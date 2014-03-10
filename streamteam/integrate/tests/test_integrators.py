@@ -18,10 +18,10 @@ from astropy.constants import G
 import matplotlib.pyplot as plt
 
 # Project
-from ...util import project_root
 from ..leapfrog import LeapfrogIntegrator
 
-plot_path = os.path.join(project_root, "tests/integrate")
+top_path = "/tmp/streamteam"
+plot_path = os.path.join(top_path, "tests/integrate")
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
@@ -39,8 +39,6 @@ def plot(ts, q, p):
     for ii in range(ndim):
         for jj in range(ndim):
             axes[jj,ii].plot(qp[ii], qp[jj], linestyle='-',
-                             marker=None, alpha=0.75)
-            axes[jj,ii].plot(qp[ii], qp[jj], linestyle='none',
                              marker='.', alpha=0.75)
 
     fig.tight_layout()
@@ -51,6 +49,34 @@ def plot(ts, q, p):
                 axes[jj,ii].set_visible(False)
                 continue
     return fig
+
+@pytest.mark.parametrize(("name","Integrator"), [('leapfrog',LeapfrogIntegrator), ])
+def test_forward(name, Integrator):
+    T = 10.
+    acceleration = lambda q: -(2*np.pi/T)**2*q
+
+    dt = 0.1
+    t1,t2 = 0, 2.5
+    integrator = Integrator(acceleration)
+    ts, qs, ps = integrator.run(q_i=[0.], p_i=[1.],
+                                t1=t1, t2=t2, dt=dt)
+
+    fig = plot(ts, qs, ps)
+    fig.savefig(os.path.join(plot_path,"forward_{0}.png".format(name)))
+
+@pytest.mark.parametrize(("name","Integrator"), [('leapfrog',LeapfrogIntegrator), ])
+def test_backward(name, Integrator):
+    T = 10.
+    acceleration = lambda q: -(2*np.pi/T)**2*q
+
+    dt = -0.1
+    t1,t2 = 2.5, 0
+    integrator = Integrator(acceleration)
+    ts, qs, ps = integrator.run(q_i=[0.], p_i=[1.],
+                                t1=t1, t2=t2, dt=dt)
+
+    fig = plot(ts, qs, ps)
+    fig.savefig(os.path.join(plot_path,"backward_{0}.png".format(name)))
 
 @pytest.mark.parametrize(("name","Integrator"), [('leapfrog',LeapfrogIntegrator), ])
 def test_harmonic_oscillator(name, Integrator):

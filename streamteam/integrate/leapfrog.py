@@ -119,10 +119,8 @@ class LeapfrogIntegrator(Integrator):
                 A fixed timestep dt and a number of steps to run for.
             dt, t1, t2 : (numeric, numeric, numeric)
                 A fixed timestep dt, an initial time, and a final time.
-            dt, t1 : (array_like, numeric)
-                An array of timesteps dt and an initial time.
             t : array_like
-                An array of times (dts = t[1:] - t[:-1])
+                An array of times (dt = t[1] - t[0])
 
         """
 
@@ -136,12 +134,19 @@ class LeapfrogIntegrator(Integrator):
                                                         self.p_im1.shape))
 
         times = _parse_time_specification(**time_spec)
-        dts = times[1:]-times[:-1]
+        _dt = times[1]-times[0]
+
         ntimesteps = len(times)
+
+        if _dt < 0.:
+            self.p_im1 *= -1.
+            dt = np.abs(_dt)
+        else:
+            dt = _dt
 
         # prime the integrator so velocity is offset from coordinate by a
         #   half timestep
-        self._prime(dts[0])
+        self._prime(dt)
 
         # create the return arrays
         qs = np.zeros((ntimesteps,) + self.q_im1.shape, dtype=float)
@@ -151,9 +156,12 @@ class LeapfrogIntegrator(Integrator):
         qs[0] = self.q_im1
         ps[0] = self.p_im1
 
-        for ii,dt in enumerate(dts):
+        for ii in range(ntimesteps-1):
             q_i, p_i = self.step(dt)
             qs[ii+1] = q_i
             ps[ii+1] = p_i
 
-        return times, qs, ps
+        if _dt < 0:
+            return times, qs, -ps
+        else:
+            return times, qs, ps
