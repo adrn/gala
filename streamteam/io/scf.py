@@ -47,7 +47,7 @@ class SCF(object):
             with open(fullpath) as f:
                 nparticles,timestep = f.readline().split()
 
-            timestep = (float(timestep)*self.units['time']).to(u.Myr)
+            timestep = (float(timestep)*self.sim_units['time']).to(u.Myr)
             self.timesteps[filename] = dict(nparticles=nparticles,
                                             timestep=timestep)
 
@@ -97,9 +97,11 @@ class SCF(object):
         mass_unit = u.Unit("{0} M_sun".format(pars['mass']))
         time_unit = u.Unit("{:08f} Myr".format(X))
 
-        self.units = dict(length=length_unit,
-                          mass=mass_unit,
-                          time=time_unit)
+        self.sim_units = dict(length=length_unit,
+                              mass=mass_unit,
+                              time=time_unit,
+                              speed=length_unit/time_unit)
+        self.sim_units['None'] = None
 
     def read_timestep(self, snapfile, units=None, overwrite=False):
         """ Given a SNAP filename, read and return the data in physical
@@ -110,8 +112,11 @@ class SCF(object):
             snapfile : str
                 The name of the SNAP file to read. Can see all possible
                 files with scf.timesteps.
-            units : list
-                List of units
+            usys : dict (optional)
+                A unit system to transform the data to. If None, will return
+                the data in simulation units.
+            overwrite : bool (optional)
+                Overwrite the cached .npy file.
         """
 
         # numpy save file
@@ -119,6 +124,8 @@ class SCF(object):
 
         # column names for SNAP file, in simulation units
         colnames = "m x y z vx vy vz s1 s2 tub".split()
+        coltypes = "mass length length length speed speed speed None None time".split()
+        colunits = [self.sim_units[x] for x in coltypes]
 
         if not self.timesteps.has_key(snapfile):
             raise IOError("Timestep file '{}' not found!".format(snapfile))
@@ -136,6 +143,13 @@ class SCF(object):
         else:
             data = np.load(os.path.join(self.path,cache_filename))
 
+        if units is not None:
+            for colname,colunit in zip(colnames,colunits):
+                if colunit is None:
+                    continue
+                data[colname] = (data[colname]*colunit).to(units[colunit.physical_type]).value
+
+        return data
 
 
 
