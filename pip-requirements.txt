@@ -1,2 +1,3 @@
 numpy==1.7.1
 astropy>=0.3
+pygaia>=0.31
