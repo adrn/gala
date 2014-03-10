@@ -19,6 +19,8 @@ from astropy.constants import G
 # Create logger
 logger = logging.getLogger(__name__)
 
+__all__ = ["SCF"]
+
 class SCF(object):
 
     def __init__(self, path):
