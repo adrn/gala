@@ -95,8 +95,8 @@ def galactic_to_orphan(galactic_coord):
 
 @transformations.transform_function(OrphanCoordinates, coord.Galactic)
 def orphan_to_galactic(orphan_coord):
-    L = np.atleast_1d(sgr_coord.Lambda.radian)
-    B = np.atleast_1d(sgr_coord.Beta.radian)
+    L = np.atleast_1d(orphan_coord.Lambda.radian)
+    B = np.atleast_1d(orphan_coord.Beta.radian)
 
     Xs = cos(B)*cos(L)
     Ys = cos(B)*sin(L)
