@@ -17,8 +17,7 @@ import astropy.coordinates as coord
 import astropy.units as u
 
 __all__ = ["vgsr_to_vhel", "vhel_to_vgsr",
-           "gal_xyz_to_hel_lbd", "hel_lbd_to_gal_xyz",
-           "gc_to_hel", "hel_to_gc"]
+           "gal_xyz_to_hel_lbd", "hel_lbd_to_gal_xyz"]
 
 # This is the default circular velocity and LSR peculiar velocity of the Sun
 default_vcirc = 220.*u.km/u.s
@@ -44,7 +43,7 @@ def vgsr_to_vhel(coords, vgsr, vcirc=default_vcirc, vlsr=default_vlsr):
 
     """
     g = coords.transform_to(coord.Galactic)
-    l,b = coord.l, coord.b
+    l,b = coords.l, coords.b
 
     # compute the velocity relative to the LSR
     lsr = vgsr - vcirc*sin(l)*cos(b)
@@ -76,7 +75,7 @@ def vhel_to_vgsr(coords, vhel, vcirc=default_vcirc, vlsr=default_vlsr):
 
     """
     g = coords.transform_to(coord.Galactic)
-    l,b = coord.l, coord.b
+    l,b = coords.l, coords.b
 
     lsr = vhel + vcirc*sin(l)*cos(b)
 
@@ -88,7 +87,7 @@ def vhel_to_vgsr(coords, vhel, vcirc=default_vcirc, vlsr=default_vlsr):
 
     return vgsr
 
-def gal_xyz_to_hel_lbd(x, v=None,
+def gal_xyz_to_hel_lbd(X, V=None,
                        vcirc=default_vcirc, vlsr=default_vlsr, xsun=default_xsun):
     """ Convert Galactocentric cartesian coordinates to Heliocentric
         spherical coordinates. Uses a right-handed cartesian system,
@@ -96,9 +95,9 @@ def gal_xyz_to_hel_lbd(x, v=None,
 
         Parameters
         ----------
-        x : astropy.units.Quantity
+        X : astropy.units.Quantity
             Cartesian x,y,z coordinates. Should have shape (3,N).
-        v : astropy.units.Quantity (optional)
+        V : astropy.units.Quantity (optional)
             Cartesian velocity components. Sometimes called U,V,W.
             Should have shape (3,N).
         vcirc : astropy.units.Quantity
@@ -112,7 +111,7 @@ def gal_xyz_to_hel_lbd(x, v=None,
 
     # unpack positions
     try:
-        x,y,z = r
+        x,y,z = X
     except ValueError:
         if len(r.shape) > 1 and r.shape[0] > r.shape[1]:
             raise ValueError("Could not unpack positions -- the shape looks"
@@ -129,12 +128,12 @@ def gal_xyz_to_hel_lbd(x, v=None,
     l = coord.Angle(np.arctan2(y, x)).wrap_at(360*u.deg).to(u.degree)
     b = coord.Angle(90*u.degree - np.arccos(z/d)).to(u.degree)
 
-    if v is not None:
-        if v.shape != r.shape:
+    if V is not None:
+        if V.shape != X.shape:
             raise ValueError("Shape of velocity should match position.")
 
         # unpack velocities
-        vx,vy,vz = v
+        vx,vy,vz = V
 
         # transform to heliocentric cartesian
         vy = vy - vcirc
