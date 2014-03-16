@@ -27,18 +27,6 @@ __all__ = ["SCFReader"]
 
 class SCFReader(NBodyReader):
 
-    # def __init__(self, path):
-    #     """ Class for reading output from an SCF simulation.
-
-    #         Parameters
-    #         ----------
-    #         path : str
-    #             Path to the output files, e.g., the directory containing
-    #             SCFPAR, and SNAP files.
-    #     """
-
-    #     super(self).__init__(self, path)
-
     def _read_units(self):
         """ Read and parse the SCFPAR file containing simulation parameters
             and initial conditions. Right now, only parse out the simulation
