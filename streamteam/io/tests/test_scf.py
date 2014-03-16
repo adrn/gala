@@ -15,18 +15,17 @@ import numpy as np
 import astropy.units as u
 
 # Project
-from ..scf import SCF
+from ..scf import SCFReader
 from ...units import usys
 
 def test_simple():
-    scf = SCF('/Users/adrian/projects/streams/data/simulation/Sgr/2.5e6/')
-    scf = SCF('/Users/adrian/projects/streams/data/simulation/Sgr/2.5e7/')
-    scf = SCF('/Users/adrian/projects/streams/data/simulation/Sgr/2.5e8/')
-    scf = SCF('/Users/adrian/projects/streams/data/simulation/Sgr/2.5e9/')
+    scf = SCFReader('/Users/adrian/projects/stream-team/tests/M2.5e+08')
 
 def test_snap():
-    scf = SCF('/Users/adrian/projects/streams/data/simulation/Sgr_DH/M2.5e+07/R0.093/4.0Gyr/L0.1')
-    # scf.read_timestep('SNAP049', overwrite=True)
-    d1 = scf.read_timestep('SNAP049')
-    d2 = scf.read_timestep('SNAP049', units=usys)
+    scf = SCFReader('/Users/adrian/projects/stream-team/tests/M2.5e+08')
+    d1 = scf.read_snap('SNAP113')
+    print(d1.meta["timestep"])
+
+    d1 = scf.read_snap('SNAP113', units=usys)
+    print(d1.meta["timestep"])
 

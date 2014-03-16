@@ -15,48 +15,31 @@ import re
 import numpy as np
 import astropy.units as u
 from astropy.constants import G
+from astropy.table import Table
+
+# Project
+from .core import NBodyReader
 
 # Create logger
 logger = logging.getLogger(__name__)
 
-__all__ = ["SCF"]
+__all__ = ["SCFReader"]
 
-class SCF(object):
+class SCFReader(NBodyReader):
 
-    def __init__(self, path):
-        """ Class for reading output from an SCF simulation.
+    # def __init__(self, path):
+    #     """ Class for reading output from an SCF simulation.
 
-            Parameters
-            ----------
-            path : str
-                Path to the output files, e.g., the directory containing
-                SCFPAR, and SNAP files.
-        """
+    #         Parameters
+    #         ----------
+    #         path : str
+    #             Path to the output files, e.g., the directory containing
+    #             SCFPAR, and SNAP files.
+    #     """
 
-        if not os.path.exists(path):
-            raise IOError("Path to SCF output '{}' does not exist.".format(path))
+    #     super(self).__init__(self, path)
 
-        self.path = path
-        self.read_scfpar()
-
-        # figure out what timesteps are present, store metadata in a dictionary
-        self.timesteps = dict()
-        for filename in os.listdir(self.path):
-            if not filename.startswith('SNAP') or filename.endswith('npy'):
-                continue
-
-            fullpath = os.path.join(self.path, filename)
-            with open(fullpath) as f:
-                nparticles,timestep = f.readline().split()
-
-            timestep = (float(timestep)*self.sim_units['time']).to(u.Myr)
-            self.timesteps[filename] = dict(nparticles=nparticles,
-                                            timestep=timestep)
-
-            if os.path.exists("{}.npy".format(fullpath)):
-                self.timesteps[filename]['cache'] = os.path.split("{}.npy".format(fullpath))[1]
-
-    def read_scfpar(self):
+    def _read_units(self):
         """ Read and parse the SCFPAR file containing simulation parameters
             and initial conditions. Right now, only parse out the simulation
             units.
@@ -99,65 +82,56 @@ class SCF(object):
         mass_unit = u.Unit("{0} M_sun".format(pars['mass']))
         time_unit = u.Unit("{:08f} Myr".format(X))
 
-        self.sim_units = dict(length=length_unit,
-                              mass=mass_unit,
-                              time=time_unit,
-                              speed=length_unit/time_unit)
-        self.sim_units['None'] = None
+        units = dict(length=length_unit,
+                     mass=mass_unit,
+                     time=time_unit,
+                     speed=length_unit/time_unit,
+                     dimensionless=u.dimensionless_unscaled)
 
-    def read_timestep(self, snapfile, units=None, overwrite=False):
-        """ Given a SNAP filename, read and return the data in physical
-            units.
+        return units
+
+    def read_snap(self, filename, units=None):
+        """ Given a SNAP filename, read and return the data. By default,
+            returns data in simulation units, but this can be changed with
+            the `units` kwarg.
 
             Parameters
             ----------
-            snapfile : str
-                The name of the SNAP file to read. Can see all possible
-                files with scf.timesteps.
-            usys : dict (optional)
+            filename : str
+                The name of the SNAP file to read.
+            units : dict (optional)
                 A unit system to transform the data to. If None, will return
                 the data in simulation units.
-            overwrite : bool (optional)
-                Overwrite the cached .npy file.
         """
-
-        # numpy save file
-        cache_filename = "{}.npy".format(snapfile)
 
         # column names for SNAP file, in simulation units
         colnames = "m x y z vx vy vz s1 s2 tub".split()
-        coltypes = "mass length length length speed speed speed None None time".split()
+        coltypes = "mass length length length speed speed speed dimensionless dimensionless time".split()
         colunits = [self.sim_units[x] for x in coltypes]
 
-        if not self.timesteps.has_key(snapfile):
-            raise IOError("Timestep file '{}' not found!".format(snapfile))
-        timestep = self.timesteps[snapfile]
+        # read the first line to get the numer of particles and timestep
+        fullpath = os.path.join(self.path, filename)
+        with open(fullpath) as f:
+            firstline = f.readline()
+            try:
+                nparticles,timestep = firstline.split()
+            except:
+                raise ValueError("Invalid header line. Expected 'nparticles,time', "
+                                 "got:\n\t\t{}".format(firstline))
+        timestep = float(timestep)*self.sim_units['time']
 
-        if timestep.has_key('cache') and overwrite:
-            timestep.pop('cache')
-
-        if not timestep.has_key('cache'):
-            data = np.genfromtxt(os.path.join(self.path,snapfile),
-                                 skiprows=1, names=colnames)
-            np.save(os.path.join(self.path,cache_filename), data)
-            self.timesteps[snapfile]['cache'] = cache_filename
-
-        else:
-            data = np.load(os.path.join(self.path,cache_filename))
-
+        data = np.genfromtxt(os.path.join(self.path,filename),
+                             skiprows=1, names=colnames)
         if units is not None:
+            new_colunits = []
             for colname,colunit in zip(colnames,colunits):
-                if colunit is None:
-                    continue
                 data[colname] = (data[colname]*colunit).to(units[colunit.physical_type]).value
+                new_colunits.append(units[colunit.physical_type])
 
-        return data
+            timestep = timestep.to(units['time'])
+            colunits = new_colunits
 
+        tbl = Table(data, meta=dict(timestep=timestep.value,
+                                    units=[str(x) for x in colunits]))
 
-
-
-
-
-
-
-
+        return tbl
