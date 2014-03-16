@@ -30,7 +30,9 @@ setup(
     version="0.1",
     author="Adrian M. Price-Whelan",
     author_email="adrn@astro.columbia.edu",
-    license="BSD"
+    license="BSD",
+    packages=["streamteam", "streamteam.coordinates", "streamteam.integrate",\
+              "streamteam.io", "streamteam.observation", "streamteam.potential"]
 )
 
 # ext_modules=[lm10_acc, pal5_acc]
