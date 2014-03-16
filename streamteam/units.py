@@ -22,3 +22,4 @@ usys['time'] = u.Myr
 usys['angular speed'] = u.mas/u.yr
 usys['angle'] = u.degree
 usys['mass'] = u.M_sun
+usys['dimensionless'] = u.dimensionless_unscaled
