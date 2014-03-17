@@ -29,6 +29,7 @@ Documentation
    :maxdepth: 1
 
    install
+   coordinates/index
 ..   getting_started
 
 ******************
