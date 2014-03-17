@@ -1,0 +1,12 @@
+@import url(http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic,700italic);
+
+html, body {
+   font-family: 'Source Sans Pro', sans-serif;
+}
+
+.field-body blockquote {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    font-size: 12pt;
+    font-weight: 300;
+}
