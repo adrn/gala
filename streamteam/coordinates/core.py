@@ -25,7 +25,7 @@ default_vlsr = [10., 5.25, 7.17]*u.km/u.s
 default_xsun = -8.*u.kpc
 
 def vgsr_to_vhel(coords, vgsr, vcirc=default_vcirc, vlsr=default_vlsr):
-    """ Convert a velocity from the Galactic standard of rest (GSR) to
+    """ Convert a radial velocity in the Galactic standard of rest (GSR) to
         a barycentric radial velocity.
 
         Parameters
@@ -58,7 +58,7 @@ def vgsr_to_vhel(coords, vgsr, vcirc=default_vcirc, vlsr=default_vlsr):
 
 def vhel_to_vgsr(coords, vhel, vcirc=default_vcirc, vlsr=default_vlsr):
     """ Convert a velocity from a heliocentric radial velocity to
-        the Galactic center of rest.
+        the Galactic standard of rest (GSR).
 
         Parameters
         ----------
