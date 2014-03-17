@@ -17,7 +17,7 @@ import astropy.coordinates as coord
 import astropy.units as u
 
 __all__ = ["vgsr_to_vhel", "vhel_to_vgsr",
-           "gal_xyz_to_hel_lbd", "hel_lbd_to_gal_xyz"]
+           "gal_xyz_to_hel", "hel_to_gal_xyz"]
 
 # This is the default circular velocity and LSR peculiar velocity of the Sun
 default_vcirc = 220.*u.km/u.s
@@ -87,8 +87,8 @@ def vhel_to_vgsr(coords, vhel, vcirc=default_vcirc, vlsr=default_vlsr):
 
     return vgsr
 
-def gal_xyz_to_hel_lbd(X, V=None,
-                       vcirc=default_vcirc, vlsr=default_vlsr, xsun=default_xsun):
+def gal_xyz_to_hel(X, V=None,
+                   vcirc=default_vcirc, vlsr=default_vlsr, xsun=default_xsun):
     """ Convert Galactocentric cartesian coordinates to Heliocentric
         spherical coordinates. Uses a right-handed cartesian system,
         with the Sun at X ~ -8 kpc.
@@ -127,6 +127,7 @@ def gal_xyz_to_hel_lbd(X, V=None,
     d = np.sqrt(x**2 + y**2 + z**2)
     l = coord.Angle(np.arctan2(y, x)).wrap_at(360*u.deg).to(u.degree)
     b = coord.Angle(90*u.degree - np.arccos(z/d)).to(u.degree)
+    lbd = coord.Galactic(l, b, distance=d)
 
     if V is not None:
         if V.shape != X.shape:
@@ -152,21 +153,21 @@ def gal_xyz_to_hel_lbd(X, V=None,
         mul = (omega_l.decompose()*u.rad).to(u.milliarcsecond / u.yr)
         mub = (omega_b.decompose()*u.rad).to(u.milliarcsecond / u.yr)
 
-        return (l,b,d), (mul,mub,vr)
+        return lbd, (mul,mub,vr)
 
-    return (l,b,d)
+    return lbd
 
 
-def hel_lbd_to_gal_xyz(lbd, pm=None, vr=None,
-                       vcirc=default_vcirc, vlsr=default_vlsr, xsun=default_xsun):
+def hel_to_gal_xyz(lbd, pm=None, vr=None,
+                   vcirc=default_vcirc, vlsr=default_vlsr, xsun=default_xsun):
     """ Convert Heliocentric spherical coordinates to Galactocentric
         cartesian coordinates. Uses a right-handed cartesian system,
         typically with the Sun at X ~ -8 kpc.
 
         Parameters
         ----------
-        lbd : tuple (of astropy.units.Quantity objects)
-            Galactic longitude, latitude, and distance.
+        lbd : astropy.coordinates.SphericalCoordinatesBase
+            An astropy [...] and distance.
         pm : astropy.units.Quantity (optional)
             Proper motion in l, b. Should have shape (2,N).
         vr : astropy.units.Quantity (optional)
@@ -181,7 +182,7 @@ def hel_lbd_to_gal_xyz(lbd, pm=None, vr=None,
     """
     # unpack positions
     try:
-        l,b,d = lbd
+        l,b,d = lbd.l, lbd.b, lbd.distance
     except ValueError:
         raise ValueError("Failed to unpack positions.")
 
