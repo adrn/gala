@@ -119,7 +119,8 @@ class SCFReader(NBodyReader):
             timestep = timestep.to(units['time'])
             colunits = new_colunits
 
-        tbl = Table(data, meta=dict(timestep=timestep.value,
-                                    units=[str(x) for x in colunits]))
+        tbl = Table(data, meta=dict(timestep=timestep.value))
+        for colname,colunit in zip(colnames,colunits):
+            tbl[colname].unit = colunit
 
         return tbl

@@ -24,8 +24,7 @@ def test_simple():
 def test_snap():
     scf = SCFReader('/Users/adrian/projects/stream-team/tests/M2.5e+08')
     d1 = scf.read_snap('SNAP113')
-    print(d1.meta["timestep"])
+    print(d1.meta)
 
     d1 = scf.read_snap('SNAP113', units=usys)
-    print(d1.meta["timestep"])
-
+    print(d1.meta)
