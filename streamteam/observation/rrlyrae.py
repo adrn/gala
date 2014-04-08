@@ -1,6 +1,6 @@
 # coding: utf-8
 
-""" Handling RR Lyrae data """
+""" Dealing with RR Lyrae photometry/measurements """
 
 from __future__ import division, print_function
 
@@ -14,8 +14,14 @@ from astropy.time import Time, TimeDelta
 import numpy as np
 import astropy.units as u
 from astropy.utils.misc import isiterable
+from pygaia.errors.spectroscopic import vradErrorSkyAvg
+from pygaia.errors.astrometric import properMotionErrorSkyAvg
 
-__all__ = ["M_V"]
+# Project
+from .core import distance_modulus
+from .gaia import V_to_G
+
+__all__ = ["M_V", "gaia_rv_error", "gaia_pm_error"]
 
 # Johnson/Cousins (V - I_C) color for RR Lyrae at *minimum*
 # Guldenschuh et al. (2005 PASP 117, 721), pg. 725
@@ -54,6 +60,41 @@ def M_V(fe_h, dfe_h=None):
         return (Mabs, dMabs)
 
     return Mabs
+
+def gaia_rv_error(d, fe_h=-1.):
+    """ Compute the sky-averaged radial velocity error for an
+        RR Lyrae at the given distance.
+
+        Parameters:
+        -----------
+        d : quantity_like
+            The distance as an Astropy Quantity object.
+        fe_h : numeric
+            The metallicity.
+    """
+
+    Vmag = distance_modulus(d) + M_V(fe_h)
+    err = vradErrorSkyAvg(Vmag, spt="F0V")*u.km/u.s
+
+    return err
+
+def gaia_pm_error(d, fe_h=-1.):
+    """ Compute the sky-averaged proper motion error for an
+        RR Lyrae at the given distance.
+
+        Parameters:
+        -----------
+        d : quantity_like
+            The distance as an Astropy Quantity object.
+        fe_h : numeric
+            The metallicity.
+    """
+
+    Vmag = distance_modulus(d) + M_V(fe_h)
+    G = V_to_G(Vmag, V_minus_I)
+    err = properMotionErrorSkyAvg(G, V_minus_I)
+    err = 0.5*(err[0] + err[1])
+    return err*u.microarcsecond/u.yr
 
 ############################################################
 # Below are light curve utilities
