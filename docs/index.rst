@@ -9,11 +9,6 @@
 Stream Team Package Documentation
 #################################
 
-.. .. image:: astropy_banner_96.png
-..     :width: 485px
-..     :height: 96px
-..     :target: http://www.astropy.org/
-
 Welcome to the `stream-team` documentation!
 
 This package contains functionality common to various collaborative
