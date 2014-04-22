@@ -13,12 +13,12 @@ import os, sys
 import numpy as np
 
 # Project
-from .core import Integrator
+from .core import PotentialIntegrator
 from .timespec import _parse_time_specification
 
 __all__ = ["LeapfrogIntegrator"]
 
-class LeapfrogIntegrator(Integrator):
+class LeapfrogIntegrator(PotentialIntegrator):
 
     def __init__(self, acceleration_func, func_args=()):
         """ Initialize a Leapfrog integrator given a function for computing
@@ -134,7 +134,7 @@ class LeapfrogIntegrator(Integrator):
                                                         self.p_im1.shape))
 
         times = _parse_time_specification(**time_spec)
-        _dt = times[1]-times[0]
+        _dt = time_spec.get("dt", times[1]-times[0])
 
         ntimesteps = len(times)
 
