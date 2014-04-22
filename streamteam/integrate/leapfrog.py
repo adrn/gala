@@ -134,7 +134,7 @@ class LeapfrogIntegrator(PotentialIntegrator):
                                                         self.p_im1.shape))
 
         times = _parse_time_specification(**time_spec)
-        _dt = time_spec.get("dt", times[1]-times[0])
+        _dt = times[1]-times[0]
 
         ntimesteps = len(times)
 

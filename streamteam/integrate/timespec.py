@@ -47,7 +47,7 @@ def _parse_time_specification(dt=None, nsteps=None, t1=None, t2=None, t=None):
             if t1 is None:
                 t1 = 0.
 
-            times = _parse_time_specification(dt=np.ones(nsteps)*dt,
+            times = _parse_time_specification(dt=np.ones(nsteps+1)*dt,
                                               t1=t1)
         # dt, t1, t2 : (numeric, numeric, numeric)
         elif dt is not None and t1 is not None and t2 is not None:
