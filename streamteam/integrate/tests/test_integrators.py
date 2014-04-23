@@ -61,23 +61,56 @@ def test_harmonic_oscillator(name, Integrator):
     fig = plot(ts, qs, ps)
     fig.savefig(os.path.join(plot_path,"harmonic_osc_{0}.png".format(name)))
 
-# @pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator), ])
-# def test_point_mass(name, Integrator):
-#     GM = (G * (1.*u.M_sun)).decompose([u.au,u.M_sun,u.year,u.radian]).value
+@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator), ])
+def test_point_mass(name, Integrator):
+    GM = (G * (1.*u.M_sun)).decompose([u.au,u.M_sun,u.year,u.radian]).value
 
-#     def acceleration(q):
-#         a = -GM/(q[:,0]**2+q[:,1]**2)**1.5
-#         return np.array([q[:,0]*a, q[:,1]*a]).T.copy()
+    def F(t,x):
+        x,y,px,py = x.T
+        a = -GM/(x*x+y*y)**1.5
+        return np.array([px, py, x*a, y*a]).T
 
-#     q_i = np.array([1.0, 0.0]) # au
-#     p_i = np.array([0.0, 2*np.pi]) # au/yr
+    q_i = np.array([1.0, 0.0]) # au
+    p_i = np.array([0.0, 2*np.pi]) # au/yr
 
-#     integrator = Integrator(acceleration)
-#     ts, qs, ps = integrator.run(q_i=q_i, p_i=p_i,
-#                                 t1=0., t2=10., dt=0.01)
+    integrator = Integrator(F)
+    ts, qs, ps = integrator.run(q_i=q_i, p_i=p_i,
+                                t1=0., t2=10., dt=0.01)
 
-#     assert integrator.q_im1.shape == (1,2)
-#     assert integrator.p_im1.shape == (1,2)
+    fig = plot(ts, qs, ps)
+    fig.savefig(os.path.join(plot_path,"point_mass_{0}.png".format(name)))
 
-#     fig = plot(ts, qs, ps)
-#     fig.savefig(os.path.join(plot_path,"point_mass_{0}.png".format(name)))
+@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator), ])
+def test_driven_pendulum(name, Integrator):
+
+    def F(t,x,A,omega_d):
+        q,p = x.T
+        return np.array([p,-np.sin(q) + A*np.cos(omega_d*t)]).T
+
+    q_i = np.array([3.]) # radians
+    p_i = np.array([0.])
+
+    integrator = Integrator(F, func_args=(0.07, 0.75))
+    ts, qs, ps = integrator.run(q_i=q_i, p_i=p_i,
+                                dt=0.1, nsteps=10000)
+
+    fig = plot(ts, qs, ps, marker=None, alpha=0.5)
+    fig.savefig(os.path.join(plot_path,"driven_pendulum_{0}.png".format(name)))
+
+@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator), ])
+def test_lorenz(name, Integrator):
+
+    def F(t,x,sigma,rho,beta):
+        x,y,z,px,py,pz = x.T
+        return np.array([sigma*(y-x), x*(rho-z)-y, x*y-beta*z,0.,0.,0.]).T
+
+    q_i = np.array([0.5,0.5,0.5])
+    p_i = np.array([0.,0.,0.])
+
+    sigma, rho, beta = 10., 14., 8/3.
+    integrator = Integrator(F, func_args=(sigma, rho, beta))
+    ts, qs, ps = integrator.run(q_i=q_i, p_i=p_i,
+                                dt=0.1, nsteps=10000)
+
+    fig = plot(ts, qs, ps, marker=None, alpha=0.5)
+    fig.savefig(os.path.join(plot_path,"lorenz_{0}.png".format(name)))
