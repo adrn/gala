@@ -22,7 +22,6 @@ def plot(ts, qp, marker='.', alpha=0.75, linestyle='-'):
     kwargs = dict(marker=marker, linestyle=linestyle, alpha=alpha)
     for ii in range(ndim):
         for jj in range(ndim):
-
             if ii == jj:
                 axes[jj,ii].plot(qp[ii], **kwargs)
             else:
