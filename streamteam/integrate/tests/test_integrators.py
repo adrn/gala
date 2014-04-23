@@ -34,10 +34,10 @@ def test_forward(name, Integrator):
     dt = 0.1
     t1,t2 = 0, 2.5
     integrator = Integrator(sho, func_args=(10.,))
-    ts, qs, ps = integrator.run(q_i=[0.], p_i=[1.],
-                                t1=t1, t2=t2, dt=dt)
+    ts, xs = integrator.run(x_i=[0., 1.],
+                            t1=t1, t2=t2, dt=dt)
 
-    fig = plot(ts, qs, ps)
+    fig = plot(ts, xs[:,0].T)
     fig.savefig(os.path.join(plot_path,"forward_{0}.png".format(name)))
 
 @pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator), ])
@@ -45,20 +45,20 @@ def test_backward(name, Integrator):
     dt = -0.1
     t1,t2 = 2.5,0.
     integrator = Integrator(sho, func_args=(10.,))
-    ts, qs, ps = integrator.run(q_i=[0.], p_i=[1.],
-                                t1=t1, t2=t2, dt=dt)
+    ts, xs = integrator.run(x_i=[0., 1.],
+                            t1=t1, t2=t2, dt=dt)
 
-    fig = plot(ts, qs, ps)
+    fig = plot(ts, xs[:,0].T)
     fig.savefig(os.path.join(plot_path,"backward_{0}.png".format(name)))
 
 @pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator), ])
 def test_harmonic_oscillator(name, Integrator):
     dt = 0.1
     integrator = Integrator(sho, func_args=(10.,))
-    ts, qs, ps = integrator.run(q_i=[1.], p_i=[0.],
-                                dt=dt, nsteps=100)
+    ts, xs = integrator.run(x_i=[1., 0.],
+                            dt=dt, nsteps=100)
 
-    fig = plot(ts, qs, ps)
+    fig = plot(ts, xs[:,0].T)
     fig.savefig(os.path.join(plot_path,"harmonic_osc_{0}.png".format(name)))
 
 @pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator), ])
@@ -74,10 +74,10 @@ def test_point_mass(name, Integrator):
     p_i = np.array([0.0, 2*np.pi]) # au/yr
 
     integrator = Integrator(F)
-    ts, qs, ps = integrator.run(q_i=q_i, p_i=p_i,
-                                t1=0., t2=10., dt=0.01)
+    ts, xs = integrator.run(x_i=np.append(q_i,p_i),
+                            t1=0., t2=10., dt=0.01)
 
-    fig = plot(ts, qs, ps)
+    fig = plot(ts, xs[:,0].T)
     fig.savefig(os.path.join(plot_path,"point_mass_{0}.png".format(name)))
 
 @pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator), ])
@@ -87,30 +87,24 @@ def test_driven_pendulum(name, Integrator):
         q,p = x.T
         return np.array([p,-np.sin(q) + A*np.cos(omega_d*t)]).T
 
-    q_i = np.array([3.]) # radians
-    p_i = np.array([0.])
-
     integrator = Integrator(F, func_args=(0.07, 0.75))
-    ts, qs, ps = integrator.run(q_i=q_i, p_i=p_i,
-                                dt=0.1, nsteps=10000)
+    ts, xs = integrator.run(x_i=[3., 0.],
+                            dt=0.1, nsteps=10000)
 
-    fig = plot(ts, qs, ps, marker=None, alpha=0.5)
+    fig = plot(ts, xs[:,0].T, marker=None, alpha=0.5)
     fig.savefig(os.path.join(plot_path,"driven_pendulum_{0}.png".format(name)))
 
 @pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator), ])
 def test_lorenz(name, Integrator):
 
     def F(t,x,sigma,rho,beta):
-        x,y,z,px,py,pz = x.T
-        return np.array([sigma*(y-x), x*(rho-z)-y, x*y-beta*z,0.,0.,0.]).T
+        x,y,z = x.T
+        return np.array([sigma*(y-x), x*(rho-z)-y, x*y-beta*z]).T
 
-    q_i = np.array([0.5,0.5,0.5])
-    p_i = np.array([0.,0.,0.])
-
-    sigma, rho, beta = 10., 14., 8/3.
+    sigma, rho, beta = 10., 28., 8/3.
     integrator = Integrator(F, func_args=(sigma, rho, beta))
-    ts, qs, ps = integrator.run(q_i=q_i, p_i=p_i,
-                                dt=0.1, nsteps=10000)
+    ts, xs = integrator.run(x_i=[0.5,0.5,0.5],
+                            dt=0.01, nsteps=10000)
 
-    fig = plot(ts, qs, ps, marker=None, alpha=0.5)
+    fig = plot(ts, xs[:,0].T, marker=None, alpha=0.5)
     fig.savefig(os.path.join(plot_path,"lorenz_{0}.png".format(name)))

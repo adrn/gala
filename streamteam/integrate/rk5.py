@@ -110,17 +110,10 @@ class RK5Integrator(Integrator):
 
         return _x
 
-    def run(self, q_i, p_i, **time_spec):
+    def run(self, x_i, **time_spec):
         """ Run the integrator starting at the given coordinates and momenta
             (or velocities) and a time specification. The initial conditions
-            `q`,`p` should each have shape `(nparticles, ndim)`.
-
-            For example, for 100 particles in 3D cartesian coordinates, the
-            coordinate (`q`) array should have shape (100,3) and the momentum
-            (`p`) array should also have shape (100,3). For a single particle,
-            1D arrays are promoted to 2D -- e.g., a coordinate array with shape
-            (3,) is interpreted as a single particle in 3 dimensions and
-            promoted to an array with shape (1,3).
+            `x` should each have shape `(nparticles, ndim)`.
 
             There are a few combinations of keyword arguments accepted for
             specifying the timestepping. For example, you can specify a fixed
@@ -129,11 +122,8 @@ class RK5Integrator(Integrator):
 
             Parameters
             ----------
-            q_i : array_like
-                Coordinate initial conditions.
-            p_i : array_like
-                Initial conditions for the momenta (or velocities) conjugate
-                to the coordinates.
+            x0 : array_like
+                Initial conditions.
 
             kwargs
             ------
@@ -146,46 +136,25 @@ class RK5Integrator(Integrator):
 
         """
 
-        q_i = np.atleast_2d(q_i)
-        p_i = np.atleast_2d(p_i)
-
-        # make sure they have the same shape
-        if not q_i.shape == p_i.shape:
-            raise ValueError("Shape of coordinates (q_i: {}) must match "
-                             "momenta (p_i: {})".format(q_i.shape,
-                                                        p_i.shape))
-        nparticles, ndim = q_i.shape
+        x_i = np.atleast_2d(x_i)
+        nparticles, ndim = x_i.shape
 
         # generate the array of times
         times = _parse_time_specification(**time_spec)
         nsteps = len(times)-1
         dt = times[1]-times[0]
 
-        if dt < 0.:
-            p_i = -p_i
-            dt = np.abs(dt)
-            backwards = True
-        else:
-            backwards = False
-            dt = dt
-        x = np.hstack((q_i, p_i))
-
         # create the return arrays
-        qs = np.zeros((nsteps+1,) + q_i.shape, dtype=float)
-        ps = np.zeros((nsteps+1,) + p_i.shape, dtype=float)
+        xs = np.zeros((nsteps+1,) + x_i.shape, dtype=float)
 
         # Set first step to the initial conditions
-        qs[0] = q_i
-        ps[0] = p_i
+        xs[0] = x_i
+        x = x_i.copy()
         for ii in range(1,nsteps+1):
             x = self.step(times[ii],x,dt)
-            qs[ii] = x[...,:ndim]
-            ps[ii] = x[...,ndim:]
+            xs[ii] = x
 
-        if backwards:
-            return times, qs, -ps
-        else:
-            return times, qs, ps
+        return times, xs
 
 '''
 

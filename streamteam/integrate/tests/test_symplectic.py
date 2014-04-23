@@ -36,7 +36,8 @@ def test_forward(name, Integrator):
     ts, qs, ps = integrator.run(q_i=[0.], p_i=[1.],
                                 t1=t1, t2=t2, dt=dt)
 
-    fig = plot(ts, qs, ps)
+    qp = np.squeeze(np.vstack((qs.T,ps.T)))
+    fig = plot(ts, qp)
     fig.savefig(os.path.join(plot_path,"forward_{0}.png".format(name)))
 
 @pytest.mark.parametrize(("name","Integrator"), [('leapfrog',LeapfrogIntegrator), ])
@@ -50,7 +51,8 @@ def test_backward(name, Integrator):
     ts, qs, ps = integrator.run(q_i=[0.], p_i=[1.],
                                 t1=t1, t2=t2, dt=dt)
 
-    fig = plot(ts, qs, ps)
+    qp = np.squeeze(np.vstack((qs.T,ps.T)))
+    fig = plot(ts, qp)
     fig.savefig(os.path.join(plot_path,"backward_{0}.png".format(name)))
 
 @pytest.mark.parametrize(("name","Integrator"), [('leapfrog',LeapfrogIntegrator), ])
@@ -63,7 +65,8 @@ def test_harmonic_oscillator(name, Integrator):
     ts, qs, ps = integrator.run(q_i=[1.], p_i=[0.],
                                 dt=dt, nsteps=100)
 
-    fig = plot(ts, qs, ps)
+    qp = np.squeeze(np.vstack((qs.T,ps.T)))
+    fig = plot(ts, qp)
     fig.savefig(os.path.join(plot_path,"harmonic_osc_{0}.png".format(name)))
 
 @pytest.mark.parametrize(("name","Integrator"), [('leapfrog',LeapfrogIntegrator), ])
@@ -84,5 +87,6 @@ def test_point_mass(name, Integrator):
     assert integrator.q_im1.shape == (1,2)
     assert integrator.p_im1.shape == (1,2)
 
-    fig = plot(ts, qs, ps)
+    qp = np.squeeze(np.vstack((qs.T,ps.T)))
+    fig = plot(ts, qp)
     fig.savefig(os.path.join(plot_path,"point_mass_{0}.png".format(name)))

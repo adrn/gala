@@ -13,10 +13,8 @@ import os, sys
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot(ts, q, p, marker='.', alpha=0.75, linestyle='-'):
+def plot(ts, qp, marker='.', alpha=0.75, linestyle='-'):
     """ Make some helpful plots for testing the integrators. """
-
-    qp = np.squeeze(np.vstack((q.T,p.T)))
 
     ndim = qp.shape[0]
     fig,axes = plt.subplots(ndim, ndim, figsize=(4*ndim,4*ndim))
