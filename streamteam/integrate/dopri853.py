@@ -75,7 +75,8 @@ class DOPRI853Integrator(Integrator):
 
         self._ode = ode(func_wrapper, jac=None)
         self._ode = self._ode.set_integrator('dop853', **self._ode_kwargs)
-        self._ode.set_f_params(*self._func_args)
+        #self._ode.set_f_params(*self._func_args)
+        #TODO: extra args broken
 
         x_i = x_i.reshape((nparticles*ndim,))
 
@@ -91,7 +92,6 @@ class DOPRI853Integrator(Integrator):
         xs = np.zeros((nsteps+1,x_i.size), dtype=float)
         xs[0] = x_i
 
-        #for ii in range(1,nsteps+1):
         # Integrate the ODE(s) across each delta_t timestep
         k = 1
         while self._ode.successful() and k < (nsteps+1):
