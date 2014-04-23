@@ -106,10 +106,9 @@ class RK5Integrator(Integrator):
         for i in range(6):
             dx = dx + C[i]*K[i]
 
-        _t = t + dt
         _x = x + dx
 
-        return _t, _x
+        return _x
 
     def run(self, q_i, p_i, **time_spec):
         """ Run the integrator starting at the given coordinates and momenta
@@ -147,8 +146,6 @@ class RK5Integrator(Integrator):
 
         """
 
-        # TODO: what if dt < 0?
-
         q_i = np.atleast_2d(q_i)
         p_i = np.atleast_2d(p_i)
 
@@ -157,12 +154,21 @@ class RK5Integrator(Integrator):
             raise ValueError("Shape of coordinates (q_i: {}) must match "
                              "momenta (p_i: {})".format(q_i.shape,
                                                         p_i.shape))
-        x = np.hstack((q_i, p_i))
         nparticles, ndim = q_i.shape
 
         # generate the array of times
         times = _parse_time_specification(**time_spec)
         nsteps = len(times)-1
+        dt = times[1]-times[0]
+
+        if dt < 0.:
+            p_i = -p_i
+            dt = np.abs(dt)
+            backwards = True
+        else:
+            backwards = False
+            dt = dt
+        x = np.hstack((q_i, p_i))
 
         # create the return arrays
         qs = np.zeros((nsteps+1,) + q_i.shape, dtype=float)
@@ -171,13 +177,15 @@ class RK5Integrator(Integrator):
         # Set first step to the initial conditions
         qs[0] = q_i
         ps[0] = p_i
-
         for ii in range(1,nsteps+1):
-            t,x = self.step(t,x,dt)
+            x = self.step(times[ii],x,dt)
             qs[ii] = x[...,:ndim]
             ps[ii] = x[...,ndim:]
 
-        return times, qs, ps
+        if backwards:
+            return times, qs, -ps
+        else:
+            return times, qs, ps
 
 '''
 
