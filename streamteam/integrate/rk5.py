@@ -1,6 +1,6 @@
 # coding: utf-8
 
-""" Leapfrog integration. """
+""" 5th order Runge-Kutta integration. """
 
 from __future__ import division, print_function
 

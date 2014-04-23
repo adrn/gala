@@ -18,6 +18,7 @@ from astropy.constants import G
 
 # Project
 from ..rk5 import RK5Integrator
+from ..dopri853 import DOPRI853Integrator
 from .helpers import plot
 
 top_path = "/tmp/streamteam"
@@ -29,7 +30,8 @@ def sho(t,x,T):
     q,p = x.T
     return np.array([p, -(2*np.pi/T)**2*q]).T
 
-@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator), ])
+@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
+                                                 ('dopri853',DOPRI853Integrator)])
 def test_forward(name, Integrator):
     dt = 0.1
     t1,t2 = 0, 2.5
@@ -40,7 +42,8 @@ def test_forward(name, Integrator):
     fig = plot(ts, xs[:,0].T)
     fig.savefig(os.path.join(plot_path,"forward_{0}.png".format(name)))
 
-@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator), ])
+@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
+                                                 ('dopri853',DOPRI853Integrator)])
 def test_backward(name, Integrator):
     dt = -0.1
     t1,t2 = 2.5,0.
@@ -51,7 +54,8 @@ def test_backward(name, Integrator):
     fig = plot(ts, xs[:,0].T)
     fig.savefig(os.path.join(plot_path,"backward_{0}.png".format(name)))
 
-@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator), ])
+@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
+                                                 ('dopri853',DOPRI853Integrator)])
 def test_harmonic_oscillator(name, Integrator):
     dt = 0.1
     integrator = Integrator(sho, func_args=(10.,))
@@ -61,7 +65,8 @@ def test_harmonic_oscillator(name, Integrator):
     fig = plot(ts, xs[:,0].T)
     fig.savefig(os.path.join(plot_path,"harmonic_osc_{0}.png".format(name)))
 
-@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator), ])
+@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
+                                                 ('dopri853',DOPRI853Integrator)])
 def test_point_mass(name, Integrator):
     GM = (G * (1.*u.M_sun)).decompose([u.au,u.M_sun,u.year,u.radian]).value
 
@@ -80,7 +85,8 @@ def test_point_mass(name, Integrator):
     fig = plot(ts, xs[:,0].T)
     fig.savefig(os.path.join(plot_path,"point_mass_{0}.png".format(name)))
 
-@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator), ])
+@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
+                                                 ('dopri853',DOPRI853Integrator)])
 def test_driven_pendulum(name, Integrator):
 
     def F(t,x,A,omega_d):
@@ -94,7 +100,8 @@ def test_driven_pendulum(name, Integrator):
     fig = plot(ts, xs[:,0].T, marker=None, alpha=0.5)
     fig.savefig(os.path.join(plot_path,"driven_pendulum_{0}.png".format(name)))
 
-@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator), ])
+@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
+                                                 ('dopri853',DOPRI853Integrator)])
 def test_lorenz(name, Integrator):
 
     def F(t,x,sigma,rho,beta):
