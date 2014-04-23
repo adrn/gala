@@ -63,8 +63,6 @@ class DOPRI853Integrator(Integrator):
                 A fixed timestep dt and a number of steps to run for.
             dt, t1, t2 : (numeric, numeric, numeric)
                 A fixed timestep dt, an initial time, and a final time.
-            t : array_like
-                An array of times (dt = t[1] - t[0])
 
         """
 
@@ -83,7 +81,12 @@ class DOPRI853Integrator(Integrator):
         xs = np.zeros((nsteps+1,) + x_i.shape, dtype=float)
         xs[0] = x_i
 
-        for ii in range(1,nsteps+1):
-            xs[ii] = self._ode.integrate(times[ii]).T
+        #for ii in range(1,nsteps+1):
+        # Integrate the ODE(s) across each delta_t timestep
+        k = 1
+        while self._ode.successful() and k < (nsteps+1):
+            self._ode.integrate(self._ode.t + dt)
+            xs[k] = self._ode.y.T
+            k += 1
 
         return times, xs
