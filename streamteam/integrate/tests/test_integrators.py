@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 
 # Project
 from ..leapfrog import LeapfrogIntegrator
+from ..rk5 import RK5Integrator
 
 top_path = "/tmp/streamteam"
 plot_path = os.path.join(top_path, "tests/integrate")
@@ -111,3 +112,35 @@ def test_point_mass(name, Integrator):
 
     fig = plot(ts, qs, ps)
     fig.savefig(os.path.join(plot_path,"point_mass_{0}.png".format(name)))
+
+def test_rk5_harmonic_osc():
+    T = 10.
+
+    def F(t,x):
+        q,p = x.T
+        return np.array([p,-(2*np.pi/T)**2*q]).T.copy()
+
+    integrator = RK5Integrator(F)
+    #ts, qs, ps = integrator.run(q_i=[[1.],[0.],[0.5]], p_i=[[0.],[1.],[0.5]],
+    ts, qs, ps = integrator.run(q_i=np.array([1.]), p_i=np.array([0.]),
+                                nsteps=100, dt0=0.1)
+
+    fig = plot(ts, qs, ps)
+    fig.savefig(os.path.join(plot_path,"rk5_harm_osc.png"))
+
+def test_rk5_chaotic_pend():
+    A = 0.07
+    omega_d = 0.75
+    def F(t,x):
+        q,p = x.T
+        return np.array([p,-np.sin(q) + A*np.cos(omega_d*t)]).T.copy()
+
+    integrator = RK5Integrator(F)
+    ts, qs, ps = integrator.run(q_i=np.array([3.]), p_i=np.array([0.]),
+                                nsteps=10000, dt0=10.)
+
+    #fig = plot(ts, qs, ps)
+    fig,ax = plt.subplots(1,1)
+    #ax.plot(ts,qs[:,0,0],marker=None)
+    ax.plot(qs[:,0,0],ps[:,0,0],marker=None)
+    fig.savefig(os.path.join(plot_path,"rk5_pend.png"))
