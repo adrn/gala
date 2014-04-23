@@ -85,6 +85,28 @@ def test_point_mass(name, Integrator):
     fig = plot(ts, xs[:,0].T)
     fig.savefig(os.path.join(plot_path,"point_mass_{0}.png".format(name)))
 
+# @pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
+#                                                  ('dopri853',DOPRI853Integrator)])
+@pytest.mark.parametrize(("name","Integrator"), [('dopri853',DOPRI853Integrator),])
+def test_point_mass_multiple(name, Integrator):
+    GM = (G * (1.*u.M_sun)).decompose([u.au,u.M_sun,u.year,u.radian]).value
+
+    def F(t,x):
+        x,y,px,py = x.T
+        a = -GM/(x*x+y*y)**1.5
+        return np.array([px, py, x*a, y*a]).T
+
+    x_i = np.array([[1.0, 0.0, 0.0, 2*np.pi],
+                    [0.8, 0.0, 0.0, 2.1*np.pi]])
+
+    integrator = Integrator(F)
+    ts, xs = integrator.run(x_i=x_i,
+                            t1=0., t2=10., dt=0.01)
+
+    fig = plot(ts, xs[:,0].T)
+    fig = plot(ts, xs[:,1].T, fig=fig)
+    fig.savefig(os.path.join(plot_path,"multi_point_mass_{0}.png".format(name)))
+
 @pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
                                                  ('dopri853',DOPRI853Integrator)])
 def test_driven_pendulum(name, Integrator):

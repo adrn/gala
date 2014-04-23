@@ -39,8 +39,8 @@ class DOPRI853Integrator(Integrator):
             raise ValueError("func must be a callable object, e.g., a function.")
 
         self.func = func
-        self._ode = ode(self.func, jac=None).set_integrator('dop853', **kwargs)
-        self._ode.set_f_params(*func_args)
+        self._func_args = func_args
+        self._ode_kwargs = kwargs
 
     def run(self, x_i, **time_spec):
         """ Run the integrator starting at the given coordinates and momenta
@@ -69,6 +69,16 @@ class DOPRI853Integrator(Integrator):
         x_i = np.atleast_2d(x_i)
         nparticles, ndim = x_i.shape
 
+        def func_wrapper(t,x):
+            _x = x.reshape((nparticles,ndim))
+            return self.func(t,_x).reshape((nparticles*ndim,))
+
+        self._ode = ode(func_wrapper, jac=None)
+        self._ode = self._ode.set_integrator('dop853', **self._ode_kwargs)
+        self._ode.set_f_params(*self._func_args)
+
+        x_i = x_i.reshape((nparticles*ndim,))
+
         # generate the array of times
         times = _parse_time_specification(**time_spec)
         nsteps = len(times)-1
@@ -78,7 +88,7 @@ class DOPRI853Integrator(Integrator):
         self._ode.set_initial_value(x_i.T, times[0])
 
         # create the return arrays
-        xs = np.zeros((nsteps+1,) + x_i.shape, dtype=float)
+        xs = np.zeros((nsteps+1,x_i.size), dtype=float)
         xs[0] = x_i
 
         #for ii in range(1,nsteps+1):
@@ -86,7 +96,10 @@ class DOPRI853Integrator(Integrator):
         k = 1
         while self._ode.successful() and k < (nsteps+1):
             self._ode.integrate(self._ode.t + dt)
-            xs[k] = self._ode.y.T
+            xs[k] = self._ode.y
             k += 1
 
-        return times, xs
+        if not self._ode.successful():
+            raise RuntimeError("ODE integration failed!")
+
+        return times, xs.reshape((nsteps+1,nparticles,ndim))

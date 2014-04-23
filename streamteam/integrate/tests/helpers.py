@@ -13,11 +13,14 @@ import os, sys
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot(ts, qp, marker='.', alpha=0.75, linestyle='-'):
+def plot(ts, qp, marker='.', alpha=0.75, linestyle='-', fig=None):
     """ Make some helpful plots for testing the integrators. """
 
     ndim = qp.shape[0]
-    fig,axes = plt.subplots(ndim, ndim, figsize=(4*ndim,4*ndim))
+    if fig is None:
+        fig,axes = plt.subplots(ndim, ndim, figsize=(4*ndim,4*ndim))
+    else:
+        axes = np.array(fig.axes).reshape(ndim,ndim)
 
     kwargs = dict(marker=marker, linestyle=linestyle, alpha=alpha)
     for ii in range(ndim):
@@ -27,7 +30,7 @@ def plot(ts, qp, marker='.', alpha=0.75, linestyle='-'):
             else:
                 axes[jj,ii].plot(qp[ii], qp[jj], **kwargs)
 
-    fig.tight_layout()
+    #fig.tight_layout()
 
     for ii in range(ndim):
         for jj in range(ndim):
