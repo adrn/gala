@@ -42,10 +42,10 @@ class DOPRI853Integrator(Integrator):
         self._func_args = func_args
         self._ode_kwargs = kwargs
 
-    def run(self, x_i, **time_spec):
+    def run(self, w_i, **time_spec):
         """ Run the integrator starting at the given coordinates and momenta
             (or velocities) and a time specification. The initial conditions
-            `x` should each have shape `(nparticles, ndim)`.
+            `w` should each have shape `(nparticles, ndim)`.
 
             There are a few combinations of keyword arguments accepted for
             specifying the timestepping. For example, you can specify a fixed
@@ -54,7 +54,7 @@ class DOPRI853Integrator(Integrator):
 
             Parameters
             ----------
-            x0 : array_like
+            w0 : array_like
                 Initial conditions.
 
             kwargs
@@ -66,8 +66,8 @@ class DOPRI853Integrator(Integrator):
 
         """
 
-        x_i = np.atleast_2d(x_i)
-        nparticles, ndim = x_i.shape
+        w_i = np.atleast_2d(w_i)
+        nparticles, ndim = w_i.shape
 
         # need this to do resizing, and to handle func_args because there is some
         #   issue with the args stuff in scipy...
@@ -79,7 +79,7 @@ class DOPRI853Integrator(Integrator):
         self._ode = self._ode.set_integrator('dop853', **self._ode_kwargs)
 
         # make 1D
-        x_i = x_i.reshape((nparticles*ndim,))
+        w_i = w_i.reshape((nparticles*ndim,))
 
         # generate the array of times
         times = _parse_time_specification(**time_spec)
@@ -87,20 +87,20 @@ class DOPRI853Integrator(Integrator):
         dt = times[1]-times[0]
 
         # set the initial conditions
-        self._ode.set_initial_value(x_i, times[0])
+        self._ode.set_initial_value(w_i, times[0])
 
         # create the return arrays
-        xs = np.zeros((nsteps+1,x_i.size), dtype=float)
-        xs[0] = x_i
+        ws = np.zeros((nsteps+1,w_i.size), dtype=float)
+        ws[0] = w_i
 
         # Integrate the ODE(s) across each delta_t timestep
         k = 1
         while self._ode.successful() and k < (nsteps+1):
             self._ode.integrate(self._ode.t + dt)
-            xs[k] = self._ode.y
+            ws[k] = self._ode.y
             k += 1
 
         if not self._ode.successful():
             raise RuntimeError("ODE integration failed!")
 
-        return times, xs.reshape((nsteps+1,nparticles,ndim))
+        return times, ws.reshape((nsteps+1,nparticles,ndim))
