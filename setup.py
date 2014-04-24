@@ -32,7 +32,8 @@ setup(
     author_email="adrn@astro.columbia.edu",
     license="BSD",
     packages=["streamteam", "streamteam.coordinates", "streamteam.io",
-              "streamteam.observation", "streamteam.integrate"]
+              "streamteam.observation", "streamteam.integrate",
+              "streamteam.dynamics"]
 )
 
 # "streamteam.potential"
