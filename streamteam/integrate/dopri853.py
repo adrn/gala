@@ -69,15 +69,16 @@ class DOPRI853Integrator(Integrator):
         x_i = np.atleast_2d(x_i)
         nparticles, ndim = x_i.shape
 
+        # need this to do resizing, and to handle func_args because there is some
+        #   issue with the args stuff in scipy...
         def func_wrapper(t,x):
             _x = x.reshape((nparticles,ndim))
-            return self.func(t,_x).reshape((nparticles*ndim,))
+            return self.func(t,_x,*self._func_args).reshape((nparticles*ndim,))
 
         self._ode = ode(func_wrapper, jac=None)
         self._ode = self._ode.set_integrator('dop853', **self._ode_kwargs)
-        #self._ode.set_f_params(*self._func_args)
-        #TODO: extra args broken
 
+        # make 1D
         x_i = x_i.reshape((nparticles*ndim,))
 
         # generate the array of times
@@ -86,7 +87,7 @@ class DOPRI853Integrator(Integrator):
         dt = times[1]-times[0]
 
         # set the initial conditions
-        self._ode.set_initial_value(x_i.T, times[0])
+        self._ode.set_initial_value(x_i, times[0])
 
         # create the return arrays
         xs = np.zeros((nsteps+1,x_i.size), dtype=float)

@@ -85,9 +85,9 @@ def test_point_mass(name, Integrator):
     fig = plot(ts, xs[:,0].T)
     fig.savefig(os.path.join(plot_path,"point_mass_{0}.png".format(name)))
 
-# @pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
-#                                                  ('dopri853',DOPRI853Integrator)])
-@pytest.mark.parametrize(("name","Integrator"), [('dopri853',DOPRI853Integrator),])
+# KNOWN FAILURE FOR RK5
+@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
+                                                 ('dopri853',DOPRI853Integrator)])
 def test_point_mass_multiple(name, Integrator):
     GM = (G * (1.*u.M_sun)).decompose([u.au,u.M_sun,u.year,u.radian]).value
 
