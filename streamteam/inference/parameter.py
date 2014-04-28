@@ -38,10 +38,10 @@ class ModelParameter(u.Quantity):
         """
 
         value = np.atleast_1d(value)
-        if hasattr(value, "unit"):
-            _value = value.decompose(usys)
-        else:
+        if not hasattr(value, "unit"):
             _value = value*u.dimensionless_unscaled
+        else:
+            _value = value
 
         self = super(ModelParameter, cls).__new__(cls, value)
 
