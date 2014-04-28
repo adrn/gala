@@ -14,7 +14,6 @@ import astropy.units as u
 from astropy.utils import isiterable
 
 # Project
-from .. import usys
 from .prior import LogPrior
 
 __all__ = ["ModelParameter"]
