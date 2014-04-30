@@ -88,7 +88,7 @@ class ModelParameter(u.Quantity):
 
     def __repr__(self):
         extra = ""
-        if self.truth is not None:
+        if np.all(~np.isnan(self.truth)):
             extra = " truth={}".format(self.truth)
 
         return "<ModelParameter '{}'{}>".format(self.name, extra)
