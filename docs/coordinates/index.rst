@@ -11,21 +11,21 @@ The `streamteam.coordinates` package provides utility functions for converting
 coordinates and velocities between various astronomical systems.
 
 .. warning::
-    `~streamteam.coordinates` is currently a work-in-progress, and thus it is
+    `streamteam.coordinates` is currently a work-in-progress, and thus it is
     possible there will be significant API changes in later versions.
 
 
 Getting Started
 ===============
 
-The utility functions in `~streamteam.coordinates` make use of the coordinates
+The utility functions in `streamteam.coordinates` make use of the coordinates
 subpackage in astropy, `astropy.coordinates <http://docs.astropy.org/en/latest/coordinates/>`_.
 So far, only a few functions are implemented:
 
 - Converting a velocity from/to the Galactic Standard of Rest (GSR) to/from a
-heliocentric velocity.
+  heliocentric velocity.
 - Converting a position (and velocity) from/to Galactic cartesian coordinates
-to/from Heliocentric spherical coordinates.
+  to/from Heliocentric spherical coordinates.
 
 These functions work naturally with the `astropy <http://www.astropy.org>`_ unit
 system and coordinate subpackage::
@@ -64,5 +64,3 @@ Reference/API
 .. autofunction:: streamteam.coordinates.vhel_to_vgsr
 .. autofunction:: streamteam.coordinates.gal_xyz_to_hel
 .. autofunction:: streamteam.coordinates.hel_to_gal_xyz
-
-.. .. automodule:: streamteam.coordinates.
