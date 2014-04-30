@@ -75,6 +75,7 @@ def galactic_to_orphan(galactic_coord):
     """ Compute the transformation from Galactic spherical to Orphan coordinates.
     """
 
+    shp = galactic_coord.l.shape
     l = np.atleast_1d(galactic_coord.l.radian)
     b = np.atleast_1d(galactic_coord.b.radian)
 
@@ -90,11 +91,13 @@ def galactic_to_orphan(galactic_coord):
     Lambda[Lambda < 0] = Lambda[Lambda < 0] + 360
     Beta = np.degrees(np.arcsin(Zs/np.sqrt(Xs*Xs+Ys*Ys+Zs*Zs)))
 
-    return Orphan(Lambda, Beta, distance=galactic_coord.distance,
-                             unit=(u.degree, u.degree))
+    return Orphan(Lambda.reshape(shp), Beta.reshape(shp),
+                  distance=galactic_coord.distance,
+                  unit=(u.degree, u.degree))
 
 @transformations.transform_function(Orphan, coord.Galactic)
 def orphan_to_galactic(orphan_coord):
+    shp = orphan_coord.Lambda.shape
     L = np.atleast_1d(orphan_coord.Lambda.radian)
     B = np.atleast_1d(orphan_coord.Beta.radian)
 
@@ -110,7 +113,8 @@ def orphan_to_galactic(orphan_coord):
     if l<0:
         l += 360
 
-    return coord.Galactic(l, b, distance=orphan_coord.distance,
+    return coord.Galactic(l.reshape(shp), b.reshape(shp),
+                          distance=orphan_coord.distance,
                           unit=(u.degree, u.degree))
 
 def distance_to_orphan_plane(ra, dec, heliocentric_distance):

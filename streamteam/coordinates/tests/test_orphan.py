@@ -16,7 +16,7 @@ import astropy.units as u
 from astropy.table import Table
 from astropy.io import ascii
 
-from ..orphan import OrphanCoordinates
+from ..orphan import Orphan
 
 def test_table():
     """ Test the transformation code against table 2 values from
@@ -41,9 +41,9 @@ def test_table():
         galactic = coord.Galactic(line['l'], line['b'],
                                   unit=(u.degree, u.degree))
 
-        orp = galactic.transform_to(OrphanCoordinates)
-        true_orp = OrphanCoordinates(line['Lambda'], line['Beta'],
-                                     unit=(u.degree, u.degree))
+        orp = galactic.transform_to(Orphan)
+        true_orp = Orphan(line['Lambda'], line['Beta'],
+                          unit=(u.degree, u.degree))
 
         print(orp, true_orp)
         assert true_orp.separation(orp) < 20*u.arcsec
