@@ -18,21 +18,6 @@ This packages has the following strict requirements:
 Installing
 ==========
 
-Prerequisites
--------------
-
-.. note:: If you are using MacOS X, you will need to the XCode command line
-          tools.  One way to get them is to install `XCode
-          <https://developer.apple.com/xcode/>`_. If you are using OS X 10.7
-          (Lion) or later, you must also explicitly install the command line
-          tools. You can do this by opening the XCode application, going to
-          **Preferences**, then **Downloads**, and then under **Components**,
-          click on the Install button to the right of **Command Line Tools**.
-          Alternatively, on 10.7 (Lion) or later, you do not need to install
-          XCode, you can download just the command line tools from
-          https://developer.apple.com/downloads/index.action (requires an Apple
-          developer account).
-
 Obtaining the source packages
 -----------------------------
 
