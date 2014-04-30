@@ -20,7 +20,7 @@ this_path = os.path.split(__file__)[0]
 data = np.genfromtxt(os.path.join(this_path, "idl_vgsr_vhel.txt"),
                      names=True, skiprows=2)
 
-def test_gsr_to_hel():
+def test_vgsr_to_vhel():
     for row in data:
         l = coord.Angle(row["lon"] * u.degree)
         b = coord.Angle(row["lat"] * u.degree)
@@ -29,6 +29,20 @@ def test_gsr_to_hel():
         vlsr = [row["vx"],row["vy"],row["vz"]]*u.km/u.s
 
         vhel = vgsr_to_vhel(c, vgsr,
+                            vlsr=vlsr,
+                            vcirc=row["vcirc"]*u.km/u.s)
+
+        np.testing.assert_almost_equal(vhel.value, row['vhelio'], decimal=4)
+
+        # now check still get right answer passing in ICRS coordinates
+        vhel = vgsr_to_vhel(c.transform_to(coord.ICRS), vgsr,
+                            vlsr=vlsr,
+                            vcirc=row["vcirc"]*u.km/u.s)
+
+        np.testing.assert_almost_equal(vhel.value, row['vhelio'], decimal=4)
+
+        # check tuple
+        vhel = vgsr_to_vhel((c.l, c.b), vgsr,
                             vlsr=vlsr,
                             vcirc=row["vcirc"]*u.km/u.s)
 

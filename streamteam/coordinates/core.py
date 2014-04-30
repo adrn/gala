@@ -30,9 +30,9 @@ def vgsr_to_vhel(coords, vgsr, vcirc=default_vcirc, vlsr=default_vlsr):
 
         Parameters
         ----------
-        coords : astropy.coordinates.SphericalCoordinatesBase
-            Any astropy coordinate object that can transform to
-            Galactic coordinates.
+        coords : sequence, astropy.coordinates
+            Either a sequence of coordinate/angle objects, or any astropy
+            coordinate object that can transform to Galactic coordinates.
         vgsr : astropy.units.Quantity
             GSR line-of-sight velocity.
         vcirc : astropy.units.Quantity
@@ -42,8 +42,17 @@ def vgsr_to_vhel(coords, vgsr, vcirc=default_vcirc, vlsr=default_vlsr):
             of rest (LSR).
 
     """
-    g = coords.transform_to(coord.Galactic)
-    l,b = coords.l, coords.b
+
+    if hasattr(coords, 'transform_to'):
+        g = coords.transform_to(coord.Galactic)
+        l,b = g.l, g.b
+    else:
+        l,b = coords
+
+        if not isinstance(l, u.Quantity) or not isinstance(b, u.Quantity):
+            raise TypeError("If passing in a sequence of coordinates, the"
+                            " elements must be subclassed from"
+                            " astropy.units.Quantity.")
 
     # compute the velocity relative to the LSR
     lsr = vgsr - vcirc*sin(l)*cos(b)
