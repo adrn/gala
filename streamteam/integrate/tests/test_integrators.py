@@ -21,8 +21,7 @@ from ..rk5 import RK5Integrator
 from ..dopri853 import DOPRI853Integrator
 from .helpers import plot
 
-top_path = "/tmp/streamteam"
-plot_path = os.path.join(top_path, "tests/integrate")
+plot_path = "plots/tests/integrate"
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
@@ -36,7 +35,7 @@ def test_forward(name, Integrator):
     dt = 0.1
     t1,t2 = 0, 2.5
     integrator = Integrator(sho, func_args=(10.,))
-    ts, xs = integrator.run(x_i=[0., 1.],
+    ts, xs = integrator.run([0., 1.],
                             t1=t1, t2=t2, dt=dt)
 
     fig = plot(ts, xs[:,0].T)
@@ -48,7 +47,7 @@ def test_backward(name, Integrator):
     dt = -0.1
     t1,t2 = 2.5,0.
     integrator = Integrator(sho, func_args=(10.,))
-    ts, xs = integrator.run(x_i=[0., 1.],
+    ts, xs = integrator.run([0., 1.],
                             t1=t1, t2=t2, dt=dt)
 
     fig = plot(ts, xs[:,0].T)
@@ -59,7 +58,7 @@ def test_backward(name, Integrator):
 def test_harmonic_oscillator(name, Integrator):
     dt = 0.1
     integrator = Integrator(sho, func_args=(10.,))
-    ts, xs = integrator.run(x_i=[1., 0.],
+    ts, xs = integrator.run([1., 0.],
                             dt=dt, nsteps=100)
 
     fig = plot(ts, xs[:,0].T)
@@ -79,7 +78,7 @@ def test_point_mass(name, Integrator):
     p_i = np.array([0.0, 2*np.pi]) # au/yr
 
     integrator = Integrator(F)
-    ts, xs = integrator.run(x_i=np.append(q_i,p_i),
+    ts, xs = integrator.run(np.append(q_i,p_i),
                             t1=0., t2=10., dt=0.01)
 
     fig = plot(ts, xs[:,0].T)
@@ -100,7 +99,7 @@ def test_point_mass_multiple(name, Integrator):
                     [0.8, 0.0, 0.0, 2.1*np.pi]])
 
     integrator = Integrator(F)
-    ts, xs = integrator.run(x_i=x_i,
+    ts, xs = integrator.run(x_i,
                             t1=0., t2=10., dt=0.01)
 
     fig = plot(ts, xs[:,0].T)
@@ -116,7 +115,7 @@ def test_driven_pendulum(name, Integrator):
         return np.array([p,-np.sin(q) + A*np.cos(omega_d*t)]).T
 
     integrator = Integrator(F, func_args=(0.07, 0.75))
-    ts, xs = integrator.run(x_i=[3., 0.],
+    ts, xs = integrator.run([3., 0.],
                             dt=0.1, nsteps=10000)
 
     fig = plot(ts, xs[:,0].T, marker=None, alpha=0.5)
@@ -132,8 +131,39 @@ def test_lorenz(name, Integrator):
 
     sigma, rho, beta = 10., 28., 8/3.
     integrator = Integrator(F, func_args=(sigma, rho, beta))
-    ts, xs = integrator.run(x_i=[0.5,0.5,0.5],
+    ts, xs = integrator.run([0.5,0.5,0.5],
                             dt=0.01, nsteps=10000)
 
     fig = plot(ts, xs[:,0].T, marker=None, alpha=0.5)
     fig.savefig(os.path.join(plot_path,"lorenz_{0}.png".format(name)))
+
+@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
+                                                 ('dopri853',DOPRI853Integrator)])
+def test_loop_vs_run(name, Integrator):
+    # If this breaks, need to specify t1 in .run()
+
+    def F(t,x,A,omega_d):
+        q,p = x.T
+        return np.array([p,-np.sin(q) + A*np.cos(omega_d*t)]).T
+
+    nsteps = 100
+    dt = 0.1
+    integrator1 = Integrator(F, func_args=(0.07, 0.75))
+    integrator2 = Integrator(F, func_args=(0.07, 0.75))
+
+    ts, xs = integrator1.run([3., 0.],
+                             dt=dt, nsteps=nsteps)
+
+    x0 = np.array([3.,0.])
+    xs_loop = np.zeros((nsteps+1,2))
+    xs_loop[0] = x0
+    time = 0.
+    for ii in range(nsteps):
+        t,new_x = integrator2.run(x0, t1=time, dt=dt, nsteps=1)
+        x0 = new_x[-1]
+        xs_loop[ii+1] = x0
+        time += dt
+
+    fig = plot(ts, xs[:,0].T, marker=None, alpha=0.5)
+    fig = plot(ts, xs_loop.T, marker=None, alpha=0.5, fig=fig)
+    fig.savefig(os.path.join(plot_path,"loop_vs_run_{0}.png".format(name)))
