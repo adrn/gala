@@ -48,7 +48,8 @@ def test_vgsr_to_vhel():
 
         np.testing.assert_almost_equal(vhel.value, row['vhelio'], decimal=4)
 
-def test_gsr_to_hel_lon():
+def test_vgsr_to_vhel_lon():
+    # make sure it works with longitude in 0-360 or -180-180
     l1 = coord.Angle(190.*u.deg)
     l2 = coord.Angle(-170.*u.deg)
     b = coord.Angle(30.*u.deg)
@@ -63,7 +64,7 @@ def test_gsr_to_hel_lon():
 
     np.testing.assert_almost_equal(vhel1.value, vhel2.value, decimal=9)
 
-def test_hel_to_gsr():
+def test_vhel_to_vgsr():
     for row in data:
         l = coord.Angle(row["lon"] * u.degree)
         b = coord.Angle(row["lat"] * u.degree)
@@ -72,6 +73,20 @@ def test_hel_to_gsr():
         vlsr = [row["vx"],row["vy"],row["vz"]]*u.km/u.s
 
         vgsr = vhel_to_vgsr(c, vhel,
+                            vlsr=vlsr,
+                            vcirc=row["vcirc"]*u.km/u.s)
+
+        np.testing.assert_almost_equal(vgsr.value, row['vgsr'], decimal=4)
+
+        # now check still get right answer passing in ICRS coordinates
+        vgsr = vhel_to_vgsr(c.transform_to(coord.ICRS), vhel,
+                            vlsr=vlsr,
+                            vcirc=row["vcirc"]*u.km/u.s)
+
+        np.testing.assert_almost_equal(vgsr.value, row['vgsr'], decimal=4)
+
+        # check tuple
+        vgsr = vhel_to_vgsr((c.l, c.b), vhel,
                             vlsr=vlsr,
                             vcirc=row["vcirc"]*u.km/u.s)
 
