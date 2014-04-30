@@ -25,19 +25,6 @@ plot_path = "plots/tests/inference"
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
-class TestModelParameter(object):
-
-    def test_string(self):
-        p = ModelParameter("m", value=np.nan, truth=1.5,
-                           prior=LogUniformPrior(1.,2.))
-        assert repr(p) == "<ModelParameter 'm' truth=1.5>"
-        assert str(p) == "m"
-
-        p = ModelParameter("m", value=np.nan,
-                           prior=LogUniformPrior(1.,2.))
-        assert repr(p) == "<ModelParameter 'm'>"
-        assert str(p) == "m"
-
 class TestEmceeModel(object):
 
     def setup(self):
