@@ -48,7 +48,7 @@ def test_vgsr_to_vhel():
 
         np.testing.assert_almost_equal(vhel.value, row['vhelio'], decimal=4)
 
-def test_vgsr_to_vhel_lon():
+def test_vgsr_to_vhel_misc():
     # make sure it works with longitude in 0-360 or -180-180
     l1 = coord.Angle(190.*u.deg)
     l2 = coord.Angle(-170.*u.deg)
@@ -58,11 +58,20 @@ def test_vgsr_to_vhel_lon():
     c2 = coord.Galactic(l2, b)
 
     vgsr = -110.*u.km/u.s
-
     vhel1 = vgsr_to_vhel(c1,vgsr)
     vhel2 = vgsr_to_vhel(c2,vgsr)
 
     np.testing.assert_almost_equal(vhel1.value, vhel2.value, decimal=9)
+
+    # make sure throws error if tuple elements are not Quantities
+    with pytest.raises(TypeError):
+        vgsr_to_vhel(c1, vgsr.value)
+
+    with pytest.raises(TypeError):
+        vgsr_to_vhel((3,112), vgsr)
+
+    with pytest.raises(TypeError):
+        vgsr_to_vhel((3,112*u.rad), vgsr)
 
 def test_vhel_to_vgsr():
     for row in data:
@@ -91,6 +100,22 @@ def test_vhel_to_vgsr():
                             vcirc=row["vcirc"]*u.km/u.s)
 
         np.testing.assert_almost_equal(vgsr.value, row['vgsr'], decimal=4)
+
+def test_vhel_to_vgsr_misc():
+    vhel = 110*u.km/u.s
+    c1 = coord.Galactic(15*u.deg, -0.6*u.deg)
+
+    # make sure throws error if tuple elements are not Quantities
+    with pytest.raises(TypeError):
+        vhel_to_vgsr(c1, vhel.value)
+
+    with pytest.raises(TypeError):
+        vhel_to_vgsr((3,112), vhel)
+
+    with pytest.raises(TypeError):
+        vhel_to_vgsr((3,112*u.rad), vhel)
+
+# ------------------------
 
 def test_gal_to_hel_call():
 

@@ -49,10 +49,12 @@ def vgsr_to_vhel(coords, vgsr, vcirc=default_vcirc, vlsr=default_vlsr):
     else:
         l,b = coords
 
-        if not isinstance(l, u.Quantity) or not isinstance(b, u.Quantity):
-            raise TypeError("If passing in a sequence of coordinates, the"
-                            " elements must be subclassed from"
-                            " astropy.units.Quantity.")
+    if not isinstance(l, u.Quantity) or not isinstance(b, u.Quantity):
+        raise TypeError("If passing in a sequence of coordinates, the"
+                        " elements must be subclassed from Quantity.")
+
+    if not isinstance(vgsr, u.Quantity):
+        raise TypeError("vgsr must be a Quantity subclass")
 
     # compute the velocity relative to the LSR
     lsr = vgsr - vcirc*sin(l)*cos(b)
@@ -90,10 +92,12 @@ def vhel_to_vgsr(coords, vhel, vcirc=default_vcirc, vlsr=default_vlsr):
     else:
         l,b = coords
 
-        if not isinstance(l, u.Quantity) or not isinstance(b, u.Quantity):
-            raise TypeError("If passing in a sequence of coordinates, the"
-                            " elements must be subclassed from"
-                            " astropy.units.Quantity.")
+    if not isinstance(l, u.Quantity) or not isinstance(b, u.Quantity):
+        raise TypeError("If passing in a sequence of coordinates, the"
+                        " elements must be subclassed from Quantity.")
+
+    if not isinstance(vhel, u.Quantity):
+        raise TypeError("vhel must be a Quantity subclass")
 
     lsr = vhel + vcirc*sin(l)*cos(b)
 
@@ -175,7 +179,6 @@ def gal_xyz_to_hel(X, V=None,
 
     return lbd
 
-
 def hel_to_gal_xyz(lbd, pm=None, vr=None,
                    vcirc=default_vcirc, vlsr=default_vlsr, xsun=default_xsun):
     """ Convert Heliocentric spherical coordinates to Galactocentric
@@ -201,8 +204,17 @@ def hel_to_gal_xyz(lbd, pm=None, vr=None,
     # unpack positions
     try:
         l,b,d = lbd.l, lbd.b, lbd.distance
-    except ValueError:
+    except TypeError:
+        # try to unpack tuple instead
+        l,b,d = lbd
+    except AttributeError:
         raise ValueError("Failed to unpack positions.")
+
+    if not isinstance(l, u.Quantity) or not isinstance(b, u.Quantity) \
+        or not isinstance(d, u.Quantity):
+        raise TypeError("If passing in a sequence of coordinates, the"
+                        " elements must be subclassed from"
+                        " astropy.units.Quantity.")
 
     # spherical to cartesian
     x = d*np.cos(b)*np.cos(l)
