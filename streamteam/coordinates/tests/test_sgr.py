@@ -23,21 +23,29 @@ law_data = np.genfromtxt(os.path.join(this_path, "SgrCoord_data"),
 def test_simple():
     c = coord.ICRS(coord.Angle(217.2141, u.degree),
                    coord.Angle(-11.4351, u.degree))
-    c.transform_to(SgrCoordinates)
+    c.transform_to(Sagittarius)
 
     c = coord.Galactic(coord.Angle(217.2141, u.degree),
                        coord.Angle(-11.4351, u.degree))
-    c.transform_to(SgrCoordinates)
+    c.transform_to(Sagittarius)
 
-    c = SgrCoordinates(coord.Angle(217.2141, u.degree),
-                       coord.Angle(-11.4351, u.degree))
+    c = Sagittarius(coord.Angle(217.2141, u.degree),
+                    coord.Angle(-11.4351, u.degree))
     c.transform_to(coord.ICRS)
     c.transform_to(coord.Galactic)
 
     c = coord.Galactic(coord.Angle(217.2141, u.degree),
                        coord.Angle(-11.4351, u.degree))
-    assert SgrCoordinates(c).Lambda.radian == \
-           c.transform_to(SgrCoordinates).Lambda.radian
+    assert Sagittarius(c).Lambda.radian == \
+           c.transform_to(Sagittarius).Lambda.radian
+
+    # with distance
+    c = Sagittarius(coord.Angle(217.2141, u.degree),
+                    coord.Angle(-11.4351, u.degree),
+                    distance=15*u.kpc)
+    c.transform_to(coord.ICRS)
+    c2 = c.transform_to(coord.Galactic)
+    assert c2.distance.value == c.distance.value
 
 def test_against_David_Law():
     """ Test my code against an output file from using David Law's cpp code. Do:
@@ -49,10 +57,10 @@ def test_against_David_Law():
     """
 
     c = coord.Galactic(law_data["l"], law_data["b"], unit=(u.degree,u.degree))
-    sgr_coords = c.transform_to(SgrCoordinates)
+    sgr_coords = c.transform_to(Sagittarius)
 
-    law_sgr_coords = SgrCoordinates(law_data["lambda"], law_data["beta"],
-                                    unit=(u.degree, u.degree))
+    law_sgr_coords = Sagittarius(law_data["lambda"], law_data["beta"],
+                                 unit=(u.degree, u.degree))
 
     sep = sgr_coords.separation(law_sgr_coords).arcsec*u.arcsec
     assert np.all(sep < 1.*u.arcsec)

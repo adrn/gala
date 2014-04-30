@@ -187,8 +187,9 @@ def hel_to_gal_xyz(lbd, pm=None, vr=None,
 
         Parameters
         ----------
-        lbd : astropy.coordinates.SphericalCoordinatesBase
-            An astropy [...] and distance.
+        lbd : sequence, astropy.coordinates
+            A sequence of Quantity objects or an astropy coordinates
+            object with a distance defined.
         pm : astropy.units.Quantity (optional)
             Proper motion in l, b. Should have shape (2,N).
         vr : astropy.units.Quantity (optional)
@@ -201,14 +202,12 @@ def hel_to_gal_xyz(lbd, pm=None, vr=None,
         xsun : astropy.units.Quantity
             Position of the Sun on the Galactic x-axis.
     """
-    # unpack positions
-    try:
+    if hasattr(lbd, 'transform_to'):
+        lbd = lbd.transform_to(coord.Galactic)
         l,b,d = lbd.l, lbd.b, lbd.distance
-    except TypeError:
+    else:
         # try to unpack tuple instead
         l,b,d = lbd
-    except AttributeError:
-        raise ValueError("Failed to unpack positions.")
 
     if not isinstance(l, u.Quantity) or not isinstance(b, u.Quantity) \
         or not isinstance(d, u.Quantity):
@@ -254,4 +253,4 @@ def hel_to_gal_xyz(lbd, pm=None, vr=None,
     else:
         # transform to galactocentric cartesian
         x = x + xsun
-        return np.vstack((x.value,y.value,z.value))*x.unit
+        return np.squeeze(np.vstack((x.value,y.value,z.value)))*x.unit
