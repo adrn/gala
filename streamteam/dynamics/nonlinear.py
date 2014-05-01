@@ -17,7 +17,7 @@ from scipy import fftpack
 
 # Project
 
-__all__ = ['lyapunov', 'frequency_map']
+__all__ = ['lyapunov', 'fft_orbit']
 
 # Create logger
 logger = logging.getLogger(__name__)
