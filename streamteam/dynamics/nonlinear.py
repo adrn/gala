@@ -12,11 +12,12 @@ import logging
 
 # Third-party
 import numpy as np
+import scipy
+from scipy import fftpack
 
 # Project
-# ...
 
-__all__ = ['lyapunov']
+__all__ = ['lyapunov', 'frequency_map']
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -32,12 +33,12 @@ def lyapunov(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10, noffse
             Initial conditions for all phase-space coordinates.
         integrator : streamteam.Integrator
             An instantiated Integrator object. Must have a run() method.
+        dt : numeric
+            Timestep.
+        nsteps : int
+            Number of steps to run for.
         d0 : numeric (optional)
             The initial separation.
-        dt : numeric (optional)
-            Timestep.
-        nsteps : int (optional)
-            Number of steps to run for.
         nsteps_per_pullback : int (optional)
             Number of steps to run before re-normalizing the offset vectors.
         noffset : int (optional)
@@ -47,16 +48,18 @@ def lyapunov(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10, noffse
 
     """
 
+    w0 = np.atleast_2d(w0)
+
     # number of iterations
     niter = nsteps // nsteps_per_pullback
-    ndim = w0.size
+    ndim = w0.shape[1]
 
     # define offset vectors to start the offset orbits on
     d0_vec = np.random.uniform(size=(noffset,ndim))
     d0_vec /= np.linalg.norm(d0_vec, axis=1)[:,np.newaxis]
     d0_vec *= d0
 
-    w_offset = w0.reshape((1,ndim)) + d0_vec
+    w_offset = w0 + d0_vec
     all_w0 = np.vstack((w0,w_offset))
 
     # array to store the full, main orbit
@@ -89,3 +92,35 @@ def lyapunov(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10, noffse
     LEs = np.array([LEs[:ii].sum(axis=0)/ts[ii-1] for ii in range(1,niter)])
 
     return LEs, full_w
+
+def frequency_map(w0, integrator, dt, nsteps, t1=0.):
+    """ TODO...
+
+        Parameters
+        ----------
+        w0 : array_like
+            Initial conditions for all phase-space coordinates.
+        integrator : streamteam.Integrator
+            An instantiated Integrator object. Must have a run() method.
+        dt : numeric (optional)
+            Timestep.
+        nsteps : int (optional)
+            Number of steps to run for.
+        t1 : numeric (optional)
+            Time of initial conditions. Assumed to be t=0.
+
+    """
+
+    w0 = np.atleast_2d(w0)
+    ndim = w0.shape[1]
+
+    # compute the orbit
+    ts,ws = integrator.run(w0, dt=dt, nsteps=nsteps)
+
+    ffts = np.zeros((nsteps+1,ndim))
+    freqs = np.zeros((nsteps+1,ndim))
+    for ii in range(ndim):
+        ffts[:,ii] = np.abs(scipy.fft(ws[:,0,ii]))
+        freqs[:,ii] = fftpack.fftfreq(nsteps+1, dt)
+
+    return freqs, ffts
