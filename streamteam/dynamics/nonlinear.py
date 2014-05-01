@@ -65,12 +65,13 @@ def lyapunov(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10, noffse
     # array to store the full, main orbit
     full_w = np.zeros((nsteps+1,ndim))
     full_w[0] = w0
+    full_ts = np.zeros((nsteps+1,))
+    full_ts[0] = t1
 
     # arrays to store the Lyapunov exponents and times
     LEs = np.zeros((niter,noffset))
     ts = np.zeros_like(LEs)
-
-    time = 0.
+    time = t1
     for i in range(1,niter+1):
         ii = i * nsteps_per_pullback
 
@@ -88,10 +89,11 @@ def lyapunov(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10, noffse
         all_w0 = np.vstack((ww[-1,0],w_offset))
 
         full_w[(i-1)*nsteps_per_pullback+1:ii+1] = ww[1:,0]
+        full_ts[(i-1)*nsteps_per_pullback+1:ii+1] = tt[1:]
 
     LEs = np.array([LEs[:ii].sum(axis=0)/ts[ii-1] for ii in range(1,niter)])
 
-    return LEs, full_w
+    return LEs, full_ts, full_w
 
 def fft_orbit(t, w):
     """ TODO...

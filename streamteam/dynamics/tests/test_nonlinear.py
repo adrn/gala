@@ -44,23 +44,22 @@ class TestForcedPendulum(object):
         d0 = 1e-5
         noffset = 10
 
-        regular_LEs, regular_ws = lyapunov(self.regular_w0, self.regular_integrator,
-                                           dt=dt, nsteps=nsteps,
-                                           d0=d0, nsteps_per_pullback=nsteps_per_pullback,
-                                           noffset=noffset)
+        regular_LEs, t, regular_ws = lyapunov(self.regular_w0, self.regular_integrator,
+                                              dt=dt, nsteps=nsteps,
+                                              d0=d0, nsteps_per_pullback=nsteps_per_pullback,
+                                              noffset=noffset)
 
-        chaotic_LEs, chaotic_ws = lyapunov(self.chaotic_w0, self.chaotic_integrator,
-                                           dt=dt, nsteps=nsteps,
-                                           d0=d0, nsteps_per_pullback=nsteps_per_pullback,
-                                           noffset=noffset)
-
+        chaotic_LEs, t, chaotic_ws = lyapunov(self.chaotic_w0, self.chaotic_integrator,
+                                              dt=dt, nsteps=nsteps,
+                                              d0=d0, nsteps_per_pullback=nsteps_per_pullback,
+                                              noffset=noffset)
         plt.clf()
         plt.semilogy(regular_LEs, marker=None)
         plt.semilogy(np.mean(regular_LEs,axis=1), marker=None, linewidth=2.)
         plt.savefig(os.path.join(plot_path,"pend_le_regular.png"))
 
         plt.clf()
-        plt.plot(regular_ws[:,0], marker=None)
+        plt.plot(t, regular_ws[:,0], marker=None)
         plt.savefig(os.path.join(plot_path,"pend_orbit_regular.png"))
 
         plt.clf()
@@ -69,7 +68,7 @@ class TestForcedPendulum(object):
         plt.savefig(os.path.join(plot_path,"pend_le_chaotic.png"))
 
         plt.clf()
-        plt.plot(chaotic_ws[:,0], marker=None)
+        plt.plot(t, chaotic_ws[:,0], marker=None)
         plt.savefig(os.path.join(plot_path,"pend_orbit_chaotic.png"))
 
     def test_frequency(self):
