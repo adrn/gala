@@ -21,7 +21,6 @@ plot_path = "plots/tests/dynamics"
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
-
 class TestForcedPendulum(object):
 
     def setup(self):
