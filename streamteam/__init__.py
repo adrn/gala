@@ -5,7 +5,7 @@ import astropy.units as u
 def _parse_quantity(cls, q):
     try:
         val,unit = q.split()
-    except AttributeError, ValueError:
+    except:
         val = q
         unit = u.dimensionless_unscaled
 
