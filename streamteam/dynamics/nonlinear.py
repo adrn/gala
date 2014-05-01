@@ -93,34 +93,35 @@ def lyapunov(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10, noffse
 
     return LEs, full_w
 
-def frequency_map(w0, integrator, dt, nsteps, t1=0.):
+def fft_orbit(t, w):
     """ TODO...
 
         Parameters
         ----------
-        w0 : array_like
-            Initial conditions for all phase-space coordinates.
-        integrator : streamteam.Integrator
-            An instantiated Integrator object. Must have a run() method.
-        dt : numeric (optional)
-            Timestep.
-        nsteps : int (optional)
-            Number of steps to run for.
-        t1 : numeric (optional)
-            Time of initial conditions. Assumed to be t=0.
+        t : array_like
+            Array of times.
+        w : array_like
+            Integrated orbits for phase-space coordinates. Must have
+            2 or 3 dimensions, where the last axis are the coordinates.
 
     """
 
-    w0 = np.atleast_2d(w0)
-    ndim = w0.shape[1]
+    if w.ndim < 2:
+        raise ValueError("w must be >= 2 dimensional.")
 
-    # compute the orbit
-    ts,ws = integrator.run(w0, dt=dt, nsteps=nsteps)
+    nsteps = w.shape[0]
+    ndim = w.shape[-1]
 
-    ffts = np.zeros((nsteps+1,ndim))
-    freqs = np.zeros((nsteps+1,ndim))
+    dts = t[1:]-t[:-1]
+    dt = dts[0]
+
+    if not np.allclose(dt, dts):
+        raise ValueError("Non-uniform time steps.")
+
+    ffts = np.zeros((nsteps,ndim))
+    freqs = np.zeros((nsteps,ndim))
     for ii in range(ndim):
-        ffts[:,ii] = np.abs(scipy.fft(ws[:,0,ii]))
-        freqs[:,ii] = fftpack.fftfreq(nsteps+1, dt)
+        ffts[:,ii] = np.abs(scipy.fft(w[:,0,ii]))
+        freqs[:,ii] = fftpack.fftfreq(nsteps, dt)
 
     return freqs, ffts

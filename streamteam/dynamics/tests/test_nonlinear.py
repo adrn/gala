@@ -14,7 +14,7 @@ import numpy as np
 import pytest
 
 # Project
-from ..nonlinear import lyapunov, frequency_map
+from ..nonlinear import lyapunov, fft_orbit
 from ...integrate import DOPRI853Integrator
 
 plot_path = "plots/tests/dynamics"
@@ -74,10 +74,15 @@ class TestForcedPendulum(object):
         plt.savefig(os.path.join(plot_path,"pend_orbit_chaotic.png"))
 
     def test_frequency(self):
+        import scipy.signal as ss
         nsteps = 10000
         dt = 0.1
-        f,fft = frequency_map(self.regular_w0, self.regular_integrator,
-                              dt=dt, nsteps=nsteps)
+
+        t,w = self.regular_integrator.run(self.regular_w0, dt=dt, nsteps=nsteps)
+        f,fft = fft_orbit(t, w)
+
+        peak_ix = ss.find_peaks_cwt(fft[:,0], widths=np.linspace(dt*2, dt*100, 10))
+        print(peak_ix)
 
         plt.clf()
         plt.axvline(self.regular_par[1]/(2*np.pi), linewidth=3., alpha=0.35, color='b')
@@ -85,9 +90,12 @@ class TestForcedPendulum(object):
         plt.semilogx(f[:,0], fft[:,0], marker=None)
         plt.savefig(os.path.join(plot_path,"pend_fft_regular.png"))
 
+        # ----------------------------------------------------------------------
+        t,w = self.chaotic_integrator.run(self.chaotic_w0, dt=dt, nsteps=nsteps)
+        f,fft = fft_orbit(t, w)
 
-        f,fft = frequency_map(self.chaotic_w0, self.chaotic_integrator,
-                              dt=dt, nsteps=nsteps)
+        peak_ix = ss.find_peaks_cwt(fft[:,0], widths=np.linspace(dt*2, dt*100, 10))
+        print(peak_ix)
 
         plt.clf()
         plt.axvline(self.chaotic_par[1]/(2*np.pi), linewidth=3., alpha=0.35, color='b')
