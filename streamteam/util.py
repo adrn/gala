@@ -15,6 +15,14 @@ __all__ = ['get_pool']
 # Create logger
 logger = logging.getLogger(__name__)
 
+class SerialPool(object):
+
+    def close(self):
+        return
+
+    def map(self, *args, **kwargs):
+        return map(*args, **kwargs)
+
 def get_pool(mpi=False, threads=None):
     """ Get a pool object to pass to emcee for parallel processing.
         If mpi is False and threads is None, pool is None.
@@ -47,6 +55,6 @@ def get_pool(mpi=False, threads=None):
 
     else:
         logger.debug("Running serial...")
-        pool = None
+        pool = SerialPool()
 
     return pool
