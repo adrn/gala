@@ -95,6 +95,78 @@ def lyapunov(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10, noffse
 
     return LEs, full_ts, full_w
 
+def sali(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10, noffset=8, t1=0.):
+    """ Compute the Smaller Alignment Index (SALI)
+        See: Skokos, Ch. 2001, J. Phys. A: Math. Gen., 34, 10029-10043
+
+        Parameters
+        ----------
+        w0 : array_like
+            Initial conditions for all phase-space coordinates.
+        integrator : streamteam.Integrator
+            An instantiated Integrator object. Must have a run() method.
+        dt : numeric
+            Timestep.
+        nsteps : int
+            Number of steps to run for.
+        d0 : numeric (optional)
+            The initial separation.
+        nsteps_per_pullback : int (optional)
+            Number of steps to run before re-normalizing the offset vectors.
+        noffset : int (optional)
+            Number of offset orbits to run.
+        t1 : numeric (optional)
+            Time of initial conditions. Assumed to be t=0.
+
+    """
+
+    w0 = np.atleast_2d(w0)
+
+    # number of iterations
+    niter = nsteps // nsteps_per_pullback
+    ndim = w0.shape[1]
+
+    # define offset vectors to start the offset orbits on
+    d0_vec = np.random.uniform(size=(noffset,ndim))
+    d0_vec /= np.linalg.norm(d0_vec, axis=1)[:,np.newaxis]
+    d0_vec *= d0
+
+    w_offset = w0 + d0_vec
+    all_w0 = np.vstack((w0,w_offset))
+
+    # array to store the full, main orbit
+    full_w = np.zeros((nsteps+1,ndim))
+    full_w[0] = w0
+    full_ts = np.zeros((nsteps+1,))
+    full_ts[0] = t1
+
+    # arrays to store the Lyapunov exponents and times
+    LEs = np.zeros((niter,noffset))
+    ts = np.zeros_like(LEs)
+    time = t1
+    for i in range(1,niter+1):
+        ii = i * nsteps_per_pullback
+
+        tt,ww = integrator.run(all_w0, dt=dt, nsteps=nsteps_per_pullback, t1=time)
+        time += dt*nsteps_per_pullback
+
+        main_w = ww[-1,0][np.newaxis]
+        d1 = ww[-1,1:] - main_w
+        d1_mag = np.linalg.norm(d1, axis=1)
+
+        LEs[i-1] = np.log(d1_mag/d0)
+        ts[i-1] = time
+
+        w_offset = ww[-1,0] + d0 * d1 / d1_mag[:,np.newaxis]
+        all_w0 = np.vstack((ww[-1,0],w_offset))
+
+        full_w[(i-1)*nsteps_per_pullback+1:ii+1] = ww[1:,0]
+        full_ts[(i-1)*nsteps_per_pullback+1:ii+1] = tt[1:]
+
+    LEs = np.array([LEs[:ii].sum(axis=0)/ts[ii-1] for ii in range(1,niter)])
+
+    return LEs, full_ts, full_w
+
 def fft_orbit(t, w):
     """ TODO...
 
