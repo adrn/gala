@@ -6,6 +6,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 import os, sys
+import cStringIO as stringio
 
 # Third-party
 import astropy.units as u
@@ -225,10 +226,8 @@ class TestHenonHeiles(object):
             plt.savefig(os.path.join(plot_path,"hh_orbit_lyap_spec_{}.png".format(ii)))
 
     def test_sali(self):
-
-        import cStringIO as stringio
         tbls = []
-        with open("/Users/adrian/projects/nonlinear-dynamics/misc/lpvicode/hh.sali") as f:
+        with get_pkg_data_fileobj('hh.sali') as f:
             d = f.read()
             blocks = d.split("\n\n")
 
