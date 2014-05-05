@@ -14,7 +14,7 @@ import numpy as np
 import pytest
 
 # Project
-from ..nonlinear import lyapunov_max, lyapunov_spectrum, fft_orbit
+from ..nonlinear import lyapunov_max, lyapunov_spectrum, sali, fft_orbit
 from ...integrate import DOPRI853Integrator
 from ...util import gram_schmidt
 
@@ -175,22 +175,20 @@ class TestHenonHeiles(object):
                              [0., 0.509, 0.254624859, 0.], # irregular
                              [0., 0.56, 0.164113781, 0.112]]) # irregular
 
-    def test_orbit(self):
-        nsteps = 10000
-        dt = 0.01
+        self.nsteps = 10000
+        self.dt = 0.1
 
+    def test_orbit(self):
         integrator = DOPRI853Integrator(F_max, func_args=self.par)
 
         plt.clf()
         for ii,w0 in enumerate(self.w0s):
-            t,w = integrator.run(w0, dt=dt, nsteps=nsteps)
+            t,w = integrator.run(w0, dt=self.dt, nsteps=self.nsteps)
             plt.plot(w[:,0,0], w[:,0,1], marker=None)
 
         plt.savefig(os.path.join(plot_path,"hh_orbits.png"))
 
     def test_lyapunov_max(self):
-        nsteps = 10000
-        dt = 0.1
         nsteps_per_pullback = 10
         d0 = 1e-5
         noffset = 8
@@ -198,7 +196,7 @@ class TestHenonHeiles(object):
         integrator = DOPRI853Integrator(F_max, func_args=self.par)
         for ii,w0 in enumerate(self.w0s):
             lyap, t, ws = lyapunov_max(w0, integrator,
-                                       dt=dt, nsteps=nsteps,
+                                       dt=self.dt, nsteps=self.nsteps,
                                        d0=d0, noffset=noffset,
                                        nsteps_per_pullback=nsteps_per_pullback)
             lyap = np.mean(lyap, axis=1)
@@ -212,13 +210,11 @@ class TestHenonHeiles(object):
             plt.savefig(os.path.join(plot_path,"hh_orbit_lyap_max_{}.png".format(ii)))
 
     def test_lyapunov_spectrum(self):
-        nsteps = 10000
-        dt = 0.1
 
         integrator = DOPRI853Integrator(F_spec, func_args=self.par)
         for ii,w0 in enumerate(self.w0s):
             lyap, t, ws = lyapunov_spectrum(w0, integrator,
-                                            dt=dt, nsteps=nsteps)
+                                            dt=self.dt, nsteps=self.nsteps)
 
             plt.clf()
             plt.loglog(lyap, marker=None)
@@ -227,3 +223,27 @@ class TestHenonHeiles(object):
             plt.clf()
             plt.plot(ws[...,0], ws[...,1], marker=None)
             plt.savefig(os.path.join(plot_path,"hh_orbit_lyap_spec_{}.png".format(ii)))
+
+    def test_sali(self):
+
+        import cStringIO as stringio
+        tbls = []
+        with open("/Users/adrian/projects/nonlinear-dynamics/misc/lpvicode/hh.sali") as f:
+            d = f.read()
+            blocks = d.split("\n\n")
+
+            for block in blocks:
+                tbls.append(np.loadtxt(stringio.StringIO(block)))
+
+        integrator = DOPRI853Integrator(F_spec, func_args=self.par)
+        for ii,w0 in enumerate(self.w0s):
+            s, t, ws = sali(w0, integrator, dt=self.dt, nsteps=self.nsteps)
+
+            plt.clf()
+            plt.loglog(t, s, marker=None)
+            plt.loglog(tbls[ii][:,0], tbls[ii][:,1], marker=None, alpha=0.4)
+            plt.savefig(os.path.join(plot_path,"hh_sali_{}.png".format(ii)))
+
+            plt.clf()
+            plt.plot(ws[...,0], ws[...,1], marker=None)
+            plt.savefig(os.path.join(plot_path,"hh_orbit_sali_{}.png".format(ii)))
