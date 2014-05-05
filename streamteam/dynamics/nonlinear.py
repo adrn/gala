@@ -24,7 +24,8 @@ __all__ = ['lyapunov_spectrum', 'lyapunov_max', 'fft_orbit', 'gram_schmidt']
 logger = logging.getLogger(__name__)
 
 def lyapunov_spectrum(w0, integrator, dt, nsteps, t1=0., deviation_vecs=None):
-    """ TODO
+    """ Compute the spectrum of Lyapunov exponents given equations of motions
+        for small deviations.
 
         Parameters
         ----------
@@ -38,8 +39,8 @@ def lyapunov_spectrum(w0, integrator, dt, nsteps, t1=0., deviation_vecs=None):
             Number of steps to run for.
         t1 : numeric (optional)
             Time of initial conditions. Assumed to be t=0.
-        deviation_vecs : array_like
-
+        deviation_vecs : array_like (optional)
+            Specify your own initial deviation vectors.
 
     """
 
@@ -51,7 +52,7 @@ def lyapunov_spectrum(w0, integrator, dt, nsteps, t1=0., deviation_vecs=None):
     psdim = w0.shape[1]
 
     if deviation_vecs is None:
-        # initialize (psdim) orthogonal deviation vectors
+        # initialize (psdim) deviation vectors
         A = np.zeros((psdim,psdim))
         for ii in range(psdim):
             A[ii] = np.random.normal(0.,1.,size=psdim)
