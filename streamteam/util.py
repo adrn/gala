@@ -59,3 +59,24 @@ def get_pool(mpi=False, threads=None):
         pool = SerialPool()
 
     return pool
+
+def gram_schmidt(y):
+    """ Modified Gram-Schmidt orthonormalization of the matrix y(n,n) """
+
+    n = y.shape[0]
+    if y.shape[1] != n:
+       raise ValueError("Invalid shape: {}".format(y.shape))
+    mo = np.zeros(n)
+
+    # Main loop
+    for i in range(n):
+        # Remove component in direction i
+        for j in range(i):
+            esc = np.sum(y[j]*y[i])
+            y[i] -= y[j]*esc
+
+        # Normalization
+        mo[i] = np.linalg.norm(y[i])
+        y[i] /= mo[i]
+
+    return mo

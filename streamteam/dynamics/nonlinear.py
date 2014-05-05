@@ -16,15 +16,85 @@ import scipy
 from scipy import fftpack
 
 # Project
+from ..util import gram_schmidt
 
-__all__ = ['lyapunov', 'simple_lyapunov', 'fft_orbit', 'gram_schmidt']
+__all__ = ['lyapunov_spectrum', 'lyapunov_max', 'fft_orbit', 'gram_schmidt']
 
 # Create logger
 logger = logging.getLogger(__name__)
 
-def simple_lyapunov(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
-                    noffset=8, t1=0.):
-    """ Compute the Lyapunov exponent of an orbit by integrating an orbit
+def lyapunov_spectrum(w0, integrator, dt, nsteps, t1=0., deviation_vecs=None):
+    """ TODO
+
+        Parameters
+        ----------
+        w0 : array_like
+            Initial conditions for all phase-space coordinates.
+        integrator : streamteam.Integrator
+            An instantiated Integrator object. Must have a run() method.
+        dt : numeric
+            Timestep.
+        nsteps : int
+            Number of steps to run for.
+        t1 : numeric (optional)
+            Time of initial conditions. Assumed to be t=0.
+        deviation_vecs : array_like
+
+
+    """
+
+    w0 = np.atleast_2d(w0)
+
+    # phase-space dimensionality
+    if w0.shape[0] > 1:
+        raise ValueError("Initial condition vector ")
+    psdim = w0.shape[1]
+
+    if deviation_vecs is None:
+        # initialize (psdim) orthogonal deviation vectors
+        A = np.zeros((psdim,psdim))
+        for ii in range(psdim):
+            A[ii] = np.random.normal(0.,1.,size=psdim)
+            A[ii] /= np.linalg.norm(A[ii])
+
+    else:
+        raise NotImplementedError()
+
+    all_w0 = np.zeros((psdim,psdim*2))
+    for ii in range(psdim):
+        all_w0[ii] = np.append(w0,A[ii])
+
+    # array to store the full, main orbit
+    full_w = np.zeros((nsteps+1,psdim))
+    full_w[0] = w0
+    full_ts = np.zeros((nsteps+1,))
+    full_ts[0] = t1
+
+    # arrays to store the Lyapunov exponents and times
+    lyap = np.zeros((nsteps+1,psdim))
+    rhi = np.zeros((nsteps+1,psdim)) # sum of logs
+
+    ts = np.zeros(nsteps+1)
+    time = t1
+    for ii in range(1,nsteps+1):
+        tt,ww = integrator.run(all_w0, dt=dt, nsteps=1, t1=time)
+        time += dt
+
+        main_w = ww[-1,0,:psdim][np.newaxis]
+        alf = gram_schmidt(ww[-1,:,psdim:])
+        rhi[ii] = rhi[ii-1] + np.log(alf)
+        lyap[ii] = rhi[ii]/time
+
+        ts[ii] = time
+        full_w[ii:ii+1] = ww[1:,0,:psdim]
+        full_ts[ii:ii+1] = tt[1:]
+        all_w0 = ww[-1].copy()
+
+    return lyap, full_ts, full_w
+
+def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
+                 noffset=8, t1=0.):
+    """ Compute the maximum Lyapunov exponent of an orbit by integrating an orbit
         from initial conditions w0, and several nearby orbits, offset
         initially with a small separation, d0.
 
@@ -95,97 +165,6 @@ def simple_lyapunov(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
     LEs = np.array([LEs[:ii].sum(axis=0)/ts[ii-1] for ii in range(1,niter)])
 
     return LEs, full_ts, full_w
-
-
-def gram_schmidt(y):
-    """ Modified Gram-Schmidt orthonormalization of the matrix y(n,n) """
-
-    n = y.shape[0]
-    if y.shape[1] != n:
-       raise ValueError("Invalid shape: {}".format(y.shape))
-    mo = np.zeros(n)
-
-    # Main loop
-    for i in range(n):
-        # Remove component in direction i
-        for j in range(i):
-            esc = np.sum(y[j]*y[i])
-            y[i] -= y[j]*esc
-
-        # Normalization
-        mo[i] = np.linalg.norm(y[i])
-        y[i] /= mo[i]
-
-    return mo
-
-def lyapunov(w0, integrator, dt, nsteps, t1=0., deviation_vecs=None):
-    """ TODO
-
-        Parameters
-        ----------
-        w0 : array_like
-            Initial conditions for all phase-space coordinates.
-        integrator : streamteam.Integrator
-            An instantiated Integrator object. Must have a run() method.
-        dt : numeric
-            Timestep.
-        nsteps : int
-            Number of steps to run for.
-        t1 : numeric (optional)
-            Time of initial conditions. Assumed to be t=0.
-        deviation_vecs : array_like
-
-
-    """
-
-    w0 = np.atleast_2d(w0)
-
-    # phase-space dimensionality
-    if w0.shape[0] > 1:
-        raise ValueError("Initial condition vector ")
-    psdim = w0.shape[1]
-
-    if deviation_vecs is None:
-        # initialize (psdim) orthogonal deviation vectors
-        A = np.zeros((psdim,psdim))
-        for ii in range(psdim):
-            A[ii] = np.random.normal(0.,1.,size=psdim)
-            A[ii] /= np.linalg.norm(A[ii])
-
-    else:
-        raise NotImplementedError()
-
-    all_w0 = np.zeros((psdim,psdim*2))
-    for ii in range(psdim):
-        all_w0[ii] = np.append(w0,A[ii])
-
-    # array to store the full, main orbit
-    full_w = np.zeros((nsteps+1,psdim))
-    full_w[0] = w0
-    full_ts = np.zeros((nsteps+1,))
-    full_ts[0] = t1
-
-    # arrays to store the Lyapunov exponents and times
-    lyap = np.zeros((nsteps+1,psdim))
-    rhi = np.zeros((nsteps+1,psdim)) # sum of logs
-
-    ts = np.zeros(nsteps+1)
-    time = t1
-    for ii in range(1,nsteps+1):
-        tt,ww = integrator.run(all_w0, dt=dt, nsteps=1, t1=time)
-        time += dt
-
-        main_w = ww[-1,0,:psdim][np.newaxis]
-        alf = gram_schmidt(ww[-1,:,psdim:])
-        rhi[ii] = rhi[ii-1] + np.log(alf)
-        lyap[ii] = rhi[ii]/time
-
-        ts[ii] = time
-        full_w[ii:ii+1] = ww[1:,0,:psdim]
-        full_ts[ii:ii+1] = tt[1:]
-        all_w0 = ww[-1].copy()
-
-    return lyap, full_ts, full_w
 
 def sali(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10, noffset=8, t1=0.):
     """ Compute the Smaller Alignment Index (SALI)
