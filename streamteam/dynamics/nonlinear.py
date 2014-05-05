@@ -18,7 +18,7 @@ from scipy import fftpack
 # Project
 from ..util import gram_schmidt
 
-__all__ = ['lyapunov_spectrum', 'lyapunov_max', 'fft_orbit', 'gram_schmidt']
+__all__ = ['lyapunov_spectrum', 'lyapunov_max', 'sali']
 
 # Create logger
 logger = logging.getLogger(__name__)
