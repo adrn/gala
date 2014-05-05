@@ -11,6 +11,9 @@ import os, sys
 import logging
 import multiprocessing
 
+# Third-party
+import numpy as np
+
 __all__ = ['get_pool']
 
 # Create logger
