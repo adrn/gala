@@ -14,8 +14,9 @@ import numpy as np
 import pytest
 
 # Project
-from ..nonlinear import lyapunov, fft_orbit
+from ..nonlinear import lyapunov_max, lyapunov_spectrum, fft_orbit
 from ...integrate import DOPRI853Integrator
+from ...util import gram_schmidt
 
 plot_path = "plots/tests/dynamics"
 if not os.path.exists(plot_path):
@@ -34,7 +35,7 @@ def test_gram(self):
         [-0.823493801368422, 0.237505395299283, 0.194657453290375, 0.477030001352140],
         [7.871383004849420E-003, -0.692298435168163, -0.467976060614355, 0.549235217994234]])
 
-    alf = gram(arr)
+    alf = gram_schmidt(arr)
     fortran_alf = np.array([0.907449612105405,1.17546413803123,0.974054532627089,0.962464733634354])
 
     assert np.abs(fortran_alf - alf).sum() < 1E-13
@@ -56,70 +57,65 @@ class TestForcedPendulum(object):
         self.chaotic_par = (0.07, 0.75)
         self.chaotic_integrator = DOPRI853Integrator(F, func_args=self.chaotic_par)
 
-    def test_lyapunov(self):
-        nsteps = 10000
-        dt = 0.1
-
-        regular_LEs, t, regular_ws = lyapunov(self.regular_w0, self.regular_integrator,
-                                              dt=dt, nsteps=nsteps)
-
-        return
-
-        chaotic_LEs, t, chaotic_ws = lyapunov(self.chaotic_w0, self.chaotic_integrator,
-                                              dt=dt, nsteps=nsteps,
-                                              d0=d0, nsteps_per_pullback=nsteps_per_pullback,
-                                              noffset=noffset)
-        plt.clf()
-        plt.semilogy(regular_LEs, marker=None)
-        plt.semilogy(np.mean(regular_LEs,axis=1), marker=None, linewidth=2.)
-        plt.savefig(os.path.join(plot_path,"pend_le_regular.png"))
-
-        plt.clf()
-        plt.plot(t, regular_ws[:,0], marker=None)
-        plt.savefig(os.path.join(plot_path,"pend_orbit_regular.png"))
-
-        plt.clf()
-        plt.semilogy(chaotic_LEs, marker=None)
-        plt.semilogy(np.mean(chaotic_LEs,axis=1), marker=None, linewidth=2)
-        plt.savefig(os.path.join(plot_path,"pend_le_chaotic.png"))
-
-        plt.clf()
-        plt.plot(t, chaotic_ws[:,0], marker=None)
-        plt.savefig(os.path.join(plot_path,"pend_orbit_chaotic.png"))
-
-    def test_simple_lyapunov(self):
-        nsteps = 10000
+    def test_lyapunov_max(self):
+        nsteps = 100000
         dt = 0.1
         nsteps_per_pullback = 10
         d0 = 1e-5
-        noffset = 10
+        noffset = 8
 
-        regular_LEs, t, regular_ws = lyapunov(self.regular_w0, self.regular_integrator,
-                                              dt=dt, nsteps=nsteps,
-                                              d0=d0, nsteps_per_pullback=nsteps_per_pullback,
-                                              noffset=noffset)
+        regular_LEs, t, regular_ws = lyapunov_max(self.regular_w0, self.regular_integrator,
+                                                  dt=dt, nsteps=nsteps,
+                                                  d0=d0, nsteps_per_pullback=nsteps_per_pullback,
+                                                  noffset=noffset)
+        regular_LEs = np.mean(regular_LEs, axis=1)
 
-        chaotic_LEs, t, chaotic_ws = lyapunov(self.chaotic_w0, self.chaotic_integrator,
-                                              dt=dt, nsteps=nsteps,
-                                              d0=d0, nsteps_per_pullback=nsteps_per_pullback,
-                                              noffset=noffset)
+        chaotic_LEs, t, chaotic_ws = lyapunov_max(self.chaotic_w0, self.chaotic_integrator,
+                                                  dt=dt, nsteps=nsteps,
+                                                  d0=d0, nsteps_per_pullback=nsteps_per_pullback,
+                                                  noffset=noffset)
+        chaotic_LEs = np.mean(chaotic_LEs, axis=1)
+
         plt.clf()
-        plt.semilogy(regular_LEs, marker=None)
-        plt.semilogy(np.mean(regular_LEs,axis=1), marker=None, linewidth=2.)
-        plt.savefig(os.path.join(plot_path,"pend_le_regular.png"))
+        plt.loglog(regular_LEs, marker=None)
+        plt.savefig(os.path.join(plot_path,"pend_regular_lyap_max.png"))
 
         plt.clf()
         plt.plot(t, regular_ws[:,0], marker=None)
-        plt.savefig(os.path.join(plot_path,"pend_orbit_regular.png"))
+        plt.savefig(os.path.join(plot_path,"pend_orbit_regular_lyap_max.png"))
 
         plt.clf()
-        plt.semilogy(chaotic_LEs, marker=None)
-        plt.semilogy(np.mean(chaotic_LEs,axis=1), marker=None, linewidth=2)
-        plt.savefig(os.path.join(plot_path,"pend_le_chaotic.png"))
+        plt.loglog(chaotic_LEs, marker=None)
+        plt.savefig(os.path.join(plot_path,"pend_chaotic_lyap_max.png"))
 
         plt.clf()
         plt.plot(t, chaotic_ws[:,0], marker=None)
-        plt.savefig(os.path.join(plot_path,"pend_orbit_chaotic.png"))
+        plt.savefig(os.path.join(plot_path,"pend_orbit_chaotic_lyap_max.png"))
+
+    def test_lyapunov_spectrum(self):
+        nsteps = 10000
+        dt = 0.1
+        regular_LEs, t, regular_ws = lyapunov_spectrum(self.regular_w0, self.regular_integrator,
+                                                       dt=dt, nsteps=nsteps)
+
+        chaotic_LEs, t, chaotic_ws = lyapunov_spectrum(self.chaotic_w0, self.chaotic_integrator,
+                                                       dt=dt, nsteps=nsteps)
+
+        plt.clf()
+        plt.loglog(regular_LEs, marker=None)
+        plt.savefig(os.path.join(plot_path,"pend_regular_lyap_spectrum.png"))
+
+        plt.clf()
+        plt.plot(t, regular_ws[:,0], marker=None)
+        plt.savefig(os.path.join(plot_path,"pend_orbit_regular_lyap_spectrum.png"))
+
+        plt.clf()
+        plt.semilogy(chaotic_LEs, marker=None)
+        plt.savefig(os.path.join(plot_path,"pend_chaotic_lyap_spectrum.png"))
+
+        plt.clf()
+        plt.plot(t, chaotic_ws[:,0], marker=None)
+        plt.savefig(os.path.join(plot_path,"pend_orbit_chaotic_lyap_spectrum.png"))
 
     def test_frequency(self):
         import scipy.signal as ss
