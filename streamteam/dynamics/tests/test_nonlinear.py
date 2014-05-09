@@ -9,6 +9,7 @@ import os, sys
 import cStringIO as stringio
 
 # Third-party
+from astropy.utils.data import get_pkg_data_fileobj
 import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
@@ -126,44 +127,42 @@ class TestForcedPendulum(object):
 
 # --------------------------------------------------------------------
 
-def potential(w,A,B,C,D):
-    x,y = w[...,:2].T
-    term1 = 0.5*(A*x**2 + B*y**2)
-    term2 = D*x**2*y - C/3.*y**3
-    return term1 + term2
-
-def acceleration(w,A,B,C,D):
-    x,y = w[...,:2].T
-    ax = -(A*x + 2*D*x*y)
-    ay = -(B*y + D*x*x - C*y*y)
-    return np.array([ax, ay]).T
-
-def jerk(w,A,B,C,D):
-    x,y = w[...,:2].T
-    dx,dy = w[...,4:6].T
-
-    dax = -(A+2*D*y)*dx - 2*D*x*dy
-    day = -2*D*x*dx - (B-2*C*y)*dy
-
-    return np.array([dax,day]).T
-
-def F_max(t,w,*args):
-    x,y,px,py = w.T
-    term1 = np.array([px, py]).T
-    term2 = acceleration(w, *args)
-
-    #print(term1, term2)
-    return np.hstack((term1,term2))
-
-def F_spec(t,w,*args):
-    x,y,px,py,dx,dy,dpx,dpy = w.T
-    term1 = np.array([px, py]).T
-    term2 = acceleration(w, *args)
-    term3 = np.array([dpx,dpy]).T
-    term4 = jerk(w, *args)
-    return np.hstack((term1,term2,term3,term4))
-
 class TestHenonHeiles(object):
+
+    def potential(self,w,A,B,C,D):
+        x,y = w[...,:2].T
+        term1 = 0.5*(A*x**2 + B*y**2)
+        term2 = D*x**2*y - C/3.*y**3
+        return term1 + term2
+
+    def acceleration(self,w,A,B,C,D):
+        x,y = w[...,:2].T
+        ax = -(A*x + 2*D*x*y)
+        ay = -(B*y + D*x*x - C*y*y)
+        return np.array([ax, ay]).T
+
+    def jerk(self,w,A,B,C,D):
+        x,y = w[...,:2].T
+        dx,dy = w[...,4:6].T
+
+        dax = -(A+2*D*y)*dx - 2*D*x*dy
+        day = -2*D*x*dx - (B-2*C*y)*dy
+
+        return np.array([dax,day]).T
+
+    def F_max(self,t,w,*args):
+        x,y,px,py = w.T
+        term1 = np.array([px, py]).T
+        term2 = self.acceleration(w, *args)
+        return np.hstack((term1,term2))
+
+    def F_spec(self,t,w,*args):
+        x,y,px,py,dx,dy,dpx,dpy = w.T
+        term1 = np.array([px, py]).T
+        term2 = self.acceleration(w, *args)
+        term3 = np.array([dpx,dpy]).T
+        term4 = self.jerk(w, *args)
+        return np.hstack((term1,term2,term3,term4))
 
     def setup(self):
         # parameter choices
@@ -177,10 +176,10 @@ class TestHenonHeiles(object):
                              [0., 0.56, 0.164113781, 0.112]]) # irregular
 
         self.nsteps = 10000
-        self.dt = 0.1
+        self.dt = 1.
 
     def test_orbit(self):
-        integrator = DOPRI853Integrator(F_max, func_args=self.par)
+        integrator = DOPRI853Integrator(self.F_max, func_args=self.par)
 
         plt.clf()
         for ii,w0 in enumerate(self.w0s):
@@ -194,7 +193,7 @@ class TestHenonHeiles(object):
         d0 = 1e-5
         noffset = 8
 
-        integrator = DOPRI853Integrator(F_max, func_args=self.par)
+        integrator = DOPRI853Integrator(self.F_max, func_args=self.par)
         for ii,w0 in enumerate(self.w0s):
             lyap, t, ws = lyapunov_max(w0, integrator,
                                        dt=self.dt, nsteps=self.nsteps,
@@ -212,7 +211,7 @@ class TestHenonHeiles(object):
 
     def test_lyapunov_spectrum(self):
 
-        integrator = DOPRI853Integrator(F_spec, func_args=self.par)
+        integrator = DOPRI853Integrator(self.F_spec, func_args=self.par)
         for ii,w0 in enumerate(self.w0s):
             lyap, t, ws = lyapunov_spectrum(w0, integrator,
                                             dt=self.dt, nsteps=self.nsteps)
@@ -234,7 +233,7 @@ class TestHenonHeiles(object):
             for block in blocks:
                 tbls.append(np.loadtxt(stringio.StringIO(block)))
 
-        integrator = DOPRI853Integrator(F_spec, func_args=self.par)
+        integrator = DOPRI853Integrator(self.F_spec, func_args=self.par)
         for ii,w0 in enumerate(self.w0s):
             s, t, ws = sali(w0, integrator, dt=self.dt, nsteps=self.nsteps)
 
