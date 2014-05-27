@@ -13,6 +13,7 @@ import numpy as np
 from astropy.constants import G
 import astropy.units as u
 import matplotlib.pyplot as plt
+from matplotlib import cm
 
 from ..core import Potential, CompositePotential
 
@@ -61,6 +62,38 @@ def test_repr():
     p = Potential(f=f, f_prime=f_prime, parameters=dict(m=1.E10*u.Msun))
     assert p.__repr__() == "<Potential: m=1.00e+10 solMass>"
 
+def test_plot():
+
+    def f(x, m, x0):
+        r = np.sqrt(np.sum((x-x0)**2, axis=-1))
+        return G*m/r
+
+    def f_prime(x, m, x0):
+        r = np.sqrt(np.sum((x-x0)**2, axis=-1))
+        return G*m*(x-x0)/r**3
+
+    p = Potential(f=f, f_prime=f_prime,
+                  parameters=dict(m=222234404403.41818*u.Msun,
+                                  x0=np.array([[1.,0.,0.]])*u.kpc))
+
+    f,a = p.plot_contours(grid=(np.linspace(-10., 10., 100)*u.kpc,
+                                0.*u.kpc,
+                                0.*u.kpc),
+                          labels=["X"])
+    f.savefig(os.path.join(plot_path, "contour_x.png"))
+
+    f,a = p.plot_contours(grid=(np.linspace(-10., 10., 100)*u.kpc,
+                                np.linspace(-10., 10., 100)*u.kpc,
+                                0.*u.kpc),
+                          cmap=cm.Blues)
+    f.savefig(os.path.join(plot_path, "contour_xy.png"))
+
+    f,a = p.plot_contours(grid=(np.linspace(-10., 10., 100)*u.kpc,
+                                1.*u.kpc,
+                                np.linspace(-10., 10., 100)*u.kpc),
+                          cmap=cm.Blues, labels=["X", "Z"])
+    f.savefig(os.path.join(plot_path, "contour_xz.png"))
+
 def test_composite():
 
     def f(x, m, x0):
@@ -83,7 +116,9 @@ def test_composite():
     assert np.allclose(p.value_at([0.,0.,0.]*u.kpc).decompose(usys), 2*u.kpc**2/u.Myr**2)
     assert np.allclose(p.acceleration_at([0.,0.,0.]*u.kpc).decompose(usys).value, 0.)
 
-    #fig, axes = p.plot_contours(grid=np.linspace(-10., 10., 100)*u.au)
+    fig, axes = p.plot_contours(grid=(np.linspace(-10., 10., 100)*u.au,
+                                      np.linspace(-10., 10., 100)*u.au,
+                                      0.))
     #fig.savefig(os.path.join(plot_path, "composite_point_mass.png"))
 
 # def test_cartesian():
