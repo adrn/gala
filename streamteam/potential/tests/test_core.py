@@ -116,10 +116,10 @@ def test_composite():
     assert np.allclose(p.value_at([0.,0.,0.]*u.kpc).decompose(usys), 2*u.kpc**2/u.Myr**2)
     assert np.allclose(p.acceleration_at([0.,0.,0.]*u.kpc).decompose(usys).value, 0.)
 
-    fig, axes = p.plot_contours(grid=(np.linspace(-10., 10., 100)*u.au,
-                                      np.linspace(-10., 10., 100)*u.au,
-                                      0.))
-    #fig.savefig(os.path.join(plot_path, "composite_point_mass.png"))
+    fig, axes = p.plot_contours(grid=(np.linspace(-10., 10., 100)*u.kpc,
+                                      np.linspace(-10., 10., 100)*u.kpc,
+                                      0.*u.kpc))
+    fig.savefig(os.path.join(plot_path, "composite_point_mass.png"))
 
 # def test_cartesian():
 
