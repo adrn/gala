@@ -120,20 +120,3 @@ def test_composite():
                                       np.linspace(-10., 10., 100)*u.kpc,
                                       0.*u.kpc))
     fig.savefig(os.path.join(plot_path, "composite_point_mass.png"))
-
-# def test_cartesian():
-
-#     def f(x, m):
-#         r = np.sqrt(np.sum(x**2, axis=-1))
-#         return G*m/r
-
-#     def f_prime(x, m):
-#         r = np.sqrt(np.sum(x**2, axis=-1))
-#         return -G*m/r**2
-
-#     p = CartesianPotential(f=f, f_prime=f_prime, parameters=dict(m=1*u.Msun))
-#     p.value_at(np.random.uniform(-10, 10, size=(100,3))*u.au)
-#     p.acceleration_at(np.random.uniform(-10, 10, size=(100,3))*u.au)
-
-#     fig, axes = p.plot_contours(grid=np.linspace(-10., 10., 100)*u.au)
-#     fig.savefig(os.path.join(plot_path, "point_mass.png"))
