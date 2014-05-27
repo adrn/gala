@@ -20,6 +20,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import astropy.units as u
+from astropy.utils import isiterable
 
 __all__ = ["Potential", "CompositePotential"]
 
@@ -104,6 +105,103 @@ class Potential(object):
     def __str__(self):
         return self.__class__.__name__
 
+    def plot_contours(self, grid, ax=None, labels=None, subplots_kw=dict(), **kwargs):
+        """ Plot equipotentials contours. Computes the potential value on a grid
+            (specified by the array `grid`).
+
+            Parameters
+            ----------
+            grid : tuple
+                Coordinate grids or slice value for each dimension. Should be a
+                tuple of 1D array (or Quantity) objects.
+            ax : matplotlib.Axes (optional)
+            labels : iterable (optional)
+                List of axis labels.
+            subplots_kw : dict
+                kwargs passed to matplotlib's subplots() function if an axes object
+                is not specified.
+            kwargs : dict
+                kwargs passed to either contourf() or plot().
+
+        cmap = kwargs.pop('cmap', cm.Blues)
+
+        """
+
+        # TODO: or grid can be an (ndim,n) array, which is already meshgridded?
+
+        # figure out which elements are iterable, which are numeric
+        _grids = []
+        _slices = []
+        for ii,g in enumerate(grid):
+            if not hasattr(g,'unit'):
+                g = g*u.dimensionless_unscaled
+
+            if isiterable(g):
+                _grids.append((ii,g))
+            else:
+                _slices.append((ii,g))
+
+        # figure out the dimensionality
+        ndim = len(_grids)
+
+        # if ndim > 2, don't know how to handle this!
+        if ndim > 2:
+            raise ValueError("ndim > 2: you can only make contours on a 2D grid. For other "
+                             "dimensions, you have to specify values to slice.")
+
+        if ax is None:
+            # default figsize
+            fig, ax = plt.subplots(1, 1, **subplots_kw)
+        else:
+            fig = ax.figure
+
+        # use the unit from the first grid
+        _unit = _grids[0][1].unit
+        if labels is not None:
+            labels = ["{} [{}]".format(l,_unit) for l in labels]
+
+        if ndim == 1:
+            # 1D curve
+            x1 = _grids[0][1].value
+            r = np.zeros((len(x1), len(_grids) + len(_slices)))
+            r[:,_grids[0][0]] = x1
+
+            for ii,slc in _slices:
+                r[:,ii] = slc.to(_unit).value
+
+            Z = self.value_at(r*_unit)
+            ax.plot(x1, Z.value, **kwargs)
+
+            if labels is not None:
+                ax.set_xlabel(labels[0])
+
+                if Z.unit is not u.dimensionless_unscaled:
+                    ax.set_ylabel("potential value [{}]".format(Z.unit))
+                else:
+                    ax.set_ylabel("potential value")
+        else:
+            # 2D contours
+            x1,x2 = np.meshgrid(_grids[0][1].to(_unit).value,
+                                _grids[1][1].to(_unit).value)
+            shp = x1.shape
+            x1,x2 = x1.ravel(), x2.ravel()
+
+            r = np.zeros((len(x1), len(_grids) + len(_slices)))
+            r[:,_grids[0][0]] = x1
+            r[:,_grids[1][0]] = x2
+
+            for ii,slc in _slices:
+                r[:,ii] = slc.to(_unit).value
+
+            Z = self.value_at(r*_unit).value
+            cs = ax.contourf(x1.reshape(shp), x2.reshape(shp), Z.reshape(shp), **kwargs)
+
+            if labels is not None:
+                ax.set_xlabel(labels[0])
+                ax.set_ylabel(labels[1])
+
+        return fig,ax
+
 class CompositePotential(dict, Potential):
 
     def __init__(self, **kwargs):
@@ -151,76 +249,3 @@ class CompositePotential(dict, Potential):
                 Position to compute the acceleration at.
         """
         return u.Quantity([p.acceleration_at(x) for p in self.values()]).sum(axis=0)
-
-    # def __repr__(self):
-    #     return "<CompositePotential: {0}>".format(", ".join(self.keys()))
-
-# class CartesianPotential(Potential):
-
-#     def plot_contours(self, grid, fig=None, labels=['x','y','z'], **kwargs):
-#         """ Plot equipotentials contours. Takes slices at x=0, y=0, z=0,
-#             computes the potential value on a grid (specified by the 1D array
-#             `grid`). This function takes care of the meshgridding.
-
-#             Parameters
-#             ----------
-#             grid : astropy.units.Quantity
-#                 Coordinate grid to compute the potential on. Should be a 1D
-#                 array, and is used for all dimensions.
-#             fig : matplotlib.Figure (optional)
-#             labels : list (optional)
-#                 A list of axis labels.
-#             kwargs : dict
-#                 kwargs passed to either contourf() or plot().
-
-#         """
-#         figsize = kwargs.pop('figsize', (10,10))
-#         cmap = kwargs.pop('cmap', cm.Blues)
-
-#         if fig == None:
-#             fig, axes = plt.subplots(2, 2, sharex=True, sharey=True,
-#                                      figsize=figsize)
-#         else:
-#             axes = fig.axes
-
-#         ndim = 3
-#         for i in range(1,ndim):
-#             for jj in range(ndim-1):
-#                 ii = i-1
-#                 if jj > ii:
-#                     axes[ii,jj].set_visible(False)
-#                     continue
-
-#                 X1, X2 = np.meshgrid(grid.value,grid.value)
-
-#                 r = np.array([np.zeros_like(X1.ravel()).tolist() \
-#                                 for xx in range(ndim)])
-#                 r[jj] = X1.ravel()
-#                 r[i] = X2.ravel()
-#                 r = r.T
-
-#                 Z = self.value_at(r*grid.unit).reshape(X1.shape).value
-#                 Z = (Z - Z.min()) / (Z.max() - Z.min())
-
-#                 cs = axes[ii,jj].contourf(X1, X2, Z, cmap=cmap, **kwargs)
-
-#         axes[ii,jj].set_xlim(X1.min(),X1.max())
-#         axes[ii,jj].set_ylim(axes[ii,jj].get_xlim())
-#         cax = fig.add_axes([0.91, 0.1, 0.02, 0.8])
-#         fig.colorbar(cs, cax=cax)
-
-#         # Label the axes
-#         for jj in range(ndim-1):
-#             try:
-#                 axes[-1,jj].set_xlabel("{} [{0}]".format(labels[jj], grid.unit))
-#             except:
-#                 axes[-1,jj].set_xlabel("[{0}]".format(grid.unit))
-
-#             try:
-#                 axes[jj,0].set_ylabel("{} [{0}]".format(labels[jj+1], grid.unit))
-#             except:
-#                 axes[jj,0].set_ylabel("[{0}]".format(grid.unit))
-
-#         fig.subplots_adjust(hspace=0.1, wspace=0.1, left=0.08, bottom=0.08, top=0.9, right=0.9 )
-
-#         return fig, axes
