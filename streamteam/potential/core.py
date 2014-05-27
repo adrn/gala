@@ -123,11 +123,7 @@ class Potential(object):
             kwargs : dict
                 kwargs passed to either contourf() or plot().
 
-        cmap = kwargs.pop('cmap', cm.Blues)
-
         """
-
-        # TODO: or grid can be an (ndim,n) array, which is already meshgridded?
 
         # figure out which elements are iterable, which are numeric
         _grids = []
@@ -194,7 +190,11 @@ class Potential(object):
                 r[:,ii] = slc.to(_unit).value
 
             Z = self.value_at(r*_unit).value
-            cs = ax.contourf(x1.reshape(shp), x2.reshape(shp), Z.reshape(shp), **kwargs)
+
+            # make default colormap not suck
+            cmap = kwargs.pop('cmap', cm.Blues)
+            cs = ax.contourf(x1.reshape(shp), x2.reshape(shp), Z.reshape(shp),
+                             cmap=cmap, **kwargs)
 
             if labels is not None:
                 ax.set_xlabel(labels[0])
@@ -237,7 +237,7 @@ class CompositePotential(dict, Potential):
             x : astropy.units.Quantity, array_like, numeric
                 Position to compute the value of the potential.
         """
-        return u.Quantity([p.value_at(x) for p in self.values()]).sum()
+        return u.Quantity([p.value_at(x) for p in self.values()]).sum(axis=0)
 
     def acceleration_at(self, x):
         """ Compute the acceleration due to the potential at the given
