@@ -21,15 +21,15 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import astropy.units as u
 
-__all__ = ["Potential", "CartesianPotential", "CompositePotential"]
+__all__ = ["Potential", "CompositePotential"]
 
 class Potential(object):
 
     def __init__(self, f, f_prime=None, parameters=dict()):
-        """ A baseclass for representing gravitational potentials in Cartesian
-            coordinates. You must specify the functional form of the potential
-            component. You may also optionally add derivatives using the
-            f_prime keyword for computing accelerations.
+        """ A baseclass for representing gravitational potentials. You must specify
+            a function that evaluates the potential value. You may also optionally
+            add a function that computes derivatives (accelerations) using the f_prime
+            keyword.
 
             Parameters
             ----------
@@ -45,19 +45,16 @@ class Potential(object):
         # store parameters
         self.parameters = parameters
 
-        # Make sure the f is callable, and that the component doesn't already
-        #   exist in the potential
+        # Make sure the f is callable
         if not hasattr(f, '__call__'):
             raise TypeError("'f' parameter must be a callable function! You "
                             "passed in a '{0}'".format(f.__class__))
-
         self.f = f
 
         if f_prime != None:
             if not hasattr(f_prime, '__call__'):
                 raise TypeError("'f_prime' must be a callable function! You "
                                 "passed in a '{0}'".format(f_prime.__class__))
-
         self.f_prime = f_prime
 
     def value_at(self, x):
@@ -76,82 +73,38 @@ class Potential(object):
 
             Parameters
             ----------
-            x : astropy.units.Quantity
+            x : astropy.units.Quantity, array_like, numeric
                 Position to compute the acceleration at.
         """
         return self.f_prime(x, **self.parameters)
 
-class CartesianPotential(Potential):
+    def __repr__(self):
+        pars = ""
+        for k,v in self.parameters.items():
+            par_fmt = "{}"
+            post = ""
 
-    def plot_contours(self, grid, fig=None, labels=['x','y','z'], **kwargs):
-        """ Plot equipotentials contours. Takes slices at x=0, y=0, z=0,
-            computes the potential value on a grid (specified by the 1D array
-            `grid`). This function takes care of the meshgridding.
+            if hasattr(v,'unit'):
+                post = " {}".format(v.unit)
+                v = v.value
 
-            Parameters
-            ----------
-            grid : astropy.units.Quantity
-                Coordinate grid to compute the potential on. Should be a 1D
-                array, and is used for all dimensions.
-            fig : matplotlib.Figure (optional)
-            labels : list (optional)
-                A list of axis labels.
-            kwargs : dict
-                kwargs passed to either contourf() or plot().
+            if isinstance(v, float):
+                if np.log10(v) < -2 or np.log10(v) > 5:
+                    par_fmt = "{:.2e}"
+                else:
+                    par_fmt = "{:.2f}"
 
-        """
-        figsize = kwargs.pop('figsize', (10,10))
-        cmap = kwargs.pop('cmap', cm.Blues)
+            elif isinstance(v, int) and np.log10(v) > 5:
+                par_fmt = "{:.2e}"
 
-        if fig == None:
-            fig, axes = plt.subplots(2, 2, sharex=True, sharey=True,
-                                     figsize=figsize)
-        else:
-            axes = fig.axes
+            pars += ("{}=" + par_fmt + post).format(k,v) + ", "
 
-        ndim = 3
-        for i in range(1,ndim):
-            for jj in range(ndim-1):
-                ii = i-1
-                if jj > ii:
-                    axes[ii,jj].set_visible(False)
-                    continue
+        return "<{}: {}>".format(self.__class__.__name__, pars.rstrip(", "))
 
-                X1, X2 = np.meshgrid(grid.value,grid.value)
+    def __str__(self):
+        return self.__class__.__name__
 
-                r = np.array([np.zeros_like(X1.ravel()).tolist() \
-                                for xx in range(ndim)])
-                r[jj] = X1.ravel()
-                r[i] = X2.ravel()
-                r = r.T
-
-                Z = self.value_at(r*grid.unit).reshape(X1.shape).value
-                Z = (Z - Z.min()) / (Z.max() - Z.min())
-
-                cs = axes[ii,jj].contourf(X1, X2, Z, cmap=cmap, **kwargs)
-
-        axes[ii,jj].set_xlim(X1.min(),X1.max())
-        axes[ii,jj].set_ylim(axes[ii,jj].get_xlim())
-        cax = fig.add_axes([0.91, 0.1, 0.02, 0.8])
-        fig.colorbar(cs, cax=cax)
-
-        # Label the axes
-        for jj in range(ndim-1):
-            try:
-                axes[-1,jj].set_xlabel("{} [{0}]".format(labels[jj], grid.unit))
-            except:
-                axes[-1,jj].set_xlabel("[{0}]".format(grid.unit))
-
-            try:
-                axes[jj,0].set_ylabel("{} [{0}]".format(labels[jj+1], grid.unit))
-            except:
-                axes[jj,0].set_ylabel("[{0}]".format(grid.unit))
-
-        fig.subplots_adjust(hspace=0.1, wspace=0.1, left=0.08, bottom=0.08, top=0.9, right=0.9 )
-
-        return fig, axes
-
-class CompositePotential(dict, CartesianPotential):
+class CompositePotential(dict, Potential):
 
     def __init__(self, **kwargs):
         """ Represents a potential composed of several distinct potential
@@ -163,9 +116,6 @@ class CompositePotential(dict, CartesianPotential):
             kwargs
 
         """
-        if len(kwargs) == 0:
-            raise ValueError("You must specify at least one potential "
-                             "component!")
 
         for v in kwargs.values():
             if not isinstance(v, Potential):
@@ -173,9 +123,6 @@ class CompositePotential(dict, CartesianPotential):
                                 "{0}.".format(type(v)))
 
         dict.__init__(self, **kwargs)
-
-    def __repr__(self):
-        return "<CompositePotential: {0}>".format(", ".join(self.keys()))
 
     def __setitem__(self, key, value):
         if not isinstance(value, Potential):
@@ -192,12 +139,7 @@ class CompositePotential(dict, CartesianPotential):
             x : astropy.units.Quantity, array_like, numeric
                 Position to compute the value of the potential.
         """
-        for p in self.values():
-            try:
-                v = v + p.value_at(x)
-            except NameError:
-                v = p.value_at(x)
-        return v
+        return u.Quantity([p.value_at(x) for p in self.values()]).sum()
 
     def acceleration_at(self, x):
         """ Compute the acceleration due to the potential at the given
@@ -208,9 +150,77 @@ class CompositePotential(dict, CartesianPotential):
             x : astropy.units.Quantity
                 Position to compute the acceleration at.
         """
-        for p in self.values():
-            try:
-                v = v + p.acceleration_at(x)
-            except NameError:
-                v = p.acceleration_at(x)
-        return v
+        return u.Quantity([p.acceleration_at(x) for p in self.values()]).sum(axis=0)
+
+    # def __repr__(self):
+    #     return "<CompositePotential: {0}>".format(", ".join(self.keys()))
+
+# class CartesianPotential(Potential):
+
+#     def plot_contours(self, grid, fig=None, labels=['x','y','z'], **kwargs):
+#         """ Plot equipotentials contours. Takes slices at x=0, y=0, z=0,
+#             computes the potential value on a grid (specified by the 1D array
+#             `grid`). This function takes care of the meshgridding.
+
+#             Parameters
+#             ----------
+#             grid : astropy.units.Quantity
+#                 Coordinate grid to compute the potential on. Should be a 1D
+#                 array, and is used for all dimensions.
+#             fig : matplotlib.Figure (optional)
+#             labels : list (optional)
+#                 A list of axis labels.
+#             kwargs : dict
+#                 kwargs passed to either contourf() or plot().
+
+#         """
+#         figsize = kwargs.pop('figsize', (10,10))
+#         cmap = kwargs.pop('cmap', cm.Blues)
+
+#         if fig == None:
+#             fig, axes = plt.subplots(2, 2, sharex=True, sharey=True,
+#                                      figsize=figsize)
+#         else:
+#             axes = fig.axes
+
+#         ndim = 3
+#         for i in range(1,ndim):
+#             for jj in range(ndim-1):
+#                 ii = i-1
+#                 if jj > ii:
+#                     axes[ii,jj].set_visible(False)
+#                     continue
+
+#                 X1, X2 = np.meshgrid(grid.value,grid.value)
+
+#                 r = np.array([np.zeros_like(X1.ravel()).tolist() \
+#                                 for xx in range(ndim)])
+#                 r[jj] = X1.ravel()
+#                 r[i] = X2.ravel()
+#                 r = r.T
+
+#                 Z = self.value_at(r*grid.unit).reshape(X1.shape).value
+#                 Z = (Z - Z.min()) / (Z.max() - Z.min())
+
+#                 cs = axes[ii,jj].contourf(X1, X2, Z, cmap=cmap, **kwargs)
+
+#         axes[ii,jj].set_xlim(X1.min(),X1.max())
+#         axes[ii,jj].set_ylim(axes[ii,jj].get_xlim())
+#         cax = fig.add_axes([0.91, 0.1, 0.02, 0.8])
+#         fig.colorbar(cs, cax=cax)
+
+#         # Label the axes
+#         for jj in range(ndim-1):
+#             try:
+#                 axes[-1,jj].set_xlabel("{} [{0}]".format(labels[jj], grid.unit))
+#             except:
+#                 axes[-1,jj].set_xlabel("[{0}]".format(grid.unit))
+
+#             try:
+#                 axes[jj,0].set_ylabel("{} [{0}]".format(labels[jj+1], grid.unit))
+#             except:
+#                 axes[jj,0].set_ylabel("[{0}]".format(grid.unit))
+
+#         fig.subplots_adjust(hspace=0.1, wspace=0.1, left=0.08, bottom=0.08, top=0.9, right=0.9 )
+
+#         return fig, axes
