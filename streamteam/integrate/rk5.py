@@ -80,8 +80,8 @@ class RK5Integrator(Integrator):
         self.func = func
         self._func_args = func_args
 
-    def step(self, t, x, dt):
-        """ Step forward the vector x by the given timestep.
+    def step(self, t, w, dt):
+        """ Step forward the vector w by the given timestep.
 
             Parameters
             ----------
@@ -90,30 +90,29 @@ class RK5Integrator(Integrator):
         """
 
         # Runge-Kutta Fehlberg formulas (see: Numerical Recipes)
-        F = lambda t,x: self.func(t,x,*self._func_args)
+        F = lambda t,w: self.func(t,w,*self._func_args)
 
-        n = len(x)
-        K = np.zeros((6,)+x.shape)
-        K[0] = dt * F(t, x)
-        K[1] = dt * F(t + A[1]*dt, x + B[1][0]*K[0])
-        K[2] = dt * F(t + A[2]*dt, x + B[2][0]*K[0] + B[2][1]*K[1])
-        K[3] = dt * F(t + A[3]*dt, x + B[3][0]*K[0] + B[3][1]*K[1] + B[3][2]*K[2])
-        K[4] = dt * F(t + A[4]*dt, x + B[4][0]*K[0] + B[4][1]*K[1] + B[4][2]*K[2] + B[4][3]*K[3])
-        K[5] = dt * F(t + A[5]*dt, x + B[5][0]*K[0] + B[5][1]*K[1] + B[5][2]*K[2] + B[5][3]*K[3] + B[5][4]*K[4])
+        n = len(w)
+        K = np.zeros((6,)+w.shape)
+        K[0] = dt * F(t, w)
+        K[1] = dt * F(t + A[1]*dt, w + B[1][0]*K[0])
+        K[2] = dt * F(t + A[2]*dt, w + B[2][0]*K[0] + B[2][1]*K[1])
+        K[3] = dt * F(t + A[3]*dt, w + B[3][0]*K[0] + B[3][1]*K[1] + B[3][2]*K[2])
+        K[4] = dt * F(t + A[4]*dt, w + B[4][0]*K[0] + B[4][1]*K[1] + B[4][2]*K[2] + B[4][3]*K[3])
+        K[5] = dt * F(t + A[5]*dt, w + B[5][0]*K[0] + B[5][1]*K[1] + B[5][2]*K[2] + B[5][3]*K[3] + B[5][4]*K[4])
 
         # shift
-        dx = np.zeros((n))
+        dw = np.zeros_like(w)
         for i in range(6):
-            dx = dx + C[i]*K[i]
+            dw = dw + C[i]*K[i]
 
-        _x = x + dx
+        return w + dw
 
-        return _x
-
-    def run(self, x_i, **time_spec):
+    def run(self, w0, **time_spec):
         """ Run the integrator starting at the given coordinates and momenta
             (or velocities) and a time specification. The initial conditions
-            `x` should each have shape `(nparticles, ndim)`.
+            `w0` should have shape `(nparticles, ndim)` or `(ndim,)` for a
+            single orbit.
 
             There are a few combinations of keyword arguments accepted for
             specifying the timestepping. For example, you can specify a fixed
@@ -122,7 +121,7 @@ class RK5Integrator(Integrator):
 
             Parameters
             ----------
-            x0 : array_like
+            w0 : array_like
                 Initial conditions.
 
             kwargs
@@ -136,8 +135,8 @@ class RK5Integrator(Integrator):
 
         """
 
-        x_i = np.atleast_2d(x_i)
-        nparticles, ndim = x_i.shape
+        w0 = np.atleast_2d(w0)
+        nparticles, ndim = w0.shape
 
         # generate the array of times
         times = _parse_time_specification(**time_spec)
@@ -145,16 +144,16 @@ class RK5Integrator(Integrator):
         dt = times[1]-times[0]
 
         # create the return arrays
-        xs = np.zeros((nsteps+1,) + x_i.shape, dtype=float)
+        ws = np.zeros((nsteps+1,) + w0.shape, dtype=float)
 
         # Set first step to the initial conditions
-        xs[0] = x_i
-        x = x_i.copy()
+        ws[0] = w0
+        w = w0.copy()
         for ii in range(1,nsteps+1):
-            x = self.step(times[ii],x,dt)
-            xs[ii] = x
+            w = self.step(times[ii], w, dt)
+            ws[ii] = w
 
-        return times, xs
+        return times, ws
 
 '''
 
