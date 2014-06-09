@@ -38,7 +38,7 @@ def test_forward(name, Integrator):
     ts, xs = integrator.run([0., 1.],
                             t1=t1, t2=t2, dt=dt)
 
-    fig = plot(ts, xs[:,0].T)
+    fig = plot(ts, xs)
     fig.savefig(os.path.join(plot_path,"forward_{0}.png".format(name)))
 
 @pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
@@ -50,7 +50,7 @@ def test_backward(name, Integrator):
     ts, xs = integrator.run([0., 1.],
                             t1=t1, t2=t2, dt=dt)
 
-    fig = plot(ts, xs[:,0].T)
+    fig = plot(ts, xs)
     fig.savefig(os.path.join(plot_path,"backward_{0}.png".format(name)))
 
 @pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
@@ -61,7 +61,7 @@ def test_harmonic_oscillator(name, Integrator):
     ts, xs = integrator.run([1., 0.],
                             dt=dt, nsteps=100)
 
-    fig = plot(ts, xs[:,0].T)
+    fig = plot(ts, xs)
     fig.savefig(os.path.join(plot_path,"harmonic_osc_{0}.png".format(name)))
 
 @pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
@@ -81,7 +81,7 @@ def test_point_mass(name, Integrator):
     ts, xs = integrator.run(np.append(q_i,p_i),
                             t1=0., t2=10., dt=0.01)
 
-    fig = plot(ts, xs[:,0].T)
+    fig = plot(ts, xs)
     fig.savefig(os.path.join(plot_path,"point_mass_{0}.png".format(name)))
 
 # KNOWN FAILURE FOR RK5
@@ -102,8 +102,8 @@ def test_point_mass_multiple(name, Integrator):
     ts, xs = integrator.run(x_i,
                             t1=0., t2=10., dt=0.01)
 
-    fig = plot(ts, xs[:,0].T)
-    fig = plot(ts, xs[:,1].T, fig=fig)
+    fig = plot(ts, xs)
+    fig = plot(ts, xs, fig=fig)
     fig.savefig(os.path.join(plot_path,"multi_point_mass_{0}.png".format(name)))
 
 @pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
@@ -118,7 +118,7 @@ def test_driven_pendulum(name, Integrator):
     ts, xs = integrator.run([3., 0.],
                             dt=0.1, nsteps=10000)
 
-    fig = plot(ts, xs[:,0].T, marker=None, alpha=0.5)
+    fig = plot(ts, xs, marker=None, alpha=0.5)
     fig.savefig(os.path.join(plot_path,"driven_pendulum_{0}.png".format(name)))
 
 @pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
@@ -134,7 +134,7 @@ def test_lorenz(name, Integrator):
     ts, xs = integrator.run([0.5,0.5,0.5],
                             dt=0.01, nsteps=10000)
 
-    fig = plot(ts, xs[:,0].T, marker=None, alpha=0.5)
+    fig = plot(ts, xs, marker=None, alpha=0.5)
     fig.savefig(os.path.join(plot_path,"lorenz_{0}.png".format(name)))
 
 @pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
@@ -155,7 +155,7 @@ def test_loop_vs_run(name, Integrator):
                              dt=dt, nsteps=nsteps)
 
     x0 = np.array([3.,0.])
-    xs_loop = np.zeros((nsteps+1,2))
+    xs_loop = np.zeros((nsteps+1,1,2))
     xs_loop[0] = x0
     time = 0.
     for ii in range(nsteps):
@@ -164,6 +164,6 @@ def test_loop_vs_run(name, Integrator):
         xs_loop[ii+1] = x0
         time += dt
 
-    fig = plot(ts, xs[:,0].T, marker=None, alpha=0.5)
-    fig = plot(ts, xs_loop.T, marker=None, alpha=0.5, fig=fig)
+    fig = plot(ts, xs, marker=None, alpha=0.5)
+    fig = plot(ts, xs_loop, marker=None, alpha=0.5, fig=fig)
     fig.savefig(os.path.join(plot_path,"loop_vs_run_{0}.png".format(name)))

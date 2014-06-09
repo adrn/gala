@@ -13,10 +13,10 @@ import os, sys
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot(ts, qp, marker='.', alpha=0.75, linestyle='-', fig=None):
+def plot(ts, ws, marker='.', alpha=0.75, linestyle='-', fig=None):
     """ Make some helpful plots for testing the integrators. """
 
-    ndim = qp.shape[0]
+    nsteps,nparticles,ndim = ws.shape
     if fig is None:
         fig,axes = plt.subplots(ndim, ndim, figsize=(4*ndim,4*ndim))
     else:
@@ -26,9 +26,9 @@ def plot(ts, qp, marker='.', alpha=0.75, linestyle='-', fig=None):
     for ii in range(ndim):
         for jj in range(ndim):
             if ii == jj:
-                axes[jj,ii].plot(qp[ii], **kwargs)
+                axes[jj,ii].plot(ws[:,0,ii], **kwargs)
             else:
-                axes[jj,ii].plot(qp[ii], qp[jj], **kwargs)
+                axes[jj,ii].plot(ws[:,0,ii], ws[:,0,jj], **kwargs)
 
     #fig.tight_layout()
 

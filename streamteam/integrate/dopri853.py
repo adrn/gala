@@ -42,7 +42,7 @@ class DOPRI853Integrator(Integrator):
         self._func_args = func_args
         self._ode_kwargs = kwargs
 
-    def run(self, w_i, **time_spec):
+    def run(self, w0, **time_spec):
         """ Run the integrator starting at the given coordinates and momenta
             (or velocities) and a time specification. The initial conditions
             `w` should each have shape `(nparticles, ndim)`.
@@ -66,8 +66,8 @@ class DOPRI853Integrator(Integrator):
 
         """
 
-        w_i = np.atleast_2d(w_i)
-        nparticles, ndim = w_i.shape
+        w0 = np.atleast_2d(w0)
+        nparticles, ndim = w0.shape
 
         # need this to do resizing, and to handle func_args because there is some
         #   issue with the args stuff in scipy...
@@ -79,7 +79,7 @@ class DOPRI853Integrator(Integrator):
         self._ode = self._ode.set_integrator('dop853', **self._ode_kwargs)
 
         # make 1D
-        w_i = w_i.reshape((nparticles*ndim,))
+        w0 = w0.reshape((nparticles*ndim,))
 
         # generate the array of times
         times = _parse_time_specification(**time_spec)
@@ -87,11 +87,11 @@ class DOPRI853Integrator(Integrator):
         dt = times[1]-times[0]
 
         # set the initial conditions
-        self._ode.set_initial_value(w_i, times[0])
+        self._ode.set_initial_value(w0, times[0])
 
         # create the return arrays
-        ws = np.zeros((nsteps+1,w_i.size), dtype=float)
-        ws[0] = w_i
+        ws = np.zeros((nsteps+1,w0.size), dtype=float)
+        ws[0] = w0
 
         # Integrate the ODE(s) across each delta_t timestep
         k = 1
