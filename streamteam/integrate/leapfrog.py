@@ -13,12 +13,12 @@ import os, sys
 import numpy as np
 
 # Project
-from .core import PotentialIntegrator
+from .core import Integrator
 from .timespec import _parse_time_specification
 
 __all__ = ["LeapfrogIntegrator"]
 
-class LeapfrogIntegrator(PotentialIntegrator):
+class LeapfrogIntegrator(Integrator):
 
     def __init__(self, acceleration_func, func_args=()):
         """ Initialize a Leapfrog integrator given a function for computing

@@ -17,6 +17,3 @@ __all__ = ["Integrator"]
 
 class Integrator(object):
     pass
-
-class PotentialIntegrator(Integrator):
-    pass
