@@ -20,9 +20,9 @@ from .prior import LogPrior
 
 __all__ = ["ModelParameter"]
 
-class ModelParameter(u.Quantity):
+class ModelParameter(object):
 
-    def __new__(cls, name, value=None, truth=None, prior=None):
+    def __init__(self, name, truth=None, prior=None, shape=None):
         """ Represents a model Parameter MCMC inference. This object is meant
             to be used with a Model object. The value can be a vector or scalar,
             and may also have units. The default value is NaN (numpy.nan) because
@@ -30,46 +30,26 @@ class ModelParameter(u.Quantity):
             is slightly wrong because NaN will operate with other numbers...
         """
 
-        if value is None and truth is None:
-            value = np.array(np.nan)*u.dimensionless_unscaled
+        if truth is None and shape is None: # assume scalar
             truth = np.array(np.nan)*u.dimensionless_unscaled
 
-        elif value is not None and truth is None:
-            if hasattr(value, "unit"):
-                unit = value.unit
-            else:
-                unit = u.dimensionless_unscaled
-            value = np.array(value)*unit
-            truth = np.ones_like(value)*np.nan
+        elif truth is None and shape is not None: # shape specified
+            truth = np.zeros(shape)*np.nan*u.dimensionless_unscaled
 
-        elif value is None and truth is not None:
+        elif truth is not None and shape is None: # truth specified, not shape
             if hasattr(truth, "unit"):
                 unit = truth.unit
             else:
                 unit = u.dimensionless_unscaled
             truth = np.array(truth)*unit
-            value = np.ones_like(truth)*np.nan
 
-        elif value is not None and truth is not None:
-            if hasattr(value, "unit"):
-                vunit = value.unit
-            else:
-                vunit = u.dimensionless_unscaled
+        elif truth is not None and shape is not None: # truth and shape specified
+            if truth.shape != shape:
+                raise ValueError("Size mismatch: truth shape ({}) does not match"
+                                 "specified shape ({})".format(truth.shape, shape))
 
-            if hasattr(truth, "unit"):
-                tunit = truth.unit
-            else:
-                tunit = u.dimensionless_unscaled
-
-            if not vunit.is_equivalent(tunit):
-                raise u.UnitsError("Incompatible units '{}' and '{}'"
-                                   .format(vunit, tunit))
-
-            value = np.array(value)*vunit
-            truth = np.array(truth)*tunit
-
-        self = super(ModelParameter, cls).__new__(cls, value.value,
-                                                  unit=value.unit)
+        else:
+            raise WTFError()
 
         # assign a benign prior that always evaluates to 0. if none specified
         if prior is None:
@@ -87,12 +67,11 @@ class ModelParameter(u.Quantity):
         # whether the parameter is variable or not - default: not frozen
         self.frozen = False
 
-        return self
-
     def copy(self):
         """ Return a copy of this `ModelParameter` instance """
-        return ModelParameter(name=self.name, value=self.value*self.unit,
-                              prior=self._prior, truth=self.truth)
+        p = ModelParameter(name=self.name, truth=self.truth, prior=self.prior)
+        p.frozen = self.frozen
+        return p
 
     def __deepcopy__(self):
         """ Return a copy of this `ModelParameter` instance """
@@ -103,23 +82,3 @@ class ModelParameter(u.Quantity):
 
     def __str__(self):
         return self.name
-
-    # -------------------------------------------------------------------------- #
-    #   this stuff is so this object is picklable / can be used
-    #       with multiprocessing and MPI.
-    def __reduce__(self):
-        # patch to pickle ModelParameter objects (ndarray subclasses),
-        # see http://www.mail-archive.com/numpy-discussion@scipy.org/msg02446.html
-
-        object_state = list(super(ModelParameter, self).__reduce__())
-        object_state[2] = (object_state[2], self.__dict__)
-        return tuple(object_state)
-
-    def __setstate__(self, state):
-        # patch to unpickle ModelParameter objects (ndarray subclasses),
-        # see http://www.mail-archive.com/numpy-discussion@scipy.org/msg02446.html
-
-        nd_state, own_state = state
-        super(ModelParameter, self).__setstate__(nd_state)
-        self.__dict__.update(own_state)
-    # -------------------------------------------------------------------------- #
