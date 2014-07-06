@@ -166,10 +166,8 @@ class TestEmceeModel(object):
             pri = model.sample_priors(n=5)
 
     def test_mcmc_sample_priors(self):
-        m = ModelParameter("m", truth=1.,
-                           prior=LogNormal1DPrior(0.,2.))
-        b = ModelParameter("b", truth=6.7,
-                           prior=LogUniformPrior(0.,10.))
+        m = ModelParameter("m", truth=1., prior=LogNormal1DPrior(0.,2.))
+        b = ModelParameter("b", truth=6.7, prior=LogUniformPrior(0.,10.))
 
         model = EmceeModel(dummy_likelihood)
         model.add_parameter(m)
@@ -185,11 +183,26 @@ class TestEmceeModel(object):
         axes[1].hist(sampler.flatchain[:,1])
         fig.savefig(os.path.join(plot_path,"priors.png"))
 
-    def test_fit_line(self):
-        m = ModelParameter("m", value=np.nan, truth=1.,
-                           prior=LogUniformPrior(0.,2.))
-        b = ModelParameter("b", value=np.nan, truth=6.7,
-                           prior=LogUniformPrior(0.,10.))
+
+def line_likelihood(parameters, value_dict, x, y, sigma_y):
+        try:
+            m = value_dict['m']
+        except KeyError:
+            m = parameters['m'].frozen
+
+        try:
+            b = value_dict['b']
+        except KeyError:
+            b = parameters['b'].frozen
+
+        model_val = m*x + b
+        return -0.5*((y - model_val) / sigma_y)**2
+
+class TestFitLine(object):
+
+    def setup(self):
+        m = ModelParameter("m", truth=1., prior=LogUniformPrior(0.,2.))
+        b = ModelParameter("b", truth=6.7, prior=LogUniformPrior(0.,10.))
 
         ndata = 15
         x = np.random.uniform(0.,10.,size=ndata)
@@ -198,22 +211,68 @@ class TestEmceeModel(object):
         sigma_y = np.random.uniform(0.5,1.,size=ndata)
         y += np.random.normal(0., sigma_y)
 
-        def ln_likelihood(parameters, x, y, sigma_y):
-            model_val = parameters['line']['m']*x + parameters['line']['b']
-            return -0.5*((y - model_val) / sigma_y)**2
+        self.model = EmceeModel(line_likelihood, args=(x,y,sigma_y))
+        self.model.add_parameter(m)
+        self.model.add_parameter(b)
 
-        model = EmceeModel(ln_likelihood, (x,y,sigma_y))
-        model.add_parameter(m, 'line')
-        model.add_parameter(b, 'line')
-
+    def test_vary_both(self):
         nwalkers = 16
-        ndim = 2
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, model)
-
-        p0 = model.sample_priors(size=nwalkers)
-        sampler.run_mcmc(p0, 1000)
+        p0 = self.model.sample_priors(n=nwalkers)
+        sampler = emcee.EnsembleSampler(nwalkers,
+                                        self.model.nparameters,
+                                        self.model)
+        pos,prob,state = sampler.run_mcmc(p0, 100)
+        sampler.reset()
+        pos,prob,state = sampler.run_mcmc(pos, 1000)
 
         fig,axes = plt.subplots(1,2)
-        axes[0].hist(sampler.flatchain[500:,0])
-        axes[1].hist(sampler.flatchain[500:,1])
-        fig.savefig(os.path.join(plot_path,"fit_line.png"))
+        axes[0].hist(sampler.flatchain[:,0], normed=True)
+        axes[0].hist(self.model.parameters['m'].prior.sample(n=1000),
+                     alpha=0.5, zorder=-1, normed=True)
+        axes[0].axvline(self.model.parameters['m'].truth.value, color='g')
+
+        axes[1].hist(sampler.flatchain[:,1], normed=True)
+        axes[1].hist(self.model.parameters['b'].prior.sample(n=1000),
+                     alpha=0.5, zorder=-1, normed=True)
+        axes[1].axvline(self.model.parameters['b'].truth.value, color='g')
+        fig.savefig(os.path.join(plot_path,"fit_line_vary_m_b.png"))
+
+    def test_m_frozen(self):
+        self.model.parameters['m'].freeze(self.model.parameters['m'].truth.value)
+
+        nwalkers = 16
+        p0 = self.model.sample_priors(n=nwalkers)
+        sampler = emcee.EnsembleSampler(nwalkers,
+                                        self.model.nparameters,
+                                        self.model)
+        pos,prob,state = sampler.run_mcmc(p0, 100)
+        sampler.reset()
+        pos,prob,state = sampler.run_mcmc(pos, 1000)
+
+        fig,ax = plt.subplots(1,1)
+        ax.hist(sampler.flatchain[:,0], normed=True)
+        ax.hist(self.model.parameters['b'].prior.sample(n=1000),
+                alpha=0.5, zorder=-1, normed=True)
+        ax.axvline(self.model.parameters['b'].truth.value, color='g')
+
+        fig.savefig(os.path.join(plot_path,"fit_line_vary_b.png"))
+
+    def test_b_frozen(self):
+        self.model.parameters['b'].freeze(self.model.parameters['b'].truth.value)
+
+        nwalkers = 16
+        p0 = self.model.sample_priors(n=nwalkers)
+        sampler = emcee.EnsembleSampler(nwalkers,
+                                        self.model.nparameters,
+                                        self.model)
+        pos,prob,state = sampler.run_mcmc(p0, 100)
+        sampler.reset()
+        pos,prob,state = sampler.run_mcmc(pos, 1000)
+
+        fig,ax = plt.subplots(1,1)
+        ax.hist(sampler.flatchain[:,0], normed=True)
+        ax.hist(self.model.parameters['m'].prior.sample(n=1000),
+                alpha=0.5, zorder=-1, normed=True)
+        ax.axvline(self.model.parameters['m'].truth.value, color='g')
+
+        fig.savefig(os.path.join(plot_path,"fit_line_vary_m.png"))
