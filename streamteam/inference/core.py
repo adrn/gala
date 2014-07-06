@@ -38,7 +38,6 @@ class EmceeModel(object):
         """ """
 
         self.parameters = OrderedDict()
-        self.nparameters = 0
 
         if ln_prior is not None:
             self.ln_prior = ln_prior
@@ -70,12 +69,20 @@ class EmceeModel(object):
         else:
             self.parameters[param.name] = param.copy()
 
-        self.nparameters += param.size
-
     def _walk(self):
         """ Walk through a dictionary tree with maximum depth=2 """
         for tup in walk_dict(self.parameters):
             yield tup
+
+    @property
+    def nparameters(self):
+        """ Compute the number of model parameters on the fly. Excludes
+            frozen parameters.
+        """
+        np = 0
+        for group_name,param_name,param in self._walk():
+            np += param.size
+        return np
 
     def ln_prior(self, parameters, value_dict, *args):
         """ Default prior -- if none specified, evaluates the priors
