@@ -30,7 +30,10 @@ def walk_dict(d):
                 else:
                     yield group, name, param
         else:
-            yield group, name, param
+            if param.frozen is not False: # skip frozen parameters
+                continue
+            else:
+                yield group, name, param
 
 class EmceeModel(object):
 
