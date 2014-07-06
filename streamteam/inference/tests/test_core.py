@@ -25,52 +25,71 @@ plot_path = "plots/tests/inference"
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
+def dummy_likelihood(parameters, value_dict, *args):
+    return 0.
+
 class TestEmceeModel(object):
 
     def setup(self):
         np.random.seed(42)
 
-        self.flat_model = EmceeModel()
+        self.flat_model = EmceeModel(dummy_likelihood)
         for name in "abcdefg":
-            p = ModelParameter(name, value=np.nan, truth=np.random.random(),
+            p = ModelParameter(name, truth=np.random.random(),
                                prior=LogUniformPrior(0.,1.))
             self.flat_model.add_parameter(p)
 
-        self.group_model = EmceeModel()
+        self.group_model = EmceeModel(dummy_likelihood)
         for group in ["herp","derp"]:
             for name in "abcd":
-                p = ModelParameter(name, value=np.nan, truth=np.random.random(),
+                p = ModelParameter(name, truth=np.random.random(),
                                    prior=LogUniformPrior(0.,1.))
-                self.group_model.add_parameter(p, parameter_group=group)
+                self.group_model.add_parameter(p, group)
 
-        self.vec_model = EmceeModel()
+        self.vec_model = EmceeModel(dummy_likelihood)
         for name in "abcd":
-            length = np.random.randint(2,10)
-            troof = np.random.random(size=length)
-            p = ModelParameter(name, value=[np.nan]*length, truth=troof,
+            troof = np.random.random(size=3)
+            p = ModelParameter(name, truth=troof,
                                prior=LogUniformPrior(0*troof,0*troof+1))
             self.vec_model.add_parameter(p)
 
         self.models = [self.group_model, self.flat_model, self.vec_model]
 
     def test_init(self):
-        m = ModelParameter("m", value=np.nan, truth=1.5,
-                           prior=LogUniformPrior(1.,2.))
-        b = ModelParameter("b", value=np.nan, truth=6.7,
-                           prior=LogUniformPrior(0.,10.))
+        m = ModelParameter("m", truth=1.5, prior=LogUniformPrior(1.,2.))
+        b = ModelParameter("b", truth=6.7, prior=LogUniformPrior(0.,10.))
 
-        model = EmceeModel()
+        model = EmceeModel(dummy_likelihood)
         model.add_parameter(m)
         model.add_parameter(b)
-        model.parameters['main']['m']
-        model.parameters['main']['b']
+        model.parameters['m']
+        model.parameters['b']
 
-        assert np.all(model.truths == np.array([1.5,6.7]))
+        assert np.all(model.truth_vector == np.array([1.5,6.7]))
 
     def test_walk_parameters(self):
-        for model in self.models:
-            for group,name,p in model._walk(model.parameters):
-                assert name == str(p)
+        model_names = list("abcdefg")
+        for group,name,p in self.flat_model._walk():
+            assert name == str(p)
+            model_names.pop(model_names.index(name))
+        assert len(model_names) == 0
+
+        model_names = list("abcdabcd")
+        for group,name,p in self.group_model._walk():
+            assert name == str(p)
+            model_names.pop(model_names.index(name))
+        assert len(model_names) == 0
+
+        model_names = list("abcd")
+        for group,name,p in self.vec_model._walk():
+            assert name == str(p)
+            model_names.pop(model_names.index(name))
+        assert len(model_names) == 0
+
+    def test_nparameters(self):
+        assert self.flat_model.nparameters == 7
+        assert self.group_model.nparameters == 8
+        assert self.vec_model.nparameters == 3*4
 
     def test_decompose_compose(self):
         for model in self.models:
