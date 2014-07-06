@@ -91,7 +91,7 @@ class TestEmceeModel(object):
         assert self.group_model.nparameters == 8
         assert self.vec_model.nparameters == 3*4
 
-    def test_decompose_compose(self):
+    def test_devectorize_vectorize(self):
         for model in self.models:
             vec = np.random.random(size=model.nparameters)
             decom = model.vector_to_parameters(vec)
