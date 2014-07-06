@@ -41,44 +41,27 @@ class TestModelParameter(object):
         assert p.name == "test"
         assert p.frozen == False
 
-    def test_truth_value(self):
-        p = ModelParameter("test", value=15.)
-        assert p.value == 15.
-        assert p.unit == u.dimensionless_unscaled
+    def test_truthvalue(self):
+        p = ModelParameter("test", truth=15.)
+        assert p.truth.value == 15.
         assert p.truth.unit == u.dimensionless_unscaled
 
-        p = ModelParameter("test", value=15.*u.km)
-        assert p.value == 15.
-        assert p.unit == u.km
+        p = ModelParameter("test", truth=15.*u.km)
+        assert p.truth.value == 15.
         assert p.truth.unit == u.km
 
-        p = ModelParameter("test", value=15., truth=21.)
-        assert p.value == 15.
-        assert p.unit == u.dimensionless_unscaled
-        assert p.truth.value == 21.
+        p = ModelParameter("test", truth=np.ones(15)*21.*u.km)
+        assert p.truth.shape == (15,)
+        assert p.truth.unit == u.km
+
+        p = ModelParameter("test", shape=(15,))
+        assert p.truth.shape == (15,)
         assert p.truth.unit == u.dimensionless_unscaled
 
         # one with units, one without not allowed
-        with pytest.raises(u.UnitsError):
-            p = ModelParameter("test", value=15.*u.km, truth=21.)
-        with pytest.raises(u.UnitsError):
-            p = ModelParameter("test", value=15., truth=21.*u.km)
-
-        # but two different units is ok
-        p = ModelParameter("test", value=15.*u.km, truth=21000.*u.m)
-
-        # vectors ok
-        p = ModelParameter("test", value=[15., 11.]*u.km, truth=[21., 13]*u.km)
-
-        # same check with vectors
-        with pytest.raises(u.UnitsError):
-            p = ModelParameter("test", value=[15., 11.]*u.km, truth=[21., 13])
-        with pytest.raises(u.UnitsError):
-            p = ModelParameter("test", value=[15., 11.], truth=[21., 13]*u.m)
-
-        # no units ok
-        p = ModelParameter("test", value=[15., 11.], truth=[21., 13])
+        with pytest.raises(ValueError):
+            p = ModelParameter("test", truth=11*u.km, shape=(15,))
 
     def test_prior(self):
         prior = LogUniformPrior(a=10., b=25.)
-        p = ModelParameter("test", value=15., truth=21., prior=prior)
+        p = ModelParameter("test", truth=21., prior=prior)
