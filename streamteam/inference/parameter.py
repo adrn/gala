@@ -67,6 +67,18 @@ class ModelParameter(object):
         # whether the parameter is variable or not - default: not frozen
         self.frozen = False
 
+    @property
+    def size(self):
+        return self.truth.size
+
+    @property
+    def shape(self):
+        return self.truth.shape
+
+    @property
+    def __len__(self):
+        return len(self.truth)
+
     def copy(self):
         """ Return a copy of this `ModelParameter` instance """
         p = ModelParameter(name=self.name, truth=self.truth, prior=self.prior)
