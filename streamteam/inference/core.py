@@ -82,10 +82,10 @@ class EmceeModel(object):
         """ Compute the number of model parameters on the fly. Excludes
             frozen parameters.
         """
-        np = 0
+        npar = 0
         for group_name,param_name,param in self._walk():
-            np += param.size
-        return np
+            npar += param.size
+        return npar
 
     def ln_prior(self, parameters, value_dict, *args):
         """ Default prior -- if none specified, evaluates the priors
@@ -196,7 +196,6 @@ class EmceeModel(object):
         p0 = np.zeros((n, self.nparameters))
         ix1 = 0
         for group_name,param_name,param in self._walk():
-            print(param_name, param.prior.sample(n=n).shape, n)
             if param.size == 1:
                 p0[:,ix1] = param.prior.sample(n=n)
             else:
