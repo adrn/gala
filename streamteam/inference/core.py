@@ -19,6 +19,19 @@ from .prior import *
 
 __all__ = ["EmceeModel"]
 
+def walk_dict(d):
+    group = None
+    for name,param in d.items():
+        if hasattr(param,"items"):
+            group = name
+            for grp,name,param in walk_dict(param):
+                if param.frozen: # skip frozen parameters
+                    continue
+                else:
+                    yield group, name, param
+        else:
+            yield group, name, param
+
 class EmceeModel(object):
 
     def __init__(self, ln_likelihood, ln_prior=None, args=()):
@@ -60,17 +73,8 @@ class EmceeModel(object):
 
     def _walk(self):
         """ Walk through a dictionary tree with maximum depth=2 """
-        group = None
-        for name,param in self.parameters.items():
-            if hasattr(param,"items"):
-                group = name
-                for grp,name,param in walk_dict(param):
-                    if param.frozen: # skip frozen parameters
-                        continue
-                    else:
-                        yield group, name, param
-            else:
-                yield group, name, param
+        for tup in walk_dict(self.parameters):
+            yield tup
 
     def ln_prior(self, parameters, value_dict, *args):
         """ Default prior -- if none specified, evaluates the priors
