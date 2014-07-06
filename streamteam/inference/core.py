@@ -65,7 +65,10 @@ class EmceeModel(object):
             if hasattr(param,"items"):
                 group = name
                 for grp,name,param in walk_dict(param):
-                    yield group, name, param
+                    if param.frozen: # skip frozen parameters
+                        continue
+                    else:
+                        yield group, name, param
             else:
                 yield group, name, param
 
