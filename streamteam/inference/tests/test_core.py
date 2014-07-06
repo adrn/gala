@@ -30,32 +30,7 @@ def dummy_likelihood(parameters, value_dict, *args):
 
 class TestEmceeModel(object):
 
-    def setup(self):
-        np.random.seed(42)
-
-        self.flat_model = EmceeModel(dummy_likelihood)
-        for name in "abcdefg":
-            p = ModelParameter(name, truth=np.random.random(),
-                               prior=LogUniformPrior(0.,1.))
-            self.flat_model.add_parameter(p)
-
-        self.group_model = EmceeModel(dummy_likelihood)
-        for group in ["herp","derp"]:
-            for name in "abcd":
-                p = ModelParameter(name, truth=np.random.random(),
-                                   prior=LogUniformPrior(0.,1.))
-                self.group_model.add_parameter(p, group)
-
-        self.vec_model = EmceeModel(dummy_likelihood)
-        for name in "abcd":
-            troof = np.random.random(size=3)
-            p = ModelParameter(name, truth=troof,
-                               prior=LogUniformPrior(0*troof,0*troof+1))
-            self.vec_model.add_parameter(p)
-
-        self.models = [self.group_model, self.flat_model, self.vec_model]
-
-    def test_init(self):
+    def test_simple(self):
         m = ModelParameter("m", truth=1.5, prior=LogUniformPrior(1.,2.))
         b = ModelParameter("b", truth=6.7, prior=LogUniformPrior(0.,10.))
 
@@ -66,6 +41,56 @@ class TestEmceeModel(object):
         model.parameters['b']
 
         assert np.all(model.truth_vector == np.array([1.5,6.7]))
+
+    def setup(self):
+        np.random.seed(42)
+
+        self.flat_model = EmceeModel(dummy_likelihood)
+        for name in "abcdefg":
+            p = ModelParameter(name, truth=np.random.random(),
+                               prior=LogUniformPrior(0.,1.))
+            self.flat_model.add_parameter(p)
+            assert self.flat_model.parameters.has_key(name)
+
+        # ---------------------------------------------------------------
+        self.group_model = EmceeModel(dummy_likelihood)
+        for group in ["herp","derp"]:
+            for name in "abcd":
+                p = ModelParameter(name, truth=np.random.random(),
+                                   prior=LogUniformPrior(0.,1.))
+                self.group_model.add_parameter(p, group)
+        assert self.group_model.parameters.has_key("herp")
+        assert self.group_model.parameters.has_key("derp")
+
+        # ---------------------------------------------------------------
+        self.vec_model = EmceeModel(dummy_likelihood)
+        for name in "abcd":
+            troof = np.random.random(size=3)
+            p = ModelParameter(name, truth=troof,
+                               prior=LogUniformPrior(0*troof,0*troof+1))
+            self.vec_model.add_parameter(p)
+            assert self.vec_model.parameters.has_key(name)
+
+        # ---------------------------------------------------------------
+        self.frozen_model = EmceeModel(dummy_likelihood)
+        for name in "abc":
+            p = ModelParameter(name, truth=np.random.random(),
+                               prior=LogUniformPrior(0.,1.))
+            self.frozen_model.add_parameter(p)
+
+        p = ModelParameter('mrfreeze', truth=0.5, prior=LogUniformPrior(0,1))
+        p.frozen = 0.4712
+        self.frozen_model.add_parameter(p)
+        assert self.frozen_model.parameters['mrfreeze'].frozen is not False
+
+        p = ModelParameter('chillout', truth=0.5, prior=LogUniformPrior(0,1))
+        p.frozen = 0.4712
+        self.frozen_model.add_parameter(p)
+        assert self.frozen_model.parameters['chillout'].frozen is not False
+
+        # ---------------------------------------------------------------
+
+        self.models = [self.flat_model, self.group_model, self.vec_model, self.frozen_model]
 
     def test_walk_parameters(self):
         model_names = list("abcdefg")
@@ -86,71 +111,73 @@ class TestEmceeModel(object):
             model_names.pop(model_names.index(name))
         assert len(model_names) == 0
 
+        model_names = list("abc")
+        for group,name,p in self.frozen_model._walk():
+            assert name == str(p)
+            model_names.pop(model_names.index(name))
+        assert len(model_names) == 0
+
     def test_nparameters(self):
         assert self.flat_model.nparameters == 7
         assert self.group_model.nparameters == 8
         assert self.vec_model.nparameters == 3*4
+        assert self.frozen_model.nparameters == 3
 
     def test_devectorize_vectorize(self):
+
         for model in self.models:
             vec = np.random.random(size=model.nparameters)
-            decom = model.vector_to_parameters(vec)
-            for group,name,p in model._walk(model.parameters):
-                decom[group][name]
 
-            com = model.parameters_to_vector(decom)
+            decom = model.devectorize(vec)
+            for group,name,p in model._walk():
+                if group is not None:
+                    decom[group][name]
+                else:
+                    decom[name]
+
+            com = model.vectorize(decom)
             assert np.all((vec-com) == 0.)
 
     def test_flatchain(self):
         nsteps = 1024
         for model in self.models:
             vec = np.random.random(size=(model.nparameters,nsteps))
-            decom = model.vector_to_parameters(vec)
-            for group,name,p in model._walk(model.parameters):
-                print(decom[group][name].shape)
+            decom = model.devectorize(vec)
+            for group,name,p in model._walk():
+                if group is None:
+                    print(decom[name].shape)
+                else:
+                    print(decom[group][name].shape)
 
     def test_prior(self):
         for model in self.models:
             vec = np.random.random(size=model.nparameters)
-            decom = model.vector_to_parameters(vec)
-            print(model.ln_prior(decom))
+            decom = model.devectorize(vec)
+            print(model.ln_prior(model.parameters, decom))
 
     def test_likelihood(self):
         for model in self.models:
             vec = np.random.random(size=model.nparameters)
-            decom = model.vector_to_parameters(vec)
-            print(model.ln_likelihood(decom))
-
-    def test_truths(self):
-        for model in self.models:
-            truths = np.array([])
-            for group,name,p in model._walk(model.parameters):
-                truths = np.append(truths,p.truth)
-
-            assert np.all(truths == model.truths)
+            decom = model.devectorize(vec)
+            print(model.ln_likelihood(model.parameters, decom))
 
     def test_sample_priors(self):
         for model in self.models:
-            pri = model.sample_priors(size=5)
-            print(pri.shape)
+            pri = model.sample_priors(n=5)
 
     def test_mcmc_sample_priors(self):
-        m = ModelParameter("m", value=np.nan, truth=1.,
-                           prior=LogNormalPrior(0.,2.))
-        b = ModelParameter("b", value=np.nan, truth=6.7,
+        m = ModelParameter("m", truth=1.,
+                           prior=LogNormal1DPrior(0.,2.))
+        b = ModelParameter("b", truth=6.7,
                            prior=LogUniformPrior(0.,10.))
 
-        model = EmceeModel()
+        model = EmceeModel(dummy_likelihood)
         model.add_parameter(m)
         model.add_parameter(b)
-        model.parameters['main']['m']
-        model.parameters['main']['b']
 
         nwalkers = 16
-        ndim = 2
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, model)
-
-        p0 = [np.random.rand(ndim) for i in range(nwalkers)]
+        p0 = model.sample_priors(n=nwalkers)
+        sampler = emcee.EnsembleSampler(nwalkers, model.nparameters, model)
         sampler.run_mcmc(p0, 1000)
 
         fig,axes = plt.subplots(1,2)
