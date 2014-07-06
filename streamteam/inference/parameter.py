@@ -67,6 +67,14 @@ class ModelParameter(object):
         # whether the parameter is variable or not - default: not frozen
         self.frozen = False
 
+    def freeze(self, val):
+        """ Freeze the parameter to the specified value """
+        self.frozen = val
+
+    def thaw(self):
+        """ Un-freeze (thaw) the parameter. """
+        self.frozen = False
+
     @property
     def size(self):
         return self.truth.size
