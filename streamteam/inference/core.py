@@ -63,8 +63,9 @@ class EmceeModel(object):
         if not isinstance(param, ModelParameter):
             raise TypeError("Invalid parameter type '{}'".format(type(param)))
 
-        if group is not None and group not in self.parameters.keys():
-            self.parameters[group] = OrderedDict()
+        if group is not None:
+            if group not in self.parameters.keys():
+                self.parameters[group] = OrderedDict()
             self.parameters[group][param.name] = param.copy()
         else:
             self.parameters[param.name] = param.copy()
