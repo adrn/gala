@@ -271,7 +271,7 @@ def fft_orbit(t, w):
     ffts = np.zeros((nsteps,ndim))
     freqs = np.zeros((nsteps,ndim))
     for ii in range(ndim):
-        ffts[:,ii] = np.abs(scipy.fft(w[:,0,ii]))
+        ffts[:,ii] = np.abs(scipy.fft(w[:,ii]))
         freqs[:,ii] = fftpack.fftfreq(nsteps, dt)
 
     return freqs, ffts
