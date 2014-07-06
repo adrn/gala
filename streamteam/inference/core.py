@@ -128,6 +128,8 @@ class EmceeModel(object):
             if group_name is None:
                 d[param_name] = val
             else:
+                if group_name not in d.keys():
+                    d[group_name] = OrderedDict()
                 d[group_name][param_name] = val
 
             ix1 += param.size
