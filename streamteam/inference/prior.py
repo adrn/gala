@@ -22,7 +22,8 @@ class LogPrior(object):
         return self.eval(value)
 
     def sample(self, n=None):
-        """ Sample from this prior.
+        """ Sample from this prior. The returned array axis=0 is the
+            sample axis.
 
             Parameters
             ----------
@@ -50,8 +51,8 @@ class LogUniformPrior(LogPrior):
             b : numeric, quantity_like, array_like
                 Lower bound.
         """
-        self.a = np.atleast_1d(a)
-        self.b = np.atleast_1d(b)
+        self.a = np.array(a)
+        self.b = np.array(b)
 
         if self.a.shape != self.b.shape:
             raise ValueError("a and b must match in shape!")
@@ -60,12 +61,13 @@ class LogUniformPrior(LogPrior):
         return "<Uniform a={}, b={}>".format(self.a, self.b)
 
     def eval(self, value):
-        p = np.log(1 / (self.b - self.a))
+        p = np.atleast_1d(np.log(1 / (self.b - self.a)))
         p[(value < self.a) | (value > self.b)] = -np.inf
-        return p
+        return np.squeeze(p)
 
     def sample(self, n=None):
-        """ Sample from this prior.
+        """ Sample from this prior. The returned array axis=0 is the
+            sample axis.
 
             Parameters
             ----------
@@ -92,7 +94,8 @@ class LogNormal1DPrior(LogPrior):
         return self._norm - 0.5*(X / self.stddev)**2
 
     def sample(self, n=None):
-        """ Sample from this prior.
+        """ Sample from this prior. The returned array axis=0 is the
+            sample axis.
 
             Parameters
             ----------

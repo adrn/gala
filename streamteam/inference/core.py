@@ -182,7 +182,7 @@ class EmceeModel(object):
         value_dict = self.devectorize(p)
         return self.ln_posterior(value_dict)
 
-    def sample_priors(self, size=1):
+    def sample_priors(self, n=1):
         """ Draw samples from the priors over the model parameters.
 
             Parameters
@@ -193,10 +193,14 @@ class EmceeModel(object):
                 Sample centered on true values.
         """
 
-        p0 = np.zeros((size, self.nparameters))
+        p0 = np.zeros((n, self.nparameters))
         ix1 = 0
         for group_name,param_name,param in self._walk():
-            p0[:,ix1:ix1+param.size] = param.prior.sample(size=size)
+            print(param_name, param.prior.sample(n=n).shape, n)
+            if param.size == 1:
+                p0[:,ix1] = param.prior.sample(n=n)
+            else:
+                p0[:,ix1:ix1+param.size] = param.prior.sample(n=n)
             ix1 += param.size
 
         return p0
