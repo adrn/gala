@@ -25,7 +25,7 @@ def walk_dict(d):
         if hasattr(param,"items"):
             group = name
             for grp,name,param in walk_dict(param):
-                if param.frozen: # skip frozen parameters
+                if param.frozen is not False: # skip frozen parameters
                     continue
                 else:
                     yield group, name, param
