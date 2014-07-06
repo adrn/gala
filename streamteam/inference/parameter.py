@@ -40,7 +40,7 @@ class ModelParameter(u.Quantity):
             else:
                 unit = u.dimensionless_unscaled
             value = np.array(value)*unit
-            truth = np.ones_like(value)*np.nan*unit
+            truth = np.ones_like(value)*np.nan
 
         elif value is None and truth is not None:
             if hasattr(truth, "unit"):
@@ -48,9 +48,28 @@ class ModelParameter(u.Quantity):
             else:
                 unit = u.dimensionless_unscaled
             truth = np.array(truth)*unit
-            value = np.ones_like(truth)*np.nan*unit
+            value = np.ones_like(truth)*np.nan
 
-        self = super(ModelParameter, cls).__new__(cls, value)
+        elif value is not None and truth is not None:
+            if hasattr(value, "unit"):
+                vunit = value.unit
+            else:
+                vunit = u.dimensionless_unscaled
+
+            if hasattr(truth, "unit"):
+                tunit = truth.unit
+            else:
+                tunit = u.dimensionless_unscaled
+
+            if not vunit.is_equivalent(tunit):
+                raise u.UnitsError("Incompatible units '{}' and '{}'"
+                                   .format(vunit, tunit))
+
+            value = np.array(value)*vunit
+            truth = np.array(truth)*tunit
+
+        self = super(ModelParameter, cls).__new__(cls, value.value,
+                                                  unit=value.unit)
 
         # assign a benign prior that always evaluates to 0. if none specified
         if prior is None:
@@ -80,11 +99,7 @@ class ModelParameter(u.Quantity):
         return self.copy()
 
     def __repr__(self):
-        extra = ""
-        if np.all(~np.isnan(self.truth)):
-            extra = " truth={}".format(self.truth)
-
-        return "<ModelParameter '{}'{}>".format(self.name, extra)
+        return "<ModelParameter '{}'>".format(self.name)
 
     def __str__(self):
         return self.name
