@@ -6,12 +6,12 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 import os, sys
-import logging
 from collections import OrderedDict
 
 # Third-party
 import numpy as np
 import astropy.units as u
+from astropy import log as logger
 
 # Project
 from .parameter import ModelParameter
@@ -19,63 +19,83 @@ from .prior import *
 
 __all__ = ["EmceeModel"]
 
-logger = logging.getLogger(__name__)
-
 class EmceeModel(object):
 
-    def __init__(self, ln_likelihood=None, ln_likelihood_args=()):
+    def __init__(self, ln_likelihood, ln_prior=None, args=()):
         """ """
 
         self.parameters = OrderedDict()
         self.nparameters = 0
 
-        if ln_likelihood is None:
-            ln_likelihood = lambda *args,**kwargs: 0.
+        if ln_prior is not None:
+            self.ln_prior = ln_prior
 
         self.ln_likelihood = ln_likelihood
-        self.ln_likelihood_args = ln_likelihood_args
+        self.args = args
 
-    def add_parameter(self, parameter, parameter_group=None):
+        if not hasattr(self.ln_likelihood, "__call__"):
+            raise TypeError("ln_likelihood must be callable.")
+        elif not hasattr(self.ln_prior, "__call__"):
+            raise TypeError("ln_prior must be callable.")
+
+    def add_parameter(self, param, group=None):
         """ Add a parameter to the model.
 
             Parameters
             ----------
-            parameter : ModelParameter
+            param : ModelParameter
                 The parameter instance.
-            parameter_group : str (optional)
-                Name of the parameter group to add this parameter to.
         """
 
-        if not isinstance(parameter, ModelParameter):
-            raise TypeError("Invalid parameter type '{}'".format(type(parameter)))
+        if not isinstance(param, ModelParameter):
+            raise TypeError("Invalid parameter type '{}'".format(type(param)))
 
-        if parameter_group is None:
-            parameter_group = "main"
+        if group is not None and group not in self.parameters.keys():
+            self.parameters[group] = OrderedDict()
+            self.parameters[group][param.name] = param.copy()
+        else:
+            self.parameters[param.name] = param.copy()
 
-        if parameter_group not in self.parameters.keys():
-            self.parameters[parameter_group] = OrderedDict()
+        self.nparameters += param.size
 
-        self.parameters[parameter_group][parameter.name] = parameter.copy()
-        self.nparameters += parameter.size
+    def _walk(self):
+        """ Walk through a dictionary tree with maximum depth=2 """
+        group = None
+        for name,param in self.parameters.items():
+            if hasattr(param,"items"):
+                group = name
+                for grp,name,param in walk_dict(param):
+                    yield group, name, param
+            else:
+                yield group, name, param
 
-    def _walk(self, container):
-        for group_name,group in container.items():
-            for param_name,param in group.items():
-                yield group_name, param_name, param
+    def ln_prior(self, parameters, value_dict, *args):
+        """ Default prior -- if none specified, evaluates the priors
+            over each parameter at the specified dictionary of values
+        """
+        ln_prior = 0.
+        for group_name,param_name,param in self._walk():
+            if group_name is None:
+                v = value_dict[param_name]
+            else:
+                v = value_dict[group_name][param_name]
+            ln_prior += param.prior(v)
+
+        return ln_prior
 
     @property
-    def truths(self):
+    def truth_vector(self):
         """ Returns an array of the true values of all parameters in the model """
 
         true_p = np.array([])
-        for group_name,param_name,param in self._walk(self.parameters):
+        for group_name,param_name,param in self._walk():
             true_p = np.append(true_p, np.ravel(param.truth))
 
         return true_p
 
-    def vector_to_parameters(self, p):
+    def devectorize(self, p):
         """ Turns a vector of parameter values, e.g. from MCMC, and turns it into
-            a dictionary of parameters.
+            a dictionary of parameter values.
 
             Parameters
             ----------
@@ -85,18 +105,18 @@ class EmceeModel(object):
         d = OrderedDict()
 
         ix1 = 0
-        for group_name,param_name,param in self._walk(self.parameters):
-            if group_name not in d.keys():
-                d[group_name] = OrderedDict()
+        for group_name,param_name,param in self._walk():
+            val = p[ix1:ix1+param.size]
+            if group_name is None:
+                d[param_name] = val
+            else:
+                d[group_name][param_name] = val
 
-            par = ModelParameter(name=param_name, value=p[ix1:ix1+param.size],
-                                 truth=param.truth, prior=param.prior)
-            d[group_name][param_name] = par# p[ix1:ix1+param.size]
             ix1 += param.size
 
         return d
 
-    def parameters_to_vector(self, parameters):
+    def vectorize(self, value_dict):
         """ Turn a parameter dictionary into a parameter vector
 
             Parameters
@@ -105,37 +125,42 @@ class EmceeModel(object):
         """
 
         vec = np.array([])
-        for group_name,param_name,param in self._walk(parameters):
-            p = np.ravel(parameters[group_name][param_name].value)
+        for group_name,param_name,param in self._walk():
+            if group_name is None:
+                p = np.ravel(value_dict[param_name])
+            else:
+                p = np.ravel(value_dict[group_name][param_name])
             vec = np.append(vec, p)
 
         return vec
 
-    def ln_prior(self, parameters):
-        ln_prior = 0.
-        for group_name,param_name,param in self._walk(parameters):
-            lp = param.prior(param.value)
-            ln_prior += lp
-
-        return ln_prior
-
-    def ln_posterior(self, parameters):
-        ln_prior = self.ln_prior(parameters)
+    def ln_posterior(self, values):
+        ln_prior = self.ln_prior(self.parameters, values, *self.args)
 
         # short-circuit if any prior value is -infinity
         if np.any(np.isinf(ln_prior)):
             return -np.inf
 
-        ln_like = self.ln_likelihood(parameters, *self.ln_likelihood_args)
+        ln_like = self.ln_likelihood(self.parameters, values, *self.args)
 
-        if np.any(np.isnan(ln_like)) or np.any(np.isnan(ln_prior)):
+        # short-circuit if any likelihood value is -infinity
+        if np.any(np.isinf(ln_like)):
             return -np.inf
 
-        return np.sum(ln_like) + np.sum(ln_prior)
+        # sum over each star
+        ln_prior = np.sum(ln_prior)
+        ln_like = np.sum(ln_like)
+
+        if np.isnan(ln_like):
+            raise ValueError("Likelihood returned NaN value.")
+        elif np.isnan(ln_prior):
+            raise ValueError("Prior returned NaN value.")
+
+        return ln_like + ln_prior
 
     def __call__(self, p):
-        parameters = self.vector_to_parameters(p)
-        return self.ln_posterior(parameters)
+        value_dict = self.devectorize(p)
+        return self.ln_posterior(value_dict)
 
     def sample_priors(self, size=1):
         """ Draw samples from the priors over the model parameters.
@@ -150,7 +175,7 @@ class EmceeModel(object):
 
         p0 = np.zeros((size, self.nparameters))
         ix1 = 0
-        for group_name,param_name,param in self._walk(self.parameters):
+        for group_name,param_name,param in self._walk():
             p0[:,ix1:ix1+param.size] = param.prior.sample(size=size)
             ix1 += param.size
 
