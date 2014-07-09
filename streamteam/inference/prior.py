@@ -62,7 +62,8 @@ class LogUniformPrior(LogPrior):
 
     def eval(self, value):
         p = np.atleast_1d(np.log(1 / (self.b - self.a)))
-        p[(value < self.a) | (value > self.b)] = -np.inf
+        ix = np.atleast_1d((value < self.a) | (value > self.b))
+        p[ix] = -np.inf
         return np.squeeze(p)
 
     def sample(self, n=None):
