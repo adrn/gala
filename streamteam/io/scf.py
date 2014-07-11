@@ -104,7 +104,7 @@ class SCFReader(NBodyReader):
         with open(fullpath) as f:
             firstline = f.readline()
             try:
-                nparticles,timestep = firstline.split()
+                nparticles,time = firstline.split()
             except:
                 raise ValueError("Invalid header line. Expected 'nparticles,time', "
                                  "got:\n\t\t{}".format(firstline))
