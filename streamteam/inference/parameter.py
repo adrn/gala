@@ -69,7 +69,10 @@ class ModelParameter(object):
 
     def freeze(self, val):
         """ Freeze the parameter to the specified value """
-        self.frozen = val
+        if str(val).lower().strip() == "truth":
+            self.frozen = self.truth
+        else:
+            self.frozen = val
 
     def thaw(self):
         """ Un-freeze (thaw) the parameter. """
