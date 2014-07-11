@@ -41,7 +41,11 @@ class ModelParameter(object):
                 unit = truth.unit
             else:
                 unit = u.dimensionless_unscaled
-            truth = np.array(truth)*unit
+
+            if unit is None:
+                unit = u.dimensionless_unscaled
+
+            truth = np.asarray(truth)*unit
 
         elif truth is not None and shape is not None: # truth and shape specified
             if truth.shape != shape:
