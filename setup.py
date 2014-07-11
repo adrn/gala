@@ -33,7 +33,7 @@ setup(
     license="BSD",
     packages=["streamteam", "streamteam.coordinates", "streamteam.io",
               "streamteam.observation", "streamteam.integrate",
-              "streamteam.dynamics"]
+              "streamteam.dynamics", "streamteam.inference"]
 )
 
 # "streamteam.potential"
