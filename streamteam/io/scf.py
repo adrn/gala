@@ -27,6 +27,8 @@ __all__ = ["SCFReader"]
 
 class SCFReader(NBodyReader):
 
+    # TODO: way to list snapshot files?
+
     def _read_units(self):
         """ Read and parse the SCFPAR file containing simulation parameters
             and initial conditions. Right now, only parse out the simulation
@@ -106,20 +108,21 @@ class SCFReader(NBodyReader):
             except:
                 raise ValueError("Invalid header line. Expected 'nparticles,time', "
                                  "got:\n\t\t{}".format(firstline))
-        timestep = float(timestep)*self.sim_units['time']
+        time = float(time)*self.sim_units['time']
 
         data = np.genfromtxt(os.path.join(self.path,filename),
                              skiprows=1, names=colnames)
         if units is not None:
             new_colunits = []
             for colname,colunit in zip(colnames,colunits):
-                data[colname] = (data[colname]*colunit).to(units[colunit.physical_type]).value
-                new_colunits.append(units[colunit.physical_type])
+                newdata = (data[colname]*colunit).decompose(units)
+                data[colname] = newdata.value
+                new_colunits.append(newdata.unit)
 
-            timestep = timestep.to(units['time'])
+            time = time.decompose(units)
             colunits = new_colunits
 
-        tbl = Table(data, meta=dict(timestep=timestep.value))
+        tbl = Table(data, meta=dict(time=time.value))
         for colname,colunit in zip(colnames,colunits):
             tbl[colname].unit = colunit
 
