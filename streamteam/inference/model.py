@@ -53,6 +53,8 @@ class EmceeModel(object):
         elif not hasattr(self.ln_prior, "__call__"):
             raise TypeError("ln_prior must be callable.")
 
+        self.joint_priors = []
+
     def add_parameter(self, param, group=None):
         """ Add a parameter to the model.
 
@@ -98,6 +100,9 @@ class EmceeModel(object):
             else:
                 v = value_dict[group_name][param_name]
             ln_prior += param.prior(v)
+
+        for joint_prior in self.joint_priors:
+            ln_prior += joint_prior(parameters, value_dict, *args)
 
         return ln_prior
 

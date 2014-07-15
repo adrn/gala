@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 
 class LogPrior(object):
 
+    def eval(self, value):
+        return 0.
+
     def __call__(self, value):
         return self.eval(value)
 
