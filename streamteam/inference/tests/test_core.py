@@ -17,7 +17,7 @@ import astropy.units as u
 from astropy.io.misc import fnpickle
 import matplotlib.pyplot as plt
 
-from ..core import *
+from ..model import *
 from ..parameter import *
 from ..prior import *
 
@@ -276,3 +276,88 @@ class TestFitLine(object):
         ax.axvline(self.model.parameters['m'].truth.value, color='g')
 
         fig.savefig(os.path.join(plot_path,"fit_line_vary_m.png"))
+
+def jvp_line_likelihood(parameters, value_dict, x, y):
+    alpha = value_dict['alpha']
+    beta = value_dict['beta']
+    sigma = value_dict['sigma']
+
+    # model_val = alpha + beta*x
+    # return -0.5*(np.sum(np.log(2*np.pi*sigma**2) + ((y - model_val) / sigma)**2))
+
+    y_model = alpha + beta * x
+    return -0.5 * np.sum(np.log(2 *np.pi*sigma**2) + (y - y_model) ** 2 / sigma ** 2)
+
+def ln_p_beta_sigma(parameters, value_dict, *args):
+    beta = value_dict['beta']
+    sigma = value_dict['sigma']
+
+    if sigma < 0:
+        return -np.inf
+    else:
+        return -1.5 * np.log(1 + beta**2) - np.log(sigma)
+
+class TestJakeVDPExample(object):
+
+    def setup(self):
+        alpha = ModelParameter("alpha", truth=11., prior=LogUniformPrior(0.,20))
+        beta = ModelParameter("beta", truth=2.7)
+        sigma = ModelParameter("sigma", truth=0.25)
+
+        ndata = 50
+        x = np.random.uniform(0.,10.,size=ndata)
+        x.sort()
+        y = alpha.truth + beta.truth*x
+        y += np.random.normal(0., sigma.truth, size=ndata)
+
+        self.model = EmceeModel(jvp_line_likelihood, args=(x,y))
+        self.model.add_parameter(alpha)
+        self.model.add_parameter(beta)
+        self.model.add_parameter(sigma)
+        self.model.joint_priors.append(ln_p_beta_sigma)
+
+    def test_sample(self):
+        nwalkers = 50
+        # p0 = emcee.utils.sample_ball([10., 5, 0.1], [0.1, 0.05, 0.01], size=nwalkers)
+        p0 = np.random.uniform([0.,0.,0.01], [20.,20.,0.5], size=(nwalkers,3))
+        sampler = emcee.EnsembleSampler(nwalkers,
+                                        self.model.nparameters,
+                                        self.model)
+        pos,prob,state = sampler.run_mcmc(p0, 1000)
+        #sampler.reset()
+        #pos,prob,state = sampler.run_mcmc(pos, 1000)
+
+        fig,axes = plt.subplots(1,3)
+        axes[0].hist(sampler.flatchain[:,0], normed=True)
+        axes[0].axvline(self.model.parameters['alpha'].truth.value, color='g')
+        axes[0].set_xlim(0, 20)
+
+        axes[1].hist(sampler.flatchain[:,1], normed=True)
+        axes[1].axvline(self.model.parameters['beta'].truth.value, color='g')
+        axes[1].set_xlim(0, 20)
+
+        axes[2].hist(sampler.flatchain[:,2], normed=True)
+        axes[2].axvline(self.model.parameters['sigma'].truth.value, color='g')
+        axes[2].set_xlim(0, 0.5)
+
+        fig.savefig(os.path.join(plot_path,"jvp_fit_line.png"))
+
+        ###
+
+        fig,axes = plt.subplots(1,3)
+        for walker in sampler.chain:
+            axes[0].plot(walker[:,0], marker=None)
+            axes[1].plot(walker[:,1], marker=None)
+            axes[2].plot(walker[:,2], marker=None)
+
+        axes[0].axhline(self.model.parameters['alpha'].truth.value, color='g')
+        axes[0].set_ylim(0, 20)
+
+        axes[1].axhline(self.model.parameters['beta'].truth.value, color='g')
+        axes[1].set_ylim(0, 20)
+
+        axes[2].axhline(self.model.parameters['sigma'].truth.value, color='g')
+        axes[2].set_ylim(0, 0.5)
+
+        fig.savefig(os.path.join(plot_path,"jvp_fit_line_trace.png"))
+
