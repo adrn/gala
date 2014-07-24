@@ -24,6 +24,7 @@ if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
 usys = [u.kpc,u.Myr,u.Msun,u.radian]
+G = G.decompose(usys)
 
 print()
 color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yellow")
@@ -70,7 +71,6 @@ def test_repr():
     assert p.__repr__() == "<Potential: m=1.00e+10 solMass>"
 
 def test_plot():
-
     def f(x, m, x0):
         r = np.sqrt(np.sum((x-x0)**2, axis=-1))
         return -G*m/r
@@ -81,12 +81,12 @@ def test_plot():
 
     p = Potential(func=f, gradient=gradient,
                   parameters=dict(m=222234404403.41818*u.Msun,
-                                  x0=np.array([[1.,0.,0.]])*u.kpc))
-
+                                  x0=np.array([[1.,3.,0.]])*u.kpc))
     f,a = p.plot_contours(grid=(np.linspace(-10., 10., 100)*u.kpc,
                                 0.*u.kpc,
                                 0.*u.kpc),
                           labels=["X"])
+    f.suptitle("slice off from 0., won't have cusp")
     f.savefig(os.path.join(plot_path, "contour_x.png"))
 
     f,a = p.plot_contours(grid=(np.linspace(-10., 10., 100)*u.kpc,
