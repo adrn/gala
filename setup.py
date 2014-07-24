@@ -33,8 +33,6 @@ setup(
     license="BSD",
     packages=["streamteam", "streamteam.coordinates", "streamteam.io",
               "streamteam.observation", "streamteam.integrate",
-              "streamteam.dynamics", "streamteam.inference"]
+              "streamteam.dynamics", "streamteam.inference",
+              "streamteam.potential"]
 )
-
-# "streamteam.potential"
-# ext_modules=[lm10_acc, pal5_acc]
