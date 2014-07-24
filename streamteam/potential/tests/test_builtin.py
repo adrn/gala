@@ -149,36 +149,22 @@ class TestIsochrone(object):
 
 class TestMiyamotoNagai(object):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
-    def test_miyamoto_creation(self):
+    def test_create_plot(self):
 
-        potential = MiyamotoNagaiPotential(units=self.usys,
-                                           m=1.E11*u.M_sun,
-                                           a=6.5*u.kpc,
-                                           b=0.26*u.kpc,
-                                           r_0=[0.,0.,0.]*u.kpc)
+        potential = MiyamotoNagaiPotential(usys=self.usys,
+                                           m=1.E11,
+                                           a=6.5,
+                                           b=0.26)
 
-        r = ([1.,0.,0.]*u.kpc).reshape(1,3)
+        r = [1.,0.,0.]
         pot_val = potential.value_at(r)
         acc_val = potential.acceleration_at(r)
 
-        grid = np.linspace(-20.,20, 50)*u.kpc
-        fig,axes = potential.plot(ndim=3, grid=grid)
-        fig.savefig(os.path.join(plot_path, "miyamoto_nagai.png"))
+        grid = np.linspace(-20.,20, 200)
+        fig,axes = potential.plot_contours(grid=(grid,0.,grid))
+        fig.savefig(os.path.join(plot_path, "miyamoto_nagai_2d.png"))
 
-    def test_composite(self):
-        potential = CompositePotential(units=self.usys)
-        potential["disk"] = MiyamotoNagaiPotential(units=self.usys,
-                                           m=1.E11*u.M_sun,
-                                           a=6.5*u.kpc,
-                                           b=0.26*u.kpc,
-                                           r_0=[0.,0.,0.]*u.kpc)
-        potential["imbh"] = PointMassPotential(units=self.usys,
-                                              m=2E9*u.M_sun,
-                                              r_0=[5.,5.,0.]*u.kpc)
-
-        grid = np.linspace(-20.,20, 50)*u.kpc
-        fig,axes = potential.plot(ndim=3, grid=grid)
-        fig.savefig(os.path.join(plot_path, "miyamoto_nagai_imbh.png"))
+# HERE
 
 class TestHernquist(object):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
