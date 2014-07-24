@@ -21,10 +21,8 @@ from .core import Potential, CompositePotential
 #import _common # minimal gains from using Cython
 
 __all__ = ["PointMassPotential", "MiyamotoNagaiPotential",\
-           "HernquistPotential", "LogarithmicPotentialLJ",\
-           "PlummerPotential", "IsochronePotential",\
-           "AxisymmetricNFWPotential", "AxisymmetricLogarithmicPotential",
-           "SphericalNFWPotential"]
+           "HernquistPotential", "TriaxialLogarithmicPotential",\
+           "IsochronePotential"]
 
 ############################################################
 #    Potential due to a point mass at a given position
@@ -223,142 +221,53 @@ class HernquistPotential(Potential):
                                                  parameters=parameters)
 
 ##############################################################################
-#    Plummer potential
-#
-def _cartesian_plummer_model(bases):
-    """ Generates functions to evaluate a Plummer potential and its
-        derivatives at a specified position.
-
-        Physical parameters for this potential are:
-            mass : total mass in the potential
-            a : core/concentration parameter
-    """
-
-    # scale G to be in this unit system
-    _G = G.decompose(bases=bases).value
-
-    def f(r,r_0,m,a):
-        rr = np.sqrt(np.sum((r-r_0)**2, axis=1))
-        val = -_G * m / np.sqrt(rr**2 + a**2)
-        return val
-
-    def df(r,r_0,m,a):
-        rr = r-r_0
-        R_sq = np.sum((rr)**2, axis=1)
-
-        fac = -_G*m / (R_sq + a**2)**1.5
-        return fac*rr
-
-    return (f, df)
-
-class PlummerPotential(Potential):
-
-    def __init__(self, units, **parameters):
-        """ Represents the Plummer potential
-
-            $\Phi = -\frac{GM}{\sqrt{r^2 + a^2}}$
-
-            The parameters dictionary should include:
-                r_0 : location of the origin
-                m : mass in the potential
-                a : core concentration
-
-            Parameters
-            ----------
-            units : list
-                Defines a system of physical base units for the potential.
-            parameters : dict
-                A dictionary of parameters for the potential definition.
-
-        """
-
-        latex = r"$\Phi = -\frac{GM}{\sqrt{r^2 + a^2}}$"
-
-        assert "m" in parameters.keys(), "You must specify a mass."
-        assert "a" in parameters.keys(), "You must specify the parameter 'a'."
-
-        # get functions for evaluating potential and derivatives
-        f,df = _cartesian_plummer_model(units)
-        super(PlummerPotential, self).__init__(units,
-                                                 f=f, f_prime=df,
-                                                 latex=latex,
-                                                 parameters=parameters)
-
-##############################################################################
 #    Triaxial, Logarithmic potential (see: Johnston et al. 1998)
 #    http://adsabs.harvard.edu/abs/1999ApJ...512L.109J
 #
-def _cartesian_logarithmic_lj_model(bases):
-    """ Generates functions to evaluate a Logarithmic potential and its
-        derivatives at a specified position. This form of the log potential
-        allows for an angle orientation in the X-Y plane.
+def triaxial_log_funcs(units):
 
-        Physical parameters for this potential are:
-            q1 : x-axis flattening parameter
-            q2 : y-axis flattening parameter
-            qz : z-axis flattening parameter
-            phi : orientation angle in X-Y plane
-            v_halo : circular velocity of the halo
-            R_halo : radial concentration
-    """
-
-    def f(r,r_0,v_halo,q1,q2,qz,phi,R_halo):
+    def func(xyz, v_c, r_h, q1, q2, q3, phi):
         C1 = (math.cos(phi)/q1)**2+(math.sin(phi)/q2)**2
         C2 = (math.cos(phi)/q2)**2+(math.sin(phi)/q1)**2
         C3 = 2.*math.sin(phi)*math.cos(phi)*(1./q1**2 - 1./q2**2)
 
-        rr = r-r_0
-        x,y,z = rr.T
+        x,y,z = xyz.T
+        return 0.5*v_c*v_c * np.log(C1*x*x + C2*y*y + C3*x*y + z*z/q3**2 + r_h**2)
 
-        return v_halo*v_halo * np.log(C1*x*x + C2*y*y + C3*x*y + z*z/qz**2 + R_halo**2)
-
-    def df(r,r_0,v_halo,q1,q2,qz,phi,R_halo):
+    def gradient(xyz, v_c, r_h, q1, q2, q3, phi):
         C1 = (math.cos(phi)/q1)**2+(math.sin(phi)/q2)**2
         C2 = (math.cos(phi)/q2)**2+(math.sin(phi)/q1)**2
         C3 = 2.*math.sin(phi)*math.cos(phi)*(1./q1**2 - 1./q2**2)
 
-        rr = r-r_0
-        x,y,z = rr.T
+        x,y,z = xyz.T
 
-        fac = v_halo*v_halo / (C1*x*x + C2*y*y + C3*x*y + z*z/qz**2 + R_halo**2)
+        fac = 0.5*v_c*v_c / (C1*x*x + C2*y*y + C3*x*y + z*z/q3**2 + r_h**2)
 
         dx = fac * (2.*C1*x + C3*y)
         dy = fac * (2.*C2*y + C3*x)
-        dz = 2.* fac * z * qz**-2
+        dz = 2.* fac * z / q3 / q3
 
-        return -np.array([dx,dy,dz]).T
+        return np.array([dx,dy,dz]).T
 
-    return (f, df)
+    return func, gradient, None
 
-class LogarithmicPotentialLJ(Potential):
+class TriaxialLogarithmicPotential(Potential):
 
-    def __init__(self, units, **parameters):
+    def __init__(self, v_c, r_h, q1, q2, q3, phi, usys):
         """ Represents a triaxial Logarithmic potential (e.g. triaxial halo).
 
-            $\Phi_{halo} = v_{halo}^2\ln(C1x^2 + C2y^2 + C3xy + z^2/q_z^2 + R_halo^2)$
+            $\Phi_{halo} = \frac{1}{2}v_{c}^2\ln(C1x^2 + C2y^2 + C3xy + z^2/q_3^2 + r_h^2)$
 
-            Model parameters: v_halo, q1, q2, qz, phi, R_halo, origin
-
-            Parameters
-            ----------
-            units : list
-                Defines a system of physical base units for the potential.
-            parameters : dict
-                A dictionary of parameters for the potential definition.
+            Model parameters: v_c, q1, q2, qz, phi, r_h
         """
 
-        latex = "$\\Phi_{halo} = v_{halo}^2\\ln(C_1x^2 + C_2y^2 + C_3xy + z^2/q_z^2 + R_halo^2)$"
-
-        for p in ["q1", "q2", "qz", "phi", "v_halo", "R_halo"]:
-            assert p in parameters.keys(), \
-                    "You must specify the parameter '{0}'.".format(p)
-
-        # get functions for evaluating potential and derivatives
-        f,df = _cartesian_logarithmic_lj_model(units)
-        super(LogarithmicPotentialLJ, self).__init__(units,
-                                                     f=f, f_prime=df,
-                                                     latex=latex,
-                                                     parameters=parameters)
+        parameters = dict(v_c=v_c, r_h=r_h, q1=q1,
+                          q2=q2, q3=q3, phi=phi)
+        func,gradient,hessian = triaxial_log_funcs(usys)
+        super(TriaxialLogarithmicPotential, self).__init__(func=func,
+                                                 gradient=gradient,
+                                                 hessian=hessian,
+                                                 parameters=parameters)
 
 
 ##############################################################################
