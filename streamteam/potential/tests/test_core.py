@@ -120,7 +120,7 @@ def test_composite():
                                    x0=np.array([[-1.,0.,0.]])*u.kpc))
 
     p = CompositePotential(one=p1, two=p2)
-    assert np.allclose(p.value_at([0.,0.,0.]*u.kpc).decompose(usys), 2*u.kpc**2/u.Myr**2)
+    assert np.allclose(p.value_at([0.,0.,0.]*u.kpc).decompose(usys), -2*u.kpc**2/u.Myr**2)
     assert np.allclose(p.acceleration_at([0.,0.,0.]*u.kpc).decompose(usys).value, 0.)
 
     fig, axes = p.plot_contours(grid=(np.linspace(-10., 10., 100)*u.kpc,
