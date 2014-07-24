@@ -67,51 +67,51 @@ class TestComposite(object):
     usys = (u.au, u.M_sun, u.yr)
 
     def test_composite_create(self):
-        potential = CompositePotential(units=self.usys)
+        potential = CompositePotential()
 
         # Add a point mass with same unit system
-        potential["one"] = PointMassPotential(units=self.usys,
-                                              m=1.*u.M_sun,
-                                              r_0=[0.,0.,0.]*u.au)
+        potential["one"] = PointMassPotential(usys=self.usys,
+                                              m=1., x0=[0.,0.,0.])
 
         with pytest.raises(TypeError):
             potential["two"] = "derp"
 
     def test_plot_composite(self):
-        potential = CompositePotential(units=self.usys)
+        potential = CompositePotential()
 
         # Add a point mass with same unit system
-        potential["one"] = PointMassPotential(units=self.usys,
-                                              m=1.*u.M_sun,
-                                              r_0=[-1.,-1.,0.]*u.au)
-        potential["two"] = PointMassPotential(units=self.usys,
-                                              m=1.*u.M_sun,
-                                              r_0=[1.,1.,0.]*u.au)
+        potential["one"] = PointMassPotential(usys=self.usys,
+                                              m=1., x0=[1.,1.,0.])
+        potential["two"] = PointMassPotential(usys=self.usys,
+                                              m=1., x0=[-1.,-1.,0.])
 
         # Where forces cancel
-        pos = ([0.,0.,0.]*u.au).reshape(1,3)
         np.testing.assert_array_almost_equal(
-                        np.squeeze(potential.acceleration_at(pos).value),
-                        np.array([0.,0.,0.]), decimal=5)
+                        potential.acceleration_at([0.,0.,0.]),
+                        [0.,0.,0.], decimal=5)
 
-        grid = np.linspace(-5.,5)*u.au
-        fig,axes = potential.plot(ndim=3, grid=grid)
-        fig.savefig(os.path.join(plot_path, "two_equal_point_masses.png"))
+        grid = np.linspace(-5.,5)
+        fig,axes = potential.plot_contours(grid=(grid,0.,0.))
+        fig.savefig(os.path.join(plot_path, "two_equal_point_masses_1d.png"))
 
-    def test_plot_composite2(self):
-        potential = CompositePotential(units=self.usys)
+        fig,axes = potential.plot_contours(grid=(grid,grid,0.))
+        fig.savefig(os.path.join(plot_path, "two_equal_point_masses_2d.png"))
+
+    def test_plot_composite_mass_ratio(self):
+        potential = CompositePotential()
 
         # Add a point mass with same unit system
-        potential["one"] = PointMassPotential(units=self.usys,
-                                              m=1.*u.M_sun,
-                                              r_0=[-1.,-1.,0.]*u.au)
-        potential["two"] = PointMassPotential(units=self.usys,
-                                              m=5.*u.M_sun,
-                                              r_0=[1.,1.,0.]*u.au)
+        potential["one"] = PointMassPotential(usys=self.usys,
+                                              m=1., x0=[1.,1.,0.])
+        potential["two"] = PointMassPotential(usys=self.usys,
+                                              m=5., x0=[-1.,-1.,0.])
 
-        grid = np.linspace(-5.,5)*u.au
-        fig,axes = potential.plot(ndim=3, grid=grid)
-        fig.savefig(os.path.join(plot_path, "two_different_point_masses.png"))
+        grid = np.linspace(-5.,5)
+        fig,axes = potential.plot_contours(grid=(grid,0.,0.))
+        fig.savefig(os.path.join(plot_path, "two_different_point_masses_1d.png"))
+
+        fig,axes = potential.plot_contours(grid=(grid,grid,0.))
+        fig.savefig(os.path.join(plot_path, "two_different_point_masses_2d.png"))
 
     def test_many_point_masses(self, N=20):
         potential = CompositePotential(units=self.usys)
