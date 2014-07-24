@@ -68,7 +68,66 @@ class PointMassPotential(Potential):
                                                  hessian=hessian,
                                                  parameters=parameters)
 
-# TODO: Left off here because not sure whether to commit to units or not...
+##############################################################################
+#    Isochrone potential
+#
+
+def isochrone_funcs(units):
+    if units is None:
+        _G = 1.
+    else:
+        _G = G.decompose(units).value
+
+    def func(x,m,b):
+        r2 = np.sum(x**2, axis=-1)
+        val = -_G * m / (np.sqrt(r2 + b*b) + b)
+        return val
+
+    def gradient(x,m,b):
+        r2 = np.sum(x**2, axis=-1)
+        fac = -_G*m / (np.sqrt(r2 + b*b) + b)**2 / np.sqrt(r2 + b*b)
+        return fac * x
+
+    def hessian(x, m, b):
+        raise NotImplementedError() # TODO:
+
+    return f, gradient, hessian
+
+class IsochronePotential(Potential):
+
+    def __init__(self, units, **parameters):
+        """ Represents the Isochrone potential.
+
+            $\Phi_{spher} = -\frac{GM}{\sqrt{r^2+b^2} + b}$
+
+            The parameters dictionary should include:
+                r_0 : location of the origin
+                m : mass in the potential
+                b : core concentration
+
+            Parameters
+            ----------
+            units : list
+                Defines a system of physical base units for the potential.
+            parameters : dict
+                A dictionary of parameters for the potential definition.
+
+        """
+
+
+        latex = "$\\Phi = -\\frac{GM}{\sqrt{r^2+b^2} + b}$"
+
+        assert "m" in parameters.keys(), "You must specify a mass."
+        assert "b" in parameters.keys(), "You must specify the parameter 'b'."
+
+        # get functions for evaluating potential and derivatives
+        f,df = _cartesian_isochrone_model(units)
+        super(IsochronePotential, self).__init__(units,
+                                                 f=f, f_prime=df,
+                                                 latex=latex,
+                                                 parameters=parameters)
+
+# TODO: below here
 
 ##############################################################################
 #    Miyamoto-Nagai Disk potential from Miyamoto & Nagai 1975
@@ -206,69 +265,6 @@ class HernquistPotential(Potential):
         # get functions for evaluating potential and derivatives
         f,df = _cartesian_hernquist_model(units)
         super(HernquistPotential, self).__init__(units,
-                                                 f=f, f_prime=df,
-                                                 latex=latex,
-                                                 parameters=parameters)
-
-##############################################################################
-#    Isochrone potential
-#
-def _cartesian_isochrone_model(bases):
-    """ Generates functions to evaluate an Isochrone potential and its
-        derivatives at a specified position.
-
-        Physical parameters for this potential are:
-            m : total mass in the potential
-            b : core/concentration parameter
-    """
-
-    # scale G to be in this unit system
-    _G = G.decompose(bases=bases).value
-
-    def f(r,r_0,m,b):
-        rr = np.sqrt(np.sum((r-r_0)**2, axis=1))
-        val = -_G * m / (np.sqrt(rr**2 + b**2) + b)
-        return val
-
-    def df(r,r_0,m,b):
-        rr = r-r_0
-        R = np.sqrt(np.sum((rr)**2, axis=1))
-
-        fac = -_G*m / (np.sqrt(R**2 + b**2) + b)
-        return fac*rr
-
-    return (f, df)
-
-class IsochronePotential(Potential):
-
-    def __init__(self, units, **parameters):
-        """ Represents the Isochrone potential.
-
-            $\Phi_{spher} = -\frac{GM}{\sqrt{r^2+b^2} + b}$
-
-            The parameters dictionary should include:
-                r_0 : location of the origin
-                m : mass in the potential
-                b : core concentration
-
-            Parameters
-            ----------
-            units : list
-                Defines a system of physical base units for the potential.
-            parameters : dict
-                A dictionary of parameters for the potential definition.
-
-        """
-
-
-        latex = "$\\Phi = -\\frac{GM}{\sqrt{r^2+b^2} + b}$"
-
-        assert "m" in parameters.keys(), "You must specify a mass."
-        assert "b" in parameters.keys(), "You must specify the parameter 'b'."
-
-        # get functions for evaluating potential and derivatives
-        f,df = _cartesian_isochrone_model(units)
-        super(IsochronePotential, self).__init__(units,
                                                  f=f, f_prime=df,
                                                  latex=latex,
                                                  parameters=parameters)
