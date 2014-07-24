@@ -30,6 +30,7 @@ __all__ = ["PointMassPotential", "MiyamotoNagaiPotential",\
 #    Potential due to a point mass at a given position
 #
 def point_mass_funcs(units):
+    # scale G to be in this unit system
     if units is None:
         _G = 1.
     else:
@@ -48,7 +49,7 @@ def point_mass_funcs(units):
     def hessian(x, x0, m):
         raise NotImplementedError() # TODO:
 
-    return f, gradient, hessian
+    return f, gradient, None
 
 class PointMassPotential(Potential):
 
@@ -73,25 +74,26 @@ class PointMassPotential(Potential):
 #
 
 def isochrone_funcs(units):
+    # scale G to be in this unit system
     if units is None:
         _G = 1.
     else:
         _G = G.decompose(units).value
 
-    def func(x,m,b):
+    def func(x, m, b):
         r2 = np.sum(x**2, axis=-1)
         val = -_G * m / (np.sqrt(r2 + b*b) + b)
         return val
 
-    def gradient(x,m,b):
+    def gradient(x, m, b):
         r2 = np.sum(x**2, axis=-1)
-        fac = -_G*m / (np.sqrt(r2 + b*b) + b)**2 / np.sqrt(r2 + b*b)
-        return fac * x
+        fac = _G*m / (np.sqrt(r2 + b*b) + b)**2 / np.sqrt(r2 + b*b)
+        return fac[...,None] * x
 
     def hessian(x, m, b):
         raise NotImplementedError() # TODO:
 
-    return func, gradient, hessian
+    return func, gradient, None
 
 class IsochronePotential(Potential):
 
@@ -111,32 +113,24 @@ class IsochronePotential(Potential):
                                                  hessian=hessian,
                                                  parameters=parameters)
 
-# TODO: below here
-
 ##############################################################################
 #    Miyamoto-Nagai Disk potential from Miyamoto & Nagai 1975
 #    http://adsabs.harvard.edu/abs/1975PASJ...27..533M
 #
-def _cartesian_miyamoto_nagai_model(bases):
-    """ Generates functions to evaluate a Miyamoto-Nagai potential and its
-        derivatives at a specified position.
-
-        Physical parameters for this potential are:
-            m : total mass in the potential
-            a :
-            b :
-    """
+def miyamoto_nagai_funcs(units):
     # scale G to be in this unit system
-    _G = G.decompose(bases=bases).value
+    if units is None:
+        _G = 1.
+    else:
+        _G = G.decompose(units).value
 
-    def f(r,m,a,b):
-        x,y,z = r.T
-
+    def func(xyz, m, a, b):
+        x,y,z = xyz.T
         z_term = a + np.sqrt(z*z + b*b)
         return -_G * m / np.sqrt(x*x + y*y + z_term*z_term)
 
-    def df(r,m,a,b):
-        x,y,z = r.T
+    def gradient(xyz, m, a, b):
+        x,y,z = xyz.T
 
         sqrtz = np.sqrt(z*z + b*b)
         z_term = a + sqrtz
@@ -150,18 +144,20 @@ def _cartesian_miyamoto_nagai_model(bases):
 
         return np.array([dx,dy,dz]).T
 
-    return (f, df)
+    def hessian(xyz, m, a, b): # TODO
+        pass
+
+    return func, gradient, None
 
 class MiyamotoNagaiPotential(Potential):
 
-    def __init__(self, units, **parameters):
-        """ Represents the Miyamoto-Nagai potential (1975) for a disk-like
-            potential.
+    def __init__(self, m, a, b, usys=None):
+        """ Miyamoto-Nagai potential (1975) for a disk-like potential.
 
             $\Phi_{disk} = -\frac{GM_{disk}}{\sqrt{R^2 + (a + sqrt{z^2 + b^2})^2}}$
 
             The parameters dictionary should include:
-                m : mass in the potential
+                m : mass scale
                 a :
                 b :
 
@@ -174,18 +170,14 @@ class MiyamotoNagaiPotential(Potential):
 
         """
 
-        latex = "$\\Phi_{disk} = -\\frac{GM_{disk}}{\\sqrt{R^2 + (a + \\sqrt{z^2 + b^2})^2}}$"
-
-        assert "m" in parameters.keys(), "You must specify a mass."
-        assert "a" in parameters.keys(), "You must specify the parameter 'a'."
-        assert "b" in parameters.keys(), "You must specify the parameter 'b'."
-
-        # get functions for evaluating potential and derivatives
-        f,df = _cartesian_miyamoto_nagai_model(units)
-        super(MiyamotoNagaiPotential, self).__init__(units,
-                                                     f=f, f_prime=df,
-                                                     latex=latex,
+        parameters = dict(m=m, a=a, b=b)
+        func,gradient,hessian = miyamoto_nagai_funcs(usys)
+        super(MiyamotoNagaiPotential, self).__init__(func=func,
+                                                     gradient=gradient,
+                                                     hessian=hessian,
                                                      parameters=parameters)
+
+# HERE
 
 ##############################################################################
 #    Hernquist Spheroid potential from Hernquist 1990
