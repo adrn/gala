@@ -225,7 +225,7 @@ class CompositePotential(dict, Potential):
             x : astropy.units.Quantity, array_like, numeric
                 Position to compute the value of the potential.
         """
-        return u.Quantity([p.value_at(x) for p in self.values()]).sum(axis=0)
+        return np.array([p.value_at(x) for p in self.values()]).sum(axis=0)
 
     def acceleration_at(self, x):
         """ Compute the acceleration due to the potential at the given
@@ -236,4 +236,4 @@ class CompositePotential(dict, Potential):
             x : astropy.units.Quantity
                 Position to compute the acceleration at.
         """
-        return u.Quantity([p.acceleration_at(x) for p in self.values()]).sum(axis=0)
+        return np.array([p.acceleration_at(x) for p in self.values()]).sum(axis=0)
