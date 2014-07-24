@@ -26,58 +26,59 @@ __all__ = ["Potential", "CompositePotential"]
 
 class Potential(object):
 
-    def __init__(self, f, f_prime=None, parameters=dict()):
+    def __init__(self, func, gradient=None, hessian=None, parameters=dict()):
         """ A baseclass for representing gravitational potentials. You must specify
-            a function that evaluates the potential value. You may also optionally
-            add a function that computes derivatives (accelerations) using the f_prime
-            keyword.
+            a function that evaluates the potential value (func). You may also optionally
+            add a function that computes derivatives (gradient), and a function to compute
+            the Hessian of the potential.
 
             Parameters
             ----------
-            f : function
+            func : function
                 A function that computes the value of the potential.
-            f_prime : function (optional)
-                A function that computes the derivatives of the potential.
+            gradient : function (optional)
+                A function that computes the first derivatives (gradient) of the potential.
+            hessian : function (optional)
+                A function that computes the second derivatives (Hessian) of the potential.
             parameters : dict (optional)
-                Any extra parameters that the functions f or f_prime require.
+                Any extra parameters that the functions f require. All functions must take
+                the same parameters.
 
         """
 
         # store parameters
         self.parameters = parameters
 
-        # Make sure the f is callable
-        if not hasattr(f, '__call__'):
-            raise TypeError("'f' parameter must be a callable function! You "
-                            "passed in a '{0}'".format(f.__class__))
-        self.f = f
+        # Make sure the functions are callable
+        for f in [func, gradient, hessian]:
+            if f is not None and not hasattr(f, '__call__'):
+                raise TypeError("'{}' parameter must be callable! You passed "
+                                "in a '{}'".format(f.func_name, f.__class__))
 
-        if f_prime != None:
-            if not hasattr(f_prime, '__call__'):
-                raise TypeError("'f_prime' must be a callable function! You "
-                                "passed in a '{0}'".format(f_prime.__class__))
-        self.f_prime = f_prime
+        self.func = func
+        self.gradient = gradient
+        self.hessian = hessian
 
     def value_at(self, x):
         """ Compute the value of the potential at the given position(s)
 
             Parameters
             ----------
-            x : astropy.units.Quantity, array_like, numeric
+            x : array_like, numeric
                 Position to compute the value of the potential.
         """
-        return self.f(x, **self.parameters)
+        return self.func(x, **self.parameters)
 
     def acceleration_at(self, x):
         """ Compute the acceleration due to the potential at the given
-            position(s)
+            position(s).
 
             Parameters
             ----------
-            x : astropy.units.Quantity, array_like, numeric
+            x : array_like, numeric
                 Position to compute the acceleration at.
         """
-        return self.f_prime(x, **self.parameters)
+        return -self.gradient(x, **self.parameters)
 
     def __repr__(self):
         pars = ""
