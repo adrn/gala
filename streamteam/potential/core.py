@@ -67,7 +67,7 @@ class Potential(object):
             x : array_like, numeric
                 Position to compute the value of the potential.
         """
-        return self.func(x, **self.parameters)
+        return self.func(np.array(x), **self.parameters)
 
     def acceleration_at(self, x):
         """ Compute the acceleration due to the potential at the given
@@ -78,7 +78,7 @@ class Potential(object):
             x : array_like, numeric
                 Position to compute the acceleration at.
         """
-        return -self.gradient(x, **self.parameters)
+        return -self.gradient(np.array(x), **self.parameters)
 
     def __repr__(self):
         pars = ""
@@ -130,9 +130,6 @@ class Potential(object):
         _grids = []
         _slices = []
         for ii,g in enumerate(grid):
-            if not hasattr(g,'unit'):
-                g = g*u.dimensionless_unscaled
-
             if isiterable(g):
                 _grids.append((ii,g))
             else:
@@ -152,34 +149,24 @@ class Potential(object):
         else:
             fig = ax.figure
 
-        # use the unit from the first grid
-        _unit = _grids[0][1].unit
-        if labels is not None:
-            labels = ["{} [{}]".format(l,_unit) for l in labels]
-
         if ndim == 1:
             # 1D curve
-            x1 = _grids[0][1].value
+            x1 = _grids[0][1]
             r = np.zeros((len(x1), len(_grids) + len(_slices)))
             r[:,_grids[0][0]] = x1
 
             for ii,slc in _slices:
-                r[:,ii] = slc.to(_unit).value
+                r[:,ii] = slc
 
-            Z = self.value_at(r*_unit)
-            ax.plot(x1, Z.value, **kwargs)
+            Z = self.value_at(r)
+            ax.plot(x1, Z, **kwargs)
 
             if labels is not None:
                 ax.set_xlabel(labels[0])
-
-                if Z.unit is not u.dimensionless_unscaled:
-                    ax.set_ylabel("potential value [{}]".format(Z.unit))
-                else:
-                    ax.set_ylabel("potential value")
+                ax.set_ylabel("potential")
         else:
             # 2D contours
-            x1,x2 = np.meshgrid(_grids[0][1].to(_unit).value,
-                                _grids[1][1].to(_unit).value)
+            x1,x2 = np.meshgrid(_grids[0][1], _grids[1][1])
             shp = x1.shape
             x1,x2 = x1.ravel(), x2.ravel()
 
@@ -188,9 +175,9 @@ class Potential(object):
             r[:,_grids[1][0]] = x2
 
             for ii,slc in _slices:
-                r[:,ii] = slc.to(_unit).value
+                r[:,ii] = slc
 
-            Z = self.value_at(r*_unit).value
+            Z = self.value_at(r)
 
             # make default colormap not suck
             cmap = kwargs.pop('cmap', cm.Blues)
