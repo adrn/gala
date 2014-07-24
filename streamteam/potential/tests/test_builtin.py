@@ -127,6 +127,26 @@ class TestComposite(object):
         fig,axes = potential.plot_contours(grid=(grid,grid,0.))
         fig.savefig(os.path.join(plot_path, "many_point_mass.png"))
 
+class TestIsochrone(object):
+    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    def test_create_plot(self):
+
+        potential = IsochronePotential(usys=self.usys,
+                                       m=1.E11, b=5.)
+
+        r = ([1.,0.,0.]*u.kpc).reshape(1,3)
+        pot_val = potential.value_at(r)
+        acc_val = potential.acceleration_at(r)
+
+        axes = None
+        grid = np.linspace(-20.,20, 50)
+        for slc in np.linspace(-20.,0.,10):
+            if axes is None:
+                fig,axes = potential.plot_contours(grid=(grid,slc,0.), marker=None)
+            else:
+                potential.plot_contours(grid=(grid,slc,0.), ax=axes, marker=None)
+        fig.savefig(os.path.join(plot_path, "isochrone_1d.png"))
+
 class TestMiyamotoNagai(object):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
     def test_miyamoto_creation(self):
@@ -225,22 +245,6 @@ class TestCompositeGalaxy(object):
         grid = np.linspace(-20.,20, 50)*u.kpc
         fig,axes = potential.plot(grid=grid, ndim=3)
         fig.savefig(os.path.join(plot_path, "composite_galaxy.png"))
-
-class TestIsochrone(object):
-    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
-    def test_create_plot(self):
-
-        potential = IsochronePotential(units=self.usys,
-                                       m=1.E11*u.M_sun,
-                                       b=5.*u.kpc)
-
-        r = ([1.,0.,0.]*u.kpc).reshape(1,3)
-        pot_val = potential.value_at(r)
-        acc_val = potential.acceleration_at(r)
-
-        grid = np.linspace(-20.,20, 50)*u.kpc
-        fig,axes = potential.plot(grid=grid,ndim=3)
-        fig.savefig(os.path.join(plot_path, "isochrone.png"))
 
 class TestAxisymmetricNFWPotential(object):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)

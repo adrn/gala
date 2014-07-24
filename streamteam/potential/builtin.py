@@ -91,40 +91,24 @@ def isochrone_funcs(units):
     def hessian(x, m, b):
         raise NotImplementedError() # TODO:
 
-    return f, gradient, hessian
+    return func, gradient, hessian
 
 class IsochronePotential(Potential):
 
-    def __init__(self, units, **parameters):
-        """ Represents the Isochrone potential.
+    def __init__(self, m, b, usys=None):
+        """ The Isochrone potential.
 
             $\Phi_{spher} = -\frac{GM}{\sqrt{r^2+b^2} + b}$
 
             The parameters dictionary should include:
-                r_0 : location of the origin
                 m : mass in the potential
                 b : core concentration
 
-            Parameters
-            ----------
-            units : list
-                Defines a system of physical base units for the potential.
-            parameters : dict
-                A dictionary of parameters for the potential definition.
-
         """
-
-
-        latex = "$\\Phi = -\\frac{GM}{\sqrt{r^2+b^2} + b}$"
-
-        assert "m" in parameters.keys(), "You must specify a mass."
-        assert "b" in parameters.keys(), "You must specify the parameter 'b'."
-
-        # get functions for evaluating potential and derivatives
-        f,df = _cartesian_isochrone_model(units)
-        super(IsochronePotential, self).__init__(units,
-                                                 f=f, f_prime=df,
-                                                 latex=latex,
+        parameters = dict(m=m, b=b)
+        func,gradient,hessian = isochrone_funcs(usys)
+        super(IsochronePotential, self).__init__(func=func, gradient=gradient,
+                                                 hessian=hessian,
                                                  parameters=parameters)
 
 # TODO: below here
