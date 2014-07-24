@@ -114,17 +114,17 @@ class TestComposite(object):
         fig.savefig(os.path.join(plot_path, "two_different_point_masses_2d.png"))
 
     def test_many_point_masses(self, N=20):
-        potential = CompositePotential(units=self.usys)
+        potential = CompositePotential()
 
         for ii in range(N):
             r0 = np.random.uniform(-1., 1., size=3)
             r0[2] = 0. # x-y plane
-            potential[str(ii)] = PointMassPotential(units=self.usys,
-                                                m=np.random.uniform()*u.M_sun,
-                                                r_0=r0*u.au)
+            potential[str(ii)] = PointMassPotential(usys=self.usys,
+                                                    m=np.exp(np.random.uniform(np.log(0.1),0.)),
+                                                    x0=r0)
 
-        grid = np.linspace(-1.,1,50)*u.au
-        fig,axes = potential.plot(ndim=3, grid=grid)
+        grid = np.linspace(-1.,1,50)
+        fig,axes = potential.plot_contours(grid=(grid,grid,0.))
         fig.savefig(os.path.join(plot_path, "many_point_mass.png"))
 
 class TestMiyamotoNagai(object):
