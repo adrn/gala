@@ -10,6 +10,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import os
 import pytest
 import numpy as np
+from astropy.utils.console import color_print
 from astropy.constants import G
 import astropy.units as u
 import matplotlib.pyplot as plt
@@ -24,55 +25,61 @@ if not os.path.exists(plot_path):
 
 usys = [u.kpc,u.Myr,u.Msun,u.radian]
 
+print()
+color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yellow")
+color_print("To view plots:", "green")
+print("    open {}".format(plot_path))
+color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yellow")
+
 def test_simple():
 
     def f(r):
-        return 1./r
+        return -1./r
 
-    def f_prime(r):
+    def gradient(r):
         return r**-2
 
-    p = Potential(f=f, f_prime=f_prime)
-    assert p.value_at(0.5) == 2.
-    assert p.acceleration_at(0.5) == 4.
+    p = Potential(func=f, gradient=gradient)
+    assert p.value_at(0.5) == -2.
+    assert p.acceleration_at(0.5) == -4.
 
-    print(p.value_at(np.arange(0.5, 11.5, 0.5)))
-    print(p.acceleration_at(np.arange(0.5, 11.5, 0.5)))
+    p.value_at(np.arange(0.5, 11.5, 0.5))
+    p.acceleration_at(np.arange(0.5, 11.5, 0.5))
 
 def test_simple_units():
 
     def f(r):
-        return (G*222234404403.41818*u.Msun)/r
+        return -(G*222234404403.41818*u.Msun)/r
 
-    def f_prime(r):
+    def gradient(r):
         return (G*222234404403.41818*u.Msun)/r**2
 
-    p = Potential(f=f, f_prime=f_prime)
-    assert np.allclose(p.value_at(0.5*u.kpc).decompose(usys), (2*u.kpc**2/u.Myr**2))
-    assert np.allclose(p.acceleration_at(0.5*u.kpc).decompose(usys), (4*u.kpc/u.Myr**2))
+    p = Potential(func=f, gradient=gradient)
+    assert np.allclose(p.value_at(0.5*u.kpc).decompose(usys), (-2*u.kpc**2/u.Myr**2))
+    assert np.allclose(p.acceleration_at(0.5*u.kpc).decompose(usys), (-4*u.kpc/u.Myr**2))
 
 def test_repr():
 
     def f(r,m):
-        return G*m/r
+        return -G*m/r
 
-    def f_prime(r,m):
-        return -G*m/r**2
+    def gradient(r,m):
+        return G*m/r**2
 
-    p = Potential(f=f, f_prime=f_prime, parameters=dict(m=1.E10*u.Msun))
+    p = Potential(func=f, gradient=gradient, parameters=dict(m=1.E10*u.Msun))
     assert p.__repr__() == "<Potential: m=1.00e+10 solMass>"
 
 def test_plot():
 
     def f(x, m, x0):
         r = np.sqrt(np.sum((x-x0)**2, axis=-1))
-        return G*m/r
+        return -G*m/r
 
-    def f_prime(x, m, x0):
+    def gradient(x, m, x0):
         r = np.sqrt(np.sum((x-x0)**2, axis=-1))
         return G*m*(x-x0)/r**3
 
-    p = Potential(f=f, f_prime=f_prime,
+    p = Potential(func=f, gradient=gradient,
                   parameters=dict(m=222234404403.41818*u.Msun,
                                   x0=np.array([[1.,0.,0.]])*u.kpc))
 
@@ -98,17 +105,17 @@ def test_composite():
 
     def f(x, m, x0):
         r = np.sqrt(np.sum((x-x0)**2, axis=-1))
-        return G*m/r
+        return -G*m/r
 
-    def f_prime(x, m, x0):
+    def gradient(x, m, x0):
         r = np.sqrt(np.sum((x-x0)**2, axis=-1))
         return G*m*(x-x0)/r**3
 
-    p1 = Potential(f=f, f_prime=f_prime,
+    p1 = Potential(func=f, gradient=gradient,
                    parameters=dict(m=222234404403.41818*u.Msun,
                                    x0=np.array([[1.,0.,0.]])*u.kpc))
 
-    p2 = Potential(f=f, f_prime=f_prime,
+    p2 = Potential(func=f, gradient=gradient,
                    parameters=dict(m=222234404403.41818*u.Msun,
                                    x0=np.array([[-1.,0.,0.]])*u.kpc))
 
