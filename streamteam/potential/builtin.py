@@ -134,7 +134,7 @@ def miyamoto_nagai_funcs(units):
 
         sqrtz = np.sqrt(z*z + b*b)
         z_term = a + sqrtz
-        fac = -_G*m*(x*x + y*y + z_term*z_term)**-1.5
+        fac = _G*m*(x*x + y*y + z_term*z_term)**-1.5
 
         dx = fac*x
         dy = fac*y
@@ -183,66 +183,43 @@ class MiyamotoNagaiPotential(Potential):
 #    Hernquist Spheroid potential from Hernquist 1990
 #    http://adsabs.harvard.edu/abs/1990ApJ...356..359H
 #
-def _cartesian_hernquist_model(bases):
-    """ Generates functions to evaluate a Hernquist potential and its
-        derivatives at a specified position.
-
-        Physical parameters for this potential are:
-            mass : total mass in the potential
-            c : core/concentration parameter
-    """
-
+def hernquist_funcs(units):
     # scale G to be in this unit system
-    _G = G.decompose(bases=bases).value
+    if units is None:
+        _G = 1.
+    else:
+        _G = G.decompose(units).value
 
-    def f(r,r_0,m,c):
-        rr = r-r_0
-        R = np.sqrt(np.sum(rr**2, axis=1))
-
-        val = -_G * m / (R + c)
+    def func(x,m,c):
+        r = np.sqrt(np.sum(x**2, axis=-1))
+        val = -_G * m / (r + c)
         return val
 
-    def df(r,r_0,m,c):
-        rr = r-r_0
-        R = np.sqrt(np.sum(rr**2, axis=1))[:,np.newaxis]
+    def gradient(x,m,c):
+        r = np.sqrt(np.sum(x**2, axis=-1))[...,None]
 
-        fac = -_G*m / ((R + c)**2 * R)
-        return fac*rr
+        fac = _G*m / ((r + c)**2 * r)
+        return fac*x
 
-    return (f, df)
+    return func, gradient, None
 
 class HernquistPotential(Potential):
 
-    def __init__(self, units, **parameters):
+    def __init__(self, m, c, usys=None):
         """ Represents the Hernquist potential (1990) for a spheroid (bulge).
 
             $\Phi_{spher} = -\frac{GM_{spher}}{r + c}$
 
             The parameters dictionary should include:
-                r_0 : location of the origin
-                m : mass in the potential
+                m : mass
                 c : core concentration
 
-            Parameters
-            ----------
-            units : list
-                Defines a system of physical base units for the potential.
-            parameters : dict
-                A dictionary of parameters for the potential definition.
-
         """
-
-
-        latex = "$\\Phi_{spher} = -\\frac{GM_{spher}}{r + c}$"
-
-        assert "m" in parameters.keys(), "You must specify a mass."
-        assert "c" in parameters.keys(), "You must specify the parameter 'c'."
-
-        # get functions for evaluating potential and derivatives
-        f,df = _cartesian_hernquist_model(units)
-        super(HernquistPotential, self).__init__(units,
-                                                 f=f, f_prime=df,
-                                                 latex=latex,
+        parameters = dict(m=m, c=c)
+        func,gradient,hessian = hernquist_funcs(usys)
+        super(HernquistPotential, self).__init__(func=func,
+                                                 gradient=gradient,
+                                                 hessian=hessian,
                                                  parameters=parameters)
 
 ##############################################################################

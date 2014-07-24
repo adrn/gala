@@ -156,7 +156,13 @@ class TestMiyamotoNagai(object):
                                            a=6.5,
                                            b=0.26)
 
+        # single
         r = [1.,0.,0.]
+        pot_val = potential.value_at(r)
+        acc_val = potential.acceleration_at(r)
+
+        # multiple
+        r = np.random.uniform(size=(100,3))
         pot_val = potential.value_at(r)
         acc_val = potential.acceleration_at(r)
 
@@ -164,22 +170,25 @@ class TestMiyamotoNagai(object):
         fig,axes = potential.plot_contours(grid=(grid,0.,grid))
         fig.savefig(os.path.join(plot_path, "miyamoto_nagai_2d.png"))
 
-# HERE
-
 class TestHernquist(object):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
     def test_create_plot(self):
 
-        potential = HernquistPotential(units=self.usys,
-                                       m=1.E11*u.M_sun,
-                                       c=10.*u.kpc)
+        potential = HernquistPotential(usys=self.usys,
+                                       m=1.E11, c=10.)
 
-        r = ([1.,0.,0.]*u.kpc).reshape(1,3)
+        # single
+        r = [1.,0.,0.]
         pot_val = potential.value_at(r)
         acc_val = potential.acceleration_at(r)
 
-        grid = np.linspace(-20.,20, 50)*u.kpc
-        fig,axes = potential.plot(grid=grid,ndim=3)
+        # multiple
+        r = np.random.uniform(size=(100,3))
+        pot_val = potential.value_at(r)
+        acc_val = potential.acceleration_at(r)
+
+        grid = np.linspace(-20.,20, 50)
+        fig,axes = potential.plot_contours(grid=(grid,grid,0.))
         fig.savefig(os.path.join(plot_path, "hernquist.png"))
 
 class TestLogarithmicPotentialLJ(object):
