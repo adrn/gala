@@ -191,86 +191,68 @@ class TestHernquist(object):
         fig,axes = potential.plot_contours(grid=(grid,grid,0.))
         fig.savefig(os.path.join(plot_path, "hernquist.png"))
 
-class TestLogarithmicPotentialLJ(object):
+class TestTriaxialLogarithmic(object):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
     def test_create_plot(self):
 
-        potential = LogarithmicPotentialLJ(units=self.usys,
-                                           q1=1.4,
-                                           q2=1.,
-                                           qz=1.5,
-                                           phi=1.69*u.radian,
-                                           v_halo=120.*u.km/u.s,
-                                           R_halo=12.*u.kpc)
+        potentials = []
+        potentials.append(TriaxialLogarithmicPotential(usys=self.usys,
+                                                       q1=1., q2=1., q3=1.,
+                                                       phi=0., v_c=0.15, r_h=10.))
+        potentials.append(TriaxialLogarithmicPotential(usys=self.usys,
+                                                       q1=0.72, q2=1., q3=1.,
+                                                       phi=0., v_c=0.15, r_h=1.))
+        potentials.append(TriaxialLogarithmicPotential(usys=self.usys,
+                                                       q1=1., q2=0.72, q3=1.,
+                                                       phi=np.pi/4, v_c=0.15, r_h=1.))
+        potentials.append(TriaxialLogarithmicPotential(usys=self.usys,
+                                                       q1=1., q2=1., q3=0.72,
+                                                       phi=0., v_c=0.08, r_h=10.))
 
-        r = ([1.,0.,0.]*u.kpc).reshape(1,3)
-        pot_val = potential.value_at(r)
-        acc_val = potential.acceleration_at(r)
 
-        grid = np.linspace(-20.,20, 50)*u.kpc
-        fig,axes = potential.plot(grid=grid,ndim=3)
-        fig.savefig(os.path.join(plot_path, "log_halo_lj.png"))
+        # single
+        r = [10.,0.,0.]
+        pot_val = potentials[0].value_at(r)
+        acc_val = potentials[0].acceleration_at(r)
+
+        # multiple
+        r = np.random.uniform(10., 50., size=(100,3))
+        pot_val = potentials[0].value_at(r)
+        acc_val = potentials[0].acceleration_at(r)
+
+        grid = np.linspace(-20.,20, 50)
+
+        fig,axes = plt.subplots(2,2,sharex=True,sharey=True,figsize=(12,12))
+
+        for ii,potential in enumerate(potentials):
+            potential.plot_contours(grid=(grid,grid,0.), ax=axes.flat[ii])
+
+        fig.savefig(os.path.join(plot_path, "triaxial_log.png"))
 
 class TestCompositeGalaxy(object):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
     def test_creation(self):
-        potential = CompositePotential(units=self.usys)
-        potential["disk"] = MiyamotoNagaiPotential(units=self.usys,
-                                           m=1.E11*u.M_sun,
-                                           a=6.5*u.kpc,
-                                           b=0.26*u.kpc,
-                                           r_0=[0.,0.,0.]*u.kpc)
+        potential = CompositePotential()
+        potential["disk"] = MiyamotoNagaiPotential(usys=self.usys,
+                                                   m=1.E11, a=6.5, b=0.26)
 
-        potential["bulge"] = HernquistPotential(units=self.usys,
-                                       m=1.E11*u.M_sun,
-                                       c=0.7*u.kpc)
+        potential["bulge"] = HernquistPotential(usys=self.usys,
+                                                m=1.E11, c=0.7)
 
-        potential["halo"] = LogarithmicPotentialLJ(units=self.usys,
-                                           q1=1.4,
-                                           q2=1.,
-                                           qz=1.5,
-                                           phi=1.69*u.radian,
-                                           v_halo=120.*u.km/u.s,
-                                           R_halo=12.*u.kpc)
+        potential["halo"] = TriaxialLogarithmicPotential(usys=self.usys,
+                                                         q1=1.4, q2=1., q3=1.5,
+                                                         phi=1.69, v_c=0.17, r_h=12.)
 
-        r = ([1.,0.,0.]*u.kpc).reshape(1,3)
+        # single
+        r = [10.,0.,0.]
         pot_val = potential.value_at(r)
         acc_val = potential.acceleration_at(r)
 
-        grid = np.linspace(-20.,20, 50)*u.kpc
-        fig,axes = potential.plot(grid=grid, ndim=3)
+        # multiple
+        r = np.random.uniform(10., 50., size=(100,3))
+        pot_val = potential.value_at(r)
+        acc_val = potential.acceleration_at(r)
+
+        grid = np.linspace(-20.,20, 50)
+        fig,axes = potential.plot_contours(grid=(grid,grid,0.))
         fig.savefig(os.path.join(plot_path, "composite_galaxy.png"))
-
-class TestAxisymmetricNFWPotential(object):
-    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
-    def test_create_plot(self):
-
-        potential = AxisymmetricNFWPotential(units=self.usys,
-                                           log_m=28.,
-                                           qz=0.71,
-                                           Rs=5.*u.kpc)
-
-        r = ([1.,0.,0.]*u.kpc).reshape(1,3)
-        pot_val = potential.value_at(r)
-        acc_val = potential.acceleration_at(r)
-
-        grid = np.linspace(-20.,20, 50)*u.kpc
-        fig,axes = potential.plot(grid=grid,ndim=3)
-        fig.savefig(os.path.join(plot_path, "nfw.png"))
-
-class TestAxisymmetricLogarithmicPotential(object):
-    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
-    def test_create_plot(self):
-
-        potential = AxisymmetricLogarithmicPotential(units=self.usys,
-                                           v_c=10.*u.km/u.s,
-                                           qz=0.71)
-
-        r = ([1.,0.,0.]*u.kpc).reshape(1,3)
-        pot_val = potential.value_at(r)
-        acc_val = potential.acceleration_at(r)
-
-        grid = np.linspace(-20.,20, 50)*u.kpc
-        fig,axes = potential.plot(grid=grid,ndim=3)
-        fig.savefig(os.path.join(plot_path, "axisym_log.png"))
-
