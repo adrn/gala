@@ -40,7 +40,11 @@ class RK5Integrator(Integrator):
     could contain a mixture of coordinates and momenta for solving
     Hamilton's equations, for example.
 
-    **Example: harmonic oscillator**
+    .. seealso::
+
+        - http://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
+
+    **Example:** Harmonic oscillator
 
     Hamilton's equations are
 
@@ -64,14 +68,25 @@ class RK5Integrator(Integrator):
 
     We then define a vector :math:`x = (q, p)`. The function passed in to
     the integrator should return the derivative of :math:`x` with respect to
-    the independent variable, :math:`\dot{x} = (\dot{q}, \dot{p})`, e.g.::
+    the independent variable,  :math:`\dot{x} = (\dot{q}, \dot{p})`, e.g.::
 
         def F(t,x):
             q,p = x.T
             return np.array([p,-q]).T
 
-    For details on the algorithm, see `wikipedia <http://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods>`_ or references therein.
+    To create an integrator object, just pass this function in to the
+    constructor, and then we can integrate orbits from a given vector of
+    initial conditions::
 
+        integrator = RK5Integrator(F)
+        times,ws = integrator.run(w0=[1.,0.], dt=0.1, nsteps=1000)
+
+    .. note::
+
+        Even though we only pass in a single vector of initial conditions,
+        this gets promoted internally to a 2D array. This means the shape of
+        the integrated orbit array will always be 3D. In this case, `ws` will
+        have shape `(1001,1,2)`.
 
     Parameters
     ----------
@@ -121,29 +136,38 @@ class RK5Integrator(Integrator):
         return w + dw
 
     def run(self, w0, **time_spec):
-        """ Run the integrator starting at the given coordinates and momenta
-            (or velocities) and a time specification. The initial conditions
-            `w0` should have shape `(nparticles, ndim)` or `(ndim,)` for a
-            single orbit.
+        """
+        Run the integrator starting at the given coordinates and momenta
+        (or velocities) and a time specification. The initial conditions
+        `w0` should have shape `(nparticles, ndim)` or `(ndim,)` for a
+        single orbit.
 
-            There are a few combinations of keyword arguments accepted for
-            specifying the timestepping. For example, you can specify a fixed
-            timestep (`dt`) and a number of steps (`nsteps`), or an array of
-            times. See `kwargs` below for more information.
+        There are a few combinations of keyword arguments accepted for
+        specifying the timestepping. For example, you can specify a fixed
+        timestep (`dt`) and a number of steps (`nsteps`), or an array of
+        times. See **Other Parameters** below for more information.
 
-            Parameters
-            ----------
-            w0 : array_like
-                Initial conditions.
+        Parameters
+        ==========
+        w0 : array_like
+            Initial conditions.
 
-            kwargs
-            ------
-            dt, nsteps[, t1] : (numeric, int[, numeric])
-                A fixed timestep dt and a number of steps to run for.
-            dt, t1, t2 : (numeric, numeric, numeric)
-                A fixed timestep dt, an initial time, and a final time.
-            t : array_like
-                An array of times (dt = t[1] - t[0])
+        Other Parameters
+        ================
+        dt, nsteps[, t1] : (numeric, int[, numeric])
+            A fixed timestep dt and a number of steps to run for.
+        dt, t1, t2 : (numeric, numeric, numeric)
+            A fixed timestep dt, an initial time, and a final time.
+        t : array_like
+            An array of times (dt = t[1] - t[0])
+
+        Returns
+        =======
+        times : array_like
+            An array of times.
+        w : array_like
+            The array of positions and momenta (velocities) at each time in
+            the time array. This array has shape `(Ntimes,Norbits,Ndim)`.
 
         """
 

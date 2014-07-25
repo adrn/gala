@@ -19,34 +19,75 @@ from .timespec import _parse_time_specification
 __all__ = ["LeapfrogIntegrator"]
 
 class LeapfrogIntegrator(Integrator):
+    r"""
+    Initialize a Leapfrog integrator given a function for computing
+    accelerations. `acceleration_func` should accept an array of
+    position(s) and optionally a set of arguments specified by
+    `func_args`.
 
+    .. seealso::
+
+    - http://en.wikipedia.org/wiki/Leapfrog_integration
+    - http://ursa.as.arizona.edu/~rad/phys305/ODE_III/node11.html
+
+    Naming convention for variables::
+
+        im1 = i-1
+        im1_2 = i-1/2
+        ip1 = i+1
+        ip1_2 = i+1/2
+
+    **Example:** Harmonic oscillator
+
+    Using `x` as our coordinate variable, we want to numerically solve for
+    an orbit in the potential
+
+    .. math::
+
+        \Phi = \frac{1}{2}x^2
+
+    The acceleration is then just
+
+    .. math::
+
+        a = -\frac{\partial \Phi}{\partial x} = -x
+
+    We define a function that computes this acceleration at any given
+    time, `t`, and position, `x`::
+
+        def acceleration(t,x):
+            return -x
+
+    .. note::
+
+        The force here is not time dependent, but the acceleration function
+        always has to accept the independent variable (e.g., time) as the
+        first argument.
+
+    To create an integrator object, just pass this acceleration function in
+    to the constructor, and then we can integrate orbits from a given vector
+    of initial conditions::
+
+        integrator = LeapfrogIntegrator(acceleration)
+        times,ws = integrator.run(w0=[1.,0.], dt=0.1, nsteps=1000)
+
+    .. note::
+
+        Even though we only pass in a single vector of initial conditions,
+        this gets promoted internally to a 2D array. This means the shape of
+        the integrated orbit array will always be 3D. In this case, `ws` will
+        have shape `(1001,1,2)`.
+
+    Parameters
+    ----------
+    acceleration_func : func
+        A callable object that computes the acceleration at a point
+        in phase space.
+    func_args : tuple (optional)
+        Any extra arguments for the acceleration function.
+
+    """
     def __init__(self, acceleration_func, func_args=()):
-        """ Initialize a Leapfrog integrator given a function for computing
-            accelerations.
-
-            `acceleration_func` should accept an array of position(s) and
-            optionally a set of arguments specified by `func_args`.
-
-            For details on the algorithm, see:
-                http://en.wikipedia.org/wiki/Leapfrog_integration
-                http://ursa.as.arizona.edu/~rad/phys305/ODE_III/node11.html
-
-            Naming convention for variables:
-                im1 -> i-1
-                im1_2 -> i-1/2
-                ip1 -> i+1
-                ip1_2 -> i+1/2
-
-            Parameters
-            ----------
-            acceleration_func : func
-                A callable object that computes the acceleration at a point
-                in phase space.
-            func_args : tuple (optional)
-                Any extra arguments for the acceleration function.
-
-        """
-
         if not hasattr(acceleration_func, '__call__'):
             raise ValueError("acceleration_func must be a callable object, "
                         "e.g. a function, that evaluates the acceleration "
@@ -56,12 +97,13 @@ class LeapfrogIntegrator(Integrator):
         self._func_args = func_args
 
     def step(self, t, x_im1, v_im1_2, dt):
-        """ Step forward the positions and velocities by the given timestep.
+        """
+        Step forward the positions and velocities by the given timestep.
 
-            Parameters
-            ----------
-            dt : numeric
-                The timestep to move forward.
+        Parameters
+        ----------
+        dt : numeric
+            The timestep to move forward.
         """
 
         x_i = x_im1 + v_im1_2*dt
@@ -95,34 +137,42 @@ class LeapfrogIntegrator(Integrator):
         return v_1_2
 
     def run(self, w0, **time_spec):
-        """ Run the integrator starting at the given coordinates and momenta
-            (or velocities) and a time specification. The initial conditions
-            `q`,`p` should each have shape `(nparticles, ndim)`.
-            For example, for 100 particles in 3D cartesian coordinates, the
-            coordinate (`q`) array should have shape (100,3) and the momentum
-            (`p`) array should also have shape (100,3). For a single particle,
-            1D arrays are promoted to 2D -- e.g., a coordinate array with shape
-            (3,) is interpreted as a single particle in 3 dimensions and
-            promoted to an array with shape (1,3).
+        """
+        Run the integrator starting at the given coordinates and momenta
+        (velocities) and a time specification. The initial conditions
+        `w0` should have shape `(nparticles, 2*ndim)`. For example, for
+        100 orbits in 3D cartesian coordinates, the initial condition
+        array should have shape `(100,3)`. For a single orbit,
+        1D arrays are promoted to 2D -- e.g., a coordinate array with shape
+        (6,) is interpreted as a single orbit in 3 dimensions and
+        promoted to an array with shape (1,6).
 
-            There are a few combinations of keyword arguments accepted for
-            specifying the timestepping. For example, you can specify a fixed
-            timestep (`dt`) and a number of steps (`nsteps`), or an array of
-            times. See `kwargs` below for more information.
+        There are a few combinations of keyword arguments accepted for
+        specifying the timestepping. For example, you can specify a fixed
+        timestep (`dt`) and a number of steps (`nsteps`), or an array of
+        times. See **Other Parameters** below for more information.
 
-            Parameters
-            ----------
-            w0 : array_like
-                Initial conditions
+        Parameters
+        ==========
+        w0 : array_like
+            Initial conditions
 
-            kwargs
-            ------
-            dt, nsteps[, t1] : (numeric, int[, numeric])
-                A fixed timestep dt and a number of steps to run for.
-            dt, t1, t2 : (numeric, numeric, numeric)
-                A fixed timestep dt, an initial time, and a final time.
-            t : array_like
-                An array of times (dt = t[1] - t[0])
+        Other Parameters
+        ================
+        dt, nsteps[, t1] : (numeric, int[, numeric])
+            A fixed timestep dt and a number of steps to run for.
+        dt, t1, t2 : (numeric, numeric, numeric)
+            A fixed timestep dt, an initial time, and a final time.
+        t : array_like
+            An array of times (dt = t[1] - t[0])
+
+        Returns
+        =======
+        times : array_like
+            An array of times.
+        w : array_like
+            The array of positions and momenta (velocities) at each time in
+            the time array. This array has shape `(Ntimes,Norbits,Ndim)`.
 
         """
 
