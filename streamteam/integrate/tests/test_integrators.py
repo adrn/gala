@@ -19,6 +19,7 @@ from astropy.constants import G
 # Project
 from ..rk5 import RK5Integrator
 from ..dopri853 import DOPRI853Integrator
+from ..adaptivevode import AdaptiveVODEIntegrator
 from .helpers import plot
 
 plot_path = "plots/tests/integrate"
@@ -29,44 +30,43 @@ def sho(t,x,T):
     q,p = x.T
     return np.array([p, -(2*np.pi/T)**2*q]).T
 
-@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
-                                                 ('dopri853',DOPRI853Integrator)])
-def test_forward(name, Integrator):
-    dt = 0.1
-    t1,t2 = 0, 2.5
+@pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
+                         [('rk5',RK5Integrator,dict(t1=0.,t2=2.5,dt=0.1)),
+                          ('dopri853',DOPRI853Integrator,dict(t1=0.,t2=2.5,dt=0.1)),
+                          ('vode',AdaptiveVODEIntegrator,dict(t1=0.,t2=2.5))])
+def test_forward(name, Integrator, run_kwargs):
     integrator = Integrator(sho, func_args=(10.,))
-    ts, xs = integrator.run([0., 1.],
-                            t1=t1, t2=t2, dt=dt)
+    ts, xs = integrator.run([0., 1.], **run_kwargs)
 
     fig = plot(ts, xs)
     fig.savefig(os.path.join(plot_path,"forward_{0}.png".format(name)))
 
-@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
-                                                 ('dopri853',DOPRI853Integrator)])
-def test_backward(name, Integrator):
-    dt = -0.1
-    t1,t2 = 2.5,0.
+@pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
+                         [('rk5',RK5Integrator,dict(t2=0.,t1=2.5,dt=-0.1)),
+                          ('dopri853',DOPRI853Integrator,dict(t2=0.,t1=2.5,dt=-0.1))])
+def test_backward(name, Integrator, run_kwargs):
     integrator = Integrator(sho, func_args=(10.,))
-    ts, xs = integrator.run([0., 1.],
-                            t1=t1, t2=t2, dt=dt)
+    ts, xs = integrator.run([0., 1.], **run_kwargs)
 
     fig = plot(ts, xs)
     fig.savefig(os.path.join(plot_path,"backward_{0}.png".format(name)))
 
-@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
-                                                 ('dopri853',DOPRI853Integrator)])
-def test_harmonic_oscillator(name, Integrator):
-    dt = 0.1
+@pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
+                         [('rk5',RK5Integrator,dict(nsteps=100,dt=0.1)),
+                          ('dopri853',DOPRI853Integrator,dict(nsteps=100,dt=0.1)),
+                          ('vode',AdaptiveVODEIntegrator,dict(t2=10.))])
+def test_harmonic_oscillator(name, Integrator, run_kwargs):
     integrator = Integrator(sho, func_args=(10.,))
-    ts, xs = integrator.run([1., 0.],
-                            dt=dt, nsteps=100)
+    ts, xs = integrator.run([1., 0.], **run_kwargs)
 
     fig = plot(ts, xs)
     fig.savefig(os.path.join(plot_path,"harmonic_osc_{0}.png".format(name)))
 
-@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
-                                                 ('dopri853',DOPRI853Integrator)])
-def test_point_mass(name, Integrator):
+@pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
+                         [('rk5',RK5Integrator,dict(t1=0.,t2=10.,dt=0.01)),
+                          ('dopri853',DOPRI853Integrator,dict(t1=0.,t2=10.,dt=0.01)),
+                          ('vode',AdaptiveVODEIntegrator,dict(t1=0.,t2=10.))])
+def test_point_mass(name, Integrator, run_kwargs):
     GM = (G * (1.*u.M_sun)).decompose([u.au,u.M_sun,u.year,u.radian]).value
 
     def F(t,x):
@@ -78,16 +78,17 @@ def test_point_mass(name, Integrator):
     p_i = np.array([0.0, 2*np.pi]) # au/yr
 
     integrator = Integrator(F)
-    ts, xs = integrator.run(np.append(q_i,p_i),
-                            t1=0., t2=10., dt=0.01)
+    ts, xs = integrator.run(np.append(q_i,p_i), **run_kwargs)
 
     fig = plot(ts, xs)
     fig.savefig(os.path.join(plot_path,"point_mass_{0}.png".format(name)))
 
 # KNOWN FAILURE FOR RK5
-@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
-                                                 ('dopri853',DOPRI853Integrator)])
-def test_point_mass_multiple(name, Integrator):
+@pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
+                         [('rk5',RK5Integrator,dict(t1=0.,t2=10.,dt=0.01)),
+                          ('dopri853',DOPRI853Integrator,dict(t1=0.,t2=10.,dt=0.01)),
+                          ('vode',AdaptiveVODEIntegrator,dict(t1=0.,t2=10.))])
+def test_point_mass_multiple(name, Integrator, run_kwargs):
     GM = (G * (1.*u.M_sun)).decompose([u.au,u.M_sun,u.year,u.radian]).value
 
     def F(t,x):
@@ -100,32 +101,34 @@ def test_point_mass_multiple(name, Integrator):
                     [2., 1.0, -1.0, 1.1*np.pi]])
 
     integrator = Integrator(F)
-    ts, xs = integrator.run(x_i,
-                            t1=0., t2=10., dt=0.01)
+    ts, xs = integrator.run(x_i, **run_kwargs)
 
     fig = plot(ts, xs[:,0])
     fig = plot(ts, xs[:,1], fig=fig)
     fig = plot(ts, xs[:,2], fig=fig)
     fig.savefig(os.path.join(plot_path,"multi_point_mass_{0}.png".format(name)))
 
-@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
-                                                 ('dopri853',DOPRI853Integrator)])
-def test_driven_pendulum(name, Integrator):
+@pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
+                         [('rk5',RK5Integrator,dict(nsteps=10000,dt=0.1)),
+                          ('dopri853',DOPRI853Integrator,dict(nsteps=10000,dt=0.1)),
+                          ('vode',AdaptiveVODEIntegrator,dict(t1=0.,t2=1000.))])
+def test_driven_pendulum(name, Integrator, run_kwargs):
 
     def F(t,x,A,omega_d):
         q,p = x.T
         return np.array([p,-np.sin(q) + A*np.cos(omega_d*t)]).T
 
     integrator = Integrator(F, func_args=(0.07, 0.75))
-    ts, xs = integrator.run([3., 0.],
-                            dt=0.1, nsteps=10000)
+    ts, xs = integrator.run([3., 0.], **run_kwargs)
 
     fig = plot(ts, xs, marker=None, alpha=0.5)
     fig.savefig(os.path.join(plot_path,"driven_pendulum_{0}.png".format(name)))
 
-@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
-                                                 ('dopri853',DOPRI853Integrator)])
-def test_lorenz(name, Integrator):
+@pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
+                         [('rk5',RK5Integrator,dict(nsteps=10000,dt=0.01)),
+                          ('dopri853',DOPRI853Integrator,dict(nsteps=10000,dt=0.01)),
+                          ('vode',AdaptiveVODEIntegrator,dict(t1=0.,t2=1000.))])
+def test_lorenz(name, Integrator, run_kwargs):
 
     def F(t,x,sigma,rho,beta):
         x,y,z = x.T
@@ -133,15 +136,15 @@ def test_lorenz(name, Integrator):
 
     sigma, rho, beta = 10., 28., 8/3.
     integrator = Integrator(F, func_args=(sigma, rho, beta))
-    ts, xs = integrator.run([0.5,0.5,0.5],
-                            dt=0.01, nsteps=10000)
+    ts, xs = integrator.run([0.5,0.5,0.5], **run_kwargs)
 
     fig = plot(ts, xs, marker=None, alpha=0.5)
     fig.savefig(os.path.join(plot_path,"lorenz_{0}.png".format(name)))
 
-@pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
-                                                 ('dopri853',DOPRI853Integrator)])
-def test_loop_vs_run(name, Integrator):
+@pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
+                         [('rk5',RK5Integrator,dict(t1=0.,t2=10.,dt=0.01)),
+                          ('dopri853',DOPRI853Integrator,dict(t1=0.,t2=10.,dt=0.01))])
+def test_loop_vs_run(name, Integrator, run_kwargs):
     # If this breaks, need to specify t1 in .run()
 
     def F(t,x,A,omega_d):
