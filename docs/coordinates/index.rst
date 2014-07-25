@@ -86,3 +86,5 @@ Reference/API
 .. autofunction:: streamteam.coordinates.vhel_to_vgsr
 .. autofunction:: streamteam.coordinates.gal_xyz_to_hel
 .. autofunction:: streamteam.coordinates.hel_to_gal_xyz
+.. autoclass:: streamteam.coordinates.Sagittarius
+.. autoclass:: streamteam.coordinates.Orphan
