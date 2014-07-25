@@ -13,7 +13,7 @@ This packages has the following strict requirements:
 
 - `Cython <http://www.cython.org/>`_: 0.20 or later
 
-- `Astropy <http://www.astropy.org/>`_ 0.3 or later
+- `Astropy <http://www.astropy.org/>`_ 0.4 or later
 
 Installing
 ==========
@@ -48,4 +48,4 @@ Requires a few extra pip-installable packages:
 
 - `numpydoc`
 
-- `sphinx-bootstrap-theme`
+- `sphinx-rtd-theme`
