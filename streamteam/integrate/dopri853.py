@@ -20,7 +20,7 @@ from .timespec import _parse_time_specification
 __all__ = ["DOPRI853Integrator"]
 
 class DOPRI853Integrator(Integrator):
-    """
+    r"""
     ...TODO
 
     Parameters
@@ -44,26 +44,36 @@ class DOPRI853Integrator(Integrator):
         self._ode_kwargs = kwargs
 
     def run(self, w0, **time_spec):
-        """ Run the integrator starting at the given coordinates and momenta
-            (or velocities) and a time specification. The initial conditions
-            `w` should each have shape `(nparticles, ndim)`.
+        """
+        Run the integrator starting at the given coordinates and momenta
+        (or velocities) and a time specification. The initial conditions
+        `w0` should have shape `(nparticles, ndim)` or `(ndim,)` for a
+        single orbit.
 
-            There are a few combinations of keyword arguments accepted for
-            specifying the timestepping. For example, you can specify a fixed
-            timestep (`dt`) and a number of steps (`nsteps`), or an array of
-            times. See `kwargs` below for more information.
+        There are a few combinations of keyword arguments accepted for
+        specifying the timestepping. For example, you can specify a fixed
+        timestep (`dt`) and a number of steps (`nsteps`), or an array of
+        times. See **Other Parameters** below for more information.
 
-            Parameters
-            ----------
-            w0 : array_like
-                Initial conditions.
+        Parameters
+        ==========
+        w0 : array_like
+            Initial conditions.
 
-            kwargs
-            ------
-            dt, nsteps[, t1] : (numeric, int[, numeric])
-                A fixed timestep dt and a number of steps to run for.
-            dt, t1, t2 : (numeric, numeric, numeric)
-                A fixed timestep dt, an initial time, and a final time.
+        Other Parameters
+        ================
+        dt, nsteps[, t1] : (numeric, int[, numeric])
+            A fixed timestep dt and a number of steps to run for.
+        dt, t1, t2 : (numeric, numeric, numeric)
+            A fixed timestep dt, an initial time, and a final time.
+
+        Returns
+        =======
+        times : array_like
+            An array of times.
+        w : array_like
+            The array of positions and momenta (velocities) at each time in
+            the time array. This array has shape `(Ntimes,Norbits,Ndim)`.
 
         """
 
