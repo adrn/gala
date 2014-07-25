@@ -27,8 +27,8 @@ class LeapfrogIntegrator(Integrator):
 
     .. seealso::
 
-    - http://en.wikipedia.org/wiki/Leapfrog_integration
-    - http://ursa.as.arizona.edu/~rad/phys305/ODE_III/node11.html
+        - http://en.wikipedia.org/wiki/Leapfrog_integration
+        - http://ursa.as.arizona.edu/~rad/phys305/ODE_III/node11.html
 
     Naming convention for variables::
 
