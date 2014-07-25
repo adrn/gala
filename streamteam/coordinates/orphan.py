@@ -14,15 +14,13 @@ from astropy.coordinates.angles import rotation_matrix
 import astropy.coordinates as coord
 import astropy.units as u
 
-
 __all__ = ["Orphan"]
-
 
 class Orphan(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
     of the Orphan stream, as described in
-        http://iopscience.iop.org/0004-637X/711/1/32/pdf/apj_711_1_32.pdf.
+    `this paper <http://iopscience.iop.org/0004-637X/711/1/32/pdf/apj_711_1_32.pdf>`_.
 
     Parameters
     ----------
