@@ -21,7 +21,8 @@ __all__ = ["DOPRI853Integrator"]
 
 class DOPRI853Integrator(Integrator):
     r"""
-    ...TODO
+    This provides a wrapper around `Scipy`'s implementation of the
+    Dormand-Prince 85(3) integration scheme.
 
     Parameters
     ----------
