@@ -43,6 +43,8 @@ class AdaptiveVODEIntegrator(Integrator):
 
     def __init__(self, func, func_args=(), **kwargs):
 
+        # TODO: there seem to be issues with this integrator...
+
         if not hasattr(func, '__call__'):
             raise ValueError("func must be a callable object, e.g., a function.")
 
@@ -97,6 +99,10 @@ class AdaptiveVODEIntegrator(Integrator):
         # set the initial conditions
         self._ode.set_initial_value(w0, t1)
 
+        # TODO:
+        if t2 < t1:
+            raise NotImplementedError()
+
         # create the return arrays
         ws = [w0]
         ts = [t1]
@@ -113,4 +119,4 @@ class AdaptiveVODEIntegrator(Integrator):
         if not self._ode.successful():
             raise RuntimeError("ODE integration failed!")
 
-        return ts, ws.reshape((nsteps+1,nparticles,ndim))
+        return ts, ws.reshape((len(ts),nparticles,ndim))
