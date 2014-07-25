@@ -24,6 +24,55 @@ class DOPRI853Integrator(Integrator):
     This provides a wrapper around `Scipy`'s implementation of the
     Dormand-Prince 85(3) integration scheme.
 
+    .. seealso::
+
+        - Numerical recipes (Dopr853)
+        - http://en.wikipedia.org/wiki/Dormand%E2%80%93Prince_method
+
+    **Example:** Harmonic oscillator
+
+    Hamilton's equations are
+
+    .. math::
+
+        \dot{q} = \frac{\partial H}{\partial p}\\
+        \dot{p} = -\frac{\partial H}{\partial q}
+
+    The harmonic oscillator Hamiltonian is
+
+    .. math::
+
+        H(q,p) = \frac{1}{2}(p^2 + q^2)
+
+    so that the equations of motion are given by
+
+    .. math::
+
+        \dot{q} = p\\
+        \dot{p} = -q
+
+    We then define a vector :math:`x = (q, p)`. The function passed in to
+    the integrator should return the derivative of :math:`x` with respect to
+    the independent variable,  :math:`\dot{x} = (\dot{q}, \dot{p})`, e.g.::
+
+        def F(t,x):
+            q,p = x.T
+            return np.array([p,-q]).T
+
+    To create an integrator object, just pass this function in to the
+    constructor, and then we can integrate orbits from a given vector of
+    initial conditions::
+
+        integrator = DOPRI853Integrator(F)
+        times,ws = integrator.run(w0=[1.,0.], dt=0.1, nsteps=1000)
+
+    .. note::
+
+        Even though we only pass in a single vector of initial conditions,
+        this gets promoted internally to a 2D array. This means the shape of
+        the integrated orbit array will always be 3D. In this case, `ws` will
+        have shape `(1001,1,2)`.
+
     Parameters
     ----------
     func : func
