@@ -25,6 +25,7 @@ Documentation
 
    install
    coordinates/index
+   integrate/index
 ..   getting_started
 
 ******************
