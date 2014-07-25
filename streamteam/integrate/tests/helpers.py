@@ -16,6 +16,9 @@ import numpy as np
 def plot(ts, ws, marker='.', alpha=0.75, linestyle='-', fig=None):
     """ Make some helpful plots for testing the integrators. """
 
+    if ws.ndim == 2:
+        ws = ws[:,np.newaxis]
+
     nsteps,nparticles,ndim = ws.shape
     if fig is None:
         fig,axes = plt.subplots(ndim, ndim, figsize=(4*ndim,4*ndim))

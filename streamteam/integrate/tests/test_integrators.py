@@ -96,14 +96,16 @@ def test_point_mass_multiple(name, Integrator):
         return np.array([px, py, x*a, y*a]).T
 
     x_i = np.array([[1.0, 0.0, 0.0, 2*np.pi],
-                    [0.8, 0.0, 0.0, 2.1*np.pi]])
+                    [0.8, 0.0, 0.0, 2.1*np.pi],
+                    [2., 1.0, -1.0, 1.1*np.pi]])
 
     integrator = Integrator(F)
     ts, xs = integrator.run(x_i,
                             t1=0., t2=10., dt=0.01)
 
-    fig = plot(ts, xs)
-    fig = plot(ts, xs, fig=fig)
+    fig = plot(ts, xs[:,0])
+    fig = plot(ts, xs[:,1], fig=fig)
+    fig = plot(ts, xs[:,2], fig=fig)
     fig.savefig(os.path.join(plot_path,"multi_point_mass_{0}.png".format(name)))
 
 @pytest.mark.parametrize(("name","Integrator"), [('rk5',RK5Integrator),
