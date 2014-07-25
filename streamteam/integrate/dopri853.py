@@ -20,20 +20,21 @@ from .timespec import _parse_time_specification
 __all__ = ["DOPRI853Integrator"]
 
 class DOPRI853Integrator(Integrator):
+    """
+    ...TODO
+
+    Parameters
+    ----------
+    func : func
+        A callable object that computes the phase-space coordinate
+        derivatives with respect to the independent variable at a point
+        in phase space.
+    func_args : tuple (optional)
+        Any extra arguments for the function.
+
+    """
 
     def __init__(self, func, func_args=(), **kwargs):
-        """ ...TODO
-
-            Parameters
-            ----------
-            func : func
-                A callable object that computes the phase-space coordinate
-                derivatives with respect to the independent variable at a point
-                in phase space.
-            func_args : tuple (optional)
-                Any extra arguments for the function.
-
-        """
 
         if not hasattr(func, '__call__'):
             raise ValueError("func must be a callable object, e.g., a function.")

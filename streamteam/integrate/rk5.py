@@ -30,49 +30,61 @@ C = np.array([37./378., 0., 250./621., 125./594., 0., 512./1771.])
 D = np.array([2825./27648., 0., 18575./48384., 13525./55296., 277./14336., 1./4.])
 
 class RK5Integrator(Integrator):
+    r"""
+    Initialize a 5th order Runge-Kutta integrator given a function for
+    computing derivatives with respect to the independent variables. The
+    function should, at minimum, take the independent variable as the
+    first argument, and the coordinates as a single vector as the second
+    argument. For notation and variable names, we assume this independent
+    variable is time, t, and the coordinate vector is named x, though it
+    could contain a mixture of coordinates and momenta for solving
+    Hamilton's equations, for example.
+
+    **Example: harmonic oscillator**
+
+    Hamilton's equations are
+
+    .. math::
+
+        \dot{q} = \frac{\partial H}{\partial p}\\
+        \dot{p} = -\frac{\partial H}{\partial q}
+
+    The harmonic oscillator Hamiltonian is
+
+    .. math::
+
+        H(q,p) = \frac{1}{2}(p^2 + q^2)
+
+    so that the equations of motion are given by
+
+    .. math::
+
+        \dot{q} = p\\
+        \dot{p} = -q
+
+    We then define a vector :math:`x = (q, p)`. The function passed in to
+    the integrator should return the derivative of :math:`x` with respect to
+    the independent variable, :math:`\dot{x} = (\dot{q}, \dot{p})`, e.g.::
+
+        def F(t,x):
+            q,p = x.T
+            return np.array([p,-q]).T
+
+    For details on the algorithm, see `wikipedia <http://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods>`_ or references therein.
+
+
+    Parameters
+    ----------
+    func : func
+        A callable object that computes the phase-space coordinate
+        derivatives with respect to the independent variable at a point
+        in phase space.
+    func_args : tuple (optional)
+        Any extra arguments for the function.
+
+    """
 
     def __init__(self, func, func_args=()):
-        """ Initialize a 5th order Runge-Kutta integrator given a function for
-            computing derivatives with respect to the independent variable. The
-            function should, at minimum, take the independent variable as the
-            first argument, and the coordinates as a single vector as the second
-            argument. For notation and variable names, we assume this independent
-            variable is time, t, and the coordinate vector is named x, though it
-            could contain a mixture of coordinates and momenta for solving
-            Hamilton's equations, for example.
-
-            Example: harmonic oscillator
-            The Hamiltonian is: $H(q,p) = \frac{1}{2}(p^2 + q^2)$
-
-            Hamilton's equations then are
-            $$
-            \begin{align}
-                \dot{q} &= \frac{\partial H}{\partial p} = p\\
-                \dot{p} &= -\frac{\partial H}{\partial q} = -q
-            \end{align}
-            $$
-
-            We then define a vector, $x = (q, p)$. The function passed in to
-            the integrator should return $\dot{x} = (\dot{q}, \dot{p})$:
-
-            def F(t,x):
-                q,p = x.T
-                return np.array([p,-q]).T
-
-            For details on the algorithm, see:
-                http://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
-
-
-            Parameters
-            ----------
-            func : func
-                A callable object that computes the phase-space coordinate
-                derivatives with respect to the independent variable at a point
-                in phase space.
-            func_args : tuple (optional)
-                Any extra arguments for the function.
-
-        """
 
         if not hasattr(func, '__call__'):
             raise ValueError("func must be a callable object, e.g., a function.")
