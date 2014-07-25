@@ -15,8 +15,8 @@ Getting Started
 Reference/API
 =============
 .. autoclass:: streamteam.integrate.DOPRI853Integrator
-   :members:
+   :members: run
 .. autoclass:: streamteam.integrate.LeapfrogIntegrator
-   :members:
+   :members: run
 .. autoclass:: streamteam.integrate.RK5Integrator
-   :members:
+   :members: run
