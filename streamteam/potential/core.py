@@ -27,22 +27,23 @@ __all__ = ["Potential", "CompositePotential"]
 class Potential(object):
 
     def __init__(self, func, gradient=None, hessian=None, parameters=dict()):
-        """ A baseclass for representing gravitational potentials. You must specify
-            a function that evaluates the potential value (func). You may also optionally
-            add a function that computes derivatives (gradient), and a function to compute
-            the Hessian of the potential.
+        """
+        A baseclass for representing gravitational potentials. You must specify
+        a function that evaluates the potential value (func). You may also
+        optionally add a function that computes derivatives (gradient), and a
+        function to compute the Hessian of the potential.
 
-            Parameters
-            ----------
-            func : function
-                A function that computes the value of the potential.
-            gradient : function (optional)
-                A function that computes the first derivatives (gradient) of the potential.
-            hessian : function (optional)
-                A function that computes the second derivatives (Hessian) of the potential.
-            parameters : dict (optional)
-                Any extra parameters that the functions f require. All functions must take
-                the same parameters.
+        Parameters
+        ----------
+        func : function
+            A function that computes the value of the potential.
+        gradient : function (optional)
+            A function that computes the first derivatives (gradient) of the potential.
+        hessian : function (optional)
+            A function that computes the second derivatives (Hessian) of the potential.
+        parameters : dict (optional)
+            Any extra parameters that the functions (func, gradient, hessian)
+            require. All functions must take the same parameters.
 
         """
 
@@ -52,33 +53,67 @@ class Potential(object):
         # Make sure the functions are callable
         for f in [func, gradient, hessian]:
             if f is not None and not hasattr(f, '__call__'):
-                raise TypeError("'{}' parameter must be callable! You passed "
+                raise TypeError("'{}' must be callable! You passed "
                                 "in a '{}'".format(f.func_name, f.__class__))
 
-        self.func = func
-        self.gradient = gradient
-        self.hessian = hessian
+        self._value = func
+        self._gradient = gradient
+        self._hessian = hessian
 
-    def value_at(self, x):
-        """ Compute the value of the potential at the given position(s)
-
-            Parameters
-            ----------
-            x : array_like, numeric
-                Position to compute the value of the potential.
+    def value(self, x):
         """
-        return self.func(np.array(x), **self.parameters)
+        Compute the value of the potential at the given position(s).
 
-    def acceleration_at(self, x):
-        """ Compute the acceleration due to the potential at the given
-            position(s).
-
-            Parameters
-            ----------
-            x : array_like, numeric
-                Position to compute the acceleration at.
+        Parameters
+        ----------
+        x : array_like, numeric
+            Position to compute the value of the potential.
         """
-        return -self.gradient(np.array(x), **self.parameters)
+        return self._value(np.array(x), **self.parameters)
+
+    def gradient(self, x):
+        """
+        Compute the gradient of the potential at the given position(s).
+
+        Parameters
+        ----------
+        x : array_like, numeric
+            Position to compute the gradient.
+        """
+        if self._gradient is None:
+            raise NotImplementedError("No gradient function was specified when"
+                                      " the object was created!")
+        return self._gradient(np.array(x), **self.parameters)
+
+    def hessian(self, x):
+        """
+        Compute the Hessian of the potential at the given position(s).
+
+        Parameters
+        ----------
+        x : array_like, numeric
+            Position to compute the Hessian.
+        """
+        if self._hessian is None:
+            raise NotImplementedError("No Hessian function was specified when"
+                                      " the object was created!")
+        return self._hessian(np.array(x), **self.parameters)
+
+    # Other useful functions to compute
+    def __call__(self, x):
+        return self.value(x)
+
+    def acceleration(self, x):
+        """
+        Compute the acceleration due to the potential at the given
+        position(s).
+
+        Parameters
+        ----------
+        x : array_like, numeric
+            Position to compute the acceleration at.
+        """
+        return -self.gradient(np.array(x))
 
     def __repr__(self):
         pars = ""
@@ -107,22 +142,23 @@ class Potential(object):
         return self.__class__.__name__
 
     def plot_contours(self, grid, ax=None, labels=None, subplots_kw=dict(), **kwargs):
-        """ Plot equipotentials contours. Computes the potential value on a grid
-            (specified by the array `grid`).
+        """
+        Plot equipotentials contours. Computes the potential value on a grid
+        (specified by the array `grid`).
 
-            Parameters
-            ----------
-            grid : tuple
-                Coordinate grids or slice value for each dimension. Should be a
-                tuple of 1D array (or Quantity) objects.
-            ax : matplotlib.Axes (optional)
-            labels : iterable (optional)
-                List of axis labels.
-            subplots_kw : dict
-                kwargs passed to matplotlib's subplots() function if an axes object
-                is not specified.
-            kwargs : dict
-                kwargs passed to either contourf() or plot().
+        Parameters
+        ----------
+        grid : tuple
+            Coordinate grids or slice value for each dimension. Should be a
+            tuple of 1D array (or Quantity) objects.
+        ax : matplotlib.Axes (optional)
+        labels : iterable (optional)
+            List of axis labels.
+        subplots_kw : dict
+            kwargs passed to matplotlib's subplots() function if an axes object
+            is not specified.
+        kwargs : dict
+            kwargs passed to either contourf() or plot().
 
         """
 
