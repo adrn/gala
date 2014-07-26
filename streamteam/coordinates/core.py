@@ -20,6 +20,7 @@ __all__ = ["vgsr_to_vhel", "vhel_to_vgsr",
            "gal_xyz_to_hel", "hel_to_gal_xyz"]
 
 # This is the default circular velocity and LSR peculiar velocity of the Sun
+# TODO: make this a config item
 default_vcirc = 220.*u.km/u.s
 default_vlsr = [10., 5.25, 7.17]*u.km/u.s
 default_xsun = -8.*u.kpc
@@ -30,9 +31,9 @@ def vgsr_to_vhel(coords, vgsr, vcirc=default_vcirc, vlsr=default_vlsr):
 
         Parameters
         ----------
-        coords : sequence, astropy.coordinates
-            Either a sequence of coordinate/angle objects, or any astropy
-            coordinate object that can transform to Galactic coordinates.
+        coords : astropy.coordinates.SkyCoord
+            An Astropy SkyCoord object or anything object that can be passed
+            to the SkyCoord initializer.
         vgsr : astropy.units.Quantity
             GSR line-of-sight velocity.
         vcirc : astropy.units.Quantity
@@ -43,15 +44,9 @@ def vgsr_to_vhel(coords, vgsr, vcirc=default_vcirc, vlsr=default_vlsr):
 
     """
 
-    if hasattr(coords, 'transform_to'):
-        g = coords.transform_to(coord.Galactic)
-        l,b = g.l, g.b
-    else:
-        l,b = coords
-
-    if not isinstance(l, u.Quantity) or not isinstance(b, u.Quantity):
-        raise TypeError("If passing in a sequence of coordinates, the"
-                        " elements must be subclassed from Quantity.")
+    c = coord.SkyCoord(coords)
+    g = c.galactic
+    l,b = g.l, g.b
 
     if not isinstance(vgsr, u.Quantity):
         raise TypeError("vgsr must be a Quantity subclass")
@@ -73,9 +68,9 @@ def vhel_to_vgsr(coords, vhel, vcirc=default_vcirc, vlsr=default_vlsr):
 
         Parameters
         ----------
-        coords : sequence, astropy.coordinates
-            Either a sequence of coordinate/angle objects, or any astropy
-            coordinate object that can transform to Galactic coordinates.
+        coords : astropy.coordinates.SkyCoord
+            An Astropy SkyCoord object or anything object that can be passed
+            to the SkyCoord initializer.
         vhel : astropy.units.Quantity
             Barycentric line-of-sight velocity.
         vcirc : astropy.units.Quantity
@@ -86,15 +81,9 @@ def vhel_to_vgsr(coords, vhel, vcirc=default_vcirc, vlsr=default_vlsr):
 
     """
 
-    if hasattr(coords, 'transform_to'):
-        g = coords.transform_to(coord.Galactic)
-        l,b = g.l, g.b
-    else:
-        l,b = coords
-
-    if not isinstance(l, u.Quantity) or not isinstance(b, u.Quantity):
-        raise TypeError("If passing in a sequence of coordinates, the"
-                        " elements must be subclassed from Quantity.")
+    c = coord.SkyCoord(coords)
+    g = c.galactic
+    l,b = g.l, g.b
 
     if not isinstance(vhel, u.Quantity):
         raise TypeError("vhel must be a Quantity subclass")
@@ -179,7 +168,7 @@ def gal_xyz_to_hel(X, V=None,
 
     return lbd
 
-def hel_to_gal_xyz(lbd, pm=None, vr=None,
+def hel_to_gal_xyz(coords, pm=None, vr=None,
                    vcirc=default_vcirc, vlsr=default_vlsr, xsun=default_xsun):
     """ Convert Heliocentric spherical coordinates to Galactocentric
         cartesian coordinates. Uses a right-handed cartesian system,
@@ -187,9 +176,9 @@ def hel_to_gal_xyz(lbd, pm=None, vr=None,
 
         Parameters
         ----------
-        lbd : sequence, astropy.coordinates
-            A sequence of Quantity objects or an astropy coordinates
-            object with a distance defined.
+        coords : astropy.coordinates.SkyCoord
+            An Astropy SkyCoord object or anything object that can be passed
+            to the SkyCoord initializer. Must have a distance defined.
         pm : astropy.units.Quantity (optional)
             Proper motion in l, b. Should have shape (2,N).
         vr : astropy.units.Quantity (optional)
@@ -202,18 +191,10 @@ def hel_to_gal_xyz(lbd, pm=None, vr=None,
         xsun : astropy.units.Quantity
             Position of the Sun on the Galactic x-axis.
     """
-    if hasattr(lbd, 'transform_to'):
-        lbd = lbd.transform_to(coord.Galactic)
-        l,b,d = lbd.l, lbd.b, lbd.distance
-    else:
-        # try to unpack tuple instead
-        l,b,d = lbd
 
-    if not isinstance(l, u.Quantity) or not isinstance(b, u.Quantity) \
-        or not isinstance(d, u.Quantity):
-        raise TypeError("If passing in a sequence of coordinates, the"
-                        " elements must be subclassed from"
-                        " astropy.units.Quantity.")
+    c = coord.SkyCoord(coords)
+    g = c.galactic
+    l,b,d = g.l, g.b, g.distance
 
     # spherical to cartesian
     x = d*np.cos(b)*np.cos(l)
