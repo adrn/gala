@@ -26,6 +26,7 @@ Documentation
    install
    coordinates/index
    integrate/index
+   potential/index
 ..   getting_started
 
 ******************
@@ -33,6 +34,5 @@ Indices and Tables
 ******************
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
 
