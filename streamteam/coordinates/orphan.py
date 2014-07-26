@@ -22,6 +22,9 @@ class Orphan(coord.BaseCoordinateFrame):
     of the Orphan stream, as described in
     `this paper <http://iopscience.iop.org/0004-637X/711/1/32/pdf/apj_711_1_32.pdf>`_.
 
+    For more information about this class, see the Astropy documentation
+    on `Coordinate Frames <http://docs.astropy.org/en/latest/coordinates/frames.html>`_.
+
     Parameters
     ----------
     representation : `BaseRepresentation` or None
