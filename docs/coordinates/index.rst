@@ -59,6 +59,15 @@ allow specifying the distance of the Sun to the Galactic center (`xsun`)::
     >>> stc.hel_to_gal_xyz(c, xsun=-8.3*u.kpc)
     <Quantity [-22.64899301,  1.42957337,  4.13070449] kpc>
 
+These functions also work on objects containing multiple coordinates::
+
+    >>> c = coord.SkyCoord(ra=[100.68458, 41.23123]*u.degree,
+    ...                    dec=[41.26917, -11.412]*u.degree,
+    ...                    distance=[13.412, 1534.1231]*u.kpc)
+    <Quantity [[ -2.11299130e+01, -7.89201791e+02],
+               [  1.27822920e+00, -1.08828561e+02],
+               [  3.69340057e+00, -1.31601004e+03]] kpc>
+
 Also included are coordinate classes for transforming to Sagittarius and Orphan
 stream coordinates (as defined in the references below). These classes behave
 like the built-in astropy coordinates frames (e.g., `ICRS` or `Galactic`) and
