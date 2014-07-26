@@ -150,7 +150,7 @@ class Potential(object):
         ----------
         grid : tuple
             Coordinate grids or slice value for each dimension. Should be a
-            tuple of 1D array (or Quantity) objects.
+            tuple of 1D arrays or numbers.
         ax : matplotlib.Axes (optional)
         labels : iterable (optional)
             List of axis labels.
@@ -229,47 +229,75 @@ class Potential(object):
 class CompositePotential(dict, Potential):
 
     def __init__(self, **kwargs):
-        """ Represents a potential composed of several distinct potential
-            components. For example, two point masses or a galactic disk
-            + halo.
+        """ A potential composed of several distinct components. For example,
+            two point masses or a galactic disk and halo, each with their own
+            potential model.
 
-            Parameters
-            ----------
-            kwargs
+            A `CompositePotential` is created like a Python dictionary, e.g.::
+
+                >>> p1 = Potential(func1)
+                >>> p2 = Potential(func2)
+                >>> cp = CompositePotential(component1=p1, component2=p2)
+
+            or equivalently::
+
+                >>> cp = CompositePotential()
+                >>> cp['component1'] = p1
+                >>> cp['component2'] = p2
+
+            You can also use any of the built-in `Potential` classes as
+            components::
+
+                >>> from streamteam.potential import HernquistPotential
+                >>> cp = CompositePotential()
+                >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., usys=[u.kpc,u.Myr,u.Msun])
 
         """
 
         for v in kwargs.values():
-            if not isinstance(v, Potential):
-                raise TypeError("Values may only be Potential objects, not "
-                                "{0}.".format(type(v)))
+            self._check_component(v)
 
         dict.__init__(self, **kwargs)
 
     def __setitem__(self, key, value):
-        if not isinstance(value, Potential):
-            raise TypeError("Values may only be Potential objects, not "
-                            "{0}.".format(type(value)))
-
+        self._check_component(value)
         super(CompositePotential, self).__setitem__(key, value)
 
-    def value_at(self, x):
-        """ Compute the value of the potential at the given position(s)
+    def _check_component(self, p):
+        # TODO: just check for value/gradient/hessian functions?
+        if not isinstance(p, Potential):
+            raise TypeError("Potential components may only be Potential "
+                            "objects, not {0}.".format(type(p)))
 
-            Parameters
-            ----------
-            x : astropy.units.Quantity, array_like, numeric
-                Position to compute the value of the potential.
+    def value(self, x):
         """
-        return np.array([p.value_at(x) for p in self.values()]).sum(axis=0)
+        Compute the value of the potential at the given position(s).
 
-    def acceleration_at(self, x):
-        """ Compute the acceleration due to the potential at the given
-            position(s)
-
-            Parameters
-            ----------
-            x : astropy.units.Quantity
-                Position to compute the acceleration at.
+        Parameters
+        ----------
+        x : array_like, numeric
+            Position to compute the value of the potential.
         """
-        return np.array([p.acceleration_at(x) for p in self.values()]).sum(axis=0)
+        return np.array([p.value(x) for p in self.values()]).sum(axis=0)
+
+    def gradient(self, x):
+        """
+        Compute the gradient of the potential at the given position(s).
+
+        Parameters
+        ----------
+        x : array_like, numeric
+            Position to compute the gradient.
+        """
+        return np.array([p.gradient(x) for p in self.values()]).sum(axis=0)
+
+    def hessian(self, x):
+        """
+        Compute the Hessian of the potential at the given position(s).
+
+        Parameters
+        ----------
+        x : array_like, numeric
+            Position to compute the Hessian.
+        """
+        return np.array([p.hessian(x) for p in self.values()]).sum(axis=0)
