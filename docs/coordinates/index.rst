@@ -1,4 +1,4 @@
-.. _astropy-coordinates:
+.. _coordinates:
 
 *********************************************
 Coordinate Systems (`streamteam.coordinates`)
@@ -21,22 +21,22 @@ Getting Started
 ===============
 
 The functions in this subpackage make use of the coordinates subpackage in
-astropy, `astropy.coordinates <http://docs.astropy.org/en/latest/coordinates/>`_.
+Astropy, `astropy.coordinates <http://docs.astropy.org/en/latest/coordinates/>`_.
 Currently available are functions to:
 
 - Convert a velocity from/to the Galactic Standard of Rest (GSR) to/from a
-  heliocentric velocity.
+  heliocentric (LSR) velocity.
 - Convert a position (and velocity) from/to Galactic cartesian coordinates
   to/from Heliocentric spherical coordinates.
 
-These functions work naturally with the `astropy <http://www.astropy.org>`_ unit
+These functions work naturally with the `Astropy <http://www.astropy.org>`_ unit
 system and coordinate subpackages. For example, to convert a sky position
 and distance to a Galactocentric, cartesian position, we first have to define
-an astropy coordinate frame object::
+an Astropy coordinate::
 
     >>> import astropy.coordinates as coord
     >>> import astropy.units as u
-    >>> c = coord.ICRS(ra=100.68458*u.degree, dec=41.26917*u.degree, distance=15*u.kpc)
+    >>> c = coord.SkyCoord(ra=100.68458*u.degree, dec=41.26917*u.degree, distance=15*u.kpc)
 
 Then pass this object in to the heliocentric to galactocentric conversion
 function::
@@ -64,14 +64,14 @@ stream coordinates (as defined in the references below). These classes behave
 like the built-in astropy coordinates frames (e.g., `ICRS` or `Galactic`) and
 can be transformed to and from other astropy coordinate frames::
 
-    >>> from streamteam.coordinates import Sagittarius
-    >>> c = coord.ICRS(ra=10.68458*u.degree, dec=41.26917*u.degree)
-    >>> c.transform_to(Sagittarius)
-    <Sagittarius Coordinate: (Lambda, Beta, distance) in (deg, deg, )
-        (113.8123808711934, -45.822661836833824, 1.0)>
-    >>> s = Sagittarius(Lambda=156.342*u.degree, Beta=1.1*u.degree)
-    >>> s.transform_to(coord.Galactic)
-    <Galactic Coordinate: (l, b, distance) in (deg, deg, )
+    >>> c = coord.SkyCoord(ra=100.68458*u.degree, dec=41.26917*u.degree)
+    >>> c.transform_to(stc.Sagittarius)
+    <SkyCoord (Sagittarius): (Lambda, Beta, distance) in (deg, deg, )
+        (179.5851618648458, -12.558369149811035, 1.0)>
+    >>> s = stc.Sagittarius(Lambda=156.342*u.degree, Beta=1.1*u.degree)
+    >>> c = coord.SkyCoord(s)
+    >>> c.galactic
+    <SkyCoord (Galactic): (l, b, distance) in (deg, deg, )
         (182.5922090437946, -9.539692094685897, 1.0)>
 
 References
