@@ -22,31 +22,30 @@ from matplotlib import cm
 import astropy.units as u
 from astropy.utils import isiterable
 
-__all__ = ["Potential", "CompositePotential"]
+__all__ = ["Potential", "CartesianPotential", "CompositePotential"]
 
 class Potential(object):
+    """
+    A baseclass for representing gravitational potentials. You must specify
+    a function that evaluates the potential value (func). You may also
+    optionally add a function that computes derivatives (gradient), and a
+    function to compute the Hessian of the potential.
+
+    Parameters
+    ----------
+    func : function
+        A function that computes the value of the potential.
+    gradient : function (optional)
+        A function that computes the first derivatives (gradient) of the potential.
+    hessian : function (optional)
+        A function that computes the second derivatives (Hessian) of the potential.
+    parameters : dict (optional)
+        Any extra parameters that the functions (func, gradient, hessian)
+        require. All functions must take the same parameters.
+
+    """
 
     def __init__(self, func, gradient=None, hessian=None, parameters=dict()):
-        """
-        A baseclass for representing gravitational potentials. You must specify
-        a function that evaluates the potential value (func). You may also
-        optionally add a function that computes derivatives (gradient), and a
-        function to compute the Hessian of the potential.
-
-        Parameters
-        ----------
-        func : function
-            A function that computes the value of the potential.
-        gradient : function (optional)
-            A function that computes the first derivatives (gradient) of the potential.
-        hessian : function (optional)
-            A function that computes the second derivatives (Hessian) of the potential.
-        parameters : dict (optional)
-            Any extra parameters that the functions (func, gradient, hessian)
-            require. All functions must take the same parameters.
-
-        """
-
         # store parameters
         self.parameters = parameters
 
@@ -226,34 +225,71 @@ class Potential(object):
 
         return fig,ax
 
-class CompositePotential(dict, Potential):
+class CartesianPotential(Potential):
+    """
+    A baseclass for representing Cartesian gravitational potentials. You must
+    specify a function that evaluates the potential value (func). You may also
+    optionally add a function that computes derivatives (gradient), and a
+    function to compute the Hessian of the potential.
 
-    def __init__(self, **kwargs):
-        """ A potential composed of several distinct components. For example,
-            two point masses or a galactic disk and halo, each with their own
-            potential model.
+    Parameters
+    ----------
+    func : function
+        A function that computes the value of the potential.
+    gradient : function (optional)
+        A function that computes the first derivatives (gradient) of the potential.
+    hessian : function (optional)
+        A function that computes the second derivatives (Hessian) of the potential.
+    parameters : dict (optional)
+        Any extra parameters that the functions (func, gradient, hessian)
+        require. All functions must take the same parameters.
 
-            A `CompositePotential` is created like a Python dictionary, e.g.::
+    """
 
-                >>> p1 = Potential(func1)
-                >>> p2 = Potential(func2)
-                >>> cp = CompositePotential(component1=p1, component2=p2)
+    def energy(self, x, v):
+        """
+        Compute the total energy (per unit mass) of a point in phase-space
+        in this potential. Assumes the last axis of the input position /
+        velocity is the dimension axis, e.g., for 100 points in 3-space,
+        the arrays should have shape (100,3).
 
-            or equivalently::
-
-                >>> cp = CompositePotential()
-                >>> cp['component1'] = p1
-                >>> cp['component2'] = p2
-
-            You can also use any of the built-in `Potential` classes as
-            components::
-
-                >>> from streamteam.potential import HernquistPotential
-                >>> cp = CompositePotential()
-                >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., usys=[u.kpc,u.Myr,u.Msun])
-
+        Parameters
+        ----------
+        x : array_like, numeric
+            Position.
+        v : array_like, numeric
+            Velocity.
         """
 
+        return self.value(x) + 0.5*(np.sum(v**2,axis=-1))
+
+class CompositePotential(dict, Potential):
+    """
+    A potential composed of several distinct components. For example,
+    two point masses or a galactic disk and halo, each with their own
+    potential model.
+
+    A `CompositePotential` is created like a Python dictionary, e.g.::
+
+        >>> p1 = Potential(func1)
+        >>> p2 = Potential(func2)
+        >>> cp = CompositePotential(component1=p1, component2=p2)
+
+    or equivalently::
+
+        >>> cp = CompositePotential()
+        >>> cp['component1'] = p1
+        >>> cp['component2'] = p2
+
+    You can also use any of the built-in `Potential` classes as
+    components::
+
+        >>> from streamteam.potential import HernquistPotential
+        >>> cp = CompositePotential()
+        >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., usys=[u.kpc,u.Myr,u.Msun])
+
+    """
+    def __init__(self, **kwargs):
         for v in kwargs.values():
             self._check_component(v)
 
