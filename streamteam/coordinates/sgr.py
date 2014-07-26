@@ -25,6 +25,9 @@ class Sagittarius(coord.BaseCoordinateFrame):
     and further explained at
     `this website <http://www.astro.virginia.edu/~srm4n/Sgr/>`_.
 
+    For more information about this class, see the Astropy documentation
+    on `Coordinate Frames <http://docs.astropy.org/en/latest/coordinates/frames.html>`_.
+
     Parameters
     ----------
     representation : `BaseRepresentation` or None
