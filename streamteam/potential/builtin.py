@@ -278,10 +278,10 @@ class TriaxialLogarithmicPotential(Potential):
 
     .. math::
 
-        \Phi_{halo} &= \frac{1}{2}v_{c}^2\ln(C_1x^2 + C_2y^2 + C_3xy + z^2/q_3^2 + r_h^2)
+        \Phi_{halo} &= \frac{1}{2}v_{c}^2\ln(C_1x^2 + C_2y^2 + C_3xy + z^2/q_3^2 + r_h^2)\\
         C_1 &= \frac{\cos^2\phi}{q_1^2} + \frac{\sin^2\phi}{q_2^2}\\
         C_2 &= \frac{\sin^2\phi}{q_1^2} + \frac{\cos^2\phi}{q_2^2}\\
-        C_3 &= 2\sin\phi\cos\phi \left(q_1^{-2} - q_2^{-2}\right).
+        C_3 &= 2\sin\phi\cos\phi \left(q_1^{-2} - q_2^{-2}\right)
 
     Parameters
     ----------
