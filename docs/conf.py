@@ -261,3 +261,6 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'http://docs.python.org/': None}
+
+# see: http://stackoverflow.com/questions/20334804/sphinx-autodoc-and-numpydoc
+numpydoc_show_class_members = False
