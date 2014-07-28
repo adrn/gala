@@ -41,23 +41,13 @@ def test_simple():
         return r**-2
 
     p = Potential(func=f, gradient=gradient)
-    assert p.value_at(0.5) == -2.
-    assert p.acceleration_at(0.5) == -4.
+    assert p(0.5) == -2.
+    assert p.value(0.5) == -2.
+    assert p.acceleration(0.5) == -4.
 
-    p.value_at(np.arange(0.5, 11.5, 0.5))
-    p.acceleration_at(np.arange(0.5, 11.5, 0.5))
-
-def test_simple_units():
-
-    def f(r):
-        return -(G*222234404403.41818*u.Msun)/r
-
-    def gradient(r):
-        return (G*222234404403.41818*u.Msun)/r**2
-
-    p = Potential(func=f, gradient=gradient)
-    assert np.allclose(p.value_at(0.5*u.kpc).decompose(usys), (-2*u.kpc**2/u.Myr**2))
-    assert np.allclose(p.acceleration_at(0.5*u.kpc).decompose(usys), (-4*u.kpc/u.Myr**2))
+    p(np.arange(0.5, 11.5, 0.5))
+    p.value(np.arange(0.5, 11.5, 0.5))
+    p.acceleration(np.arange(0.5, 11.5, 0.5))
 
 def test_repr():
 
@@ -73,31 +63,29 @@ def test_repr():
 def test_plot():
     def f(x, m, x0):
         r = np.sqrt(np.sum((x-x0)**2, axis=-1))
-        return -G*m/r
+        return -m/r
 
     def gradient(x, m, x0):
         r = np.sqrt(np.sum((x-x0)**2, axis=-1))
-        return G*m*(x-x0)/r**3
+        return m*(x-x0)/r**3
 
     p = Potential(func=f, gradient=gradient,
-                  parameters=dict(m=222234404403.41818*u.Msun,
-                                  x0=np.array([[1.,3.,0.]])*u.kpc))
-    f,a = p.plot_contours(grid=(np.linspace(-10., 10., 100)*u.kpc,
-                                0.*u.kpc,
-                                0.*u.kpc),
+                  parameters=dict(m=1,
+                                  x0=[1.,3.,0.]))
+    f,a = p.plot_contours(grid=(np.linspace(-10., 10., 100), 0., 0.),
                           labels=["X"])
     f.suptitle("slice off from 0., won't have cusp")
     f.savefig(os.path.join(plot_path, "contour_x.png"))
 
-    f,a = p.plot_contours(grid=(np.linspace(-10., 10., 100)*u.kpc,
-                                np.linspace(-10., 10., 100)*u.kpc,
-                                0.*u.kpc),
+    f,a = p.plot_contours(grid=(np.linspace(-10., 10., 100),
+                                np.linspace(-10., 10., 100),
+                                0.),
                           cmap=cm.Blues)
     f.savefig(os.path.join(plot_path, "contour_xy.png"))
 
-    f,a = p.plot_contours(grid=(np.linspace(-10., 10., 100)*u.kpc,
-                                1.*u.kpc,
-                                np.linspace(-10., 10., 100)*u.kpc),
+    f,a = p.plot_contours(grid=(np.linspace(-10., 10., 100),
+                                1.,
+                                np.linspace(-10., 10., 100)),
                           cmap=cm.Blues, labels=["X", "Z"])
     f.savefig(os.path.join(plot_path, "contour_xz.png"))
 
@@ -105,25 +93,25 @@ def test_composite():
 
     def f(x, m, x0):
         r = np.sqrt(np.sum((x-x0)**2, axis=-1))
-        return -G*m/r
+        return -m/r
 
     def gradient(x, m, x0):
         r = np.sqrt(np.sum((x-x0)**2, axis=-1))
-        return G*m*(x-x0)/r**3
+        return m*(x-x0)/r**3
 
     p1 = Potential(func=f, gradient=gradient,
-                   parameters=dict(m=222234404403.41818*u.Msun,
-                                   x0=np.array([[1.,0.,0.]])*u.kpc))
+                   parameters=dict(m=1.,
+                                   x0=[1.,0.,0.]))
 
     p2 = Potential(func=f, gradient=gradient,
-                   parameters=dict(m=222234404403.41818*u.Msun,
-                                   x0=np.array([[-1.,0.,0.]])*u.kpc))
+                   parameters=dict(m=1.,
+                                   x0=[-1.,0.,0.]))
 
     p = CompositePotential(one=p1, two=p2)
-    assert np.allclose(p.value_at([0.,0.,0.]*u.kpc).decompose(usys), -2*u.kpc**2/u.Myr**2)
-    assert np.allclose(p.acceleration_at([0.,0.,0.]*u.kpc).decompose(usys).value, 0.)
+    assert np.allclose(p.value([0.,0.,0.]), -2)
+    assert np.allclose(p.acceleration([0.,0.,0.]), 0.)
 
-    fig, axes = p.plot_contours(grid=(np.linspace(-10., 10., 100)*u.kpc,
-                                      np.linspace(-10., 10., 100)*u.kpc,
-                                      0.*u.kpc))
+    fig, axes = p.plot_contours(grid=(np.linspace(-10., 10., 100),
+                                      np.linspace(-10., 10., 100),
+                                      0.))
     fig.savefig(os.path.join(plot_path, "composite_point_mass.png"))

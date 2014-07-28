@@ -46,10 +46,10 @@ class TestPointMass(object):
 
         # Test with a single position
         r = [1.,0.,0.]
-        pot_val = potential.value_at(r)
+        pot_val = potential.value(r)
         assert np.allclose(pot_val, -39.487906, atol=5)
 
-        acc_val = potential.acceleration_at(r)
+        acc_val = potential.acceleration(r)
         assert np.allclose(acc_val, [-39.487906,0.,0.], atol=5)
 
     def test_pointmass_plot(self):
@@ -87,7 +87,7 @@ class TestComposite(object):
 
         # Where forces cancel
         np.testing.assert_array_almost_equal(
-                        potential.acceleration_at([0.,0.,0.]),
+                        potential.acceleration([0.,0.,0.]),
                         [0.,0.,0.], decimal=5)
 
         grid = np.linspace(-5.,5)
@@ -135,8 +135,8 @@ class TestIsochrone(object):
                                        m=1.E11, b=5.)
 
         r = ([1.,0.,0.]*u.kpc).reshape(1,3)
-        pot_val = potential.value_at(r)
-        acc_val = potential.acceleration_at(r)
+        pot_val = potential.value(r)
+        acc_val = potential.acceleration(r)
 
         axes = None
         grid = np.linspace(-20.,20, 50)
@@ -158,13 +158,13 @@ class TestMiyamotoNagai(object):
 
         # single
         r = [1.,0.,0.]
-        pot_val = potential.value_at(r)
-        acc_val = potential.acceleration_at(r)
+        pot_val = potential.value(r)
+        acc_val = potential.acceleration(r)
 
         # multiple
         r = np.random.uniform(size=(100,3))
-        pot_val = potential.value_at(r)
-        acc_val = potential.acceleration_at(r)
+        pot_val = potential.value(r)
+        acc_val = potential.acceleration(r)
 
         grid = np.linspace(-20.,20, 200)
         fig,axes = potential.plot_contours(grid=(grid,0.,grid))
@@ -179,13 +179,13 @@ class TestHernquist(object):
 
         # single
         r = [1.,0.,0.]
-        pot_val = potential.value_at(r)
-        acc_val = potential.acceleration_at(r)
+        pot_val = potential.value(r)
+        acc_val = potential.acceleration(r)
 
         # multiple
         r = np.random.uniform(size=(100,3))
-        pot_val = potential.value_at(r)
-        acc_val = potential.acceleration_at(r)
+        pot_val = potential.value(r)
+        acc_val = potential.acceleration(r)
 
         grid = np.linspace(-20.,20, 50)
         fig,axes = potential.plot_contours(grid=(grid,grid,0.))
@@ -212,13 +212,13 @@ class TestLogarithmic(object):
 
         # single
         r = [10.,0.,0.]
-        pot_val = potentials[0].value_at(r)
-        acc_val = potentials[0].acceleration_at(r)
+        pot_val = potentials[0].value(r)
+        acc_val = potentials[0].acceleration(r)
 
         # multiple
         r = np.random.uniform(10., 50., size=(100,3))
-        pot_val = potentials[0].value_at(r)
-        acc_val = potentials[0].acceleration_at(r)
+        pot_val = potentials[0].value(r)
+        acc_val = potentials[0].acceleration(r)
 
         grid = np.linspace(-20.,20, 50)
 
@@ -249,13 +249,13 @@ class TestNFW(object):
 
         # single
         r = [10.,0.,0.]
-        pot_val = potentials[0].value_at(r)
-        acc_val = potentials[0].acceleration_at(r)
+        pot_val = potentials[0].value(r)
+        acc_val = potentials[0].acceleration(r)
 
         # multiple
         r = np.random.uniform(10., 50., size=(100,3))
-        pot_val = potentials[0].value_at(r)
-        acc_val = potentials[0].acceleration_at(r)
+        pot_val = potentials[0].value(r)
+        acc_val = potentials[0].acceleration(r)
 
         grid = np.linspace(-20.,20, 50)
 
@@ -282,13 +282,13 @@ class TestCompositeGalaxy(object):
 
         # single
         r = [10.,0.,0.]
-        pot_val = potential.value_at(r)
-        acc_val = potential.acceleration_at(r)
+        pot_val = potential.value(r)
+        acc_val = potential.acceleration(r)
 
         # multiple
         r = np.random.uniform(10., 50., size=(100,3))
-        pot_val = potential.value_at(r)
-        acc_val = potential.acceleration_at(r)
+        pot_val = potential.value(r)
+        acc_val = potential.acceleration(r)
 
         grid = np.linspace(-20.,20, 50)
         fig,axes = potential.plot_contours(grid=(grid,grid,0.))
