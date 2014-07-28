@@ -118,7 +118,7 @@ class IsochronePotential(Potential):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, m, b, usys=None):
+    def __init__(self, m, b, usys):
         parameters = dict(m=m, b=b)
         func,gradient,hessian = isochrone_funcs(usys)
         super(IsochronePotential, self).__init__(func=func, gradient=gradient,
@@ -180,7 +180,7 @@ class MiyamotoNagaiPotential(Potential):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, m, a, b, usys=None):
+    def __init__(self, m, a, b, usys):
         parameters = dict(m=m, a=a, b=b)
         func,gradient,hessian = miyamoto_nagai_funcs(usys)
         super(MiyamotoNagaiPotential, self).__init__(func=func,
@@ -233,7 +233,7 @@ class HernquistPotential(Potential):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, m, c, usys=None):
+    def __init__(self, m, c, usys):
         parameters = dict(m=m, c=c)
         func,gradient,hessian = hernquist_funcs(usys)
         super(HernquistPotential, self).__init__(func=func,
