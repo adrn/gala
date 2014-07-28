@@ -18,12 +18,26 @@ Reference/API
 
 Base classes
 ------------
-.. automodule:: streamteam.potential.core
-   :members:
+
+.. autosummary::
+   :nosignatures:
+   :toctree: _potential/
+
+   streamteam.potential.core.Potential
+   streamteam.potential.core.CartesianPotential
+   streamteam.potential.core.CompositePotential
 
 -------------------------------------------------------------
 
 Built-in potentials
 -------------------
-.. automodule:: streamteam.potential.builtin
-   :members:
+
+.. autosummary::
+   :nosignatures:
+   :toctree: _potential/
+
+   streamteam.potential.builtin.HernquistPotential
+   streamteam.potential.builtin.IsochronePotential
+   streamteam.potential.builtin.MiyamotoNagaiPotential
+   streamteam.potential.builtin.PointMassPotential
+   streamteam.potential.builtin.TriaxialLogarithmicPotential
