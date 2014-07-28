@@ -304,10 +304,10 @@ class LogarithmicPotential(CartesianPotential):
         parameters = dict(v_c=v_c, r_h=r_h, q1=q1,
                           q2=q2, q3=q3, phi=phi)
         func,gradient,hessian = log_funcs(usys)
-        super(TriaxialLogarithmicPotential, self).__init__(func=func,
-                                                 gradient=gradient,
-                                                 hessian=hessian,
-                                                 parameters=parameters)
+        super(LogarithmicPotential, self).__init__(func=func,
+                                                   gradient=gradient,
+                                                   hessian=hessian,
+                                                   parameters=parameters)
 
 # TODO: BELOW HERE
 
