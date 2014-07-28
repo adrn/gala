@@ -36,7 +36,7 @@ class LM10Potential(CompositePotential):
         kwargs["bulge"] = HernquistPotential(usys=usys,
                                              m=m_spher, c=c)
 
-        kwargs["halo"] = TriaxialLogarithmicPotential(usys=usys,
-                                                      q1=q1, q2=q2, q3=q3,
-                                                      phi=phi, v_c=v_c, r_h=r_h)
+        kwargs["halo"] = LogarithmicPotential(usys=usys,
+                                              q1=q1, q2=q2, q3=q3,
+                                              phi=phi, v_c=v_c, r_h=r_h)
         super(LM10Potential,self).__init__(**kwargs)
