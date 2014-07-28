@@ -191,21 +191,21 @@ class TestHernquist(object):
         fig,axes = potential.plot_contours(grid=(grid,grid,0.))
         fig.savefig(os.path.join(plot_path, "hernquist.png"))
 
-class TestTriaxialLogarithmic(object):
+class TestLogarithmic(object):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
     def test_create_plot(self):
 
         potentials = []
-        potentials.append(TriaxialLogarithmicPotential(usys=self.usys,
+        potentials.append(LogarithmicPotential(usys=self.usys,
                                                        q1=1., q2=1., q3=1.,
                                                        phi=0., v_c=0.15, r_h=10.))
-        potentials.append(TriaxialLogarithmicPotential(usys=self.usys,
+        potentials.append(LogarithmicPotential(usys=self.usys,
                                                        q1=0.72, q2=1., q3=1.,
                                                        phi=0., v_c=0.15, r_h=1.))
-        potentials.append(TriaxialLogarithmicPotential(usys=self.usys,
+        potentials.append(LogarithmicPotential(usys=self.usys,
                                                        q1=1., q2=0.72, q3=1.,
                                                        phi=np.pi/4, v_c=0.15, r_h=1.))
-        potentials.append(TriaxialLogarithmicPotential(usys=self.usys,
+        potentials.append(LogarithmicPotential(usys=self.usys,
                                                        q1=1., q2=1., q3=0.72,
                                                        phi=0., v_c=0.08, r_h=10.))
 
@@ -227,7 +227,44 @@ class TestTriaxialLogarithmic(object):
         for ii,potential in enumerate(potentials):
             potential.plot_contours(grid=(grid,grid,0.), ax=axes.flat[ii])
 
-        fig.savefig(os.path.join(plot_path, "triaxial_log.png"))
+        fig.savefig(os.path.join(plot_path, "log.png"))
+
+class TestNFW(object):
+    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    def test_create_plot(self):
+
+        potentials = []
+        potentials.append(NFWPotential(usys=self.usys,
+                                       q1=1., q2=1., q3=1.,
+                                       v_h=0.15, r_h=10.))
+        potentials.append(NFWPotential(usys=self.usys,
+                                       q1=0.75, q2=1., q3=1.,
+                                       v_h=0.15, r_h=10.))
+        potentials.append(NFWPotential(usys=self.usys,
+                                       q1=1., q2=0.75, q3=1.,
+                                       v_h=0.15, r_h=1.))
+        potentials.append(NFWPotential(usys=self.usys,
+                                       q1=1., q2=1., q3=1.3,
+                                       v_h=0.08, r_h=1.))
+
+        # single
+        r = [10.,0.,0.]
+        pot_val = potentials[0].value_at(r)
+        acc_val = potentials[0].acceleration_at(r)
+
+        # multiple
+        r = np.random.uniform(10., 50., size=(100,3))
+        pot_val = potentials[0].value_at(r)
+        acc_val = potentials[0].acceleration_at(r)
+
+        grid = np.linspace(-20.,20, 50)
+
+        fig,axes = plt.subplots(2,2,sharex=True,sharey=True,figsize=(12,12))
+
+        for ii,potential in enumerate(potentials):
+            potential.plot_contours(grid=(grid,grid,0.), ax=axes.flat[ii])
+
+        fig.savefig(os.path.join(plot_path, "nfw.png"))
 
 class TestCompositeGalaxy(object):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
@@ -239,7 +276,7 @@ class TestCompositeGalaxy(object):
         potential["bulge"] = HernquistPotential(usys=self.usys,
                                                 m=1.E11, c=0.7)
 
-        potential["halo"] = TriaxialLogarithmicPotential(usys=self.usys,
+        potential["halo"] = LogarithmicPotential(usys=self.usys,
                                                          q1=1.4, q2=1., q3=1.5,
                                                          phi=1.69, v_c=0.17, r_h=12.)
 
