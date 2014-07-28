@@ -15,5 +15,15 @@ Example:
 
 Reference/API
 =============
-.. autoclass:: streamteam.potential.Potential
+
+Base classes
+------------
+.. automodule:: streamteam.potential.core
+   :members:
+
+-------------------------------------------------------------
+
+Built-in potentials
+-------------------
+.. automodule:: streamteam.potential.builtin
    :members:
