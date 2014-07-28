@@ -1,6 +1,6 @@
 # coding: utf-8
 
-""" Common Galactic potential components. """
+""" Common astronomical potentials. """
 
 from __future__ import division, print_function
 
@@ -48,17 +48,25 @@ def point_mass_funcs(units):
     return f, gradient, None
 
 class PointMassPotential(Potential):
+    r"""
+    Represents a point-mass potential at the given origin.
+
+    .. math::
+
+        \Phi = -\frac{Gm}{x-x0}
+
+    Parameters
+    ----------
+    m : numeric
+        Mass.
+    x0 : array_like, numeric
+        Position of the point mass relative to origin of coordinates
+    usys : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+    """
 
     def __init__(self, m, x0, usys=None):
-        """ Represents a point-mass potential at the given origin.
-
-            $\Phi = -\frac{Gm}{x-x0}$
-
-            The parameters are:
-                m : mass
-                x0 : location of the point mass
-
-        """
         parameters = dict(m=m, x0=x0)
         func,gradient,hessian = point_mass_funcs(usys)
         super(PointMassPotential, self).__init__(func=func, gradient=gradient,
@@ -92,17 +100,25 @@ def isochrone_funcs(units):
     return func, gradient, None
 
 class IsochronePotential(Potential):
+    r"""
+    The Isochrone potential.
 
+    .. math::
+
+        \Phi_{spher} = -\frac{GM}{\sqrt{r^2+b^2} + b}
+
+    Parameters
+    ----------
+    m : numeric
+        Mass.
+    b : numeric
+        Core concentration.
+    usys : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
     def __init__(self, m, b, usys=None):
-        """ The Isochrone potential.
-
-            $\Phi_{spher} = -\frac{GM}{\sqrt{r^2+b^2} + b}$
-
-            The parameters dictionary should include:
-                m : mass in the potential
-                b : core concentration
-
-        """
         parameters = dict(m=m, b=b)
         func,gradient,hessian = isochrone_funcs(usys)
         super(IsochronePotential, self).__init__(func=func, gradient=gradient,
@@ -146,26 +162,25 @@ def miyamoto_nagai_funcs(units):
     return func, gradient, None
 
 class MiyamotoNagaiPotential(Potential):
+    r"""
+    Miyamoto-Nagai potential (1975) for a disk-like potential.
 
+    .. math::
+
+        \Phi_{disk} = -\frac{GM_{disk}}{\sqrt{R^2 + (a + sqrt{z^2 + b^2})^2}}
+
+    Parameters
+    ----------
+    m : numeric
+        Mass.
+    a : numeric
+    b : numeric
+    usys : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
     def __init__(self, m, a, b, usys=None):
-        """ Miyamoto-Nagai potential (1975) for a disk-like potential.
-
-            $\Phi_{disk} = -\frac{GM_{disk}}{\sqrt{R^2 + (a + sqrt{z^2 + b^2})^2}}$
-
-            The parameters dictionary should include:
-                m : mass scale
-                a :
-                b :
-
-            Parameters
-            ----------
-            units : list
-                Defines a system of physical base units for the potential.
-            parameters : dict
-                A dictionary of parameters for the potential definition.
-
-        """
-
         parameters = dict(m=m, a=a, b=b)
         func,gradient,hessian = miyamoto_nagai_funcs(usys)
         super(MiyamotoNagaiPotential, self).__init__(func=func,
@@ -200,17 +215,25 @@ def hernquist_funcs(units):
     return func, gradient, None
 
 class HernquistPotential(Potential):
+    r"""
+    Represents the Hernquist potential (1990) for a spheroid (bulge).
 
+    .. math::
+
+        \Phi_{spher} = -\frac{GM_{spher}}{r + c}
+
+    Parameters
+    ----------
+    m : numeric
+        Mass.
+    c : numeric
+        Core concentration.
+    usys : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
     def __init__(self, m, c, usys=None):
-        """ Represents the Hernquist potential (1990) for a spheroid (bulge).
-
-            $\Phi_{spher} = -\frac{GM_{spher}}{r + c}$
-
-            The parameters dictionary should include:
-                m : mass
-                c : core concentration
-
-        """
         parameters = dict(m=m, c=c)
         func,gradient,hessian = hernquist_funcs(usys)
         super(HernquistPotential, self).__init__(func=func,
@@ -250,15 +273,33 @@ def triaxial_log_funcs(units):
     return func, gradient, None
 
 class TriaxialLogarithmicPotential(Potential):
+    r"""
+    Represents a triaxial Logarithmic potential (e.g. triaxial halo).
 
+    .. math::
+
+        \Phi_{halo} = \frac{1}{2}v_{c}^2\ln(C1x^2 + C2y^2 + C3xy + z^2/q_3^2 + r_h^2)
+
+    Parameters
+    ----------
+    v_c : numeric
+        Circular velocity.
+    r_h : numeric
+        Scale radius.
+    q1 : numeric
+        Flattening in X-Y plane.
+    q2 : numeric
+        Flattening in X-Y plane.
+    q3 : numeric
+        Flattening in Z direction.
+    phi : numeric
+        Rotation of halo in X-Y plane.
+    usys : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
     def __init__(self, v_c, r_h, q1, q2, q3, phi, usys):
-        """ Represents a triaxial Logarithmic potential (e.g. triaxial halo).
-
-            $\Phi_{halo} = \frac{1}{2}v_{c}^2\ln(C1x^2 + C2y^2 + C3xy + z^2/q_3^2 + r_h^2)$
-
-            Model parameters: v_c, q1, q2, qz, phi, r_h
-        """
-
         parameters = dict(v_c=v_c, r_h=r_h, q1=q1,
                           q2=q2, q3=q3, phi=phi)
         func,gradient,hessian = triaxial_log_funcs(usys)
@@ -267,6 +308,7 @@ class TriaxialLogarithmicPotential(Potential):
                                                  hessian=hessian,
                                                  parameters=parameters)
 
+# TODO: BELOW HERE
 
 ##############################################################################
 #    Axisymmetric NFW potential
