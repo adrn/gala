@@ -51,7 +51,7 @@ interest, you pass in a grid of values to compute the potential on and
 then just numerical values for the other dimensions. For example, to
 make a 1D plot of the potential contour at :math:`y=0,z=1`::
 
-    >>> p = sp.MiyamotoNagaiPotential(1E11, 6.5, 0.27, usys=(u.kpc, u.Msun, u.Myr))
+    >>> p = sp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, usys=(u.kpc, u.Msun, u.Myr))
     >>> fig,axes = p.plot_contours(grid=(np.linspace(-15,15,100), 0., 1.))
 
 Produces a plot like:
