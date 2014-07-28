@@ -189,7 +189,7 @@ class Potential(object):
             for ii,slc in _slices:
                 r[:,ii] = slc
 
-            Z = self.value_at(r)
+            Z = self.value(r)
             ax.plot(x1, Z, **kwargs)
 
             if labels is not None:
@@ -208,7 +208,7 @@ class Potential(object):
             for ii,slc in _slices:
                 r[:,ii] = slc
 
-            Z = self.value_at(r)
+            Z = self.value(r)
 
             # make default colormap not suck
             cmap = kwargs.pop('cmap', cm.Blues)
