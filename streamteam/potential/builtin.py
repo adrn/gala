@@ -276,7 +276,7 @@ class TriaxialLogarithmicPotential(CartesianPotential):
 
     .. math::
 
-        \Phi_{halo} &= \frac{1}{2}v_{c}^2\ln(C_1x^2 + C_2y^2 + C_3xy + z^2/q_3^2 + r_h^2)\\
+        \Phi &= \frac{1}{2}v_{c}^2\ln(C_1x^2 + C_2y^2 + C_3xy + z^2/q_3^2 + r_h^2)\\
         C_1 &= \frac{\cos^2\phi}{q_1^2} + \frac{\sin^2\phi}{q_2^2}\\
         C_2 &= \frac{\sin^2\phi}{q_1^2} + \frac{\cos^2\phi}{q_2^2}\\
         C_3 &= 2\sin\phi\cos\phi \left(q_1^{-2} - q_2^{-2}\right)
@@ -312,188 +312,59 @@ class TriaxialLogarithmicPotential(CartesianPotential):
 # TODO: BELOW HERE
 
 ##############################################################################
-#    Axisymmetric NFW potential
+#    NFW potential
 #
-def _cartesian_axisymmetric_nfw_model(bases):
-    """ Generates functions to evaluate an NFW potential and its
-        derivatives at a specified position.
+def nfw_funcs(units):
 
-        Physical parameters for this potential are:
-            m : total mass in the potential
-            qz : z axis flattening
-            Rs : scale-length
+    def func(xyz, v_h, r_h, q1, q2, q3):
+        x,y,z = xyz.T
+        r = np.sqrt((x/q1)**2 + (y/q2)**2 + (z/q3)**2 + r_h**2)
+        return -v_h**2 * r_h/r * np.log(1+r/r_h)
+
+    def gradient(xyz, v_c, r_h, q1, q2, q3, phi):
+        x,y,z = xyz.T
+        r = np.sqrt((x/q1)**2 + (y/q2)**2 + (z/q3)**2 + r_h**2)
+
+        dPhi_dr = r_h*v_h**2*(-r + (r + r_h)*np.log((r + r_h)/r_h))/(r**2*(r + r_h))
+        dPhi_dx = dPhi_dr * 2*x/q1**2
+        dPhi_dy = dPhi_dr * 2*y/q2**2
+        dPhi_dz = dPhi_dr * 2*z/q3**2
+
+        return np.array([dPhi_dx,dPhi_dy,dPhi_dz]).T
+
+    return func, gradient, None
+
+class NFWPotential(Potential):
+    r"""
+    Triaxial NFW potential.
+
+    .. math::
+
+        \Phi &= -v_h^2\frac{\ln(1 + r/r_h)}{r/r_h}\\
+        r^2 = (x/q_1)^2 + (y/q_2)^2 + (z/q_3)^2 + r_h^2
+
+    Parameters
+    ----------
+    v_h : numeric
+        Scale velocity.
+    r_h : numeric
+        Scale radius.
+    q1 : numeric
+        Flattening in X direction.
+    q2 : numeric
+        Flattening in Y direction.
+    q3 : numeric
+        Flattening in Z direction.
+    usys : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
     """
 
-    # scale G to be in this unit system
-    _G = G.decompose(bases=bases).value
-
-    def f(r,r_0,log_m,qz,Rs):
-        rr = r-r_0
-        x,y,z = rr.T
-
-        m = np.exp(log_m)
-        R_sq = x**2 + y**2
-        sqrt_term = np.sqrt(R_sq + (z/qz)**2)
-        val = -_G * m / sqrt_term * np.log(1. + sqrt_term/Rs)
-
-        return val
-
-    def df(r,r_0,log_m,qz,Rs):
-        rr = r-r_0
-        x,y,z = rr.T
-
-        m = np.exp(log_m)
-        zz = z/qz
-        R = np.sqrt(x*x + y*y + zz*zz)
-
-        term1 = 1./(R*R*(Rs+R))
-        term2 = -np.log(1. + R/Rs) / (R*R*R)
-        fac = _G*m * (term1 + term2)
-        _x = fac * x
-        _y = fac * y
-        _z = fac * z / qz**2
-
-        return np.array([_x,_y,_z]).T
-
-    return (f, df)
-
-class AxisymmetricNFWPotential(Potential):
-
-    def __init__(self, units, **parameters):
-
-        latex = "$\sigma$"
-
-        assert "log_m" in parameters.keys(), "You must specify a log-mass."
-        assert "qz" in parameters.keys(), "You must specify the parameter 'qz'."
-        assert "Rs" in parameters.keys(), "You must specify the parameter 'Rs'."
-
-        # get functions for evaluating potential and derivatives
-        f,df = _cartesian_axisymmetric_nfw_model(units)
-        super(AxisymmetricNFWPotential, self).__init__(units,
-                                                 f=f, f_prime=df,
-                                                 latex=latex,
-                                                 parameters=parameters)
-
-##############################################################################
-#    Spherical NFW potential
-#
-def _cartesian_spherical_nfw_model(bases):
-    """ Generates functions to evaluate an NFW potential and its
-        derivatives at a specified position.
-
-        Physical parameters for this potential are:
-            log_m : total mass in the core of the potential
-            a : scale-length
-    """
-
-    # scale G to be in this unit system
-    _G = G.decompose(bases=bases).value
-
-    def f(r,r_0,log_m,a):
-        rr = r-r_0
-        x,y,z = rr.T
-
-        m = np.exp(log_m)
-        R2 = x**2 + y**2 + z**2
-
-        return -3 * _G * m / R2 * np.log(1. + R2/a)
-
-    def df(r,r_0,log_m,a):
-        rr = r-r_0
-        x,y,z = rr.T
-
-        m = np.exp(log_m)
-        R = np.sqrt(x*x + y*y + z*z)
-
-        dphi_dr = 3*_G*m/R * (np.log(1+R/a)/R - 1/(R+a))
-        _x = dphi_dr * x/R
-        _y = dphi_dr * y/R
-        _z = dphi_dr * z/R
-
-        return -np.array([_x,_y,_z]).T
-
-    return (f, df)
-
-class SphericalNFWPotential(Potential):
-
-    def __init__(self, units, **parameters):
-
-        latex = "$\sigma$"
-
-        assert "log_m" in parameters.keys(), "You must specify a log-mass."
-        assert "a" in parameters.keys(), "You must specify the parameter 'a'."
-
-        # get functions for evaluating potential and derivatives
-        f,df = _cartesian_spherical_nfw_model(units)
-        super(SphericalNFWPotential, self).__init__(units,
-                                                 f=f, f_prime=df,
-                                                 latex=latex,
-                                                 parameters=parameters)
-
-    def v_circ(self, r):
-        """ Return the circular velocity at position r """
-        a = np.sqrt(np.sum(self.acceleration_at(r)**2, axis=-1))
-        R = np.sqrt(np.sum(r**2, axis=-1))
-        return np.sqrt(R*a)
-
-##############################################################################
-#    Axisymmetric, Logarithmic potential
-#
-def _cartesian_axisymmetric_logarithmic_model(bases):
-    """ Generates functions to evaluate a Logarithmic potential and its
-        derivatives at a specified position.
-
-        Physical parameters for this potential are:
-            qz : z-axis flattening parameter
-            v_c : circular velocity of the halo
-    """
-
-    def f(r,r_0,v_c,qz):
-        rr = r-r_0
-        x,y,z = rr.T
-
-        return 0.5*v_c*v_c * np.log(x*x + y*y + z*z/qz**2)
-
-    def df(r,r_0,v_c,qz):
-        rr = r-r_0
-        x,y,z = rr.T
-
-        fac = v_c*v_c / (x*x + y*y + z*z/(qz*qz))
-
-        dx = fac * x
-        dy = fac * y
-        dz = fac * z / (qz*qz)
-
-        return -np.array([dx,dy,dz]).T
-
-    return (f, df)
-
-class AxisymmetricLogarithmicPotential(Potential):
-
-    def __init__(self, units, **parameters):
-        """ Represents an axisymmetric Logarithmic potential
-
-            $\Phi_{halo} = v_{c}^2/2\ln(x^2 + y^2 + z^2/q_z^2)$
-
-            Model parameters: v_c, qz
-
-            Parameters
-            ----------
-            units : list
-                Defines a system of physical base units for the potential.
-            parameters : dict
-                A dictionary of parameters for the potential definition.
-        """
-
-        latex = "$\\Phi_{halo} = v_{halo}^2\\ln(C_1x^2 + C_2y^2 + C_3xy + z^2/q_z^2 + R_halo^2)$"
-
-        for p in ["qz", "v_c"]:
-            assert p in parameters.keys(), \
-                    "You must specify the parameter '{0}'.".format(p)
-
-        # get functions for evaluating potential and derivatives
-        f,df = _cartesian_axisymmetric_logarithmic_model(units)
-        super(AxisymmetricLogarithmicPotential, self).__init__(units,
-                                                     f=f, f_prime=df,
-                                                     latex=latex,
-                                                     parameters=parameters)
+    def __init__(self, v_h, r_h, q1, q2, q3, usys):
+        parameters = dict(v_h=v_h, r_h=r_h, q1=q1, q2=q2, q3=q3)
+        func,gradient,hessian = nfw_funcs(usys)
+        super(NFWPotential, self).__init__(func=func,
+                                           gradient=gradient,
+                                           hessian=hessian,
+                                           parameters=parameters)
