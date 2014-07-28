@@ -1,9 +1,5 @@
 # coding: utf-8
 
-""" Base class for handling analytic representations of scalar gravitational
-    potentials.
-"""
-
 from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
