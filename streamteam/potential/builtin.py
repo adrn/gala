@@ -18,8 +18,6 @@ from astropy.constants import G
 
 from .core import Potential, CompositePotential
 
-#import _common # minimal gains from using Cython
-
 __all__ = ["PointMassPotential", "MiyamotoNagaiPotential",\
            "HernquistPotential", "TriaxialLogarithmicPotential",\
            "IsochronePotential"]
