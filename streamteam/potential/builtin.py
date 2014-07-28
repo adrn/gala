@@ -321,7 +321,7 @@ def nfw_funcs(units):
         r = np.sqrt((x/q1)**2 + (y/q2)**2 + (z/q3)**2 + r_h**2)
         return -v_h**2 * r_h/r * np.log(1+r/r_h)
 
-    def gradient(xyz, v_c, r_h, q1, q2, q3, phi):
+    def gradient(xyz, v_h, r_h, q1, q2, q3):
         x,y,z = xyz.T
         r = np.sqrt((x/q1)**2 + (y/q2)**2 + (z/q3)**2 + r_h**2)
 
