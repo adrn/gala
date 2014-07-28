@@ -37,7 +37,7 @@ def point_mass_funcs(units):
 
     def gradient(x, x0, m):
         xx = x-x0
-        a = np.sum(xx**2, axis=-1)**-1.5
+        a = (np.sum(xx**2, axis=-1)**-1.5)[...,None]
         return _G * m * xx * a
 
     def hessian(x, x0, m):
