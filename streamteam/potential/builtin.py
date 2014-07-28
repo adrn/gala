@@ -14,7 +14,7 @@ import numpy as np
 import astropy.units as u
 from astropy.constants import G
 
-from .core import Potential, CompositePotential
+from .core import Potential, CartesianPotential, CompositePotential
 
 __all__ = ["PointMassPotential", "MiyamotoNagaiPotential",\
            "HernquistPotential", "TriaxialLogarithmicPotential",\
@@ -97,7 +97,7 @@ def isochrone_funcs(units):
 
     return func, gradient, None
 
-class IsochronePotential(Potential):
+class IsochronePotential(CartesianPotential):
     r"""
     The Isochrone potential.
 
@@ -159,9 +159,9 @@ def miyamoto_nagai_funcs(units):
 
     return func, gradient, None
 
-class MiyamotoNagaiPotential(Potential):
+class MiyamotoNagaiPotential(CartesianPotential):
     r"""
-    Miyamoto-Nagai potential (1975) for a disk-like potential.
+    Miyamoto-Nagai potential for a flattened mass distribution.
 
     .. math::
 
@@ -212,9 +212,9 @@ def hernquist_funcs(units):
 
     return func, gradient, None
 
-class HernquistPotential(Potential):
+class HernquistPotential(CartesianPotential):
     r"""
-    Represents the Hernquist potential (1990) for a spheroid (bulge).
+    Hernquist potential for a spheroid.
 
     .. math::
 
@@ -270,9 +270,9 @@ def triaxial_log_funcs(units):
 
     return func, gradient, None
 
-class TriaxialLogarithmicPotential(Potential):
+class TriaxialLogarithmicPotential(CartesianPotential):
     r"""
-    Represents a triaxial Logarithmic potential (e.g. triaxial halo).
+    Triaxial logarithmic potential.
 
     .. math::
 
