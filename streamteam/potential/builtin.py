@@ -17,8 +17,8 @@ from astropy.constants import G
 from .core import Potential, CartesianPotential, CompositePotential
 
 __all__ = ["PointMassPotential", "MiyamotoNagaiPotential",\
-           "HernquistPotential", "TriaxialLogarithmicPotential",\
-           "IsochronePotential"]
+           "HernquistPotential", "LogarithmicPotential",\
+           "IsochronePotential", "NFWPotential"]
 
 ############################################################
 #    Potential due to a point mass at a given position
@@ -243,7 +243,7 @@ class HernquistPotential(CartesianPotential):
 #    Triaxial, Logarithmic potential (see: Johnston et al. 1998)
 #    http://adsabs.harvard.edu/abs/1999ApJ...512L.109J
 #
-def triaxial_log_funcs(units):
+def log_funcs(units):
 
     def func(xyz, v_c, r_h, q1, q2, q3, phi):
         C1 = (math.cos(phi)/q1)**2+(math.sin(phi)/q2)**2
@@ -270,7 +270,7 @@ def triaxial_log_funcs(units):
 
     return func, gradient, None
 
-class TriaxialLogarithmicPotential(CartesianPotential):
+class LogarithmicPotential(CartesianPotential):
     r"""
     Triaxial logarithmic potential.
 
@@ -303,7 +303,7 @@ class TriaxialLogarithmicPotential(CartesianPotential):
     def __init__(self, v_c, r_h, q1, q2, q3, phi, usys):
         parameters = dict(v_c=v_c, r_h=r_h, q1=q1,
                           q2=q2, q3=q3, phi=phi)
-        func,gradient,hessian = triaxial_log_funcs(usys)
+        func,gradient,hessian = log_funcs(usys)
         super(TriaxialLogarithmicPotential, self).__init__(func=func,
                                                  gradient=gradient,
                                                  hessian=hessian,
@@ -334,7 +334,7 @@ def nfw_funcs(units):
 
     return func, gradient, None
 
-class NFWPotential(Potential):
+class NFWPotential(CartesianPotential):
     r"""
     Triaxial NFW potential.
 

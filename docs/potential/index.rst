@@ -39,5 +39,6 @@ Built-in potentials
    streamteam.potential.builtin.HernquistPotential
    streamteam.potential.builtin.IsochronePotential
    streamteam.potential.builtin.MiyamotoNagaiPotential
+   streamteam.potential.builtin.NFWPotential
    streamteam.potential.builtin.PointMassPotential
-   streamteam.potential.builtin.TriaxialLogarithmicPotential
+   streamteam.potential.builtin.LogarithmicPotential
