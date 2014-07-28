@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-:tocdepth: 2
+:tocdepth: 3
 
 #################################
 Stream Team Package Documentation
@@ -14,7 +14,10 @@ Welcome to the `stream-team` documentation!
 This package contains functionality common to various collaborative
 astrophysics projects between Columbia, Yale, and NYU. For example,
 reading n-body simulations used by the group, coordinate transformations,
-numerical integration.
+numerical integration. The package is being actively developed in
+`a public repository on GitHub <https://github.com/stream-team/stream-team>`_
+so if you have any trouble,
+`open an issue <https://github.com/stream-team/stream-team/issues>`_ there.
 
 *************
 Documentation
