@@ -264,3 +264,6 @@ intersphinx_mapping = {'http://docs.python.org/': None}
 
 # see: http://stackoverflow.com/questions/20334804/sphinx-autodoc-and-numpydoc
 numpydoc_show_class_members = False
+
+# generate stub pages
+autosummary_generate = True
