@@ -15,6 +15,7 @@ import astropy.units as u
 from astropy.constants import G
 
 from .core import Potential, CartesianPotential, CompositePotential
+from ..coordinates import cartesian_to_spherical
 
 __all__ = ["PointMassPotential", "MiyamotoNagaiPotential",\
            "HernquistPotential", "LogarithmicPotential",\
@@ -132,6 +133,9 @@ class IsochronePotential(CartesianPotential):
         and can be used as a "toy potential" in the Sanders & Binney 2014
         formalism for computing action-angle coordinates in _any_ potential.
 
+        Adapted from Jason Sanders' code
+        `here <https://github.com/jlsanders/genfunc>`_.
+
         Parameters
         ----------
         x : array_like
@@ -139,8 +143,78 @@ class IsochronePotential(CartesianPotential):
         v : array_like
             Velocities.
         """
+        _G = G.decompose(self.usys).value
+        GM = _G*self.parameters['m']
+        b = self.parameters['b']
+        E = self.energy(x, v)
 
+        if np.any(E > 0.):
+            raise ValueError("Unbound particle. (E = {})".format(E))
 
+        # convert position, velocity to spherical polar coordinates
+        sph = cartesian_to_spherical(x, v)
+        r,phi,theta,vr,vphi,vtheta = sph.T
+
+        # ----------------------------
+        # Actions
+        # ----------------------------
+
+        # compute angular momentum and angular momentum in Z direction
+        Lz = r*vphi*np.sin(theta)
+        L = np.sqrt(r*r*vtheta*vtheta + Lz*Lz/np.sin(theta)**2)
+        Jr = GM / np.sqrt(-2*E) - 0.5*(L + np.sqrt(L*L + 4*GM*b))
+
+        # compute the three action variables
+        actions = np.array([Jr, Lz, L - np.abs(Lz)]).T
+
+        # ----------------------------
+        # Angles
+        # ----------------------------
+        c = GM / (-2*E) - b
+        e = np.sqrt(1 - L*L*(1 + b/c) / GM / c)
+
+        tmp1 = r*vr / np.sqrt(-2.*E)
+        tmp2 = b + c - np.sqrt(b*b + r*r)
+        eta = np.arctan2(tmp1,tmp2)
+
+        OmegaR = (-2*E)**1.5 / GM
+        OmegaPhi = 0.5*OmegaR * (1 + L/np.sqrt(L*L + 4*GM*b))
+        thetar = eta - e*c*np.sin(eta) / (c + b)
+
+        psi = np.arctan2(np.cos(theta), -np.sin(theta)*r*vtheta/L)
+        psi[np.abs(vtheta) <= 1e-10] = np.pi/2.
+
+        a = np.sqrt((1+e) / (1-e))
+        ap = np.sqrt((1 + e + 2*b/c) / (1 - e + 2*b/c))
+        def F(x, y):
+            z = np.zeros_like(x)
+
+            ix = y>np.pi/2.
+            z[ix] = np.pi/2. - np.arctan(np.tan(np.pi/2.-0.5*y[ix])/x[ix])
+
+            ix = y<-np.pi/2.
+            z[ix] = -np.pi/2. + np.arctan(np.tan(np.pi/2.+0.5*y[ix])/x[ix])
+
+            ix = (y<=np.pi/2) & (y>=-np.pi/2)
+            z[ix] = np.arctan(x[ix]*np.tan(0.5*y[ix]))
+            return z
+
+        thetaz = psi + OmegaPhi*thetar/OmegaR - F(a,eta) - \
+                 F(ap,eta)/np.sqrt(1 + 4*GM*b/L/L)
+
+        LR = Lz/L
+        sinu = LR/np.sqrt(1.-LR*LR)/np.tan(theta)
+
+        u = np.arcsin(sinu)
+        u[sinu > 1.] = np.pi/2.
+        u[sinu < -1.] = -np.pi/2.
+        u[vtheta > 0.] = np.pi - u[vtheta > 0.]
+
+        thetap = phi - u + np.sign(Lz)*thetaz
+        angles = np.array([thetar, thetap, thetaz]).T
+        angles %= 2*np.pi
+
+        return actions, angles
 
 ##############################################################################
 #    Miyamoto-Nagai Disk potential from Miyamoto & Nagai 1975
@@ -328,8 +402,6 @@ class LogarithmicPotential(CartesianPotential):
                                                    gradient=gradient,
                                                    hessian=hessian,
                                                    parameters=parameters)
-
-# TODO: BELOW HERE
 
 ##############################################################################
 #    NFW potential
