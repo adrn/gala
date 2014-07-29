@@ -73,7 +73,7 @@ class HarmonicOscillatorPotential(CartesianPotential):
         in _any_ potential.
 
         Adapted from Jason Sanders' code
-        `here <https://github.com/jlsanders/genfunc>`_.
+        `genfunc <https://github.com/jlsanders/genfunc>`_.
 
         Parameters
         ----------
