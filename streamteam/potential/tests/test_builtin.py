@@ -147,6 +147,25 @@ class TestIsochrone(object):
                 potential.plot_contours(grid=(grid,slc,0.), ax=axes, marker=None)
         fig.savefig(os.path.join(plot_path, "isochrone_1d.png"))
 
+    def test_action_angle(self):
+        from ...integrate import LeapfrogIntegrator
+        potential = IsochronePotential(usys=self.usys, m=1.E11, b=5.)
+        acc = lambda t,x: potential.acceleration(x)
+        integrator = LeapfrogIntegrator(acc)
+        t,ws = integrator.run([0.,0.,1.,0.1,0.,0.], dt=1., nsteps=10000)
+
+        actions,angles = potential.action_angle(ws[:,0,:3], ws[:,0,3:])
+
+        fig,axes = plt.subplots(2,1,figsize=(8,5))
+        axes[0].plot(actions[:,0], marker=None)
+        axes[0].plot(actions[:,1], marker=None)
+        axes[0].plot(actions[:,2], marker=None)
+
+        axes[1].plot(angles[:,0], marker=None)
+        axes[1].plot(angles[:,1], marker=None)
+        axes[1].plot(angles[:,2], marker=None)
+        plt.show()
+
 class TestMiyamotoNagai(object):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
     def test_create_plot(self):
