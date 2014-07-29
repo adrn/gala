@@ -65,6 +65,7 @@ class PointMassPotential(Potential):
     """
 
     def __init__(self, m, x0, usys=None):
+        self.usys = usys
         parameters = dict(m=m, x0=x0)
         func,gradient,hessian = point_mass_funcs(usys)
         super(PointMassPotential, self).__init__(func=func, gradient=gradient,
@@ -117,11 +118,29 @@ class IsochronePotential(CartesianPotential):
 
     """
     def __init__(self, m, b, usys):
+        self.usys = usys
         parameters = dict(m=m, b=b)
         func,gradient,hessian = isochrone_funcs(usys)
         super(IsochronePotential, self).__init__(func=func, gradient=gradient,
                                                  hessian=hessian,
                                                  parameters=parameters)
+
+    def action_angle(self, x, v):
+        """
+        Transform the input cartesian position and velocity to action-angle
+        coordinates the Isochrone potential. This transformation is analytic
+        and can be used as a "toy potential" in the Sanders & Binney 2014
+        formalism for computing action-angle coordinates in _any_ potential.
+
+        Parameters
+        ----------
+        x : array_like
+            Positions.
+        v : array_like
+            Velocities.
+        """
+
+
 
 ##############################################################################
 #    Miyamoto-Nagai Disk potential from Miyamoto & Nagai 1975
@@ -179,14 +198,13 @@ class MiyamotoNagaiPotential(CartesianPotential):
 
     """
     def __init__(self, m, a, b, usys):
+        self.usys = usys
         parameters = dict(m=m, a=a, b=b)
         func,gradient,hessian = miyamoto_nagai_funcs(usys)
         super(MiyamotoNagaiPotential, self).__init__(func=func,
                                                      gradient=gradient,
                                                      hessian=hessian,
                                                      parameters=parameters)
-
-# HERE
 
 ##############################################################################
 #    Hernquist Spheroid potential from Hernquist 1990
@@ -232,6 +250,7 @@ class HernquistPotential(CartesianPotential):
 
     """
     def __init__(self, m, c, usys):
+        self.usys = usys
         parameters = dict(m=m, c=c)
         func,gradient,hessian = hernquist_funcs(usys)
         super(HernquistPotential, self).__init__(func=func,
@@ -301,6 +320,7 @@ class LogarithmicPotential(CartesianPotential):
 
     """
     def __init__(self, v_c, r_h, q1, q2, q3, phi, usys):
+        self.usys = usys
         parameters = dict(v_c=v_c, r_h=r_h, q1=q1,
                           q2=q2, q3=q3, phi=phi)
         func,gradient,hessian = log_funcs(usys)
@@ -362,6 +382,7 @@ class NFWPotential(CartesianPotential):
     """
 
     def __init__(self, v_h, r_h, q1, q2, q3, usys):
+        self.usys = usys
         parameters = dict(v_h=v_h, r_h=r_h, q1=q1, q2=q2, q3=q3)
         func,gradient,hessian = nfw_funcs(usys)
         super(NFWPotential, self).__init__(func=func,
