@@ -143,6 +143,7 @@ Built-in potentials
    :nosignatures:
    :toctree: _potential/
 
+   streamteam.potential.builtin.HarmonicOscillatorPotential
    streamteam.potential.builtin.HernquistPotential
    streamteam.potential.builtin.IsochronePotential
    streamteam.potential.builtin.MiyamotoNagaiPotential
