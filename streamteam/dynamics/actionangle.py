@@ -65,11 +65,24 @@ def classify_orbit(w):
         ix = np.any(np.sign(L0[...,ii]) != np.sign(Ls[1:,...,ii]), axis=0)
         loop[ix,ii] = 0
 
-    # orbit_type = np.zeros(norbits)
-    # orbit_type[loop.sum(axis=1) == 0] = 0 # box
-    # orbit_type[loop.sum(axis=1) > 0] = 1 # loop
-
     return loop.astype(int)
+
+def flip_coords(w, loop_bit):
+    """
+    Align circulation with z-axis.
+
+    Parameters
+    ----------
+    w : array_like
+        Array of phase-space positions.
+    loop_bit : array_like
+        Array of bits that specify axis about which the orbit circulates.
+        See docstring for `classify_orbit()`.
+    """
+    ix = loop_bit[:,0] == 1
+    w[:,ix,:3] = w[:,ix,2::-1] # index magic to flip positions
+    w[:,ix,3:] = w[:,ix,:2:-1] # index magic to flip velocities
+    return w
 
 def find_actions(t, w, N_max=8):
     """
