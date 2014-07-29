@@ -19,7 +19,50 @@ from ..coordinates import cartesian_to_spherical
 
 __all__ = ["PointMassPotential", "MiyamotoNagaiPotential",\
            "HernquistPotential", "LogarithmicPotential",\
-           "IsochronePotential", "NFWPotential"]
+           "IsochronePotential", "NFWPotential",\
+           "HarmonicOscillatorPotential"]
+
+############################################################
+#    Harmonic oscillator
+#
+def harmonic_osc_funcs(units):
+    def f(x, omega):
+        omega2 = omega*omega
+        return np.sum(0.5*np.atleast_2d(omega2)*x*x, axis=-1)
+
+    def gradient(x, omega):
+        omega2 = omega*omega
+        return np.atleast_2d(omega2)*x
+
+    def hessian(x, x0, m):
+        raise NotImplementedError() # TODO:
+
+    return f, gradient, None
+
+class HarmonicOscillatorPotential(Potential):
+    r"""
+    Represents an N-dimensional harmonic oscillator.
+
+    .. math::
+
+        \Phi = \frac{1}{2}\omega^2 x^2
+
+    Parameters
+    ----------
+    omega : numeric
+        Frequency.
+    usys : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+    """
+
+    def __init__(self, omega, usys=None):
+        self.usys = usys
+        parameters = dict(omega=np.array(omega))
+        func,gradient,hessian = harmonic_osc_funcs(usys)
+        super(HarmonicOscillatorPotential, self).__init__(func=func, gradient=gradient,
+                                                          hessian=hessian,
+                                                          parameters=parameters)
 
 ############################################################
 #    Potential due to a point mass at a given position
