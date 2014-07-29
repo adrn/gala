@@ -155,6 +155,9 @@ class TestIsochrone(object):
         t,ws = integrator.run([0.,0.,1.,0.1,0.,0.], dt=1., nsteps=10000)
 
         actions,angles = potential.action_angle(ws[:,0,:3], ws[:,0,3:])
+        assert np.allclose(actions[0,0],actions[1:,0],rtol=1E-3)
+        assert np.allclose(actions[0,1],actions[1:,1],rtol=1E-3)
+        assert np.allclose(actions[0,2],actions[1:,2],rtol=1E-3)
 
         fig,axes = plt.subplots(2,1,figsize=(8,5))
         axes[0].plot(actions[:,0], marker=None)
@@ -164,7 +167,7 @@ class TestIsochrone(object):
         axes[1].plot(angles[:,0], marker=None)
         axes[1].plot(angles[:,1], marker=None)
         axes[1].plot(angles[:,2], marker=None)
-        plt.show()
+        fig.savefig(os.path.join(plot_path, "isochrone_aa.png"))
 
 class TestMiyamotoNagai(object):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
