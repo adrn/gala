@@ -28,7 +28,7 @@ def cartesian_to_spherical(x, v):
     """
     x,y,z = x.T
     vx,vy,vz = v.T
-    d_xy = np.sqrt(x*x + y*y)
+    d_xy = np.sqrt(x**2 + y**2)
 
     # position
     r = np.sqrt(x*x + y*y + z*z)
@@ -39,6 +39,7 @@ def cartesian_to_spherical(x, v):
     # vr = (vx*np.cos(phi) + vy*np.sin(phi))*np.sin(theta) + vz*np.cos(theta)
     vr = (vx*x + vy*y + vz*z) / r
     vphi = (-vx*y + vy*x) / d_xy
+    vphi[d_xy == 0] = 0.
     vtheta = (vx*np.cos(phi) + vy*np.sin(phi))*np.cos(theta) - vz*np.sin(theta)
 
     return np.array([r,phi,theta,vr,vphi,vtheta]).T
