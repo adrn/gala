@@ -39,7 +39,7 @@ def harmonic_osc_funcs(units):
 
     return f, gradient, None
 
-class HarmonicOscillatorPotential(Potential):
+class HarmonicOscillatorPotential(CartesianPotential):
     r"""
     Represents an N-dimensional harmonic oscillator.
 
@@ -63,6 +63,36 @@ class HarmonicOscillatorPotential(Potential):
         super(HarmonicOscillatorPotential, self).__init__(func=func, gradient=gradient,
                                                           hessian=hessian,
                                                           parameters=parameters)
+
+    def action_angle(self, x, v):
+        """
+        Transform the input cartesian position and velocity to action-angle
+        coordinates the Harmonic Oscillator potential. This transformation
+        is analytic and can be used as a "toy potential" in the
+        Sanders & Binney 2014 formalism for computing action-angle coordinates
+        in _any_ potential.
+
+        Adapted from Jason Sanders' code
+        `here <https://github.com/jlsanders/genfunc>`_.
+
+        Parameters
+        ----------
+        x : array_like
+            Positions.
+        v : array_like
+            Velocities.
+        """
+        omega = np.atleast_2d(self.parameters['omega'])
+
+        # compute actions -- just energy (hamiltonian) over frequency
+        E = self.energy(x,v)[:,None]
+        action = E / omega
+
+        angle = np.arctan(-v / omega / x)
+        angle[x == 0] = -np.sign(v[x == 0])*np.pi/2.
+        angle[x < 0] += np.pi
+
+        return action, angle % (2.*np.pi)
 
 ############################################################
 #    Potential due to a point mass at a given position

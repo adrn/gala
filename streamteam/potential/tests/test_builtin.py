@@ -65,6 +65,29 @@ class TestHarmonicOscillator(object):
         fig,axes = potential.plot_contours(grid=(grid,grid))
         fig.savefig(os.path.join(plot_path, "harmonic_osc_2d.png"))
 
+    def test_action_angle(self):
+        from ...integrate import LeapfrogIntegrator
+        potential = HarmonicOscillatorPotential(omega=[1.,2.])
+        acc = lambda t,x: potential.acceleration(x)
+        integrator = LeapfrogIntegrator(acc)
+        t,ws = integrator.run([0.,0.,1.,1.], dt=0.01, nsteps=1000)
+
+        actions,angles = potential.action_angle(ws[:,0,:2], ws[:,0,2:])
+        assert np.allclose(actions[0,0],actions[1:,0],rtol=1E-2)
+        assert np.allclose(actions[0,1],actions[1:,1],rtol=1E-2)
+
+        plt.figure()
+        plt.plot(ws[:,0,0], ws[:,0,1], marker=None)
+        plt.savefig(os.path.join(plot_path, "harmonic_osc_orbit.png"))
+
+        fig,axes = plt.subplots(2,1,figsize=(8,5))
+        axes[0].plot(actions[:,0], marker=None)
+        axes[0].plot(actions[:,1], marker=None)
+
+        axes[1].plot(angles[:,0], marker=None)
+        axes[1].plot(angles[:,1], marker=None)
+        fig.savefig(os.path.join(plot_path, "harmonic_osc_aa.png"))
+
 class TestPointMass(object):
 
     def test_pointmass_creation(self):
