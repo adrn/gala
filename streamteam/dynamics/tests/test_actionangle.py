@@ -93,6 +93,19 @@ def plot_orbit(w,ix=None):
     fig.tight_layout()
     return fig
 
+def plot_angles(t,angles,freqs):
+    _theta = (angles[:,None] + freqs[:,None]*t[np.newaxis])
+    t = t[::_theta.shape[1]//500]
+    _theta = _theta[:,::_theta.shape[1]//500]
+    theta = _theta % 2*np.pi
+
+    fig,axes = plt.subplots(1,2,sharex=True,sharey=True,figsize=(10,5))
+    axes[0].scatter(theta[0]/np.pi, theta[1]/np.pi, alpha=0.5, marker='o', c=t)
+    axes[1].scatter(theta[0]/np.pi, theta[2]/np.pi, alpha=0.5, marker='o', c=t)
+    axes[0].set_xlim(0,2)
+    axes[0].set_ylim(0,2)
+    return fig
+
 def sanders_nvecs(N_max, dx, dy, dz):
     from itertools import product
     NNx = range(-N_max, N_max+1, dx)
@@ -146,13 +159,13 @@ def sanders_act_ang_freq(t,w,N_max=6):
     w2[:,0,3:] = (w2[:,0,3:]*u.kpc/u.Myr).to(u.km/u.s).value
     act,ang,n_vec,toy_aa,pars = genfunc_3d.find_actions(w2[:,0], t/1000., N_matrix=N_max)
 
-    actions = (act[:3]*u.kpc*u.km/u.s).to(u.kpc**2/u.Myr)
-    angles = ang[:3]*u.radian
-    freqs = (ang[3:6]/u.Gyr).to(1/u.Myr)
+    actions = (act[:3]*u.kpc*u.km/u.s).to(u.kpc**2/u.Myr).value
+    angles = ang[:3]
+    freqs = (ang[3:6]/u.Gyr).to(1/u.Myr).value
 
     return actions,angles,freqs
 
-class TestLoopActions(object):
+class TestActions(object):
 
     def setup(self):
         self.usys = (u.kpc, u.Msun, u.Myr)
@@ -161,12 +174,33 @@ class TestLoopActions(object):
         self.integrator = LeapfrogIntegrator(acc)
 
     def test_box(self):
-        return
-        box_w0 = [-59.420, 53.435, -26.473, -0.1943, 0.0601, -0.1347]
-        t,w = integrator.run(box_w0, dt=1., nsteps=15000)
-        fig = plot_orbit(w,ix=0)
-        fig.savefig(os.path.join(plot_path,"box.png"))
-        actions,angles,nvecs = find_actions(t, w[:,0], N_max=6, usys=self.usys)
+        N_max = 6
+
+        # # box_w0 = np.append(([-21.4, 6.76, -78.81]*u.kpc).decompose(self.usys).value,
+        # #                    ([-0.0175, 0.00749, 0.00164]*u.kpc/u.Myr).decompose(self.usys).value)
+        # box_w0 = [14.63246135523404, 0.055318651380143996, 13.244557620388647, -0.014889749717353759, 0.06938434296800051, -0.03308257540141258]
+        # t,w = self.integrator.run(box_w0, dt=0.1, nsteps=100000)
+
+        # fig = plot_orbit(w,ix=0)
+        # fig.savefig(os.path.join(plot_path,"box.png"))
+        # return
+
+        # # get values from Sanders' code
+        # s_actions,s_angles,s_freqs = sanders_act_ang_freq(t, w, N_max=N_max)
+
+        # actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, usys=self.usys)
+
+        # print("Action ratio:", actions / s_actions)
+        # print("Angle ratio:", angles / s_angles)
+        # print("Freq ratio:", freqs / s_freqs)
+
+        # assert np.allclose(actions, s_actions, rtol=1E-3)
+        # assert np.allclose(angles, s_angles, rtol=1E-3)
+        # assert np.allclose(freqs, s_freqs, rtol=1E-3)
+
+        # fig = plot_angles(t,angles,freqs)
+        # fig.savefig(os.path.join(plot_path,"box_angles.png"))
+
 
     def test_loop(self):
         N_max = 6
@@ -175,28 +209,21 @@ class TestLoopActions(object):
                             ([15.97, -128.9, 44.68]*u.km/u.s).decompose(self.usys).value)
         t,w = self.integrator.run(loop_w0, dt=0.5, nsteps=20000)
 
-        # get values from Sanders' code
-        s_actions,s_angles,s_freqs = sanders_act_ang_freq(t, w, N_max=N_max)
-
         fig = plot_orbit(w,ix=0)
         fig.savefig(os.path.join(plot_path,"loop.png"))
 
+        # get values from Sanders' code
+        s_actions,s_angles,s_freqs = sanders_act_ang_freq(t, w, N_max=N_max)
+
         actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, usys=self.usys)
 
-        print("Streamteam actions:", actions)
-        print("Sanders actions:", s_actions)
-        print()
-        print("Streamteam angles:", angles)
-        print("Sanders angles:", s_angles)
-        print()
-        print("Streamteam freqs:", freqs)
-        print("Sanders freqs:", s_freqs)
+        print("Action ratio:", actions / s_actions)
+        print("Angle ratio:", angles / s_angles)
+        print("Freq ratio:", freqs / s_freqs)
 
-        theta = (angles[:,None] + freqs[:,None]*t[np.newaxis]) % 2*np.pi
+        assert np.allclose(actions, s_actions, rtol=1E-3)
+        assert np.allclose(angles, s_angles, rtol=1E-3)
+        assert np.allclose(freqs, s_freqs, rtol=1E-3)
 
-        fig,axes = plt.subplots(1,2,sharex=True,sharey=True,figsize=(10,5))
-        axes[0].plot(theta[0]/np.pi, theta[1]/np.pi, alpha=0.2, marker=None)
-        axes[1].plot(theta[0]/np.pi, theta[2]/np.pi, alpha=0.2, marker=None)
-        axes[0].set_xlim(0,2)
-        axes[0].set_ylim(0,2)
+        fig = plot_angles(t,angles,freqs)
         fig.savefig(os.path.join(plot_path,"loop_angles.png"))
