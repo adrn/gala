@@ -65,7 +65,7 @@ def classify_orbit(w):
     # see if at any timestep the sign has changed
     loop = np.ones((norbits,3))
     for ii in range(3):
-        ix = np.any(np.sign(L0[...,ii]) != np.sign(Ls[1:,...,ii]), axis=0)
+        ix = np.atleast_1d(np.any(np.sign(L0[...,ii]) != np.sign(Ls[1:,...,ii]), axis=0))
         loop[ix,ii] = 0
 
     return loop.astype(int)
@@ -283,8 +283,9 @@ def find_actions(t, w, N_max, usys):
         logger.debug("Using isochrone toy potential")
 
         # find best toy potential parameters
-        potential = IsochronePotential(m=1E10, b=10.)
-        def f(m,b,w):
+        potential = IsochronePotential(m=1E10, b=10., usys=usys)
+        def f(p,w):
+            m,b = p
             potential.parameters['m'] = m
             potential.parameters['b'] = b
             H = potential.energy(w[...,:3], w[...,3:])
@@ -295,8 +296,10 @@ def find_actions(t, w, N_max, usys):
             raise ValueError("Failed to fit toy potential to orbit.")
 
         m,b = np.abs(p)
-        potential = IsochronePotential(m=m,b=b)
+        potential = IsochronePotential(m=m, b=b, usys=usys)
         logger.debug("Best m={}, b={}".format(m, b))
+
+        dxyz = (1,2,2)
 
     else: # box orbit
         logger.info("===== Box orbit =====")
@@ -317,20 +320,21 @@ def find_actions(t, w, N_max, usys):
         potential = HarmonicOscillatorPotential(omega=best_omega)
         logger.debug("Best omegas ({})".format(best_omega))
 
-    return
+        dxyz = (2,2,2)
+
     # Now find toy actions and angles
     aa = np.hstack(potential.action_angle(w[...,:3], w[...,3:]))
     if np.any(np.isnan(aa)):
         raise ValueError("NaN value in toy actions or angles!")
 
     t1 = time.time()
-    actions,nvecs = action_solver(aa, N_max, dx=2, dy=2, dz=2)
+    actions,nvecs = action_solver(aa, N_max, dx=dxyz[0], dy=dxyz[1], dz=dxyz[2])
     logger.debug("Action solution found for N_max={}, size {} symmetric"
                  " matrix in {} seconds"\
                  .format(N_max,len(actions),time.time()-t1))
 
     t1 = time.time()
-    angles,nvecs = angle_solver(aa, t, N_max, dx=2, dy=2, dz=2)
+    angles,nvecs = angle_solver(aa, t, N_max, dx=dxyz[0], dy=dxyz[1], dz=dxyz[2])
     logger.debug("Angle solution found for N_max={}, size {} symmetric"
                  " matrix in {} seconds"\
                  .format(N_max,len(angles),time.time()-t1))
