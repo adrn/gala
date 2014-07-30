@@ -18,8 +18,7 @@ from scipy.optimize import leastsq
 # Project
 from ..potential import HarmonicOscillatorPotential, IsochronePotential
 
-__all__ = ['classify_orbit', 'find_actions', 'action_solver', 'angle_solver', \
-           'generate_n_vectors']
+__all__ = ['classify_orbit', 'find_actions', 'generate_n_vectors']
 
 def L(w):
     """
@@ -149,7 +148,7 @@ def check_angle_sampling(nvecs, angles):
 
     return checks,P
 
-def action_solver(aa, N_max, dx, dy, dz):
+def _action_prepare(aa, N_max, dx, dy, dz):
     """
     TODO:
 
@@ -191,9 +190,9 @@ def action_solver(aa, N_max, dx, dy, dz):
     # rest of the vector is C dotted with actions
     b[3:] = 2*np.sum(np.dot(nvecs,actions.T)*np.cos(np.dot(nvecs,angles.T)), axis=1)
 
-    return np.array(solve(A,b)), nvecs
+    return A,b,nvecs
 
-def angle_solver(aa, t, N_max, dx, dy, dz):
+def _angle_prepare(aa, t, N_max, dx, dy, dz):
     """
     TODO:
 
@@ -250,7 +249,7 @@ def angle_solver(aa, t, N_max, dx, dy, dz):
     b[6+nv:6+2*nv] = -2.*np.sum(angles[:,1]*np.sin(np.dot(nvecs,angles.T)), axis=1)
     b[6+2*nv:6+3*nv] = -2.*np.sum(angles[:,2]*np.sin(np.dot(nvecs,angles.T)), axis=1)
 
-    return np.array(solve(A,b)), nvecs
+    return A,b,nvecs
 
 def find_actions(t, w, N_max, usys):
     """
@@ -330,13 +329,15 @@ def find_actions(t, w, N_max, usys):
         raise ValueError("NaN value in toy actions or angles!")
 
     t1 = time.time()
-    actions,nvecs = action_solver(aa, N_max, dx=dxyz[0], dy=dxyz[1], dz=dxyz[2])
+    A,b,nvecs = _action_prepare(aa, N_max, dx=dxyz[0], dy=dxyz[1], dz=dxyz[2])
+    actions = np.array(solve(A,b))
     logger.debug("Action solution found for N_max={}, size {} symmetric"
                  " matrix in {} seconds"\
                  .format(N_max,len(actions),time.time()-t1))
 
     t1 = time.time()
-    angles,nvecs = angle_solver(aa, t, N_max, dx=dxyz[0], dy=dxyz[1], dz=dxyz[2])
+    A,b,nvecs = _angle_prepare(aa, t, N_max, dx=dxyz[0], dy=dxyz[1], dz=dxyz[2])
+    angles = np.array(solve(A,b))
     logger.debug("Angle solution found for N_max={}, size {} symmetric"
                  " matrix in {} seconds"\
                  .format(N_max,len(angles),time.time()-t1))
