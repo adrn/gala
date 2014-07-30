@@ -148,14 +148,14 @@ def check_angle_sampling(nvecs, angles):
 
     return checks,P
 
-def _action_prepare(aa, N_max, dx, dy, dz):
+def _action_prepare(aa, N_max, dx, dy, dz, sign=1.):
     """
     TODO:
 
     """
 
     # unroll the angles so they increase continuously instead of wrap
-    angles = unroll_angles(aa[:,3:])
+    angles = unroll_angles(aa[:,3:], sign=sign)
 
     # generate integer vectors for fourier modes
     nvecs = generate_n_vectors(N_max, dx, dy, dz)
@@ -192,14 +192,14 @@ def _action_prepare(aa, N_max, dx, dy, dz):
 
     return A,b,nvecs
 
-def _angle_prepare(aa, t, N_max, dx, dy, dz):
+def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
     """
     TODO:
 
     """
 
     # unroll the angles so they increase continuously instead of wrap
-    angles = unroll_angles(aa[:,3:])
+    angles = unroll_angles(aa[:,3:], sign=sign)
 
     # generate integer vectors for fourier modes
     nvecs = generate_n_vectors(N_max, dx, dy, dz)
