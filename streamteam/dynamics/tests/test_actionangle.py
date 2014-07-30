@@ -148,9 +148,9 @@ class TestActions(object):
 
         w2 = w.copy()
         w2[:,0,3:] = (w2[:,0,3:]*u.kpc/u.Myr).to(u.km/u.s).value
-        act,ang,n_vec,toy_aa,pars = genfunc_3d.find_actions(w2[:,0], t, N_matrix=N_max)
+        act,ang,n_vec,toy_aa,pars = genfunc_3d.find_actions(w2[:,0], t/1000., N_matrix=N_max)
         print(act[:3])
-        print(ang[3:6]*1000.)
+        print(ang[3:6])
         # return
 
         fig = plot_orbit(w,ix=0)
