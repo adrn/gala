@@ -112,13 +112,31 @@ def test_nvecs():
 
     assert np.all(nvecs == nvecs_sanders)
 
-def test_compare():
+def test_compare_action_prepare():
+    from ..actionangle import _action_prepare
     import solver
     logger.setLevel(logging.ERROR)
     AA = np.random.uniform(0., 100., size=(1000,6))
 
     A1,b1 = solver.solver(AA, N_max=6, symNx=2)
-    A2,b2 = action_solver(AA, N_max=6, dx=2, dy=2, dz=2)
+    A2,b2,n = _action_prepare(AA, N_max=6, dx=2, dy=2, dz=2)
+
+    assert np.allclose(A1, A2)
+    assert np.allclose(b1, b2)
+
+def test_compare_angle_prepare():
+    from ..actionangle import _angle_prepare
+    import solver
+    logger.setLevel(logging.ERROR)
+    AA = np.random.uniform(0., 100., size=(1000,6))
+    t = np.linspace(0., 100., 1000)
+
+    A1,b1 = solver.angle_solver(AA, t, N_max=6, sign=1., symNx=2)
+    A2,b2,n = _angle_prepare(AA, t, N_max=6, dx=2, dy=2, dz=2)
+
+    # row = slice(None,None)
+    # col = slice(None,None)
+    # assert np.allclose(A1[row,col], A2[row,col])
 
     assert np.allclose(A1, A2)
     assert np.allclose(b1, b2)
