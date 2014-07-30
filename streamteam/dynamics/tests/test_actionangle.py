@@ -181,20 +181,18 @@ class TestLoopActions(object):
         fig = plot_orbit(w,ix=0)
         fig.savefig(os.path.join(plot_path,"loop.png"))
 
-        actions,angles,nvecs = find_actions(t, w[:,0], N_max=N_max, usys=self.usys)
+        actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, usys=self.usys)
 
-        print("Streamteam actions:", actions[:3])
+        print("Streamteam actions:", actions)
         print("Sanders actions:", s_actions)
         print()
-        print("Streamteam angles:", angles[:3])
+        print("Streamteam angles:", angles)
         print("Sanders angles:", s_angles)
         print()
-        print("Streamteam freqs:", angles[3:6])
+        print("Streamteam freqs:", freqs)
         print("Sanders freqs:", s_freqs)
 
-        #theta = (angles[:3,None] + angles[3:6,None]*t[np.newaxis]) % 2*np.pi
-
-        return
+        theta = (angles[:,None] + freqs[:,None]*t[np.newaxis]) % 2*np.pi
 
         fig,axes = plt.subplots(1,2,sharex=True,sharey=True,figsize=(10,5))
         axes[0].plot(theta[0]/np.pi, theta[1]/np.pi, alpha=0.2, marker=None)
