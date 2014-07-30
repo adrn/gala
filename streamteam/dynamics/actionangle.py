@@ -18,7 +18,8 @@ from scipy.optimize import leastsq
 # Project
 from ..potential import HarmonicOscillatorPotential, IsochronePotential
 
-__all__ = ['classify_orbit', 'find_actions']
+__all__ = ['classify_orbit', 'find_actions', 'action_solver', 'angle_solver', \
+           'generate_n_vectors']
 
 def L(w):
     """
@@ -99,7 +100,7 @@ def generate_n_vectors(N_max, dx=1, dy=1, dz=1):
     vecs = vecs[np.linalg.norm(vecs,axis=1) <= N_max]
     ix = ((vecs[:,2] > 0) | ((vecs[:,2] == 0) & (vecs[:,1] > 0)) | ((vecs[:,2] == 0) & (vecs[:,1] == 0) & (vecs[:,0] > 0)))
     vecs = vecs[ix]
-    return vecs
+    return np.array(sorted(vecs, key=lambda x: (x[0],x[1],x[2])))
 
 def unroll_angles(angles, sign=1.):
     """
@@ -188,7 +189,7 @@ def action_solver(aa, N_max, dx, dy, dz):
     b[:3] = np.sum(actions, axis=0)
 
     # rest of the vector is C dotted with actions
-    b[3:] = np.sum(C_T.T.dot(actions.T),axis=1)
+    b[3:] = 2*np.sum(np.dot(nvecs,actions.T)*np.cos(np.dot(nvecs,angles.T)), axis=1)
 
     return np.array(solve(A,b)), nvecs
 
@@ -285,17 +286,18 @@ def find_actions(t, w, N_max, usys):
         # find best toy potential parameters
         potential = IsochronePotential(m=1E10, b=10., usys=usys)
         def f(p,w):
-            m,b = p
-            potential.parameters['m'] = m
+            logm,b = p
+            potential.parameters['m'] = np.exp(logm)
             potential.parameters['b'] = b
             H = potential.energy(w[...,:3], w[...,3:])
             return np.squeeze(H - np.median(H))
 
-        p,ier = leastsq(f, np.array([1E10,10.]), args=(w,))
+        p,ier = leastsq(f, np.array([26.,10.]), args=(w,))
         if ier < 1 or ier > 4:
             raise ValueError("Failed to fit toy potential to orbit.")
 
-        m,b = np.abs(p)
+        logm,b = np.abs(p)
+        m = np.exp(logm)
         potential = IsochronePotential(m=m, b=b, usys=usys)
         logger.debug("Best m={}, b={}".format(m, b))
 
