@@ -294,32 +294,27 @@ def find_box_actions(t, w, N_max=8):
     logger.debug("Best omegas ({}) found in {} seconds".format(best_omega,time.time()-t1))
 
     # Now find toy actions and angles
-    action,angle = potential.action_angle(w[...,:3], w[...,3:])
-    aa = np.hstack((action,angle))
+    aa = np.hstack(potential.action_angle(w[...,:3], w[...,3:]))
     if np.any(np.isnan(aa)):
         raise ValueError("NaN value in toy actions or angles!")
 
     t1 = time.time()
     actions,nvecs = action_solver(aa, N_max, dx=2, dy=2, dz=2)
-
     logger.debug("Action solution found for N_max={}, size {} symmetric"
                  " matrix in {} seconds"\
                  .format(N_max,len(actions),time.time()-t1))
 
-    print(actions[:3])
-    return
-
-    np.savetxt("GF.Sn_box",np.vstack((act[1].T,act[0][3:])).T)
-
-    ang = solver.angle_solver(AA,times,N_matrix,np.ones(3))
-    if(ifprint):
-        print("Angle solution found for N_max = "+str(N_matrix)+", size "+str(len(ang))+" symmetric matrix in "+str(time.time()-t)+" seconds")
+    t1 = time.time()
+    angles,nvecs = angle_solver(aa, t, N_max, dx=2, dy=2, dz=2)
+    logger.debug("Angle solution found for N_max={}, size {} symmetric"
+                 " matrix in {} seconds"\
+                 .format(N_max,len(angles),time.time()-t1))
 
     # Just some checks
-    if(len(ang)>len(AA)):
-        print("More unknowns than equations")
+    if len(angles) > len(aa):
+        logger.warning("More unknowns than equations!")
 
-    return act[0], ang, act[1], AA, omega
+    return actions, angles, nvecs
 
 def find_actions(t, w, N_max=8):
     """
