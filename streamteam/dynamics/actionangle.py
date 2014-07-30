@@ -181,18 +181,73 @@ def action_solver(aa, N_max, dx, dy, dz):
     A[3:,:3] = C_T.T
 
     # lower right block matrix: C_nk dotted with C_nk^T
-    CdotC_T = 0.
-    for ang in angles:
-        v = np.cos(np.dot(nvecs,ang))
-        CdotC_T += np.outer(v,v)
-    CdotC_T *= 4.*np.dot(nvecs,nvecs.T)
-    A[3:,3:] = CdotC_T
+    cosv = np.cos(np.dot(nvecs,angles.T))
+    A[3:,3:] = 4.*np.dot(nvecs,nvecs.T)*np.einsum('it,jt->ij', cosv, cosv)
 
     # b vector first three is just sum of toy actions
     b[:3] = np.sum(actions, axis=0)
 
     # rest of the vector is C dotted with actions
     b[3:] = np.sum(C_T.T.dot(actions.T),axis=1)
+
+    return np.array(solve(A,b)), nvecs
+
+def angle_solver(aa, t, N_max, dx, dy, dz):
+    """
+    TODO:
+
+    """
+
+    # unroll the angles so they increase continuously instead of wrap
+    angles = unroll_angles(aa[:,3:])
+
+    # generate integer vectors for fourier modes
+    nvecs = generate_n_vectors(N_max, dx, dy, dz)
+
+    # make sure we have enough angle coverage
+    modes,P = check_angle_sampling(nvecs, angles)
+
+    # TODO: throw out modes?
+    # if(throw_out_modes):
+    #     n_vectors = np.delete(n_vectors,check_each_direction(n_vectors,angs),axis=0)
+
+    nv = len(nvecs)
+    n = 3 + 3 + 3*nv # angle(0)'s, freqs, 3 derivatives of Sn
+
+    b = np.zeros(shape=(n,))
+    A = np.zeros(shape=(n,n))
+
+    # top left block matrix: identity matrix summed over timesteps
+    A[:3,:3] = len(aa)*np.identity(3)
+
+    # identity matrices summed over times
+    A[:3,3:6] = A[3:6,:3] = np.sum(t)*np.identity(3)
+    A[3:6,3:6] = np.sum(t*t)*np.identity(3)
+
+    # S1,2,3
+    A[6:6+nv,0] = -2.*np.sum(np.sin(np.dot(nvecs,angles.T)),axis=1)
+    A[6+nv:6+2*nv,1] = A[6:6+nv,0]
+    A[6+2*nv:6+3*nv,2] = A[6:6+nv,0]
+
+    # t*S1,2,3
+    A[6:6+nv,3] = -2.*np.sum(t[None,:]*np.sin(np.dot(nvecs,angles.T)),axis=1)
+    A[6+nv:6+2*nv,4] = A[6:6+nv,3]
+    A[6+2*nv:6+3*nv,5] = A[6:6+nv,3]
+
+    # lower right block structure: S dot S^T
+    sinv = np.sin(np.dot(nvecs,angles.T))
+    SdotST = np.einsum('it,jt->ij', sinv, sinv)
+    A[6:6+nv,6:6+nv] = A[6+nv:6+2*nv,6+nv:6+2*nv] = \
+        A[6+2*nv:6+3*nv,6+2*nv:6+3*nv] = SdotST
+
+    # top rectangle
+    A[:6,:] = A[:,:6].T
+
+    b[:3] = np.sum(angles, axis=0)
+    b[3:6] = np.sum(t[:,None]*angles, axis=0)
+    b[6:6+nv] = -2.*np.sum(angles[:,0]*np.sin(np.dot(nvecs,angles.T)), axis=1)
+    b[6+nv:6+2*nv] = -2.*np.sum(angles[:,1]*np.sin(np.dot(nvecs,angles.T)), axis=1)
+    b[6+2*nv:6+3*nv] = -2.*np.sum(angles[:,2]*np.sin(np.dot(nvecs,angles.T)), axis=1)
 
     return np.array(solve(A,b)), nvecs
 
