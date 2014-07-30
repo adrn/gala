@@ -141,7 +141,18 @@ def test_compare_angle_prepare():
     assert np.allclose(A1, A2)
     assert np.allclose(b1, b2)
 
-class TestActions(object):
+def sanders_act_ang_freq(t,w,N_max=6):
+    w2 = w.copy()
+    w2[:,0,3:] = (w2[:,0,3:]*u.kpc/u.Myr).to(u.km/u.s).value
+    act,ang,n_vec,toy_aa,pars = genfunc_3d.find_actions(w2[:,0], t/1000., N_matrix=N_max)
+
+    actions = (act[:3]*u.kpc*u.km/u.s).to(u.kpc**2/u.Myr)
+    angles = ang[:3]*u.radian
+    freqs = (ang[3:6]/u.Gyr).to(1/u.Myr)
+
+    return actions,angles,freqs
+
+class TestLoopActions(object):
 
     def setup(self):
         self.usys = (u.kpc, u.Msun, u.Myr)
@@ -164,22 +175,24 @@ class TestActions(object):
                             ([15.97, -128.9, 44.68]*u.km/u.s).decompose(self.usys).value)
         t,w = self.integrator.run(loop_w0, dt=0.5, nsteps=20000)
 
-        w2 = w.copy()
-        w2[:,0,3:] = (w2[:,0,3:]*u.kpc/u.Myr).to(u.km/u.s).value
-        act,ang,n_vec,toy_aa,pars = genfunc_3d.find_actions(w2[:,0], t/1000., N_matrix=N_max)
-        print(act[:3])
-        print(ang[3:6])
-        # return
+        # get values from Sanders' code
+        s_actions,s_angles,s_freqs = sanders_act_ang_freq(t, w, N_max=N_max)
 
         fig = plot_orbit(w,ix=0)
         fig.savefig(os.path.join(plot_path,"loop.png"))
 
         actions,angles,nvecs = find_actions(t, w[:,0], N_max=N_max, usys=self.usys)
-        J = (actions[:3]*u.kpc**2/u.Myr).to(u.kpc*u.km/u.s)
-        print(J)
-        omega = (angles[3:6]/u.Myr).to(1/u.Gyr)
-        print(omega)
-        theta = (angles[:3,None] + angles[3:6,None]*t[np.newaxis]) % 2*np.pi
+
+        print("Streamteam actions:", actions[:3])
+        print("Sanders actions:", s_actions)
+        print()
+        print("Streamteam angles:", angles[:3])
+        print("Sanders angles:", s_angles)
+        print()
+        print("Streamteam freqs:", angles[3:6])
+        print("Sanders freqs:", s_freqs)
+
+        #theta = (angles[:3,None] + angles[3:6,None]*t[np.newaxis]) % 2*np.pi
 
         return
 
