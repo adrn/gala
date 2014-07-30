@@ -18,7 +18,7 @@ from scipy.optimize import leastsq
 # Project
 from ..potential import HarmonicOscillatorPotential, IsochronePotential
 
-__all__ = ['classify_orbit', 'find_box_actions']
+__all__ = ['classify_orbit', 'find_actions']
 
 def L(w):
     """
@@ -55,7 +55,7 @@ def classify_orbit(w):
     # if only 2D, add another empty axis
     if w.ndim == 2:
         ntimesteps,ndim = w.shape
-        w = w.reshape(ntimesteps*norbits,1,ndim)
+        w = w.reshape(ntimesteps,1,ndim)
 
     ntimes,norbits,ndim = w.shape
 
@@ -251,11 +251,11 @@ def angle_solver(aa, t, N_max, dx, dy, dz):
 
     return np.array(solve(A,b)), nvecs
 
-def find_box_actions(t, w, N_max=8):
+def find_actions(t, w, N_max, usys):
     """
-    Finds actions, angles, and frequencies for a box orbit.
-    Takes a series of phase-space points, `w`, from an orbit integration at
-    times `t`.
+    Find approximate actions and angles for samples of a phase-space orbit,
+    `w`, at times `t`. Uses toy potentials with known, analytic action-angle
+    transformations to approximate the true coordinates as a Fourier sum.
 
     This code is adapted from Jason Sanders'
     `genfunc <https://github.com/jlsanders/genfunc>`_
@@ -268,31 +268,56 @@ def find_box_actions(t, w, N_max=8):
         Phase-space orbit at times, `t`. Should have shape (ntimes,6).
     N_max : int
         Maximum integer Fourier mode vector length, |n|.
+    usys : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units. For example,
+        (u.kpc, u.Myr, u.Msun).
     """
 
     if w.ndim > 2:
         raise ValueError("w must be a single orbit")
 
-    logger.debug("===== Using triaxial harmonic oscillator toy potential =====")
+    orbit_class = classify_orbit(w)
+    if np.any(orbit_class == 1): # loop orbit
+        logger.info("===== Loop orbit =====")
+        logger.debug("Using isochrone toy potential")
 
-    t1 = time.time()
+        # find best toy potential parameters
+        potential = IsochronePotential(m=1E10, b=10.)
+        def f(m,b,w):
+            potential.parameters['m'] = m
+            potential.parameters['b'] = b
+            H = potential.energy(w[...,:3], w[...,3:])
+            return np.squeeze(H - np.median(H))
 
-    # find best toy potential parameters
-    potential = HarmonicOscillatorPotential(omega=[1.,1.,1.])
-    def f(omega,w):
-        potential.parameters['omega'] = omega
-        H = potential.energy(w[...,:3], w[...,3:])
-        return np.squeeze(H - np.median(H))
+        p,ier = leastsq(f, np.array([1E10,10.]), args=(w,))
+        if ier < 1 or ier > 4:
+            raise ValueError("Failed to fit toy potential to orbit.")
 
-    p,ier = leastsq(f, np.array([10.,10.,10.]), args=(w,))
+        m,b = np.abs(p)
+        potential = IsochronePotential(m=m,b=b)
+        logger.debug("Best m={}, b={}".format(m, b))
 
-    if ier < 1 or ier > 4:
-        raise ValueError("Failed to fit toy potential to orbit.")
+    else: # box orbit
+        logger.info("===== Box orbit =====")
+        logger.debug("Using triaxial harmonic oscillator toy potential")
 
-    best_omega = np.abs(p)
-    potential = HarmonicOscillatorPotential(omega=best_omega)
-    logger.debug("Best omegas ({}) found in {} seconds".format(best_omega,time.time()-t1))
+        # find best toy potential parameters
+        potential = HarmonicOscillatorPotential(omega=[1.,1.,1.])
+        def f(omega,w):
+            potential.parameters['omega'] = omega
+            H = potential.energy(w[...,:3], w[...,3:])
+            return np.squeeze(H - np.median(H))
 
+        p,ier = leastsq(f, np.array([1.,1.,1.]), args=(w,))
+        if ier < 1 or ier > 4:
+            raise ValueError("Failed to fit toy potential to orbit.")
+
+        best_omega = np.abs(p)
+        potential = HarmonicOscillatorPotential(omega=best_omega)
+        logger.debug("Best omegas ({})".format(best_omega))
+
+    return
     # Now find toy actions and angles
     aa = np.hstack(potential.action_angle(w[...,:3], w[...,3:]))
     if np.any(np.isnan(aa)):
@@ -315,25 +340,3 @@ def find_box_actions(t, w, N_max=8):
         logger.warning("More unknowns than equations!")
 
     return actions, angles, nvecs
-
-def find_actions(t, w, N_max=8):
-    """
-    Find approximate actions and angles for samples of a phase-space orbit,
-    `w`, at times `t`. Uses toy potentials with known, analytic action-angle
-    transformations to approximate the true coordinates as a Fourier sum. Uses
-    the formalism presented in Sanders & Binney (2014).
-
-    This code is adapted from Jason Sanders'
-    `genfunc <https://github.com/jlsanders/genfunc>`_
-
-    Parameters
-    ----------
-    t : array_like
-        Array of times with shape (ntimes,).
-    w : array_like
-        Phase-space orbits at times, `t`. Should have shape (ntimes,norbits,6).
-    N_max : int
-        Maximum integer Fourier mode vector length, |n|.
-    """
-
-    # first determine orbit
