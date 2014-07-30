@@ -8,14 +8,24 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 import os, sys
+import logging
 
 # Third-party
+import matplotlib.pyplot as plt
 import numpy as np
 from astropy import log as logger
 import astropy.units as u
 
 # Project
-from ..actionangle import classify_orbit
+from ...integrate import LeapfrogIntegrator
+from ...potential import NFWPotential
+from ..actionangle import *
+
+logger.setLevel(logging.DEBUG)
+
+plot_path = "plots/tests/dynamics/actionangle"
+if not os.path.exists(plot_path):
+    os.makedirs(plot_path)
 
 def angmom(x):
     return np.array([x[1]*x[5]-x[2]*x[4],x[2]*x[3]-x[0]*x[5],x[0]*x[4]-x[1]*x[3]])
@@ -34,10 +44,6 @@ def sanders_classify(X):
     return loop
 
 def test_classify():
-
-    from ...integrate import LeapfrogIntegrator
-    from ...potential import NFWPotential
-
     usys = (u.kpc, u.Msun, u.Myr)
     potential = NFWPotential(v_h=(121.858*u.km/u.s).decompose(usys).value,
                              r_h=20., q1=0.86, q2=1., q3=1.18, usys=usys)
@@ -59,3 +65,45 @@ def test_classify():
     orb_type = classify_orbit(box_ws)
     for j in range(len(box_w0)):
         assert np.all(orb_type[j] == sanders_classify(box_ws[:,j]))
+
+def plot_orbit(w,ix=None):
+    fig,axes = plt.subplots(1,3,figsize=(12,5),sharex=True,sharey=True)
+    if ix is None:
+        for ii in range(w.shape[1]):
+            axes[0].plot(w[:,ii,0], w[:,ii,1], marker=None)
+            axes[1].plot(w[:,ii,0], w[:,ii,2], marker=None)
+            axes[2].plot(w[:,ii,1], w[:,ii,2], marker=None)
+    else:
+        axes[0].plot(w[:,ix,0], w[:,ix,1], marker=None)
+        axes[1].plot(w[:,ix,0], w[:,ix,2], marker=None)
+        axes[2].plot(w[:,ix,1], w[:,ix,2], marker=None)
+
+    axes[0].set_xlabel("X")
+    axes[0].set_ylabel("Y")
+
+    axes[1].set_xlabel("X")
+    axes[1].set_ylabel("Z")
+
+    axes[2].set_xlabel("Y")
+    axes[2].set_ylabel("Z")
+    fig.tight_layout()
+    return fig
+
+def test_actions():
+    usys = (u.kpc, u.Msun, u.Myr)
+    potential = NFWPotential(v_h=(121.858*u.km/u.s).decompose(usys).value,
+                             r_h=20., q1=0.86, q2=1., q3=1.18, usys=usys)
+    acc = lambda t,x: potential.acceleration(x)
+    integrator = LeapfrogIntegrator(acc)
+
+    box_w0 = [-59.420, 53.435, -26.473, -0.1943, 0.0601, -0.1347]
+    t,w = integrator.run(box_w0, dt=1., nsteps=15000)
+    fig = plot_orbit(w,ix=0)
+    fig.savefig(os.path.join(plot_path,"box.png"))
+    actions,angles,nvecs = find_actions(t, w[:,0], N_max=6, usys=usys)
+
+    loop_w0 = [-66.979, 0.019, -28.09, 0.1548, 0.2063, -0.0237]
+    t,w = integrator.run(loop_w0, dt=1., nsteps=15000)
+    fig = plot_orbit(w,ix=0)
+    fig.savefig(os.path.join(plot_path,"loop.png"))
+    actions,angles,nvecs = find_actions(t, w[:,0], N_max=6, usys=usys)
