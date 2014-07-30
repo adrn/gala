@@ -164,6 +164,8 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1.):
     modes,P = check_angle_sampling(nvecs, angles)
 
     # TODO: throw out modes?
+    # if(throw_out_modes):
+    #     n_vectors = np.delete(n_vectors,check_each_direction(n_vectors,angs),axis=0)
 
     n = len(nvecs) + 3
     b = np.zeros(shape=(n, ))
@@ -301,6 +303,8 @@ def find_actions(t, w, N_max, usys):
         logger.debug("Best m={}, b={}".format(m, b))
 
         dxyz = (1,2,2)
+        circ = np.sign(w[0,0]*w[0,4]-w[0,1]*w[0,3])
+        sign = np.array([1.,circ,1.])
 
     else: # box orbit
         logger.info("===== Box orbit =====")
@@ -322,6 +326,7 @@ def find_actions(t, w, N_max, usys):
         logger.debug("Best omegas ({})".format(best_omega))
 
         dxyz = (2,2,2)
+        sign = 1.
 
     # Now find toy actions and angles
     aa = np.hstack(potential.action_angle(w[...,:3], w[...,3:]))
@@ -336,7 +341,7 @@ def find_actions(t, w, N_max, usys):
                  .format(N_max,len(actions),time.time()-t1))
 
     t1 = time.time()
-    A,b,nvecs = _angle_prepare(aa, t, N_max, dx=dxyz[0], dy=dxyz[1], dz=dxyz[2])
+    A,b,nvecs = _angle_prepare(aa, t, N_max, dx=dxyz[0], dy=dxyz[1], dz=dxyz[2], sign=sign)
     angles = np.array(solve(A,b))
     logger.debug("Angle solution found for N_max={}, size {} symmetric"
                  " matrix in {} seconds"\
