@@ -18,7 +18,7 @@ import astropy.units as u
 
 # Project
 from ...integrate import LeapfrogIntegrator
-from ...potential import NFWPotential
+from ...potential.lm10 import LM10Potential
 from ..actionangle import *
 
 logger.setLevel(logging.DEBUG)
@@ -26,6 +26,10 @@ logger.setLevel(logging.DEBUG)
 plot_path = "plots/tests/dynamics/actionangle"
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
+
+# HACK:
+sys.path.append("/Users/adrian/Downloads/genfunc-master")
+import genfunc_3d
 
 def angmom(x):
     return np.array([x[1]*x[5]-x[2]*x[4],x[2]*x[3]-x[0]*x[5],x[0]*x[4]-x[1]*x[3]])
@@ -89,21 +93,81 @@ def plot_orbit(w,ix=None):
     fig.tight_layout()
     return fig
 
-def test_actions():
-    usys = (u.kpc, u.Msun, u.Myr)
-    potential = NFWPotential(v_h=(121.858*u.km/u.s).decompose(usys).value,
-                             r_h=20., q1=0.86, q2=1., q3=1.18, usys=usys)
-    acc = lambda t,x: potential.acceleration(x)
-    integrator = LeapfrogIntegrator(acc)
+def sanders_nvecs(N_max, dx, dy, dz):
+    from itertools import product
+    NNx = range(-N_max, N_max+1, dx)
+    NNy = range(-N_max, N_max+1, dy)
+    NNz = range(-N_max, N_max+1, dz)
+    n_vectors = np.array([[i,j,k] for (i,j,k) in product(NNx,NNy,NNz)
+                          if(not(i==0 and j==0 and k==0)            # exclude zero vector
+                             and (k>0                               # northern hemisphere
+                                  or (k==0 and j>0)                 # half of x-y plane
+                                  or (k==0 and j==0 and i>0))       # half of x axis
+                             and np.sqrt(i*i+j*j+k*k)<=N_max)])     # inside sphere
+    return n_vectors
 
-    box_w0 = [-59.420, 53.435, -26.473, -0.1943, 0.0601, -0.1347]
-    t,w = integrator.run(box_w0, dt=1., nsteps=15000)
-    fig = plot_orbit(w,ix=0)
-    fig.savefig(os.path.join(plot_path,"box.png"))
-    actions,angles,nvecs = find_actions(t, w[:,0], N_max=6, usys=usys)
+def test_nvecs():
+    nvecs = generate_n_vectors(N_max=6, dx=2, dy=2, dz=2)
+    nvecs_sanders = sanders_nvecs(N_max=6, dx=2, dy=2, dz=2)
 
-    loop_w0 = [-66.979, 0.019, -28.09, 0.1548, 0.2063, -0.0237]
-    t,w = integrator.run(loop_w0, dt=1., nsteps=15000)
-    fig = plot_orbit(w,ix=0)
-    fig.savefig(os.path.join(plot_path,"loop.png"))
-    actions,angles,nvecs = find_actions(t, w[:,0], N_max=6, usys=usys)
+    assert np.all(nvecs == nvecs_sanders)
+
+def test_compare():
+    import solver
+    logger.setLevel(logging.ERROR)
+    AA = np.random.uniform(0., 100., size=(1000,6))
+
+    A1,b1 = solver.solver(AA, N_max=6, symNx=2)
+    A2,b2 = action_solver(AA, N_max=6, dx=2, dy=2, dz=2)
+
+    assert np.allclose(A1, A2)
+    assert np.allclose(b1, b2)
+
+class TestActions(object):
+
+    def setup(self):
+        self.usys = (u.kpc, u.Msun, u.Myr)
+        self.potential = LM10Potential()
+        acc = lambda t,x: self.potential.acceleration(x)
+        self.integrator = LeapfrogIntegrator(acc)
+
+    def test_box(self):
+        return
+        box_w0 = [-59.420, 53.435, -26.473, -0.1943, 0.0601, -0.1347]
+        t,w = integrator.run(box_w0, dt=1., nsteps=15000)
+        fig = plot_orbit(w,ix=0)
+        fig.savefig(os.path.join(plot_path,"box.png"))
+        actions,angles,nvecs = find_actions(t, w[:,0], N_max=6, usys=self.usys)
+
+    def test_loop(self):
+        N_max = 6
+
+        loop_w0 = np.append(([14.69, 1.8, 0.12]*u.kpc).decompose(self.usys).value,
+                            ([15.97, -128.9, 44.68]*u.km/u.s).decompose(self.usys).value)
+        t,w = self.integrator.run(loop_w0, dt=0.5, nsteps=20000)
+
+        w2 = w.copy()
+        w2[:,0,3:] = (w2[:,0,3:]*u.kpc/u.Myr).to(u.km/u.s).value
+        act,ang,n_vec,toy_aa,pars = genfunc_3d.find_actions(w2[:,0], t, N_matrix=N_max)
+        print(act[:3])
+        print(ang[3:6]*1000.)
+        # return
+
+        fig = plot_orbit(w,ix=0)
+        fig.savefig(os.path.join(plot_path,"loop.png"))
+
+        actions,angles,nvecs = find_actions(t, w[:,0], N_max=N_max, usys=self.usys)
+        J = (actions[:3]*u.kpc**2/u.Myr).to(u.kpc*u.km/u.s)
+        print(J)
+        omega = (angles[3:6]/u.Myr).to(1/u.Gyr)
+        print(omega)
+        theta = (angles[:3,None] + angles[3:6,None]*t[np.newaxis]) % 2*np.pi
+
+        return
+
+        fig,axes = plt.subplots(1,2,sharex=True,sharey=True,figsize=(10,5))
+        axes[0].plot(theta[0]/np.pi, theta[1]/np.pi, alpha=0.2, marker=None)
+        axes[1].plot(theta[0]/np.pi, theta[2]/np.pi, alpha=0.2, marker=None)
+        axes[0].set_xlim(0,2)
+        axes[0].set_ylim(0,2)
+        fig.savefig(os.path.join(plot_path,"loop_angles.png"))
