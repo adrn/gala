@@ -253,7 +253,7 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
 
     return A,b,nvecs
 
-def find_actions(t, w, N_max, usys):
+def find_actions(t, w, N_max, usys, return_Sn=False):
     """
     Find approximate actions and angles for samples of a phase-space orbit,
     `w`, at times `t`. Uses toy potentials with known, analytic action-angle
@@ -274,6 +274,8 @@ def find_actions(t, w, N_max, usys):
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units. For example,
         (u.kpc, u.Myr, u.Msun).
+    return_Sn : bool (optional)
+        Return the Sn and dSn/dJ's. Default is False.
     """
 
     if w.ndim > 2:
@@ -351,4 +353,12 @@ def find_actions(t, w, N_max, usys):
     if len(angles) > len(aa):
         logger.warning("More unknowns than equations!")
 
-    return actions, angles, nvecs
+    J = actions[:3]
+    theta = angles[:3]
+    freq = angles[3:6]
+
+    if return_Sn:
+        return J, theta, freq, actions[3:], angles[6:], nvecs
+    else:
+        return J, theta, freq
+
