@@ -238,7 +238,7 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz):
     sinv = np.sin(np.dot(nvecs,angles.T))
     SdotST = np.einsum('it,jt->ij', sinv, sinv)
     A[6:6+nv,6:6+nv] = A[6+nv:6+2*nv,6+nv:6+2*nv] = \
-        A[6+2*nv:6+3*nv,6+2*nv:6+3*nv] = SdotST
+        A[6+2*nv:6+3*nv,6+2*nv:6+3*nv] = 4*SdotST
 
     # top rectangle
     A[:6,:] = A[:,:6].T
