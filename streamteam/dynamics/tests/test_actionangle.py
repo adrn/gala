@@ -94,15 +94,46 @@ def plot_orbit(w,ix=None):
     fig.tight_layout()
     return fig
 
+def _crazy_loop(theta1,theta2,ax):
+    cnt = 0
+    ix1 = 0
+    while True:
+        cnt += 1
+
+        for ix2 in range(ix1,ix1+1000):
+            if ix2 > len(theta1)-1:
+                ix2 = len(theta1)-1
+                break
+
+            if theta1[ix2] < theta1[ix1] or theta2[ix2] < theta2[ix1]:
+                ix2 -= 1
+                break
+
+        if theta1[ix2] != theta1[ix1:ix2+1].max() or theta2[ix2] != theta2[ix1:ix2+1].max():
+            ix1 = ix2+1
+            continue
+
+        if cnt > 100 or ix2 == len(theta1)-1:
+            break
+
+        if ix1 == ix2:
+            ix1 = ix2+1
+            continue
+
+        ax.plot(theta1[ix1:ix2+1], theta2[ix1:ix2+1], alpha=0.5, marker='o', c='k')
+
+        ix1 = ix2+1
+
 def plot_angles(t,angles,freqs):
-    _theta = (angles[:,None] + freqs[:,None]*t[np.newaxis])
-    t = t[::_theta.shape[1]//500]
-    _theta = _theta[:,::_theta.shape[1]//500]
-    theta = _theta % 2*np.pi
+    theta = (angles[:,None] + freqs[:,None]*t[np.newaxis])
+    subsample = theta.shape[1]//1000
+#    subsample = 1
+    theta = (theta[:,::subsample] / np.pi) % 2.
 
     fig,axes = plt.subplots(1,2,sharex=True,sharey=True,figsize=(10,5))
-    axes[0].scatter(theta[0]/np.pi, theta[1]/np.pi, alpha=0.5, marker='o', c=t)
-    axes[1].scatter(theta[0]/np.pi, theta[2]/np.pi, alpha=0.5, marker='o', c=t)
+    _crazy_loop(theta[0], theta[1], axes[0])
+    _crazy_loop(theta[0], theta[2], axes[1])
+
     axes[0].set_xlim(0,2)
     axes[0].set_ylim(0,2)
     return fig
@@ -228,6 +259,9 @@ class TestActions(object):
 
         fig = plot_angles(t,angles,freqs)
         fig.savefig(os.path.join(plot_path,"loop_angles.png"))
+
+        fig = plot_angles(t,s_angles,s_freqs)
+        fig.savefig(os.path.join(plot_path,"loop_angles_sanders.png"))
 
 class TestFrequencyMap(object):
 
