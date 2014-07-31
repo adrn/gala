@@ -18,6 +18,7 @@ import astropy.units as u
 
 # Project
 from ...integrate import LeapfrogIntegrator
+from ...potential import LogarithmicPotential
 from ...potential.lm10 import LM10Potential
 from ..actionangle import *
 
@@ -227,3 +228,59 @@ class TestActions(object):
 
         fig = plot_angles(t,angles,freqs)
         fig.savefig(os.path.join(plot_path,"loop_angles.png"))
+
+class TestFrequencyMap(object):
+
+    def setup(self):
+        self.usys = (u.kpc, u.Msun, u.Myr)
+        self.potential = LogarithmicPotential(v_c=1., r_h=np.sqrt(0.1),
+                                              q1=1., q2=0.9, q3=0.7, phi=0.,
+                                              usys=self.usys)
+        acc = lambda t,x: self.potential.acceleration(x)
+        self.integrator = LeapfrogIntegrator(acc)
+
+        n = 16
+        phis = np.linspace(0,2*np.pi,n)
+        thetas = np.arccos(2*np.linspace(0.,1.,n) - 1)
+        p,t = np.meshgrid(phis, thetas)
+        phis = p.ravel()
+        thetas = t.ravel()
+
+        sinp,cosp = np.sin(phis),np.cos(phis)
+        sint,cost = np.sin(thetas),np.cos(thetas)
+
+        rh2 = self.potential.parameters['r_h']**2
+        q2 = self.potential.parameters['q2']
+        q3 = self.potential.parameters['q3']
+        r2 = (np.e - rh2) / (sint**2*cosp**2 + sint**2*sinp**2/q2**2 + cost**2/q3**2)
+        r = np.sqrt(r2)
+
+        x = r*cosp*sint
+        y = r*sinp*sint
+        z = r*cost
+        v = np.zeros_like(x)
+
+        self.grid = np.vstack((x,y,z,v,v,v)).T
+
+    def test(self):
+        N_max = 6
+        t,w = self.integrator.run(self.grid, dt=0.1, nsteps=100000)
+
+        # fig = plot_orbit(w,ix=10)
+        # plt.show()
+
+        all_freqs = []
+        for n in range(w.shape[1]):
+            try:
+                actions,angles,freqs = find_actions(t, w[:,n], N_max=N_max, usys=self.usys)
+            except:
+                print("FAILED")
+                continue
+
+            all_freqs.append(list(freqs))
+        all_freqs = np.array(all_freqs)
+
+        plt.clf()
+        plt.plot(all_freqs[:,1]/all_freqs[:,0], all_freqs[:,2]/all_freqs[:,0],
+                 linestyle='none', marker=',')
+        plt.show()
