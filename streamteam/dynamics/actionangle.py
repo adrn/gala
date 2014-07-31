@@ -315,8 +315,8 @@ def find_actions(t, w, N_max, usys, return_Sn=False):
         logger.debug("Using triaxial harmonic oscillator toy potential")
 
         omega = fit_harmonic_oscillator(w, usys=usys)
-        potential = HarmonicOscillatorPotential(omega=best_omega)
-        logger.debug("Best omegas ({})".format(best_omega))
+        potential = HarmonicOscillatorPotential(omega=omega)
+        logger.debug("Best omegas ({})".format(omega))
 
         dxyz = (2,2,2)
         sign = 1.
