@@ -16,21 +16,10 @@ from scipy.linalg import solve
 from scipy.optimize import leastsq
 
 # Project
+from .core import angular_momentum
 from ..potential import HarmonicOscillatorPotential, IsochronePotential
 
 __all__ = ['classify_orbit', 'find_actions', 'generate_n_vectors']
-
-def L(w):
-    """
-    Compute the angular momentum vector of phase-space point(s), `w`
-
-    Parameters
-    ----------
-    w : array_like
-        Array of phase-space positions.
-    """
-    ndim = w.shape[-1]
-    return np.cross(w[...,:ndim//2], w[...,ndim//2:])
 
 def classify_orbit(w):
     """
@@ -50,7 +39,7 @@ def classify_orbit(w):
 
     """
     # get angular momenta
-    Ls = L(w)
+    Ls = angular_momentum(w)
 
     # if only 2D, add another empty axis
     if w.ndim == 2:
