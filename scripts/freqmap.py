@@ -23,8 +23,11 @@ from streamteam.util import get_pool
 def setup_grid(n, potential):
     # grid of points on Phi = 0.5
 
-    phis = np.linspace(0,2*np.pi,n)
-    thetas = np.arccos(2*np.linspace(0.,1.,n) - 1)
+    # phis = np.linspace(0,2*np.pi,n)
+    # thetas = np.arccos(2*np.linspace(0.,1.,n) - 1)
+    # HACK
+    phis = np.linspace(0.1,1.95*np.pi,n)
+    thetas = np.arccos(2*np.linspace(0.05,0.95,n) - 1)
     p,t = np.meshgrid(phis, thetas)
     phis = p.ravel()
     thetas = t.ravel()
@@ -85,11 +88,10 @@ def main(n, mpi=False):
     #np.save("/vega/astro/users/amp2217/projects/new_streamteam/freqs.npy", all_freqs)
     np.save("freqs.npy", all_freqs)
 
-    return
-    plt.clf()
+    plt.figure(figsize=(6,6))
     plt.plot(all_freqs[:,1]/all_freqs[:,0], all_freqs[:,2]/all_freqs[:,0],
-             linestyle='none', marker=',')
-    plt.show()
+             linestyle='none', marker='.', alpha=0.5)
+    plt.savefig(freqs.png)
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
