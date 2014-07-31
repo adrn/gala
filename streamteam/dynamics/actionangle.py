@@ -324,7 +324,12 @@ def find_actions(t, w, N_max, usys, return_Sn=False):
     # Now find toy actions and angles
     aa = np.hstack(potential.action_angle(w[...,:3], w[...,3:]))
     if np.any(np.isnan(aa)):
-        raise ValueError("NaN value in toy actions or angles!")
+        ix = ~np.any(np.isnan(aa),axis=1)
+        aa = aa[ix]
+        t = t[ix]
+        logger.warning("NaN value in toy actions or angles!")
+        if sum(ix) > 1:
+            raise ValueError("Too many NaN value in toy actions or angles!")
 
     t1 = time.time()
     A,b,nvecs = _action_prepare(aa, N_max, dx=dxyz[0], dy=dxyz[1], dz=dxyz[2])
