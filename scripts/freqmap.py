@@ -50,30 +50,35 @@ def setup_grid(n, potential):
 def worker(stuff):
     t,w = stuff
     try:
-        actions,angles,freqs = find_actions(t, w, N_max=6, usys=(u.kpc, u.Msun, u.Myr))
-    except ValueError:
-        return [np.nan,np.nan,np.nan]
-    return freqs
+        actions,angles,freqs = cross_validate_actions(t, w, N_max=6,
+                                                      usys=None, skip_failures=True)
+        return freqs
+    except ValueError as e:
+        return None
 
 def main(n, mpi=False):
     usys = (u.kpc, u.Msun, u.Myr)
     potential = LogarithmicPotential(v_c=1., r_h=np.sqrt(0.1),
-                                     q1=1., q2=0.9, q3=0.7, phi=0.,
-                                     usys=usys)
+                                     q1=1., q2=0.9, q3=0.7, phi=0.)
     acc = lambda t,x: potential.acceleration(x)
     integrator = LeapfrogIntegrator(acc)
 
+    logger.debug("Setting up grid...")
     grid = setup_grid(n, potential)
-    N_max = 6
+    logger.debug("...done!")
 
     # integrate the orbits
-    t,w = integrator.run(grid, dt=1., nsteps=10000)
+    logger.debug("Integrating orbits...")
+    t,w = integrator.run(grid, dt=0.05, nsteps=200000)
+    logger.debug("...done!")
 
     stuffs = zip(np.repeat(t[np.newaxis], len(grid), 0), np.rollaxis(w, 1))
     pool = get_pool(mpi=mpi)
 
+    logger.debug("Computing frequencies...")
     all_freqs = pool.map(worker, stuffs)
     all_freqs = np.array(all_freqs)
+    logger.debug("...done!")
 
     pool.close()
 
@@ -87,14 +92,27 @@ def main(n, mpi=False):
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
+    import logging
 
     # Define parser object
     parser = ArgumentParser(description="")
+    parser.add_argument("-v", "--verbose", action="store_true", dest="verbose",
+                        default=False, help="Be chatty! (default = False)")
+    parser.add_argument("-q", "--quiet", action="store_true", dest="quiet",
+                        default=False, help="Be quiet! (default = False)")
     parser.add_argument("--mpi", dest="mpi", action="store_true", default=False,
                         help="Run with MPI.")
     parser.add_argument("-n", dest="n", required=True, type=int,
                         help="Number of elements along one axis of grid.")
 
     args = parser.parse_args()
+
+    # Set logger level based on verbose flags
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+    elif args.quiet:
+        logger.setLevel(logging.ERROR)
+    else:
+        logger.setLevel(logging.INFO)
 
     main(n=args.n, mpi=args.mpi)
