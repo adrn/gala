@@ -299,7 +299,7 @@ def find_actions(t, w, N_max, usys, return_Sn=False):
 
     orbit_class = classify_orbit(w)
     if np.any(orbit_class == 1): # loop orbit
-        logger.info("===== Loop orbit =====")
+        logger.debug("===== Loop orbit =====")
         logger.debug("Using isochrone toy potential")
 
         m,b = fit_isochrone(w, usys=usys)
@@ -311,7 +311,7 @@ def find_actions(t, w, N_max, usys, return_Sn=False):
         sign = np.array([1.,circ,1.])
 
     else: # box orbit
-        logger.info("===== Box orbit =====")
+        logger.debug("===== Box orbit =====")
         logger.debug("Using triaxial harmonic oscillator toy potential")
 
         omega = fit_harmonic_oscillator(w, usys=usys)
@@ -344,9 +344,9 @@ def find_actions(t, w, N_max, usys, return_Sn=False):
     if len(angles) > len(aa):
         logger.warning("More unknowns than equations!")
 
-    J = actions[:3]
+    J = actions[:3] * sign
     theta = angles[:3]
-    freq = angles[3:6]
+    freq = angles[3:6] * sign
 
     if return_Sn:
         return J, theta, freq, actions[3:], angles[6:], nvecs
