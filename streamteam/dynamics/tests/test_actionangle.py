@@ -222,6 +222,8 @@ class TestActions(object):
 
         # get values from Sanders' code
         s_actions,s_angles,s_freqs = sanders_act_ang_freq(t, w, N_max=N_max)
+        s_actions = np.abs(s_actions)
+        s_freqs = np.abs(s_freqs)
 
         print("Action ratio:", actions / s_actions)
         print("Angle ratio:", angles / s_angles)
