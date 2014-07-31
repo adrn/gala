@@ -462,12 +462,12 @@ class LogarithmicPotential(CartesianPotential):
         Flattening in Z direction.
     phi : numeric
         Rotation of halo in X-Y plane.
-    usys : iterable
+    usys : iterable (optional)
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_c, r_h, q1, q2, q3, phi, usys):
+    def __init__(self, v_c, r_h, q1, q2, q3, phi, usys=None):
         self.usys = usys
         parameters = dict(v_c=v_c, r_h=r_h, q1=q1,
                           q2=q2, q3=q3, phi=phi)
