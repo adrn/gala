@@ -8,12 +8,10 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 import os, sys
-import logging
 
 # Third-party
 import numpy as np
 from astropy import log as logger
-logger.setLevel(logging.WARNING)
 import astropy.units as u
 
 # Project
@@ -84,7 +82,8 @@ def main(n, mpi=False):
 
     pool.close()
 
-    np.save("/vega/astro/users/amp2217/projects/new_streamteam/freqs.npy", all_freqs)
+    #np.save("/vega/astro/users/amp2217/projects/new_streamteam/freqs.npy", all_freqs)
+    np.save("freqs.npy", all_freqs)
 
     return
     plt.clf()
