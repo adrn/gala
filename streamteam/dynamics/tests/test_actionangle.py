@@ -73,17 +73,19 @@ def test_classify():
     for j in range(len(box_w0)):
         assert np.all(orb_type[j] == sanders_classify(box_ws[:,j]))
 
-def plot_orbit(w,ix=None):
-    fig,axes = plt.subplots(1,3,figsize=(12,5),sharex=True,sharey=True)
+def plot_orbit(w,ix=None,axes=None,**kwargs):
+    if axes is None:
+        fig,axes = plt.subplots(1,3,figsize=(12,5),sharex=True,sharey=True)
+
     if ix is None:
         for ii in range(w.shape[1]):
-            axes[0].plot(w[:,ii,0], w[:,ii,1], marker=None)
-            axes[1].plot(w[:,ii,0], w[:,ii,2], marker=None)
-            axes[2].plot(w[:,ii,1], w[:,ii,2], marker=None)
+            axes[0].plot(w[:,ii,0], w[:,ii,1], **kwargs)
+            axes[1].plot(w[:,ii,0], w[:,ii,2], **kwargs)
+            axes[2].plot(w[:,ii,1], w[:,ii,2], **kwargs)
     else:
-        axes[0].plot(w[:,ix,0], w[:,ix,1], marker=None)
-        axes[1].plot(w[:,ix,0], w[:,ix,2], marker=None)
-        axes[2].plot(w[:,ix,1], w[:,ix,2], marker=None)
+        axes[0].plot(w[:,ix,0], w[:,ix,1], **kwargs)
+        axes[1].plot(w[:,ix,0], w[:,ix,2], **kwargs)
+        axes[2].plot(w[:,ix,1], w[:,ix,2], **kwargs)
 
     axes[0].set_xlabel("X")
     axes[0].set_ylabel("Y")
@@ -93,8 +95,8 @@ def plot_orbit(w,ix=None):
 
     axes[2].set_xlabel("Y")
     axes[2].set_ylabel("Z")
-    fig.tight_layout()
-    return fig
+    axes[0].figure.tight_layout()
+    return axes[0].figure
 
 def _crazy_loop(theta1,theta2,ax):
     cnt = 0
@@ -200,24 +202,23 @@ def sanders_act_ang_freq(t,w,N_max=6):
 
     return actions,angles,freqs
 
-class TestActions(object):
+class TestLoopActions(object):
 
     def setup(self):
         self.usys = (u.kpc, u.Msun, u.Myr)
         self.potential = LM10Potential()
         acc = lambda t,x: self.potential.acceleration(x)
         self.integrator = LeapfrogIntegrator(acc)
+        self.loop_w0 = np.append(([14.69, 1.8, 0.12]*u.kpc).decompose(self.usys).value,
+                                 ([15.97, -128.9, 44.68]*u.km/u.s).decompose(self.usys).value)
 
-    def test_loop(self):
-        N_max = 6
-
-        loop_w0 = np.append(([14.69, 1.8, 0.12]*u.kpc).decompose(self.usys).value,
-                            ([15.97, -128.9, 44.68]*u.km/u.s).decompose(self.usys).value)
-        t,w = self.integrator.run(loop_w0, dt=0.5, nsteps=20000)
+    def test_actions(self):
+        t,w = self.integrator.run(self.loop_w0, dt=0.5, nsteps=20000)
 
         fig = plot_orbit(w,ix=0)
         fig.savefig(os.path.join(plot_path,"loop.png"))
 
+        N_max = 6
         actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, usys=self.usys)
 
         # get values from Sanders' code
@@ -239,17 +240,33 @@ class TestActions(object):
         fig = plot_angles(t,s_angles,s_freqs)
         fig.savefig(os.path.join(plot_path,"loop_angles_sanders.png"))
 
+    def test_cross_validate(self):
+        N_max = 6
+
+        # integrate a long orbit
+        logger.debug("Integrating orbit...")
+        t,w = self.integrator.run(self.loop_w0, dt=0.5, nsteps=200000)
+        logger.debug("Orbit integration done")
+
+        actions,angles,freqs = cross_validate_actions(t, w[:,0], N_max=N_max, usys=self.usys)
+        action_std = (np.std(actions, axis=0)*u.kpc**2/u.Myr).to(u.kpc*u.km/u.s)
+        freq_std = (np.std(freqs, axis=0)/u.Myr).to(1/u.Gyr)
+
+        # Sanders' reported variance is ∆J = (0.07, 0.08, 0.03)
+        #                               ∆Ω = (3e-4, 6e-5, 2e-3)
+        print(action_std)
+        print(freq_std)
+
 class TestFrequencyMap(object):
 
     def setup(self):
         self.usys = (u.kpc, u.Msun, u.Myr)
         self.potential = LogarithmicPotential(v_c=1., r_h=np.sqrt(0.1),
-                                              q1=1., q2=0.9, q3=0.7, phi=0.,
-                                              usys=self.usys)
+                                              q1=1., q2=1., q3=0.7, phi=0.)
         acc = lambda t,x: self.potential.acceleration(x)
         self.integrator = LeapfrogIntegrator(acc)
 
-        n = 4
+        n = 5
         phis = np.linspace(0,2*np.pi,n)
         thetas = np.arccos(2*np.linspace(0.,1.,n) - 1)
         p,t = np.meshgrid(phis, thetas)
@@ -270,27 +287,43 @@ class TestFrequencyMap(object):
         z = r*cost
         v = np.zeros_like(x)
 
+        E = self.potential.energy(np.vstack((x,y,z)).T, np.vstack((v,v,v)).T)
+        assert np.allclose(E, 0.5)
+
         self.grid = np.vstack((x,y,z,v,v,v)).T
 
     def test(self):
         N_max = 6
-        t,w = self.integrator.run(self.grid, dt=0.1, nsteps=100000)
+        t,w = self.integrator.run(self.grid, dt=0.01, nsteps=100000)
 
         # fig = plot_orbit(w,ix=10)
         # plt.show()
+
+        fig,axes = plt.subplots(1,3,figsize=(16,5))
 
         all_freqs = []
         for n in range(w.shape[1]):
             try:
                 actions,angles,freqs = find_actions(t, w[:,n], N_max=N_max, usys=self.usys)
-            except:
-                print("FAILED")
-                continue
+                failed = False
+            except ValueError as e:
+                print("FAILED: {}".format(e))
+                failed = True
 
-            all_freqs.append(list(freqs))
+            fig = plot_orbit(w, ix=n, axes=axes, linestyle='none', marker='.', alpha=0.1)
+            fig.axes[1].set_title("Failed: {}".format(failed),fontsize=24)
+            fig.savefig(os.path.join(plot_path,"orbit_{}.png".format(n)))
+            for i in range(3): axes[i].cla()
+
+            if not failed:
+                all_freqs.append(list(freqs))
+
         all_freqs = np.array(all_freqs)
 
         plt.clf()
+        plt.figure(figsize=(6,6))
         plt.plot(all_freqs[:,1]/all_freqs[:,0], all_freqs[:,2]/all_freqs[:,0],
-                 linestyle='none', marker=',')
+                 linestyle='none', marker='.')
+        plt.xlim(0.9, 1.5)
+        plt.ylim(1.1, 2.1)
         plt.savefig(os.path.join(plot_path,"freq_map.png"))
