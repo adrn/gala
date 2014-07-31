@@ -266,9 +266,9 @@ class TestFrequencyMap(object):
         acc = lambda t,x: self.potential.acceleration(x)
         self.integrator = LeapfrogIntegrator(acc)
 
-        n = 5
-        phis = np.linspace(0,2*np.pi,n)
-        thetas = np.arccos(2*np.linspace(0.,1.,n) - 1)
+        n = 3
+        phis = np.linspace(0.1,1.95*np.pi,n)
+        thetas = np.arccos(2*np.linspace(0.05,0.95,n) - 1)
         p,t = np.meshgrid(phis, thetas)
         phis = p.ravel()
         thetas = t.ravel()
@@ -294,29 +294,32 @@ class TestFrequencyMap(object):
 
     def test(self):
         N_max = 6
-        t,w = self.integrator.run(self.grid, dt=0.01, nsteps=100000)
-
-        # fig = plot_orbit(w,ix=10)
-        # plt.show()
+        logger.debug("Integrating orbits...")
+        t,w = self.integrator.run(self.grid, dt=0.05, nsteps=100000)
+        logger.debug("...done!")
 
         fig,axes = plt.subplots(1,3,figsize=(16,5))
-
         all_freqs = []
         for n in range(w.shape[1]):
             try:
-                actions,angles,freqs = find_actions(t, w[:,n], N_max=N_max, usys=self.usys)
+                actions,angles,freqs = cross_validate_actions(t, w[:,n], N_max=N_max,
+                                                            usys=self.usys, skip_failures=True)
                 failed = False
             except ValueError as e:
                 print("FAILED: {}".format(e))
                 failed = True
+
+            if not failed:
+                all_freqs.append(freqs)
 
             fig = plot_orbit(w, ix=n, axes=axes, linestyle='none', marker='.', alpha=0.1)
             fig.axes[1].set_title("Failed: {}".format(failed),fontsize=24)
             fig.savefig(os.path.join(plot_path,"orbit_{}.png".format(n)))
             for i in range(3): axes[i].cla()
 
-            if not failed:
-                all_freqs.append(list(freqs))
+        # for freqs in all_freqs:
+        #     print(np.median(freqs,axis=0))
+        #     print(np.std(freqs,axis=0))
 
         all_freqs = np.array(all_freqs)
 
@@ -324,6 +327,6 @@ class TestFrequencyMap(object):
         plt.figure(figsize=(6,6))
         plt.plot(all_freqs[:,1]/all_freqs[:,0], all_freqs[:,2]/all_freqs[:,0],
                  linestyle='none', marker='.')
-        plt.xlim(0.9, 1.5)
-        plt.ylim(1.1, 2.1)
+        # plt.xlim(0.9, 1.5)
+        # plt.ylim(1.1, 2.1)
         plt.savefig(os.path.join(plot_path,"freq_map.png"))
