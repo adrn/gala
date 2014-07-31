@@ -20,10 +20,9 @@ from streamteam.potential import LogarithmicPotential
 from streamteam.dynamics.actionangle import *
 from streamteam.util import get_pool
 
-def setup_grid(potential):
+def setup_grid(n, potential):
     # grid of points on Phi = 0.5
 
-    n = 16
     phis = np.linspace(0,2*np.pi,n)
     thetas = np.arccos(2*np.linspace(0.,1.,n) - 1)
     p,t = np.meshgrid(phis, thetas)
@@ -56,7 +55,7 @@ def worker(stuff):
         return [np.nan,np.nan,np.nan]
     return freqs
 
-def main(mpi=False):
+def main(n, mpi=False):
     usys = (u.kpc, u.Msun, u.Myr)
     potential = LogarithmicPotential(v_c=1., r_h=np.sqrt(0.1),
                                      q1=1., q2=0.9, q3=0.7, phi=0.,
@@ -64,7 +63,7 @@ def main(mpi=False):
     acc = lambda t,x: potential.acceleration(x)
     integrator = LeapfrogIntegrator(acc)
 
-    grid = setup_grid(potential)
+    grid = setup_grid(n, potential)
     N_max = 6
 
     # integrate the orbits
@@ -77,6 +76,8 @@ def main(mpi=False):
     all_freqs = np.array(all_freqs)
 
     pool.close()
+
+    np.save("grid.freqs", all_freqs)
 
     return
     plt.clf()
@@ -91,7 +92,9 @@ if __name__ == "__main__":
     parser = ArgumentParser(description="")
     parser.add_argument("--mpi", dest="mpi", action="store_true", default=False,
                         help="Run with MPI.")
+    parser.add_argument("-n", dest="n", required=True, type=int,
+                        help="Number of elements along one axis of grid.")
 
     args = parser.parse_args()
 
-    main(mpi=args.mpi)
+    main(n=args.n, mpi=args.mpi)
