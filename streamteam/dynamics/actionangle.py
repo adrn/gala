@@ -19,7 +19,8 @@ from scipy.optimize import leastsq
 from .core import angular_momentum, classify_orbit
 from ..potential import HarmonicOscillatorPotential, IsochronePotential
 
-__all__ = ['find_actions', 'generate_n_vectors', 'fit_isochrone', 'fit_harmonic_oscillator']
+__all__ = ['cross_validate_actions', 'find_actions', 'generate_n_vectors', \
+           'fit_isochrone', 'fit_harmonic_oscillator']
 
 def flip_coords(w, loop_bit):
     """
@@ -358,3 +359,43 @@ def find_actions(t, w, N_max, usys, return_Sn=False):
     else:
         return J, theta, freq
 
+# def chunks(data, nbins, noverlap=0):
+#     for i in xrange(0, len(data), nbins):
+#         if i > 0:
+#             i -= overlap//2
+#             i2 = i+nbins+noverlap
+#         else:
+#             i2 = i+nbins+noverlap//2
+
+#         if i2 > len(data):
+#             i2 = len(data)
+#         yield i,i2
+
+def cross_validate_actions(t, w, N_max, usys, return_Sn=False, nbins=10, skip_failures=False):
+    """
+    Compute actions along windows of `w` to make sure the solutions are
+    reasonable. The integration time must be long enough that it can be
+    broken into `nbins` overlapping samples.
+
+    TODO:
+    """
+    t_split = np.array_split(t,nbins)
+    w_split = np.array_split(w,nbins)
+
+    all_actions, all_angles, all_freqs = [],[],[]
+    for t,w in zip(t_split,w_split):
+        if skip_failures:
+            try:
+                actions,angles,freqs = find_actions(t, w, N_max, usys, return_Sn)
+            except:
+                continue
+        else:
+            actions,angles,freqs = find_actions(t, w, N_max, usys, return_Sn)
+
+        all_actions.append(actions)
+        all_angles.append(angles)
+        all_freqs.append(freqs)
+
+    all_actions, all_angles, all_freqs = map(np.array, [all_actions, all_angles, all_freqs])
+
+    return all_actions, all_angles, all_freqs
