@@ -203,9 +203,13 @@ class IsochronePotential(CartesianPotential):
     def action_angle(self, x, v):
         """
         Transform the input cartesian position and velocity to action-angle
-        coordinates the Isochrone potential. This transformation is analytic
-        and can be used as a "toy potential" in the Sanders & Binney 2014
-        formalism for computing action-angle coordinates in _any_ potential.
+        coordinates the Isochrone potential. See Section 3.5.2 in
+        Binney & Tremaine (2008), and be aware of the errata entry for
+        Eq. 3.225.
+
+        This transformation is analytic and can be used as a "toy potential"
+        in the Sanders & Binney 2014 formalism for computing action-angle
+        coordinates in _any_ potential.
 
         Adapted from Jason Sanders' code
         `here <https://github.com/jlsanders/genfunc>`_.
