@@ -249,17 +249,18 @@ class IsochronePotential(CartesianPotential):
         c = GM / (-2*E) - b
         e = np.sqrt(1 - L*L*(1 + b/c) / GM / c)
 
+        # Compute theta_r using eta
         tmp1 = r*vr / np.sqrt(-2.*E)
         tmp2 = b + c - np.sqrt(b*b + r*r)
         eta = np.arctan2(tmp1,tmp2)
         thetar = eta - e*c*np.sin(eta) / (c + b) # same as theta3
 
+        # Compute theta_z
+        psi = np.arctan2(np.cos(theta), -np.sin(theta)*r*vtheta/L)
+        psi[np.abs(vtheta) <= 1e-10] = np.pi/2. # blows up for small vtheta
+
         OmegaR = (-2*E)**1.5 / GM
         OmegaPhi = 0.5*OmegaR * (1 + L/np.sqrt(L*L + 4*GM*b))
-
-
-        psi = np.arctan2(np.cos(theta), -np.sin(theta)*r*vtheta/L)
-        psi[np.abs(vtheta) <= 1e-10] = np.pi/2.
 
         a = np.sqrt((1+e) / (1-e))
         ap = np.sqrt((1 + e + 2*b/c) / (1 - e + 2*b/c))
