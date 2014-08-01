@@ -23,6 +23,7 @@ from ...potential import NFWPotential
 from ...potential.lm10 import LM10Potential
 from ..actionangle import *
 from ..core import *
+from ..plot import *
 
 logger.setLevel(logging.DEBUG)
 
@@ -72,31 +73,6 @@ def test_classify():
     orb_type = classify_orbit(box_ws)
     for j in range(len(box_w0)):
         assert np.all(orb_type[j] == sanders_classify(box_ws[:,j]))
-
-def plot_orbit(w,ix=None,axes=None,**kwargs):
-    if axes is None:
-        fig,axes = plt.subplots(1,3,figsize=(12,5),sharex=True,sharey=True)
-
-    if ix is None:
-        for ii in range(w.shape[1]):
-            axes[0].plot(w[:,ii,0], w[:,ii,1], **kwargs)
-            axes[1].plot(w[:,ii,0], w[:,ii,2], **kwargs)
-            axes[2].plot(w[:,ii,1], w[:,ii,2], **kwargs)
-    else:
-        axes[0].plot(w[:,ix,0], w[:,ix,1], **kwargs)
-        axes[1].plot(w[:,ix,0], w[:,ix,2], **kwargs)
-        axes[2].plot(w[:,ix,1], w[:,ix,2], **kwargs)
-
-    axes[0].set_xlabel("X")
-    axes[0].set_ylabel("Y")
-
-    axes[1].set_xlabel("X")
-    axes[1].set_ylabel("Z")
-
-    axes[2].set_xlabel("Y")
-    axes[2].set_ylabel("Z")
-    axes[0].figure.tight_layout()
-    return axes[0].figure
 
 def _crazy_loop(theta1,theta2,ax):
     cnt = 0
