@@ -26,12 +26,12 @@ def plot_orbits(w, ix=None, axes=None, triangle=False, **kwargs):
         axes = axes.flat
         axes = [axes[0],axes[2],axes[3]]
 
-    if triangle and axes is not None:
+    elif triangle and axes is not None:
         axes = axes.flat
         if len(axes) == 4:
             axes = [axes[0],axes[2],axes[3]]
 
-    if not triangle and axes is None:
+    elif not triangle and axes is None:
         fig,axes = plt.subplots(1,3,figsize=(12,5),sharex=True,sharey=True)
 
     if ix is not None:
