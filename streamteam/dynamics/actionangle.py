@@ -2,6 +2,11 @@
 
 from __future__ import division, print_function
 
+"""
+Utilities for estimating actions and angles for an arbitrary orbit in an
+arbitrary potential.
+"""
+
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
@@ -426,9 +431,11 @@ def find_actions(t, w, N_max, usys, return_Sn=False):
 
 def cross_validate_actions(t, w, N_max, usys, return_Sn=False, nbins=10, skip_failures=False):
     """
-    Compute actions along windows of `w` to make sure the solutions are
-    reasonable. The integration time must be long enough that it can be
-    broken into `nbins` overlapping samples.
+    Compute actions along windows of time of an orbit, `w`, to make sure
+    the solutions are stable.
+
+    The integration time must be long enough that it can be broken into `nbins`
+    overlapping samples.
 
     Parameters
     ----------
