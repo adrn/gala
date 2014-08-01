@@ -16,6 +16,7 @@ from astropy.constants import G
 
 from .core import Potential, CartesianPotential, CompositePotential
 from ..coordinates import cartesian_to_spherical
+from ..dynamics import angular_momentum
 
 __all__ = ["PointMassPotential", "MiyamotoNagaiPotential",\
            "HernquistPotential", "LogarithmicPotential",\
@@ -232,11 +233,12 @@ class IsochronePotential(CartesianPotential):
         # Actions
         # ----------------------------
 
-        # compute angular momentum and angular momentum in Z direction
-        Lz = r*vphi*np.sin(theta)
-        L = np.sqrt(r*r*vtheta*vtheta + Lz*Lz/np.sin(theta)**2)
-        L[theta == 0] = r[theta == 0]*vtheta[theta == 0]
-        Jr = GM / np.sqrt(-2*E) - 0.5*(L + 0.5*np.sqrt(L*L + 4*GM*b))
+        L_vec = angular_momentum(np.hstack((x,v)))
+        Lz = L_vec[:,2]
+        L = np.linalg.norm(L_vec, axis=1)
+
+        # Radial action
+        Jr = GM / np.sqrt(-2*E) - 0.5*(L + np.sqrt(L*L + 4*GM*b))
 
         # compute the three action variables
         actions = np.array([Jr, Lz, L - np.abs(Lz)]).T
@@ -250,10 +252,11 @@ class IsochronePotential(CartesianPotential):
         tmp1 = r*vr / np.sqrt(-2.*E)
         tmp2 = b + c - np.sqrt(b*b + r*r)
         eta = np.arctan2(tmp1,tmp2)
+        thetar = eta - e*c*np.sin(eta) / (c + b) # same as theta3
 
         OmegaR = (-2*E)**1.5 / GM
         OmegaPhi = 0.5*OmegaR * (1 + L/np.sqrt(L*L + 4*GM*b))
-        thetar = eta - e*c*np.sin(eta) / (c + b)
+
 
         psi = np.arctan2(np.cos(theta), -np.sin(theta)*r*vtheta/L)
         psi[np.abs(vtheta) <= 1e-10] = np.pi/2.
