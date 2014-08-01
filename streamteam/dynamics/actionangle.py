@@ -41,7 +41,24 @@ def flip_coords(w, loop_bit):
 
 def generate_n_vectors(N_max, dx=1, dy=1, dz=1):
     """
-    TODO:
+    Generate integer vectors with |n| < N_max in just half of the three-
+    dimensional lattice. If the set N = {(i,j,k)} defines the lattice,
+    we restrict to the cases such that (k > 0), (k = 0, j > 0), and
+    (k = 0, j = 0, i > 0).
+
+    Parameters
+    ----------
+    N_max : int
+        Maximum norm of the integer vector.
+    dx : int
+        Step size in x direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
+    dy : int
+        Step size in y direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
+    dz : int
+        Step size in z direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
 
     """
     vecs = np.meshgrid(np.arange(-N_max, N_max+1, dx),
