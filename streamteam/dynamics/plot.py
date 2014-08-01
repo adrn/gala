@@ -21,7 +21,7 @@ def plot_orbits(w, ix=None, axes=None, triangle=False, **kwargs):
     """
 
     if triangle and axes is None:
-        fig,axes = plt.subplots(2,2,figsize=(12,12),sharex=True,sharey=True)
+        fig,axes = plt.subplots(2,2,figsize=(12,12),sharex='col',sharey='row')
         axes[0,1].set_visible(False)
         axes = axes.flat
         axes = [axes[0],axes[2],axes[3]]
