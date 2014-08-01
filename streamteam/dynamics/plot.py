@@ -21,7 +21,7 @@ def plot_orbits(w, ix=None, axes=None, triangle=False, **kwargs):
     """
 
     if triangle and axes is None:
-        fig,axes = plt.subplots(2,2,figsize=(12,12),sharex='col',sharey='row')
+        fig,axes = plt.subplots(2,2,figsize=(12,12),sharex=True,sharey=True)
         axes[0,1].set_visible(False)
         axes = axes.flat
         axes = [axes[0],axes[2],axes[3]]
@@ -45,6 +45,10 @@ def plot_orbits(w, ix=None, axes=None, triangle=False, **kwargs):
         axes[2].plot(w[:,ii,1], w[:,ii,2], **kwargs)
 
     if triangle:
+        # HACK: until matplotlib 1.4 comes out, need this
+        axes[0].set_ylim(axes[0].get_xlim())
+        axes[2].set_xlim(axes[0].get_ylim())
+
         axes[0].set_ylabel("Y")
         axes[1].set_xlabel("X")
         axes[1].set_ylabel("Z")
@@ -60,6 +64,7 @@ def plot_orbits(w, ix=None, axes=None, triangle=False, **kwargs):
         axes[2].set_xlabel("Y")
         axes[2].set_ylabel("Z")
 
-    axes[0].figure.tight_layout()
+    if not triangle:
+        axes[0].figure.tight_layout()
 
     return axes[0].figure
