@@ -215,7 +215,7 @@ class TestLoopActions(object):
     def test_actions(self):
         t,w = self.integrator.run(self.loop_w0, dt=0.5, nsteps=20000)
 
-        fig = plot_orbit(w,ix=0)
+        fig = plot_orbit(w,ix=0,marker=None)
         fig.savefig(os.path.join(plot_path,"loop.png"))
 
         N_max = 6
@@ -230,15 +230,15 @@ class TestLoopActions(object):
         print("Angle ratio:", angles / s_angles)
         print("Freq ratio:", freqs / s_freqs)
 
-        assert np.allclose(actions, s_actions, rtol=1E-2)
-        assert np.allclose(angles, s_angles, rtol=1E-2)
-        assert np.allclose(freqs, s_freqs, rtol=1E-2)
-
         fig = plot_angles(t,angles,freqs)
         fig.savefig(os.path.join(plot_path,"loop_angles.png"))
 
         fig = plot_angles(t,s_angles,s_freqs)
         fig.savefig(os.path.join(plot_path,"loop_angles_sanders.png"))
+
+        assert np.allclose(actions, s_actions, rtol=1E-2)
+        assert np.allclose(angles, s_angles, rtol=1E-2)
+        assert np.allclose(freqs, s_freqs, rtol=1E-2)
 
     def test_cross_validate(self):
         N_max = 6
