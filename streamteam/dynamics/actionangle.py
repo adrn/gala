@@ -461,15 +461,15 @@ def cross_validate_actions(t, w, N_max, usys, return_Sn=False, nbins=10, skip_fa
     w_split = np.array_split(w,nbins)
 
     all_actions, all_angles, all_freqs = [],[],[]
-    for t,w in zip(t_split,w_split):
+    for tt,ww in zip(t_split,w_split):
         if skip_failures:
             try:
-                actions,angles,freqs = find_actions(t, w, N_max, usys, return_Sn)
+                actions,angles,freqs = find_actions(tt, ww, N_max, usys, return_Sn)
             except:
                 logger.debug("Skipping failure...")
                 continue
         else:
-            actions,angles,freqs = find_actions(t, w, N_max, usys, return_Sn)
+            actions,angles,freqs = find_actions(tt, ww, N_max, usys, return_Sn)
 
         all_actions.append(actions)
         all_angles.append(angles)
