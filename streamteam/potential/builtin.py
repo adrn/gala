@@ -236,7 +236,7 @@ class IsochronePotential(CartesianPotential):
         Lz = r*vphi*np.sin(theta)
         L = np.sqrt(r*r*vtheta*vtheta + Lz*Lz/np.sin(theta)**2)
         L[theta == 0] = r[theta == 0]*vtheta[theta == 0]
-        Jr = GM / np.sqrt(-2*E) - 0.5*(L + np.sqrt(L*L + 4*GM*b))
+        Jr = GM / np.sqrt(-2*E) - 0.5*(L + 0.5*np.sqrt(L*L + 4*GM*b))
 
         # compute the three action variables
         actions = np.array([Jr, Lz, L - np.abs(Lz)]).T
