@@ -27,7 +27,11 @@ def plot_orbits(w, ix=None, axes=None, triangle=False, **kwargs):
         axes = [axes[0],axes[2],axes[3]]
 
     elif triangle and axes is not None:
-        axes = axes.flat
+        try:
+            axes = axes.flat
+        except:
+            pass
+
         if len(axes) == 4:
             axes = [axes[0],axes[2],axes[3]]
 
