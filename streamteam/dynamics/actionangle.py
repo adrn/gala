@@ -80,7 +80,7 @@ def unroll_angles(angles, sign=1.):
     angles : array_like
         Array of angles, (ntimes,3).
     sign : numeric (optional)
-        TODO:
+        Vector that defines direction of circulation about the axes.
     """
     n = np.array([0,0,0])
     P = np.zeros_like(angles)
@@ -92,9 +92,16 @@ def unroll_angles(angles, sign=1.):
 
 def check_angle_sampling(nvecs, angles):
     """
-    returns a list of the index of elements of n which do not have adequate
+    Returns a list of the index of elements of n which do not have adequate
     toy angle coverage. The criterion is that we must have at least one sample
-    in each Nyquist box when we project the toy angles along the vector n
+    in each Nyquist box when we project the toy angles along the vector n.
+
+    Parameters
+    ----------
+    nvecs : array_like
+        Array of integer vectors.
+    angles : array_like
+        Array of angles.
     """
 
     checks = np.array([])
