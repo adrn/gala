@@ -66,6 +66,9 @@ def main(n, mpi=False):
     acc = lambda t,x: potential.acceleration(x)
     integrator = LeapfrogIntegrator(acc)
 
+    # has to go here so we don't integrate a huge number of orbits
+    pool = get_pool(mpi=mpi)
+
     logger.debug("Setting up grid...")
     grid = setup_grid(n, potential)
     logger.debug("...done!")
@@ -76,7 +79,6 @@ def main(n, mpi=False):
     logger.debug("...done!")
 
     stuffs = zip(np.repeat(t[np.newaxis], len(grid), 0), np.rollaxis(w, 1))
-    pool = get_pool(mpi=mpi)
 
     logger.debug("Computing frequencies...")
     all_freqs = pool.map(worker, stuffs)
