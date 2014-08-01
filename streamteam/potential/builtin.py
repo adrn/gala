@@ -16,7 +16,6 @@ from astropy.constants import G
 
 from .core import Potential, CartesianPotential, CompositePotential
 from ..coordinates import cartesian_to_spherical
-from ..dynamics import angular_momentum
 
 __all__ = ["PointMassPotential", "MiyamotoNagaiPotential",\
            "HernquistPotential", "LogarithmicPotential",\
@@ -221,6 +220,8 @@ class IsochronePotential(CartesianPotential):
         v : array_like
             Velocities.
         """
+        from ..dynamics import angular_momentum
+
         _G = G.decompose(self.usys).value
         GM = _G*self.parameters['m']
         b = self.parameters['b']
