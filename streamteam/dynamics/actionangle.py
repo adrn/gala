@@ -126,8 +126,27 @@ def check_angle_sampling(nvecs, angles):
 
 def _action_prepare(aa, N_max, dx, dy, dz, sign=1.):
     """
-    TODO:
+    Given toy actions and angles, `aa`, compute the matrix `A` and
+    vector `b` to solve for the vector of "true" actions and generating
+    function values, `x` (see Equations 12-14 in Sanders & Binney (2014)).
 
+    Parameters
+    ----------
+    aa : array_like
+        Shape (ntimes,6) array of toy actions and angles.
+    N_max : int
+        Maximum norm of the integer vector.
+    dx : int
+        Step size in x direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
+    dy : int
+        Step size in y direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
+    dz : int
+        Step size in z direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
+    sign : numeric (optional)
+        Vector that defines direction of circulation about the axes.
     """
 
     # unroll the angles so they increase continuously instead of wrap
@@ -172,8 +191,30 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1.):
 
 def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
     """
-    TODO:
+    Given toy actions and angles, `aa`, compute the matrix `A` and
+    vector `b` to solve for the vector of "true" angles, frequencies, and
+    generating function derivatives, `x` (see Appendix of
+    Sanders & Binney (2014)).
 
+    Parameters
+    ----------
+    aa : array_like
+        Shape (ntimes,6) array of toy actions and angles.
+    t : array_like
+        Array of times.
+    N_max : int
+        Maximum norm of the integer vector.
+    dx : int
+        Step size in x direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
+    dy : int
+        Step size in y direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
+    dz : int
+        Step size in z direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
+    sign : numeric (optional)
+        Vector that defines direction of circulation about the axes.
     """
 
     # unroll the angles so they increase continuously instead of wrap
@@ -389,7 +430,25 @@ def cross_validate_actions(t, w, N_max, usys, return_Sn=False, nbins=10, skip_fa
     reasonable. The integration time must be long enough that it can be
     broken into `nbins` overlapping samples.
 
-    TODO:
+    Parameters
+    ----------
+    t : array_like
+        Array of times with shape (ntimes,).
+    w : array_like
+        Phase-space orbit at times, `t`. Should have shape (ntimes,6).
+    N_max : int
+        Maximum integer Fourier mode vector length, |n|.
+    usys : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units. For example,
+        (u.kpc, u.Myr, u.Msun).
+    return_Sn : bool (optional)
+        Return the Sn and dSn/dJ's. Default is False.
+    nbins : int (optional)
+        Number of bins to split the input orbit into.
+    skip_failures : bool (optional)
+        Skip any individual failure of `find_actions()`, but keep trying
+        on other bins.
     """
     t_split = np.array_split(t,nbins)
     w_split = np.array_split(w,nbins)
