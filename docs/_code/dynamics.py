@@ -35,8 +35,8 @@ def main(overwrite=False):
 
     # define an axisymmetric potential
     usys = (u.kpc, u.Msun, u.Myr)
-    p = sp.LogarithmicPotential(v_c=0.15, r_h=0., q1=1., q2=1.,
-                                q3=0.85, phi=0., usys=usys)
+    p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
+                                q1=1., q2=1., q3=0.85,  usys=usys)
 
     # initial conditions
     w0 = [8.,0.,0.,0.075,0.15,0.05]
@@ -83,7 +83,7 @@ def main(overwrite=False):
     ax.plot(iso_R, iso_w[:,0,2], marker=None, linestyle='-', alpha=0.5, c='r')
     ax.plot(R[:plot_ix], w[:plot_ix,0,2], marker=None, linestyle='-', alpha=0.8, c='k')
     ax.set_xlabel("$R$")
-    ax.set_xlabel("$Z$")
+    ax.set_ylabel("$Z$")
     fig.savefig(os.path.join(plot_path, "orbit_Rz.png"))
 
     if not os.path.exists(action_filename):
@@ -91,7 +91,7 @@ def main(overwrite=False):
         actions,angles,freqs = sd.cross_validate_actions(t, w[:,0], N_max=6, nbins=100, usys=usys)
 
         # now compute for the full time series
-        r = find_actions(t, w, N_max, usys, return_Sn=return_Sn)
+        r = sd.find_actions(t, w[:,0], N_max=6, usys=usys, return_Sn=True)
         full_actions,full_angles,full_freqs = r[:3]
         Sn,dSn_dJ,nvecs = r[3:]
 
@@ -115,6 +115,24 @@ def main(overwrite=False):
     fig.suptitle("Deviation from median", y=0.05, fontsize=18)
     fig.tight_layout()
     fig.savefig(os.path.join(plot_path, "action_hist.png"))
+
+    # --------------------------------------------------------
+    # now going to plot toy actions and solved actions
+
+    # fit isochrone potential
+    m,b = sd.fit_isochrone(w, usys=usys)
+    isochrone = sp.IsochronePotential(m=m, b=b, usys=usys)
+    actions,angles = isochrone.action_angle(w[:,0,:3],w[:,0,3:])
+
+    fig,ax = plt.subplots(1,1,figsize=(10,5))
+    for i in range(3):
+        l, = ax.plot(t, actions[:,i], linestyle='--', marker=None)
+        ax.axhline(full_actions[i], lw=1., color=l.get_color(), zorder=-1)
+
+    dt = t[1]-t[0]
+    ax.set_xlim(0.,1200.)
+
+    fig.savefig(os.path.join(plot_path,"toy_computed_actions.png"))
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
