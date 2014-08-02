@@ -7,10 +7,9 @@ Dynamics (`streamteam.dynamics`)
 Introduction
 ============
 
-Getting started with the built-in classes
-=========================================
-
-.. image:: ../_static/potential/nfw.png
+Getting started
+===============
+`actionangle`_
 
 Reference/API
 =============
