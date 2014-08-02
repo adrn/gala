@@ -429,7 +429,7 @@ def find_actions(t, w, N_max, usys, return_Sn=False):
     else:
         return J, theta, freq
 
-def cross_validate_actions(t, w, N_max, usys, return_Sn=False, nbins=10, skip_failures=False):
+def cross_validate_actions(t, w, N_max, usys, nbins=10, skip_failures=False):
     """
     Compute actions along windows of time of an orbit, `w`, to make sure
     the solutions are stable.
@@ -449,8 +449,6 @@ def cross_validate_actions(t, w, N_max, usys, return_Sn=False, nbins=10, skip_fa
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units. For example,
         (u.kpc, u.Myr, u.Msun).
-    return_Sn : bool (optional)
-        Return the Sn and dSn/dJ's. Default is False.
     nbins : int (optional)
         Number of bins to split the input orbit into.
     skip_failures : bool (optional)
@@ -464,12 +462,12 @@ def cross_validate_actions(t, w, N_max, usys, return_Sn=False, nbins=10, skip_fa
     for tt,ww in zip(t_split,w_split):
         if skip_failures:
             try:
-                actions,angles,freqs = find_actions(tt, ww, N_max, usys, return_Sn)
+                actions,angles,freqs = find_actions(tt, ww, N_max, usys, return_Sn=False)
             except:
                 logger.debug("Skipping failure...")
                 continue
         else:
-            actions,angles,freqs = find_actions(tt, ww, N_max, usys, return_Sn)
+            actions,angles,freqs = find_actions(tt, ww, N_max, usys, return_Sn=False)
 
         all_actions.append(actions)
         all_angles.append(angles)
