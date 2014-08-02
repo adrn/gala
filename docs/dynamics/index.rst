@@ -7,9 +7,11 @@ Dynamics (`streamteam.dynamics`)
 Introduction
 ============
 
+For a detailed example that makes use of the code for transforming to
+action-angle coordinates, see: :ref:`actionangle`.
+
 Getting started
 ===============
-`actionangle`_
 
 Reference/API
 =============
