@@ -83,7 +83,7 @@ def main(overwrite=False):
     ax.plot(iso_R, iso_w[:,0,2], marker=None, linestyle='-', alpha=0.5, c='r')
     ax.plot(R[:plot_ix], w[:plot_ix,0,2], marker=None, linestyle='-', alpha=0.8, c='k')
     ax.set_xlabel("$R$")
-    ax.set_ylabel("$Z$")
+    ax.set_ylabel("$Z$", rotation='horizontal')
     fig.savefig(os.path.join(plot_path, "orbit_Rz.png"))
 
     if not os.path.exists(action_filename):
@@ -124,14 +124,24 @@ def main(overwrite=False):
     isochrone = sp.IsochronePotential(m=m, b=b, usys=usys)
     actions,angles = isochrone.action_angle(w[:,0,:3],w[:,0,3:])
 
-    fig,ax = plt.subplots(1,1,figsize=(10,5))
+    fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
     for i in range(3):
-        l, = ax.plot(t, actions[:,i], linestyle='--', marker=None)
-        ax.axhline(full_actions[i], lw=1., color=l.get_color(), zorder=-1)
+        computed_action = full_actions[i]
+        l, = axes[i].plot(t/1000., (actions[:,i]-computed_action)/computed_action*100,
+                          marker=None, alpha=0.5, label='toy action', lw=1.5)
+        axes[i].axhline(0., lw=1., zorder=-1, c='#31a354')
+        axes[i].set_xlabel("time [Gyr]")
+        axes[i].set_title("$J_{}$".format(i+1), y=1.02)
+
+    fig.suptitle("Percent deviation from estimated action", fontsize=20)
+    axes[0].legend(fontsize=16)
+    axes[0].set_yticks((-50,-25,0,25,50))
+    axes[0].set_yticklabels(["{}%".format(tck) for tck in axes[0].get_yticks()])
 
     dt = t[1]-t[0]
-    ax.set_xlim(0.,1200.)
-
+    axes[0].set_xlim(0.,3.)
+    axes[0].set_ylim(-52,52)
+    fig.tight_layout()
     fig.savefig(os.path.join(plot_path,"toy_computed_actions.png"))
 
 if __name__ == "__main__":
