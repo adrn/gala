@@ -431,7 +431,8 @@ def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=F
     else:
         return J, theta, freq
 
-def cross_validate_actions(t, w, N_max, usys, nbins=10, skip_failures=False):
+def cross_validate_actions(t, w, N_max, usys, nbins=10, skip_failures=False,
+                           force_harmonic_oscillator=False):
     """
     Compute actions along windows of time of an orbit, `w`, to make sure
     the solutions are stable.
@@ -456,6 +457,8 @@ def cross_validate_actions(t, w, N_max, usys, nbins=10, skip_failures=False):
     skip_failures : bool (optional)
         Skip any individual failure of `find_actions()`, but keep trying
         on other bins.
+    force_harmonic_oscillator : bool (optional)
+        Force using the harmonic oscillator potential as the toy potential.
     """
     t_split = np.array_split(t,nbins)
     w_split = np.array_split(w,nbins)
@@ -464,12 +467,14 @@ def cross_validate_actions(t, w, N_max, usys, nbins=10, skip_failures=False):
     for tt,ww in zip(t_split,w_split):
         if skip_failures:
             try:
-                actions,angles,freqs = find_actions(tt, ww, N_max, usys, return_Sn=False)
+                actions,angles,freqs = find_actions(tt, ww, N_max, usys, return_Sn=False,
+                                        force_harmonic_oscillator=force_harmonic_oscillator)
             except:
                 logger.debug("Skipping failure...")
                 continue
         else:
-            actions,angles,freqs = find_actions(tt, ww, N_max, usys, return_Sn=False)
+            actions,angles,freqs = find_actions(tt, ww, N_max, usys, return_Sn=False,
+                                    force_harmonic_oscillator=force_harmonic_oscillator)
 
         all_actions.append(actions)
         all_angles.append(angles)
