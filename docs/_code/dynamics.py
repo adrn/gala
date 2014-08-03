@@ -31,10 +31,12 @@ def make_orbit_files(potential, w0, nsteps, plot_ix, suffix="", overwrite=False,
                      force_harmonic_oscillator=False):
 
     orbit_filename = os.path.join(plot_path, "orbits{}.npy".format(suffix))
+    usys = potential.usys
 
     if overwrite and os.path.exists(orbit_filename):
         os.remove(orbit_filename)
 
+    toy_potential = None
     if not os.path.exists(orbit_filename):
         # integrate an orbit in a axisymmetric potential
         acc = lambda t,x: potential.acceleration(x)
@@ -62,6 +64,15 @@ def make_orbit_files(potential, w0, nsteps, plot_ix, suffix="", overwrite=False,
         t,w,toy_t,toy_w = np.load(orbit_filename)
         logger.debug("Orbit read from file: {}".format(orbit_filename))
 
+    if toy_potential is None:
+        loop = sd.classify_orbit(w)
+        if np.any(loop == 1) and not force_harmonic_oscillator: # loop orbit
+            m,b = sd.fit_isochrone(w, usys=usys)
+            toy_potential = sp.IsochronePotential(m=m, b=b, usys=usys)
+        else:
+            omegas = sd.fit_harmonic_oscillator(w, usys=usys)
+            toy_potential = sp.HarmonicOscillatorPotential(omega=omegas, usys=usys)
+
     # plot a smaller section of the orbit in projections of XYZ
     fig = sd.plot_orbits(toy_w, marker=None, linestyle='-',
                          alpha=0.5, triangle=True, c='r')
@@ -81,7 +92,7 @@ def make_orbit_files(potential, w0, nsteps, plot_ix, suffix="", overwrite=False,
 
     return t,w,toy_t,toy_w,toy_potential
 
-def make_action_files(suffix="", overwrite=False,
+def make_action_files(t, w, potential, suffix="", overwrite=False,
                       force_harmonic_oscillator=False):
 
     action_filename = os.path.join(plot_path, "actions{}.npy".format(suffix))
@@ -93,22 +104,71 @@ def make_action_files(suffix="", overwrite=False,
         # compute the actions and angles for the orbit
         actions,angles,freqs = sd.cross_validate_actions(t, w[:,0], N_max=6, nbins=100,
                                     force_harmonic_oscillator=force_harmonic_oscillator,
-                                    usys=usys, skip_failures=True)
+                                    usys=potential.usys, skip_failures=True)
 
         # now compute for the full time series
-        r = sd.find_actions(t, w[:,0], N_max=6, usys=usys, return_Sn=True,
+        r = sd.find_actions(t, w[:,0], N_max=6, usys=potential.usys, return_Sn=True,
                             force_harmonic_oscillator=force_harmonic_oscillator)
         full_actions,full_angles,full_freqs = r[:3]
         Sn,dSn_dJ,nvecs = r[3:]
 
         np.save(action_filename, (actions,angles,freqs) + r)
+        logger.debug("Actions computed and saved to file: {}".format(action_filename))
     else:
         r = np.load(action_filename)
         actions,angles,freqs = r[:3]
         full_actions,full_angles,full_freqs = r[3:6]
         Sn,dSn_dJ,nvecs = r[6:]
+        logger.debug("Actions read from file: {}".format(action_filename))
 
-def main(overwrite=False):
+    return actions,angles,freqs,full_actions,full_angles,full_freqs
+
+def action_plots(actions,angles,freqs,full_actions,full_angles,full_freqs,
+                 suffix=""):
+
+    # deviation of actions from actions computed on full orbit
+    fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
+    dev_percent = (actions - full_actions[None]) / full_actions[None]*100.
+    max_dev = np.max(np.abs(dev_percent))
+    max_dev = float("{:.0e}".format(max_dev))
+    for i in range(3):
+        axes[i].set_title("$J_{}$".format(i+1), y=1.02)
+        axes[i].plot(dev_percent[:,i], marker='.', linestyle='none')
+
+    if max_dev < 0.1:
+        max_dev = 0.1
+
+    axes[0].set_ylim(-max_dev,max_dev)
+    axes[0].set_yticks(np.linspace(-max_dev,max_dev,5))
+    axes[0].set_yticklabels(["{}%".format(tck) for tck in axes[0].get_yticks()])
+    axes[1].set_xlabel("subsample index")
+
+    fig.suptitle("Percent deviation of subsample action value", fontsize=20)
+    fig.tight_layout()
+    fig.savefig(os.path.join(plot_path, "action_hist{}.png".format(suffix)))
+
+    # deviation of frequencies from freqs computed on full orbit
+    fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
+    dev_percent = (freqs - full_freqs[None]) / full_freqs[None]*100.
+    max_dev = np.max(np.abs(dev_percent))
+    max_dev = float("{:.0e}".format(max_dev))
+    for i in range(3):
+        axes[i].set_title(r"$\Omega_{}$".format(i+1), y=1.02)
+        axes[i].plot(dev_percent[:,i], marker='.', linestyle='none')
+
+    if max_dev < 0.1:
+        max_dev = 0.1
+
+    axes[0].set_ylim(-max_dev,max_dev)
+    axes[0].set_yticks(np.linspace(-max_dev,max_dev,5))
+    axes[0].set_yticklabels(["{}%".format(tck) for tck in axes[0].get_yticks()])
+    axes[1].set_xlabel("subsample index")
+
+    fig.suptitle("Percent deviation of subsample frequency value", fontsize=20)
+    fig.tight_layout()
+    fig.savefig(os.path.join(plot_path, "freq_hist{}.png".format(suffix)))
+
+def main(orbit_name, overwrite=False):
 
     # only plot up to this index in the orbit plots
     nsteps = 500000
@@ -117,69 +177,31 @@ def main(overwrite=False):
     # define an axisymmetric potential
     usys = (u.kpc, u.Msun, u.Myr)
 
-    # well-fit loop orbit
-    p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
-                                q1=1., q2=1., q3=0.85,  usys=usys)
-    w0 = [8.,0.,0.,0.075,0.15,0.05]
+    if orbit_name == "loop":
+        # well-fit loop orbit
+        p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
+                                    q1=1., q2=1., q3=0.85,  usys=usys)
+        w0 = [8.,0.,0.,0.075,0.15,0.05]
 
-    t,w,toy_t,toy_w,toy_potential = make_orbit_files(p, w0, suffix="_loop",
-                                                     overwrite=overwrite,
-                                                     nsteps=nsteps, plot_ix=plot_ix)
+        t,w,toy_t,toy_w,toy_potential = make_orbit_files(p, w0, suffix="_loop",
+                                                         overwrite=overwrite,
+                                                         nsteps=nsteps, plot_ix=plot_ix)
+        r = make_action_files(t, w, p, suffix="_loop", overwrite=overwrite)
+        action_plots(*r, suffix="_loop")
+
+    elif orbit_name == "chaotic":
+        # chaotic orbit?
+        p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
+                                    q1=1.3, q2=1., q3=0.85,  usys=usys)
+        w0 = [8.,0.,0.,-0.025,0.065,0.15]
+
+        t,w,toy_t,toy_w,toy_potential = make_orbit_files(p, w0, suffix="_chaotic",
+                                                         overwrite=overwrite,
+                                                         nsteps=nsteps, plot_ix=plot_ix)
+        r = make_action_files(t, w, p, suffix="_chaotic", overwrite=overwrite)
+        action_plots(*r, suffix="_chaotic")
 
     return
-
-    # chaotic orbit?
-    # p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
-    #                             q1=1.3, q2=1., q3=0.85,  usys=usys)
-    # w0 = [8.,0.,0.,-0.025,0.05,0.12]
-
-    # t,w,toy_t,toy_w,toy_potential = make_orbit_files(p, w0, suffix="_chaotic",
-    #                                                  overwrite=overwrite,
-    #                                                  force_harmonic_oscillator=True)
-
-
-
-    # deviation of actions computed from subsample to median value
-    fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
-    bins = np.linspace(-0.1,0.1,20)
-    for i in range(3):
-        axes[i].set_title("$J_{}$".format(i+1), y=1.02)
-        axes[i].plot(actions[:,i], marker='.', linestyle='none')
-        # axes[i].plot((actions[:,i] - np.median(actions[:,i])) / np.median(actions[:,i])*100.,
-        #              marker='.', linestyle='none')
-    #     axes[i].set_ylim(-.11,.11)
-
-    # axes[0].set_yticks((-0.1,-0.05,0.,0.05,0.1))
-    # axes[0].set_yticklabels(["{}%".format(tck) for tck in axes[0].get_yticks()])
-
-    axes[1].set_xlabel("subsample index")
-
-    fig.suptitle("Deviation from median action value", fontsize=20)
-    fig.tight_layout()
-    fig.savefig(os.path.join(plot_path, "action_hist.png"))
-
-    # deviation of frequencies computed from subsample to median value
-    fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
-    bins = np.linspace(-0.1,0.1,20)
-    for i in range(3):
-        axes[i].set_title(r"$\Omega_{}$".format(i+1), y=1.02)
-        axes[i].plot(freqs[:,i], marker='.', linestyle='none')
-        freqs[:,i]
-
-        mad = np.median(np.absolute(freqs[:,i] - np.median(freqs[:,i])))
-        axes[i].set_ylim(np.median(freqs[:,i]) - 10*mad, np.median(freqs[:,i]) + 10*mad)
-        # axes[i].plot((freqs[:,i] - np.median(freqs[:,i])) / np.median(freqs[:,i])*100.,
-        #              marker='.', linestyle='none')
-        # axes[i].set_ylim(-.11,.11)
-
-    #axes[0].set_yticks((-0.1,-0.05,0.,0.05,0.1))
-    #axes[0].set_yticklabels(["{}%".format(tck) for tck in axes[0].get_yticks()])
-
-    axes[1].set_xlabel("subsample index")
-
-    fig.suptitle("Deviation from median frequency value", fontsize=20)
-    fig.tight_layout()
-    fig.savefig(os.path.join(plot_path, "freq_hist.png"))
 
     # --------------------------------------------------------
     # now going to plot toy actions and solved actions
@@ -219,6 +241,8 @@ if __name__ == "__main__":
 
     parser.add_argument("-o", dest="overwrite", action="store_true", default=False,
                         help="Overwrite generated files.")
+    parser.add_argument("-n", "--name", dest="name", required=True,
+                        help="Name of the orbit. 'loop' or 'chaotic'.")
 
     args = parser.parse_args()
 
@@ -230,4 +254,4 @@ if __name__ == "__main__":
     else:
         logger.setLevel(logging.INFO)
 
-    main(overwrite=args.overwrite)
+    main(args.name, overwrite=args.overwrite)
