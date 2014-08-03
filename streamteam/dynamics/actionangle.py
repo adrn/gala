@@ -340,7 +340,7 @@ def fit_harmonic_oscillator(w, usys, omega=[1.,1.,1.]):
     best_omega = np.abs(p)
     return best_omega
 
-def find_actions(t, w, N_max, usys, return_Sn=False):
+def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=False):
     """
     Find approximate actions and angles for samples of a phase-space orbit,
     `w`, at times `t`. Uses toy potentials with known, analytic action-angle
@@ -363,13 +363,15 @@ def find_actions(t, w, N_max, usys, return_Sn=False):
         (u.kpc, u.Myr, u.Msun).
     return_Sn : bool (optional)
         Return the Sn and dSn/dJ's. Default is False.
+    force_harmonic_oscillator : bool (optional)
+        Force using the harmonic oscillator potential as the toy potential.
     """
 
     if w.ndim > 2:
         raise ValueError("w must be a single orbit")
 
     orbit_class = classify_orbit(w)
-    if np.any(orbit_class == 1): # loop orbit
+    if np.any(orbit_class == 1) and not force_harmonic_oscillator: # loop orbit
         logger.debug("===== Loop orbit =====")
         logger.debug("Using isochrone toy potential")
 
