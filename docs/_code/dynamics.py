@@ -173,6 +173,8 @@ def main(orbit_name, overwrite=False):
     # only plot up to this index in the orbit plots
     nsteps = 500000
     plot_ix = nsteps//35
+    # nsteps = 50000
+    # plot_ix = nsteps-1
 
     # define an axisymmetric potential
     usys = (u.kpc, u.Msun, u.Myr)
@@ -193,11 +195,12 @@ def main(orbit_name, overwrite=False):
         # chaotic orbit?
         p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
                                     q1=1.3, q2=1., q3=0.85,  usys=usys)
-        w0 = [8.,0.,0.,-0.025,0.065,0.15]
+        w0 = [5.5,5.5,0.,-0.02,0.02,0.11]
 
         t,w,toy_t,toy_w,toy_potential = make_orbit_files(p, w0, suffix="_chaotic",
                                                          overwrite=overwrite,
                                                          nsteps=nsteps, plot_ix=plot_ix)
+
         r = make_action_files(t, w, p, suffix="_chaotic", overwrite=overwrite)
         action_plots(*r, suffix="_chaotic")
 
