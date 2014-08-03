@@ -27,71 +27,77 @@ plot_path = os.path.abspath("../_static/dynamics")
 if not os.path.exists(plot_path):
     os.mkdir(plot_path)
 
-def main(overwrite=False):
+def make_orbit_files(potential, w0, nsteps, plot_ix, suffix="", overwrite=False,
+                     force_harmonic_oscillator=False):
 
-    # only plot up to this index in the orbit plots
-    nsteps = 500000
-    plot_ix = nsteps//35
+    orbit_filename = os.path.join(plot_path, "orbits{}.npy".format(suffix))
 
-    # define an axisymmetric potential
-    usys = (u.kpc, u.Msun, u.Myr)
-    p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
-                                q1=1., q2=1., q3=0.85,  usys=usys)
-
-    # initial conditions
-    w0 = [8.,0.,0.,0.075,0.15,0.05]
-
-    orbit_filename = os.path.join(plot_path, "orbits.npy")
-    action_filename = os.path.join(plot_path, "actions.npy")
-
-    if overwrite:
-        if os.path.exists(orbit_filename):
-            os.remove(orbit_filename)
-
-        if os.path.exists(action_filename):
-            os.remove(action_filename)
+    if overwrite and os.path.exists(orbit_filename):
+        os.remove(orbit_filename)
 
     if not os.path.exists(orbit_filename):
         # integrate an orbit in a axisymmetric potential
-        acc = lambda t,x: p.acceleration(x)
+        acc = lambda t,x: potential.acceleration(x)
         integrator = si.LeapfrogIntegrator(acc)
         t,w = integrator.run(w0, dt=1., nsteps=nsteps)
 
-        # also integrate the orbit in the best-fitting isochrone potential
-        m,b = sd.fit_isochrone(w, usys=usys)
-        isochrone = sp.IsochronePotential(m=m, b=b, usys=usys)
-        acc = lambda t,x: isochrone.acceleration(x)
+        loop = sd.classify_orbit(w)
+        if np.any(loop == 1) and not force_harmonic_oscillator: # loop orbit
+            m,b = sd.fit_isochrone(w, usys=usys)
+            toy_potential = sp.IsochronePotential(m=m, b=b, usys=usys)
+        else:
+            omegas = sd.fit_harmonic_oscillator(w, usys=usys)
+            toy_potential = sp.HarmonicOscillatorPotential(omega=omegas, usys=usys)
+
+        # also integrate the orbit in the best-fitting toy potential
+        acc = lambda t,x: toy_potential.acceleration(x)
         integrator = si.LeapfrogIntegrator(acc)
-        iso_t,iso_w = integrator.run(w0, dt=1., nsteps=plot_ix)
+        toy_t,toy_w = integrator.run(w0, dt=1., nsteps=plot_ix)
 
         # cache the orbits
-        np.save(orbit_filename, (t,w,iso_t,iso_w))
+        np.save(orbit_filename, (t,w,toy_t,toy_w))
+
+        logger.debug("Orbit computed and saved to file: {}".format(orbit_filename))
     else:
-        t,w,iso_t,iso_w = np.load(orbit_filename)
+        t,w,toy_t,toy_w = np.load(orbit_filename)
+        logger.debug("Orbit read from file: {}".format(orbit_filename))
 
     # plot a smaller section of the orbit in projections of XYZ
-    fig = sd.plot_orbits(iso_w, marker=None, linestyle='-',
+    fig = sd.plot_orbits(toy_w, marker=None, linestyle='-',
                          alpha=0.5, triangle=True, c='r')
     fig = sd.plot_orbits(w[:plot_ix], axes=fig.axes, marker=None, linestyle='-',
                          alpha=0.8, triangle=True, c='k')
-    fig.savefig(os.path.join(plot_path, "orbit_xyz.png"))
+    fig.savefig(os.path.join(plot_path, "orbit_xyz{}.png".format(suffix)))
 
     # plot a smaller section of the orbit in the meridional plane
     fig,ax = plt.subplots(1,1,figsize=(6,6))
     R = np.sqrt(w[:,0,0]**2 + w[:,0,1]**2)
-    iso_R = np.sqrt(iso_w[:,0,0]**2 + iso_w[:,0,1]**2)
-    ax.plot(iso_R, iso_w[:,0,2], marker=None, linestyle='-', alpha=0.5, c='r')
+    toy_R = np.sqrt(toy_w[:,0,0]**2 + toy_w[:,0,1]**2)
+    ax.plot(toy_R, toy_w[:,0,2], marker=None, linestyle='-', alpha=0.5, c='r')
     ax.plot(R[:plot_ix], w[:plot_ix,0,2], marker=None, linestyle='-', alpha=0.8, c='k')
     ax.set_xlabel("$R$")
     ax.set_ylabel("$Z$", rotation='horizontal')
-    fig.savefig(os.path.join(plot_path, "orbit_Rz.png"))
+    fig.savefig(os.path.join(plot_path, "orbit_Rz{}.png".format(suffix)))
+
+    return t,w,toy_t,toy_w,toy_potential
+
+def make_action_files(suffix="", overwrite=False,
+                      force_harmonic_oscillator=False):
+
+    action_filename = os.path.join(plot_path, "actions{}.npy".format(suffix))
+
+    if overwrite and os.path.exists(action_filename):
+        os.remove(action_filename)
 
     if not os.path.exists(action_filename):
         # compute the actions and angles for the orbit
-        actions,angles,freqs = sd.cross_validate_actions(t, w[:,0], N_max=6, nbins=100, usys=usys)
+        actions,angles,freqs = sd.cross_validate_actions(t, w[:,0], N_max=6, nbins=100,
+                                    force_harmonic_oscillator=force_harmonic_oscillator,
+                                    usys=usys, skip_failures=True)
 
         # now compute for the full time series
-        r = sd.find_actions(t, w[:,0], N_max=6, usys=usys, return_Sn=True)
+        r = sd.find_actions(t, w[:,0], N_max=6, usys=usys, return_Sn=True,
+                            force_harmonic_oscillator=force_harmonic_oscillator)
         full_actions,full_angles,full_freqs = r[:3]
         Sn,dSn_dJ,nvecs = r[3:]
 
@@ -102,17 +108,49 @@ def main(overwrite=False):
         full_actions,full_angles,full_freqs = r[3:6]
         Sn,dSn_dJ,nvecs = r[6:]
 
+def main(overwrite=False):
+
+    # only plot up to this index in the orbit plots
+    nsteps = 500000
+    plot_ix = nsteps//35
+
+    # define an axisymmetric potential
+    usys = (u.kpc, u.Msun, u.Myr)
+
+    # well-fit loop orbit
+    p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
+                                q1=1., q2=1., q3=0.85,  usys=usys)
+    w0 = [8.,0.,0.,0.075,0.15,0.05]
+
+    t,w,toy_t,toy_w,toy_potential = make_orbit_files(p, w0, suffix="_loop",
+                                                     overwrite=overwrite,
+                                                     nsteps=nsteps, plot_ix=plot_ix)
+
+    return
+
+    # chaotic orbit?
+    # p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
+    #                             q1=1.3, q2=1., q3=0.85,  usys=usys)
+    # w0 = [8.,0.,0.,-0.025,0.05,0.12]
+
+    # t,w,toy_t,toy_w,toy_potential = make_orbit_files(p, w0, suffix="_chaotic",
+    #                                                  overwrite=overwrite,
+    #                                                  force_harmonic_oscillator=True)
+
+
+
     # deviation of actions computed from subsample to median value
     fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
     bins = np.linspace(-0.1,0.1,20)
     for i in range(3):
         axes[i].set_title("$J_{}$".format(i+1), y=1.02)
-        axes[i].plot((actions[:,i] - np.median(actions[:,i])) / np.median(actions[:,i])*100.,
-                     marker='.', linestyle='none')
-        axes[i].set_ylim(-.11,.11)
+        axes[i].plot(actions[:,i], marker='.', linestyle='none')
+        # axes[i].plot((actions[:,i] - np.median(actions[:,i])) / np.median(actions[:,i])*100.,
+        #              marker='.', linestyle='none')
+    #     axes[i].set_ylim(-.11,.11)
 
-    axes[0].set_yticks((-0.1,-0.05,0.,0.05,0.1))
-    axes[0].set_yticklabels(["{}%".format(tck) for tck in axes[0].get_yticks()])
+    # axes[0].set_yticks((-0.1,-0.05,0.,0.05,0.1))
+    # axes[0].set_yticklabels(["{}%".format(tck) for tck in axes[0].get_yticks()])
 
     axes[1].set_xlabel("subsample index")
 
@@ -125,12 +163,17 @@ def main(overwrite=False):
     bins = np.linspace(-0.1,0.1,20)
     for i in range(3):
         axes[i].set_title(r"$\Omega_{}$".format(i+1), y=1.02)
-        axes[i].plot((freqs[:,i] - np.median(freqs[:,i])) / np.median(freqs[:,i])*100.,
-                     marker='.', linestyle='none')
-        axes[i].set_ylim(-.11,.11)
+        axes[i].plot(freqs[:,i], marker='.', linestyle='none')
+        freqs[:,i]
 
-    axes[0].set_yticks((-0.1,-0.05,0.,0.05,0.1))
-    axes[0].set_yticklabels(["{}%".format(tck) for tck in axes[0].get_yticks()])
+        mad = np.median(np.absolute(freqs[:,i] - np.median(freqs[:,i])))
+        axes[i].set_ylim(np.median(freqs[:,i]) - 10*mad, np.median(freqs[:,i]) + 10*mad)
+        # axes[i].plot((freqs[:,i] - np.median(freqs[:,i])) / np.median(freqs[:,i])*100.,
+        #              marker='.', linestyle='none')
+        # axes[i].set_ylim(-.11,.11)
+
+    #axes[0].set_yticks((-0.1,-0.05,0.,0.05,0.1))
+    #axes[0].set_yticklabels(["{}%".format(tck) for tck in axes[0].get_yticks()])
 
     axes[1].set_xlabel("subsample index")
 
@@ -140,11 +183,7 @@ def main(overwrite=False):
 
     # --------------------------------------------------------
     # now going to plot toy actions and solved actions
-
-    # fit isochrone potential
-    m,b = sd.fit_isochrone(w, usys=usys)
-    isochrone = sp.IsochronePotential(m=m, b=b, usys=usys)
-    actions,angles = isochrone.action_angle(w[:,0,:3],w[:,0,3:])
+    actions,angles = toy_potential.action_angle(w[:,0,:3],w[:,0,3:])
 
     fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
     for i in range(3):
@@ -170,13 +209,6 @@ def main(overwrite=False):
 if __name__ == "__main__":
     from argparse import ArgumentParser
     import logging
-
-    # Create logger
-    logger = logging.getLogger(__name__)
-    ch = logging.StreamHandler()
-    formatter = logging.Formatter("%(name)s / %(levelname)s / %(message)s")
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
 
     # Define parser object
     parser = ArgumentParser(description="")
