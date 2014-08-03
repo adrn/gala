@@ -124,8 +124,9 @@ def make_action_files(t, w, potential, suffix="", overwrite=False,
     return actions,angles,freqs,full_actions,full_angles,full_freqs
 
 def action_plots(actions,angles,freqs,full_actions,full_angles,full_freqs,
-                 suffix=""):
+                 t, w, toy_potential, suffix=""):
 
+    # --------------------------------------------------------
     # deviation of actions from actions computed on full orbit
     fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
     dev_percent = (actions - full_actions[None]) / full_actions[None]*100.
@@ -147,6 +148,7 @@ def action_plots(actions,angles,freqs,full_actions,full_angles,full_freqs,
     fig.tight_layout()
     fig.savefig(os.path.join(plot_path, "action_hist{}.png".format(suffix)))
 
+    # --------------------------------------------------------
     # deviation of frequencies from freqs computed on full orbit
     fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
     dev_percent = (freqs - full_freqs[None]) / full_freqs[None]*100.
@@ -167,6 +169,33 @@ def action_plots(actions,angles,freqs,full_actions,full_angles,full_freqs,
     fig.suptitle("Percent deviation of subsample frequency value", fontsize=20)
     fig.tight_layout()
     fig.savefig(os.path.join(plot_path, "freq_hist{}.png".format(suffix)))
+
+    # --------------------------------------------------------
+    # now going to plot toy actions and solved actions
+    actions,angles = toy_potential.action_angle(w[:,0,:3],w[:,0,3:])
+
+    fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
+    dev_percent = (actions-full_actions[None])/full_actions[None]*100
+    max_dev = np.max(np.abs(dev_percent))
+    max_dev = float("{:.0e}".format(max_dev))
+    for i in range(3):
+        axes[i].plot(t/1000., dev_percent[:,i], linestyle='none',
+                     marker='.', alpha=0.75, label='toy action')
+        axes[i].axhline(0., lw=1., zorder=-1, c='#31a354')
+        axes[i].set_title("$J_{}$".format(i+1), y=1.02)
+
+    axes[0].set_ylim(-max_dev,max_dev)
+    axes[0].set_yticks(np.linspace(-max_dev,max_dev,5))
+    axes[0].set_yticklabels(["{}%".format(tck) for tck in axes[0].get_yticks()])
+    axes[1].set_xlabel("time [Gyr]")
+
+    fig.suptitle("Percent deviation from estimated action", fontsize=20)
+    axes[0].legend(fontsize=16)
+
+    dt = t[1]-t[0]
+    axes[0].set_xlim(0.,5.)
+    fig.tight_layout()
+    fig.savefig(os.path.join(plot_path,"toy_computed_actions{}.png".format(suffix)))
 
 def main(orbit_name, overwrite=False):
 
@@ -189,7 +218,7 @@ def main(orbit_name, overwrite=False):
                                                          overwrite=overwrite,
                                                          nsteps=nsteps, plot_ix=plot_ix)
         r = make_action_files(t, w, p, suffix="_loop", overwrite=overwrite)
-        action_plots(*r, suffix="_loop")
+        action_plots(*r, t=t, w=w, toy_potential=toy_potential, suffix="_loop")
 
     elif orbit_name == "chaotic":
         # chaotic orbit?
@@ -202,34 +231,7 @@ def main(orbit_name, overwrite=False):
                                                          nsteps=nsteps, plot_ix=plot_ix)
 
         r = make_action_files(t, w, p, suffix="_chaotic", overwrite=overwrite)
-        action_plots(*r, suffix="_chaotic")
-
-    return
-
-    # --------------------------------------------------------
-    # now going to plot toy actions and solved actions
-    actions,angles = toy_potential.action_angle(w[:,0,:3],w[:,0,3:])
-
-    fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
-    for i in range(3):
-        computed_action = full_actions[i]
-        axes[i].plot(t/1000., (actions[:,i]-computed_action)/computed_action*100,
-                     marker=None, alpha=0.5, label='toy action', lw=1.5)
-        axes[i].axhline(0., lw=1., zorder=-1, c='#31a354')
-        axes[i].set_title("$J_{}$".format(i+1), y=1.02)
-
-    axes[1].set_xlabel("time [Gyr]")
-
-    fig.suptitle("Percent deviation from estimated action", fontsize=20)
-    axes[0].legend(fontsize=16)
-    axes[0].set_yticks((-50,-25,0,25,50))
-    axes[0].set_yticklabels(["{}%".format(tck) for tck in axes[0].get_yticks()])
-
-    dt = t[1]-t[0]
-    axes[0].set_xlim(0.,3.)
-    axes[0].set_ylim(-52,52)
-    fig.tight_layout()
-    fig.savefig(os.path.join(plot_path,"toy_computed_actions.png"))
+        action_plots(*r, t=t, w=w, toy_potential=toy_potential, suffix="_chaotic")
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
