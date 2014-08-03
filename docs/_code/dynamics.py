@@ -102,19 +102,41 @@ def main(overwrite=False):
         full_actions,full_angles,full_freqs = r[3:6]
         Sn,dSn_dJ,nvecs = r[6:]
 
-    fig,axes = plt.subplots(1,3,figsize=(12,5),sharex=True)
+    # deviation of actions computed from subsample to median value
+    fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
     bins = np.linspace(-0.1,0.1,20)
     for i in range(3):
         axes[i].set_title("$J_{}$".format(i+1), y=1.02)
-        axes[i].hist((actions[:,i] - np.median(actions[:,i])) / np.median(actions[:,i])*100.,
-                     bins=bins)
-        axes[i].set_xlim(-.11,.11)
-        axes[i].set_xticks((-0.1,-0.05,0.,0.05,0.1))
-        axes[i].set_xticklabels(("-0.1%","-0.05%","0%","0.05%","0.1%"))
+        axes[i].plot((actions[:,i] - np.median(actions[:,i])) / np.median(actions[:,i])*100.,
+                     marker='.', linestyle='none')
+        axes[i].set_ylim(-.11,.11)
 
-    fig.suptitle("Deviation from median", y=0.05, fontsize=18)
+    axes[0].set_yticks((-0.1,-0.05,0.,0.05,0.1))
+    axes[0].set_yticklabels(["{}%".format(tck) for tck in axes[0].get_yticks()])
+
+    axes[1].set_xlabel("subsample index")
+
+    fig.suptitle("Deviation from median action value", fontsize=20)
     fig.tight_layout()
     fig.savefig(os.path.join(plot_path, "action_hist.png"))
+
+    # deviation of frequencies computed from subsample to median value
+    fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
+    bins = np.linspace(-0.1,0.1,20)
+    for i in range(3):
+        axes[i].set_title(r"$\Omega_{}$".format(i+1), y=1.02)
+        axes[i].plot((freqs[:,i] - np.median(freqs[:,i])) / np.median(freqs[:,i])*100.,
+                     marker='.', linestyle='none')
+        axes[i].set_ylim(-.11,.11)
+
+    axes[0].set_yticks((-0.1,-0.05,0.,0.05,0.1))
+    axes[0].set_yticklabels(["{}%".format(tck) for tck in axes[0].get_yticks()])
+
+    axes[1].set_xlabel("subsample index")
+
+    fig.suptitle("Deviation from median frequency value", fontsize=20)
+    fig.tight_layout()
+    fig.savefig(os.path.join(plot_path, "freq_hist.png"))
 
     # --------------------------------------------------------
     # now going to plot toy actions and solved actions
@@ -127,11 +149,12 @@ def main(overwrite=False):
     fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
     for i in range(3):
         computed_action = full_actions[i]
-        l, = axes[i].plot(t/1000., (actions[:,i]-computed_action)/computed_action*100,
-                          marker=None, alpha=0.5, label='toy action', lw=1.5)
+        axes[i].plot(t/1000., (actions[:,i]-computed_action)/computed_action*100,
+                     marker=None, alpha=0.5, label='toy action', lw=1.5)
         axes[i].axhline(0., lw=1., zorder=-1, c='#31a354')
-        axes[i].set_xlabel("time [Gyr]")
         axes[i].set_title("$J_{}$".format(i+1), y=1.02)
+
+    axes[1].set_xlabel("time [Gyr]")
 
     fig.suptitle("Percent deviation from estimated action", fontsize=20)
     axes[0].legend(fontsize=16)
