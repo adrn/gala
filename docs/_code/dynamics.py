@@ -1,6 +1,13 @@
 # coding: utf-8
 
-""" ...explain... """
+""" Produce plots for the Action-Angle tutorial. To run the three examples,
+    execute::
+
+        python dynamics.py --name axisymmetricloop
+        python dynamics.py --name triaxialloop
+        python dynamics.py --name triaxialchaotic
+
+"""
 
 from __future__ import division, print_function
 
