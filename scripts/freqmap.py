@@ -107,8 +107,7 @@ def main(n, mpi=False, batch=None):
 
     pool.close()
 
-    #fn = "/vega/astro/users/amp2217/projects/new_streamteam/freqs{}.npy".format(suffix)
-    fn = "/tmp/freqs{}.npy".format(suffix)
+    fn = "/vega/astro/users/amp2217/projects/new_streamteam/freqs{}.npy".format(suffix)
     np.save(fn, all_freqs)
 
     # plt.figure(figsize=(6,6))
