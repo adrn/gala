@@ -466,20 +466,25 @@ def cross_validate_actions(t, w, N_max, usys, nbins=10, skip_failures=False,
     t_split = np.array_split(t,nbins)
     w_split = np.array_split(w,nbins)
     if overlap != 0:
+        new_t_split = []
+        new_w_split = []
         for i in range(len(t_split)):
             if i == 0:
-                t_split[i] = np.append(t_split[i], t_split[i+1][:overlap])
-                w_split[i] = np.vstack((w_split[i],w_split[i+1][:overlap]))
+                new_t_split.append(np.append(t_split[i], t_split[i+1][:overlap]))
+                new_w_split.append(np.vstack((w_split[i], w_split[i+1][:overlap])))
 
             elif i == (len(t_split) - 1):
-                t_split[i] = np.append(t_split[i-1][-overlap:], t_split[i])
-                w_split[i] = np.vstack((w_split[i-1][-overlap:], w_split[i]))
+                new_t_split.append(np.append(t_split[i-1][-overlap:], t_split[i]))
+                new_w_split.append(np.vstack((w_split[i-1][-overlap:], w_split[i])))
 
             else:
-                t_split[i] = np.append(t_split[i-1][-overlap:], t_split[i])
-                t_split[i] = np.append(t_split[i], t_split[i+1][:overlap])
-                w_split[i] = np.vstack((w_split[i-1][-overlap:], w_split[i]))
-                w_split[i] = np.vstack((w_split[i],w_split[i+1][:overlap]))
+                new_t_split.append(np.append(t_split[i-1][-overlap:], t_split[i]))
+                new_t_split[i] = np.append(new_t_split[i], t_split[i+1][:overlap])
+                new_w_split.append(np.vstack((w_split[i-1][-overlap:], w_split[i])))
+                new_w_split[i] = np.vstack((new_w_split[i],w_split[i+1][:overlap]))
+
+        t_split = new_t_split
+        w_split = new_w_split
 
     all_actions, all_angles, all_freqs = [],[],[]
     for tt,ww in zip(t_split,w_split):
