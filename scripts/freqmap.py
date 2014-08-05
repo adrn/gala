@@ -107,10 +107,10 @@ def main(n, mpi=False, batch=None):
     fn = "/tmp/freqs{}.npy".format(suffix)
     np.save(fn, all_freqs)
 
-    plt.figure(figsize=(6,6))
-    plt.plot(all_freqs[:,1]/all_freqs[:,0], all_freqs[:,2]/all_freqs[:,0],
-             linestyle='none', marker='.', alpha=0.5)
-    plt.savefig(freqs.png)
+    # plt.figure(figsize=(6,6))
+    # plt.plot(all_freqs[:,1]/all_freqs[:,0], all_freqs[:,2]/all_freqs[:,0],
+    #          linestyle='none', marker='.', alpha=0.5)
+    # plt.savefig(freqs.png)
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
