@@ -113,7 +113,6 @@ def make_action_files(t, w, potential, suffix="", overwrite=False,
                                     force_harmonic_oscillator=force_harmonic_oscillator,
                                     usys=potential.usys, skip_failures=True,
                                     overlap=w.shape[0]//100)
-                                    #overlap=0)
 
         # now compute for the full time series
         r = sd.find_actions(t, w[:,0], N_max=6, usys=potential.usys, return_Sn=True,
