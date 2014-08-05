@@ -432,7 +432,7 @@ def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=F
         return J, theta, freq
 
 def cross_validate_actions(t, w, N_max, usys, nbins=10, skip_failures=False,
-                           force_harmonic_oscillator=False):
+                           force_harmonic_oscillator=False, overlap=0):
     """
     Compute actions along windows of time of an orbit, `w`, to make sure
     the solutions are stable.
@@ -459,9 +459,27 @@ def cross_validate_actions(t, w, N_max, usys, nbins=10, skip_failures=False,
         on other bins.
     force_harmonic_oscillator : bool (optional)
         Force using the harmonic oscillator potential as the toy potential.
+    overlap : int (optional)
+        Number of steps to overlap in each direction for each orbit sub-section.
     """
+
     t_split = np.array_split(t,nbins)
     w_split = np.array_split(w,nbins)
+    if overlap != 0:
+        for i in range(len(t_split)):
+            if i == 0:
+                t_split[i] = np.append(t_split[i], t_split[i+1][:overlap])
+                w_split[i] = np.vstack((w_split[i],w_split[i+1][:overlap]))
+
+            elif i == (len(t_split) - 1):
+                t_split[i] = np.append(t_split[i-1][-overlap:], t_split[i])
+                w_split[i] = np.vstack((w_split[i-1][-overlap:], w_split[i]))
+
+            else:
+                t_split[i] = np.append(t_split[i-1][-overlap:], t_split[i])
+                t_split[i] = np.append(t_split[i], t_split[i+1][:overlap])
+                w_split[i] = np.vstack((w_split[i-1][-overlap:], w_split[i]))
+                w_split[i] = np.vstack((w_split[i],w_split[i+1][:overlap]))
 
     all_actions, all_angles, all_freqs = [],[],[]
     for tt,ww in zip(t_split,w_split):
