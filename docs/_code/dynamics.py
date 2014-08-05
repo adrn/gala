@@ -208,30 +208,48 @@ def main(orbit_name, overwrite=False):
     # define an axisymmetric potential
     usys = (u.kpc, u.Msun, u.Myr)
 
-    if orbit_name == "loop":
+    if orbit_name == "axisymmetricloop":
+        suffix = "_" + orbit_name
+
         # well-fit loop orbit
         p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
                                     q1=1., q2=1., q3=0.85,  usys=usys)
         w0 = [8.,0.,0.,0.075,0.15,0.05]
 
-        t,w,toy_t,toy_w,toy_potential = make_orbit_files(p, w0, suffix="_loop",
+        t,w,toy_t,toy_w,toy_potential = make_orbit_files(p, w0, suffix=suffix,
                                                          overwrite=overwrite,
                                                          nsteps=nsteps, plot_ix=plot_ix)
-        r = make_action_files(t, w, p, suffix="_loop", overwrite=overwrite)
-        action_plots(*r, t=t, w=w, toy_potential=toy_potential, suffix="_loop")
+        r = make_action_files(t, w, p, suffix=suffix, overwrite=overwrite)
+        action_plots(*r, t=t, w=w, toy_potential=toy_potential, suffix=suffix)
 
-    elif orbit_name == "chaotic":
+    elif orbit_name == "triaxialloop":
+        suffix = "_" + orbit_name
+
+        # well-fit loop orbit
+        p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
+                                    q1=1.3, q2=1., q3=0.85,  usys=usys)
+        w0 = [8.,0.,0.,0.075,0.15,0.05]
+
+        t,w,toy_t,toy_w,toy_potential = make_orbit_files(p, w0, suffix=suffix,
+                                                         overwrite=overwrite,
+                                                         nsteps=nsteps, plot_ix=plot_ix)
+        r = make_action_files(t, w, p, suffix=suffix, overwrite=overwrite)
+        action_plots(*r, t=t, w=w, toy_potential=toy_potential, suffix=suffix)
+
+    elif orbit_name == "triaxialchaotic":
+        suffix = "_" + orbit_name
+
         # chaotic orbit?
         p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
                                     q1=1.3, q2=1., q3=0.85,  usys=usys)
         w0 = [5.5,5.5,0.,-0.02,0.02,0.11]
 
-        t,w,toy_t,toy_w,toy_potential = make_orbit_files(p, w0, suffix="_chaotic",
+        t,w,toy_t,toy_w,toy_potential = make_orbit_files(p, w0, suffix=suffix,
                                                          overwrite=overwrite,
                                                          nsteps=nsteps, plot_ix=plot_ix)
 
-        r = make_action_files(t, w, p, suffix="_chaotic", overwrite=overwrite)
-        action_plots(*r, t=t, w=w, toy_potential=toy_potential, suffix="_chaotic")
+        r = make_action_files(t, w, p, suffix=suffix, overwrite=overwrite)
+        action_plots(*r, t=t, w=w, toy_potential=toy_potential, suffix=suffix)
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
