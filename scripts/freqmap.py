@@ -65,14 +65,14 @@ def parse_batch(batch):
     return this_n-1, n_of
 
 def main(n, mpi=False, batch=None):
+    # has to go here so we don't integrate a huge number of orbits
+    pool = get_pool(mpi=mpi)
+
     usys = (u.kpc, u.Msun, u.Myr)
     potential = LogarithmicPotential(v_c=1., r_h=np.sqrt(0.1),
                                      q1=1., q2=0.9, q3=0.7, phi=0.)
     acc = lambda t,x: potential.acceleration(x)
     integrator = LeapfrogIntegrator(acc)
-
-    # has to go here so we don't integrate a huge number of orbits
-    pool = get_pool(mpi=mpi)
 
     logger.debug("Setting up grid...")
     grid = setup_grid(n, potential)
@@ -88,13 +88,17 @@ def main(n, mpi=False, batch=None):
         logger.debug("Grid batch length: {}".format(len(grid)))
 
     # integrate the orbits
-    logger.debug("Integrating orbits...")
-    t,w = integrator.run(grid, dt=0.05, nsteps=200000)
-    logger.debug("...done!")
+    try:
+        logger.debug("Integrating orbits...")
+        t,w = integrator.run(grid, dt=0.05, nsteps=200000)
+        logger.debug("...done!")
 
-    t = np.repeat(t[np.newaxis], len(grid), 0)
-    w = np.rollaxis(w,1)
-    stuffs = zip(t, w)
+        t = np.repeat(t[np.newaxis], len(grid), 0)
+        w = np.rollaxis(w,1)
+        stuffs = zip(t, w)
+    except:
+        pool.close()
+        sys.exit(1)
 
     logger.debug("Computing frequencies...")
     all_freqs = pool.map(worker, stuffs)
