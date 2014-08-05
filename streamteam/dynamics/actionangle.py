@@ -2,6 +2,11 @@
 
 from __future__ import division, print_function
 
+"""
+Utilities for estimating actions and angles for an arbitrary orbit in an
+arbitrary potential.
+"""
+
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
@@ -41,7 +46,24 @@ def flip_coords(w, loop_bit):
 
 def generate_n_vectors(N_max, dx=1, dy=1, dz=1):
     """
-    TODO:
+    Generate integer vectors with |n| < N_max in just half of the three-
+    dimensional lattice. If the set N = {(i,j,k)} defines the lattice,
+    we restrict to the cases such that (k > 0), (k = 0, j > 0), and
+    (k = 0, j = 0, i > 0).
+
+    Parameters
+    ----------
+    N_max : int
+        Maximum norm of the integer vector.
+    dx : int
+        Step size in x direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
+    dy : int
+        Step size in y direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
+    dz : int
+        Step size in z direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
 
     """
     vecs = np.meshgrid(np.arange(-N_max, N_max+1, dx),
@@ -63,7 +85,7 @@ def unroll_angles(angles, sign=1.):
     angles : array_like
         Array of angles, (ntimes,3).
     sign : numeric (optional)
-        TODO:
+        Vector that defines direction of circulation about the axes.
     """
     n = np.array([0,0,0])
     P = np.zeros_like(angles)
@@ -75,9 +97,16 @@ def unroll_angles(angles, sign=1.):
 
 def check_angle_sampling(nvecs, angles):
     """
-    returns a list of the index of elements of n which do not have adequate
+    Returns a list of the index of elements of n which do not have adequate
     toy angle coverage. The criterion is that we must have at least one sample
-    in each Nyquist box when we project the toy angles along the vector n
+    in each Nyquist box when we project the toy angles along the vector n.
+
+    Parameters
+    ----------
+    nvecs : array_like
+        Array of integer vectors.
+    angles : array_like
+        Array of angles.
     """
 
     checks = np.array([])
@@ -102,8 +131,27 @@ def check_angle_sampling(nvecs, angles):
 
 def _action_prepare(aa, N_max, dx, dy, dz, sign=1.):
     """
-    TODO:
+    Given toy actions and angles, `aa`, compute the matrix `A` and
+    vector `b` to solve for the vector of "true" actions and generating
+    function values, `x` (see Equations 12-14 in Sanders & Binney (2014)).
 
+    Parameters
+    ----------
+    aa : array_like
+        Shape (ntimes,6) array of toy actions and angles.
+    N_max : int
+        Maximum norm of the integer vector.
+    dx : int
+        Step size in x direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
+    dy : int
+        Step size in y direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
+    dz : int
+        Step size in z direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
+    sign : numeric (optional)
+        Vector that defines direction of circulation about the axes.
     """
 
     # unroll the angles so they increase continuously instead of wrap
@@ -148,8 +196,30 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1.):
 
 def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
     """
-    TODO:
+    Given toy actions and angles, `aa`, compute the matrix `A` and
+    vector `b` to solve for the vector of "true" angles, frequencies, and
+    generating function derivatives, `x` (see Appendix of
+    Sanders & Binney (2014)).
 
+    Parameters
+    ----------
+    aa : array_like
+        Shape (ntimes,6) array of toy actions and angles.
+    t : array_like
+        Array of times.
+    N_max : int
+        Maximum norm of the integer vector.
+    dx : int
+        Step size in x direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
+    dy : int
+        Step size in y direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
+    dz : int
+        Step size in z direction. Set to 1 for odd and even terms, set
+        to 2 for just even terms.
+    sign : numeric (optional)
+        Vector that defines direction of circulation about the axes.
     """
 
     # unroll the angles so they increase continuously instead of wrap
@@ -270,7 +340,7 @@ def fit_harmonic_oscillator(w, usys, omega=[1.,1.,1.]):
     best_omega = np.abs(p)
     return best_omega
 
-def find_actions(t, w, N_max, usys, return_Sn=False):
+def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=False):
     """
     Find approximate actions and angles for samples of a phase-space orbit,
     `w`, at times `t`. Uses toy potentials with known, analytic action-angle
@@ -293,13 +363,15 @@ def find_actions(t, w, N_max, usys, return_Sn=False):
         (u.kpc, u.Myr, u.Msun).
     return_Sn : bool (optional)
         Return the Sn and dSn/dJ's. Default is False.
+    force_harmonic_oscillator : bool (optional)
+        Force using the harmonic oscillator potential as the toy potential.
     """
 
     if w.ndim > 2:
         raise ValueError("w must be a single orbit")
 
     orbit_class = classify_orbit(w)
-    if np.any(orbit_class == 1): # loop orbit
+    if np.any(orbit_class == 1) and not force_harmonic_oscillator: # loop orbit
         logger.debug("===== Loop orbit =====")
         logger.debug("Using isochrone toy potential")
 
@@ -359,27 +431,50 @@ def find_actions(t, w, N_max, usys, return_Sn=False):
     else:
         return J, theta, freq
 
-def cross_validate_actions(t, w, N_max, usys, return_Sn=False, nbins=10, skip_failures=False):
+def cross_validate_actions(t, w, N_max, usys, nbins=10, skip_failures=False,
+                           force_harmonic_oscillator=False):
     """
-    Compute actions along windows of `w` to make sure the solutions are
-    reasonable. The integration time must be long enough that it can be
-    broken into `nbins` overlapping samples.
+    Compute actions along windows of time of an orbit, `w`, to make sure
+    the solutions are stable.
 
-    TODO:
+    The integration time must be long enough that it can be broken into `nbins`
+    overlapping samples.
+
+    Parameters
+    ----------
+    t : array_like
+        Array of times with shape (ntimes,).
+    w : array_like
+        Phase-space orbit at times, `t`. Should have shape (ntimes,6).
+    N_max : int
+        Maximum integer Fourier mode vector length, |n|.
+    usys : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units. For example,
+        (u.kpc, u.Myr, u.Msun).
+    nbins : int (optional)
+        Number of bins to split the input orbit into.
+    skip_failures : bool (optional)
+        Skip any individual failure of `find_actions()`, but keep trying
+        on other bins.
+    force_harmonic_oscillator : bool (optional)
+        Force using the harmonic oscillator potential as the toy potential.
     """
     t_split = np.array_split(t,nbins)
     w_split = np.array_split(w,nbins)
 
     all_actions, all_angles, all_freqs = [],[],[]
-    for t,w in zip(t_split,w_split):
+    for tt,ww in zip(t_split,w_split):
         if skip_failures:
             try:
-                actions,angles,freqs = find_actions(t, w, N_max, usys, return_Sn)
+                actions,angles,freqs = find_actions(tt, ww, N_max, usys, return_Sn=False,
+                                        force_harmonic_oscillator=force_harmonic_oscillator)
             except:
                 logger.debug("Skipping failure...")
                 continue
         else:
-            actions,angles,freqs = find_actions(t, w, N_max, usys, return_Sn)
+            actions,angles,freqs = find_actions(tt, ww, N_max, usys, return_Sn=False,
+                                    force_harmonic_oscillator=force_harmonic_oscillator)
 
         all_actions.append(actions)
         all_angles.append(angles)
