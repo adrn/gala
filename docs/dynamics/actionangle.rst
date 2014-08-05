@@ -37,6 +37,14 @@ for an arbitrary numerically integrated orbit. We test it below on three orbits:
 Axisymmetric potential
 ----------------------
 
+For this example, we use
+
+.. image:: ../_static/dynamics/orbit_Rz_axisymmetricloop.png
+
+.. image:: ../_static/dynamics/action_hist_axisymmetricloop.png
+
+.. image:: ../_static/dynamics/freq_hist_axisymmetricloop.png
+
 Triaxial potential
 ------------------
 
@@ -45,18 +53,22 @@ Triaxial potential
 Loop orbit
 ^^^^^^^^^^
 
+.. image:: ../_static/dynamics/orbit_xyz_triaxialloop.png
+
+.. image:: ../_static/dynamics/action_hist_triaxialloop.png
+
+.. image:: ../_static/dynamics/freq_hist_triaxialloop.png
+
 .. _triaxialchaotic:
 
 Irregular orbit
 ^^^^^^^^^^^^^^^
 
-.. image:: ../_static/dynamics/orbit_Rz_loop.png
+.. image:: ../_static/dynamics/orbit_xyz_triaxialchaotic.png
 
-.. image:: ../_static/dynamics/action_hist_loop.png
+.. image:: ../_static/dynamics/action_hist_triaxialchaotic.png
 
-.. image:: ../_static/dynamics/freq_hist_loop.png
-
-.. image:: ../_static/dynamics/toy_computed_actions_loop.png
+.. image:: ../_static/dynamics/freq_hist_triaxialchaotic.png
 
 .. _references:
 
