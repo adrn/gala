@@ -64,17 +64,17 @@ initial conditions:
 
 The orbit is shown in the meridional plane in the figure below (black). In red,
 we show the orbit from the same initial conditions in the best-fitting Isochrone
-potential (the toy potential for loop orbits)
+potential (the toy potential for loop orbits):
 
 .. image:: ../_static/dynamics/orbit_Rz_axisymmetricloop.png
 
 For the "true" orbit in the potential of interest, we first compute the actions,
-angles, and frequencies using the full orbit (200000 timesteps). We then break
-the orbit into 100 evenly spaced sub-sections and compute the actions and
-frequencies for each sub-section of the orbit. Below we plot the percent deviation
-of the actions computed for each sub-section with relation to the actions computed
-for the total orbit, and the same for the frequencies. For this orbit, the
-deviations are all :math:`\ll` 1%.
+angles, and frequencies using the full orbit (500000 timesteps). We then break
+the orbit into 100 evenly spaced, overlapping sub-sections and compute the actions
+and frequencies for each sub-section of the orbit. Below we plot the percent
+deviation of the actions computed for each sub-section with relation to the
+actions computed for the total orbit, and the same for the frequencies. For this
+orbit, the deviations are all :math:`\ll` 1%.
 
 .. image:: ../_static/dynamics/action_hist_axisymmetricloop.png
 
@@ -83,12 +83,37 @@ deviations are all :math:`\ll` 1%.
 Triaxial potential
 ------------------
 
+For a triaxial potential, we again use a logarithmic potential:
+
+.. math::
+
+    \Phi(x,y,z) = \frac{1}{2}v_{\rm c}^2\ln ((x/q_1)^2 + (y/q_2)^2 + (z/q_3)^2)
+
+with :math:`v_{\rm c}=0.15`, :math:`q_1=1.3`, :math:`q_2=1.`, and :math:`q_1=0.85`.
+
 .. _triaxialloop:
 
 Loop orbit
 ^^^^^^^^^^
 
+We use the initial conditions:
+
+.. math::
+
+    \boldsymbol{r} &= (8, 0, 0)\\
+    \boldsymbol{v} &= (0.05, 0.175, 0.05)
+
+which produces the orbit shown below (black). Again in red, we show the orbit
+integrated from the same initial conditions in the best-fitting Isochrone
+potential (the toy potential for loop orbits):
+
 .. image:: ../_static/dynamics/orbit_xyz_triaxialloop.png
+
+We repeat the same procedure as above by first computing quantities for the full
+orbit and then for overlapping sub-sections of the orbit. There is more variation
+in the values of the computed actions, possibly because we are truncating the
+Fourier series with too few modes, but the variations are only a few percent
+relative to the actions and frequencies computed from the full orbit:
 
 .. image:: ../_static/dynamics/action_hist_triaxialloop.png
 
@@ -99,7 +124,25 @@ Loop orbit
 Irregular orbit
 ^^^^^^^^^^^^^^^
 
+We use the initial conditions:
+
+.. math::
+
+    \boldsymbol{r} &= (5.5, 5.5, 0)\\
+    \boldsymbol{v} &= (-0.02, 0.02, 0.11)
+
+which produces the orbit shown below (black). In red, we show the orbit
+integrated from the same initial conditions in the best-fitting triaxial
+harmonic oscillator potential (the toy potential for box orbits):
+
 .. image:: ../_static/dynamics/orbit_xyz_triaxialchaotic.png
+
+We repeat the same procedure as above by first computing quantities for the full
+orbit and then for overlapping sub-sections of the orbit. For this orbit, there
+is no real definition of actions because the orbit is irregular -- it diffuses
+stochastically through action space and gets trapped in resonances along the way.
+This is clear in the deviation plots below, showing that the values of the actions
+and frequencies oscillate and vary on many timescales:
 
 .. image:: ../_static/dynamics/action_hist_triaxialchaotic.png
 
