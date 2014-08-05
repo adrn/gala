@@ -228,7 +228,7 @@ def main(orbit_name, overwrite=False):
         # well-fit loop orbit
         p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
                                     q1=1.3, q2=1., q3=0.85,  usys=usys)
-        w0 = [8.,0.,0.,0.075,0.15,0.05]
+        w0 = [8.,0.,0.,0.05,0.175,0.05]
 
         t,w,toy_t,toy_w,toy_potential = make_orbit_files(p, w0, suffix=suffix,
                                                          overwrite=overwrite,
