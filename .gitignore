@@ -3,3 +3,4 @@ _generated
 build
 plots/*
 docs/*/_*/
+*.npy
