@@ -60,6 +60,10 @@ def worker(stuff):
     except ValueError as e:
         return None
 
+def parse_batch(batch):
+    this_n, n_of = map(int, batch.split("of"))
+    return this_n-1, n_of
+
 def main(n, mpi=False, batch=None):
     usys = (u.kpc, u.Msun, u.Myr)
     potential = LogarithmicPotential(v_c=1., r_h=np.sqrt(0.1),
@@ -74,14 +78,23 @@ def main(n, mpi=False, batch=None):
     grid = setup_grid(n, potential)
     logger.debug("...done!")
 
+    if batch is None:
+        suffix = ""
+    else:
+        suffix = "_" + str(batch)
+        this_n, n_of = parse_batch(batch)
+        grid = grid[this_n::n_of]
+        logger.debug("Running batch {} of {}".format(this_n+1, n_of))
+        logger.debug("Grid batch length: {}".format(len(grid)))
+
     # integrate the orbits
     logger.debug("Integrating orbits...")
     t,w = integrator.run(grid, dt=0.05, nsteps=200000)
     logger.debug("...done!")
-    
-    t = 
+
+    t = np.repeat(t[np.newaxis], len(grid), 0)
     w = np.rollaxis(w,1)
-    stuffs = zip(np.repeat(t[np.newaxis], len(grid), 0), np.rollaxis(w, 1))
+    stuffs = zip(t, w)
 
     logger.debug("Computing frequencies...")
     all_freqs = pool.map(worker, stuffs)
@@ -90,8 +103,9 @@ def main(n, mpi=False, batch=None):
 
     pool.close()
 
-    np.save("/vega/astro/users/amp2217/projects/new_streamteam/freqs.npy", all_freqs)
-    #np.save("freqs.npy", all_freqs)
+    #fn = "/vega/astro/users/amp2217/projects/new_streamteam/freqs{}.npy".format(suffix)
+    fn = "/tmp/freqs{}.npy".format(suffix)
+    np.save(fn, all_freqs)
 
     plt.figure(figsize=(6,6))
     plt.plot(all_freqs[:,1]/all_freqs[:,0], all_freqs[:,2]/all_freqs[:,0],
@@ -112,6 +126,8 @@ if __name__ == "__main__":
                         help="Run with MPI.")
     parser.add_argument("-n", dest="n", required=True, type=int,
                         help="Number of elements along one axis of grid.")
+    parser.add_argument("-b", "--batch", dest="batch", type=str,
+                        help="Batch number, e.g., 1of10.")
 
     args = parser.parse_args()
 
@@ -123,4 +139,4 @@ if __name__ == "__main__":
     else:
         logger.setLevel(logging.INFO)
 
-    main(n=args.n, mpi=args.mpi)
+    main(n=args.n, mpi=args.mpi, batch=args.batch)
