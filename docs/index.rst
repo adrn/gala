@@ -26,6 +26,7 @@ Documentation
 
    install
    coordinates/index
+   dynamics/index
    integrate/index
    potential/index
 ..   getting_started

@@ -202,9 +202,13 @@ class IsochronePotential(CartesianPotential):
     def action_angle(self, x, v):
         """
         Transform the input cartesian position and velocity to action-angle
-        coordinates the Isochrone potential. This transformation is analytic
-        and can be used as a "toy potential" in the Sanders & Binney 2014
-        formalism for computing action-angle coordinates in _any_ potential.
+        coordinates the Isochrone potential. See Section 3.5.2 in
+        Binney & Tremaine (2008), and be aware of the errata entry for
+        Eq. 3.225.
+
+        This transformation is analytic and can be used as a "toy potential"
+        in the Sanders & Binney 2014 formalism for computing action-angle
+        coordinates in _any_ potential.
 
         Adapted from Jason Sanders' code
         `here <https://github.com/jlsanders/genfunc>`_.
@@ -216,6 +220,8 @@ class IsochronePotential(CartesianPotential):
         v : array_like
             Velocities.
         """
+        from ..dynamics import angular_momentum
+
         _G = G.decompose(self.usys).value
         GM = _G*self.parameters['m']
         b = self.parameters['b']
@@ -232,10 +238,11 @@ class IsochronePotential(CartesianPotential):
         # Actions
         # ----------------------------
 
-        # compute angular momentum and angular momentum in Z direction
-        Lz = r*vphi*np.sin(theta)
-        L = np.sqrt(r*r*vtheta*vtheta + Lz*Lz/np.sin(theta)**2)
-        L[theta == 0] = r[theta == 0]*vtheta[theta == 0]
+        L_vec = angular_momentum(np.hstack((x,v)))
+        Lz = L_vec[:,2]
+        L = np.linalg.norm(L_vec, axis=1)
+
+        # Radial action
         Jr = GM / np.sqrt(-2*E) - 0.5*(L + np.sqrt(L*L + 4*GM*b))
 
         # compute the three action variables
@@ -247,16 +254,18 @@ class IsochronePotential(CartesianPotential):
         c = GM / (-2*E) - b
         e = np.sqrt(1 - L*L*(1 + b/c) / GM / c)
 
+        # Compute theta_r using eta
         tmp1 = r*vr / np.sqrt(-2.*E)
         tmp2 = b + c - np.sqrt(b*b + r*r)
         eta = np.arctan2(tmp1,tmp2)
+        thetar = eta - e*c*np.sin(eta) / (c + b) # same as theta3
+
+        # Compute theta_z
+        psi = np.arctan2(np.cos(theta), -np.sin(theta)*r*vtheta/L)
+        psi[np.abs(vtheta) <= 1e-10] = np.pi/2. # blows up for small vtheta
 
         OmegaR = (-2*E)**1.5 / GM
         OmegaPhi = 0.5*OmegaR * (1 + L/np.sqrt(L*L + 4*GM*b))
-        thetar = eta - e*c*np.sin(eta) / (c + b)
-
-        psi = np.arctan2(np.cos(theta), -np.sin(theta)*r*vtheta/L)
-        psi[np.abs(vtheta) <= 1e-10] = np.pi/2.
 
         a = np.sqrt((1+e) / (1-e))
         ap = np.sqrt((1 + e + 2*b/c) / (1 - e + 2*b/c))
