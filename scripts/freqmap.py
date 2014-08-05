@@ -10,6 +10,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import os, sys
 
 # Third-party
+import matplotlib.pyplot as plt
 import numpy as np
 from astropy import log as logger
 import astropy.units as u
@@ -59,7 +60,7 @@ def worker(stuff):
     except ValueError as e:
         return None
 
-def main(n, mpi=False):
+def main(n, mpi=False, batch=None):
     usys = (u.kpc, u.Msun, u.Myr)
     potential = LogarithmicPotential(v_c=1., r_h=np.sqrt(0.1),
                                      q1=1., q2=0.9, q3=0.7, phi=0.)
@@ -77,7 +78,9 @@ def main(n, mpi=False):
     logger.debug("Integrating orbits...")
     t,w = integrator.run(grid, dt=0.05, nsteps=200000)
     logger.debug("...done!")
-
+    
+    t = 
+    w = np.rollaxis(w,1)
     stuffs = zip(np.repeat(t[np.newaxis], len(grid), 0), np.rollaxis(w, 1))
 
     logger.debug("Computing frequencies...")
@@ -87,8 +90,8 @@ def main(n, mpi=False):
 
     pool.close()
 
-    #np.save("/vega/astro/users/amp2217/projects/new_streamteam/freqs.npy", all_freqs)
-    np.save("freqs.npy", all_freqs)
+    np.save("/vega/astro/users/amp2217/projects/new_streamteam/freqs.npy", all_freqs)
+    #np.save("freqs.npy", all_freqs)
 
     plt.figure(figsize=(6,6))
     plt.plot(all_freqs[:,1]/all_freqs[:,0], all_freqs[:,2]/all_freqs[:,0],
