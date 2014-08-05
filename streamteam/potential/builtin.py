@@ -222,6 +222,9 @@ class IsochronePotential(CartesianPotential):
         """
         from ..dynamics import angular_momentum
 
+        x = np.atleast_2d(x)
+        v = np.atleast_2d(v)
+
         _G = G.decompose(self.usys).value
         GM = _G*self.parameters['m']
         b = self.parameters['b']
