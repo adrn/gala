@@ -129,7 +129,7 @@ def make_action_files(t, w, potential, suffix="", overwrite=False,
         actions,angles,freqs = sd.cross_validate_actions(t, w[:,0], N_max=N_max, nbins=100,
                                     force_harmonic_oscillator=force_harmonic_oscillator,
                                     usys=potential.usys, skip_failures=True,
-                                    overlap=w.shape[0]//100)
+                                    overlap=0) #w.shape[0]//100)
 
         # now compute for the full time series
         r = sd.find_actions(t, w[:,0], N_max=N_max, usys=potential.usys, return_Sn=True,
@@ -274,8 +274,8 @@ if __name__ == "__main__":
                         help="Overwrite generated files.")
     parser.add_argument("-n", "--name", dest="name", required=True,
                         help="Name of the orbit. 'loop' or 'chaotic'.")
-    parser.add_argument("--Nmax", dest="Nmax",
-                        help="")
+    parser.add_argument("--Nmax", dest="Nmax", default=6, type=int,
+                        help="Max. length of integer vector.")
 
     args = parser.parse_args()
 
