@@ -4,3 +4,4 @@ build
 plots/*
 docs/*/_*/
 *.npy
+*.c
