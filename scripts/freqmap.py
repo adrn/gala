@@ -94,9 +94,11 @@ def main(path, n, mpi=False):
         every = nsteps // NT
         t = t[::every]
         w = w[::every]
-        np.save(fn, (t,w))
+        np.save(fn, np.vstack((t.reshape(t.size,1,1).T,w.T)).T)
     else:
-        t,w = np.load(fn)
+        l = np.load(fn)
+        t = np.squeeze(l.T[0])
+        w = l.T[1:].T
         logger.debug("Read orbits from cache file ({})".format(fn))
 
     try:
