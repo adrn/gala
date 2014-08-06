@@ -21,6 +21,7 @@ cimport cython
 # Project
 from .cpotential cimport _CPotential
 from .cpotential import CPotential
+from .core import CartesianPotential
 
 cdef extern from "math.h":
     double sqrt(double x)
@@ -41,8 +42,8 @@ __all__ = ['MiyamotoNagaiPotential']
 cdef class _MiyamotoNagaiPotential(_CPotential):
 
     # here need to cdef all the attributes
-    cdef public double G
-    cdef public double m, a, b
+    cdef public double G, GM
+    cdef public double m, a, b, b2
 
     def __init__(self, double G, double m, double a, double b):
         """ Units of everything should be in the system:
@@ -53,10 +54,11 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
         self.G = G
 
         # disk parameters
-        self.GM_disk = G*m
+        self.GM = G*m
         self.m = m
         self.a = a
         self.b = b
+        self.b2 = b*b
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
@@ -73,7 +75,29 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
             z = r[i,2]
 
             zd = (self.a + sqrt(z*z+self.b2))
-            pot[i] = -self.GM_disk / np.sqrt(x*x + y*y + zd*zd)
+            pot[i] = -self.GM / np.sqrt(x*x + y*y + zd*zd)
+
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public inline void _gradient(self, double[:,::1] r,
+                                      double[:,::1] grad, int nparticles):
+
+        cdef double x, y, z
+        cdef double sqrtz, zd, fac
+        for i in range(nparticles):
+            x = r[i,0]
+            y = r[i,1]
+            z = r[i,2]
+
+            sqrtz = sqrt(z*z + self.b2)
+            zd = self.a + sqrtz
+            fac = self.GM*pow(x*x + y*y + zd*zd, -1.5)
+
+            grad[i,0] = fac*x
+            grad[i,1] = fac*y
+            grad[i,2] = fac*z * (1. + self.a / sqrtz)
 
 # def miyamoto_nagai_funcs(units):
 #     # scale G to be in this unit system
@@ -107,28 +131,28 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
 
 #     return func, gradient, None
 
-# class MiyamotoNagaiPotential(CPotential, CartesianPotential):
-#     r"""
-#     Miyamoto-Nagai potential for a flattened mass distribution.
+class MiyamotoNagaiPotential(CPotential, CartesianPotential):
+    r"""
+    Miyamoto-Nagai potential for a flattened mass distribution.
 
-#     .. math::
+    .. math::
 
-#         \Phi_{disk} = -\frac{GM_{disk}}{\sqrt{R^2 + (a + \sqrt{z^2 + b^2})^2}}
+        \Phi_{disk} = -\frac{GM_{disk}}{\sqrt{R^2 + (a + \sqrt{z^2 + b^2})^2}}
 
-#     Parameters
-#     ----------
-#     m : numeric
-#         Mass.
-#     a : numeric
-#     b : numeric
-#     usys : iterable
-#         Unique list of non-reducable units that specify (at minimum) the
-#         length, mass, time, and angle units.
+    Parameters
+    ----------
+    m : numeric
+        Mass.
+    a : numeric
+    b : numeric
+    usys : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
 
-#     """
-#     def __init__(self, m, a, b, usys):
-#         self.usys = usys
-#         _G = G.decompose(usys).value
-#         parameters = dict(G=_G, m=m, a=a, b=b)
-#         super(MiyamotoNagaiPotential, self).__init__(_MiyamotoNagaiPotential,
-#                                                      parameters=parameters)
+    """
+    def __init__(self, m, a, b, usys):
+        self.usys = usys
+        _G = G.decompose(usys).value
+        parameters = dict(G=_G, m=m, a=a, b=b)
+        super(MiyamotoNagaiPotential, self).__init__(_MiyamotoNagaiPotential,
+                                                     parameters=parameters)
