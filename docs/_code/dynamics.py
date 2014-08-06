@@ -34,11 +34,16 @@ plot_path = os.path.abspath("../_static/dynamics")
 if not os.path.exists(plot_path):
     os.mkdir(plot_path)
 
-def make_orbit_files(potential, w0, nsteps, plot_ix, suffix="", overwrite=False,
+def make_orbit_files(potential, w0, N_max=6, suffix="", overwrite=False,
                      force_harmonic_oscillator=False):
 
     orbit_filename = os.path.join(plot_path, "orbits{}.npy".format(suffix))
     usys = potential.usys
+    nsteps = 50000
+    dt = 10.
+
+    #NT = 9*N_max**3/2
+    #every = nsteps // NT
 
     if overwrite and os.path.exists(orbit_filename):
         os.remove(orbit_filename)
@@ -46,22 +51,33 @@ def make_orbit_files(potential, w0, nsteps, plot_ix, suffix="", overwrite=False,
     toy_potential = None
     if not os.path.exists(orbit_filename):
         # integrate an orbit in a axisymmetric potential
-        acc = lambda t,x: potential.acceleration(x)
-        integrator = si.LeapfrogIntegrator(acc)
-        t,w = integrator.run(w0, dt=1., nsteps=nsteps)
+        logger.debug("Integrating orbit for {} steps...".format(nsteps))
+        acc = lambda t,w: np.hstack((w[...,3:],potential.acceleration(w[...,:3])))
+        integrator = si.DOPRI853Integrator(acc)
+        # acc = lambda t,x: potential.acceleration(x)
+        # integrator = si.LeapfrogIntegrator(acc)
+        t,w = integrator.run(w0, dt=dt, nsteps=nsteps)
+        logger.debug("...done!")
 
         loop = sd.classify_orbit(w)
         if np.any(loop == 1) and not force_harmonic_oscillator: # loop orbit
+            logger.debug("Orbit classified as LOOP")
             m,b = sd.fit_isochrone(w, usys=usys)
             toy_potential = sp.IsochronePotential(m=m, b=b, usys=usys)
         else:
+            logger.debug("Orbit classified as BOX")
             omegas = sd.fit_harmonic_oscillator(w, usys=usys)
             toy_potential = sp.HarmonicOscillatorPotential(omega=omegas, usys=usys)
 
         # also integrate the orbit in the best-fitting toy potential
-        acc = lambda t,x: toy_potential.acceleration(x)
-        integrator = si.LeapfrogIntegrator(acc)
-        toy_t,toy_w = integrator.run(w0, dt=1., nsteps=plot_ix)
+        toy_steps = w.shape[0]//10
+        logger.debug("Integrating toy orbit for {} steps...".format(toy_steps))
+        acc = lambda ts,ws: np.hstack((ws[...,3:],toy_potential.acceleration(ws[...,:3])))
+        integrator = si.DOPRI853Integrator(acc)
+        # acc = lambda t,x: toy_potential.acceleration(x)
+        # integrator = si.LeapfrogIntegrator(acc)
+        toy_t,toy_w = integrator.run(w0, dt=dt, nsteps=toy_steps)
+        logger.debug("...done!")
 
         # cache the orbits
         np.save(orbit_filename, (t,w,toy_t,toy_w))
@@ -81,26 +97,27 @@ def make_orbit_files(potential, w0, nsteps, plot_ix, suffix="", overwrite=False,
             toy_potential = sp.HarmonicOscillatorPotential(omega=omegas, usys=usys)
 
     # plot a smaller section of the orbit in projections of XYZ
+    plot_w = w[:w.shape[0]//10]
     fig = sd.plot_orbits(toy_w, marker=None, linestyle='-',
                          alpha=0.5, triangle=True, c='r')
-    fig = sd.plot_orbits(w[:plot_ix], axes=fig.axes, marker=None, linestyle='-',
+    fig = sd.plot_orbits(plot_w, axes=fig.axes, marker=None, linestyle='-',
                          alpha=0.8, triangle=True, c='k')
     fig.savefig(os.path.join(plot_path, "orbit_xyz{}.png".format(suffix)))
 
     # plot a smaller section of the orbit in the meridional plane
     fig,ax = plt.subplots(1,1,figsize=(6,6))
-    R = np.sqrt(w[:,0,0]**2 + w[:,0,1]**2)
+    R = np.sqrt(plot_w[:,0,0]**2 + plot_w[:,0,1]**2)
     toy_R = np.sqrt(toy_w[:,0,0]**2 + toy_w[:,0,1]**2)
     ax.plot(toy_R, toy_w[:,0,2], marker=None, linestyle='-', alpha=0.5, c='r')
-    ax.plot(R[:plot_ix], w[:plot_ix,0,2], marker=None, linestyle='-', alpha=0.8, c='k')
+    ax.plot(R, plot_w[:,0,2], marker=None, linestyle='-', alpha=0.8, c='k')
     ax.set_xlabel("$R$")
     ax.set_ylabel("$Z$", rotation='horizontal')
     fig.savefig(os.path.join(plot_path, "orbit_Rz{}.png".format(suffix)))
 
-    return t,w,toy_t,toy_w,toy_potential
+    return t,w,toy_potential
 
 def make_action_files(t, w, potential, suffix="", overwrite=False,
-                      force_harmonic_oscillator=False):
+                      force_harmonic_oscillator=False, N_max=6):
 
     action_filename = os.path.join(plot_path, "actions{}.npy".format(suffix))
 
@@ -109,13 +126,13 @@ def make_action_files(t, w, potential, suffix="", overwrite=False,
 
     if not os.path.exists(action_filename):
         # compute the actions and angles for the orbit
-        actions,angles,freqs = sd.cross_validate_actions(t, w[:,0], N_max=6, nbins=100,
+        actions,angles,freqs = sd.cross_validate_actions(t, w[:,0], N_max=N_max, nbins=100,
                                     force_harmonic_oscillator=force_harmonic_oscillator,
                                     usys=potential.usys, skip_failures=True,
                                     overlap=w.shape[0]//100)
 
         # now compute for the full time series
-        r = sd.find_actions(t, w[:,0], N_max=6, usys=potential.usys, return_Sn=True,
+        r = sd.find_actions(t, w[:,0], N_max=N_max, usys=potential.usys, return_Sn=True,
                             force_harmonic_oscillator=force_harmonic_oscillator)
         full_actions,full_angles,full_freqs = r[:3]
         Sn,dSn_dJ,nvecs = r[3:]
@@ -205,13 +222,7 @@ def action_plots(actions,angles,freqs,full_actions,full_angles,full_freqs,
     fig.tight_layout()
     fig.savefig(os.path.join(plot_path,"toy_computed_actions{}.png".format(suffix)))
 
-def main(orbit_name, overwrite=False):
-
-    # only plot up to this index in the orbit plots
-    nsteps = 500000
-    plot_ix = nsteps//35
-    # nsteps = 50000
-    # plot_ix = nsteps-1
+def main(orbit_name, overwrite=False, N_max=6):
 
     # define an axisymmetric potential
     usys = (u.kpc, u.Msun, u.Myr)
@@ -224,12 +235,6 @@ def main(orbit_name, overwrite=False):
                                     q1=1., q2=1., q3=0.85,  usys=usys)
         w0 = [8.,0.,0.,0.075,0.15,0.05]
 
-        t,w,toy_t,toy_w,toy_potential = make_orbit_files(p, w0, suffix=suffix,
-                                                         overwrite=overwrite,
-                                                         nsteps=nsteps, plot_ix=plot_ix)
-        r = make_action_files(t, w, p, suffix=suffix, overwrite=overwrite)
-        action_plots(*r, t=t, w=w, toy_potential=toy_potential, suffix=suffix)
-
     elif orbit_name == "triaxialloop":
         suffix = "_" + orbit_name
 
@@ -237,12 +242,6 @@ def main(orbit_name, overwrite=False):
         p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
                                     q1=1.3, q2=1., q3=0.85,  usys=usys)
         w0 = [8.,0.,0.,0.05,0.175,0.05]
-
-        t,w,toy_t,toy_w,toy_potential = make_orbit_files(p, w0, suffix=suffix,
-                                                         overwrite=overwrite,
-                                                         nsteps=nsteps, plot_ix=plot_ix)
-        r = make_action_files(t, w, p, suffix=suffix, overwrite=overwrite)
-        action_plots(*r, t=t, w=w, toy_potential=toy_potential, suffix=suffix)
 
     elif orbit_name == "triaxialchaotic":
         suffix = "_" + orbit_name
@@ -252,12 +251,13 @@ def main(orbit_name, overwrite=False):
                                     q1=1.3, q2=1., q3=0.85,  usys=usys)
         w0 = [5.5,5.5,0.,-0.02,0.02,0.11]
 
-        t,w,toy_t,toy_w,toy_potential = make_orbit_files(p, w0, suffix=suffix,
-                                                         overwrite=overwrite,
-                                                         nsteps=nsteps, plot_ix=plot_ix)
+    else:
+        raise NameError("No orbit name '{}'".format(orbit_name))
 
-        r = make_action_files(t, w, p, suffix=suffix, overwrite=overwrite)
-        action_plots(*r, t=t, w=w, toy_potential=toy_potential, suffix=suffix)
+    t,w,toy_potential = make_orbit_files(p, w0, suffix=suffix,
+                                         overwrite=overwrite, N_max=N_max)
+    r = make_action_files(t, w, p, suffix=suffix, overwrite=overwrite, N_max=N_max)
+    action_plots(*r, t=t, w=w, toy_potential=toy_potential, suffix=suffix)
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
@@ -274,6 +274,8 @@ if __name__ == "__main__":
                         help="Overwrite generated files.")
     parser.add_argument("-n", "--name", dest="name", required=True,
                         help="Name of the orbit. 'loop' or 'chaotic'.")
+    parser.add_argument("--Nmax", dest="Nmax",
+                        help="")
 
     args = parser.parse_args()
 
@@ -285,4 +287,4 @@ if __name__ == "__main__":
     else:
         logger.setLevel(logging.INFO)
 
-    main(args.name, overwrite=args.overwrite)
+    main(args.name, overwrite=args.overwrite, N_max=args.Nmax)
