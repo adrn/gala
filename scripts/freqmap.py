@@ -119,7 +119,6 @@ def main(path, n, mpi=False, batch=None):
     pool.close()
 
     fn = os.path.join(path, "freqs{}.npy".format(suffix))
-    # fn = "/vega/astro/users/amp2217/projects/new_streamteam/"
     np.save(fn, all_freqs)
     logger.info("Frequencies cached to file:\n\n\t {}".format(fn))
 
