@@ -492,8 +492,8 @@ def cross_validate_actions(t, w, N_max, usys, nbins=10, skip_failures=False,
             try:
                 actions,angles,freqs = find_actions(tt, ww, N_max, usys, return_Sn=False,
                                         force_harmonic_oscillator=force_harmonic_oscillator)
-            except:
-                logger.debug("Skipping failure...")
+            except ValueError as e:
+                logger.debug("Skipping failure: {}".format(e))
                 continue
         else:
             actions,angles,freqs = find_actions(tt, ww, N_max, usys, return_Sn=False,
