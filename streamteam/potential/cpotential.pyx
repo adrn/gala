@@ -89,3 +89,64 @@ class CPotential(Potential):
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "Hessian function")
+
+# ==============================================================================
+
+cdef class _Potential:
+
+    cpdef value(self, double[:,::1] xyz):
+        cdef int nparticles, ndim
+        nparticles = xyz.shape[0]
+        ndim = xyz.shape[1]
+
+        cdef double [::1] pot = np.empty(nparticles)
+        self._value(xyz, pot, nparticles)
+        return np.array(pot)
+
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public void _value(self, double[:,::1] xyz, double[::1] pot, int nparticles):
+        for i in range(nparticles):
+            pot[i] = 0.
+
+    # -------------------------------------------------------------
+    cpdef gradient(self, double[:,::1] xyz):
+        cdef int nparticles, ndim
+        nparticles = xyz.shape[0]
+        ndim = xyz.shape[1]
+
+        cdef double [:,::1] acc = np.empty((nparticles,ndim//2))
+        self._gradient(xyz, acc, nparticles)
+        return np.array(acc)
+
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public void _gradient(self, double[:,::1] r, double[:,::1] acc, int nparticles):
+        for i in range(nparticles):
+            acc[i,0] = 0.
+            acc[i,1] = 0.
+            acc[i,2] = 0.
+
+    # -------------------------------------------------------------
+    cpdef hessian(self, double[:,::1] w):
+        cdef int nparticles, ndim
+        nparticles = w.shape[0]
+        ndim = w.shape[1]
+
+        cdef double [:,::1] acc = np.empty((nparticles,ndim))
+        self._hessian(w, acc, nparticles)
+        return np.array(acc)
+
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public void _hessian(self, double[:,::1] w, double[:,::1] acc, int nparticles):
+        for i in range(nparticles):
+            acc[i,0] = 0.
+            acc[i,1] = 0.
+            acc[i,2] = 0.
