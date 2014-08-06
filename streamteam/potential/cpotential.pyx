@@ -14,7 +14,7 @@ cimport cython
 # Project
 from .core import Potential
 
-__all__ = ["CPotential"]
+# __all__ = ["CPotential"]
 
 class CPotential(Potential):
     """
@@ -92,7 +92,7 @@ class CPotential(Potential):
 
 # ==============================================================================
 
-cdef class _Potential:
+cdef class _CPotential:
 
     cpdef value(self, double[:,::1] xyz):
         cdef int nparticles, ndim
