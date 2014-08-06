@@ -71,7 +71,7 @@ def main(path, n, mpi=False):
 
     # parameters
     N_max = 6
-    nsteps = 20000
+    nsteps = 50000
 
     usys = (u.kpc, u.Msun, u.Myr)
     potential = sp.LogarithmicPotential(v_c=1., r_h=np.sqrt(0.1),
@@ -90,7 +90,7 @@ def main(path, n, mpi=False):
         t,w = integrator.run(grid, dt=0.01, nsteps=nsteps)
         logger.debug("...done!")
 
-        NT = 9*N_max**3 / 2 # twice Sander's value to be safe
+        NT = 9*N_max**3 # 4 times Sander's value to be safe
         every = nsteps // NT
         t = t[::every]
         w = w[::every]
