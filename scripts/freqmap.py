@@ -65,7 +65,7 @@ def parse_batch(batch):
     this_n, n_of = map(int, batch.split("of"))
     return this_n-1, n_of
 
-def main(path, n, mpi=False, batch=None):
+def main(path, n, mpi=False):
     # has to go here so we don't integrate a huge number of orbits
     pool = get_pool(mpi=mpi)
 
@@ -79,21 +79,9 @@ def main(path, n, mpi=False, batch=None):
     acc = lambda t,x: potential.acceleration(x)
     integrator = si.LeapfrogIntegrator(acc)
 
-    logger.debug("Setting up grid...")
-    grid = setup_grid(n, potential)
-    logger.debug("...done!")
-
-    if batch is None:
-        suffix = ""
-    else:
-        suffix = "_" + str(batch)
-        this_n, n_of = parse_batch(batch)
-        grid = grid[this_n::n_of]
-        logger.debug("Running batch {} of {}".format(this_n+1, n_of))
-        logger.debug("Grid batch length: {}".format(len(grid)))
-
     # integrate the orbits
-    try:
+    fn = os.path.join(path, 'orbits.npy')
+    if not os.path.exists(fn):
         logger.debug("Integrating orbits...")
         t,w = integrator.run(grid, dt=0.01, nsteps=nsteps)
         logger.debug("...done!")
@@ -102,7 +90,15 @@ def main(path, n, mpi=False, batch=None):
         every = nsteps // NT
         t = t[::every]
         w = w[::every]
+        np.save(fn, (t,w))
+    else:
+        t,w = np.load(fn)
 
+    logger.debug("Setting up grid...")
+    grid = setup_grid(n, potential)
+    logger.debug("...done!")
+
+    try:
         t = np.repeat(t[np.newaxis], len(grid), 0)
         w = np.rollaxis(w,1)
         N = np.ones(len(grid),dtype=int)*N_max
@@ -118,7 +114,7 @@ def main(path, n, mpi=False, batch=None):
 
     pool.close()
 
-    fn = os.path.join(path, "freqs{}.npy".format(suffix))
+    fn = os.path.join(path, "freqs.npy")
     np.save(fn, all_freqs)
     logger.info("Frequencies cached to file:\n\n\t {}".format(fn))
 
@@ -141,8 +137,6 @@ if __name__ == "__main__":
                         help="Run with MPI.")
     parser.add_argument("-n", dest="n", required=True, type=int,
                         help="Number of elements along one axis of grid.")
-    parser.add_argument("-b", "--batch", dest="batch", type=str,
-                        help="Batch number, e.g., 1of10.")
     parser.add_argument("--path", dest="path", type=str, required=True,
                         help="Path to cache to.")
 
@@ -156,4 +150,4 @@ if __name__ == "__main__":
     else:
         logger.setLevel(logging.INFO)
 
-    main(path=args.path, n=args.n, mpi=args.mpi, batch=args.batch)
+    main(path=args.path, n=args.n, mpi=args.mpi)
