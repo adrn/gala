@@ -94,7 +94,7 @@ def main(path, n, mpi=False):
         every = nsteps // NT
         t = t[::every]
         w = w[::every]
-        np.save(fn, np.vstack((t.reshape(t.size,1,1).T,w.T)).T)
+        np.save(fn, np.vstack((np.repeat(t.reshape(1,1,t.size), len(grid), axis=1),w.T)).T)
     else:
         l = np.load(fn)
         t = np.squeeze(l.T[0])
