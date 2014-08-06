@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-    Test the core Potential classes
+    Test the builtin CPotential classes
 """
 
 from __future__ import absolute_import, unicode_literals, division, print_function
@@ -16,7 +16,7 @@ import astropy.units as u
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-from ..cpotential import CPotential
+from ..cbuiltin import *
 
 # HACK: bad solution is to do this:
 # python setup.py build_ext --inplace
