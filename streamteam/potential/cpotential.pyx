@@ -14,8 +14,6 @@ cimport cython
 # Project
 from .core import Potential
 
-# __all__ = ["CPotential"]
-
 class CPotential(Potential):
     """
     TODO:
