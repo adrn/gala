@@ -122,7 +122,7 @@ def check_angle_sampling(nvecs, angles):
             checks = np.append(checks,vec)
             P = np.append(P,(2.*np.pi-np.abs(np.max(X)-np.min(X))))
 
-        elif(np.abs(np.max(X)-np.min(X))/len(X) > np.pi):
+        elif (np.sum(X[1:] - X[:-1]) / (X.shape[0] - 1)) > np.pi:
             logger.warning("Need a finer sampling for mode " + str(vec))
             checks = np.append(checks,vec)
             P = np.append(P,(2.*np.pi-np.abs(np.max(X)-np.min(X))))
