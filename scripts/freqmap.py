@@ -16,9 +16,9 @@ from astropy import log as logger
 import astropy.units as u
 
 # Project
-from streamteam.integrate import LeapfrogIntegrator
-from streamteam.potential import LogarithmicPotential
-from streamteam.dynamics.actionangle import *
+import streamteam.integrate as si
+import streamteam.potential as sp
+import streamteam.dynamics as sd
 from streamteam.util import get_pool
 
 def setup_grid(n, potential):
@@ -52,10 +52,11 @@ def setup_grid(n, potential):
     return grid
 
 def worker(stuff):
-    t,w = stuff
+    t,w,N_max = stuff
     try:
-        actions,angles,freqs = cross_validate_actions(t, w, N_max=6,
-                                                      usys=None, skip_failures=True)
+        # actions,angles,freqs = cross_validate_actions(t, w, N_max=6,
+        #                                               usys=None, skip_failures=True)
+        actions,angles,freqs = sd.find_actions(t, w, N_max=N_max, usys=None)
         return freqs
     except ValueError as e:
         return None
@@ -64,15 +65,19 @@ def parse_batch(batch):
     this_n, n_of = map(int, batch.split("of"))
     return this_n-1, n_of
 
-def main(n, mpi=False, batch=None):
+def main(path, n, mpi=False, batch=None):
     # has to go here so we don't integrate a huge number of orbits
     pool = get_pool(mpi=mpi)
 
+    # parameters
+    N_max = 6
+    nsteps = 20000
+
     usys = (u.kpc, u.Msun, u.Myr)
-    potential = LogarithmicPotential(v_c=1., r_h=np.sqrt(0.1),
-                                     q1=1., q2=0.9, q3=0.7, phi=0.)
+    potential = sp.LogarithmicPotential(v_c=1., r_h=np.sqrt(0.1),
+                                        q1=1., q2=0.9, q3=0.7, phi=0., usys=usys)
     acc = lambda t,x: potential.acceleration(x)
-    integrator = LeapfrogIntegrator(acc)
+    integrator = si.LeapfrogIntegrator(acc)
 
     logger.debug("Setting up grid...")
     grid = setup_grid(n, potential)
@@ -90,12 +95,18 @@ def main(n, mpi=False, batch=None):
     # integrate the orbits
     try:
         logger.debug("Integrating orbits...")
-        t,w = integrator.run(grid, dt=0.05, nsteps=200000)
+        t,w = integrator.run(grid, dt=0.01, nsteps=nsteps)
         logger.debug("...done!")
+
+        NT = 9*N_max**3 / 2 # twice Sander's value to be safe
+        every = nsteps // NT
+        t = t[::every]
+        w = w[::every]
 
         t = np.repeat(t[np.newaxis], len(grid), 0)
         w = np.rollaxis(w,1)
-        stuffs = zip(t, w)
+        N = np.ones(len(grid),dtype=int)*N_max
+        stuffs = zip(t, w, N)
     except:
         pool.close()
         sys.exit(1)
@@ -107,8 +118,10 @@ def main(n, mpi=False, batch=None):
 
     pool.close()
 
-    fn = "/vega/astro/users/amp2217/projects/new_streamteam/freqs{}.npy".format(suffix)
+    fn = os.path.join(path, "freqs{}.npy".format(suffix))
+    # fn = "/vega/astro/users/amp2217/projects/new_streamteam/"
     np.save(fn, all_freqs)
+    logger.info("Frequencies cached to file:\n\n\t {}".format(fn))
 
     # plt.figure(figsize=(6,6))
     # plt.plot(all_freqs[:,1]/all_freqs[:,0], all_freqs[:,2]/all_freqs[:,0],
@@ -131,6 +144,8 @@ if __name__ == "__main__":
                         help="Number of elements along one axis of grid.")
     parser.add_argument("-b", "--batch", dest="batch", type=str,
                         help="Batch number, e.g., 1of10.")
+    parser.add_argument("--path", dest="path", type=str, required=True,
+                        help="Path to cache to.")
 
     args = parser.parse_args()
 
@@ -142,4 +157,4 @@ if __name__ == "__main__":
     else:
         logger.setLevel(logging.INFO)
 
-    main(n=args.n, mpi=args.mpi, batch=args.batch)
+    main(path=args.path, n=args.n, mpi=args.mpi, batch=args.batch)
