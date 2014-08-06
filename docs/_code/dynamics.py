@@ -39,8 +39,8 @@ def make_orbit_files(potential, w0, N_max=6, suffix="", overwrite=False,
 
     orbit_filename = os.path.join(plot_path, "orbits{}.npy".format(suffix))
     usys = potential.usys
-    nsteps = 50000
-    dt = 10.
+    nsteps = 100000
+    dt = 5.
 
     #NT = 9*N_max**3/2
     #every = nsteps // NT
@@ -241,7 +241,7 @@ def main(orbit_name, overwrite=False, N_max=6):
         # well-fit loop orbit
         p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
                                     q1=1.3, q2=1., q3=0.85,  usys=usys)
-        w0 = [8.,0.,0.,0.05,0.175,0.05]
+        w0 = [8.,0.,0.,0.05,0.175,0.075]
 
     elif orbit_name == "triaxialchaotic":
         suffix = "_" + orbit_name
