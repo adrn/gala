@@ -115,19 +115,19 @@ cdef class _CPotential:
         nparticles = xyz.shape[0]
         ndim = xyz.shape[1]
 
-        cdef double [:,::1] acc = np.empty((nparticles,ndim//2))
-        self._gradient(xyz, acc, nparticles)
-        return np.array(acc)
+        cdef double [:,::1] grad = np.empty((nparticles,ndim))
+        self._gradient(xyz, grad, nparticles)
+        return np.array(grad)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public void _gradient(self, double[:,::1] r, double[:,::1] acc, int nparticles):
+    cdef public void _gradient(self, double[:,::1] r, double[:,::1] grad, int nparticles):
         for i in range(nparticles):
-            acc[i,0] = 0.
-            acc[i,1] = 0.
-            acc[i,2] = 0.
+            grad[i,0] = 0.
+            grad[i,1] = 0.
+            grad[i,2] = 0.
 
     # -------------------------------------------------------------
     cpdef hessian(self, double[:,::1] w):

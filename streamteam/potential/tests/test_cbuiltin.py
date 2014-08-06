@@ -8,6 +8,7 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 import os
+import time
 import pytest
 import numpy as np
 from astropy.utils.console import color_print
@@ -36,5 +37,56 @@ color_print("To view plots:", "green")
 print("    open {}".format(plot_path))
 color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yellow")
 
-def test_simple():
-    return
+niter = 1000
+nparticles = 1000
+
+class TestMiyamotoNagai(object):
+    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    def setup(self):
+        print()
+
+    def test_create_plot(self):
+        from ..builtin import MiyamotoNagaiPotential as PyMiyamotoNagaiPotential
+
+        potential = MiyamotoNagaiPotential(usys=self.usys,
+                                           m=1.E11,
+                                           a=6.5,
+                                           b=0.26)
+        pypotential = PyMiyamotoNagaiPotential(usys=self.usys,
+                                               m=1.E11,
+                                               a=6.5,
+                                               b=0.26)
+
+        # single
+        r = [[1.,0.,0.]]
+        pot_val = potential.value(r)
+        acc_val = potential.acceleration(r)
+
+        # multiple
+        r = np.random.uniform(size=(nparticles,3))
+
+        for func_name in ["value", "gradient", "acceleration"]:
+            t1 = time.time()
+            for ii in range(niter):
+                x = getattr(potential, func_name)(r)
+            print("Cython - {}: {:e} sec per call".format(func_name,
+                            (time.time()-t1)/float(niter)))
+
+            t1 = time.time()
+            for ii in range(niter):
+                x = getattr(pypotential, func_name)(r)
+            print("Python - {}: {:e} sec per call".format(func_name,
+                            (time.time()-t1)/float(niter)))
+        return
+        # acc_val = potential.acceleration(r)
+
+        grid = np.linspace(-20.,20, 200)
+
+        t1 = time.time()
+        fig,axes = potential.plot_contours(grid=(grid,0.,grid))
+        print(time.time() - t1)
+
+        t1 = time.time()
+        fig,axes = pypotential.plot_contours(grid=(grid,0.,grid))
+        print(time.time() - t1)
+        fig.savefig(os.path.join(plot_path, "miyamoto_nagai_2d.png"))
