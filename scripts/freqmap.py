@@ -51,8 +51,10 @@ def setup_grid(n, potential):
 
     return grid
 
-def worker(stuff):
-    t,w,N_max = stuff
+N_max = 6
+def worker(l):
+    t = l[:,0]
+    w = l[:,1:]
     try:
         # actions,angles,freqs = cross_validate_actions(t, w, N_max=6,
         #                                               usys=None, skip_failures=True)
@@ -94,24 +96,25 @@ def main(path, n, mpi=False):
         every = nsteps // NT
         t = t[::every]
         w = w[::every]
-        np.save(fn, np.vstack((np.repeat(t.reshape(1,1,t.size), len(grid), axis=1),w.T)).T)
+        l = np.vstack((np.repeat(t.reshape(1,1,t.size), len(grid), axis=1),w.T)).T
+        np.save(fn, l)
     else:
         l = np.load(fn)
         t = np.squeeze(l.T[0])
         w = l.T[1:].T
         logger.debug("Read orbits from cache file ({})".format(fn))
 
-    try:
-        t = np.repeat(t[np.newaxis], len(grid), 0)
-        w = np.rollaxis(w,1)
-        N = np.ones(len(grid),dtype=int)*N_max
-        stuffs = zip(t, w, N)
-    except:
-        pool.close()
-        sys.exit(1)
+    #try:
+    #    t = np.repeat(t[np.newaxis], len(grid), 0)
+    #    w = np.rollaxis(w,1)
+    #    N = np.ones(len(grid),dtype=int)*N_max
+    #    stuffs = zip(t, w, N)
+    #except:
+    #    pool.close()
+    #    sys.exit(1)
 
     logger.debug("Computing frequencies...")
-    all_freqs = pool.map(worker, stuffs)
+    all_freqs = pool.map(worker, np.rollaxis(l,1))
     all_freqs = np.array(all_freqs)
     logger.debug("...done!")
 
