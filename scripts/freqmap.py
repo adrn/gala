@@ -79,6 +79,10 @@ def main(path, n, mpi=False):
     acc = lambda t,x: potential.acceleration(x)
     integrator = si.LeapfrogIntegrator(acc)
 
+    logger.debug("Setting up grid...")
+    grid = setup_grid(n, potential)
+    logger.debug("...done!")
+
     # integrate the orbits
     fn = os.path.join(path, 'orbits.npy')
     if not os.path.exists(fn):
@@ -93,10 +97,7 @@ def main(path, n, mpi=False):
         np.save(fn, (t,w))
     else:
         t,w = np.load(fn)
-
-    logger.debug("Setting up grid...")
-    grid = setup_grid(n, potential)
-    logger.debug("...done!")
+        logger.debug("Read orbits from cache file ({})".format(fn))
 
     try:
         t = np.repeat(t[np.newaxis], len(grid), 0)
