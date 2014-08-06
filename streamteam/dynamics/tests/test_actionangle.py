@@ -104,9 +104,9 @@ def _crazy_loop(theta1,theta2,ax):
 
         ix1 = ix2+1
 
-def plot_angles(t,angles,freqs):
+def plot_angles(t, angles, freqs, subsample_factor=1000):
     theta = (angles[:,None] + freqs[:,None]*t[np.newaxis])
-    subsample = theta.shape[1]//1000
+    subsample = theta.shape[1]//subsample_factor
 #    subsample = 1
     theta = (theta[:,::subsample] / np.pi) % 2.
 
@@ -188,10 +188,46 @@ class TestLoopActions(object):
         self.loop_w0 = np.append(([14.69, 1.8, 0.12]*u.kpc).decompose(self.usys).value,
                                  ([15.97, -128.9, 44.68]*u.km/u.s).decompose(self.usys).value)
 
+    def test_subsample(self):
+        N_max = 6
+        NT = 9*N_max**3 / 4
+
+        nsteps = 20000
+        t,w = self.integrator.run(self.loop_w0, dt=0.5, nsteps=nsteps)
+
+        every = nsteps // NT // 2
+        t = t[::every]
+        w = w[::every]
+        logger.debug("w shape: {}".format(w.shape))
+
+        fig = plot_orbits(w,ix=0,marker=None)
+        fig.savefig(os.path.join(plot_path,"subsample_loop.png"))
+
+        actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, usys=self.usys)
+
+        # get values from Sanders' code
+        s_actions,s_angles,s_freqs = sanders_act_ang_freq(t, w, N_max=N_max)
+        s_actions = np.abs(s_actions)
+        s_freqs = np.abs(s_freqs)
+
+        print("Action ratio:", actions / s_actions)
+        print("Angle ratio:", angles / s_angles)
+        print("Freq ratio:", freqs / s_freqs)
+
+        fig = plot_angles(t, angles, freqs, subsample_factor=len(t))
+        fig.savefig(os.path.join(plot_path,"subsample_loop_angles.png"))
+
+        fig = plot_angles(t, s_angles, s_freqs, subsample_factor=len(t))
+        fig.savefig(os.path.join(plot_path,"subsample_loop_angles_sanders.png"))
+
+        assert np.allclose(actions, s_actions, rtol=1E-2)
+        assert np.allclose(angles, s_angles, rtol=1E-2)
+        assert np.allclose(freqs, s_freqs, rtol=1E-2)
+
     def test_actions(self):
         t,w = self.integrator.run(self.loop_w0, dt=0.5, nsteps=20000)
 
-        fig = plot_orbit(w,ix=0,marker=None)
+        fig = plot_orbits(w,ix=0,marker=None)
         fig.savefig(os.path.join(plot_path,"loop.png"))
 
         N_max = 6
