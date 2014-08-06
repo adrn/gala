@@ -20,6 +20,7 @@ numpy_incl_path = os.path.join(numpy_base_path, "core", "include")
 cpotential = Extension("streamteam.potential.cpotential",
                        ["streamteam/potential/cpotential.pyx"],
                        include_dirs=[numpy_incl_path])
+
 cbuiltin = Extension("streamteam.potential.cbuiltin",
                      ["streamteam/potential/cbuiltin.pyx"],
                      include_dirs=[numpy_incl_path])
@@ -30,10 +31,11 @@ setup(
     author="Adrian M. Price-Whelan",
     author_email="adrn@astro.columbia.edu",
     license="BSD",
-    packages=["streamteam", "streamteam.coordinates", "streamteam.io",
-              "streamteam.observation", "streamteam.integrate",
-              "streamteam.dynamics", "streamteam.inference",
-              "streamteam.potential"],
     cmdclass = {'build_ext': build_ext},
     ext_modules=[cpotential, cbuiltin]
 )
+
+# packages=["streamteam", "streamteam.coordinates", "streamteam.io",
+#           "streamteam.observation", "streamteam.integrate",
+#           "streamteam.dynamics", "streamteam.inference",
+#           "streamteam.potential"],
