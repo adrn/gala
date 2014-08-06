@@ -27,8 +27,8 @@ def setup_grid(n, potential):
     # phis = np.linspace(0,2*np.pi,n)
     # thetas = np.arccos(2*np.linspace(0.,1.,n) - 1)
     # HACK
-    phis = np.linspace(0.1,1.95*np.pi,n)
-    thetas = np.arccos(2*np.linspace(0.05,0.95,n) - 1)
+    phis = np.linspace(0.01,1.99*np.pi,n)
+    thetas = np.arccos(2*np.linspace(0.01,0.99,n) - 1)
     p,t = np.meshgrid(phis, thetas)
     phis = p.ravel()
     thetas = t.ravel()
