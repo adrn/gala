@@ -241,9 +241,9 @@ cdef class _LeeSutoNFWPotential(_CPotential):
             x32 = 26*x23
             x33 = 3*self.r_h*x19*x2*(-15*self.r_h*x28 + 90*self.r_h2*x13*x2*x7*x8 + x25*x29 - x30*x7*x8*(x24 + x31)) + 48*self.a2*x12*x2**2*x27 - x2*x23*(-2*self.a2 + self.b2 + self.c2)*(self.r_h*x30*x7*x8*(x31 - x32) - 6*x13*x2*x29*(self.x20 - 8*x23) - x21*x29*(15*self.r_h**3 - self.r_h*x32 - 12*_r**3 + 5*_r*self.r_h2) + x28*(self.x20 - 24*x23))
 
-            grad[i,0] = -x*x9*(x11*(x14 + x19*x26) + x33)
-            grad[i,1] = -x9*y*(x11*(x14 + x26*(-self.x16*x23 + x19)) + x33)
-            grad[i,2] = -x9*z*(x11*(x14 + x26*(-self.x18*x23 + x19)) + x33)
+            grad[i,0] = x*x9*(x11*(x14 + x19*x26) + x33)
+            grad[i,1] = x9*y*(x11*(x14 + x26*(-self.x16*x23 + x19)) + x33)
+            grad[i,2] = x9*z*(x11*(x14 + x26*(-self.x18*x23 + x19)) + x33)
 
 class LeeSutoNFWPotential(CPotential, CartesianPotential):
     r"""
