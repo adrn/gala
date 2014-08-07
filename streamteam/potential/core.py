@@ -18,6 +18,9 @@ from matplotlib import cm
 import astropy.units as u
 from astropy.utils import isiterable
 
+# Project
+from ..integrate import *
+
 __all__ = ["Potential", "CartesianPotential", "CompositePotential"]
 
 class Potential(object):
@@ -220,6 +223,33 @@ class Potential(object):
                 ax.set_ylabel(labels[1])
 
         return fig,ax
+
+    def integrate_orbit(self, w0, Integrator=LeapfrogIntegrator, **time_spec):
+        """
+        Integrate an orbit in the current potential using the integrator class
+        provided. Uses same time specification as `Integrator.run()` -- see
+        the documentation for `streamteam.integrate` for more information.
+
+        Parameters
+        ----------
+        w0 : array_like
+            Initial conditions.
+        Integrator : class
+            Integrator class to use.
+
+        Other Parameters
+        ----------------
+        (see Integrator documentation)
+
+        """
+
+        if Integrator == LeapfrogIntegrator:
+            acc = lambda t,w: self.acceleration(w)
+        else:
+            acc = lambda t,w: np.hstack((w[...,3:],self.acceleration(w[...,:3])))
+
+        integrator = Integrator(acc)
+        return integrator.run(w0, **time_spec)
 
 class CartesianPotential(Potential):
     """
