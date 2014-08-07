@@ -87,6 +87,13 @@ def make_orbit_files(potential, w0, N_max=6, suffix="", overwrite=False,
         t,w,toy_t,toy_w = np.load(orbit_filename)
         logger.debug("Orbit read from file: {}".format(orbit_filename))
 
+    # for i in range(100):
+    #     omega0 = np.random.uniform(0.,100.,size=3)
+    #     omegas = sd.fit_harmonic_oscillator(w, usys=usys, omega=omega0)
+    #     print(omegas)
+    #     toy_potential = sp.HarmonicOscillatorPotential(omega=omegas, usys=usys)
+    # sys.exit(0)
+
     if toy_potential is None:
         loop = sd.classify_orbit(w)
         if np.any(loop == 1) and not force_harmonic_oscillator: # loop orbit
@@ -95,6 +102,8 @@ def make_orbit_files(potential, w0, N_max=6, suffix="", overwrite=False,
         else:
             omegas = sd.fit_harmonic_oscillator(w, usys=usys)
             toy_potential = sp.HarmonicOscillatorPotential(omega=omegas, usys=usys)
+
+    logger.debug("Toy potential: {}".format(toy_potential))
 
     # plot a smaller section of the orbit in projections of XYZ
     plot_w = w[:w.shape[0]//10]
@@ -174,6 +183,17 @@ def action_plots(actions,angles,freqs,full_actions,full_angles,full_freqs,
     fig.savefig(os.path.join(plot_path, "action_hist{}.png".format(suffix)))
 
     # --------------------------------------------------------
+    # subsample action values
+    fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
+    for i in range(3):
+        axes[i].set_title("$J_{}$".format(i+1), y=1.02)
+        axes[i].plot(actions[:,i], marker='.', linestyle='none')
+
+    axes[1].set_xlabel("subsample index")
+    fig.tight_layout()
+    fig.savefig(os.path.join(plot_path, "actions{}.png".format(suffix)))
+
+    # --------------------------------------------------------
     # deviation of frequencies from freqs computed on full orbit
     fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
     dev_percent = (freqs - full_freqs[None]) / full_freqs[None]*100.
@@ -194,6 +214,17 @@ def action_plots(actions,angles,freqs,full_actions,full_angles,full_freqs,
     fig.suptitle("Percent deviation of subsample frequency value", fontsize=20)
     fig.tight_layout()
     fig.savefig(os.path.join(plot_path, "freq_hist{}.png".format(suffix)))
+
+    # --------------------------------------------------------
+    # subsample freq values
+    fig,axes = plt.subplots(1,3,figsize=(12,5),sharey=True,sharex=True)
+    for i in range(3):
+        axes[i].set_title(r"$\Omega_{}$".format(i+1), y=1.02)
+        axes[i].plot(freqs[:,i], marker='.', linestyle='none')
+
+    axes[1].set_xlabel("subsample index")
+    fig.tight_layout()
+    fig.savefig(os.path.join(plot_path, "freqs{}.png".format(suffix)))
 
     # --------------------------------------------------------
     # now going to plot toy actions and solved actions
@@ -249,7 +280,7 @@ def main(orbit_name, overwrite=False, N_max=6):
         # chaotic orbit?
         p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
                                     q1=1.3, q2=1., q3=0.85,  usys=usys)
-        w0 = [5.5,5.5,0.,-0.02,0.02,0.11]
+        w0 = [5.5, 0.1, 0., -0.02, 0.02, 0.07]
 
     else:
         raise NameError("No orbit name '{}'".format(orbit_name))
