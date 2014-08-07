@@ -32,10 +32,9 @@ setup(
     author_email="adrn@astro.columbia.edu",
     license="BSD",
     cmdclass = {'build_ext': build_ext},
-    ext_modules=[cpotential, cbuiltin]
+    ext_modules=[cpotential, cbuiltin],
+    packages=["streamteam", "streamteam.coordinates", "streamteam.io",
+              "streamteam.observation", "streamteam.integrate",
+              "streamteam.dynamics", "streamteam.inference",
+              "streamteam.potential"],
 )
-
-# packages=["streamteam", "streamteam.coordinates", "streamteam.io",
-#           "streamteam.observation", "streamteam.integrate",
-#           "streamteam.dynamics", "streamteam.inference",
-#           "streamteam.potential"],
