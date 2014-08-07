@@ -135,9 +135,9 @@ cdef class _CPotential:
         nparticles = w.shape[0]
         ndim = w.shape[1]
 
-        cdef double [:,::1] acc = np.empty((nparticles,ndim))
-        self._hessian(w, acc, nparticles)
-        return np.array(acc)
+        cdef double [:,::1] hess = np.empty((nparticles,ndim,ndim))
+        self._hessian(w, hess, nparticles)
+        return np.array(hess)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
