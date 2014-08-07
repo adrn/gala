@@ -97,9 +97,22 @@ class TestLeeSutoNFWPotential(object):
         print()
 
     def test_create_plot(self):
+        from ...dynamics import plot_orbits
+        from ...integrate import DOPRI853Integrator
         potential = LeeSutoNFWPotential(usys=self.usys,
-                                        v_h=0.125, r_h=12.,
+                                        v_h=0.35, r_h=12.,
                                         a=1.4, b=1., c=0.6)
+
+        w0 = np.array([19.0,2.7,-6.9,0.0352238,-0.03579493,0.075])
+
+        t1 = time.time()
+        t,w = potential.integrate_orbit(w0, dt=1., nsteps=60000) #, Integrator=DOPRI853Integrator)
+        print("Time: {}".format(time.time() - t1))
+
+        #plt.plot(w[:,0,0], w[:,0,2], marker=None)
+        fig = plot_orbits(w, triangle=True, marker=None)
+        plt.show()
+        return
 
         # single
         r = [[1.,0.,0.]]
