@@ -99,37 +99,28 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
             grad[i,1] = fac*y
             grad[i,2] = fac*z * (1. + self.a / sqrtz)
 
-# def miyamoto_nagai_funcs(units):
-#     # scale G to be in this unit system
-#     if units is None:
-#         _G = 1.
-#     else:
-#         _G = G.decompose(units).value
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public inline void _hessian(self, double[:,::1] r,
+                                     double[:,:,::1] hess, int nparticles):
 
-#     def func(xyz, m, a, b):
-#         x,y,z = xyz.T
-#         z_term = a + np.sqrt(z*z + b*b)
-#         return -_G * m / np.sqrt(x*x + y*y + z_term*z_term)
+        cdef double x, y, z
+        cdef double sqrtz, zd, fac
+        for i in range(nparticles):
+            x = r[i,0]
+            y = r[i,1]
+            z = r[i,2]
 
-#     def gradient(xyz, m, a, b):
-#         x,y,z = xyz.T
+            sqrtz = sqrt(z*z + self.b2)
+            zd = self.a + sqrtz
+            fac = self.GM*pow(x*x + y*y + zd*zd, -1.5)
 
-#         sqrtz = np.sqrt(z*z + b*b)
-#         z_term = a + sqrtz
-#         fac = _G*m*(x*x + y*y + z_term*z_term)**-1.5
+            grad[i,0] = fac*x
+            grad[i,1] = fac*y
+            grad[i,2] = fac*z * (1. + self.a / sqrtz)
 
-#         dx = fac*x
-#         dy = fac*y
-
-#         c = a / sqrtz
-#         dz = fac*z * (1. + c)
-
-#         return np.array([dx,dy,dz]).T
-
-#     def hessian(xyz, m, a, b): # TODO
-#         pass
-
-#     return func, gradient, None
 
 class MiyamotoNagaiPotential(CPotential, CartesianPotential):
     r"""
