@@ -90,3 +90,40 @@ class TestMiyamotoNagai(object):
         fig,axes = pypotential.plot_contours(grid=(grid,0.,grid))
         print(time.time() - t1)
         fig.savefig(os.path.join(plot_path, "miyamoto_nagai_2d.png"))
+
+class TestLeeSutoNFWPotential(object):
+    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    def setup(self):
+        print()
+
+    def test_create_plot(self):
+        potential = LeeSutoNFWPotential(usys=self.usys,
+                                        v_h=0.125, r_h=12.,
+                                        a=1.4, b=1., c=0.6)
+
+        # single
+        r = [[1.,0.,0.]]
+        pot_val = potential.value(r)
+        acc_val = potential.acceleration(r)
+
+        # multiple
+        r = np.random.uniform(size=(nparticles,3))
+        pot_val = potential.value(r)
+        acc_val = potential.acceleration(r)
+
+        for func_name in ["value", "gradient", "acceleration"]:
+            t1 = time.time()
+            for ii in range(niter):
+                x = getattr(potential, func_name)(r)
+            print("Cython - {}: {:e} sec per call".format(func_name,
+                            (time.time()-t1)/float(niter)))
+
+        # acc_val = potential.acceleration(r)
+
+        grid = np.linspace(-50, 50, 200)
+
+        t1 = time.time()
+        fig,axes = potential.plot_contours(grid=(grid,0.,grid))
+        print(time.time() - t1)
+
+        fig.savefig(os.path.join(plot_path, "lee_suto_nfw_2d.png"))
