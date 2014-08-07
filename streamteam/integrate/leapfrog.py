@@ -131,7 +131,7 @@ class LeapfrogIntegrator(Integrator):
         v = w0[...,self.ndim_xv:]
 
         # here is where we scoot the velocity at t=t1 to v(t+1/2)
-        a0 = self.acceleration(t, np.array(x), *self._func_args)
+        a0 = self.acceleration(t.copy(), x.copy(), *self._func_args)
         v_1_2 = v + a0*dt/2.
 
         return v_1_2
