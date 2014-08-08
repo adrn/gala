@@ -32,6 +32,7 @@ cdef extern from "math.h":
     double log(double x)
     double fabs(double x)
     double exp(double x)
+    double pow(double x, double n)
 
 __all__ = ['MiyamotoNagaiPotential', 'LeeSutoNFWPotential']
 
@@ -155,8 +156,8 @@ class MiyamotoNagaiPotential(CPotential, CartesianPotential):
 cdef class _LeeSutoNFWPotential(_CPotential):
 
     # here need to cdef all the attributes
-    cdef public double v_h, r_h, a, b, c
-    cdef public double v_h2, r_h2, a2, b2, c2, x0, x16, x18, x20
+    cdef public double v_h, r_h, a, b, c, e_b2, e_c2
+    cdef public double v_h2, r_h2, a2, b2, c2, x0
 
     def __init__(self, double v_h, double r_h, double a, double b, double c):
         """ Units of everything should be in the system:
@@ -174,10 +175,10 @@ cdef class _LeeSutoNFWPotential(_CPotential):
         self.c = c
         self.c2 = c*c
 
+        self.e_b2 = 1-pow(b/a,2)
+        self.e_c2 = 1-pow(c/a,2)
+
         self.x0 = 1/r_h
-        self.x16 = self.a2 - self.b2
-        self.x18 = self.a2 - self.c2
-        self.x20 = 15*self.r_h2
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
@@ -186,14 +187,15 @@ cdef class _LeeSutoNFWPotential(_CPotential):
     cdef public inline void _value(self, double[:,::1] r,
                                    double[::1] pot, int nparticles):
 
-        cdef double x, y, z, _r
+        cdef double x, y, z, _r, u
         for i in range(nparticles):
             x = r[i,0]
             y = r[i,1]
             z = r[i,2]
 
             _r = sqrt(x*x + y*y + z*z)
-            pot[i] = -self.v_h2*(48*self.r_h*self.a2*_r*_r*_r*_r*log(sqrt(_r/self.r_h) + sqrt((self.r_h + _r)/self.r_h)) - 3*self.r_h*(15*self.r_h**2*log(sqrt(_r/self.r_h) + sqrt((self.r_h + _r)/self.r_h)) - sqrt(_r/(self.r_h + _r))*(15*self.r_h*self.r_h + 5*self.r_h*_r - 2*_r*_r))*(y*y*(self.a2 - self.b2) + z*z*(self.a2 - self.c2)) - 48*self.a2*_r*_r*_r*_r*_r*(sqrt((self.r_h + _r)/_r) - 1) + _r*_r*(-2*self.a2 + self.b2 + self.c2)*(-3*self.r_h*(5*self.r_h*self.r_h - 8*_r*_r)*log(sqrt(_r/self.r_h) + sqrt((self.r_h + _r)/self.r_h)) + 12*_r*_r*_r + sqrt(_r/(self.r_h + _r))*(15*self.r_h*self.r_h*self.r_h + 5*self.r_h*self.r_h*_r - 26*self.r_h*_r*_r - 12*_r*_r*_r)))/(24*self.a2*_r*_r*_r*_r*_r)
+            u = _r / self.r_h
+            pot[i] = self.v_h2*(2*sqrt((u + 1)/u) + (self.e_b2/2 + self.e_c2/2)*(sqrt(u/(u + 1))*(-1 - 13/(6*u) + 5/(12*u*u) + 5/(4*u*u*u)) + (2/u - 5/(4*u*u*u))*log(sqrt(u) + sqrt(u + 1)) + 1) + (sqrt(u/(u + 1))*(1/(2*u) - 5/(4*u*u) - 15/(4*u*u*u)) + 15*log(sqrt(u) + sqrt(u + 1))/(4*u*u*u))*(self.e_b2*y**2/(2*_r*_r) + self.e_c2*z*z/(2*_r*_r)) - 2 - 2*log(sqrt(u) + sqrt(u + 1))/u)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
@@ -204,9 +206,10 @@ cdef class _LeeSutoNFWPotential(_CPotential):
 
         cdef:
             double x, y, z, _r
-            double x2, x3, x4, x5, x6, x7, x8, x9
-            double x11, x12, x13, x14, x19
-            double x21, x22, x23, x24, x25, x26, x27, x28, x29, x30, x31, x32, x33
+            double x1, x2, x3, x4, x5, x6, x7, x8
+            double x10, x11, x12, x13, x16, x17, x18, x19
+            double x20, x21, x22, x23, x24, x25, x26, x27, x28, x29
+            double x30, x31
 
         for i in range(nparticles):
             x = r[i,0]
@@ -214,36 +217,38 @@ cdef class _LeeSutoNFWPotential(_CPotential):
             z = r[i,2]
             _r = sqrt(x*x + y*y + z*z)
 
-            x2 = self.r_h + _r
-            x3 = 1/x2
-            x4 = self.x0*x2
-            x5 = x4**(3/2)
-            x6 = sqrt(_r*self.x0)
-            x7 = sqrt(x4)
-            x8 = x6 + x7
-            x9 = self.v_h2*self.x0*x3/(48*_r**7*self.a2*x5*x8)
-            x11 = 12*self.r_h2*x5*x8
-            x12 = _r*_r*_r*_r
-            x13 = log(x8)
-            x14 = 4*_r**5*self.a2*sqrt(x2/_r) - 8*self.a2*x12*x13*x2
-            x19 = self.x16*y**2 + self.x18*z**2
-            x21 = sqrt(_r*x3)
-            x22 = self.r_h*_r
-            x23 = _r*_r
-            x24 = -2*x23
-            x25 = x21*(self.x20 + 5*x22 + x24)
-            x26 = x2*(x13*self.x20 - x25)
-            x27 = self.r_h*x6*x7 + _r
-            x28 = x2*x27
-            x29 = self.r_h*x7*x8
-            x30 = 2*x2*x21
-            x31 = 45*self.r_h2 + 10*x22
-            x32 = 26*x23
-            x33 = 3*self.r_h*x19*x2*(-15*self.r_h*x28 + 90*self.r_h2*x13*x2*x7*x8 + x25*x29 - x30*x7*x8*(x24 + x31)) + 48*self.a2*x12*x2**2*x27 - x2*x23*(-2*self.a2 + self.b2 + self.c2)*(self.r_h*x30*x7*x8*(x31 - x32) - 6*x13*x2*x29*(self.x20 - 8*x23) - x21*x29*(15*self.r_h**3 - self.r_h*x32 - 12*_r**3 + 5*_r*self.r_h2) + x28*(self.x20 - 24*x23))
+            x1 = _r + self.r_h
+            x2 = 1/x1
+            x3 = self.x0*x1
+            x4 = pow(x3,1.5)
+            x5 = sqrt(_r*self.x0)
+            x6 = sqrt(x3)
+            x7 = x5 + x6
+            x8 = self.v_h2*self.x0*x2/(48*pow(_r,7)*x4*x7)
+            x10 = 12*x4*x7*self.r_h2
+            x11 = _r*_r*_r*_r
+            x12 = log(x7)
+            x13 = -4*_r*_r*_r*_r*_r*sqrt(x1/_r) + 8*x1*x11*x12
+            x16 = self.e_b2*y*y + self.e_c2*z*z
+            x17 = 15*self.r_h2
+            x18 = sqrt(_r*x2)
+            x19 = _r*self.r_h
+            x20 = _r*_r
+            x21 = -2*x20
+            x22 = x18*(x17 + 5*x19 + x21)
+            x23 = x1*(-x12*x17 + x22)
+            x24 = _r + self.r_h*x5*x6
+            x25 = x1*x24
+            x26 = self.r_h*x6*x7
+            x27 = 2*x1*x18
+            x28 = 10*x19 + 45*self.r_h2
+            x29 = -x17
+            x30 = 26*x20
+            x31 = 3*self.r_h*x1*x16*(15*self.r_h*x25 - 90*x1*x12*x6*x7*self.r_h2 - x22*x26 + x27*x6*x7*(x21 + x28)) - 48*x1**2*x11*x24 - x1*x20*(self.e_b2 + self.e_c2)*(self.r_h*x27*x6*x7*(x28 - x30) + 6*x1*x12*x26*(8*x20 + x29) + x18*x26*(12*_r*_r*_r - 5*_r*self.r_h2 - 15*self.r_h2*self.r_h + self.r_h*x30) - x25*(24*x20 + x29))
 
-            grad[i,0] = x*x9*(x11*(x14 + x19*x26) + x33)
-            grad[i,1] = x9*y*(x11*(x14 + x26*(-self.x16*x23 + x19)) + x33)
-            grad[i,2] = x9*z*(x11*(x14 + x26*(-self.x18*x23 + x19)) + x33)
+            grad[i,0] = x*x8*(x10*(x13 + x16*x23) + x31)
+            grad[i,1] = x8*y*(x10*(x13 + x23*(-self.e_b2*x20 + x16)) + x31)
+            grad[i,2] = x8*z*(x10*(x13 + x23*(-self.e_c2*x20 + x16)) + x31)
 
 class LeeSutoNFWPotential(CPotential, CartesianPotential):
     r"""
