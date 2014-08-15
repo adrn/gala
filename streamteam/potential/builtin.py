@@ -410,12 +410,12 @@ class IsochronePotential(CartesianPotential):
         sinu = cosi/sini * np.cos(theta)/np.sin(theta)
         phi = (u + Omega) % (2*np.pi)
 
-        print("r", r)
-        print("φ", phi)
-        print("θ", theta)
-        print("vr", vr)
-        print("vφ", vphi)
-        print("vθ", vtheta)
+        # print("r", r)
+        # print("φ", phi)
+        # print("θ", theta)
+        # print("vr", vr)
+        # print("vφ", vphi)
+        # print("vθ", vtheta)
 
         # We now need to convert from spherical polar coord to cart. coord.
         x,v = spherical_to_cartesian(r,phi,theta,vr,vphi,vtheta)
