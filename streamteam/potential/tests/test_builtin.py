@@ -227,6 +227,40 @@ class TestIsochrone(object):
         axes[1].plot(angles[:,2], marker=None)
         fig.savefig(os.path.join(plot_path, "isochrone_aa.png"))
 
+    def test_roundtrip(self):
+        from ...coordinates.util import cartesian_to_spherical
+        from ...integrate import LeapfrogIntegrator
+
+        np.random.seed(4342)
+
+        n = 10
+        x = np.random.uniform(-10., 10., size=(n,3))
+        v = np.random.uniform(-1., 1., size=(n,3)) / 33.
+
+        potential = IsochronePotential(usys=self.usys, m=1.E11, b=5.)
+        acc = lambda t,x: potential.acceleration(x)
+        integrator = LeapfrogIntegrator(acc)
+        t,ws = integrator.run(np.hstack((x,v)), dt=1., nsteps=10000)
+        print()
+
+        for i in range(n):
+            xs = ws[:,i,:3]
+            vs = ws[:,i,3:]
+
+            r,phi,theta,vr,vphi,vtheta = cartesian_to_spherical(xs,vs).T
+            # print("True r", r)
+            # print("True φ", phi)
+            # print("True θ", theta)
+            # print("True vr", vr)
+            # print("True vφ", vphi)
+            # print("True vθ", vtheta)
+
+            actions,angles = potential.action_angle(xs, vs)
+            x,v = potential.phase_space(actions,angles)
+
+            assert np.allclose(x, xs, rtol=1E-8)
+            assert np.allclose(v, vs, rtol=1E-8)
+
 class TestMiyamotoNagai(object):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
     def test_create_plot(self):
