@@ -292,9 +292,11 @@ class IsochronePotential(CartesianPotential):
         sinu = LR/np.sqrt(1.-LR*LR)/np.tan(theta)
 
         u = np.arcsin(sinu)
+        # print("true pre", vtheta, u)
         u[sinu > 1.] = np.pi/2.
         u[sinu < -1.] = -np.pi/2.
         u[vtheta > 0.] = np.pi - u[vtheta > 0.]
+        # print("true post", vtheta, u)
 
         thetap = phi - u + np.sign(Lz)*thetaz
         angles = np.array([thetar, thetap, thetaz]).T
@@ -353,10 +355,13 @@ class IsochronePotential(CartesianPotential):
         # solve for eta
         theta_3 = theta_r
         eta_func = lambda x: x - e*c/(b+c)*np.sin(x) - theta_3
-        sol = so.root(eta_func, [np.pi/2]*len(theta_3), tol=1E-7)
-        eta = sol.x
-        if not sol.success:
-            raise ValueError("Unable to find solution for η.")
+        eta_func_prime = lambda x: 1 - e*c/(b+c)*np.cos(x)
+
+        # use newton's method to find roots
+        niter = 100
+        eta = np.ones_like(theta_3)*np.pi/2.
+        for i in range(niter):
+            eta -= eta_func(eta)/eta_func_prime(eta)
 
         # TODO: when to do this???
         eta -= 2*np.pi
@@ -366,10 +371,6 @@ class IsochronePotential(CartesianPotential):
 
         theta_2 = theta_theta
         Omega_23 = 0.5*(1 + L / np.sqrt(L**2 + 4*GM*b))
-        # A = L/np.sqrt(L**2 + 4*b*GM)
-        # arg1 = np.arctan(np.sqrt((1+e)/(1-e))*np.tan(0.5*eta))
-        # arg2 = A*np.arctan(np.sqrt((1+e+2*b/c)/(1-e+2*b/c))*np.tan(0.5*eta))
-        # psi = theta_2 - Omega_23*theta_3 + arg1 + arg2
 
         a = np.sqrt((1+e) / (1-e))
         ap = np.sqrt((1 + e + 2*b/c) / (1 - e + 2*b/c))
@@ -394,19 +395,27 @@ class IsochronePotential(CartesianPotential):
         # theta
         theta = np.arccos(np.sin(psi)*sini)
         vtheta = L*sini*np.cos(psi)/np.cos(theta)
+        vtheta = -L*sini*np.cos(psi)/np.sin(theta)/r
+        vphi = Lz / (r*np.sin(theta))
 
         # phi
         sinu = np.sin(psi)*cosi/np.sin(theta)
         u = np.arcsin(sinu)
+        # print("pre", vtheta, u)
         u[sinu > 1.] = np.pi/2.
         u[sinu < -1.] = -np.pi/2.
         u[vtheta > 0.] = np.pi - u[vtheta > 0.]
+        # print("post", vtheta, u)
 
         sinu = cosi/sini * np.cos(theta)/np.sin(theta)
         phi = (u + Omega) % (2*np.pi)
 
-        vtheta = -L*sini*np.cos(psi)/np.sin(theta)/r
-        vphi = Lz / (r*np.sin(theta))
+        print("r", r)
+        print("φ", phi)
+        print("θ", theta)
+        print("vr", vr)
+        print("vφ", vphi)
+        print("vθ", vtheta)
 
         # We now need to convert from spherical polar coord to cart. coord.
         x,v = spherical_to_cartesian(r,phi,theta,vr,vphi,vtheta)
