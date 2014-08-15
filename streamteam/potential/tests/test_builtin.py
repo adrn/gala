@@ -247,7 +247,7 @@ class TestIsochrone(object):
             xs = ws[:,i,:3]
             vs = ws[:,i,3:]
 
-            r,phi,theta,vr,vphi,vtheta = cartesian_to_spherical(xs,vs).T
+            # r,phi,theta,vr,vphi,vtheta = cartesian_to_spherical(xs,vs).T
             # print("True r", r)
             # print("True φ", phi)
             # print("True θ", theta)
@@ -256,7 +256,7 @@ class TestIsochrone(object):
             # print("True vθ", vtheta)
 
             actions,angles = potential.action_angle(xs, vs)
-            x,v = potential.phase_space(actions,angles)
+            x,v = potential.phase_space(actions, angles)
 
             assert np.allclose(x, xs, rtol=1E-8)
             assert np.allclose(v, vs, rtol=1E-8)
