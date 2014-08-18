@@ -48,7 +48,25 @@ def cartesian_to_spherical(x, v):
     return np.array([r,phi,theta,vr,vphi,vtheta]).T
 
 def spherical_to_cartesian(r, phi, theta, vr, vphi, vtheta):
-    """ TODO """
+    """
+    Convert a position and velocity from spherical polar coordinates to
+    cartesian.
+
+    Parameters
+    ----------
+    r : array_like
+        Distance / radius.
+    phi : array_like
+        Azimuth.
+    theta : array_like
+        Polar angle measured from z-axis.
+    vr : array_like
+        Radial / line-of-sight velocity.
+    vphi : array_like
+        Velocity in phi(hat) direction.
+    vtheta : array_like
+        Velocity in theta(hat) direction
+    """
 
     x1 = r*np.sin(theta)*np.cos(phi)
     x2 = r*np.sin(theta)*np.sin(phi)
