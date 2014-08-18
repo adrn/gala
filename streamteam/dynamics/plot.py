@@ -15,9 +15,32 @@ import numpy as np
 
 __all__ = ['plot_orbits']
 
-def plot_orbits(w, ix=None, axes=None, triangle=False, **kwargs):
+def plot_orbits(x, ix=None, axes=None, triangle=False, **kwargs):
     """
-    TODO:
+    Given time series of positions, `x`, make nice plots of the orbit in
+    cartesian projections.
+
+    Parameters
+    ----------
+    x : array_like
+        Array of positions. The last axis (`axis=-1`) is assumed
+        to be the dimensionality, e.g., `x.shape[-1]`. The first axis
+        (`axis=0`) is assumed to be the time axis.
+    ix : int, array_like (optional)
+        Index or array of indices of orbits to plot. For example, if `x` is an
+        array of shape (1024,32,6) -- 1024 timesteps for 32 orbits in 6D
+        phase-space -- `ix` would specify which of the 32 orbits to plot.
+    axes : array_like (optional)
+        Array of matplotlib Axes objects.
+    triangle : bool (optional)
+        Make a triangle plot instead of plotting all projections in a single row.
+
+    Other Parameters
+    ----------------
+    kwargs
+        All other keyword arguments are passed to the matplotlib `plot()` call.
+        You can pass in any of the usual style kwargs like `color=...`,
+        `marker=...`, etc.
     """
 
     if triangle and axes is None:
@@ -39,14 +62,14 @@ def plot_orbits(w, ix=None, axes=None, triangle=False, **kwargs):
         fig,axes = plt.subplots(1,3,figsize=(12,5),sharex=True,sharey=True)
 
     if ix is not None:
-        ixs = [ix]
+        ixs = np.atleast_1d(ix)
     else:
-        ixs = range(w.shape[1])
+        ixs = range(x.shape[1])
 
     for ii in ixs:
-        axes[0].plot(w[:,ii,0], w[:,ii,1], **kwargs)
-        axes[1].plot(w[:,ii,0], w[:,ii,2], **kwargs)
-        axes[2].plot(w[:,ii,1], w[:,ii,2], **kwargs)
+        axes[0].plot(x[:,ii,0], x[:,ii,1], **kwargs)
+        axes[1].plot(x[:,ii,0], x[:,ii,2], **kwargs)
+        axes[2].plot(x[:,ii,1], x[:,ii,2], **kwargs)
 
     if triangle:
         # HACK: until matplotlib 1.4 comes out, need this
