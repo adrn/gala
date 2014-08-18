@@ -38,12 +38,9 @@ def test_table():
     table = ascii.read(table, names=names)
 
     for line in table:
-        galactic = coord.Galactic(line['l'], line['b'],
-                                  unit=(u.degree, u.degree))
+        galactic = coord.Galactic(l=line['l']*u.deg, b=line['b']*u.deg)
 
         orp = galactic.transform_to(Orphan)
-        true_orp = Orphan(line['Lambda'], line['Beta'],
-                          unit=(u.degree, u.degree))
+        true_orp = Orphan(Lambda=line['Lambda']*u.deg, Beta=line['Beta']*u.deg)
 
-        print(orp, true_orp)
         assert true_orp.separation(orp) < 20*u.arcsec
