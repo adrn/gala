@@ -305,18 +305,17 @@ class IsochronePotential(CartesianPotential):
         return actions, angles
 
     def phase_space(self, actions, angles):
-        """ TODO: """
-        # def angact_to_xv_iso(act,ang,M,b)
-        """Calculate x and v for a given set of agtion angles using the analytically
-        solvable isochrone potential with best fit parameters b and M.
-        Function takes in array of action and angles (1x3,1x3) and the best fit parameters for b
-        and M in the isocrhone potential and returns X,V = [( x1,x2,x3), (v1,v2,v3)] for those action
-        angles.
-        We use Appendix 2 in McGill&Binney 1990
-        J1,2,3 = Jr,phi,theta = Jr,Lz,L-Lz"""
+        """
+        Transform the input actions and angles to ordinary phase space (position
+        and velocity) in cartesian coordinates. See Section 3.5.2 in
+        Binney & Tremaine (2008), and be aware of the errata entry for
+        Eq. 3.225.
 
-
-        """ Binney & Tremaine (2008) """
+        Parameters
+        ----------
+        actions : array_like
+        angles : array_like
+        """
 
         actions = np.atleast_2d(actions)
         angles = np.atleast_2d(angles)
@@ -401,11 +400,9 @@ class IsochronePotential(CartesianPotential):
         # phi
         sinu = np.sin(psi)*cosi/np.sin(theta)
         u = np.arcsin(sinu)
-        # print("pre", vtheta, u)
         u[sinu > 1.] = np.pi/2.
         u[sinu < -1.] = -np.pi/2.
         u[vtheta > 0.] = np.pi - u[vtheta > 0.]
-        # print("post", vtheta, u)
 
         sinu = cosi/sini * np.cos(theta)/np.sin(theta)
         phi = (u + Omega) % (2*np.pi)
