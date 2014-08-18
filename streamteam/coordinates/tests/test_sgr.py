@@ -36,8 +36,7 @@ def test_simple():
 
     c = coord.Galactic(coord.Angle(217.2141, u.degree),
                        coord.Angle(-11.4351, u.degree))
-    assert Sagittarius(c).Lambda.radian == \
-           c.transform_to(Sagittarius).Lambda.radian
+    s = c.transform_to(Sagittarius)
 
     # with distance
     c = Sagittarius(coord.Angle(217.2141, u.degree),
@@ -56,20 +55,10 @@ def test_against_David_Law():
 
     """
 
-    c = coord.Galactic(law_data["l"], law_data["b"], unit=(u.degree,u.degree))
+    c = coord.Galactic(law_data["l"]*u.deg, law_data["b"]*u.deg)
     sgr_coords = c.transform_to(Sagittarius)
 
-    law_sgr_coords = Sagittarius(law_data["lambda"], law_data["beta"],
-                                 unit=(u.degree, u.degree))
+    law_sgr_coords = Sagittarius(Lambda=law_data["lambda"]*u.deg, Beta=law_data["beta"]*u.deg)
 
     sep = sgr_coords.separation(law_sgr_coords).arcsec*u.arcsec
     assert np.all(sep < 1.*u.arcsec)
-
-def test_distance_to_sgr_plane():
-    N = 100
-    ra = coord.Angle(np.random.uniform(0, 360., size=N)*u.degree)
-    dec = coord.Angle(np.random.uniform(-90, 90., size=N)*u.degree)
-    distance = np.random.uniform(10, 60., size=N)*u.kpc
-
-    D = distance_to_sgr_plane(ra, dec, distance)
-    assert hasattr(D, "unit")
