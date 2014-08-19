@@ -34,7 +34,7 @@ cdef extern from "math.h":
     double exp(double x)
     double pow(double x, double n)
 
-__all__ = ['MiyamotoNagaiPotential', 'LeeSutoNFWPotential']
+__all__ = ['HernquistPotential', 'MiyamotoNagaiPotential', 'LeeSutoNFWPotential']
 
 ##############################################################################
 #    Hernquist Spheroid potential from Hernquist 1990
@@ -44,7 +44,7 @@ cdef class _HernquistPotential(_CPotential):
 
     # here need to cdef all the attributes
     cdef public double G, GM
-    cdef public double m, a, b, b2
+    cdef public double m, c
 
     def __init__(self, double G, double m, double c):
         """ Units of everything should be in the system:
