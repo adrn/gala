@@ -179,7 +179,7 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
             z = r[i,2]
 
             zd = (self.a + sqrt(z*z+self.b2))
-            pot[i] = -self.GM / np.sqrt(x*x + y*y + zd*zd)
+            pot[i] = -self.GM / sqrt(x*x + y*y + zd*zd)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
@@ -298,7 +298,7 @@ cdef class _LeeSutoNFWPotential(_CPotential):
 
             _r = sqrt(x*x + y*y + z*z)
             u = _r / self.r_h
-            pot[i] = self.v_h2*(2*sqrt((u + 1)/u) + (self.e_b2/2 + self.e_c2/2)*(sqrt(u/(u + 1))*(-1 - 13/(6*u) + 5/(12*u*u) + 5/(4*u*u*u)) + (2/u - 5/(4*u*u*u))*log(sqrt(u) + sqrt(u + 1)) + 1) + (sqrt(u/(u + 1))*(1/(2*u) - 5/(4*u*u) - 15/(4*u*u*u)) + 15*log(sqrt(u) + sqrt(u + 1))/(4*u*u*u))*(self.e_b2*y**2/(2*_r*_r) + self.e_c2*z*z/(2*_r*_r)) - 2 - 2*log(sqrt(u) + sqrt(u + 1))/u)
+            pot[i] = self.v_h2*(2*sqrt((u + 1)/u) + (self.e_b2/2 + self.e_c2/2)*(sqrt(u/(u + 1))*(-1 - 13/(6*u) + 5/(12*u*u) + 5/(4*u*u*u)) + (2/u - 5/(4*u*u*u))*log(sqrt(u) + sqrt(u + 1)) + 1) + (sqrt(u/(u + 1))*(1/(2*u) - 5/(4*u*u) - 15/(4*u*u*u)) + 15*log(sqrt(u) + sqrt(u + 1))/(4*u*u*u))*(self.e_b2*y*y/(2*_r*_r) + self.e_c2*z*z/(2*_r*_r)) - 2 - 2*log(sqrt(u) + sqrt(u + 1))/u)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
@@ -347,7 +347,7 @@ cdef class _LeeSutoNFWPotential(_CPotential):
             x28 = 10*x19 + 45*self.r_h2
             x29 = -x17
             x30 = 26*x20
-            x31 = 3*self.r_h*x1*x16*(15*self.r_h*x25 - 90*x1*x12*x6*x7*self.r_h2 - x22*x26 + x27*x6*x7*(x21 + x28)) - 48*x1**2*x11*x24 - x1*x20*(self.e_b2 + self.e_c2)*(self.r_h*x27*x6*x7*(x28 - x30) + 6*x1*x12*x26*(8*x20 + x29) + x18*x26*(12*_r*_r*_r - 5*_r*self.r_h2 - 15*self.r_h2*self.r_h + self.r_h*x30) - x25*(24*x20 + x29))
+            x31 = 3*self.r_h*x1*x16*(15*self.r_h*x25 - 90*x1*x12*x6*x7*self.r_h2 - x22*x26 + x27*x6*x7*(x21 + x28)) - 48*x1*x1*x11*x24 - x1*x20*(self.e_b2 + self.e_c2)*(self.r_h*x27*x6*x7*(x28 - x30) + 6*x1*x12*x26*(8*x20 + x29) + x18*x26*(12*_r*_r*_r - 5*_r*self.r_h2 - 15*self.r_h2*self.r_h + self.r_h*x30) - x25*(24*x20 + x29))
 
             grad[i,0] = x*x8*(x10*(x13 + x16*x23) + x31)
             grad[i,1] = x8*y*(x10*(x13 + x23*(-self.e_b2*x20 + x16)) + x31)
