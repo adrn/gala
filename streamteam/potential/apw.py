@@ -16,8 +16,7 @@ import astropy.units as u
 
 # Project
 from .core import CompositePotential
-from .builtin import *
-from .cbuiltin import MiyamotoNagaiPotential, LeeSutoNFWPotential
+from .cbuiltin import HernquistPotential, MiyamotoNagaiPotential, LeeSutoNFWPotential
 
 __all__ = ['PW14Potential']
 
