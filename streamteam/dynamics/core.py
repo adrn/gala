@@ -29,6 +29,7 @@ def angular_momentum(w):
         to be the phase-space dimension so that the phase-space dimensionality
         is `w.shape[-1]`.
     """
+    w = np.atleast_1d(w)
     ndim = w.shape[-1]
     return np.cross(w[...,:ndim//2], w[...,ndim//2:])
 
@@ -65,7 +66,10 @@ def classify_orbit(w):
     # see if at any timestep the sign has changed
     loop = np.ones((norbits,3))
     for ii in range(3):
-        ix = np.atleast_1d(np.any(np.sign(L0[...,ii]) != np.sign(Ls[1:,...,ii]), axis=0))
+        cnd = (np.sign(L0[...,ii]) != np.sign(Ls[1:,...,ii])) | \
+              (np.abs(Ls[1:,...,ii]) < 1E-14)
+
+        ix = np.atleast_1d(np.any(cnd, axis=0))
         loop[ix,ii] = 0
 
     return loop.astype(int)
