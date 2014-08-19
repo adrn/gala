@@ -32,7 +32,7 @@ if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
 # HACK:
-sys.path.append("/Users/adrian/Downloads/genfunc-master")
+sys.path.append("/Users/adrian/projects/genfunc")
 import genfunc_3d
 
 def angmom(x):
@@ -324,7 +324,7 @@ class TestFrequencyMap(object):
             if not failed:
                 all_freqs.append(freqs)
 
-            fig = plot_orbit(w, ix=n, axes=axes, linestyle='none', marker='.', alpha=0.1)
+            fig = plot_orbits(w, ix=n, axes=axes, linestyle='none', marker='.', alpha=0.1)
             fig.axes[1].set_title("Failed: {}".format(failed),fontsize=24)
             fig.savefig(os.path.join(plot_path,"orbit_{}.png".format(n)))
             for i in range(3): axes[i].cla()
