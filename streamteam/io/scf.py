@@ -131,7 +131,7 @@ class SCFReader(NBodyReader):
             colunits = [self.sim_units[x] for x in coltypes]
 
         else:
-            raise ValueError("Invalid SNAP file.")
+            raise ValueError("Invalid SNAP file: {} columns (not 8 or 10).".format(numcols))
 
         data = np.genfromtxt(full_filename,
                              skiprows=1, names=colnames)
