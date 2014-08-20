@@ -94,11 +94,6 @@ class SCFReader(NBodyReader):
                 the data in simulation units.
         """
 
-        # column names for SNAP file, in simulation units
-        colnames = "m x y z vx vy vz s1 s2 tub".split()
-        coltypes = "mass length length length speed speed speed dimensionless dimensionless time".split()
-        colunits = [self.sim_units[x] for x in coltypes]
-
         # read the first line to get the numer of particles and timestep
         fullpath = os.path.join(self.path, filename)
         with open(fullpath) as f:
@@ -110,7 +105,35 @@ class SCFReader(NBodyReader):
                                  "got:\n\t\t{}".format(firstline))
         time = float(time)*self.sim_units['time']
 
-        data = np.genfromtxt(os.path.join(self.path,filename),
+        full_filename = os.path.join(self.path,filename)
+
+        with open(full_filename) as f:
+            l0 = f.readline()
+            l1 = f.readline()
+            numcols = len(l1.split())
+
+        if numcols == 8:
+            # not self gravitating
+            logger.debug("Not a self-gravitating run: only 8 columns")
+
+            # column names for SNAP file, in simulation units
+            colnames = "m x y z vx vy vz s1".split()
+            coltypes = "mass length length length speed speed speed dimensionless".split()
+            colunits = [self.sim_units[x] for x in coltypes]
+
+        elif numcols == 10:
+            # not self gravitating
+            logger.debug("A self-gravitating run: 10 columns")
+
+            # column names for SNAP file, in simulation units
+            colnames = "m x y z vx vy vz s1 s2 tub".split()
+            coltypes = "mass length length length speed speed speed dimensionless dimensionless time".split()
+            colunits = [self.sim_units[x] for x in coltypes]
+
+        else:
+            raise ValueError("Invalid SNAP file.")
+
+        data = np.genfromtxt(full_filename,
                              skiprows=1, names=colnames)
         if units is not None:
             new_colunits = []
