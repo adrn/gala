@@ -103,14 +103,9 @@ class SCFReader(NBodyReader):
             except:
                 raise ValueError("Invalid header line. Expected 'nparticles,time', "
                                  "got:\n\t\t{}".format(firstline))
+            numcols = len(f.readline().split())
+
         time = float(time)*self.sim_units['time']
-
-        full_filename = os.path.join(self.path,filename)
-
-        with open(full_filename) as f:
-            l0 = f.readline()
-            l1 = f.readline()
-            numcols = len(l1.split())
 
         if numcols == 8:
             # not self gravitating
@@ -133,8 +128,7 @@ class SCFReader(NBodyReader):
         else:
             raise ValueError("Invalid SNAP file: {} columns (not 8 or 10).".format(numcols))
 
-        data = np.genfromtxt(full_filename,
-                             skiprows=1, names=colnames)
+        data = np.genfromtxt(fullpath, skiprows=1, names=colnames)
         if units is not None:
             new_colunits = []
             for colname,colunit in zip(colnames,colunits):
@@ -146,6 +140,39 @@ class SCFReader(NBodyReader):
             colunits = new_colunits
 
         tbl = Table(data, meta=dict(time=time.value))
+        for colname,colunit in zip(colnames,colunits):
+            tbl[colname].unit = colunit
+
+        return tbl
+
+    def read_cen(self, units=None):
+        """ Read the SCFCEN file data. By default, returns data in simulation
+            units, but this can be changed with the `units` kwarg.
+
+            Parameters
+            ----------
+            units : dict (optional)
+                A unit system to transform the data to. If None, will return
+                the data in simulation units.
+        """
+        fullpath = os.path.join(self.path, "SCFCEN")
+
+        # column names for SNAP file, in simulation units
+        colnames = "t dt x y z vx vy vz".split()
+        coltypes = "time time length length length speed speed speed".split()
+        colunits = [self.sim_units[x] for x in coltypes]
+
+        data = np.genfromtxt(fullpath, skiprows=1, names=colnames)
+        if units is not None:
+            new_colunits = []
+            for colname,colunit in zip(colnames,colunits):
+                newdata = (data[colname]*colunit).decompose(units)
+                data[colname] = newdata.value
+                new_colunits.append(newdata.unit)
+
+            colunits = new_colunits
+
+        tbl = Table(data)
         for colname,colunit in zip(colnames,colunits):
             tbl[colname].unit = colunit
 
