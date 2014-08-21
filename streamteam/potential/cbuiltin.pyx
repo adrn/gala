@@ -298,7 +298,7 @@ cdef class _LeeSutoNFWPotential(_CPotential):
 
             _r = sqrt(x*x + y*y + z*z)
             u = _r / self.r_h
-            pot[i] = self.v_h2*(2*sqrt((u + 1)/u) + (self.e_b2/2 + self.e_c2/2)*(sqrt(u/(u + 1))*(-1 - 13/(6*u) + 5/(12*u*u) + 5/(4*u*u*u)) + (2/u - 5/(4*u*u*u))*log(sqrt(u) + sqrt(u + 1)) + 1) + (sqrt(u/(u + 1))*(1/(2*u) - 5/(4*u*u) - 15/(4*u*u*u)) + 15*log(sqrt(u) + sqrt(u + 1))/(4*u*u*u))*(self.e_b2*y*y/(2*_r*_r) + self.e_c2*z*z/(2*_r*_r)) - 2 - 2*log(sqrt(u) + sqrt(u + 1))/u)
+            pot[i] = self.v_h2*((self.e_b2/2 + self.e_c2/2)*((1/u - 1/u**3)*log(u + 1) - 1 + (2*u**2 - 3*u + 6)/(6*u**2)) + (self.e_b2*y**2/(2*_r*_r) + self.e_c2*z*z/(2*_r*_r))*((u*u - 3*u - 6)/(2*u*u*(u + 1)) + 3*log(u + 1)/u/u/u) - log(u + 1)/u)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
@@ -308,50 +308,36 @@ cdef class _LeeSutoNFWPotential(_CPotential):
                                       double[:,::1] grad, int nparticles):
 
         cdef:
-            double x, y, z, _r
-            double x1, x2, x3, x4, x5, x6, x7, x8
-            double x10, x11, x12, x13, x16, x17, x18, x19
-            double x20, x21, x22, x23, x24, x25, x26, x27, x28, x29
-            double x30, x31
+            double x, y, z, _r, _r2
+            double x0, x1, x2, x7
+            double x10, x11, x13, x15, x16, x17, x18
+            double x20, x21, x22
 
         for i in range(nparticles):
             x = r[i,0]
             y = r[i,1]
             z = r[i,2]
-            _r = sqrt(x*x + y*y + z*z)
+            _r2 = x*x + y*y + z*z
+            _r = sqrt(_r2)
 
-            x1 = _r + self.r_h
-            x2 = 1/x1
-            x3 = self.x0*x1
-            x4 = pow(x3,1.5)
-            x5 = sqrt(_r*self.x0)
-            x6 = sqrt(x3)
-            x7 = x5 + x6
-            x8 = self.v_h2*self.x0*x2/(48*pow(_r,7)*x4*x7)
-            x10 = 12*x4*x7*self.r_h2
-            x11 = _r*_r*_r*_r
-            x12 = log(x7)
-            x13 = -4*_r*_r*_r*_r*_r*sqrt(x1/_r) + 8*x1*x11*x12
-            x16 = self.e_b2*y*y + self.e_c2*z*z
-            x17 = 15*self.r_h2
-            x18 = sqrt(_r*x2)
-            x19 = _r*self.r_h
-            x20 = _r*_r
-            x21 = -2*x20
-            x22 = x18*(x17 + 5*x19 + x21)
-            x23 = x1*(-x12*x17 + x22)
-            x24 = _r + self.r_h*x5*x6
-            x25 = x1*x24
-            x26 = self.r_h*x6*x7
-            x27 = 2*x1*x18
-            x28 = 10*x19 + 45*self.r_h2
-            x29 = -x17
-            x30 = 26*x20
-            x31 = 3*self.r_h*x1*x16*(15*self.r_h*x25 - 90*x1*x12*x6*x7*self.r_h2 - x22*x26 + x27*x6*x7*(x21 + x28)) - 48*x1*x1*x11*x24 - x1*x20*(self.e_b2 + self.e_c2)*(self.r_h*x27*x6*x7*(x28 - x30) + 6*x1*x12*x26*(8*x20 + x29) + x18*x26*(12*_r*_r*_r - 5*_r*self.r_h2 - 15*self.r_h2*self.r_h + self.r_h*x30) - x25*(24*x20 + x29))
+            x0 = _r + self.r_h
+            x1 = x0*x0
+            x2 = self.v_h2/(12.*pow(_r,7)*x1)
+            x7 = self.e_b2*y*y + self.e_c2*z*z
+            x10 = log(x0/self.r_h)
+            x11 = x0*x10
+            x13 = _r*3.*self.r_h
+            x15 = x13 - _r2
+            x16 = x15 + 6.*self.r_h2
+            x17 = 6.*self.r_h*x0*(_r*x16 - x11*6.*self.r_h2)
+            x18 = x1*x10
+            x20 = x0*_r2
+            x21 = 2.*_r*x0
+            x22 = -12.*pow(_r,5)*self.r_h*x0 + 12.*pow(_r,4)*self.r_h*x18 + 3.*self.r_h*x7*(x16*_r2 - 18.*x18*self.r_h2 + x20*(2.*_r - 3.*self.r_h) + x21*(x15 + 9.*self.r_h2)) - x20*(self.e_b2 + self.e_c2)*(-6.*_r*self.r_h*(_r2 - self.r_h2) + 6.*self.r_h*x11*(_r2 - 3.*self.r_h2) + x20*(-4.*_r + 3.*self.r_h) + x21*(-x13 + 2.*_r2 + 6.*self.r_h2))
 
-            grad[i,0] = x*x8*(x10*(x13 + x16*x23) + x31)
-            grad[i,1] = x8*y*(x10*(x13 + x23*(-self.e_b2*x20 + x16)) + x31)
-            grad[i,2] = x8*z*(x10*(x13 + x23*(-self.e_c2*x20 + x16)) + x31)
+            grad[i,0] = x2*x*(x17*x7 + x22)
+            grad[i,1] = x2*y*(x17*(x7 - _r2*self.e_b2) + x22)
+            grad[i,2] = x2*z*(x17*(x7 - _r2*self.e_c2) + x22)
 
 class LeeSutoNFWPotential(CPotential, CartesianPotential):
     r"""
