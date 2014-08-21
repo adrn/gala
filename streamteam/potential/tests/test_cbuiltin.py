@@ -96,14 +96,16 @@ class PotentialTestBase(object):
         fig,axes = plt.subplots(1,1)
 
         t1 = time.time()
-        fig,axes = self.potential.plot_contours(grid=(grid,0.,grid))
+        fig,axes = self.potential.plot_contours(grid=(grid,0.,grid),
+                                                subplots_kw=dict(figsize=(8,8)))
         print("Cython plot_contours time", time.time() - t1)
         fig.savefig(os.path.join(plot_path, "{}_2d_cy.png"\
                         .format(self.potential.__class__.__name__)))
 
         if self.pypotential is not None:
             t1 = time.time()
-            fig,axes = self.pypotential.plot_contours(grid=(grid,0.,grid))
+            fig,axes = self.pypotential.plot_contours(grid=(grid,0.,grid),
+                                                      subplots_kw=dict(figsize=(8,8)))
             print("Python plot_contours time", time.time() - t1)
             fig.savefig(os.path.join(plot_path, "{}_2d_py.png"\
                          .format(self.pypotential.__class__.__name__)))
