@@ -15,7 +15,7 @@ import numpy as np
 import astropy.units as u
 from astropy.utils.misc import isiterable
 from pygaia.errors.spectroscopic import vradErrorSkyAvg
-from pygaia.errors.astrometric import properMotionErrorSkyAvg
+from pygaia.errors.astrometric import properMotionErrorSkyAvg, parallaxErrorSkyAvg
 
 # Project
 from .core import distance_modulus
@@ -61,7 +61,7 @@ def M_V(fe_h, dfe_h=None):
 
     return Mabs
 
-def gaia_rv_error(d, fe_h=-1.):
+def gaia_radial_velocity_error(d, fe_h=-1.):
     """ Compute the sky-averaged radial velocity error for an
         RR Lyrae at the given distance.
 
@@ -78,7 +78,7 @@ def gaia_rv_error(d, fe_h=-1.):
 
     return err
 
-def gaia_pm_error(d, fe_h=-1.):
+def gaia_proper_motion_error(d, fe_h=-1.):
     """ Compute the sky-averaged proper motion error for an
         RR Lyrae at the given distance.
 
@@ -95,6 +95,23 @@ def gaia_pm_error(d, fe_h=-1.):
     err = properMotionErrorSkyAvg(G, V_minus_I)
     err = 0.5*(err[0] + err[1])
     return err*u.microarcsecond/u.yr
+
+def gaia_parallax_error(d, fe_h=-1.):
+    """ Compute the sky-averaged parallax motion error for an
+        RR Lyrae at the given distance.
+
+        Parameters:
+        -----------
+        d : quantity_like
+            The distance as an Astropy Quantity object.
+        fe_h : numeric
+            The metallicity.
+    """
+
+    Vmag = distance_modulus(d) + M_V(fe_h)
+    G = V_to_G(Vmag, V_minus_I)
+    err = parallaxErrorSkyAvg(G, V_minus_I)
+    return err*u.microarcsecond
 
 ############################################################
 # Below are light curve utilities
