@@ -15,7 +15,7 @@ import numpy as np
 
 __all__ = ['plot_orbits']
 
-def plot_orbits(x, ix=None, axes=None, triangle=False, **kwargs):
+def plot_orbits(x, ix=None, axes=None, triangle=False, subplots_kwargs=dict(), **kwargs):
     """
     Given time series of positions, `x`, make nice plots of the orbit in
     cartesian projections.
@@ -34,6 +34,8 @@ def plot_orbits(x, ix=None, axes=None, triangle=False, **kwargs):
         Array of matplotlib Axes objects.
     triangle : bool (optional)
         Make a triangle plot instead of plotting all projections in a single row.
+    subplots_kwargs : dict (optional)
+        Dictionary of kwargs passed to the matplotlib `subplots()` call.
 
     Other Parameters
     ----------------
@@ -44,7 +46,8 @@ def plot_orbits(x, ix=None, axes=None, triangle=False, **kwargs):
     """
 
     if triangle and axes is None:
-        fig,axes = plt.subplots(2,2,figsize=(12,12),sharex='col',sharey='row')
+        figsize = subplots_kwargs.pop('figsize', (12,12))
+        fig,axes = plt.subplots(2,2,figsize=figsize,**subplots_kwargs)
         axes[0,1].set_visible(False)
         axes = axes.flat
         axes = [axes[0],axes[2],axes[3]]
@@ -59,7 +62,11 @@ def plot_orbits(x, ix=None, axes=None, triangle=False, **kwargs):
             axes = [axes[0],axes[2],axes[3]]
 
     elif not triangle and axes is None:
-        fig,axes = plt.subplots(1,3,figsize=(12,5),sharex=True,sharey=True)
+        figsize = subplots_kwargs.pop('figsize', (12,5))
+        sharex = subplots_kwargs.pop('sharex', True)
+        sharey = subplots_kwargs.pop('sharey', True)
+        fig,axes = plt.subplots(1, 3, figsize=figsize,
+                                sharex=sharex,sharey=sharey,**subplots_kwargs)
 
     if ix is not None:
         ixs = np.atleast_1d(ix)
