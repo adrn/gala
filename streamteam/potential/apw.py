@@ -25,8 +25,9 @@ class PW14Potential(CompositePotential):
     def __init__(self, m_disk=6.5E10, a=6.5, b=0.26,
                  m_spher=1.5E10, c=0.7,
                  q1=1.4, q2=1., q3=0.6,
-                 v_h=0.376391758029, r_h=40.):
+                 v_h=0.57649379854, r_h=20.):
 
+        # Choice of r_h comes from c ~ 10 for MW, and R_vir ~ 200 kpc
         # Choice of v_h sets circular velocity at Sun to 220 km/s
         usys = (u.kpc, u.M_sun, u.Myr, u.radian)
         self.usys = usys
