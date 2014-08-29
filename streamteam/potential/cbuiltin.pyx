@@ -10,6 +10,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 from collections import OrderedDict
 
 # Third-party
+from astropy.coordinates.angles import rotation_matrix
 from astropy.constants import G
 import astropy.units as u
 import numpy as np
@@ -261,8 +262,10 @@ cdef class _LeeSutoNFWPotential(_CPotential):
     # here need to cdef all the attributes
     cdef public double v_h, r_h, a, b, c, e_b2, e_c2
     cdef public double v_h2, r_h2, a2, b2, c2, x0
+    cdef public double[:,::1] R
 
-    def __init__(self, double v_h, double r_h, double a, double b, double c):
+    def __init__(self, double v_h, double r_h, double a, double b, double c,
+                 double[:,::1] R):
         """ Units of everything should be in the system:
                 kpc, Myr, radian, M_sun
         """
@@ -282,6 +285,7 @@ cdef class _LeeSutoNFWPotential(_CPotential):
         self.e_c2 = 1-pow(c/a,2)
 
         self.x0 = 1/r_h
+        self.R = R
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
@@ -290,11 +294,15 @@ cdef class _LeeSutoNFWPotential(_CPotential):
     cdef public inline void _value(self, double[:,::1] r,
                                    double[::1] pot, int nparticles):
 
-        cdef double x, y, z, _r, u
+        cdef double x, y, z, _r, u, _x, _y, _z
         for i in range(nparticles):
-            x = r[i,0]
-            y = r[i,1]
-            z = r[i,2]
+            _x = r[i,0]
+            _y = r[i,1]
+            _z = r[i,2]
+
+            x = self.R[0,0]*_x + self.R[0,1]*_y + self.R[0,2]*_z
+            y = self.R[1,0]*_x + self.R[1,1]*_y + self.R[1,2]*_z
+            z = self.R[2,0]*_x + self.R[2,1]*_y + self.R[2,2]*_z
 
             _r = sqrt(x*x + y*y + z*z)
             u = _r / self.r_h
@@ -308,15 +316,20 @@ cdef class _LeeSutoNFWPotential(_CPotential):
                                       double[:,::1] grad, int nparticles):
 
         cdef:
-            double x, y, z, _r, _r2
+            double x, y, z, _r, _r2, _x, _y, _z
             double x0, x1, x2, x7
             double x10, x11, x13, x15, x16, x17, x18
             double x20, x21, x22
 
         for i in range(nparticles):
-            x = r[i,0]
-            y = r[i,1]
-            z = r[i,2]
+            _x = r[i,0]
+            _y = r[i,1]
+            _z = r[i,2]
+
+            x = self.R[0,0]*_x + self.R[0,1]*_y + self.R[0,2]*_z
+            y = self.R[1,0]*_x + self.R[1,1]*_y + self.R[1,2]*_z
+            z = self.R[2,0]*_x + self.R[2,1]*_y + self.R[2,2]*_z
+
             _r2 = x*x + y*y + z*z
             _r = sqrt(_r2)
 
@@ -349,14 +362,36 @@ class LeeSutoNFWPotential(CPotential, CartesianPotential):
 
     Parameters
     ----------
-    TODO
+    phi : numeric (optional)
+        Euler angle for rotation about z-axis (using the x-convention
+        from Goldstein). Allows for specifying a misalignment between
+        the halo and disk potentials.
+    theta : numeric (optional)
+        Euler angle for rotation about x'-axis (using the x-convention
+        from Goldstein). Allows for specifying a misalignment between
+        the halo and disk potentials.
+    psi : numeric (optional)
+        Euler angle for rotation about z'-axis (using the x-convention
+        from Goldstein). Allows for specifying a misalignment between
+        the halo and disk potentials.
     usys : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_h, r_h, a, b, c, usys=None):
+    def __init__(self, v_h, r_h, a, b, c, phi=0., theta=0., psi=0., usys=None):
         self.usys = usys
         parameters = dict(v_h=v_h, r_h=r_h, a=a, b=b, c=c)
+
+        if theta != 0 or phi != 0 or psi != 0:
+            D = rotation_matrix(phi, "z", unit=u.radian)
+            C = rotation_matrix(theta, "x", unit=u.radian)
+            B = rotation_matrix(psi, "z", unit=u.radian)
+            R = np.array(B.dot(C).dot(D))
+
+        else:
+            R = np.eye(3)
+
+        parameters['R'] = R
         super(LeeSutoNFWPotential, self).__init__(_LeeSutoNFWPotential,
                                                   parameters=parameters)
