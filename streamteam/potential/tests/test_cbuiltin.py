@@ -41,7 +41,7 @@ niter = 1000
 nparticles = 1000
 
 class PotentialTestBase(object):
-
+    name = None
     def test_method_call(self):
         # single
         r = [[1.,0.,0.]]
@@ -90,8 +90,11 @@ class PotentialTestBase(object):
 
     def test_plot_contours(self):
 
+        if self.name is None:
+            self.name = self.potential.__class__.__name__
+
         # test plotting a grid
-        grid = np.linspace(-20.,20, 200)
+        grid = np.linspace(-50.,50, 200)
 
         fig,axes = plt.subplots(1,1)
 
@@ -100,7 +103,7 @@ class PotentialTestBase(object):
                                                 subplots_kw=dict(figsize=(8,8)))
         print("Cython plot_contours time", time.time() - t1)
         fig.savefig(os.path.join(plot_path, "{}_2d_cy.png"\
-                        .format(self.potential.__class__.__name__)))
+                        .format(self.name)))
 
         if self.pypotential is not None:
             t1 = time.time()
@@ -108,7 +111,7 @@ class PotentialTestBase(object):
                                                       subplots_kw=dict(figsize=(8,8)))
             print("Python plot_contours time", time.time() - t1)
             fig.savefig(os.path.join(plot_path, "{}_2d_py.png"\
-                         .format(self.pypotential.__class__.__name__)))
+                         .format(self.name)))
 
 class TestHernquist(PotentialTestBase):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
@@ -146,3 +149,17 @@ class TestLeeSutoNFWPotential(PotentialTestBase):
 
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
+class TestMisalignedLeeSutoNFWPotential(PotentialTestBase):
+    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    def setup(self):
+        print()
+        self.name = "MisalignedLeeSutoNFWPotential"
+        self.potential = LeeSutoNFWPotential(usys=self.usys,
+                                             v_h=0.35, r_h=12.,
+                                             a=1.4, b=1., c=0.6,
+                                             phi=np.radians(30.),
+                                             theta=np.radians(30))
+
+        self.pypotential = None
+
+        self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
