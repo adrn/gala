@@ -25,7 +25,8 @@ class PW14Potential(CompositePotential):
     def __init__(self, m_disk=6.5E10, a=6.5, b=0.26,
                  m_spher=1.5E10, c=0.7,
                  q1=1.4, q2=1., q3=0.6,
-                 v_h=0.57649379854, r_h=20.):
+                 v_h=0.57649379854, r_h=20.,
+                 phi=0., theta=0., psi=0.):
 
         # Choice of r_h comes from c ~ 10 for MW, and R_vir ~ 200 kpc
         # Choice of v_h sets circular velocity at Sun to 220 km/s
@@ -41,5 +42,6 @@ class PW14Potential(CompositePotential):
 
         kwargs["halo"] = LeeSutoNFWPotential(usys=usys,
                                              a=q1, b=q2, c=q3,
-                                             v_h=v_h, r_h=r_h)
+                                             v_h=v_h, r_h=r_h,
+                                             phi=phi, theta=theta, psi=psi)
         super(PW14Potential,self).__init__(**kwargs)
