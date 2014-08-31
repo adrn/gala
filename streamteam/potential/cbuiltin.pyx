@@ -262,7 +262,7 @@ cdef class _LeeSutoNFWPotential(_CPotential):
     # here need to cdef all the attributes
     cdef public double v_h, r_h, a, b, c, e_b2, e_c2
     cdef public double v_h2, r_h2, a2, b2, c2, x0
-    cdef public double[:,::1] R
+    cdef public double[:,::1] R, Rinv
 
     def __init__(self, double v_h, double r_h, double a, double b, double c,
                  double[:,::1] R):
@@ -286,6 +286,7 @@ cdef class _LeeSutoNFWPotential(_CPotential):
 
         self.x0 = 1/r_h
         self.R = R
+        self.Rinv = np.linalg.inv(R)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
@@ -316,7 +317,7 @@ cdef class _LeeSutoNFWPotential(_CPotential):
                                       double[:,::1] grad, int nparticles):
 
         cdef:
-            double x, y, z, _r, _r2, _x, _y, _z
+            double x, y, z, _r, _r2, _x, _y, _z, ax, ay, az
             double x0, x1, x2, x7
             double x10, x11, x13, x15, x16, x17, x18
             double x20, x21, x22
@@ -348,9 +349,15 @@ cdef class _LeeSutoNFWPotential(_CPotential):
             x21 = 2.*_r*x0
             x22 = -12.*pow(_r,5)*self.r_h*x0 + 12.*pow(_r,4)*self.r_h*x18 + 3.*self.r_h*x7*(x16*_r2 - 18.*x18*self.r_h2 + x20*(2.*_r - 3.*self.r_h) + x21*(x15 + 9.*self.r_h2)) - x20*(self.e_b2 + self.e_c2)*(-6.*_r*self.r_h*(_r2 - self.r_h2) + 6.*self.r_h*x11*(_r2 - 3.*self.r_h2) + x20*(-4.*_r + 3.*self.r_h) + x21*(-x13 + 2.*_r2 + 6.*self.r_h2))
 
-            grad[i,0] = x2*x*(x17*x7 + x22)
-            grad[i,1] = x2*y*(x17*(x7 - _r2*self.e_b2) + x22)
-            grad[i,2] = x2*z*(x17*(x7 - _r2*self.e_c2) + x22)
+            ax = x2*x*(x17*x7 + x22)
+            ay = x2*y*(x17*(x7 - _r2*self.e_b2) + x22)
+            az = x2*z*(x17*(x7 - _r2*self.e_c2) + x22)
+
+            grad[i,0] = self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
+            grad[i,1] = self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
+            grad[i,2] = self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
+
+
 
 class LeeSutoNFWPotential(CPotential, CartesianPotential):
     r"""
