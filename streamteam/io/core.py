@@ -17,6 +17,8 @@ import numpy as np
 # Create logger
 logger = logging.getLogger(__name__)
 
+__all__ = ['NBodyReader', 'tbl_to_w']
+
 class NBodyReader(object):
     __metaclass__ = abc.ABCMeta
 
@@ -47,3 +49,9 @@ class NBodyReader(object):
         self.path = path
         self.sim_units = self._read_units()
         self.nparticles = None
+
+def tbl_to_w(tbl):
+    """ TODO: """
+    w = np.asarray(tbl['x','y','z','vx','vy','vz'])
+    w = w.view('float64').reshape(len(tbl),1,6)
+    return w
