@@ -51,6 +51,7 @@ def main(snap_path, plot_cen=False, bound=None):
     ttext = "Time: {:05.2f} Gyr, Percent bound: {:04.1f}"\
                 .format(tbl.meta['time']/1000., pct_bound)
     fig.suptitle(ttext, fontsize=20)
+    fig.tight_layout()
     plt.show()
 
 if __name__ == '__main__':

@@ -71,7 +71,7 @@ def main(path, plot_cen=False, bound=None, output="orbit.mp4", interval=50):
         bound = R.max()*1.1
 
     if plot_cen:
-        faxes[0].plot(cen_w[...,0], cen_w[...,1], marker=None,
+        axes[0].plot(cen_w[...,0], cen_w[...,1], marker=None,
                      linestyle='-', zorder=-100, color='#2b8cbe')
         axes[1].plot(cen_w[...,0], cen_w[...,2], marker=None,
                      linestyle='-', zorder=-100, color='#2b8cbe')
