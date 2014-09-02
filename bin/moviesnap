@@ -88,6 +88,8 @@ def main(path, plot_cen=False, bound=None, output="orbit.mp4", interval=50):
     axes[0].set_xlim(-bound,bound)
     axes[0].set_ylim(-bound,bound)
 
+    fig.tight_layout()
+
     title = fig.suptitle("")
     anim = FuncAnimation(fig, anim_update, len(snapfiles),
                          fargs=(scf, snapfiles, lines, title),
