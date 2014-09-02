@@ -47,7 +47,7 @@ def anim_update(num, scf, snapfiles, lines, title):
     lines[2].set_data(data)
     return lines
 
-def main(path, plot_cen=False, bound=None, output="orbit.mp4"):
+def main(path, plot_cen=False, bound=None, output="orbit.mp4", interval=50):
     scf = sio.SCFReader(path)
 
     # get list of all SNAP files, excluding png's if there are any
@@ -89,7 +89,7 @@ def main(path, plot_cen=False, bound=None, output="orbit.mp4"):
     title = fig.suptitle("")
     anim = FuncAnimation(fig, anim_update, len(snapfiles),
                          fargs=(scf, snapfiles, lines, title),
-                         interval=50, blit=True)
+                         interval=interval, blit=True)
 
     anim.save(os.path.join(path, output), bitrate=2048)
 
@@ -112,6 +112,8 @@ if __name__ == '__main__':
                         help="Bounding distance.")
     parser.add_argument("-o", "--output", dest="output", default="orbit.mp4",
                         type=str, help="Output file.")
+    parser.add_argument("-i", "--interval", dest="interval", default=50,
+                        type=int, help="Interval between frames (in ms).")
 
     args = parser.parse_args()
 
@@ -123,4 +125,5 @@ if __name__ == '__main__':
     else:
         logger.setLevel(logging.INFO)
 
-    main(args.snap_path, args.plot_cen, bound=args.bound, output=args.output)
+    main(args.snap_path, args.plot_cen, bound=args.bound, output=args.output,
+         interval=args.interval)
