@@ -11,24 +11,60 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import os, sys
 
 # Third-party
-import numpy as np
 from astropy import log as logger
 import astropy.units as u
+import matplotlib.pyplot as plt
+import numpy as np
 
 # Project
 import streamteam.dynamics as sd
 import streamteam.io as sio
 from streamteam.units import galactic
 
-def main(snap_path):
+def main(snap_path, plot_cen=False):
     path,snap_file = os.path.split(snap_path)
 
     scf = sio.SCFReader(path)
     tbl = scf.read_snap(snap_file, units=galactic)
-    w = sio.tbl_to_w
+    w = sio.tbl_to_w(tbl)
 
     fig = sd.plot_orbits(w, marker='.', linestyle='none', alpha=0.1)
+    if plot_cen:
+        cen_w = sio.tbl_to_w(scf.read_cen(galactic))
+        fig.axes[0].plot(cen_w[...,0], cen_w[...,1], marker=None)
+        fig.axes[1].plot(cen_w[...,0], cen_w[...,2], marker=None)
+        fig.axes[2].plot(cen_w[...,1], cen_w[...,2], marker=None)
+
+    pct_bound = sum(tbl['tub'] == 0) / float(len(w))*100
+    ttext = "Time: {:05.2f} Gyr, Percent bound: {:04.1f}"\
+                .format(tbl.meta['time']/1000., pct_bound)
+    fig.suptitle(ttext, fontsize=20)
     plt.show()
 
 if __name__ == '__main__':
-    main(str(sys.argv[1]))
+    from argparse import ArgumentParser
+    import logging
+
+    # Define parser object
+    parser = ArgumentParser(description="")
+    parser.add_argument("-v", "--verbose", action="store_true", dest="verbose",
+                        default=False, help="Be chatty! (default = False)")
+    parser.add_argument("-q", "--quiet", action="store_true", dest="quiet",
+                        default=False, help="Be quiet! (default = False)")
+
+    parser.add_argument("-p", "--path", dest="snap_path", required=True,
+                        type=str, help="Path to SNAP file.")
+    parser.add_argument("--cen", dest="plot_cen", action="store_true",
+                        default=False, help="Plot SCFCEN orbit.")
+
+    args = parser.parse_args()
+
+    # Set logger level based on verbose flags
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+    elif args.quiet:
+        logger.setLevel(logging.ERROR)
+    else:
+        logger.setLevel(logging.INFO)
+
+    main(args.snap_path, args.plot_cen)
