@@ -30,7 +30,11 @@ def anim_update(num, scf, snapfiles, lines, title):
     tbl = scf.read_snap(snapfile, units=galactic)
     w = sio.tbl_to_w(tbl)
 
-    pct_bound = sum(tbl['tub'] == 0) / float(len(w))
+    try:
+        pct_bound = sum(tbl['tub'] == 0) / float(len(w))*100.
+    except KeyError:
+        pct_bound = 0.
+
     ttext = "Time: {:05.2f} Gyr, Percent bound: {:04.1f}"\
             .format(tbl.meta['time']/1000., pct_bound)
     title.set_text(ttext)
@@ -57,7 +61,8 @@ def main(path, plot_cen=False, bound=None, output="orbit.mp4"):
     l2, = axes[2].plot([], [], **style)
     lines = [l0,l1,l2]
 
-    cen_w = sio.tbl_to_w(scf.read_cen(galactic))
+    if bound is None or plot_cen:
+        cen_w = sio.tbl_to_w(scf.read_cen(galactic))
 
     if bound is None:
         R = np.sqrt(np.sum(cen_w[...,:3]**2, axis=-1))
