@@ -27,7 +27,9 @@ def main(snap_path, plot_cen=False, bound=None):
     scf = sio.SCFReader(path)
     tbl = scf.read_snap(snap_file, units=galactic)
     w = sio.tbl_to_w(tbl)
-    cen_w = sio.tbl_to_w(scf.read_cen(galactic))
+
+    if bound is None or plot_cen:
+        cen_w = sio.tbl_to_w(scf.read_cen(galactic))
 
     if bound is None:
         R = np.sqrt(np.sum(cen_w[...,:3]**2, axis=-1))
@@ -42,7 +44,10 @@ def main(snap_path, plot_cen=False, bound=None):
     fig.axes[0].set_xlim(-bound, bound)
     fig.axes[0].set_ylim(-bound, bound)
 
-    pct_bound = sum(tbl['tub'] == 0) / float(len(w))*100
+    try:
+        pct_bound = sum(tbl['tub'] == 0) / float(len(w))*100.
+    except KeyError:
+        pct_bound = 0.
     ttext = "Time: {:05.2f} Gyr, Percent bound: {:04.1f}"\
                 .format(tbl.meta['time']/1000., pct_bound)
     fig.suptitle(ttext, fontsize=20)
