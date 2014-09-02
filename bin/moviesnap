@@ -43,7 +43,7 @@ def anim_update(num, scf, snapfiles, lines, title):
     lines[2].set_data(data)
     return lines
 
-def main(path, plot_cen=False, bound=100., output="orbit.mp4"):
+def main(path, plot_cen=False, bound=None, output="orbit.mp4"):
     scf = sio.SCFReader(path)
 
     # get list of all SNAP files, excluding png's if there are any
@@ -57,8 +57,13 @@ def main(path, plot_cen=False, bound=100., output="orbit.mp4"):
     l2, = axes[2].plot([], [], **style)
     lines = [l0,l1,l2]
 
+    cen_w = sio.tbl_to_w(scf.read_cen(galactic))
+
+    if bound is None:
+        R = np.sqrt(np.sum(cen_w[...,:3]**2, axis=-1))
+        bound = R.max()*1.1
+
     if plot_cen:
-        cen_w = sio.tbl_to_w(scf.read_cen(galactic))
         faxes[0].plot(cen_w[...,0], cen_w[...,1], marker=None,
                      linestyle='-', zorder=-100, color='#2b8cbe')
         axes[1].plot(cen_w[...,0], cen_w[...,2], marker=None,
@@ -98,7 +103,7 @@ if __name__ == '__main__':
                         type=str, help="Path to SNAP files.")
     parser.add_argument("--cen", dest="plot_cen", action="store_true",
                         default=False, help="Plot SCFCEN orbit.")
-    parser.add_argument("--bound", dest="bound", type=float, default=100.,
+    parser.add_argument("--bound", dest="bound", type=float, default=None,
                         help="Bounding distance.")
     parser.add_argument("-o", "--output", dest="output", default="orbit.mp4",
                         type=str, help="Output file.")
