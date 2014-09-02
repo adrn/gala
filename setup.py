@@ -37,4 +37,5 @@ setup(
               "streamteam.observation", "streamteam.integrate",
               "streamteam.dynamics", "streamteam.inference",
               "streamteam.potential"],
+    scripts=['bin/plotsnap', 'bin/moviesnap']
 )
