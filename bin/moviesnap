@@ -9,6 +9,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 import os, sys
+import glob
 
 # Third-party
 from astropy import log as logger
@@ -26,13 +27,13 @@ from streamteam.units import galactic
 
 def anim_update(num, scf, snapfiles, lines, title):
     snapfile = os.path.split(snapfiles[num])[1]
-    tbl = scf.read_snap(snapfile, units=usys)
-    w = tbl_to_w(tbl)
+    tbl = scf.read_snap(snapfile, units=galactic)
+    w = sio.tbl_to_w(tbl)
 
     pct_bound = sum(tbl['tub'] == 0) / float(len(w))
     ttext = "Time: {:05.2f} Gyr, Percent bound: {:04.1f}"\
             .format(tbl.meta['time']/1000., pct_bound)
-    title.set_text()
+    title.set_text(ttext)
 
     data = w[:,0,:2].T.copy()
     lines[0].set_data(data)
@@ -42,9 +43,7 @@ def anim_update(num, scf, snapfiles, lines, title):
     lines[2].set_data(data)
     return lines
 
-def main(snap_path, plot_cen=False, bound=100., output="orbit.mp4"):
-    path,snap_file = os.path.split(snap_path)
-
+def main(path, plot_cen=False, bound=100., output="orbit.mp4"):
     scf = sio.SCFReader(path)
 
     # get list of all SNAP files, excluding png's if there are any
@@ -96,10 +95,10 @@ if __name__ == '__main__':
                         default=False, help="Be quiet! (default = False)")
 
     parser.add_argument("-p", "--path", dest="snap_path", required=True,
-                        type=str, help="Path to SNAP file.")
+                        type=str, help="Path to SNAP files.")
     parser.add_argument("--cen", dest="plot_cen", action="store_true",
                         default=False, help="Plot SCFCEN orbit.")
-    parser.add_argument("--bound", dest="bound", type=float,
+    parser.add_argument("--bound", dest="bound", type=float, default=100.,
                         help="Bounding distance.")
     parser.add_argument("-o", "--output", dest="output", default="orbit.mp4",
                         type=str, help="Output file.")
