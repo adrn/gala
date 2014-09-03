@@ -19,7 +19,7 @@ import astropy.units as u
 # Project
 from ...integrate import LeapfrogIntegrator
 from ...potential import LogarithmicPotential
-from ...potential import NFWPotential
+from ...potential import NFWPotential, IsochronePotential
 from ...potential.lm10 import LM10Potential
 from ..actionangle import *
 from ..core import *
@@ -251,6 +251,16 @@ class TestLoopActions(object):
         assert np.allclose(actions, s_actions, rtol=1E-2)
         assert np.allclose(angles, s_angles, rtol=1E-2)
         assert np.allclose(freqs, s_freqs, rtol=1E-2)
+
+    def test_given_toy(self):
+        t,w = self.integrator.run(self.loop_w0, dt=0.5, nsteps=20000)
+
+        m,b = fit_isochrone(w, usys=self.usys)
+        toy_potential = IsochronePotential(m=m, b=b, usys=self.usys)
+
+        N_max = 6
+        actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, usys=self.usys,
+                                            toy_potential=toy_potential)
 
     def test_cross_validate(self):
         N_max = 6
