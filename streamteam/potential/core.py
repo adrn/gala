@@ -21,7 +21,7 @@ from astropy.utils import isiterable
 # Project
 from ..integrate import *
 
-__all__ = ["Potential", "CartesianPotential", "CompositePotential"]
+__all__ = ["Potential", "CartesianPotential", "CompositePotential", "CartesianCompositePotential"]
 
 class Potential(object):
     """
@@ -363,3 +363,6 @@ class CompositePotential(dict, Potential):
             Position to compute the Hessian.
         """
         return np.array([p.hessian(x) for p in self.values()]).sum(axis=0)
+
+class CartesianCompositePotential(CompositePotential, CartesianPotential):
+    pass
