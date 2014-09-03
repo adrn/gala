@@ -383,10 +383,6 @@ def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=F
             toy_potential = IsochronePotential(m=m, b=b, usys=usys)
             logger.debug("Best m={}, b={}".format(m, b))
 
-            dxyz = (1,2,2)
-            circ = np.sign(w[0,0]*w[0,4]-w[0,1]*w[0,3])
-            sign = np.array([1.,circ,1.])
-
         else: # box orbit
             logger.debug("===== Box orbit =====")
             logger.debug("Using triaxial harmonic oscillator toy potential")
@@ -395,11 +391,18 @@ def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=F
             toy_potential = HarmonicOscillatorPotential(omega=omega)
             logger.debug("Best omegas ({})".format(omega))
 
-            dxyz = (2,2,2)
-            sign = 1.
-
     else:
         logger.debug("Using *fixed* toy potential: {}".format(toy_potential.parameters))
+
+    if isinstance(toy_potential, IsochronePotential):
+        dxyz = (1,2,2)
+        circ = np.sign(w[0,0]*w[0,4]-w[0,1]*w[0,3])
+        sign = np.array([1.,circ,1.])
+    elif isinstance(toy_potential, HarmonicOscillatorPotential):
+        dxyz = (2,2,2)
+        sign = 1.
+    else:
+        raise ValueError("Invalid toy potential.")
 
     # Now find toy actions and angles
     aa = np.hstack(toy_potential.action_angle(w[...,:3], w[...,3:]))
