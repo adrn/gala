@@ -398,6 +398,9 @@ def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=F
             dxyz = (2,2,2)
             sign = 1.
 
+    else:
+        logger.debug("Using *fixed* toy potential: {}".format(toy_potential.parameters))
+
     # Now find toy actions and angles
     aa = np.hstack(toy_potential.action_angle(w[...,:3], w[...,3:]))
     if np.any(np.isnan(aa)):
