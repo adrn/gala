@@ -62,7 +62,7 @@ def plot_orbits(x, ix=None, axes=None, triangle=False, subplots_kwargs=dict(), *
             axes = [axes[0],axes[2],axes[3]]
 
     elif not triangle and axes is None:
-        figsize = subplots_kwargs.pop('figsize', (12,5))
+        figsize = subplots_kwargs.pop('figsize', (14,5))
         sharex = subplots_kwargs.pop('sharex', True)
         sharey = subplots_kwargs.pop('sharey', True)
         fig,axes = plt.subplots(1, 3, figsize=figsize,
