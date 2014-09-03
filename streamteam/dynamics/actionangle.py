@@ -340,7 +340,8 @@ def fit_harmonic_oscillator(w, usys, omega=[1.,1.,1.]):
     best_omega = np.abs(p)
     return best_omega
 
-def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=False):
+def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=False,
+                 toy_potential=None):
     """
     Find approximate actions and angles for samples of a phase-space orbit,
     `w`, at times `t`. Uses toy potentials with known, analytic action-angle
@@ -365,37 +366,40 @@ def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=F
         Return the Sn and dSn/dJ's. Default is False.
     force_harmonic_oscillator : bool (optional)
         Force using the harmonic oscillator potential as the toy potential.
+    toy_potential : Potential (optional)
+        Fix the toy potential class.
     """
 
     if w.ndim > 2:
         raise ValueError("w must be a single orbit")
 
     orbit_class = classify_orbit(w)
-    if np.any(orbit_class == 1) and not force_harmonic_oscillator: # loop orbit
-        logger.debug("===== Loop orbit =====")
-        logger.debug("Using isochrone toy potential")
+    if toy_potential is None:
+        if np.any(orbit_class == 1) and not force_harmonic_oscillator: # loop orbit
+            logger.debug("===== Loop orbit =====")
+            logger.debug("Using isochrone toy potential")
 
-        m,b = fit_isochrone(w, usys=usys)
-        potential = IsochronePotential(m=m, b=b, usys=usys)
-        logger.debug("Best m={}, b={}".format(m, b))
+            m,b = fit_isochrone(w, usys=usys)
+            toy_potential = IsochronePotential(m=m, b=b, usys=usys)
+            logger.debug("Best m={}, b={}".format(m, b))
 
-        dxyz = (1,2,2)
-        circ = np.sign(w[0,0]*w[0,4]-w[0,1]*w[0,3])
-        sign = np.array([1.,circ,1.])
+            dxyz = (1,2,2)
+            circ = np.sign(w[0,0]*w[0,4]-w[0,1]*w[0,3])
+            sign = np.array([1.,circ,1.])
 
-    else: # box orbit
-        logger.debug("===== Box orbit =====")
-        logger.debug("Using triaxial harmonic oscillator toy potential")
+        else: # box orbit
+            logger.debug("===== Box orbit =====")
+            logger.debug("Using triaxial harmonic oscillator toy potential")
 
-        omega = fit_harmonic_oscillator(w, usys=usys)
-        potential = HarmonicOscillatorPotential(omega=omega)
-        logger.debug("Best omegas ({})".format(omega))
+            omega = fit_harmonic_oscillator(w, usys=usys)
+            toy_potential = HarmonicOscillatorPotential(omega=omega)
+            logger.debug("Best omegas ({})".format(omega))
 
-        dxyz = (2,2,2)
-        sign = 1.
+            dxyz = (2,2,2)
+            sign = 1.
 
     # Now find toy actions and angles
-    aa = np.hstack(potential.action_angle(w[...,:3], w[...,3:]))
+    aa = np.hstack(toy_potential.action_angle(w[...,:3], w[...,3:]))
     if np.any(np.isnan(aa)):
         ix = ~np.any(np.isnan(aa),axis=1)
         aa = aa[ix]
