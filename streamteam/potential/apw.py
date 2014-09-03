@@ -15,12 +15,12 @@ from astropy import log as logger
 import astropy.units as u
 
 # Project
-from .core import CompositePotential
+from .core import CartesianCompositePotential
 from .cbuiltin import HernquistPotential, MiyamotoNagaiPotential, LeeSutoNFWPotential
 
 __all__ = ['PW14Potential']
 
-class PW14Potential(CompositePotential):
+class PW14Potential(CartesianCompositePotential):
 
     def __init__(self, m_disk=6.5E10, a=6.5, b=0.26,
                  m_spher=1.5E10, c=0.7,
