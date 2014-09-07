@@ -391,7 +391,7 @@ class LeeSutoNFWPotential(CPotential, CartesianPotential):
         parameters = dict(v_h=v_h, r_h=r_h, a=a, b=b, c=c)
 
         if theta != 0 or phi != 0 or psi != 0:
-            D = rotation_matrix(phi, "z", unit=u.radian)
+            D = rotation_matrix(phi, "z", unit=u.radian) # TODO: Bad assuming radians
             C = rotation_matrix(theta, "x", unit=u.radian)
             B = rotation_matrix(psi, "z", unit=u.radian)
             R = np.array(B.dot(C).dot(D))
