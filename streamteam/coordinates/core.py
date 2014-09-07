@@ -6,9 +6,6 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os, sys
-
 # Third-party
 import numpy as np
 from numpy import cos, sin
@@ -24,6 +21,7 @@ __all__ = ["vgsr_to_vhel", "vhel_to_vgsr",
 default_vcirc = 220.*u.km/u.s
 default_vlsr = [10., 5.25, 7.17]*u.km/u.s
 default_xsun = -8.*u.kpc
+
 
 def vgsr_to_vhel(coords, vgsr, vcirc=default_vcirc, vlsr=default_vlsr):
     """ Convert a radial velocity in the Galactic standard of rest (GSR) to
@@ -56,11 +54,12 @@ def vgsr_to_vhel(coords, vgsr, vcirc=default_vcirc, vlsr=default_vlsr):
 
     # velocity correction for Sun relative to LSR
     v_correct = vlsr[0]*cos(b)*cos(l) + \
-                vlsr[1]*cos(b)*sin(l) + \
-                vlsr[2]*sin(b)
+        vlsr[1]*cos(b)*sin(l) + \
+        vlsr[2]*sin(b)
     vhel = lsr - v_correct
 
     return vhel
+
 
 def vhel_to_vgsr(coords, vhel, vcirc=default_vcirc, vlsr=default_vlsr):
     """ Convert a velocity from a heliocentric radial velocity to
@@ -92,11 +91,12 @@ def vhel_to_vgsr(coords, vhel, vcirc=default_vcirc, vlsr=default_vlsr):
 
     # velocity correction for Sun relative to LSR
     v_correct = vlsr[0]*cos(b)*cos(l) + \
-                vlsr[1]*cos(b)*sin(l) + \
-                vlsr[2]*sin(b)
+        vlsr[1]*cos(b)*sin(l) + \
+        vlsr[2]*sin(b)
     vgsr = lsr + v_correct
 
     return vgsr
+
 
 def gal_xyz_to_hel(X, V=None,
                    vcirc=default_vcirc, vlsr=default_vlsr, xsun=default_xsun):
@@ -124,12 +124,12 @@ def gal_xyz_to_hel(X, V=None,
     try:
         x,y,z = X
     except ValueError:
-        if len(r.shape) > 1 and r.shape[0] > r.shape[1]:
+        if len(X.shape) > 1 and X.shape[0] > X.shape[1]:
             raise ValueError("Could not unpack positions -- the shape looks"
                              " transposed. Should have shape (3,N).")
         else:
             raise ValueError("Failed to unpack positions with shape {}."
-                             " Should have shape (3,N).".format(r.shape))
+                             " Should have shape (3,N).".format(X.shape))
 
     # transform to heliocentric cartesian
     x = x - xsun
