@@ -6,9 +6,6 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os, sys
-
 # Third-party
 import numpy as np
 
@@ -17,6 +14,7 @@ from .core import Integrator
 from .timespec import _parse_time_specification
 
 __all__ = ["LeapfrogIntegrator"]
+
 
 class LeapfrogIntegrator(Integrator):
     r"""
@@ -90,8 +88,8 @@ class LeapfrogIntegrator(Integrator):
     def __init__(self, acceleration_func, func_args=()):
         if not hasattr(acceleration_func, '__call__'):
             raise ValueError("acceleration_func must be a callable object, "
-                        "e.g. a function, that evaluates the acceleration "
-                        "at a given position.")
+                             "e.g. a function, that evaluates the acceleration "
+                             "at a given position.")
 
         self.acceleration = acceleration_func
         self._func_args = func_args
@@ -106,11 +104,11 @@ class LeapfrogIntegrator(Integrator):
             The timestep to move forward.
         """
 
-        x_i = x_im1 + v_im1_2*dt
+        x_i = x_im1 + v_im1_2 * dt
         a_i = self.acceleration(t, x_i, *self._func_args)
 
-        v_i = v_im1_2 + a_i*dt/2
-        v_ip1_2 = v_i + a_i*dt/2
+        v_i = v_im1_2 + a_i * dt / 2
+        v_ip1_2 = v_i + a_i * dt / 2
 
         return x_i, v_i, v_ip1_2
 
@@ -179,20 +177,20 @@ class LeapfrogIntegrator(Integrator):
         w0 = np.atleast_2d(w0)
         nparticles, ndim = w0.shape
 
-        if ndim%2 != 0:
+        if ndim % 2 != 0:
             raise ValueError("Dimensionality must be even.")
 
         # dimensionality of positions,velocities
         self.ndim = ndim
-        self.ndim_xv = self.ndim//2
+        self.ndim_xv = self.ndim // 2
 
         x0 = w0[...,:self.ndim_xv]
         v0 = w0[...,self.ndim_xv:]
 
         # generate the array of times
         times = _parse_time_specification(**time_spec)
-        nsteps = len(times)-1
-        _dt = times[1]-times[0]
+        nsteps = len(times) - 1
+        _dt = times[1] - times[0]
 
         if _dt < 0.:
             v0 *= -1.
