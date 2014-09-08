@@ -6,12 +6,7 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os, sys
-
 # Third-party
-import numpy as np
-from astropy import log as logger
 import astropy.units as u
 
 # Project
@@ -19,6 +14,7 @@ from .core import CartesianCompositePotential
 from .cbuiltin import HernquistPotential, MiyamotoNagaiPotential, LeeSutoNFWPotential
 
 __all__ = ['PW14Potential']
+
 
 class PW14Potential(CartesianCompositePotential):
 
