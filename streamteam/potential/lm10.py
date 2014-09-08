@@ -6,21 +6,18 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os, sys
-
 # Third-party
 import numpy as np
-from astropy import log as logger
 import astropy.units as u
 
 # Project
-from .core import CompositePotential
-from .builtin import *
+from .core import CartesianCompositePotential
+from .cbuiltin import HernquistPotential, MiyamotoNagaiPotential, LogarithmicPotential
 
 __all__ = ['LM10Potential']
 
-class LM10Potential(CompositePotential):
+
+class LM10Potential(CartesianCompositePotential):
 
     def __init__(self, m_disk=1E11, a=6.5, b=0.26,
                  m_spher=3.4E10, c=0.7,
