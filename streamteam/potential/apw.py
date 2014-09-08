@@ -19,9 +19,9 @@ __all__ = ['PW14Potential']
 class PW14Potential(CartesianCompositePotential):
 
     def __init__(self, m_disk=6.5E10, a=6.5, b=0.26,
-                 m_spher=1.5E10, c=0.7,
+                 m_spher=2E10, c=0.3,
                  q1=1.4, q2=1., q3=0.6,
-                 v_h=0.57649379854, r_h=20.,
+                 v_h=0.562, r_h=30.,
                  phi=0., theta=0., psi=0.):
 
         # Choice of r_h comes from c ~ 10 for MW, and R_vir ~ 200 kpc
