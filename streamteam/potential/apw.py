@@ -8,6 +8,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
 import astropy.units as u
+import numpy as np
 
 # Project
 from .core import CartesianCompositePotential
@@ -22,9 +23,8 @@ class PW14Potential(CartesianCompositePotential):
                  m_spher=2E10, c=0.3,
                  q1=1.4, q2=1., q3=0.6,
                  v_h=0.562, r_h=30.,
-                 phi=0., theta=0., psi=0.):
+                 phi=np.pi/2., theta=np.pi/2., psi=np.pi/2.):
 
-        # Choice of r_h comes from c ~ 10 for MW, and R_vir ~ 200 kpc
         # Choice of v_h sets circular velocity at Sun to 220 km/s
         usys = (u.kpc, u.M_sun, u.Myr, u.radian)
         self.usys = usys
