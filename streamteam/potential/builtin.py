@@ -5,22 +5,18 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os, sys
-import uuid
 import math
 
 # Third-party
 import numpy as np
-import astropy.units as u
 from astropy.constants import G
-import scipy.optimize as so
 
-from .core import Potential, CartesianPotential, CompositePotential
+from .core import Potential, CartesianPotential
 from ..coordinates import cartesian_to_spherical, spherical_to_cartesian
 
-__all__ = ["PointMassPotential", "MiyamotoNagaiPotential",\
-           "HernquistPotential", "LogarithmicPotential",\
-           "IsochronePotential", "NFWPotential",\
+__all__ = ["PointMassPotential", "MiyamotoNagaiPotential",
+           "HernquistPotential", "LogarithmicPotential",
+           "IsochronePotential", "NFWPotential",
            "HarmonicOscillatorPotential"]
 
 ############################################################

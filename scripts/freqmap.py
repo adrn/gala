@@ -7,7 +7,7 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os, sys
+import os
 
 # Third-party
 import matplotlib.pyplot as plt
