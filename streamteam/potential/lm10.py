@@ -12,7 +12,8 @@ import astropy.units as u
 
 # Project
 from .core import CartesianCompositePotential
-from .cbuiltin import HernquistPotential, MiyamotoNagaiPotential, LogarithmicPotential
+from .builtin import LogarithmicPotential
+from .cbuiltin import HernquistPotential, MiyamotoNagaiPotential
 
 __all__ = ['LM10Potential']
 
