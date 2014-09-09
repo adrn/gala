@@ -7,7 +7,7 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os, sys
+import sys
 import logging
 import multiprocessing
 
@@ -53,8 +53,8 @@ def get_pool(mpi=False, threads=None):
         logger.debug("Running with MPI...")
 
     elif threads > 1:
-        logger.debug("Running with multiprocessing on {} cores..."\
-                    .format(threads))
+        logger.debug("Running with multiprocessing on {} cores..."
+                     .format(threads))
         pool = multiprocessing.Pool(threads)
 
     else:
@@ -68,7 +68,7 @@ def gram_schmidt(y):
 
     n = y.shape[0]
     if y.shape[1] != n:
-       raise ValueError("Invalid shape: {}".format(y.shape))
+        raise ValueError("Invalid shape: {}".format(y.shape))
     mo = np.zeros(n)
 
     # Main loop
@@ -83,3 +83,20 @@ def gram_schmidt(y):
         y[i] /= mo[i]
 
     return mo
+
+class use_backend(object):
+
+    def __init__(self, backend):
+        import matplotlib.pyplot as plt
+        from IPython.core.interactiveshell import InteractiveShell
+        from IPython.core.pylabtools import backend2gui
+
+        self.shell = InteractiveShell.instance()
+        self.old_backend = backend2gui[str(plt.get_backend())]
+        self.new_backend = backend
+
+    def __enter__(self):
+        gui, backend = self.shell.enable_matplotlib(self.new_backend)
+
+    def __exit__(self, type, value, tb):
+        gui, backend = self.shell.enable_matplotlib(self.old_backend)
