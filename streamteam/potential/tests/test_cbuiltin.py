@@ -98,7 +98,7 @@ class PotentialTestBase(object):
         fig,axes = plt.subplots(1,1)
 
         t1 = time.time()
-        fig,axes = self.potential.plot_contours(grid=(grid,0.,grid),
+        fig,axes = self.potential.plot_contours(grid=(grid,grid,0.),
                                                 subplots_kw=dict(figsize=(8,8)))
         print("Cython plot_contours time", time.time() - t1)
         fig.savefig(os.path.join(plot_path, "{}_2d_cy.png"\
@@ -106,7 +106,7 @@ class PotentialTestBase(object):
 
         if self.pypotential is not None:
             t1 = time.time()
-            fig,axes = self.pypotential.plot_contours(grid=(grid,0.,grid),
+            fig,axes = self.pypotential.plot_contours(grid=(grid,grid,0.),
                                                       subplots_kw=dict(figsize=(8,8)))
             print("Python plot_contours time", time.time() - t1)
             fig.savefig(os.path.join(plot_path, "{}_2d_py.png"\
@@ -180,5 +180,22 @@ class TestLogarithmicPotential(PotentialTestBase):
 
         self.pypotential = PyLogarithmicPotential(v_c=0.17, r_h=10.,
                                                   q1=1.2, q2=1., q3=0.8, phi=0.)
+
+        self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+
+class TestMisalignedLogarithmicPotential(PotentialTestBase):
+    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+
+    def setup(self):
+        print()
+        self.name = "MisalignedLogarithmicPotential"
+        from ..builtin import LogarithmicPotential as PyLogarithmicPotential
+
+        self.potential = LogarithmicPotential(usys=self.usys,
+                                              v_c=0.17, r_h=10.,
+                                              q1=1.2, q2=1., q3=0.8, phi=0.35)
+
+        self.pypotential = PyLogarithmicPotential(v_c=0.17, r_h=10.,
+                                                  q1=1.2, q2=1., q3=0.8, phi=0.35)
 
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
