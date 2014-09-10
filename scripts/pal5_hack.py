@@ -28,6 +28,8 @@ input_path = "/vega/astro/users/amp2217/projects/nonlinear-dynamics/input/pal5"
 output_path = "/vega/astro/users/amp2217/projects/nonlinear-dynamics/output/pal5"
 
 def main():
+    N = 2000
+
     if not os.path.exists(input_path):
         logger.error("Input path doesn't exist: {}".format(input_path))
         sys.exit(1)
@@ -39,7 +41,7 @@ def main():
     x = (d[:,1:4]*u.pc).decompose(galactic).value
     v = (d[:,4:7]*u.km/u.s).decompose(galactic).value
     w0 = np.hstack((x,v))
-    w0 = w0[np.random.randint(len(w0),size=2000)]
+    w0 = w0[np.random.randint(len(w0),size=N)]
 
     potential = LM10Potential()
 
@@ -51,27 +53,31 @@ def main():
         np.save(os.path.join(output_path,"orbits.npy"), w)
     else:
         t = np.load(os.path.join(output_path,"time.npy"))
-        w = np.load(os.path.join(output_path,"orbits.npy"))
+        w = np.load(os.path.join(output_path,"orbits.npy"), mmap_mode='r')
 
     # Make a few orbit plots
     for ix in np.random.randint(len(w0), size=10):
-        fig = sd.plot_orbits(w, ix=ix, alpha=0.01, linestyle='none')
+        ww = w[:,ix]
+        fig = sd.plot_orbits(ww[:,None], alpha=0.01, linestyle='none', marker='.',color='k')
         fig.savefig(os.path.join(output_path, "orbit_{}.png".format(ix)))
 
     # Make energy conservation check plot
+    plt.clf()
     for i in range(100):
-        E = potential.energy(w[...,i,:3], w[...,i,3:])
-        plt.clf()
+        ww = w[:,i]
+        E = potential.energy(ww[:,:3], ww[:,3:])
         plt.semilogy(np.abs(E[1:]-E[0])/E[0], marker=None, alpha=0.25)
-        plt.ylim(1E-16, 1E-2)
-        plt.savefig(os.path.join(output_path, "energy_cons.png"))
+
+    plt.ylim(1E-16, 1E-2)
+    plt.savefig(os.path.join(output_path, "energy_cons.png"))
 
     # Compute actions, etc.
-    freqs = np.empty((w.shape[1],3))
+    freqs = np.empty((N,3))
     angles = np.empty_like(freqs)
     actions = np.empty_like(freqs)
-    for i in range(w.shape[1]):
-        actions[i],angles[i],freqs[i] = sd.find_actions(t[::10], w[::10,i],
+    for i in range(N):
+        ww = w[:,i]
+        actions[i],angles[i],freqs[i] = sd.find_actions(t[::10], ww[::10],
                                                         N_max=6, usys=galactic)
 
     np.save(os.path.join(output_path,"actions.npy"), actions)
