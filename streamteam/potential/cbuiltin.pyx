@@ -284,7 +284,6 @@ cdef class _LeeSutoNFWPotential(_CPotential):
         self.e_b2 = 1-pow(b/a,2)
         self.e_c2 = 1-pow(c/a,2)
 
-        self.x0 = 1/r_h
         self.R = R
         self.Rinv = np.linalg.inv(R)
 
@@ -407,31 +406,27 @@ class LeeSutoNFWPotential(CPotential, CartesianPotential):
 cdef class _LogarithmicPotential(_CPotential):
 
     # here need to cdef all the attributes
-    cdef public double v_h, r_h, a, b, c, e_b2, e_c2
-    cdef public double v_h2, r_h2, a2, b2, c2, x0
+    cdef public double v_c, r_h, q1, q2, q3
+    cdef public double v_c2, r_h2, q1_2, q2_2, q3_2, x0
     cdef public double[:,::1] R, Rinv
 
-    def __init__(self, double v_h, double r_h, double a, double b, double c,
+    def __init__(self, double v_c, double r_h, double q1, double q2, double q3,
                  double[:,::1] R):
         """ Units of everything should be in the system:
                 kpc, Myr, radian, M_sun
         """
 
-        self.v_h = v_h
-        self.v_h2 = v_h*v_h
+        self.v_c = v_c
+        self.v_c2 = v_c*v_c
         self.r_h = r_h
         self.r_h2 = r_h*r_h
-        self.a = a
-        self.a2 = a*a
-        self.b = b
-        self.b2 = b*b
-        self.c = c
-        self.c2 = c*c
+        self.q1 = q1
+        self.q1_2 = q1*q1
+        self.q2 = q2
+        self.q2_2 = q2*q2
+        self.q3 = q3
+        self.q3_2 = q3*q3
 
-        self.e_b2 = 1-pow(b/a,2)
-        self.e_c2 = 1-pow(c/a,2)
-
-        self.x0 = 1/r_h
         self.R = R
         self.Rinv = np.linalg.inv(R)
 
@@ -442,7 +437,7 @@ cdef class _LogarithmicPotential(_CPotential):
     cdef public inline void _value(self, double[:,::1] r,
                                    double[::1] pot, int nparticles):
 
-        cdef double x, y, z, _r, u, _x, _y, _z
+        cdef double x, y, z, _r, _x, _y, _z
         for i in range(nparticles):
             _x = r[i,0]
             _y = r[i,1]
@@ -453,8 +448,7 @@ cdef class _LogarithmicPotential(_CPotential):
             z = self.R[2,0]*_x + self.R[2,1]*_y + self.R[2,2]*_z
 
             _r = sqrt(x*x + y*y + z*z)
-            u = _r / self.r_h
-            pot[i] = self.v_h2*((self.e_b2/2 + self.e_c2/2)*((1/u - 1/u**3)*log(u + 1) - 1 + (2*u**2 - 3*u + 6)/(6*u**2)) + (self.e_b2*y**2/(2*_r*_r) + self.e_c2*z*z/(2*_r*_r))*((u*u - 3*u - 6)/(2*u*u*(u + 1)) + 3*log(u + 1)/u/u/u) - log(u + 1)/u)
+            pot[i] = 0.5*self.v_c2 * log(x*x/self.q1_2 + y*y/self.q2_2 + z*z/self.q3_2 + self.r_h2)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
@@ -481,24 +475,10 @@ cdef class _LogarithmicPotential(_CPotential):
             _r2 = x*x + y*y + z*z
             _r = sqrt(_r2)
 
-            x0 = _r + self.r_h
-            x1 = x0*x0
-            x2 = self.v_h2/(12.*pow(_r,7)*x1)
-            x7 = self.e_b2*y*y + self.e_c2*z*z
-            x10 = log(x0/self.r_h)
-            x11 = x0*x10
-            x13 = _r*3.*self.r_h
-            x15 = x13 - _r2
-            x16 = x15 + 6.*self.r_h2
-            x17 = 6.*self.r_h*x0*(_r*x16 - x11*6.*self.r_h2)
-            x18 = x1*x10
-            x20 = x0*_r2
-            x21 = 2.*_r*x0
-            x22 = -12.*pow(_r,5)*self.r_h*x0 + 12.*pow(_r,4)*self.r_h*x18 + 3.*self.r_h*x7*(x16*_r2 - 18.*x18*self.r_h2 + x20*(2.*_r - 3.*self.r_h) + x21*(x15 + 9.*self.r_h2)) - x20*(self.e_b2 + self.e_c2)*(-6.*_r*self.r_h*(_r2 - self.r_h2) + 6.*self.r_h*x11*(_r2 - 3.*self.r_h2) + x20*(-4.*_r + 3.*self.r_h) + x21*(-x13 + 2.*_r2 + 6.*self.r_h2))
-
-            ax = x2*x*(x17*x7 + x22)
-            ay = x2*y*(x17*(x7 - _r2*self.e_b2) + x22)
-            az = x2*z*(x17*(x7 - _r2*self.e_c2) + x22)
+            fac = x3 = self.v_c2/(self.r_h2 + x*x/self.q1_2 + y*y/self.q2_2 + z*z/self.q3_2 + self.r_h2)
+            ax = fac*x/self.q1_2
+            ay = fac*y/self.q2_2
+            az = fac*z/self.q3_2
 
             grad[i,0] = self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
             grad[i,1] = self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
@@ -509,12 +489,11 @@ class LogarithmicPotential(CPotential, CartesianPotential):
     r"""
     Triaxial logarithmic potential.
 
+    TODO:
+
     .. math::
 
-        \Phi &= \frac{1}{2}v_{c}^2\ln(C_1x^2 + C_2y^2 + C_3xy + z^2/q_3^2 + r_h^2)\\
-        C_1 &= \frac{\cos^2\phi}{q_1^2} + \frac{\sin^2\phi}{q_2^2}\\
-        C_2 &= \frac{\sin^2\phi}{q_1^2} + \frac{\cos^2\phi}{q_2^2}\\
-        C_3 &= 2\sin\phi\cos\phi \left(q_1^{-2} - q_2^{-2}\right)
+        \Phi &= \frac{1}{2}v_{c}^2\ln((x/q_1)^2 + (y/q_2)^2 + (z/q_3)^2 + r_h^2)\\
 
     Parameters
     ----------
@@ -528,16 +507,37 @@ class LogarithmicPotential(CPotential, CartesianPotential):
         Flattening in X-Y plane.
     q3 : numeric
         Flattening in Z direction.
-    phi : numeric
-        Rotation of halo in X-Y plane.
-    usys : iterable (optional)
+    phi : numeric (optional)
+        Euler angle for rotation about z-axis (using the x-convention
+        from Goldstein). Allows for specifying a misalignment between
+        the halo and disk potentials.
+    theta : numeric (optional)
+        Euler angle for rotation about x'-axis (using the x-convention
+        from Goldstein). Allows for specifying a misalignment between
+        the halo and disk potentials.
+    psi : numeric (optional)
+        Euler angle for rotation about z'-axis (using the x-convention
+        from Goldstein). Allows for specifying a misalignment between
+        the halo and disk potentials.
+    usys : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_c, r_h, q1, q2, q3, phi, usys=None):
+    def __init__(self, v_c, r_h, q1, q2, q3, phi=0., theta=0., psi=0., usys=None):
         self.usys = usys
         parameters = dict(v_c=v_c, r_h=r_h, q1=q1,
                           q2=q2, q3=q3, phi=phi)
+
+        if theta != 0 or phi != 0 or psi != 0:
+            D = rotation_matrix(phi, "z", unit=u.radian)  # TODO: Bad assuming radians
+            C = rotation_matrix(theta, "x", unit=u.radian)
+            B = rotation_matrix(psi, "z", unit=u.radian)
+            R = np.array(B.dot(C).dot(D))
+
+        else:
+            R = np.eye(3)
+
+        parameters['R'] = R
         super(LogarithmicPotential, self).__init__(_LogarithmicPotential,
-                                                  parameters=parameters)
+                                                   parameters=parameters)
