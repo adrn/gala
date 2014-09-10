@@ -8,12 +8,12 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os, sys
+import os
 
 # Third-party
 from astropy import log as logger
-import astropy.units as u
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
 # Project
@@ -21,7 +21,7 @@ import streamteam.dynamics as sd
 import streamteam.io as sio
 from streamteam.units import galactic
 
-def main(snap_path, plot_cen=False, bound=None):
+def main(snap_path, plot_cen=False, bound=None, threeD=False):
     path,snap_file = os.path.split(snap_path)
 
     scf = sio.SCFReader(path)
@@ -35,21 +35,32 @@ def main(snap_path, plot_cen=False, bound=None):
         R = np.sqrt(np.sum(cen_w[...,:3]**2, axis=-1))
         bound = R.max()*1.1
 
-    fig = sd.plot_orbits(w, marker='.', linestyle='none', alpha=0.1)
-    if plot_cen:
-        fig.axes[0].plot(cen_w[...,0], cen_w[...,1], marker=None)
-        fig.axes[1].plot(cen_w[...,0], cen_w[...,2], marker=None)
-        fig.axes[2].plot(cen_w[...,1], cen_w[...,2], marker=None)
+    if threeD:
+        fig,ax = plt.subplots(1,1,subplot_kw=dict(projection='3d'),figsize=(9,8))
+        ax.set_xlim(-bound, bound)
+        ax.set_ylim(-bound, bound)
+        ax.set_zlim(-bound, bound)
 
-    fig.axes[0].set_xlim(-bound, bound)
-    fig.axes[0].set_ylim(-bound, bound)
+        ax.plot(w[:,0,0], w[:,0,1], w[:,0,2], marker='.', linestyle='none', alpha=0.1)
+        if plot_cen:
+            ax.plot(cen_w[...,0], cen_w[...,1], cen_w[...,2], marker=None)
+
+    else:
+        fig = sd.plot_orbits(w, marker='.', linestyle='none', alpha=0.1)
+        if plot_cen:
+            fig.axes[0].plot(cen_w[...,0], cen_w[...,1], marker=None)
+            fig.axes[1].plot(cen_w[...,0], cen_w[...,2], marker=None)
+            fig.axes[2].plot(cen_w[...,1], cen_w[...,2], marker=None)
+
+        fig.axes[0].set_xlim(-bound, bound)
+        fig.axes[0].set_ylim(-bound, bound)
 
     try:
         pct_bound = sum(tbl['tub'] == 0) / float(len(w))*100.
     except KeyError:
         pct_bound = 0.
     ttext = "Time: {:05.2f} Gyr, Percent bound: {:04.1f}"\
-                .format(tbl.meta['time']/1000., pct_bound)
+            .format(tbl.meta['time']/1000., pct_bound)
     fig.suptitle(ttext, fontsize=20)
     fig.tight_layout()
     plt.show()
@@ -69,6 +80,8 @@ if __name__ == '__main__':
                         type=str, help="Path to SNAP file.")
     parser.add_argument("--cen", dest="plot_cen", action="store_true",
                         default=False, help="Plot SCFCEN orbit.")
+    parser.add_argument("--3d", dest="threeD", action="store_true",
+                        default=False, help="Make a 3D plot.")
     parser.add_argument("--bound", dest="bound", type=float, default=None,
                         help="Bounding distance.")
 
@@ -82,4 +95,4 @@ if __name__ == '__main__':
     else:
         logger.setLevel(logging.INFO)
 
-    main(args.snap_path, args.plot_cen, args.bound)
+    main(args.snap_path, args.plot_cen, args.bound, args.threeD)
