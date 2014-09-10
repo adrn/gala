@@ -12,6 +12,7 @@ import sys
 
 # Third-party
 import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy import log as logger
@@ -42,11 +43,15 @@ def main():
 
     potential = LM10Potential()
 
-    # Integrate orbits and save
-    t,w = potential.integrate_orbit(w0, Integrator=si.DOPRI853Integrator,
-                                    dt=0.4, nsteps=250000)
-    np.save(os.path.join(output_path,"time.npy"), t)
-    np.save(os.path.join(output_path,"orbits.npy"), w)
+    if not os.path.exists(os.path.join(output_path,"time.npy")):
+        # Integrate orbits and save
+        t,w = potential.integrate_orbit(w0, Integrator=si.DOPRI853Integrator,
+                                        dt=0.4, nsteps=250000)
+        np.save(os.path.join(output_path,"time.npy"), t)
+        np.save(os.path.join(output_path,"orbits.npy"), w)
+    else:
+        t = np.load(os.path.join(output_path,"time.npy"))
+        w = np.load(os.path.join(output_path,"orbits.npy"))
 
     # Make a few orbit plots
     for ix in np.random.randint(len(w0), size=10):
