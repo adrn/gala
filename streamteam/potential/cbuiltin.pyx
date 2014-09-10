@@ -35,7 +35,8 @@ cdef extern from "math.h":
     double exp(double x)
     double pow(double x, double n)
 
-__all__ = ['HernquistPotential', 'MiyamotoNagaiPotential', 'LeeSutoNFWPotential']
+__all__ = ['HernquistPotential', 'MiyamotoNagaiPotential',
+           'LeeSutoNFWPotential', 'LogarithmicPotential']
 
 ##############################################################################
 #    Hernquist Spheroid potential from Hernquist 1990
@@ -526,8 +527,7 @@ class LogarithmicPotential(CPotential, CartesianPotential):
     """
     def __init__(self, v_c, r_h, q1, q2, q3, phi=0., theta=0., psi=0., usys=None):
         self.usys = usys
-        parameters = dict(v_c=v_c, r_h=r_h, q1=q1,
-                          q2=q2, q3=q3, phi=phi)
+        parameters = dict(v_c=v_c, r_h=r_h, q1=q1, q2=q2, q3=q3)
 
         if theta != 0 or phi != 0 or psi != 0:
             D = rotation_matrix(phi, "z", unit=u.radian)  # TODO: Bad assuming radians
