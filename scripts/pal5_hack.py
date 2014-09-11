@@ -67,6 +67,8 @@ def main(filename):
 
         logger.info("Saving to files...")
         np.save(time_file, t)
+        mmap.close()
+        w = np.load(orbit_file, mmap_mode='r')
 
     else:
         logger.info("Files exist, reading orbit data...")
