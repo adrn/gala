@@ -31,6 +31,13 @@ def main(filename):
     norbits = 2000
     nsteps = 250000
 
+    filename_base = os.path.splitext(filename)[0]
+    time_file = os.path.join(output_path,"time_{}.npy".format(filename_base))
+    orbit_file = os.path.join(output_path,"orbits_{}.npy".format(filename_base))
+    action_file = os.path.join(output_path,"actions_{}.npy".format(filename_base))
+    angle_file =o s.path.join(output_path,"angles_{}.npy".format(filename_base))
+    freq_file = os.path.join(output_path,"freqs_{}.npy".format(filename_base))
+
     if not os.path.exists(input_path):
         logger.error("Input path doesn't exist: {}".format(input_path))
         sys.exit(1)
@@ -47,11 +54,11 @@ def main(filename):
     potential = LM10Potential()
 
     logger.info("Read initial conditions...")
-    if not os.path.exists(os.path.join(output_path,"time.npy")):
+    if not os.path.exists(time_file):
         logger.info("Beginning integration...")
 
         # create memory-mapped array to dump output to
-        mmap = np.memmap(os.path.join(output_path,"orbits.npy"), mode='w+',
+        mmap = np.memmap(orbit_file, mode='w+',
                          shape=(nsteps+1, norbits, 6))
 
         # Integrate orbits and save
@@ -59,12 +66,12 @@ def main(filename):
                                         dt=0.4, nsteps=nsteps, mmap=mmap)
 
         logger.info("Saving to files...")
-        np.save(os.path.join(output_path,"time.npy"), t)
+        np.save(time_file, t)
 
     else:
         logger.info("Files exist, reading orbit data...")
-        t = np.load(os.path.join(output_path,"time.npy"))
-        w = np.load(os.path.join(output_path,"orbits.npy"), mmap_mode='r')
+        t = np.load(time_file)
+        w = np.load(orbit_file, mmap_mode='r')
 
     logger.info("Orbit data loaded...")
 
@@ -72,7 +79,9 @@ def main(filename):
     for ix in np.random.randint(len(w0), size=10):
         ww = w[:,ix]
         fig = sd.plot_orbits(ww[:,None], alpha=0.01, linestyle='none', marker='.',color='k')
-        fig.savefig(os.path.join(output_path, "orbit_{}.png".format(ix)))
+        fig.savefig(os.path.join(output_path, "orbit_{}_{}.png".format(ix, filename_base)
+
+    logger.debug("Made orbit plots")
 
     # Make energy conservation check plot
     plt.clf()
@@ -82,7 +91,8 @@ def main(filename):
         plt.semilogy(np.abs(E[1:]-E[0])/E[0], marker=None, alpha=0.25)
 
     plt.ylim(1E-16, 1E-2)
-    plt.savefig(os.path.join(output_path, "energy_cons.png"))
+    plt.savefig(os.path.join(output_path, "energy_cons_{}.png".format(filename_base)
+    logger.debug("Made energy conservation plot")
 
     logger.info("Computing actions...")
 
@@ -96,9 +106,9 @@ def main(filename):
         actions[i],angles[i],freqs[i] = sd.find_actions(t[::10], ww[::10],
                                                         N_max=6, usys=galactic)
 
-    np.save(os.path.join(output_path,"actions.npy"), actions)
-    np.save(os.path.join(output_path,"angles.npy"), angles)
-    np.save(os.path.join(output_path,"freqs.npy"), freqs)
+    np.save(action_file, actions)
+    np.save(angle_file, angles)
+    np.save(freq_file, freqs)
 
     # Make frequency plot
     r1,r2,r3 = np.array([freqs[:,0]-np.mean(freqs[:,0]),
@@ -116,7 +126,7 @@ def main(filename):
     axes[0].set_xlabel(r"$\Omega_1-\langle\Omega_1\rangle$ [Gyr$^{-1}$]")
     axes[0].set_ylabel(r"$\Omega_3-\langle\Omega_3\rangle$ [Gyr$^{-1}$]")
     axes[1].set_xlabel(r"$\Omega_2-\langle\Omega_2\rangle$ [Gyr$^{-1}$]")
-    fig.savefig(os.path.join(output_path, "frequencies.png"))
+    fig.savefig(os.path.join(output_path, "frequencies_{}.png".format(filename_base)
 
     # Make action plot
     r1,r2,r3 = np.array([(actions[:,0]-np.mean(actions[:,0]))/np.mean(actions[:,0]),
@@ -131,7 +141,7 @@ def main(filename):
     axes[0].set_xlabel(r"$(J_1-\langle J_1\rangle)/\langle J_1\rangle$")
     axes[0].set_ylabel(r"$(J_3-\langle J_3\rangle)/\langle J_3\rangle$")
     axes[1].set_xlabel(r"$(J_2-\langle J_2\rangle)/\langle J_2\rangle$")
-    fig.savefig(os.path.join(output_path, "actions.png"))
+    fig.savefig(os.path.join(output_path, "actions_{}.png".format(filename_base)))
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
