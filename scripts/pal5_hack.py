@@ -81,7 +81,7 @@ def main(filename):
     for ix in np.random.randint(len(w0), size=10):
         ww = w[:,ix]
         fig = sd.plot_orbits(ww[:,None], alpha=0.01, linestyle='none', marker='.',color='k')
-        fig.savefig(os.path.join(output_path, "orbit_{}_{}.png".format(ix, filename_base)
+        fig.savefig(os.path.join(output_path, "orbit_{}_{}.png".format(ix, filename_base)))
 
     logger.debug("Made orbit plots")
 
@@ -93,7 +93,7 @@ def main(filename):
         plt.semilogy(np.abs(E[1:]-E[0])/E[0], marker=None, alpha=0.25)
 
     plt.ylim(1E-16, 1E-2)
-    plt.savefig(os.path.join(output_path, "energy_cons_{}.png".format(filename_base)
+    plt.savefig(os.path.join(output_path, "energy_cons_{}.png".format(filename_base)))
     logger.debug("Made energy conservation plot")
 
     logger.info("Computing actions...")
@@ -128,7 +128,7 @@ def main(filename):
     axes[0].set_xlabel(r"$\Omega_1-\langle\Omega_1\rangle$ [Gyr$^{-1}$]")
     axes[0].set_ylabel(r"$\Omega_3-\langle\Omega_3\rangle$ [Gyr$^{-1}$]")
     axes[1].set_xlabel(r"$\Omega_2-\langle\Omega_2\rangle$ [Gyr$^{-1}$]")
-    fig.savefig(os.path.join(output_path, "frequencies_{}.png".format(filename_base)
+    fig.savefig(os.path.join(output_path, "frequencies_{}.png".format(filename_base)))
 
     # Make action plot
     r1,r2,r3 = np.array([(actions[:,0]-np.mean(actions[:,0]))/np.mean(actions[:,0]),
