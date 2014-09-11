@@ -43,7 +43,7 @@ class Integrator(object):
                 raise ValueError("Shape of memory-mapped array doesn't match expected shape of "
                                  "return array ({} vs {})".format(mmap.shape, return_shape))
 
-            if mmap.mode != 'w+':
+            if not mmap.flags.writeable:
                 raise TypeError("Memory-mapped array must be a writable mode, not '{}'"
                                 .format(mmap.mode))
 
