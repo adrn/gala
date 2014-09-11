@@ -28,7 +28,8 @@ input_path = "/vega/astro/users/amp2217/projects/nonlinear-dynamics/input/pal5"
 output_path = "/vega/astro/users/amp2217/projects/nonlinear-dynamics/output/pal5"
 
 def main(filename):
-    N = 2000
+    norbits = 2000
+    nsteps = 250000
 
     if not os.path.exists(input_path):
         logger.error("Input path doesn't exist: {}".format(input_path))
@@ -41,20 +42,25 @@ def main(filename):
     x = (d[:,1:4]*u.pc).decompose(galactic).value
     v = (d[:,4:7]*u.km/u.s).decompose(galactic).value
     w0 = np.hstack((x,v))
-    w0 = w0[np.random.randint(len(w0),size=N)]
+    w0 = w0[np.random.randint(len(w0),size=norbits)]
 
     potential = LM10Potential()
 
     logger.info("Read initial conditions...")
     if not os.path.exists(os.path.join(output_path,"time.npy")):
         logger.info("Beginning integration...")
+
+        # create memory-mapped array to dump output to
+        mmap = np.memmap(os.path.join(output_path,"orbits.npy"), mode='w+',
+                         shape=(nsteps+1, norbits, 6))
+
         # Integrate orbits and save
         t,w = potential.integrate_orbit(w0, Integrator=si.DOPRI853Integrator,
-                                        dt=0.4, nsteps=250000)
+                                        dt=0.4, nsteps=nsteps, mmap=mmap)
 
         logger.info("Saving to files...")
         np.save(os.path.join(output_path,"time.npy"), t)
-        np.save(os.path.join(output_path,"orbits.npy"), w)
+
     else:
         logger.info("Files exist, reading orbit data...")
         t = np.load(os.path.join(output_path,"time.npy"))
@@ -81,10 +87,10 @@ def main(filename):
     logger.info("Computing actions...")
 
     # Compute actions, etc.
-    freqs = np.empty((N,3))
+    freqs = np.empty((norbits,3))
     angles = np.empty_like(freqs)
     actions = np.empty_like(freqs)
-    for i in range(N):
+    for i in range(norbits):
         logger.debug("Computing actions+ for orbit {}".format(i))
         ww = w[:,i]
         actions[i],angles[i],freqs[i] = sd.find_actions(t[::10], ww[::10],
