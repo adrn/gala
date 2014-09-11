@@ -9,13 +9,11 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 import os
 import time
-import pytest
 import numpy as np
 from astropy.utils.console import color_print
 from astropy.constants import G
 import astropy.units as u
 import matplotlib.pyplot as plt
-from matplotlib import cm
 
 from ..cbuiltin import *
 
@@ -42,6 +40,7 @@ nparticles = 1000
 
 class PotentialTestBase(object):
     name = None
+
     def test_method_call(self):
         # single
         r = [[1.,0.,0.]]
@@ -79,7 +78,7 @@ class PotentialTestBase(object):
             for ii in range(niter):
                 x = getattr(self.potential, func_name)(r)
             print("Cython - {}: {:e} sec per call".format(func_name,
-                            (time.time()-t1)/float(niter)))
+                  (time.time()-t1)/float(niter)))
 
             if self.pypotential is not None:
                 t1 = time.time()
@@ -99,7 +98,7 @@ class PotentialTestBase(object):
         fig,axes = plt.subplots(1,1)
 
         t1 = time.time()
-        fig,axes = self.potential.plot_contours(grid=(grid,0.,grid),
+        fig,axes = self.potential.plot_contours(grid=(grid,grid,0.),
                                                 subplots_kw=dict(figsize=(8,8)))
         print("Cython plot_contours time", time.time() - t1)
         fig.savefig(os.path.join(plot_path, "{}_2d_cy.png"\
@@ -107,7 +106,7 @@ class PotentialTestBase(object):
 
         if self.pypotential is not None:
             t1 = time.time()
-            fig,axes = self.pypotential.plot_contours(grid=(grid,0.,grid),
+            fig,axes = self.pypotential.plot_contours(grid=(grid,grid,0.),
                                                       subplots_kw=dict(figsize=(8,8)))
             print("Python plot_contours time", time.time() - t1)
             fig.savefig(os.path.join(plot_path, "{}_2d_py.png"\
@@ -115,6 +114,7 @@ class PotentialTestBase(object):
 
 class TestHernquist(PotentialTestBase):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+
     def setup(self):
         print()
         from ..builtin import HernquistPotential as PyHernquistPotential
@@ -127,6 +127,7 @@ class TestHernquist(PotentialTestBase):
 
 class TestMiyamotoNagai(PotentialTestBase):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+
     def setup(self):
         print()
         from ..builtin import MiyamotoNagaiPotential as PyMiyamotoNagaiPotential
@@ -139,6 +140,7 @@ class TestMiyamotoNagai(PotentialTestBase):
 
 class TestLeeSutoNFWPotential(PotentialTestBase):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+
     def setup(self):
         print()
         self.potential = LeeSutoNFWPotential(usys=self.usys,
@@ -151,6 +153,7 @@ class TestLeeSutoNFWPotential(PotentialTestBase):
 
 class TestMisalignedLeeSutoNFWPotential(PotentialTestBase):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+
     def setup(self):
         print()
         self.name = "MisalignedLeeSutoNFWPotential"
@@ -161,5 +164,38 @@ class TestMisalignedLeeSutoNFWPotential(PotentialTestBase):
                                              theta=np.radians(30))
 
         self.pypotential = None
+
+        self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+
+class TestLogarithmicPotential(PotentialTestBase):
+    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+
+    def setup(self):
+        print()
+        from ..builtin import LogarithmicPotential as PyLogarithmicPotential
+
+        self.potential = LogarithmicPotential(usys=self.usys,
+                                              v_c=0.17, r_h=10.,
+                                              q1=1.2, q2=1., q3=0.8)
+
+        self.pypotential = PyLogarithmicPotential(v_c=0.17, r_h=10.,
+                                                  q1=1.2, q2=1., q3=0.8, phi=0.)
+
+        self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+
+class TestMisalignedLogarithmicPotential(PotentialTestBase):
+    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+
+    def setup(self):
+        print()
+        self.name = "MisalignedLogarithmicPotential"
+        from ..builtin import LogarithmicPotential as PyLogarithmicPotential
+
+        self.potential = LogarithmicPotential(usys=self.usys,
+                                              v_c=0.17, r_h=10.,
+                                              q1=1.2, q2=1., q3=0.8, phi=0.35)
+
+        self.pypotential = PyLogarithmicPotential(v_c=0.17, r_h=10.,
+                                                  q1=1.2, q2=1., q3=0.8, phi=0.35)
 
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]

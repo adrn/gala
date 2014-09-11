@@ -6,9 +6,6 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os, sys
-
 # Third-party
 import numpy as np
 from scipy.integrate import ode
@@ -93,7 +90,7 @@ class DOPRI853Integrator(Integrator):
         self._func_args = func_args
         self._ode_kwargs = kwargs
 
-    def run(self, w0, **time_spec):
+    def run(self, w0, mmap=None, **time_spec):
         """
         Run the integrator starting at the given coordinates and momenta
         (or velocities) and a time specification. The initial conditions
@@ -129,7 +126,11 @@ class DOPRI853Integrator(Integrator):
 
         """
 
-        w0 = np.atleast_2d(w0)
+        # generate the array of times
+        times = _parse_time_specification(**time_spec)
+        nsteps = len(times)-1
+
+        w0, ws = self._prepare_ws(w0, mmap, nsteps)
         nparticles, ndim = w0.shape
 
         # need this to do resizing, and to handle func_args because there is some
@@ -141,29 +142,24 @@ class DOPRI853Integrator(Integrator):
         self._ode = ode(func_wrapper, jac=None)
         self._ode = self._ode.set_integrator('dop853', **self._ode_kwargs)
 
+        # create the return arrays
+        ws[0] = w0
+
         # make 1D
         w0 = w0.reshape((nparticles*ndim,))
 
-        # generate the array of times
-        times = _parse_time_specification(**time_spec)
-        nsteps = len(times)-1
-        dt = times[1]-times[0]
-
         # set the initial conditions
         self._ode.set_initial_value(w0, times[0])
-
-        # create the return arrays
-        ws = np.zeros((nsteps+1,w0.size), dtype=float)
-        ws[0] = w0
 
         # Integrate the ODE(s) across each delta_t timestep
         k = 1
         while self._ode.successful() and k < (nsteps+1):
             self._ode.integrate(times[k])
-            ws[k] = self._ode.y
+            outy = self._ode.y
+            ws[k] = outy.reshape(nparticles,ndim)
             k += 1
 
         if not self._ode.successful():
             raise RuntimeError("ODE integration failed!")
 
-        return times, ws.reshape((nsteps+1,nparticles,ndim))
+        return times, ws

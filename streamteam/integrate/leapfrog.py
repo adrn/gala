@@ -134,7 +134,7 @@ class LeapfrogIntegrator(Integrator):
 
         return v_1_2
 
-    def run(self, w0, **time_spec):
+    def run(self, w0, mmap=None, **time_spec):
         """
         Run the integrator starting at the given coordinates and momenta
         (velocities) and a time specification. The initial conditions
@@ -154,6 +154,10 @@ class LeapfrogIntegrator(Integrator):
         ==========
         w0 : array_like
             Initial conditions
+        mmap : None, array_like (optional)
+            Option to write integration output to a memory-mapped array so the memory
+            usage doesn't explode. Must pass in a memory-mapped array, e.g., from
+            `numpy.memmap`.
 
         Other Parameters
         ================
@@ -174,23 +178,17 @@ class LeapfrogIntegrator(Integrator):
 
         """
 
-        w0 = np.atleast_2d(w0)
-        nparticles, ndim = w0.shape
-
-        if ndim % 2 != 0:
-            raise ValueError("Dimensionality must be even.")
-
-        # dimensionality of positions,velocities
-        self.ndim = ndim
-        self.ndim_xv = self.ndim // 2
-
-        x0 = w0[...,:self.ndim_xv]
-        v0 = w0[...,self.ndim_xv:]
-
         # generate the array of times
         times = _parse_time_specification(**time_spec)
         nsteps = len(times) - 1
         _dt = times[1] - times[0]
+
+        w0, ws = self._prepare_ws(w0, mmap, nsteps)
+        x0 = w0[:,:self.ndim_xv]
+        v0 = w0[:,self.ndim_xv:]
+
+        if (self.ndim % 2) != 0:
+            raise ValueError("Dimensionality must be even.")
 
         if _dt < 0.:
             v0 *= -1.
@@ -203,10 +201,7 @@ class LeapfrogIntegrator(Integrator):
         v_im1_2 = self._init_v(times[0], w0, dt)
         x_im1 = x0
 
-        # create the return arrays
-        ws = np.zeros((nsteps+1,) + w0.shape, dtype=float)
-        ws[0,:,:self.ndim_xv] = x0
-        ws[0,:,self.ndim_xv:] = v0
+        ws[0] = w0
         for ii in range(1,nsteps+1):
             x_i, v_i, v_ip1_2 = self.step(times[ii], x_im1, v_im1_2, dt)
             ws[ii,:,:self.ndim_xv] = x_i
