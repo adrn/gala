@@ -225,7 +225,6 @@ class LeapfrogIntegrator(Integrator):
 
         ws[0,:,:self.ndim_xv] = x0
         ws[0,:,self.ndim_xv:] = v0
-
         for ii in range(1,nsteps+1):
             x_i, v_i, v_ip1_2 = self.step(times[ii], x_im1, v_im1_2, dt)
             ws[ii,:,:self.ndim_xv] = x_i
