@@ -35,7 +35,7 @@ def main(filename):
     time_file = os.path.join(output_path,"time_{}.npy".format(filename_base))
     orbit_file = os.path.join(output_path,"orbits_{}.npy".format(filename_base))
     action_file = os.path.join(output_path,"actions_{}.npy".format(filename_base))
-    angle_file =o s.path.join(output_path,"angles_{}.npy".format(filename_base))
+    angle_file =os.path.join(output_path,"angles_{}.npy".format(filename_base))
     freq_file = os.path.join(output_path,"freqs_{}.npy".format(filename_base))
 
     if not os.path.exists(input_path):
