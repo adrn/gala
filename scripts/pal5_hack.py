@@ -27,7 +27,7 @@ from streamteam.units import galactic
 input_path = "/vega/astro/users/amp2217/projects/nonlinear-dynamics/input/pal5"
 output_path = "/vega/astro/users/amp2217/projects/nonlinear-dynamics/output/pal5"
 
-def main():
+def main(filename):
     N = 2000
 
     if not os.path.exists(input_path):
@@ -37,7 +37,7 @@ def main():
     if not os.path.exists(output_path):
         os.mkdir(output_path)
 
-    d = np.loadtxt(os.path.join(input_path, "Pal5_triax_vr_M16_sun.txt"))
+    d = np.loadtxt(os.path.join(input_path, filename))
     x = (d[:,1:4]*u.pc).decompose(galactic).value
     v = (d[:,4:7]*u.km/u.s).decompose(galactic).value
     w0 = np.hstack((x,v))
@@ -118,4 +118,27 @@ def main():
     fig.savefig(os.path.join(output_path, "actions.png"))
 
 if __name__ == "__main__":
-    main()
+    from argparse import ArgumentParser
+    import logging
+
+    # Define parser object
+    parser = ArgumentParser(description="")
+    parser.add_argument("-v", "--verbose", action="store_true", dest="verbose",
+                        default=False, help="Be chatty! (default = False)")
+    parser.add_argument("-q", "--quiet", action="store_true", dest="quiet",
+                        default=False, help="Be quiet! (default = False)")
+
+    parser.add_argument("-f", dest="filename", default=None, required=True,
+                        type=str, help="Filename.")
+
+    args = parser.parse_args()
+
+    # Set logger level based on verbose flags
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+    elif args.quiet:
+        logger.setLevel(logging.ERROR)
+    else:
+        logger.setLevel(logging.INFO)
+
+    main(args.filename)
