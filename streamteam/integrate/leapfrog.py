@@ -134,7 +134,7 @@ class LeapfrogIntegrator(Integrator):
 
         return v_1_2
 
-    def run(self, w0, **time_spec):
+    def run(self, w0, mmap=None, **time_spec):
         """
         Run the integrator starting at the given coordinates and momenta
         (velocities) and a time specification. The initial conditions
@@ -163,6 +163,10 @@ class LeapfrogIntegrator(Integrator):
             A fixed timestep dt, an initial time, and a final time.
         t : array_like
             An array of times (dt = t[1] - t[0])
+        mmap : None, array_like (optional)
+            Option to write integration output to a memory-mapped array so the memory
+            usage doesn't explode. Must pass in a memory-mapped array, e.g., from
+            `numpy.memmap`.
 
         Returns
         =======
@@ -203,10 +207,25 @@ class LeapfrogIntegrator(Integrator):
         v_im1_2 = self._init_v(times[0], w0, dt)
         x_im1 = x0
 
-        # create the return arrays
-        ws = np.zeros((nsteps+1,) + w0.shape, dtype=float)
+        return_shape = (nsteps+1,) + w0.shape
+        if mmap is None:
+            # create the return arrays
+            ws = np.zeros(return_shape, dtype=float)
+
+        else:
+            if mmap.shape != return_shape:
+                raise ValueError("Shape of memory-mapped array doesn't match expected shape of "
+                                 "return array ({} vs {})".format(mmap.shape, return_shape))
+
+            if mmap.mode != 'w+':
+                raise TypeError("Memory-mapped array must be a writable mode, not '{}'"
+                                .format(mmap.mode))
+
+            ws = mmap
+
         ws[0,:,:self.ndim_xv] = x0
         ws[0,:,self.ndim_xv:] = v0
+
         for ii in range(1,nsteps+1):
             x_i, v_i, v_ip1_2 = self.step(times[ii], x_im1, v_im1_2, dt)
             ws[ii,:,:self.ndim_xv] = x_i
