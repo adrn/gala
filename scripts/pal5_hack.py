@@ -24,16 +24,18 @@ from streamteam.potential.lm10 import LM10Potential
 import streamteam.dynamics as sd
 from streamteam.units import galactic
 
-input_path = "/vega/astro/users/amp2217/projects/nonlinear-dynamics/input/pal5"
-output_path = "/vega/astro/users/amp2217/projects/nonlinear-dynamics/output/pal5"
+# input_path = "/vega/astro/users/amp2217/projects/nonlinear-dynamics/input/pal5"
+# output_path = "/vega/astro/users/amp2217/projects/nonlinear-dynamics/output/pal5"
+input_path = "/Users/adrian/projects/nonlinear-dynamics/input/pal5"
+output_path = "/Users/adrian/projects/nonlinear-dynamics/output/pal5"
 
 def main(filename):
-    norbits = 2000
-    nsteps = 250000
+    norbits = 10
+    nsteps = 250
 
-    filename_base = os.path.splitext(filename)[0]
+    filename_base = os.path.splitext(os.path.basename(filename))[0]
     time_file = os.path.join(output_path,"time_{}.npy".format(filename_base))
-    orbit_file = os.path.join(output_path,"orbits_{}.npy".format(filename_base))
+    orbit_file = os.path.join(output_path,"orbits_{}.array".format(filename_base))
     action_file = os.path.join(output_path,"actions_{}.npy".format(filename_base))
     angle_file =os.path.join(output_path,"angles_{}.npy".format(filename_base))
     freq_file = os.path.join(output_path,"freqs_{}.npy".format(filename_base))
@@ -59,7 +61,7 @@ def main(filename):
 
         # create memory-mapped array to dump output to
         mmap = np.memmap(orbit_file, mode='w+',
-                         shape=(nsteps+1, norbits, 6))
+                         shape=(nsteps+1, norbits, 6), dtype=np.float64)
 
         # Integrate orbits and save
         t,w = potential.integrate_orbit(w0, Integrator=si.DOPRI853Integrator,
@@ -67,13 +69,14 @@ def main(filename):
 
         logger.info("Saving to files...")
         np.save(time_file, t)
-        mmap.close()
-        w = np.load(orbit_file, mmap_mode='r')
+        w = np.memmap(orbit_file, mode='r',
+                      shape=(nsteps+1, norbits, 6), dtype=np.float64)
 
     else:
         logger.info("Files exist, reading orbit data...")
         t = np.load(time_file)
-        w = np.load(orbit_file, mmap_mode='r')
+        w = np.memmap(orbit_file, mode='r',
+                      shape=(nsteps+1, norbits, 6), dtype=np.float64)
 
     logger.info("Orbit data loaded...")
 
