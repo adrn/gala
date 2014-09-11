@@ -45,19 +45,22 @@ def main(filename):
 
     potential = LM10Potential()
 
-    print("Initial conditions")
-
+    logger.info("Read initial conditions...")
     if not os.path.exists(os.path.join(output_path,"time.npy")):
+        logger.info("Beginning integration...")
         # Integrate orbits and save
         t,w = potential.integrate_orbit(w0, Integrator=si.DOPRI853Integrator,
                                         dt=0.4, nsteps=250000)
+
+        logger.info("Saving to files...")
         np.save(os.path.join(output_path,"time.npy"), t)
         np.save(os.path.join(output_path,"orbits.npy"), w)
     else:
+        logger.info("Files exist, reading orbit data...")
         t = np.load(os.path.join(output_path,"time.npy"))
         w = np.load(os.path.join(output_path,"orbits.npy"), mmap_mode='r')
 
-    print("Orbits loaded")
+    logger.info("Orbit data loaded...")
 
     # Make a few orbit plots
     for ix in np.random.randint(len(w0), size=10):
@@ -75,11 +78,14 @@ def main(filename):
     plt.ylim(1E-16, 1E-2)
     plt.savefig(os.path.join(output_path, "energy_cons.png"))
 
+    logger.info("Computing actions...")
+
     # Compute actions, etc.
     freqs = np.empty((N,3))
     angles = np.empty_like(freqs)
     actions = np.empty_like(freqs)
     for i in range(N):
+        logger.debug("Computing actions+ for orbit {}".format(i))
         ww = w[:,i]
         actions[i],angles[i],freqs[i] = sd.find_actions(t[::10], ww[::10],
                                                         N_max=6, usys=galactic)
