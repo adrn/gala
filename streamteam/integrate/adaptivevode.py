@@ -6,16 +6,12 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os, sys
-
 # Third-party
 import numpy as np
 from scipy.integrate import ode
 
 # Project
 from .core import Integrator
-from .timespec import _parse_time_specification
 
 __all__ = ["AdaptiveVODEIntegrator"]
 

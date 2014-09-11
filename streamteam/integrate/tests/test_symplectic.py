@@ -9,6 +9,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 import os
+import time
 
 # Third-party
 import pytest
@@ -73,8 +74,8 @@ def test_point_mass(name, Integrator):
         a = -GM/(q[:,0]**2+q[:,1]**2)**1.5
         return np.array([q[:,0]*a, q[:,1]*a]).T.copy()
 
-    q_i = np.array([1.0, 0.0]) # au
-    p_i = np.array([0.0, 2*np.pi]) # au/yr
+    q_i = np.array([1.0, 0.0])  # au
+    p_i = np.array([0.0, 2*np.pi])  # au/yr
 
     integrator = Integrator(acceleration)
     ts, ws = integrator.run(np.append(q_i, p_i),
@@ -82,3 +83,27 @@ def test_point_mass(name, Integrator):
 
     fig = plot(ts, ws)
     fig.savefig(os.path.join(plot_path,"point_mass_{0}.png".format(name)))
+
+@pytest.mark.parametrize(("name","Integrator"), [('leapfrog',LeapfrogIntegrator), ])
+def test_memmap(name, Integrator):
+
+    dt = 0.1
+    T = 10.
+    nsteps = 20000
+    nw0 = 10000
+    mmap = np.memmap("/tmp/test_memmap.npy", mode='w+', shape=(nsteps+1, nw0, 2))
+    acceleration = lambda t,q: -(2*np.pi/T)**2*q
+
+    w0 = np.random.uniform(-1,1,size=(nw0,2))
+
+    integrator = Integrator(acceleration)
+
+    a = time.time()
+    ts, ws = integrator.run(w0, dt=dt, nsteps=nsteps)
+    t1 = time.time() - a
+
+    a = time.time()
+    ts, ws = integrator.run(w0, dt=dt, nsteps=nsteps, mmap=mmap)
+    t2 = time.time() - a
+
+    print(t1, t2)
