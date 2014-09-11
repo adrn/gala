@@ -19,7 +19,7 @@ __all__ = ["Integrator"]
 
 class Integrator(object):
 
-    def _prepare_ws(self, w0, mmap):
+    def _prepare_ws(self, w0, mmap, nsteps):
         """ Decide how to make the return array. If mmap is False, this returns a full array
             of zeros, but with the correct shape as the output. If mmap is True, return a
             pointer to a memory-mapped array. The latter is particularly useful for integrating
@@ -29,15 +29,9 @@ class Integrator(object):
         w0 = np.atleast_2d(w0)
         nparticles, ndim = w0.shape
 
-        if ndim % 2 != 0:
-            raise ValueError("Dimensionality must be even.")
-
         # dimensionality of positions,velocities
         self.ndim = ndim
         self.ndim_xv = self.ndim // 2
-
-        x0 = w0[...,:self.ndim_xv]
-        v0 = w0[...,self.ndim_xv:]
 
         return_shape = (nsteps+1,) + w0.shape
         if mmap is None:
@@ -55,4 +49,4 @@ class Integrator(object):
 
             ws = mmap
 
-        return x0, v0, ws
+        return w0, ws
