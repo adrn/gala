@@ -6,9 +6,6 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os, sys
-
 # Third-party
 import numpy as np
 
@@ -135,7 +132,7 @@ class RK5Integrator(Integrator):
 
         return w + dw
 
-    def run(self, w0, **time_spec):
+    def run(self, w0, mmap=None, **time_spec):
         """
         Run the integrator starting at the given coordinates and momenta
         (or velocities) and a time specification. The initial conditions
@@ -151,6 +148,10 @@ class RK5Integrator(Integrator):
         ==========
         w0 : array_like
             Initial conditions.
+        mmap : None, array_like (optional)
+            Option to write integration output to a memory-mapped array so the memory
+            usage doesn't explode. Must pass in a memory-mapped array, e.g., from
+            `numpy.memmap`.
 
         Other Parameters
         ================
@@ -171,13 +172,13 @@ class RK5Integrator(Integrator):
 
         """
 
-        w0 = np.atleast_2d(w0)
-        nparticles, ndim = w0.shape
-
         # generate the array of times
         times = _parse_time_specification(**time_spec)
         nsteps = len(times)-1
         dt = times[1]-times[0]
+
+        w0, ws = self._prepare_ws(w0, mmap, nsteps=nsteps)
+        nparticles, ndim = w0.shape
 
         # create the return arrays
         ws = np.zeros((nsteps+1,) + w0.shape, dtype=float)
