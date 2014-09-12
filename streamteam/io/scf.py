@@ -36,34 +36,14 @@ class SCFReader(NBodyReader):
         """
         pars = dict()
 
-        pattr = re.compile("^([0-9\.e\+]+)\s+satellite\s+((scale)|(mass))\s\(([A-Za-z]+)\)")
         parfile = os.path.join(self.path, "SCFPAR")
         with open(parfile) as f:
-            for line in f:
-                spl = line.split()
+            lines = f.readlines()
 
-                # find what G is set to
-                try:
-                    if spl[1].strip() == 'G':
-                        pars['G'] = float(spl[0])
-                except IndexError:
-                    pass
-
-                # parse out length scale and mass scale
-                m = pattr.search(line)
-                try:
-                    grp = m.groups()
-                    if grp[1] == 'scale':
-                        pars['length'] = float(grp[0])
-                    elif grp[1] == 'mass':
-                        pars['mass'] = float(grp[0])
-                except:
-                    pass
-
-                # exit if have length, mass, and G
-                if pars.has_key('G') and pars.has_key('length')\
-                    and pars.has_key('mass'):
-                    break
+            # find what G is set to
+            pars['G'] = float(lines[7].split()[0])
+            pars['length'] = float(lines[17].split()[0])
+            pars['mass'] = float(lines[18].split()[0])
 
         _G = G.decompose(bases=[u.kpc,u.M_sun,u.Myr]).value
         X = (_G / pars['length']**3 * pars['mass'])**-0.5
