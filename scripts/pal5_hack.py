@@ -21,6 +21,7 @@ import astropy.units as u
 # Project
 import streamteam.integrate as si
 from streamteam.potential.lm10 import LM10Potential
+from streamteam.potential.apw import PW14Potential
 import streamteam.dynamics as sd
 from streamteam.units import galactic
 
@@ -53,7 +54,8 @@ def main(filename):
     w0 = np.hstack((x,v))
     w0 = w0[np.random.randint(len(w0),size=norbits)]
 
-    potential = LM10Potential()
+    # potential = LM10Potential()
+    potential = PW14Potential(q1=1.2, q3=0.9, phi=np.pi/2., theta=np.pi/2., psi=np.pi/2.)
 
     logger.info("Read initial conditions...")
     if not os.path.exists(time_file):
