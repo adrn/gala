@@ -49,8 +49,10 @@ def main(filename):
         os.mkdir(output_path)
 
     d = np.loadtxt(os.path.join(input_path, filename))
-    x = (d[:,1:4]*u.pc).decompose(galactic).value
-    v = (d[:,4:7]*u.km/u.s).decompose(galactic).value
+    # x = (d[:,1:4]*u.pc).decompose(galactic).value
+    # v = (d[:,4:7]*u.km/u.s).decompose(galactic).value
+    x = d[:,1:4]  # already in kpc
+    v = d[:,4:7]  # already in kpc/Myr
     w0 = np.hstack((x,v))
     w0 = w0[np.random.randint(len(w0),size=norbits)]
 
