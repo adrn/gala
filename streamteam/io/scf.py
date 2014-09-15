@@ -41,9 +41,9 @@ class SCFReader(NBodyReader):
             lines = f.readlines()
 
             # find what G is set to
-            pars['G'] = float(lines[7].split()[0])
-            pars['length'] = float(lines[17].split()[0])
-            pars['mass'] = float(lines[18].split()[0])
+            pars['G'] = float(lines[6].split()[0])
+            pars['length'] = float(lines[16].split()[0])
+            pars['mass'] = float(lines[17].split()[0])
 
         _G = G.decompose(bases=[u.kpc,u.M_sun,u.Myr]).value
         X = (_G / pars['length']**3 * pars['mass'])**-0.5
