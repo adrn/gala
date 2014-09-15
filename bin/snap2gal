@@ -1,0 +1,22 @@
+# coding: utf-8
+
+""" Convert an SCF SNAP file to a text file containing x,y,z,vx,vy,vz in galactic units
+    for each particle
+"""
+
+from __future__ import division, print_function
+
+__author__ = "adrn <adrn@astro.columbia.edu>"
+
+# Standard library
+import os, sys
+
+# Third-party
+import numpy as np
+from astropy import log as logger
+import astropy.units as u
+
+# Project
+# ...
+
+__all__ = ['']
