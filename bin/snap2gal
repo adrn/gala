@@ -29,8 +29,7 @@ def main(snapfile, outfile=None):
     if outfile is None:
         outfile = os.path.join(scfpath, "{}_gal.txt".format(snapname))
 
-    else:
-        np.savetxt(outfile, w)
+    np.savetxt(outfile, w)
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
