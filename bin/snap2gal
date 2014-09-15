@@ -20,7 +20,7 @@ from astropy import log as logger
 import streamteam.io as sio
 from streamteam.units import galactic
 
-def main(snapfile, outfile=None, stdout=False):
+def main(snapfile, outfile=None):
     scfpath,snapname = os.path.split(snapfile)
     scf = sio.SCFReader(scfpath)
     snap_tbl = scf.read_snap(snapname, units=galactic)
@@ -28,10 +28,6 @@ def main(snapfile, outfile=None, stdout=False):
 
     if outfile is None:
         outfile = os.path.join(scfpath, "{}_gal.txt".format(snapname))
-
-    if stdout:
-        for row in w:
-            print(row)
 
     else:
         np.savetxt(outfile, w)
@@ -51,8 +47,6 @@ if __name__ == '__main__':
                         type=str, help="Path to the snapfile to convert.")
     parser.add_argument("-o", "--output", dest="outfile", default=None,
                         type=str, help="Path to the output file.")
-    parser.add_argument("--stdout", dest="stdout", action="store_true", default=False,
-                        help="Dump to stdout.")
 
     args = parser.parse_args()
 
@@ -64,4 +58,4 @@ if __name__ == '__main__':
     else:
         logger.setLevel(logging.INFO)
 
-    main(args.snapfile, outfile=args.outfile, stdout=args.stdout)
+    main(args.snapfile, outfile=args.outfile)
