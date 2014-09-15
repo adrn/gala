@@ -24,7 +24,7 @@ def main(snapfile, outfile=None):
     scfpath,snapname = os.path.split(snapfile)
     scf = sio.SCFReader(scfpath)
     snap_tbl = scf.read_snap(snapname, units=galactic)
-    w = sio.tbl_to_w(snap_tbl)
+    w = sio.tbl_to_w(snap_tbl)[:,0]
 
     if outfile is None:
         outfile = os.path.join(scfpath, "{}_gal.txt".format(snapname))
