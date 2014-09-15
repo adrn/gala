@@ -1,7 +1,8 @@
+#!/usr/bin/env python
 # coding: utf-8
 
-""" Convert an SCF SNAP file to a text file containing x,y,z,vx,vy,vz in galactic units
-    for each particle
+""" Convert an SCF SNAP file to a text file containing x,y,z,vx,vy,vz in
+    galactic units for each particle
 """
 
 from __future__ import division, print_function
@@ -9,14 +10,47 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os, sys
+import os
 
 # Third-party
 import numpy as np
 from astropy import log as logger
-import astropy.units as u
 
 # Project
-# ...
+import streamteam.io as sio
+from streamteam.units import galactic
 
-__all__ = ['']
+def main(snapfile, outfile):
+    scfpath,snapname = os.path.split(snapfile)
+    scf = sio.SCFReader(scfpath)
+    snap_tbl = scf.read_snap(snapname, units=galactic)
+    w = sio.tbl_to_w(snap_tbl)
+    np.savetxt(outfile, w)
+
+if __name__ == '__main__':
+    from argparse import ArgumentParser
+    import logging
+
+    # Define parser object
+    parser = ArgumentParser(description="")
+    parser.add_argument("-v", "--verbose", action="store_true", dest="verbose",
+                        default=False, help="Be chatty! (default = False)")
+    parser.add_argument("-q", "--quiet", action="store_true", dest="quiet",
+                        default=False, help="Be quiet! (default = False)")
+
+    parser.add_argument("-i", "--input", dest="snapfile", default=None, required=True,
+                        type=str, help="Path to the snapfile to convert.")
+    parser.add_argument("-o", "--output", dest="outfile", default=None,
+                        type=str, help="Path to the output. Leave as None to print to stdout.")
+
+    args = parser.parse_args()
+
+    # Set logger level based on verbose flags
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+    elif args.quiet:
+        logger.setLevel(logging.ERROR)
+    else:
+        logger.setLevel(logging.INFO)
+
+    main(args.snapfile, args.outfile)
