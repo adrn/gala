@@ -16,8 +16,8 @@ from astropy import log as logger
 import astropy.units as u
 import matplotlib
 matplotlib.use("Agg")
-matplotlib.style.use("https://raw.githubusercontent.com/adrn/dotfiles/master/python/matplotlibrc")
 import matplotlib.pyplot as plt
+plt.style.use("https://raw.githubusercontent.com/adrn/dotfiles/master/python/matplotlibrc")
 from matplotlib.animation import FuncAnimation
 import numpy as np
 

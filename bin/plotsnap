@@ -19,9 +19,9 @@ def main(snap_path, plot_cen=False, bound=None, threeD=False, show=True, output=
     if not show:
         import matplotlib
         matplotlib.use("Agg")
-        matplotlib.style.use("https://raw.githubusercontent.com/adrn/dotfiles/master/python/matplotlibrc")
 
     import matplotlib.pyplot as plt
+    plt.style.use("https://raw.githubusercontent.com/adrn/dotfiles/master/python/matplotlibrc")
     from mpl_toolkits.mplot3d import Axes3D
 
     # Project (Need these here because of matplotlib.use() call)
