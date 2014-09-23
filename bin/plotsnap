@@ -12,8 +12,6 @@ import os
 
 # Third-party
 from astropy import log as logger
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
 # Project
@@ -21,7 +19,15 @@ import streamteam.dynamics as sd
 import streamteam.io as sio
 from streamteam.units import galactic
 
-def main(snap_path, plot_cen=False, bound=None, threeD=False):
+def main(snap_path, plot_cen=False, bound=None, threeD=False, show=True, output=None):
+
+    if not show:
+        import matplotlib
+        matplotlib.use("Agg")
+
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+
     path,snap_file = os.path.split(snap_path)
 
     scf = sio.SCFReader(path)
@@ -63,7 +69,14 @@ def main(snap_path, plot_cen=False, bound=None, threeD=False):
             .format(tbl.meta['time']/1000., pct_bound)
     fig.suptitle(ttext, fontsize=20)
     fig.tight_layout()
-    plt.show()
+
+    if show:
+        plt.show()
+    else:
+        if output is None:
+            output = "{}.png".format(snap_path)
+
+        fig.savefig(output)
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
