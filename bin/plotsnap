@@ -14,19 +14,20 @@ import os
 from astropy import log as logger
 import numpy as np
 
-# Project
-import streamteam.dynamics as sd
-import streamteam.io as sio
-from streamteam.units import galactic
-
 def main(snap_path, plot_cen=False, bound=None, threeD=False, show=True, output=None):
 
     if not show:
         import matplotlib
         matplotlib.use("Agg")
+        matplotlib.style.use("https://raw.githubusercontent.com/adrn/dotfiles/master/python/matplotlibrc")
 
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
+
+    # Project (Need these here because of matplotlib.use() call)
+    import streamteam.dynamics as sd
+    import streamteam.io as sio
+    from streamteam.units import galactic
 
     path,snap_file = os.path.split(snap_path)
 
