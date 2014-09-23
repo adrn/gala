@@ -97,6 +97,8 @@ if __name__ == '__main__':
                         default=False, help="Make a 3D plot.")
     parser.add_argument("--bound", dest="bound", type=float, default=None,
                         help="Bounding distance.")
+    parser.add_argument("--show", dest="show", action="store_true",
+                        default=False, help="Show the plot or save the plot.")
 
     args = parser.parse_args()
 
@@ -108,4 +110,4 @@ if __name__ == '__main__':
     else:
         logger.setLevel(logging.INFO)
 
-    main(args.snap_path, args.plot_cen, args.bound, args.threeD)
+    main(args.snap_path, args.plot_cen, args.bound, args.threeD, show=args.show)
