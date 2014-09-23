@@ -17,10 +17,6 @@ import astropy.units as u
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-try:
-    plt.style.use("https://raw.githubusercontent.com/adrn/dotfiles/master/python/matplotlibrc")
-except:
-    pass
 from matplotlib.animation import FuncAnimation
 import numpy as np
 
