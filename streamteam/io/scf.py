@@ -41,7 +41,7 @@ class SCFReader(NBodyReader):
             lines = f.readlines()
 
             # find what G is set to
-            for i,line in enumerate(line):
+            for i,line in enumerate(lines):
                 if line.split()[1].strip() == "G":
                     break
             pars['G'] = float(lines[i].split()[0])
