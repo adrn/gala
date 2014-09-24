@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from astropy import log as logger
 import astropy.units as u
+from scipy.linalg import solve
 
 # Project
 from ...integrate import LeapfrogIntegrator
@@ -30,10 +31,6 @@ logger.setLevel(logging.DEBUG)
 plot_path = "plots/tests/dynamics/actionangle"
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
-
-# HACK:
-sys.path.append("/Users/adrian/projects/genfunc")
-import genfunc_3d
 
 def angmom(x):
     return np.array([x[1]*x[5]-x[2]*x[4],x[2]*x[3]-x[0]*x[5],x[0]*x[4]-x[1]*x[3]])
@@ -138,34 +135,25 @@ def test_nvecs():
 
     assert np.all(nvecs == nvecs_sanders)
 
-# def test_compare_action_prepare():
-#     from ..actionangle import _action_prepare
-#     import solver
-#     logger.setLevel(logging.ERROR)
-#     AA = np.random.uniform(0., 100., size=(1000,6))
+def test_compare_action_prepare():
+    # HACK:
+    sys.path.append("/Users/adrian/projects/genfunc")
+    from ..actionangle import _action_prepare, _angle_prepare
+    import solver
+    logger.setLevel(logging.ERROR)
+    AA = np.random.uniform(0., 100., size=(1000,6))
+    t = np.linspace(0., 100., 1000)
 
-#     A1,b1 = solver.solver(AA, N_max=6, symNx=2)
-#     A2,b2,n = _action_prepare(AA, N_max=6, dx=2, dy=2, dz=2)
+    act_san,n_vectors = solver.solver(AA, N_max=6, symNx=2)
+    A2,b2,n = _action_prepare(AA, N_max=6, dx=2, dy=2, dz=2)
+    act_apw = np.array(solve(A2,b2))
 
-#     assert np.allclose(A1, A2)
-#     assert np.allclose(b1, b2)
+    ang_san = solver.angle_solver(AA, t, N_max=6, symNx=2, sign=1)
+    A2,b2,n = _angle_prepare(AA, t, N_max=6, dx=2, dy=2, dz=2)
+    ang_apw = np.array(solve(A2,b2))
 
-# def test_compare_angle_prepare():
-#     from ..actionangle import _angle_prepare
-#     import solver
-#     logger.setLevel(logging.ERROR)
-#     AA = np.random.uniform(0., 100., size=(1000,6))
-#     t = np.linspace(0., 100., 1000)
-
-#     A1,b1 = solver.angle_solver(AA, t, N_max=6, sign=1., symNx=2)
-#     A2,b2,n = _angle_prepare(AA, t, N_max=6, dx=2, dy=2, dz=2)
-
-#     # row = slice(None,None)
-#     # col = slice(None,None)
-#     # assert np.allclose(A1[row,col], A2[row,col])
-
-#     assert np.allclose(A1, A2)
-#     assert np.allclose(b1, b2)
+    assert np.allclose(act_apw, act_san)
+    assert np.allclose(ang_apw, ang_san)
 
 def sanders_act_ang_freq(t,w,N_max=6):
     w2 = w.copy()
