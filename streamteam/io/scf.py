@@ -19,11 +19,13 @@ from astropy.table import Table
 
 # Project
 from .core import NBodyReader
+from ..potential.apw import PW14Potential
+from ..units import galactic
 
 # Create logger
 logger = logging.getLogger(__name__)
 
-__all__ = ["SCFReader"]
+__all__ = ["SCFReader", "APWSCFReader"]
 
 class SCFReader(NBodyReader):
 
@@ -160,3 +162,53 @@ class SCFReader(NBodyReader):
             tbl[colname].unit = colunit
 
         return tbl
+
+class APWSCFReader(SCFReader):
+
+    def read_potential(self, units=None):
+        """ Read the SCFPOT potential specification file and get the potential
+            parameters. By default, returns in whatever units are in the file.
+
+            Parameters
+            ----------
+            units : dict (optional)
+                A unit system to transform the data to. If None, will return
+                the data in the file units.
+        """
+
+        fullpath = os.path.join(self.path, "SCFPOT")
+        with open(fullpath) as f:
+            lines = f.readlines()
+
+        pars = dict()
+
+        if units is None:
+            pars['a'] = float(lines[1].split()[0])
+            pars['b'] = float(lines[2].split()[0])
+            pars['m_disk'] = float(lines[3].split()[0])
+            pars['c'] = float(lines[5].split()[0])
+            pars['m_spher'] = float(lines[6].split()[0])
+            pars['r_h'] = float(lines[8].split()[0])
+            pars['v_h'] = float(lines[9].split()[0])
+            pars['q1'] = float(lines[10].split()[0])
+            pars['q2'] = float(lines[11].split()[0])
+            pars['q3'] = float(lines[12].split()[0])
+            pars['phi'] = float(lines[13].split()[0])
+            pars['theta'] = float(lines[14].split()[0])
+            pars['psi'] = float(lines[15].split()[0])
+        else:
+            pars['a'] = (float(lines[1].split()[0])*u.kpc).decompose(units)
+            pars['b'] = (float(lines[2].split()[0])*u.kpc).decompose(units)
+            pars['m_disk'] = (float(lines[3].split()[0])*u.Msun).decompose(units)
+            pars['c'] = (float(lines[5].split()[0])*u.kpc).decompose(units)
+            pars['m_spher'] = (float(lines[6].split()[0])*u.Msun).decompose(units)
+            pars['r_h'] = (float(lines[8].split()[0])*u.kpc).decompose(units)
+            pars['v_h'] = (float(lines[9].split()[0])*u.km/u.s).decompose(units)
+            pars['q1'] = float(lines[10].split()[0])
+            pars['q2'] = float(lines[11].split()[0])
+            pars['q3'] = float(lines[12].split()[0])
+            pars['phi'] = (float(lines[13].split()[0])*u.radian).decompose(units)
+            pars['theta'] = (float(lines[14].split()[0])*u.radian).decompose(units)
+            pars['psi'] = (float(lines[15].split()[0])*u.radian).decompose(units)
+
+        return pars
