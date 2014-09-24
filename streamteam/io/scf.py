@@ -197,18 +197,18 @@ class APWSCFReader(SCFReader):
             pars['theta'] = float(lines[14].split()[0])
             pars['psi'] = float(lines[15].split()[0])
         else:
-            pars['a'] = (float(lines[1].split()[0])*u.kpc).decompose(units)
-            pars['b'] = (float(lines[2].split()[0])*u.kpc).decompose(units)
-            pars['m_disk'] = (float(lines[3].split()[0])*u.Msun).decompose(units)
-            pars['c'] = (float(lines[5].split()[0])*u.kpc).decompose(units)
-            pars['m_spher'] = (float(lines[6].split()[0])*u.Msun).decompose(units)
-            pars['r_h'] = (float(lines[8].split()[0])*u.kpc).decompose(units)
-            pars['v_h'] = (float(lines[9].split()[0])*u.km/u.s).decompose(units)
+            pars['a'] = (float(lines[1].split()[0])*u.kpc).decompose(units).value
+            pars['b'] = (float(lines[2].split()[0])*u.kpc).decompose(units).value
+            pars['m_disk'] = (float(lines[3].split()[0])*u.Msun).decompose(units).value
+            pars['c'] = (float(lines[5].split()[0])*u.kpc).decompose(units).value
+            pars['m_spher'] = (float(lines[6].split()[0])*u.Msun).decompose(units).value
+            pars['r_h'] = (float(lines[8].split()[0])*u.kpc).decompose(units).value
+            pars['v_h'] = (float(lines[9].split()[0])*u.km/u.s).decompose(units).value
             pars['q1'] = float(lines[10].split()[0])
             pars['q2'] = float(lines[11].split()[0])
             pars['q3'] = float(lines[12].split()[0])
-            pars['phi'] = (float(lines[13].split()[0])*u.radian).decompose(units)
-            pars['theta'] = (float(lines[14].split()[0])*u.radian).decompose(units)
-            pars['psi'] = (float(lines[15].split()[0])*u.radian).decompose(units)
+            pars['phi'] = (float(lines[13].split()[0])*u.radian).decompose(units).value
+            pars['theta'] = (float(lines[14].split()[0])*u.radian).decompose(units).value
+            pars['psi'] = (float(lines[15].split()[0])*u.radian).decompose(units).value
 
         return pars
