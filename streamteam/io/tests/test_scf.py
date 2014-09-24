@@ -16,15 +16,15 @@ import astropy.units as u
 
 # Project
 from ..scf import SCFReader
-from ...units import usys
+from ...units import galactic
 
 def test_simple():
-    scf = SCFReader('/Users/adrian/projects/stream-team/tests/M2.5e+08')
+    scf = SCFReader('/Users/adrian/projects/streamteam/tests/M2.5e+08')
 
 def test_snap():
-    scf = SCFReader('/Users/adrian/projects/stream-team/tests/M2.5e+08')
+    scf = SCFReader('/Users/adrian/projects/streamteam/tests/M2.5e+08')
     d1 = scf.read_snap('SNAP113')
     print(d1.meta)
 
-    d1 = scf.read_snap('SNAP113', units=usys)
+    d1 = scf.read_snap('SNAP113', units=galactic)
     print(d1.meta)
