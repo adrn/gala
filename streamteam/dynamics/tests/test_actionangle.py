@@ -18,13 +18,18 @@ import astropy.units as u
 from scipy.linalg import solve
 
 # Project
-from ...integrate import LeapfrogIntegrator
+from ...integrate import LeapfrogIntegrator, DOPRI853Integrator
 from ...potential import LogarithmicPotential
 from ...potential import NFWPotential, IsochronePotential
+from ...potential.apw import PW14Potential
 from ...potential.lm10 import LM10Potential
 from ..actionangle import *
 from ..core import *
 from ..plot import *
+
+# HACK:
+sys.path.append("/Users/adrian/projects/genfunc")
+import genfunc_3d
 
 logger.setLevel(logging.DEBUG)
 
@@ -136,8 +141,7 @@ def test_nvecs():
     assert np.all(nvecs == nvecs_sanders)
 
 def test_compare_action_prepare():
-    # HACK:
-    sys.path.append("/Users/adrian/projects/genfunc")
+
     from ..actionangle import _action_prepare, _angle_prepare
     import solver
     logger.setLevel(logging.ERROR)
@@ -266,6 +270,55 @@ class TestLoopActions(object):
         #                               ∆Ω = (3e-4, 6e-5, 2e-3)
         print(action_std)
         print(freq_std)
+
+class TestDifficultActions(object):
+
+    def setup(self):
+        self.usys = (u.kpc, u.Msun, u.Myr)
+        params = {'a': 6.5, 'q1': 1.3, 'c': 0.3, 'b': 0.26, 'q3': 0.8, 'r_h': 30.0, 'm_disk': 65000000000.0, 'psi': 1.570796, 'q2': 1.0, 'theta': 1.570796, 'phi': 1.570796, 'm_spher': 20000000000.0, 'v_h': 0.5600371815834104}
+        self.potential = PW14Potential(**params)
+        acc = lambda t,w: np.hstack((w[...,3:],self.potential.acceleration(w[...,:3])))
+        self.integrator = DOPRI853Integrator(acc)
+        self.w0 = np.append(([20., 2.5, 0.]*u.kpc).decompose(self.usys).value,
+                            ([0., 0., 146.66883]*u.km/u.s).decompose(self.usys).value)
+
+    def test_actions(self):
+        t,w = self.integrator.run(self.w0, dt=0.5, nsteps=20000)
+
+        fig = plot_orbits(w,ix=0,marker=None)
+        fig.savefig(os.path.join(plot_path,"difficult_orbit.png"))
+
+        N_max = 6
+        actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, usys=self.usys)
+
+        # get values from Sanders' code
+        s_actions,s_angles,s_freqs = sanders_act_ang_freq(t, w, N_max=N_max)
+        s_actions = np.abs(s_actions)
+        s_freqs = np.abs(s_freqs)
+
+        print("actions: ", actions)
+        print("angles: ", angles)
+        print("freqs: ", freqs)
+        print()
+        print("s actions: ", s_actions)
+        print("s angles: ", s_angles)
+        print("s freqs: ", s_freqs)
+        print()
+        print("Action ratio:", actions / s_actions)
+        print("Angle ratio:", angles / s_angles)
+        print("Freq ratio:", freqs / s_freqs)
+
+        return
+
+        fig = plot_angles(t,angles,freqs)
+        fig.savefig(os.path.join(plot_path,"difficult_angles.png"))
+
+        fig = plot_angles(t,s_angles,s_freqs)
+        fig.savefig(os.path.join(plot_path,"difficult_angles_sanders.png"))
+
+        assert np.allclose(actions, s_actions, rtol=1E-2)
+        assert np.allclose(angles, s_angles, rtol=1E-2)
+        assert np.allclose(freqs, s_freqs, rtol=1E-2)
 
 class TestFrequencyMap(object):
 
