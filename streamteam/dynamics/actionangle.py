@@ -340,6 +340,43 @@ def fit_harmonic_oscillator(w, usys, omega=[1.,1.,1.]):
     best_omega = np.abs(p)
     return best_omega
 
+def fit_toy_potential(w, usys, force_harmonic_oscillator=False):
+    """
+    Fit a toy potential (isochrone or harmonic oscillator) to the orbit provided.
+
+    TODO
+
+    Parameters
+    ----------
+    w : array_like
+        Phase-space orbit at times, `t`. Should have shape (ntimes,6).
+    usys : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units. For example,
+        (u.kpc, u.Myr, u.Msun).
+    force_harmonic_oscillator : bool (optional)
+        Force using the harmonic oscillator potential as the toy potential.
+
+    """
+    orbit_class = classify_orbit(w)
+    if np.any(orbit_class == 1) and not force_harmonic_oscillator:  # loop orbit
+        logger.debug("===== Loop orbit =====")
+        logger.debug("Using isochrone toy potential")
+
+        m,b = fit_isochrone(w, usys=usys)
+        toy_potential = IsochronePotential(m=m, b=b, usys=usys)
+        logger.debug("Best m={}, b={}".format(m, b))
+
+    else:  # box orbit
+        logger.debug("===== Box orbit =====")
+        logger.debug("Using triaxial harmonic oscillator toy potential")
+
+        omega = fit_harmonic_oscillator(w, usys=usys)
+        toy_potential = HarmonicOscillatorPotential(omega=omega)
+        logger.debug("Best omegas ({})".format(omega))
+
+    return toy_potential
+
 def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=False,
                  toy_potential=None):
     """
@@ -373,23 +410,9 @@ def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=F
     if w.ndim > 2:
         raise ValueError("w must be a single orbit")
 
-    orbit_class = classify_orbit(w)
     if toy_potential is None:
-        if np.any(orbit_class == 1) and not force_harmonic_oscillator: # loop orbit
-            logger.debug("===== Loop orbit =====")
-            logger.debug("Using isochrone toy potential")
-
-            m,b = fit_isochrone(w, usys=usys)
-            toy_potential = IsochronePotential(m=m, b=b, usys=usys)
-            logger.debug("Best m={}, b={}".format(m, b))
-
-        else: # box orbit
-            logger.debug("===== Box orbit =====")
-            logger.debug("Using triaxial harmonic oscillator toy potential")
-
-            omega = fit_harmonic_oscillator(w, usys=usys)
-            toy_potential = HarmonicOscillatorPotential(omega=omega)
-            logger.debug("Best omegas ({})".format(omega))
+        toy_potential = fit_toy_potential(w, usys=usys,
+                                          force_harmonic_oscillator=force_harmonic_oscillator)
 
     else:
         logger.debug("Using *fixed* toy potential: {}".format(toy_potential.parameters))
