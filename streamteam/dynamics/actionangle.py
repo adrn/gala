@@ -25,7 +25,7 @@ from .core import angular_momentum, classify_orbit
 from ..potential import HarmonicOscillatorPotential, IsochronePotential
 
 __all__ = ['cross_validate_actions', 'find_actions', 'generate_n_vectors', \
-           'fit_isochrone', 'fit_harmonic_oscillator']
+           'fit_isochrone', 'fit_harmonic_oscillator', 'fit_toy_potential']
 
 def flip_coords(w, loop_bit):
     """
