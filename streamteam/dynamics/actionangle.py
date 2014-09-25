@@ -34,15 +34,17 @@ def flip_coords(w, loop_bit):
     Parameters
     ----------
     w : array_like
-        Array of phase-space positions.
+        Array of phase-space positions. Only works for 2D.
     loop_bit : array_like
         Array of bits that specify axis about which the orbit circulates.
         See docstring for `classify_orbit()`.
     """
-    ix = loop_bit[:,0] == 1
-    w[:,ix,:3] = w[:,ix,2::-1] # index magic to flip positions
-    w[:,ix,3:] = w[:,ix,:2:-1] # index magic to flip velocities
-    return w
+    new_w = w.copy()
+    # circulation around x-axis
+    if loop_bit[0] == 1:
+        new_w[:,:3] = w[:,2::-1]  # index magic to flip positions
+        new_w[:,3:] = w[:,:2:-1]  # index magic to flip velocities
+    return new_w
 
 def generate_n_vectors(N_max, dx=1, dy=1, dz=1):
     """
@@ -129,7 +131,7 @@ def check_angle_sampling(nvecs, angles):
 
     return checks,P
 
-def _action_prepare(aa, N_max, dx, dy, dz, sign=1.):
+def _action_prepare(aa, N_max, dx, dy, dz, sign=1., throw_out_modes=False):
     """
     Given toy actions and angles, `aa`, compute the matrix `A` and
     vector `b` to solve for the vector of "true" actions and generating
@@ -163,9 +165,9 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1.):
     # make sure we have enough angle coverage
     modes,P = check_angle_sampling(nvecs, angles)
 
-    # TODO: throw out modes?
-    # if(throw_out_modes):
-    #     n_vectors = np.delete(n_vectors,check_each_direction(n_vectors,angs),axis=0)
+    # throw out modes?
+    # if throw_out_modes:
+    #     nvecs = np.delete(nvecs, (modes,P), axis=0)
 
     n = len(nvecs) + 3
     b = np.zeros(shape=(n, ))
@@ -418,6 +420,9 @@ def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=F
         logger.debug("Using *fixed* toy potential: {}".format(toy_potential.parameters))
 
     if isinstance(toy_potential, IsochronePotential):
+        loop = classify_orbit(w)
+        w = flip_coords(w, loop[0])
+
         dxyz = (1,2,2)
         circ = np.sign(w[0,0]*w[0,4]-w[0,1]*w[0,3])
         sign = np.array([1.,circ,1.])
@@ -428,7 +433,7 @@ def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=F
         raise ValueError("Invalid toy potential.")
 
     # Now find toy actions and angles
-    aa = np.hstack(toy_potential.action_angle(w[...,:3], w[...,3:]))
+    aa = np.hstack(toy_potential.action_angle(w[:,:3], w[:,3:]))
     if np.any(np.isnan(aa)):
         ix = ~np.any(np.isnan(aa),axis=1)
         aa = aa[ix]
@@ -441,14 +446,14 @@ def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=F
     A,b,nvecs = _action_prepare(aa, N_max, dx=dxyz[0], dy=dxyz[1], dz=dxyz[2])
     actions = np.array(solve(A,b))
     logger.debug("Action solution found for N_max={}, size {} symmetric"
-                 " matrix in {} seconds"\
+                 " matrix in {} seconds"
                  .format(N_max,len(actions),time.time()-t1))
 
     t1 = time.time()
     A,b,nvecs = _angle_prepare(aa, t, N_max, dx=dxyz[0], dy=dxyz[1], dz=dxyz[2], sign=sign)
     angles = np.array(solve(A,b))
     logger.debug("Angle solution found for N_max={}, size {} symmetric"
-                 " matrix in {} seconds"\
+                 " matrix in {} seconds"
                  .format(N_max,len(angles),time.time()-t1))
 
     # Just some checks
