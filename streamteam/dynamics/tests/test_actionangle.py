@@ -282,8 +282,26 @@ class TestDifficultActions(object):
         self.w0 = np.append(([20., 2.5, 0.]*u.kpc).decompose(self.usys).value,
                             ([0., 0., 146.66883]*u.km/u.s).decompose(self.usys).value)
 
+        self.t,self.w = self.integrator.run(self.w0, dt=0.5, nsteps=20000)
+
+    def test_toy_potentials(self):
+        import toy_potentials # sanders
+
+        toy_potential = fit_toy_potential(self.w, self.usys)
+        actions,angles = toy_potential.action_angle(self.w[:,0,:3], self.w[:,0,3:])
+
+        params = (toy_potential.parameters['m']/1E11, toy_potential.parameters['b'])
+        s_w = self.w[:,0].copy()
+        s_w[:,3:] = (s_w[:,3:]*u.kpc/u.Myr).to(u.km/u.s).value
+        AA = np.array([toy_potentials.angact_iso(i,params) for i in s_w])
+        AA = AA[~np.isnan(AA).any(1)]
+        s_actions = (AA[:,:3]*u.km/u.s*u.kpc).to(u.kpc**2/u.Myr).value
+        s_angles = AA[:,3:]
+
+        assert np.all(np.abs(np.sum(actions - s_actions, axis=0) / len(actions)) < 1E-13)
+        assert np.all(np.abs(np.sum(angles - s_angles, axis=0) / len(angles)) < 1E-13)
+
     def test_actions(self):
-        t,w = self.integrator.run(self.w0, dt=0.5, nsteps=20000)
 
         fig = plot_orbits(w,ix=0,marker=None)
         fig.savefig(os.path.join(plot_path,"difficult_orbit.png"))
