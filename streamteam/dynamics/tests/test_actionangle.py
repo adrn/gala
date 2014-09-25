@@ -159,10 +159,10 @@ def test_compare_action_prepare():
     assert np.allclose(act_apw, act_san)
     assert np.allclose(ang_apw, ang_san)
 
-def sanders_act_ang_freq(t,w,N_max=6):
-    w2 = w.copy()
-    w2[:,0,3:] = (w2[:,0,3:]*u.kpc/u.Myr).to(u.km/u.s).value
-    act,ang,n_vec,toy_aa,pars = genfunc_3d.find_actions(w2[:,0], t/1000., N_matrix=N_max)
+def sanders_act_ang_freq(t, w, N_max=6):
+    w2 = w[:,0].copy()
+    w2[:,3:] = (w2[:,3:]*u.kpc/u.Myr).to(u.km/u.s).value
+    act,ang,n_vec,toy_aa,pars = genfunc_3d.find_actions(w2, t/1000., N_matrix=N_max)
 
     actions = (act[:3]*u.kpc*u.km/u.s).to(u.kpc**2/u.Myr).value
     angles = ang[:3]
@@ -275,7 +275,9 @@ class TestDifficultActions(object):
 
     def setup(self):
         self.usys = (u.kpc, u.Msun, u.Myr)
-        params = {'a': 6.5, 'q1': 1.3, 'c': 0.3, 'b': 0.26, 'q3': 0.8, 'r_h': 30.0, 'm_disk': 65000000000.0, 'psi': 1.570796, 'q2': 1.0, 'theta': 1.570796, 'phi': 1.570796, 'm_spher': 20000000000.0, 'v_h': 0.5600371815834104}
+        params = {'a': 6.5, 'q1': 1.3, 'c': 0.3, 'b': 0.26, 'q3': 0.8, 'r_h': 30.0,
+                  'm_disk': 65000000000.0, 'psi': 1.570796, 'q2': 1.0, 'theta': 1.570796,
+                  'phi': 1.570796, 'm_spher': 20000000000.0, 'v_h': 0.5600371815834104}
         self.potential = PW14Potential(**params)
         acc = lambda t,w: np.hstack((w[...,3:],self.potential.acceleration(w[...,:3])))
         self.integrator = DOPRI853Integrator(acc)
@@ -302,6 +304,8 @@ class TestDifficultActions(object):
         assert np.all(np.abs(np.sum(angles - s_angles, axis=0) / len(angles)) < 1E-13)
 
     def test_actions(self):
+        t = self.t
+        w = self.w
 
         fig = plot_orbits(w,ix=0,marker=None)
         fig.savefig(os.path.join(plot_path,"difficult_orbit.png"))
