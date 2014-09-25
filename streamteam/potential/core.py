@@ -287,7 +287,7 @@ class CartesianPotential(Potential):
             Velocity.
         """
 
-        return self.value(x) + 0.5*(np.sum(v**2,axis=-1))
+        return self.value(x) + 0.5*np.sum(v**2,axis=-1)
 
 class CompositePotential(dict, Potential):
     """
