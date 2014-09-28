@@ -274,6 +274,7 @@ class TestLoopActions(object):
 class TestDifficultActions(object):
 
     def setup(self):
+        path = os.path.split(os.path.abspath(__file__))[0]
         self.usys = (u.kpc, u.Msun, u.Myr)
         params = {'a': 6.5, 'q1': 1.3, 'c': 0.3, 'b': 0.26, 'q3': 0.8, 'r_h': 30.0,
                   'm_disk': 65000000000.0, 'psi': 1.570796, 'q2': 1.0, 'theta': 1.570796,
@@ -281,13 +282,27 @@ class TestDifficultActions(object):
         self.potential = PW14Potential(**params)
         acc = lambda t,w: np.hstack((w[...,3:],self.potential.acceleration(w[...,:3])))
         self.integrator = DOPRI853Integrator(acc)
-        self.w0 = np.append(([20., 2.5, 0.]*u.kpc).decompose(self.usys).value,
-                            ([0., 0., 146.66883]*u.km/u.s).decompose(self.usys).value)
+        # self.w0 = np.append(([20., 2.5, 0.]*u.kpc).decompose(self.usys).value,
+        #                     ([0., 0., 146.66883]*u.km/u.s).decompose(self.usys).value)
 
-        self.t,self.w = self.integrator.run(self.w0, dt=0.5, nsteps=20000)
+        if not os.path.exists(os.path.join(path, "w.npy")):
+            self.w0 = np.loadtxt(os.path.join(path, "w0.txt"))
+            logger.debug("Integrating orbits")
+            t,w = self.integrator.run(self.w0, dt=0.2, nsteps=50000)
+
+            logger.debug("Saving orbits")
+            np.save(os.path.join(path, "t.npy"), t)
+            np.save(os.path.join(path, "w.npy"), w)
+        else:
+            logger.debug("Loaded orbits")
+            t = np.load(os.path.join(path, "t.npy"))
+            w = np.load(os.path.join(path, "w.npy"))
+
+        self.t = t[::10]
+        self.w = w[::10,0][:,np.newaxis]
 
     def test_toy_potentials(self):
-        import toy_potentials # sanders
+        import toy_potentials  # sanders
 
         toy_potential = fit_toy_potential(self.w, self.usys)
         actions,angles = toy_potential.action_angle(self.w[:,0,:3], self.w[:,0,3:])
