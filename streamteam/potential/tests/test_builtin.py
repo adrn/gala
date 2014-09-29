@@ -65,29 +65,6 @@ class TestHarmonicOscillator(object):
         fig,axes = potential.plot_contours(grid=(grid,grid))
         fig.savefig(os.path.join(plot_path, "harmonic_osc_2d.png"))
 
-    def test_action_angle(self):
-        from ...integrate import LeapfrogIntegrator
-        potential = HarmonicOscillatorPotential(omega=[1.,2.])
-        acc = lambda t,x: potential.acceleration(x)
-        integrator = LeapfrogIntegrator(acc)
-        t,ws = integrator.run([0.,0.,1.,1.], dt=0.01, nsteps=1000)
-
-        actions,angles = potential.action_angle(ws[:,0,:2], ws[:,0,2:])
-        assert np.allclose(actions[0,0],actions[1:,0],rtol=1E-2)
-        assert np.allclose(actions[0,1],actions[1:,1],rtol=1E-2)
-
-        plt.figure()
-        plt.plot(ws[:,0,0], ws[:,0,1], marker=None)
-        plt.savefig(os.path.join(plot_path, "harmonic_osc_orbit.png"))
-
-        fig,axes = plt.subplots(2,1,figsize=(8,5))
-        axes[0].plot(actions[:,0], marker=None)
-        axes[0].plot(actions[:,1], marker=None)
-
-        axes[1].plot(angles[:,0], marker=None)
-        axes[1].plot(angles[:,1], marker=None)
-        fig.savefig(os.path.join(plot_path, "harmonic_osc_aa.png"))
-
 class TestPointMass(object):
 
     def test_pointmass_creation(self):
@@ -204,62 +181,6 @@ class TestIsochrone(object):
             else:
                 potential.plot_contours(grid=(grid,slc,0.), ax=axes, marker=None)
         fig.savefig(os.path.join(plot_path, "isochrone_1d.png"))
-
-    def test_action_angle(self):
-        from ...integrate import LeapfrogIntegrator
-        potential = IsochronePotential(usys=self.usys, m=1.E11, b=5.)
-        acc = lambda t,x: potential.acceleration(x)
-        integrator = LeapfrogIntegrator(acc)
-        t,ws = integrator.run([0.,0.,1.,0.1,0.,0.], dt=1., nsteps=10000)
-
-        actions,angles = potential.action_angle(ws[:,0,:3], ws[:,0,3:])
-        assert np.allclose(actions[0,0],actions[1:,0],rtol=1E-3)
-        assert np.allclose(actions[0,1],actions[1:,1],rtol=1E-3)
-        assert np.allclose(actions[0,2],actions[1:,2],rtol=1E-3)
-
-        fig,axes = plt.subplots(2,1,figsize=(8,5))
-        axes[0].plot(actions[:,0], marker=None)
-        axes[0].plot(actions[:,1], marker=None)
-        axes[0].plot(actions[:,2], marker=None)
-
-        axes[1].plot(angles[:,0], marker=None)
-        axes[1].plot(angles[:,1], marker=None)
-        axes[1].plot(angles[:,2], marker=None)
-        fig.savefig(os.path.join(plot_path, "isochrone_aa.png"))
-
-    def test_roundtrip(self):
-        from ...coordinates.util import cartesian_to_spherical
-        from ...integrate import LeapfrogIntegrator
-
-        np.random.seed(4342)
-
-        n = 10
-        x = np.random.uniform(-10., 10., size=(n,3))
-        v = np.random.uniform(-1., 1., size=(n,3)) / 33.
-
-        potential = IsochronePotential(usys=self.usys, m=1.E11, b=5.)
-        acc = lambda t,x: potential.acceleration(x)
-        integrator = LeapfrogIntegrator(acc)
-        t,ws = integrator.run(np.hstack((x,v)), dt=1., nsteps=10000)
-        print()
-
-        for i in range(n):
-            xs = ws[:,i,:3]
-            vs = ws[:,i,3:]
-
-            # r,phi,theta,vr,vphi,vtheta = cartesian_to_spherical(xs,vs).T
-            # print("True r", r)
-            # print("True φ", phi)
-            # print("True θ", theta)
-            # print("True vr", vr)
-            # print("True vφ", vphi)
-            # print("True vθ", vtheta)
-
-            actions,angles = potential.action_angle(xs, vs)
-            x,v = potential.phase_space(actions, angles)
-
-            assert np.allclose(x, xs, rtol=1E-8)
-            assert np.allclose(v, vs, rtol=1E-8)
 
 class TestMiyamotoNagai(object):
     usys = (u.kpc, u.M_sun, u.Myr, u.radian)
