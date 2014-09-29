@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import streamteam.potential as sp
 
-p = sp.MiyamotoNagaiPotential(1E11, 6.5, 0.27, usys=(u.kpc, u.Msun, u.Myr))
+p = sp.MiyamotoNagaiPotential(1E11, 6.5, 0.27, units=(u.kpc, u.Msun, u.Myr))
 
 fig,axes = p.plot_contours(grid=(np.linspace(-15,15,100), 0., 1.), marker=None)
 fig.set_size_inches(8,6)
@@ -21,16 +21,16 @@ import astropy.units as u
 import numpy as np
 import streamteam.potential as sp
 
-usys = (u.kpc, u.Msun, u.Myr)
-potential = sp.NFWPotential(v_h=(150*u.km/u.s).decompose(usys).value,
-                            r_h=3., q1=1., q2=1., q3=1., usys=usys)
+units = (u.kpc, u.Msun, u.Myr)
+potential = sp.NFWPotential(v_h=(150*u.km/u.s).decompose(units).value,
+                            r_h=3., q1=1., q2=1., q3=1., units=units)
 
 import streamteam.integrate as si
 acc = lambda t,x: potential.acceleration(x)
 integrator = si.LeapfrogIntegrator(acc)
 
 x0 = np.array([[11.,6.,19.],[31.,0.,-4.]])
-v0 = ([[50.,0.,0.],[120.,-120.,375.]]*u.km/u.s).decompose(usys).value
+v0 = ([[50.,0.,0.],[120.,-120.,375.]]*u.km/u.s).decompose(units).value
 w0 = np.hstack((x0,v0))
 t,ws = integrator.run(w0, dt=1., nsteps=10000)
 

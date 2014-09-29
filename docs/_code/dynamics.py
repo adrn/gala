@@ -38,7 +38,7 @@ def make_orbit_files(potential, w0, N_max=6, suffix="", overwrite=False,
                      force_harmonic_oscillator=False):
 
     orbit_filename = os.path.join(plot_path, "orbits{}.npy".format(suffix))
-    usys = potential.usys
+    units = potential.units
     nsteps = 100000
     dt = 5.
 
@@ -62,12 +62,12 @@ def make_orbit_files(potential, w0, N_max=6, suffix="", overwrite=False,
         loop = sd.classify_orbit(w)
         if np.any(loop == 1) and not force_harmonic_oscillator: # loop orbit
             logger.debug("Orbit classified as LOOP")
-            m,b = sd.fit_isochrone(w, usys=usys)
-            toy_potential = sp.IsochronePotential(m=m, b=b, usys=usys)
+            m,b = sd.fit_isochrone(w, units=units)
+            toy_potential = sp.IsochronePotential(m=m, b=b, units=units)
         else:
             logger.debug("Orbit classified as BOX")
-            omegas = sd.fit_harmonic_oscillator(w, usys=usys)
-            toy_potential = sp.HarmonicOscillatorPotential(omega=omegas, usys=usys)
+            omegas = sd.fit_harmonic_oscillator(w, units=units)
+            toy_potential = sp.HarmonicOscillatorPotential(omega=omegas, units=units)
 
         # also integrate the orbit in the best-fitting toy potential
         toy_steps = w.shape[0]//10
@@ -89,19 +89,19 @@ def make_orbit_files(potential, w0, N_max=6, suffix="", overwrite=False,
 
     # for i in range(100):
     #     omega0 = np.random.uniform(0.,100.,size=3)
-    #     omegas = sd.fit_harmonic_oscillator(w, usys=usys, omega=omega0)
+    #     omegas = sd.fit_harmonic_oscillator(w, units=units, omega=omega0)
     #     print(omegas)
-    #     toy_potential = sp.HarmonicOscillatorPotential(omega=omegas, usys=usys)
+    #     toy_potential = sp.HarmonicOscillatorPotential(omega=omegas, units=units)
     # sys.exit(0)
 
     if toy_potential is None:
         loop = sd.classify_orbit(w)
         if np.any(loop == 1) and not force_harmonic_oscillator: # loop orbit
-            m,b = sd.fit_isochrone(w, usys=usys)
-            toy_potential = sp.IsochronePotential(m=m, b=b, usys=usys)
+            m,b = sd.fit_isochrone(w, units=units)
+            toy_potential = sp.IsochronePotential(m=m, b=b, units=units)
         else:
-            omegas = sd.fit_harmonic_oscillator(w, usys=usys)
-            toy_potential = sp.HarmonicOscillatorPotential(omega=omegas, usys=usys)
+            omegas = sd.fit_harmonic_oscillator(w, units=units)
+            toy_potential = sp.HarmonicOscillatorPotential(omega=omegas, units=units)
 
     logger.debug("Toy potential: {}".format(toy_potential))
 
@@ -137,11 +137,11 @@ def make_action_files(t, w, potential, suffix="", overwrite=False,
         # compute the actions and angles for the orbit
         actions,angles,freqs = sd.cross_validate_actions(t, w[:,0], N_max=N_max, nbins=100,
                                     force_harmonic_oscillator=force_harmonic_oscillator,
-                                    usys=potential.usys, skip_failures=True,
+                                    units=potential.units, skip_failures=True,
                                     overlap=0) #w.shape[0]//100)
 
         # now compute for the full time series
-        r = sd.find_actions(t, w[:,0], N_max=N_max, usys=potential.usys, return_Sn=True,
+        r = sd.find_actions(t, w[:,0], N_max=N_max, units=potential.units, return_Sn=True,
                             force_harmonic_oscillator=force_harmonic_oscillator)
         full_actions,full_angles,full_freqs = r[:3]
         Sn,dSn_dJ,nvecs = r[3:]
@@ -256,14 +256,14 @@ def action_plots(actions,angles,freqs,full_actions,full_angles,full_freqs,
 def main(orbit_name, overwrite=False, N_max=6):
 
     # define an axisymmetric potential
-    usys = (u.kpc, u.Msun, u.Myr)
+    units = (u.kpc, u.Msun, u.Myr)
 
     if orbit_name == "axisymmetricloop":
         suffix = "_" + orbit_name
 
         # well-fit loop orbit
         p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
-                                    q1=1., q2=1., q3=0.85,  usys=usys)
+                                    q1=1., q2=1., q3=0.85,  units=units)
         w0 = [8.,0.,0.,0.075,0.15,0.05]
 
     elif orbit_name == "triaxialloop":
@@ -271,7 +271,7 @@ def main(orbit_name, overwrite=False, N_max=6):
 
         # well-fit loop orbit
         p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
-                                    q1=1.3, q2=1., q3=0.85,  usys=usys)
+                                    q1=1.3, q2=1., q3=0.85,  units=units)
         w0 = [8.,0.,0.,0.05,0.175,0.075]
 
     elif orbit_name == "triaxialchaotic":
@@ -279,7 +279,7 @@ def main(orbit_name, overwrite=False, N_max=6):
 
         # chaotic orbit?
         p = sp.LogarithmicPotential(v_c=0.15, r_h=0., phi=0.,
-                                    q1=1.3, q2=1., q3=0.85,  usys=usys)
+                                    q1=1.3, q2=1., q3=0.85,  units=units)
         w0 = [5.5, 0.1, 0., -0.02, 0.02, 0.07]
 
     else:

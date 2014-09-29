@@ -24,13 +24,13 @@ documentation for the individual classes below. You must also specify a unit
 system when initializing a potential. A unit system is a set of non-reducible
 units and must at least contain Astropy Unit objects for length, mass, and
 time, and optionally an angle unit. For example,
-`usys = (u.kpc, u.Msun, u.Myr, u.radian)`.
+`units = (u.kpc, u.Msun, u.Myr, u.radian)`.
 
 All of the built-in potential objects have defined methods that evaluate
 the value of the potential or the gradient/acceleration at a given
 position(s)::
 
-    >>> ptmass = PointMassPotential(m=1., x0=[0.,0.], usys=(u.Msun, u.au, u.yr))
+    >>> ptmass = PointMassPotential(m=1., x0=[0.,0.], units=(u.Msun, u.au, u.yr))
     >>> ptmass
     <PointMassPotential: x0=[0.0, 0.0], m=1.00>
     >>> ptmass.value([1.,-1.])
@@ -51,7 +51,7 @@ interest, you pass in a grid of values to compute the potential on and
 then just numerical values for the other dimensions. For example, to
 make a 1D plot of the potential contour at :math:`y=0,z=1`::
 
-    >>> p = sp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, usys=(u.kpc, u.Msun, u.Myr))
+    >>> p = sp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=(u.kpc, u.Msun, u.Myr))
     >>> fig,axes = p.plot_contours(grid=(np.linspace(-15,15,100), 0., 1.))
 
 Produces a plot like:
@@ -82,9 +82,9 @@ halo by setting the axis ratios to unity::
    import numpy as np
    import streamteam.potential as sp
 
-   usys = (u.kpc, u.Msun, u.Myr)
-   potential = sp.NFWPotential(v_h=(150*u.km/u.s).decompose(usys).value,
-                               r_h=10., q1=1., q2=1., q3=1., usys=usys)
+   units = (u.kpc, u.Msun, u.Myr)
+   potential = sp.NFWPotential(v_h=(150*u.km/u.s).decompose(units).value,
+                               r_h=10., q1=1., q2=1., q3=1., units=units)
 
 Now we need to define an integrator object to compute an orbit. We'll use the
 Leapfrog integration scheme implemented in the `integrate` subpackage. The
@@ -99,7 +99,7 @@ a temporary (lambda) function to get around this::
 We'll now compute orbits for two different initial conditions::
 
    x0 = np.array([[11.,6.,19.],[31.,0.,-4.]])
-   v0 = ([[50.,0.,0.],[120.,-120.,375.]]*u.km/u.s).decompose(usys).value
+   v0 = ([[50.,0.,0.],[120.,-120.,375.]]*u.km/u.s).decompose(units).value
    w0 = np.hstack((x0,v0))
    t,ws = integrator.run(w0, dt=1., nsteps=10000)
 

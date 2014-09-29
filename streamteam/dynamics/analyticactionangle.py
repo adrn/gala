@@ -45,7 +45,7 @@ def isochrone_xv_to_aa(x, v, potential):
     x = np.atleast_2d(x)
     v = np.atleast_2d(v)
 
-    _G = G.decompose(potential.usys).value
+    _G = G.decompose(potential.units).value
     GM = _G*potential.parameters['m']
     b = potential.parameters['b']
     E = potential.energy(x, v)
@@ -141,7 +141,7 @@ def isochrone_aa_to_xv(actions, angles, potential):
     actions = np.atleast_2d(actions)
     angles = np.atleast_2d(angles)
 
-    _G = G.decompose(potential.usys).value
+    _G = G.decompose(potential.units).value
     GM = _G*potential.parameters['m']
     b = potential.parameters['b']
 

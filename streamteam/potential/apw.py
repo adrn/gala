@@ -26,17 +26,17 @@ class PW14Potential(CartesianCompositePotential):
                  phi=np.pi/2., theta=np.pi/2., psi=np.pi/2.):
 
         # Choice of v_h sets circular velocity at Sun to 220 km/s
-        usys = (u.kpc, u.M_sun, u.Myr, u.radian)
-        self.usys = usys
+        units = (u.kpc, u.M_sun, u.Myr, u.radian)
+        self.units = units
 
         kwargs = dict()
-        kwargs["disk"] = MiyamotoNagaiPotential(usys=usys,
+        kwargs["disk"] = MiyamotoNagaiPotential(units=units,
                                                 m=m_disk, a=a, b=b)
 
-        kwargs["bulge"] = HernquistPotential(usys=usys,
+        kwargs["bulge"] = HernquistPotential(units=units,
                                              m=m_spher, c=c)
 
-        kwargs["halo"] = LeeSutoNFWPotential(usys=usys,
+        kwargs["halo"] = LeeSutoNFWPotential(units=units,
                                              a=q1, b=q2, c=q3,
                                              v_h=v_h, r_h=r_h,
                                              phi=phi, theta=theta, psi=psi)

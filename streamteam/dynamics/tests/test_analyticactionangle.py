@@ -42,7 +42,7 @@ class TestIsochrone(object):
         v = np.random.uniform(-1., 1., size=(self.N,3)) / 33.
         w0 = np.hstack((x,v))
 
-        self.potential = IsochronePotential(usys=galactic, m=1.E11, b=5.)
+        self.potential = IsochronePotential(units=galactic, m=1.E11, b=5.)
         self.t,self.w = self.potential.integrate_orbit(w0, dt=0.1, nsteps=10000)
         self.t = self.t[::10]
         self.w = self.w[::10]
@@ -88,7 +88,7 @@ class TestHarmonicOscillator(object):
         v = np.random.uniform(-1., 1., size=(self.N,3)) / 33.
         w0 = np.hstack((x,v))
 
-        self.potential = HarmonicOscillatorPotential(omega=np.array([0.013, 0.02, 0.005]), usys=galactic)
+        self.potential = HarmonicOscillatorPotential(omega=np.array([0.013, 0.02, 0.005]), units=galactic)
         self.t,self.w = self.potential.integrate_orbit(w0, dt=0.1, nsteps=10000)
         self.t = self.t[::10]
         self.w = self.w[::10]
