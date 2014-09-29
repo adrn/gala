@@ -14,9 +14,10 @@ from astropy.constants import G
 
 # Project
 from ..coordinates import cartesian_to_spherical, spherical_to_cartesian
-from ..core import angular_momentum
+from .core import angular_momentum
 
-__all__ = []
+__all__ = ['isochrone_xv_to_aa', 'isochrone_aa_to_xv',
+           'harmonic_oscillator_xv_to_aa', 'harmonic_oscillator_aa_to_xv']
 
 def isochrone_xv_to_aa(x, v, potential):
     """
@@ -254,8 +255,9 @@ def harmonic_oscillator_xv_to_aa(x, v, potential):
     omega = np.atleast_2d(potential.parameters['omega'])
 
     # compute actions -- just energy (hamiltonian) over frequency
-    E = potential.energy(x,v)[:,None]
-    action = E / omega
+    # E = potential.energy(x,v)[:,None]
+    omega = potential.parameters['omega']
+    action = (v**2 + (omega*x)**2)/(2.*omega[None])
 
     angle = np.arctan(-v / omega / x)
     angle[x == 0] = -np.sign(v[x == 0])*np.pi/2.
@@ -263,7 +265,7 @@ def harmonic_oscillator_xv_to_aa(x, v, potential):
 
     return action, angle % (2.*np.pi)
 
-def harmonic_oscillator_aa_to_xv(x, v, potential):
+def harmonic_oscillator_aa_to_xv(actions, angles, potential):
     """
     Transform the input action-angle coordinates to cartesian position and velocity
     assuming a Harmonic Oscillator potential. This transformation
@@ -276,20 +278,15 @@ def harmonic_oscillator_aa_to_xv(x, v, potential):
 
     Parameters
     ----------
-    x : array_like
-        Positions.
-    v : array_like
-        Velocities.
+    actions : array_like
+    angles : array_like
     potential : Potential
     """
-    omega = np.atleast_2d(potential.parameters['omega'])
+    raise NotImplementedError()
 
-    # compute actions -- just energy (hamiltonian) over frequency
-    E = potential.energy(x,v)[:,None]
-    action = E / omega
+    # TODO: bug in below...
+    omega = potential.parameters['omega']
+    x = np.sqrt(2*actions/omega[None]) * np.sin(angles)
+    v = np.sqrt(2*actions*omega[None]) * np.cos(angles)
 
-    angle = np.arctan(-v / omega / x)
-    angle[x == 0] = -np.sign(v[x == 0])*np.pi/2.
-    angle[x < 0] += np.pi
-
-    return action, angle % (2.*np.pi)
+    return x,v
