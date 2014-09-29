@@ -45,6 +45,9 @@ def plot_orbits(x, ix=None, axes=None, triangle=False, subplots_kwargs=dict(), *
         `marker=...`, etc.
     """
 
+    if x.ndim == 2:
+        x = x[:,np.newaxis]
+
     if triangle and axes is None:
         figsize = subplots_kwargs.pop('figsize', (12,12))
         fig,axes = plt.subplots(2,2,figsize=figsize,**subplots_kwargs)
