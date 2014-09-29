@@ -112,3 +112,5 @@ def isotropic_w0(N=100):
                                  vr.decompose(galactic).value,
                                  vphi.decompose(galactic).value,
                                  vtheta.decompose(galactic).value)
+
+    return np.hstack((x,v))
