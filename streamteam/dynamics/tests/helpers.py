@@ -37,7 +37,7 @@ def sanders_nvecs(N_max, dx, dy, dz):
     return n_vectors
 
 def sanders_act_ang_freq(t, w, N_max=6):
-    w2 = w[:,0].copy()
+    w2 = w.copy()
     w2[:,3:] = (w2[:,3:]*u.kpc/u.Myr).to(u.km/u.s).value
     act,ang,n_vec,toy_aa,pars = genfunc_3d.find_actions(w2, t/1000., N_matrix=N_max)
 
