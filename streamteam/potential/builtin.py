@@ -48,15 +48,15 @@ class HarmonicOscillatorPotential(CartesianPotential):
     ----------
     omega : numeric
         Frequency.
-    usys : iterable
+    units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
     """
 
-    def __init__(self, omega, usys=None):
-        self.usys = usys
+    def __init__(self, omega, units=None):
+        self.units = units
         parameters = dict(omega=np.array(omega))
-        func,gradient,hessian = harmonic_osc_funcs(usys)
+        func,gradient,hessian = harmonic_osc_funcs(units)
         super(HarmonicOscillatorPotential, self).__init__(func=func, gradient=gradient,
                                                           hessian=hessian,
                                                           parameters=parameters)
@@ -142,15 +142,15 @@ class PointMassPotential(Potential):
         Mass.
     x0 : array_like, numeric
         Position of the point mass relative to origin of coordinates
-    usys : iterable
+    units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
     """
 
-    def __init__(self, m, x0, usys=None):
-        self.usys = usys
+    def __init__(self, m, x0, units=None):
+        self.units = units
         parameters = dict(m=m, x0=x0)
-        func,gradient,hessian = point_mass_funcs(usys)
+        func,gradient,hessian = point_mass_funcs(units)
         super(PointMassPotential, self).__init__(func=func, gradient=gradient,
                                                  hessian=hessian,
                                                  parameters=parameters)
@@ -195,15 +195,15 @@ class IsochronePotential(CartesianPotential):
         Mass.
     b : numeric
         Core concentration.
-    usys : iterable
+    units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, m, b, usys):
-        self.usys = usys
+    def __init__(self, m, b, units):
+        self.units = units
         parameters = dict(m=m, b=b)
-        func,gradient,hessian = isochrone_funcs(usys)
+        func,gradient,hessian = isochrone_funcs(units)
         super(IsochronePotential, self).__init__(func=func, gradient=gradient,
                                                  hessian=hessian,
                                                  parameters=parameters)
@@ -297,15 +297,15 @@ class MiyamotoNagaiPotential(CartesianPotential):
         Mass.
     a : numeric
     b : numeric
-    usys : iterable
+    units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, m, a, b, usys):
-        self.usys = usys
+    def __init__(self, m, a, b, units):
+        self.units = units
         parameters = dict(m=m, a=a, b=b)
-        func,gradient,hessian = miyamoto_nagai_funcs(usys)
+        func,gradient,hessian = miyamoto_nagai_funcs(units)
         super(MiyamotoNagaiPotential, self).__init__(func=func,
                                                      gradient=gradient,
                                                      hessian=hessian,
@@ -349,15 +349,15 @@ class HernquistPotential(CartesianPotential):
         Mass.
     c : numeric
         Core concentration.
-    usys : iterable
+    units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, m, c, usys):
-        self.usys = usys
+    def __init__(self, m, c, units):
+        self.units = units
         parameters = dict(m=m, c=c)
-        func,gradient,hessian = hernquist_funcs(usys)
+        func,gradient,hessian = hernquist_funcs(units)
         super(HernquistPotential, self).__init__(func=func,
                                                  gradient=gradient,
                                                  hessian=hessian,
@@ -419,16 +419,16 @@ class LogarithmicPotential(CartesianPotential):
         Flattening in Z direction.
     phi : numeric
         Rotation of halo in X-Y plane.
-    usys : iterable (optional)
+    units : iterable (optional)
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_c, r_h, q1, q2, q3, phi, usys=None):
-        self.usys = usys
+    def __init__(self, v_c, r_h, q1, q2, q3, phi, units=None):
+        self.units = units
         parameters = dict(v_c=v_c, r_h=r_h, q1=q1,
                           q2=q2, q3=q3, phi=phi)
-        func,gradient,hessian = log_funcs(usys)
+        func,gradient,hessian = log_funcs(units)
         super(LogarithmicPotential, self).__init__(func=func,
                                                    gradient=gradient,
                                                    hessian=hessian,
@@ -478,16 +478,16 @@ class NFWPotential(CartesianPotential):
         Flattening in Y direction.
     q3 : numeric
         Flattening in Z direction.
-    usys : iterable
+    units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
 
-    def __init__(self, v_h, r_h, q1, q2, q3, usys):
-        self.usys = usys
+    def __init__(self, v_h, r_h, q1, q2, q3, units):
+        self.units = units
         parameters = dict(v_h=v_h, r_h=r_h, q1=q1, q2=q2, q3=q3)
-        func,gradient,hessian = nfw_funcs(usys)
+        func,gradient,hessian = nfw_funcs(units)
         super(NFWPotential, self).__init__(func=func,
                                            gradient=gradient,
                                            hessian=hessian,
