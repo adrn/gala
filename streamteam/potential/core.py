@@ -312,7 +312,7 @@ class CompositePotential(dict, Potential):
 
         >>> from streamteam.potential import HernquistPotential
         >>> cp = CompositePotential()
-        >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., usys=[u.kpc,u.Myr,u.Msun])
+        >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., units=[u.kpc,u.Myr,u.Msun])
 
     """
     def __init__(self, **kwargs):

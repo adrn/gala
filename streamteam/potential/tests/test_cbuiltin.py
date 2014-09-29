@@ -26,8 +26,8 @@ plot_path = os.path.join(top_path, "tests/potential/cpotential")
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
-usys = [u.kpc,u.Myr,u.Msun,u.radian]
-G = G.decompose(usys)
+units = [u.kpc,u.Myr,u.Msun,u.radian]
+G = G.decompose(units)
 
 print()
 color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yellow")
@@ -113,37 +113,37 @@ class PotentialTestBase(object):
                          .format(self.name)))
 
 class TestHernquist(PotentialTestBase):
-    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
         print()
         from ..builtin import HernquistPotential as PyHernquistPotential
 
-        self.potential = HernquistPotential(usys=self.usys,
+        self.potential = HernquistPotential(units=self.units,
                                             m=1.E11, c=0.26)
-        self.pypotential = PyHernquistPotential(usys=self.usys,
+        self.pypotential = PyHernquistPotential(units=self.units,
                                                 m=1.E11, c=0.26)
         self.w0 = [1.,0.,0.,0.,0.1,0.1]
 
 class TestMiyamotoNagai(PotentialTestBase):
-    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
         print()
         from ..builtin import MiyamotoNagaiPotential as PyMiyamotoNagaiPotential
 
-        self.potential = MiyamotoNagaiPotential(usys=self.usys,
+        self.potential = MiyamotoNagaiPotential(units=self.units,
                                                 m=1.E11, a=6.5, b=0.26)
-        self.pypotential = PyMiyamotoNagaiPotential(usys=self.usys,
+        self.pypotential = PyMiyamotoNagaiPotential(units=self.units,
                                                     m=1.E11, a=6.5, b=0.26)
         self.w0 = [8.,0.,0.,0.,0.22,0.1]
 
 class TestLeeSutoNFWPotential(PotentialTestBase):
-    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
         print()
-        self.potential = LeeSutoNFWPotential(usys=self.usys,
+        self.potential = LeeSutoNFWPotential(units=self.units,
                                              v_h=0.35, r_h=12.,
                                              a=1.4, b=1., c=0.6)
 
@@ -152,12 +152,12 @@ class TestLeeSutoNFWPotential(PotentialTestBase):
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
 class TestMisalignedLeeSutoNFWPotential(PotentialTestBase):
-    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
         print()
         self.name = "MisalignedLeeSutoNFWPotential"
-        self.potential = LeeSutoNFWPotential(usys=self.usys,
+        self.potential = LeeSutoNFWPotential(units=self.units,
                                              v_h=0.35, r_h=12.,
                                              a=1.4, b=1., c=0.6,
                                              phi=np.radians(30.),
@@ -168,13 +168,13 @@ class TestMisalignedLeeSutoNFWPotential(PotentialTestBase):
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
 class TestLogarithmicPotential(PotentialTestBase):
-    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
         print()
         from ..builtin import LogarithmicPotential as PyLogarithmicPotential
 
-        self.potential = LogarithmicPotential(usys=self.usys,
+        self.potential = LogarithmicPotential(units=self.units,
                                               v_c=0.17, r_h=10.,
                                               q1=1.2, q2=1., q3=0.8)
 
@@ -184,14 +184,14 @@ class TestLogarithmicPotential(PotentialTestBase):
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
 class TestMisalignedLogarithmicPotential(PotentialTestBase):
-    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
         print()
         self.name = "MisalignedLogarithmicPotential"
         from ..builtin import LogarithmicPotential as PyLogarithmicPotential
 
-        self.potential = LogarithmicPotential(usys=self.usys,
+        self.potential = LogarithmicPotential(units=self.units,
                                               v_c=0.17, r_h=10.,
                                               q1=1.2, q2=1., q3=0.8, phi=0.35)
 

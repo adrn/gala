@@ -23,8 +23,8 @@ plot_path = os.path.join(top_path, "tests/potential")
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
-usys = [u.kpc,u.Myr,u.Msun,u.radian]
-G = G.decompose(usys)
+units = [u.kpc,u.Myr,u.Msun,u.radian]
+G = G.decompose(units)
 
 print()
 color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yellow")
