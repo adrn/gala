@@ -40,6 +40,7 @@ def flip_coords(w, loop_bit):
         See docstring for `classify_orbit()`.
     """
     new_w = w.copy()
+
     # circulation around x-axis
     if loop_bit[0] == 1:
         new_w[:,:3] = w[:,2::-1]  # index magic to flip positions
@@ -460,9 +461,9 @@ def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=F
     if len(angles) > len(aa):
         logger.warning("More unknowns than equations!")
 
-    J = actions[:3] * sign
+    J = actions[:3]# * sign
     theta = angles[:3]
-    freq = angles[3:6] * sign
+    freq = angles[3:6]# * sign
 
     if return_Sn:
         return J, theta, freq, actions[3:], angles[6:], nvecs
