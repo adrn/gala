@@ -55,16 +55,19 @@ def test_classify():
     # my classify
     orb_type = classify_orbit(loop_ws)
     for j in range(len(loop_w0)):
-        assert np.all(orb_type[j] == sanders_classify(loop_ws[:,j]))
+        assert np.all(orb_type[j] == genfunc_3d.assess_angmom(loop_ws[:,j]))
 
     orb_type = classify_orbit(box_ws)
     for j in range(len(box_w0)):
-        assert np.all(orb_type[j] == sanders_classify(box_ws[:,j]))
+        assert np.all(orb_type[j] == genfunc_3d.assess_angmom(box_ws[:,j]))
 
 def test_nvecs():
     nvecs = generate_n_vectors(N_max=6, dx=2, dy=2, dz=2)
     nvecs_sanders = sanders_nvecs(N_max=6, dx=2, dy=2, dz=2)
+    assert np.all(nvecs == nvecs_sanders)
 
+    nvecs = generate_n_vectors(N_max=6, dx=1, dy=1, dz=1)
+    nvecs_sanders = sanders_nvecs(N_max=6, dx=1, dy=1, dz=1)
     assert np.all(nvecs == nvecs_sanders)
 
 def test_compare_action_prepare():
