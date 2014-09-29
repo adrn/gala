@@ -13,22 +13,6 @@ import os, sys
 import matplotlib.pyplot as plt
 import numpy as np
 
-def angmom(x):
-    return np.array([x[1]*x[5]-x[2]*x[4],x[2]*x[3]-x[0]*x[5],x[0]*x[4]-x[1]*x[3]])
-
-def sanders_classify(X):
-    L=angmom(X[0])
-    loop = np.array([1,1,1])
-    for i in X[1:]:
-        L0 = angmom(i)
-        if(L0[0]*L[0]<0.):
-            loop[0] = 0
-        if(L0[1]*L[1]<0.):
-            loop[1] = 0
-        if(L0[2]*L[2]<0.):
-            loop[2] = 0
-    return loop
-
 def sanders_nvecs(N_max, dx, dy, dz):
     from itertools import product
     NNx = range(-N_max, N_max+1, dx)
