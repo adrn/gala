@@ -16,6 +16,7 @@ import numpy as np
 from astropy import log as logger
 import astropy.units as u
 from scipy.linalg import solve
+import pytest
 
 # Project
 from ...integrate import LeapfrogIntegrator, DOPRI853Integrator
@@ -29,7 +30,8 @@ from ..plot import *
 from .helpers import *
 
 # HACK:
-sys.path.append("/Users/adrian/projects/genfunc")
+if "/Users/adrian/projects/genfunc" not in sys.path:
+    sys.path.append("/Users/adrian/projects/genfunc")
 import genfunc_3d
 
 logger.setLevel(logging.DEBUG)
@@ -38,28 +40,80 @@ plot_path = "plots/tests/dynamics/actionangle"
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
-def test_classify():
-    usys = (u.kpc, u.Msun, u.Myr)
-    potential = NFWPotential(v_h=(121.858*u.km/u.s).decompose(usys).value,
-                             r_h=20., q1=0.86, q2=1., q3=1.18, usys=usys)
-    acc = lambda t,x: potential.acceleration(x)
-    integrator = LeapfrogIntegrator(acc)
+this_path = os.path.split(os.path.abspath(__file__))[0]
 
-    # initial conditions
-    loop_w0 = [[6.975016793191392, -93.85342183505938, -71.90978460109265, -0.19151220547102255, -0.5944685489722188, 0.4262481187389783], [-119.85377948180077, -50.68671610744867, -10.05148560039928, -0.3351091185863992, -0.42681239582943836, -0.2512200315205476]]
-    t,loop_ws = integrator.run(loop_w0, dt=1., nsteps=15000)
+class TestActions(object):
 
-    box_w0 = [[57.66865614916953, -66.09241133078703, 47.43779192106421, -0.6862780950091272, 0.04550073987392385, -0.36216991360120393], [-12.10727872905934, -17.556470673741607, 7.7552881580976, -0.1300187288715955, -0.023618199542192752, 0.08686283408067244]]
-    t,box_ws = integrator.run(box_w0, dt=1., nsteps=15000)
+    def setup(self):
+        self.units = (u.kpc, u.Msun, u.Myr)
+        self.potential = PW14Potential()
+        self.N = 100
+        np.random.seed(42)
+        w0 = isotropic_w0(N=self.N)
+        nsteps = 200000
 
-    # my classify
-    orb_type = classify_orbit(loop_ws)
-    for j in range(len(loop_w0)):
-        assert np.all(orb_type[j] == genfunc_3d.assess_angmom(loop_ws[:,j]))
+        if not os.path.exists(os.path.join(this_path, "w.npy")):
+            logger.debug("Integrating orbits")
+            t,w = self.potential.integrate_orbit(w0, dt=0.2, nsteps=nsteps)
 
-    orb_type = classify_orbit(box_ws)
-    for j in range(len(box_w0)):
-        assert np.all(orb_type[j] == genfunc_3d.assess_angmom(box_ws[:,j]))
+            logger.debug("Saving orbits")
+            np.save(os.path.join(this_path, "t.npy"), t)
+            np.save(os.path.join(this_path, "w.npy"), w)
+        else:
+            logger.debug("Loaded orbits")
+            t = np.load(os.path.join(this_path, "t.npy"))
+            w = np.load(os.path.join(this_path, "w.npy"))
+
+        self.t = t[::10]
+        self.w = w[::10]
+
+    def test_classify(self):
+        # my classify
+        orb_type = classify_orbit(self.w)
+
+        # compare to Sanders'
+        for j in range(self.N):
+            sdrs = genfunc_3d.assess_angmom(self.w[:,j])
+            logger.debug("APW: {}, Sanders: {}".format(orb_type[j], sdrs))
+            assert np.all(orb_type[j] == sdrs)
+
+    def test_actions(self, plot=False):
+        t = self.t
+
+        N_max = 6
+        for n in range(self.N):
+            print("\n\n")
+            logger.info("======================= Orbit {} =======================".format(n))
+            w = self.w[:,n]
+
+            if plot:
+                logger.debug("Plotting orbit...")
+                fig = plot_orbits(w, marker='.', alpha=0.2, linestyle='none')
+                fig.savefig(os.path.join(plot_path,"orbit_{}.png".format(n)))
+                plt.close('all')
+
+            logger.debug("Computing actions...")
+            actions,angles,freqs = find_actions(t, w, N_max=N_max, usys=self.units)
+
+            # get values from Sanders' code
+            logger.debug("Computing actions from genfunc...")
+            s_actions,s_angles,s_freqs = sanders_act_ang_freq(t, w, N_max=N_max)
+            s_actions = np.abs(s_actions)
+            s_freqs = np.abs(s_freqs)
+
+            logger.info("Action ratio: {}".format(actions / s_actions))
+            logger.info("Angle ratio: {}".format(angles / s_angles))
+            logger.info("Freq ratio: {}".format(freqs / s_freqs))
+
+            assert np.allclose(actions, s_actions, rtol=1E-5)
+            assert np.allclose(angles, s_angles, rtol=1E-5)
+            assert np.allclose(freqs, s_freqs, rtol=1E-5)
+
+        fig = plot_angles(t,angles,freqs)
+        fig.savefig(os.path.join(plot_path,"loop_angles.png"))
+
+        fig = plot_angles(t,s_angles,s_freqs)
+        fig.savefig(os.path.join(plot_path,"loop_angles_sanders.png"))
 
 def test_nvecs():
     nvecs = generate_n_vectors(N_max=6, dx=2, dy=2, dz=2)
@@ -89,7 +143,7 @@ def test_compare_action_prepare():
     assert np.allclose(act_apw, act_san)
     assert np.allclose(ang_apw, ang_san)
 
-class TestLoopActions(object):
+class TestLoopAcctions(object):
 
     def setup(self):
         self.usys = (u.kpc, u.Msun, u.Myr)
@@ -190,7 +244,7 @@ class TestLoopActions(object):
         print(action_std)
         print(freq_std)
 
-class TestDifficultActions(object):
+class TestDifficultAcctions(object):
 
     def setup(self):
         path = os.path.split(os.path.abspath(__file__))[0]
