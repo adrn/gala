@@ -81,7 +81,7 @@ class TestActions(object):
         t = self.t
 
         N_max = 6
-        for n in range(1,self.N):
+        for n in range(self.N):
             print("\n\n")
             logger.info("======================= Orbit {} =======================".format(n))
             w = self.w[:,n]
@@ -95,12 +95,16 @@ class TestActions(object):
             # get values from Sanders' code
             logger.debug("Computing actions from genfunc...")
             s_actions,s_angles,s_freqs,toy_potential = sanders_act_ang_freq(t, w, N_max=N_max)
-            s_actions = np.abs(s_actions)
-            s_freqs = np.abs(s_freqs)
 
             logger.debug("Computing actions...")
             actions,angles,freqs = find_actions(t, w, N_max=N_max, usys=self.units,
                                                 toy_potential=toy_potential)
+
+            # print(actions)
+            # print(s_actions)
+            # print()
+            # print(freqs)
+            # print(s_freqs)
 
             logger.info("Action ratio: {}".format(actions / s_actions))
             logger.info("Angle ratio: {}".format(angles / s_angles))
@@ -109,8 +113,6 @@ class TestActions(object):
             assert np.allclose(actions, s_actions, rtol=1E-5)
             assert np.allclose(angles, s_angles, rtol=1E-5)
             assert np.allclose(freqs, s_freqs, rtol=1E-5)
-
-            return
 
         fig = plot_angles(t,angles,freqs)
         fig.savefig(os.path.join(plot_path,"loop_angles.png"))
