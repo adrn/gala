@@ -77,7 +77,7 @@ class TestPointMass(object):
 
     def test_pointmass_eval(self):
         potential = PointMassPotential(m=1., x0=[0.,0.,0.],
-                                       usys=[u.M_sun, u.yr, u.au])
+                                       units=[u.M_sun, u.yr, u.au])
 
         # Test with a single position
         r = [1.,0.,0.]
@@ -89,7 +89,7 @@ class TestPointMass(object):
 
     def test_pointmass_plot(self):
         potential = PointMassPotential(m=1., x0=[0.,0.,0.],
-                                       usys=[u.M_sun, u.yr, u.au])
+                                       units=[u.M_sun, u.yr, u.au])
         grid = np.linspace(-5.,5)
 
         fig,axes = potential.plot_contours(grid=(grid,0.,0.))
@@ -99,13 +99,13 @@ class TestPointMass(object):
         fig.savefig(os.path.join(plot_path, "point_mass_2d.png"))
 
 class TestComposite(object):
-    usys = (u.au, u.M_sun, u.yr)
+    units = (u.au, u.M_sun, u.yr)
 
     def test_composite_create(self):
         potential = CompositePotential()
 
         # Add a point mass with same unit system
-        potential["one"] = PointMassPotential(usys=self.usys,
+        potential["one"] = PointMassPotential(units=self.units,
                                               m=1., x0=[0.,0.,0.])
 
         with pytest.raises(TypeError):
@@ -115,9 +115,9 @@ class TestComposite(object):
         potential = CompositePotential()
 
         # Add a point mass with same unit system
-        potential["one"] = PointMassPotential(usys=self.usys,
+        potential["one"] = PointMassPotential(units=self.units,
                                               m=1., x0=[1.,1.,0.])
-        potential["two"] = PointMassPotential(usys=self.usys,
+        potential["two"] = PointMassPotential(units=self.units,
                                               m=1., x0=[-1.,-1.,0.])
 
         # Where forces cancel
@@ -136,9 +136,9 @@ class TestComposite(object):
         potential = CompositePotential()
 
         # Add a point mass with same unit system
-        potential["one"] = PointMassPotential(usys=self.usys,
+        potential["one"] = PointMassPotential(units=self.units,
                                               m=1., x0=[1.,1.,0.])
-        potential["two"] = PointMassPotential(usys=self.usys,
+        potential["two"] = PointMassPotential(units=self.units,
                                               m=5., x0=[-1.,-1.,0.])
 
         grid = np.linspace(-5.,5)
@@ -154,7 +154,7 @@ class TestComposite(object):
         for ii in range(N):
             r0 = np.random.uniform(-1., 1., size=3)
             r0[2] = 0. # x-y plane
-            potential[str(ii)] = PointMassPotential(usys=self.usys,
+            potential[str(ii)] = PointMassPotential(units=self.units,
                                                     m=np.exp(np.random.uniform(np.log(0.1),0.)),
                                                     x0=r0)
 
@@ -163,10 +163,10 @@ class TestComposite(object):
         fig.savefig(os.path.join(plot_path, "many_point_mass.png"))
 
 class TestIsochrone(object):
-    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
     def test_create_plot(self):
 
-        potential = IsochronePotential(usys=self.usys,
+        potential = IsochronePotential(units=self.units,
                                        m=1.E11, b=5.)
 
         r = ([1.,0.,0.]*u.kpc).reshape(1,3)
@@ -183,10 +183,10 @@ class TestIsochrone(object):
         fig.savefig(os.path.join(plot_path, "isochrone_1d.png"))
 
 class TestMiyamotoNagai(object):
-    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
     def test_create_plot(self):
 
-        potential = MiyamotoNagaiPotential(usys=self.usys,
+        potential = MiyamotoNagaiPotential(units=self.units,
                                            m=1.E11,
                                            a=6.5,
                                            b=0.26)
@@ -206,10 +206,10 @@ class TestMiyamotoNagai(object):
         fig.savefig(os.path.join(plot_path, "miyamoto_nagai_2d.png"))
 
 class TestHernquist(object):
-    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
     def test_create_plot(self):
 
-        potential = HernquistPotential(usys=self.usys,
+        potential = HernquistPotential(units=self.units,
                                        m=1.E11, c=10.)
 
         # single
@@ -227,20 +227,20 @@ class TestHernquist(object):
         fig.savefig(os.path.join(plot_path, "hernquist.png"))
 
 class TestLogarithmic(object):
-    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
     def test_create_plot(self):
 
         potentials = []
-        potentials.append(LogarithmicPotential(usys=self.usys,
+        potentials.append(LogarithmicPotential(units=self.units,
                                                        q1=1., q2=1., q3=1.,
                                                        phi=0., v_c=0.15, r_h=10.))
-        potentials.append(LogarithmicPotential(usys=self.usys,
+        potentials.append(LogarithmicPotential(units=self.units,
                                                        q1=0.72, q2=1., q3=1.,
                                                        phi=0., v_c=0.15, r_h=1.))
-        potentials.append(LogarithmicPotential(usys=self.usys,
+        potentials.append(LogarithmicPotential(units=self.units,
                                                        q1=1., q2=0.72, q3=1.,
                                                        phi=np.pi/4, v_c=0.15, r_h=1.))
-        potentials.append(LogarithmicPotential(usys=self.usys,
+        potentials.append(LogarithmicPotential(units=self.units,
                                                        q1=1., q2=1., q3=0.72,
                                                        phi=0., v_c=0.08, r_h=10.))
 
@@ -265,20 +265,20 @@ class TestLogarithmic(object):
         fig.savefig(os.path.join(plot_path, "log.png"))
 
 class TestNFW(object):
-    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
     def test_create_plot(self):
 
         potentials = []
-        potentials.append(NFWPotential(usys=self.usys,
+        potentials.append(NFWPotential(units=self.units,
                                        q1=1., q2=1., q3=1.,
                                        v_h=0.15, r_h=10.))
-        potentials.append(NFWPotential(usys=self.usys,
+        potentials.append(NFWPotential(units=self.units,
                                        q1=0.75, q2=1., q3=1.,
                                        v_h=0.15, r_h=10.))
-        potentials.append(NFWPotential(usys=self.usys,
+        potentials.append(NFWPotential(units=self.units,
                                        q1=1., q2=0.75, q3=1.,
                                        v_h=0.15, r_h=1.))
-        potentials.append(NFWPotential(usys=self.usys,
+        potentials.append(NFWPotential(units=self.units,
                                        q1=1., q2=1., q3=1.3,
                                        v_h=0.08, r_h=1.))
 
@@ -302,16 +302,16 @@ class TestNFW(object):
         fig.savefig(os.path.join(plot_path, "nfw.png"))
 
 class TestCompositeGalaxy(object):
-    usys = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
     def test_creation(self):
         potential = CompositePotential()
-        potential["disk"] = MiyamotoNagaiPotential(usys=self.usys,
+        potential["disk"] = MiyamotoNagaiPotential(units=self.units,
                                                    m=1.E11, a=6.5, b=0.26)
 
-        potential["bulge"] = HernquistPotential(usys=self.usys,
+        potential["bulge"] = HernquistPotential(units=self.units,
                                                 m=1.E11, c=0.7)
 
-        potential["halo"] = LogarithmicPotential(usys=self.usys,
+        potential["halo"] = LogarithmicPotential(units=self.units,
                                                          q1=1.4, q2=1., q3=1.5,
                                                          phi=1.69, v_c=0.17, r_h=12.)
 

@@ -15,14 +15,14 @@ import astropy.units as u
 logger = logging.getLogger(__name__)
 
 # default unit system
-usys = dict()
-usys['length'] = u.kpc
-usys['speed'] = u.km/u.s
-usys['time'] = u.Myr
-usys['angular speed'] = u.mas/u.yr
-usys['angle'] = u.degree
-usys['mass'] = u.M_sun
-usys['dimensionless'] = u.dimensionless_unscaled
+units = dict()
+units['length'] = u.kpc
+units['speed'] = u.km/u.s
+units['time'] = u.Myr
+units['angular speed'] = u.mas/u.yr
+units['angle'] = u.degree
+units['mass'] = u.M_sun
+units['dimensionless'] = u.dimensionless_unscaled
 
 # define galactic unit system
 galactic = (u.kpc, u.Myr, u.Msun, u.radian)

@@ -129,14 +129,14 @@ class HernquistPotential(CPotential, CartesianPotential):
         Mass.
     c : numeric
         Core concentration.
-    usys : iterable
+    units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, m, c, usys):
-        self.usys = usys
-        _G = G.decompose(usys).value
+    def __init__(self, m, c, units):
+        self.units = units
+        _G = G.decompose(units).value
         parameters = dict(G=_G, m=m, c=c)
         super(HernquistPotential, self).__init__(_HernquistPotential,
                                                  parameters=parameters)
@@ -242,14 +242,14 @@ class MiyamotoNagaiPotential(CPotential, CartesianPotential):
         Mass.
     a : numeric
     b : numeric
-    usys : iterable
+    units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, m, a, b, usys):
-        self.usys = usys
-        _G = G.decompose(usys).value
+    def __init__(self, m, a, b, units):
+        self.units = units
+        _G = G.decompose(units).value
         parameters = dict(G=_G, m=m, a=a, b=b)
         super(MiyamotoNagaiPotential, self).__init__(_MiyamotoNagaiPotential,
                                                      parameters=parameters)
@@ -379,13 +379,13 @@ class LeeSutoNFWPotential(CPotential, CartesianPotential):
         Euler angle for rotation about z'-axis (using the x-convention
         from Goldstein). Allows for specifying a misalignment between
         the halo and disk potentials.
-    usys : iterable
+    units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_h, r_h, a, b, c, phi=0., theta=0., psi=0., usys=None):
-        self.usys = usys
+    def __init__(self, v_h, r_h, a, b, c, phi=0., theta=0., psi=0., units=None):
+        self.units = units
         parameters = dict(v_h=v_h, r_h=r_h, a=a, b=b, c=c)
 
         if theta != 0 or phi != 0 or psi != 0:
@@ -520,13 +520,13 @@ class LogarithmicPotential(CPotential, CartesianPotential):
         Euler angle for rotation about z'-axis (using the x-convention
         from Goldstein). Allows for specifying a misalignment between
         the halo and disk potentials.
-    usys : iterable
+    units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_c, r_h, q1, q2, q3, phi=0., theta=0., psi=0., usys=None):
-        self.usys = usys
+    def __init__(self, v_c, r_h, q1, q2, q3, phi=0., theta=0., psi=0., units=None):
+        self.units = units
         parameters = dict(v_c=v_c, r_h=r_h, q1=q1, q2=q2, q3=q3)
 
         if theta != 0 or phi != 0 or psi != 0:
