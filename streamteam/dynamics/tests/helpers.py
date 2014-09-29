@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Project
+from ..actionangle import classify_orbit
 from ...units import galactic
 from ...coordinates import spherical_to_cartesian
 from ...potential import HarmonicOscillatorPotential, IsochronePotential
@@ -39,18 +40,26 @@ def sanders_nvecs(N_max, dx, dy, dz):
 
 def sanders_act_ang_freq(t, w, N_max=6):
     w2 = w.copy()
-    w2[:,3:] = (w2[:,3:]*u.kpc/u.Myr).to(u.km/u.s).value
-    (act,ang,n_vec,toy_aa,pars),loop = genfunc_3d.find_actions(w2, t/1000.,
-                                                               N_matrix=N_max, ifloop=True)
+    loop = classify_orbit(w)
+
+    if np.any(loop):
+        w2[:,3:] = (w2[:,3:]*u.kpc/u.Myr).to(u.km/u.s).value
+        (act,ang,n_vec,toy_aa,pars),loop2 = genfunc_3d.find_actions(w2, t/1000.,
+                                                                    N_matrix=N_max, ifloop=True)
+    else:
+        (act,ang,n_vec,toy_aa,pars),loop2 = genfunc_3d.find_actions(w2, t,
+                                                                    N_matrix=N_max, ifloop=True)
+
+    actions = act[:3]
+    angles = ang[:3]
+    freqs = ang[3:6]
 
     if np.any(loop):
         toy_potential = IsochronePotential(m=pars[0]*1E11, b=pars[1], usys=self.usys)
+        actions = (actions*u.kpc*u.km/u.s).to(u.kpc**2/u.Myr).value
+        freqs = (freqs/u.Gyr).to(1/u.Myr).value
     else:
-        toy_potential = HarmonicOscillatorPotential(omega=np.array(pars)/1000.)
-
-    actions = (act[:3]*u.kpc*u.km/u.s).to(u.kpc**2/u.Myr).value
-    angles = ang[:3]
-    freqs = (ang[3:6]/u.Gyr).to(1/u.Myr).value
+        toy_potential = HarmonicOscillatorPotential(omega=np.array(pars))
 
     return actions,angles,freqs,toy_potential
 
