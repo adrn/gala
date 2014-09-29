@@ -278,7 +278,7 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
 
     return A,b,nvecs
 
-def fit_isochrone(w, usys, m0=2E11, b0=1.):
+def fit_isochrone(w, units, m0=2E11, b0=1.):
     """
     Fit the toy Isochrone potential to the sum of the energy residuals.
 
@@ -286,7 +286,7 @@ def fit_isochrone(w, usys, m0=2E11, b0=1.):
     ----------
     w : array_like
         Array of phase-space positions.
-    usys : iterable
+    units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units. For example,
         (u.kpc, u.Myr, u.Msun).
@@ -296,7 +296,7 @@ def fit_isochrone(w, usys, m0=2E11, b0=1.):
         Initial b guess.
     """
     # find best toy potential parameters
-    potential = IsochronePotential(m=1E10, b=10., usys=usys)
+    potential = IsochronePotential(m=1E10, b=10., units=units)
     def f(p,w):
         logm,b = p
         potential.parameters['m'] = np.exp(logm)
@@ -313,7 +313,7 @@ def fit_isochrone(w, usys, m0=2E11, b0=1.):
     m = np.exp(logm)
     return m,b
 
-def fit_harmonic_oscillator(w, usys, omega=[1.,1.,1.]):
+def fit_harmonic_oscillator(w, units, omega=[1.,1.,1.]):
     """
     Fit the toy Harmonic Oscillator potential to the sum of the
     energy residuals.
@@ -322,7 +322,7 @@ def fit_harmonic_oscillator(w, usys, omega=[1.,1.,1.]):
     ----------
     w : array_like
         Array of phase-space positions.
-    usys : iterable
+    units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units. For example,
         (u.kpc, u.Myr, u.Msun).
@@ -343,7 +343,7 @@ def fit_harmonic_oscillator(w, usys, omega=[1.,1.,1.]):
     best_omega = np.abs(p)
     return best_omega
 
-def fit_toy_potential(w, usys, force_harmonic_oscillator=False):
+def fit_toy_potential(w, units, force_harmonic_oscillator=False):
     """
     Fit a toy potential (isochrone or harmonic oscillator) to the orbit provided.
 
@@ -353,7 +353,7 @@ def fit_toy_potential(w, usys, force_harmonic_oscillator=False):
     ----------
     w : array_like
         Phase-space orbit at times, `t`. Should have shape (ntimes,6).
-    usys : iterable
+    units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units. For example,
         (u.kpc, u.Myr, u.Msun).
@@ -366,21 +366,21 @@ def fit_toy_potential(w, usys, force_harmonic_oscillator=False):
         logger.debug("===== Loop orbit =====")
         logger.debug("Using isochrone toy potential")
 
-        m,b = fit_isochrone(w, usys=usys)
-        toy_potential = IsochronePotential(m=m, b=b, usys=usys)
+        m,b = fit_isochrone(w, units=units)
+        toy_potential = IsochronePotential(m=m, b=b, units=units)
         logger.debug("Best m={}, b={}".format(m, b))
 
     else:  # box orbit
         logger.debug("===== Box orbit =====")
         logger.debug("Using triaxial harmonic oscillator toy potential")
 
-        omega = fit_harmonic_oscillator(w, usys=usys)
+        omega = fit_harmonic_oscillator(w, units=units)
         toy_potential = HarmonicOscillatorPotential(omega=omega)
         logger.debug("Best omegas ({})".format(omega))
 
     return toy_potential
 
-def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=False,
+def find_actions(t, w, N_max, units, return_Sn=False, force_harmonic_oscillator=False,
                  toy_potential=None):
     """
     Find approximate actions and angles for samples of a phase-space orbit,
@@ -398,7 +398,7 @@ def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=F
         Phase-space orbit at times, `t`. Should have shape (ntimes,6).
     N_max : int
         Maximum integer Fourier mode vector length, |n|.
-    usys : iterable
+    units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units. For example,
         (u.kpc, u.Myr, u.Msun).
@@ -414,7 +414,7 @@ def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=F
         raise ValueError("w must be a single orbit")
 
     if toy_potential is None:
-        toy_potential = fit_toy_potential(w, usys=usys,
+        toy_potential = fit_toy_potential(w, units=units,
                                           force_harmonic_oscillator=force_harmonic_oscillator)
 
     else:
@@ -470,7 +470,7 @@ def find_actions(t, w, N_max, usys, return_Sn=False, force_harmonic_oscillator=F
     else:
         return J, theta, freq
 
-def cross_validate_actions(t, w, N_max, usys, nbins=10, skip_failures=False,
+def cross_validate_actions(t, w, N_max, units, nbins=10, skip_failures=False,
                            force_harmonic_oscillator=False, overlap=0):
     """
     Compute actions along windows of time of an orbit, `w`, to make sure
@@ -487,7 +487,7 @@ def cross_validate_actions(t, w, N_max, usys, nbins=10, skip_failures=False,
         Phase-space orbit at times, `t`. Should have shape (ntimes,6).
     N_max : int
         Maximum integer Fourier mode vector length, |n|.
-    usys : iterable
+    units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units. For example,
         (u.kpc, u.Myr, u.Msun).
@@ -529,13 +529,13 @@ def cross_validate_actions(t, w, N_max, usys, nbins=10, skip_failures=False,
     for tt,ww in zip(t_split,w_split):
         if skip_failures:
             try:
-                actions,angles,freqs = find_actions(tt, ww, N_max, usys, return_Sn=False,
+                actions,angles,freqs = find_actions(tt, ww, N_max, units, return_Sn=False,
                                         force_harmonic_oscillator=force_harmonic_oscillator)
             except ValueError as e:
                 logger.debug("Skipping failure: {}".format(e))
                 continue
         else:
-            actions,angles,freqs = find_actions(tt, ww, N_max, usys, return_Sn=False,
+            actions,angles,freqs = find_actions(tt, ww, N_max, units, return_Sn=False,
                                     force_harmonic_oscillator=force_harmonic_oscillator)
 
         all_actions.append(actions)

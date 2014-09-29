@@ -97,7 +97,7 @@ class TestActions(object):
             s_actions,s_angles,s_freqs,toy_potential = sanders_act_ang_freq(t, w, N_max=N_max)
 
             logger.debug("Computing actions...")
-            actions,angles,freqs = find_actions(t, w, N_max=N_max, usys=self.units,
+            actions,angles,freqs = find_actions(t, w, N_max=N_max, units=self.units,
                                                 toy_potential=toy_potential)
 
             # print(actions)
@@ -151,12 +151,12 @@ def test_compare_action_prepare():
 class TestLoopAcctions(object):
 
     def setup(self):
-        self.usys = (u.kpc, u.Msun, u.Myr)
+        self.units = (u.kpc, u.Msun, u.Myr)
         self.potential = LM10Potential()
         acc = lambda t,x: self.potential.acceleration(x)
         self.integrator = LeapfrogIntegrator(acc)
-        self.loop_w0 = np.append(([14.69, 1.8, 0.12]*u.kpc).decompose(self.usys).value,
-                                 ([15.97, -128.9, 44.68]*u.km/u.s).decompose(self.usys).value)
+        self.loop_w0 = np.append(([14.69, 1.8, 0.12]*u.kpc).decompose(self.units).value,
+                                 ([15.97, -128.9, 44.68]*u.km/u.s).decompose(self.units).value)
 
     def test_subsample(self):
         N_max = 6
@@ -173,7 +173,7 @@ class TestLoopAcctions(object):
         fig = plot_orbits(w,ix=0,marker=None)
         fig.savefig(os.path.join(plot_path,"subsample_loop.png"))
 
-        actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, usys=self.usys)
+        actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, units=self.units)
 
         # get values from Sanders' code
         s_actions,s_angles,s_freqs = sanders_act_ang_freq(t, w, N_max=N_max)
@@ -201,7 +201,7 @@ class TestLoopAcctions(object):
         fig.savefig(os.path.join(plot_path,"loop.png"))
 
         N_max = 6
-        actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, usys=self.usys)
+        actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, units=self.units)
 
         # get values from Sanders' code
         s_actions,s_angles,s_freqs = sanders_act_ang_freq(t, w, N_max=N_max)
@@ -225,11 +225,11 @@ class TestLoopAcctions(object):
     def test_given_toy(self):
         t,w = self.integrator.run(self.loop_w0, dt=0.5, nsteps=20000)
 
-        m,b = fit_isochrone(w, usys=self.usys)
-        toy_potential = IsochronePotential(m=m, b=b, usys=self.usys)
+        m,b = fit_isochrone(w, units=self.units)
+        toy_potential = IsochronePotential(m=m, b=b, units=self.units)
 
         N_max = 6
-        actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, usys=self.usys,
+        actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, units=self.units,
                                             toy_potential=toy_potential)
 
     def test_cross_validate(self):
@@ -240,7 +240,7 @@ class TestLoopAcctions(object):
         t,w = self.integrator.run(self.loop_w0, dt=0.5, nsteps=200000)
         logger.debug("Orbit integration done")
 
-        actions,angles,freqs = cross_validate_actions(t, w[:,0], N_max=N_max, usys=self.usys)
+        actions,angles,freqs = cross_validate_actions(t, w[:,0], N_max=N_max, units=self.units)
         action_std = (np.std(actions, axis=0)*u.kpc**2/u.Myr).to(u.kpc*u.km/u.s)
         freq_std = (np.std(freqs, axis=0)/u.Myr).to(1/u.Gyr)
 
@@ -253,15 +253,15 @@ class TestDifficultAcctions(object):
 
     def setup(self):
         path = os.path.split(os.path.abspath(__file__))[0]
-        self.usys = (u.kpc, u.Msun, u.Myr)
+        self.units = (u.kpc, u.Msun, u.Myr)
         params = {'a': 6.5, 'q1': 1.3, 'c': 0.3, 'b': 0.26, 'q3': 0.8, 'r_h': 30.0,
                   'm_disk': 65000000000.0, 'psi': 1.570796, 'q2': 1.0, 'theta': 1.570796,
                   'phi': 1.570796, 'm_spher': 20000000000.0, 'v_h': 0.5600371815834104}
         self.potential = PW14Potential(**params)
         acc = lambda t,w: np.hstack((w[...,3:],self.potential.acceleration(w[...,:3])))
         self.integrator = DOPRI853Integrator(acc)
-        # self.w0 = np.append(([20., 2.5, 0.]*u.kpc).decompose(self.usys).value,
-        #                     ([0., 0., 146.66883]*u.km/u.s).decompose(self.usys).value)
+        # self.w0 = np.append(([20., 2.5, 0.]*u.kpc).decompose(self.units).value,
+        #                     ([0., 0., 146.66883]*u.km/u.s).decompose(self.units).value)
 
         if not os.path.exists(os.path.join(path, "w.npy")):
             self.w0 = np.loadtxt(os.path.join(path, "w0.txt"))
@@ -282,7 +282,7 @@ class TestDifficultAcctions(object):
     def test_toy_potentials(self):
         import toy_potentials  # sanders
 
-        toy_potential = fit_toy_potential(self.w, self.usys)
+        toy_potential = fit_toy_potential(self.w, self.units)
         actions,angles = toy_potential.action_angle(self.w[:,0,:3], self.w[:,0,3:])
 
         params = (toy_potential.parameters['m']/1E11, toy_potential.parameters['b'])
@@ -304,7 +304,7 @@ class TestDifficultAcctions(object):
         fig.savefig(os.path.join(plot_path,"difficult_orbit.png"))
 
         N_max = 6
-        actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, usys=self.usys)
+        actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, units=self.units)
 
         # get values from Sanders' code
         s_actions,s_angles,s_freqs = sanders_act_ang_freq(t, w, N_max=N_max)
@@ -338,7 +338,7 @@ class TestDifficultAcctions(object):
 # class TestFrequencyMap(object):
 
 #     def setup(self):
-#         self.usys = (u.kpc, u.Msun, u.Myr)
+#         self.units = (u.kpc, u.Msun, u.Myr)
 #         self.potential = LogarithmicPotential(v_c=1., r_h=np.sqrt(0.1),
 #                                               q1=1., q2=1., q3=0.7, phi=0.)
 #         acc = lambda t,x: self.potential.acceleration(x)
@@ -381,7 +381,7 @@ class TestDifficultAcctions(object):
 #         for n in range(w.shape[1]):
 #             try:
 #                 actions,angles,freqs = cross_validate_actions(t, w[:,n], N_max=N_max,
-#                                                             usys=self.usys, skip_failures=True)
+#                                                             units=self.units, skip_failures=True)
 #                 failed = False
 #             except ValueError as e:
 #                 print("FAILED: {}".format(e))
