@@ -55,7 +55,7 @@ def sanders_act_ang_freq(t, w, N_max=6):
     freqs = ang[3:6]
 
     if np.any(loop):
-        toy_potential = IsochronePotential(m=pars[0]*1E11, b=pars[1], usys=galactic)
+        toy_potential = IsochronePotential(m=pars[0]*1E11, b=pars[1], units=galactic)
         actions = (actions*u.kpc*u.km/u.s).to(u.kpc**2/u.Myr).value
         freqs = (freqs/u.Gyr).to(1/u.Myr).value
     else:
