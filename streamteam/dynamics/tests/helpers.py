@@ -17,6 +17,7 @@ import numpy as np
 # Project
 from ...units import galactic
 from ...coordinates import spherical_to_cartesian
+from ...potential import HarmonicOscillatorPotential, IsochronePotential
 
 # HACK:
 if "/Users/adrian/projects/genfunc" not in sys.path:
@@ -39,13 +40,19 @@ def sanders_nvecs(N_max, dx, dy, dz):
 def sanders_act_ang_freq(t, w, N_max=6):
     w2 = w.copy()
     w2[:,3:] = (w2[:,3:]*u.kpc/u.Myr).to(u.km/u.s).value
-    act,ang,n_vec,toy_aa,pars = genfunc_3d.find_actions(w2, t/1000., N_matrix=N_max)
+    (act,ang,n_vec,toy_aa,pars),loop = genfunc_3d.find_actions(w2, t/1000.,
+                                                               N_matrix=N_max, ifloop=True)
+
+    if np.any(loop):
+        toy_potential = IsochronePotential(m=pars[0]*1E11, b=pars[1], usys=self.usys)
+    else:
+        toy_potential = HarmonicOscillatorPotential(omega=np.array(pars)/1000.)
 
     actions = (act[:3]*u.kpc*u.km/u.s).to(u.kpc**2/u.Myr).value
     angles = ang[:3]
     freqs = (ang[3:6]/u.Gyr).to(1/u.Myr).value
 
-    return actions,angles,freqs
+    return actions,angles,freqs,toy_potential
 
 def _crazy_angle_loop(theta1,theta2,ax):
     cnt = 0
