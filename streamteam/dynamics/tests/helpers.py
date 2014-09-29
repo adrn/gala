@@ -15,8 +15,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Project
-from ..units import galactic
-from ..coordinates import spherical_to_cartesian
+from ...units import galactic
+from ...coordinates import spherical_to_cartesian
 
 # HACK:
 if "/Users/adrian/projects/genfunc" not in sys.path:
