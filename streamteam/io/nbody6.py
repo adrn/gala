@@ -66,10 +66,9 @@ class NBODY6Reader(NBodyReader):
                 data[colname] = newdata.value
                 new_colunits.append(newdata.unit)
 
-            time = time.decompose(units)
             colunits = new_colunits
 
-        tbl = Table(data, meta=dict(time=time.value))
+        tbl = Table(data)
         for colname,colunit in zip(colnames,colunits):
             tbl[colname].unit = colunit
 
