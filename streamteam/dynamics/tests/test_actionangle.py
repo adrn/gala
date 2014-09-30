@@ -42,30 +42,7 @@ if not os.path.exists(plot_path):
 
 this_path = os.path.split(os.path.abspath(__file__))[0]
 
-class TestActions(object):
-
-    def setup(self):
-        self.units = (u.kpc, u.Msun, u.Myr)
-        self.potential = PW14Potential()
-        self.N = 100
-        np.random.seed(42)
-        w0 = isotropic_w0(N=self.N)
-        nsteps = 200000
-
-        if not os.path.exists(os.path.join(this_path, "w.npy")):
-            logger.debug("Integrating orbits")
-            t,w = self.potential.integrate_orbit(w0, dt=0.2, nsteps=nsteps)
-
-            logger.debug("Saving orbits")
-            np.save(os.path.join(this_path, "t.npy"), t)
-            np.save(os.path.join(this_path, "w.npy"), w)
-        else:
-            logger.debug("Loaded orbits")
-            t = np.load(os.path.join(this_path, "t.npy"))
-            w = np.load(os.path.join(this_path, "w.npy"))
-
-        self.t = t[::10]
-        self.w = w[::10]
+class ActionsBase(object):
 
     def test_classify(self):
         # my classify
@@ -78,19 +55,13 @@ class TestActions(object):
             assert np.all(orb_type[j] == sdrs)
 
     def test_actions(self, plot=False):
-        t = self.t
+        t = self.t[::10]
 
         N_max = 6
         for n in range(self.N):
             print("\n\n")
             logger.info("======================= Orbit {} =======================".format(n))
-            w = self.w[:,n]
-
-            if plot:
-                logger.debug("Plotting orbit...")
-                fig = plot_orbits(w, marker='.', alpha=0.2, linestyle='none')
-                fig.savefig(os.path.join(plot_path,"orbit_{}.png".format(n)))
-                plt.close('all')
+            w = self.w[::10,n]
 
             # get values from Sanders' code
             logger.debug("Computing actions from genfunc...")
@@ -100,12 +71,6 @@ class TestActions(object):
             actions,angles,freqs = find_actions(t, w, N_max=N_max, units=self.units,
                                                 toy_potential=toy_potential)
 
-            # print(actions)
-            # print(s_actions)
-            # print()
-            # print(freqs)
-            # print(s_freqs)
-
             logger.info("Action ratio: {}".format(actions / s_actions))
             logger.info("Angle ratio: {}".format(angles / s_angles))
             logger.info("Freq ratio: {}".format(freqs / s_freqs))
@@ -114,11 +79,79 @@ class TestActions(object):
             assert np.allclose(angles, s_angles, rtol=1E-5)
             assert np.allclose(freqs, s_freqs, rtol=1E-5)
 
-        fig = plot_angles(t,angles,freqs)
-        fig.savefig(os.path.join(plot_path,"loop_angles.png"))
+            if plot:
+                logger.debug("Plotting orbit...")
+                fig = plot_orbits(w, marker='.', alpha=0.2, linestyle='none')
+                fig.savefig(os.path.join(self.plot_path,"orbit_{}.png".format(n)))
 
-        fig = plot_angles(t,s_angles,s_freqs)
-        fig.savefig(os.path.join(plot_path,"loop_angles_sanders.png"))
+                fig = plot_angles(t,angles,freqs)
+                fig.savefig(os.path.join(self.plot_path,"angles_{}.png".format(n)))
+
+                fig = plot_angles(t,s_angles,s_freqs)
+                fig.savefig(os.path.join(self.plot_path,"angles_sanders_{}.png".format(n)))
+
+                plt.close('all')
+
+class TestActions(ActionsBase):
+
+    def setup(self):
+        self.plot_path = os.path.join(plot_path, 'normal')
+        if not os.path.exists(self.plot_path):
+            os.makedirs(self.plot_path)
+
+        self.units = (u.kpc, u.Msun, u.Myr)
+        self.potential = PW14Potential()
+        self.N = 100
+        np.random.seed(42)
+        w0 = isotropic_w0(N=self.N)
+        nsteps = 200000
+
+        if not os.path.exists(os.path.join(this_path, "w.npy")):
+            logger.debug("Integrating orbits")
+            t,w = self.potential.integrate_orbit(w0, dt=0.2, nsteps=nsteps, Integrator=DOPRI853Integrator)
+
+            logger.debug("Saving orbits")
+            np.save(os.path.join(this_path, "t.npy"), t)
+            np.save(os.path.join(this_path, "w.npy"), w)
+        else:
+            logger.debug("Loaded orbits")
+            t = np.load(os.path.join(this_path, "t.npy"))
+            w = np.load(os.path.join(this_path, "w.npy"))
+
+        self.t = t
+        self.w = w
+
+class TestHardActions(ActionsBase):
+
+    def setup(self):
+        self.plot_path = os.path.join(plot_path, 'hard')
+        if not os.path.exists(self.plot_path):
+            os.makedirs(self.plot_path)
+
+        self.units = (u.kpc, u.Msun, u.Myr)
+        params = {'a': 6.5, 'q1': 1.3, 'c': 0.3, 'b': 0.26, 'q3': 0.8, 'r_h': 30.0,
+                  'm_disk': 65000000000.0, 'psi': 1.570796, 'q2': 1.0, 'theta': 1.570796,
+                  'phi': 1.570796, 'm_spher': 20000000000.0, 'v_h': 0.5600371815834104}
+        self.potential = PW14Potential(**params)
+        self.N = 100
+
+        w0 = np.loadtxt(os.path.join(this_path, "w0.txt"))
+        nsteps = 200000
+
+        if not os.path.exists(os.path.join(this_path, "w_hard.npy")):
+            logger.debug("Integrating orbits")
+            t,w = self.potential.integrate_orbit(w0, dt=0.2, nsteps=nsteps, Integrator=DOPRI853Integrator)
+
+            logger.debug("Saving orbits")
+            np.save(os.path.join(this_path, "t_hard.npy"), t)
+            np.save(os.path.join(this_path, "w_hard.npy"), w)
+        else:
+            logger.debug("Loaded orbits")
+            t = np.load(os.path.join(this_path, "t_hard.npy"))
+            w = np.load(os.path.join(this_path, "w_hard.npy"))
+
+        self.t = t
+        self.w = w
 
 def test_nvecs():
     nvecs = generate_n_vectors(N_max=6, dx=2, dy=2, dz=2)
@@ -147,193 +180,6 @@ def test_compare_action_prepare():
 
     assert np.allclose(act_apw, act_san)
     assert np.allclose(ang_apw, ang_san)
-
-class TestLoopAcctions(object):
-
-    def setup(self):
-        self.units = (u.kpc, u.Msun, u.Myr)
-        self.potential = LM10Potential()
-        acc = lambda t,x: self.potential.acceleration(x)
-        self.integrator = LeapfrogIntegrator(acc)
-        self.loop_w0 = np.append(([14.69, 1.8, 0.12]*u.kpc).decompose(self.units).value,
-                                 ([15.97, -128.9, 44.68]*u.km/u.s).decompose(self.units).value)
-
-    def test_subsample(self):
-        N_max = 6
-        NT = 9*N_max**3 / 4
-
-        nsteps = 20000
-        t,w = self.integrator.run(self.loop_w0, dt=0.5, nsteps=nsteps)
-
-        every = nsteps // NT // 2
-        t = t[::every]
-        w = w[::every]
-        logger.debug("w shape: {}".format(w.shape))
-
-        fig = plot_orbits(w,ix=0,marker=None)
-        fig.savefig(os.path.join(plot_path,"subsample_loop.png"))
-
-        actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, units=self.units)
-
-        # get values from Sanders' code
-        s_actions,s_angles,s_freqs = sanders_act_ang_freq(t, w, N_max=N_max)
-        s_actions = np.abs(s_actions)
-        s_freqs = np.abs(s_freqs)
-
-        print("Action ratio:", actions / s_actions)
-        print("Angle ratio:", angles / s_angles)
-        print("Freq ratio:", freqs / s_freqs)
-
-        fig = plot_angles(t, angles, freqs, subsample_factor=len(t))
-        fig.savefig(os.path.join(plot_path,"subsample_loop_angles.png"))
-
-        fig = plot_angles(t, s_angles, s_freqs, subsample_factor=len(t))
-        fig.savefig(os.path.join(plot_path,"subsample_loop_angles_sanders.png"))
-
-        assert np.allclose(actions, s_actions, rtol=1E-2)
-        assert np.allclose(angles, s_angles, rtol=1E-2)
-        assert np.allclose(freqs, s_freqs, rtol=1E-2)
-
-    def test_actions(self):
-        t,w = self.integrator.run(self.loop_w0, dt=0.5, nsteps=20000)
-
-        fig = plot_orbits(w,ix=0,marker=None)
-        fig.savefig(os.path.join(plot_path,"loop.png"))
-
-        N_max = 6
-        actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, units=self.units)
-
-        # get values from Sanders' code
-        s_actions,s_angles,s_freqs = sanders_act_ang_freq(t, w, N_max=N_max)
-        s_actions = np.abs(s_actions)
-        s_freqs = np.abs(s_freqs)
-
-        print("Action ratio:", actions / s_actions)
-        print("Angle ratio:", angles / s_angles)
-        print("Freq ratio:", freqs / s_freqs)
-
-        fig = plot_angles(t,angles,freqs)
-        fig.savefig(os.path.join(plot_path,"loop_angles.png"))
-
-        fig = plot_angles(t,s_angles,s_freqs)
-        fig.savefig(os.path.join(plot_path,"loop_angles_sanders.png"))
-
-        assert np.allclose(actions, s_actions, rtol=1E-2)
-        assert np.allclose(angles, s_angles, rtol=1E-2)
-        assert np.allclose(freqs, s_freqs, rtol=1E-2)
-
-    def test_given_toy(self):
-        t,w = self.integrator.run(self.loop_w0, dt=0.5, nsteps=20000)
-
-        m,b = fit_isochrone(w, units=self.units)
-        toy_potential = IsochronePotential(m=m, b=b, units=self.units)
-
-        N_max = 6
-        actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, units=self.units,
-                                            toy_potential=toy_potential)
-
-    def test_cross_validate(self):
-        N_max = 6
-
-        # integrate a long orbit
-        logger.debug("Integrating orbit...")
-        t,w = self.integrator.run(self.loop_w0, dt=0.5, nsteps=200000)
-        logger.debug("Orbit integration done")
-
-        actions,angles,freqs = cross_validate_actions(t, w[:,0], N_max=N_max, units=self.units)
-        action_std = (np.std(actions, axis=0)*u.kpc**2/u.Myr).to(u.kpc*u.km/u.s)
-        freq_std = (np.std(freqs, axis=0)/u.Myr).to(1/u.Gyr)
-
-        # Sanders' reported variance is ∆J = (0.07, 0.08, 0.03)
-        #                               ∆Ω = (3e-4, 6e-5, 2e-3)
-        print(action_std)
-        print(freq_std)
-
-class TestDifficultAcctions(object):
-
-    def setup(self):
-        path = os.path.split(os.path.abspath(__file__))[0]
-        self.units = (u.kpc, u.Msun, u.Myr)
-        params = {'a': 6.5, 'q1': 1.3, 'c': 0.3, 'b': 0.26, 'q3': 0.8, 'r_h': 30.0,
-                  'm_disk': 65000000000.0, 'psi': 1.570796, 'q2': 1.0, 'theta': 1.570796,
-                  'phi': 1.570796, 'm_spher': 20000000000.0, 'v_h': 0.5600371815834104}
-        self.potential = PW14Potential(**params)
-        acc = lambda t,w: np.hstack((w[...,3:],self.potential.acceleration(w[...,:3])))
-        self.integrator = DOPRI853Integrator(acc)
-        # self.w0 = np.append(([20., 2.5, 0.]*u.kpc).decompose(self.units).value,
-        #                     ([0., 0., 146.66883]*u.km/u.s).decompose(self.units).value)
-
-        if not os.path.exists(os.path.join(path, "w.npy")):
-            self.w0 = np.loadtxt(os.path.join(path, "w0.txt"))
-            logger.debug("Integrating orbits")
-            t,w = self.integrator.run(self.w0, dt=0.2, nsteps=50000)
-
-            logger.debug("Saving orbits")
-            np.save(os.path.join(path, "t.npy"), t)
-            np.save(os.path.join(path, "w.npy"), w)
-        else:
-            logger.debug("Loaded orbits")
-            t = np.load(os.path.join(path, "t.npy"))
-            w = np.load(os.path.join(path, "w.npy"))
-
-        self.t = t[::10]
-        self.w = w[::10,0][:,np.newaxis]
-
-    def test_toy_potentials(self):
-        import toy_potentials  # sanders
-
-        toy_potential = fit_toy_potential(self.w, self.units)
-        actions,angles = toy_potential.action_angle(self.w[:,0,:3], self.w[:,0,3:])
-
-        params = (toy_potential.parameters['m']/1E11, toy_potential.parameters['b'])
-        s_w = self.w[:,0].copy()
-        s_w[:,3:] = (s_w[:,3:]*u.kpc/u.Myr).to(u.km/u.s).value
-        AA = np.array([toy_potentials.angact_iso(i,params) for i in s_w])
-        AA = AA[~np.isnan(AA).any(1)]
-        s_actions = (AA[:,:3]*u.km/u.s*u.kpc).to(u.kpc**2/u.Myr).value
-        s_angles = AA[:,3:]
-
-        assert np.all(np.abs(np.sum(actions - s_actions, axis=0) / len(actions)) < 1E-13)
-        assert np.all(np.abs(np.sum(angles - s_angles, axis=0) / len(angles)) < 1E-13)
-
-    def test_actions(self):
-        t = self.t
-        w = self.w
-
-        fig = plot_orbits(w,ix=0,marker=None)
-        fig.savefig(os.path.join(plot_path,"difficult_orbit.png"))
-
-        N_max = 6
-        actions,angles,freqs = find_actions(t, w[:,0], N_max=N_max, units=self.units)
-
-        # get values from Sanders' code
-        s_actions,s_angles,s_freqs = sanders_act_ang_freq(t, w, N_max=N_max)
-        s_actions = np.abs(s_actions)
-        s_freqs = np.abs(s_freqs)
-
-        print("actions: ", actions)
-        print("angles: ", angles)
-        print("freqs: ", freqs)
-        print()
-        print("s actions: ", s_actions)
-        print("s angles: ", s_angles)
-        print("s freqs: ", s_freqs)
-        print()
-        print("Action ratio:", actions / s_actions)
-        print("Angle ratio:", angles / s_angles)
-        print("Freq ratio:", freqs / s_freqs)
-
-        return
-
-        fig = plot_angles(t,angles,freqs)
-        fig.savefig(os.path.join(plot_path,"difficult_angles.png"))
-
-        fig = plot_angles(t,s_angles,s_freqs)
-        fig.savefig(os.path.join(plot_path,"difficult_angles_sanders.png"))
-
-        assert np.allclose(actions, s_actions, rtol=1E-2)
-        assert np.allclose(angles, s_angles, rtol=1E-2)
-        assert np.allclose(freqs, s_freqs, rtol=1E-2)
 
 # class TestFrequencyMap(object):
 
