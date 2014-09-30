@@ -380,8 +380,9 @@ def fit_toy_potential(w, units, force_harmonic_oscillator=False):
 
     return toy_potential
 
-def find_actions(t, w, N_max, units, return_Sn=False, force_harmonic_oscillator=False,
-                 toy_potential=None):
+def _single_orbit_find_actions(t, w, N_max, units,
+                               return_Sn=False, force_harmonic_oscillator=False,
+                               toy_potential=None):
     """
     Find approximate actions and angles for samples of a phase-space orbit,
     `w`, at times `t`. Uses toy potentials with known, analytic action-angle
@@ -469,6 +470,62 @@ def find_actions(t, w, N_max, units, return_Sn=False, force_harmonic_oscillator=
         return J, theta, freq, actions[3:], angles[6:], nvecs
     else:
         return J, theta, freq
+
+def find_actions(t, w, N_max, units, force_harmonic_oscillator=False, toy_potential=None):
+    """
+    Find approximate actions and angles for samples of a phase-space orbit,
+    `w`, at times `t`. Uses toy potentials with known, analytic action-angle
+    transformations to approximate the true coordinates as a Fourier sum.
+
+    This code is adapted from Jason Sanders'
+    `genfunc <https://github.com/jlsanders/genfunc>`_
+
+    Parameters
+    ----------
+    t : array_like
+        Array of times with shape (ntimes,).
+    w : array_like
+        Phase-space orbit at times, `t`. Should have shape (ntimes,norbits,6).
+    N_max : int
+        Maximum integer Fourier mode vector length, |n|.
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units. For example,
+        (u.kpc, u.Myr, u.Msun).
+    force_harmonic_oscillator : bool (optional)
+        Force using the harmonic oscillator potential as the toy potential.
+    toy_potential : Potential (optional)
+        Fix the toy potential class.
+    return_Sn : bool (optional)
+        Return the Sn and dSn/dJ's. Default is False.
+    """
+
+    if w.ndim == 2:
+        return _single_orbit_find_actions(t, w, N_max, units,
+                                          force_harmonic_oscillator=force_harmonic_oscillator,
+                                          toy_potential=toy_potential)
+    elif w.ndim == 3:
+        ntime,norbits,ndim = w.shape
+        actions = np.zeros((norbits,3))
+        angles = np.zeros((norbits,3))
+        freqs = np.zeros((norbits,3))
+        for n in range(norbits):
+            aaf = _single_orbit_find_actions(t, w[:,n], N_max, units,
+                                             force_harmonic_oscillator=force_harmonic_oscillator,
+                                             toy_potential=toy_potential)
+            actions[n] = aaf[0]
+            angles[n] = aaf[1]
+            freqs[n] = aaf[2]
+
+    else:
+        raise ValueError("Invalid shape for orbit array: {}".format(w.shape))
+
+    # if return_Sn:
+    #     return J, theta, freq, actions[3:], angles[6:], nvecs
+    # else:
+    #     return J, theta, freq
+
+    return actions, angles, freqs
 
 def cross_validate_actions(t, w, N_max, units, nbins=10, skip_failures=False,
                            force_harmonic_oscillator=False, overlap=0):
