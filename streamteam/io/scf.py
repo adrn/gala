@@ -19,8 +19,6 @@ from astropy.table import Table
 
 # Project
 from .core import NBodyReader
-from ..potential.apw import PW14Potential
-from ..units import galactic
 
 # Create logger
 logger = logging.getLogger(__name__)
