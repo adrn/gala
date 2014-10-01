@@ -183,7 +183,7 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
             y = r[i,1]
             z = r[i,2]
 
-            zd = (self.a + sqrt(z*z+self.b2))
+            zd = (self.a + sqrt(z*z + self.b2))
             pot[i] = -self.GM / sqrt(x*x + y*y + zd*zd)
 
     @cython.boundscheck(False)
@@ -441,7 +441,7 @@ cdef class _LogarithmicPotential(_CPotential):
     cdef public inline void _value(self, double[:,::1] r,
                                    double[::1] pot, int nparticles):
 
-        cdef double x, y, z, _r, _x, _y, _z
+        cdef double x, y, z, _x, _y, _z
         for i in range(nparticles):
             _x = r[i,0]
             _y = r[i,1]
@@ -451,7 +451,6 @@ cdef class _LogarithmicPotential(_CPotential):
             y = self.R[1,0]*_x + self.R[1,1]*_y + self.R[1,2]*_z
             z = self.R[2,0]*_x + self.R[2,1]*_y + self.R[2,2]*_z
 
-            _r = sqrt(x*x + y*y + z*z)
             pot[i] = 0.5*self.v_c2 * log(x*x/self.q1_2 + y*y/self.q2_2 + z*z/self.q3_2 + self.r_h2)
 
     @cython.boundscheck(False)
@@ -461,11 +460,7 @@ cdef class _LogarithmicPotential(_CPotential):
     cdef public inline void _gradient(self, double[:,::1] r,
                                       double[:,::1] grad, int nparticles):
 
-        cdef:
-            double x, y, z, _r, _r2, _x, _y, _z, ax, ay, az
-            double x0, x1, x2, x7
-            double x10, x11, x13, x15, x16, x17, x18
-            double x20, x21, x22
+        cdef double x, y, z, _r, _r2, _x, _y, _z, ax, ay, az
 
         for i in range(nparticles):
             _x = r[i,0]
@@ -479,7 +474,7 @@ cdef class _LogarithmicPotential(_CPotential):
             _r2 = x*x + y*y + z*z
             _r = sqrt(_r2)
 
-            fac = x3 = self.v_c2/(self.r_h2 + x*x/self.q1_2 + y*y/self.q2_2 + z*z/self.q3_2 + self.r_h2)
+            fac = self.v_c2/(self.r_h2 + x*x/self.q1_2 + y*y/self.q2_2 + z*z/self.q3_2)
             ax = fac*x/self.q1_2
             ay = fac*y/self.q2_2
             az = fac*z/self.q3_2
