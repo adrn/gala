@@ -68,9 +68,12 @@ cdef class _HernquistPotential(_CPotential):
     cdef public inline void _value(self, double[:,::1] r,
                                    double[::1] pot, int nparticles):
 
-        cdef double R
+        cdef double x, y, z, R
         for i in range(nparticles):
-            R = sqrt(r[i,0]*r[i,0] + r[i,1]*r[i,1] + r[i,2]*r[i,2])
+            x = r[i,0]
+            y = r[i,1]
+            z = r[i,2]
+            R = sqrt(x*x + y*y + z*z)
             pot[i] = -self.GM / (R + self.c)
 
     @cython.boundscheck(False)
