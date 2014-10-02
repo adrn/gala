@@ -527,6 +527,11 @@ def find_actions(t, w, N_max, units, force_harmonic_oscillator=False, toy_potent
 
     return actions, angles, freqs
 
+
+
+# -------------------------------------------------
+# DO NOT USE YET:
+#
 def cross_validate_actions(t, w, N_max, units, nbins=10, skip_failures=False,
                            force_harmonic_oscillator=False, overlap=0):
     """
@@ -558,6 +563,8 @@ def cross_validate_actions(t, w, N_max, units, nbins=10, skip_failures=False,
     overlap : int (optional)
         Number of steps to overlap in each direction for each orbit sub-section.
     """
+
+    raise NotImplementedError()
 
     t_split = np.array_split(t,nbins)
     w_split = np.array_split(w,nbins)
