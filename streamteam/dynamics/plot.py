@@ -170,7 +170,7 @@ def three_panel(q, relative_to=None, symbol=None, autolim=True,
         q -= relative_to
 
         if symbol is not None:
-            label = r"$\Delta{sym}_{{ix}}/{sym}^{{{{(0)}}}}_{{ix}}$".format(sym=symbol)
+            label = r"$\Delta {sym}_{{ix}}/{sym}^{{{{(0)}}}}_{{ix}}$".format(sym=symbol)
 
     else:
         if symbol is not None:
