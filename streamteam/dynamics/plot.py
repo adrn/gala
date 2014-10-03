@@ -123,7 +123,7 @@ def plot_orbits(x, ix=None, axes=None, triangle=False, subplots_kwargs=dict(), *
 
     return axes[0].figure
 
-def three_panel(q, relative_to=None, symbol=None,
+def three_panel(q, relative_to=None, symbol=None, autolim=True,
                 axes=None, triangle=False, subplots_kwargs=dict(), **kwargs):
     """
     Given 3D quantities, `q`, (not astropy quantities...), make nice three-panel or
@@ -138,6 +138,8 @@ def three_panel(q, relative_to=None, symbol=None,
         Plot the values relative to this value or values.
     symbol : str (optional)
         Symbol to represent the quantity for axis labels. Can be Latex.
+    autolim : bool (optional)
+        Automatically set the plot limits to be something sensible.
     axes : array_like (optional)
         Array of matplotlib Axes objects.
     triangle : bool (optional)
@@ -194,6 +196,20 @@ def three_panel(q, relative_to=None, symbol=None,
 
             axes[2].set_xlabel(label.format(ix=2))
             axes[2].set_ylabel(label.format(ix=3))
+
+    if autolim:
+        lims = []
+        for i in range(3):
+            mx,mi = q[:,i].max(), q[:,i].min()
+            delta = mx-mi
+            lims.append((mi-delta*0.05, mx+delta*0.05))
+
+        axes[0].set_xlim(lims[0])
+        axes[0].set_ylim(lims[1])
+        axes[1].set_xlim(lims[0])
+        axes[1].set_ylim(lims[2])
+        axes[2].set_xlim(lims[1])
+        axes[2].set_ylim(lims[2])
 
     if not triangle:
         axes[0].figure.tight_layout()
