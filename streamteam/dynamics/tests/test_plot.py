@@ -50,9 +50,18 @@ def test_orbits():
 def test_three_panel():
 
     q = np.random.uniform(0.,10.,size=(1000,3))
+    q0 = np.array([5,5,5])
 
     fig = three_panel(q)
     fig.savefig(os.path.join(plot_path, "three-panel-random.png"))
 
     fig = three_panel(q, triangle=True)
     fig.savefig(os.path.join(plot_path, "three-panel-random_triangle.png"))
+
+    fig = three_panel(q, relative_to=q0, symbol=r'\Omega')
+    fig.savefig(os.path.join(plot_path, "three-panel-random-relative.png"))
+
+    fig = three_panel(q, relative_to=q0, triangle=True, symbol=r'\Omega')
+    fig.savefig(os.path.join(plot_path, "three-panel-random-relative_triangle.png"))
+
+
