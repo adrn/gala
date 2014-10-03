@@ -16,7 +16,7 @@ import numpy as np
 from astropy import log as logger
 
 # Project
-from ..plot import plot_orbits
+from ..plot import *
 
 logger.setLevel(logging.DEBUG)
 
@@ -46,3 +46,13 @@ def test_orbits():
 
     fig = plot_orbits(w, ix=0, triangle=True, linestyle='-', marker=None)
     fig.savefig(os.path.join(plot_path, "one_orbit_triangle.png"))
+
+def test_three_panel():
+
+    q = np.random.uniform(0.,10.,size=(1000,3))
+
+    fig = three_panel(q)
+    fig.savefig(os.path.join(plot_path, "three-panel-random.png"))
+
+    fig = three_panel(q, triangle=True)
+    fig.savefig(os.path.join(plot_path, "three-panel-random_triangle.png"))
