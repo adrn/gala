@@ -148,7 +148,7 @@ def three_panel(q, relative_to=None, symbol=None,
     Other Parameters
     ----------------
     kwargs
-        All other keyword arguments are passed to the matplotlib `plot()` call.
+        All other keyword arguments are passed to the matplotlib `scatter()` call.
         You can pass in any of the usual style kwargs like `color=...`,
         `marker=...`, etc.
     """
