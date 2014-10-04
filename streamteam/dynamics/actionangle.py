@@ -527,7 +527,36 @@ def find_actions(t, w, N_max, units, force_harmonic_oscillator=False, toy_potent
 
     return actions, angles, freqs
 
+def solve_hessian(relative_actions, relative_freqs):
+    """ Use ordinary least squares to solve for the Hessian, given a
+        set of actions and frequencies relative to the parent orbit.
+    """
 
+def compute_hessian(t, w, actions_kwargs={}):
+    """ Compute the Hessian (in action-space) of the given orbit
+
+    """
+
+    N = dJ.shape[0]
+
+    Y = np.ravel(dF)
+    A = np.zeros((3*N,9))
+    A[::3,:3] = dJ
+    A[1::3,3:6] = dJ
+    A[2::3,6:9] = dJ
+
+    # Solve for 'parameters' - the Hessian elements
+    X,res,rank,s = np.linalg.lstsq(A, Y)
+
+    # Symmetrize
+    D0 = X.reshape(3,3)
+    D0[0,1] = D0[1,0] = (D0[0,1] + D0[1,0])/2.
+    D0[0,2] = D0[2,0] = (D0[0,2] + D0[2,0])/2.
+    D0[1,2] = D0[2,1] = (D0[1,2] + D0[2,1])/2.
+
+    print("Residual: " + str(res[0]))
+
+    return D0,np.linalg.eigh(D0) # symmetric matrix
 
 # -------------------------------------------------
 # DO NOT USE YET:
