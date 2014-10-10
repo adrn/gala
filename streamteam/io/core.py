@@ -53,5 +53,5 @@ class NBodyReader(object):
 def tbl_to_w(tbl):
     """ TODO: """
     w = np.asarray(tbl['x','y','z','vx','vy','vz'])
-    w = w.view('float64').reshape(len(tbl),1,6)
+    w = w.view('float64').reshape(len(tbl),6)
     return w
