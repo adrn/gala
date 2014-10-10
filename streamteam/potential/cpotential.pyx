@@ -88,6 +88,24 @@ class CPotential(Potential):
             raise ValueError("Potential C instance has no defined "
                              "Hessian function")
 
+    # ----------------------------
+    # Functions of the derivatives
+    # ----------------------------
+    def acceleration(self, x):
+        """
+        Compute the acceleration due to the potential at the given position(s).
+
+        Parameters
+        ----------
+        x : array_like, numeric
+            Position to compute the gradient.
+        """
+        try:
+            return -self.c_instance.gradient(np.array(x))
+        except AttributeError,TypeError:
+            raise ValueError("Potential C instance has no defined "
+                             "gradient function")
+
 # ==============================================================================
 
 cdef class _CPotential:
@@ -144,6 +162,26 @@ cdef class _CPotential:
     @cython.wraparound(False)
     @cython.nonecheck(False)
     cdef public void _hessian(self, double[:,::1] w, double[:,::1] acc, int nparticles):
+        for i in range(nparticles):
+            acc[i,0] = 0.
+            acc[i,1] = 0.
+            acc[i,2] = 0.
+
+    # -------------------------------------------------------------
+    cpdef acceleration(self, double[:,::1] xyz):
+        cdef int nparticles, ndim
+        nparticles = xyz.shape[0]
+        ndim = xyz.shape[1]
+
+        cdef double [:,::1] acc = np.empty((nparticles,ndim))
+        self._acceleration(xyz, acc, nparticles)
+        return np.array(acc)
+
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public void _acceleration(self, double[:,::1] r, double[:,::1] acc, int nparticles):
         for i in range(nparticles):
             acc[i,0] = 0.
             acc[i,1] = 0.

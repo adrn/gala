@@ -7,3 +7,6 @@ cdef class _CPotential:
 
     cpdef hessian(self, double[:,::1] w)
     cdef public void _hessian(self, double[:,::1] w, double[:,::1] hess, int nparticles)
+
+    cpdef acceleration(self, double[:,::1] xyz)
+    cdef public void _acceleration(self, double[:,::1] xyz, double[:,::1] acc, int nparticles)
