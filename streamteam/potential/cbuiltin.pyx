@@ -483,6 +483,19 @@ cdef class _LogarithmicPotential(_CPotential):
             grad[i,1] = self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
             grad[i,2] = self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
 
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public inline void _acceleration(self, double[:,::1] r,
+                                          double[:,::1] acc, int nparticles):
+
+        for i in range(nparticles):
+            self._gradient(r, acc, nparticles)
+            acc[i,0] = -acc[i,0]
+            acc[i,1] = -acc[i,1]
+            acc[i,2] = -acc[i,2]
+
 
 class LogarithmicPotential(CPotential, CartesianPotential):
     r"""
