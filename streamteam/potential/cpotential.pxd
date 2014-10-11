@@ -10,3 +10,6 @@ cdef class _CPotential:
 
     cpdef acceleration(self, double[:,::1] xyz)
     cdef public void _acceleration(self, double[:,::1] xyz, double[:,::1] acc, int nparticles)
+
+    cpdef tidal_radius(self, double m, double[:,::1] xyz)
+    cdef public void _tidal_radius(self, double m, double[:,::1] xyz, double[::1] rtide, int n)
