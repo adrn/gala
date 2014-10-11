@@ -264,7 +264,7 @@ class MiyamotoNagaiPotential(CPotential, CartesianPotential):
 cdef class _LeeSutoNFWPotential(_CPotential):
 
     # here need to cdef all the attributes
-    cdef public double v_h, r_h, a, b, c, e_b2, e_c2
+    cdef public double v_h, r_h, a, b, c, e_b2, e_c2, G
     cdef public double v_h2, r_h2, a2, b2, c2, x0
     cdef public double[:,::1] R, Rinv
 
@@ -290,6 +290,8 @@ cdef class _LeeSutoNFWPotential(_CPotential):
 
         self.R = R
         self.Rinv = np.linalg.inv(R)
+
+        self.G = 4.49975332435e-12  # kpc, Myr, Msun
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
@@ -359,6 +361,30 @@ cdef class _LeeSutoNFWPotential(_CPotential):
             grad[i,0] = self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
             grad[i,1] = self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
             grad[i,2] = self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
+
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public inline void _tidal_radius(self, double m, double[:,::1] xyz,
+                                          double[::1] rtide, int n):
+
+        cdef:
+            double _x, _y, _z, R
+            double fac, m_enc
+
+        for i in range(n):
+            _x = xyz[i,0]
+            _y = xyz[i,1]
+            _z = xyz[i,2]
+
+            R = sqrt(_x*_x + _y*_y + _z*_z)
+            # rho0 = v_h*v_h / (4*np.pi*G*r_h*r_h)
+            # m_enc = 4*np.pi*rho0*r_h**3 * fac
+            fac = log((R + self.r_h)/self.r_h) - R / (self.r_h + R)
+            m_enc = self.v_h2*self.r_h / self.G * fac
+
+            rtide[i] = R * (m / (3.*m_enc))**(0.3333333333333)
 
 class LeeSutoNFWPotential(CPotential, CartesianPotential):
     r"""
@@ -482,20 +508,6 @@ cdef class _LogarithmicPotential(_CPotential):
             grad[i,0] = self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
             grad[i,1] = self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
             grad[i,2] = self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
-
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
-    cdef public inline void _acceleration(self, double[:,::1] r,
-                                          double[:,::1] acc, int nparticles):
-
-        for i in range(nparticles):
-            self._gradient(r, acc, nparticles)
-            acc[i,0] = -acc[i,0]
-            acc[i,1] = -acc[i,1]
-            acc[i,2] = -acc[i,2]
-
 
 class LogarithmicPotential(CPotential, CartesianPotential):
     r"""

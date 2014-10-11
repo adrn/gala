@@ -98,7 +98,7 @@ class CPotential(Potential):
         Parameters
         ----------
         x : array_like, numeric
-            Position to compute the gradient.
+            Position to compute the acceleration.
         """
         try:
             return -self.c_instance.gradient(np.array(x))
@@ -183,6 +183,25 @@ cdef class _CPotential:
     @cython.nonecheck(False)
     cdef public void _acceleration(self, double[:,::1] r, double[:,::1] acc, int nparticles):
         for i in range(nparticles):
-            acc[i,0] = 0.
-            acc[i,1] = 0.
-            acc[i,2] = 0.
+            self._gradient(r, acc, nparticles)
+            acc[i,0] = -acc[i,0]
+            acc[i,1] = -acc[i,1]
+            acc[i,2] = -acc[i,2]
+
+    # ------------------------------------------------------------
+    cpdef tidal_radius(self, double m, double[:,::1] xyz):
+        cdef int nparticles, ndim
+        nparticles = xyz.shape[0]
+        ndim = xyz.shape[1]
+
+        cdef double [::1] rtide = np.empty((nparticles,))
+        self._tidal_radius(m, xyz, rtide, nparticles)
+        return np.array(rtide)
+
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public void _tidal_radius(self, double m, double[:,::1] xyz, double[::1] rtide, int n):
+        for i in range(n):
+            rtide[i] = 0.
