@@ -123,7 +123,7 @@ cdef class _CPotential:
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public void _value(self, double[:,::1] xyz, double[::1] pot, int nparticles):
+    cdef public void _value(self, double[:,::1] xyz, double[::1] pot, int nparticles) nogil:
         for i in range(nparticles):
             pot[i] = 0.
 
@@ -141,7 +141,7 @@ cdef class _CPotential:
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public void _gradient(self, double[:,::1] r, double[:,::1] grad, int nparticles):
+    cdef public void _gradient(self, double[:,::1] r, double[:,::1] grad, int nparticles) nogil:
         for i in range(nparticles):
             grad[i,0] = 0.
             grad[i,1] = 0.
@@ -161,7 +161,7 @@ cdef class _CPotential:
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public void _hessian(self, double[:,::1] w, double[:,::1] acc, int nparticles):
+    cdef public void _hessian(self, double[:,::1] w, double[:,::1] acc, int nparticles) nogil:
         for i in range(nparticles):
             acc[i,0] = 0.
             acc[i,1] = 0.
@@ -181,7 +181,7 @@ cdef class _CPotential:
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public void _acceleration(self, double[:,::1] r, double[:,::1] acc, int nparticles):
+    cdef public void _acceleration(self, double[:,::1] r, double[:,::1] acc, int nparticles) nogil:
         for i in range(nparticles):
             self._gradient(r, acc, nparticles)
             acc[i,0] = -acc[i,0]
@@ -195,13 +195,14 @@ cdef class _CPotential:
         ndim = xyz.shape[1]
 
         cdef double [::1] rtide = np.empty((nparticles,))
-        self._tidal_radius(m, xyz, rtide, nparticles)
+        for i in range(nparticles):
+            rtide[i] = self._tidal_radius(m, xyz[i])
+
         return np.array(rtide)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public void _tidal_radius(self, double m, double[:,::1] xyz, double[::1] rtide, int n):
-        for i in range(n):
-            rtide[i] = 0.
+    cdef public double _tidal_radius(self, double m, double[::1] xyz) nogil:
+        return 0.
