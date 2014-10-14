@@ -25,15 +25,13 @@ from .cpotential import CPotential
 from .core import CartesianPotential
 
 cdef extern from "math.h":
-    double sqrt(double x)
-    double atan2(double x, double x)
-    double acos(double x)
-    double sin(double x)
-    double cos(double x)
-    double log(double x)
-    double fabs(double x)
-    double exp(double x)
-    double pow(double x, double n)
+    double sqrt(double x) nogil
+    double sin(double x) nogil
+    double cos(double x) nogil
+    double log(double x) nogil
+    double fabs(double x) nogil
+    double exp(double x) nogil
+    double pow(double x, double n) nogil
 
 __all__ = ['HernquistPotential', 'MiyamotoNagaiPotential',
            'LeeSutoNFWPotential', 'LogarithmicPotential']
@@ -66,7 +64,7 @@ cdef class _HernquistPotential(_CPotential):
     @cython.wraparound(False)
     @cython.nonecheck(False)
     cdef public inline void _value(self, double[:,::1] r,
-                                   double[::1] pot, int nparticles):
+                                   double[::1] pot, int nparticles) nogil:
 
         cdef double x, y, z, R
         for i in range(nparticles):
@@ -81,7 +79,7 @@ cdef class _HernquistPotential(_CPotential):
     @cython.wraparound(False)
     @cython.nonecheck(False)
     cdef public inline void _gradient(self, double[:,::1] r,
-                                      double[:,::1] grad, int nparticles):
+                                      double[:,::1] grad, int nparticles) nogil:
 
         cdef double x, y, z, R, fac
         for i in range(nparticles):
@@ -174,7 +172,7 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
     @cython.wraparound(False)
     @cython.nonecheck(False)
     cdef public inline void _value(self, double[:,::1] r,
-                                   double[::1] pot, int nparticles):
+                                   double[::1] pot, int nparticles) nogil:
 
         cdef double x, y, z
         cdef double zd
@@ -191,7 +189,7 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
     @cython.wraparound(False)
     @cython.nonecheck(False)
     cdef public inline void _gradient(self, double[:,::1] r,
-                                      double[:,::1] grad, int nparticles):
+                                      double[:,::1] grad, int nparticles) nogil:
 
         cdef double x, y, z
         cdef double sqrtz, zd, fac
@@ -298,7 +296,7 @@ cdef class _LeeSutoNFWPotential(_CPotential):
     @cython.wraparound(False)
     @cython.nonecheck(False)
     cdef public inline void _value(self, double[:,::1] r,
-                                   double[::1] pot, int nparticles):
+                                   double[::1] pot, int nparticles) nogil:
 
         cdef double x, y, z, _r, u, _x, _y, _z
         for i in range(nparticles):
@@ -319,7 +317,7 @@ cdef class _LeeSutoNFWPotential(_CPotential):
     @cython.wraparound(False)
     @cython.nonecheck(False)
     cdef public inline void _gradient(self, double[:,::1] r,
-                                      double[:,::1] grad, int nparticles):
+                                      double[:,::1] grad, int nparticles) nogil:
 
         cdef:
             double x, y, z, _r, _r2, _x, _y, _z, ax, ay, az
@@ -366,25 +364,23 @@ cdef class _LeeSutoNFWPotential(_CPotential):
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public inline void _tidal_radius(self, double m, double[:,::1] xyz,
-                                          double[::1] rtide, int n):
+    cdef public inline double _tidal_radius(self, double m, double[::1] xyz) nogil:
 
         cdef:
             double _x, _y, _z, R
             double fac, m_enc
 
-        for i in range(n):
-            _x = xyz[i,0]
-            _y = xyz[i,1]
-            _z = xyz[i,2]
+        _x = xyz[0]
+        _y = xyz[1]
+        _z = xyz[2]
 
-            R = sqrt(_x*_x + _y*_y + _z*_z)
-            # rho0 = v_h*v_h / (4*np.pi*G*r_h*r_h)
-            # m_enc = 4*np.pi*rho0*r_h**3 * fac
-            fac = log((R + self.r_h)/self.r_h) - R / (self.r_h + R)
-            m_enc = self.v_h2*self.r_h / self.G * fac
+        R = sqrt(_x*_x + _y*_y + _z*_z)
+        # rho0 = v_h*v_h / (4*np.pi*G*r_h*r_h)
+        # m_enc = 4*np.pi*rho0*r_h**3 * fac
+        fac = log((R + self.r_h)/self.r_h) - R / (self.r_h + R)
+        m_enc = self.v_h2*self.r_h / self.G * fac
 
-            rtide[i] = R * (m / (3.*m_enc))**(0.3333333333333)
+        return R * (m / (3.*m_enc))**(0.3333333333333)
 
 class LeeSutoNFWPotential(CPotential, CartesianPotential):
     r"""
@@ -465,7 +461,7 @@ cdef class _LogarithmicPotential(_CPotential):
     @cython.wraparound(False)
     @cython.nonecheck(False)
     cdef public inline void _value(self, double[:,::1] r,
-                                   double[::1] pot, int nparticles):
+                                   double[::1] pot, int nparticles) nogil:
 
         cdef double x, y, z, _x, _y, _z
         for i in range(nparticles):
@@ -484,7 +480,7 @@ cdef class _LogarithmicPotential(_CPotential):
     @cython.wraparound(False)
     @cython.nonecheck(False)
     cdef public inline void _gradient(self, double[:,::1] r,
-                                      double[:,::1] grad, int nparticles):
+                                      double[:,::1] grad, int nparticles) nogil:
 
         cdef double x, y, z, _r, _r2, _x, _y, _z, ax, ay, az
 
