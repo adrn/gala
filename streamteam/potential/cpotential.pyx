@@ -196,7 +196,7 @@ cdef class _CPotential:
 
         cdef double [::1] rtide = np.empty((nparticles,))
         for i in range(nparticles):
-            rtide[i] = self._tidal_radius(m, xyz[i])
+            rtide[i] = self._tidal_radius(m, xyz[i,0], xyz[i,1], xyz[i,2])
 
         return np.array(rtide)
 
@@ -204,5 +204,5 @@ cdef class _CPotential:
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public double _tidal_radius(self, double m, double[::1] xyz) nogil:
+    cdef public double _tidal_radius(self, double m, double x, double y, double z) nogil:
         return 0.
