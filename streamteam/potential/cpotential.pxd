@@ -12,4 +12,4 @@ cdef class _CPotential:
     cdef public void _acceleration(self, double[:,::1] xyz, double[:,::1] acc, int nparticles) nogil
 
     cpdef tidal_radius(self, double m, double[:,::1] xyz)
-    cdef public double _tidal_radius(self, double m, double[::1] xyz) nogil
+    cdef public double _tidal_radius(self, double m, double x, double y, double z) nogil
