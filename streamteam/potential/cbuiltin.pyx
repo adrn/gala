@@ -26,6 +26,7 @@ from .core import CartesianPotential
 
 cdef extern from "math.h":
     double sqrt(double x) nogil
+    double cbrt(double x) nogil
     double sin(double x) nogil
     double cos(double x) nogil
     double log(double x) nogil
@@ -364,23 +365,17 @@ cdef class _LeeSutoNFWPotential(_CPotential):
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public inline double _tidal_radius(self, double m, double[::1] xyz) nogil:
+    cdef public inline double _tidal_radius(self, double m, double x, double y, double z) nogil:
 
-        cdef:
-            double _x, _y, _z, R
-            double fac, m_enc
+        cdef double fac, m_enc, R
 
-        _x = xyz[0]
-        _y = xyz[1]
-        _z = xyz[2]
-
-        R = sqrt(_x*_x + _y*_y + _z*_z)
+        R = sqrt(x*x + y*y + z*z)
         # rho0 = v_h*v_h / (4*np.pi*G*r_h*r_h)
         # m_enc = 4*np.pi*rho0*r_h**3 * fac
         fac = log((R + self.r_h)/self.r_h) - R / (self.r_h + R)
         m_enc = self.v_h2*self.r_h / self.G * fac
 
-        return R * (m / (3.*m_enc))**(0.3333333333333)
+        return R * cbrt(m / (3.*m_enc))
 
 class LeeSutoNFWPotential(CPotential, CartesianPotential):
     r"""
