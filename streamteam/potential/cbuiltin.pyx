@@ -321,7 +321,7 @@ cdef class _LeeSutoNFWPotential(_CPotential):
                                       double[:,::1] grad, int nparticles) nogil:
 
         cdef:
-            double x, y, z, _r, _r2, _x, _y, _z, ax, ay, az
+            double x, y, z, _r, _r2, _r4, _x, _y, _z, ax, ay, az
             double x0, x1, x2, x7
             double x10, x11, x13, x15, x16, x17, x18
             double x20, x21, x22
@@ -337,10 +337,11 @@ cdef class _LeeSutoNFWPotential(_CPotential):
 
             _r2 = x*x + y*y + z*z
             _r = sqrt(_r2)
+            _r4 = _r2*_r2
 
             x0 = _r + self.r_h
             x1 = x0*x0
-            x2 = self.v_h2/(12.*pow(_r,7)*x1)
+            x2 = self.v_h2/(12.*_r4*_r2*_r*x1)
             x7 = self.e_b2*y*y + self.e_c2*z*z
             x10 = log(x0/self.r_h)
             x11 = x0*x10
@@ -351,7 +352,7 @@ cdef class _LeeSutoNFWPotential(_CPotential):
             x18 = x1*x10
             x20 = x0*_r2
             x21 = 2.*_r*x0
-            x22 = -12.*pow(_r,5)*self.r_h*x0 + 12.*pow(_r,4)*self.r_h*x18 + 3.*self.r_h*x7*(x16*_r2 - 18.*x18*self.r_h2 + x20*(2.*_r - 3.*self.r_h) + x21*(x15 + 9.*self.r_h2)) - x20*(self.e_b2 + self.e_c2)*(-6.*_r*self.r_h*(_r2 - self.r_h2) + 6.*self.r_h*x11*(_r2 - 3.*self.r_h2) + x20*(-4.*_r + 3.*self.r_h) + x21*(-x13 + 2.*_r2 + 6.*self.r_h2))
+            x22 = -12.*_r4*_r*self.r_h*x0 + 12.*_r4*self.r_h*x18 + 3.*self.r_h*x7*(x16*_r2 - 18.*x18*self.r_h2 + x20*(2.*_r - 3.*self.r_h) + x21*(x15 + 9.*self.r_h2)) - x20*(self.e_b2 + self.e_c2)*(-6.*_r*self.r_h*(_r2 - self.r_h2) + 6.*self.r_h*x11*(_r2 - 3.*self.r_h2) + x20*(-4.*_r + 3.*self.r_h) + x21*(-x13 + 2.*_r2 + 6.*self.r_h2))
 
             ax = x2*x*(x17*x7 + x22)
             ay = x2*y*(x17*(x7 - _r2*self.e_b2) + x22)
