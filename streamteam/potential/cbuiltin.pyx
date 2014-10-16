@@ -266,6 +266,7 @@ cdef class _LeeSutoNFWPotential(_CPotential):
     cdef public double v_h, r_h, a, b, c, e_b2, e_c2, G
     cdef public double v_h2, r_h2, a2, b2, c2, x0
     cdef public double[:,::1] R, Rinv
+    cdef public unsigned int rotated, spherical
 
     def __init__(self, double v_h, double r_h, double a, double b, double c,
                  double[:,::1] R):
@@ -286,9 +287,19 @@ cdef class _LeeSutoNFWPotential(_CPotential):
 
         self.e_b2 = 1-pow(b/a,2)
         self.e_c2 = 1-pow(c/a,2)
+        if (self.e_b2 == 0.) and (self.e_c2 == 0.):
+            self.spherical = 1
+        else:
+            self.spherical = 0
 
         self.R = R
-        self.Rinv = np.linalg.inv(R)
+        self.Rinv = R.T.copy()
+
+        self.rotated = 0
+        for i in range(3):
+            for j in range(3):
+                if self.R[i,j] != self.Rinv[i,j]:
+                    self.rotated = 1
 
         self.G = 4.49975332435e-12  # kpc, Myr, Msun
 
@@ -317,14 +328,43 @@ cdef class _LeeSutoNFWPotential(_CPotential):
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public inline void _gradient(self, double[:,::1] r,
-                                      double[:,::1] grad, int nparticles) nogil:
+    cdef public inline void _gradient_spherical(self, double[:,::1] r,
+                                                double[:,::1] grad, int nparticles) nogil:
+        cdef:
+            double x, y, z, _r, _r2, _r4, ax, ay, az
+            double x0, x2, x22
+
+        for i in range(nparticles):
+            x = r[i,0]
+            y = r[i,1]
+            z = r[i,2]
+
+            _r2 = x*x + y*y + z*z
+            _r = sqrt(_r2)
+            _r4 = _r2*_r2
+
+            x0 = _r + self.r_h
+            x2 = self.v_h2/(12.*_r4*_r2*_r*x0*x0)
+            x22 = -12.*_r4*_r*self.r_h*x0 + 12.*_r4*self.r_h*x0*x0*log(x0/self.r_h)
+
+            grad[i,0] = x2*x*x22
+            grad[i,1] = x2*y*x22
+            grad[i,2] = x2*z*x22
+
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public inline void _gradient_triaxial(self, double[:,::1] r,
+                                               double[:,::1] grad, int nparticles) nogil:
 
         cdef:
-            double x, y, z, _r, _r2, _r4, _x, _y, _z, ax, ay, az
-            double x0, x1, x2, x7
+            double x, y, z, _r, _r2, _r4, ax, ay, az
+            double x0, x2, x22
+
+            double _x, _y, _z
+            double x20, x21, x7, x1
             double x10, x11, x13, x15, x16, x17, x18
-            double x20, x21, x22
 
         for i in range(nparticles):
             _x = r[i,0]
@@ -342,16 +382,17 @@ cdef class _LeeSutoNFWPotential(_CPotential):
             x0 = _r + self.r_h
             x1 = x0*x0
             x2 = self.v_h2/(12.*_r4*_r2*_r*x1)
-            x7 = self.e_b2*y*y + self.e_c2*z*z
             x10 = log(x0/self.r_h)
+            x18 = x1*x10
+
             x11 = x0*x10
             x13 = _r*3.*self.r_h
             x15 = x13 - _r2
             x16 = x15 + 6.*self.r_h2
             x17 = 6.*self.r_h*x0*(_r*x16 - x11*6.*self.r_h2)
-            x18 = x1*x10
             x20 = x0*_r2
             x21 = 2.*_r*x0
+            x7 = self.e_b2*y*y + self.e_c2*z*z
             x22 = -12.*_r4*_r*self.r_h*x0 + 12.*_r4*self.r_h*x18 + 3.*self.r_h*x7*(x16*_r2 - 18.*x18*self.r_h2 + x20*(2.*_r - 3.*self.r_h) + x21*(x15 + 9.*self.r_h2)) - x20*(self.e_b2 + self.e_c2)*(-6.*_r*self.r_h*(_r2 - self.r_h2) + 6.*self.r_h*x11*(_r2 - 3.*self.r_h2) + x20*(-4.*_r + 3.*self.r_h) + x21*(-x13 + 2.*_r2 + 6.*self.r_h2))
 
             ax = x2*x*(x17*x7 + x22)
@@ -361,6 +402,18 @@ cdef class _LeeSutoNFWPotential(_CPotential):
             grad[i,0] = self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
             grad[i,1] = self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
             grad[i,2] = self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
+
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public inline void _gradient(self, double[:,::1] r,
+                                      double[:,::1] grad, int nparticles) nogil:
+
+        if self.spherical == 1:
+            self._gradient_spherical(r, grad, nparticles)
+        else:
+            self._gradient_triaxial(r, grad, nparticles)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
