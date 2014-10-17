@@ -97,6 +97,21 @@ class Potential(object):
                                       " the object was created!")
         return self._hessian(np.array(x), **self.parameters)
 
+    # def mass_enclosed(self, x):
+    #     """
+    #     Estimate the mass enclosed within the given position by assumine the potential
+    #     is spherical. This is not so good!
+
+    #     Parameters
+    #     ----------
+    #     x : array_like, numeric
+    #         Position to compute the Hessian.
+    #     """
+    #     if self._mass_enclosed is None:
+    #         raise NotImplementedError("No Hessian function was specified when"
+    #                                   " the object was created!")
+    #     return self._mass_enclosed(np.array(x), **self.parameters)
+
     # Other useful functions to compute
     def __call__(self, x):
         return self.value(x)
@@ -289,6 +304,9 @@ class CartesianPotential(Potential):
 
         return self.value(x) + 0.5*np.sum(v**2,axis=-1)
 
+# -------------------------------------------------------------------------------------------------
+# COMPOSITE POTENTIALS
+#
 class CompositePotential(dict, Potential):
     """
     A potential composed of several distinct components. For example,
