@@ -87,6 +87,22 @@ class CPotential(Potential):
             raise ValueError("Potential C instance has no defined "
                              "Hessian function")
 
+    def mass_enclosed(self, q):
+        """
+        Estimate the mass enclosed within the given position by assumine the potential
+        is spherical. This is not so good!
+
+        Parameters
+        ----------
+        q : array_like, numeric
+            Position to compute the mass enclosed.
+        """
+        try:
+            return self.c_instance.mass_enclosed(np.array(q))
+        except AttributeError,TypeError:
+            raise ValueError("Potential C instance has no defined "
+                             "mass_enclosed function")
+
     # ----------------------------
     # Functions of the derivatives
     # ----------------------------
