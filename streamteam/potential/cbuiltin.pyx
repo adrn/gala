@@ -370,22 +370,6 @@ cdef class _LeeSutoNFWPotential(_CPotential):
         else:
             self._gradient_triaxial(r, grad, nparticles)
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
-    cdef public inline double _tidal_radius(self, double m, double x, double y, double z) nogil:
-
-        cdef double fac, m_enc, R
-
-        R = sqrt(x*x + y*y + z*z)
-        # rho0 = v_h*v_h / (4*np.pi*G*r_h*r_h)
-        # m_enc = 4*np.pi*rho0*r_h**3 * fac
-        fac = log((R + self.r_h)/self.r_h) - R / (self.r_h + R)
-        m_enc = self.v_h2*self.r_h / self.G * fac
-
-        return R * cbrt(m / (3.*m_enc))
-
 class LeeSutoNFWPotential(CPotential, CartesianPotential):
     r"""
     TODO:
