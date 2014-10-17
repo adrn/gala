@@ -95,28 +95,6 @@ cdef class _HernquistPotential(_CPotential):
             grad[i,1] = fac*y
             grad[i,2] = fac*z
 
-    # @cython.boundscheck(False)
-    # @cython.cdivision(True)
-    # @cython.wraparound(False)
-    # @cython.nonecheck(False)
-    # cdef public inline void _hessian(self, double[:,::1] r,
-    #                                  double[:,:,::1] hess, int nparticles):
-
-    #     cdef double x, y, z
-    #     cdef double sqrtz, zd, fac
-    #     for i in range(nparticles):
-    #         x = r[i,0]
-    #         y = r[i,1]
-    #         z = r[i,2]
-
-    #         sqrtz = sqrt(z*z + self.b2)
-    #         zd = self.a + sqrtz
-    #         fac = self.GM*pow(x*x + y*y + zd*zd, -1.5)
-
-    #         grad[i,0] = fac*x
-    #         grad[i,1] = fac*y
-    #         grad[i,2] = fac*z * (1. + self.a / sqrtz)
-
 class HernquistPotential(CPotential, CartesianPotential):
     r"""
     Hernquist potential for a spheroid.
@@ -206,29 +184,6 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
             grad[i,0] = fac*x
             grad[i,1] = fac*y
             grad[i,2] = fac*z * (1. + self.a / sqrtz)
-
-    # @cython.boundscheck(False)
-    # @cython.cdivision(True)
-    # @cython.wraparound(False)
-    # @cython.nonecheck(False)
-    # cdef public inline void _hessian(self, double[:,::1] r,
-    #                                  double[:,:,::1] hess, int nparticles):
-
-    #     cdef double x, y, z
-    #     cdef double sqrtz, zd, fac
-    #     for i in range(nparticles):
-    #         x = r[i,0]
-    #         y = r[i,1]
-    #         z = r[i,2]
-
-    #         sqrtz = sqrt(z*z + self.b2)
-    #         zd = self.a + sqrtz
-    #         fac = self.GM*pow(x*x + y*y + zd*zd, -1.5)
-
-    #         grad[i,0] = fac*x
-    #         grad[i,1] = fac*y
-    #         grad[i,2] = fac*z * (1. + self.a / sqrtz)
-
 
 class MiyamotoNagaiPotential(CPotential, CartesianPotential):
     r"""
