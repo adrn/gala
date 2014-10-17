@@ -16,11 +16,10 @@ from .core import Potential
 
 class CPotential(Potential):
     """
-    TODO:
     A baseclass for representing gravitational potentials. You must specify
     a function that evaluates the potential value (func). You may also
     optionally add a function that computes derivatives (gradient), and a
-    function to compute the Hessian of the potential.
+    function to compute second derivatives (the Hessian) of the potential.
 
     Parameters
     ----------
@@ -47,43 +46,43 @@ class CPotential(Potential):
         # self.gradient = getattr(self.c_instance, 'gradient', None)
         # self.hessian = getattr(self.c_instance, 'hessian', None)
 
-    def value(self, x):
+    def value(self, q):
         """
         Compute the value of the potential at the given position(s).
 
         Parameters
         ----------
-        x : array_like, numeric
+        q : array_like, numeric
             Position to compute the value of the potential.
         """
-        return self.c_instance.value(np.array(x))
+        return self.c_instance.value(np.array(q))
 
-    def gradient(self, x):
+    def gradient(self, q):
         """
         Compute the gradient of the potential at the given position(s).
 
         Parameters
         ----------
-        x : array_like, numeric
+        q : array_like, numeric
             Position to compute the gradient.
         """
         try:
-            return self.c_instance.gradient(np.array(x))
+            return self.c_instance.gradient(np.array(q))
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
 
-    def hessian(self, x):
+    def hessian(self, q):
         """
         Compute the Hessian of the potential at the given position(s).
 
         Parameters
         ----------
-        x : array_like, numeric
+        q : array_like, numeric
             Position to compute the Hessian.
         """
         try:
-            return self.c_instance.hessian(np.array(x))
+            return self.c_instance.hessian(np.array(q))
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "Hessian function")
@@ -91,17 +90,17 @@ class CPotential(Potential):
     # ----------------------------
     # Functions of the derivatives
     # ----------------------------
-    def acceleration(self, x):
+    def acceleration(self, q):
         """
         Compute the acceleration due to the potential at the given position(s).
 
         Parameters
         ----------
-        x : array_like, numeric
+        q : array_like, numeric
             Position to compute the acceleration.
         """
         try:
-            return -self.c_instance.gradient(np.array(x))
+            return -self.c_instance.gradient(np.array(q))
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
@@ -110,31 +109,31 @@ class CPotential(Potential):
 
 cdef class _CPotential:
 
-    cpdef value(self, double[:,::1] xyz):
+    cpdef value(self, double[:,::1] q):
         cdef int nparticles, ndim
-        nparticles = xyz.shape[0]
-        ndim = xyz.shape[1]
+        nparticles = q.shape[0]
+        ndim = q.shape[1]
 
         cdef double [::1] pot = np.empty(nparticles)
-        self._value(xyz, pot, nparticles)
+        self._value(q, pot, nparticles)
         return np.array(pot)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public void _value(self, double[:,::1] xyz, double[::1] pot, int nparticles) nogil:
+    cdef public void _value(self, double[:,::1] q, double[::1] pot, int nparticles) nogil:
         for i in range(nparticles):
             pot[i] = 0.
 
     # -------------------------------------------------------------
-    cpdef gradient(self, double[:,::1] xyz):
+    cpdef gradient(self, double[:,::1] q):
         cdef int nparticles, ndim
-        nparticles = xyz.shape[0]
-        ndim = xyz.shape[1]
+        nparticles = q.shape[0]
+        ndim = q.shape[1]
 
         cdef double [:,::1] grad = np.empty((nparticles,ndim))
-        self._gradient(xyz, grad, nparticles)
+        self._gradient(q, grad, nparticles)
         return np.array(grad)
 
     @cython.boundscheck(False)
@@ -168,41 +167,11 @@ cdef class _CPotential:
             acc[i,2] = 0.
 
     # -------------------------------------------------------------
-    cpdef acceleration(self, double[:,::1] xyz):
+    cpdef mass_enclosed(self, double[:,::1] q):
         cdef int nparticles, ndim
-        nparticles = xyz.shape[0]
-        ndim = xyz.shape[1]
+        nparticles = q.shape[0]
+        ndim = q.shape[1]
 
-        cdef double [:,::1] acc = np.empty((nparticles,ndim))
-        self._acceleration(xyz, acc, nparticles)
-        return np.array(acc)
-
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
-    cdef public void _acceleration(self, double[:,::1] r, double[:,::1] acc, int nparticles) nogil:
-        for i in range(nparticles):
-            self._gradient(r, acc, nparticles)
-            acc[i,0] = -acc[i,0]
-            acc[i,1] = -acc[i,1]
-            acc[i,2] = -acc[i,2]
-
-    # ------------------------------------------------------------
-    cpdef tidal_radius(self, double m, double[:,::1] xyz):
-        cdef int nparticles, ndim
-        nparticles = xyz.shape[0]
-        ndim = xyz.shape[1]
-
-        cdef double [::1] rtide = np.empty((nparticles,))
-        for i in range(nparticles):
-            rtide[i] = self._tidal_radius(m, xyz[i,0], xyz[i,1], xyz[i,2])
-
-        return np.array(rtide)
-
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
-    cdef public double _tidal_radius(self, double m, double x, double y, double z) nogil:
-        return 0.
+        cdef double [:,::1] mass = np.empty((nparticles,))
+        self._mass_enclosed(q, mass, nparticles)
+        return np.array(mass)
