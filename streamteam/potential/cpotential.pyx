@@ -14,6 +14,9 @@ cimport cython
 # Project
 from .core import Potential
 
+cdef extern from "math.h":
+    double sqrt(double x) nogil
+
 class CPotential(Potential):
     """
     A baseclass for representing gravitational potentials. You must specify
@@ -87,22 +90,6 @@ class CPotential(Potential):
             raise ValueError("Potential C instance has no defined "
                              "Hessian function")
 
-    def mass_enclosed(self, q):
-        """
-        Estimate the mass enclosed within the given position by assumine the potential
-        is spherical. This is not so good!
-
-        Parameters
-        ----------
-        q : array_like, numeric
-            Position to compute the mass enclosed.
-        """
-        try:
-            return self.c_instance.mass_enclosed(np.array(q))
-        except AttributeError,TypeError:
-            raise ValueError("Potential C instance has no defined "
-                             "mass_enclosed function")
-
     # ----------------------------
     # Functions of the derivatives
     # ----------------------------
@@ -120,6 +107,22 @@ class CPotential(Potential):
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
+
+    def mass_enclosed(self, q):
+        """
+        Estimate the mass enclosed within the given position by assuming the potential
+        is spherical. This is not so good!
+
+        Parameters
+        ----------
+        q : array_like, numeric
+            Position to compute the mass enclosed.
+        """
+        try:
+            return self.c_instance.mass_enclosed(np.array(q))
+        except AttributeError,TypeError:
+            raise ValueError("Potential C instance has no defined "
+                             "mass_enclosed function")
 
 # ==============================================================================
 
@@ -184,10 +187,35 @@ cdef class _CPotential:
 
     # -------------------------------------------------------------
     cpdef mass_enclosed(self, double[:,::1] q):
-        cdef int nparticles, ndim
+        cdef int nparticles
         nparticles = q.shape[0]
-        ndim = q.shape[1]
 
-        cdef double [:,::1] mass = np.empty((nparticles,))
+        cdef double[::1] mass = np.empty((nparticles,))
         self._mass_enclosed(q, mass, nparticles)
         return np.array(mass)
+
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public void _mass_enclosed(self, double[:,::1] q, double[::1] mass, int nparticles):
+        cdef double h, r, dPhi_dr
+        cdef double [:,::1] epsilon = np.empty((1,3))
+
+        # Fractional step-size
+        h = 0.01
+
+        for i in range(nparticles):
+
+            # Step-size for estimating radial gradient of the potential
+            r = sqrt(q[i,0]*q[i,0] + q[i,1]*q[i,1] + q[i,2]*q[i,2])
+
+            for j in range(3):
+                epsilon[0,j] = h * q[i,j]/r + q[i,j]
+            dPhi_dr = self.value(epsilon)
+
+            for j in range(3):
+                epsilon[0,j] = h * q[i,j]/r - q[i,j]
+            dPhi_dr = dPhi_dr - self.value(epsilon)
+
+            mass[i] = abs(r*r * dPhi_dr / self.G / (2*h))
