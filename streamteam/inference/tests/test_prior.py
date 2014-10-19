@@ -24,15 +24,15 @@ if not os.path.exists(plot_path):
 
 def test_uniform():
 
-    prior = LogUniformPrior(0.,1.)
-    assert prior(0.5) == 0.
-    assert prior(1.5) == -np.inf
+    prior = UniformPrior(0.,1.)
+    prior.logpdf(0.5)
+    assert prior.logpdf(1.5) == -np.inf
     assert prior.sample(n=10).shape == (10,)
 
-    prior = LogUniformPrior([0.,1],[1.,2])
-    assert np.all(prior([0.5,1.5]) == np.array([0., 0.]))
-    assert np.all(prior([1.5,0.5]) == np.array([-np.inf, -np.inf]))
-    assert np.all(prior([1.5,1.5]) == np.array([-np.inf, 0.]))
+    prior = UniformPrior([0.,1],[1.,2])
+    np.all(prior.logpdf([0.5,1.5]))
+    assert np.all(prior.logpdf([1.5,0.5]) == np.array([-np.inf, -np.inf]))
+    assert np.all(prior.logpdf([1.5,1.5]) == np.array([-np.inf, 0.]))
     assert prior.sample(n=10).shape == (10,2)
 
 def test_normal1d():
