@@ -12,7 +12,7 @@ import logging
 import numpy as np
 import astropy.units as u
 
-__all__ = ["BasePrior", "UniformPrior", "Normal1DPrior"]
+__all__ = ["BasePrior", "UniformPrior", "LogarithmicPrior", "Normal1DPrior"]
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +68,53 @@ class UniformPrior(BasePrior):
     def logpdf(self, value):
         value = np.array(value)
         p = np.array(-np.log(self.b - self.a))
+        p[(value < self.a) | (value > self.b)] = -np.inf
+        return p
+
+    def sample(self, n=None):
+        """
+        Sample from this prior. The returned array axis=0 is the
+        sample axis.
+
+        Parameters
+        ----------
+        n : int (optional)
+            Number of samples to draw
+        """
+        if n is not None:
+            return np.random.uniform(self.a, self.b, size=(n,) + self.a.shape)
+        else:
+            return np.random.uniform(self.a, self.b)
+
+    def __str__(self):
+        return "<Uniform a={}, b={}>".format(self.a, self.b)
+
+class LogarithmicPrior(BasePrior):
+
+    def __init__(self, a, b):
+        """ Logarithmic (scale-invariant) prior. Returns 0 if value is
+            outside of the range defined by a < value < b. Otherwise,
+            returns ln(b/a)/value.
+
+            Parameters
+            ----------
+            a : numeric, quantity_like, array_like
+                Lower bound.
+            b : numeric, quantity_like, array_like
+                Lower bound.
+        """
+        self.a = np.array(a)
+        self.b = np.array(b)
+
+    def pdf(self, value):
+        value = np.array(value)
+        p = np.array(1 / np.log(self.b / self.a))
+        p[(value < self.a) | (value > self.b)] = 0.
+        return p
+
+    def logpdf(self, value):
+        value = np.array(value)
+        p = np.array(np.log(1. / np.log(self.b/self.a)))
         p[(value < self.a) | (value > self.b)] = -np.inf
         return p
 
