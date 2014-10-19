@@ -35,6 +35,19 @@ def test_uniform():
     assert np.all(prior.logpdf([1.5,1.5]) == np.array([-np.inf, 0.]))
     assert prior.sample(n=10).shape == (10,2)
 
+def test_logarithmic():
+
+    prior = LogarithmicPrior(1.,2.)
+    assert prior.logpdf(1.5) == np.log(1/np.log(2/1.))
+    assert prior.logpdf(0.5) == -np.inf
+    assert prior.sample(n=10).shape == (10,)
+
+    prior = LogarithmicPrior([0.,1],[1.,2])
+    np.all(prior.logpdf([0.5,1.5]))
+    assert np.all(prior.logpdf([1.5,0.5]) == np.array([-np.inf, -np.inf]))
+    assert np.all(prior.logpdf([1.5,1.5]) == np.array([-np.inf, np.log(1./np.log(2/1.))]))
+    assert prior.sample(n=10).shape == (10,2)
+
 def test_normal1d():
     prior = LogNormal1DPrior(mean=0., stddev=0.5)
     assert prior.sample(11).shape == (11,)
