@@ -16,7 +16,7 @@ import astropy.units as u
 from astropy import log as logger
 
 # Project
-from .prior import LogPrior
+from .prior import BasePrior
 
 __all__ = ["ModelParameter"]
 
@@ -57,11 +57,11 @@ class ModelParameter(object):
 
         # assign a benign prior that always evaluates to 0. if none specified
         if prior is None:
-            prior = LogPrior()
+            prior = BasePrior()
 
-        # prior must be a LogPrior object
-        if not isinstance(prior, LogPrior):
-            raise TypeError("prior must be a LogPrior subclass, not {}."
+        # prior must be a BasePrior object
+        if not isinstance(prior, BasePrior):
+            raise TypeError("prior must be a BasePrior subclass, not {}."
                             .format(type(prior)))
 
         self.prior = prior
