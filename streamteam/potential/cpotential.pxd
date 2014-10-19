@@ -9,4 +9,4 @@ cdef class _CPotential:
     cdef public void _hessian(self, double[:,::1] w, double[:,::1] hess, int nparticles) nogil
 
     cpdef mass_enclosed(self, double[:,::1] q)
-    cdef public void _mass_enclosed(self, double[:,::1] q, double[::1] mass, int nparticles)
+    cdef public double _mass_enclosed(self, double[::1] q)

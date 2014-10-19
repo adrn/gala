@@ -191,31 +191,31 @@ cdef class _CPotential:
         nparticles = q.shape[0]
 
         cdef double[::1] mass = np.empty((nparticles,))
-        self._mass_enclosed(q, mass, nparticles)
+        for i in range(nparticles):
+            # mass[i] = self._mass_enclosed(q, mass, nparticles)
+            mass[i] = self._mass_enclosed(q[i])
         return np.array(mass)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public void _mass_enclosed(self, double[:,::1] q, double[::1] mass, int nparticles):
+    cdef public double _mass_enclosed(self, double[::1] q):
         cdef double h, r, dPhi_dr
         cdef double [:,::1] epsilon = np.empty((1,3))
 
         # Fractional step-size
         h = 0.01
 
-        for i in range(nparticles):
+        # Step-size for estimating radial gradient of the potential
+        r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2])
 
-            # Step-size for estimating radial gradient of the potential
-            r = sqrt(q[i,0]*q[i,0] + q[i,1]*q[i,1] + q[i,2]*q[i,2])
+        for j in range(3):
+            epsilon[0,j] = h * q[j]/r + q[j]
+        dPhi_dr = self.value(epsilon)
 
-            for j in range(3):
-                epsilon[0,j] = h * q[i,j]/r + q[i,j]
-            dPhi_dr = self.value(epsilon)
+        for j in range(3):
+            epsilon[0,j] = h * q[j]/r - q[j]
+        dPhi_dr = dPhi_dr - self.value(epsilon)
 
-            for j in range(3):
-                epsilon[0,j] = h * q[i,j]/r - q[i,j]
-            dPhi_dr = dPhi_dr - self.value(epsilon)
-
-            mass[i] = abs(r*r * dPhi_dr / self.G / (2*h))
+        return abs(r*r * dPhi_dr / self.G / (2*h))
