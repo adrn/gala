@@ -16,6 +16,7 @@ from .core import Potential
 
 cdef extern from "math.h":
     double sqrt(double x) nogil
+    double fabs(double x) nogil
 
 class CPotential(Potential):
     """
@@ -190,19 +191,20 @@ cdef class _CPotential:
         cdef int nparticles
         nparticles = q.shape[0]
 
+        cdef double [:,::1] epsilon = np.empty((1,3))
+        cdef double [::1] tmp = np.empty((1,))
         cdef double[::1] mass = np.empty((nparticles,))
         for i in range(nparticles):
             # mass[i] = self._mass_enclosed(q, mass, nparticles)
-            mass[i] = self._mass_enclosed(q[i])
+            mass[i] = self._mass_enclosed(q[i], epsilon, tmp)
         return np.array(mass)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public double _mass_enclosed(self, double[::1] q):
+    cdef public double _mass_enclosed(self, double[::1] q, double [:,::1] epsilon, double [::1] tmp):
         cdef double h, r, dPhi_dr
-        cdef double [:,::1] epsilon = np.empty((1,3))
 
         # Fractional step-size
         h = 0.01
@@ -212,10 +214,13 @@ cdef class _CPotential:
 
         for j in range(3):
             epsilon[0,j] = h * q[j]/r + q[j]
-        dPhi_dr = self.value(epsilon)
+        self._value(epsilon, tmp, 1)
+        dPhi_dr = tmp[0]
 
         for j in range(3):
             epsilon[0,j] = h * q[j]/r - q[j]
-        dPhi_dr = dPhi_dr - self.value(epsilon)
+        self._value(epsilon, tmp, 1)
+        dPhi_dr = dPhi_dr - tmp[0]
 
-        return abs(r*r * dPhi_dr / self.G / (2*h))
+        return fabs(r*r * dPhi_dr / self.G / (2.*h))
+        # return fabs(r*r * dPhi_dr / (2.*h))
