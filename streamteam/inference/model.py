@@ -129,7 +129,8 @@ class EmceeModel(object):
 
         ix1 = 0
         for group_name,param_name,param in self._walk():
-            val = p[ix1:ix1+param.size]
+            val = np.squeeze(p[ix1:ix1+param.size])
+
             if group_name is None:
                 d[param_name] = val
             else:
