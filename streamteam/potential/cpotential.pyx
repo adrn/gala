@@ -130,80 +130,83 @@ class CPotential(Potential):
 cdef class _CPotential:
 
     cpdef value(self, double[:,::1] q):
-        cdef int nparticles, ndim
+        cdef int nparticles, ndim, i
         nparticles = q.shape[0]
         ndim = q.shape[1]
 
         cdef double [::1] pot = np.empty(nparticles)
-        self._value(q, pot, nparticles)
+        for i in range(nparticles):
+            pot[i] = self._value(q[i])
+
         return np.array(pot)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public void _value(self, double[:,::1] q, double[::1] pot, int nparticles) nogil:
-        for i in range(nparticles):
-            pot[i] = 0.
+    cdef public double _value(self, double[::1] q) nogil:
+        return 0.
 
     # -------------------------------------------------------------
     cpdef gradient(self, double[:,::1] q):
-        cdef int nparticles, ndim
+        cdef int nparticles, ndim, i
         nparticles = q.shape[0]
         ndim = q.shape[1]
 
         cdef double [:,::1] grad = np.empty((nparticles,ndim))
-        self._gradient(q, grad, nparticles)
+        for i in range(nparticles):
+            self._gradient(q[i], grad[i])
+
         return np.array(grad)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public void _gradient(self, double[:,::1] r, double[:,::1] grad, int nparticles) nogil:
-        for i in range(nparticles):
-            grad[i,0] = 0.
-            grad[i,1] = 0.
-            grad[i,2] = 0.
+    cdef public void _gradient(self, double[::1] r, double[::1] grad) nogil:
+        grad[0] = 0.
+        grad[1] = 0.
+        grad[2] = 0.
 
     # -------------------------------------------------------------
     cpdef hessian(self, double[:,::1] w):
-        cdef int nparticles, ndim
+        cdef int nparticles, ndim, i
         nparticles = w.shape[0]
         ndim = w.shape[1]
 
-        cdef double [:,::1] hess = np.empty((nparticles,ndim,ndim))
-        self._hessian(w, hess, nparticles)
+        cdef double [:,:,::1] hess = np.empty((nparticles,ndim,ndim))
+        for i in range(nparticles):
+            self._hessian(w[i], hess[i])
+
         return np.array(hess)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public void _hessian(self, double[:,::1] w, double[:,::1] acc, int nparticles) nogil:
-        for i in range(nparticles):
-            acc[i,0] = 0.
-            acc[i,1] = 0.
-            acc[i,2] = 0.
+    cdef public void _hessian(self, double[::1] w, double[:,::1] hess) nogil:
+        cdef int i,j
+        for i in range(3):
+            for j in range(3):
+                hess[i,j] = 0.
 
     # -------------------------------------------------------------
     cpdef mass_enclosed(self, double[:,::1] q):
         cdef int nparticles
         nparticles = q.shape[0]
 
-        cdef double [:,::1] epsilon = np.empty((1,3))
-        cdef double [::1] tmp = np.empty((1,))
+        cdef double [::1] epsilon = np.empty(3)
         cdef double[::1] mass = np.empty((nparticles,))
         for i in range(nparticles):
             # mass[i] = self._mass_enclosed(q, mass, nparticles)
-            mass[i] = self._mass_enclosed(q[i], epsilon, tmp)
+            mass[i] = self._mass_enclosed(q[i], epsilon, self.G)
         return np.array(mass)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public double _mass_enclosed(self, double[::1] q, double [:,::1] epsilon, double [::1] tmp):
+    cdef public double _mass_enclosed(self, double[::1] q, double [::1] epsilon, double Gee) nogil:
         cdef double h, r, dPhi_dr
 
         # Fractional step-size
@@ -213,14 +216,12 @@ cdef class _CPotential:
         r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2])
 
         for j in range(3):
-            epsilon[0,j] = h * q[j]/r + q[j]
-        self._value(epsilon, tmp, 1)
-        dPhi_dr = tmp[0]
+            epsilon[j] = h * q[j]/r + q[j]
+        dPhi_dr = self._value(epsilon)
 
         for j in range(3):
-            epsilon[0,j] = h * q[j]/r - q[j]
-        self._value(epsilon, tmp, 1)
-        dPhi_dr = dPhi_dr - tmp[0]
+            epsilon[j] = h * q[j]/r - q[j]
+        dPhi_dr -= self._value(epsilon)
 
-        return fabs(r*r * dPhi_dr / self.G / (2.*h))
+        return fabs(r*r * dPhi_dr / Gee / (2.*h))
         # return fabs(r*r * dPhi_dr / (2.*h))

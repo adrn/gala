@@ -37,7 +37,7 @@ cdef extern from "math.h":
 __all__ = ['HernquistPotential', 'MiyamotoNagaiPotential',
            'LeeSutoNFWPotential', 'LogarithmicPotential']
 
-##############################################################################
+# ============================================================================
 #    Hernquist Spheroid potential from Hernquist 1990
 #    http://adsabs.harvard.edu/abs/1990ApJ...356..359H
 #
@@ -64,36 +64,24 @@ cdef class _HernquistPotential(_CPotential):
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public inline void _value(self, double[:,::1] r,
-                                   double[::1] pot, int nparticles) nogil:
-
-        cdef double x, y, z, R
-        for i in range(nparticles):
-            x = r[i,0]
-            y = r[i,1]
-            z = r[i,2]
-            R = sqrt(x*x + y*y + z*z)
-            pot[i] = -self.GM / (R + self.c)
+    cdef public inline double _value(self, double[::1] r) nogil:
+        cdef double R
+        R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2])
+        return -self.GM / (R + self.c)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public inline void _gradient(self, double[:,::1] r,
-                                      double[:,::1] grad, int nparticles) nogil:
+    cdef public inline void _gradient(self, double[::1] r, double[::1] grad) nogil:
 
-        cdef double x, y, z, R, fac
-        for i in range(nparticles):
-            x = r[i,0]
-            y = r[i,1]
-            z = r[i,2]
-            R = sqrt(x*x + y*y + z*z)
+        cdef double R, fac
+        R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2])
+        fac = self.GM / ((R + self.c) * (R + self.c) * R)
 
-            fac = self.GM / (pow(R + self.c,2) * R)
-
-            grad[i,0] = fac*x
-            grad[i,1] = fac*y
-            grad[i,2] = fac*z
+        grad[0] = fac*r[0]
+        grad[1] = fac*r[1]
+        grad[2] = fac*r[2]
 
 class HernquistPotential(CPotential, CartesianPotential):
     r"""
@@ -121,7 +109,7 @@ class HernquistPotential(CPotential, CartesianPotential):
         super(HernquistPotential, self).__init__(_HernquistPotential,
                                                  parameters=parameters)
 
-##############################################################################
+# ============================================================================
 #    Miyamoto-Nagai Disk potential from Miyamoto & Nagai 1975
 #    http://adsabs.harvard.edu/abs/1975PASJ...27..533M
 #
@@ -150,40 +138,25 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public inline void _value(self, double[:,::1] r,
-                                   double[::1] pot, int nparticles) nogil:
-
-        cdef double x, y, z
+    cdef public inline double _value(self, double[::1] r) nogil:
         cdef double zd
-        for i in range(nparticles):
-            x = r[i,0]
-            y = r[i,1]
-            z = r[i,2]
-
-            zd = (self.a + sqrt(z*z + self.b2))
-            pot[i] = -self.GM / sqrt(x*x + y*y + zd*zd)
+        zd = (self.a + sqrt(r[2]*r[2] + self.b2))
+        return -self.GM / sqrt(r[0]*r[0] + r[1]*r[1] + zd*zd)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public inline void _gradient(self, double[:,::1] r,
-                                      double[:,::1] grad, int nparticles) nogil:
-
-        cdef double x, y, z
+    cdef public inline void _gradient(self, double[::1] r, double[::1] grad) nogil:
         cdef double sqrtz, zd, fac
-        for i in range(nparticles):
-            x = r[i,0]
-            y = r[i,1]
-            z = r[i,2]
 
-            sqrtz = sqrt(z*z + self.b2)
-            zd = self.a + sqrtz
-            fac = self.GM*pow(x*x + y*y + zd*zd, -1.5)
+        sqrtz = sqrt(r[2]*r[2] + self.b2)
+        zd = self.a + sqrtz
+        fac = self.GM*pow(r[0]*r[0] + r[1]*r[1] + zd*zd, -1.5)
 
-            grad[i,0] = fac*x
-            grad[i,1] = fac*y
-            grad[i,2] = fac*z * (1. + self.a / sqrtz)
+        grad[0] = fac*r[0]
+        grad[1] = fac*r[1]
+        grad[2] = fac*r[2] * (1. + self.a / sqrtz)
 
 class MiyamotoNagaiPotential(CPotential, CartesianPotential):
     r"""
@@ -211,7 +184,7 @@ class MiyamotoNagaiPotential(CPotential, CartesianPotential):
         super(MiyamotoNagaiPotential, self).__init__(_MiyamotoNagaiPotential,
                                                      parameters=parameters)
 
-##############################################################################
+# ============================================================================
 #    Lee & Suto (2003) triaxial NFW potential
 #    http://adsabs.harvard.edu/abs/2003ApJ...585..151L
 #
@@ -262,113 +235,118 @@ cdef class _LeeSutoNFWPotential(_CPotential):
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public inline void _value(self, double[:,::1] r,
-                                   double[::1] pot, int nparticles) nogil:
-
-        cdef double x, y, z, _r, u, _x, _y, _z
-        for i in range(nparticles):
-            _x = r[i,0]
-            _y = r[i,1]
-            _z = r[i,2]
-
-            x = self.R[0,0]*_x + self.R[0,1]*_y + self.R[0,2]*_z
-            y = self.R[1,0]*_x + self.R[1,1]*_y + self.R[1,2]*_z
-            z = self.R[2,0]*_x + self.R[2,1]*_y + self.R[2,2]*_z
-
-            _r = sqrt(x*x + y*y + z*z)
-            u = _r / self.r_h
-            pot[i] = self.v_h2*((self.e_b2/2 + self.e_c2/2)*((1/u - 1/u**3)*log(u + 1) - 1 + (2*u**2 - 3*u + 6)/(6*u**2)) + (self.e_b2*y**2/(2*_r*_r) + self.e_c2*z*z/(2*_r*_r))*((u*u - 3*u - 6)/(2*u*u*(u + 1)) + 3*log(u + 1)/u/u/u) - log(u + 1)/u)
-
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
-    cdef public inline void _gradient_spherical(self, double[:,::1] r,
-                                                double[:,::1] grad, int nparticles) nogil:
-        cdef:
-            double x, y, z, _r, _r2, _r4, ax, ay, az
-            double x0, x2, x22
-
-        for i in range(nparticles):
-            x = r[i,0]
-            y = r[i,1]
-            z = r[i,2]
-
-            _r2 = x*x + y*y + z*z
-            _r = sqrt(_r2)
-            _r4 = _r2*_r2
-
-            x0 = _r + self.r_h
-            x2 = self.v_h2/(12.*_r4*_r2*_r*x0*x0)
-            x22 = -12.*_r4*_r*self.r_h*x0 + 12.*_r4*self.r_h*x0*x0*log(x0/self.r_h)
-
-            grad[i,0] = x2*x*x22
-            grad[i,1] = x2*y*x22
-            grad[i,2] = x2*z*x22
-
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
-    cdef public inline void _gradient_triaxial(self, double[:,::1] r,
-                                               double[:,::1] grad, int nparticles) nogil:
-
-        cdef:
-            double x, y, z, _r, _r2, _r4, ax, ay, az
-            double x0, x2, x22
-
-            double _x, _y, _z
-            double x20, x21, x7, x1
-            double x10, x11, x13, x15, x16, x17, x18
-
-        for i in range(nparticles):
-            _x = r[i,0]
-            _y = r[i,1]
-            _z = r[i,2]
-
-            x = self.R[0,0]*_x + self.R[0,1]*_y + self.R[0,2]*_z
-            y = self.R[1,0]*_x + self.R[1,1]*_y + self.R[1,2]*_z
-            z = self.R[2,0]*_x + self.R[2,1]*_y + self.R[2,2]*_z
-
-            _r2 = x*x + y*y + z*z
-            _r = sqrt(_r2)
-            _r4 = _r2*_r2
-
-            x0 = _r + self.r_h
-            x1 = x0*x0
-            x2 = self.v_h2/(12.*_r4*_r2*_r*x1)
-            x10 = log(x0/self.r_h)
-            x18 = x1*x10
-
-            x11 = x0*x10
-            x13 = _r*3.*self.r_h
-            x15 = x13 - _r2
-            x16 = x15 + 6.*self.r_h2
-            x17 = 6.*self.r_h*x0*(_r*x16 - x11*6.*self.r_h2)
-            x20 = x0*_r2
-            x21 = 2.*_r*x0
-            x7 = self.e_b2*y*y + self.e_c2*z*z
-            x22 = -12.*_r4*_r*self.r_h*x0 + 12.*_r4*self.r_h*x18 + 3.*self.r_h*x7*(x16*_r2 - 18.*x18*self.r_h2 + x20*(2.*_r - 3.*self.r_h) + x21*(x15 + 9.*self.r_h2)) - x20*(self.e_b2 + self.e_c2)*(-6.*_r*self.r_h*(_r2 - self.r_h2) + 6.*self.r_h*x11*(_r2 - 3.*self.r_h2) + x20*(-4.*_r + 3.*self.r_h) + x21*(-x13 + 2.*_r2 + 6.*self.r_h2))
-
-            ax = x2*x*(x17*x7 + x22)
-            ay = x2*y*(x17*(x7 - _r2*self.e_b2) + x22)
-            az = x2*z*(x17*(x7 - _r2*self.e_c2) + x22)
-
-            grad[i,0] = self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
-            grad[i,1] = self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
-            grad[i,2] = self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
-
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
-    cdef public inline void _gradient(self, double[:,::1] r,
-                                      double[:,::1] grad, int nparticles) nogil:
+    cdef public inline double _value(self, double[::1] r) nogil:
 
         if self.spherical == 1:
-            self._gradient_spherical(r, grad, nparticles)
+            return self._value_spherical(r)
         else:
-            self._gradient_triaxial(r, grad, nparticles)
+            return self._value_triaxial(r)
+
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public inline double _value_spherical(self, double[::1] r) nogil:
+
+        cdef double x, y, z, u
+        x = self.R[0,0]*r[0] + self.R[0,1]*r[1] + self.R[0,2]*r[2]
+        y = self.R[1,0]*r[0] + self.R[1,1]*r[1] + self.R[1,2]*r[2]
+        z = self.R[2,0]*r[0] + self.R[2,1]*r[1] + self.R[2,2]*r[2]
+        u = sqrt(x*x + y*y + z*z) / self.r_h
+        return -self.v_h2 * log(1 + u) / u
+
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public inline double _value_triaxial(self, double[::1] r) nogil:
+
+        cdef double x, y, z, _r, u
+
+        x = self.R[0,0]*r[0] + self.R[0,1]*r[1] + self.R[0,2]*r[2]
+        y = self.R[1,0]*r[0] + self.R[1,1]*r[1] + self.R[1,2]*r[2]
+        z = self.R[2,0]*r[0] + self.R[2,1]*r[1] + self.R[2,2]*r[2]
+
+        _r = sqrt(x*x + y*y + z*z)
+        u = _r / self.r_h
+        return self.v_h2*((self.e_b2/2 + self.e_c2/2)*((1/u - 1/u**3)*log(u + 1) - 1 + (2*u**2 - 3*u + 6)/(6*u**2)) + (self.e_b2*y**2/(2*_r*_r) + self.e_c2*z*z/(2*_r*_r))*((u*u - 3*u - 6)/(2*u*u*(u + 1)) + 3*log(u + 1)/u/u/u) - log(u + 1)/u)
+
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public inline void _gradient_spherical(self, double[::1] r, double[::1] grad) nogil:
+        cdef double fac, u
+
+        u = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / self.r_h
+        fac = self.v_h2*self.v_h / (u*u*u) * (1 + log(u))
+
+        grad[0] = fac*r[0]
+        grad[1] = fac*r[1]
+        grad[2] = fac*r[2]
+
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public inline void _gradient_triaxial(self, double[::1] r, double[::1] grad) nogil:
+        pass
+
+    #     cdef:
+    #         double x, y, z, _r, _r2, _r4, ax, ay, az
+    #         double x0, x2, x22
+
+    #         double _x, _y, _z
+    #         double x20, x21, x7, x1
+    #         double x10, x11, x13, x15, x16, x17, x18
+
+    #     for i in range(nparticles):
+    #         _x = r[i,0]
+    #         _y = r[i,1]
+    #         _z = r[i,2]
+
+    #         x = self.R[0,0]*_x + self.R[0,1]*_y + self.R[0,2]*_z
+    #         y = self.R[1,0]*_x + self.R[1,1]*_y + self.R[1,2]*_z
+    #         z = self.R[2,0]*_x + self.R[2,1]*_y + self.R[2,2]*_z
+
+    #         _r2 = x*x + y*y + z*z
+    #         _r = sqrt(_r2)
+    #         _r4 = _r2*_r2
+
+    #         x0 = _r + self.r_h
+    #         x1 = x0*x0
+    #         x2 = self.v_h2/(12.*_r4*_r2*_r*x1)
+    #         x10 = log(x0/self.r_h)
+    #         x18 = x1*x10
+
+    #         x11 = x0*x10
+    #         x13 = _r*3.*self.r_h
+    #         x15 = x13 - _r2
+    #         x16 = x15 + 6.*self.r_h2
+    #         x17 = 6.*self.r_h*x0*(_r*x16 - x11*6.*self.r_h2)
+    #         x20 = x0*_r2
+    #         x21 = 2.*_r*x0
+    #         x7 = self.e_b2*y*y + self.e_c2*z*z
+    #         x22 = -12.*_r4*_r*self.r_h*x0 + 12.*_r4*self.r_h*x18 + 3.*self.r_h*x7*(x16*_r2 - 18.*x18*self.r_h2 + x20*(2.*_r - 3.*self.r_h) + x21*(x15 + 9.*self.r_h2)) - x20*(self.e_b2 + self.e_c2)*(-6.*_r*self.r_h*(_r2 - self.r_h2) + 6.*self.r_h*x11*(_r2 - 3.*self.r_h2) + x20*(-4.*_r + 3.*self.r_h) + x21*(-x13 + 2.*_r2 + 6.*self.r_h2))
+
+    #         ax = x2*x*(x17*x7 + x22)
+    #         ay = x2*y*(x17*(x7 - _r2*self.e_b2) + x22)
+    #         az = x2*z*(x17*(x7 - _r2*self.e_c2) + x22)
+
+    #         grad[i,0] = self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
+    #         grad[i,1] = self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
+    #         grad[i,2] = self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
+
+    @cython.boundscheck(False)
+    @cython.cdivision(True)
+    @cython.wraparound(False)
+    @cython.nonecheck(False)
+    cdef public inline void _gradient(self, double[::1] r, double[::1] grad) nogil:
+
+        if self.spherical == 1:
+            self._gradient_spherical(r, grad)
+        else:
+            self._gradient_triaxial(r, grad)
 
 class LeeSutoNFWPotential(CPotential, CartesianPotential):
     r"""
@@ -414,7 +392,7 @@ class LeeSutoNFWPotential(CPotential, CartesianPotential):
         super(LeeSutoNFWPotential, self).__init__(_LeeSutoNFWPotential,
                                                   parameters=parameters)
 
-##############################################################################
+# ============================================================================
 #    Triaxial, Logarithmic potential
 #
 cdef class _LogarithmicPotential(_CPotential):
@@ -448,50 +426,39 @@ cdef class _LogarithmicPotential(_CPotential):
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public inline void _value(self, double[:,::1] r,
-                                   double[::1] pot, int nparticles) nogil:
+    cdef public inline double _value(self, double[::1] r) nogil:
 
-        cdef double x, y, z, _x, _y, _z
-        for i in range(nparticles):
-            _x = r[i,0]
-            _y = r[i,1]
-            _z = r[i,2]
+        cdef double x, y, z
 
-            x = self.R[0,0]*_x + self.R[0,1]*_y + self.R[0,2]*_z
-            y = self.R[1,0]*_x + self.R[1,1]*_y + self.R[1,2]*_z
-            z = self.R[2,0]*_x + self.R[2,1]*_y + self.R[2,2]*_z
+        x = self.R[0,0]*r[0] + self.R[0,1]*r[1] + self.R[0,2]*r[2]
+        y = self.R[1,0]*r[0] + self.R[1,1]*r[1] + self.R[1,2]*r[2]
+        z = self.R[2,0]*r[0] + self.R[2,1]*r[1] + self.R[2,2]*r[2]
 
-            pot[i] = 0.5*self.v_c2 * log(x*x/self.q1_2 + y*y/self.q2_2 + z*z/self.q3_2 + self.r_h2)
+        return 0.5*self.v_c2 * log(x*x/self.q1_2 + y*y/self.q2_2 + z*z/self.q3_2 + self.r_h2)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public inline void _gradient(self, double[:,::1] r,
-                                      double[:,::1] grad, int nparticles) nogil:
+    cdef public inline void _gradient(self, double[::1] r, double[::1] grad) nogil:
 
-        cdef double x, y, z, _r, _r2, _x, _y, _z, ax, ay, az
+        cdef double x, y, z, _r, _r2, ax, ay, az
 
-        for i in range(nparticles):
-            _x = r[i,0]
-            _y = r[i,1]
-            _z = r[i,2]
+        x = self.R[0,0]*r[0] + self.R[0,1]*r[1] + self.R[0,2]*r[2]
+        y = self.R[1,0]*r[0] + self.R[1,1]*r[1] + self.R[1,2]*r[2]
+        z = self.R[2,0]*r[0] + self.R[2,1]*r[1] + self.R[2,2]*r[2]
 
-            x = self.R[0,0]*_x + self.R[0,1]*_y + self.R[0,2]*_z
-            y = self.R[1,0]*_x + self.R[1,1]*_y + self.R[1,2]*_z
-            z = self.R[2,0]*_x + self.R[2,1]*_y + self.R[2,2]*_z
+        _r2 = x*x + y*y + z*z
+        _r = sqrt(_r2)
 
-            _r2 = x*x + y*y + z*z
-            _r = sqrt(_r2)
+        fac = self.v_c2/(self.r_h2 + x*x/self.q1_2 + y*y/self.q2_2 + z*z/self.q3_2)
+        ax = fac*x/self.q1_2
+        ay = fac*y/self.q2_2
+        az = fac*z/self.q3_2
 
-            fac = self.v_c2/(self.r_h2 + x*x/self.q1_2 + y*y/self.q2_2 + z*z/self.q3_2)
-            ax = fac*x/self.q1_2
-            ay = fac*y/self.q2_2
-            az = fac*z/self.q3_2
-
-            grad[i,0] = self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
-            grad[i,1] = self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
-            grad[i,2] = self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
+        grad[0] = self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
+        grad[1] = self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
+        grad[2] = self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
 
 class LogarithmicPotential(CPotential, CartesianPotential):
     r"""
