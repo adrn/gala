@@ -10,6 +10,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import os
 import time
 import numpy as np
+import pytest
 from astropy.utils.console import color_print
 from astropy.constants import G
 import astropy.units as u
@@ -86,6 +87,28 @@ class PotentialTestBase(object):
                     x = getattr(self.pypotential, func_name)(r)
                 print("Python - {}: {:e} sec per call".format(func_name,
                                 (time.time()-t1)/float(niter)))
+
+    @pytest.mark.slowtest
+    def test_profile(self):
+        import pstats, cProfile
+
+        r = np.random.uniform(size=(nparticles,3))
+        tmp_value = np.zeros(nparticles)
+        tmp_gradient = np.zeros_like(r)
+        for func_name in ["value", "gradient"]:
+            t1 = time.time()
+            for ii in range(niter):
+                the_str = "for n in range(10000): self.potential.{}(r)".format(func_name)
+                cProfile.runctx(the_str, globals(), locals(), "pro.prof")
+
+                s = pstats.Stats("pro.prof")
+                s.strip_dirs().sort_stats("cumulative").print_stats()
+
+                the_str = "for n in range(10000): self.potential.c_instance.{f}(r,tmp_{f})".format(f=func_name)
+                cProfile.runctx(the_str, globals(), locals(), "pro.prof")
+
+                s = pstats.Stats("pro.prof")
+                s.strip_dirs().sort_stats("cumulative").print_stats()
 
     def test_plot_contours(self):
 
