@@ -3,7 +3,7 @@
 # cython: nonecheck=False
 # cython: cdivision=True
 # cython: wraparound=False
-# cython: profile=True
+# cython: profile=False
 
 from __future__ import division, print_function
 
@@ -148,7 +148,7 @@ cdef class _CPotential:
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef double _value(self, double[:,::1] q, int k):
+    cdef public double _value(self, double[:,::1] q, int k) nogil:
         return 0.
 
     # -------------------------------------------------------------
@@ -167,7 +167,7 @@ cdef class _CPotential:
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
+    cdef public void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
         grad[0] = 0.
         grad[1] = 0.
         grad[2] = 0.
@@ -188,7 +188,7 @@ cdef class _CPotential:
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef void _hessian(self, double[:,::1] w, double[:,:,::1] hess, int k) nogil:
+    cdef public void _hessian(self, double[:,::1] w, double[:,:,::1] hess, int k) nogil:
         cdef int i,j
         for i in range(3):
             for j in range(3):
@@ -209,7 +209,7 @@ cdef class _CPotential:
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef double _mass_enclosed(self, double[:,::1] q, double [:,::1] epsilon, double Gee, int k):
+    cdef public double _mass_enclosed(self, double[:,::1] q, double [:,::1] epsilon, double Gee, int k):
         cdef double h, r, dPhi_dr
 
         # Fractional step-size
