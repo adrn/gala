@@ -42,6 +42,10 @@ nparticles = 1000
 class PotentialTestBase(object):
     name = None
 
+    def setup(self):
+        print("="*50)
+        print(self.__class__.__name__)
+
     def test_method_call(self):
         # single
         r = [[1.,0.,0.]]
@@ -73,6 +77,7 @@ class PotentialTestBase(object):
             print("Python orbit integration time (10000 steps): {}".format(time.time() - t1))
 
     def test_time_methods(self):
+
         r = np.random.uniform(size=(nparticles,3))
         for func_name in ["value", "gradient", "acceleration"]:
             t1 = time.time()
@@ -88,7 +93,7 @@ class PotentialTestBase(object):
                 print("Python - {}: {:e} sec per call".format(func_name,
                                 (time.time()-t1)/float(niter)))
 
-    @pytest.mark.slowtest
+    @pytest.mark.skipif(True, reason="derp.")
     def test_profile(self):
         import pstats, cProfile
 
@@ -139,7 +144,10 @@ class TestHernquist(PotentialTestBase):
     units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
-        print()
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
         from ..builtin import HernquistPotential as PyHernquistPotential
 
         self.potential = HernquistPotential(units=self.units,
@@ -152,7 +160,10 @@ class TestMiyamotoNagai(PotentialTestBase):
     units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
-        print()
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
         from ..builtin import MiyamotoNagaiPotential as PyMiyamotoNagaiPotential
 
         self.potential = MiyamotoNagaiPotential(units=self.units,
@@ -165,7 +176,10 @@ class TestLeeSutoNFWPotential(PotentialTestBase):
     units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
-        print()
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
         self.potential = LeeSutoNFWPotential(units=self.units,
                                              v_h=0.35, r_h=12.,
                                              a=1.4, b=1., c=0.6)
@@ -178,7 +192,10 @@ class TestMisalignedLeeSutoNFWPotential(PotentialTestBase):
     units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
-        print()
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
         self.name = "MisalignedLeeSutoNFWPotential"
         self.potential = LeeSutoNFWPotential(units=self.units,
                                              v_h=0.35, r_h=12.,
@@ -194,7 +211,10 @@ class TestLogarithmicPotential(PotentialTestBase):
     units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
-        print()
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
         from ..builtin import LogarithmicPotential as PyLogarithmicPotential
 
         self.potential = LogarithmicPotential(units=self.units,
@@ -210,7 +230,10 @@ class TestMisalignedLogarithmicPotential(PotentialTestBase):
     units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
-        print()
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
         self.name = "MisalignedLogarithmicPotential"
         from ..builtin import LogarithmicPotential as PyLogarithmicPotential
 
