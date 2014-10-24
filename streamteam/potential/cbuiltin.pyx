@@ -1,4 +1,5 @@
 # coding: utf-8
+# cython: profile=True
 
 """ Built-in potentials implemented in Cython """
 
@@ -34,8 +35,10 @@ cdef extern from "math.h":
     double exp(double x) nogil
     double pow(double x, double n) nogil
 
-__all__ = ['HernquistPotential', 'MiyamotoNagaiPotential',
-           'LeeSutoNFWPotential', 'LogarithmicPotential']
+# __all__ = ['HernquistPotential', 'MiyamotoNagaiPotential',
+#            'LeeSutoNFWPotential', 'LogarithmicPotential']
+
+__all__ = ['HernquistPotential']
 
 # ============================================================================
 #    Hernquist Spheroid potential from Hernquist 1990
@@ -64,24 +67,24 @@ cdef class _HernquistPotential(_CPotential):
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public inline double _value(self, double[::1] r) nogil:
-        cdef double R
-        R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2])
-        return -self.GM / (R + self.c)
+    cdef inline double _value(self, double[:,::1] r, int k):
+        # cdef double R
+        # R = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2])
+        # return -self.GM / (R + self.c)
+        return 0.
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public inline void _gradient(self, double[::1] r, double[::1] grad) nogil:
-
+    cdef public inline void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
         cdef double R, fac
-        R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2])
+        R = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2])
         fac = self.GM / ((R + self.c) * (R + self.c) * R)
 
-        grad[0] = fac*r[0]
-        grad[1] = fac*r[1]
-        grad[2] = fac*r[2]
+        grad[k,0] = fac*r[k,0]
+        grad[k,1] = fac*r[k,1]
+        grad[k,2] = fac*r[k,2]
 
 class HernquistPotential(CPotential, CartesianPotential):
     r"""
@@ -109,6 +112,7 @@ class HernquistPotential(CPotential, CartesianPotential):
         super(HernquistPotential, self).__init__(_HernquistPotential,
                                                  parameters=parameters)
 
+'''
 # ============================================================================
 #    Miyamoto-Nagai Disk potential from Miyamoto & Nagai 1975
 #    http://adsabs.harvard.edu/abs/1975PASJ...27..533M
@@ -515,3 +519,5 @@ class LogarithmicPotential(CPotential, CartesianPotential):
         parameters['R'] = R
         super(LogarithmicPotential, self).__init__(_LogarithmicPotential,
                                                    parameters=parameters)
+
+'''
