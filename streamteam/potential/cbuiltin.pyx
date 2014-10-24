@@ -65,19 +65,11 @@ cdef class _HernquistPotential(_CPotential):
         self.m = m
         self.c = c
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
     cdef public inline double _value(self, double[:,::1] r, int k) nogil:
         cdef double R
         R = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2])
         return -self.GM / (R + self.c)
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
     cdef public inline void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
         cdef double R, fac
         R = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2])
@@ -138,19 +130,11 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
         self.b = b
         self.b2 = b*b
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
     cdef public inline double _value(self, double[:,::1] r, int k) nogil:
         cdef double zd
         zd = (self.a + sqrt(r[k,2]*r[k,2] + self.b2))
         return -self.GM / sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + zd*zd)
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
     cdef public inline void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
         cdef double sqrtz, zd, fac
 
@@ -235,10 +219,6 @@ cdef class _LeeSutoNFWPotential(_CPotential):
 
         self.G = 4.49975332435e-12  # kpc, Myr, Msun
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
     cdef public inline double _value(self, double[:,::1] r, int k) nogil:
 
         if self.spherical == 1:
@@ -246,19 +226,11 @@ cdef class _LeeSutoNFWPotential(_CPotential):
         else:
             return self._value_triaxial(r, k)
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
     cdef public inline double _value_spherical(self, double[:,::1] r, int k) nogil:
         cdef double u
         u = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2]) / self.r_h
         return -self.v_h2 * log(1 + u) / u
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
     cdef public inline double _value_triaxial(self, double[:,::1] r, int k) nogil:
 
         cdef double x, y, z, _r, u
@@ -271,10 +243,6 @@ cdef class _LeeSutoNFWPotential(_CPotential):
         u = _r / self.r_h
         return self.v_h2*((self.e_b2/2 + self.e_c2/2)*((1/u - 1/u**3)*log(u + 1) - 1 + (2*u**2 - 3*u + 6)/(6*u**2)) + (self.e_b2*y**2/(2*_r*_r) + self.e_c2*z*z/(2*_r*_r))*((u*u - 3*u - 6)/(2*u*u*(u + 1)) + 3*log(u + 1)/u/u/u) - log(u + 1)/u)
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
     cdef public inline void _gradient_spherical(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
         cdef double fac, u
 
@@ -285,10 +253,6 @@ cdef class _LeeSutoNFWPotential(_CPotential):
         grad[k,1] = fac*r[k,1]
         grad[k,2] = fac*r[k,2]
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
     cdef public inline void _gradient_triaxial(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
         pass
 
@@ -337,10 +301,6 @@ cdef class _LeeSutoNFWPotential(_CPotential):
     #         grad[i,1] = self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
     #         grad[i,2] = self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
     cdef public inline void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
 
         if self.spherical == 1:
@@ -422,10 +382,6 @@ cdef class _LogarithmicPotential(_CPotential):
         self.R = R
         self.Rinv = np.linalg.inv(R)
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
     cdef public inline double _value(self, double[:,::1] r, int k) nogil:
 
         cdef double x, y, z
@@ -436,10 +392,6 @@ cdef class _LogarithmicPotential(_CPotential):
 
         return 0.5*self.v_c2 * log(x*x/self.q1_2 + y*y/self.q2_2 + z*z/self.q3_2 + self.r_h2)
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
     cdef public inline void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
 
         cdef double x, y, z, _r, _r2, ax, ay, az

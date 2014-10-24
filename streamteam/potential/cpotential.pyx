@@ -144,10 +144,6 @@ cdef class _CPotential:
         for k in range(nparticles):
             pot[k] = self._value(q,k)
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
     cdef public double _value(self, double[:,::1] q, int k) nogil:
         return 0.
 
@@ -163,10 +159,6 @@ cdef class _CPotential:
 
         return np.array(grad)
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
     cdef public void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
         grad[0] = 0.
         grad[1] = 0.
@@ -184,10 +176,6 @@ cdef class _CPotential:
 
         return np.array(hess)
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
     cdef public void _hessian(self, double[:,::1] w, double[:,:,::1] hess, int k) nogil:
         cdef int i,j
         for i in range(3):
@@ -205,10 +193,6 @@ cdef class _CPotential:
             mass[k] = self._mass_enclosed(q, epsilon, self.G, k)
         return np.array(mass)
 
-    @cython.boundscheck(False)
-    @cython.cdivision(True)
-    @cython.wraparound(False)
-    @cython.nonecheck(False)
     cdef public double _mass_enclosed(self, double[:,::1] q, double [:,::1] epsilon, double Gee, int k) nogil:
         cdef double h, r, dPhi_dr
 
