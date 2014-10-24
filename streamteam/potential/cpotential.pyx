@@ -209,7 +209,7 @@ cdef class _CPotential:
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public double _mass_enclosed(self, double[:,::1] q, double [:,::1] epsilon, double Gee, int k):
+    cdef public double _mass_enclosed(self, double[:,::1] q, double [:,::1] epsilon, double Gee, int k) nogil:
         cdef double h, r, dPhi_dr
 
         # Fractional step-size
