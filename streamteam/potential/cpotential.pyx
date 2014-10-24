@@ -1,4 +1,9 @@
 # coding: utf-8
+# cython: boundscheck=False
+# cython: nonecheck=False
+# cython: cdivision=True
+# cython: wraparound=False
+# cython: profile=True
 
 from __future__ import division, print_function
 
@@ -59,7 +64,9 @@ class CPotential(Potential):
         q : array_like, numeric
             Position to compute the value of the potential.
         """
-        return self.c_instance.value(np.array(q))
+        tmp = np.zeros(len(q))
+        self.c_instance.value(np.array(q), tmp)
+        return tmp
 
     def gradient(self, q):
         """
@@ -129,33 +136,30 @@ class CPotential(Potential):
 
 cdef class _CPotential:
 
-    cpdef value(self, double[:,::1] q):
-        cdef int nparticles, ndim, i
+    cpdef value(self, double[:,::1] q, double[::1] pot):
+        cdef int nparticles, ndim, k
         nparticles = q.shape[0]
         ndim = q.shape[1]
 
-        cdef double [::1] pot = np.empty(nparticles)
-        for i in range(nparticles):
-            pot[i] = self._value(q[i])
-
-        return np.array(pot)
+        for k in range(nparticles):
+            pot[k] = self._value(q,k)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public double _value(self, double[::1] q) nogil:
+    cdef double _value(self, double[:,::1] q, int k):
         return 0.
 
     # -------------------------------------------------------------
     cpdef gradient(self, double[:,::1] q):
-        cdef int nparticles, ndim, i
+        cdef int nparticles, ndim, k
         nparticles = q.shape[0]
         ndim = q.shape[1]
 
         cdef double [:,::1] grad = np.empty((nparticles,ndim))
-        for i in range(nparticles):
-            self._gradient(q[i], grad[i])
+        for k in range(nparticles):
+            self._gradient(q, grad, k)
 
         return np.array(grad)
 
@@ -163,20 +167,20 @@ cdef class _CPotential:
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public void _gradient(self, double[::1] r, double[::1] grad) nogil:
+    cdef void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
         grad[0] = 0.
         grad[1] = 0.
         grad[2] = 0.
 
     # -------------------------------------------------------------
     cpdef hessian(self, double[:,::1] w):
-        cdef int nparticles, ndim, i
+        cdef int nparticles, ndim, k
         nparticles = w.shape[0]
         ndim = w.shape[1]
 
         cdef double [:,:,::1] hess = np.empty((nparticles,ndim,ndim))
-        for i in range(nparticles):
-            self._hessian(w[i], hess[i])
+        for k in range(nparticles):
+            self._hessian(w, hess, k)
 
         return np.array(hess)
 
@@ -184,7 +188,7 @@ cdef class _CPotential:
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public void _hessian(self, double[::1] w, double[:,::1] hess) nogil:
+    cdef void _hessian(self, double[:,::1] w, double[:,:,::1] hess, int k) nogil:
         cdef int i,j
         for i in range(3):
             for j in range(3):
@@ -192,36 +196,35 @@ cdef class _CPotential:
 
     # -------------------------------------------------------------
     cpdef mass_enclosed(self, double[:,::1] q):
-        cdef int nparticles
+        cdef int nparticles, k
         nparticles = q.shape[0]
 
-        cdef double [::1] epsilon = np.empty(3)
-        cdef double[::1] mass = np.empty((nparticles,))
-        for i in range(nparticles):
-            # mass[i] = self._mass_enclosed(q, mass, nparticles)
-            mass[i] = self._mass_enclosed(q[i], epsilon, self.G)
+        cdef double [:,::1] epsilon = np.empty((1,3))
+        cdef double [::1] mass = np.empty((nparticles,))
+        for k in range(nparticles):
+            mass[k] = self._mass_enclosed(q, epsilon, self.G, k)
         return np.array(mass)
 
     @cython.boundscheck(False)
     @cython.cdivision(True)
     @cython.wraparound(False)
     @cython.nonecheck(False)
-    cdef public double _mass_enclosed(self, double[::1] q, double [::1] epsilon, double Gee) nogil:
+    cdef double _mass_enclosed(self, double[:,::1] q, double [:,::1] epsilon, double Gee, int k):
         cdef double h, r, dPhi_dr
 
         # Fractional step-size
         h = 0.01
 
         # Step-size for estimating radial gradient of the potential
-        r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2])
+        r = sqrt(q[k,0]*q[k,0] + q[k,1]*q[k,1] + q[k,2]*q[k,2])
 
         for j in range(3):
-            epsilon[j] = h * q[j]/r + q[j]
-        dPhi_dr = self._value(epsilon)
+            epsilon[0,j] = h * q[k,j]/r + q[k,j]
+        dPhi_dr = self._value(epsilon,0)
 
         for j in range(3):
-            epsilon[j] = h * q[j]/r - q[j]
-        dPhi_dr -= self._value(epsilon)
+            epsilon[0,j] = h * q[k,j]/r - q[k,j]
+        dPhi_dr -= self._value(epsilon,0)
 
         return fabs(r*r * dPhi_dr / Gee / (2.*h))
         # return fabs(r*r * dPhi_dr / (2.*h))
