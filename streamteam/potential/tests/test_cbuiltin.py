@@ -10,6 +10,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import os
 import time
 import numpy as np
+import pytest
 from astropy.utils.console import color_print
 from astropy.constants import G
 import astropy.units as u
@@ -40,6 +41,10 @@ nparticles = 1000
 
 class PotentialTestBase(object):
     name = None
+
+    def setup(self):
+        print("="*50)
+        print(self.__class__.__name__)
 
     def test_method_call(self):
         # single
@@ -72,6 +77,7 @@ class PotentialTestBase(object):
             print("Python orbit integration time (10000 steps): {}".format(time.time() - t1))
 
     def test_time_methods(self):
+
         r = np.random.uniform(size=(nparticles,3))
         for func_name in ["value", "gradient", "acceleration"]:
             t1 = time.time()
@@ -86,6 +92,28 @@ class PotentialTestBase(object):
                     x = getattr(self.pypotential, func_name)(r)
                 print("Python - {}: {:e} sec per call".format(func_name,
                                 (time.time()-t1)/float(niter)))
+
+    @pytest.mark.skipif(True, reason="derp.")
+    def test_profile(self):
+        import pstats, cProfile
+
+        r = np.random.uniform(size=(nparticles,3))
+        tmp_value = np.zeros(nparticles)
+        tmp_gradient = np.zeros_like(r)
+        for func_name in ["value", "gradient"]:
+            t1 = time.time()
+            for ii in range(niter):
+                the_str = "for n in range(10000): self.potential.{}(r)".format(func_name)
+                cProfile.runctx(the_str, globals(), locals(), "pro.prof")
+
+                s = pstats.Stats("pro.prof")
+                s.strip_dirs().sort_stats("cumulative").print_stats()
+
+                the_str = "for n in range(10000): self.potential.c_instance.{f}(r,tmp_{f})".format(f=func_name)
+                cProfile.runctx(the_str, globals(), locals(), "pro.prof")
+
+                s = pstats.Stats("pro.prof")
+                s.strip_dirs().sort_stats("cumulative").print_stats()
 
     def test_plot_contours(self):
 
@@ -116,7 +144,10 @@ class TestHernquist(PotentialTestBase):
     units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
-        print()
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
         from ..builtin import HernquistPotential as PyHernquistPotential
 
         self.potential = HernquistPotential(units=self.units,
@@ -129,7 +160,10 @@ class TestMiyamotoNagai(PotentialTestBase):
     units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
-        print()
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
         from ..builtin import MiyamotoNagaiPotential as PyMiyamotoNagaiPotential
 
         self.potential = MiyamotoNagaiPotential(units=self.units,
@@ -142,10 +176,13 @@ class TestLeeSutoNFWPotential(PotentialTestBase):
     units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
-        print()
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
         self.potential = LeeSutoNFWPotential(units=self.units,
                                              v_h=0.35, r_h=12.,
-                                             a=1.4, b=1., c=0.6)
+                                             a=1., b=1., c=1.)
 
         self.pypotential = None
 
@@ -155,7 +192,10 @@ class TestMisalignedLeeSutoNFWPotential(PotentialTestBase):
     units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
-        print()
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
         self.name = "MisalignedLeeSutoNFWPotential"
         self.potential = LeeSutoNFWPotential(units=self.units,
                                              v_h=0.35, r_h=12.,
@@ -171,7 +211,10 @@ class TestLogarithmicPotential(PotentialTestBase):
     units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
-        print()
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
         from ..builtin import LogarithmicPotential as PyLogarithmicPotential
 
         self.potential = LogarithmicPotential(units=self.units,
@@ -187,7 +230,10 @@ class TestMisalignedLogarithmicPotential(PotentialTestBase):
     units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
-        print()
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
         self.name = "MisalignedLogarithmicPotential"
         from ..builtin import LogarithmicPotential as PyLogarithmicPotential
 
