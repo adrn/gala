@@ -251,12 +251,8 @@ cdef class _LeeSutoNFWPotential(_CPotential):
     @cython.wraparound(False)
     @cython.nonecheck(False)
     cdef public inline double _value_spherical(self, double[:,::1] r, int k) nogil:
-
-        cdef double x, y, z, u
-        x = self.R[0,0]*r[k,0] + self.R[0,1]*r[k,1] + self.R[0,2]*r[k,2]
-        y = self.R[1,0]*r[k,0] + self.R[1,1]*r[k,1] + self.R[1,2]*r[k,2]
-        z = self.R[2,0]*r[k,0] + self.R[2,1]*r[k,1] + self.R[2,2]*r[k,2]
-        u = sqrt(x*x + y*y + z*z) / self.r_h
+        cdef double u
+        u = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2]) / self.r_h
         return -self.v_h2 * log(1 + u) / u
 
     @cython.boundscheck(False)
@@ -283,7 +279,7 @@ cdef class _LeeSutoNFWPotential(_CPotential):
         cdef double fac, u
 
         u = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2]) / self.r_h
-        fac = self.v_h2*self.v_h / (u*u*u) * (1 + log(u))
+        fac = self.v_h2 / (u*u*u) / self.r_h2 * (log(1+u) - u/(1+u))
 
         grad[k,0] = fac*r[k,0]
         grad[k,1] = fac*r[k,1]

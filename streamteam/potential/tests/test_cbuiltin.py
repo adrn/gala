@@ -182,7 +182,7 @@ class TestLeeSutoNFWPotential(PotentialTestBase):
 
         self.potential = LeeSutoNFWPotential(units=self.units,
                                              v_h=0.35, r_h=12.,
-                                             a=1.4, b=1., c=0.6)
+                                             a=1., b=1., c=1.)
 
         self.pypotential = None
 
