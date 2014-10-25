@@ -256,50 +256,42 @@ cdef class _LeeSutoNFWPotential(_CPotential):
     cdef public inline void _gradient_triaxial(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
         pass
 
-    #     cdef:
-    #         double x, y, z, _r, _r2, _r4, ax, ay, az
-    #         double x0, x2, x22
+        cdef:
+            double x, y, z, _r, _r2, _r4, ax, ay, az
+            double x0, x2, x22
 
-    #         double _x, _y, _z
-    #         double x20, x21, x7, x1
-    #         double x10, x11, x13, x15, x16, x17, x18
+            double x20, x21, x7, x1
+            double x10, x13, x15, x16, x17
 
-    #     for i in range(nparticles):
-    #         _x = r[i,0]
-    #         _y = r[i,1]
-    #         _z = r[i,2]
+        x = self.R[0,0]*r[k,0] + self.R[0,1]*r[k,1] + self.R[0,2]*r[k,2]
+        y = self.R[1,0]*r[k,0] + self.R[1,1]*r[k,1] + self.R[1,2]*r[k,2]
+        z = self.R[2,0]*r[k,0] + self.R[2,1]*r[k,1] + self.R[2,2]*r[k,2]
 
-    #         x = self.R[0,0]*_x + self.R[0,1]*_y + self.R[0,2]*_z
-    #         y = self.R[1,0]*_x + self.R[1,1]*_y + self.R[1,2]*_z
-    #         z = self.R[2,0]*_x + self.R[2,1]*_y + self.R[2,2]*_z
+        _r2 = x*x + y*y + z*z
+        _r = sqrt(_r2)
+        _r4 = _r2*_r2
 
-    #         _r2 = x*x + y*y + z*z
-    #         _r = sqrt(_r2)
-    #         _r4 = _r2*_r2
+        x0 = _r + self.r_h
+        x1 = x0*x0
+        x2 = self.v_h2/(12.*_r4*_r2*_r*x1)
+        x10 = log(x0/self.r_h)
 
-    #         x0 = _r + self.r_h
-    #         x1 = x0*x0
-    #         x2 = self.v_h2/(12.*_r4*_r2*_r*x1)
-    #         x10 = log(x0/self.r_h)
-    #         x18 = x1*x10
+        x13 = _r*3.*self.r_h
+        x15 = x13 - _r2
+        x16 = x15 + 6.*self.r_h2
+        x17 = 6.*self.r_h*x0*(_r*x16 - x0*x10*6.*self.r_h2)
+        x20 = x0*_r2
+        x21 = 2.*_r*x0
+        x7 = self.e_b2*y*y + self.e_c2*z*z
+        x22 = -12.*_r4*_r*self.r_h*x0 + 12.*_r4*self.r_h*x1*x10 + 3.*self.r_h*x7*(x16*_r2 - 18.*x1*x10*self.r_h2 + x20*(2.*_r - 3.*self.r_h) + x21*(x15 + 9.*self.r_h2)) - x20*(self.e_b2 + self.e_c2)*(-6.*_r*self.r_h*(_r2 - self.r_h2) + 6.*self.r_h*x0*x10*(_r2 - 3.*self.r_h2) + x20*(-4.*_r + 3.*self.r_h) + x21*(-x13 + 2.*_r2 + 6.*self.r_h2))
 
-    #         x11 = x0*x10
-    #         x13 = _r*3.*self.r_h
-    #         x15 = x13 - _r2
-    #         x16 = x15 + 6.*self.r_h2
-    #         x17 = 6.*self.r_h*x0*(_r*x16 - x11*6.*self.r_h2)
-    #         x20 = x0*_r2
-    #         x21 = 2.*_r*x0
-    #         x7 = self.e_b2*y*y + self.e_c2*z*z
-    #         x22 = -12.*_r4*_r*self.r_h*x0 + 12.*_r4*self.r_h*x18 + 3.*self.r_h*x7*(x16*_r2 - 18.*x18*self.r_h2 + x20*(2.*_r - 3.*self.r_h) + x21*(x15 + 9.*self.r_h2)) - x20*(self.e_b2 + self.e_c2)*(-6.*_r*self.r_h*(_r2 - self.r_h2) + 6.*self.r_h*x11*(_r2 - 3.*self.r_h2) + x20*(-4.*_r + 3.*self.r_h) + x21*(-x13 + 2.*_r2 + 6.*self.r_h2))
+        ax = x2*x*(x17*x7 + x22)
+        ay = x2*y*(x17*(x7 - _r2*self.e_b2) + x22)
+        az = x2*z*(x17*(x7 - _r2*self.e_c2) + x22)
 
-    #         ax = x2*x*(x17*x7 + x22)
-    #         ay = x2*y*(x17*(x7 - _r2*self.e_b2) + x22)
-    #         az = x2*z*(x17*(x7 - _r2*self.e_c2) + x22)
-
-    #         grad[i,0] = self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
-    #         grad[i,1] = self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
-    #         grad[i,2] = self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
+        grad[k,0] = self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
+        grad[k,1] = self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
+        grad[k,2] = self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
 
     cdef public inline void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
 
