@@ -17,7 +17,7 @@ import cython
 cimport cython
 
 # Project
-from .core import Potential
+from .core import Potential, CartesianCompositePotential
 
 cdef extern from "math.h":
     double sqrt(double x) nogil
@@ -153,7 +153,7 @@ cdef class _CPotential:
         nparticles = q.shape[0]
         ndim = q.shape[1]
 
-        cdef double [:,::1] grad = np.empty((nparticles,ndim))
+        cdef double [:,::1] grad = np.zeros((nparticles,ndim))
         for k in range(nparticles):
             self._gradient(q, grad, k)
 
@@ -170,7 +170,7 @@ cdef class _CPotential:
         nparticles = w.shape[0]
         ndim = w.shape[1]
 
-        cdef double [:,:,::1] hess = np.empty((nparticles,ndim,ndim))
+        cdef double [:,:,::1] hess = np.zeros((nparticles,ndim,ndim))
         for k in range(nparticles):
             self._hessian(w, hess, k)
 
@@ -187,8 +187,8 @@ cdef class _CPotential:
         cdef int nparticles, k
         nparticles = q.shape[0]
 
-        cdef double [:,::1] epsilon = np.empty((1,3))
-        cdef double [::1] mass = np.empty((nparticles,))
+        cdef double [:,::1] epsilon = np.zeros((1,3))
+        cdef double [::1] mass = np.zeros((nparticles,))
         for k in range(nparticles):
             mass[k] = self._mass_enclosed(q, epsilon, self.G, k)
         return np.array(mass)
@@ -212,3 +212,69 @@ cdef class _CPotential:
 
         return fabs(r*r * dPhi_dr / Gee / (2.*h))
         # return fabs(r*r * dPhi_dr / (2.*h))
+
+# ==============================================================================
+
+class CCompositePotential(CPotential):
+    """
+
+    TODO!
+
+    A baseclass for representing gravitational potentials. You must specify
+    a function that evaluates the potential value (func). You may also
+    optionally add a function that computes derivatives (gradient), and a
+    function to compute second derivatives (the Hessian) of the potential.
+
+    Parameters
+    ----------
+    TODO
+    """
+
+    def __init__(self, **kwargs):
+        # hurm?
+        self.c_instance = _CCompositePotential([p.c_instance for p in kwargs.values()])
+        super(CPotential, self).__init__(func=lambda x: x, parameters=dict())
+
+from python cimport PyObject
+cdef class _CCompositePotential(_CPotential):
+
+    cdef public list py_instances
+    cdef public int ninstances
+    cdef PyObject *obj_list[100]
+
+    def __init__(self, instance_list):
+        """ Need a list of instances of _CPotential classes """
+        self.py_instances = list(instance_list)
+        self.ninstances = len(instance_list)
+        self._more_init()
+
+    cpdef _more_init(self):
+        for i in range(self.ninstances):
+            self.obj_list[i] = <PyObject *>self.py_instances[i]
+
+    cdef public double _value(self, double[:,::1] q, int k) nogil:
+        # whoa this is some whack cython wizardry right here
+        #   (stolen from stackoverflow)
+        cdef double v = 0.
+        for i in range(self.ninstances):
+            v += (<_CPotential>(self.obj_list[i]))._value(q, k)
+        return v
+
+    cdef public void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
+        # whoa this is some whack cython wizardry right here
+        #   (stolen from stackoverflow)
+        cdef double v = 0.
+
+        for i in range(self.ninstances):
+            (<_CPotential>(self.obj_list[i]))._gradient(r, grad, k)
+
+    cdef public void _hessian(self, double[:,::1] w, double[:,:,::1] hess, int k) nogil:
+        # whoa this is some whack cython wizardry right here
+        #   (stolen from stackoverflow)
+        for i in range(self.ninstances):
+            (<_CPotential>(self.obj_list[i]))._hessian(w, hess, k)
+
+    cdef public double _mass_enclosed(self, double[:,::1] q, double [:,::1] epsilon, double Gee, int k) nogil:
+        cdef double mm = 0.
+        for i in range(self.ninstances):
+            mm += (<_CPotential>(self.obj_list[i]))._mass_enclosed(q, epsilon, Gee, k)
