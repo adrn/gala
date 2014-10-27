@@ -350,7 +350,7 @@ class LeeSutoNFWPotential(CPotential, CartesianPotential):
 cdef class _LogarithmicPotential(_CPotential):
 
     # here need to cdef all the attributes
-    cdef public double v_c, r_h, q1, q2, q3
+    cdef public double v_c, r_h, q1, q2, q3, G
     cdef public double v_c2, r_h2, q1_2, q2_2, q3_2, x0
     cdef public double[:,::1] R, Rinv
 
@@ -373,6 +373,8 @@ cdef class _LogarithmicPotential(_CPotential):
 
         self.R = R
         self.Rinv = np.linalg.inv(R)
+
+        self.G = 4.49975332435e-12  # kpc, Myr, Msun
 
     cdef public inline double _value(self, double[:,::1] r, int k) nogil:
 
