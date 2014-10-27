@@ -75,9 +75,9 @@ cdef class _HernquistPotential(_CPotential):
         R = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2])
         fac = self.GM / ((R + self.c) * (R + self.c) * R)
 
-        grad[k,0] = fac*r[k,0]
-        grad[k,1] = fac*r[k,1]
-        grad[k,2] = fac*r[k,2]
+        grad[k,0] += fac*r[k,0]
+        grad[k,1] += fac*r[k,1]
+        grad[k,2] += fac*r[k,2]
 
 class HernquistPotential(CPotential, CartesianPotential):
     r"""
@@ -142,9 +142,9 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
         zd = self.a + sqrtz
         fac = self.GM*pow(r[k,0]*r[k,0] + r[k,1]*r[k,1] + zd*zd, -1.5)
 
-        grad[k,0] = fac*r[k,0]
-        grad[k,1] = fac*r[k,1]
-        grad[k,2] = fac*r[k,2] * (1. + self.a / sqrtz)
+        grad[k,0] += fac*r[k,0]
+        grad[k,1] += fac*r[k,1]
+        grad[k,2] += fac*r[k,2] * (1. + self.a / sqrtz)
 
 class MiyamotoNagaiPotential(CPotential, CartesianPotential):
     r"""
@@ -249,13 +249,11 @@ cdef class _LeeSutoNFWPotential(_CPotential):
         u = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2]) / self.r_h
         fac = self.v_h2 / (u*u*u) / self.r_h2 * (log(1+u) - u/(1+u))
 
-        grad[k,0] = fac*r[k,0]
-        grad[k,1] = fac*r[k,1]
-        grad[k,2] = fac*r[k,2]
+        grad[k,0] += fac*r[k,0]
+        grad[k,1] += fac*r[k,1]
+        grad[k,2] += fac*r[k,2]
 
     cdef public inline void _gradient_triaxial(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
-        pass
-
         cdef:
             double x, y, z, _r, _r2, _r4, ax, ay, az
             double x0, x2, x22
@@ -289,9 +287,9 @@ cdef class _LeeSutoNFWPotential(_CPotential):
         ay = x2*y*(x17*(x7 - _r2*self.e_b2) + x22)
         az = x2*z*(x17*(x7 - _r2*self.e_c2) + x22)
 
-        grad[k,0] = self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
-        grad[k,1] = self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
-        grad[k,2] = self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
+        grad[k,0] += self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
+        grad[k,1] += self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
+        grad[k,2] += self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
 
     cdef public inline void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
 
@@ -402,9 +400,9 @@ cdef class _LogarithmicPotential(_CPotential):
         ay = fac*y/self.q2_2
         az = fac*z/self.q3_2
 
-        grad[k,0] = self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
-        grad[k,1] = self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
-        grad[k,2] = self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
+        grad[k,0] += self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
+        grad[k,1] += self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
+        grad[k,2] += self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
 
 class LogarithmicPotential(CPotential, CartesianPotential):
     r"""
