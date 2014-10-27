@@ -241,6 +241,7 @@ cdef class _CCompositePotential(_CPotential):
     cdef public list py_instances
     cdef public int ninstances
     cdef PyObject *obj_list[100]
+    cdef public double G
 
     def __init__(self, instance_list):
         """ Need a list of instances of _CPotential classes """
@@ -278,3 +279,4 @@ cdef class _CCompositePotential(_CPotential):
         cdef double mm = 0.
         for i in range(self.ninstances):
             mm += (<_CPotential>(self.obj_list[i]))._mass_enclosed(q, epsilon, Gee, k)
+        return mm
