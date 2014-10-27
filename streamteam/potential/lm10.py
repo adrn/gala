@@ -39,5 +39,4 @@ class LM10Potential(CCompositePotential):
                                               q1=q1, q2=q2, q3=q3,
                                               phi=phi, v_c=v_c, r_h=r_h)
         super(LM10Potential,self).__init__(**kwargs)
-
         self.c_instance.G = G.decompose(units).value

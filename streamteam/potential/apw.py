@@ -7,6 +7,7 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
+from astropy.constants import G
 import numpy as np
 
 # Project
@@ -42,4 +43,4 @@ class PW14Potential(CCompositePotential):
                                              v_h=v_h, r_h=r_h,
                                              phi=phi, theta=theta, psi=psi)
         super(PW14Potential,self).__init__(**kwargs)
-
+        self.c_instance.G = G.decompose(units).value
