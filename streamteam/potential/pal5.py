@@ -13,7 +13,7 @@ import numpy as np
 # Project
 # from .core import CartesianCompositePotential
 from .cpotential import CCompositePotential
-from .cbuiltin import HernquistPotential, MiyamotoNagaiPotential, Pal5AxisymmetricNFWPotential
+from .cbuiltin import JaffePotential, MiyamotoNagaiPotential, Pal5AxisymmetricNFWPotential
 from ..units import galactic
 
 __all__ = ['GC2Pal5Potential']
@@ -33,8 +33,8 @@ class GC2Pal5Potential(CCompositePotential):
         kwargs["disk"] = MiyamotoNagaiPotential(units=units,
                                                 m=m_disk, a=a, b=b)
 
-        kwargs["bulge"] = HernquistPotential(units=units,
-                                             m=m_spher, c=c)
+        kwargs["bulge"] = JaffePotential(units=units,
+                                         m=m_spher, c=c)
 
         kwargs["halo"] = Pal5AxisymmetricNFWPotential(units=units,
                                                       M=m_halo, Rh=Rh, qz=qz)

@@ -106,6 +106,69 @@ class HernquistPotential(CPotential, CartesianPotential):
                                                  parameters=parameters)
 
 # ============================================================================
+#    Jaffe Spheroid potential
+#
+cdef class _JaffePotential(_CPotential):
+
+    # here need to cdef all the attributes
+    cdef public double G, GM
+    cdef public double m, c
+
+    def __init__(self, double G, double m, double c):
+        """ Units of everything should be in the system:
+                kpc, Myr, radian, M_sun
+        """
+        # cdef double G = 4.499753324353494927e-12 # kpc^3 / Myr^2 / M_sun
+        # have to specify G in the correct units
+        self.G = G
+
+        # disk parameters
+        self.GM = G*m
+        self.m = m
+        self.c = c
+
+    cdef public inline double _value(self, double[:,::1] r, int k) nogil:
+        cdef double R
+        R = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2])
+        return self.GM / self.c * log(R / (R + self.c))
+
+    cdef public inline void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
+        cdef double R, fac
+        R = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2])
+        fac = self.GM / ((R + 1) * R * R * self.c)
+
+        grad[k,0] += fac*r[k,0]
+        grad[k,1] += fac*r[k,1]
+        grad[k,2] += fac*r[k,2]
+
+class JaffePotential(CPotential, CartesianPotential):
+    r"""
+    Jaffe potential for a spheroid.
+
+    .. math::
+
+        TODO
+
+    Parameters
+    ----------
+    m : numeric
+        Mass.
+    c : numeric
+        Core concentration.
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, m, c, units):
+        self.units = units
+        _G = G.decompose(units).value
+        parameters = dict(G=_G, m=m, c=c)
+        super(JaffePotential, self).__init__(_JaffePotential,
+                                             parameters=parameters)
+
+
+# ============================================================================
 #    Miyamoto-Nagai Disk potential from Miyamoto & Nagai 1975
 #    http://adsabs.harvard.edu/abs/1975PASJ...27..533M
 #
