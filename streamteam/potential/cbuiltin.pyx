@@ -40,7 +40,8 @@ cdef extern from "math.h":
     double pow(double x, double n) nogil
 
 __all__ = ['HernquistPotential', 'MiyamotoNagaiPotential',
-           'LeeSutoNFWPotential', 'LogarithmicPotential']
+           'LeeSutoNFWPotential', 'LogarithmicPotential',
+           'JaffePotential']
 
 # ============================================================================
 #    Hernquist Spheroid potential from Hernquist 1990
@@ -135,7 +136,7 @@ cdef class _JaffePotential(_CPotential):
     cdef public inline void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
         cdef double R, fac
         R = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2])
-        fac = self.GM / ((R + c) * R * R)
+        fac = self.GM / ((R + self.c) * R * R)
 
         grad[k,0] += fac*r[k,0]
         grad[k,1] += fac*r[k,1]
