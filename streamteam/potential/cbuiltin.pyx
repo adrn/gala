@@ -135,7 +135,7 @@ cdef class _JaffePotential(_CPotential):
     cdef public inline void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
         cdef double R, fac
         R = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2])
-        fac = self.GM / ((R + 1) * R * R * self.c)
+        fac = self.GM / ((R + c) * R * R)
 
         grad[k,0] += fac*r[k,0]
         grad[k,1] += fac*r[k,1]
@@ -540,7 +540,7 @@ cdef class _Pal5AxisymmetricNFWPotential(_CPotential):
         self.Rh = Rh
         self.qz = qz
 
-        self.qz2 = self.qz*self.qz
+        self.qz2 = self.qz * self.qz
         self.G = 4.49975332435e-12  # kpc, Myr, Msun
         self.GM = self.G * self.M
 
@@ -555,7 +555,7 @@ cdef class _Pal5AxisymmetricNFWPotential(_CPotential):
         dPhi_dR = self.GM / R / R * (log(1+R/self.Rh) - R/(R+self.Rh))
         grad[k,0] += dPhi_dR * r[k,0] / R
         grad[k,1] += dPhi_dR * r[k,1] / R
-        grad[k,2] += dPhi_dR * r[k,2] / R / self.qz2
+        grad[k,2] += dPhi_dR * r[k,2] / (R * self.qz2)
 
 class Pal5AxisymmetricNFWPotential(CPotential, CartesianPotential):
     r"""

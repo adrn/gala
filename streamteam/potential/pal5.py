@@ -21,8 +21,8 @@ __all__ = ['GC2Pal5Potential']
 # change to CartesianCompositePotential for Pure-Python
 class GC2Pal5Potential(CCompositePotential):
 
-    def __init__(self, m_disk=6.5E10, a=6.5, b=0.26,
-                 m_spher=2E10, c=0.3,
+    def __init__(self, m_disk=1E11, a=6.5, b=0.26,
+                 m_spher=3.4E10, c=0.3,
                  m_halo=1.81194E12, Rh=32.26, qz=0.814,
                  units=galactic):
 
