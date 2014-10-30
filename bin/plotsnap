@@ -60,6 +60,10 @@ def main(snap_path, plot_cen=False, bound=None, threeD=False, show=True, output=
 
         fig.axes[0].set_xlim(-bound, bound)
         fig.axes[0].set_ylim(-bound, bound)
+        fig.axes[1].set_xlim(-bound, bound)
+        fig.axes[1].set_ylim(-bound, bound)
+        fig.axes[2].set_xlim(-bound, bound)
+        fig.axes[2].set_ylim(-bound, bound)
 
     try:
         pct_bound = sum(tbl['tub'] == 0) / float(len(w))*100.
