@@ -164,6 +164,10 @@ class SCFReader(NBodyReader):
 class APWSCFReader(SCFReader):
 
     def read_potential(self, units=None):
+        return self._read_potential(self.path, units)
+
+    @classmethod
+    def _read_potential(cls, path, units=None):
         """ Read the SCFPOT potential specification file and get the potential
             parameters. By default, returns in whatever units are in the file.
 
@@ -174,7 +178,7 @@ class APWSCFReader(SCFReader):
                 the data in the file units.
         """
 
-        fullpath = os.path.join(self.path, "SCFPOT")
+        fullpath = os.path.join(path, "SCFPOT")
         with open(fullpath) as f:
             lines = f.readlines()
 
