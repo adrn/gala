@@ -16,7 +16,7 @@ from ..coordinates import cartesian_to_spherical, spherical_to_cartesian
 
 __all__ = ["PointMassPotential", "MiyamotoNagaiPotential",
            "HernquistPotential", "LogarithmicPotential",
-           "IsochronePotential", "NFWPotential",
+           "IsochronePotential",
            "HarmonicOscillatorPotential"]
 
 ############################################################
@@ -437,58 +437,59 @@ class LogarithmicPotential(CartesianPotential):
 ##############################################################################
 #    NFW potential
 #
-def nfw_funcs(units):
-
-    def func(xyz, v_h, r_h, q1, q2, q3):
-        x,y,z = xyz.T
-        r = np.sqrt((x/q1)**2 + (y/q2)**2 + (z/q3)**2 + r_h**2)
-        return -v_h**2 * r_h/r * np.log(1+r/r_h)
-
-    def gradient(xyz, v_h, r_h, q1, q2, q3):
-        x,y,z = xyz.T
-        r = np.sqrt((x/q1)**2 + (y/q2)**2 + (z/q3)**2 + r_h**2)
-
-        dPhi_dr = r_h*v_h**2*(-r + (r + r_h)*np.log((r + r_h)/r_h))/(r**2*(r + r_h))
-        dPhi_dx = dPhi_dr * 2*x/q1**2
-        dPhi_dy = dPhi_dr * 2*y/q2**2
-        dPhi_dz = dPhi_dr * 2*z/q3**2
-
-        return np.array([dPhi_dx,dPhi_dy,dPhi_dz]).T
-
-    return func, gradient, None
-
-class NFWPotential(CartesianPotential):
-    r"""
-    Triaxial NFW potential.
-
-    .. math::
-
-        \Phi &= -v_h^2\frac{\ln(1 + r/r_h)}{r/r_h}\\
-        r^2 = (x/q_1)^2 + (y/q_2)^2 + (z/q_3)^2 + r_h^2
-
-    Parameters
-    ----------
-    v_h : numeric
-        Scale velocity.
-    r_h : numeric
-        Scale radius.
-    q1 : numeric
-        Flattening in X direction.
-    q2 : numeric
-        Flattening in Y direction.
-    q3 : numeric
-        Flattening in Z direction.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units.
-
-    """
-
-    def __init__(self, v_h, r_h, q1, q2, q3, units):
-        self.units = units
-        parameters = dict(v_h=v_h, r_h=r_h, q1=q1, q2=q2, q3=q3)
-        func,gradient,hessian = nfw_funcs(units)
-        super(NFWPotential, self).__init__(func=func,
-                                           gradient=gradient,
-                                           hessian=hessian,
-                                           parameters=parameters)
+#def nfw_funcs(units):
+#
+#    def func(xyz, v_h, r_h, q1, q2, q3):
+#        x,y,z = xyz.T
+#        r = np.sqrt((x/q1)**2 + (y/q2)**2 + (z/q3)**2 + r_h**2)
+#        return -v_h**2 * r_h/r * np.log(1+r/r_h)
+#
+#    def gradient(xyz, v_h, r_h, q1, q2, q3):
+#        x,y,z = xyz.T
+#        r = np.sqrt((x/q1)**2 + (y/q2)**2 + (z/q3)**2 + r_h**2)
+#
+#        dPhi_dr = r_h*v_h**2*(-r + (r + r_h)*np.log((r + r_h)/r_h))/(r**2*(r + r_h))
+#        dPhi_dx = dPhi_dr * x/q1**2
+#        dPhi_dy = dPhi_dr * y/q2**2
+#        dPhi_dz = dPhi_dr * z/q3**2
+#
+#        return np.array([dPhi_dx,dPhi_dy,dPhi_dz]).T
+#
+#    return func, gradient, None
+#
+#class NFWPotential(CartesianPotential):
+#    r"""
+#    Triaxial NFW potential.
+#
+#    .. math::
+#
+#        \Phi &= -v_h^2\frac{\ln(1 + r/r_h)}{r/r_h}\\
+#        r^2 = (x/q_1)^2 + (y/q_2)^2 + (z/q_3)^2 + r_h^2
+#
+#    Parameters
+#    ----------
+#    v_h : numeric
+#        Scale velocity.
+#    r_h : numeric
+#        Scale radius.
+#    q1 : numeric
+#        Flattening in X direction.
+#    q2 : numeric
+#        Flattening in Y direction.
+#    q3 : numeric
+#        Flattening in Z direction.
+#    units : iterable
+#        Unique list of non-reducable units that specify (at minimum) the
+#        length, mass, time, and angle units.
+#
+#    """
+#
+#    def __init__(self, v_h, r_h, q1, q2, q3, units):
+#        self.units = units
+#        parameters = dict(v_h=v_h, r_h=r_h, q1=q1, q2=q2, q3=q3)
+#        func,gradient,hessian = nfw_funcs(units)
+#        super(NFWPotential, self).__init__(func=func,
+#                                           gradient=gradient,
+#                                           hessian=hessian,
+#                                           parameters=parameters)
+#
