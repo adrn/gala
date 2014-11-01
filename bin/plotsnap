@@ -28,6 +28,7 @@ def main(snap_path, plot_cen=False, bound=None, threeD=False, show=True, output=
     import streamteam.io as sio
     from streamteam.units import galactic
 
+    snap_path = os.path.abspath(snap_path)
     path,snap_file = os.path.split(snap_path)
 
     scf = sio.SCFReader(path)
