@@ -17,13 +17,13 @@ import cython
 cimport cython
 
 # Project
-from .core import Potential, CartesianCompositePotential
+from .core import CartesianPotential, CartesianCompositePotential
 
 cdef extern from "math.h":
     double sqrt(double x) nogil
     double fabs(double x) nogil
 
-class CPotential(Potential):
+class CPotential(CartesianPotential):
     """
     A baseclass for representing gravitational potentials. You must specify
     a function that evaluates the potential value (func). You may also
