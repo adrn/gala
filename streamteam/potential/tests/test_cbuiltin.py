@@ -172,7 +172,7 @@ class TestMiyamotoNagai(PotentialTestBase):
                                                     m=1.E11, a=6.5, b=0.26)
         self.w0 = [8.,0.,0.,0.,0.22,0.1]
 
-class TestLeeSutoNFWPotential(PotentialTestBase):
+class TestSphericalNFWPotential(PotentialTestBase):
     units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def setup(self):
@@ -180,9 +180,37 @@ class TestLeeSutoNFWPotential(PotentialTestBase):
         print("="*50)
         print(self.__class__.__name__)
 
-        self.potential = LeeSutoNFWPotential(units=self.units,
-                                             v_h=0.35, r_h=12.,
-                                             a=1., b=1., c=1.)
+        self.potential = SphericalNFWPotential(units=self.units,
+                                               v_h=0.35, r_h=12.)
+
+        self.pypotential = None
+
+        self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+
+    def test_against_triaxial(self):
+        other = LeeSutoTriaxialNFWPotential(units=self.units,
+                                            v_h=0.35, r_h=12.,
+                                            a=1., b=1., c=1.)
+
+        v1 = other.value(np.array([self.w0[:3]]))
+        v2 = self.potential.value(np.array([self.w0[:3]]))
+        assert np.allclose(v1,v2)
+
+        a1 = other.acceleration(np.array([self.w0[:3]]))
+        a2 = self.potential.acceleration(np.array([self.w0[:3]]))
+        assert np.allclose(a1,a2)
+
+class TestLeeSutoTriaxialNFWPotential(PotentialTestBase):
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+
+    def setup(self):
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
+        self.potential = LeeSutoTriaxialNFWPotential(units=self.units,
+                                                     v_h=0.35, r_h=12.,
+                                                     a=1.3, b=1., c=0.8)
 
         self.pypotential = None
 
@@ -197,11 +225,11 @@ class TestMisalignedLeeSutoNFWPotential(PotentialTestBase):
         print(self.__class__.__name__)
 
         self.name = "MisalignedLeeSutoNFWPotential"
-        self.potential = LeeSutoNFWPotential(units=self.units,
-                                             v_h=0.35, r_h=12.,
-                                             a=1.4, b=1., c=0.6,
-                                             phi=np.radians(30.),
-                                             theta=np.radians(30))
+        self.potential = LeeSutoTriaxialNFWPotential(units=self.units,
+                                                     v_h=0.35, r_h=12.,
+                                                     a=1.4, b=1., c=0.6,
+                                                     phi=np.radians(30.),
+                                                     theta=np.radians(30))
 
         self.pypotential = None
 
