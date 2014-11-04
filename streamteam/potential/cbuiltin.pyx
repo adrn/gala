@@ -411,7 +411,7 @@ class LeeSutoTriaxialNFWPotential(CPotential, CartesianPotential):
     def __init__(self, v_h, r_h, a, b, c, units, phi=0., theta=0., psi=0.):
         self.units = units
         _G = G.decompose(units).value
-        parameters = dict(G=G, v_h=v_h, r_h=r_h, a=a, b=b, c=c)
+        parameters = dict(G=_G, v_h=v_h, r_h=r_h, a=a, b=b, c=c)
 
         if theta != 0 or phi != 0 or psi != 0:
             D = rotation_matrix(phi, "z", unit=u.radian) # TODO: Bad assuming radians
