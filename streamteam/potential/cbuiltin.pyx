@@ -39,7 +39,7 @@ cdef extern from "math.h":
     double exp(double x) nogil
     double pow(double x, double n) nogil
 
-__all__ = ['HernquistPotential', 'MiyamotoNagaiPotential',
+__all__ = ['HernquistPotential', 'MiyamotoNagaiPotential', 'SphericalNFWPotential',
            'LeeSutoNFWPotential', 'LogarithmicPotential',
            'JaffePotential', 'NFWPotential']
 
@@ -54,10 +54,7 @@ cdef class _HernquistPotential(_CPotential):
     cdef public double m, c
 
     def __init__(self, double G, double m, double c):
-        """ Units of everything should be in the system:
-                kpc, Myr, radian, M_sun
-        """
-        # cdef double G = 4.499753324353494927e-12 # kpc^3 / Myr^2 / M_sun
+
         # have to specify G in the correct units
         self.G = G
 
@@ -86,7 +83,7 @@ class HernquistPotential(CPotential, CartesianPotential):
 
     .. math::
 
-        \Phi_{spher} = -\frac{GM_{spher}}{r + c}
+        \Phi(r) = -\frac{G M}{r + c}
 
     Parameters
     ----------
@@ -107,7 +104,7 @@ class HernquistPotential(CPotential, CartesianPotential):
                                                  parameters=parameters)
 
 # ============================================================================
-#    Jaffe Spheroid potential
+#    Jaffe spheroid potential
 #
 cdef class _JaffePotential(_CPotential):
 
@@ -116,10 +113,7 @@ cdef class _JaffePotential(_CPotential):
     cdef public double m, c
 
     def __init__(self, double G, double m, double c):
-        """ Units of everything should be in the system:
-                kpc, Myr, radian, M_sun
-        """
-        # cdef double G = 4.499753324353494927e-12 # kpc^3 / Myr^2 / M_sun
+
         # have to specify G in the correct units
         self.G = G
 
@@ -148,7 +142,7 @@ class JaffePotential(CPotential, CartesianPotential):
 
     .. math::
 
-        TODO
+        \Phi(r) = \frac{G M}{c} \ln(\frac{r}{r + c})
 
     Parameters
     ----------
@@ -180,9 +174,7 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
     cdef public double m, a, b, b2
 
     def __init__(self, double G, double m, double a, double b):
-        """ Units of everything should be in the system:
-                kpc, Myr, radian, M_sun
-        """
+
         # cdef double G = 4.499753324353494927e-12 # kpc^3 / Myr^2 / M_sun
         # have to specify G in the correct units
         self.G = G
@@ -216,14 +208,16 @@ class MiyamotoNagaiPotential(CPotential, CartesianPotential):
 
     .. math::
 
-        \Phi_{disk} = -\frac{GM_{disk}}{\sqrt{R^2 + (a + \sqrt{z^2 + b^2})^2}}
+        \Phi(R,z) = -\frac{G M}{\sqrt{R^2 + (a + \sqrt{z^2 + b^2})^2}}
 
     Parameters
     ----------
     m : numeric
         Mass.
     a : numeric
+        Scale length.
     b : numeric
+        Scare height.
     units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
@@ -237,10 +231,69 @@ class MiyamotoNagaiPotential(CPotential, CartesianPotential):
                                                      parameters=parameters)
 
 # ============================================================================
+#    Spherical NFW potential
+#
+cdef class _SphericalNFWPotential(_CPotential):
+
+    # here need to cdef all the attributes
+    cdef public double G, v_h, r_h
+    cdef public double v_h2, r_h2
+
+    def __init__(self, double G, double v_h, double r_h):
+        self.G = G
+        self.v_h = v_h
+        self.v_h2 = v_h*v_h
+        self.r_h = r_h
+        self.r_h2 = r_h*r_h
+
+    cdef public inline double _value(self, double[:,::1] r, int k) nogil:
+        cdef double u
+        u = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2]) / self.r_h
+        return -self.v_h2 * log(1 + u) / u
+
+    cdef public inline void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
+        cdef double fac, u
+
+        u = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2]) / self.r_h
+        fac = self.v_h2 / (u*u*u) / self.r_h2 * (log(1+u) - u/(1+u))
+
+        grad[k,0] += fac*r[k,0]
+        grad[k,1] += fac*r[k,1]
+        grad[k,2] += fac*r[k,2]
+
+class SphericalNFWPotential(CPotential, CartesianPotential):
+    r"""
+    Spherical NFW potential. Separate from the triaxial potential below to
+    optimize for speed. Much faster than computing the triaxial case.
+
+    .. math::
+
+        \Phi(r) = -v_h^2 \frac{\ln(1 + r/r_h)}{r/r_h}
+
+    Parameters
+    ----------
+    v_h : numeric
+        Scale velocity.
+    r_h : numeric
+        Scale radius.
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, v_h, r_h, units):
+        self.units = units
+        _G = G.decompose(units).value
+        parameters = dict(G=_G, v_h=v_h, r_h=r_h)
+
+        super(SphericalNFWPotential, self).__init__(_SphericalNFWPotential,
+                                                    parameters=parameters)
+
+# ============================================================================
 #    Lee & Suto (2003) triaxial NFW potential
 #    http://adsabs.harvard.edu/abs/2003ApJ...585..151L
 #
-cdef class _LeeSutoNFWPotential(_CPotential):
+cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
 
     # here need to cdef all the attributes
     cdef public double v_h, r_h, a, b, c, e_b2, e_c2, G
@@ -248,7 +301,7 @@ cdef class _LeeSutoNFWPotential(_CPotential):
     cdef public double[:,::1] R, Rinv
     cdef public unsigned int rotated, spherical
 
-    def __init__(self, double v_h, double r_h, double a, double b, double c,
+    def __init__(self, double G, double v_h, double r_h, double a, double b, double c,
                  double[:,::1] R):
         """ Units of everything should be in the system:
                 kpc, Myr, radian, M_sun
@@ -264,39 +317,15 @@ cdef class _LeeSutoNFWPotential(_CPotential):
         self.b2 = b*b
         self.c = c
         self.c2 = c*c
+        self.G = G
 
         self.e_b2 = 1-pow(b/a,2)
         self.e_c2 = 1-pow(c/a,2)
-        if (self.e_b2 == 0.) and (self.e_c2 == 0.):
-            self.spherical = 1
-        else:
-            self.spherical = 0
 
         self.R = R
         self.Rinv = R.T.copy()
 
-        self.rotated = 0
-        for i in range(3):
-            for j in range(3):
-                if self.R[i,j] != self.Rinv[i,j]:
-                    self.rotated = 1
-
-        self.G = 4.49975332435e-12  # kpc, Myr, Msun
-
     cdef public inline double _value(self, double[:,::1] r, int k) nogil:
-
-        if self.spherical == 1:
-            return self._value_spherical(r, k)
-        else:
-            return self._value_triaxial(r, k)
-
-    cdef public inline double _value_spherical(self, double[:,::1] r, int k) nogil:
-        cdef double u
-        u = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2]) / self.r_h
-        return -self.v_h2 * log(1 + u) / u
-
-    cdef public inline double _value_triaxial(self, double[:,::1] r, int k) nogil:
-
         cdef double x, y, z, _r, u
 
         x = self.R[0,0]*r[k,0] + self.R[0,1]*r[k,1] + self.R[0,2]*r[k,2]
@@ -307,17 +336,7 @@ cdef class _LeeSutoNFWPotential(_CPotential):
         u = _r / self.r_h
         return self.v_h2*((self.e_b2/2 + self.e_c2/2)*((1/u - 1/u**3)*log(u + 1) - 1 + (2*u**2 - 3*u + 6)/(6*u**2)) + (self.e_b2*y**2/(2*_r*_r) + self.e_c2*z*z/(2*_r*_r))*((u*u - 3*u - 6)/(2*u*u*(u + 1)) + 3*log(u + 1)/u/u/u) - log(u + 1)/u)
 
-    cdef public inline void _gradient_spherical(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
-        cdef double fac, u
-
-        u = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2]) / self.r_h
-        fac = self.v_h2 / (u*u*u) / self.r_h2 * (log(1+u) - u/(1+u))
-
-        grad[k,0] += fac*r[k,0]
-        grad[k,1] += fac*r[k,1]
-        grad[k,2] += fac*r[k,2]
-
-    cdef public inline void _gradient_triaxial(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
+    cdef public inline void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
         cdef:
             double x, y, z, _r, _r2, _r4, ax, ay, az
             double x0, x2, x22
@@ -355,23 +374,23 @@ cdef class _LeeSutoNFWPotential(_CPotential):
         grad[k,1] += self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
         grad[k,2] += self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
 
-    cdef public inline void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
-
-        if self.spherical == 1:
-            self._gradient_spherical(r, grad, k)
-        else:
-            self._gradient_triaxial(r, grad, k)
-
-class LeeSutoNFWPotential(CPotential, CartesianPotential):
+class LeeSutoTriaxialNFWPotential(CPotential, CartesianPotential):
     r"""
-    TODO:
-
-    .. math::
-
-        \Phi() =
+    Approximation of a Triaxial NFW Potential with the flattening in the density,
+    not the potential. See Lee & Suto (2003) for details.
 
     Parameters
     ----------
+    v_h : numeric
+        Scale velocity.
+    r_h : numeric
+        Scale radius.
+    a : numeric
+        Major axis.
+    b : numeric
+        Intermediate axis.
+    c : numeric
+        Minor axis.
     phi : numeric (optional)
         Euler angle for rotation about z-axis (using the x-convention
         from Goldstein). Allows for specifying a misalignment between
@@ -389,9 +408,10 @@ class LeeSutoNFWPotential(CPotential, CartesianPotential):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_h, r_h, a, b, c, phi=0., theta=0., psi=0., units=None):
+    def __init__(self, v_h, r_h, a, b, c, units, phi=0., theta=0., psi=0.):
         self.units = units
-        parameters = dict(v_h=v_h, r_h=r_h, a=a, b=b, c=c)
+        _G = G.decompose(units).value
+        parameters = dict(G=G, v_h=v_h, r_h=r_h, a=a, b=b, c=c)
 
         if theta != 0 or phi != 0 or psi != 0:
             D = rotation_matrix(phi, "z", unit=u.radian) # TODO: Bad assuming radians
@@ -403,8 +423,8 @@ class LeeSutoNFWPotential(CPotential, CartesianPotential):
             R = np.eye(3)
 
         parameters['R'] = R
-        super(LeeSutoNFWPotential, self).__init__(_LeeSutoNFWPotential,
-                                                  parameters=parameters)
+        super(LeeSutoTriaxialNFWPotential, self).__init__(_LeeSutoTriaxialNFWPotential,
+                                                          parameters=parameters)
 
 # ============================================================================
 #    Triaxial, Logarithmic potential
@@ -416,11 +436,8 @@ cdef class _LogarithmicPotential(_CPotential):
     cdef public double v_c2, r_h2, q1_2, q2_2, q3_2, x0
     cdef public double[:,::1] R, Rinv
 
-    def __init__(self, double v_c, double r_h, double q1, double q2, double q3,
+    def __init__(self, double G, double v_c, double r_h, double q1, double q2, double q3,
                  double[:,::1] R):
-        """ Units of everything should be in the system:
-                kpc, Myr, radian, M_sun
-        """
 
         self.v_c = v_c
         self.v_c2 = v_c*v_c
@@ -436,7 +453,7 @@ cdef class _LogarithmicPotential(_CPotential):
         self.R = R
         self.Rinv = np.linalg.inv(R)
 
-        self.G = 4.49975332435e-12  # kpc, Myr, Msun
+        self.G = G
 
     cdef public inline double _value(self, double[:,::1] r, int k) nogil:
 
@@ -472,11 +489,9 @@ class LogarithmicPotential(CPotential, CartesianPotential):
     r"""
     Triaxial logarithmic potential.
 
-    TODO:
-
     .. math::
 
-        \Phi &= \frac{1}{2}v_{c}^2\ln((x/q_1)^2 + (y/q_2)^2 + (z/q_3)^2 + r_h^2)\\
+        \Phi(x,y,z) &= \frac{1}{2}v_{c}^2\ln((x/q_1)^2 + (y/q_2)^2 + (z/q_3)^2 + r_h^2)\\
 
     Parameters
     ----------
@@ -485,11 +500,11 @@ class LogarithmicPotential(CPotential, CartesianPotential):
     r_h : numeric
         Scale radius.
     q1 : numeric
-        Flattening in X-Y plane.
+        Flattening in X.
     q2 : numeric
-        Flattening in X-Y plane.
+        Flattening in Y.
     q3 : numeric
-        Flattening in Z direction.
+        Flattening in Z.
     phi : numeric (optional)
         Euler angle for rotation about z-axis (using the x-convention
         from Goldstein). Allows for specifying a misalignment between
@@ -507,9 +522,10 @@ class LogarithmicPotential(CPotential, CartesianPotential):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_c, r_h, q1, q2, q3, phi=0., theta=0., psi=0., units=None):
+    def __init__(self, v_c, r_h, q1, q2, q3, units, phi=0., theta=0., psi=0.):
         self.units = units
-        parameters = dict(v_c=v_c, r_h=r_h, q1=q1, q2=q2, q3=q3)
+        _G = G.decompose(units).value
+        parameters = dict(G=_G, v_c=v_c, r_h=r_h, q1=q1, q2=q2, q3=q3)
 
         if theta != 0 or phi != 0 or psi != 0:
             D = rotation_matrix(phi, "z", unit=u.radian)  # TODO: Bad assuming radians
@@ -523,135 +539,3 @@ class LogarithmicPotential(CPotential, CartesianPotential):
         parameters['R'] = R
         super(LogarithmicPotential, self).__init__(_LogarithmicPotential,
                                                    parameters=parameters)
-
-# ============================================================================
-#    Pal5 Challenge Halo (for Gaia Challenge)
-#
-cdef class _Pal5AxisymmetricNFWPotential(_CPotential):
-
-    # here need to cdef all the attributes
-    cdef public double M, Rh, qz
-    cdef public double G, GM, qz2
-
-    def __init__(self, double M, double Rh, double qz):
-        """ Units of everything should be in the system:
-                kpc, Myr, radian, M_sun
-        """
-        self.M = M
-        self.Rh = Rh
-        self.qz = qz
-
-        self.qz2 = self.qz * self.qz
-        self.G = 4.49975332435e-12  # kpc, Myr, Msun
-        self.GM = self.G * self.M
-
-    cdef public inline double _value(self, double[:,::1] r, int k) nogil:
-        cdef double R
-        R = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2]/self.qz2)
-        return -self.GM / R * log(1. + R/self.Rh)
-
-    cdef public inline void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
-        cdef double R, dPhi_dR
-        R = sqrt(r[k,0]*r[k,0] + r[k,1]*r[k,1] + r[k,2]*r[k,2]/self.qz2)
-        dPhi_dR = self.GM / R / R * (log(1+R/self.Rh) - R/(R+self.Rh))
-        grad[k,0] += dPhi_dR * r[k,0] / R
-        grad[k,1] += dPhi_dR * r[k,1] / R
-        grad[k,2] += dPhi_dR * r[k,2] / (R * self.qz2)
-
-class Pal5AxisymmetricNFWPotential(CPotential, CartesianPotential):
-    r"""
-    Flattened, axisymmetric NFW potential Andreas used for the Pal 5 challenge.
-
-    .. math::
-
-        \Phi &=
-
-    Parameters
-    ----------
-    TODO:
-    qz : numeric
-        Flattening in Z direction.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units.
-
-    """
-    def __init__(self, M, Rh, qz, units=None):
-        self.units = units
-        parameters = dict(M=M, Rh=Rh, qz=qz)
-        super(Pal5AxisymmetricNFWPotential, self).__init__(_Pal5AxisymmetricNFWPotential,
-                                                           parameters=parameters)
-
-
-##############################################################################
-#    NFW potential with flattening in potential
-#
-cdef class _NFWPotential(_CPotential):
-
-    # here need to cdef all the attributes
-    cdef public double v_h, r_h, q1, q2, q3
-    cdef public double G, v_h2
-
-    def __init__(self, double v_h, double r_h, double q1, double q2, double q3):
-        """ Units of everything should be in the system:
-                kpc, Myr, radian, M_sun
-        """
-        self.v_h = v_h
-        self.r_h = r_h
-        self.q1 = q1
-        self.q2 = q2
-        self.q3 = q3
-
-        self.v_h2 = self.v_h * self.v_h
-        self.G = 4.49975332435e-12  # kpc, Myr, Msun
-
-    cdef public inline double _value(self, double[:,::1] r, int k) nogil:
-        cdef double R
-        R = sqrt(r[k,0]*r[k,0]/(self.q1*self.q1) + 
-                 r[k,1]*r[k,1]/(self.q2*self.q2) + 
-                 r[k,2]*r[k,2]/(self.q3*self.q3) + self.r_h*self.r_h)
-        return -self.v_h2 * self.r_h / R * log(1. + R/self.r_h)
-
-    cdef public inline void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
-        cdef double R, dPhi_dR
-        R = sqrt(r[k,0]*r[k,0]/(self.q1*self.q1) + 
-                 r[k,1]*r[k,1]/(self.q2*self.q2) + 
-                 r[k,2]*r[k,2]/(self.q3*self.q3) + self.r_h*self.r_h)
-        dPhi_dR = self.v_h2 * self.r_h / R / R * (log(1+R/self.r_h) - R/(R+self.r_h))
-        grad[k,0] += dPhi_dR * r[k,0] / (R * self.q1 * self.q1)
-        grad[k,1] += dPhi_dR * r[k,1] / (R * self.q2 * self.q2)
-        grad[k,2] += dPhi_dR * r[k,2] / (R * self.q3 * self.q3)
-
-class NFWPotential(CPotential, CartesianPotential):
-    r"""
-    Triaxial NFW potential.
-
-    .. math::
-
-        \Phi &= -v_h^2\frac{\ln(1 + r/r_h)}{r/r_h}\\
-        r^2 = (x/q_1)^2 + (y/q_2)^2 + (z/q_3)^2 + r_h^2
-
-    Parameters
-    ----------
-    v_h : numeric
-        Scale velocity.
-    r_h : numeric
-        Scale radius.
-    q1 : numeric
-        Flattening in X direction.
-    q2 : numeric
-        Flattening in Y direction.
-    q3 : numeric
-        Flattening in Z direction.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units.
-
-    """
-
-    def __init__(self, v_h, r_h, q1, q2, q3, units=None):
-        self.units = units
-        parameters = dict(v_h=v_h, r_h=r_h, q1=q1, q2=q2, q3=q3)
-
-        super(NFWPotential, self).__init__(_NFWPotential,
-                                           parameters=parameters)
