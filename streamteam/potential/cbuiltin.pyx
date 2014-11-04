@@ -40,8 +40,8 @@ cdef extern from "math.h":
     double pow(double x, double n) nogil
 
 __all__ = ['HernquistPotential', 'MiyamotoNagaiPotential', 'SphericalNFWPotential',
-           'LeeSutoNFWPotential', 'LogarithmicPotential',
-           'JaffePotential', 'NFWPotential']
+           'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential', 'JaffePotential',
+           'SphericalNFWPotential']
 
 # ============================================================================
 #    Hernquist Spheroid potential from Hernquist 1990
