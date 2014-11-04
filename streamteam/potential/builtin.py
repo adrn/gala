@@ -12,12 +12,10 @@ import numpy as np
 from astropy.constants import G
 
 from .core import Potential, CartesianPotential
-from ..coordinates import cartesian_to_spherical, spherical_to_cartesian
 
 __all__ = ["PointMassPotential", "MiyamotoNagaiPotential",
            "HernquistPotential", "LogarithmicPotential",
-           "IsochronePotential",
-           "HarmonicOscillatorPotential"]
+           "IsochronePotential", "HarmonicOscillatorPotential"]
 
 ############################################################
 #    Harmonic oscillator
