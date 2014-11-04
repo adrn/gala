@@ -13,7 +13,8 @@ import numpy as np
 # Project
 # from .core import CartesianCompositePotential
 from .cpotential import CCompositePotential
-from .cbuiltin import HernquistPotential, MiyamotoNagaiPotential, LeeSutoNFWPotential
+from .cbuiltin import HernquistPotential, MiyamotoNagaiPotential, \
+    LeeSutoTriaxialNFWPotential, SphericalNFWPotential
 from ..units import galactic
 
 __all__ = ['PW14Potential']
@@ -38,9 +39,13 @@ class PW14Potential(CCompositePotential):
         kwargs["bulge"] = HernquistPotential(units=units,
                                              m=m_spher, c=c)
 
-        kwargs["halo"] = LeeSutoNFWPotential(units=units,
-                                             a=q1, b=q2, c=q3,
-                                             v_h=v_h, r_h=r_h,
-                                             phi=phi, theta=theta, psi=psi)
+        if q1 == 1 and q2 == 1 and q3 == 1:
+            kwargs["halo"] = SphericalNFWPotential(units=units,
+                                                   v_h=v_h, r_h=r_h)
+        else:
+            kwargs["halo"] = LeeSutoTriaxialNFWPotential(units=units,
+                                                         a=q1, b=q2, c=q3,
+                                                         v_h=v_h, r_h=r_h,
+                                                         phi=phi, theta=theta, psi=psi)
         super(PW14Potential,self).__init__(**kwargs)
         self.c_instance.G = G.decompose(units).value
