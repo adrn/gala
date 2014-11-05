@@ -142,9 +142,9 @@ cdef class _CPotential:
         ndim = q.shape[1]
 
         for k in range(nparticles):
-            pot[k] = self._value(q,k)
+            pot[k] = self._value(&q[k,0])
 
-    cdef public double _value(self, double[:,::1] q, int k) nogil:
+    cdef public double _value(self, double* q) nogil:
         return 0.
 
     # -------------------------------------------------------------
@@ -155,11 +155,11 @@ cdef class _CPotential:
 
         cdef double [:,::1] grad = np.zeros((nparticles,ndim))
         for k in range(nparticles):
-            self._gradient(q, grad, k)
+            self._gradient(&q[k,0], &grad[k,0])
 
         return np.array(grad)
 
-    cdef public void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
+    cdef public void _gradient(self, double *r, double *grad) nogil:
         grad[0] = 0.
         grad[1] = 0.
         grad[2] = 0.
@@ -172,46 +172,45 @@ cdef class _CPotential:
 
         cdef double [:,:,::1] hess = np.zeros((nparticles,ndim,ndim))
         for k in range(nparticles):
-            self._hessian(w, hess, k)
+            self._hessian(&w[k,0], &hess[k,0,0])
 
         return np.array(hess)
 
-    cdef public void _hessian(self, double[:,::1] w, double[:,:,::1] hess, int k) nogil:
+    cdef public void _hessian(self, double *w, double *hess) nogil:
         cdef int i,j
         for i in range(3):
             for j in range(3):
-                hess[i,j] = 0.
+                hess[3*i+j] = 0.
 
     # -------------------------------------------------------------
     cpdef mass_enclosed(self, double[:,::1] q):
         cdef int nparticles, k
         nparticles = q.shape[0]
 
-        cdef double [:,::1] epsilon = np.zeros((1,3))
+        cdef double [::1] epsilon = np.zeros(3)
         cdef double [::1] mass = np.zeros((nparticles,))
         for k in range(nparticles):
-            mass[k] = self._mass_enclosed(q, epsilon, self.G, k)
+            mass[k] = self._mass_enclosed(&q[k,0], &epsilon[0], self.G)
         return np.array(mass)
 
-    cdef public double _mass_enclosed(self, double[:,::1] q, double [:,::1] epsilon, double Gee, int k) nogil:
+    cdef public double _mass_enclosed(self, double *q, double *epsilon, double Gee) nogil:
         cdef double h, r, dPhi_dr
 
         # Fractional step-size
         h = 0.01
 
         # Step-size for estimating radial gradient of the potential
-        r = sqrt(q[k,0]*q[k,0] + q[k,1]*q[k,1] + q[k,2]*q[k,2])
+        r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2])
 
         for j in range(3):
-            epsilon[0,j] = h * q[k,j]/r + q[k,j]
-        dPhi_dr = self._value(epsilon,0)
+            epsilon[j] = h * q[j]/r + q[j]
+        dPhi_dr = self._value(epsilon)
 
         for j in range(3):
-            epsilon[0,j] = h * q[k,j]/r - q[k,j]
-        dPhi_dr -= self._value(epsilon,0)
+            epsilon[j] = h * q[j]/r - q[j]
+        dPhi_dr -= self._value(epsilon)
 
         return fabs(r*r * dPhi_dr / Gee / (2.*h))
-        # return fabs(r*r * dPhi_dr / (2.*h))
 
 # ==============================================================================
 
@@ -235,7 +234,7 @@ class CCompositePotential(CPotential):
         self.c_instance = _CCompositePotential([p.c_instance for p in kwargs.values()])
         super(CPotential, self).__init__(func=lambda x: x, parameters=dict())
 
-from python cimport PyObject
+from cpython cimport PyObject
 cdef class _CCompositePotential(_CPotential):
 
     cdef public list py_instances
@@ -253,30 +252,30 @@ cdef class _CCompositePotential(_CPotential):
         for i in range(self.ninstances):
             self.obj_list[i] = <PyObject *>self.py_instances[i]
 
-    cdef public double _value(self, double[:,::1] q, int k) nogil:
+    cdef public double _value(self, double* q) nogil:
         # whoa this is some whack cython wizardry right here
         #   (stolen from stackoverflow)
         cdef double v = 0.
         for i in range(self.ninstances):
-            v += (<_CPotential>(self.obj_list[i]))._value(q, k)
+            v += (<_CPotential>(self.obj_list[i]))._value(q)
         return v
 
-    cdef public void _gradient(self, double[:,::1] r, double[:,::1] grad, int k) nogil:
+    cdef public void _gradient(self, double *r, double *grad) nogil:
         # whoa this is some whack cython wizardry right here
         #   (stolen from stackoverflow)
         cdef double v = 0.
 
         for i in range(self.ninstances):
-            (<_CPotential>(self.obj_list[i]))._gradient(r, grad, k)
+            (<_CPotential>(self.obj_list[i]))._gradient(r, grad)
 
-    cdef public void _hessian(self, double[:,::1] w, double[:,:,::1] hess, int k) nogil:
+    cdef public void _hessian(self, double *w, double *hess) nogil:
         # whoa this is some whack cython wizardry right here
         #   (stolen from stackoverflow)
         for i in range(self.ninstances):
-            (<_CPotential>(self.obj_list[i]))._hessian(w, hess, k)
+            (<_CPotential>(self.obj_list[i]))._hessian(w, hess)
 
-    cdef public double _mass_enclosed(self, double[:,::1] q, double [:,::1] epsilon, double Gee, int k) nogil:
+    cdef public double _mass_enclosed(self, double *q, double *epsilon, double Gee) nogil:
         cdef double mm = 0.
         for i in range(self.ninstances):
-            mm += (<_CPotential>(self.obj_list[i]))._mass_enclosed(q, epsilon, Gee, k)
+            mm += (<_CPotential>(self.obj_list[i]))._mass_enclosed(q, epsilon, Gee)
         return mm
