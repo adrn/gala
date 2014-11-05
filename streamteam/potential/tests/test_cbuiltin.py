@@ -95,6 +95,7 @@ class PotentialTestBase(object):
 
     @pytest.mark.skipif(True, reason="derp.")
     def test_profile(self):
+        # Have to turn on cython profiling for this to work
         import pstats, cProfile
 
         r = np.random.uniform(size=(nparticles,3))
