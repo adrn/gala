@@ -12,18 +12,17 @@ from distutils.extension import Extension
 # Third-party
 import numpy as np
 from Cython.Distutils import build_ext
+from Cython.Build import cythonize
 
 # Get numpy path
 numpy_base_path = os.path.split(np.__file__)[0]
 numpy_incl_path = os.path.join(numpy_base_path, "core", "include")
 
-cpotential = Extension("streamteam.potential.cpotential",
-                       ["streamteam/potential/cpotential.pyx"],
-                       include_dirs=[numpy_incl_path])
+potential = Extension("streamteam.potential.*",
+                      ["streamteam/potential/*.pyx"],
+                      include_dirs=[numpy_incl_path])
 
-cbuiltin = Extension("streamteam.potential.cbuiltin",
-                     ["streamteam/potential/cbuiltin.pyx"],
-                     include_dirs=[numpy_incl_path])
+extensions = [potential]
 
 setup(
     name="streamteam",
@@ -32,7 +31,7 @@ setup(
     author_email="adrn@astro.columbia.edu",
     license="BSD",
     cmdclass = {'build_ext': build_ext},
-    ext_modules=[cpotential, cbuiltin],
+    ext_modules=cythonize(extensions),
     packages=["streamteam", "streamteam.coordinates", "streamteam.io",
               "streamteam.observation", "streamteam.integrate",
               "streamteam.dynamics", "streamteam.inference",
