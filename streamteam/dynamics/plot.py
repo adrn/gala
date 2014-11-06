@@ -6,11 +6,7 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os, sys
-
 # Third-party
-import matplotlib.pyplot as plt
 import numpy as np
 
 __all__ = ['plot_orbits', 'three_panel']
@@ -26,6 +22,8 @@ def _get_axes(axes=None, triangle=False, subplots_kwargs=dict()):
     subplots_kwargs : dict (optional)
         Dictionary of kwargs passed to the matplotlib `subplots()` call.
     """
+
+    import matplotlib.pyplot as plt
 
     if triangle and axes is None:
         figsize = subplots_kwargs.pop('figsize', (12,12))
