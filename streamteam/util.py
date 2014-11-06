@@ -100,3 +100,16 @@ class use_backend(object):
 
     def __exit__(self, type, value, tb):
         gui, backend = self.shell.enable_matplotlib(self.old_backend)
+
+def inherit_docs(cls):
+    for name, func in vars(cls).items():
+        if not func.__doc__:
+            for parent in cls.__bases__:
+                try:
+                    parfunc = getattr(parent, name)
+                except AttributeError: # parent doesn't have function
+                    break
+                if parfunc and getattr(parfunc, '__doc__', None):
+                    func.__doc__ = parfunc.__doc__
+                    break
+    return cls
