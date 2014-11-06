@@ -4,17 +4,8 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os
-import copy
-import inspect
-import logging
-import functools
-
 # Third-party
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import cm
 import astropy.units as u
 from astropy.utils import isiterable
 
@@ -174,6 +165,9 @@ class Potential(object):
             kwargs passed to either contourf() or plot().
 
         """
+
+        import matplotlib.pyplot as plt
+        from matplotlib import cm
 
         # figure out which elements are iterable, which are numeric
         _grids = []
