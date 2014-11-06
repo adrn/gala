@@ -6,11 +6,13 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
 import numpy as np
+from astropy.constants import G
 import astropy.units as u
 from astropy.utils import isiterable
 
 # Project
 from ..integrate import *
+from ..util import inherit_docs
 
 __all__ = ["Potential", "CartesianPotential", "CompositePotential", "CartesianCompositePotential"]
 
@@ -25,6 +27,9 @@ class Potential(object):
     ----------
     func : function
         A function that computes the value of the potential.
+    units : iterable
+        A list of astropy.units.Unit objects that define a complete unit system.
+        Must include at least a length unit, time unit, and mass unit.
     gradient : function (optional)
         A function that computes the first derivatives (gradient) of the potential.
     hessian : function (optional)
@@ -35,7 +40,7 @@ class Potential(object):
 
     """
 
-    def __init__(self, func, gradient=None, hessian=None, parameters=dict()):
+    def __init__(self, func, units, gradient=None, hessian=None, parameters=dict()):
         # store parameters
         self.parameters = parameters
 
@@ -49,6 +54,13 @@ class Potential(object):
         self._gradient = gradient
         self._hessian = hessian
 
+        # TODO: validate units
+        self.units = units
+        self.G = G.decompose(self.units).value
+
+    # ========================================================================
+    # Base methods
+    #
     def value(self, x):
         """
         Compute the value of the potential at the given position(s).
@@ -88,24 +100,33 @@ class Potential(object):
                                       " the object was created!")
         return self._hessian(np.array(x), **self.parameters)
 
-    # def mass_enclosed(self, x):
-    #     """
-    #     Estimate the mass enclosed within the given position by assumine the potential
-    #     is spherical. This is not so good!
+    # ========================================================================
+    # Things that use the base methods
+    #
+    def mass_enclosed(self, x):
+        """
+        Estimate the mass enclosed within the given position by assumine the potential
+        is spherical. This is basic, and assumes spherical symmetry.
 
-    #     Parameters
-    #     ----------
-    #     x : array_like, numeric
-    #         Position to compute the Hessian.
-    #     """
-    #     if self._mass_enclosed is None:
-    #         raise NotImplementedError("No Hessian function was specified when"
-    #                                   " the object was created!")
-    #     return self._mass_enclosed(np.array(x), **self.parameters)
+        Parameters
+        ----------
+        x : array_like, numeric
+            Position to estimate the enclossed mass.
+        """
 
-    # Other useful functions to compute
-    def __call__(self, x):
-        return self.value(x)
+        # Fractional step-size in radius
+        h = 0.01
+
+        # Radius
+        r = np.sqrt(np.sum(x**2, axis=-1))
+
+        epsilon = h*x/r[...,np.newaxis]
+
+        dPhi_dr_plus = self.value(x + epsilon)
+        dPhi_dr_minus = self.value(x - epsilon)
+        diff = dPhi_dr_plus - dPhi_dr_minus
+
+        return np.abs(r*r * diff / self.G / (2.*h))
 
     def acceleration(self, x):
         """
@@ -117,7 +138,13 @@ class Potential(object):
         x : array_like, numeric
             Position to compute the acceleration at.
         """
-        return -self.gradient(np.array(x))
+        return -self.gradient(x)
+
+    # ========================================================================
+    # Python special methods
+    #
+    def __call__(self, x):
+        return self.value(x)
 
     def __repr__(self):
         pars = ""
@@ -145,6 +172,9 @@ class Potential(object):
     def __str__(self):
         return self.__class__.__name__
 
+    # ========================================================================
+    # Convenience methods that do fancy things
+    #
     def plot_contours(self, grid, ax=None, labels=None, subplots_kw=dict(), **kwargs):
         """
         Plot equipotentials contours. Computes the potential value on a grid
@@ -271,6 +301,9 @@ class CartesianPotential(Potential):
     ----------
     func : function
         A function that computes the value of the potential.
+    units : iterable
+        A list of astropy.units.Unit objects that define a complete unit system.
+        Must include at least a length unit, time unit, and mass unit.
     gradient : function (optional)
         A function that computes the first derivatives (gradient) of the potential.
     hessian : function (optional)
@@ -298,9 +331,7 @@ class CartesianPotential(Potential):
 
         return self.value(x) + 0.5*np.sum(v**2,axis=-1)
 
-# -------------------------------------------------------------------------------------------------
-# COMPOSITE POTENTIALS
-#
+@inherit_docs
 class CompositePotential(dict, Potential):
     """
     A potential composed of several distinct components. For example,
@@ -324,7 +355,7 @@ class CompositePotential(dict, Potential):
 
         >>> from streamteam.potential import HernquistPotential
         >>> cp = CompositePotential()
-        >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., units=[u.kpc,u.Myr,u.Msun])
+        >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., units=(u.kpc,u.Myr,u.Msun))
 
     """
     def __init__(self, **kwargs):
@@ -338,42 +369,17 @@ class CompositePotential(dict, Potential):
         super(CompositePotential, self).__setitem__(key, value)
 
     def _check_component(self, p):
-        # TODO: just check for value/gradient/hessian functions?
         if not isinstance(p, Potential):
             raise TypeError("Potential components may only be Potential "
                             "objects, not {0}.".format(type(p)))
 
     def value(self, x):
-        """
-        Compute the value of the potential at the given position(s).
-
-        Parameters
-        ----------
-        x : array_like, numeric
-            Position to compute the value of the potential.
-        """
         return np.array([p.value(x) for p in self.values()]).sum(axis=0)
 
     def gradient(self, x):
-        """
-        Compute the gradient of the potential at the given position(s).
-
-        Parameters
-        ----------
-        x : array_like, numeric
-            Position to compute the gradient.
-        """
         return np.array([p.gradient(x) for p in self.values()]).sum(axis=0)
 
     def hessian(self, x):
-        """
-        Compute the Hessian of the potential at the given position(s).
-
-        Parameters
-        ----------
-        x : array_like, numeric
-            Position to compute the Hessian.
-        """
         return np.array([p.hessian(x) for p in self.values()]).sum(axis=0)
 
 class CartesianCompositePotential(CompositePotential, CartesianPotential):
