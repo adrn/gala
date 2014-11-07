@@ -1,7 +1,5 @@
 from .core import *
 from .builtin import *
-from .cpotential import CPotential
+from .cpotential import *
 from .cbuiltin import *
-
-from .lm10 import LM10Potential
-from .apw import PW14Potential
+from .custom import *
