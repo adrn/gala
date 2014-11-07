@@ -4,9 +4,8 @@ html, body {
    font-family: 'Source Sans Pro', sans-serif;
 }
 
-.field-body blockquote {
-    padding-top: 3px;
-    padding-bottom: 3px;
-    font-size: 12pt;
-    font-weight: 300;
+
+.highlight pre {
+    font-size: 10pt !important;
+    padding: 8px !important;
 }
