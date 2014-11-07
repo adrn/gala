@@ -30,11 +30,12 @@ setup(
     author="Adrian M. Price-Whelan",
     author_email="adrn@astro.columbia.edu",
     license="BSD",
-    cmdclass = {'build_ext': build_ext},
+    cmdclass={'build_ext': build_ext},
     ext_modules=cythonize(extensions),
     packages=["streamteam", "streamteam.coordinates", "streamteam.io",
               "streamteam.observation", "streamteam.integrate",
               "streamteam.dynamics", "streamteam.inference",
               "streamteam.potential"],
-    scripts=['bin/plotsnap', 'bin/moviesnap', 'bin/snap2gal']
+    scripts=['bin/plotsnap', 'bin/moviesnap', 'bin/snap2gal'],
+    package_data={'streamteam.potential': ['*.pxd']},
 )
