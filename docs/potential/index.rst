@@ -9,11 +9,12 @@ Introduction
 
 This subpackage provides a number of classes for working with parametric
 gravitational potentials. There are `base classes`_ for defining custom
-potentials, but more useful are the `built-in potentials`_. These are commonly
-used potentials that have the potential form, gradient (and acceleration), and
-(in some cases) Hessians available as methods. These are particularly useful
-in combination with the `streamteam.integrate` subpackage -- see the `example`_
-below.
+potentials (see :ref:`custompotential` for more information), but more
+useful are the `built-in potentials`_. These are commonly used potentials
+that have the potential form, gradient (and acceleration), and (in some cases)
+Hessians available as methods. These are particularly useful in combination
+with the `streamteam.integrate` subpackage -- see the `example`_ below for a
+use case.
 
 Getting started with the built-in classes
 =========================================
@@ -28,15 +29,25 @@ time, and optionally an angle unit. For example,
 
 All of the built-in potential objects have defined methods that evaluate
 the value of the potential or the gradient/acceleration at a given
-position(s)::
+position(s). For example, here we will create a potential object for a
+2D point mass located at the origin with unit mass::
 
     >>> ptmass = PointMassPotential(m=1., x0=[0.,0.], units=(u.Msun, u.au, u.yr))
     >>> ptmass
     <PointMassPotential: x0=[0.0, 0.0], m=1.00>
+
+We can then evaluate the value of the potential at some other position::
+
     >>> ptmass.value([1.,-1.])
     -27.922166224010091
+
+Or at multiple positions, by passing in a 2D array::
+
     >>> ptmass.value([[1.,-1.],[2.,3.]])
     array([-27.92216622, -10.95197465])
+
+We may also compute the gradient of the potential or acceleration due to the potential::
+
     >>> ptmass.gradient([1.,-1.])
     array([ 13.96108311, -13.96108311])
     >>> ptmass.acceleration([1.,-1.])
@@ -45,7 +56,7 @@ position(s)::
 The position(s) must be specified in the same length units as specified in
 the unit system.
 
-The classes also allow plotting isopotential contours, either as 1D slices
+These objects also provide ... TODO ... plotting isopotential contours, either as 1D slices
 or contour plots over 2D grids. To plot a 1D slice over the dimension of
 interest, you pass in a grid of values to compute the potential on and
 then just numerical values for the other dimensions. For example, to
@@ -83,8 +94,8 @@ halo by setting the axis ratios to unity::
    import streamteam.potential as sp
 
    units = (u.kpc, u.Msun, u.Myr)
-   potential = sp.NFWPotential(v_h=(150*u.km/u.s).decompose(units).value,
-                               r_h=10., q1=1., q2=1., q3=1., units=units)
+   v_h = (250*u.km/u.s).decompose(units).value
+   potential = sp.SphericalNFWPotential(v_h=v_h, r_h=10., units=units)
 
 Now we need to define an integrator object to compute an orbit. We'll use the
 Leapfrog integration scheme implemented in the `integrate` subpackage. The
@@ -128,9 +139,9 @@ Base classes
    :nosignatures:
    :toctree: _potential/
 
-   streamteam.potential.core.Potential
-   streamteam.potential.core.CartesianPotential
-   streamteam.potential.core.CompositePotential
+   streamteam.potential.Potential
+   streamteam.potential.CartesianPotential
+   streamteam.potential.CompositePotential
 
 -------------------------------------------------------------
 
@@ -142,11 +153,16 @@ Built-in potentials
 .. autosummary::
    :nosignatures:
    :toctree: _potential/
+   :template: class.rst
 
-   streamteam.potential.builtin.HarmonicOscillatorPotential
-   streamteam.potential.builtin.HernquistPotential
-   streamteam.potential.builtin.IsochronePotential
-   streamteam.potential.builtin.MiyamotoNagaiPotential
-   streamteam.potential.builtin.NFWPotential
-   streamteam.potential.builtin.PointMassPotential
-   streamteam.potential.builtin.LogarithmicPotential
+   streamteam.potential.HarmonicOscillatorPotential
+   streamteam.potential.HernquistPotential
+   streamteam.potential.IsochronePotential
+   streamteam.potential.JaffePotential
+   streamteam.potential.LeeSutoTriaxialNFWPotential
+   streamteam.potential.LogarithmicPotential
+   streamteam.potential.MiyamotoNagaiPotential
+   streamteam.potential.PointMassPotential
+   streamteam.potential.SphericalNFWPotential
+
+
