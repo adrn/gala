@@ -69,7 +69,7 @@ class Potential(object):
         x : array_like, numeric
             Position to compute the value of the potential.
         """
-        return self._value(np.array(x), **self.parameters)
+        return self._value(np.atleast_2d(x), **self.parameters)
 
     def gradient(self, x):
         """
@@ -83,7 +83,7 @@ class Potential(object):
         if self._gradient is None:
             raise NotImplementedError("No gradient function was specified when"
                                       " the object was created!")
-        return self._gradient(np.array(x), **self.parameters)
+        return self._gradient(np.atleast_2d(x), **self.parameters)
 
     def hessian(self, x):
         """
@@ -97,7 +97,7 @@ class Potential(object):
         if self._hessian is None:
             raise NotImplementedError("No Hessian function was specified when"
                                       " the object was created!")
-        return self._hessian(np.array(x), **self.parameters)
+        return self._hessian(np.atleast_2d(x), **self.parameters)
 
     # ========================================================================
     # Things that use the base methods
@@ -377,12 +377,15 @@ class CompositePotential(dict, Potential):
                             "objects, not {0}.".format(type(p)))
 
     def value(self, x):
+        x = np.atleast_2d(x).copy()
         return np.array([p.value(x) for p in self.values()]).sum(axis=0)
 
     def gradient(self, x):
+        x = np.atleast_2d(x).copy()
         return np.array([p.gradient(x) for p in self.values()]).sum(axis=0)
 
     def hessian(self, x):
+        x = np.atleast_2d(x).copy()
         return np.array([p.hessian(x) for p in self.values()]).sum(axis=0)
 
 class CartesianCompositePotential(CompositePotential, CartesianPotential):
