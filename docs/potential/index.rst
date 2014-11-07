@@ -138,6 +138,7 @@ Base classes
 .. autosummary::
    :nosignatures:
    :toctree: _potential/
+   :template: class.rst
 
    streamteam.potential.Potential
    streamteam.potential.CartesianPotential
