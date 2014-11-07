@@ -74,7 +74,6 @@ class TestPointMass(object):
         with pytest.raises(TypeError):
             potential = PointMassPotential(x0=[0.,0.,0.])
 
-
     def test_pointmass_eval(self):
         potential = PointMassPotential(m=1., x0=[0.,0.,0.],
                                        units=[u.M_sun, u.yr, u.au])
@@ -97,6 +96,27 @@ class TestPointMass(object):
 
         fig,axes = potential.plot_contours(grid=(grid,grid,0.))
         fig.savefig(os.path.join(plot_path, "point_mass_2d.png"))
+
+class TestIsochrone(object):
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+
+    def test_create_plot(self):
+
+        potential = IsochronePotential(units=self.units,
+                                       m=1.E11, b=5.)
+
+        r = ([1.,0.,0.]*u.kpc).reshape(1,3)
+        pot_val = potential.value(r)
+        acc_val = potential.acceleration(r)
+
+        axes = None
+        grid = np.linspace(-20.,20, 50)
+        for slc in np.linspace(-20.,0.,10):
+            if axes is None:
+                fig,axes = potential.plot_contours(grid=(grid,slc,0.), marker=None)
+            else:
+                potential.plot_contours(grid=(grid,slc,0.), ax=axes, marker=None)
+        fig.savefig(os.path.join(plot_path, "isochrone_1d.png"))
 
 class TestComposite(object):
     units = (u.au, u.M_sun, u.yr)
@@ -161,170 +181,3 @@ class TestComposite(object):
         grid = np.linspace(-1.,1,50)
         fig,axes = potential.plot_contours(grid=(grid,grid,0.))
         fig.savefig(os.path.join(plot_path, "many_point_mass.png"))
-
-class TestIsochrone(object):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
-    def test_create_plot(self):
-
-        potential = IsochronePotential(units=self.units,
-                                       m=1.E11, b=5.)
-
-        r = ([1.,0.,0.]*u.kpc).reshape(1,3)
-        pot_val = potential.value(r)
-        acc_val = potential.acceleration(r)
-
-        axes = None
-        grid = np.linspace(-20.,20, 50)
-        for slc in np.linspace(-20.,0.,10):
-            if axes is None:
-                fig,axes = potential.plot_contours(grid=(grid,slc,0.), marker=None)
-            else:
-                potential.plot_contours(grid=(grid,slc,0.), ax=axes, marker=None)
-        fig.savefig(os.path.join(plot_path, "isochrone_1d.png"))
-
-class TestMiyamotoNagai(object):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
-    def test_create_plot(self):
-
-        potential = MiyamotoNagaiPotential(units=self.units,
-                                           m=1.E11,
-                                           a=6.5,
-                                           b=0.26)
-
-        # single
-        r = [1.,0.,0.]
-        pot_val = potential.value(r)
-        acc_val = potential.acceleration(r)
-
-        # multiple
-        r = np.random.uniform(size=(100,3))
-        pot_val = potential.value(r)
-        acc_val = potential.acceleration(r)
-
-        grid = np.linspace(-20.,20, 200)
-        fig,axes = potential.plot_contours(grid=(grid,0.,grid))
-        fig.savefig(os.path.join(plot_path, "miyamoto_nagai_2d.png"))
-
-class TestHernquist(object):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
-    def test_create_plot(self):
-
-        potential = HernquistPotential(units=self.units,
-                                       m=1.E11, c=10.)
-
-        # single
-        r = [1.,0.,0.]
-        pot_val = potential.value(r)
-        acc_val = potential.acceleration(r)
-
-        # multiple
-        r = np.random.uniform(size=(100,3))
-        pot_val = potential.value(r)
-        acc_val = potential.acceleration(r)
-
-        grid = np.linspace(-20.,20, 50)
-        fig,axes = potential.plot_contours(grid=(grid,grid,0.))
-        fig.savefig(os.path.join(plot_path, "hernquist.png"))
-
-class TestLogarithmic(object):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
-    def test_create_plot(self):
-
-        potentials = []
-        potentials.append(LogarithmicPotential(units=self.units,
-                                                       q1=1., q2=1., q3=1.,
-                                                       phi=0., v_c=0.15, r_h=10.))
-        potentials.append(LogarithmicPotential(units=self.units,
-                                                       q1=0.72, q2=1., q3=1.,
-                                                       phi=0., v_c=0.15, r_h=1.))
-        potentials.append(LogarithmicPotential(units=self.units,
-                                                       q1=1., q2=0.72, q3=1.,
-                                                       phi=np.pi/4, v_c=0.15, r_h=1.))
-        potentials.append(LogarithmicPotential(units=self.units,
-                                                       q1=1., q2=1., q3=0.72,
-                                                       phi=0., v_c=0.08, r_h=10.))
-
-
-        # single
-        r = [10.,0.,0.]
-        pot_val = potentials[0].value(r)
-        acc_val = potentials[0].acceleration(r)
-
-        # multiple
-        r = np.random.uniform(10., 50., size=(100,3))
-        pot_val = potentials[0].value(r)
-        acc_val = potentials[0].acceleration(r)
-
-        grid = np.linspace(-20.,20, 50)
-
-        fig,axes = plt.subplots(2,2,sharex=True,sharey=True,figsize=(12,12))
-
-        for ii,potential in enumerate(potentials):
-            potential.plot_contours(grid=(grid,grid,0.), ax=axes.flat[ii])
-
-        fig.savefig(os.path.join(plot_path, "log.png"))
-
-class TestNFW(object):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
-    def test_create_plot(self):
-
-        potentials = []
-        potentials.append(NFWPotential(units=self.units,
-                                       q1=1., q2=1., q3=1.,
-                                       v_h=0.15, r_h=10.))
-        potentials.append(NFWPotential(units=self.units,
-                                       q1=0.75, q2=1., q3=1.,
-                                       v_h=0.15, r_h=10.))
-        potentials.append(NFWPotential(units=self.units,
-                                       q1=1., q2=0.75, q3=1.,
-                                       v_h=0.15, r_h=1.))
-        potentials.append(NFWPotential(units=self.units,
-                                       q1=1., q2=1., q3=1.3,
-                                       v_h=0.08, r_h=1.))
-
-        # single
-        r = [10.,0.,0.]
-        pot_val = potentials[0].value(r)
-        acc_val = potentials[0].acceleration(r)
-
-        # multiple
-        r = np.random.uniform(10., 50., size=(100,3))
-        pot_val = potentials[0].value(r)
-        acc_val = potentials[0].acceleration(r)
-
-        grid = np.linspace(-20.,20, 50)
-
-        fig,axes = plt.subplots(2,2,sharex=True,sharey=True,figsize=(12,12))
-
-        for ii,potential in enumerate(potentials):
-            potential.plot_contours(grid=(grid,grid,0.), ax=axes.flat[ii])
-
-        fig.savefig(os.path.join(plot_path, "nfw.png"))
-
-class TestCompositeGalaxy(object):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
-    def test_creation(self):
-        potential = CompositePotential()
-        potential["disk"] = MiyamotoNagaiPotential(units=self.units,
-                                                   m=1.E11, a=6.5, b=0.26)
-
-        potential["bulge"] = HernquistPotential(units=self.units,
-                                                m=1.E11, c=0.7)
-
-        potential["halo"] = LogarithmicPotential(units=self.units,
-                                                         q1=1.4, q2=1., q3=1.5,
-                                                         phi=1.69, v_c=0.17, r_h=12.)
-
-        # single
-        r = [10.,0.,0.]
-        pot_val = potential.value(r)
-        acc_val = potential.acceleration(r)
-
-        # multiple
-        r = np.random.uniform(10., 50., size=(100,3))
-        pot_val = potential.value(r)
-        acc_val = potential.acceleration(r)
-
-        grid = np.linspace(-20.,20, 50)
-        fig,axes = potential.plot_contours(grid=(grid,grid,0.))
-        fig.savefig(os.path.join(plot_path, "composite_galaxy.png"))

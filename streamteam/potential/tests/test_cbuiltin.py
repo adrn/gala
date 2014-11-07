@@ -57,24 +57,11 @@ class PotentialTestBase(object):
         pot_val = self.potential.value(r)
         acc_val = self.potential.acceleration(r)
 
-        if self.pypotential is not None:
-            py_pot_val = self.potential.value(r)
-            py_acc_val = self.potential.acceleration(r)
-
-            assert np.allclose(py_pot_val, pot_val)
-            assert np.allclose(py_acc_val, acc_val)
-            print("Cython and Python values match")
-
     def test_orbit_integration(self):
         w0 = self.w0
         t1 = time.time()
         t,w = self.potential.integrate_orbit(w0, dt=1., nsteps=10000)
         print("Cython orbit integration time (10000 steps): {}".format(time.time() - t1))
-
-        if self.pypotential is not None:
-            t1 = time.time()
-            t,w = self.pypotential.integrate_orbit(w0, dt=1., nsteps=10000)
-            print("Python orbit integration time (10000 steps): {}".format(time.time() - t1))
 
     def test_time_methods(self):
 
@@ -85,13 +72,6 @@ class PotentialTestBase(object):
                 x = getattr(self.potential, func_name)(r)
             print("Cython - {}: {:e} sec per call".format(func_name,
                   (time.time()-t1)/float(niter)))
-
-            if self.pypotential is not None:
-                t1 = time.time()
-                for ii in range(niter):
-                    x = getattr(self.pypotential, func_name)(r)
-                print("Python - {}: {:e} sec per call".format(func_name,
-                                (time.time()-t1)/float(niter)))
 
     @pytest.mark.skipif(True, reason="derp.")
     def test_profile(self):
@@ -133,13 +113,9 @@ class PotentialTestBase(object):
         fig.savefig(os.path.join(plot_path, "{}_2d_cy.png"\
                         .format(self.name)))
 
-        if self.pypotential is not None:
-            t1 = time.time()
-            fig,axes = self.pypotential.plot_contours(grid=(grid,grid,0.),
-                                                      subplots_kw=dict(figsize=(8,8)))
-            print("Python plot_contours time", time.time() - t1)
-            fig.savefig(os.path.join(plot_path, "{}_2d_py.png"\
-                         .format(self.name)))
+# ----------------------------------------------------------------------------
+#  Potentials to test
+#
 
 class TestHernquist(PotentialTestBase):
     units = (u.kpc, u.M_sun, u.Myr, u.radian)
@@ -149,12 +125,9 @@ class TestHernquist(PotentialTestBase):
         print("="*50)
         print(self.__class__.__name__)
 
-        from ..builtin import HernquistPotential as PyHernquistPotential
-
         self.potential = HernquistPotential(units=self.units,
                                             m=1.E11, c=0.26)
-        self.pypotential = PyHernquistPotential(units=self.units,
-                                                m=1.E11, c=0.26)
+
         self.w0 = [1.,0.,0.,0.,0.1,0.1]
 
 class TestMiyamotoNagai(PotentialTestBase):
@@ -165,12 +138,9 @@ class TestMiyamotoNagai(PotentialTestBase):
         print("="*50)
         print(self.__class__.__name__)
 
-        from ..builtin import MiyamotoNagaiPotential as PyMiyamotoNagaiPotential
-
         self.potential = MiyamotoNagaiPotential(units=self.units,
                                                 m=1.E11, a=6.5, b=0.26)
-        self.pypotential = PyMiyamotoNagaiPotential(units=self.units,
-                                                    m=1.E11, a=6.5, b=0.26)
+
         self.w0 = [8.,0.,0.,0.,0.22,0.1]
 
 class TestSphericalNFWPotential(PotentialTestBase):
@@ -183,8 +153,6 @@ class TestSphericalNFWPotential(PotentialTestBase):
 
         self.potential = SphericalNFWPotential(units=self.units,
                                                v_h=0.35, r_h=12.)
-
-        self.pypotential = None
 
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
@@ -213,8 +181,6 @@ class TestLeeSutoTriaxialNFWPotential(PotentialTestBase):
                                                      v_h=0.35, r_h=12.,
                                                      a=1.3, b=1., c=0.8)
 
-        self.pypotential = None
-
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
 class TestMisalignedLeeSutoNFWPotential(PotentialTestBase):
@@ -232,8 +198,6 @@ class TestMisalignedLeeSutoNFWPotential(PotentialTestBase):
                                                      phi=np.radians(30.),
                                                      theta=np.radians(30))
 
-        self.pypotential = None
-
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
 class TestLogarithmicPotential(PotentialTestBase):
@@ -244,14 +208,9 @@ class TestLogarithmicPotential(PotentialTestBase):
         print("="*50)
         print(self.__class__.__name__)
 
-        from ..builtin import LogarithmicPotential as PyLogarithmicPotential
-
         self.potential = LogarithmicPotential(units=self.units,
                                               v_c=0.17, r_h=10.,
                                               q1=1.2, q2=1., q3=0.8)
-
-        self.pypotential = PyLogarithmicPotential(v_c=0.17, r_h=10.,
-                                                  q1=1.2, q2=1., q3=0.8, phi=0.)
 
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
@@ -264,13 +223,8 @@ class TestMisalignedLogarithmicPotential(PotentialTestBase):
         print(self.__class__.__name__)
 
         self.name = "MisalignedLogarithmicPotential"
-        from ..builtin import LogarithmicPotential as PyLogarithmicPotential
-
         self.potential = LogarithmicPotential(units=self.units,
                                               v_c=0.17, r_h=10.,
                                               q1=1.2, q2=1., q3=0.8, phi=0.35)
-
-        self.pypotential = PyLogarithmicPotential(v_c=0.17, r_h=10.,
-                                                  q1=1.2, q2=1., q3=0.8, phi=0.35)
 
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
