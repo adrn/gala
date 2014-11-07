@@ -13,9 +13,7 @@ from astropy.constants import G
 
 from .core import Potential, CartesianPotential
 
-__all__ = ["PointMassPotential", "MiyamotoNagaiPotential",
-           "HernquistPotential", "LogarithmicPotential",
-           "IsochronePotential", "HarmonicOscillatorPotential"]
+__all__ = ["PointMassPotential", "IsochronePotential", "HarmonicOscillatorPotential"]
 
 # ============================================================================
 #    Harmonic oscillator
