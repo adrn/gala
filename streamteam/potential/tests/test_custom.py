@@ -14,7 +14,7 @@ from astropy.constants.si import G
 import astropy.units as u
 import matplotlib.pyplot as plt
 
-from ..lm10 import *
+from ..custom import *
 
 top_path = "/tmp/streamteam"
 plot_path = os.path.join(top_path, "tests/potential")
@@ -30,5 +30,6 @@ color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def test_create():
     potential = LM10Potential()
-    v = potential.value(np.array([[10.,15.,21.]]))
-    g = potential.gradient(np.array([[10.,15.,21.]]))
+    potential = PW14Potential()
+
+# TODO
