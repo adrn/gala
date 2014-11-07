@@ -13,7 +13,8 @@ from astropy.constants import G
 
 from .core import Potential, CartesianPotential
 
-__all__ = ["PointMassPotential", "IsochronePotential", "HarmonicOscillatorPotential"]
+__all__ = ["PointMassPotential", "IsochronePotential", "HarmonicOscillatorPotential",
+           "KuzminPotential"]
 
 # ============================================================================
 #    Harmonic oscillator
@@ -181,7 +182,7 @@ class IsochronePotential(CartesianPotential):
 
     .. math::
 
-        \Phi_{spher} = -\frac{GM}{\sqrt{r^2+b^2} + b}
+        \Phi = -\frac{GM}{\sqrt{r^2+b^2} + b}
 
     Parameters
     ----------
@@ -239,3 +240,55 @@ class IsochronePotential(CartesianPotential):
         """
         from ..dynamics.analyticactionangle import isochrone_aa_to_xv
         return isochrone_aa_to_xv(actions, angles, self)
+
+# ============================================================================
+#    Kuzmin potential
+#
+
+def kuzmin_funcs(units):
+    # scale G to be in this unit system
+    if units is None:
+        _G = 1.
+    else:
+        _G = G.decompose(units).value
+
+    def func(q, m, a):
+        x,y,z = q.T
+        val = -_G * m / np.sqrt(x**2 + y**2 + (a + np.abs(z))**2)
+        return val
+
+    def gradient(q, m, a):
+        x,y,z = q.T
+        fac = _G * m / (x**2 + y**2 + (a + np.abs(z))**2)**1.5
+        return fac[...,None] * q
+
+    def hessian(x, m, a):
+        raise NotImplementedError()  # TODO:
+
+    return func, gradient, None
+
+class KuzminPotential(CartesianPotential):
+    r"""
+    The Kuzmin flattened disk potential.
+
+    .. math::
+
+        \Phi = -\frac{Gm}{\sqrt{x^2 + y^2 + (a + |z|)^2}}
+
+    Parameters
+    ----------
+    m : numeric
+        Mass.
+    a : numeric
+        Flattening parameter.
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, m, a, units):
+        parameters = dict(m=m, a=a)
+        func,gradient,hessian = kuzmin_funcs(units)
+        super(KuzminPotential, self).__init__(func=func, gradient=gradient,
+                                              hessian=hessian,
+                                              parameters=parameters, units=units)
