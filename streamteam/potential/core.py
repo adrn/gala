@@ -56,7 +56,6 @@ class Potential(object):
 
         # TODO: validate units
         self.units = units
-        self.G = G.decompose(self.units).value
 
     # ========================================================================
     # Base methods
@@ -126,7 +125,11 @@ class Potential(object):
         dPhi_dr_minus = self.value(x - epsilon)
         diff = dPhi_dr_plus - dPhi_dr_minus
 
-        return np.abs(r*r * diff / self.G / (2.*h))
+        if self.units is None:
+            raise ValueError("No units specified when creating potential object.")
+        Gee = G.decompose(self.units).value
+
+        return np.abs(r*r * diff / Gee / (2.*h))
 
     def acceleration(self, x):
         """
