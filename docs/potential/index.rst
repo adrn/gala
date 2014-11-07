@@ -101,6 +101,17 @@ be used to compute, for example, a mass profile::
 
 .. image:: ../_static/potential/mass-profile.png
 
+Further information
+===================
+More detailed information on using the package is provided on separate pages,
+listed below.
+
+.. toctree::
+   :maxdepth: 1
+
+   compositepotential
+   custompotential
+
 Reference/API
 =============
 
