@@ -17,7 +17,7 @@ __all__ = ["PointMassPotential", "MiyamotoNagaiPotential",
            "HernquistPotential", "LogarithmicPotential",
            "IsochronePotential", "HarmonicOscillatorPotential"]
 
-############################################################
+# ============================================================================
 #    Harmonic oscillator
 #
 def harmonic_osc_funcs(units):
@@ -100,7 +100,7 @@ class HarmonicOscillatorPotential(CartesianPotential):
         from ..dynamics.analyticactionangle import harmonic_oscillator_aa_to_xv
         return harmonic_oscillator_aa_to_xv(actions, angles, self)
 
-############################################################
+# ============================================================================
 #    Potential due to a point mass at a given position
 #
 def point_mass_funcs(units):
@@ -151,7 +151,7 @@ class PointMassPotential(Potential):
                                                  hessian=hessian,
                                                  parameters=parameters, units=units)
 
-##############################################################################
+# ============================================================================
 #    Isochrone potential
 #
 
@@ -242,7 +242,7 @@ class IsochronePotential(CartesianPotential):
         from ..dynamics.analyticactionangle import isochrone_aa_to_xv
         return isochrone_aa_to_xv(actions, angles, self)
 
-##############################################################################
+# ============================================================================
 #    Miyamoto-Nagai Disk potential from Miyamoto & Nagai 1975
 #    http://adsabs.harvard.edu/abs/1975PASJ...27..533M
 #
@@ -305,7 +305,7 @@ class MiyamotoNagaiPotential(CartesianPotential):
                                                      hessian=hessian,
                                                      parameters=parameters, units=units)
 
-##############################################################################
+# ============================================================================
 #    Hernquist Spheroid potential from Hernquist 1990
 #    http://adsabs.harvard.edu/abs/1990ApJ...356..359H
 #
@@ -356,7 +356,7 @@ class HernquistPotential(CartesianPotential):
                                                  hessian=hessian,
                                                  parameters=parameters, units=units)
 
-##############################################################################
+# ============================================================================
 #    Triaxial, Logarithmic potential (see: Johnston et al. 1998)
 #    http://adsabs.harvard.edu/abs/1999ApJ...512L.109J
 #
