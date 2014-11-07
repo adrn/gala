@@ -8,10 +8,10 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
 from astropy.constants import G
+import astropy.units as u
 import numpy as np
 
 # Project
-# from .core import CartesianCompositePotential
 from .cpotential import CCompositePotential
 from .cbuiltin import HernquistPotential, MiyamotoNagaiPotential, \
     LeeSutoTriaxialNFWPotential, SphericalNFWPotential, LogarithmicPotential
