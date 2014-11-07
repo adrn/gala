@@ -40,7 +40,7 @@ class Potential(object):
 
     """
 
-    def __init__(self, func, units, gradient=None, hessian=None, parameters=dict()):
+    def __init__(self, func, gradient=None, hessian=None, parameters=dict(), units=None):
         # store parameters
         self.parameters = parameters
 
