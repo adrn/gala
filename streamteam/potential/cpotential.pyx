@@ -57,6 +57,8 @@ class CPotential(CartesianPotential):
 
     def value(self, q):
         """
+        value(q)
+
         Compute the value of the potential at the given position(s).
 
         Parameters
@@ -70,6 +72,8 @@ class CPotential(CartesianPotential):
 
     def gradient(self, q):
         """
+        gradient(q)
+
         Compute the gradient of the potential at the given position(s).
 
         Parameters
@@ -85,6 +89,8 @@ class CPotential(CartesianPotential):
 
     def hessian(self, q):
         """
+        hessian(q)
+
         Compute the Hessian of the potential at the given position(s).
 
         Parameters
@@ -103,6 +109,8 @@ class CPotential(CartesianPotential):
     # ----------------------------
     def acceleration(self, q):
         """
+        acceleration(q)
+
         Compute the acceleration due to the potential at the given position(s).
 
         Parameters
@@ -118,6 +126,8 @@ class CPotential(CartesianPotential):
 
     def mass_enclosed(self, q):
         """
+        mass_enclosed(q)
+
         Estimate the mass enclosed within the given position by assuming the potential
         is spherical. This is not so good!
 
