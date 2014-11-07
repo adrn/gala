@@ -30,7 +30,7 @@ def harmonic_osc_funcs(units):
         return np.atleast_2d(omega2)*x
 
     def hessian(x, x0, m):
-        raise NotImplementedError() # TODO:
+        raise NotImplementedError()  # TODO:
 
     return f, gradient, None
 
@@ -52,12 +52,11 @@ class HarmonicOscillatorPotential(CartesianPotential):
     """
 
     def __init__(self, omega, units=None):
-        self.units = units
         parameters = dict(omega=np.array(omega))
         func,gradient,hessian = harmonic_osc_funcs(units)
         super(HarmonicOscillatorPotential, self).__init__(func=func, gradient=gradient,
                                                           hessian=hessian,
-                                                          parameters=parameters)
+                                                          parameters=parameters, units=units)
 
     def action_angle(self, x, v):
         """
@@ -122,7 +121,7 @@ def point_mass_funcs(units):
         return _G * m * xx * a
 
     def hessian(x, x0, m):
-        raise NotImplementedError() # TODO:
+        raise NotImplementedError()  # TODO:
 
     return f, gradient, None
 
@@ -146,12 +145,11 @@ class PointMassPotential(Potential):
     """
 
     def __init__(self, m, x0, units=None):
-        self.units = units
         parameters = dict(m=m, x0=x0)
         func,gradient,hessian = point_mass_funcs(units)
         super(PointMassPotential, self).__init__(func=func, gradient=gradient,
                                                  hessian=hessian,
-                                                 parameters=parameters)
+                                                 parameters=parameters, units=units)
 
 ##############################################################################
 #    Isochrone potential
@@ -175,7 +173,7 @@ def isochrone_funcs(units):
         return fac[...,None] * x
 
     def hessian(x, m, b):
-        raise NotImplementedError() # TODO:
+        raise NotImplementedError()  # TODO:
 
     return func, gradient, None
 
@@ -199,12 +197,11 @@ class IsochronePotential(CartesianPotential):
 
     """
     def __init__(self, m, b, units):
-        self.units = units
         parameters = dict(m=m, b=b)
         func,gradient,hessian = isochrone_funcs(units)
         super(IsochronePotential, self).__init__(func=func, gradient=gradient,
                                                  hessian=hessian,
-                                                 parameters=parameters)
+                                                 parameters=parameters, units=units)
 
     def action_angle(self, x, v):
         """
@@ -276,7 +273,7 @@ def miyamoto_nagai_funcs(units):
 
         return np.array([dx,dy,dz]).T
 
-    def hessian(xyz, m, a, b): # TODO
+    def hessian(xyz, m, a, b):  # TODO
         pass
 
     return func, gradient, None
@@ -301,13 +298,12 @@ class MiyamotoNagaiPotential(CartesianPotential):
 
     """
     def __init__(self, m, a, b, units):
-        self.units = units
         parameters = dict(m=m, a=a, b=b)
         func,gradient,hessian = miyamoto_nagai_funcs(units)
         super(MiyamotoNagaiPotential, self).__init__(func=func,
                                                      gradient=gradient,
                                                      hessian=hessian,
-                                                     parameters=parameters)
+                                                     parameters=parameters, units=units)
 
 ##############################################################################
 #    Hernquist Spheroid potential from Hernquist 1990
@@ -353,13 +349,12 @@ class HernquistPotential(CartesianPotential):
 
     """
     def __init__(self, m, c, units):
-        self.units = units
         parameters = dict(m=m, c=c)
         func,gradient,hessian = hernquist_funcs(units)
         super(HernquistPotential, self).__init__(func=func,
                                                  gradient=gradient,
                                                  hessian=hessian,
-                                                 parameters=parameters)
+                                                 parameters=parameters, units=units)
 
 ##############################################################################
 #    Triaxial, Logarithmic potential (see: Johnston et al. 1998)
@@ -423,11 +418,10 @@ class LogarithmicPotential(CartesianPotential):
 
     """
     def __init__(self, v_c, r_h, q1, q2, q3, phi, units=None):
-        self.units = units
         parameters = dict(v_c=v_c, r_h=r_h, q1=q1,
                           q2=q2, q3=q3, phi=phi)
         func,gradient,hessian = log_funcs(units)
         super(LogarithmicPotential, self).__init__(func=func,
                                                    gradient=gradient,
                                                    hessian=hessian,
-                                                   parameters=parameters)
+                                                   parameters=parameters, units=units)
