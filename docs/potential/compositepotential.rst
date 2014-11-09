@@ -25,3 +25,8 @@ is equivalent to::
     >>> pot = sp.CompositePotential()
     >>> pot['disk'] = disk
     >>> pot['bulge'] = bulge
+
+The resulting potential object has all of the same properties as the
+individual potential objects, for example::
+
+    >>> pot.value([1.,-1.,0.])
