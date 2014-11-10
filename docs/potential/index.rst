@@ -146,6 +146,7 @@ Built-in potentials
    streamteam.potential.HernquistPotential
    streamteam.potential.IsochronePotential
    streamteam.potential.JaffePotential
+   streamteam.potential.KuzminPotential
    streamteam.potential.LeeSutoTriaxialNFWPotential
    streamteam.potential.LogarithmicPotential
    streamteam.potential.MiyamotoNagaiPotential
