@@ -16,10 +16,10 @@ from astropy import log as logger
 import astropy.units as u
 
 # Project
-import streamteam.integrate as si
-import streamteam.potential as sp
-import streamteam.dynamics as sd
-from streamteam.util import get_pool
+import gary.integrate as si
+import gary.potential as sp
+import gary.dynamics as sd
+from gary.util import get_pool
 
 def setup_grid(n, potential):
     # grid of points on Phi = 0.5

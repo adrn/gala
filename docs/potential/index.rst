@@ -1,7 +1,7 @@
 .. _potential:
 
 *************************************************
-Gravitational potentials (`streamteam.potential`)
+Gravitational potentials (`gary.potential`)
 *************************************************
 
 Introduction
@@ -13,7 +13,7 @@ potentials (see :ref:`custompotential` for more information), but more
 useful are the `built-in potentials`_. These are commonly used potentials
 that have methods for computing the potential value, gradient, and (in some
 cases) Hessian. These are particularly useful in combination with
-the `streamteam.integrate` subpackage (see
+the `gary.integrate` subpackage (see
 :doc:`../examples/integrate_potential_example`).
 
 Getting started with the built-in classes
@@ -57,11 +57,11 @@ The position(s) must be specified in the same length units as specified in
 the unit system.
 
 .. These objects also provide more specialized methods such as
-.. :meth:`~streamteam.potential.Potential.plot_contours`, for plotting isopotential
-.. contours in both 1D and 2D, and :meth:`~streamteam.potential.Potential.mass_enclosed`,
+.. :meth:`~gary.potential.Potential.plot_contours`, for plotting isopotential
+.. contours in both 1D and 2D, and :meth:`~gary.potential.Potential.mass_enclosed`,
 .. which estimates the mass enclosed within a specified spherical radius.
 
-:meth:`~streamteam.potential.Potential.plot_contours` supports plotting
+:meth:`~gary.potential.Potential.plot_contours` supports plotting
 either 1D slices or 2D contour plots of isopotentials. To plot a 1D slice
 over the dimension of interest, pass in a grid of values for that dimension
 and numerical values for the others. For example, to make a 1D plot of the
@@ -86,7 +86,7 @@ which produces:
 
 .. image:: ../_static/potential/miyamoto-nagai-2d.png
 
-:meth:`~streamteam.potential.Potential.mass_enclosed` is a method that
+:meth:`~gary.potential.Potential.mass_enclosed` is a method that
 numerically estimates the mass enclosed within a spherical shell defined
 by the specified position. This numerically estimates
 :math:`\frac{d \Phi}{d r}` along the vector pointing at the specified position
@@ -126,9 +126,9 @@ Base classes
    :toctree: _potential/
    :template: class.rst
 
-   streamteam.potential.Potential
-   streamteam.potential.CartesianPotential
-   streamteam.potential.CompositePotential
+   gary.potential.Potential
+   gary.potential.CartesianPotential
+   gary.potential.CompositePotential
 
 -------------------------------------------------------------
 
@@ -142,15 +142,15 @@ Built-in potentials
    :toctree: _potential/
    :template: class.rst
 
-   streamteam.potential.HarmonicOscillatorPotential
-   streamteam.potential.HernquistPotential
-   streamteam.potential.IsochronePotential
-   streamteam.potential.JaffePotential
-   streamteam.potential.KuzminPotential
-   streamteam.potential.LeeSutoTriaxialNFWPotential
-   streamteam.potential.LogarithmicPotential
-   streamteam.potential.MiyamotoNagaiPotential
-   streamteam.potential.PointMassPotential
-   streamteam.potential.SphericalNFWPotential
+   gary.potential.HarmonicOscillatorPotential
+   gary.potential.HernquistPotential
+   gary.potential.IsochronePotential
+   gary.potential.JaffePotential
+   gary.potential.KuzminPotential
+   gary.potential.LeeSutoTriaxialNFWPotential
+   gary.potential.LogarithmicPotential
+   gary.potential.MiyamotoNagaiPotential
+   gary.potential.PointMassPotential
+   gary.potential.SphericalNFWPotential
 
 

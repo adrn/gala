@@ -270,7 +270,7 @@ class Potential(object):
         """
         Integrate an orbit in the current potential using the integrator class
         provided. Uses same time specification as `Integrator.run()` -- see
-        the documentation for `streamteam.integrate` for more information.
+        the documentation for `gary.integrate` for more information.
 
         Parameters
         ----------
@@ -356,7 +356,7 @@ class CompositePotential(dict, Potential):
     You can also use any of the built-in `Potential` classes as
     components::
 
-        >>> from streamteam.potential import HernquistPotential
+        >>> from gary.potential import HernquistPotential
         >>> cp = CompositePotential()
         >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., units=(u.kpc,u.Myr,u.Msun))
 

@@ -19,10 +19,10 @@ from ..scf import SCFReader
 from ...units import galactic
 
 def test_simple():
-    scf = SCFReader('/Users/adrian/projects/streamteam/tests/M2.5e+08')
+    scf = SCFReader('/Users/adrian/projects/gary/tests/M2.5e+08')
 
 def test_snap():
-    scf = SCFReader('/Users/adrian/projects/streamteam/tests/M2.5e+08')
+    scf = SCFReader('/Users/adrian/projects/gary/tests/M2.5e+08')
     d1 = scf.read_snap('SNAP113')
     print(d1.meta)
 

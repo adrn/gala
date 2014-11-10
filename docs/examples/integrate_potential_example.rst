@@ -6,10 +6,10 @@ Integrating and plotting an orbit in an NFW potential
 We first need to import some relevant packages::
 
    import numpy as np
-   from streamteam.coordinates import spherical_to_cartesian
-   import streamteam.integrate as si
-   import streamteam.potential as sp
-   from streamteam.units import galactic
+   from gary.coordinates import spherical_to_cartesian
+   import gary.integrate as si
+   import gary.potential as sp
+   from gary.units import galactic
 
 The variable ``galactic`` is defined and included in this package as as
 short-hand for what I refer to as a Galactic unit system: :math:`{\rm kpc}`,
@@ -24,7 +24,7 @@ circular velocity at the scale radius::
    potential = sp.SphericalNFWPotential(v_c=v_c, r_s=10., units=units)
 
 The easiest way to integrate an orbit in this potential is to use the
-:meth:`~streamteam.potential.Potential.integrate_orbit` method, which accepts
+:meth:`~gary.potential.Potential.integrate_orbit` method, which accepts
 a single set of (or array of) initial conditions and a specification for the
 time-stepping and performs the integration for you::
 
@@ -33,7 +33,7 @@ time-stepping and performs the integration for you::
 
 This method returns an array of times, ``t``, and the orbit, ``orbit``.
 By default, this method uses Leapfrog integration to compute the orbit
-(:class:`~streamteam.integrate.LeapfrogIntegrator`), but you can optionally specify
+(:class:`~gary.integrate.LeapfrogIntegrator`), but you can optionally specify
 a different integrator class as a keyword argument::
 
    t,orbit = potential.integrate_orbit(initial_conditions, dt=0.5, nsteps=10000,
@@ -49,7 +49,7 @@ conditions by sampling from a Gaussian around our initial orbit::
    t,orbits = potential.integrate_orbit(initial_conditions, dt=0.5, nsteps=10000)
 
 We'll now plot the final positions of these orbits over isopotential contours.
-We start by using the :meth:`~streamteam.potential.Potential.plot_contours`
+We start by using the :meth:`~gary.potential.Potential.plot_contours`
 method of the ``potential`` object to plot the potential contours. This function
 returns a :class:`~matplotlib.figure.Figure` object, which we can then use to
 over-plot the orbit points::

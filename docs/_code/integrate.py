@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import streamteam.integrate as si
+import gary.integrate as si
 from matplotlib.gridspec import GridSpec
 
 def F(t, w, A, omega_D):

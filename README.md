@@ -1,8 +1,8 @@
-Stream Team
-===========
+Gary
+====
 
-This project contains Python code that might be useful to anyone in the Stream
- Team, or anyone working on dynamics with Python.
+Gary is a Python package for Galactic Astronomy and especially gravitational
+dynamics.
 
 Installation
 ============
@@ -11,3 +11,7 @@ You'll first need to make sure you have the required packages installed (see
 pip-requirements.txt). You can use `pip` to automatically install these with
 
     pip install -r pip-requirements.txt
+
+Then it's just a matter of
+
+    python setup.py install

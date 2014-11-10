@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# stream-team documentation build configuration file, created by
+# gary documentation build configuration file, created by
 # sphinx-quickstart on Mon Mar 17 11:02:00 2014.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -42,7 +42,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'stream-team'
+project = u'gary'
 copyright = u'2014, Adrian M. Price-Whelan'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -100,8 +100,8 @@ html_theme_path = ["_themes/sphinx_rtd_theme", ]
 
 html_context = dict(
     display_github=True,
-    github_user="stream-team",
-    github_repo="stream-team",
+    github_user="adrn",
+    github_repo="gary",
     github_version="master",
     conf_py_path="/docs/",
     script_files=[
@@ -181,7 +181,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'stream-teamdoc'
+htmlhelp_basename = 'garydoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -200,7 +200,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'stream-team.tex', u'stream-team Documentation',
+  ('index', 'gary.tex', u'Gary Documentation',
    u'Adrian M. Price-Whelan', 'manual'),
 ]
 
@@ -230,7 +230,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'stream-team', u'stream-team Documentation',
+    ('index', 'gary', u'Gary Documentation',
      [u'Adrian M. Price-Whelan'], 1)
 ]
 
@@ -244,8 +244,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'stream-team', u'stream-team Documentation',
-   u'Adrian M. Price-Whelan', 'stream-team', 'One line description of project.',
+  ('index', 'gary', u'Gary Documentation',
+   u'Adrian M. Price-Whelan', 'gary', 'One line description of project.',
    'Miscellaneous'),
 ]
 
