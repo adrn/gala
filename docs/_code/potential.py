@@ -2,6 +2,9 @@ import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
 import streamteam.potential as sp
+from streamteam.units import galactic
+
+# ----------------------------------------------------------------------------
 
 p = sp.MiyamotoNagaiPotential(1E11, 6.5, 0.27, units=(u.kpc, u.Msun, u.Myr))
 
@@ -29,3 +32,16 @@ ax.set_xlabel(r"$\log (r/r_s)$")
 ax.set_ylabel(r"$M(<r)\,[{\rm M}_\odot]$")
 fig.tight_layout()
 fig.savefig("../_static/potential/mass-profile.png")
+
+# ----------------------------------------------------------------------------
+
+fig,ax = plt.subplots(1,1,figsize=(8,6))
+
+disk = sp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
+bulge = sp.HernquistPotential(m=3E10, c=0.7, units=galactic)
+pot = sp.CompositePotential(disk=disk, bulge=bulge)
+
+x = z = np.linspace(-3.,3.,100)
+pot.plot_contours(grid=(x,0,z), axes=ax)
+
+fig.savefig("../_static/potential/composite.png")
