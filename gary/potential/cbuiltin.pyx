@@ -78,6 +78,8 @@ cdef class _HernquistPotential(_CPotential):
 
 class HernquistPotential(CPotential, CartesianPotential):
     r"""
+    HernquistPotential(m, c, units)
+
     Hernquist potential for a spheroid.
 
     .. math::
@@ -137,6 +139,8 @@ cdef class _JaffePotential(_CPotential):
 
 class JaffePotential(CPotential, CartesianPotential):
     r"""
+    JaffePotential(m, c, units)
+
     Jaffe potential for a spheroid.
 
     .. math::
@@ -203,6 +207,8 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
 
 class MiyamotoNagaiPotential(CPotential, CartesianPotential):
     r"""
+    MiyamotoNagaiPotential(m, a, b, units)
+
     Miyamoto-Nagai potential for a flattened mass distribution.
 
     .. math::
@@ -262,6 +268,8 @@ cdef class _SphericalNFWPotential(_CPotential):
 
 class SphericalNFWPotential(CPotential, CartesianPotential):
     r"""
+    SphericalNFWPotential(v_c, r_s, units)
+
     Spherical NFW potential. Separate from the triaxial potential below to
     optimize for speed. Much faster than computing the triaxial case.
 
@@ -375,6 +383,8 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
 
 class LeeSutoTriaxialNFWPotential(CPotential, CartesianPotential):
     r"""
+    LeeSutoTriaxialNFWPotential(v_h, r_h, a, b, c, units, phi=0., theta=0., psi=0.)
+
     Approximation of a Triaxial NFW Potential with the flattening in the density,
     not the potential. See Lee & Suto (2003) for details.
 
@@ -486,6 +496,8 @@ cdef class _LogarithmicPotential(_CPotential):
 
 class LogarithmicPotential(CPotential, CartesianPotential):
     r"""
+    LogarithmicPotential(v_c, r_h, q1, q2, q3, units, phi=0., theta=0., psi=0.)
+
     Triaxial logarithmic potential.
 
     .. math::

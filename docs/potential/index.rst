@@ -138,7 +138,6 @@ Built-in potentials
 -------------------
 
 .. autosummary::
-   :nosignatures:
    :toctree: _potential/
    :template: class.rst
 
