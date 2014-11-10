@@ -51,36 +51,12 @@ conditions by sampling from a Gaussian around our initial orbit::
 We'll now plot the final positions of these orbits over isopotential contours.
 We start by using the :meth:`~streamteam.potential.Potential.plot_contours`
 method of the ``potential`` object to plot the potential contours. This function
-returns a :class:`~matplotlib.figure.Figure` object
+returns a :class:`~matplotlib.figure.Figure` object, which we can then use to
+over-plot the orbit points::
 
+   x = y = np.linspace(-15,15,100)
+   fig = potential.plot_contours(grid=(x,y,0), cmap=cm.Greys)
+   fig.axes[0].plot(orbits[-1,:,0], orbits[-1,:,1], marker='.',
+                    linestyle='none', alpha=0.75, color='#cc0000')
 
-
-Now we need to define an integrator object to compute an orbit. We'll use the
-Leapfrog integration scheme implemented in the `integrate` subpackage. The
-integrator assumes that the acceleration function accepts time and position,
-but the potential acceleration method only accepts a position, so we define
-a temporary (lambda) function to get around this::
-
-   import streamteam.integrate as si
-   acc = lambda t,x: potential.acceleration(x)
-   integrator = si.LeapfrogIntegrator(acc)
-
-We'll now compute orbits for two different initial conditions::
-
-   x0 = np.array([[11.,6.,19.],[31.,0.,-4.]])
-   v0 = ([[50.,0.,0.],[120.,-120.,375.]]*u.km/u.s).decompose(units).value
-   w0 = np.hstack((x0,v0))
-   t,ws = integrator.run(w0, dt=1., nsteps=10000)
-
-And finally, over plot the orbits on the potential contours::
-
-   import matplotlib.pyplot as plt
-   from matplotlib import cm
-   x = np.linspace(-50,50,200)
-   z = np.linspace(-50,50,200)
-   fig,ax = potential.plot_contours(grid=(x,0.,z), cmap=cm.gray_r)
-   ax.plot(ws[:,0,0], ws[:,0,2], marker=None, lw=2., alpha=0.6)
-   ax.plot(ws[:,1,0], ws[:,1,2], marker=None, lw=2., alpha=0.6)
-   fig.set_size_inches(8,8)
-
-.. image:: _static/examples/nfw.png
+.. image:: ../_static/examples/nfw.png
