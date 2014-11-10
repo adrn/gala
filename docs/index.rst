@@ -39,11 +39,3 @@ Examples using multiple subpackages
    :glob:
 
    examples/*
-
-******************
-Indices and Tables
-******************
-
-* :ref:`genindex`
-* :ref:`search`
-
