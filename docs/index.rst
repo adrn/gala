@@ -31,6 +31,16 @@ Documentation
    potential/index
 ..   getting_started
 
+***********************************
+Examples using multiple subpackages
+***********************************
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   examples/*
+
 ******************
 Indices and Tables
 ******************
