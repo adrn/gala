@@ -72,21 +72,21 @@ def test_plot():
     p = Potential(func=f, gradient=gradient,
                   parameters=dict(m=1,
                                   x0=[1.,3.,0.]))
-    f,a = p.plot_contours(grid=(np.linspace(-10., 10., 100), 0., 0.),
-                          labels=["X"])
+    f = p.plot_contours(grid=(np.linspace(-10., 10., 100), 0., 0.),
+                        labels=["X"])
     f.suptitle("slice off from 0., won't have cusp")
     f.savefig(os.path.join(plot_path, "contour_x.png"))
 
-    f,a = p.plot_contours(grid=(np.linspace(-10., 10., 100),
-                                np.linspace(-10., 10., 100),
-                                0.),
-                          cmap=cm.Blues)
+    f = p.plot_contours(grid=(np.linspace(-10., 10., 100),
+                              np.linspace(-10., 10., 100),
+                              0.),
+                        cmap=cm.Blues)
     f.savefig(os.path.join(plot_path, "contour_xy.png"))
 
-    f,a = p.plot_contours(grid=(np.linspace(-10., 10., 100),
-                                1.,
-                                np.linspace(-10., 10., 100)),
-                          cmap=cm.Blues, labels=["X", "Z"])
+    f = p.plot_contours(grid=(np.linspace(-10., 10., 100),
+                              1.,
+                              np.linspace(-10., 10., 100)),
+                        cmap=cm.Blues, labels=["X", "Z"])
     f.savefig(os.path.join(plot_path, "contour_xz.png"))
 
 def test_composite():
@@ -111,7 +111,7 @@ def test_composite():
     assert np.allclose(p.value([0.,0.,0.]), -2)
     assert np.allclose(p.acceleration([0.,0.,0.]), 0.)
 
-    fig, axes = p.plot_contours(grid=(np.linspace(-10., 10., 100),
-                                      np.linspace(-10., 10., 100),
-                                      0.))
+    fig = p.plot_contours(grid=(np.linspace(-10., 10., 100),
+                                np.linspace(-10., 10., 100),
+                                0.))
     fig.savefig(os.path.join(plot_path, "composite_point_mass.png"))

@@ -107,7 +107,7 @@ class PotentialTestBase(object):
         fig,axes = plt.subplots(1,1)
 
         t1 = time.time()
-        fig,axes = self.potential.plot_contours(grid=(grid,grid,0.),
+        fig = self.potential.plot_contours(grid=(grid,grid,0.),
                                                 subplots_kw=dict(figsize=(8,8)))
         print("Cython plot_contours time", time.time() - t1)
         fig.savefig(os.path.join(plot_path, "{}_2d_cy.png"\

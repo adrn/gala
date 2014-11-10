@@ -40,8 +40,7 @@ cdef extern from "math.h":
     double pow(double x, double n) nogil
 
 __all__ = ['HernquistPotential', 'MiyamotoNagaiPotential', 'SphericalNFWPotential',
-           'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential', 'JaffePotential',
-           'SphericalNFWPotential']
+           'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential', 'JaffePotential']
 
 # ============================================================================
 #    Hernquist Spheroid potential from Hernquist 1990
@@ -236,26 +235,26 @@ class MiyamotoNagaiPotential(CPotential, CartesianPotential):
 cdef class _SphericalNFWPotential(_CPotential):
 
     # here need to cdef all the attributes
-    cdef public double G, v_h, r_h
-    cdef public double v_h2, r_h2
+    cdef public double G, v_c, r_s
+    cdef public double v_h, v_h2, r_s2
 
-    def __init__(self, double G, double v_h, double r_h):
+    def __init__(self, double G, double v_c, double r_s):
         self.G = G
-        self.v_h = v_h
-        self.v_h2 = v_h*v_h
-        self.r_h = r_h
-        self.r_h2 = r_h*r_h
+        self.v_h = v_c / sqrt(log(2.) - 0.5)
+        self.v_h2 = self.v_h*self.v_h
+        self.r_s = r_s
+        self.r_s2 = r_s*r_s
 
     cdef public inline double _value(self, double *r) nogil:
         cdef double u
-        u = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / self.r_h
+        u = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / self.r_s
         return -self.v_h2 * log(1 + u) / u
 
     cdef public inline void _gradient(self, double *r, double *grad) nogil:
         cdef double fac, u
 
-        u = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / self.r_h
-        fac = self.v_h2 / (u*u*u) / self.r_h2 * (log(1+u) - u/(1+u))
+        u = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / self.r_s
+        fac = self.v_h2 / (u*u*u) / self.r_s2 * (log(1+u) - u/(1+u))
 
         grad[0] += fac*r[0]
         grad[1] += fac*r[1]
@@ -268,23 +267,23 @@ class SphericalNFWPotential(CPotential, CartesianPotential):
 
     .. math::
 
-        \Phi(r) = -v_h^2 \frac{\ln(1 + r/r_h)}{r/r_h}
+        \Phi(r) = -\frac{v_h^2}{\sqrt{\ln 2 - \frac{1}{2}}} \frac{\ln(1 + r/r_s)}{r/r_s}
 
     Parameters
     ----------
-    v_h : numeric
-        Scale velocity.
-    r_h : numeric
+    v_c : numeric
+        Circular velocity at the scale radius.
+    r_s : numeric
         Scale radius.
     units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_h, r_h, units):
+    def __init__(self, v_c, r_s, units):
         self.units = units
         _G = G.decompose(units).value
-        parameters = dict(G=_G, v_h=v_h, r_h=r_h)
+        parameters = dict(G=_G, v_c=v_c, r_s=r_s)
 
         super(SphericalNFWPotential, self).__init__(_SphericalNFWPotential,
                                                     parameters=parameters)
