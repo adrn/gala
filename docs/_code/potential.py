@@ -42,6 +42,6 @@ bulge = sp.HernquistPotential(m=3E10, c=0.7, units=galactic)
 pot = sp.CompositePotential(disk=disk, bulge=bulge)
 
 x = z = np.linspace(-3.,3.,100)
-pot.plot_contours(grid=(x,0,z), axes=ax)
+fig,ax = pot.plot_contours(grid=(x,0,z), ax=ax)
 
 fig.savefig("../_static/potential/composite.png")
