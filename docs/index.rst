@@ -1,21 +1,20 @@
-.. stream-team documentation master file, created by
-   sphinx-quickstart on Mon Mar 17 11:02:00 2014.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+#########
+Meet Gary
+#########
 
-#################################
-Stream Team Package Documentation
-#################################
+Gary is a Python package for Galactic Astronomy and especially gravitational
+dynamics. The bulk of the package centers around implementations of
+`gravtitational potentials <potential/index>`_,
+`numerical integration <integrate/index>`_,
+and `non-linear dynamics <dynamics/index>`_.
 
-Welcome to the `stream-team` documentation!
+The package is being actively developed in
+`a public repository on GitHub <https://github.com/adrn/gary>`_ so if you
+have any trouble,
+`open an issue <https://github.com/adrn/gary/issues>`_ there.
 
-This package contains functionality common to various collaborative
-astrophysics projects between Columbia, Yale, and NYU. For example,
-reading n-body simulations used by the group, coordinate transformations,
-numerical integration. The package is being actively developed in
-`a public repository on GitHub <https://github.com/stream-team/stream-team>`_
-so if you have any trouble,
-`open an issue <https://github.com/stream-team/stream-team/issues>`_ there.
+Gary is not related to `George <https://github.com/dfm/george>`_, but they
+occasionally `have coffee <http://coffee.dfm.io/coffee/>`_.
 
 *************
 Documentation
