@@ -83,7 +83,7 @@ exclude_patterns = []
 #show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+# pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
@@ -260,7 +260,8 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'http://docs.python.org/': None}
+intersphinx_mapping = {'python': ('http://docs.python.org/2.7', None),
+                       'astropy': ('http://docs.astropy.org/en/latest/', None)}
 
 # see: http://stackoverflow.com/questions/20334804/sphinx-autodoc-and-numpydoc
 numpydoc_show_class_members = False
