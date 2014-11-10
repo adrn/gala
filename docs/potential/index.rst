@@ -13,8 +13,7 @@ potentials (see :ref:`custompotential` for more information), but more
 useful are the `built-in potentials`_. These are commonly used potentials
 that have methods for computing the potential value, gradient, and (in some
 cases) Hessian. These are particularly useful in combination with
-the `streamteam.integrate` subpackage (TODO: see the
-`integrate_potential_example`_).
+the `streamteam.integrate` subpackage (see :doc:`../integrate_potential_example`).
 
 Getting started with the built-in classes
 =========================================
