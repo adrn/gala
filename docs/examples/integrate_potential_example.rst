@@ -1,17 +1,22 @@
 .. _integrate_potential_example:
 
-Example: Integrating and plotting an orbit in an NFW potential
-==============================================================
+Integrating and plotting an orbit in an NFW potential
+=====================================================
 
-First we will define the potential object. We'll just use a spherical NFW
-halo by setting the axis ratios to unity::
+We first need to import some relevant packages::
 
-   import astropy.units as u
    import numpy as np
    import streamteam.potential as sp
+   from streamteam.units import galactic
 
-   units = (u.kpc, u.Msun, u.Myr)
-   v_h = (250*u.km/u.s).decompose(units).value
+The variable ``galactic`` is defined and included in this package as as
+short-hand for what I refer to as a Galactic unit system: :math:`{\rm kpc}`,
+:math:`{\rm Myr}`, :math:`{\rm M}_\odot`. It is simply a tuple of
+:class:`astropy.units.Unit` objects that define this unit system.
+
+We now create a potential object to work with::
+
+   v_h = (250*u.km/u.s).decompose(galactic).value
    potential = sp.SphericalNFWPotential(v_h=v_h, r_h=10., units=units)
 
 Now we need to define an integrator object to compute an orbit. We'll use the
