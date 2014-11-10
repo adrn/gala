@@ -23,9 +23,9 @@ The built-in potentials are all initialized by passing in keyword argument
 parameter values. To see what parameters are available for a given potential,
 check the documentation for the individual classes below. You must also specify
 a unit system when initializing a potential. A unit system is a set of
-non-reducible units and must at least contain Astropy Unit objects for length,
-mass, and time, and optionally an angle unit. For example,
-`units = (u.kpc, u.Msun, u.Myr, u.radian)`.
+non-reducible units and must at least contain :class:`astropy.units.Unit` objects
+for length, mass, and time, and optionally an angle unit. For example,
+``units = (u.kpc, u.Msun, u.Myr, u.radian)``.
 
 All of the built-in potential objects have defined methods that evaluate
 the value of the potential and the gradient/acceleration at a given
