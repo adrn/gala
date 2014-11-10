@@ -5,3 +5,4 @@ plots/*
 docs/*/_*/
 *.npy
 *.c
+notebooks/*
