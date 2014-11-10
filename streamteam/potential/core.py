@@ -264,7 +264,7 @@ class Potential(object):
                 ax.set_xlabel(labels[0])
                 ax.set_ylabel(labels[1])
 
-        return fig,ax
+        return fig
 
     def integrate_orbit(self, w0, Integrator=LeapfrogIntegrator, **time_spec):
         """
