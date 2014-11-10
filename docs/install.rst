@@ -24,16 +24,16 @@ Obtaining the source packages
 Development repository
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The latest development version of stream-team can be cloned from github
+The latest development version of gary can be cloned from github
 using this command::
 
-   git clone git://github.com/stream-team/stream-team.git
+   git clone git://github.com/adrn/gary.git
 
 Building and Installing
 -----------------------
 
 To build the project (from the root of the source tree, e.g., inside
-the cloned stream-team directory)::
+the cloned gary directory)::
 
     python setup.py build
 

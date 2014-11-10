@@ -24,9 +24,9 @@ import astropy.units as u
 import matplotlib.pyplot as plt
 
 # Package
-import streamteam.potential as sp
-import streamteam.integrate as si
-import streamteam.dynamics as sd
+import gary.potential as sp
+import gary.integrate as si
+import gary.dynamics as sd
 
 logger.setLevel(logging.DEBUG)
 

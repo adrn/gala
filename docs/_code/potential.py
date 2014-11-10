@@ -1,8 +1,8 @@
 import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
-import streamteam.potential as sp
-from streamteam.units import galactic
+import gary.potential as sp
+from gary.units import galactic
 
 # ----------------------------------------------------------------------------
 

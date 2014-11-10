@@ -18,24 +18,24 @@ from Cython.Build import cythonize
 numpy_base_path = os.path.split(np.__file__)[0]
 numpy_incl_path = os.path.join(numpy_base_path, "core", "include")
 
-potential = Extension("streamteam.potential.*",
-                      ["streamteam/potential/*.pyx"],
+potential = Extension("gary.potential.*",
+                      ["gary/potential/*.pyx"],
                       include_dirs=[numpy_incl_path])
 
 extensions = [potential]
 
 setup(
-    name="streamteam",
+    name="gary",
     version="0.1",
     author="Adrian M. Price-Whelan",
     author_email="adrn@astro.columbia.edu",
-    license="BSD",
+    license="MIT",
     cmdclass={'build_ext': build_ext},
     ext_modules=cythonize(extensions),
-    packages=["streamteam", "streamteam.coordinates", "streamteam.io",
-              "streamteam.observation", "streamteam.integrate",
-              "streamteam.dynamics", "streamteam.inference",
-              "streamteam.potential"],
+    packages=["gary", "gary.coordinates", "gary.io",
+              "gary.observation", "gary.integrate",
+              "gary.dynamics", "gary.inference",
+              "gary.potential"],
     scripts=['bin/plotsnap', 'bin/moviesnap', 'bin/snap2gal'],
-    package_data={'streamteam.potential': ['*.pxd']},
+    package_data={'gary.potential': ['*.pxd']},
 )

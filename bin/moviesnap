@@ -21,9 +21,9 @@ from matplotlib.animation import FuncAnimation
 import numpy as np
 
 # Project
-import streamteam.dynamics as sd
-import streamteam.io as sio
-from streamteam.units import galactic
+import gary.dynamics as sd
+import gary.io as sio
+from gary.units import galactic
 
 def anim_update(num, scf, snapfiles, lines, title):
     snapfile = os.path.split(snapfiles[num])[1]

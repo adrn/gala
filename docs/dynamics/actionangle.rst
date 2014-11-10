@@ -35,7 +35,7 @@ for an arbitrary numerically integrated orbit. We test it below on three orbits:
 We do not describe the method in detail, but only show
 
 The code that produces the figures below can be found on GitHub
-`at this link <https://github.com/stream-team/stream-team/blob/master/docs/_code/dynamics.py>`_.
+`at this link <https://github.com/adrn/gary/blob/master/docs/_code/dynamics.py>`_.
 
 .. _axisymmetric:
 

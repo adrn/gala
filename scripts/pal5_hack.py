@@ -19,11 +19,11 @@ from astropy import log as logger
 import astropy.units as u
 
 # Project
-import streamteam.integrate as si
-from streamteam.potential.lm10 import LM10Potential
-from streamteam.potential.apw import PW14Potential
-import streamteam.dynamics as sd
-from streamteam.units import galactic
+import gary.integrate as si
+from gary.potential.lm10 import LM10Potential
+from gary.potential.apw import PW14Potential
+import gary.dynamics as sd
+from gary.units import galactic
 
 # input_path = "/vega/astro/users/amp2217/projects/nonlinear-dynamics/input/pal5"
 # output_path = "/vega/astro/users/amp2217/projects/nonlinear-dynamics/output/pal5"

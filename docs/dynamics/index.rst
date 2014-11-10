@@ -1,7 +1,7 @@
 .. _dynamics:
 
 ********************************
-Dynamics (`streamteam.dynamics`)
+Dynamics (`gary.dynamics`)
 ********************************
 
 Introduction
@@ -20,9 +20,9 @@ Reference/API
    :nosignatures:
    :toctree: _dynamics/
 
-   streamteam.dynamics.core.angular_momentum
-   streamteam.dynamics.core.classify_orbit
-   streamteam.dynamics.actionangle.cross_validate_actions
-   streamteam.dynamics.actionangle.find_actions
-   streamteam.dynamics.actionangle.fit_isochrone
-   streamteam.dynamics.actionangle.fit_harmonic_oscillator
+   gary.dynamics.core.angular_momentum
+   gary.dynamics.core.classify_orbit
+   gary.dynamics.actionangle.cross_validate_actions
+   gary.dynamics.actionangle.find_actions
+   gary.dynamics.actionangle.fit_isochrone
+   gary.dynamics.actionangle.fit_harmonic_oscillator
