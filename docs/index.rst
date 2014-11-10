@@ -2,11 +2,11 @@
 Meet Gary
 #########
 
-Gary is a Python package for Galactic Astronomy and especially gravitational
+Gary is a Python package for Galactic Astronomy and gravitational
 dynamics. The bulk of the package centers around implementations of
-`gravtitational potentials <potential/index>`_,
+`gravitational potentials <potential/index>`_,
 `numerical integration <integrate/index>`_,
-and `non-linear dynamics <dynamics/index>`_.
+and `nonlinear dynamics <dynamics/index>`_.
 
 The package is being actively developed in
 `a public repository on GitHub <https://github.com/adrn/gary>`_ so if you
