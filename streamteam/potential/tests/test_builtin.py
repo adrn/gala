@@ -59,10 +59,10 @@ class TestHarmonicOscillator(object):
         potential = HarmonicOscillatorPotential(omega=[1.,2.])
         grid = np.linspace(-5.,5)
 
-        fig,axes = potential.plot_contours(grid=(grid,0.))
+        fig = potential.plot_contours(grid=(grid,0.))
         fig.savefig(os.path.join(plot_path, "harmonic_osc_1d.png"))
 
-        fig,axes = potential.plot_contours(grid=(grid,grid))
+        fig = potential.plot_contours(grid=(grid,grid))
         fig.savefig(os.path.join(plot_path, "harmonic_osc_2d.png"))
 
 class TestPointMass(object):
@@ -91,10 +91,10 @@ class TestPointMass(object):
                                        units=[u.M_sun, u.yr, u.au])
         grid = np.linspace(-5.,5)
 
-        fig,axes = potential.plot_contours(grid=(grid,0.,0.))
+        fig = potential.plot_contours(grid=(grid,0.,0.))
         fig.savefig(os.path.join(plot_path, "point_mass_1d.png"))
 
-        fig,axes = potential.plot_contours(grid=(grid,grid,0.))
+        fig = potential.plot_contours(grid=(grid,grid,0.))
         fig.savefig(os.path.join(plot_path, "point_mass_2d.png"))
 
 class TestIsochrone(object):
@@ -113,7 +113,8 @@ class TestIsochrone(object):
         grid = np.linspace(-20.,20, 50)
         for slc in np.linspace(-20.,0.,10):
             if axes is None:
-                fig,axes = potential.plot_contours(grid=(grid,slc,0.), marker=None)
+                fig = potential.plot_contours(grid=(grid,slc,0.), marker=None)
+                axes = fig.axes
             else:
                 potential.plot_contours(grid=(grid,slc,0.), ax=axes, marker=None)
         fig.savefig(os.path.join(plot_path, "isochrone_1d.png"))
@@ -146,10 +147,10 @@ class TestComposite(object):
                         [0.,0.,0.], decimal=5)
 
         grid = np.linspace(-5.,5)
-        fig,axes = potential.plot_contours(grid=(grid,0.,0.))
+        fig = potential.plot_contours(grid=(grid,0.,0.))
         fig.savefig(os.path.join(plot_path, "two_equal_point_masses_1d.png"))
 
-        fig,axes = potential.plot_contours(grid=(grid,grid,0.))
+        fig = potential.plot_contours(grid=(grid,grid,0.))
         fig.savefig(os.path.join(plot_path, "two_equal_point_masses_2d.png"))
 
     def test_plot_composite_mass_ratio(self):
@@ -162,10 +163,10 @@ class TestComposite(object):
                                               m=5., x0=[-1.,-1.,0.])
 
         grid = np.linspace(-5.,5)
-        fig,axes = potential.plot_contours(grid=(grid,0.,0.))
+        fig = potential.plot_contours(grid=(grid,0.,0.))
         fig.savefig(os.path.join(plot_path, "two_different_point_masses_1d.png"))
 
-        fig,axes = potential.plot_contours(grid=(grid,grid,0.))
+        fig = potential.plot_contours(grid=(grid,grid,0.))
         fig.savefig(os.path.join(plot_path, "two_different_point_masses_2d.png"))
 
     def test_many_point_masses(self, N=20):
@@ -179,5 +180,5 @@ class TestComposite(object):
                                                     x0=r0)
 
         grid = np.linspace(-1.,1,50)
-        fig,axes = potential.plot_contours(grid=(grid,grid,0.))
+        fig = potential.plot_contours(grid=(grid,grid,0.))
         fig.savefig(os.path.join(plot_path, "many_point_mass.png"))
