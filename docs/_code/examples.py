@@ -20,11 +20,10 @@ stddev = [0.1,0.1,0.1,0.01,0.01,0.01]  # 100 pc spatial scale, ~10 km/s velocity
 initial_conditions = np.random.normal(initial_conditions, stddev, size=(norbits,6))
 t,orbits = potential.integrate_orbit(initial_conditions, dt=0.5, nsteps=10000)
 
-fig,ax = plt.subplots(1,1,figsize=(6,6))
-ax.plot(orbits[-1,:,0], orbits[-1,:,1], marker='.', linestyle='none',
-        alpha=0.75, color='#cc0000')
-
 x = y = np.linspace(-15,15,100)
-potential.plot_contours(grid=(x,y,0), ax=ax, cmap=cm.Greys)
+fig = potential.plot_contours(grid=(x,y,0), cmap=cm.Greys)
+fig.axes[0].plot(orbits[-1,:,0], orbits[-1,:,1], marker='.', linestyle='none',
+                 alpha=0.75, color='#cc0000')
+
 fig.set_size_inches(6,6)
 fig.savefig("../_static/examples/nfw.png")
