@@ -6,20 +6,25 @@ import streamteam.potential as sp
 import streamteam.integrate as si
 from streamteam.units import galactic
 
-
 # integrate & potential example
-potential = sp.SphericalNFWPotential(v_h=(500*u.km/u.s).decompose(galactic).value,
-                                     r_h=3., units=galactic)
+v_c = (200*u.km/u.s).decompose(galactic).value
+potential = sp.SphericalNFWPotential(v_c=v_c, r_s=10., units=galactic)
 
-x0 = np.array([[11.,6.,19.],[31.,0.,-4.]])
-v0 = ([[50.,0.,0.],[70.,-70.,155.]]*u.km/u.s).decompose(galactic).value
-w0 = np.hstack((x0,v0))
-t,ws = potential.integrate_orbit(w0.copy(), dt=1., nsteps=10000)
+# single orbit
+initial_conditions = np.array([10., 0, 0, 0, v_c, 0])
+t,orbit = potential.integrate_orbit(initial_conditions, dt=0.5, nsteps=10000)
 
-x = np.linspace(-50,50,200)
-z = np.linspace(-50,50,200)
-fig,ax = potential.plot_contours(grid=(x,0.,z), cmap=cm.Blues)
-ax.plot(ws[:,0,0], ws[:,0,2], marker=None, lw=1., alpha=0.75)
-ax.plot(ws[:,1,0], ws[:,1,2], marker=None, lw=1., alpha=0.75, color='r')
+# multiple orbits
+norbits = 1000
+stddev = [0.1,0.1,0.1,0.01,0.01,0.01]  # 100 pc spatial scale, ~10 km/s velocity scale
+initial_conditions = np.random.normal(initial_conditions, stddev, size=(norbits,6))
+t,orbits = potential.integrate_orbit(initial_conditions, dt=0.5, nsteps=10000)
+
+fig,ax = plt.subplots(1,1,figsize=(6,6))
+ax.plot(orbits[-1,:,0], orbits[-1,:,1], marker='.', linestyle='none',
+        alpha=0.75, color='#cc0000')
+
+x = y = np.linspace(-15,15,100)
+potential.plot_contours(grid=(x,y,0), ax=ax, cmap=cm.Greys)
 fig.set_size_inches(6,6)
 fig.savefig("../_static/examples/nfw.png")
