@@ -35,7 +35,7 @@ fig.savefig("../_static/potential/mass-profile.png")
 
 # ----------------------------------------------------------------------------
 
-fig,ax = plt.subplots(1,1,figsize=(8,6))
+fig,ax = plt.subplots(1,1,figsize=(6,6))
 
 disk = sp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
 bulge = sp.HernquistPotential(m=3E10, c=0.7, units=galactic)
