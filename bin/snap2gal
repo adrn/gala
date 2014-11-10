@@ -17,8 +17,8 @@ import numpy as np
 from astropy import log as logger
 
 # Project
-import streamteam.io as sio
-from streamteam.units import galactic
+import gary.io as sio
+from gary.units import galactic
 
 def main(snapfile, outfile=None):
     scfpath,snapname = os.path.split(snapfile)

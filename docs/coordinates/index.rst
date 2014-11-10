@@ -1,19 +1,19 @@
 .. _coordinates:
 
 *********************************************
-Coordinate Systems (`streamteam.coordinates`)
+Coordinate Systems (`gary.coordinates`)
 *********************************************
 
 Introduction
 ============
 
-The `streamteam.coordinates` package provides functions for converting
+The `gary.coordinates` package provides functions for converting
 coordinates and velocities between various astronomical systems, as well
 as `astropy.coordinates` frame classes for coordinates defined by the
 Sagittarius and Orphan streams.
 
 .. warning::
-    `streamteam.coordinates` is currently a work-in-progress, and thus it is
+    `gary.coordinates` is currently a work-in-progress, and thus it is
     possible there will be significant API changes in later versions.
 
 
@@ -41,7 +41,7 @@ an Astropy coordinate::
 Then pass this object in to the heliocentric to galactocentric conversion
 function::
 
-    >>> import streamteam.coordinates as stc
+    >>> import gary.coordinates as stc
     >>> stc.hel_to_gal_xyz(c)
     <Quantity [-22.34899301,  1.42957337,  4.13070449] kpc>
 
@@ -91,9 +91,9 @@ References
 
 Reference/API
 =============
-.. autofunction:: streamteam.coordinates.vgsr_to_vhel
-.. autofunction:: streamteam.coordinates.vhel_to_vgsr
-.. autofunction:: streamteam.coordinates.gal_xyz_to_hel
-.. autofunction:: streamteam.coordinates.hel_to_gal_xyz
-.. autoclass:: streamteam.coordinates.Sagittarius
-.. autoclass:: streamteam.coordinates.Orphan
+.. autofunction:: gary.coordinates.vgsr_to_vhel
+.. autofunction:: gary.coordinates.vhel_to_vgsr
+.. autofunction:: gary.coordinates.gal_xyz_to_hel
+.. autofunction:: gary.coordinates.hel_to_gal_xyz
+.. autoclass:: gary.coordinates.Sagittarius
+.. autoclass:: gary.coordinates.Orphan

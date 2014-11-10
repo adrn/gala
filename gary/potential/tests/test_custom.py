@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 from ..custom import *
 
-top_path = "/tmp/streamteam"
+top_path = "/tmp/gary"
 plot_path = os.path.join(top_path, "tests/potential")
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)

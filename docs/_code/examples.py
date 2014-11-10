@@ -2,9 +2,9 @@ import astropy.units as u
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np
-import streamteam.potential as sp
-import streamteam.integrate as si
-from streamteam.units import galactic
+import gary.potential as sp
+import gary.integrate as si
+from gary.units import galactic
 
 # integrate & potential example
 v_c = (200*u.km/u.s).decompose(galactic).value

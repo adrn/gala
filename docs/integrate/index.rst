@@ -1,7 +1,7 @@
 .. _integrate:
 
 ************************************
-Integration (`streamteam.integrate`)
+Integration (`gary.integrate`)
 ************************************
 
 Introduction
@@ -103,9 +103,9 @@ generates this figure is shown below the plot.
 
 Reference/API
 =============
-.. autoclass:: streamteam.integrate.DOPRI853Integrator
+.. autoclass:: gary.integrate.DOPRI853Integrator
    :members: run
-.. autoclass:: streamteam.integrate.LeapfrogIntegrator
+.. autoclass:: gary.integrate.LeapfrogIntegrator
    :members: run
-.. autoclass:: streamteam.integrate.RK5Integrator
+.. autoclass:: gary.integrate.RK5Integrator
    :members: run

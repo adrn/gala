@@ -31,7 +31,7 @@ def lyapunov_spectrum(w0, integrator, dt, nsteps, t1=0., deviation_vecs=None):
         ----------
         w0 : array_like
             Initial conditions for all phase-space coordinates.
-        integrator : streamteam.Integrator
+        integrator : gary.Integrator
             An instantiated Integrator object. Must have a run() method.
         dt : numeric
             Timestep.
@@ -102,7 +102,7 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
         ----------
         w0 : array_like
             Initial conditions for all phase-space coordinates.
-        integrator : streamteam.Integrator
+        integrator : gary.Integrator
             An instantiated Integrator object. Must have a run() method.
         dt : numeric
             Timestep.
@@ -174,7 +174,7 @@ def sali(w0, integrator, dt, nsteps, t1=0., deviation_vecs=None):
         ----------
         w0 : array_like
             Initial conditions for all phase-space coordinates.
-        integrator : streamteam.Integrator
+        integrator : gary.Integrator
             An instantiated Integrator object. Must have a run() method.
         dt : numeric
             Timestep.
