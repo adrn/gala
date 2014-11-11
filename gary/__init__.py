@@ -12,3 +12,9 @@ def _parse_quantity(cls, q):
     return u.Quantity(float(val), unit)
 
 u.Quantity.from_string = _parse_quantity
+
+from . import coordinates
+from . import dynamics
+from . import integrate
+from . import io
+from . import potential
