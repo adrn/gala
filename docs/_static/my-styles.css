@@ -1,6 +1,6 @@
 @import url(http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic,700italic);
 
-html, body {
+/*html, body {
    font-family: 'Source Sans Pro', sans-serif;
 }
 
@@ -9,3 +9,15 @@ html, body {
     font-size: 10pt !important;
     padding: 8px !important;
 }
+
+table.docutils td {
+    padding: 8px !important;
+    font-size: 12pt !important;
+}
+
+table.docutils td span.pre {
+    margin: 10px !important;
+    background: none !important;
+    border: 0px !important;
+}
+*/
