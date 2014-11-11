@@ -13,8 +13,8 @@ potentials (see :ref:`custompotential` for more information), but more
 useful are the `built-in potentials`_. These are commonly used potentials
 that have methods for computing the potential value, gradient, and (in some
 cases) Hessian. These are particularly useful in combination with
-the `gary.integrate` subpackage (see
-:doc:`../examples/integrate_potential_example`).
+the :ref:`integrate <integrate>` subpackage (see
+:doc:`this example <../examples/integrate_potential_example>`).
 
 Getting started with the built-in classes
 =========================================
