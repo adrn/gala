@@ -105,6 +105,66 @@ class HernquistPotential(CPotential, CartesianPotential):
                                                  parameters=parameters)
 
 # ============================================================================
+#    Plummer sphere potential
+#
+cdef class _PlummerPotential(_CPotential):
+
+    # here need to cdef all the attributes
+    cdef public double G, GM
+    cdef public double m, b, b2
+
+    def __init__(self, double G, double m, double b):
+
+        # have to specify G in the correct units
+        self.G = G
+
+        # parameters
+        self.GM = G*m
+        self.m = m
+        self.b = b
+        self.b2 = b2
+
+    cdef public inline double _value(self, double *r) nogil:
+        return -self.GM / sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2] + self.b2)
+
+    cdef public inline void _gradient(self, double *r, double *grad) nogil:
+        cdef double R2b, fac
+        R2b = (r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) + self.b2
+        fac = self.GM / sqrt(R2b) / R2b
+
+        grad[0] += fac*r[0]
+        grad[1] += fac*r[1]
+        grad[2] += fac*r[2]
+
+class PlummerPotential(CPotential, CartesianPotential):
+    r"""
+    PlummerPotential(m, b, units)
+
+    Plummer potential for a spheroid.
+
+    .. math::
+
+        \Phi(r) = -\frac{G M}{\sqrt{r^2 + b^2}}
+
+    Parameters
+    ----------
+    m : numeric
+       Mass.
+    b : numeric
+        Core concentration.
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, m, b, units):
+        self.units = units
+        _G = G.decompose(units).value
+        parameters = dict(G=_G, m=m, b=b)
+        super(PlummerPotential, self).__init__(_PlummerPotential,
+                                               parameters=parameters)
+
+# ============================================================================
 #    Jaffe spheroid potential
 #
 cdef class _JaffePotential(_CPotential):
