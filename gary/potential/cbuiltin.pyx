@@ -122,7 +122,7 @@ cdef class _PlummerPotential(_CPotential):
         self.GM = G*m
         self.m = m
         self.b = b
-        self.b2 = b2
+        self.b2 = b*b
 
     cdef public inline double _value(self, double *r) nogil:
         return -self.GM / sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2] + self.b2)
