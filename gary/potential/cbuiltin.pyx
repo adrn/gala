@@ -39,8 +39,9 @@ cdef extern from "math.h":
     double exp(double x) nogil
     double pow(double x, double n) nogil
 
-__all__ = ['HernquistPotential', 'MiyamotoNagaiPotential', 'SphericalNFWPotential',
-           'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential', 'JaffePotential']
+__all__ = ['HernquistPotential', 'PlummerPotential', 'MiyamotoNagaiPotential',
+           'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential',
+           'JaffePotential']
 
 # ============================================================================
 #    Hernquist Spheroid potential from Hernquist 1990
