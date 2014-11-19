@@ -390,3 +390,4 @@ class CompositePotential(dict, Potential):
 
 class CartesianCompositePotential(CompositePotential, CartesianPotential):
     pass
+
