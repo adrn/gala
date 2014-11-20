@@ -39,11 +39,11 @@ def anim_update(num, scf, snapfiles, lines, title):
             .format(tbl.meta['time']/1000., pct_bound)
     title.set_text(ttext)
 
-    data = w[:,0,:2].T.copy()
+    data = w[:,:2].T.copy()
     lines[0].set_data(data)
-    data = w[:,0,np.array([0,2])].T.copy()
+    data = w[:,np.array([0,2])].T.copy()
     lines[1].set_data(data)
-    data = w[:,0,np.array([1,2])].T.copy()
+    data = w[:,np.array([1,2])].T.copy()
     lines[2].set_data(data)
     return lines
 
