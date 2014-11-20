@@ -40,7 +40,7 @@ class PW14Potential(CCompositePotential):
 
         if q1 == 1 and q2 == 1 and q3 == 1:
             kwargs["halo"] = SphericalNFWPotential(units=units,
-                                                   v_h=v_h, r_h=r_h)
+                                                   v_c=v_h*np.sqrt(np.log(2)-0.5), r_s=r_h)
         else:
             kwargs["halo"] = LeeSutoTriaxialNFWPotential(units=units,
                                                          a=q1, b=q2, c=q3,
