@@ -48,6 +48,9 @@ class SCFReader(NBodyReader):
             pars['length'] = float(lines[i+10].split()[0])
             pars['mass'] = float(lines[i+11].split()[0])
 
+            self.x0 = np.array(map(float, lines[19].split()))*u.kpc
+            self.v0 = np.array(map(float, lines[20].split()))*u.km/u.s
+
         _G = G.decompose(bases=[u.kpc,u.M_sun,u.Myr]).value
         X = (_G / pars['length']**3 * pars['mass'])**-0.5
 
