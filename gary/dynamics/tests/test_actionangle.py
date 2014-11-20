@@ -211,7 +211,7 @@ def test_compare_action_prepare():
 #         z = r*cost
 #         v = np.zeros_like(x)
 
-#         E = self.potential.energy(np.vstack((x,y,z)).T, np.vstack((v,v,v)).T)
+#         E = self.potential.total_energy(np.vstack((x,y,z)).T, np.vstack((v,v,v)).T)
 #         assert np.allclose(E, 0.5)
 
 #         self.grid = np.vstack((x,y,z,v,v,v)).T

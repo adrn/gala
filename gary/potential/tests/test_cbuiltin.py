@@ -108,7 +108,7 @@ class PotentialTestBase(object):
 
         t1 = time.time()
         fig = self.potential.plot_contours(grid=(grid,grid,0.),
-                                                subplots_kw=dict(figsize=(8,8)))
+                                           subplots_kw=dict(figsize=(8,8)))
         print("Cython plot_contours time", time.time() - t1)
         fig.savefig(os.path.join(plot_path, "{}_2d_cy.png"\
                         .format(self.name)))
@@ -152,7 +152,8 @@ class TestSphericalNFWPotential(PotentialTestBase):
         print(self.__class__.__name__)
 
         self.potential = SphericalNFWPotential(units=self.units,
-                                               v_h=0.35, r_h=12.)
+                                               v_c=0.35*np.sqrt(np.log(2)-0.5),
+                                               r_s=12.)
 
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
@@ -168,6 +169,29 @@ class TestSphericalNFWPotential(PotentialTestBase):
         a1 = other.acceleration(np.array([self.w0[:3]]))
         a2 = self.potential.acceleration(np.array([self.w0[:3]]))
         assert np.allclose(a1,a2)
+
+    def test_mass_enclosed(self):
+
+        # true mass profile
+        vc = self.potential.parameters['v_c']
+        rs = self.potential.parameters['r_s']
+        G = self.potential.parameters['G']
+
+        r = np.linspace(1., 400, 100)
+        fac = np.log(1 + r/rs) - (r/rs) / (1 + (r/rs))
+        true_mprof = vc**2*rs / (np.log(2)-0.5) / G * fac
+
+        R = np.zeros((len(r),3))
+        R[:,0] = r
+        esti_mprof = self.potential.mass_enclosed(R)
+
+        plt.clf()
+        plt.plot(r, true_mprof, label='true')
+        plt.plot(r, esti_mprof, label='estimated')
+        plt.legend(loc='lower right')
+        plt.savefig(os.path.join(plot_path, "mass_profile_nfw.png"))
+
+        assert np.allclose(true_mprof, esti_mprof, rtol=1E-6)
 
 class TestLeeSutoTriaxialNFWPotential(PotentialTestBase):
     units = (u.kpc, u.M_sun, u.Myr, u.radian)

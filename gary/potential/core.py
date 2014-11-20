@@ -317,7 +317,7 @@ class CartesianPotential(Potential):
 
     """
 
-    def energy(self, x, v):
+    def total_energy(self, x, v):
         """
         Compute the total energy (per unit mass) of a point in phase-space
         in this potential. Assumes the last axis of the input position /
@@ -332,7 +332,7 @@ class CartesianPotential(Potential):
             Velocity.
         """
 
-        return self.value(x) + 0.5*np.sum(v**2,axis=-1)
+        return self.value(x) + 0.5*np.sum(v**2, axis=-1)
 
 @inherit_docs
 class CompositePotential(dict, Potential):
@@ -390,3 +390,4 @@ class CompositePotential(dict, Potential):
 
 class CartesianCompositePotential(CompositePotential, CartesianPotential):
     pass
+

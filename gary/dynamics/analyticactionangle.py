@@ -48,7 +48,7 @@ def isochrone_xv_to_aa(x, v, potential):
     _G = G.decompose(potential.units).value
     GM = _G*potential.parameters['m']
     b = potential.parameters['b']
-    E = potential.energy(x, v)
+    E = potential.total_energy(x, v)
 
     if np.any(E > 0.):
         raise ValueError("Unbound particle. (E = {})".format(E))
@@ -255,7 +255,7 @@ def harmonic_oscillator_xv_to_aa(x, v, potential):
     omega = np.atleast_2d(potential.parameters['omega'])
 
     # compute actions -- just energy (hamiltonian) over frequency
-    # E = potential.energy(x,v)[:,None]
+    # E = potential.total_energy(x,v)[:,None]
     omega = potential.parameters['omega']
     action = (v**2 + (omega*x)**2)/(2.*omega[None])
 
