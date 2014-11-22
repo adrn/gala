@@ -7,6 +7,7 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
+import logging
 import os
 import sys
 
@@ -17,14 +18,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy.fft import fft, fftshift
 from scipy.optimize import fmin_slsqp
-from scipy.integrate import trapz
+from scipy.integrate import simps
 
 # Project
 
 def phir(w, xf, yf, signx, chi, tz, tg):
     # this is the subroutine phir() in NAFF
     zreal = chi * (xf*np.cos(w*tz) + yf*np.sin(w*tz))
-    ans = trapz(zreal, x=tz)
+    ans = simps(zreal, x=tz)
     return -(ans*signx)/(2.*tg)
 
 def hanning(x):
@@ -43,11 +44,11 @@ def hanning_product(u1, u2, chi, tz, tg):
     integ_i = integ.imag
 
     # Now integrate the real part:
-    ans1 = trapz(integ_r, x=tz)
+    ans1 = simps(integ_r, x=tz)
     ans1 = ans1/(2.*tg)
 
     # Integrate Imaginary part:
-    ans2 = trapz(integ_i, x=tz)
+    ans2 = simps(integ_i, x=tz)
     ans2 = ans2/(2.*tg)
 
     return ans1 + ans2*1j
@@ -82,7 +83,7 @@ def frequency(f, tz, tg, chi):
     omax = omega0 + np.pi/tg
 
     res = fmin_slsqp(phir, x0=(omax+omin)/2, args=(xf, yf, signx, chi, tz, tg),
-                     acc=1E-15, bounds=[(omin,omax)])
+                     acc=1E-12, bounds=[(omin,omax)], disp=0, epsilon=1E-12)
 
     # freqi = abs(res.x)[0]
     # ampli = -res.fun
@@ -103,7 +104,7 @@ def sub_chi(f_km1, k, ecap, ai):
     return f_k, fmax
 
 def gso(ecap, nui, k, chi, tz, tg):
-    cik = np.zeros(k, dtype=np.complex64)
+    cik = np.zeros(ecap.shape[0], dtype=np.complex64)
 
     # generate the u_n vector:
     ux = np.cos(nui*tz)
@@ -112,15 +113,11 @@ def gso(ecap, nui, k, chi, tz, tg):
 
     # on input k = number of vectors found so far:
     # first find the k-1 complex constants cik(k,2):
-
     for j in range(k):
-        e_i = ecap[j]
-        cik[j] = hanning_product(u_n, e_i, chi, tz, tg)
+        cik[j] = hanning_product(u_n, ecap[j], chi, tz, tg)
 
     # Now construct the orthogonal vector
-    for i in range(len(tz)):
-        sum = np.sum(cik[j] * ecap[j])
-        e_i[i] = u_n[i] - sum
+    e_i = u_n - np.sum(cik[:,np.newaxis]*ecap, axis=0)
 
     # Now Normalize this vector:
     # <ei, ei> = A +iB,  e^i = ei/sqrt(A+iB)
@@ -136,7 +133,7 @@ def gso(ecap, nui, k, chi, tz, tg):
     # now fill in the (k)th vector into the ecap array
     ecap[k] = e_i
 
-def frecoder(t, f, nvec=10):
+def frecoder(t, f, nvec=12):
     ecap = np.zeros((nvec,len(t)), dtype=np.complex64)
     nu_k = np.zeros(nvec)
     ai = np.zeros(nvec, dtype=np.complex64)
@@ -151,7 +148,7 @@ def frecoder(t, f, nvec=10):
     chi = hanning(tz*const)
     fk = f.copy()
     for k in range(nvec):
-        # TODO: break if tolerance met for .. something
+        # TODO: break if tolerance met?
         nu_k[k] = frequency(fk, tz, tg, chi)
 
         if k == 0:
@@ -191,19 +188,28 @@ def main(t, w):
     fy = w[:,0,1] + w[:,0,4] * 1j
     fz = w[:,0,2] + w[:,0,5] * 1j
 
-    nux,aix = frecoder(t, fx)
+    nux,aix = frecoder(t, fx, nvec=10)
     print(nux, aix)
 
-    nuy,aiy = frecoder(t, fy)
+    nuy,aiy = frecoder(t, fy, nvec=10)
     print(nuy, aiy)
 
-    nuz,aiz = frecoder(t, fz)
+    nuz,aiz = frecoder(t, fz, nvec=10)
     print(nuz, aiz)
 
     nu = np.append(np.append(nux, nuy), nuz)
     ai = np.append(np.append(aix, aiy), aiz)
 
     ix = np.abs(ai).argsort()[::-1]
+    nu = nu[ix]
+    ai = ai[ix]
+
+    freq1 = nu[0]
+    amp1 = np.abs(ai[0])
+    ix2 = np.abs(np.abs(freq1) - np.abs(nu[1:])) > 1E-6
+    print()
+    print(freq1)
+    print(nu[1:][ix2][0])
 
     print()
     print("Best freq:", nu[ix][0])
@@ -211,17 +217,50 @@ def main(t, w):
 
 
 if __name__ == '__main__':
+    import gary.coordinates as gc
+    import gary.dynamics as gd
     import gary.potential as gp
     import gary.integrate as gi
+    from gary.units import galactic
 
+    logger.setLevel(logging.DEBUG)
+    logger.debug("Integrating orbit...")
+    # -----------------------------------------------------------------------
+    # Easy:
     potential = gp.HarmonicOscillatorPotential([1.214, 1.46, 1.1])
     t,w = potential.integrate_orbit([1,0,0.2,0.,0.1,-0.8], dt=0.1, nsteps=10000,
                                     Integrator=gi.DOPRI853Integrator)
+    # -----------------------------------------------------------------------
 
+    # -----------------------------------------------------------------------
+    # Harder? For loop orbit, align z axis with circulation?
+    # potential = gp.IsochronePotential(m=1E11, b=1., units=galactic)
+    # t,w = potential.integrate_orbit([1,0,0.,0.,0.12,0.], dt=0.1, nsteps=12000,
+    #                                 Integrator=gi.DOPRI853Integrator)
+
+    # from scipy.signal import argrelmax
+    # R = np.sqrt(np.sum(w[:,0,:2]**2, axis=-1))
+    # ix = argrelmax(R)[0]
+    # TR = np.mean(t[ix[1:]] - t[ix[:-1]])
+    # freq_R = 2*np.pi/TR
+
+    # phi = np.arctan2(w[:,0,1], w[:,0,0])
+    # ix = argrelmax(phi)[0]
+    # Tphi = np.mean(t[ix[1:]] - t[ix[:-1]])
+    # freq_Phi = 2*np.pi/Tphi
+
+    # print("period (R,φ)", TR, Tphi)
+    # print("freq (R,φ)", freq_R, freq_Phi)
+    # print(np.abs(freq_R - freq_Phi))
+    # -----------------------------------------------------------------------
+
+    # plot orbit
+    # fig = gd.plot_orbits(w, marker='.', linestyle='none', alpha=0.2)
+    # plt.show()
+
+    # plot energy conservation
     # E = potential.total_energy(w[:,0,:3],w[:,0,3:])
     # plt.semilogy(t[1:], np.abs(E[1:]-E[:-1]), marker=None)
     # plt.show()
-
-    # TODO: need a better integrator mehbeh?
-
+    logger.debug("Done integrating orbit, starting frequency analysis...")
     main(t,w)
