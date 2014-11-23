@@ -501,7 +501,8 @@ def find_actions(t, w, N_max, units, force_harmonic_oscillator=False, toy_potent
         Return the Sn and dSn/dJ's. Default is False.
     """
 
-    if w.ndim == 2:
+    if w.ndim == 2 or w.shape[1] == 1:
+        w = np.squeeze(w)
         return _single_orbit_find_actions(t, w, N_max, units,
                                           force_harmonic_oscillator=force_harmonic_oscillator,
                                           toy_potential=toy_potential,
