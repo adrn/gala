@@ -107,7 +107,7 @@ class NAFF(object):
         """ Same as the subroutine FRECODER in Valluri's NAFF routines. """
 
         # initialize container arrays
-        ecap = np.zeros((nvec,len(t)), dtype=np.complex64)
+        ecap = np.zeros((nvec,len(self.t)), dtype=np.complex64)
         nu = np.zeros(nvec)
         A = np.zeros(nvec)
         phi = np.zeros(nvec)
@@ -248,11 +248,17 @@ class NAFF(object):
         ffreq_ixes = np.zeros(ndim, dtype=int)
         ffreq[0] = d[0]['freq']
 
+        if ffreq.ndim == 1:
+            return ffreq, d, ffreq_ixes
+
         # choose the next nontrivially related frequency as the 2nd fundamental:
         #   TODO: why 1E-6? this isn't well described in the papers...
         ixes = np.where((d['n'] != d[0]['n']) & ((np.abs(ffreq[0]) - np.abs(d['freq'])) > 1E-6))[0]
         ffreq[1] = d[ixes[1]]['freq']
         ffreq_ixes[1] = ixes[1]
+
+        if ffreq.ndim == 2:
+            return ffreq, d, ffreq_ixes
 
         # brute-force method for finding third frequency: find maximum error in
         #   n*f1 + m*f2 - l*f3
