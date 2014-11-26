@@ -9,11 +9,9 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 # Standard library
 import os
 import sys
-import logging
 
 # Third-party
 from astropy import log as logger
-from astropy.utils.console import color_print
 import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,18 +24,11 @@ from ...integrate import DOPRI853Integrator
 from ... import potential as gp
 from ... import dynamics as gd
 
-logger.setLevel(logging.DEBUG)
-
 plot_path = "plots/tests/dynamics/naff"
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
-print()
-color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yellow")
-color_print("To view plots:", "green")
-print("    open {}".format(plot_path))
-color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yellow")
-
+logger.important("Plots located at: {}".format(plot_path))
 
 def estimate_axisym_freqs(t, w):
     R = np.sqrt(w[:,0,0]**2 + w[:,0,1]**2)
@@ -53,17 +44,31 @@ def estimate_axisym_freqs(t, w):
 
     return fR, fphi, fz
 
-class TestNAFF(object):
+class NAFFBase(object):
 
     def setup(self):
-        name = self.__class__.__name__
+        self.name = self.__class__.__name__
+
         logger.debug("-"*79)
-        logger.debug(name)
+        logger.debug(self.name)
+
+        # figure out integration time, timestep based on true frequency
+        T = (2*np.pi/self.true_freqs).min()
+        t2 = T * 100.
+        dt = T/10.
+        nsteps = int(t2/dt)
+        logger.debug("dt : {}".format(dt))
+        logger.debug("Nsteps : {}".format(nsteps))
+
+        self.filename = "orbit_{}.npy".format(self.name)
+        self.t,self.w = self.potential.integrate_orbit(self.w0,
+                                                       dt=dt, nsteps=nsteps,
+                                                       Integrator=DOPRI853Integrator)
 
         # plot and save orbit
         if self.w.shape[-1] == 6:
             fig = gd.plot_orbits(self.w, marker='.', linestyle='none', alpha=0.2)
-            fig.savefig(os.path.join(plot_path,"orbit_{}.png".format(name)))
+            fig.savefig(os.path.join(plot_path,"orbit_{}.png".format(self.name)))
 
             # plot energy conservation
             E = self.potential.total_energy(self.w[:,0,:3],self.w[:,0,3:])
@@ -71,12 +76,12 @@ class TestNAFF(object):
 
     def test_naff(self):
         naff = NAFF(self.t)
-        f,d,ixes = naff.find_fundamental_frequencies(self.w, nvec=15)
+        f,d,ixes = naff.find_fundamental_frequencies(self.w[:,0], nvec=15)
 
 # -----------------------------------------------------------------------
 # Hand-constructed time-series
 #
-class TestHandConstructed(TestNAFF):
+class TestHandConstructed(NAFFBase):
     def setup(self):
         Ts = np.array([1., 1.2, 1.105])
         As = (1., 0.5, 0.2)
@@ -84,25 +89,14 @@ class TestHandConstructed(TestNAFF):
         self.true_freqs = (2*np.pi) / Ts
 
         f = np.sum([A*(np.cos(2*np.pi*self.t/T) + 1j*np.sin(2*np.pi*self.t/T)) for T,A in zip(Ts,As)], axis=0)
-        self.w = np.vstack((f.real, f.imag)).T
-
-        super(TestHandConstructed,self).setup()
+        self.w = np.vstack((f.real, f.imag)).T[:,np.newaxis]
 
 # -----------------------------------------------------------------------
 # Harmonic Oscillator
 #
-class TestHarmonicOscillator(TestNAFF):
-    def setup(self):
+class TestHarmonicOscillator(NAFFBase):
+    def setup_class(self):
         Ts = np.array([1., 1.2, 1.105])
         self.true_freqs = 2*np.pi/Ts
-
-        t2 = 100
-        nsteps = 50000
-        dt = t2/float(nsteps)
-
         self.potential = gp.HarmonicOscillatorPotential(self.true_freqs)
-        self.t,self.w = self.potential.integrate_orbit([1,0,0.2,0.,0.1,-0.8],
-                                                       dt=dt, nsteps=nsteps,
-                                                       Integrator=DOPRI853Integrator)
-
-        super(TestHarmonicOscillator,self).setup()
+        self.w0 = np.array([1,0,0.2,0.,0.1,-0.8])
