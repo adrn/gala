@@ -18,3 +18,17 @@ from . import dynamics
 from . import integrate
 from . import io
 from . import potential
+
+# Add a custom log level
+from astropy import log as logger
+import logging
+
+def debug_factory(logger, debug_level):
+    def custom_debug(msg, *args, **kwargs):
+        if logger.level >= debug_level:
+           return
+        logger._log(debug_level, msg, args, kwargs)
+    return custom_debug
+
+logging.addLevelName(logging.WARN, 'IMPORTANT')
+setattr(logger, 'important', debug_factory(logger, logging.WARN))
