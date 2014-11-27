@@ -248,7 +248,7 @@ class NAFF(object):
         ffreq_ixes = np.zeros(ndim, dtype=int)
         ffreq[0] = d[0]['freq']
 
-        if ffreq.ndim == 1:
+        if ndim == 1:
             return ffreq, d, ffreq_ixes
 
         # choose the next nontrivially related frequency as the 2nd fundamental:
@@ -257,7 +257,7 @@ class NAFF(object):
         ffreq[1] = d[ixes[1]]['freq']
         ffreq_ixes[1] = ixes[1]
 
-        if ffreq.ndim == 2:
+        if ndim == 2:
             return ffreq, d, ffreq_ixes
 
         # brute-force method for finding third frequency: find maximum error in
