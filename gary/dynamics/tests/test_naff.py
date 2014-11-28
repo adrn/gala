@@ -103,10 +103,11 @@ class TestHandConstructed(NAFFBase):
         Ts = np.array([1., 1.2, 1.105])
         As = (1., 0.5, 0.2)
         self.t = np.linspace(0,100,50000)
-        self.true_freqs = (2*np.pi) / Ts
+        self.true_freqs = (2*np.pi) / Ts[0:1]
 
         f = np.sum([A*(np.cos(2*np.pi*self.t/T) + 1j*np.sin(2*np.pi*self.t/T)) for T,A in zip(Ts,As)], axis=0)
-        self.w = np.vstack((f.real, f.imag)).T[:,np.newaxis]
+        z = np.zeros_like(f.real)
+        self.w = np.vstack((f.real,z,z,f.imag,z,z)).T[:,np.newaxis]
 
         self.dt = 0.1
         self.nsteps = 20000
