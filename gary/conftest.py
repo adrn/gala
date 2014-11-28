@@ -14,5 +14,8 @@ def pytest_configure(config):
     if config.getoption('verbose'):
         logger.setLevel(logging.DEBUG)
 
-    if config.getoption('quiet'):
+    elif config.getoption('quiet'):
         logger.setLevel(logging.WARN)
+
+    else:
+        logger.setLevel(logging.INFO+1)
