@@ -225,7 +225,7 @@ class NAFF(object):
         ndim = w.shape[1]//2
         for i in range(ndim):
             nu,A,phi = self.frecoder(w[:,i] + 1j*w[:,i+ndim], nvec=nvec)
-            freqs.append(nu)
+            freqs.append(-nu)
             As.append(A)
             amps.append(np.abs(A))
             phis.append(phi)
