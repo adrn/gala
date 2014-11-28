@@ -30,5 +30,5 @@ def debug_factory(logger, debug_level):
         logger._log(debug_level, msg, args, kwargs)
     return custom_debug
 
-logging.addLevelName(logging.WARN, 'IMPORTANT')
-setattr(logger, 'important', debug_factory(logger, logging.WARN))
+logging.addLevelName(logging.INFO+5, 'IMPORTANT')
+setattr(logger, 'important', debug_factory(logger, logging.INFO+5))
