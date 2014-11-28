@@ -98,7 +98,7 @@ class NAFFBase(object):
                         done.append(i)
         assert len(done) == len(self.true_freqs)
 
-# -----------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Hand-constructed time-series
 #
 class TestHandConstructed(NAFFBase):
@@ -114,7 +114,7 @@ class TestHandConstructed(NAFFBase):
         self.dt = 0.1
         self.nsteps = 20000
 
-# -----------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Harmonic Oscillator
 #
 class TestHarmonicOscillator(NAFFBase):
@@ -127,7 +127,7 @@ class TestHarmonicOscillator(NAFFBase):
         self.dt = 0.009
         self.nsteps = 20000
 
-# -----------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 # Logarithmic potential, 1D orbit as in Papaphilippou & Laskar (1996), Table 2
 #
 class TestLogarithmic1D(NAFFBase):
@@ -140,10 +140,10 @@ class TestLogarithmic1D(NAFFBase):
         self.dt = 0.005
         self.nsteps = 2**15
 
-# -----------------------------------------------------------------------
-# Logarithmic potential, 2D orbit as in Papaphilippou & Laskar (1996), Table 1
+# -------------------------------------------------------------------------------------
+# Logarithmic potential, 2D Box orbit as in Papaphilippou & Laskar (1996), Table 1
 #
-class TestLogarithmic2D(NAFFBase):
+class TestLogarithmic2DBox(NAFFBase):
     def setup_class(self):
         self.true_freqs = np.array([2.16326132, 3.01405257])
         self.potential = gp.LogarithmicPotential(v_c=np.sqrt(2.), r_h=0.1,
@@ -153,15 +153,15 @@ class TestLogarithmic2D(NAFFBase):
         self.dt = 0.005
         self.nsteps = 2**15
 
-# -----------------------------------------------------------------------
-# Axisymmetric potential
-# TODO: need to compare to Sanders' ?
-class TestAxisymmetric(NAFFBase):
+# -------------------------------------------------------------------------------------
+# Logarithmic potential, 2D Loop orbit as in Papaphilippou & Laskar (1996), Table 3
+#
+class TestLogarithmic2DLoop(NAFFBase):
     def setup_class(self):
-        # self.true_freqs = np.array([2.16326132, 3.01405257, 100.])
+        self.true_freqs = np.array([2.94864765, 1.35752682])
         self.potential = gp.LogarithmicPotential(v_c=np.sqrt(2.), r_h=0.1,
                                                  q1=1., q2=0.9, q3=1., units=galactic)
-        self.w0 = np.array([10.,0,0.,0.,0.15,0.005])
+        self.w0 = np.array([0.49,0.,0.,0.4788,1.3156,0.])
 
         self.dt = 0.005
         self.nsteps = 2**15
