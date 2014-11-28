@@ -253,9 +253,9 @@ class NAFF(object):
 
         # choose the next nontrivially related frequency as the 2nd fundamental:
         #   TODO: why 1E-6? this isn't well described in the papers...
-        ixes = np.where((d['n'] != d[0]['n']) & ((np.abs(ffreq[0]) - np.abs(d['freq'])) > 1E-6))[0]
-        ffreq[1] = d[ixes[1]]['freq']
-        ffreq_ixes[1] = ixes[1]
+        ixes = np.where((d['n'] != d[0]['n']) & (np.abs(np.abs(ffreq[0]) - np.abs(d['freq'])) > 1E-6))[0]
+        ffreq[1] = d[ixes[0]]['freq']
+        ffreq_ixes[1] = ixes[0]
 
         if ndim == 2:
             return ffreq, d, ffreq_ixes
