@@ -137,8 +137,8 @@ class TestLogarithmic1D(NAFFBase):
                                                  q1=1., q2=0.9, q3=1., units=galactic)
         self.w0 = np.array([0.49,0.,0.,1.4,0.,0.])
 
-        self.dt = 0.002
-        self.nsteps = 100000
+        self.dt = 0.005
+        self.nsteps = 2**15
 
 # -----------------------------------------------------------------------
 # Logarithmic potential, 2D orbit as in Papaphilippou & Laskar (1996), Table 1
