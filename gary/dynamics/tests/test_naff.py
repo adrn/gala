@@ -150,8 +150,8 @@ class TestLogarithmic2D(NAFFBase):
                                                  q1=1., q2=0.9, q3=1., units=galactic)
         self.w0 = np.array([0.49,0.,0.,1.3156,0.4788,0.])
 
-        self.dt = 0.002
-        self.nsteps = 100000
+        self.dt = 0.005
+        self.nsteps = 2**15
 
 # -----------------------------------------------------------------------
 # Axisymmetric potential
@@ -163,5 +163,5 @@ class TestAxisymmetric(NAFFBase):
                                                  q1=1., q2=0.9, q3=1., units=galactic)
         self.w0 = np.array([10.,0,0.,0.,0.15,0.005])
 
-        self.dt = 0.002
-        self.nsteps = 100000
+        self.dt = 0.005
+        self.nsteps = 2**15
