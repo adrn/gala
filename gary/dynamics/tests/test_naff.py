@@ -84,8 +84,8 @@ class NAFFBase(object):
             w[:,i+ndim] = self.w[:,0,i+3]
         f,d,ixes = naff.find_fundamental_frequencies(w, nvec=15)
 
-        logger.info("True freqs: {}".format(self.true_freqs))
-        logger.info("Find freqs: {}".format(f))
+        logger.important("True freqs: {}".format(self.true_freqs))
+        logger.important("Find freqs: {}".format(f))
 
         done = []
         for freq in f:
