@@ -11,8 +11,11 @@ def pytest_configure(config):
     import logging
     from astropy import log as logger
 
-    if config.getoption('verbose'):
+    if config.getoption('verbose') == 2:
         logger.setLevel(logging.DEBUG)
+
+    elif config.getoption('verbose') == 1:
+        logger.setLevel(logging.INFO)
 
     elif config.getoption('quiet'):
         logger.setLevel(logging.WARN)
