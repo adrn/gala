@@ -95,6 +95,12 @@ class NAFFBase(object):
                         done.append(i)
         assert len(done) == len(self.true_freqs)
 
+        if len(f) < 2:
+            return
+
+        nvecs = naff.find_integer_vectors(f, d)
+        print(nvecs)
+
 # -------------------------------------------------------------------------------------
 # Hand-constructed time-series
 #
