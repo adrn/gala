@@ -232,7 +232,7 @@ class NAFF(object):
             nqs.append(np.zeros_like(nu) + i)
             ntot += len(nu)
 
-        d = np.zeros(ntot, dtype=zip(('freq','A','|A|','phi','n'),
+        d = np.zeros(ntot, dtype=zip(('freq','A','|A|','phi','n','n1','n2','n3'),
                                      ('f8','c8','f8','f8',np.int)))
         d['freq'] = np.concatenate(freqs)
         d['A'] = np.concatenate(As)
@@ -261,25 +261,41 @@ class NAFF(object):
             return ffreq, d, ffreq_ixes
 
         # brute-force method for finding third frequency: find maximum error in
-        #   n*f1 + m*f2 - l*f3
-        n1 = np.zeros(ntot)
-        n2 = np.zeros(ntot)
-        err = np.zeros(ntot)
+        #   n*f1 + m*f2 - f3
+        # TODO: I"m not sure this actually works...
 
+        # define meshgrid of integer vectors
         imax = 15
+        nvecs = np.vstack(np.vstack(np.mgrid[-imax:imax+1,-imax:imax+1].T))
+        err = np.zeros(ntot)
         for i in range(ntot):
-            obji = 1E20
-            for in1 in range(-imax,imax+1,1):
-                for in2 in range(-imax,imax+1,1):
-                    # for in3 in range(-imax,imax+1,1):
-                    funi = np.abs(d[i]['freq'] - in1*ffreq[0] - in2*ffreq[1])
-                    if funi < obji:
-                        obji = funi
-                        n1[i] = in1
-                        n2[i] = in2
-                        err[i] = obji
+            err[i] = np.abs(d[i]['freq'] - nvecs.dot(ffreq[:2]))
 
         ffreq[2] = d[err.argmax()]['freq']
         ffreq_ixes[2] = err.argmax()
 
         return ffreq, d, ffreq_ixes
+
+    def find_integer_vectors(self, ffreqs, d, imax=15):
+        """ TODO """
+
+        ntot = len(d)
+
+        # define meshgrid of integer vectors
+        nfreqs = len(ffreqs)
+        slc = [slice(-imax,imax+1,None)]*nfreqs
+        nvecs = np.vstack(np.vstack(np.mgrid[slc].T))
+
+        # integer vectors
+        d_nvec = np.zeros((ntot,nfreqs))
+        err = np.zeros(ntot)
+        for i in range(ntot):
+            this_err = np.abs(d[i]['freq'] - nvecs.dot(ffreqs))
+            err[i] = this_err.min()
+            d_nvec[i] = nvecs[this_err.argmin()]
+
+        return d_nvec
+
+    def find_actions(self):
+        """ Reconstruct approximations to the actions using Percivals equation """
+        pass
