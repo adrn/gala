@@ -82,7 +82,7 @@ class NAFFBase(object):
         for i in range(ndim):
             w[:,i] = self.w[:,0,i]
             w[:,i+ndim] = self.w[:,0,i+3]
-        f,d,ixes = naff.find_fundamental_frequencies(w, nvec=15)
+        f,d,ixes = naff.find_fundamental_frequencies(w, nintvec=15)
 
         logger.important("True freqs: {}".format(self.true_freqs))
         logger.important("Find freqs: {}".format(f))
@@ -102,11 +102,21 @@ class NAFFBase(object):
 
         Js = np.zeros(ndim)
         for row,nvec in zip(d,nvecs):
-            Js[0] += nvec[0]*nvec.dot(f)*row['|A|']**2
-            Js[1] += nvec[1]*nvec.dot(f)*row['|A|']**2
-            Js[2] += nvec[2]*nvec.dot(f)*row['|A|']**2
+            a = row['|A|']*np.exp(1j*row['phi'])
+            print(a.real, a.imag)
+            Js[0] += nvec[0] * nvec.dot(f) * row['|A|']**2
+            Js[1] += nvec[1] * nvec.dot(f) * row['|A|']**2
+            Js[2] += nvec[2] * nvec.dot(f) * row['|A|']**2
+            # Js[0] += nvec[0] * nvec.dot(f) * a.real**2
+            # Js[1] += nvec[1] * nvec.dot(f) * a.real**2
+            # Js[2] += nvec[2] * nvec.dot(f) * a.real**2
+
+        if hasattr(self.potential, 'action_angle'):
+            true_Js,angles = self.potential.action_angle(self.w[...,:3], self.w[...,3:])
+            true_Js = np.mean(true_Js[:,0], axis=0)
 
         print(Js)
+        print(true_Js)
 
         # a = d['|A|']*np.exp(1j*d['phi'])
         # a.real, a.imag
