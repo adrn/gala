@@ -17,7 +17,7 @@ from numpy.fft import fft, fftfreq
 from scipy.optimize import fmin_slsqp
 from scipy.integrate import simps
 
-# Project
+__all__ = ['NAFF']
 
 def hanning(x):
     return 1 + np.cos(x)
@@ -286,7 +286,7 @@ class NAFF(object):
             nqs.append(np.zeros_like(nu) + i)
             ntot += len(nu)
 
-        d = np.zeros(ntot, dtype=zip(('freq','A','|A|','phi','n','n1','n2','n3'),
+        d = np.zeros(ntot, dtype=zip(('freq','A','|A|','phi','n'),
                                      ('f8','c8','f8','f8',np.int)))
         d['freq'] = np.concatenate(freqs)
         d['A'] = np.concatenate(As)
