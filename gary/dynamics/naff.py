@@ -269,7 +269,7 @@ class NAFF(object):
         nvecs = np.vstack(np.vstack(np.mgrid[-imax:imax+1,-imax:imax+1].T))
         err = np.zeros(ntot)
         for i in range(ntot):
-            err[i] = np.abs(d[i]['freq'] - nvecs.dot(ffreq[:2]))
+            err[i] = np.abs(d[i]['freq'] - nvecs.dot(ffreq[:2])).min()
 
         ffreq[2] = d[err.argmax()]['freq']
         ffreq_ixes[2] = err.argmax()
