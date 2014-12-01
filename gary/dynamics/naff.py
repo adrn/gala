@@ -25,7 +25,29 @@ def hanning(x):
 class NAFF(object):
 
     def __init__(self, t):
-        """ """
+        """ Implementation of the Numerical Analysis of Fundamental Frequencies (NAFF)
+            method of Laskar, later modified by Valluri and Merritt (see references below).
+
+            This algorithm attempts to numerically find the fundamental frequencies of an
+            input orbit (time series) and can also find approximate actions for the orbit.
+            The basic idea is to Fourier transform the orbit convolved with a Hanning filter,
+            find the most significant peak, subtract that frequency, and iterate on this
+            until convergence or for a fixed number of terms. The fundamental frequencies
+            can then be solved for by assuming that the frequencies found by the above method
+            are integer combinations of the fundamental frequencies.
+
+            For more information, see:
+
+                - Laskar, J., Froeschlé, C., and Celletti, A. (1992)
+                - Laskar, J. (1993)
+                - Papaphilippou, Y. and Laskar, J. (1996)
+                - Valluri, M. and Merritt, D. (1998)
+
+            Parameters
+            ----------
+            t : array_like
+                Array of times.
+        """
 
         self.t = t
         self.ts = 0.5*(t[-1] + t[0])
@@ -36,13 +58,19 @@ class NAFF(object):
         self.chi = hanning(self.tz*np.pi/self.T)
 
     def frequency(self, f):
-        """ Find the most significant frequency of a (complex) time series, `f(t)`,
+        """ Find the most significant frequency of a (complex) time series, :math:`f(t)`,
             by Fourier transforming the function convolved with a Hanning filter and
-            picking the biggest peak.
+            picking the biggest peak. This assumes `f` is aligned with / given at the
+            times specified when constructing this object.
+
+            Parameters
+            ----------
+            f : array_like
+                Complex time-series, :math:`q(t) + i p(t)`.
         """
 
+        # number of data points or time samples
         ndata = len(f)
-        C = np.pi / self.T  # normalization constant to go from [-T/2,T/2] to [-pi,pi]
 
         # take Fourier transform of input (complex) function f
         logger.debug("Fourier transforming...")
@@ -103,19 +131,36 @@ class NAFF(object):
 
         return freq[0]
 
-    def frecoder(self, f, nvec=12):
-        """ Same as the subroutine FRECODER in Valluri's NAFF routines. """
+    def frecoder(self, f, nintvec=12, break_condition=1E-7):
+        """ For a given number of iterations, or until the break condition is met,
+            solve for strongest frequency of the input time series, then subtract
+            it from the time series.
+
+            This function is meant to be the same as the subroutine FRECODER in
+            Monica Valluri's Fortran NAFF routines.
+
+            Parameters
+            ----------
+            f : array_like
+                Complex time-series, :math:`q(t) + i p(t)`.
+            nintvec : int
+                Number of integer vectors to find or number of frequencies to find and subtract.
+            break_condition : numeric
+                Break the iterations of the time series maximum value or amplitude of the
+                subtracted frequency is smaller than this value. Set to 0 if you want to always
+                iterate for `nintvec` frequencies.
+        """
 
         # initialize container arrays
-        ecap = np.zeros((nvec,len(self.t)), dtype=np.complex64)
-        nu = np.zeros(nvec)
-        A = np.zeros(nvec)
-        phi = np.zeros(nvec)
+        ecap = np.zeros((nintvec,len(self.t)), dtype=np.complex64)
+        nu = np.zeros(nintvec)
+        A = np.zeros(nintvec)
+        phi = np.zeros(nintvec)
 
         fk = f.copy()
         logger.info("-"*50)
         logger.info("k    ωk    Ak    φk(deg)    ak")
-        for k in range(nvec):
+        for k in range(nintvec):
             nu[k] = self.frequency(fk)
 
             if k == 0:
@@ -205,7 +250,7 @@ class NAFF(object):
 
         return f_k, fmax
 
-    def find_fundamental_frequencies(self, w, nvec=15):
+    def find_fundamental_frequencies(self, w, nintvec=15):
         """ Solve for the fundamental frequencies of the given orbit, `w`.
 
             TODO:
@@ -224,7 +269,7 @@ class NAFF(object):
         ntot = 0
         ndim = w.shape[1]//2
         for i in range(ndim):
-            nu,A,phi = self.frecoder(w[:,i] + 1j*w[:,i+ndim], nvec=nvec)
+            nu,A,phi = self.frecoder(w[:,i] + 1j*w[:,i+ndim], nintvec=nintvec)
             freqs.append(-nu)
             As.append(A)
             amps.append(np.abs(A))
