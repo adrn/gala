@@ -99,7 +99,17 @@ class NAFFBase(object):
             return
 
         nvecs = naff.find_integer_vectors(f, d)
-        print(nvecs)
+
+        Js = np.zeros(ndim)
+        for row,nvec in zip(d,nvecs):
+            Js[0] += nvec[0]*nvec.dot(f)*row['|A|']**2
+            Js[1] += nvec[1]*nvec.dot(f)*row['|A|']**2
+            Js[2] += nvec[2]*nvec.dot(f)*row['|A|']**2
+
+        print(Js)
+
+        # a = d['|A|']*np.exp(1j*d['phi'])
+        # a.real, a.imag
 
 # -------------------------------------------------------------------------------------
 # Hand-constructed time-series
