@@ -187,20 +187,28 @@ class NAFF(object):
         return nu[:k+1], A[:k+1], phi[:k+1]
 
     def hanning_product(self, u1, u2):
-        # Routine to compute the scalar product of two vectors
-        # the scalar product is defined with the Hanning filter as
-        #  <u1, u2> = integral(u1(t)* chi(t) * u2~(t))
-        # The product is the integral 1/2t*(u1(t)*chi(t)*u2conj(t) dt)
+        r""" Compute the scalar product of two 'vectors', `u1` and `u2`.
+            The scalar product is defined with the Hanning filter as
+
+            .. math::
+
+                <u_1, u_2> = \frac{1}{2 T} \int \, u_1(t) \, \chi(t) \, u_2^*(t)\,dt
+
+            Parameters
+            ----------
+            u1 : array_like
+            u2 : array_like
+        """
 
         # First find complex conjugate of vector u2 and construct integrand
         integ = u1 * np.conj(u2) * self.chi
         integ_r = integ.real
         integ_i = integ.imag
 
-        # Now integrate the real part:
+        # Integrate the real part
         real = simps(integ_r, x=self.tz) / (2.*self.T)
 
-        # Integrate Imaginary part:
+        # Integrate Imaginary part
         imag = simps(integ_i, x=self.tz) / (2.*self.T)
 
         return real + imag*1j
