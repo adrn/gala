@@ -214,40 +214,41 @@ class NAFF(object):
         return real + imag*1j
 
     def gso(self, ecap, nu, k):
-        """ Gram-Schmidt Orthogonalization of
+        """ Gram-Schmidt orthonormalization of the function
+        ..math::
+
+            e_k(t) = \exp (i \omega_k t)
+
+        with all previous functions.
 
         Parameters
         ----------
-        ecap : ndarray
+        ecap : array_like
         nu : numeric
         k : int
             Index of maximum freq. found so far.
         """
-        cik = np.zeros(k, dtype=np.complex64)
 
-        u_n = np.cos(nu*self.tz) + 1j*np.sin(nu*self.tz)
+        # coefficients
+        c_ik = np.zeros(k, dtype=np.complex64)
+
+        u_n = np.exp(1j*nu*self.tz)
 
         # first find the k complex constants cik(k,ndata):
         for j in range(k):
-            cik[j] = self.hanning_product(u_n, ecap[j])
+            c_ik[j] = self.hanning_product(u_n, ecap[j])
 
         # Now construct the orthogonal vector
-        # print(np.sum(cik[:,np.newaxis]*ecap[:k], axis=0))
-        e_i = u_n - np.sum(cik[:,np.newaxis]*ecap[:k], axis=0)
+        e_i = u_n - np.sum(c_ik[:,np.newaxis]*ecap[:k], axis=0)
 
-        # Now Normalize this vector:
-        # <ei, ei> = A + iB
+        # Now normalize this vector
         prod = self.hanning_product(e_i, e_i)
 
-        if prod != 0.:
-            norm = 1. / np.sqrt(prod)
-        else:
+        norm = 1. / np.sqrt(prod)
+        if prod == 0.:
             norm = 0. + 0j
 
-        e_i *= norm
-
-        # now fill in the (k)th vector into the ecap array
-        return e_i
+        return e_i*norm
 
     def sub_chi(self, f_km1, ecap_k, a_k):
         # remove the new orthogonal frequency component from the f_k
