@@ -259,7 +259,7 @@ class NAFF(object):
 
         return f_k, fmax
 
-    def find_fundamental_frequencies(self, w, nintvec=15):
+    def find_fundamental_frequencies(self, w, nintvec=15, imax=15):
         """ Solve for the fundamental frequencies of the given orbit, `w`.
 
             TODO:
@@ -314,19 +314,26 @@ class NAFF(object):
         if ndim == 2:
             return ffreq, d, ffreq_ixes
 
-        # brute-force method for finding third frequency: find maximum error in
-        #   n*f1 + m*f2 - f3
-        # TODO: I"m not sure this actually works...
+        # -------------
+        # brute-force method for finding third frequency: find maximum error in (n*f1 + m*f2 - f3)
 
-        # define meshgrid of integer vectors
-        imax = 15
+        # first define meshgrid of integer vectors
         nvecs = np.vstack(np.vstack(np.mgrid[-imax:imax+1,-imax:imax+1].T))
         err = np.zeros(ntot)
-        for i in range(ntot):
+        for i in range(ffreq_ixes[1]+1, ntot):
+            # find best solution for each integer vector
             err[i] = np.abs(d[i]['freq'] - nvecs.dot(ffreq[:2])).min()
 
-        ffreq[2] = d[err.argmax()]['freq']
-        ffreq_ixes[2] = err.argmax()
+            if err[i] > 1E-6:
+                break
+
+            i = np.nan
+
+        if np.isnan(i):
+            raise ValueError("Failed to find third fundamental frequency.")
+
+        ffreq[2] = d[i]['freq']
+        ffreq_ixes[2] = i
 
         return ffreq, d, ffreq_ixes
 
