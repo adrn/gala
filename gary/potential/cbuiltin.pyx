@@ -64,11 +64,6 @@ cdef class _HernquistPotential(_CPotential):
         self.c = c
 
     def __reduce__(self):
-        d = {}
-        d['G'] = self.G
-        d['GM'] = self.GM
-        d['m'] = self.m
-        d['c'] = self.c
         args = (self.G, self.m, self.c)
         return (_HernquistPotential, args)
 
@@ -135,14 +130,8 @@ cdef class _PlummerPotential(_CPotential):
         self.b2 = b*b
 
     def __reduce__(self):
-        d = {}
-        d['G'] = self.G
-        d['GM'] = self.GM
-        d['m'] = self.m
-        d['b'] = self.b
-        d['b2'] = self.b2
         args = (self.G, self.m, self.b)
-        return (_PlummerPotential, args) #, d)
+        return (_PlummerPotential, args)
 
     cdef public inline double _value(self, double *r) nogil:
         return -self.GM / sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2] + self.b2)
@@ -204,13 +193,8 @@ cdef class _JaffePotential(_CPotential):
         self.c = c
 
     def __reduce__(self):
-        d = {}
-        d['G'] = self.G
-        d['GM'] = self.GM
-        d['m'] = self.m
-        d['c'] = self.c
         args = (self.G, self.m, self.c)
-        return (_JaffePotential, args, d)
+        return (_JaffePotential, args)
 
     cdef public inline double _value(self, double *r) nogil:
         cdef double R
@@ -279,15 +263,8 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
         self.b2 = b*b
 
     def __reduce__(self):
-        d = {}
-        d['G'] = self.G
-        d['GM'] = self.GM
-        d['m'] = self.m
-        d['a'] = self.a
-        d['b'] = self.b
-        d['b2'] = self.b2
         args = (self.G, self.m, self.a, self.b)
-        return (_MiyamotoNagaiPotential, args, d)
+        return (_MiyamotoNagaiPotential, args)
 
     cdef public inline double _value(self, double *r) nogil:
         cdef double zd
@@ -352,14 +329,8 @@ cdef class _SphericalNFWPotential(_CPotential):
         self.r_s2 = r_s*r_s
 
     def __reduce__(self):
-        d = {}
-        d['G'] = self.G
-        d['v_h'] = self.v_h
-        d['v_h'] = self.v_h2
-        d['r_s'] = self.r_s
-        d['r_s2'] = self.r_s2
         args = (self.G, self.v_c, self.r_s)
-        return (_SphericalNFWPotential, args, d)
+        return (_SphericalNFWPotential, args)
 
     cdef public inline double _value(self, double *r) nogil:
         cdef double u
