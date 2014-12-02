@@ -5,7 +5,8 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os, sys
+import os
+import sys
 
 # Third-party
 from astropy import log as logger
@@ -18,6 +19,12 @@ import gary.dynamics as gd
 import gary.potential as gp
 import gary.integrate as gi
 from gary.units import galactic
+from gary.util import get_pool
+
+# timstep and number of steps
+dt = 0.02
+nsteps = 2**14
+nintvec = 15
 
 def setup_grid(n, potential):
     # grid of points on Phi = 0.5
@@ -49,17 +56,15 @@ def setup_grid(n, potential):
 
     return grid
 
-def main():
+def worker(task):
+    i,filename,potential = task
+    w0 = np.load(filename)
+    t,ws = potential.integrate_orbit(w0[i], dt=dt, nsteps=nsteps,
+                                     Integrator=gi.DOPRI853Integrator)
 
-    # Reproducing Fig. 3.45 from Binney & Tremaine
-    potential = gp.LogarithmicPotential(v_c=1., r_h=np.sqrt(0.1),
-                                        q1=1., q2=0.9, q3=0.7, units=galactic)
-
-    dt = 0.05
-    nsteps = 2**13
-
-    w0 = setup_grid(25, potential)
-    norbits = len(w0)
+    naff = gd.NAFF(t)
+    f,d,ixes = naff.find_fundamental_frequencies(ws[:,0], nintvec=nintvec)
+    return f
 
     # t,ws = potential.integrate_orbit(w0[10], dt=dt, nsteps=nsteps, Integrator=gi.DOPRI853Integrator)
     # E = potential.total_energy(ws[:,0,:3].copy(), ws[:,0,3:].copy())
@@ -68,29 +73,70 @@ def main():
     # gd.plot_orbits(ws, linestyle='none', alpha=0.5)
     # plt.show()
 
-    t,ws = potential.integrate_orbit(w0, dt=dt, nsteps=nsteps, Integrator=gi.DOPRI853Integrator)
+def main(path="", mpi=False):
+    """ Reproducing Fig. 3.45 from Binney & Tremaine """
 
-    naff = gd.NAFF(t)
-    all_freqs = np.zeros((norbits,3))
-    for i in range(norbits):
-        f,d,ixes = naff.find_fundamental_frequencies(ws[:,i], nintvec=15)
-        all_freqs[i,0] = f[0]
-        all_freqs[i,1] = f[1]
-        all_freqs[i,2] = f[2]
+    # potential from page 259 in B&T
+    potential = gp.LogarithmicPotential(v_c=1., r_h=np.sqrt(0.1),
+                                        q1=1., q2=0.9, q3=0.7, units=galactic)
 
-    np.save("all_freqs.npy", all_freqs)
+    # get a pool object for multiprocessing / MPI
+    pool = get_pool(mpi=mpi)
+    if mpi:
+        logger.info("Using MPI")
+    logger.info("Caching to: {}".format(path))
 
-def plot():
-    all_freqs = np.load("all_freqs.npy")
+    # initial conditions
+    w0 = setup_grid(25, potential)
+    norbits = len(w0)
+    logger.info("Number of orbits: {}".format(norbits))
 
-    plt.plot(all_freqs[:,0], all_freqs[:,1], linestyle='none')
-    plt.show()
+    # save the initial conditions
+    filename = os.path.join(path, 'w0.npy')
+    np.save(filename, w0)
+
+    # for zipping
+    filenames = [filename]*norbits
+    potentials = [potential]*norbits
+
+    tasks = zip(range(norbits), filenames, potentials)
+    all_freqs = pool.map(worker, tasks)
+    pool.close()
+
+    np.save(os.path.join(path,"all_freqs.npy"), np.array(all_freqs))
+
+def plot(path):
+    all_freqs = np.load(os.path.join(path,"all_freqs.npy"))
+
+    plt.figure(figsize=(6,6))
+    plt.plot(all_freqs[:,1]/all_freqs[:,0], all_freqs[:,2]/all_freqs[:,0],
+             linestyle='none', marker='.', alpha=0.5)
+    plt.savefig(os.path.join(path,'freqs.png'))
 
 if __name__ == '__main__':
+    from argparse import ArgumentParser
+    import logging
 
-    main()
+    # Define parser object
+    parser = ArgumentParser(description="")
+    parser.add_argument("-v", "--verbose", action="store_true", dest="verbose",
+                        default=False, help="Be chatty! (default = False)")
+    parser.add_argument("-q", "--quiet", action="store_true", dest="quiet",
+                        default=False, help="Be quiet! (default = False)")
 
-    # if not os.path.exists("all_freqs.npy"):
-    #     main()
+    parser.add_argument("--mpi", dest="mpi", default=False, action="store_true",
+                        help="Use an MPI pool.")
+    parser.add_argument("--path", dest="path", default='', help="Cache path.")
 
-    # plot()
+    args = parser.parse_args()
+
+    # Set logger level based on verbose flags
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+    elif args.quiet:
+        logger.setLevel(logging.ERROR)
+    else:
+        logger.setLevel(logging.INFO)
+
+    main(path=args.path, mpi=args.mpi)
+    plot(path=args.path)
