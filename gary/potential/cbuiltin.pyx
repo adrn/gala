@@ -414,11 +414,11 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
     # here need to cdef all the attributes
     cdef public double v_h, r_h, a, b, c, e_b2, e_c2, G
     cdef public double v_h2, r_h2, a2, b2, c2, x0
-    cdef public double[:,::1] R, Rinv
+    cdef public double[::1] R
     cdef public unsigned int rotated, spherical
 
     def __init__(self, double G, double v_h, double r_h, double a, double b, double c,
-                 double[:,::1] R):
+                 double[::1] R):
         """ Units of everything should be in the system:
                 kpc, Myr, radian, M_sun
         """
@@ -439,7 +439,6 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
         self.e_c2 = 1-pow(c/a,2)
 
         self.R = R
-        self.Rinv = R.T.copy()
 
     def __reduce__(self):
         d = {}
@@ -456,16 +455,15 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
         d['G'] = self.G
         d['e_b2'] = self.e_b2
         d['e_c2'] = self.e_c2
-        d['R'] = self.R.base
-        d['Rinv'] = self.Rinv.base
+        d['R'] = np.asarray(self.R)
         return (_LeeSutoTriaxialNFWPotential, (), d)
 
     cdef public inline double _value(self, double *r) nogil:
         cdef double x, y, z, _r, u
 
-        x = self.R[0,0]*r[0] + self.R[0,1]*r[1] + self.R[0,2]*r[2]
-        y = self.R[1,0]*r[0] + self.R[1,1]*r[1] + self.R[1,2]*r[2]
-        z = self.R[2,0]*r[0] + self.R[2,1]*r[1] + self.R[2,2]*r[2]
+        x = self.R[0]*r[0] + self.R[1]*r[1] + self.R[2]*r[2]
+        y = self.R[3]*r[0] + self.R[4]*r[1] + self.R[5]*r[2]
+        z = self.R[6]*r[0] + self.R[7]*r[1] + self.R[8]*r[2]
 
         _r = sqrt(x*x + y*y + z*z)
         u = _r / self.r_h
@@ -479,9 +477,9 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
             double x20, x21, x7, x1
             double x10, x13, x15, x16, x17
 
-        x = self.R[0,0]*r[0] + self.R[0,1]*r[1] + self.R[0,2]*r[2]
-        y = self.R[1,0]*r[0] + self.R[1,1]*r[1] + self.R[1,2]*r[2]
-        z = self.R[2,0]*r[0] + self.R[2,1]*r[1] + self.R[2,2]*r[2]
+        x = self.R[0]*r[0] + self.R[1]*r[1] + self.R[2]*r[2]
+        y = self.R[3]*r[0] + self.R[4]*r[1] + self.R[5]*r[2]
+        z = self.R[6]*r[0] + self.R[7]*r[1] + self.R[8]*r[2]
 
         _r2 = x*x + y*y + z*z
         _r = sqrt(_r2)
@@ -505,9 +503,9 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
         ay = x2*y*(x17*(x7 - _r2*self.e_b2) + x22)
         az = x2*z*(x17*(x7 - _r2*self.e_c2) + x22)
 
-        grad[0] += self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
-        grad[1] += self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
-        grad[2] += self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
+        grad[0] += self.R[0]*ax + self.R[3]*ay + self.R[6]*az
+        grad[1] += self.R[1]*ax + self.R[4]*ay + self.R[7]*az
+        grad[2] += self.R[2]*ax + self.R[5]*ay + self.R[8]*az
 
 class LeeSutoTriaxialNFWPotential(CPotential, CartesianPotential):
     r"""
@@ -559,7 +557,7 @@ class LeeSutoTriaxialNFWPotential(CPotential, CartesianPotential):
         else:
             R = np.eye(3)
 
-        parameters['R'] = R
+        parameters['R'] = np.ravel(R).copy()
         super(LeeSutoTriaxialNFWPotential, self).__init__(_LeeSutoTriaxialNFWPotential,
                                                           parameters=parameters)
 
@@ -571,10 +569,10 @@ cdef class _LogarithmicPotential(_CPotential):
     # here need to cdef all the attributes
     cdef public double v_c, r_h, q1, q2, q3, G
     cdef public double v_c2, r_h2, q1_2, q2_2, q3_2, x0
-    cdef public double[:,::1] R, Rinv
+    cdef public double[::1] R
 
     def __init__(self, double G, double v_c, double r_h, double q1, double q2, double q3,
-                 double[:,::1] R):
+                 double[::1] R):
 
         self.v_c = v_c
         self.v_c2 = v_c*v_c
@@ -588,8 +586,6 @@ cdef class _LogarithmicPotential(_CPotential):
         self.q3_2 = q3*q3
 
         self.R = R
-        self.Rinv = np.linalg.inv(R)
-
         self.G = G
 
     def __reduce__(self):
@@ -604,8 +600,7 @@ cdef class _LogarithmicPotential(_CPotential):
         d['q2_2'] = self.q2_2
         d['q3'] = self.q3
         d['q3_2'] = self.q3_2
-        d['R'] = self.R
-        d['Rinv'] = self.Rinv
+        d['R'] = np.asarray(self.R)
         d['G'] = self.G
         return (LogarithmicPotential, (), d)
 
@@ -613,9 +608,9 @@ cdef class _LogarithmicPotential(_CPotential):
 
         cdef double x, y, z
 
-        x = self.R[0,0]*r[0] + self.R[0,1]*r[1] + self.R[0,2]*r[2]
-        y = self.R[1,0]*r[0] + self.R[1,1]*r[1] + self.R[1,2]*r[2]
-        z = self.R[2,0]*r[0] + self.R[2,1]*r[1] + self.R[2,2]*r[2]
+        x = self.R[0]*r[0] + self.R[1]*r[1] + self.R[2]*r[2]
+        y = self.R[3]*r[0] + self.R[4]*r[1] + self.R[5]*r[2]
+        z = self.R[6]*r[0] + self.R[7]*r[1] + self.R[8]*r[2]
 
         return 0.5*self.v_c2 * log(x*x/self.q1_2 + y*y/self.q2_2 + z*z/self.q3_2 + self.r_h2)
 
@@ -623,9 +618,9 @@ cdef class _LogarithmicPotential(_CPotential):
 
         cdef double x, y, z, _r, _r2, ax, ay, az
 
-        x = self.R[0,0]*r[0] + self.R[0,1]*r[1] + self.R[0,2]*r[2]
-        y = self.R[1,0]*r[0] + self.R[1,1]*r[1] + self.R[1,2]*r[2]
-        z = self.R[2,0]*r[0] + self.R[2,1]*r[1] + self.R[2,2]*r[2]
+        x = self.R[0]*r[0] + self.R[1]*r[1] + self.R[2]*r[2]
+        y = self.R[3]*r[0] + self.R[4]*r[1] + self.R[5]*r[2]
+        z = self.R[6]*r[0] + self.R[7]*r[1] + self.R[8]*r[2]
 
         _r2 = x*x + y*y + z*z
         _r = sqrt(_r2)
@@ -635,9 +630,9 @@ cdef class _LogarithmicPotential(_CPotential):
         ay = fac*y/self.q2_2
         az = fac*z/self.q3_2
 
-        grad[0] += self.Rinv[0,0]*ax + self.Rinv[0,1]*ay + self.Rinv[0,2]*az
-        grad[1] += self.Rinv[1,0]*ax + self.Rinv[1,1]*ay + self.Rinv[1,2]*az
-        grad[2] += self.Rinv[2,0]*ax + self.Rinv[2,1]*ay + self.Rinv[2,2]*az
+        grad[0] += self.R[0]*ax + self.R[3]*ay + self.R[6]*az
+        grad[1] += self.R[1]*ax + self.R[4]*ay + self.R[7]*az
+        grad[2] += self.R[2]*ax + self.R[5]*ay + self.R[8]*az
 
 class LogarithmicPotential(CPotential, CartesianPotential):
     r"""
@@ -692,6 +687,6 @@ class LogarithmicPotential(CPotential, CartesianPotential):
         else:
             R = np.eye(3)
 
-        parameters['R'] = R
+        parameters['R'] = np.ravel(R)
         super(LogarithmicPotential, self).__init__(_LogarithmicPotential,
                                                    parameters=parameters)
