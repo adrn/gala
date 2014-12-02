@@ -64,7 +64,6 @@ cdef class _HernquistPotential(_CPotential):
         self.c = c
 
     def __reduce__(self):
-        print(dir(self))
         d = {}
         d['G'] = self.G
         d['GM'] = self.GM
@@ -135,6 +134,16 @@ cdef class _PlummerPotential(_CPotential):
         self.b = b
         self.b2 = b*b
 
+    def __reduce__(self):
+        d = {}
+        d['G'] = self.G
+        d['GM'] = self.GM
+        d['m'] = self.m
+        d['b'] = self.b
+        d['b2'] = self.b2
+
+        return (_PlummerPotential, (), d)
+
     cdef public inline double _value(self, double *r) nogil:
         return -self.GM / sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2] + self.b2)
 
@@ -193,6 +202,13 @@ cdef class _JaffePotential(_CPotential):
         self.GM = G*m
         self.m = m
         self.c = c
+
+    def __reduce__(self):
+        d = {}
+        d['G'] = self.G
+        d['GM'] = self.GM
+        d['m'] = self.m
+        d['c'] = self.c
 
     cdef public inline double _value(self, double *r) nogil:
         cdef double R
@@ -260,6 +276,15 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
         self.b = b
         self.b2 = b*b
 
+    def __reduce__(self):
+        d = {}
+        d['G'] = self.G
+        d['GM'] = self.GM
+        d['m'] = self.m
+        d['a'] = self.a
+        d['b'] = self.b
+        d['b2'] = self.b2
+
     cdef public inline double _value(self, double *r) nogil:
         cdef double zd
         zd = (self.a + sqrt(r[2]*r[2] + self.b2))
@@ -321,6 +346,14 @@ cdef class _SphericalNFWPotential(_CPotential):
         self.v_h2 = self.v_h*self.v_h
         self.r_s = r_s
         self.r_s2 = r_s*r_s
+
+    def __reduce__(self):
+        d = {}
+        d['G'] = self.G
+        d['v_h'] = self.v_h
+        d['v_h'] = self.v_h2
+        d['r_s'] = self.r_s
+        d['r_s2'] = self.r_s2
 
     cdef public inline double _value(self, double *r) nogil:
         cdef double u
@@ -402,6 +435,24 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
 
         self.R = R
         self.Rinv = R.T.copy()
+
+    def __reduce__(self):
+        d = {}
+        d['v_h'] = self.v_h
+        d['v_h2'] = self.v_h2
+        d['r_h'] = self.r_h
+        d['r_h2'] = self.r_h2
+        d['a'] = self.a
+        d['a2'] = self.a2
+        d['b'] = self.b
+        d['b2'] = self.b2
+        d['c'] = self.c
+        d['c2'] = self.c2
+        d['G'] = self.G
+        d['e_b2'] = self.e_b2
+        d['e_c2'] = self.e_c2
+        d['R'] = self.R
+        d['Rinv'] = self.Rinv
 
     cdef public inline double _value(self, double *r) nogil:
         cdef double x, y, z, _r, u
@@ -534,6 +585,21 @@ cdef class _LogarithmicPotential(_CPotential):
         self.Rinv = np.linalg.inv(R)
 
         self.G = G
+
+    def __reduce__(self):
+        d['v_c'] = self.v_c
+        d['v_c2'] = self.v_c2
+        d['r_h'] = self.r_h
+        d['r_h2'] = self.r_h2
+        d['q1'] = self.q1
+        d['q1_2'] = self.q1_2
+        d['q2'] = self.q2
+        d['q2_2'] = self.q2_2
+        d['q3'] = self.q3
+        d['q3_2'] = self.q3_2
+        d['R'] = self.R
+        d['Rinv'] = self.Rinv
+        d['G'] = self.G
 
     cdef public inline double _value(self, double *r) nogil:
 
