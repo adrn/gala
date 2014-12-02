@@ -7,6 +7,7 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
+import cPickle as pickle
 import os
 import time
 import numpy as np
@@ -113,6 +114,10 @@ class PotentialTestBase(object):
         fig.savefig(os.path.join(plot_path, "{}_2d_cy.png"\
                         .format(self.name)))
 
+    def test_pickle(self):
+        with open("/tmp/derp.pickle", "w") as f:
+            pickle.dump(self.potential, f)
+
 # ----------------------------------------------------------------------------
 #  Potentials to test
 #
@@ -127,6 +132,32 @@ class TestHernquist(PotentialTestBase):
 
         self.potential = HernquistPotential(units=self.units,
                                             m=1.E11, c=0.26)
+
+        self.w0 = [1.,0.,0.,0.,0.1,0.1]
+
+class TestPlummer(PotentialTestBase):
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+
+    def setup(self):
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
+        self.potential = PlummerPotential(units=self.units,
+                                          m=1.E11, b=0.26)
+
+        self.w0 = [1.,0.,0.,0.,0.1,0.1]
+
+class TestJaffe(PotentialTestBase):
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+
+    def setup(self):
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
+        self.potential = JaffePotential(units=self.units,
+                                        m=1.E11, c=0.26)
 
         self.w0 = [1.,0.,0.,0.,0.1,0.1]
 
