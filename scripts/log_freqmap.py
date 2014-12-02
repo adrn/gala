@@ -73,7 +73,7 @@ def worker(task):
     # gd.plot_orbits(ws, linestyle='none', alpha=0.5)
     # plt.show()
 
-def main(path="", mpi=False):
+def main(path="", mpi=False, overwrite=False):
     """ Reproducing Fig. 3.45 from Binney & Tremaine """
 
     # potential from page 259 in B&T
@@ -85,6 +85,7 @@ def main(path="", mpi=False):
     if mpi:
         logger.info("Using MPI")
     logger.info("Caching to: {}".format(path))
+    all_freqs_filename = os.path.join(path,"all_freqs.npy")
 
     # initial conditions
     w0 = setup_grid(25, potential)
@@ -95,22 +96,29 @@ def main(path="", mpi=False):
     filename = os.path.join(path, 'w0.npy')
     np.save(filename, w0)
 
-    # for zipping
-    filenames = [filename]*norbits
-    potentials = [potential]*norbits
+    if os.path.exists(all_freqs_filename) and overwrite:
+        os.remove(all_freqs_filename)
 
-    tasks = zip(range(norbits), filenames, potentials)
-    all_freqs = pool.map(worker, tasks)
-    pool.close()
+    if not os.path.exists(all_freqs_filename):
+        # for zipping
+        filenames = [filename]*norbits
+        potentials = [potential]*norbits
 
-    np.save(os.path.join(path,"all_freqs.npy"), np.array(all_freqs))
+        tasks = zip(range(norbits), filenames, potentials)
+        all_freqs = pool.map(worker, tasks)
+        pool.close()
 
-def plot(path):
-    all_freqs = np.load(os.path.join(path,"all_freqs.npy"))
+        np.save(all_freqs_filename, np.array(all_freqs))
 
+    all_freqs = np.load(all_freqs_filename)
+    return all_freqs
+
+def plot(freqs, path):
     plt.figure(figsize=(6,6))
-    plt.plot(all_freqs[:,1]/all_freqs[:,0], all_freqs[:,2]/all_freqs[:,0],
+    plt.plot(freqs[:,1]/freqs[:,0], freqs[:,2]/freqs[:,0],
              linestyle='none', marker='.', alpha=0.5)
+    plt.xlim(0.75, 1.51)
+    plt.ylim(1.25, 2.5)
     plt.savefig(os.path.join(path,'freqs.png'))
 
 if __name__ == '__main__':
@@ -123,6 +131,8 @@ if __name__ == '__main__':
                         default=False, help="Be chatty! (default = False)")
     parser.add_argument("-q", "--quiet", action="store_true", dest="quiet",
                         default=False, help="Be quiet! (default = False)")
+    parser.add_argument("-o", "--overwrite", action="store_true", dest="overwrite",
+                        default=False, help="DESTROY. DESTROY. (default = False)")
 
     parser.add_argument("--mpi", dest="mpi", default=False, action="store_true",
                         help="Use an MPI pool.")
@@ -138,5 +148,5 @@ if __name__ == '__main__':
     else:
         logger.setLevel(logging.INFO)
 
-    main(path=args.path, mpi=args.mpi)
-    plot(path=args.path)
+    all_freqs = main(path=args.path, mpi=args.mpi, overwrite=args.overwrite)
+    plot(freqs=all_freqs, path=args.path)
