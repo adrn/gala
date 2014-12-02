@@ -59,6 +59,7 @@ class NAFFBase(object):
                                                  nsteps=self.nsteps,
                                                  Integrator=DOPRI853Integrator)
             np.save(self.filename, np.vstack((w.T,t[np.newaxis,np.newaxis])))
+
         wt = np.load(self.filename)
         self.w = wt[:6].T.copy()
         self.t = wt[6,0].copy()
@@ -71,7 +72,7 @@ class NAFFBase(object):
             # plot energy conservation
             E = self.potential.total_energy(self.w[:,0,:3],self.w[:,0,3:])
             plt.clf()
-            plt.semilogy(self.t[1:], np.abs(E[1:]-E[:-1]), marker=None)
+            plt.semilogy(self.t[1:], np.abs(E[1:]-E[0]), marker=None)
             plt.savefig(os.path.join(plot_path,"energy_{}.png".format(self.name)))
 
     def test_naff(self):
@@ -87,18 +88,24 @@ class NAFFBase(object):
         logger.important("True freqs: {}".format(self.true_freqs))
         logger.important("Find freqs: {}".format(f))
 
-        done = []
-        for freq in f:
-            for i,tfreq in enumerate(self.true_freqs):
-                if i not in done:
-                    if abs(abs(tfreq) - abs(freq)) < 1E-3:
-                        done.append(i)
-        assert len(done) == len(self.true_freqs)
+        actions,angles,freqs = gd.find_actions(self.t, self.w[:,0], N_max=6, units=galactic)
+        logger.important("Sanders freqs: {}".format(freqs))
+
+        if np.all(np.isfinite(self.true_freqs)):
+            done = []
+            for freq in f:
+                for i,tfreq in enumerate(self.true_freqs):
+                    if i not in done:
+                        if abs(abs(tfreq) - abs(freq)) < 1E-3:
+                            done.append(i)
+            assert len(done) == len(self.true_freqs)
 
         if len(f) < 2:
             return
 
         nvecs = naff.find_integer_vectors(f, d)
+
+        return
 
         Js = np.zeros(ndim)
         for row,nvec in zip(d,nvecs):
@@ -189,3 +196,16 @@ class TestLogarithmic2DLoop(NAFFBase):
 
         self.dt = 0.005
         self.nsteps = 2**15
+
+# -------------------------------------------------------------------------------------
+# Logarithmic potential, 3D Loop orbit
+#
+class TestLogarithmic3DLoop(NAFFBase):
+    def setup_class(self):
+        self.true_freqs = np.array([np.nan, np.nan, np.nan])
+        self.potential = gp.LogarithmicPotential(v_c=0.24, r_h=10.,
+                                                 q1=1., q2=0.9, q3=0.7, units=galactic)
+        self.w0 = np.array([10.,0.,0.,0.07,0.22,-0.07])
+
+        self.dt = 2.5
+        self.nsteps = 2**13
