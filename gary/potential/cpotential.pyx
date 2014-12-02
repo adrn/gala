@@ -55,10 +55,6 @@ class CPotential(CartesianPotential):
         # self.gradient = getattr(self.c_instance, 'gradient', None)
         # self.hessian = getattr(self.c_instance, 'hessian', None)
 
-    def __setstate__(self, d):
-        for key,val in d.items():
-            setattr(self, key, val)
-
     def value(self, q):
         """
         value(q)
@@ -149,6 +145,12 @@ class CPotential(CartesianPotential):
 # ==============================================================================
 
 cdef class _CPotential:
+
+    def __setstate__(self, d):
+        pass
+
+    def __getstate__(self):
+        return None
 
     cpdef value(self, double[:,::1] q, double[::1] pot):
         cdef int nparticles, ndim, k
