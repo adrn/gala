@@ -416,7 +416,6 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
     cdef public double v_h, r_h, a, b, c, e_b2, e_c2, G
     cdef public double v_h2, r_h2, a2, b2, c2, x0
     cdef public double[::1] R
-    cdef public unsigned int rotated, spherical
 
     def __init__(self, double G, double v_h, double r_h, double a, double b, double c,
                  double[::1] R):
@@ -442,23 +441,8 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
         self.R = R
 
     def __reduce__(self):
-        d = {}
-        d['v_h'] = self.v_h
-        d['v_h2'] = self.v_h2
-        d['r_h'] = self.r_h
-        d['r_h2'] = self.r_h2
-        d['a'] = self.a
-        d['a2'] = self.a2
-        d['b'] = self.b
-        d['b2'] = self.b2
-        d['c'] = self.c
-        d['c2'] = self.c2
-        d['G'] = self.G
-        d['e_b2'] = self.e_b2
-        d['e_c2'] = self.e_c2
-        d['R'] = np.asarray(self.R)
-        args = (self.G, self.v_h, self.r_h, self.a, self.b, self.c, d['R'])
-        return (_LeeSutoTriaxialNFWPotential, args, d)
+        args = (self.G, self.v_h, self.r_h, self.a, self.b, self.c, np.asarray(self.R))
+        return (_LeeSutoTriaxialNFWPotential, args)
 
     cdef public inline double _value(self, double *r) nogil:
         cdef double x, y, z, _r, u
@@ -591,21 +575,8 @@ cdef class _LogarithmicPotential(_CPotential):
         self.G = G
 
     def __reduce__(self):
-        d = {}
-        d['v_c'] = self.v_c
-        d['v_c2'] = self.v_c2
-        d['r_h'] = self.r_h
-        d['r_h2'] = self.r_h2
-        d['q1'] = self.q1
-        d['q1_2'] = self.q1_2
-        d['q2'] = self.q2
-        d['q2_2'] = self.q2_2
-        d['q3'] = self.q3
-        d['q3_2'] = self.q3_2
-        d['R'] = np.asarray(self.R)
-        d['G'] = self.G
-        args = (self.G, self.v_c, self.r_h, self.q1, self.q2, self.q3, d['R'])
-        return (LogarithmicPotential, args, d)
+        args = (self.G, self.v_c, self.r_h, self.q1, self.q2, self.q3, np.asarray(self.R))
+        return (_LogarithmicPotential, args)
 
     cdef public inline double _value(self, double *r) nogil:
 
@@ -690,6 +661,6 @@ class LogarithmicPotential(CPotential, CartesianPotential):
         else:
             R = np.eye(3)
 
-        parameters['R'] = np.ravel(R)
+        parameters['R'] = np.ravel(R).copy()
         super(LogarithmicPotential, self).__init__(_LogarithmicPotential,
                                                    parameters=parameters)
