@@ -346,7 +346,7 @@ class NAFF(object):
         ffreq[2] = d[ixes[0]]['freq']
         ffreq_ixes[2] = ixes[0]
         nqs[2] = d[ixes[0]]['n']
-        if np.unique(sorted(nqs)) != [0,1,2]:
+        if not np.all(np.unique(sorted(nqs)) == [0,1,2]):
             raise ValueError("Don't have x,y,z frequencies.")
 
         return ffreq[nqs.argsort()], d, ffreq_ixes[nqs.argsort()]
