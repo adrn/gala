@@ -63,6 +63,16 @@ cdef class _HernquistPotential(_CPotential):
         self.m = m
         self.c = c
 
+    def __reduce__(self):
+        print(dir(self))
+        d = {}
+        d['G'] = self.G
+        d['GM'] = self.GM
+        d['m'] = self.m
+        d['c'] = self.c
+
+        return (_HernquistPotential, (), d)
+
     cdef public inline double _value(self, double *r) nogil:
         cdef double R
         R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2])
