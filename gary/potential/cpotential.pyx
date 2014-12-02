@@ -147,6 +147,8 @@ class CPotential(CartesianPotential):
 cdef class _CPotential:
 
     def __setstate__(self, d):
+        # for k,v in d.items():
+        #     setattr(self, k, v)
         pass
 
     def __getstate__(self):
