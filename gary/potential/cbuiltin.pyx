@@ -69,8 +69,8 @@ cdef class _HernquistPotential(_CPotential):
         d['GM'] = self.GM
         d['m'] = self.m
         d['c'] = self.c
-
-        return (_HernquistPotential, (), d)
+        args = (self.G, self.m, self.c)
+        return (_HernquistPotential, args)
 
     cdef public inline double _value(self, double *r) nogil:
         cdef double R
@@ -141,8 +141,8 @@ cdef class _PlummerPotential(_CPotential):
         d['m'] = self.m
         d['b'] = self.b
         d['b2'] = self.b2
-
-        return (_PlummerPotential, (), d)
+        args = (self.G, self.m, self.b)
+        return (_PlummerPotential, args) #, d)
 
     cdef public inline double _value(self, double *r) nogil:
         return -self.GM / sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2] + self.b2)
@@ -209,8 +209,8 @@ cdef class _JaffePotential(_CPotential):
         d['GM'] = self.GM
         d['m'] = self.m
         d['c'] = self.c
-
-        return (_JaffePotential, (), d)
+        args = (self.G, self.m, self.c)
+        return (_JaffePotential, args, d)
 
     cdef public inline double _value(self, double *r) nogil:
         cdef double R
@@ -286,8 +286,8 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
         d['a'] = self.a
         d['b'] = self.b
         d['b2'] = self.b2
-
-        return (_MiyamotoNagaiPotential, (), d)
+        args = (self.G, self.m, self.a, self.b)
+        return (_MiyamotoNagaiPotential, args, d)
 
     cdef public inline double _value(self, double *r) nogil:
         cdef double zd
@@ -358,7 +358,8 @@ cdef class _SphericalNFWPotential(_CPotential):
         d['v_h'] = self.v_h2
         d['r_s'] = self.r_s
         d['r_s2'] = self.r_s2
-        return (_SphericalNFWPotential, (), d)
+        args = (self.G, self.v_c, self.r_s)
+        return (_SphericalNFWPotential, args, d)
 
     cdef public inline double _value(self, double *r) nogil:
         cdef double u
@@ -456,7 +457,8 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
         d['e_b2'] = self.e_b2
         d['e_c2'] = self.e_c2
         d['R'] = np.asarray(self.R)
-        return (_LeeSutoTriaxialNFWPotential, (), d)
+        args = (self.G, self.v_h, self.r_h, self.a, self.b, self.c, d['R'])
+        return (_LeeSutoTriaxialNFWPotential, args, d)
 
     cdef public inline double _value(self, double *r) nogil:
         cdef double x, y, z, _r, u
@@ -552,7 +554,7 @@ class LeeSutoTriaxialNFWPotential(CPotential, CartesianPotential):
             D = rotation_matrix(phi, "z", unit=u.radian) # TODO: Bad assuming radians
             C = rotation_matrix(theta, "x", unit=u.radian)
             B = rotation_matrix(psi, "z", unit=u.radian)
-            R = np.array(B.dot(C).dot(D))
+            R = np.asarray(B.dot(C).dot(D))
 
         else:
             R = np.eye(3)
@@ -602,7 +604,8 @@ cdef class _LogarithmicPotential(_CPotential):
         d['q3_2'] = self.q3_2
         d['R'] = np.asarray(self.R)
         d['G'] = self.G
-        return (LogarithmicPotential, (), d)
+        args = (self.G, self.v_c, self.r_h, self.q1, self.q2, self.q3, d['R'])
+        return (LogarithmicPotential, args, d)
 
     cdef public inline double _value(self, double *r) nogil:
 
@@ -682,7 +685,7 @@ class LogarithmicPotential(CPotential, CartesianPotential):
             D = rotation_matrix(phi, "z", unit=u.radian)  # TODO: Bad assuming radians
             C = rotation_matrix(theta, "x", unit=u.radian)
             B = rotation_matrix(psi, "z", unit=u.radian)
-            R = np.array(B.dot(C).dot(D))
+            R = np.asarray(B.dot(C).dot(D))
 
         else:
             R = np.eye(3)
