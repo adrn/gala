@@ -49,11 +49,15 @@ class CPotential(CartesianPotential):
         self.c_instance = c_class(**parameters)
 
         # HACK?
-        super(CPotential, self).__init__(func=lambda x: x, parameters=parameters)
+        super(CPotential, self).__init__(func=None, parameters=parameters)
 
         # self.value = getattr(self.c_instance, 'value')
         # self.gradient = getattr(self.c_instance, 'gradient', None)
         # self.hessian = getattr(self.c_instance, 'hessian', None)
+
+    def __setstate__(self, d):
+        for key,val in d.items():
+            setattr(self, key, val)
 
     def value(self, q):
         """
