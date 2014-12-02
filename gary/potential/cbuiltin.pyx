@@ -210,6 +210,8 @@ cdef class _JaffePotential(_CPotential):
         d['m'] = self.m
         d['c'] = self.c
 
+        return (_JaffePotential, (), d)
+
     cdef public inline double _value(self, double *r) nogil:
         cdef double R
         R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2])
@@ -285,6 +287,8 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
         d['b'] = self.b
         d['b2'] = self.b2
 
+        return (_MiyamotoNagaiPotential, (), d)
+
     cdef public inline double _value(self, double *r) nogil:
         cdef double zd
         zd = (self.a + sqrt(r[2]*r[2] + self.b2))
@@ -354,6 +358,7 @@ cdef class _SphericalNFWPotential(_CPotential):
         d['v_h'] = self.v_h2
         d['r_s'] = self.r_s
         d['r_s2'] = self.r_s2
+        return (_SphericalNFWPotential, (), d)
 
     cdef public inline double _value(self, double *r) nogil:
         cdef double u
@@ -451,8 +456,9 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
         d['G'] = self.G
         d['e_b2'] = self.e_b2
         d['e_c2'] = self.e_c2
-        d['R'] = self.R
-        d['Rinv'] = self.Rinv
+        d['R'] = self.R.base
+        d['Rinv'] = self.Rinv.base
+        return (_LeeSutoTriaxialNFWPotential, (), d)
 
     cdef public inline double _value(self, double *r) nogil:
         cdef double x, y, z, _r, u
@@ -587,6 +593,7 @@ cdef class _LogarithmicPotential(_CPotential):
         self.G = G
 
     def __reduce__(self):
+        d = {}
         d['v_c'] = self.v_c
         d['v_c2'] = self.v_c2
         d['r_h'] = self.r_h
@@ -600,6 +607,7 @@ cdef class _LogarithmicPotential(_CPotential):
         d['R'] = self.R
         d['Rinv'] = self.Rinv
         d['G'] = self.G
+        return (LogarithmicPotential, (), d)
 
     cdef public inline double _value(self, double *r) nogil:
 
