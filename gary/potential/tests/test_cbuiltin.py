@@ -118,6 +118,11 @@ class PotentialTestBase(object):
         with open("/tmp/derp.pickle", "w") as f:
             pickle.dump(self.potential, f)
 
+        with open("/tmp/derp.pickle") as f:
+            p = pickle.load(f)
+
+        p.value(np.array([[100,0,0.]]))
+
 # ----------------------------------------------------------------------------
 #  Potentials to test
 #
