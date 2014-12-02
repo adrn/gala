@@ -88,7 +88,7 @@ def main(path="", mpi=False, overwrite=False):
     all_freqs_filename = os.path.join(path,"all_freqs.npy")
 
     # initial conditions
-    w0 = setup_grid(25, potential)
+    w0 = setup_grid(100, potential)
     norbits = len(w0)
     logger.info("Number of orbits: {}".format(norbits))
 
