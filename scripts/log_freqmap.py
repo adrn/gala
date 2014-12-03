@@ -64,6 +64,9 @@ def worker(task):
 
     naff = gd.NAFF(t)
     f,d,ixes = naff.find_fundamental_frequencies(ws[:,0], nintvec=nintvec)
+
+    path = os.path.split(filename)[0]
+    open(os.path.join(path,str(i)), 'w').close()
     return f
 
     # t,ws = potential.integrate_orbit(w0[10], dt=dt, nsteps=nsteps, Integrator=gi.DOPRI853Integrator)
@@ -85,7 +88,9 @@ def main(path="", mpi=False, overwrite=False):
     if mpi:
         logger.info("Using MPI")
     logger.info("Caching to: {}".format(path))
-    all_freqs_filename = os.path.join(path,"all_freqs.npy")
+    all_freqs_filename = os.path.join(path, "all_freqs.npy")
+    if not os.path.join(path):
+        os.mkdir(path)
 
     # initial conditions
     w0 = setup_grid(100, potential)
@@ -106,10 +111,9 @@ def main(path="", mpi=False, overwrite=False):
 
         tasks = zip(range(norbits), filenames, potentials)
         all_freqs = pool.map(worker, tasks)
-        pool.close()
-
         np.save(all_freqs_filename, np.array(all_freqs))
 
+    pool.close()
     all_freqs = np.load(all_freqs_filename)
     return all_freqs
 
@@ -150,3 +154,4 @@ if __name__ == '__main__':
 
     all_freqs = main(path=args.path, mpi=args.mpi, overwrite=args.overwrite)
     plot(freqs=all_freqs, path=args.path)
+    sys.exit(0)
