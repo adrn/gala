@@ -384,8 +384,8 @@ class SphericalNFWPotential(CPotential, CartesianPotential):
 cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
 
     # here need to cdef all the attributes
-    cdef public double v_c, r_s, a, b, c, e_b2, e_c2, G
-    cdef public double v_c2, r_s2, a2, b2, c2, x0
+    cdef public double v_h, r_s, a, b, c, e_b2, e_c2, G
+    cdef public double v_h2, r_s2, a2, b2, c2, x0
     cdef public double[::1] R
 
     def __init__(self, double G, double v_c, double r_s, double a, double b, double c,
@@ -394,8 +394,8 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
                 kpc, Myr, radian, M_sun
         """
 
-        self.v_c = v_c
-        self.v_c2 = v_c*v_c
+        self.v_h = v_c/sqrt(log(2.)-0.5)
+        self.v_h2 = self.v_h*self.v_h
         self.r_s = r_s
         self.r_s2 = r_s*r_s
         self.a = a
@@ -412,7 +412,8 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
         self.R = R
 
     def __reduce__(self):
-        args = (self.G, self.v_c, self.r_s, self.a, self.b, self.c, np.asarray(self.R))
+        args = (self.G, self.v_h*sqrt(log(2.)-0.5), self.r_s,
+                self.a, self.b, self.c, np.asarray(self.R))
         return (_LeeSutoTriaxialNFWPotential, args)
 
     cdef public inline double _value(self, double *r) nogil:
@@ -424,7 +425,7 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
 
         _r = sqrt(x*x + y*y + z*z)
         u = _r / self.r_s
-        return self.v_c2*((self.e_b2/2 + self.e_c2/2)*((1/u - 1/u**3)*log(u + 1) - 1 + (2*u**2 - 3*u + 6)/(6*u**2)) + (self.e_b2*y**2/(2*_r*_r) + self.e_c2*z*z/(2*_r*_r))*((u*u - 3*u - 6)/(2*u*u*(u + 1)) + 3*log(u + 1)/u/u/u) - log(u + 1)/u)
+        return self.v_h2*((self.e_b2/2 + self.e_c2/2)*((1/u - 1/u**3)*log(u + 1) - 1 + (2*u**2 - 3*u + 6)/(6*u**2)) + (self.e_b2*y**2/(2*_r*_r) + self.e_c2*z*z/(2*_r*_r))*((u*u - 3*u - 6)/(2*u*u*(u + 1)) + 3*log(u + 1)/u/u/u) - log(u + 1)/u)
 
     cdef public inline void _gradient(self, double *r, double *grad) nogil:
         cdef:
@@ -444,7 +445,7 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
 
         x0 = _r + self.r_s
         x1 = x0*x0
-        x2 = self.v_c2/(12.*_r4*_r2*_r*x1)
+        x2 = self.v_h2/(12.*_r4*_r2*_r*x1)
         x10 = log(x0/self.r_s)
 
         x13 = _r*3.*self.r_s
