@@ -384,20 +384,20 @@ class SphericalNFWPotential(CPotential, CartesianPotential):
 cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
 
     # here need to cdef all the attributes
-    cdef public double v_h, r_h, a, b, c, e_b2, e_c2, G
-    cdef public double v_h2, r_h2, a2, b2, c2, x0
+    cdef public double v_c, r_s, a, b, c, e_b2, e_c2, G
+    cdef public double v_c2, r_s2, a2, b2, c2, x0
     cdef public double[::1] R
 
-    def __init__(self, double G, double v_h, double r_h, double a, double b, double c,
+    def __init__(self, double G, double v_c, double r_s, double a, double b, double c,
                  double[::1] R):
         """ Units of everything should be in the system:
                 kpc, Myr, radian, M_sun
         """
 
-        self.v_h = v_h
-        self.v_h2 = v_h*v_h
-        self.r_h = r_h
-        self.r_h2 = r_h*r_h
+        self.v_c = v_c
+        self.v_c2 = v_c*v_c
+        self.r_s = r_s
+        self.r_s2 = r_s*r_s
         self.a = a
         self.a2 = a*a
         self.b = b
@@ -412,7 +412,7 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
         self.R = R
 
     def __reduce__(self):
-        args = (self.G, self.v_h, self.r_h, self.a, self.b, self.c, np.asarray(self.R))
+        args = (self.G, self.v_c, self.r_s, self.a, self.b, self.c, np.asarray(self.R))
         return (_LeeSutoTriaxialNFWPotential, args)
 
     cdef public inline double _value(self, double *r) nogil:
@@ -423,8 +423,8 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
         z = self.R[6]*r[0] + self.R[7]*r[1] + self.R[8]*r[2]
 
         _r = sqrt(x*x + y*y + z*z)
-        u = _r / self.r_h
-        return self.v_h2*((self.e_b2/2 + self.e_c2/2)*((1/u - 1/u**3)*log(u + 1) - 1 + (2*u**2 - 3*u + 6)/(6*u**2)) + (self.e_b2*y**2/(2*_r*_r) + self.e_c2*z*z/(2*_r*_r))*((u*u - 3*u - 6)/(2*u*u*(u + 1)) + 3*log(u + 1)/u/u/u) - log(u + 1)/u)
+        u = _r / self.r_s
+        return self.v_c2*((self.e_b2/2 + self.e_c2/2)*((1/u - 1/u**3)*log(u + 1) - 1 + (2*u**2 - 3*u + 6)/(6*u**2)) + (self.e_b2*y**2/(2*_r*_r) + self.e_c2*z*z/(2*_r*_r))*((u*u - 3*u - 6)/(2*u*u*(u + 1)) + 3*log(u + 1)/u/u/u) - log(u + 1)/u)
 
     cdef public inline void _gradient(self, double *r, double *grad) nogil:
         cdef:
@@ -442,19 +442,19 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
         _r = sqrt(_r2)
         _r4 = _r2*_r2
 
-        x0 = _r + self.r_h
+        x0 = _r + self.r_s
         x1 = x0*x0
-        x2 = self.v_h2/(12.*_r4*_r2*_r*x1)
-        x10 = log(x0/self.r_h)
+        x2 = self.v_c2/(12.*_r4*_r2*_r*x1)
+        x10 = log(x0/self.r_s)
 
-        x13 = _r*3.*self.r_h
+        x13 = _r*3.*self.r_s
         x15 = x13 - _r2
-        x16 = x15 + 6.*self.r_h2
-        x17 = 6.*self.r_h*x0*(_r*x16 - x0*x10*6.*self.r_h2)
+        x16 = x15 + 6.*self.r_s2
+        x17 = 6.*self.r_s*x0*(_r*x16 - x0*x10*6.*self.r_s2)
         x20 = x0*_r2
         x21 = 2.*_r*x0
         x7 = self.e_b2*y*y + self.e_c2*z*z
-        x22 = -12.*_r4*_r*self.r_h*x0 + 12.*_r4*self.r_h*x1*x10 + 3.*self.r_h*x7*(x16*_r2 - 18.*x1*x10*self.r_h2 + x20*(2.*_r - 3.*self.r_h) + x21*(x15 + 9.*self.r_h2)) - x20*(self.e_b2 + self.e_c2)*(-6.*_r*self.r_h*(_r2 - self.r_h2) + 6.*self.r_h*x0*x10*(_r2 - 3.*self.r_h2) + x20*(-4.*_r + 3.*self.r_h) + x21*(-x13 + 2.*_r2 + 6.*self.r_h2))
+        x22 = -12.*_r4*_r*self.r_s*x0 + 12.*_r4*self.r_s*x1*x10 + 3.*self.r_s*x7*(x16*_r2 - 18.*x1*x10*self.r_s2 + x20*(2.*_r - 3.*self.r_s) + x21*(x15 + 9.*self.r_s2)) - x20*(self.e_b2 + self.e_c2)*(-6.*_r*self.r_s*(_r2 - self.r_s2) + 6.*self.r_s*x0*x10*(_r2 - 3.*self.r_s2) + x20*(-4.*_r + 3.*self.r_s) + x21*(-x13 + 2.*_r2 + 6.*self.r_s2))
 
         ax = x2*x*(x17*x7 + x22)
         ay = x2*y*(x17*(x7 - _r2*self.e_b2) + x22)
@@ -466,16 +466,16 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
 
 class LeeSutoTriaxialNFWPotential(CPotential, CartesianPotential):
     r"""
-    LeeSutoTriaxialNFWPotential(v_h, r_h, a, b, c, units, phi=0., theta=0., psi=0.)
+    LeeSutoTriaxialNFWPotential(v_c, r_s, a, b, c, units, phi=0., theta=0., psi=0.)
 
     Approximation of a Triaxial NFW Potential with the flattening in the density,
     not the potential. See Lee & Suto (2003) for details.
 
     Parameters
     ----------
-    v_h : numeric
-        Scale velocity.
-    r_h : numeric
+    v_c : numeric
+        Circular velocity.
+    r_s : numeric
         Scale radius.
     a : numeric
         Major axis.
@@ -500,10 +500,10 @@ class LeeSutoTriaxialNFWPotential(CPotential, CartesianPotential):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_h, r_h, a, b, c, units, phi=0., theta=0., psi=0.):
+    def __init__(self, v_c, r_s, a, b, c, units, phi=0., theta=0., psi=0.):
         self.units = units
         _G = G.decompose(units).value
-        parameters = dict(G=_G, v_h=v_h, r_h=r_h, a=a, b=b, c=c)
+        parameters = dict(G=_G, v_c=v_c, r_s=r_s, a=a, b=b, c=c)
 
         if theta != 0 or phi != 0 or psi != 0:
             D = rotation_matrix(phi, "z", unit=u.radian) # TODO: Bad assuming radians
