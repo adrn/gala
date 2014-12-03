@@ -58,15 +58,22 @@ def setup_grid(n, potential):
 
 def worker(task):
     i,filename,potential = task
+    path = os.path.split(filename)[0]
+    freq_fn = os.path.join(path,"{}.npy".format(i))
+    if os.path.exists(freq_fn):
+        return np.load(freq_fn)
+
     w0 = np.load(filename)
     t,ws = potential.integrate_orbit(w0[i].copy(), dt=dt, nsteps=nsteps,
                                      Integrator=gi.DOPRI853Integrator)
 
     naff = gd.NAFF(t)
-    f,d,ixes = naff.find_fundamental_frequencies(ws[:,0], nintvec=nintvec)
+    try:
+        f,d,ixes = naff.find_fundamental_frequencies(ws[:,0], nintvec=nintvec)
+    except:
+        f = np.array([np.nan,np.nan,np.nan])
 
-    path = os.path.split(filename)[0]
-    open(os.path.join(path,str(i)), 'w').close()
+    np.save(freq_fn, f)
     return f
 
     # t,ws = potential.integrate_orbit(w0[10], dt=dt, nsteps=nsteps, Integrator=gi.DOPRI853Integrator)
