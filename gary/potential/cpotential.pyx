@@ -67,7 +67,7 @@ class CPotential(CartesianPotential):
             Position to compute the value of the potential.
         """
         tmp = np.zeros(len(q))
-        self.c_instance.value(np.asarray(q), tmp)
+        self.c_instance.value(np.atleast_2d(q).copy(), tmp)
         return tmp
 
     def gradient(self, q):
@@ -82,7 +82,7 @@ class CPotential(CartesianPotential):
             Position to compute the gradient.
         """
         try:
-            return self.c_instance.gradient(np.asarray(q))
+            return self.c_instance.gradient(np.atleast_2d(q).copy())
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
@@ -99,7 +99,7 @@ class CPotential(CartesianPotential):
             Position to compute the Hessian.
         """
         try:
-            return self.c_instance.hessian(np.asarray(q))
+            return self.c_instance.hessian(np.atleast_2d(q).copy())
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "Hessian function")
@@ -119,7 +119,7 @@ class CPotential(CartesianPotential):
             Position to compute the acceleration.
         """
         try:
-            return -self.c_instance.gradient(np.asarray(q))
+            return -self.c_instance.gradient(np.atleast_2d(q).copy())
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
@@ -137,7 +137,7 @@ class CPotential(CartesianPotential):
             Position to compute the mass enclosed.
         """
         try:
-            return self.c_instance.mass_enclosed(np.asarray(q))
+            return self.c_instance.mass_enclosed(np.atleast_2d(q).copy())
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "mass_enclosed function")
