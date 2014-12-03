@@ -24,7 +24,7 @@ class PW14Potential(CCompositePotential):
     def __init__(self, m_disk=6.5E10, a=6.5, b=0.26,
                  m_spher=2E10, c=0.3,
                  q1=1.4, q2=1., q3=0.6,
-                 v_h=0.562, r_h=30.,
+                 v_c=0.247, r_s=30.,
                  phi=np.pi/2., theta=np.pi/2., psi=np.pi/2.,
                  units=galactic):
 
@@ -40,11 +40,11 @@ class PW14Potential(CCompositePotential):
 
         if q1 == 1 and q2 == 1 and q3 == 1:
             kwargs["halo"] = SphericalNFWPotential(units=units,
-                                                   v_c=v_h*np.sqrt(np.log(2)-0.5), r_s=r_h)
+                                                   v_c=v_c, r_s=r_s)
         else:
             kwargs["halo"] = LeeSutoTriaxialNFWPotential(units=units,
                                                          a=q1, b=q2, c=q3,
-                                                         v_h=v_h, r_h=r_h,
+                                                         v_c=v_c, r_s=r_s,
                                                          phi=phi, theta=theta, psi=psi)
         super(PW14Potential,self).__init__(**kwargs)
         self.c_instance.G = G.decompose(units).value
