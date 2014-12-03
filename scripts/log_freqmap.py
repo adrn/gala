@@ -59,7 +59,7 @@ def setup_grid(n, potential):
 def worker(task):
     i,filename,potential = task
     w0 = np.load(filename)
-    t,ws = potential.integrate_orbit(w0[i], dt=dt, nsteps=nsteps,
+    t,ws = potential.integrate_orbit(w0[i].copy(), dt=dt, nsteps=nsteps,
                                      Integrator=gi.DOPRI853Integrator)
 
     naff = gd.NAFF(t)
