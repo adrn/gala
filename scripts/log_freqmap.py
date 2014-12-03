@@ -127,9 +127,9 @@ def main(path="", mpi=False, overwrite=False):
 def plot(freqs, path):
     plt.figure(figsize=(6,6))
     plt.plot(freqs[:,1]/freqs[:,0], freqs[:,2]/freqs[:,0],
-             linestyle='none', marker='.', alpha=0.5)
-    plt.xlim(0.75, 1.51)
-    plt.ylim(1.25, 2.5)
+             linestyle='none', marker='.', alpha=1., ms=2)
+    plt.xlim(0.95, 1.51)
+    plt.ylim(1.25, 2.1)
     plt.savefig(os.path.join(path,'freqs.png'))
 
 if __name__ == '__main__':
