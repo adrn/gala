@@ -61,7 +61,7 @@ class LaskarBase(object):
         for i in range(3):
             fn = os.path.join(this_path, "{}.txt".format(i))
             try:
-                tbl = np.genfromtxt(fn)
+                tbl = np.genfromtxt(fn, names=True)
             except:
                 continue
 
@@ -127,6 +127,24 @@ class LaskarBase(object):
         f,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=15)
 
         # TODO: compare with true tables
+        for i in range(3):
+            if sum(d['n'] == i) == 0 or i == len(self.true_tables):
+                break
+
+            this_d = d[d['n'] == i]
+            this_tbl = self.true_tables[i]
+
+            dfreq = np.abs((this_d['freq'] - this_tbl['freq'])/this_tbl['freq'])
+            dA = np.abs((this_d['|A|'] - this_tbl['A'])/this_tbl['A'])
+
+            import astropy.coordinates as coord
+            import astropy.units as u
+            phi = coord.Angle(this_d['phi']*u.deg).wrap_at(360*u.deg).value
+            dphi = (phi - this_tbl['phi'])
+
+            print(dfreq)
+            print(dA)
+            print(dphi)
 
         return
 
