@@ -22,6 +22,22 @@ __all__ = ['NAFF']
 def hanning(x):
     return 1 + np.cos(x)
 
+def poincare_polar(w):
+    ndim = w.shape[-1]//2
+
+    R = np.sqrt(w[...,0]**2 + w[...,1]**2)
+    phi = np.arctan2(w[...,1], w[...,0])
+
+    vR = (w[...,0]*w[...,0+ndim] + w[...,1]*w[...,1+ndim]) / R
+    vPhi = w[...,0]*w[...,1+ndim] - w[...,1]*w[...,0+ndim]
+
+    fs = []
+    fs.append(R + 1j*vR)
+    fs.append(np.sqrt(2*vPhi)*(np.cos(phi) + 1j*np.sin(phi)))  # PP
+    fs.append(w[...,2] + 1j*w[...,2+ndim])
+
+    return fs
+
 class NAFF(object):
 
     def __init__(self, t):
@@ -120,12 +136,25 @@ class NAFF(object):
             ans = simps(zreal, x=self.tz)
             return -(ans*signx*signo)/(2.*self.T)
 
-        res = fmin_slsqp(phi_w, x0=(omax+omin)/2, acc=1E-12,
+        w = np.linspace(omin, omax, 25)
+        init_w = w[np.array([phi_w(ww) for ww in w]).argmin()]
+        res = fmin_slsqp(phi_w, x0=init_w, acc=1E-8,
                          bounds=[(omin,omax)], disp=0, iter=50,
                          full_output=True)
-
         freq,fx,its,imode,smode = res
+
         if imode != 0:
+            # TEST
+            import matplotlib.pyplot as plt
+            plt.figure()
+            w = np.linspace(omin, omax, 100)
+            plt.plot(w, np.array([phi_w(ww) for ww in w]))
+            plt.axvline(freq)
+            plt.title(str(imode))
+            plt.show()
+            sys.exit(0)
+            # TEST
+
             raise ValueError("Function minimization to find best frequency failed with:\n"
                              "\t {} : {}".format(imode, smode))
 
@@ -259,7 +288,7 @@ class NAFF(object):
 
         return f_k, fmax
 
-    def find_fundamental_frequencies(self, w, nintvec=15, imax=15):
+    def find_fundamental_frequencies(self, w, nintvec=15, imax=15, poincare=False):
         """ Solve for the fundamental frequencies of the given orbit, `w`.
 
             TODO:
@@ -277,8 +306,15 @@ class NAFF(object):
 
         ntot = 0
         ndim = w.shape[1]//2
+
+        # comples time series
+        if poincare:
+            fs = poincare_polar(w)
+        else:
+            fs = [w[:,i] + 1j*w[:,i+ndim] for i in range(ndim)]
+
         for i in range(ndim):
-            nu,A,phi = self.frecoder(w[:,i] + 1j*w[:,i+ndim], nintvec=nintvec)
+            nu,A,phi = self.frecoder(fs[i], nintvec=nintvec)
             freqs.append(-nu)
             As.append(A)
             amps.append(np.abs(A))
