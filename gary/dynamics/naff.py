@@ -17,7 +17,7 @@ from numpy.fft import fft, fftfreq
 from scipy.optimize import fmin_slsqp
 from scipy.integrate import simps
 
-__all__ = ['NAFF']
+__all__ = ['NAFF', 'poincare_polar']
 
 def hanning(x):
     return 1 + np.cos(x)
@@ -29,7 +29,7 @@ def poincare_polar(w):
     phi = np.arctan2(w[...,1], w[...,0])
 
     vR = (w[...,0]*w[...,0+ndim] + w[...,1]*w[...,1+ndim]) / R
-    vPhi = w[...,0]*w[...,1+ndim] - w[...,1]*w[...,0+ndim]
+    vPhi = np.abs(w[...,0]*w[...,1+ndim] - w[...,1]*w[...,0+ndim])
 
     fs = []
     fs.append(R + 1j*vR)
@@ -288,14 +288,11 @@ class NAFF(object):
 
         return f_k, fmax
 
-    def find_fundamental_frequencies(self, w, nintvec=15, imax=15, poincare=False):
-        """ Solve for the fundamental frequencies of the given orbit, `w`.
+    def find_fundamental_frequencies(self, fs, nintvec=15, imax=15, poincare=False):
+        """ Solve for the fundamental frequencies of the given time series, `fs`
 
             TODO:
         """
-
-        if w.ndim > 2:
-            raise ValueError("Input orbit must be a single orbit (have ndim=2).")
 
         # containers
         freqs = []
@@ -305,13 +302,7 @@ class NAFF(object):
         nqs = []
 
         ntot = 0
-        ndim = w.shape[1]//2
-
-        # comples time series
-        if poincare:
-            fs = poincare_polar(w)
-        else:
-            fs = [w[:,i] + 1j*w[:,i+ndim] for i in range(ndim)]
+        ndim = len(fs)
 
         for i in range(ndim):
             nu,A,phi = self.frecoder(fs[i], nintvec=nintvec)
