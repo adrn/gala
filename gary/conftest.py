@@ -1,7 +1,7 @@
 def pytest_addoption(parser):
     """ add a command line option """
-    # parser.addoption("--quiet", action="store_true", default=False,
-    #                  help="Shhh! SHHHHHHH!!")
+    parser.addoption("--overwrite", action="store_true", default=False,
+                     help="Destroy.")
 
 def pytest_configure(config):
     """ called after command line options have been parsed
