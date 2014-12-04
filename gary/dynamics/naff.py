@@ -213,7 +213,7 @@ class NAFF(object):
             if fmax < 1E-7 or A[k] < 1E-6:
                 break
 
-        return nu[:k+1], A[:k+1], phi[:k+1]
+        return -nu[:k+1], A[:k+1], phi[:k+1]
 
     def hanning_product(self, u1, u2):
         r""" Compute the scalar product of two 'vectors', `u1` and `u2`.
