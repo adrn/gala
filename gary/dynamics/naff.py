@@ -12,6 +12,7 @@ import time
 
 # Third-party
 from astropy import log as logger
+import matplotlib.pyplot as plt
 import numpy as np
 from numpy.fft import fft, fftfreq
 from scipy.optimize import fmin_slsqp
@@ -95,6 +96,12 @@ class NAFF(object):
         omegas = 2*np.pi*fftfreq(f.size, self.t[1]-self.t[0])
         logger.debug("...done. Took {} seconds to FFT.".format(time.time()-t1))
 
+        # plot the FFT
+        # plt.clf()
+        # plt.plot(omegas, fff.real, marker=None)
+        # plt.show()
+        #sys.exit(0)
+
         A = 1./np.sqrt(ndata - 1.)
         xf = A * fff.real * (-1)**np.arange(ndata)
         yf = A * fff.imag * (-1)**np.arange(ndata)
@@ -136,16 +143,21 @@ class NAFF(object):
             ans = simps(zreal, x=self.tz)
             return -(ans*signx*signo)/(2.*self.T)
 
-        w = np.linspace(omin, omax, 25)
-        init_w = w[np.array([phi_w(ww) for ww in w]).argmin()]
-        res = fmin_slsqp(phi_w, x0=init_w, acc=1E-8,
+        w = np.linspace(omin, omax, 50)
+        phi_vals = np.array([phi_w(ww) for ww in w]).argmin()
+
+        if np.all(np.abs(phi_vals) < 1E-10):
+            init_w = (omin+omax)/2.
+        else:
+            init_w = w[phi_vals]
+
+        res = fmin_slsqp(phi_w, x0=init_w, acc=1E-10,
                          bounds=[(omin,omax)], disp=0, iter=50,
                          full_output=True)
         freq,fx,its,imode,smode = res
 
         if imode != 0:
             # TEST
-            import matplotlib.pyplot as plt
             plt.figure()
             w = np.linspace(omin, omax, 100)
             plt.plot(w, np.array([phi_w(ww) for ww in w]))
