@@ -10,6 +10,8 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import os
 
 # Third-party
+import astropy.coordinates as coord
+import astropy.units as u
 from astropy import log as logger
 import matplotlib.pyplot as plt
 import numpy as np
@@ -55,6 +57,8 @@ class LaskarBase(object):
         d = np.loadtxt(os.path.join(this_path, "ics.txt"))
         w0 = d[:6]
         poincare = bool(d[6])
+        self.q = d[7]
+        self.true_freqs = d[8:]
 
         # read true tables
         tables = []
@@ -82,7 +86,8 @@ class LaskarBase(object):
 
         # potential is the same for all PL96 tables
         self.potential = gp.LogarithmicPotential(v_c=np.sqrt(2.), r_h=0.1,
-                                                 q1=1., q2=0.9, q3=1., units=galactic)
+                                                 q1=1., q2=self.q, q3=1.,
+                                                 units=galactic)
 
         orbit_filename = os.path.join(plot_path,"orbit_{}.npy".format(self.name))
         if os.path.exists(orbit_filename) and config.option.overwrite:
@@ -124,81 +129,86 @@ class LaskarBase(object):
             logger.info("Using Cartesian coordinates")
             fs = [(self.w[:,0,i] + 1j*self.w[:,0,i+3]) for i in range(3)]
 
-        f,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=15)
+        f,d,ixes = naff.find_fundamental_frequencies(fs[:2], nintvec=15)
+        nvecs = naff.find_integer_vectors(f, d)
 
         # TODO: compare with true tables
-        for i in range(3):
+        for i in range(2):
             if sum(d['n'] == i) == 0 or i == len(self.true_tables):
                 break
 
             this_d = d[d['n'] == i]
-            this_tbl = self.true_tables[i]
+            this_nvecs = nvecs[d['n'] == i]
+            this_tbl = self.true_tables[i][:len(this_d)]
 
             dfreq = np.abs((this_d['freq'] - this_tbl['freq'])/this_tbl['freq'])
             dA = np.abs((this_d['|A|'] - this_tbl['A'])/this_tbl['A'])
+            dn = this_nvecs[:,0] - this_tbl['n']
+            dm = this_nvecs[:,1] - this_tbl['m']
 
-            import astropy.coordinates as coord
-            import astropy.units as u
             phi = coord.Angle(this_d['phi']*u.deg).wrap_at(360*u.deg).value
             dphi = (phi - this_tbl['phi'])
 
-            print(dfreq)
-            print(dA)
-            print(dphi)
+            print("∆Freq (percent):", 100*dfreq)
+            print("∆A (percent):", 100*dA)
+            print("∆φ (abs):", dphi)
+            print("∆n:", dn)
+            print("∆m:", dm)
+            print()
+            print("freq:", this_d['freq'])
+            print("A:", this_d['|A|'])
+            print("φ:", this_d['phi'])
+            print("-"*79)
 
-        return
+        # Compare the true frequencies
+        done = np.zeros_like(self.true_freqs).astype(bool)
+        for i,true_f in enumerate(self.true_freqs):
+            for ff in f:
+                if np.abs(np.abs(ff) - np.abs(true_f)) < 1E-4:
+                    done[i] = True
+                    break
 
-        logger.important("True freqs: {}".format(self.true_freqs))
-        logger.important("Find freqs: {}".format(f))
+        assert np.all(done)
 
-        actions,angles,freqs = gd.find_actions(self.t, self.w[:,0], N_max=6, units=galactic)
-        logger.important("Sanders freqs: {}".format(freqs))
+        # Js = np.zeros(3)
+        # for row,nvec in zip(d,nvecs):
+        #     a = row['|A|']*np.exp(1j*row['phi'])
+        #     Js[0] += nvec[0] * nvec.dot(f) * row['|A|']**2
+        #     Js[1] += nvec[1] * nvec.dot(f) * row['|A|']**2
+        #     # Js[2] += nvec[2] * nvec.dot(f) * row['|A|']**2
+        #     # Js[0] += nvec[0] * nvec.dot(f) * a.real**2
+        #     # Js[1] += nvec[1] * nvec.dot(f) * a.real**2
+        #     # Js[2] += nvec[2] * nvec.dot(f) * a.real**2
 
-        if np.all(np.isfinite(self.true_freqs)):
-            done = []
-            for freq in f:
-                for i,tfreq in enumerate(self.true_freqs):
-                    if i not in done:
-                        if abs(abs(tfreq) - abs(freq)) < 1E-3:
-                            done.append(i)
-            assert len(done) == len(self.true_freqs)
+        # print(Js)
 
-        if len(f) < 2:
-            return
-
-        nvecs = naff.find_integer_vectors(f, d)
-
-        return
-
-        Js = np.zeros(3)
-        for row,nvec in zip(d,nvecs):
-            a = row['|A|']*np.exp(1j*row['phi'])
-            print(a.real, a.imag)
-            Js[0] += nvec[0] * nvec.dot(f) * row['|A|']**2
-            Js[1] += nvec[1] * nvec.dot(f) * row['|A|']**2
-            Js[2] += nvec[2] * nvec.dot(f) * row['|A|']**2
-            # Js[0] += nvec[0] * nvec.dot(f) * a.real**2
-            # Js[1] += nvec[1] * nvec.dot(f) * a.real**2
-            # Js[2] += nvec[2] * nvec.dot(f) * a.real**2
-
-        if hasattr(self.potential, 'action_angle'):
-            true_Js,angles = self.potential.action_angle(self.w[...,:3], self.w[...,3:])
-            true_Js = np.mean(true_Js[:,0], axis=0)
-
-        print(Js)
-        print(true_Js)
-
-        # a = d['|A|']*np.exp(1j*d['phi'])
-        # a.real, a.imag
-
-class TestTable1(LaskarBase):
+class TestBox1(LaskarBase):
 
     def setup_class(self):
         self.name = 'box-orbit-1'
         self.dt = 0.005
         self.nsteps = 2**15
 
+class TestLoop1xy(LaskarBase):
 
+    def setup_class(self):
+        self.name = 'loop-orbit-1-xy'
+        self.dt = 0.01
+        self.nsteps = 2**15
+
+class TestLoop2xy(LaskarBase):
+
+    def setup_class(self):
+        self.name = 'loop-orbit-2-xy'
+        self.dt = 0.01
+        self.nsteps = 2**15
+
+class TestLoop2rphi(LaskarBase):
+
+    def setup_class(self):
+        self.name = 'loop-orbit-2-rphi'
+        self.dt = 0.01
+        self.nsteps = 2**15
 
 # # -------------------------------------------------------------------------------------
 # # Hand-constructed time-series
