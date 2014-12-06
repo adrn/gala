@@ -341,21 +341,25 @@ class NAFF(object):
         ffreq_ixes = np.zeros(ndim, dtype=int)
         nqs = np.zeros(ndim, dtype=int)
 
-        ffreq[0] = d[0]['freq']
-        nqs[0] = d[0]['n']
+        # first frequency is largest amplitude, nonzero freq.
+        ixes = np.where(np.abs(d['freq']) > 1E-5)[0]
+        ffreq[0] = d[ixes[0]]['freq']
+        ffreq_ixes[0] = ixes[0]
+        nqs[0] = d[ixes[0]]['n']
 
         if ndim == 1:
             return ffreq, d, ffreq_ixes
 
         # choose the next nontrivially related frequency as the 2nd fundamental:
         #   TODO: why 1E-6? this isn't well described in the papers...
-        ixes = np.where((d['n'] != d[0]['n']) & (np.abs(np.abs(ffreq[0]) - np.abs(d['freq'])) > 1E-6))[0]
+        ixes = np.where((np.abs(d['freq']) > 1E-5) & (d['n'] != d[0]['n']) &
+                        (np.abs(np.abs(ffreq[0]) - np.abs(d['freq'])) > 1E-6))[0]
         ffreq[1] = d[ixes[0]]['freq']
         ffreq_ixes[1] = ixes[0]
         nqs[1] = d[ixes[0]]['n']
 
         if ndim == 2:
-            return ffreq, d, ffreq_ixes
+            return ffreq[nqs.argsort()], d, ffreq_ixes[nqs.argsort()]
 
         # # -------------
         # # brute-force method for finding third frequency: find maximum error in (n*f1 + m*f2 - f3)
@@ -380,8 +384,10 @@ class NAFF(object):
 
         # for now, third frequency is just largest amplitude frequency in the remaining dimension
         #   TODO: why 1E-6? this isn't well described in the papers...
-        ixes = np.where((d['n'] != d[0]['n']) & (d['n'] != d[ffreq_ixes[1]]['n']) & (np.abs(np.abs(ffreq[0]) - np.abs(d['freq'])) > 1E-6)
-                        & (np.abs(np.abs(ffreq[1]) - np.abs(d['freq'])) > 1E-6))[0]
+        ixes = np.where((np.abs(d['freq']) > 1E-5) & (d['n'] != d[0]['n']) &
+                        (d['n'] != d[ffreq_ixes[1]]['n']) &
+                        (np.abs(np.abs(ffreq[0]) - np.abs(d['freq'])) > 1E-6) &
+                        (np.abs(np.abs(ffreq[1]) - np.abs(d['freq'])) > 1E-6))[0]
         ffreq[2] = d[ixes[0]]['freq']
         ffreq_ixes[2] = ixes[0]
         nqs[2] = d[ixes[0]]['n']
