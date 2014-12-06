@@ -156,6 +156,14 @@ class NAFF(object):
                          full_output=True)
         freq,fx,its,imode,smode = res
 
+        # failed by starting at minimum, try instead starting from middle
+        if imode != 0:
+            init_w = (omin+omax)/2.
+            res = fmin_slsqp(phi_w, x0=init_w, acc=1E-10,
+                             bounds=[(omin,omax)], disp=0, iter=50,
+                             full_output=True)
+            freq,fx,its,imode,smode = res
+
         if imode != 0:
             # TEST
             plt.figure()
@@ -221,8 +229,7 @@ class NAFF(object):
             logger.info("{}  {:.6f}  {:.6f}  {:.2f}  {:.6f}"
                         .format(k,nu[k],A[k],np.degrees(phi[k]),ab))
 
-            # TODO: why?
-            if fmax < 1E-7 or A[k] < 1E-6:
+            if break_condition is not None and (fmax < break_condition or A[k] < break_condition):
                 break
 
         return -nu[:k+1], A[:k+1], phi[:k+1]
@@ -300,7 +307,8 @@ class NAFF(object):
 
         return f_k, fmax
 
-    def find_fundamental_frequencies(self, fs, nintvec=15, imax=15, poincare=False):
+    def find_fundamental_frequencies(self, fs, nintvec=15, imax=15, poincare=False,
+                                     break_condition=1E-7):
         """ Solve for the fundamental frequencies of the given time series, `fs`
 
             TODO:
@@ -317,7 +325,7 @@ class NAFF(object):
         ndim = len(fs)
 
         for i in range(ndim):
-            nu,A,phi = self.frecoder(fs[i], nintvec=nintvec)
+            nu,A,phi = self.frecoder(fs[i], nintvec=nintvec, break_condition=break_condition)
             freqs.append(-nu)
             As.append(A)
             amps.append(np.abs(A))
@@ -352,7 +360,8 @@ class NAFF(object):
 
         # choose the next nontrivially related frequency as the 2nd fundamental:
         #   TODO: why 1E-6? this isn't well described in the papers...
-        ixes = np.where((np.abs(d['freq']) > 1E-5) & (d['n'] != d[0]['n']) &
+        ixes = np.where((np.abs(d['freq']) > 1E-5) &
+                        (d['n'] != d[ffreq_ixes[0]]['n']) &
                         (np.abs(np.abs(ffreq[0]) - np.abs(d['freq'])) > 1E-6))[0]
         ffreq[1] = d[ixes[0]]['freq']
         ffreq_ixes[1] = ixes[0]
@@ -384,13 +393,15 @@ class NAFF(object):
 
         # for now, third frequency is just largest amplitude frequency in the remaining dimension
         #   TODO: why 1E-6? this isn't well described in the papers...
-        ixes = np.where((np.abs(d['freq']) > 1E-5) & (d['n'] != d[0]['n']) &
+        ixes = np.where((np.abs(d['freq']) > 1E-5) &
+                        (d['n'] != d[ffreq_ixes[0]]['n']) &
                         (d['n'] != d[ffreq_ixes[1]]['n']) &
                         (np.abs(np.abs(ffreq[0]) - np.abs(d['freq'])) > 1E-6) &
                         (np.abs(np.abs(ffreq[1]) - np.abs(d['freq'])) > 1E-6))[0]
         ffreq[2] = d[ixes[0]]['freq']
         ffreq_ixes[2] = ixes[0]
         nqs[2] = d[ixes[0]]['n']
+
         if not np.all(np.unique(sorted(nqs)) == [0,1,2]):
             raise ValueError("Don't have x,y,z frequencies.")
 
