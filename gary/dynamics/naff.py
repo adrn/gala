@@ -27,14 +27,15 @@ def poincare_polar(w):
     ndim = w.shape[-1]//2
 
     R = np.sqrt(w[...,0]**2 + w[...,1]**2)
-    phi = np.arctan2(w[...,1], w[...,0])
+    # phi = np.arctan2(w[...,1], w[...,0])
+    phi = np.arctan2(w[...,0], w[...,1])
 
     vR = (w[...,0]*w[...,0+ndim] + w[...,1]*w[...,1+ndim]) / R
-    vPhi = np.abs(w[...,0]*w[...,1+ndim] - w[...,1]*w[...,0+ndim])
+    vPhi = w[...,0]*w[...,1+ndim] - w[...,1]*w[...,0+ndim]
 
     fs = []
     fs.append(R + 1j*vR)
-    fs.append(np.sqrt(2*vPhi)*(np.cos(phi) + 1j*np.sin(phi)))  # PP
+    fs.append(np.sqrt(2*np.abs(vPhi))*(np.cos(phi) + 1j*np.sin(phi)))  # PP
     fs.append(w[...,2] + 1j*w[...,2+ndim])
 
     return fs
