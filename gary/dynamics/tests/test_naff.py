@@ -255,6 +255,10 @@ class NAFFVsSandersBase(LaskarBase):
         #             break
         # assert np.all(done)
 
+        L = np.cross(self.w[:,0,:3], self.w[:,0,3:])
+        Lz = L[:,2].mean()
+        print("Lz", Lz)
+
         # try reconstructing actions with NAFF
         Js = np.zeros(3)
         for row,nvec in zip(d,nvecs):
