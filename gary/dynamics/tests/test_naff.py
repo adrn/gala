@@ -273,7 +273,7 @@ class TestFlattenedNFW(NAFFVsSandersBase):
                                                         a=1., b=1., c=0.8, units=galactic)
         self.w0 = np.array([30.,2,5,0,0.16,0.05])
         self.dt = 2.
-        self.nsteps = 50000
+        self.nsteps = 20000
 
 class TestLogarithmic3D(NAFFVsSandersBase):
 
