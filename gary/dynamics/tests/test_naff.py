@@ -49,6 +49,7 @@ def estimate_axisym_freqs(t, w):
     return fR, fphi, fz
 
 class LaskarBase(object):
+    potential = None
 
     def read_files(self):
         this_path = os.path.join(test_data_path, self.name)
@@ -85,9 +86,10 @@ class LaskarBase(object):
         self.read_files()
 
         # potential is the same for all PL96 tables
-        self.potential = gp.LogarithmicPotential(v_c=np.sqrt(2.), r_h=0.1,
-                                                 q1=1., q2=self.q, q3=1.,
-                                                 units=galactic)
+        if self.potential is None:
+            self.potential = gp.LogarithmicPotential(v_c=np.sqrt(2.), r_h=0.1,
+                                                     q1=1., q2=self.q, q3=1.,
+                                                     units=galactic)
 
         orbit_filename = os.path.join(plot_path,"orbit_{}.npy".format(self.name))
         if os.path.exists(orbit_filename) and config.option.overwrite:
@@ -170,18 +172,6 @@ class LaskarBase(object):
 
         assert np.all(done)
 
-        # Js = np.zeros(3)
-        # for row,nvec in zip(d,nvecs):
-        #     a = row['|A|']*np.exp(1j*row['phi'])
-        #     Js[0] += nvec[0] * nvec.dot(f) * row['|A|']**2
-        #     Js[1] += nvec[1] * nvec.dot(f) * row['|A|']**2
-        #     # Js[2] += nvec[2] * nvec.dot(f) * row['|A|']**2
-        #     # Js[0] += nvec[0] * nvec.dot(f) * a.real**2
-        #     # Js[1] += nvec[1] * nvec.dot(f) * a.real**2
-        #     # Js[2] += nvec[2] * nvec.dot(f) * a.real**2
-
-        # print(Js)
-
 class TestBox1(LaskarBase):
 
     def setup_class(self):
@@ -210,125 +200,87 @@ class TestLoop2rphi(LaskarBase):
         self.dt = 0.01
         self.nsteps = 2**15
 
-# # -------------------------------------------------------------------------------------
-# # Hand-constructed time-series
-# #
-# class TestHandConstructed(NAFFBase):
-#     def setup(self):
-#         Ts = np.array([1., 1.2, 1.105])
-#         As = (1., 0.5, 0.2)
-#         self.t = np.linspace(0,100,50000)
-#         self.true_freqs = (2*np.pi) / Ts[0:1]
+# -------------------------------------------------------------------------------------
 
-#         f = np.sum([A*(np.cos(2*np.pi*self.t/T) + 1j*np.sin(2*np.pi*self.t/T)) for T,A in zip(Ts,As)], axis=0)
-#         z = np.zeros_like(f.real)
-#         self.w = np.vstack((f.real,z,z,f.imag,z,z)).T[:,np.newaxis]
+class NAFFVsSandersBase(LaskarBase):
 
-#         self.dt = 0.1
-#         self.nsteps = 20000
+    def read_files(self):
+        pass
 
-# # -------------------------------------------------------------------------------------
-# # Harmonic Oscillator
-# #
-# class TestHarmonicOscillator(NAFFBase):
-#     def setup_class(self):
-#         Ts = np.array([1., 1.2, 1.105])
-#         self.true_freqs = 2*np.pi/Ts
-#         self.potential = gp.HarmonicOscillatorPotential(self.true_freqs)
-#         self.w0 = np.array([1,0,0.2,0.,0.1,-0.8])
+    def test_naff(self):
+        naff = NAFF(self.t)
 
-#         self.dt = 0.009
-#         self.nsteps = 20000
+        # complex time series
+        logger.info("Using Poincaré polar coordinates")
+        fs = poincare_polar(self.w[:,0])
 
-# # -------------------------------------------------------------------------------------
-# # Logarithmic potential, 1D orbit as in Papaphilippou & Laskar (1996), Table 2
-# #
-# class TestLogarithmic1D(NAFFBase):
-#     def setup_class(self):
-#         self.true_freqs = np.array([2.13905125])
-#         self.potential = gp.LogarithmicPotential(v_c=np.sqrt(2.), r_h=0.1,
-#                                                  q1=1., q2=0.9, q3=1., units=galactic)
-#         self.w0 = np.array([0.49,0.,0.,1.4,0.,0.])
+        f,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=15, break_condition=None)
+        nvecs = naff.find_integer_vectors(f, d)
 
-#         self.dt = 0.005
-#         self.nsteps = 2**15
+        max_T = np.max(np.abs(2*np.pi/f))
+        int_time = self.dt*self.nsteps
+        logger.important("Integrated for ~{} periods".format(int_time/max_T))
 
-# # -------------------------------------------------------------------------------------
-# # Logarithmic potential, 2D Box orbit as in Papaphilippou & Laskar (1996), Table 1
-# #
-# class TestLogarithmic2DBox(NAFFBase):
-#     def setup_class(self):
-#         self.true_freqs = np.array([2.16326132, 3.01405257])
-#         self.potential = gp.LogarithmicPotential(v_c=np.sqrt(2.), r_h=0.1,
-#                                                  q1=1., q2=0.9, q3=1., units=galactic)
-#         self.w0 = np.array([0.49,0.,0.,1.3156,0.4788,0.])
+        # compure sanders frequencies
+        s_actions,s_angles,s_freqs = gd.find_actions(self.t[::2], self.w[::2],
+                                                     N_max=6, units=galactic)
 
-#         self.dt = 0.005
-#         self.nsteps = 2**15
+        ptp_freqs = estimate_axisym_freqs(self.t, self.w)
 
-# # -------------------------------------------------------------------------------------
-# # Logarithmic potential, 2D Loop orbit as in Papaphilippou & Laskar (1996), Table 3
-# #
-# class TestLogarithmic2DLoop(NAFFBase):
-#     def setup_class(self):
-#         self.true_freqs = np.array([2.94864765, 1.35752682])
-#         self.potential = gp.LogarithmicPotential(v_c=np.sqrt(2.), r_h=0.1,
-#                                                  q1=1., q2=0.9, q3=1., units=galactic)
-#         self.w0 = np.array([0.49,0.,0.,0.4788,1.3156,0.])
+        print("NAFF:", f)
+        print("Sanders:", s_freqs)
+        print("ptp:", ptp_freqs)
 
-#         self.dt = 0.005
-#         self.nsteps = 2**15
+        # compute frequnecy diffusion with NAFF
+        naff = NAFF(self.t[:self.nsteps//2+1])
 
-# # -------------------------------------------------------------------------------------
-# # Logarithmic potential, 3D Loop orbit
-# #
-# class TestLogarithmic3DLoop(NAFFBase):
-#     def setup_class(self):
-#         self.true_freqs = np.array([np.nan, np.nan, np.nan])
-#         self.potential = gp.LogarithmicPotential(v_c=0.24, r_h=10.,
-#                                                  q1=1., q2=0.9, q3=0.7, units=galactic)
-#         self.w0 = np.array([10.,0.,0.,0.07,0.22,-0.07])
+        # first window
+        fs = poincare_polar(self.w[:self.nsteps//2+1,0])
+        f1,d1,ixes1 = naff.find_fundamental_frequencies(fs, nintvec=15, break_condition=None)
+        fs = poincare_polar(self.w[self.nsteps//2:,0])
+        f2,d2,ixes2 = naff.find_fundamental_frequencies(fs, nintvec=15, break_condition=None)
 
-#         self.dt = 2.5
-#         self.nsteps = 2**13
+        dfreq = f2 - f1
+        print("Window 1 freqs:", f1)
+        print("Window 2 freqs:", f2)
+        print("Abs. freq change:", dfreq)
+        print("Percent freq change:", np.abs(dfreq/f1)*100)
 
-# # -------------------------------------------------------------------------------------
-# # Triaxial NFW potential, 3D Loop orbit
-# #
-# class TestFlattenedNFWLoop(NAFFBase):
-#     def setup_class(self):
-#         self.true_freqs = np.array([np.nan, np.nan, np.nan])
-#         self.potential = gp.LeeSutoTriaxialNFWPotential(v_c=0.22, r_s=30.,
-#                                                         a=1., b=1., c=0.8, units=galactic)
-#         self.w0 = np.array([1.,20,0,0.05,0,0.185])
+        # compare NAFF with Sanders
+        # done = np.zeros(3).astype(bool)
+        # for i,true_f in enumerate(s_freqs):
+        #     for ff in f:
+        #         if np.abs(np.abs(ff) - np.abs(true_f)) < 1E-4:
+        #             done[i] = True
+        #             break
+        # assert np.all(done)
 
-#         self.dt = 2.
-#         self.nsteps = 40000
+        # try reconstructing actions with NAFF
+        Js = np.zeros(3)
+        for row,nvec in zip(d,nvecs):
+            Js[0] += nvec[0] * nvec.dot(f) * row['|A|']**2
+            Js[1] += nvec[1] * nvec.dot(f) * row['|A|']**2
+            Js[2] += nvec[2] * nvec.dot(f) * row['|A|']**2
 
-# # -------------------------------------------------------------------------------------
-# # Triaxial NFW potential, 3D Loop orbit
-# #
-# class TestTriaxialNFWLoop(NAFFBase):
-#     def setup_class(self):
-#         self.true_freqs = np.array([np.nan, np.nan, np.nan])
-#         self.potential = gp.LeeSutoTriaxialNFWPotential(v_c=0.22, r_s=30.,
-#                                                         a=1., b=0.9, c=0.7, units=galactic)
-#         self.w0 = np.array([0,30,0,0.025,0,0.2])
+        print(Js)
+        print(s_actions)
 
-#         self.dt = 4.
-#         self.nsteps = 20000
+class TestFlattenedNFW(NAFFVsSandersBase):
 
+    def setup_class(self):
+        self.name = 'flattened-nfw'
+        self.potential = gp.LeeSutoTriaxialNFWPotential(v_c=0.22, r_s=30.,
+                                                        a=1., b=1., c=0.8, units=galactic)
+        self.w0 = np.array([30.,2,5,0,0.16,0.05])
+        self.dt = 2.
+        self.nsteps = 50000
 
-# # -------------------------------------------------------------------------------------
-# # Logarithmic potential, 2D Loop orbit as in Papaphilippou & Laskar (1996), Table 3
-# #
-# class TestAPW(NAFFBase):
-#     def setup_class(self):
-#         # self.true_freqs = np.array([2.94864765, 1.35752682])
-#         self.true_freqs = np.array([np.nan, np.nan, np.nan])
-#         self.potential = gp.LogarithmicPotential(v_c=np.sqrt(2.), r_h=0.1,
-#                                                  q1=1., q2=1., q3=0.9, units=galactic)
-#         self.w0 = np.array([0.49,0.,0.,0.4788,1.3156,0.1])
+class TestLogarithmic3D(NAFFVsSandersBase):
 
-#         self.dt = 0.002
-#         self.nsteps = 2**16
+    def setup_class(self):
+        self.name = 'logarithmic-3d'
+        self.potential = gp.LogarithmicPotential(v_c=0.24, r_h=10.,
+                                                 q1=1., q2=0.9, q3=0.7, units=galactic)
+        self.w0 = np.array([10.,0.,0.,0.02,0.25,-0.02])
+        self.dt = 2.5
+        self.nsteps = 40000
