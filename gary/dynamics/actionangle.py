@@ -21,11 +21,12 @@ from scipy.linalg import solve
 from scipy.optimize import leastsq
 
 # Project
-from .core import angular_momentum, classify_orbit
+from .core import classify_orbit
 from ..potential import HarmonicOscillatorPotential, IsochronePotential
 
-__all__ = ['cross_validate_actions', 'find_actions', 'generate_n_vectors', \
-           'fit_isochrone', 'fit_harmonic_oscillator', 'fit_toy_potential']
+__all__ = ['cross_validate_actions', 'find_actions', 'generate_n_vectors',
+           'fit_isochrone', 'fit_harmonic_oscillator', 'fit_toy_potential',
+           'flip_coords']
 
 def flip_coords(w, loop_bit):
     """
