@@ -42,6 +42,10 @@ if not os.path.exists(plot_path):
 
 this_path = os.path.split(os.path.abspath(__file__))[0]
 
+# TODO: config item to specify path to test data?
+test_data_path = os.path.abspath(os.path.join(os.path.split(__file__)[0],
+                                 "../../../test-data/actionangle"))
+
 class ActionsBase(object):
 
     def test_classify(self):
@@ -135,7 +139,7 @@ class TestHardActions(ActionsBase):
         self.potential = PW14Potential(**params)
         self.N = 100
 
-        w0 = np.loadtxt(os.path.join(this_path, "w0.txt"))
+        w0 = np.loadtxt(os.path.join(test_data_path, "w0.txt"))
         nsteps = 200000
 
         if not os.path.exists(os.path.join(this_path, "w_hard.npy")):
