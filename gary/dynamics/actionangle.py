@@ -44,8 +44,8 @@ def flip_coords(w, loop_bit):
 
     # circulation around x-axis
     if loop_bit[0] == 1:
-        new_w[:,:3] = w[:,2::-1]  # index magic to flip positions
-        new_w[:,3:] = w[:,:2:-1]  # index magic to flip velocities
+        new_w[...,:3] = w[...,2::-1]  # index magic to flip positions
+        new_w[...,3:] = w[...,:2:-1]  # index magic to flip velocities
     return new_w
 
 def generate_n_vectors(N_max, dx=1, dy=1, dz=1):
