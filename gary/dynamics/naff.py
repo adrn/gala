@@ -167,13 +167,13 @@ class NAFF(object):
 
         if imode != 0:
             # TEST
-            plt.figure()
-            w = np.linspace(omin, omax, 100)
-            plt.plot(w, np.array([phi_w(ww) for ww in w]))
-            plt.axvline(freq)
-            plt.title(str(imode))
-            plt.show()
-            sys.exit(0)
+            # plt.figure()
+            # w = np.linspace(omin, omax, 100)
+            # plt.plot(w, np.array([phi_w(ww) for ww in w]))
+            # plt.axvline(freq)
+            # plt.title(str(imode))
+            # plt.show()
+            # sys.exit(0)
             # TEST
 
             raise ValueError("Function minimization to find best frequency failed with:\n"
