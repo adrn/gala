@@ -308,8 +308,7 @@ class NAFF(object):
 
         return f_k, fmax
 
-    def find_fundamental_frequencies(self, fs, nintvec=15, imax=15, poincare=False,
-                                     break_condition=1E-7):
+    def find_fundamental_frequencies(self, fs, nintvec=15, imax=15, break_condition=1E-7):
         """ Solve for the fundamental frequencies of the given time series, `fs`
 
             TODO:
