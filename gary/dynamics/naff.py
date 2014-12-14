@@ -263,7 +263,7 @@ class NAFF(object):
         return real + imag*1j
 
     def gso(self, ecap, nu, k):
-        """ Gram-Schmidt orthonormalization of the function
+        r""" Gram-Schmidt orthonormalization of the function
         ..math::
 
             e_k(t) = \exp (i \omega_k t)
