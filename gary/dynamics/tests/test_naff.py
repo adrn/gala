@@ -7,7 +7,9 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
+from collections import OrderedDict
 import os
+import re
 
 # Third-party
 import astropy.coordinates as coord
@@ -32,7 +34,7 @@ logger.important("Plots located at: {}".format(plot_path))
 
 # TODO: config item to specify path to test data?
 test_data_path = os.path.abspath(os.path.join(os.path.split(__file__)[0],
-                                 "../../../test-data/papapilippou-orbits"))
+                                 "../../../test-data/"))
 
 def estimate_axisym_freqs(t, w):
     R = np.sqrt(w[:,0,0]**2 + w[:,0,1]**2)
@@ -52,7 +54,7 @@ class LaskarBase(object):
     potential = None
 
     def read_files(self):
-        this_path = os.path.join(test_data_path, self.name)
+        this_path = os.path.join(test_data_path, 'papapilippou-orbits', self.name)
 
         # read initial conditions
         d = np.loadtxt(os.path.join(this_path, "ics.txt"))
@@ -288,3 +290,90 @@ class TestLogarithmic3D(NAFFVsSandersBase):
         self.w0 = np.array([10.,0.,0.,0.02,0.25,-0.02])
         self.dt = 2.5
         self.nsteps = 40000
+
+# -------------------------------------------------------------------------------------
+class MonicaBase(object):
+
+    def setup(self):
+        self.path = os.path.join(test_data_path, 'monica-naff')
+
+        with open(os.path.join(self.path, 'filenames')) as f:
+            self.filenames = [l.strip() for l in f.readlines()]
+
+        self.index = self.filenames.index(self.filename)
+
+        split_indices = []
+        with open(os.path.join(self.path, 'adrian1.int')) as f:
+            lines = f.readlines()
+            for i,line in enumerate(lines):
+                if re.search('[\*]+', line) is not None:
+                    split_indices.append(i)
+
+        if self.index == 0:
+            these_lines = lines[:split_indices[0]]
+        else:
+            these_lines = lines[split_indices[self.index-1]+2:split_indices[self.index]]
+
+        freqs = OrderedDict()
+        freqs['freq'] = []
+        freqs['l'] = []
+        freqs['m'] = []
+        freqs['n'] = []
+        freqs['nq'] = []
+        nq = None
+        for line in these_lines:
+            s = re.search('\s*[-]+\s+([XYZ])', line)
+            if s is not None:
+                nq = 'xyz'.index(s.groups()[0].lower())
+                continue
+
+            if nq is None:
+                continue
+
+            freqs['freq'].append(float(line.split()[1]))
+            freqs['l'].append(int(line.split()[2]))
+            freqs['m'].append(int(line.split()[3]))
+            freqs['n'].append(int(line.split()[4]))
+            freqs['nq'].append(nq)
+
+        names,formats = [],[]
+        for k,v in freqs.items():
+            names.append(k)
+            formats.append(type(v[0]))
+        self.monica_freqs = np.array(zip(*freqs.values()), dtype=dict(names=names,formats=formats))
+
+    def test_naff(self):
+        # read in the orbit and compute the frequencies with my implementation
+        t = np.loadtxt(os.path.join(self.path, self.filename), usecols=[0])
+        w = np.loadtxt(os.path.join(self.path, self.filename), usecols=range(1,7))
+
+        naff = NAFF(t)
+
+        # compute complex time series from orbit
+        fs = [(w[:,i] + 1j*w[:,i+3]) for i in range(3)]
+        f,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=15)
+        nvecs = naff.find_integer_vectors(f, d)
+
+        for nq in range(3):
+            freq = d[d['n'] == nq]['freq']
+            nvec = nvecs[d['n'] == nq]
+            monica = self.monica_freqs[self.monica_freqs['nq'] == nq]
+            print(np.vstack((freq,nvec.T)).T)
+
+            # for j in range(5):
+            #     print("APW: {}, {}".format(freq[j], nvec[j]))
+            #     print("Monica: {}".format(monica[j]))
+            #     print()
+
+            break
+
+        # print(f)
+        # print(self.monica_freqs)
+
+class TestInterAxisTube(MonicaBase):
+    def setup_class(self):
+        self.filename = 'inter-axis-tube.txt'
+
+class TestShortAxisTube(MonicaBase):
+    def setup_class(self):
+        self.filename = 'short-axis-tube.txt'
