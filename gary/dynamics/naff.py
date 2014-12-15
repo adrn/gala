@@ -134,43 +134,52 @@ class NAFF(object):
         omin = omega0 - np.pi/self.T
         omax = omega0 + np.pi/self.T
 
+        def transform(x):
+            return (x - omin) / (omax - omin)
+
+        def invtransform(y):
+            return y*(omax - omin) + omin
+
         def phi_w(w):
             """ This function numerically computes phi(ω), as in
                 Eq. 12 in Valluri & Merritt (1998).
             """
-
+            w = invtransform(w)
             # real part of integrand of Eq. 12
             zreal = self.chi * (xf*np.cos(w*self.tz) + yf*np.sin(w*self.tz))
             ans = simps(zreal, x=self.tz)
             return -(ans*signx*signo)/(2.*self.T)
 
-        w = np.linspace(omin, omax, 50)
+        w = np.linspace(0, 1, 50)
         phi_vals = np.array([phi_w(ww) for ww in w]).argmin()
 
         if np.all(np.abs(phi_vals) < 1E-10):
-            init_w = (omin+omax)/2.
+            init_w = 0.5
         else:
             init_w = w[phi_vals]
 
-        res = fmin_slsqp(phi_w, x0=init_w, acc=1E-10,
-                         bounds=[(omin,omax)], disp=0, iter=50,
+        res = fmin_slsqp(phi_w, x0=init_w, acc=1E-8,
+                         bounds=[(0,1)], disp=0, iter=50,
                          full_output=True)
         freq,fx,its,imode,smode = res
+        freq = invtransform(freq)
 
         # failed by starting at minimum, try instead starting from middle
         if imode != 0:
-            init_w = (omin+omax)/2.
-            res = fmin_slsqp(phi_w, x0=init_w, acc=1E-10,
-                             bounds=[(omin,omax)], disp=0, iter=50,
+            init_w = 0.5
+            res = fmin_slsqp(phi_w, x0=init_w, acc=1E-8,
+                             bounds=[(0,1)], disp=0, iter=50,
                              full_output=True)
             freq,fx,its,imode,smode = res
+            freq = invtransform(freq)
 
         if imode != 0:
             # TEST
             # plt.figure()
-            # w = np.linspace(omin, omax, 100)
-            # plt.plot(w, np.array([phi_w(ww) for ww in w]))
+            # w = np.linspace(0, 1, 100)
+            # plt.plot(invtransform(w), np.array([phi_w(ww) for ww in w]))
             # plt.axvline(freq)
+            # plt.axvline(invtransform(init_w), linestyle='dashed')
             # plt.title(str(imode))
             # plt.show()
             # sys.exit(0)
