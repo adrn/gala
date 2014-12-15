@@ -91,11 +91,11 @@ class NAFF(object):
         ndata = len(f)
 
         # take Fourier transform of input (complex) function f
-        logger.debug("Fourier transforming...")
+        logger.log(0, "Fourier transforming...")
         t1 = time.time()
         fff = fft(f) / np.sqrt(ndata)
         omegas = 2*np.pi*fftfreq(f.size, self.t[1]-self.t[0])
-        logger.debug("...done. Took {} seconds to FFT.".format(time.time()-t1))
+        logger.log(0, "...done. Took {} seconds to FFT.".format(time.time()-t1))
 
         # plot the FFT
         # plt.clf()
@@ -114,8 +114,8 @@ class NAFF(object):
         if xf[wmax] != 0.:
             signx = np.sign(xf[wmax])
             signy = np.sign(xf[wmax])
-            logger.debug("sign(xf) = {}".format(signx))
-            logger.debug("sign(yf) = {}".format(signy))
+            logger.log(0, "sign(xf) = {}".format(signx))
+            logger.log(0, "sign(yf) = {}".format(signy))
             # signx = np.sign(xyf[xyf_abs[:,wmax].argmax(),wmax])
         else:
             # return early -- "this may be an axial or planar orbit"
@@ -124,7 +124,7 @@ class NAFF(object):
         # find the frequency associated with this index
         omega0 = omegas[wmax]
         signo = np.sign(omega0)
-        logger.debug("sign(omega0) = {}".format(signo))
+        logger.log(0, "sign(omega0) = {}".format(signo))
 
         # now that we have a guess for the maximum, convolve with Hanning filter and re-solve
         xf = f.real
@@ -208,8 +208,8 @@ class NAFF(object):
         phi = np.zeros(nintvec)
 
         fk = f.copy()
-        logger.info("-"*50)
-        logger.info("k    ωk    Ak    φk(deg)    ak")
+        logger.debug("-"*50)
+        logger.debug("k    ωk    Ak    φk(deg)    ak")
         for k in range(nintvec):
             nu[k] = self.frequency(fk)
 
@@ -227,8 +227,8 @@ class NAFF(object):
             # new fk has the previous frequency subtracted out
             fk,fmax = self.sub_chi(fk, ecap[k], ab)
 
-            logger.info("{}  {:.6f}  {:.6f}  {:.2f}  {:.6f}"
-                        .format(k,nu[k],A[k],np.degrees(phi[k]),ab))
+            logger.debug("{}  {:.6f}  {:.6f}  {:.2f}  {:.6f}"
+                         .format(k,nu[k],A[k],np.degrees(phi[k]),ab))
 
             if break_condition is not None and (fmax < break_condition or A[k] < break_condition):
                 break
