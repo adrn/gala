@@ -17,7 +17,7 @@ from .cbuiltin import HernquistPotential, MiyamotoNagaiPotential, \
     LeeSutoTriaxialNFWPotential, SphericalNFWPotential, LogarithmicPotential
 from ..units import galactic
 
-__all__ = ['PW14Potential', 'LM10Potential']
+__all__ = ['PW14Potential', 'LM10Potential', 'OblateMWPotential']
 
 class PW14Potential(CCompositePotential):
 
@@ -68,4 +68,37 @@ class LM10Potential(CCompositePotential):
                                               q1=q1, q2=q2, q3=q3,
                                               phi=phi, v_c=v_c, r_h=r_h)
         super(LM10Potential,self).__init__(**kwargs)
+        self.c_instance.G = G.decompose(units).value
+
+class OblateMWPotential(CCompositePotential):
+
+    def __init__(self, m_disk=7E10, a=3.5, b=0.14,
+                 m_spher=1E10, c=1.1,
+                 q1=1., q2=0.75, q3=0.55,
+                 v_c=0.239225, r_s=30.,
+                 phi=0., theta=0., psi=0.,
+                 units=galactic):
+        """ Axis ratio values taken from Jing & Suto (2002). Other
+            parameters come from a by-eye fit to Bovy's MW2014Potential.
+        """
+
+        # Choice of v_h sets circular velocity at Sun to 220 km/s
+        self.units = units
+
+        kwargs = dict()
+        kwargs["disk"] = MiyamotoNagaiPotential(units=units,
+                                                m=m_disk, a=a, b=b)
+
+        kwargs["bulge"] = HernquistPotential(units=units,
+                                             m=m_spher, c=c)
+
+        if q1 == 1 and q2 == 1 and q3 == 1:
+            kwargs["halo"] = SphericalNFWPotential(units=units,
+                                                   v_c=v_c, r_s=r_s)
+        else:
+            kwargs["halo"] = LeeSutoTriaxialNFWPotential(units=units,
+                                                         a=q1, b=q2, c=q3,
+                                                         v_c=v_c, r_s=r_s,
+                                                         phi=phi, theta=theta, psi=psi)
+        super(PW14Potential,self).__init__(**kwargs)
         self.c_instance.G = G.decompose(units).value
