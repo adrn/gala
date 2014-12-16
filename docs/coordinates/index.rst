@@ -9,7 +9,7 @@ Introduction
 
 The `gary.coordinates` package provides functions for converting
 coordinates and velocities between various astronomical systems, as well
-as `astropy.coordinates` frame classes for coordinates defined by the
+as :mod:`astropy.coordinates` frame classes for coordinates defined by the
 Sagittarius and Orphan streams.
 
 .. warning::
@@ -21,16 +21,14 @@ Getting Started
 ===============
 
 The functions in this subpackage make use of the coordinates subpackage in
-Astropy, `astropy.coordinates <http://docs.astropy.org/en/latest/coordinates/>`_.
-Currently available are functions to:
+Astropy, :mod:`astropy.coordinates`. Currently available are functions to:
 
 - Convert a velocity from/to the Galactic Standard of Rest (GSR) to/from a
   heliocentric (LSR) velocity.
 - Convert a position (and velocity) from/to Galactic cartesian coordinates
   to/from Heliocentric spherical coordinates.
 
-These functions work naturally with the `Astropy <http://www.astropy.org>`_ unit
-system and coordinate subpackages. For example, to convert a sky position
+These functions work naturally with the :mod:`astropy.units` and :mod:`astropy.coordinates` subpackages. For example, to convert a sky position
 and distance to a Galactocentric, cartesian position, we first have to define
 an Astropy coordinate::
 
@@ -70,7 +68,8 @@ These functions also work on objects containing multiple coordinates::
 
 Also included are coordinate classes for transforming to Sagittarius and Orphan
 stream coordinates (as defined in the references below). These classes behave
-like the built-in astropy coordinates frames (e.g., `ICRS` or `Galactic`) and
+like the built-in astropy coordinates frames (e.g.,
+:class:`~astropy.coordinates.ICRS` or :class:`~astropy.coordinates.Galactic`) and
 can be transformed to and from other astropy coordinate frames::
 
     >>> c = coord.SkyCoord(ra=100.68458*u.degree, dec=41.26917*u.degree)
