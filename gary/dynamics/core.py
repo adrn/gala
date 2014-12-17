@@ -28,6 +28,11 @@ def angular_momentum(w):
         Array of phase-space positions. The last axis (`axis=-1`) is assumed
         to be the phase-space dimension so that the phase-space dimensionality
         is `w.shape[-1]`.
+
+    Returns
+    -------
+    L : :class:`numpy.ndarray`
+        Array of angular momentum vectors.
     """
     w = np.atleast_1d(w)
     ndim = w.shape[-1]
@@ -48,6 +53,12 @@ def classify_orbit(w):
     ----------
     w : array_like
         Array of phase-space positions.
+
+    Returns
+    -------
+    circulation : :class:`numpy.ndarray`
+        An array that specifies whether there is circulation about any of
+        the axes of the input orbit. Shape: (len(w), 3)
 
     """
     # get angular momenta
