@@ -39,14 +39,14 @@ an Astropy coordinate::
 Then pass this object in to the heliocentric to galactocentric conversion
 function::
 
-    >>> import gary.coordinates as stc
-    >>> stc.hel_to_gal_xyz(c)
+    >>> import gary.coordinates as gc
+    >>> gc.hel_to_gal_xyz(c)
     <Quantity [-22.34899301,  1.42957337,  4.13070449] kpc>
 
 Or, with the same sky position (as specified by the astropy frame object)
 and a radial velocity, we could convert to the Galactic standard of rest::
 
-    >>> stc.vhel_to_vgsr(c, 110*u.km/u.s)
+    >>> gc.vhel_to_vgsr(c, 110*u.km/u.s)
     <Quantity 123.87590811841189 km / s>
 
 Both of these functions allow specifying the circular velocity at the Sun
@@ -54,7 +54,7 @@ Both of these functions allow specifying the circular velocity at the Sun
 local standard of rest (`vlsr`). The position transformation functions also
 allow specifying the distance of the Sun to the Galactic center (`xsun`)::
 
-    >>> stc.hel_to_gal_xyz(c, xsun=-8.3*u.kpc)
+    >>> gc.hel_to_gal_xyz(c, xsun=-8.3*u.kpc)
     <Quantity [-22.64899301,  1.42957337,  4.13070449] kpc>
 
 These functions also work on objects containing multiple coordinates::
@@ -73,10 +73,10 @@ like the built-in astropy coordinates frames (e.g.,
 can be transformed to and from other astropy coordinate frames::
 
     >>> c = coord.SkyCoord(ra=100.68458*u.degree, dec=41.26917*u.degree)
-    >>> c.transform_to(stc.Sagittarius)
+    >>> c.transform_to(gc.Sagittarius)
     <SkyCoord (Sagittarius): (Lambda, Beta, distance) in (deg, deg, )
         (179.5851618648458, -12.558369149811035, 1.0)>
-    >>> s = stc.Sagittarius(Lambda=156.342*u.degree, Beta=1.1*u.degree)
+    >>> s = gc.Sagittarius(Lambda=156.342*u.degree, Beta=1.1*u.degree)
     >>> c = coord.SkyCoord(s)
     >>> c.galactic
     <SkyCoord (Galactic): (l, b, distance) in (deg, deg, )
