@@ -34,19 +34,20 @@ def angular_momentum(w):
 
 def classify_orbit(w):
     """
-    Determine whether an orbit is a Box or Loop orbit by figuring out
-    whether there is a change of sign of the angular momentum about an
-    axis. Returns an array with 3 integers per phase-space point, such
-    that:
+    Determine whether an orbit or series of orbits is a Box or Loop orbit by
+    figuring out whether there is a change of sign of the angular momentum
+    about an axis. Returns a 2D array with 3 integers per orbit point such that:
 
     - Box = [0,0,0]
-    - Short axis Loop = [0,0,1]
-    - Long axis Loop = [1,0,0]
+    - Loop around z axis = [0,0,1]
+    - Loop around x axis = [1,0,0]
 
     Parameters
     ----------
     w : array_like
-        Array of phase-space positions.
+        Array of phase-space positions. Accepts 2D or 3D arrays. If 2D, assumes
+        this is a single orbit. If 3D, assumes that this is a collection of orbits,
+        where `axis=0` is the time axis, and `axis=1` are the different orbits.
 
     Returns
     -------
