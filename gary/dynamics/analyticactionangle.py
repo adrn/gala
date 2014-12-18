@@ -30,6 +30,12 @@ def isochrone_xv_to_aa(x, v, potential):
     in the Sanders & Binney (2014) formalism for computing action-angle
     coordinates in any potential.
 
+    .. note::
+
+        This function is included as a method of the :class:`~gary.potential.IsochronePotential`
+        and it is recommended to call :meth:`~gary.potential.IsochronePotential.phase_space()`
+        instead.
+
     Parameters
     ----------
     x : array_like
@@ -138,6 +144,12 @@ def isochrone_aa_to_xv(actions, angles, potential):
     and velocity) in cartesian coordinates. See Section 3.5.2 in
     Binney & Tremaine (2008), and be aware of the errata entry for
     Eq. 3.225.
+
+    .. note::
+
+        This function is included as a method of the :class:`~gary.potential.IsochronePotential`
+        and it is recommended to call :meth:`~gary.potential.IsochronePotential.action_angle()`
+        instead.
 
     Parameters
     ----------
