@@ -67,7 +67,28 @@ def test_classify_orbit():
 
 # ----------------------------------------------------------------------------
 
-def test_align_circulation():
+def test_align_circulation_single():
+
+    potential = LogarithmicPotential(v_c=1., r_h=0.14, q1=1., q2=0.9, q3=1.,
+                                     units=galactic)
+    w0 = np.array([[0.,1.,0.,0.,0.,0.5],  # loop around x axis
+                   [1.,0.,0.,0.,0.,0.5],  # loop around y axis
+                   [1.,0.,0.,0.,0.5,0.],  # loop around z axis
+                   [0.8,0.4,0.,0.,0.1,0.]])  # box
+
+    t,w = potential.integrate_orbit(w0, dt=0.05, nsteps=10000)
+
+    for i in range(w.shape[1]):
+        circ = classify_orbit(w[:,i])[0]
+        new_w = align_circulation_with_z(w[:,i], circ)
+        new_circ = classify_orbit(new_w)
+
+        if i != 3:
+            assert new_circ[0,2] == 1.
+        else:
+            assert np.sum(new_circ) == 0
+
+def test_align_circulation_many():
 
     potential = LogarithmicPotential(v_c=1., r_h=0.14, q1=1., q2=0.9, q3=1.,
                                      units=galactic)
