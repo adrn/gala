@@ -110,9 +110,9 @@ def align_circulation_with_z(w, loop_bit):
             circ = 1
 
     else:
-        for ix in len(loop_bit):
-            if loop_bit[ix,2] == 1:
-                # already circulating about z
+        for ix in range(len(loop_bit)):
+            if loop_bit[ix,2] == 1 or np.all(loop_bit[ix] == 0):
+                # already circulating about z or box orbit
                 continue
 
             if sum(loop_bit[ix]) > 1:
@@ -123,15 +123,12 @@ def align_circulation_with_z(w, loop_bit):
                 circ = 0
             elif loop_bit[ix,1] == 1:
                 circ = 1
+            else:
+                raise RuntimeError("Should never get here...")
 
-        new_w[:,ix,circ] = w[:,ix,2]
-        new_w[:,ix,2] = w[:,ix,circ]
-        new_w[:,ix,circ+3] = w[:,ix,5]
-        new_w[:,ix,5] = w[:,ix,circ+3]
-
-    # circulation around x-axis
-    if loop_bit[0] == 1:
-        new_w[...,:3] = w[...,2::-1]  # index magic to flip positions
-        new_w[...,3:] = w[...,:2:-1]  # index magic to flip velocities
+            new_w[:,ix,circ] = w[:,ix,2]
+            new_w[:,ix,2] = w[:,ix,circ]
+            new_w[:,ix,circ+3] = w[:,ix,5]
+            new_w[:,ix,5] = w[:,ix,circ+3]
 
     return new_w
