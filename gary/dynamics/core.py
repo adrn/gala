@@ -101,34 +101,34 @@ def align_circulation_with_z(w, loop_bit):
         A copy of the input array with circulation aligned with the z axis.
     """
 
-    new_w = w.copy()
+    if (w.ndim-1) != loop_bit.ndim:
+        raise ValueError("Shape mismatch - input orbit array should have 1 more dimension "
+                         "than the input loop bit.")
 
     if loop_bit.ndim == 1:
-        if loop_bit[0] == 1:
+        loop_bit = np.atleast_2d(loop_bit)
+        w = w[:,np.newaxis]
+
+    new_w = w.copy()
+    for ix in range(len(loop_bit)):
+        if loop_bit[ix,2] == 1 or np.all(loop_bit[ix] == 0):
+            # already circulating about z or box orbit
+            continue
+
+        if sum(loop_bit[ix]) > 1:
+            logger.warning("Circulation about x and y axes - are you sure the orbit has been "
+                           "integrated for long enough?")
+
+        if loop_bit[ix,0] == 1:
             circ = 0
-        elif loop_bit[1] == 1:
+        elif loop_bit[ix,1] == 1:
             circ = 1
+        else:
+            raise RuntimeError("Should never get here...")
 
-    else:
-        for ix in range(len(loop_bit)):
-            if loop_bit[ix,2] == 1 or np.all(loop_bit[ix] == 0):
-                # already circulating about z or box orbit
-                continue
-
-            if sum(loop_bit[ix]) > 1:
-                logger.warning("Circulation about x and y axes - are you sure the orbit has been "
-                               "integrated for long enough?")
-
-            if loop_bit[ix,0] == 1:
-                circ = 0
-            elif loop_bit[ix,1] == 1:
-                circ = 1
-            else:
-                raise RuntimeError("Should never get here...")
-
-            new_w[:,ix,circ] = w[:,ix,2]
-            new_w[:,ix,2] = w[:,ix,circ]
-            new_w[:,ix,circ+3] = w[:,ix,5]
-            new_w[:,ix,5] = w[:,ix,circ+3]
+        new_w[:,ix,circ] = w[:,ix,2]
+        new_w[:,ix,2] = w[:,ix,circ]
+        new_w[:,ix,circ+3] = w[:,ix,5]
+        new_w[:,ix,5] = w[:,ix,circ+3]
 
     return new_w
