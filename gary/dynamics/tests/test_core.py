@@ -44,7 +44,7 @@ def make_known_orbit(x, vx, potential, name):
     # See Binney & Tremaine (2008) Figure 3.8 and 3.9
     E = -0.337
     y = 0.
-    vy = np.sqrt(2*(E - potential.value([x,y,0.])))
+    vy = np.sqrt(2*(E - potential.value([x,y,0.])))[0]
 
     w = [x,y,0.,vx,vy,0.]
     t,ws = potential.integrate_orbit(w, dt=0.05, nsteps=10000)
@@ -63,6 +63,10 @@ def test_classify_orbit():
 
     ws = make_known_orbit(0., 1.5, potential, "box")
     loop = classify_orbit(ws)
+    assert loop.sum() == 0
+
+    # try also for a single orbit
+    loop = classify_orbit(ws[:,0])
     assert loop.sum() == 0
 
 # ----------------------------------------------------------------------------
