@@ -28,9 +28,6 @@ Reference/API
    :nosignatures:
    :toctree: _dynamics/
 
-   gary.dynamics.core.angular_momentum
-   gary.dynamics.core.classify_orbit
-   gary.dynamics.actionangle.cross_validate_actions
-   gary.dynamics.actionangle.find_actions
-   gary.dynamics.actionangle.fit_isochrone
-   gary.dynamics.actionangle.fit_harmonic_oscillator
+   gary.dynamics.angular_momentum
+   gary.dynamics.classify_orbit
+   gary.dynamics.find_actions
