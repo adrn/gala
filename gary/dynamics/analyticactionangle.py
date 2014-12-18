@@ -22,24 +22,34 @@ __all__ = ['isochrone_xv_to_aa', 'isochrone_aa_to_xv',
 def isochrone_xv_to_aa(x, v, potential):
     """
     Transform the input cartesian position and velocity to action-angle
-    coordinates the Isochrone potential. See Section 3.5.2 in
+    coordinates in the Isochrone potential. See Section 3.5.2 in
     Binney & Tremaine (2008), and be aware of the errata entry for
     Eq. 3.225.
 
     This transformation is analytic and can be used as a "toy potential"
-    in the Sanders & Binney 2014 formalism for computing action-angle
-    coordinates in _any_ potential.
-
-    Adapted from Jason Sanders' code
-    `here <https://github.com/jlsanders/genfunc>`_.
+    in the Sanders & Binney (2014) formalism for computing action-angle
+    coordinates in any potential.
 
     Parameters
     ----------
     x : array_like
-        Positions.
+        Cartesian positions. Must have shape (N,3) or (3,).
     v : array_like
-        Velocities.
-    potential : Potential
+        Cartesian velocities. Must have shape (N,3) or (3,).
+    potential : :class:`gary.potential.IsochronePotential`
+        An instance of the potential to use for computing the transformation
+        to angle-action coordinates.
+
+    Returns
+    -------
+    actions : :class:`numpy.ndarray`
+        An array of actions computed from the input positions and velocities. Will
+        always have shape (N,3) -- if input coordinates are 1D, the output shape will
+        be (1,3).
+    angles : :class:`numpy.ndarray`
+        An array of angles computed from the input positions and velocities. Will
+        always have shape (N,3) -- if input coordinates are 1D, the output shape will
+        be (1,3).
     """
 
     x = np.atleast_2d(x)
@@ -112,11 +122,9 @@ def isochrone_xv_to_aa(x, v, potential):
     sinu = LR/np.sqrt(1.-LR*LR)/np.tan(theta)
 
     u = np.arcsin(sinu)
-    # print("true pre", vtheta, u)
     u[sinu > 1.] = np.pi/2.
     u[sinu < -1.] = -np.pi/2.
     u[vtheta > 0.] = np.pi - u[vtheta > 0.]
-    # print("true post", vtheta, u)
 
     thetap = phi - u + np.sign(Lz)*thetaz
     angles = np.array([thetar, thetap, thetaz]).T
@@ -134,8 +142,24 @@ def isochrone_aa_to_xv(actions, angles, potential):
     Parameters
     ----------
     actions : array_like
+        Action variables. Must have shape (N,3) or (3,).
     angles : array_like
-    potential : Potential
+        Angle variables. Must have shape (N,3) or (3,).
+    potential : :class:`gary.potential.IsochronePotential`
+        An instance of the potential to use for computing the transformation
+        to angle-action coordinates.
+
+    Returns
+    -------
+    x : :class:`numpy.ndarray`
+        An array of cartesian positions computed from the input angles and actions. Will
+        always have shape (N,3) -- if input coordinates are 1D, the output shape will
+        be (1,3).
+    v : :class:`numpy.ndarray`
+        An array of cartesian velocities computed from the input angles and actions. Will
+        always have shape (N,3) -- if input coordinates are 1D, the output shape will
+        be (1,3).
+
     """
 
     actions = np.atleast_2d(actions)
