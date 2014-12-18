@@ -92,13 +92,9 @@ class OblateMWPotential(CCompositePotential):
         kwargs["bulge"] = HernquistPotential(units=units,
                                              m=m_spher, c=c)
 
-        if q1 == 1 and q2 == 1 and q3 == 1:
-            kwargs["halo"] = SphericalNFWPotential(units=units,
-                                                   v_c=v_c, r_s=r_s)
-        else:
-            kwargs["halo"] = LeeSutoTriaxialNFWPotential(units=units,
-                                                         a=q1, b=q2, c=q3,
-                                                         v_c=v_c, r_s=r_s,
-                                                         phi=phi, theta=theta, psi=psi)
-        super(PW14Potential,self).__init__(**kwargs)
+        kwargs["halo"] = LeeSutoTriaxialNFWPotential(units=units,
+                                                     a=q1, b=q2, c=q3,
+                                                     v_c=v_c, r_s=r_s,
+                                                     phi=phi, theta=theta, psi=psi)
+        super(OblateMWPotential,self).__init__(**kwargs)
         self.c_instance.G = G.decompose(units).value
