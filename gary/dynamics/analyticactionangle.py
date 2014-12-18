@@ -272,13 +272,18 @@ def isochrone_aa_to_xv(actions, angles, potential):
 def harmonic_oscillator_xv_to_aa(x, v, potential):
     """
     Transform the input cartesian position and velocity to action-angle
-    coordinates the Harmonic Oscillator potential. This transformation
-    is analytic and can be used as a "toy potential" in the
-    Sanders & Binney 2014 formalism for computing action-angle coordinates
-    in _any_ potential.
+    coordinates for the Harmonic Oscillator potential.
 
-    Adapted from Jason Sanders' code
-    `genfunc <https://github.com/jlsanders/genfunc>`_.
+    This transformation is analytic and can be used as a "toy potential"
+    in the Sanders & Binney (2014) formalism for computing action-angle
+    coordinates in any potential.
+
+    .. note::
+
+        This function is included as a method of the
+        :class:`~gary.potential.HarmonicOscillatorPotential`
+        and it is recommended to call
+        :meth:`~gary.potential.HarmonicOscillatorPotential.action_angle()` instead.
 
     Parameters
     ----------
@@ -303,14 +308,15 @@ def harmonic_oscillator_xv_to_aa(x, v, potential):
 
 def harmonic_oscillator_aa_to_xv(actions, angles, potential):
     """
-    Transform the input action-angle coordinates to cartesian position and velocity
-    assuming a Harmonic Oscillator potential. This transformation
-    is analytic and can be used as a "toy potential" in the
-    Sanders & Binney 2014 formalism for computing action-angle coordinates
-    in _any_ potential.
+    Transform the input action-angle coordinates to cartesian
+    position and velocity for the Harmonic Oscillator potential.
 
-    Adapted from Jason Sanders' code
-    `genfunc <https://github.com/jlsanders/genfunc>`_.
+    .. note::
+
+        This function is included as a method of the
+        :class:`~gary.potential.HarmonicOscillatorPotential`
+        and it is recommended to call
+        :meth:`~gary.potential.HarmonicOscillatorPotential.phase_space()` instead.
 
     Parameters
     ----------
