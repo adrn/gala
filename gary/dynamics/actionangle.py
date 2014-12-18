@@ -26,9 +26,9 @@ from ..potential import HarmonicOscillatorPotential, IsochronePotential
 
 __all__ = ['cross_validate_actions', 'find_actions', 'generate_n_vectors',
            'fit_isochrone', 'fit_harmonic_oscillator', 'fit_toy_potential',
-           'flip_coords']
+           'align_circulation_with_z']
 
-def flip_coords(w, loop_bit):
+def align_circulation_with_z(w, loop_bit):
     """
     If the input orbit is a loop orbit, this function aligns the circulation
     axis with the z axis.
@@ -461,7 +461,7 @@ def _single_orbit_find_actions(t, w, N_max, units,
 
     if isinstance(toy_potential, IsochronePotential):
         loop = classify_orbit(w)
-        w = flip_coords(w, loop[0])
+        w = align_circulation_with_z(w, loop[0])
 
         dxyz = (1,2,2)
         circ = np.sign(w[0,0]*w[0,4]-w[0,1]*w[0,3])
