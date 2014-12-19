@@ -266,7 +266,8 @@ class Potential(object):
 
         return fig
 
-    def integrate_orbit(self, w0, Integrator=LeapfrogIntegrator, **time_spec):
+    def integrate_orbit(self, w0, Integrator=LeapfrogIntegrator,
+                        Integrator_kwargs=dict(), **time_spec):
         """
         Integrate an orbit in the current potential using the integrator class
         provided. Uses same time specification as `Integrator.run()` -- see
@@ -290,7 +291,7 @@ class Potential(object):
         else:
             acc = lambda t,w: np.hstack((w[...,3:],self.acceleration(w[...,:3])))
 
-        integrator = Integrator(acc)
+        integrator = Integrator(acc, **Integrator_kwargs)
         return integrator.run(w0, **time_spec)
 
 class CartesianPotential(Potential):
