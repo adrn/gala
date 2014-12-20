@@ -24,7 +24,7 @@ from ...units import galactic
 # HACK:
 if "/Users/adrian/projects/genfunc" not in sys.path:
     sys.path.append("/Users/adrian/projects/genfunc")
-import genfunc_3d, toy_potentials
+import toy_potentials
 
 logger.setLevel(logging.DEBUG)
 
