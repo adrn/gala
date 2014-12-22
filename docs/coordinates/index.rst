@@ -25,22 +25,34 @@ Astropy, :mod:`astropy.coordinates`. Currently available are functions to:
 
 - Convert a velocity from/to the Galactic Standard of Rest (GSR) to/from a
   heliocentric (LSR) velocity.
-- Convert a position (and velocity) from/to Galactic cartesian coordinates
-  to/from Heliocentric spherical coordinates.
+- Convert a velocity from/to Galactic cartesian coordinates to/from
+  heliocentric spherical coordinates.
+- Convert a proper motion velocity from/to Galactic cartesian coordinates to/from
+  heliocentric spherical coordinates.
 
-These functions work naturally with the :mod:`astropy.units` and :mod:`astropy.coordinates` subpackages. For example, to convert a sky position
-and distance to a Galactocentric, cartesian position, we first have to define
-an Astropy coordinate::
+These functions work naturally with the :mod:`astropy.units` and
+:mod:`astropy.coordinates` subpackages. Handling position transformations is already
+supported by :mod:`astropy.coordinates` (in v1.0 and the latest master branch), and
+new to v1.0 is a :class:`~astropy.coordinates.Galactocentric` reference frame for
+transforming positions. However, there is currently no support for velocities. The
+functions below attempt to bridge that gap as a temporary solution until support
+is added (in v1.1).
+
+For example, to convert a spherical, heliocentric velocity (proper motion and radial
+velocity) to a Galactocentric, cartesian velocity, we first have to define an Astropy
+coordinate for the position of the object::
 
     >>> import astropy.coordinates as coord
     >>> import astropy.units as u
-    >>> c = coord.SkyCoord(ra=100.68458*u.degree, dec=41.26917*u.degree, distance=15*u.kpc)
+    >>> c = coord.SkyCoord(ra=100.68458*u.deg, dec=41.26917*u.deg, distance=1.1*u.kpc)
 
 Then pass this object in to the heliocentric to galactocentric conversion
 function::
 
     >>> import gary.coordinates as gc
-    >>> gc.hel_to_gal_xyz(c)
+    >>> pm = (1.5*u.mas/u.yr, -1.7*u.mas/u.yr)
+    >>> rv = 151.1*u.km/u.s
+    >>> gc.vhel_to_gal(c, pm=pm, rv=rv)
     <Quantity [-22.34899301,  1.42957337,  4.13070449] kpc>
 
 Or, with the same sky position (as specified by the astropy frame object)
