@@ -96,8 +96,10 @@ Coordinate conversion
 
    gary.coordinates.vgsr_to_vhel
    gary.coordinates.vhel_to_vgsr
-   gary.coordinates.gal_xyz_to_hel
-   gary.coordinates.hel_to_gal_xyz
+   gary.coordinates.vgal_to_hel
+   gary.coordinates.vhel_to_gal
+   gary.coordinates.pm_gal_to_icrs
+   gary.coordinates.pm_icrs_to_gal
 
 New coordinate classes
 ======================
