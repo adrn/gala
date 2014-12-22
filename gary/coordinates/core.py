@@ -115,7 +115,7 @@ def vgal_to_hel(coordinate, vxyz, vcirc=default_vcirc, vlsr=default_vlsr):
         This is most commonly a `~astropy.coordinates.Galactocentric` Astropy
         coordinate, but alternatively, it can be any coordinate object that is
         transformable to the Galactocentric frame.
-    vxyz : :class:`~astropy.units.Quantity`
+    vxyz : :class:`~astropy.units.Quantity`, iterable
         Cartesian velocity components (U,V,W). This should either be a single
         :class:`~astropy.units.Quantity` object with shape (3,N), or an iterable
         object with 3 :class:`~astropy.units.Quantity` objects as elements.
@@ -134,7 +134,8 @@ def vgal_to_hel(coordinate, vxyz, vcirc=default_vcirc, vlsr=default_vlsr):
     """
 
     # make sure we have a Galactocentric coordinate
-    gc = coordinate.transform_to(coord.Galactocentric)
+    c = coord.SkyCoord(coordinate)
+    gc = c.transform_to(coord.Galactocentric)
     x,y,z = gc.cartesian.xyz
 
     if vxyz.shape != gc.cartesian.xyz.shape:
@@ -163,19 +164,18 @@ def vgal_to_hel(coordinate, vxyz, vcirc=default_vcirc, vlsr=default_vlsr):
 
     return mul,mub,vr
 
-def vhel_to_gal(coordinate, pm=None, vr=None,
-                vcirc=default_vcirc, vlsr=default_vlsr):
+def vhel_to_gal(coordinate, pm, rv, vcirc=default_vcirc, vlsr=default_vlsr):
     r"""
-    Convert Heliocentric spherical coordinates to Galactocentric
-    cartesian coordinates. Uses a right-handed cartesian system,
-    typically with the Sun at :math:`x \approx -8~{\rm kpc}`.
+    Convert a Heliocentric, spherical velocity to a Galactocentric,
+    cartesian velocity.
 
     Parameters
     ----------
     coordinate : :class:`~astropy.coordinates.SkyCoord`
-        An Astropy SkyCoord object or anything object that can be passed
-        to the SkyCoord initializer. Must have a distance defined.
-    pm : :class:`~astropy.units.Quantity` (optional)
+        This is most commonly a `~astropy.coordinates.Galactocentric` Astropy
+        coordinate, but alternatively, it can be any coordinate object that is
+        transformable to the Galactocentric frame.
+    pm : iterable of :class:`~astropy.units.Quantity`s
         Proper motion in l, b. Should have shape (2,N).
     vr : :class:`~astropy.units.Quantity` (optional)
         Barycentric radial velocity. Should have shape (1,N) or (N,).
@@ -184,60 +184,45 @@ def vhel_to_gal(coordinate, pm=None, vr=None,
     vlsr : :class:`~astropy.units.Quantity`
         Velocity of the Sun relative to the local standard
         of rest (LSR).
-    xsun : :class:`~astropy.units.Quantity`
-        Position of the Sun on the Galactic x-axis.
 
     Returns
     -------
-    xyz : :class:`~astropy.units.Quantity`, iterable
-        Cartesian x,y,z coordinates. A :class:`~astropy.units.Quantity`
-        object with shape (3,N).
     vxyz : :class:`~astropy.units.Quantity` (optional)
         Cartesian velocity components (U,V,W). A :class:`~astropy.units.Quantity`
         object with shape (3,N).
     """
 
     c = coord.SkyCoord(coordinate)
-    g = c.galactic
-    l,b,d = g.l, g.b, g.distance
+    l,b,d = c.galactic.l, c.galactic.b, c.galactic.distance
+    gc = c.transform_to(coord.Galactocentric)
+    x,y,z = gc.cartesian.xyz
 
-    # spherical to cartesian
-    x = d*np.cos(b)*np.cos(l)
-    y = d*np.cos(b)*np.sin(l)
-    z = d*np.sin(b)
+    if pm.shape[1] != rv.size or pm.shape[1] != coordinate.shape[1]:
+        raise ValueError("Length of proper motion and radial velocity must"
+                         " be consistent with axis=1 size of coordinate.")
 
-    if pm is not None:
-        if vr is None:
-            raise ValueError("If proper motions are specified, radial velocity must"
-                             " also be specified.")
+    if rv is None:
+        raise ValueError("If proper motions are specified, radial velocity must"
+                         " also be specified.")
 
-        # unpack velocities
-        mul,mub = pm
-        vr = np.squeeze(vr)
+    # unpack velocities
+    mul,mub = pm
+    rv = np.squeeze(rv)
 
-        omega_l = -mul.to(u.rad/u.s).value/u.s
-        omega_b = -mub.to(u.rad/u.s).value/u.s
+    omega_l = -mul.to(u.rad/u.s).value/u.s
+    omega_b = -mub.to(u.rad/u.s).value/u.s
 
-        vx = x/d*vr + y*omega_l + z*np.cos(l)*omega_b
-        vy = y/d*vr - x*omega_l + z*np.sin(l)*omega_b
-        vz = z/d*vr - d*np.cos(b)*omega_b
+    vx = x/d*rv + y*omega_l + z*np.cos(l)*omega_b
+    vy = y/d*rv - x*omega_l + z*np.sin(l)*omega_b
+    vz = z/d*rv - d*np.cos(b)*omega_b
 
-        # transform to galactocentric cartesian
-        vy = vy + vcirc
+    # transform to galactocentric cartesian
+    vy = vy + vcirc
 
-        # correct for motion of Sun relative to LSR
-        vx = vx + vlsr[0]
-        vy = vy + vlsr[1]
-        vz = vz + vlsr[2]
+    # correct for motion of Sun relative to LSR
+    vx = vx + vlsr[0]
+    vy = vy + vlsr[1]
+    vz = vz + vlsr[2]
 
-        # transform to galactocentric cartesian
-        x = x + xsun
-
-        # Workaround because Quantities can't be vstack'd
-        return (np.vstack((x.value,y.value,z.value))*x.unit,
-                np.vstack((vx.value,vy.value,vz.value))*vx.unit)
-
-    else:
-        # transform to galactocentric cartesian
-        x = x + xsun
-        return np.vstack((x.value,y.value,z.value))*x.unit
+    # Workaround because Quantities can't be vstack'd
+    return np.vstack((vx.value,vy.value,vz.value))*vx.unit
