@@ -92,6 +92,7 @@ Coordinate conversion
 =====================
 
 .. autosummary::
+   :nosignatures:
    :toctree: _coordinates/
 
    gary.coordinates.vgsr_to_vhel
