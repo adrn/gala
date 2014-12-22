@@ -111,8 +111,8 @@ def vgal_to_hel(coordinate, vxyz, vcirc=default_vcirc, vlsr=default_vlsr):
 
     Parameters
     ----------
-    coordinate : `~astropy.coordinates.SkyCoord`, `~astropy.coordinates.BaseCoordinateFrame`
-        This is most commonly a `~astropy.coordinates.Galactocentric` Astropy
+    coordinate : :class:`~astropy.coordinates.SkyCoord`, :class:`~astropy.coordinates.BaseCoordinateFrame`
+        This is most commonly a :class:`~astropy.coordinates.Galactocentric` Astropy
         coordinate, but alternatively, it can be any coordinate object that is
         transformable to the Galactocentric frame.
     vxyz : :class:`~astropy.units.Quantity`, iterable
@@ -172,7 +172,7 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=default_vcirc, vlsr=default_vlsr):
     Parameters
     ----------
     coordinate : :class:`~astropy.coordinates.SkyCoord`
-        This is most commonly a `~astropy.coordinates.Galactocentric` Astropy
+        This is most commonly a :class:`~astropy.coordinates.Galactocentric` Astropy
         coordinate, but alternatively, it can be any coordinate object that is
         transformable to the Galactocentric frame.
     pm : iterable of :class:`~astropy.units.Quantity`s
