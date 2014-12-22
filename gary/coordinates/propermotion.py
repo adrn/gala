@@ -6,15 +6,9 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os
-import sys
-
 # Third-party
 import numpy as np
-from astropy import log as logger
 import astropy.coordinates as coord
-import astropy.units as u
 
 __all__ = ['pm_gal_to_icrs', 'pm_icrs_to_gal']
 
@@ -128,52 +122,3 @@ def pm_icrs_to_gal(coordinate, mu, cosdec):
     new_mu = R.dot(mu)
 
     return new_mu
-
-# -------------------------------------------------------------------
-
-class ProperMotion(object):
-    """ Represents a proper motion vector at a given sky position.
-
-        Parameters
-        ----------
-        coordinate : `~astropy.coordinates.SkyCoord`, `~astropy.coordinates.BaseCoordinateFrame`
-
-        **keyword_args
-            Other keyword arguments as applicable for user-defined coordinate frames.
-            Common options include:
-
-            ra, dec : valid `~astropy.coordinates.Angle` initializer, optional
-                RA and Dec for frames where ``ra`` and ``dec`` are keys in the
-                frame's ``representation_component_names``, including `ICRS`,
-                `FK5`, `FK4`, and `FK4NoETerms`.
-            l, b : valid `~astropy.coordinates.Angle` initializer, optional
-                Galactic ``l`` and ``b`` for for frames where ``l`` and ``b`` are
-                keys in the frame's ``representation_component_names``, including
-                the `Galactic` frame.
-
-    """
-
-    def __init__(self, coordinate, **kwargs):
-        c = coord.SkyCoord(coordinate)
-
-        # coordinates of NGP
-        ag = coord.Galactic._ngp_J2000.ra
-        dg = coord.Galactic._ngp_J2000.dec
-
-        C1 = np.sin(dg)*np.cos(c.dec) - np.cos(dg)*np.sin(c.dec)*np.cos(c.ra - ag)
-        C2 = np.cos(dg)*np.sin(c.ra - ag)
-        cosb = np.sqrt(C1**2 + C2**2)
-
-        ra = kwargs.get('ra')
-        dec = kwargs.get('dec')
-        l = kwargs.get('l')
-        b = kwargs.get('b')
-        if ra is not None and dec is not None:
-            pass
-
-        elif l is not None and b is not None:
-            pass
-
-        else:
-            raise ValueError("You must specify either proper motion in ra,dec (ICRS) "
-                             "or in l,b (Galactic).")
