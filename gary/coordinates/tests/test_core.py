@@ -90,7 +90,7 @@ def test_vhel_to_vgsr_misc():
         vhel_to_vgsr(c1, vhel.value)
 
 # ------------------------
-
+# TODO: all these mofos are dead
 def test_gal_to_hel_call():
 
     r = np.random.uniform(-10,10,size=(3,1000))*u.kpc
