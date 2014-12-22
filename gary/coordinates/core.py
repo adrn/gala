@@ -104,121 +104,97 @@ def vhel_to_vgsr(coordinate, vhel, vcirc=default_vcirc, vlsr=default_vlsr):
 
     return vgsr
 
-def gal_xyz_to_hel(xyz, vxyz=None,
-                   vcirc=default_vcirc, vlsr=default_vlsr, xsun=default_xsun):
-    r""" Convert Galactocentric cartesian coordinates to Heliocentric
-        spherical coordinates. Uses a right-handed cartesian system,
-        with the Sun at :math:`x \approx -8~{\rm kpc}`.
+def vgal_to_hel(coordinate, vxyz, vcirc=default_vcirc, vlsr=default_vlsr):
+    r"""
+    Convert a Galactocentric, cartesian velocity to a Heliocentric velocity in
+    spherical coordinates (e.g., proper motion and radial velocity).
 
-        Parameters
-        ----------
-        xyz : :class:`~astropy.units.Quantity`, iterable
-            Cartesian x,y,z coordinates. This should either be a single
-            :class:`~astropy.units.Quantity` object with shape (3,N), or an iterable
-            object with 3 :class:`~astropy.units.Quantity` objects as elements.
-        vxyz : :class:`~astropy.units.Quantity` (optional)
-            Cartesian velocity components (U,V,W). This should either be a single
-            :class:`~astropy.units.Quantity` object with shape (3,N), or an iterable
-            object with 3 :class:`~astropy.units.Quantity` objects as elements.
-        vcirc : :class:`~astropy.units.Quantity`
-            Circular velocity of the Sun.
-        vlsr : :class:`~astropy.units.Quantity`
-            Velocity of the Sun relative to the local standard
-            of rest (LSR).
-        xsun : :class:`~astropy.units.Quantity`
-            Position of the Sun on the Galactic x-axis.
+    Parameters
+    ----------
+    coordinate : `~astropy.coordinates.SkyCoord`, `~astropy.coordinates.BaseCoordinateFrame`
+        This is most commonly a `~astropy.coordinates.Galactocentric` Astropy
+        coordinate, but alternatively, it can be any coordinate object that is
+        transformable to the Galactocentric frame.
+    vxyz : :class:`~astropy.units.Quantity`
+        Cartesian velocity components (U,V,W). This should either be a single
+        :class:`~astropy.units.Quantity` object with shape (3,N), or an iterable
+        object with 3 :class:`~astropy.units.Quantity` objects as elements.
+    vcirc : :class:`~astropy.units.Quantity` (optional)
+        Circular velocity of the Sun.
+    vlsr : :class:`~astropy.units.Quantity` (optional)
+        Velocity of the Sun relative to the local standard
+        of rest (LSR).
 
-        Returns
-        -------
-        lbd : :class:`~astropy.coordinates.SkyCoord`
-            The position in heliocentric coordinates as an Astropy coordinates
-            :class:`~astropy.coordinates.SkyCoord` object.
-        pmv : tuple (optional)
-            If velocity information is provided, also return a tuple containing
-            the proper motions (in Galactic coordinates) and radial velocity,
-            all as :class:`~astropy.units.Quantity` objects.
+    Returns
+    -------
+    pmv : tuple (optional)
+        A tuple containing the proper motions (in Galactic coordinates) and
+        radial velocity, all as :class:`~astropy.units.Quantity` objects.
 
     """
 
-    # unpack positions
-    try:
-        x,y,z = xyz
-    except ValueError:
-        if len(xyz.shape) > 1 and xyz.shape[0] > xyz.shape[1]:
-            raise ValueError("Could not unpack positions -- the shape looks"
-                             " transposed. Should have shape (3,N).")
-        else:
-            raise ValueError("Failed to unpack positions with shape {}."
-                             " Should have shape (3,N).".format(xyz.shape))
+    # make sure we have a Galactocentric coordinate
+    gc = coordinate.transform_to(coord.Galactocentric)
+    x,y,z = gc.cartesian.xyz
+
+    if vxyz.shape != gc.cartesian.xyz.shape:
+        raise ValueError("Shape of velocity must match position.")
+
+    # unpack velocities
+    vx,vy,vz = vxyz
 
     # transform to heliocentric cartesian
-    x = x - xsun
+    vy = vy - vcirc
 
-    # transform from cartesian to spherical
+    # correct for motion of Sun relative to LSR
+    vx = vx - vlsr[0]
+    vy = vy - vlsr[1]
+    vz = vz - vlsr[2]
+
+    # transform cartesian velocity to spherical
     d = np.sqrt(x**2 + y**2 + z**2)
-    l = coord.Angle(np.arctan2(y, x)).wrap_at(360*u.deg).to(u.degree)
-    b = coord.Angle(90*u.degree - np.arccos(z/d)).to(u.degree)
-    lbd = coord.SkyCoord(l=l, b=b, distance=d)
+    d_xy = np.sqrt(x**2 + y**2)
+    vr = (vx*x + vy*y + vz*z) / d  # velocity
+    omega_l = -(vx*y - x*vy) / d_xy**2  # angular velocity
+    omega_b = -(z*(x*vx + y*vy) - d_xy**2*vz) / (d**2 * d_xy)  # angular velocity
 
-    if vxyz is not None:
-        if len(vxyz) != len(xyz):
-            raise ValueError("Shape of velocity should match position.")
+    mul = (omega_l.decompose()*u.rad).to(u.milliarcsecond / u.yr)
+    mub = (omega_b.decompose()*u.rad).to(u.milliarcsecond / u.yr)
 
-        # unpack velocities
-        vx,vy,vz = vxyz
+    return mul,mub,vr
 
-        # transform to heliocentric cartesian
-        vy = vy - vcirc
+def vhel_to_gal(coordinate, pm=None, vr=None,
+                vcirc=default_vcirc, vlsr=default_vlsr):
+    r"""
+    Convert Heliocentric spherical coordinates to Galactocentric
+    cartesian coordinates. Uses a right-handed cartesian system,
+    typically with the Sun at :math:`x \approx -8~{\rm kpc}`.
 
-        # correct for motion of Sun relative to LSR
-        vx = vx - vlsr[0]
-        vy = vy - vlsr[1]
-        vz = vz - vlsr[2]
+    Parameters
+    ----------
+    coordinate : :class:`~astropy.coordinates.SkyCoord`
+        An Astropy SkyCoord object or anything object that can be passed
+        to the SkyCoord initializer. Must have a distance defined.
+    pm : :class:`~astropy.units.Quantity` (optional)
+        Proper motion in l, b. Should have shape (2,N).
+    vr : :class:`~astropy.units.Quantity` (optional)
+        Barycentric radial velocity. Should have shape (1,N) or (N,).
+    vcirc : :class:`~astropy.units.Quantity`
+        Circular velocity of the Sun.
+    vlsr : :class:`~astropy.units.Quantity`
+        Velocity of the Sun relative to the local standard
+        of rest (LSR).
+    xsun : :class:`~astropy.units.Quantity`
+        Position of the Sun on the Galactic x-axis.
 
-        # transform cartesian velocity to spherical
-        d_xy = np.sqrt(x**2 + y**2)
-        vr = (vx*x + vy*y + vz*z) / d  # velocity
-        omega_l = -(vx*y - x*vy) / d_xy**2  # angular velocity
-        omega_b = -(z*(x*vx + y*vy) - d_xy**2*vz) / (d**2 * d_xy)  # angular velocity
-
-        mul = (omega_l.decompose()*u.rad).to(u.milliarcsecond / u.yr)
-        mub = (omega_b.decompose()*u.rad).to(u.milliarcsecond / u.yr)
-
-        return lbd, (mul,mub,vr)
-
-    return lbd
-
-def hel_to_gal_xyz(coordinate, pm=None, vr=None,
-                   vcirc=default_vcirc, vlsr=default_vlsr, xsun=default_xsun):
-    r""" Convert Heliocentric spherical coordinates to Galactocentric
-        cartesian coordinates. Uses a right-handed cartesian system,
-        typically with the Sun at :math:`x \approx -8~{\rm kpc}`.
-
-        Parameters
-        ----------
-        coordinate : :class:`~astropy.coordinates.SkyCoord`
-            An Astropy SkyCoord object or anything object that can be passed
-            to the SkyCoord initializer. Must have a distance defined.
-        pm : :class:`~astropy.units.Quantity` (optional)
-            Proper motion in l, b. Should have shape (2,N).
-        vr : :class:`~astropy.units.Quantity` (optional)
-            Barycentric radial velocity. Should have shape (1,N) or (N,).
-        vcirc : :class:`~astropy.units.Quantity`
-            Circular velocity of the Sun.
-        vlsr : :class:`~astropy.units.Quantity`
-            Velocity of the Sun relative to the local standard
-            of rest (LSR).
-        xsun : :class:`~astropy.units.Quantity`
-            Position of the Sun on the Galactic x-axis.
-
-        Returns
-        -------
-        xyz : :class:`~astropy.units.Quantity`, iterable
-            Cartesian x,y,z coordinates. A :class:`~astropy.units.Quantity`
-            object with shape (3,N).
-        vxyz : :class:`~astropy.units.Quantity` (optional)
-            Cartesian velocity components (U,V,W). A :class:`~astropy.units.Quantity`
-            object with shape (3,N).
+    Returns
+    -------
+    xyz : :class:`~astropy.units.Quantity`, iterable
+        Cartesian x,y,z coordinates. A :class:`~astropy.units.Quantity`
+        object with shape (3,N).
+    vxyz : :class:`~astropy.units.Quantity` (optional)
+        Cartesian velocity components (U,V,W). A :class:`~astropy.units.Quantity`
+        object with shape (3,N).
     """
 
     c = coord.SkyCoord(coordinate)
