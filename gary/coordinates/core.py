@@ -127,7 +127,7 @@ def vgal_to_hel(coordinate, vxyz, vcirc=default_vcirc, vlsr=default_vlsr):
 
     Returns
     -------
-    pmv : tuple (optional)
+    pmv : tuple
         A tuple containing the proper motions (in Galactic coordinates) and
         radial velocity, all as :class:`~astropy.units.Quantity` objects.
 
