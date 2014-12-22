@@ -176,7 +176,8 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=default_vcirc, vlsr=default_vlsr):
         coordinate, but alternatively, it can be any coordinate object that is
         transformable to the Galactocentric frame.
     pm : iterable of :class:`~astropy.units.Quantity`s
-        Proper motion in l, b. Should have shape (2,N).
+        Proper motion in l, b. Should have shape (2,N). If you have a proper motion
+        in ICRS (RA, Dec), use `pm_icrs_to_gal()` to convert.
     vr : :class:`~astropy.units.Quantity` (optional)
         Barycentric radial velocity. Should have shape (1,N) or (N,).
     vcirc : :class:`~astropy.units.Quantity`
