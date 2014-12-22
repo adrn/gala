@@ -44,29 +44,34 @@ def pm_gal_to_icrs(coordinate, mu, cosb=False):
     g = coordinate.transform_to(coord.Galactic)
     i = coordinate.transform_to(coord.ICRS)
 
-    mul,mub = mu
+    mul,mub = map(np.atleast_1d, mu)
     if cosb is False:
         mulcosb = mul*np.cos(g.b)
     else:
         mulcosb = mul
 
+    n = len(mul)
+
     # coordinates of NGP
     ag = coord.Galactic._ngp_J2000.ra
     dg = coord.Galactic._ngp_J2000.dec
 
-    # used for the transformation matrix
-    C1 = np.sin(dg)*np.cos(i.dec) - np.cos(dg)*np.sin(i.dec)*np.cos(i.ra - ag)
-    C2 = np.cos(dg)*np.sin(i.ra - ag)
-    cosb = np.sqrt(C1**2 + C2**2)
+    # used for the transformation matrix from Bovy (2011)
+    cosphi = (np.sin(dg) - np.sin(i.dec)*np.sin(g.b)) / np.cos(g.b) / np.cos(i.dec)
+    sinphi = np.sin(i.ra - ag) * np.cos(dg) / np.cos(g.b)
 
-    R = np.array([[C1, C2],[-C1, C2]]) / cosb
+    R = np.zeros((2,2,n))
+    R[0,0] = cosphi
+    R[0,1] = -sinphi
+    R[1,0] = sinphi
+    R[1,1] = cosphi
 
-    # hack
-    mub = mub.to(mulcosb.unit)
-    mu = np.array([mulcosb.value, mub.value])*mulcosb.unit
-    new_mu = np.linalg.inv(R).dot(mu)
+    mu = np.vstack((mulcosb.value, mub.to(mulcosb.unit).value))
+    new_mu = np.zeros_like(mu)
+    for i in range(n):
+        new_mu[:,i] = R[...,i].dot(mu[:,i])
 
-    return new_mu
+    return new_mu*mulcosb.unit
 
 def pm_icrs_to_gal(coordinate, mu, cosdec):
     """ Convert proper motion in ICRS coordinates (RA, Dec) to
