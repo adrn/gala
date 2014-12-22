@@ -18,7 +18,7 @@ def pm_gal_to_icrs(coordinate, mu, cosb=False):
 
         Parameters
         ----------
-        coordinate : `~astropy.coordinates.SkyCoord`, `~astropy.coordinates.BaseCoordinateFrame`
+        coordinate : :class:`~astropy.coordinates.SkyCoord`, :class:`~astropy.coordinates.BaseCoordinateFrame`
             An instance of an Astropy coordinate object. Can be in any
             frame that is transformable to ICRS coordinates.
         mu : :class:`~astropy.units.Quantity`, iterable
@@ -79,7 +79,7 @@ def pm_icrs_to_gal(coordinate, mu, cosdec):
 
         Parameters
         ----------
-        coordinate : `~astropy.coordinates.SkyCoord`, `~astropy.coordinates.BaseCoordinateFrame`
+        coordinate : :class:`~astropy.coordinates.SkyCoord`, :class:`~astropy.coordinates.BaseCoordinateFrame`
             An instance of an Astropy coordinate object. Can be in any
             frame that is transformable to ICRS coordinates.
         mu : :class:`~astropy.units.Quantity`, iterable
