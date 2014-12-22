@@ -178,7 +178,7 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=default_vcirc, vlsr=default_vlsr):
     pm : iterable of :class:`~astropy.units.Quantity`s
         Proper motion in l, b. Should have shape (2,N). If you have a proper motion
         in ICRS (RA, Dec), use `pm_icrs_to_gal()` to convert.
-    vr : :class:`~astropy.units.Quantity` (optional)
+    rv : :class:`~astropy.units.Quantity` (optional)
         Barycentric radial velocity. Should have shape (1,N) or (N,).
     vcirc : :class:`~astropy.units.Quantity`
         Circular velocity of the Sun.
@@ -194,21 +194,15 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=default_vcirc, vlsr=default_vlsr):
     """
 
     c = coord.SkyCoord(coordinate)
-    l,b,d = c.galactic.l, c.galactic.b, c.galactic.distance
+    g = c.galactic
+    l,b,d = g.l, g.b, g.distance
     gc = c.transform_to(coord.Galactocentric)
     x,y,z = gc.cartesian.xyz
-
-    if pm.shape[1] != rv.size or pm.shape[1] != coordinate.shape[1]:
-        raise ValueError("Length of proper motion and radial velocity must"
-                         " be consistent with axis=1 size of coordinate.")
-
-    if rv is None:
-        raise ValueError("If proper motions are specified, radial velocity must"
-                         " also be specified.")
+    x = x + coord.Galactocentric.galcen_distance
 
     # unpack velocities
     mul,mub = pm
-    rv = np.squeeze(rv)
+    rv = rv
 
     omega_l = -mul.to(u.rad/u.s).value/u.s
     omega_b = -mub.to(u.rad/u.s).value/u.s

@@ -10,6 +10,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import os
 import pytest
 import numpy as np
+import tempfile
 
 import astropy.coordinates as coord
 import astropy.units as u
@@ -88,6 +89,43 @@ def test_vhel_to_vgsr_misc():
     # make sure throws error if tuple elements are not Quantities
     with pytest.raises(TypeError):
         vhel_to_vgsr(c1, vhel.value)
+
+_txt = """# from: XHIP catalog
+# ra dec HIPID l b dist pml pmb rv U V W
+0.022010 20.036114      7 106.82021040 -41.22316218   57.56  -253.69  -138.84    8.30   71.7    2.1  -34.0
+2.208349 40.494550    714 114.23363142 -21.65650026  249.00     5.57    -9.00  -11.78    0.1  -16.3   -5.5
+3.126297 14.563522    999 108.98177530 -47.25067692   40.94   296.66  -141.05  -15.30  -44.5  -47.6   -7.3
+"""
+class TestVHelGalConvert(object):
+
+    def setup(self):
+        with tempfile.NamedTemporaryFile() as temp:
+            temp.write(_txt)
+            temp.flush()
+            temp.seek(0)
+            self.data = np.genfromtxt(temp, names=True, skiprows=1)
+
+    def test_vhel_to_gal(self):
+
+        # test a single entry
+        row = self.data[0]
+        c = coord.SkyCoord(ra=row['ra']*u.deg, dec=row['dec']*u.deg, distance=row['dist']*u.pc)
+        pm = [row['pml'],row['pmb']]*u.mas/u.yr
+        rv = row['rv']*u.km/u.s
+
+        vxyz = vhel_to_gal(c, pm=pm, rv=rv)
+        print(row['U'],row['V'],row['W'])
+        print(vxyz)
+
+# def test_vhel_to_gal():
+
+#     # test with single
+#     c = coord.SkyCoord(ra=100.68458*u.deg, dec=41.26917*u.deg, distance=1.1*u.kpc)
+
+#     pm = (1.5*u.mas/u.yr, -1.7*u.mas/u.yr)
+#     rv = 151.1*u.km/u.s
+#     vxyz = vhel_to_gal(c, pm=pm, rv=rv)
+#     print(vxyz)
 
 # ------------------------
 # TODO: all these mofos are dead
