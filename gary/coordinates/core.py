@@ -13,7 +13,7 @@ from numpy import cos, sin
 import astropy.coordinates as coord
 import astropy.units as u
 
-__all__ = ["vgsr_to_vhel", "vhel_to_vgsr", "vgal_to_hel", "vhel_to_vgsr"]
+__all__ = ["vgsr_to_vhel", "vhel_to_vgsr", "vgal_to_hel", "vhel_to_gal"]
 
 # This is the default circular velocity and LSR peculiar velocity of the Sun
 # TODO: make this a config item
