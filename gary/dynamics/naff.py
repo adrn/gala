@@ -14,7 +14,12 @@ import time
 from astropy import log as logger
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.fft import fft, fftfreq
+from numpy.fft import fftfreq
+try:
+    from pyfftw.interfaces.numpy_fft import fft
+except ImportError:
+    from numpy.fft import fft
+
 from scipy.optimize import fmin_slsqp
 from scipy.integrate import simps
 
