@@ -15,6 +15,12 @@ This packages has the following strict requirements:
 
 - `Astropy <http://www.astropy.org/>`_ 0.4 or later
 
+Optional
+--------
+
+For faster FFT's in the NAFF routines (:mod:`gary.dynamics`), install the
+``FFTW`` library and the Python bindings, ``pyFFTW``.
+
 Installing
 ==========
 
