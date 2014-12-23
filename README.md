@@ -15,3 +15,7 @@ pip-requirements.txt). You can use `pip` to automatically install these with
 Then it's just a matter of
 
     python setup.py install
+
+Dependencies
+============
+See the installation instructions in the documentation.
