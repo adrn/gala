@@ -119,9 +119,6 @@ class NAFF(object):
         if xf[wmax] != 0.:
             signx = np.sign(xf[wmax])
             signy = np.sign(xf[wmax])
-            logger.log(0, "sign(xf) = {}".format(signx))
-            logger.log(0, "sign(yf) = {}".format(signy))
-            # signx = np.sign(xyf[xyf_abs[:,wmax].argmax(),wmax])
         else:
             # return early -- "this may be an axial or planar orbit"
             return 0.
@@ -129,7 +126,6 @@ class NAFF(object):
         # find the frequency associated with this index
         omega0 = omegas[wmax]
         signo = np.sign(omega0)
-        logger.log(0, "sign(omega0) = {}".format(signo))
 
         # now that we have a guess for the maximum, convolve with Hanning filter and re-solve
         xf = f.real
@@ -229,7 +225,7 @@ class NAFF(object):
 
             if k == 0:
                 # compute exp(iωt) for first frequency
-                ecap[k] = np.cos(nu[k]*self.tz) + 1j*np.sin(nu[k]*self.tz)
+                ecap[k] = np.exp(1j*nu[k]*self.t)
             else:
                 ecap[k] = self.gso(ecap, nu[k], k)
 
@@ -295,7 +291,7 @@ class NAFF(object):
         # coefficients
         c_ik = np.zeros(k, dtype=np.complex64)
 
-        u_n = np.exp(1j*nu*self.tz)
+        u_n = np.exp(1j*nu*self.t)
 
         # first find the k complex constants cik(k,ndata):
         for j in range(k):
@@ -341,8 +337,8 @@ class NAFF(object):
         for i in range(ndim):
             nu,A,phi = self.frecoder(fs[i], nintvec=nintvec, break_condition=break_condition)
             freqs.append(-nu)
-            As.append(A)
-            amps.append(np.abs(A))
+            As.append(A*np.exp(1j*phi))
+            amps.append(A)
             phis.append(phi)
             nqs.append(np.zeros_like(nu) + i)
             ntot += len(nu)
