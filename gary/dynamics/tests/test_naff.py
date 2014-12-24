@@ -50,6 +50,50 @@ def estimate_axisym_freqs(t, w):
 
     return fR, fphi, fz
 
+def test_error_estimate():
+    potential = gp.LogarithmicPotential(v_c=np.sqrt(2.), r_h=0.1,
+                                        q1=1., q2=1., q3=0.9,
+                                        units=galactic)
+    w0 = [1., 0.1, 0.2, 0., 1., 0.]
+    t,w = potential.integrate_orbit(w0, dt=0.005, nsteps=32768,
+                                    Integrator=DOPRI853Integrator)
+    logger.info("Done integrating orbit")
+    fig = gd.plot_orbits(w, linestyle='none', alpha=0.1)
+    fig.savefig(os.path.join(plot_path,"orbit_error_estimate.png"))
+
+    fs = poincare_polar(w[:,0])
+
+    naff = NAFF(t)
+    f,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=30, break_condition=None)
+    logger.info("Solved for fundamental freqs")
+
+    fprimes = []
+    for i in range(3):
+        _d = d[d['n'] == i]
+        fp = _d['A'][:,np.newaxis] * np.exp(1j * _d['freq'][:,np.newaxis] * t[np.newaxis])
+        fp = np.sum(fp, axis=0)
+        fprimes.append(fp)
+
+        # plotting...
+        fig,axes = plt.subplots(2,2,figsize=(14,14),sharex='col',sharey='col')
+
+        alpha = 0.1
+        axes[0,0].plot(fs[i].real, fs[i].imag, linestyle='none', alpha=alpha)
+        axes[1,0].plot(fp.real, fp.imag, linestyle='none', alpha=alpha)
+
+        axes[0,1].plot(fs[i].real)
+        axes[1,1].plot(fp.real)
+        axes[1,1].set_xlim(0,1000)
+        fig.savefig(os.path.join(plot_path,"error_estimate_fprime_{}.png".format(i)))
+
+    # dp = double prime
+    fdp,ddp,ixesdp = naff.find_fundamental_frequencies(fprimes, nintvec=30, break_condition=None)
+    logger.info("Solved for fundamental freqs of f'(t)")
+
+    df = f - fdp
+    logger.info("δω = {}".format(df))
+    assert np.abs(df).max() < 1E-6
+
 class LaskarBase(object):
     potential = None
 
