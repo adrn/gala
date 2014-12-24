@@ -160,7 +160,7 @@ class NAFF(object):
         else:
             init_w = w[phi_ix]
 
-        res = so.fmin_slsqp(phi_w, x0=init_w, acc=1E-8,
+        res = so.fmin_slsqp(phi_w, x0=init_w, acc=1E-9,
                             bounds=[(0,1)], disp=0, iter=50,
                             full_output=True)
         freq,fx,its,imode,smode = res
@@ -170,7 +170,7 @@ class NAFF(object):
         if imode != 0:
             init_w = 0.5
             res = so.fmin_slsqp(phi_w, x0=init_w, acc=1E-9,
-                                bounds=[(0,1)], disp=0, iter=50,
+                                bounds=[(0,1)], disp=0, iter=100,
                                 full_output=True)
             freq,fx,its,imode,smode = res
             freq = invtransform(freq)
