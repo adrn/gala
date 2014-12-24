@@ -20,7 +20,7 @@ try:
 except ImportError:
     from numpy.fft import fft
 
-from scipy.optimize import fmin_slsqp
+import scipy.optimize as so
 from scipy.integrate import simps
 
 __all__ = ['NAFF', 'poincare_polar']
@@ -152,25 +152,26 @@ class NAFF(object):
             return -(ans*signx*signo)/(2.*self.T)
 
         w = np.linspace(0, 1, 50)
-        phi_vals = np.array([phi_w(ww) for ww in w]).argmin()
+        phi_vals = np.array([phi_w(ww) for ww in w])
+        phi_ix = phi_vals.argmin()
 
         if np.all(np.abs(phi_vals) < 1E-10):
             init_w = 0.5
         else:
-            init_w = w[phi_vals]
+            init_w = w[phi_ix]
 
-        res = fmin_slsqp(phi_w, x0=init_w, acc=1E-8,
-                         bounds=[(0,1)], disp=0, iter=50,
-                         full_output=True)
+        res = so.fmin_slsqp(phi_w, x0=init_w, acc=1E-8,
+                            bounds=[(0,1)], disp=0, iter=50,
+                            full_output=True)
         freq,fx,its,imode,smode = res
         freq = invtransform(freq)
 
         # failed by starting at minimum, try instead starting from middle
         if imode != 0:
             init_w = 0.5
-            res = fmin_slsqp(phi_w, x0=init_w, acc=1E-8,
-                             bounds=[(0,1)], disp=0, iter=50,
-                             full_output=True)
+            res = so.fmin_slsqp(phi_w, x0=init_w, acc=1E-9,
+                                bounds=[(0,1)], disp=0, iter=50,
+                                full_output=True)
             freq,fx,its,imode,smode = res
             freq = invtransform(freq)
 
@@ -233,6 +234,10 @@ class NAFF(object):
             ab = self.hanning_product(fk, ecap[k])
             A[k] = np.abs(ab)
             phi[k] = np.arctan2(ab.imag, ab.real)
+
+            # print(nu[k], ab, A[k], phi[k])
+            # if k == 1:
+            #     sys.exit(0)
 
             # new fk has the previous frequency subtracted out
             fk,fmax = self.sub_chi(fk, ecap[k], ab)
