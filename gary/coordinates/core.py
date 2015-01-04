@@ -109,6 +109,13 @@ def vgal_to_hel(coordinate, vxyz, vcirc=default_vcirc, vlsr=default_vlsr):
     Convert a Galactocentric, cartesian velocity to a Heliocentric velocity in
     spherical coordinates (e.g., proper motion and radial velocity).
 
+    .. warning::
+
+        This is slightly wrong and does not use the same transformation as
+        used by the Astropy Galactocentric class, but is instead an approximation
+        that assumes that the Galactic (l,b) = (0,0) is the position of the
+        Galactic center.
+
     Parameters
     ----------
     coordinate : :class:`~astropy.coordinates.SkyCoord`, :class:`~astropy.coordinates.BaseCoordinateFrame`
@@ -168,6 +175,13 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=default_vcirc, vlsr=default_vlsr):
     r"""
     Convert a Heliocentric, spherical velocity to a Galactocentric,
     cartesian velocity.
+
+    .. warning::
+
+        This is slightly wrong and does not use the same transformation as
+        used by the Astropy Galactocentric class, but is instead an approximation
+        that assumes that the Galactic (l,b) = (0,0) is the position of the
+        Galactic center.
 
     Parameters
     ----------
