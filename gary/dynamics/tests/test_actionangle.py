@@ -54,12 +54,12 @@ def test_generate_n_vectors():
 
 def test_unroll_angles():
     # generate fake angles
-    t = np.linspace(0,100.,250)
+    t = np.linspace(10,100.,250)
     omegas = np.array([0.21, 0.32, 0.55])
     angles = t[:,np.newaxis] * omegas[np.newaxis]
     wrap_angles = angles % (2*np.pi)
 
-    unrolled_angles = unroll_angles(wrap_angles, sign=1.)
+    unrolled_angles = unwrap_angles(wrap_angles, sign=1.)
     assert np.allclose(angles, unrolled_angles)
 
 class ActionsBase(object):
