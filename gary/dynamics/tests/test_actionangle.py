@@ -16,14 +16,10 @@ import numpy as np
 from astropy import log as logger
 import astropy.units as u
 from scipy.linalg import solve
-import pytest
 
 # Project
-from ...integrate import LeapfrogIntegrator, DOPRI853Integrator
-from ...potential import LogarithmicPotential
-from ...potential import NFWPotential, IsochronePotential
-from ...potential.apw import PW14Potential
-from ...potential.lm10 import LM10Potential
+from ...integrate import DOPRI853Integrator
+from ...potential.custom import PW14Potential
 from ..actionangle import *
 from ..core import *
 from ..plot import *
@@ -45,6 +41,26 @@ this_path = os.path.split(os.path.abspath(__file__))[0]
 # TODO: config item to specify path to test data?
 test_data_path = os.path.abspath(os.path.join(os.path.split(__file__)[0],
                                  "../../../test-data/actionangle"))
+
+def test_generate_n_vectors():
+    # test against Sanders' method
+    nvecs = generate_n_vectors(N_max=6, dx=2, dy=2, dz=2)
+    nvecs_sanders = sanders_nvecs(N_max=6, dx=2, dy=2, dz=2)
+    assert np.all(nvecs == nvecs_sanders)
+
+    nvecs = generate_n_vectors(N_max=6, dx=1, dy=1, dz=1)
+    nvecs_sanders = sanders_nvecs(N_max=6, dx=1, dy=1, dz=1)
+    assert np.all(nvecs == nvecs_sanders)
+
+def test_unroll_angles():
+    # generate fake angles
+    t = np.linspace(0,100.,250)
+    omegas = np.array([0.21, 0.32, 0.55])
+    angles = t[:,np.newaxis] * omegas[np.newaxis]
+    wrap_angles = angles % (2*np.pi)
+
+    unrolled_angles = unroll_angles(wrap_angles, sign=1.)
+    assert np.allclose(angles, unrolled_angles)
 
 class ActionsBase(object):
 
@@ -156,15 +172,6 @@ class TestHardActions(ActionsBase):
 
         self.t = t
         self.w = w
-
-def test_nvecs():
-    nvecs = generate_n_vectors(N_max=6, dx=2, dy=2, dz=2)
-    nvecs_sanders = sanders_nvecs(N_max=6, dx=2, dy=2, dz=2)
-    assert np.all(nvecs == nvecs_sanders)
-
-    nvecs = generate_n_vectors(N_max=6, dx=1, dy=1, dz=1)
-    nvecs_sanders = sanders_nvecs(N_max=6, dx=1, dy=1, dz=1)
-    assert np.all(nvecs == nvecs_sanders)
 
 def test_compare_action_prepare():
 
