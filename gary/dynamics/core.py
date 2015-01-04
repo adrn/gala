@@ -27,6 +27,7 @@ def angular_momentum(w):
     -------
     L : :class:`numpy.ndarray`
         Array of angular momentum vectors.
+
     """
     w = np.atleast_1d(w)
     ndim = w.shape[-1]
@@ -34,13 +35,13 @@ def angular_momentum(w):
 
 def classify_orbit(w):
     """
-    Determine whether an orbit or series of orbits is a Box or Loop orbit by
+    Determine whether an orbit or series of orbits is a Box or Tube orbit by
     figuring out whether there is a change of sign of the angular momentum
     about an axis. Returns a 2D array with 3 integers per orbit point such that:
 
-    - Box = [0,0,0]
-    - Loop around z axis = [0,0,1]
-    - Loop around x axis = [1,0,0]
+    - Box and boxlet = [0,0,0]
+    - z-axis (short-axis) tube = [0,0,1]
+    - x-axis (long-axis) tube = [1,0,0]
 
     Parameters
     ----------
