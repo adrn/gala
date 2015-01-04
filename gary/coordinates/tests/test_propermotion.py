@@ -7,13 +7,10 @@ from __future__ import absolute_import, division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-import os
-import pytest
 import tempfile
 
 import numpy as np
 
-from astropy.io import fits
 import astropy.coordinates as coord
 import astropy.units as u
 
