@@ -49,3 +49,15 @@ Angle-action
    gary.dynamics.isochrone_aa_to_xv
    gary.dynamics.harmonic_oscillator_xv_to_aa
    gary.dynamics.harmonic_oscillator_aa_to_xv
+
+Misc. / Utility
+===============
+
+.. autosummary::
+   :nosignatures:
+   :toctree: _dynamics/
+
+   gary.dynamics.generate_n_vectors
+   gary.dynamics.unwrap_angles
+   gary.dynamics.fit_isochrone
+   gary.dynamics.fit_harmonic_oscillator
