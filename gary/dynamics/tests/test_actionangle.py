@@ -52,15 +52,15 @@ def test_generate_n_vectors():
     nvecs_sanders = sanders_nvecs(N_max=6, dx=1, dy=1, dz=1)
     assert np.all(nvecs == nvecs_sanders)
 
-def test_unroll_angles():
+def test_unwrap_angles():
     # generate fake angles
     t = np.linspace(10,100.,250)
     omegas = np.array([0.21, 0.32, 0.55])
     angles = t[:,np.newaxis] * omegas[np.newaxis]
     wrap_angles = angles % (2*np.pi)
 
-    unrolled_angles = unwrap_angles(wrap_angles, sign=1.)
-    assert np.allclose(angles, unrolled_angles)
+    unwrapped_angles = unwrap_angles(wrap_angles, sign=1.)
+    assert np.allclose(angles, unwrapped_angles)
 
 class ActionsBase(object):
 
