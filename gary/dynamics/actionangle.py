@@ -24,7 +24,7 @@ from scipy.optimize import leastsq
 from .core import classify_orbit
 from ..potential import HarmonicOscillatorPotential, IsochronePotential
 
-__all__ = ['generate_n_vectors', 'unroll_angles',
+__all__ = ['generate_n_vectors', 'unwrap_angles',
            'cross_validate_actions', 'find_actions', 'fit_isochrone',
            'fit_harmonic_oscillator', 'fit_toy_potential']
 
@@ -71,10 +71,14 @@ def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
     vecs = np.array(sorted(vecs, key=lambda x: (x[0],x[1],x[2])))
     return vecs
 
-def unroll_angles(angles, sign=1.):
+def unwrap_angles(angles, sign=1.):
     """
-    Unrolls the angles, `angles`, so they increase continuously instead of
+    Unwraps the angles, `angles`, so they increase continuously instead of
     wrapping at 2π.
+
+    .. warning::
+
+        This function does not properly unwrap negative angles.
 
     Parameters
     ----------
@@ -82,14 +86,21 @@ def unroll_angles(angles, sign=1.):
         Array of angles, (ntimes,3).
     sign : numeric (optional)
         Vector that defines direction of circulation about the axes.
+
+    Returns
+    -------
+    unwrapped_angles : :class:`numpy.ndarray`
+        Array of unbounded angles.
+
     """
-    n = np.array([0,0,0])
-    P = np.zeros_like(angles)
-    P[0] = angles[0]
+
+    # set the initial angles
+    unwrapped_angles = np.zeros_like(angles)
+    unwrapped_angles[0] = angles[0]
 
     n = np.cumsum(((angles[1:] - angles[:-1] + 0.5*sign*np.pi)*sign < 0) * 2.*np.pi, axis=0)
-    P[1:] = angles[1:] + sign*n
-    return P
+    unwrapped_angles[1:] = angles[1:] + sign*n
+    return unwrapped_angles
 
 def check_angle_sampling(nvecs, angles):
     """
@@ -151,7 +162,7 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1., throw_out_modes=False):
     """
 
     # unroll the angles so they increase continuously instead of wrap
-    angles = unroll_angles(aa[:,3:], sign=sign)
+    angles = unwrap_angles(aa[:,3:], sign=sign)
 
     # generate integer vectors for fourier modes
     nvecs = generate_n_vectors(N_max, dx, dy, dz)
@@ -219,7 +230,7 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
     """
 
     # unroll the angles so they increase continuously instead of wrap
-    angles = unroll_angles(aa[:,3:], sign=sign)
+    angles = unwrap_angles(aa[:,3:], sign=sign)
 
     # generate integer vectors for fourier modes
     nvecs = generate_n_vectors(N_max, dx, dy, dz)
