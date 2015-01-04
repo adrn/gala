@@ -213,6 +213,11 @@ def fit_toy_potential(w, units, force_harmonic_oscillator=False):
     force_harmonic_oscillator : bool (optional)
         Force using the harmonic oscillator potential as the toy potential.
 
+    Returns
+    -------
+    potential : :class:`~gary.potential.IsochronePotential` or :class:`~gary.potential.HarmonicOscillatorPotential`
+        The best-fit potential object.
+
     """
     orbit_class = classify_orbit(w)
     if np.any(orbit_class == 1) and not force_harmonic_oscillator:  # tube orbit
