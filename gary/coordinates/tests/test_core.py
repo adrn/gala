@@ -113,10 +113,33 @@ class TestVHelGalConvert(object):
         pm = [row['pml'],row['pmb']]*u.mas/u.yr
         rv = row['rv']*u.km/u.s
 
-        vxyz = vhel_to_gal(c, pm=pm, rv=rv)
-        print(row['U'],row['V'],row['W'])
-        print(vxyz)
+        vxyz = vhel_to_gal(c, pm=pm, rv=rv,
+                           vcirc=0*u.km/u.s,
+                           vlsr=[0.,0,0]*u.km/u.s)
 
+        true_UVW = [row['U'],row['V'],row['W']]*u.km/u.s
+        found_UVW = vxyz.T[0]
+
+        print(true_UVW - found_UVW)
+
+    def test_vgal_to_hel(self):
+
+        # test a single entry
+        row = self.data[0]
+        c = coord.SkyCoord(ra=row['ra']*u.deg, dec=row['dec']*u.deg, distance=row['dist']*u.pc)
+        pm = [row['pml'],row['pmb']]*u.mas/u.yr
+        rv = row['rv']*u.km/u.s
+
+        true_pmrv = (pm[0],pm[1],rv)
+        vxyz = [row['U'],row['V'],row['W']]*u.km/u.s
+        pmrv = vgal_to_hel(c, vxyz=vxyz,
+                           vcirc=0.*u.km/u.s,
+                           vlsr=[0.,0,0]*u.km/u.s)
+
+        print(pmrv)
+        print(true_pmrv)
+
+'''
 # def test_vhel_to_gal():
 
 #     # test with single
@@ -224,3 +247,5 @@ def test_gal_to_hel():
     np.testing.assert_almost_equal(v[2], 20*u.km/u.s)
 
     print(r,v)
+
+'''
