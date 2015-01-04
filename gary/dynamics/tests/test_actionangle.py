@@ -19,7 +19,9 @@ from scipy.linalg import solve
 
 # Project
 from ...integrate import DOPRI853Integrator
+from ...potential import IsochronePotential, HarmonicOscillatorPotential
 from ...potential.custom import PW14Potential
+from ...units import galactic
 from ..actionangle import *
 from ..core import *
 from ..plot import *
@@ -61,6 +63,47 @@ def test_unwrap_angles():
 
     unwrapped_angles = unwrap_angles(wrap_angles, sign=1.)
     assert np.allclose(angles, unwrapped_angles)
+
+def test_fit_isochrone():
+    # integrate orbit in Isochrone potential, then try to recover it
+    true_m = 2.81E11
+    true_b = 11.
+    potential = IsochronePotential(m=true_m, b=true_b, units=galactic)
+    t,w = potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., nsteps=10000)
+
+    m,b = fit_isochrone(w, units=galactic)
+    assert np.allclose(m, true_m, rtol=1E-2)
+    assert np.allclose(b, true_b, rtol=1E-2)
+
+def test_fit_harmonic_oscillator():
+    # integrate orbit in harmonic oscillator potential, then try to recover it
+    true_omegas = np.array([0.011, 0.032, 0.045])
+    potential = HarmonicOscillatorPotential(omega=true_omegas, units=galactic)
+    t,w = potential.integrate_orbit([15.,1,2,0,0,0], dt=2., nsteps=10000)
+
+    omegas = fit_harmonic_oscillator(w, units=galactic)
+    assert np.allclose(omegas, true_omegas, rtol=1E-2)
+
+def test_fit_toy_potential():
+    # integrate orbit in both toy potentials, make sure correct one is chosen
+    true_m = 2.81E11
+    true_b = 11.
+    true_potential = IsochronePotential(m=true_m, b=true_b, units=galactic)
+    t,w = true_potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., nsteps=10000)
+
+    potential = fit_toy_potential(w, units=galactic)
+    for k,v in true_potential.parameters.items():
+        assert np.allclose(v, potential.parameters[k], rtol=1E-2)
+
+    # -----------------------------------------------------------------
+    true_omegas = np.array([0.011, 0.032, 0.045])
+    true_potential = HarmonicOscillatorPotential(omega=true_omegas, units=galactic)
+    t,w = true_potential.integrate_orbit([15.,1,2,0,0,0], dt=2., nsteps=10000)
+
+    potential = fit_toy_potential(w, units=galactic)
+    assert np.allclose(potential.parameters['omega'],
+                       true_potential.parameters['omega'],
+                       rtol=1E-2)
 
 class ActionsBase(object):
 
