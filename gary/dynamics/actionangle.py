@@ -27,12 +27,13 @@ from ..potential import HarmonicOscillatorPotential, IsochronePotential
 __all__ = ['cross_validate_actions', 'find_actions', 'generate_n_vectors',
            'fit_isochrone', 'fit_harmonic_oscillator', 'fit_toy_potential']
 
-def generate_n_vectors(N_max, dx=1, dy=1, dz=1):
+def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
     """
-    Generate integer vectors with |n| < N_max in just half of the three-
-    dimensional lattice. If the set N = {(i,j,k)} defines the lattice,
-    we restrict to the cases such that (k > 0), (k = 0, j > 0), and
-    (k = 0, j = 0, i > 0).
+    Generate integer vectors with |n| < N_max.
+
+    If `half_lattice=True`, only return half of the three-dimensional lattice.
+    If the set N = {(i,j,k)} defines the lattice, we restrict to the cases
+    such that (k > 0), (k = 0, j > 0), and (k = 0, j = 0, i > 0).
 
     Parameters
     ----------
@@ -47,6 +48,13 @@ def generate_n_vectors(N_max, dx=1, dy=1, dz=1):
     dz : int
         Step size in z direction. Set to 1 for odd and even terms, set
         to 2 for just even terms.
+    half_lattice : bool (optional)
+        Only return half of the 3D lattice.
+
+    Returns
+    -------
+    vecs : :class:`numpy.ndarray`
+        A 2D array of integers with |n| < N_max with shape (N,3).
 
     """
     vecs = np.meshgrid(np.arange(-N_max, N_max+1, dx),
@@ -54,9 +62,13 @@ def generate_n_vectors(N_max, dx=1, dy=1, dz=1):
                        np.arange(-N_max, N_max+1, dz))
     vecs = np.vstack(map(np.ravel,vecs)).T
     vecs = vecs[np.linalg.norm(vecs,axis=1) <= N_max]
-    ix = ((vecs[:,2] > 0) | ((vecs[:,2] == 0) & (vecs[:,1] > 0)) | ((vecs[:,2] == 0) & (vecs[:,1] == 0) & (vecs[:,0] > 0)))
-    vecs = vecs[ix]
-    return np.array(sorted(vecs, key=lambda x: (x[0],x[1],x[2])))
+
+    if half_lattice:
+        ix = ((vecs[:,2] > 0) | ((vecs[:,2] == 0) & (vecs[:,1] > 0)) | ((vecs[:,2] == 0) & (vecs[:,1] == 0) & (vecs[:,0] > 0)))
+        vecs = vecs[ix]
+
+    vecs = np.array(sorted(vecs, key=lambda x: (x[0],x[1],x[2])))
+    return vecs
 
 def unroll_angles(angles, sign=1.):
     """
