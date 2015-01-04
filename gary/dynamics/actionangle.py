@@ -24,8 +24,9 @@ from scipy.optimize import leastsq
 from .core import classify_orbit
 from ..potential import HarmonicOscillatorPotential, IsochronePotential
 
-__all__ = ['cross_validate_actions', 'find_actions', 'generate_n_vectors',
-           'fit_isochrone', 'fit_harmonic_oscillator', 'fit_toy_potential']
+__all__ = ['generate_n_vectors', 'unroll_angles',
+           'cross_validate_actions', 'find_actions', 'fit_isochrone',
+           'fit_harmonic_oscillator', 'fit_toy_potential']
 
 def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
     """
