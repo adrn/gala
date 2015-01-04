@@ -194,9 +194,13 @@ def fit_harmonic_oscillator(w, units, omega=[1.,1.,1.]):
 
 def fit_toy_potential(w, units, force_harmonic_oscillator=False):
     """
-    Fit a toy potential (isochrone or harmonic oscillator) to the orbit provided.
+    Fit a best fitting toy potential to the orbit provided. If the orbit is a
+    tube (loop) orbit, use the Isochrone potential. If the orbit is a box
+    potential, use the harmonic oscillator potential. An option is available to
+    force using the harmonic oscillator (`force_harmonic_oscillator`).
 
-    TODO
+    See the docstrings for ~`gary.dynamics.fit_isochrone()` and
+    ~`gary.dynamics.fit_harmonic_oscillator()` for more information.
 
     Parameters
     ----------
@@ -211,9 +215,9 @@ def fit_toy_potential(w, units, force_harmonic_oscillator=False):
 
     """
     orbit_class = classify_orbit(w)
-    if np.any(orbit_class == 1) and not force_harmonic_oscillator:  # loop orbit
-        logger.debug("===== Loop orbit =====")
-        logger.debug("Using isochrone toy potential")
+    if np.any(orbit_class == 1) and not force_harmonic_oscillator:  # tube orbit
+        logger.debug("===== Tube orbit =====")
+        logger.debug("Using Isochrone toy potential")
 
         m,b = fit_isochrone(w, units=units)
         toy_potential = IsochronePotential(m=m, b=b, units=units)
