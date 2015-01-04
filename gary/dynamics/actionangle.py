@@ -102,6 +102,133 @@ def unwrap_angles(angles, sign=1.):
     unwrapped_angles[1:] = angles[1:] + sign*n
     return unwrapped_angles
 
+def fit_isochrone(w, units, m0=2E11, b0=1.):
+    r"""
+    Fit the toy Isochrone potential to the sum of the energy residuals relative
+    to the mean energy by minimizing the function
+
+    .. math::
+
+        f(m,b) = \sum_i (\frac{1}{2}v_i^2 + \Phi_{\rm iso}(x_i\,|\,m,b) - <E>)^2
+
+    Parameters
+    ----------
+    w : array_like
+        Array of phase-space positions.
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units. For example,
+        (u.kpc, u.Myr, u.Msun).
+    m0 : numeric (optional)
+        Initial mass guess.
+    b0 : numeric (optional)
+        Initial b guess.
+
+    Returns
+    -------
+    m : float
+        Best-fit scale mass for the Isochrone potential.
+    b : float
+        Best-fit core radius for the Isochrone potential.
+
+    """
+    # find best toy potential parameters
+    potential = IsochronePotential(m=1E10, b=10., units=units)
+    def f(p,w):
+        logm,b = p
+        potential.parameters['m'] = np.exp(logm)
+        potential.parameters['b'] = b
+        H = potential.total_energy(w[...,:3], w[...,3:])
+        return np.squeeze(H - np.mean(H))
+
+    logm0 = np.log(m0)
+    p,ier = leastsq(f, np.array([logm0, b0]), args=(w,))
+    if ier < 1 or ier > 4:
+        raise ValueError("Failed to fit toy potential to orbit.")
+
+    logm,b = np.abs(p)
+    m = np.exp(logm)
+
+    return m,b
+
+def fit_harmonic_oscillator(w, units, omega=[1.,1.,1.]):
+    r"""
+    Fit the toy harmonic oscillator potential to the sum of the energy
+    residuals relative to the mean energy by minimizing the function
+
+    .. math::
+
+        f(\boldsymbol{\omega}) = \sum_i (\frac{1}{2}v_i^2 + \Phi_{\rm sho}(x_i\,|\,\boldsymbol{\omega}) - <E>)^2
+
+
+    Parameters
+    ----------
+    w : array_like
+        Array of phase-space positions.
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units. For example,
+        (u.kpc, u.Myr, u.Msun).
+    omega : array_like (optional)
+        Initial frequency guess.
+
+    Returns
+    -------
+    omegas : float
+        Best-fit harmonic oscillator frequencies.
+
+    """
+    # find best toy potential parameters
+    potential = HarmonicOscillatorPotential(omega=[1.,1.,1.])
+    def f(omega,w):
+        potential.parameters['omega'] = omega
+        H = potential.total_energy(w[...,:3], w[...,3:])
+        return np.squeeze(H - np.mean(H))
+
+    p,ier = leastsq(f, np.array(omega), args=(w,))
+    if ier < 1 or ier > 4:
+        raise ValueError("Failed to fit toy potential to orbit.")
+
+    best_omega = np.abs(p)
+    return best_omega
+
+def fit_toy_potential(w, units, force_harmonic_oscillator=False):
+    """
+    Fit a toy potential (isochrone or harmonic oscillator) to the orbit provided.
+
+    TODO
+
+    Parameters
+    ----------
+    w : array_like
+        Phase-space orbit at times, `t`. Should have shape (ntimes,6).
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units. For example,
+        (u.kpc, u.Myr, u.Msun).
+    force_harmonic_oscillator : bool (optional)
+        Force using the harmonic oscillator potential as the toy potential.
+
+    """
+    orbit_class = classify_orbit(w)
+    if np.any(orbit_class == 1) and not force_harmonic_oscillator:  # loop orbit
+        logger.debug("===== Loop orbit =====")
+        logger.debug("Using isochrone toy potential")
+
+        m,b = fit_isochrone(w, units=units)
+        toy_potential = IsochronePotential(m=m, b=b, units=units)
+        logger.debug("Best m={}, b={}".format(m, b))
+
+    else:  # box orbit
+        logger.debug("===== Box orbit =====")
+        logger.debug("Using triaxial harmonic oscillator toy potential")
+
+        omega = fit_harmonic_oscillator(w, units=units)
+        toy_potential = HarmonicOscillatorPotential(omega=omega)
+        logger.debug("Best omegas ({})".format(omega))
+
+    return toy_potential
+
 def check_angle_sampling(nvecs, angles):
     """
     Returns a list of the index of elements of n which do not have adequate
@@ -281,108 +408,6 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
     b[6+2*nv:6+3*nv] = -2.*np.sum(angles[:,2]*np.sin(np.dot(nvecs,angles.T)), axis=1)
 
     return A,b,nvecs
-
-def fit_isochrone(w, units, m0=2E11, b0=1.):
-    """
-    Fit the toy Isochrone potential to the sum of the energy residuals.
-
-    Parameters
-    ----------
-    w : array_like
-        Array of phase-space positions.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units. For example,
-        (u.kpc, u.Myr, u.Msun).
-    m0 : numeric (optional)
-        Initial mass guess.
-    b0 : numeric (optional)
-        Initial b guess.
-    """
-    # find best toy potential parameters
-    potential = IsochronePotential(m=1E10, b=10., units=units)
-    def f(p,w):
-        logm,b = p
-        potential.parameters['m'] = np.exp(logm)
-        potential.parameters['b'] = b
-        H = potential.total_energy(w[...,:3], w[...,3:])
-        return np.squeeze(H - np.mean(H))
-
-    logm0 = np.log(m0)
-    p,ier = leastsq(f, np.array([logm0, b0]), args=(w,))
-    if ier < 1 or ier > 4:
-        raise ValueError("Failed to fit toy potential to orbit.")
-
-    logm,b = np.abs(p)
-    m = np.exp(logm)
-    return m,b
-
-def fit_harmonic_oscillator(w, units, omega=[1.,1.,1.]):
-    """
-    Fit the toy Harmonic Oscillator potential to the sum of the
-    energy residuals.
-
-    Parameters
-    ----------
-    w : array_like
-        Array of phase-space positions.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units. For example,
-        (u.kpc, u.Myr, u.Msun).
-    omega : array_like (optional)
-        Initial frequency guess.
-    """
-    # find best toy potential parameters
-    potential = HarmonicOscillatorPotential(omega=[1.,1.,1.])
-    def f(omega,w):
-        potential.parameters['omega'] = omega
-        H = potential.total_energy(w[...,:3], w[...,3:])
-        return np.squeeze(H - np.mean(H))
-
-    p,ier = leastsq(f, np.array(omega), args=(w,))
-    if ier < 1 or ier > 4:
-        raise ValueError("Failed to fit toy potential to orbit.")
-
-    best_omega = np.abs(p)
-    return best_omega
-
-def fit_toy_potential(w, units, force_harmonic_oscillator=False):
-    """
-    Fit a toy potential (isochrone or harmonic oscillator) to the orbit provided.
-
-    TODO
-
-    Parameters
-    ----------
-    w : array_like
-        Phase-space orbit at times, `t`. Should have shape (ntimes,6).
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units. For example,
-        (u.kpc, u.Myr, u.Msun).
-    force_harmonic_oscillator : bool (optional)
-        Force using the harmonic oscillator potential as the toy potential.
-
-    """
-    orbit_class = classify_orbit(w)
-    if np.any(orbit_class == 1) and not force_harmonic_oscillator:  # loop orbit
-        logger.debug("===== Loop orbit =====")
-        logger.debug("Using isochrone toy potential")
-
-        m,b = fit_isochrone(w, units=units)
-        toy_potential = IsochronePotential(m=m, b=b, units=units)
-        logger.debug("Best m={}, b={}".format(m, b))
-
-    else:  # box orbit
-        logger.debug("===== Box orbit =====")
-        logger.debug("Using triaxial harmonic oscillator toy potential")
-
-        omega = fit_harmonic_oscillator(w, units=units)
-        toy_potential = HarmonicOscillatorPotential(omega=omega)
-        logger.debug("Best omegas ({})".format(omega))
-
-    return toy_potential
 
 def _single_orbit_find_actions(t, w, N_max, units,
                                return_Sn=False, force_harmonic_oscillator=False,
