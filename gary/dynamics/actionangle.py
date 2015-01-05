@@ -15,7 +15,6 @@ import time
 # Third-party
 import numpy as np
 from astropy import log as logger
-import astropy.units as u
 from scipy.linalg import solve
 from scipy.optimize import leastsq
 
