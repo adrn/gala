@@ -10,7 +10,6 @@ arbitrary potential.
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os, sys
 import time
 
 # Third-party
