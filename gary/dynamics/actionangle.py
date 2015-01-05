@@ -24,9 +24,9 @@ from scipy.optimize import leastsq
 from .core import classify_orbit
 from ..potential import HarmonicOscillatorPotential, IsochronePotential
 
-__all__ = ['generate_n_vectors', 'unwrap_angles',
-           'cross_validate_actions', 'find_actions', 'fit_isochrone',
-           'fit_harmonic_oscillator', 'fit_toy_potential']
+__all__ = ['generate_n_vectors', 'unwrap_angles', 'fit_isochrone',
+           'fit_harmonic_oscillator', 'fit_toy_potential', 'check_angle_sampling',
+           'find_actions']
 
 def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
     """
@@ -250,27 +250,39 @@ def check_angle_sampling(nvecs, angles):
         Array of integer vectors.
     angles : array_like
         Array of angles.
+
+    Returns
+    -------
+    failed_nvecs : :class:`numpy.ndarray`
+        Array of all integer vectors that failed checks. Has shape (N,3).
+    failures : :class:`numpy.ndarray`
+        Array of flags that designate whether this failed needing a longer
+        integration window (0) or finer sampling (1).
+
     """
 
-    checks = np.array([])
-    P = np.array([])
+    failed_nvecs = []
+    failures = []
 
     logger.debug("Checking modes:")
     for i,vec in enumerate(nvecs):
         N = np.linalg.norm(vec)
         X = np.dot(angles,vec)
+        diff = float(np.abs(X.max() - X.min()))
 
-        if(np.abs(np.max(X)-np.min(X)) < 2.*np.pi):
+        if diff < (2.*np.pi):
             logger.warning("Need a longer integration window for mode " + str(vec))
-            checks = np.append(checks,vec)
-            P = np.append(P,(2.*np.pi-np.abs(np.max(X)-np.min(X))))
+            failed_nvecs.append(vec.tolist())
+            # P.append(2.*np.pi - diff)
+            failures.append(0)
 
-        elif (np.sum(X[1:] - X[:-1]) / (X.shape[0] - 1)) > np.pi:
+        elif (diff/len(X)) > np.pi:
             logger.warning("Need a finer sampling for mode " + str(vec))
-            checks = np.append(checks,vec)
-            P = np.append(P,(2.*np.pi-np.abs(np.max(X)-np.min(X))))
+            failed_nvecs.append(vec.tolist())
+            # P.append(np.pi - diff/len(X))
+            failures.append(1)
 
-    return checks,P
+    return np.array(failed_nvecs), np.array(failures)
 
 def _action_prepare(aa, N_max, dx, dy, dz, sign=1., throw_out_modes=False):
     """
