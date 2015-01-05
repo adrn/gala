@@ -105,6 +105,28 @@ def test_fit_toy_potential():
                        true_potential.parameters['omega'],
                        rtol=1E-2)
 
+def test_check_angle_sampling():
+
+    # frequencies
+    omegas = np.array([0.21, 0.3421, 0.4968])
+
+    # integer vectors
+    nvecs = generate_n_vectors(N_max=6)
+
+    # loop over times with known failures:
+    #   - first one fails needing longer integration time
+    #   - second one fails needing finer sampling
+    for i,t in enumerate([np.linspace(0,50,500), np.linspace(0,8000,8000)]):
+        angles = t[:,np.newaxis] * omegas[np.newaxis]
+        periods = 2*np.pi/omegas
+        print("Periods:", periods)
+        print("N periods:", t.max() / periods)
+
+        angles = t[:,np.newaxis] * omegas[np.newaxis]
+        checks,failures = check_angle_sampling(nvecs, angles)
+
+        assert np.all(failures == i)
+
 class ActionsBase(object):
 
     def test_classify(self):
