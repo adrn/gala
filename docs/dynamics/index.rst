@@ -57,7 +57,9 @@ Misc. / Utility
    :nosignatures:
    :toctree: _dynamics/
 
-   gary.dynamics.generate_n_vectors
-   gary.dynamics.unwrap_angles
+   gary.dynamics.check_angle_sampling
    gary.dynamics.fit_isochrone
    gary.dynamics.fit_harmonic_oscillator
+   gary.dynamics.fit_toy_potential
+   gary.dynamics.generate_n_vectors
+   gary.dynamics.unwrap_angles
