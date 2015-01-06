@@ -7,12 +7,10 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import sys
 import time
 
 # Third-party
 from astropy import log as logger
-import matplotlib.pyplot as plt
 import numpy as np
 from numpy.fft import fftfreq
 try:
