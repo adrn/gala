@@ -21,7 +21,7 @@ table.docutils td {
     font-size: 12pt !important;
 }
 
-tt.literal, span.pre {
+p tt.literal, span.pre {
     background: transparent !important;
     border: solid 0px #aaa !important;
     font-size: 100% !important;
