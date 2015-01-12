@@ -17,7 +17,7 @@ from .cbuiltin import HernquistPotential, MiyamotoNagaiPotential, \
     LeeSutoTriaxialNFWPotential, SphericalNFWPotential, LogarithmicPotential
 from ..units import galactic
 
-__all__ = ['PW14Potential', 'LM10Potential', 'OblateMWPotential']
+__all__ = ['PW14Potential', 'LM10Potential', 'TriaxialMWPotential']
 
 class PW14Potential(CCompositePotential):
 
@@ -70,7 +70,7 @@ class LM10Potential(CCompositePotential):
         super(LM10Potential,self).__init__(**kwargs)
         self.c_instance.G = G.decompose(units).value
 
-class OblateMWPotential(CCompositePotential):
+class TriaxialMWPotential(CCompositePotential):
 
     def __init__(self, m_disk=7E10, a=3.5, b=0.14,
                  m_spher=1E10, c=1.1,
@@ -96,5 +96,5 @@ class OblateMWPotential(CCompositePotential):
                                                      a=q1, b=q2, c=q3,
                                                      v_c=v_c, r_s=r_s,
                                                      phi=phi, theta=theta, psi=psi)
-        super(OblateMWPotential,self).__init__(**kwargs)
+        super(TriaxialMWPotential,self).__init__(**kwargs)
         self.c_instance.G = G.decompose(units).value
