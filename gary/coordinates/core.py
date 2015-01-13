@@ -15,7 +15,7 @@ import astropy.units as u
 from astropy.coordinates.angles import rotation_matrix
 from astropy.coordinates.builtin_frames.galactocentric import ROLL0
 
-from .propermotion import pm_gal_to_icrs
+from .propermotion import pm_gal_to_icrs, pm_icrs_to_gal
 
 __all__ = ["vgsr_to_vhel", "vhel_to_vgsr", "vgal_to_hel", "vhel_to_gal"]
 
@@ -127,24 +127,27 @@ def _icrs_gctc_velocity_matrix(galactocentric_frame):
 
     return M4*M3*M1*M2  # this is right: 4,3,1,2
 
-def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR):
+def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=None):
     r"""
     Convert a Galactocentric, cartesian velocity to a Heliocentric velocity in
-    spherical coordinates (e.g., proper motion and radial velocity).
+    spherical coordinates (e.g., proper motion and radial velocity) in the ICRS
+    system. You can then transform to, e.g., Galactic proper motions using the
+    :ref:`pm_icrs_to_gal` function.
 
-    .. warning::
+    For example, to convert a coordinate and velocity to heliocentric ICRS
+    coordinates, you would use the Astropy machinery to convert the coordinate,
+    and this for the velocity::
 
-        This is slightly wrong and does not use the same transformation as
-        used by the Astropy Galactocentric class, but is instead an approximation
-        that assumes that the Galactic (l,b) = (0,0) is the position of the
-        Galactic center.
+        >>> import astropy.coordinates as coord
+        >>> c = coord.Galactocentric(x=15.*u.kpc, y=13.*u.kpc, z=2.*u.kpc)
+        >>> vxyz = [-115., 100., 95.]*u.km/u.s
+        >>> icrs = c.transform_to(coord.ICRS)
+        >>> pmv = vgal_to_hel(icrs, vxyz)
 
     Parameters
     ----------
     coordinate : :class:`~astropy.coordinates.SkyCoord`, :class:`~astropy.coordinates.BaseCoordinateFrame`
-        This is most commonly a :class:`~astropy.coordinates.Galactocentric` Astropy
-        coordinate, but alternatively, it can be any coordinate object that is
-        transformable to the Galactocentric frame.
+
     vxyz : :class:`~astropy.units.Quantity`, iterable
         Cartesian velocity components (U,V,W). This should either be a single
         :class:`~astropy.units.Quantity` object with shape (3,N), or an iterable
@@ -163,48 +166,52 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR):
 
     """
 
-    # make sure we have a Galactocentric coordinate
+    if galactocentric_frame is None:
+        galactocentric_frame = coord.Galactocentric
+
+    # make sure this is a coordinate and get the frame for later use
     c = coord.SkyCoord(coordinate)
-    gc = c.transform_to(coord.Galactocentric)
-    x,y,z = gc.cartesian.xyz
+    coord_frame = c.frame
 
-    if vxyz.shape != gc.cartesian.xyz.shape:
-        raise ValueError("Shape of velocity must match position.")
+    R = _icrs_gctc_velocity_matrix(galactocentric_frame)
 
-    # unpack velocities
-    vx,vy,vz = vxyz
+    orig_shape = vxyz.shape
+    v_icrs = np.linalg.inv(R).dot(vxyz.reshape(vxyz.shape[0], np.prod(vxyz.shape[1:]))).reshape(orig_shape)
 
-    # transform to heliocentric cartesian
-    vy = vy - vcirc
+    # remove circular and LSR velocities
+    v_icrs[1] = v_icrs[1] - vcirc
+    for i in range(3):
+        v_icrs[i] = v_icrs[i] - vlsr[i]
 
-    # correct for motion of Sun relative to LSR
-    vx = vx - vlsr[0]
-    vy = vy - vlsr[1]
-    vz = vz - vlsr[2]
+    # get cartesian galactocentric
+    x_icrs = c.icrs.cartesian.xyz
+    d = np.sqrt(np.sum(x_icrs**2, axis=0))
+    dxy = np.sqrt(np.sum(x_icrs[:2]**2, axis=0))
 
-    # transform cartesian velocity to spherical
-    d = np.sqrt(x**2 + y**2 + z**2)
-    d_xy = np.sqrt(x**2 + y**2)
-    vr = (vx*x + vy*y + vz*z) / d  # velocity
-    omega_l = -(vx*y - x*vy) / d_xy**2  # angular velocity
-    omega_b = -(z*(x*vx + y*vy) - d_xy**2*vz) / (d**2 * d_xy)  # angular velocity
+    vr = np.sum(x_icrs * v_icrs, axis=0) / d
+    with u.set_enabled_equivalencies(u.dimensionless_angles()):
+        mua_cosd = (-(v_icrs[0]*x_icrs[1] - x_icrs[0]*v_icrs[1]) / dxy**2).to(u.mas/u.yr) * x_icrs[2] / d
+        mud = (-(x_icrs[2]*(x_icrs[0]*v_icrs[0] + x_icrs[1]*v_icrs[1]) - dxy**2*v_icrs[2]) / d**2 / dxy).to(u.mas/u.yr)
 
-    mul = (omega_l.decompose()*u.rad).to(u.milliarcsecond / u.yr)
-    mub = (omega_b.decompose()*u.rad).to(u.milliarcsecond / u.yr)
+    pm_radec = (mua_cosd, mud)
+    if coord_frame.name == 'icrs':
+        pm = pm_radec
 
-    return mul,mub,vr
+    elif coord_frame.name == 'galactic':
+        # transform to ICRS proper motions
+        pm = pm_icrs_to_gal(c, pm_radec, cosdec=True)
+
+    else:
+        raise NotImplementedError("Proper motions in the {} system are not "
+                                  "currently supported.".format(coord_frame.name))
+
+    # TODO: check proper motion stuff to make sure pm returned is correct shape
+    return tuple(pm) + (vr,)
 
 def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=None):
     r"""
     Convert a Heliocentric, spherical velocity to a Galactocentric,
     cartesian velocity.
-
-    .. warning::
-
-        This is slightly wrong and does not use the same transformation as
-        used by the Astropy Galactocentric class, but is instead an approximation
-        that assumes that the Galactic (l,b) = (0,0) is the position of the
-        Galactic center.
 
     Parameters
     ----------
