@@ -19,7 +19,7 @@ from scipy.linalg import solve
 from scipy.optimize import leastsq
 
 # Project
-from .core import classify_orbit
+from .core import classify_orbit, align_circulation_with_z
 from ..potential import HarmonicOscillatorPotential, IsochronePotential
 
 __all__ = ['generate_n_vectors', 'unwrap_angles', 'fit_isochrone',
@@ -132,6 +132,7 @@ def fit_isochrone(w, units, m0=2E11, b0=1.):
     """
     # find best toy potential parameters
     potential = IsochronePotential(m=1E10, b=10., units=units)
+
     def f(p,w):
         logm,b = p
         potential.parameters['m'] = np.exp(logm)
@@ -178,6 +179,7 @@ def fit_harmonic_oscillator(w, units, omega=[1.,1.,1.]):
     """
     # find best toy potential parameters
     potential = HarmonicOscillatorPotential(omega=[1.,1.,1.])
+
     def f(omega,w):
         potential.parameters['omega'] = omega
         H = potential.total_energy(w[...,:3], w[...,3:])
@@ -264,7 +266,7 @@ def check_angle_sampling(nvecs, angles):
 
     logger.debug("Checking modes:")
     for i,vec in enumerate(nvecs):
-        N = np.linalg.norm(vec)
+        # N = np.linalg.norm(vec)
         X = np.dot(angles,vec)
         diff = float(np.abs(X.max() - X.min()))
 
@@ -428,9 +430,8 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
 
     return A,b,nvecs
 
-def _single_orbit_find_actions(t, w, N_max, units,
-                               return_Sn=False, force_harmonic_oscillator=False,
-                               toy_potential=None):
+def _single_orbit_find_actions(t, w, N_max, units, toy_potential=None,
+                               force_harmonic_oscillator=False):
     """
     Find approximate actions and angles for samples of a phase-space orbit,
     `w`, at times `t`. Uses toy potentials with known, analytic action-angle
@@ -451,12 +452,10 @@ def _single_orbit_find_actions(t, w, N_max, units,
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units. For example,
         (u.kpc, u.Myr, u.Msun).
-    return_Sn : bool (optional)
-        Return the Sn and dSn/dJ's. Default is False.
-    force_harmonic_oscillator : bool (optional)
-        Force using the harmonic oscillator potential as the toy potential.
     toy_potential : Potential (optional)
         Fix the toy potential class.
+    force_harmonic_oscillator : bool (optional)
+        Force using the harmonic oscillator potential as the toy potential.
     """
 
     if w.ndim > 2:
@@ -510,17 +509,14 @@ def _single_orbit_find_actions(t, w, N_max, units,
     if len(angles) > len(aa):
         logger.warning("More unknowns than equations!")
 
-    J = actions[:3]# * sign
+    J = actions[:3]  # * sign
     theta = angles[:3]
-    freq = angles[3:6]# * sign
+    freqs = angles[3:6]  # * sign
 
-    if return_Sn:
-        return J, theta, freq, actions[3:], angles[6:], nvecs
-    else:
-        return J, theta, freq
+    return dict(actions=J, angles=theta, freqs=freqs,
+                Sn=actions[3:], dSn_dJ=angles[6:], nvecs=nvecs)
 
-def find_actions(t, w, N_max, units, force_harmonic_oscillator=False, toy_potential=None,
-                 return_Sn=False):
+def find_actions(t, w, N_max, units, force_harmonic_oscillator=False, toy_potential=None):
     """
     Find approximate actions and angles for samples of a phase-space orbit,
     `w`, at times `t`. Uses toy potentials with known, analytic action-angle
@@ -547,17 +543,23 @@ def find_actions(t, w, N_max, units, force_harmonic_oscillator=False, toy_potent
         Fix the toy potential class.
     return_Sn : bool (optional)
         Return the Sn and dSn/dJ's. Default is False.
+
+    Returns
+    -------
+    aaf : dict
+        A Python dictionary containing the actions, angles, frequencies, and
+        value of the generating function and derivatives for each integer
+        vector. Each value of the dictionary is a :class:`numpy.ndarray`.
+
     """
 
     if w.ndim == 2 or w.shape[1] == 1:
         w = np.squeeze(w)
         return _single_orbit_find_actions(t, w, N_max, units,
                                           force_harmonic_oscillator=force_harmonic_oscillator,
-                                          toy_potential=toy_potential,
-                                          return_Sn=return_Sn)
+                                          toy_potential=toy_potential)
 
     elif w.ndim == 3:
-        logger.warning("return_Sn has no effect for more than one orbit.")
         ntime,norbits,ndim = w.shape
         actions = np.zeros((norbits,3))
         angles = np.zeros((norbits,3))
@@ -573,12 +575,8 @@ def find_actions(t, w, N_max, units, force_harmonic_oscillator=False, toy_potent
     else:
         raise ValueError("Invalid shape for orbit array: {}".format(w.shape))
 
-    # if return_Sn:
-    #     return J, theta, freq, actions[3:], angles[6:], nvecs
-    # else:
-    #     return J, theta, freq
-
-    return actions, angles, freqs
+    return dict(actions=actions, angles=angles, freqs=freqs,
+                Sn=actions[3:], dSn=angles[6:], nvecs=nvecs)
 
 # def solve_hessian(relative_actions, relative_freqs):
 #     """ Use ordinary least squares to solve for the Hessian, given a
