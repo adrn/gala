@@ -132,12 +132,39 @@ class TestVHelGalConvert(object):
 
         true_pmrv = (pm[0],pm[1],rv)
         vxyz = [row['U'],row['V'],row['W']]*u.km/u.s
-        pmrv = vgal_to_hel(c, vxyz=vxyz,
+        pmrv = vgal_to_hel(c.galactic, vxyz=vxyz,
                            vcirc=0.*u.km/u.s,
                            vlsr=[0.,0,0]*u.km/u.s)
 
         print(pmrv)
         print(true_pmrv)
+
+    def test_roundtrip(self):
+        np.random.seed(42)
+        n = 2
+
+        # yeahhhh, i know this isn't uniform on the sphere - shut up
+        c = coord.SkyCoord(ra=np.random.uniform(0,360,n)*u.degree,
+                           dec=np.random.uniform(-90,90,n)*u.degree,
+                           distance=np.random.uniform(0.1,10.,n)*u.kpc)
+
+        pm = np.random.uniform(-20,20,size=(2,n)) * u.mas/u.yr
+        vr = np.random.normal(0., 75., size=n)*u.km/u.s
+
+        # first to galactocentric
+        vxyz = vhel_to_gal(c.icrs, pm=pm, rv=vr)
+
+        # then back again, wooo
+        pmv = vgal_to_hel(c.icrs, vxyz=vxyz)
+
+        mua,mud = pm
+
+        mua2,mud2 = pmv[:2]
+        vr2 = pmv[2]
+
+        print(mua - mua2)
+        print(mud - mud2)
+        print(vr - vr2)
 
 '''
 # def test_vhel_to_gal():
