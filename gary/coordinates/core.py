@@ -12,16 +12,19 @@ from numpy import cos, sin
 
 import astropy.coordinates as coord
 import astropy.units as u
+from astropy.coordinates.angles import rotation_matrix
+from astropy.coordinates.builtin_frames.galactocentric import ROLL0
+
+from .propermotion import pm_gal_to_icrs
 
 __all__ = ["vgsr_to_vhel", "vhel_to_vgsr", "vgal_to_hel", "vhel_to_gal"]
 
 # This is the default circular velocity and LSR peculiar velocity of the Sun
-# TODO: make this a config item
-default_vcirc = 220.*u.km/u.s
-default_vlsr = [10., 5.25, 7.17]*u.km/u.s
-default_xsun = -8.*u.kpc
+# TODO: make this a config item?
+VCIRC = 220.*u.km/u.s
+VLSR = [10., 5.25, 7.17]*u.km/u.s
 
-def vgsr_to_vhel(coordinate, vgsr, vcirc=default_vcirc, vlsr=default_vlsr):
+def vgsr_to_vhel(coordinate, vgsr, vcirc=VCIRC, vlsr=VLSR):
     """ Convert a radial velocity in the Galactic standard of rest (GSR) to
         a barycentric radial velocity.
 
@@ -63,7 +66,7 @@ def vgsr_to_vhel(coordinate, vgsr, vcirc=default_vcirc, vlsr=default_vlsr):
 
     return vhel
 
-def vhel_to_vgsr(coordinate, vhel, vcirc=default_vcirc, vlsr=default_vlsr):
+def vhel_to_vgsr(coordinate, vhel, vcirc=VCIRC, vlsr=VLSR):
     """ Convert a velocity from a heliocentric radial velocity to
         the Galactic standard of rest (GSR).
 
@@ -104,7 +107,27 @@ def vhel_to_vgsr(coordinate, vhel, vcirc=default_vcirc, vlsr=default_vlsr):
 
     return vgsr
 
-def vgal_to_hel(coordinate, vxyz, vcirc=default_vcirc, vlsr=default_vlsr):
+def _icrs_gctc_velocity_matrix(galactocentric_frame):
+    """ Construct a transformation matrix to go from heliocentric ICRS to a galactocentric
+        frame. This is just a rotation and tilt which makes it approximately the same
+        as transforming to Galactic coordinates. This only works for velocity because there
+        is no shift due to the position of the Sun.
+    """
+
+    # define rotation matrix to align x(ICRS) with the vector to the Galactic center
+    M1 = rotation_matrix(-galactocentric_frame.galcen_dec, 'y')
+    M2 = rotation_matrix(galactocentric_frame.galcen_ra, 'z')
+
+    # extra roll away from the Galactic x-z plane
+    M3 = rotation_matrix(ROLL0 - galactocentric_frame.roll, 'x')
+
+    # rotate about y' to account for tilt due to Sun's height above the plane
+    z_d = (galactocentric_frame.z_sun / galactocentric_frame.galcen_distance).decompose()
+    M4 = rotation_matrix(-np.arcsin(z_d), 'y')
+
+    return M4*M3*M1*M2  # this is right: 4,3,1,2
+
+def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR):
     r"""
     Convert a Galactocentric, cartesian velocity to a Heliocentric velocity in
     spherical coordinates (e.g., proper motion and radial velocity).
@@ -171,7 +194,7 @@ def vgal_to_hel(coordinate, vxyz, vcirc=default_vcirc, vlsr=default_vlsr):
 
     return mul,mub,vr
 
-def vhel_to_gal(coordinate, pm, rv, vcirc=default_vcirc, vlsr=default_vlsr):
+def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=None):
     r"""
     Convert a Heliocentric, spherical velocity to a Galactocentric,
     cartesian velocity.
@@ -186,19 +209,28 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=default_vcirc, vlsr=default_vlsr):
     Parameters
     ----------
     coordinate : :class:`~astropy.coordinates.SkyCoord`
-        This is most commonly a :class:`~astropy.coordinates.Galactocentric` Astropy
-        coordinate, but alternatively, it can be any coordinate object that is
-        transformable to the Galactocentric frame.
-    pm : iterable of :class:`~astropy.units.Quantity`s
-        Proper motion in l, b. Should have shape (2,N). If you have a proper motion
-        in ICRS (RA, Dec), use `pm_icrs_to_gal()` to convert.
-    rv : :class:`~astropy.units.Quantity` (optional)
+        This is most commonly a :class:`~astropy.coordinates.SkyCoord` object, but
+        alternatively, it can be any coordinate object that is transformable to the
+        Galactocentric frame.
+    pm : :class:`~astropy.units.Quantity` or iterable of :class:`~astropy.units.Quantity`s
+        Proper motion in the same frame as the coordinate. For example, if your input
+        coordinate is in :class:`~astropy.coordinates.ICRS`, then the proper motion is
+        assumed to be in this frame as well. The order of elements should always be
+        proper motion in (longitude, latitude), and should have shape (2,N). The longitude
+        component is assumed to have the cosine of the latitude already multiplied in, so
+        that in ICRS, for example, this would be :math:`\mu_\alpha\cos\delta`.
+    rv : :class:`~astropy.units.Quantity`
         Barycentric radial velocity. Should have shape (1,N) or (N,).
-    vcirc : :class:`~astropy.units.Quantity`
+    vcirc : :class:`~astropy.units.Quantity` (optional)
         Circular velocity of the Sun.
-    vlsr : :class:`~astropy.units.Quantity`
+    vlsr : :class:`~astropy.units.Quantity` (optional)
         Velocity of the Sun relative to the local standard
         of rest (LSR).
+    galactocentric_frame : :class:`~astropy.coordinates.Galactocentric` (optional)
+        An instantiated :class:`~astropy.coordinates.Galactocentric` frame object with
+        custom parameters for the Galactocentric coordinates. For example, if you want
+        to set your own position of the Galactic center, you can pass in a frame with
+        custom `galcen_ra` and `galcen_dec`.
 
     Returns
     -------
@@ -207,31 +239,43 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=default_vcirc, vlsr=default_vlsr):
         object with shape (3,N).
     """
 
+    if galactocentric_frame is None:
+        galactocentric_frame = coord.Galactocentric
+
+    # make sure this is a coordinate and get the frame for later use
     c = coord.SkyCoord(coordinate)
-    g = c.galactic
-    l,b,d = g.l, g.b, g.distance
-    gc = c.transform_to(coord.Galactocentric)
-    x,y,z = gc.cartesian.xyz
-    x = x + coord.Galactocentric.galcen_distance
+    coord_frame = c.frame
 
-    # unpack velocities
-    mul,mub = pm
-    rv = rv
+    if coord_frame.name == 'icrs':
+        pm_radec = pm
 
-    omega_l = -mul.to(u.rad/u.s).value/u.s
-    omega_b = -mub.to(u.rad/u.s).value/u.s
+    elif coord_frame.name == 'galactic':
+        # transform to ICRS proper motions
+        pm_radec = pm_gal_to_icrs(c, pm, cosb=True)
 
-    vx = x/d*rv + y*omega_l + z*np.cos(l)*omega_b
-    vy = y/d*rv - x*omega_l + z*np.sin(l)*omega_b
-    vz = z/d*rv - d*np.cos(b)*omega_b
+    else:
+        raise NotImplementedError("Proper motions in the {} system are not "
+                                  "currently supported.".format(coord_frame.name))
 
-    # transform to galactocentric cartesian
-    vy = vy + vcirc
+    # proper motion components: longitude, latitude
+    mura_cosdec, mudec = pm_radec
 
-    # correct for motion of Sun relative to LSR
-    vx = vx + vlsr[0]
-    vy = vy + vlsr[1]
-    vz = vz + vlsr[2]
+    # Adrian, you're fired
+    a,d,D = c.icrs.ra, c.icrs.dec, c.distance
+    with u.set_enabled_equivalencies(u.dimensionless_angles()):
+        v_icrs = [rv*np.cos(a)*np.cos(d) - D*np.sin(a)*mura_cosdec - D*np.cos(a)*np.sin(d)*mudec,
+                  rv*np.sin(a)*np.cos(d) + D*np.cos(a)*mura_cosdec - D*np.sin(a)*np.sin(d)*mudec,
+                  rv*np.sin(d) + D*np.cos(d)*mudec]
+    v_icrs = np.array([v.to(u.km/u.s).value for v in v_icrs]) * u.km/u.s
 
-    # Workaround because Quantities can't be vstack'd
-    return np.vstack((vx.value,vy.value,vz.value))*vx.unit
+    # remove circular and LSR velocities
+    v_icrs[1] = v_icrs[1] + vcirc
+    for i in range(3):
+        v_icrs[i] = v_icrs[i] + vlsr[i]
+
+    R = _icrs_gctc_velocity_matrix(galactocentric_frame)
+
+    orig_shape = v_icrs.shape
+    v_gc = R.dot(v_icrs.reshape(v_icrs.shape[0], np.prod(v_icrs.shape[1:]))).reshape(orig_shape)
+
+    return v_gc
