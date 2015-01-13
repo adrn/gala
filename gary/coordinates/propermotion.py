@@ -12,7 +12,7 @@ import astropy.coordinates as coord
 
 __all__ = ['pm_gal_to_icrs', 'pm_icrs_to_gal']
 
-def pm_gal_to_icrs(coordinate, mu, cosb=False):
+def pm_gal_to_icrs(coordinate, mu, cosb):
     """ Convert proper motion in Galactic coordinates (l,b) to
         ICRS coordinates (RA, Dec).
 
@@ -29,7 +29,7 @@ def pm_gal_to_icrs(coordinate, mu, cosb=False):
             If proper motion of longitude is pre-multipled by cosine of
             Galactic latitude, use the keyword argument `cosb=True` to
             automatically handle this.
-        cosb : bool (optional)
+        cosb : bool
             Specify whether the input proper motion in longitude has been
             pre-multiplied by cosine of the latitude. Default is False.
 
@@ -90,7 +90,7 @@ def pm_icrs_to_gal(coordinate, mu, cosdec):
             If proper motion of RA is pre-multipled by cosine of
             Dec, use the keyword argument `cosdec=True` to
             automatically handle this.
-        cosdec : bool (optional)
+        cosdec : bool
             Specify whether the input proper motion in RA has been
             pre-multiplied by cosine of the Dec. Default is False.
 
