@@ -1,5 +1,5 @@
-Gary
-====
+Gary :man:
+==========
 
 Gary is a Python package for Galactic Astronomy and especially gravitational
 dynamics.
