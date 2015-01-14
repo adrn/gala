@@ -186,14 +186,16 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
     # get cartesian galactocentric
     x_icrs = c.icrs.cartesian.xyz
     d = np.sqrt(np.sum(x_icrs**2, axis=0))
-    dxy = np.sqrt(np.sum(x_icrs[:2]**2, axis=0))
+    dxy = np.sqrt(x_icrs[0]**2 + x_icrs[1]**2)
 
     vr = np.sum(x_icrs * v_icrs, axis=0) / d
     with u.set_enabled_equivalencies(u.dimensionless_angles()):
-        mua_cosd = (-(v_icrs[0]*x_icrs[1] - x_icrs[0]*v_icrs[1]) / dxy**2).to(u.mas/u.yr) * x_icrs[2] / d
+        mua = ((x_icrs[0]*v_icrs[1] - v_icrs[0]*x_icrs[1]) / dxy**2).to(u.mas/u.yr)
+        mua_cosd = (mua * dxy / d).to(u.mas/u.yr)
         mud = (-(x_icrs[2]*(x_icrs[0]*v_icrs[0] + x_icrs[1]*v_icrs[1]) - dxy**2*v_icrs[2]) / d**2 / dxy).to(u.mas/u.yr)
 
     pm_radec = (mua_cosd, mud)
+
     if coord_frame.name == 'icrs':
         pm = pm_radec
 
