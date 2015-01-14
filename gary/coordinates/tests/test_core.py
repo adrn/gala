@@ -150,14 +150,13 @@ class TestVHelGalConvert(object):
 
         pm = np.random.uniform(-20,20,size=(2,n)) * u.mas/u.yr
         vr = np.random.normal(0., 75., size=n)*u.km/u.s
+        mua,mud = pm  # initial
 
         # first to galactocentric
         vxyz = vhel_to_gal(c.icrs, pm=pm, rv=vr)
 
         # then back again, wooo
         pmv = vgal_to_hel(c.icrs, vxyz=vxyz)
-
-        mua,mud = pm
 
         mua2,mud2 = pmv[:2]
         vr2 = pmv[2]
