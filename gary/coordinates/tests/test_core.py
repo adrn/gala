@@ -199,6 +199,41 @@ class TestVHelGalConvert(object):
             for i in range(3):
                 np.testing.assert_allclose(pmrv[i], true_pmrv[i], atol=1.)
 
+        # some sanity checks - first, some convenience definitions
+        g = coord.Galactic(l=0*u.deg, b=0*u.deg).transform_to(coord.ICRS)
+        frargs = dict(galcen_ra=g.ra,
+                      galcen_dec=g.dec,
+                      z_sun=0*u.kpc,
+                      galcen_distance=8*u.kpc)
+        galcen_frame = coord.Galactocentric(**frargs)
+
+        # --------------------------------------------------------------------
+        # l = 0
+        # without LSR and circular velocity
+        # c = coord.Galactocentric([6,0,0]*u.kpc,**frargs)
+        c = coord.SkyCoord(l=0*u.deg, b=0*u.deg, distance=2*u.kpc, frame=coord.Galactic)
+        vxyz = [20.,0,0]*u.km/u.s
+        pmv = vgal_to_hel(c.galactic, vxyz,
+                          vcirc=0*u.km/u.s,
+                          vlsr=[0.,0,0]*u.km/u.s,
+                          galactocentric_frame=galcen_frame)
+        np.testing.assert_allclose(pmv[0], 0.*u.mas/u.yr, atol=1E-12)
+        np.testing.assert_allclose(pmv[1], 0.*u.mas/u.yr, atol=1E-12)
+        np.testing.assert_allclose(pmv[2], 20.*u.km/u.s, atol=1E-12)
+
+        # with LSR and circular velocity
+        c = coord.SkyCoord(l=0*u.deg, b=0*u.deg, distance=2*u.kpc, frame=coord.Galactic)
+        vxyz = [20.,0,0]*u.km/u.s
+        pmv = vgal_to_hel(c.galactic, vxyz,
+                          vcirc=-200*u.km/u.s,
+                          vlsr=[0.,0,10]*u.km/u.s,
+                          galactocentric_frame=galcen_frame)
+
+        with u.set_enabled_equivalencies(u.dimensionless_angles()):
+            np.testing.assert_allclose(pmv[0], ((200.*u.km/u.s)/(2*u.kpc)).to(u.mas/u.yr), atol=1E-12)
+            np.testing.assert_allclose(pmv[1], ((-10.*u.km/u.s)/(2*u.kpc)).to(u.mas/u.yr), atol=1E-4)
+        np.testing.assert_allclose(pmv[2], 20.*u.km/u.s, atol=1E-12)
+
     def test_roundtrip(self):
         np.random.seed(42)
         n = 100
@@ -224,95 +259,3 @@ class TestVHelGalConvert(object):
         np.testing.assert_allclose(mua.to(u.mas/u.yr).value, mua2.to(u.mas/u.yr).value, atol=1e-12)
         np.testing.assert_allclose(mud.to(u.mas/u.yr).value, mud2.to(u.mas/u.yr).value, atol=1e-12)
         np.testing.assert_allclose(vr.to(u.km/u.s).value, vr2.to(u.km/u.s).value, atol=1e-12)
-
-'''
-
-def test_hel_to_gal():
-
-    # l = 0
-    r,v = hel_to_gal_xyz(coord.Galactic(0*u.deg, 0*u.deg, distance=2*u.kpc),
-                             pm=(0*u.mas/u.yr, 0*u.mas/u.yr), vr=20*u.km/u.s,
-                             vlsr=[0.,0,0]*u.km/u.s,
-                             vcirc=200*u.km/u.s)
-    np.testing.assert_almost_equal(r, [-6,0,0]*u.kpc)
-    np.testing.assert_almost_equal(v, [20,200,0]*u.km/u.s)
-
-    # l = 90
-    r,v = hel_to_gal_xyz(coord.Galactic(90*u.deg, 0*u.deg, distance=2*u.kpc),
-                             pm=(0*u.mas/u.yr, 0*u.mas/u.yr), vr=20*u.km/u.s,
-                             vlsr=[0.,0,0]*u.km/u.s,
-                             vcirc=200*u.km/u.s)
-    np.testing.assert_almost_equal(r, [-8,2,0]*u.kpc)
-    np.testing.assert_almost_equal(v, [0,220,0]*u.km/u.s)
-
-    # l = 180
-    r,v = hel_to_gal_xyz(coord.Galactic(180*u.deg, 0*u.deg, distance=2*u.kpc),
-                             pm=(0*u.mas/u.yr, 0*u.mas/u.yr), vr=20*u.km/u.s,
-                             vlsr=[0.,0,0]*u.km/u.s,
-                             vcirc=200*u.km/u.s)
-    np.testing.assert_almost_equal(r, [-10,0,0]*u.kpc)
-    np.testing.assert_almost_equal(v, [-20,200,0]*u.km/u.s)
-
-    # l = 270
-    r,v = hel_to_gal_xyz(coord.Galactic(270*u.deg, 0*u.deg, distance=2*u.kpc),
-                             pm=(0*u.mas/u.yr, 0*u.mas/u.yr), vr=20*u.km/u.s,
-                             vlsr=[0.,0,0]*u.km/u.s,
-                             vcirc=200*u.km/u.s)
-    np.testing.assert_almost_equal(r, [-8,-2,0]*u.kpc)
-    np.testing.assert_almost_equal(v, [0,180,0]*u.km/u.s)
-
-    print(r,v)
-
-def test_gal_to_hel():
-
-    # l = 0
-    r,v = gal_xyz_to_hel([-6,0,0]*u.kpc,
-                             [20,200,0]*u.km/u.s,
-                             vlsr=[0.,0,0]*u.km/u.s,
-                             vcirc=200*u.km/u.s)
-    np.testing.assert_almost_equal(r.l, 0*u.deg)
-    np.testing.assert_almost_equal(r.b, 0*u.deg)
-    np.testing.assert_almost_equal(u.Quantity(r.distance), 2*u.kpc)
-    np.testing.assert_almost_equal(v[0], 0*u.mas/u.yr)
-    np.testing.assert_almost_equal(v[1], 0*u.mas/u.yr)
-    np.testing.assert_almost_equal(v[2], 20*u.km/u.s)
-
-    # l = 90
-    r,v = gal_xyz_to_hel([-8,2,0]*u.kpc,
-                             [0,220,0]*u.km/u.s,
-                             vlsr=[0.,0,0]*u.km/u.s,
-                             vcirc=200*u.km/u.s)
-    np.testing.assert_almost_equal(r.l, 90*u.deg)
-    np.testing.assert_almost_equal(r.b, 0*u.deg)
-    np.testing.assert_almost_equal(u.Quantity(r.distance), 2*u.kpc)
-    np.testing.assert_almost_equal(v[0], 0*u.mas/u.yr)
-    np.testing.assert_almost_equal(v[1], 0*u.mas/u.yr)
-    np.testing.assert_almost_equal(v[2], 20*u.km/u.s)
-
-    # l = 180
-    r,v = gal_xyz_to_hel([-10,0,0]*u.kpc,
-                             [-20,200,0]*u.km/u.s,
-                             vlsr=[0.,0,0]*u.km/u.s,
-                             vcirc=200*u.km/u.s)
-    np.testing.assert_almost_equal(r.l, 180*u.deg)
-    np.testing.assert_almost_equal(r.b, 0*u.deg)
-    np.testing.assert_almost_equal(u.Quantity(r.distance), 2*u.kpc)
-    np.testing.assert_almost_equal(v[0], 0*u.mas/u.yr)
-    np.testing.assert_almost_equal(v[1], 0*u.mas/u.yr)
-    np.testing.assert_almost_equal(v[2], 20*u.km/u.s)
-
-    # l = 270
-    r,v = gal_xyz_to_hel([-8,-2,0]*u.kpc,
-                             [0,180,0]*u.km/u.s,
-                             vlsr=[0.,0,0]*u.km/u.s,
-                             vcirc=200*u.km/u.s)
-    np.testing.assert_almost_equal(r.l, 270*u.deg)
-    np.testing.assert_almost_equal(r.b, 0*u.deg)
-    np.testing.assert_almost_equal(u.Quantity(r.distance), 2*u.kpc)
-    np.testing.assert_almost_equal(v[0], 0*u.mas/u.yr)
-    np.testing.assert_almost_equal(v[1], 0*u.mas/u.yr)
-    np.testing.assert_almost_equal(v[2], 20*u.km/u.s)
-
-    print(r,v)
-
-'''
