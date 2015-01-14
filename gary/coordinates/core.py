@@ -277,14 +277,14 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame
                   rv*np.sin(d) + D*np.cos(d)*mudec]
     v_icrs = np.array([v.to(u.km/u.s).value for v in v_icrs]) * u.km/u.s
 
-    # remove circular and LSR velocities
-    v_icrs[1] = v_icrs[1] + vcirc
-    for i in range(3):
-        v_icrs[i] = v_icrs[i] + vlsr[i]
-
     R = _icrs_gctc_velocity_matrix(galactocentric_frame)
 
     orig_shape = v_icrs.shape
     v_gc = R.dot(v_icrs.reshape(v_icrs.shape[0], np.prod(v_icrs.shape[1:]))).reshape(orig_shape)
+
+    # remove circular and LSR velocities
+    v_gc[1] = v_gc[1] + vcirc
+    for i in range(3):
+        v_gc[i] = v_gc[i] + vlsr[i]
 
     return v_gc
