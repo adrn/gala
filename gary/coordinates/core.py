@@ -175,13 +175,13 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
 
     R = _icrs_gctc_velocity_matrix(galactocentric_frame)
 
+    # remove circular and LSR velocities
+    vxyz[1] = vxyz[1] - vcirc
+    for i in range(3):
+        vxyz[i] = vxyz[i] - vlsr[i]
+
     orig_shape = vxyz.shape
     v_icrs = np.linalg.inv(R).dot(vxyz.reshape(vxyz.shape[0], np.prod(vxyz.shape[1:]))).reshape(orig_shape)
-
-    # remove circular and LSR velocities
-    v_icrs[1] = v_icrs[1] - vcirc
-    for i in range(3):
-        v_icrs[i] = v_icrs[i] - vlsr[i]
 
     # get cartesian galactocentric
     x_icrs = c.icrs.cartesian.xyz
