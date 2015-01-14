@@ -110,7 +110,7 @@ class TestVHelGalConvert(object):
         # test a single entry
         row = self.data[0]
         c = coord.SkyCoord(ra=row['ra']*u.deg, dec=row['dec']*u.deg, distance=row['dist']*u.pc)
-        pm = [row['pml'],row['pmb']]*u.mas/u.yr
+        pm = [row['pml'], row['pmb']]*u.mas/u.yr
         rv = row['rv']*u.km/u.s
 
         vxyz = vhel_to_gal(c.galactic, pm=pm, rv=rv,
@@ -130,7 +130,7 @@ class TestVHelGalConvert(object):
         pm = [row['pml'],row['pmb']]*u.mas/u.yr
         rv = row['rv']*u.km/u.s
 
-        true_pmrv = (pm[0],pm[1],rv)
+        true_pmrv = (pm[0], pm[1], rv)
         vxyz = [row['U'],row['V'],row['W']]*u.km/u.s
         pmrv = vgal_to_hel(c.galactic, vxyz=vxyz,
                            vcirc=0.*u.km/u.s,
@@ -141,7 +141,7 @@ class TestVHelGalConvert(object):
 
     def test_roundtrip(self):
         np.random.seed(42)
-        n = 2
+        n = 100
 
         # yeahhhh, i know this isn't uniform on the sphere - shut up
         c = coord.SkyCoord(ra=np.random.uniform(0,360,n)*u.degree,
@@ -161,9 +161,9 @@ class TestVHelGalConvert(object):
         mua2,mud2 = pmv[:2]
         vr2 = pmv[2]
 
-        print(mua - mua2)
-        print(mud - mud2)
-        print(vr - vr2)
+        np.testing.assert_allclose(mua.to(u.mas/u.yr).value, mua2.to(u.mas/u.yr).value, atol=1e-12)
+        np.testing.assert_allclose(mud.to(u.mas/u.yr).value, mud2.to(u.mas/u.yr).value, atol=1e-12)
+        np.testing.assert_allclose(vr.to(u.km/u.s).value, vr2.to(u.km/u.s).value, atol=1e-12)
 
 '''
 # def test_vhel_to_gal():
