@@ -130,24 +130,35 @@ def _icrs_gctc_velocity_matrix(galactocentric_frame):
 def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=None):
     r"""
     Convert a Galactocentric, cartesian velocity to a Heliocentric velocity in
-    spherical coordinates (e.g., proper motion and radial velocity) in the ICRS
-    system. You can then transform to, e.g., Galactic proper motions using the
-    :ref:`pm_icrs_to_gal` function.
+    spherical coordinates (e.g., proper motion and radial velocity).
 
-    For example, to convert a coordinate and velocity to heliocentric ICRS
-    coordinates, you would use the Astropy machinery to convert the coordinate,
-    and this for the velocity::
+    The frame of the input coordinate determines the output frame of the proper motions.
+    For example, if the input coordinate is in the ICRS frame, the proper motions
+    returned will be  :math:`(\mu_\alpha\cos\delta,\mu_delta)`. This function also
+    handles array inputs (see examples below).
+
+    Examples
+    --------
 
         >>> import astropy.coordinates as coord
         >>> c = coord.Galactocentric(x=15.*u.kpc, y=13.*u.kpc, z=2.*u.kpc)
         >>> vxyz = [-115., 100., 95.]*u.km/u.s
         >>> icrs = c.transform_to(coord.ICRS)
-        >>> pmv = vgal_to_hel(icrs, vxyz)
+        >>> vgal_to_hel(icrs, vxyz)
+        (<Quantity -0.876885123328934 mas / yr>, <Quantity 0.024501209459030334 mas / yr>, <Quantity -163.24449462243052 km / s>)
+
+        >>> c = coord.Galactocentric([[15.,11.],[13,21.],[2.,-7]]*u.kpc)
+        >>> vxyz = [[-115.,11.], [100.,-21.], [95.,103]]*u.km/u.s
+        >>> icrs = c.transform_to(coord.ICRS)
+        >>> vgal_to_hel(icrs, vxyz)
+        (<Quantity [-0.87688512,-0.91157482] mas / yr>, <Quantity [ 0.02450121,-0.86124895] mas / yr>, <Quantity [-163.24449462,-198.31241148] km / s>)
 
     Parameters
     ----------
     coordinate : :class:`~astropy.coordinates.SkyCoord`, :class:`~astropy.coordinates.BaseCoordinateFrame`
-
+        This is most commonly a :class:`~astropy.coordinates.SkyCoord` object, but
+        alternatively, it can be any coordinate frame object that is transformable to the
+        Galactocentric frame.
     vxyz : :class:`~astropy.units.Quantity`, iterable
         Cartesian velocity components (U,V,W). This should either be a single
         :class:`~astropy.units.Quantity` object with shape (3,N), or an iterable
@@ -212,16 +223,40 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
 
 def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=None):
     r"""
-    Convert a Heliocentric, spherical velocity to a Galactocentric,
-    cartesian velocity.
+    Convert a Heliocentric velocity in spherical coordinates (e.g., proper motion
+    and radial velocity) in the ICRS or Galactic frame to a Galactocentric, cartesian
+    velocity.
+
+    The frame of the input coordinate determines how to interpret the given
+    proper motions. For example, if the input coordinate is in the ICRS frame, the
+    proper motions are assumed to be :math:`(\mu_\alpha\cos\delta,\mu_delta)`. This
+    function also handles array inputs (see examples below).
+
+    Examples
+    --------
+
+        >>> import astropy.coordinates as coord
+        >>> c = coord.SkyCoord(ra=196.5*u.degree, dec=-10.33*u.deg, distance=16.2*u.kpc)
+        >>> pm = [-1.53, 3.5]*u.mas/u.yr
+        >>> rv = 161.4*u.km/u.s
+        >>> vhel_to_gal(c, pm=pm, rv=rv)
+        <Quantity [-137.29984564, 262.64052249, 305.50786499] km / s>
+
+        >>> c = coord.SkyCoord(ra=[196.5,51.3]*u.degree, dec=[-10.33,2.1]*u.deg, distance=[16.2,11.]*u.kpc)
+        >>> pm = [[-1.53,4.5], [3.5,10.9]]*u.mas/u.yr
+        >>> rv = [161.4,-210.2]*u.km/u.s
+        >>> vhel_to_gal(c, pm=pm, rv=rv)
+        <Quantity [[-137.29984564,-212.10415701],
+                   [ 262.64052249, 496.85687803],
+                   [ 305.50786499, 554.16562628]] km / s>
 
     Parameters
     ----------
-    coordinate : :class:`~astropy.coordinates.SkyCoord`
+    coordinate : :class:`~astropy.coordinates.SkyCoord`, :class:`~astropy.coordinates.BaseCoordinateFrame`
         This is most commonly a :class:`~astropy.coordinates.SkyCoord` object, but
-        alternatively, it can be any coordinate object that is transformable to the
+        alternatively, it can be any coordinate frame object that is transformable to the
         Galactocentric frame.
-    pm : :class:`~astropy.units.Quantity` or iterable of :class:`~astropy.units.Quantity`s
+    pm : :class:`~astropy.units.Quantity` or iterable of :class:`~astropy.units.Quantity` objects
         Proper motion in the same frame as the coordinate. For example, if your input
         coordinate is in :class:`~astropy.coordinates.ICRS`, then the proper motion is
         assumed to be in this frame as well. The order of elements should always be
