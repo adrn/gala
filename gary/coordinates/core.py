@@ -160,7 +160,7 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
         alternatively, it can be any coordinate frame object that is transformable to the
         Galactocentric frame.
     vxyz : :class:`~astropy.units.Quantity`, iterable
-        Cartesian velocity components (U,V,W). This should either be a single
+        Cartesian velocity components :math:`(v_x,v_y,v_z)`. This should either be a single
         :class:`~astropy.units.Quantity` object with shape (3,N), or an iterable
         object with 3 :class:`~astropy.units.Quantity` objects as elements.
     vcirc : :class:`~astropy.units.Quantity` (optional)
@@ -168,6 +168,11 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
     vlsr : :class:`~astropy.units.Quantity` (optional)
         Velocity of the Sun relative to the local standard
         of rest (LSR).
+    galactocentric_frame : :class:`~astropy.coordinates.Galactocentric` (optional)
+        An instantiated :class:`~astropy.coordinates.Galactocentric` frame object with
+        custom parameters for the Galactocentric coordinates. For example, if you want
+        to set your own position of the Galactic center, you can pass in a frame with
+        custom `galcen_ra` and `galcen_dec`.
 
     Returns
     -------
@@ -229,7 +234,7 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame
 
     The frame of the input coordinate determines how to interpret the given
     proper motions. For example, if the input coordinate is in the ICRS frame, the
-    proper motions are assumed to be :math:`(\mu_\alpha\cos\delta,\mu_delta)`. This
+    proper motions are assumed to be :math:`(\mu_\alpha\cos\delta,\mu_\delta)`. This
     function also handles array inputs (see examples below).
 
     Examples
