@@ -2,4 +2,3 @@ numpy>=1.7
 astropy>=0.4
 cython>=0.21
 pygaia>=0.31
-sphinx_rtd_theme
