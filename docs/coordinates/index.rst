@@ -16,7 +16,6 @@ Sagittarius and Orphan streams.
     `gary.coordinates` is currently a work-in-progress, and thus it is
     possible there will be significant API changes in later versions.
 
-
 Getting Started
 ===============
 
@@ -84,14 +83,15 @@ These functions also work on arrays of coordinates and velocities, e.g.::
                [  3.69340057e+00, -1.31601004e+03]] kpc>
 
 
-Tidal Stream Coordinates
-------------------------
+Tidal Stream Coordinate Frames
+------------------------------
 
-Also included are coordinate classes for transforming to Sagittarius and Orphan
-stream coordinates (as defined in the references below). These classes behave
-like the built-in astropy coordinates frames (e.g.,
-:class:`~astropy.coordinates.ICRS` or :class:`~astropy.coordinates.Galactic`) and
-can be transformed to and from other astropy coordinate frames::
+Also included in this subpackage are Astropy coordinate frame classes for
+transforming to Sagittarius and Orphan stream coordinates (as defined in the
+references below). These classes behave like the built-in astropy coordinates
+frames (e.g., :class:`~astropy.coordinates.ICRS` or
+:class:`~astropy.coordinates.Galactic`) and can be transformed to and from
+other astropy coordinate frames::
 
     >>> c = coord.SkyCoord(ra=100.68458*u.degree, dec=41.26917*u.degree)
     >>> c.transform_to(gc.Sagittarius)

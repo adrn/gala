@@ -28,14 +28,11 @@ For faster FFT's in the NAFF routines (:mod:`gary.dynamics`), install the
 Installing
 ==========
 
-Obtaining the source packages
------------------------------
-
 Development repository
-^^^^^^^^^^^^^^^^^^^^^^
+----------------------
 
-The latest development version of gary can be cloned from github
-using this command::
+The latest development version of gary can be cloned from
+[GitHub](https://github.com/) using git::
 
    git clone git://github.com/adrn/gary.git
 
@@ -43,7 +40,7 @@ Building and Installing
 -----------------------
 
 To build the project (from the root of the source tree, e.g., inside
-the cloned gary directory)::
+the cloned ``gary`` directory)::
 
     python setup.py build
 
