@@ -57,6 +57,6 @@ Building the documentation
 This requires a few extra pip-installable packages, listed in the
 `docs-pip-requirements.txt <https://github.com/adrn/gary/blob/master/docs-pip-requirements-txt>`_.
 You can install these extra dependencies automatically using pip (from the
-root of the project):
+root of the project)::
 
     pip install -r docs-pip-requirements.txt
