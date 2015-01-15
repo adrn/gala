@@ -7,13 +7,17 @@ Requirements
 
 This packages has the following strict requirements:
 
-- `Python <http://www.python.org/>`_ 2.7 (untested with >3.0!)
+- `Python <http://www.python.org/>`_ 2.7 (untested with versions >2.7.8)
 
 - `Numpy <http://www.numpy.org/>`_ 1.7 or later
 
-- `Cython <http://www.cython.org/>`_: 0.20 or later
+- `Cython <http://www.cython.org/>`_: 0.21 or later
 
-- `Astropy <http://www.astropy.org/>`_ 0.4 or later
+- `Astropy <http://www.astropy.org/>`_ 1.0 or later
+
+You can use pip to install these automatically using the [pip-requirements.txt](https://github.com/adrn/gary/blob/master/pip-requirements-txt) file (from the root of the project):
+
+    pip install -r pip-requirements.txt
 
 Optional
 --------
@@ -50,8 +54,6 @@ To install the project::
 Building the documentation
 --------------------------
 
-Requires a few extra pip-installable packages:
+This requires a few extra pip-installable packages, listed in the [docs-pip-requirements.txt](https://github.com/adrn/gary/blob/master/docs-pip-requirements-txt). You can install these extra dependencies automatically using pip (from the root of the project):
 
-- `numpydoc`
-
-- `sphinx-rtd-theme`
+    pip install -r docs-pip-requirements.txt
