@@ -22,8 +22,8 @@ You can use pip to install these automatically using the `pip-requirements.txt <
 Optional
 --------
 
-For faster FFT's in the NAFF routines (:mod:`gary.dynamics`), install the
-``FFTW`` library and the Python bindings, ``pyFFTW``.
+For faster FFT's in the NAFF routines (:mod:`gary.dynamics.naff`), install the
+`FFTW <http://www.fftw.org/>`_ library and the Python bindings, `pyFFTW <http://hgomersall.github.io/pyFFTW/>`_.
 
 Installing
 ==========
