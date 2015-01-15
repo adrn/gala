@@ -7,10 +7,10 @@ Coordinate Systems (`gary.coordinates`)
 Introduction
 ============
 
-The ``gary.coordinates`` package provides functions for converting
-coordinates and velocities between various astronomical systems, as well
-as :mod:`astropy.coordinates` frame classes for coordinates defined by the
-Sagittarius and Orphan streams.
+The ``gary.coordinates`` subpackage provides functions for converting velocities between
+various astronomical coordinate frames and systems. This subpackage also provides
+:mod:`astropy.coordinates` frame classes for coordinate sytems defined by the Sagittarius and
+Orphan streams.
 
 .. warning::
     `gary.coordinates` is currently a work-in-progress, and thus it is
@@ -19,8 +19,7 @@ Sagittarius and Orphan streams.
 Getting Started
 ===============
 
-The functions in this subpackage make use of the coordinates subpackage in
-Astropy, :mod:`astropy.coordinates`. Currently available are functions to:
+The core functions in this subpackage provide support to:
 
 - Convert Galactocentric, cartesian velocities to heliocentric proper motion
   and radial velocities.
@@ -32,9 +31,10 @@ Astropy, :mod:`astropy.coordinates`. Currently available are functions to:
 
 These functions work naturally with the :mod:`astropy.units` and
 :mod:`astropy.coordinates` subpackages. Handling positional transformations is already
-supported by :mod:`astropy.coordinates`, but new to v1.0 is a
+supported by :mod:`astropy.coordinates` and new to v1.0 is a
 :class:`~astropy.coordinates.Galactocentric` reference frame. However, there is currently
-no support in Astropy for transforming velocities. The functions below attempt to bridge that gap as a temporary solution until support is added (planned for v1.1).
+no support in Astropy for transforming velocities. The functions below attempt to bridge
+that gap as a temporary solution until support is added (planned for v1.1).
 
 For example, to convert a spherical, heliocentric velocity (proper motion and radial
 velocity) in an ICRS frame to a Galactocentric, cartesian velocity, we first have
@@ -51,7 +51,7 @@ function, :func:`~gary.coordinates.vhel_to_gal`::
     >>> pm = [1.5, -1.7] * u.mas/u.yr
     >>> rv = 151.1 * u.km/u.s
     >>> gc.vhel_to_gal(c.icrs, pm=pm, rv=rv)
-    <Quantity [-22.34899301,  1.42957337,  4.13070449] kpc>
+    <Quantity [-134.44094022, 228.42957796,  52.97041271] km / s>
 
 Because the input coordinate is given in the ICRS frame, the function assumes that
 the proper motion is also in this frame, e.g., that the proper motion components are
@@ -72,16 +72,28 @@ keyword argument ``galactocentric_frame``::
     ...                vcirc=218*u.km/u.s, vlsr=[0.,0.,0.]*u.km/u.s)
     <Quantity [-144.5344455 , 221.17957796,  45.50447318] km / s>
 
-These functions also work on arrays of coordinates and velocities, e.g.::
+The inverse transformations are also available, with the function
+:func:`~gary.coordinates.vgal_to_hel`. Here, because the input coordinate is passed
+in after being transformed to the ICRS frame, the output proper motions will also be
+given in the ICRS frame :math:`(\mu_\alpha\cos\delta, \mu_\delta)`::
 
-    >>> c = coord.SkyCoord(ra=[100.68458, 41.23123]*u.degree,
-    ...                    dec=[41.26917, -11.412]*u.degree,
-    ...                    distance=[13.412, 1534.1231]*u.kpc)
-    >>> TODO:
-    <Quantity [[ -2.11299130e+01, -7.89201791e+02],
-               [  1.27822920e+00, -1.08828561e+02],
-               [  3.69340057e+00, -1.31601004e+03]] kpc>
+    >>> xyz = coord.Galactocentric([11., 15, 25] * u.kpc)
+    >>> vxyz = [121., 150., -75.] * u.km/u.s
+    >>> gc.vgal_to_hel(xyz.transform_to(coord.ICRS), vxyz)
+    (<Quantity -0.5882547406162156 mas / yr>, <Quantity -1.7095914403763801 mas / yr>, <Quantity -137.0530746020453 km / s>)
 
+Passing in coordinates in the Galactic frame means that the output proper motions will
+instead be :math:`(\mu_l\cos b, \mu_b)`::
+
+    >>> gc.vgal_to_hel(xyz.transform_to(coord.Galactic), vxyz)
+    (<Quantity [-2.84108065] mas / yr>, <Quantity [ 0.68248581] mas / yr>, <Quantity -244.38824295598562 km / s>)
+
+All of these functions also work on arrays of coordinates and velocities, e.g.::
+
+    >>> xyz = coord.Galactocentric(np.random.uniform(-20,20,size=(3,10)) * u.kpc)
+    >>> vxyz = np.random.uniform(-150,150,size=(3,10)) * u.km/u.s
+    >>> gc.vgal_to_hel(xyz.transform_to(coord.ICRS), vxyz) # doctest: +SKIP
+    ...etc.
 
 Tidal Stream Coordinate Frames
 ------------------------------
