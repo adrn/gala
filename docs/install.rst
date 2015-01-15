@@ -15,15 +15,18 @@ This packages has the following strict requirements:
 
 - `Astropy <http://www.astropy.org/>`_ 1.0 or later
 
-You can use pip to install these automatically using the `pip-requirements.txt <https://github.com/adrn/gary/blob/master/pip-requirements-txt>`_ file (from the root of the project):
+You can use pip to install these automatically using the
+`pip-requirements.txt <https://github.com/adrn/gary/blob/master/pip-requirements-txt>`_
+file (from the root of the project):
 
     pip install -r pip-requirements.txt
 
 Optional
 --------
 
-For faster FFT's in the NAFF routines (:mod:`gary.dynamics.naff`), install the
-`FFTW <http://www.fftw.org/>`_ library and the Python bindings, `pyFFTW <http://hgomersall.github.io/pyFFTW/>`_.
+For faster FFT's in the NAFF routines (:class:`~gary.dynamics.naff.NAFF`),
+install the `FFTW <http://www.fftw.org/>`_ library and the Python bindings,
+`pyFFTW <http://hgomersall.github.io/pyFFTW/>`_.
 
 Installing
 ==========
@@ -51,6 +54,9 @@ To install the project::
 Building the documentation
 --------------------------
 
-This requires a few extra pip-installable packages, listed in the `docs-pip-requirements.txt <https://github.com/adrn/gary/blob/master/docs-pip-requirements-txt>`_. You can install these extra dependencies automatically using pip (from the root of the project):
+This requires a few extra pip-installable packages, listed in the
+`docs-pip-requirements.txt <https://github.com/adrn/gary/blob/master/docs-pip-requirements-txt>`_.
+You can install these extra dependencies automatically using pip (from the
+root of the project):
 
     pip install -r docs-pip-requirements.txt
