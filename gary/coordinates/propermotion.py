@@ -71,7 +71,7 @@ def pm_gal_to_icrs(coordinate, mu, cosb):
     for i in range(n):
         new_mu[:,i] = R[...,i].dot(mu[:,i])
 
-    return new_mu.reshape(mu.shape)*mulcosb.unit
+    return new_mu.reshape((2,) + mul.shape)*mulcosb.unit
 
 def pm_icrs_to_gal(coordinate, mu, cosdec):
     """ Convert proper motion in ICRS coordinates (RA, Dec) to
@@ -132,6 +132,4 @@ def pm_icrs_to_gal(coordinate, mu, cosdec):
     for i in range(n):
         new_mu[:,i] = R[...,i].dot(mu[:,i])
 
-    return new_mu.reshape(mu.shape)*muacosd.unit
-
-    # TODO: check proper motion stuff to make sure pm returned is correct shape
+    return new_mu.reshape((2,) + mua.shape)*muacosd.unit
