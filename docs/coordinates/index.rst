@@ -51,7 +51,9 @@ function, :func:`~gary.coordinates.vhel_to_gal`::
     >>> pm = [1.5, -1.7] * u.mas/u.yr
     >>> rv = 151.1 * u.km/u.s
     >>> gc.vhel_to_gal(c.icrs, pm=pm, rv=rv)
-    <Quantity [-134.44094022, 228.42957796,  52.97041271] km / s>
+    <Quantity [[-134.44094022],
+               [ 228.42957796],
+               [  52.97041271]] km / s>
 
 Because the input coordinate is given in the ICRS frame, the function assumes that
 the proper motion is also in this frame, e.g., that the proper motion components are
@@ -59,7 +61,9 @@ the proper motion is also in this frame, e.g., that the proper motion components
 the Galactic frame, the components are assumed to be :math:`(\mu_l\cos b, \mu_b)`::
 
     >>> gc.vhel_to_gal(c.galactic, pm=pm, rv=rv)
-    <Quantity [-137.63839042,  232.10966635,  40.73819003] km / s>
+    <Quantity [[-137.63839042],
+               [ 232.10966635],
+               [  40.73819003]] km / s>
 
 The velocity transformation functions allow specifying the circular velocity at the Sun
 (`vcirc`) and a 3-vector specifying the Sun's velocity with respect to the local
@@ -70,7 +74,9 @@ keyword argument ``galactocentric_frame``::
     >>> frame = coord.Galactocentric(z_sun=10.*u.pc, galcen_distance=8.3*u.kpc)
     >>> gc.vhel_to_gal(c.icrs, pm=pm, rv=rv, galactocentric_frame=frame,
     ...                vcirc=218*u.km/u.s, vlsr=[0.,0.,0.]*u.km/u.s)
-    <Quantity [-144.5344455 , 221.17957796,  45.50447318] km / s>
+    <Quantity [[-144.5344455 ],
+               [ 221.17957796],
+               [  45.50447318]] km / s>
 
 The inverse transformations are also available, with the function
 :func:`~gary.coordinates.vgal_to_hel`. Here, because the input coordinate is passed
@@ -80,20 +86,20 @@ given in the ICRS frame :math:`(\mu_\alpha\cos\delta, \mu_\delta)`::
     >>> xyz = coord.Galactocentric([11., 15, 25] * u.kpc)
     >>> vxyz = [121., 150., -75.] * u.km/u.s
     >>> gc.vgal_to_hel(xyz.transform_to(coord.ICRS), vxyz)
-    (<Quantity -0.5882547406162156 mas / yr>, <Quantity -1.7095914403763801 mas / yr>, <Quantity -137.0530746020453 km / s>)
+    (<Quantity 0.2834641666390529 mas / yr>, <Quantity -0.888174413651107 mas / yr>, <Quantity -29.71790624810498 km / s>)
 
 Passing in coordinates in the Galactic frame means that the output proper motions will
 instead be :math:`(\mu_l\cos b, \mu_b)`::
 
     >>> gc.vgal_to_hel(xyz.transform_to(coord.Galactic), vxyz)
-    (<Quantity [-2.84108065] mas / yr>, <Quantity [ 0.68248581] mas / yr>, <Quantity -244.38824295598562 km / s>)
+    (<Quantity -0.7713637315333076 mas / yr>, <Quantity -0.5236445726220675 mas / yr>, <Quantity -29.717906248104974 km / s>)
 
 All of these functions also work on arrays of coordinates and velocities, e.g.::
 
+    >>> import numpy as np
     >>> xyz = coord.Galactocentric(np.random.uniform(-20,20,size=(3,10)) * u.kpc)
     >>> vxyz = np.random.uniform(-150,150,size=(3,10)) * u.km/u.s
     >>> gc.vgal_to_hel(xyz.transform_to(coord.ICRS), vxyz) # doctest: +SKIP
-    ...etc.
 
 Tidal Stream Coordinate Frames
 ------------------------------
@@ -108,7 +114,7 @@ other astropy coordinate frames::
     >>> c = coord.SkyCoord(ra=100.68458*u.degree, dec=41.26917*u.degree)
     >>> c.transform_to(gc.Sagittarius)
     <SkyCoord (Sagittarius): (Lambda, Beta, distance) in (deg, deg, )
-        (179.5851618648458, -12.558369149811035, 1.0)>
+        (179.58511053544734, -12.558450192162631, 1.0)>
     >>> s = gc.Sagittarius(Lambda=156.342*u.degree, Beta=1.1*u.degree)
     >>> c = coord.SkyCoord(s)
     >>> c.galactic
