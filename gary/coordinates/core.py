@@ -213,7 +213,7 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
     pm_radec = (mua_cosd, mud)
 
     if coord_frame.name == 'icrs':
-        pm = pm_radec
+        pm = u.Quantity(map(np.atleast_1d,pm_radec))
 
     elif coord_frame.name == 'galactic':
         # transform to ICRS proper motions
@@ -296,7 +296,7 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame
     coord_frame = c.frame
 
     if coord_frame.name == 'icrs':
-        pm_radec = pm
+        pm_radec = u.Quantity(map(np.atleast_1d,pm))
 
     elif coord_frame.name == 'galactic':
         # transform to ICRS proper motions
