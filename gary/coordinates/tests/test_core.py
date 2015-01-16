@@ -113,9 +113,16 @@ class TestVHelGalConvert(object):
             pm = [row['pml'], row['pmb']]*u.mas/u.yr
             rv = row['rv']*u.km/u.s
 
+            # stupid check
+            vxyz_i = vhel_to_gal(c.icrs, pm=pm, rv=rv,
+                                 vcirc=0*u.km/u.s,
+                                 vlsr=[0.,0,0]*u.km/u.s)
+
             vxyz = vhel_to_gal(c.galactic, pm=pm, rv=rv,
                                vcirc=0*u.km/u.s,
                                vlsr=[0.,0,0]*u.km/u.s)
+
+            assert vxyz_i.shape == vxyz.shape
 
             true_UVW = [row['U'],row['V'],row['W']]*u.km/u.s
             found_UVW = vxyz.T[0]
