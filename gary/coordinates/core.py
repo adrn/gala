@@ -185,6 +185,9 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
     if galactocentric_frame is None:
         galactocentric_frame = coord.Galactocentric
 
+    # so I don't accidentally modify in place
+    vxyz = vxyz.copy()
+
     # make sure this is a coordinate and get the frame for later use
     c = coord.SkyCoord(coordinate)
     coord_frame = c.frame
@@ -223,7 +226,9 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
         raise NotImplementedError("Proper motions in the {} system are not "
                                   "currently supported.".format(coord_frame.name))
 
-    # TODO: check proper motion stuff to make sure pm returned is correct shape
+    if x_icrs.ndim == 1 and v_icrs.ndim == 1:
+        pm = (pm[0][0],pm[1][0])
+
     return tuple(pm) + (vr,)
 
 def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=None):
