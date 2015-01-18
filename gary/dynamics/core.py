@@ -75,7 +75,8 @@ def classify_orbit(w):
 
     """
     # get angular momenta
-    Ls = angular_momentum(w)
+    ndim = w.shape[-1]
+    Ls = angular_momentum(w[...,:ndim//2], w[...,ndim//2:])
 
     # if only 2D, add another empty axis
     if w.ndim == 2:
