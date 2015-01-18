@@ -20,6 +20,24 @@ import astropy.units as u
 
 __all__ = ['cartesian_to_spherical']
 
+def _pos_to_repr(pos):
+
+    if hasattr(pos, 'xyz'):  # Representation-like
+        pos_repr = coord.CartesianRepresentation(pos.xyz)
+
+    elif hasattr(pos, 'cartesian'):  # Frame-like
+        pos_repr = pos.cartesian
+
+    elif hasattr(pos, 'unit'):  # Quantity-like
+        pos_repr = coord.CartesianRepresentation(pos)
+
+    else:
+        raise TypeError("Unsupported position type '{0}'. Position must be "
+                        "an Astropy Representation or Frame, or a "
+                        "Quantity instance".format(type(pos)))
+
+    return pos_repr
+
 def cartesian_to_spherical(pos, vel):
     """
     Convert a velocity in Cartesian coordinates to velocity components
@@ -29,8 +47,14 @@ def cartesian_to_spherical(pos, vel):
 
     Parameters
     ----------
-    pos : array_like, :class:`astropy.coordinates.BaseCoordinateFrame`
-    vel :
+    pos : :class:`astropy.units.Quantity`, :class:`astropy.coordinates.BaseCoordinateFrame`, :class:`astropy.coordinates.BaseRepresentation`
+        Input position or positions as one of the allowed types. You may pass in a
+        :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
+        units if you are working in natural units.
+    vel : :class:`astropy.units.Quantity`
+        Input velocity or velocities as one of the allowed types. You may pass in a
+        :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
+        units if you are working in natural units.
 
     Returns
     -------
@@ -40,31 +64,31 @@ def cartesian_to_spherical(pos, vel):
 
     """
 
-    # if this is an astropy coordinate frame, need to get out cartesian pos.
-    try:
-        xyz = pos.cartesian.xyz
-    except AttributeError:
-        xyz = pos
-
-    # if it doesn't have a unit, make it dimensionless_unscaled
-    try:
-        xyz.unit
-    except AttributeError:
-        xyz = xyz * u.dimensionless_unscaled
-
-    # convert position to spherical
-    car_pos = coord.CartesianRepresentation(xyz)
+    # position in Cartesian and spherical
+    car_pos = _pos_to_repr(pos)
     sph_pos = car_pos.represent_as(coord.SphericalRepresentation)
+
+    if not hasattr(vel, 'unit'):
+        raise TypeError("Unsupported velocity type '{}'. Velocity must be "
+                        "an Astropy Quantity instance.".format(type(vel)))
 
     # get out spherical components
     d = sph_pos.distance
     dxy = np.sqrt(car_pos.x**2 + car_pos.y**2)
 
     vr = np.sum(car_pos.xyz * vel, axis=0) / d
-    mu_lon = -(car_pos.xyz[0]*vel[1] - vel[0]*car_pos.xyz[1]) / dxy**2
-    mu_lat = -(car_pos.xyz[2]*(car_pos.xyz[0]*vel[0] + car_pos.xyz[1]*vel[1]) - dxy**2*vel[2]) / d**2 / dxy
 
-    return (vr, mu_lon, mu_lat)
+    mu_lon = -(car_pos.xyz[0]*vel[1] - vel[0]*car_pos.xyz[1]) / dxy**2
+    vlon = mu_lon * d
+
+    mu_lat = -(car_pos.xyz[2]*(car_pos.xyz[0]*vel[0] + car_pos.xyz[1]*vel[1]) - dxy**2*vel[2]) / d**2 / dxy
+    vlat = mu_lat * d * np.cos(sph_pos.lat)
+
+    vsph = np.zeros_like(vel)
+    vsph[0] = vr
+    vsph[1] = vlon
+    vsph[2] = vlat
+    return vsph
 
 def spherical_to_cartesian(pos, vel):
     pass
