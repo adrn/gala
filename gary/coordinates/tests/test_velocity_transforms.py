@@ -32,7 +32,7 @@ def test_cartesian_to_spherical():
     # dimensionless
     vsph1 = cartesian_to_spherical(pos.value * u.dimensionless_unscaled,
                                    vel.value * u.dimensionless_unscaled)
-    assert vsph1.unit == u.km/u.s
+    assert vsph1.unit == u.dimensionless_unscaled
 
     # astropy coordinates
     cpos = coord.SkyCoord(pos_repr)

@@ -39,11 +39,21 @@ def _pos_to_repr(pos):
     return pos_repr
 
 def cartesian_to_spherical(pos, vel):
-    """
+    r"""
     Convert a velocity in Cartesian coordinates to velocity components
     in spherical coordinates. This follows the naming convention used in
     :mod:`astropy.coordinates`: spherical coordinates consist of a longitude
     in the range [0,360) deg and latitude in the range [-90, 90] deg.
+
+    The components of the output velocity all have units of velocity, i.e.,
+    this is not used for transforming from a cartesian velocity to angular
+    velocities, but rather the velocity vector components in Eq. 2 below.
+
+    .. math::
+
+        \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}
+        &= v_r\boldsymbol{\hat{r}} + v_\phi\boldsymbol{\hat{\phi}} + v_\theta\boldsymbol{\hat{\theta}}
+        &= \dot{r}\boldsymbol{\hat{r}} + r\sin\theta \dot{\phi}\boldsymbol{\hat{\phi}} + r\dot{\theta}\boldsymbol{\hat{\theta}}
 
     Parameters
     ----------
@@ -54,11 +64,14 @@ def cartesian_to_spherical(pos, vel):
     vel : :class:`astropy.units.Quantity`
         Input velocity or velocities as one of the allowed types. You may pass in a
         :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
-        units if you are working in natural units.
+        units if you are working in natural units. axis=0 is assumed to be the
+        dimensionality axis, e.g., ``vx,vy,vz = vel`` should work.
 
     Returns
     -------
     vsph : :class:`astropy.units.Quantity`
+        Array of spherical velocity components. Will have the same shape as the
+        input velocity.
 
     Examples
     --------
