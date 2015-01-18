@@ -12,26 +12,42 @@ from astropy import log as logger
 
 __all__ = ['angular_momentum', 'classify_orbit', 'align_circulation_with_z']
 
-def angular_momentum(w):
-    """
-    Compute the angular momentum vector(s) of phase-space point(s), `w`.
+def angular_momentum(q, p):
+    r"""
+    Compute the angular momentum vector(s) of a single or array of positions
+    and conjugate momenta, ``q`` and ``p``.
+
+    .. math::
+
+        \boldsymbol{L} = \boldsymbol{q} \times \boldsymbol{p}
+
+    Examples
+    --------
+
+        >>> import numpy as np
+        >>> import astropy.units as u
+        >>> q = np.array([1., 0, 0]) * u.au
+        >>> p = np.array([0, 2*np.pi, 0]) * u.au/u.yr
+        >>> angular_momentum(q, p)
+        <Quantity [ 0.        , 0.        , 6.28318531] AU2 / yr>
 
     Parameters
     ----------
-    w : array_like
-        Array of phase-space positions. The last axis (`axis=-1`) is assumed
-        to be the phase-space dimension so that the phase-space dimensionality
-        is `w.shape[-1]`.
+    q : array_like, :class:`~astropy.units.Quantity`
+        Array of positions.
+    p : array_like, :class:`~astropy.units.Quantity`
+        Array of momenta, or, velocities if working in per-mass units.
 
     Returns
     -------
-    L : :class:`numpy.ndarray`
+    L : :class:`numpy.ndarray`, :class:`~astropy.units.Quantity`
         Array of angular momentum vectors.
 
     """
-    w = np.atleast_1d(w)
-    ndim = w.shape[-1]
-    return np.cross(w[...,:ndim//2], w[...,ndim//2:])
+    try:
+        return np.cross(q,p) * q.unit * p.unit
+    except AttributeError:  # q,p are just array's
+        return np.cross(q,p)
 
 def classify_orbit(w):
     """
