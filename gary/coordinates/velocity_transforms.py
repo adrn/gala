@@ -13,7 +13,8 @@ import numpy as np
 import astropy.coordinates as coord
 
 __all__ = ['cartesian_to_spherical', 'cartesian_to_physicsspherical',
-           'cartesian_to_cylindrical']
+           'cartesian_to_cylindrical', 'spherical_to_cartesian',
+           'physicsspherical_to_cartesian', 'cylindrical_to_cartesian']
 
 def _pos_to_repr(pos):
 
