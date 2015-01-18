@@ -22,26 +22,39 @@ from ..velocity_transforms import *
 
 logger.setLevel(logging.DEBUG)
 
-def test_cartesian_to_spherical():
-    n = 10
+class TestCartesianToAll(object):
 
-    pos = np.random.uniform(-10,10,size=(3,n)) * u.kpc
-    vel = np.random.uniform(-100,100,size=(3,n)) * u.km/u.s
-    pos_repr = coord.CartesianRepresentation(pos)
+    def setup(self):
+        n = 10
+        self.pos = np.random.uniform(-10,10,size=(3,n)) * u.kpc
+        self.vel = np.random.uniform(-100,100,size=(3,n)) * u.km/u.s
+        self.pos_repr = coord.CartesianRepresentation(self.pos)
 
-    # dimensionless
-    vsph1 = cartesian_to_spherical(pos.value * u.dimensionless_unscaled,
-                                   vel.value * u.dimensionless_unscaled)
-    assert vsph1.unit == u.dimensionless_unscaled
+    def test_to_spherical(self):
+        all_vs = []
+        for func in [cartesian_to_spherical,
+                     cartesian_to_physicsspherical,
+                     cartesian_to_cylindrical]:
 
-    # astropy coordinates
-    cpos = coord.SkyCoord(pos_repr)
-    vsph2 = cartesian_to_spherical(cpos, vel)
-    assert vsph2.unit == u.km/u.s
+            # dimensionless
+            vsph1 = func(self.pos.value * u.dimensionless_unscaled,
+                         self.vel.value * u.dimensionless_unscaled)
+            assert vsph1.unit == u.dimensionless_unscaled
 
-    # astropy representation
-    vsph3 = cartesian_to_spherical(pos_repr, vel)
-    assert vsph3.unit == u.km/u.s
+            # astropy coordinates
+            cpos = coord.SkyCoord(self.pos_repr)
+            vsph2 = func(cpos, self.vel)
+            assert vsph2.unit == u.km/u.s
 
-    np.testing.assert_allclose(vsph1, vsph2)
-    np.testing.assert_allclose(vsph1, vsph3)
+            # astropy representation
+            vsph3 = func(self.pos_repr, self.vel)
+            assert vsph3.unit == u.km/u.s
+
+            np.testing.assert_allclose(vsph1, vsph2)
+            np.testing.assert_allclose(vsph1, vsph3)
+
+            all_vs.append(vsph1)
+            if len(all_vs) == 2:
+                break
+
+        np.testing.assert_allclose(all_vs[0], all_vs[1])
