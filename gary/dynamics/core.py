@@ -70,7 +70,8 @@ def classify_orbit(w):
     -------
     circulation : :class:`numpy.ndarray`
         An array that specifies whether there is circulation about any of
-        the axes of the input orbit. Shape: (len(w), 3)
+        the axes of the input orbit. For a single orbit, will return a
+        1D array, but for multiple orbits, the shape will be (len(w), 3).
 
     """
     # get angular momenta
@@ -78,8 +79,11 @@ def classify_orbit(w):
 
     # if only 2D, add another empty axis
     if w.ndim == 2:
+        single_orbit = True
         ntimesteps,ndim = w.shape
         w = w.reshape(ntimesteps,1,ndim)
+    else:
+        single_orbit = False
 
     ntimes,norbits,ndim = w.shape
 
@@ -95,7 +99,11 @@ def classify_orbit(w):
         ix = np.atleast_1d(np.any(cnd, axis=0))
         loop[ix,ii] = 0
 
-    return loop.astype(int)
+    loop = loop.astype(int)
+    if single_orbit:
+        return loop.reshape((ndim//2,))
+    else:
+        return loop
 
 def align_circulation_with_z(w, loop_bit):
     """
