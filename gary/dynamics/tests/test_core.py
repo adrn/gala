@@ -11,6 +11,7 @@ import os
 import logging
 
 # Third-party
+import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy import log as logger
@@ -31,12 +32,17 @@ if not os.path.exists(plot_path):
 
 def test_angular_momentum():
 
-    assert np.allclose(angular_momentum([1.,0.,0.,0.,0.,1.]),
+    assert np.allclose(angular_momentum([1.,0.,0.],[0.,0.,1.]),
                        [0., -1, 0])
-    assert np.allclose(angular_momentum([1.,0.,0.,0.,1.,0.]),
+    assert np.allclose(angular_momentum([1.,0.,0.],[0.,1.,0.]),
                        [0., 0, 1])
-    assert np.allclose(angular_momentum([0.,1.,0.,0.,0.,1.]),
+    assert np.allclose(angular_momentum([0.,1.,0.],[0.,0.,1.]),
                        [1., 0, 0])
+
+    q = [1.,0,0]*u.kpc
+    p = [0,200.,0]*u.pc/u.Myr
+    np.testing.assert_allclose(angular_momentum(q,p).to(u.kpc**2/u.Myr),
+                               [0,0,0.2]*u.kpc**2/u.Myr)
 
 # ----------------------------------------------------------------------------
 
