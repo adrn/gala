@@ -18,7 +18,8 @@ import astropy.units as u
 # Project
 # ...
 
-__all__ = ['cartesian_to_spherical']
+__all__ = ['cartesian_to_spherical', 'cartesian_to_physicsspherical',
+           'cartesian_to_cylindrical']
 
 def _pos_to_repr(pos):
 
@@ -42,8 +43,9 @@ def cartesian_to_spherical(pos, vel):
     r"""
     Convert a velocity in Cartesian coordinates to velocity components
     in spherical coordinates. This follows the naming convention used in
-    :mod:`astropy.coordinates`: spherical coordinates consist of a longitude
-    in the range [0,360) deg and latitude in the range [-90, 90] deg.
+    :mod:`astropy.coordinates`: spherical coordinates consist of a longitude,
+    :math:`\phi`, in the range [0, 360] deg and latitude, :math:`\delta`, in
+    the range [-90, 90] deg.
 
     The components of the output velocity all have units of velocity, i.e.,
     this is not used for transforming from a cartesian velocity to angular
@@ -52,8 +54,8 @@ def cartesian_to_spherical(pos, vel):
     .. math::
 
         \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}
-        &= v_r\boldsymbol{\hat{r}} + v_\phi\boldsymbol{\hat{\phi}} + v_\theta\boldsymbol{\hat{\theta}}
-        &= \dot{r}\boldsymbol{\hat{r}} + r\sin\theta \dot{\phi}\boldsymbol{\hat{\phi}} + r\dot{\theta}\boldsymbol{\hat{\theta}}
+        &= v_r\boldsymbol{\hat{d}} + v_\phi\boldsymbol{\hat{\phi}} + v_\delta\boldsymbol{\hat{\delta}}
+        &= \dot{d}\boldsymbol{\hat{d}} + d\cos\delta \dot{\phi}\boldsymbol{\hat{\phi}} + d\dot{\delta}\boldsymbol{\hat{\delta}}
 
     Parameters
     ----------
@@ -104,19 +106,83 @@ def cartesian_to_spherical(pos, vel):
     vsph[2] = vlat
     return vsph
 
+def cartesian_to_physicsspherical(pos, vel):
+    r"""
+    Convert a velocity in Cartesian coordinates to velocity components
+    in spherical coordinates. This follows the naming convention used in
+    :mod:`astropy.coordinates`: physics spherical coordinates consist of
+    a longitude, :math:`\phi`, in the range [0, 360] deg and a colatitude,
+    :math:`\theta`, in the range [0, 180] deg, measured from the z-axis.
+
+    The components of the output velocity all have units of velocity, i.e.,
+    this is not used for transforming from a cartesian velocity to angular
+    velocities, but rather the velocity vector components in Eq. 2 below.
+
+    .. math::
+
+        \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}
+        &= v_r\boldsymbol{\hat{r}} + v_\phi\boldsymbol{\hat{\phi}} + v_\theta\boldsymbol{\hat{\theta}}
+        &= \dot{r}\boldsymbol{\hat{r}} + r\sin\theta \dot{\phi}\boldsymbol{\hat{\phi}} + r\dot{\theta}\boldsymbol{\hat{\theta}}
+
+    Parameters
+    ----------
+    pos : :class:`astropy.units.Quantity`, :class:`astropy.coordinates.BaseCoordinateFrame`, :class:`astropy.coordinates.BaseRepresentation`
+        Input position or positions as one of the allowed types. You may pass in a
+        :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
+        units if you are working in natural units.
+    vel : :class:`astropy.units.Quantity`
+        Input velocity or velocities as one of the allowed types. You may pass in a
+        :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
+        units if you are working in natural units. axis=0 is assumed to be the
+        dimensionality axis, e.g., ``vx,vy,vz = vel`` should work.
+
+    Returns
+    -------
+    vsph : :class:`astropy.units.Quantity`
+        Array of spherical velocity components. Will have the same shape as the
+        input velocity.
+
+    Examples
+    --------
+
+    """
+
+    # position in Cartesian and spherical
+    car_pos = _pos_to_repr(pos)
+    sph_pos = car_pos.represent_as(coord.PhysicsSphericalRepresentation)
+
+    if not hasattr(vel, 'unit'):
+        raise TypeError("Unsupported velocity type '{}'. Velocity must be "
+                        "an Astropy Quantity instance.".format(type(vel)))
+
+    # get out spherical components
+    r = sph_pos.r
+    dxy = np.sqrt(car_pos.x**2 + car_pos.y**2)
+
+    vr = np.sum(car_pos.xyz * vel, axis=0) / r
+
+    mu_lon = -(car_pos.xyz[0]*vel[1] - vel[0]*car_pos.xyz[1]) / dxy**2
+    vlon = mu_lon * r
+
+    mu_lat = -(car_pos.xyz[2]*(car_pos.xyz[0]*vel[0] + car_pos.xyz[1]*vel[1]) - dxy**2*vel[2]) / r**2 / dxy
+    vlat = mu_lat * r * np.sin(sph_pos.theta)
+
+    vsph = np.zeros_like(vel)
+    vsph[0] = vr
+    vsph[1] = vlon
+    vsph[2] = vlat
+    return vsph
+
+def cartesian_to_cylindrical(pos, vel):
+    pass
+
 def spherical_to_cartesian(pos, vel):
     pass
     v = [rv*np.cos(a)*np.cos(d) - D*np.sin(a)*mura_cosdec - D*np.cos(a)*np.sin(d)*mudec,
               rv*np.sin(a)*np.cos(d) + D*np.cos(a)*mura_cosdec - D*np.sin(a)*np.sin(d)*mudec,
               rv*np.sin(d) + D*np.cos(d)*mudec]
 
-def cartesian_to_physicsspherical(pos, vel):
-    pass
-
 def physicsspherical_to_cartesian(pos, vel):
-    pass
-
-def cartesian_to_cylindrical(pos, vel):
     pass
 
 def cylindrical_to_cartesian(pos, vel):
