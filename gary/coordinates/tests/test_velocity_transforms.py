@@ -32,13 +32,16 @@ def test_cartesian_to_spherical():
     # dimensionless
     vsph1 = cartesian_to_spherical(pos.value * u.dimensionless_unscaled,
                                    vel.value * u.dimensionless_unscaled)
+    assert vsph1.unit == u.km/u.s
 
     # astropy coordinates
     cpos = coord.SkyCoord(pos_repr)
     vsph2 = cartesian_to_spherical(cpos, vel)
+    assert vsph2.unit == u.km/u.s
 
     # astropy representation
     vsph3 = cartesian_to_spherical(pos_repr, vel)
+    assert vsph3.unit == u.km/u.s
 
     np.testing.assert_allclose(vsph1, vsph2)
     np.testing.assert_allclose(vsph1, vsph3)
