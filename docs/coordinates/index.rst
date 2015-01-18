@@ -98,7 +98,19 @@ All of these functions also work on arrays of coordinates and velocities, e.g.::
 Proper motion transformations
 -----------------------------
 
+Transforming between ICRS and Galactic proper motions is supported in Gary. To
+demonstrate, we again need to first define a coordinate for the object of
+interest::
 
+    >>> c = coord.SkyCoord(ra=100.68458*u.deg, dec=41.26917*u.deg)
+
+Now we define the proper motion as a :class:`~astropy.units.Quantity`, and pass
+in to the relevant transformation function. Here, we will transform from ICRS
+to Galactic::
+
+    >>> pm = [1.53, -2.1] * u.mas/u.yr
+    >>> gc.pm_icrs_to_gal(c, pm)
+    <Quantity [ 2.52366087, 0.61809041] mas / yr>
 
 Tidal Stream Coordinate Frames
 ------------------------------
