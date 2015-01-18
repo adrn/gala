@@ -33,4 +33,5 @@ def debug_factory(logger, debug_level):
 logging.addLevelName(logging.INFO+5, 'IMPORTANT')
 setattr(logger, 'important', debug_factory(logger, logging.INFO+5))
 logger.setLevel(logging.INFO+1)
-del logging
+
+del logging, debug_factory, u
