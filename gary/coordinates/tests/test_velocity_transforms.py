@@ -56,8 +56,8 @@ class TestCartesianToAll(object):
             np.testing.assert_allclose(vsph1, vsph2)
             np.testing.assert_allclose(vsph1, vsph3)
 
+            true_v = self.vel.copy()
             if func == cartesian_to_physicsspherical:
-                true_v = self.vel.copy()
                 true_v[2] *= -1.
 
             np.testing.assert_allclose(vsph1, true_v)
