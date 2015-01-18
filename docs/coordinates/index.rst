@@ -95,6 +95,11 @@ All of these functions also work on arrays of coordinates and velocities, e.g.::
     >>> vxyz = np.random.uniform(-150,150,size=(3,10)) * u.km/u.s
     >>> gc.vgal_to_hel(xyz.transform_to(coord.ICRS), vxyz) # doctest: +SKIP
 
+Proper motion transformations
+-----------------------------
+
+
+
 Tidal Stream Coordinate Frames
 ------------------------------
 
