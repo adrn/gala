@@ -1,6 +1,6 @@
 # coding: utf-8
 
-""" ...explain... """
+""" Velocity transformations for coordinate representations. """
 
 from __future__ import division, print_function
 
@@ -11,7 +11,6 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 # Third-party
 import numpy as np
 import astropy.coordinates as coord
-import astropy.units as u
 
 __all__ = ['cartesian_to_spherical', 'cartesian_to_physicsspherical',
            'cartesian_to_cylindrical']
