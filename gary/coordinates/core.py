@@ -140,6 +140,7 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
     Examples
     --------
 
+        >>> import astropy.units as u
         >>> import astropy.coordinates as coord
         >>> c = coord.Galactocentric(x=15.*u.kpc, y=13.*u.kpc, z=2.*u.kpc)
         >>> vxyz = [-115., 100., 95.]*u.km/u.s
@@ -246,6 +247,7 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame
     Examples
     --------
 
+        >>> import astropy.units as u
         >>> import astropy.coordinates as coord
         >>> c = coord.SkyCoord(ra=196.5*u.degree, dec=-10.33*u.deg, distance=16.2*u.kpc)
         >>> pm = [-1.53, 3.5]*u.mas/u.yr

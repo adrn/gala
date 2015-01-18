@@ -12,9 +12,19 @@ import astropy.coordinates as coord
 
 __all__ = ['pm_gal_to_icrs', 'pm_icrs_to_gal']
 
-def pm_gal_to_icrs(coordinate, mu, cosb):
-    """ Convert proper motion in Galactic coordinates (l,b) to
+def pm_gal_to_icrs(coordinate, mu):
+    r""" Convert proper motion in Galactic coordinates (l,b) to
         ICRS coordinates (RA, Dec).
+
+        Examples
+        --------
+
+            >>> import astropy.units as u
+            >>> import astropy.coordinates as coord
+            >>> c = coord.SkyCoord(ra=196.5*u.degree, dec=-10.33*u.deg, distance=16.2*u.kpc)
+            >>> pm = [-1.53, 3.5]*u.mas/u.yr
+            >>> pm_gal_to_icrs(c, pm)
+            <Quantity [-1.84741767, 3.34334366] mas / yr>
 
         Parameters
         ----------
@@ -26,12 +36,8 @@ def pm_gal_to_icrs(coordinate, mu, cosb):
             latitude. Can either be a tuple of two
             :class:`~astropy.units.Quantity` objects or a single
             :class:`~astropy.units.Quantity` with shape (2,N).
-            If proper motion of longitude is pre-multipled by cosine of
-            Galactic latitude, use the keyword argument `cosb=True` to
-            automatically handle this.
-        cosb : bool
-            Specify whether the input proper motion in longitude has been
-            pre-multiplied by cosine of the latitude. Default is False.
+            The proper motion in longitude is assumed to be multipled by
+            cosine of Galactic latitude, :math:`\mu_l\cosb`.
 
         Returns
         -------
@@ -44,12 +50,7 @@ def pm_gal_to_icrs(coordinate, mu, cosb):
     g = coordinate.transform_to(coord.Galactic)
     i = coordinate.transform_to(coord.ICRS)
 
-    mul,mub = map(np.atleast_1d, mu)
-    if cosb is False:
-        mulcosb = mul*np.cos(g.b)
-    else:
-        mulcosb = mul
-
+    mulcosb,mub = map(np.atleast_1d, mu)
     n = len(mulcosb)
 
     # coordinates of NGP
@@ -71,11 +72,21 @@ def pm_gal_to_icrs(coordinate, mu, cosb):
     for i in range(n):
         new_mu[:,i] = R[...,i].dot(mu[:,i])
 
-    return new_mu.reshape((2,) + mul.shape)*mulcosb.unit
+    if coordinate.isscalar:
+        return new_mu.reshape((2,))*mulcosb.unit
+    else:
+        return new_mu.reshape((2,) + mulcosb.shape)*mulcosb.unit
 
-def pm_icrs_to_gal(coordinate, mu, cosdec):
-    """ Convert proper motion in ICRS coordinates (RA, Dec) to
+def pm_icrs_to_gal(coordinate, mu):
+    r""" Convert proper motion in ICRS coordinates (RA, Dec) to
         Galactic coordinates (l,b).
+
+        >>> import astropy.units as u
+        >>> import astropy.coordinates as coord
+        >>> c = coord.SkyCoord(ra=196.5*u.degree, dec=-10.33*u.deg, distance=16.2*u.kpc)
+        >>> pm = [-1.84741767, 3.34334366]*u.mas/u.yr
+        >>> pm_icrs_to_gal(c, pm)
+        <Quantity [-1.52999988, 3.49999973] mas / yr>
 
         Parameters
         ----------
@@ -87,12 +98,8 @@ def pm_icrs_to_gal(coordinate, mu, cosdec):
             declination (Dec). Can either be a tuple of two
             :class:`~astropy.units.Quantity` objects or a single
             :class:`~astropy.units.Quantity` with shape (2,N).
-            If proper motion of RA is pre-multipled by cosine of
-            Dec, use the keyword argument `cosdec=True` to
-            automatically handle this.
-        cosdec : bool
-            Specify whether the input proper motion in RA has been
-            pre-multiplied by cosine of the Dec. Default is False.
+            The proper motion in RA is assumed to be multipled by
+            cosine of declination, :math:`\mu_\alpha\cos\delta`.
 
         Returns
         -------
@@ -105,12 +112,7 @@ def pm_icrs_to_gal(coordinate, mu, cosdec):
     g = coordinate.transform_to(coord.Galactic)
     i = coordinate.transform_to(coord.ICRS)
 
-    mua,mud = map(np.atleast_1d, mu)
-    if cosdec is False:
-        muacosd = mua*np.cos(i.dec)
-    else:
-        muacosd = mua
-
+    muacosd,mud = map(np.atleast_1d, mu)
     n = len(muacosd)
 
     # coordinates of NGP
@@ -132,4 +134,7 @@ def pm_icrs_to_gal(coordinate, mu, cosdec):
     for i in range(n):
         new_mu[:,i] = R[...,i].dot(mu[:,i])
 
-    return new_mu.reshape((2,) + mua.shape)*muacosd.unit
+    if coordinate.isscalar:
+        return new_mu.reshape((2,))*muacosd.unit
+    else:
+        return new_mu.reshape((2,) + muacosd.shape)*muacosd.unit
