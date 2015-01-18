@@ -125,7 +125,7 @@ class TestVHelGalConvert(object):
             assert vxyz_i.shape == vxyz.shape
 
             true_UVW = [row['U'],row['V'],row['W']]*u.km/u.s
-            found_UVW = vxyz.T[0]
+            found_UVW = vxyz
             np.testing.assert_allclose(true_UVW.value, found_UVW.value, atol=1.)
 
         # some sanity checks - first, some convenience definitions
@@ -144,7 +144,7 @@ class TestVHelGalConvert(object):
                            vcirc=0*u.km/u.s,
                            vlsr=[0.,0,0]*u.km/u.s,
                            galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(vxyz.T[0], [20,0,0.]*u.km/u.s, atol=1E-12)
+        np.testing.assert_allclose(vxyz, [20,0,0.]*u.km/u.s, atol=1E-12)
 
         # with LSR and circular velocity
         c = coord.SkyCoord(ra=galcen_frame.galcen_ra, dec=galcen_frame.galcen_dec, distance=2*u.kpc)
@@ -154,7 +154,7 @@ class TestVHelGalConvert(object):
                            vcirc=200*u.km/u.s,
                            vlsr=[-20.,0,10]*u.km/u.s,
                            galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(vxyz.T[0], [0,200,10]*u.km/u.s, atol=1E-12)
+        np.testing.assert_allclose(vxyz, [0,200,10]*u.km/u.s, atol=1E-12)
 
         # l = 90
         # with LSR and circular velocity
@@ -165,7 +165,7 @@ class TestVHelGalConvert(object):
                            vcirc=200*u.km/u.s,
                            vlsr=[-20.,0,10]*u.km/u.s,
                            galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(vxyz.T[0], [-20,220,10]*u.km/u.s, atol=1E-5)
+        np.testing.assert_allclose(vxyz, [-20,220,10]*u.km/u.s, atol=1E-5)
 
         # l = 180
         # with LSR and circular velocity
@@ -176,7 +176,7 @@ class TestVHelGalConvert(object):
                            vcirc=200*u.km/u.s,
                            vlsr=[-20.,0,10]*u.km/u.s,
                            galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(vxyz.T[0], [-40,200,10]*u.km/u.s, atol=1E-12)
+        np.testing.assert_allclose(vxyz, [-40,200,10]*u.km/u.s, atol=1E-12)
 
         # l = 270
         # with LSR and circular velocity
@@ -187,7 +187,7 @@ class TestVHelGalConvert(object):
                            vcirc=200*u.km/u.s,
                            vlsr=[-20.,0,10]*u.km/u.s,
                            galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(vxyz.T[0], [-20,180,10]*u.km/u.s, atol=1E-5)
+        np.testing.assert_allclose(vxyz, [-20,180,10]*u.km/u.s, atol=1E-5)
 
     def test_vgal_to_hel(self):
 

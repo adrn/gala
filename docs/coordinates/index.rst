@@ -51,9 +51,7 @@ function, :func:`~gary.coordinates.vhel_to_gal`::
     >>> pm = [1.5, -1.7] * u.mas/u.yr
     >>> rv = 151.1 * u.km/u.s
     >>> gc.vhel_to_gal(c.icrs, pm=pm, rv=rv)
-    <Quantity [[-134.44094022],
-               [ 228.42957796],
-               [  52.97041271]] km / s>
+    <Quantity [-134.44094022, 228.42957796,  52.97041271] km / s>
 
 Because the input coordinate is given in the ICRS frame, the function assumes that
 the proper motion is also in this frame, e.g., that the proper motion components are
@@ -61,9 +59,7 @@ the proper motion is also in this frame, e.g., that the proper motion components
 the Galactic frame, the components are assumed to be :math:`(\mu_l\cos b, \mu_b)`::
 
     >>> gc.vhel_to_gal(c.galactic, pm=pm, rv=rv)
-    <Quantity [[-137.63839042],
-               [ 232.10966635],
-               [  40.73819003]] km / s>
+    <Quantity [-137.63839042, 232.10966635,  40.73819003] km / s>
 
 The velocity transformation functions allow specifying the circular velocity at the Sun
 (`vcirc`) and a 3-vector specifying the Sun's velocity with respect to the local
@@ -74,9 +70,7 @@ keyword argument ``galactocentric_frame``::
     >>> frame = coord.Galactocentric(z_sun=10.*u.pc, galcen_distance=8.3*u.kpc)
     >>> gc.vhel_to_gal(c.icrs, pm=pm, rv=rv, galactocentric_frame=frame,
     ...                vcirc=218*u.km/u.s, vlsr=[0.,0.,0.]*u.km/u.s)
-    <Quantity [[-144.5344455 ],
-               [ 221.17957796],
-               [  45.50447318]] km / s>
+    <Quantity [-144.5344455 , 221.17957796,  45.50447318] km / s>
 
 The inverse transformations are also available, with the function
 :func:`~gary.coordinates.vgal_to_hel`. Here, because the input coordinate is passed

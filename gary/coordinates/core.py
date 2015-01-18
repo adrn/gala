@@ -226,8 +226,9 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
         raise NotImplementedError("Proper motions in the {} system are not "
                                   "currently supported.".format(coord_frame.name))
 
-    if x_icrs.ndim == 1 and v_icrs.ndim == 1:
-        pm = (pm[0][0],pm[1][0])
+    if c.isscalar:
+        vr = vr.reshape(())
+        pm = (pm[0].reshape(()), pm[1].reshape(()))
 
     return tuple(pm) + (vr,)
 
@@ -332,4 +333,7 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame
     for i in range(3):
         v_gc[i] = v_gc[i] + vlsr[i]
 
-    return v_gc
+    if c.isscalar:
+        return v_gc.reshape((3,))
+    else:
+        return v_gc
