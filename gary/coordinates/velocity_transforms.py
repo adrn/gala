@@ -94,11 +94,11 @@ def cartesian_to_spherical(pos, vel):
 
     vr = np.sum(car_pos.xyz * vel, axis=0) / d
 
-    mu_lon = -(car_pos.xyz[0]*vel[1] - vel[0]*car_pos.xyz[1]) / dxy**2
+    mu_lon = (car_pos.xyz[0]*vel[1] - vel[0]*car_pos.xyz[1]) / dxy**2
     vlon = mu_lon * d
 
-    mu_lat = -(car_pos.xyz[2]*(car_pos.xyz[0]*vel[0] + car_pos.xyz[1]*vel[1]) - dxy**2*vel[2]) / d**2 / dxy
-    vlat = mu_lat * d * np.cos(sph_pos.lat)
+    mu_lat = (car_pos.xyz[2]*(car_pos.xyz[0]*vel[0] + car_pos.xyz[1]*vel[1]) - dxy**2*vel[2]) / d**2 / dxy
+    vlat = -mu_lat * d * np.cos(sph_pos.lat)
 
     vsph = np.zeros_like(vel)
     vsph[0] = vr
@@ -162,10 +162,10 @@ def cartesian_to_physicsspherical(pos, vel):
 
     vr = np.sum(car_pos.xyz * vel, axis=0) / r
 
-    mu_lon = -(car_pos.xyz[0]*vel[1] - vel[0]*car_pos.xyz[1]) / dxy**2
+    mu_lon = (car_pos.xyz[0]*vel[1] - vel[0]*car_pos.xyz[1]) / dxy**2
     vlon = mu_lon * r
 
-    mu_lat = -(car_pos.xyz[2]*(car_pos.xyz[0]*vel[0] + car_pos.xyz[1]*vel[1]) - dxy**2*vel[2]) / r**2 / dxy
+    mu_lat = (car_pos.xyz[2]*(car_pos.xyz[0]*vel[0] + car_pos.xyz[1]*vel[1]) - dxy**2*vel[2]) / r**2 / dxy
     vlat = mu_lat * r * np.sin(sph_pos.theta)
 
     vsph = np.zeros_like(vel)
