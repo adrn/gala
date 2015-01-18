@@ -94,6 +94,7 @@ All of these functions also work on arrays of coordinates and velocities, e.g.::
     >>> xyz = coord.Galactocentric(np.random.uniform(-20,20,size=(3,10)) * u.kpc)
     >>> vxyz = np.random.uniform(-150,150,size=(3,10)) * u.km/u.s
     >>> gc.vgal_to_hel(xyz.transform_to(coord.ICRS), vxyz) # doctest: +SKIP
+    ...
 
 Proper motion transformations
 -----------------------------
@@ -111,6 +112,16 @@ to Galactic::
     >>> pm = [1.53, -2.1] * u.mas/u.yr
     >>> gc.pm_icrs_to_gal(c, pm)
     <Quantity [ 2.52366087, 0.61809041] mas / yr>
+
+Of course, these functions also work on arrays. The first axis of the input
+proper motion arrays should have length=2::
+
+    >>> ra = np.random.uniform(0,360,size=10) * u.degree
+    >>> dec = np.random.uniform(-90,90,size=10) * u.degree
+    >>> c = coord.SkyCoord(ra=ra, dec=dec)
+    >>> pm = np.random.uniform(-10,10,size=(2,10)) * u.mas/u.yr
+    >>> gc.pm_icrs_to_gal(c, pm) # doctest: +SKIP
+    ...
 
 Tidal Stream Coordinate Frames
 ------------------------------
