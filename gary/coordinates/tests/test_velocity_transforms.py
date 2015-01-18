@@ -25,20 +25,20 @@ logger.setLevel(logging.DEBUG)
 def test_cartesian_to_spherical():
     n = 10
 
-    # just arrays
-    pos = np.random.uniform(-10,10,size=(3,n))
-    vel = np.random.uniform(-0.1,0.1,size=(3,n))
-    cartesian_to_spherical(pos, vel)
+    pos = np.random.uniform(-10,10,size=(3,n)) * u.kpc
+    vel = np.random.uniform(-100,100,size=(3,n)) * u.km/u.s
+    pos_repr = coord.CartesianRepresentation(pos)
 
-    # # astropy coordinates
-    # pos = coord.SkyCoord(ra=np.random.uniform(0,360,size=n)*u.deg,
-    #                      dec=np.random.uniform(-90,90,size=n)*u.deg,
-    #                      distance=np.random.uniform(0,30,size=n)*u.kpc)
-    # vel = np.random.uniform(-0.1,0.1,size=(3,n))
-    # cartesian_to_spherical(pos, vel)
+    # dimensionless
+    vsph1 = cartesian_to_spherical(pos.value * u.dimensionless_unscaled,
+                                   vel.value * u.dimensionless_unscaled)
 
-    # # astropy representation
-    # xyz = np.random.uniform(-10,10,size=(3,n)) * u.dimensionless_unscaled
-    # pos = coord.CartesianRepresentation(xyz)
-    # vel = np.random.uniform(-0.1,0.1,size=(3,n))
-    # cartesian_to_spherical(pos, vel)
+    # astropy coordinates
+    cpos = coord.SkyCoord(pos_repr)
+    vsph2 = cartesian_to_spherical(cpos, vel)
+
+    # astropy representation
+    vsph3 = cartesian_to_spherical(pos_repr, vel)
+
+    np.testing.assert_allclose(vsph1, vsph2)
+    np.testing.assert_allclose(vsph1, vsph3)
