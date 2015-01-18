@@ -35,9 +35,9 @@ class TestCartesianToAll(object):
         self.pos_repr = coord.CartesianRepresentation(self.pos)
 
     def test_to_spherical(self):
-        for func in [cartesian_to_spherical,
-                     cartesian_to_physicsspherical,
-                     cartesian_to_cylindrical]:
+        for i,func in enumerate([cartesian_to_spherical,
+                                 cartesian_to_physicsspherical,
+                                 cartesian_to_cylindrical]):
 
             # dimensionless
             vsph1 = func(self.pos.value * u.dimensionless_unscaled,
@@ -56,4 +56,8 @@ class TestCartesianToAll(object):
             np.testing.assert_allclose(vsph1, vsph2)
             np.testing.assert_allclose(vsph1, vsph3)
 
-            print(vsph3)
+            if func == cartesian_to_physicsspherical:
+                true_v = self.vel.copy()
+                true_v[2] *= -1.
+
+            np.testing.assert_allclose(vsph1, true_v)
