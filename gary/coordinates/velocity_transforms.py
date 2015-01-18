@@ -58,6 +58,7 @@ def cartesian_to_spherical(pos, vel):
 
     Returns
     -------
+    vsph : :class:`astropy.units.Quantity`
 
     Examples
     --------
