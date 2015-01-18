@@ -25,12 +25,8 @@ logger.setLevel(logging.DEBUG)
 class TestCartesianToAll(object):
 
     def setup(self):
-        n = 10
-        # self.pos = np.random.uniform(-10,10,size=(3,n)) * u.kpc
-        # self.vel = np.random.uniform(-100,100,size=(3,n)) * u.km/u.s
-
-        self.pos = ([[10.,0,0], [10,0,0]] * u.kpc).T
-        self.vel = ([[0.,100,500],[0,-100,-500]] * u.km/u.s).T
+        self.pos = ([[10.,0,0], [10,0,0], [4,4,0]] * u.kpc).T
+        self.vel = ([[0.,100,500], [0,-100,-500], [100.,100.,-500]] * u.km/u.s).T
 
         self.pos_repr = coord.CartesianRepresentation(self.pos)
 
@@ -53,11 +49,14 @@ class TestCartesianToAll(object):
             vsph3 = func(self.pos_repr, self.vel)
             assert vsph3.unit == u.km/u.s
 
-            np.testing.assert_allclose(vsph1, vsph2)
-            np.testing.assert_allclose(vsph1, vsph3)
+            np.testing.assert_allclose(vsph1, vsph2, atol=1E-10)
+            np.testing.assert_allclose(vsph1, vsph3, atol=1E-10)
 
             true_v = self.vel.copy()
             if func == cartesian_to_physicsspherical:
                 true_v[2] *= -1.
 
-            np.testing.assert_allclose(vsph1, true_v)
+            np.testing.assert_allclose(vsph1[:,:2], true_v[:,:2])
+
+            assert vsph1[0,2] > 0.  # vr
+            assert np.sign(vsph1[2,2]) == np.sign(true_v[2,2])
