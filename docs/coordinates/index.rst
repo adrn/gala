@@ -171,6 +171,11 @@ Velocity transformations
    :toctree: _coordinates/
 
    gary.coordinates.cartesian_to_spherical
+   gary.coordinates.cartesian_to_physicsspherical
+   gary.coordinates.cartesian_to_cylindrical
+   gary.coordinates.spherical_to_cartesian
+   gary.coordinates.physicsspherical_to_cartesian
+   gary.coordinates.cylindrical_to_cartesian
 
 New coordinate frames
 =====================
