@@ -163,6 +163,15 @@ Coordinate conversion
    gary.coordinates.vgsr_to_vhel
    gary.coordinates.vhel_to_vgsr
 
+Velocity transformations
+========================
+
+.. autosummary::
+   :nosignatures:
+   :toctree: _coordinates/
+
+   gary.coordinates.cartesian_to_spherical
+
 New coordinate frames
 =====================
 
