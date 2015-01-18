@@ -31,7 +31,6 @@ class TestCartesianToAll(object):
         self.pos_repr = coord.CartesianRepresentation(self.pos)
 
     def test_to_spherical(self):
-        all_vs = []
         for func in [cartesian_to_spherical,
                      cartesian_to_physicsspherical,
                      cartesian_to_cylindrical]:
@@ -52,9 +51,3 @@ class TestCartesianToAll(object):
 
             np.testing.assert_allclose(vsph1, vsph2)
             np.testing.assert_allclose(vsph1, vsph3)
-
-            all_vs.append(vsph1)
-            if len(all_vs) == 2:
-                break
-
-        np.testing.assert_allclose(all_vs[0], all_vs[1])
