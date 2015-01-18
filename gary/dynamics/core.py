@@ -108,7 +108,7 @@ def classify_orbit(w):
 
 def align_circulation_with_z(w, loop_bit):
     """
-    If the input orbit is a loop orbit, this function aligns the circulation
+    If the input orbit is a tube orbit, this function aligns the circulation
     axis with the z axis.
 
     Parameters
@@ -132,6 +132,7 @@ def align_circulation_with_z(w, loop_bit):
         raise ValueError("Shape mismatch - input orbit array should have 1 more dimension "
                          "than the input loop bit.")
 
+    orig_shape = w.shape
     if loop_bit.ndim == 1:
         loop_bit = np.atleast_2d(loop_bit)
         w = w[:,np.newaxis]
@@ -158,4 +159,4 @@ def align_circulation_with_z(w, loop_bit):
         new_w[:,ix,circ+3] = w[:,ix,5]
         new_w[:,ix,5] = w[:,ix,circ+3]
 
-    return new_w
+    return new_w.reshape(orig_shape)
