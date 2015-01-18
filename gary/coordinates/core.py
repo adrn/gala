@@ -221,7 +221,7 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
 
     elif coord_frame.name == 'galactic':
         # transform to ICRS proper motions
-        pm = pm_icrs_to_gal(c, pm_radec, cosdec=True)
+        pm = pm_icrs_to_gal(c, pm_radec)
 
     else:
         raise NotImplementedError("Proper motions in the {} system are not "
@@ -308,7 +308,7 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame
 
     elif coord_frame.name == 'galactic':
         # transform to ICRS proper motions
-        pm_radec = pm_gal_to_icrs(c, pm, cosb=True)
+        pm_radec = pm_gal_to_icrs(c, pm)
 
     else:
         raise NotImplementedError("Proper motions in the {} system are not "
