@@ -31,7 +31,7 @@ The core functions in this subpackage provide support to:
 
 These functions work naturally with the :mod:`astropy.units` and
 :mod:`astropy.coordinates` subpackages. Handling positional transformations is already
-supported by :mod:`astropy.coordinates` and new to v1.0 is a
+supported by :mod:`astropy.coordinates` and new to Astropy v1.0 is a
 :class:`~astropy.coordinates.Galactocentric` reference frame. However, there is currently
 no support in Astropy for transforming velocities. The functions below attempt to bridge
 that gap as a temporary solution until support is added (planned for v1.1).
