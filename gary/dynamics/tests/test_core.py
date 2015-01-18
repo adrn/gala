@@ -73,6 +73,7 @@ def test_classify_orbit():
 
     # try also for a single orbit
     loop = classify_orbit(ws[:,0])
+    assert loop.shape == (3,)
     assert loop.sum() == 0
 
 # ----------------------------------------------------------------------------
@@ -89,14 +90,14 @@ def test_align_circulation_single():
     t,w = potential.integrate_orbit(w0, dt=0.05, nsteps=10000)
 
     for i in range(w.shape[1]):
-        circ = classify_orbit(w[:,i])[0]
+        circ = classify_orbit(w[:,i])
         new_w = align_circulation_with_z(w[:,i], circ)
         new_circ = classify_orbit(new_w)
 
-        if i != 3:
-            assert new_circ[0,2] == 1.
-        else:
+        if i == 3:
             assert np.sum(new_circ) == 0
+        else:
+            assert new_circ[2] == 1.
 
 def test_align_circulation_many():
 
@@ -113,6 +114,8 @@ def test_align_circulation_many():
     fig.savefig(os.path.join(plot_path, "align_circulation_orbits_init.png"))
 
     circ = classify_orbit(w)
+    assert circ.shape == (4,3)
+
     new_w = align_circulation_with_z(w, circ)
     fig = plot_orbits(new_w, linestyle='none', alpha=0.1)
     fig.savefig(os.path.join(plot_path, "align_circulation_orbits_post.png"))
