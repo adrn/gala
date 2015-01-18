@@ -46,7 +46,7 @@ class TestPMConvert(object):
         muad = [row['pmra'],row['pmdec']]*u.mas/u.yr
         mulb = [row['pml'],row['pmb']]*u.mas/u.yr
 
-        trans_muad = pm_gal_to_icrs(c, mulb, cosb=True)[:,0]
+        trans_muad = pm_gal_to_icrs(c, mulb)[:,0]
         assert np.allclose(muad, trans_muad, atol=1E-2)
 
         # multiple entries
@@ -54,7 +54,7 @@ class TestPMConvert(object):
         muad = np.vstack((self.data['pmra'],self.data['pmdec']))*u.mas/u.yr
         mulb = np.vstack((self.data['pml'],self.data['pmb']))*u.mas/u.yr
 
-        trans_muad = pm_gal_to_icrs(c, mulb, cosb=True)
+        trans_muad = pm_gal_to_icrs(c, mulb)
         assert np.allclose(muad, trans_muad, atol=1E-2)
 
     def test_pm_icrs_to_gal(self):
@@ -65,7 +65,7 @@ class TestPMConvert(object):
         muad = [row['pmra'],row['pmdec']]*u.mas/u.yr
         mulb = [row['pml'],row['pmb']]*u.mas/u.yr
 
-        trans_mulb = pm_icrs_to_gal(c, muad, cosdec=True)[:,0]
+        trans_mulb = pm_icrs_to_gal(c, muad)[:,0]
         assert np.allclose(mulb, trans_mulb, atol=1E-2)
 
         # multiple entries
@@ -73,6 +73,6 @@ class TestPMConvert(object):
         muad = np.vstack((self.data['pmra'],self.data['pmdec']))*u.mas/u.yr
         mulb = np.vstack((self.data['pml'],self.data['pmb']))*u.mas/u.yr
 
-        trans_mulb = pm_icrs_to_gal(c, muad, cosdec=True)
+        trans_mulb = pm_icrs_to_gal(c, muad)
         assert np.allclose(mulb, trans_mulb, atol=1E-2)
 
