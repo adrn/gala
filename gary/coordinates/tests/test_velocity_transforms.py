@@ -26,8 +26,12 @@ class TestCartesianToAll(object):
 
     def setup(self):
         n = 10
-        self.pos = np.random.uniform(-10,10,size=(3,n)) * u.kpc
-        self.vel = np.random.uniform(-100,100,size=(3,n)) * u.km/u.s
+        # self.pos = np.random.uniform(-10,10,size=(3,n)) * u.kpc
+        # self.vel = np.random.uniform(-100,100,size=(3,n)) * u.km/u.s
+
+        self.pos = ([[10.,0,0], [10,0,0]] * u.kpc).T
+        self.vel = ([[0.,100,500],[0,-100,-500]] * u.km/u.s).T
+
         self.pos_repr = coord.CartesianRepresentation(self.pos)
 
     def test_to_spherical(self):
@@ -51,3 +55,5 @@ class TestCartesianToAll(object):
 
             np.testing.assert_allclose(vsph1, vsph2)
             np.testing.assert_allclose(vsph1, vsph3)
+
+            print(vsph3)
