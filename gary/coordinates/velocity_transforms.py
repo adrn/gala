@@ -48,25 +48,25 @@ def cartesian_to_spherical(pos, vel):
 
     .. math::
 
-        \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}
-        &= v_r\boldsymbol{\hat{d}} + v_\phi\boldsymbol{\hat{\phi}} + v_\delta\boldsymbol{\hat{\delta}}
+        \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}\\
+        &= v_r\boldsymbol{\hat{d}} + v_\phi\boldsymbol{\hat{\phi}} + v_\delta\boldsymbol{\hat{\delta}}\\
         &= \dot{d}\boldsymbol{\hat{d}} + d\cos\delta \dot{\phi}\boldsymbol{\hat{\phi}} + d\dot{\delta}\boldsymbol{\hat{\delta}}
 
     Parameters
     ----------
-    pos : :class:`astropy.units.Quantity`, :class:`astropy.coordinates.BaseCoordinateFrame`, :class:`astropy.coordinates.BaseRepresentation`
+    pos : :class:`~astropy.units.Quantity`, :class:`~astropy.coordinates.BaseCoordinateFrame`, :class:`~astropy.coordinates.BaseRepresentation`
         Input position or positions as one of the allowed types. You may pass in a
-        :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
+        :class:`~astropy.units.Quantity` with :class:`~astropy.units.dimensionless_unscaled`
         units if you are working in natural units.
-    vel : :class:`astropy.units.Quantity`
+    vel : :class:`~astropy.units.Quantity`
         Input velocity or velocities as one of the allowed types. You may pass in a
-        :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
+        :class:`~astropy.units.Quantity` with :class:`~astropy.units.dimensionless_unscaled`
         units if you are working in natural units. axis=0 is assumed to be the
         dimensionality axis, e.g., ``vx,vy,vz = vel`` should work.
 
     Returns
     -------
-    vsph : :class:`astropy.units.Quantity`
+    vsph : :class:`~astropy.units.Quantity`
         Array of spherical velocity components. Will have the same shape as the
         input velocity.
 
@@ -122,19 +122,19 @@ def cartesian_to_physicsspherical(pos, vel):
 
     Parameters
     ----------
-    pos : :class:`astropy.units.Quantity`, :class:`astropy.coordinates.BaseCoordinateFrame`, :class:`astropy.coordinates.BaseRepresentation`
+    pos : :class:`~astropy.units.Quantity`, :class:`~astropy.coordinates.BaseCoordinateFrame`, :class:`~astropy.coordinates.BaseRepresentation`
         Input position or positions as one of the allowed types. You may pass in a
-        :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
+        :class:`~astropy.units.Quantity` with :class:`~astropy.units.dimensionless_unscaled`
         units if you are working in natural units.
-    vel : :class:`astropy.units.Quantity`
+    vel : :class:`~astropy.units.Quantity`
         Input velocity or velocities as one of the allowed types. You may pass in a
-        :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
+        :class:`~astropy.units.Quantity` with :class:`~astropy.units.dimensionless_unscaled`
         units if you are working in natural units. axis=0 is assumed to be the
         dimensionality axis, e.g., ``vx,vy,vz = vel`` should work.
 
     Returns
     -------
-    vsph : :class:`astropy.units.Quantity`
+    vsph : :class:`~astropy.units.Quantity`
         Array of spherical velocity components. Will have the same shape as the
         input velocity.
 
@@ -189,19 +189,19 @@ def cartesian_to_cylindrical(pos, vel):
 
     Parameters
     ----------
-    pos : :class:`astropy.units.Quantity`, :class:`astropy.coordinates.BaseCoordinateFrame`, :class:`astropy.coordinates.BaseRepresentation`
+    pos : :class:`~astropy.units.Quantity`, :class:`~astropy.coordinates.BaseCoordinateFrame`, :class:`~astropy.coordinates.BaseRepresentation`
         Input position or positions as one of the allowed types. You may pass in a
-        :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
+        :class:`~astropy.units.Quantity` with :class:`~astropy.units.dimensionless_unscaled`
         units if you are working in natural units.
-    vel : :class:`astropy.units.Quantity`
+    vel : :class:`~astropy.units.Quantity`
         Input velocity or velocities as one of the allowed types. You may pass in a
-        :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
+        :class:`~astropy.units.Quantity` with :class:`~astropy.units.dimensionless_unscaled`
         units if you are working in natural units. axis=0 is assumed to be the
         dimensionality axis, e.g., ``vx,vy,vz = vel`` should work.
 
     Returns
     -------
-    vcyl : :class:`astropy.units.Quantity`
+    vcyl : :class:`~astropy.units.Quantity`
         Array of spherical velocity components. Will have the same shape as the
         input velocity.
 
@@ -251,19 +251,19 @@ def spherical_to_cartesian(pos, vel):
 
     Parameters
     ----------
-    pos : :class:`astropy.units.Quantity`, :class:`astropy.coordinates.BaseCoordinateFrame`, :class:`astropy.coordinates.BaseRepresentation`
+    pos : :class:`~astropy.units.Quantity`, :class:`~astropy.coordinates.BaseCoordinateFrame`, :class:`~astropy.coordinates.BaseRepresentation`
         Input position or positions as one of the allowed types. You may pass in a
-        :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
+        :class:`~astropy.units.Quantity` with :class:`~astropy.units.dimensionless_unscaled`
         units if you are working in natural units.
-    vel : :class:`astropy.units.Quantity`
+    vel : :class:`~astropy.units.Quantity`
         Input velocity or velocities as one of the allowed types. You may pass in a
-        :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
+        :class:`~astropy.units.Quantity` with :class:`~astropy.units.dimensionless_unscaled`
         units if you are working in natural units. axis=0 is assumed to be the
         dimensionality axis, e.g., ``vx,vy,vz = vel`` should work.
 
     Returns
     -------
-    vxyz : :class:`astropy.units.Quantity`
+    vxyz : :class:`~astropy.units.Quantity`
         Array of Cartesian velocity components. Will have the same shape as the
         input velocity.
 
@@ -284,11 +284,13 @@ def spherical_to_cartesian(pos, vel):
     d = sph_pos.distance
     phi = sph_pos.lon
     lat = sph_pos.lat
-    dxy = np.sqrt(car_pos.x**2 + car_pos.y**2)
 
-    vr = np.sum(car_pos.xyz * vel, axis=0) / d
-    mu_lon = (car_pos.xyz[0]*vel[1] - vel[0]*car_pos.xyz[1]) / dxy**2
-    mu_lat = -(car_pos.xyz[2]*(car_pos.xyz[0]*vel[0] + car_pos.xyz[1]*vel[1]) - dxy**2*vel[2]) / d**2 / dxy
+    # THIS IS WRONG: NEED TO USE vhel
+
+    vr = vel[0]
+    mu_lon = vel[1] / (d * np.cos(lat))
+    mu_lat = vel[2] / d
+    # mu_lat = -(car_pos.xyz[2]*(car_pos.xyz[0]*vel[0] + car_pos.xyz[1]*vel[1]) - dxy**2*vel[2]) / d**2 / dxy
 
     vxyz = np.zeros_like(vel)
     vxyz[0] = vr*np.cos(phi)*np.cos(lat) - d*np.sin(phi)*np.cos(lat)*mu_lon - d*np.cos(phi)*np.sin(lat)*mu_lat
@@ -316,19 +318,19 @@ def physicsspherical_to_cartesian(pos, vel):
 
     Parameters
     ----------
-    pos : :class:`astropy.units.Quantity`, :class:`astropy.coordinates.BaseCoordinateFrame`, :class:`astropy.coordinates.BaseRepresentation`
+    pos : :class:`~astropy.units.Quantity`, :class:`~astropy.coordinates.BaseCoordinateFrame`, :class:`~astropy.coordinates.BaseRepresentation`
         Input position or positions as one of the allowed types. You may pass in a
-        :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
+        :class:`~astropy.units.Quantity` with :class:`~astropy.units.dimensionless_unscaled`
         units if you are working in natural units.
-    vel : :class:`astropy.units.Quantity`
+    vel : :class:`~astropy.units.Quantity`
         Input velocity or velocities as one of the allowed types. You may pass in a
-        :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
+        :class:`~astropy.units.Quantity` with :class:`~astropy.units.dimensionless_unscaled`
         units if you are working in natural units. axis=0 is assumed to be the
         dimensionality axis, e.g., ``vx,vy,vz = vel`` should work.
 
     Returns
     -------
-    vxyz : :class:`astropy.units.Quantity`
+    vxyz : :class:`~astropy.units.Quantity`
         Array of Cartesian velocity components. Will have the same shape as the
         input velocity.
 
@@ -380,19 +382,19 @@ def cylindrical_to_cartesian(pos, vel):
 
     Parameters
     ----------
-    pos : :class:`astropy.units.Quantity`, :class:`astropy.coordinates.BaseCoordinateFrame`, :class:`astropy.coordinates.BaseRepresentation`
+    pos : :class:`~astropy.units.Quantity`, :class:`~astropy.coordinates.BaseCoordinateFrame`, :class:`~astropy.coordinates.BaseRepresentation`
         Input position or positions as one of the allowed types. You may pass in a
-        :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
+        :class:`~astropy.units.Quantity` with :class:`~astropy.units.dimensionless_unscaled`
         units if you are working in natural units.
-    vel : :class:`astropy.units.Quantity`
+    vel : :class:`~astropy.units.Quantity`
         Input velocity or velocities as one of the allowed types. You may pass in a
-        :class:`astropy.units.Quantity` with :class:`astropy.units.dimensionless_unscaled`
+        :class:`~astropy.units.Quantity` with :class:`~astropy.units.dimensionless_unscaled`
         units if you are working in natural units. axis=0 is assumed to be the
         dimensionality axis, e.g., ``vx,vy,vz = vel`` should work.
 
     Returns
     -------
-    vxyz : :class:`astropy.units.Quantity`
+    vxyz : :class:`~astropy.units.Quantity`
         Array of Cartesian velocity components. Will have the same shape as the
         input velocity.
 
