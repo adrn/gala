@@ -163,8 +163,8 @@ Coordinate conversion
    gary.coordinates.vgsr_to_vhel
    gary.coordinates.vhel_to_vgsr
 
-New coordinate classes
-======================
+New coordinate frames
+=====================
 
 .. autosummary::
    :toctree: _coordinates/
