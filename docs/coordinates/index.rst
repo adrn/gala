@@ -14,7 +14,7 @@ Orphan streams.
 
 .. warning::
     `gary.coordinates` is currently a work-in-progress, and thus it is
-    possible there will be significant API changes in later versions.
+    possible there will be API changes in later versions.
 
 Getting Started
 ===============
