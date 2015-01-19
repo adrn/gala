@@ -90,10 +90,10 @@ def cartesian_to_spherical(pos, vel):
     vr = np.sum(car_pos.xyz * vel, axis=0) / d
 
     mu_lon = (car_pos.xyz[0]*vel[1] - vel[0]*car_pos.xyz[1]) / dxy**2
-    vlon = mu_lon * d
+    vlon = mu_lon * d * np.cos(sph_pos.lat)
 
     mu_lat = (car_pos.xyz[2]*(car_pos.xyz[0]*vel[0] + car_pos.xyz[1]*vel[1]) - dxy**2*vel[2]) / d**2 / dxy
-    vlat = -mu_lat * d * np.cos(sph_pos.lat)
+    vlat = -mu_lat * d
 
     vsph = np.zeros_like(vel)
     vsph[0] = vr
@@ -158,10 +158,10 @@ def cartesian_to_physicsspherical(pos, vel):
     vr = np.sum(car_pos.xyz * vel, axis=0) / r
 
     mu_lon = (car_pos.xyz[0]*vel[1] - vel[0]*car_pos.xyz[1]) / dxy**2
-    vlon = mu_lon * r
+    vlon = mu_lon * r * np.sin(sph_pos.theta)
 
     mu_lat = (car_pos.xyz[2]*(car_pos.xyz[0]*vel[0] + car_pos.xyz[1]*vel[1]) - dxy**2*vel[2]) / r**2 / dxy
-    vlat = mu_lat * r * np.sin(sph_pos.theta)
+    vlat = mu_lat * r
 
     vsph = np.zeros_like(vel)
     vsph[0] = vr
@@ -281,21 +281,14 @@ def spherical_to_cartesian(pos, vel):
                         "an Astropy Quantity instance.".format(type(vel)))
 
     # get out spherical components
-    d = sph_pos.distance
     phi = sph_pos.lon
     lat = sph_pos.lat
-
-    # THIS IS WRONG: NEED TO USE vhel
-
-    vr = vel[0]
-    mu_lon = vel[1] / (d * np.cos(lat))
-    mu_lat = vel[2] / d
-    # mu_lat = -(car_pos.xyz[2]*(car_pos.xyz[0]*vel[0] + car_pos.xyz[1]*vel[1]) - dxy**2*vel[2]) / d**2 / dxy
+    vr,vlon,vlat = vel
 
     vxyz = np.zeros_like(vel)
-    vxyz[0] = vr*np.cos(phi)*np.cos(lat) - d*np.sin(phi)*np.cos(lat)*mu_lon - d*np.cos(phi)*np.sin(lat)*mu_lat
-    vxyz[1] = vr*np.sin(phi)*np.cos(lat) + d*np.cos(phi)*np.cos(lat)*mu_lon - d*np.sin(phi)*np.sin(lat)*mu_lat
-    vxyz[2] = vr*np.sin(lat) + d*np.cos(lat)*mu_lat
+    vxyz[0] = vr*np.cos(phi)*np.cos(lat) - np.sin(phi)*vlon - np.cos(phi)*np.sin(lat)*vlat
+    vxyz[1] = vr*np.sin(phi)*np.cos(lat) + np.cos(phi)*vlon - np.sin(phi)*np.sin(lat)*vlat
+    vxyz[2] = vr*np.sin(lat) + np.cos(lat)*vlat
     return vxyz
 
 def physicsspherical_to_cartesian(pos, vel):
@@ -348,19 +341,15 @@ def physicsspherical_to_cartesian(pos, vel):
                         "an Astropy Quantity instance.".format(type(vel)))
 
     # get out spherical components
-    d = sph_pos.r
     phi = sph_pos.phi
     the = sph_pos.theta
-    dxy = np.sqrt(car_pos.x**2 + car_pos.y**2)
-
-    vr = np.sum(car_pos.xyz * vel, axis=0) / d
-    mu_phi = (car_pos.xyz[0]*vel[1] - vel[0]*car_pos.xyz[1]) / dxy**2
-    mu_the = (car_pos.xyz[2]*(car_pos.xyz[0]*vel[0] + car_pos.xyz[1]*vel[1]) - dxy**2*vel[2]) / d**2 / dxy
+    vr,vphi,vthe = vel
+    vthe = -vthe
 
     vxyz = np.zeros_like(vel)
-    vxyz[0] = vr*np.cos(phi)*np.sin(the) - d*np.sin(phi)*np.sin(the)*mu_phi - d*np.cos(phi)*np.cos(the)*mu_the
-    vxyz[1] = vr*np.sin(phi)*np.sin(the) + d*np.cos(phi)*np.sin(the)*mu_phi - d*np.sin(phi)*np.cos(the)*mu_the
-    vxyz[2] = vr*np.cos(the) + d*np.sin(the)*mu_the
+    vxyz[0] = vr*np.cos(phi)*np.sin(the) - np.sin(phi)*vphi - np.cos(phi)*np.cos(the)*vthe
+    vxyz[1] = vr*np.sin(phi)*np.sin(the) + np.cos(phi)*vphi - np.sin(phi)*np.cos(the)*vthe
+    vxyz[2] = vr*np.cos(the) + np.sin(the)*vthe
     return vxyz
 
 def cylindrical_to_cartesian(pos, vel):
@@ -412,13 +401,11 @@ def cylindrical_to_cartesian(pos, vel):
                         "an Astropy Quantity instance.".format(type(vel)))
 
     # get out spherical components
-    rho = cyl_pos.rho
     phi = cyl_pos.phi
-    vrho = np.sum(car_pos.xyz[:2] * vel[:2], axis=0) / rho
-    phidot = (car_pos.xyz[0]*vel[1] - vel[0]*car_pos.xyz[1]) / rho**2
+    vrho,vphi,vz = vel
 
     vcyl = np.zeros_like(vel)
-    vcyl[0] = vrho * np.cos(phi) - rho * np.sin(phi) * phidot
-    vcyl[1] = vrho * np.sin(phi) + rho * np.cos(phi) * phidot
-    vcyl[2] = vel[2]
+    vcyl[0] = vrho * np.cos(phi) - np.sin(phi) * vphi
+    vcyl[1] = vrho * np.sin(phi) + np.cos(phi) * vphi
+    vcyl[2] = vz
     return vcyl
