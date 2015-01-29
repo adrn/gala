@@ -7,12 +7,10 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os, sys
+import os
 
 # Third-party
 import numpy as np
-from astropy import log as logger
-import astropy.units as u
 
 # Project
 from ..io import read, write
