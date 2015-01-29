@@ -18,6 +18,7 @@ from . import dynamics
 from . import integrate
 from . import io
 from . import potential
+from .potential import busey
 
 # Add a custom log level
 from astropy import log as logger
