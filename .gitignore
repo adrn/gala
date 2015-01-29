@@ -7,3 +7,4 @@ docs/*/_*/
 *.c
 notebooks/*
 setup.cfg
+test-data
