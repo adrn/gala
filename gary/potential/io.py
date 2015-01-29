@@ -55,6 +55,26 @@ def from_dict(d):
 
     return Potential(units=unitsys, **params)
 
+def to_dict(potential):
+    """
+    Turn a potential object into a dictionary that fully specifies the
+    state of the object.
+
+    Parameters
+    ----------
+    potential :
+        The instantiated :class:`~gary.potential.Potential` object.
+
+    """
+    d = dict()
+
+    d['class'] = potential.__class__.__name__
+    d['units'] = [str(unit) for unit in potential.units]
+    if len(potential.parameters) > 0:
+        d['parameters'] = potential.parameters
+
+    return d
+
 def read(f):
     """
     Read a potential specification file and return a
@@ -89,4 +109,11 @@ def write(potential, f):
         A filename or file-like object to write the input potential object to.
 
     """
-    raise NotImplementedError()
+    d = to_dict(potential)
+
+    if hasattr(f, 'write'):
+        yaml.dump(d, f, default_flow_style=False)
+    else:
+        with open(f, 'w') as f:
+            yaml.dump(d, f, default_flow_style=False)
+
