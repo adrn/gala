@@ -26,7 +26,11 @@ test_data_path = os.path.abspath(os.path.join(os.path.split(__file__)[0],
 def test_read():
     f1 = os.path.join(test_data_path, 'potential', 'isochrone.yml')
     potential = read(f1)
-    print(repr(potential))
+    assert np.allclose(potential.parameters['m'], 1E11)
+    assert np.allclose(potential.parameters['b'], 0.76)
+
+    f2 = os.path.join(test_data_path, 'potential', 'pw14.yml')
+    potential = read(f2)
 
 def test_write():
 
