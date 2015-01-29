@@ -47,6 +47,10 @@ def from_dict(d):
     else:
         params = dict()
 
+    # Hack because PyYAML sux
+    for k,v in params.items():
+        params[k] = float(v)
+
     Potential = getattr(potential, class_name)
 
     return Potential(units=unitsys, **params)
