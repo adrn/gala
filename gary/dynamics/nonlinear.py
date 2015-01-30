@@ -7,13 +7,10 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os, sys
 import logging
 
 # Third-party
 import numpy as np
-import scipy
-from scipy import fftpack
 
 # Project
 from ..util import gram_schmidt
@@ -242,36 +239,3 @@ def sali(w0, integrator, dt, nsteps, t1=0., deviation_vecs=None):
         all_w0 = ww[-1].copy()
 
     return sali, full_ts, full_w
-
-def fft_orbit(t, w):
-    """ TODO...
-
-        Parameters
-        ----------
-        t : array_like
-            Array of times.
-        w : array_like
-            Integrated orbits for phase-space coordinates. Must have
-            2 or 3 dimensions, where the last axis are the coordinates.
-
-    """
-
-    if w.ndim < 2:
-        raise ValueError("w must be >= 2 dimensional.")
-
-    nsteps = w.shape[0]
-    ndim = w.shape[-1]
-
-    dts = t[1:]-t[:-1]
-    dt = dts[0]
-
-    if not np.allclose(dt, dts):
-        raise ValueError("Non-uniform time steps.")
-
-    ffts = np.zeros((nsteps,ndim))
-    freqs = np.zeros((nsteps,ndim))
-    for ii in range(ndim):
-        ffts[:,ii] = np.abs(scipy.fft(w[:,ii]))
-        freqs[:,ii] = fftpack.fftfreq(nsteps, dt)
-
-    return freqs, ffts
