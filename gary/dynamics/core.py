@@ -21,16 +21,6 @@ def angular_momentum(q, p):
 
         \boldsymbol{L} = \boldsymbol{q} \times \boldsymbol{p}
 
-    Examples
-    --------
-
-        >>> import numpy as np
-        >>> import astropy.units as u
-        >>> q = np.array([1., 0, 0]) * u.au
-        >>> p = np.array([0, 2*np.pi, 0]) * u.au/u.yr
-        >>> angular_momentum(q, p)
-        <Quantity [ 0.        , 0.        , 6.28318531] AU2 / yr>
-
     Parameters
     ----------
     q : array_like, :class:`~astropy.units.Quantity`
@@ -42,6 +32,16 @@ def angular_momentum(q, p):
     -------
     L : :class:`numpy.ndarray`, :class:`~astropy.units.Quantity`
         Array of angular momentum vectors.
+
+    Examples
+    --------
+
+        >>> import numpy as np
+        >>> import astropy.units as u
+        >>> q = np.array([1., 0, 0]) * u.au
+        >>> p = np.array([0, 2*np.pi, 0]) * u.au/u.yr
+        >>> angular_momentum(q, p)
+        <Quantity [ 0.        , 0.        , 6.28318531] AU2 / yr>
 
     """
     try:
