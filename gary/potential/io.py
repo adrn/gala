@@ -13,9 +13,6 @@ import os
 import astropy.units as u
 import yaml
 
-# Project
-from .. import potential
-
 __all__ = ['read', 'write']
 
 def from_dict(d):
@@ -51,6 +48,7 @@ def from_dict(d):
     for k,v in params.items():
         params[k] = float(v)
 
+    from .. import potential
     Potential = getattr(potential, class_name)
 
     return Potential(units=unitsys, **params)
