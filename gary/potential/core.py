@@ -363,6 +363,19 @@ class CompositePotential(dict, PotentialBase):
             raise TypeError("Potential components may only be Potential "
                             "objects, not {0}.".format(type(p)))
 
+    @property
+    def parameters(self):
+        params = dict()
+        for k,v in self.items():
+            params[k] = v.parameters
+        return params
+
+    @parameters.setter
+    def parameters(self, v):
+        raise NotImplementedError("Setting parameters from the CompositePotential is not "
+                                  "allowed. To change potential parameters, change them for "
+                                  "the potential component, e.g., potential['...'].parameters.")
+
     def value(self, x):
         x = np.atleast_2d(x).copy()
         return np.array([p.value(x) for p in self.values()]).sum(axis=0)
