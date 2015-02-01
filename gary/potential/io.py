@@ -81,7 +81,11 @@ def to_dict(potential):
     """
     d = dict()
 
-    d['class'] = potential.__class__.__name__
+    if potential.__class__.__name__ == 'CompositePotential':
+        d['class'] = dict(CompositePotential=dict([(k,p.__class__.__name__) for k,p in potential.items()]))
+    else:
+        d['class'] = potential.__class__.__name__
+
     d['units'] = [str(unit) for unit in potential.units]
     if len(potential.parameters) > 0:
         params = dict(**potential.parameters)
