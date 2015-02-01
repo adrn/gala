@@ -14,7 +14,8 @@ import numpy as np
 
 # Project
 from ..io import read, write
-from ..builtin import IsochronePotential
+from ..core import CompositePotential
+from ..builtin import IsochronePotential, PointMassPotential
 from ..custom import PW14Potential
 from ...units import galactic
 
@@ -34,6 +35,9 @@ def test_read():
     f3 = os.path.join(test_data_path, 'potential', 'pw14_2.yml')
     potential = read(f3)
 
+    f4 = os.path.join(test_data_path, 'potential', 'composite.yml')
+    potential = read(f4)
+
 def test_write():
 
     tmp_filename = "/tmp/potential.yml"
@@ -52,5 +56,10 @@ def test_write():
     with open(tmp_filename,'w') as f:
         write(potential, f)
 
+    write(potential, tmp_filename)
+
+    # composite potential
+    potential = CompositePotential(halo=PointMassPotential(m=1E11, x0=0., units=galactic),
+                                   bulge=IsochronePotential(m=1E11, b=0.76, units=galactic))
     write(potential, tmp_filename)
 
