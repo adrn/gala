@@ -17,6 +17,7 @@ from astropy.constants import G
 import astropy.units as u
 import matplotlib.pyplot as plt
 
+from ..core import CompositePotential
 from ..cpotential import CCompositePotential
 from ..cbuiltin import *
 
@@ -287,24 +288,5 @@ class TestMisalignedLogarithmicPotential(PotentialTestBase):
         self.potential = LogarithmicPotential(units=self.units,
                                               v_c=0.17, r_h=10.,
                                               q1=1.2, q2=1., q3=0.8, phi=0.35)
-
-        self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
-
-class TestCCompositePotential(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
-
-    def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
-        self.name = "CCompositePotential"
-        p1 = LogarithmicPotential(units=self.units,
-                                  v_c=0.17, r_h=10.,
-                                  q1=1.2, q2=1., q3=0.8, phi=0.35)
-        p2 = MiyamotoNagaiPotential(units=self.units,
-                                    m=1.E11, a=6.5, b=0.26)
-
-        self.potential = CCompositePotential(disk=p2, halo=p1)
 
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
