@@ -18,7 +18,6 @@ import astropy.units as u
 import matplotlib.pyplot as plt
 
 from ..core import CompositePotential
-from ..cpotential import CCompositePotential
 from ..cbuiltin import *
 
 # HACK: bad solution is to do this:

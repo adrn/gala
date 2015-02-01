@@ -15,6 +15,7 @@ import astropy.units as u
 import matplotlib.pyplot as plt
 
 from ..custom import *
+from .test_cbuiltin import PotentialTestBase
 
 top_path = "/tmp/gary"
 plot_path = os.path.join(top_path, "tests/potential")
@@ -28,8 +29,35 @@ color_print("To view plots:", "green")
 print("    open {}".format(plot_path))
 color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yellow")
 
-def test_create():
-    potential = LM10Potential()
-    potential = PW14Potential()
+class TestPW14Potential(PotentialTestBase):
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
-# TODO
+    def setup(self):
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
+        self.potential = PW14Potential()
+        self.w0 = [8.,0.,0.,0.,0.22,0.1]
+
+class TestLM10Potential(PotentialTestBase):
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+
+    def setup(self):
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
+        self.potential = LM10Potential()
+        self.w0 = [8.,0.,0.,0.,0.22,0.1]
+
+class TestTriaxialMWPotential(PotentialTestBase):
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+
+    def setup(self):
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
+        self.potential = TriaxialMWPotential()
+        self.w0 = [8.,0.,0.,0.,0.22,0.1]
