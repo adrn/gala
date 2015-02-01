@@ -61,6 +61,10 @@ class PotentialBase(object):
 
     """
 
+    def __init__(self, units=None, **parameters):
+        self.units = units
+        self.parameters = parameters
+
     @abc.abstractmethod
     def _value(self):
         raise NotImplementedError()
