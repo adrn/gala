@@ -4,21 +4,42 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
+# Standard library
+import abc
+
 # Third-party
 import numpy as np
 from astropy.constants import G
 import astropy.units as u
 from astropy.utils import isiterable
+import six
 
 # Project
 from ..integrate import *
 from ..util import inherit_docs
 
-__all__ = ["Potential", "CompositePotential"]
+__all__ = ["PotentialBase", "CompositePotential"]
 
-class Potential(object):
+class MetaPotential(type):
+    # def __init__(cls, name, bases, dct):
+    #     super(MetaPotential, cls).__init__(name, bases, dct)
+
+    #     if name != 'PotentialBase' and 'units' not in dct:
+    #         raise NotImplementedError("Potentials must have a 'units' attribute that "
+    #                                   "defines a valid system of units.")
+
+    #     if name != 'PotentialBase' and 'parameters' not in dct:
+    #         raise NotImplementedError("Potentials must have a 'parameters' attribute that "
+    #                                   "contains the parameters to pass to its methods.")
+    pass
+
+
+@six.add_metaclass(MetaPotential)
+class PotentialBase(object):
     """
-    A baseclass for representing gravitational potentials. You must specify
+    A baseclass for defining gravitational potentials.
+
+    You must specify
     a function that evaluates the potential value (func). You may also
     optionally add a function that computes derivatives (gradient), and a
     function to compute the Hessian of the potential.
@@ -40,26 +61,10 @@ class Potential(object):
 
     """
 
-    def __init__(self, func, gradient=None, hessian=None, parameters=dict(), units=None):
-        # store parameters
-        self.parameters = parameters
+    @abc.abstractmethod
+    def _value(self):
+        raise NotImplementedError()
 
-        # Make sure the functions are callable
-        for f in [func, gradient, hessian]:
-            if f is not None and not hasattr(f, '__call__'):
-                raise TypeError("'{}' must be callable! You passed "
-                                "in a '{}'".format(f.func_name, f.__class__))
-
-        self._value = func
-        self._gradient = gradient
-        self._hessian = hessian
-
-        # TODO: validate units
-        self.units = units
-
-    # ========================================================================
-    # Base methods
-    #
     def value(self, x):
         """
         Compute the value of the potential at the given position(s).
@@ -70,6 +75,9 @@ class Potential(object):
             Position to compute the value of the potential.
         """
         return self._value(np.atleast_2d(x), **self.parameters)
+
+    def _gradient(self, *args, **kwargs):
+        raise NotImplementedError()
 
     def gradient(self, x):
         """
@@ -84,6 +92,9 @@ class Potential(object):
             raise NotImplementedError("No gradient function was specified when"
                                       " the object was created!")
         return self._gradient(np.atleast_2d(x), **self.parameters)
+
+    def _hessian(self, *args, **kwargs):
+        raise NotImplementedError()
 
     def hessian(self, x):
         """
@@ -102,6 +113,18 @@ class Potential(object):
     # ========================================================================
     # Things that use the base methods
     #
+    def acceleration(self, x):
+        """
+        Compute the acceleration due to the potential at the given
+        position(s).
+
+        Parameters
+        ----------
+        x : array_like, numeric
+            Position to compute the acceleration at.
+        """
+        return -self.gradient(x)
+
     def mass_enclosed(self, x):
         """
         Estimate the mass enclosed within the given position by assumine the potential
@@ -130,18 +153,6 @@ class Potential(object):
         Gee = G.decompose(self.units).value
 
         return np.abs(r*r * diff / Gee / (2.*h))
-
-    def acceleration(self, x):
-        """
-        Compute the acceleration due to the potential at the given
-        position(s).
-
-        Parameters
-        ----------
-        x : array_like, numeric
-            Position to compute the acceleration at.
-        """
-        return -self.gradient(x)
 
     # ========================================================================
     # Python special methods
@@ -308,11 +319,10 @@ class Potential(object):
         v : array_like, numeric
             Velocity.
         """
-
         return self.value(x) + 0.5*np.sum(v**2, axis=-1)
 
 @inherit_docs
-class CompositePotential(dict, Potential):
+class CompositePotential(dict, PotentialBase):
     """
     A potential composed of several distinct components. For example,
     two point masses or a galactic disk and halo, each with their own

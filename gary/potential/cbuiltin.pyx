@@ -27,7 +27,6 @@ cimport cython
 # Project
 from .cpotential cimport _CPotential
 from .cpotential import CPotential
-from .core import CartesianPotential
 
 cdef extern from "math.h":
     double sqrt(double x) nogil
@@ -81,7 +80,7 @@ cdef class _HernquistPotential(_CPotential):
         grad[1] += fac*r[1]
         grad[2] += fac*r[2]
 
-class HernquistPotential(CPotential, CartesianPotential):
+class HernquistPotential(CPotential):
     r"""
     HernquistPotential(m, c, units)
 
@@ -145,7 +144,7 @@ cdef class _PlummerPotential(_CPotential):
         grad[1] += fac*r[1]
         grad[2] += fac*r[2]
 
-class PlummerPotential(CPotential, CartesianPotential):
+class PlummerPotential(CPotential):
     r"""
     PlummerPotential(m, b, units)
 
@@ -210,7 +209,7 @@ cdef class _JaffePotential(_CPotential):
         grad[1] += fac*r[1]
         grad[2] += fac*r[2]
 
-class JaffePotential(CPotential, CartesianPotential):
+class JaffePotential(CPotential):
     r"""
     JaffePotential(m, c, units)
 
@@ -282,7 +281,7 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
         grad[1] += fac*r[1]
         grad[2] += fac*r[2] * (1. + self.a / sqrtz)
 
-class MiyamotoNagaiPotential(CPotential, CartesianPotential):
+class MiyamotoNagaiPotential(CPotential):
     r"""
     MiyamotoNagaiPotential(m, a, b, units)
 
@@ -347,7 +346,7 @@ cdef class _SphericalNFWPotential(_CPotential):
         grad[1] += fac*r[1]
         grad[2] += fac*r[2]
 
-class SphericalNFWPotential(CPotential, CartesianPotential):
+class SphericalNFWPotential(CPotential):
     r"""
     SphericalNFWPotential(v_c, r_s, units)
 
@@ -465,7 +464,7 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
         grad[1] += self.R[1]*ax + self.R[4]*ay + self.R[7]*az
         grad[2] += self.R[2]*ax + self.R[5]*ay + self.R[8]*az
 
-class LeeSutoTriaxialNFWPotential(CPotential, CartesianPotential):
+class LeeSutoTriaxialNFWPotential(CPotential):
     r"""
     LeeSutoTriaxialNFWPotential(v_c, r_s, a, b, c, units, phi=0., theta=0., psi=0.)
 
@@ -580,7 +579,7 @@ cdef class _LogarithmicPotential(_CPotential):
         grad[1] += self.R[1]*ax + self.R[4]*ay + self.R[7]*az
         grad[2] += self.R[2]*ax + self.R[5]*ay + self.R[8]*az
 
-class LogarithmicPotential(CPotential, CartesianPotential):
+class LogarithmicPotential(CPotential):
     r"""
     LogarithmicPotential(v_c, r_h, q1, q2, q3, units, phi=0., theta=0., psi=0.)
 
