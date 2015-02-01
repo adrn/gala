@@ -11,9 +11,24 @@ import os
 
 # Third-party
 import astropy.units as u
+from astropy.utils import isiterable
 import yaml
 
 __all__ = ['read', 'write']
+
+def pythonify(node):
+    for key, item in node.items():
+        if hasattr(item, 'items'):
+            pythonify(item)
+        else:
+            if hasattr(item,'tolist'):
+                node[key] = item.tolist()
+
+            elif isiterable(item) and not isinstance(item, str):
+                node[key] = map(float, list(item))
+
+            else:
+                node[key] = float(item)
 
 def from_dict(d):
     """
@@ -44,9 +59,9 @@ def from_dict(d):
     else:
         params = dict()
 
-    # Hack because PyYAML sux
-    for k,v in params.items():
-        params[k] = float(v)
+    # need to crawl the dictionary structure and make sure everything is float or
+    #   a list of floats
+    pythonify(params)
 
     from .. import potential
     Potential = getattr(potential, class_name)
@@ -69,7 +84,9 @@ def to_dict(potential):
     d['class'] = potential.__class__.__name__
     d['units'] = [str(unit) for unit in potential.units]
     if len(potential.parameters) > 0:
-        d['parameters'] = potential.parameters
+        params = dict(**potential.parameters)
+        pythonify(params)
+        d['parameters'] = params
 
     return d
 
