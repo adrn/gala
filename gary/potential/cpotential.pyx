@@ -130,6 +130,7 @@ cdef class _CPotential:
         nparticles = q.shape[0]
         ndim = q.shape[1]
 
+        cdef double [::1] pot = np.zeros((nparticles,))
         for k in range(nparticles):
             pot[k] = self._value(&q[k,0])
 
@@ -205,7 +206,7 @@ cdef class _CPotential:
 
 # ==============================================================================
 
-class CCompositePotential(CPotential):
+class CCompositePotential(CPotentialBase):
     """
 
     TODO!
@@ -223,7 +224,7 @@ class CCompositePotential(CPotential):
     def __init__(self, **kwargs):
         # hurm?
         self.c_instance = _CCompositePotential([p.c_instance for p in kwargs.values()])
-        super(CPotential, self).__init__(func=lambda x: x, parameters=dict())
+        super(CPotentialBase, self).__init__(func=lambda x: x, parameters=dict())
 
 from cpython cimport PyObject
 cdef class _CCompositePotential(_CPotential):
