@@ -4,9 +4,6 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import math
-
 # Third-party
 import numpy as np
 from astropy.constants import G
