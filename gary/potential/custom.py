@@ -28,9 +28,6 @@ class PW14Potential(CompositePotential):
                  halo=dict(a=1.4, b=1., c=0.6, v_c=0.247, r_s=30.,
                            phi=np.pi/2., theta=np.pi/2., psi=np.pi/2.)):
 
-        # Choice of v_h sets circular velocity at Sun to 220 km/s
-        self.units = units
-
         kwargs = dict()
         kwargs["disk"] = MiyamotoNagaiPotential(units=units, **disk)
         kwargs["bulge"] = HernquistPotential(units=units, **bulge)
@@ -70,10 +67,8 @@ class TriaxialMWPotential(CompositePotential):
                            phi=0., theta=0., psi=0.)):
         """ Axis ratio values taken from Jing & Suto (2002). Other
             parameters come from a by-eye fit to Bovy's MW2014Potential.
+            Choice of v_c sets circular velocity at Sun to 220 km/s
         """
-
-        # Choice of v_h sets circular velocity at Sun to 220 km/s
-        self.units = units
 
         kwargs = dict()
         kwargs["disk"] = MiyamotoNagaiPotential(units=units, **disk)
