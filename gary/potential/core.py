@@ -349,6 +349,8 @@ class CompositePotential(PotentialBase, dict):
 
     """
     def __init__(self, **kwargs):
+        self._units = None
+
         for v in kwargs.values():
             self._check_component(v)
 
@@ -362,6 +364,18 @@ class CompositePotential(PotentialBase, dict):
         if not isinstance(p, PotentialBase):
             raise TypeError("Potential components may only be Potential "
                             "objects, not {0}.".format(type(p)))
+
+        if self.units is None:
+            self._units = p.units
+
+        else:
+            if sorted([str(x) for x in self.units]) != sorted([str(x) for x in p.units]):
+                raise ValueError("Unit system of new potential component must match "
+                                 "unit systems of other potential components.")
+
+    @property
+    def units(self):  # read-only
+        return self._units
 
     @property
     def parameters(self):

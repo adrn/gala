@@ -16,7 +16,7 @@ import astropy.units as u
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-from ..core import Potential, CompositePotential
+from ..core import PotentialBase, CompositePotential
 
 top_path = "/tmp/gary"
 plot_path = os.path.join(top_path, "tests/potential")
@@ -34,13 +34,18 @@ color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def test_simple():
 
-    def f(r):
-        return -1./r
+    class MyPotential(PotentialBase):
+        def __init__(self, units=None):
+            self.parameters = dict()
+            self.units = units
 
-    def gradient(r):
-        return r**-2
+        def _value(self, r):
+            return -1/r
 
-    p = Potential(func=f, gradient=gradient)
+        def _gradient(self, r):
+            return r**-2
+
+    p = MyPotential()
     assert p(0.5) == -2.
     assert p.value(0.5) == -2.
     assert p.acceleration(0.5) == -4.
@@ -49,29 +54,27 @@ def test_simple():
     p.value(np.arange(0.5, 11.5, 0.5))
     p.acceleration(np.arange(0.5, 11.5, 0.5))
 
-def test_repr():
+# ----------------------------------------------------------------------------
 
-    def f(r,m):
-        return -G*m/r
+class MyPotential(PotentialBase):
+    def __init__(self, m, x0=0., units=None):
+        self.parameters = dict(m=m, x0=x0)
+        self.units = units
 
-    def gradient(r,m):
-        return G*m/r**2
-
-    p = Potential(func=f, gradient=gradient, parameters=dict(m=1.E10*u.Msun))
-    assert p.__repr__() == "<Potential: m=1.00e+10 solMass>"
-
-def test_plot():
-    def f(x, m, x0):
+    def _value(self, x, m, x0):
         r = np.sqrt(np.sum((x-x0)**2, axis=-1))
         return -m/r
 
-    def gradient(x, m, x0):
+    def _gradient(self, x, m, x0):
         r = np.sqrt(np.sum((x-x0)**2, axis=-1))
         return m*(x-x0)/r**3
 
-    p = Potential(func=f, gradient=gradient,
-                  parameters=dict(m=1,
-                                  x0=[1.,3.,0.]))
+def test_repr():
+    p = MyPotential(m=1.E10*u.Msun)
+    assert p.__repr__() == "<MyPotential: x0=0.00e+00, m=1.00e+10 solMass>"
+
+def test_plot():
+    p = MyPotential(m=1, x0=[1.,3.,0.])
     f = p.plot_contours(grid=(np.linspace(-10., 10., 100), 0., 0.),
                         labels=["X"])
     f.suptitle("slice off from 0., won't have cusp")
@@ -91,21 +94,8 @@ def test_plot():
 
 def test_composite():
 
-    def f(x, m, x0):
-        r = np.sqrt(np.sum((x-x0)**2, axis=-1))
-        return -m/r
-
-    def gradient(x, m, x0):
-        r = np.sqrt(np.sum((x-x0)**2, axis=-1))
-        return m*(x-x0)/r**3
-
-    p1 = Potential(func=f, gradient=gradient,
-                   parameters=dict(m=1.,
-                                   x0=[1.,0.,0.]))
-
-    p2 = Potential(func=f, gradient=gradient,
-                   parameters=dict(m=1.,
-                                   x0=[-1.,0.,0.]))
+    p1 = MyPotential(m=1., x0=[1.,0.,0.])
+    p2 = MyPotential(m=1., x0=[-1.,0.,0.])
 
     p = CompositePotential(one=p1, two=p2)
     assert np.allclose(p.value([0.,0.,0.]), -2)
@@ -115,3 +105,15 @@ def test_composite():
                                 np.linspace(-10., 10., 100),
                                 0.))
     fig.savefig(os.path.join(plot_path, "composite_point_mass.png"))
+
+    p1 = MyPotential(m=1., x0=[1.,0.,0.], units=[u.au, u.yr, u.Msun])
+    p2 = MyPotential(m=1., x0=[-1.,0.,0.], units=[u.kpc, u.yr, u.Msun])
+    with pytest.raises(ValueError):
+        p = CompositePotential(one=p1, two=p2)
+
+    p1 = MyPotential(m=1., x0=[1.,0.,0.], units=[u.au, u.yr, u.Msun])
+    p2 = MyPotential(m=1., x0=[-1.,0.,0.], units=[u.au, u.yr, u.Msun])
+    p = CompositePotential(one=p1, two=p2)
+    assert u.au in p.units
+    assert u.yr in p.units
+    assert u.Msun in p.units
