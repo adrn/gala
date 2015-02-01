@@ -132,6 +132,12 @@ class TestComposite(object):
         with pytest.raises(TypeError):
             potential["two"] = "derp"
 
+        assert "one" in potential.parameters
+        assert "m" in potential.parameters["one"]
+        assert "x0" in potential.parameters["one"]
+        with pytest.raises(TypeError):
+            potential.parameters["m"] = "derp"
+
     def test_plot_composite(self):
         potential = CompositePotential()
 
