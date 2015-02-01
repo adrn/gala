@@ -23,12 +23,7 @@ cdef extern from "math.h":
     double sqrt(double x) nogil
     double fabs(double x) nogil
 
-# class MetaCPotential(type):
-#     def __init__(cls, name, bases, dct):
-#         super(MetaCPotential, cls).__init__(name, bases, dct)
-
-# @six.add_metaclass(MetaCPotential)
-class CPotential(PotentialBase):
+class CPotentialBase(PotentialBase):
     """
     A base class for representing gravitational potentials implemented in Cython.
 
@@ -50,13 +45,6 @@ class CPotential(PotentialBase):
 
     """
 
-    def __init__(self, c_class, parameters=dict()):
-        # store C instance
-        self.c_instance = c_class(**parameters)
-
-        # HACK?
-        super(CPotential, self).__init__(func=None, parameters=parameters)
-
     def value(self, q):
         """
         value(q)
@@ -68,9 +56,7 @@ class CPotential(PotentialBase):
         q : array_like, numeric
             Position to compute the value of the potential.
         """
-        tmp = np.zeros(len(q))
-        self.c_instance.value(np.atleast_2d(q).copy(), tmp)
-        return tmp
+        return self.c_instance.value(np.atleast_2d(q).copy())
 
     def gradient(self, q):
         """
@@ -109,23 +95,6 @@ class CPotential(PotentialBase):
     # ----------------------------
     # Functions of the derivatives
     # ----------------------------
-    def acceleration(self, q):
-        """
-        acceleration(q)
-
-        Compute the acceleration due to the potential at the given position(s).
-
-        Parameters
-        ----------
-        q : array_like, numeric
-            Position to compute the acceleration.
-        """
-        try:
-            return -self.c_instance.gradient(np.atleast_2d(q).copy())
-        except AttributeError,TypeError:
-            raise ValueError("Potential C instance has no defined "
-                             "gradient function")
-
     def mass_enclosed(self, q):
         """
         mass_enclosed(q)
@@ -156,13 +125,15 @@ cdef class _CPotential:
     def __getstate__(self):
         return None
 
-    cpdef value(self, double[:,::1] q, double[::1] pot):
+    cpdef value(self, double[:,::1] q):
         cdef int nparticles, ndim, k
         nparticles = q.shape[0]
         ndim = q.shape[1]
 
         for k in range(nparticles):
             pot[k] = self._value(&q[k,0])
+
+        return np.array(pot)
 
     cdef public double _value(self, double* q) nogil:
         return 0.
