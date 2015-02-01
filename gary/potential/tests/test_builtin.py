@@ -144,7 +144,7 @@ class TestComposite(object):
         # Where forces cancel
         np.testing.assert_array_almost_equal(
                         potential.acceleration([0.,0.,0.]),
-                        [0.,0.,0.], decimal=5)
+                        [[0.,0.,0.]], decimal=5)
 
         grid = np.linspace(-5.,5)
         fig = potential.plot_contours(grid=(grid,0.,0.))
