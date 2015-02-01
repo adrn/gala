@@ -16,7 +16,7 @@ import six
 
 # Project
 from ..integrate import *
-from ..util import inherit_docs
+from ..util import inherit_docs, ImmutableDict
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
@@ -322,7 +322,7 @@ class PotentialBase(object):
         return self.value(x) + 0.5*np.sum(v**2, axis=-1)
 
 @inherit_docs
-class CompositePotential(dict, PotentialBase):
+class CompositePotential(PotentialBase, dict):
     """
     A potential composed of several distinct components. For example,
     two point masses or a galactic disk and halo, each with their own
@@ -368,13 +368,7 @@ class CompositePotential(dict, PotentialBase):
         params = dict()
         for k,v in self.items():
             params[k] = v.parameters
-        return params
-
-    @parameters.setter
-    def parameters(self, v):
-        raise NotImplementedError("Setting parameters from the CompositePotential is not "
-                                  "allowed. To change potential parameters, change them for "
-                                  "the potential component, e.g., potential['...'].parameters.")
+        return ImmutableDict(params)
 
     def value(self, x):
         x = np.atleast_2d(x).copy()
