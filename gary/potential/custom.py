@@ -22,31 +22,27 @@ __all__ = ['PW14Potential', 'LM10Potential', 'TriaxialMWPotential']
 
 class PW14Potential(CompositePotential):
 
-    def __init__(self, m_disk=6.5E10, a=6.5, b=0.26,
-                 m_spher=2E10, c=0.3,
-                 q1=1.4, q2=1., q3=0.6,
-                 v_c=0.247, r_s=30.,
-                 phi=np.pi/2., theta=np.pi/2., psi=np.pi/2.,
+    def __init__(self,
+                 disk=dict(m=6.5E10, a=6.5, b=0.26),
+                 bulge=dict(m=2E10, c=0.3),
+                 halo=dict(a=1.4, b=1., c=0.6, v_c=0.247, r_s=30.,
+                           phi=np.pi/2., theta=np.pi/2., psi=np.pi/2.),
                  units=galactic):
 
         # Choice of v_h sets circular velocity at Sun to 220 km/s
         self.units = units
 
         kwargs = dict()
-        kwargs["disk"] = MiyamotoNagaiPotential(units=units,
-                                                m=m_disk, a=a, b=b)
+        kwargs["disk"] = MiyamotoNagaiPotential(units=units, **disk)
+        kwargs["bulge"] = HernquistPotential(units=units, **bulge)
 
-        kwargs["bulge"] = HernquistPotential(units=units,
-                                             m=m_spher, c=c)
-
-        if q1 == 1 and q2 == 1 and q3 == 1:
+        if halo['a'] == 1 and halo['b'] == 1 and halo['c'] == 1:
             kwargs["halo"] = SphericalNFWPotential(units=units,
-                                                   v_c=v_c, r_s=r_s)
+                                                   v_c=halo['v_c'],
+                                                   r_s=halo['r_s'])
         else:
-            kwargs["halo"] = LeeSutoTriaxialNFWPotential(units=units,
-                                                         a=q1, b=q2, c=q3,
-                                                         v_c=v_c, r_s=r_s,
-                                                         phi=phi, theta=theta, psi=psi)
+            kwargs["halo"] = LeeSutoTriaxialNFWPotential(units=units, **halo)
+
         super(PW14Potential,self).__init__(**kwargs)
 
 class LM10Potential(CompositePotential):
