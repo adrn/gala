@@ -105,8 +105,7 @@ class HernquistPotential(CPotentialBase):
         self.units = units
         self.G = G.decompose(units).value
         self.parameters = dict(m=m, c=c)
-        # self.c_instance = _HernquistPotential(G=self.G, **self.parameters)
-        self.c_instance = _HernquistPotential(G=self.G, m=1., b=1.)
+        self.c_instance = _HernquistPotential(G=self.G, **self.parameters)
 
 # ============================================================================
 #    Plummer sphere potential
@@ -167,10 +166,9 @@ class PlummerPotential(CPotentialBase):
     """
     def __init__(self, m, b, units):
         self.units = units
-        _G = G.decompose(units).value
-        parameters = dict(G=_G, m=m, b=b)
-        super(PlummerPotential, self).__init__(_PlummerPotential,
-                                               parameters=parameters)
+        self.G = G.decompose(units).value
+        self.parameters = dict(m=m, b=b)
+        self.c_instance = _PlummerPotential(G=self.G, **self.parameters)
 
 # ============================================================================
 #    Jaffe spheroid potential
@@ -232,10 +230,9 @@ class JaffePotential(CPotentialBase):
     """
     def __init__(self, m, c, units):
         self.units = units
-        _G = G.decompose(units).value
-        parameters = dict(G=_G, m=m, c=c)
-        super(JaffePotential, self).__init__(_JaffePotential,
-                                             parameters=parameters)
+        self.G = G.decompose(units).value
+        self.parameters = dict(m=m, c=c)
+        self.c_instance = _JaffePotential(G=self.G, **self.parameters)
 
 
 # ============================================================================
@@ -306,10 +303,9 @@ class MiyamotoNagaiPotential(CPotentialBase):
     """
     def __init__(self, m, a, b, units):
         self.units = units
-        _G = G.decompose(units).value
-        parameters = dict(G=_G, m=m, a=a, b=b)
-        super(MiyamotoNagaiPotential, self).__init__(_MiyamotoNagaiPotential,
-                                                     parameters=parameters)
+        self.G = G.decompose(units).value
+        self.parameters = dict(m=m, a=a, b=b)
+        self.c_instance = _MiyamotoNagaiPotential(G=self.G, **self.parameters)
 
 # ============================================================================
 #    Spherical NFW potential
@@ -370,11 +366,9 @@ class SphericalNFWPotential(CPotentialBase):
     """
     def __init__(self, v_c, r_s, units):
         self.units = units
-        _G = G.decompose(units).value
-        parameters = dict(G=_G, v_c=v_c, r_s=r_s)
-
-        super(SphericalNFWPotential, self).__init__(_SphericalNFWPotential,
-                                                    parameters=parameters)
+        self.G = G.decompose(units).value
+        self.parameters = dict(v_c=v_c, r_s=r_s)
+        self.c_instance = _SphericalNFWPotential(G=self.G, **self.parameters)
 
 # ============================================================================
 #    Lee & Suto (2003) triaxial NFW potential
@@ -502,8 +496,8 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
     """
     def __init__(self, v_c, r_s, a, b, c, units, phi=0., theta=0., psi=0.):
         self.units = units
-        _G = G.decompose(units).value
-        parameters = dict(G=_G, v_c=v_c, r_s=r_s, a=a, b=b, c=c)
+        self.G = G.decompose(units).value
+        self.parameters = dict(v_c=v_c, r_s=r_s, a=a, b=b, c=c)
 
         if theta != 0 or phi != 0 or psi != 0:
             D = rotation_matrix(phi, "z", unit=u.radian) # TODO: Bad assuming radians
@@ -514,9 +508,8 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
         else:
             R = np.eye(3)
 
-        parameters['R'] = np.ravel(R).copy()
-        super(LeeSutoTriaxialNFWPotential, self).__init__(_LeeSutoTriaxialNFWPotential,
-                                                          parameters=parameters)
+        self.parameters['R'] = np.ravel(R).copy()
+        self.c_instance = _LeeSutoTriaxialNFWPotential(G=self.G, **self.parameters)
 
 # ============================================================================
 #    Triaxial, Logarithmic potential
@@ -620,11 +613,11 @@ class LogarithmicPotential(CPotentialBase):
     """
     def __init__(self, v_c, r_h, q1, q2, q3, units, phi=0., theta=0., psi=0.):
         self.units = units
-        _G = G.decompose(units).value
-        parameters = dict(G=_G, v_c=v_c, r_h=r_h, q1=q1, q2=q2, q3=q3)
+        self.G = G.decompose(units).value
+        self.parameters = dict(v_c=v_c, r_h=r_h, q1=q1, q2=q2, q3=q3)
 
         if theta != 0 or phi != 0 or psi != 0:
-            D = rotation_matrix(phi, "z", unit=u.radian)  # TODO: Bad assuming radians
+            D = rotation_matrix(phi, "z", unit=u.radian) # TODO: Bad assuming radians
             C = rotation_matrix(theta, "x", unit=u.radian)
             B = rotation_matrix(psi, "z", unit=u.radian)
             R = np.asarray(B.dot(C).dot(D))
@@ -632,6 +625,5 @@ class LogarithmicPotential(CPotentialBase):
         else:
             R = np.eye(3)
 
-        parameters['R'] = np.ravel(R).copy()
-        super(LogarithmicPotential, self).__init__(_LogarithmicPotential,
-                                                   parameters=parameters)
+        self.parameters['R'] = np.ravel(R).copy()
+        self.c_instance = _LogarithmicPotential(G=self.G, **self.parameters)
