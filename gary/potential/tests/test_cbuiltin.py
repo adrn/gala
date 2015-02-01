@@ -195,7 +195,7 @@ class TestSphericalNFWPotential(PotentialTestBase):
 
     def test_against_triaxial(self):
         other = LeeSutoTriaxialNFWPotential(units=self.units,
-                                            v_h=0.35, r_h=12.,
+                                            v_c=0.35, r_s=12.,
                                             a=1., b=1., c=1.)
 
         v1 = other.value(np.array([self.w0[:3]]))
@@ -211,7 +211,7 @@ class TestSphericalNFWPotential(PotentialTestBase):
         # true mass profile
         vc = self.potential.parameters['v_c']
         rs = self.potential.parameters['r_s']
-        G = self.potential.parameters['G']
+        G = self.potential.G
 
         r = np.linspace(1., 400, 100)
         fac = np.log(1 + r/rs) - (r/rs) / (1 + (r/rs))
@@ -238,7 +238,7 @@ class TestLeeSutoTriaxialNFWPotential(PotentialTestBase):
         print(self.__class__.__name__)
 
         self.potential = LeeSutoTriaxialNFWPotential(units=self.units,
-                                                     v_h=0.35, r_h=12.,
+                                                     v_c=0.35, r_s=12.,
                                                      a=1.3, b=1., c=0.8)
 
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
@@ -253,7 +253,7 @@ class TestMisalignedLeeSutoNFWPotential(PotentialTestBase):
 
         self.name = "MisalignedLeeSutoNFWPotential"
         self.potential = LeeSutoTriaxialNFWPotential(units=self.units,
-                                                     v_h=0.35, r_h=12.,
+                                                     v_c=0.35, r_s=12.,
                                                      a=1.4, b=1., c=0.6,
                                                      phi=np.radians(30.),
                                                      theta=np.radians(30))
