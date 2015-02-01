@@ -1,5 +1,5 @@
 cdef class _CPotential:
-    cpdef value(self, double[:,::1] q, double[::1] pot)
+    cpdef value(self, double[:,::1] q)
     cdef public double _value(self, double *q) nogil
 
     cpdef gradient(self, double[:,::1] q)
