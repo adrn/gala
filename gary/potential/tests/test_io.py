@@ -37,6 +37,7 @@ def test_read():
 
     f4 = os.path.join(test_data_path, 'potential', 'composite.yml')
     potential = read(f4)
+    assert str(potential) == "CompositePotential"
 
 def test_write():
 
