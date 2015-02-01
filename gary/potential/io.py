@@ -64,9 +64,16 @@ def from_dict(d):
     pythonify(params)
 
     from .. import potential
-    Potential = getattr(potential, class_name)
+    if isinstance(class_name, dict):  # CompositePotential
+        p = potential.CompositePotential()
+        for k,potential_name in class_name.items():
+            p[k] = getattr(potential, potential_name)(units=unitsys, **params[k])
 
-    return Potential(units=unitsys, **params)
+        return p
+
+    else:
+        Potential = getattr(potential, class_name)
+        return Potential(units=unitsys, **params)
 
 def to_dict(potential):
     """
