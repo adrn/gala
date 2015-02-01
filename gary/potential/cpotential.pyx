@@ -206,7 +206,7 @@ cdef class _CPotential:
 
 # ==============================================================================
 
-class CCompositePotential(CPotentialBase):
+class CCompositePotential(CompositePotential, CPotentialBase):
     """
 
     TODO!
@@ -222,9 +222,8 @@ class CCompositePotential(CPotentialBase):
     """
 
     def __init__(self, **kwargs):
-        # hurm?
+        super(CCompositePotential, self).__init__(**kwargs)
         self.c_instance = _CCompositePotential([p.c_instance for p in kwargs.values()])
-        super(CPotentialBase, self).__init__(func=lambda x: x, parameters=dict())
 
 from cpython cimport PyObject
 cdef class _CCompositePotential(_CPotential):
@@ -239,6 +238,14 @@ cdef class _CCompositePotential(_CPotential):
         self.py_instances = list(instance_list)
         self.ninstances = len(instance_list)
         self._more_init()
+
+    def __setstate__(self, d):
+        # for k,v in d.items():
+        #     setattr(self, k, v)
+        pass
+
+    def __getstate__(self):
+        return None
 
     cpdef _more_init(self):
         for i in range(self.ninstances):
