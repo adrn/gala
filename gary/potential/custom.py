@@ -12,14 +12,15 @@ import astropy.units as u
 import numpy as np
 
 # Project
-from .cpotential import CCompositePotential
+# from .cpotential import CCompositePotential
+from .core import CompositePotential
 from .cbuiltin import HernquistPotential, MiyamotoNagaiPotential, \
     LeeSutoTriaxialNFWPotential, SphericalNFWPotential, LogarithmicPotential
 from ..units import galactic
 
 __all__ = ['PW14Potential', 'LM10Potential', 'TriaxialMWPotential']
 
-class PW14Potential(CCompositePotential):
+class PW14Potential(CompositePotential):
 
     def __init__(self, m_disk=6.5E10, a=6.5, b=0.26,
                  m_spher=2E10, c=0.3,
@@ -47,9 +48,8 @@ class PW14Potential(CCompositePotential):
                                                          v_c=v_c, r_s=r_s,
                                                          phi=phi, theta=theta, psi=psi)
         super(PW14Potential,self).__init__(**kwargs)
-        self.c_instance.G = G.decompose(units).value
 
-class LM10Potential(CCompositePotential):
+class LM10Potential(CompositePotential):
 
     def __init__(self, m_disk=1E11, a=6.5, b=0.26,
                  m_spher=3.4E10, c=0.7,
@@ -68,9 +68,8 @@ class LM10Potential(CCompositePotential):
                                               q1=q1, q2=q2, q3=q3,
                                               phi=phi, v_c=v_c, r_h=r_h)
         super(LM10Potential,self).__init__(**kwargs)
-        self.c_instance.G = G.decompose(units).value
 
-class TriaxialMWPotential(CCompositePotential):
+class TriaxialMWPotential(CompositePotential):
 
     def __init__(self, m_disk=7E10, a=3.5, b=0.14,
                  m_spher=1E10, c=1.1,
@@ -97,4 +96,3 @@ class TriaxialMWPotential(CCompositePotential):
                                                      v_c=v_c, r_s=r_s,
                                                      phi=phi, theta=theta, psi=psi)
         super(TriaxialMWPotential,self).__init__(**kwargs)
-        self.c_instance.G = G.decompose(units).value
