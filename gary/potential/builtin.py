@@ -8,7 +8,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import numpy as np
 from astropy.constants import G
 
-from .core import Potential, CartesianPotential
+from .core import Potential
 
 __all__ = ["PointMassPotential", "IsochronePotential", "HarmonicOscillatorPotential",
            "KuzminPotential"]
@@ -30,7 +30,7 @@ def harmonic_osc_funcs(units):
 
     return f, gradient, None
 
-class HarmonicOscillatorPotential(CartesianPotential):
+class HarmonicOscillatorPotential(Potential):
     r"""
     Represents an N-dimensional harmonic oscillator.
 
@@ -173,7 +173,7 @@ def isochrone_funcs(units):
 
     return func, gradient, None
 
-class IsochronePotential(CartesianPotential):
+class IsochronePotential(Potential):
     r"""
     The Isochrone potential.
 
@@ -264,7 +264,7 @@ def kuzmin_funcs(units):
 
     return func, gradient, None
 
-class KuzminPotential(CartesianPotential):
+class KuzminPotential(Potential):
     r"""
     The Kuzmin flattened disk potential.
 

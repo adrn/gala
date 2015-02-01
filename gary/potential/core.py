@@ -14,7 +14,7 @@ from astropy.utils import isiterable
 from ..integrate import *
 from ..util import inherit_docs
 
-__all__ = ["Potential", "CartesianPotential", "CompositePotential", "CartesianCompositePotential"]
+__all__ = ["Potential", "CompositePotential"]
 
 class Potential(object):
     """
@@ -294,30 +294,6 @@ class Potential(object):
         integrator = Integrator(acc, **Integrator_kwargs)
         return integrator.run(w0, **time_spec)
 
-class CartesianPotential(Potential):
-    """
-    A baseclass for representing Cartesian gravitational potentials. You must
-    specify a function that evaluates the potential value (func). You may also
-    optionally add a function that computes derivatives (gradient), and a
-    function to compute the Hessian of the potential.
-
-    Parameters
-    ----------
-    func : function
-        A function that computes the value of the potential.
-    units : iterable
-        A list of astropy.units.Unit objects that define a complete unit system.
-        Must include at least a length unit, time unit, and mass unit.
-    gradient : function (optional)
-        A function that computes the first derivatives (gradient) of the potential.
-    hessian : function (optional)
-        A function that computes the second derivatives (Hessian) of the potential.
-    parameters : dict (optional)
-        Any extra parameters that the functions (func, gradient, hessian)
-        require. All functions must take the same parameters.
-
-    """
-
     def total_energy(self, x, v):
         """
         Compute the total energy (per unit mass) of a point in phase-space
@@ -388,7 +364,4 @@ class CompositePotential(dict, Potential):
     def hessian(self, x):
         x = np.atleast_2d(x).copy()
         return np.array([p.hessian(x) for p in self.values()]).sum(axis=0)
-
-class CartesianCompositePotential(CompositePotential, CartesianPotential):
-    pass
 
