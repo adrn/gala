@@ -15,6 +15,7 @@ import numpy as np
 # Project
 from ..io import read, write
 from ..builtin import IsochronePotential
+from ..custom import PW14Potential
 from ...units import galactic
 
 # TODO: config item to specify path to test data?
@@ -30,6 +31,9 @@ def test_read():
     f2 = os.path.join(test_data_path, 'potential', 'pw14.yml')
     potential = read(f2)
 
+    f3 = os.path.join(test_data_path, 'potential', 'pw14_2.yml')
+    potential = read(f3)
+
 def test_write():
 
     tmp_filename = "/tmp/potential.yml"
@@ -41,3 +45,12 @@ def test_write():
         write(potential, f)
 
     write(potential, tmp_filename)
+
+    # more complex
+    potential = PW14Potential()
+
+    with open(tmp_filename,'w') as f:
+        write(potential, f)
+
+    write(potential, tmp_filename)
+
