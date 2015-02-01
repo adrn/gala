@@ -14,7 +14,7 @@ import astropy.units as u
 from astropy.utils import isiterable
 import yaml
 
-__all__ = ['read', 'write']
+__all__ = ['load', 'save']
 
 def pythonify(node):
     for key, item in node.items():
