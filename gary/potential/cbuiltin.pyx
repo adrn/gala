@@ -494,19 +494,20 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_c, r_s, a, b, c, units, phi=0., theta=0., psi=0.):
+    def __init__(self, v_c, r_s, a, b, c, units, phi=0., theta=0., psi=0., R=None):
         self.units = units
         self.G = G.decompose(units).value
         self.parameters = dict(v_c=v_c, r_s=r_s, a=a, b=b, c=c)
 
-        if theta != 0 or phi != 0 or psi != 0:
-            D = rotation_matrix(phi, "z", unit=u.radian) # TODO: Bad assuming radians
-            C = rotation_matrix(theta, "x", unit=u.radian)
-            B = rotation_matrix(psi, "z", unit=u.radian)
-            R = np.asarray(B.dot(C).dot(D))
+        if R is None:
+            if theta != 0 or phi != 0 or psi != 0:
+                D = rotation_matrix(phi, "z", unit=u.radian) # TODO: Bad assuming radians
+                C = rotation_matrix(theta, "x", unit=u.radian)
+                B = rotation_matrix(psi, "z", unit=u.radian)
+                R = np.asarray(B.dot(C).dot(D))
 
-        else:
-            R = np.eye(3)
+            else:
+                R = np.eye(3)
 
         self.parameters['R'] = np.ravel(R).copy()
         self.c_instance = _LeeSutoTriaxialNFWPotential(G=self.G, **self.parameters)
@@ -611,19 +612,20 @@ class LogarithmicPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_c, r_h, q1, q2, q3, units, phi=0., theta=0., psi=0.):
+    def __init__(self, v_c, r_h, q1, q2, q3, units, phi=0., theta=0., psi=0., R=None):
         self.units = units
         self.G = G.decompose(units).value
         self.parameters = dict(v_c=v_c, r_h=r_h, q1=q1, q2=q2, q3=q3)
 
-        if theta != 0 or phi != 0 or psi != 0:
-            D = rotation_matrix(phi, "z", unit=u.radian) # TODO: Bad assuming radians
-            C = rotation_matrix(theta, "x", unit=u.radian)
-            B = rotation_matrix(psi, "z", unit=u.radian)
-            R = np.asarray(B.dot(C).dot(D))
+        if R is None:
+            if theta != 0 or phi != 0 or psi != 0:
+                D = rotation_matrix(phi, "z", unit=u.radian) # TODO: Bad assuming radians
+                C = rotation_matrix(theta, "x", unit=u.radian)
+                B = rotation_matrix(psi, "z", unit=u.radian)
+                R = np.asarray(B.dot(C).dot(D))
 
-        else:
-            R = np.eye(3)
+            else:
+                R = np.eye(3)
 
         self.parameters['R'] = np.ravel(R).copy()
         self.c_instance = _LogarithmicPotential(G=self.G, **self.parameters)
