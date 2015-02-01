@@ -359,7 +359,7 @@ class CompositePotential(dict, PotentialBase):
         super(CompositePotential, self).__setitem__(key, value)
 
     def _check_component(self, p):
-        if not isinstance(p, Potential):
+        if not isinstance(p, PotentialBase):
             raise TypeError("Potential components may only be Potential "
                             "objects, not {0}.".format(type(p)))
 
@@ -374,4 +374,3 @@ class CompositePotential(dict, PotentialBase):
     def hessian(self, x):
         x = np.atleast_2d(x).copy()
         return np.array([p.hessian(x) for p in self.values()]).sum(axis=0)
-
