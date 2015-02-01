@@ -26,7 +26,7 @@ cimport cython
 
 # Project
 from .cpotential cimport _CPotential
-from .cpotential import CPotential
+from .cpotential import CPotentialBase
 
 cdef extern from "math.h":
     double sqrt(double x) nogil
@@ -80,7 +80,7 @@ cdef class _HernquistPotential(_CPotential):
         grad[1] += fac*r[1]
         grad[2] += fac*r[2]
 
-class HernquistPotential(CPotential):
+class HernquistPotential(CPotentialBase):
     r"""
     HernquistPotential(m, c, units)
 
@@ -103,10 +103,10 @@ class HernquistPotential(CPotential):
     """
     def __init__(self, m, c, units):
         self.units = units
-        _G = G.decompose(units).value
-        parameters = dict(G=_G, m=m, c=c)
-        super(HernquistPotential, self).__init__(_HernquistPotential,
-                                                 parameters=parameters)
+        self.G = G.decompose(units).value
+        self.parameters = dict(m=m, c=c)
+        # self.c_instance = _HernquistPotential(G=self.G, **self.parameters)
+        self.c_instance = _HernquistPotential(G=self.G, m=1., b=1.)
 
 # ============================================================================
 #    Plummer sphere potential
@@ -144,7 +144,7 @@ cdef class _PlummerPotential(_CPotential):
         grad[1] += fac*r[1]
         grad[2] += fac*r[2]
 
-class PlummerPotential(CPotential):
+class PlummerPotential(CPotentialBase):
     r"""
     PlummerPotential(m, b, units)
 
@@ -209,7 +209,7 @@ cdef class _JaffePotential(_CPotential):
         grad[1] += fac*r[1]
         grad[2] += fac*r[2]
 
-class JaffePotential(CPotential):
+class JaffePotential(CPotentialBase):
     r"""
     JaffePotential(m, c, units)
 
@@ -281,7 +281,7 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
         grad[1] += fac*r[1]
         grad[2] += fac*r[2] * (1. + self.a / sqrtz)
 
-class MiyamotoNagaiPotential(CPotential):
+class MiyamotoNagaiPotential(CPotentialBase):
     r"""
     MiyamotoNagaiPotential(m, a, b, units)
 
@@ -346,7 +346,7 @@ cdef class _SphericalNFWPotential(_CPotential):
         grad[1] += fac*r[1]
         grad[2] += fac*r[2]
 
-class SphericalNFWPotential(CPotential):
+class SphericalNFWPotential(CPotentialBase):
     r"""
     SphericalNFWPotential(v_c, r_s, units)
 
@@ -464,7 +464,7 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
         grad[1] += self.R[1]*ax + self.R[4]*ay + self.R[7]*az
         grad[2] += self.R[2]*ax + self.R[5]*ay + self.R[8]*az
 
-class LeeSutoTriaxialNFWPotential(CPotential):
+class LeeSutoTriaxialNFWPotential(CPotentialBase):
     r"""
     LeeSutoTriaxialNFWPotential(v_c, r_s, a, b, c, units, phi=0., theta=0., psi=0.)
 
@@ -579,7 +579,7 @@ cdef class _LogarithmicPotential(_CPotential):
         grad[1] += self.R[1]*ax + self.R[4]*ay + self.R[7]*az
         grad[2] += self.R[2]*ax + self.R[5]*ay + self.R[8]*az
 
-class LogarithmicPotential(CPotential):
+class LogarithmicPotential(CPotentialBase):
     r"""
     LogarithmicPotential(v_c, r_h, q1, q2, q3, units, phi=0., theta=0., psi=0.)
 
