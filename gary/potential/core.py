@@ -325,6 +325,20 @@ class PotentialBase(object):
         """
         return self.value(x) + 0.5*np.sum(v**2, axis=-1)
 
+    def save(self, f):
+        """
+        Save the potential to a text file. See :func:`~gary.potential.save`
+        for more information.
+
+        Parameters
+        ----------
+        f : str, file_like
+            A filename or file-like object to write the input potential object to.
+
+        """
+        from .io import save
+        save(self, f)
+
 @inherit_docs
 class CompositePotential(PotentialBase, dict):
     """

@@ -128,7 +128,7 @@ def save(potential, f):
 
     Parameters
     ----------
-    potential :
+    potential : :class:`~gary.potential.Potential`
         The instantiated :class:`~gary.potential.Potential` object.
     f : str, file_like
         A filename or file-like object to write the input potential object to.
