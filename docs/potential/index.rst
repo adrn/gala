@@ -33,25 +33,27 @@ the value of the potential and the gradient/acceleration at a given
 position(s). For example, here we will create a potential object for a
 2D point mass located at the origin with unit mass::
 
-    >>> ptmass = PointMassPotential(m=1., x0=[0.,0.], units=(u.Msun, u.au, u.yr))
+    >>> from gary.potential import PointMassPotential
+    >>> ptmass = PointMassPotential(m=1., x0=[0.,0.],
+    ...                             units=(u.Msun, u.au, u.yr))
     >>> ptmass
     <PointMassPotential: x0=[0.0, 0.0], m=1.00>
 
 We can then evaluate the value of the potential at some other position::
 
-    >>> ptmass.value([1.,-1.])
-    -27.922166224010091
+    >>> ptmass.value([1.,-1.]) # doctest: +FLOAT_CMP
+    array([-27.92216622])
 
 Or at multiple positions, by passing in a 2D array::
 
-    >>> ptmass.value([[1.,-1.],[2.,3.],[12.,-2.]])
-    array([-27.92216622, -10.95197465])
+    >>> ptmass.value([[1.,-1.],[2.,3.],[12.,-2.]]) # doctest: +FLOAT_CMP
+    array([-27.92216622, -10.95197465,  -3.24588589])
 
 We may also compute the gradient of the potential or acceleration due to the potential::
 
-    >>> ptmass.gradient([1.,-1.])
+    >>> ptmass.gradient([1.,-1.]) # doctest: +FLOAT_CMP
     array([ 13.96108311, -13.96108311])
-    >>> ptmass.acceleration([1.,-1.])
+    >>> ptmass.acceleration([1.,-1.]) # doctest: +FLOAT_CMP
     array([ -13.96108311, 13.96108311])
 
 The position(s) must be specified in the same length units as specified in
@@ -68,7 +70,9 @@ over the dimension of interest, pass in a grid of values for that dimension
 and numerical values for the others. For example, to make a 1D plot of the
 potential value as a function of :math:`x` position at :math:`y=0, z=1`::
 
-    >>> p = sp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=(u.kpc, u.Msun, u.Myr))
+    >>> from gary.potential import MiyamotoNagaiPotential
+    >>> p = MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27,
+    ...                            units=(u.kpc, u.Msun, u.Myr))
     >>> fig,axes = p.plot_contours(grid=(np.linspace(-15,15,100), 0., 1.))
 
 Produces a plot like:
@@ -79,9 +83,9 @@ To instead make a 2D contour plot over :math:`x` and :math:`z` along with
 :math:`y=0`, pass in a 1D grid of values for :math:`x` and a 1D grid of values
 for :math:`z` (the meshgridding is taken care of internally)::
 
-   >>> x = np.linspace(-15,15,100)
-   >>> z = np.linspace(-5,5,100)
-   >>> p.plot_contours(grid=(x, 1., z))
+    >>> x = np.linspace(-15,15,100)
+    >>> z = np.linspace(-5,5,100)
+    >>> p.plot_contours(grid=(x, 1., z))
 
 which produces:
 
@@ -95,13 +99,27 @@ and estimates the enclosed mass simply as
 :math:`M(<r)\approx\frac{r^2}{G} \frac{d \Phi}{d r}`. This function can
 be used to compute, for example, a mass profile::
 
-  >>> pot = sp.SphericalNFWPotential(v_h=0.5, r_h=20., units=(u.kpc, u.Msun, u.Myr))
-  >>> r = np.zeros((100,3))
-  >>> r[:,0] = np.logspace(np.log10(20./100.), np.log10(20*100.), len(r))
-  >>> m_profile = p.mass_enclosed(r)
-  >>> plt.loglog(r/r_h, menc, marker=None)
+    >>> from gary.potential import SphericalNFWPotential
+    >>> pot = SphericalNFWPotential(v_h=0.5, r_h=20.,
+    ...                             units=(u.kpc, u.Msun, u.Myr))
+    >>> r = np.zeros((100,3))
+    >>> r[:,0] = np.logspace(np.log10(20./100.), np.log10(20*100.), len(r))
+    >>> m_profile = p.mass_enclosed(r)
+    >>> plt.loglog(r/r_h, menc, marker=None)
 
 .. image:: ../_static/potential/mass-profile.png
+
+Potential objects can be `pickled <https://docs.python.org/2/library/pickle.html>`_
+and can therefore be stored for later use. However, pickles are saved as binary
+files. It may be useful to save to or load from text-based specifications of
+Potential objects. This can be done with :func:`gary.potential.save` and
+:func:`gary.potential.load`, or with the :meth:`~gary.potential.PotentialBase.save`
+method::
+
+    >>> pot = SphericalNFWPotential(v_h=0.5, r_h=20.,
+    ...                             units=(u.kpc, u.Msun, u.Myr))
+    >>> pot.save("potential.yml")
+    >>> gpot.load("potential.yml")
 
 Further information
 ===================
@@ -127,8 +145,7 @@ Base classes
    :toctree: _potential/
    :template: class.rst
 
-   gary.potential.Potential
-   gary.potential.CartesianPotential
+   gary.potential.PotentialBase
    gary.potential.CompositePotential
 
 -------------------------------------------------------------
@@ -154,3 +171,13 @@ Built-in potentials
    gary.potential.SphericalNFWPotential
 
 
+.. _utilities:
+
+Built-in potentials
+-------------------
+
+.. autosummary::
+   :toctree: _potential/
+
+   gary.potential.save
+   gary.potential.load
