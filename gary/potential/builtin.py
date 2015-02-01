@@ -8,29 +8,12 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import numpy as np
 from astropy.constants import G
 
-from .core import Potential
+from .core import PotentialBase
 
 __all__ = ["PointMassPotential", "IsochronePotential", "HarmonicOscillatorPotential",
            "KuzminPotential"]
 
-# ============================================================================
-#    Harmonic oscillator
-#
-def harmonic_osc_funcs(units):
-    def f(x, omega):
-        omega2 = omega*omega
-        return np.sum(0.5*np.atleast_2d(omega2)*x*x, axis=-1)
-
-    def gradient(x, omega):
-        omega2 = omega*omega
-        return np.atleast_2d(omega2)*x
-
-    def hessian(x, x0, m):
-        raise NotImplementedError()  # TODO:
-
-    return f, gradient, None
-
-class HarmonicOscillatorPotential(Potential):
+class HarmonicOscillatorPotential(PotentialBase):
     r"""
     Represents an N-dimensional harmonic oscillator.
 
@@ -42,17 +25,20 @@ class HarmonicOscillatorPotential(Potential):
     ----------
     omega : numeric
         Frequency.
-    units : iterable
+    units : iterable(optional)
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
     """
 
     def __init__(self, omega, units=None):
-        parameters = dict(omega=np.array(omega))
-        func,gradient,hessian = harmonic_osc_funcs(units)
-        super(HarmonicOscillatorPotential, self).__init__(func=func, gradient=gradient,
-                                                          hessian=hessian,
-                                                          parameters=parameters, units=units)
+        self.parameters = dict(omega=np.array(omega))
+        self.units = units
+
+    def _value(self, x, omega):
+        return np.sum(0.5*np.atleast_2d(omega**2)*x**2, axis=-1)
+
+    def _gradient(self, x, omega):
+        return np.atleast_2d(omega**2)*x
 
     def action_angle(self, x, v):
         """
@@ -96,32 +82,8 @@ class HarmonicOscillatorPotential(Potential):
         from ..dynamics.analyticactionangle import harmonic_oscillator_aa_to_xv
         return harmonic_oscillator_aa_to_xv(actions, angles, self)
 
-# ============================================================================
-#    Potential due to a point mass at a given position
-#
-def point_mass_funcs(units):
-    # scale G to be in this unit system
-    if units is None:
-        _G = 1.
-    else:
-        _G = G.decompose(units).value
 
-    def f(x, x0, m):
-        xx = x-x0
-        R = np.sqrt(np.sum(xx**2, axis=-1))
-        return -_G * m / R
-
-    def gradient(x, x0, m):
-        xx = x-x0
-        a = (np.sum(xx**2, axis=-1)**-1.5)[...,None]
-        return _G * m * xx * a
-
-    def hessian(x, x0, m):
-        raise NotImplementedError()  # TODO:
-
-    return f, gradient, None
-
-class PointMassPotential(Potential):
+class PointMassPotential(PotentialBase):
     r"""
     Represents a point-mass potential at the given origin.
 
@@ -141,39 +103,25 @@ class PointMassPotential(Potential):
     """
 
     def __init__(self, m, x0, units=None):
-        parameters = dict(m=m, x0=x0)
-        func,gradient,hessian = point_mass_funcs(units)
-        super(PointMassPotential, self).__init__(func=func, gradient=gradient,
-                                                 hessian=hessian,
-                                                 parameters=parameters, units=units)
+        self.parameters = dict(m=m, x0=x0)
+        self.units = units
+        if units is not None:
+            self.G = G.decompose(units).value
+        else:
+            self.G = 1.
 
-# ============================================================================
-#    Isochrone potential
-#
+    def _value(self, x, x0, m):
+        xx = x-x0
+        R = np.sqrt(np.sum(xx**2, axis=-1))
+        return -self.G * m / R
 
-def isochrone_funcs(units):
-    # scale G to be in this unit system
-    if units is None:
-        _G = 1.
-    else:
-        _G = G.decompose(units).value
+    def _gradient(self, x, x0, m):
+        xx = x-x0
+        a = (np.sum(xx**2, axis=-1)**-1.5)[...,None]
+        return self.G * m * xx * a
 
-    def func(x, m, b):
-        r2 = np.sum(x**2, axis=-1)
-        val = -_G * m / (np.sqrt(r2 + b*b) + b)
-        return val
 
-    def gradient(x, m, b):
-        r2 = np.sum(x**2, axis=-1)
-        fac = _G*m / (np.sqrt(r2 + b*b) + b)**2 / np.sqrt(r2 + b*b)
-        return fac[...,None] * x
-
-    def hessian(x, m, b):
-        raise NotImplementedError()  # TODO:
-
-    return func, gradient, None
-
-class IsochronePotential(Potential):
+class IsochronePotential(PotentialBase):
     r"""
     The Isochrone potential.
 
@@ -193,11 +141,19 @@ class IsochronePotential(Potential):
 
     """
     def __init__(self, m, b, units):
-        parameters = dict(m=m, b=b)
-        func,gradient,hessian = isochrone_funcs(units)
-        super(IsochronePotential, self).__init__(func=func, gradient=gradient,
-                                                 hessian=hessian,
-                                                 parameters=parameters, units=units)
+        self.parameters = dict(m=m, b=b)
+        self.units = units
+        self.G = G.decompose(units).value
+
+    def _value(self, x, m, b):
+        r2 = np.sum(x**2, axis=-1)
+        val = -self.G * m / (np.sqrt(r2 + b*b) + b)
+        return val
+
+    def _gradient(self, x, m, b):
+        r2 = np.sum(x**2, axis=-1)
+        fac = self.G*m / (np.sqrt(r2 + b*b) + b)**2 / np.sqrt(r2 + b*b)
+        return fac[...,None] * x
 
     def action_angle(self, x, v):
         """
@@ -238,33 +194,7 @@ class IsochronePotential(Potential):
         from ..dynamics.analyticactionangle import isochrone_aa_to_xv
         return isochrone_aa_to_xv(actions, angles, self)
 
-# ============================================================================
-#    Kuzmin potential
-#
-
-def kuzmin_funcs(units):
-    # scale G to be in this unit system
-    if units is None:
-        _G = 1.
-    else:
-        _G = G.decompose(units).value
-
-    def func(q, m, a):
-        x,y,z = q.T
-        val = -_G * m / np.sqrt(x**2 + y**2 + (a + np.abs(z))**2)
-        return val
-
-    def gradient(q, m, a):
-        x,y,z = q.T
-        fac = _G * m / (x**2 + y**2 + (a + np.abs(z))**2)**1.5
-        return fac[...,None] * q
-
-    def hessian(x, m, a):
-        raise NotImplementedError()  # TODO:
-
-    return func, gradient, None
-
-class KuzminPotential(Potential):
+class KuzminPotential(PotentialBase):
     r"""
     The Kuzmin flattened disk potential.
 
@@ -284,8 +214,16 @@ class KuzminPotential(Potential):
 
     """
     def __init__(self, m, a, units):
-        parameters = dict(m=m, a=a)
-        func,gradient,hessian = kuzmin_funcs(units)
-        super(KuzminPotential, self).__init__(func=func, gradient=gradient,
-                                              hessian=hessian,
-                                              parameters=parameters, units=units)
+        self.parameters = dict(m=m, a=a)
+        self.units = units
+        self.G = G.decompose(units).value
+
+    def _value(self, q, m, a):
+        x,y,z = q.T
+        val = -self.G * m / np.sqrt(x**2 + y**2 + (a + np.abs(z))**2)
+        return val
+
+    def _gradient(self, q, m, a):
+        x,y,z = q.T
+        fac = self.G * m / (x**2 + y**2 + (a + np.abs(z))**2)**1.5
+        return fac[...,None] * q

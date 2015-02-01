@@ -17,16 +17,22 @@ import cython
 cimport cython
 
 # Project
-from .core import CartesianPotential, CartesianCompositePotential
+from .core import PotentialBase, CompositePotential
 
 cdef extern from "math.h":
     double sqrt(double x) nogil
     double fabs(double x) nogil
 
-class CPotential(CartesianPotential):
+# class MetaCPotential(type):
+#     def __init__(cls, name, bases, dct):
+#         super(MetaCPotential, cls).__init__(name, bases, dct)
+
+# @six.add_metaclass(MetaCPotential)
+class CPotential(PotentialBase):
     """
-    A baseclass for representing gravitational potentials. You must specify
-    a function that evaluates the potential value (func). You may also
+    A base class for representing gravitational potentials implemented in Cython.
+
+    You must specify a function that evaluates the potential value (func). You may also
     optionally add a function that computes derivatives (gradient), and a
     function to compute second derivatives (the Hessian) of the potential.
 
@@ -50,10 +56,6 @@ class CPotential(CartesianPotential):
 
         # HACK?
         super(CPotential, self).__init__(func=None, parameters=parameters)
-
-        # self.value = getattr(self.c_instance, 'value')
-        # self.gradient = getattr(self.c_instance, 'gradient', None)
-        # self.hessian = getattr(self.c_instance, 'hessian', None)
 
     def value(self, q):
         """
