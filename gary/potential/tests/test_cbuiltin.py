@@ -127,6 +127,16 @@ class PotentialTestBase(object):
 
         p.value(np.array([[100,0,0.]]))
 
+    def test_mass_enclosed(self):
+        r = np.linspace(1., 400, 100)
+        R = np.zeros((len(r),3))
+        R[:,0] = r
+        esti_mprof = self.potential.mass_enclosed(R)
+
+        plt.clf()
+        plt.plot(r, esti_mprof)
+        plt.savefig(os.path.join(plot_path, "mass_profile_{}.png".format(self.name)))
+
 # ----------------------------------------------------------------------------
 #  Potentials to test
 #
@@ -290,5 +300,23 @@ class TestMisalignedLogarithmicPotential(PotentialTestBase):
         self.potential = LogarithmicPotential(units=self.units,
                                               v_c=0.17, r_h=10.,
                                               q1=1.2, q2=1., q3=0.8, phi=0.35)
+
+        self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+
+class TestCompositePotential(PotentialTestBase):
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+
+    def setup(self):
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
+        self.name = "CompositePotential"
+        p1 = LogarithmicPotential(units=self.units,
+                                  v_c=0.17, r_h=10.,
+                                  q1=1.2, q2=1., q3=0.8, phi=0.35)
+        p2 = MiyamotoNagaiPotential(units=self.units,
+                                    m=1.E11, a=6.5, b=0.26)
+        self.potential = CompositePotential(disk=p2, halo=p1)
 
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
