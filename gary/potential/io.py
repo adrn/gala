@@ -100,7 +100,7 @@ def to_dict(potential):
 
     return d
 
-def read(f):
+def load(f):
     """
     Read a potential specification file and return a
     :class:`~gary.potential.Potential` object instantiated with parameters
@@ -121,7 +121,7 @@ def read(f):
 
     return from_dict(p_dict)
 
-def write(potential, f):
+def save(potential, f):
     """
     Write a :class:`~gary.potential.Potential` object out to a text (YAML)
     file.
