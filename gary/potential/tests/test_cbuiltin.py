@@ -188,7 +188,7 @@ class TestSphericalNFWPotential(PotentialTestBase):
         print(self.__class__.__name__)
 
         self.potential = SphericalNFWPotential(units=self.units,
-                                               v_c=0.35*np.sqrt(np.log(2)-0.5),
+                                               v_c=0.35, # np.sqrt(np.log(2)-0.5)
                                                r_s=12.)
 
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
