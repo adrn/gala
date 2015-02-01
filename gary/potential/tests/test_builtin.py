@@ -105,7 +105,7 @@ class TestIsochrone(object):
         potential = IsochronePotential(units=self.units,
                                        m=1.E11, b=5.)
 
-        r = ([1.,0.,0.]*u.kpc).reshape(1,3)
+        r = np.array([1.,0.,0.]).reshape(1,3)
         pot_val = potential.value(r)
         acc_val = potential.acceleration(r)
 
@@ -114,7 +114,7 @@ class TestIsochrone(object):
         for slc in np.linspace(-20.,0.,10):
             if axes is None:
                 fig = potential.plot_contours(grid=(grid,slc,0.), marker=None)
-                axes = fig.axes
+                axes = fig.axes[0]
             else:
                 potential.plot_contours(grid=(grid,slc,0.), ax=axes, marker=None)
         fig.savefig(os.path.join(plot_path, "isochrone_1d.png"))
