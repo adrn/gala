@@ -59,6 +59,9 @@ class PotentialTestBase(object):
         pot_val = self.potential.value(r)
         acc_val = self.potential.acceleration(r)
 
+        # save to disk
+        self.potential.save("/tmp/potential.yml")
+
     def test_orbit_integration(self):
         w0 = self.w0
         t1 = time.time()
