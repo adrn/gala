@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 
 from ..core import CompositePotential
 from ..cbuiltin import *
+from ..io import load
 
 # HACK: bad solution is to do this:
 # python setup.py build_ext --inplace
@@ -61,6 +62,7 @@ class PotentialTestBase(object):
 
         # save to disk
         self.potential.save("/tmp/potential.yml")
+        derp = load("/tmp/potential.yml")
 
     def test_orbit_integration(self):
         w0 = self.w0
