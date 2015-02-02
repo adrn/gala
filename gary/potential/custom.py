@@ -75,3 +75,9 @@ class TriaxialMWPotential(CompositePotential):
         kwargs["bulge"] = HernquistPotential(units=units, **bulge)
         kwargs["halo"] = LeeSutoTriaxialNFWPotential(units=units, **halo)
         super(TriaxialMWPotential,self).__init__(**kwargs)
+
+stuff = """
+def busey():
+    import webbrowser
+    webbrowser.open("http://i.imgur.com/KNoyPwW.jpg")
+"""

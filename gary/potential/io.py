@@ -33,7 +33,7 @@ def pythonify(node):
 def from_dict(d):
     """
     Convert a dictionary potential specification into a
-    :class:`~gary.potential.Potential` object.
+    :class:`~gary.potential.PotentialBase` subclass object.
 
     Parameters
     ----------
@@ -81,8 +81,8 @@ def to_dict(potential):
 
     Parameters
     ----------
-    potential :
-        The instantiated :class:`~gary.potential.Potential` object.
+    potential : :class:`~gary.potential.PotentialBase`
+        The instantiated :class:`~gary.potential.PotentialBase` object.
 
     """
     d = dict()
@@ -103,7 +103,7 @@ def to_dict(potential):
 def load(f):
     """
     Read a potential specification file and return a
-    :class:`~gary.potential.Potential` object instantiated with parameters
+    :class:`~gary.potential.PotentialBase` object instantiated with parameters
     specified in the spec file.
 
     Parameters
@@ -123,13 +123,13 @@ def load(f):
 
 def save(potential, f):
     """
-    Write a :class:`~gary.potential.Potential` object out to a text (YAML)
+    Write a :class:`~gary.potential.PotentialBase` object out to a text (YAML)
     file.
 
     Parameters
     ----------
-    potential : :class:`~gary.potential.Potential`
-        The instantiated :class:`~gary.potential.Potential` object.
+    potential : :class:`~gary.potential.PotentialBase`
+        The instantiated :class:`~gary.potential.PotentialBase` object.
     f : str, file_like
         A filename or file-like object to write the input potential object to.
 
