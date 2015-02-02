@@ -146,7 +146,6 @@ Base classes
 ------------
 
 .. autosummary::
-   :nosignatures:
    :toctree: _potential/
    :template: class.rst
 
@@ -178,8 +177,8 @@ Built-in potentials
 
 .. _utilities:
 
-Built-in potentials
--------------------
+Utilities
+---------
 
 .. autosummary::
    :toctree: _potential/
