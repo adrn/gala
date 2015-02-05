@@ -36,11 +36,12 @@ cdef extern from "math.h":
     double log(double x) nogil
     double fabs(double x) nogil
     double exp(double x) nogil
+    double atan(double x) nogil
     double pow(double x, double n) nogil
 
 __all__ = ['HernquistPotential', 'PlummerPotential', 'MiyamotoNagaiPotential',
            'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential',
-           'JaffePotential']
+           'JaffePotential', 'StonePotential']
 
 # ============================================================================
 #    Hernquist Spheroid potential from Hernquist 1990
@@ -306,6 +307,78 @@ class MiyamotoNagaiPotential(CPotentialBase):
         self.G = G.decompose(units).value
         self.parameters = dict(m=m, a=a, b=b)
         self.c_instance = _MiyamotoNagaiPotential(G=self.G, **self.parameters)
+
+# ============================================================================
+#    Stone and Ostriker potential (2015)
+#
+cdef class _StonePotential(_CPotential):
+
+    # here need to cdef all the attributes
+    cdef public double G, v_c, r_c, r_t
+    cdef public double A, r_c2, r_t2
+
+    def __init__(self, double G, double v_c, double r_c, double r_t):
+        self.G = G
+        self.v_c = v_c
+        self.r_c = r_c
+        self.r_c2 = r_c*r_c
+        self.r_t = r_t
+        self.r_t2 = r_t*r_t
+        self.A = v_c*v_c * (self.r_c2 * self.r_t2) / (self.r_t2 - self.r_c2)
+
+    def __reduce__(self):
+        args = (self.G, self.v_c, self.r_c, self.r_t)
+        return (_StonePotential, args)
+
+    cdef public inline double _value(self, double *r) nogil:
+        cdef double rr, u_c, u_t
+        rr = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2])
+        u_c = rr/self.r_c
+        u_t = rr/self.r_t
+        return -self.A * (atan(u_t)/u_t - atan(u_c)/u_c +
+                          0.5*log((rr*rr + self.r_t2)/(rr*rr + self.r_c2)))
+
+    cdef public inline void _gradient(self, double *r, double *grad) nogil:
+        cdef double dphi_dr, rr, u_c, u_t
+        rr = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2])
+        u_c = rr/self.r_c
+        u_t = rr/self.r_t
+
+        dphi_dr = self.A * ((atan(u_c) - u_c)/(u_c*u_c*self.r_c) -
+                            (atan(u_t) - u_t)/(u_t*u_t*self.r_t)) / rr
+
+        grad[0] += dphi_dr*r[0]
+        grad[1] += dphi_dr*r[1]
+        grad[2] += dphi_dr*r[2]
+
+class StonePotential(CPotentialBase):
+    r"""
+    StonePotential(v_c, r_c, v_t, units)
+
+    Stone potential from Stone & Ostriker (2015).
+
+    .. math::
+
+        \Phi(r) = -\frac{v_c^2 r_c^2 r_t^2}{r_t^2 - r_c^2}\left[ \frac{\arctan(r/r_t)}{r/r_t} - \frac{\arctan(r/r_c)}{r/r_c} + \frac{1}{2}\ln\left(\frac{r^2+r_t^2}{r^2+r_c^2}\right)\right]
+
+    Parameters
+    ----------
+    v_c : numeric
+        Circular velocity at the core radius.
+    r_c : numeric
+        Core radius.
+    r_t : numeric
+        Truncation radius.
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, v_c, r_c, r_t, units):
+        self.units = units
+        self.G = G.decompose(units).value
+        self.parameters = dict(v_c=v_c, r_c=r_c, r_t=r_t)
+        self.c_instance = _StonePotential(G=self.G, **self.parameters)
 
 # ============================================================================
 #    Spherical NFW potential
