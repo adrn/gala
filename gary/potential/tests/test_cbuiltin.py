@@ -195,6 +195,20 @@ class TestMiyamotoNagai(PotentialTestBase):
 
         self.w0 = [8.,0.,0.,0.,0.22,0.1]
 
+class TestStone(PotentialTestBase):
+    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+
+    def setup(self):
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
+        self.name = "Stone"
+        self.potential = StonePotential(units=self.units,
+                                        v_c=0.2, r_c=1, r_t=2.)
+
+        self.w0 = [8.,0.,0.,0.,0.22,0.1]
+
 class TestSphericalNFWPotential(PotentialTestBase):
     units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
