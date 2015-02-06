@@ -91,29 +91,41 @@ def lyapunov_spectrum(w0, integrator, dt, nsteps, t1=0., deviation_vecs=None):
 
 def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
                  noffset=8, t1=0.):
-    """ Compute the maximum Lyapunov exponent of an orbit by integrating an orbit
-        from initial conditions w0, and several nearby orbits, offset
-        initially with a small separation, d0.
+    """
+    Compute the maximum Lyapunov exponent of an orbit by integrating many
+    nearby orbits (``noffset``) separated with isotropically distributed
+    directions but the same initial deviation length, ``d0``. This algorithm
+    re-normalizes the offset orbits every ``nsteps_per_pullback`` steps.
 
-        Parameters
-        ----------
-        w0 : array_like
-            Initial conditions for all phase-space coordinates.
-        integrator : gary.Integrator
-            An instantiated Integrator object. Must have a run() method.
-        dt : numeric
-            Timestep.
-        nsteps : int
-            Number of steps to run for.
-        d0 : numeric (optional)
-            The initial separation.
-        nsteps_per_pullback : int (optional)
-            Number of steps to run before re-normalizing the offset vectors.
-        noffset : int (optional)
-            Number of offset orbits to run.
-        t1 : numeric (optional)
-            Time of initial conditions. Assumed to be t=0.
+    Parameters
+    ----------
+    w0 : array_like
+        Initial conditions for all phase-space coordinates.
+    integrator : gary.Integrator
+        An instantiated Integrator object. Must have a run() method.
+    dt : numeric
+        Timestep.
+    nsteps : int
+        Number of steps to run for.
+    d0 : numeric (optional)
+        The initial separation.
+    nsteps_per_pullback : int (optional)
+        Number of steps to run before re-normalizing the offset vectors.
+    noffset : int (optional)
+        Number of offset orbits to run.
+    t1 : numeric (optional)
+        Time of initial conditions. Assumed to be t=0.
 
+    Returns
+    -------
+    LEs : :class:`numpy.ndarray`
+        Lyapunov exponents calculated from each offset / deviation orbit.
+    ts : :class:`numpy.ndarray`
+        Array of times from integrating main orbit.
+    ws : :class:`numpy.ndarray`
+        All orbits -- main / parent orbit is index 0, all others are the
+        full orbits of the deviations. TODO: right now, only returns parent
+        orbit.
     """
 
     w0 = np.atleast_2d(w0)
