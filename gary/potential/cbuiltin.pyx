@@ -314,17 +314,18 @@ class MiyamotoNagaiPotential(CPotentialBase):
 cdef class _StonePotential(_CPotential):
 
     # here need to cdef all the attributes
-    cdef public double G, v_c, r_c, r_t
-    cdef public double A, r_c2, r_t2
+    cdef public double G, m_tot, r_c, r_t
+    cdef public double A, r_c2, r_t2, f
 
-    def __init__(self, double G, double v_c, double r_c, double r_t):
+    def __init__(self, double G, double m_tot, double r_c, double r_t):
         self.G = G
-        self.v_c = v_c
+        self.m_tot = m_tot
         self.r_c = r_c
         self.r_c2 = r_c*r_c
         self.r_t = r_t
         self.r_t2 = r_t*r_t
-        self.A = v_c*v_c * (self.r_c2 * self.r_t2) / (self.r_t2 - self.r_c2)
+        self.f = np.pi * (self.r_t2 - self.r_c2) / (r_t + r_c)
+        self.A = G * m_tot / self.f
 
     def __reduce__(self):
         args = (self.G, self.v_c, self.r_c, self.r_t)
@@ -339,32 +340,28 @@ cdef class _StonePotential(_CPotential):
                           0.5*log((rr*rr + self.r_t2)/(rr*rr + self.r_c2)))
 
     cdef public inline void _gradient(self, double *r, double *grad) nogil:
-        cdef double dphi_dr, rr, u_c, u_t
+        cdef double dphi_dr, rr
         rr = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2])
-        u_c = rr/self.r_c
-        u_t = rr/self.r_t
+        dphi_dr = self.A * (self.r_t*atan(rr/self.r_t) + self.r_c*atan(rr/self.r_c)) / (rr*rr)
 
-        dphi_dr = self.A * ((atan(u_c) - u_c)/(u_c*u_c*self.r_c) -
-                            (atan(u_t) - u_t)/(u_t*u_t*self.r_t)) / rr
-
-        grad[0] += dphi_dr*r[0]
-        grad[1] += dphi_dr*r[1]
-        grad[2] += dphi_dr*r[2]
+        grad[0] += dphi_dr*r[0]/rr
+        grad[1] += dphi_dr*r[1]/rr
+        grad[2] += dphi_dr*r[2]/rr
 
 class StonePotential(CPotentialBase):
     r"""
-    StonePotential(v_c, r_c, r_t, units)
+    StonePotential(m_tot, r_c, r_t, units)
 
     Stone potential from Stone & Ostriker (2015).
 
     .. math::
 
-        \Phi(r) = -\frac{v_c^2 r_c^2 r_t^2}{r_t^2 - r_c^2}\left[ \frac{\arctan(r/r_t)}{r/r_t} - \frac{\arctan(r/r_c)}{r/r_c} + \frac{1}{2}\ln\left(\frac{r^2+r_t^2}{r^2+r_c^2}\right)\right]
+        \Phi(r) = -\frac{wrong}{wrong}\left[ \frac{\arctan(r/r_t)}{r/r_t} - \frac{\arctan(r/r_c)}{r/r_c} + \frac{1}{2}\ln\left(\frac{r^2+r_t^2}{r^2+r_c^2}\right)\right]
 
     Parameters
     ----------
-    v_c : numeric
-        Circular velocity at the core radius.
+    m_tot : numeric
+        Total mass.
     r_c : numeric
         Core radius.
     r_t : numeric
@@ -374,10 +371,10 @@ class StonePotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_c, r_c, r_t, units):
+    def __init__(self, m_tot, r_c, r_t, units):
         self.units = units
         self.G = G.decompose(units).value
-        self.parameters = dict(v_c=v_c, r_c=r_c, r_t=r_t)
+        self.parameters = dict(m_tot=m_tot, r_c=r_c, r_t=r_t)
         self.c_instance = _StonePotential(G=self.G, **self.parameters)
 
 # ============================================================================
