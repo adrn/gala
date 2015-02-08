@@ -457,8 +457,6 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
                 kpc, Myr, radian, M_sun
         """
 
-        self.v_h = v_c/sqrt(log(2.)-0.5)
-        self.v_h2 = self.v_h*self.v_h
         self.r_s = r_s
         self.r_s2 = r_s*r_s
         self.a = a
@@ -471,6 +469,10 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
 
         self.e_b2 = 1-pow(b/a,2)
         self.e_c2 = 1-pow(c/a,2)
+
+        const = log(2.) - 0.5 + (log(2.)-0.75)*self.e_b2 + (log(2.)-0.75)*self.e_c2
+        self.v_h2 = v_c*v_c/const
+        self.v_h = sqrt(self.v_h)
 
         self.R = R
 
