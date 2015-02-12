@@ -18,11 +18,17 @@ from Cython.Build import cythonize
 numpy_base_path = os.path.split(np.__file__)[0]
 numpy_incl_path = os.path.join(numpy_base_path, "core", "include")
 
+extensions = []
+
 potential = Extension("gary.potential.*",
                       ["gary/potential/*.pyx"],
                       include_dirs=[numpy_incl_path])
+extensions.append(potential)
 
-extensions = [potential]
+# dynamics = Extension("gary.dynamics.*",
+#                      ["gary/dynamics/*.pyx"],
+#                      include_dirs=[numpy_incl_path])
+# extensions.append(dynamics)
 
 setup(
     name="gary",
