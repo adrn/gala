@@ -258,28 +258,28 @@ class LaskarBase(object):
 
         assert np.all(done)
 
-class TestBox1(LaskarBase):
+class TestLaskarBox1(LaskarBase):
 
     def setup_class(self):
         self.name = 'box-orbit-1'
         self.dt = 0.004
         self.nsteps = 2**16
 
-class TestLoop1xy(LaskarBase):
+class TestLaskarLoop1xy(LaskarBase):
 
     def setup_class(self):
         self.name = 'loop-orbit-1-xy'
         self.dt = 0.01
         self.nsteps = 2**15
 
-class TestLoop2xy(LaskarBase):
+class TestLaskarLoop2xy(LaskarBase):
 
     def setup_class(self):
         self.name = 'loop-orbit-2-xy'
         self.dt = 0.01
         self.nsteps = 2**15
 
-class TestLoop2rphi(LaskarBase):
+class TestLaskarLoop2rphi(LaskarBase):
 
     def setup_class(self):
         self.name = 'loop-orbit-2-rphi'
