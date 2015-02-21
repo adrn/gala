@@ -13,7 +13,7 @@ from numpy import cos, sin
 import astropy.coordinates as coord
 import astropy.units as u
 from astropy.coordinates.angles import rotation_matrix
-from astropy.coordinates.builtin_frames.galactocentric import ROLL0
+from astropy.coordinates.builtin_frames.galactocentric import _ROLL0 as ROLL0
 
 from .propermotion import pm_gal_to_icrs, pm_icrs_to_gal
 
