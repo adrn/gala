@@ -10,7 +10,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import numpy as np
 from astropy import log as logger
 
-__all__ = ['angular_momentum', 'classify_orbit', 'align_circulation_with_z']
+__all__ = ['angular_momentum', 'classify_orbit', 'align_circulation_with_z', 'check_for_primes']
 
 def angular_momentum(q, p):
     r"""
@@ -160,3 +160,34 @@ def align_circulation_with_z(w, loop_bit):
         new_w[:,ix,5] = w[:,ix,circ+3]
 
     return new_w.reshape(orig_shape)
+
+def check_for_primes(n, max_prime=41):
+    """
+    Given an integer, ``n``, ensure that it doest not have large prime
+    divisors, which can wreak havok for FFT's. If needed, will decrease
+    the number.
+
+    Parameters
+    ----------
+    n : int
+        Integer number to test.
+
+    Returns
+    -------
+    n2 : int
+        Integer combed for large prime divisors.
+    """
+
+    m = n
+    f = 2
+    while (f**2 <= m):
+        if m % f == 0:
+            m /= f
+        else:
+            f += 1
+
+    if m >= max_prime and n >= max_prime:
+        n -= 1
+        n = check_for_primes(n)
+
+    return n
