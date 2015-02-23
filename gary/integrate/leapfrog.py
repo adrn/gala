@@ -15,7 +15,6 @@ from .timespec import _parse_time_specification
 
 __all__ = ["LeapfrogIntegrator"]
 
-
 class LeapfrogIntegrator(Integrator):
     r"""
     Initialize a Leapfrog integrator given a function for computing
