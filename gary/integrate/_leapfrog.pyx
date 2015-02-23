@@ -16,9 +16,10 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-from cython.parallel import prange
-
+# Project
 from ..potential.cpotential cimport _CPotential
+
+# ctypedef void (*f_type)(int, double*, double*)
 
 cdef void c_init_velocity(_CPotential p, int ndim, double t, double dt,
                           double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil:
@@ -47,15 +48,19 @@ cdef void c_leapfrog_step(_CPotential p, int ndim, double t, double dt,
 
 cpdef cy_leapfrog_run(_CPotential potential, double [:,::1] w0,
                       double dt, int nsteps, double t1):
+    # temporary scalars
     cdef int i,j,k
     cdef int n = w0.shape[0]
     cdef int ndim = w0.shape[1] // 2
     cdef double t
 
+    # temporary array containers
     cdef double[::1] grad = np.zeros(ndim)
+    cdef double[:,::1] v_jm1_2 = np.zeros((n,ndim))
+
+    # return arrays
     cdef double[::1] all_t = np.zeros(nsteps+1)
     cdef double[:,:,::1] all_w = np.zeros((nsteps+1,n,2*ndim))
-    cdef double[:,::1] v_jm1_2 = np.zeros((n,ndim))
 
     # save initial conditions
     all_w[0,:,:] = w0.copy()
