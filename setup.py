@@ -25,6 +25,11 @@ potential = Extension("gary.potential.*",
                       include_dirs=[numpy_incl_path])
 extensions.append(potential)
 
+integrate = Extension("gary.integrate.*",
+                      ["gary/integrate/*.pyx"],
+                      include_dirs=[numpy_incl_path])
+extensions.append(integrate)
+
 # dynamics = Extension("gary.dynamics.*",
 #                      ["gary/dynamics/*.pyx"],
 #                      include_dirs=[numpy_incl_path])
