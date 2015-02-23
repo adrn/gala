@@ -12,10 +12,7 @@ import os
 import time
 
 # Third-party
-import pytest
 import numpy as np
-import astropy.units as u
-from astropy.constants import G
 import matplotlib.pyplot as plt
 
 # Project
@@ -36,7 +33,7 @@ def test_py_compare():
     nsteps = 10000
 
     cy_t,cy_w = cy_leapfrog_run(p.c_instance, w0, 0.1, nsteps, 0.)
-    py_t,py_w = p.integrate_orbit(w0, dt=0.1, nsteps=nsteps)
+    py_t,py_w = p.integrate_orbit(w0, dt=0.1, nsteps=nsteps, cython_if_possible=False)
 
     np.testing.assert_allclose(cy_w[-1], py_w[-1])
 

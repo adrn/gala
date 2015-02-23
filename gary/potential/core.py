@@ -282,7 +282,8 @@ class PotentialBase(object):
         return fig
 
     def integrate_orbit(self, w0, Integrator=LeapfrogIntegrator,
-                        Integrator_kwargs=dict(), **time_spec):
+                        Integrator_kwargs=dict(), cython_if_possible=True,
+                        **time_spec):
         """
         Integrate an orbit in the current potential using the integrator class
         provided. Uses same time specification as `Integrator.run()` -- see
@@ -302,7 +303,20 @@ class PotentialBase(object):
         """
 
         if Integrator == LeapfrogIntegrator:
-            acc = lambda t,w: self.acceleration(w)
+            if hasattr(self, 'c_instance') and cython_if_possible:
+                from ..integrate._leapfrog import cy_leapfrog_run
+                from ..integrate.timespec import _parse_time_specification
+
+                # use fast integrator
+                times = _parse_time_specification(**time_spec)
+                nsteps = len(times) - 1
+                dt = times[1] - times[0]
+                t1 = times[0]
+
+                return cy_leapfrog_run(self.c_instance, np.atleast_2d(w0), dt, nsteps, t1)
+
+            else:
+                acc = lambda t,w: self.acceleration(w)
         else:
             acc = lambda t,w: np.hstack((w[...,3:],self.acceleration(w[...,:3])))
 
