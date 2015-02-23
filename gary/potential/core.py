@@ -313,7 +313,8 @@ class PotentialBase(object):
                 dt = times[1] - times[0]
                 t1 = times[0]
 
-                return cy_leapfrog_run(self.c_instance, np.atleast_2d(w0), dt, nsteps, t1)
+                w0 = np.ascontiguousarray(np.atleast_2d(w0))
+                return cy_leapfrog_run(self.c_instance, w0, dt, nsteps, t1)
 
             else:
                 acc = lambda t,w: self.acceleration(w)
