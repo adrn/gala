@@ -5,6 +5,8 @@ plots/*
 docs/*/_*/
 *.npy
 *.c
+*.h
+*.html
 notebooks/*
 setup.cfg
 test-data
