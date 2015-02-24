@@ -59,15 +59,13 @@ cdef class _HernquistPotential(_CPotential):
     # here need to cdef all the attributes
     cdef public double G, GM
     cdef public double m, c
-    cdef double *_parameters
-    cdef valuefunc c_value
-    cdef gradientfunc c_gradient
+    cdef double[::1] _parvec # need to maintain a reference to parameter array
 
     def __cinit__(self, double G, double m, double c):
-        cdef double[::1] p = np.array([G, m, c])
-        self._parameters = &p[0]
-        self.c_value = hernquist_value
-        self.c_gradient = hernquist_gradient
+        self._parvec = np.array([G,m,c])
+        self._parameters = &(self._parvec)[0]
+        self.c_value = &hernquist_value
+        self.c_gradient = &hernquist_gradient
 
     def __init__(self, double G, double m, double c):
 
@@ -82,12 +80,6 @@ cdef class _HernquistPotential(_CPotential):
     def __reduce__(self):
         args = (self.G, self.m, self.c)
         return (_HernquistPotential, args)
-
-    cdef public inline double _value(self, double *r) nogil:
-        return self.c_value(self._parameters, r)
-
-    cdef public inline void _gradient(self, double *r, double *grad) nogil:
-        self.c_gradient(self._parameters, r, grad)
 
 class HernquistPotential(CPotentialBase):
     r"""
