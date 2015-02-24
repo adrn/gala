@@ -39,6 +39,13 @@ cdef extern from "math.h":
     double atan(double x) nogil
     double pow(double x, double n) nogil
 
+cdef extern from "_cbuiltin.h":
+    double hernquist_value(double *pars, double *q)
+    void hernquist_gradient(double *pars, double *q, double *grad);
+
+ctypedef double (*valuefunc)(double *pars, double *q)
+ctypedef void (*gradientfunc)(double *pars, double *q, double *grad)
+
 __all__ = ['HernquistPotential', 'PlummerPotential', 'MiyamotoNagaiPotential',
            'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential',
            'JaffePotential', 'StonePotential']
@@ -52,6 +59,15 @@ cdef class _HernquistPotential(_CPotential):
     # here need to cdef all the attributes
     cdef public double G, GM
     cdef public double m, c
+    cdef double *_parameters
+    cdef valuefunc c_value
+    cdef gradientfunc c_gradient
+
+    def __cinit__(self, double G, double m, double c):
+        cdef double[::1] p = np.array([1., 1E11, 0.5])
+        self._parameters = &p[0]
+        self.c_value = hernquist_value
+        self.c_gradient = hernquist_gradient
 
     def __init__(self, double G, double m, double c):
 
