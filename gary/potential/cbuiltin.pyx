@@ -43,9 +43,6 @@ cdef extern from "_cbuiltin.h":
     double hernquist_value(double *pars, double *q) nogil
     void hernquist_gradient(double *pars, double *q, double *grad) nogil
 
-ctypedef double (*valuefunc)(double *pars, double *q) nogil
-ctypedef void (*gradientfunc)(double *pars, double *q, double *grad) nogil
-
 __all__ = ['HernquistPotential', 'PlummerPotential', 'MiyamotoNagaiPotential',
            'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential',
            'JaffePotential', 'StonePotential']
