@@ -156,6 +156,11 @@ cdef class _CPotential:
         grad[1] = 0.
         grad[2] = 0.
 
+    cdef public void _gradient2(self, double *params, double *r, double *grad) nogil:
+        grad[0] = 0.
+        grad[1] = 0.
+        grad[2] = 0.
+
     # -------------------------------------------------------------
     cpdef hessian(self, double[:,::1] w):
         cdef int nparticles, ndim, k

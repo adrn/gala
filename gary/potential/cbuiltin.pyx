@@ -81,6 +81,15 @@ cdef class _HernquistPotential(_CPotential):
         grad[1] += fac*r[1]
         grad[2] += fac*r[2]
 
+    cdef public inline void _gradient2(self, double *params, double *r, double *grad) nogil:
+        cdef double R, fac
+        R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2])
+        fac = params[0]*params[1] / ((R + params[2]) * (R + params[2]) * R)
+
+        grad[0] += fac*r[0]
+        grad[1] += fac*r[1]
+        grad[2] += fac*r[2]
+
 class HernquistPotential(CPotentialBase):
     r"""
     HernquistPotential(m, c, units)
