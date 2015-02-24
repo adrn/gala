@@ -1,6 +1,16 @@
 /*      DOP853
 	------
 
+********************************************
+                  WARNING
+********************************************
+This code has been modified! This is *not*
+the original! I have added some extra
+functionality to play nice with Python code.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This code computes the numerical solution of a system of first order ordinary
 differential equations y'=f(x,y). It uses an explicit Runge-Kutta method of
@@ -174,13 +184,15 @@ nfcnRead    Number of function calls.
 #include <stdio.h>
 #include <limits.h>
 
-typedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f);
+typedef void (*GradFn)(double *pars, double *q, double *grad);
 typedef void (*SolTrait)(long nr, double xold, double x, double* y, unsigned n, int* irtrn);
-
+typedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f, GradFn gradfunc, double *gpars);
 
 extern int dop853
  (unsigned n,      /* dimension of the system <= UINT_MAX-1*/
   FcnEqDiff fcn,   /* function computing the value of f(x,y) */
+  GradFn gradfunc, /* ADDED BY ADRN: function to compute gradient */
+  double *gpars,   /* ADDED BY ADRN: parameters for gradient function */
   double x,        /* initial x-value */
   double* y,       /* initial values for y */
   double xend,     /* final x-value (xend-x may be positive or negative) */
