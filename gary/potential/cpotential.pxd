@@ -4,6 +4,7 @@ cdef class _CPotential:
 
     cpdef gradient(self, double[:,::1] q)
     cdef public void _gradient(self, double *q, double *grad) nogil
+    cdef public void _gradient2(self, double *params, double *q, double *grad) nogil
 
     cpdef hessian(self, double[:,::1] w)
     cdef public void _hessian(self, double *w, double *hess) nogil
