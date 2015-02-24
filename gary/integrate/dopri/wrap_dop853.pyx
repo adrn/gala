@@ -18,9 +18,12 @@ np.import_array()
 
 from ...potential.cpotential cimport _CPotential
 
+cdef extern from "math.h":
+    double sqrt(double x) nogil
+
 cdef extern from "dop853.h":
-    ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f)
     ctypedef void (*SolTrait)(long nr, double xold, double x, double* y, unsigned n, int* irtrn)
+    ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f);
     double contd8 (unsigned ii, double x)
 
     # See dop853.h for full description of all input parameters
@@ -41,15 +44,26 @@ cdef extern from "stdio.h":
     ctypedef struct FILE
     FILE *stdout
 
-ctypedef void (*GradFn)(void*, double *params, double *x, double *grad);
+# custom typedef
+ctypedef void (*GradFn)(double *pars, double *q, double *grad);
 
-# whack, hacky wrapper for gradient function
-cdef void F(unsigned ndim, double t, double *w, double *f, GradFn func, double *params):
-    cdef int i
-    func(NULL, &params[0], &w[0], &f[3])
-    for k in range(ndim):
-        f[k+ndim] = -f[k+ndim]  # acceleration is minus gradient
-        f[k] = w[k+ndim]  # velocities are dw/dx
+cdef void F(unsigned ndim, double t, double *w, double *f,
+            GradFn func, double *pars):
+    cdef int i, half_ndim
+    half_ndim = ndim / 2
+    print("ndim", ndim)
+    print("half_ndim", half_ndim)
+
+    # call gradient function
+    func(pars, w, &f[half_ndim])
+    print("no f")
+    print(f[0],f[1],f[2])
+    print(f[3],f[4],f[5])
+    print()
+
+    for k in range(half_ndim):
+        f[k] = w[k+half_ndim]
+        f[k+half_ndim] = -f[k+half_ndim]
 
 cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irtrn):
     pass
@@ -64,38 +78,39 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
     #         print ("x={0:f}  y={1:12.10f} {2:12.10f}  nstep={3:d}".format(xout, contd8(0,xout), contd8(1,xout), nr-1))
     #         xout += 0.1
 
-cpdef main(_CPotential cpotential):
-    cdef double *w = [0.,1.,0., 0.,0.2,0.]
-    cdef double *f = [0.,0.,0.,0.,0.,0.]
-    cdef double *params = [4.49975332435e-12, 1E11, 0.5]
+cpdef main(_CPotential cpotential, double[::1] w0):
     cdef int i
+    cdef int res, iout, itoler
+    cdef double x, xend, atoler, rtoler
+    cdef unsigned ndim = 6
+    cdef double[::1] w = w0.copy()
+    cdef double[::1] f = np.zeros(ndim)
 
-    F(3, 0., &w[0], &f[0], <GradFn>cpotential._gradient2, &params[0])
-
+    for i in range(ndim):
+        print(w[i], f[i])
     print()
-    for i in range(6):
-        print(f[i])
 
-    # # cdef double[::1] y = np.empty(ndgl)
-    # cdef double *y = [2.0, 0.0]
-    # cdef int ndgl = 2
-    # cdef int res, iout, itoler
-    # cdef double x, xend, atoler, rtoler
+    F(ndim, 0., &w[0], &f[0], <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]))
+
+    for i in range(ndim):
+        print(w[i], f[i])
+
 
     # iout = 2
     # x = 0.0
-    # xend = 2.0
+    # xend = 1000.0
     # itoler = 0
     # rtoler = 1.0E-6
     # atoler = rtoler
 
     # print("winding up")
 
-    # res = dop853 (ndgl, fvpol, x, y, xend, &rtoler, &atoler, itoler, solout, iout,
-    #     stdout, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0., 0, 0, 1, ndgl, NULL, 0);
+    # res = dop853 (ndim, F, x, &w[0], xend, &rtoler, &atoler, itoler, solout, iout,
+    #     stdout, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0, 0, 1, ndim, NULL, 0);
 
-    # print("x=xend  y={0:12.10f} {1:12.10f}".format(y[0], y[1]))
-    # printf ("rtol=%12.10f   fcn=%li   step=%li   accpt=%li   rejct=%li\r\n",
-    #   rtoler, nfcnRead(), nstepRead(), naccptRead(), nrejctRead());
+    # print("End w: {}".format(np.array(w)))
+    # # print("x=xend  y={0:12.10f} {1:12.10f}".format(y[0], y[1]))
+    # # printf ("rtol=%12.10f   fcn=%li   step=%li   accpt=%li   rejct=%li\r\n",
+    # #   rtoler, nfcnRead(), nstepRead(), naccptRead(), nrejctRead());
 
-    # return 0;
+    # # return 0;
