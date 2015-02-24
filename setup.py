@@ -21,7 +21,8 @@ numpy_incl_path = os.path.join(numpy_base_path, "core", "include")
 extensions = []
 
 potential = Extension("gary.potential.*",
-                      ["gary/potential/*.pyx"],
+                      ["gary/potential/*.pyx",
+                       "gary/potential/_cbuiltin.c"],
                       include_dirs=[numpy_incl_path])
 extensions.append(potential)
 
