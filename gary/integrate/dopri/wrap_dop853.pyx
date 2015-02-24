@@ -16,8 +16,6 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-from ... import potential as gp
-from ...units import galactic
 from ...potential.cpotential cimport _CPotential
 
 cdef extern from "dop853.h":
@@ -43,16 +41,12 @@ cdef extern from "stdio.h":
     ctypedef struct FILE
     FILE *stdout
 
-# Define the ODE to be solved
-cdef void fvpol(unsigned n, double x, double *y, double *f):
-    cdef double eps = 1.0E-3
-    f[0] = y[1]
-    f[1] = ((1.0 - y[0]*y[0]) * y[1] - y[0]) / eps
+ctypedef void (*GradFn)(void*, double *params, double *x, double *grad);
 
-cdef void F(unsigned ndim, double t, double *w, double *f, _CPotential potential):
+# whack, hacky wrapper for gradient function
+cdef void F(unsigned ndim, double t, double *w, double *f, GradFn func, double *params):
     cdef int i
-
-    potential._gradient(&w[0], &f[3])
+    func(NULL, &params[0], &w[0], &f[3])
     for k in range(ndim):
         f[k+ndim] = -f[k+ndim]  # acceleration is minus gradient
         f[k] = w[k+ndim]  # velocities are dw/dx
@@ -70,19 +64,17 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
     #         print ("x={0:f}  y={1:12.10f} {2:12.10f}  nstep={3:d}".format(xout, contd8(0,xout), contd8(1,xout), nr-1))
     #         xout += 0.1
 
-cpdef main():
+cpdef main(_CPotential cpotential):
     cdef double *w = [0.,1.,0., 0.,0.2,0.]
     cdef double *f = [0.,0.,0.,0.,0.,0.]
+    cdef double *params = [4.49975332435e-12, 1E11, 0.5]
     cdef int i
 
-    pot = gp.HernquistPotential(m=1E11, c=0.5, units=galactic)
-    F(0, 0., &w[0], &f[0], pot.c_instance)
+    F(3, 0., &w[0], &f[0], <GradFn>cpotential._gradient2, &params[0])
 
+    print()
     for i in range(6):
-        print(w[i], f[i])
-
-    print(pot.gradient([0.,1.,0.]))
-
+        print(f[i])
 
     # # cdef double[::1] y = np.empty(ndgl)
     # cdef double *y = [2.0, 0.0]
