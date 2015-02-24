@@ -30,6 +30,12 @@ integrate = Extension("gary.integrate.*",
                       include_dirs=[numpy_incl_path])
 extensions.append(integrate)
 
+dopri = Extension("gary.integrate.dopri.wrap_dop853",
+                  ["gary/integrate/dopri/wrap_dop853.pyx",
+                   "gary/integrate/dopri/dop853.c"],
+                  include_dirs=[numpy_incl_path])
+extensions.append(dopri)
+
 # dynamics = Extension("gary.dynamics.*",
 #                      ["gary/dynamics/*.pyx"],
 #                      include_dirs=[numpy_incl_path])
