@@ -1,10 +1,16 @@
+ctypedef double (*valuefunc)(double *pars, double *q) nogil
+ctypedef void (*gradientfunc)(double *pars, double *q, double *grad) nogil
+
 cdef class _CPotential:
+    cdef double *_parameters
+    cdef valuefunc c_value
+    cdef gradientfunc c_gradient
+
     cpdef value(self, double[:,::1] q)
     cdef public double _value(self, double *q) nogil
 
     cpdef gradient(self, double[:,::1] q)
     cdef public void _gradient(self, double *q, double *grad) nogil
-    cdef public void _gradient2(self, double *params, double *q, double *grad) nogil
 
     cpdef hessian(self, double[:,::1] w)
     cdef public void _hessian(self, double *w, double *hess) nogil
