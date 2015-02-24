@@ -136,8 +136,8 @@ cdef class _CPotential:
 
         return np.array(pot)
 
-    cdef public double _value(self, double* q) nogil:
-        return 0.
+    cdef public inline double _value(self, double *r) nogil:
+        return self.c_value(self._parameters, r)
 
     # -------------------------------------------------------------
     cpdef gradient(self, double[:,::1] q):
@@ -151,15 +151,8 @@ cdef class _CPotential:
 
         return np.array(grad)
 
-    cdef public void _gradient(self, double *r, double *grad) nogil:
-        grad[0] = 0.
-        grad[1] = 0.
-        grad[2] = 0.
-
-    cdef public void _gradient2(self, double *params, double *r, double *grad) nogil:
-        grad[0] = 0.
-        grad[1] = 0.
-        grad[2] = 0.
+    cdef public inline void _gradient(self, double *r, double *grad) nogil:
+        self.c_gradient(self._parameters, r, grad)
 
     # -------------------------------------------------------------
     cpdef hessian(self, double[:,::1] w):
