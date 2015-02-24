@@ -40,11 +40,11 @@ cdef extern from "math.h":
     double pow(double x, double n) nogil
 
 cdef extern from "_cbuiltin.h":
-    double hernquist_value(double *pars, double *q)
-    void hernquist_gradient(double *pars, double *q, double *grad);
+    double hernquist_value(double *pars, double *q) nogil
+    void hernquist_gradient(double *pars, double *q, double *grad) nogil
 
-ctypedef double (*valuefunc)(double *pars, double *q)
-ctypedef void (*gradientfunc)(double *pars, double *q, double *grad)
+ctypedef double (*valuefunc)(double *pars, double *q) nogil
+ctypedef void (*gradientfunc)(double *pars, double *q, double *grad) nogil
 
 __all__ = ['HernquistPotential', 'PlummerPotential', 'MiyamotoNagaiPotential',
            'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential',
@@ -64,7 +64,7 @@ cdef class _HernquistPotential(_CPotential):
     cdef gradientfunc c_gradient
 
     def __cinit__(self, double G, double m, double c):
-        cdef double[::1] p = np.array([1., 1E11, 0.5])
+        cdef double[::1] p = np.array([G, m, c])
         self._parameters = &p[0]
         self.c_value = hernquist_value
         self.c_gradient = hernquist_gradient
@@ -84,27 +84,10 @@ cdef class _HernquistPotential(_CPotential):
         return (_HernquistPotential, args)
 
     cdef public inline double _value(self, double *r) nogil:
-        cdef double R
-        R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2])
-        return -self.GM / (R + self.c)
+        return self.c_value(self._parameters, r)
 
     cdef public inline void _gradient(self, double *r, double *grad) nogil:
-        cdef double R, fac
-        R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2])
-        fac = self.GM / ((R + self.c) * (R + self.c) * R)
-
-        grad[0] += fac*r[0]
-        grad[1] += fac*r[1]
-        grad[2] += fac*r[2]
-
-    cdef public inline void _gradient2(self, double *params, double *r, double *grad) nogil:
-        cdef double R, fac
-        R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2])
-        fac = params[0]*params[1] / ((R + params[2]) * (R + params[2]) * R)
-
-        grad[0] += fac*r[0]
-        grad[1] += fac*r[1]
-        grad[2] += fac*r[2]
+        self.c_gradient(self._parameters, r, grad)
 
 class HernquistPotential(CPotentialBase):
     r"""
