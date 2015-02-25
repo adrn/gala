@@ -270,7 +270,7 @@ class StonePotential(CPotentialBase):
 #
 cdef class _SphericalNFWPotential(_CPotential):
 
-    def __cinit__(self, double G, double v_c, double r_s):
+    def __cinit__(self, double v_c, double r_s):
         self._parvec = np.array([v_c,r_s])
         self._parameters = &(self._parvec)[0]
         self.c_value = &sphericalnfw_value
