@@ -48,6 +48,7 @@ cdef extern from "stdio.h":
 
 cdef void F(unsigned ndim, double t, double *w, double *f,
             GradFn func, double *pars):
+
     cdef int k
     cdef unsigned half_ndim = ndim / 2
 
@@ -59,45 +60,69 @@ cdef void F(unsigned ndim, double t, double *w, double *f,
         f[k+half_ndim] = -f[k+half_ndim]
 
 cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irtrn):
-    pass
-    # cdef double xout
+    # TODO: see here for example in FORTRAN:
+    #   http://www.unige.ch/~hairer/prog/nonstiff/dr_dop853.f
+    cdef double xout, dx
 
-    # if nr == 1:
-    #     print ("x={0:f}  y={1:12.10f} {2:12.10f}  nstep={3:d}".format(x, y[0], y[1], nr-1))
-    #     xout = x + 0.1
+    if xold == x:
+        return
 
-    # else:
-    #     while (x >= xout):
-    #         print ("x={0:f}  y={1:12.10f} {2:12.10f}  nstep={3:d}".format(xout, contd8(0,xout), contd8(1,xout), nr-1))
-    #         xout += 0.1
+    print("nr={} xold={} x={} y={} n={}".format(nr, xold, x, y[0], n))
 
-cpdef main(_CPotential cpotential, double[::1] w0):
-    cdef int i
-    cdef int res, iout, itoler
-    cdef double x, xend, atoler, rtoler
-    cdef unsigned ndim = 6
-    cdef double[::1] w = w0.copy()
-    cdef double[::1] f = np.zeros(ndim)
+    # TODO: this is bad - should use a fixed size?
+    dx = (x - xold) / 10.
+    xout = xold + dx
+    while xout <= x:
+        print("{0:.5f} {1:.5f} {2:.5f} {3:.3f}".format(contd8(0, xout),
+                                                       contd8(1, xout),
+                                                       contd8(2, xout),
+                                                       dx))
+        xout += dx
 
-    F(ndim, 0., &w[0], &f[0],
-      <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]))
+cpdef dop853_integrate_potential(_CPotential cpotential, double[::1] w0,
+                                 int nsteps, double t0, double dt0,
+                                 double atol, double rtol):
+    # TODO: add option for a callback function to be called at each step
+    cdef:
+        int i, j
+        int res, iout
+        double[::1] t = np.empty(nsteps)
+        unsigned ndim = w0.size
+        double[::1] w = np.empty(ndim)
+        double[::1] f = np.zeros(ndim)
+        # Note: icont not needed because nrdens == ndim
+        double t_end = (<double>nsteps) * dt0
+        double[:,::1] all_w = np.empty((nsteps,ndim))
 
-    iout = 2
-    x = 0.0
-    xend = 1000.0
-    itoler = 0
-    rtoler = 1.0E-6
-    atoler = rtoler
+    # store initial conditions
+    w = w0.copy()
+    for i in range(ndim):
+        all_w[0,i] = w[i]
 
-    print("winding up")
+    # TODO: dense output?
+    iout = 0  # no solout calls
+    # iout = 2  # dense output
 
-    res = dop853(ndim, F, <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]),
-        x, &w[0], xend, &rtoler, &atoler, itoler, solout, iout,
-        stdout, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0, 0, 1, ndim, NULL, 0);
+    # F(ndim, 0., &w[0], &f[0],
+    #   <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]))
 
-    print("End w: {}".format(np.array(w)))
-    # print("x=xend  y={0:12.10f} {1:12.10f}".format(y[0], y[1]))
-    # printf ("rtol=%12.10f   fcn=%li   step=%li   accpt=%li   rejct=%li\r\n",
-    #   rtoler, nfcnRead(), nstepRead(), naccptRead(), nrejctRead());
+    # define full array of times
+    t = np.linspace(t0, t_end, nsteps)
+    for i in range(1,nsteps,1):
+        res = dop853(ndim, F,
+                     <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]),
+                     t[i-1], &w[0], t[i], &rtol, &atol, 0, solout, iout,
+                     NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0, 0, 1, ndim, NULL, ndim);
+        for j in range(ndim):
+            all_w[i,j] = w[j]
 
-    return 0;
+    if res == -1:
+        raise RuntimeError("Input is not consistent.")
+    elif res == -2:
+        raise RuntimeError("Larger nmax is needed.")
+    elif res == -3:
+        raise RuntimeError("Step size becomes too small.")
+    elif res == -4:
+        raise RuntimeError("The problem is probably stff (interrupted).")
+
+    return np.asarray(t), np.asarray(all_w)
