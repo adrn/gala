@@ -16,7 +16,7 @@ cdef class _CPotential:
     cpdef hessian(self, double[:,::1] w)
     cdef public void _hessian(self, double *w, double *hess) nogil
 
-    cpdef mass_enclosed(self, double[:,::1] q)
+    cpdef mass_enclosed(self, double[:,::1] q, double G)
     cdef public double _mass_enclosed(self, double *q, double *epsilon, double Gee) nogil
 
 # cdef public class _CCompositePotential[type _CPotentialType, object _CPotential]:
