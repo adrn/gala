@@ -5,6 +5,7 @@ cdef class _CPotential:
     cdef double *_parameters
     cdef valuefunc c_value
     cdef gradientfunc c_gradient
+    cdef double[::1] _parvec # need to maintain a reference to parameter array
 
     cpdef value(self, double[:,::1] q)
     cdef public double _value(self, double *q) nogil
