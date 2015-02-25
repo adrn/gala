@@ -52,11 +52,14 @@ cdef extern from "_cbuiltin.h":
     double stone_value(double *pars, double *q) nogil
     void stone_gradient(double *pars, double *q, double *grad) nogil
 
+    double sphericalnfw_value(double *pars, double *q) nogil
+    void sphericalnfw_gradient(double *pars, double *q, double *grad) nogil
+
     double miyamotonagai_value(double *pars, double *q) nogil
     void miyamotonagai_gradient(double *pars, double *q, double *grad) nogil
 
-    double sphericalnfw_value(double *pars, double *q) nogil
-    void sphericalnfw_gradient(double *pars, double *q, double *grad) nogil
+    double leesuto_value(double *pars, double *q) nogil
+    void leesuto_gradient(double *pars, double *q, double *grad) nogil
 
 __all__ = ['HernquistPotential', 'PlummerPotential', 'MiyamotoNagaiPotential',
            'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential',
@@ -264,10 +267,6 @@ class StonePotential(CPotentialBase):
 #
 cdef class _SphericalNFWPotential(_CPotential):
 
-    # here need to cdef all the attributes
-    cdef public double G
-    cdef public double v_c, r_s
-
     def __cinit__(self, double G, double v_c, double r_s):
         self._parvec = np.array([v_c,r_s])
         self._parameters = &(self._parvec)[0]
@@ -300,7 +299,7 @@ class SphericalNFWPotential(CPotentialBase):
         self.units = units
         self.G = G.decompose(units).value
         self.parameters = dict(v_c=v_c, r_s=r_s)
-        self.c_instance = _SphericalNFWPotential(G=self.G, **self.parameters)
+        self.c_instance = _SphericalNFWPotential(**self.parameters)
 
 # ============================================================================
 #    Lee & Suto (2003) triaxial NFW potential
@@ -308,89 +307,13 @@ class SphericalNFWPotential(CPotentialBase):
 #
 cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
 
-    # here need to cdef all the attributes
-    cdef public double v_h, r_s, a, b, c, e_b2, e_c2, G
-    cdef public double v_h2, r_s2, a2, b2, c2, x0
-    cdef public double[::1] R
-
-    def __init__(self, double G, double v_c, double r_s, double a, double b, double c,
-                 double[::1] R):
-        """ Units of everything should be in the system:
-                kpc, Myr, radian, M_sun
-        """
-
-        self.r_s = r_s
-        self.r_s2 = r_s*r_s
-        self.a = a
-        self.a2 = a*a
-        self.b = b
-        self.b2 = b*b
-        self.c = c
-        self.c2 = c*c
-        self.G = G
-
-        self.e_b2 = 1-pow(b/a,2)
-        self.e_c2 = 1-pow(c/a,2)
-
-        const = log(2.) - 0.5 + (log(2.)-0.75)*self.e_b2 + (log(2.)-0.75)*self.e_c2
-        self.v_h2 = v_c*v_c/const
-        self.v_h = sqrt(self.v_h)
-
-        self.R = R
-
-    def __reduce__(self):
-        args = (self.G, self.v_h*sqrt(log(2.)-0.5), self.r_s,
-                self.a, self.b, self.c, np.asarray(self.R))
-        return (_LeeSutoTriaxialNFWPotential, args)
-
-    cdef public inline double _value(self, double *r) nogil:
-        cdef double x, y, z, _r, u
-
-        x = self.R[0]*r[0] + self.R[1]*r[1] + self.R[2]*r[2]
-        y = self.R[3]*r[0] + self.R[4]*r[1] + self.R[5]*r[2]
-        z = self.R[6]*r[0] + self.R[7]*r[1] + self.R[8]*r[2]
-
-        _r = sqrt(x*x + y*y + z*z)
-        u = _r / self.r_s
-        return self.v_h2*((self.e_b2/2 + self.e_c2/2)*((1/u - 1/u**3)*log(u + 1) - 1 + (2*u**2 - 3*u + 6)/(6*u**2)) + (self.e_b2*y**2/(2*_r*_r) + self.e_c2*z*z/(2*_r*_r))*((u*u - 3*u - 6)/(2*u*u*(u + 1)) + 3*log(u + 1)/u/u/u) - log(u + 1)/u)
-
-    cdef public inline void _gradient(self, double *r, double *grad) nogil:
-        cdef:
-            double x, y, z, _r, _r2, _r4, ax, ay, az
-            double x0, x2, x22
-
-            double x20, x21, x7, x1
-            double x10, x13, x15, x16, x17
-
-        x = self.R[0]*r[0] + self.R[1]*r[1] + self.R[2]*r[2]
-        y = self.R[3]*r[0] + self.R[4]*r[1] + self.R[5]*r[2]
-        z = self.R[6]*r[0] + self.R[7]*r[1] + self.R[8]*r[2]
-
-        _r2 = x*x + y*y + z*z
-        _r = sqrt(_r2)
-        _r4 = _r2*_r2
-
-        x0 = _r + self.r_s
-        x1 = x0*x0
-        x2 = self.v_h2/(12.*_r4*_r2*_r*x1)
-        x10 = log(x0/self.r_s)
-
-        x13 = _r*3.*self.r_s
-        x15 = x13 - _r2
-        x16 = x15 + 6.*self.r_s2
-        x17 = 6.*self.r_s*x0*(_r*x16 - x0*x10*6.*self.r_s2)
-        x20 = x0*_r2
-        x21 = 2.*_r*x0
-        x7 = self.e_b2*y*y + self.e_c2*z*z
-        x22 = -12.*_r4*_r*self.r_s*x0 + 12.*_r4*self.r_s*x1*x10 + 3.*self.r_s*x7*(x16*_r2 - 18.*x1*x10*self.r_s2 + x20*(2.*_r - 3.*self.r_s) + x21*(x15 + 9.*self.r_s2)) - x20*(self.e_b2 + self.e_c2)*(-6.*_r*self.r_s*(_r2 - self.r_s2) + 6.*self.r_s*x0*x10*(_r2 - 3.*self.r_s2) + x20*(-4.*_r + 3.*self.r_s) + x21*(-x13 + 2.*_r2 + 6.*self.r_s2))
-
-        ax = x2*x*(x17*x7 + x22)
-        ay = x2*y*(x17*(x7 - _r2*self.e_b2) + x22)
-        az = x2*z*(x17*(x7 - _r2*self.e_c2) + x22)
-
-        grad[0] += self.R[0]*ax + self.R[3]*ay + self.R[6]*az
-        grad[1] += self.R[1]*ax + self.R[4]*ay + self.R[7]*az
-        grad[2] += self.R[2]*ax + self.R[5]*ay + self.R[8]*az
+    def __cinit__(self, double v_c, double r_s,
+                  double a, double b, double c,
+                  double R11, double R12, double R13, double R22, double R23, double R33):
+        self._parvec = np.array([v_c,r_s,a,b,c, R11,R12,R13,R22,R23,R33])
+        self._parameters = &(self._parvec)[0]
+        self.c_value = &leesuto_value
+        self.c_gradient = &leesuto_gradient
 
 class LeeSutoTriaxialNFWPotential(CPotentialBase):
     r"""
@@ -439,12 +362,26 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
                 C = rotation_matrix(theta, "x", unit=u.radian)
                 B = rotation_matrix(psi, "z", unit=u.radian)
                 R = np.asarray(B.dot(C).dot(D))
+                R = np.array([R[0,0],R[0,1],R[0,2],R[1,1],R[1,2],R[2,2]])
 
             else:
-                R = np.eye(3)
+                R = np.array([1., 0, 0, 1, 0, 1])
 
+        # Note: R is the upper triangle of the rotation matrix
+        R = np.ravel(R)
+        if R.size != 6:
+            raise ValueError("Rotation matrix parameter, R, should specify the upper triangle "
+                             "of a rotation matrix.")
+
+        c_params = self.parameters.copy()
+        c_params['R11'] = R[0]
+        c_params['R12'] = R[1]
+        c_params['R13'] = R[2]
+        c_params['R22'] = R[3]
+        c_params['R23'] = R[4]
+        c_params['R33'] = R[5]
+        self.c_instance = _LeeSutoTriaxialNFWPotential(**c_params)
         self.parameters['R'] = np.ravel(R).copy()
-        self.c_instance = _LeeSutoTriaxialNFWPotential(G=self.G, **self.parameters)
 
 # ============================================================================
 #    Triaxial, Logarithmic potential
