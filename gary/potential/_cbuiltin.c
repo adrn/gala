@@ -173,6 +173,9 @@ void miyamotonagai_gradient(double *pars, double *r, double *grad) {
     Lee-Suto triaxial NFW from Lee & Suto (2003)
 */
 double leesuto_value(double *pars, double *r) {
+    /*  pars: TODO
+            -
+    */
     double x, y, z, _r, u, v_h2;
     double e_b2 = 1-pow(pars[3]/pars[2],2);
     double e_c2 = 1-pow(pars[4]/pars[2],2);
@@ -190,44 +193,46 @@ double leesuto_value(double *pars, double *r) {
 }
 
 void leesuto_gradient(double *pars, double *r, double *grad) {
-    // TODO:
-    grad[0] = 0.;
-    grad[1] = 0.;
-    grad[2] = 0.;
+    /*  pars: TODO
+            -
+    */
+    double x, y, z, _r, _r2, _r4, ax, ay, az;
+    double v_h2, x0, x2, x22;
+    double x20, x21, x7, x1;
+    double x10, x13, x15, x16, x17;
+    double e_b2 = 1-pow(pars[3]/pars[2],2);
+    double e_c2 = 1-pow(pars[4]/pars[2],2);
+
+    v_h2 = pars[0]*pars[0] / (log(2.) - 0.5 + (log(2.)-0.75)*e_b2 + (log(2.)-0.75)*e_c2);
+
+    // pars[5] up to and including pars[10] are R
+    x = pars[5]*r[0] + pars[6]*r[1] + pars[7]*r[2];
+    y = -pars[6]*r[0] + pars[8]*r[1] + pars[9]*r[2];
+    z = -pars[7]*r[0] + -pars[9]*r[1] + pars[10]*r[2];
+
+    _r2 = x*x + y*y + z*z;
+    _r = sqrt(_r2);
+    _r4 = _r2*_r2;
+
+    x0 = _r + pars[1];
+    x1 = x0*x0;
+    x2 = v_h2/(12.*_r4*_r2*_r*x1);
+    x10 = log(x0/pars[1]);
+
+    x13 = _r*3.*pars[1];
+    x15 = x13 - _r2;
+    x16 = x15 + 6.*(pars[1]*pars[1]);
+    x17 = 6.*pars[1]*x0*(_r*x16 - x0*x10*6.*(pars[1]*pars[1]));
+    x20 = x0*_r2;
+    x21 = 2.*_r*x0;
+    x7 = e_b2*y*y + e_c2*z*z;
+    x22 = -12.*_r4*_r*pars[1]*x0 + 12.*_r4*pars[1]*x1*x10 + 3.*pars[1]*x7*(x16*_r2 - 18.*x1*x10*(pars[1]*pars[1]) + x20*(2.*_r - 3.*pars[1]) + x21*(x15 + 9.*(pars[1]*pars[1]))) - x20*(e_b2 + e_c2)*(-6.*_r*pars[1]*(_r2 - (pars[1]*pars[1])) + 6.*pars[1]*x0*x10*(_r2 - 3.*(pars[1]*pars[1])) + x20*(-4.*_r + 3.*pars[1]) + x21*(-x13 + 2.*_r2 + 6.*(pars[1]*pars[1])));
+
+    ax = x2*x*(x17*x7 + x22);
+    ay = x2*y*(x17*(x7 - _r2*e_b2) + x22);
+    az = x2*z*(x17*(x7 - _r2*e_c2) + x22);
+
+    grad[0] = pars[5]*ax + -pars[6]*ay + -pars[7]*az;
+    grad[1] = pars[6]*ax + pars[8]*ay + -pars[9]*az;
+    grad[2] = pars[7]*ax + pars[9]*ay + pars[10]*az;
 }
-//     cdef:
-//         double x, y, z, _r, _r2, _r4, ax, ay, az
-//         double x0, x2, x22
-
-//         double x20, x21, x7, x1
-//         double x10, x13, x15, x16, x17
-
-//     x = self.R[0]*r[0] + self.R[1]*r[1] + self.R[2]*r[2]
-//     y = self.R[3]*r[0] + self.R[4]*r[1] + self.R[5]*r[2]
-//     z = self.R[6]*r[0] + self.R[7]*r[1] + self.R[8]*r[2]
-
-//     _r2 = x*x + y*y + z*z
-//     _r = sqrt(_r2)
-//     _r4 = _r2*_r2
-
-//     x0 = _r + self.r_s
-//     x1 = x0*x0
-//     x2 = self.v_h2/(12.*_r4*_r2*_r*x1)
-//     x10 = log(x0/self.r_s)
-
-//     x13 = _r*3.*self.r_s
-//     x15 = x13 - _r2
-//     x16 = x15 + 6.*self.r_s2
-//     x17 = 6.*self.r_s*x0*(_r*x16 - x0*x10*6.*self.r_s2)
-//     x20 = x0*_r2
-//     x21 = 2.*_r*x0
-//     x7 = self.e_b2*y*y + self.e_c2*z*z
-//     x22 = -12.*_r4*_r*self.r_s*x0 + 12.*_r4*self.r_s*x1*x10 + 3.*self.r_s*x7*(x16*_r2 - 18.*x1*x10*self.r_s2 + x20*(2.*_r - 3.*self.r_s) + x21*(x15 + 9.*self.r_s2)) - x20*(self.e_b2 + self.e_c2)*(-6.*_r*self.r_s*(_r2 - self.r_s2) + 6.*self.r_s*x0*x10*(_r2 - 3.*self.r_s2) + x20*(-4.*_r + 3.*self.r_s) + x21*(-x13 + 2.*_r2 + 6.*self.r_s2))
-
-//     ax = x2*x*(x17*x7 + x22)
-//     ay = x2*y*(x17*(x7 - _r2*self.e_b2) + x22)
-//     az = x2*z*(x17*(x7 - _r2*self.e_c2) + x22)
-
-//     grad[0] += self.R[0]*ax + self.R[3]*ay + self.R[6]*az
-//     grad[1] += self.R[1]*ax + self.R[4]*ay + self.R[7]*az
-//     grad[2] += self.R[2]*ax + self.R[5]*ay + self.R[8]*az
