@@ -312,8 +312,10 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
 
     def __cinit__(self, double v_c, double r_s,
                   double a, double b, double c,
-                  double R11, double R12, double R13, double R22, double R23, double R33):
-        self._parvec = np.array([v_c,r_s,a,b,c, R11,R12,R13,R22,R23,R33])
+                  double R11, double R12, double R13,
+                  double R21, double R22, double R23,
+                  double R31, double R32, double R33):
+        self._parvec = np.array([v_c,r_s,a,b,c, R11,R12,R13,R21,R22,R23,R31,R32,R33])
         self._parameters = &(self._parvec)[0]
         self.c_value = &leesuto_value
         self.c_gradient = &leesuto_gradient
@@ -365,24 +367,25 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
                 C = rotation_matrix(theta, "x", unit=u.radian)
                 B = rotation_matrix(psi, "z", unit=u.radian)
                 R = np.asarray(B.dot(C).dot(D))
-                R = np.array([R[0,0],R[0,1],R[0,2],R[1,1],R[1,2],R[2,2]])
 
             else:
-                R = np.array([1., 0, 0, 1, 0, 1])
+                R = np.eye(3)
 
         # Note: R is the upper triangle of the rotation matrix
         R = np.ravel(R)
-        if R.size != 6:
-            raise ValueError("Rotation matrix parameter, R, should specify the upper triangle "
-                             "of a rotation matrix.")
+        if R.size != 9:
+            raise ValueError("Rotation matrix parameter, R, should have 9 elements.")
 
         c_params = self.parameters.copy()
         c_params['R11'] = R[0]
         c_params['R12'] = R[1]
         c_params['R13'] = R[2]
-        c_params['R22'] = R[3]
-        c_params['R23'] = R[4]
-        c_params['R33'] = R[5]
+        c_params['R21'] = R[3]
+        c_params['R22'] = R[4]
+        c_params['R23'] = R[5]
+        c_params['R31'] = R[6]
+        c_params['R32'] = R[7]
+        c_params['R33'] = R[8]
         self.c_instance = _LeeSutoTriaxialNFWPotential(**c_params)
         self.parameters['R'] = np.ravel(R).copy()
 
@@ -393,8 +396,10 @@ cdef class _LogarithmicPotential(_CPotential):
 
     def __cinit__(self, double v_c, double r_h,
                   double q1, double q2, double q3,
-                  double R11, double R12, double R13, double R22, double R23, double R33):
-        self._parvec = np.array([v_c,r_h,q1,q2,q3, R11,R12,R13,R22,R23,R33])
+                  double R11, double R12, double R13,
+                  double R21, double R22, double R23,
+                  double R31, double R32, double R33):
+        self._parvec = np.array([v_c,r_h,q1,q2,q3, R11,R12,R13,R21,R22,R23,R31,R32,R33])
         self._parameters = &(self._parvec)[0]
         self.c_value = &logarithmic_value
         self.c_gradient = &logarithmic_gradient
@@ -449,23 +454,24 @@ class LogarithmicPotential(CPotentialBase):
                 C = rotation_matrix(theta, "x", unit=u.radian)
                 B = rotation_matrix(psi, "z", unit=u.radian)
                 R = np.asarray(B.dot(C).dot(D))
-                R = np.array([R[0,0],R[0,1],R[0,2],R[1,1],R[1,2],R[2,2]])
 
             else:
-                R = np.array([1., 0, 0, 1, 0, 1])
+                R = np.eye(3)
 
         # Note: R is the upper triangle of the rotation matrix
         R = np.ravel(R)
-        if R.size != 6:
-            raise ValueError("Rotation matrix parameter, R, should specify the upper triangle "
-                             "of a rotation matrix.")
+        if R.size != 9:
+            raise ValueError("Rotation matrix parameter, R, should have 9 elements.")
 
         c_params = self.parameters.copy()
         c_params['R11'] = R[0]
         c_params['R12'] = R[1]
         c_params['R13'] = R[2]
-        c_params['R22'] = R[3]
-        c_params['R23'] = R[4]
-        c_params['R33'] = R[5]
+        c_params['R21'] = R[3]
+        c_params['R22'] = R[4]
+        c_params['R23'] = R[5]
+        c_params['R31'] = R[6]
+        c_params['R32'] = R[7]
+        c_params['R33'] = R[8]
         self.c_instance = _LogarithmicPotential(**c_params)
         self.parameters['R'] = np.ravel(R).copy()
