@@ -318,6 +318,20 @@ class PotentialBase(object):
 
             else:
                 acc = lambda t,w: self.acceleration(w)
+
+        elif Integrator == DOPRI853Integrator and hasattr(self, 'c_instance') and cython_if_possible:
+            # TODO: use dop853_integrate_potential
+            from ..integrate.timespec import _parse_time_specification
+            from ..integrate.dopri.wrap_dop853 import dop853_integrate_potential
+            t = _parse_time_specification(**time_spec)
+
+            w0 = np.atleast_2d(w0)
+            # TODO: loop over w0s?
+            return dop853_integrate_potential(self.c_instance, w0[0],
+                                              t[1]-t[0], len(t), t[0],
+                                              Integrator_kwargs.get('atol', 1E-9),
+                                              Integrator_kwargs.get('rtol', 1E-9))
+
         else:
             acc = lambda t,w: np.hstack((w[...,3:],self.acceleration(w[...,:3])))
 
