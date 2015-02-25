@@ -108,7 +108,7 @@ class CPotentialBase(PotentialBase):
             Position to compute the mass enclosed.
         """
         try:
-            return self.c_instance.mass_enclosed(np.atleast_2d(q).copy())
+            return self.c_instance.mass_enclosed(np.atleast_2d(q).copy(), self.G)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "mass_enclosed function")
@@ -116,6 +116,9 @@ class CPotentialBase(PotentialBase):
 # ==============================================================================
 
 cdef class _CPotential:
+
+    def __init__(self, *args, **kwargs):
+        pass
 
     def __setstate__(self, d):
         # for k,v in d.items():
@@ -178,14 +181,14 @@ cdef class _CPotential:
                 hess[3*i+j] = 0.
 
     # -------------------------------------------------------------
-    cpdef mass_enclosed(self, double[:,::1] q):
+    cpdef mass_enclosed(self, double[:,::1] q, double G):
         cdef int nparticles, k
         nparticles = q.shape[0]
 
         cdef double [::1] epsilon = np.zeros(3)
         cdef double [::1] mass = np.zeros((nparticles,))
         for k in range(nparticles):
-            mass[k] = self._mass_enclosed(&q[k,0], &epsilon[0], self.G)
+            mass[k] = self._mass_enclosed(&q[k,0], &epsilon[0], G)
         return np.array(mass)
 
     cdef public double _mass_enclosed(self, double *q, double *epsilon, double Gee) nogil:
