@@ -236,3 +236,42 @@ void leesuto_gradient(double *pars, double *r, double *grad) {
     grad[1] = pars[6]*ax + pars[8]*ay + -pars[9]*az;
     grad[2] = pars[7]*ax + pars[9]*ay + pars[10]*az;
 }
+
+/* ---------------------------------------------------------------------------
+    Logarithmic (triaxial)
+*/
+double logarithmic_value(double *pars, double *r) {
+    double x, y, z;
+
+    // pars[5] up to and including pars[10] are R
+    x = pars[5]*r[0] + pars[6]*r[1] + pars[7]*r[2];
+    y = -pars[6]*r[0] + pars[8]*r[1] + pars[9]*r[2];
+    z = -pars[7]*r[0] + -pars[9]*r[1] + pars[10]*r[2];
+
+    return 0.5*pars[0]*pars[0] * log(pars[1]*pars[1] + // scale radius
+                                     x*x/(pars[2]*pars[2]) +
+                                     y*y/(pars[3]*pars[3]) +
+                                     z*z/(pars[4]*pars[4]));
+}
+
+void logarithmic_gradient(double *pars, double *r, double *grad) {
+
+    double x, y, z, _r, _r2, ax, ay, az, fac;
+
+    // pars[5] up to and including pars[10] are R
+    x = pars[5]*r[0] + pars[6]*r[1] + pars[7]*r[2];
+    y = -pars[6]*r[0] + pars[8]*r[1] + pars[9]*r[2];
+    z = -pars[7]*r[0] + -pars[9]*r[1] + pars[10]*r[2];
+
+    _r2 = x*x + y*y + z*z;
+    _r = sqrt(_r2);
+
+    fac = pars[0]*pars[0] / (pars[1]*pars[1] + x*x/(pars[2]*pars[2]) + y*y/(pars[3]*pars[3]) + z*z/(pars[4]*pars[4]));
+    ax = fac*x/pars[2]*pars[2];
+    ay = fac*y/pars[3]*pars[3];
+    az = fac*z/pars[4]*pars[4];
+
+    grad[0] = pars[5]*ax + -pars[6]*ay + -pars[7]*az;
+    grad[1] = pars[6]*ax + pars[8]*ay + -pars[9]*az;
+    grad[2] = pars[7]*ax + pars[9]*ay + pars[10]*az;
+}

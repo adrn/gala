@@ -61,6 +61,9 @@ cdef extern from "_cbuiltin.h":
     double leesuto_value(double *pars, double *q) nogil
     void leesuto_gradient(double *pars, double *q, double *grad) nogil
 
+    double logarithmic_value(double *pars, double *q) nogil
+    void logarithmic_gradient(double *pars, double *q, double *grad) nogil
+
 __all__ = ['HernquistPotential', 'PlummerPotential', 'MiyamotoNagaiPotential',
            'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential',
            'JaffePotential', 'StonePotential']
@@ -388,61 +391,13 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
 #
 cdef class _LogarithmicPotential(_CPotential):
 
-    # here need to cdef all the attributes
-    cdef public double v_c, r_h, q1, q2, q3, G
-    cdef public double v_c2, r_h2, q1_2, q2_2, q3_2, x0
-    cdef public double[::1] R
-
-    def __init__(self, double G, double v_c, double r_h, double q1, double q2, double q3,
-                 double[::1] R):
-
-        self.v_c = v_c
-        self.v_c2 = v_c*v_c
-        self.r_h = r_h
-        self.r_h2 = r_h*r_h
-        self.q1 = q1
-        self.q1_2 = q1*q1
-        self.q2 = q2
-        self.q2_2 = q2*q2
-        self.q3 = q3
-        self.q3_2 = q3*q3
-
-        self.R = R
-        self.G = G
-
-    def __reduce__(self):
-        args = (self.G, self.v_c, self.r_h, self.q1, self.q2, self.q3, np.asarray(self.R))
-        return (_LogarithmicPotential, args)
-
-    cdef public inline double _value(self, double *r) nogil:
-
-        cdef double x, y, z
-
-        x = self.R[0]*r[0] + self.R[1]*r[1] + self.R[2]*r[2]
-        y = self.R[3]*r[0] + self.R[4]*r[1] + self.R[5]*r[2]
-        z = self.R[6]*r[0] + self.R[7]*r[1] + self.R[8]*r[2]
-
-        return 0.5*self.v_c2 * log(x*x/self.q1_2 + y*y/self.q2_2 + z*z/self.q3_2 + self.r_h2)
-
-    cdef public inline void _gradient(self, double *r, double *grad) nogil:
-
-        cdef double x, y, z, _r, _r2, ax, ay, az
-
-        x = self.R[0]*r[0] + self.R[1]*r[1] + self.R[2]*r[2]
-        y = self.R[3]*r[0] + self.R[4]*r[1] + self.R[5]*r[2]
-        z = self.R[6]*r[0] + self.R[7]*r[1] + self.R[8]*r[2]
-
-        _r2 = x*x + y*y + z*z
-        _r = sqrt(_r2)
-
-        fac = self.v_c2/(self.r_h2 + x*x/self.q1_2 + y*y/self.q2_2 + z*z/self.q3_2)
-        ax = fac*x/self.q1_2
-        ay = fac*y/self.q2_2
-        az = fac*z/self.q3_2
-
-        grad[0] += self.R[0]*ax + self.R[3]*ay + self.R[6]*az
-        grad[1] += self.R[1]*ax + self.R[4]*ay + self.R[7]*az
-        grad[2] += self.R[2]*ax + self.R[5]*ay + self.R[8]*az
+    def __cinit__(self, double v_c, double r_h,
+                  double q1, double q2, double q3,
+                  double R11, double R12, double R13, double R22, double R23, double R33):
+        self._parvec = np.array([v_c,r_h,q1,q2,q3, R11,R12,R13,R22,R23,R33])
+        self._parameters = &(self._parvec)[0]
+        self.c_value = &logarithmic_value
+        self.c_gradient = &logarithmic_gradient
 
 class LogarithmicPotential(CPotentialBase):
     r"""
@@ -494,9 +449,23 @@ class LogarithmicPotential(CPotentialBase):
                 C = rotation_matrix(theta, "x", unit=u.radian)
                 B = rotation_matrix(psi, "z", unit=u.radian)
                 R = np.asarray(B.dot(C).dot(D))
+                R = np.array([R[0,0],R[0,1],R[0,2],R[1,1],R[1,2],R[2,2]])
 
             else:
-                R = np.eye(3)
+                R = np.array([1., 0, 0, 1, 0, 1])
 
+        # Note: R is the upper triangle of the rotation matrix
+        R = np.ravel(R)
+        if R.size != 6:
+            raise ValueError("Rotation matrix parameter, R, should specify the upper triangle "
+                             "of a rotation matrix.")
+
+        c_params = self.parameters.copy()
+        c_params['R11'] = R[0]
+        c_params['R12'] = R[1]
+        c_params['R13'] = R[2]
+        c_params['R22'] = R[3]
+        c_params['R23'] = R[4]
+        c_params['R33'] = R[5]
+        self.c_instance = _LogarithmicPotential(**c_params)
         self.parameters['R'] = np.ravel(R).copy()
-        self.c_instance = _LogarithmicPotential(G=self.G, **self.parameters)
