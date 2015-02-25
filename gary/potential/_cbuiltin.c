@@ -28,3 +28,4 @@ void hernquist_gradient(double *pars, double *q, double *grad) {
     grad[1] = fac*q[1];
     grad[2] = fac*q[2];
 }
+
