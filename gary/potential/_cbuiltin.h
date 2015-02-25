@@ -18,3 +18,6 @@ extern void miyamotonagai_gradient(double *pars, double *q, double *grad);
 
 extern double leesuto_value(double *pars, double *q);
 extern void leesuto_gradient(double *pars, double *q, double *grad);
+
+extern double logarithmic_value(double *pars, double *q);
+extern void logarithmic_gradient(double *pars, double *q, double *grad);
