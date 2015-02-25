@@ -79,25 +79,29 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
                                                        dx))
         xout += dx
 
-cpdef dop853_integrate_potential(_CPotential cpotential, double[::1] w0,
+cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
                                  double dt0, int nsteps, double t0,
                                  double atol, double rtol):
     # TODO: add option for a callback function to be called at each step
     cdef:
-        int i, j
+        int i, j, k
         int res, iout
+        unsigned ptr
+        unsigned norbits = w0.shape[0]
+        unsigned ndim = w0.shape[1]
         double[::1] t = np.empty(nsteps)
-        unsigned ndim = w0.size
-        double[::1] w = np.empty(ndim)
+        double[:,::1] w = np.empty((norbits,ndim))
         double[::1] f = np.zeros(ndim)
+
         # Note: icont not needed because nrdens == ndim
         double t_end = (<double>nsteps) * dt0
-        double[:,::1] all_w = np.empty((nsteps,ndim))
+        double[:,:,::1] all_w = np.empty((nsteps,norbits,ndim))
 
     # store initial conditions
-    w = w0.copy()
-    for i in range(ndim):
-        all_w[0,i] = w[i]
+    for i in range(norbits):
+        for k in range(ndim):
+            w[i,k] = w0[i,k]
+            all_w[0,i,k] = w[i,k]
 
     # TODO: dense output?
     iout = 0  # no solout calls
@@ -108,13 +112,15 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[::1] w0,
 
     # define full array of times
     t = np.linspace(t0, t_end, nsteps)
-    for i in range(1,nsteps,1):
-        res = dop853(ndim, F,
-                     <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]),
-                     t[i-1], &w[0], t[i], &rtol, &atol, 0, solout, iout,
-                     NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0, 0, 1, ndim, NULL, ndim);
-        for j in range(ndim):
-            all_w[i,j] = w[j]
+    for j in range(1,nsteps,1):
+        for i in range(norbits):
+            res = dop853(ndim, F,
+                         <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]),
+                         t[i-1], &w[i][0], t[i], &rtol, &atol, 0, solout, iout,
+                         NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0, 0, 1, ndim, NULL, ndim);
+
+            for k in range(ndim):
+                all_w[j,i,k] = w[i,k]
 
     if res == -1:
         raise RuntimeError("Input is not consistent.")
