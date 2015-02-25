@@ -125,6 +125,11 @@ cdef class _CPotential:
     def __getstate__(self):
         return None
 
+    def __reduce__(self):
+        # args = (self.G, self.m, self.c)
+        # return (_HernquistPotential, tuple(self._parvec))
+        return (self.__class__, tuple(self._parvec))
+
     cpdef value(self, double[:,::1] q):
         cdef int nparticles, ndim, k
         nparticles = q.shape[0]
