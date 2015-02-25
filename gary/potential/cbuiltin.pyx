@@ -49,7 +49,14 @@ cdef extern from "_cbuiltin.h":
     double jaffe_value(double *pars, double *q) nogil
     void jaffe_gradient(double *pars, double *q, double *grad) nogil
 
+    double stone_value(double *pars, double *q) nogil
+    void stone_gradient(double *pars, double *q, double *grad) nogil
 
+    double miyamotonagai_value(double *pars, double *q) nogil
+    void miyamotonagai_gradient(double *pars, double *q, double *grad) nogil
+
+    double sphericalnfw_value(double *pars, double *q) nogil
+    void sphericalnfw_gradient(double *pars, double *q, double *grad) nogil
 
 __all__ = ['HernquistPotential', 'PlummerPotential', 'MiyamotoNagaiPotential',
            'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential',
@@ -61,23 +68,11 @@ __all__ = ['HernquistPotential', 'PlummerPotential', 'MiyamotoNagaiPotential',
 #
 cdef class _HernquistPotential(_CPotential):
 
-    # here need to cdef all the attributes
-    cdef public double G
-    cdef public double m, c
-
     def __cinit__(self, double G, double m, double c):
         self._parvec = np.array([G,m,c])
         self._parameters = &(self._parvec)[0]
         self.c_value = &hernquist_value
         self.c_gradient = &hernquist_gradient
-
-    def __init__(self, double G, double m, double c):
-        # have to specify G in the correct units
-        self.G = G
-
-        # disk parameters
-        self.m = m
-        self.c = c
 
 class HernquistPotential(CPotentialBase):
     r"""
@@ -111,24 +106,11 @@ class HernquistPotential(CPotentialBase):
 #
 cdef class _PlummerPotential(_CPotential):
 
-    # here need to cdef all the attributes
-    cdef public double G
-    cdef public double m, b
-
     def __cinit__(self, double G, double m, double b):
         self._parvec = np.array([G,m,b])
         self._parameters = &(self._parvec)[0]
         self.c_value = &plummer_value
         self.c_gradient = &plummer_gradient
-
-    def __init__(self, double G, double m, double b):
-
-        # have to specify G in the correct units
-        self.G = G
-
-        # parameters
-        self.m = m
-        self.b = b
 
 class PlummerPotential(CPotentialBase):
     r"""
@@ -162,24 +144,11 @@ class PlummerPotential(CPotentialBase):
 #
 cdef class _JaffePotential(_CPotential):
 
-    # here need to cdef all the attributes
-    cdef public double G
-    cdef public double m, c
-
     def __cinit__(self, double G, double m, double c):
         self._parvec = np.array([G,m,c])
         self._parameters = &(self._parvec)[0]
         self.c_value = &jaffe_value
         self.c_gradient = &jaffe_gradient
-
-    def __init__(self, double G, double m, double c):
-
-        # have to specify G in the correct units
-        self.G = G
-
-        # disk parameters
-        self.m = m
-        self.c = c
 
 class JaffePotential(CPotentialBase):
     r"""
@@ -215,42 +184,11 @@ class JaffePotential(CPotentialBase):
 #
 cdef class _MiyamotoNagaiPotential(_CPotential):
 
-    # here need to cdef all the attributes
-    cdef public double G, GM
-    cdef public double m, a, b, b2
-
-    def __init__(self, double G, double m, double a, double b):
-
-        # cdef double G = 4.499753324353494927e-12 # kpc^3 / Myr^2 / M_sun
-        # have to specify G in the correct units
-        self.G = G
-
-        # disk parameters
-        self.GM = G*m
-        self.m = m
-        self.a = a
-        self.b = b
-        self.b2 = b*b
-
-    def __reduce__(self):
-        args = (self.G, self.m, self.a, self.b)
-        return (_MiyamotoNagaiPotential, args)
-
-    cdef public inline double _value(self, double *r) nogil:
-        cdef double zd
-        zd = (self.a + sqrt(r[2]*r[2] + self.b2))
-        return -self.GM / sqrt(r[0]*r[0] + r[1]*r[1] + zd*zd)
-
-    cdef public inline void _gradient(self, double *r, double *grad) nogil:
-        cdef double sqrtz, zd, fac
-
-        sqrtz = sqrt(r[2]*r[2] + self.b2)
-        zd = self.a + sqrtz
-        fac = self.GM*pow(r[0]*r[0] + r[1]*r[1] + zd*zd, -1.5)
-
-        grad[0] += fac*r[0]
-        grad[1] += fac*r[1]
-        grad[2] += fac*r[2] * (1. + self.a / sqrtz)
+    def __cinit__(self, double G, double m, double a, double b):
+        self._parvec = np.array([G,m,a,b])
+        self._parameters = &(self._parvec)[0]
+        self.c_value = &miyamotonagai_value
+        self.c_gradient = &miyamotonagai_gradient
 
 class MiyamotoNagaiPotential(CPotentialBase):
     r"""
@@ -286,40 +224,11 @@ class MiyamotoNagaiPotential(CPotentialBase):
 #
 cdef class _StonePotential(_CPotential):
 
-    # here need to cdef all the attributes
-    cdef public double G, m_tot, r_c, r_t
-    cdef public double A, r_c2, r_t2, f
-
-    def __init__(self, double G, double m_tot, double r_c, double r_t):
-        self.G = G
-        self.m_tot = m_tot
-        self.r_c = r_c
-        self.r_c2 = r_c*r_c
-        self.r_t = r_t
-        self.r_t2 = r_t*r_t
-        self.f = np.pi * (self.r_t2 - self.r_c2) / (r_t + r_c)
-        self.A = G * m_tot / self.f
-
-    def __reduce__(self):
-        args = (self.G, self.v_c, self.r_c, self.r_t)
-        return (_StonePotential, args)
-
-    cdef public inline double _value(self, double *r) nogil:
-        cdef double rr, u_c, u_t
-        rr = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2])
-        u_c = rr/self.r_c
-        u_t = rr/self.r_t
-        return -self.A * (atan(u_t)/u_t - atan(u_c)/u_c +
-                          0.5*log((rr*rr + self.r_t2)/(rr*rr + self.r_c2)))
-
-    cdef public inline void _gradient(self, double *r, double *grad) nogil:
-        cdef double dphi_dr, rr
-        rr = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2])
-        dphi_dr = self.A * (self.r_t*atan(rr/self.r_t) + self.r_c*atan(rr/self.r_c)) / (rr*rr)
-
-        grad[0] += dphi_dr*r[0]/rr
-        grad[1] += dphi_dr*r[1]/rr
-        grad[2] += dphi_dr*r[2]/rr
+    def __cinit__(self, double G, double m_tot, double r_c, double r_t):
+        self._parvec = np.array([G,m_tot,r_c,r_t])
+        self._parameters = &(self._parvec)[0]
+        self.c_value = &stone_value
+        self.c_gradient = &stone_gradient
 
 class StonePotential(CPotentialBase):
     r"""
@@ -356,34 +265,14 @@ class StonePotential(CPotentialBase):
 cdef class _SphericalNFWPotential(_CPotential):
 
     # here need to cdef all the attributes
-    cdef public double G, v_c, r_s
-    cdef public double v_h, v_h2, r_s2
+    cdef public double G
+    cdef public double v_c, r_s
 
-    def __init__(self, double G, double v_c, double r_s):
-        self.G = G
-        self.v_h = v_c / sqrt(log(2.) - 0.5)
-        self.v_h2 = self.v_h*self.v_h
-        self.r_s = r_s
-        self.r_s2 = r_s*r_s
-
-    def __reduce__(self):
-        args = (self.G, self.v_c, self.r_s)
-        return (_SphericalNFWPotential, args)
-
-    cdef public inline double _value(self, double *r) nogil:
-        cdef double u
-        u = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / self.r_s
-        return -self.v_h2 * log(1 + u) / u
-
-    cdef public inline void _gradient(self, double *r, double *grad) nogil:
-        cdef double fac, u
-
-        u = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / self.r_s
-        fac = self.v_h2 / (u*u*u) / self.r_s2 * (log(1+u) - u/(1+u))
-
-        grad[0] += fac*r[0]
-        grad[1] += fac*r[1]
-        grad[2] += fac*r[2]
+    def __cinit__(self, double G, double v_c, double r_s):
+        self._parvec = np.array([v_c,r_s])
+        self._parameters = &(self._parvec)[0]
+        self.c_value = &sphericalnfw_value
+        self.c_gradient = &sphericalnfw_gradient
 
 class SphericalNFWPotential(CPotentialBase):
     r"""
