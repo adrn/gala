@@ -10,8 +10,11 @@ extern void jaffe_gradient(double *pars, double *q, double *grad);
 extern double stone_value(double *pars, double *q);
 extern void stone_gradient(double *pars, double *q, double *grad);
 
+extern double sphericalnfw_value(double *pars, double *q);
+extern void sphericalnfw_gradient(double *pars, double *q, double *grad);
+
 extern double miyamotonagai_value(double *pars, double *q);
 extern void miyamotonagai_gradient(double *pars, double *q, double *grad);
 
-extern double sphericalnfw_value(double *pars, double *q);
-extern void sphericalnfw_gradient(double *pars, double *q, double *grad);
+extern double leesuto_value(double *pars, double *q);
+extern void leesuto_gradient(double *pars, double *q, double *grad);
