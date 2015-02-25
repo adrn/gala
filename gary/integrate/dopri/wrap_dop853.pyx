@@ -80,7 +80,7 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
         xout += dx
 
 cpdef dop853_integrate_potential(_CPotential cpotential, double[::1] w0,
-                                 int nsteps, double t0, double dt0,
+                                 double dt0, int nsteps, double t0,
                                  double atol, double rtol):
     # TODO: add option for a callback function to be called at each step
     cdef:
