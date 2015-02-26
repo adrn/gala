@@ -90,7 +90,7 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
         unsigned norbits = w0.shape[0]
         unsigned ndim = w0.shape[1]
         double[::1] t = np.empty(nsteps)
-        double[:,::1] w = np.empty((norbits,ndim))
+        double[::1] w = np.empty(norbits*ndim)
         double[::1] f = np.zeros(ndim)
 
         # Note: icont not needed because nrdens == ndim
@@ -100,8 +100,8 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
     # store initial conditions
     for i in range(norbits):
         for k in range(ndim):
-            w[i,k] = w0[i,k]
-            all_w[0,i,k] = w[i,k]
+            w[i*ndim + k] = w0[i,k]
+            all_w[0,i,k] = w0[i,k]
 
     # TODO: dense output?
     iout = 0  # no solout calls
@@ -116,11 +116,11 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
         for i in range(norbits):
             res = dop853(ndim, F,
                          <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]),
-                         t[i-1], &w[i][0], t[i], &rtol, &atol, 0, solout, iout,
+                         t[j-1], &w[i*ndim], t[j], &rtol, &atol, 0, solout, iout,
                          NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0, 0, 1, ndim, NULL, ndim);
 
             for k in range(ndim):
-                all_w[j,i,k] = w[i,k]
+                all_w[j,i,k] = w[i*ndim + k]
 
     if res == -1:
         raise RuntimeError("Input is not consistent.")
