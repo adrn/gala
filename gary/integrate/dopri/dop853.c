@@ -77,7 +77,7 @@ static double max_d (double a, double b)
 } /* max_d */
 
 
-static double hinit (unsigned n, FcnEqDiff fcn, GradFn gradfunc, double *gpars,
+static double hinit (unsigned n, FcnEqDiff fcn, GradFn gradfunc, double *gpars, unsigned norbits,
         double x, double* y,
 	      double posneg, double* f0, double* f1, double* yy1, int iord,
 	      double hmax, double* atoler, double* rtoler, int itoler)
@@ -120,7 +120,7 @@ static double hinit (unsigned n, FcnEqDiff fcn, GradFn gradfunc, double *gpars,
   /* perform an explicit Euler step */
   for (i = 0; i < n; i++)
     yy1[i] = y[i] + h * f0[i];
-  fcn (n, x+h, yy1, f1, gradfunc, gpars);
+  fcn (n, x+h, yy1, f1, gradfunc, gpars, norbits);
 
   /* estimate the second derivative of the solution */
   der2 = 0.0;
@@ -154,7 +154,7 @@ static double hinit (unsigned n, FcnEqDiff fcn, GradFn gradfunc, double *gpars,
 
 
 /* core integrator */
-static int dopcor (unsigned n, FcnEqDiff fcn, GradFn gradfunc, double *gpars,
+static int dopcor (unsigned n, FcnEqDiff fcn, GradFn gradfunc, double *gpars, unsigned norbits,
        double x, double* y, double xend,
 		   double hmax, double h, double* rtoler, double* atoler,
 		   int itoler, FILE* fileout, SolTrait solout, int iout,
@@ -369,11 +369,11 @@ static int dopcor (unsigned n, FcnEqDiff fcn, GradFn gradfunc, double *gpars,
   last  = 0;
   hlamb = 0.0;
   iasti = 0;
-  fcn (n, x, y, k1, gradfunc, gpars);
+  fcn (n, x, y, k1, gradfunc, gpars, norbits);
   hmax = fabs (hmax);
   iord = 8;
   if (h == 0.0)
-    h = hinit (n, fcn, gradfunc, gpars, x, y, posneg, k1, k2, k3, iord, hmax, atoler, rtoler, itoler);
+    h = hinit (n, fcn, gradfunc, gpars, norbits, x, y, posneg, k1, k2, k3, iord, hmax, atoler, rtoler, itoler);
   nfcn += 2;
   reject = 0;
   xold = x;
@@ -424,44 +424,44 @@ static int dopcor (unsigned n, FcnEqDiff fcn, GradFn gradfunc, double *gpars,
     /* the twelve stages */
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * a21 * k1[i];
-    fcn (n, x+c2*h, yy1, k2, gradfunc, gpars);
+    fcn (n, x+c2*h, yy1, k2, gradfunc, gpars, norbits);
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a31*k1[i] + a32*k2[i]);
-    fcn (n, x+c3*h, yy1, k3, gradfunc, gpars);
+    fcn (n, x+c3*h, yy1, k3, gradfunc, gpars, norbits);
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a41*k1[i] + a43*k3[i]);
-    fcn (n, x+c4*h, yy1, k4, gradfunc, gpars);
+    fcn (n, x+c4*h, yy1, k4, gradfunc, gpars, norbits);
     for (i = 0; i <n; i++)
       yy1[i] = y[i] + h * (a51*k1[i] + a53*k3[i] + a54*k4[i]);
-    fcn (n, x+c5*h, yy1, k5, gradfunc, gpars);
+    fcn (n, x+c5*h, yy1, k5, gradfunc, gpars, norbits);
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a61*k1[i] + a64*k4[i] + a65*k5[i]);
-    fcn (n, x+c6*h, yy1, k6, gradfunc, gpars);
+    fcn (n, x+c6*h, yy1, k6, gradfunc, gpars, norbits);
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a71*k1[i] + a74*k4[i] + a75*k5[i] + a76*k6[i]);
-    fcn (n, x+c7*h, yy1, k7, gradfunc, gpars);
+    fcn (n, x+c7*h, yy1, k7, gradfunc, gpars, norbits);
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a81*k1[i] + a84*k4[i] + a85*k5[i] + a86*k6[i] +
 			  a87*k7[i]);
-    fcn (n, x+c8*h, yy1, k8, gradfunc, gpars);
+    fcn (n, x+c8*h, yy1, k8, gradfunc, gpars, norbits);
     for (i = 0; i <n; i++)
       yy1[i] = y[i] + h * (a91*k1[i] + a94*k4[i] + a95*k5[i] + a96*k6[i] +
 			  a97*k7[i] + a98*k8[i]);
-    fcn (n, x+c9*h, yy1, k9, gradfunc, gpars);
+    fcn (n, x+c9*h, yy1, k9, gradfunc, gpars, norbits);
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a101*k1[i] + a104*k4[i] + a105*k5[i] + a106*k6[i] +
 			  a107*k7[i] + a108*k8[i] + a109*k9[i]);
-    fcn (n, x+c10*h, yy1, k10, gradfunc, gpars);
+    fcn (n, x+c10*h, yy1, k10, gradfunc, gpars, norbits);
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a111*k1[i] + a114*k4[i] + a115*k5[i] + a116*k6[i] +
 			  a117*k7[i] + a118*k8[i] + a119*k9[i] + a1110*k10[i]);
-    fcn (n, x+c11*h, yy1, k2, gradfunc, gpars);
+    fcn (n, x+c11*h, yy1, k2, gradfunc, gpars, norbits);
     xph = x + h;
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a121*k1[i] + a124*k4[i] + a125*k5[i] + a126*k6[i] +
 			  a127*k7[i] + a128*k8[i] + a129*k9[i] +
 			  a1210*k10[i] + a1211*k2[i]);
-    fcn (n, xph, yy1, k3, gradfunc, gpars);
+    fcn (n, xph, yy1, k3, gradfunc, gpars, norbits);
     nfcn += 11;
     for (i = 0; i < n; i++)
     {
@@ -516,7 +516,7 @@ static int dopcor (unsigned n, FcnEqDiff fcn, GradFn gradfunc, double *gpars,
 
       facold = max_d (err, 1.0E-4);
       naccpt++;
-      fcn (n, xph, k5, k4, gradfunc, gpars);
+      fcn (n, xph, k5, k4, gradfunc, gpars, norbits);
       nfcn++;
 
       /* stiffness detection */
@@ -602,17 +602,17 @@ static int dopcor (unsigned n, FcnEqDiff fcn, GradFn gradfunc, double *gpars,
 	  yy1[i] = y[i] + h * (a141*k1[i] + a147*k7[i] + a148*k8[i] +
 			      a149*k9[i] + a1410*k10[i] + a1411*k2[i] +
 			      a1412*k3[i] + a1413*k4[i]);
-	fcn (n, x+c14*h, yy1, k10, gradfunc, gpars);
+	fcn (n, x+c14*h, yy1, k10, gradfunc, gpars, norbits);
 	for (i = 0; i < n; i++)
 	  yy1[i] = y[i] + h * (a151*k1[i] + a156*k6[i] + a157*k7[i] + a158*k8[i] +
 			      a1511*k2[i] + a1512*k3[i] + a1513*k4[i] +
 			      a1514*k10[i]);
-	fcn (n, x+c15*h, yy1, k2, gradfunc, gpars);
+	fcn (n, x+c15*h, yy1, k2, gradfunc, gpars, norbits);
 	for (i = 0; i < n; i++)
 	  yy1[i] = y[i] + h * (a161*k1[i] + a166*k6[i] + a167*k7[i] + a168*k8[i] +
 			      a169*k9[i] + a1613*k4[i] + a1614*k10[i] +
 			      a1615*k2[i]);
-	fcn (n, x+c16*h, yy1, k3, gradfunc, gpars);
+	fcn (n, x+c16*h, yy1, k3, gradfunc, gpars, norbits);
 	nfcn += 3;
 
 	/* final preparation */
@@ -694,7 +694,7 @@ static int dopcor (unsigned n, FcnEqDiff fcn, GradFn gradfunc, double *gpars,
 
 /* front-end */
 int dop853
- (unsigned n, FcnEqDiff fcn, GradFn gradfunc, double *gpars,
+ (unsigned n, FcnEqDiff fcn, GradFn gradfunc, double *gpars, unsigned norbits,
   double x, double* y, double xend, double* rtoler,
   double* atoler, int itoler, SolTrait solout, int iout, FILE* fileout, double uround,
   double safe, double fac1, double fac2, double beta, double hmax, double h,
@@ -914,7 +914,7 @@ int dop853
   }
   else
   {
-    idid = dopcor (n, fcn, gradfunc, gpars, x, y, xend, hmax, h, rtoler, atoler, itoler, fileout,
+    idid = dopcor (n, fcn, gradfunc, gpars, norbits, x, y, xend, hmax, h, rtoler, atoler, itoler, fileout,
 		   solout, iout, nmax, uround, meth, nstiff, safe, beta, fac1, fac2, icont);
     free (k10);
     free (k9);
@@ -974,3 +974,25 @@ double contd8 (unsigned ii, double x)
 
 } /* contd8 */
 
+/* ADDED BY APW */
+void Fwrapper (unsigned ndim, double t, double *w, double *f,
+               GradFn funk, double *pars, unsigned norbits) {
+    int k;
+    unsigned half_ndim = ndim / 2;
+
+    // printf("w,f,pars live at %p %p %p.\n", (void*)&w, (void*)&f, (void*)&pars);
+    // printf("func lives at %p", (void*)funk);
+    (void*)funk;
+
+    // call gradient function
+    for (int i=0; i < norbits; i++) {
+        funk(pars, &w[i*ndim], &f[i*ndim + half_ndim]);
+
+        for (k=0; k < half_ndim; k++) {
+            // f[k] = w[k+half_ndim]
+            f[i*ndim + k] = w[i*ndim + k + half_ndim];
+            // f[k+half_ndim] = -f[k+half_ndim]
+            f[i*ndim + k + half_ndim] = -f[i*ndim + k + half_ndim];
+        }
+    }
+}
