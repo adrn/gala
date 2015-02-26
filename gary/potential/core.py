@@ -325,9 +325,8 @@ class PotentialBase(object):
             from ..integrate.dopri.wrap_dop853 import dop853_integrate_potential
             t = _parse_time_specification(**time_spec)
 
-            w0 = np.atleast_2d(w0)
-            # TODO: loop over w0s?
-            return dop853_integrate_potential(self.c_instance, w0[0],
+            w0 = np.ascontiguousarray(np.atleast_2d(w0))
+            return dop853_integrate_potential(self.c_instance, w0,
                                               t[1]-t[0], len(t), t[0],
                                               Integrator_kwargs.get('atol', 1E-9),
                                               Integrator_kwargs.get('rtol', 1E-9))
