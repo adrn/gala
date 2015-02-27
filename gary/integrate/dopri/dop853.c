@@ -975,17 +975,14 @@ double contd8 (unsigned ii, double x)
 } /* contd8 */
 
 /* ADDED BY APW */
-void Fwrapper (unsigned ndim, double t, double *w, double *f,
+void Fwrapper (unsigned full_ndim, double t, double *w, double *f,
                GradFn funk, double *pars, unsigned norbits) {
-    int k;
+    int i, k;
+    unsigned ndim = full_ndim/norbits;
     unsigned half_ndim = ndim / 2;
 
-    // printf("w,f,pars live at %p %p %p.\n", (void*)&w, (void*)&f, (void*)&pars);
-    // printf("func lives at %p", (void*)funk);
-    (void*)funk;
-
     // call gradient function
-    for (int i=0; i < norbits; i++) {
+    for (i=0; i < norbits; i++) {
         funk(pars, &w[i*ndim], &f[i*ndim + half_ndim]);
 
         for (k=0; k < half_ndim; k++) {
