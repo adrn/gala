@@ -51,12 +51,12 @@ def test_derp():
         times.append(time.time()-t1)
         print("cy: {0:.2f}".format(times[-1]))
 
-        # t1 = time.time()
-        # t,w = pot.integrate_orbit(w0, dt=0.1, nsteps=nsteps,
-        #                           Integrator=DOPRI853Integrator,
-        #                           cython_if_possible=False)
-        # pytimes.append(time.time()-t1)
-        # print("py: {0:.2f}".format(pytimes[-1]))
+        t1 = time.time()
+        t,w = pot.integrate_orbit(w0, dt=0.1, nsteps=nsteps,
+                                  Integrator=DOPRI853Integrator,
+                                  cython_if_possible=False)
+        pytimes.append(time.time()-t1)
+        print("py: {0:.2f}".format(pytimes[-1]))
 
     from scipy.optimize import leastsq
 
@@ -66,7 +66,7 @@ def test_derp():
     print(p_opt)
 
     plt.plot(norbitses, times)
-    # plt.plot(norbitses, pytimes)
+    plt.plot(norbitses, pytimes)
     derp = np.linspace(norbitses.min(),norbitses.max(),100)
     plt.plot(derp, p_opt[0]*derp + p_opt[1], marker=None)
     plt.show()
