@@ -233,3 +233,4 @@ extern double xRead (void);
 /* ADDED BY APW */
 extern void Fwrapper (unsigned ndim, double t, double *w, double *f,
                       GradFn func, double *pars, unsigned norbits);
+extern double six_norm (double *x);
