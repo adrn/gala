@@ -266,7 +266,12 @@ def isochrone_aa_to_xv(actions, angles, potential):
     phi = (u + Omega) % (2*np.pi)
 
     # We now need to convert from spherical polar coord to cart. coord.
-    x,v = spherical_to_cartesian(r,phi,theta,vr,vphi,vtheta)
+    # TODO: BROKEN BROKEN DA BROEK
+    import astropy.units as u
+    import astropy.coordinates as coord
+    pos = coord.PhysicsSphericalRepresentation(r=r*u.kpc, phi=phi*u.rad, theta=theta*u.rad)
+    x = pos.represent_as(coord.CartesianRepresentation).xyz.T.value
+    v = spherical_to_cartesian(pos,[vr,vphi,vtheta]*u.kpc/u.Myr).T.value
     return x,v
 
 def harmonic_oscillator_xv_to_aa(x, v, potential):
