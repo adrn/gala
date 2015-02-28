@@ -89,6 +89,19 @@ def lyapunov_spectrum(w0, integrator, dt, nsteps, t1=0., deviation_vecs=None):
 
     return lyap, full_ts, full_w
 
+def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
+                      nsteps_per_pullback=10, noffset_orbits=8, t1=0.):
+    from ..integrate.dopri.wrap_dop853 import dop853_lyapunov
+
+    if not hasattr(potential, 'c_instance'):
+        raise TypeError("Input potential must be a CPotential subclass.")
+
+    t,w,l = dop853_lyapunov(potential.c_instance, w0,
+                            dt, nsteps, t1, 1E-8, 1E-8,
+                            d0, nsteps_per_pullback, noffset_orbits)
+
+    return l,t,w
+
 def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
                  noffset=8, t1=0.):
     """
