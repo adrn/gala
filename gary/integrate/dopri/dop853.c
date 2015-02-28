@@ -993,3 +993,11 @@ void Fwrapper (unsigned full_ndim, double t, double *w, double *f,
         }
     }
 }
+
+double six_norm (double *x) {
+    double norm = 0;
+    for (int i=0; i<6; i++) {
+        norm = norm + x[i]*x[i];
+    }
+    return sqrt(norm);
+}
