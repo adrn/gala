@@ -15,7 +15,7 @@ import numpy as np
 # Project
 from ..util import gram_schmidt
 
-__all__ = ['lyapunov_spectrum', 'lyapunov_max']
+__all__ = ['lyapunov_spectrum', 'fast_lyapunov_max', 'lyapunov_max']
 
 # Create logger
 logger = logging.getLogger(__name__)
