@@ -22,6 +22,7 @@ from ...potential.cpotential cimport _CPotential
 
 cdef extern from "math.h":
     double sqrt(double x) nogil
+    double log(double x) nogil
 
 cdef extern from "dop853.h":
     ctypedef void (*GradFn)(double *pars, double *q, double *grad) nogil
@@ -39,6 +40,7 @@ cdef extern from "dop853.h":
 
     void Fwrapper (unsigned ndim, double t, double *w, double *f,
                    GradFn func, double *pars, unsigned norbits)
+    double six_norm (double *x)
 
 cdef extern from "stdio.h":
     ctypedef struct FILE
@@ -100,19 +102,97 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
         res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
                      <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]), norbits,
                      t[j-1], &w[0], t[j], &rtol, &atol, 0, solout, iout,
-                     NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0, 0, 1, 0, NULL, 0);
+                     NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, 0, 0, 1, 0, NULL, 0);
 
         for i in range(norbits):
             for k in range(ndim):
                 all_w[j,i,k] = w[i*ndim + k]
 
-    if res == -1:
-        raise RuntimeError("Input is not consistent.")
-    elif res == -2:
-        raise RuntimeError("Larger nmax is needed.")
-    elif res == -3:
-        raise RuntimeError("Step size becomes too small.")
-    elif res == -4:
-        raise RuntimeError("The problem is probably stff (interrupted).")
+        if res == -1:
+            raise RuntimeError("Input is not consistent.")
+        elif res == -2:
+            raise RuntimeError("Larger nmax is needed.")
+        elif res == -3:
+            raise RuntimeError("Step size becomes too small.")
+        elif res == -4:
+            raise RuntimeError("The problem is probably stff (interrupted).")
 
     return np.asarray(t), np.asarray(all_w)
+
+cpdef dop853_lyapunov(_CPotential cpotential, double[::1] w0,
+                      double dt0, int nsteps, double t0,
+                      double atol, double rtol,
+                      double d0, int nsteps_per_pullback, int noffset_orbits):
+    # TODO: add option for a callback function to be called at each step
+    cdef:
+        int i, j, k, jj
+        int res
+        unsigned ndim = w0.size
+        unsigned norbits = noffset_orbits + 1
+        unsigned niter = nsteps // nsteps_per_pullback
+        double[::1] t = np.empty(niter)
+        double[::1] w = np.empty(norbits*ndim)
+
+        double d1_mag, norm
+        double[:,::1] d1 = np.empty((norbits,ndim))
+        double[:,::1] LEs = np.zeros((niter,noffset_orbits))
+        double[:,::1] main_w = np.zeros((niter+1,ndim))
+
+        # temp stuff
+        double[:,::1] d0_vec = np.random.uniform(size=(noffset_orbits,ndim))
+
+    # store initial conditions for parent orbit
+    for k in range(ndim):
+        w[k] = w0[k]
+
+    # offset vectors to start the offset orbits on - need to be normalized
+    for i in range(1,noffset_orbits+1,1):
+        norm = np.linalg.norm(d0_vec[i-1])
+        for k in range(ndim):
+            d0_vec[i-1,k] /= norm
+            d0_vec[i-1,k] *= d0
+            w[i*ndim + k] = w0[k] + d0_vec[i-1,k]
+            main_w[0,k] = w0[k]
+
+    # define full array of times
+    time = t0
+    for j in range(niter):
+        res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
+                     <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]), norbits,
+                     time, &w[0], time + dt0*nsteps_per_pullback,
+                     &rtol, &atol, 0, solout, 0,
+                     NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                     dt0, 0, 0, 1, 0, NULL, 0);
+
+        if res == -1:
+            raise RuntimeError("Input is not consistent.")
+        elif res == -2:
+            raise RuntimeError("Larger nmax is needed.")
+        elif res == -3:
+            raise RuntimeError("Step size becomes too small.")
+        elif res == -4:
+            raise RuntimeError("The problem is probably stff (interrupted).")
+
+        # store position of main orbit
+
+        for k in range(ndim):
+            main_w[j+1,k] = w[k]
+
+        # get magnitude of deviation vector
+        for i in range(1,norbits):
+            for k in range(ndim):
+                d1[i,k] = w[i*ndim + k] - w[k]
+
+            d1_mag = six_norm(&d1[i,0])
+            LEs[j,i-1] = log(d1_mag / d0)
+
+            # renormalize offset orbits
+            for k in range(ndim):
+                w[i*ndim + k] = w[k] + d0 * d1[i,k] / d1_mag
+
+        # advance time
+        time += dt0*nsteps_per_pullback
+        t[j] = time
+
+    LEs = np.array([np.sum(LEs[:ii],axis=0)/t[ii-1] for ii in range(1,niter)])
+    return np.array(t), np.array(main_w), np.array(LEs)
