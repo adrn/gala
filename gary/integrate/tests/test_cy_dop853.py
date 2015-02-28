@@ -17,9 +17,11 @@ import matplotlib.pyplot as plt
 
 # Project
 from ... import potential as gp
+from ... import integrate as gi
+from ... import dynamics as gd
 from ..dopri853 import DOPRI853Integrator
 from ...units import galactic
-from ..dopri.wrap_dop853 import dop853_integrate_potential
+from ..dopri.wrap_dop853 import dop853_integrate_potential, dop853_lyapunov
 plot_path = "plots/tests/integrate"
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
@@ -38,8 +40,8 @@ def test_derp():
     # plt.plot(w[:,0,0], w[:,0,1])
     # plt.show()
 
-    nsteps = 100000
-    norbitses = 2**np.arange(0,5+1,1)
+    nsteps = 10000
+    norbitses = 2**np.arange(3,10+2,2)
     times = []
     pytimes = []
     for norbits in norbitses:
@@ -58,6 +60,8 @@ def test_derp():
         pytimes.append(time.time()-t1)
         print("py: {0:.2f}".format(pytimes[-1]))
 
+    return
+
     from scipy.optimize import leastsq
 
     def errfunc(p, x, y):
@@ -74,3 +78,24 @@ def test_derp():
     # plt.figure(figsize=(8,8))
     # plt.plot(w[:,0],w[:,1],marker=None)
     # plt.show()
+
+def test_lyapunov():
+    pot = gp.HernquistPotential(m=1E11, c=0.5, units=galactic)
+    w0 = np.array([5.,0.,0., 0.,0.2,0.])
+    nsteps = 100000
+
+    # with python
+    # F = lambda t,w: np.hstack((w[...,3:],pot.acceleration(w[...,:3])))
+    # integrator = gi.DOPRI853Integrator(F)
+    # regular_LEs, t, regular_ws = gd.lyapunov_max(w0, integrator, dt=0.1, nsteps=nsteps)
+    # plt.loglog(regular_LEs[:,0], marker=None)
+
+    print()
+
+    t,w,l = dop853_lyapunov(pot.c_instance, w0,
+                            0.1, nsteps, 0., 1E-8, 1E-8,
+                            1E-5, 10, 8)
+
+    # plt.plot(w[:,0], w[:,1], marker=None)
+    plt.loglog(l, marker=None)
+    plt.show()
