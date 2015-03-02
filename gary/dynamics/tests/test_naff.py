@@ -255,48 +255,22 @@ class LaskarBase(object):
             logger.info("Using Cartesian coordinates")
             fs = [(self.w[:,0,i] + 1j*self.w[:,0,i+3]) for i in range(3)]
 
-        # print()
-        # for i in range(2):
-        #     row = self.true_tables[0][i]
-        #     print(row['freq'], row['A']*np.exp(1j*row['phi']), row['A'], row['phi'])
-
         f,d,ixes = naff.find_fundamental_frequencies(fs[:2], nintvec=15, break_condition=None)
         nvecs = naff.find_integer_vectors(f, d)
 
         # TEST
         this_d = d[d['n'] == 0]
         print(this_d['|A|'])
-
-        # plt.clf()
-        # plt.loglog(this_d['|A|'])
-        # plt.show()
-        # return
+        print(self.true_tables[0]['A'])
 
         phi = coord.Angle(this_d['phi']*u.radian).wrap_at(360*u.deg).to(u.degree).value
         print(phi)
         print(self.true_tables[0]['phi'])
 
-        # plt.figure(figsize=(10,10))
-        # plt.scatter(self.true_tables[0]['phi'][:15], phi[:15], c=range(15), marker='o')
-        # plt.plot(np.linspace(0,360,100), np.linspace(0,360,100), marker=None)
-        # plt.show()
-        # return
+        return
+
         fprime = this_d['A'][:,np.newaxis] * np.exp(1j * this_d['freq'][:,np.newaxis] * self.t[np.newaxis])
         fprime = np.sum(fprime, axis=0)
-
-        # fig,axes = plt.subplots(2,2,figsize=(14,14),sharex='col',sharey='col')
-
-        # slc = slice(0,50000,None)
-        # alpha = 0.1
-        # axes[0,0].plot(fs[0].real[slc], fs[0].imag[slc], linestyle='none', alpha=alpha)
-        # axes[1,0].plot(fprime.real[slc], fprime.imag[slc], linestyle='none', alpha=alpha)
-
-        # axes[0,1].plot(fs[0].real)
-        # axes[1,1].plot(fprime.real)
-        # axes[1,1].set_xlim(0,1000)
-
-        # plt.show()
-        # return
 
         # TODO: compare with true tables
         for i in range(2):
