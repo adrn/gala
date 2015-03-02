@@ -8,6 +8,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 from collections import OrderedDict
+import logging
 import os
 import re
 
@@ -35,6 +36,83 @@ logger.important("Plots located at: {}".format(plot_path))
 # TODO: config item to specify path to test data?
 test_data_path = os.path.abspath(os.path.join(os.path.split(__file__)[0],
                                  "../../../test-data/"))
+
+logger.setLevel(logging.DEBUG)
+
+
+def test_simple_f():
+    true_ws = 2*np.pi*np.array([0.581, 0.73])
+    true_as = np.array([5*(np.cos(np.radians(15.)) + 1j*np.sin(np.radians(15.))),
+                        1.8*(np.cos(np.radians(85.)) + 1j*np.sin(np.radians(85.)))])
+    true_A = np.sqrt(true_as.imag**2 + true_as.real**2)
+    true_phi = np.arctan2(true_as.imag, true_as.real)
+
+    logger.info("")
+    logger.info("True ω = {}".format(true_ws.tolist()))
+    logger.info("True a = {}".format(true_as.tolist()))
+    logger.info("True A = {}".format(true_A.tolist()))
+
+    ts = [np.linspace(0., 300., 12000),
+          np.linspace(0., 300., 24414),
+          np.linspace(150., 450., 12000),
+          np.linspace(150., 450., 24414),
+          np.linspace(0., 300., 12000) + 50*(2*np.pi/true_ws[0])]
+
+    for i,t in enumerate(ts):
+        print(i)
+        f = np.sum(true_as[None] * np.exp(1j * true_ws[None] * t[:,None]), axis=1)
+
+        naff = gd.NAFF(t, debug=True, debug_path=os.path.join(plot_path,'naff-debug'))
+
+        # try recovering the strongest frequency
+        w = naff.frequency(f[:naff.n])
+        np.testing.assert_allclose(true_ws[0], w, atol=1E-6)
+
+        # try recovering all frequencies
+        output = naff.frecoder(f[:naff.n], break_condition=1E-5)
+        nu,A,phi = output
+        np.testing.assert_allclose(true_ws, nu[:2], atol=1E-7)
+        np.testing.assert_allclose(true_A, A[:2], atol=1E-4)
+        np.testing.assert_allclose(true_phi, phi[:2], atol=1E-4)
+
+def test_simple_f2():
+    true_ws = 2*np.pi*np.array([0.581, -0.73, 0.91])
+    true_as = np.array([5*(np.cos(np.radians(35.)) + 1j*np.sin(np.radians(35.))),
+                        1.8*(np.cos(np.radians(75.)) + 1j*np.sin(np.radians(75.))),
+                        0.7*(np.cos(np.radians(45.)) + 1j*np.sin(np.radians(45.)))])
+    true_A = np.sqrt(true_as.imag**2 + true_as.real**2)
+    true_phi = np.arctan2(true_as.imag, true_as.real)
+
+    logger.info("")
+    logger.info("True ω = {}".format(true_ws.tolist()))
+    logger.info("True a = {}".format(true_as.tolist()))
+    logger.info("True A = {}".format(true_A.tolist()))
+
+    ts = [np.linspace(0., 300., 12000),
+          np.linspace(0., 300., 24414),
+          np.linspace(150., 450., 12000),
+          np.linspace(150., 450., 24414),
+          np.linspace(0., 300., 12000) + 50*(2*np.pi/true_ws[0])]
+
+    for i,t in enumerate(ts):
+        print(i)
+        print("{} periods".format(t.max() / (2*np.pi/true_ws)))
+        f = np.sum(true_as[None] * np.exp(1j * true_ws[None] * t[:,None]), axis=1)
+
+        naff = gd.NAFF(t, debug=True, debug_path=os.path.join(plot_path,'naff-debug'))
+
+        # try recovering the strongest frequency
+        w = naff.frequency(f[:naff.n])
+        np.testing.assert_allclose(true_ws[0], w, atol=1E-6)
+
+        # try recovering all frequencies
+        output = naff.frecoder(f[:naff.n], break_condition=1E-4)
+        nu,A,phi = output
+        np.testing.assert_allclose(true_ws, nu[:3], atol=1E-7)
+        np.testing.assert_allclose(true_A, A[:3], atol=1E-4)
+        np.testing.assert_allclose(true_phi, phi[:2], atol=1E-4)
+
+# ----------------------------------------------------------------------------
 
 def estimate_axisym_freqs(t, w):
     R = np.sqrt(w[:,0,0]**2 + w[:,0,1]**2)
