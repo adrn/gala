@@ -31,8 +31,9 @@ integrate = Extension("gary.integrate.*",
                       include_dirs=[numpy_incl_path])
 extensions.append(integrate)
 
-dopri = Extension("gary.integrate.dopri.wrap_dop853",
-                  ["gary/integrate/dopri/wrap_dop853.pyx",
+dopri = Extension("gary.integrate.*",
+                  ["gary/integrate/*.pyx",
+                   "gary/integrate/dopri/dop853.h",
                    "gary/integrate/dopri/dop853.c"],
                   include_dirs=[numpy_incl_path])
 extensions.append(dopri)
@@ -55,5 +56,7 @@ setup(
               "gary.dynamics", "gary.inference",
               "gary.potential"],
     scripts=['bin/plotsnap', 'bin/moviesnap', 'bin/snap2gal'],
-    package_data={'gary.potential': ['*.pxd']},
+    package_data={'gary.potential': ['*.pxd','*.c','*.h'],
+                  'gary.integrate': ['*.pxd','*.c','*.h']
+                  },
 )
