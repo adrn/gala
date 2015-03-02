@@ -18,13 +18,13 @@ np.import_array()
 
 from libc.stdio cimport printf
 
-from ...potential.cpotential cimport _CPotential
+from ..potential.cpotential cimport _CPotential
 
 cdef extern from "math.h":
     double sqrt(double x) nogil
     double log(double x) nogil
 
-cdef extern from "dop853.h":
+cdef extern from "dopri/dop853.h":
     ctypedef void (*GradFn)(double *pars, double *q, double *grad) nogil
     ctypedef void (*SolTrait)(long nr, double xold, double x, double* y, unsigned n, int* irtrn)
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f, GradFn gradfunc, double *gpars, unsigned norbits) nogil
@@ -194,5 +194,5 @@ cpdef dop853_lyapunov(_CPotential cpotential, double[::1] w0,
         time += dt0*nsteps_per_pullback
         t[j] = time
 
-    LEs = np.array([np.sum(LEs[:ii],axis=0)/t[ii-1] for ii in range(1,niter)])
+    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j-1] for j in range(1,niter)])
     return np.array(t), np.array(main_w), np.array(LEs)
