@@ -110,7 +110,7 @@ def test_simple_f2():
         nu,A,phi = output
         np.testing.assert_allclose(true_ws, nu[:3], atol=1E-7)
         np.testing.assert_allclose(true_A, A[:3], atol=1E-4)
-        np.testing.assert_allclose(true_phi, phi[:2], atol=1E-4)
+        np.testing.assert_allclose(true_phi, phi[:3], atol=1E-4)
 
 # ----------------------------------------------------------------------------
 
