@@ -322,7 +322,7 @@ class PotentialBase(object):
         elif Integrator == DOPRI853Integrator and hasattr(self, 'c_instance') and cython_if_possible:
             # TODO: use dop853_integrate_potential
             from ..integrate.timespec import _parse_time_specification
-            from ..integrate.dopri.wrap_dop853 import dop853_integrate_potential
+            from ..integrate._dop853 import dop853_integrate_potential
             t = _parse_time_specification(**time_spec)
 
             w0 = np.ascontiguousarray(np.atleast_2d(w0))
