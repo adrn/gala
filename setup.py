@@ -17,20 +17,20 @@ from Cython.Build import cythonize
 # Get numpy path
 numpy_base_path = os.path.split(np.__file__)[0]
 numpy_incl_path = os.path.join(numpy_base_path, "core", "include")
+mac_incl_path = "/usr/include/malloc"
 
 extensions = []
 
 potential = Extension("gary.potential.*",
                       ["gary/potential/*.pyx",
                        "gary/potential/_cbuiltin.c"],
-                      include_dirs=[numpy_incl_path])
+                      include_dirs=[numpy_incl_path, mac_incl_path])
 extensions.append(potential)
 
 integrate = Extension("gary.integrate.*",
                       ["gary/integrate/*.pyx",
-                       "gary/integrate/dopri/dop853.h",
                        "gary/integrate/dopri/dop853.c"],
-                      include_dirs=[numpy_incl_path])
+                      include_dirs=[numpy_incl_path, mac_incl_path])
 extensions.append(integrate)
 
 # dynamics = Extension("gary.dynamics.*",
@@ -51,7 +51,7 @@ setup(
               "gary.dynamics", "gary.inference",
               "gary.potential"],
     scripts=['bin/plotsnap', 'bin/moviesnap', 'bin/snap2gal'],
-    package_data={'gary.potential': ['*.pxd','*.c','*.h'],
-                  'gary.integrate': ['*.pxd','*.c','*.h']
+    package_data={'gary.potential': ['*.pxd','*.c'],
+                  'gary.integrate': ['*.pxd','*.c']
                   },
 )
