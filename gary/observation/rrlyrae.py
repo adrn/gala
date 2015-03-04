@@ -61,7 +61,7 @@ def M_V(fe_h, dfe_h=None):
 
     return Mabs
 
-def gaia_radial_velocity_error(d, fe_h=-1.):
+def gaia_radial_velocity_error(d, fe_h=-1.5):
     """ Compute the sky-averaged radial velocity error for an
         RR Lyrae at the given distance.
 
@@ -78,7 +78,7 @@ def gaia_radial_velocity_error(d, fe_h=-1.):
 
     return err
 
-def gaia_proper_motion_error(d, fe_h=-1.):
+def gaia_proper_motion_error(d, fe_h=-1.5):
     """ Compute the sky-averaged proper motion error for an
         RR Lyrae at the given distance.
 
@@ -96,7 +96,7 @@ def gaia_proper_motion_error(d, fe_h=-1.):
     err = 0.5*(err[0] + err[1])
     return err*u.microarcsecond/u.yr
 
-def gaia_parallax_error(d, fe_h=-1.):
+def gaia_parallax_error(d, fe_h=-1.5):
     """ Compute the sky-averaged parallax motion error for an
         RR Lyrae at the given distance.
 
