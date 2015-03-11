@@ -118,7 +118,7 @@ class TestHarmonicOscillator(object):
             assert np.allclose(angles, s_angles, rtol=1E-8)
 
             # test roundtrip
-            x2,v2 = harmonic_oscillator_aa_to_xv(actions, angles, self.potential)
+            # x2,v2 = harmonic_oscillator_aa_to_xv(actions, angles, self.potential)
 
             # TODO: figure out transform back
             continue
