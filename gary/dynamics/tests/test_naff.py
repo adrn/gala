@@ -526,23 +526,23 @@ def test_weird_bump():
 
     every = 2
 
-    i1,i2 = (0,200001)
-    naff = NAFF(t[i1:i2:every], debug=True, debug_path=os.path.join(test_data_path, "naff"))
-    fs = poincare_polar(w[i1:i2:every])
-    f,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=5)
-    print(f)
+    # i1,i2 = (0,200001)
+    # naff = NAFF(t[i1:i2:every], debug=True, debug_path=os.path.join(test_data_path, "naff"))
+    # fs = poincare_polar(w[i1:i2:every])
+    # f,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=5)
+    # print(f)
 
-    freqs,d,ixes,is_tube = gd.naff.orbit_to_freqs(t[i1:i2:every], w[i1:i2:every],
-                                                  silently_fail=False, nintvec=5)
-    print(freqs)
-    print()
+    # freqs,d,ixes,is_tube = gd.naff.orbit_to_freqs(t[i1:i2:every], w[i1:i2:every],
+    #                                               silently_fail=False, nintvec=5)
+    # print(freqs)
+    # print()
 
     # ----
 
     i1,i2 = (350000,550001)
     naff = NAFF(t[i1:i2:every], debug=True, debug_path=os.path.join(test_data_path, "naff"))
     fs = poincare_polar(w[i1:i2:every])
-    f,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=5)
+    f,d,ixes = naff.find_fundamental_frequencies(fs[2:3], nintvec=5)
     print(f)
 
     freqs,d,ixes,is_tube = gd.naff.orbit_to_freqs(t[i1:i2:every], w[i1:i2:every],
