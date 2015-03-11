@@ -13,7 +13,7 @@ import numpy as np
 from astropy.constants import G
 
 # Project
-from ..coordinates import cartesian_to_spherical, spherical_to_cartesian
+from ..coordinates import cartesian_to_physicsspherical, physicsspherical_to_cartesian
 from .core import angular_momentum
 
 __all__ = ['isochrone_xv_to_aa', 'isochrone_aa_to_xv',
@@ -70,14 +70,25 @@ def isochrone_xv_to_aa(x, v, potential):
         raise ValueError("Unbound particle. (E = {})".format(E))
 
     # convert position, velocity to spherical polar coordinates
-    sph = cartesian_to_spherical(x, v)
-    r,phi,theta,vr,vphi,vtheta = sph.T
+
+    # TODO: need to get length unit out and use that
+    import astropy.coordinates as coord
+    import astropy.units as u
+    x_rep = coord.CartesianRepresentation((x*u.kpc).T)
+    x_rep = x_rep.represent_as(coord.PhysicsSphericalRepresentation)
+    v_sph = cartesian_to_physicsspherical(x_rep, (v*u.kpc/u.Myr).T)
+    r,phi,theta = x_rep.r, x_rep.phi, x_rep.theta
+    vr,vphi,vtheta = v_sph.decompose(potential.units).value
+
+    r = r.decompose(potential.units).value
+    phi = phi.decompose(potential.units).value
+    theta = theta.decompose(potential.units).value
 
     # ----------------------------
     # Actions
     # ----------------------------
 
-    L_vec = angular_momentum(np.hstack((x,v)))
+    L_vec = angular_momentum(x,v)
     Lz = L_vec[:,2]
     L = np.linalg.norm(L_vec, axis=1)
 
