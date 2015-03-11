@@ -13,7 +13,7 @@ import os, sys
 import numpy as np
 import astropy.units as u
 
-__all__ = ["apparent_magnitude", "absolute_magnitude", "distance_modulus", \
+__all__ = ["apparent_magnitude", "absolute_magnitude", "distance_modulus",
            "distance"]
 
 def apparent_magnitude(M, d):
