@@ -25,26 +25,27 @@ VCIRC = 220.*u.km/u.s
 VLSR = [10., 5.25, 7.17]*u.km/u.s
 
 def vgsr_to_vhel(coordinate, vgsr, vcirc=VCIRC, vlsr=VLSR):
-    """ Convert a radial velocity in the Galactic standard of rest (GSR) to
-        a barycentric radial velocity.
+    """
+    Convert a radial velocity in the Galactic standard of rest (GSR) to
+    a barycentric radial velocity.
 
-        Parameters
-        ----------
-        coordinate : :class:`~astropy.coordinates.SkyCoord`
-            An Astropy SkyCoord object or anything object that can be passed
-            to the SkyCoord initializer.
-        vgsr : :class:`~astropy.units.Quantity`
-            GSR line-of-sight velocity.
-        vcirc : :class:`~astropy.units.Quantity`
-            Circular velocity of the Sun.
-        vlsr : :class:`~astropy.units.Quantity`
-            Velocity of the Sun relative to the local standard
-            of rest (LSR).
+    Parameters
+    ----------
+    coordinate : :class:`~astropy.coordinates.SkyCoord`
+        An Astropy SkyCoord object or anything object that can be passed
+        to the SkyCoord initializer.
+    vgsr : :class:`~astropy.units.Quantity`
+        GSR line-of-sight velocity.
+    vcirc : :class:`~astropy.units.Quantity`
+        Circular velocity of the Sun.
+    vlsr : :class:`~astropy.units.Quantity`
+        Velocity of the Sun relative to the local standard
+        of rest (LSR).
 
-        Returns
-        -------
-        vhel : :class:`~astropy.units.Quantity`
-            Radial velocity in a barycentric rest frame.
+    Returns
+    -------
+    vhel : :class:`~astropy.units.Quantity`
+        Radial velocity in a barycentric rest frame.
 
     """
 
