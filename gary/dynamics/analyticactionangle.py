@@ -11,6 +11,8 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 # Third-party
 import numpy as np
 from astropy.constants import G
+import astropy.coordinates as coord
+import astropy.units as u
 
 # Project
 from ..coordinates import cartesian_to_physicsspherical, physicsspherical_to_cartesian
@@ -35,6 +37,8 @@ def isochrone_xv_to_aa(x, v, potential):
         This function is included as a method of the :class:`~gary.potential.IsochronePotential`
         and it is recommended to call :meth:`~gary.potential.IsochronePotential.phase_space()`
         instead.
+
+    # TODO: should accept quantities
 
     Parameters
     ----------
@@ -66,23 +70,18 @@ def isochrone_xv_to_aa(x, v, potential):
     b = potential.parameters['b']
     E = potential.total_energy(x, v)
 
+    x = x * u.dimensionless_unscaled
+    v = v * u.dimensionless_unscaled
+
     if np.any(E > 0.):
         raise ValueError("Unbound particle. (E = {})".format(E))
 
     # convert position, velocity to spherical polar coordinates
-
-    # TODO: need to get length unit out and use that
-    import astropy.coordinates as coord
-    import astropy.units as u
-    x_rep = coord.CartesianRepresentation((x*u.kpc).T)
+    x_rep = coord.CartesianRepresentation(x.T)
     x_rep = x_rep.represent_as(coord.PhysicsSphericalRepresentation)
-    v_sph = cartesian_to_physicsspherical(x_rep, (v*u.kpc/u.Myr).T)
-    r,phi,theta = x_rep.r, x_rep.phi, x_rep.theta
-    vr,vphi,vtheta = v_sph.decompose(potential.units).value
-
-    r = r.decompose(potential.units).value
-    phi = phi.decompose(potential.units).value
-    theta = theta.decompose(potential.units).value
+    v_sph = cartesian_to_physicsspherical(x_rep, v.T)
+    r,phi,theta = x_rep.r.value, x_rep.phi.value, x_rep.theta.value
+    vr,vphi,vtheta = v_sph.value
 
     # ----------------------------
     # Actions
@@ -136,14 +135,15 @@ def isochrone_xv_to_aa(x, v, potential):
     thetaz = psi + A
 
     LR = Lz/L
-    sinu = LR/np.sqrt(1.-LR*LR)/np.tan(theta)
+    sinu = (LR/np.sqrt(1.-LR*LR)/np.tan(theta))
+    sinu = sinu.value
+    uu = np.arcsin(sinu)
 
-    u = np.arcsin(sinu)
-    u[sinu > 1.] = np.pi/2.
-    u[sinu < -1.] = -np.pi/2.
-    u[vtheta > 0.] = np.pi - u[vtheta > 0.]
+    uu[sinu > 1.] = np.pi/2.
+    uu[sinu < -1.] = -np.pi/2.
+    uu[vtheta > 0.] = np.pi - uu[vtheta > 0.]
 
-    thetap = phi - u + np.sign(Lz)*thetaz
+    thetap = phi - uu + np.sign(Lz)*thetaz
     angles = np.array([thetar, thetap, thetaz]).T
     angles %= (2*np.pi)
 
@@ -162,12 +162,14 @@ def isochrone_aa_to_xv(actions, angles, potential):
         and it is recommended to call :meth:`~gary.potential.IsochronePotential.action_angle()`
         instead.
 
+    # TODO: should accept quantities
+
     Parameters
     ----------
     actions : array_like
         Action variables. Must have shape (N,3) or (3,).
     angles : array_like
-        Angle variables. Must have shape (N,3) or (3,).
+        Angle variables. Must have shape (N,3) or (3,). Should be in radians.
     potential : :class:`gary.potential.IsochronePotential`
         An instance of the potential to use for computing the transformation
         to angle-action coordinates.
@@ -268,21 +270,20 @@ def isochrone_aa_to_xv(actions, angles, potential):
 
     # phi
     sinu = np.sin(psi)*cosi/np.sin(theta)
-    u = np.arcsin(sinu)
-    u[sinu > 1.] = np.pi/2.
-    u[sinu < -1.] = -np.pi/2.
-    u[vtheta > 0.] = np.pi - u[vtheta > 0.]
+
+    uu = np.arcsin(sinu)
+    uu[sinu > 1.] = np.pi/2.
+    uu[sinu < -1.] = -np.pi/2.
+    uu[vtheta > 0.] = np.pi - uu[vtheta > 0.]
 
     sinu = cosi/sini * np.cos(theta)/np.sin(theta)
-    phi = (u + Omega) % (2*np.pi)
+    phi = (uu + Omega) % (2*np.pi)
 
     # We now need to convert from spherical polar coord to cart. coord.
-    # TODO: BROKEN BROKEN DA BROEK
-    import astropy.units as u
-    import astropy.coordinates as coord
-    pos = coord.PhysicsSphericalRepresentation(r=r*u.kpc, phi=phi*u.rad, theta=theta*u.rad)
+    pos = coord.PhysicsSphericalRepresentation(r=r*u.dimensionless_unscaled,
+                                               phi=phi*u.rad, theta=theta*u.rad)
     x = pos.represent_as(coord.CartesianRepresentation).xyz.T.value
-    v = spherical_to_cartesian(pos,[vr,vphi,vtheta]*u.kpc/u.Myr).T.value
+    v = physicsspherical_to_cartesian(pos, [vr,vphi,vtheta]*u.dimensionless_unscaled).T.value
     return x,v
 
 def harmonic_oscillator_xv_to_aa(x, v, potential):
