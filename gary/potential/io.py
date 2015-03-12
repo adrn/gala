@@ -49,7 +49,7 @@ def from_dict(d):
                        "specifying the name of the Potential class.")
 
     try:
-        unitsys = [u.Unit(unit) for unit in d['units']]
+        unitsys = [u.Unit(unit) for ptype,unit in d['units'].items()]
     except KeyError:
         raise KeyError("Potential dictionary must contain a key 'units' with "
                        "a list of strings specifying the unit system.")
@@ -92,7 +92,7 @@ def to_dict(potential):
     else:
         d['class'] = potential.__class__.__name__
 
-    d['units'] = [str(unit) for unit in potential.units]
+    d['units'] = dict([(str(ptype),str(unit)) for ptype,unit in potential.units.to_dict().items()])
     if len(potential.parameters) > 0:
         params = dict(**potential.parameters)
         pythonify(params)
