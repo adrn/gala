@@ -32,7 +32,7 @@ class HarmonicOscillatorPotential(PotentialBase):
 
     def __init__(self, omega, units=None):
         self.parameters = dict(omega=np.array(omega))
-        self.units = units
+        super(HarmonicOscillatorPotential, self).__init__(units=units)
 
     def _value(self, x, omega):
         return np.sum(0.5*np.atleast_2d(omega**2)*x**2, axis=-1)
