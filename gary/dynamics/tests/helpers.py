@@ -7,9 +7,11 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os, sys
+import os
+import sys
 
 # Third-party
+import astropy.coordinates as coord
 import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,7 +19,7 @@ import numpy as np
 # Project
 from ..actionangle import classify_orbit
 from ...units import galactic
-from ...coordinates import spherical_to_cartesian
+from ...coordinates import physicsspherical_to_cartesian
 from ...potential import HarmonicOscillatorPotential, IsochronePotential
 
 # HACK:
@@ -124,9 +126,14 @@ def isotropic_w0(N=100):
     vt = np.array([vv.dot(MM) for (vv,MM) in zip(vt,M)])*u.km/u.s
     vphi,vtheta = vt.T
 
-    x,v = spherical_to_cartesian(d, phi, theta,
-                                 vr.decompose(galactic).value,
-                                 vphi.decompose(galactic).value,
-                                 vtheta.decompose(galactic).value)
+    rep = coord.PhysicsSphericalRepresentation(r=d*u.dimensionless_unscaled,
+                                               phi=phi*u.radian,
+                                               theta=theta*u.radian)
+    x = rep.represent_as(coord.CartesianRepresentation).xyz.T.value
+
+    vr = vr.decompose(galactic).value
+    vphi = vphi.decompose(galactic).value
+    vtheta = vtheta.decompose(galactic).value
+    v = physicsspherical_to_cartesian(rep, [vr,vphi,vtheta]*u.dimensionless_unscaled).T.value
 
     return np.hstack((x,v))
