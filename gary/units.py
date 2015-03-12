@@ -60,6 +60,9 @@ class UnitSystem(object):
     def __repr__(self):
         return "<{0}>".format(self.__str__())
 
+    def to_dict(self):
+        return self._registry.copy()
+
 # define galactic unit system
 galactic = UnitSystem(u.kpc, u.Myr, u.Msun, u.radian,
                       u.km/u.s, u.mas/u.yr)
