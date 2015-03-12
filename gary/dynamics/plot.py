@@ -118,6 +118,13 @@ def plot_orbits(x, t=None, ix=None, axes=None, triangle=False,
         # if orbit has more than 3 dimensions, only use the first 3
         dim = 3
 
+    # hack in some defaults to subplots kwargs so by default share x and y axes
+    if 'sharex' not in subplots_kwargs:
+        subplots_kwargs['sharex'] = True
+
+    if 'sharey' not in subplots_kwargs:
+        subplots_kwargs['sharey'] = True
+
     axes = _get_axes(dim=dim, axes=axes, triangle=triangle,
                      subplots_kwargs=subplots_kwargs)
 
