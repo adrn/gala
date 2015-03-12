@@ -17,6 +17,7 @@ import six
 # Project
 from ..integrate import *
 from ..util import inherit_docs, ImmutableDict
+from ..units import UnitSystem
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
@@ -61,9 +62,10 @@ class PotentialBase(object):
 
     """
 
-    def __init__(self, units=None, **parameters):
+    def __init__(self, units=None):
+        if units is not None and not isinstance(units, UnitSystem):
+            units = UnitSystem(*units)
         self.units = units
-        self.parameters = parameters
 
     @abc.abstractmethod
     def _value(self):
