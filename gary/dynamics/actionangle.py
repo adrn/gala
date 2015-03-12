@@ -568,13 +568,14 @@ def find_actions(t, w, N_max, units, force_harmonic_oscillator=False, toy_potent
             aaf = _single_orbit_find_actions(t, w[:,n], N_max, units,
                                              force_harmonic_oscillator=force_harmonic_oscillator,
                                              toy_potential=toy_potential)
-            actions[n] = aaf[0]
-            angles[n] = aaf[1]
-            freqs[n] = aaf[2]
+            actions[n] = aaf['actions']
+            angles[n] = aaf['angles']
+            freqs[n] = aaf['freqs']
 
     else:
         raise ValueError("Invalid shape for orbit array: {}".format(w.shape))
 
+    # TODO: this is broken -- what to return and how to pre-determine shape?
     return dict(actions=actions, angles=angles, freqs=freqs,
                 Sn=actions[3:], dSn=angles[6:], nvecs=nvecs)
 
@@ -608,87 +609,3 @@ def find_actions(t, w, N_max, units, force_harmonic_oscillator=False, toy_potent
 #     print("Residual: " + str(res[0]))
 
 #     return D0,np.linalg.eigh(D0) # symmetric matrix
-
-# -------------------------------------------------
-# DO NOT USE YET:
-#
-def cross_validate_actions(t, w, N_max, units, nbins=10, skip_failures=False,
-                           force_harmonic_oscillator=False, overlap=0):
-    """
-    Compute actions along windows of time of an orbit, `w`, to make sure
-    the solutions are stable.
-
-    The integration time must be long enough that it can be broken into `nbins`
-    overlapping samples.
-
-    Parameters
-    ----------
-    t : array_like
-        Array of times with shape (ntimes,).
-    w : array_like
-        Phase-space orbit at times, `t`. Should have shape (ntimes,6).
-    N_max : int
-        Maximum integer Fourier mode vector length, |n|.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units. For example,
-        (u.kpc, u.Myr, u.Msun).
-    nbins : int (optional)
-        Number of bins to split the input orbit into.
-    skip_failures : bool (optional)
-        Skip any individual failure of `find_actions()`, but keep trying
-        on other bins.
-    force_harmonic_oscillator : bool (optional)
-        Force using the harmonic oscillator potential as the toy potential.
-    overlap : int (optional)
-        Number of steps to overlap in each direction for each orbit sub-section.
-    """
-
-    raise NotImplementedError()
-
-    t_split = np.array_split(t,nbins)
-    w_split = np.array_split(w,nbins)
-    if overlap != 0:
-        new_t_split = []
-        new_w_split = []
-        for i in range(len(t_split)):
-            if i == 0:
-                new_t_split.append(np.append(t_split[i], t_split[i+1][:overlap]))
-                new_w_split.append(np.vstack((w_split[i], w_split[i+1][:overlap])))
-
-            elif i == (len(t_split) - 1):
-                new_t_split.append(np.append(t_split[i-1][-overlap:], t_split[i]))
-                new_w_split.append(np.vstack((w_split[i-1][-overlap:], w_split[i])))
-
-            else:
-                new_t_split.append(np.append(t_split[i-1][-overlap:], t_split[i]))
-                new_t_split[i] = np.append(new_t_split[i], t_split[i+1][:overlap])
-                new_w_split.append(np.vstack((w_split[i-1][-overlap:], w_split[i])))
-                new_w_split[i] = np.vstack((new_w_split[i],w_split[i+1][:overlap]))
-
-        t_split = new_t_split
-        w_split = new_w_split
-
-    all_actions, all_angles, all_freqs = [],[],[]
-    for tt,ww in zip(t_split,w_split):
-        if skip_failures:
-            try:
-                actions,angles,freqs = find_actions(tt, ww, N_max, units, return_Sn=False,
-                                        force_harmonic_oscillator=force_harmonic_oscillator)
-            except ValueError as e:
-                logger.debug("Skipping failure: {}".format(e))
-                continue
-        else:
-            actions,angles,freqs = find_actions(tt, ww, N_max, units, return_Sn=False,
-                                    force_harmonic_oscillator=force_harmonic_oscillator)
-
-        all_actions.append(actions)
-        all_angles.append(angles)
-        all_freqs.append(freqs)
-
-    if len(all_actions) == 0:
-        raise ValueError("No action calculations were successful!")
-
-    all_actions, all_angles, all_freqs = map(np.array, [all_actions, all_angles, all_freqs])
-
-    return all_actions, all_angles, all_freqs
