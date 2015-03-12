@@ -70,7 +70,8 @@ def test_fit_isochrone():
     potential = IsochronePotential(m=true_m, b=true_b, units=galactic)
     t,w = potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., nsteps=10000)
 
-    m,b = fit_isochrone(w, units=galactic)
+    fit_potential = fit_isochrone(w, units=galactic)
+    m,b = fit_potential.parameters['m'], fit_potential.parameters['b']
     assert np.allclose(m, true_m, rtol=1E-2)
     assert np.allclose(b, true_b, rtol=1E-2)
 
@@ -80,7 +81,8 @@ def test_fit_harmonic_oscillator():
     potential = HarmonicOscillatorPotential(omega=true_omegas, units=galactic)
     t,w = potential.integrate_orbit([15.,1,2,0,0,0], dt=2., nsteps=10000)
 
-    omegas = fit_harmonic_oscillator(w, units=galactic)
+    fit_potential = fit_harmonic_oscillator(w, units=galactic)
+    omegas = fit_potential.parameters['omega']
     assert np.allclose(omegas, true_omegas, rtol=1E-2)
 
 def test_fit_toy_potential():
