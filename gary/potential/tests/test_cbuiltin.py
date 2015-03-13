@@ -24,7 +24,6 @@ from ..io import load
 # HACK: bad solution is to do this:
 # python setup.py build_ext --inplace
 
-#top_path = "/tmp/gary"
 top_path = "plots/"
 plot_path = os.path.join(top_path, "tests/potential/cpotential")
 if not os.path.exists(plot_path):
