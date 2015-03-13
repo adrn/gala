@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from ..custom import *
 from .test_cbuiltin import PotentialTestBase
 
-top_path = "/tmp/gary"
+top_path = "plots/"
 plot_path = os.path.join(top_path, "tests/potential")
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
