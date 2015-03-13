@@ -16,8 +16,9 @@ import matplotlib.pyplot as plt
 
 from ..core import *
 from ..builtin import *
+from ...units import solarsystem
 
-top_path = "/tmp/gary"
+top_path = "plots/"
 plot_path = os.path.join(top_path, "tests/potential")
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
@@ -65,18 +66,17 @@ class TestHarmonicOscillator(object):
         fig = potential.plot_contours(grid=(grid,grid))
         fig.savefig(os.path.join(plot_path, "harmonic_osc_2d.png"))
 
-class TestPointMass(object):
+class TestKepler(object):
 
-    def test_pointmass_creation(self):
-        potential = PointMassPotential(m=1.,x0=[0.,0.,0.])
+    def test_kepler_creation(self):
+        potential = KeplerPotential(m=1.)
 
         # no mass provided
         with pytest.raises(TypeError):
-            potential = PointMassPotential(x0=[0.,0.,0.])
+            potential = KeplerPotential()
 
     def test_pointmass_eval(self):
-        potential = PointMassPotential(m=1., x0=[0.,0.,0.],
-                                       units=[u.M_sun, u.yr, u.au])
+        potential = KeplerPotential(m=1., units=solarsystem)
 
         # Test with a single position
         r = [1.,0.,0.]
@@ -87,8 +87,7 @@ class TestPointMass(object):
         assert np.allclose(acc_val, [-39.487906,0.,0.], atol=5)
 
     def test_pointmass_plot(self):
-        potential = PointMassPotential(m=1., x0=[0.,0.,0.],
-                                       units=[u.M_sun, u.yr, u.au])
+        potential = KeplerPotential(m=1., units=solarsystem)
         grid = np.linspace(-5.,5)
 
         fig = potential.plot_contours(grid=(grid,0.,0.))
@@ -98,7 +97,6 @@ class TestPointMass(object):
         fig.savefig(os.path.join(plot_path, "point_mass_2d.png"))
 
 class TestIsochrone(object):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
 
     def test_create_plot(self):
 
@@ -120,71 +118,33 @@ class TestIsochrone(object):
         fig.savefig(os.path.join(plot_path, "isochrone_1d.png"))
 
 class TestComposite(object):
-    units = (u.au, u.M_sun, u.yr)
+    units = solarsystem
 
     def test_composite_create(self):
         potential = CompositePotential()
 
         # Add a point mass with same unit system
-        potential["one"] = PointMassPotential(units=self.units,
-                                              m=1., x0=[0.,0.,0.])
+        potential["one"] = KeplerPotential(units=self.units, m=1.)
 
         with pytest.raises(TypeError):
             potential["two"] = "derp"
 
         assert "one" in potential.parameters
         assert "m" in potential.parameters["one"]
-        assert "x0" in potential.parameters["one"]
         with pytest.raises(TypeError):
             potential.parameters["m"] = "derp"
 
     def test_plot_composite(self):
         potential = CompositePotential()
 
-        # Add a point mass with same unit system
-        potential["one"] = PointMassPotential(units=self.units,
-                                              m=1., x0=[1.,1.,0.])
-        potential["two"] = PointMassPotential(units=self.units,
-                                              m=1., x0=[-1.,-1.,0.])
-
-        # Where forces cancel
-        np.testing.assert_array_almost_equal(
-                        potential.acceleration([0.,0.,0.]),
-                        [[0.,0.,0.]], decimal=5)
+        # Add a kepler potential and a harmonic oscillator
+        potential["one"] = KeplerPotential(m=1., units=self.units)
+        potential["two"] = HarmonicOscillatorPotential(omega=[0.1,0.2,0.31],
+                                                       units=self.units)
 
         grid = np.linspace(-5.,5)
         fig = potential.plot_contours(grid=(grid,0.,0.))
-        fig.savefig(os.path.join(plot_path, "two_equal_point_masses_1d.png"))
+        fig.savefig(os.path.join(plot_path, "composite_kepler_sho_1d.png"))
 
         fig = potential.plot_contours(grid=(grid,grid,0.))
-        fig.savefig(os.path.join(plot_path, "two_equal_point_masses_2d.png"))
-
-    def test_plot_composite_mass_ratio(self):
-        potential = CompositePotential()
-
-        # Add a point mass with same unit system
-        potential["one"] = PointMassPotential(units=self.units,
-                                              m=1., x0=[1.,1.,0.])
-        potential["two"] = PointMassPotential(units=self.units,
-                                              m=5., x0=[-1.,-1.,0.])
-
-        grid = np.linspace(-5.,5)
-        fig = potential.plot_contours(grid=(grid,0.,0.))
-        fig.savefig(os.path.join(plot_path, "two_different_point_masses_1d.png"))
-
-        fig = potential.plot_contours(grid=(grid,grid,0.))
-        fig.savefig(os.path.join(plot_path, "two_different_point_masses_2d.png"))
-
-    def test_many_point_masses(self, N=20):
-        potential = CompositePotential()
-
-        for ii in range(N):
-            r0 = np.random.uniform(-1., 1., size=3)
-            r0[2] = 0. # x-y plane
-            potential[str(ii)] = PointMassPotential(units=self.units,
-                                                    m=np.exp(np.random.uniform(np.log(0.1),0.)),
-                                                    x0=r0)
-
-        grid = np.linspace(-1.,1,50)
-        fig = potential.plot_contours(grid=(grid,grid,0.))
-        fig.savefig(os.path.join(plot_path, "many_point_mass.png"))
+        fig.savefig(os.path.join(plot_path, "composite_kepler_sho_2d.png"))

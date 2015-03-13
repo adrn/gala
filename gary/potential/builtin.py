@@ -10,8 +10,8 @@ from astropy.constants import G
 
 from .core import PotentialBase
 
-__all__ = ["PointMassPotential", "IsochronePotential", "HarmonicOscillatorPotential",
-           "KuzminPotential"]
+__all__ = ["KeplerPotential", "IsochronePotential",
+           "HarmonicOscillatorPotential", "KuzminPotential"]
 
 class HarmonicOscillatorPotential(PotentialBase):
     r"""
@@ -82,44 +82,38 @@ class HarmonicOscillatorPotential(PotentialBase):
         from ..dynamics.analyticactionangle import harmonic_oscillator_aa_to_xv
         return harmonic_oscillator_aa_to_xv(actions, angles, self)
 
-
-class PointMassPotential(PotentialBase):
+class KeplerPotential(PotentialBase):
     r"""
-    Represents a point-mass potential at the given origin.
+    Represents a Kepler (point mass) potential at the given origin.
 
     .. math::
 
-        \Phi = -\frac{Gm}{x-x0}
+        \Phi = -\frac{Gm}{|x|}
 
     Parameters
     ----------
     m : numeric
         Mass.
-    x0 : array_like, numeric
-        Position of the point mass relative to origin of coordinates
     units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
     """
 
-    def __init__(self, m, x0, units=None):
-        self.parameters = dict(m=m, x0=x0)
+    def __init__(self, m, units=None):
+        self.parameters = dict(m=m)
         self.units = units
         if units is not None:
             self.G = G.decompose(units).value
         else:
             self.G = 1.
 
-    def _value(self, x, x0, m):
-        xx = x-x0
-        R = np.sqrt(np.sum(xx**2, axis=-1))
+    def _value(self, x, m):
+        R = np.sqrt(np.sum(x**2, axis=-1))
         return -self.G * m / R
 
-    def _gradient(self, x, x0, m):
-        xx = x-x0
-        a = (np.sum(xx**2, axis=-1)**-1.5)[...,None]
-        return self.G * m * xx * a
-
+    def _gradient(self, x, m):
+        a = (np.sum(x**2, axis=-1)**-1.5)[...,None]
+        return self.G * m * x * a
 
 class IsochronePotential(PotentialBase):
     r"""
