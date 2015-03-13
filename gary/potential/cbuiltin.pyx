@@ -40,6 +40,9 @@ cdef extern from "math.h":
     double pow(double x, double n) nogil
 
 cdef extern from "_cbuiltin.h":
+    double kepler_value(double *pars, double *q) nogil
+    void kepler_gradient(double *pars, double *q, double *grad) nogil
+
     double hernquist_value(double *pars, double *q) nogil
     void hernquist_gradient(double *pars, double *q, double *grad) nogil
 
@@ -64,9 +67,45 @@ cdef extern from "_cbuiltin.h":
     double logarithmic_value(double *pars, double *q) nogil
     void logarithmic_gradient(double *pars, double *q, double *grad) nogil
 
-__all__ = ['HernquistPotential', 'PlummerPotential', 'MiyamotoNagaiPotential',
+__all__ = ['KeplerPotential', 'HernquistPotential', 'PlummerPotential', 'MiyamotoNagaiPotential',
            'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential',
            'JaffePotential', 'StonePotential']
+
+# ============================================================================
+#    Kepler potential
+#
+cdef class _KeplerPotential(_CPotential):
+
+    def __cinit__(self, double G, double m):
+        self._parvec = np.array([G,m])
+        self._parameters = &(self._parvec)[0]
+        self.c_value = &kepler_value
+        self.c_gradient = &kepler_gradient
+
+class KeplerPotential(CPotentialBase):
+    r"""
+    KeplerPotential(m, units)
+
+    The Kepler potential for a point mass.
+
+    .. math::
+
+        \Phi(r) = -\frac{Gm}{r}
+
+    Parameters
+    ----------
+    m : numeric
+        Mass.
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, m, units):
+        self.units = units
+        self.G = G.decompose(units).value
+        self.parameters = dict(m=m)
+        self.c_instance = _KeplerPotential(G=self.G, **self.parameters)
 
 # ============================================================================
 #    Hernquist Spheroid potential from Hernquist 1990

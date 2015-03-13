@@ -1,6 +1,33 @@
 #include <math.h>
 
 /* ---------------------------------------------------------------------------
+    Kepler potential
+*/
+double kepler_value(double *pars, double *q) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+    */
+    double R;
+    R = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    return -pars[0] * pars[1] / R;
+}
+
+void kepler_gradient(double *pars, double *r, double *grad) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+    */
+    double R, fac;
+    R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
+    fac = pars[0] * pars[1] / (R*R*R);
+
+    grad[0] = fac*r[0];
+    grad[1] = fac*r[1];
+    grad[2] = fac*r[2];
+}
+
+/* ---------------------------------------------------------------------------
     Hernquist sphere
 */
 double hernquist_value(double *pars, double *q) {
