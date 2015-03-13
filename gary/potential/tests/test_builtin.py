@@ -66,27 +66,6 @@ class TestHarmonicOscillator(object):
         fig = potential.plot_contours(grid=(grid,grid))
         fig.savefig(os.path.join(plot_path, "harmonic_osc_2d.png"))
 
-class TestIsochrone(object):
-
-    def test_create_plot(self):
-
-        potential = IsochronePotential(units=galactic,
-                                       m=1.E11, b=5.)
-
-        r = np.array([1.,0.,0.]).reshape(1,3)
-        pot_val = potential.value(r)
-        acc_val = potential.acceleration(r)
-
-        axes = None
-        grid = np.linspace(-20.,20, 50)
-        for slc in np.linspace(-20.,0.,10):
-            if axes is None:
-                fig = potential.plot_contours(grid=(grid,slc,0.), marker=None)
-                axes = fig.axes[0]
-            else:
-                potential.plot_contours(grid=(grid,slc,0.), ax=axes, marker=None)
-        fig.savefig(os.path.join(plot_path, "isochrone_1d.png"))
-
 class TestComposite(object):
     units = solarsystem
 
