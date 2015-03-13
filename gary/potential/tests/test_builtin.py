@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 from ..core import *
 from ..builtin import *
-from ...units import solarsystem
+from ...units import solarsystem, galactic
 
 top_path = "plots/"
 plot_path = os.path.join(top_path, "tests/potential")
@@ -100,7 +100,7 @@ class TestIsochrone(object):
 
     def test_create_plot(self):
 
-        potential = IsochronePotential(units=self.units,
+        potential = IsochronePotential(units=galactic,
                                        m=1.E11, b=5.)
 
         r = np.array([1.,0.,0.]).reshape(1,3)
