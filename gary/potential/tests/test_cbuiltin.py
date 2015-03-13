@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 from ..core import CompositePotential
 from ..cbuiltin import *
 from ..io import load
+from ...units  import galactic
 
 # HACK: bad solution is to do this:
 # python setup.py build_ext --inplace
@@ -143,7 +144,7 @@ class PotentialTestBase(object):
 #
 
 class TestHernquist(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = galactic
 
     def setup(self):
         print("\n\n")
@@ -156,7 +157,7 @@ class TestHernquist(PotentialTestBase):
         self.w0 = [1.,0.,0.,0.,0.1,0.1]
 
 class TestPlummer(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = galactic
 
     def setup(self):
         print("\n\n")
@@ -169,7 +170,7 @@ class TestPlummer(PotentialTestBase):
         self.w0 = [1.,0.,0.,0.,0.1,0.1]
 
 class TestJaffe(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = galactic
 
     def setup(self):
         print("\n\n")
@@ -182,7 +183,7 @@ class TestJaffe(PotentialTestBase):
         self.w0 = [1.,0.,0.,0.,0.1,0.1]
 
 class TestMiyamotoNagai(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = galactic
 
     def setup(self):
         print("\n\n")
@@ -195,7 +196,7 @@ class TestMiyamotoNagai(PotentialTestBase):
         self.w0 = [8.,0.,0.,0.,0.22,0.1]
 
 class TestStone(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = galactic
 
     def setup(self):
         print("\n\n")
@@ -209,7 +210,7 @@ class TestStone(PotentialTestBase):
         self.w0 = [8.,0.,0.,0.,0.22,0.1]
 
 class TestSphericalNFWPotential(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = galactic
 
     def setup(self):
         print("\n\n")
@@ -259,7 +260,7 @@ class TestSphericalNFWPotential(PotentialTestBase):
         assert np.allclose(true_mprof, esti_mprof, rtol=1E-6)
 
 class TestLeeSutoTriaxialNFWPotential(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = galactic
 
     def setup(self):
         print("\n\n")
@@ -273,7 +274,7 @@ class TestLeeSutoTriaxialNFWPotential(PotentialTestBase):
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
 class TestMisalignedLeeSutoNFWPotential(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = galactic
 
     def setup(self):
         print("\n\n")
@@ -290,7 +291,7 @@ class TestMisalignedLeeSutoNFWPotential(PotentialTestBase):
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
 class TestLogarithmicPotential(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = galactic
 
     def setup(self):
         print("\n\n")
@@ -304,7 +305,7 @@ class TestLogarithmicPotential(PotentialTestBase):
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
 class TestMisalignedLogarithmicPotential(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = galactic
 
     def setup(self):
         print("\n\n")
@@ -319,7 +320,7 @@ class TestMisalignedLogarithmicPotential(PotentialTestBase):
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
 class TestCompositePotential(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+    units = galactic
 
     def setup(self):
         print("\n\n")
