@@ -10,8 +10,7 @@ from astropy.constants import G
 
 from .core import PotentialBase
 
-__all__ = ["KeplerPotential", "IsochronePotential",
-           "HarmonicOscillatorPotential", "KuzminPotential"]
+__all__ = ["IsochronePotential", "HarmonicOscillatorPotential", "KuzminPotential"]
 
 class HarmonicOscillatorPotential(PotentialBase):
     r"""
@@ -81,39 +80,6 @@ class HarmonicOscillatorPotential(PotentialBase):
         """
         from ..dynamics.analyticactionangle import harmonic_oscillator_aa_to_xv
         return harmonic_oscillator_aa_to_xv(actions, angles, self)
-
-class KeplerPotential(PotentialBase):
-    r"""
-    Represents a Kepler (point mass) potential at the given origin.
-
-    .. math::
-
-        \Phi = -\frac{Gm}{|x|}
-
-    Parameters
-    ----------
-    m : numeric
-        Mass.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units.
-    """
-
-    def __init__(self, m, units=None):
-        self.parameters = dict(m=m)
-        self.units = units
-        if units is not None:
-            self.G = G.decompose(units).value
-        else:
-            self.G = 1.
-
-    def _value(self, x, m):
-        R = np.sqrt(np.sum(x**2, axis=-1))
-        return -self.G * m / R
-
-    def _gradient(self, x, m):
-        a = (np.sum(x**2, axis=-1)**-1.5)[...,None]
-        return self.G * m * x * a
 
 class IsochronePotential(PotentialBase):
     r"""

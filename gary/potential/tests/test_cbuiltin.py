@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 from ..core import CompositePotential
 from ..cbuiltin import *
 from ..io import load
-from ...units  import galactic
+from ...units import galactic, solarsystem
 
 # HACK: bad solution is to do this:
 # python setup.py build_ext --inplace
@@ -142,6 +142,17 @@ class PotentialTestBase(object):
 # ----------------------------------------------------------------------------
 #  Potentials to test
 #
+
+class TestKepler(PotentialTestBase):
+    units = solarsystem
+
+    def setup(self):
+        print("\n\n")
+        print("="*50)
+        print(self.__class__.__name__)
+
+        self.potential = KeplerPotential(units=self.units, m=1.)
+        self.w0 = [1.,0.,0.,0.,2*np.pi,0.]
 
 class TestHernquist(PotentialTestBase):
     units = galactic

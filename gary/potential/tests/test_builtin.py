@@ -66,36 +66,6 @@ class TestHarmonicOscillator(object):
         fig = potential.plot_contours(grid=(grid,grid))
         fig.savefig(os.path.join(plot_path, "harmonic_osc_2d.png"))
 
-class TestKepler(object):
-
-    def test_kepler_creation(self):
-        potential = KeplerPotential(m=1.)
-
-        # no mass provided
-        with pytest.raises(TypeError):
-            potential = KeplerPotential()
-
-    def test_pointmass_eval(self):
-        potential = KeplerPotential(m=1., units=solarsystem)
-
-        # Test with a single position
-        r = [1.,0.,0.]
-        pot_val = potential.value(r)
-        assert np.allclose(pot_val, -39.487906, atol=5)
-
-        acc_val = potential.acceleration(r)
-        assert np.allclose(acc_val, [-39.487906,0.,0.], atol=5)
-
-    def test_pointmass_plot(self):
-        potential = KeplerPotential(m=1., units=solarsystem)
-        grid = np.linspace(-5.,5)
-
-        fig = potential.plot_contours(grid=(grid,0.,0.))
-        fig.savefig(os.path.join(plot_path, "point_mass_1d.png"))
-
-        fig = potential.plot_contours(grid=(grid,grid,0.))
-        fig.savefig(os.path.join(plot_path, "point_mass_2d.png"))
-
 class TestIsochrone(object):
 
     def test_create_plot(self):

@@ -1,3 +1,6 @@
+extern double kepler_value(double *pars, double *q);
+extern void kepler_gradient(double *pars, double *q, double *grad);
+
 extern double hernquist_value(double *pars, double *q);
 extern void hernquist_gradient(double *pars, double *q, double *grad);
 
