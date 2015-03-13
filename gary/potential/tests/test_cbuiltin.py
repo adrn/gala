@@ -20,11 +20,11 @@ import matplotlib.pyplot as plt
 from ..core import CompositePotential
 from ..cbuiltin import *
 from ..io import load
+from ...units import galactic, solarsystem
 
 # HACK: bad solution is to do this:
 # python setup.py build_ext --inplace
 
-#top_path = "/tmp/gary"
 top_path = "plots/"
 plot_path = os.path.join(top_path, "tests/potential/cpotential")
 if not os.path.exists(plot_path):
@@ -44,10 +44,14 @@ nparticles = 1000
 
 class PotentialTestBase(object):
     name = None
+    units = galactic
 
     def setup(self):
+        print("\n\n")
         print("="*50)
-        print(self.__class__.__name__)
+        if self.name is None:
+            self.name = self.__class__.__name__
+        print(self.name)
 
     def test_method_call(self):
         # single
@@ -117,8 +121,18 @@ class PotentialTestBase(object):
         fig = self.potential.plot_contours(grid=(grid,grid,0.),
                                            subplots_kw=dict(figsize=(8,8)))
         print("Cython plot_contours time", time.time() - t1)
-        fig.savefig(os.path.join(plot_path, "{}_2d_cy.png"\
-                        .format(self.name)))
+        fig.savefig(os.path.join(plot_path, "{}_2d.png"
+                    .format(self.name)))
+
+        fig = self.potential.plot_contours(grid=(grid,0,0.),
+                                           subplots_kw=dict(figsize=(8,8)))
+        fig.savefig(os.path.join(plot_path, "{}_1d_x.png"
+                    .format(self.name)))
+
+        fig = self.potential.plot_contours(grid=(0,0,grid),
+                                           subplots_kw=dict(figsize=(8,8)))
+        fig.savefig(os.path.join(plot_path, "{}_1d_z.png"
+                    .format(self.name)))
 
     def test_pickle(self):
         with open("/tmp/derp.pickle", "w") as f:
@@ -143,85 +157,66 @@ class PotentialTestBase(object):
 #  Potentials to test
 #
 
-class TestHernquist(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+class TestKepler(PotentialTestBase):
+    units = solarsystem
 
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
+        self.potential = KeplerPotential(units=self.units, m=1.)
+        self.w0 = [1.,0.,0.,0.,2*np.pi,0.]
+        super(TestKepler,self).setup()
 
+class TestIsochrone(PotentialTestBase):
+    units = solarsystem
+
+    def setup(self):
+        self.potential = IsochronePotential(units=self.units, m=1., b=0.1)
+        self.w0 = [1.,0.,0.,0.,2*np.pi,0.]
+        super(TestIsochrone,self).setup()
+
+class TestHernquist(PotentialTestBase):
+    def setup(self):
         self.potential = HernquistPotential(units=self.units,
                                             m=1.E11, c=0.26)
-
         self.w0 = [1.,0.,0.,0.,0.1,0.1]
+        super(TestHernquist,self).setup()
 
 class TestPlummer(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.potential = PlummerPotential(units=self.units,
                                           m=1.E11, b=0.26)
-
         self.w0 = [1.,0.,0.,0.,0.1,0.1]
+        super(TestPlummer,self).setup()
 
 class TestJaffe(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.potential = JaffePotential(units=self.units,
                                         m=1.E11, c=0.26)
-
         self.w0 = [1.,0.,0.,0.,0.1,0.1]
+        super(TestJaffe,self).setup()
 
 class TestMiyamotoNagai(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.potential = MiyamotoNagaiPotential(units=self.units,
                                                 m=1.E11, a=6.5, b=0.26)
-
         self.w0 = [8.,0.,0.,0.,0.22,0.1]
+        super(TestMiyamotoNagai,self).setup()
 
-class TestStone(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
+# class TestStone(PotentialTestBase):
+#     units = galactic
 
-    def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
-        self.name = "Stone"
-        self.potential = StonePotential(units=self.units,
-                                        v_c=0.2, r_c=1, r_t=2.)
-
-        self.w0 = [8.,0.,0.,0.,0.22,0.1]
+#     def setup(self):
+#         self.potential = StonePotential(units=self.units,
+#                                         v_c=0.2, r_c=1, r_t=2.)
+#         self.w0 = [8.,0.,0.,0.,0.22,0.1]
+#         super(TestStone,self).setup()
 
 class TestSphericalNFWPotential(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.potential = SphericalNFWPotential(units=self.units,
-                                               v_c=0.35, # np.sqrt(np.log(2)-0.5)
+                                               v_c=0.35,  # np.sqrt(np.log(2)-0.5)
                                                r_s=12.)
-
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+        super(TestSphericalNFWPotential,self).setup()
 
     def test_against_triaxial(self):
         other = LeeSutoTriaxialNFWPotential(units=self.units,
@@ -260,73 +255,43 @@ class TestSphericalNFWPotential(PotentialTestBase):
         assert np.allclose(true_mprof, esti_mprof, rtol=1E-6)
 
 class TestLeeSutoTriaxialNFWPotential(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.potential = LeeSutoTriaxialNFWPotential(units=self.units,
                                                      v_c=0.35, r_s=12.,
                                                      a=1.3, b=1., c=0.8)
-
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+        super(TestLeeSutoTriaxialNFWPotential,self).setup()
 
 class TestMisalignedLeeSutoNFWPotential(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
-        self.name = "MisalignedLeeSutoNFWPotential"
         self.potential = LeeSutoTriaxialNFWPotential(units=self.units,
                                                      v_c=0.35, r_s=12.,
                                                      a=1.4, b=1., c=0.6,
                                                      phi=np.radians(30.),
                                                      theta=np.radians(30))
-
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+        super(TestMisalignedLeeSutoNFWPotential,self).setup()
+        self.name = "MisalignedLeeSutoNFWPotential"
 
 class TestLogarithmicPotential(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.potential = LogarithmicPotential(units=self.units,
                                               v_c=0.17, r_h=10.,
                                               q1=1.2, q2=1., q3=0.8)
-
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+        super(TestLogarithmicPotential,self).setup()
 
 class TestMisalignedLogarithmicPotential(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.name = "MisalignedLogarithmicPotential"
         self.potential = LogarithmicPotential(units=self.units,
                                               v_c=0.17, r_h=10.,
                                               q1=1.2, q2=1., q3=0.8, phi=0.35)
-
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+        super(TestMisalignedLogarithmicPotential,self).setup()
 
 class TestCompositePotential(PotentialTestBase):
-    units = (u.kpc, u.M_sun, u.Myr, u.radian)
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.name = "CompositePotential"
         p1 = LogarithmicPotential(units=self.units,
                                   v_c=0.17, r_h=10.,
@@ -336,3 +301,5 @@ class TestCompositePotential(PotentialTestBase):
         self.potential = CompositePotential(disk=p2, halo=p1)
 
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+
+        super(TestCompositePotential,self).setup()

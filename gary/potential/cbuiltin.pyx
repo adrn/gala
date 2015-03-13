@@ -40,6 +40,12 @@ cdef extern from "math.h":
     double pow(double x, double n) nogil
 
 cdef extern from "_cbuiltin.h":
+    double kepler_value(double *pars, double *q) nogil
+    void kepler_gradient(double *pars, double *q, double *grad) nogil
+
+    double isochrone_value(double *pars, double *q) nogil
+    void isochrone_gradient(double *pars, double *q, double *grad) nogil
+
     double hernquist_value(double *pars, double *q) nogil
     void hernquist_gradient(double *pars, double *q, double *grad) nogil
 
@@ -64,9 +70,124 @@ cdef extern from "_cbuiltin.h":
     double logarithmic_value(double *pars, double *q) nogil
     void logarithmic_gradient(double *pars, double *q, double *grad) nogil
 
-__all__ = ['HernquistPotential', 'PlummerPotential', 'MiyamotoNagaiPotential',
-           'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential',
-           'JaffePotential', 'StonePotential']
+__all__ = ['KeplerPotential', 'HernquistPotential',
+           'PlummerPotential', 'MiyamotoNagaiPotential',
+           'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential',
+           'LogarithmicPotential', 'JaffePotential',
+           'StonePotential', 'IsochronePotential']
+
+# ============================================================================
+#    Kepler potential
+#
+cdef class _KeplerPotential(_CPotential):
+
+    def __cinit__(self, double G, double m):
+        self._parvec = np.array([G,m])
+        self._parameters = &(self._parvec)[0]
+        self.c_value = &kepler_value
+        self.c_gradient = &kepler_gradient
+
+class KeplerPotential(CPotentialBase):
+    r"""
+    KeplerPotential(m, units)
+
+    The Kepler potential for a point mass.
+
+    .. math::
+
+        \Phi(r) = -\frac{Gm}{r}
+
+    Parameters
+    ----------
+    m : numeric
+        Mass.
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, m, units):
+        self.units = units
+        self.G = G.decompose(units).value
+        self.parameters = dict(m=m)
+        self.c_instance = _KeplerPotential(G=self.G, **self.parameters)
+
+# ============================================================================
+#    Isochrone potential
+#
+cdef class _IsochronePotential(_CPotential):
+
+    def __cinit__(self, double G, double m, double b):
+        self._parvec = np.array([G,m,b])
+        self._parameters = &(self._parvec)[0]
+        self.c_value = &isochrone_value
+        self.c_gradient = &isochrone_gradient
+
+class IsochronePotential(CPotentialBase):
+    r"""
+    IsochronePotential(m, units)
+
+    The Isochrone potential.
+
+    .. math::
+
+        \Phi = -\frac{GM}{\sqrt{r^2+b^2} + b}
+
+    Parameters
+    ----------
+    m : numeric
+        Mass.
+    b : numeric
+        Core concentration.
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, m, b, units):
+        self.units = units
+        self.G = G.decompose(units).value
+        self.parameters = dict(m=m, b=b)
+        self.c_instance = _IsochronePotential(G=self.G, **self.parameters)
+
+    def action_angle(self, x, v):
+        """
+        Transform the input cartesian position and velocity to action-angle
+        coordinates the Isochrone potential. See Section 3.5.2 in
+        Binney & Tremaine (2008), and be aware of the errata entry for
+        Eq. 3.225.
+
+        This transformation is analytic and can be used as a "toy potential"
+        in the Sanders & Binney 2014 formalism for computing action-angle
+        coordinates in _any_ potential.
+
+        Adapted from Jason Sanders' code
+        `here <https://github.com/jlsanders/genfunc>`_.
+
+        Parameters
+        ----------
+        x : array_like
+            Positions.
+        v : array_like
+            Velocities.
+        """
+        from ..dynamics.analyticactionangle import isochrone_xv_to_aa
+        return isochrone_xv_to_aa(x, v, self)
+
+    def phase_space(self, actions, angles):
+        """
+        Transform the input actions and angles to ordinary phase space (position
+        and velocity) in cartesian coordinates. See Section 3.5.2 in
+        Binney & Tremaine (2008), and be aware of the errata entry for
+        Eq. 3.225.
+
+        Parameters
+        ----------
+        actions : array_like
+        angles : array_like
+        """
+        from ..dynamics.analyticactionangle import isochrone_aa_to_xv
+        return isochrone_aa_to_xv(actions, angles, self)
 
 # ============================================================================
 #    Hernquist Spheroid potential from Hernquist 1990
