@@ -15,7 +15,7 @@ import numpy as np
 # Project
 from ..io import load, save
 from ..core import CompositePotential
-from ..builtin import IsochronePotential, PointMassPotential
+from ..builtin import IsochronePotential, KeplerPotential
 from ..custom import PW14Potential
 from ...units import galactic
 
@@ -60,7 +60,7 @@ def test_write():
     save(potential, tmp_filename)
 
     # composite potential
-    potential = CompositePotential(halo=PointMassPotential(m=1E11, x0=0., units=galactic),
+    potential = CompositePotential(halo=KeplerPotential(m=1E11, units=galactic),
                                    bulge=IsochronePotential(m=1E11, b=0.76, units=galactic))
     save(potential, tmp_filename)
 
