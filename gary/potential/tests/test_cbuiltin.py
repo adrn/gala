@@ -44,10 +44,14 @@ nparticles = 1000
 
 class PotentialTestBase(object):
     name = None
+    units = galactic
 
     def setup(self):
+        print("\n\n")
         print("="*50)
-        print(self.__class__.__name__)
+        if self.name is None:
+            self.name = self.__class__.__name__
+        print(self.name)
 
     def test_method_call(self):
         # single
@@ -147,92 +151,54 @@ class TestKepler(PotentialTestBase):
     units = solarsystem
 
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.potential = KeplerPotential(units=self.units, m=1.)
         self.w0 = [1.,0.,0.,0.,2*np.pi,0.]
+        super(TestKepler,self).setup()
 
 class TestHernquist(PotentialTestBase):
-    units = galactic
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.potential = HernquistPotential(units=self.units,
                                             m=1.E11, c=0.26)
-
         self.w0 = [1.,0.,0.,0.,0.1,0.1]
+        super(TestHernquist,self).setup()
 
 class TestPlummer(PotentialTestBase):
-    units = galactic
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.potential = PlummerPotential(units=self.units,
                                           m=1.E11, b=0.26)
-
         self.w0 = [1.,0.,0.,0.,0.1,0.1]
+        super(TestPlummer,self).setup()
 
 class TestJaffe(PotentialTestBase):
-    units = galactic
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.potential = JaffePotential(units=self.units,
                                         m=1.E11, c=0.26)
-
         self.w0 = [1.,0.,0.,0.,0.1,0.1]
+        super(TestJaffe,self).setup()
 
 class TestMiyamotoNagai(PotentialTestBase):
-    units = galactic
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.potential = MiyamotoNagaiPotential(units=self.units,
                                                 m=1.E11, a=6.5, b=0.26)
-
         self.w0 = [8.,0.,0.,0.,0.22,0.1]
+        super(TestMiyamotoNagai,self).setup()
 
-class TestStone(PotentialTestBase):
-    units = galactic
+# class TestStone(PotentialTestBase):
+#     units = galactic
 
-    def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
-        self.name = "Stone"
-        self.potential = StonePotential(units=self.units,
-                                        v_c=0.2, r_c=1, r_t=2.)
-
-        self.w0 = [8.,0.,0.,0.,0.22,0.1]
+#     def setup(self):
+#         self.potential = StonePotential(units=self.units,
+#                                         v_c=0.2, r_c=1, r_t=2.)
+#         self.w0 = [8.,0.,0.,0.,0.22,0.1]
+#         super(TestStone,self).setup()
 
 class TestSphericalNFWPotential(PotentialTestBase):
-    units = galactic
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.potential = SphericalNFWPotential(units=self.units,
-                                               v_c=0.35, # np.sqrt(np.log(2)-0.5)
+                                               v_c=0.35,  # np.sqrt(np.log(2)-0.5)
                                                r_s=12.)
-
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+        super(TestSphericalNFWPotential,self).setup()
 
     def test_against_triaxial(self):
         other = LeeSutoTriaxialNFWPotential(units=self.units,
@@ -271,73 +237,43 @@ class TestSphericalNFWPotential(PotentialTestBase):
         assert np.allclose(true_mprof, esti_mprof, rtol=1E-6)
 
 class TestLeeSutoTriaxialNFWPotential(PotentialTestBase):
-    units = galactic
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.potential = LeeSutoTriaxialNFWPotential(units=self.units,
                                                      v_c=0.35, r_s=12.,
                                                      a=1.3, b=1., c=0.8)
-
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+        super(TestLeeSutoTriaxialNFWPotential,self).setup()
 
 class TestMisalignedLeeSutoNFWPotential(PotentialTestBase):
-    units = galactic
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
-        self.name = "MisalignedLeeSutoNFWPotential"
         self.potential = LeeSutoTriaxialNFWPotential(units=self.units,
                                                      v_c=0.35, r_s=12.,
                                                      a=1.4, b=1., c=0.6,
                                                      phi=np.radians(30.),
                                                      theta=np.radians(30))
-
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+        super(TestMisalignedLeeSutoNFWPotential,self).setup()
+        self.name = "MisalignedLeeSutoNFWPotential"
 
 class TestLogarithmicPotential(PotentialTestBase):
-    units = galactic
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.potential = LogarithmicPotential(units=self.units,
                                               v_c=0.17, r_h=10.,
                                               q1=1.2, q2=1., q3=0.8)
-
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+        super(TestLogarithmicPotential,self).setup()
 
 class TestMisalignedLogarithmicPotential(PotentialTestBase):
-    units = galactic
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.name = "MisalignedLogarithmicPotential"
         self.potential = LogarithmicPotential(units=self.units,
                                               v_c=0.17, r_h=10.,
                                               q1=1.2, q2=1., q3=0.8, phi=0.35)
-
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+        super(TestMisalignedLogarithmicPotential,self).setup()
 
 class TestCompositePotential(PotentialTestBase):
-    units = galactic
-
     def setup(self):
-        print("\n\n")
-        print("="*50)
-        print(self.__class__.__name__)
-
         self.name = "CompositePotential"
         p1 = LogarithmicPotential(units=self.units,
                                   v_c=0.17, r_h=10.,
@@ -347,3 +283,5 @@ class TestCompositePotential(PotentialTestBase):
         self.potential = CompositePotential(disk=p2, halo=p1)
 
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+
+        super(TestCompositePotential,self).setup()
