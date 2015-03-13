@@ -66,7 +66,8 @@ def from_dict(d):
     from .. import potential
     if isinstance(class_name, dict):  # CompositePotential
         p = potential.CompositePotential()
-        for k,potential_name in class_name.items():
+        composite = class_name.values()[0]
+        for k,potential_name in composite.items():
             p[k] = getattr(potential, potential_name)(units=unitsys, **params[k])
         return p
 

@@ -18,7 +18,7 @@ from matplotlib import cm
 
 from ..core import PotentialBase, CompositePotential
 
-top_path = "/tmp/gary"
+top_path = "plots/"
 plot_path = os.path.join(top_path, "tests/potential")
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
