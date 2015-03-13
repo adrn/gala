@@ -165,6 +165,14 @@ class TestKepler(PotentialTestBase):
         self.w0 = [1.,0.,0.,0.,2*np.pi,0.]
         super(TestKepler,self).setup()
 
+class TestIsochrone(PotentialTestBase):
+    units = solarsystem
+
+    def setup(self):
+        self.potential = IsochronePotential(units=self.units, m=1., b=0.1)
+        self.w0 = [1.,0.,0.,0.,2*np.pi,0.]
+        super(TestIsochrone,self).setup()
+
 class TestHernquist(PotentialTestBase):
     def setup(self):
         self.potential = HernquistPotential(units=self.units,
