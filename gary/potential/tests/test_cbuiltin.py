@@ -121,8 +121,18 @@ class PotentialTestBase(object):
         fig = self.potential.plot_contours(grid=(grid,grid,0.),
                                            subplots_kw=dict(figsize=(8,8)))
         print("Cython plot_contours time", time.time() - t1)
-        fig.savefig(os.path.join(plot_path, "{}_2d_cy.png"\
-                        .format(self.name)))
+        fig.savefig(os.path.join(plot_path, "{}_2d.png"
+                    .format(self.name)))
+
+        fig = self.potential.plot_contours(grid=(grid,0,0.),
+                                           subplots_kw=dict(figsize=(8,8)))
+        fig.savefig(os.path.join(plot_path, "{}_1d_x.png"
+                    .format(self.name)))
+
+        fig = self.potential.plot_contours(grid=(0,0,grid),
+                                           subplots_kw=dict(figsize=(8,8)))
+        fig.savefig(os.path.join(plot_path, "{}_1d_z.png"
+                    .format(self.name)))
 
     def test_pickle(self):
         with open("/tmp/derp.pickle", "w") as f:
