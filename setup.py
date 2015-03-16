@@ -36,7 +36,9 @@ integrate = Extension("gary.integrate.*",
 extensions.append(integrate)
 
 dynamics = Extension("gary.dynamics.*",
-                     ["gary/dynamics/*.pyx"],
+                     ["gary/dynamics/*.pyx",
+                      "gary/dynamics/brent.c",
+                      "gary/integrate/1d/simpson.c"],
                      include_dirs=[numpy_incl_path])
 extensions.append(dynamics)
 
@@ -54,6 +56,7 @@ setup(
               "gary.potential"],
     scripts=['bin/plotsnap', 'bin/moviesnap', 'bin/snap2gal'],
     package_data={'gary.potential': ['*.pxd','*.c'],
-                  'gary.integrate': ['*.pxd','*.c']
+                  'gary.integrate': ['*.pxd','*.c'],
+                  'gary.dynamics': ['*.pxd','*.c']
                   },
 )
