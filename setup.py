@@ -29,15 +29,16 @@ extensions.append(potential)
 
 integrate = Extension("gary.integrate.*",
                       ["gary/integrate/*.pyx",
-                       "gary/integrate/dopri/dop853.c"],
+                       "gary/integrate/dopri/dop853.c",
+                       "gary/integrate/1d/simpson.c"],
                       include_dirs=[numpy_incl_path, mac_incl_path],
                       extra_compile_args=['-std=c99'])
 extensions.append(integrate)
 
-# dynamics = Extension("gary.dynamics.*",
-#                      ["gary/dynamics/*.pyx"],
-#                      include_dirs=[numpy_incl_path])
-# extensions.append(dynamics)
+dynamics = Extension("gary.dynamics.*",
+                     ["gary/dynamics/*.pyx"],
+                     include_dirs=[numpy_incl_path])
+extensions.append(dynamics)
 
 setup(
     name="gary",
