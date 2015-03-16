@@ -39,6 +39,21 @@ test_data_path = os.path.abspath(os.path.join(os.path.split(__file__)[0],
 
 logger.setLevel(logging.DEBUG)
 
+def test_cy_naff():
+    from .._naff import naff_frequency
+
+    t = np.linspace(0., 300., 12000)
+    naff = gd.NAFF(t)
+
+    true_ws = 2*np.pi*np.array([0.581, 0.73])
+    true_as = np.array([5*(np.cos(np.radians(15.)) + 1j*np.sin(np.radians(15.))),
+                        1.8*(np.cos(np.radians(85.)) + 1j*np.sin(np.radians(85.)))])
+    f = np.sum(true_as[None] * np.exp(1j * true_ws[None] * t[:,None]), axis=1)
+
+    naff_frequency(naff.tz, naff.chi,
+                   np.ascontiguousarray(f.real),
+                   np.ascontiguousarray(f.imag),
+                   naff.T)
 
 def test_simple_f():
     true_ws = 2*np.pi*np.array([0.581, 0.73])
