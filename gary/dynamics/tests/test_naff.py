@@ -114,20 +114,6 @@ def test_simple_f2():
 
 # ----------------------------------------------------------------------------
 
-def estimate_axisym_freqs(t, w):
-    R = np.sqrt(w[:,0,0]**2 + w[:,0,1]**2)
-    phi = np.arctan2(w[:,0,1], w[:,0,0])
-    z = w[:,0,2]
-
-    ix = argrelmax(R)[0]
-    fR = np.mean(2*np.pi / (t[ix[1:]] - t[ix[:-1]]))
-    ix = argrelmax(phi)[0]
-    fphi = np.mean(2*np.pi / (t[ix[1:]] - t[ix[:-1]]))
-    ix = argrelmax(z)[0]
-    fz = np.mean(2*np.pi / (t[ix[1:]] - t[ix[:-1]]))
-
-    return fR, fphi, fz
-
 def test_error_estimate():
     potential = gp.LogarithmicPotential(v_c=np.sqrt(2.), r_h=0.1,
                                         q1=1., q2=1., q3=0.9,
@@ -258,57 +244,43 @@ class LaskarBase(object):
         f,d,ixes = naff.find_fundamental_frequencies(fs[:2], nintvec=15, break_condition=None)
         nvecs = naff.find_integer_vectors(f, d)
 
-        # TEST
-        this_d = d[d['n'] == 0]
-        print(this_d['|A|'])
-        print(self.true_tables[0]['A'])
+        # # TEST
+        # this_d = d[d['n'] == 0]
 
-        phi = coord.Angle(this_d['phi']*u.radian).wrap_at(360*u.deg).to(u.degree).value
-        print(phi)
-        print(self.true_tables[0]['phi'])
+        # print(this_d['freq'])
+        # print(self.true_tables[0]['freq'])
+        # print((this_d['freq'] - self.true_tables[0]['freq']) / self.true_tables[0]['freq'])
 
-        return
+        # print(this_d['|A|'])
+        # print(self.true_tables[0]['A'])
+        # print((this_d['|A|'] - self.true_tables[0]['A']) / self.true_tables[0]['A'])
 
-        fprime = this_d['A'][:,np.newaxis] * np.exp(1j * this_d['freq'][:,np.newaxis] * self.t[np.newaxis])
-        fprime = np.sum(fprime, axis=0)
+        # phi = coord.Angle(this_d['phi']*u.radian).wrap_at(360*u.deg).to(u.degree).value
+        # print(phi)
+        # print(self.true_tables[0]['phi'])
+        # print((phi - self.true_tables[0]['phi']) / self.true_tables[0]['phi'])
 
-        # TODO: compare with true tables
+        # return
+
+        # fprime = this_d['A'][:,np.newaxis] * np.exp(1j * this_d['freq'][:,np.newaxis] * self.t[np.newaxis])
+        # fprime = np.sum(fprime, axis=0)
+
+        # compare with true tables
         for i in range(2):
-            if sum(d['n'] == i) == 0 or i == len(self.true_tables):
-                break
+            # if sum(d['n'] == i) == 0 or i == len(self.true_tables):
+            #     break
 
             this_d = d[d['n'] == i]
-            this_nvecs = nvecs[d['n'] == i]
-            this_tbl = self.true_tables[i][:len(this_d)]
-
-            dfreq = np.abs((this_d['freq'] - this_tbl['freq'])/this_tbl['freq'])
-            dA = np.abs((this_d['|A|'] - this_tbl['A'])/this_tbl['A'])
-            dn = this_nvecs[:,0] - this_tbl['n']
-            dm = this_nvecs[:,1] - this_tbl['m']
-
+            this_true_tbl = self.true_tables[i][:len(this_d)]
             phi = coord.Angle(this_d['phi']*u.deg).wrap_at(360*u.deg).value
-            dphi = (phi - this_tbl['phi'])
 
-            print("∆Freq (percent):", 100*dfreq)
-            print("∆A (percent):", 100*dA)
-            print("∆φ (abs):", dphi)
-            print("∆n:", dn)
-            print("∆m:", dm)
-            print()
-            print("freq:", this_d['freq'])
-            print("A:", this_d['|A|'])
-            print("φ:", this_d['phi'])
-            print("-"*79)
+            dfreq = np.abs((this_d['freq'] - this_true_tbl['freq']) / this_true_tbl['freq'])
+            dA = np.abs((this_d['|A|'] - this_true_tbl['A']) / this_true_tbl['A'])
+            dphi = (phi - this_true_tbl['phi']) / this_true_tbl['phi']
 
-        # Compare the true frequencies
-        done = np.zeros_like(self.true_freqs).astype(bool)
-        for i,true_f in enumerate(self.true_freqs):
-            for ff in f:
-                if np.abs(np.abs(ff) - np.abs(true_f)) < 1E-4:
-                    done[i] = True
-                    break
-
-        assert np.all(done)
+            np.testing.assert_allclose(dfreq[:5], 0., atol=1E-3)
+            np.testing.assert_allclose(dA[:5], 0., atol=1E-3)
+            np.testing.assert_allclose(dphi[:5], 0., atol=1E-1)
 
 class TestLaskarBox1(LaskarBase):
 
@@ -322,110 +294,21 @@ class TestLaskarLoop1xy(LaskarBase):
     def setup_class(self):
         self.name = 'loop-orbit-1-xy'
         self.dt = 0.01
-        self.nsteps = 2**15
+        self.nsteps = 2**16
 
 class TestLaskarLoop2xy(LaskarBase):
 
     def setup_class(self):
         self.name = 'loop-orbit-2-xy'
         self.dt = 0.01
-        self.nsteps = 2**15
+        self.nsteps = 2**16
 
 class TestLaskarLoop2rphi(LaskarBase):
 
     def setup_class(self):
         self.name = 'loop-orbit-2-rphi'
         self.dt = 0.01
-        self.nsteps = 2**15
-
-# -------------------------------------------------------------------------------------
-
-class NAFFVsSandersBase(LaskarBase):
-
-    def read_files(self):
-        pass
-
-    def test_naff(self):
-        naff = NAFF(self.t)
-
-        # complex time series
-        logger.info("Using Poincaré polar coordinates")
-        fs = poincare_polar(self.w[:,0])
-
-        f,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=15, break_condition=None)
-        nvecs = naff.find_integer_vectors(f, d)
-
-        max_T = np.max(np.abs(2*np.pi/f))
-        int_time = self.dt*self.nsteps
-        logger.important("Integrated for ~{} periods".format(int_time/max_T))
-
-        # compure sanders frequencies
-        s_actions,s_angles,s_freqs = gd.find_actions(self.t[::2], self.w[::2],
-                                                     N_max=6, units=galactic)
-
-        ptp_freqs = estimate_axisym_freqs(self.t, self.w)
-
-        print("NAFF:", f)
-        print("Sanders:", s_freqs)
-        print("ptp:", ptp_freqs)
-
-        # compute frequnecy diffusion with NAFF
-        naff = NAFF(self.t[:self.nsteps//2+1])
-
-        # first window
-        fs = poincare_polar(self.w[:self.nsteps//2+1,0])
-        f1,d1,ixes1 = naff.find_fundamental_frequencies(fs, nintvec=15, break_condition=None)
-        fs = poincare_polar(self.w[self.nsteps//2:,0])
-        f2,d2,ixes2 = naff.find_fundamental_frequencies(fs, nintvec=15, break_condition=None)
-
-        dfreq = f2 - f1
-        print("Window 1 freqs:", f1)
-        print("Window 2 freqs:", f2)
-        print("Abs. freq change:", dfreq)
-        print("Percent freq change:", np.abs(dfreq/f1)*100)
-
-        # compare NAFF with Sanders
-        # done = np.zeros(3).astype(bool)
-        # for i,true_f in enumerate(s_freqs):
-        #     for ff in f:
-        #         if np.abs(np.abs(ff) - np.abs(true_f)) < 1E-4:
-        #             done[i] = True
-        #             break
-        # assert np.all(done)
-
-        L = np.cross(self.w[:,0,:3], self.w[:,0,3:])
-        Lz = L[:,2].mean()
-        print("Lz", Lz)
-
-        # try reconstructing actions with NAFF
-        Js = np.zeros(3)
-        for row,nvec in zip(d,nvecs):
-            Js[0] += nvec[0] * nvec.dot(f) * row['|A|']**2
-            Js[1] += nvec[1] * nvec.dot(f) * row['|A|']**2
-            Js[2] += nvec[2] * nvec.dot(f) * row['|A|']**2
-
-        print(Js)
-        print(s_actions)
-
-class TestFlattenedNFW(NAFFVsSandersBase):
-
-    def setup_class(self):
-        self.name = 'flattened-nfw'
-        self.potential = gp.LeeSutoTriaxialNFWPotential(v_c=0.22, r_s=30.,
-                                                        a=1., b=1., c=0.8, units=galactic)
-        self.w0 = np.array([30.,2,5,0,0.16,0.05])
-        self.dt = 2.
-        self.nsteps = 20000
-
-class TestLogarithmic3D(NAFFVsSandersBase):
-
-    def setup_class(self):
-        self.name = 'logarithmic-3d'
-        self.potential = gp.LogarithmicPotential(v_c=0.24, r_h=10.,
-                                                 q1=1., q2=0.9, q3=0.7, units=galactic)
-        self.w0 = np.array([10.,0.,0.,0.02,0.25,-0.02])
-        self.dt = 2.5
-        self.nsteps = 40000
+        self.nsteps = 2**16
 
 # -------------------------------------------------------------------------------------
 class MonicaBase(object):
