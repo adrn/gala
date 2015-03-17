@@ -18,6 +18,7 @@ import astropy.units as u
 from astropy import log as logger
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 
 # Project
 from ..naff import NAFF, poincare_polar
@@ -202,6 +203,10 @@ class LaskarBase(object):
         self.poincare = poincare
         self.true_tables = tables
 
+        # read fundamental frequencies
+        fn = os.path.join(this_path, "ffs.txt")
+        self.fund_freqs = np.loadtxt(fn)
+
     def setup(self):
         from pytest import config
 
@@ -246,7 +251,7 @@ class LaskarBase(object):
             plt.semilogy(self.t[1:], np.abs(E[1:]-E[0]), marker=None)
             plt.savefig(os.path.join(plot_path,"energy_{}.png".format(self.name)))
 
-    def test_naff(self):
+    def test_naff_fund_freqs(self):
         naff = NAFF(self.t)
 
         # complex time series
@@ -258,25 +263,40 @@ class LaskarBase(object):
             fs = [(self.w[:,0,i] + 1j*self.w[:,0,i+3]) for i in range(3)]
 
         f,d,ixes = naff.find_fundamental_frequencies(fs[:2], nintvec=15, break_condition=None)
-        nvecs = naff.find_integer_vectors(f, d)
 
-        # # TEST
-        # this_d = d[d['n'] == 0]
+        print("frac. freq diff", (f - self.fund_freqs)/self.fund_freqs)
 
-        # print(this_d['freq'])
-        # print(self.true_tables[0]['freq'])
-        # print((this_d['freq'] - self.true_tables[0]['freq']) / self.true_tables[0]['freq'])
+    @pytest.mark.xfail
+    def test_naff_tables(self):
+        naff = NAFF(self.t)
 
-        # print(this_d['|A|'])
-        # print(self.true_tables[0]['A'])
-        # print((this_d['|A|'] - self.true_tables[0]['A']) / self.true_tables[0]['A'])
+        # complex time series
+        if self.poincare:
+            logger.info("Using Poincaré polar coordinates")
+            fs = poincare_polar(self.w[:,0])
+        else:
+            logger.info("Using Cartesian coordinates")
+            fs = [(self.w[:,0,i] + 1j*self.w[:,0,i+3]) for i in range(3)]
 
-        # phi = coord.Angle(this_d['phi']*u.radian).wrap_at(360*u.deg).to(u.degree).value
-        # print(phi)
-        # print(self.true_tables[0]['phi'])
-        # print((phi - self.true_tables[0]['phi']) / self.true_tables[0]['phi'])
+        f,d,ixes = naff.find_fundamental_frequencies(fs[:2], nintvec=15, break_condition=None)
 
-        # return
+        # TEST
+        this_d = d[d['idx'] == 0]
+
+        print(this_d['freq'])
+        print(self.true_tables[0]['freq'])
+        print((this_d['freq'] - self.true_tables[0]['freq']) / self.true_tables[0]['freq'])
+
+        print(this_d['|A|'])
+        print(self.true_tables[0]['A'])
+        print((this_d['|A|'] - self.true_tables[0]['A']) / self.true_tables[0]['A'])
+
+        phi = coord.Angle(this_d['phi']*u.radian).wrap_at(360*u.deg).to(u.degree).value
+        print(phi)
+        print(self.true_tables[0]['phi'])
+        print((phi - self.true_tables[0]['phi']) / self.true_tables[0]['phi'])
+
+        return
 
         # fprime = this_d['A'][:,np.newaxis] * np.exp(1j * this_d['freq'][:,np.newaxis] * self.t[np.newaxis])
         # fprime = np.sum(fprime, axis=0)
@@ -302,7 +322,7 @@ class TestLaskarBox1(LaskarBase):
 
     def setup_class(self):
         self.name = 'box-orbit-1'
-        self.dt = 0.004
+        self.dt = 0.005
         self.nsteps = 2**16
 
 class TestLaskarLoop1xy(LaskarBase):
@@ -416,6 +436,29 @@ class TestInterAxisTube(MonicaBase):
 class TestShortAxisTube(MonicaBase):
     def setup_class(self):
         self.filename = 'short-axis-tube.txt'
+
+# ------------------------------------------------------------------------------
+
+def test_freq_accuracy():
+    potential = gp.LogarithmicPotential(v_c=np.sqrt(2), r_h=0.1,
+                                        q1=1., q2=0.9, q3=1., units=galactic)
+
+    nsteps = 100000
+    t,w = potential.integrate_orbit([0.49, 0., 0., 1.3156, 0.4788, 0.],
+                                    dt=0.004, nsteps=nsteps,
+                                    Integrator=DOPRI853Integrator)
+
+    fs = [(w[:nsteps//2,0,i] + 1j*w[:nsteps//2,0,i+3]) for i in range(2)]
+    naff = gd.NAFF(t[:nsteps//2])
+    freq1,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=5)
+
+    fs = [(w[nsteps//2:,0,i] + 1j*w[nsteps//2:,0,i+3]) for i in range(2)]
+    naff = gd.NAFF(t[:nsteps//2])
+    freq2,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=5)
+
+    print(freq1)
+    print(freq2)
+    print(freq2 - freq1)
 
 # ------------------------------------------------------------------------------
 
