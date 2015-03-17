@@ -324,9 +324,9 @@ void logarithmic_gradient(double *pars, double *r, double *grad) {
     _r = sqrt(_r2);
 
     fac = pars[0]*pars[0] / (pars[1]*pars[1] + x*x/(pars[2]*pars[2]) + y*y/(pars[3]*pars[3]) + z*z/(pars[4]*pars[4]));
-    ax = fac*x/pars[2]*pars[2];
-    ay = fac*y/pars[3]*pars[3];
-    az = fac*z/pars[4]*pars[4];
+    ax = fac*x/(pars[2]*pars[2]);
+    ay = fac*y/(pars[3]*pars[3]);
+    az = fac*z/(pars[4]*pars[4]);
 
     grad[0] = pars[5]*ax  + pars[8]*ay  + pars[11]*az;
     grad[1] = pars[6]*ax  + pars[9]*ay  + pars[12]*az;
