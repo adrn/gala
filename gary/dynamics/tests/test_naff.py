@@ -439,13 +439,42 @@ class TestShortAxisTube(MonicaBase):
 
 # ------------------------------------------------------------------------------
 
-def test_freq_accuracy():
+def test_freq_accuracy_regular():
     potential = gp.LogarithmicPotential(v_c=np.sqrt(2), r_h=0.1,
                                         q1=1., q2=0.9, q3=1., units=galactic)
 
     nsteps = 100000
     t,w = potential.integrate_orbit([0.49, 0., 0., 1.3156, 0.4788, 0.],
                                     dt=0.004, nsteps=nsteps,
+                                    Integrator=DOPRI853Integrator)
+
+    fs = [(w[:nsteps//2,0,i] + 1j*w[:nsteps//2,0,i+3]) for i in range(2)]
+    naff = gd.NAFF(t[:nsteps//2])
+    freq1,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=5)
+
+    fs = [(w[nsteps//2:,0,i] + 1j*w[nsteps//2:,0,i+3]) for i in range(2)]
+    naff = gd.NAFF(t[:nsteps//2])
+    freq2,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=5)
+
+    print(freq1)
+    print(freq2)
+    print(freq2 - freq1)
+
+def test_freq_accuracy_chaotic():
+    potential = gp.LogarithmicPotential(v_c=np.sqrt(2), r_h=0.1,
+                                        q1=1., q2=0.9, q3=1., units=galactic)
+
+    nsteps = 100000
+
+    # see figure 1 from Papaphillipou & Laskar
+    x0 = -0.01
+    X0 = -0.2
+    y0 = 0.
+    E0 = -0.4059
+    Y0 = np.sqrt(E0 - potential.value([x0,y0,0.]))
+    w0 = np.array([x0,y0,0.,X0,Y0,0.])
+
+    t,w = potential.integrate_orbit(w0, dt=0.004, nsteps=nsteps,
                                     Integrator=DOPRI853Integrator)
 
     fs = [(w[:nsteps//2,0,i] + 1j*w[:nsteps//2,0,i+3]) for i in range(2)]
