@@ -18,7 +18,6 @@ import astropy.units as u
 from astropy import log as logger
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.signal import argrelmax
 
 # Project
 from ..naff import NAFF, poincare_polar
@@ -75,13 +74,14 @@ def test_simple_f():
           np.linspace(0., 300., 12000) + 50*(2*np.pi/true_ws[0])]
 
     for i,t in enumerate(ts):
-        print(i)
+        if i == 0: continue
+        print(i, t.min(), t.max(), len(t))
         f = np.sum(true_as[None] * np.exp(1j * true_ws[None] * t[:,None]), axis=1)
 
-        naff = gd.NAFF(t, debug=True, debug_path=os.path.join(plot_path,'naff-debug'))
+        naff = gd.NAFF(t)
 
         # try recovering the strongest frequency
-        w = naff.frequency(f[:naff.n])
+        w = naff.frequency(f)
         np.testing.assert_allclose(true_ws[0], w, atol=1E-6)
 
         # try recovering all frequencies
@@ -115,7 +115,7 @@ def test_simple_f2():
         print("{} periods".format(t.max() / (2*np.pi/true_ws)))
         f = np.sum(true_as[None] * np.exp(1j * true_ws[None] * t[:,None]), axis=1)
 
-        naff = gd.NAFF(t, debug=True, debug_path=os.path.join(plot_path,'naff-debug'))
+        naff = gd.NAFF(t)
 
         # try recovering the strongest frequency
         w = naff.frequency(f[:naff.n])
@@ -149,7 +149,7 @@ def test_error_estimate():
 
     fprimes = []
     for i in range(3):
-        _d = d[d['n'] == i]
+        _d = d[d['idx'] == i]
         fp = _d['A'][:,np.newaxis] * np.exp(1j * _d['freq'][:,np.newaxis] * t[np.newaxis])
         fp = np.sum(fp, axis=0)
         fprimes.append(fp)
@@ -286,7 +286,7 @@ class LaskarBase(object):
             # if sum(d['n'] == i) == 0 or i == len(self.true_tables):
             #     break
 
-            this_d = d[d['n'] == i]
+            this_d = d[d['idx'] == i]
             this_true_tbl = self.true_tables[i][:len(this_d)]
             phi = coord.Angle(this_d['phi']*u.deg).wrap_at(360*u.deg).value
 
@@ -353,7 +353,7 @@ class MonicaBase(object):
         freqs['freq'] = []
         freqs['l'] = []
         freqs['m'] = []
-        freqs['n'] = []
+        freqs['idx'] = []
         freqs['nq'] = []
         nq = None
         for line in these_lines:
@@ -368,7 +368,7 @@ class MonicaBase(object):
             freqs['freq'].append(float(line.split()[1]))
             freqs['l'].append(int(line.split()[2]))
             freqs['m'].append(int(line.split()[3]))
-            freqs['n'].append(int(line.split()[4]))
+            freqs['idx'].append(int(line.split()[4]))
             freqs['nq'].append(nq)
 
         names,formats = [],[]
@@ -390,8 +390,8 @@ class MonicaBase(object):
         nvecs = naff.find_integer_vectors(f, d)
 
         for nq in range(3):
-            this_d = d[d['n'] == nq]
-            nvec = nvecs[d['n'] == nq]
+            this_d = d[d['idx'] == nq]
+            nvec = nvecs[d['idx'] == nq]
             monica = self.monica_freqs[self.monica_freqs['nq'] == nq]
             # print(np.vstack((freq,nvec.T)).T)
 
@@ -439,7 +439,7 @@ def test_weird_bump():
     # ----
 
     i1,i2 = (350000,550001)
-    naff = NAFF(t[i1:i2:every], debug=True, debug_path=os.path.join(test_data_path, "naff"))
+    naff = NAFF(t[i1:i2:every])
     fs = poincare_polar(w[i1:i2:every])
     f,d,ixes = naff.find_fundamental_frequencies(fs[2:3], nintvec=5)
     print(f)
