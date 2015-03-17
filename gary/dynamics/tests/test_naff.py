@@ -50,10 +50,11 @@ def test_cy_naff():
                         1.8*(np.cos(np.radians(85.)) + 1j*np.sin(np.radians(85.)))])
     f = np.sum(true_as[None] * np.exp(1j * true_ws[None] * t[:,None]), axis=1)
 
-    naff_frequency(naff.tz, naff.chi,
-                   np.ascontiguousarray(f.real),
-                   np.ascontiguousarray(f.imag),
-                   naff.T)
+    ww = naff_frequency(true_ws[0], naff.tz, naff.chi,
+                        np.ascontiguousarray(f.real),
+                        np.ascontiguousarray(f.imag),
+                        naff.T)
+    np.testing.assert_allclose(ww, true_ws[0], atol=1E-8)
 
 def test_simple_f():
     true_ws = 2*np.pi*np.array([0.581, 0.73])
