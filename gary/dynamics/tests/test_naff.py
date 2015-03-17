@@ -460,6 +460,8 @@ def test_freq_accuracy_regular():
     print(freq2)
     print(freq2 - freq1)
 
+    np.testing.assert_allclose(freq2 - freq1, 0., atol=1E-7)
+
 def test_freq_accuracy_chaotic():
     potential = gp.LogarithmicPotential(v_c=np.sqrt(2), r_h=0.1,
                                         q1=1., q2=0.9, q3=1., units=galactic)
@@ -488,6 +490,8 @@ def test_freq_accuracy_chaotic():
     print(freq1)
     print(freq2)
     print(freq2 - freq1)
+
+    assert np.abs(freq2 - freq1).min() > 1E-4
 
 # ------------------------------------------------------------------------------
 
