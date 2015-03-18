@@ -17,7 +17,7 @@ from astropy.coordinates.builtin_frames.galactocentric import _ROLL0 as ROLL0
 
 from .propermotion import pm_gal_to_icrs, pm_icrs_to_gal
 
-__all__ = ["vgsr_to_vhel", "vhel_to_vgsr", "vgal_to_hel", "vhel_to_gal"]
+__all__ = ["vgsr_to_vhel", "vhel_to_vgsr", "vgal_to_hel", "vhel_to_gal", "poincare_polar"]
 
 # This is the default circular velocity and LSR peculiar velocity of the Sun
 # TODO: make this a config item?
@@ -340,3 +340,16 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame
         return v_gc.reshape((3,))
     else:
         return v_gc
+
+def poincare_polar(w):
+    """ TODO: this needs a home """
+
+    R = np.sqrt(w[...,0]**2 + w[...,1]**2)
+    # phi = np.arctan2(w[...,1], w[...,0])
+    phi = np.arctan2(w[...,0], w[...,1])
+
+    vR = (w[...,0]*w[...,0+3] + w[...,1]*w[...,1+3]) / R
+    vPhi = w[...,0]*w[...,1+3] - w[...,1]*w[...,0+3]
+
+    new_w = np.vstack((R.T,phi.T,w[...,2].T, vR.T,vPhi.T,w[...,2+3].T)).T
+    return new_w
