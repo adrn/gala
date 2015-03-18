@@ -69,7 +69,7 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
 
 cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
                                  double dt0, int nsteps, double t0,
-                                 double atol, double rtol):
+                                 double atol, double rtol, int nmax):
     # TODO: add option for a callback function to be called at each step
     cdef:
         int i, j, k
@@ -102,7 +102,7 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
         res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
                      <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]), norbits,
                      t[j-1], &w[0], t[j], &rtol, &atol, 0, solout, iout,
-                     NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, 0, 0, 1, 0, NULL, 0);
+                     NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0);
 
         for i in range(norbits):
             for k in range(ndim):
