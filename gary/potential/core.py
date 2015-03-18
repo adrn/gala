@@ -331,7 +331,8 @@ class PotentialBase(object):
             return dop853_integrate_potential(self.c_instance, w0,
                                               t[1]-t[0], len(t), t[0],
                                               Integrator_kwargs.get('atol', 1E-9),
-                                              Integrator_kwargs.get('rtol', 1E-9))
+                                              Integrator_kwargs.get('rtol', 1E-9),
+                                              Integrator_kwargs.get('nmax', 0))
 
         else:
             acc = lambda t,w: np.hstack((w[...,3:],self.acceleration(w[...,:3])))
