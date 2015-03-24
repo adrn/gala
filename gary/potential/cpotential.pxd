@@ -19,15 +19,24 @@ cdef class _CPotential:
     cpdef mass_enclosed(self, double[:,::1] q, double G)
     cdef public double _mass_enclosed(self, double *q, double *epsilon, double Gee) nogil
 
-# cdef public class _CCompositePotential[type _CPotentialType, object _CPotential]:
-#     cpdef value(self, double[:,::1] q, double[::1] pot)
-#     cdef public double _value(self, double[:,::1] q, int k) nogil
+# cdef class _CCompositePotential: #[type _CPotentialType, object _CPotential]:
 
-#     cpdef gradient(self, double[:,::1] q)
-#     cdef public void _gradient(self, double[:,::1] q, double[:,::1] grad, int k) nogil
+#     cdef public int n  # number of potential components
+#     cdef public double G  # gravitational constant in proper units
+#     cdef public _CPotential[::1] cpotentials
+#     cdef int[::1] pointers # points to array of pointers to C instances
+#     cdef int[::1] param_pointers # points to array of pointers to C instances
+#     cdef int * _pointers # points to array of pointers to C instances
+#     cdef int * _param_pointers # points to array of pointers to C instances
 
-#     cpdef hessian(self, double[:,::1] w)
-#     cdef public void _hessian(self, double[:,::1] w, double[:,:,::1] hess, int k) nogil
+#     cpdef value(self, double[:,::1] q)
+#     cdef public double _value(self, double *q) nogil
 
-#     cpdef mass_enclosed(self, double[:,::1] q)
-#     cdef public double _mass_enclosed(self, double[:,::1] q, double[:,::1] epsilon, double Gee, int k) nogil
+#     # cpdef gradient(self, double[:,::1] q)
+#     # cdef public void _gradient(self, double *q, double *grad) nogil
+
+#     # cpdef hessian(self, double[:,::1] w)
+#     # cdef public void _hessian(self, double *w, double *hess) nogil
+
+#     # cpdef mass_enclosed(self, double[:,::1] q, double G)
+#     # cdef public double _mass_enclosed(self, double *q, double *epsilon, double Gee) nogil
