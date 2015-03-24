@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdint.h>
 
 /* ---------------------------------------------------------------------------
     Kepler potential
@@ -331,4 +332,8 @@ void logarithmic_gradient(double *pars, double *r, double *grad) {
     grad[0] = pars[5]*ax  + pars[8]*ay  + pars[11]*az;
     grad[1] = pars[6]*ax  + pars[9]*ay  + pars[12]*az;
     grad[2] = pars[7]*ax  + pars[10]*ay + pars[13]*az;
+}
+
+void composite_value(int n, intptr_t *funcs, intptr_t *pars, double *r) {
+
 }
