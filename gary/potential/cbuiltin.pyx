@@ -25,6 +25,7 @@ import cython
 cimport cython
 
 # Project
+from ..units import galactic
 from .cpotential cimport _CPotential
 from .cpotential import CPotentialBase
 
@@ -70,11 +71,15 @@ cdef extern from "_cbuiltin.h":
     double logarithmic_value(double *pars, double *q) nogil
     void logarithmic_gradient(double *pars, double *q, double *grad) nogil
 
+    double lm10_value(double *pars, double *q) nogil
+    void lm10_gradient(double *pars, double *q, double *grad) nogil
+
 __all__ = ['KeplerPotential', 'HernquistPotential',
            'PlummerPotential', 'MiyamotoNagaiPotential',
            'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential',
            'LogarithmicPotential', 'JaffePotential',
-           'StonePotential', 'IsochronePotential']
+           'StonePotential', 'IsochronePotential',
+           'LM10Potential']
 
 # ============================================================================
 #    Kepler potential
@@ -579,7 +584,6 @@ class LogarithmicPotential(CPotentialBase):
             else:
                 R = np.eye(3)
 
-        # Note: R is the upper triangle of the rotation matrix
         R = np.ravel(R)
         if R.size != 9:
             raise ValueError("Rotation matrix parameter, R, should have 9 elements.")
@@ -596,3 +600,113 @@ class LogarithmicPotential(CPotentialBase):
         c_params['R33'] = R[8]
         self.c_instance = _LogarithmicPotential(**c_params)
         self.parameters['R'] = np.ravel(R).copy()
+
+# ------------------------------------------------------------------------
+# HACK
+cdef class _LM10Potential(_CPotential):
+
+    def __cinit__(self, double G, double m_spher, double c,
+                  double m_disk, double a, double b,
+                  double v_c, double r_h,
+                  double q1, double q2, double q3,
+                  double R11, double R12, double R13,
+                  double R21, double R22, double R23,
+                  double R31, double R32, double R33):
+        self._parvec = np.array([G,m_spher,c,
+                                 G,m_disk,a,b,
+                                 v_c,r_h,q1,q2,q3,
+                                 R11,R12,R13,R21,R22,R23,R31,R32,R33])
+        self._parameters = &(self._parvec[0])
+        self.c_value = &lm10_value
+        self.c_gradient = &lm10_gradient
+
+class LM10Potential(CPotentialBase):
+    r"""
+    LM10Potential(units, bulge=dict(), disk=dict(), halo=dict())
+
+    Three-component Milky Way potential model from Law & Majewski (2010).
+
+    Parameters
+    ----------
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+    bulge : dict
+        Dictionary of parameter values for a :class:`HernquistPotential`.
+    disk : dict
+        Dictionary of parameter values for a :class:`MiyamotoNagaiPotential`.
+    halo : dict
+        Dictionary of parameter values for a :class:`LogarithmicPotential`.
+
+    """
+    def __init__(self, units=galactic, bulge=dict(), disk=dict(), halo=dict()):
+        self.units = units
+        self.G = G.decompose(units).value
+        self.parameters = dict()
+
+        default_bulge = dict(m=3.4E10, c=0.7)
+        default_disk = dict(m=1E11, a=6.5, b=0.26)
+        default_halo = dict(q1=1.38, q2=1., q3=1.36, r_h=12.,
+                            phi=(97*u.degree).to(u.radian).value,
+                            v_c=np.sqrt(2)*(121.858*u.km/u.s).to(u.kpc/u.Myr).value,
+                            theta=0., psi=0.)
+
+        for k,v in default_disk.items():
+            if k not in disk:
+                disk[k] = v
+        self.parameters['disk'] = disk
+
+        for k,v in default_bulge.items():
+            if k not in bulge:
+                bulge[k] = v
+        self.parameters['bulge'] = bulge
+
+        for k,v in default_halo.items():
+            if k not in halo:
+                halo[k] = v
+        self.parameters['halo'] = halo
+
+        if halo.get('R', None) is None:
+            if halo['theta'] != 0 or halo['phi'] != 0 or halo['psi'] != 0:
+                D = rotation_matrix(halo['phi'], "z", unit=u.radian) # TODO: Bad assuming radians
+                C = rotation_matrix(halo['theta'], "x", unit=u.radian)
+                B = rotation_matrix(halo['psi'], "z", unit=u.radian)
+                R = np.asarray(B.dot(C).dot(D))
+
+            else:
+                R = np.eye(3)
+        else:
+            R = halo['R']
+
+        R = np.ravel(R)
+        if R.size != 9:
+            raise ValueError("Rotation matrix parameter, R, should have 9 elements.")
+
+        c_params = dict()
+
+        # bulge
+        c_params['G'] = self.G
+        c_params['m_spher'] = bulge['m']
+        c_params['c'] = bulge['c']
+
+        # disk
+        c_params['m_disk'] = disk['m']
+        c_params['a'] = disk['a']
+        c_params['b'] = disk['b']
+
+        # halo
+        c_params['v_c'] = halo['v_c']
+        c_params['r_h'] = halo['r_h']
+        c_params['q1'] = halo['q1']
+        c_params['q2'] = halo['q2']
+        c_params['q3'] = halo['q3']
+        c_params['R11'] = R[0]
+        c_params['R12'] = R[1]
+        c_params['R13'] = R[2]
+        c_params['R21'] = R[3]
+        c_params['R22'] = R[4]
+        c_params['R23'] = R[5]
+        c_params['R31'] = R[6]
+        c_params['R32'] = R[7]
+        c_params['R33'] = R[8]
+        self.c_instance = _LM10Potential(**c_params)

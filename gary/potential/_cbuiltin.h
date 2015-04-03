@@ -27,3 +27,6 @@ extern void leesuto_gradient(double *pars, double *q, double *grad);
 
 extern double logarithmic_value(double *pars, double *q);
 extern void logarithmic_gradient(double *pars, double *q, double *grad);
+
+extern double lm10_value(double *pars, double *q);
+extern void lm10_gradient(double *pars, double *q, double *grad);
