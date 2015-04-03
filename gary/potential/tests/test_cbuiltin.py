@@ -18,6 +18,7 @@ import astropy.units as u
 import matplotlib.pyplot as plt
 
 from ..core import CompositePotential
+from ..cbuiltin import LM10Potential
 from ..cbuiltin import *
 from ..io import load
 from ...units import galactic, solarsystem
@@ -289,6 +290,13 @@ class TestMisalignedLogarithmicPotential(PotentialTestBase):
                                               q1=1.2, q2=1., q3=0.8, phi=0.35)
         self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
         super(TestMisalignedLogarithmicPotential,self).setup()
+
+class TestLM10Potential(PotentialTestBase):
+    def setup(self):
+        self.name = "LM10Potential"
+        self.potential = LM10Potential(units=self.units)
+        self.w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+        super(TestLM10Potential,self).setup()
 
 class TestCompositePotential(PotentialTestBase):
     def setup(self):
