@@ -11,7 +11,8 @@ import numpy as np
 from astropy import log as logger
 from scipy.signal import argrelmax, argrelmin
 
-__all__ = ['angular_momentum', 'classify_orbit', 'align_circulation_with_z', 'check_for_primes']
+__all__ = ['angular_momentum', 'classify_orbit', 'align_circulation_with_z',
+           'check_for_primes', 'peak_to_peak_period']
 
 def angular_momentum(q, p):
     r"""
