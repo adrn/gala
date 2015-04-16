@@ -56,78 +56,120 @@ def test_cy_naff():
                         naff.T)
     np.testing.assert_allclose(ww, true_ws[0], atol=1E-8)
 
-def test_simple_f():
-    true_ws = 2*np.pi*np.array([0.581, 0.73])
-    true_as = np.array([5*(np.cos(np.radians(15.)) + 1j*np.sin(np.radians(15.))),
-                        1.8*(np.cos(np.radians(85.)) + 1j*np.sin(np.radians(85.)))])
-    true_A = np.sqrt(true_as.imag**2 + true_as.real**2)
-    true_phi = np.arctan2(true_as.imag, true_as.real)
+# TODO: make a class to do these tests for given arrays of freqs, complex amps.
 
-    logger.info("")
-    logger.info("True ω = {}".format(true_ws.tolist()))
-    logger.info("True a = {}".format(true_as.tolist()))
-    logger.info("True A = {}".format(true_A.tolist()))
+class SimpleBase(object):
 
-    ts = [np.linspace(0., 300., 12000),
-          np.linspace(0., 300., 24414),
-          np.linspace(150., 450., 12000),
-          np.linspace(150., 450., 24414),
-          np.linspace(0., 300., 12000) + 50*(2*np.pi/true_ws[0])]
+    """ Need to define:
 
-    for i,t in enumerate(ts):
-        if i == 0: continue
-        print(i, t.min(), t.max(), len(t))
-        f = np.sum(true_as[None] * np.exp(1j * true_ws[None] * t[:,None]), axis=1)
+            self.amp
+            self.omega
 
-        naff = gd.NAFF(t)
+        in subclass setup().
+    """
+    def setup(self):
+        print("PAReNT SETUP")
+        self.A = np.sqrt(self.amp.imag**2 + self.amp.real**2)
+        self.phi = np.arctan2(self.amp.imag, self.amp.real)
 
-        # try recovering the strongest frequency
-        w = naff.frequency(f)
-        np.testing.assert_allclose(true_ws[0], w, atol=1E-6)
+    def make_f(self, t):
+        A = self.amp
+        w = self.omega
+        return np.sum(A[None] * np.exp(1j * w[None] * t[:,None]), axis=1)
 
-        # try recovering all frequencies
-        output = naff.frecoder(f[:naff.n], break_condition=1E-5)
-        nu,A,phi = output
-        np.testing.assert_allclose(true_ws, nu[:2], atol=1E-7)
-        np.testing.assert_allclose(true_A, A[:2], atol=1E-4)
-        np.testing.assert_allclose(true_phi, phi[:2], atol=1E-4)
+    def test_T_scaling(self):
+        # time arrays
+        end_T = np.linspace(32, 512, 25)
+        ts = [np.arange(0., ee, 0.01) for ee in end_T]
 
-def test_simple_f2():
-    true_ws = 2*np.pi*np.array([0.581, -0.73, 0.91])
-    true_as = np.array([5*(np.cos(np.radians(35.)) + 1j*np.sin(np.radians(35.))),
-                        1.8*(np.cos(np.radians(75.)) + 1j*np.sin(np.radians(75.))),
-                        0.7*(np.cos(np.radians(45.)) + 1j*np.sin(np.radians(45.)))])
-    true_A = np.sqrt(true_as.imag**2 + true_as.real**2)
-    true_phi = np.arctan2(true_as.imag, true_as.real)
+        dws = []
+        for i,t in enumerate(ts):
+            f = self.make_f(t)
 
-    logger.info("")
-    logger.info("True ω = {}".format(true_ws.tolist()))
-    logger.info("True a = {}".format(true_as.tolist()))
-    logger.info("True A = {}".format(true_A.tolist()))
+            naff = gd.NAFF(t)
 
-    ts = [np.linspace(0., 300., 12000),
-          np.linspace(0., 300., 24414),
-          np.linspace(150., 450., 12000),
-          np.linspace(150., 450., 24414),
-          np.linspace(0., 300., 12000) + 50*(2*np.pi/true_ws[0])]
+            # try recovering the strongest frequency
+            w = naff.frequency(f)
+            dw = self.omega[0] - w
+            dws.append(dw)
 
-    for i,t in enumerate(ts):
-        print(i)
-        print("{} periods".format(t.max() / (2*np.pi/true_ws)))
-        f = np.sum(true_as[None] * np.exp(1j * true_ws[None] * t[:,None]), axis=1)
+        plt.clf()
+        plt.loglog(end_T, np.abs(dws))
+        derp = np.linspace(end_T.min(), end_T.max(), 1000)
+        plt.loglog(derp, derp**(-4.))
+        plt.xlabel("T")
+        plt.ylabel(r"$\delta \omega$")
+        plt.savefig(os.path.join(plot_path, "{0}_T_scaling.png".format(self.__class__.__name__)))
 
-        naff = gd.NAFF(t)
+    def test_dt_scaling(self):
+        # time arrays
+        dt = 2**np.linspace(-4, 0, 25)
+        ts = [np.arange(0., 150, ee) for ee in dt]
 
-        # try recovering the strongest frequency
-        w = naff.frequency(f[:naff.n])
-        np.testing.assert_allclose(true_ws[0], w, atol=1E-6)
+        dws = []
+        for i,t in enumerate(ts):
+            f = self.make_f(t)
 
-        # try recovering all frequencies
-        output = naff.frecoder(f[:naff.n], break_condition=1E-4)
-        nu,A,phi = output
-        np.testing.assert_allclose(true_ws, nu[:3], atol=1E-7)
-        np.testing.assert_allclose(true_A, A[:3], atol=1E-4)
-        np.testing.assert_allclose(true_phi, phi[:3], atol=1E-4)
+            naff = gd.NAFF(t)
+
+            # try recovering the strongest frequency
+            w = naff.frequency(f)
+            dw = self.omega[0] - w
+            dws.append(dw)
+
+        plt.clf()
+        plt.loglog(dt, np.abs(dws))
+        # derp = np.linspace(dt.min(), dt.max(), 1000)
+        plt.xlabel("dt")
+        plt.ylabel(r"$\delta \omega$")
+        plt.xlim(dt.min(), dt.max())
+        plt.savefig(os.path.join(plot_path, "{0}_dt_scaling.png".format(self.__class__.__name__)))
+
+    def test_simple(self):
+        ts = [np.linspace(0., 150., 12000),
+              np.linspace(0., 150., 24414),
+              np.linspace(0., 150., 42104),
+              np.linspace(150., 300., 12000),
+              np.linspace(150., 300., 24414),
+              np.linspace(150., 300., 42104),
+              np.linspace(0., 150., 12000) + 50*(2*np.pi/self.omega[0])]
+
+        for i,t in enumerate(ts):
+            print()
+            print(i, t.min(), t.max(), len(t))
+            f = self.make_f(t)
+
+            naff = gd.NAFF(t)
+
+            # try recovering the strongest frequency
+            w = naff.frequency(f)
+            print(self.omega[0] - w)
+            continue
+            # derp
+
+            np.testing.assert_allclose(true_ws[0], w, atol=1E-6)
+
+            # try recovering all frequencies
+            output = naff.frecoder(f[:naff.n], break_condition=1E-5)
+            nu,A,phi = output
+            np.testing.assert_allclose(true_ws, nu[:2], atol=1E-7)
+            np.testing.assert_allclose(true_A, A[:2], atol=1E-4)
+            np.testing.assert_allclose(true_phi, phi[:2], atol=1E-4)
+
+class TestSimple1(SimpleBase):
+
+    def setup(self):
+        self.omega = 2*np.pi*np.array([0.581, 0.73])
+        self.amp = np.array([5*(np.cos(np.radians(15.)) + 1j*np.sin(np.radians(15.))),
+                             1.8*(np.cos(np.radians(85.)) + 1j*np.sin(np.radians(85.)))])
+
+class TestSimple2(SimpleBase):
+
+    def setup(self):
+        self.omega = 2*np.pi*np.array([0.581, -0.73, 0.91])
+        self.amp = np.array([5*(np.cos(np.radians(35.)) + 1j*np.sin(np.radians(35.))),
+                             1.8*(np.cos(np.radians(75.)) + 1j*np.sin(np.radians(75.))),
+                             0.7*(np.cos(np.radians(45.)) + 1j*np.sin(np.radians(45.)))])
 
 # ----------------------------------------------------------------------------
 
