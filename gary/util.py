@@ -136,3 +136,46 @@ class ImmutableDict(collections.Mapping):
 
     def __eq__(self, other):
         return self._dict == other._dict
+
+def rolling_window(arr, window_size, stride=1):
+    """
+    There is an example of an iterator for pure-Python objects in:
+    http://stackoverflow.com/questions/6822725/rolling-or-sliding-window-iterator-in-python
+    This is a rolling-window iterator Numpy arrays, with window size and
+    stride control. See examples below for demos.
+
+    Parameters
+    ----------
+
+
+    Examples
+    --------
+    >>> a = np.array([1,2,3,4,5,6])
+    >>> for x in rolling_window(a, 3):
+    ...     print(x)
+    [1,2,3]
+    [2,3,4]
+    [3,4,5]
+    [4,5,6]
+    >>> for x in rolling_window(a, 2, stride=2):
+    ...     print(x)
+    [1,2]
+    [3,4]
+    [5,6]
+
+    """
+
+    if window_size < 0 or stride < 1:
+        raise ValueError
+
+    if len(arr) < window_size:
+        yield arr
+
+    ix1 = 0
+    while ix1 < len(arr):
+        ix2 = ix1 + window_size
+        result = arr[ix1:ix2]
+        yield result
+        if len(result) < window_size or ix2 >= len(arr):
+            break
+        ix1 += stride
