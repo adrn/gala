@@ -169,6 +169,11 @@ def rolling_window(arr, window_size, stride=1, return_idx=False):
     [1,2]
     [3,4]
     [5,6]
+    >>> for (i1,i2),x in rolling_window(a, 2, stride=2, return_idx=True):
+    ...     print(i1, i2, x)
+    (0, 2, array([1, 2]))
+    (2, 4, array([3, 4]))
+    (4, 6, array([5, 6]))
 
     """
 
