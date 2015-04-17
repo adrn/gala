@@ -146,7 +146,12 @@ def rolling_window(arr, window_size, stride=1):
 
     Parameters
     ----------
-
+    arr : array_like
+        Input numpy array.
+    window_size : int
+        Width of the window.
+    stride : int (optional)
+        Number of indices to advance the window each iteration step.
 
     Examples
     --------
