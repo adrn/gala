@@ -73,20 +73,21 @@ class SimpleBase(object):
         self.phi = np.arctan2(self.amp.imag, self.amp.real)
 
     def make_f(self, t):
-        A = self.amp
+        a = self.amp
         w = self.omega
-        return np.sum(A[None] * np.exp(1j * w[None] * t[:,None]), axis=1)
+        return np.sum(a[None] * np.exp(1j * w[None] * t[:,None]), axis=1)
 
     def test_T_scaling(self):
         # time arrays
-        end_T = np.linspace(32, 512, 25)
+        # end_T = np.linspace(32, 512, 25)
+        end_T = np.logspace(np.log10(32), np.log10(512), 251)
         ts = [np.arange(0., ee, 0.01) for ee in end_T]
 
         dws = []
         for i,t in enumerate(ts):
             f = self.make_f(t)
 
-            naff = gd.NAFF(t)
+            naff = gd.NAFF(t, p=self.p)
 
             # try recovering the strongest frequency
             w = naff.frequency(f)
@@ -96,7 +97,7 @@ class SimpleBase(object):
         plt.clf()
         plt.loglog(end_T, np.abs(dws))
         derp = np.linspace(end_T.min(), end_T.max(), 1000)
-        plt.loglog(derp, derp**(-4.))
+        plt.loglog(derp, derp**(-4.), marker=None)
         plt.xlabel("T")
         plt.ylabel(r"$\delta \omega$")
         plt.savefig(os.path.join(plot_path, "{0}_T_scaling.png".format(self.__class__.__name__)))
@@ -110,7 +111,8 @@ class SimpleBase(object):
         for i,t in enumerate(ts):
             f = self.make_f(t)
 
-            naff = gd.NAFF(t)
+            # create NAFF object for this time array
+            naff = gd.NAFF(t, p=self.p)
 
             # try recovering the strongest frequency
             w = naff.frequency(f)
@@ -123,7 +125,34 @@ class SimpleBase(object):
         plt.xlabel("dt")
         plt.ylabel(r"$\delta \omega$")
         plt.xlim(dt.min(), dt.max())
+        plt.ylim(1E-7,1E-5)
         plt.savefig(os.path.join(plot_path, "{0}_dt_scaling.png".format(self.__class__.__name__)))
+
+    def test_rolling_window(self):
+        # ts = [np.linspace(0.+dd, 150.+dd, 42104) for dd in np.linspace(0,150,250)]
+        ts = [np.linspace(0.+dd, 150.+dd, 42104) for dd in np.linspace(0,10,150)]
+        dws = []
+        for i,t in enumerate(ts):
+            print()
+            print(i, t.min(), t.max(), len(t))
+            f = self.make_f(t)
+
+            # create NAFF object for this time array
+            naff = gd.NAFF(t, p=self.p)
+
+            # try recovering the strongest frequency
+            w = naff.frequency(f)
+            dws.append(np.abs(self.omega[0] - w))
+        dws = np.array(dws)
+        tt = np.array([t.min() for t in ts])
+
+        from scipy.signal import argrelmax
+        ixes = argrelmax(dws)[0]
+
+        print(tt[ixes[1:]] - tt[ixes[:-1]])
+        plt.clf()
+        plt.semilogy(tt, dws, marker='o', c='k')
+        plt.savefig(os.path.join(plot_path, "{0}_rolling_window.png".format(self.__class__.__name__)))
 
     def test_simple(self):
         ts = [np.linspace(0., 150., 12000),
@@ -139,6 +168,7 @@ class SimpleBase(object):
             print(i, t.min(), t.max(), len(t))
             f = self.make_f(t)
 
+            # create NAFF object for this time array
             naff = gd.NAFF(t)
 
             # try recovering the strongest frequency
@@ -162,6 +192,7 @@ class TestSimple1(SimpleBase):
         self.omega = 2*np.pi*np.array([0.581, 0.73])
         self.amp = np.array([5*(np.cos(np.radians(15.)) + 1j*np.sin(np.radians(15.))),
                              1.8*(np.cos(np.radians(85.)) + 1j*np.sin(np.radians(85.)))])
+        self.p = 2
 
 class TestSimple2(SimpleBase):
 
@@ -170,6 +201,7 @@ class TestSimple2(SimpleBase):
         self.amp = np.array([5*(np.cos(np.radians(35.)) + 1j*np.sin(np.radians(35.))),
                              1.8*(np.cos(np.radians(75.)) + 1j*np.sin(np.radians(75.))),
                              0.7*(np.cos(np.radians(45.)) + 1j*np.sin(np.radians(45.)))])
+        self.p = 2
 
 # ----------------------------------------------------------------------------
 
@@ -216,6 +248,8 @@ def test_error_estimate():
     df = f - fdp
     logger.info("δω = {}".format(df))
     assert np.abs(df).max() < 1E-6
+
+# ----------------------------------------------------------------------------
 
 class LaskarBase(object):
     potential = None
@@ -294,7 +328,7 @@ class LaskarBase(object):
             plt.savefig(os.path.join(plot_path,"energy_{}.png".format(self.name)))
 
     def test_naff_fund_freqs(self):
-        naff = NAFF(self.t)
+        naff = NAFF(self.t, p=self.p)
 
         # complex time series
         if self.poincare:
@@ -310,7 +344,7 @@ class LaskarBase(object):
 
     @pytest.mark.xfail
     def test_naff_tables(self):
-        naff = NAFF(self.t)
+        naff = NAFF(self.t, p=self.p)
 
         # complex time series
         if self.poincare:
@@ -366,6 +400,7 @@ class TestLaskarBox1(LaskarBase):
         self.name = 'box-orbit-1'
         self.dt = 0.005
         self.nsteps = 2**16
+        self.p = 2
 
 class TestLaskarLoop1xy(LaskarBase):
 
@@ -373,6 +408,7 @@ class TestLaskarLoop1xy(LaskarBase):
         self.name = 'loop-orbit-1-xy'
         self.dt = 0.01
         self.nsteps = 2**16
+        self.p = 2
 
 class TestLaskarLoop2xy(LaskarBase):
 
@@ -380,6 +416,7 @@ class TestLaskarLoop2xy(LaskarBase):
         self.name = 'loop-orbit-2-xy'
         self.dt = 0.01
         self.nsteps = 2**16
+        self.p = 2
 
 class TestLaskarLoop2rphi(LaskarBase):
 
@@ -387,6 +424,7 @@ class TestLaskarLoop2rphi(LaskarBase):
         self.name = 'loop-orbit-2-rphi'
         self.dt = 0.01
         self.nsteps = 2**16
+        self.p = 2
 
 # -------------------------------------------------------------------------------------
 class MonicaBase(object):
@@ -537,31 +575,134 @@ def test_freq_accuracy_chaotic():
 
 # ------------------------------------------------------------------------------
 
-def test_weird_bump():
-    t = np.load(os.path.join(test_data_path, "naff/t.npy"))
-    w = np.load(os.path.join(test_data_path, "naff/w.npy"))
+def roll_it(w0, period, potential, dt=0.005, p=2):
+    from ...util import rolling_window
 
-    every = 2
+    # total integration time
+    nsteps = int(500*period/dt)
+    window_size = int(100*period/dt)
 
-    # i1,i2 = (0,200001)
-    # naff = NAFF(t[i1:i2:every], debug=True, debug_path=os.path.join(test_data_path, "naff"))
-    # fs = poincare_polar(w[i1:i2:every])
-    # f,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=5)
-    # print(f)
+    t,w = potential.integrate_orbit(w0, dt=dt, nsteps=nsteps,
+                                    Integrator=DOPRI853Integrator)
 
-    # freqs,d,ixes,is_tube = gd.naff.orbit_to_freqs(t[i1:i2:every], w[i1:i2:every],
-    #                                               silently_fail=False, nintvec=5)
-    # print(freqs)
-    # print()
+    # do the rolling window test for the input orbit
+    E = potential.total_energy(w[:,0,:3], w[:,0,3:])
+    assert np.abs(E[1:] - E[0]).max() < 1E-8
 
-    # ----
+    f = w[:,0,0] + 1j*w[:,0,3]
+    naff = gd.NAFF(t, p=p)
+    omega0_x = naff.frequency(f)
 
-    i1,i2 = (350000,550001)
-    naff = NAFF(t[i1:i2:every])
-    fs = poincare_polar(w[i1:i2:every])
-    f,d,ixes = naff.find_fundamental_frequencies(fs[2:3], nintvec=5)
-    print(f)
+    f = w[:,0,1] + 1j*w[:,0,4]
+    omega0_y = naff.frequency(f)
 
-    freqs,d,ixes,is_tube = gd.naff.orbit_to_freqs(t[i1:i2:every], w[i1:i2:every],
-                                                  silently_fail=False, nintvec=5)
-    print(freqs)
+    # roll the window
+    naff = gd.NAFF(t[:window_size], p=p)
+    all_freqs = []
+    for (ix1,ix2),ww in rolling_window(w[:,0], window_size=window_size, stride=window_size//10, return_idx=True):
+        print(ix1, ix2)
+        f = ww[:,0] + 1j*ww[:,3]
+        freqx = naff.frequency(f, omega0=omega0_x)
+
+        f = ww[:,1] + 1j*ww[:,4]
+        freqy = naff.frequency(f, omega0=omega0_y)
+
+        all_freqs.append([freqx, freqy])
+
+    return np.array(all_freqs)
+
+def test_rolling_window_papa():
+    # orbits from from Papaphillipou & Laskar
+    print()
+
+    potential = gp.LogarithmicPotential(v_c=np.sqrt(2), r_h=0.1,
+                                        q1=1., q2=0.9, q3=1., units=galactic)
+
+    # regular orbit:
+    w0 = [0.49, 0., 0., 1.3156, 0.4788, 0.]
+    print("Regular orbit")
+    reg_all_freqs = roll_it(w0, period=2.90454, potential=potential, dt=0.005)
+    reg_all_freqs = np.abs(reg_all_freqs[:-1])
+
+    # chaotic orbit initial conditions -- see figure 1 from Papaphillipou & Laskar
+    x0 = -0.01
+    X0 = -0.2
+    y0 = 0.
+    E0 = -0.4059
+    Y0 = np.sqrt(E0 - potential.value([x0,y0,0.]))
+    w0 = np.array([x0,y0,0.,X0,Y0,0.])
+    print("Chaotic orbit")
+    cha_all_freqs = roll_it(w0, period=1.05, potential=potential)
+    cha_all_freqs = np.abs(cha_all_freqs[:-1])
+
+    fig,axes = plt.subplots(1,2,figsize=(12,6))
+    # plt.semilogy(np.abs(reg_all_freqs[1:] - reg_all_freqs[0]))
+    axes[0].plot(reg_all_freqs[:,0], reg_all_freqs[:,1])
+    # plt.semilogy(np.abs(cha_all_freqs[1:] - cha_all_freqs[0]))
+    axes[1].plot(cha_all_freqs[:,0], cha_all_freqs[:,1])
+    plt.show()
+
+def test_rolling_window_apw():
+    # two orbits
+    print()
+
+    logger.setLevel(logging.ERROR)
+
+    params = {'a': 1.0, 'b': 0.77, 'c': 0.55, 'r_s': 20.0, 'v_c': 0.17897462888439886}
+    potential = gp.LeeSutoTriaxialNFWPotential(units=galactic, **params)
+
+    # regular orbit:
+    w0 = [22.76, 0.0, 18.8, 0.0, 0.15610748624460613, 0.0]
+    print("Regular orbit")
+    reg_all_freqs = roll_it(w0, period=900., potential=potential, dt=2., p=4)
+    reg_all_freqs = np.abs(reg_all_freqs[:-1])
+    print(reg_all_freqs[1:] - reg_all_freqs[0])
+
+    # chaotic orbit initial conditions -- see figure 1 from Papaphillipou & Laskar
+    w0 = [22.76, 0.0, 19.680000000000003, 0.0, 0.15086768887859237, 0.0]
+    print("Chaotic orbit")
+    cha_all_freqs = roll_it(w0, period=900, potential=potential, dt=2., p=4)
+    cha_all_freqs = np.abs(cha_all_freqs[:-1])
+    print(cha_all_freqs[1:] - cha_all_freqs[0])
+
+    fig,axes = plt.subplots(1,2,figsize=(12,6))
+    axes[0].plot(reg_all_freqs[:,0], reg_all_freqs[:,1])
+    axes[1].plot(cha_all_freqs[:,0], cha_all_freqs[:,1])
+
+    fig,axes = plt.subplots(1,2,figsize=(12,6))
+    axes[0].semilogy(np.abs(reg_all_freqs[1:,0] - reg_all_freqs[0,0]))
+    axes[0].semilogy(np.abs(reg_all_freqs[1:,1] - reg_all_freqs[0,1]))
+
+    axes[1].semilogy(np.abs(cha_all_freqs[1:,0] - cha_all_freqs[0,0]))
+    axes[1].semilogy(np.abs(cha_all_freqs[1:,1] - cha_all_freqs[0,1]))
+
+    plt.show()
+
+# def test_weird_bump():
+#     t = np.load(os.path.join(test_data_path, "naff/t.npy"))
+#     w = np.load(os.path.join(test_data_path, "naff/w.npy"))
+
+#     every = 2
+
+#     # i1,i2 = (0,200001)
+#     # naff = NAFF(t[i1:i2:every], debug=True, debug_path=os.path.join(test_data_path, "naff"))
+#     # fs = poincare_polar(w[i1:i2:every])
+#     # f,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=5)
+#     # print(f)
+
+#     # freqs,d,ixes,is_tube = gd.naff.orbit_to_freqs(t[i1:i2:every], w[i1:i2:every],
+#     #                                               silently_fail=False, nintvec=5)
+#     # print(freqs)
+#     # print()
+
+#     # ----
+
+#     i1,i2 = (350000,550001)
+#     naff = NAFF(t[i1:i2:every])
+#     fs = poincare_polar(w[i1:i2:every])
+#     f,d,ixes = naff.find_fundamental_frequencies(fs[2:3], nintvec=5)
+#     print(f)
+
+#     freqs,d,ixes,is_tube = gd.naff.orbit_to_freqs(t[i1:i2:every], w[i1:i2:every],
+#                                                   silently_fail=False, nintvec=5)
+#     print(freqs)
