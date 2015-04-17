@@ -15,7 +15,7 @@ import multiprocessing
 # Third-party
 import numpy as np
 
-__all__ = ['get_pool']
+__all__ = ['get_pool', 'rolling_window']
 
 # Create logger
 logger = logging.getLogger(__name__)
