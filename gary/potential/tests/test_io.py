@@ -15,7 +15,7 @@ import numpy as np
 # Project
 from ..io import load, save
 from ..core import CompositePotential
-from ..builtin import IsochronePotential, KeplerPotential
+from ..cbuiltin import IsochronePotential, KeplerPotential
 from ..custom import PW14Potential
 from ...units import galactic
 
@@ -64,3 +64,12 @@ def test_write():
                                    bulge=IsochronePotential(m=1E11, b=0.76, units=galactic))
     save(potential, tmp_filename)
 
+def test_units():
+    import astropy.units as u
+
+    tmp_filename = "/tmp/potential.yml"
+
+    # try a simple potential
+    potential = KeplerPotential(m=1E11, units=[u.kpc,u.Gyr,u.Msun,u.radian])
+    save(potential, tmp_filename)
+    p = load(tmp_filename)
