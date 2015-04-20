@@ -21,7 +21,7 @@ from ..core import CompositePotential
 from ..cbuiltin import LM10Potential
 from ..cbuiltin import *
 from ..io import load
-from ...units import galactic, solarsystem
+from ...units import UnitSystem, galactic, solarsystem
 
 # HACK: bad solution is to do this:
 # python setup.py build_ext --inplace
@@ -53,6 +53,9 @@ class PotentialTestBase(object):
         if self.name is None:
             self.name = self.__class__.__name__
         print(self.name)
+
+    def test_unitsystem(self):
+        assert isinstance(self.potential.units, UnitSystem)
 
     def test_method_call(self):
         # single
@@ -173,6 +176,14 @@ class TestIsochrone(PotentialTestBase):
         self.potential = IsochronePotential(units=self.units, m=1., b=0.1)
         self.w0 = [1.,0.,0.,0.,2*np.pi,0.]
         super(TestIsochrone,self).setup()
+
+class TestIsochroneU(PotentialTestBase):
+    units = (u.yr, u.au, u.Msun, u.radian)
+
+    def setup(self):
+        self.potential = IsochronePotential(units=self.units, m=1., b=0.1)
+        self.w0 = [1.,0.,0.,0.,2*np.pi,0.]
+        super(TestIsochroneU,self).setup()
 
 class TestHernquist(PotentialTestBase):
     def setup(self):
