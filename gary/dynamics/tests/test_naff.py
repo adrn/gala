@@ -640,6 +640,23 @@ def test_rolling_window_papa():
     axes[0].plot(reg_all_freqs[:,0], reg_all_freqs[:,1])
     # plt.semilogy(np.abs(cha_all_freqs[1:] - cha_all_freqs[0]))
     axes[1].plot(cha_all_freqs[:,0], cha_all_freqs[:,1])
+
+    # derivative
+    fig,axes = plt.subplots(1,2,figsize=(12,6),sharey=True)
+
+    df = np.sqrt((reg_all_freqs[1:,0] - reg_all_freqs[:-1,0])**2 +
+                 (reg_all_freqs[1:,1] - reg_all_freqs[:-1,1])**2)
+    # axes[0].semilogy(np.abs(reg_all_freqs[1:,0] - reg_all_freqs[0,0]))
+    # axes[0].semilogy(np.abs(reg_all_freqs[1:,1] - reg_all_freqs[0,1]))
+    axes[0].semilogy(df)
+
+    df = np.sqrt((cha_all_freqs[1:,0] - cha_all_freqs[:-1,0])**2 +
+                 (cha_all_freqs[1:,1] - cha_all_freqs[:-1,1])**2)
+    # axes[1].semilogy(np.abs(cha_all_freqs[1:,0] - cha_all_freqs[0,0]))
+    # axes[1].semilogy(np.abs(cha_all_freqs[1:,1] - cha_all_freqs[0,1]))
+    axes[1].semilogy(df)
+    axes[0].set_ylim(1E-9, 1E-2)
+
     plt.show()
 
 def test_rolling_window_apw():
@@ -651,17 +668,19 @@ def test_rolling_window_apw():
     params = {'a': 1.0, 'b': 0.77, 'c': 0.55, 'r_s': 20.0, 'v_c': 0.17897462888439886}
     potential = gp.LeeSutoTriaxialNFWPotential(units=galactic, **params)
 
+    p = 2
+
     # regular orbit:
     w0 = [22.76, 0.0, 18.8, 0.0, 0.15610748624460613, 0.0]
     print("Regular orbit")
-    reg_all_freqs = roll_it(w0, period=900., potential=potential, dt=2., p=4)
+    reg_all_freqs = roll_it(w0, period=900., potential=potential, dt=2., p=p)
     reg_all_freqs = np.abs(reg_all_freqs[:-1])
     print(reg_all_freqs[1:] - reg_all_freqs[0])
 
     # chaotic orbit initial conditions -- see figure 1 from Papaphillipou & Laskar
     w0 = [22.76, 0.0, 19.680000000000003, 0.0, 0.15086768887859237, 0.0]
     print("Chaotic orbit")
-    cha_all_freqs = roll_it(w0, period=900, potential=potential, dt=2., p=4)
+    cha_all_freqs = roll_it(w0, period=900, potential=potential, dt=2., p=p)
     cha_all_freqs = np.abs(cha_all_freqs[:-1])
     print(cha_all_freqs[1:] - cha_all_freqs[0])
 
@@ -669,12 +688,21 @@ def test_rolling_window_apw():
     axes[0].plot(reg_all_freqs[:,0], reg_all_freqs[:,1])
     axes[1].plot(cha_all_freqs[:,0], cha_all_freqs[:,1])
 
-    fig,axes = plt.subplots(1,2,figsize=(12,6))
-    axes[0].semilogy(np.abs(reg_all_freqs[1:,0] - reg_all_freqs[0,0]))
-    axes[0].semilogy(np.abs(reg_all_freqs[1:,1] - reg_all_freqs[0,1]))
+    # derivative
+    fig,axes = plt.subplots(1,2,figsize=(12,6),sharey=True)
 
-    axes[1].semilogy(np.abs(cha_all_freqs[1:,0] - cha_all_freqs[0,0]))
-    axes[1].semilogy(np.abs(cha_all_freqs[1:,1] - cha_all_freqs[0,1]))
+    df = np.sqrt((reg_all_freqs[1:,0] - reg_all_freqs[:-1,0])**2 +
+                 (reg_all_freqs[1:,1] - reg_all_freqs[:-1,1])**2)
+    # axes[0].semilogy(np.abs(reg_all_freqs[1:,0] - reg_all_freqs[0,0]))
+    # axes[0].semilogy(np.abs(reg_all_freqs[1:,1] - reg_all_freqs[0,1]))
+    axes[0].semilogy(df)
+
+    df = np.sqrt((cha_all_freqs[1:,0] - cha_all_freqs[:-1,0])**2 +
+                 (cha_all_freqs[1:,1] - cha_all_freqs[:-1,1])**2)
+    # axes[1].semilogy(np.abs(cha_all_freqs[1:,0] - cha_all_freqs[0,0]))
+    # axes[1].semilogy(np.abs(cha_all_freqs[1:,1] - cha_all_freqs[0,1]))
+    axes[1].semilogy(df)
+    axes[0].set_ylim(1E-9, 1E-2)
 
     plt.show()
 
