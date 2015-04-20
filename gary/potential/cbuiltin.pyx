@@ -112,7 +112,7 @@ class KeplerPotential(CPotentialBase):
 
     """
     def __init__(self, m, units):
-        self.units = units
+        super(KeplerPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
         self.parameters = dict(m=m)
         self.c_instance = _KeplerPotential(G=self.G, **self.parameters)
@@ -150,7 +150,7 @@ class IsochronePotential(CPotentialBase):
 
     """
     def __init__(self, m, b, units):
-        self.units = units
+        super(IsochronePotential, self).__init__(units=units)
         self.G = G.decompose(units).value
         self.parameters = dict(m=m, b=b)
         self.c_instance = _IsochronePotential(G=self.G, **self.parameters)
@@ -228,7 +228,7 @@ class HernquistPotential(CPotentialBase):
 
     """
     def __init__(self, m, c, units):
-        self.units = units
+        super(HernquistPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
         self.parameters = dict(m=m, c=c)
         self.c_instance = _HernquistPotential(G=self.G, **self.parameters)
@@ -266,7 +266,7 @@ class PlummerPotential(CPotentialBase):
 
     """
     def __init__(self, m, b, units):
-        self.units = units
+        super(PlummerPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
         self.parameters = dict(m=m, b=b)
         self.c_instance = _PlummerPotential(G=self.G, **self.parameters)
@@ -304,7 +304,7 @@ class JaffePotential(CPotentialBase):
 
     """
     def __init__(self, m, c, units):
-        self.units = units
+        super(JaffePotential, self).__init__(units=units)
         self.G = G.decompose(units).value
         self.parameters = dict(m=m, c=c)
         self.c_instance = _JaffePotential(G=self.G, **self.parameters)
@@ -346,7 +346,7 @@ class MiyamotoNagaiPotential(CPotentialBase):
 
     """
     def __init__(self, m, a, b, units):
-        self.units = units
+        super(MiyamotoNagaiPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
         self.parameters = dict(m=m, a=a, b=b)
         self.c_instance = _MiyamotoNagaiPotential(G=self.G, **self.parameters)
@@ -386,7 +386,7 @@ class StonePotential(CPotentialBase):
 
     """
     def __init__(self, m_tot, r_c, r_t, units):
-        self.units = units
+        super(StonePotential, self).__init__(units=units)
         self.G = G.decompose(units).value
         self.parameters = dict(m_tot=m_tot, r_c=r_c, r_t=r_t)
         self.c_instance = _StonePotential(G=self.G, **self.parameters)
@@ -425,7 +425,7 @@ class SphericalNFWPotential(CPotentialBase):
 
     """
     def __init__(self, v_c, r_s, units):
-        self.units = units
+        super(SphericalNFWPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
         self.parameters = dict(v_c=v_c, r_s=r_s)
         self.c_instance = _SphericalNFWPotential(**self.parameters)
@@ -483,7 +483,7 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
 
     """
     def __init__(self, v_c, r_s, a, b, c, units, phi=0., theta=0., psi=0., R=None):
-        self.units = units
+        super(LeeSutoTriaxialNFWPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
         self.parameters = dict(v_c=v_c, r_s=r_s, a=a, b=b, c=c)
 
@@ -570,7 +570,7 @@ class LogarithmicPotential(CPotentialBase):
 
     """
     def __init__(self, v_c, r_h, q1, q2, q3, units, phi=0., theta=0., psi=0., R=None):
-        self.units = units
+        super(LogarithmicPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
         self.parameters = dict(v_c=v_c, r_h=r_h, q1=q1, q2=q2, q3=q3)
 
@@ -640,7 +640,7 @@ class LM10Potential(CPotentialBase):
 
     """
     def __init__(self, units=galactic, bulge=dict(), disk=dict(), halo=dict()):
-        self.units = units
+        super(LM10Potential, self).__init__(units=units)
         self.G = G.decompose(units).value
         self.parameters = dict()
 
