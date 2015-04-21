@@ -25,8 +25,14 @@ class SerialPool(object):
     def close(self):
         return
 
-    def map(self, *args, **kwargs):
-        return map(*args, **kwargs)
+    def map(self, function, tasks, callback=None):
+        results = []
+        for task in tasks:
+            result = function(task)
+            if callback is not None:
+                callback(result)
+            results.append(result)
+        return results
 
 def get_pool(mpi=False, threads=None):
     """ Get a pool object to pass to emcee for parallel processing.
@@ -42,7 +48,7 @@ def get_pool(mpi=False, threads=None):
     """
 
     if mpi:
-        from emcee.utils import MPIPool
+        from mpipool import MPIPool
 
         # Initialize the MPI pool
         pool = MPIPool()
