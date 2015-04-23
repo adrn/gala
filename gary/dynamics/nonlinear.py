@@ -91,20 +91,20 @@ def lyapunov_spectrum(w0, integrator, dt, nsteps, t1=0., deviation_vecs=None):
 
 def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
                       nsteps_per_pullback=10, noffset_orbits=2, t1=0.,
-                      atol=1E-9, rtol=1E-8):
+                      atol=1E-9, rtol=1E-9, nmax=0):
     from ..integrate._dop853 import dop853_lyapunov
 
     if not hasattr(potential, 'c_instance'):
         raise TypeError("Input potential must be a CPotential subclass.")
 
     t,w,l = dop853_lyapunov(potential.c_instance, w0,
-                            dt, nsteps, t1, atol, rtol,
+                            dt, nsteps, t1, atol, rtol, nmax,
                             d0, nsteps_per_pullback, noffset_orbits)
 
     return l,t,w
 
 def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
-                 noffset=8, t1=0.):
+                 noffset_orbits=8, t1=0.):
     """
     Compute the maximum Lyapunov exponent of an orbit by integrating many
     nearby orbits (``noffset``) separated with isotropically distributed
@@ -125,7 +125,7 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
         The initial separation.
     nsteps_per_pullback : int (optional)
         Number of steps to run before re-normalizing the offset vectors.
-    noffset : int (optional)
+    noffset_orbits : int (optional)
         Number of offset orbits to run.
     t1 : numeric (optional)
         Time of initial conditions. Assumed to be t=0.
