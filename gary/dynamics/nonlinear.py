@@ -149,7 +149,7 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
     ndim = w0.shape[1]
 
     # define offset vectors to start the offset orbits on
-    d0_vec = np.random.uniform(size=(noffset,ndim))
+    d0_vec = np.random.uniform(size=(noffset_orbits,ndim))
     d0_vec /= np.linalg.norm(d0_vec, axis=1)[:,np.newaxis]
     d0_vec *= d0
 
@@ -163,7 +163,7 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
     full_ts[0] = t1
 
     # arrays to store the Lyapunov exponents and times
-    LEs = np.zeros((niter,noffset))
+    LEs = np.zeros((niter,noffset_orbits))
     ts = np.zeros_like(LEs)
     time = t1
     for i in range(1,niter+1):
