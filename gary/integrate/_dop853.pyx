@@ -120,23 +120,26 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
     return np.asarray(t), np.asarray(all_w)
 
 cpdef dop853_lyapunov(_CPotential cpotential, double[::1] w0,
-                      double dt0, int nsteps, double t0,
-                      double atol, double rtol,
+                      double dt, int nsteps, double t0,
+                      double atol, double rtol, int nmax,
                       double d0, int nsteps_per_pullback, int noffset_orbits):
     # TODO: add option for a callback function to be called at each step
     cdef:
-        int i, j, k, jj
+        int i, j, k, jiter
         int res
         unsigned ndim = w0.size
         unsigned norbits = noffset_orbits + 1
         unsigned niter = nsteps // nsteps_per_pullback
-        double[::1] t = np.empty(niter)
         double[::1] w = np.empty(norbits*ndim)
+
+        # define full array of times
+        double t_end = (<double>nsteps) * dt
+        double[::1] t = np.linspace(t0, t_end, nsteps)
 
         double d1_mag, norm
         double[:,::1] d1 = np.empty((norbits,ndim))
         double[:,::1] LEs = np.zeros((niter,noffset_orbits))
-        double[:,::1] main_w = np.zeros((niter+1,ndim))
+        double[:,::1] main_w = np.zeros((nsteps,ndim))
 
         # temp stuff
         double[:,::1] d0_vec = np.random.uniform(size=(noffset_orbits,ndim))
@@ -154,15 +157,14 @@ cpdef dop853_lyapunov(_CPotential cpotential, double[::1] w0,
             w[i*ndim + k] = w0[k] + d0_vec[i-1,k]
             main_w[0,k] = w0[k]
 
-    # define full array of times
-    time = t0
-    for j in range(niter):
+    # dummy counter for storing Lyapunov stuff, which only happens every few steps
+    jiter = 0
+
+    for j in range(1,nsteps,1):
         res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
                      <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]), norbits,
-                     time, &w[0], time + dt0*nsteps_per_pullback,
-                     &rtol, &atol, 0, solout, 0,
-                     NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                     dt0, 0, 0, 1, 0, NULL, 0);
+                     t[j-1], &w[0], t[j], &rtol, &atol, 0, solout, 0,
+                     NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt, nmax, 0, 1, 0, NULL, 0);
 
         if res == -1:
             raise RuntimeError("Input is not consistent.")
@@ -174,25 +176,23 @@ cpdef dop853_lyapunov(_CPotential cpotential, double[::1] w0,
             raise RuntimeError("The problem is probably stff (interrupted).")
 
         # store position of main orbit
-
         for k in range(ndim):
-            main_w[j+1,k] = w[k]
+            main_w[j,k] = w[k]
 
-        # get magnitude of deviation vector
-        for i in range(1,norbits):
-            for k in range(ndim):
-                d1[i,k] = w[i*ndim + k] - w[k]
+        if (j % nsteps_per_pullback) == 0:
+            # get magnitude of deviation vector
+            for i in range(1,norbits):
+                for k in range(ndim):
+                    d1[i,k] = w[i*ndim + k] - w[k]
 
-            d1_mag = six_norm(&d1[i,0])
-            LEs[j,i-1] = log(d1_mag / d0)
+                d1_mag = six_norm(&d1[i,0])
+                LEs[jiter,i-1] = log(d1_mag / d0)
 
-            # renormalize offset orbits
-            for k in range(ndim):
-                w[i*ndim + k] = w[k] + d0 * d1[i,k] / d1_mag
+                # renormalize offset orbits
+                for k in range(ndim):
+                    w[i*ndim + k] = w[k] + d0 * d1[i,k] / d1_mag
 
-        # advance time
-        time += dt0*nsteps_per_pullback
-        t[j] = time
+            jiter += 1
 
-    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j-1] for j in range(1,niter)])
+    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j] for j in range(1,niter)])
     return np.array(t), np.array(main_w), np.array(LEs)

@@ -16,11 +16,13 @@ import numpy as np
 import pytest
 
 # Project
-from ..nonlinear import lyapunov_max, lyapunov_spectrum, sali, fft_orbit
+from ... import potential as gp
+from ..nonlinear import lyapunov_max, fast_lyapunov_max, lyapunov_spectrum
 from ...integrate import DOPRI853Integrator
 from ...util import gram_schmidt
+from ...units import galactic
 
-plot_path = "plots/tests/dynamics"
+plot_path = "plots/tests/dynamics/nonlinear"
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
@@ -70,13 +72,13 @@ class TestForcedPendulum(object):
         regular_LEs, t, regular_ws = lyapunov_max(self.regular_w0, self.regular_integrator,
                                                   dt=dt, nsteps=nsteps,
                                                   d0=d0, nsteps_per_pullback=nsteps_per_pullback,
-                                                  noffset=noffset)
+                                                  noffset_orbits=noffset)
         regular_LEs = np.mean(regular_LEs, axis=1)
 
         chaotic_LEs, t, chaotic_ws = lyapunov_max(self.chaotic_w0, self.chaotic_integrator,
                                                   dt=dt, nsteps=nsteps,
                                                   d0=d0, nsteps_per_pullback=nsteps_per_pullback,
-                                                  noffset=noffset)
+                                                  noffset_orbits=noffset)
         chaotic_LEs = np.mean(chaotic_LEs, axis=1)
 
         plt.clf()
@@ -197,7 +199,7 @@ class TestHenonHeiles(object):
         for ii,w0 in enumerate(self.w0s):
             lyap, t, ws = lyapunov_max(w0, integrator,
                                        dt=self.dt, nsteps=self.nsteps,
-                                       d0=d0, noffset=noffset,
+                                       d0=d0, noffset_orbits=noffset,
                                        nsteps_per_pullback=nsteps_per_pullback)
             lyap = np.mean(lyap, axis=1)
 
@@ -224,24 +226,57 @@ class TestHenonHeiles(object):
             plt.plot(ws[...,0], ws[...,1], marker=None)
             plt.savefig(os.path.join(plot_path,"hh_orbit_lyap_spec_{}.png".format(ii)))
 
-    def test_sali(self):
-        tbls = []
-        with get_pkg_data_fileobj('hh.sali') as f:
-            d = f.read()
-            blocks = d.split("\n\n")
+# --------------------------------------------------------------------
 
-            for block in blocks:
-                tbls.append(np.loadtxt(stringio.StringIO(block)))
+class TestLogarithmic(object):
 
-        integrator = DOPRI853Integrator(self.F_spec, func_args=self.par)
+    def setup(self):
+
+        # set the potential
+        self.potential = gp.LogarithmicPotential(v_c=np.sqrt(2), r_h=0.1,
+                                                 q1=1., q2=0.9, q3=1.,
+                                                 units=galactic)
+
+        # see figure 1 from Papaphillipou & Laskar
+        x0 = -0.01
+        X0 = -0.2
+        y0 = 0.
+        E0 = -0.4059
+        Y0 = np.sqrt(E0 - self.potential.value([x0,y0,0.]))
+        chaotic_w0 = [x0,y0,0.,X0,Y0,0.]
+
+        # initial conditions from LP-VI documentation:
+        self.w0s = np.array([[0.49, 0., 0., 1.3156, 0.4788, 0.],  # regular
+                             chaotic_w0])  # chaotic
+
+        self.nsteps = 250000
+        self.dt = 0.004
+
+    def test_fast_lyapunov_max(self):
+        nsteps_per_pullback = 10
+        d0 = 1e-5
+        noffset = 2
+
         for ii,w0 in enumerate(self.w0s):
-            s, t, ws = sali(w0, integrator, dt=self.dt, nsteps=self.nsteps)
+            lyap, t, ws = fast_lyapunov_max(w0, self.potential,
+                                            dt=self.dt, nsteps=self.nsteps,
+                                            d0=d0, noffset_orbits=noffset,
+                                            nsteps_per_pullback=nsteps_per_pullback)
+            lyap = np.mean(lyap, axis=1)
 
+            # lyapunov exp
             plt.clf()
-            plt.loglog(t, s, marker=None)
-            plt.loglog(tbls[ii][:,0], tbls[ii][:,1], marker=None, alpha=0.4)
-            plt.savefig(os.path.join(plot_path,"hh_sali_{}.png".format(ii)))
+            plt.loglog(lyap, marker=None)
+            plt.savefig(os.path.join(plot_path,"log_lyap_max_{}.png".format(ii)))
 
+            # energy conservation
+            E = self.potential.total_energy(ws[:,:3], ws[:,3:])
+            dE = np.abs(E[1:] - E[0])
             plt.clf()
-            plt.plot(ws[...,0], ws[...,1], marker=None)
-            plt.savefig(os.path.join(plot_path,"hh_orbit_sali_{}.png".format(ii)))
+            plt.semilogy(dE, marker=None)
+            plt.savefig(os.path.join(plot_path,"log_dE_{}.png".format(ii)))
+
+            plt.figure(figsize=(6,6))
+            plt.plot(ws[:,0], ws[:,1], marker='.', linestyle='none', alpha=0.1)
+            plt.savefig(os.path.join(plot_path,"log_orbit_lyap_max_{}.png".format(ii)))
+

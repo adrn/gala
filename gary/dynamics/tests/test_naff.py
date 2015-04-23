@@ -677,7 +677,7 @@ def test_rolling_window_apw():
     reg_all_freqs = np.abs(reg_all_freqs[:-1])
     print(reg_all_freqs[1:] - reg_all_freqs[0])
 
-    # chaotic orbit initial conditions -- see figure 1 from Papaphillipou & Laskar
+    # chaotic orbit initial conditions
     w0 = [22.76, 0.0, 19.680000000000003, 0.0, 0.15086768887859237, 0.0]
     print("Chaotic orbit")
     cha_all_freqs = roll_it(w0, period=900, potential=potential, dt=2., p=p)
