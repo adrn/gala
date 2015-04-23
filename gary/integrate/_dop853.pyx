@@ -139,27 +139,28 @@ cpdef dop853_lyapunov(_CPotential cpotential, double[::1] w0,
         double d1_mag, norm
         double[:,::1] d1 = np.empty((norbits,ndim))
         double[:,::1] LEs = np.zeros((niter,noffset_orbits))
-        double[:,::1] main_w = np.zeros((nsteps,ndim))
+        double[:,:,::1] all_w = np.zeros((nsteps,norbits,ndim))
 
         # temp stuff
         double[:,::1] d0_vec = np.random.uniform(size=(noffset_orbits,ndim))
 
-    # store initial conditions for parent orbit
-    for k in range(ndim):
-        w[k] = w0[k]
+    # store initial conditions
+    for i in range(norbits):
+        if i == 0:  # store initial conditions for parent orbit
+            for k in range(ndim):
+                all_w[0,i,k] = w0[k]
+                w[i*ndim + k] = all_w[0,i,k]
 
-    # offset vectors to start the offset orbits on - need to be normalized
-    for i in range(1,noffset_orbits+1,1):
-        norm = np.linalg.norm(d0_vec[i-1])
-        for k in range(ndim):
-            d0_vec[i-1,k] /= norm
-            d0_vec[i-1,k] *= d0
-            w[i*ndim + k] = w0[k] + d0_vec[i-1,k]
-            main_w[0,k] = w0[k]
+        else:  # offset orbits
+            norm = np.linalg.norm(d0_vec[i-1])
+            for k in range(ndim):
+                d0_vec[i-1,k] *= d0/norm  # rescale offset vector
+
+                all_w[0,i,k] = w0[k] + d0_vec[i-1,k]
+                w[i*ndim + k] = all_w[0,i,k]
 
     # dummy counter for storing Lyapunov stuff, which only happens every few steps
     jiter = 0
-
     for j in range(1,nsteps,1):
         res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
                      <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]), norbits,
@@ -176,8 +177,9 @@ cpdef dop853_lyapunov(_CPotential cpotential, double[::1] w0,
             raise RuntimeError("The problem is probably stff (interrupted).")
 
         # store position of main orbit
-        for k in range(ndim):
-            main_w[j,k] = w[k]
+        for i in range(norbits):
+            for k in range(ndim):
+                all_w[j,i,k] = w[i*ndim + k]
 
         if (j % nsteps_per_pullback) == 0:
             # get magnitude of deviation vector
@@ -195,4 +197,4 @@ cpdef dop853_lyapunov(_CPotential cpotential, double[::1] w0,
             jiter += 1
 
     LEs = np.array([np.sum(LEs[:j],axis=0)/t[j] for j in range(1,niter)])
-    return np.array(t), np.array(main_w), np.array(LEs)
+    return np.array(t), np.array(all_w), np.array(LEs)
