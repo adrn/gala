@@ -196,5 +196,5 @@ cpdef dop853_lyapunov(_CPotential cpotential, double[::1] w0,
 
             jiter += 1
 
-    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j] for j in range(1,niter)])
+    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j*nsteps_per_pullback] for j in range(1,niter)])
     return np.array(t), np.array(all_w), np.array(LEs)
