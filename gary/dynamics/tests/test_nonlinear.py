@@ -230,6 +230,12 @@ class TestHenonHeiles(object):
 
 class TestLogarithmic(object):
 
+    def F(self,t,w):
+        x,y,z,px,py,pz = w.T
+        term1 = np.array([px, py, pz]).T
+        term2 = self.potential.acceleration(w[:,:3])
+        return np.hstack((term1,term2))
+
     def setup(self):
 
         # set the potential
@@ -249,7 +255,7 @@ class TestLogarithmic(object):
         self.w0s = np.array([[0.49, 0., 0., 1.3156, 0.4788, 0.],  # regular
                              chaotic_w0])  # chaotic
 
-        self.nsteps = 250000
+        self.nsteps = 25000
         self.dt = 0.004
 
     def test_fast_lyapunov_max(self):
@@ -272,6 +278,47 @@ class TestLogarithmic(object):
             plt.clf()
             plt.loglog(lyap, marker=None)
             plt.savefig(os.path.join(plot_path,"log_lyap_max_{}.png".format(ii)))
+
+            # energy conservation
+            E = self.potential.total_energy(ww[:,0,:3], ww[:,0,3:])
+            dE_ww = np.abs(E[1:] - E[0])
+
+            E = self.potential.total_energy(ws[:,:3], ws[:,3:])
+            dE = np.abs(E[1:] - E[0])
+
+            plt.clf()
+            plt.semilogy(dE_ww, marker=None)
+            plt.semilogy(dE, marker=None)
+            plt.savefig(os.path.join(plot_path,"log_dE_{}.png".format(ii)))
+
+            plt.figure(figsize=(6,6))
+            plt.plot(ws[:,0], ws[:,1], marker='.', linestyle='none', alpha=0.1)
+            plt.savefig(os.path.join(plot_path,"log_orbit_lyap_max_{}.png".format(ii)))
+
+    def test_compare(self):
+        nsteps_per_pullback = 10
+        d0 = 1e-5
+        noffset = 2
+
+        integrator = DOPRI853Integrator(self.F)
+        for ii,w0 in enumerate(self.w0s):
+            lyap1, t1, ws1 = fast_lyapunov_max(w0, self.potential,
+                                               dt=self.dt, nsteps=self.nsteps,
+                                               d0=d0, noffset_orbits=noffset,
+                                               nsteps_per_pullback=nsteps_per_pullback)
+
+            lyap2, t2, ws2 = lyapunov_max(w0.copy().reshape(1,6), integrator,
+                                          dt=self.dt, nsteps=self.nsteps,
+                                          d0=d0, noffset_orbits=noffset,
+                                          nsteps_per_pullback=nsteps_per_pullback)
+
+            # lyapunov exp
+            plt.clf()
+            plt.loglog(t1[1:-10:10], lyap1, marker=None)
+            plt.loglog(t2[1:-10:10], lyap2, marker=None)
+            plt.savefig(os.path.join(plot_path,"log_lyap_compare_{}.png".format(ii)))
+
+            continue
 
             # energy conservation
             E = self.potential.total_energy(ww[:,0,:3], ww[:,0,3:])
