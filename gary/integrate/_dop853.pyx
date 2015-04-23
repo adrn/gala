@@ -76,7 +76,9 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
         int res, iout
         unsigned norbits = w0.shape[0]
         unsigned ndim = w0.shape[1]
-        double[::1] t = np.empty(nsteps)
+
+        # define full array of times
+        double[::1] t = np.linspace(t0, t_end, nsteps)
         double[::1] w = np.empty(norbits*ndim)
 
         # Note: icont not needed because nrdens == ndim
@@ -96,17 +98,11 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
     # F(ndim, 0., &w[0], &f[0],
     #   <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]))
 
-    # define full array of times
-    t = np.linspace(t0, t_end, nsteps)
     for j in range(1,nsteps,1):
         res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
                      <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]), norbits,
                      t[j-1], &w[0], t[j], &rtol, &atol, 0, solout, iout,
                      NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0);
-
-        for i in range(norbits):
-            for k in range(ndim):
-                all_w[j,i,k] = w[i*ndim + k]
 
         if res == -1:
             raise RuntimeError("Input is not consistent.")
@@ -116,6 +112,10 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
             raise RuntimeError("Step size becomes too small.")
         elif res == -4:
             raise RuntimeError("The problem is probably stff (interrupted).")
+
+        for i in range(norbits):
+            for k in range(ndim):
+                all_w[j,i,k] = w[i*ndim + k]
 
     return np.asarray(t), np.asarray(all_w)
 
