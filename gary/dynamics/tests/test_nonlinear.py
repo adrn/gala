@@ -264,15 +264,24 @@ class TestLogarithmic(object):
                                             nsteps_per_pullback=nsteps_per_pullback)
             lyap = np.mean(lyap, axis=1)
 
+            # also just integrate the orbit to compare dE scaling
+            tt,ww = self.potential.integrate_orbit(w0, dt=self.dt, nsteps=self.nsteps,
+                                                   Integrator=DOPRI853Integrator)
+
             # lyapunov exp
             plt.clf()
             plt.loglog(lyap, marker=None)
             plt.savefig(os.path.join(plot_path,"log_lyap_max_{}.png".format(ii)))
 
             # energy conservation
+            E = self.potential.total_energy(ww[:,0,:3], ww[:,0,3:])
+            dE_ww = np.abs(E[1:] - E[0])
+
             E = self.potential.total_energy(ws[:,:3], ws[:,3:])
             dE = np.abs(E[1:] - E[0])
+
             plt.clf()
+            plt.semilogy(dE_ww, marker=None)
             plt.semilogy(dE, marker=None)
             plt.savefig(os.path.join(plot_path,"log_dE_{}.png".format(ii)))
 
