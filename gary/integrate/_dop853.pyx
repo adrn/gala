@@ -78,11 +78,11 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
         unsigned ndim = w0.shape[1]
 
         # define full array of times
+        double t_end = (<double>nsteps) * dt0
         double[::1] t = np.linspace(t0, t_end, nsteps)
         double[::1] w = np.empty(norbits*ndim)
 
         # Note: icont not needed because nrdens == ndim
-        double t_end = (<double>nsteps) * dt0
         double[:,:,::1] all_w = np.empty((nsteps,norbits,ndim))
 
     # store initial conditions
