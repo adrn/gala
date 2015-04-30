@@ -1,6 +1,20 @@
 #include <math.h>
 
 /* ---------------------------------------------------------------------------
+    Henon-Heiles potential
+*/
+double henon_heiles_value(double *pars, double *q) {
+    /*  no parameters... */
+    return 0.5 * (q[0]*q[0] + q[1]*q[1] + 2*q[0]*q[0]*q[1] - 2/3.*q[1]*q[1]*q[1]);
+}
+
+void henon_heiles_gradient(double *pars, double *q, double *grad) {
+    /*  no parameters... */
+    grad[0] = q[0] + 2*q[0]*q[1];
+    grad[1] = q[1] + q[0]*q[0] - q[1]*q[1];
+}
+
+/* ---------------------------------------------------------------------------
     Kepler potential
 */
 double kepler_value(double *pars, double *q) {
