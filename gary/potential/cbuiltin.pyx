@@ -41,6 +41,9 @@ cdef extern from "math.h":
     double pow(double x, double n) nogil
 
 cdef extern from "_cbuiltin.h":
+    double henon_heiles_value(double *pars, double *q) nogil
+    void henon_heiles_gradient(double *pars, double *q, double *grad) nogil
+
     double kepler_value(double *pars, double *q) nogil
     void kepler_gradient(double *pars, double *q, double *grad) nogil
 
@@ -74,12 +77,49 @@ cdef extern from "_cbuiltin.h":
     double lm10_value(double *pars, double *q) nogil
     void lm10_gradient(double *pars, double *q, double *grad) nogil
 
-__all__ = ['KeplerPotential', 'HernquistPotential',
+__all__ = ['HenonHeilesPotential', 'KeplerPotential', 'HernquistPotential',
            'PlummerPotential', 'MiyamotoNagaiPotential',
            'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential',
            'LogarithmicPotential', 'JaffePotential',
            'StonePotential', 'IsochronePotential',
            'LM10Potential']
+
+# ============================================================================
+#    Hénon-Heiles potential
+#
+cdef class _HenonHeilesPotential(_CPotential):
+
+    def __cinit__(self):
+        self._parvec = np.array([])
+        self._parameters = &(self._parvec)[0]
+        self.c_value = &henon_heiles_value
+        self.c_gradient = &henon_heiles_gradient
+
+class HenonHeilesPotential(CPotentialBase):
+    r"""
+    HenonHeilesPotential(units=None)
+
+    The Hénon-Heiles potential.
+
+    .. math::
+
+        \Phi(x,y) = \frac{1}{2}(x^2 + y^2 + 2x^2 y - \frac{2}{3}y^3)
+
+    Parameters
+    ----------
+    units : iterable (optional)
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, units=None):
+        super(HenonHeilesPotential, self).__init__(units=units)
+        if units is None:
+            self.G = 1.
+        else:
+            self.G = G.decompose(units).value
+        self.parameters = dict()
+        self.c_instance = _HenonHeilesPotential(G=self.G )
 
 # ============================================================================
 #    Kepler potential
