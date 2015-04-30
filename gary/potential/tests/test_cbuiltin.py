@@ -116,8 +116,10 @@ class PotentialTestBase(object):
         if self.name is None:
             self.name = self.potential.__class__.__name__
 
-        # test plotting a grid
-        grid = np.linspace(-50.,50, 200)
+        if self.grid is None:
+            grid = np.linspace(-50.,50, 200)
+        else:
+            grid = self.grid
 
         fig,axes = plt.subplots(1,1)
 
@@ -160,6 +162,15 @@ class PotentialTestBase(object):
 # ----------------------------------------------------------------------------
 #  Potentials to test
 #
+
+class TestHenonHeiles(PotentialTestBase):
+    units = None
+
+    def setup(self):
+        self.grid = np.linspace(-1,1,100)
+        self.potential = HenonHeilesPotential()
+        self.w0 = [1.,0.,0.,0.,2*np.pi,0.]
+        super(TestHenonHeiles,self).setup()
 
 class TestKepler(PotentialTestBase):
     units = solarsystem
