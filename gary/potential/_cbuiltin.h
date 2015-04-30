@@ -1,3 +1,6 @@
+extern double henon_heiles_value(double *pars, double *q);
+extern void henon_heiles_gradient(double *pars, double *q, double *grad);
+
 extern double kepler_value(double *pars, double *q);
 extern void kepler_gradient(double *pars, double *q, double *grad);
 
