@@ -706,31 +706,50 @@ def test_rolling_window_apw():
 
     plt.show()
 
-# def test_weird_bump():
-#     t = np.load(os.path.join(test_data_path, "naff/t.npy"))
-#     w = np.load(os.path.join(test_data_path, "naff/w.npy"))
+# def test_discontinuity_freqmap():
+#     from streammorphology.freqmap import estimate_dt_nsteps
+#     import gary.coordinates as gc
 
-#     every = 2
+#     w0 = np.array([[20.395098039215686, 0.0, 25.485294117647058, 0.0, 0.12119010877417434, 0.0],
+#                    [20.395098039215686, 0.0, 25.487254901960785, 0.0, 0.12117483983499934, 0.0],
+#                    [20.395098039215686, 0.0, 25.48921568627451, 0.0, 0.12115956944745397, 0.0]])
+#     potential = gp.load("/Users/adrian/projects/morphology/output/freqmap/triaxial-NFW/paper1_zoom_farther/potential.yml")
 
-#     # i1,i2 = (0,200001)
-#     # naff = NAFF(t[i1:i2:every], debug=True, debug_path=os.path.join(test_data_path, "naff"))
-#     # fs = poincare_polar(w[i1:i2:every])
-#     # f,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=5)
-#     # print(f)
+#     for ww0 in w0:
+#         dt, nsteps = estimate_dt_nsteps(potential, ww0.copy(),
+#                                         nperiods=250, nsteps_per_period=2048)
+#         t,ws = potential.integrate_orbit(ww0.copy(), dt=dt, nsteps=nsteps,
+#                                          Integrator=DOPRI853Integrator,
+#                                          Integrator_kwargs=dict(atol=1E-10,rtol=1E-10))
 
-#     # freqs,d,ixes,is_tube = gd.naff.orbit_to_freqs(t[i1:i2:every], w[i1:i2:every],
-#     #                                               silently_fail=False, nintvec=5)
-#     # print(freqs)
-#     # print()
+#         # check energy conservation for the orbit
+#         E = potential.total_energy(ws[:,0,:3].copy(), ws[:,0,3:].copy())
+#         dE = np.abs(E[1:] - E[0])
+#         dEmax = dE.max()
+#         print(dEmax)
 
-#     # ----
+#         # start finding the frequencies -- do first half then second half
+#         p = 2
+#         sl1 = slice(None,nsteps//2+1)
+#         sl2 = slice(nsteps//2,None)
 
-#     i1,i2 = (350000,550001)
-#     naff = NAFF(t[i1:i2:every])
-#     fs = poincare_polar(w[i1:i2:every])
-#     f,d,ixes = naff.find_fundamental_frequencies(fs[2:3], nintvec=5)
-#     print(f)
+#         naff1 = gd.NAFF(t[sl1], p=p)
+#         naff2 = gd.NAFF(t[sl2], p=p)
 
-#     freqs,d,ixes,is_tube = gd.naff.orbit_to_freqs(t[i1:i2:every], w[i1:i2:every],
-#                                                   silently_fail=False, nintvec=5)
-#     print(freqs)
+#         # fs1 = [(ws[sl1,0,j] + 1j*ws[sl1,0,j+3]) for j in range(3)]
+#         # fs2 = [(ws[sl2,0,j] + 1j*ws[sl2,0,j+3]) for j in range(3)]
+#         # fs1 = [(ws[sl1,0,2] + 1j*ws[sl1,0,2+3])]
+#         # fs2 = [(ws[sl2,0,2] + 1j*ws[sl2,0,2+3])]
+
+#         circ = gd.classify_orbit(ws)
+#         new_ws = gd.align_circulation_with_z(ws, circ)
+#         new_ws = gc.poincare_polar(new_ws)
+#         fs1 = [(new_ws[sl1,2] + 1j*new_ws[sl1,2+3])]
+#         fs2 = [(new_ws[sl2,2] + 1j*new_ws[sl2,2+3])]
+
+#         freq1 = naff1.frequency(fs1[0])
+#         freq2 = naff2.frequency(fs2[0])
+#         # freqs1,d1,ixs1 = naff1.find_fundamental_frequencies(fs1, nintvec=5)
+#         # freqs2,d2,ixs2 = naff2.find_fundamental_frequencies(fs2, nintvec=5)
+
+#         print(np.log10(np.abs(freq2 - freq1)))
