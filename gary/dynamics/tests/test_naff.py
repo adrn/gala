@@ -21,7 +21,7 @@ import numpy as np
 import pytest
 
 # Project
-from ..naff import NAFF, poincare_polar
+from ..naff import NAFF, cartesian_to_poincare_polar
 from ...integrate import DOPRI853Integrator
 from ... import potential as gp
 from ... import dynamics as gd
@@ -216,7 +216,7 @@ def test_error_estimate():
     fig = gd.plot_orbits(w, linestyle='none', alpha=0.1)
     fig.savefig(os.path.join(plot_path,"orbit_error_estimate.png"))
 
-    fs = poincare_polar(w[:,0])
+    fs = cartesian_to_poincare_polar(w[:,0])
 
     naff = NAFF(t)
     f,d,ixes = naff.find_fundamental_frequencies(fs, nintvec=30, break_condition=None)
@@ -333,7 +333,7 @@ class LaskarBase(object):
         # complex time series
         if self.poincare:
             logger.info("Using Poincaré polar coordinates")
-            fs = poincare_polar(self.w[:,0])
+            fs = cartesian_to_poincare_polar(self.w[:,0])
         else:
             logger.info("Using Cartesian coordinates")
             fs = [(self.w[:,0,i] + 1j*self.w[:,0,i+3]) for i in range(3)]
@@ -349,7 +349,7 @@ class LaskarBase(object):
         # complex time series
         if self.poincare:
             logger.info("Using Poincaré polar coordinates")
-            fs = poincare_polar(self.w[:,0])
+            fs = cartesian_to_poincare_polar(self.w[:,0])
         else:
             logger.info("Using Cartesian coordinates")
             fs = [(self.w[:,0,i] + 1j*self.w[:,0,i+3]) for i in range(3)]
@@ -743,7 +743,7 @@ def test_rolling_window_apw():
 
 #         circ = gd.classify_orbit(ws)
 #         new_ws = gd.align_circulation_with_z(ws, circ)
-#         new_ws = gc.poincare_polar(new_ws)
+#         new_ws = gc.cartesian_to_poincare_polar(new_ws)
 #         fs1 = [(new_ws[sl1,2] + 1j*new_ws[sl1,2+3])]
 #         fs2 = [(new_ws[sl2,2] + 1j*new_ws[sl2,2+3])]
 
