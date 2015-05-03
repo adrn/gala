@@ -1,6 +1,6 @@
 # coding: utf-8
 
-""" ...explain... """
+""" Transform a proper motion to/from Galactic to/from ICRS coordinates """
 
 from __future__ import division, print_function
 
@@ -13,38 +13,40 @@ import astropy.coordinates as coord
 __all__ = ['pm_gal_to_icrs', 'pm_icrs_to_gal']
 
 def pm_gal_to_icrs(coordinate, mu):
-    r""" Convert proper motion in Galactic coordinates (l,b) to
-        ICRS coordinates (RA, Dec).
+    r"""
+    Convert proper motion in Galactic coordinates (l,b) to
+    ICRS coordinates (RA, Dec).
 
-        Examples
-        --------
+    Parameters
+    ----------
+    coordinate : :class:`~astropy.coordinates.SkyCoord`, :class:`~astropy.coordinates.BaseCoordinateFrame`
+        An instance of an Astropy coordinate object. Can be in any
+        frame that is transformable to ICRS coordinates.
+    mu : :class:`~astropy.units.Quantity`, iterable
+        Full description of proper motion in Galactic longitude and
+        latitude. Can either be a tuple of two
+        :class:`~astropy.units.Quantity` objects or a single
+        :class:`~astropy.units.Quantity` with shape (2,N).
+        The proper motion in longitude is assumed to be multipled by
+        cosine of Galactic latitude, :math:`\mu_l\cosb`.
 
-            >>> import astropy.units as u
-            >>> import astropy.coordinates as coord
-            >>> c = coord.SkyCoord(ra=196.5*u.degree, dec=-10.33*u.deg, distance=16.2*u.kpc)
-            >>> pm = [-1.53, 3.5]*u.mas/u.yr
-            >>> pm_gal_to_icrs(c, pm)
-            <Quantity [-1.84741767, 3.34334366] mas / yr>
+    Returns
+    -------
+    pm : :class:`~astropy.units.Quantity`
+        An astropy :class:`~astropy.units.Quantity` object specifying the
+        proper motion vector array in ICRS coordinates. Will have shape
+        (2,N).
 
-        Parameters
-        ----------
-        coordinate : :class:`~astropy.coordinates.SkyCoord`, :class:`~astropy.coordinates.BaseCoordinateFrame`
-            An instance of an Astropy coordinate object. Can be in any
-            frame that is transformable to ICRS coordinates.
-        mu : :class:`~astropy.units.Quantity`, iterable
-            Full description of proper motion in Galactic longitude and
-            latitude. Can either be a tuple of two
-            :class:`~astropy.units.Quantity` objects or a single
-            :class:`~astropy.units.Quantity` with shape (2,N).
-            The proper motion in longitude is assumed to be multipled by
-            cosine of Galactic latitude, :math:`\mu_l\cosb`.
+    Examples
+    --------
 
-        Returns
-        -------
-        pm : :class:`~astropy.units.Quantity`
-            An astropy :class:`~astropy.units.Quantity` object specifying the
-            proper motion vector array in ICRS coordinates. Will have shape
-            (2,N).
+        >>> import astropy.units as u
+        >>> import astropy.coordinates as coord
+        >>> c = coord.SkyCoord(ra=196.5*u.degree, dec=-10.33*u.deg, distance=16.2*u.kpc)
+        >>> pm = [-1.53, 3.5]*u.mas/u.yr
+        >>> pm_gal_to_icrs(c, pm)
+        <Quantity [-1.84741767, 3.34334366] mas / yr>
+
     """
 
     g = coordinate.transform_to(coord.Galactic)
@@ -78,8 +80,32 @@ def pm_gal_to_icrs(coordinate, mu):
         return new_mu.reshape((2,) + mulcosb.shape)*mulcosb.unit
 
 def pm_icrs_to_gal(coordinate, mu):
-    r""" Convert proper motion in ICRS coordinates (RA, Dec) to
-        Galactic coordinates (l,b).
+    r"""
+    Convert proper motion in ICRS coordinates (RA, Dec) to
+    Galactic coordinates (l,b).
+
+    Parameters
+    ----------
+    coordinate : :class:`~astropy.coordinates.SkyCoord`, :class:`~astropy.coordinates.BaseCoordinateFrame`
+        An instance of an Astropy coordinate object. Can be in any
+        frame that is transformable to ICRS coordinates.
+    mu : :class:`~astropy.units.Quantity`, iterable
+        Full description of proper motion in Right ascension (RA) and
+        declination (Dec). Can either be a tuple of two
+        :class:`~astropy.units.Quantity` objects or a single
+        :class:`~astropy.units.Quantity` with shape (2,N).
+        The proper motion in RA is assumed to be multipled by
+        cosine of declination, :math:`\mu_\alpha\cos\delta`.
+
+    Returns
+    -------
+    pm : :class:`~astropy.units.Quantity`
+        An astropy :class:`~astropy.units.Quantity` object specifying the
+        proper motion vector array in Galactic coordinates. Will have shape
+        (2,N).
+
+    Examples
+    --------
 
         >>> import astropy.units as u
         >>> import astropy.coordinates as coord
@@ -88,25 +114,6 @@ def pm_icrs_to_gal(coordinate, mu):
         >>> pm_icrs_to_gal(c, pm)
         <Quantity [-1.52999988, 3.49999973] mas / yr>
 
-        Parameters
-        ----------
-        coordinate : :class:`~astropy.coordinates.SkyCoord`, :class:`~astropy.coordinates.BaseCoordinateFrame`
-            An instance of an Astropy coordinate object. Can be in any
-            frame that is transformable to ICRS coordinates.
-        mu : :class:`~astropy.units.Quantity`, iterable
-            Full description of proper motion in Right ascension (RA) and
-            declination (Dec). Can either be a tuple of two
-            :class:`~astropy.units.Quantity` objects or a single
-            :class:`~astropy.units.Quantity` with shape (2,N).
-            The proper motion in RA is assumed to be multipled by
-            cosine of declination, :math:`\mu_\alpha\cos\delta`.
-
-        Returns
-        -------
-        pm : :class:`~astropy.units.Quantity`
-            An astropy :class:`~astropy.units.Quantity` object specifying the
-            proper motion vector array in Galactic coordinates. Will have shape
-            (2,N).
     """
 
     g = coordinate.transform_to(coord.Galactic)
