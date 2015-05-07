@@ -5,11 +5,10 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os, sys
-import cStringIO as stringio
+import os
+import sys
 
 # Third-party
-from astropy.utils.data import get_pkg_data_fileobj
 import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,7 +16,7 @@ import pytest
 
 # Project
 from ... import potential as gp
-from ..nonlinear import lyapunov_max, fast_lyapunov_max, lyapunov_spectrum
+from ..nonlinear import lyapunov_max, fast_lyapunov_max, lyapunov_spectrum, surface_of_section
 from ...integrate import DOPRI853Integrator
 from ...util import gram_schmidt
 from ...units import galactic
@@ -336,3 +335,30 @@ class TestLogarithmic(object):
             plt.plot(ws[:,0], ws[:,1], marker='.', linestyle='none', alpha=0.1)
             plt.savefig(os.path.join(plot_path,"log_orbit_lyap_max_{}.png".format(ii)))
 
+def test_surface_of_section():
+    from mpl_toolkits.mplot3d import Axes3D
+    from ...potential import LogarithmicPotential
+    from ...units import galactic
+
+    pot = LogarithmicPotential(v_c=1., r_h=1., q1=1., q2=0.9, q3=0.8, units=galactic)
+
+    w0 = np.array([[0.,0.8,0.,1.,0.,0.],
+                   [0.,0.9,0.,1.,0.,0.]])
+    t,w = pot.integrate_orbit(w0, dt=0.02, nsteps=100000)
+
+    sos = surface_of_section(w, plane_ix=1)
+
+    # plot in 3D
+    fig = plt.figure(figsize=(10,10))
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.scatter(np.concatenate(sos[:,0]), # x
+               np.concatenate(sos[:,3]), # xdot
+               np.concatenate(sos[:,2]), # z
+               c=np.concatenate(sos[:,5])) # zdot
+    ax.set_xlabel('$x$')
+    ax.set_ylabel(r'$\dot{x}$')
+    ax.set_zlabel('$z$')
+
+    fig.tight_layout()
+    plt.show()
