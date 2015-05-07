@@ -11,11 +11,12 @@ import logging
 
 # Third-party
 import numpy as np
+from scipy.signal import argrelmin
 
 # Project
 from ..util import gram_schmidt
 
-__all__ = ['lyapunov_spectrum', 'fast_lyapunov_max', 'lyapunov_max']
+__all__ = ['lyapunov_spectrum', 'fast_lyapunov_max', 'lyapunov_max', 'surface_of_section']
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -189,79 +190,54 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
 
     return LEs, full_ts, full_w
 
-# def sali(w0, integrator, dt, nsteps, t1=0., deviation_vecs=None):
-#     """ Compute the Smaller Alignment Index (SALI)
-#         See: Skokos, Ch. 2001, J. Phys. A: Math. Gen., 34, 10029-10043
+def surface_of_section(w, plane_ix, interpolate=False):
+    """
 
-#         Parameters
-#         ----------
-#         w0 : array_like
-#             Initial conditions for all phase-space coordinates.
-#         integrator : gary.Integrator
-#             An instantiated Integrator object. Must have a run() method.
-#         dt : numeric
-#             Timestep.
-#         nsteps : int
-#             Number of steps to run for.
-#         d0 : numeric (optional)
-#             The initial separation.
-#         nsteps_per_pullback : int (optional)
-#             Number of steps to run before re-normalizing the offset vectors.
-#         noffset : int (optional)
-#             Number of offset orbits to run.
-#         t1 : numeric (optional)
-#             Time of initial conditions. Assumed to be t=0.
+    Parameters
+    ----------
+    w : array_like
+        Array of orbits. The phase-space dimensionality is assumed to be
+        the size of ``axis=-1``.
+    plane_ix : int
+        Integer that represents the coordinate to record crossings in. For
+        example, for a 2D Hamiltonian where you want to make a SoS in
+        :math:`y-p_y`, you would specify ``plane_ix=0`` (crossing the
+        :math:`x` axis), and this will only record crossings for which
+        :math:`p_x>0`.
+    interpolate : bool (optional)
+        Whether or not to interpolate on to the plane of interest. This
+        makes it much slower, but will work for orbits with a coarser
+        sampling.
 
-#     """
+    Examples
+    --------
+    If your orbit of interest is a tube orbit, it probably conserves (at
+    least approximately) some equivalent to angular momentum in the direction
+    of the circulation axis. Therefore, a surface of section in R-z should
+    be instructive for classifying these orbits. TODO...show how to convert
+    an orbit to Cylindrical..etc...
 
-#     w0 = np.atleast_2d(w0)
+    Returns
+    -------
 
-#     # phase-space dimensionality
-#     if w0.shape[0] > 1:
-#         raise ValueError("Initial condition vector ")
-#     ndim_ps = w0.shape[1]
+    """
 
-#     if deviation_vecs is None:
-#         # initialize (ndim_ps) deviation vectors
-#         A = np.zeros((ndim_ps,ndim_ps))
-#         for ii in range(ndim_ps):
-#             A[ii] = np.random.normal(0.,1.,size=ndim_ps)
-#             A[ii] /= np.linalg.norm(A[ii])
+    if w.ndim == 2:
+        w = w[:,None]
 
-#         vec = gram_schmidt(A)
-#         A = A[:2]
+    ntimes,norbits,ndim = w.shape
+    H_dim = ndim // 2
+    p_ix = plane_ix + H_dim
 
-#     else:
-#         raise NotImplementedError()
+    if interpolate:
+        raise NotImplementedError("Not yet implemented, sorry!")
 
-#     all_w0 = np.zeros((2,ndim_ps*2))
-#     for ii in range(2):
-#         all_w0[ii] = np.append(w0,A[ii])
+    # record position on specified plane when orbit crosses
+    all_sos = []
+    for n in range(norbits):
+        cross_ix = argrelmin(w[:,n,plane_ix]**2)[0]
+        cross_ix = cross_ix[w[cross_ix,n,p_ix] > 0.]
+        sos = w[cross_ix,n]
+        all_sos.append(sos)
 
-#     # array to store the full, main orbit
-#     full_w = np.zeros((nsteps+1,ndim_ps))
-#     full_w[0] = w0
-#     full_ts = np.zeros((nsteps+1,))
-#     full_ts[0] = t1
-
-#     # arrays to store the sali
-#     sali = np.zeros((nsteps+1,))
-
-#     time = t1
-#     for ii in range(1,nsteps+1):
-#         tt,ww = integrator.run(all_w0, dt=dt, nsteps=1, t1=time)
-#         time += dt
-
-#         dm = np.sqrt(np.sum((ww[-1,0,ndim_ps:] - ww[-1,1,ndim_ps:])**2))
-#         dq = np.sqrt(np.sum((ww[-1,0,ndim_ps:] + ww[-1,1,ndim_ps:])**2))
-#         sali[ii] = min(dm, dq)
-
-#         # renormalize
-#         ww[-1,0,ndim_ps:] = ww[-1,0,ndim_ps:] / np.linalg.norm(ww[-1,0,ndim_ps:])
-#         ww[-1,1,ndim_ps:] = ww[-1,1,ndim_ps:] / np.linalg.norm(ww[-1,1,ndim_ps:])
-
-#         full_w[ii:ii+1] = ww[-1,0,:ndim_ps]
-#         full_ts[ii:ii+1] = time
-#         all_w0 = ww[-1].copy()
-
-#     return sali, full_ts, full_w
+    return all_sos
