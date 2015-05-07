@@ -233,11 +233,13 @@ def surface_of_section(w, plane_ix, interpolate=False):
         raise NotImplementedError("Not yet implemented, sorry!")
 
     # record position on specified plane when orbit crosses
-    all_sos = []
+    all_sos = np.zeros((norbits,ndim), dtype=object)
     for n in range(norbits):
         cross_ix = argrelmin(w[:,n,plane_ix]**2)[0]
         cross_ix = cross_ix[w[cross_ix,n,p_ix] > 0.]
         sos = w[cross_ix,n]
-        all_sos.append(sos)
+
+        for j in range(ndim):
+            all_sos[n,j] = sos[:,j]
 
     return all_sos
