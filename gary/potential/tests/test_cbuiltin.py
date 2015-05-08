@@ -53,6 +53,7 @@ class PotentialTestBase(object):
         if self.name is None:
             self.name = self.__class__.__name__
         print(self.name)
+        self.grid = None
 
     def test_unitsystem(self):
         assert isinstance(self.potential.units, UnitSystem)
