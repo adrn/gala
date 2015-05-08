@@ -646,7 +646,7 @@ class LogarithmicPotential(CPotentialBase):
 cdef class _LM10Potential(_CPotential):
 
     def __cinit__(self, double G, double m_spher, double c,
-                  double m_disk, double a, double b,
+                  double G2, double m_disk, double a, double b,
                   double v_c, double r_h,
                   double q1, double q2, double q3,
                   double R11, double R12, double R13,
@@ -730,6 +730,7 @@ class LM10Potential(CPotentialBase):
         c_params['c'] = bulge['c']
 
         # disk
+        c_params['G2'] = self.G
         c_params['m_disk'] = disk['m']
         c_params['a'] = disk['a']
         c_params['b'] = disk['b']
