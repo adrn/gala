@@ -183,6 +183,9 @@ def rolling_window(arr, window_size, stride=1, return_idx=False):
 
     """
 
+    window_size = int(window_size)
+    stride = int(stride)
+
     if window_size < 0 or stride < 1:
         raise ValueError
 
