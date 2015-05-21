@@ -67,6 +67,15 @@ class PotentialBase(object):
             units = UnitSystem(*units)
         self.units = units
 
+        # must set parameters first...TODO: throw error?
+        if not hasattr(self, 'parameters'):
+            raise ValueError("Must set parameters of potential subclass before"
+                             " calling super().")
+
+        for k,v in self.parameters:
+            if hasattr(v, 'unit'):
+                self.parameters[k] = v.decompose(self.units).value
+
     @abc.abstractmethod
     def _value(self):
         raise NotImplementedError()
