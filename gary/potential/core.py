@@ -72,7 +72,7 @@ class PotentialBase(object):
             raise ValueError("Must set parameters of potential subclass before"
                              " calling super().")
 
-        for k,v in self.parameters:
+        for k,v in self.parameters.items():
             if hasattr(v, 'unit'):
                 self.parameters[k] = v.decompose(self.units).value
 

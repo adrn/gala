@@ -113,13 +113,13 @@ class HenonHeilesPotential(CPotentialBase):
 
     """
     def __init__(self, units=None):
+        self.parameters = dict()
         super(HenonHeilesPotential, self).__init__(units=units)
         if units is None:
             self.G = 1.
         else:
             self.G = G.decompose(units).value
-        self.parameters = dict()
-        self.c_instance = _HenonHeilesPotential(G=self.G )
+        self.c_instance = _HenonHeilesPotential(G=self.G)
 
 # ============================================================================
 #    Kepler potential
