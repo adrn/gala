@@ -682,14 +682,12 @@ class LM10Potential(CPotentialBase):
     def __init__(self, units=galactic, bulge=dict(), disk=dict(), halo=dict()):
         self.G = G.decompose(units).value
         self.parameters = dict()
-
         default_bulge = dict(m=3.4E10, c=0.7)
         default_disk = dict(m=1E11, a=6.5, b=0.26)
         default_halo = dict(q1=1.38, q2=1., q3=1.36, r_h=12.,
-                            phi=97*u.degree,
-                            v_c=np.sqrt(2)*121.858*u.km/u.s,
+                            phi=(97*u.degree).decompose(units).value,
+                            v_c=np.sqrt(2)*(121.858*u.km/u.s).decompose(units).value,
                             theta=0., psi=0.)
-        super(LM10Potential, self).__init__(units=units)
 
         for k,v in default_disk.items():
             if k not in disk:
@@ -705,6 +703,8 @@ class LM10Potential(CPotentialBase):
             if k not in halo:
                 halo[k] = v
         self.parameters['halo'] = halo
+
+        super(LM10Potential, self).__init__(units=units)
 
         if halo.get('R', None) is None:
             if halo['theta'] != 0 or halo['phi'] != 0 or halo['psi'] != 0:
