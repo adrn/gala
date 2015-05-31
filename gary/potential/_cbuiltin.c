@@ -171,7 +171,8 @@ double stone_value(double *pars, double *r) {
     rr = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
     u_c = rr / pars[2];
     u_t = rr / pars[3];
-    f = M_PI * (pars[3]*pars[3] - pars[2]*pars[2]) / (pars[2] + pars[3]);
+    //f = M_PI * (pars[3]*pars[3] - pars[2]*pars[2]) / (pars[2] + pars[3]);
+    f = 1.;
     return -pars[0] * pars[1] / f * (atan(u_t)/u_t - atan(u_c)/u_c +
                       0.5*log((rr*rr + pars[3]*pars[3])/(rr*rr + pars[2]*pars[2])));
 }
