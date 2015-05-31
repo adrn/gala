@@ -366,3 +366,114 @@ void lm10_gradient(double *pars, double *r, double *grad) {
     logarithmic_gradient(&pars[7], &r[0], &tmp_grad[0]);
     for (i=0; i<3; i++) grad[i] += tmp_grad[i];
 }
+
+/* ---------------------------------------------------------------------------
+    Spherical Hernquist Basis Function Expansion
+*/
+double spherical_hernquist_bfe_value(double *pars, double *r) {
+    double ultrasp[32];
+    double c1[32];
+    double c2[32];
+    double c3[32];
+
+    int n_max = pars[0];
+    double G = pars[1];
+    double m = pars[2];
+    double c = pars[3];
+
+    double clm, dlm, un, unm1, phinltil;
+
+    double R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / c;
+    double xi = (R-1.) / (R+1.);
+
+    for (int n=1; n<(n_max+1); n++) {
+        c3[n-1] = 1./(n+1);
+        c1[n-1] = 2.0*n + 3.;
+        c2[n-1] = n-1.0 + 3.;
+    }
+
+    // eh
+    ultrasp[0] = 1.0;
+    ultrasp[1] = 3.*xi;
+    un = ultrasp[1];
+    unm1 = 1.0;
+    for (int n=1; n<n_max; n++) {
+        ultrasp[n+1] = (c1[n]*xi*un - c2[n]*unm1) * c3[n];
+        unm1 = un;
+        un = ultrasp[n+1];
+    }
+
+    clm = 0.;
+    dlm = 0.;
+    for (int n=0; n<(n_max+1); n++) {
+        clm += ultrasp[n] * pars[4 + n+n_max+1];
+        dlm += ultrasp[n] * pars[4 + n]; // sin coeffs are first
+    }
+
+    phinltil = 1 / (1.+R);
+    return -G * m * (clm + dlm) * phinltil;
+
+}
+
+void spherical_hernquist_bfe_gradient(double *pars, double *r, double *grad) {
+    double ultrasp[32];
+    double ultrasp1[32];
+    double c1[32];
+    double c2[32];
+    double c3[32];
+
+    int n_max = pars[0];
+    double G = pars[1];
+    double m = pars[2];
+    double c = pars[3];
+
+    double ar, clm, dlm, elm, flm, un, unm1, temp3, temp4, phinltil;
+
+    double R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / c;
+    double costh = r[2]/R;
+    double sinth = sqrt(1 - costh*costh);
+    double phi = atan2(r[1], r[0]);
+    double xi = (R-1.) / (R+1.);
+
+    for (int n=1; n<(n_max+1); n++) {
+        c3[n-1] = 1./(n+1);
+        c1[n-1] = 2.0*n + 3.;
+        c2[n-1] = n-1.0 + 3.;
+    }
+
+    // eh
+    ultrasp[0] = 1.0;
+    ultrasp[1] = 3.*xi;
+    ultrasp1[0] = 0.;
+    ultrasp1[1] = 1.;
+
+    un = ultrasp[1];
+    unm1 = 1.0;
+    for (int n=1; n<n_max; n++) {
+        ultrasp[n+1] = (c1[n]*xi*un - c2[n]*unm1) * c3[n];
+        unm1 = un;
+        un = ultrasp[n+1];
+        ultrasp1[n+1] = ((3. + (n+1)-1.)*unm1-(n+1)*xi*ultrasp[n+1]) / (3.*(1.-xi*xi));
+    }
+
+    clm = 0.;
+    dlm = 0.;
+    elm = 0.;
+    flm = 0.;
+    for (int n=0; n<(n_max+1); n++) {
+        clm += ultrasp[n] * pars[4 + n+n_max+1];
+        dlm += ultrasp[n] * pars[4 + n]; // sin coeffs are first
+        elm += ultrasp1[n] * pars[4 + n+n_max+1];
+        flm += ultrasp1[n] * pars[4 + n];
+    }
+
+    temp3 = (clm + dlm);
+    temp4 = (elm + flm);
+    phinltil = 1 / (1.+R);
+    ar = G * m * phinltil * (temp3/(1.+R) + 6*temp4/(1.+R)/(1.+R));
+
+    grad[0] = sinth*cos(phi)*ar;
+    grad[1] = sinth*sin(phi)*ar;
+    grad[2] = costh*ar;
+
+}
