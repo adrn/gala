@@ -411,7 +411,7 @@ double spherical_hernquist_bfe_value(double *pars, double *r) {
         dlm += ultrasp[n] * pars[4 + n]; // sin coeffs are first
     }
 
-    phinltil = 1 / (1.+R);
+    phinltil = 1 / (1.+R) / c;
     return -G * m * (clm + dlm) * phinltil;
 
 }
@@ -431,7 +431,7 @@ void spherical_hernquist_bfe_gradient(double *pars, double *r, double *grad) {
     double ar, clm, dlm, elm, flm, un, unm1, temp3, temp4, phinltil;
 
     double R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / c;
-    double costh = r[2]/R;
+    double costh = r[2]/R/c;
     double sinth = sqrt(1 - costh*costh);
     double phi = atan2(r[1], r[0]);
     double xi = (R-1.) / (R+1.);
@@ -470,8 +470,8 @@ void spherical_hernquist_bfe_gradient(double *pars, double *r, double *grad) {
 
     temp3 = (clm + dlm);
     temp4 = (elm + flm);
-    phinltil = 1 / (1.+R);
-    ar = G * m * phinltil * (temp3/(1.+R) + 6*temp4/(1.+R)/(1.+R));
+    phinltil = 1 / (1.+R) / c;
+    ar = G * m * phinltil * (temp3/(1.+R)/c + 6*temp4/(1.+R)/(1.+R)/c/c);
 
     grad[0] = sinth*cos(phi)*ar;
     grad[1] = sinth*sin(phi)*ar;
