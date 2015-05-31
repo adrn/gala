@@ -33,3 +33,6 @@ extern void logarithmic_gradient(double *pars, double *q, double *grad);
 
 extern double lm10_value(double *pars, double *q);
 extern void lm10_gradient(double *pars, double *q, double *grad);
+
+extern double spherical_hernquist_bfe_value(double *pars, double *q);
+extern void spherical_hernquist_bfe_gradient(double *pars, double *q, double *grad);
