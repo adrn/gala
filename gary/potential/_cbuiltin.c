@@ -382,7 +382,7 @@ double spherical_hernquist_bfe_value(double *pars, double *r) {
     double m = pars[2];
     double c = pars[3];
 
-    double clm, dlm, un, unm1, phinltil;
+    double clm, un, unm1, phinltil;
 
     double R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / c;
     double xi = (R-1.) / (R+1.);
@@ -405,14 +405,12 @@ double spherical_hernquist_bfe_value(double *pars, double *r) {
     }
 
     clm = 0.;
-    dlm = 0.;
     for (int n=0; n<(n_max+1); n++) {
-        clm += ultrasp[n] * pars[4 + n+n_max+1];
-        dlm += ultrasp[n] * pars[4 + n]; // sin coeffs are first
+        clm += ultrasp[n] * pars[4 + n];
     }
 
     phinltil = 1 / (1.+R) / c;
-    return -G * m * (clm + dlm) * phinltil;
+    return -G * m * clm * phinltil;
 
 }
 
@@ -428,7 +426,7 @@ void spherical_hernquist_bfe_gradient(double *pars, double *r, double *grad) {
     double m = pars[2];
     double c = pars[3];
 
-    double ar, clm, dlm, elm, flm, un, unm1, temp3, temp4, phinltil;
+    double ar, clm, elm, un, unm1, phinltil;
 
     double R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / c;
     double costh = r[2]/R/c;
@@ -458,20 +456,14 @@ void spherical_hernquist_bfe_gradient(double *pars, double *r, double *grad) {
     }
 
     clm = 0.;
-    dlm = 0.;
     elm = 0.;
-    flm = 0.;
     for (int n=0; n<(n_max+1); n++) {
-        clm += ultrasp[n] * pars[4 + n+n_max+1];
-        dlm += ultrasp[n] * pars[4 + n]; // sin coeffs are first
-        elm += ultrasp1[n] * pars[4 + n+n_max+1];
-        flm += ultrasp1[n] * pars[4 + n];
+        clm += ultrasp[n] * pars[4 + n];
+        elm += ultrasp1[n] * pars[4 + n];
     }
 
-    temp3 = (clm + dlm);
-    temp4 = (elm + flm);
     phinltil = 1 / (1.+R) / c;
-    ar = G * m * phinltil * (temp3/(1.+R)/c + 6*temp4/(1.+R)/(1.+R)/c/c);
+    ar = G * m * phinltil * (clm/(1.+R)/c + 6*elm/(1.+R)/(1.+R)/c/c);
 
     grad[0] = sinth*cos(phi)*ar;
     grad[1] = sinth*sin(phi)*ar;

@@ -768,7 +768,7 @@ cdef class _SphericalBFEPotential(_CPotential):
 
 class SphericalBFEPotential(CPotentialBase):
     r"""
-    SphericalBFEPotential(TODO, units)
+    SphericalBFEPotential(m, c, coeffs, units)
 
     TODO:
 
@@ -780,21 +780,18 @@ class SphericalBFEPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, m, c, sin_coeffs, cos_coeffs, units):
-        self.parameters = dict(m=m, c=c, sin_coeffs=sin_coeffs, cos_coeffs=cos_coeffs)
+    def __init__(self, m, c, coeffs, units):
+        self.parameters = dict(m=m, c=c, coeffs=coeffs)
         super(SphericalBFEPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
 
         c_params = list()
-        c_params.append(len(sin_coeffs)-1)
+        c_params.append(len(coeffs)-1)
         c_params.append(self.G)
         c_params.append(m)
         c_params.append(c)
 
-        for co in sin_coeffs:
-            c_params.append(co)
-
-        for co in cos_coeffs:
+        for co in coeffs:
             c_params.append(co)
 
         self.c_instance = _SphericalBFEPotential(*c_params)
