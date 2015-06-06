@@ -60,6 +60,10 @@ def isochrone_xv_to_aa(x, v, potential):
         An array of angles computed from the input positions and velocities. Will
         always have shape (N,3) -- if input coordinates are 1D, the output shape will
         be (1,3).
+    freqs : :class:`numpy.ndarray`
+        An array of frequencies computed from the input positions and velocities. Will
+        always have shape (N,3) -- if input coordinates are 1D, the output shape will
+        be (1,3).
     """
 
     x = np.atleast_2d(x)
@@ -113,7 +117,7 @@ def isochrone_xv_to_aa(x, v, potential):
     psi = np.arctan2(np.cos(theta), -np.sin(theta)*r*vtheta/L)
     psi[np.abs(vtheta) <= 1e-10] = np.pi/2.  # blows up for small vtheta
 
-    omega = 0.5 * (1 + L/np.sqrt(L*L + 4*GM*b))
+    omega_th = 0.5 * (1 + L/np.sqrt(L*L + 4*GM*b))
 
     a = np.sqrt((1+e) / (1-e))
     ap = np.sqrt((1 + e + 2*b/c) / (1 - e + 2*b/c))
@@ -131,7 +135,7 @@ def isochrone_xv_to_aa(x, v, potential):
         z[ix] = np.arctan(x[ix]*np.tan(0.5*y[ix]))
         return z
 
-    A = omega*thetar - F(a,eta) - F(ap,eta)/np.sqrt(1 + 4*GM*b/L/L)
+    A = omega_th*thetar - F(a,eta) - F(ap,eta)/np.sqrt(1 + 4*GM*b/L/L)
     thetaz = psi + A
 
     LR = Lz/L
@@ -147,7 +151,16 @@ def isochrone_xv_to_aa(x, v, potential):
     angles = np.array([thetar, thetap, thetaz]).T
     angles %= (2*np.pi)
 
-    return actions, angles
+    # ----------------------------
+    # Frequencies
+    # ----------------------------
+    freqs = np.zeros_like(actions)
+    omega_r = GM**2 / (Jr + 0.5*(L + np.sqrt(L*L + 4*GM*b)))**3
+    freqs[:,0] = omega_r
+    freqs[:,1] = omega_th
+    freqs[:,2] = np.sign(actions[:,2]) * omega_th
+
+    return actions, angles, freqs
 
 def isochrone_aa_to_xv(actions, angles, potential):
     """
