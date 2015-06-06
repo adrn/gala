@@ -61,10 +61,10 @@ void isochrone_gradient(double *pars, double *r, double *grad) {
             - m (mass scale)
             - b (core scale)
     */
-    double sqrtR2b, fac, denom;
-    sqrtR2b = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2] + pars[2]*pars[2]);
-    denom = (sqrtR2b + pars[2]*pars[2]);
-    fac = pars[0] * pars[1] / (denom * denom * sqrtR2b);
+    double sqrt_r2_b2, fac, denom;
+    sqrt_r2_b2 = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2] + pars[2]*pars[2]);
+    denom = sqrt_r2_b2 * (sqrt_r2_b2 + pars[2])*(sqrt_r2_b2 + pars[2]);
+    fac = pars[0] * pars[1] / denom;
 
     grad[0] = fac*r[0];
     grad[1] = fac*r[1];
