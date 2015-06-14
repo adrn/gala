@@ -470,7 +470,7 @@ def _single_orbit_find_actions(t, w, N_max, units, toy_potential=None,
 
     if isinstance(toy_potential, IsochronePotential):
         loop = classify_orbit(w)
-        w = align_circulation_with_z(w, loop[0])
+        w = align_circulation_with_z(w, loop)
 
         dxyz = (1,2,2)
         circ = np.sign(w[0,0]*w[0,4]-w[0,1]*w[0,3])
@@ -482,7 +482,8 @@ def _single_orbit_find_actions(t, w, N_max, units, toy_potential=None,
         raise ValueError("Invalid toy potential.")
 
     # Now find toy actions and angles
-    aa = np.hstack(toy_potential.action_angle(w[:,:3], w[:,3:]))
+    aaf = toy_potential.action_angle(w[:,:3], w[:,3:])
+    aa = np.hstack(aaf[:2])
     if np.any(np.isnan(aa)):
         ix = ~np.any(np.isnan(aa),axis=1)
         aa = aa[ix]
