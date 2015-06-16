@@ -69,7 +69,7 @@ def get_pool(mpi=False, threads=None, **kwargs):
 
     else:
         logger.debug("Running serial...")
-        pool = SerialPool(**kwarg)
+        pool = SerialPool(**kwargs)
 
     return pool
 
