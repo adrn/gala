@@ -34,7 +34,7 @@ class SerialPool(object):
             results.append(result)
         return results
 
-def get_pool(mpi=False, threads=None):
+def get_pool(mpi=False, threads=None, **kwargs):
     """ Get a pool object to pass to emcee for parallel processing.
         If mpi is False and threads is None, pool is None.
 
@@ -45,13 +45,16 @@ def get_pool(mpi=False, threads=None):
         threads : int (optional)
             If mpi is False and threads is specified, use a Python
             multiprocessing pool with the specified number of threads.
+        **kwargs
+            Any other keyword arguments are passed through to the pool
+            initializers.
     """
 
     if mpi:
         from mpipool import MPIPool
 
         # Initialize the MPI pool
-        pool = MPIPool()
+        pool = MPIPool(**kwargs)
 
         # Make sure the thread we're running on is the master
         if not pool.is_master():
@@ -62,11 +65,11 @@ def get_pool(mpi=False, threads=None):
     elif threads > 1:
         logger.debug("Running with multiprocessing on {} cores..."
                      .format(threads))
-        pool = multiprocessing.Pool(threads)
+        pool = multiprocessing.Pool(threads, **kwargs)
 
     else:
         logger.debug("Running serial...")
-        pool = SerialPool()
+        pool = SerialPool(**kwarg)
 
     return pool
 
