@@ -367,3 +367,371 @@ void lm10_gradient(double t, double *pars, double *r, double *grad) {
     logarithmic_gradient(0., &pars[7], &r[0], &tmp_grad[0]);
     for (i=0; i<3; i++) grad[i] += tmp_grad[i];
 }
+
+/* AGAIN, TOTAL FUCKING HACKs */
+int get_idx(int nrows, int x, int y) {
+    return (nrows*x+y);
+}
+
+void _compute_helpers(double *twoalpha, double *dblfact,
+                      double *c1, double *c2, double *c3,
+                      int nmax, int lmax) {
+    int l, n;
+
+    dblfact[1] = 1.;
+    for (l=2; l<(lmax+1); l++) {
+        dblfact[l] = dblfact[l-1] * (2.*l - 1.);
+    }
+
+    for (l=0; l<(lmax+1); l++) {
+        twoalpha[l] = 2.0*(2.*l + 1.5);
+    }
+
+    for (n=1; n<(nmax+1); n++) {
+        c3[n-1] = 1./(n+1);
+        for (l=0; l<(lmax+1); l++) {
+            c1[get_idx(nmax+1,n-1,l)] = 2.0*n + twoalpha[l];
+            c2[get_idx(nmax+1,n-1,l)] = n-1.0 + twoalpha[l];
+        }
+    }
+}
+
+double scf_value(double t, double *pars, double *r) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - r_s (length scale)
+            - nmax
+            - lmax
+            [- sin_coeff, cos_coeff]
+    */
+    int n,l,m,i;
+
+    double G = pars[0];
+    double M = pars[1];
+    double r_s = pars[2];
+    int nmax = (int)pars[3];
+    int lmax = (int)pars[4];
+
+    // return value
+    double pot = 0.;
+
+    // initialize empty arrays
+    double cosmphi[lmax+1];
+    double sinmphi[lmax+1];
+    double ultrasp[nmax+1][lmax+1];
+    double plm[lmax+1][lmax+1];
+    double sin_coeff[nmax+1][lmax+1][lmax+1];
+    double cos_coeff[nmax+1][lmax+1][lmax+1];
+
+    int num_coeff = 0;
+    for (n=0; n<(nmax+1); n++) {
+        for (l=0; l<(lmax+1); l++) {
+            for (m=0; m<(lmax+1); m++) {
+                num_coeff++;
+            }
+        }
+    }
+
+    i = 0;
+    for (n=0; n<(nmax+1); n++) {
+        for (l=0; l<(lmax+1); l++) {
+            for (m=0; m<(lmax+1); m++) {
+                sin_coeff[n][l][m] = pars[5+i];
+                cos_coeff[n][l][m] = pars[5+i+num_coeff];
+                i++;
+            }
+        }
+    }
+
+    double phinltil,costh,un,xi,phi,R,unm1,plm1m,plm2m;
+    double clm,dlm,temp3;
+
+    // temp arrays
+    double twoalpha[lmax+1];
+    double dblfact[lmax+1];
+    double c1[nmax][lmax+1];
+    double c2[nmax][lmax+1];
+    double c3[nmax];
+
+    // zero out arrays
+    for (n=0; n < nmax+1; n++) {
+        for (l=0; l < (lmax+1); l++) {
+            ultrasp[n][l] = 0.;
+            c1[n][l] = 0.;
+            c2[n][l] = 0.;
+        }
+        c3[n] = 0.;
+    }
+    for (l=0; l < (lmax+1); l++) {
+        twoalpha[l] = 0.;
+        dblfact[l] = 0.;
+        for (m=0; m < (lmax+1); m++) {
+            plm[l][m] = 0.;
+        }
+    }
+    _compute_helpers(twoalpha, dblfact, (double *)c1, (double *)c2, c3, nmax, lmax);
+
+    // position
+    R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
+    costh = r[2]/R;
+    phi = atan2(r[1], r[0]);
+    xi = (R-1.)/(R+1.);
+
+    for (m=0; m < (lmax+1); m++) {
+        cosmphi[m] = cos(m*phi);
+        sinmphi[m] = sin(m*phi);
+    }
+
+    for (l=0; l < (lmax+1); l++) {
+        ultrasp[0][l] = 1.0;
+        ultrasp[1][l] = twoalpha[l]*xi;
+
+        un = ultrasp[1][l];
+        unm1 = 1.0;
+        for (n=1; n < nmax; n++) {
+            ultrasp[n+1][l] = (c1[n-1][l]*xi*un - c2[n-1][l]*unm1) * c3[n-1];
+            unm1 = un;
+            un = ultrasp[n+1][l];
+        }
+    }
+
+    for (m=0; m < (lmax+1); m++) {
+        plm[m][m] = 1.0;
+        if (m > 0) {
+            plm[m][m] = pow(-1.,m) * dblfact[m] * pow(sqrt(1.-costh*costh),m);
+        }
+
+        plm1m = plm[m][m];
+        plm2m = 0.0;
+        for (l=m+1; l < (lmax+1); l++) {
+            plm[l][m] = (costh*(2.*l-1.)*plm1m-(l+m-1.)*plm2m)/(l-m);
+            plm2m = plm1m;
+            plm1m = plm[l][m];
+        }
+    }
+
+    for (l=0; l < (lmax+1); l++) {
+        temp3 = 0.0;
+        for (m=0; m < (l+1); m++) {
+            clm = 0.0;
+            dlm = 0.0;
+            for (n=0; n < (nmax+1); n++) {
+                clm += ultrasp[n][l] * cos_coeff[n][l][m];
+                dlm += ultrasp[n][l] * sin_coeff[n][l][m];
+            }
+
+            temp3 = temp3 + plm[l][m] * (clm*cosmphi[m] + dlm*sinmphi[m]);
+        }
+
+        phinltil = pow(R,l) / pow((1.+R), (2*l+1));
+        pot = pot + temp3*phinltil;
+    }
+    return -G*M/r_s * pot;
+}
+
+double scf_gradient(double t, double *pars, double *r, double *grad) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - r_s (length scale)
+            - nmax
+            - lmax
+            [- sin_coeff, cos_coeff]
+    */
+    int n,l,m,i;
+
+    double G = pars[0];
+    double M = pars[1];
+    double r_s = pars[2];
+    int nmax = (int)pars[3];
+    int lmax = (int)pars[4];
+
+    // return value
+    double pot = 0.;
+
+    // initialize empty arrays
+    double cosmphi[lmax+1];
+    double sinmphi[lmax+1];
+    double ultrasp[nmax+1][lmax+1];
+    double ultrasp1[nmax+1][lmax+1];
+    double plm[lmax+1][lmax+1];
+    double dplm[lmax+1][lmax+1];
+    double sin_coeff[nmax+1][lmax+1][lmax+1];
+    double cos_coeff[nmax+1][lmax+1][lmax+1];
+
+    int num_coeff = 0;
+    for (n=0; n<(nmax+1); n++) {
+        for (l=0; l<(lmax+1); l++) {
+            for (m=0; m<(lmax+1); m++) {
+                num_coeff++;
+            }
+        }
+    }
+
+    i = 0;
+    for (n=0; n<(nmax+1); n++) {
+        for (l=0; l<(lmax+1); l++) {
+            for (m=0; m<(lmax+1); m++) {
+                sin_coeff[n][l][m] = pars[5+i];
+                cos_coeff[n][l][m] = pars[5+i+num_coeff];
+                i++;
+            }
+        }
+    }
+
+    double phinltil,costh,un,xi,phi,R,unm1,plm1m,plm2m;
+    double cosp,sinp,sinth;
+    double ar,aphi,ath;
+    double clm,dlm,elm,flm;
+    double temp3,temp4,temp5,temp6;
+
+    // temp arrays
+    double twoalpha[lmax+1];
+    double dblfact[lmax+1];
+    double c1[nmax][lmax+1];
+    double c2[nmax][lmax+1];
+    double c3[nmax];
+
+    // zero out arrays
+    for (n=0; n < nmax+1; n++) {
+        for (l=0; l < (lmax+1); l++) {
+            ultrasp[n][l] = 0.;
+            ultrasp1[n][l] = 0.;
+            c1[n][l] = 0.;
+            c2[n][l] = 0.;
+        }
+        c3[n] = 0.;
+    }
+    for (l=0; l < (lmax+1); l++) {
+        twoalpha[l] = 0.;
+        dblfact[l] = 0.;
+        for (m=0; m < (lmax+1); m++) {
+            plm[l][m] = 0.;
+            dplm[l][m] = 0.;
+        }
+    }
+    _compute_helpers(twoalpha, dblfact, (double *)c1, (double *)c2, c3, nmax, lmax);
+
+    // position
+    R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
+    costh = r[2]/R;
+    phi = atan2(r[1], r[0]);
+    xi = (R-1.)/(R+1.);
+
+    for (m=0; m < (lmax+1); m++) {
+        cosmphi[m] = cos(m*phi);
+        sinmphi[m] = sin(m*phi);
+    }
+
+    ar = 0.;
+    ath = 0.;
+    aphi = 0.;
+    for (l=0; l < (lmax+1); l++) {
+        ultrasp[0][l] = 1.0;
+        ultrasp[1][l] = twoalpha[l]*xi;
+        ultrasp1[0][l] = 0.0;
+        ultrasp1[1][l] = 1.0;
+
+        un = ultrasp[1][l];
+        unm1 = 1.0;
+        for (n=1; n < nmax; n++) {
+            ultrasp[n+1][l] = (c1[n-1][l]*xi*un - c2[n-1][l]*unm1) * c3[n-1];
+            unm1 = un;
+            un = ultrasp[n+1][l];
+            ultrasp1[n+1][l] = ((twoalpha[l] + (n+1)-1.)*unm1-(n+1)*xi*ultrasp[n+1][l]) / \
+                                (twoalpha[l]*(1.-xi*xi));
+        }
+    }
+
+    for (m=0; m < (lmax+1); m++) {
+        plm[m][m] = 1.0;
+        if (m > 0) {
+            plm[m][m] = pow(-1.,m) * dblfact[m] * pow(sqrt(1.-costh*costh),m);
+        }
+
+        plm1m = plm[m][m];
+        plm2m = 0.0;
+
+        for (l=m+1; l < (lmax+1); l++) {
+            plm[l][m] = (costh*(2.*l-1.)*plm1m-(l+m-1.)*plm2m)/(l-m);
+            plm2m = plm1m;
+            plm1m = plm[l][m];
+        }
+    }
+
+    dplm[0][0] = 0.0;
+    for (l=1; l < (lmax+1); l++) {
+        for (m=0; m < l; m++) {
+            if (l == m) {
+                dplm[l][m] = l*costh*plm[l][m] / (costh*costh-1.0);
+            } else {
+                dplm[l][m] = ((l*costh*plm[l][m]-(l+m)*plm[l-1][m]) /
+                             (costh*costh-1.0));
+            }
+        }
+    }
+
+    for (l=0; l < (lmax+1); l++) {
+        temp3 = 0.0;
+        temp4 = 0.0;
+        temp5 = 0.0;
+        temp6 = 0.0;
+
+        for (m=0; m < (l+1); m++) {
+            clm = 0.0;
+            dlm = 0.0;
+            elm = 0.0;
+            flm = 0.0;
+
+            for (n=0; n < (nmax+1); n++) {
+                clm += ultrasp[n][l] * cos_coeff[n][l][m];
+                dlm += ultrasp[n][l] * sin_coeff[n][l][m];
+                elm += ultrasp1[n][l] * cos_coeff[n][l][m];
+                flm += ultrasp1[n][l] * sin_coeff[n][l][m];
+            }
+
+            temp3 += plm[l][m] * (clm*cosmphi[m] + dlm*sinmphi[m]);
+            temp4 -= plm[l][m] * (elm*cosmphi[m] + flm*sinmphi[m]);
+            temp5 -= dplm[l][m] * (clm*cosmphi[m] + dlm*sinmphi[m]);
+            temp6 -= m*plm[l][m] * (dlm*cosmphi[m] - clm*sinmphi[m]);
+        }
+
+        phinltil = pow(R,l) / pow((1.+R), (2*l+1));
+        ar += phinltil*(-temp3*(l/R-(2.*l+1.)/(1.+R)) + \
+                        temp4*4.*(2.*l+1.5)/pow(1.+R,2));
+        ath += temp5*phinltil;
+        aphi += temp6*phinltil;
+    }
+
+    cosp = cos(phi);
+    sinp = sin(phi);
+
+    sinth = sqrt(1.-costh*costh);
+    ath = -sinth*ath/R;
+    aphi = aphi/(R*sinth);
+
+    grad[0] = -G*M/r_s * (sinth*cosp*ar + costh*cosp*ath - sinp*aphi);
+    grad[1] = -G*M/r_s * (sinth*sinp*ar + costh*sinp*ath + cosp*aphi);
+    grad[2] = -G*M/r_s * (costh*ar - sinth*ath);
+}
+
+
+double wang_zhao_bar_value(double t, double *pars, double *r) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - r_s (length scale)
+            - pattern speed
+            - initial bar angle
+    */
+
+    // int n,l,m,i;
+
+    // double G = &pars[0];
+    // double m = &pars[1];
+    // double r_s = &pars[2];
+    // int nmax = (int)&pars[3];
+    // int lmax = (int)&pars[4];
+
+}
