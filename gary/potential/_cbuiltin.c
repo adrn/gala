@@ -4,12 +4,12 @@
 /* ---------------------------------------------------------------------------
     Henon-Heiles potential
 */
-double henon_heiles_value(double *pars, double *q) {
+double henon_heiles_value(double t, double *pars, double *q) {
     /*  no parameters... */
     return 0.5 * (q[0]*q[0] + q[1]*q[1] + 2*q[0]*q[0]*q[1] - 2/3.*q[1]*q[1]*q[1]);
 }
 
-void henon_heiles_gradient(double *pars, double *q, double *grad) {
+void henon_heiles_gradient(double t, double *pars, double *q, double *grad) {
     /*  no parameters... */
     grad[0] = q[0] + 2*q[0]*q[1];
     grad[1] = q[1] + q[0]*q[0] - q[1]*q[1];
@@ -18,7 +18,7 @@ void henon_heiles_gradient(double *pars, double *q, double *grad) {
 /* ---------------------------------------------------------------------------
     Kepler potential
 */
-double kepler_value(double *pars, double *q) {
+double kepler_value(double t, double *pars, double *q) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -28,7 +28,7 @@ double kepler_value(double *pars, double *q) {
     return -pars[0] * pars[1] / R;
 }
 
-void kepler_gradient(double *pars, double *r, double *grad) {
+void kepler_gradient(double t, double *pars, double *r, double *grad) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -45,7 +45,7 @@ void kepler_gradient(double *pars, double *r, double *grad) {
 /* ---------------------------------------------------------------------------
     Isochrone potential
 */
-double isochrone_value(double *pars, double *q) {
+double isochrone_value(double t, double *pars, double *q) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -56,7 +56,7 @@ double isochrone_value(double *pars, double *q) {
     return -pars[0] * pars[1] / (sqrt(R2 + pars[2]*pars[2]) + pars[2]);
 }
 
-void isochrone_gradient(double *pars, double *r, double *grad) {
+void isochrone_gradient(double t, double *pars, double *r, double *grad) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -75,7 +75,7 @@ void isochrone_gradient(double *pars, double *r, double *grad) {
 /* ---------------------------------------------------------------------------
     Hernquist sphere
 */
-double hernquist_value(double *pars, double *q) {
+double hernquist_value(double t, double *pars, double *q) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -86,7 +86,7 @@ double hernquist_value(double *pars, double *q) {
     return -pars[0] * pars[1] / (R + pars[2]);
 }
 
-void hernquist_gradient(double *pars, double *r, double *grad) {
+void hernquist_gradient(double t, double *pars, double *r, double *grad) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -104,7 +104,7 @@ void hernquist_gradient(double *pars, double *r, double *grad) {
 /* ---------------------------------------------------------------------------
     Plummer sphere
 */
-double plummer_value(double *pars, double *r) {
+double plummer_value(double t, double *pars, double *r) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -114,7 +114,7 @@ double plummer_value(double *pars, double *r) {
     return -pars[0]*pars[1] / sqrt(R2 + pars[2]*pars[2]);
 }
 
-void plummer_gradient(double *pars, double *r, double *grad) {
+void plummer_gradient(double t, double *pars, double *r, double *grad) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -132,7 +132,7 @@ void plummer_gradient(double *pars, double *r, double *grad) {
 /* ---------------------------------------------------------------------------
     Jaffe sphere
 */
-double jaffe_value(double *pars, double *r) {
+double jaffe_value(double t, double *pars, double *r) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -143,7 +143,7 @@ double jaffe_value(double *pars, double *r) {
     return pars[0] * pars[1] / pars[2] * log(R / (R + pars[2]));
 }
 
-void jaffe_gradient(double *pars, double *r, double *grad){
+void jaffe_gradient(double t, double *pars, double *r, double *grad){
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -161,7 +161,7 @@ void jaffe_gradient(double *pars, double *r, double *grad){
 /* ---------------------------------------------------------------------------
     Stone-Ostriker potential from Stone & Ostriker (2015)
 */
-double stone_value(double *pars, double *r) {
+double stone_value(double t, double *pars, double *r) {
     /*  pars:
             - G (Gravitational constant)
             - m (total mass)
@@ -178,7 +178,7 @@ double stone_value(double *pars, double *r) {
                       0.5*log((rr*rr + pars[3]*pars[3])/(rr*rr + pars[2]*pars[2])));
 }
 
-void stone_gradient(double *pars, double *r, double *grad) {
+void stone_gradient(double t, double *pars, double *r, double *grad) {
     double dphi_dr, rr;
     // TODO: not implemented
 
@@ -190,14 +190,14 @@ void stone_gradient(double *pars, double *r, double *grad) {
 /* ---------------------------------------------------------------------------
     Spherical NFW
 */
-double sphericalnfw_value(double *pars, double *r) {
+double sphericalnfw_value(double t, double *pars, double *r) {
     double u, v_h2;
     v_h2 = pars[0]*pars[0] / (log(2.) - 0.5);
     u = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / pars[1];
     return -v_h2 * log(1 + u) / u;
 }
 
-void sphericalnfw_gradient(double *pars, double *r, double *grad) {
+void sphericalnfw_gradient(double t, double *pars, double *r, double *grad) {
     double fac, u, v_h2;
     v_h2 = pars[0]*pars[0] / (log(2.) - 0.5);
 
@@ -212,7 +212,7 @@ void sphericalnfw_gradient(double *pars, double *r, double *grad) {
 /* ---------------------------------------------------------------------------
     Miyamoto-Nagai flattened potential
 */
-double miyamotonagai_value(double *pars, double *r) {
+double miyamotonagai_value(double t, double *pars, double *r) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -224,7 +224,7 @@ double miyamotonagai_value(double *pars, double *r) {
     return -pars[0] * pars[1] / sqrt(r[0]*r[0] + r[1]*r[1] + zd*zd);
 }
 
-void miyamotonagai_gradient(double *pars, double *r, double *grad) {
+void miyamotonagai_gradient(double t, double *pars, double *r, double *grad) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -245,7 +245,7 @@ void miyamotonagai_gradient(double *pars, double *r, double *grad) {
 /* ---------------------------------------------------------------------------
     Lee-Suto triaxial NFW from Lee & Suto (2003)
 */
-double leesuto_value(double *pars, double *r) {
+double leesuto_value(double t, double *pars, double *r) {
     /*  pars: TODO
             -
     */
@@ -265,7 +265,7 @@ double leesuto_value(double *pars, double *r) {
     return v_h2 * ((e_b2/2 + e_c2/2)*((1/u - 1/(u*u*u))*log(u + 1) - 1 + (2*u*u - 3*u + 6)/(6*u*u)) + (e_b2*y*y/(2*_r*_r) + e_c2*z*z/(2*_r*_r))*((u*u - 3*u - 6)/(2*u*u*(u + 1)) + 3*log(u + 1)/(u*u*u)) - log(u + 1)/u);
 }
 
-void leesuto_gradient(double *pars, double *r, double *grad) {
+void leesuto_gradient(double t, double *pars, double *r, double *grad) {
     /*  pars: TODO
             -
     */
@@ -313,7 +313,7 @@ void leesuto_gradient(double *pars, double *r, double *grad) {
 /* ---------------------------------------------------------------------------
     Logarithmic (triaxial)
 */
-double logarithmic_value(double *pars, double *r) {
+double logarithmic_value(double t, double *pars, double *r) {
     double x, y, z;
 
     // pars[5] up to and including pars[10] are R
@@ -327,7 +327,7 @@ double logarithmic_value(double *pars, double *r) {
                                      z*z/(pars[4]*pars[4]));
 }
 
-void logarithmic_gradient(double *pars, double *r, double *grad) {
+void logarithmic_gradient(double t, double *pars, double *r, double *grad) {
 
     double x, y, z, ax, ay, az, fac;
 
@@ -347,7 +347,7 @@ void logarithmic_gradient(double *pars, double *r, double *grad) {
 }
 
 /* TOTAL HACK */
-double lm10_value(double *pars, double*r) {
+double lm10_value(double t, double *pars, double*r) {
     double v = 0.;
     v += hernquist_value(&pars[0], &r[0]);
     v += miyamotonagai_value(&pars[3], &r[0]);
@@ -355,7 +355,7 @@ double lm10_value(double *pars, double*r) {
     return v;
 }
 
-void lm10_gradient(double *pars, double *r, double *grad) {
+void lm10_gradient(double t, double *pars, double *r, double *grad) {
     double tmp_grad[3];
     int i;
 

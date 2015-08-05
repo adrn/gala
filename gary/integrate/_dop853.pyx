@@ -25,7 +25,7 @@ cdef extern from "math.h":
     double log(double x) nogil
 
 cdef extern from "dopri/dop853.h":
-    ctypedef void (*GradFn)(double *pars, double *q, double *grad) nogil
+    ctypedef void (*GradFn)(double t, double *pars, double *q, double *grad) nogil
     ctypedef void (*SolTrait)(long nr, double xold, double x, double* y, unsigned n, int* irtrn)
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f, GradFn gradfunc, double *gpars, unsigned norbits) nogil
     double contd8 (unsigned ii, double x)
@@ -50,22 +50,6 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
     # TODO: see here for example in FORTRAN:
     #   http://www.unige.ch/~hairer/prog/nonstiff/dr_dop853.f
     pass
-    # cdef double xout, dx
-
-    # if xold == x:
-    #     return
-
-    # print("nr={} xold={} x={} y={} n={}".format(nr, xold, x, y[0], n))
-
-    # # TODO: this is bad - should use a fixed size?
-    # dx = (x - xold) / 10.
-    # xout = xold + dx
-    # while xout <= x:
-    #     print("{0:.5f} {1:.5f} {2:.5f} {3:.3f}".format(contd8(0, xout),
-    #                                                    contd8(1, xout),
-    #                                                    contd8(2, xout),
-    #                                                    dx))
-    #     xout += dx
 
 cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
                                  double dt0, int nsteps, double t0,
@@ -93,10 +77,6 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
 
     # TODO: dense output?
     iout = 0  # no solout calls
-    # iout = 2  # dense output
-
-    # F(ndim, 0., &w[0], &f[0],
-    #   <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]))
 
     for j in range(1,nsteps,1):
         res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
