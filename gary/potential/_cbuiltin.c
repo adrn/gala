@@ -1,5 +1,4 @@
 #include <math.h>
-#include "brent.h"
 
 /* ---------------------------------------------------------------------------
     Henon-Heiles potential
