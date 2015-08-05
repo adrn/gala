@@ -1,5 +1,5 @@
-ctypedef double (*valuefunc)(double *pars, double *q) nogil
-ctypedef void (*gradientfunc)(double *pars, double *q, double *grad) nogil
+ctypedef double (*valuefunc)(double t, double *pars, double *q) nogil
+ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
 
 cdef class _CPotential:
     cdef double *_parameters
