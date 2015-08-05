@@ -77,15 +77,12 @@ cdef extern from "_cbuiltin.h":
     double lm10_value(double *pars, double *q) nogil
     void lm10_gradient(double *pars, double *q, double *grad) nogil
 
-    double spherical_hernquist_bfe_value(double *pars, double *q) nogil
-    void spherical_hernquist_bfe_gradient(double *pars, double *q, double *grad) nogil
-
 __all__ = ['HenonHeilesPotential', 'KeplerPotential', 'HernquistPotential',
            'PlummerPotential', 'MiyamotoNagaiPotential',
            'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential',
            'LogarithmicPotential', 'JaffePotential',
            'StonePotential', 'IsochronePotential',
-           'LM10Potential', 'SphericalBFEPotential']
+           'LM10Potential']
 
 # ============================================================================
 #    Hénon-Heiles potential
@@ -754,45 +751,3 @@ class LM10Potential(CPotentialBase):
         c_params['R32'] = R[7]
         c_params['R33'] = R[8]
         self.c_instance = _LM10Potential(**c_params)
-
-# ============================================================================
-#    Spherical Hernquist Basis Function Expansion potential
-#
-cdef class _SphericalBFEPotential(_CPotential):
-
-    def __cinit__(self, int nmax, double G, double m, double c, *args):
-        self._parvec = np.array([nmax, G, m, c] + list(args))
-        self._parameters = &(self._parvec)[0]
-        self.c_value = &spherical_hernquist_bfe_value
-        self.c_gradient = &spherical_hernquist_bfe_gradient
-
-class SphericalBFEPotential(CPotentialBase):
-    r"""
-    SphericalBFEPotential(m, c, coeffs, units)
-
-    TODO:
-
-    Parameters
-    ----------
-    TODO
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units.
-
-    """
-    def __init__(self, m, c, coeffs, units):
-        self.parameters = dict(m=m, c=c, coeffs=coeffs)
-        super(SphericalBFEPotential, self).__init__(units=units)
-        self.G = G.decompose(units).value
-
-        c_params = list()
-        c_params.append(len(coeffs)-1)
-        c_params.append(self.G)
-        c_params.append(m)
-        c_params.append(c)
-
-        for co in coeffs:
-            c_params.append(co)
-
-        self.c_instance = _SphericalBFEPotential(*c_params)
-
