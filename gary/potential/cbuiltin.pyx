@@ -41,41 +41,41 @@ cdef extern from "math.h":
     double pow(double x, double n) nogil
 
 cdef extern from "_cbuiltin.h":
-    double henon_heiles_value(double *pars, double *q) nogil
-    void henon_heiles_gradient(double *pars, double *q, double *grad) nogil
+    double henon_heiles_value(double t, double *pars, double *q) nogil
+    void henon_heiles_gradient(double t, double *pars, double *q, double *grad) nogil
 
-    double kepler_value(double *pars, double *q) nogil
-    void kepler_gradient(double *pars, double *q, double *grad) nogil
+    double kepler_value(double t, double *pars, double *q) nogil
+    void kepler_gradient(double t, double *pars, double *q, double *grad) nogil
 
-    double isochrone_value(double *pars, double *q) nogil
-    void isochrone_gradient(double *pars, double *q, double *grad) nogil
+    double isochrone_value(double t, double *pars, double *q) nogil
+    void isochrone_gradient(double t, double *pars, double *q, double *grad) nogil
 
-    double hernquist_value(double *pars, double *q) nogil
-    void hernquist_gradient(double *pars, double *q, double *grad) nogil
+    double hernquist_value(double t, double *pars, double *q) nogil
+    void hernquist_gradient(double t, double *pars, double *q, double *grad) nogil
 
-    double plummer_value(double *pars, double *q) nogil
-    void plummer_gradient(double *pars, double *q, double *grad) nogil
+    double plummer_value(double t, double *pars, double *q) nogil
+    void plummer_gradient(double t, double *pars, double *q, double *grad) nogil
 
-    double jaffe_value(double *pars, double *q) nogil
-    void jaffe_gradient(double *pars, double *q, double *grad) nogil
+    double jaffe_value(double t, double *pars, double *q) nogil
+    void jaffe_gradient(double t, double *pars, double *q, double *grad) nogil
 
-    double stone_value(double *pars, double *q) nogil
-    void stone_gradient(double *pars, double *q, double *grad) nogil
+    double stone_value(double t, double *pars, double *q) nogil
+    void stone_gradient(double t, double *pars, double *q, double *grad) nogil
 
-    double sphericalnfw_value(double *pars, double *q) nogil
-    void sphericalnfw_gradient(double *pars, double *q, double *grad) nogil
+    double sphericalnfw_value(double t, double *pars, double *q) nogil
+    void sphericalnfw_gradient(double t, double *pars, double *q, double *grad) nogil
 
-    double miyamotonagai_value(double *pars, double *q) nogil
-    void miyamotonagai_gradient(double *pars, double *q, double *grad) nogil
+    double miyamotonagai_value(double t, double *pars, double *q) nogil
+    void miyamotonagai_gradient(double t, double *pars, double *q, double *grad) nogil
 
-    double leesuto_value(double *pars, double *q) nogil
-    void leesuto_gradient(double *pars, double *q, double *grad) nogil
+    double leesuto_value(double t, double *pars, double *q) nogil
+    void leesuto_gradient(double t, double *pars, double *q, double *grad) nogil
 
-    double logarithmic_value(double *pars, double *q) nogil
-    void logarithmic_gradient(double *pars, double *q, double *grad) nogil
+    double logarithmic_value(double t, double *pars, double *q) nogil
+    void logarithmic_gradient(double t, double *pars, double *q, double *grad) nogil
 
-    double lm10_value(double *pars, double *q) nogil
-    void lm10_gradient(double *pars, double *q, double *grad) nogil
+    double lm10_value(double t, double *pars, double *q) nogil
+    void lm10_gradient(double t, double *pars, double *q, double *grad) nogil
 
 __all__ = ['HenonHeilesPotential', 'KeplerPotential', 'HernquistPotential',
            'PlummerPotential', 'MiyamotoNagaiPotential',

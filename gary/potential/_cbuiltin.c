@@ -348,9 +348,9 @@ void logarithmic_gradient(double t, double *pars, double *r, double *grad) {
 /* TOTAL HACK */
 double lm10_value(double t, double *pars, double*r) {
     double v = 0.;
-    v += hernquist_value(&pars[0], &r[0]);
-    v += miyamotonagai_value(&pars[3], &r[0]);
-    v += logarithmic_value(&pars[7], &r[0]);
+    v += hernquist_value(0., &pars[0], &r[0]);
+    v += miyamotonagai_value(0., &pars[3], &r[0]);
+    v += logarithmic_value(0., &pars[7], &r[0]);
     return v;
 }
 
@@ -358,12 +358,12 @@ void lm10_gradient(double t, double *pars, double *r, double *grad) {
     double tmp_grad[3];
     int i;
 
-    hernquist_gradient(&pars[0], &r[0], &tmp_grad[0]);
+    hernquist_gradient(0., &pars[0], &r[0], &tmp_grad[0]);
     for (i=0; i<3; i++) grad[i] = tmp_grad[i];
 
-    miyamotonagai_gradient(&pars[3], &r[0], &tmp_grad[0]);
+    miyamotonagai_gradient(0., &pars[3], &r[0], &tmp_grad[0]);
     for (i=0; i<3; i++) grad[i] += tmp_grad[i];
 
-    logarithmic_gradient(&pars[7], &r[0], &tmp_grad[0]);
+    logarithmic_gradient(0., &pars[7], &r[0], &tmp_grad[0]);
     for (i=0; i<3; i++) grad[i] += tmp_grad[i];
 }
