@@ -59,7 +59,7 @@ class CPotentialBase(PotentialBase):
         q : array_like, numeric
             Position to compute the value of the potential.
         """
-        return self.c_instance.value(np.atleast_2d(q).copy())
+        return self.c_instance.value(0., np.atleast_2d(q).copy())
 
     def gradient(self, q):
         """
@@ -73,7 +73,7 @@ class CPotentialBase(PotentialBase):
             Position to compute the gradient.
         """
         try:
-            return self.c_instance.gradient(np.atleast_2d(q).copy())
+            return self.c_instance.gradient(0., np.atleast_2d(q).copy())
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
@@ -148,7 +148,7 @@ cdef class _CPotential:
         return np.array(pot)
 
     cdef public inline double _value(self, double *r) nogil:
-        return self.c_value(self._parameters, r)
+        return self.c_value(0., self._parameters, r)
 
     # -------------------------------------------------------------
     cpdef gradient(self, double[:,::1] q):
@@ -163,7 +163,7 @@ cdef class _CPotential:
         return np.array(grad)
 
     cdef public inline void _gradient(self, double *r, double *grad) nogil:
-        self.c_gradient(self._parameters, r, grad)
+        self.c_gradient(0., self._parameters, r, grad)
 
     # -------------------------------------------------------------
     cpdef hessian(self, double[:,::1] w):
