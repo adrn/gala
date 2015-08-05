@@ -983,7 +983,7 @@ void Fwrapper (unsigned full_ndim, double t, double *w, double *f,
 
     // call gradient function
     for (i=0; i < norbits; i++) {
-        funk(pars, &w[i*ndim], &f[i*ndim + half_ndim]);
+        funk(t, pars, &w[i*ndim], &f[i*ndim + half_ndim]);
 
         for (k=0; k < half_ndim; k++) {
             // f[k] = w[k+half_ndim]
