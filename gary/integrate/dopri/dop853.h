@@ -184,7 +184,7 @@ nfcnRead    Number of function calls.
 #include <stdio.h>
 #include <limits.h>
 
-typedef void (*GradFn)(double *pars, double *q, double *grad);
+typedef void (*GradFn)(double t, double *pars, double *q, double *grad);
 typedef void (*SolTrait)(long nr, double xold, double x, double* y, unsigned n, int* irtrn);
 typedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f, GradFn gradfunc, double *gpars, unsigned norbits);
 
