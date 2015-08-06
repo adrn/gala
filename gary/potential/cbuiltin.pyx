@@ -851,8 +851,8 @@ class OphiuchusPotential(CPotentialBase):
         self.G = G.decompose(units).value
         self.parameters = dict()
         default_spheroid = dict(m=0.9E10, c=0.2)
-        default_disk = dict(m=1.E10, a=3, b=0.28) # similar to Bovy
-        default_halo = dict(v_c=0.21, r_s=15.)
+        default_disk = dict(m=5.E10, a=3, b=0.28) # similar to Bovy
+        default_halo = dict(v_c=0.21, r_s=30.)
         default_bar = dict(m=1.E10, r_s=4.8, alpha=0.349065850398, Omega=0.06136272990322247) # from Wang, Zhao, et al.
 
         for k,v in default_disk.items():
