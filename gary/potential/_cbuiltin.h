@@ -35,4 +35,4 @@ extern double lm10_value(double t, double *pars, double *q);
 extern void lm10_gradient(double t, double *pars, double *q, double *grad);
 
 extern double scf_value(double t, double *pars, double *q);
-extern void scf_acceleration(double t, double *pars, double *q, double *grad);
+extern void scf_gradient(double t, double *pars, double *q, double *grad);
