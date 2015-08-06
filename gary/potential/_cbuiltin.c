@@ -392,8 +392,8 @@ void _compute_helpers(double *twoalpha, double *dblfact,
     for (n=1; n<(nmax+1); n++) {
         c3[n-1] = 1./(n+1);
         for (l=0; l<(lmax+1); l++) {
-            c1[get_idx(nmax+1,n-1,l)] = 2.0*n + twoalpha[l];
-            c2[get_idx(nmax+1,n-1,l)] = n-1.0 + twoalpha[l];
+            c1[get_idx(nmax-1,n-1,l)] = 2.0*n + twoalpha[l];
+            c2[get_idx(nmax-1,n-1,l)] = n-1.0 + twoalpha[l];
         }
     }
 }
@@ -422,7 +422,9 @@ double scf_value(double t, double *pars, double *r) {
     double cosmphi[lmax+1];
     double sinmphi[lmax+1];
     double ultrasp[nmax+1][lmax+1];
+    memset(ultrasp, 0., (nmax+1)*(lmax+1)*sizeof(double));
     double plm[lmax+1][lmax+1];
+    memset(plm, 0., (lmax+1)*(lmax+1)*sizeof(double));
     double sin_coeff[nmax+1][lmax+1][lmax+1];
     double cos_coeff[nmax+1][lmax+1][lmax+1];
 
@@ -451,27 +453,16 @@ double scf_value(double t, double *pars, double *r) {
 
     // temp arrays
     double twoalpha[lmax+1];
+    memset(twoalpha, 0., (lmax+1)*sizeof(double));
     double dblfact[lmax+1];
+    memset(dblfact, 0., (lmax+1)*sizeof(double));
     double c1[nmax][lmax+1];
+    memset(c1, 0., (nmax)*(lmax+1)*sizeof(double));
     double c2[nmax][lmax+1];
+    memset(c2, 0., (nmax)*(lmax+1)*sizeof(double));
     double c3[nmax];
+    memset(c3, 0., (nmax)*sizeof(double));
 
-    // zero out arrays
-    for (n=0; n < nmax+1; n++) {
-        for (l=0; l < (lmax+1); l++) {
-            ultrasp[n][l] = 0.;
-            c1[n][l] = 0.;
-            c2[n][l] = 0.;
-        }
-        c3[n] = 0.;
-    }
-    for (l=0; l < (lmax+1); l++) {
-        twoalpha[l] = 0.;
-        dblfact[l] = 0.;
-        for (m=0; m < (lmax+1); m++) {
-            plm[l][m] = 0.;
-        }
-    }
     _compute_helpers(twoalpha, dblfact, (double *)c1, (double *)c2, c3, nmax, lmax);
 
     // position
@@ -506,7 +497,7 @@ double scf_value(double t, double *pars, double *r) {
 
         plm1m = plm[m][m];
         plm2m = 0.0;
-        for (l=m+1; l < (lmax+1); l++) {
+        for (l=(m+1); l < (lmax+1); l++) {
             plm[l][m] = (costh*(2.*l-1.)*plm1m-(l+m-1.)*plm2m)/(l-m);
             plm2m = plm1m;
             plm1m = plm[l][m];
@@ -523,11 +514,11 @@ double scf_value(double t, double *pars, double *r) {
                 dlm += ultrasp[n][l] * sin_coeff[n][l][m];
             }
 
-            temp3 = temp3 + plm[l][m] * (clm*cosmphi[m] + dlm*sinmphi[m]);
+            temp3 += plm[l][m] * (clm*cosmphi[m] + dlm*sinmphi[m]);
         }
 
         phinltil = pow(R,l) / pow((1.+R), (2*l+1));
-        pot = pot + temp3*phinltil;
+        pot += temp3*phinltil;
     }
     return -G*M/r_s * pot;
 }
