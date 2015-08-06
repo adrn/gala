@@ -48,7 +48,7 @@ class CPotentialBase(PotentialBase):
 
     """
 
-    def value(self, q):
+    def value(self, q, t=0.):
         """
         value(q)
 
@@ -59,9 +59,9 @@ class CPotentialBase(PotentialBase):
         q : array_like, numeric
             Position to compute the value of the potential.
         """
-        return self.c_instance.value(np.atleast_2d(q).copy())
+        return self.c_instance.value(np.atleast_2d(q).copy(), t=t)
 
-    def gradient(self, q):
+    def gradient(self, q, t=0.):
         """
         gradient(q)
 
@@ -73,7 +73,7 @@ class CPotentialBase(PotentialBase):
             Position to compute the gradient.
         """
         try:
-            return self.c_instance.gradient(np.atleast_2d(q).copy())
+            return self.c_instance.gradient(np.atleast_2d(q).copy(), t=t)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
@@ -98,7 +98,7 @@ class CPotentialBase(PotentialBase):
     # ----------------------------
     # Functions of the derivatives
     # ----------------------------
-    def mass_enclosed(self, q):
+    def mass_enclosed(self, q, t=0.):
         """
         mass_enclosed(q)
 
@@ -111,7 +111,7 @@ class CPotentialBase(PotentialBase):
             Position to compute the mass enclosed.
         """
         try:
-            return self.c_instance.mass_enclosed(np.atleast_2d(q).copy(), self.G)
+            return self.c_instance.mass_enclosed(np.atleast_2d(q).copy(), self.G, t=t)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "mass_enclosed function")
