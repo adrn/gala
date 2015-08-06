@@ -537,7 +537,7 @@ double scf_gradient(double t, double *pars, double *r, double *grad) {
             - r_s (length scale)
             - nmax
             - lmax
-            [- sin_coeff, cos_coeff]
+            [sin_coeff, cos_coeff]
     */
     int n,l,m,i;
 
