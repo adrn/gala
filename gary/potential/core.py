@@ -338,7 +338,7 @@ class PotentialBase(object):
 
             w0 = np.ascontiguousarray(np.atleast_2d(w0))
             return dop853_integrate_potential(self.c_instance, w0,
-                                              t[1]-t[0], len(t), t[0],
+                                              t,
                                               Integrator_kwargs.get('atol', 1E-9),
                                               Integrator_kwargs.get('rtol', 1E-9),
                                               Integrator_kwargs.get('nmax', 0))

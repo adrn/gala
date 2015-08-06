@@ -51,8 +51,9 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
     #   http://www.unige.ch/~hairer/prog/nonstiff/dr_dop853.f
     pass
 
+# double dt0, int nsteps, double t0,
 cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
-                                 double dt0, int nsteps, double t0,
+                                 double[::1] t,
                                  double atol, double rtol, int nmax):
     # TODO: add option for a callback function to be called at each step
     cdef:
@@ -62,8 +63,8 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
         unsigned ndim = w0.shape[1]
 
         # define full array of times
-        double t_end = (<double>nsteps) * dt0
-        double[::1] t = np.linspace(t0, t_end, nsteps)
+        int nsteps = len(t)
+        double dt0 = t[1]-t[0]
         double[::1] w = np.empty(norbits*ndim)
 
         # Note: icont not needed because nrdens == ndim
