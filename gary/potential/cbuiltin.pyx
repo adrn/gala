@@ -77,12 +77,15 @@ cdef extern from "_cbuiltin.h":
     double lm10_value(double t, double *pars, double *q) nogil
     void lm10_gradient(double t, double *pars, double *q, double *grad) nogil
 
+    double scf_value(double t, double *pars, double *q) nogil
+    void scf_gradient(double t, double *pars, double *q, double *grad) nogil
+
 __all__ = ['HenonHeilesPotential', 'KeplerPotential', 'HernquistPotential',
            'PlummerPotential', 'MiyamotoNagaiPotential',
            'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential',
            'LogarithmicPotential', 'JaffePotential',
            'StonePotential', 'IsochronePotential',
-           'LM10Potential']
+           'LM10Potential', 'SCFPotential']
 
 # ============================================================================
 #    Hénon-Heiles potential
@@ -751,3 +754,53 @@ class LM10Potential(CPotentialBase):
         c_params['R32'] = R[7]
         c_params['R33'] = R[8]
         self.c_instance = _LM10Potential(**c_params)
+
+cdef class _SCFPotential(_CPotential):
+    # double[:,:,::1] sin_coeff, double[:,:,::1] cos_coeff):
+    # np.ndarray[np.float64_t, ndim=3] sin_coeff,
+    # np.ndarray[np.float64_t, ndim=3] cos_coeff):
+    def __cinit__(self, double G, double m, double r_s,
+                  int nmax, int lmax,
+                  *args):
+        self._parvec = np.concatenate([[G,m,r_s,nmax,lmax],args])
+                                       # sin_coeff.ravel(),
+                                       # cos_coeff.ravel()])
+        self._parameters = &(self._parvec[0])
+        self.c_value = &scf_value
+        self.c_gradient = &scf_gradient
+
+class SCFPotential(CPotentialBase):
+    r"""
+    SCFPotential(units, TODO)
+
+    TODO:
+
+    Parameters
+    ----------
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+    TODO
+
+    """
+    def __init__(self, m, r_s, nmax, lmax, sin_coeff, cos_coeff, units=galactic):
+        self.G = G.decompose(units).value
+        self.parameters = dict()
+        self.parameters['m'] = m
+        self.parameters['r_s'] = r_s
+        self.parameters['nmax'] = int(nmax)
+        self.parameters['lmax'] = int(lmax)
+        self.parameters['sin_coeff'] = np.array(sin_coeff)
+        self.parameters['cos_coeff'] = np.array(cos_coeff)
+        super(SCFPotential, self).__init__(units=units)
+
+        # c_params = self.parameters.copy()
+        # c_params['G'] = self.G
+        # c_params.pop('sin_coeff')
+        # c_params.pop('cos_coeff')
+        coeff = np.concatenate((sin_coeff.ravel(), cos_coeff.ravel()))
+        params1 = [self.G, self.parameters['m'], self.parameters['r_s'],
+                   self.parameters['nmax'], self.parameters['lmax']]
+        c_params = np.array(params1 + coeff.tolist())
+        # self.c_instance = _SCFPotential(*coeff, **c_params)
+        self.c_instance = _SCFPotential(*c_params)
