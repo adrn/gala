@@ -25,7 +25,7 @@ cdef void c_init_velocity(_CPotential p, int ndim, double t, double dt,
                           double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil:
     cdef int k
 
-    p._gradient(x_jm1, grad)
+    p._gradient(t, x_jm1, grad)
 
     for k in range(ndim):
         v_jm1_2[k] = v_jm1[k] - grad[k] * dt/2.  # acceleration is minus gradient
@@ -38,7 +38,7 @@ cdef void c_leapfrog_step(_CPotential p, int ndim, double t, double dt,
     for k in range(ndim):
         x_jm1[k] = x_jm1[k] + v_jm1_2[k] * dt
 
-    p._gradient(x_jm1, grad)  # compute gradient at new position
+    p._gradient(t, x_jm1, grad)  # compute gradient at new position
 
     # step velocity forward by half step, aligned w/ position, then
     #   finish the full step to leapfrog over position
