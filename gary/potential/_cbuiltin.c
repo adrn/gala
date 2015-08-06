@@ -368,7 +368,9 @@ void lm10_gradient(double t, double *pars, double *r, double *grad) {
     for (i=0; i<3; i++) grad[i] += tmp_grad[i];
 }
 
-/* AGAIN, TOTAL FUCKING HACKs */
+/* ----------------------------------------------------------
+    AGAIN, TOTAL FUCKING HACKs BELOW
+*/
 int get_idx(int nrows, int x, int y) {
     return (nrows*x+y);
 }
@@ -783,4 +785,30 @@ double wang_zhao_bar_gradient(double t, double *pars, double *r, double *grad) {
     }
     scf_gradient(t, &new_pars[0], &rot_r[0], &grad[0]);
 
+}
+
+double ophiuchus_value(double t, double *pars, double*r) {
+    double v = 0.;
+    v += hernquist_value(0., &pars[0], &r[0]);
+    v += miyamotonagai_value(0., &pars[3], &r[0]);
+    v += sphericalnfw_value(0., &pars[7], &r[0]);
+    v += wang_zhao_bar_value(0., &pars[9], &r[0]);
+    return v;
+}
+
+void ophiuchus_gradient(double t, double *pars, double *r, double *grad) {
+    double tmp_grad[3];
+    int i;
+
+    hernquist_gradient(0., &pars[0], &r[0], &tmp_grad[0]);
+    for (i=0; i<3; i++) grad[i] = tmp_grad[i];
+
+    miyamotonagai_gradient(0., &pars[3], &r[0], &tmp_grad[0]);
+    for (i=0; i<3; i++) grad[i] += tmp_grad[i];
+
+    sphericalnfw_gradient(0., &pars[7], &r[0], &tmp_grad[0]);
+    for (i=0; i<3; i++) grad[i] += tmp_grad[i];
+
+    wang_zhao_bar_gradient(0., &pars[9], &r[0], &tmp_grad[0]);
+    for (i=0; i<3; i++) grad[i] += tmp_grad[i];
 }

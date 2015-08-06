@@ -80,12 +80,15 @@ cdef extern from "_cbuiltin.h":
     double scf_value(double t, double *pars, double *q) nogil
     void scf_gradient(double t, double *pars, double *q, double *grad) nogil
 
+    double ophiuchus_value(double t, double *pars, double *q) nogil
+    void ophiuchus_gradient(double t, double *pars, double *q, double *grad) nogil
+
 __all__ = ['HenonHeilesPotential', 'KeplerPotential', 'HernquistPotential',
            'PlummerPotential', 'MiyamotoNagaiPotential',
            'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential',
            'LogarithmicPotential', 'JaffePotential',
            'StonePotential', 'IsochronePotential',
-           'LM10Potential', 'SCFPotential']
+           'LM10Potential', 'SCFPotential', 'OphiuchusPotential']
 
 # ============================================================================
 #    Hénon-Heiles potential
@@ -804,3 +807,97 @@ class SCFPotential(CPotentialBase):
         c_params = np.array(params1 + coeff.tolist())
         # self.c_instance = _SCFPotential(*coeff, **c_params)
         self.c_instance = _SCFPotential(*c_params)
+
+cdef class _OphiuchusPotential(_CPotential):
+
+    def __cinit__(self, double G, double m_spher, double c,
+                  double G2, double m_disk, double a, double b,
+                  double v_c, double r_s,
+                  double G3, double m_bar, double a_bar, double alpha, double Omega
+                  ):
+        # alpha = initial bar angle
+        # Omega = pattern speed
+        self._parvec = np.array([G,m_spher,c,
+                                 G,m_disk,a,b,
+                                 v_c, r_s,
+                                 G,m_bar,a_bar,alpha,Omega])
+        self._parameters = &(self._parvec[0])
+        self.c_value = &ophiuchus_value
+        self.c_gradient = &ophiuchus_gradient
+
+class OphiuchusPotential(CPotentialBase):
+    r"""
+    OphiuchusPotential(units, spheroid=dict(), disk=dict(), halo=dict(), bar=dict())
+
+    Four-component Milky Way potential used for modeling the Ophiuchus stream.
+
+    Parameters
+    ----------
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+    spheroid : dict
+        Dictionary of parameter values for a :class:`HernquistPotential`.
+    disk : dict
+        Dictionary of parameter values for a :class:`MiyamotoNagaiPotential`.
+    halo : dict
+        Dictionary of parameter values for a :class:`SphericalNFWPotential`.
+    bar : dict
+        Dictionary of parameter values for a :class:`TODO`.
+
+    """
+    def __init__(self, units=galactic, bulge=dict(), disk=dict(), halo=dict(), bar=dict()):
+        self.G = G.decompose(units).value
+        self.parameters = dict()
+        default_bulge = dict(m=0.9E10, c=0.2)
+        default_disk = dict(m=1.E10, a=3, b=0.28) # similar to Bovy
+        default_halo = dict(v_c=0.21, r_s=15.)
+        default_bar = dict(m=5.E10, r_s=4.8, alpha=0.349065850398, Omega=0.06136272990322247) # from Wang, Zhao, et al.
+
+        for k,v in default_disk.items():
+            if k not in disk:
+                disk[k] = v
+        self.parameters['disk'] = disk
+
+        for k,v in default_bulge.items():
+            if k not in bulge:
+                bulge[k] = v
+        self.parameters['bulge'] = bulge
+
+        for k,v in default_halo.items():
+            if k not in halo:
+                halo[k] = v
+        self.parameters['halo'] = halo
+
+        for k,v in default_bar.items():
+            if k not in bar:
+                bar[k] = v
+        self.parameters['bar'] = bar
+
+        super(OphiuchusPotential, self).__init__(units=units)
+
+        c_params = dict()
+
+        # bulge
+        c_params['G'] = self.G
+        c_params['m_spher'] = bulge['m']
+        c_params['c'] = bulge['c']
+
+        # disk
+        c_params['G2'] = self.G
+        c_params['m_disk'] = disk['m']
+        c_params['a'] = disk['a']
+        c_params['b'] = disk['b']
+
+        # halo
+        c_params['v_c'] = halo['v_c']
+        c_params['r_s'] = halo['r_s']
+
+        # bar
+        c_params['G3'] = self.G
+        c_params['m_bar'] = bar['m']
+        c_params['a_bar'] = bar['r_s']
+        c_params['alpha'] = bar['alpha']
+        c_params['Omega'] = bar['Omega']
+
+        self.c_instance = _OphiuchusPotential(**c_params)
