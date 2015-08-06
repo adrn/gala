@@ -786,16 +786,17 @@ class SCFPotential(CPotentialBase):
     TODO
 
     """
-    def __init__(self, m, r_s, nmax, lmax, sin_coeff, cos_coeff, units=galactic):
+    def __init__(self, m, r_s, sin_coeff, cos_coeff, units=galactic):
         self.G = G.decompose(units).value
         self.parameters = dict()
         self.parameters['m'] = m
         self.parameters['r_s'] = r_s
-        self.parameters['nmax'] = int(nmax)
-        self.parameters['lmax'] = int(lmax)
         self.parameters['sin_coeff'] = np.array(sin_coeff)
         self.parameters['cos_coeff'] = np.array(cos_coeff)
         super(SCFPotential, self).__init__(units=units)
+
+        nmax = sin_coeff.shape[0]-1
+        lmax = sin_coeff.shape[1]-1
 
         # c_params = self.parameters.copy()
         # c_params['G'] = self.G
@@ -803,7 +804,7 @@ class SCFPotential(CPotentialBase):
         # c_params.pop('cos_coeff')
         coeff = np.concatenate((sin_coeff.ravel(), cos_coeff.ravel()))
         params1 = [self.G, self.parameters['m'], self.parameters['r_s'],
-                   self.parameters['nmax'], self.parameters['lmax']]
+                   nmax, lmax]
         c_params = np.array(params1 + coeff.tolist())
         # self.c_instance = _SCFPotential(*coeff, **c_params)
         self.c_instance = _SCFPotential(*c_params)
