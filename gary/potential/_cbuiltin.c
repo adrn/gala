@@ -713,9 +713,9 @@ double scf_gradient(double t, double *pars, double *r, double *grad) {
     ath = -sinth*ath/R;
     aphi = aphi/(R*sinth);
 
-    grad[0] = -G*M/r_s * (sinth*cosp*ar + costh*cosp*ath - sinp*aphi);
-    grad[1] = -G*M/r_s * (sinth*sinp*ar + costh*sinp*ath + cosp*aphi);
-    grad[2] = -G*M/r_s * (costh*ar - sinth*ath);
+    grad[0] = G*M/r_s * (sinth*cosp*ar + costh*cosp*ath - sinp*aphi);
+    grad[1] = G*M/r_s * (sinth*sinp*ar + costh*sinp*ath + cosp*aphi);
+    grad[2] = G*M/r_s * (costh*ar - sinth*ath);
 }
 
 
@@ -746,7 +746,7 @@ double wang_zhao_bar_value(double t, double *pars, double *r) {
     new_pars[2] = pars[4];
     new_pars[3] = 3.; // nmax
     new_pars[4] = 6.; // lmax
-    for (int i=0; i<(5+392); i++) {
+    for (int i=0; i<392; i++) {
         new_pars[5+i] = coeff[i];
     }
     return scf_value(t, &new_pars[0], &rot_r[0]);
@@ -780,7 +780,7 @@ double wang_zhao_bar_gradient(double t, double *pars, double *r, double *grad) {
     new_pars[2] = pars[4];
     new_pars[3] = 3.; // nmax
     new_pars[4] = 6.; // lmax
-    for (int i=0; i<(5+392); i++) {
+    for (int i=0; i<392; i++) {
         new_pars[5+i] = coeff[i];
     }
     scf_gradient(t, &new_pars[0], &rot_r[0], &grad[0]);
@@ -792,7 +792,7 @@ double ophiuchus_value(double t, double *pars, double*r) {
     v += hernquist_value(0., &pars[0], &r[0]);
     v += miyamotonagai_value(0., &pars[3], &r[0]);
     v += sphericalnfw_value(0., &pars[7], &r[0]);
-    v += wang_zhao_bar_value(0., &pars[9], &r[0]);
+    v += wang_zhao_bar_value(t, &pars[9], &r[0]);
     return v;
 }
 
@@ -809,6 +809,6 @@ void ophiuchus_gradient(double t, double *pars, double *r, double *grad) {
     sphericalnfw_gradient(0., &pars[7], &r[0], &tmp_grad[0]);
     for (i=0; i<3; i++) grad[i] += tmp_grad[i];
 
-    wang_zhao_bar_gradient(0., &pars[9], &r[0], &tmp_grad[0]);
+    wang_zhao_bar_gradient(t, &pars[9], &r[0], &tmp_grad[0]);
     for (i=0; i<3; i++) grad[i] += tmp_grad[i];
 }

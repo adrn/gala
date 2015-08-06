@@ -846,23 +846,23 @@ class OphiuchusPotential(CPotentialBase):
         Dictionary of parameter values for a :class:`TODO`.
 
     """
-    def __init__(self, units=galactic, bulge=dict(), disk=dict(), halo=dict(), bar=dict()):
+    def __init__(self, units=galactic, spheroid=dict(), disk=dict(), halo=dict(), bar=dict()):
         self.G = G.decompose(units).value
         self.parameters = dict()
-        default_bulge = dict(m=0.9E10, c=0.2)
+        default_spheroid = dict(m=0.9E10, c=0.2)
         default_disk = dict(m=1.E10, a=3, b=0.28) # similar to Bovy
         default_halo = dict(v_c=0.21, r_s=15.)
-        default_bar = dict(m=5.E10, r_s=4.8, alpha=0.349065850398, Omega=0.06136272990322247) # from Wang, Zhao, et al.
+        default_bar = dict(m=1.E10, r_s=4.8, alpha=0.349065850398, Omega=0.06136272990322247) # from Wang, Zhao, et al.
 
         for k,v in default_disk.items():
             if k not in disk:
                 disk[k] = v
         self.parameters['disk'] = disk
 
-        for k,v in default_bulge.items():
-            if k not in bulge:
-                bulge[k] = v
-        self.parameters['bulge'] = bulge
+        for k,v in default_spheroid.items():
+            if k not in spheroid:
+                spheroid[k] = v
+        self.parameters['spheroid'] = spheroid
 
         for k,v in default_halo.items():
             if k not in halo:
@@ -880,8 +880,8 @@ class OphiuchusPotential(CPotentialBase):
 
         # bulge
         c_params['G'] = self.G
-        c_params['m_spher'] = bulge['m']
-        c_params['c'] = bulge['c']
+        c_params['m_spher'] = spheroid['m']
+        c_params['c'] = spheroid['c']
 
         # disk
         c_params['G2'] = self.G
