@@ -136,34 +136,34 @@ cdef class _CPotential:
         # return (_HernquistPotential, tuple(self._parvec))
         return (self.__class__, tuple(self._parvec))
 
-    cpdef value(self, double[:,::1] q):
+    cpdef value(self, double[:,::1] q, double t=0.):
         cdef int nparticles, ndim, k
         nparticles = q.shape[0]
         ndim = q.shape[1]
 
         cdef double [::1] pot = np.zeros((nparticles,))
         for k in range(nparticles):
-            pot[k] = self._value(&q[k,0])
+            pot[k] = self._value(t, &q[k,0])
 
         return np.array(pot)
 
-    cdef public inline double _value(self, double *r) nogil:
-        return self.c_value(0., self._parameters, r)
+    cdef public inline double _value(self, double t, double *r) nogil:
+        return self.c_value(t, self._parameters, r)
 
     # -------------------------------------------------------------
-    cpdef gradient(self, double[:,::1] q):
+    cpdef gradient(self, double[:,::1] q, double t=0.):
         cdef int nparticles, ndim, k
         nparticles = q.shape[0]
         ndim = q.shape[1]
 
         cdef double [:,::1] grad = np.zeros((nparticles,ndim))
         for k in range(nparticles):
-            self._gradient(&q[k,0], &grad[k,0])
+            self._gradient(t, &q[k,0], &grad[k,0])
 
         return np.array(grad)
 
-    cdef public inline void _gradient(self, double *r, double *grad) nogil:
-        self.c_gradient(0., self._parameters, r, grad)
+    cdef public inline void _gradient(self, double t, double *r, double *grad) nogil:
+        self.c_gradient(t, self._parameters, r, grad)
 
     # -------------------------------------------------------------
     cpdef hessian(self, double[:,::1] w):
@@ -184,17 +184,17 @@ cdef class _CPotential:
                 hess[3*i+j] = 0.
 
     # -------------------------------------------------------------
-    cpdef mass_enclosed(self, double[:,::1] q, double G):
+    cpdef mass_enclosed(self, double[:,::1] q, double G, double t=0.):
         cdef int nparticles, k
         nparticles = q.shape[0]
 
         cdef double [::1] epsilon = np.zeros(3)
         cdef double [::1] mass = np.zeros((nparticles,))
         for k in range(nparticles):
-            mass[k] = self._mass_enclosed(&q[k,0], &epsilon[0], G)
+            mass[k] = self._mass_enclosed(t, &q[k,0], &epsilon[0], G)
         return np.array(mass)
 
-    cdef public double _mass_enclosed(self, double *q, double *epsilon, double Gee) nogil:
+    cdef public double _mass_enclosed(self, double t, double *q, double *epsilon, double Gee) nogil:
         cdef double h, r, dPhi_dr
 
         # Fractional step-size
@@ -205,11 +205,11 @@ cdef class _CPotential:
 
         for j in range(3):
             epsilon[j] = h * q[j]/r + q[j]
-        dPhi_dr = self._value(epsilon)
+        dPhi_dr = self._value(t, epsilon)
 
         for j in range(3):
             epsilon[j] = h * q[j]/r - q[j]
-        dPhi_dr -= self._value(epsilon)
+        dPhi_dr -= self._value(t, epsilon)
 
         return fabs(r*r * dPhi_dr / Gee / (2.*h))
 
