@@ -7,17 +7,17 @@ cdef class _CPotential:
     cdef gradientfunc c_gradient
     cdef double[::1] _parvec # need to maintain a reference to parameter array
 
-    cpdef value(self, double[:,::1] q)
-    cdef public double _value(self, double *q) nogil
+    cpdef value(self, double[:,::1] q, double t=?)
+    cdef public double _value(self, double t, double *q) nogil
 
-    cpdef gradient(self, double[:,::1] q)
-    cdef public void _gradient(self, double *q, double *grad) nogil
+    cpdef gradient(self, double[:,::1] q, double t=?)
+    cdef public void _gradient(self, double t, double *q, double *grad) nogil
 
     cpdef hessian(self, double[:,::1] w)
     cdef public void _hessian(self, double *w, double *hess) nogil
 
-    cpdef mass_enclosed(self, double[:,::1] q, double G)
-    cdef public double _mass_enclosed(self, double *q, double *epsilon, double Gee) nogil
+    cpdef mass_enclosed(self, double[:,::1] q, double G, double t=?)
+    cdef public double _mass_enclosed(self, double t, double *q, double *epsilon, double Gee) nogil
 
 # cdef class _CCompositePotential: #[type _CPotentialType, object _CPotential]:
 
