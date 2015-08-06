@@ -59,7 +59,7 @@ class CPotentialBase(PotentialBase):
         q : array_like, numeric
             Position to compute the value of the potential.
         """
-        return self.c_instance.value(0., np.atleast_2d(q).copy())
+        return self.c_instance.value(np.atleast_2d(q).copy())
 
     def gradient(self, q):
         """
@@ -73,7 +73,7 @@ class CPotentialBase(PotentialBase):
             Position to compute the gradient.
         """
         try:
-            return self.c_instance.gradient(0., np.atleast_2d(q).copy())
+            return self.c_instance.gradient(np.atleast_2d(q).copy())
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
