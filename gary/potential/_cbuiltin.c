@@ -711,11 +711,11 @@ double wang_zhao_coeff[392] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 
 double wang_zhao_bar_value(double t, double *pars, double *r) {
     /*  pars:
-            - initial bar angle
-            - pattern speed
             - G (Gravitational constant)
             - m (mass scale)
             - r_s (length scale)
+            - initial bar angle
+            - pattern speed
     */
 
     double bar_angle0 = pars[3];
