@@ -80,6 +80,9 @@ cdef extern from "_cbuiltin.h":
     double scf_value(double t, double *pars, double *q) nogil
     void scf_gradient(double t, double *pars, double *q, double *grad) nogil
 
+    double wang_zhao_bar_value(double t, double *pars, double *q) nogil
+    void wang_zhao_bar_gradient(double t, double *pars, double *q, double *grad) nogil
+
     double ophiuchus_value(double t, double *pars, double *q) nogil
     void ophiuchus_gradient(double t, double *pars, double *q, double *grad) nogil
 
@@ -88,7 +91,7 @@ __all__ = ['HenonHeilesPotential', 'KeplerPotential', 'HernquistPotential',
            'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential',
            'LogarithmicPotential', 'JaffePotential',
            'StonePotential', 'IsochronePotential',
-           'LM10Potential', 'SCFPotential', 'OphiuchusPotential']
+           'LM10Potential', 'SCFPotential', 'WangZhaoBarPotential', 'OphiuchusPotential']
 
 # ============================================================================
 #    Hénon-Heiles potential
