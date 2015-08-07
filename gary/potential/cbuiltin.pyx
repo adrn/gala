@@ -809,6 +809,45 @@ class SCFPotential(CPotentialBase):
         # self.c_instance = _SCFPotential(*coeff, **c_params)
         self.c_instance = _SCFPotential(*c_params)
 
+cdef class _WangZhaoBarPotential(_CPotential):
+    def __cinit__(self, double G, double m, double r_s, double alpha, double Omega):
+        self._parvec = np.array([G,m,r_s,alpha,Omega])
+        self._parameters = &(self._parvec[0])
+        self.c_value = &wang_zhao_bar_value
+        self.c_gradient = &wang_zhao_bar_gradient
+
+class WangZhaoBarPotential(CPotentialBase):
+    r"""
+    WangZhaoBarPotential(units, TODO)
+
+    TODO:
+
+    Parameters
+    ----------
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+    TODO
+
+    """
+    def __init__(self, m, r_s, alpha, Omega, units=galactic):
+        self.G = G.decompose(units).value
+        self.parameters = dict()
+        self.parameters['m'] = m
+        self.parameters['r_s'] = r_s
+        self.parameters['alpha'] = alpha
+        self.parameters['Omega'] = Omega
+        super(WangZhaoBarPotential, self).__init__(units=units)
+
+        c_params = dict()
+        c_params['G'] = self.G
+        c_params['m'] = m
+        c_params['r_s'] = r_s
+        c_params['alpha'] = alpha
+        c_params['Omega'] = Omega
+
+        self.c_instance = _WangZhaoBarPotential(**c_params)
+
 cdef class _OphiuchusPotential(_CPotential):
 
     def __cinit__(self, double G, double m_spher, double c,
