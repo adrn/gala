@@ -653,7 +653,7 @@ double scf_gradient(double t, double *pars, double *r, double *grad) {
 
     dplm[0][0] = 0.0;
     for (l=1; l < (lmax+1); l++) {
-        for (m=0; m < l; m++) {
+        for (m=0; m < (l+1); m++) {
             if (l == m) {
                 dplm[l][m] = l*costh*plm[l][m] / (costh*costh-1.0);
             } else {
