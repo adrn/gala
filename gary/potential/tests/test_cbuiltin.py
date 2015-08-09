@@ -16,6 +16,7 @@ from astropy.utils.console import color_print
 from astropy.constants import G
 import astropy.units as u
 import matplotlib.pyplot as plt
+from scipy.misc import derivative
 
 from ..core import CompositePotential
 from ..cbuiltin import LM10Potential
@@ -39,6 +40,13 @@ color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 color_print("To view plots:", "green")
 print("    open {}".format(plot_path))
 color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yellow")
+
+def partial_derivative(func, point, ix=0, **kwargs):
+    xyz = np.array(point)
+    def wraps(a):
+        xyz[ix] = a
+        return func(xyz)
+    return derivative(wraps, point[ix], **kwargs)
 
 niter = 1000
 nparticles = 1000
@@ -69,9 +77,19 @@ class PotentialTestBase(object):
         pot_val = self.potential.value(r)
         acc_val = self.potential.acceleration(r)
 
+    def test_save_load(self):
         # save to disk
         self.potential.save("/tmp/potential.yml")
         derp = load("/tmp/potential.yml")
+
+    def test_numerical_gradient_vs_gradient(self):
+        dx = 1E-6
+        xyz = np.random.uniform(-10,10,size=(100,3))
+        num_grad = np.zeros_like(xyz)
+        for i in range(xyz.shape[0]):
+            num_grad[i] = np.array([partial_derivative(self.potential.value, xyz[i], ix=ix, n=1, dx=dx, order=5) for ix in range(3)]).T
+        grad = self.potential.gradient(xyz)
+        np.testing.assert_allclose(num_grad, grad, rtol=1E-5)
 
     def test_orbit_integration(self):
         w0 = self.w0
@@ -340,8 +358,17 @@ class TestSCFPotential(PotentialTestBase):
         self.name = "SCFPotential"
         cc = np.array([[[1.509, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [-2.606, 0.0, 0.665, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [6.406, 0.0, -0.66, 0.0, 0.044, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [-5.5859, 0.0, 0.984, 0.0, -0.03, 0.0, 0.001]], [[-0.086, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [-0.221, 0.0, 0.129, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [1.295, 0.0, -0.14, 0.0, -0.012, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], [[-0.033, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [-0.001, 0.0, 0.006, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], [[-0.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]])
         sc = np.zeros_like(cc)
-        self.potential = SCFPotential(m=1E10, r_s=1., nmax=3, lmax=6,
+        self.potential = SCFPotential(m=1E10, r_s=1.,
                                       sin_coeff=sc, cos_coeff=cc,
                                       units=self.units)
         self.w0 = [2.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
         super(TestSCFPotential,self).setup()
+
+class TestWangZhaoBarPotential(PotentialTestBase):
+    def setup(self):
+        self.name = "WangZhaoBarPotential"
+        self.potential = WangZhaoBarPotential(m=1E10, r_s=1.,
+                                              alpha=0., Omega=0.,
+                                              units=self.units)
+        self.w0 = [3.0,0.7,-0.5,0.0352238,-0.03579493,0.075]
+        super(TestWangZhaoBarPotential,self).setup()
