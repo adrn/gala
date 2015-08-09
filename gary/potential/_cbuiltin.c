@@ -372,9 +372,6 @@ void lm10_gradient(double t, double *pars, double *r, double *grad) {
 /* ----------------------------------------------------------
     AGAIN, TOTAL FUCKING HACKs BELOW
 */
-int get_idx(int nrows, int x, int y) {
-    return (nrows*x+y);
-}
 
 void _compute_helpers(double *twoalpha, double *dblfact,
                       double *c1, double *c2, double *c3,
@@ -391,10 +388,10 @@ void _compute_helpers(double *twoalpha, double *dblfact,
     }
 
     for (n=1; n<(nmax+1); n++) {
-        c3[n-1] = 1./(n+1);
+        c3[n] = 1./(n+1);
         for (l=0; l<(lmax+1); l++) {
-            c1[get_idx(nmax-1,n-1,l)] = 2.0*n + twoalpha[l];
-            c2[get_idx(nmax-1,n-1,l)] = n-1.0 + twoalpha[l];
+            c1[n*(lmax+1) + l] = 2.0*n + twoalpha[l];
+            c2[n*(lmax+1) + l] = n-1.0 + twoalpha[l];
         }
     }
 }
@@ -457,12 +454,12 @@ double scf_value(double t, double *pars, double *r) {
     memset(twoalpha, 0., (lmax+1)*sizeof(double));
     double dblfact[lmax+1];
     memset(dblfact, 0., (lmax+1)*sizeof(double));
-    double c1[nmax][lmax+1];
-    memset(c1, 0., (nmax)*(lmax+1)*sizeof(double));
-    double c2[nmax][lmax+1];
-    memset(c2, 0., (nmax)*(lmax+1)*sizeof(double));
-    double c3[nmax];
-    memset(c3, 0., (nmax)*sizeof(double));
+    double c1[nmax+1][lmax+1];
+    memset(c1, 0., (nmax+1)*(lmax+1)*sizeof(double));
+    double c2[nmax+1][lmax+1];
+    memset(c2, 0., (nmax+1)*(lmax+1)*sizeof(double));
+    double c3[nmax+1];
+    memset(c3, 0., (nmax+1)*sizeof(double));
 
     _compute_helpers(twoalpha, dblfact, (double *)c1, (double *)c2, c3, nmax, lmax);
 
@@ -484,7 +481,7 @@ double scf_value(double t, double *pars, double *r) {
         un = ultrasp[1][l];
         unm1 = 1.0;
         for (n=1; n < nmax; n++) {
-            ultrasp[n+1][l] = (c1[n-1][l]*xi*un - c2[n-1][l]*unm1) * c3[n-1];
+            ultrasp[n+1][l] = (c1[n][l]*xi*un - c2[n][l]*unm1) * c3[n];
             unm1 = un;
             un = ultrasp[n+1][l];
         }
@@ -579,29 +576,15 @@ double scf_gradient(double t, double *pars, double *r, double *grad) {
 
     // temp arrays
     double twoalpha[lmax+1];
+    memset(twoalpha, 0., (lmax+1)*sizeof(double));
     double dblfact[lmax+1];
-    double c1[nmax][lmax+1];
-    double c2[nmax][lmax+1];
-    double c3[nmax];
-
-    // zero out arrays
-    for (n=0; n < nmax+1; n++) {
-        for (l=0; l < (lmax+1); l++) {
-            ultrasp[n][l] = 0.;
-            ultrasp1[n][l] = 0.;
-            c1[n][l] = 0.;
-            c2[n][l] = 0.;
-        }
-        c3[n] = 0.;
-    }
-    for (l=0; l < (lmax+1); l++) {
-        twoalpha[l] = 0.;
-        dblfact[l] = 0.;
-        for (m=0; m < (lmax+1); m++) {
-            plm[l][m] = 0.;
-            dplm[l][m] = 0.;
-        }
-    }
+    memset(dblfact, 0., (lmax+1)*sizeof(double));
+    double c1[nmax+1][lmax+1];
+    memset(c1, 0., (nmax+1)*(lmax+1)*sizeof(double));
+    double c2[nmax+1][lmax+1];
+    memset(c2, 0., (nmax+1)*(lmax+1)*sizeof(double));
+    double c3[nmax+1];
+    memset(c3, 0., (nmax+1)*sizeof(double));
     _compute_helpers(twoalpha, dblfact, (double *)c1, (double *)c2, c3, nmax, lmax);
 
     // position
@@ -627,7 +610,7 @@ double scf_gradient(double t, double *pars, double *r, double *grad) {
         un = ultrasp[1][l];
         unm1 = 1.0;
         for (n=1; n < nmax; n++) {
-            ultrasp[n+1][l] = (c1[n-1][l]*xi*un - c2[n-1][l]*unm1) * c3[n-1];
+            ultrasp[n+1][l] = (c1[n][l]*xi*un - c2[n][l]*unm1) * c3[n];
             unm1 = un;
             un = ultrasp[n+1][l];
             ultrasp1[n+1][l] = ((twoalpha[l] + (n+1)-1.)*unm1-(n+1)*xi*ultrasp[n+1][l]) / \
