@@ -84,7 +84,12 @@ class PotentialTestBase(object):
 
     def test_numerical_gradient_vs_gradient(self):
         dx = 1E-6
-        xyz = np.random.uniform(-10,10,size=(100,3))
+        max_x = np.sqrt(np.sum([x**2 for x in self.w0[:3]]))
+
+        grid = np.linspace(-max_x,max_x,8)
+        grid = grid[grid != 0.]
+        xyz = np.vstack(map(np.ravel, np.meshgrid(grid,grid,grid))).T
+
         num_grad = np.zeros_like(xyz)
         for i in range(xyz.shape[0]):
             num_grad[i] = np.array([partial_derivative(self.potential.value, xyz[i], ix=ix, n=1, dx=dx, order=5) for ix in range(3)]).T
