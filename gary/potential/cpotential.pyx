@@ -59,7 +59,7 @@ class CPotentialBase(PotentialBase):
         q : array_like, numeric
             Position to compute the value of the potential.
         """
-        return self.c_instance.value(np.atleast_2d(q).copy(), t=t)
+        return self.c_instance.value(np.ascontiguousarray(np.atleast_2d(q)), t=t)
 
     def gradient(self, q, t=0.):
         """
@@ -73,7 +73,7 @@ class CPotentialBase(PotentialBase):
             Position to compute the gradient.
         """
         try:
-            return self.c_instance.gradient(np.atleast_2d(q).copy(), t=t)
+            return self.c_instance.gradient(np.ascontiguousarray(np.atleast_2d(q)), t=t)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
@@ -90,7 +90,7 @@ class CPotentialBase(PotentialBase):
             Position to compute the Hessian.
         """
         try:
-            return self.c_instance.hessian(np.atleast_2d(q).copy())
+            return self.c_instance.hessian(np.ascontiguousarray(np.atleast_2d(q)))
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "Hessian function")
@@ -111,7 +111,7 @@ class CPotentialBase(PotentialBase):
             Position to compute the mass enclosed.
         """
         try:
-            return self.c_instance.mass_enclosed(np.atleast_2d(q).copy(), self.G, t=t)
+            return self.c_instance.mass_enclosed(np.ascontiguousarray(np.atleast_2d(q)), self.G, t=t)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "mass_enclosed function")
