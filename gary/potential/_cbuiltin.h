@@ -33,12 +33,3 @@ extern void logarithmic_gradient(double t, double *pars, double *q, double *grad
 
 extern double lm10_value(double t, double *pars, double *q);
 extern void lm10_gradient(double t, double *pars, double *q, double *grad);
-
-extern double scf_value(double t, double *pars, double *q);
-extern void scf_gradient(double t, double *pars, double *q, double *grad);
-
-extern double wang_zhao_bar_value(double t, double *pars, double *q);
-extern void wang_zhao_bar_gradient(double t, double *pars, double *q, double *grad);
-
-extern double ophiuchus_value(double t, double *pars, double *q);
-extern void ophiuchus_gradient(double t, double *pars, double *q, double *grad);
