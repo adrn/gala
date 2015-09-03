@@ -50,7 +50,7 @@ class CPotentialBase(PotentialBase):
 
     def value(self, q, t=0.):
         """
-        value(q)
+        value(q, t=0)
 
         Compute the value of the potential at the given position(s).
 
@@ -58,12 +58,14 @@ class CPotentialBase(PotentialBase):
         ----------
         q : array_like, numeric
             Position to compute the value of the potential.
+        t : numeric (optional)
+            The time.
         """
         return self.c_instance.value(np.ascontiguousarray(np.atleast_2d(q)), t=t)
 
     def gradient(self, q, t=0.):
         """
-        gradient(q)
+        gradient(q, t=0)
 
         Compute the gradient of the potential at the given position(s).
 
@@ -71,12 +73,29 @@ class CPotentialBase(PotentialBase):
         ----------
         q : array_like, numeric
             Position to compute the gradient.
+        t : numeric (optional)
+            The time.
         """
         try:
             return self.c_instance.gradient(np.ascontiguousarray(np.atleast_2d(q)), t=t)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
+
+    def density(self, q, t=0.):
+        """
+        density(q, t=0)
+
+        Compute the value of the potential at the given position(s).
+
+        Parameters
+        ----------
+        q : array_like, numeric
+            Position to compute the value of the potential.
+        t : numeric (optional)
+            The time.
+        """
+        return self.c_instance.density(np.ascontiguousarray(np.atleast_2d(q)), t=t)
 
     def hessian(self, q):
         """

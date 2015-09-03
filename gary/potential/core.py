@@ -108,6 +108,23 @@ class PotentialBase(object):
                                       " the object was created!")
         return self._gradient(np.atleast_2d(x), **self.parameters)
 
+    def _density(self, *args, **kwargs):
+        raise NotImplementedError()
+
+    def density(self, x):
+        """
+        Compute the density value at the given position(s).
+
+        Parameters
+        ----------
+        x : array_like, numeric
+            Position to compute the density.
+        """
+        if self._density is None:
+            raise NotImplementedError("No density function was specified when"
+                                      " the object was created!")
+        return self._density(np.atleast_2d(x), **self.parameters)
+
     def _hessian(self, *args, **kwargs):
         raise NotImplementedError()
 
