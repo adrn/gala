@@ -185,6 +185,21 @@ cdef class _CPotential:
         self.c_gradient(t, self._parameters, r, grad)
 
     # -------------------------------------------------------------
+    cpdef density(self, double[:,::1] q, double t=0.):
+        cdef int nparticles, ndim, k
+        nparticles = q.shape[0]
+        ndim = q.shape[1]
+
+        cdef double [::1] pot = np.zeros((nparticles,))
+        for k in range(nparticles):
+            pot[k] = self._density(t, &q[k,0])
+
+        return np.array(pot)
+
+    cdef public inline double _density(self, double t, double *r) nogil:
+        return self.c_density(t, self._parameters, r)
+
+    # -------------------------------------------------------------
     cpdef hessian(self, double[:,::1] w):
         cdef int nparticles, ndim, k
         nparticles = w.shape[0]
