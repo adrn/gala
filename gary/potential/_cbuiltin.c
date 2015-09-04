@@ -245,18 +245,28 @@ void stone_gradient(double t, double *pars, double *r, double *grad) {
     Spherical NFW
 */
 double sphericalnfw_value(double t, double *pars, double *r) {
+    /*  pars:
+            - G (Gravitational constant)
+            - v_c (circular velocity at the scale radius)
+            - r_s (scale radius)
+    */
     double u, v_h2;
-    v_h2 = pars[0]*pars[0] / (log(2.) - 0.5);
-    u = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / pars[1];
+    v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+    u = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / pars[2];
     return -v_h2 * log(1 + u) / u;
 }
 
 void sphericalnfw_gradient(double t, double *pars, double *r, double *grad) {
+    /*  pars:
+            - G (Gravitational constant)
+            - v_c (circular velocity at the scale radius)
+            - r_s (scale radius)
+    */
     double fac, u, v_h2;
-    v_h2 = pars[0]*pars[0] / (log(2.) - 0.5);
+    v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
 
-    u = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / pars[1];
-    fac = v_h2 / (u*u*u) / (pars[1]*pars[1]) * (log(1+u) - u/(1+u));
+    u = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / pars[2];
+    fac = v_h2 / (u*u*u) / (pars[2]*pars[2]) * (log(1+u) - u/(1+u));
 
     grad[0] = fac*r[0];
     grad[1] = fac*r[1];
@@ -264,12 +274,17 @@ void sphericalnfw_gradient(double t, double *pars, double *r, double *grad) {
 }
 
 double sphericalnfw_density(double t, double *pars, double *q) {
-    double v_h2 = pars[0]*pars[0] / (log(2.) - 0.5);
+    /*  pars:
+            - G (Gravitational constant)
+            - v_c (circular velocity at the scale radius)
+            - r_s (scale radius)
+    */
+    double v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
     double r, rho0;
     r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
 
-    rho0 = v_h2 / (4*M_PI*pars[0]*pars[1]*pars[1]);
-    return rho0 / ((r/pars[1]) * pow(1+r/pars[1],2));
+    rho0 = v_h2 / (4*M_PI*pars[0]*pars[2]*pars[2]);
+    return rho0 / ((r/pars[2]) * pow(1+r/pars[2],2));
 }
 
 /* ---------------------------------------------------------------------------

@@ -452,8 +452,8 @@ class StonePotential(CPotentialBase):
 #
 cdef class _SphericalNFWPotential(_CPotential):
 
-    def __cinit__(self, double v_c, double r_s):
-        self._parvec = np.array([v_c,r_s])
+    def __cinit__(self, double G, double v_c, double r_s):
+        self._parvec = np.array([G, v_c,r_s])
         self._parameters = &(self._parvec)[0]
         self.c_value = &sphericalnfw_value
         self.c_gradient = &sphericalnfw_gradient
@@ -485,7 +485,7 @@ class SphericalNFWPotential(CPotentialBase):
         self.parameters = dict(v_c=v_c, r_s=r_s)
         super(SphericalNFWPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
-        self.c_instance = _SphericalNFWPotential(**self.parameters)
+        self.c_instance = _SphericalNFWPotential(G=self.G, **self.parameters)
 
 # ============================================================================
 #    Lee & Suto (2003) triaxial NFW potential
