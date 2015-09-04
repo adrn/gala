@@ -1,6 +1,10 @@
 #include <math.h>
 #include <string.h>
 
+double nan_density(double t, double *pars, double *q) {
+    return NAN;
+}
+
 /* ---------------------------------------------------------------------------
     Henon-Heiles potential
 */
@@ -72,6 +76,20 @@ void isochrone_gradient(double t, double *pars, double *r, double *grad) {
     grad[2] = fac*r[2];
 }
 
+double isochrone_density(double t, double *pars, double *q) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - b (core scale)
+    */
+    double r2, a, b;
+    b = pars[2];
+    r2 = q[0]*q[0] + q[1]*q[1] + q[2]*q[2];
+    a = sqrt(b*b + r2);
+
+    return pars[1] * (3*(b+a)*a*a - r2*(b+3*a)) / (4*M_PI*pow(b+a,3)*a*a*a);
+}
+
 /* ---------------------------------------------------------------------------
     Hernquist sphere
 */
@@ -99,6 +117,18 @@ void hernquist_gradient(double t, double *pars, double *r, double *grad) {
     grad[0] = fac*r[0];
     grad[1] = fac*r[1];
     grad[2] = fac*r[2];
+}
+
+double hernquist_density(double t, double *pars, double *q) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - c (length scale)
+    */
+    double r, rho0;
+    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    rho0 = pars[1]/(2*M_PI*pars[2]*pars[2]*pars[2]);
+    return rho0 / ((r/pars[2]) * pow(1+r/pars[2],3));
 }
 
 /* ---------------------------------------------------------------------------
@@ -129,8 +159,20 @@ void plummer_gradient(double t, double *pars, double *r, double *grad) {
     grad[2] = fac*r[2];
 }
 
+double plummer_density(double t, double *pars, double *r) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - b (length scale)
+    */
+    double r2 = r[0]*r[0] + r[1]*r[1] + r[2]*r[2];
+    return 3*pars[1] / (4*M_PI*pars[2]*pars[2]*pars[2]) * pow(1 + r2/(pars[2]*pars[2]), -2.5);
+}
+
 /* ---------------------------------------------------------------------------
     Jaffe sphere
+
+    TODO: I think this is all wrong?
 */
 double jaffe_value(double t, double *pars, double *r) {
     /*  pars:
@@ -156,6 +198,18 @@ void jaffe_gradient(double t, double *pars, double *r, double *grad){
     grad[0] = fac*r[0];
     grad[1] = fac*r[1];
     grad[2] = fac*r[2];
+}
+
+double jaffe_density(double t, double *pars, double *q) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - c (length scale)
+    */
+    double r, rho0;
+    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    rho0 = pars[1]/(2*M_PI*pars[2]*pars[2]*pars[2]);
+    return rho0 / ((r/pars[2]) * pow(1+r/pars[2],3));
 }
 
 /* ---------------------------------------------------------------------------
@@ -209,6 +263,15 @@ void sphericalnfw_gradient(double t, double *pars, double *r, double *grad) {
     grad[2] = fac*r[2];
 }
 
+double sphericalnfw_density(double t, double *pars, double *r) {
+    double v_h2 = pars[0]*pars[0] / (log(2.) - 0.5);
+    double r, rho0;
+    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+
+    rho0 = v_h2 / (4*M_PI*pars[0]*pars[1]*pars[1]);
+    return rho0 / ((r/pars[1]) * pow(1+r/pars[1],2));
+}
+
 /* ---------------------------------------------------------------------------
     Miyamoto-Nagai flattened potential
 */
@@ -240,6 +303,27 @@ void miyamotonagai_gradient(double t, double *pars, double *r, double *grad) {
     grad[0] = fac*r[0];
     grad[1] = fac*r[1];
     grad[2] = fac*r[2] * (1. + pars[2] / sqrtz);
+}
+
+double miyamotonagai_density(double t, double *pars, double *r) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - a (length scale 1) TODO
+            - b (length scale 2) TODO
+    */
+
+    double M, a, b;
+    M = pars[1];
+    a = pars[2];
+    b = pars[3];
+
+    double R2 = q[0]*q[0] + q[1]*q[1];
+    double sqrt_zb = sqrt(q[2]*q[2] + b*b);
+    double numer = (b*b*M / (4*M_PI)) * (a*R2 + (a + 2*sqrt_zb)*(a + sqrt_zb)*(a + sqrt_zb));
+    double denom = pow(R2 + (a + sqrt_zb)*(a + sqrt_zb), 2.5) * sqrt_zb*sqrt_zb*sqrt_zb;
+
+    return numer/denom;
 }
 
 /* ---------------------------------------------------------------------------
