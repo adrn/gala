@@ -263,7 +263,7 @@ void sphericalnfw_gradient(double t, double *pars, double *r, double *grad) {
     grad[2] = fac*r[2];
 }
 
-double sphericalnfw_density(double t, double *pars, double *r) {
+double sphericalnfw_density(double t, double *pars, double *q) {
     double v_h2 = pars[0]*pars[0] / (log(2.) - 0.5);
     double r, rho0;
     r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
@@ -305,7 +305,7 @@ void miyamotonagai_gradient(double t, double *pars, double *r, double *grad) {
     grad[2] = fac*r[2] * (1. + pars[2] / sqrtz);
 }
 
-double miyamotonagai_density(double t, double *pars, double *r) {
+double miyamotonagai_density(double t, double *pars, double *q) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
