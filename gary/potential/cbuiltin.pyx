@@ -41,6 +41,8 @@ cdef extern from "math.h":
     double pow(double x, double n) nogil
 
 cdef extern from "_cbuiltin.h":
+    double nan_density(double t, double *pars, double *q) nogil
+
     double henon_heiles_value(double t, double *pars, double *q) nogil
     void henon_heiles_gradient(double t, double *pars, double *q, double *grad) nogil
 
@@ -49,24 +51,30 @@ cdef extern from "_cbuiltin.h":
 
     double isochrone_value(double t, double *pars, double *q) nogil
     void isochrone_gradient(double t, double *pars, double *q, double *grad) nogil
+    double isochrone_density(double t, double *pars, double *q) nogil
 
     double hernquist_value(double t, double *pars, double *q) nogil
     void hernquist_gradient(double t, double *pars, double *q, double *grad) nogil
+    double hernquist_density(double t, double *pars, double *q) nogil
 
     double plummer_value(double t, double *pars, double *q) nogil
     void plummer_gradient(double t, double *pars, double *q, double *grad) nogil
+    double plummer_density(double t, double *pars, double *q) nogil
 
     double jaffe_value(double t, double *pars, double *q) nogil
     void jaffe_gradient(double t, double *pars, double *q, double *grad) nogil
+    double jaffe_density(double t, double *pars, double *q) nogil
 
     double stone_value(double t, double *pars, double *q) nogil
     void stone_gradient(double t, double *pars, double *q, double *grad) nogil
 
     double sphericalnfw_value(double t, double *pars, double *q) nogil
     void sphericalnfw_gradient(double t, double *pars, double *q, double *grad) nogil
+    double sphericalnfw_density(double t, double *pars, double *q) nogil
 
     double miyamotonagai_value(double t, double *pars, double *q) nogil
     void miyamotonagai_gradient(double t, double *pars, double *q, double *grad) nogil
+    double miyamotonagai_density(double t, double *pars, double *q) nogil
 
     double leesuto_value(double t, double *pars, double *q) nogil
     void leesuto_gradient(double t, double *pars, double *q, double *grad) nogil
@@ -94,6 +102,7 @@ cdef class _HenonHeilesPotential(_CPotential):
         self._parameters = &(self._parvec)[0]
         self.c_value = &henon_heiles_value
         self.c_gradient = &henon_heiles_gradient
+        self.c_density = &nan_density
 
 class HenonHeilesPotential(CPotentialBase):
     r"""
@@ -131,6 +140,7 @@ cdef class _KeplerPotential(_CPotential):
         self._parameters = &(self._parvec)[0]
         self.c_value = &kepler_value
         self.c_gradient = &kepler_gradient
+        self.c_density = &nan_density
 
 class KeplerPotential(CPotentialBase):
     r"""
@@ -167,6 +177,7 @@ cdef class _IsochronePotential(_CPotential):
         self._parameters = &(self._parvec)[0]
         self.c_value = &isochrone_value
         self.c_gradient = &isochrone_gradient
+        self.c_density = &isochrone_density
 
 class IsochronePotential(CPotentialBase):
     r"""
@@ -245,6 +256,7 @@ cdef class _HernquistPotential(_CPotential):
         self._parameters = &(self._parvec)[0]
         self.c_value = &hernquist_value
         self.c_gradient = &hernquist_gradient
+        self.c_density = &hernquist_density
 
 class HernquistPotential(CPotentialBase):
     r"""
@@ -283,6 +295,7 @@ cdef class _PlummerPotential(_CPotential):
         self._parameters = &(self._parvec)[0]
         self.c_value = &plummer_value
         self.c_gradient = &plummer_gradient
+        self.c_density = &plummer_density
 
 class PlummerPotential(CPotentialBase):
     r"""
@@ -321,6 +334,7 @@ cdef class _JaffePotential(_CPotential):
         self._parameters = &(self._parvec)[0]
         self.c_value = &jaffe_value
         self.c_gradient = &jaffe_gradient
+        self.c_density = &jaffe_density
 
 class JaffePotential(CPotentialBase):
     r"""
@@ -361,6 +375,7 @@ cdef class _MiyamotoNagaiPotential(_CPotential):
         self._parameters = &(self._parvec)[0]
         self.c_value = &miyamotonagai_value
         self.c_gradient = &miyamotonagai_gradient
+        self.c_density = &miyamotonagai_density
 
 class MiyamotoNagaiPotential(CPotentialBase):
     r"""
@@ -401,6 +416,7 @@ cdef class _StonePotential(_CPotential):
         self._parameters = &(self._parvec)[0]
         self.c_value = &stone_value
         self.c_gradient = &stone_gradient
+        self.c_density = &nan_density
 
 class StonePotential(CPotentialBase):
     r"""
@@ -441,6 +457,7 @@ cdef class _SphericalNFWPotential(_CPotential):
         self._parameters = &(self._parvec)[0]
         self.c_value = &sphericalnfw_value
         self.c_gradient = &sphericalnfw_gradient
+        self.c_density = &sphericalnfw_density
 
 class SphericalNFWPotential(CPotentialBase):
     r"""
@@ -485,6 +502,7 @@ cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
         self._parameters = &(self._parvec)[0]
         self.c_value = &leesuto_value
         self.c_gradient = &leesuto_gradient
+        self.c_density = &nan_density
 
 class LeeSutoTriaxialNFWPotential(CPotentialBase):
     r"""
@@ -569,6 +587,7 @@ cdef class _LogarithmicPotential(_CPotential):
         self._parameters = &(self._parvec)[0]
         self.c_value = &logarithmic_value
         self.c_gradient = &logarithmic_gradient
+        self.c_density = &nan_density
 
 class LogarithmicPotential(CPotentialBase):
     r"""
@@ -659,6 +678,7 @@ cdef class _LM10Potential(_CPotential):
         self._parameters = &(self._parvec[0])
         self.c_value = &lm10_value
         self.c_gradient = &lm10_gradient
+        self.c_density = &nan_density
 
 class LM10Potential(CPotentialBase):
     r"""
