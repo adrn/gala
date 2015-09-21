@@ -78,6 +78,7 @@ cdef extern from "_cbuiltin.h":
 
     double leesuto_value(double t, double *pars, double *q) nogil
     void leesuto_gradient(double t, double *pars, double *q, double *grad) nogil
+    double leesuto_density(double t, double *pars, double *q) nogil
 
     double logarithmic_value(double t, double *pars, double *q) nogil
     void logarithmic_gradient(double t, double *pars, double *q, double *grad) nogil
@@ -493,16 +494,16 @@ class SphericalNFWPotential(CPotentialBase):
 #
 cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
 
-    def __cinit__(self, double v_c, double r_s,
+    def __cinit__(self, double G, double v_c, double r_s,
                   double a, double b, double c,
                   double R11, double R12, double R13,
                   double R21, double R22, double R23,
                   double R31, double R32, double R33):
-        self._parvec = np.array([v_c,r_s,a,b,c, R11,R12,R13,R21,R22,R23,R31,R32,R33])
+        self._parvec = np.array([G, v_c,r_s,a,b,c, R11,R12,R13,R21,R22,R23,R31,R32,R33])
         self._parameters = &(self._parvec)[0]
         self.c_value = &leesuto_value
         self.c_gradient = &leesuto_gradient
-        self.c_density = &nan_density
+        self.c_density = &leesuto_density
 
 class LeeSutoTriaxialNFWPotential(CPotentialBase):
     r"""
@@ -541,9 +542,9 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
 
     """
     def __init__(self, v_c, r_s, a, b, c, units, phi=0., theta=0., psi=0., R=None):
-        self.parameters = dict(v_c=v_c, r_s=r_s, a=a, b=b, c=c)
         super(LeeSutoTriaxialNFWPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
+        self.parameters = dict(G=self.G, v_c=v_c, r_s=r_s, a=a, b=b, c=c)
 
         if R is None:
             if theta != 0 or phi != 0 or psi != 0:
