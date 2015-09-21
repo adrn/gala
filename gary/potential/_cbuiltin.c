@@ -442,7 +442,7 @@ double leesuto_density(double t, double *pars, double *r) {
     z = pars[12]*r[0] + pars[13]*r[1] + pars[14]*r[2];
 
     u = sqrt(x*x + y*y/b_a2 + z*z/c_a2) / pars[2];
-    return v_h2 / (u * (1+u)*(1+u));
+    return v_h2 / (u * (1+u)*(1+u)) / (4.*M_PI*pars[2]*pars[2]*pars[0]);
 }
 
 /* ---------------------------------------------------------------------------
