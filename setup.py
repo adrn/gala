@@ -50,6 +50,6 @@ setup(
               "gary.potential"],
     scripts=['bin/plotsnap', 'bin/moviesnap', 'bin/snap2gal'],
     package_data={'gary.potential': ['*.pxd','*.c','*.h'],
-                  'gary.integrate': ['*.pxd','*.c']
+                  'gary.integrate': ['*.pxd','*.c','dopri/*']
                   },
 )
