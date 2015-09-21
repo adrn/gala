@@ -35,6 +35,7 @@ extern double miyamotonagai_density(double t, double *pars, double *q);
 
 extern double leesuto_value(double t, double *pars, double *q);
 extern void leesuto_gradient(double t, double *pars, double *q, double *grad);
+extern double leesuto_density(double t, double *pars, double *q);
 
 extern double logarithmic_value(double t, double *pars, double *q);
 extern void logarithmic_gradient(double t, double *pars, double *q, double *grad);
