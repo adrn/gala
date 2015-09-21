@@ -542,9 +542,9 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
 
     """
     def __init__(self, v_c, r_s, a, b, c, units, phi=0., theta=0., psi=0., R=None):
+        self.parameters = dict(v_c=v_c, r_s=r_s, a=a, b=b, c=c)
         super(LeeSutoTriaxialNFWPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
-        self.parameters = dict(G=self.G, v_c=v_c, r_s=r_s, a=a, b=b, c=c)
 
         if R is None:
             if theta != 0 or phi != 0 or psi != 0:
@@ -571,7 +571,7 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
         c_params['R31'] = R[6]
         c_params['R32'] = R[7]
         c_params['R33'] = R[8]
-        self.c_instance = _LeeSutoTriaxialNFWPotential(**c_params)
+        self.c_instance = _LeeSutoTriaxialNFWPotential(G=self.G, **c_params)
         self.parameters['R'] = np.ravel(R).copy()
 
 # ============================================================================
