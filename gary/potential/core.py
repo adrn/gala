@@ -309,6 +309,94 @@ class PotentialBase(object):
 
         return fig
 
+    def plot_densty_contours(self, grid, ax=None, labels=None, subplots_kw=dict(), **kwargs):
+        """
+        Plot density contours. Computes the density on a grid
+        (specified by the array `grid`).
+
+        Parameters
+        ----------
+        grid : tuple
+            Coordinate grids or slice value for each dimension. Should be a
+            tuple of 1D arrays or numbers.
+        ax : matplotlib.Axes (optional)
+        labels : iterable (optional)
+            List of axis labels.
+        subplots_kw : dict
+            kwargs passed to matplotlib's subplots() function if an axes object
+            is not specified.
+        kwargs : dict
+            kwargs passed to either contourf() or plot().
+
+        """
+
+        import matplotlib.pyplot as plt
+        from matplotlib import cm
+
+        # figure out which elements are iterable, which are numeric
+        _grids = []
+        _slices = []
+        for ii,g in enumerate(grid):
+            if isiterable(g):
+                _grids.append((ii,g))
+            else:
+                _slices.append((ii,g))
+
+        # figure out the dimensionality
+        ndim = len(_grids)
+
+        # if ndim > 2, don't know how to handle this!
+        if ndim > 2:
+            raise ValueError("ndim > 2: you can only make contours on a 2D grid. For other "
+                             "dimensions, you have to specify values to slice.")
+
+        if ax is None:
+            # default figsize
+            fig, ax = plt.subplots(1, 1, **subplots_kw)
+        else:
+            fig = ax.figure
+
+        if ndim == 1:
+            # 1D curve
+            x1 = _grids[0][1]
+            r = np.zeros((len(x1), len(_grids) + len(_slices)))
+            r[:,_grids[0][0]] = x1
+
+            for ii,slc in _slices:
+                r[:,ii] = slc
+
+            Z = self.density(r)
+            ax.plot(x1, Z, **kwargs)
+
+            if labels is not None:
+                ax.set_xlabel(labels[0])
+                ax.set_ylabel("potential")
+        else:
+            # 2D contours
+            x1,x2 = np.meshgrid(_grids[0][1], _grids[1][1])
+            shp = x1.shape
+            x1,x2 = x1.ravel(), x2.ravel()
+
+            r = np.zeros((len(x1), len(_grids) + len(_slices)))
+            r[:,_grids[0][0]] = x1
+            r[:,_grids[1][0]] = x2
+
+            for ii,slc in _slices:
+                r[:,ii] = slc
+
+            Z = self.density(r)
+
+            # make default colormap not suck
+            cmap = kwargs.pop('cmap', cm.Blues)
+            cs = ax.contourf(x1.reshape(shp), x2.reshape(shp), Z.reshape(shp),
+                             cmap=cmap, **kwargs)
+
+            if labels is not None:
+                ax.set_xlabel(labels[0])
+                ax.set_ylabel(labels[1])
+
+        return fig
+
     def integrate_orbit(self, w0, Integrator=LeapfrogIntegrator,
                         Integrator_kwargs=dict(), cython_if_possible=True,
                         **time_spec):
