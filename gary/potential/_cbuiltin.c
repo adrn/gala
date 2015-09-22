@@ -353,11 +353,12 @@ double leesuto_value(double t, double *pars, double *r) {
             4 - b
             5 - c
     */
-    double x, y, z, _r, u, v_h2;
+    double x, y, z, _r, u, phi0;
     double e_b2 = 1-pow(pars[4]/pars[3],2);
     double e_c2 = 1-pow(pars[5]/pars[3],2);
+    double F1,F2,F3,costh2,sinth2,sinph2;
 
-    v_h2 = pars[1]*pars[1] / (log(2.) - 0.5 + (log(2.)-0.75)*e_b2 + (log(2.)-0.75)*e_c2);
+    phi0 = pars[1]*pars[1] / (log(2.) - 0.5 + (log(2.)-0.75)*e_b2 + (log(2.)-0.75)*e_c2);
 
     // pars[6] up are R
     x = pars[6]*r[0]  + pars[7]*r[1]  + pars[8]*r[2];
@@ -366,7 +367,15 @@ double leesuto_value(double t, double *pars, double *r) {
 
     _r = sqrt(x*x + y*y + z*z);
     u = _r / pars[2];
-    return v_h2 * ((e_b2/2 + e_c2/2)*((1/u - 1/(u*u*u))*log(u + 1) - 1 + (2*u*u - 3*u + 6)/(6*u*u)) + (e_b2*y*y/(2*_r*_r) + e_c2*z*z/(2*_r*_r))*((u*u - 3*u - 6)/(2*u*u*(u + 1)) + 3*log(u + 1)/(u*u*u)) - log(u + 1)/u);
+
+    F1 = -log(1+u)/u;
+    F2 = -1/3. + (2*u*u - 3*u + 6)/(6*u*u) + (1/u - pow(u,-3.))*log(1+u);
+    F3 = (u*u - 3*u - 6)/(2*u*u*(1+u)) + 3*pow(u,-3)*log(1+u);
+    costh2 = z*z / (_r*_r);
+    sinth2 = 1 - costh2;
+    sinph2 = y*y / (x*x + y*y);
+    //return phi0 * ((e_b2/2 + e_c2/2)*((1/u - 1/(u*u*u))*log(u + 1) - 1 + (2*u*u - 3*u + 6)/(6*u*u)) + (e_b2*y*y/(2*_r*_r) + e_c2*z*z/(2*_r*_r))*((u*u - 3*u - 6)/(2*u*u*(u + 1)) + 3*log(u + 1)/(u*u*u)) - log(u + 1)/u);
+    return phi0 * (F1 + (e_b2+e_c2)/2.*F2 + (e_b2*sinth2*sinph2 + e_c2*costh2)/2. * F3);
 }
 
 void leesuto_gradient(double t, double *pars, double *r, double *grad) {
