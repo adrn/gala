@@ -72,6 +72,9 @@ cdef extern from "_cbuiltin.h":
     void sphericalnfw_gradient(double t, double *pars, double *q, double *grad) nogil
     double sphericalnfw_density(double t, double *pars, double *q) nogil
 
+    double flattenednfw_value(double t, double *pars, double *q) nogil
+    void flattenednfw_gradient(double t, double *pars, double *q, double *grad) nogil
+
     double miyamotonagai_value(double t, double *pars, double *q) nogil
     void miyamotonagai_gradient(double t, double *pars, double *q, double *grad) nogil
     double miyamotonagai_density(double t, double *pars, double *q) nogil
@@ -88,7 +91,8 @@ cdef extern from "_cbuiltin.h":
 
 __all__ = ['HenonHeilesPotential', 'KeplerPotential', 'HernquistPotential',
            'PlummerPotential', 'MiyamotoNagaiPotential',
-           'SphericalNFWPotential', 'LeeSutoTriaxialNFWPotential',
+           'SphericalNFWPotential', 'FlattenedNFWPotential',
+           'LeeSutoTriaxialNFWPotential',
            'LogarithmicPotential', 'JaffePotential',
            'StonePotential', 'IsochronePotential',
            'LM10Potential']
@@ -487,6 +491,49 @@ class SphericalNFWPotential(CPotentialBase):
         super(SphericalNFWPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
         self.c_instance = _SphericalNFWPotential(G=self.G, **self.parameters)
+
+# ============================================================================
+#    Flattened NFW potential
+#
+cdef class _FlattenedNFWPotential(_CPotential):
+
+    def __cinit__(self, double G, double v_c, double r_s, double q_z):
+        self._parvec = np.array([G, v_c,r_s,q_z])
+        self._parameters = &(self._parvec)[0]
+        self.c_value = &sphericalnfw_value
+        self.c_gradient = &flattenednfw_gradient
+        self.c_density = &nan_density
+
+class FlattenedNFWPotential(CPotentialBase):
+    r"""
+    FlattenedNFWPotential(v_c, r_s, q_z, units)
+
+    Flattened NFW potential. Separate from the triaxial potential below to
+    optimize for speed. Much faster than computing the triaxial case.
+
+    .. math::
+
+        \Phi(r) = -\frac{v_h^2}{\sqrt{\ln 2 - \frac{1}{2}}} \frac{\ln(1 + r/r_s)}{r/r_s}\\
+        r^2 = x^2 + y^2 + z^2/q_z^2
+
+    Parameters
+    ----------
+    v_c : numeric
+        Circular velocity at the scale radius.
+    r_s : numeric
+        Scale radius.
+    q_z : numeric
+        Flattening.
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, v_c, r_s, q_z, units):
+        self.parameters = dict(v_c=v_c, r_s=r_s, q_z=q_z)
+        super(FlattenedNFWPotential, self).__init__(units=units)
+        self.G = G.decompose(units).value
+        self.c_instance = _FlattenedNFWPotential(G=self.G, **self.parameters)
 
 # ============================================================================
 #    Lee & Suto (2003) triaxial NFW potential
