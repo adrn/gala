@@ -288,6 +288,40 @@ double sphericalnfw_density(double t, double *pars, double *q) {
 }
 
 /* ---------------------------------------------------------------------------
+    Flattened NFW
+*/
+double flattenednfw_value(double t, double *pars, double *r) {
+    /*  pars:
+            - G (Gravitational constant)
+            - v_c (circular velocity at the scale radius)
+            - r_s (scale radius)
+            - q (flattening)
+    */
+    double u, v_h2;
+    v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+    u = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]/(pars[3]*pars[3])) / pars[2];
+    return -v_h2 * log(1 + u) / u;
+}
+
+void flattenednfw_gradient(double t, double *pars, double *r, double *grad) {
+    /*  pars:
+            - G (Gravitational constant)
+            - v_c (circular velocity at the scale radius)
+            - r_s (scale radius)
+            - q (flattening)
+    */
+    double fac, u, v_h2;
+    v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+
+    u = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]/(pars[3]*pars[3])) / pars[2];
+    fac = v_h2 / (u*u*u) / (pars[2]*pars[2]) * (log(1+u) - u/(1+u));
+
+    grad[0] = fac*r[0];
+    grad[1] = fac*r[1];
+    grad[2] = fac*r[2]/(pars[3]*pars[3]);
+}
+
+/* ---------------------------------------------------------------------------
     Miyamoto-Nagai flattened potential
 */
 double miyamotonagai_value(double t, double *pars, double *r) {

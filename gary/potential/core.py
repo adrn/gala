@@ -390,6 +390,8 @@ class PotentialBase(object):
             cmap = kwargs.pop('cmap', cm.Blues)
             cs = ax.contourf(x1.reshape(shp), x2.reshape(shp), Z.reshape(shp),
                              cmap=cmap, **kwargs)
+            # cs.cmap.set_under('w')
+            # cs.cmap.set_over('k')
 
             if labels is not None:
                 ax.set_xlabel(labels[0])
