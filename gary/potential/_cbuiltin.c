@@ -321,6 +321,34 @@ void flattenednfw_gradient(double t, double *pars, double *r, double *grad) {
     grad[2] = fac*r[2]/(pars[3]*pars[3]);
 }
 
+double flattenednfw_density(double t, double *pars, double *xyz) {
+    /*  pars:
+            - G (Gravitational constant)
+            - v_c (circular velocity at the scale radius)
+            - r_s (scale radius)
+            - q (flattening)
+    */
+    double v = pars[1]*pars[1] / (log(2.) - 0.5);
+    double s = pars[2];
+    double q = pars[3];
+    double x = xyz[0];
+    double y = xyz[1];
+    double z = xyz[2];
+
+    return ((2*(s*s)*(v*v)*((-(pow(q,6)*pow((x*x) + (y*y),2)*
+                 ((-1 + 2*(q*q))*(s*s) +
+                   (-1 + 4*(q*q))*((x*x) + (y*y)))) -
+              pow(q,4)*((x*x) + (y*y))*
+               (2*(s*s) + 3*(1 + 2*(q*q))*((x*x) + (y*y)))*(z*z) +
+              (q*q)*((-3 + 2*(q*q))*(s*s) - 9*((x*x) + (y*y)))*
+               pow(z,4) + (-5 + 2*(q*q))*pow(z,6))/
+            pow((q*q)*((s*s) + (x*x) + (y*y)) + (z*z),2) +
+           ((q*q)*(-1 + 2*(q*q))*((x*x) + (y*y)) +
+              (3 - 2*(q*q))*(z*z))*
+            log(1 + ((x*x) + (y*y) + (z*z)/(q*q))/(s*s))))/
+       (pow(q,4)*pow((x*x) + (y*y) + (z*z)/(q*q),3))) / (4*M_PI*pars[0]);
+}
+
 /* ---------------------------------------------------------------------------
     Miyamoto-Nagai flattened potential
 */
