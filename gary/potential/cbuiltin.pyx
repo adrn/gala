@@ -74,6 +74,7 @@ cdef extern from "_cbuiltin.h":
 
     double flattenednfw_value(double t, double *pars, double *q) nogil
     void flattenednfw_gradient(double t, double *pars, double *q, double *grad) nogil
+    double flattenednfw_density(double t, double *pars, double *q) nogil
 
     double miyamotonagai_value(double t, double *pars, double *q) nogil
     void miyamotonagai_gradient(double t, double *pars, double *q, double *grad) nogil
@@ -502,7 +503,7 @@ cdef class _FlattenedNFWPotential(_CPotential):
         self._parameters = &(self._parvec)[0]
         self.c_value = &sphericalnfw_value
         self.c_gradient = &flattenednfw_gradient
-        self.c_density = &nan_density
+        self.c_density = &flattenednfw_density
 
 class FlattenedNFWPotential(CPotentialBase):
     r"""

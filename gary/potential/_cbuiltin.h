@@ -31,6 +31,7 @@ extern double sphericalnfw_density(double t, double *pars, double *q);
 
 extern double flattenednfw_value(double t, double *pars, double *q);
 extern void flattenednfw_gradient(double t, double *pars, double *q, double *grad);
+extern double flattenednfw_density(double t, double *pars, double *q);
 
 extern double miyamotonagai_value(double t, double *pars, double *q);
 extern void miyamotonagai_gradient(double t, double *pars, double *q, double *grad);
