@@ -335,7 +335,7 @@ double flattenednfw_density(double t, double *pars, double *xyz) {
     double y = xyz[1];
     double z = xyz[2];
 
-    return ((2*(s*s)*(v*v)*((-(pow(q,6)*pow((x*x) + (y*y),2)*
+    return -((2*(s*s)*(v*v)*((-(pow(q,6)*pow((x*x) + (y*y),2)*
                  ((-1 + 2*(q*q))*(s*s) +
                    (-1 + 4*(q*q))*((x*x) + (y*y)))) -
               pow(q,4)*((x*x) + (y*y))*
