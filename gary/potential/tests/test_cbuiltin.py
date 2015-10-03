@@ -301,6 +301,13 @@ class TestSphericalNFWPotential(PotentialTestBase):
 
         assert np.allclose(true_mprof, esti_mprof, rtol=1E-6)
 
+class TestFlattenedNFWPotential(PotentialTestBase):
+    def setup(self):
+        self.potential = FlattenedNFWPotential(units=self.units,
+                                               v_c=0.2, r_s=12., q_z=0.9)
+        self.w0 = [0.,20.,0.,0.0352238,-0.03579493,0.175]
+        super(TestFlattenedNFWPotential,self).setup()
+
 class TestLeeSutoTriaxialNFWPotential(PotentialTestBase):
     def setup(self):
         self.potential = LeeSutoTriaxialNFWPotential(units=self.units,
