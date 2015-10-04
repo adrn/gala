@@ -30,7 +30,7 @@ def pythonify(node):
             else:
                 node[key] = float(item)
 
-def from_dict(d):
+def from_dict(d, module=None):
     """
     Convert a dictionary potential specification into a
     :class:`~gary.potential.PotentialBase` subclass object.
@@ -39,6 +39,7 @@ def from_dict(d):
     ----------
     d : dict
         Dictionary specification of a potential.
+    module : namespace (optional)
 
     """
 
@@ -63,7 +64,11 @@ def from_dict(d):
     #   a list of floats
     pythonify(params)
 
-    from .. import potential
+    if module is None:
+        from .. import potential
+    else:
+        potential = module
+
     if isinstance(class_name, dict):  # CompositePotential
         p = potential.CompositePotential()
         composite = class_name.values()[0]
@@ -101,7 +106,7 @@ def to_dict(potential):
 
     return d
 
-def load(f):
+def load(f, module=None):
     """
     Read a potential specification file and return a
     :class:`~gary.potential.PotentialBase` object instantiated with parameters
@@ -112,6 +117,7 @@ def load(f):
     f : str, file_like
         A block of text, filename, or file-like object to parse and read
         a potential from.
+    module : namespace (optional)
 
     """
     try:
@@ -120,7 +126,7 @@ def load(f):
     except:
         p_dict = yaml.load(f)
 
-    return from_dict(p_dict)
+    return from_dict(p_dict, module=module)
 
 def save(potential, f):
     """
