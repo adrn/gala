@@ -25,7 +25,7 @@ potential = Extension("gary.potential.*",
                       ["gary/potential/*.pyx",
                        "gary/potential/_cbuiltin.c"],
                       include_dirs=[numpy_incl_path, mac_incl_path],
-                      extra_compile_args=['-std=c99'])
+                      extra_compile_args=['-std=gnu99'])
 extensions.append(potential)
 
 integrate = Extension("gary.integrate.*",
@@ -33,7 +33,7 @@ integrate = Extension("gary.integrate.*",
                        "gary/integrate/dopri/dop853.c",
                        "gary/integrate/1d/simpson.c"],
                       include_dirs=[numpy_incl_path, mac_incl_path],
-                      extra_compile_args=['-std=c99'])
+                      extra_compile_args=['-std=gnu99'])
 extensions.append(integrate)
 
 setup(
