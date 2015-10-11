@@ -24,6 +24,7 @@ cdef class _CPotential:
     cpdef mass_enclosed(self, double[:,::1] q, double G, double t=?)
     cdef public double _mass_enclosed(self, double t, double *q, double *epsilon, double Gee) nogil
 
+    cpdef d_dr(self, double[:,::1] q, double G, double t=?)
     cdef public double _d_dr(self, double t, double *q, double *epsilon, double Gee) nogil
 
 # cdef class _CCompositePotential: #[type _CPotentialType, object _CPotential]:
