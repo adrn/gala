@@ -218,6 +218,16 @@ cdef class _CPotential:
                 hess[3*i+j] = 0.
 
     # -------------------------------------------------------------
+    cpdef d_dr(self, double[:,::1] q, double G, double t=0.):
+        cdef int nparticles, k
+        nparticles = q.shape[0]
+
+        cdef double [::1] epsilon = np.zeros(3)
+        cdef double [::1] dr = np.zeros((nparticles,))
+        for k in range(nparticles):
+            dr[k] = self._d_dr(t, &q[k,0], &epsilon[0], G)
+        return np.array(dr)
+
     cdef public double _d_dr(self, double t, double *q, double *epsilon, double Gee) nogil:
         cdef double h, r, dPhi_dr
 
@@ -249,13 +259,8 @@ cdef class _CPotential:
 
     cdef public double _mass_enclosed(self, double t, double *q, double *epsilon, double Gee) nogil:
         cdef double r, dPhi_dr
-
         dPhi_dr = self._d_dr(t, &q[0], &epsilon[0], Gee)
-
-        # Step-size for estimating radial gradient of the potential
-        r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2])
-
-        return fabs(r*r * dPhi_dr / Gee)
+        return dPhi_dr / (2.*h)
 
 # ==============================================================================
 
