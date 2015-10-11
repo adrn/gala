@@ -183,6 +183,16 @@ class PotentialTestBase(object):
         plt.plot(r, esti_mprof)
         plt.savefig(os.path.join(plot_path, "mass_profile_{}.png".format(self.name)))
 
+    def test_d_dr(self):
+        r = np.linspace(1., 400, 100)
+        R = np.zeros((len(r),3))
+        R[:,0] = r
+        dr = self.potential.c_instance.d_dr(R)
+
+        plt.clf()
+        plt.plot(r, dr)
+        plt.savefig(os.path.join(plot_path, "d_dr_{}.png".format(self.name)))
+
 # ----------------------------------------------------------------------------
 #  Potentials to test
 #
