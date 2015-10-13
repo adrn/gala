@@ -247,6 +247,37 @@ cdef class _CPotential:
 
         return dPhi_dr / (2.*h)
 
+    cpdef d2_dr2(self, double[:,::1] q, double G, double t=0.):
+        cdef int nparticles, k
+        nparticles = q.shape[0]
+
+        cdef double [::1] epsilon = np.zeros(3)
+        cdef double [::1] dr = np.zeros((nparticles,))
+        for k in range(nparticles):
+            dr[k] = self._d_dr(t, &q[k,0], &epsilon[0], G)
+        return np.array(dr)
+
+    cdef public double _d2_dr2(self, double t, double *q, double *epsilon, double Gee) nogil:
+        cdef double h, r, d2Phi_dr2
+
+        # Fractional step-size
+        h = 0.01
+
+        # Step-size for estimating radial gradient of the potential
+        r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2])
+
+        for j in range(3):
+            epsilon[j] = h * q[j]/r + q[j]
+        d2Phi_dr2 = self._value(t, epsilon)
+
+        d2Phi_dr2 -= 2*self._value(t, q)
+
+        for j in range(3):
+            epsilon[j] = h * q[j]/r - q[j]
+        d2Phi_dr2 += self._value(t, epsilon)
+
+        return d2Phi_dr2 / (h*h)
+
     cpdef mass_enclosed(self, double[:,::1] q, double G, double t=0.):
         cdef int nparticles, k
         nparticles = q.shape[0]
@@ -260,7 +291,7 @@ cdef class _CPotential:
     cdef public double _mass_enclosed(self, double t, double *q, double *epsilon, double Gee) nogil:
         cdef double r, dPhi_dr
         dPhi_dr = self._d_dr(t, &q[0], &epsilon[0], Gee)
-        return dPhi_dr / (2.*h)
+        return dPhi_dr
 
 # ==============================================================================
 
