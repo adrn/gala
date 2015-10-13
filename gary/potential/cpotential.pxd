@@ -27,6 +27,9 @@ cdef class _CPotential:
     cpdef d_dr(self, double[:,::1] q, double G, double t=?)
     cdef public double _d_dr(self, double t, double *q, double *epsilon, double Gee) nogil
 
+    cpdef d2_dr2(self, double[:,::1] q, double G, double t=?)
+    cdef public double _d2_dr2(self, double t, double *q, double *epsilon, double Gee) nogil
+
 # cdef class _CCompositePotential: #[type _CPotentialType, object _CPotential]:
 
 #     cdef public int n  # number of potential components
