@@ -254,7 +254,7 @@ cdef class _CPotential:
         cdef double [::1] epsilon = np.zeros(3)
         cdef double [::1] dr = np.zeros((nparticles,))
         for k in range(nparticles):
-            dr[k] = self._d_dr(t, &q[k,0], &epsilon[0], G)
+            dr[k] = self._d2_dr2(t, &q[k,0], &epsilon[0], G)
         return np.array(dr)
 
     cdef public double _d2_dr2(self, double t, double *q, double *epsilon, double Gee) nogil:
