@@ -248,6 +248,9 @@ cdef class _CPotential:
         return dPhi_dr / (2.*h)
 
     cpdef d2_dr2(self, double[:,::1] q, double G, double t=0.):
+        """
+        d2_dr2(q, G, t=0.)
+        """
         cdef int nparticles, k
         nparticles = q.shape[0]
 
