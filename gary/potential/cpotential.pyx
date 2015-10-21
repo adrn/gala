@@ -293,8 +293,9 @@ cdef class _CPotential:
 
     cdef public double _mass_enclosed(self, double t, double *q, double *epsilon, double Gee) nogil:
         cdef double r, dPhi_dr
+        r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2])
         dPhi_dr = self._d_dr(t, &q[0], &epsilon[0], Gee)
-        return dPhi_dr
+        return fabs(r*r * dPhi_dr / Gee)
 
 # ==============================================================================
 
