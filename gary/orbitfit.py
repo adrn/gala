@@ -118,9 +118,9 @@ def ln_prior(p):
     lp += -np.log(phi2_sigma)
 
     # prefer shorter integrations
-    if t_integ <= 0.1 or t_integ > 1000.: # 1 Myr to 1000 Myr
+    if t_integ <= 1. or t_integ > 1000.: # 1 Myr to 1000 Myr
         return -np.inf
-    lp += -np.log(t_integ)
+    # lp += -np.log(t_integ)
 
     return lp
 
