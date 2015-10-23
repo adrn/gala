@@ -13,9 +13,11 @@ import astropy.units as u
 uno = u.dimensionless_unscaled
 import numpy as np
 from scipy.optimize import minimize
+from scipy.interpolate import InterpolatedUnivariateSpline
 
 # Project
-from .coordinates import Quaternion
+from .coordinates import Quaternion, vgal_to_hel
+from .units import galactic
 
 def _rotation_opt_func(qua_wxyz, xyz):
     """
@@ -90,3 +92,80 @@ def rotate_sph_coordinate(rep, R):
     sph = coord.CartesianRepresentation(R.dot(xyz)*unit)\
                .represent_as(coord.SphericalRepresentation)
     return sph
+
+# ----------------------------------------------------------------------------
+# For inference:
+
+def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_frame=dict()):
+    """
+    Evaluate the stream orbit fit likelihood.
+
+    Parameters
+    ----------
+    p : iterable
+        The parameters of the model: the 6 orbital initial conditions, the integration time,
+        intrinsic angular width of the stream.
+    data_coord : :class:`astropy.coordinate.SkyCoord`, :class:`astropy.coordinate.BaseCoordinateFrame`
+    data_veloc : iterable
+        An iterable of Astropy :class:`astropy.units.Quantity` objects for the proper motions and
+        line-of-sight velocity. The proper motions should be in the same coordinate frame as
+        ``data_coord``.
+    data_uncer : iterable
+        An iterable of Astropy :class:`astropy.units.Quantity` objects for the uncertainties in
+        each observable. Should have length = 6.
+    potential : :class:`gary.potential.PotentialBase`
+        The gravitational potential.
+    dt : float
+        Timestep for integrating the orbit.
+    R : :class:`numpy.ndarray`
+        The rotation matrix to convert from the coordinate frame of ``data_coord`` to stream
+        coordinates.
+    reference_frame : dict (optional)
+        Any parameters that specify the reference frame, such as the Sun-Galactic Center distance,
+        the circular velocity of the Sun, etc.
+
+    """
+    w0 = p[:6]
+    t_integ = p[6]
+    phi2_sigma = p[7] # intrinsic width on sky
+
+    # integrate orbit
+    t,w = potential.integrate_orbit(w0, dt=dt, t1=0, t2=t_integ)
+    w = w[:,0]
+
+    # rotate the model points to stream coordinates
+    galactocentric_frame = reference_frame.get('galactocentric_frame', coord.Galactocentric)
+    model_c = galactocentric_frame.realize_frame(coord.CartesianRepresentation(w[:,:3].T*u.kpc))\
+                                  .transform_to(coord.Galactic)
+    model_c_rot = coord.CartesianRepresentation(R.dot(model_c.represent_as(coord.CartesianRepresentation).xyz.value)*u.kpc)\
+                       .represent_as(coord.SphericalRepresentation)
+    model_phi1 = model_c_rot.lon
+    model_phi2 = model_c_rot.lat
+    model_d = model_c_rot.distance
+    model_mul,model_mub,model_vr = vgal_to_hel(model_c, w[:,3:].T*u.kpc/u.Myr,
+                                               vcirc=reference_frame.get('vcirc', None),
+                                               vlsr=reference_frame.get('vlsr', None),
+                                               galactocentric_frame=galactocentric_frame)
+
+    # rotate the data to stream coordinates
+    data_rot_sph = rotate_sph_coordinate(data_coord, R)
+    cosphi1_data = np.cos(data_rot_sph.lon).value
+    cosphi1_model = np.cos(model_phi1).value
+    ix = np.argsort(cosphi1_model)
+
+    # define interpolating functions
+    order = 1
+    phi2_interp = InterpolatedUnivariateSpline(cosphi1_model[ix], model_phi2[ix].radian, k=order, bbox=[-1,1])
+    d_interp = InterpolatedUnivariateSpline(cosphi1_model[ix], model_d[ix].decompose(galactic).value, k=order, bbox=[-1,1])
+    mul_interp = InterpolatedUnivariateSpline(cosphi1_model[ix], model_mul[ix].decompose(galactic).value, k=order, bbox=[-1,1])
+    mub_interp = InterpolatedUnivariateSpline(cosphi1_model[ix], model_mub[ix].decompose(galactic).value, k=order, bbox=[-1,1])
+    vr_interp = InterpolatedUnivariateSpline(cosphi1_model[ix], model_vr[ix].decompose(galactic).value, k=order, bbox=[-1,1])
+
+    chi2 = 0.
+    chi2 += -(phi2_interp(cosphi1_data) - data_rot_sph.lat.radian)**2 / (2*phi2_sigma**2)
+    chi2 += -(d_interp(cosphi1_data) - data_rot_sph.distance.decompose(galactic).value)**2 / (2*data_uncer[2].decompose(galactic).value**2)
+    chi2 += -(mul_interp(cosphi1_data) - data_veloc[0].decompose(galactic).value)**2 / (2*data_uncer[3].decompose(galactic).value**2)
+    chi2 += -(mub_interp(cosphi1_data) - data_veloc[1].decompose(galactic).value)**2 / (2*data_uncer[4].decompose(galactic).value**2)
+    chi2 += -(vr_interp(cosphi1_data) - data_veloc[2].decompose(galactic).value)**2 / (2*data_uncer[5].decompose(galactic).value**2)
+
+    return chi2
