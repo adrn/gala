@@ -124,6 +124,11 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
         Any parameters that specify the reference frame, such as the Sun-Galactic Center distance,
         the circular velocity of the Sun, etc.
 
+    Returns
+    -------
+    ll : :class:`numpy.ndarray`
+        An array of likelihoods for each data point.
+
     """
     w0 = p[:6]
     t_integ = p[6]
