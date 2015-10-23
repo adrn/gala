@@ -96,6 +96,34 @@ def rotate_sph_coordinate(rep, R):
 # ----------------------------------------------------------------------------
 # For inference:
 
+def ln_prior(p):
+    """
+    Evaluate the prior over stream orbit fit parameters.
+
+    Parameters
+    ----------
+    p : iterable
+        The parameters of the model: the 6 orbital initial conditions, the integration time,
+        intrinsic angular width of the stream.
+    """
+    w0 = p[:6]
+    t_integ = p[6]
+    phi2_sigma = p[7] # intrinsic width on sky
+
+    lp = 0.
+
+    # prior on instrinsic width of stream
+    if phi2_sigma <= 0.:
+        return -np.inf
+    lp += -np.log(phi2_sigma)
+
+    # prefer shorter integrations
+    if t_integ <= 0.1 or t_integ > 1000.: # 1 Myr to 1000 Myr
+        return -np.inf
+    lp += -np.log(t_integ)
+
+    return lp
+
 def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_frame=dict()):
     """
     Evaluate the stream orbit fit likelihood.
@@ -174,3 +202,48 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
     chi2 += -(vr_interp(cosphi1_data) - data_veloc[2].decompose(galactic).value)**2 / (2*data_uncer[5].decompose(galactic).value**2)
 
     return chi2
+
+def ln_posterior(p, *args, **kwargs):
+    """
+    Evaluate the stream orbit fit posterior probability.
+
+    Parameters
+    ----------
+    p : iterable
+        The parameters of the model: the 6 orbital initial conditions, the integration time,
+        intrinsic angular width of the stream.
+    data_coord : :class:`astropy.coordinate.SkyCoord`, :class:`astropy.coordinate.BaseCoordinateFrame`
+    data_veloc : iterable
+        An iterable of Astropy :class:`astropy.units.Quantity` objects for the proper motions and
+        line-of-sight velocity. The proper motions should be in the same coordinate frame as
+        ``data_coord``.
+    data_uncer : iterable
+        An iterable of Astropy :class:`astropy.units.Quantity` objects for the uncertainties in
+        each observable. Should have length = 6.
+    potential : :class:`gary.potential.PotentialBase`
+        The gravitational potential.
+    dt : float
+        Timestep for integrating the orbit.
+    R : :class:`numpy.ndarray`
+        The rotation matrix to convert from the coordinate frame of ``data_coord`` to stream
+        coordinates.
+    reference_frame : dict (optional)
+        Any parameters that specify the reference frame, such as the Sun-Galactic Center distance,
+        the circular velocity of the Sun, etc.
+
+    Returns
+    -------
+    lp : float
+        The log of the posterior probability.
+
+    """
+
+    lp = ln_prior(p)
+    if not np.isfinite(lp):
+        return -np.inf
+
+    ll = ln_likelihood(p, *args, **kwargs)
+    if not np.all(np.isfinite(ll)):
+        return -np.inf
+
+    return lp + ll.sum()
