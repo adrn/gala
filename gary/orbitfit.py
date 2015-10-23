@@ -110,12 +110,12 @@ def ln_prior(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_
     """
     w0 = p[:6]
     t_integ = p[6]
-    phi2_sigma = p[7] # intrinsic width on sky
 
     lp = 0.
 
     # prior on instrinsic width of stream
     if not fix_phi2_sigma:
+        phi2_sigma = p[7] # intrinsic width on sky
         if phi2_sigma <= 0.:
             return -np.inf
         lp += -np.log(phi2_sigma)
