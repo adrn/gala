@@ -96,7 +96,8 @@ def rotate_sph_coordinate(rep, R):
 # ----------------------------------------------------------------------------
 # For inference:
 
-def ln_prior(p):
+def ln_prior(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_frame=dict(),
+             fix_phi2_sigma=False):
     """
     Evaluate the prior over stream orbit fit parameters.
 
@@ -105,6 +106,7 @@ def ln_prior(p):
     p : iterable
         The parameters of the model: the 6 orbital initial conditions, the integration time,
         intrinsic angular width of the stream.
+    see docstring for ln_likelihood
     """
     w0 = p[:6]
     t_integ = p[6]
@@ -113,18 +115,20 @@ def ln_prior(p):
     lp = 0.
 
     # prior on instrinsic width of stream
-    if phi2_sigma <= 0.:
-        return -np.inf
-    lp += -np.log(phi2_sigma)
+    if not fix_phi2_sigma:
+        if phi2_sigma <= 0.:
+            return -np.inf
+        lp += -np.log(phi2_sigma)
 
     # prefer shorter integrations
-    if np.abs(t_integ) <= 1. or np.abs(t_integ) > 1000.: # 1 Myr to 1000 Myr
+    if np.sign(dt)*t_integ <= 1. or np.sign(dt)*t_integ > 1000.: # 1 Myr to 1000 Myr
         return -np.inf
     # lp += -np.log(t_integ)
 
     return lp
 
-def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_frame=dict()):
+def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_frame=dict(),
+                  fix_phi2_sigma=False):
     """
     Evaluate the stream orbit fit likelihood.
 
@@ -160,7 +164,10 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
     """
     w0 = p[:6]
     t_integ = p[6]
-    phi2_sigma = p[7] # intrinsic width on sky
+    if not fix_phi2_sigma:
+        phi2_sigma = p[7] # intrinsic width on sky
+    else:
+        phi2_sigma = fix_phi2_sigma
 
     # integrate orbit
     t,w = potential.integrate_orbit(w0, dt=dt, t1=0, t2=t_integ)
@@ -195,11 +202,14 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
     vr_interp = InterpolatedUnivariateSpline(cosphi1_model[ix], model_vr[ix].decompose(galactic).value, k=order, bbox=[-1,1])
 
     chi2 = 0.
-    chi2 += -(phi2_interp(cosphi1_data) - data_rot_sph.lat.radian)**2 / (2*phi2_sigma**2)
-    chi2 += -(d_interp(cosphi1_data) - data_rot_sph.distance.decompose(galactic).value)**2 / (2*data_uncer[2].decompose(galactic).value**2)
-    chi2 += -(mul_interp(cosphi1_data) - data_veloc[0].decompose(galactic).value)**2 / (2*data_uncer[3].decompose(galactic).value**2)
-    chi2 += -(mub_interp(cosphi1_data) - data_veloc[1].decompose(galactic).value)**2 / (2*data_uncer[4].decompose(galactic).value**2)
-    chi2 += -(vr_interp(cosphi1_data) - data_veloc[2].decompose(galactic).value)**2 / (2*data_uncer[5].decompose(galactic).value**2)
+    chi2 += -(phi2_interp(cosphi1_data) - data_rot_sph.lat.radian)**2 / (2*phi2_sigma**2) - np.log(phi2_sigma)
+
+    err = data_uncer[2].decompose(galactic).value
+    chi2 += -(d_interp(cosphi1_data) - data_rot_sph.distance.decompose(galactic).value)**2 / (2*err**2) - np.log(err)
+
+    for i,interp in enumerate([mul_interp, mub_interp, vr_interp]):
+        err = data_uncer[3+i].decompose(galactic).value
+        chi2 += -(interp(cosphi1_data) - data_veloc[i].decompose(galactic).value)**2 / (2*err**2) - np.log(err)
 
     return chi2
 
@@ -238,7 +248,7 @@ def ln_posterior(p, *args, **kwargs):
 
     """
 
-    lp = ln_prior(p)
+    lp = ln_prior(p, *args, **kwargs)
     if not np.isfinite(lp):
         return -np.inf
 
