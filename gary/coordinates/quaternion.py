@@ -1,6 +1,6 @@
 # coding: utf-8
 
-""" Misc. utilities """
+""" Quaternions. """
 
 from __future__ import division, print_function
 
@@ -21,7 +21,8 @@ class Quaternion(object):
     Parameters
     ----------
     wxyz : array_like
-        A quaternion or array of quaternions. Ordere is assumed to be ``(w,x,y,z)``.
+        A quaternion in vector representation. Order is assumed
+        to be ``(w,x,y,z)``.
     """
     def __init__(self, wxyz):
         self.wxyz = np.array(wxyz).astype(float)
@@ -31,7 +32,13 @@ class Quaternion(object):
     @classmethod
     def from_v_theta(cls, v, theta):
         """
-        Construct quaternion from unit vector v and rotation angle theta
+        Create a quaternion from unit vector v and rotation angle theta.
+
+        Returns
+        -------
+        q : :class:`gary.coordinates.Quaternion`
+            A ``Quaternion`` instance.
+
         """
         theta = np.asarray(theta)
         v = np.asarray(v)
@@ -47,7 +54,7 @@ class Quaternion(object):
         return "Quaternion:\n" + self.wxyz.__repr__()
 
     def __str__(self):
-        return "Quaternion"
+        return "Quaternion({:.5f},{:.5f},{:.5f},{:.5f})".format(*self.wxyz)
 
     def __mul__(self, other):
         # multiplication of two quaternions.
@@ -65,6 +72,12 @@ class Quaternion(object):
     def v_theta(self):
         """
         Return the ``(v, theta)`` equivalent of the (normalized) quaternion.
+
+        Returns
+        -------
+        v : float
+        theta : float
+
         """
         # compute theta
         norm = np.sqrt(np.sum(self.wxyz**2))
@@ -79,7 +92,13 @@ class Quaternion(object):
     @property
     def rotation_matrix(self):
         """
-        Return the rotation matrix of the (normalized) quaternion
+        Compute the rotation matrix of the (normalized) quaternion.
+
+        Returns
+        -------
+        R : :class:`~numpy.ndarray`
+            A 3 by 3 rotation matrix (has shape ``(3,3)``).
+
         """
         v, theta = self.v_theta
         c = np.cos(theta)
@@ -96,33 +115,29 @@ class Quaternion(object):
                           v[2] * v[2] * (1. - c) + c]])
 
     @classmethod
-    def random(cls, size=None):
+    def random(cls):
         """
         Randomly sample a Quaternion from a distribution uniform in
         3D rotation angles.
 
         https://www-preview.ri.cmu.edu/pub_files/pub4/kuffner_james_2004_1/kuffner_james_2004_1.pdf
 
-        Parameters
-        ----------
-        size : int
-            Number of quaternions to randomly sample.
+        Returns
+        -------
+        q : :class:`gary.coordinates.Quaternion`
+            A randomly sampled ``Quaternion`` instance.
 
         """
 
-        if size is not None:
-            raise NotImplementedError("Setting the size not yet supported.")
-
-        s = np.random.uniform(size=size)
+        s = np.random.uniform()
         s1 = np.sqrt(1 - s)
         s2 = np.sqrt(s)
-        t1 = np.random.uniform(0, 2*np.pi, size=size)
-        t2 = np.random.uniform(0, 2*np.pi, size=size)
+        t1 = np.random.uniform(0, 2*np.pi)
+        t2 = np.random.uniform(0, 2*np.pi)
 
         w = np.cos(t2)*s2
         x = np.sin(t1)*s1
         y = np.cos(t1)*s1
         z = np.sin(t2)*s2
 
-        return cls(np.array([w,x,y,z]))
-        # return cls(np.vstack((w,x,y,z)).T)
+        return cls([w,x,y,z])
