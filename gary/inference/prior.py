@@ -5,12 +5,10 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os, sys
 import logging
 
 # Third-party
 import numpy as np
-import astropy.units as u
 
 __all__ = ["BasePrior", "UniformPrior", "LogarithmicPrior", "NormalPrior"]
 
