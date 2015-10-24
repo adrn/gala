@@ -99,7 +99,6 @@ def rotate_sph_coordinate(rep, R):
 # ----------------------------------------------------------------------------
 # For inference:
 
-# TODO: need to account for a polynomial in phi2
 def ln_prior(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_frame=dict(),
              fix_phi2_sigma=False):
     """
