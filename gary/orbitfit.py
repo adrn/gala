@@ -14,10 +14,12 @@ uno = u.dimensionless_unscaled
 import numpy as np
 from scipy.optimize import minimize
 from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.stats import norm
 
 # Project
-from .coordinates import Quaternion, vgal_to_hel
+from .coordinates import Quaternion, vgal_to_hel, vhel_to_gal
 from .units import galactic
+from .integrate import DOPRI853Integrator
 
 def _rotation_opt_func(qua_wxyz, xyz):
     """
@@ -41,7 +43,7 @@ def compute_stream_rotation_matrix(coordinate, wxyz0=None, align_lon=False):
     wxyz0 : array_like (optional)
         Initial guess for the quaternion vector that represents the rotation.
     align_lon : bool (optional)
-        Also rotate in longitude so the minimum longitude is 0.
+        Rotate so that the point at the minimum longitude is at lon = 0.
 
     Returns
     -------
@@ -58,7 +60,8 @@ def compute_stream_rotation_matrix(coordinate, wxyz0=None, align_lon=False):
     if align_lon:
         new_xyz = R.dot(coordinate.cartesian.xyz.value)
         lon = np.arctan2(new_xyz[1], new_xyz[0])
-        R2 = rotation_matrix(lon.min()*u.radian, 'z')
+        ix = lon.argmin()
+        R2 = rotation_matrix(lon[ix]*u.radian, 'z')
         R = R2*R
 
     return R
@@ -101,32 +104,35 @@ def ln_prior(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_
     """
     Evaluate the prior over stream orbit fit parameters.
 
-    Parameters
-    ----------
-    p : iterable
-        The parameters of the model: the 6 orbital initial conditions, the integration time,
-        intrinsic angular width of the stream.
-    see docstring for ln_likelihood
+    See docstring for `ln_likelihood()` for information on args and kwargs.
+
     """
-    w0 = p[:6]
-    t_integ = p[6]
+    # these are for the initial conditions
+    phi2,d,mul,mub,vr = p[:5]
+    t_integ = p[5]
 
     lp = 0.
 
     # prior on instrinsic width of stream
     if not fix_phi2_sigma:
-        phi2_sigma = p[7] # intrinsic width on sky
+        phi2_sigma = p[6] # intrinsic width on sky
         if phi2_sigma <= 0.:
             return -np.inf
         lp += -np.log(phi2_sigma)
+    else:
+        phi2_sigma = fix_phi2_sigma
 
-    # prefer shorter integrations
+    # strong prior on phi2
+    lp += norm.logpdf(phi2, loc=0., scale=phi2_sigma)
+
+    # uniform prior on integration time
     if np.sign(dt)*t_integ <= 1. or np.sign(dt)*t_integ > 1000.: # 1 Myr to 1000 Myr
         return -np.inf
     # lp += -np.log(t_integ)
 
     return lp
 
+# TODO: i do need to allow for scatter in phi2 at phi1=0...
 def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_frame=dict(),
                   fix_phi2_sigma=False):
     """
@@ -135,8 +141,8 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
     Parameters
     ----------
     p : iterable
-        The parameters of the model: the 6 orbital initial conditions, the integration time,
-        intrinsic angular width of the stream.
+        The parameters of the model: distance, proper motions, radial velocity, the integration time,
+        and (optionally) intrinsic angular width of the stream.
     data_coord : :class:`astropy.coordinate.SkyCoord`, :class:`astropy.coordinate.BaseCoordinateFrame`
     data_veloc : iterable
         An iterable of Astropy :class:`astropy.units.Quantity` objects for the proper motions and
@@ -162,30 +168,51 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
         An array of likelihoods for each data point.
 
     """
-    w0 = p[:6]
-    t_integ = p[6]
+
+    # the Galactocentric frame we're using
+    gc_frame = reference_frame.get('galactocentric_frame', coord.Galactocentric())
+
+    # read in from the parameter vector to variables
+    # these are for the initial conditions
+    phi2,d,mul,mub,vr = p[:5]
+    phi2 *= u.radian
+    d *= u.kpc
+    mul *= u.radian/u.Myr
+    mub *= u.radian/u.Myr
+    vr *= u.kpc/u.Myr
+
+    t_integ = p[5]
     if not fix_phi2_sigma:
-        phi2_sigma = p[7] # intrinsic width on sky
+        phi2_sigma = p[5] # intrinsic width on sky
     else:
         phi2_sigma = fix_phi2_sigma
 
-    # integrate orbit
-    t,w = potential.integrate_orbit(w0, dt=dt, t1=0, t2=t_integ)
+    # convert initial conditions from stream coordinates to data coordinate frame
+    sph = coord.SphericalRepresentation(lon=0.*u.radian, lat=phi2, distance=d)
+    xyz = sph.represent_as(coord.CartesianRepresentation).xyz.value
+    in_frame_car = coord.CartesianRepresentation(R.T.dot(xyz).T*u.kpc)
+    initial_coord = data_coord.realize_frame(in_frame_car)
+
+    # now convert to galactocentric coordinates
+    x0 = initial_coord.transform_to(gc_frame).cartesian.xyz.decompose(galactic).value
+    v0 = vhel_to_gal(initial_coord, pm=(mul,mub), rv=vr,
+                     **reference_frame).decompose(galactic).value
+    w0 = np.append(x0, v0)
+
+    # integrate the orbit
+    t,w = potential.integrate_orbit(w0, dt=np.sign(t_integ)*np.abs(dt), t1=0, t2=t_integ,
+                                    Integrator=DOPRI853Integrator)
     w = w[:,0]
 
     # rotate the model points to stream coordinates
-    galactocentric_frame = reference_frame.get('galactocentric_frame', coord.Galactocentric)
-    model_c = galactocentric_frame.realize_frame(coord.CartesianRepresentation(w[:,:3].T*u.kpc))\
-                                  .transform_to(coord.Galactic)
+    model_c = gc_frame.realize_frame(coord.CartesianRepresentation(w[:,:3].T*u.kpc))\
+                      .transform_to(coord.Galactic)
     model_c_rot = coord.CartesianRepresentation(R.dot(model_c.represent_as(coord.CartesianRepresentation).xyz.value)*u.kpc)\
                        .represent_as(coord.SphericalRepresentation)
     model_phi1 = model_c_rot.lon
     model_phi2 = model_c_rot.lat
     model_d = model_c_rot.distance
-    model_mul,model_mub,model_vr = vgal_to_hel(model_c, w[:,3:].T*u.kpc/u.Myr,
-                                               vcirc=reference_frame.get('vcirc', None),
-                                               vlsr=reference_frame.get('vlsr', None),
-                                               galactocentric_frame=galactocentric_frame)
+    model_mul,model_mub,model_vr = vgal_to_hel(model_c, w[:,3:].T*u.kpc/u.Myr, **reference_frame)
 
     # rotate the data to stream coordinates
     data_rot_sph = rotate_sph_coordinate(data_coord, R)
@@ -194,7 +221,7 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
     ix = np.argsort(cosphi1_model)
 
     # define interpolating functions
-    order = 1
+    order = 3
     phi2_interp = InterpolatedUnivariateSpline(cosphi1_model[ix], model_phi2[ix].radian, k=order, bbox=[-1,1])
     d_interp = InterpolatedUnivariateSpline(cosphi1_model[ix], model_d[ix].decompose(galactic).value, k=order, bbox=[-1,1])
     mul_interp = InterpolatedUnivariateSpline(cosphi1_model[ix], model_mul[ix].decompose(galactic).value, k=order, bbox=[-1,1])
@@ -217,29 +244,7 @@ def ln_posterior(p, *args, **kwargs):
     """
     Evaluate the stream orbit fit posterior probability.
 
-    Parameters
-    ----------
-    p : iterable
-        The parameters of the model: the 6 orbital initial conditions, the integration time,
-        intrinsic angular width of the stream.
-    data_coord : :class:`astropy.coordinate.SkyCoord`, :class:`astropy.coordinate.BaseCoordinateFrame`
-    data_veloc : iterable
-        An iterable of Astropy :class:`astropy.units.Quantity` objects for the proper motions and
-        line-of-sight velocity. The proper motions should be in the same coordinate frame as
-        ``data_coord``.
-    data_uncer : iterable
-        An iterable of Astropy :class:`astropy.units.Quantity` objects for the uncertainties in
-        each observable. Should have length = 6.
-    potential : :class:`gary.potential.PotentialBase`
-        The gravitational potential.
-    dt : float
-        Timestep for integrating the orbit.
-    R : :class:`numpy.ndarray`
-        The rotation matrix to convert from the coordinate frame of ``data_coord`` to stream
-        coordinates.
-    reference_frame : dict (optional)
-        Any parameters that specify the reference frame, such as the Sun-Galactic Center distance,
-        the circular velocity of the Sun, etc.
+    See docstring for `ln_likelihood()` for information on args and kwargs.
 
     Returns
     -------
