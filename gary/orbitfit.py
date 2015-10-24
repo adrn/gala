@@ -239,6 +239,10 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
         err = data_uncer[3+i].decompose(galactic).value
         chi2 += -(interp(cosphi1_data) - data_veloc[i].decompose(galactic).value)**2 / (2*err**2) - np.log(err)
 
+    # this is some kind of whack prior - don't integrate more than we have to
+    chi2 += -(model_phi1.min() - data_rot_sph.lon.radian.min())**2 / (2*(2*phi2_sigma)**2)
+    chi2 += -(model_phi1.max() - data_rot_sph.lon.radian.max())**2 / (2*(2*phi2_sigma)**2)
+
     return chi2
 
 def ln_posterior(p, *args, **kwargs):
