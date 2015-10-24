@@ -4,4 +4,4 @@ from .orphan import *
 from .propermotion import *
 from .velocity_transforms import *
 from .poincarepolar import *
-from .quaternion import Quaternion
+from .quaternion import *
