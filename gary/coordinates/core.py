@@ -209,10 +209,10 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
     dxy = np.sqrt(x_icrs[0]**2 + x_icrs[1]**2)
 
     vr = np.sum(x_icrs * v_icrs, axis=0) / d
-    with u.set_enabled_equivalencies(u.dimensionless_angles()):
-        mua = ((x_icrs[0]*v_icrs[1] - v_icrs[0]*x_icrs[1]) / dxy**2).to(u.mas/u.yr)
-        mua_cosd = (mua * dxy / d).to(u.mas/u.yr)
-        mud = (-(x_icrs[2]*(x_icrs[0]*v_icrs[0] + x_icrs[1]*v_icrs[1]) - dxy**2*v_icrs[2]) / d**2 / dxy).to(u.mas/u.yr)
+
+    mua = ((x_icrs[0]*v_icrs[1] - v_icrs[0]*x_icrs[1]) / dxy**2).to(u.mas/u.yr, equivalencies=u.dimensionless_angles())
+    mua_cosd = (mua * dxy / d).to(u.mas/u.yr, equivalencies=u.dimensionless_angles())
+    mud = (-(x_icrs[2]*(x_icrs[0]*v_icrs[0] + x_icrs[1]*v_icrs[1]) - dxy**2*v_icrs[2]) / d**2 / dxy).to(u.mas/u.yr, equivalencies=u.dimensionless_angles())
 
     pm_radec = (mua_cosd, mud)
 
@@ -305,24 +305,28 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame
 
     if c.name == 'icrs':
         pm_radec = u.Quantity(map(np.atleast_1d,pm))
+        icrs = c
 
     elif c.name == 'galactic':
         # transform to ICRS proper motions
         pm_radec = pm_gal_to_icrs(c, pm)
+        icrs = c.transform_to(coord.ICRS)
 
     else:
         raise NotImplementedError("Proper motions in the {} system are not "
                                   "currently supported.".format(c.name))
 
+    # I'm so fired
+    a,d,D = icrs.ra, icrs.dec, c.distance
+
     # proper motion components: longitude, latitude
     mura_cosdec, mudec = pm_radec
+    vra = (D*mura_cosdec).to(rv.unit, equivalencies=u.dimensionless_angles())
+    vdec = (D*mura_cosdec).to(rv.unit, equivalencies=u.dimensionless_angles())
 
-    # Adrian, you're fired
-    a,d,D = c.icrs.ra, c.icrs.dec, c.distance
-    with u.set_enabled_equivalencies(u.dimensionless_angles()):
-        v_icrs = [rv*np.cos(a)*np.cos(d) - D*np.sin(a)*mura_cosdec - D*np.cos(a)*np.sin(d)*mudec,
-                  rv*np.sin(a)*np.cos(d) + D*np.cos(a)*mura_cosdec - D*np.sin(a)*np.sin(d)*mudec,
-                  rv*np.sin(d) + D*np.cos(d)*mudec]
+    v_icrs = [rv*np.cos(a)*np.cos(d) - vra*np.sin(a) - vdec*np.cos(a)*np.sin(d),
+              rv*np.sin(a)*np.cos(d) + vra*np.cos(a) - vdec*np.sin(a)*np.sin(d),
+              rv*np.sin(d) + vdec*np.cos(d)]
     v_icrs = np.array([v.to(u.km/u.s).value for v in v_icrs]) * u.km/u.s
 
     R = _icrs_gctc_velocity_matrix(galactocentric_frame)
