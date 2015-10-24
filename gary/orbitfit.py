@@ -128,7 +128,8 @@ def ln_prior(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_
     lp += norm.logpdf(phi2, loc=0., scale=phi2_sigma)
 
     # uniform prior on integration time
-    if np.sign(dt)*t_integ <= 1. or np.sign(dt)*t_integ > 1000.: # 1 Myr to 1000 Myr
+    ntimes = int(t_integ / dt) + 1
+    if np.sign(dt)*t_integ <= 1. or np.sign(dt)*t_integ > 1000. or ntimes < 4:
         return -np.inf
 
     return lp
