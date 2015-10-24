@@ -192,10 +192,7 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
     # so I don't accidentally modify in place
     vxyz = vxyz.copy()
 
-    # make sure this is a coordinate and get the frame for later use
-    c = coord.SkyCoord(coordinate)
-    coord_frame = c.frame
-
+    c = coordinate
     R = _icrs_gctc_velocity_matrix(galactocentric_frame)
 
     # remove circular and LSR velocities
@@ -206,8 +203,8 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
     orig_shape = vxyz.shape
     v_icrs = np.linalg.inv(R).dot(vxyz.reshape(vxyz.shape[0], np.prod(vxyz.shape[1:]))).reshape(orig_shape)
 
-    # get cartesian galactocentric
-    x_icrs = c.icrs.cartesian.xyz
+    # get cartesian heliocentric
+    x_icrs = c.transform_to(coord.ICRS).cartesian.xyz
     d = np.sqrt(np.sum(x_icrs**2, axis=0))
     dxy = np.sqrt(x_icrs[0]**2 + x_icrs[1]**2)
 
@@ -219,16 +216,16 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
 
     pm_radec = (mua_cosd, mud)
 
-    if coord_frame.name == 'icrs':
+    if c.name == 'icrs':
         pm = u.Quantity(map(np.atleast_1d,pm_radec))
 
-    elif coord_frame.name == 'galactic':
+    elif c.name == 'galactic':
         # transform to ICRS proper motions
         pm = pm_icrs_to_gal(c, pm_radec)
 
     else:
         raise NotImplementedError("Proper motions in the {} system are not "
-                                  "currently supported.".format(coord_frame.name))
+                                  "currently supported.".format(c.name))
 
     if c.isscalar:
         vr = vr.reshape(())
@@ -304,19 +301,18 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame
         galactocentric_frame = coord.Galactocentric
 
     # make sure this is a coordinate and get the frame for later use
-    c = coord.SkyCoord(coordinate)
-    coord_frame = c.frame
+    c = coordinate
 
-    if coord_frame.name == 'icrs':
+    if c.name == 'icrs':
         pm_radec = u.Quantity(map(np.atleast_1d,pm))
 
-    elif coord_frame.name == 'galactic':
+    elif c.name == 'galactic':
         # transform to ICRS proper motions
         pm_radec = pm_gal_to_icrs(c, pm)
 
     else:
         raise NotImplementedError("Proper motions in the {} system are not "
-                                  "currently supported.".format(coord_frame.name))
+                                  "currently supported.".format(c.name))
 
     # proper motion components: longitude, latitude
     mura_cosdec, mudec = pm_radec
