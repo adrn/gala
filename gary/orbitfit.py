@@ -99,6 +99,7 @@ def rotate_sph_coordinate(rep, R):
 # ----------------------------------------------------------------------------
 # For inference:
 
+# TODO: need to account for a polynomial in phi2
 def ln_prior(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_frame=dict(),
              fix_phi2_sigma=False):
     """
@@ -123,16 +124,16 @@ def ln_prior(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_
         phi2_sigma = fix_phi2_sigma
 
     # strong prior on phi2
+    if phi2 < -np.pi/2. or phi2 > np.pi/2:
+        return -np.inf
     lp += norm.logpdf(phi2, loc=0., scale=phi2_sigma)
 
     # uniform prior on integration time
     if np.sign(dt)*t_integ <= 1. or np.sign(dt)*t_integ > 1000.: # 1 Myr to 1000 Myr
         return -np.inf
-    # lp += -np.log(t_integ)
 
     return lp
 
-# TODO: i do need to allow for scatter in phi2 at phi1=0...
 def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_frame=dict(),
                   fix_phi2_sigma=False):
     """
