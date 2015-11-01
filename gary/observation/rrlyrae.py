@@ -21,7 +21,7 @@ from pygaia.errors.astrometric import properMotionErrorSkyAvg, parallaxErrorSkyA
 from .core import distance_modulus
 from .gaia import V_to_G
 
-__all__ = ["M_V", "gaia_rv_error", "gaia_pm_error"]
+__all__ = ["M_V", "gaia_radial_velocity_error", "gaia_proper_motion_error"]
 
 # Johnson/Cousins (V - I_C) color for RR Lyrae at *minimum*
 # Guldenschuh et al. (2005 PASP 117, 721), pg. 725
