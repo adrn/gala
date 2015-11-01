@@ -147,7 +147,7 @@ def ln_prior(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_
     return lp
 
 def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_frame=dict(),
-                  fix_phi2_sigma=False):
+                  fix_phi2_sigma=False, fix_d_sigma=False):
     """
     Evaluate the stream orbit fit likelihood.
 
@@ -200,6 +200,11 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
     else:
         phi2_sigma = fix_phi2_sigma
 
+    if not fix_d_sigma:
+        d_sigma = p[6] # intrinsic width in distance
+    else:
+        d_sigma = fix_d_sigma
+
     # convert initial conditions from stream coordinates to data coordinate frame
     sph = coord.SphericalRepresentation(lon=0.*u.radian, lat=phi2, distance=d)
     xyz = sph.represent_as(coord.CartesianRepresentation).xyz.value
@@ -242,18 +247,18 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
     vr_interp = InterpolatedUnivariateSpline(cosphi1_model[ix], model_vr[ix].decompose(galactic).value, k=order, bbox=[-1,1])
 
     chi2 = 0.
-    chi2 += -(phi2_interp(cosphi1_data) - data_rot_sph.lat.radian)**2 / (2*phi2_sigma**2) - np.log(phi2_sigma)
+    chi2 += -(phi2_interp(cosphi1_data) - data_rot_sph.lat.radian)**2 / (phi2_sigma**2) - 2*np.log(phi2_sigma)
 
     err = data_uncer[2].decompose(galactic).value
-    chi2 += -(d_interp(cosphi1_data) - data_rot_sph.distance.decompose(galactic).value)**2 / (2*err**2) - np.log(err)
+    chi2 += -(d_interp(cosphi1_data) - data_rot_sph.distance.decompose(galactic).value)**2 / (err**2 + d_sigma**2) - np.log(err**2 + d_sigma**2)
 
     for i,interp in enumerate([mul_interp, mub_interp, vr_interp]):
         err = data_uncer[3+i].decompose(galactic).value
-        chi2 += -(interp(cosphi1_data) - data_veloc[i].decompose(galactic).value)**2 / (2*err**2) - np.log(err)
+        chi2 += -(interp(cosphi1_data) - data_veloc[i].decompose(galactic).value)**2 / (err**2) - 2*np.log(err)
 
     # this is some kind of whack prior - don't integrate more than we have to
-    chi2 += -(model_phi1.radian.min() - data_rot_sph.lon.radian.min())**2 / (2*(2*phi2_sigma)**2)
-    chi2 += -(model_phi1.radian.max() - data_rot_sph.lon.radian.max())**2 / (2*(2*phi2_sigma)**2)
+    chi2 += -(model_phi1.radian.min() - data_rot_sph.lon.radian.min())**2 / ((2*phi2_sigma)**2)
+    chi2 += -(model_phi1.radian.max() - data_rot_sph.lon.radian.max())**2 / ((2*phi2_sigma)**2)
 
     return chi2
 
