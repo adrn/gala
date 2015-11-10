@@ -112,7 +112,7 @@ def rotate_sph_coordinate(rep, R):
 # For inference:
 
 def ln_prior(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_frame=dict(),
-             fix_phi2_sigma=False):
+             fix_phi2_sigma=False, fix_d_sigma=False):
     """
     Evaluate the prior over stream orbit fit parameters.
 
@@ -133,6 +133,15 @@ def ln_prior(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_
         lp += -np.log(phi2_sigma)
     else:
         phi2_sigma = fix_phi2_sigma
+
+    # prior on instrinsic depth of stream
+    if not fix_d_sigma:
+        d_sigma = p[7] # intrinsic depth (in distance)
+        if d_sigma <= 0.:
+            return -np.inf
+        lp += -np.log(d_sigma)
+    else:
+        d_sigma = fix_d_sigma
 
     # strong prior on phi2
     if phi2 < -np.pi/2. or phi2 > np.pi/2:
