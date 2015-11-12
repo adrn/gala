@@ -199,6 +199,7 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
         An array of likelihoods for each data point.
 
     """
+    chi2 = 0.
 
     # the Galactocentric frame we're using
     gc_frame = reference_frame.get('galactocentric_frame', coord.Galactocentric())
@@ -240,6 +241,10 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
                      **reference_frame).decompose(galactic).value
     w0 = np.append(x0, v0)
 
+    # HACK: a prior on velocities
+    vmag = np.sqrt(np.sum(v0**2))
+    chi2 += -vmag**2 / (0.15**2)
+
     # integrate the orbit
     t,w = potential.integrate_orbit(w0, dt=np.sign(t_integ)*np.abs(dt), t1=0, t2=t_integ,
                                     Integrator=DOPRI853Integrator)
@@ -269,7 +274,6 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
     mub_interp = InterpolatedUnivariateSpline(cosphi1_model[ix], model_mub[ix].decompose(galactic).value, k=order, bbox=[-1,1])
     vr_interp = InterpolatedUnivariateSpline(cosphi1_model[ix], model_vr[ix].decompose(galactic).value, k=order, bbox=[-1,1])
 
-    chi2 = 0.
     chi2 += -(phi2_interp(cosphi1_data) - data_rot_sph.lat.radian)**2 / (phi2_sigma**2) - 2*np.log(phi2_sigma)
 
     err = data_uncer[2].decompose(galactic).value
@@ -286,7 +290,7 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
     chi2 += -(model_phi1.radian.min() - data_rot_sph.lon.radian.min())**2 / ((2*phi2_sigma)**2)
     chi2 += -(model_phi1.radian.max() - data_rot_sph.lon.radian.max())**2 / ((2*phi2_sigma)**2)
 
-    return chi2
+    return 0.5*chi2
 
 def ln_posterior(p, *args, **kwargs):
     """
