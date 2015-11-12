@@ -242,8 +242,9 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
     w0 = np.append(x0, v0)
 
     # HACK: a prior on velocities
-    vmag = np.sqrt(np.sum(v0**2))
-    chi2 += -vmag**2 / (0.15**2)
+    vmag2 = np.sum(v0**2)
+    chi2 += -vmag2 / (0.15**2)
+    print(chi2)
 
     # integrate the orbit
     t,w = potential.integrate_orbit(w0, dt=np.sign(t_integ)*np.abs(dt), t1=0, t2=t_integ,
@@ -287,8 +288,8 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
         chi2 += -(interp(cosphi1_data) - data_veloc[i].decompose(galactic).value)**2 / (err**2) - 2*np.log(err)
 
     # this is some kind of whack prior - don't integrate more than we have to
-    chi2 += -(model_phi1.radian.min() - data_rot_sph.lon.radian.min())**2 / ((2*phi2_sigma)**2)
-    chi2 += -(model_phi1.radian.max() - data_rot_sph.lon.radian.max())**2 / ((2*phi2_sigma)**2)
+    # chi2 += -(model_phi1.radian.min() - data_rot_sph.lon.radian.min())**2 / ((2*phi2_sigma)**2)
+    # chi2 += -(model_phi1.radian.max() - data_rot_sph.lon.radian.max())**2 / ((2*phi2_sigma)**2)
 
     return 0.5*chi2
 
