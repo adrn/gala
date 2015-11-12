@@ -322,7 +322,7 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame
     # proper motion components: longitude, latitude
     mura_cosdec, mudec = pm_radec
     vra = (D*mura_cosdec).to(rv.unit, equivalencies=u.dimensionless_angles())
-    vdec = (D*mura_cosdec).to(rv.unit, equivalencies=u.dimensionless_angles())
+    vdec = (D*mudec).to(rv.unit, equivalencies=u.dimensionless_angles())
 
     v_icrs = [rv*np.cos(a)*np.cos(d) - vra*np.sin(a) - vdec*np.cos(a)*np.sin(d),
               rv*np.sin(a)*np.cos(d) + vra*np.cos(a) - vdec*np.sin(a)*np.sin(d),
