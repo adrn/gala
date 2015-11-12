@@ -22,7 +22,7 @@ from ..units import galactic
 from ..integrate import DOPRI853Integrator
 
 __all__ = ['compute_stream_rotation_matrix', 'rotate_sph_coordinate',
-           'ln_prior', 'ln_likelihood', 'ln_posterior']
+           'ln_prior', 'ln_likelihood', 'ln_posterior', 'chi']
 
 def _rotation_opt_func(qua_wxyz, xyz):
     """
@@ -112,7 +112,7 @@ def rotate_sph_coordinate(rep, R):
 # For inference:
 
 def ln_prior(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_frame=dict(),
-             fix_phi2_sigma=False, fix_d_sigma=False):
+             fix_phi2_sigma=False, fix_d_sigma=False, fix_vr_sigma=False):
     """
     Evaluate the prior over stream orbit fit parameters.
 
@@ -143,6 +143,15 @@ def ln_prior(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_
     else:
         d_sigma = fix_d_sigma
 
+    # prior on instrinsic LOS velocity dispersion of stream
+    if not fix_vr_sigma:
+        vr_sigma = p[8]
+        if vr_sigma <= 0.:
+            return -np.inf
+        lp += -np.log(vr_sigma)
+    else:
+        vr_sigma = fix_vr_sigma
+
     # strong prior on phi2
     if phi2 < -np.pi/2. or phi2 > np.pi/2:
         return -np.inf
@@ -156,7 +165,7 @@ def ln_prior(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_
     return lp
 
 def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, reference_frame=dict(),
-                  fix_phi2_sigma=False, fix_d_sigma=False):
+                  fix_phi2_sigma=False, fix_d_sigma=False, fix_vr_sigma=False):
     """
     Evaluate the stream orbit fit likelihood.
 
@@ -205,14 +214,19 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
 
     t_integ = p[5]
     if not fix_phi2_sigma:
-        phi2_sigma = p[5] # intrinsic width on sky
+        phi2_sigma = p[6] # intrinsic width on sky
     else:
         phi2_sigma = fix_phi2_sigma
 
     if not fix_d_sigma:
-        d_sigma = p[6] # intrinsic width in distance
+        d_sigma = p[7] # intrinsic width in distance
     else:
         d_sigma = fix_d_sigma
+
+    if not fix_vr_sigma:
+        vr_sigma = p[8] # intrinsic LOS velocity dispersion
+    else:
+        vr_sigma = fix_vr_sigma
 
     # convert initial conditions from stream coordinates to data coordinate frame
     sph = coord.SphericalRepresentation(lon=0.*u.radian, lat=phi2, distance=d)
@@ -261,7 +275,10 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
     err = data_uncer[2].decompose(galactic).value
     chi2 += -(d_interp(cosphi1_data) - data_rot_sph.distance.decompose(galactic).value)**2 / (err**2 + d_sigma**2) - np.log(err**2 + d_sigma**2)
 
-    for i,interp in enumerate([mul_interp, mub_interp, vr_interp]):
+    err = data_uncer[5].decompose(galactic).value
+    chi2 += -(vr_interp(cosphi1_data) - data_veloc[2].decompose(galactic).value)**2 / (err**2 + vr_sigma**2) - np.log(err**2 + vr_sigma**2)
+
+    for i,interp in enumerate([mul_interp, mub_interp]):
         err = data_uncer[3+i].decompose(galactic).value
         chi2 += -(interp(cosphi1_data) - data_veloc[i].decompose(galactic).value)**2 / (err**2) - 2*np.log(err)
 
