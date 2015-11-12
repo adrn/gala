@@ -244,7 +244,6 @@ def ln_likelihood(p, data_coord, data_veloc, data_uncer, potential, dt, R, refer
     # HACK: a prior on velocities
     vmag2 = np.sum(v0**2)
     chi2 += -vmag2 / (0.15**2)
-    print(chi2)
 
     # integrate the orbit
     t,w = potential.integrate_orbit(w0, dt=np.sign(t_integ)*np.abs(dt), t1=0, t2=t_integ,
