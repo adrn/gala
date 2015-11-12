@@ -7,21 +7,23 @@ from __future__ import absolute_import, division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
+# Standard library
 import os
 import pytest
 import numpy as np
 import tempfile
 
+# Third-party
 import astropy.coordinates as coord
 import astropy.units as u
+from astropy.utils.data import get_pkg_data_filename
 
+# This package
 from ..core import *
 
-this_path = os.path.split(__file__)[0]
-data = np.genfromtxt(os.path.join(this_path, "idl_vgsr_vhel.txt"),
-                     names=True, skiprows=2)
-
 def test_vgsr_to_vhel():
+    filename = get_pkg_data_filename('idl_vgsr_vhel.txt')
+    data = np.genfromtxt(filename, names=True, skip_header=2)
     for row in data:
         l = coord.Angle(row["lon"] * u.degree)
         b = coord.Angle(row["lat"] * u.degree)
@@ -62,6 +64,8 @@ def test_vgsr_to_vhel_misc():
         vgsr_to_vhel(c1, vgsr.value)
 
 def test_vhel_to_vgsr():
+    filename = get_pkg_data_filename('idl_vgsr_vhel.txt')
+    data = np.genfromtxt(filename, names=True, skip_header=2)
     for row in data:
         l = coord.Angle(row["lon"] * u.degree)
         b = coord.Angle(row["lat"] * u.degree)
@@ -103,7 +107,7 @@ class TestVHelGalConvert(object):
             temp.write(_txt)
             temp.flush()
             temp.seek(0)
-            self.data = np.genfromtxt(temp, names=True, skiprows=1)
+            self.data = np.genfromtxt(temp, names=True, skip_header=1)
 
     def test_vhel_to_gal(self):
 
@@ -224,9 +228,9 @@ class TestVHelGalConvert(object):
                           vcirc=0*u.km/u.s,
                           vlsr=[0.,0,0]*u.km/u.s,
                           galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(pmv[0], 0.*u.mas/u.yr, atol=1E-12)
-        np.testing.assert_allclose(pmv[1], 0.*u.mas/u.yr, atol=1E-12)
-        np.testing.assert_allclose(pmv[2], 20.*u.km/u.s, atol=1E-12)
+        np.testing.assert_allclose(pmv[0].to(u.mas/u.yr).value, 0., atol=1E-12)
+        np.testing.assert_allclose(pmv[1].to(u.mas/u.yr).value, 0., atol=1E-12)
+        np.testing.assert_allclose(pmv[2].to(u.mas/u.yr).value, 20., atol=1E-12)
 
         # with LSR and circular velocity
         c = coord.SkyCoord(l=0*u.deg, b=0*u.deg, distance=2*u.kpc, frame=coord.Galactic)
@@ -237,11 +241,15 @@ class TestVHelGalConvert(object):
                           galactocentric_frame=galcen_frame)
 
         with u.set_enabled_equivalencies(u.dimensionless_angles()):
-            np.testing.assert_allclose(pmv[0], ((200.*u.km/u.s)/(2*u.kpc)).to(u.mas/u.yr), atol=1E-12)
-            np.testing.assert_allclose(pmv[1], ((-10.*u.km/u.s)/(2*u.kpc)).to(u.mas/u.yr), atol=1E-4)
-        np.testing.assert_allclose(pmv[2], 20.*u.km/u.s, atol=1E-12)
+            np.testing.assert_allclose(pmv[0].to(u.mas/u.yr).value,
+                                       ((200.*u.km/u.s)/(2*u.kpc)).to(u.mas/u.yr).value,
+                                       atol=1E-12)
+            np.testing.assert_allclose(pmv[1].to(u.mas/u.yr).value,
+                                       ((-10.*u.km/u.s)/(2*u.kpc)).to(u.mas/u.yr).value,
+                                       atol=1E-4)
+        np.testing.assert_allclose(pmv[2].to(u.km/u.s).value, 20., atol=1E-12)
 
-    def test_roundtrip(self):
+    def test_roundtrip_icrs(self):
         np.random.seed(42)
         n = 100
 
@@ -265,4 +273,30 @@ class TestVHelGalConvert(object):
 
         np.testing.assert_allclose(mua.to(u.mas/u.yr).value, mua2.to(u.mas/u.yr).value, atol=1e-12)
         np.testing.assert_allclose(mud.to(u.mas/u.yr).value, mud2.to(u.mas/u.yr).value, atol=1e-12)
+        np.testing.assert_allclose(vr.to(u.km/u.s).value, vr2.to(u.km/u.s).value, atol=1e-12)
+
+    def test_roundtrip_gal(self):
+        np.random.seed(42)
+        n = 100
+
+        # yeahhhh, i know this isn't uniform on the sphere - shut up
+        c = coord.SkyCoord(ra=np.random.uniform(0,360,n)*u.degree,
+                           dec=np.random.uniform(-90,90,n)*u.degree,
+                           distance=np.random.uniform(0.1,10.,n)*u.kpc)
+
+        pm = np.random.uniform(-20,20,size=(2,n)) * u.mas/u.yr
+        vr = np.random.normal(0., 75., size=n)*u.km/u.s
+        mul,mub = pm  # initial
+
+        # first to galactocentric
+        vxyz = vhel_to_gal(c.galactic, pm=pm, rv=vr)
+
+        # then back again, wooo
+        pmv = vgal_to_hel(c.galactic, vxyz=vxyz)
+
+        mul2,mub2 = pmv[:2]
+        vr2 = pmv[2]
+
+        np.testing.assert_allclose(mul.to(u.mas/u.yr).value, mul2.to(u.mas/u.yr).value, atol=1e-12)
+        np.testing.assert_allclose(mub.to(u.mas/u.yr).value, mub2.to(u.mas/u.yr).value, atol=1e-12)
         np.testing.assert_allclose(vr.to(u.km/u.s).value, vr2.to(u.km/u.s).value, atol=1e-12)
