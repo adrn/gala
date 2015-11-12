@@ -22,7 +22,7 @@ from ..units import galactic
 from ..integrate import DOPRI853Integrator
 
 __all__ = ['compute_stream_rotation_matrix', 'rotate_sph_coordinate',
-           'ln_prior', 'ln_likelihood', 'ln_posterior', 'chi']
+           'ln_prior', 'ln_likelihood', 'ln_posterior']
 
 def _rotation_opt_func(qua_wxyz, xyz):
     """
