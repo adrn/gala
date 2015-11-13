@@ -7,18 +7,14 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-import os
-import pytest
-import numpy as np
-
+# Third-party
 import astropy.coordinates as coord
 import astropy.units as u
+from astropy.utils.data import get_pkg_data_filename
+import numpy as np
 
+# This package
 from ..sgr import *
-
-this_path = os.path.split(__file__)[0]
-law_data = np.genfromtxt(os.path.join(this_path, "SgrCoord_data"),
-                         names=True, delimiter=',')
 
 def test_simple():
     c = coord.ICRS(coord.Angle(217.2141, u.degree),
@@ -54,6 +50,8 @@ def test_against_David_Law():
         to generate the data file, SgrCoord_data.
 
     """
+    filename = get_pkg_data_filename('SgrCoord_data')
+    law_data = np.genfromtxt(filename, names=True, delimiter=',')
 
     c = coord.Galactic(law_data["l"]*u.deg, law_data["b"]*u.deg)
     sgr_coords = c.transform_to(Sagittarius)
