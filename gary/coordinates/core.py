@@ -201,7 +201,8 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
         vxyz[i] = vxyz[i] - vlsr[i]
 
     orig_shape = vxyz.shape
-    v_icrs = np.linalg.inv(R).dot(vxyz.reshape(vxyz.shape[0], np.prod(vxyz.shape[1:]))).reshape(orig_shape)
+    # v_icrs = np.linalg.inv(R).dot(vxyz.reshape(vxyz.shape[0], np.prod(vxyz.shape[1:]))).reshape(orig_shape)
+    v_icrs = R.T.dot(vxyz.reshape(vxyz.shape[0], np.prod(vxyz.shape[1:]))).reshape(orig_shape)
 
     # get cartesian heliocentric
     x_icrs = c.transform_to(coord.ICRS).cartesian.xyz
@@ -243,6 +244,9 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame
     proper motions. For example, if the input coordinate is in the ICRS frame, the
     proper motions are assumed to be :math:`(\mu_\alpha\cos\delta,\mu_\delta)`. This
     function also handles array inputs (see examples below).
+
+    TODO: Roundtrip using galactic coordinates only maintains relative precision
+    of ~1E-5. Why?
 
     Parameters
     ----------
