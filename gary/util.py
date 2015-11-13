@@ -210,3 +210,65 @@ def rolling_window(arr, window_size, stride=1, return_idx=False):
         if len(result) < window_size or ix2 >= arr_len:
             break
         ix1 += stride
+
+def apw_atleast_2d(*arys, **kwargs):
+    """
+    View inputs as arrays with at least two dimensions.
+
+    Parameters
+    ----------
+    arys1, arys2, ... : array_like
+        One or more array-like sequences.  Non-array inputs are converted
+        to arrays.  Arrays that already have two or more dimensions are
+        preserved.
+    insert_axis : int (optional)
+        Where to create a new axis if input array(s) have <2 dim.
+
+    Returns
+    -------
+    res, res2, ... : ndarray
+        An array, or tuple of arrays, each with ``a.ndim >= 2``.
+        Copies are avoided where possible, and views with two or more
+        dimensions are returned.
+
+    See Also
+    --------
+    atleast_1d, atleast_3d
+
+    Examples
+    --------
+    >>> np.atleast_2d(3.0)
+    array([[ 3.]])
+
+    >>> x = np.arange(3.0)
+    >>> np.atleast_2d(x)
+    array([[ 0.,  1.,  2.]])
+    >>> np.atleast_2d(x, insert_axis=-1)
+    array([[ 0.],
+           [ 1.],
+           [ 2.]])
+    >>> np.atleast_2d(x).base is x
+    True
+
+    >>> np.atleast_2d(1, [1, 2], [[1, 2]])
+    [array([[1]]), array([[1, 2]]), array([[1, 2]])]
+
+    """
+    insert_axis = kwargs.pop('insert_axis', 0)
+    slc = [None, None]
+    slc[insert_axis] = slice(None)
+
+    res = []
+    for ary in arys:
+        ary = np.asanyarray(ary)
+        if len(ary.shape) == 0:
+            result = ary.reshape(1, 1)
+        elif len(ary.shape) == 1:
+            result = ary[slc]
+        else:
+            result = ary
+        res.append(result)
+    if len(res) == 1:
+        return res[0]
+    else:
+        return res
