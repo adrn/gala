@@ -7,13 +7,15 @@ from __future__ import absolute_import, division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
+# Standard library
 import tempfile
 
-import numpy as np
-
+# Third-party
 import astropy.coordinates as coord
 import astropy.units as u
+import numpy as np
 
+# This package
 from ..propermotion import *
 
 _txt = """ # from here: http://www.astrostudio.org/xhipreadme.html
@@ -36,7 +38,7 @@ class TestPMConvert(object):
             temp.write(_txt)
             temp.flush()
             temp.seek(0)
-            self.data = np.genfromtxt(temp, names=True, skiprows=1)
+            self.data = np.genfromtxt(temp, names=True, skip_header=1)
 
     def test_pm_gal_to_icrs(self):
 
@@ -47,7 +49,7 @@ class TestPMConvert(object):
             mulb = [row['pml'],row['pmb']]*u.mas/u.yr
 
             trans_muad = pm_gal_to_icrs(c, mulb)
-            assert np.allclose(muad, trans_muad, atol=1E-2)
+            assert np.allclose(muad.value, trans_muad.value, atol=1E-2)
 
         # multiple entries
         c = coord.SkyCoord(ra=self.data['ra']*u.deg, dec=self.data['dec']*u.deg)
@@ -55,7 +57,7 @@ class TestPMConvert(object):
         mulb = np.vstack((self.data['pml'],self.data['pmb']))*u.mas/u.yr
 
         trans_muad = pm_gal_to_icrs(c, mulb)
-        assert np.allclose(muad, trans_muad, atol=1E-2)
+        assert np.allclose(muad.value, trans_muad.value, atol=1E-2)
 
     def test_pm_icrs_to_gal(self):
 
@@ -66,7 +68,7 @@ class TestPMConvert(object):
             mulb = [row['pml'],row['pmb']]*u.mas/u.yr
 
             trans_mulb = pm_icrs_to_gal(c, muad)
-            assert np.allclose(mulb, trans_mulb, atol=1E-2)
+            assert np.allclose(mulb.value, trans_mulb.value, atol=1E-2)
 
         # multiple entries
         c = coord.SkyCoord(ra=self.data['ra']*u.deg, dec=self.data['dec']*u.deg)
@@ -74,5 +76,5 @@ class TestPMConvert(object):
         mulb = np.vstack((self.data['pml'],self.data['pmb']))*u.mas/u.yr
 
         trans_mulb = pm_icrs_to_gal(c, muad)
-        assert np.allclose(mulb, trans_mulb, atol=1E-2)
+        assert np.allclose(mulb.value, trans_mulb.value, atol=1E-2)
 
