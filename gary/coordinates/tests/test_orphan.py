@@ -7,15 +7,12 @@ from __future__ import absolute_import, division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-from cStringIO import StringIO
-import pytest
-import numpy as np
-
+# Third-party
 import astropy.coordinates as coord
 import astropy.units as u
-from astropy.table import Table
 from astropy.io import ascii
 
+# This project
 from ..orphan import Orphan
 
 def test_table():
