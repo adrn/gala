@@ -232,7 +232,7 @@ class TestVHelGalConvert(object):
                           galactocentric_frame=galcen_frame)
         np.testing.assert_allclose(pmv[0].to(u.mas/u.yr).value, 0., atol=1E-12)
         np.testing.assert_allclose(pmv[1].to(u.mas/u.yr).value, 0., atol=1E-12)
-        np.testing.assert_allclose(pmv[2].to(u.mas/u.yr).value, 20., atol=1E-12)
+        np.testing.assert_allclose(pmv[2].to(u.km/u.s).value, 20., atol=1E-12)
 
         # with LSR and circular velocity
         c = coord.SkyCoord(l=0*u.deg, b=0*u.deg, distance=2*u.kpc, frame=coord.Galactic)
