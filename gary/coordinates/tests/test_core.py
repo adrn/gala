@@ -148,7 +148,7 @@ class TestVHelGalConvert(object):
                            vcirc=0*u.km/u.s,
                            vlsr=[0.,0,0]*u.km/u.s,
                            galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(vxyz, [20,0,0.]*u.km/u.s, atol=1E-12)
+        np.testing.assert_allclose(vxyz.to(u.km/u.s).value, [20,0,0.], atol=1E-12)
 
         # with LSR and circular velocity
         c = coord.SkyCoord(ra=galcen_frame.galcen_ra, dec=galcen_frame.galcen_dec, distance=2*u.kpc)
@@ -158,7 +158,7 @@ class TestVHelGalConvert(object):
                            vcirc=200*u.km/u.s,
                            vlsr=[-20.,0,10]*u.km/u.s,
                            galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(vxyz, [0,200,10]*u.km/u.s, atol=1E-12)
+        np.testing.assert_allclose(vxyz.to(u.km/u.s).value, [0,200,10], atol=1E-12)
 
         # l = 90
         # with LSR and circular velocity
@@ -169,7 +169,7 @@ class TestVHelGalConvert(object):
                            vcirc=200*u.km/u.s,
                            vlsr=[-20.,0,10]*u.km/u.s,
                            galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(vxyz, [-20,220,10]*u.km/u.s, atol=1E-5)
+        np.testing.assert_allclose(vxyz.to(u.km/u.s).value, [-20,220,10], atol=1E-5)
 
         # l = 180
         # with LSR and circular velocity
@@ -180,7 +180,7 @@ class TestVHelGalConvert(object):
                            vcirc=200*u.km/u.s,
                            vlsr=[-20.,0,10]*u.km/u.s,
                            galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(vxyz, [-40,200,10]*u.km/u.s, atol=1E-12)
+        np.testing.assert_allclose(vxyz.to(u.km/u.s).value, [-40,200,10], atol=1E-12)
 
         # l = 270
         # with LSR and circular velocity
@@ -191,7 +191,7 @@ class TestVHelGalConvert(object):
                            vcirc=200*u.km/u.s,
                            vlsr=[-20.,0,10]*u.km/u.s,
                            galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(vxyz, [-20,180,10]*u.km/u.s, atol=1E-5)
+        np.testing.assert_allclose(vxyz.to(u.km/u.s).value, [-20,180,10], atol=1E-5)
 
     def test_vgal_to_hel(self):
 
@@ -208,7 +208,9 @@ class TestVHelGalConvert(object):
                                vlsr=[0.,0,0]*u.km/u.s)
 
             for i in range(3):
-                np.testing.assert_allclose(pmrv[i], true_pmrv[i], atol=1.)
+                np.testing.assert_allclose(pmrv[i].to(true_pmrv[i].unit).value,
+                                           true_pmrv[i].value,
+                                           atol=1.)
 
         # some sanity checks - first, some convenience definitions
         g = coord.Galactic(l=0*u.deg, b=0*u.deg).transform_to(coord.ICRS)
@@ -297,6 +299,6 @@ class TestVHelGalConvert(object):
         mul2,mub2 = pmv[:2]
         vr2 = pmv[2]
 
-        np.testing.assert_allclose(mul.to(u.mas/u.yr).value, mul2.to(u.mas/u.yr).value, atol=1e-12)
-        np.testing.assert_allclose(mub.to(u.mas/u.yr).value, mub2.to(u.mas/u.yr).value, atol=1e-12)
-        np.testing.assert_allclose(vr.to(u.km/u.s).value, vr2.to(u.km/u.s).value, atol=1e-12)
+        np.testing.assert_allclose(mul.to(u.mas/u.yr).value, mul2.to(u.mas/u.yr).value, rtol=1E-5, atol=1e-12)
+        np.testing.assert_allclose(mub.to(u.mas/u.yr).value, mub2.to(u.mas/u.yr).value, rtol=1E-5, atol=1e-12)
+        np.testing.assert_allclose(vr.to(u.km/u.s).value, vr2.to(u.km/u.s).value, rtol=1E-5, atol=1e-12)
