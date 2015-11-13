@@ -15,7 +15,7 @@ import multiprocessing
 # Third-party
 import numpy as np
 
-__all__ = ['get_pool', 'rolling_window']
+__all__ = ['get_pool', 'rolling_window', 'atleast_2d']
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -211,7 +211,7 @@ def rolling_window(arr, window_size, stride=1, return_idx=False):
             break
         ix1 += stride
 
-def apw_atleast_2d(*arys, **kwargs):
+def atleast_2d(*arys, **kwargs):
     """
     View inputs as arrays with at least two dimensions.
 
@@ -231,26 +231,22 @@ def apw_atleast_2d(*arys, **kwargs):
         Copies are avoided where possible, and views with two or more
         dimensions are returned.
 
-    See Also
-    --------
-    atleast_1d, atleast_3d
-
     Examples
     --------
-    >>> np.atleast_2d(3.0)
+    >>> atleast_2d(3.0)
     array([[ 3.]])
 
     >>> x = np.arange(3.0)
-    >>> np.atleast_2d(x)
+    >>> atleast_2d(x)
     array([[ 0.,  1.,  2.]])
-    >>> np.atleast_2d(x, insert_axis=-1)
+    >>> atleast_2d(x, insert_axis=-1)
     array([[ 0.],
            [ 1.],
            [ 2.]])
-    >>> np.atleast_2d(x).base is x
+    >>> atleast_2d(x).base is x
     True
 
-    >>> np.atleast_2d(1, [1, 2], [[1, 2]])
+    >>> atleast_2d(1, [1, 2], [[1, 2]])
     [array([[1]]), array([[1, 2]]), array([[1, 2]])]
 
     """
