@@ -1,5 +1,5 @@
-numpy>=1.7
-astropy>=1.0rc1
+numpy>=1.10
+astropy>=1.0
 cython>=0.21
 pygaia>=0.31
 pyyaml
