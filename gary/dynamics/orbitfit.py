@@ -34,7 +34,7 @@ def _rotation_opt_func(qua_wxyz, xyz):
                .represent_as(coord.SphericalRepresentation)
     return np.sum(sph.lat.degree**2)
 
-def compute_stream_rotation_matrix(coordinate, wxyz0=None, align_lon=None):
+def compute_stream_rotation_matrix(coordinate, wxyz0=None, align_lon='mean'):
     """
     Compute the rotation matrix to go from the frame of the input
     coordinate to closely align the equator with the stream.
@@ -47,7 +47,7 @@ def compute_stream_rotation_matrix(coordinate, wxyz0=None, align_lon=None):
         Initial guess for the quaternion vector that represents the rotation.
     align_lon : str, int (optional)
         Can specify either 'min', 'max', or an integer index. This picks the
-        'hinge' star, whose longitude is set to 0.
+        'pirvot' star, whose longitude is set to 0.
 
     Returns
     -------
@@ -61,20 +61,25 @@ def compute_stream_rotation_matrix(coordinate, wxyz0=None, align_lon=None):
     res = minimize(_rotation_opt_func, x0=wxyz0, args=(coordinate.cartesian.xyz,))
     R = Quaternion(res.x).rotation_matrix
 
-    if align_lon is not None:
-        new_xyz = R.dot(coordinate.cartesian.xyz.value)
-        lon = np.arctan2(new_xyz[1], new_xyz[0])
-        if align_lon == 'min':
-            ix = lon.argmin()
-            R3 = 1.
-        elif align_lon == 'max':
-            ix = lon.argmax()
-            R3 = rotation_matrix(np.pi*u.radian, 'x')
-        else:
-            ix = int(align_lon)
-            R3 = 1.
-        R2 = rotation_matrix(lon[ix]*u.radian, 'z')
-        R = R3*R2*R
+    new_xyz = R.dot(coordinate.cartesian.xyz.value)
+    lon = np.arctan2(new_xyz[1], new_xyz[0])
+    if align_lon == 'mean':
+        _lon = np.mean(lon)
+        R3 = 1.
+    elif align_lon == 'min':
+        ix = lon.argmin()
+        _lon = lon[ix]
+        R3 = 1.
+    elif align_lon == 'max':
+        ix = lon.argmax()
+        _lon = lon[ix]
+        R3 = rotation_matrix(np.pi*u.radian, 'x')
+    else:
+        ix = int(align_lon)
+        _lon = lon[ix]
+        R3 = 1.
+    R2 = rotation_matrix(_lon*u.radian, 'z')
+    R = R3*R2*R
 
     return R
 
