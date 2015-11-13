@@ -7,17 +7,15 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os
 import logging
 
 # Third-party
-import matplotlib.pyplot as plt
 import numpy as np
 from astropy import log as logger
 import astropy.coordinates as coord
 import astropy.units as u
 
-# Project
+# This project
 from ..velocity_transforms import *
 
 logger.setLevel(logging.DEBUG)
@@ -49,19 +47,19 @@ class TestTransforms(object):
             vsph3 = func(self.pos_repr, self.vel)
             assert vsph3.unit == u.km/u.s
 
-            np.testing.assert_allclose(vsph1, vsph2, atol=1E-10)
-            np.testing.assert_allclose(vsph1, vsph3, atol=1E-10)
+            np.testing.assert_allclose(vsph1.value, vsph2.value, atol=1E-10)
+            np.testing.assert_allclose(vsph1.value, vsph3.value, atol=1E-10)
 
             true_v = self.vel.copy()
             if func == cartesian_to_physicsspherical:
                 true_v[2] *= -1.
 
-            np.testing.assert_allclose(vsph1[:,:2], true_v[:,:2])
+            np.testing.assert_allclose(vsph1[:,:2].value, true_v[:,:2].value)
 
             assert vsph1[0,2] > 0.  # vr
             assert np.sign(vsph1[2,2]) == np.sign(true_v[2,2])
-            np.testing.assert_allclose(np.sqrt(np.sum(vsph1**2,axis=0)),
-                                       np.sqrt(np.sum(true_v**2,axis=0)))
+            np.testing.assert_allclose(np.sqrt(np.sum(vsph1**2,axis=0)).value,
+                                       np.sqrt(np.sum(true_v**2,axis=0)).value)
 
     def test_to_cartesian(self):
         for i,func in enumerate([spherical_to_cartesian,
@@ -83,10 +81,10 @@ class TestTransforms(object):
             vsph3 = func(self.pos_repr, self.vel)
             assert vsph3.unit == u.km/u.s
 
-            np.testing.assert_allclose(vsph1, vsph2, atol=1E-10)
-            np.testing.assert_allclose(vsph1, vsph3, atol=1E-10)
+            np.testing.assert_allclose(vsph1.value, vsph2.value, atol=1E-10)
+            np.testing.assert_allclose(vsph1.value, vsph3.value, atol=1E-10)
 
             if func == physicsspherical_to_cartesian:
                 true_v[2] *= -1.
 
-            np.testing.assert_allclose(vsph1, true_v, atol=1E-10)
+            np.testing.assert_allclose(vsph1.value, true_v.value, atol=1E-10)
