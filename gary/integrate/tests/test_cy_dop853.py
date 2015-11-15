@@ -21,44 +21,27 @@ from ... import integrate as gi
 from ... import dynamics as gd
 from ..dopri853 import DOPRI853Integrator
 from ...units import galactic
-from ..dopri.wrap_dop853 import dop853_integrate_potential, dop853_lyapunov
-plot_path = "plots/tests/integrate"
-if not os.path.exists(plot_path):
-    os.makedirs(plot_path)
+from .._dop853 import dop853_integrate_potential, dop853_lyapunov
 
 def test_derp():
-    print()
     pot = gp.HernquistPotential(m=1E11, c=0.5, units=galactic)
-    # w0 = np.array([1.,2.1,0., 0.,0.5,0.])
+    w0 = np.array([1.,2.1,0., 0.,0.5,0.])
+    t = np.linspace(0., -5., 32)
 
-    # print("python")
-    # print(pot.gradient(w0[:3]))
+    t,w = pot.integrate_orbit(w0, dt=t[1]-t[0], nsteps=len(t),
+                              Integrator=DOPRI853Integrator,
+                              cython_if_possible=False)
+    print("Python integration done.")
 
-    # t1 = time.time()
-    # t,w = pot.integrate_orbit(w0, dt=0.1, nsteps=10000, Integrator=DOPRI853Integrator)
-    # print(w[-1], time.time()-t1)
-    # plt.plot(w[:,0,0], w[:,0,1])
-    # plt.show()
+    t,w = dop853_integrate_potential(pot.c_instance, np.ascontiguousarray(w0[None]),
+                                     t, 1E-8, 1E-8, 0)
+    print("Cython integration done.")
 
-    nsteps = 10000
-    norbitses = 2**np.arange(3,10+2,2)
-    times = []
-    pytimes = []
-    for norbits in norbitses:
-        print("{} orbits".format(norbits))
-        w0 = np.array([[1.,2.1,0., 0.,0.5,0.]]*norbits)
-        t1 = time.time()
-        # t,w = dop853_integrate_potential(pot.c_instance, w0, 0.1, 10000, 0., 1E-8, 1E-8)
-        t,w = dop853_integrate_potential(pot.c_instance, w0, 0.1, nsteps, 0., 1E-8, 1E-8)
-        times.append(time.time()-t1)
-        print("cy: {0:.2f}".format(times[-1]))
-
-        t1 = time.time()
-        t,w = pot.integrate_orbit(w0, dt=0.1, nsteps=nsteps,
-                                  Integrator=DOPRI853Integrator,
-                                  cython_if_possible=False)
-        pytimes.append(time.time()-t1)
-        print("py: {0:.2f}".format(pytimes[-1]))
+    print(t[1]-t[0], 0., t.min())
+    t,w = pot.integrate_orbit(w0, dt=t[1]-t[0], t1=0., t2=t.min(),
+                              Integrator=DOPRI853Integrator,
+                              cython_if_possible=True)
+    print("Cython integration2 done.")
 
     return
 
@@ -79,23 +62,23 @@ def test_derp():
     # plt.plot(w[:,0],w[:,1],marker=None)
     # plt.show()
 
-def test_lyapunov():
-    pot = gp.HernquistPotential(m=1E11, c=0.5, units=galactic)
-    w0 = np.array([5.,0.,0., 0.,0.2,0.])
-    nsteps = 100000
+# def test_lyapunov():
+#     pot = gp.HernquistPotential(m=1E11, c=0.5, units=galactic)
+#     w0 = np.array([5.,0.,0., 0.,0.2,0.])
+#     nsteps = 100000
 
-    # with python
-    # F = lambda t,w: np.hstack((w[...,3:],pot.acceleration(w[...,:3])))
-    # integrator = gi.DOPRI853Integrator(F)
-    # regular_LEs, t, regular_ws = gd.lyapunov_max(w0, integrator, dt=0.1, nsteps=nsteps)
-    # plt.loglog(regular_LEs[:,0], marker=None)
+#     # with python
+#     # F = lambda t,w: np.hstack((w[...,3:],pot.acceleration(w[...,:3])))
+#     # integrator = gi.DOPRI853Integrator(F)
+#     # regular_LEs, t, regular_ws = gd.lyapunov_max(w0, integrator, dt=0.1, nsteps=nsteps)
+#     # plt.loglog(regular_LEs[:,0], marker=None)
 
-    print()
+#     print()
 
-    t,w,l = dop853_lyapunov(pot.c_instance, w0,
-                            0.1, nsteps, 0., 1E-8, 1E-8,
-                            1E-5, 10, 8)
+#     t,w,l = dop853_lyapunov(pot.c_instance, w0,
+#                             0.1, nsteps, 0., 1E-8, 1E-8,
+#                             1E-5, 10, 8)
 
-    # plt.plot(w[:,0], w[:,1], marker=None)
-    plt.loglog(l, marker=None)
-    plt.show()
+#     # plt.plot(w[:,0], w[:,1], marker=None)
+#     plt.loglog(l, marker=None)
+#     plt.show()
