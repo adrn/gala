@@ -40,4 +40,6 @@ def test_table():
         orp = galactic.transform_to(Orphan)
         true_orp = Orphan(Lambda=line['Lambda']*u.deg, Beta=line['Beta']*u.deg)
 
+        # TODO: why does this suck so badly?
         assert true_orp.separation(orp) < 20*u.arcsec
+
