@@ -59,7 +59,8 @@ psi = np.radians(180+14.111534)
 D = rotation_matrix(phi, "z", unit=u.radian)
 C = rotation_matrix(theta, "x", unit=u.radian)
 B = rotation_matrix(psi, "z", unit=u.radian)
-R = np.array(B.dot(C).dot(D))
+A = np.diag([1.,1.,-1.])
+R = np.array(A.dot(B).dot(C).dot(D))
 
 # Galactic to Sgr coordinates
 @frame_transform_graph.transform(coord.StaticMatrixTransform, coord.Galactic, Sagittarius)
@@ -76,3 +77,54 @@ def sgr_to_galactic():
         spherical Galactic.
     """
     return galactic_to_sgr().T
+
+
+# # Galactic to Sgr coordinates
+# @frame_transform_graph.transform(coord.FunctionTransform, coord.Galactic, Sagittarius)
+# def galactic_to_sgr(gal_coord, sgr_frame):
+#     """ Compute the transformation from Galactic spherical to
+#         heliocentric Sgr coordinates.
+#     """
+
+#     l = np.atleast_1d(gal_coord.l.radian)
+#     b = np.atleast_1d(gal_coord.b.radian)
+
+#     X = cos(b)*cos(l)
+#     Y = cos(b)*sin(l)
+#     Z = sin(b)
+
+#     # Calculate X,Y,Z,distance in the Sgr system
+#     Xs, Ys, Zs = sgr_matrix.dot(np.array([X, Y, Z]))
+#     Zs = -Zs
+
+#     # Calculate the angular coordinates lambda,beta
+#     Lambda = np.arctan2(Ys, Xs)*u.radian
+#     Lambda[Lambda < 0] = Lambda[Lambda < 0] + 2.*np.pi*u.radian
+#     Beta = np.arcsin(Zs/np.sqrt(Xs*Xs+Ys*Ys+Zs*Zs))*u.radian
+
+#     return Sagittarius(Lambda=Lambda, Beta=Beta,
+#                        distance=gal_coord.distance)
+
+
+# # Sgr to Galactic coordinates
+# @frame_transform_graph.transform(coord.FunctionTransform, Sagittarius, coord.Galactic)
+# def sgr_to_galactic(sgr_coord, gal_frame):
+#     """ Compute the transformation from heliocentric Sgr coordinates to
+#         spherical Galactic.
+#     """
+#     L = np.atleast_1d(sgr_coord.Lambda.radian)
+#     B = np.atleast_1d(sgr_coord.Beta.radian)
+
+#     Xs = cos(B)*cos(L)
+#     Ys = cos(B)*sin(L)
+#     Zs = sin(B)
+#     Zs = -Zs
+
+#     X, Y, Z = sgr_matrix.T.dot(np.array([Xs, Ys, Zs]))
+
+#     l = np.arctan2(Y, X)*u.radian
+#     b = np.arcsin(Z/np.sqrt(X*X+Y*Y+Z*Z))*u.radian
+
+#     l[l<0] += 2*np.pi*u.radian
+
+#     return coord.Galactic(l=l, b=b, distance=sgr_coord.distance)
