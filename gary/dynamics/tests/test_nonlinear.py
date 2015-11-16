@@ -21,10 +21,6 @@ from ...integrate import DOPRI853Integrator
 from ...util import gram_schmidt
 from ...units import galactic
 
-plot_path = "plots/tests/dynamics/nonlinear"
-if not os.path.exists(plot_path):
-    os.makedirs(plot_path)
-
 def test_gram():
     arr = np.array([
       [0.159947293111244, -0.402071263039210, 0.781989928439469, 0.157200868935014],
@@ -61,7 +57,7 @@ class TestForcedPendulum(object):
         self.chaotic_par = (0.07, 0.75)
         self.chaotic_integrator = DOPRI853Integrator(F, func_args=self.chaotic_par)
 
-    def test_lyapunov_max(self):
+    def test_lyapunov_max(self, tmpdir):
         nsteps = 100000
         dt = 0.1
         nsteps_per_pullback = 10
@@ -82,21 +78,21 @@ class TestForcedPendulum(object):
 
         plt.clf()
         plt.loglog(regular_LEs, marker=None)
-        plt.savefig(os.path.join(plot_path,"pend_regular.png"))
+        plt.savefig(os.path.join(str(tmpdir),"pend_regular.png"))
 
         plt.clf()
         plt.plot(t, regular_ws[:,0], marker=None)
-        plt.savefig(os.path.join(plot_path,"pend_orbit_regular.png"))
+        plt.savefig(os.path.join(str(tmpdir),"pend_orbit_regular.png"))
 
         plt.clf()
         plt.loglog(chaotic_LEs, marker=None)
-        plt.savefig(os.path.join(plot_path,"pend_chaotic.png"))
+        plt.savefig(os.path.join(str(tmpdir),"pend_chaotic.png"))
 
         plt.clf()
         plt.plot(t, chaotic_ws[:,0], marker=None)
-        plt.savefig(os.path.join(plot_path,"pend_orbit_chaotic.png"))
+        plt.savefig(os.path.join(str(tmpdir),"pend_orbit_chaotic.png"))
 
-    def test_frequency(self):
+    def test_frequency(self, tmpdir):
         import scipy.signal as ss
         nsteps = 10000
         dt = 0.1
@@ -111,7 +107,7 @@ class TestForcedPendulum(object):
         plt.axvline(self.regular_par[1]/(2*np.pi), linewidth=3., alpha=0.35, color='b')
         plt.axvline(1/(2*np.pi), linewidth=3., alpha=0.35, color='r')
         plt.semilogx(f[:,0], fft[:,0], marker=None)
-        plt.savefig(os.path.join(plot_path,"pend_fft_regular.png"))
+        plt.savefig(os.path.join(str(tmpdir),"pend_fft_regular.png"))
 
         # ----------------------------------------------------------------------
         t,w = self.chaotic_integrator.run(self.chaotic_w0, dt=dt, nsteps=nsteps)
@@ -124,7 +120,7 @@ class TestForcedPendulum(object):
         plt.axvline(self.chaotic_par[1]/(2*np.pi), linewidth=3., alpha=0.35, color='b')
         plt.axvline(1/(2*np.pi), linewidth=3., alpha=0.35, color='r')
         plt.semilogx(f[:,0], fft[:,0], marker=None)
-        plt.savefig(os.path.join(plot_path,"pend_fft_chaotic.png"))
+        plt.savefig(os.path.join(str(tmpdir),"pend_fft_chaotic.png"))
 
 # --------------------------------------------------------------------
 
@@ -179,7 +175,7 @@ class TestHenonHeiles(object):
         self.nsteps = 10000
         self.dt = 1.
 
-    def test_orbit(self):
+    def test_orbit(self, tmpdir):
         integrator = DOPRI853Integrator(self.F_max, func_args=self.par)
 
         plt.clf()
@@ -187,9 +183,9 @@ class TestHenonHeiles(object):
             t,w = integrator.run(w0, dt=self.dt, nsteps=self.nsteps)
             plt.plot(w[:,0,0], w[:,0,1], marker=None)
 
-        plt.savefig(os.path.join(plot_path,"hh_orbits.png"))
+        plt.savefig(os.path.join(str(tmpdir),"hh_orbits.png"))
 
-    def test_lyapunov_max(self):
+    def test_lyapunov_max(self, tmpdir):
         nsteps_per_pullback = 10
         d0 = 1e-5
         noffset = 8
@@ -204,13 +200,13 @@ class TestHenonHeiles(object):
 
             plt.clf()
             plt.loglog(lyap, marker=None)
-            plt.savefig(os.path.join(plot_path,"hh_lyap_max_{}.png".format(ii)))
+            plt.savefig(os.path.join(str(tmpdir),"hh_lyap_max_{}.png".format(ii)))
 
             plt.clf()
             plt.plot(ws[...,0], ws[...,1], marker=None)
-            plt.savefig(os.path.join(plot_path,"hh_orbit_lyap_max_{}.png".format(ii)))
+            plt.savefig(os.path.join(str(tmpdir),"hh_orbit_lyap_max_{}.png".format(ii)))
 
-    def test_lyapunov_spectrum(self):
+    def test_lyapunov_spectrum(self, tmpdir):
 
         integrator = DOPRI853Integrator(self.F_spec, func_args=self.par)
         for ii,w0 in enumerate(self.w0s):
@@ -219,11 +215,11 @@ class TestHenonHeiles(object):
 
             plt.clf()
             plt.loglog(lyap, marker=None)
-            plt.savefig(os.path.join(plot_path,"hh_lyap_spec_{}.png".format(ii)))
+            plt.savefig(os.path.join(str(tmpdir),"hh_lyap_spec_{}.png".format(ii)))
 
             plt.clf()
             plt.plot(ws[...,0], ws[...,1], marker=None)
-            plt.savefig(os.path.join(plot_path,"hh_orbit_lyap_spec_{}.png".format(ii)))
+            plt.savefig(os.path.join(str(tmpdir),"hh_orbit_lyap_spec_{}.png".format(ii)))
 
 # --------------------------------------------------------------------
 
@@ -257,7 +253,7 @@ class TestLogarithmic(object):
         self.nsteps = 25000
         self.dt = 0.004
 
-    def test_fast_lyapunov_max(self):
+    def test_fast_lyapunov_max(self, tmpdir):
         nsteps_per_pullback = 10
         d0 = 1e-5
         noffset = 2
@@ -276,7 +272,7 @@ class TestLogarithmic(object):
             # lyapunov exp
             plt.clf()
             plt.loglog(lyap, marker=None)
-            plt.savefig(os.path.join(plot_path,"log_lyap_max_{}.png".format(ii)))
+            plt.savefig(os.path.join(str(tmpdir),"log_lyap_max_{}.png".format(ii)))
 
             # energy conservation
             E = self.potential.total_energy(ww[:,0,:3], ww[:,0,3:])
@@ -288,13 +284,13 @@ class TestLogarithmic(object):
             plt.clf()
             plt.semilogy(dE_ww, marker=None)
             plt.semilogy(dE, marker=None)
-            plt.savefig(os.path.join(plot_path,"log_dE_{}.png".format(ii)))
+            plt.savefig(os.path.join(str(tmpdir),"log_dE_{}.png".format(ii)))
 
             plt.figure(figsize=(6,6))
             plt.plot(ws[:,0], ws[:,1], marker='.', linestyle='none', alpha=0.1)
-            plt.savefig(os.path.join(plot_path,"log_orbit_lyap_max_{}.png".format(ii)))
+            plt.savefig(os.path.join(str(tmpdir),"log_orbit_lyap_max_{}.png".format(ii)))
 
-    def test_compare(self):
+    def test_compare(self, tmpdir):
         nsteps_per_pullback = 10
         d0 = 1e-5
         noffset = 2
@@ -315,7 +311,7 @@ class TestLogarithmic(object):
             plt.clf()
             plt.loglog(t1[1:-10:10], lyap1, marker=None)
             plt.loglog(t2[1:-10:10], lyap2, marker=None)
-            plt.savefig(os.path.join(plot_path,"log_lyap_compare_{}.png".format(ii)))
+            plt.savefig(os.path.join(str(tmpdir),"log_lyap_compare_{}.png".format(ii)))
 
             continue
 
@@ -329,13 +325,13 @@ class TestLogarithmic(object):
             plt.clf()
             plt.semilogy(dE_ww, marker=None)
             plt.semilogy(dE, marker=None)
-            plt.savefig(os.path.join(plot_path,"log_dE_{}.png".format(ii)))
+            plt.savefig(os.path.join(str(tmpdir),"log_dE_{}.png".format(ii)))
 
             plt.figure(figsize=(6,6))
             plt.plot(ws[:,0], ws[:,1], marker='.', linestyle='none', alpha=0.1)
-            plt.savefig(os.path.join(plot_path,"log_orbit_lyap_max_{}.png".format(ii)))
+            plt.savefig(os.path.join(str(tmpdir),"log_orbit_lyap_max_{}.png".format(ii)))
 
-def test_surface_of_section():
+def test_surface_of_section(tmpdir):
     from mpl_toolkits.mplot3d import Axes3D
     from ...potential import LogarithmicPotential
     from ...units import galactic
@@ -361,4 +357,4 @@ def test_surface_of_section():
     ax.set_zlabel('$z$')
 
     fig.tight_layout()
-    plt.show()
+    fig.savefig(os.path.join("sos.png"))
