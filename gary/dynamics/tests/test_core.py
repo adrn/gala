@@ -12,7 +12,6 @@ import logging
 
 # Third-party
 import astropy.units as u
-import matplotlib.pyplot as plt
 import numpy as np
 from astropy import log as logger
 
@@ -23,10 +22,6 @@ from ...potential import LogarithmicPotential
 from ...units import galactic
 
 logger.setLevel(logging.DEBUG)
-
-plot_path = "plots/tests/dynamics"
-if not os.path.exists(plot_path):
-    os.makedirs(plot_path)
 
 # ----------------------------------------------------------------------------
 
@@ -46,7 +41,7 @@ def test_angular_momentum():
 
 # ----------------------------------------------------------------------------
 
-def make_known_orbit(x, vx, potential, name):
+def make_known_orbit(tmpdir, x, vx, potential, name):
     # See Binney & Tremaine (2008) Figure 3.8 and 3.9
     E = -0.337
     y = 0.
@@ -55,7 +50,7 @@ def make_known_orbit(x, vx, potential, name):
     w = [x,y,0.,vx,vy,0.]
     t,ws = potential.integrate_orbit(w, dt=0.05, nsteps=10000)
     fig = plot_orbits(ws, linestyle='none', alpha=0.1)
-    fig.savefig(os.path.join(plot_path, "{}.png".format(name)))
+    fig.savefig(os.path.join(str(tmpdir), "{}.png".format(name)))
 
     return ws
 
@@ -99,7 +94,7 @@ def test_align_circulation_single():
         else:
             assert new_circ[2] == 1.
 
-def test_align_circulation_many():
+def test_align_circulation_many(tmpdir):
 
     potential = LogarithmicPotential(v_c=1., r_h=0.14, q1=1., q2=0.9, q3=1.,
                                      units=galactic)
@@ -111,14 +106,14 @@ def test_align_circulation_many():
 
     t,w = potential.integrate_orbit(w0, dt=0.05, nsteps=10000)
     fig = plot_orbits(w, linestyle='none', alpha=0.1)
-    fig.savefig(os.path.join(plot_path, "align_circulation_orbits_init.png"))
+    fig.savefig(os.path.join(str(tmpdir), "align_circulation_orbits_init.png"))
 
     circ = classify_orbit(w)
     assert circ.shape == (4,3)
 
     new_w = align_circulation_with_z(w, circ)
     fig = plot_orbits(new_w, linestyle='none', alpha=0.1)
-    fig.savefig(os.path.join(plot_path, "align_circulation_orbits_post.png"))
+    fig.savefig(os.path.join(str(tmpdir), "align_circulation_orbits_post.png"))
 
     new_circ = classify_orbit(new_w)
     assert np.all(new_circ[:3,2] == 1.)
