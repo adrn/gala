@@ -44,5 +44,8 @@ extern double leesuto_density(double t, double *pars, double *q);
 extern double logarithmic_value(double t, double *pars, double *q);
 extern void logarithmic_gradient(double t, double *pars, double *q, double *grad);
 
+extern double rotating_logarithmic_value(double t, double *pars, double *q);
+extern void rotating_logarithmic_gradient(double t, double *pars, double *q, double *grad);
+
 extern double lm10_value(double t, double *pars, double *q);
 extern void lm10_gradient(double t, double *pars, double *q, double *grad);
