@@ -99,7 +99,7 @@ __all__ = ['HenonHeilesPotential', 'KeplerPotential', 'HernquistPotential',
            'LeeSutoTriaxialNFWPotential',
            'LogarithmicPotential', 'JaffePotential',
            'StonePotential', 'IsochronePotential',
-           'LM10Potential']
+           'LM10Potential', 'RotatingLogarithmicPotential']
 
 # ============================================================================
 #    Hénon-Heiles potential
