@@ -145,7 +145,7 @@ class PotentialBase(object):
     # ========================================================================
     # Things that use the base methods
     #
-    def acceleration(self, x):
+    def acceleration(self, x, t=0.):
         """
         Compute the acceleration due to the potential at the given
         position(s).
@@ -155,9 +155,9 @@ class PotentialBase(object):
         x : array_like, numeric
             Position to compute the acceleration at.
         """
-        return -self.gradient(x)
+        return -self.gradient(x, t=t)
 
-    def mass_enclosed(self, x):
+    def mass_enclosed(self, x, t):
         """
         Estimate the mass enclosed within the given position by assumine the potential
         is spherical. This is basic, and assumes spherical symmetry.
@@ -451,7 +451,7 @@ class PotentialBase(object):
                                               Integrator_kwargs.get('nmax', 0))
 
         else:
-            acc = lambda t,w: np.hstack((w[...,3:],self.acceleration(w[...,:3])))
+            acc = lambda t,w: np.hstack((w[...,3:], self.acceleration(w[...,:3], t=t)))
 
         integrator = Integrator(acc, **Integrator_kwargs)
         return integrator.run(w0, **time_spec)
