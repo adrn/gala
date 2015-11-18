@@ -575,7 +575,7 @@ double rotating_logarithmic_value(double t, double *pars, double *r) {
 }
 
 void rotating_logarithmic_gradient(double t, double *pars, double *r, double *grad) {
-    double x, y, z, fac;
+    double x, y, z, fac, tmp1, tmp2;
 
     double bar_angle0 = pars[5];
     double pattern_speed = -pars[6]; // added minus sign to make it rotate clockwise by default
@@ -591,6 +591,11 @@ void rotating_logarithmic_gradient(double t, double *pars, double *r, double *gr
     grad[0] = fac*x/(pars[2]*pars[2]);
     grad[1] = fac*y/(pars[3]*pars[3]);
     grad[2] = fac*z/(pars[4]*pars[4]);
+
+    tmp1 = cosa*grad[0] - sina*grad[1];
+    tmp2 = sina*grad[0] + cosa*grad[1];
+    grad[0] = tmp1;
+    grad[1] = tmp2;
 }
 
 /* TOTAL HACK */
