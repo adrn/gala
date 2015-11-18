@@ -552,6 +552,47 @@ void logarithmic_gradient(double t, double *pars, double *r, double *grad) {
     grad[2] = pars[7]*ax  + pars[10]*ay + pars[13]*az;
 }
 
+/* ---------------------------------------------------------------------------
+    Rotating Triaxial Logarithmic
+*/
+double rotating_logarithmic_value(double t, double *pars, double *r) {
+    double x, y, z;
+
+    double bar_angle0 = pars[5];
+    double pattern_speed = -pars[6]; // added minus sign to make it rotate clockwise by default
+    double alpha = (-bar_angle0 + pattern_speed*t);
+
+    double cosa = cos(alpha);
+    double sina = sin(alpha);
+    x = cosa*r[0] + sina*r[1];
+    y = -sina*r[0] + cosa*r[1];
+    z = r[2];
+
+    return 0.5*pars[0]*pars[0] * log(pars[1]*pars[1] + // scale radius
+                                     x*x/(pars[2]*pars[2]) +
+                                     y*y/(pars[3]*pars[3]) +
+                                     z*z/(pars[4]*pars[4]));
+}
+
+void rotating_logarithmic_gradient(double t, double *pars, double *r, double *grad) {
+    double x, y, z, fac;
+
+    double bar_angle0 = pars[5];
+    double pattern_speed = -pars[6]; // added minus sign to make it rotate clockwise by default
+    double alpha = (-bar_angle0 + pattern_speed*t);
+
+    double cosa = cos(alpha);
+    double sina = sin(alpha);
+    x = cosa*r[0] + sina*r[1];
+    y = -sina*r[0] + cosa*r[1];
+    z = r[2];
+
+    fac = pars[0]*pars[0] / (pars[1]*pars[1] + x*x/(pars[2]*pars[2]) + y*y/(pars[3]*pars[3]) + z*z/(pars[4]*pars[4]));
+    grad[0] = fac*x/(pars[2]*pars[2]);
+    grad[1] = fac*y/(pars[3]*pars[3]);
+    grad[2] = fac*z/(pars[4]*pars[4]);
+}
+
 /* TOTAL HACK */
 double lm10_value(double t, double *pars, double*r) {
     double v = 0.;
