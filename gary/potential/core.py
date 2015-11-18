@@ -551,14 +551,14 @@ class CompositePotential(PotentialBase, dict):
             params[k] = v.parameters
         return ImmutableDict(params)
 
-    def value(self, x):
-        x = np.atleast_2d(x).copy()
-        return np.array([p.value(x) for p in self.values()]).sum(axis=0)
+    def value(self, *args, **kwargs):
+        return np.array([p.value(*args, **kwargs) for p in self.values()]).sum(axis=0)
 
-    def gradient(self, x):
-        x = np.atleast_2d(x).copy()
-        return np.array([p.gradient(x) for p in self.values()]).sum(axis=0)
+    def gradient(self, *args, **kwargs):
+        return np.array([p.gradient(*args, **kwargs) for p in self.values()]).sum(axis=0)
 
-    def hessian(self, x):
-        x = np.atleast_2d(x).copy()
-        return np.array([p.hessian(x) for p in self.values()]).sum(axis=0)
+    def hessian(self, *args, **kwargs):
+        return np.array([p.hessian(*args, **kwargs) for p in self.values()]).sum(axis=0)
+
+    def density(self, *args, **kwargs):
+        return np.array([p.density(*args, **kwargs) for p in self.values()]).sum(axis=0)
