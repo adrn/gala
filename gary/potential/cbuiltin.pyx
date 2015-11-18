@@ -87,6 +87,9 @@ cdef extern from "_cbuiltin.h":
     double logarithmic_value(double t, double *pars, double *q) nogil
     void logarithmic_gradient(double t, double *pars, double *q, double *grad) nogil
 
+    double rotating_logarithmic_value(double t, double *pars, double *q) nogil
+    void rotating_logarithmic_gradient(double t, double *pars, double *q, double *grad) nogil
+
     double lm10_value(double t, double *pars, double *q) nogil
     void lm10_gradient(double t, double *pars, double *q, double *grad) nogil
 
@@ -708,6 +711,57 @@ class LogarithmicPotential(CPotentialBase):
         c_params['R33'] = R[8]
         self.c_instance = _LogarithmicPotential(**c_params)
         self.parameters['R'] = np.ravel(R).copy()
+
+# ============================================================================
+#    Rotating, triaxial, Logarithmic potential
+#
+cdef class _RotatingLogarithmicPotential(_CPotential):
+
+    def __cinit__(self, double v_c, double r_h,
+                  double q1, double q2, double q3,
+                  double alpha, double Omega):
+        self._parvec = np.array([v_c,r_h,q1,q2,q3,alpha,Omega])
+        self._parameters = &(self._parvec)[0]
+        self.c_value = &rotating_logarithmic_value
+        self.c_gradient = &rotating_logarithmic_gradient
+        self.c_density = &nan_density
+
+class RotatingLogarithmicPotential(CPotentialBase):
+    r"""
+    RotatingLogarithmicPotential(v_c, r_h, q1, q2, q3, alpha, Omega, units)
+
+    Rotating, triaxial logarithmic potential.
+
+    .. math::
+
+        \Phi(x,y,z) &= \frac{1}{2}v_{c}^2\ln((x/q_1)^2 + (y/q_2)^2 + (z/q_3)^2 + r_h^2)\\
+
+    Parameters
+    ----------
+    v_c : numeric
+        Circular velocity.
+    r_h : numeric
+        Scale radius.
+    q1 : numeric
+        Flattening in X.
+    q2 : numeric
+        Flattening in Y.
+    q3 : numeric
+        Flattening in Z.
+    alpha : numeric
+        Initial bar angle.
+    Omega : numeric
+        Pattern speed.
+    units : iterable
+        Unique list of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, v_c, r_h, q1, q2, q3, alpha, Omega, units):
+        self.parameters = dict(v_c=v_c, r_h=r_h, q1=q1, q2=q2, q3=q3, alpha=alpha, Omega=Omega)
+        super(RotatingLogarithmicPotential, self).__init__(units=units)
+        self.G = G.decompose(units).value
+        self.c_instance = _RotatingLogarithmicPotential(**self.parameters)
 
 # ------------------------------------------------------------------------
 # HACK
