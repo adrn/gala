@@ -93,6 +93,27 @@ def lyapunov_spectrum(w0, integrator, dt, nsteps, t1=0., deviation_vecs=None):
 def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
                       nsteps_per_pullback=10, noffset_orbits=2, t0=0.,
                       atol=1E-9, rtol=1E-9, nmax=0):
+    """
+    Compute the maximum Lyapunov exponent using a C-implemented estimator
+    that uses the DOPRI853 integrator.
+
+    Parameters
+    ----------
+    TODO:
+
+    Returns
+    -------
+    LEs : :class:`numpy.ndarray`
+        Lyapunov exponents calculated from each offset / deviation orbit.
+    ts : :class:`numpy.ndarray`
+        Array of times from integrating main orbit.
+    ws : :class:`numpy.ndarray`
+        All orbits -- main / parent orbit is index 0, all others are the
+        full orbits of the deviations. TODO: right now, only returns parent
+        orbit.
+
+    """
+
     from ..integrate._dop853 import dop853_lyapunov
 
     if not hasattr(potential, 'c_instance'):
