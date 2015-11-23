@@ -175,13 +175,13 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
         >>> c = coord.Galactocentric(x=15.*u.kpc, y=13.*u.kpc, z=2.*u.kpc)
         >>> vxyz = [-115., 100., 95.]*u.km/u.s
         >>> icrs = c.transform_to(coord.ICRS)
-        >>> vgal_to_hel(icrs, vxyz)
+        >>> vgal_to_hel(icrs, vxyz) # doctest: +FLOAT_CMP
         (<Quantity -0.876885123328934 mas / yr>, <Quantity 0.024501209459030334 mas / yr>, <Quantity -163.24449462243052 km / s>)
 
         >>> c = coord.Galactocentric([[15.,11.],[13,21.],[2.,-7]]*u.kpc)
         >>> vxyz = [[-115.,11.], [100.,-21.], [95.,103]]*u.km/u.s
         >>> icrs = c.transform_to(coord.ICRS)
-        >>> vgal_to_hel(icrs, vxyz)
+        >>> vgal_to_hel(icrs, vxyz) # doctest: +FLOAT_CMP
         (<Quantity [-0.87688512,-0.91157482] mas / yr>, <Quantity [ 0.02450121,-0.86124895] mas / yr>, <Quantity [-163.24449462,-198.31241148] km / s>)
 
     """
@@ -288,13 +288,13 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame
         >>> c = coord.SkyCoord(ra=196.5*u.degree, dec=-10.33*u.deg, distance=16.2*u.kpc)
         >>> pm = [-1.53, 3.5]*u.mas/u.yr
         >>> rv = 161.4*u.km/u.s
-        >>> vhel_to_gal(c, pm=pm, rv=rv)
+        >>> vhel_to_gal(c, pm=pm, rv=rv) # doctest: +FLOAT_CMP
         <Quantity [-137.29984564, 262.64052249, 305.50786499] km / s>
 
         >>> c = coord.SkyCoord(ra=[196.5,51.3]*u.degree, dec=[-10.33,2.1]*u.deg, distance=[16.2,11.]*u.kpc)
         >>> pm = [[-1.53,4.5], [3.5,10.9]]*u.mas/u.yr
         >>> rv = [161.4,-210.2]*u.km/u.s
-        >>> vhel_to_gal(c, pm=pm, rv=rv)
+        >>> vhel_to_gal(c, pm=pm, rv=rv) # doctest: +FLOAT_CMP
         <Quantity [[-137.29984564,-212.10415701],
                    [ 262.64052249, 496.85687803],
                    [ 305.50786499, 554.16562628]] km / s>
