@@ -8,7 +8,6 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 import os
-import sys
 import logging
 
 # Third-party
@@ -17,6 +16,7 @@ import numpy as np
 from astropy import log as logger
 import astropy.units as u
 from scipy.linalg import solve
+import pytest
 
 # Project
 from ...integrate import DOPRI853Integrator
@@ -27,10 +27,6 @@ from ..actionangle import *
 from ..core import *
 from ..plot import *
 from .helpers import *
-
-# TODO: config item to specify path to test data?
-# test_data_path = os.path.abspath(os.path.join(os.path.split(__file__)[0],
-#                                  "../../../test-data/actionangle"))
 
 def test_generate_n_vectors():
     # test against Sanders' method
@@ -119,6 +115,10 @@ def test_check_angle_sampling():
 
 class ActionsBase(object):
 
+    @pytest.fixture(autouse=True)
+    def set_tmpdir(self, tmpdir):
+        self.tmpdir = tmpdir
+
     def test_classify(self):
         # my classify
         orb_type = classify_orbit(self.w)
@@ -130,21 +130,26 @@ class ActionsBase(object):
             assert np.all(orb_type[j] == sdrs)
 
     def test_actions(self):
-        t = self.t[::10]
+        # t = self.t[::10]
+        t = self.t
 
         N_max = 6
         for n in range(self.N):
             print("\n\n")
             logger.info("======================= Orbit {} =======================".format(n))
-            w = self.w[::10,n]
+            # w = self.w[::10,n]
+            w = self.w[:,n]
 
             # get values from Sanders' code
             logger.debug("Computing actions from genfunc...")
             s_actions,s_angles,s_freqs,toy_potential = sanders_act_ang_freq(t, w, N_max=N_max)
 
             logger.debug("Computing actions...")
-            actions,angles,freqs = find_actions(t, w, N_max=N_max, units=self.units,
-                                                toy_potential=toy_potential)
+            ret = find_actions(t, w, N_max=N_max, units=self.units,
+                               toy_potential=toy_potential)
+            actions = ret['actions']
+            angles = ret['angles']
+            freqs = ret['freqs']
 
             logger.info("Action ratio: {}".format(actions / s_actions))
             logger.info("Angle ratio: {}".format(angles / s_angles))
@@ -156,44 +161,33 @@ class ActionsBase(object):
 
             logger.debug("Plotting orbit...")
             fig = plot_orbits(w, marker='.', alpha=0.2, linestyle='none')
-            fig.savefig(os.path.join(self.plot_path,"orbit_{}.png".format(n)))
+            fig.savefig(str(self.plot_path.join("orbit_{}.png".format(n))))
 
             fig = plot_angles(t,angles,freqs)
-            fig.savefig(os.path.join(self.plot_path,"angles_{}.png".format(n)))
+            fig.savefig(str(self.plot_path.join("angles_{}.png".format(n))))
 
             fig = plot_angles(t,s_angles,s_freqs)
-            fig.savefig(os.path.join(self.plot_path,"angles_sanders_{}.png".format(n)))
+            fig.savefig(str(self.plot_path.join("angles_sanders_{}.png".format(n))))
 
             plt.close('all')
 
 class TestActions(ActionsBase):
 
     def setup(self):
-        self.plot_path = os.path.join(plot_path, 'normal')
-        if not os.path.exists(self.plot_path):
-            os.makedirs(self.plot_path)
+        self.plot_path = self.tmpdir.mkdir("normal")
 
         self.units = (u.kpc, u.Msun, u.Myr)
         self.potential = LeeSutoTriaxialNFWPotential(v_c=0.2, r_s=20.,
                                                      a=1., b=0.77, c=0.55,
                                                      units=galactic)
-        self.N = 25
+        self.N = 1
         np.random.seed(42)
         w0 = isotropic_w0(N=self.N)
-        nsteps = 200000
+        nsteps = 20000
 
-        if not os.path.exists(os.path.join(test_data_path, "w.npy")):
-            logger.debug("Integrating orbits")
-            t,w = self.potential.integrate_orbit(w0, dt=0.2, nsteps=nsteps, Integrator=DOPRI853Integrator)
-
-            logger.debug("Saving orbits")
-            np.save(os.path.join(test_data_path, "t.npy"), t)
-            np.save(os.path.join(test_data_path, "w.npy"), w)
-        else:
-            logger.debug("Loaded orbits")
-            t = np.load(os.path.join(test_data_path, "t.npy"))
-            w = np.load(os.path.join(test_data_path, "w.npy"))
-
+        # integrate orbits
+        t,w = self.potential.integrate_orbit(w0, dt=2., nsteps=nsteps,
+                                             Integrator=DOPRI853Integrator)
         self.t = t
         self.w = w
 
