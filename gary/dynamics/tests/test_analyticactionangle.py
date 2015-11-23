@@ -6,12 +6,7 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os, sys
-import logging
-
 # Third-party
-import matplotlib.pyplot as plt
 import numpy as np
 from astropy import log as logger
 import astropy.units as u
@@ -20,17 +15,7 @@ import astropy.units as u
 from ..analyticactionangle import *
 from ...potential import IsochronePotential, HarmonicOscillatorPotential
 from ...units import galactic
-
-# HACK:
-if "/Users/adrian/projects/genfunc" not in sys.path:
-    sys.path.append("/Users/adrian/projects/genfunc")
-import toy_potentials
-
-logger.setLevel(logging.DEBUG)
-
-plot_path = "plots/tests/dynamics/analyticactionangle"
-if not os.path.exists(plot_path):
-    os.makedirs(plot_path)
+from .helpers import *
 
 class TestIsochrone(object):
 
@@ -54,7 +39,7 @@ class TestIsochrone(object):
             x,v = self.w[:,n,:3],self.w[:,n,3:]
             s_v = (v*u.kpc/u.Myr).to(u.km/u.s).value
             s_w = np.hstack((x,s_v))
-            actions,angles = isochrone_xv_to_aa(x, v, self.potential)
+            actions,angles,freqs = isochrone_xv_to_aa(x, v, self.potential)
 
             for i in range(3):
                 assert np.allclose(actions[1:,i], actions[0,i], rtol=1E-5)
