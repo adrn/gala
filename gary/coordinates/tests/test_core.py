@@ -125,8 +125,8 @@ _txt = """# from: XHIP catalog
 class TestVHelGalConvert(object):
 
     def setup(self):
-        with tempfile.NamedTemporaryFile(mode='w+') as temp:
-            temp.write(_txt)
+        with tempfile.NamedTemporaryFile(mode='w+b') as temp:
+            temp.write(_txt.encode('utf-8'))
             temp.flush()
             temp.seek(0)
             self.data = np.genfromtxt(temp, names=True, skip_header=1)
