@@ -22,10 +22,7 @@ from ...units import galactic
 from ...coordinates import physicsspherical_to_cartesian
 from ...potential import HarmonicOscillatorPotential, IsochronePotential
 
-# HACK:
-if "/Users/adrian/projects/genfunc" not in sys.path:
-    sys.path.append("/Users/adrian/projects/genfunc")
-import genfunc_3d
+from .._genfunc import genfunc_3d
 
 def sanders_nvecs(N_max, dx, dy, dz):
     from itertools import product

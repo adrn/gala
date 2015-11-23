@@ -129,18 +129,15 @@ def fit_isochrone(w, units, m0=2E11, b0=1.):
         Best-fit core radius for the Isochrone potential.
 
     """
-    # initialize with any values, will be set by m0 and b0 passed in
-    potential = IsochronePotential(m=m0, b=b0, units=units)
-
     def f(p,w):
         logm,b = p
-        potential.parameters['m'] = np.exp(logm)
-        potential.parameters['b'] = b
+        potential = IsochronePotential(m=np.exp(logm), b=b, units=units)
         H = potential.total_energy(w[...,:3], w[...,3:])
         return np.squeeze(H - np.mean(H))
 
     logm0 = np.log(m0)
     p,ier = leastsq(f, np.array([logm0, b0]), args=(w,))
+
     if ier < 1 or ier > 4:
         raise ValueError("Failed to fit toy potential to orbit.")
 
@@ -178,15 +175,12 @@ def fit_harmonic_oscillator(w, units, omega0=[1.,1.,1.]):
     """
     omega0 = np.atleast_1d(omega0)
 
-    # initialize potential object
-    potential = HarmonicOscillatorPotential(omega=omega0)
-
     def f(omega,w):
-        potential.parameters['omega'] = omega
+        potential = HarmonicOscillatorPotential(omega=omega)
         H = potential.total_energy(w[...,:3], w[...,3:])
         return np.squeeze(H - np.mean(H))
 
-    p,ier = leastsq(f, np.array(omega0), args=(w,))
+    p,ier = leastsq(f, omega0, args=(w,))
     if ier < 1 or ier > 4:
         raise ValueError("Failed to fit toy potential to orbit.")
 
@@ -576,9 +570,8 @@ def find_actions(t, w, N_max, units, force_harmonic_oscillator=False, toy_potent
     else:
         raise ValueError("Invalid shape for orbit array: {}".format(w.shape))
 
-    # TODO: this is broken -- what to return and how to pre-determine shape?
     return dict(actions=actions, angles=angles, freqs=freqs,
-                Sn=actions[3:], dSn=angles[6:], nvecs=nvecs)
+                Sn=actions[3:], dSn=angles[6:], nvecs=aaf['nvecs'])
 
 # def solve_hessian(relative_actions, relative_freqs):
 #     """ Use ordinary least squares to solve for the Hessian, given a

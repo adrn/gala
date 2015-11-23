@@ -20,29 +20,17 @@ from scipy.linalg import solve
 
 # Project
 from ...integrate import DOPRI853Integrator
-from ...potential import IsochronePotential, HarmonicOscillatorPotential
-from ...potential import LeeSutoTriaxialNFWPotential
-from ...potential.custom import PW14Potential
+from ...potential import (IsochronePotential, HarmonicOscillatorPotential,
+                          LeeSutoTriaxialNFWPotential)
 from ...units import galactic
 from ..actionangle import *
 from ..core import *
 from ..plot import *
 from .helpers import *
 
-# HACK:
-if "/Users/adrian/projects/genfunc" not in sys.path:
-    sys.path.append("/Users/adrian/projects/genfunc")
-import genfunc_3d
-
-logger.setLevel(logging.DEBUG)
-
-plot_path = "plots/tests/dynamics/actionangle"
-if not os.path.exists(plot_path):
-    os.makedirs(plot_path)
-
 # TODO: config item to specify path to test data?
-test_data_path = os.path.abspath(os.path.join(os.path.split(__file__)[0],
-                                 "../../../test-data/actionangle"))
+# test_data_path = os.path.abspath(os.path.join(os.path.split(__file__)[0],
+#                                  "../../../test-data/actionangle"))
 
 def test_generate_n_vectors():
     # test against Sanders' method
@@ -71,7 +59,9 @@ def test_fit_isochrone():
     potential = IsochronePotential(m=true_m, b=true_b, units=galactic)
     t,w = potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., nsteps=10000)
 
-    fit_potential = fit_isochrone(w, units=galactic)
+    fit_potential = fit_isochrone(w[:,0], units=galactic)
+    print(fit_potential.parameters)
+    return
     m,b = fit_potential.parameters['m'], fit_potential.parameters['b']
     assert np.allclose(m, true_m, rtol=1E-2)
     assert np.allclose(b, true_b, rtol=1E-2)
