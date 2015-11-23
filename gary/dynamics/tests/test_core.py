@@ -54,15 +54,15 @@ def make_known_orbit(tmpdir, x, vx, potential, name):
 
     return ws
 
-def test_classify_orbit():
+def test_classify_orbit(tmpdir):
 
     potential = LogarithmicPotential(v_c=1., r_h=0.14, q1=1., q2=0.9, q3=1.,
                                      units=galactic)
-    ws = make_known_orbit(0.5, 0., potential, "loop")
+    ws = make_known_orbit(tmpdir, 0.5, 0., potential, "loop")
     loop = classify_orbit(ws)
     assert loop.sum() == 1
 
-    ws = make_known_orbit(0., 1.5, potential, "box")
+    ws = make_known_orbit(tmpdir, 0., 1.5, potential, "box")
     loop = classify_orbit(ws)
     assert loop.sum() == 0
 
