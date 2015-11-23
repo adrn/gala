@@ -24,25 +24,36 @@ from ..core import *
 def test_vgsr_to_vhel():
     filename = get_pkg_data_filename('idl_vgsr_vhel.txt')
     data = np.genfromtxt(filename, names=True, skip_header=2)
-    for row in data:
-        l = coord.Angle(row["lon"] * u.degree)
-        b = coord.Angle(row["lat"] * u.degree)
-        c = coord.Galactic(l, b)
-        vgsr = row["vgsr"] * u.km/u.s
-        vlsr = [row["vx"],row["vy"],row["vz"]]*u.km/u.s
 
-        vhel = vgsr_to_vhel(c, vgsr,
-                            vlsr=vlsr,
-                            vcirc=row["vcirc"]*u.km/u.s)
+    # one row
+    row = data[0]
+    l = coord.Angle(row["lon"] * u.degree)
+    b = coord.Angle(row["lat"] * u.degree)
+    c = coord.Galactic(l, b)
+    vgsr = row["vgsr"] * u.km/u.s
+    vlsr = [row["vx"],row["vy"],row["vz"]]*u.km/u.s # this is right
+    vcirc = row["vcirc"]*u.km/u.s
 
-        np.testing.assert_almost_equal(vhel.value, row['vhelio'], decimal=4)
+    vhel = vgsr_to_vhel(c, vgsr, vlsr=vlsr, vcirc=vcirc)
+    np.testing.assert_almost_equal(vhel.value, row['vhelio'], decimal=4)
 
-        # now check still get right answer passing in ICRS coordinates
-        vhel = vgsr_to_vhel(c.transform_to(coord.ICRS), vgsr,
-                            vlsr=vlsr,
-                            vcirc=row["vcirc"]*u.km/u.s)
+    # now check still get right answer passing in ICRS coordinates
+    vhel = vgsr_to_vhel(c.transform_to(coord.ICRS), vgsr,
+                        vlsr=vlsr, vcirc=vcirc)
+    np.testing.assert_almost_equal(vhel.value, row['vhelio'], decimal=4)
 
-        np.testing.assert_almost_equal(vhel.value, row['vhelio'], decimal=4)
+    # all together now
+    l = coord.Angle(data["lon"] * u.degree)
+    b = coord.Angle(data["lat"] * u.degree)
+    c = coord.Galactic(l, b)
+    vgsr = data["vgsr"] * u.km/u.s
+    vhel = vgsr_to_vhel(c, vgsr, vlsr=vlsr, vcirc=vcirc)
+    np.testing.assert_almost_equal(vhel.value, data['vhelio'], decimal=4)
+
+    # now check still get right answer passing in ICRS coordinates
+    vhel = vgsr_to_vhel(c.transform_to(coord.ICRS), vgsr,
+                        vlsr=vlsr, vcirc=vcirc)
+    np.testing.assert_almost_equal(vhel.value, data['vhelio'], decimal=4)
 
 def test_vgsr_to_vhel_misc():
     # make sure it works with longitude in 0-360 or -180-180
@@ -66,25 +77,36 @@ def test_vgsr_to_vhel_misc():
 def test_vhel_to_vgsr():
     filename = get_pkg_data_filename('idl_vgsr_vhel.txt')
     data = np.genfromtxt(filename, names=True, skip_header=2)
-    for row in data:
-        l = coord.Angle(row["lon"] * u.degree)
-        b = coord.Angle(row["lat"] * u.degree)
-        c = coord.Galactic(l, b)
-        vhel = row["vhelio"] * u.km/u.s
-        vlsr = [row["vx"],row["vy"],row["vz"]]*u.km/u.s
 
-        vgsr = vhel_to_vgsr(c, vhel,
-                            vlsr=vlsr,
-                            vcirc=row["vcirc"]*u.km/u.s)
+    # one row
+    row = data[0]
+    l = coord.Angle(row["lon"] * u.degree)
+    b = coord.Angle(row["lat"] * u.degree)
+    c = coord.Galactic(l, b)
+    vhel = row["vhel"] * u.km/u.s
+    vlsr = [row["vx"],row["vy"],row["vz"]]*u.km/u.s # this is right
+    vcirc = row["vcirc"]*u.km/u.s
 
-        np.testing.assert_almost_equal(vgsr.value, row['vgsr'], decimal=4)
+    vgsr = vhel_to_vgsr(c, vhel, vlsr=vlsr, vcirc=vcirc)
+    np.testing.assert_almost_equal(vgsr.value, row['vgsr'], decimal=4)
 
-        # now check still get right answer passing in ICRS coordinates
-        vgsr = vhel_to_vgsr(c.transform_to(coord.ICRS), vhel,
-                            vlsr=vlsr,
-                            vcirc=row["vcirc"]*u.km/u.s)
+    # now check still get right answer passing in ICRS coordinates
+    vgsr = vhel_to_vgsr(c.transform_to(coord.ICRS), vhel,
+                        vlsr=vlsr, vcirc=vcirc)
+    np.testing.assert_almost_equal(vgsr.value, row['vgsr'], decimal=4)
 
-        np.testing.assert_almost_equal(vgsr.value, row['vgsr'], decimal=4)
+    # all together now
+    l = coord.Angle(data["lon"] * u.degree)
+    b = coord.Angle(data["lat"] * u.degree)
+    c = coord.Galactic(l, b)
+    vhel = data["vhel"] * u.km/u.s
+    vgsr = vhel_to_gal(c, vhel, vlsr=vlsr, vcirc=vcirc)
+    np.testing.assert_almost_equal(vgsr.value, data['vgsr'], decimal=4)
+
+    # now check still get right answer passing in ICRS coordinates
+    vgsr = vhel_to_gal(c.transform_to(coord.ICRS), vhel,
+                       vlsr=vlsr, vcirc=vcirc)
+    np.testing.assert_almost_equal(vgsr.value, data['vgsr'], decimal=4)
 
 def test_vhel_to_vgsr_misc():
     vhel = 110*u.km/u.s
