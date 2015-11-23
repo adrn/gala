@@ -83,7 +83,7 @@ def test_vhel_to_vgsr():
     l = coord.Angle(row["lon"] * u.degree)
     b = coord.Angle(row["lat"] * u.degree)
     c = coord.Galactic(l, b)
-    vhel = row["vhel"] * u.km/u.s
+    vhel = row["vhelio"] * u.km/u.s
     vlsr = [row["vx"],row["vy"],row["vz"]]*u.km/u.s # this is right
     vcirc = row["vcirc"]*u.km/u.s
 
@@ -99,13 +99,13 @@ def test_vhel_to_vgsr():
     l = coord.Angle(data["lon"] * u.degree)
     b = coord.Angle(data["lat"] * u.degree)
     c = coord.Galactic(l, b)
-    vhel = data["vhel"] * u.km/u.s
-    vgsr = vhel_to_gal(c, vhel, vlsr=vlsr, vcirc=vcirc)
+    vhel = data["vhelio"] * u.km/u.s
+    vgsr = vhel_to_vgsr(c, vhel, vlsr=vlsr, vcirc=vcirc)
     np.testing.assert_almost_equal(vgsr.value, data['vgsr'], decimal=4)
 
     # now check still get right answer passing in ICRS coordinates
-    vgsr = vhel_to_gal(c.transform_to(coord.ICRS), vhel,
-                       vlsr=vlsr, vcirc=vcirc)
+    vgsr = vhel_to_vgsr(c.transform_to(coord.ICRS), vhel,
+                        vlsr=vlsr, vcirc=vcirc)
     np.testing.assert_almost_equal(vgsr.value, data['vgsr'], decimal=4)
 
 def test_vhel_to_vgsr_misc():
@@ -125,7 +125,7 @@ _txt = """# from: XHIP catalog
 class TestVHelGalConvert(object):
 
     def setup(self):
-        with tempfile.NamedTemporaryFile() as temp:
+        with tempfile.NamedTemporaryFile(mode='w+') as temp:
             temp.write(_txt)
             temp.flush()
             temp.seek(0)
