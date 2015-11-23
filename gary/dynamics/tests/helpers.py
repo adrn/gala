@@ -6,10 +6,6 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os
-import sys
-
 # Third-party
 import astropy.coordinates as coord
 import astropy.units as u
@@ -22,7 +18,7 @@ from ...units import galactic
 from ...coordinates import physicsspherical_to_cartesian
 from ...potential import HarmonicOscillatorPotential, IsochronePotential
 
-from .._genfunc import genfunc_3d
+from .._genfunc import genfunc_3d, solver
 
 def sanders_nvecs(N_max, dx, dy, dz):
     from itertools import product
@@ -97,10 +93,12 @@ def plot_angles(t, angles, freqs, subsample_factor=1000):
     subsample = theta.shape[1]//subsample_factor
 #    subsample = 1
     theta = (theta[:,::subsample] / np.pi) % 2.
-
+    print(theta.shape)
     fig,axes = plt.subplots(1,2,sharex=True,sharey=True,figsize=(10,5))
-    _crazy_angle_loop(theta[0], theta[1], axes[0])
-    _crazy_angle_loop(theta[0], theta[2], axes[1])
+    # _crazy_angle_loop(theta[0], theta[1], axes[0])
+    # _crazy_angle_loop(theta[0], theta[2], axes[1])
+    axes[0].plot(theta[0], theta[1], ls='none')
+    axes[0].plot(theta[0], theta[2], ls='none')
 
     axes[0].set_xlim(0,2)
     axes[0].set_ylim(0,2)

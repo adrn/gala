@@ -171,6 +171,8 @@ class ActionsBase(object):
 
             plt.close('all')
 
+            print("Plots saved at:", self.plot_path)
+
 class TestActions(ActionsBase):
 
     def setup(self):
@@ -180,7 +182,7 @@ class TestActions(ActionsBase):
         self.potential = LeeSutoTriaxialNFWPotential(v_c=0.2, r_s=20.,
                                                      a=1., b=0.77, c=0.55,
                                                      units=galactic)
-        self.N = 1
+        self.N = 8
         np.random.seed(42)
         w0 = isotropic_w0(N=self.N)
         nsteps = 20000
@@ -191,43 +193,42 @@ class TestActions(ActionsBase):
         self.t = t
         self.w = w
 
-class TestHardActions(ActionsBase):
+# TODO: need to fix this -- or assess whether needed?
+# class TestHardActions(ActionsBase):
 
-    def setup(self):
-        self.plot_path = os.path.join(plot_path, 'hard')
-        if not os.path.exists(self.plot_path):
-            os.makedirs(self.plot_path)
+#     def setup(self):
+#         self.plot_path = self.tmpdir.mkdir("hard")
 
-        self.units = (u.kpc, u.Msun, u.Myr)
-        params = {'disk': {'a': 6.5, 'b': 0.26, 'm': 65000000000.0},
-                  'bulge': {'c': 0.3, 'm': 20000000000.0},
-                  'halo': {'psi': 1.570796, 'theta': 1.570796, 'phi': 1.570796,
-                           'a': 1., 'b': 0.77, 'c': 0.61, 'r_s': 30.0, 'v_c': 0.22}}
-        self.potential = PW14Potential(**params)
-        self.N = 25
+#         self.units = (u.kpc, u.Msun, u.Myr)
+#         params = {'disk': {'a': 6.5, 'b': 0.26, 'm': 65000000000.0},
+#                   'bulge': {'c': 0.3, 'm': 20000000000.0},
+#                   'halo': {'psi': 1.570796, 'theta': 1.570796, 'phi': 1.570796,
+#                            'a': 1., 'b': 0.77, 'c': 0.61, 'r_s': 30.0, 'v_c': 0.22}}
+#         self.potential = PW14Potential(**params)
+#         self.N = 25
 
-        w0 = np.loadtxt(os.path.join(test_data_path, "w0.txt"))
-        nsteps = 200000
+#         w0 = np.loadtxt(os.path.join(test_data_path, "w0.txt"))
+#         nsteps = 200000
 
-        if not os.path.exists(os.path.join(test_data_path, "w_hard.npy")):
-            logger.debug("Integrating orbits")
-            t,w = self.potential.integrate_orbit(w0, dt=0.2, nsteps=nsteps, Integrator=DOPRI853Integrator)
+#         if not os.path.exists(os.path.join(test_data_path, "w_hard.npy")):
+#             logger.debug("Integrating orbits")
+#             t,w = self.potential.integrate_orbit(w0, dt=0.2, nsteps=nsteps, Integrator=DOPRI853Integrator)
 
-            logger.debug("Saving orbits")
-            np.save(os.path.join(test_data_path, "t_hard.npy"), t)
-            np.save(os.path.join(test_data_path, "w_hard.npy"), w)
-        else:
-            logger.debug("Loaded orbits")
-            t = np.load(os.path.join(test_data_path, "t_hard.npy"))
-            w = np.load(os.path.join(test_data_path, "w_hard.npy"))
+#             logger.debug("Saving orbits")
+#             np.save(os.path.join(test_data_path, "t_hard.npy"), t)
+#             np.save(os.path.join(test_data_path, "w_hard.npy"), w)
+#         else:
+#             logger.debug("Loaded orbits")
+#             t = np.load(os.path.join(test_data_path, "t_hard.npy"))
+#             w = np.load(os.path.join(test_data_path, "w_hard.npy"))
 
-        self.t = t
-        self.w = w
+#         self.t = t
+#         self.w = w
 
 def test_compare_action_prepare():
 
     from ..actionangle import _action_prepare, _angle_prepare
-    import solver
+
     logger.setLevel(logging.ERROR)
     AA = np.random.uniform(0., 100., size=(1000,6))
     t = np.linspace(0., 100., 1000)
