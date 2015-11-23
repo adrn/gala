@@ -7,11 +7,10 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os, sys
+import os
 import logging
 
 # Third-party
-import matplotlib.pyplot as plt
 import numpy as np
 from astropy import log as logger
 
