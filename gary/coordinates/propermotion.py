@@ -44,7 +44,7 @@ def pm_gal_to_icrs(coordinate, mu):
         >>> import astropy.coordinates as coord
         >>> c = coord.SkyCoord(ra=196.5*u.degree, dec=-10.33*u.deg, distance=16.2*u.kpc)
         >>> pm = [-1.53, 3.5]*u.mas/u.yr
-        >>> pm_gal_to_icrs(c, pm)
+        >>> pm_gal_to_icrs(c, pm) # doctest: +FLOAT_CMP
         <Quantity [-1.84741767, 3.34334366] mas / yr>
 
     """
@@ -111,7 +111,7 @@ def pm_icrs_to_gal(coordinate, mu):
         >>> import astropy.coordinates as coord
         >>> c = coord.SkyCoord(ra=196.5*u.degree, dec=-10.33*u.deg, distance=16.2*u.kpc)
         >>> pm = [-1.84741767, 3.34334366]*u.mas/u.yr
-        >>> pm_icrs_to_gal(c, pm)
+        >>> pm_icrs_to_gal(c, pm) # doctest: +FLOAT_CMP
         <Quantity [-1.52999988, 3.49999973] mas / yr>
 
     """
