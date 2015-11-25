@@ -40,7 +40,7 @@ def cartesian_to_spherical(pos, vel):
     in spherical coordinates. This follows the naming convention used in
     :mod:`astropy.coordinates`: spherical coordinates consist of a distance,
     :math:`d`, a longitude, :math:`\phi`, in the range [0, 360] deg, and
-    a latitude, :math:`\delta`, in the range [-90, 90] deg.
+    a latitude, :math:`b`, in the range [-90, 90] deg.
 
     The components of the output velocity all have units of velocity, i.e.,
     this is not used for transforming from a cartesian velocity to angular
@@ -48,9 +48,9 @@ def cartesian_to_spherical(pos, vel):
 
     .. math::
 
-        \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}\\
-        &= v_r\boldsymbol{\hat{d}} + v_\phi\boldsymbol{\hat{\phi}} + v_\delta\boldsymbol{\hat{\delta}}\\
-        &= \dot{d}\boldsymbol{\hat{d}} + d\cos\delta \dot{\phi}\boldsymbol{\hat{\phi}} + d\dot{\delta}\boldsymbol{\hat{\delta}}
+        \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}\\\\
+        &= v_r\boldsymbol{\hat{d}} + v_\phi\boldsymbol{\hat{\phi}} + v_b\boldsymbol{\hat{b}}\\\\
+        &= \dot{d}\boldsymbol{\hat{d}} + d\cos b \dot{\phi}\boldsymbol{\hat{\phi}} + d\dot{b}\boldsymbol{\hat{b}}
 
     Parameters
     ----------
@@ -116,8 +116,8 @@ def cartesian_to_physicsspherical(pos, vel):
 
     .. math::
 
-        \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}
-        &= v_r\boldsymbol{\hat{r}} + v_\phi\boldsymbol{\hat{\phi}} + v_\theta\boldsymbol{\hat{\theta}}
+        \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}\\\\
+        &= v_r\boldsymbol{\hat{r}} + v_\phi\boldsymbol{\hat{\phi}} + v_\theta\boldsymbol{\hat{\theta}}\\\\
         &= \dot{r}\boldsymbol{\hat{r}} + r\sin\theta \dot{\phi}\boldsymbol{\hat{\phi}} + r\dot{\theta}\boldsymbol{\hat{\theta}}
 
     Parameters
@@ -183,8 +183,8 @@ def cartesian_to_cylindrical(pos, vel):
 
     .. math::
 
-        \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}
-        &= v_\rho\boldsymbol{\hat{\rho}} + v_\phi\boldsymbol{\hat{\phi}} + v_z\boldsymbol{\hat{z}}
+        \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}\\\\
+        &= v_\rho\boldsymbol{\hat{\rho}} + v_\phi\boldsymbol{\hat{\phi}} + v_z\boldsymbol{\hat{z}}\\\\
         &= \dot{\rho}\boldsymbol{\hat{\rho}} + \rho\dot{\phi}\boldsymbol{\hat{\phi}} + \dot{z}\boldsymbol{\hat{\theta}}
 
     Parameters
@@ -236,7 +236,7 @@ def spherical_to_cartesian(pos, vel):
     Convert a velocity in Spherical coordinates to Cartesian coordinates.
     This follows the naming convention used in :mod:`astropy.coordinates`:
     spherical coordinates consist of a distance, :math:`d`, a longitude,
-    :math:`\phi`, in the range [0, 360] deg, and a latitude, :math:`\delta`,
+    :math:`\phi`, in the range [0, 360] deg, and a latitude, :math:`b`,
     in the range [-90, 90] deg.
 
     All components of the input spherical velocity should have units of
@@ -245,9 +245,9 @@ def spherical_to_cartesian(pos, vel):
 
     .. math::
 
-        \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}
-        &= v_r\boldsymbol{\hat{d}} + v_\phi\boldsymbol{\hat{\phi}} + v_\delta\boldsymbol{\hat{\delta}}
-        &= \dot{d}\boldsymbol{\hat{d}} + d\cos\delta \dot{\phi}\boldsymbol{\hat{\phi}} + d\dot{\delta}\boldsymbol{\hat{\delta}}
+        \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}\\\\
+        &= v_r\boldsymbol{\hat{d}} + v_\phi\boldsymbol{\hat{\phi}} + v_b\boldsymbol{\hat{b}}\\\\
+        &= \dot{d}\boldsymbol{\hat{d}} + d\cos b \dot{\phi}\boldsymbol{\hat{\phi}} + d\dot{b}\boldsymbol{\hat{b}}
 
     Parameters
     ----------
@@ -305,8 +305,8 @@ def physicsspherical_to_cartesian(pos, vel):
 
     .. math::
 
-        \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}
-        &= v_r\boldsymbol{\hat{r}} + v_\phi\boldsymbol{\hat{\phi}} + v_\theta\boldsymbol{\hat{\theta}}
+        \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}\\\\
+        &= v_r\boldsymbol{\hat{r}} + v_\phi\boldsymbol{\hat{\phi}} + v_\theta\boldsymbol{\hat{\theta}}\\\\
         &= \dot{r}\boldsymbol{\hat{r}} + r\sin\theta \dot{\phi}\boldsymbol{\hat{\phi}} + r\dot{\theta}\boldsymbol{\hat{\theta}}
 
     Parameters
@@ -365,8 +365,8 @@ def cylindrical_to_cartesian(pos, vel):
 
     .. math::
 
-        \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}
-        &= v_\rho\boldsymbol{\hat{\rho}} + v_\phi\boldsymbol{\hat{\phi}} + v_z\boldsymbol{\hat{z}}
+        \boldsymbol{v} &= v_x\boldsymbol{\hat{x}} + v_y\boldsymbol{\hat{y}} + v_z\boldsymbol{\hat{z}}\\\\
+        &= v_\rho\boldsymbol{\hat{\rho}} + v_\phi\boldsymbol{\hat{\phi}} + v_z\boldsymbol{\hat{z}}\\\\
         &= \dot{\rho}\boldsymbol{\hat{\rho}} + \rho\dot{\phi}\boldsymbol{\hat{\phi}} + \dot{z}\boldsymbol{\hat{\theta}}
 
     Parameters
