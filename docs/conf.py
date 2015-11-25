@@ -89,6 +89,13 @@ release = package.__version__
 # -- Options for HTML output ---------------------------------------------------
 
 # A NOTE ON HTML THEMES
+# A NOTE ON HTML THEMES
+html_theme_options = {
+    'logotext1': '',  # white,  semi-bold
+    'logotext2': 'gary',  # red, light
+    'logotext3': ':docs'   # white,  light
+}
+
 # The global astropy configuration uses a custom theme, 'bootstrap-astropy',
 # which is installed along with astropy. A different theme can be used or
 # the options for this theme can be modified by overriding some of the
@@ -122,6 +129,10 @@ html_title = '{0} v{1}'.format(project, release)
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = project + 'doc'
+
+# Static files to copy after template files
+html_static_path = ['_static']
+html_style = 'gary.css'
 
 
 # -- Options for LaTeX output --------------------------------------------------
