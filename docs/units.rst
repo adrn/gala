@@ -23,8 +23,8 @@ Unit Systems
 
 At its simplest, a unit system is a container class that holds a
 set of base units that specify length, time, mass, and angle. A
-`UnitSystem` object is created by passing in units with (at least)
-these four required physical types::
+`~gary.units.UnitSystem` object is created by passing in units with
+(at least) these four required physical types::
 
     >>> usys = UnitSystem(u.cm, u.millisecond, u.degree, u.gram)
     >>> usys
@@ -37,9 +37,9 @@ unit system using :meth:`~astropy.units.Quantity.decompose`::
     >>> a.decompose(usys)
     <Quantity 1500.0 cm / ms>
 
-`UnitSystem` objects can also act as a dictionary to look up a unit for
-a given physical type. For example, if we want to know what a 'speed' unit
-is in a given unit system, simple pass ``'speed'`` in as a key::
+`~gary.units.UnitSystem` objects can also act as a dictionary to look up
+a unit for a given physical type. For example, if we want to know what a
+'speed' unit is in a given unit system, simple pass ``'speed'`` in as a key::
 
     >>> usys['speed']
     Unit("cm / ms")
@@ -76,8 +76,8 @@ it only uses the base units::
     <Quantity 0.15 kpc / Myr>
 
 Because we specified a unit for quantities with a physical type = 'speed',
-we instead want to use the :meth:`~gary.units.UnitSystem.decompose` method
-of the :class:`~astropy.units.UnitSystem` object, which has exactly opposite
+we instead want to use the `~gary.units.UnitSystem.decompose` method
+of the `~gary.units.UnitSystem` object, which has exactly opposite
 call syntax::
 
     >>> usys2.decompose(q)
