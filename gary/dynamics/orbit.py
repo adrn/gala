@@ -15,7 +15,6 @@ import numpy as np
 
 # Project
 from .core import angular_momentum
-from ..util import atleast_2d
 
 __all__ = ['CartesianOrbit']
 
@@ -150,6 +149,7 @@ class CartesianOrbit(object):
         computed each time the attribute is accessed.
         """
         pass
+        # TODO: waiting until I overhaul how potentials handle units...
 
     @property
     def potential_energy(self):
@@ -162,6 +162,7 @@ class CartesianOrbit(object):
                              " object must be provided when creating the"
                              " orbit object!")
         pass
+        # TODO: waiting until I overhaul how potentials handle units...
 
     @property
     def energy(self):
@@ -170,6 +171,7 @@ class CartesianOrbit(object):
         cached and is computed each time the attribute is accessed.
         """
         return self.kinetic_energy + self.potential_energy
+        # TODO: waiting until I overhaul how potentials handle units...
 
     @property
     def angular_momentum(self):
@@ -177,7 +179,7 @@ class CartesianOrbit(object):
         The angular momentum. This is currently *not* cached and is
         computed each time the attribute is accessed.
         """
-        pass
+        return angular_momentum(self.pos, self.vel)
 
     # Methods
     def plot(self):
