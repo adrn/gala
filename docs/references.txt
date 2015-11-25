@@ -1,0 +1,4 @@
+.. _Astropy: http://astropy.org
+.. _Matplotlib: http://www.matplotlib.org
+.. _Numpy: http://www.numpy.org
+.. _Python: http://www.python.org

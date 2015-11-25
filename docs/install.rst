@@ -1,3 +1,7 @@
+.. include:: references.txt
+
+.. _gary-install:
+
 ************
 Installation
 ************
@@ -7,13 +11,13 @@ Requirements
 
 This packages has the following dependencies:
 
-- `Python <http://www.python.org/>`_ >= 2.7
+- `Python`_ >= 2.7
 
-- `Numpy <http://www.numpy.org/>`_ >= 1.8
+- `Numpy`_ >= 1.8
 
 - `Cython <http://www.cython.org/>`_: >= 0.21
 
-- `Astropy <http://www.astropy.org/>`_ >= 1.0
+- `Astropy`_ >= 1.0
 
 - PyYAML
 
