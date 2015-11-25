@@ -1,4 +1,6 @@
-.. _coordinates:
+.. include:: references.txt
+
+.. _gary-coordinates:
 
 *********************************************
 Coordinate Systems (`gary.coordinates`)
