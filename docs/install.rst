@@ -19,7 +19,7 @@ This packages has the following dependencies:
 
 - `Astropy`_ >= 1.0
 
-- PyYAML
+- `_PyYAML`_ >= 3.10
 
 You can use ``pip`` or ``conda`` to install these automatically.
 
