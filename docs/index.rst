@@ -1,3 +1,7 @@
+.. include:: references.txt
+
+.. _gary:
+
 #########
 Meet Gary
 #########
