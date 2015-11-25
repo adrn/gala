@@ -1,3 +1,5 @@
+.. include:: references.txt
+
 .. _potential:
 
 *************************************************
@@ -137,51 +139,7 @@ listed below.
    compositepotential
    custompotential
 
-Reference/API
-=============
+API
+===
 
-.. _base:
-
-Base classes
-------------
-
-.. autosummary::
-   :toctree: _potential/
-   :template: class.rst
-
-   gary.potential.PotentialBase
-   gary.potential.CompositePotential
-
--------------------------------------------------------------
-
-.. _builtin:
-
-Built-in potentials
--------------------
-
-.. autosummary::
-   :toctree: _potential/
-   :template: class.rst
-
-   gary.potential.HarmonicOscillatorPotential
-   gary.potential.HernquistPotential
-   gary.potential.IsochronePotential
-   gary.potential.JaffePotential
-   gary.potential.KuzminPotential
-   gary.potential.LeeSutoTriaxialNFWPotential
-   gary.potential.LogarithmicPotential
-   gary.potential.MiyamotoNagaiPotential
-   gary.potential.PointMassPotential
-   gary.potential.SphericalNFWPotential
-
-
-.. _utilities:
-
-Utilities
----------
-
-.. autosummary::
-   :toctree: _potential/
-
-   gary.potential.save
-   gary.potential.load
+.. automodapi:: gary.potential
