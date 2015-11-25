@@ -149,41 +149,9 @@ References
 * `A 2MASS All-Sky View of the Sagittarius Dwarf Galaxy: I. Morphology of the Sagittarius Core and Tidal Arms <http://arxiv.org/abs/astro-ph/0304198>`_
 * `The Orbit of the Orphan Stream <http://arxiv.org/abs/1001.0576>`_
 
-Coordinate conversion
-=====================
+***
+API
+***
 
-.. autosummary::
-   :nosignatures:
-   :toctree: _coordinates/
-
-   gary.coordinates.vgal_to_hel
-   gary.coordinates.vhel_to_gal
-   gary.coordinates.pm_gal_to_icrs
-   gary.coordinates.pm_icrs_to_gal
-   gary.coordinates.vgsr_to_vhel
-   gary.coordinates.vhel_to_vgsr
-
-Velocity transformations
-========================
-
-.. autosummary::
-   :nosignatures:
-   :toctree: _coordinates/
-
-   gary.coordinates.cartesian_to_spherical
-   gary.coordinates.cartesian_to_physicsspherical
-   gary.coordinates.cartesian_to_cylindrical
-   gary.coordinates.spherical_to_cartesian
-   gary.coordinates.physicsspherical_to_cartesian
-   gary.coordinates.cylindrical_to_cartesian
-
-New coordinate frames
-=====================
-
-.. autosummary::
-   :toctree: _coordinates/
-   :template: class.rst
-
-   gary.coordinates.Sagittarius
-   gary.coordinates.Orphan
+.. automodapi:: gary.coordinates
 
