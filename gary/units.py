@@ -45,7 +45,9 @@ class UnitSystem(object):
             if unit is None:
                 raise ValueError("Physical type '{0}' doesn't exist in unit registry.".format(key))
 
-            return unit.decompose(self._registry.values())
+            unit = unit.decompose(self._core_units)
+            unit._scale = 1.
+            return unit
 
     def __len__(self):
         return len(self._core_units)
