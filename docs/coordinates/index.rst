@@ -1,6 +1,6 @@
 .. include:: ../references.txt
 
-.. _gary-coordinates:
+.. _coordinates:
 
 *********************************************
 Coordinate Systems (`gary.coordinates`)
@@ -9,14 +9,10 @@ Coordinate Systems (`gary.coordinates`)
 Introduction
 ============
 
-The ``gary.coordinates`` subpackage provides functions for converting velocities between
-various astronomical coordinate frames and systems. This subpackage also provides
-:mod:`astropy.coordinates` frame classes for coordinate sytems defined by the Sagittarius and
-Orphan streams.
-
-.. warning::
-    `gary.coordinates` is currently a work-in-progress, and thus it is
-    possible there will be API changes in later versions.
+The ``gary.coordinates`` subpackage provides functions for converting
+velocities between various astronomical coordinate frames and systems.
+This subpackage also provides :mod:`astropy.coordinates` frame classes
+for coordinate sytems defined by the Sagittarius and Orphan streams.
 
 Getting Started
 ===============
