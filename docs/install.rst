@@ -30,7 +30,7 @@ Development repository
 ----------------------
 
 The latest development version of gary can be cloned from
-`GitHub <https://github.com/>`_ using git::
+`GitHub <https://github.com/>`_ using ``git``::
 
    git clone git://github.com/adrn/gary.git
 
