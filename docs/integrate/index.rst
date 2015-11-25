@@ -1,4 +1,6 @@
-.. _integrate:
+.. include:: references.txt
+
+.. _gary-integrate:
 
 ************************************
 Integration (`gary.integrate`)
@@ -101,11 +103,7 @@ generates this figure is shown below the plot.
     plt.xlim(min(times),max(times))
 
 
-Reference/API
-=============
-.. autoclass:: gary.integrate.DOPRI853Integrator
-   :members: run
-.. autoclass:: gary.integrate.LeapfrogIntegrator
-   :members: run
-.. autoclass:: gary.integrate.RK5Integrator
-   :members: run
+API
+===
+
+.. automodapi:: gary.integrate

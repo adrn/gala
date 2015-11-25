@@ -1,4 +1,6 @@
-.. _io:
+.. include:: references.txt
+
+.. _gary-io:
 
 *********************************
 Reading/writing (`gary.io`)
@@ -13,11 +15,7 @@ Getting Started
 Example:
 ========================
 
-Reference/API
-=============
-.. autoclass:: gary.integrate.DOPRI853Integrator
-   :members: run
-.. autoclass:: gary.integrate.LeapfrogIntegrator
-   :members: run
-.. autoclass:: gary.integrate.RK5Integrator
-   :members: run
+API
+===
+
+.. automodapi:: gary.io
