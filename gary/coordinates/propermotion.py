@@ -12,7 +12,7 @@ import astropy.coordinates as coord
 
 __all__ = ['pm_gal_to_icrs', 'pm_icrs_to_gal']
 
-def pm_gal_to_icrs(coordinate, mu):
+def pm_gal_to_icrs(coordinate, pm):
     r"""
     Convert proper motion in Galactic coordinates (l,b) to
     ICRS coordinates (RA, Dec).
@@ -22,7 +22,7 @@ def pm_gal_to_icrs(coordinate, mu):
     coordinate : :class:`~astropy.coordinates.SkyCoord`, :class:`~astropy.coordinates.BaseCoordinateFrame`
         An instance of an Astropy coordinate object. Can be in any
         frame that is transformable to ICRS coordinates.
-    mu : :class:`~astropy.units.Quantity`, iterable
+    pm : :class:`~astropy.units.Quantity`, iterable
         Full description of proper motion in Galactic longitude and
         latitude. Can either be a tuple of two
         :class:`~astropy.units.Quantity` objects or a single
@@ -52,7 +52,7 @@ def pm_gal_to_icrs(coordinate, mu):
     g = coordinate.transform_to(coord.Galactic)
     i = coordinate.transform_to(coord.ICRS)
 
-    mulcosb,mub = map(np.atleast_1d, mu)
+    mulcosb,mub = map(np.atleast_1d, pm)
     n = len(mulcosb)
 
     # coordinates of NGP
@@ -79,7 +79,7 @@ def pm_gal_to_icrs(coordinate, mu):
     else:
         return new_mu.reshape((2,) + mulcosb.shape)*mulcosb.unit
 
-def pm_icrs_to_gal(coordinate, mu):
+def pm_icrs_to_gal(coordinate, pm):
     r"""
     Convert proper motion in ICRS coordinates (RA, Dec) to
     Galactic coordinates (l,b).
@@ -89,7 +89,7 @@ def pm_icrs_to_gal(coordinate, mu):
     coordinate : :class:`~astropy.coordinates.SkyCoord`, :class:`~astropy.coordinates.BaseCoordinateFrame`
         An instance of an Astropy coordinate object. Can be in any
         frame that is transformable to ICRS coordinates.
-    mu : :class:`~astropy.units.Quantity`, iterable
+    pm : :class:`~astropy.units.Quantity`, iterable
         Full description of proper motion in Right ascension (RA) and
         declination (Dec). Can either be a tuple of two
         :class:`~astropy.units.Quantity` objects or a single
@@ -119,7 +119,7 @@ def pm_icrs_to_gal(coordinate, mu):
     g = coordinate.transform_to(coord.Galactic)
     i = coordinate.transform_to(coord.ICRS)
 
-    muacosd,mud = map(np.atleast_1d, mu)
+    muacosd,mud = map(np.atleast_1d, pm)
     n = len(muacosd)
 
     # coordinates of NGP
