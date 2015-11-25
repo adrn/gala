@@ -137,7 +137,7 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
 
     The frame of the input coordinate determines the output frame of the proper motions.
     For example, if the input coordinate is in the ICRS frame, the proper motions
-    returned will be  :math:`(\mu_\alpha\cos\delta,\mu_delta)`. This function also
+    returned will be  :math:`(\mu_\alpha\cos\delta,\mu_\delta)`. This function also
     handles array inputs (see examples below).
 
     Parameters
