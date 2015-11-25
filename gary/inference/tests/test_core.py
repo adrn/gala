@@ -4,26 +4,14 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os, sys
-import time as pytime
-import copy
-
 # Third-party
 import emcee
 import numpy as np
-import pytest
-import astropy.units as u
-from astropy.io.misc import fnpickle
 import matplotlib.pyplot as plt
 
 from ..model import *
 from ..parameter import *
 from ..prior import *
-
-plot_path = "plots/tests/inference"
-if not os.path.exists(plot_path):
-    os.makedirs(plot_path)
 
 def dummy_likelihood(parameters, value_dict, *args):
     return 0.
@@ -31,8 +19,8 @@ def dummy_likelihood(parameters, value_dict, *args):
 class TestEmceeModel(object):
 
     def test_simple(self):
-        m = ModelParameter("m", truth=1.5, prior=LogUniformPrior(1.,2.))
-        b = ModelParameter("b", truth=6.7, prior=LogUniformPrior(0.,10.))
+        m = ModelParameter("m", truth=1.5, prior=UniformPrior(1.,2.))
+        b = ModelParameter("b", truth=6.7, prior=UniformPrior(0.,10.))
 
         model = EmceeModel(dummy_likelihood)
         model.add_parameter(m)
@@ -48,7 +36,7 @@ class TestEmceeModel(object):
         self.flat_model = EmceeModel(dummy_likelihood)
         for name in "abcdefg":
             p = ModelParameter(name, truth=np.random.random(),
-                               prior=LogUniformPrior(0.,1.))
+                               prior=UniformPrior(0.,1.))
             self.flat_model.add_parameter(p)
             assert self.flat_model.parameters.has_key(name)
 
@@ -57,7 +45,7 @@ class TestEmceeModel(object):
         for group in ["herp","derp"]:
             for name in "abcd":
                 p = ModelParameter(name, truth=np.random.random(),
-                                   prior=LogUniformPrior(0.,1.))
+                                   prior=UniformPrior(0.,1.))
                 self.group_model.add_parameter(p, group)
         assert self.group_model.parameters.has_key("herp")
         assert self.group_model.parameters.has_key("derp")
@@ -67,7 +55,7 @@ class TestEmceeModel(object):
         for name in "abcd":
             troof = np.random.random(size=3)
             p = ModelParameter(name, truth=troof,
-                               prior=LogUniformPrior(0*troof,0*troof+1))
+                               prior=UniformPrior(0*troof,0*troof+1))
             self.vec_model.add_parameter(p)
             assert self.vec_model.parameters.has_key(name)
 
@@ -75,15 +63,15 @@ class TestEmceeModel(object):
         self.frozen_model = EmceeModel(dummy_likelihood)
         for name in "abc":
             p = ModelParameter(name, truth=np.random.random(),
-                               prior=LogUniformPrior(0.,1.))
+                               prior=UniformPrior(0.,1.))
             self.frozen_model.add_parameter(p)
 
-        p = ModelParameter('mrfreeze', truth=0.5, prior=LogUniformPrior(0,1))
+        p = ModelParameter('mrfreeze', truth=0.5, prior=UniformPrior(0,1))
         p.frozen = 0.4712
         self.frozen_model.add_parameter(p)
         assert self.frozen_model.parameters['mrfreeze'].frozen is not False
 
-        p = ModelParameter('chillout', truth=0.5, prior=LogUniformPrior(0,1))
+        p = ModelParameter('chillout', truth=0.5, prior=UniformPrior(0,1))
         p.frozen = 0.4712
         self.frozen_model.add_parameter(p)
         assert self.frozen_model.parameters['chillout'].frozen is not False
@@ -166,8 +154,8 @@ class TestEmceeModel(object):
             pri = model.sample_priors(n=5)
 
     def test_mcmc_sample_priors(self):
-        m = ModelParameter("m", truth=1., prior=LogNormal1DPrior(0.,2.))
-        b = ModelParameter("b", truth=6.7, prior=LogUniformPrior(0.,10.))
+        m = ModelParameter("m", truth=1., prior=LogarithmicPrior(0.,2.))
+        b = ModelParameter("b", truth=6.7, prior=UniformPrior(0.,10.))
 
         model = EmceeModel(dummy_likelihood)
         model.add_parameter(m)
@@ -177,11 +165,6 @@ class TestEmceeModel(object):
         p0 = model.sample_priors(n=nwalkers)
         sampler = emcee.EnsembleSampler(nwalkers, model.nparameters, model)
         sampler.run_mcmc(p0, 1000)
-
-        fig,axes = plt.subplots(1,2)
-        axes[0].hist(sampler.flatchain[:,0])
-        axes[1].hist(sampler.flatchain[:,1])
-        fig.savefig(os.path.join(plot_path,"priors.png"))
 
 
 def line_likelihood(parameters, value_dict, x, y, sigma_y):
@@ -201,8 +184,8 @@ def line_likelihood(parameters, value_dict, x, y, sigma_y):
 class TestFitLine(object):
 
     def setup(self):
-        m = ModelParameter("m", truth=1., prior=LogUniformPrior(0.,2.))
-        b = ModelParameter("b", truth=6.7, prior=LogUniformPrior(0.,10.))
+        m = ModelParameter("m", truth=1., prior=UniformPrior(0.,2.))
+        b = ModelParameter("b", truth=6.7, prior=UniformPrior(0.,10.))
 
         ndata = 15
         x = np.random.uniform(0.,10.,size=ndata)
@@ -235,7 +218,7 @@ class TestFitLine(object):
         axes[1].hist(self.model.parameters['b'].prior.sample(n=1000),
                      alpha=0.5, zorder=-1, normed=True)
         axes[1].axvline(self.model.parameters['b'].truth.value, color='g')
-        fig.savefig(os.path.join(plot_path,"fit_line_vary_m_b.png"))
+        # fig.savefig(os.path.join(plot_path,"fit_line_vary_m_b.png"))
 
     def test_m_frozen(self):
         self.model.parameters['m'].freeze(self.model.parameters['m'].truth.value)
@@ -255,7 +238,7 @@ class TestFitLine(object):
                 alpha=0.5, zorder=-1, normed=True)
         ax.axvline(self.model.parameters['b'].truth.value, color='g')
 
-        fig.savefig(os.path.join(plot_path,"fit_line_vary_b.png"))
+        # fig.savefig(os.path.join(plot_path,"fit_line_vary_b.png"))
 
     def test_b_frozen(self):
         self.model.parameters['b'].freeze(self.model.parameters['b'].truth.value)
@@ -275,7 +258,7 @@ class TestFitLine(object):
                 alpha=0.5, zorder=-1, normed=True)
         ax.axvline(self.model.parameters['m'].truth.value, color='g')
 
-        fig.savefig(os.path.join(plot_path,"fit_line_vary_m.png"))
+        # fig.savefig(os.path.join(plot_path,"fit_line_vary_m.png"))
 
 def jvp_line_likelihood(parameters, value_dict, x, y):
     alpha = value_dict['alpha']
@@ -300,7 +283,7 @@ def ln_p_beta_sigma(parameters, value_dict, *args):
 class TestJakeVDPExample(object):
 
     def setup(self):
-        alpha = ModelParameter("alpha", truth=11., prior=LogUniformPrior(0.,20))
+        alpha = ModelParameter("alpha", truth=11., prior=UniformPrior(0.,20))
         beta = ModelParameter("beta", truth=2.7)
         sigma = ModelParameter("sigma", truth=0.25)
 
@@ -340,7 +323,7 @@ class TestJakeVDPExample(object):
         axes[2].axvline(self.model.parameters['sigma'].truth.value, color='g')
         axes[2].set_xlim(0, 0.5)
 
-        fig.savefig(os.path.join(plot_path,"jvp_fit_line.png"))
+        # fig.savefig(os.path.join(plot_path,"jvp_fit_line.png"))
 
         ###
 
@@ -359,5 +342,5 @@ class TestJakeVDPExample(object):
         axes[2].axhline(self.model.parameters['sigma'].truth.value, color='g')
         axes[2].set_ylim(0, 0.5)
 
-        fig.savefig(os.path.join(plot_path,"jvp_fit_line_trace.png"))
+        # fig.savefig(os.path.join(plot_path,"jvp_fit_line_trace.png"))
 
