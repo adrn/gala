@@ -29,6 +29,7 @@ Documentation
    dynamics/index
    integrate/index
    potential/index
+   units
 ..   getting_started
 
 ***********************************
