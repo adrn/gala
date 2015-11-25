@@ -99,7 +99,7 @@ class EmceeModel(object):
                 v = value_dict[param_name]
             else:
                 v = value_dict[group_name][param_name]
-            ln_prior += param.prior(v)
+            ln_prior += param.prior.logpdf(v)
 
         for joint_prior in self.joint_priors:
             ln_prior += joint_prior(parameters, value_dict, *args)
