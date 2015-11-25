@@ -155,6 +155,10 @@ class CartesianOrbit(object):
         The potential energy. This is currently *not* cached and is
         computed each time the attribute is accessed.
         """
+        if self.potential is None:
+            raise ValueError("To compute the potential energy, a potential"
+                             " object must be provided when creating the"
+                             " orbit object!")
         pass
 
     @property
