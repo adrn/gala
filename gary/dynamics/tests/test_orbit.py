@@ -26,6 +26,16 @@ def test_initialize():
         t = np.arange(8)
         CartesianOrbit(pos=x, vel=v, t=t)
 
+    x = np.random.random(size=(3,10))
+    v = np.random.random(size=(3,10))
+    o = CartesianOrbit(pos=x, vel=v)
+    assert o.ndim == 3
+
+    x = np.random.random(size=(2,10))
+    v = np.random.random(size=(2,10))
+    o = CartesianOrbit(pos=x, vel=v)
+    assert o.ndim == 2
+
 def test_slice():
 
     # simple
