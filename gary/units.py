@@ -109,7 +109,7 @@ class UnitSystem(object):
 
     def decompose(self, q):
         """
-        A thin wrapper around `astropy.units.Quantity.decompose()` that
+        A thin wrapper around :meth:`astropy.units.Quantity.decompose` that
         knows how to handle Quantities with physical types with non-default
         representations.
 
