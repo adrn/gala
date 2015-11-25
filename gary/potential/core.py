@@ -80,7 +80,7 @@ class PotentialBase(object):
     def _value(self):
         raise NotImplementedError()
 
-    def value(self, x):
+    def value(self, x, t=0.):
         """
         Compute the value of the potential at the given position(s).
 
@@ -94,7 +94,7 @@ class PotentialBase(object):
     def _gradient(self, *args, **kwargs):
         raise NotImplementedError()
 
-    def gradient(self, x):
+    def gradient(self, x, t=0.):
         """
         Compute the gradient of the potential at the given position(s).
 
@@ -111,7 +111,7 @@ class PotentialBase(object):
     def _density(self, *args, **kwargs):
         raise NotImplementedError()
 
-    def density(self, x):
+    def density(self, x, t=0.):
         """
         Compute the density value at the given position(s).
 
