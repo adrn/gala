@@ -1,0 +1,6 @@
+@import url("bootstrap-astropy.css");
+
+div.topbar a.brand {
+    background: none;
+    background-image: none;
+}
