@@ -119,6 +119,14 @@ class CartesianOrbit(object):
 
     @property
     def ndim(self):
+        """
+        Number of coordinate dimensions.
+
+        .. warning::
+
+            This is *not* the number of axes in the position or velocity
+            arrays. That is accessed by doing ``orbit.pos.ndim``.
+        """
         return self.pos.shape[0]
 
     # Convert from Cartesian to other representations
@@ -133,21 +141,42 @@ class CartesianOrbit(object):
         pass
 
     # Computed quantities
+    @property
     def kinetic_energy(self):
+        """
+        The kinetic energy. This is currently *not* cached and is
+        computed each time the attribute is accessed.
+        """
         pass
 
+    @property
     def potential_energy(self):
+        """
+        The potential energy. This is currently *not* cached and is
+        computed each time the attribute is accessed.
+        """
         pass
 
+    @property
     def energy(self):
+        """
+        The total energy (kinetic + potential). This is currently *not*
+        cached and is computed each time the attribute is accessed.
+        """
+        return self.kinetic_energy + self.potential_energy
+
+    @property
+    def angular_momentum(self):
+        """
+        The angular momentum. This is currently *not* cached and is
+        computed each time the attribute is accessed.
+        """
         pass
 
-    def angular_momentum(self):
+    # Methods
+    def plot(self):
         pass
 
     def align_circulation_with_z(self):
         # TODO: returns copy
-        pass
-
-    def plot(self):
         pass
