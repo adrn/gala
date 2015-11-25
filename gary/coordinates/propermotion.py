@@ -28,7 +28,7 @@ def pm_gal_to_icrs(coordinate, mu):
         :class:`~astropy.units.Quantity` objects or a single
         :class:`~astropy.units.Quantity` with shape (2,N).
         The proper motion in longitude is assumed to be multipled by
-        cosine of Galactic latitude, :math:`\mu_l\cosb`.
+        cosine of Galactic latitude, :math:`\mu_l\cos b`.
 
     Returns
     -------
