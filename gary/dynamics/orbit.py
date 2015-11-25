@@ -117,70 +117,32 @@ class CartesianOrbit(object):
         return self.__class__(pos=self.pos[_slyce], vel=self.vel[_slyce],
                               potential=self.potential, **kw)
 
-    def __copy__(self):
-        # TODO:
-        pass
+    @property
+    def ndim(self):
+        return self.pos.shape[0]
 
-    def __deepcopy__(self):
-        # TODO:
-        pass
-
-    def copy(self, deep=False):
-        # TODO:
-        pass
-
+    # Convert from Cartesian to other representations
     def represent_as(self, Representation):
         """
-        Transform the representation or coordinate system of the orbit, for example,
-        from Cartesian to Spherical.
 
         Parameters
         ----------
         Representation : :class:`~astropy.coordinates.BaseRepresentation`
-            The output representation class.
+            The class for the desired representation.
         """
-
-        if self.Representation == Representation:
-            return self
-
-        # first transform the position
-        new_pos = self.Representation(*self.pos).represent_as(Representation)
-
-        # now find the function to transform the velocity
-        _func_name = "{}_to_{}".format(self.Representation.get_name(),
-                                       Representation.get_name())
-        v_func = getattr(vtrans, _func_name)
-        new_vel = v_func(self.pos, self.vel)
-
-        # return Orbit(pos=new_pos, vel=new_vel, t=self.t, unitsys=self.unitsys,
-        #              Representation=Representation, potential=self.potential)
-
-    @property
-    def shape(self):
-        """
-        Returns the shape of the orbit, without the implicit dimensionality axis=0
-        (assumed to be 3D in position and velocity).
-
-        """
-
-        return self.pos.shape[1:]
-
-    @property
-    def norbits(self):
-        if len(self.pos.shape) == 2:
-            return 1
-        else:
-            return self.pos.shape[-1]
-
-    @property
-    def orbit_type(self):
-        # TODO: figure out if tube or box (.orbit_type)
         pass
 
+    # Computed quantities
     def kinetic_energy(self):
         pass
 
-    def total_energy(self):
+    def potential_energy(self):
+        pass
+
+    def energy(self):
+        pass
+
+    def angular_momentum(self):
         pass
 
     def align_circulation_with_z(self):
