@@ -14,6 +14,7 @@ import astropy.coordinates as coord
 import numpy as np
 
 # Project
+from .core import angular_momentum
 from ..util import atleast_2d
 
 __all__ = ['CartesianOrbit']
@@ -24,22 +25,23 @@ class CartesianOrbit(object):
     and velocities (conjugate momenta) at different times.
 
     The position and velocity quantities (arrays) can have an arbitrary
-    number of dimensions, but axis 0 and 1 have special meaning:
+    number of dimensions, but the first and last axes (0 and -1) have
+    special meaning::
 
-        - `axis=0` is the coordinate dimension (e.g., x, y, z)
-        - `axis=1` is the time dimension
+        - `axis=0` is the time dimension
+        - `axis=-1` is the coordinate dimension (e.g., x, y, z)
 
-    So if the input position array, `pos`, has shape `pos.shape = (3, 100)`, this
-    would be a 3D orbit (`pos[0]` is `x`, `pos[1]` is `y`, etc.). For representing
+    So if the input position array, `pos`, has shape `pos.shape = (100, 3)`, this
+    would be a 3D orbit (`pos[...,0]` is `x`, `pos[...,1]` is `y`, etc.). For representing
     multiple orbits, the position array could have 3 axes, e.g., it might have shape
-    `pos.shape = (3, 100, 8)`, where this is interpreted as a 3D position at 100 times
+    `pos.shape = (100, 8, 3)`, where this is interpreted as a 3D position at 100 times
     for 8 different orbits. The same is true for velocity. The position and velocity
     arrays must have the same shape.
 
     If a time argument is specified, the position and velocity arrays must have
     the same number of timesteps as the length of the time object::
 
-        len(t) == pos.shape[1]
+        len(t) == pos.shape[0]
 
     Parameters
     ----------
@@ -61,15 +63,15 @@ class CartesianOrbit(object):
     def __init__(self, pos, vel, t=None, potential=None):
 
         # make sure position and velocity input are 2D
-        pos = atleast_2d(pos, insert_axis=1)
-        vel = atleast_2d(vel, insert_axis=1)
+        pos = np.atleast_2d(pos)
+        vel = np.atleast_2d(vel)
 
         if t is not None:
             t = np.atleast_1d(t)
-            if pos.shape[1] != len(t):
+            if pos.shape[0] != len(t):
                 raise ValueError("Position and velocity must have the same length "
-                                 "along axis=1 as the length of the time array "
-                                 "{} vs {}".format(len(t), pos.shape[1]))
+                                 "along axis=0 as the length of the time array "
+                                 "{} vs {}".format(len(t), pos.shape[0]))
 
             if not hasattr(t, 'unit'):
                 t = t * uno
@@ -107,13 +109,13 @@ class CartesianOrbit(object):
 
     def __getitem__(self, slyce):
         try:
-            _slyce = (slice(None),) + tuple(slyce)
+            _slyce = tuple(slyce) + (slice(None),)
         except TypeError:
-            _slyce = (slice(None),) + (slyce,)
+            _slyce = (slyce,) + (slice(None),)
 
         kw = dict()
         if self.t is not None:
-            kw['t'] = self.t[_slyce[1]]
+            kw['t'] = self.t[_slyce[0]]
         return self.__class__(pos=self.pos[_slyce], vel=self.vel[_slyce],
                               potential=self.potential, **kw)
 
@@ -127,7 +129,7 @@ class CartesianOrbit(object):
             This is *not* the number of axes in the position or velocity
             arrays. That is accessed by doing ``orbit.pos.ndim``.
         """
-        return self.pos.shape[0]
+        return self.pos.shape[-1]
 
     # Convert from Cartesian to other representations
     def represent_as(self, Representation):
