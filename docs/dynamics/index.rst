@@ -1,4 +1,6 @@
-.. _dynamics:
+.. include:: references.txt
+
+.. _gary-dynamics:
 
 ********************************
 Dynamics (`gary.dynamics`)
@@ -54,51 +56,7 @@ Tutorial
 For a detailed example that makes use of the code for transforming to
 action-angle coordinates, see: :ref:`actionangle`.
 
-Reference / API
-===============
+API
+===
 
-General
--------
-
-.. autosummary::
-   :nosignatures:
-   :toctree: _dynamics/
-
-   gary.dynamics.angular_momentum
-   gary.dynamics.classify_orbit
-
-Angle-action
-------------
-
-.. autosummary::
-   :nosignatures:
-   :toctree: _dynamics/
-
-   gary.dynamics.find_actions
-   gary.dynamics.isochrone_xv_to_aa
-   gary.dynamics.isochrone_aa_to_xv
-   gary.dynamics.harmonic_oscillator_xv_to_aa
-   gary.dynamics.harmonic_oscillator_aa_to_xv
-
-Plotting
---------
-
-.. autosummary::
-   :nosignatures:
-   :toctree: _dynamics/
-
-   gary.dynamics.plot_orbits
-
-Misc. / Utility
----------------
-
-.. autosummary::
-   :nosignatures:
-   :toctree: _dynamics/
-
-   gary.dynamics.check_angle_sampling
-   gary.dynamics.fit_isochrone
-   gary.dynamics.fit_harmonic_oscillator
-   gary.dynamics.fit_toy_potential
-   gary.dynamics.generate_n_vectors
-   gary.dynamics.unwrap_angles
+.. automodapi:: gary.dynamics
