@@ -2,3 +2,4 @@
 .. _Matplotlib: http://www.matplotlib.org
 .. _Numpy: http://www.numpy.org
 .. _Python: http://www.python.org
+.. _PyYAML: http://pyyaml.org/
