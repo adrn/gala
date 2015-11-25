@@ -59,6 +59,7 @@ setup_cfg = dict(conf.items('metadata'))
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 exclude_patterns.append('_templates')
+exclude_patterns.append('_static/m104.ai')
 
 # This is added to the end of RST files - a good place to put substitutions to
 # be used globally.
@@ -117,7 +118,7 @@ html_theme_options = {
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-#html_favicon = ''
+html_favicon = 'm104.ico'
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
