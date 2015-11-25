@@ -101,7 +101,38 @@ class UnitSystem(object):
         return "<{0}>".format(self.__str__())
 
     def to_dict(self):
+        """
+        Return a dictionary representation of the unit system with keys
+        set by the physical types and values set by the unit objects.
+        """
         return self._registry.copy()
+
+    def decompose(self, q):
+        """
+        A thin wrapper around `astropy.units.Quantity.decompose()` that
+        knows how to handle Quantities with physical types with non-default
+        representations.
+
+        Parameters
+        ----------
+        q : :class:`~astropy.units.Quantity`
+            An instance of an astropy Quantity object.
+
+        Returns
+        -------
+        q : :class:`~astropy.units.Quantity`
+            A new quantity, decomposed to represented in this unit system.
+        """
+        try:
+            ptype = q.unit.physical_type
+        except AttributeError:
+            raise TypeError("Object must be an astropy.units.Quantity, not "
+                            "a '{}'.".format(q.__class__.__name__))
+
+        if ptype in self._registry:
+            return q.to(self._registry[ptype])
+        else:
+            return q.decompose(self)
 
 # define galactic unit system
 galactic = UnitSystem(u.kpc, u.Myr, u.Msun, u.radian,
