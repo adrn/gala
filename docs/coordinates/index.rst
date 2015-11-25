@@ -1,4 +1,4 @@
-.. include:: references.txt
+.. include:: ../references.txt
 
 .. _gary-coordinates:
 
@@ -28,19 +28,19 @@ The core functions in this subpackage provide support to:
 - Convert proper motions and radial velocities to Galactocentric, cartesian
   velocities.
 - Convert proper motions from/to ICRS to/from Galactic.
-- Convert radial velocities from/to the Galactic Standard of Rest (GSR) to/from a
-  barycentric frame.
+- Convert radial velocities from/to the Galactic Standard of Rest (GSR) to/from a barycentric frame.
 
 These functions work naturally with the :mod:`astropy.units` and
-:mod:`astropy.coordinates` subpackages. Handling positional transformations is already
-supported by :mod:`astropy.coordinates` and new to Astropy v1.0 is a
-:class:`~astropy.coordinates.Galactocentric` reference frame. However, there is currently
-no support in Astropy for transforming velocities. The functions below attempt to bridge
-that gap as a temporary solution until support is added (planned for v1.1).
+:mod:`astropy.coordinates` subpackages. Handling positional transformations
+is already supported by :mod:`astropy.coordinates` and new to Astropy v1.0 is a
+:class:`~astropy.coordinates.Galactocentric` reference frame. However, there is
+currently no support for transforming velocities in Astropy. The functions below
+attempt to bridge that gap as a temporary solution until support is added
+(planned for v1.2).
 
 For example, to convert a spherical, heliocentric velocity (proper motion and radial
 velocity) in an ICRS frame to a Galactocentric, cartesian velocity, we first have
-to define an Astropy coordinate for the position of the object::
+to define an Astropy coordinate to specify the position of the object::
 
     >>> import astropy.coordinates as coord
     >>> import astropy.units as u
@@ -125,8 +125,8 @@ proper motion arrays should have length=2::
     >>> gc.pm_icrs_to_gal(c, pm) # doctest: +SKIP
     ...
 
-Tidal Stream Coordinate Frames
-------------------------------
+Stellar Stream Coordinate Frames
+--------------------------------
 
 Also included in this subpackage are Astropy coordinate frame classes for
 transforming to Sagittarius and Orphan stream coordinates (as defined in the
@@ -157,4 +157,6 @@ API
 ===
 
 .. automodapi:: gary.coordinates
+    :no-inheritance-diagram:
+    :skip: cartesian_to_poincare_polar
 
