@@ -15,6 +15,8 @@ import numpy as np
 
 # Project
 from .core import angular_momentum
+from ..coordinates import velocity_transforms as vtrans
+from ..coordinates import vgal_to_hel
 
 __all__ = ['CartesianOrbit']
 
@@ -133,13 +135,58 @@ class CartesianOrbit(object):
     # Convert from Cartesian to other representations
     def represent_as(self, Representation):
         """
+        TODO
 
         Parameters
         ----------
         Representation : :class:`~astropy.coordinates.BaseRepresentation`
             The class for the desired representation.
+
+        Returns
+        -------
+        pos : `~astropy.coordinates.BaseRepresentation`
+        vel : `~astropy.units.Quantity`
+            The velocity in the new representation. All components
+            have units of velocity -- e.g., to get an angular velocity
+            in spherical representations, you'll need to divide by the radius.
         """
-        pass
+        # get the name of the desired representation
+        rep_name = Representation.get_name()
+
+        # transform the position
+        car_pos = coord.CartesianRepresentation(self.pos.T)
+        new_pos = car_pos.represent_as(Representation)
+
+        # transform the velocity
+        vfunc = getattr(vtrans, "cartesian_to_{}".format(rep_name))
+        new_vel = vfunc(car_pos, self.vel.T)
+
+        return new_pos, new_vel.T
+
+    def to_frame(self, frame, galactocentric_frame=coord.Galactocentric(), **kwargs):
+        """
+        TODO
+
+        Parameters
+        ----------
+        frame : :class:`~astropy.coordinates.BaseCoordinateFrame`
+        galactocentric_frame : :class:`~astropy.coordinates.Galactocentric`
+        **kwargs
+            Passed to velocity transform.
+
+        Returns
+        -------
+        c : :class:`~astropy.coordinates.BaseCoordinateFrame`
+        v : tuple
+
+        """
+
+        car_pos = coord.CartesianRepresentation(self.pos.T)
+        gc_c = galactocentric_frame.realize_frame(car_pos)
+        c = gc_c.transform_to(frame)
+
+        v = vgal_to_hel(c, self.vel.T, galactocentric_frame=galactocentric_frame, **kwargs)
+        return c, [v[i].T for i in range(3)]
 
     # Computed quantities
     @property
