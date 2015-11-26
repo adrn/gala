@@ -25,6 +25,10 @@ class CartesianOrbit(object):
     Represents an orbit in Cartesian coordinates -- positions
     and velocities (conjugate momenta) at different times.
 
+    .. warning::
+
+        This is an experimental class. The API can and probably will change!
+
     The position and velocity quantities (arrays) can have an arbitrary
     number of dimensions, but the first and last axes (0 and -1) have
     special meaning::
