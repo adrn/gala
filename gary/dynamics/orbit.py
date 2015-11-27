@@ -215,6 +215,23 @@ class CartesianOrbit(object):
         pass
         # TODO: waiting until I overhaul how potentials handle units...
 
+    @property
+    def energy(self):
+        """
+        The total energy (kinetic + potential). This is currently *not*
+        cached and is computed each time the attribute is accessed.
+        """
+        return self.kinetic_energy + self.potential_energy
+        # TODO: waiting until I overhaul how potentials handle units...
+
+    @property
+    def angular_momentum(self):
+        """
+        The angular momentum. This is currently *not* cached and is
+        computed each time the attribute is accessed.
+        """
+        return angular_momentum(self.pos, self.vel)
+
     def estimate_period(self, radial=True):
         """
         Estimate the period of the orbit. By default, computes the radial
@@ -251,23 +268,6 @@ class CartesianOrbit(object):
             T = T * self.t.unit
 
         return T
-
-    @property
-    def energy(self):
-        """
-        The total energy (kinetic + potential). This is currently *not*
-        cached and is computed each time the attribute is accessed.
-        """
-        return self.kinetic_energy + self.potential_energy
-        # TODO: waiting until I overhaul how potentials handle units...
-
-    @property
-    def angular_momentum(self):
-        """
-        The angular momentum. This is currently *not* cached and is
-        computed each time the attribute is accessed.
-        """
-        return angular_momentum(self.pos, self.vel)
 
     # Methods
     def plot(self):
