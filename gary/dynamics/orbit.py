@@ -14,7 +14,7 @@ import astropy.coordinates as coord
 import numpy as np
 
 # Project
-from .core import angular_momentum
+from .core import angular_momentum, peak_to_peak_period
 from ..coordinates import velocity_transforms as vtrans
 from ..coordinates import vgal_to_hel
 
@@ -214,6 +214,43 @@ class CartesianOrbit(object):
                              " orbit object!")
         pass
         # TODO: waiting until I overhaul how potentials handle units...
+
+    def estimate_period(self, radial=True):
+        """
+        Estimate the period of the orbit. By default, computes the radial
+        period. If ``radial==False``, this returns period estimates for
+        each dimension of the orbit.
+
+        Parameters
+        ----------
+        radial : bool (optional)
+            What period to estimate. If ``True``, estimates the radial
+            period. If ``False``, estimates period in each dimension, e.g.,
+            if the orbit is 3D, along x, y, and z.
+
+        Returns
+        -------
+        T : `~astropy.units.Quantity`
+            The period or periods.
+        """
+
+        if self.t is None:
+            raise ValueError("To compute the period, a time array is needed."
+                             " Specify a time array when creating this object.")
+
+        if radial:
+            r = np.sqrt(np.sum(self.pos**2, axis=-1))
+            T = [peak_to_peak_period(self.t.value, r[i]) for i in range(r.shape[1])]
+            T = T * self.t.unit
+
+        else:
+            T = np.zeros(self.pos.shape[1:])
+            for i in range(self.pos.shape[1]):
+                for k in range(self.pos.shape[-1]):
+                    T[i,k] = peak_to_peak_period(self.t.value, self.pos[:,i,k])
+            T = T * self.t.unit
+
+        return T
 
     @property
     def energy(self):
