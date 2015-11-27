@@ -40,34 +40,18 @@ class PotentialBase(object):
     """
     A baseclass for defining gravitational potentials.
 
-    You must specify
-    a function that evaluates the potential value (func). You may also
-    optionally add a function that computes derivatives (gradient), and a
-    function to compute the Hessian of the potential.
-
-    Parameters
-    ----------
-    func : function
-        A function that computes the value of the potential.
-    units : iterable
-        A list of astropy.units.Unit objects that define a complete unit system.
-        Must include at least a length unit, time unit, and mass unit.
-    gradient : function (optional)
-        A function that computes the first derivatives (gradient) of the potential.
-    hessian : function (optional)
-        A function that computes the second derivatives (Hessian) of the potential.
-    parameters : dict (optional)
-        Any extra parameters that the functions (func, gradient, hessian)
-        require. All functions must take the same parameters.
-
+    Subclasses must define a function that evaluates the value of the
+    potential at a given position and time. For integration, the
+    subclasses should also define a gradient function. Optionally, they
+    may also define functions to compute the density and hessian.
     """
-
     def __init__(self, units=None):
+        # make sure the units specified are a UnitSystem instance
         if units is not None and not isinstance(units, UnitSystem):
             units = UnitSystem(*units)
         self.units = units
 
-        # must set parameters first...TODO: throw error?
+        # must set parameters first...
         if not hasattr(self, 'parameters'):
             raise ValueError("Must set parameters of potential subclass before"
                              " calling super().")
@@ -76,91 +60,90 @@ class PotentialBase(object):
             if hasattr(v, 'unit'):
                 self.parameters[k] = v.decompose(self.units).value
 
-    @abc.abstractmethod
     def _value(self):
         raise NotImplementedError()
 
-    def value(self, x, t=0.):
+    def value(self, q, t=0.):
         """
         Compute the value of the potential at the given position(s).
 
         Parameters
         ----------
-        x : array_like, numeric
+        q : array_like, numeric
             Position to compute the value of the potential.
         """
-        return self._value(np.atleast_2d(x), **self.parameters)
+        return self._value(np.atleast_2d(q), **self.parameters)
 
     def _gradient(self, *args, **kwargs):
         raise NotImplementedError()
 
-    def gradient(self, x, t=0.):
+    def gradient(self, q, t=0.):
         """
         Compute the gradient of the potential at the given position(s).
 
         Parameters
         ----------
-        x : array_like, numeric
+        q : array_like, numeric
             Position to compute the gradient.
         """
-        if self._gradient is None:
-            raise NotImplementedError("No gradient function was specified when"
-                                      " the object was created!")
-        return self._gradient(np.atleast_2d(x), **self.parameters)
+        try:
+            return self._gradient(np.atleast_2d(q), **self.parameters)
+        except NotImplementedError:
+            raise NotImplementedError("This potential has no specified gradient function.")
 
     def _density(self, *args, **kwargs):
         raise NotImplementedError()
 
-    def density(self, x, t=0.):
+    def density(self, q, t=0.):
         """
         Compute the density value at the given position(s).
 
         Parameters
         ----------
-        x : array_like, numeric
+        q : array_like, numeric
             Position to compute the density.
         """
-        if self._density is None:
-            raise NotImplementedError("No density function was specified when"
-                                      " the object was created!")
-        return self._density(np.atleast_2d(x), **self.parameters)
+        try:
+            return self._density(np.atleast_2d(q), **self.parameters)
+        except NotImplementedError:
+            raise NotImplementedError("This potential has no specified density function.")
 
     def _hessian(self, *args, **kwargs):
         raise NotImplementedError()
 
-    def hessian(self, x):
+    def hessian(self, q, t=0.):
         """
         Compute the Hessian of the potential at the given position(s).
 
         Parameters
         ----------
-        x : array_like, numeric
+        q : array_like, numeric
             Position to compute the Hessian.
         """
-        if self._hessian is None:
-            raise NotImplementedError("No Hessian function was specified when"
-                                      " the object was created!")
-        return self._hessian(np.atleast_2d(x), **self.parameters)
+        try:
+            return self._hessian(np.atleast_2d(q), **self.parameters)
+        except NotImplementedError:
+            raise NotImplementedError("This potential has no specified hessian function.")
 
     # ========================================================================
     # Things that use the base methods
     #
-    def acceleration(self, x, t=0.):
+    def acceleration(self, q, t=0.):
         """
         Compute the acceleration due to the potential at the given
         position(s).
 
         Parameters
         ----------
-        x : array_like, numeric
+        q : array_like, numeric
             Position to compute the acceleration at.
         """
-        return -self.gradient(x, t=t)
+        return -self.gradient(q, t=t)
 
-    def mass_enclosed(self, x, t):
+    def mass_enclosed(self, q, t):
         """
-        Estimate the mass enclosed within the given position by assumine the potential
-        is spherical. This is basic, and assumes spherical symmetry.
+        Estimate the mass enclosed within the given position by assuming the potential
+        is spherical.
 
         Parameters
         ----------
@@ -172,12 +155,12 @@ class PotentialBase(object):
         h = 0.01
 
         # Radius
-        r = np.sqrt(np.sum(x**2, axis=-1))
+        r = np.sqrt(np.sum(q**2, axis=-1))
 
-        epsilon = h*x/r[...,np.newaxis]
+        epsilon = h*q/r[...,np.newaxis]
 
-        dPhi_dr_plus = self.value(x + epsilon)
-        dPhi_dr_minus = self.value(x - epsilon)
+        dPhi_dr_plus = self.value(q + epsilon)
+        dPhi_dr_minus = self.value(q - epsilon)
         diff = dPhi_dr_plus - dPhi_dr_minus
 
         if self.units is None:
@@ -189,8 +172,8 @@ class PotentialBase(object):
     # ========================================================================
     # Python special methods
     #
-    def __call__(self, x):
-        return self.value(x)
+    def __call__(self, q):
+        return self.value(q)
 
     def __repr__(self):
         pars = ""
