@@ -40,7 +40,7 @@ cdef extern from "math.h":
     double atan(double x) nogil
     double pow(double x, double n) nogil
 
-cdef extern from "_cbuiltin.h":
+cdef extern from "src/_cbuiltin.h":
     double nan_density(double t, double *pars, double *q) nogil
 
     double henon_heiles_value(double t, double *pars, double *q) nogil
