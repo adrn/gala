@@ -51,32 +51,31 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
     #   http://www.unige.ch/~hairer/prog/nonstiff/dr_dop853.f
     pass
 
-# double dt0, int nsteps, double t0,
 cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
                                  double[::1] t,
-                                 double atol, double rtol, int nmax):
+                                 double atol=1E-10, double rtol=1E-10, int nmax=0):
     # TODO: add option for a callback function to be called at each step
     cdef:
         int i, j, k
         int res, iout
-        unsigned norbits = w0.shape[0]
-        unsigned ndim = w0.shape[1]
+        unsigned ndim = w0.shape[0]
+        unsigned norbits = w0.shape[1]
 
         # define full array of times
         int nsteps = len(t)
         double dt0 = t[1]-t[0]
-        double[::1] w = np.empty(norbits*ndim)
+        double[::1] w = np.empty(ndim*norbits)
 
         # Note: icont not needed because nrdens == ndim
-        double[:,:,::1] all_w = np.empty((nsteps,norbits,ndim))
+        double[:,:,::1] all_w = np.empty((ndim,nsteps,norbits))
 
     # store initial conditions
     for i in range(norbits):
         for k in range(ndim):
-            w[i*ndim + k] = w0[i,k]
-            all_w[0,i,k] = w0[i,k]
+            w[i*ndim + k] = w0[k,i]
+            all_w[k,0,i] = w0[k,i]
 
-    # TODO: dense output?
+    # TODO: any way to support dense output?
     iout = 0  # no solout calls
 
     for j in range(1,nsteps,1):
@@ -92,11 +91,11 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
         elif res == -3:
             raise RuntimeError("Step size becomes too small.")
         elif res == -4:
-            raise RuntimeError("The problem is probably stff (interrupted).")
+            raise RuntimeError("The problem is probably stiff (interrupted).")
 
-        for i in range(norbits):
-            for k in range(ndim):
-                all_w[j,i,k] = w[i*ndim + k]
+        for k in range(ndim):
+            for i in range(norbits):
+                all_w[k,j,i] = w[i*ndim + k]
 
     return np.asarray(t), np.asarray(all_w)
 
