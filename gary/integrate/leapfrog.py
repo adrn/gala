@@ -93,12 +93,6 @@ class LeapfrogIntegrator(Integrator):
         Any extra arguments for the derivative function.
 
     """
-    def __init__(self, func, func_args=()):
-        if not hasattr(func, '__call__'):
-            raise ValueError("func must be a callable object.")
-
-        self.F = func
-        self._func_args = func_args
 
     def step(self, t, x_im1, v_im1_2, dt):
         """

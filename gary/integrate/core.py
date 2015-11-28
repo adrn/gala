@@ -16,6 +16,13 @@ __all__ = ["Integrator"]
 
 class Integrator(object):
 
+    def __init__(self, func, func_args=()):
+        if not hasattr(func, '__call__'):
+            raise ValueError("func must be a callable object, e.g., a function.")
+
+        self.F = func
+        self._func_args = func_args
+
     def _prepare_ws(self, w0, mmap, nsteps):
         """
         Decide how to make the return array. If mmap is False, this returns a
