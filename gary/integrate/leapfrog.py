@@ -17,10 +17,10 @@ __all__ = ["LeapfrogIntegrator"]
 
 class LeapfrogIntegrator(Integrator):
     r"""
-    Initialize a Leapfrog integrator given a function for computing
-    accelerations. `acceleration_func` should accept an array of
-    position(s) and optionally a set of arguments specified by
-    `func_args`.
+    A symplectic, Leapfrog integrator.
+
+    Given a function for computing time derivatives of the phase-space
+    coordinates, this object computes the orbit at specified times.
 
     .. seealso::
 
@@ -34,31 +34,39 @@ class LeapfrogIntegrator(Integrator):
         ip1 = i+1
         ip1_2 = i+1/2
 
-    **Example:** Harmonic oscillator
+    Example: Integrating orbits in a Harmonic oscillator potential
+    --------------------------------------------------------------
 
-    Using `x` as our coordinate variable, we want to numerically solve for
-    an orbit in the potential
-
-    .. math::
-
-        \Phi = \frac{1}{2}x^2
-
-    The acceleration is then just
+    Using ``q`` as our coordinate variable and ``p`` as the conjugate
+    momentum, we want to numerically solve for an orbit in the
+    potential (Hamiltonian)
 
     .. math::
 
-        a = -\frac{\partial \Phi}{\partial x} = -x
+        \Phi &= \frac{1}{2}q^2\\
+        H(q,p) &= \frac{1}{2}(p^2 + q^2)
 
-    We define a function that computes this acceleration at any given
-    time, `t`, and position, `x`::
 
-        def acceleration(t,x):
-            return -x
+    In this system,
+
+    .. math::
+
+        \dot{q} &= \frac{\partial \Phi}{\partial p} = p \\
+        \dot{p} &= -\frac{\partial \Phi}{\partial q} = -q
+
+
+    We will use the variable ``w`` to represent the full phase-space vector,
+    :math:`w = (q,p)`. We define a function that computes the time derivates
+    at any given time, ``t``, and phase-space position, ``w``::
+
+        def F(t,w):
+            dw = [w[1], -w[0]]
+            return dw
 
     .. note::
 
-        The force here is not time dependent, but the acceleration function
-        always has to accept the independent variable (e.g., time) as the
+        The force here is not time dependent, but this function always has
+        to accept the independent variable (e.g., time) as the
         first argument.
 
     To create an integrator object, just pass this acceleration function in
@@ -70,27 +78,26 @@ class LeapfrogIntegrator(Integrator):
 
     .. note::
 
-        Even though we only pass in a single vector of initial conditions,
-        this gets promoted internally to a 2D array. This means the shape of
-        the integrated orbit array will always be 3D. In this case, `ws` will
-        have shape `(1001,1,2)`.
+        When integrating a single vector of initial conditions, the return
+        array will have 2 axes. In the above example, the returned array will
+        have shape ``(2,1001)``. If an array of initial conditions are passed
+        in, the return array will have 3 axes, where the last axis is for the
+        individual orbits.
 
     Parameters
     ----------
-    acceleration_func : func
-        A callable object that computes the acceleration at a point
-        in phase space.
+    func : func
+        A callable object that computes the phase-space time derivatives
+        at a time and point in phase space.
     func_args : tuple (optional)
-        Any extra arguments for the acceleration function.
+        Any extra arguments for the derivative function.
 
     """
-    def __init__(self, acceleration_func, func_args=()):
-        if not hasattr(acceleration_func, '__call__'):
-            raise ValueError("acceleration_func must be a callable object, "
-                             "e.g. a function, that evaluates the acceleration "
-                             "at a given position.")
+    def __init__(self, func, func_args=()):
+        if not hasattr(func, '__call__'):
+            raise ValueError("func must be a callable object.")
 
-        self.acceleration = acceleration_func
+        self.F = func
         self._func_args = func_args
 
     def step(self, t, x_im1, v_im1_2, dt):
@@ -104,7 +111,8 @@ class LeapfrogIntegrator(Integrator):
         """
 
         x_i = x_im1 + v_im1_2 * dt
-        a_i = self.acceleration(t, x_i, *self._func_args)
+        F_i = self.F(t, np.vstack((x_i,v_im1_2)), *self._func_args)
+        a_i = F_i[self.ndim_xv:]
 
         v_i = v_im1_2 + a_i * dt / 2
         v_ip1_2 = v_i + a_i * dt / 2
@@ -124,12 +132,10 @@ class LeapfrogIntegrator(Integrator):
                 The first timestep.
         """
 
-        x = w0[...,:self.ndim_xv]
-        v = w0[...,self.ndim_xv:]
-
         # here is where we scoot the velocity at t=t1 to v(t+1/2)
-        a0 = self.acceleration(t.copy(), x.copy(), *self._func_args)
-        v_1_2 = v + a0*dt/2.
+        F0 = self.F(t.copy(), w0.copy(), *self._func_args)
+        a0 = F0[self.ndim_xv:]
+        v_1_2 = w0[self.ndim_xv:] + a0*dt/2.
 
         return v_1_2
 
@@ -183,8 +189,8 @@ class LeapfrogIntegrator(Integrator):
         _dt = times[1] - times[0]
 
         w0, ws = self._prepare_ws(w0, mmap, nsteps)
-        x0 = w0[:,:self.ndim_xv]
-        v0 = w0[:,self.ndim_xv:]
+        x0 = w0[:self.ndim_xv]
+        v0 = w0[self.ndim_xv:]
 
         if (self.ndim % 2) != 0:
             raise ValueError("Dimensionality must be even.")
@@ -200,14 +206,16 @@ class LeapfrogIntegrator(Integrator):
         v_im1_2 = self._init_v(times[0], w0, dt)
         x_im1 = x0
 
-        ws[0] = w0
+        ws[:,0] = w0
         for ii in range(1,nsteps+1):
             x_i, v_i, v_ip1_2 = self.step(times[ii], x_im1, v_im1_2, dt)
-            ws[ii,:,:self.ndim_xv] = x_i
-            ws[ii,:,self.ndim_xv:] = v_i
+            ws[:self.ndim_xv,ii,:] = x_i
+            ws[self.ndim_xv:,ii,:] = v_i
             x_im1, v_im1_2 = x_i, v_ip1_2
 
         if _dt < 0:
-            ws[...,self.ndim_xv:] *= -1.
+            ws[self.ndim_xv:,...] *= -1.
 
+        if ws.shape[-1] == 1:
+            ws = ws[...,0]
         return times, ws
