@@ -159,14 +159,14 @@ class CartesianOrbit(object):
         rep_name = Representation.get_name()
 
         # transform the position
-        car_pos = coord.CartesianRepresentation(self.pos.T)
+        car_pos = coord.CartesianRepresentation(self.pos)
         new_pos = car_pos.represent_as(Representation)
 
         # transform the velocity
         vfunc = getattr(vtrans, "cartesian_to_{}".format(rep_name))
-        new_vel = vfunc(car_pos, self.vel.T)
+        new_vel = vfunc(car_pos, self.vel)
 
-        return new_pos, new_vel.T
+        return new_pos, new_vel
 
     def to_frame(self, frame, galactocentric_frame=coord.Galactocentric(), **kwargs):
         """
