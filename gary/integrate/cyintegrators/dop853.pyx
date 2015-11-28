@@ -18,7 +18,7 @@ np.import_array()
 
 from libc.stdio cimport printf
 
-from ..potential.cpotential cimport _CPotential
+from ...potential.cpotential cimport _CPotential
 
 cdef extern from "math.h":
     double sqrt(double x) nogil

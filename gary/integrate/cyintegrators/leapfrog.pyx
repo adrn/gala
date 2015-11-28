@@ -17,7 +17,7 @@ cimport numpy as np
 np.import_array()
 
 # Project
-from ..potential.cpotential cimport _CPotential
+from ...potential.cpotential cimport _CPotential
 
 # ctypedef void (*f_type)(int, double*, double*)
 
