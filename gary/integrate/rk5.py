@@ -41,50 +41,6 @@ class RK5Integrator(Integrator):
 
         - http://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
 
-    **Example:** Harmonic oscillator
-
-    Hamilton's equations are
-
-    .. math::
-
-        \dot{q} = \frac{\partial H}{\partial p}\\
-        \dot{p} = -\frac{\partial H}{\partial q}
-
-    The harmonic oscillator Hamiltonian is
-
-    .. math::
-
-        H(q,p) = \frac{1}{2}(p^2 + q^2)
-
-    so that the equations of motion are given by
-
-    .. math::
-
-        \dot{q} = p\\
-        \dot{p} = -q
-
-    We then define a vector :math:`x = (q, p)`. The function passed in to
-    the integrator should return the derivative of :math:`x` with respect to
-    the independent variable,  :math:`\dot{x} = (\dot{q}, \dot{p})`, e.g.::
-
-        def F(t,x):
-            q,p = x.T
-            return np.array([p,-q]).T
-
-    To create an integrator object, just pass this function in to the
-    constructor, and then we can integrate orbits from a given vector of
-    initial conditions::
-
-        integrator = RK5Integrator(F)
-        times,ws = integrator.run(w0=[1.,0.], dt=0.1, nsteps=1000)
-
-    .. note::
-
-        Even though we only pass in a single vector of initial conditions,
-        this gets promoted internally to a 2D array. This means the shape of
-        the integrated orbit array will always be 3D. In this case, `ws` will
-        have shape `(1001,1,2)`.
-
     Parameters
     ----------
     func : func
@@ -96,14 +52,6 @@ class RK5Integrator(Integrator):
 
     """
 
-    def __init__(self, func, func_args=()):
-
-        if not hasattr(func, '__call__'):
-            raise ValueError("func must be a callable object, e.g., a function.")
-
-        self.func = func
-        self._func_args = func_args
-
     def step(self, t, w, dt):
         """ Step forward the vector w by the given timestep.
 
@@ -114,7 +62,7 @@ class RK5Integrator(Integrator):
         """
 
         # Runge-Kutta Fehlberg formulas (see: Numerical Recipes)
-        F = lambda t,w: self.func(t,w,*self._func_args)
+        F = lambda t,w: self.F(t,w,*self._func_args)
 
         n = len(w)
         K = np.zeros((6,)+w.shape)

@@ -25,50 +25,6 @@ class DOPRI853Integrator(Integrator):
         - Numerical recipes (Dopr853)
         - http://en.wikipedia.org/wiki/Dormand%E2%80%93Prince_method
 
-    **Example:** Harmonic oscillator
-
-    Hamilton's equations are
-
-    .. math::
-
-        \dot{q} = \frac{\partial H}{\partial p}\\
-        \dot{p} = -\frac{\partial H}{\partial q}
-
-    The harmonic oscillator Hamiltonian is
-
-    .. math::
-
-        H(q,p) = \frac{1}{2}(p^2 + q^2)
-
-    so that the equations of motion are given by
-
-    .. math::
-
-        \dot{q} = p\\
-        \dot{p} = -q
-
-    We then define a vector :math:`x = (q, p)`. The function passed in to
-    the integrator should return the derivative of :math:`x` with respect to
-    the independent variable,  :math:`\dot{x} = (\dot{q}, \dot{p})`, e.g.::
-
-        def F(t,x):
-            q,p = x.T
-            return np.array([p,-q]).T
-
-    To create an integrator object, just pass this function in to the
-    constructor, and then we can integrate orbits from a given vector of
-    initial conditions::
-
-        integrator = DOPRI853Integrator(F)
-        times,ws = integrator.run(w0=[1.,0.], dt=0.1, nsteps=1000)
-
-    .. note::
-
-        Even though we only pass in a single vector of initial conditions,
-        this gets promoted internally to a 2D array. This means the shape of
-        the integrated orbit array will always be 3D. In this case, `ws` will
-        have shape `(1001,1,2)`.
-
     Parameters
     ----------
     func : func
@@ -81,12 +37,7 @@ class DOPRI853Integrator(Integrator):
     """
 
     def __init__(self, func, func_args=(), **kwargs):
-
-        if not hasattr(func, '__call__'):
-            raise ValueError("func must be a callable object, e.g., a function.")
-
-        self.func = func
-        self._func_args = func_args
+        super(DOPRI853Integrator, self).__init__(func, func_args)
         self._ode_kwargs = kwargs
 
     def run(self, w0, mmap=None, **time_spec):
@@ -136,7 +87,7 @@ class DOPRI853Integrator(Integrator):
         #   issue with the args stuff in scipy...
         def func_wrapper(t,x):
             _x = x.reshape((nparticles,ndim))
-            return self.func(t, _x, *self._func_args).reshape((nparticles*ndim,))
+            return self.F(t, _x, *self._func_args).reshape((nparticles*ndim,))
 
         self._ode = ode(func_wrapper, jac=None)
         self._ode = self._ode.set_integrator('dop853', **self._ode_kwargs)
