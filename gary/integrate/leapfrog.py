@@ -120,16 +120,17 @@ class LeapfrogIntegrator(Integrator):
         return x_i, v_i, v_ip1_2
 
     def _init_v(self, t, w0, dt):
-        """ Leapfrog updates the velocities offset a half-step from the
-            position updates. If we're given initial conditions aligned in
-            time, e.g. the positions and velocities at the same 0th step,
-            then we have to initially scoot the velocities forward by a half
-            step to prime the integrator.
+        """
+        Leapfrog updates the velocities offset a half-step from the
+        position updates. If we're given initial conditions aligned in
+        time, e.g. the positions and velocities at the same 0th step,
+        then we have to initially scoot the velocities forward by a half
+        step to prime the integrator.
 
-            Parameters
-            ----------
-            dt : numeric
-                The first timestep.
+        Parameters
+        ----------
+        dt : numeric
+            The first timestep.
         """
 
         # here is where we scoot the velocity at t=t1 to v(t+1/2)
@@ -142,13 +143,11 @@ class LeapfrogIntegrator(Integrator):
     def run(self, w0, mmap=None, **time_spec):
         """
         Run the integrator starting at the given coordinates and momenta
-        (velocities) and a time specification. The initial conditions
-        `w0` should have shape `(nparticles, 2*ndim)`. For example, for
+        (velocities) and a time specification. The initial conditions,
+        ``w0``, should have shape ``(2*ndim,norbits)``. For example, for
         100 orbits in 3D cartesian coordinates, the initial condition
-        array should have shape `(100,3)`. For a single orbit,
-        1D arrays are promoted to 2D -- e.g., a coordinate array with shape
-        (6,) is interpreted as a single orbit in 3 dimensions and
-        promoted to an array with shape (1,6).
+        array should have shape ``(6,100)``. For a single orbit, a single
+        1D array with shape ``(6,)`` is fine.
 
         There are a few combinations of keyword arguments accepted for
         specifying the timestepping. For example, you can specify a fixed
@@ -179,7 +178,7 @@ class LeapfrogIntegrator(Integrator):
             An array of times.
         w : array_like
             The array of positions and momenta (velocities) at each time in
-            the time array. This array has shape `(Ntimes,Norbits,Ndim)`.
+            the time array. This array has shape ``(ndim,ntimes,norbits)``.
 
         """
 
