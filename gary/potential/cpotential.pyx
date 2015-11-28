@@ -28,95 +28,40 @@ cdef extern from "stdint.h":
 
 class CPotentialBase(PotentialBase):
     """
-    A base class for representing gravitational potentials implemented in Cython.
+    A base class for representing gravitational potentials with
+    value, gradient, etc. functions implemented in C.
 
-    You must specify a function that evaluates the potential value (func). You may also
-    optionally add a function that computes derivatives (gradient), and a
-    function to compute second derivatives (the Hessian) of the potential.
-
-    Parameters
-    ----------
-    func : function
-        A function that computes the value of the potential.
-    gradient : function (optional)
-        A function that computes the first derivatives (gradient) of the potential.
-    hessian : function (optional)
-        A function that computes the second derivatives (Hessian) of the potential.
-    parameters : dict (optional)
-        Any extra parameters that the functions (func, gradient, hessian)
-        require. All functions must take the same parameters.
-
+    TODO: better description here
     """
 
-    def value(self, q, t=0.):
-        """
-        value(q, t=0)
+    def _value(self, q, t=0.):
+        return self.c_instance.value(q, t=t)
 
-        Compute the value of the potential at the given position(s).
-
-        Parameters
-        ----------
-        q : array_like, numeric
-            Position to compute the value of the potential.
-        t : numeric (optional)
-            The time.
-        """
-        return self.c_instance.value(np.ascontiguousarray(np.atleast_2d(q)), t=t)
-
-    def gradient(self, q, t=0.):
-        """
-        gradient(q, t=0)
-
-        Compute the gradient of the potential at the given position(s).
-
-        Parameters
-        ----------
-        q : array_like, numeric
-            Position to compute the gradient.
-        t : numeric (optional)
-            The time.
-        """
+    def _gradient(self, q, t=0.):
         try:
-            return self.c_instance.gradient(np.ascontiguousarray(np.atleast_2d(q)), t=t)
+            return self.c_instance.gradient(q, t=t)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
 
-    def density(self, q, t=0.):
-        """
-        density(q, t=0)
-
-        Compute the value of the potential at the given position(s).
-
-        Parameters
-        ----------
-        q : array_like, numeric
-            Position to compute the value of the potential.
-        t : numeric (optional)
-            The time.
-        """
-        return self.c_instance.density(np.ascontiguousarray(np.atleast_2d(q)), t=t)
-
-    def hessian(self, q):
-        """
-        hessian(q)
-
-        Compute the Hessian of the potential at the given position(s).
-
-        Parameters
-        ----------
-        q : array_like, numeric
-            Position to compute the Hessian.
-        """
+    def _density(self, q, t=0.):
         try:
-            return self.c_instance.hessian(np.ascontiguousarray(np.atleast_2d(q)))
+            return self.c_instance.density(q, t=t)
+        except AttributeError,TypeError:
+            # TODO: if no density function, should this numerically esimate
+            #   the density?
+            raise ValueError("Potential C instance has no defined "
+                             "density function")
+
+    def _hessian(self, q, t=0.):
+        try:
+            return self.c_instance.hessian(q, t=t)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "Hessian function")
 
-    # ----------------------------
-    # Functions of the derivatives
-    # ----------------------------
+    # ----------------------------------------------------------
+    # Overwrite the Python potential method to use Cython method
     def mass_enclosed(self, q, t=0.):
         """
         mass_enclosed(q)
@@ -129,8 +74,9 @@ class CPotentialBase(PotentialBase):
         q : array_like, numeric
             Position to compute the mass enclosed.
         """
+        q = np.ascontiguousarray(np.atleast_2d(q))
         try:
-            return self.c_instance.mass_enclosed(np.ascontiguousarray(np.atleast_2d(q)), self.G, t=t)
+            return self.c_instance.mass_enclosed(q, self.G, t=t)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "mass_enclosed function")
