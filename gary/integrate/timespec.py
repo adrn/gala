@@ -8,28 +8,26 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os, sys
-
 # Third-party
 import numpy as np
 
 def _parse_time_specification(dt=None, nsteps=None, t1=None, t2=None, t=None):
-    """ Return an array of times given a few combinations of kwargs that are
-        accepted -- see below.
+    """
+    Return an array of times given a few combinations of kwargs that are
+    accepted -- see below.
 
-        Parameters
-        ----------
-        dt, nsteps[, t1] : (numeric, int[, numeric])
-            A fixed timestep dt and a number of steps to run for.
-        dt, t1, t2 : (numeric, numeric, numeric)
-            A fixed timestep dt, an initial time, and an final time.
-        dt, t1 : (array_like, numeric)
-            An array of timesteps dt and an initial time.
-        nsteps, t1, t2 : (int, numeric, numeric)
-            Number of steps between an initial time, and a final time.
-        t : array_like
-            An array of times (dts = t[1:] - t[:-1])
+    Parameters
+    ----------
+    dt, nsteps[, t1] : (numeric, int[, numeric])
+        A fixed timestep dt and a number of steps to run for.
+    dt, t1, t2 : (numeric, numeric, numeric)
+        A fixed timestep dt, an initial time, and an final time.
+    dt, t1 : (array_like, numeric)
+        An array of timesteps dt and an initial time.
+    nsteps, t1, t2 : (int, numeric, numeric)
+        Number of steps between an initial time, and a final time.
+    t : array_like
+        An array of times (dts = t[1:] - t[:-1])
 
     """
 
