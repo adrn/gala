@@ -7,7 +7,7 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
-from astropy.coordinates import SphericalRepresentation
+from astropy.coordinates import SphericalRepresentation, Galactic
 import astropy.units as u
 import numpy as np
 import pytest
@@ -79,5 +79,19 @@ def test_represent_as():
     o = CartesianOrbit(pos=x, vel=v)
     sph_pos, sph_vel = o.represent_as(SphericalRepresentation)
     assert sph_pos.distance.unit == u.kpc
-    print(sph_pos)
-    print(sph_vel)
+
+def test_to_frame():
+    # simple / unitless
+    x = np.random.random(size=(3,10))
+    v = np.random.random(size=(3,10))
+    o = CartesianOrbit(pos=x, vel=v)
+
+    with pytest.raises(u.UnitConversionError):
+        o.to_frame(Galactic)
+
+    # simple / with units
+    x = np.random.random(size=(3,10))*u.kpc
+    v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
+    o = CartesianOrbit(pos=x, vel=v)
+    coo,vel = o.to_frame(Galactic)
+    assert coo.name == 'galactic'
