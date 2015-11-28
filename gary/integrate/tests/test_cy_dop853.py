@@ -28,20 +28,21 @@ def test_derp():
     w0 = np.array([1.,2.1,0., 0.,0.5,0.])
     t = np.linspace(0., -5., 32)
 
-    t,w = pot.integrate_orbit(w0, dt=t[1]-t[0], nsteps=len(t),
-                              Integrator=DOPRI853Integrator,
-                              cython_if_possible=False)
-    print("Python integration done.")
+    # t,w = pot.integrate_orbit(w0, dt=t[1]-t[0], nsteps=len(t),
+    #                           Integrator=DOPRI853Integrator,
+    #                           cython_if_possible=False)
+    # print("Python integration done.")
 
-    t,w = dop853_integrate_potential(pot.c_instance, np.ascontiguousarray(w0[None]),
-                                     t, 1E-8, 1E-8, 0)
+    t,w = dop853_integrate_potential(pot.c_instance,
+                                     np.ascontiguousarray(w0[:,None]),
+                                     t)
     print("Cython integration done.")
 
-    print(t[1]-t[0], 0., t.min())
-    t,w = pot.integrate_orbit(w0, dt=t[1]-t[0], t1=0., t2=t.min(),
-                              Integrator=DOPRI853Integrator,
-                              cython_if_possible=True)
-    print("Cython integration2 done.")
+    # print(t[1]-t[0], 0., t.min())
+    # t,w = pot.integrate_orbit(w0, dt=t[1]-t[0], t1=0., t2=t.min(),
+    #                           Integrator=DOPRI853Integrator,
+    #                           cython_if_possible=True)
+    # print("Cython integration2 done.")
 
     return
 
