@@ -4,15 +4,11 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import abc
-
 # Third-party
 import numpy as np
 from astropy.constants import G
 import astropy.units as u
 from astropy.utils import isiterable
-import six
 
 # Project
 from ..integrate import *
@@ -21,21 +17,6 @@ from ..units import UnitSystem
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
-class MetaPotential(type):
-    # def __init__(cls, name, bases, dct):
-    #     super(MetaPotential, cls).__init__(name, bases, dct)
-
-    #     if name != 'PotentialBase' and 'units' not in dct:
-    #         raise NotImplementedError("Potentials must have a 'units' attribute that "
-    #                                   "defines a valid system of units.")
-
-    #     if name != 'PotentialBase' and 'parameters' not in dct:
-    #         raise NotImplementedError("Potentials must have a 'parameters' attribute that "
-    #                                   "contains the parameters to pass to its methods.")
-    pass
-
-
-@six.add_metaclass(MetaPotential)
 class PotentialBase(object):
     """
     A baseclass for defining gravitational potentials.
