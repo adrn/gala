@@ -7,6 +7,8 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
+from astropy.coordinates import SphericalRepresentation
+import astropy.units as u
 import numpy as np
 import pytest
 
@@ -59,3 +61,23 @@ def test_slice():
     new_o = o[:5,:4]
     assert new_o.pos.shape == (3,5,4)
     assert new_o.t.shape == (5,)
+
+def test_represent_as():
+
+    # simple / unitless
+    x = np.random.random(size=(3,10))
+    v = np.random.random(size=(3,10))
+    o = CartesianOrbit(pos=x, vel=v)
+    sph_pos, sph_vel = o.represent_as(SphericalRepresentation)
+
+    assert sph_pos.distance.unit == u.dimensionless_unscaled
+    assert sph_vel.unit == u.dimensionless_unscaled
+
+    # simple / with units
+    x = np.random.random(size=(3,10))*u.kpc
+    v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
+    o = CartesianOrbit(pos=x, vel=v)
+    sph_pos, sph_vel = o.represent_as(SphericalRepresentation)
+    assert sph_pos.distance.unit == u.kpc
+    print(sph_pos)
+    print(sph_vel)
