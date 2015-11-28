@@ -17,6 +17,7 @@ import numpy as np
 from .core import angular_momentum, peak_to_peak_period
 from ..coordinates import velocity_transforms as vtrans
 from ..coordinates import vgal_to_hel
+from ..util import atleast_2d
 
 __all__ = ['CartesianOrbit']
 
@@ -30,23 +31,23 @@ class CartesianOrbit(object):
         This is an experimental class. The API can and probably will change!
 
     The position and velocity quantities (arrays) can have an arbitrary
-    number of dimensions, but the first and last axes (0 and -1) have
+    number of dimensions, but the first two axes (0, 1) have
     special meaning::
 
-        - `axis=0` is the time dimension
-        - `axis=-1` is the coordinate dimension (e.g., x, y, z)
+        - `axis=0` is the coordinatte dimension (e.g., x, y, z)
+        - `axis=1` is the time dimension
 
-    So if the input position array, `pos`, has shape `pos.shape = (100, 3)`, this
-    would be a 3D orbit (`pos[...,0]` is `x`, `pos[...,1]` is `y`, etc.). For representing
+    So if the input position array, `pos`, has shape `pos.shape = (3, 100)`, this
+    would be a 3D orbit (`pos[0]` is `x`, `pos[1]` is `y`, etc.). For representing
     multiple orbits, the position array could have 3 axes, e.g., it might have shape
-    `pos.shape = (100, 8, 3)`, where this is interpreted as a 3D position at 100 times
+    `pos.shape = (3, 100, 8)`, where this is interpreted as a 3D position at 100 times
     for 8 different orbits. The same is true for velocity. The position and velocity
     arrays must have the same shape.
 
     If a time argument is specified, the position and velocity arrays must have
     the same number of timesteps as the length of the time object::
 
-        len(t) == pos.shape[0]
+        len(t) == pos.shape[1]
 
     Parameters
     ----------
@@ -68,15 +69,15 @@ class CartesianOrbit(object):
     def __init__(self, pos, vel, t=None, potential=None):
 
         # make sure position and velocity input are 2D
-        pos = np.atleast_2d(pos)
-        vel = np.atleast_2d(vel)
+        pos = atleast_2d(pos, insert_axis=1)
+        vel = atleast_2d(vel, insert_axis=1)
 
         if t is not None:
             t = np.atleast_1d(t)
-            if pos.shape[0] != len(t):
+            if pos.shape[1] != len(t):
                 raise ValueError("Position and velocity must have the same length "
-                                 "along axis=0 as the length of the time array "
-                                 "{} vs {}".format(len(t), pos.shape[0]))
+                                 "along axis=1 as the length of the time array "
+                                 "{} vs {}".format(len(t), pos.shape[1]))
 
             if not hasattr(t, 'unit'):
                 t = t * uno
@@ -114,13 +115,13 @@ class CartesianOrbit(object):
 
     def __getitem__(self, slyce):
         try:
-            _slyce = tuple(slyce) + (slice(None),)
+            _slyce = (slice(None),) + tuple(slyce)
         except TypeError:
-            _slyce = (slyce,) + (slice(None),)
+            _slyce = (slice(None),) + (slyce,)
 
         kw = dict()
         if self.t is not None:
-            kw['t'] = self.t[_slyce[0]]
+            kw['t'] = self.t[_slyce[1]]
         return self.__class__(pos=self.pos[_slyce], vel=self.vel[_slyce],
                               potential=self.potential, **kw)
 
@@ -134,7 +135,7 @@ class CartesianOrbit(object):
             This is *not* the number of axes in the position or velocity
             arrays. That is accessed by doing ``orbit.pos.ndim``.
         """
-        return self.pos.shape[-1]
+        return self.pos.shape[0]
 
     # Convert from Cartesian to other representations
     def represent_as(self, Representation):
@@ -256,12 +257,13 @@ class CartesianOrbit(object):
                              " Specify a time array when creating this object.")
 
         if radial:
-            r = np.sqrt(np.sum(self.pos**2, axis=-1))
-            T = [peak_to_peak_period(self.t.value, r[i]) for i in range(r.shape[1])]
+            r = np.sqrt(np.sum(self.pos**2, axis=0))
+            T = [peak_to_peak_period(self.t.value, r[i]) for i in range(r.shape[0])]
             T = T * self.t.unit
 
         else:
-            T = np.zeros(self.pos.shape[1:])
+            # TODO: this is broken
+            T = np.zeros(self.pos.shape[[]])
             for i in range(self.pos.shape[1]):
                 for k in range(self.pos.shape[-1]):
                     T[i,k] = peak_to_peak_period(self.t.value, self.pos[:,i,k])
