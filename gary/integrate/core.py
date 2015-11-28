@@ -6,34 +6,33 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import logging
-
 # Third-party
 import numpy as np
 
-# Create logger
-logger = logging.getLogger(__name__)
+# This project
+from ..util import atleast_2d
 
 __all__ = ["Integrator"]
 
 class Integrator(object):
 
     def _prepare_ws(self, w0, mmap, nsteps):
-        """ Decide how to make the return array. If mmap is False, this returns a full array
-            of zeros, but with the correct shape as the output. If mmap is True, return a
-            pointer to a memory-mapped array. The latter is particularly useful for integrating
-            a large number of orbits or integrating a large number of time steps.
+        """
+        Decide how to make the return array. If mmap is False, this returns a
+        full array of zeros, but with the correct shape as the output. If mmap
+        is True, return a pointer to a memory-mapped array. The latter is
+        particularly useful for integrating a large number of orbits or
+        integrating a large number of time steps.
         """
 
-        w0 = np.atleast_2d(w0)
-        nparticles, ndim = w0.shape
+        w0 = atleast_2d(w0, insert_axis=1)
+        ndim,norbits = w0.shape
 
         # dimensionality of positions,velocities
         self.ndim = ndim
         self.ndim_xv = self.ndim // 2
 
-        return_shape = (nsteps+1,) + w0.shape
+        return_shape = (self.ndim,nsteps+1,norbits)
         if mmap is None:
             # create the return arrays
             ws = np.zeros(return_shape, dtype=float)
