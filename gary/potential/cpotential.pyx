@@ -97,17 +97,15 @@ cdef class _CPotential:
         return None
 
     def __reduce__(self):
-        # args = (self.G, self.m, self.c)
-        # return (_HernquistPotential, tuple(self._parvec))
         return (self.__class__, tuple(self._parvec))
 
     cpdef value(self, double[:,::1] q, double t=0.):
-        cdef int nparticles, ndim, k
-        nparticles = q.shape[0]
+        cdef int norbits, ndim, k
+        norbits = q.shape[0]
         ndim = q.shape[1]
 
-        cdef double [::1] pot = np.zeros((nparticles,))
-        for k in range(nparticles):
+        cdef double [::1] pot = np.zeros((norbits,))
+        for k in range(norbits):
             pot[k] = self._value(t, &q[k,0])
 
         return np.array(pot)
@@ -117,12 +115,12 @@ cdef class _CPotential:
 
     # -------------------------------------------------------------
     cpdef gradient(self, double[:,::1] q, double t=0.):
-        cdef int nparticles, ndim, k
-        nparticles = q.shape[0]
+        cdef int norbits, ndim, k
+        norbits = q.shape[0]
         ndim = q.shape[1]
 
-        cdef double [:,::1] grad = np.zeros((nparticles,ndim))
-        for k in range(nparticles):
+        cdef double [:,::1] grad = np.zeros((norbits,ndim))
+        for k in range(norbits):
             self._gradient(t, &q[k,0], &grad[k,0])
 
         return np.array(grad)
@@ -132,12 +130,12 @@ cdef class _CPotential:
 
     # -------------------------------------------------------------
     cpdef density(self, double[:,::1] q, double t=0.):
-        cdef int nparticles, ndim, k
-        nparticles = q.shape[0]
+        cdef int norbits, ndim, k
+        norbits = q.shape[0]
         ndim = q.shape[1]
 
-        cdef double [::1] pot = np.zeros((nparticles,))
-        for k in range(nparticles):
+        cdef double [::1] pot = np.zeros((norbits,))
+        for k in range(norbits):
             pot[k] = self._density(t, &q[k,0])
 
         return np.array(pot)
@@ -147,12 +145,12 @@ cdef class _CPotential:
 
     # -------------------------------------------------------------
     cpdef hessian(self, double[:,::1] w):
-        cdef int nparticles, ndim, k
-        nparticles = w.shape[0]
+        cdef int norbits, ndim, k
+        norbits = w.shape[0]
         ndim = w.shape[1]
 
-        cdef double [:,:,::1] hess = np.zeros((nparticles,ndim,ndim))
-        for k in range(nparticles):
+        cdef double [:,:,::1] hess = np.zeros((norbits,ndim,ndim))
+        for k in range(norbits):
             self._hessian(&w[k,0], &hess[k,0,0])
 
         return np.array(hess)
@@ -165,12 +163,12 @@ cdef class _CPotential:
 
     # -------------------------------------------------------------
     cpdef d_dr(self, double[:,::1] q, double G, double t=0.):
-        cdef int nparticles, k
-        nparticles = q.shape[0]
+        cdef int norbits, k
+        norbits = q.shape[0]
 
         cdef double [::1] epsilon = np.zeros(3)
-        cdef double [::1] dr = np.zeros((nparticles,))
-        for k in range(nparticles):
+        cdef double [::1] dr = np.zeros((norbits,))
+        for k in range(norbits):
             dr[k] = self._d_dr(t, &q[k,0], &epsilon[0], G)
         return np.array(dr)
 
@@ -197,12 +195,12 @@ cdef class _CPotential:
         """
         d2_dr2(q, G, t=0.)
         """
-        cdef int nparticles, k
-        nparticles = q.shape[0]
+        cdef int norbits, k
+        norbits = q.shape[0]
 
         cdef double [::1] epsilon = np.zeros(3)
-        cdef double [::1] dr = np.zeros((nparticles,))
-        for k in range(nparticles):
+        cdef double [::1] dr = np.zeros((norbits,))
+        for k in range(norbits):
             dr[k] = self._d2_dr2(t, &q[k,0], &epsilon[0], G)
         return np.array(dr)
 
@@ -228,12 +226,12 @@ cdef class _CPotential:
         return d2Phi_dr2 / (h*h)
 
     cpdef mass_enclosed(self, double[:,::1] q, double G, double t=0.):
-        cdef int nparticles, k
-        nparticles = q.shape[0]
+        cdef int norbits, k
+        norbits = q.shape[0]
 
         cdef double [::1] epsilon = np.zeros(3)
-        cdef double [::1] mass = np.zeros((nparticles,))
-        for k in range(nparticles):
+        cdef double [::1] mass = np.zeros((norbits,))
+        for k in range(norbits):
             mass[k] = self._mass_enclosed(t, &q[k,0], &epsilon[0], G)
         return np.array(mass)
 
@@ -305,12 +303,12 @@ cdef class _CPotential:
 #         return v
 
 #     cpdef value(self, double[:,::1] q):
-#         cdef int nparticles, ndim, k
-#         nparticles = q.shape[0]
+#         cdef int norbits, ndim, k
+#         norbits = q.shape[0]
 #         ndim = q.shape[1]
 
-#         cdef double [::1] pot = np.zeros((nparticles,))
-#         for k in range(nparticles):
+#         cdef double [::1] pot = np.zeros((norbits,))
+#         for k in range(norbits):
 #             pot[k] = self._value(&q[k,0])
 
 #         return np.array(pot)
