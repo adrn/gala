@@ -17,6 +17,7 @@ import astropy.units as u
 from astropy.constants import G
 
 # Project
+from ..leapfrog import LeapfrogIntegrator
 from ..rk5 import RK5Integrator
 from ..dopri853 import DOPRI853Integrator
 from ..adaptivevode import AdaptiveVODEIntegrator
@@ -26,9 +27,17 @@ plot_path = "plots/tests/integrate"
 if not os.path.exists(plot_path):
     os.makedirs(plot_path)
 
-def sho(t,x,T):
-    q,p = x.T
-    return np.array([p, -(2*np.pi/T)**2*q]).T
+def sho(t,w,T):
+    q,p = w
+    return np.array([p, -(2*np.pi/T)**2*q])
+
+def test_only_leapfrog():
+    import matplotlib.pyplot as pl
+    integrator = LeapfrogIntegrator(sho, func_args=(10.,))
+    ts, ws = integrator.run([0., 1.], dt=0.1, nsteps=1000)
+
+    pl.plot(ws[0], ws[1])
+    pl.show()
 
 @pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
                          [('rk5',RK5Integrator,dict(t1=0.,t2=2.5,dt=0.1)),
