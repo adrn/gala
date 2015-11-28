@@ -140,7 +140,9 @@ class CartesianOrbit(object):
     # Convert from Cartesian to other representations
     def represent_as(self, Representation):
         """
-        TODO
+        Represent the position and velocity of the orbit in an alternate
+        coordinate system. Supports any of the Astropy coordinates
+        representation classes.
 
         Parameters
         ----------
@@ -168,16 +170,20 @@ class CartesianOrbit(object):
 
         return new_pos, new_vel
 
-    def to_frame(self, frame, galactocentric_frame=coord.Galactocentric(), **kwargs):
+    def to_frame(self, frame, galactocentric_frame=coord.Galactocentric(),
+                 vcirc=None, vlsr=None):
         """
-        TODO
+        Transform the orbit from Galactocentric, cartesian coordinates to
+        Heliocentric coordinates in the specified Astropy coordinate frame.
 
         Parameters
         ----------
         frame : :class:`~astropy.coordinates.BaseCoordinateFrame`
         galactocentric_frame : :class:`~astropy.coordinates.Galactocentric`
-        **kwargs
-            Passed to velocity transform.
+        vcirc : :class:`~astropy.units.Quantity`
+            TODO. Passed to velocity transformation.
+        vlsr : :class:`~astropy.units.Quantity`
+            TODO. Passed to velocity transformation.
 
         Returns
         -------
@@ -186,12 +192,19 @@ class CartesianOrbit(object):
 
         """
 
-        car_pos = coord.CartesianRepresentation(self.pos.T)
+        car_pos = coord.CartesianRepresentation(self.pos)
         gc_c = galactocentric_frame.realize_frame(car_pos)
         c = gc_c.transform_to(frame)
 
-        v = vgal_to_hel(c, self.vel.T, galactocentric_frame=galactocentric_frame, **kwargs)
-        return c, [v[i].T for i in range(3)]
+        kw = dict()
+        kw['galactocentric_frame'] = galactocentric_frame
+        if vcirc is not None:
+            kw['vcirc'] = vcirc
+        if vlsr is not None:
+            kw['vlsr'] = vlsr
+
+        v = vgal_to_hel(c, self.vel, **kw)
+        return c, v
 
     # Computed quantities
     @property
