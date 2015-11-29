@@ -7,177 +7,92 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os
-
 # Third-party
 import pytest
+import matplotlib.pyplot as pl
 import numpy as np
-import astropy.units as u
-from astropy.constants import G
 
 # Project
-from ..leapfrog import LeapfrogIntegrator
-from ..rk5 import RK5Integrator
-from ..dopri853 import DOPRI853Integrator
-from ..adaptivevode import AdaptiveVODEIntegrator
-from .helpers import plot
+from .. import LeapfrogIntegrator, RK5Integrator, DOPRI853Integrator
 
-plot_path = "plots/tests/integrate"
-if not os.path.exists(plot_path):
-    os.makedirs(plot_path)
+# Integrators to test
+integrator_list = [RK5Integrator, DOPRI853Integrator, LeapfrogIntegrator]
 
-def sho(t,w,T):
-    q,p = w
-    return np.array([p, -(2*np.pi/T)**2*q])
+# ----------------------------------------------------------------------------
 
-def test_only_leapfrog():
-    import matplotlib.pyplot as pl
-    integrator = LeapfrogIntegrator(sho, func_args=(10.,))
-    ts, ws = integrator.run([0., 1.], dt=0.1, nsteps=1000)
+@pytest.mark.parametrize("Integrator", integrator_list)
+def test_sho_forward_backward(Integrator):
+    def sho(t,w,T):
+        q,p = w
+        return np.array([p, -(2*np.pi/T)**2*q])
 
-    pl.plot(ws[0], ws[1])
-    pl.show()
+    integrator = Integrator(sho, func_args=(1.,))
 
-@pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
-                         [('rk5',RK5Integrator,dict(t1=0.,t2=2.5,dt=0.1)),
-                          ('dopri853',DOPRI853Integrator,dict(t1=0.,t2=2.5,dt=0.1)),
-                          ('vode',AdaptiveVODEIntegrator,dict(t1=0.,t2=2.5))])
-def test_forward(name, Integrator, run_kwargs):
-    integrator = Integrator(sho, func_args=(10.,))
-    ts, xs = integrator.run([0., 1.], **run_kwargs)
+    dt = 0.01
+    nsteps = 100
+    if Integrator == LeapfrogIntegrator:
+        dt = 1E-4
+        nsteps = int(1E4)
 
-    fig = plot(ts, xs)
-    fig.savefig(os.path.join(plot_path,"forward_{0}.png".format(name)))
+    f_ts, f_ws = integrator.run([0., 1.], dt=dt, nsteps=nsteps)
+    b_ts, b_ws = integrator.run([0., 1.], dt=-dt, nsteps=nsteps)
 
-@pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
-                         [('rk5',RK5Integrator,dict(t2=0.,t1=2.5,dt=-0.1)),
-                          ('dopri853',DOPRI853Integrator,dict(t2=0.,t1=2.5,dt=-0.1))])
-def test_backward(name, Integrator, run_kwargs):
-    integrator = Integrator(sho, func_args=(10.,))
-    ts, xs = integrator.run([0., 1.], **run_kwargs)
+    assert np.allclose(f_ws[:,-1], b_ws[:,-1], atol=1E-6)
 
-    fig = plot(ts, xs)
-    fig.savefig(os.path.join(plot_path,"backward_{0}.png".format(name)))
+@pytest.mark.parametrize("Integrator", integrator_list)
+def test_point_mass(Integrator):
+    def F(t,w):
+        x,y,px,py = w
+        a = -1./(x*x+y*y)**1.5
+        return np.array([px, py, x*a, y*a])
 
-@pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
-                         [('rk5',RK5Integrator,dict(nsteps=100,dt=0.1)),
-                          ('dopri853',DOPRI853Integrator,dict(nsteps=100,dt=0.1)),
-                          ('vode',AdaptiveVODEIntegrator,dict(t2=10.))])
-def test_harmonic_oscillator(name, Integrator, run_kwargs):
-    integrator = Integrator(sho, func_args=(10.,))
-    ts, xs = integrator.run([1., 0.], **run_kwargs)
-
-    fig = plot(ts, xs)
-    fig.savefig(os.path.join(plot_path,"harmonic_osc_{0}.png".format(name)))
-
-@pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
-                         [('rk5',RK5Integrator,dict(t1=0.,t2=10.,dt=0.01)),
-                          ('dopri853',DOPRI853Integrator,dict(t1=0.,t2=10.,dt=0.01)),
-                          ('vode',AdaptiveVODEIntegrator,dict(t1=0.,t2=10.))])
-def test_point_mass(name, Integrator, run_kwargs):
-    GM = (G * (1.*u.M_sun)).decompose([u.au,u.M_sun,u.year,u.radian]).value
-
-    def F(t,x):
-        x,y,px,py = x.T
-        a = -GM/(x*x+y*y)**1.5
-        return np.array([px, py, x*a, y*a]).T
-
-    q_i = np.array([1.0, 0.0]) # au
-    p_i = np.array([0.0, 2*np.pi]) # au/yr
+    q0 = np.array([1., 0.])
+    p0 = np.array([0., 1.])
+    T = 1.
 
     integrator = Integrator(F)
-    ts, xs = integrator.run(np.append(q_i,p_i), **run_kwargs)
+    ts, ws = integrator.run(np.append(q0,p0), t1=0., t2=2*np.pi, nsteps=1E4)
 
-    fig = plot(ts, xs)
-    fig.savefig(os.path.join(plot_path,"point_mass_{0}.png".format(name)))
+    assert np.allclose(ws[:,0], ws[:,-1], atol=1E-6)
 
-# KNOWN FAILURE FOR RK5
-@pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
-                         [('rk5',RK5Integrator,dict(t1=0.,t2=10.,dt=0.01)),
-                          ('dopri853',DOPRI853Integrator,dict(t1=0.,t2=10.,dt=0.01)),
-                          ('vode',AdaptiveVODEIntegrator,dict(t1=0.,t2=10.))])
-def test_point_mass_multiple(name, Integrator, run_kwargs):
-    GM = (G * (1.*u.M_sun)).decompose([u.au,u.M_sun,u.year,u.radian]).value
+@pytest.mark.parametrize("Integrator", integrator_list)
+def test_point_mass_multiple(Integrator):
+    def F(t,w):
+        x,y,px,py = w
+        a = -1/(x*x+y*y)**1.5
+        return np.array([px, py, x*a, y*a])
 
-    def F(t,x):
-        x,y,px,py = x.T
-        a = -GM/(x*x+y*y)**1.5
-        return np.array([px, py, x*a, y*a]).T
-
-    x_i = np.array([[1.0, 0.0, 0.0, 2*np.pi],
-                    [0.8, 0.0, 0.0, 2.1*np.pi],
-                    [2., 1.0, -1.0, 1.1*np.pi]])
+    w0 = np.array([[1.0, 0.0, 0.0, 1.],
+                   [0.8, 0.0, 0.0, 1.1],
+                   [2., 1.0, -1.0, 1.1]]).T
 
     integrator = Integrator(F)
-    ts, xs = integrator.run(x_i, **run_kwargs)
+    ts, ws = integrator.run(w0, dt=1E-3, nsteps=1E4)
 
-    fig = plot(ts, xs[:,0])
-    fig = plot(ts, xs[:,1], fig=fig)
-    fig = plot(ts, xs[:,2], fig=fig)
-    fig.savefig(os.path.join(plot_path,"multi_point_mass_{0}.png".format(name)))
-
-@pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
-                         [('rk5',RK5Integrator,dict(nsteps=10000,dt=0.1)),
-                          ('dopri853',DOPRI853Integrator,dict(nsteps=10000,dt=0.1)),
-                          ('vode',AdaptiveVODEIntegrator,dict(t1=0.,t2=1000.))])
-def test_driven_pendulum(name, Integrator, run_kwargs):
-
-    def F(t,x,A,omega_d):
-        q,p = x.T
-        return np.array([p,-np.sin(q) + A*np.cos(omega_d*t)]).T
+@pytest.mark.parametrize("Integrator", integrator_list)
+def test_driven_pendulum(Integrator):
+    def F(t,w,A,omega_d):
+        q,p = w
+        return np.array([p,-np.sin(q) + A*np.cos(omega_d*t)])
 
     integrator = Integrator(F, func_args=(0.07, 0.75))
-    ts, xs = integrator.run([3., 0.], **run_kwargs)
+    ts, ws = integrator.run([3., 0.], dt=1E-2, nsteps=1E4)
 
-    fig = plot(ts, xs, marker=None, alpha=0.5)
-    fig.savefig(os.path.join(plot_path,"driven_pendulum_{0}.png".format(name)))
+@pytest.mark.parametrize("Integrator", integrator_list)
+def test_lorenz(Integrator):
 
-@pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
-                         [('rk5',RK5Integrator,dict(nsteps=10000,dt=0.01)),
-                          ('dopri853',DOPRI853Integrator,dict(nsteps=10000,dt=0.01)),
-                          ('vode',AdaptiveVODEIntegrator,dict(t1=0.,t2=1000.))])
-def test_lorenz(name, Integrator, run_kwargs):
-
-    def F(t,x,sigma,rho,beta):
-        x,y,z = x.T
-        return np.array([sigma*(y-x), x*(rho-z)-y, x*y-beta*z]).T
+    def F(t,w,sigma,rho,beta):
+        x,y,z = w
+        return np.array([sigma*(y-x), x*(rho-z)-y, x*y-beta*z])
 
     sigma, rho, beta = 10., 28., 8/3.
     integrator = Integrator(F, func_args=(sigma, rho, beta))
-    ts, xs = integrator.run([0.5,0.5,0.5], **run_kwargs)
 
-    fig = plot(ts, xs, marker=None, alpha=0.5)
-    fig.savefig(os.path.join(plot_path,"lorenz_{0}.png".format(name)))
+    if Integrator == LeapfrogIntegrator:
+        with pytest.raises(ValueError):
+            ts, ws = integrator.run([0.5,0.5,0.5], dt=1E-2, nsteps=1E4)
+    else:
+        ts, ws = integrator.run([0.5,0.5,0.5], dt=1E-2, nsteps=1E4)
 
-@pytest.mark.parametrize(("name","Integrator","run_kwargs"), \
-                         [('rk5',RK5Integrator,dict(t1=0.,t2=10.,dt=0.01)),
-                          ('dopri853',DOPRI853Integrator,dict(t1=0.,t2=10.,dt=0.01))])
-def test_loop_vs_run(name, Integrator, run_kwargs):
-    # If this breaks, need to specify t1 in .run()
-
-    def F(t,x,A,omega_d):
-        q,p = x.T
-        return np.array([p,-np.sin(q) + A*np.cos(omega_d*t)]).T
-
-    nsteps = 100
-    dt = 0.1
-    integrator1 = Integrator(F, func_args=(0.07, 0.75))
-    integrator2 = Integrator(F, func_args=(0.07, 0.75))
-
-    ts, xs = integrator1.run([3., 0.],
-                             dt=dt, nsteps=nsteps)
-
-    x0 = np.array([3.,0.])
-    xs_loop = np.zeros((nsteps+1,1,2))
-    xs_loop[0] = x0
-    time = 0.
-    for ii in range(nsteps):
-        t,new_x = integrator2.run(x0, t1=time, dt=dt, nsteps=1)
-        x0 = new_x[-1]
-        xs_loop[ii+1] = x0
-        time += dt
-
-    fig = plot(ts, xs, marker=None, alpha=0.5)
-    fig = plot(ts, xs_loop, marker=None, alpha=0.5, fig=fig)
-    fig.savefig(os.path.join(plot_path,"loop_vs_run_{0}.png".format(name)))
+        # pl.plot(ws[0], ws[1])
+        # pl.show()
