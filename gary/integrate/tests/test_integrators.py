@@ -96,3 +96,20 @@ def test_lorenz(Integrator):
 
         # pl.plot(ws[0], ws[1])
         # pl.show()
+
+@pytest.mark.parametrize("Integrator", integrator_list)
+def test_memmap(tmpdir, Integrator):
+    dt = 0.1
+    nsteps = 1000
+    nw0 = 10000
+    mmap = np.memmap("/tmp/test_memmap.npy", mode='w+', shape=(2, nsteps+1, nw0))
+
+    def sho(t,w,T):
+        q,p = w
+        return np.array([p, -(2*np.pi/T)**2*q])
+
+    w0 = np.random.uniform(-1,1,size=(2,nw0))
+
+    integrator = Integrator(sho, func_args=(1.,))
+
+    ts, ws = integrator.run(w0, dt=dt, nsteps=nsteps, mmap=mmap)
