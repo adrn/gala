@@ -55,7 +55,7 @@ cpdef leapfrog_integrate_potential(_CPotential potential, double [:,::1] w0,
         int ndim = w0.shape[0] // 2
         int n = w0.shape[1]
 
-        int nsteps = len(t)
+        int ntimes = len(t)
         double dt = t[1]-t[0]
 
         # temporary array containers
@@ -63,7 +63,7 @@ cpdef leapfrog_integrate_potential(_CPotential potential, double [:,::1] w0,
         double[:,::1] v_jm1_2 = np.zeros((ndim,n))
 
         # return arrays
-        double[:,:,::1] all_w = np.zeros((2*ndim,nsteps+1,n))
+        double[:,:,::1] all_w = np.zeros((2*ndim,ntimes,n))
 
     # save initial conditions
     all_w[:,0,:] = w0.copy()
@@ -75,7 +75,7 @@ cpdef leapfrog_integrate_potential(_CPotential potential, double [:,::1] w0,
             c_init_velocity(potential, ndim, t[0], dt,
                             &all_w[0,0,i], &all_w[ndim,0,i], &v_jm1_2[0,i], &grad[0])
 
-        for j in range(1,nsteps+1):
+        for j in range(1,ntimes,1):
             for i in range(n):
                 for k in range(ndim):
                     all_w[k,j,i] = all_w[k,j-1,i]
