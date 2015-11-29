@@ -62,12 +62,12 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
         unsigned norbits = w0.shape[1]
 
         # define full array of times
-        int nsteps = len(t)
+        int ntimes = len(t)
         double dt0 = t[1]-t[0]
         double[::1] w = np.empty(ndim*norbits)
 
         # Note: icont not needed because nrdens == ndim
-        double[:,:,::1] all_w = np.empty((ndim,nsteps,norbits))
+        double[:,:,::1] all_w = np.empty((ndim,ntimes,norbits))
 
     # store initial conditions
     for i in range(norbits):
@@ -78,7 +78,7 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
     # TODO: any way to support dense output?
     iout = 0  # no solout calls
 
-    for j in range(1,nsteps,1):
+    for j in range(1,ntimes,1):
         res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
                      <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]), norbits,
                      t[j-1], &w[0], t[j], &rtol, &atol, 0, solout, iout,
