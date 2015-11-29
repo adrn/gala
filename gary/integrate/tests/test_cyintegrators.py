@@ -56,38 +56,51 @@ def test_compare_to_py(Integrator, integrate_func):
     assert py_w.shape == cy_w.shape
     assert np.allclose(cy_w[:,-1], py_w[:,-1])
 
-def test_scaling():
+@pytest.mark.parametrize(("Integrator","integrate_func"), _list)
+def test_scaling(tmpdir, Integrator, integrate_func):
     p = HernquistPotential(m=1E11, c=0.5, units=galactic)
+
+    def F(t,w):
+        dq = w[3:]
+        dp = -p.gradient(w[:3])
+        return np.vstack((dq,dp))
 
     step_bins = np.logspace(2,np.log10(25000),7)
     colors = ['k', 'b', 'r']
+    dt = 1.
 
     for c,nparticles in zip(colors,[1, 100, 1000]):
-        w0 = np.array([[0.,1.,0.,0.2,0.,0.]]*nparticles)
+        cy_w0 = np.array([[0.,10.,0.,0.2,0.,0.]]*nparticles)
+        py_w0 = np.ascontiguousarray(cy_w0.T)
+
         x = []
-        y = []
+        cy_times = []
+        py_times = []
         for nsteps in step_bins:
             print(nparticles, nsteps)
-            t1 = time.time()
-            cy_leapfrog_run(p.c_instance, w0, 0.1, nsteps, 0.)
+            t = np.linspace(0,dt*nsteps,nsteps+1)
             x.append(nsteps)
-            y.append(time.time() - t1)
 
-        plt.loglog(x, y, linestyle='-', lw=2., c=c)
+            # time the Cython integration
+            t0 = time.time()
+            integrate_func(p.c_instance, cy_w0, t)
+            cy_times.append(time.time() - t0)
 
-    for c,nparticles in zip(colors,[1, 100, 1000]):
-        w0 = np.array([[0.,1.,0.,0.2,0.,0.]]*nparticles)
-        x = []
-        y = []
-        for nsteps in step_bins:
-            print(nparticles, nsteps)
-            t1 = time.time()
-            p.integrate_orbit(w0, dt=0.1, nsteps=nsteps)
-            x.append(nsteps)
-            y.append(time.time() - t1)
+            # time the Python integration
+            t0 = time.time()
+            integrator = Integrator(F)
+            py_t,py_w = integrator.run(py_w0, dt=dt, nsteps=nsteps)
+            py_times.append(time.time() - t0)
 
-        plt.loglog(x, y, linestyle='--', lw=2., c=c)
+        pl.loglog(x, cy_times, linestyle='-', lw=2., c=c, marker=None,
+                  label="cy: {} orbits".format(nparticles))
+        pl.loglog(x, py_times, linestyle='--', lw=2., c=c, marker=None,
+                  label="py: {} orbits".format(nparticles))
 
-    plt.xlim(95,10100)
-    plt.tight_layout()
-    plt.savefig(os.path.join(plot_path, "cy-scaling.png"))
+    pl.title(Integrator.__name__)
+    pl.legend(loc='upper left')
+    pl.xlim(90,30000)
+    pl.xlabel("N steps")
+    pl.tight_layout()
+    # pl.show()
+    pl.savefig(os.path.join(tmpdir, "integrate-scaling.png"), dpi=300)
