@@ -20,6 +20,7 @@ from ..units import UnitSystem
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
+# TODO: what to do when units is None?
 class PotentialBase(object):
     """
     A baseclass for defining gravitational potentials.
@@ -391,14 +392,17 @@ class PotentialBase(object):
 
         """
 
+        w0 = atleast_2d(w0, insert_axis=1)
+        ndim_2 = w0.shape[0]//2
+
         if hasattr(self, 'c_instance') and cython_if_possible:
+            # WARNING TO SELF: this transpose is there because the Cython
+            #   functions expect a shape: (norbits, ndim)
+            w0 = np.ascontiguousarray(w0.T)
+
             # array of times
             from ..integrate.timespec import _parse_time_specification
             t = _parse_time_specification(**time_spec)
-
-            # WARNING TO SELF: this transpose is there because the Cython
-            #   functions expect a shape: (norbits, ndim)
-            w0 = np.ascontiguousarray(atleast_2d(w0, insert_axis=1).T)
 
             if Integrator == LeapfrogIntegrator:
                 from ..integrate import leapfrog_integrate_potential
@@ -412,7 +416,7 @@ class PotentialBase(object):
                                                   Integrator_kwargs.get('nmax', 0))
 
         else:
-            acc = lambda t,w: np.hstack((w[...,3:], self.acceleration(w[...,:3], t=t)))
+            acc = lambda t,w: np.vstack((w[ndim_2:], self.acceleration(w[:ndim_2], t=t)))
             integrator = Integrator(acc, **Integrator_kwargs)
             return integrator.run(w0, **time_spec)
 
