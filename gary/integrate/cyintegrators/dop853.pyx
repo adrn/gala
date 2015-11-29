@@ -54,12 +54,18 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
 cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
                                  double[::1] t,
                                  double atol=1E-10, double rtol=1E-10, int nmax=0):
-    # TODO: add option for a callback function to be called at each step
+    """
+    CAUTION: Interpretation of axes is different here! We need the
+    arrays to be C ordered and easy to iterate over, so here the
+    axes are (norbits, ndim).
+
+    TODO: add option for a callback function to be called at each step
+    """
     cdef:
         int i, j, k
         int res, iout
-        unsigned ndim = w0.shape[0]
-        unsigned norbits = w0.shape[1]
+        unsigned norbits = w0.shape[0]
+        unsigned ndim = w0.shape[1]
 
         # define full array of times
         int ntimes = len(t)
@@ -67,13 +73,13 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
         double[::1] w = np.empty(ndim*norbits)
 
         # Note: icont not needed because nrdens == ndim
-        double[:,:,::1] all_w = np.empty((ndim,ntimes,norbits))
+        double[:,:,::1] all_w = np.empty((ntimes,norbits,ndim))
 
     # store initial conditions
     for i in range(norbits):
         for k in range(ndim):
-            w[i*ndim + k] = w0[k,i]
-            all_w[k,0,i] = w0[k,i]
+            w[i*ndim + k] = w0[i,k]
+            all_w[0,i,k] = w0[i,k]
 
     # TODO: any way to support dense output?
     iout = 0  # no solout calls
@@ -95,7 +101,7 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
 
         for k in range(ndim):
             for i in range(norbits):
-                all_w[k,j,i] = w[i*ndim + k]
+                all_w[j,i,k] = w[i*ndim + k]
 
     return np.asarray(t), np.asarray(all_w)
 
