@@ -25,9 +25,9 @@ import cython
 cimport cython
 
 # Project
-from ..units import galactic
-from .cpotential cimport _CPotential
-from .cpotential import CPotentialBase
+from ...units import galactic
+from ..cpotential cimport _CPotential
+from ..cpotential import CPotentialBase
 
 cdef extern from "math.h":
     double sqrt(double x) nogil
