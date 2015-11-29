@@ -47,20 +47,23 @@ cdef void c_leapfrog_step(_CPotential p, int ndim, double t, double dt,
         v_jm1_2[k] = v_jm1_2[k] - grad[k] * dt
 
 cpdef leapfrog_integrate_potential(_CPotential potential, double [:,::1] w0,
-                                   double dt, int nsteps, double t1):
-    # temporary scalars
-    cdef int i,j,k
-    cdef int ndim = w0.shape[0] // 2
-    cdef int n = w0.shape[1]
-    cdef double t
+                                   double[::1] t):
 
-    # temporary array containers
-    cdef double[::1] grad = np.zeros(ndim)
-    cdef double[:,::1] v_jm1_2 = np.zeros((ndim,n))
+    cdef:
+        # temporary scalars
+        int i,j,k
+        int ndim = w0.shape[0] // 2
+        int n = w0.shape[1]
 
-    # return arrays
-    cdef double[::1] all_t = np.zeros(nsteps+1)
-    cdef double[:,:,::1] all_w = np.zeros((2*ndim,nsteps+1,n))
+        int nsteps = len(t)
+        double dt = t[1]-t[0]
+
+        # temporary array containers
+        double[::1] grad = np.zeros(ndim)
+        double[:,::1] v_jm1_2 = np.zeros((ndim,n))
+
+        # return arrays
+        double[:,:,::1] all_w = np.zeros((2*ndim,nsteps+1,n))
 
     # save initial conditions
     all_w[:,0,:] = w0.copy()
@@ -69,20 +72,16 @@ cpdef leapfrog_integrate_potential(_CPotential potential, double [:,::1] w0,
         # first initialize the velocities so they are evolved by a
         #   half step relative to the positions
         for i in range(n):
-            c_init_velocity(potential, ndim, t1, dt,
+            c_init_velocity(potential, ndim, t[0], dt,
                             &all_w[0,0,i], &all_w[ndim,0,i], &v_jm1_2[0,i], &grad[0])
 
-        t = t1  # initial time
-        all_t[0] = t
         for j in range(1,nsteps+1):
-            t += dt
-            all_t[j] = t
             for i in range(n):
                 for k in range(ndim):
                     all_w[k,j,i] = all_w[k,j-1,i]
                     grad[k] = 0.
 
-                c_leapfrog_step(potential, ndim, t, dt,
+                c_leapfrog_step(potential, ndim, t[j], dt,
                                 &all_w[0,j,i], &all_w[ndim,j,i], &v_jm1_2[0,i], &grad[0])
 
-    return np.array(all_t), np.array(all_w)
+    return np.asarray(t), np.asarray(all_w)
