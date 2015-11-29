@@ -10,8 +10,8 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import numpy as np
 
 # Project
-from .core import Integrator
-from .timespec import _parse_time_specification
+from ..core import Integrator
+from ..timespec import _parse_time_specification
 
 __all__ = ["RK5Integrator"]
 
@@ -126,16 +126,15 @@ class RK5Integrator(Integrator):
         dt = times[1]-times[0]
 
         w0, ws = self._prepare_ws(w0, mmap, nsteps=nsteps)
-        nparticles, ndim = w0.shape
-
-        # create the return arrays
-        ws = np.zeros((nsteps+1,) + w0.shape, dtype=float)
+        ndim,nparticles = w0.shape
 
         # Set first step to the initial conditions
-        ws[0] = w0
+        ws[:,0] = w0
         w = w0.copy()
         for ii in range(1,nsteps+1):
             w = self.step(times[ii], w, dt)
-            ws[ii] = w
+            ws[:,ii] = w
 
+        if ws.shape[-1] == 1:
+            ws = ws[...,0]
         return times, ws

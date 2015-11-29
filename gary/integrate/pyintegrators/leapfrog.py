@@ -10,8 +10,8 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import numpy as np
 
 # Project
-from .core import Integrator
-from .timespec import _parse_time_specification
+from ..core import Integrator
+from ..timespec import _parse_time_specification
 
 __all__ = ["LeapfrogIntegrator"]
 
