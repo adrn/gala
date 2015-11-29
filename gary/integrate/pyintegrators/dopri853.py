@@ -10,8 +10,8 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 from scipy.integrate import ode
 
 # Project
-from .core import Integrator
-from .timespec import _parse_time_specification
+from ..core import Integrator
+from ..timespec import _parse_time_specification
 
 __all__ = ["DOPRI853Integrator"]
 
@@ -93,7 +93,7 @@ class DOPRI853Integrator(Integrator):
         self._ode = self._ode.set_integrator('dop853', **self._ode_kwargs)
 
         # create the return arrays
-        ws[0] = w0
+        ws[:,0] = w0
 
         # make 1D
         w0 = w0.reshape((nparticles*ndim,))
@@ -106,10 +106,12 @@ class DOPRI853Integrator(Integrator):
         while self._ode.successful() and k < (nsteps+1):
             self._ode.integrate(times[k])
             outy = self._ode.y
-            ws[k] = outy.reshape(nparticles,ndim)
+            ws[:,k] = outy.reshape(nparticles,ndim)
             k += 1
 
         if not self._ode.successful():
             raise RuntimeError("ODE integration failed!")
 
+        if ws.shape[-1] == 1:
+            ws = ws[...,0]
         return times, ws
