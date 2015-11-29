@@ -20,7 +20,6 @@ from ..units import UnitSystem
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
-# TODO: what to do when units is None?
 class PotentialBase(object):
     """
     A baseclass for defining gravitational potentials.
