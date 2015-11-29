@@ -48,40 +48,44 @@ cdef void c_leapfrog_step(_CPotential p, int ndim, double t, double dt,
 
 cpdef leapfrog_integrate_potential(_CPotential potential, double [:,::1] w0,
                                    double[::1] t):
-
+    """
+    CAUTION: Interpretation of axes is different here! We need the
+    arrays to be C ordered and easy to iterate over, so here the
+    axes are (norbits, ndim).
+    """
     cdef:
         # temporary scalars
         int i,j,k
-        int ndim = w0.shape[0] // 2
-        int n = w0.shape[1]
+        int n = w0.shape[0]
+        int ndim = w0.shape[1] // 2
 
         int ntimes = len(t)
         double dt = t[1]-t[0]
 
         # temporary array containers
         double[::1] grad = np.zeros(ndim)
-        double[:,::1] v_jm1_2 = np.zeros((ndim,n))
+        double[:,::1] v_jm1_2 = np.zeros((n,ndim))
 
         # return arrays
-        double[:,:,::1] all_w = np.zeros((2*ndim,ntimes,n))
+        double[:,:,::1] all_w = np.zeros((ntimes,n,2*ndim))
 
     # save initial conditions
-    all_w[:,0,:] = w0.copy()
+    all_w[0,:,:] = w0.copy()
 
     with nogil:
         # first initialize the velocities so they are evolved by a
         #   half step relative to the positions
         for i in range(n):
             c_init_velocity(potential, ndim, t[0], dt,
-                            &all_w[0,0,i], &all_w[ndim,0,i], &v_jm1_2[0,i], &grad[0])
+                            &all_w[0,i,0], &all_w[0,i,ndim], &v_jm1_2[i,0], &grad[0])
 
         for j in range(1,ntimes,1):
             for i in range(n):
                 for k in range(ndim):
-                    all_w[k,j,i] = all_w[k,j-1,i]
+                    all_w[j,i,k] = all_w[j-1,i,k]
                     grad[k] = 0.
 
                 c_leapfrog_step(potential, ndim, t[j], dt,
-                                &all_w[0,j,i], &all_w[ndim,j,i], &v_jm1_2[0,i], &grad[0])
+                                &all_w[j,i,0], &all_w[j,i,ndim], &v_jm1_2[i,0], &grad[0])
 
     return np.asarray(t), np.asarray(all_w)
