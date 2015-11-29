@@ -9,6 +9,7 @@ import numpy as np
 from astropy.constants import G
 
 from .core import PotentialBase
+from ..util import atleast_2d
 
 __all__ = ["HarmonicOscillatorPotential", "KuzminPotential"]
 
@@ -33,11 +34,11 @@ class HarmonicOscillatorPotential(PotentialBase):
         self.parameters = dict(omega=np.array(omega))
         super(HarmonicOscillatorPotential, self).__init__(units=units)
 
-    def _value(self, x, omega):
-        return np.sum(0.5*np.atleast_2d(omega**2)*x**2, axis=-1)
+    def _value(self, x, t, omega):
+        return np.sum(0.5*atleast_2d(omega**2, insert_axis=1)*x**2, axis=0)
 
-    def _gradient(self, x, omega):
-        return np.atleast_2d(omega**2)*x
+    def _gradient(self, x, t, omega):
+        return atleast_2d(omega**2, insert_axis=1)*x
 
     def action_angle(self, x, v):
         """
@@ -105,12 +106,12 @@ class KuzminPotential(PotentialBase):
         self.units = units
         self.G = G.decompose(units).value
 
-    def _value(self, q, m, a):
-        x,y,z = q.T
+    def _value(self, q, t, m, a):
+        x,y,z = q
         val = -self.G * m / np.sqrt(x**2 + y**2 + (a + np.abs(z))**2)
         return val
 
-    def _gradient(self, q, m, a):
-        x,y,z = q.T
+    def _gradient(self, q, t, m, a):
+        x,y,z = q
         fac = self.G * m / (x**2 + y**2 + (a + np.abs(z))**2)**1.5
-        return fac[...,None] * q
+        return fac[None,...] * q
