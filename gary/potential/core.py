@@ -54,7 +54,7 @@ class PotentialBase(object):
             Position to compute the value of the potential.
         """
         q = np.ascontiguousarray(np.atleast_2d(q))
-        return self._value(q, **self.parameters)
+        return self._value(q, t=t, **self.parameters)
 
     def _gradient(self, *args, **kwargs):
         raise NotImplementedError()
@@ -70,7 +70,7 @@ class PotentialBase(object):
         """
         q = np.ascontiguousarray(np.atleast_2d(q))
         try:
-            return self._gradient(q, **self.parameters)
+            return self._gradient(q, t=t, **self.parameters)
         except NotImplementedError:
             raise NotImplementedError("This potential has no specified gradient function.")
 
@@ -88,7 +88,7 @@ class PotentialBase(object):
         """
         q = np.ascontiguousarray(np.atleast_2d(q))
         try:
-            return self._density(q, **self.parameters)
+            return self._density(q, t=t, **self.parameters)
         except NotImplementedError:
             raise NotImplementedError("This potential has no specified density function.")
 
@@ -106,7 +106,7 @@ class PotentialBase(object):
         """
         q = np.ascontiguousarray(np.atleast_2d(q))
         try:
-            return self._hessian(q, **self.parameters)
+            return self._hessian(q, t=t, **self.parameters)
         except NotImplementedError:
             raise NotImplementedError("This potential has no specified hessian function.")
 
@@ -125,7 +125,7 @@ class PotentialBase(object):
         """
         return -self.gradient(q, t=t)
 
-    def mass_enclosed(self, q, t):
+    def mass_enclosed(self, q, t=0.):
         """
         Estimate the mass enclosed within the given position by assuming the potential
         is spherical.
@@ -144,8 +144,8 @@ class PotentialBase(object):
 
         epsilon = h*q/r[...,np.newaxis]
 
-        dPhi_dr_plus = self.value(q + epsilon)
-        dPhi_dr_minus = self.value(q - epsilon)
+        dPhi_dr_plus = self.value(q + epsilon, t=t)
+        dPhi_dr_minus = self.value(q - epsilon, t=t)
         diff = dPhi_dr_plus - dPhi_dr_minus
 
         if self.units is None:
@@ -388,9 +388,10 @@ class PotentialBase(object):
 
         """
 
+        # TODO: this is all broken...
         if Integrator == LeapfrogIntegrator:
             if hasattr(self, 'c_instance') and cython_if_possible:
-                from ..integrate._leapfrog import cy_leapfrog_run
+                from ..integrate import leapfrog_integrate_potential
                 from ..integrate.timespec import _parse_time_specification
 
                 # use fast integrator
