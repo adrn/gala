@@ -66,7 +66,7 @@ rst_epilog += """
 """
 
 # Add sympy to intersphinx mapping
-intersphinx_mapping['sympy'] = ('http://docs.sympy.org//', None)
+intersphinx_mapping['sympy'] = ('http://docs.sympy.org/latest/', None)
 
 # -- Project information ------------------------------------------------------
 
