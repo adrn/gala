@@ -6,12 +6,7 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os
-import sys
-
 # Third-party
-import astropy.units as u
 import numpy as np
 from sympy.utilities.lambdify import lambdify
 
@@ -25,20 +20,51 @@ def _classnamify(s):
         words.append(word[0].upper() + word[1:])
     return "".join(words)
 
-def from_equation(expr, vars, pars, name=None):
+def from_equation(expr, vars, pars, name=None, hessian=False):
     """
     Create a potential class from an expression for the potential.
 
+    .. note::
+
+        This utility requires having :ref:`sympy` installed.
+
     Parameters
     ----------
-    expr : sympy., str
+    expr : :ref:`sympy.core.expr.Expr`, str
+        Either a ``sympy`` expression, or a string that can be converted to
+        a ``sympy`` expression.
     vars : iterable
-        Variables, e.g., x, y, z. Should be an iterable of strings containing
-        the names of the variables.
+        An iterable of variable names in the expression.
     pars : iterable
-        Parameters of the potential. For example, ... TODO
+        An iterable of parameter names in the expression.
     name : str (optional)
         The name of the potential class returned.
+    hessian : bool (optional)
+        Generate a function to compute the Hessian.
+
+    Returns
+    -------
+    CustomPotential : `~gary.potential.PotentialBase`
+        A potential class that represents the input equation. To instantiate the
+        potential, use just like a normal class with parameters.
+
+    Examples
+    --------
+    Here we'll create a potential class for the harmonic oscillator
+    potential, :math:`\Phi(x) = \frac{1}{2}\,k\,x^2`::
+
+        >>> Potential = from_equation("1/2*k*x**2", vars="x", pars="k",
+        ...                           name='HarmonicOscillator')
+        >>> p1 = Potential(k=1.)
+        >>> p1
+        <HarmonicoscillatorPotential: k=1.00 (dimensionless)>
+
+    The potential class (and object) is a fully-fledged subclass of
+    `~gary.potential.PotentialBase` and therefore has many useful methods.
+    For example, to integrate an orbit::
+
+        >>> t,w = p1.integrate_orbit([1.,0], dt=0.01, nsteps=1000)
+
     """
     try:
         import sympy
@@ -61,7 +87,6 @@ def from_equation(expr, vars, pars, name=None):
                 if par not in self.parameters:
                     raise ValueError("You must specify a value for "
                                      "parameter '{}'.".format(par))
-
             super(MyPotential,self).__init__(units)
 
     if name is not None:
@@ -90,5 +115,10 @@ def from_equation(expr, vars, pars, name=None):
             kw[name] = w[i]
         return np.vstack([f(**kw) for f in gradfuncs])
     MyPotential._gradient = _gradient
+
+    # Hessian
+    if hessian:
+        raise NotImplementedError("Hessian functionality doesn't exist yet...sorry.")
+        hessfuncs = []
 
     return MyPotential
