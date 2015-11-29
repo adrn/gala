@@ -184,7 +184,7 @@ class PotentialBase(object):
 
             pars += ("{}=" + par_fmt + post).format(k,v) + ", "
 
-        return "<{}: {}>".format(self.__class__.__name__, pars.rstrip(", "))
+        return "<{}: {} ({})>".format(self.__class__.__name__, pars.rstrip(", "), ",".join(map(str, self.units._core_units)))
 
     def __str__(self):
         return self.__class__.__name__
