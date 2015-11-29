@@ -7,42 +7,34 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
+# Standard library
 import os
+
+# Third party
 import pytest
 import numpy as np
-from astropy.utils.console import color_print
 from astropy.constants import G
 import astropy.units as u
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as pl
 from matplotlib import cm
 
+# This package
 from ..core import PotentialBase, CompositePotential
-
-top_path = "plots/"
-plot_path = os.path.join(top_path, "tests/potential")
-if not os.path.exists(plot_path):
-    os.makedirs(plot_path)
 
 units = [u.kpc,u.Myr,u.Msun,u.radian]
 G = G.decompose(units)
 
-print()
-color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yellow")
-color_print("To view plots:", "green")
-print("    open {}".format(plot_path))
-color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yellow")
-
-def test_simple():
+def test_new_simple():
 
     class MyPotential(PotentialBase):
         def __init__(self, units=None):
             self.parameters = dict()
             self.units = units
 
-        def _value(self, r):
+        def _value(self, r, t=0.):
             return -1/r
 
-        def _gradient(self, r):
+        def _gradient(self, r, t=0.):
             return r**-2
 
     p = MyPotential()
@@ -57,40 +49,40 @@ def test_simple():
 # ----------------------------------------------------------------------------
 
 class MyPotential(PotentialBase):
-    def __init__(self, m, x0=0., units=None):
-        self.parameters = dict(m=m, x0=x0)
+    def __init__(self, m, x0, units=None):
+        self.parameters = dict(m=m, x0=np.array(x0))
         self.units = units
 
-    def _value(self, x, m, x0):
-        r = np.sqrt(np.sum((x-x0)**2, axis=-1))
+    def _value(self, x, t, m, x0):
+        r = np.sqrt(np.sum((x-x0[:,None])**2, axis=0))
         return -m/r
 
-    def _gradient(self, x, m, x0):
-        r = np.sqrt(np.sum((x-x0)**2, axis=-1))
-        return m*(x-x0)/r**3
+    def _gradient(self, x, t, m, x0):
+        r = np.sqrt(np.sum((x-x0[:,None])**2, axis=0))
+        return m*(x-x0[:,None])/r**3
 
 def test_repr():
-    p = MyPotential(m=1.E10*u.Msun)
-    assert p.__repr__() == "<MyPotential: x0=0.00e+00, m=1.00e+10 solMass>"
+    p = MyPotential(m=1.E10*u.Msun, x0=0.)
+    assert p.__repr__() == "<MyPotential: m=1.00e+10 solMass, x0=0.0>"
 
 def test_plot():
     p = MyPotential(m=1, x0=[1.,3.,0.])
     f = p.plot_contours(grid=(np.linspace(-10., 10., 100), 0., 0.),
                         labels=["X"])
-    f.suptitle("slice off from 0., won't have cusp")
-    f.savefig(os.path.join(plot_path, "contour_x.png"))
+    # f.suptitle("slice off from 0., won't have cusp")
+    # f.savefig(os.path.join(plot_path, "contour_x.png"))
 
     f = p.plot_contours(grid=(np.linspace(-10., 10., 100),
                               np.linspace(-10., 10., 100),
                               0.),
                         cmap=cm.Blues)
-    f.savefig(os.path.join(plot_path, "contour_xy.png"))
+    # f.savefig(os.path.join(plot_path, "contour_xy.png"))
 
     f = p.plot_contours(grid=(np.linspace(-10., 10., 100),
                               1.,
                               np.linspace(-10., 10., 100)),
                         cmap=cm.Blues, labels=["X", "Z"])
-    f.savefig(os.path.join(plot_path, "contour_xz.png"))
+    # f.savefig(os.path.join(plot_path, "contour_xz.png"))
 
 def test_composite():
 
@@ -100,11 +92,6 @@ def test_composite():
     p = CompositePotential(one=p1, two=p2)
     assert np.allclose(p.value([0.,0.,0.]), -2)
     assert np.allclose(p.acceleration([0.,0.,0.]), 0.)
-
-    fig = p.plot_contours(grid=(np.linspace(-10., 10., 100),
-                                np.linspace(-10., 10., 100),
-                                0.))
-    fig.savefig(os.path.join(plot_path, "composite_point_mass.png"))
 
     p1 = MyPotential(m=1., x0=[1.,0.,0.], units=[u.au, u.yr, u.Msun])
     p2 = MyPotential(m=1., x0=[-1.,0.,0.], units=[u.kpc, u.yr, u.Msun])

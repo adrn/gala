@@ -4,6 +4,9 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
+# Standard library
+from collections import OrderedDict
+
 # Third-party
 import numpy as np
 from astropy.constants import G
@@ -239,11 +242,11 @@ class PotentialBase(object):
         if ndim == 1:
             # 1D curve
             x1 = _grids[0][1]
-            r = np.zeros((len(x1), len(_grids) + len(_slices)))
-            r[:,_grids[0][0]] = x1
+            r = np.zeros((len(_grids) + len(_slices), len(x1)))
+            r[_grids[0][0]] = x1
 
             for ii,slc in _slices:
-                r[:,ii] = slc
+                r[ii] = slc
 
             Z = self.value(r)
             ax.plot(x1, Z, **kwargs)
@@ -257,12 +260,12 @@ class PotentialBase(object):
             shp = x1.shape
             x1,x2 = x1.ravel(), x2.ravel()
 
-            r = np.zeros((len(x1), len(_grids) + len(_slices)))
-            r[:,_grids[0][0]] = x1
-            r[:,_grids[1][0]] = x2
+            r = np.zeros((len(_grids) + len(_slices), len(x1)))
+            r[_grids[0][0]] = x1
+            r[_grids[1][0]] = x2
 
             for ii,slc in _slices:
-                r[:,ii] = slc
+                r[ii] = slc
 
             Z = self.value(r)
 
@@ -388,42 +391,30 @@ class PotentialBase(object):
 
         """
 
-        # TODO: this is all broken...
-        if Integrator == LeapfrogIntegrator:
-            if hasattr(self, 'c_instance') and cython_if_possible:
-                from ..integrate import leapfrog_integrate_potential
-                from ..integrate.timespec import _parse_time_specification
-
-                # use fast integrator
-                times = _parse_time_specification(**time_spec)
-                nsteps = len(times) - 1
-                dt = times[1] - times[0]
-                t1 = times[0]
-
-                w0 = np.ascontiguousarray(np.atleast_2d(w0))
-                return cy_leapfrog_run(self.c_instance, w0, dt, nsteps, t1)
-
-            else:
-                acc = lambda t,w: self.acceleration(w)
-
-        elif Integrator == DOPRI853Integrator and hasattr(self, 'c_instance') and cython_if_possible:
-            # TODO: use dop853_integrate_potential
+        if hasattr(self, 'c_instance') and cython_if_possible:
+            # array of times
             from ..integrate.timespec import _parse_time_specification
-            from ..integrate._dop853 import dop853_integrate_potential
             t = _parse_time_specification(**time_spec)
 
-            w0 = np.ascontiguousarray(np.atleast_2d(w0))
-            return dop853_integrate_potential(self.c_instance, w0,
-                                              t,
-                                              Integrator_kwargs.get('atol', 1E-9),
-                                              Integrator_kwargs.get('rtol', 1E-9),
-                                              Integrator_kwargs.get('nmax', 0))
+            # WARNING TO SELF: this transpose is there because the Cython
+            #   functions expect a shape: (norbits, ndim)
+            w0 = np.ascontiguousarray(atleast_2d(w0, insert_axis=1).T)
+
+            if Integrator == LeapfrogIntegrator:
+                from ..integrate import leapfrog_integrate_potential
+                return leapfrog_integrate_potential(self.c_instance, w0, t)
+
+            elif Integrator == DOPRI853Integrator:
+                from ..integrate._dop853 import dop853_integrate_potential
+                return dop853_integrate_potential(self.c_instance, w0, t,
+                                                  Integrator_kwargs.get('atol', 1E-10),
+                                                  Integrator_kwargs.get('rtol', 1E-10),
+                                                  Integrator_kwargs.get('nmax', 0))
 
         else:
             acc = lambda t,w: np.hstack((w[...,3:], self.acceleration(w[...,:3], t=t)))
-
-        integrator = Integrator(acc, **Integrator_kwargs)
-        return integrator.run(w0, **time_spec)
+            integrator = Integrator(acc, **Integrator_kwargs)
+            return integrator.run(w0, **time_spec)
 
     def total_energy(self, x, v):
         """
@@ -456,7 +447,7 @@ class PotentialBase(object):
         save(self, f)
 
 @inherit_docs
-class CompositePotential(PotentialBase, dict):
+class CompositePotential(PotentialBase, OrderedDict):
     """
     A potential composed of several distinct components. For example,
     two point masses or a galactic disk and halo, each with their own
@@ -470,7 +461,8 @@ class CompositePotential(PotentialBase, dict):
         >>> p2 = Potential(func2)
         >>> cp = CompositePotential(component1=p1, component2=p2)
 
-    or equivalently::
+    This object actually acts like an `OrderedDict`, so if you want to
+    preserve the order of the potential components, use::
 
         >>> cp = CompositePotential()
         >>> cp['component1'] = p1
@@ -490,7 +482,7 @@ class CompositePotential(PotentialBase, dict):
         for v in kwargs.values():
             self._check_component(v)
 
-        dict.__init__(self, **kwargs)
+        OrderedDict.__init__(self, **kwargs)
 
     def __setitem__(self, key, value):
         self._check_component(value)
@@ -520,14 +512,14 @@ class CompositePotential(PotentialBase, dict):
             params[k] = v.parameters
         return ImmutableDict(params)
 
-    def value(self, *args, **kwargs):
-        return np.array([p.value(*args, **kwargs) for p in self.values()]).sum(axis=0)
+    def value(self, q, t=0.):
+        return np.array([p.value(q, t) for p in self.values()]).sum(axis=0)
 
-    def gradient(self, *args, **kwargs):
-        return np.array([p.gradient(*args, **kwargs) for p in self.values()]).sum(axis=0)
+    def gradient(self, q, t=0.):
+        return np.array([p.gradient(q, t) for p in self.values()]).sum(axis=0)
 
-    def hessian(self, *args, **kwargs):
-        return np.array([p.hessian(*args, **kwargs) for p in self.values()]).sum(axis=0)
+    def hessian(self, w, t=0.):
+        return np.array([p.hessian(w, t) for p in self.values()]).sum(axis=0)
 
-    def density(self, *args, **kwargs):
-        return np.array([p.density(*args, **kwargs) for p in self.values()]).sum(axis=0)
+    def density(self, q, t=0.):
+        return np.array([p.density(q, t) for p in self.values()]).sum(axis=0)
