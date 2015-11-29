@@ -12,7 +12,7 @@ from astropy.utils import isiterable
 
 # Project
 from ..integrate import *
-from ..util import inherit_docs, ImmutableDict
+from ..util import inherit_docs, ImmutableDict, atleast_2d
 from ..units import UnitSystem
 
 __all__ = ["PotentialBase", "CompositePotential"]
@@ -53,7 +53,7 @@ class PotentialBase(object):
         q : array_like, numeric
             Position to compute the value of the potential.
         """
-        q = np.ascontiguousarray(np.atleast_2d(q))
+        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
         return self._value(q, t=t, **self.parameters)
 
     def _gradient(self, *args, **kwargs):
@@ -68,7 +68,7 @@ class PotentialBase(object):
         q : array_like, numeric
             Position to compute the gradient.
         """
-        q = np.ascontiguousarray(np.atleast_2d(q))
+        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
         try:
             return self._gradient(q, t=t, **self.parameters)
         except NotImplementedError:
@@ -86,7 +86,7 @@ class PotentialBase(object):
         q : array_like, numeric
             Position to compute the density.
         """
-        q = np.ascontiguousarray(np.atleast_2d(q))
+        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
         try:
             return self._density(q, t=t, **self.parameters)
         except NotImplementedError:
@@ -104,7 +104,7 @@ class PotentialBase(object):
         q : array_like, numeric
             Position to compute the Hessian.
         """
-        q = np.ascontiguousarray(np.atleast_2d(q))
+        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
         try:
             return self._hessian(q, t=t, **self.parameters)
         except NotImplementedError:
@@ -140,7 +140,7 @@ class PotentialBase(object):
         h = 0.01
 
         # Radius
-        r = np.sqrt(np.sum(q**2, axis=-1))
+        r = np.sqrt(np.sum(q**2, axis=0))
 
         epsilon = h*q/r[...,np.newaxis]
 
@@ -439,7 +439,7 @@ class PotentialBase(object):
         v : array_like, numeric
             Velocity.
         """
-        return self.value(x) + 0.5*np.sum(v**2, axis=-1)
+        return self.value(x) + 0.5*np.sum(v**2, axis=0)
 
     def save(self, f):
         """
