@@ -4,6 +4,9 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
+# Standard library
+from collections import OrderedDict
+
 # Third-party
 import numpy as np
 from astropy.constants import G
@@ -31,13 +34,16 @@ class HarmonicOscillatorPotential(PotentialBase):
     """
 
     def __init__(self, omega, units=None):
-        self.parameters = dict(omega=np.array(omega))
+        self.parameters = OrderedDict()
+        self.parameters['omega'] = np.array(omega)
         super(HarmonicOscillatorPotential, self).__init__(units=units)
 
-    def _value(self, x, t, omega):
+    def _value(self, x, t):
+        omega = self.parameters['omega']
         return np.sum(0.5*atleast_2d(omega**2, insert_axis=1)*x**2, axis=0)
 
-    def _gradient(self, x, t, omega):
+    def _gradient(self, x, t):
+        omega = self.parameters['omega']
         return atleast_2d(omega**2, insert_axis=1)*x
 
     def action_angle(self, x, v):
@@ -102,16 +108,23 @@ class KuzminPotential(PotentialBase):
 
     """
     def __init__(self, m, a, units):
-        self.parameters = dict(m=m, a=a)
-        self.units = units
+        self.parameters = OrderedDict()
+        self.parameters['m'] = m
+        self.parameters['a'] = a
+
+        super(KuzminPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
 
-    def _value(self, q, t, m, a):
+    def _value(self, q, t):
         x,y,z = q
+        m = self.parameters['m']
+        a = self.parameters['a']
         val = -self.G * m / np.sqrt(x**2 + y**2 + (a + np.abs(z))**2)
         return val
 
-    def _gradient(self, q, t, m, a):
+    def _gradient(self, q, t):
         x,y,z = q
+        m = self.parameters['m']
+        a = self.parameters['a']
         fac = self.G * m / (x**2 + y**2 + (a + np.abs(z))**2)**1.5
         return fac[None,...] * q

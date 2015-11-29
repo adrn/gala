@@ -57,7 +57,7 @@ class PotentialBase(object):
             Position to compute the value of the potential.
         """
         q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
-        return self._value(q, t=t, **self.parameters)
+        return self._value(q, t=t)
 
     def _gradient(self, *args, **kwargs):
         raise NotImplementedError()
@@ -73,7 +73,7 @@ class PotentialBase(object):
         """
         q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
         try:
-            return self._gradient(q, t=t, **self.parameters)
+            return self._gradient(q, t=t)
         except NotImplementedError:
             raise NotImplementedError("This potential has no specified gradient function.")
 
@@ -91,7 +91,7 @@ class PotentialBase(object):
         """
         q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
         try:
-            return self._density(q, t=t, **self.parameters)
+            return self._density(q, t=t)
         except NotImplementedError:
             raise NotImplementedError("This potential has no specified density function.")
 
@@ -109,7 +109,7 @@ class PotentialBase(object):
         """
         q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
         try:
-            return self._hessian(q, t=t, **self.parameters)
+            return self._hessian(q, t=t)
         except NotImplementedError:
             raise NotImplementedError("This potential has no specified hessian function.")
 

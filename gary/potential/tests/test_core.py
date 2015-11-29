@@ -9,6 +9,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 import os
+from collections import OrderedDict
 
 # Third party
 import pytest
@@ -28,7 +29,7 @@ def test_new_simple():
 
     class MyPotential(PotentialBase):
         def __init__(self, units=None):
-            self.parameters = dict()
+            self.parameters = OrderedDict()
             self.units = units
 
         def _value(self, r, t=0.):
@@ -48,25 +49,32 @@ def test_new_simple():
 
 # ----------------------------------------------------------------------------
 
+usys = [u.au, u.yr, u.Msun, u.radian]
 class MyPotential(PotentialBase):
     def __init__(self, m, x0, units=None):
-        self.parameters = dict(m=m, x0=np.array(x0))
-        self.units = units
+        self.parameters = OrderedDict()
+        self.parameters['m'] = m
+        self.parameters['x0'] = np.array(x0)
+        super(MyPotential, self).__init__(units)
 
-    def _value(self, x, t, m, x0):
+    def _value(self, x, t):
+        m = self.parameters['m']
+        x0 = self.parameters['x0']
         r = np.sqrt(np.sum((x-x0[:,None])**2, axis=0))
         return -m/r
 
-    def _gradient(self, x, t, m, x0):
+    def _gradient(self, x, t):
+        m = self.parameters['m']
+        x0 = self.parameters['x0']
         r = np.sqrt(np.sum((x-x0[:,None])**2, axis=0))
         return m*(x-x0[:,None])/r**3
 
 def test_repr():
-    p = MyPotential(m=1.E10*u.Msun, x0=0.)
+    p = MyPotential(m=1.E10*u.Msun, x0=0., units=usys)
     assert p.__repr__() == "<MyPotential: m=1.00e+10 solMass, x0=0.0>"
 
 def test_plot():
-    p = MyPotential(m=1, x0=[1.,3.,0.])
+    p = MyPotential(m=1, x0=[1.,3.,0.], units=usys)
     f = p.plot_contours(grid=(np.linspace(-10., 10., 100), 0., 0.),
                         labels=["X"])
     # f.suptitle("slice off from 0., won't have cusp")
@@ -85,21 +93,20 @@ def test_plot():
     # f.savefig(os.path.join(plot_path, "contour_xz.png"))
 
 def test_composite():
-
-    p1 = MyPotential(m=1., x0=[1.,0.,0.])
-    p2 = MyPotential(m=1., x0=[-1.,0.,0.])
+    p1 = MyPotential(m=1., x0=[1.,0.,0.], units=usys)
+    p2 = MyPotential(m=1., x0=[-1.,0.,0.], units=usys)
 
     p = CompositePotential(one=p1, two=p2)
     assert np.allclose(p.value([0.,0.,0.]), -2)
     assert np.allclose(p.acceleration([0.,0.,0.]), 0.)
 
-    p1 = MyPotential(m=1., x0=[1.,0.,0.], units=[u.au, u.yr, u.Msun])
-    p2 = MyPotential(m=1., x0=[-1.,0.,0.], units=[u.kpc, u.yr, u.Msun])
+    p1 = MyPotential(m=1., x0=[1.,0.,0.], units=usys)
+    p2 = MyPotential(m=1., x0=[-1.,0.,0.], units=[u.kpc, u.yr, u.Msun, u.radian])
     with pytest.raises(ValueError):
         p = CompositePotential(one=p1, two=p2)
 
-    p1 = MyPotential(m=1., x0=[1.,0.,0.], units=[u.au, u.yr, u.Msun])
-    p2 = MyPotential(m=1., x0=[-1.,0.,0.], units=[u.au, u.yr, u.Msun])
+    p1 = MyPotential(m=1., x0=[1.,0.,0.], units=usys)
+    p2 = MyPotential(m=1., x0=[-1.,0.,0.], units=usys)
     p = CompositePotential(one=p1, two=p2)
     assert u.au in p.units
     assert u.yr in p.units
