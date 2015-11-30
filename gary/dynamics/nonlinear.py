@@ -6,17 +6,14 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import logging
-
 # Third-party
 import numpy as np
 from scipy.signal import argrelmin
 
-__all__ = ['fast_lyapunov_max', 'lyapunov_max', 'surface_of_section']
+# Project
+from ..util import atleast_2d
 
-# Create logger
-logger = logging.getLogger(__name__)
+__all__ = ['fast_lyapunov_max', 'lyapunov_max', 'surface_of_section']
 
 def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
                       nsteps_per_pullback=10, noffset_orbits=2, t0=0.,
@@ -51,12 +48,17 @@ def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
                                 dt, nsteps+1, t0,
                                 d0, nsteps_per_pullback, noffset_orbits,
                                 atol, rtol, nmax)
-
+    w = np.rollaxis(w, -1)
     return l,t,w
 
 def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
                  noffset_orbits=8, t1=0.):
     """
+
+    .. note::
+
+        This is currently broken!
+
     Compute the maximum Lyapunov exponent of an orbit by integrating many
     nearby orbits (``noffset``) separated with isotropically distributed
     directions but the same initial deviation length, ``d0``. This algorithm
@@ -93,23 +95,23 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
         orbit.
     """
 
-    w0 = np.atleast_2d(w0)
+    w0 = atleast_2d(w0, insert_axis=1)
 
     # number of iterations
     niter = nsteps // nsteps_per_pullback
-    ndim = w0.shape[1]
+    ndim = w0.shape[0]
 
     # define offset vectors to start the offset orbits on
-    d0_vec = np.random.uniform(size=(noffset_orbits,ndim))
-    d0_vec /= np.linalg.norm(d0_vec, axis=1)[:,np.newaxis]
+    d0_vec = np.random.uniform(size=(ndim,noffset_orbits))
+    d0_vec /= np.linalg.norm(d0_vec, axis=0)[np.newaxis]
     d0_vec *= d0
 
     w_offset = w0 + d0_vec
-    all_w0 = np.vstack((w0,w_offset))
+    all_w0 = np.hstack((w0,w_offset))
 
     # array to store the full, main orbit
-    full_w = np.zeros((nsteps+1,ndim))
-    full_w[0] = w0
+    full_w = np.zeros((ndim,nsteps+1))
+    full_w[:,0] = w0[:,0]
     full_ts = np.zeros((nsteps+1,))
     full_ts[0] = t1
 
@@ -123,17 +125,17 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
         tt,ww = integrator.run(all_w0, dt=dt, nsteps=nsteps_per_pullback, t1=time)
         time += dt*nsteps_per_pullback
 
-        main_w = ww[-1,0][np.newaxis]
-        d1 = ww[-1,1:] - main_w
-        d1_mag = np.linalg.norm(d1, axis=1)
+        main_w = ww[:,-1,0:1]
+        d1 = ww[:,-1,1:] - main_w
+        d1_mag = np.linalg.norm(d1, axis=0)
 
         LEs[i-1] = np.log(d1_mag/d0)
         ts[i-1] = time
 
-        w_offset = ww[-1,0] + d0 * d1 / d1_mag[:,np.newaxis]
-        all_w0 = np.vstack((ww[-1,0],w_offset))
+        w_offset = ww[:,-1,0:1] + d0 * d1 / d1_mag[np.newaxis]
+        all_w0 = np.hstack((ww[:,-1,0:1],w_offset))
 
-        full_w[(i-1)*nsteps_per_pullback+1:ii+1] = ww[1:,0]
+        full_w[:,(i-1)*nsteps_per_pullback+1:ii+1] = ww[:,1:,0]
         full_ts[(i-1)*nsteps_per_pullback+1:ii+1] = tt[1:]
 
     LEs = np.array([LEs[:ii].sum(axis=0)/ts[ii-1] for ii in range(1,niter)])
@@ -172,10 +174,11 @@ def surface_of_section(w, plane_ix, interpolate=False):
 
     """
 
+    w = atleast_2d(w, insert_axis=1)
     if w.ndim == 2:
-        w = w[:,None]
+        w = w[...,None]
 
-    ntimes,norbits,ndim = w.shape
+    ndim,ntimes,norbits = w.shape
     H_dim = ndim // 2
     p_ix = plane_ix + H_dim
 
@@ -183,13 +186,13 @@ def surface_of_section(w, plane_ix, interpolate=False):
         raise NotImplementedError("Not yet implemented, sorry!")
 
     # record position on specified plane when orbit crosses
-    all_sos = np.zeros((norbits,ndim), dtype=object)
+    all_sos = np.zeros((ndim,norbits), dtype=object)
     for n in range(norbits):
-        cross_ix = argrelmin(w[:,n,plane_ix]**2)[0]
-        cross_ix = cross_ix[w[cross_ix,n,p_ix] > 0.]
-        sos = w[cross_ix,n]
+        cross_ix = argrelmin(w[plane_ix,:,n]**2)[0]
+        cross_ix = cross_ix[w[p_ix,cross_ix,n] > 0.]
+        sos = w[:,cross_ix,n]
 
         for j in range(ndim):
-            all_sos[n,j] = sos[:,j]
+            all_sos[j,n] = sos[j,:]
 
     return all_sos
