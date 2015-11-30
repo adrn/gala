@@ -28,6 +28,7 @@ def partial_derivative(func, point, dim_ix=0, **kwargs):
 class PotentialTestBase(object):
     name = None
     potential = None # MUST SET THIS
+    tol = 1E-5
 
     @classmethod
     def setup_class(cls):
@@ -102,7 +103,7 @@ class PotentialTestBase(object):
         numerically estimated value. This is to check the coded-up version.
         """
 
-        dx = 1E-6
+        dx = 1E-3 * np.sqrt(np.sum(self.w0[:self.w0.size//2]**2))
         max_x = np.sqrt(np.sum([x**2 for x in self.w0[:self.w0.size//2]]))
 
         grid = np.linspace(-max_x,max_x,8)
@@ -115,7 +116,7 @@ class PotentialTestBase(object):
             num_grad[:,i] = np.squeeze([partial_derivative(self.potential.value, xyz[:,i], dim_ix=dim_ix, n=1, dx=dx, order=5) for dim_ix in range(self.w0.size//2)])
         grad = self.potential.gradient(xyz)
 
-        assert np.allclose(num_grad, grad, atol=1E-8)
+        assert np.allclose(num_grad, grad, rtol=self.tol)
 
     def test_orbit_integration(self):
         """
