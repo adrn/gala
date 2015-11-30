@@ -33,23 +33,22 @@ class CPotentialBase(PotentialBase):
     value, gradient, etc. functions implemented in C.
 
     TODO: better description here
-    TODO: inconsistent API with the Python potentials...can pass in parameters
-        to the Python potentials ._value(), etc. methods.
+    TODO: need tests of return shapes and handling 3d arrays!!!
     """
 
-    def _value(self, q, t=0., *args, **kwargs):
+    def _value(self, q, t=0.):
         q = np.ascontiguousarray(q.T)
         return self.c_instance.value(q, t=t)
 
-    def _gradient(self, q, t=0., *args, **kwargs):
+    def _gradient(self, q, t=0.):
         q = np.ascontiguousarray(q.T)
         try:
-            return self.c_instance.gradient(q, t=t)
+            return self.c_instance.gradient(q, t=t).T
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
 
-    def _density(self, q, t=0., *args, **kwargs):
+    def _density(self, q, t=0.):
         q = np.ascontiguousarray(q.T)
         try:
             return self.c_instance.density(q, t=t)
@@ -59,10 +58,10 @@ class CPotentialBase(PotentialBase):
             raise ValueError("Potential C instance has no defined "
                              "density function")
 
-    def _hessian(self, q, t=0., *args, **kwargs):
+    def _hessian(self, q, t=0.):
         q = np.ascontiguousarray(q.T)
         try:
-            return self.c_instance.hessian(q, t=t)
+            return self.c_instance.hessian(q, t=t) # TODO: return shape?
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "Hessian function")
