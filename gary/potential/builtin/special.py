@@ -13,10 +13,10 @@ import numpy as np
 
 # Project
 # from .cpotential import CCompositePotential
-from .core import CompositePotential
-from .cbuiltin import HernquistPotential, MiyamotoNagaiPotential, \
+from ..core import CompositePotential
+from .cybuiltin import HernquistPotential, MiyamotoNagaiPotential, \
     LeeSutoTriaxialNFWPotential, SphericalNFWPotential, LogarithmicPotential
-from ..units import galactic
+from ...units import galactic
 
 __all__ = ['PW14Potential', 'TriaxialMWPotential', 'PyLM10Potential']
 
