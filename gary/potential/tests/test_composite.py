@@ -46,7 +46,7 @@ class TestComposite(object):
 
         grid = np.linspace(-5.,5)
         fig = potential.plot_contours(grid=(grid,0.,0.))
-        fig.savefig(os.path.join(plot_path, "composite_kepler_sho_1d.png"))
+        # fig.savefig(os.path.join(plot_path, "composite_kepler_sho_1d.png"))
 
         fig = potential.plot_contours(grid=(grid,grid,0.))
-        fig.savefig(os.path.join(plot_path, "composite_kepler_sho_2d.png"))
+        # fig.savefig(os.path.join(plot_path, "composite_kepler_sho_2d.png"))
