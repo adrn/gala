@@ -55,10 +55,6 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
                  noffset_orbits=8, t1=0.):
     """
 
-    .. note::
-
-        This is currently broken!
-
     Compute the maximum Lyapunov exponent of an orbit by integrating many
     nearby orbits (``noffset``) separated with isotropically distributed
     directions but the same initial deviation length, ``d0``. This algorithm
@@ -110,8 +106,8 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
     all_w0 = np.hstack((w0,w_offset))
 
     # array to store the full, main orbit
-    full_w = np.zeros((ndim,nsteps+1))
-    full_w[:,0] = w0[:,0]
+    full_w = np.zeros((ndim,nsteps+1,noffset_orbits+1))
+    full_w[:,0] = all_w0
     full_ts = np.zeros((nsteps+1,))
     full_ts[0] = t1
 
@@ -135,7 +131,7 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
         w_offset = ww[:,-1,0:1] + d0 * d1 / d1_mag[np.newaxis]
         all_w0 = np.hstack((ww[:,-1,0:1],w_offset))
 
-        full_w[:,(i-1)*nsteps_per_pullback+1:ii+1] = ww[:,1:,0]
+        full_w[:,(i-1)*nsteps_per_pullback+1:ii+1] = ww[:,1:]
         full_ts[(i-1)*nsteps_per_pullback+1:ii+1] = tt[1:]
 
     LEs = np.array([LEs[:ii].sum(axis=0)/ts[ii-1] for ii in range(1,niter)])
