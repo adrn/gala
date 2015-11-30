@@ -8,7 +8,6 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os
 from collections import OrderedDict
 
 # Third party
