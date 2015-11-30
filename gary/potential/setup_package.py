@@ -36,4 +36,4 @@ def get_extensions():
     return exts
 
 def get_package_data():
-    return {'gary.potential': ['*.pxd', '*.c', '*.h']}
+    return {'gary.potential': ['*.pxd', '*.c', '*.h', 'tests/*.yml']}
