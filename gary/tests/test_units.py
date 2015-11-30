@@ -36,3 +36,9 @@ def test_constants():
     usys = UnitSystem(u.kpc, u.Myr, u.radian, u.Msun)
     assert np.allclose(usys.get_constant('G'), G.decompose([u.kpc, u.Myr, u.radian, u.Msun]).value)
     assert np.allclose(usys.get_constant('c'), c.decompose([u.kpc, u.Myr, u.radian, u.Msun]).value)
+
+def test_decompose():
+    usys = UnitSystem(u.kpc, u.Myr, u.radian, u.Msun, u.km/u.s)
+    q = 15.*u.km/u.s
+    assert q.decompose(usys).unit == u.kpc/u.Myr # uses the core units
+    assert usys.decompose(q).unit == u.km/u.s
