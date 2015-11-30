@@ -312,8 +312,8 @@ void flattenednfw_gradient(double t, double *pars, double *r, double *grad) {
     */
     double fac, u, v_h2;
     v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
-
     u = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]/(pars[3]*pars[3])) / pars[2];
+
     fac = v_h2 / (u*u*u) / (pars[2]*pars[2]) * (log(1+u) - u/(1+u));
 
     grad[0] = fac*r[0];
