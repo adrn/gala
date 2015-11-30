@@ -12,6 +12,7 @@ import logging
 
 # Third-party
 import astropy.units as u
+import matplotlib.pyplot as pl
 import numpy as np
 from astropy import log as logger
 
@@ -27,6 +28,7 @@ logger.setLevel(logging.DEBUG)
 
 def test_angular_momentum():
 
+    # single
     assert np.allclose(angular_momentum([1.,0.,0.],[0.,0.,1.]),
                        [0., -1, 0])
     assert np.allclose(angular_momentum([1.,0.,0.],[0.,1.,0.]),
@@ -39,6 +41,20 @@ def test_angular_momentum():
     np.testing.assert_allclose(angular_momentum(q,p).to(u.kpc**2/u.Myr),
                                [0,0,0.2]*u.kpc**2/u.Myr)
 
+    # multiple - known
+    q = np.array([[1.,0.,0.],[1.,0.,0.],[0,1.,0.]]).T
+    p = np.array([[0,0,1.],[0,1.,0.],[0,0,1]]).T
+    L = angular_momentum(q,p)
+    true_L = np.array([[0., -1, 0],[0., 0, 1],[1., 0, 0]]).T
+    assert L.shape == (3,3)
+    assert np.allclose(L, true_L)
+
+    # multiple - random
+    q = np.random.uniform(size=(3,128))
+    p = np.random.uniform(size=(3,128))
+    L = angular_momentum(q,p)
+    assert L.shape == (3,128)
+
 # ----------------------------------------------------------------------------
 
 def make_known_orbit(tmpdir, x, vx, potential, name):
@@ -49,8 +65,12 @@ def make_known_orbit(tmpdir, x, vx, potential, name):
 
     w = [x,y,0.,vx,vy,0.]
     t,ws = potential.integrate_orbit(w, dt=0.05, nsteps=10000)
-    fig = plot_orbits(ws, linestyle='none', alpha=0.1)
+
+    fig,ax = pl.subplots(1,1)
+    ax.plot(ws[0], ws[1])
+    # fig = plot_orbits(ws, linestyle='none', alpha=0.1)
     fig.savefig(os.path.join(str(tmpdir), "{}.png".format(name)))
+    logger.debug(os.path.join(str(tmpdir), "{}.png".format(name)))
 
     return ws
 
@@ -58,18 +78,23 @@ def test_classify_orbit(tmpdir):
 
     potential = LogarithmicPotential(v_c=1., r_h=0.14, q1=1., q2=0.9, q3=1.,
                                      units=galactic)
-    ws = make_known_orbit(tmpdir, 0.5, 0., potential, "loop")
-    loop = classify_orbit(ws)
+
+    # individual
+    w1 = make_known_orbit(tmpdir, 0.5, 0., potential, "loop")
+    loop = classify_orbit(w1)
+    assert loop.shape == (3,)
     assert loop.sum() == 1
 
-    ws = make_known_orbit(tmpdir, 0., 1.5, potential, "box")
-    loop = classify_orbit(ws)
-    assert loop.sum() == 0
-
-    # try also for a single orbit
-    loop = classify_orbit(ws[:,0])
+    w2 = make_known_orbit(tmpdir, 0., 1.5, potential, "box")
+    loop = classify_orbit(w2)
     assert loop.shape == (3,)
     assert loop.sum() == 0
+
+    # try also for both, together
+    w3 = np.stack((w1,w2),-1)
+    loop = classify_orbit(w3)
+    assert loop.shape == (3,2)
+    assert np.allclose(loop.sum(axis=0), [1,0])
 
 # ----------------------------------------------------------------------------
 
@@ -80,7 +105,7 @@ def test_align_circulation_single():
     w0 = np.array([[0.,1.,0.,0.,0.,0.5],  # loop around x axis
                    [1.,0.,0.,0.,0.,0.5],  # loop around y axis
                    [1.,0.,0.,0.,0.5,0.],  # loop around z axis
-                   [0.8,0.4,0.,0.,0.1,0.]])  # box
+                   [0.8,0.4,0.,0.,0.1,0.]]).T  # box
 
     t,w = potential.integrate_orbit(w0, dt=0.05, nsteps=10000)
 

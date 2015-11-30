@@ -23,6 +23,9 @@ def angular_momentum(q, p):
 
         \boldsymbol{L} = \boldsymbol{q} \times \boldsymbol{p}
 
+    See :ref:`shape-conventions` for more information about the shapes of
+    input and output objects.
+
     Parameters
     ----------
     q : array_like, :class:`~astropy.units.Quantity`
@@ -47,9 +50,9 @@ def angular_momentum(q, p):
 
     """
     try:
-        return np.cross(q,p) * q.unit * p.unit
+        return np.cross(q,p,axis=0) * q.unit * p.unit
     except AttributeError:  # q,p are just array's
-        return np.cross(q,p)
+        return np.cross(q,p,axis=0)
 
 def classify_orbit(w):
     """
@@ -65,46 +68,44 @@ def classify_orbit(w):
     ----------
     w : array_like
         Array of phase-space positions. Accepts 2D or 3D arrays. If 2D, assumes
-        this is a single orbit. If 3D, assumes that this is a collection of orbits,
-        where `axis=0` is the time axis, and `axis=1` are the different orbits.
+        this is a single orbit. If 3D, assumes that this is a collection of orbits.
+        See :ref:`shape-conventions` for more information about shapes.
 
     Returns
     -------
     circulation : :class:`numpy.ndarray`
         An array that specifies whether there is circulation about any of
         the axes of the input orbit. For a single orbit, will return a
-        1D array, but for multiple orbits, the shape will be (len(w), 3).
+        1D array, but for multiple orbits, the shape will be ``(3, len(w))``.
 
     """
     # get angular momenta
-    ndim = w.shape[-1]
-    Ls = angular_momentum(w[...,:ndim//2], w[...,ndim//2:])
+    full_ndim = w.shape[0]
+    Ls = angular_momentum(w[:full_ndim//2], w[full_ndim//2:])
 
     # if only 2D, add another empty axis
     if w.ndim == 2:
         single_orbit = True
-        ntimesteps,ndim = w.shape
-        w = w.reshape(ntimesteps,1,ndim)
+        Ls = Ls[...,None]
     else:
         single_orbit = False
 
-    ntimes,norbits,ndim = w.shape
+    ndim,ntimes,norbits = Ls.shape
 
     # initial angular momentum
-    L0 = Ls[0]
+    L0 = Ls[:,0]
 
     # see if at any timestep the sign has changed
-    loop = np.ones((norbits,3))
-    for ii in range(3):
-        cnd = (np.sign(L0[...,ii]) != np.sign(Ls[1:,...,ii])) | \
-              (np.abs(Ls[1:,...,ii]) < 1E-14)
-
+    loop = np.ones((ndim,norbits))
+    for ii in range(ndim):
+        cnd = (np.sign(L0[ii]) != np.sign(Ls[ii,1:])) | \
+              (np.abs(Ls[ii,1:]) < 1E-13)
         ix = np.atleast_1d(np.any(cnd, axis=0))
-        loop[ix,ii] = 0
+        loop[ii,ix] = 0
 
     loop = loop.astype(int)
     if single_orbit:
-        return loop.reshape((ndim//2,))
+        return loop.reshape((ndim,))
     else:
         return loop
 
@@ -117,9 +118,8 @@ def align_circulation_with_z(w, loop_bit):
     ----------
     w : array_like
         Array of phase-space positions. Accepts 2D or 3D arrays. If 2D, assumes
-        this is a single orbit so that `loop_bit` should be a 1D array. If 3D, assumes
-        that this is a collection of orbits, where `axis=0` is the time axis, and
-        `axis=1` are the different orbits.
+        this is a single orbit. If 3D, assumes that this is a collection of orbits.
+        See :ref:`shape-conventions` for more information about shapes.
     loop_bit : array_like
         Array of bits that specify the axis about which the orbit circulates.
         See the documentation for ~`gary.dynamics.classify_orbit()`.
