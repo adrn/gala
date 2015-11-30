@@ -419,6 +419,8 @@ class PotentialBase(object):
             else:
                 raise ValueError("Cython integration not supported for '{}'".format(Integrator))
 
+            # because shape is different from normal integrator return
+            w = np.rollaxis(w, -1)
             if w.shape[-1] == 1:
                 w = w[...,0]
             return t, w
