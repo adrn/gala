@@ -13,6 +13,8 @@ from sympy.utilities.lambdify import lambdify
 # Project
 from .core import PotentialBase
 
+__all__ = ['from_equation']
+
 def _classnamify(s):
     s = [x.lower() for x in str(s).split()]
     words = []
