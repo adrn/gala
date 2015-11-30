@@ -21,7 +21,7 @@ class Sagittarius(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
     of the Sagittarius dwarf galaxy, as described in
-    `this paper <http://adsabs.harvard.edu/abs/2003ApJ...599.1082M>`_
+    `Majewski et al. (2003) <http://adsabs.harvard.edu/abs/2003ApJ...599.1082M>`_
     and further explained at
     `this website <http://www.astro.virginia.edu/~srm4n/Sgr/>`_.
 
