@@ -474,23 +474,23 @@ class CompositePotential(PotentialBase, OrderedDict):
 
     A `CompositePotential` is created like a Python dictionary, e.g.::
 
-        >>> p1 = Potential(func1)
-        >>> p2 = Potential(func2)
-        >>> cp = CompositePotential(component1=p1, component2=p2)
+        >>> p1 = SomePotential(func1) # doctest: +SKIP
+        >>> p2 = SomePotential(func2) # doctest: +SKIP
+        >>> cp = CompositePotential(component1=p1, component2=p2) # doctest: +SKIP
 
     This object actually acts like an `OrderedDict`, so if you want to
     preserve the order of the potential components, use::
 
-        >>> cp = CompositePotential()
-        >>> cp['component1'] = p1
-        >>> cp['component2'] = p2
+        >>> cp = CompositePotential() # doctest: +SKIP
+        >>> cp['component1'] = p1 # doctest: +SKIP
+        >>> cp['component2'] = p2 # doctest: +SKIP
 
     You can also use any of the built-in `Potential` classes as
     components::
 
         >>> from gary.potential import HernquistPotential
         >>> cp = CompositePotential()
-        >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., units=(u.kpc,u.Myr,u.Msun))
+        >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., units=(u.kpc,u.Myr,u.Msun,u.radian))
 
     """
     def __init__(self, **kwargs):
