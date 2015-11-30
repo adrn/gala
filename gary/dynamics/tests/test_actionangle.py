@@ -95,12 +95,11 @@ def test_check_angle_sampling():
     #   - first one fails needing longer integration time
     #   - second one fails needing finer sampling
     for i,t in enumerate([np.linspace(0,50,500), np.linspace(0,8000,8000)]):
-        angles = t[:,np.newaxis] * omegas[np.newaxis]
         # periods = 2*np.pi/omegas
         # print("Periods:", periods)
         # print("N periods:", t.max() / periods)
 
-        angles = t[:,np.newaxis] * omegas[np.newaxis]
+        angles = t[np.newaxis] * omegas[:,np.newaxis]
         checks,failures = check_angle_sampling(nvecs, angles)
 
         assert np.all(failures == i)
@@ -117,9 +116,9 @@ class ActionsBase(object):
 
         # compare to Sanders'
         for j in range(self.N):
-            sdrs = genfunc_3d.assess_angmom(self.w[:,j])
-            logger.debug("APW: {}, Sanders: {}".format(orb_type[j], sdrs))
-            assert np.all(orb_type[j] == sdrs)
+            sdrs = genfunc_3d.assess_angmom(self.w[...,j].T)
+            logger.debug("APW: {}, Sanders: {}".format(orb_type[:,j], sdrs))
+            assert np.all(orb_type[:,j] == sdrs)
 
     def test_actions(self):
         # t = self.t[::10]
