@@ -49,11 +49,14 @@ def from_dict(d, module=None):
         raise KeyError("Potential dictionary must contain a key 'class' for "
                        "specifying the name of the Potential class.")
 
-    try:
-        unitsys = [u.Unit(unit) for ptype,unit in d['units'].items()]
-    except KeyError:
-        raise KeyError("Potential dictionary must contain a key 'units' with "
-                       "a list of strings specifying the unit system.")
+    if 'units' not in d:
+        unitsys = None
+    else:
+        try:
+            unitsys = [u.Unit(unit) for ptype,unit in d['units'].items()]
+        except KeyError:
+            raise KeyError("Potential dictionary must contain a key 'units' with "
+                           "a list of strings specifying the unit system.")
 
     if 'parameters' in d:
         params = d['parameters']
@@ -98,7 +101,9 @@ def to_dict(potential):
     else:
         d['class'] = potential.__class__.__name__
 
-    d['units'] = dict([(str(ptype),str(unit)) for ptype,unit in potential.units.to_dict().items()])
+    if potential.units is not None:
+        d['units'] = dict([(str(ptype),str(unit)) for ptype,unit in potential.units.to_dict().items()])
+
     if len(potential.parameters) > 0:
         params = dict(**potential.parameters)
         pythonify(params)
