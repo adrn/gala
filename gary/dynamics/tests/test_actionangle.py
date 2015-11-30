@@ -28,6 +28,8 @@ from ..core import *
 from ..plot import *
 from .helpers import *
 
+logger.setLevel(logging.ERROR)
+
 def test_generate_n_vectors():
     # test against Sanders' method
     nvecs = generate_n_vectors(N_max=6, dx=2, dy=2, dz=2)
@@ -38,16 +40,6 @@ def test_generate_n_vectors():
     nvecs_sanders = sanders_nvecs(N_max=6, dx=1, dy=1, dz=1)
     assert np.all(nvecs == nvecs_sanders)
 
-def test_unwrap_angles():
-    # generate fake angles
-    t = np.linspace(10,100.,250)
-    omegas = np.array([0.21, 0.32, 0.55])
-    angles = t[:,np.newaxis] * omegas[np.newaxis]
-    wrap_angles = angles % (2*np.pi)
-
-    unwrapped_angles = unwrap_angles(wrap_angles, sign=1.)
-    assert np.allclose(angles, unwrapped_angles)
-
 def test_fit_isochrone():
     # integrate orbit in Isochrone potential, then try to recover it
     true_m = 2.81E11
@@ -55,7 +47,7 @@ def test_fit_isochrone():
     potential = IsochronePotential(m=true_m, b=true_b, units=galactic)
     t,w = potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., nsteps=10000)
 
-    fit_potential = fit_isochrone(w[:,0], units=galactic)
+    fit_potential = fit_isochrone(w, units=galactic)
     m,b = fit_potential.parameters['m'], fit_potential.parameters['b']
     assert np.allclose(m, true_m, rtol=1E-2)
     assert np.allclose(b, true_b, rtol=1E-2)
@@ -77,7 +69,7 @@ def test_fit_toy_potential():
     true_potential = IsochronePotential(m=true_m, b=true_b, units=galactic)
     t,w = true_potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., nsteps=10000)
 
-    potential = fit_toy_potential(w[:,0], units=galactic)
+    potential = fit_toy_potential(w, units=galactic)
     for k,v in true_potential.parameters.items():
         assert np.allclose(v, potential.parameters[k], rtol=1E-2)
 
@@ -86,7 +78,7 @@ def test_fit_toy_potential():
     true_potential = HarmonicOscillatorPotential(omega=true_omegas, units=galactic)
     t,w = true_potential.integrate_orbit([15.,1,2,0,0,0], dt=2., nsteps=10000)
 
-    potential = fit_toy_potential(w[:,0], units=galactic)
+    potential = fit_toy_potential(w, units=galactic)
     assert np.allclose(potential.parameters['omega'],
                        true_potential.parameters['omega'],
                        rtol=1E-2)
@@ -104,9 +96,9 @@ def test_check_angle_sampling():
     #   - second one fails needing finer sampling
     for i,t in enumerate([np.linspace(0,50,500), np.linspace(0,8000,8000)]):
         angles = t[:,np.newaxis] * omegas[np.newaxis]
-        periods = 2*np.pi/omegas
-        print("Periods:", periods)
-        print("N periods:", t.max() / periods)
+        # periods = 2*np.pi/omegas
+        # print("Periods:", periods)
+        # print("N periods:", t.max() / periods)
 
         angles = t[:,np.newaxis] * omegas[np.newaxis]
         checks,failures = check_angle_sampling(nvecs, angles)
@@ -130,15 +122,15 @@ class ActionsBase(object):
             assert np.all(orb_type[j] == sdrs)
 
     def test_actions(self):
-        # t = self.t[::10]
-        t = self.t
+        t = self.t[::10]
+        # t = self.t
 
         N_max = 6
         for n in range(self.N):
             print("\n\n")
             logger.info("======================= Orbit {} =======================".format(n))
-            # w = self.w[::10,n]
-            w = self.w[:,n]
+            w = self.w[:,::10,n]
+            # w = self.w[...,n]
 
             # get values from Sanders' code
             logger.debug("Computing actions from genfunc...")
@@ -159,26 +151,26 @@ class ActionsBase(object):
             assert np.allclose(angles, s_angles, rtol=1E-5)
             assert np.allclose(freqs, s_freqs, rtol=1E-5)
 
-            logger.debug("Plotting orbit...")
-            fig = plot_orbits(w, marker='.', alpha=0.2, linestyle='none')
-            fig.savefig(str(self.plot_path.join("orbit_{}.png".format(n))))
+            # logger.debug("Plotting orbit...")
+            # fig = plot_orbits(w, marker='.', alpha=0.2, linestyle='none')
+            # fig.savefig(str(self.plot_path.join("orbit_{}.png".format(n))))
 
-            fig = plot_angles(t,angles,freqs)
-            fig.savefig(str(self.plot_path.join("angles_{}.png".format(n))))
+            # fig = plot_angles(t,angles,freqs)
+            # fig.savefig(str(self.plot_path.join("angles_{}.png".format(n))))
 
-            fig = plot_angles(t,s_angles,s_freqs)
-            fig.savefig(str(self.plot_path.join("angles_sanders_{}.png".format(n))))
+            # fig = plot_angles(t,s_angles,s_freqs)
+            # fig.savefig(str(self.plot_path.join("angles_sanders_{}.png".format(n))))
 
-            plt.close('all')
+            # plt.close('all')
 
-            print("Plots saved at:", self.plot_path)
+            # print("Plots saved at:", self.plot_path)
 
 class TestActions(ActionsBase):
 
     def setup(self):
         self.plot_path = self.tmpdir.mkdir("normal")
 
-        self.units = (u.kpc, u.Msun, u.Myr)
+        self.units = galactic
         self.potential = LeeSutoTriaxialNFWPotential(v_c=0.2, r_s=20.,
                                                      a=1., b=0.77, c=0.55,
                                                      units=galactic)
