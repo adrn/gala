@@ -7,201 +7,51 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-import cPickle as pickle
+# Standard library
 import os
-import time
+
+# Third-party
 import numpy as np
-import pytest
-from astropy.utils.console import color_print
-from astropy.constants import G
 import astropy.units as u
-import matplotlib.pyplot as plt
-from scipy.misc import derivative
 
+# This project
 from ..core import CompositePotential
-from ..cbuiltin import LM10Potential
-from ..cbuiltin import *
-from ..io import load
-from ...units import UnitSystem, galactic, solarsystem
+from ..builtin import *
+from ...units import UnitSystem, solarsystem
+from .helpers import PotentialTestBase
 
-# HACK: bad solution is to do this:
-# python setup.py build_ext --inplace
+# Python
+class TestHarmonicOscillator(object):
 
-top_path = "plots/"
-plot_path = os.path.join(top_path, "tests/potential/cpotential")
-if not os.path.exists(plot_path):
-    os.makedirs(plot_path)
+    def test_eval(self):
+        potential = HarmonicOscillatorPotential(omega=1.)
 
-units = [u.kpc,u.Myr,u.Msun,u.radian]
-G = G.decompose(units)
+        # 1D oscillator, a single position
+        r = 1.
+        pot_val = potential.value(r)
+        assert np.allclose(pot_val, 0.5, atol=5)
 
-print()
-color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yellow")
-color_print("To view plots:", "green")
-print("    open {}".format(plot_path))
-color_print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", "yellow")
+        acc_val = potential.acceleration(r)
+        assert np.allclose(acc_val, -1., atol=5)
 
-def partial_derivative(func, point, ix=0, **kwargs):
-    xyz = np.array(point)
-    def wraps(a):
-        xyz[ix] = a
-        return func(xyz)
-    return derivative(wraps, point[ix], **kwargs)
+        # 2D oscillator, single position
+        r = [1.,0.75]
+        potential = HarmonicOscillatorPotential(omega=[1.,2.])
+        pot_val = potential.value(r)
+        assert np.allclose(pot_val, 1.625)
 
-niter = 1000
-nparticles = 1000
+        # 2D oscillator, multiple positions
+        r = [[1.,0.75],[2.,1.4],[1.5,0.1]]
+        pot_val = potential.value(r)
+        assert np.allclose(pot_val, [1.625,5.92,1.145])
+        acc_val = potential.acceleration(r)
+        assert acc_val.shape == (3,2)
 
-class PotentialTestBase(object):
-    name = None
-    units = galactic
-
-    def setup(self):
-        print("\n\n")
-        print("="*50)
-        if self.name is None:
-            self.name = self.__class__.__name__
-        print(self.name)
-        self.grid = None
-
-    def test_unitsystem(self):
-        assert isinstance(self.potential.units, UnitSystem)
-
-    def test_method_call(self):
-        # single
-        r = [[1.,0.,0.]]
-        pot_val = self.potential.value(r)
-        acc_val = self.potential.acceleration(r)
-
-        # multiple
-        r = np.random.uniform(size=(nparticles,3))
-        pot_val = self.potential.value(r)
-        acc_val = self.potential.acceleration(r)
-
-    def test_save_load(self):
-        # save to disk
-        self.potential.save("/tmp/potential.yml")
-        derp = load("/tmp/potential.yml")
-
-    def test_numerical_gradient_vs_gradient(self):
-        dx = 1E-6
-        max_x = np.sqrt(np.sum([x**2 for x in self.w0[:3]]))
-
-        grid = np.linspace(-max_x,max_x,8)
-        grid = grid[grid != 0.]
-        xyz = np.vstack(map(np.ravel, np.meshgrid(grid,grid,grid))).T
-
-        num_grad = np.zeros_like(xyz)
-        for i in range(xyz.shape[0]):
-            num_grad[i] = np.array([partial_derivative(self.potential.value, xyz[i], ix=ix, n=1, dx=dx, order=5) for ix in range(3)]).T
-        grad = self.potential.gradient(xyz)
-        np.testing.assert_allclose(num_grad, grad, rtol=1E-5)
-
-    def test_orbit_integration(self):
-        w0 = self.w0
-        t1 = time.time()
-        t,w = self.potential.integrate_orbit(w0, dt=1., nsteps=10000)
-        print("Cython orbit integration time (10000 steps): {}".format(time.time() - t1))
-
-    def test_time_methods(self):
-
-        r = np.random.uniform(size=(nparticles,3))
-        for func_name in ["value", "gradient", "acceleration"]:
-            t1 = time.time()
-            for ii in range(niter):
-                x = getattr(self.potential, func_name)(r)
-            print("Cython - {}: {:e} sec per call".format(func_name,
-                  (time.time()-t1)/float(niter)))
-
-    @pytest.mark.skipif(True, reason="derp.")
-    def test_profile(self):
-        # Have to turn on cython profiling for this to work
-        import pstats, cProfile
-
-        r = np.random.uniform(size=(nparticles,3))
-        tmp_value = np.zeros(nparticles)
-        tmp_gradient = np.zeros_like(r)
-        for func_name in ["value", "gradient"]:
-            t1 = time.time()
-            for ii in range(niter):
-                the_str = "for n in range(10000): self.potential.{}(r)".format(func_name)
-                cProfile.runctx(the_str, globals(), locals(), "pro.prof")
-
-                s = pstats.Stats("pro.prof")
-                s.strip_dirs().sort_stats("cumulative").print_stats()
-
-                the_str = "for n in range(10000): self.potential.c_instance.{f}(r,tmp_{f})".format(f=func_name)
-                cProfile.runctx(the_str, globals(), locals(), "pro.prof")
-
-                s = pstats.Stats("pro.prof")
-                s.strip_dirs().sort_stats("cumulative").print_stats()
-
-    def test_plot_contours(self):
-
-        if self.name is None:
-            self.name = self.potential.__class__.__name__
-
-        if self.grid is None:
-            grid = np.linspace(-50.,50, 200)
-        else:
-            grid = self.grid
-
-        fig,axes = plt.subplots(1,1)
-
-        t1 = time.time()
-        fig = self.potential.plot_contours(grid=(grid,grid,0.),
-                                           subplots_kw=dict(figsize=(8,8)))
-        print("Cython plot_contours time", time.time() - t1)
-        fig.savefig(os.path.join(plot_path, "{}_2d.png"
-                    .format(self.name)))
-
-        fig = self.potential.plot_contours(grid=(grid,0,0.),
-                                           subplots_kw=dict(figsize=(8,8)))
-        fig.savefig(os.path.join(plot_path, "{}_1d_x.png"
-                    .format(self.name)))
-
-        fig = self.potential.plot_contours(grid=(0,0,grid),
-                                           subplots_kw=dict(figsize=(8,8)))
-        fig.savefig(os.path.join(plot_path, "{}_1d_z.png"
-                    .format(self.name)))
-
-    def test_pickle(self):
-        with open("/tmp/derp.pickle", "w") as f:
-            pickle.dump(self.potential, f)
-
-        with open("/tmp/derp.pickle") as f:
-            p = pickle.load(f)
-
-        p.value(np.array([[100,0,0.]]))
-
-    def test_mass_enclosed(self):
-        r = np.linspace(1., 400, 100)
-        R = np.zeros((len(r),3))
-        R[:,0] = r
-        esti_mprof = self.potential.mass_enclosed(R)
-
-        plt.clf()
-        plt.plot(r, esti_mprof)
-        plt.savefig(os.path.join(plot_path, "mass_profile_{}.png".format(self.name)))
-
-    def test_d_dr(self):
-        r = np.linspace(1., 400, 100)
-        R = np.zeros((len(r),3))
-        R[:,0] = r
-        dr = self.potential.c_instance.d_dr(R)
-
-        plt.clf()
-        plt.plot(r, dr)
-        plt.savefig(os.path.join(plot_path, "d_dr_{}.png".format(self.name)))
-
-# ----------------------------------------------------------------------------
-#  Potentials to test
-#
-
+# Cython
 class TestHenonHeiles(PotentialTestBase):
     units = None
 
     def setup(self):
-        self.grid = np.linspace(-1,1,100)
         self.potential = HenonHeilesPotential()
         self.w0 = [1.,0.,0.,0.,2*np.pi,0.]
         super(TestHenonHeiles,self).setup()
