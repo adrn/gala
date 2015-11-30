@@ -167,15 +167,15 @@ def rolling_window(arr, window_size, stride=1, return_idx=False):
     >>> a = np.array([1,2,3,4,5,6])
     >>> for x in rolling_window(a, 3):
     ...     print(x)
-    [1,2,3]
-    [2,3,4]
-    [3,4,5]
-    [4,5,6]
+    [1 2 3]
+    [2 3 4]
+    [3 4 5]
+    [4 5 6]
     >>> for x in rolling_window(a, 2, stride=2):
     ...     print(x)
-    [1,2]
-    [3,4]
-    [5,6]
+    [1 2]
+    [3 4]
+    [5 6]
     >>> for (i1,i2),x in rolling_window(a, 2, stride=2, return_idx=True):
     ...     print(i1, i2, x)
     (0, 2, array([1, 2]))
