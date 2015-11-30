@@ -139,13 +139,15 @@ class PotentialBase(object):
             Position to estimate the enclossed mass.
         """
 
+        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
+
         # Fractional step-size in radius
         h = 0.01
 
         # Radius
         r = np.sqrt(np.sum(q**2, axis=0))
 
-        epsilon = h*q/r[...,np.newaxis]
+        epsilon = h*q/r[np.newaxis]
 
         dPhi_dr_plus = self.value(q + epsilon, t=t)
         dPhi_dr_minus = self.value(q - epsilon, t=t)
