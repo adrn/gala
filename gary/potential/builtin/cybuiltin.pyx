@@ -563,6 +563,11 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
     Approximation of a Triaxial NFW Potential with the flattening in the density,
     not the potential. See Lee & Suto (2003) for details.
 
+    .. warning::
+
+        There is a known bug with using the Euler angles to rotate the potential.
+        Avoid this for now.
+
     Parameters
     ----------
     v_c : numeric
