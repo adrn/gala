@@ -43,7 +43,7 @@ class CPotentialBase(PotentialBase):
     def _gradient(self, q, t=0.):
         q = np.ascontiguousarray(q.T)
         try:
-            return self.c_instance.gradient(q, t=t).T
+            return self.c_instance.gradient(q, t=t)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
