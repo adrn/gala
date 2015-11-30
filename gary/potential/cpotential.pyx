@@ -38,21 +38,23 @@ class CPotentialBase(PotentialBase):
 
     def _value(self, q, t=0.):
         sh = q.shape
-        q = np.ascontiguousarray(q.reshape[sh[0],np.prod(sh[1:])].T)
+        q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
         return self.c_instance.value(q, t=t).reshape(sh[1:])
 
     def _gradient(self, q, t=0.):
-        q = np.ascontiguousarray(q.T)
+        sh = q.shape
+        q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
         try:
-            return self.c_instance.gradient(q, t=t)
+            return self.c_instance.gradient(q, t=t).reshape(sh)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
 
     def _density(self, q, t=0.):
-        q = np.ascontiguousarray(q.T)
+        sh = q.shape
+        q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
         try:
-            return self.c_instance.density(q, t=t)
+            return self.c_instance.density(q, t=t).reshape(sh[1:])
         except AttributeError,TypeError:
             # TODO: if no density function, should this numerically esimate
             #   the density?
@@ -60,7 +62,8 @@ class CPotentialBase(PotentialBase):
                              "density function")
 
     def _hessian(self, q, t=0.):
-        q = np.ascontiguousarray(q.T)
+        sh = q.shape
+        q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
         try:
             return self.c_instance.hessian(q, t=t) # TODO: return shape?
         except AttributeError,TypeError:
@@ -81,9 +84,11 @@ class CPotentialBase(PotentialBase):
         q : array_like, numeric
             Position to compute the mass enclosed.
         """
-        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1).T)
+        q = atleast_2d(q, insert_axis=1)
+        sh = q.shape
+        q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
         try:
-            return self.c_instance.mass_enclosed(q, self.G, t=t)
+            return self.c_instance.mass_enclosed(q, self.G, t=t).reshape(sh[1:])
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "mass_enclosed function")
