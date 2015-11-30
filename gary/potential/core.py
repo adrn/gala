@@ -408,14 +408,20 @@ class PotentialBase(object):
 
             if Integrator == LeapfrogIntegrator:
                 from ..integrate.cyintegrators import leapfrog_integrate_potential
-                return leapfrog_integrate_potential(self.c_instance, w0, t)
+                t,w = leapfrog_integrate_potential(self.c_instance, w0, t)
 
             elif Integrator == DOPRI853Integrator:
                 from ..integrate.cyintegrators import dop853_integrate_potential
-                return dop853_integrate_potential(self.c_instance, w0, t,
-                                                  Integrator_kwargs.get('atol', 1E-10),
-                                                  Integrator_kwargs.get('rtol', 1E-10),
-                                                  Integrator_kwargs.get('nmax', 0))
+                t,w = dop853_integrate_potential(self.c_instance, w0, t,
+                                                 Integrator_kwargs.get('atol', 1E-10),
+                                                 Integrator_kwargs.get('rtol', 1E-10),
+                                                 Integrator_kwargs.get('nmax', 0))
+            else:
+                raise ValueError("Cython integration not supported for '{}'".format(Integrator))
+
+            if w.shape[-1] == 1:
+                w = w[...,0]
+            return t, w
 
         else:
             acc = lambda t,w: np.vstack((w[ndim_2:], self.acceleration(w[:ndim_2], t=t)))
