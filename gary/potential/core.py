@@ -407,11 +407,11 @@ class PotentialBase(object):
             t = _parse_time_specification(**time_spec)
 
             if Integrator == LeapfrogIntegrator:
-                from ..integrate import leapfrog_integrate_potential
+                from ..integrate.cyintegrators import leapfrog_integrate_potential
                 return leapfrog_integrate_potential(self.c_instance, w0, t)
 
             elif Integrator == DOPRI853Integrator:
-                from ..integrate._dop853 import dop853_integrate_potential
+                from ..integrate.cyintegrators import dop853_integrate_potential
                 return dop853_integrate_potential(self.c_instance, w0, t,
                                                   Integrator_kwargs.get('atol', 1E-10),
                                                   Integrator_kwargs.get('rtol', 1E-10),
