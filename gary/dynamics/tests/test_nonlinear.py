@@ -16,7 +16,7 @@ import pytest
 from ... import potential as gp
 from ..nonlinear import lyapunov_max, fast_lyapunov_max, surface_of_section
 from ...integrate import DOPRI853Integrator
-from ...util import gram_schmidt
+from ...util import gram_schmidt, atleast_2d
 from ...units import galactic
 
 def test_gram_schmidt():
@@ -45,8 +45,8 @@ class TestForcedPendulum(object):
     def setup(self):
 
         def F(t,x,A,omega_d):
-            q,p = x.T
-            return np.array([p,-np.sin(q) + A*np.cos(omega_d*t)]).T
+            q,p = x
+            return np.array([p,-np.sin(q) + A*np.cos(omega_d*t)])
 
         # initial conditions and parameter choices for chaotic / regular pendulum
         self.regular_w0 = np.array([1.,0.])
@@ -68,6 +68,7 @@ class TestForcedPendulum(object):
                                                   dt=dt, nsteps=nsteps,
                                                   d0=d0, nsteps_per_pullback=nsteps_per_pullback,
                                                   noffset_orbits=noffset)
+
         regular_LEs = np.mean(regular_LEs, axis=1)
         assert regular_LEs[-1] < 1E-3
 
@@ -101,31 +102,31 @@ class TestForcedPendulum(object):
 class HenonHeilesBase(object):
 
     def potential(self,w,A,B,C,D):
-        x,y = w[...,:2].T
+        x,y = w[:2]
         term1 = 0.5*(A*x**2 + B*y**2)
         term2 = D*x**2*y - C/3.*y**3
         return term1 + term2
 
     def acceleration(self,w,A,B,C,D):
-        x,y = w[...,:2].T
+        x,y = w[:2]
         ax = -(A*x + 2*D*x*y)
         ay = -(B*y + D*x*x - C*y*y)
-        return np.array([ax, ay]).T
+        return np.array([ax, ay])
 
     def jerk(self,w,A,B,C,D):
-        x,y = w[...,:2].T
-        dx,dy = w[...,4:6].T
+        x,y = w[:2]
+        dx,dy = w[4:6]
 
         dax = -(A+2*D*y)*dx - 2*D*x*dy
         day = -2*D*x*dx - (B-2*C*y)*dy
 
-        return np.array([dax,day]).T
+        return np.array([dax,day])
 
     def F_max(self,t,w,*args):
-        x,y,px,py = w.T
-        term1 = np.array([px, py]).T
+        x,y,px,py = w
+        term1 = np.array([px, py])
         term2 = self.acceleration(w, *args)
-        return np.hstack((term1,term2))
+        return np.vstack((term1,term2))
 
     def setup(self):
         # parameter choices
@@ -136,7 +137,7 @@ class HenonHeilesBase(object):
     def test_integrate_orbit(self, tmpdir):
         integrator = DOPRI853Integrator(self.F_max, func_args=self.par)
 
-        pl.clf()
+        # pl.clf()
         t,w = integrator.run(self.w0, dt=self.dt, nsteps=self.nsteps)
         # pl.plot(w[:,0,0], w[:,0,1], marker=None)
 
@@ -199,7 +200,7 @@ class TestLogarithmic(object):
 
     def F(self,t,w):
         x,y,z,px,py,pz = w
-        term1 = np.array([px, py, pz])
+        term1 = atleast_2d([px, py, pz], insert_axis=1)
         term2 = self.potential.acceleration(w[:3])
         return np.vstack((term1,term2))
 
@@ -231,6 +232,7 @@ class TestLogarithmic(object):
         noffset = 2
 
         for ii,w0 in enumerate(self.w0s):
+
             lyap, t, ws = fast_lyapunov_max(w0, self.potential,
                                             dt=self.dt, nsteps=self.nsteps,
                                             d0=d0, noffset_orbits=noffset,
@@ -265,42 +267,42 @@ class TestLogarithmic(object):
             # pl.plot(ws[:,0], ws[:,1], marker='.', linestyle='none', alpha=0.1)
             # pl.savefig(os.path.join(str(tmpdir),"log_orbit_lyap_max_{}.png".format(ii)))
 
-    @pytest.mark.skipif(True)
     def test_compare_fast(self, tmpdir):
-        # TODO: lyapunov_max is broken!
         nsteps_per_pullback = 10
         d0 = 1e-5
         noffset = 2
 
         integrator = DOPRI853Integrator(self.F)
         for ii,w0 in enumerate(self.w0s):
+
             lyap1, t1, ws1 = fast_lyapunov_max(w0, self.potential,
                                                dt=self.dt, nsteps=self.nsteps,
                                                d0=d0, noffset_orbits=noffset,
                                                nsteps_per_pullback=nsteps_per_pullback)
+            lyap1 = np.mean(lyap1, axis=1)
 
             lyap2, t2, ws2 = lyapunov_max(w0.copy(), integrator,
                                           dt=self.dt, nsteps=self.nsteps,
                                           d0=d0, noffset_orbits=noffset,
                                           nsteps_per_pullback=nsteps_per_pullback)
+            lyap2 = np.mean(lyap2, axis=1)
 
             # lyapunov exp
-            pl.clf()
-            pl.loglog(t1[1:-10:10], lyap1, marker=None)
-            pl.loglog(t2[1:-10:10], lyap2, marker=None)
-            pl.show()
-            return
+            # pl.clf()
+            # pl.loglog(t1[1:-10:10], lyap1, marker=None)
+            # pl.loglog(t2[1:-10:10], lyap2, marker=None)
+            # pl.show()
             # pl.savefig(os.path.join(str(tmpdir),"log_lyap_compare_{}.png".format(ii)))
 
             # energy conservation
             E = self.potential.total_energy(ws1[:3,:,0], ws1[3:,:,0])
             dE_fast = np.abs(E[1:] - E[0])
 
-            E = self.potential.total_energy(ws2[:3,:], ws2[3:,:])
+            E = self.potential.total_energy(ws2[:3,:,0], ws2[3:,:,0])
             dE_slow = np.abs(E[1:] - E[0])
 
-            print(dE_fast[-10:])
-            print(dE_slow[-10:])
+            assert np.all(dE_fast < 1E-10)
+            assert np.all(dE_slow < 1E-10)
 
             # pl.clf()
             # pl.semilogy(dE_ww, marker=None)
