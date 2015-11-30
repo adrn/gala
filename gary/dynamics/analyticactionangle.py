@@ -17,6 +17,7 @@ import astropy.units as u
 # Project
 from ..coordinates import cartesian_to_physicsspherical, physicsspherical_to_cartesian
 from .core import angular_momentum
+from ..util import atleast_2d
 
 __all__ = ['isochrone_xv_to_aa', 'isochrone_aa_to_xv',
            'harmonic_oscillator_xv_to_aa', 'harmonic_oscillator_aa_to_xv']
@@ -34,8 +35,9 @@ def isochrone_xv_to_aa(x, v, potential):
 
     .. note::
 
-        This function is included as a method of the :class:`~gary.potential.IsochronePotential`
-        and it is recommended to call :meth:`~gary.potential.IsochronePotential.phase_space()`
+        This function is included as a method of the
+        :class:`~gary.potential.IsochronePotential` and it is recommended
+        to call :meth:`~gary.potential.IsochronePotential.phase_space()`
         instead.
 
     # TODO: should accept quantities
@@ -43,9 +45,9 @@ def isochrone_xv_to_aa(x, v, potential):
     Parameters
     ----------
     x : array_like
-        Cartesian positions. Must have shape (N,3) or (3,).
+        Cartesian positions. Must have shape ``(3,N)`` or ``(3,)``.
     v : array_like
-        Cartesian velocities. Must have shape (N,3) or (3,).
+        Cartesian velocities. Must have shape ``(3,N)`` or ``(3,)``.
     potential : :class:`gary.potential.IsochronePotential`
         An instance of the potential to use for computing the transformation
         to angle-action coordinates.
@@ -53,21 +55,15 @@ def isochrone_xv_to_aa(x, v, potential):
     Returns
     -------
     actions : :class:`numpy.ndarray`
-        An array of actions computed from the input positions and velocities. Will
-        always have shape (N,3) -- if input coordinates are 1D, the output shape will
-        be (1,3).
+        An array of actions computed from the input positions and velocities.
     angles : :class:`numpy.ndarray`
-        An array of angles computed from the input positions and velocities. Will
-        always have shape (N,3) -- if input coordinates are 1D, the output shape will
-        be (1,3).
+        An array of angles computed from the input positions and velocities.
     freqs : :class:`numpy.ndarray`
-        An array of frequencies computed from the input positions and velocities. Will
-        always have shape (N,3) -- if input coordinates are 1D, the output shape will
-        be (1,3).
+        An array of frequencies computed from the input positions and velocities.
     """
 
-    x = np.atleast_2d(x)
-    v = np.atleast_2d(v)
+    x = atleast_2d(x,insert_axis=1)
+    v = atleast_2d(v,insert_axis=1)
 
     _G = G.decompose(potential.units).value
     GM = _G*potential.parameters['m']
@@ -81,9 +77,9 @@ def isochrone_xv_to_aa(x, v, potential):
         raise ValueError("Unbound particle. (E = {})".format(E))
 
     # convert position, velocity to spherical polar coordinates
-    x_rep = coord.CartesianRepresentation(x.T)
+    x_rep = coord.CartesianRepresentation(x)
     x_rep = x_rep.represent_as(coord.PhysicsSphericalRepresentation)
-    v_sph = cartesian_to_physicsspherical(x_rep, v.T)
+    v_sph = cartesian_to_physicsspherical(x_rep, v)
     r,phi,theta = x_rep.r.value, x_rep.phi.value, x_rep.theta.value
     vr,vphi,vtheta = v_sph.value
 
@@ -92,14 +88,14 @@ def isochrone_xv_to_aa(x, v, potential):
     # ----------------------------
 
     L_vec = angular_momentum(x,v)
-    Lz = L_vec[:,2]
-    L = np.linalg.norm(L_vec, axis=1)
+    Lz = L_vec[2]
+    L = np.linalg.norm(L_vec, axis=0)
 
     # Radial action
     Jr = GM / np.sqrt(-2*E) - 0.5*(L + np.sqrt(L*L + 4*GM*b))
 
     # compute the three action variables
-    actions = np.array([Jr, Lz, L - np.abs(Lz)]).T
+    actions = np.array([Jr, Lz, L - np.abs(Lz)])
 
     # ----------------------------
     # Angles
@@ -148,17 +144,17 @@ def isochrone_xv_to_aa(x, v, potential):
     uu[vtheta > 0.] = np.pi - uu[vtheta > 0.]
 
     thetap = phi - uu + np.sign(Lz)*thetaz
-    angles = np.array([thetar, thetap, thetaz]).T
-    angles %= (2*np.pi)
+    angles = np.array([thetar, thetap, thetaz])
+    angles = angles % (2*np.pi)
 
     # ----------------------------
     # Frequencies
     # ----------------------------
     freqs = np.zeros_like(actions)
     omega_r = GM**2 / (Jr + 0.5*(L + np.sqrt(L*L + 4*GM*b)))**3
-    freqs[:,0] = omega_r
-    freqs[:,1] = omega_th * omega_r
-    freqs[:,2] = np.sign(actions[:,2]) * omega_th
+    freqs[0] = omega_r
+    freqs[1] = omega_th * omega_r
+    freqs[2] = np.sign(actions[2]) * omega_th
 
     return actions, angles, freqs
 
@@ -180,9 +176,10 @@ def isochrone_aa_to_xv(actions, angles, potential):
     Parameters
     ----------
     actions : array_like
-        Action variables. Must have shape (N,3) or (3,).
+        Action variables. Must have shape ``(3,N)`` or ``(3,)``.
     angles : array_like
-        Angle variables. Must have shape (N,3) or (3,). Should be in radians.
+        Angle variables. Must have shape ``(3,N)`` or ``(3,)``.
+        Should be in radians.
     potential : :class:`gary.potential.IsochronePotential`
         An instance of the potential to use for computing the transformation
         to angle-action coordinates.
@@ -190,30 +187,27 @@ def isochrone_aa_to_xv(actions, angles, potential):
     Returns
     -------
     x : :class:`numpy.ndarray`
-        An array of cartesian positions computed from the input angles and actions. Will
-        always have shape (N,3) -- if input coordinates are 1D, the output shape will
-        be (1,3).
+        An array of cartesian positions computed from the input
+        angles and actions.
     v : :class:`numpy.ndarray`
-        An array of cartesian velocities computed from the input angles and actions. Will
-        always have shape (N,3) -- if input coordinates are 1D, the output shape will
-        be (1,3).
-
+        An array of cartesian velocities computed from the input
+        angles and actions.
     """
 
-    actions = np.atleast_2d(actions)
-    angles = np.atleast_2d(angles)
+    actions = atleast_2d(actions,insert_axis=1).copy()
+    angles = atleast_2d(angles,insert_axis=1).copy()
 
     _G = G.decompose(potential.units).value
     GM = _G*potential.parameters['m']
     b = potential.parameters['b']
 
     # actions
-    Jr = actions[:,0]
-    Lz = actions[:,1]
-    L = actions[:,2] + np.abs(Lz)
+    Jr = actions[0]
+    Lz = actions[1]
+    L = actions[2] + np.abs(Lz)
 
     # angles
-    theta_r,theta_phi,theta_theta = angles.T
+    theta_r,theta_phi,theta_theta = angles
 
     # get longitude of ascending node
     theta_1 = theta_phi - np.sign(Lz)*theta_theta
@@ -295,8 +289,8 @@ def isochrone_aa_to_xv(actions, angles, potential):
     # We now need to convert from spherical polar coord to cart. coord.
     pos = coord.PhysicsSphericalRepresentation(r=r*u.dimensionless_unscaled,
                                                phi=phi*u.rad, theta=theta*u.rad)
-    x = pos.represent_as(coord.CartesianRepresentation).xyz.T.value
-    v = physicsspherical_to_cartesian(pos, [vr,vphi,vtheta]*u.dimensionless_unscaled).T.value
+    x = pos.represent_as(coord.CartesianRepresentation).xyz.value
+    v = physicsspherical_to_cartesian(pos, [vr,vphi,vtheta]*u.dimensionless_unscaled).value
     return x,v
 
 def harmonic_oscillator_xv_to_aa(x, v, potential):
@@ -323,14 +317,13 @@ def harmonic_oscillator_xv_to_aa(x, v, potential):
         Velocities.
     potential : Potential
     """
-    omega = np.atleast_2d(potential.parameters['omega'])
 
     # compute actions -- just energy (hamiltonian) over frequency
     # E = potential.total_energy(x,v)[:,None]
     omega = potential.parameters['omega']
-    action = (v**2 + (omega*x)**2)/(2.*omega[None])
+    action = (v**2 + (omega[:,None]*x)**2)/(2.*omega[:,None])
 
-    angle = np.arctan(-v / omega / x)
+    angle = np.arctan(-v / omega[:,None] / x)
     angle[x == 0] = -np.sign(v[x == 0])*np.pi/2.
     angle[x < 0] += np.pi
 
