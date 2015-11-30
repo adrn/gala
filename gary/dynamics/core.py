@@ -11,6 +11,9 @@ import numpy as np
 from astropy import log as logger
 from scipy.signal import argrelmax, argrelmin
 
+# Project
+from ..util import atleast_2d
+
 __all__ = ['angular_momentum', 'classify_orbit', 'align_circulation_with_z',
            'check_for_primes', 'peak_to_peak_period']
 
@@ -122,7 +125,7 @@ def align_circulation_with_z(w, loop_bit):
         See :ref:`shape-conventions` for more information about shapes.
     loop_bit : array_like
         Array of bits that specify the axis about which the orbit circulates.
-        See the documentation for ~`gary.dynamics.classify_orbit()`.
+        See the documentation for `~gary.dynamics.classify_orbit`.
 
     Returns
     -------
@@ -136,30 +139,32 @@ def align_circulation_with_z(w, loop_bit):
 
     orig_shape = w.shape
     if loop_bit.ndim == 1:
-        loop_bit = np.atleast_2d(loop_bit)
-        w = w[:,np.newaxis]
+        loop_bit = atleast_2d(loop_bit,insert_axis=1)
+        w = w[...,np.newaxis]
+    elif loop_bit.ndim > 2:
+        raise ValueError("Invalid shape for loop_bit: {}".format(loop_bit.shape))
 
     new_w = w.copy()
-    for ix in range(len(loop_bit)):
-        if loop_bit[ix,2] == 1 or np.all(loop_bit[ix] == 0):
+    for ix in range(w.shape[-1]):
+        if loop_bit[2,ix] == 1 or np.all(loop_bit[:,ix] == 0):
             # already circulating about z or box orbit
             continue
 
-        if sum(loop_bit[ix]) > 1:
-            logger.warning("Circulation about x and y axes - are you sure the orbit has been "
-                           "integrated for long enough?")
+        if sum(loop_bit[:,ix]) > 1:
+            logger.warning("Circulation about x and y axes - are you sure "
+                           "the orbit has been integrated for long enough?")
 
-        if loop_bit[ix,0] == 1:
+        if loop_bit[0,ix] == 1:
             circ = 0
-        elif loop_bit[ix,1] == 1:
+        elif loop_bit[1,ix] == 1:
             circ = 1
         else:
             raise RuntimeError("Should never get here...")
 
-        new_w[:,ix,circ] = w[:,ix,2]
-        new_w[:,ix,2] = w[:,ix,circ]
-        new_w[:,ix,circ+3] = w[:,ix,5]
-        new_w[:,ix,5] = w[:,ix,circ+3]
+        new_w[circ,:,ix] = w[2,:,ix]
+        new_w[2,:,ix] = w[circ,:,ix]
+        new_w[circ+3,:,ix] = w[5,:,ix]
+        new_w[5,:,ix] = w[circ+3,:,ix]
 
     return new_w.reshape(orig_shape)
 
