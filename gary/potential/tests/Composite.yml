@@ -1,0 +1,32 @@
+class:
+  CompositePotential:
+    disk: MiyamotoNagaiPotential
+    halo: LogarithmicPotential
+parameters:
+  disk:
+    a: 6.5
+    b: 0.26
+    m: 100000000000.0
+  halo:
+    R:
+    - 0.9393727128473789
+    - 0.34289780745545134
+    - 0.0
+    - -0.34289780745545134
+    - 0.9393727128473789
+    - 0.0
+    - 0.0
+    - 0.0
+    - 1.0
+    q1: 1.2
+    q2: 1.0
+    q3: 0.8
+    r_h: 10.0
+    v_c: 0.17
+units:
+  angle: rad
+  angular speed: mas / yr
+  length: kpc
+  mass: solMass
+  speed: km / s
+  time: Myr

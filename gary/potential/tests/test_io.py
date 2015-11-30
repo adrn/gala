@@ -6,37 +6,28 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os
-
 # Third-party
+from astropy.utils.data import get_pkg_data_filename
 import numpy as np
 
 # Project
 from ..io import load, save
 from ..core import CompositePotential
-from ..cbuiltin import IsochronePotential, KeplerPotential
-from ..custom import PW14Potential
+from ..builtin import IsochronePotential, KeplerPotential
+from ..builtin.special import PW14Potential
 from ...units import galactic
 
-# TODO: config item to specify path to test data?
-test_data_path = os.path.abspath(os.path.join(os.path.split(__file__)[0],
-                                 "../../../test-data/"))
-
 def test_read():
-    f1 = os.path.join(test_data_path, 'potential', 'isochrone.yml')
-    potential = load(f1)
-    assert np.allclose(potential.parameters['m'], 1E11)
-    assert np.allclose(potential.parameters['b'], 0.76)
+    potential = load(get_pkg_data_filename('Plummer.yml'))
+    assert np.allclose(potential.parameters['m'], 100000000000.)
+    assert np.allclose(potential.parameters['b'], 0.26)
 
-    f2 = os.path.join(test_data_path, 'potential', 'pw14.yml')
-    potential = load(f2)
+    potential = load(get_pkg_data_filename('HarmonicOscillator1D.yml'))
+    assert potential.units is None
 
-    f3 = os.path.join(test_data_path, 'potential', 'pw14_2.yml')
-    potential = load(f3)
-
-    f4 = os.path.join(test_data_path, 'potential', 'composite.yml')
-    potential = load(f4)
+    potential = load(get_pkg_data_filename('Composite.yml'))
+    assert 'disk' in potential.keys()
+    assert 'halo' in potential.keys()
     assert str(potential) == "CompositePotential"
 
 def test_write():
