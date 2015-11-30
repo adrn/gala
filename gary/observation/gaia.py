@@ -6,15 +6,7 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os, sys
-import logging
-
-# Third-party
-import numpy as np
-import astropy.units as u
-
-__all__ = []
+__all__ = ['V_to_G']
 
 def V_to_G(V, V_minus_I):
     """ Convert Johnson V to Gaia G-band.

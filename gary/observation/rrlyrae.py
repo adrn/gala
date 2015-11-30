@@ -6,16 +6,16 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os, sys
-
 # Third-party
-from astropy.time import Time, TimeDelta
+from astropy.time import Time
 import numpy as np
 import astropy.units as u
-from astropy.utils.misc import isiterable
-from pygaia.errors.spectroscopic import vradErrorSkyAvg
-from pygaia.errors.astrometric import properMotionErrorSkyAvg, parallaxErrorSkyAvg
+try:
+    from pygaia.errors.spectroscopic import vradErrorSkyAvg
+    from pygaia.errors.astrometric import properMotionErrorSkyAvg, parallaxErrorSkyAvg
+    PYGAIA = True
+except ImportError:
+    PYGAIA = False
 
 # Project
 from .core import distance_modulus
@@ -73,6 +73,10 @@ def gaia_radial_velocity_error(d, fe_h=-1.5):
             The metallicity.
     """
 
+    if not PYGAIA:
+        raise ImportError("pygaia is required to use this function.\n"
+                          "pip install pygaia")
+
     Vmag = distance_modulus(d) + M_V(fe_h)
     err = vradErrorSkyAvg(Vmag, spt="F0V")*u.km/u.s
 
@@ -89,6 +93,10 @@ def gaia_proper_motion_error(d, fe_h=-1.5):
         fe_h : numeric
             The metallicity.
     """
+
+    if not PYGAIA:
+        raise ImportError("pygaia is required to use this function.\n"
+                          "pip install pygaia")
 
     Vmag = distance_modulus(d) + M_V(fe_h)
     G = V_to_G(Vmag, V_minus_I)
@@ -107,6 +115,10 @@ def gaia_parallax_error(d, fe_h=-1.5):
         fe_h : numeric
             The metallicity.
     """
+
+    if not PYGAIA:
+        raise ImportError("pygaia is required to use this function.\n"
+                          "pip install pygaia")
 
     Vmag = distance_modulus(d) + M_V(fe_h)
     G = V_to_G(Vmag, V_minus_I)
