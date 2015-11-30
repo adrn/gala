@@ -210,6 +210,9 @@ def peak_to_peak_period(t, f, tol=1E-2):
         Time grid aligned with the input time series.
     f : array_like
         A periodic time series.
+    tol : numeric (optional)
+        A tolerance parameter. Fails if the mean amplitude of oscillations
+        isn't larger than this tolerance.
 
     Returns
     -------
