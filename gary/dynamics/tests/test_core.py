@@ -81,20 +81,20 @@ def test_classify_orbit(tmpdir):
 
     # individual
     w1 = make_known_orbit(tmpdir, 0.5, 0., potential, "loop")
-    loop = classify_orbit(w1)
-    assert loop.shape == (3,)
-    assert loop.sum() == 1
+    circ = classify_orbit(w1)
+    assert circ.shape == (3,)
+    assert circ.sum() == 1
 
     w2 = make_known_orbit(tmpdir, 0., 1.5, potential, "box")
-    loop = classify_orbit(w2)
-    assert loop.shape == (3,)
-    assert loop.sum() == 0
+    circ = classify_orbit(w2)
+    assert circ.shape == (3,)
+    assert circ.sum() == 0
 
     # try also for both, together
     w3 = np.stack((w1,w2),-1)
-    loop = classify_orbit(w3)
-    assert loop.shape == (3,2)
-    assert np.allclose(loop.sum(axis=0), [1,0])
+    circ = classify_orbit(w3)
+    assert circ.shape == (3,2)
+    assert np.allclose(circ.sum(axis=0), [1,0])
 
 # ----------------------------------------------------------------------------
 
@@ -109,9 +109,9 @@ def test_align_circulation_single():
 
     t,w = potential.integrate_orbit(w0, dt=0.05, nsteps=10000)
 
-    for i in range(w.shape[1]):
-        circ = classify_orbit(w[:,i])
-        new_w = align_circulation_with_z(w[:,i], circ)
+    for i in range(w.shape[2]):
+        circ = classify_orbit(w[...,i])
+        new_w = align_circulation_with_z(w[...,i], circ)
         new_circ = classify_orbit(new_w)
 
         if i == 3:
@@ -126,19 +126,19 @@ def test_align_circulation_many(tmpdir):
     w0 = np.array([[0.,1.,0.,0.,0.,0.5],  # loop around x axis
                    [1.,0.,0.,0.,0.,0.5],  # loop around y axis
                    [1.,0.,0.,0.,0.5,0.],  # loop around z axis
-                   [0.8,0.4,0.,0.,0.1,0.]])  # box
+                   [0.8,0.4,0.,0.,0.1,0.]]).T  # box
     names = ['xloop', 'yloop', 'zloop', 'box']
 
     t,w = potential.integrate_orbit(w0, dt=0.05, nsteps=10000)
-    fig = plot_orbits(w, linestyle='none', alpha=0.1)
-    fig.savefig(os.path.join(str(tmpdir), "align_circulation_orbits_init.png"))
+    # fig = plot_orbits(w, linestyle='none', alpha=0.1)
+    # fig.savefig(os.path.join(str(tmpdir), "align_circulation_orbits_init.png"))
 
     circ = classify_orbit(w)
-    assert circ.shape == (4,3)
+    assert circ.shape == (3,4)
 
     new_w = align_circulation_with_z(w, circ)
-    fig = plot_orbits(new_w, linestyle='none', alpha=0.1)
-    fig.savefig(os.path.join(str(tmpdir), "align_circulation_orbits_post.png"))
+    # fig = plot_orbits(new_w, linestyle='none', alpha=0.1)
+    # fig.savefig(os.path.join(str(tmpdir), "align_circulation_orbits_post.png"))
 
     new_circ = classify_orbit(new_w)
-    assert np.all(new_circ[:3,2] == 1.)
+    assert np.all(new_circ[2,:3] == 1.)
