@@ -9,17 +9,14 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 # Standard library
 import collections
 import sys
-import logging
 import multiprocessing
 
 # Third-party
+from astropy import log as logger
 import numpy as np
 
 __all__ = ['get_pool', 'rolling_window', 'atleast_2d',
            'assert_angles_allclose']
-
-# Create logger
-logger = logging.getLogger(__name__)
 
 class SerialPool(object):
 
@@ -269,6 +266,10 @@ def atleast_2d(*arys, **kwargs):
         return res[0]
     else:
         return res
+
+##############################################################################
+# Testing
+#
 
 def assert_angles_allclose(x, y, **kwargs):
     """

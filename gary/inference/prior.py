@@ -4,15 +4,10 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import logging
-
 # Third-party
 import numpy as np
 
 __all__ = ["BasePrior", "UniformPrior", "LogarithmicPrior", "NormalPrior"]
-
-logger = logging.getLogger(__name__)
 
 class BasePrior(object):
 

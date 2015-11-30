@@ -14,9 +14,6 @@ import logging
 import numpy as np
 import astropy.units as u
 
-# Create logger
-logger = logging.getLogger(__name__)
-
 __all__ = []
 
 def V_to_G(V, V_minus_I):
