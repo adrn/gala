@@ -68,6 +68,9 @@ rst_epilog += """
 # Add sympy to intersphinx mapping
 intersphinx_mapping['sympy'] = ('http://docs.sympy.org/latest/', None)
 
+# Show / hide TODO blocks
+todo_include_todos = True
+
 # -- Project information ------------------------------------------------------
 
 # This does not *have* to match the package name, but typically does
