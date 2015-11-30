@@ -8,7 +8,6 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
 import numpy as np
-import sympy
 from sympy.utilities.lambdify import lambdify
 
 # Project
