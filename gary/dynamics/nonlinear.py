@@ -13,82 +13,10 @@ import logging
 import numpy as np
 from scipy.signal import argrelmin
 
-# Project
-from ..util import gram_schmidt
-
-__all__ = ['lyapunov_spectrum', 'fast_lyapunov_max', 'lyapunov_max', 'surface_of_section']
+__all__ = ['fast_lyapunov_max', 'lyapunov_max', 'surface_of_section']
 
 # Create logger
 logger = logging.getLogger(__name__)
-
-def lyapunov_spectrum(w0, integrator, dt, nsteps, t1=0., deviation_vecs=None):
-    """ Compute the spectrum of Lyapunov exponents given equations of motions
-        for small deviations.
-
-        Parameters
-        ----------
-        w0 : array_like
-            Initial conditions for all phase-space coordinates.
-        integrator : gary.Integrator
-            An instantiated Integrator object. Must have a run() method.
-        dt : numeric
-            Timestep.
-        nsteps : int
-            Number of steps to run for.
-        t1 : numeric (optional)
-            Time of initial conditions. Assumed to be t=0.
-        deviation_vecs : array_like (optional)
-            Specify your own initial deviation vectors.
-
-    """
-
-    w0 = np.atleast_2d(w0)
-
-    # phase-space dimensionality
-    if w0.shape[0] > 1:
-        raise ValueError("Initial condition vector ")
-    ndim_ps = w0.shape[1]
-
-    if deviation_vecs is None:
-        # initialize (ndim_ps) deviation vectors
-        A = np.zeros((ndim_ps,ndim_ps))
-        for ii in range(ndim_ps):
-            A[ii] = np.random.normal(0.,1.,size=ndim_ps)
-            A[ii] /= np.linalg.norm(A[ii])
-
-    else:
-        raise NotImplementedError()
-
-    all_w0 = np.zeros((ndim_ps,ndim_ps*2))
-    for ii in range(ndim_ps):
-        all_w0[ii] = np.append(w0,A[ii])
-
-    # array to store the full, main orbit
-    full_w = np.zeros((nsteps+1,ndim_ps))
-    full_w[0] = w0
-    full_ts = np.zeros((nsteps+1,))
-    full_ts[0] = t1
-
-    # arrays to store the Lyapunov exponents and times
-    lyap = np.zeros((nsteps+1,ndim_ps))
-    rhi = np.zeros((nsteps+1,ndim_ps))  # sum of logs
-
-    ts = np.zeros(nsteps+1)
-    time = t1
-    for ii in range(1,nsteps+1):
-        tt,ww = integrator.run(all_w0, dt=dt, nsteps=1, t1=time)
-        time += dt
-
-        alf = gram_schmidt(ww[-1,:,ndim_ps:])
-        rhi[ii] = rhi[ii-1] + np.log(alf)
-        lyap[ii] = rhi[ii]/time
-
-        ts[ii] = time
-        full_w[ii:ii+1] = ww[1:,0,:ndim_ps]
-        full_ts[ii:ii+1] = tt[1:]
-        all_w0 = ww[-1].copy()
-
-    return lyap, full_ts, full_w
 
 def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
                       nsteps_per_pullback=10, noffset_orbits=2, t0=0.,
@@ -114,14 +42,15 @@ def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
 
     """
 
-    from ..integrate._dop853 import dop853_lyapunov
+    from .lyapunov import dop853_lyapunov_max
 
     if not hasattr(potential, 'c_instance'):
         raise TypeError("Input potential must be a CPotential subclass.")
 
-    t,w,l = dop853_lyapunov(potential.c_instance, w0,
-                            dt, nsteps+1, t0, atol, rtol, nmax,
-                            d0, nsteps_per_pullback, noffset_orbits)
+    t,w,l = dop853_lyapunov_max(potential.c_instance, w0,
+                                dt, nsteps+1, t0,
+                                d0, nsteps_per_pullback, noffset_orbits,
+                                atol, rtol, nmax)
 
     return l,t,w
 
