@@ -14,7 +14,7 @@ import pytest
 
 # Project
 from ... import potential as gp
-from ..nonlinear import lyapunov_max, fast_lyapunov_max, lyapunov_spectrum, surface_of_section
+from ..nonlinear import lyapunov_max, fast_lyapunov_max, surface_of_section
 from ...integrate import DOPRI853Integrator
 from ...util import gram_schmidt
 from ...units import galactic
@@ -127,14 +127,6 @@ class HenonHeilesBase(object):
         term2 = self.acceleration(w, *args)
         return np.hstack((term1,term2))
 
-    def F_spec(self,t,w,*args):
-        x,y,px,py,dx,dy,dpx,dpy = w.T
-        term1 = np.array([px, py]).T
-        term2 = self.acceleration(w, *args)
-        term3 = np.array([dpx,dpy]).T
-        term4 = self.jerk(w, *args)
-        return np.hstack((term1,term2,term3,term4))
-
     def setup(self):
         # parameter choices
         self.par = (1.,1.,1.,1.)
@@ -169,20 +161,6 @@ class HenonHeilesBase(object):
         pl.clf()
         pl.plot(ws[...,0], ws[...,1], marker=None)
         pl.savefig(os.path.join(str(tmpdir),"hh_orbit_lyap_max_{}.png".format(self.__class__.__name__)))
-
-    def test_lyapunov_spectrum(self, tmpdir):
-
-        integrator = DOPRI853Integrator(self.F_spec, func_args=self.par)
-        lyap, t, ws = lyapunov_spectrum(self.w0, integrator,
-                                        dt=self.dt, nsteps=self.nsteps)
-
-        pl.clf()
-        pl.loglog(lyap, marker=None)
-        pl.savefig(os.path.join(str(tmpdir),"hh_lyap_spec_{}.png".format(self.__class__.__name__)))
-
-        pl.clf()
-        pl.plot(ws[...,0], ws[...,1], marker=None)
-        pl.savefig(os.path.join(str(tmpdir),"hh_orbit_lyap_spec_{}.png".format(self.__class__.__name__)))
 
 # initial conditions from LP-VI documentation:
 class TestHenonHeilesStablePeriodic(HenonHeilesBase):
