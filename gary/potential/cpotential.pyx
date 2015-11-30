@@ -83,6 +83,9 @@ class CPotentialBase(PotentialBase):
         q : array_like, numeric
             Position to compute the mass enclosed.
         """
+        if self.units is None:
+            raise ValueError("No units specified when creating potential object.")
+
         q = atleast_2d(q, insert_axis=1)
         sh = q.shape
         q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
