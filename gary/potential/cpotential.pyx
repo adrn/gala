@@ -33,7 +33,6 @@ class CPotentialBase(PotentialBase):
     value, gradient, etc. functions implemented in C.
 
     TODO: better description here
-    TODO: need tests of return shapes and handling 3d arrays!!!
     """
 
     def _value(self, q, t=0.):
@@ -88,10 +87,12 @@ class CPotentialBase(PotentialBase):
         sh = q.shape
         q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
         try:
-            return self.c_instance.mass_enclosed(q, self.G, t=t).reshape(sh[1:])
+            menc = self.c_instance.mass_enclosed(q, self.G, t=t)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "mass_enclosed function")
+        print(menc.shape)
+        return menc.reshape(sh[1:])
 
 # ==============================================================================
 
@@ -268,7 +269,7 @@ cdef class _CPotential:
 
     cpdef mass_enclosed(self, double[:,::1] q, double G, double t=0.):
         cdef int norbits, i
-        norbits = q.shape[1]
+        norbits = q.shape[0] # follows Cython axis convention
 
         cdef double [::1] epsilon = np.zeros(3)
         cdef double [::1] mass = np.zeros((norbits,))
