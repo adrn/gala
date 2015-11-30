@@ -25,29 +25,9 @@ class TestHarmonicOscillator1D(PotentialTestBase):
     potential = HarmonicOscillatorPotential(omega=1.)
     w0 = [1.,0.]
 
-    # def test_eval(self):
-    #     potential = HarmonicOscillatorPotential(omega=1.)
-
-    #     # 1D oscillator, a single position
-    #     r = 1.
-    #     pot_val = potential.value(r)
-    #     assert np.allclose(pot_val, 0.5, atol=5)
-
-    #     acc_val = potential.acceleration(r)
-    #     assert np.allclose(acc_val, -1., atol=5)
-
-    #     # 2D oscillator, single position
-    #     r = [1.,0.75]
-    #     potential = HarmonicOscillatorPotential(omega=[1.,2.])
-    #     pot_val = potential.value(r)
-    #     assert np.allclose(pot_val, 1.625)
-
-    #     # 2D oscillator, multiple positions
-    #     r = [[1.,0.75],[2.,1.4],[1.5,0.1]]
-    #     pot_val = potential.value(r)
-    #     assert np.allclose(pot_val, [1.625,5.92,1.145])
-    #     acc_val = potential.acceleration(r)
-    #     assert acc_val.shape == (3,2)
+# class TestHarmonicOscillator2D(PotentialTestBase):
+#     potential = HarmonicOscillatorPotential(omega=[1.,2])
+#     w0 = [1.,0.5,0.,0.1]
 
 # Cython
 class TestHenonHeiles(PotentialTestBase):

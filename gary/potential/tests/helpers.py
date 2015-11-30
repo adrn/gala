@@ -35,12 +35,28 @@ class PotentialTestBase(object):
             cls.name = cls.__name__[4:] # remove Test
         print("Testing potential: {}".format(cls.name))
         cls.w0 = np.array(cls.w0)
+        cls.ndim = cls.w0.size
+
+        # these are arrays we will test the methods on:
+        w0_2d = np.repeat(cls.w0[:,None], axis=1, repeats=16)
+        w0_3d = np.repeat(w0_2d[...,None], axis=2, repeats=8)
+        w0_list = list(cls.w0)
+        w0_slice = w0_2d[:,:4]
+        cls.w0s = [cls.w0, w0_2d, w0_3d, w0_list, w0_slice]
+        cls._grad_return_shapes = [cls.w0[:cls.ndim].shape + (1,),
+                                   w0_2d[:cls.ndim].shape,
+                                   w0_3d[:cls.ndim].shape,
+                                   cls.w0[:cls.ndim].shape + (1,),
+                                   w0_slice[:cls.ndim].shape]
+        cls._valu_return_shapes = [x[1:] for x in cls._grad_return_shapes]
 
     def test_unitsystem(self):
         assert isinstance(self.potential.units, UnitSystem) or self.potential.units is None
 
     def test_value(self):
-        pass
+        for arr,shp in zip(self.w0s, self._valu_return_shapes):
+            v = self.potential.value(arr[:self.ndim])
+            assert v.shape == shp
 
     def test_gradient(self):
         pass
