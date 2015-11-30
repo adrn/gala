@@ -28,7 +28,7 @@ def test_orbits(tmpdir):
     y = np.cos(np.random.uniform(1.,8.,size=(1,n))*t).T[None]
     z = np.cos(np.random.uniform(1.,8.,size=(1,n))*t).T[None]
 
-    w = np.vstack((x,y,z)).T
+    w = np.rollaxis(np.vstack((x,y,z)), -1, 1)
 
     fig = plot_orbits(w, linestyle='none', marker='.', alpha=0.25)
     fig.savefig(os.path.join(str(tmpdir), "all_orbits.png"))
@@ -70,8 +70,7 @@ def test_three_panel(tmpdir):
 def test_1d(tmpdir):
 
     t = np.linspace(0,100.,1000)
-    q = np.cos(2*np.pi*t/10.)
-    q = q[:,np.newaxis]
+    q = np.cos(2*np.pi*t/10.)[None]
 
     fig = plot_orbits(q, labels=(r"$\theta$",))
     fig.savefig(os.path.join(str(tmpdir), "1d-orbit-labels.png"))
@@ -80,13 +79,12 @@ def test_1d(tmpdir):
     fig.savefig(os.path.join(str(tmpdir), "1d-orbit-labels-time.png"))
 
 def test_2d(tmpdir):
-    print(tmpdir)
 
     t = np.linspace(0,100.,1000)
 
-    q = np.zeros((len(t),1,2))
-    q[:,0,0] = np.cos(2*np.pi*t/10.)
-    q[:,0,1] = np.sin(2*np.pi*t/5.5)
+    q = np.zeros((2,len(t)))
+    q[0,:] = np.cos(2*np.pi*t/10.)
+    q[1,:] = np.sin(2*np.pi*t/5.5)
 
     fig = plot_orbits(q, labels=(r"$\theta$",r"$\omega$"))
     fig.savefig(os.path.join(str(tmpdir), "2d-orbit-labels.png"))
