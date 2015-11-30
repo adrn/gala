@@ -504,7 +504,7 @@ cdef class _FlattenedNFWPotential(_CPotential):
     def __cinit__(self, double G, double v_c, double r_s, double q_z):
         self._parvec = np.array([G, v_c,r_s,q_z])
         self._parameters = &(self._parvec)[0]
-        self.c_value = &sphericalnfw_value
+        self.c_value = &flattenednfw_value
         self.c_gradient = &flattenednfw_gradient
         self.c_density = &flattenednfw_density
 
