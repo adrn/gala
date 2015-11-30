@@ -59,14 +59,23 @@ class PotentialTestBase(object):
             assert v.shape == shp
 
     def test_gradient(self):
-        pass
+        for arr,shp in zip(self.w0s, self._grad_return_shapes):
+            g = self.potential.gradient(arr[:self.ndim])
+            assert g.shape == shp
 
     @pytest.mark.skipif(True, reason="not implemented")
     def test_hessian(self):
         pass
 
     def test_mass_enclosed(self):
-        pass
+        if self.potential.units is None:
+            with pytest.raises(ValueError):
+                self.potential.mass_enclosed(self.w0)
+            return
+
+        for arr,shp in zip(self.w0s, self._valu_return_shapes):
+            g = self.potential.mass_enclosed(arr[:self.ndim])
+            assert g.shape == shp
 
     def test_repr(self):
         pass
@@ -103,10 +112,10 @@ class PotentialTestBase(object):
 
         num_grad = np.zeros_like(xyz)
         for i in range(xyz.shape[1]):
-            num_grad[:,i] = np.array([partial_derivative(self.potential.value, xyz[:,i], dim_ix=dim_ix, n=1, dx=dx, order=5) for dim_ix in range(self.w0.size//2)])
+            num_grad[:,i] = np.squeeze([partial_derivative(self.potential.value, xyz[:,i], dim_ix=dim_ix, n=1, dx=dx, order=5) for dim_ix in range(self.w0.size//2)])
         grad = self.potential.gradient(xyz)
 
-        np.testing.assert_allclose(num_grad, grad, rtol=1E-5)
+        assert np.allclose(num_grad, grad, atol=1E-8)
 
     def test_orbit_integration(self):
         """
