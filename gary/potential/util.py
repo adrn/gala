@@ -8,6 +8,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
 import numpy as np
+import sympy
 from sympy.utilities.lambdify import lambdify
 
 # Project
@@ -21,18 +22,18 @@ def _classnamify(s):
     return "".join(words)
 
 def from_equation(expr, vars, pars, name=None, hessian=False):
-    """
+    r"""
     Create a potential class from an expression for the potential.
 
     .. note::
 
-        This utility requires having :ref:`sympy` installed.
+        This utility requires having `Sympy <http://www.sympy.org/>`_ installed.
 
     Parameters
     ----------
-    expr : :ref:`sympy.core.expr.Expr`, str
-        Either a ``sympy`` expression, or a string that can be converted to
-        a ``sympy`` expression.
+    expr : :class:`sympy.core.expr.Expr`, str
+        Either a ``Sympy`` expression, or a string that can be converted to
+        a ``Sympy`` expression.
     vars : iterable
         An iterable of variable names in the expression.
     pars : iterable
