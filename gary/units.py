@@ -7,6 +7,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 # Third-party
 import astropy.units as u
 from astropy.units.physical import _physical_unit_mapping
+import astropy.constants as const
 
 class UnitSystem(object):
     """
@@ -133,6 +134,35 @@ class UnitSystem(object):
             return q.to(self._registry[ptype])
         else:
             return q.decompose(self)
+
+    def get_constant(self, name):
+        """
+        Retrieve a constant with specified name in this unit system.
+
+        Parameters
+        ----------
+        name : str
+            The name of the constant, e.g., G.
+
+        Returns
+        -------
+        const : float
+            The value of the constant represented in this unit system.
+
+        Examples
+        --------
+
+            >>> usys = UnitSystem(u.kpc, u.Myr, u.radian, u.Msun)
+            >>> usys.get_constant('c')
+            306.6013937879527
+
+        """
+        try:
+            c = getattr(const, name)
+        except AttributeError:
+            raise ValueError("Constant name '{}' doesn't exist in astropy.constants".format(name))
+
+        return c.decompose(self._core_units).value
 
 # define galactic unit system
 galactic = UnitSystem(u.kpc, u.Myr, u.Msun, u.radian,
