@@ -65,7 +65,7 @@ cpdef dop853_lyapunov_max(_CPotential cpotential, double[::1] w0,
 
         # define full array of times
         double t_end = (<double>nsteps) * dt
-        double[::1] t = np.linspace(t0, t_end, nsteps)
+        double[::1] t = np.linspace(t0, t_end, nsteps) # TODO: should be nsteps+1
 
         double d1_mag, norm
         double[:,::1] d1 = np.empty((norbits,ndim))
