@@ -15,7 +15,8 @@ import multiprocessing
 # Third-party
 import numpy as np
 
-__all__ = ['get_pool', 'rolling_window', 'atleast_2d']
+__all__ = ['get_pool', 'rolling_window', 'atleast_2d',
+           'assert_angles_allclose']
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -268,3 +269,11 @@ def atleast_2d(*arys, **kwargs):
         return res[0]
     else:
         return res
+
+def assert_angles_allclose(x, y, **kwargs):
+    """
+    Like numpy's assert_allclose, but for angles (in radians).
+    """
+    c2 = (np.sin(x)-np.sin(y))**2 + (np.cos(x)-np.cos(y))**2
+    diff = np.arccos((2.0 - c2)/2.0) # a = b = 1
+    assert np.allclose(diff, 0.0, **kwargs)
