@@ -8,7 +8,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import time
 
 # Third-party
-import astropy.units as u
+import matplotlib.pyplot as pl
 import numpy as np
 import pytest
 from scipy.misc import derivative
@@ -101,18 +101,21 @@ class PotentialTestBase(object):
                             labels=["X"])
         # f.suptitle("slice off from 0., won't have cusp")
         # f.savefig(os.path.join(plot_path, "contour_x.png"))
+        pl.close(f)
 
         f = p.plot_contours(grid=(np.linspace(-10., 10., 100),
                                   np.linspace(-10., 10., 100),
                                   0.),
                             cmap='Blues')
         # f.savefig(os.path.join(plot_path, "contour_xy.png"))
+        pl.close(f)
 
         f = p.plot_contours(grid=(np.linspace(-10., 10., 100),
                                   1.,
                                   np.linspace(-10., 10., 100)),
                             cmap='Blues', labels=["X", "Z"])
         # f.savefig(os.path.join(plot_path, "contour_xz.png"))
+        pl.close(f)
 
     def test_save_load(self, tmpdir):
         """
