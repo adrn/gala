@@ -236,7 +236,7 @@ class IsochronePotential(CPotentialBase):
         v : array_like
             Velocities.
         """
-        from ..dynamics.analyticactionangle import isochrone_xv_to_aa
+        from ...dynamics.analyticactionangle import isochrone_xv_to_aa
         return isochrone_xv_to_aa(x, v, self)
 
     def phase_space(self, actions, angles):
@@ -251,7 +251,7 @@ class IsochronePotential(CPotentialBase):
         actions : array_like
         angles : array_like
         """
-        from ..dynamics.analyticactionangle import isochrone_aa_to_xv
+        from ...dynamics.analyticactionangle import isochrone_aa_to_xv
         return isochrone_aa_to_xv(actions, angles, self)
 
 # ============================================================================
