@@ -94,7 +94,6 @@ class CPotentialBase(PotentialBase):
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "mass_enclosed function")
-        print(menc.shape)
         return menc.reshape(sh[1:])
 
 # ==============================================================================
