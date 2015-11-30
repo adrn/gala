@@ -38,11 +38,11 @@ def sanders_act_ang_freq(t, w, N_max=6):
     loop = classify_orbit(w)
 
     if np.any(loop):
-        w2[:,3:] = (w2[:,3:]*u.kpc/u.Myr).to(u.km/u.s).value
-        (act,ang,n_vec,toy_aa,pars),loop2 = genfunc_3d.find_actions(w2, t/1000.,
+        w2[3:] = (w2[3:]*u.kpc/u.Myr).to(u.km/u.s).value
+        (act,ang,n_vec,toy_aa,pars),loop2 = genfunc_3d.find_actions(w2.T, t/1000.,
                                                                     N_matrix=N_max, ifloop=True)
     else:
-        (act,ang,n_vec,toy_aa,pars),loop2 = genfunc_3d.find_actions(w2, t,
+        (act,ang,n_vec,toy_aa,pars),loop2 = genfunc_3d.find_actions(w2.T, t,
                                                                     N_matrix=N_max, ifloop=True)
 
     actions = act[:3]
