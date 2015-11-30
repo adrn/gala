@@ -9,10 +9,11 @@ if not _ASTROPY_SETUP_:
     from . import coordinates
     from . import dynamics
     from . import integrate
-    from . import io
     from . import potential
+    from . import units
+    from . import util
 
-    from .potential.custom import stuff
+    from .potential.builtin.special import stuff
     exec(stuff)
 
     # Monkey-patch Quantity
