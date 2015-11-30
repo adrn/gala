@@ -7,6 +7,7 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
+import matplotlib.pyplot as pl
 import numpy as np
 from astropy import log as logger
 import astropy.units as u
@@ -15,6 +16,7 @@ import astropy.units as u
 from ..analyticactionangle import *
 from ...potential import IsochronePotential, HarmonicOscillatorPotential
 from ...units import galactic
+from ...util import assert_angles_allclose
 from .helpers import *
 
 class TestIsochrone(object):
@@ -23,45 +25,42 @@ class TestIsochrone(object):
         logger.info("======== Isochrone ========")
         self.N = 100
         np.random.seed(42)
-        x = np.random.uniform(-10., 10., size=(self.N,3))
-        v = np.random.uniform(-1., 1., size=(self.N,3)) / 33.
-        w0 = np.hstack((x,v))
+        x = np.random.uniform(-10., 10., size=(3,self.N))
+        v = np.random.uniform(-1., 1., size=(3,self.N)) / 33.
+        w0 = np.vstack((x,v))
 
         self.potential = IsochronePotential(units=galactic, m=1.E11, b=5.)
         self.t,self.w = self.potential.integrate_orbit(w0, dt=0.1, nsteps=10000)
         self.t = self.t[::10]
-        self.w = self.w[::10]
+        self.w = self.w[:,::10]
 
     def test(self):
         for n in range(self.N):
             logger.debug("Orbit {}".format(n))
 
-            x,v = self.w[:,n,:3],self.w[:,n,3:]
-            s_v = (v*u.kpc/u.Myr).to(u.km/u.s).value
-            s_w = np.hstack((x,s_v))
+            x,v = self.w[:3,:,n],self.w[3:,:,n]
             actions,angles,freqs = isochrone_xv_to_aa(x, v, self.potential)
 
             for i in range(3):
-                assert np.allclose(actions[1:,i], actions[0,i], rtol=1E-5)
+                assert np.allclose(actions[i,1:], actions[i,0], rtol=1E-5)
 
             # Compare to genfunc
+            s_v = (v*u.kpc/u.Myr).to(u.km/u.s).value
+            s_w = np.vstack((x,s_v))
             m = self.potential.parameters['m'] / 1E11
             b = self.potential.parameters['b']
-            aa = np.array([toy_potentials.angact_iso(w, params=(m,b)) for w in s_w])
+            aa = np.array([toy_potentials.angact_iso(s_w[:,i].T, params=(m,b)) for i in range(s_w.shape[1])])
             s_actions = (aa[:,:3]*u.km/u.s*u.kpc).decompose(galactic).value
             s_angles = aa[:,3:]
 
-            assert np.allclose(actions, s_actions, rtol=1E-8)
-            assert np.allclose(angles, s_angles, rtol=1E-8)
+            assert np.allclose(actions, s_actions.T, rtol=1E-8)
+            assert_angles_allclose(angles, s_angles.T, rtol=1E-8)
 
             # test roundtrip
             x2,v2 = isochrone_aa_to_xv(actions, angles, self.potential)
 
-            rel_err_x = np.abs((x2 - x) / x)
-            rel_err_v = np.abs((v2 - v) / v)
-
-            assert rel_err_x.max() < (1E-8)
-            assert rel_err_v.max() < (1E-8)
+            assert np.allclose(x, x2, rtol=1E-8)
+            assert np.allclose(v, v2, rtol=1E-8)
 
 class TestHarmonicOscillator(object):
 
@@ -69,14 +68,14 @@ class TestHarmonicOscillator(object):
         logger.info("======== Harmonic Oscillator ========")
         self.N = 100
         np.random.seed(42)
-        x = np.random.uniform(-10., 10., size=(self.N,3))
-        v = np.random.uniform(-1., 1., size=(self.N,3)) / 33.
-        w0 = np.hstack((x,v))
+        x = np.random.uniform(-10., 10., size=(3,self.N))
+        v = np.random.uniform(-1., 1., size=(3,self.N)) / 33.
+        w0 = np.vstack((x,v))
 
         self.potential = HarmonicOscillatorPotential(omega=np.array([0.013, 0.02, 0.005]), units=galactic)
         self.t,self.w = self.potential.integrate_orbit(w0, dt=0.1, nsteps=10000)
         self.t = self.t[::10]
-        self.w = self.w[::10]
+        self.w = self.w[:,::10]
 
     def test(self):
         """
@@ -86,30 +85,22 @@ class TestHarmonicOscillator(object):
         for n in range(self.N):
             logger.debug("Orbit {}".format(n))
 
-            x,v = self.w[:,n,:3],self.w[:,n,3:]
-            ww = self.w[:,n]
+            x,v = self.w[:3,:,n],self.w[3:,:,n]
             actions,angles = harmonic_oscillator_xv_to_aa(x, v, self.potential)
 
             for i in range(3):
-                assert np.allclose(actions[1:,i], actions[0,i], rtol=1E-5)
+                assert np.allclose(actions[i,1:], actions[i,0], rtol=1E-5)
 
             # Compare to genfunc
+            s_w = np.vstack((x,v))
             omega = self.potential.parameters['omega']
-            aa = np.array([toy_potentials.angact_ho(w, omega=omega) for w in ww])
+            aa = np.array([toy_potentials.angact_ho(s_w[:,i].T, omega=omega) for i in range(s_w.shape[1])])
             s_actions = aa[:,:3]
             s_angles = aa[:,3:]
 
-            assert np.allclose(actions, s_actions, rtol=1E-8)
-            assert np.allclose(angles, s_angles, rtol=1E-8)
+            assert np.allclose(actions, s_actions.T, rtol=1E-8)
+            assert_angles_allclose(angles, s_angles.T, rtol=1E-8)
 
             # test roundtrip
             # x2,v2 = harmonic_oscillator_aa_to_xv(actions, angles, self.potential)
-
-            # TODO: figure out transform back
-            continue
-
-            rel_err_x = np.abs((x2 - x) / x)
-            rel_err_v = np.abs((v2 - v) / v)
-
-            assert rel_err_x.max() < (1E-8)
-            assert rel_err_v.max() < (1E-8)
+            # TODO: transform back??
