@@ -92,15 +92,15 @@ def test_scaling(tmpdir, Integrator, integrate_func):
             py_t,py_w = integrator.run(py_w0, dt=dt, nsteps=nsteps)
             py_times.append(time.time() - t0)
 
-        pl.loglog(x, cy_times, linestyle='-', lw=2., c=c, marker=None,
-                  label="cy: {} orbits".format(nparticles))
-        pl.loglog(x, py_times, linestyle='--', lw=2., c=c, marker=None,
-                  label="py: {} orbits".format(nparticles))
+    #     pl.loglog(x, cy_times, linestyle='-', lw=2., c=c, marker=None,
+    #               label="cy: {} orbits".format(nparticles))
+    #     pl.loglog(x, py_times, linestyle='--', lw=2., c=c, marker=None,
+    #               label="py: {} orbits".format(nparticles))
 
-    pl.title(Integrator.__name__)
-    pl.legend(loc='upper left')
-    pl.xlim(90,30000)
-    pl.xlabel("N steps")
-    pl.tight_layout()
-    # pl.show()
-    pl.savefig(os.path.join(tmpdir, "integrate-scaling.png"), dpi=300)
+    # pl.title(Integrator.__name__)
+    # pl.legend(loc='upper left')
+    # pl.xlim(90,30000)
+    # pl.xlabel("N steps")
+    # pl.tight_layout()
+    # # pl.show()
+    # pl.savefig(os.path.join(tmpdir, "integrate-scaling.png"), dpi=300)
