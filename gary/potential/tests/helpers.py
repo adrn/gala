@@ -79,14 +79,40 @@ class PotentialTestBase(object):
             assert g.shape == shp
 
     def test_repr(self):
-        pass
+        pot_repr = repr(self.potential)
+        if self.potential.units is None:
+            assert "dimensionless" in pot_repr
+        else:
+            assert str(self.potential.units['length']) in pot_repr
+            assert str(self.potential.units['time']) in pot_repr
+            assert str(self.potential.units['mass']) in pot_repr
+
+        for k in self.potential.parameters.keys():
+            assert "{}=".format(k) in pot_repr
 
     def test_energy(self):
-        pass
+        for arr,shp in zip(self.w0s, self._valu_return_shapes):
+            E = self.potential.total_energy(arr[:self.ndim], arr[self.ndim:])
+            assert E.shape == shp
 
     def test_plot(self):
-        # TODO
-        pass
+        p = self.potential
+        f = p.plot_contours(grid=(np.linspace(-10., 10., 100), 0., 0.),
+                            labels=["X"])
+        # f.suptitle("slice off from 0., won't have cusp")
+        # f.savefig(os.path.join(plot_path, "contour_x.png"))
+
+        f = p.plot_contours(grid=(np.linspace(-10., 10., 100),
+                                  np.linspace(-10., 10., 100),
+                                  0.),
+                            cmap='Blues')
+        # f.savefig(os.path.join(plot_path, "contour_xy.png"))
+
+        f = p.plot_contours(grid=(np.linspace(-10., 10., 100),
+                                  1.,
+                                  np.linspace(-10., 10., 100)),
+                            cmap='Blues', labels=["X", "Z"])
+        # f.savefig(os.path.join(plot_path, "contour_xz.png"))
 
     def test_save_load(self, tmpdir):
         """

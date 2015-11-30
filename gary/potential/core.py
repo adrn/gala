@@ -446,6 +446,7 @@ class PotentialBase(object):
         v : array_like, numeric
             Velocity.
         """
+        v = atleast_2d(v, insert_axis=1)
         return self.value(x) + 0.5*np.sum(v**2, axis=0)
 
     def save(self, f):
