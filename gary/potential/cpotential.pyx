@@ -37,8 +37,9 @@ class CPotentialBase(PotentialBase):
     """
 
     def _value(self, q, t=0.):
-        q = np.ascontiguousarray(q.T)
-        return self.c_instance.value(q, t=t)
+        sh = q.shape
+        q = np.ascontiguousarray(q.reshape[sh[0],np.prod(sh[1:])].T)
+        return self.c_instance.value(q, t=t).reshape(sh[1:])
 
     def _gradient(self, q, t=0.):
         q = np.ascontiguousarray(q.T)
