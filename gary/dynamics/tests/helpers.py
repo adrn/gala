@@ -131,4 +131,4 @@ def isotropic_w0(N=100):
     vtheta = vtheta.decompose(galactic).value
     v = physicsspherical_to_cartesian(rep, [vr,vphi,vtheta]*u.dimensionless_unscaled).T.value
 
-    return np.hstack((x,v))
+    return np.hstack((x,v)).T
