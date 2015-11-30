@@ -45,7 +45,7 @@ class PotentialTestBase(object):
     def test_gradient(self):
         pass
 
-    @pytest.mark.skipif(True)
+    @pytest.mark.skipif(True, reason="not implemented")
     def test_hessian(self):
         pass
 
@@ -103,10 +103,10 @@ class PotentialTestBase(object):
 
     def test_pickle(self, tmpdir):
         fn = str(tmpdir.join("{}.pickle".format(self.name)))
-        with open(fn, "w") as f:
+        with open(fn, "wb") as f:
             pickle.dump(self.potential, f)
 
-        with open(fn) as f:
+        with open(fn, "rb") as f:
             p = pickle.load(f)
 
         p.value(self.w0[:self.w0.size//2])
