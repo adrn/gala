@@ -18,25 +18,26 @@ from six.moves import cPickle as pickle
 from ..io import load
 from ...units import UnitSystem
 
-def partial_derivative(func, point, ix=0, **kwargs):
+def partial_derivative(func, point, dim_ix=0, **kwargs):
     xyz = np.array(point)
     def wraps(a):
-        xyz[ix] = a
+        xyz[dim_ix] = a
         return func(xyz)
-    return derivative(wraps, point[ix], **kwargs)
+    return derivative(wraps, point[dim_ix], **kwargs)
 
 class PotentialTestBase(object):
+    name = None
+    potential = None # MUST SET THIS
 
-    def setup(self, potential, name=None):
-        self.p = potential
-        if name is None:
-            self.name = potential.__class__.__name__
-        else:
-            self.name = name
-        print("Testing potential: {}".format(self.name))
+    @classmethod
+    def setup_class(cls):
+        if cls.name is None:
+            cls.name = cls.__name__[4:] # remove Test
+        print("Testing potential: {}".format(cls.name))
+        cls.w0 = np.array(cls.w0)
 
     def test_unitsystem(self):
-        assert isinstance(self.potential.units, UnitSystem)
+        assert isinstance(self.potential.units, UnitSystem) or self.potential.units is None
 
     def test_value(self):
         pass
@@ -68,7 +69,7 @@ class PotentialTestBase(object):
         fn = str(tmpdir.join("{}.yml".format(self.name)))
         self.potential.save(fn)
         p = load(fn)
-        p.value([100,0,0.])
+        p.value(self.w0[:self.w0.size//2])
 
     def test_numerical_gradient_vs_gradient(self):
         """
@@ -77,16 +78,18 @@ class PotentialTestBase(object):
         """
 
         dx = 1E-6
-        max_x = np.sqrt(np.sum([x**2 for x in self.w0[:3]]))
+        max_x = np.sqrt(np.sum([x**2 for x in self.w0[:self.w0.size//2]]))
 
         grid = np.linspace(-max_x,max_x,8)
         grid = grid[grid != 0.]
-        xyz = np.vstack(map(np.ravel, np.meshgrid(grid,grid,grid))).T
+        grids = [grid for i in range(self.w0.size//2)]
+        xyz = np.vstack(map(np.ravel, np.meshgrid(*grids)))
 
         num_grad = np.zeros_like(xyz)
-        for i in range(xyz.shape[0]):
-            num_grad[i] = np.array([partial_derivative(self.potential.value, xyz[i], ix=ix, n=1, dx=dx, order=5) for ix in range(3)]).T
+        for i in range(xyz.shape[1]):
+            num_grad[:,i] = np.array([partial_derivative(self.potential.value, xyz[:,i], dim_ix=dim_ix, n=1, dx=dx, order=5) for dim_ix in range(self.w0.size//2)])
         grad = self.potential.gradient(xyz)
+
         np.testing.assert_allclose(num_grad, grad, rtol=1E-5)
 
     def test_orbit_integration(self):
@@ -106,4 +109,4 @@ class PotentialTestBase(object):
         with open(fn) as f:
             p = pickle.load(f)
 
-        p.value([100,0,0.])
+        p.value(self.w0[:self.w0.size//2])
