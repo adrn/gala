@@ -14,7 +14,7 @@ import pytest
 
 # Project
 from ..orbit import *
-from ...potential import HernquistPotential
+from ...potential import HernquistPotential, LogarithmicPotential
 from ...units import galactic, solarsystem
 
 def make_known_orbit(tmpdir, x, vx, potential, name):
@@ -26,37 +26,35 @@ def make_known_orbit(tmpdir, x, vx, potential, name):
     w = [x,y,0.,vx,vy,0.]
     t,ws = potential.integrate_orbit(w, dt=0.05, nsteps=10000)
 
-    fig,ax = pl.subplots(1,1)
-    ax.plot(ws[0], ws[1])
+    # fig,ax = pl.subplots(1,1)
+    # ax.plot(ws[0], ws[1])
     # fig = plot_orbits(ws, linestyle='none', alpha=0.1)
-    fig.savefig(os.path.join(str(tmpdir), "{}.png".format(name)))
-    logger.debug(os.path.join(str(tmpdir), "{}.png".format(name)))
+    # fig.savefig(os.path.join(str(tmpdir), "{}.png".format(name)))
+    # logger.debug(os.path.join(str(tmpdir), "{}.png".format(name)))
 
-    return ws
+    return CartesianOrbit.from_w(ws, units=galactic)
 
-def test_classify_orbit(tmpdir):
+def test_circulation(tmpdir):
 
     potential = LogarithmicPotential(v_c=1., r_h=0.14, q1=1., q2=0.9, q3=1.,
                                      units=galactic)
 
     # individual
     w1 = make_known_orbit(tmpdir, 0.5, 0., potential, "loop")
-    circ = classify_orbit(w1)
+    circ = w1.circulation()
     assert circ.shape == (3,)
     assert circ.sum() == 1
 
     w2 = make_known_orbit(tmpdir, 0., 1.5, potential, "box")
-    circ = classify_orbit(w2)
+    circ = w2.circulation()
     assert circ.shape == (3,)
     assert circ.sum() == 0
 
     # try also for both, together
-    w3 = np.stack((w1,w2),-1)
-    circ = classify_orbit(w3)
+    w3 = combine(w1,w2)
+    circ = w3.circulation()
     assert circ.shape == (3,2)
     assert np.allclose(circ.sum(axis=0), [1,0])
-
-# ----------------------------------------------------------------------------
 
 def test_align_circulation_single():
 
@@ -286,3 +284,19 @@ def test_angular_momentum():
     L = o.angular_momentum()
     assert L.unit == (o.vel.unit*o.pos.unit)
     assert L.shape == o.pos.shape
+
+def test_combine():
+
+    o1 = CartesianOrbit.from_w(np.random.random(size=6), units=galactic)
+    o2 = CartesianOrbit.from_w(np.random.random(size=6), units=galactic)
+    o = combine(o1, o2)
+    assert o.pos.shape == (3,1,2)
+    assert o.vel.shape == (3,1,2)
+
+    o1 = CartesianOrbit.from_w(np.random.random(size=(6,11,1)), units=galactic)
+    o2 = CartesianOrbit.from_w(np.random.random(size=(6,11,10)), units=galactic)
+    o = combine(o1, o2)
+    assert o.pos.shape == (3,11,11)
+    assert o.vel.shape == (3,11,11)
+
+

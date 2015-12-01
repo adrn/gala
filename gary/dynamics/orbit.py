@@ -254,7 +254,7 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         circ = np.ones((ndim,norbits))
         for ii in range(ndim):
             cnd = (np.sign(L0[ii]) != np.sign(L[ii,1:])) | \
-                  (np.abs(L[ii,1:]) < 1E-13)
+                  (np.abs(L[ii,1:]).value < 1E-13)
             ix = np.atleast_1d(np.any(cnd, axis=0))
             circ[ii,ix] = 0
 
@@ -369,8 +369,9 @@ def combine(*args):
             if x.ndim != ndim:
                 raise ValueError("All objects must have the same dimensionality.")
 
-            if not np.allclose(x.t, time):
-                raise ValueError("All orbits must have the same time array.")
+            # TODO: logic here
+            # if time is not None or x.t is not None and not np.all(x.t, time):
+                # raise ValueError("All orbits must have the same time array.")
 
             if x.potential != pot:
                 raise ValueError("All orbits must have the same Potential object.")
