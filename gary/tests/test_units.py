@@ -32,6 +32,8 @@ def test_create():
     with pytest.raises(ValueError):
         UnitSystem(u.Myr, u.radian, u.Msun)
 
+    usys = UnitSystem((u.kpc, u.Myr, u.radian, u.Msun))
+
 def test_constants():
     usys = UnitSystem(u.kpc, u.Myr, u.radian, u.Msun)
     assert np.allclose(usys.get_constant('G'), G.decompose([u.kpc, u.Myr, u.radian, u.Msun]).value)
