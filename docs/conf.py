@@ -86,6 +86,10 @@ copyright = '{0}, {1}'.format(
 __import__(setup_cfg['package_name'])
 package = sys.modules[setup_cfg['package_name']]
 
+# TODO: Use the astropy style when building docs
+plot_rcparams = package.mpl_style.mpl_style
+plot_apply_rcparams = True
+
 # The short X.Y version.
 version = package.__version__.split('-', 1)[0]
 # The full version, including alpha/beta/rc tags.
@@ -94,7 +98,6 @@ release = package.__version__
 
 # -- Options for HTML output ---------------------------------------------------
 
-# A NOTE ON HTML THEMES
 # A NOTE ON HTML THEMES
 html_theme_options = {
     'logotext1': '',  # white,  semi-bold
