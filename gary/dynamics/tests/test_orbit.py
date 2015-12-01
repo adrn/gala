@@ -260,6 +260,22 @@ def test_angular_momentum():
     assert L.unit == (o.vel.unit*o.pos.unit)
     assert L.shape == o.pos.shape
 
+def test_estimate_period():
+    ntimes = 16384
+    for true_T_R in [1., 2., 4.123]:
+        t = np.linspace(0,10.,ntimes)
+        R = 0.25*np.sin(2*np.pi/true_T_R * t) + 1.
+        phi = (2*np.pi * t) % (2*np.pi)
+
+        pos = np.zeros((3,ntimes))
+        pos[0] = R*np.cos(phi)
+        pos[1] = R*np.sin(phi)
+        vel = np.zeros_like(pos)
+
+        orb = CartesianOrbit(pos*u.kpc, vel*u.kpc/u.Myr, t=t*u.Gyr)
+        T = orb.estimate_period()
+        assert np.allclose(T.value, true_T_R, rtol=1E-3)
+
 def test_combine():
 
     o1 = CartesianOrbit.from_w(np.random.random(size=6), units=galactic)
