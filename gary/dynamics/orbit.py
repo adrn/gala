@@ -103,6 +103,13 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         return self.__class__(pos=self.pos[_slyce], vel=self.vel[_slyce],
                               potential=self.potential, **kw)
 
+    @property
+    def norbits(self):
+        if self.pos.ndim < 3:
+            return 1
+        else:
+            return self.pos.shape[2]
+
     def w(self, units=None):
         """
         This returns a single array containing the phase-space positions.
@@ -200,17 +207,16 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
                              " Specify a time array when creating this object.")
 
         if radial:
-            r = np.sqrt(np.sum(self.pos**2, axis=0))
-            T = [peak_to_peak_period(self.t.value, r[i]) for i in range(r.shape[0])]
-            T = T * self.t.unit
+            r = np.sqrt(np.sum(self.pos**2, axis=0)).value
+            if self.norbits == 1:
+                T = peak_to_peak_period(self.t.value, r)
+                T = T * self.t.unit
+            else:
+                T = [peak_to_peak_period(self.t.value, r[:,n]) for n in range(r.shape[1])]
+                T = T * self.t.unit
 
         else:
-            # TODO: this is broken
-            T = np.zeros(self.pos.shape[[]])
-            for i in range(self.pos.shape[1]):
-                for k in range(self.pos.shape[-1]):
-                    T[i,k] = peak_to_peak_period(self.t.value, self.pos[:,i,k])
-            T = T * self.t.unit
+            raise NotImplementedError("sorry 'bout that...")
 
         return T
 
