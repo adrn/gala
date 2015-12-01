@@ -8,7 +8,6 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 import os
-import logging
 
 # Third-party
 import astropy.units as u
@@ -18,33 +17,30 @@ from astropy import log as logger
 
 # Project
 from ..core import *
-# from ..plot import plot_orbits
 from ...potential import LogarithmicPotential
 from ...units import galactic
-
-logger.setLevel(logging.DEBUG)
+from ...util import assert_quantities_allclose
 
 # ----------------------------------------------------------------------------
 
 def test_angular_momentum():
 
-    # single
-    assert np.allclose(angular_momentum([1.,0.,0.],[0.,0.,1.]),
-                       [0., -1, 0])
-    assert np.allclose(angular_momentum([1.,0.,0.],[0.,1.,0.]),
-                       [0., 0, 1])
-    assert np.allclose(angular_momentum([0.,1.,0.],[0.,0.,1.]),
-                       [1., 0, 0])
+    w = CartesianPhaseSpacePosition([1.,0.,0.], [0.,0.,1.])
+    assert np.allclose(np.squeeze(w.angular_momentum()), [0., -1, 0])
 
-    q = [1.,0,0]*u.kpc
-    p = [0,200.,0]*u.pc/u.Myr
-    np.testing.assert_allclose(angular_momentum(q,p).to(u.kpc**2/u.Myr),
-                               [0,0,0.2]*u.kpc**2/u.Myr)
+    w = CartesianPhaseSpacePosition([1.,0.,0.], [0.,1.,0.])
+    assert np.allclose(np.squeeze(w.angular_momentum()), [0., 0, 1])
+
+    w = CartesianPhaseSpacePosition([0.,1.,0.],[0.,0.,1.])
+    assert np.allclose(np.squeeze(w.angular_momentum()), [1., 0, 0])
+
+    w = CartesianPhaseSpacePosition([1.,0,0]*u.kpc, [0.,200.,0]*u.pc/u.Myr)
+    assert_quantities_allclose(np.squeeze(w.angular_momentum()), [0,0,0.2]*u.kpc**2/u.Myr)
 
     # multiple - known
     q = np.array([[1.,0.,0.],[1.,0.,0.],[0,1.,0.]]).T
     p = np.array([[0,0,1.],[0,1.,0.],[0,0,1]]).T
-    L = angular_momentum(q,p)
+    L = CartesianPhaseSpacePosition(q, p).angular_momentum()
     true_L = np.array([[0., -1, 0],[0., 0, 1],[1., 0, 0]]).T
     assert L.shape == (3,3)
     assert np.allclose(L, true_L)
@@ -52,7 +48,7 @@ def test_angular_momentum():
     # multiple - random
     q = np.random.uniform(size=(3,128))
     p = np.random.uniform(size=(3,128))
-    L = angular_momentum(q,p)
+    L = CartesianPhaseSpacePosition(q, p).angular_momentum()
     assert L.shape == (3,128)
 
 # ----------------------------------------------------------------------------
