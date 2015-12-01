@@ -17,6 +17,7 @@ import numpy as np
 from .core import angular_momentum, peak_to_peak_period
 from ..coordinates import velocity_transforms as vtrans
 from ..coordinates import vgal_to_hel
+from ..units import UnitSystem
 from ..util import inherit_docs, atleast_2d
 
 __all__ = ['CartesianPhaseSpacePosition', 'CartesianOrbit']
@@ -151,6 +152,60 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
 
         v = vgal_to_hel(c, self.vel, **kw)
         return c, v
+
+    # Pseudo-backwards compatibility
+    def w(self, units=None):
+        """
+        This returns a single array containing the phase-space positions.
+
+        Parameters
+        ----------
+        units : `gary.units.UnitSystem` (optional)
+            TODO
+
+        Returns
+        -------
+        w : `~numpy.ndarray`
+            TODO
+
+        """
+        if self.pos.unit == uno and self.vel.unit == uno:
+            units = [uno]
+
+        if units is None:
+            x = self.pos.value
+            v = self.vel.value
+
+        else:
+            x = self.pos.decompose(units).value
+            v = self.vel.decompose(units).value
+
+        return np.vstack((x,v))
+
+    @classmethod
+    def from_w(cls, w, units, **kwargs):
+        """
+        Create a
+
+        Parameters
+        ----------
+        units : `gary.units.UnitSystem` (optional)
+            TODO
+        **kwargs
+            Any aditional keyword arguments passed to the class initializer.
+
+        Returns
+        -------
+        TODO...
+
+        """
+        units = UnitSystem(units)
+
+        ndim = w.shape[0]//2
+        pos = w[:ndim]*units['length']
+        vel = w[ndim:]*units['length']/units['time'] # velocity in w is from _core_units
+
+        return cls(pos=pos, vel=vel, **kwargs)
 
     # ------------------------------------------------------------------------
     # Computed dynamical quantities
