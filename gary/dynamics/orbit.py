@@ -210,13 +210,12 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
     # ------------------------------------------------------------------------
     # Computed dynamical quantities
     # ------------------------------------------------------------------------
-    def kinetic_energy(self, potential):
+    def kinetic_energy(self):
         """
         The kinetic energy. This is currently *not* cached and is
         computed each time the attribute is accessed.
         """
-        pass
-        # TODO: waiting until I overhaul how potentials handle units...
+        return 0.5*np.sum(self.vel**2, axis=0)
 
     def potential_energy(self, potential):
         """
@@ -227,16 +226,18 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
             raise ValueError("To compute the potential energy, a potential"
                              " object must be provided when creating the"
                              " orbit object!")
-        pass
-        # TODO: waiting until I overhaul how potentials handle units...
+
+        # TODO: will I overhaul how potentials handle units?
+        q = self.pos.decompose(self.potential.units).value
+        _unit = (self.potential.units['length']/self.potential.units['time'])**2
+        return self.potential.value(q)*_unit
 
     def energy(self, potential):
         """
         The total energy (kinetic + potential). This is currently *not*
         cached and is computed each time the attribute is accessed.
         """
-        return self.kinetic_energy + self.potential_energy
-        # TODO: waiting until I overhaul how potentials handle units...
+        return self.kinetic_energy() + self.potential_energy(potential)
 
     @property
     def angular_momentum(self):
@@ -378,15 +379,13 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
     # ------------------------------------------------------------------------
     # Computed dynamical quantities
     # ------------------------------------------------------------------------
-    @property
     def kinetic_energy(self):
         """
         The kinetic energy. This is currently *not* cached and is
         computed each time the attribute is accessed.
         """
-        return super(CartesianOrbit,self).kinetic_energy(self.potential)
+        return super(CartesianOrbit,self).kinetic_energy()
 
-    @property
     def potential_energy(self):
         """
         The potential energy. This is currently *not* cached and is
@@ -398,15 +397,14 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
                              " orbit object!")
         return super(CartesianOrbit,self).potential_energy(self.potential)
 
-    @property
     def energy(self):
         """
         The total energy (kinetic + potential). This is currently *not*
         cached and is computed each time the attribute is accessed.
         """
-        return super(CartesianOrbit,self).energy(self.potential)
+        return self.kinetic_energy() + self.potential_energy()
 
-    @property
+
     def angular_momentum(self):
         """
         The angular momentum. This is currently *not* cached and is
