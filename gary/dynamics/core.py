@@ -14,48 +14,8 @@ from scipy.signal import argrelmax, argrelmin
 # Project
 from ..util import atleast_2d
 
-__all__ = ['angular_momentum', 'classify_orbit', 'align_circulation_with_z',
+__all__ = ['classify_orbit', 'align_circulation_with_z',
            'check_for_primes', 'peak_to_peak_period']
-
-def angular_momentum(q, p):
-    r"""
-    Compute the angular momentum vector(s) of a single or array of positions
-    and conjugate momenta, ``q`` and ``p``.
-
-    .. math::
-
-        \boldsymbol{L} = \boldsymbol{q} \times \boldsymbol{p}
-
-    See :ref:`shape-conventions` for more information about the shapes of
-    input and output objects.
-
-    Parameters
-    ----------
-    q : array_like, :class:`~astropy.units.Quantity`
-        Array of positions.
-    p : array_like, :class:`~astropy.units.Quantity`
-        Array of momenta, or, velocities if working in per-mass units.
-
-    Returns
-    -------
-    L : :class:`numpy.ndarray`, :class:`~astropy.units.Quantity`
-        Array of angular momentum vectors.
-
-    Examples
-    --------
-
-        >>> import numpy as np
-        >>> import astropy.units as u
-        >>> q = np.array([1., 0, 0]) * u.au
-        >>> p = np.array([0, 2*np.pi, 0]) * u.au/u.yr
-        >>> angular_momentum(q, p)
-        <Quantity [ 0.        , 0.        , 6.28318531] AU2 / yr>
-
-    """
-    try:
-        return np.cross(q,p,axis=0) * q.unit * p.unit
-    except AttributeError:  # q,p are just array's
-        return np.cross(q,p,axis=0)
 
 def classify_orbit(w):
     """

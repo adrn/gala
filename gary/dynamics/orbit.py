@@ -14,7 +14,7 @@ import astropy.coordinates as coord
 import numpy as np
 
 # Project
-from .core import angular_momentum, peak_to_peak_period
+from .core import peak_to_peak_period
 from ..coordinates import velocity_transforms as vtrans
 from ..coordinates import vgal_to_hel
 from ..units import UnitSystem
@@ -240,9 +240,32 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         return self.kinetic_energy() + self.potential_energy(potential)
 
     def angular_momentum(self):
-        """
-        The angular momentum. This is currently *not* cached and is
-        computed each time the attribute is accessed.
+        r"""
+        Compute the angular momentum for the phase-space positions contained
+        in this object::
+
+        .. math::
+
+            \boldsymbol{L} = \boldsymbol{q} \times \boldsymbol{p}
+
+        See :ref:`shape-conventions` for more information about the shapes of
+        input and output objects.
+
+        Returns
+        -------
+        L : :class:`~astropy.units.Quantity`
+            Array of angular momentum vectors.
+
+        Examples
+        --------
+
+            >>> import numpy as np
+            >>> import astropy.units as u
+            >>> pos = np.array([1., 0, 0]) * u.au
+            >>> vel = np.array([0, 2*np.pi, 0]) * u.au/u.yr
+            >>> orb = CartesianOrbit(pos, vel)
+            >>> orb.angular_momentum()
+            <Quantity [ 0.        , 0.        , 6.28318531] AU2 / yr>
         """
         return np.cross(self.pos.value, self.vel.value, axis=0) * self.pos.unit * self.vel.unit
 
