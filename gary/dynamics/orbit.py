@@ -15,7 +15,7 @@ import numpy as np
 # Project
 from .core import CartesianPhaseSpacePosition
 from .util import peak_to_peak_period
-from ..util import inherit_docs
+from ..util import inherit_docs, atleast_2d
 
 __all__ = ['CartesianOrbit', 'combine']
 
@@ -137,7 +137,10 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
 
         x = self.pos.decompose(units).value
         v = self.vel.decompose(units).value
-        return np.vstack((x,v))
+        w = np.vstack((x,v))
+        if w.ndim < 3:
+            w = w[...,np.newaxis] # one orbit
+        return w
 
     # ------------------------------------------------------------------------
     # Computed dynamical quantities
@@ -222,6 +225,8 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         point. If a box orbit, all integers will be 0. A 1 indicates
         circulation about the corresponding axis.
 
+        TODO: clockwise / counterclockwise?
+
         For example, for a single 3D orbit:
 
         - Box and boxlet = [0,0,0]
@@ -267,63 +272,62 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
     def align_circulation_with_z(self, circulation=None):
         """
         If the input orbit is a tube orbit, this function aligns the circulation
-        axis with the z axis.
-
-        TODO: update this
+        axis with the z axis and returns a copy.
 
         Parameters
         ----------
-        w : array_like
-            Array of phase-space positions. Accepts 2D or 3D arrays. If 2D, assumes
-            this is a single orbit. If 3D, assumes that this is a collection of orbits.
-            See :ref:`shape-conventions` for more information about shapes.
-        loop_bit : array_like
-            Array of bits that specify the axis about which the orbit circulates.
-            See the documentation for `~gary.dynamics.classify_orbit`.
+        circulation : array_like (optional)
+            Array of bits that specify the axis about which the orbit circulates. If
+            not provided, will compute this using
+            :meth:`~gary.dynamics.CartesianOrbit.circulation`. See that method for
+            more information.
 
         Returns
         -------
-        new_w : :class:`~numpy.ndarray`
-            A copy of the input array with circulation aligned with the z axis.
+        orb : :class:`~gary.dynamics.CartesianOrbit`
+            A copy of the original orbit object with circulation aligned with the z axis.
         """
 
         if circulation is None:
             circulation = self.circulation()
+        circulation = atleast_2d(circulation, insert_axis=1)
 
-        if (w.ndim-1) != loop_bit.ndim:
-            raise ValueError("Shape mismatch - input orbit array should have 1 more dimension "
-                             "than the input loop bit.")
+        if self.pos.ndim < 3:
+            pos = self.pos[...,np.newaxis]
+            vel = self.vel[...,np.newaxis]
+        else:
+            pos = self.pos
+            vel = self.vel
 
-        orig_shape = w.shape
-        if loop_bit.ndim == 1:
-            loop_bit = atleast_2d(loop_bit,insert_axis=1)
-            w = w[...,np.newaxis]
-        elif loop_bit.ndim > 2:
-            raise ValueError("Invalid shape for loop_bit: {}".format(loop_bit.shape))
+        if circulation.shape[0] != self.ndim or circulation.shape[1] != pos.shape[2]:
+            raise ValueError("Shape of 'circulation' array should match the shape"
+                             " of the position/velocity (minus the time axis).")
 
-        new_w = w.copy()
-        for ix in range(w.shape[-1]):
-            if loop_bit[2,ix] == 1 or np.all(loop_bit[:,ix] == 0):
+        new_pos = pos.copy()
+        new_vel = vel.copy()
+        for n in range(pos.shape[2]):
+            if circulation[2,n] == 1 or np.all(circulation[:,n] == 0):
                 # already circulating about z or box orbit
                 continue
 
-            if sum(loop_bit[:,ix]) > 1:
-                logger.warning("Circulation about x and y axes - are you sure "
+            if sum(circulation[:,n]) > 1:
+                logger.warning("Circulation about multiple axes - are you sure "
                                "the orbit has been integrated for long enough?")
 
-            if loop_bit[0,ix] == 1:
+            if circulation[0,n] == 1:
                 circ = 0
-            elif loop_bit[1,ix] == 1:
+            elif circulation[1,n] == 1:
                 circ = 1
             else:
                 raise RuntimeError("Should never get here...")
 
-            new_w[circ,:,ix] = w[2,:,ix]
-            new_w[2,:,ix] = w[circ,:,ix]
-            new_w[circ+3,:,ix] = w[5,:,ix]
-            new_w[5,:,ix] = w[circ+3,:,ix]
+            new_pos[circ,:,n] = pos[2,:,n]
+            new_pos[2,:,n] = pos[circ,:,n]
 
-        return new_w.reshape(orig_shape)
+            new_vel[circ,:,n] = vel[2,:,n]
+            new_vel[2,:,n] = vel[circ,:,n]
+
+        return self.__class__(pos=new_pos, vel=new_vel, t=self.t, potential=self.potential)
 
     def plot(self):
         raise NotImplementedError("sorry 'bout that...")
@@ -371,7 +375,7 @@ def combine(*args):
 
             # TODO: logic here
             # if time is not None or x.t is not None and not np.all(x.t, time):
-                # raise ValueError("All orbits must have the same time array.")
+                raise ValueError("All orbits must have the same time array.")
 
             if x.potential != pot:
                 raise ValueError("All orbits must have the same Potential object.")
@@ -391,5 +395,3 @@ def combine(*args):
     all_vel = np.dstack(all_vel)*vel_unit
 
     return cls(pos=all_pos, vel=all_vel)
-
-

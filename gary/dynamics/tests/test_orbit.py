@@ -56,50 +56,57 @@ def test_circulation(tmpdir):
     assert circ.shape == (3,2)
     assert np.allclose(circ.sum(axis=0), [1,0])
 
-def test_align_circulation_single():
+def test_align_circulation():
 
-    potential = LogarithmicPotential(v_c=1., r_h=0.14, q1=1., q2=0.9, q3=1.,
-                                     units=galactic)
-    w0 = np.array([[0.,1.,0.,0.,0.,0.5],  # loop around x axis
-                   [1.,0.,0.,0.,0.,0.5],  # loop around y axis
-                   [1.,0.,0.,0.,0.5,0.],  # loop around z axis
-                   [0.8,0.4,0.,0.,0.1,0.]]).T  # box
+    t = np.linspace(0,100,1024)
+    w = np.zeros((6,1024,4))
 
-    t,w = potential.integrate_orbit(w0, dt=0.05, nsteps=10000)
+    # loop around x axis
+    w[1,:,0] = np.cos(t)
+    w[2,:,0] = np.sin(t)
+    w[4,:,0] = -np.sin(t)
+    w[5,:,0] = np.cos(t)
 
+    # loop around y axis
+    w[0,:,1] = -np.cos(t)
+    w[2,:,1] = np.sin(t)
+    w[3,:,1] = np.sin(t)
+    w[5,:,1] = np.cos(t)
+
+    # loop around z axis
+    w[0,:,2] = np.cos(t)
+    w[1,:,2] = np.sin(t)
+    w[3,:,2] = -np.sin(t)
+    w[4,:,2] = np.cos(t)
+
+    # box
+    w[0,:,3] = np.cos(t)
+    w[1,:,3] = -np.cos(0.5*t)
+    w[2,:,3] = np.cos(0.25*t)
+    w[3,:,3] = -np.sin(t)
+    w[4,:,3] = 0.5*np.sin(0.5*t)
+    w[5,:,3] = -0.25*np.sin(0.25*t)
+
+    # First, individually
     for i in range(w.shape[2]):
-        circ = classify_orbit(w[...,i])
-        new_w = align_circulation_with_z(w[...,i], circ)
-        new_circ = classify_orbit(new_w)
+        orb = CartesianOrbit.from_w(w[...,i], units=galactic)
+        new_orb = orb.align_circulation_with_z()
+        circ = new_orb.circulation()
 
         if i == 3:
-            assert np.sum(new_circ) == 0
+            assert np.sum(circ) == 0
         else:
-            assert new_circ[2] == 1.
+            assert circ[2] == 1.
 
-def test_align_circulation_many(tmpdir):
-
-    potential = LogarithmicPotential(v_c=1., r_h=0.14, q1=1., q2=0.9, q3=1.,
-                                     units=galactic)
-    w0 = np.array([[0.,1.,0.,0.,0.,0.5],  # loop around x axis
-                   [1.,0.,0.,0.,0.,0.5],  # loop around y axis
-                   [1.,0.,0.,0.,0.5,0.],  # loop around z axis
-                   [0.8,0.4,0.,0.,0.1,0.]]).T  # box
-    names = ['xloop', 'yloop', 'zloop', 'box']
-
-    t,w = potential.integrate_orbit(w0, dt=0.05, nsteps=10000)
-    # fig = plot_orbits(w, linestyle='none', alpha=0.1)
-    # fig.savefig(os.path.join(str(tmpdir), "align_circulation_orbits_init.png"))
-
-    circ = classify_orbit(w)
+    # all together now
+    orb = CartesianOrbit.from_w(w, units=galactic)
+    circ = orb.circulation()
     assert circ.shape == (3,4)
 
-    new_w = align_circulation_with_z(w, circ)
-    # fig = plot_orbits(new_w, linestyle='none', alpha=0.1)
-    # fig.savefig(os.path.join(str(tmpdir), "align_circulation_orbits_post.png"))
-
-    new_circ = classify_orbit(new_w)
+    new_orb = orb.align_circulation_with_z()
+    new_circ = new_orb.circulation()
     assert np.all(new_circ[2,:3] == 1.)
+    assert np.all(new_circ[:,3] == 0.)
 
 def test_peak_to_peak_period():
     ntimes = 16384
@@ -234,7 +241,7 @@ def test_w():
     v = np.random.random(size=(3,10))
     o = CartesianOrbit(pos=x, vel=v)
     w = o.w()
-    assert w.shape == (6,10)
+    assert w.shape == (6,10,1)
 
     # simple / with units
     x = np.random.random(size=(3,10))*u.kpc
