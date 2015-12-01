@@ -57,6 +57,11 @@ class UnitSystem(object):
         self._required_physical_types = ['length', 'time', 'mass', 'angle']
         self._core_units = []
 
+        if isinstance(units, UnitSystem):
+            self._registry = units._registry.copy()
+            self._core_units = units._core_units
+            return
+
         if len(args) > 0:
             units = (units,) + tuple(args)
 
