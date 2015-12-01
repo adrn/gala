@@ -14,6 +14,13 @@ velocities between various astronomical coordinate frames and systems.
 This subpackage also provides :mod:`astropy.coordinates` frame classes
 for coordinate sytems defined by the Sagittarius and Orphan streams.
 
+For the examples below the following imports have already been executed::
+
+    import numpy as np
+    import astropy.coordinates as coord
+    import astropy.units as u
+    import gary.coordinates as gc
+
 Getting Started
 ===============
 
@@ -38,14 +45,11 @@ For example, to convert a spherical, heliocentric velocity (proper motion and ra
 velocity) in an ICRS frame to a Galactocentric, cartesian velocity, we first have
 to define an Astropy coordinate to specify the position of the object::
 
-    >>> import astropy.coordinates as coord
-    >>> import astropy.units as u
     >>> c = coord.SkyCoord(ra=100.68458*u.deg, dec=41.26917*u.deg, distance=1.1*u.kpc)
 
 Then pass this object in to the heliocentric to galactocentric conversion
 function, :func:`~gary.coordinates.vhel_to_gal`::
 
-    >>> import gary.coordinates as gc
     >>> pm = [1.5, -1.7] * u.mas/u.yr
     >>> rv = 151.1 * u.km/u.s
     >>> gc.vhel_to_gal(c.icrs, pm=pm, rv=rv)
@@ -88,64 +92,16 @@ instead be :math:`(\mu_l\cos b, \mu_b)`::
 
 All of these functions also work on arrays of coordinates and velocities, e.g.::
 
-    >>> import numpy as np
     >>> xyz = coord.Galactocentric(np.random.uniform(-20,20,size=(3,10)) * u.kpc)
     >>> vxyz = np.random.uniform(-150,150,size=(3,10)) * u.km/u.s
     >>> gc.vgal_to_hel(xyz.transform_to(coord.ICRS), vxyz) # doctest: +SKIP
     ...
 
-Proper motion transformations
------------------------------
+.. toctree::
+   :maxdepth: 1
 
-Transforming between ICRS and Galactic proper motions is supported in Gary. To
-demonstrate, we again need to first define a coordinate for the object of
-interest::
-
-    >>> c = coord.SkyCoord(ra=100.68458*u.deg, dec=41.26917*u.deg)
-
-Now we define the proper motion as a :class:`~astropy.units.Quantity`, and pass
-in to the relevant transformation function. Here, we will transform from ICRS
-to Galactic::
-
-    >>> pm = [1.53, -2.1] * u.mas/u.yr
-    >>> gc.pm_icrs_to_gal(c, pm)
-    <Quantity [ 2.52366087, 0.61809041] mas / yr>
-
-Of course, these functions also work on arrays. The first axis of the input
-proper motion arrays should have length=2::
-
-    >>> ra = np.random.uniform(0,360,size=10) * u.degree
-    >>> dec = np.random.uniform(-90,90,size=10) * u.degree
-    >>> c = coord.SkyCoord(ra=ra, dec=dec)
-    >>> pm = np.random.uniform(-10,10,size=(2,10)) * u.mas/u.yr
-    >>> gc.pm_icrs_to_gal(c, pm) # doctest: +SKIP
-    ...
-
-Stellar Stream Coordinate Frames
---------------------------------
-
-Also included in this subpackage are Astropy coordinate frame classes for
-transforming to Sagittarius and Orphan stream coordinates (as defined in the
-references below). These classes behave like the built-in astropy coordinates
-frames (e.g., :class:`~astropy.coordinates.ICRS` or
-:class:`~astropy.coordinates.Galactic`) and can be transformed to and from
-other astropy coordinate frames::
-
-    >>> c = coord.SkyCoord(ra=100.68458*u.degree, dec=41.26917*u.degree)
-    >>> c.transform_to(gc.Sagittarius)
-    <SkyCoord (Sagittarius): (Lambda, Beta, distance) in (deg, deg, )
-        (179.58511053544734, -12.558450192162631, 1.0)>
-    >>> s = gc.Sagittarius(Lambda=156.342*u.degree, Beta=1.1*u.degree)
-    >>> c = coord.SkyCoord(s)
-    >>> c.galactic
-    <SkyCoord (Galactic): (l, b, distance) in (deg, deg, )
-        (182.5922090437946, -9.539692094685897, 1.0)>
-
-References
-==========
-
-* `A 2MASS All-Sky View of the Sagittarius Dwarf Galaxy: I. Morphology of the Sagittarius Core and Tidal Arms <http://arxiv.org/abs/astro-ph/0304198>`_
-* `The Orbit of the Orphan Stream <http://arxiv.org/abs/1001.0576>`_
+   propermotion.rst
+   streamframes.rst
 
 .. _gary-coordinates-api:
 
