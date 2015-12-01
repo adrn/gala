@@ -142,3 +142,19 @@ def test_w():
     assert np.allclose(x.value, (w[:3]*u.au).to(u.kpc).value)
     assert np.allclose(v.value, (w[3:]*u.au/u.yr).to(u.km/u.s).value)
 
+def test_energy():
+    # with units
+    x = np.random.random(size=(3,10))*u.kpc
+    v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
+    o = CartesianOrbit(pos=x, vel=v)
+    KE = o.kinetic_energy()
+    assert KE.unit == (o.vel.unit)**2
+    assert KE.shape == o.pos.shape[1:]
+
+    # with units and potential
+    p = HernquistPotential(units=galactic, m=1E11, c=0.25)
+    x = np.random.random(size=(3,10))*u.kpc
+    v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
+    o = CartesianOrbit(pos=x, vel=v, potential=p)
+    PE = o.potential_energy()
+    E = o.energy()
