@@ -33,6 +33,7 @@ def test_create():
         UnitSystem(u.Myr, u.radian, u.Msun)
 
     usys = UnitSystem((u.kpc, u.Myr, u.radian, u.Msun))
+    usys = UnitSystem(usys)
 
 def test_constants():
     usys = UnitSystem(u.kpc, u.Myr, u.radian, u.Msun)
