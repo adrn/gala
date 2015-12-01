@@ -1,18 +1,20 @@
 # coding: utf-8
 
-""" General dynamics utilities. """
+""" Orbit classes. """
 
 from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
+from astropy import log as logger
 import astropy.units as u
 uno = u.dimensionless_unscaled
 import numpy as np
 
 # Project
-from .core import CartesianPhaseSpacePosition, peak_to_peak_period
+from .core import CartesianPhaseSpacePosition
+from .util import peak_to_peak_period
 from ..util import inherit_docs
 
 __all__ = ['CartesianOrbit']
@@ -28,7 +30,7 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
 
     .. warning::
 
-        This is an experimental class. The API can and probably will change!
+        This is an experimental class. The API may change in a future release!
 
     The position and velocity quantities (arrays) can have an arbitrary
     number of dimensions, but the first two axes (0, 1) have
@@ -51,11 +53,11 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
 
     Parameters
     ----------
-    pos : array_like, :class:`~astropy.units.Quantity`
+    pos : :class:`~astropy.units.Quantity`, array_like
         Positions. If a numpy array (e.g., has no units), this will be
         stored as a dimensionless :class:`~astropy.units.Quantity`. See
         the note above about the assumed meaning of the axes of this object.
-    vel : array_like, :class:`~astropy.units.Quantity`
+    vel : :class:`~astropy.units.Quantity`, array_like
         Velocities. If a numpy array (e.g., has no units), this will be
         stored as a dimensionless :class:`~astropy.units.Quantity`. See
         the note above about the assumed meaning of the axes of this object.
@@ -104,19 +106,18 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
     def w(self, units=None):
         """
         This returns a single array containing the phase-space positions.
-        If no unit system is specified, this tries to use the unit system
-        defined by the potential associated with this orbit. An error is
-        thrown if no units are given and no potential is set.
 
         Parameters
         ----------
-        units : `gary.units.UnitSystem` (optional)
-            TODO
+        units : `~gary.units.UnitSystem` (optional)
+            The unit system to represent the position and velocity in
+            before combining into the full array.
 
         Returns
         -------
         w : `~numpy.ndarray`
-            TODO
+            A numpy array of all positions and velocities, without units.
+            Will have shape ``(2*ndim,...)``.
 
         """
         if self.pos.unit == uno and self.vel.unit == uno:
@@ -141,17 +142,19 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
     # ------------------------------------------------------------------------
     # Computed dynamical quantities
     # ------------------------------------------------------------------------
-    def kinetic_energy(self):
-        """
-        The kinetic energy. This is currently *not* cached and is
-        computed each time the attribute is accessed.
-        """
-        return super(CartesianOrbit,self).kinetic_energy()
 
     def potential_energy(self):
-        """
-        The potential energy. This is currently *not* cached and is
-        computed each time the attribute is accessed.
+        r"""
+        The potential energy *per unit mass*:
+
+        .. math::
+
+            E_\Phi = \Phi(\boldsymbol{q})
+
+        Returns
+        -------
+        E : :class:`~astropy.units.Quantity`
+            The potential energy.
         """
         if self.potential is None:
             raise ValueError("To compute the potential energy, a potential"
@@ -160,9 +163,13 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         return super(CartesianOrbit,self).potential_energy(self.potential)
 
     def energy(self):
-        """
-        The total energy (kinetic + potential). This is currently *not*
-        cached and is computed each time the attribute is accessed.
+        r"""
+        The total energy *per unit mass* (e.g., kinetic + potential):
+
+        Returns
+        -------
+        E : :class:`~astropy.units.Quantity`
+            The total energy.
         """
         return self.kinetic_energy() + self.potential_energy()
 
@@ -213,3 +220,110 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
     def align_circulation_with_z(self):
         # TODO: returns copy
         pass
+
+    def circulation(self):
+        """
+        Determine which axes the Orbit circulates around by checking
+        whether there is a change of sign of the angular momentum
+        about an axis. Returns a 2D array with ``ndim`` integers per orbit
+        point. If a box orbit, all integers will be 0. A 1 indicates
+        circulation about the corresponding axis.
+
+        For example, for a single 3D orbit:
+
+        - Box and boxlet = [0,0,0]
+        - z-axis (short-axis) tube = [0,0,1]
+        - x-axis (long-axis) tube = [1,0,0]
+
+        Returns
+        -------
+        circulation : :class:`numpy.ndarray`
+            An array that specifies whether there is circulation about any of
+            the axes of the input orbit. For a single orbit, will return a
+            1D array, but for multiple orbits, the shape will be ``(3, norbits)``.
+
+        """
+        L = self.angular_momentum()
+
+        # TODO: broken
+        # if only 2D, add another empty axis
+        if w.ndim == 2:
+            single_orbit = True
+            Ls = Ls[...,None]
+        else:
+            single_orbit = False
+
+        ndim,ntimes,norbits = Ls.shape
+
+        # initial angular momentum
+        L0 = Ls[:,0]
+
+        # see if at any timestep the sign has changed
+        loop = np.ones((ndim,norbits))
+        for ii in range(ndim):
+            cnd = (np.sign(L0[ii]) != np.sign(Ls[ii,1:])) | \
+                  (np.abs(Ls[ii,1:]) < 1E-13)
+            ix = np.atleast_1d(np.any(cnd, axis=0))
+            loop[ii,ix] = 0
+
+        loop = loop.astype(int)
+        if single_orbit:
+            return loop.reshape((ndim,))
+        else:
+            return loop
+
+def align_circulation_with_z(w, loop_bit):
+    """
+    If the input orbit is a tube orbit, this function aligns the circulation
+    axis with the z axis.
+
+    Parameters
+    ----------
+    w : array_like
+        Array of phase-space positions. Accepts 2D or 3D arrays. If 2D, assumes
+        this is a single orbit. If 3D, assumes that this is a collection of orbits.
+        See :ref:`shape-conventions` for more information about shapes.
+    loop_bit : array_like
+        Array of bits that specify the axis about which the orbit circulates.
+        See the documentation for `~gary.dynamics.classify_orbit`.
+
+    Returns
+    -------
+    new_w : :class:`~numpy.ndarray`
+        A copy of the input array with circulation aligned with the z axis.
+    """
+
+    if (w.ndim-1) != loop_bit.ndim:
+        raise ValueError("Shape mismatch - input orbit array should have 1 more dimension "
+                         "than the input loop bit.")
+
+    orig_shape = w.shape
+    if loop_bit.ndim == 1:
+        loop_bit = atleast_2d(loop_bit,insert_axis=1)
+        w = w[...,np.newaxis]
+    elif loop_bit.ndim > 2:
+        raise ValueError("Invalid shape for loop_bit: {}".format(loop_bit.shape))
+
+    new_w = w.copy()
+    for ix in range(w.shape[-1]):
+        if loop_bit[2,ix] == 1 or np.all(loop_bit[:,ix] == 0):
+            # already circulating about z or box orbit
+            continue
+
+        if sum(loop_bit[:,ix]) > 1:
+            logger.warning("Circulation about x and y axes - are you sure "
+                           "the orbit has been integrated for long enough?")
+
+        if loop_bit[0,ix] == 1:
+            circ = 0
+        elif loop_bit[1,ix] == 1:
+            circ = 1
+        else:
+            raise RuntimeError("Should never get here...")
+
+        new_w[circ,:,ix] = w[2,:,ix]
+        new_w[2,:,ix] = w[circ,:,ix]
+        new_w[circ+3,:,ix] = w[5,:,ix]
+        new_w[5,:,ix] = w[circ+3,:,ix]
+
+    return new_w.reshape(orig_shape)
