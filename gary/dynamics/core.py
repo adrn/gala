@@ -31,7 +31,7 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
 
     .. warning::
 
-        This is an experimental class. The API can and probably will change!
+        This is an experimental class. The API may change in a future release!
 
     The position and velocity quantities (arrays) can have an arbitrary
     number of dimensions, but the first axis (0, 1) has special meaning::
@@ -212,16 +212,13 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
             Will have shape ``(2*ndim,...)``.
 
         """
-        if self.pos.unit == uno and self.vel.unit == uno:
+        if units is None and (self.pos.unit == uno and self.vel.unit == uno):
             units = [uno]
+        elif units is None:
+            raise ValueError("A UnitSystem must be provided.")
 
-        if units is None:
-            x = self.pos.value
-            v = self.vel.value
-
-        else:
-            x = self.pos.decompose(units).value
-            v = self.vel.decompose(units).value
+        x = self.pos.decompose(units).value
+        v = self.vel.decompose(units).value
 
         return np.vstack((x,v))
 
@@ -289,15 +286,10 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         E : :class:`~astropy.units.Quantity`
             The potential energy.
         """
-        if self.potential is None:
-            raise ValueError("To compute the potential energy, a potential"
-                             " object must be provided when creating the"
-                             " orbit object!")
-
         # TODO: will I overhaul how potentials handle units?
-        q = self.pos.decompose(self.potential.units).value
-        _unit = (self.potential.units['length']/self.potential.units['time'])**2
-        return self.potential.value(q)*_unit
+        q = self.pos.decompose(potential.units).value
+        _unit = (potential.units['length']/potential.units['time'])**2
+        return potential.value(q)*_unit
 
     def energy(self, potential):
         r"""
