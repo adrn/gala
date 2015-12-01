@@ -108,23 +108,6 @@ def test_align_circulation():
     assert np.all(new_circ[2,:3] == 1.)
     assert np.all(new_circ[:,3] == 0.)
 
-def test_peak_to_peak_period():
-    ntimes = 16384
-
-    # trivial test
-    for true_T in [1., 2., 4.123]:
-        t = np.linspace(0,10.,ntimes)
-        f = np.sin(2*np.pi/true_T * t)
-        T = peak_to_peak_period(t, f)
-        assert np.allclose(T, true_T, atol=1E-3)
-
-    # modulated trivial test
-    true_T = 2.
-    t = np.linspace(0,10.,ntimes)
-    f = np.sin(2*np.pi/true_T * t) + 0.1*np.cos(2*np.pi/(10*true_T) * t)
-    T = peak_to_peak_period(t, f)
-    assert np.allclose(T, true_T, atol=1E-3)
-
 # Tests below should be fixed a bit...
 def test_initialize():
 
@@ -235,8 +218,8 @@ def test_w():
     with pytest.raises(ValueError):
         o.w()
     w = o.w(units=galactic)
-    assert np.allclose(x.value, w[:3])
-    assert np.allclose(v.value, (w[3:]*u.kpc/u.Myr).to(u.km/u.s).value)
+    assert np.allclose(x.value, w[:3,:,0])
+    assert np.allclose(v.value, (w[3:,:,0]*u.kpc/u.Myr).to(u.km/u.s).value)
 
     # simple / with units and potential
     p = HernquistPotential(units=galactic, m=1E11, c=0.25)
@@ -244,12 +227,12 @@ def test_w():
     v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
     o = CartesianOrbit(pos=x, vel=v, potential=p)
     w = o.w()
-    assert np.allclose(x.value, w[:3])
-    assert np.allclose(v.value, (w[3:]*u.kpc/u.Myr).to(u.km/u.s).value)
+    assert np.allclose(x.value, w[:3,:,0])
+    assert np.allclose(v.value, (w[3:,:,0]*u.kpc/u.Myr).to(u.km/u.s).value)
 
     w = o.w(units=solarsystem)
-    assert np.allclose(x.value, (w[:3]*u.au).to(u.kpc).value)
-    assert np.allclose(v.value, (w[3:]*u.au/u.yr).to(u.km/u.s).value)
+    assert np.allclose(x.value, (w[:3,:,0]*u.au).to(u.kpc).value)
+    assert np.allclose(v.value, (w[3:,:,0]*u.au/u.yr).to(u.km/u.s).value)
 
 def test_energy():
     # with units
