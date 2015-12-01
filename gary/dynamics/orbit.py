@@ -17,70 +17,20 @@ import numpy as np
 from .core import angular_momentum, peak_to_peak_period
 from ..coordinates import velocity_transforms as vtrans
 from ..coordinates import vgal_to_hel
-from ..util import atleast_2d
+from ..util import inherit_docs, atleast_2d
 
-__all__ = ['CartesianOrbit']
+__all__ = ['CartesianPhaseSpacePosition', 'CartesianOrbit']
 
-class CartesianOrbit(object):
-    """
-    Represents an orbit in Cartesian coordinates -- positions
-    and velocities (conjugate momenta) at different times.
+class PhaseSpacePosition(object):
+    pass
 
-    .. warning::
+class CartesianPhaseSpacePosition(PhaseSpacePosition):
 
-        This is an experimental class. The API can and probably will change!
-
-    The position and velocity quantities (arrays) can have an arbitrary
-    number of dimensions, but the first two axes (0, 1) have
-    special meaning::
-
-        - `axis=0` is the coordinatte dimension (e.g., x, y, z)
-        - `axis=1` is the time dimension
-
-    So if the input position array, `pos`, has shape `pos.shape = (3, 100)`, this
-    would be a 3D orbit (`pos[0]` is `x`, `pos[1]` is `y`, etc.). For representing
-    multiple orbits, the position array could have 3 axes, e.g., it might have shape
-    `pos.shape = (3, 100, 8)`, where this is interpreted as a 3D position at 100 times
-    for 8 different orbits. The same is true for velocity. The position and velocity
-    arrays must have the same shape.
-
-    If a time argument is specified, the position and velocity arrays must have
-    the same number of timesteps as the length of the time object::
-
-        len(t) == pos.shape[1]
-
-    Parameters
-    ----------
-    pos : array_like, :class:`~astropy.units.Quantity`
-        Positions. If a numpy array (e.g., has no units), this will be
-        stored as a dimensionless :class:`~astropy.units.Quantity`. See
-        the note above about the assumed meaning of the axes of this object.
-    vel : array_like, :class:`~astropy.units.Quantity`
-        Velocities. If a numpy array (e.g., has no units), this will be
-        stored as a dimensionless :class:`~astropy.units.Quantity`. See
-        the note above about the assumed meaning of the axes of this object.
-    t : array_like, :class:`~astropy.units.Quantity` (optional)
-        Array of times. If a numpy array (e.g., has no units), this will be
-        stored as a dimensionless :class:`~astropy.units.Quantity`.
-    potential : `~gary.potential.PotentialBase` (optional)
-        The potential that the orbit was integrated in.
-
-    """
-    def __init__(self, pos, vel, t=None, potential=None):
+    def __init__(self, pos, vel):
 
         # make sure position and velocity input are 2D
         pos = atleast_2d(pos, insert_axis=1)
         vel = atleast_2d(vel, insert_axis=1)
-
-        if t is not None:
-            t = np.atleast_1d(t)
-            if pos.shape[1] != len(t):
-                raise ValueError("Position and velocity must have the same length "
-                                 "along axis=1 as the length of the time array "
-                                 "{} vs {}".format(len(t), pos.shape[1]))
-
-            if not hasattr(t, 'unit'):
-                t = t * uno
 
         # make sure position and velocity have at least a dimensionless unit!
         if not hasattr(pos, 'unit'):
@@ -104,14 +54,12 @@ class CartesianOrbit(object):
 
         self.pos = pos
         self.vel = vel
-        self.t = t
-        self.potential = potential
 
     def __repr__(self):
-        return "<Orbit {}>".format(self.pos.shape)
+        return "<CartesianPhaseSpacePosition {}>".format(self.pos.shape)
 
     def __str__(self):
-        pass
+        return "CartesianPhaseSpacePosition"
 
     def __getitem__(self, slyce):
         try:
@@ -119,16 +67,12 @@ class CartesianOrbit(object):
         except TypeError:
             _slyce = (slice(None),) + (slyce,)
 
-        kw = dict()
-        if self.t is not None:
-            kw['t'] = self.t[_slyce[1]]
-        return self.__class__(pos=self.pos[_slyce], vel=self.vel[_slyce],
-                              potential=self.potential, **kw)
+        return self.__class__(pos=self.pos[_slyce], vel=self.vel[_slyce])
 
     @property
     def ndim(self):
         """
-        Number of coordinate dimensions.
+        Number of coordinate dimensions. 1/2 of the phase-space dimensionality.
 
         .. warning::
 
@@ -137,7 +81,9 @@ class CartesianOrbit(object):
         """
         return self.pos.shape[0]
 
+    # ------------------------------------------------------------------------
     # Convert from Cartesian to other representations
+    # ------------------------------------------------------------------------
     def represent_as(self, Representation):
         """
         Represent the position and velocity of the orbit in an alternate
@@ -206,9 +152,10 @@ class CartesianOrbit(object):
         v = vgal_to_hel(c, self.vel, **kw)
         return c, v
 
-    # Computed quantities
-    @property
-    def kinetic_energy(self):
+    # ------------------------------------------------------------------------
+    # Computed dynamical quantities
+    # ------------------------------------------------------------------------
+    def kinetic_energy(self, potential):
         """
         The kinetic energy. This is currently *not* cached and is
         computed each time the attribute is accessed.
@@ -216,8 +163,7 @@ class CartesianOrbit(object):
         pass
         # TODO: waiting until I overhaul how potentials handle units...
 
-    @property
-    def potential_energy(self):
+    def potential_energy(self, potential):
         """
         The potential energy. This is currently *not* cached and is
         computed each time the attribute is accessed.
@@ -229,14 +175,181 @@ class CartesianOrbit(object):
         pass
         # TODO: waiting until I overhaul how potentials handle units...
 
-    @property
-    def energy(self):
+    def energy(self, potential):
         """
         The total energy (kinetic + potential). This is currently *not*
         cached and is computed each time the attribute is accessed.
         """
         return self.kinetic_energy + self.potential_energy
         # TODO: waiting until I overhaul how potentials handle units...
+
+    @property
+    def angular_momentum(self):
+        """
+        The angular momentum. This is currently *not* cached and is
+        computed each time the attribute is accessed.
+        """
+        return angular_momentum(self.pos, self.vel)
+
+    # ------------------------------------------------------------------------
+    # Misc. useful methods
+    # ------------------------------------------------------------------------
+    def plot(self):
+        pass
+
+# ----------------------------------------------------------------------------
+
+class Orbit(object):
+    pass
+
+@inherit_docs
+class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
+    """
+    Represents an orbit in Cartesian coordinates -- positions
+    and velocities (conjugate momenta) at different times.
+
+    .. warning::
+
+        This is an experimental class. The API can and probably will change!
+
+    The position and velocity quantities (arrays) can have an arbitrary
+    number of dimensions, but the first two axes (0, 1) have
+    special meaning::
+
+        - `axis=0` is the coordinatte dimension (e.g., x, y, z)
+        - `axis=1` is the time dimension
+
+    So if the input position array, `pos`, has shape `pos.shape = (3, 100)`, this
+    would be a 3D orbit (`pos[0]` is `x`, `pos[1]` is `y`, etc.). For representing
+    multiple orbits, the position array could have 3 axes, e.g., it might have shape
+    `pos.shape = (3, 100, 8)`, where this is interpreted as a 3D position at 100 times
+    for 8 different orbits. The same is true for velocity. The position and velocity
+    arrays must have the same shape.
+
+    If a time argument is specified, the position and velocity arrays must have
+    the same number of timesteps as the length of the time object::
+
+        len(t) == pos.shape[1]
+
+    Parameters
+    ----------
+    pos : array_like, :class:`~astropy.units.Quantity`
+        Positions. If a numpy array (e.g., has no units), this will be
+        stored as a dimensionless :class:`~astropy.units.Quantity`. See
+        the note above about the assumed meaning of the axes of this object.
+    vel : array_like, :class:`~astropy.units.Quantity`
+        Velocities. If a numpy array (e.g., has no units), this will be
+        stored as a dimensionless :class:`~astropy.units.Quantity`. See
+        the note above about the assumed meaning of the axes of this object.
+    t : array_like, :class:`~astropy.units.Quantity` (optional)
+        Array of times. If a numpy array (e.g., has no units), this will be
+        stored as a dimensionless :class:`~astropy.units.Quantity`.
+    potential : `~gary.potential.PotentialBase` (optional)
+        The potential that the orbit was integrated in.
+
+    """
+    def __init__(self, pos, vel, t=None, potential=None):
+
+        super(CartesianOrbit, self).__init__(pos=pos, vel=vel)
+
+        if t is not None:
+            t = np.atleast_1d(t)
+            if self.pos.shape[1] != len(t):
+                raise ValueError("Position and velocity must have the same length "
+                                 "along axis=1 as the length of the time array "
+                                 "{} vs {}".format(len(t), self.pos.shape[1]))
+
+            if not hasattr(t, 'unit'):
+                t = t * uno
+
+        self.t = t
+        self.potential = potential
+
+    def __repr__(self):
+        return "<Orbit {}>".format(self.pos.shape)
+
+    def __str__(self):
+        return "Orbit"
+
+    def __getitem__(self, slyce):
+        try:
+            _slyce = (slice(None),) + tuple(slyce)
+        except TypeError:
+            _slyce = (slice(None),) + (slyce,)
+
+        kw = dict()
+        if self.t is not None:
+            kw['t'] = self.t[_slyce[1]]
+        return self.__class__(pos=self.pos[_slyce], vel=self.vel[_slyce],
+                              potential=self.potential, **kw)
+
+    def w(self, units=None):
+        """
+        This returns a single array containing the phase-space positions.
+        If no unit system is specified, this tries to use the unit system
+        defined by the potential associated with this orbit. An error is
+        thrown if no units are given and no potential is set.
+
+        Parameters
+        ----------
+        units : `gary.units.UnitSystem` (optional)
+            TODO
+
+        Returns
+        -------
+        w : `~numpy.ndarray`
+            TODO
+
+        """
+        if self.pos.unit == uno and self.vel.unit == uno:
+            units = [uno]
+
+        else:
+            if units is None and self.potential is None:
+                raise ValueError("If no UnitSystem is specified, the orbit must have "
+                                 "an associated potential object.")
+
+            if units is None and self.potential.units is None:
+                raise ValueError("If no UnitSystem is specified, the potential object "
+                                 "associated with this orbit must have a UnitSystem defined.")
+
+            if units is None:
+                units = self.potential.units
+
+        x = self.pos.decompose(units).value
+        v = self.vel.decompose(units).value
+        return np.vstack((x,v))
+
+    # ------------------------------------------------------------------------
+    # Computed dynamical quantities
+    # ------------------------------------------------------------------------
+    @property
+    def kinetic_energy(self):
+        """
+        The kinetic energy. This is currently *not* cached and is
+        computed each time the attribute is accessed.
+        """
+        return super(CartesianOrbit,self).kinetic_energy(self.potential)
+
+    @property
+    def potential_energy(self):
+        """
+        The potential energy. This is currently *not* cached and is
+        computed each time the attribute is accessed.
+        """
+        if self.potential is None:
+            raise ValueError("To compute the potential energy, a potential"
+                             " object must be provided when creating the"
+                             " orbit object!")
+        return super(CartesianOrbit,self).potential_energy(self.potential)
+
+    @property
+    def energy(self):
+        """
+        The total energy (kinetic + potential). This is currently *not*
+        cached and is computed each time the attribute is accessed.
+        """
+        return super(CartesianOrbit,self).energy(self.potential)
 
     @property
     def angular_momentum(self):
@@ -284,7 +397,9 @@ class CartesianOrbit(object):
 
         return T
 
-    # Methods
+    # ------------------------------------------------------------------------
+    # Misc. useful methods
+    # ------------------------------------------------------------------------
     def plot(self):
         pass
 
