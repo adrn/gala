@@ -158,3 +158,12 @@ def test_energy():
     o = CartesianOrbit(pos=x, vel=v, potential=p)
     PE = o.potential_energy()
     E = o.energy()
+
+def test_angular_momentum():
+    # with units
+    x = np.random.random(size=(3,10))*u.kpc
+    v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
+    o = CartesianOrbit(pos=x, vel=v)
+    L = o.angular_momentum()
+    assert L.unit == (o.vel.unit*o.pos.unit)
+    assert L.shape == o.pos.shape
