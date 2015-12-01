@@ -16,7 +16,7 @@ from astropy import log as logger
 import numpy as np
 
 __all__ = ['get_pool', 'rolling_window', 'atleast_2d',
-           'assert_angles_allclose']
+           'assert_angles_allclose', 'assert_quantities_allclose']
 
 class SerialPool(object):
 
@@ -278,3 +278,11 @@ def assert_angles_allclose(x, y, **kwargs):
     c2 = (np.sin(x)-np.sin(y))**2 + (np.cos(x)-np.cos(y))**2
     diff = np.arccos((2.0 - c2)/2.0) # a = b = 1
     assert np.allclose(diff, 0.0, **kwargs)
+
+def assert_quantities_allclose(x, y, **kwargs):
+    """
+    Like numpy's assert_allclose, but for quantities.
+    """
+    y = y.to(x.unit).value
+    x = x.value
+    assert np.allclose(x, y, **kwargs)
