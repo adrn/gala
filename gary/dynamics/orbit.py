@@ -239,13 +239,12 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         """
         return self.kinetic_energy() + self.potential_energy(potential)
 
-    @property
     def angular_momentum(self):
         """
         The angular momentum. This is currently *not* cached and is
         computed each time the attribute is accessed.
         """
-        return angular_momentum(self.pos, self.vel)
+        return np.cross(self.pos.value, self.vel.value, axis=0) * self.pos.unit * self.vel.unit
 
     # ------------------------------------------------------------------------
     # Misc. useful methods
@@ -403,14 +402,6 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         cached and is computed each time the attribute is accessed.
         """
         return self.kinetic_energy() + self.potential_energy()
-
-
-    def angular_momentum(self):
-        """
-        The angular momentum. This is currently *not* cached and is
-        computed each time the attribute is accessed.
-        """
-        return angular_momentum(self.pos, self.vel)
 
     def estimate_period(self, radial=True):
         """
