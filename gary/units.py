@@ -52,10 +52,13 @@ class UnitSystem(object):
         Unit("km / s")
 
     """
-    def __init__(self, *units):
+    def __init__(self, units, *args):
 
         self._required_physical_types = ['length', 'time', 'mass', 'angle']
         self._core_units = []
+
+        if len(args) > 0:
+            units = (units,) + tuple(args)
 
         self._registry = dict()
         for unit in units:
