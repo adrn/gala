@@ -125,22 +125,7 @@ def test_peak_to_peak_period():
     T = peak_to_peak_period(t, f)
     assert np.allclose(T, true_T, atol=1E-3)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Tests below should be fixed a bit...
 def test_initialize():
 
     with pytest.raises(ValueError):
@@ -305,5 +290,3 @@ def test_combine():
     o = combine(o1, o2)
     assert o.pos.shape == (3,11,11)
     assert o.vel.shape == (3,11,11)
-
-
