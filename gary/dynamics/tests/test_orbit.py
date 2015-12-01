@@ -46,6 +46,13 @@ def test_initialize():
     o = CartesianOrbit(pos=x, vel=v)
     assert o.ndim == 2
 
+def test_from_w():
+
+    w = np.random.random(size=(6,10))
+    o = CartesianOrbit.from_w(w, galactic)
+    assert o.pos.unit == u.kpc
+    assert o.vel.unit == u.kpc/u.Myr
+
 def test_slice():
 
     # simple
