@@ -27,6 +27,8 @@ cdef extern from "math.h":
 cdef extern from "stdint.h":
     ctypedef int intptr_t
 
+__all__ = ['CPotentialBase']
+
 class CPotentialBase(PotentialBase):
     """
     A base class for representing gravitational potentials with
