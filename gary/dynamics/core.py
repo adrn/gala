@@ -19,7 +19,7 @@ from ..coordinates import vgal_to_hel
 from ..units import UnitSystem
 from ..util import atleast_2d
 
-__all__ = ['CartesianPhaseSpacePosition']
+__all__ = ['CartesianPhaseSpacePosition', 'combine']
 
 class PhaseSpacePosition(object):
     pass
@@ -341,4 +341,51 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
     # Misc. useful methods
     # ------------------------------------------------------------------------
     def plot(self):
-        pass
+        raise NotImplementedError("sorry 'bout that...")
+
+def combine(*args):
+    """
+    Combine the input `PhaseSpacePosition` objects into a single object.
+
+    Parameters
+    ----------
+    *args
+        Multiple instances of `PhaseSpacePosition`.
+
+    Returns
+    -------
+    obj : `~gary.dynamics.PhaseSpacePosition`
+        A single objct with positions and velocities stacked along the last axis.
+    """
+
+    ndim = None
+    pos_unit = None
+    vel_unit = None
+    all_pos = []
+    all_vel = []
+    for x in args:
+        if ndim is None:
+            ndim = x.ndim
+            pos_unit = x.pos.unit
+            vel_unit = x.vel.unit
+        else:
+            if x.ndim != ndim:
+                raise ValueError("All objects must have the same dimensionality.")
+
+        pos = x.pos
+        if pos.ndim < 2:
+            pos = pos[...,np.newaxis]
+
+        vel = x.vel
+        if vel.ndim < 2:
+            vel = vel[...,np.newaxis]
+
+        all_pos.append(pos.to(pos_unit).value)
+        all_vel.append(vel.to(vel_unit).value)
+
+    all_pos = np.hstack(all_pos)*pos_unit
+    all_vel = np.hstack(all_vel)*vel_unit
+
+    return CartesianPhaseSpacePosition(pos=all_pos, vel=all_vel)
+
+
