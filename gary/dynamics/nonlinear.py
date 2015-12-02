@@ -27,6 +27,18 @@ def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
     ----------
     w0 : `~gary.dynamics.PhaseSpacePosition`, array_like
         Initial conditions.
+    dt : numeric
+        Timestep.
+    nsteps : int
+        Number of steps to run for.
+    d0 : numeric (optional)
+        The initial separation.
+    nsteps_per_pullback : int (optional)
+        Number of steps to run before re-normalizing the offset vectors.
+    noffset_orbits : int (optional)
+        Number of offset orbits to run.
+    t0 : numeric (optional)
+        Time of initial conditions. Assumed to be t=0.
 
     Returns
     -------
@@ -67,7 +79,7 @@ def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
     return l/tunit, orbit
 
 def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
-                 noffset_orbits=8, t1=0., units=None):
+                 noffset_orbits=8, t0=0., units=None):
     """
 
     Compute the maximum Lyapunov exponent of an orbit by integrating many
@@ -77,10 +89,10 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
 
     Parameters
     ----------
-    w0 : array_like
-        Initial conditions for all phase-space coordinates.
-    integrator : gary.Integrator
-        An instantiated Integrator object. Must have a run() method.
+    w0 : `~gary.dynamics.PhaseSpacePosition`, array_like
+        Initial conditions.
+    integrator : `~gary.integrate.Integrator`
+        An instantiated `~gary.integrate.Integrator` object. Must have a run() method.
     dt : numeric
         Timestep.
     nsteps : int
@@ -91,19 +103,17 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
         Number of steps to run before re-normalizing the offset vectors.
     noffset_orbits : int (optional)
         Number of offset orbits to run.
-    t1 : numeric (optional)
+    t0 : numeric (optional)
         Time of initial conditions. Assumed to be t=0.
+    units : `~gary.units.UnitSystem` (optional)
+        If passing in an array (not a `~gary.dynamics.PhaseSpacePosition`),
+        you must specify a unit system.
 
     Returns
     -------
-    LEs : :class:`numpy.ndarray`
+    LEs : :class:`~astropy.units.Quantity`
         Lyapunov exponents calculated from each offset / deviation orbit.
-    ts : :class:`numpy.ndarray`
-        Array of times from integrating main orbit.
-    ws : :class:`numpy.ndarray`
-        All orbits -- main / parent orbit is index 0, all others are the
-        full orbits of the deviations. TODO: right now, only returns parent
-        orbit.
+    orbit : `~gary.dynamics.CartesianOrbit`
     """
 
     if units is not None:
@@ -137,16 +147,16 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
     full_w = np.zeros((ndim,nsteps+1,noffset_orbits+1))
     full_w[:,0] = all_w0
     full_ts = np.zeros((nsteps+1,))
-    full_ts[0] = t1
+    full_ts[0] = t0
 
     # arrays to store the Lyapunov exponents and times
     LEs = np.zeros((niter,noffset_orbits))
     ts = np.zeros_like(LEs)
-    time = t1
+    time = t0
     for i in range(1,niter+1):
         ii = i * nsteps_per_pullback
 
-        tt,ww = integrator.run(all_w0, dt=dt, nsteps=nsteps_per_pullback, t1=time)
+        tt,ww = integrator.run(all_w0, dt=dt, nsteps=nsteps_per_pullback, t0=time)
         time += dt*nsteps_per_pullback
 
         main_w = ww[:,-1,0:1]
@@ -182,8 +192,7 @@ def surface_of_section(orbit, plane_ix, interpolate=False):
 
     Parameters
     ----------
-    orbit :
-        TODO
+    orbit : `~gary.dynamics.CartesianOrbit`
     plane_ix : int
         Integer that represents the coordinate to record crossings in. For
         example, for a 2D Hamiltonian where you want to make a SoS in
