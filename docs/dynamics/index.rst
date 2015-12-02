@@ -82,7 +82,7 @@ Using gary.dynamics
 More details are provided in the linked pages below:
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    orbits-in-detail
    actionangle
