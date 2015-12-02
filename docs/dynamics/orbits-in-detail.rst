@@ -12,7 +12,11 @@ associated units, however, dynamical quantities often contain many
 quantities with mixed units. An example is a position in phase-space, which
 may contain some quantities with length units and some quantities with
 velocity units. The `~gary.dynamics.PhaseSpacePosition` and
-`~gary.dynamics.Orbit` subclasses are designed to work with these structures.
+`~gary.dynamics.Orbit` subclasses are designed to work with these structures --
+click these shortcuts to jump to a section below:
+
+ * `phase-space-position`_
+ * `orbit`_
 
 Some imports needed for the code below::
 
@@ -22,6 +26,8 @@ Some imports needed for the code below::
     import gary.dynamics as gd
     from gary.units import galactic
     np.random.seed(42)
+
+.. _phase-space-position:
 
 Phase-space positions
 =====================
@@ -85,11 +91,11 @@ to Astropy::
     >>> cyl_pos # doctest: +SKIP
     <CylindricalRepresentation (rho, phi, z) in (kpc, rad, kpc)
         [(2.64929392, 1.5595981, 5.27411405),
-        ...
+    ...etc.
     >>> cyl_vel # doctest: +SKIP
     <Quantity [[-185.61668456, 160.10813427, -75.14559842, 138.36905651,
                  -60.93410629,  95.60242757,  41.89615149, 128.34632582,
-                 ...
+    ...etc.
 
 There is also support for transforming the cartesian positions and velocities
 (assumed to be in a `~astropy.coordinates.Galactocentric` frame) to any of
@@ -107,7 +113,7 @@ object is a tuple with proper motions and radial velocity,
     >>> gal_c # doctest: +SKIP
     <Galactic Coordinate: (l, b, distance) in (deg, deg, kpc)
         [(17.67673481, 31.15412806, 10.19473889),
-        ...
+    ...etc.
     >>> gal_v[0].unit, gal_v[1].unit, gal_v[2].unit
     (Unit("mas / yr"), Unit("mas / yr"), Unit("km / s"))
 
@@ -153,6 +159,7 @@ Phase-space position API
     :no-heading:
     :headings: ^^
 
+.. _orbit:
 
 Orbits
 ======
@@ -166,30 +173,45 @@ A `~gary.dynamics.CartesianOrbit` is initialized much like the
 `~gary.dynamics.CartesianPhaseSpacePosition`. `~gary.dynamics.CartesianOrbit`s can be
 created with just position and velocity information, however now the
 interpretation of the input object shapes is different. Whereas an input position with
-shape ``(3,128)`` to a `~gary.dynamics.CartesianPhaseSpacePosition` represents
-128, 3D positions, for an orbit it would represent a single orbit's positions
+shape ``(2,128)`` to a `~gary.dynamics.CartesianPhaseSpacePosition` represents
+128, 2D positions, for an orbit it would represent a single orbit's positions
 at 128 timesteps::
 
-    >>> x = np.random.uniform(-10,10,size=(3,128))
-    >>> v = np.random.uniform(-200,200,size=(3,128))
-    >>> orbit = gd.CartesianOrbit(pos=x*u.kpc, vel=v*u.km/u.s)
+    >>> t = np.linspace(0,10,128)
+    >>> pos,vel = np.zeros((2,128)),np.zeros((2,128))
+    >>> pos[0] = np.cos(t)
+    >>> pos[1] = np.sin(t)
+    >>> vel[0] = -np.sin(t)
+    >>> vel[1] = np.cos(t)
+    >>> orbit = gd.CartesianOrbit(pos=pos*u.kpc, vel=vel*u.km/u.s)
     >>> orbit
-    <Orbit N=3, shape=(128,)>
+    <Orbit N=2, shape=(128,)>
 
 To create a single object that contains multiple orbits, the input position object
 should have 3 axes. The last axis (``axis=2``) contains each orbit. So, an input
-position with shape ``(3,128,16)`` would represent 16, 3D orbits with 128 timesteps::
+position with shape ``(2,128,16)`` would represent 16, 2D orbits with 128 timesteps::
 
-    >>> x = np.random.uniform(-10,10,size=(3,128,16))
-    >>> v = np.random.uniform(-200,200,size=(3,128,16))
-    >>> orbit = gd.CartesianOrbit(pos=x*u.kpc, vel=v*u.km/u.s)
+    >>> t = np.linspace(0,10,128)
+    >>> pos,vel = np.zeros((2,128,16)),np.zeros((2,128,16))
+    >>> Omega = np.random.uniform(size=16)
+    >>> pos[0] = np.cos(Omega[np.newaxis]*t[:,np.newaxis])
+    >>> pos[1] = np.sin(Omega[np.newaxis]*t[:,np.newaxis])
+    >>> vel[0] = -np.sin(Omega[np.newaxis]*t[:,np.newaxis])
+    >>> vel[1] = np.cos(Omega[np.newaxis]*t[:,np.newaxis])
+    >>> orbit = gd.CartesianOrbit(pos=pos*u.kpc, vel=vel*u.km/u.s)
     >>> orbit
-    <Orbit N=3, shape=(128,16)>
+    <Orbit N=2, shape=(128,16)>
 
-TODO: time, potential
+To make full use of the orbit functionality, you must also pass in an array with
+the time values::
 
-Orbit objects are returned by the `~gary.potential.PotentialBase.integrate_orbit` method
-of potential objects::
+    >>> orbit = gd.CartesianOrbit(pos=pos*u.kpc, vel=vel*u.km/u.s,
+    ...                           t=t*u.Myr, potential=pot)
+
+and an instance of a `~gary.potential.PotentialBase` subclass that
+represents the potential that the orbit was integrated in. Orbit objects
+are returned by the `~gary.potential.PotentialBase.integrate_orbit` method
+of potential objects that already have the ``time`` and ``potential`` set::
 
     >>> pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=[10.,0,0]*u.kpc,
@@ -197,6 +219,12 @@ of potential objects::
     >>> orbit = pot.integrate_orbit(w0, dt=1., nsteps=500)
     >>> orbit
     <CartesianOrbit N=3, shape=(501,)>
+    >>> orbit.t # doctest: +SKIP
+    <Quantity [   0.,   1.,   2.,   3.,   4.,   5.,   6.,   7.,   8.,   9.,
+                 10.,  11.,  12.,  13.,  14.,  15.,  16.,  17.,  18.,  19.,
+    ...etc.
+    >>> orbit.potential
+    <PlummerPotential: m=1.00e+10, b=1.00 (kpc,Myr,solMass,rad)>
 
 Just like above, we can quickly visualize an orbit using the
 `~gary.dynamics.CartesianOrbit.plot` method::
