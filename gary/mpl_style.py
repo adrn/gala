@@ -37,7 +37,7 @@ mpl_style = {
 
     # Font
     'font.family': 'CMU Serif',
-    'font.size': 16.0,
+    'font.size': 24.0,
     'text.latex.preamble': '\usepackage{amsmath}',
 
     # Axes
@@ -60,18 +60,20 @@ mpl_style = {
                          'FEE08B'],
 
     # Ticks
-    'xtick.major.size': 0,
-    'xtick.minor.size': 0,
+    'xtick.major.size': 8,
+    'xtick.minor.size': 4,
     'xtick.major.pad': 6,
     'xtick.minor.pad': 6,
     'xtick.color': '#565656',
     'xtick.direction': 'in',
-    'ytick.major.size': 0,
-    'ytick.minor.size': 0,
+    'ytick.major.size': 8,
+    'ytick.minor.size': 4,
     'ytick.major.pad': 6,
     'ytick.minor.pad': 6,
     'ytick.color': '#565656',
     'ytick.direction': 'in',
+    'xtick.labelsize': 'medium',
+    'ytick.labelsize': 'medium',
 
     # Legend
     'legend.fancybox': True,
