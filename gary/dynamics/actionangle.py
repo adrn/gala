@@ -19,7 +19,7 @@ from scipy.linalg import solve
 from scipy.optimize import leastsq
 
 # Project
-from .core import classify_orbit, align_circulation_with_z
+# from .core import classify_orbit, align_circulation_with_z # BROKEN
 from ..potential import HarmonicOscillatorPotential, IsochronePotential
 
 __all__ = ['generate_n_vectors', 'fit_isochrone',
