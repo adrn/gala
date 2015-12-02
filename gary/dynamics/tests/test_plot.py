@@ -61,10 +61,10 @@ def test_three_panel(tmpdir):
     fig = three_panel(q, triangle=True)
     fig.savefig(os.path.join(str(tmpdir), "three-panel-random_triangle.png"))
 
-    fig = three_panel(q, relative_to=q0, symbol=r'\Omega')
+    fig = three_panel(q, relative_to=q0, labels=[r'$\Omega_1$',r'$\Omega_2$',r'$\Omega_3$'])
     fig.savefig(os.path.join(str(tmpdir), "three-panel-random-relative.png"))
 
-    fig = three_panel(q, relative_to=q0, triangle=True, symbol=r'\Omega')
+    fig = three_panel(q, relative_to=q0, triangle=True, labels=[r'$\Omega_1$',r'$\Omega_2$',r'$\Omega_3$'])
     fig.savefig(os.path.join(str(tmpdir), "three-panel-random-relative_triangle.png"))
 
 def test_1d(tmpdir):
