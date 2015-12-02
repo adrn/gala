@@ -399,9 +399,9 @@ class PotentialBase(object):
 
         if not isinstance(w0, CartesianPhaseSpacePosition):
             w0 = np.asarray(w0)
-            ndim = w0.shape[0]
-            w0 = CartesianPhaseSpacePosition(pos=w0[:ndim//2],
-                                             vel=w0[ndim//2:])
+            ndim = w0.shape[0]//2
+            w0 = CartesianPhaseSpacePosition(pos=w0[:ndim],
+                                             vel=w0[ndim:])
 
         ndim = w0.ndim
         arr_w0 = w0.w(self.units)
@@ -433,7 +433,7 @@ class PotentialBase(object):
                 w = w[...,0]
 
         else:
-            acc = lambda t,w: np.vstack((w[ndim//2:], self.acceleration(w[:ndim//2], t=t)))
+            acc = lambda t,w: np.vstack((w[ndim:], self.acceleration(w[:ndim], t=t)))
             integrator = Integrator(acc, **Integrator_kwargs)
             t,w = integrator.run(arr_w0, **time_spec)
 
