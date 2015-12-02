@@ -85,7 +85,7 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         self.potential = potential
 
     def __repr__(self):
-        return "<CartesianOrbit {}>".format(self.pos.shape)
+        return "<CartesianOrbit N={}, shape={}>".format(self.ndim, self.pos.shape[1:])
 
     def __str__(self):
         return "CartesianOrbit"
