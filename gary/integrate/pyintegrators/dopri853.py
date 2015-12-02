@@ -11,7 +11,7 @@ from scipy.integrate import ode
 
 # Project
 from ..core import Integrator
-from ..timespec import _parse_time_specification
+from ..timespec import parse_time_specification
 
 __all__ = ["DOPRI853Integrator"]
 
@@ -77,7 +77,7 @@ class DOPRI853Integrator(Integrator):
         """
 
         # generate the array of times
-        times = _parse_time_specification(**time_spec)
+        times = parse_time_specification(**time_spec)
         nsteps = len(times)-1
 
         w0, ws = self._prepare_ws(w0, mmap, nsteps)
