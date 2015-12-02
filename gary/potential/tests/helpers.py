@@ -153,7 +153,7 @@ class PotentialTestBase(object):
         """
         w0 = self.w0
         t1 = time.time()
-        t,w = self.potential.integrate_orbit(w0, dt=1., nsteps=10000)
+        orbit = self.potential.integrate_orbit(w0, dt=1., nsteps=10000)
         print("Integration time (10000 steps): {}".format(time.time() - t1))
 
     def test_pickle(self, tmpdir):
