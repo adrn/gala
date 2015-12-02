@@ -336,9 +336,12 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
 
     def plot(self, **kwargs):
         """
-        Plot the orbit in all projections. This might fail for
-        <3D orbits. This is a thin wrapper around
+        Plot the orbit in all projections. This is a thin wrapper around
         `~gary.dynamics.plot_orbits`.
+
+        .. warning::
+
+            This will currently fail for orbits with fewer than 3 dimensions.
 
         Parameters
         ----------
