@@ -64,7 +64,7 @@ class TestForcedPendulum(object):
         d0 = 1e-5
         noffset = 2
 
-        regular_LEs, t, regular_ws = lyapunov_max(self.regular_w0, self.regular_integrator,
+        regular_LEs, regular_orbit = lyapunov_max(self.regular_w0, self.regular_integrator,
                                                   dt=dt, nsteps=nsteps,
                                                   d0=d0, nsteps_per_pullback=nsteps_per_pullback,
                                                   noffset_orbits=noffset)
@@ -72,7 +72,7 @@ class TestForcedPendulum(object):
         regular_LEs = np.mean(regular_LEs, axis=1)
         assert regular_LEs[-1] < 1E-3
 
-        chaotic_LEs, t, chaotic_ws = lyapunov_max(self.chaotic_w0, self.chaotic_integrator,
+        chaotic_LEs, chaotic_orbit = lyapunov_max(self.chaotic_w0, self.chaotic_integrator,
                                                   dt=dt, nsteps=nsteps,
                                                   d0=d0, nsteps_per_pullback=nsteps_per_pullback,
                                                   noffset_orbits=noffset)
@@ -149,7 +149,7 @@ class HenonHeilesBase(object):
         noffset = 2
 
         integrator = DOPRI853Integrator(self.F_max, func_args=self.par)
-        lyap, t, ws = lyapunov_max(self.w0, integrator,
+        lyap, orbit = lyapunov_max(self.w0, integrator,
                                    dt=self.dt, nsteps=self.nsteps,
                                    d0=d0, noffset_orbits=noffset,
                                    nsteps_per_pullback=nsteps_per_pullback)
@@ -233,15 +233,15 @@ class TestLogarithmic(object):
 
         for ii,w0 in enumerate(self.w0s):
 
-            lyap, t, ws = fast_lyapunov_max(w0, self.potential,
+            lyap, orbit = fast_lyapunov_max(w0, self.potential,
                                             dt=self.dt, nsteps=self.nsteps,
                                             d0=d0, noffset_orbits=noffset,
                                             nsteps_per_pullback=nsteps_per_pullback)
             lyap = np.mean(lyap, axis=1)
 
             # also just integrate the orbit to compare dE scaling
-            tt,ww = self.potential.integrate_orbit(w0, dt=self.dt, nsteps=self.nsteps,
-                                                   Integrator=DOPRI853Integrator)
+            orbit2 = self.potential.integrate_orbit(w0, dt=self.dt, nsteps=self.nsteps,
+                                                    Integrator=DOPRI853Integrator)
 
             # lyapunov exp
             # pl.figure()
@@ -249,10 +249,10 @@ class TestLogarithmic(object):
             # pl.savefig(os.path.join(str(tmpdir),"log_lyap_max_{}.png".format(ii)))
 
             # energy conservation
-            E = self.potential.total_energy(ws[:3,:,0], ws[3:,:,0])
+            E = orbit[:,0].energy().value # returns 3 orbits
             dE = np.abs(E[1:] - E[0])
 
-            E = self.potential.total_energy(ww[:3], ww[3:])
+            E = orbit2.energy().value
             dE_ww = np.abs(E[1:] - E[0])
 
             assert np.allclose(dE_ww[-100:], dE[-100:], rtol=1E-1)
@@ -275,16 +275,17 @@ class TestLogarithmic(object):
         integrator = DOPRI853Integrator(self.F)
         for ii,w0 in enumerate(self.w0s):
 
-            lyap1, t1, ws1 = fast_lyapunov_max(w0, self.potential,
-                                               dt=self.dt, nsteps=self.nsteps,
-                                               d0=d0, noffset_orbits=noffset,
-                                               nsteps_per_pullback=nsteps_per_pullback)
+            lyap1, orbit1 = fast_lyapunov_max(w0, self.potential,
+                                              dt=self.dt, nsteps=self.nsteps,
+                                              d0=d0, noffset_orbits=noffset,
+                                              nsteps_per_pullback=nsteps_per_pullback)
             lyap1 = np.mean(lyap1, axis=1)
 
-            lyap2, t2, ws2 = lyapunov_max(w0.copy(), integrator,
-                                          dt=self.dt, nsteps=self.nsteps,
-                                          d0=d0, noffset_orbits=noffset,
-                                          nsteps_per_pullback=nsteps_per_pullback)
+            lyap2, orbit2 = lyapunov_max(w0.copy(), integrator,
+                                         dt=self.dt, nsteps=self.nsteps,
+                                         d0=d0, noffset_orbits=noffset,
+                                         nsteps_per_pullback=nsteps_per_pullback,
+                                         units=self.potential.units)
             lyap2 = np.mean(lyap2, axis=1)
 
             # lyapunov exp
@@ -295,11 +296,15 @@ class TestLogarithmic(object):
             # pl.savefig(os.path.join(str(tmpdir),"log_lyap_compare_{}.png".format(ii)))
 
             # energy conservation
-            E = self.potential.total_energy(ws1[:3,:,0], ws1[3:,:,0])
+            E = orbit1.energy().value
             dE_fast = np.abs(E[1:] - E[0])
+            print(E.shape)
 
-            E = self.potential.total_energy(ws2[:3,:,0], ws2[3:,:,0])
+            E = orbit2.energy(self.potential).value
             dE_slow = np.abs(E[1:] - E[0])
+
+            print(E.shape)
+            return
 
             assert np.all(dE_fast < 1E-10)
             assert np.all(dE_slow < 1E-10)
@@ -322,9 +327,8 @@ def test_surface_of_section(tmpdir):
 
     w0 = np.array([[0.,0.8,0.,1.,0.,0.],
                    [0.,0.9,0.,1.,0.,0.]]).T
-    t,w = pot.integrate_orbit(w0, dt=0.02, nsteps=100000)
-
-    sos = surface_of_section(w, plane_ix=1)
+    orbit = pot.integrate_orbit(w0, dt=0.02, nsteps=100000)
+    sos = surface_of_section(orbit, plane_ix=1)
 
     # plot in 3D
     # fig = pl.figure(figsize=(10,10))
