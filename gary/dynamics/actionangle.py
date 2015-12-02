@@ -466,6 +466,7 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
         raise ValueError("Invalid toy potential.")
 
     t = orbit.t.value
+    w = np.squeeze(w) # get rid of extra axis if len=1
 
     # Now find toy actions and angles
     aaf = toy_potential.action_angle(w[:3], w[3:])
