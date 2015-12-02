@@ -425,12 +425,13 @@ class PotentialBase(object):
             w = np.rollaxis(w, -1)
             if w.shape[-1] == 1:
                 w = w[...,0]
-            return t, w
 
         else:
             acc = lambda t,w: np.vstack((w[ndim_2:], self.acceleration(w[:ndim_2], t=t)))
             integrator = Integrator(acc, **Integrator_kwargs)
-            return integrator.run(w0, **time_spec)
+            t,w = integrator.run(w0, **time_spec)
+
+        return CartesianOrbit.from_w(w=w, unit=self.units, t=t, potential=self)
 
     def total_energy(self, x, v):
         """

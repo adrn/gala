@@ -65,7 +65,7 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
     `~gary.potential.PotentialBase` and therefore has many useful methods.
     For example, to integrate an orbit::
 
-        >>> t,w = p1.integrate_orbit([1.,0], dt=0.01, nsteps=1000)
+        >>> orbit = p1.integrate_orbit([1.,0], dt=0.01, nsteps=1000)
 
     """
     try:
