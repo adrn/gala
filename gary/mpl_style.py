@@ -37,7 +37,7 @@ mpl_style = {
 
     # Font
     'font.family': 'CMU Serif',
-    'font.size': 16.0,
+    'font.size': 14.0,
     'text.latex.preamble': '\usepackage{amsmath}',
 
     # Axes
