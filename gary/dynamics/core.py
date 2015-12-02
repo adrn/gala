@@ -139,6 +139,10 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
             have units of velocity -- e.g., to get an angular velocity
             in spherical representations, you'll need to divide by the radius.
         """
+        if self.ndim != 3:
+            raise ValueError("Representation changes require a 3D (ndim=3) "
+                             "position and velocity.")
+
         # get the name of the desired representation
         rep_name = Representation.get_name()
 
@@ -177,6 +181,10 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
             :class:`~astropy.units.Quantity` objects.
 
         """
+
+        if self.ndim != 3:
+            raise ValueError("Frame transformations require a 3D (ndim=3) "
+                             "position and velocity.")
 
         car_pos = coord.CartesianRepresentation(self.pos)
         gc_c = galactocentric_frame.realize_frame(car_pos)
