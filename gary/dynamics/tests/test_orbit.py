@@ -24,7 +24,7 @@ def make_known_orbit(tmpdir, x, vx, potential, name):
     vy = np.sqrt(2*(E - potential.value([x,y,0.])))[0]
 
     w = [x,y,0.,vx,vy,0.]
-    t,ws = potential.integrate_orbit(w, dt=0.05, nsteps=10000)
+    orbit = potential.integrate_orbit(w, dt=0.05, nsteps=10000)
 
     # fig,ax = pl.subplots(1,1)
     # ax.plot(ws[0], ws[1])
@@ -32,7 +32,7 @@ def make_known_orbit(tmpdir, x, vx, potential, name):
     # fig.savefig(os.path.join(str(tmpdir), "{}.png".format(name)))
     # logger.debug(os.path.join(str(tmpdir), "{}.png".format(name)))
 
-    return CartesianOrbit.from_w(ws, units=galactic)
+    return orbit
 
 def test_circulation(tmpdir):
 
