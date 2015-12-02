@@ -13,11 +13,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Project
-from ..actionangle import classify_orbit
+# from ..actionangle import classify_orbit
 from ...units import galactic
 from ...coordinates import physicsspherical_to_cartesian
 from ...potential import HarmonicOscillatorPotential, IsochronePotential
-
 from .._genfunc import genfunc_3d, solver, toy_potentials
 
 def sanders_nvecs(N_max, dx, dy, dz):

@@ -30,15 +30,16 @@ class TestIsochrone(object):
         w0 = np.vstack((x,v))
 
         self.potential = IsochronePotential(units=galactic, m=1.E11, b=5.)
-        self.t,self.w = self.potential.integrate_orbit(w0, dt=0.1, nsteps=10000)
-        self.t = self.t[::10]
-        self.w = self.w[:,::10]
+        self.w = self.potential.integrate_orbit(w0, dt=0.1, nsteps=10000)
+        self.w = self.w[::10]
 
     def test(self):
         for n in range(self.N):
             logger.debug("Orbit {}".format(n))
 
-            x,v = self.w[:3,:,n],self.w[3:,:,n]
+            # x,v = self.w[:3,:,n],self.w[3:,:,n]
+            x = self.w.pos.value[...,n]
+            v = self.w.vel.value[...,n]
             actions,angles,freqs = isochrone_xv_to_aa(x, v, self.potential)
 
             for i in range(3):
@@ -73,9 +74,8 @@ class TestHarmonicOscillator(object):
         w0 = np.vstack((x,v))
 
         self.potential = HarmonicOscillatorPotential(omega=np.array([0.013, 0.02, 0.005]), units=galactic)
-        self.t,self.w = self.potential.integrate_orbit(w0, dt=0.1, nsteps=10000)
-        self.t = self.t[::10]
-        self.w = self.w[:,::10]
+        self.w = self.potential.integrate_orbit(w0, dt=0.1, nsteps=10000)
+        self.w = self.w[::10]
 
     def test(self):
         """
@@ -85,7 +85,9 @@ class TestHarmonicOscillator(object):
         for n in range(self.N):
             logger.debug("Orbit {}".format(n))
 
-            x,v = self.w[:3,:,n],self.w[3:,:,n]
+            # x,v = self.w[:3,:,n],self.w[3:,:,n]
+            x = self.w.pos.value[...,n]
+            v = self.w.vel.value[...,n]
             actions,angles = harmonic_oscillator_xv_to_aa(x, v, self.potential)
 
             for i in range(3):
