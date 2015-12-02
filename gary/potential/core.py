@@ -217,6 +217,10 @@ class PotentialBase(object):
         kwargs : dict
             kwargs passed to either contourf() or plot().
 
+        Returns
+        -------
+        fig : `~matplotlib.Figure`
+
         """
 
         import matplotlib.pyplot as plt
@@ -305,6 +309,10 @@ class PotentialBase(object):
         kwargs : dict
             kwargs passed to either contourf() or plot().
 
+        Returns
+        -------
+        fig : `~matplotlib.Figure`
+
         """
 
         import matplotlib.pyplot as plt
@@ -386,14 +394,23 @@ class PotentialBase(object):
 
         Parameters
         ----------
-        w0 : array_like
+        w0 : `~gary.dynamics.PhaseSpacePosition`, array_like
             Initial conditions.
-        Integrator : class
+        Integrator : `~gary.integrate.Integrator` (optional)
             Integrator class to use.
+        Integrator_kwargs : dict (optional)
+            Any extra keyword argumets to pass to the integrator class
+            when initializing. Only works in non-Cython mode.
+        cython_if_possible : bool (optional)
+            If there is a Cython version of the integrator implemented,
+            and the potential object has a C instance, using Cython
+            will be *much* faster.
+        **time_spec
+            Specification of how long to integrate. See documentation
+            for `gary.integrate.parse_time_specification`.
 
-        Other Parameters
-        ----------------
-        (see Integrator documentation)
+        Returns
+        -------
 
         """
 
@@ -411,8 +428,8 @@ class PotentialBase(object):
             arr_w0 = np.ascontiguousarray(arr_w0.T)
 
             # array of times
-            from ..integrate.timespec import _parse_time_specification
-            t = _parse_time_specification(**time_spec)
+            from ..integrate.timespec import parse_time_specification
+            t = parse_time_specification(**time_spec)
 
             if Integrator == LeapfrogIntegrator:
                 from ..integrate.cyintegrators import leapfrog_integrate_potential
@@ -453,6 +470,7 @@ class PotentialBase(object):
         v : array_like, numeric
             Velocity.
         """
+        # TODO: deprecationwarning?
         v = atleast_2d(v, insert_axis=1)
         return self.value(x) + 0.5*np.sum(v**2, axis=0)
 
