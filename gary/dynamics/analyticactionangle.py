@@ -16,7 +16,6 @@ import astropy.units as u
 
 # Project
 from ..coordinates import cartesian_to_physicsspherical, physicsspherical_to_cartesian
-# from .core import angular_momentum
 from ..util import atleast_2d
 
 __all__ = ['isochrone_xv_to_aa', 'isochrone_aa_to_xv',
@@ -87,7 +86,7 @@ def isochrone_xv_to_aa(x, v, potential):
     # Actions
     # ----------------------------
 
-    L_vec = angular_momentum(x,v)
+    L_vec = np.cross(x,v,axis=0)
     Lz = L_vec[2]
     L = np.linalg.norm(L_vec, axis=0)
 
@@ -136,7 +135,7 @@ def isochrone_xv_to_aa(x, v, potential):
 
     LR = Lz/L
     sinu = (LR/np.sqrt(1.-LR*LR)/np.tan(theta))
-    sinu = sinu.value
+    sinu = sinu
     uu = np.arcsin(sinu)
 
     uu[sinu > 1.] = np.pi/2.
