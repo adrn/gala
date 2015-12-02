@@ -15,6 +15,7 @@ import numpy as np
 # Project
 from .core import CartesianPhaseSpacePosition
 from .util import peak_to_peak_period
+from .plot import plot_orbits
 from ..util import inherit_docs, atleast_2d
 
 __all__ = ['CartesianOrbit', 'combine']
@@ -335,8 +336,36 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
 
         return self.__class__(pos=new_pos, vel=new_vel, t=self.t, potential=self.potential)
 
-    def plot(self):
-        raise NotImplementedError("sorry 'bout that...")
+    def plot(self, **kwargs):
+        """
+        Plot the orbit in all projections. This might fail for
+        <3D orbits. This is a thin wrapper around
+        `~gary.dynamics.plot_orbits`.
+
+        Parameters
+        ----------
+        **kwargs
+            All keyword arguments are passed to `~gary.dynamics.plot_orbits`.
+            See the documentation of that function.
+
+        Returns
+        -------
+        fig : `~matplotlib.Figure`
+        axes : `~matplotlib.Axes`
+
+        """
+        default_kwargs = {
+            'marker': None,
+            'linestyle': '-',
+            'labels': ('$x$ [{}]'.format(self.pos.unit),
+                       '$y$ [{}]'.format(self.pos.unit),
+                       '$z$ [{}]'.format(self.pos.unit))
+        }
+
+        for k,v in default_kwargs.items():
+            kwargs[k] = kwargs.get(k, v)
+
+        return plot_orbits(self.pos.value, **kwargs)
 
 def combine(*args):
     """
