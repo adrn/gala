@@ -140,6 +140,11 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
 
 def surface_of_section(w, plane_ix, interpolate=False):
     """
+    Generate and return a surface of section from the given orbit.
+
+    .. warning::
+
+        This is an experimental function and the API may change.
 
     Parameters
     ----------
