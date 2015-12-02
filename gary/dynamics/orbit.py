@@ -127,7 +127,7 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
             Will have shape ``(2*ndim,...)``.
 
         """
-        if self.pos.unit == uno and self.vel.unit == uno:
+        if self.pos.unit == uno and self.vel.unit == uno and units is None:
             units = [uno]
 
         else:

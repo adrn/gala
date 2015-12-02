@@ -223,7 +223,7 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         return np.vstack((x,v))
 
     @classmethod
-    def from_w(cls, w, units, **kwargs):
+    def from_w(cls, w, units=None, **kwargs):
         """
         Create a {name} object from a single array specifying positions
         and velocities. This is mainly for backwards-compatibility and
@@ -231,6 +231,8 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
 
         Parameters
         ----------
+        w : array_like
+            The array of phase-space positions.
         units : `~gary.units.UnitSystem` (optional)
             The unit system that the input position+velocity array, ``w``,
             is represented in.
@@ -242,11 +244,15 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         obj : `~gary.dynamics.{name}`
 
         """.format(name=cls.__name__)
-        units = UnitSystem(units)
 
         ndim = w.shape[0]//2
-        pos = w[:ndim]*units['length']
-        vel = w[ndim:]*units['length']/units['time'] # velocity in w is from _core_units
+        pos = w[:ndim]
+        vel = w[ndim:]
+
+        if units is not None:
+            units = UnitSystem(units)
+            pos = pos*units['length']
+            vel = vel*units['length']/units['time'] # velocity in w is from _core_units
 
         return cls(pos=pos, vel=vel, **kwargs)
 
