@@ -109,7 +109,7 @@ class ActionsBase(object):
 
     def test_classify(self):
         # my classify
-        orb_type = classify_orbit(self.w)
+        orb_type = self.orbit.circulation()
 
         # compare to Sanders'
         for j in range(self.N):
@@ -127,14 +127,15 @@ class ActionsBase(object):
             logger.info("======================= Orbit {} =======================".format(n))
             # w = self.w[:,::10,n]
             w = self.w[...,n]
+            orb = self.orbit[:,n]
+            circ = orb.circulation()
 
             # get values from Sanders' code
             logger.debug("Computing actions from genfunc...")
-            s_actions,s_angles,s_freqs,toy_potential = sanders_act_ang_freq(t, w, N_max=N_max)
+            s_actions,s_angles,s_freqs,toy_potential = sanders_act_ang_freq(t, w, circ, N_max=N_max)
 
             logger.debug("Computing actions...")
-            ret = find_actions(t, w, N_max=N_max, units=self.units,
-                               toy_potential=toy_potential)
+            ret = find_actions(orb, N_max=N_max, toy_potential=toy_potential)
             actions = ret['actions']
             angles = ret['angles']
             freqs = ret['freqs']
@@ -178,6 +179,7 @@ class TestActions(ActionsBase):
         # integrate orbits
         orbit = self.potential.integrate_orbit(w0, dt=2., nsteps=nsteps,
                                                Integrator=DOPRI853Integrator)
+        self.orbit = orbit
         self.t = orbit.t.value
         self.w = orbit.w()
 
