@@ -16,7 +16,7 @@ import astropy.units as u
 
 # Project
 from ..coordinates import cartesian_to_physicsspherical, physicsspherical_to_cartesian
-from .core import angular_momentum
+# from .core import angular_momentum
 from ..util import atleast_2d
 
 __all__ = ['isochrone_xv_to_aa', 'isochrone_aa_to_xv',
