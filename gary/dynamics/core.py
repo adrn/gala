@@ -12,6 +12,7 @@ uno = u.dimensionless_unscaled
 import numpy as np
 
 # Project
+from .plot import three_panel
 from ..coordinates import velocity_transforms as vtrans
 from ..coordinates import vgal_to_hel
 from ..units import UnitSystem
@@ -352,8 +353,40 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
     # ------------------------------------------------------------------------
     # Misc. useful methods
     # ------------------------------------------------------------------------
-    def plot(self):
-        raise NotImplementedError("sorry 'bout that...")
+    def plot(self, **kwargs):
+        """
+        Plot the positions in all projections. This is a thin wrapper around
+        `~gary.dynamics.three_panel`.
+
+        .. warning::
+
+            This will currently fail for orbits with fewer than 3 dimensions.
+
+        Parameters
+        ----------
+        **kwargs
+            All keyword arguments are passed to `~gary.dynamics.three_panel`.
+            See the documentation of that function.
+
+        Returns
+        -------
+        fig : `~matplotlib.Figure`
+        axes : `~matplotlib.Axes`
+
+        """
+        default_kwargs = {
+            'marker': '.',
+            'alpha': 0.5,
+            'linestyle': 'none',
+            'labels': ('$x$ [{}]'.format(self.pos.unit),
+                       '$y$ [{}]'.format(self.pos.unit),
+                       '$z$ [{}]'.format(self.pos.unit))
+        }
+
+        for k,v in default_kwargs.items():
+            kwargs[k] = kwargs.get(k, v)
+
+        return three_panel(self.pos.value, **kwargs)
 
 def combine(*args):
     """
