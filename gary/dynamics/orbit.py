@@ -152,7 +152,7 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
     # Computed dynamical quantities
     # ------------------------------------------------------------------------
 
-    def potential_energy(self):
+    def potential_energy(self, potential=None):
         r"""
         The potential energy *per unit mass*:
 
@@ -165,13 +165,15 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         E : :class:`~astropy.units.Quantity`
             The potential energy.
         """
-        if self.potential is None:
+        if self.potential is None and potential is None:
             raise ValueError("To compute the potential energy, a potential"
-                             " object must be provided when creating the"
-                             " orbit object!")
-        return super(CartesianOrbit,self).potential_energy(self.potential)
+                             " object must be provided!")
+        if potential is None:
+            potential = self.potential
 
-    def energy(self):
+        return super(CartesianOrbit,self).potential_energy(potential)
+
+    def energy(self, potential=None):
         r"""
         The total energy *per unit mass* (e.g., kinetic + potential):
 
@@ -180,7 +182,7 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         E : :class:`~astropy.units.Quantity`
             The total energy.
         """
-        return self.kinetic_energy() + self.potential_energy()
+        return self.kinetic_energy() + self.potential_energy(potential)
 
     def estimate_period(self, radial=True):
         """
