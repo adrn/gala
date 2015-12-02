@@ -188,8 +188,8 @@ def plot_orbits(x, t=None, ix=None, axes=None, triangle=False,
 def three_panel(q, relative_to=None, symbol=None, autolim=True,
                 axes=None, triangle=False, subplots_kwargs=dict(), **kwargs):
     """
-    Given 3D quantities, `q`, (not astropy quantities...), make nice three-panel or
-    triangle plots of projections of the values.
+    Given 3D quantities, ``q``, make a nice three-panel or triangle plot
+    of projections of the values.
 
     Parameters
     ----------
