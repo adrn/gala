@@ -1,8 +1,8 @@
 .. _actionangle:
 
-*************************************************
-Actions, angles, and frequencies for three orbits
-*************************************************
+************************************************
+Transforming to actions, angles, and frequencies
+************************************************
 
 Introduction
 ============
