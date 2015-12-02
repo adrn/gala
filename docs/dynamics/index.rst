@@ -19,10 +19,11 @@ coordinates, tools for visualizing and computing dynamical quantities from
 orbits, and tools useful for nonlinear dynamics such as Lyapunov exponent
 estimation.
 
-For code blocks below, I assume the following imports have already
-been excuted::
+For code blocks below and any pages linked below, I assume the following
+imports have already been excuted::
 
     >>> import astropy.units as u
+    >>> import numpy as np
     >>> import gary.potential as gp
     >>> import gary.dynamics as gd
     >>> from gary.units import galactic
