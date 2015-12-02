@@ -209,17 +209,20 @@ Just like above, we can quickly visualize an orbit using the
     import astropy.units as u
     import gary.dynamics as gd
     import gary.potential as gp
+    from gary.units import galactic
 
     pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[10.,0,0]*u.kpc,
-                                        vel=[0.,100,0]*u.km/u.s)
-    orbit = pot.integrate_orbit(w0, dt=0.5, nsteps=1000)
+    w0 = gd.CartesianPhaseSpacePosition(pos=[1.,0,0]*u.kpc,
+                                        vel=[0.,50,0]*u.km/u.s)
+    orbit = pot.integrate_orbit(w0, dt=1., nsteps=1000)
     fig = orbit.plot()
 
 This is a thin wrapper around the `~gary.dynamics.plot_orbits`
 function and any keyword arguments are passed through to that function::
 
-    >>> fig = orbit.plot(linewidth=3., alpha=0.5)
+    >>> fig = orbit.plot(linewidth=5., alpha=0.5, color='r')
+    >>> fig.axes[0].set_xlim(-1.5,1.5)
+    >>> fig.axes[0].set_ylim(-1.5,1.5)
 
 .. plot::
     :align: center
@@ -227,12 +230,15 @@ function and any keyword arguments are passed through to that function::
     import astropy.units as u
     import gary.dynamics as gd
     import gary.potential as gp
+    from gary.units import galactic
 
     pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[10.,0,0]*u.kpc,
-                                        vel=[0.,100,0]*u.km/u.s)
-    orbit = pot.integrate_orbit(w0, dt=0.5, nsteps=1000)
-    fig = orbit.plot(linewidth=3., alpha=0.5)
+    w0 = gd.CartesianPhaseSpacePosition(pos=[1.,0,0]*u.kpc,
+                                        vel=[0.,50,0]*u.km/u.s)
+    orbit = pot.integrate_orbit(w0, dt=1., nsteps=1000)
+    fig = orbit.plot(linewidth=5., alpha=0.5, color='r')
+    fig.axes[0].set_xlim(-1.5,1.5)
+    fig.axes[0].set_ylim(-1.5,1.5)
 
 
 Orbit API
