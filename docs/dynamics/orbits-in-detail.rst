@@ -15,8 +15,8 @@ velocity units. The `~gary.dynamics.PhaseSpacePosition` and
 `~gary.dynamics.Orbit` subclasses are designed to work with these structures --
 click these shortcuts to jump to a section below:
 
- * `phase-space-position`_
- * `orbit`_
+ * :ref:`phase-space-position`
+ * :ref:`orbit`
 
 Some imports needed for the code below::
 
