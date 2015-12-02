@@ -486,7 +486,11 @@ class PotentialBase(object):
             integrator = Integrator(acc, **Integrator_kwargs)
             t,w = integrator.run(arr_w0, **time_spec)
 
-        return CartesianOrbit.from_w(w=w, units=self.units, t=t, potential=self)
+        try:
+            tunit = self.units['time']
+        except (TypeError, AttributeError):
+            tunit = u.dimensionless_unscaled
+        return CartesianOrbit.from_w(w=w, units=self.units, t=t*tunit, potential=self)
 
     def total_energy(self, x, v):
         """
