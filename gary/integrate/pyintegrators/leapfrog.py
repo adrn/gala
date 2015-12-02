@@ -11,7 +11,7 @@ import numpy as np
 
 # Project
 from ..core import Integrator
-from ..timespec import _parse_time_specification
+from ..timespec import parse_time_specification
 
 __all__ = ["LeapfrogIntegrator"]
 
@@ -177,7 +177,7 @@ class LeapfrogIntegrator(Integrator):
         """
 
         # generate the array of times
-        times = _parse_time_specification(**time_spec)
+        times = parse_time_specification(**time_spec)
         nsteps = len(times) - 1
         _dt = times[1] - times[0]
 
