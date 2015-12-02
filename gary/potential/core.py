@@ -56,6 +56,13 @@ class PotentialBase(object):
         ----------
         q : array_like, numeric
             Position to compute the value of the potential.
+
+        Returns
+        -------
+        E : `~numpy.ndarray`
+            The potential energy, value of the potential. Will have
+            the same shape as the input position, array, ``q``, but
+            without the coordinate axis, ``axis=0``.
         """
         q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
         return self._value(q, t=t)
@@ -71,6 +78,12 @@ class PotentialBase(object):
         ----------
         q : array_like, numeric
             Position to compute the gradient.
+
+        Returns
+        -------
+        grad : `~numpy.ndarray`
+            The gradient of the potential. Will have the same shape as
+            the input position array, ``q``.
         """
         q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
         try:
@@ -89,6 +102,12 @@ class PotentialBase(object):
         ----------
         q : array_like, numeric
             Position to compute the density.
+
+        Returns
+        -------
+        dens : `~numpy.ndarray`
+            The density. Will have the same shape as the input position,
+            array, ``q``, but without the coordinate axis, ``axis=0``.
         """
         q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
         try:
@@ -126,6 +145,12 @@ class PotentialBase(object):
         ----------
         q : array_like, numeric
             Position to compute the acceleration at.
+
+        Returns
+        -------
+        acce : `~numpy.ndarray`
+            The acceleration. Will have the same shape as the input
+            position array, ``q``.
         """
         return -self.gradient(q, t=t)
 
@@ -138,6 +163,12 @@ class PotentialBase(object):
         ----------
         x : array_like, numeric
             Position to estimate the enclossed mass.
+
+        Returns
+        -------
+        menc : `~numpy.ndarray`
+            The mass. Will have the same shape as the input position,
+            array, ``q``, but without the coordinate axis, ``axis=0``
         """
 
         q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
@@ -407,10 +438,11 @@ class PotentialBase(object):
             will be *much* faster.
         **time_spec
             Specification of how long to integrate. See documentation
-            for `gary.integrate.parse_time_specification`.
+            for `~gary.integrate.parse_time_specification`.
 
         Returns
         -------
+        orbit : `~gary.dynamics.CartesianOrbit`
 
         """
 
