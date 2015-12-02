@@ -88,7 +88,7 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         self.vel = vel
 
     def __repr__(self):
-        return "<CartesianPhaseSpacePosition {}>".format(self.pos.shape)
+        return "<CartesianPhaseSpacePosition N={}, shape={}>".format(self.ndim, self.pos.shape[1:])
 
     def __str__(self):
         return "CartesianPhaseSpacePosition"
