@@ -194,9 +194,9 @@ of potential objects::
     >>> pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=[10.,0,0]*u.kpc,
                                             vel=[0.,100,0]*u.km/u.s)
-    >>> orbit = pot.integrate_orbit(w0, dt=0.5, nsteps=1000)
+    >>> orbit = pot.integrate_orbit(w0, dt=1., nsteps=500)
     >>> orbit
-    <CartesianOrbit N=3, shape=(1001,)>
+    <CartesianOrbit N=3, shape=(501,)>
 
 Just like above, we can quickly visualize an orbit using the
 `~gary.dynamics.CartesianOrbit.plot` method::
@@ -214,13 +214,13 @@ Just like above, we can quickly visualize an orbit using the
     pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
     w0 = gd.CartesianPhaseSpacePosition(pos=[1.,0,0]*u.kpc,
                                         vel=[0.,50,0]*u.km/u.s)
-    orbit = pot.integrate_orbit(w0, dt=1., nsteps=1000)
+    orbit = pot.integrate_orbit(w0, dt=1., nsteps=500)
     fig = orbit.plot()
 
 This is a thin wrapper around the `~gary.dynamics.plot_orbits`
 function and any keyword arguments are passed through to that function::
 
-    >>> fig = orbit.plot(linewidth=5., alpha=0.5, color='r')
+    >>> fig = orbit.plot(linewidth=4., alpha=0.5, color='r')
     >>> fig.axes[0].set_xlim(-1.5,1.5)
     >>> fig.axes[0].set_ylim(-1.5,1.5)
 
@@ -235,8 +235,8 @@ function and any keyword arguments are passed through to that function::
     pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
     w0 = gd.CartesianPhaseSpacePosition(pos=[1.,0,0]*u.kpc,
                                         vel=[0.,50,0]*u.km/u.s)
-    orbit = pot.integrate_orbit(w0, dt=1., nsteps=1000)
-    fig = orbit.plot(linewidth=5., alpha=0.5, color='r')
+    orbit = pot.integrate_orbit(w0, dt=1., nsteps=500)
+    fig = orbit.plot(linewidth=4., alpha=0.5, color='r')
     fig.axes[0].set_xlim(-1.5,1.5)
     fig.axes[0].set_ylim(-1.5,1.5)
 
