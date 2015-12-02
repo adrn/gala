@@ -185,8 +185,8 @@ def plot_orbits(x, t=None, ix=None, axes=None, triangle=False,
 
     return axes[0].figure
 
-def three_panel(q, relative_to=None, symbol=None, autolim=True,
-                axes=None, triangle=False, subplots_kwargs=dict(), **kwargs):
+def three_panel(q, relative_to=None, autolim=True, axes=None,
+                triangle=False, subplots_kwargs=dict(), labels=None, **kwargs):
     """
     Given 3D quantities, ``q``, make a nice three-panel or triangle plot
     of projections of the values.
@@ -198,8 +198,6 @@ def three_panel(q, relative_to=None, symbol=None, autolim=True,
         ``axis=1`` is the time axis. See :ref:`shape-conventions` for more information.
     relative_to : bool (optional)
         Plot the values relative to this value or values.
-    symbol : str (optional)
-        Symbol to represent the quantity for axis labels. Can be Latex.
     autolim : bool (optional)
         Automatically set the plot limits to be something sensible.
     axes : array_like (optional)
@@ -208,6 +206,9 @@ def three_panel(q, relative_to=None, symbol=None, autolim=True,
         Make a triangle plot instead of plotting all projections in a single row.
     subplots_kwargs : dict (optional)
         Dictionary of kwargs passed to the matplotlib `subplots()` call.
+    labels : iterable (optional)
+        List or iterable of axis labels as strings. They should correspond to the
+        dimensions of the input orbit.
 
     Other Parameters
     ----------------
@@ -228,33 +229,26 @@ def three_panel(q, relative_to=None, symbol=None, autolim=True,
     if relative_to is not None:
         q -= relative_to
 
-        if symbol is not None:
-            label = r"$\Delta {sym}_{{ix}}/{sym}^{{{{(0)}}}}_{{ix}}$".format(sym=symbol)
-
-    else:
-        if symbol is not None:
-            label = r"${sym}_{{ix}}$".format(sym=symbol)
-
     axes[0].scatter(q[0], q[1], **kwargs)
     axes[1].scatter(q[0], q[2], **kwargs)
     axes[2].scatter(q[1], q[2], **kwargs)
 
     if label is not None:
         if triangle:
-            axes[0].set_ylabel(label.format(ix=2))
-            axes[1].set_xlabel(label.format(ix=1))
-            axes[1].set_ylabel(label.format(ix=3))
-            axes[2].set_xlabel(label.format(ix=1))
+            axes[0].set_ylabel(labels[1])
+            axes[1].set_xlabel(labels[0])
+            axes[1].set_ylabel(labels[2])
+            axes[2].set_xlabel(labels[0])
 
         else:
-            axes[0].set_xlabel(label.format(ix=1))
-            axes[0].set_ylabel(label.format(ix=2))
+            axes[0].set_xlabel(labels[0])
+            axes[0].set_ylabel(labels[1])
 
-            axes[1].set_xlabel(label.format(ix=1))
-            axes[1].set_ylabel(label.format(ix=3))
+            axes[1].set_xlabel(labels[0])
+            axes[1].set_ylabel(labels[2])
 
-            axes[2].set_xlabel(label.format(ix=2))
-            axes[2].set_ylabel(label.format(ix=3))
+            axes[2].set_xlabel(labels[1])
+            axes[2].set_ylabel(labels[2])
 
     if autolim:
         lims = []
