@@ -227,7 +227,6 @@ def three_panel(q, relative_to=None, autolim=True, axes=None,
     axes = _get_axes(dim=3, axes=axes, triangle=triangle, subplots_kwargs=subplots_kwargs)
 
     # if the quantities are relative
-    label = None
     if relative_to is not None:
         q -= relative_to
 
@@ -235,22 +234,21 @@ def three_panel(q, relative_to=None, autolim=True, axes=None,
     axes[1].scatter(q[0], q[2], **kwargs)
     axes[2].scatter(q[1], q[2], **kwargs)
 
-    if label is not None:
-        if triangle:
-            axes[0].set_ylabel(labels[1])
-            axes[1].set_xlabel(labels[0])
-            axes[1].set_ylabel(labels[2])
-            axes[2].set_xlabel(labels[0])
+    if triangle:
+        axes[0].set_ylabel(labels[1])
+        axes[1].set_xlabel(labels[0])
+        axes[1].set_ylabel(labels[2])
+        axes[2].set_xlabel(labels[0])
 
-        else:
-            axes[0].set_xlabel(labels[0])
-            axes[0].set_ylabel(labels[1])
+    else:
+        axes[0].set_xlabel(labels[0])
+        axes[0].set_ylabel(labels[1])
 
-            axes[1].set_xlabel(labels[0])
-            axes[1].set_ylabel(labels[2])
+        axes[1].set_xlabel(labels[0])
+        axes[1].set_ylabel(labels[2])
 
-            axes[2].set_xlabel(labels[1])
-            axes[2].set_ylabel(labels[2])
+        axes[2].set_xlabel(labels[1])
+        axes[2].set_ylabel(labels[2])
 
     if autolim:
         lims = []

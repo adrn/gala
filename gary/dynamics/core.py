@@ -375,7 +375,7 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         """
         default_kwargs = {
             'marker': '.',
-            'alpha': 0.5,
+            'color': 'k',
             'labels': ('$x$ [{}]'.format(self.pos.unit),
                        '$y$ [{}]'.format(self.pos.unit),
                        '$z$ [{}]'.format(self.pos.unit))
