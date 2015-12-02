@@ -35,7 +35,7 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
     The position and velocity quantities (arrays) can have an arbitrary
     number of dimensions, but the first axis (0, 1) has special meaning::
 
-        - `axis=0` is the coordinatte dimension (e.g., x, y, z)
+        - `axis=0` is the coordinate dimension (e.g., x, y, z)
 
     So if the input position array, `pos`, has shape `pos.shape = (3, 100)`,
     this would represent 100 3D positions (`pos[0]` is `x`, `pos[1]` is `y`,
