@@ -9,49 +9,68 @@ Dynamics (`gary.dynamics`)
 Introduction
 ============
 
-This subpackage contains functions and classes useful for advanced gravitational
-dynamics. Much of the code is focused on transforming orbits in phase-space to
-either action-angle coordinates or frequency-space. There are other useful
-tools for computing Lyapunov exponents and classifying orbits.
+This subpackage contains functions and classes useful for gravitational
+dynamics. The fundamental objects used by many of the functions and utilities
+in this and other subpackages are the `~gary.dynamics.PhaseSpacePosition` and
+`~gary.dynamics.Orbit` subclasses.
+
+There are utilities for transforming orbits in phase-space to action-angle
+coordinates, tools for visualizing and computing dynamical quantities from
+orbits, and tools useful for nonlinear dynamics such as Lyapunov exponent
+estimation.
+
+For code blocks below, I assume the following imports have already
+been excuted::
+
+    >>> import astropy.units as u
+    >>> import gary.potential as gp
+    >>> import gary.dynamics as gd
+    >>> from gary.units import galactic
 
 Getting started
 ===============
 
-Conventions
------------
-
-Orbits and phase-space positions are typically stored as Numpy :class:`~numpy.ndarray` objects with the convention that the *last* axis (``axis=-1``) is the phase-
-space dimensionality. For example, for a collection of 100, 3D cartesian positions
-(x,y,z), this would be represented as an array with shape ``(100,3)``. Or, for orbits
-of 100 particles over 1000 timesteps for the full phase-space (including velocities),
-the array would have shape ``(1000,100,6)``.
-
-Analyzing orbits
-----------------
+Working with orbits
+-------------------
 
 Some simple tools are provided for inspecting and plotting orbits. For example,
-imagine we have an orbit in Cartesian coordinates (by integrating an orbit using the
-:ref:`gary.potential` and :ref:`gary.integrate` submodules)::
+we'll start by integrating an orbit in Cartesian coordinates using the
+:mod:`gary.potential` and :mod:`gary.integrate` subpackages::
 
-   >>> from gary.units import galactic
-   >>> import gary.potential as gp
-   >>> p = gp.MiyamotoNagaiPotential(m=2.5E11, a=6.5, b=0.26, units=galactic)
-   >>> w0 = [11., 0., 0.2, 0., 0.2, 0., -0.025]
-   >>> t,w = p.integrate_orbit(w0, dt=1., nsteps=10000)
+    >>> pot = gp.MiyamotoNagaiPotential(m=2.5E11, a=6.5, b=0.26, units=galactic)
+    >>> w0 = gd.CartesianPhaseSpacePosition(pos=[11., 0., 0.2]*u.kpc,
+    ...                                     vel=[0., 200, 100]*u.km/u.s)
+    >>> orbit = pot.integrate_orbit(w0, dt=1., nsteps=1000)
 
-We may want to quickly plot the orbit in all projections to get an idea of the
-geometry of the orbit. We can use the `gd.plot_orbits` function to generate a
-3-panel plot of the orbit in all projections (x-y, x-z, y-z)::
+This will integrate an orbit from the specified initial conditions (``w0``) and
+return an orbit object. There are many useful methods of the `~gary.dynamics.Orbit`
+subclasses and many functions that accept `~gary.dynamics.Orbit` objects. For example,
+we can easily visualize the orbit by plotting the time series in all projections
+using the :meth:`gary.dynamics.CartesianOrbit.plot` method::
 
-   >>> fig = gd.plot_orbits(w, marker=None, linestyle='-')
+    >>> fig = orbit.plot()
 
+.. plot::
+    :align: center
+
+    import astropy.units as u
+    import gary.potential as gp
+    import gary.dynamics as gd
+    from gary.units import galactic
+    pot = gp.MiyamotoNagaiPotential(m=2.5E11, a=6.5, b=0.26, units=galactic)
+    w0 = gd.CartesianPhaseSpacePosition(pos=[11., 0., 0.2]*u.kpc,
+                                        vel=[0., 200, 100]*u.km/u.s)
+    orbit = pot.integrate_orbit(w0, dt=1., nsteps=1000)
+    fig = orbit.plot()
 
 Transforming to angle-action coordinates
 ----------------------------------------
 
+This
 
-Tutorial
-========
+
+Tutorials
+=========
 
 For a detailed example that makes use of the code for transforming to
 action-angle coordinates, see: :ref:`actionangle`.
