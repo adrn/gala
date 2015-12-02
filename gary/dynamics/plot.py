@@ -32,7 +32,7 @@ def _get_axes(dim, axes=None, triangle=False, subplots_kwargs=dict()):
 
     if dim == 3:
         if triangle and axes is None:
-            figsize = subplots_kwargs.pop('figsize', (12,12))
+            figsize = subplots_kwargs.pop('figsize', (8,8))
             sharex = subplots_kwargs.pop('sharex', True)
             sharey = subplots_kwargs.pop('sharey', True)
             fig,axes = plt.subplots(2,2,figsize=figsize, sharex=sharex, sharey=sharey,
@@ -51,7 +51,7 @@ def _get_axes(dim, axes=None, triangle=False, subplots_kwargs=dict()):
                 axes = [axes[0],axes[2],axes[3]]
 
         elif not triangle and axes is None:
-            figsize = subplots_kwargs.pop('figsize', (14,5))
+            figsize = subplots_kwargs.pop('figsize', (10,3.5))
             fig,axes = plt.subplots(1, 3, figsize=figsize, **subplots_kwargs)
 
     elif dim <= 2:
