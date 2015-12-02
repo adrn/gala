@@ -34,3 +34,14 @@ is assumed to be the coordinate dimension. For example, for representing
 For collections of orbits, arrays have 3 axes. As above, ``axis=0``
 is assumed to be the coordinate dimension, but now ``axis=1`` is
 interpreted as the time axis, and ``axis=2`` are the individual orbits.
+
+.. _energy-momentum:
+
+Energy and momentum
+===================
+
+The `gary` documentation and functions often refer to energy and
+angular momentum and the respective quantities *per unit mass*
+interchangibly. Unless otherwise specified, all such quantities -- e.g.,
+energy, angular momentum, momenta, conjugate momenta -- are in fact
+used and returned *per unit mass*.
