@@ -36,9 +36,9 @@ Subpackages
    :maxdepth: 1
 
    coordinates/index
-   dynamics/index
    integrate/index
    potential/index
+   dynamics/index
    units
    util
 

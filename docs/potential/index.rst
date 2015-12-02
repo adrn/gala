@@ -81,7 +81,7 @@ potential value as a function of :math:`x` position at :math:`y=0, z=1`::
 
 Produces a plot like:
 
-.. image:: ../_static/potential/miyamoto-nagai-1d.png
+.. .. image:: ../_static/potential/miyamoto-nagai-1d.png
 
 To instead make a 2D contour plot over :math:`x` and :math:`z` along with
 :math:`y=0`, pass in a 1D grid of values for :math:`x` and a 1D grid of values
@@ -93,7 +93,7 @@ for :math:`z` (the meshgridding is taken care of internally)::
 
 which produces:
 
-.. image:: ../_static/potential/miyamoto-nagai-2d.png
+.. .. image:: ../_static/potential/miyamoto-nagai-2d.png
 
 :meth:`~gary.potential.Potential.mass_enclosed` is a method that
 numerically estimates the mass enclosed within a spherical shell defined
@@ -112,7 +112,7 @@ be used to compute, for example, a mass profile::
     >>> m_profile = p.mass_enclosed(r)
     >>> plt.loglog(r/r_h, menc, marker=None) # doctest: +SKIP
 
-.. image:: ../_static/potential/mass-profile.png
+    .. .. image:: ../_static/potential/mass-profile.png
 
 Potential objects can be `pickled <https://docs.python.org/2/library/pickle.html>`_
 and can therefore be stored for later use. However, pickles are saved as binary
