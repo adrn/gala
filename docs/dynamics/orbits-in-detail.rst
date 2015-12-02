@@ -1,10 +1,3 @@
-.. testsetup:: *
-    import astropy.units as u
-    import numpy as np
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
-
 .. _orbits-in-detail:
 
 *****************************************************
@@ -21,6 +14,15 @@ may contain some quantities with length units and some quantities with
 velocity units. The `~gary.dynamics.PhaseSpacePosition` and
 `~gary.dynamics.Orbit` subclasses are designed to work with these structures.
 
+Some imports needed for the code below::
+
+    import astropy.units as u
+    import numpy as np
+    import gary.potential as gp
+    import gary.dynamics as gd
+    from gary.units import galactic
+    np.random.seed(42)
+
 Phase-space positions
 =====================
 
@@ -36,7 +38,7 @@ cartesian position and velocity to the initializer::
 
     >>> gd.CartesianPhaseSpacePosition(pos=[4.,8.,15.]*u.kpc,
                                        vel=[-150.,50.,15.]*u.km/u.s)
-    <CartesianPhaseSpacePosition (3, 1)>
+    <CartesianPhaseSpacePosition N=3, shape=(1,)>
 
 Of course, this works with arrays of positions and velocities as well::
 
@@ -44,14 +46,14 @@ Of course, this works with arrays of positions and velocities as well::
     >>> v = np.random.uniform(-200,200,size=(3,128))
     >>> gd.CartesianPhaseSpacePosition(pos=x*u.kpc,
                                        vel=v*u.km/u.s)
-    <CartesianPhaseSpacePosition (3, 128)>
+    <CartesianPhaseSpacePosition N=3, shape=(128,)>
 
 This works for arbitrary numbers of dimensions, e.g., we define a position::
 
     >>> w = gd.CartesianPhaseSpacePosition(pos=[4.,8.]*u.kpc,
                                            vel=[-150.45.]*u.km/u.s)
     >>> w
-    <CartesianPhaseSpacePosition (2, 1)>
+    <CartesianPhaseSpacePosition N=2, shape=(1,)>
 
 We can check the dimensionality using the `~gary.dynamics.CartesianPhaseSpacePosition.ndim`
 attribute::
@@ -112,7 +114,7 @@ object is a tuple with proper motions and radial velocity,
 We can easily plot projections of the positions using the
 `~gary.dynamics.CartesianPhaseSpacePosition.plot` method::
 
-    >>> fig,axes = w.plot()
+    >>> fig = w.plot()
 
 .. plot::
     :align: center
@@ -120,16 +122,17 @@ We can easily plot projections of the positions using the
     import astropy.units as u
     import numpy as np
     import gary.dynamics as gd
+    np.random.seed(42)
     x = np.random.uniform(-10,10,size=(3,128))
     v = np.random.uniform(-200,200,size=(3,128))
     w = gd.CartesianPhaseSpacePosition(pos=x*u.kpc,
                                        vel=v*u.km/u.s)
-    fig,axes = w.plot()
+    fig = w.plot()
 
-This is a thin wrapper around the `~gary.dynamics.plot.three_panel`
+This is a thin wrapper around the `~gary.dynamics.three_panel`
 function and any keyword arguments are passed through to that function::
 
-    >>> fig,axes = w.plot(marker='o', markersize=10, alpha=0.1)
+    >>> fig = w.plot(marker='o', s=40, alpha=0.5)
 
 .. plot::
     :align: center
@@ -137,17 +140,100 @@ function and any keyword arguments are passed through to that function::
     import astropy.units as u
     import numpy as np
     import gary.dynamics as gd
+    np.random.seed(42)
     x = np.random.uniform(-10,10,size=(3,128))
     v = np.random.uniform(-200,200,size=(3,128))
     w = gd.CartesianPhaseSpacePosition(pos=x*u.kpc,
                                        vel=v*u.km/u.s)
-    fig,axes = w.plot(marker='o', markersize=10, alpha=0.1)
+    fig = w.plot(marker='o', s=40, alpha=0.5)
 
 Phase-space position API
 ------------------------
 .. automodapi:: gary.dynamics.core
     :no-heading:
     :headings: ^^
+
+
+Orbits
+======
+
+The `~gary.dynamics.Orbit` subclasses all inherit the functionality described
+above from `~gary.dynamics.PhaseSpacePosition`, but similarly, at present only the
+`~gary.dynamics.CartesianOrbit` is fully implemented. There are some differences
+between the methods and some functionality that is particular to the orbit classes.
+
+A `~gary.dynamics.CartesianOrbit` is initialized much like the
+`~gary.dynamics.CartesianPhaseSpacePosition`. `~gary.dynamics.CartesianOrbit`s can be
+created with just position and velocity information, however now the
+interpretation of the input object shapes is different. Whereas an input position with
+shape ``(3,128)`` to a `~gary.dynamics.CartesianPhaseSpacePosition` represents
+128, 3D positions, for an orbit it would represent a single orbit's positions
+at 128 timesteps::
+
+    >>> x = np.random.uniform(-10,10,size=(3,128))
+    >>> v = np.random.uniform(-200,200,size=(3,128))
+    >>> orbit = gd.CartesianOrbit(pos=x*u.kpc, vel=v*u.km/u.s)
+    >>> orbit
+    <Orbit N=3, shape=(128,)>
+
+To create a single object that contains multiple orbits, the input position object
+should have 3 axes. The last axis (``axis=2``) contains each orbit. So, an input
+position with shape ``(3,128,16)`` would represent 16, 3D orbits with 128 timesteps::
+
+    >>> x = np.random.uniform(-10,10,size=(3,128,16))
+    >>> v = np.random.uniform(-200,200,size=(3,128,16))
+    >>> orbit = gd.CartesianOrbit(pos=x*u.kpc, vel=v*u.km/u.s)
+    >>> orbit
+    <Orbit N=3, shape=(128,16)>
+
+TODO: time, potential
+
+Orbit objects are returned by the `~gary.potential.PotentialBase.integrate_orbit` method
+of potential objects::
+
+    >>> pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
+    >>> w0 = gd.CartesianPhaseSpacePosition(pos=[10.,0,0]*u.kpc,
+                                            vel=[0.,100,0]*u.km/u.s)
+    >>> orbit = pot.integrate_orbit(w0, dt=0.5, nsteps=1000)
+    >>> orbit
+    <CartesianOrbit N=3, shape=(1001,)>
+
+Just like above, we can quickly visualize an orbit using the
+`~gary.dynamics.CartesianOrbit.plot` method::
+
+    >>> fig = orbit.plot()
+
+.. plot::
+    :align: center
+
+    import astropy.units as u
+    import gary.dynamics as gd
+    import gary.potential as gp
+
+    pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
+    w0 = gd.CartesianPhaseSpacePosition(pos=[10.,0,0]*u.kpc,
+                                        vel=[0.,100,0]*u.km/u.s)
+    orbit = pot.integrate_orbit(w0, dt=0.5, nsteps=1000)
+    fig = orbit.plot()
+
+This is a thin wrapper around the `~gary.dynamics.plot_orbits`
+function and any keyword arguments are passed through to that function::
+
+    >>> fig = orbit.plot(linewidth=3., alpha=0.5)
+
+.. plot::
+    :align: center
+
+    import astropy.units as u
+    import gary.dynamics as gd
+    import gary.potential as gp
+
+    pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
+    w0 = gd.CartesianPhaseSpacePosition(pos=[10.,0,0]*u.kpc,
+                                        vel=[0.,100,0]*u.km/u.s)
+    orbit = pot.integrate_orbit(w0, dt=0.5, nsteps=1000)
+    fig = orbit.plot(linewidth=3., alpha=0.5)
+
 
 Orbit API
 ---------
