@@ -371,13 +371,11 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         Returns
         -------
         fig : `~matplotlib.Figure`
-        axes : `~matplotlib.Axes`
 
         """
         default_kwargs = {
             'marker': '.',
             'alpha': 0.5,
-            'linestyle': 'none',
             'labels': ('$x$ [{}]'.format(self.pos.unit),
                        '$y$ [{}]'.format(self.pos.unit),
                        '$z$ [{}]'.format(self.pos.unit))

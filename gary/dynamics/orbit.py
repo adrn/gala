@@ -352,7 +352,6 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         Returns
         -------
         fig : `~matplotlib.Figure`
-        axes : `~matplotlib.Axes`
 
         """
         default_kwargs = {
