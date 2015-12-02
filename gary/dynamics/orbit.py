@@ -37,7 +37,7 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
     number of dimensions, but the first two axes (0, 1) have
     special meaning::
 
-        - `axis=0` is the coordinatte dimension (e.g., x, y, z)
+        - `axis=0` is the coordinate dimension (e.g., x, y, z)
         - `axis=1` is the time dimension
 
     So if the input position array, `pos`, has shape `pos.shape = (3, 100)`, this
@@ -87,10 +87,10 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         self.potential = potential
 
     def __repr__(self):
-        return "<Orbit {}>".format(self.pos.shape)
+        return "<CartesianOrbit {}>".format(self.pos.shape)
 
     def __str__(self):
-        return "Orbit"
+        return "CartesianOrbit"
 
     def __getitem__(self, slyce):
         try:
