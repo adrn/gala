@@ -1,5 +1,5 @@
-from .core import CartesianPhaseSpacePosition
-from .orbit import CartesianOrbit
+from .core import PhaseSpacePosition, CartesianPhaseSpacePosition
+from .orbit import Orbit, CartesianOrbit
 from .analyticactionangle import *
 from .actionangle import *
 from .nonlinear import *
