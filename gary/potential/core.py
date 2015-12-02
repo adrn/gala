@@ -17,6 +17,7 @@ from astropy.utils import isiterable
 from ..integrate import *
 from ..util import inherit_docs, ImmutableDict, atleast_2d
 from ..units import UnitSystem
+from ..dynamics import CartesianOrbit
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
@@ -431,7 +432,7 @@ class PotentialBase(object):
             integrator = Integrator(acc, **Integrator_kwargs)
             t,w = integrator.run(w0, **time_spec)
 
-        return CartesianOrbit.from_w(w=w, unit=self.units, t=t, potential=self)
+        return CartesianOrbit.from_w(w=w, units=self.units, t=t, potential=self)
 
     def total_energy(self, x, v):
         """
