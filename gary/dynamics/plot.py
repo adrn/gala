@@ -25,7 +25,7 @@ def _get_axes(dim, axes=None, triangle=False, subplots_kwargs=dict()):
     triangle : bool (optional)
         Make a triangle plot instead of plotting all projections in a single row.
     subplots_kwargs : dict (optional)
-        Dictionary of kwargs passed to the matplotlib `subplots()` call.
+        Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
     """
 
     import matplotlib.pyplot as plt
@@ -97,17 +97,18 @@ def plot_orbits(x, t=None, ix=None, axes=None, triangle=False,
     triangle : bool (optional)
         Make a triangle plot instead of plotting all projections in a single row.
     subplots_kwargs : dict (optional)
-        Dictionary of kwargs passed to the matplotlib `subplots()` call.
+        Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
     labels : iterable (optional)
         List or iterable of axis labels as strings. They should correspond to the
         dimensions of the input orbit.
+    **kwargs
+        All other keyword arguments are passed to :func:`~matplotlib.pyplot.plot`.
+        You can pass in any of the usual style kwargs like ``color=...``,
+        ``marker=...``, etc.
 
-    Other Parameters
-    ----------------
-    kwargs
-        All other keyword arguments are passed to the matplotlib `plot()` call.
-        You can pass in any of the usual style kwargs like `color=...`,
-        `marker=...`, etc.
+    Returns
+    -------
+    fig : `~matplotlib.Figure`
     """
 
     x = atleast_2d(x, insert_axis=1)
@@ -205,17 +206,18 @@ def three_panel(q, relative_to=None, autolim=True, axes=None,
     triangle : bool (optional)
         Make a triangle plot instead of plotting all projections in a single row.
     subplots_kwargs : dict (optional)
-        Dictionary of kwargs passed to the matplotlib `subplots()` call.
+        Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
     labels : iterable (optional)
         List or iterable of axis labels as strings. They should correspond to the
         dimensions of the input orbit.
+    **kwargs
+        All other keyword arguments are passed to :func:`~matplotlib.pyplot.scatter`.
+        You can pass in any of the usual style kwargs like ``color=...``,
+        ``marker=...``, etc.
 
-    Other Parameters
-    ----------------
-    kwargs
-        All other keyword arguments are passed to the matplotlib `scatter()` call.
-        You can pass in any of the usual style kwargs like `color=...`,
-        `marker=...`, etc.
+    Returns
+    -------
+    fig : `~matplotlib.Figure`
     """
 
     # don't propagate changes back...
