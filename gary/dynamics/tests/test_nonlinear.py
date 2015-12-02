@@ -4,13 +4,8 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os
-
 # Third-party
-import matplotlib.pyplot as pl
 import numpy as np
-import pytest
 
 # Project
 from ... import potential as gp
