@@ -46,10 +46,111 @@ Of course, this works with arrays of positions and velocities as well::
                                        vel=v*u.km/u.s)
     <CartesianPhaseSpacePosition (3, 128)>
 
-TODO: what can we do with these objects?
+This works for arbitrary numbers of dimensions, e.g., we define a position::
 
-.. _references:
+    >>> w = gd.CartesianPhaseSpacePosition(pos=[4.,8.]*u.kpc,
+                                           vel=[-150.45.]*u.km/u.s)
+    >>> w
+    <CartesianPhaseSpacePosition (2, 1)>
 
-.. automodapi:: gary.dynamics.orbit
+We can check the dimensionality using the `~gary.dynamics.CartesianPhaseSpacePosition.ndim`
+attribute::
 
+    >>> w.ndim
+    2
+
+For objects with ``ndim=3``, we can also easily transform the full
+phase-space vector to new representations or coordinate frames. These
+transformations use the :mod:`astropy.coordinates` framework and the
+velocity transforms from `gary.coordinates`.
+
+    >>> from astropy.coordinates import CylindricalRepresentation
+    >>> x = np.random.uniform(-10,10,size=(3,128))
+    >>> v = np.random.uniform(-200,200,size=(3,128))
+    >>> w = gd.CartesianPhaseSpacePosition(pos=x*u.kpc,
+                                           vel=v*u.km/u.s)
+    >>> cyl_pos, cyl_vel = w.represent_as(CylindricalRepresentation)
+
+The `~gary.dynamics.CartesianPhaseSpacePosition.represent_as` method returns two
+objects that contain the position in the new representation, and the velocity
+in the new representation. The position is returned as a
+:class:`~astropy.coordinates.BaseRepresentation` subclass. The velocity is
+presently returned as a single :class:`~astropy.units.Quantity` object with
+the velocity components represented in velocity units (not in angular velocity
+units!) but this will change in the future when velocity support is added
+to Astropy::
+
+    >>> cyl_pos # doctest: +SKIP
+    <CylindricalRepresentation (rho, phi, z) in (kpc, rad, kpc)
+        [(2.64929392, 1.5595981, 5.27411405),
+        ...
+    >>> cyl_vel # doctest: +SKIP
+    <Quantity [[-185.61668456, 160.10813427, -75.14559842, 138.36905651,
+                 -60.93410629,  95.60242757,  41.89615149, 128.34632582,
+                 ...
+
+There is also support for transforming the cartesian positions and velocities
+(assumed to be in a `~astropy.coordinates.Galactocentric` frame) to any of
+the other coordinate frames. The transformation returns two objects: an
+initialized coordinate frame for the position, and a tuple of
+:class:`~astropy.units.Quantity` objects for the velocity. Here, velocities
+are represented in angular velocities for the velocities conjugate to angle
+variables. For example, in the below transformation to
+:class:`~astropy.coordinates.Galactic` coordinates, the returned velocity
+object is a tuple with proper motions and radial velocity,
+:math:`(\mu_l, \mu_b, v_r)`::
+
+    >>> from astropy.coordinates import Galactic
+    >>> gal_c, gal_v = w.to_frame(Galactic)
+    >>> gal_c # doctest: +SKIP
+    <Galactic Coordinate: (l, b, distance) in (deg, deg, kpc)
+        [(17.67673481, 31.15412806, 10.19473889),
+        ...
+    >>> gal_v[0].unit, gal_v[1].unit, gal_v[2].unit
+    (Unit("mas / yr"), Unit("mas / yr"), Unit("km / s"))
+
+We can easily plot projections of the positions using the
+`~gary.dynamics.CartesianPhaseSpacePosition.plot` method::
+
+    >>> fig,axes = w.plot()
+
+.. plot::
+    :align: center
+
+    import astropy.units as u
+    import numpy as np
+    import gary.dynamics as gd
+    x = np.random.uniform(-10,10,size=(3,128))
+    v = np.random.uniform(-200,200,size=(3,128))
+    w = gd.CartesianPhaseSpacePosition(pos=x*u.kpc,
+                                       vel=v*u.km/u.s)
+    fig,axes = w.plot()
+
+This is a thin wrapper around the `~gary.dynamics.plot.three_panel`
+function and any keyword arguments are passed through to that function::
+
+    >>> fig,axes = w.plot(marker='o', markersize=10, alpha=0.1)
+
+.. plot::
+    :align: center
+
+    import astropy.units as u
+    import numpy as np
+    import gary.dynamics as gd
+    x = np.random.uniform(-10,10,size=(3,128))
+    v = np.random.uniform(-200,200,size=(3,128))
+    w = gd.CartesianPhaseSpacePosition(pos=x*u.kpc,
+                                       vel=v*u.km/u.s)
+    fig,axes = w.plot(marker='o', markersize=10, alpha=0.1)
+
+Phase-space position API
+------------------------
 .. automodapi:: gary.dynamics.core
+    :no-heading:
+    :headings: ^^
+
+Orbit API
+---------
+.. automodapi:: gary.dynamics.orbit
+    :no-heading:
+    :headings: ^^
