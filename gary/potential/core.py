@@ -17,7 +17,7 @@ from astropy.utils import isiterable
 from ..integrate import *
 from ..util import inherit_docs, ImmutableDict, atleast_2d
 from ..units import UnitSystem
-from ..dynamics import CartesianOrbit
+from ..dynamics import CartesianOrbit, CartesianPhaseSpacePosition
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
@@ -397,13 +397,18 @@ class PotentialBase(object):
 
         """
 
-        w0 = atleast_2d(w0, insert_axis=1)
-        ndim_2 = w0.shape[0]//2
+        if not isinstance(w0, CartesianPhaseSpacePosition):
+            w0 = np.asarray(w0)
+            ndim = w0.shape[0]
+            w0 = CartesianPhaseSpacePosition(pos=w0[:ndim//2],
+                                             vel=w0[ndim//2:])
 
+        ndim = w0.ndim
+        arr_w0 = w0.w(self.units)
         if hasattr(self, 'c_instance') and cython_if_possible:
             # WARNING TO SELF: this transpose is there because the Cython
             #   functions expect a shape: (norbits, ndim)
-            w0 = np.ascontiguousarray(w0.T)
+            arr_w0 = np.ascontiguousarray(arr_w0.T)
 
             # array of times
             from ..integrate.timespec import _parse_time_specification
@@ -411,11 +416,11 @@ class PotentialBase(object):
 
             if Integrator == LeapfrogIntegrator:
                 from ..integrate.cyintegrators import leapfrog_integrate_potential
-                t,w = leapfrog_integrate_potential(self.c_instance, w0, t)
+                t,w = leapfrog_integrate_potential(self.c_instance, arr_w0, t)
 
             elif Integrator == DOPRI853Integrator:
                 from ..integrate.cyintegrators import dop853_integrate_potential
-                t,w = dop853_integrate_potential(self.c_instance, w0, t,
+                t,w = dop853_integrate_potential(self.c_instance, arr_w0, t,
                                                  Integrator_kwargs.get('atol', 1E-10),
                                                  Integrator_kwargs.get('rtol', 1E-10),
                                                  Integrator_kwargs.get('nmax', 0))
@@ -428,9 +433,9 @@ class PotentialBase(object):
                 w = w[...,0]
 
         else:
-            acc = lambda t,w: np.vstack((w[ndim_2:], self.acceleration(w[:ndim_2], t=t)))
+            acc = lambda t,w: np.vstack((w[ndim//2:], self.acceleration(w[:ndim//2], t=t)))
             integrator = Integrator(acc, **Integrator_kwargs)
-            t,w = integrator.run(w0, **time_spec)
+            t,w = integrator.run(arr_w0, **time_spec)
 
         return CartesianOrbit.from_w(w=w, units=self.units, t=t, potential=self)
 
