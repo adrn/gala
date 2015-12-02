@@ -1,7 +1,5 @@
 # coding: utf-8
 
-""" General dynamics utilities. """
-
 from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
