@@ -7,14 +7,11 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os
 import logging
 
 # Third-party
-import matplotlib.pyplot as plt
 import numpy as np
 from astropy import log as logger
-import astropy.units as u
 from scipy.linalg import solve
 import pytest
 
@@ -45,9 +42,9 @@ def test_fit_isochrone():
     true_m = 2.81E11
     true_b = 11.
     potential = IsochronePotential(m=true_m, b=true_b, units=galactic)
-    t,w = potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., nsteps=10000)
+    orbit = potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., nsteps=10000)
 
-    fit_potential = fit_isochrone(w, units=galactic)
+    fit_potential = fit_isochrone(orbit)
     m,b = fit_potential.parameters['m'], fit_potential.parameters['b']
     assert np.allclose(m, true_m, rtol=1E-2)
     assert np.allclose(b, true_b, rtol=1E-2)
@@ -56,9 +53,9 @@ def test_fit_harmonic_oscillator():
     # integrate orbit in harmonic oscillator potential, then try to recover it
     true_omegas = np.array([0.011, 0.032, 0.045])
     potential = HarmonicOscillatorPotential(omega=true_omegas, units=galactic)
-    t,w = potential.integrate_orbit([15.,1,2,0,0,0], dt=2., nsteps=10000)
+    orbit = potential.integrate_orbit([15.,1,2,0,0,0], dt=2., nsteps=10000)
 
-    fit_potential = fit_harmonic_oscillator(w, units=galactic)
+    fit_potential = fit_harmonic_oscillator(orbit)
     omegas = fit_potential.parameters['omega']
     assert np.allclose(omegas, true_omegas, rtol=1E-2)
 
@@ -67,18 +64,18 @@ def test_fit_toy_potential():
     true_m = 2.81E11
     true_b = 11.
     true_potential = IsochronePotential(m=true_m, b=true_b, units=galactic)
-    t,w = true_potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., nsteps=10000)
+    orbit = true_potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., nsteps=10000)
 
-    potential = fit_toy_potential(w, units=galactic)
+    potential = fit_toy_potential(orbit)
     for k,v in true_potential.parameters.items():
         assert np.allclose(v, potential.parameters[k], rtol=1E-2)
 
     # -----------------------------------------------------------------
     true_omegas = np.array([0.011, 0.032, 0.045])
     true_potential = HarmonicOscillatorPotential(omega=true_omegas, units=galactic)
-    t,w = true_potential.integrate_orbit([15.,1,2,0,0,0], dt=2., nsteps=10000)
+    orbit = true_potential.integrate_orbit([15.,1,2,0,0,0], dt=2., nsteps=10000)
 
-    potential = fit_toy_potential(w, units=galactic)
+    potential = fit_toy_potential(orbit)
     assert np.allclose(potential.parameters['omega'],
                        true_potential.parameters['omega'],
                        rtol=1E-2)
@@ -179,10 +176,10 @@ class TestActions(ActionsBase):
         nsteps = 20000
 
         # integrate orbits
-        t,w = self.potential.integrate_orbit(w0, dt=2., nsteps=nsteps,
-                                             Integrator=DOPRI853Integrator)
-        self.t = t
-        self.w = w
+        orbit = self.potential.integrate_orbit(w0, dt=2., nsteps=nsteps,
+                                               Integrator=DOPRI853Integrator)
+        self.t = orbit.t.value
+        self.w = orbit.w()
 
 # TODO: need to fix this -- or assess whether needed?
 # class TestHardActions(ActionsBase):

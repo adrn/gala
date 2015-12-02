@@ -19,7 +19,6 @@ from scipy.linalg import solve
 from scipy.optimize import leastsq
 
 # Project
-# from .core import classify_orbit, align_circulation_with_z # BROKEN
 from ..potential import HarmonicOscillatorPotential, IsochronePotential
 
 __all__ = ['generate_n_vectors', 'fit_isochrone',
@@ -76,7 +75,7 @@ def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
     vecs = np.array(sorted(vecs, key=lambda x: (x[0],x[1],x[2])))
     return vecs
 
-def fit_isochrone(w, units, m0=2E11, b0=1.):
+def fit_isochrone(orbit, m0=2E11, b0=1.):
     r"""
     Fit the toy Isochrone potential to the sum of the energy residuals relative
     to the mean energy by minimizing the function
@@ -87,14 +86,8 @@ def fit_isochrone(w, units, m0=2E11, b0=1.):
 
     Parameters
     ----------
-    w : array_like
-        Array of phase-space positions. Accepts 2D or 3D arrays. If 2D, assumes
-        this is a single orbit. If 3D, assumes that this is a collection of orbits.
-        See :ref:`shape-conventions` for more information about shapes.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units. For example,
-        (u.kpc, u.Myr, u.Msun).
+    orbit : array_like
+        TODO:
     m0 : numeric (optional)
         Initial mass guess.
     b0 : numeric (optional)
@@ -108,6 +101,16 @@ def fit_isochrone(w, units, m0=2E11, b0=1.):
         Best-fit core radius for the Isochrone potential.
 
     """
+    try:
+        units = orbit.potential.units
+    except AttributeError:
+        raise ValueError("The orbit object must have an associated potential with "
+                         "a defined unit system.")
+
+    w = np.squeeze(orbit.w())
+    if w.ndim > 2:
+        raise ValueError("Input orbit object must be a single orbit.")
+
     def f(p,w):
         logm,b = p
         potential = IsochronePotential(m=np.exp(logm), b=b, units=units)
@@ -125,7 +128,7 @@ def fit_isochrone(w, units, m0=2E11, b0=1.):
 
     return IsochronePotential(m=m, b=b, units=units)
 
-def fit_harmonic_oscillator(w, units, omega0=[1.,1.,1.]):
+def fit_harmonic_oscillator(orbit, omega0=[1.,1.,1.]):
     r"""
     Fit the toy harmonic oscillator potential to the sum of the energy
     residuals relative to the mean energy by minimizing the function
@@ -136,14 +139,8 @@ def fit_harmonic_oscillator(w, units, omega0=[1.,1.,1.]):
 
     Parameters
     ----------
-    w : array_like
-        Array of phase-space positions. Accepts 2D or 3D arrays. If 2D, assumes
-        this is a single orbit. If 3D, assumes that this is a collection of orbits.
-        See :ref:`shape-conventions` for more information about shapes.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units. For example,
-        (u.kpc, u.Myr, u.Msun).
+    orbit :
+        TODO:
     omega0 : array_like (optional)
         Initial frequency guess.
 
@@ -155,8 +152,18 @@ def fit_harmonic_oscillator(w, units, omega0=[1.,1.,1.]):
     """
     omega0 = np.atleast_1d(omega0)
 
+    try:
+        units = orbit.potential.units
+    except AttributeError:
+        raise ValueError("The orbit object must have an associated potential with "
+                         "a defined unit system.")
+
+    w = np.squeeze(orbit.w())
+    if w.ndim > 2:
+        raise ValueError("Input orbit object must be a single orbit.")
+
     def f(omega,w):
-        potential = HarmonicOscillatorPotential(omega=omega)
+        potential = HarmonicOscillatorPotential(omega=omega, units=units)
         H = potential.total_energy(w[:3], w[3:])
         return np.squeeze(H - np.mean(H))
 
@@ -167,7 +174,7 @@ def fit_harmonic_oscillator(w, units, omega0=[1.,1.,1.]):
     best_omega = np.abs(p)
     return HarmonicOscillatorPotential(omega=best_omega)
 
-def fit_toy_potential(w, units, force_harmonic_oscillator=False):
+def fit_toy_potential(orbit, force_harmonic_oscillator=False):
     """
     Fit a best fitting toy potential to the orbit provided. If the orbit is a
     tube (loop) orbit, use the Isochrone potential. If the orbit is a box
@@ -179,14 +186,8 @@ def fit_toy_potential(w, units, force_harmonic_oscillator=False):
 
     Parameters
     ----------
-    w : array_like
-        Array of phase-space positions. Accepts 2D or 3D arrays. If 2D, assumes
-        this is a single orbit. If 3D, assumes that this is a collection of orbits.
-        See :ref:`shape-conventions` for more information about shapes.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units. For example,
-        (u.kpc, u.Myr, u.Msun).
+    orbit :
+        TODO
     force_harmonic_oscillator : bool (optional)
         Force using the harmonic oscillator potential as the toy potential.
 
@@ -196,12 +197,12 @@ def fit_toy_potential(w, units, force_harmonic_oscillator=False):
         The best-fit potential object.
 
     """
-    orbit_class = classify_orbit(w)
-    if np.any(orbit_class == 1) and not force_harmonic_oscillator:  # tube orbit
+    circulation = orbit.circulation()
+    if np.any(circulation == 1) and not force_harmonic_oscillator:  # tube orbit
         logger.debug("===== Tube orbit =====")
         logger.debug("Using Isochrone toy potential")
 
-        toy_potential = fit_isochrone(w, units=units)
+        toy_potential = fit_isochrone(orbit)
         logger.debug("Best m={}, b={}".format(toy_potential.parameters['m'],
                                               toy_potential.parameters['b']))
 
@@ -209,7 +210,7 @@ def fit_toy_potential(w, units, force_harmonic_oscillator=False):
         logger.debug("===== Box orbit =====")
         logger.debug("Using triaxial harmonic oscillator toy potential")
 
-        toy_potential = fit_harmonic_oscillator(w, units=units)
+        toy_potential = fit_harmonic_oscillator(orbit)
         logger.debug("Best omegas ({})".format(toy_potential.parameters['omega']))
 
     return toy_potential
@@ -415,7 +416,7 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
 
     return A,b,nvecs
 
-def _single_orbit_find_actions(t, w, N_max, units, toy_potential=None,
+def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
                                force_harmonic_oscillator=False):
     """
     Find approximate actions and angles for samples of a phase-space orbit,
@@ -431,37 +432,28 @@ def _single_orbit_find_actions(t, w, N_max, units, toy_potential=None,
 
     Parameters
     ----------
-    t : array_like
-        Array of times with shape (ntimes,).
-    w : array_like
-        Array of phase-space positions. Accepts 2D or 3D arrays. If 2D, assumes
-        this is a single orbit. If 3D, assumes that this is a collection of orbits.
-        See :ref:`shape-conventions` for more information about shapes.
+    orbit :
+        TODO
     N_max : int
         Maximum integer Fourier mode vector length, |n|.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units. For example,
-        (u.kpc, u.Myr, u.Msun).
     toy_potential : Potential (optional)
         Fix the toy potential class.
     force_harmonic_oscillator : bool (optional)
         Force using the harmonic oscillator potential as the toy potential.
     """
 
-    if w.ndim > 2:
-        raise ValueError("w must be a single orbit")
+    if orbit.norbits > 1:
+        raise ValueError("must be a single orbit")
 
     if toy_potential is None:
-        toy_potential = fit_toy_potential(w, units=units,
-                                          force_harmonic_oscillator=force_harmonic_oscillator)
+        toy_potential = fit_toy_potential(orbit, force_harmonic_oscillator=force_harmonic_oscillator)
 
     else:
         logger.debug("Using *fixed* toy potential: {}".format(toy_potential.parameters))
 
     if isinstance(toy_potential, IsochronePotential):
-        loop = classify_orbit(w)
-        w = align_circulation_with_z(w, loop)
+        orbit_align = orbit.align_circulation_with_z()
+        w = orbit_align.w()
 
         dxyz = (1,2,2)
         circ = np.sign(w[0,0]*w[4,0]-w[1,0]*w[3,0])
@@ -469,8 +461,11 @@ def _single_orbit_find_actions(t, w, N_max, units, toy_potential=None,
     elif isinstance(toy_potential, HarmonicOscillatorPotential):
         dxyz = (2,2,2)
         sign = 1.
+        w = orbit.w()
     else:
         raise ValueError("Invalid toy potential.")
+
+    t = orbit.t.value
 
     # Now find toy actions and angles
     aaf = toy_potential.action_angle(w[:3], w[3:])
@@ -508,7 +503,7 @@ def _single_orbit_find_actions(t, w, N_max, units, toy_potential=None,
     return dict(actions=J, angles=theta, freqs=freqs,
                 Sn=actions[3:], dSn_dJ=angles[6:], nvecs=nvecs)
 
-def find_actions(t, w, N_max, units, force_harmonic_oscillator=False, toy_potential=None):
+def find_actions(orbit, N_max, force_harmonic_oscillator=False, toy_potential=None):
     """
     Find approximate actions and angles for samples of a phase-space orbit,
     `w`, at times `t`. Uses toy potentials with known, analytic action-angle
@@ -519,18 +514,10 @@ def find_actions(t, w, N_max, units, force_harmonic_oscillator=False, toy_potent
 
     Parameters
     ----------
-    t : array_like
-        Array of times with shape (ntimes,).
-    w : array_like
-        Array of phase-space positions. Accepts 2D or 3D arrays. If 2D, assumes
-        this is a single orbit. If 3D, assumes that this is a collection of orbits.
-        See :ref:`shape-conventions` for more information about shapes.
+    orbit :
+        TODO
     N_max : int
         Maximum integer Fourier mode vector length, |n|.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units. For example,
-        (u.kpc, u.Myr, u.Msun).
     force_harmonic_oscillator : bool (optional)
         Force using the harmonic oscillator potential as the toy potential.
     toy_potential : Potential (optional)
@@ -547,27 +534,23 @@ def find_actions(t, w, N_max, units, force_harmonic_oscillator=False, toy_potent
 
     """
 
-    if w.ndim == 2 or w.shape[-1] == 1:
-        w = np.squeeze(w)
-        return _single_orbit_find_actions(t, w, N_max, units,
+    if orbit.norbits == 1:
+        return _single_orbit_find_actions(orbit, N_max,
                                           force_harmonic_oscillator=force_harmonic_oscillator,
                                           toy_potential=toy_potential)
 
-    elif w.ndim == 3:
-        ndim,ntime,norbits = w.shape
+    else:
+        norbits = orbit.norbits
         actions = np.zeros((3,norbits))
         angles = np.zeros((3,norbits))
         freqs = np.zeros((3,norbits))
         for n in range(norbits):
-            aaf = _single_orbit_find_actions(t, w[...,n], N_max, units,
+            aaf = _single_orbit_find_actions(orbit[:,n], N_max,
                                              force_harmonic_oscillator=force_harmonic_oscillator,
                                              toy_potential=toy_potential)
             actions[n] = aaf['actions']
             angles[n] = aaf['angles']
             freqs[n] = aaf['freqs']
-
-    else:
-        raise ValueError("Invalid shape for orbit array: {}".format(w.shape))
 
     return dict(actions=actions, angles=angles, freqs=freqs,
                 Sn=actions[3:], dSn=angles[6:], nvecs=aaf['nvecs'])
