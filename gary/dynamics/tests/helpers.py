@@ -13,11 +13,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Project
-from ..actionangle import classify_orbit
+# from ..actionangle import classify_orbit
 from ...units import galactic
 from ...coordinates import physicsspherical_to_cartesian
 from ...potential import HarmonicOscillatorPotential, IsochronePotential
-
 from .._genfunc import genfunc_3d, solver, toy_potentials
 
 def sanders_nvecs(N_max, dx, dy, dz):
@@ -33,23 +32,22 @@ def sanders_nvecs(N_max, dx, dy, dz):
                              and np.sqrt(i*i+j*j+k*k)<=N_max)])     # inside sphere
     return n_vectors
 
-def sanders_act_ang_freq(t, w, N_max=6):
+def sanders_act_ang_freq(t, w, circ, N_max=6):
     w2 = w.copy()
-    loop = classify_orbit(w)
 
-    if np.any(loop):
-        w2[:,3:] = (w2[:,3:]*u.kpc/u.Myr).to(u.km/u.s).value
-        (act,ang,n_vec,toy_aa,pars),loop2 = genfunc_3d.find_actions(w2, t/1000.,
+    if np.any(circ):
+        w2[3:] = (w2[3:]*u.kpc/u.Myr).to(u.km/u.s).value
+        (act,ang,n_vec,toy_aa,pars),loop2 = genfunc_3d.find_actions(w2.T, t/1000.,
                                                                     N_matrix=N_max, ifloop=True)
     else:
-        (act,ang,n_vec,toy_aa,pars),loop2 = genfunc_3d.find_actions(w2, t,
+        (act,ang,n_vec,toy_aa,pars),loop2 = genfunc_3d.find_actions(w2.T, t,
                                                                     N_matrix=N_max, ifloop=True)
 
     actions = act[:3]
     angles = ang[:3]
     freqs = ang[3:6]
 
-    if np.any(loop):
+    if np.any(circ):
         toy_potential = IsochronePotential(m=pars[0]*1E11, b=pars[1], units=galactic)
         actions = (actions*u.kpc*u.km/u.s).to(u.kpc**2/u.Myr).value
         freqs = (freqs/u.Gyr).to(1/u.Myr).value
@@ -131,4 +129,4 @@ def isotropic_w0(N=100):
     vtheta = vtheta.decompose(galactic).value
     v = physicsspherical_to_cartesian(rep, [vr,vphi,vtheta]*u.dimensionless_unscaled).T.value
 
-    return np.hstack((x,v))
+    return np.hstack((x,v)).T

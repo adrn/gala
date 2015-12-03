@@ -1,144 +1,30 @@
 # coding: utf-8
 
-""" Utilities for nonlinear dynamics """
-
 from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import logging
-
 # Third-party
+import astropy.units as u
 import numpy as np
 from scipy.signal import argrelmin
 
 # Project
-from ..util import gram_schmidt
+from . import CartesianPhaseSpacePosition, CartesianOrbit
 
-__all__ = ['lyapunov_spectrum', 'fast_lyapunov_max', 'lyapunov_max', 'surface_of_section']
-
-# Create logger
-logger = logging.getLogger(__name__)
-
-def lyapunov_spectrum(w0, integrator, dt, nsteps, t1=0., deviation_vecs=None):
-    """ Compute the spectrum of Lyapunov exponents given equations of motions
-        for small deviations.
-
-        Parameters
-        ----------
-        w0 : array_like
-            Initial conditions for all phase-space coordinates.
-        integrator : gary.Integrator
-            An instantiated Integrator object. Must have a run() method.
-        dt : numeric
-            Timestep.
-        nsteps : int
-            Number of steps to run for.
-        t1 : numeric (optional)
-            Time of initial conditions. Assumed to be t=0.
-        deviation_vecs : array_like (optional)
-            Specify your own initial deviation vectors.
-
-    """
-
-    w0 = np.atleast_2d(w0)
-
-    # phase-space dimensionality
-    if w0.shape[0] > 1:
-        raise ValueError("Initial condition vector ")
-    ndim_ps = w0.shape[1]
-
-    if deviation_vecs is None:
-        # initialize (ndim_ps) deviation vectors
-        A = np.zeros((ndim_ps,ndim_ps))
-        for ii in range(ndim_ps):
-            A[ii] = np.random.normal(0.,1.,size=ndim_ps)
-            A[ii] /= np.linalg.norm(A[ii])
-
-    else:
-        raise NotImplementedError()
-
-    all_w0 = np.zeros((ndim_ps,ndim_ps*2))
-    for ii in range(ndim_ps):
-        all_w0[ii] = np.append(w0,A[ii])
-
-    # array to store the full, main orbit
-    full_w = np.zeros((nsteps+1,ndim_ps))
-    full_w[0] = w0
-    full_ts = np.zeros((nsteps+1,))
-    full_ts[0] = t1
-
-    # arrays to store the Lyapunov exponents and times
-    lyap = np.zeros((nsteps+1,ndim_ps))
-    rhi = np.zeros((nsteps+1,ndim_ps))  # sum of logs
-
-    ts = np.zeros(nsteps+1)
-    time = t1
-    for ii in range(1,nsteps+1):
-        tt,ww = integrator.run(all_w0, dt=dt, nsteps=1, t1=time)
-        time += dt
-
-        alf = gram_schmidt(ww[-1,:,ndim_ps:])
-        rhi[ii] = rhi[ii-1] + np.log(alf)
-        lyap[ii] = rhi[ii]/time
-
-        ts[ii] = time
-        full_w[ii:ii+1] = ww[1:,0,:ndim_ps]
-        full_ts[ii:ii+1] = tt[1:]
-        all_w0 = ww[-1].copy()
-
-    return lyap, full_ts, full_w
+__all__ = ['fast_lyapunov_max', 'lyapunov_max', 'surface_of_section']
 
 def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
-                      nsteps_per_pullback=10, noffset_orbits=2, t0=0.,
-                      atol=1E-9, rtol=1E-9, nmax=0):
+                      nsteps_per_pullback=10, noffset_orbits=2, t1=0.,
+                      atol=1E-10, rtol=1E-10, nmax=0):
     """
     Compute the maximum Lyapunov exponent using a C-implemented estimator
     that uses the DOPRI853 integrator.
 
     Parameters
     ----------
-    TODO:
-
-    Returns
-    -------
-    LEs : :class:`numpy.ndarray`
-        Lyapunov exponents calculated from each offset / deviation orbit.
-    ts : :class:`numpy.ndarray`
-        Array of times from integrating main orbit.
-    ws : :class:`numpy.ndarray`
-        All orbits -- main / parent orbit is index 0, all others are the
-        full orbits of the deviations. TODO: right now, only returns parent
-        orbit.
-
-    """
-
-    from ..integrate._dop853 import dop853_lyapunov
-
-    if not hasattr(potential, 'c_instance'):
-        raise TypeError("Input potential must be a CPotential subclass.")
-
-    t,w,l = dop853_lyapunov(potential.c_instance, w0,
-                            dt, nsteps+1, t0, atol, rtol, nmax,
-                            d0, nsteps_per_pullback, noffset_orbits)
-
-    return l,t,w
-
-def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
-                 noffset_orbits=8, t1=0.):
-    """
-    Compute the maximum Lyapunov exponent of an orbit by integrating many
-    nearby orbits (``noffset``) separated with isotropically distributed
-    directions but the same initial deviation length, ``d0``. This algorithm
-    re-normalizes the offset orbits every ``nsteps_per_pullback`` steps.
-
-    Parameters
-    ----------
-    w0 : array_like
-        Initial conditions for all phase-space coordinates.
-    integrator : gary.Integrator
-        An instantiated Integrator object. Must have a run() method.
+    w0 : `~gary.dynamics.PhaseSpacePosition`, array_like
+        Initial conditions.
     dt : numeric
         Timestep.
     nsteps : int
@@ -154,33 +40,109 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
 
     Returns
     -------
-    LEs : :class:`numpy.ndarray`
+    LEs : :class:`~astropy.units.Quantity`
         Lyapunov exponents calculated from each offset / deviation orbit.
-    ts : :class:`numpy.ndarray`
-        Array of times from integrating main orbit.
-    ws : :class:`numpy.ndarray`
-        All orbits -- main / parent orbit is index 0, all others are the
-        full orbits of the deviations. TODO: right now, only returns parent
-        orbit.
+    orbit : `~gary.dynamics.CartesianOrbit`
+
     """
 
-    w0 = np.atleast_2d(w0)
+    from .lyapunov import dop853_lyapunov_max
+
+    if not hasattr(potential, 'c_instance'):
+        raise TypeError("Input potential must be a CPotential subclass.")
+
+    if not isinstance(w0, CartesianPhaseSpacePosition):
+        w0 = np.asarray(w0)
+        ndim = w0.shape[0]//2
+        w0 = CartesianPhaseSpacePosition(pos=w0[:ndim],
+                                         vel=w0[ndim:])
+
+    _w0 = np.squeeze(w0.w(potential.units))
+    if _w0.ndim > 1:
+        raise ValueError("Can only compute fast Lyapunov exponent for a single orbit.")
+
+    t,w,l = dop853_lyapunov_max(potential.c_instance, _w0,
+                                dt, nsteps+1, t1,
+                                d0, nsteps_per_pullback, noffset_orbits,
+                                atol, rtol, nmax)
+    w = np.rollaxis(w, -1)
+
+    try:
+        tunit = potential.units['time']
+    except (TypeError, AttributeError):
+        tunit = u.dimensionless_unscaled
+
+    orbit = CartesianOrbit.from_w(w=w, units=potential.units, t=t*tunit, potential=potential)
+    return l/tunit, orbit
+
+def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
+                 noffset_orbits=8, t1=0., units=None):
+    """
+
+    Compute the maximum Lyapunov exponent of an orbit by integrating many
+    nearby orbits (``noffset``) separated with isotropically distributed
+    directions but the same initial deviation length, ``d0``. This algorithm
+    re-normalizes the offset orbits every ``nsteps_per_pullback`` steps.
+
+    Parameters
+    ----------
+    w0 : `~gary.dynamics.PhaseSpacePosition`, array_like
+        Initial conditions.
+    integrator : `~gary.integrate.Integrator`
+        An instantiated `~gary.integrate.Integrator` object. Must have a run() method.
+    dt : numeric
+        Timestep.
+    nsteps : int
+        Number of steps to run for.
+    d0 : numeric (optional)
+        The initial separation.
+    nsteps_per_pullback : int (optional)
+        Number of steps to run before re-normalizing the offset vectors.
+    noffset_orbits : int (optional)
+        Number of offset orbits to run.
+    t1 : numeric (optional)
+        Time of initial conditions. Assumed to be t=0.
+    units : `~gary.units.UnitSystem` (optional)
+        If passing in an array (not a `~gary.dynamics.PhaseSpacePosition`),
+        you must specify a unit system.
+
+    Returns
+    -------
+    LEs : :class:`~astropy.units.Quantity`
+        Lyapunov exponents calculated from each offset / deviation orbit.
+    orbit : `~gary.dynamics.CartesianOrbit`
+    """
+
+    if units is not None:
+        pos_unit = units['length']
+        vel_unit = units['length']/units['time']
+    else:
+        pos_unit = u.dimensionless_unscaled
+        vel_unit = u.dimensionless_unscaled
+
+    if not isinstance(w0, CartesianPhaseSpacePosition):
+        w0 = np.asarray(w0)
+        ndim = w0.shape[0]//2
+        w0 = CartesianPhaseSpacePosition(pos=w0[:ndim]*pos_unit,
+                                         vel=w0[ndim:]*vel_unit)
+
+    _w0 = w0.w(units)
+    ndim = 2*w0.ndim
 
     # number of iterations
     niter = nsteps // nsteps_per_pullback
-    ndim = w0.shape[1]
 
     # define offset vectors to start the offset orbits on
-    d0_vec = np.random.uniform(size=(noffset_orbits,ndim))
-    d0_vec /= np.linalg.norm(d0_vec, axis=1)[:,np.newaxis]
+    d0_vec = np.random.uniform(size=(ndim,noffset_orbits))
+    d0_vec /= np.linalg.norm(d0_vec, axis=0)[np.newaxis]
     d0_vec *= d0
 
-    w_offset = w0 + d0_vec
-    all_w0 = np.vstack((w0,w_offset))
+    w_offset = _w0 + d0_vec
+    all_w0 = np.hstack((_w0,w_offset))
 
     # array to store the full, main orbit
-    full_w = np.zeros((nsteps+1,ndim))
-    full_w[0] = w0
+    full_w = np.zeros((ndim,nsteps+1,noffset_orbits+1))
+    full_w[:,0] = all_w0
     full_ts = np.zeros((nsteps+1,))
     full_ts[0] = t1
 
@@ -191,34 +153,45 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
     for i in range(1,niter+1):
         ii = i * nsteps_per_pullback
 
-        tt,ww = integrator.run(all_w0, dt=dt, nsteps=nsteps_per_pullback, t1=time)
+        orbit = integrator.run(all_w0, dt=dt, nsteps=nsteps_per_pullback, t1=time)
+        tt = orbit.t.value
+        ww = orbit.w(units)
         time += dt*nsteps_per_pullback
 
-        main_w = ww[-1,0][np.newaxis]
-        d1 = ww[-1,1:] - main_w
-        d1_mag = np.linalg.norm(d1, axis=1)
+        main_w = ww[:,-1,0:1]
+        d1 = ww[:,-1,1:] - main_w
+        d1_mag = np.linalg.norm(d1, axis=0)
 
         LEs[i-1] = np.log(d1_mag/d0)
         ts[i-1] = time
 
-        w_offset = ww[-1,0] + d0 * d1 / d1_mag[:,np.newaxis]
-        all_w0 = np.vstack((ww[-1,0],w_offset))
+        w_offset = ww[:,-1,0:1] + d0 * d1 / d1_mag[np.newaxis]
+        all_w0 = np.hstack((ww[:,-1,0:1],w_offset))
 
-        full_w[(i-1)*nsteps_per_pullback+1:ii+1] = ww[1:,0]
+        full_w[:,(i-1)*nsteps_per_pullback+1:ii+1] = ww[:,1:]
         full_ts[(i-1)*nsteps_per_pullback+1:ii+1] = tt[1:]
 
     LEs = np.array([LEs[:ii].sum(axis=0)/ts[ii-1] for ii in range(1,niter)])
 
-    return LEs, full_ts, full_w
+    try:
+        t_unit = units['time']
+    except (TypeError, AttributeError):
+        t_unit = u.dimensionless_unscaled
 
-def surface_of_section(w, plane_ix, interpolate=False):
+    orbit = CartesianOrbit.from_w(w=full_w, units=units, t=full_ts*t_unit)
+    return LEs/t_unit, orbit
+
+def surface_of_section(orbit, plane_ix, interpolate=False):
     """
+    Generate and return a surface of section from the given orbit.
+
+    .. warning::
+
+        This is an experimental function and the API may change.
 
     Parameters
     ----------
-    w : array_like
-        Array of orbits. The phase-space dimensionality is assumed to be
-        the size of ``axis=-1``.
+    orbit : `~gary.dynamics.CartesianOrbit`
     plane_ix : int
         Integer that represents the coordinate to record crossings in. For
         example, for a 2D Hamiltonian where you want to make a SoS in
@@ -230,6 +203,9 @@ def surface_of_section(w, plane_ix, interpolate=False):
         makes it much slower, but will work for orbits with a coarser
         sampling.
 
+    Returns
+    -------
+
     Examples
     --------
     If your orbit of interest is a tube orbit, it probably conserves (at
@@ -238,15 +214,13 @@ def surface_of_section(w, plane_ix, interpolate=False):
     be instructive for classifying these orbits. TODO...show how to convert
     an orbit to Cylindrical..etc...
 
-    Returns
-    -------
-
     """
 
+    w = orbit.w()
     if w.ndim == 2:
-        w = w[:,None]
+        w = w[...,None]
 
-    ntimes,norbits,ndim = w.shape
+    ndim,ntimes,norbits = w.shape
     H_dim = ndim // 2
     p_ix = plane_ix + H_dim
 
@@ -254,13 +228,13 @@ def surface_of_section(w, plane_ix, interpolate=False):
         raise NotImplementedError("Not yet implemented, sorry!")
 
     # record position on specified plane when orbit crosses
-    all_sos = np.zeros((norbits,ndim), dtype=object)
+    all_sos = np.zeros((ndim,norbits), dtype=object)
     for n in range(norbits):
-        cross_ix = argrelmin(w[:,n,plane_ix]**2)[0]
-        cross_ix = cross_ix[w[cross_ix,n,p_ix] > 0.]
-        sos = w[cross_ix,n]
+        cross_ix = argrelmin(w[plane_ix,:,n]**2)[0]
+        cross_ix = cross_ix[w[p_ix,cross_ix,n] > 0.]
+        sos = w[:,cross_ix,n]
 
         for j in range(ndim):
-            all_sos[n,j] = sos[:,j]
+            all_sos[j,n] = sos[j,:]
 
     return all_sos

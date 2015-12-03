@@ -22,19 +22,29 @@ Documentation
 *************
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    install
-   coordinates/index
-   dynamics/index
-   integrate/index
-   potential/index
-   units
+   conventions
 ..   getting_started
 
-***********************************
-Examples using multiple subpackages
-***********************************
+***********
+Subpackages
+***********
+
+.. toctree::
+   :maxdepth: 2
+
+   coordinates/index
+   integrate/index
+   potential/index
+   dynamics/index
+   units
+   util
+
+*********
+Tutorials
+*********
 
 .. toctree::
    :maxdepth: 1

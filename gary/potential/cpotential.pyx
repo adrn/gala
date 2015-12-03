@@ -18,6 +18,7 @@ cimport cython
 
 # Project
 from .core import PotentialBase, CompositePotential
+from ..util import atleast_2d
 
 cdef extern from "math.h":
     double sqrt(double x) nogil
@@ -26,97 +27,52 @@ cdef extern from "math.h":
 cdef extern from "stdint.h":
     ctypedef int intptr_t
 
+__all__ = ['CPotentialBase']
+
 class CPotentialBase(PotentialBase):
     """
-    A base class for representing gravitational potentials implemented in Cython.
+    A base class for representing gravitational potentials with
+    value, gradient, etc. functions implemented in C.
 
-    You must specify a function that evaluates the potential value (func). You may also
-    optionally add a function that computes derivatives (gradient), and a
-    function to compute second derivatives (the Hessian) of the potential.
-
-    Parameters
-    ----------
-    func : function
-        A function that computes the value of the potential.
-    gradient : function (optional)
-        A function that computes the first derivatives (gradient) of the potential.
-    hessian : function (optional)
-        A function that computes the second derivatives (Hessian) of the potential.
-    parameters : dict (optional)
-        Any extra parameters that the functions (func, gradient, hessian)
-        require. All functions must take the same parameters.
-
+    TODO: better description here
     """
 
-    def value(self, q, t=0.):
-        """
-        value(q, t=0)
+    def _value(self, q, t=0.):
+        sh = q.shape
+        q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
+        return self.c_instance.value(q, t=t).reshape(sh[1:])
 
-        Compute the value of the potential at the given position(s).
-
-        Parameters
-        ----------
-        q : array_like, numeric
-            Position to compute the value of the potential.
-        t : numeric (optional)
-            The time.
-        """
-        return self.c_instance.value(np.ascontiguousarray(np.atleast_2d(q)), t=t)
-
-    def gradient(self, q, t=0.):
-        """
-        gradient(q, t=0)
-
-        Compute the gradient of the potential at the given position(s).
-
-        Parameters
-        ----------
-        q : array_like, numeric
-            Position to compute the gradient.
-        t : numeric (optional)
-            The time.
-        """
+    def _gradient(self, q, t=0.):
+        sh = q.shape
+        q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
         try:
-            return self.c_instance.gradient(np.ascontiguousarray(np.atleast_2d(q)), t=t)
+            return self.c_instance.gradient(q, t=t).reshape(sh)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
 
-    def density(self, q, t=0.):
-        """
-        density(q, t=0)
-
-        Compute the value of the potential at the given position(s).
-
-        Parameters
-        ----------
-        q : array_like, numeric
-            Position to compute the value of the potential.
-        t : numeric (optional)
-            The time.
-        """
-        return self.c_instance.density(np.ascontiguousarray(np.atleast_2d(q)), t=t)
-
-    def hessian(self, q):
-        """
-        hessian(q)
-
-        Compute the Hessian of the potential at the given position(s).
-
-        Parameters
-        ----------
-        q : array_like, numeric
-            Position to compute the Hessian.
-        """
+    def _density(self, q, t=0.):
+        sh = q.shape
+        q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
         try:
-            return self.c_instance.hessian(np.ascontiguousarray(np.atleast_2d(q)))
+            return self.c_instance.density(q, t=t).reshape(sh[1:])
+        except AttributeError,TypeError:
+            # TODO: if no density function, should this numerically esimate
+            #   the density?
+            raise ValueError("Potential C instance has no defined "
+                             "density function")
+
+    def _hessian(self, q, t=0.):
+        sh = q.shape
+        q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
+        try:
+            return self.c_instance.hessian(q, t=t) # TODO: return shape?
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "Hessian function")
 
-    # ----------------------------
-    # Functions of the derivatives
-    # ----------------------------
+    # ----------------------------------------------------------
+    # Overwrite the Python potential method to use Cython method
     def mass_enclosed(self, q, t=0.):
         """
         mass_enclosed(q)
@@ -129,11 +85,18 @@ class CPotentialBase(PotentialBase):
         q : array_like, numeric
             Position to compute the mass enclosed.
         """
+        if self.units is None:
+            raise ValueError("No units specified when creating potential object.")
+
+        q = atleast_2d(q, insert_axis=1)
+        sh = q.shape
+        q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
         try:
-            return self.c_instance.mass_enclosed(np.ascontiguousarray(np.atleast_2d(q)), self.G, t=t)
+            menc = self.c_instance.mass_enclosed(q, self.G, t=t)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "mass_enclosed function")
+        return menc.reshape(sh[1:])
 
 # ==============================================================================
 
@@ -151,18 +114,21 @@ cdef class _CPotential:
         return None
 
     def __reduce__(self):
-        # args = (self.G, self.m, self.c)
-        # return (_HernquistPotential, tuple(self._parvec))
         return (self.__class__, tuple(self._parvec))
 
     cpdef value(self, double[:,::1] q, double t=0.):
-        cdef int nparticles, ndim, k
-        nparticles = q.shape[0]
+        """
+        CAUTION: Interpretation of axes is different here! We need the
+        arrays to be C ordered and easy to iterate over, so here the
+        axes are (norbits, ndim).
+        """
+        cdef int norbits, ndim, i
+        norbits = q.shape[0]
         ndim = q.shape[1]
 
-        cdef double [::1] pot = np.zeros((nparticles,))
-        for k in range(nparticles):
-            pot[k] = self._value(t, &q[k,0])
+        cdef double [::1] pot = np.zeros((norbits,))
+        for i in range(norbits):
+            pot[i] = self._value(t, &q[i,0])
 
         return np.array(pot)
 
@@ -171,28 +137,38 @@ cdef class _CPotential:
 
     # -------------------------------------------------------------
     cpdef gradient(self, double[:,::1] q, double t=0.):
-        cdef int nparticles, ndim, k
-        nparticles = q.shape[0]
+        """
+        CAUTION: Interpretation of axes is different here! We need the
+        arrays to be C ordered and easy to iterate over, so here the
+        axes are (norbits, ndim).
+        """
+        cdef int norbits, ndim, i
+        norbits = q.shape[0]
         ndim = q.shape[1]
 
-        cdef double [:,::1] grad = np.zeros((nparticles,ndim))
-        for k in range(nparticles):
-            self._gradient(t, &q[k,0], &grad[k,0])
+        cdef double [:,::1] grad = np.zeros((norbits,ndim))
+        for i in range(norbits):
+            self._gradient(t, &q[i,0], &grad[i,0])
 
-        return np.array(grad)
+        return np.array(grad).T
 
     cdef public inline void _gradient(self, double t, double *r, double *grad) nogil:
         self.c_gradient(t, self._parameters, r, grad)
 
     # -------------------------------------------------------------
     cpdef density(self, double[:,::1] q, double t=0.):
-        cdef int nparticles, ndim, k
-        nparticles = q.shape[0]
+        """
+        CAUTION: Interpretation of axes is different here! We need the
+        arrays to be C ordered and easy to iterate over, so here the
+        axes are (norbits, ndim).
+        """
+        cdef int norbits, ndim, i
+        norbits = q.shape[0]
         ndim = q.shape[1]
 
-        cdef double [::1] pot = np.zeros((nparticles,))
-        for k in range(nparticles):
-            pot[k] = self._density(t, &q[k,0])
+        cdef double [::1] pot = np.zeros((norbits,))
+        for i in range(norbits):
+            pot[i] = self._density(t, &q[i,0])
 
         return np.array(pot)
 
@@ -201,15 +177,20 @@ cdef class _CPotential:
 
     # -------------------------------------------------------------
     cpdef hessian(self, double[:,::1] w):
-        cdef int nparticles, ndim, k
-        nparticles = w.shape[0]
+        """
+        CAUTION: Interpretation of axes is different here! We need the
+        arrays to be C ordered and easy to iterate over, so here the
+        axes are (norbits, ndim).
+        """
+        cdef int norbits, ndim, i
+        norbits = w.shape[0]
         ndim = w.shape[1]
 
-        cdef double [:,:,::1] hess = np.zeros((nparticles,ndim,ndim))
-        for k in range(nparticles):
-            self._hessian(&w[k,0], &hess[k,0,0])
+        cdef double [:,:,::1] hess = np.zeros((norbits,ndim,ndim))
+        for i in range(norbits):
+            self._hessian(&w[i,0], &hess[i,0,0])
 
-        return np.array(hess)
+        return np.array(hess) # TODO: this should be rollaxis
 
     cdef public void _hessian(self, double *w, double *hess) nogil:
         cdef int i,j
@@ -219,13 +200,18 @@ cdef class _CPotential:
 
     # -------------------------------------------------------------
     cpdef d_dr(self, double[:,::1] q, double G, double t=0.):
-        cdef int nparticles, k
-        nparticles = q.shape[0]
+        """
+        CAUTION: Interpretation of axes is different here! We need the
+        arrays to be C ordered and easy to iterate over, so here the
+        axes are (norbits, ndim).
+        """
+        cdef int norbits, i
+        norbits = q.shape[0]
 
         cdef double [::1] epsilon = np.zeros(3)
-        cdef double [::1] dr = np.zeros((nparticles,))
-        for k in range(nparticles):
-            dr[k] = self._d_dr(t, &q[k,0], &epsilon[0], G)
+        cdef double [::1] dr = np.zeros((norbits,))
+        for i in range(norbits):
+            dr[i] = self._d_dr(t, &q[i,0], &epsilon[0], G)
         return np.array(dr)
 
     cdef public double _d_dr(self, double t, double *q, double *epsilon, double Gee) nogil:
@@ -250,14 +236,18 @@ cdef class _CPotential:
     cpdef d2_dr2(self, double[:,::1] q, double G, double t=0.):
         """
         d2_dr2(q, G, t=0.)
+
+        CAUTION: Interpretation of axes is different here! We need the
+        arrays to be C ordered and easy to iterate over, so here the
+        axes are (norbits, ndim).
         """
-        cdef int nparticles, k
-        nparticles = q.shape[0]
+        cdef int norbits, i
+        norbits = q.shape[0]
 
         cdef double [::1] epsilon = np.zeros(3)
-        cdef double [::1] dr = np.zeros((nparticles,))
-        for k in range(nparticles):
-            dr[k] = self._d2_dr2(t, &q[k,0], &epsilon[0], G)
+        cdef double [::1] dr = np.zeros((norbits,))
+        for i in range(norbits):
+            dr[i] = self._d2_dr2(t, &q[i,0], &epsilon[0], G)
         return np.array(dr)
 
     cdef public double _d2_dr2(self, double t, double *q, double *epsilon, double Gee) nogil:
@@ -282,13 +272,13 @@ cdef class _CPotential:
         return d2Phi_dr2 / (h*h)
 
     cpdef mass_enclosed(self, double[:,::1] q, double G, double t=0.):
-        cdef int nparticles, k
-        nparticles = q.shape[0]
+        cdef int norbits, i
+        norbits = q.shape[0] # follows Cython axis convention
 
         cdef double [::1] epsilon = np.zeros(3)
-        cdef double [::1] mass = np.zeros((nparticles,))
-        for k in range(nparticles):
-            mass[k] = self._mass_enclosed(t, &q[k,0], &epsilon[0], G)
+        cdef double [::1] mass = np.zeros((norbits,))
+        for i in range(norbits):
+            mass[i] = self._mass_enclosed(t, &q[i,0], &epsilon[0], G)
         return np.array(mass)
 
     cdef public double _mass_enclosed(self, double t, double *q, double *epsilon, double Gee) nogil:
@@ -359,12 +349,12 @@ cdef class _CPotential:
 #         return v
 
 #     cpdef value(self, double[:,::1] q):
-#         cdef int nparticles, ndim, k
-#         nparticles = q.shape[0]
+#         cdef int norbits, ndim, k
+#         norbits = q.shape[0]
 #         ndim = q.shape[1]
 
-#         cdef double [::1] pot = np.zeros((nparticles,))
-#         for k in range(nparticles):
+#         cdef double [::1] pot = np.zeros((norbits,))
+#         for k in range(norbits):
 #             pot[k] = self._value(&q[k,0])
 
 #         return np.array(pot)

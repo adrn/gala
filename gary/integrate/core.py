@@ -6,34 +6,48 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import logging
-
 # Third-party
+import astropy.units as u
 import numpy as np
 
-# Create logger
-logger = logging.getLogger(__name__)
+# This project
+from ..dynamics import CartesianPhaseSpacePosition, CartesianOrbit
+from ..units import UnitSystem
 
 __all__ = ["Integrator"]
 
 class Integrator(object):
 
+    def __init__(self, func, func_args=(), func_units=None):
+        if not hasattr(func, '__call__'):
+            raise ValueError("func must be a callable object, e.g., a function.")
+
+        self.F = func
+        self._func_args = func_args
+        if func_units is not None:
+            func_units = UnitSystem(func_units)
+        self._func_units = func_units
+
     def _prepare_ws(self, w0, mmap, nsteps):
-        """ Decide how to make the return array. If mmap is False, this returns a full array
-            of zeros, but with the correct shape as the output. If mmap is True, return a
-            pointer to a memory-mapped array. The latter is particularly useful for integrating
-            a large number of orbits or integrating a large number of time steps.
+        """
+        Decide how to make the return array. If mmap is False, this returns a
+        full array of zeros, but with the correct shape as the output. If mmap
+        is True, return a pointer to a memory-mapped array. The latter is
+        particularly useful for integrating a large number of orbits or
+        integrating a large number of time steps.
         """
 
-        w0 = np.atleast_2d(w0)
-        nparticles, ndim = w0.shape
+        if not isinstance(w0, CartesianPhaseSpacePosition):
+            w0 = np.asarray(w0)
+            ndim = w0.shape[0]//2
+            w0 = CartesianPhaseSpacePosition(pos=w0[:ndim],
+                                             vel=w0[ndim:])
 
-        # dimensionality of positions,velocities
-        self.ndim = ndim
-        self.ndim_xv = self.ndim // 2
+        arr_w0 = w0.w(self._func_units)
+        self.ndim,self.norbits = arr_w0.shape
+        self.ndim = self.ndim//2
 
-        return_shape = (nsteps+1,) + w0.shape
+        return_shape = (2*self.ndim,nsteps+1,self.norbits)
         if mmap is None:
             # create the return arrays
             ws = np.zeros(return_shape, dtype=float)
@@ -49,4 +63,67 @@ class Integrator(object):
 
             ws = mmap
 
-        return w0, ws
+        return w0, arr_w0, ws
+
+    def _handle_output(self, w0, t, w):
+        """
+        """
+        if w.shape[-1] == 1:
+            w = w[...,0]
+
+        if self._func_units is None:
+            pos_unit = u.dimensionless_unscaled
+            vel_unit = u.dimensionless_unscaled
+            t_unit = u.dimensionless_unscaled
+        else:
+            pos_unit = self._func_units['length']
+            t_unit = self._func_units['time']
+            vel_unit = pos_unit / t_unit
+
+        orbit = CartesianOrbit(pos=w[:self.ndim]*pos_unit,
+                               vel=w[self.ndim:]*vel_unit,
+                               t=t*t_unit) # HACK: BADDDD
+
+        return orbit
+
+    def run(self):
+        """
+        Run the integrator starting from the specified phase-space position.
+        The initial conditions ``w0`` should be a `~gary.dynamics.CartesianPhaseSpacePosition`
+        instance.
+
+        There are a few combinations of keyword arguments accepted for
+        specifying the timestepping. For example, you can specify a fixed
+        timestep (``dt``) and a number of steps (``nsteps``), or an array of
+        times::
+
+            dt, nsteps[, t1] : (numeric, int[, numeric])
+                A fixed timestep dt and a number of steps to run for.
+            dt, t1, t2 : (numeric, numeric, numeric)
+                A fixed timestep dt, an initial time, and a final time.
+            t : array_like
+                An array of times to solve on.
+
+        .. warning::
+
+            Right now, this always returns a `~gary.dynamics.CartesianOrbit` instance.
+            This is wrong and will change!
+
+        .. todo::
+
+            Allow specifying the return orbit class.
+
+        Parameters
+        ----------
+        w0 : `~gary.dynamics.CartesianPhaseSpacePosition`
+            Initial conditions.
+        **time_spec
+            Timestep information passed to
+            `~gary.integrate.time_spec.parse_time_specification`.
+
+        Returns
+        -------
+        orbit : `~gary.dynamics.CartesianOrbit`
+
+        """
+        pass
