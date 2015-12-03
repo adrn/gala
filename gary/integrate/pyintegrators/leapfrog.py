@@ -12,9 +12,11 @@ import numpy as np
 # Project
 from ..core import Integrator
 from ..timespec import parse_time_specification
+from ...util import inherit_docs
 
 __all__ = ["LeapfrogIntegrator"]
 
+@inherit_docs
 class LeapfrogIntegrator(Integrator):
     r"""
     A symplectic, Leapfrog integrator.
@@ -91,6 +93,9 @@ class LeapfrogIntegrator(Integrator):
         at a time and point in phase space.
     func_args : tuple (optional)
         Any extra arguments for the derivative function.
+    func_units : `~gary.units.UnitSystem` (optional)
+        If using units, this is the unit system assumed by the
+        integrand function.
 
     """
 
@@ -106,7 +111,7 @@ class LeapfrogIntegrator(Integrator):
 
         x_i = x_im1 + v_im1_2 * dt
         F_i = self.F(t, np.vstack((x_i,v_im1_2)), *self._func_args)
-        a_i = F_i[self.ndim_xv:]
+        a_i = F_i[self.ndim:]
 
         v_i = v_im1_2 + a_i * dt / 2
         v_ip1_2 = v_i + a_i * dt / 2
@@ -129,64 +134,21 @@ class LeapfrogIntegrator(Integrator):
 
         # here is where we scoot the velocity at t=t1 to v(t+1/2)
         F0 = self.F(t.copy(), w0.copy(), *self._func_args)
-        a0 = F0[self.ndim_xv:]
-        v_1_2 = w0[self.ndim_xv:] + a0*dt/2.
+        a0 = F0[self.ndim:]
+        v_1_2 = w0[self.ndim:] + a0*dt/2.
 
         return v_1_2
 
     def run(self, w0, mmap=None, **time_spec):
-        """
-        Run the integrator starting at the given coordinates and momenta
-        (velocities) and a time specification. The initial conditions,
-        ``w0``, should have shape ``(2*ndim,norbits)``. For example, for
-        100 orbits in 3D cartesian coordinates, the initial condition
-        array should have shape ``(6,100)``. For a single orbit, a single
-        1D array with shape ``(6,)`` is fine.
-
-        There are a few combinations of keyword arguments accepted for
-        specifying the timestepping. For example, you can specify a fixed
-        timestep (`dt`) and a number of steps (`nsteps`), or an array of
-        times. See **Other Parameters** below for more information.
-
-        Parameters
-        ==========
-        w0 : array_like
-            Initial conditions
-        mmap : None, array_like (optional)
-            Option to write integration output to a memory-mapped array so the memory
-            usage doesn't explode. Must pass in a memory-mapped array, e.g., from
-            `numpy.memmap`.
-
-        Other Parameters
-        ================
-        dt, nsteps[, t1] : (numeric, int[, numeric])
-            A fixed timestep dt and a number of steps to run for.
-        dt, t1, t2 : (numeric, numeric, numeric)
-            A fixed timestep dt, an initial time, and a final time.
-        t : array_like
-            An array of times (dt = t[1] - t[0])
-
-        Returns
-        =======
-        times : array_like
-            An array of times.
-        w : array_like
-            The array of positions and momenta (velocities) at each time in
-            the time array. This array has shape ``(ndim,ntimes,norbits)``.
-
-        """
 
         # generate the array of times
         times = parse_time_specification(**time_spec)
         nsteps = len(times) - 1
         _dt = times[1] - times[0]
 
-        w0, ws = self._prepare_ws(w0, mmap, nsteps)
-        x0 = w0[:self.ndim_xv]
-        v0 = w0[self.ndim_xv:]
-
-        if (self.ndim % 2) != 0:
-            raise ValueError("Dimensionality must be even.")
+        w0_obj, w0, ws = self._prepare_ws(w0, mmap, nsteps)
+        x0 = w0[:self.ndim]
+        v0 = w0[self.ndim:]
 
         if _dt < 0.:
             v0 *= -1.
@@ -202,13 +164,11 @@ class LeapfrogIntegrator(Integrator):
         ws[:,0] = w0
         for ii in range(1,nsteps+1):
             x_i, v_i, v_ip1_2 = self.step(times[ii], x_im1, v_im1_2, dt)
-            ws[:self.ndim_xv,ii,:] = x_i
-            ws[self.ndim_xv:,ii,:] = v_i
+            ws[:self.ndim,ii,:] = x_i
+            ws[self.ndim:,ii,:] = v_i
             x_im1, v_im1_2 = x_i, v_ip1_2
 
         if _dt < 0:
-            ws[self.ndim_xv:,...] *= -1.
+            ws[self.ndim:,...] *= -1.
 
-        if ws.shape[-1] == 1:
-            ws = ws[...,0]
-        return times, ws
+        return self._handle_output(w0_obj, times, ws)

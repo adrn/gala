@@ -44,12 +44,10 @@ class Integrator(object):
                                              vel=w0[ndim:])
 
         arr_w0 = w0.w(self._func_units)
-        ndim,norbits = w0.shape
+        self.ndim,self.norbits = arr_w0.shape
+        self.ndim = self.ndim//2
 
-        # dimensionality of positions,velocities
-        self.ndim = ndim
-
-        return_shape = (2*self.ndim,nsteps+1,norbits)
+        return_shape = (2*self.ndim,nsteps+1,self.norbits)
         if mmap is None:
             # create the return arrays
             ws = np.zeros(return_shape, dtype=float)
@@ -73,8 +71,6 @@ class Integrator(object):
         if w.shape[-1] == 1:
             w = w[...,0]
 
-        ndim = w.shape[0]//2
-
         if self._func_units is None:
             pos_unit = u.dimensionless_unscaled
             vel_unit = u.dimensionless_unscaled
@@ -84,8 +80,8 @@ class Integrator(object):
             t_unit = self._func_units['time']
             vel_unit = pos_unit / t_unit
 
-        orbit = CartesianOrbit(pos=w[:ndim]*pos_unit,
-                               vel=w[ndim:]*vel_unit,
+        orbit = CartesianOrbit(pos=w[:self.ndim]*pos_unit,
+                               vel=w[self.ndim:]*vel_unit,
                                t=t*t_unit) # HACK: BADDDD
 
         return orbit
