@@ -208,8 +208,6 @@ and frequencies oscillate and vary on many timescales:
 
 .. .. image:: ../_static/dynamics/freq_hist_triaxialchaotic.png
 
-.. _references:
-
 References
 ==========
 
