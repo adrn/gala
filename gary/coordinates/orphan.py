@@ -20,7 +20,7 @@ class Orphan(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
     of the Orphan stream, as described in
-    `Newberg et al. 2010 <http://arxiv.org/abs/1001.0576>`_.
+    Newberg et al. 2010 (see: `<http://arxiv.org/abs/1001.0576>`_).
 
     For more information about this class, see the Astropy documentation
     on coordinate frames in :mod:`~astropy.coordinates`.
