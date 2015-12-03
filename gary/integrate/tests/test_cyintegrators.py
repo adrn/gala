@@ -51,7 +51,9 @@ def test_compare_to_py(Integrator, integrate_func):
     cy_w = np.rollaxis(cy_w, -1)
 
     integrator = Integrator(F)
-    py_t,py_w = integrator.run(py_w0, dt=dt, nsteps=nsteps)
+    orbit = integrator.run(py_w0, dt=dt, nsteps=nsteps)
+    py_t = orbit.t.value
+    py_w = orbit.w()
 
     assert py_w.shape == cy_w.shape
     assert np.allclose(cy_w[:,-1], py_w[:,-1])
@@ -89,7 +91,7 @@ def test_scaling(tmpdir, Integrator, integrate_func):
             # time the Python integration
             t0 = time.time()
             integrator = Integrator(F)
-            py_t,py_w = integrator.run(py_w0, dt=dt, nsteps=nsteps)
+            orbit = integrator.run(py_w0, dt=dt, nsteps=nsteps)
             py_times.append(time.time() - t0)
 
     #     pl.loglog(x, cy_times, linestyle='-', lw=2., c=c, marker=None,
