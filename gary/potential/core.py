@@ -483,7 +483,7 @@ class PotentialBase(object):
 
         else:
             acc = lambda t,w: np.vstack((w[ndim:], self.acceleration(w[:ndim], t=t)))
-            integrator = Integrator(acc, **Integrator_kwargs)
+            integrator = Integrator(acc, func_units=self.units, **Integrator_kwargs)
             orbit = integrator.run(w0, **time_spec)
             orbit.potential = self
             return orbit
