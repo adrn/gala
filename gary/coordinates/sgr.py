@@ -21,7 +21,7 @@ class Sagittarius(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
     of the Sagittarius dwarf galaxy, as described in
-    `Majewski et al. (2003) <http://adsabs.harvard.edu/abs/2003ApJ...599.1082M>`_
+    `Majewski et al. 2003 <http://adsabs.harvard.edu/abs/2003ApJ...599.1082M>`_
     and further explained at
     `this website <http://www.astro.virginia.edu/~srm4n/Sgr/>`_.
 
@@ -30,13 +30,13 @@ class Sagittarius(coord.BaseCoordinateFrame):
 
     Parameters
     ----------
-    representation : `BaseRepresentation` or None
+    representation : :class:`~astropy.coordinates.BaseRepresentation` or None
         A representation object or None to have no data (or use the other keywords)
-    Lambda : `Angle`, optional, must be keyword
+    Lambda : angle_like, optional, must be keyword
         The longitude-like angle corresponding to Sagittarius' orbit.
-    Beta : `Angle`, optional, must be keyword
+    Beta : angle_like, optional, must be keyword
         The latitude-like angle corresponding to Sagittarius' orbit.
-    distance : `Quantity`, optional, must be keyword
+    distance : :class:`~astropy.units.Quantity`, optional, must be keyword
         The Distance for this object along the line-of-sight.
 
     """

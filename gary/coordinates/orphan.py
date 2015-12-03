@@ -20,20 +20,20 @@ class Orphan(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
     of the Orphan stream, as described in
-    `Newberg et al. (2010) <http://arxiv.org/abs/1001.0576>`_.
+    `Newberg et al. 2010 <http://arxiv.org/abs/1001.0576>`_.
 
     For more information about this class, see the Astropy documentation
-    on `Coordinate Frames <http://docs.astropy.org/en/latest/coordinates/frames.html>`_.
+    on coordinate frames in :mod:`~astropy.coordinates`.
 
     Parameters
     ----------
-    representation : `BaseRepresentation` or None
+    representation : :class:`~astropy.coordinates.BaseRepresentation` or None
         A representation object or None to have no data (or use the other keywords)
-    Lambda : `Angle`, optional, must be keyword
-        The longitude-like angle corresponding to Sagittarius' orbit.
-    Beta : `Angle`, optional, must be keyword
-        The latitude-like angle corresponding to Sagittarius' orbit.
-    distance : `Quantity`, optional, must be keyword
+    Lambda : angle_like, optional, must be keyword
+        The longitude-like angle corresponding to Orphan's orbit.
+    Beta : angle_like, optional, must be keyword
+        The latitude-like angle corresponding to Orphan's orbit.
+    distance : :class:`~astropy.units.Quantity`, optional, must be keyword
         The Distance for this object along the line-of-sight.
 
     """
