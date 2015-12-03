@@ -153,7 +153,9 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
     for i in range(1,niter+1):
         ii = i * nsteps_per_pullback
 
-        tt,ww = integrator.run(all_w0, dt=dt, nsteps=nsteps_per_pullback, t1=time)
+        orbit = integrator.run(all_w0, dt=dt, nsteps=nsteps_per_pullback, t1=time)
+        tt = orbit.t.value
+        ww = orbit.w(units)
         time += dt*nsteps_per_pullback
 
         main_w = ww[:,-1,0:1]
