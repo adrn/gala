@@ -9,7 +9,7 @@ Misc. Utilities (`gary.util`)
 Introduction
 ============
 
-This subpackage contains ...
+This subpackage contains miscellaneous utilities.
 
 .. _util-api:
 
