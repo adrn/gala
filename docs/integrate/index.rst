@@ -29,14 +29,59 @@ Getting Started
 All of the integrator classes have the same basic call structure. To create
 an integrator object, you pass in a function that evaluates derivatives of,
 for example, phase-space coordinates, then you call the `~gary.integrate.Integrator.run`
-method while specifying timestep information. This is best seen with an example.
+method while specifying timestep information.
 
-.. todo::
+The integration function must accept, at minimum, two arguments: the current time, ``t``,
+and the current position in phase-space, ``w``. The time is a single floating-point number
+and the position will have shape ``(ndim, norbits)`` where ``ndim`` is the full dimensionality
+of the phase-space (e.g., 6 for a 3D coordinate system) and ``norbits`` is the number of
+orbits. These inputs will *not* have units associated with them (e.g., they are not
+:class:`astropy.units.Quantity` objects). An example of such a function (that represents
+a simple harmonic oscillator) is::
 
-    Explain how to use units with the integrators...
+    >>> def F(t, w):
+    ...     x,x_dot = w
+    ...     return np.array([x_dot, -x])
+
+Even though time does not explicitly enter into the equation, the function must still
+accept a time argument. We will now create an instance of `~gary.integrate.LeapfrogIntegrator`
+to integrate an orbit::
+
+    >>> integrator = gi.LeapfrogIntegrator(F)
+
+To actually run the integrator, we need to specify a set of initial conditions. The
+simplest way to do this is to specify an array::
+
+    >>> w0 = np.array([1.,0.])
+
+However this then causes the integrator to work without units. The orbit object
+returned by the integrator will then also have no associated units. For example,
+to integrate from these initial conditions with a time step of 0.5 for 100
+steps::
+
+    >>> orbit = integrator.run(w0, dt=0.5, nsteps=100)
+    >>> orbit.t.unit
+    Unit(dimensionless)
+    >>> orbit.pos.unit
+    Unit(dimensionless)
+
+We can instead specify the unit system that the function (``F``) expects, and
+then pass in a `~gary.dynamics.CartesianPhaseSpacePosition` object with arbitrary
+units in as initial conditions::
+
+    >>> import gary.dynamics as gd
+    >>> from gary.units import UnitSystem
+    >>> usys = UnitSystem(u.m, u.s, u.kg, u.radian)
+    >>> integrator = gi.LeapfrogIntegrator(F, func_units=usys)
+    >>> w0 = gd.CartesianPhaseSpacePosition(pos=100.*u.cm, vel=0*u.cm/u.yr)
+    >>> orbit = integrator.run(w0, dt=0.5, nsteps=100)
+    >>> orbit.t.unit
+    Unit("s")
+
+Now the orbit object will have quantities in the specified unit system.
 
 Example: Forced pendulum
-========================
+-------------------------
 
 Here we demonstrate how to use the Dormand-Prince integrator to compute the
 orbit of a forced pendulum. We will use the variable ``q`` as the angle of the
@@ -99,6 +144,9 @@ We can plot the integrated (chaotic) orbit::
     integrator = gi.DOPRI853Integrator(F, func_args=(0.07, 0.75))
     orbit = integrator.run([3.,0.], dt=0.1, nsteps=10000)
     fig = orbit.plot()
+
+Example: Lorenz equations
+-------------------------
 
 Here's another example of integrating the
 `Lorenz equations <https://en.wikipedia.org/wiki/Lorenz_system>`_, a 3D
