@@ -19,20 +19,25 @@ from scipy.linalg import solve
 from scipy.optimize import leastsq
 
 # Project
-from .core import classify_orbit, align_circulation_with_z
 from ..potential import HarmonicOscillatorPotential, IsochronePotential
 
-__all__ = ['generate_n_vectors', 'unwrap_angles', 'fit_isochrone',
+__all__ = ['generate_n_vectors', 'fit_isochrone',
            'fit_harmonic_oscillator', 'fit_toy_potential', 'check_angle_sampling',
            'find_actions']
 
 def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
-    """
-    Generate integer vectors with |n| < N_max.
+    r"""
+    Generate integer vectors, :math:`\boldsymbol{n}`, with
+    :math:`|\boldsymbol{n}| < N_{\rm max}`.
 
-    If `half_lattice=True`, only return half of the three-dimensional lattice.
-    If the set N = {(i,j,k)} defines the lattice, we restrict to the cases
-    such that (k > 0), (k = 0, j > 0), and (k = 0, j = 0, i > 0).
+    If ``half_lattice=True``, only return half of the three-dimensional
+    lattice. If the set N = {(i,j,k)} defines the lattice, we restrict to
+    the cases such that ``(k > 0)``, ``(k = 0, j > 0)``, and
+    ``(k = 0, j = 0, i > 0)``.
+
+    .. todo::
+
+        Return shape should be (3,N) to be consistent.
 
     Parameters
     ----------
@@ -53,7 +58,8 @@ def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
     Returns
     -------
     vecs : :class:`numpy.ndarray`
-        A 2D array of integers with |n| < N_max with shape (N,3).
+        A 2D array of integers with :math:`|\boldsymbol{n}| < N_{\rm max}`
+        with shape (N,3).
 
     """
     vecs = np.meshgrid(np.arange(-N_max, N_max+1, dx),
@@ -69,37 +75,7 @@ def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
     vecs = np.array(sorted(vecs, key=lambda x: (x[0],x[1],x[2])))
     return vecs
 
-def unwrap_angles(angles, sign=1.):
-    """
-    Unwraps the angles so they increase continuously instead of wrapping at 2π.
-
-    .. warning::
-
-        This function does not properly handle negative angles.
-
-    Parameters
-    ----------
-    angles : array_like
-        Array of angles, (ntimes,3).
-    sign : numeric (optional)
-        Vector that defines direction of circulation about the axes.
-
-    Returns
-    -------
-    unwrapped_angles : :class:`numpy.ndarray`
-        Array of unbounded angles.
-
-    """
-
-    # set the initial angles
-    unwrapped_angles = np.zeros_like(angles)
-    unwrapped_angles[0] = angles[0]
-
-    n = np.cumsum(((angles[1:] - angles[:-1] + 0.5*sign*np.pi)*sign < 0) * 2.*np.pi, axis=0)
-    unwrapped_angles[1:] = angles[1:] + sign*n
-    return unwrapped_angles
-
-def fit_isochrone(w, units, m0=2E11, b0=1.):
+def fit_isochrone(orbit, m0=2E11, b0=1.):
     r"""
     Fit the toy Isochrone potential to the sum of the energy residuals relative
     to the mean energy by minimizing the function
@@ -110,12 +86,8 @@ def fit_isochrone(w, units, m0=2E11, b0=1.):
 
     Parameters
     ----------
-    w : array_like
-        Array of phase-space positions.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units. For example,
-        (u.kpc, u.Myr, u.Msun).
+    orbit : array_like
+        TODO:
     m0 : numeric (optional)
         Initial mass guess.
     b0 : numeric (optional)
@@ -129,10 +101,18 @@ def fit_isochrone(w, units, m0=2E11, b0=1.):
         Best-fit core radius for the Isochrone potential.
 
     """
+    pot = orbit.potential
+    if pot is None:
+        raise ValueError("The orbit object must have an associated potential")
+
+    w = np.squeeze(orbit.w(pot.units))
+    if w.ndim > 2:
+        raise ValueError("Input orbit object must be a single orbit.")
+
     def f(p,w):
         logm,b = p
-        potential = IsochronePotential(m=np.exp(logm), b=b, units=units)
-        H = potential.total_energy(w[...,:3], w[...,3:])
+        potential = IsochronePotential(m=np.exp(logm), b=b, units=pot.units)
+        H = potential.total_energy(w[:3], w[3:])
         return np.squeeze(H - np.mean(H))
 
     logm0 = np.log(m0)
@@ -144,9 +124,9 @@ def fit_isochrone(w, units, m0=2E11, b0=1.):
     logm,b = np.abs(p)
     m = np.exp(logm)
 
-    return IsochronePotential(m=m, b=b, units=units)
+    return IsochronePotential(m=m, b=b, units=pot.units)
 
-def fit_harmonic_oscillator(w, units, omega0=[1.,1.,1.]):
+def fit_harmonic_oscillator(orbit, omega0=[1.,1.,1.]):
     r"""
     Fit the toy harmonic oscillator potential to the sum of the energy
     residuals relative to the mean energy by minimizing the function
@@ -155,15 +135,9 @@ def fit_harmonic_oscillator(w, units, omega0=[1.,1.,1.]):
 
         f(\boldsymbol{\omega}) = \sum_i (\frac{1}{2}v_i^2 + \Phi_{\rm sho}(x_i\,|\,\boldsymbol{\omega}) - <E>)^2
 
-
     Parameters
     ----------
-    w : array_like
-        Array of phase-space positions.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units. For example,
-        (u.kpc, u.Myr, u.Msun).
+    orbit : `~gary.dynamics.CartesianOrbit`
     omega0 : array_like (optional)
         Initial frequency guess.
 
@@ -175,9 +149,17 @@ def fit_harmonic_oscillator(w, units, omega0=[1.,1.,1.]):
     """
     omega0 = np.atleast_1d(omega0)
 
+    pot = orbit.potential
+    if pot is None:
+        raise ValueError("The orbit object must have an associated potential")
+
+    w = np.squeeze(orbit.w(pot.units))
+    if w.ndim > 2:
+        raise ValueError("Input orbit object must be a single orbit.")
+
     def f(omega,w):
-        potential = HarmonicOscillatorPotential(omega=omega)
-        H = potential.total_energy(w[...,:3], w[...,3:])
+        potential = HarmonicOscillatorPotential(omega=omega, units=pot.units)
+        H = potential.total_energy(w[:3], w[3:])
         return np.squeeze(H - np.mean(H))
 
     p,ier = leastsq(f, omega0, args=(w,))
@@ -185,9 +167,9 @@ def fit_harmonic_oscillator(w, units, omega0=[1.,1.,1.]):
         raise ValueError("Failed to fit toy potential to orbit.")
 
     best_omega = np.abs(p)
-    return HarmonicOscillatorPotential(omega=best_omega)
+    return HarmonicOscillatorPotential(omega=best_omega, units=pot.units)
 
-def fit_toy_potential(w, units, force_harmonic_oscillator=False):
+def fit_toy_potential(orbit, force_harmonic_oscillator=False):
     """
     Fit a best fitting toy potential to the orbit provided. If the orbit is a
     tube (loop) orbit, use the Isochrone potential. If the orbit is a box
@@ -199,12 +181,7 @@ def fit_toy_potential(w, units, force_harmonic_oscillator=False):
 
     Parameters
     ----------
-    w : array_like
-        Phase-space orbit at times, `t`. Should have shape (ntimes,6).
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units. For example,
-        (u.kpc, u.Myr, u.Msun).
+    orbit : `~gary.dynamics.CartesianOrbit`
     force_harmonic_oscillator : bool (optional)
         Force using the harmonic oscillator potential as the toy potential.
 
@@ -214,12 +191,12 @@ def fit_toy_potential(w, units, force_harmonic_oscillator=False):
         The best-fit potential object.
 
     """
-    orbit_class = classify_orbit(w)
-    if np.any(orbit_class == 1) and not force_harmonic_oscillator:  # tube orbit
+    circulation = orbit.circulation()
+    if np.any(circulation == 1) and not force_harmonic_oscillator:  # tube orbit
         logger.debug("===== Tube orbit =====")
         logger.debug("Using Isochrone toy potential")
 
-        toy_potential = fit_isochrone(w, units=units)
+        toy_potential = fit_isochrone(orbit)
         logger.debug("Best m={}, b={}".format(toy_potential.parameters['m'],
                                               toy_potential.parameters['b']))
 
@@ -227,7 +204,7 @@ def fit_toy_potential(w, units, force_harmonic_oscillator=False):
         logger.debug("===== Box orbit =====")
         logger.debug("Using triaxial harmonic oscillator toy potential")
 
-        toy_potential = fit_harmonic_oscillator(w, units=units)
+        toy_potential = fit_harmonic_oscillator(orbit)
         logger.debug("Best omegas ({})".format(toy_potential.parameters['omega']))
 
     return toy_potential
@@ -261,7 +238,8 @@ def check_angle_sampling(nvecs, angles):
     logger.debug("Checking modes:")
     for i,vec in enumerate(nvecs):
         # N = np.linalg.norm(vec)
-        X = np.dot(angles,vec)
+        # X = np.dot(angles,vec)
+        X = (angles*vec[:,None]).sum(axis=0)
         diff = float(np.abs(X.max() - X.min()))
 
         if diff < (2.*np.pi):
@@ -284,10 +262,14 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1., throw_out_modes=False):
     vector `b` to solve for the vector of "true" actions and generating
     function values, `x` (see Equations 12-14 in Sanders & Binney (2014)).
 
+    .. todo::
+
+        Wrong shape for aa -- should be (6,n) as usual...
+
     Parameters
     ----------
     aa : array_like
-        Shape (ntimes,6) array of toy actions and angles.
+        Shape ``(6,ntimes)`` array of toy actions and angles.
     N_max : int
         Maximum norm of the integer vector.
     dx : int
@@ -304,7 +286,7 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1., throw_out_modes=False):
     """
 
     # unroll the angles so they increase continuously instead of wrap
-    angles = unwrap_angles(aa[:,3:], sign=sign)
+    angles = np.unwrap(aa[3:])
 
     # generate integer vectors for fourier modes
     nvecs = generate_n_vectors(N_max, dx, dy, dz)
@@ -321,25 +303,25 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1., throw_out_modes=False):
     A = np.zeros(shape=(n,n))
 
     # top left block matrix: identity matrix summed over timesteps
-    A[:3,:3] = len(aa)*np.identity(3)
+    A[:3,:3] = aa.shape[1]*np.identity(3)
 
-    actions = aa[:,:3]
-    angles = aa[:,3:]
+    actions = aa[:3]
+    angles = aa[3:]
 
     # top right block matrix: transpose of C_nk matrix (Eq. 12)
-    C_T = 2.*nvecs.T * np.sum(np.cos(np.dot(nvecs,angles.T)), axis=-1)
+    C_T = 2.*nvecs.T * np.sum(np.cos(np.dot(nvecs,angles)), axis=-1)
     A[:3,3:] = C_T
     A[3:,:3] = C_T.T
 
     # lower right block matrix: C_nk dotted with C_nk^T
-    cosv = np.cos(np.dot(nvecs,angles.T))
+    cosv = np.cos(np.dot(nvecs,angles))
     A[3:,3:] = 4.*np.dot(nvecs,nvecs.T)*np.einsum('it,jt->ij', cosv, cosv)
 
     # b vector first three is just sum of toy actions
-    b[:3] = np.sum(actions, axis=0)
+    b[:3] = np.sum(actions, axis=1)
 
     # rest of the vector is C dotted with actions
-    b[3:] = 2*np.sum(np.dot(nvecs,actions.T)*np.cos(np.dot(nvecs,angles.T)), axis=1)
+    b[3:] = 2*np.sum(np.dot(nvecs,actions)*np.cos(np.dot(nvecs,angles)), axis=1)
 
     return A,b,nvecs
 
@@ -350,10 +332,14 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
     generating function derivatives, `x` (see Appendix of
     Sanders & Binney (2014)).
 
+    .. todo::
+
+        Wrong shape for aa -- should be (6,n) as usual...
+
     Parameters
     ----------
     aa : array_like
-        Shape (ntimes,6) array of toy actions and angles.
+        Shape ``(6,ntimes)`` array of toy actions and angles.
     t : array_like
         Array of times.
     N_max : int
@@ -372,7 +358,7 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
     """
 
     # unroll the angles so they increase continuously instead of wrap
-    angles = unwrap_angles(aa[:,3:], sign=sign)
+    angles = np.unwrap(aa[3:])
 
     # generate integer vectors for fourier modes
     nvecs = generate_n_vectors(N_max, dx, dy, dz)
@@ -391,24 +377,24 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
     A = np.zeros(shape=(n,n))
 
     # top left block matrix: identity matrix summed over timesteps
-    A[:3,:3] = len(aa)*np.identity(3)
+    A[:3,:3] = aa.shape[1]*np.identity(3)
 
     # identity matrices summed over times
     A[:3,3:6] = A[3:6,:3] = np.sum(t)*np.identity(3)
     A[3:6,3:6] = np.sum(t*t)*np.identity(3)
 
     # S1,2,3
-    A[6:6+nv,0] = -2.*np.sum(np.sin(np.dot(nvecs,angles.T)),axis=1)
+    A[6:6+nv,0] = -2.*np.sum(np.sin(np.dot(nvecs,angles)),axis=1)
     A[6+nv:6+2*nv,1] = A[6:6+nv,0]
     A[6+2*nv:6+3*nv,2] = A[6:6+nv,0]
 
     # t*S1,2,3
-    A[6:6+nv,3] = -2.*np.sum(t[None,:]*np.sin(np.dot(nvecs,angles.T)),axis=1)
+    A[6:6+nv,3] = -2.*np.sum(t[None,:]*np.sin(np.dot(nvecs,angles)),axis=1)
     A[6+nv:6+2*nv,4] = A[6:6+nv,3]
     A[6+2*nv:6+3*nv,5] = A[6:6+nv,3]
 
     # lower right block structure: S dot S^T
-    sinv = np.sin(np.dot(nvecs,angles.T))
+    sinv = np.sin(np.dot(nvecs,angles))
     SdotST = np.einsum('it,jt->ij', sinv, sinv)
     A[6:6+nv,6:6+nv] = A[6+nv:6+2*nv,6+nv:6+2*nv] = \
         A[6+2*nv:6+3*nv,6+2*nv:6+3*nv] = 4*SdotST
@@ -416,15 +402,15 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
     # top rectangle
     A[:6,:] = A[:,:6].T
 
-    b[:3] = np.sum(angles, axis=0)
-    b[3:6] = np.sum(t[:,None]*angles, axis=0)
-    b[6:6+nv] = -2.*np.sum(angles[:,0]*np.sin(np.dot(nvecs,angles.T)), axis=1)
-    b[6+nv:6+2*nv] = -2.*np.sum(angles[:,1]*np.sin(np.dot(nvecs,angles.T)), axis=1)
-    b[6+2*nv:6+3*nv] = -2.*np.sum(angles[:,2]*np.sin(np.dot(nvecs,angles.T)), axis=1)
+    b[:3] = np.sum(angles.T, axis=0)
+    b[3:6] = np.sum(t[:,None]*angles.T, axis=0)
+    b[6:6+nv] = -2.*np.sum(angles[0]*np.sin(np.dot(nvecs,angles)), axis=1)
+    b[6+nv:6+2*nv] = -2.*np.sum(angles[1]*np.sin(np.dot(nvecs,angles)), axis=1)
+    b[6+2*nv:6+3*nv] = -2.*np.sum(angles[2]*np.sin(np.dot(nvecs,angles)), axis=1)
 
     return A,b,nvecs
 
-def _single_orbit_find_actions(t, w, N_max, units, toy_potential=None,
+def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
                                force_harmonic_oscillator=False):
     """
     Find approximate actions and angles for samples of a phase-space orbit,
@@ -434,53 +420,53 @@ def _single_orbit_find_actions(t, w, N_max, units, toy_potential=None,
     This code is adapted from Jason Sanders'
     `genfunc <https://github.com/jlsanders/genfunc>`_
 
+    .. todo::
+
+        Wrong shape for w -- should be (6,n) as usual...
+
     Parameters
     ----------
-    t : array_like
-        Array of times with shape (ntimes,).
-    w : array_like
-        Phase-space orbit at times, `t`. Should have shape (ntimes,6).
+    orbit : `~gary.dynamics.CartesianOrbit`
     N_max : int
         Maximum integer Fourier mode vector length, |n|.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units. For example,
-        (u.kpc, u.Myr, u.Msun).
     toy_potential : Potential (optional)
         Fix the toy potential class.
     force_harmonic_oscillator : bool (optional)
         Force using the harmonic oscillator potential as the toy potential.
     """
 
-    if w.ndim > 2:
-        raise ValueError("w must be a single orbit")
+    if orbit.norbits > 1:
+        raise ValueError("must be a single orbit")
 
     if toy_potential is None:
-        toy_potential = fit_toy_potential(w, units=units,
-                                          force_harmonic_oscillator=force_harmonic_oscillator)
+        toy_potential = fit_toy_potential(orbit, force_harmonic_oscillator=force_harmonic_oscillator)
 
     else:
         logger.debug("Using *fixed* toy potential: {}".format(toy_potential.parameters))
 
     if isinstance(toy_potential, IsochronePotential):
-        loop = classify_orbit(w)
-        w = align_circulation_with_z(w, loop)
+        orbit_align = orbit.align_circulation_with_z()
+        w = orbit_align.w()
 
         dxyz = (1,2,2)
-        circ = np.sign(w[0,0]*w[0,4]-w[0,1]*w[0,3])
+        circ = np.sign(w[0,0]*w[4,0]-w[1,0]*w[3,0])
         sign = np.array([1.,circ,1.])
     elif isinstance(toy_potential, HarmonicOscillatorPotential):
         dxyz = (2,2,2)
         sign = 1.
+        w = orbit.w()
     else:
         raise ValueError("Invalid toy potential.")
 
+    t = orbit.t.value
+    w = np.squeeze(w) # get rid of extra axis if len=1
+
     # Now find toy actions and angles
-    aaf = toy_potential.action_angle(w[:,:3], w[:,3:])
-    aa = np.hstack(aaf[:2])
+    aaf = toy_potential.action_angle(w[:3], w[3:])
+    aa = np.vstack(aaf[:2])
     if np.any(np.isnan(aa)):
-        ix = ~np.any(np.isnan(aa),axis=1)
-        aa = aa[ix]
+        ix = ~np.any(np.isnan(aa),axis=0)
+        aa = aa[:,ix]
         t = t[ix]
         logger.warning("NaN value in toy actions or angles!")
         if sum(ix) > 1:
@@ -511,27 +497,20 @@ def _single_orbit_find_actions(t, w, N_max, units, toy_potential=None,
     return dict(actions=J, angles=theta, freqs=freqs,
                 Sn=actions[3:], dSn_dJ=angles[6:], nvecs=nvecs)
 
-def find_actions(t, w, N_max, units, force_harmonic_oscillator=False, toy_potential=None):
-    """
-    Find approximate actions and angles for samples of a phase-space orbit,
-    `w`, at times `t`. Uses toy potentials with known, analytic action-angle
-    transformations to approximate the true coordinates as a Fourier sum.
+def find_actions(orbit, N_max, force_harmonic_oscillator=False, toy_potential=None):
+    r"""
+    Find approximate actions and angles for samples of a phase-space orbit.
+    Uses toy potentials with known, analytic action-angle transformations to
+    approximate the true coordinates as a Fourier sum.
 
     This code is adapted from Jason Sanders'
     `genfunc <https://github.com/jlsanders/genfunc>`_
 
     Parameters
     ----------
-    t : array_like
-        Array of times with shape (ntimes,).
-    w : array_like
-        Phase-space orbit at times, `t`. Should have shape (ntimes,norbits,6).
+    orbit : `~gary.dynamics.CartesianOrbit`
     N_max : int
-        Maximum integer Fourier mode vector length, |n|.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units. For example,
-        (u.kpc, u.Myr, u.Msun).
+        Maximum integer Fourier mode vector length, :math:`|\boldsymbol{n}|`.
     force_harmonic_oscillator : bool (optional)
         Force using the harmonic oscillator potential as the toy potential.
     toy_potential : Potential (optional)
@@ -548,27 +527,23 @@ def find_actions(t, w, N_max, units, force_harmonic_oscillator=False, toy_potent
 
     """
 
-    if w.ndim == 2 or w.shape[1] == 1:
-        w = np.squeeze(w)
-        return _single_orbit_find_actions(t, w, N_max, units,
+    if orbit.norbits == 1:
+        return _single_orbit_find_actions(orbit, N_max,
                                           force_harmonic_oscillator=force_harmonic_oscillator,
                                           toy_potential=toy_potential)
 
-    elif w.ndim == 3:
-        ntime,norbits,ndim = w.shape
-        actions = np.zeros((norbits,3))
-        angles = np.zeros((norbits,3))
-        freqs = np.zeros((norbits,3))
+    else:
+        norbits = orbit.norbits
+        actions = np.zeros((3,norbits))
+        angles = np.zeros((3,norbits))
+        freqs = np.zeros((3,norbits))
         for n in range(norbits):
-            aaf = _single_orbit_find_actions(t, w[:,n], N_max, units,
+            aaf = _single_orbit_find_actions(orbit[:,n], N_max,
                                              force_harmonic_oscillator=force_harmonic_oscillator,
                                              toy_potential=toy_potential)
             actions[n] = aaf['actions']
             angles[n] = aaf['angles']
             freqs[n] = aaf['freqs']
-
-    else:
-        raise ValueError("Invalid shape for orbit array: {}".format(w.shape))
 
     return dict(actions=actions, angles=angles, freqs=freqs,
                 Sn=actions[3:], dSn=angles[6:], nvecs=aaf['nvecs'])

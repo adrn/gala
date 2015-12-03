@@ -9,6 +9,9 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 # Third-party
 import numpy as np
 
+# Project
+from ..util import atleast_2d
+
 __all__ = ['plot_orbits', 'three_panel']
 
 def _get_axes(dim, axes=None, triangle=False, subplots_kwargs=dict()):
@@ -22,14 +25,14 @@ def _get_axes(dim, axes=None, triangle=False, subplots_kwargs=dict()):
     triangle : bool (optional)
         Make a triangle plot instead of plotting all projections in a single row.
     subplots_kwargs : dict (optional)
-        Dictionary of kwargs passed to the matplotlib `subplots()` call.
+        Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
     """
 
     import matplotlib.pyplot as plt
 
     if dim == 3:
         if triangle and axes is None:
-            figsize = subplots_kwargs.pop('figsize', (12,12))
+            figsize = subplots_kwargs.pop('figsize', (8,8))
             sharex = subplots_kwargs.pop('sharex', True)
             sharey = subplots_kwargs.pop('sharey', True)
             fig,axes = plt.subplots(2,2,figsize=figsize, sharex=sharex, sharey=sharey,
@@ -48,7 +51,7 @@ def _get_axes(dim, axes=None, triangle=False, subplots_kwargs=dict()):
                 axes = [axes[0],axes[2],axes[3]]
 
         elif not triangle and axes is None:
-            figsize = subplots_kwargs.pop('figsize', (14,5))
+            figsize = subplots_kwargs.pop('figsize', (10,3.5))
             fig,axes = plt.subplots(1, 3, figsize=figsize, **subplots_kwargs)
 
     elif dim <= 2:
@@ -81,39 +84,39 @@ def plot_orbits(x, t=None, ix=None, axes=None, triangle=False,
     Parameters
     ----------
     x : array_like
-        Array of positions. The last axis (`axis=-1`) is assumed
-        to be the dimensionality, e.g., `x.shape[-1]`. The first axis
-        (`axis=0`) is assumed to be the time axis.
+        Array of positions. ``axis=0`` is assumed to be the dimensionality,
+        ``axis=1`` is the time axis. See :ref:`shape-conventions` for more information.
     t : array_like (optional)
-        Arra of times. Only used if the input orbit is 1 dimensional.
+        Array of times. Only used if the input orbit is 1-dimensional.
     ix : int, array_like (optional)
         Index or array of indices of orbits to plot. For example, if `x` is an
-        array of shape (1024,32,6) -- 1024 timesteps for 32 orbits in 6D
-        phase-space -- `ix` would specify which of the 32 orbits to plot.
+        array of shape ``(3,1024,32)`` - 1024 timesteps for 32 orbits in 3D
+        positions -- `ix` would specify which of the 32 orbits to plot.
     axes : array_like (optional)
         Array of matplotlib Axes objects.
     triangle : bool (optional)
         Make a triangle plot instead of plotting all projections in a single row.
     subplots_kwargs : dict (optional)
-        Dictionary of kwargs passed to the matplotlib `subplots()` call.
+        Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
     labels : iterable (optional)
         List or iterable of axis labels as strings. They should correspond to the
-        dimensions of the input orbit, for example, if the input orbit has shape
-        (1000,1,3), then labels should have length=3.
+        dimensions of the input orbit.
+    **kwargs
+        All other keyword arguments are passed to :func:`~matplotlib.pyplot.plot`.
+        You can pass in any of the usual style kwargs like ``color=...``,
+        ``marker=...``, etc.
 
-    Other Parameters
-    ----------------
-    kwargs
-        All other keyword arguments are passed to the matplotlib `plot()` call.
-        You can pass in any of the usual style kwargs like `color=...`,
-        `marker=...`, etc.
+    Returns
+    -------
+    fig : `~matplotlib.Figure`
     """
 
+    x = atleast_2d(x, insert_axis=1)
     if x.ndim == 2:
-        x = x[:,np.newaxis]
+        x = x[...,np.newaxis]
 
     # dimensionality of input orbit
-    dim = x.shape[-1]
+    dim = x.shape[0]
     if dim > 3:
         # if orbit has more than 3 dimensions, only use the first 3
         dim = 3
@@ -131,13 +134,13 @@ def plot_orbits(x, t=None, ix=None, axes=None, triangle=False,
     if ix is not None:
         ixs = np.atleast_1d(ix)
     else:
-        ixs = range(x.shape[1])
+        ixs = range(x.shape[-1])
 
     if dim == 3:
         for ii in ixs:
-            axes[0].plot(x[:,ii,0], x[:,ii,1], **kwargs)
-            axes[1].plot(x[:,ii,0], x[:,ii,2], **kwargs)
-            axes[2].plot(x[:,ii,1], x[:,ii,2], **kwargs)
+            axes[0].plot(x[0,:,ii], x[1,:,ii], **kwargs)
+            axes[1].plot(x[0,:,ii], x[2,:,ii], **kwargs)
+            axes[2].plot(x[1,:,ii], x[2,:,ii], **kwargs)
 
         if triangle:
             # HACK: until matplotlib 1.4 comes out, need this
@@ -164,7 +167,7 @@ def plot_orbits(x, t=None, ix=None, axes=None, triangle=False,
 
     elif dim == 2:
         for ii in ixs:
-            axes[0].plot(x[:,ii,0], x[:,ii,1], **kwargs)
+            axes[0].plot(x[0,:,ii], x[1,:,ii], **kwargs)
 
         axes[0].set_xlabel(labels[0])
         axes[0].set_ylabel(labels[1])
@@ -172,10 +175,10 @@ def plot_orbits(x, t=None, ix=None, axes=None, triangle=False,
 
     elif dim == 1:
         if t is None:
-            t = np.arange(len(x))
+            t = np.arange(x.shape[1])
 
         for ii in ixs:
-            axes[0].plot(t, x[:,ii,0], **kwargs)
+            axes[0].plot(t, x[0,:,ii], **kwargs)
 
         axes[0].set_xlabel("$t$")
         axes[0].set_ylabel(labels[0])
@@ -183,21 +186,19 @@ def plot_orbits(x, t=None, ix=None, axes=None, triangle=False,
 
     return axes[0].figure
 
-def three_panel(q, relative_to=None, symbol=None, autolim=True,
-                axes=None, triangle=False, subplots_kwargs=dict(), **kwargs):
+def three_panel(q, relative_to=None, autolim=True, axes=None,
+                triangle=False, subplots_kwargs=dict(), labels=None, **kwargs):
     """
-    Given 3D quantities, `q`, (not astropy quantities...), make nice three-panel or
-    triangle plots of projections of the values.
+    Given 3D quantities, ``q``, make a nice three-panel or triangle plot
+    of projections of the values.
 
     Parameters
     ----------
     q : array_like
-        Array of values. The last axis (`axis=-1`) is assumed
-        to be the dimensionality, e.g., `q.shape[-1]`.
+        Array of values. ``axis=0`` is assumed to be the dimensionality,
+        ``axis=1`` is the time axis. See :ref:`shape-conventions` for more information.
     relative_to : bool (optional)
         Plot the values relative to this value or values.
-    symbol : str (optional)
-        Symbol to represent the quantity for axis labels. Can be Latex.
     autolim : bool (optional)
         Automatically set the plot limits to be something sensible.
     axes : array_like (optional)
@@ -205,62 +206,55 @@ def three_panel(q, relative_to=None, symbol=None, autolim=True,
     triangle : bool (optional)
         Make a triangle plot instead of plotting all projections in a single row.
     subplots_kwargs : dict (optional)
-        Dictionary of kwargs passed to the matplotlib `subplots()` call.
+        Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
+    labels : iterable (optional)
+        List or iterable of axis labels as strings. They should correspond to the
+        dimensions of the input orbit.
+    **kwargs
+        All other keyword arguments are passed to :func:`~matplotlib.pyplot.scatter`.
+        You can pass in any of the usual style kwargs like ``color=...``,
+        ``marker=...``, etc.
 
-    Other Parameters
-    ----------------
-    kwargs
-        All other keyword arguments are passed to the matplotlib `scatter()` call.
-        You can pass in any of the usual style kwargs like `color=...`,
-        `marker=...`, etc.
+    Returns
+    -------
+    fig : `~matplotlib.Figure`
     """
 
     # don't propagate changes back...
     q = q.copy()
 
-    # change default marker
-    marker = kwargs.pop('marker', '.')
-
     # get axes object from arguments
     axes = _get_axes(dim=3, axes=axes, triangle=triangle, subplots_kwargs=subplots_kwargs)
 
     # if the quantities are relative
-    label = None
     if relative_to is not None:
         q -= relative_to
 
-        if symbol is not None:
-            label = r"$\Delta {sym}_{{ix}}/{sym}^{{{{(0)}}}}_{{ix}}$".format(sym=symbol)
+    axes[0].scatter(q[0], q[1], **kwargs)
+    axes[1].scatter(q[0], q[2], **kwargs)
+    axes[2].scatter(q[1], q[2], **kwargs)
 
-    else:
-        if symbol is not None:
-            label = r"${sym}_{{ix}}$".format(sym=symbol)
-
-    axes[0].scatter(q[:,0], q[:,1], marker=marker, **kwargs)
-    axes[1].scatter(q[:,0], q[:,2], marker=marker, **kwargs)
-    axes[2].scatter(q[:,1], q[:,2], marker=marker, **kwargs)
-
-    if label is not None:
+    if labels is not None:
         if triangle:
-            axes[0].set_ylabel(label.format(ix=2))
-            axes[1].set_xlabel(label.format(ix=1))
-            axes[1].set_ylabel(label.format(ix=3))
-            axes[2].set_xlabel(label.format(ix=1))
+            axes[0].set_ylabel(labels[1])
+            axes[1].set_xlabel(labels[0])
+            axes[1].set_ylabel(labels[2])
+            axes[2].set_xlabel(labels[0])
 
         else:
-            axes[0].set_xlabel(label.format(ix=1))
-            axes[0].set_ylabel(label.format(ix=2))
+            axes[0].set_xlabel(labels[0])
+            axes[0].set_ylabel(labels[1])
 
-            axes[1].set_xlabel(label.format(ix=1))
-            axes[1].set_ylabel(label.format(ix=3))
+            axes[1].set_xlabel(labels[0])
+            axes[1].set_ylabel(labels[2])
 
-            axes[2].set_xlabel(label.format(ix=2))
-            axes[2].set_ylabel(label.format(ix=3))
+            axes[2].set_xlabel(labels[1])
+            axes[2].set_ylabel(labels[2])
 
     if autolim:
         lims = []
         for i in range(3):
-            mx,mi = q[:,i].max(), q[:,i].min()
+            mx,mi = q[i].max(), q[i].min()
             delta = mx-mi
             lims.append((mi-delta*0.05, mx+delta*0.05))
 

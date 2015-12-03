@@ -35,7 +35,7 @@ class TestPMConvert(object):
 
     def setup(self):
         with tempfile.NamedTemporaryFile() as temp:
-            temp.write(_txt)
+            temp.write(_txt.encode('utf-8'))
             temp.flush()
             temp.seek(0)
             self.data = np.genfromtxt(temp, names=True, skip_header=1)

@@ -1,240 +1,438 @@
 # coding: utf-8
 
-""" General dynamics utilities. """
-
 from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
-import numpy as np
 from astropy import log as logger
-from scipy.signal import argrelmax, argrelmin
+import astropy.coordinates as coord
+import astropy.units as u
+uno = u.dimensionless_unscaled
+import numpy as np
 
-__all__ = ['angular_momentum', 'classify_orbit', 'align_circulation_with_z',
-           'check_for_primes', 'peak_to_peak_period']
+# Project
+from .plot import three_panel
+from ..coordinates import velocity_transforms as vtrans
+from ..coordinates import vgal_to_hel
+from ..units import UnitSystem
+from ..util import atleast_2d
 
-def angular_momentum(q, p):
-    r"""
-    Compute the angular momentum vector(s) of a single or array of positions
-    and conjugate momenta, ``q`` and ``p``.
+__all__ = ['CartesianPhaseSpacePosition', 'combine']
 
-    .. math::
+class PhaseSpacePosition(object):
+    pass
 
-        \boldsymbol{L} = \boldsymbol{q} \times \boldsymbol{p}
+class CartesianPhaseSpacePosition(PhaseSpacePosition):
+    """
+    Represents phase-space positions in Cartesian coordinates, e.g.,
+    positions and conjugate momenta (velocities).
+
+    .. warning::
+
+        This is an experimental class. The API may change in a future release!
+
+    The position and velocity quantities (arrays) can have an arbitrary
+    number of dimensions, but the first axis (0, 1) has special meaning::
+
+        - `axis=0` is the coordinate dimension (e.g., x, y, z)
+
+    So if the input position array, `pos`, has shape `pos.shape = (3, 100)`,
+    this would represent 100 3D positions (`pos[0]` is `x`, `pos[1]` is `y`,
+    etc.). The same is true for velocity. The position and velocity arrays
+    must have the same shape.
+
+    If the input position and velocity are arrays rather than
+    :class:`~astropy.units.Quantity` objects, they are internally stored with
+    dimensionles units.
 
     Parameters
     ----------
-    q : array_like, :class:`~astropy.units.Quantity`
-        Array of positions.
-    p : array_like, :class:`~astropy.units.Quantity`
-        Array of momenta, or, velocities if working in per-mass units.
-
-    Returns
-    -------
-    L : :class:`numpy.ndarray`, :class:`~astropy.units.Quantity`
-        Array of angular momentum vectors.
-
-    Examples
-    --------
-
-        >>> import numpy as np
-        >>> import astropy.units as u
-        >>> q = np.array([1., 0, 0]) * u.au
-        >>> p = np.array([0, 2*np.pi, 0]) * u.au/u.yr
-        >>> angular_momentum(q, p)
-        <Quantity [ 0.        , 0.        , 6.28318531] AU2 / yr>
+    pos : :class:`~astropy.units.Quantity`, array_like
+        Positions. If a numpy array (e.g., has no units), this will be
+        stored as a dimensionless :class:`~astropy.units.Quantity`. See
+        the note above about the assumed meaning of the axes of this object.
+    vel : :class:`~astropy.units.Quantity`, array_like
+        Velocities. If a numpy array (e.g., has no units), this will be
+        stored as a dimensionless :class:`~astropy.units.Quantity`. See
+        the note above about the assumed meaning of the axes of this object.
 
     """
-    try:
-        return np.cross(q,p) * q.unit * p.unit
-    except AttributeError:  # q,p are just array's
-        return np.cross(q,p)
+    def __init__(self, pos, vel):
 
-def classify_orbit(w):
+        # make sure position and velocity input are 2D
+        pos = atleast_2d(pos, insert_axis=1)
+        vel = atleast_2d(vel, insert_axis=1)
+
+        # make sure position and velocity have at least a dimensionless unit!
+        if not hasattr(pos, 'unit'):
+            pos = pos * uno
+
+        if not hasattr(vel, 'unit'):
+            vel = vel * uno
+
+        if (pos.unit == uno and vel.unit != uno):
+            logger.warning("Position unit is dimensionless but velocity unit is not."
+                           "Are you sure that's what you want?")
+        elif (vel.unit == uno and pos.unit != uno):
+            logger.warning("Velocity unit is dimensionless but position unit is not."
+                           "Are you sure that's what you want?")
+
+        # make sure shape is the same
+        for i in range(pos.ndim):
+            if pos.shape[i] != vel.shape[i]:
+                raise ValueError("Position and velocity must have the same shape "
+                                 "{} vs {}".format(pos.shape, vel.shape))
+
+        self.pos = pos
+        self.vel = vel
+
+    def __repr__(self):
+        return "<CartesianPhaseSpacePosition N={}, shape={}>".format(self.ndim, self.pos.shape[1:])
+
+    def __str__(self):
+        return "CartesianPhaseSpacePosition"
+
+    def __getitem__(self, slyce):
+        try:
+            _slyce = (slice(None),) + tuple(slyce)
+        except TypeError:
+            _slyce = (slice(None),) + (slyce,)
+
+        return self.__class__(pos=self.pos[_slyce], vel=self.vel[_slyce])
+
+    @property
+    def ndim(self):
+        """
+        Number of coordinate dimensions. 1/2 of the phase-space dimensionality.
+
+        .. warning::
+
+            This is *not* the number of axes in the position or velocity
+            arrays. That is accessed by doing ``orbit.pos.ndim``.
+
+        Returns
+        -------
+        n : int
+
+        """
+        return self.pos.shape[0]
+
+    # ------------------------------------------------------------------------
+    # Convert from Cartesian to other representations
+    # ------------------------------------------------------------------------
+    def represent_as(self, Representation):
+        """
+        Represent the position and velocity of the orbit in an alternate
+        coordinate system. Supports any of the Astropy coordinates
+        representation classes.
+
+        Parameters
+        ----------
+        Representation : :class:`~astropy.coordinates.BaseRepresentation`
+            The class for the desired representation.
+
+        Returns
+        -------
+        pos : `~astropy.coordinates.BaseRepresentation`
+        vel : `~astropy.units.Quantity`
+            The velocity in the new representation. All components
+            have units of velocity -- e.g., to get an angular velocity
+            in spherical representations, you'll need to divide by the radius.
+        """
+        if self.ndim != 3:
+            raise ValueError("Representation changes require a 3D (ndim=3) "
+                             "position and velocity.")
+
+        # get the name of the desired representation
+        rep_name = Representation.get_name()
+
+        # transform the position
+        car_pos = coord.CartesianRepresentation(self.pos)
+        new_pos = car_pos.represent_as(Representation)
+
+        # transform the velocity
+        vfunc = getattr(vtrans, "cartesian_to_{}".format(rep_name))
+        new_vel = vfunc(car_pos, self.vel)
+
+        return new_pos, new_vel
+
+    def to_frame(self, frame, galactocentric_frame=coord.Galactocentric(),
+                 vcirc=None, vlsr=None):
+        """
+        Transform the orbit from Galactocentric, cartesian coordinates to
+        Heliocentric coordinates in the specified Astropy coordinate frame.
+
+        Parameters
+        ----------
+        frame : :class:`~astropy.coordinates.BaseCoordinateFrame`
+        galactocentric_frame : :class:`~astropy.coordinates.Galactocentric`
+        vcirc : :class:`~astropy.units.Quantity`
+            Circular velocity of the Sun. Passed to velocity transformation.
+        vlsr : :class:`~astropy.units.Quantity`
+            Velocity of the Sun relative to the LSR. Passed to
+            velocity transformation.
+
+        Returns
+        -------
+        c : :class:`~astropy.coordinates.BaseCoordinateFrame`
+            An instantiated coordinate frame.
+        v : tuple
+            A tuple of velocities represented as
+            :class:`~astropy.units.Quantity` objects.
+
+        """
+
+        if self.ndim != 3:
+            raise ValueError("Frame transformations require a 3D (ndim=3) "
+                             "position and velocity.")
+
+        car_pos = coord.CartesianRepresentation(self.pos)
+        gc_c = galactocentric_frame.realize_frame(car_pos)
+        c = gc_c.transform_to(frame)
+
+        kw = dict()
+        kw['galactocentric_frame'] = galactocentric_frame
+        if vcirc is not None:
+            kw['vcirc'] = vcirc
+        if vlsr is not None:
+            kw['vlsr'] = vlsr
+
+        v = vgal_to_hel(c, self.vel, **kw)
+        return c, v
+
+    # Pseudo-backwards compatibility
+    def w(self, units=None):
+        """
+        This returns a single array containing the phase-space positions.
+
+        Parameters
+        ----------
+        units : `~gary.units.UnitSystem` (optional)
+            The unit system to represent the position and velocity in
+            before combining into the full array.
+
+        Returns
+        -------
+        w : `~numpy.ndarray`
+            A numpy array of all positions and velocities, without units.
+            Will have shape ``(2*ndim,...)``.
+
+        """
+        if units is None and (self.pos.unit == uno and self.vel.unit == uno):
+            units = [uno]
+        elif units is None:
+            raise ValueError("A UnitSystem must be provided.")
+
+        x = self.pos.decompose(units).value
+        v = self.vel.decompose(units).value
+
+        return np.vstack((x,v))
+
+    @classmethod
+    def from_w(cls, w, units=None, **kwargs):
+        """
+        Create a {name} object from a single array specifying positions
+        and velocities. This is mainly for backwards-compatibility and
+        it is not recommended for new users.
+
+        Parameters
+        ----------
+        w : array_like
+            The array of phase-space positions.
+        units : `~gary.units.UnitSystem` (optional)
+            The unit system that the input position+velocity array, ``w``,
+            is represented in.
+        **kwargs
+            Any aditional keyword arguments passed to the class initializer.
+
+        Returns
+        -------
+        obj : `~gary.dynamics.{name}`
+
+        """.format(name=cls.__name__)
+
+        ndim = w.shape[0]//2
+        pos = w[:ndim]
+        vel = w[ndim:]
+
+        if units is not None:
+            units = UnitSystem(units)
+            pos = pos*units['length']
+            vel = vel*units['length']/units['time'] # velocity in w is from _core_units
+
+        return cls(pos=pos, vel=vel, **kwargs)
+
+    # ------------------------------------------------------------------------
+    # Computed dynamical quantities
+    # ------------------------------------------------------------------------
+    def kinetic_energy(self):
+        r"""
+        The kinetic energy *per unit mass*:
+
+        .. math::
+
+            E_K = \frac{1}{2} \, |\boldsymbol{v}|^2
+
+        Returns
+        -------
+        E : :class:`~astropy.units.Quantity`
+            The kinetic energy.
+        """
+        return 0.5*np.sum(self.vel**2, axis=0)
+
+    def potential_energy(self, potential):
+        r"""
+        The potential energy *per unit mass*:
+
+        .. math::
+
+            E_\Phi = \Phi(\boldsymbol{q})
+
+        Parameters
+        ----------
+        potential : `gary.potential.PotentialBase`
+            The potential object to compute the energy from.
+
+        Returns
+        -------
+        E : :class:`~astropy.units.Quantity`
+            The potential energy.
+        """
+        # TODO: will I overhaul how potentials handle units?
+        q = self.pos.decompose(potential.units).value
+        _unit = (potential.units['length']/potential.units['time'])**2
+        return potential.value(q)*_unit
+
+    def energy(self, potential):
+        r"""
+        The total energy *per unit mass* (e.g., kinetic + potential):
+
+        Parameters
+        ----------
+        potential : `gary.potential.PotentialBase`
+            The potential object to compute the energy from.
+
+        Returns
+        -------
+        E : :class:`~astropy.units.Quantity`
+            The total energy.
+        """
+        return self.kinetic_energy() + self.potential_energy(potential)
+
+    def angular_momentum(self):
+        r"""
+        Compute the angular momentum for the phase-space positions contained
+        in this object::
+
+        .. math::
+
+            \boldsymbol{{L}} = \boldsymbol{{q}} \times \boldsymbol{{p}}
+
+        See :ref:`shape-conventions` for more information about the shapes of
+        input and output objects.
+
+        Returns
+        -------
+        L : :class:`~astropy.units.Quantity`
+            Array of angular momentum vectors.
+
+        Examples
+        --------
+
+            >>> import numpy as np
+            >>> import astropy.units as u
+            >>> pos = np.array([1., 0, 0]) * u.au
+            >>> vel = np.array([0, 2*np.pi, 0]) * u.au/u.yr
+            >>> w = {}(pos, vel)
+            >>> w.angular_momentum()
+            <Quantity [ 0.        , 0.        , 6.28318531] AU2 / yr>
+        """.format(self.__class__.__name__)
+        return np.cross(self.pos.value, self.vel.value, axis=0) * self.pos.unit * self.vel.unit
+
+    # ------------------------------------------------------------------------
+    # Misc. useful methods
+    # ------------------------------------------------------------------------
+    def plot(self, **kwargs):
+        """
+        Plot the positions in all projections. This is a thin wrapper around
+        `~gary.dynamics.three_panel`.
+
+        .. warning::
+
+            This will currently fail for orbits with fewer than 3 dimensions.
+
+        Parameters
+        ----------
+        **kwargs
+            All keyword arguments are passed to `~gary.dynamics.three_panel`.
+            See the documentation of that function.
+
+        Returns
+        -------
+        fig : `~matplotlib.Figure`
+
+        """
+        _label_unit = ''
+        if self.pos.unit != u.dimensionless_unscaled:
+            _label_unit = ' [{}]'.format(self.pos.unit)
+
+        default_kwargs = {
+            'marker': '.',
+            'color': 'k',
+            'labels': ('$x${}'.format(_label_unit),
+                       '$y${}'.format(_label_unit),
+                       '$z${}'.format(_label_unit))
+        }
+
+        for k,v in default_kwargs.items():
+            kwargs[k] = kwargs.get(k, v)
+
+        return three_panel(self.pos.value, **kwargs)
+
+def combine(*args):
     """
-    Determine whether an orbit or series of orbits is a Box or Tube orbit by
-    figuring out whether there is a change of sign of the angular momentum
-    about an axis. Returns a 2D array with 3 integers per orbit point such that:
-
-    - Box and boxlet = [0,0,0]
-    - z-axis (short-axis) tube = [0,0,1]
-    - x-axis (long-axis) tube = [1,0,0]
+    Combine the input `PhaseSpacePosition` objects into a single object.
 
     Parameters
     ----------
-    w : array_like
-        Array of phase-space positions. Accepts 2D or 3D arrays. If 2D, assumes
-        this is a single orbit. If 3D, assumes that this is a collection of orbits,
-        where `axis=0` is the time axis, and `axis=1` are the different orbits.
+    *args
+        Multiple instances of `PhaseSpacePosition`.
 
     Returns
     -------
-    circulation : :class:`numpy.ndarray`
-        An array that specifies whether there is circulation about any of
-        the axes of the input orbit. For a single orbit, will return a
-        1D array, but for multiple orbits, the shape will be (len(w), 3).
-
-    """
-    # get angular momenta
-    ndim = w.shape[-1]
-    Ls = angular_momentum(w[...,:ndim//2], w[...,ndim//2:])
-
-    # if only 2D, add another empty axis
-    if w.ndim == 2:
-        single_orbit = True
-        ntimesteps,ndim = w.shape
-        w = w.reshape(ntimesteps,1,ndim)
-    else:
-        single_orbit = False
-
-    ntimes,norbits,ndim = w.shape
-
-    # initial angular momentum
-    L0 = Ls[0]
-
-    # see if at any timestep the sign has changed
-    loop = np.ones((norbits,3))
-    for ii in range(3):
-        cnd = (np.sign(L0[...,ii]) != np.sign(Ls[1:,...,ii])) | \
-              (np.abs(Ls[1:,...,ii]) < 1E-14)
-
-        ix = np.atleast_1d(np.any(cnd, axis=0))
-        loop[ix,ii] = 0
-
-    loop = loop.astype(int)
-    if single_orbit:
-        return loop.reshape((ndim//2,))
-    else:
-        return loop
-
-def align_circulation_with_z(w, loop_bit):
-    """
-    If the input orbit is a tube orbit, this function aligns the circulation
-    axis with the z axis.
-
-    Parameters
-    ----------
-    w : array_like
-        Array of phase-space positions. Accepts 2D or 3D arrays. If 2D, assumes
-        this is a single orbit so that `loop_bit` should be a 1D array. If 3D, assumes
-        that this is a collection of orbits, where `axis=0` is the time axis, and
-        `axis=1` are the different orbits.
-    loop_bit : array_like
-        Array of bits that specify the axis about which the orbit circulates.
-        See the documentation for ~`gary.dynamics.classify_orbit()`.
-
-    Returns
-    -------
-    new_w : :class:`~numpy.ndarray`
-        A copy of the input array with circulation aligned with the z axis.
+    obj : `~gary.dynamics.PhaseSpacePosition`
+        A single objct with positions and velocities stacked along the last axis.
     """
 
-    if (w.ndim-1) != loop_bit.ndim:
-        raise ValueError("Shape mismatch - input orbit array should have 1 more dimension "
-                         "than the input loop bit.")
-
-    orig_shape = w.shape
-    if loop_bit.ndim == 1:
-        loop_bit = np.atleast_2d(loop_bit)
-        w = w[:,np.newaxis]
-
-    new_w = w.copy()
-    for ix in range(len(loop_bit)):
-        if loop_bit[ix,2] == 1 or np.all(loop_bit[ix] == 0):
-            # already circulating about z or box orbit
-            continue
-
-        if sum(loop_bit[ix]) > 1:
-            logger.warning("Circulation about x and y axes - are you sure the orbit has been "
-                           "integrated for long enough?")
-
-        if loop_bit[ix,0] == 1:
-            circ = 0
-        elif loop_bit[ix,1] == 1:
-            circ = 1
+    ndim = None
+    pos_unit = None
+    vel_unit = None
+    all_pos = []
+    all_vel = []
+    for x in args:
+        if ndim is None:
+            ndim = x.ndim
+            pos_unit = x.pos.unit
+            vel_unit = x.vel.unit
         else:
-            raise RuntimeError("Should never get here...")
+            if x.ndim != ndim:
+                raise ValueError("All objects must have the same dimensionality.")
 
-        new_w[:,ix,circ] = w[:,ix,2]
-        new_w[:,ix,2] = w[:,ix,circ]
-        new_w[:,ix,circ+3] = w[:,ix,5]
-        new_w[:,ix,5] = w[:,ix,circ+3]
+        pos = x.pos
+        if pos.ndim < 2:
+            pos = pos[...,np.newaxis]
 
-    return new_w.reshape(orig_shape)
+        vel = x.vel
+        if vel.ndim < 2:
+            vel = vel[...,np.newaxis]
 
-def check_for_primes(n, max_prime=41):
-    """
-    Given an integer, ``n``, ensure that it doest not have large prime
-    divisors, which can wreak havok for FFT's. If needed, will decrease
-    the number.
+        all_pos.append(pos.to(pos_unit).value)
+        all_vel.append(vel.to(vel_unit).value)
 
-    Parameters
-    ----------
-    n : int
-        Integer number to test.
+    all_pos = np.hstack(all_pos)*pos_unit
+    all_vel = np.hstack(all_vel)*vel_unit
 
-    Returns
-    -------
-    n2 : int
-        Integer combed for large prime divisors.
-    """
+    return CartesianPhaseSpacePosition(pos=all_pos, vel=all_vel)
 
-    m = n
-    f = 2
-    while (f**2 <= m):
-        if m % f == 0:
-            m /= f
-        else:
-            f += 1
 
-    if m >= max_prime and n >= max_prime:
-        n -= 1
-        n = check_for_primes(n)
-
-    return n
-
-def peak_to_peak_period(t, f, tol=1E-2):
-    """
-    Estimate the period of the input time series by measuring the average
-    peak-to-peak time.
-
-    Parameters
-    ----------
-    t : array_like
-        Time grid aligned with the input time series.
-    f : array_like
-        A periodic time series.
-
-    Returns
-    -------
-    period : float
-        The mean peak-to-peak period.
-    """
-
-    # find peaks
-    max_ix = argrelmax(f, mode='wrap')[0]
-    max_ix = max_ix[(max_ix != 0) & (max_ix != (len(f)-1))]
-
-    # find troughs
-    min_ix = argrelmin(f, mode='wrap')[0]
-    min_ix = min_ix[(min_ix != 0) & (min_ix != (len(f)-1))]
-
-    # neglect minor oscillations
-    if abs(np.mean(f[max_ix]) - np.mean(f[min_ix])) < tol:
-        return np.nan
-
-    # compute mean peak-to-peak
-    if len(max_ix) > 0:
-        T_max = np.mean(t[max_ix[1:]] - t[max_ix[:-1]])
-    else:
-        T_max = np.nan
-
-    # now compute mean trough-to-trough
-    if len(min_ix) > 0:
-        T_min = np.mean(t[min_ix[1:]] - t[min_ix[:-1]])
-    else:
-        T_min = np.nan
-
-    # then take the mean of these two
-    return np.mean([T_max, T_min])

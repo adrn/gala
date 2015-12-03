@@ -50,11 +50,11 @@ setup_cfg = dict(conf.items('metadata'))
 # -- General configuration ----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-# needs_sphinx = '1.2'
+needs_sphinx = '1.3'
 
 # To perform a Sphinx version check that needs to be more specific than
 # major.minor, call `check_sphinx_version("x.y.z")` here.
-# check_sphinx_version("1.2.1")
+check_sphinx_version("1.3")
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -64,6 +64,12 @@ exclude_patterns.append('_templates')
 # be used globally.
 rst_epilog += """
 """
+
+# Add sympy to intersphinx mapping
+intersphinx_mapping['sympy'] = ('http://docs.sympy.org/latest/', None)
+
+# Show / hide TODO blocks
+todo_include_todos = True
 
 # -- Project information ------------------------------------------------------
 
@@ -80,6 +86,10 @@ copyright = '{0}, {1}'.format(
 __import__(setup_cfg['package_name'])
 package = sys.modules[setup_cfg['package_name']]
 
+# TODO: Use the astropy style when building docs
+plot_rcparams = package.mpl_style.mpl_style
+plot_apply_rcparams = True
+
 # The short X.Y version.
 version = package.__version__.split('-', 1)[0]
 # The full version, including alpha/beta/rc tags.
@@ -88,7 +98,6 @@ release = package.__version__
 
 # -- Options for HTML output ---------------------------------------------------
 
-# A NOTE ON HTML THEMES
 # A NOTE ON HTML THEMES
 html_theme_options = {
     'logotext1': '',  # white,  semi-bold
@@ -117,7 +126,8 @@ html_theme_options = {
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-html_favicon = 'm104.ico'
+path = os.path.abspath(os.path.join(os.path.dirname(__file__), '_static'))
+html_favicon = os.path.join(path, 'm104.ico')
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
