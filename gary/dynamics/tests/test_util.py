@@ -10,7 +10,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import numpy as np
 
 # Project
-from ...util import peak_to_peak_period
+from ..util import peak_to_peak_period
 
 def test_peak_to_peak_period():
     ntimes = 16384
