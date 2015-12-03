@@ -34,7 +34,7 @@ a set of initial conditions::
     ...                               q1=1., q2=0.8, q3=0.6, units=galactic)
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,5.5]*u.kpc,
     ...                                     vel=[0.,100.,0]*u.km/u.s)
-    >>> lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., nsteps=100000)
+    >>> lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., nsteps=100000) # doctest: +SKIP
 
 This returns two objects: an `~astropy.units.Quantity` object that
 contains the maximum Lyapunov exponent estimate for each offset orbit,
@@ -42,7 +42,7 @@ contains the maximum Lyapunov exponent estimate for each offset orbit,
 argument) and an `~gary.dynamics.CartesianOrbit` object that contains
 the parent orbit and each offset orbit. Let's plot the parent orbit::
 
-    >>> fig = orbit[:,0].plot(marker=',', alpha=0.1, linestyle='none')
+    >>> fig = orbit[:,0].plot(marker=',', alpha=0.1, linestyle='none') # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -67,11 +67,11 @@ several time-steps (controllable with the ``nsteps_per_pullback`` argument),
 we have to down-sample the time array to align it with the Lyapunov exponent
 array. This plots one line per offset orbit::
 
-    >>> pl.figure()
-    >>> pl.loglog(orbit.t[11::10], lyap, marker=None)
-    >>> pl.xlabel("Time [{}]".format(orbit.t.unit))
-    >>> pl.ylabel(r"$\lambda_{{\rm max}}$ [{}]".format(lyap.unit))
-    >>> pl.tight_layout()
+    >>> pl.figure() # doctest: +SKIP
+    >>> pl.loglog(orbit.t[11::10], lyap, marker=None) # doctest: +SKIP
+    >>> pl.xlabel("Time [{}]".format(orbit.t.unit)) # doctest: +SKIP
+    >>> pl.ylabel(r"$\lambda_{{\rm max}}$ [{}]".format(lyap.unit)) # doctest: +SKIP
+    >>> pl.tight_layout() # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -99,8 +99,8 @@ To compare, we will compute the estimate for a regular orbit as well::
 
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,0.]*u.kpc,
     ...                                     vel=[0.,140.,25]*u.km/u.s)
-    >>> lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., nsteps=100000)
-    >>> fig = orbit[:,0].plot(marker=',', alpha=0.1, linestyle='none')
+    >>> lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., nsteps=100000) # doctest: +SKIP
+    >>> fig = orbit[:,0].plot(marker=',', alpha=0.1, linestyle='none') # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -121,11 +121,11 @@ To compare, we will compute the estimate for a regular orbit as well::
 Because this is a regular orbit, the estimate continues decreasing,
 following a characteristic power-law (a straight line in a log-log plot)::
 
-    >>> pl.figure()
-    >>> pl.loglog(orbit.t[11::10], lyap, marker=None)
-    >>> pl.xlabel("Time [{}]".format(orbit.t.unit))
-    >>> pl.ylabel(r"$\lambda_{{\rm max}}$ [{}]".format(lyap.unit))
-    >>> pl.tight_layout()
+    >>> pl.figure() # doctest: +SKIP
+    >>> pl.loglog(orbit.t[11::10], lyap, marker=None) # doctest: +SKIP
+    >>> pl.xlabel("Time [{}]".format(orbit.t.unit)) # doctest: +SKIP
+    >>> pl.ylabel(r"$\lambda_{{\rm max}}$ [{}]".format(lyap.unit)) # doctest: +SKIP
+    >>> pl.tight_layout() # doctest: +SKIP
 
 .. plot::
     :align: center
