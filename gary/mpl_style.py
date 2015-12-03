@@ -16,7 +16,7 @@ for older versions of matplotlib the following works::
     >>> mpl.rcParams.update(mpl_style)
 
 """
-from cycler import cycler
+
 mpl_style = {
 
     # Lines
@@ -49,15 +49,6 @@ mpl_style = {
     'axes.labelsize': 'large',
     'axes.labelcolor': 'k',
     'axes.axisbelow': True,
-    'axes.prop_cycle': cycler('color', ['#1A1A1A', # black
-                                        '#2166AC', # blue
-                                        '#006837', # green
-                                        '#B2182B', # red
-                                        '#762A83', # purple
-                                        '#E08214',
-                                        '#80CDC1',
-                                        '#C51B7D',
-                                        '#FEE08B']),
 
     # Ticks
     'xtick.major.size': 8,
@@ -88,3 +79,25 @@ mpl_style = {
     # Other
     'savefig.dpi': 300,
 }
+
+try:
+    from cycler import cycler
+    mpl_style['axes.prop_cycle'] = cycler('color', ['#1A1A1A', # black
+                                                    '#2166AC', # blue
+                                                    '#006837', # green
+                                                    '#B2182B', # red
+                                                    '#762A83', # purple
+                                                    '#E08214',
+                                                    '#80CDC1',
+                                                    '#C51B7D',
+                                                    '#FEE08B'])
+except ImportError:
+    mpl_style['axes.color_cycle'] = ['#1A1A1A', # black
+                                     '#2166AC', # blue
+                                     '#006837', # green
+                                     '#B2182B', # red
+                                     '#762A83', # purple
+                                     '#E08214',
+                                     '#80CDC1',
+                                     '#C51B7D',
+                                     '#FEE08B']
