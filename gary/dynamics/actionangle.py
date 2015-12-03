@@ -101,19 +101,17 @@ def fit_isochrone(orbit, m0=2E11, b0=1.):
         Best-fit core radius for the Isochrone potential.
 
     """
-    try:
-        units = orbit.potential.units
-    except AttributeError:
-        raise ValueError("The orbit object must have an associated potential with "
-                         "a defined unit system.")
+    pot = orbit.potential
+    if pot is None:
+        raise ValueError("The orbit object must have an associated potential")
 
-    w = np.squeeze(orbit.w())
+    w = np.squeeze(orbit.w(pot.units))
     if w.ndim > 2:
         raise ValueError("Input orbit object must be a single orbit.")
 
     def f(p,w):
         logm,b = p
-        potential = IsochronePotential(m=np.exp(logm), b=b, units=units)
+        potential = IsochronePotential(m=np.exp(logm), b=b, units=pot.units)
         H = potential.total_energy(w[:3], w[3:])
         return np.squeeze(H - np.mean(H))
 
@@ -126,7 +124,7 @@ def fit_isochrone(orbit, m0=2E11, b0=1.):
     logm,b = np.abs(p)
     m = np.exp(logm)
 
-    return IsochronePotential(m=m, b=b, units=units)
+    return IsochronePotential(m=m, b=b, units=pot.units)
 
 def fit_harmonic_oscillator(orbit, omega0=[1.,1.,1.]):
     r"""
@@ -151,18 +149,16 @@ def fit_harmonic_oscillator(orbit, omega0=[1.,1.,1.]):
     """
     omega0 = np.atleast_1d(omega0)
 
-    try:
-        units = orbit.potential.units
-    except AttributeError:
-        raise ValueError("The orbit object must have an associated potential with "
-                         "a defined unit system.")
+    pot = orbit.potential
+    if pot is None:
+        raise ValueError("The orbit object must have an associated potential")
 
-    w = np.squeeze(orbit.w())
+    w = np.squeeze(orbit.w(pot.units))
     if w.ndim > 2:
         raise ValueError("Input orbit object must be a single orbit.")
 
     def f(omega,w):
-        potential = HarmonicOscillatorPotential(omega=omega, units=units)
+        potential = HarmonicOscillatorPotential(omega=omega, units=pot.units)
         H = potential.total_energy(w[:3], w[3:])
         return np.squeeze(H - np.mean(H))
 
@@ -171,7 +167,7 @@ def fit_harmonic_oscillator(orbit, omega0=[1.,1.,1.]):
         raise ValueError("Failed to fit toy potential to orbit.")
 
     best_omega = np.abs(p)
-    return HarmonicOscillatorPotential(omega=best_omega)
+    return HarmonicOscillatorPotential(omega=best_omega, units=pot.units)
 
 def fit_toy_potential(orbit, force_harmonic_oscillator=False):
     """
