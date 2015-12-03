@@ -159,6 +159,7 @@ Or, we could create a contour plot of equipotentials::
             return grad
 
     pot = HenonHeilesPotential(A=1., units=None)
+    grid = np.linspace(-1.5,1.5,100)
     fig = pot.plot_contours(grid=(grid,grid), cmap='Blues_r',)
 
 Adding a custom potential with Cython
