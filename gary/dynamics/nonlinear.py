@@ -15,7 +15,7 @@ from . import CartesianPhaseSpacePosition, CartesianOrbit
 __all__ = ['fast_lyapunov_max', 'lyapunov_max', 'surface_of_section']
 
 def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
-                      nsteps_per_pullback=10, noffset_orbits=2, t0=0.,
+                      nsteps_per_pullback=10, noffset_orbits=2, t1=0.,
                       atol=1E-10, rtol=1E-10, nmax=0):
     """
     Compute the maximum Lyapunov exponent using a C-implemented estimator
@@ -35,7 +35,7 @@ def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
         Number of steps to run before re-normalizing the offset vectors.
     noffset_orbits : int (optional)
         Number of offset orbits to run.
-    t0 : numeric (optional)
+    t1 : numeric (optional)
         Time of initial conditions. Assumed to be t=0.
 
     Returns
@@ -62,7 +62,7 @@ def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
         raise ValueError("Can only compute fast Lyapunov exponent for a single orbit.")
 
     t,w,l = dop853_lyapunov_max(potential.c_instance, _w0,
-                                dt, nsteps+1, t0,
+                                dt, nsteps+1, t1,
                                 d0, nsteps_per_pullback, noffset_orbits,
                                 atol, rtol, nmax)
     w = np.rollaxis(w, -1)
@@ -76,7 +76,7 @@ def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
     return l/tunit, orbit
 
 def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
-                 noffset_orbits=8, t0=0., units=None):
+                 noffset_orbits=8, t1=0., units=None):
     """
 
     Compute the maximum Lyapunov exponent of an orbit by integrating many
@@ -100,7 +100,7 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
         Number of steps to run before re-normalizing the offset vectors.
     noffset_orbits : int (optional)
         Number of offset orbits to run.
-    t0 : numeric (optional)
+    t1 : numeric (optional)
         Time of initial conditions. Assumed to be t=0.
     units : `~gary.units.UnitSystem` (optional)
         If passing in an array (not a `~gary.dynamics.PhaseSpacePosition`),
@@ -144,16 +144,16 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
     full_w = np.zeros((ndim,nsteps+1,noffset_orbits+1))
     full_w[:,0] = all_w0
     full_ts = np.zeros((nsteps+1,))
-    full_ts[0] = t0
+    full_ts[0] = t1
 
     # arrays to store the Lyapunov exponents and times
     LEs = np.zeros((niter,noffset_orbits))
     ts = np.zeros_like(LEs)
-    time = t0
+    time = t1
     for i in range(1,niter+1):
         ii = i * nsteps_per_pullback
 
-        tt,ww = integrator.run(all_w0, dt=dt, nsteps=nsteps_per_pullback, t0=time)
+        tt,ww = integrator.run(all_w0, dt=dt, nsteps=nsteps_per_pullback, t1=time)
         time += dt*nsteps_per_pullback
 
         main_w = ww[:,-1,0:1]
