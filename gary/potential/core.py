@@ -484,7 +484,8 @@ class PotentialBase(object):
         else:
             acc = lambda t,w: np.vstack((w[ndim:], self.acceleration(w[:ndim], t=t)))
             integrator = Integrator(acc, **Integrator_kwargs)
-            t,w = integrator.run(arr_w0, **time_spec)
+            orbit = integrator.run(w0, **time_spec)
+            return orbit
 
         try:
             tunit = self.units['time']
