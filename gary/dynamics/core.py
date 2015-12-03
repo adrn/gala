@@ -373,12 +373,16 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         fig : `~matplotlib.Figure`
 
         """
+        _label_unit = ''
+        if self.pos.unit != u.dimensionless_unscaled:
+            _label_unit = ' [{}]'.format(self.pos.unit)
+
         default_kwargs = {
             'marker': '.',
             'color': 'k',
-            'labels': ('$x$ [{}]'.format(self.pos.unit),
-                       '$y$ [{}]'.format(self.pos.unit),
-                       '$z$ [{}]'.format(self.pos.unit))
+            'labels': ('$x${}'.format(_label_unit),
+                       '$y${}'.format(_label_unit),
+                       '$z${}'.format(_label_unit))
         }
 
         for k,v in default_kwargs.items():
