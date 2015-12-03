@@ -165,4 +165,6 @@ Or, we could create a contour plot of equipotentials::
 Adding a custom potential with Cython
 -------------------------------------
 
-TODO:
+.. todo::
+
+    Coming soon!
