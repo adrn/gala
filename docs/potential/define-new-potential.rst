@@ -160,7 +160,7 @@ Or, we could create a contour plot of equipotentials::
 
     pot = HenonHeilesPotential(A=1., units=None)
     grid = np.linspace(-1.5,1.5,100)
-    fig = pot.plot_contours(grid=(grid,grid), cmap='Blues_r',)
+    fig = pot.plot_contours(grid=(grid,grid), cmap='Blues_r', levels=[0, 0.05,0.1,1/6.,0.5,1.,2,3,5])
 
 Adding a custom potential with Cython
 -------------------------------------
