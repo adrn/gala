@@ -16,7 +16,7 @@ __all__ = ['fast_lyapunov_max', 'lyapunov_max', 'surface_of_section']
 
 def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
                       nsteps_per_pullback=10, noffset_orbits=2, t0=0.,
-                      atol=1E-9, rtol=1E-9, nmax=0):
+                      atol=1E-10, rtol=1E-10, nmax=0):
     """
     Compute the maximum Lyapunov exponent using a C-implemented estimator
     that uses the DOPRI853 integrator.
