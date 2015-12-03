@@ -49,15 +49,15 @@ mpl_style = {
     'axes.labelsize': 'large',
     'axes.labelcolor': 'k',
     'axes.axisbelow': True,
-    'axes.prop_cycle': cycler('color', ['1A1A1A', # black
-                                        '2166AC', # blue
-                                        '006837', # green
-                                        'B2182B', # red
-                                        '762A83', # purple
-                                        'E08214',
-                                        '80CDC1',
-                                        'C51B7D',
-                                        'FEE08B']),
+    'axes.prop_cycle': cycler('color', ['#1A1A1A', # black
+                                        '#2166AC', # blue
+                                        '#006837', # green
+                                        '#B2182B', # red
+                                        '#762A83', # purple
+                                        '#E08214',
+                                        '#80CDC1',
+                                        '#C51B7D',
+                                        '#FEE08B']),
 
     # Ticks
     'xtick.major.size': 8,
