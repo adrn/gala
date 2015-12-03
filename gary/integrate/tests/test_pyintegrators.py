@@ -34,10 +34,10 @@ def test_sho_forward_backward(Integrator):
         dt = 1E-4
         nsteps = int(1E4)
 
-    f_ts, f_ws = integrator.run([0., 1.], dt=dt, nsteps=nsteps)
-    b_ts, b_ws = integrator.run([0., 1.], dt=-dt, nsteps=nsteps)
+    forw = integrator.run([0., 1.], dt=dt, nsteps=nsteps)
+    back = integrator.run([0., 1.], dt=-dt, nsteps=nsteps)
 
-    assert np.allclose(f_ws[:,-1], b_ws[:,-1], atol=1E-6)
+    assert np.allclose(forw.w()[:,-1], back.w()[:,-1], atol=1E-6)
 
 @pytest.mark.parametrize("Integrator", integrator_list)
 def test_point_mass(Integrator):
@@ -51,9 +51,9 @@ def test_point_mass(Integrator):
     T = 1.
 
     integrator = Integrator(F)
-    ts, ws = integrator.run(np.append(q0,p0), t1=0., t2=2*np.pi, nsteps=1E4)
+    orbit = integrator.run(np.append(q0,p0), t1=0., t2=2*np.pi, nsteps=1E4)
 
-    assert np.allclose(ws[:,0], ws[:,-1], atol=1E-6)
+    assert np.allclose(orbit.w()[:,0], orbit.w()[:,-1], atol=1E-6)
 
 @pytest.mark.parametrize("Integrator", integrator_list)
 def test_point_mass_multiple(Integrator):
@@ -67,7 +67,7 @@ def test_point_mass_multiple(Integrator):
                    [2., 1.0, -1.0, 1.1]]).T
 
     integrator = Integrator(F)
-    ts, ws = integrator.run(w0, dt=1E-3, nsteps=1E4)
+    orbit = integrator.run(w0, dt=1E-3, nsteps=1E4)
 
 @pytest.mark.parametrize("Integrator", integrator_list)
 def test_driven_pendulum(Integrator):
@@ -76,26 +76,21 @@ def test_driven_pendulum(Integrator):
         return np.array([p,-np.sin(q) + A*np.cos(omega_d*t)])
 
     integrator = Integrator(F, func_args=(0.07, 0.75))
-    ts, ws = integrator.run([3., 0.], dt=1E-2, nsteps=1E4)
+    orbit = integrator.run([3., 0.], dt=1E-2, nsteps=1E4)
 
 @pytest.mark.parametrize("Integrator", integrator_list)
 def test_lorenz(Integrator):
-
     def F(t,w,sigma,rho,beta):
-        x,y,z = w
-        return np.array([sigma*(y-x), x*(rho-z)-y, x*y-beta*z])
+        x,y,z,px,py,pz = w
+        return np.array([sigma*(y-x), x*(rho-z)-y, x*y-beta*z, 0., 0., 0.]).reshape(w.shape)
 
     sigma, rho, beta = 10., 28., 8/3.
     integrator = Integrator(F, func_args=(sigma, rho, beta))
 
-    if Integrator == LeapfrogIntegrator:
-        with pytest.raises(ValueError):
-            ts, ws = integrator.run([0.5,0.5,0.5], dt=1E-2, nsteps=1E4)
-    else:
-        ts, ws = integrator.run([0.5,0.5,0.5], dt=1E-2, nsteps=1E4)
+    orbit = integrator.run([0.5,0.5,0.5,0,0,0], dt=1E-2, nsteps=1E4)
 
-        # pl.plot(ws[0], ws[1])
-        # pl.show()
+    # pl.plot(ws[0], ws[1])
+    # pl.show()
 
 @pytest.mark.parametrize("Integrator", integrator_list)
 def test_memmap(tmpdir, Integrator):
@@ -112,4 +107,4 @@ def test_memmap(tmpdir, Integrator):
 
     integrator = Integrator(sho, func_args=(1.,))
 
-    ts, ws = integrator.run(w0, dt=dt, nsteps=nsteps, mmap=mmap)
+    orbit = integrator.run(w0, dt=dt, nsteps=nsteps, mmap=mmap)
