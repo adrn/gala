@@ -57,8 +57,7 @@ def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
         w0 = CartesianPhaseSpacePosition(pos=w0[:ndim],
                                          vel=w0[ndim:])
 
-    _w0 = w0.w(potential.units)
-    _w0 = np.squeeze(w0.w())
+    _w0 = np.squeeze(w0.w(potential.units))
     if _w0.ndim > 1:
         raise ValueError("Can only compute fast Lyapunov exponent for a single orbit.")
 
