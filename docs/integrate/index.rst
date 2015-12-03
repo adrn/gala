@@ -28,6 +28,10 @@ an integrator object, you pass in a function that evaluates derivatives of,
 for example, phase-space coordinates, then you call the `~gary.integrate.Integrator.run`
 method while specifying timestep information. This is best seen with an example.
 
+.. todo::
+
+    Explain how to use units with the integrators...
+
 Example: Forced pendulum
 ========================
 
@@ -50,10 +54,10 @@ so that
 Our derivative function is then::
 
     >>> def F(t, w, A, omega_D):
-    >>>     q,p = w
-    >>>     q_dot = p
-    >>>     p_dot = -np.sin(q) + A*omega_D*np.cos(omega_D*t)
-    >>>     return np.array([q_dot, p_dot])
+    ...     q,p = w
+    ...     q_dot = p
+    ...     p_dot = -np.sin(q) + A*omega_D*np.cos(omega_D*t)
+    ...     return np.array([q_dot, p_dot])
 
 This function has two arguments -- :math:`A` (``A``), the amplitude of the forcing,
 and :math:`\omega_D` (``omega_D``), the driving frequency. We define an integrator
@@ -91,6 +95,36 @@ We can plot the integrated (chaotic) orbit::
 
     integrator = gi.DOPRI853Integrator(F, func_args=(0.07, 0.75))
     orbit = integrator.run([3.,0.], dt=0.1, nsteps=10000)
+    fig = orbit.plot()
+
+Here's another example of integrating the
+`Lorenz equations <https://en.wikipedia.org/wiki/Lorenz_system>`_, a 3D
+nonlinear system::
+
+    >>> def F(t,w,sigma,rho,beta):
+    ...     x,y,z,px,py,pz = w
+    ...     return np.array([sigma*(y-x), x*(rho-z)-y, x*y-beta*z, 0., 0., 0.]).reshape(w.shape)
+    >>> sigma, rho, beta = 10., 28., 8/3.
+    >>> integrator = Integrator(F, func_args=(sigma, rho, beta))
+    >>> orbit = integrator.run([0.5,0.5,0.5,0,0,0], dt=1E-2, nsteps=1E4)
+    >>> fig = orbit.plot()
+
+.. plot::
+    :align: center
+
+    import astropy.units as u
+    import matplotlib.pyplot as pl
+    import numpy as np
+    import gary.integrate as gi
+
+    def F(t,w,sigma,rho,beta):
+        x,y,z,px,py,pz = w
+        return np.array([sigma*(y-x), x*(rho-z)-y, x*y-beta*z, 0., 0., 0.]).reshape(w.shape)
+
+    sigma, rho, beta = 10., 28., 8/3.
+    integrator = Integrator(F, func_args=(sigma, rho, beta))
+
+    orbit = integrator.run([0.5,0.5,0.5,0,0,0], dt=1E-2, nsteps=1E4)
     fig = orbit.plot()
 
 API
