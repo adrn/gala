@@ -25,7 +25,7 @@ other astropy coordinate frames::
         (182.5922090437946, -9.539692094685897, 1.0)>
 
 References
-==========
+----------
 
 * `A 2MASS All-Sky View of the Sagittarius Dwarf Galaxy: I. Morphology of the Sagittarius Core and Tidal Arms <http://arxiv.org/abs/astro-ph/0304198>`_
 * `The Orbit of the Orphan Stream <http://arxiv.org/abs/1001.0576>`_
