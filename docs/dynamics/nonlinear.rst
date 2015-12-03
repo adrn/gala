@@ -98,7 +98,7 @@ The estimate is clearly starting to diverge from a simple power law decay.
 To compare, we will compute the estimate for a regular orbit as well::
 
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,0.]*u.kpc,
-    ...                                     vel=[0.,100.,25]*u.km/u.s)
+    ...                                     vel=[0.,140.,25]*u.km/u.s)
     >>> lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., nsteps=100000)
     >>> fig = orbit[:,0].plot(marker=',', alpha=0.1, linestyle='none')
 
@@ -114,8 +114,8 @@ To compare, we will compute the estimate for a regular orbit as well::
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, r_h=0.1*u.kpc,
                                   q1=1., q2=0.8, q3=0.6, units=galactic)
     w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,0.]*u.kpc,
-                                        vel=[0.,100.,25]*u.km/u.s)
-    lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., nsteps=100000)
+                                        vel=[0.,140.,25]*u.km/u.s)
+    lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=1., nsteps=200000)
     fig = orbit[:,0].plot(marker=',', linestyle='none', alpha=0.1)
 
 Because this is a regular orbit, the estimate continues decreasing,
@@ -139,8 +139,8 @@ following a characteristic power-law (a straight line in a log-log plot)::
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, r_h=0.1*u.kpc,
                                   q1=1., q2=0.8, q3=0.6, units=galactic)
     w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,0.]*u.kpc,
-                                        vel=[0.,100.,25]*u.km/u.s)
-    lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., nsteps=100000)
+                                        vel=[0.,140.,25]*u.km/u.s)
+    lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=1., nsteps=200000)
 
     pl.figure()
     pl.loglog(orbit.t[11::10], lyap, marker=None)
