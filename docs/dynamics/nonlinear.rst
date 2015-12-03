@@ -23,6 +23,9 @@ Some imports needed for the code below::
 Computing Lyapunov exponents
 ============================
 
+Chaotic orbit
+-------------
+
 There are two ways to compute Lyapunov exponents implemented in `gary.dynamics`.
 In most cases, you'll want to use the `~gary.dynamics.fast_lyapunov_max` function
 because the integration is implemented in C and is quite fast. This function only
@@ -95,6 +98,10 @@ array. This plots one line per offset orbit::
     pl.tight_layout()
 
 The estimate is clearly starting to diverge from a simple power law decay.
+
+Regular orbit
+-------------
+
 To compare, we will compute the estimate for a regular orbit as well::
 
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,0.]*u.kpc,
