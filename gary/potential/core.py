@@ -556,8 +556,15 @@ class CompositePotential(PotentialBase, OrderedDict):
         >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., units=(u.kpc,u.Myr,u.Msun,u.radian))
 
     """
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         self._units = None
+
+        if len(args) > 0 and isinstance(args[0], list):
+            for k,v in args[0]:
+                kwargs[k] = v
+        else:
+            for i,v in args:
+                kwargs[str(i)] = v
 
         for v in kwargs.values():
             self._check_component(v)
