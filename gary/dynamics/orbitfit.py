@@ -39,8 +39,8 @@ def compute_stream_rotation_matrix(coordinate, wxyz0=None, align_lon='mean'):
     Compute the rotation matrix to go from the frame of the input
     coordinate to closely align the equator with the stream.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     coordinate : :class:`astropy.coordinate.SkyCoord`, :class:`astropy.coordinate.BaseCoordinateFrame`
         The coordinates of the stream stars.
     wxyz0 : array_like (optional)
@@ -86,8 +86,8 @@ def compute_stream_rotation_matrix(coordinate, wxyz0=None, align_lon='mean'):
 def rotate_sph_coordinate(rep, R):
     """
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     rep : :class:`astropy.coordinate.BaseCoordinateFrame`, :class:`astropy.coordinate.BaseRepresentation`
         The coordinates.
     R : array_like
