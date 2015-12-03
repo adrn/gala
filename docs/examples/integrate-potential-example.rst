@@ -23,7 +23,7 @@ circular velocity at the scale radius::
 
 As a demonstration, we're going to first integrate a single orbit in this potential.
 
-The easiest way to do this is to use the `~gary.potential.Potential.integrate_orbit`
+The easiest way to do this is to use the `~gary.potential.PotentialBase.integrate_orbit`
 method of the potential object, which accepts a set of initial conditions and
 a specification for the time-stepping. We'll define the initial conditions as a
 `~gary.dynamics.CartesianPhaseSpacePosition` object::
