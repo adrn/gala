@@ -1,5 +1,3 @@
-.. include:: ../references.txt
-
 .. _coordinates:
 
 *********************************************
@@ -9,17 +7,17 @@ Coordinate Systems (`gary.coordinates`)
 Introduction
 ============
 
-The ``gary.coordinates`` subpackage provides functions for converting
+The `~gary.coordinates` subpackage provides functions for converting
 velocities between various astronomical coordinate frames and systems.
 This subpackage also provides :mod:`astropy.coordinates` frame classes
 for coordinate sytems defined by the Sagittarius and Orphan streams.
 
 For the examples below the following imports have already been executed::
 
-    import numpy as np
-    import astropy.coordinates as coord
-    import astropy.units as u
-    import gary.coordinates as gc
+    >>> import numpy as np
+    >>> import astropy.coordinates as coord
+    >>> import astropy.units as u
+    >>> import gary.coordinates as gc
 
 Getting Started
 ===============
@@ -58,16 +56,16 @@ function, :func:`~gary.coordinates.vhel_to_gal`::
 Because the input coordinate is given in the ICRS frame, the function assumes that
 the proper motion is also in this frame, e.g., that the proper motion components are
 :math:`(\mu_\alpha\cos\delta, \mu_\delta)`. If we instead passed in a coordinate in
-the Galactic frame, the components are assumed to be :math:`(\mu_l\cos b, \mu_b)`::
+the Galactic frame, the components are assumed to be :math:`(\mu_l\cos b, \mu_b)` ::
 
     >>> gc.vhel_to_gal(c.galactic, pm=pm, rv=rv)
     <Quantity [-137.63839042, 232.10966635,  40.73819003] km / s>
 
 The velocity transformation functions allow specifying the circular velocity at the Sun
-(`vcirc`) and a 3-vector specifying the Sun's velocity with respect to the local
-standard of rest (`vlsr`). Further customization of the Sun's location can be made via
+(``vcirc``) and a 3-vector specifying the Sun's velocity with respect to the local
+standard of rest (``vlsr``). Further customization of the Sun's location can be made via
 the :class:`~astropy.coordinates.Galactocentric` frame attributes and passed in with the
-keyword argument ``galactocentric_frame``::
+keyword argument ``galactocentric_frame`` ::
 
     >>> frame = coord.Galactocentric(z_sun=10.*u.pc, galcen_distance=8.3*u.kpc)
     >>> gc.vhel_to_gal(c.icrs, pm=pm, rv=rv, galactocentric_frame=frame,
@@ -77,7 +75,7 @@ keyword argument ``galactocentric_frame``::
 The inverse transformations are also available, with the function
 :func:`~gary.coordinates.vgal_to_hel`. Here, because the input coordinate is passed
 in after being transformed to the ICRS frame, the output proper motions will also be
-given in the ICRS frame :math:`(\mu_\alpha\cos\delta, \mu_\delta)`::
+given in the ICRS frame :math:`(\mu_\alpha\cos\delta, \mu_\delta)` ::
 
     >>> xyz = coord.Galactocentric([11., 15, 25] * u.kpc)
     >>> vxyz = [121., 150., -75.] * u.km/u.s
@@ -85,7 +83,7 @@ given in the ICRS frame :math:`(\mu_\alpha\cos\delta, \mu_\delta)`::
     (<Quantity 0.2834641666390529 mas / yr>, <Quantity -0.888174413651107 mas / yr>, <Quantity -29.71790624810498 km / s>)
 
 Passing in coordinates in the Galactic frame means that the output proper motions will
-instead be :math:`(\mu_l\cos b, \mu_b)`::
+instead be :math:`(\mu_l\cos b, \mu_b)` ::
 
     >>> gc.vgal_to_hel(xyz.transform_to(coord.Galactic), vxyz)
     (<Quantity -0.7713637315333076 mas / yr>, <Quantity -0.5236445726220675 mas / yr>, <Quantity -29.717906248104974 km / s>)
@@ -97,11 +95,15 @@ All of these functions also work on arrays of coordinates and velocities, e.g.::
     >>> gc.vgal_to_hel(xyz.transform_to(coord.ICRS), vxyz) # doctest: +SKIP
     ...
 
+Using gary.coordinates
+======================
+More details are provided in the linked pages below:
+
 .. toctree::
    :maxdepth: 1
 
-   propermotion.rst
-   streamframes.rst
+   propermotion
+   streamframes
 
 .. _gary-coordinates-api:
 
@@ -110,5 +112,3 @@ API
 
 .. automodapi:: gary.coordinates
     :no-inheritance-diagram:
-    :skip: cartesian_to_poincare_polar
-

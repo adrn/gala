@@ -1,10 +1,11 @@
+.. _streamframes:
 
-import astropy.coordinates as coord
-import astropy.units as u
-import gary.coordinates as gc
+    >>> import astropy.coordinates as coord
+    >>> import astropy.units as u
+    >>> import gary.coordinates as gc
 
 Stellar Stream Coordinate Frames
---------------------------------
+================================
 
 Also included in this subpackage are Astropy coordinate frame classes for
 transforming to Sagittarius and Orphan stream coordinates (as defined in the

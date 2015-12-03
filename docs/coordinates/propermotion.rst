@@ -1,6 +1,12 @@
+.. _propermotion:
+
+    >>> import numpy as np
+    >>> import astropy.coordinates as coord
+    >>> import astropy.units as u
+    >>> import gary.coordinates as gc
 
 Proper motion transformations
------------------------------
+=============================
 
 Transforming between ICRS and Galactic proper motions is supported in Gary. To
 demonstrate, we again need to first define a coordinate for the object of
