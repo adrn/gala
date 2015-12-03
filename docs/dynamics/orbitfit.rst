@@ -25,8 +25,6 @@ Stream star data
 TODO:
 
 
-.. _references:
-
 References
 ==========
 
