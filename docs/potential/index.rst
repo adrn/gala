@@ -159,16 +159,15 @@ and method::
     >>> load("potential.yml")
     <SphericalNFWPotential: r_s=20.00, v_c=0.50>
 
-Further information
-===================
-More detailed information on using the package is provided on separate pages,
-listed below.
+Using gary.potential
+====================
+More details are provided in the linked pages below:
 
 .. toctree::
    :maxdepth: 2
 
+   define-new-potential
    compositepotential
-   custompotential
 
 API
 ===
