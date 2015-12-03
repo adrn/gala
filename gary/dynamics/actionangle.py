@@ -139,8 +139,7 @@ def fit_harmonic_oscillator(orbit, omega0=[1.,1.,1.]):
 
     Parameters
     ----------
-    orbit :
-        TODO:
+    orbit : `~gary.dynamics.CartesianOrbit`
     omega0 : array_like (optional)
         Initial frequency guess.
 
@@ -186,8 +185,7 @@ def fit_toy_potential(orbit, force_harmonic_oscillator=False):
 
     Parameters
     ----------
-    orbit :
-        TODO
+    orbit : `~gary.dynamics.CartesianOrbit`
     force_harmonic_oscillator : bool (optional)
         Force using the harmonic oscillator potential as the toy potential.
 
@@ -432,8 +430,7 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
 
     Parameters
     ----------
-    orbit :
-        TODO
+    orbit : `~gary.dynamics.CartesianOrbit`
     N_max : int
         Maximum integer Fourier mode vector length, |n|.
     toy_potential : Potential (optional)
@@ -505,20 +502,19 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
                 Sn=actions[3:], dSn_dJ=angles[6:], nvecs=nvecs)
 
 def find_actions(orbit, N_max, force_harmonic_oscillator=False, toy_potential=None):
-    """
-    Find approximate actions and angles for samples of a phase-space orbit,
-    `w`, at times `t`. Uses toy potentials with known, analytic action-angle
-    transformations to approximate the true coordinates as a Fourier sum.
+    r"""
+    Find approximate actions and angles for samples of a phase-space orbit.
+    Uses toy potentials with known, analytic action-angle transformations to
+    approximate the true coordinates as a Fourier sum.
 
     This code is adapted from Jason Sanders'
     `genfunc <https://github.com/jlsanders/genfunc>`_
 
     Parameters
     ----------
-    orbit :
-        TODO
+    orbit : `~gary.dynamics.CartesianOrbit`
     N_max : int
-        Maximum integer Fourier mode vector length, |n|.
+        Maximum integer Fourier mode vector length, :math:`|\boldsymbol{n}|`.
     force_harmonic_oscillator : bool (optional)
         Force using the harmonic oscillator potential as the toy potential.
     toy_potential : Potential (optional)
