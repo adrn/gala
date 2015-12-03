@@ -6,13 +6,13 @@ but can be used to prepare any matplotlib figure.
 Using a matplotlib version > 1.4 you can do::
 
     >>> import matplotlib.pyplot as pl
-    >>> from gary.mplstyle import mpl_style
+    >>> from gary.mpl_style import mpl_style
     >>> pl.style.use(mpl_style)
 
 for older versions of matplotlib the following works::
 
     >>> import matplotlib as mpl
-    >>> from gary.mplstyle import mpl_style
+    >>> from gary.mpl_style import mpl_style
     >>> mpl.rcParams.update(mpl_style)
 
 """

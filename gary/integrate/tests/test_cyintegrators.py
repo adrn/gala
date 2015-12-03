@@ -58,6 +58,7 @@ def test_compare_to_py(Integrator, integrate_func):
     assert py_w.shape == cy_w.shape
     assert np.allclose(cy_w[:,-1], py_w[:,-1])
 
+@pytest.mark.skipif(True, reason="Slow test - mainly for plotting locally")
 @pytest.mark.parametrize(("Integrator","integrate_func"), _list)
 def test_scaling(tmpdir, Integrator, integrate_func):
     p = HernquistPotential(m=1E11, c=0.5, units=galactic)
