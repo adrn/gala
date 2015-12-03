@@ -12,6 +12,7 @@ import numpy as np
 # Project
 from ..core import Integrator
 from ..timespec import parse_time_specification
+from ...util import inherit_docs
 
 __all__ = ["RK5Integrator"]
 
@@ -26,6 +27,7 @@ B = np.array([[        0.0,        0.0,         0.0,            0.0,        0.0]
 C = np.array([37./378., 0., 250./621., 125./594., 0., 512./1771.])
 D = np.array([2825./27648., 0., 18575./48384., 13525./55296., 277./14336., 1./4.])
 
+@inherit_docs
 class RK5Integrator(Integrator):
     r"""
     Initialize a 5th order Runge-Kutta integrator given a function for
@@ -49,6 +51,9 @@ class RK5Integrator(Integrator):
         in phase space.
     func_args : tuple (optional)
         Any extra arguments for the function.
+    func_units : `~gary.units.UnitSystem` (optional)
+        If using units, this is the unit system assumed by the
+        integrand function.
 
     """
 
@@ -81,52 +86,13 @@ class RK5Integrator(Integrator):
         return w + dw
 
     def run(self, w0, mmap=None, **time_spec):
-        """
-        Run the integrator starting at the given coordinates and momenta
-        (or velocities) and a time specification. The initial conditions
-        `w0` should have shape `(nparticles, ndim)` or `(ndim,)` for a
-        single orbit.
-
-        There are a few combinations of keyword arguments accepted for
-        specifying the timestepping. For example, you can specify a fixed
-        timestep (`dt`) and a number of steps (`nsteps`), or an array of
-        times. See **Other Parameters** below for more information.
-
-        Parameters
-        ==========
-        w0 : array_like
-            Initial conditions.
-        mmap : None, array_like (optional)
-            Option to write integration output to a memory-mapped array so the memory
-            usage doesn't explode. Must pass in a memory-mapped array, e.g., from
-            `numpy.memmap`.
-
-        Other Parameters
-        ================
-        dt, nsteps[, t1] : (numeric, int[, numeric])
-            A fixed timestep dt and a number of steps to run for.
-        dt, t1, t2 : (numeric, numeric, numeric)
-            A fixed timestep dt, an initial time, and a final time.
-        t : array_like
-            An array of times.
-
-        Returns
-        =======
-        times : array_like
-            An array of times.
-        w : array_like
-            The array of positions and momenta (velocities) at each time in
-            the time array. This array has shape `(Ntimes,Norbits,Ndim)`.
-
-        """
 
         # generate the array of times
         times = parse_time_specification(**time_spec)
         nsteps = len(times)-1
         dt = times[1]-times[0]
 
-        w0, ws = self._prepare_ws(w0, mmap, nsteps=nsteps)
-        ndim,nparticles = w0.shape
+        w0_obj, w0, ws = self._prepare_ws(w0, mmap, nsteps=nsteps)
 
         # Set first step to the initial conditions
         ws[:,0] = w0
@@ -135,6 +101,4 @@ class RK5Integrator(Integrator):
             w = self.step(times[ii], w, dt)
             ws[:,ii] = w
 
-        if ws.shape[-1] == 1:
-            ws = ws[...,0]
-        return times, ws
+        return self._handle_output(w0_obj, times, ws)
