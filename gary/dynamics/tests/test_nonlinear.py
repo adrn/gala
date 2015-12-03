@@ -133,7 +133,7 @@ class HenonHeilesBase(object):
         integrator = DOPRI853Integrator(self.F_max, func_args=self.par)
 
         # pl.clf()
-        t,w = integrator.run(self.w0, dt=self.dt, nsteps=self.nsteps)
+        orbit = integrator.run(self.w0, dt=self.dt, nsteps=self.nsteps)
         # pl.plot(w[:,0,0], w[:,0,1], marker=None)
 
         # pl.savefig(os.path.join(str(tmpdir),"hh_orbit_{}.png".format(self.__class__.__name__)))
