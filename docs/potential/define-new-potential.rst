@@ -41,9 +41,7 @@ At minimum, the subclass must implement:
 - ``__init__()``
 - ``_value()``
 
-For integration, it must also implement::
-
-- ``_gradient()``
+For integration, it must also implement a ``_gradient()`` method.
 
 The ``_value`` method will compute the value of the potential at a given
 position and time (e.g., the potential energy). The ``_gradient`` computes
@@ -160,6 +158,7 @@ Or, we could create a contour plot of equipotentials::
             grad[1] = y + A*(x**2 - y**2)
             return grad
 
+    pot = HenonHeilesPotential(A=1., units=None)
     fig = pot.plot_contours(grid=(grid,grid), cmap='Blues_r',)
 
 Adding a custom potential with Cython
