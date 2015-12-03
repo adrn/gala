@@ -5,37 +5,22 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import abc
+from collections import OrderedDict
 
 # Third-party
 import numpy as np
 from astropy.constants import G
 import astropy.units as u
 from astropy.utils import isiterable
-import six
 
 # Project
 from ..integrate import *
-from ..util import inherit_docs, ImmutableDict
+from ..util import inherit_docs, ImmutableDict, atleast_2d
 from ..units import UnitSystem
+from ..dynamics import CartesianOrbit, CartesianPhaseSpacePosition
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
-class MetaPotential(type):
-    # def __init__(cls, name, bases, dct):
-    #     super(MetaPotential, cls).__init__(name, bases, dct)
-
-    #     if name != 'PotentialBase' and 'units' not in dct:
-    #         raise NotImplementedError("Potentials must have a 'units' attribute that "
-    #                                   "defines a valid system of units.")
-
-    #     if name != 'PotentialBase' and 'parameters' not in dct:
-    #         raise NotImplementedError("Potentials must have a 'parameters' attribute that "
-    #                                   "contains the parameters to pass to its methods.")
-    pass
-
-
-@six.add_metaclass(MetaPotential)
 class PotentialBase(object):
     """
     A baseclass for defining gravitational potentials.
@@ -71,8 +56,16 @@ class PotentialBase(object):
         ----------
         q : array_like, numeric
             Position to compute the value of the potential.
+
+        Returns
+        -------
+        E : `~numpy.ndarray`
+            The potential energy, value of the potential. Will have
+            the same shape as the input position, array, ``q``, but
+            without the coordinate axis, ``axis=0``.
         """
-        return self._value(np.atleast_2d(q), **self.parameters)
+        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
+        return self._value(q, t=t)
 
     def _gradient(self, *args, **kwargs):
         raise NotImplementedError()
@@ -85,9 +78,16 @@ class PotentialBase(object):
         ----------
         q : array_like, numeric
             Position to compute the gradient.
+
+        Returns
+        -------
+        grad : `~numpy.ndarray`
+            The gradient of the potential. Will have the same shape as
+            the input position array, ``q``.
         """
+        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
         try:
-            return self._gradient(np.atleast_2d(q), **self.parameters)
+            return self._gradient(q, t=t)
         except NotImplementedError:
             raise NotImplementedError("This potential has no specified gradient function.")
 
@@ -102,9 +102,16 @@ class PotentialBase(object):
         ----------
         q : array_like, numeric
             Position to compute the density.
+
+        Returns
+        -------
+        dens : `~numpy.ndarray`
+            The density. Will have the same shape as the input position,
+            array, ``q``, but without the coordinate axis, ``axis=0``.
         """
+        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
         try:
-            return self._density(np.atleast_2d(q), **self.parameters)
+            return self._density(q, t=t)
         except NotImplementedError:
             raise NotImplementedError("This potential has no specified density function.")
 
@@ -120,8 +127,9 @@ class PotentialBase(object):
         q : array_like, numeric
             Position to compute the Hessian.
         """
+        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
         try:
-            return self._hessian(np.atleast_2d(q), **self.parameters)
+            return self._hessian(q, t=t)
         except NotImplementedError:
             raise NotImplementedError("This potential has no specified hessian function.")
 
@@ -137,10 +145,16 @@ class PotentialBase(object):
         ----------
         q : array_like, numeric
             Position to compute the acceleration at.
+
+        Returns
+        -------
+        acce : `~numpy.ndarray`
+            The acceleration. Will have the same shape as the input
+            position array, ``q``.
         """
         return -self.gradient(q, t=t)
 
-    def mass_enclosed(self, q, t):
+    def mass_enclosed(self, q, t=0.):
         """
         Estimate the mass enclosed within the given position by assuming the potential
         is spherical.
@@ -149,18 +163,26 @@ class PotentialBase(object):
         ----------
         x : array_like, numeric
             Position to estimate the enclossed mass.
+
+        Returns
+        -------
+        menc : `~numpy.ndarray`
+            The mass. Will have the same shape as the input position,
+            array, ``q``, but without the coordinate axis, ``axis=0``
         """
+
+        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
 
         # Fractional step-size in radius
         h = 0.01
 
         # Radius
-        r = np.sqrt(np.sum(q**2, axis=-1))
+        r = np.sqrt(np.sum(q**2, axis=0))
 
-        epsilon = h*q/r[...,np.newaxis]
+        epsilon = h*q/r[np.newaxis]
 
-        dPhi_dr_plus = self.value(q + epsilon)
-        dPhi_dr_minus = self.value(q - epsilon)
+        dPhi_dr_plus = self.value(q + epsilon, t=t)
+        dPhi_dr_minus = self.value(q - epsilon, t=t)
         diff = dPhi_dr_plus - dPhi_dr_minus
 
         if self.units is None:
@@ -196,7 +218,10 @@ class PotentialBase(object):
 
             pars += ("{}=" + par_fmt + post).format(k,v) + ", "
 
-        return "<{}: {}>".format(self.__class__.__name__, pars.rstrip(", "))
+        if self.units is None:
+            return "<{}: {} (dimensionless)>".format(self.__class__.__name__, pars.rstrip(", "))
+        else:
+            return "<{}: {} ({})>".format(self.__class__.__name__, pars.rstrip(", "), ",".join(map(str, self.units._core_units)))
 
     def __str__(self):
         return self.__class__.__name__
@@ -222,6 +247,10 @@ class PotentialBase(object):
             is not specified.
         kwargs : dict
             kwargs passed to either contourf() or plot().
+
+        Returns
+        -------
+        fig : `~matplotlib.Figure`
 
         """
 
@@ -254,11 +283,11 @@ class PotentialBase(object):
         if ndim == 1:
             # 1D curve
             x1 = _grids[0][1]
-            r = np.zeros((len(x1), len(_grids) + len(_slices)))
-            r[:,_grids[0][0]] = x1
+            r = np.zeros((len(_grids) + len(_slices), len(x1)))
+            r[_grids[0][0]] = x1
 
             for ii,slc in _slices:
-                r[:,ii] = slc
+                r[ii] = slc
 
             Z = self.value(r)
             ax.plot(x1, Z, **kwargs)
@@ -272,12 +301,12 @@ class PotentialBase(object):
             shp = x1.shape
             x1,x2 = x1.ravel(), x2.ravel()
 
-            r = np.zeros((len(x1), len(_grids) + len(_slices)))
-            r[:,_grids[0][0]] = x1
-            r[:,_grids[1][0]] = x2
+            r = np.zeros((len(_grids) + len(_slices), len(x1)))
+            r[_grids[0][0]] = x1
+            r[_grids[1][0]] = x2
 
             for ii,slc in _slices:
-                r[:,ii] = slc
+                r[ii] = slc
 
             Z = self.value(r)
 
@@ -310,6 +339,10 @@ class PotentialBase(object):
             is not specified.
         kwargs : dict
             kwargs passed to either contourf() or plot().
+
+        Returns
+        -------
+        fig : `~matplotlib.Figure`
 
         """
 
@@ -392,52 +425,74 @@ class PotentialBase(object):
 
         Parameters
         ----------
-        w0 : array_like
+        w0 : `~gary.dynamics.PhaseSpacePosition`, array_like
             Initial conditions.
-        Integrator : class
+        Integrator : `~gary.integrate.Integrator` (optional)
             Integrator class to use.
+        Integrator_kwargs : dict (optional)
+            Any extra keyword argumets to pass to the integrator class
+            when initializing. Only works in non-Cython mode.
+        cython_if_possible : bool (optional)
+            If there is a Cython version of the integrator implemented,
+            and the potential object has a C instance, using Cython
+            will be *much* faster.
+        **time_spec
+            Specification of how long to integrate. See documentation
+            for `~gary.integrate.parse_time_specification`.
 
-        Other Parameters
-        ----------------
-        (see Integrator documentation)
+        Returns
+        -------
+        orbit : `~gary.dynamics.CartesianOrbit`
 
         """
 
-        if Integrator == LeapfrogIntegrator:
-            if hasattr(self, 'c_instance') and cython_if_possible:
-                from ..integrate._leapfrog import cy_leapfrog_run
-                from ..integrate.timespec import _parse_time_specification
+        if not isinstance(w0, CartesianPhaseSpacePosition):
+            w0 = np.asarray(w0)
+            ndim = w0.shape[0]//2
+            w0 = CartesianPhaseSpacePosition(pos=w0[:ndim],
+                                             vel=w0[ndim:])
 
-                # use fast integrator
-                times = _parse_time_specification(**time_spec)
-                nsteps = len(times) - 1
-                dt = times[1] - times[0]
-                t1 = times[0]
+        ndim = w0.ndim
+        arr_w0 = w0.w(self.units)
+        if hasattr(self, 'c_instance') and cython_if_possible:
+            # WARNING TO SELF: this transpose is there because the Cython
+            #   functions expect a shape: (norbits, ndim)
+            arr_w0 = np.ascontiguousarray(arr_w0.T)
 
-                w0 = np.ascontiguousarray(np.atleast_2d(w0))
-                return cy_leapfrog_run(self.c_instance, w0, dt, nsteps, t1)
+            # array of times
+            from ..integrate.timespec import parse_time_specification
+            t = parse_time_specification(**time_spec)
 
+            if Integrator == LeapfrogIntegrator:
+                from ..integrate.cyintegrators import leapfrog_integrate_potential
+                t,w = leapfrog_integrate_potential(self.c_instance, arr_w0, t)
+
+            elif Integrator == DOPRI853Integrator:
+                from ..integrate.cyintegrators import dop853_integrate_potential
+                t,w = dop853_integrate_potential(self.c_instance, arr_w0, t,
+                                                 Integrator_kwargs.get('atol', 1E-10),
+                                                 Integrator_kwargs.get('rtol', 1E-10),
+                                                 Integrator_kwargs.get('nmax', 0))
             else:
-                acc = lambda t,w: self.acceleration(w)
+                raise ValueError("Cython integration not supported for '{}'".format(Integrator))
 
-        elif Integrator == DOPRI853Integrator and hasattr(self, 'c_instance') and cython_if_possible:
-            # TODO: use dop853_integrate_potential
-            from ..integrate.timespec import _parse_time_specification
-            from ..integrate._dop853 import dop853_integrate_potential
-            t = _parse_time_specification(**time_spec)
-
-            w0 = np.ascontiguousarray(np.atleast_2d(w0))
-            return dop853_integrate_potential(self.c_instance, w0,
-                                              t,
-                                              Integrator_kwargs.get('atol', 1E-9),
-                                              Integrator_kwargs.get('rtol', 1E-9),
-                                              Integrator_kwargs.get('nmax', 0))
+            # because shape is different from normal integrator return
+            w = np.rollaxis(w, -1)
+            if w.shape[-1] == 1:
+                w = w[...,0]
 
         else:
-            acc = lambda t,w: np.hstack((w[...,3:], self.acceleration(w[...,:3], t=t)))
+            acc = lambda t,w: np.vstack((w[ndim:], self.acceleration(w[:ndim], t=t)))
+            integrator = Integrator(acc, func_units=self.units, **Integrator_kwargs)
+            orbit = integrator.run(w0, **time_spec)
+            orbit.potential = self
+            return orbit
 
-        integrator = Integrator(acc, **Integrator_kwargs)
-        return integrator.run(w0, **time_spec)
+        try:
+            tunit = self.units['time']
+        except (TypeError, AttributeError):
+            tunit = u.dimensionless_unscaled
+        return CartesianOrbit.from_w(w=w, units=self.units, t=t*tunit, potential=self)
 
     def total_energy(self, x, v):
         """
@@ -453,7 +508,9 @@ class PotentialBase(object):
         v : array_like, numeric
             Velocity.
         """
-        return self.value(x) + 0.5*np.sum(v**2, axis=-1)
+        # TODO: deprecationwarning?
+        v = atleast_2d(v, insert_axis=1)
+        return self.value(x) + 0.5*np.sum(v**2, axis=0)
 
     def save(self, f):
         """
@@ -470,7 +527,7 @@ class PotentialBase(object):
         save(self, f)
 
 @inherit_docs
-class CompositePotential(PotentialBase, dict):
+class CompositePotential(PotentialBase, OrderedDict):
     """
     A potential composed of several distinct components. For example,
     two point masses or a galactic disk and halo, each with their own
@@ -480,22 +537,23 @@ class CompositePotential(PotentialBase, dict):
 
     A `CompositePotential` is created like a Python dictionary, e.g.::
 
-        >>> p1 = Potential(func1)
-        >>> p2 = Potential(func2)
-        >>> cp = CompositePotential(component1=p1, component2=p2)
+        >>> p1 = SomePotential(func1) # doctest: +SKIP
+        >>> p2 = SomePotential(func2) # doctest: +SKIP
+        >>> cp = CompositePotential(component1=p1, component2=p2) # doctest: +SKIP
 
-    or equivalently::
+    This object actually acts like an `OrderedDict`, so if you want to
+    preserve the order of the potential components, use::
 
-        >>> cp = CompositePotential()
-        >>> cp['component1'] = p1
-        >>> cp['component2'] = p2
+        >>> cp = CompositePotential() # doctest: +SKIP
+        >>> cp['component1'] = p1 # doctest: +SKIP
+        >>> cp['component2'] = p2 # doctest: +SKIP
 
     You can also use any of the built-in `Potential` classes as
     components::
 
         >>> from gary.potential import HernquistPotential
         >>> cp = CompositePotential()
-        >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., units=(u.kpc,u.Myr,u.Msun))
+        >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., units=(u.kpc,u.Myr,u.Msun,u.radian))
 
     """
     def __init__(self, **kwargs):
@@ -504,7 +562,7 @@ class CompositePotential(PotentialBase, dict):
         for v in kwargs.values():
             self._check_component(v)
 
-        dict.__init__(self, **kwargs)
+        OrderedDict.__init__(self, **kwargs)
 
     def __setitem__(self, key, value):
         self._check_component(value)
@@ -534,14 +592,14 @@ class CompositePotential(PotentialBase, dict):
             params[k] = v.parameters
         return ImmutableDict(params)
 
-    def value(self, *args, **kwargs):
-        return np.array([p.value(*args, **kwargs) for p in self.values()]).sum(axis=0)
+    def value(self, q, t=0.):
+        return np.array([p.value(q, t) for p in self.values()]).sum(axis=0)
 
-    def gradient(self, *args, **kwargs):
-        return np.array([p.gradient(*args, **kwargs) for p in self.values()]).sum(axis=0)
+    def gradient(self, q, t=0.):
+        return np.array([p.gradient(q, t) for p in self.values()]).sum(axis=0)
 
-    def hessian(self, *args, **kwargs):
-        return np.array([p.hessian(*args, **kwargs) for p in self.values()]).sum(axis=0)
+    def hessian(self, w, t=0.):
+        return np.array([p.hessian(w, t) for p in self.values()]).sum(axis=0)
 
-    def density(self, *args, **kwargs):
-        return np.array([p.density(*args, **kwargs) for p in self.values()]).sum(axis=0)
+    def density(self, q, t=0.):
+        return np.array([p.density(q, t) for p in self.values()]).sum(axis=0)

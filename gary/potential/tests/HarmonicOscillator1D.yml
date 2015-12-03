@@ -1,0 +1,3 @@
+class: HarmonicOscillatorPotential
+parameters:
+  omega: 1.0

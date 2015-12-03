@@ -8,28 +8,28 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard library
-import os, sys
-
 # Third-party
 import numpy as np
 
-def _parse_time_specification(dt=None, nsteps=None, t1=None, t2=None, t=None):
-    """ Return an array of times given a few combinations of kwargs that are
-        accepted -- see below.
+__all__ = ['parse_time_specification']
 
-        Parameters
-        ----------
-        dt, nsteps[, t1] : (numeric, int[, numeric])
-            A fixed timestep dt and a number of steps to run for.
-        dt, t1, t2 : (numeric, numeric, numeric)
-            A fixed timestep dt, an initial time, and an final time.
-        dt, t1 : (array_like, numeric)
-            An array of timesteps dt and an initial time.
-        nsteps, t1, t2 : (int, numeric, numeric)
-            Number of steps between an initial time, and a final time.
-        t : array_like
-            An array of times (dts = t[1:] - t[:-1])
+def parse_time_specification(dt=None, nsteps=None, t1=None, t2=None, t=None):
+    """
+    Return an array of times given a few combinations of kwargs that are
+    accepted -- see below.
+
+    Parameters
+    ----------
+    dt, nsteps[, t1] : (numeric, int[, numeric])
+        A fixed timestep dt and a number of steps to run for.
+    dt, t1, t2 : (numeric, numeric, numeric)
+        A fixed timestep dt, an initial time, and an final time.
+    dt, t1 : (array_like, numeric)
+        An array of timesteps dt and an initial time.
+    nsteps, t1, t2 : (int, numeric, numeric)
+        Number of steps between an initial time, and a final time.
+    t : array_like
+        An array of times (dts = t[1:] - t[:-1])
 
     """
 
@@ -47,8 +47,8 @@ def _parse_time_specification(dt=None, nsteps=None, t1=None, t2=None, t=None):
             if t1 is None:
                 t1 = 0.
 
-            times = _parse_time_specification(dt=np.ones(nsteps+1)*dt,
-                                              t1=t1)
+            times = parse_time_specification(dt=np.ones(nsteps+1)*dt,
+                                             t1=t1)
         # dt, t1, t2 : (numeric, numeric, numeric)
         elif dt is not None and t1 is not None and t2 is not None:
             if t2 < t1 and dt < 0:
