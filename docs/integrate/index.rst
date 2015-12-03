@@ -15,10 +15,13 @@ integration scheme (not available in Scipy) and provides wrappers to
 higher order integration schemes such as a 5th order Runge-Kutta and the
 Dormand-Prince 85(3) method.
 
->>> import astropy.units as u
->>> import numpy as np
->>> import gary.integrate as gi
->>> from gary.units import galactic
+For code blocks below and any pages linked below, I assume the following
+imports have already been excuted::
+
+    >>> import astropy.units as u
+    >>> import numpy as np
+    >>> import gary.integrate as gi
+    >>> from gary.units import galactic
 
 Getting Started
 ===============
