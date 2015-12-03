@@ -5,58 +5,92 @@ Integrating and plotting an orbit in an NFW potential
 
 We first need to import some relevant packages::
 
-   import numpy as np
-   from gary.coordinates import spherical_to_cartesian
-   import gary.integrate as si
-   import gary.potential as sp
-   from gary.units import galactic
+   >>> import astropy.units as u
+   >>> import numpy as np
+   >>> import gary.integrate as gi
+   >>> import gary.dynamics as gd
+   >>> import gary.potential as gp
+   >>> from gary.units import galactic
 
-The variable ``galactic`` is defined and included in this package as as
-short-hand for what I refer to as a Galactic unit system: :math:`{\rm kpc}`,
-:math:`{\rm Myr}`, :math:`{\rm M}_\odot`. It is simply a tuple of
-:class:`astropy.units.Unit` objects that define this unit system.
+In the examples below, we will work use the ``galactic`` `~gary.units.UnitSystem`:
+as I define it, this is: :math:`{\rm kpc}`, :math:`{\rm Myr}`, :math:`{\rm M}_\odot`.
 
-We will now create a potential object to work with. For this example, we'll
+We first create a potential object to work with. For this example, we'll
 use a spherical NFW potential, parametrized by a scale radius and the
 circular velocity at the scale radius::
 
-   v_c = (200*u.km/u.s).decompose(galactic).value
-   potential = sp.SphericalNFWPotential(v_c=v_c, r_s=10., units=units)
+   >>> pot = gp.SphericalNFWPotential(v_c=200*u.km/u.s, r_s=10.*u.kpc, units=galactic)
 
-The easiest way to integrate an orbit in this potential is to use the
-:meth:`~gary.potential.Potential.integrate_orbit` method, which accepts
-a single set of (or array of) initial conditions and a specification for the
-time-stepping and performs the integration for you::
+As a demonstration, we're going to first integrate a single orbit in this potential.
 
-   initial_conditions = np.array([10., 0, 0, 0, v_c, 0])
-   t,orbit = potential.integrate_orbit(initial_conditions, dt=0.5, nsteps=10000)
+The easiest way to do this is to use the `~gary.potential.Potential.integrate_orbit`
+method of the potential object, which accepts a set of initial conditions and
+a specification for the time-stepping. We'll define the initial conditions as a
+`~gary.dynamics.CartesianPhaseSpacePosition` object::
 
-This method returns an array of times, ``t``, and the orbit, ``orbit``.
-By default, this method uses Leapfrog integration to compute the orbit
+   >>> ics = gd.CartesianPhaseSpacePosition(pos=[10,0,0.]*u.kpc,
+   ...                                      vel=[0,175,0]*u.km/u.s)
+   >>> orbit = pot.integrate_orbit(ics, dt=0.5, nsteps=10000)
+
+This method returns a `~gary.dynamics.CartesianOrbit` object that contains an
+array of times and the (6D) position at each time-step. By default, this method
+uses Leapfrog integration to compute the orbit
 (:class:`~gary.integrate.LeapfrogIntegrator`), but you can optionally specify
-a different integrator class as a keyword argument::
+a different (e.g., more precise) integrator class as a keyword argument::
 
-   t,orbit = potential.integrate_orbit(initial_conditions, dt=0.5, nsteps=10000,
-                                       Integrator=si.DOPRI853Integrator)
+   >>> orbit = pot.integrate_orbit(ics, dt=0.5, nsteps=10000,
+   ...                             Integrator=gi.DOPRI853Integrator)
 
 We can integrate many orbits in parallel by passing in a 2D array of initial
 conditions. Here, as an example, we'll generate some random initial
-conditions by sampling from a Gaussian around our initial orbit::
+conditions by sampling from a Gaussian around the initial orbit (with a
+positional scale of 100 pc, and a velocity scale of 1 km/s)::
 
-   norbits = 1000
-   stddev = [0.1,0.1,0.1,0.01,0.01,0.01] # 100 pc spatial scale, ~10 km/s velocity scale
-   initial_conditions = np.random.normal(initial_conditions, stddev, size=(norbits,6))
-   t,orbits = potential.integrate_orbit(initial_conditions, dt=0.5, nsteps=10000)
+   >>> norbits = 128
+   >>> new_pos = np.random.normal(ics.pos.to(u.pc).value, 100., size=(3,norbits))*u.pc
+   >>> new_vel = np.random.normal(ics.vel.to(u.km/u.s).value, 1, size=(3,norbits))*u.km/u.s
+   >>> new_ics = gd.CartesianPhaseSpacePosition(pos=new_pos, vel=new_vel)
+   >>> orbits = pot.integrate_orbit(new_ics, dt=0.5, nsteps=10000)
 
 We'll now plot the final positions of these orbits over isopotential contours.
-We start by using the :meth:`~gary.potential.Potential.plot_contours`
-method of the ``potential`` object to plot the potential contours. This function
-returns a :class:`~matplotlib.figure.Figure` object, which we can then use to
-over-plot the orbit points::
+We use the :meth:`~gary.potential.Potential.plot_contours` method of the potential
+object to plot the potential contours. This function returns a
+:class:`~matplotlib.figure.Figure` object, which we can then use to over-plot
+the orbit points::
 
-   x = y = np.linspace(-15,15,100)
-   fig = potential.plot_contours(grid=(x,y,0), cmap=cm.Greys)
-   fig.axes[0].plot(orbits[-1,:,0], orbits[-1,:,1], marker='.',
-                    linestyle='none', alpha=0.75, color='#cc0000')
+   >>> grid = np.linspace(-15,15,100)
+   >>> fig = pot.plot_contours(grid=(grid,grid,0), cmap='Greys')
+   >>> ax = fig.axes[0] # grab the first plot axes
+   >>> ax.plot(orbits.pos[0,-1], orbits.pos[1,-1], # this is x and y, the last timestep
+   ...         marker='.', linestyle='none', alpha=0.5, color='#cc0000')
 
-.. image:: ../_static/examples/nfw.png
+.. plot::
+   :align: center
+
+   import astropy.units as u
+   import numpy as np
+   import gary.integrate as gi
+   import gary.dynamics as gd
+   import gary.potential as gp
+   from gary.units import galactic
+
+   np.random.seed(42)
+
+   pot = gp.SphericalNFWPotential(v_c=200*u.km/u.s, r_s=10.*u.kpc, units=galactic)
+
+   ics = gd.CartesianPhaseSpacePosition(pos=[10,0,0.]*u.kpc,
+                                        vel=[0,175,0]*u.km/u.s)
+   orbit = pot.integrate_orbit(ics, dt=0.5, nsteps=10000)
+
+   norbits = 1024
+   new_pos = np.random.normal(ics.pos.to(u.pc).value, 100., size=(3,norbits))*u.pc
+   new_vel = np.random.normal(ics.vel.to(u.km/u.s).value, 1., size=(3,norbits))*u.km/u.s
+   new_ics = gd.CartesianPhaseSpacePosition(pos=new_pos, vel=new_vel)
+   orbits = pot.integrate_orbit(new_ics, dt=0.5, nsteps=10000)
+
+   grid = np.linspace(-15,15,100)
+   fig = pot.plot_contours(grid=(grid,grid,0), cmap='Greys')
+   ax = fig.axes[0] # grab the first plot axes
+   ax.plot(orbits.pos[0,-1], orbits.pos[1,-1], # this is x and y, the last timestep
+           marker='.', linestyle='none', alpha=0.75, color='#cc0000')
+
