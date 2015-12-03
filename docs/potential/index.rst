@@ -10,9 +10,9 @@ Introduction
 ============
 
 This subpackage provides a number of classes for working with parametric
-gravitational potentials. There are `base classes`_ for defining custom
+gravitational potentials. There are base classes for defining custom
 potentials (see :ref:`custompotential` for more information), but more
-useful are the `built-in potentials`_. These are commonly used potentials
+useful are the built-in potentials. These are commonly used potentials
 that have methods for computing the potential value, gradient, and (in some
 cases) Hessian. These are particularly useful in combination with
 the `~gary.integrate` subpackage.
