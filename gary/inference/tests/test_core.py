@@ -12,7 +12,9 @@ except ImportError:
     HAS_EMCEE = False
 import numpy as np
 import matplotlib.pyplot as plt
+import pytest
 
+# This project
 from ..model import *
 from ..parameter import *
 from ..prior import *
