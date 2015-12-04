@@ -6,7 +6,7 @@
 Installation
 ************
 
-Requirements
+Dependencies
 ============
 
 This packages has the following dependencies:
@@ -22,6 +22,15 @@ This packages has the following dependencies:
 - `PyYAML`_ >= 3.10
 
 You can use ``pip`` or ``conda`` to install these automatically.
+
+Optional Dependencies
+---------------------
+
+- PyGaia (`pip install pygaia`)
+
+- `Sympy`_
+
+- `emcee`_ (only for running some tests)
 
 Installing
 ==========
