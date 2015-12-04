@@ -14,11 +14,11 @@ for creating surface of sections and computing the full Lyapunov spectrum.
 
 Some imports needed for the code below::
 
-    import astropy.units as u
-    import numpy as np
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
+    >>> import astropy.units as u
+    >>> import numpy as np
+    >>> import gary.potential as gp
+    >>> import gary.dynamics as gd
+    >>> from gary.units import galactic
 
 Computing Lyapunov exponents
 ============================
