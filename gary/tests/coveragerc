@@ -11,6 +11,7 @@ omit =
    {packagename}/*/tests/*
    {packagename}/*/*/tests/*
    {packagename}/version*
+   {packagename}/dynamics/_genfunc/*
 
 [report]
 exclude_lines =
