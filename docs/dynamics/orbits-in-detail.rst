@@ -20,12 +20,12 @@ click these shortcuts to jump to a section below:
 
 Some imports needed for the code below::
 
-    import astropy.units as u
-    import numpy as np
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
-    np.random.seed(42)
+    >>> import astropy.units as u
+    >>> import numpy as np
+    >>> import gary.potential as gp
+    >>> import gary.dynamics as gd
+    >>> from gary.units import galactic
+    >>> np.random.seed(42)
 
 .. _phase-space-position:
 
@@ -43,7 +43,7 @@ To create a `~gary.dynamics.CartesianPhaseSpacePosition` object, pass in a
 cartesian position and velocity to the initializer::
 
     >>> gd.CartesianPhaseSpacePosition(pos=[4.,8.,15.]*u.kpc,
-                                       vel=[-150.,50.,15.]*u.km/u.s)
+    ...                                vel=[-150.,50.,15.]*u.km/u.s)
     <CartesianPhaseSpacePosition N=3, shape=(1,)>
 
 Of course, this works with arrays of positions and velocities as well::
@@ -51,13 +51,13 @@ Of course, this works with arrays of positions and velocities as well::
     >>> x = np.random.uniform(-10,10,size=(3,128))
     >>> v = np.random.uniform(-200,200,size=(3,128))
     >>> gd.CartesianPhaseSpacePosition(pos=x*u.kpc,
-                                       vel=v*u.km/u.s)
+    ...                                vel=v*u.km/u.s)
     <CartesianPhaseSpacePosition N=3, shape=(128,)>
 
 This works for arbitrary numbers of dimensions, e.g., we define a position::
 
     >>> w = gd.CartesianPhaseSpacePosition(pos=[4.,8.]*u.kpc,
-                                           vel=[-150.45.]*u.km/u.s)
+    ...                                    vel=[-150,45.]*u.km/u.s)
     >>> w
     <CartesianPhaseSpacePosition N=2, shape=(1,)>
 
@@ -76,7 +76,7 @@ velocity transforms from `gary.coordinates`.
     >>> x = np.random.uniform(-10,10,size=(3,128))
     >>> v = np.random.uniform(-200,200,size=(3,128))
     >>> w = gd.CartesianPhaseSpacePosition(pos=x*u.kpc,
-                                           vel=v*u.km/u.s)
+    ...                                    vel=v*u.km/u.s)
     >>> cyl_pos, cyl_vel = w.represent_as(CylindricalRepresentation)
 
 The `~gary.dynamics.CartesianPhaseSpacePosition.represent_as` method returns two
@@ -185,7 +185,7 @@ at 128 timesteps::
     >>> vel[1] = np.cos(t)
     >>> orbit = gd.CartesianOrbit(pos=pos*u.kpc, vel=vel*u.km/u.s)
     >>> orbit
-    <Orbit N=2, shape=(128,)>
+    <CartesianOrbit N=2, shape=(128,)>
 
 To create a single object that contains multiple orbits, the input position object
 should have 3 axes. The last axis (``axis=2``) contains each orbit. So, an input
@@ -200,22 +200,24 @@ position with shape ``(2,128,16)`` would represent 16, 2D orbits with 128 timest
     >>> vel[1] = np.cos(Omega[np.newaxis]*t[:,np.newaxis])
     >>> orbit = gd.CartesianOrbit(pos=pos*u.kpc, vel=vel*u.km/u.s)
     >>> orbit
-    <Orbit N=2, shape=(128,16)>
+    <CartesianOrbit N=2, shape=(128, 16)>
 
 To make full use of the orbit functionality, you must also pass in an array with
-the time values::
+the time values and an instance of a `~gary.potential.PotentialBase` subclass that
+represents the potential that the orbit was integrated in::
 
+    >>> pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
     >>> orbit = gd.CartesianOrbit(pos=pos*u.kpc, vel=vel*u.km/u.s,
     ...                           t=t*u.Myr, potential=pot)
 
-and an instance of a `~gary.potential.PotentialBase` subclass that
-represents the potential that the orbit was integrated in. Orbit objects
+(note, in this case ``pos`` and ``vel`` were not generated from integrating
+an orbit in the potential ``pot``!) Orbit objects
 are returned by the `~gary.potential.PotentialBase.integrate_orbit` method
 of potential objects that already have the ``time`` and ``potential`` set::
 
     >>> pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=[10.,0,0]*u.kpc,
-                                            vel=[0.,100,0]*u.km/u.s)
+    ...                                     vel=[0.,100,0]*u.km/u.s)
     >>> orbit = pot.integrate_orbit(w0, dt=1., nsteps=500)
     >>> orbit
     <CartesianOrbit N=3, shape=(501,)>
@@ -224,7 +226,7 @@ of potential objects that already have the ``time`` and ``potential`` set::
                  10.,  11.,  12.,  13.,  14.,  15.,  16.,  17.,  18.,  19.,
     ...etc.
     >>> orbit.potential
-    <PlummerPotential: m=1.00e+10, b=1.00 (kpc,Myr,solMass,rad)>
+    <PlummerPotential: b=1.00, m=1.00e+10 (kpc,Myr,solMass,rad)>
 
 Just like above, we can quickly visualize an orbit using the
 `~gary.dynamics.CartesianOrbit.plot` method::
@@ -249,8 +251,8 @@ This is a thin wrapper around the `~gary.dynamics.plot_orbits`
 function and any keyword arguments are passed through to that function::
 
     >>> fig = orbit.plot(linewidth=4., alpha=0.5, color='r')
-    >>> fig.axes[0].set_xlim(-1.5,1.5)
-    >>> fig.axes[0].set_ylim(-1.5,1.5)
+    >>> fig.axes[0].set_xlim(-1.5,1.5) # doctest: +SKIP
+    >>> fig.axes[0].set_ylim(-1.5,1.5) # doctest: +SKIP
 
 .. plot::
     :align: center

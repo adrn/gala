@@ -35,13 +35,13 @@ this method below with three orbits:
 For the examples below, we will use the `~gary.units.galactic` unit system and
 assume the following imports have been executed::
 
-    import astropy.coordinates as coord
-    import astropy.units as u
-    import matplotlib.pyplot as pl
-    import numpy as np
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
+    >>> import astropy.coordinates as coord
+    >>> import astropy.units as u
+    >>> import matplotlib.pyplot as pl
+    >>> import numpy as np
+    >>> import gary.potential as gp
+    >>> import gary.dynamics as gd
+    >>> from gary.units import galactic
 
 .. _loop-axisymmetric:
 
@@ -73,9 +73,9 @@ For the orbit, we use initial conditions
 In code, we create a potential and set up our initial conditions::
 
     >>> pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.85, r_h=0,
-                                      units=galactic)
+    ...                               units=galactic)
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=[8,0,0.]*u.kpc,
-                                            vel=[75, 150, 50.]*u.km/u.s)
+    ...                                     vel=[75, 150, 50.]*u.km/u.s)
 
 We will now integrate the orbit and plot it in the meridional plane::
 
@@ -84,8 +84,8 @@ We will now integrate the orbit and plot it in the meridional plane::
     >>> fig,ax = pl.subplots(1,1,figsize=(6,6))
     >>> ax.plot(cyl_pos.rho.to(u.kpc).value, cyl_pos.z.to(u.kpc).value,
     ...         marker=None, linestyle='-') # doctest: +SKIP
-    >>> ax.set_xlabel("R [kpc]")
-    >>> ax.set_ylabel("z [kpc]")
+    >>> ax.set_xlabel("R [kpc]") # doctest: +SKIP
+    >>> ax.set_ylabel("z [kpc]") # doctest: +SKIP
 
 .. plot::
     :align: center
