@@ -27,4 +27,4 @@ def get_extensions():
 
 def get_package_data():
     return {'gary.integrate': ['cyintegrators/*.pxd', 'cyintegrators/*.c',
-                               'cyintegrators/dopri/*']}
+                               'cyintegrators/dopri/*.c', 'cyintegrators/dopri/*.h']}
