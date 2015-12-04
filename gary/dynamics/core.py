@@ -390,13 +390,13 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
 
         return three_panel(self.pos.value, **kwargs)
 
-def combine(*args):
+def combine(args):
     """
     Combine the input `PhaseSpacePosition` objects into a single object.
 
     Parameters
     ----------
-    *args
+    args : iterable
         Multiple instances of `PhaseSpacePosition`.
 
     Returns

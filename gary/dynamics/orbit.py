@@ -373,7 +373,7 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
 
         return plot_orbits(self.pos.value, **kwargs)
 
-def combine(*args):
+def combine(args, along_time_axis=False):
     """
     Combine the input `Orbit` objects into a single object.
 
@@ -381,13 +381,16 @@ def combine(*args):
 
     Parameters
     ----------
-    *args
+    args : iterable
         Multiple instances of `Orbit` objects.
+    along_time_axis : bool (optional)
+        If True, will combine single orbits along the time axis.
 
     Returns
     -------
     obj : orbit_like
         A single objct with positions and velocities stacked along the last axis.
+
     """
 
     ndim = None
@@ -432,7 +435,17 @@ def combine(*args):
         all_pos.append(pos.to(pos_unit).value)
         all_vel.append(vel.to(vel_unit).value)
 
-    all_pos = np.dstack(all_pos)*pos_unit
-    all_vel = np.dstack(all_vel)*vel_unit
+    norbits = np.array([pos.shape[-1] for pos in all_pos] + [pos.shape[-1] for pos in all_vel])
+    if along_time_axis:
+        if np.all(norbits == norbits[0]):
+            all_pos = np.hstack(all_pos)*pos_unit
+            all_vel = np.hstack(all_vel)*vel_unit
+        else:
+            raise ValueError("To combine along time axis, all orbit objects must have "
+                             "the same number of orbits.")
+
+    else:
+        all_pos = np.dstack(all_pos)*pos_unit
+        all_vel = np.dstack(all_vel)*vel_unit
 
     return cls(pos=all_pos, vel=all_vel)

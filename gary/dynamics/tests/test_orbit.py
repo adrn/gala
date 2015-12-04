@@ -280,12 +280,23 @@ def test_combine():
 
     o1 = CartesianOrbit.from_w(np.random.random(size=6), units=galactic)
     o2 = CartesianOrbit.from_w(np.random.random(size=6), units=galactic)
-    o = combine(o1, o2)
+    o = combine((o1, o2))
     assert o.pos.shape == (3,1,2)
     assert o.vel.shape == (3,1,2)
 
     o1 = CartesianOrbit.from_w(np.random.random(size=(6,11,1)), units=galactic)
     o2 = CartesianOrbit.from_w(np.random.random(size=(6,11,10)), units=galactic)
-    o = combine(o1, o2)
+    o = combine((o1, o2))
     assert o.pos.shape == (3,11,11)
     assert o.vel.shape == (3,11,11)
+
+    o1 = CartesianOrbit.from_w(np.random.random(size=(6,20,1)), units=galactic)
+    o2 = CartesianOrbit.from_w(np.random.random(size=(6,10,1)), units=galactic)
+    o = combine((o1, o2), along_time_axis=True)
+    assert o.pos.shape == (3,30,1)
+    assert o.vel.shape == (3,30,1)
+
+    with pytest.raises(ValueError):
+        o1 = CartesianOrbit.from_w(np.random.random(size=(6,10,2)), units=galactic)
+        o2 = CartesianOrbit.from_w(np.random.random(size=(6,10,1)), units=galactic)
+        o = combine((o1, o2), along_time_axis=True)
