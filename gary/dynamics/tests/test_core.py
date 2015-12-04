@@ -192,18 +192,18 @@ def test_combine():
 
     o1 = CartesianPhaseSpacePosition.from_w(np.random.random(size=6), units=galactic)
     o2 = CartesianPhaseSpacePosition.from_w(np.random.random(size=6), units=galactic)
-    o = combine(o1, o2)
+    o = combine((o1, o2))
     assert o.pos.shape == (3,2)
     assert o.vel.shape == (3,2)
 
     o1 = CartesianPhaseSpacePosition.from_w(np.random.random(size=6), units=galactic)
     o2 = CartesianPhaseSpacePosition.from_w(np.random.random(size=(6,10)), units=galactic)
-    o = combine(o1, o2)
+    o = combine((o1, o2))
     assert o.pos.shape == (3,11)
     assert o.vel.shape == (3,11)
 
     o1 = CartesianPhaseSpacePosition.from_w(np.random.random(size=6), units=galactic)
     o2 = CartesianPhaseSpacePosition.from_w(np.random.random(size=6), units=solarsystem)
-    o = combine(o1, o2)
+    o = combine((o1, o2))
     assert o.pos.unit == galactic['length']
     assert o.vel.unit == galactic['length']/galactic['time']
