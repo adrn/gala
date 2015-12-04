@@ -62,7 +62,7 @@ the orbit points::
    >>> fig = pot.plot_contours(grid=(grid,grid,0), cmap='Greys')
    >>> ax = fig.axes[0] # grab the first plot axes
    >>> ax.plot(orbits.pos[0,-1], orbits.pos[1,-1], # this is x and y, the last timestep
-   ...         marker='.', linestyle='none', alpha=0.5, color='#cc0000')
+   ...         marker='.', linestyle='none', alpha=0.5, color='#cc0000') # doctest: +SKIP
 
 .. plot::
    :align: center

@@ -39,31 +39,34 @@ the value of the potential and the gradient/acceleration at a given
 position(s). For example, here we will create a potential object for a
 2D point mass located at the origin with unit mass::
 
-    >>> ptmass = gp.PointMassPotential(m=1., x0=[0.,0.],
-    ...                                units=solarsystem)
+    >>> ptmass = gp.KeplerPotential(m=1., units=solarsystem)
     >>> ptmass
-    <PointMassPotential: x0=[0.0, 0.0], m=1.00>
+    <KeplerPotential: m=1.00 (AU,yr,solMass,rad)>
 
 We can then evaluate the value of the potential at some other position (note: the
 position array is assumed to be in the unit system of the potential)::
 
-    >>> ptmass.value([1.,-1.])
+    >>> ptmass.value([1.,-1.,0.])
     array([-27.92216622])
 
 Or at multiple positions, by passing in a 2D array::
 
-    >>> pos = np.array([[1.,-1.],
-    ...                 [2.,3.],
-    ...                 [12.,-2.]]).T
+    >>> pos = np.array([[1.,-1.,0],
+    ...                 [2.,3.,0],
+    ...                 [12.,-2.,0]]).T
     >>> ptmass.value(pos)
     array([-27.92216622, -10.95197465,  -3.24588589])
 
 We may also compute the gradient of the potential or acceleration due to the potential::
 
-    >>> ptmass.gradient([1.,-1.])
-    array([[ 13.96108311, -13.96108311]])
-    >>> ptmass.acceleration([1.,-1.])
-    array([[-13.96108311,  13.96108311]])
+    >>> ptmass.gradient([1.,-1.,0])
+    array([[ 13.96108311],
+           [-13.96108311],
+           [  0.        ]])
+    >>> ptmass.acceleration([1.,-1.,0])
+    array([[-13.96108311],
+           [ 13.96108311],
+           [ -0.        ]])
 
 The position(s) must be specified in the same length units as specified in
 the unit system.
@@ -152,11 +155,11 @@ Potential objects. This can be done with :func:`gary.potential.save` and
 and method::
 
     >>> from gary.potential import load
-    >>> pot = SphericalNFWPotential(v_c=0.5, r_s=20.,
-    ...                             units=(u.kpc, u.Msun, u.Myr))
+    >>> pot = gp.SphericalNFWPotential(v_c=0.5, r_s=20.,
+    ...                                units=galactic)
     >>> pot.save("potential.yml")
     >>> load("potential.yml")
-    <SphericalNFWPotential: r_s=20.00, v_c=0.50>
+    <SphericalNFWPotential: r_s=20.00, v_c=0.50 (kpc,Myr,solMass,rad)>
 
 Using gary.potential
 ====================

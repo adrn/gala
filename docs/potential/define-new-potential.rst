@@ -16,6 +16,7 @@ you probably want to stick to a pure-Python class.
 For code blocks below and any pages linked below, I assume the following
 imports have already been excuted::
 
+    >>> import numpy as np
     >>> import gary.potential as gp
     >>> import gary.dynamics as gd
 
