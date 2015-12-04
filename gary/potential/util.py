@@ -8,7 +8,6 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
 import numpy as np
-from sympy.utilities.lambdify import lambdify
 
 # Project
 from .core import PotentialBase
@@ -70,6 +69,7 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
     """
     try:
         import sympy
+        from sympy.utilities.lambdify import lambdify
     except ImportError:
         raise ImportError("sympy is required to use 'from_equation()' "
                           "potential class creation.")
