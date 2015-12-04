@@ -5,7 +5,11 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
-import emcee
+try:
+    import emcee
+    HAS_EMCEE = True
+except ImportError:
+    HAS_EMCEE = False
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -153,6 +157,7 @@ class TestEmceeModel(object):
         for model in self.models:
             pri = model.sample_priors(n=5)
 
+    @pytest.mark.skipif(not HAS_EMCEE, reason="emcee not installed")
     def test_mcmc_sample_priors(self):
         m = ModelParameter("m", truth=1., prior=LogarithmicPrior(0.,2.))
         b = ModelParameter("b", truth=6.7, prior=UniformPrior(0.,10.))
@@ -198,6 +203,7 @@ class TestFitLine(object):
         self.model.add_parameter(m)
         self.model.add_parameter(b)
 
+    @pytest.mark.skipif(not HAS_EMCEE, reason="emcee not installed")
     def test_vary_both(self):
         nwalkers = 16
         p0 = self.model.sample_priors(n=nwalkers)
@@ -220,6 +226,7 @@ class TestFitLine(object):
         axes[1].axvline(self.model.parameters['b'].truth.value, color='g')
         # fig.savefig(os.path.join(plot_path,"fit_line_vary_m_b.png"))
 
+    @pytest.mark.skipif(not HAS_EMCEE, reason="emcee not installed")
     def test_m_frozen(self):
         self.model.parameters['m'].freeze(self.model.parameters['m'].truth.value)
 
@@ -240,6 +247,7 @@ class TestFitLine(object):
 
         # fig.savefig(os.path.join(plot_path,"fit_line_vary_b.png"))
 
+    @pytest.mark.skipif(not HAS_EMCEE, reason="emcee not installed")
     def test_b_frozen(self):
         self.model.parameters['b'].freeze(self.model.parameters['b'].truth.value)
 
@@ -299,6 +307,7 @@ class TestJakeVDPExample(object):
         self.model.add_parameter(sigma)
         self.model.joint_priors.append(ln_p_beta_sigma)
 
+    @pytest.mark.skipif(not HAS_EMCEE, reason="emcee not installed")
     def test_sample(self):
         nwalkers = 50
         # p0 = emcee.utils.sample_ball([10., 5, 0.1], [0.1, 0.05, 0.01], size=nwalkers)
