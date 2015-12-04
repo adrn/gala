@@ -40,7 +40,7 @@ def test_simple():
                     distance=15*u.kpc)
     c.transform_to(coord.ICRS)
     c2 = c.transform_to(coord.Galactic)
-    assert c2.distance.value == c.distance.value
+    assert np.allclose(c2.distance.value, c.distance.value)
 
 def test_against_David_Law():
     """ Test my code against an output file from using David Law's cpp code. Do:
