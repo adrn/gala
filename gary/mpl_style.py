@@ -36,9 +36,9 @@ mpl_style = {
     'image.origin': 'upper',
 
     # Font
-    'font.family': 'CMU Serif',
     'font.size': 14.0,
     'text.latex.preamble': '\usepackage{amsmath}',
+    'text.usetex': True,
 
     # Axes
     'axes.facecolor': '#FFFFFF',
