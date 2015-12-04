@@ -199,7 +199,13 @@ class PotentialBase(object):
 
     def __repr__(self):
         pars = ""
-        for k,v in self.parameters.items():
+        if not isinstance(self.parameters, OrderedDict):
+            keys = sorted(self.parameters.keys()) # to ensure the order is always the same
+        else:
+            keys = self.parameters.keys()
+
+        for k in keys:
+            v = self.parameters[k]
             par_fmt = "{}"
             post = ""
 
