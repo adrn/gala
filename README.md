@@ -11,12 +11,11 @@ dynamics.
 Documentation
 =============
 
-Read the docs
-Gary's core functionality is [documented](http://adrian.pw/gary/) in Sphinx, and tested with PyTest.
+[Read the docs](http://gary.adrian.pw)
 
 Installation and Dependencies
 =============================
-See the [installation instructions](http://adrian.pw/gary/install.html) in the [documentation](http://adrian.pw/gary/).
+See the [installation instructions](http://gary.adrian.pw/install.html) in the [documentation](http://gary.adrian.pw).
 
 Warning
 =======
@@ -24,7 +23,7 @@ Warning
 Note that in November/December 2015, in order to prepare for the first
 formal release v0.1, a number of API-breaking improvements were implemented
 that may wreak havok on your old code if you have updated since then. To
-check out the pre-alpha version, clone this repository, and use the git tag
-`pre-alpha`:
+check out the legacy/pre-alpha version, clone this repository, and use the branch
+`legacy`:
 
-    git checkout tags/pre-alpha
+    git checkout legacy
