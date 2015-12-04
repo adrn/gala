@@ -12,6 +12,7 @@ or added after the composite potential container is already created. Either
 way, each component potential must be instantiated before adding it to the
 composite potential::
 
+    >>> import numpy as np
     >>> import gary.potential as gp
     >>> from gary.units import galactic
     >>> disk = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
@@ -30,7 +31,9 @@ potential objects::
     >>> pot.value([1.,-1.,0.])
     array([-0.12891172])
     >>> pot.acceleration([1.,-1.,0.])
-    array([[-0.02271507,  0.02271507, -0.        ]])
+    array([[-0.02271507],
+           [ 0.02271507],
+           [-0.        ]])
     >>> grid = np.linspace(-3.,3.,100)
     >>> fig = pot.plot_contours(grid=(grid,0,grid))
 
