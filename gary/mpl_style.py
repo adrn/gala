@@ -92,12 +92,12 @@ try:
                                                     '#C51B7D',
                                                     '#FEE08B'])
 except ImportError:
-    mpl_style['axes.color_cycle'] = ['1A1A1A', # black
-                                     '2166AC', # blue
-                                     '006837', # green
-                                     'B2182B', # red
-                                     '762A83', # purple
-                                     'E08214',
-                                     '80CDC1',
-                                     'C51B7D',
-                                     'FEE08B']
+    mpl_style['axes.color_cycle'] = ['#1A1A1A', # black
+                                     '#2166AC', # blue
+                                     '#006837', # green
+                                     '#B2182B', # red
+                                     '#762A83', # purple
+                                     '#E08214',
+                                     '#80CDC1',
+                                     '#C51B7D',
+                                     '#FEE08B']
