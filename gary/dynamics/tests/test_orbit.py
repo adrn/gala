@@ -51,7 +51,7 @@ def test_circulation(tmpdir):
     assert circ.sum() == 0
 
     # try also for both, together
-    w3 = combine(w1,w2)
+    w3 = combine((w1,w2))
     circ = w3.circulation()
     assert circ.shape == (3,2)
     assert np.allclose(circ.sum(axis=0), [1,0])

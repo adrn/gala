@@ -443,6 +443,9 @@ def combine(args, along_time_axis=False):
         else:
             raise ValueError("To combine along time axis, all orbit objects must have "
                              "the same number of orbits.")
+        if args[0].pos.ndim == 2:
+            all_pos = all_pos[...,0]
+            all_vel = all_vel[...,0]
 
     else:
         all_pos = np.dstack(all_pos)*pos_unit
