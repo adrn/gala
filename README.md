@@ -4,6 +4,10 @@ Gary :man:
 Gary is a Python package for Galactic Astronomy and especially gravitational
 dynamics.
 
+[![Coverage Status](https://coveralls.io/repos/adrn/gary/badge.svg?branch=master&service=github)](https://coveralls.io/github/adrn/gary?branch=master)
+[![Build status](http://img.shields.io/travis/adrn/gary/master.svg?style=flat)](http://travis-ci.org/adrn/gary)
+[![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/adrn/gary/blob/master/LICENSE)
+
 Documentation
 =============
 Gary's core functionality is [documented](http://adrian.pw/gary/) in Sphinx, and tested with PyTest.
