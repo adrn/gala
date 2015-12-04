@@ -7,13 +7,13 @@ Using a matplotlib version > 1.4 you can do::
 
     >>> import matplotlib.pyplot as pl
     >>> from gary.mpl_style import mpl_style
-    >>> pl.style.use(mpl_style)
+    >>> pl.style.use(mpl_style) # doctest: +SKIP
 
 for older versions of matplotlib the following works::
 
     >>> import matplotlib as mpl
     >>> from gary.mpl_style import mpl_style
-    >>> mpl.rcParams.update(mpl_style)
+    >>> mpl.rcParams.update(mpl_style) # doctest: +SKIP
 
 """
 
