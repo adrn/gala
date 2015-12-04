@@ -75,18 +75,24 @@ keyword argument ``galactocentric_frame`` ::
 The inverse transformations are also available, with the function
 :func:`~gary.coordinates.vgal_to_hel`. Here, because the input coordinate is passed
 in after being transformed to the ICRS frame, the output proper motions will also be
-given in the ICRS frame :math:`(\mu_\alpha\cos\delta, \mu_\delta)` ::
+given in the ICRS frame :math:`(\mu_\alpha\cos\delta, \mu_\delta)`::
 
     >>> xyz = coord.Galactocentric([11., 15, 25] * u.kpc)
     >>> vxyz = [121., 150., -75.] * u.km/u.s
-    >>> gc.vgal_to_hel(xyz.transform_to(coord.ICRS), vxyz)
-    (<Quantity 0.2834641666390529 mas / yr>, <Quantity -0.888174413651107 mas / yr>, <Quantity -29.71790624810498 km / s>)
+    >>> pm_ra,pm_dec,vr = gc.vgal_to_hel(xyz.transform_to(coord.ICRS), vxyz)
+    >>> pm_ra # doctest: +FLOAT_CMP
+    <Quantity 0.2834641666390529 mas / yr>
+    >>> pm_dec # doctest: +FLOAT_CMP
+    <Quantity -0.888174413651107 mas / yr>
+    >>> vr # doctest: +FLOAT_CMP
+    <Quantity -29.71790624810498 km / s>
 
 Passing in coordinates in the Galactic frame means that the output proper motions will
 instead be :math:`(\mu_l\cos b, \mu_b)` ::
 
-    >>> gc.vgal_to_hel(xyz.transform_to(coord.Galactic), vxyz)
-    (<Quantity -0.7713637315333076 mas / yr>, <Quantity -0.5236445726220675 mas / yr>, <Quantity -29.717906248104974 km / s>)
+    >>> pm_l,pm_b,vr = gc.vgal_to_hel(xyz.transform_to(coord.Galactic), vxyz)
+    >>> pm_l # doctest: +FLOAT_CMP
+    <Quantity -0.7713637315333076 mas / yr>
 
 All of these functions also work on arrays of coordinates and velocities, e.g.::
 
