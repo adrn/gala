@@ -38,7 +38,6 @@ mpl_style = {
     # Font
     'font.size': 14.0,
     'text.latex.preamble': r'\usepackage{amsmath}',
-    'text.usetex': True,
     'axes.unicode_minus': False,
 
     # Axes
