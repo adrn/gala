@@ -111,7 +111,7 @@ This function has two arguments -- :math:`A` (``A``), the amplitude of the forci
 and :math:`\omega_D` (``omega_D``), the driving frequency. We define an integrator
 object by specifying this function, along with values for the function arguments::
 
-    >>> integrator = DOPRI853Integrator(F, func_args=(0.07, 0.75))
+    >>> integrator = gi.DOPRI853Integrator(F, func_args=(0.07, 0.75))
 
 To integrate an orbit, we use the `~gary.integrate.Integrator.run` method.
 We have to specify the initial conditions along with information about how long
