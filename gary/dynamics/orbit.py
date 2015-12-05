@@ -402,12 +402,17 @@ def combine(args, along_time_axis=False):
 
     all_pos = []
     all_vel = []
+    all_time = []
     for x in args:
         if ndim is None:
             ndim = x.ndim
             pos_unit = x.pos.unit
             vel_unit = x.vel.unit
             time = x.t
+            if time is not None:
+                t_unit = time.unit
+            else:
+                t_unit = None
             pot = x.potential
             cls = x.__class__
         else:
@@ -417,9 +422,10 @@ def combine(args, along_time_axis=False):
             if x.ndim != ndim:
                 raise ValueError("All objects must have the same dimensionality.")
 
-            # TODO: logic here
-            # if time is not None or x.t is not None and not np.all(x.t, time):
-                raise ValueError("All orbits must have the same time array.")
+            if not along_time_axis:
+                if time is not None:
+                    if x.t is None or len(x.t) != len(time) or not np.all(x.t.to(time.unit).value, time.value):
+                        raise ValueError("All orbits must have the same time array.")
 
             if x.potential != pot:
                 raise ValueError("All orbits must have the same Potential object.")
@@ -434,12 +440,18 @@ def combine(args, along_time_axis=False):
 
         all_pos.append(pos.to(pos_unit).value)
         all_vel.append(vel.to(vel_unit).value)
+        if time is not None:
+            all_time.append(x.t.to(t_unit).value)
 
     norbits = np.array([pos.shape[-1] for pos in all_pos] + [pos.shape[-1] for pos in all_vel])
     if along_time_axis:
         if np.all(norbits == norbits[0]):
             all_pos = np.hstack(all_pos)*pos_unit
             all_vel = np.hstack(all_vel)*vel_unit
+            if len(all_time) > 0:
+                all_time = np.concatenate(all_time)*t_unit
+            else:
+                all_time = None
         else:
             raise ValueError("To combine along time axis, all orbit objects must have "
                              "the same number of orbits.")
@@ -450,5 +462,9 @@ def combine(args, along_time_axis=False):
     else:
         all_pos = np.dstack(all_pos)*pos_unit
         all_vel = np.dstack(all_vel)*vel_unit
+        if len(all_time) > 0:
+            all_time = all_time[0]*t_unit
+        else:
+            all_time = None
 
-    return cls(pos=all_pos, vel=all_vel)
+    return cls(pos=all_pos, vel=all_vel, t=all_time, potential=args[0].potential)
