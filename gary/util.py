@@ -60,7 +60,7 @@ def get_pool(mpi=False, threads=None, **kwargs):
             sys.exit(0)
         logger.debug("Running with MPI...")
 
-    elif threads > 1:
+    elif threads is not None and threads > 1:
         logger.debug("Running with multiprocessing on {} cores..."
                      .format(threads))
         pool = multiprocessing.Pool(threads, **kwargs)
