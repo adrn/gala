@@ -17,6 +17,7 @@ cimport numpy as np
 np.import_array()
 
 from libc.stdio cimport printf
+from cpython.exc cimport PyErr_CheckSignals
 
 from ...potential.cpotential cimport _CPotential
 
@@ -102,5 +103,7 @@ cpdef dop853_integrate_potential(_CPotential cpotential, double[:,::1] w0,
         for k in range(ndim):
             for i in range(norbits):
                 all_w[j,i,k] = w[i*ndim + k]
+
+        PyErr_CheckSignals()
 
     return np.asarray(t), np.asarray(all_w)

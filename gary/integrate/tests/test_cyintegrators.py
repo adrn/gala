@@ -58,6 +58,26 @@ def test_compare_to_py(Integrator, integrate_func):
     assert py_w.shape == cy_w.shape
     assert np.allclose(cy_w[:,-1], py_w[:,-1])
 
+@pytest.mark.skipif(True, reason="For timing locally")
+def test_time_integration():
+    niter = 100
+
+    p = HernquistPotential(m=1E11, c=0.5, units=galactic)
+
+    cy_w0 = np.array([[0.,10.,0.,0.2,0.,0.],
+                      [10.,0.,0.,0.,0.2,0.]])
+
+    nsteps = 10000
+    dt = 2.
+    t = np.linspace(0,dt*nsteps,nsteps+1)
+
+    time0 = time.time()
+    for i in range(niter):
+        t,w = dop853_integrate_potential(p.c_instance, cy_w0, t)
+
+    exec_time = (time.time()-time0) / niter
+    print("{:.3f} per loop iteration".format(exec_time))
+
 @pytest.mark.skipif(True, reason="Slow test - mainly for plotting locally")
 @pytest.mark.parametrize(("Integrator","integrate_func"), _list)
 def test_scaling(tmpdir, Integrator, integrate_func):
