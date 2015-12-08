@@ -424,7 +424,7 @@ def combine(args, along_time_axis=False):
 
             if not along_time_axis:
                 if time is not None:
-                    if x.t is None or len(x.t) != len(time) or not np.all(x.t.to(time.unit).value, time.value):
+                    if x.t is None or len(x.t) != len(time) or np.any(x.t.to(time.unit).value != time.value):
                         raise ValueError("All orbits must have the same time array.")
 
             if x.potential != pot:
