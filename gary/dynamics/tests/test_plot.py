@@ -13,6 +13,7 @@ import logging
 # Third-party
 import numpy as np
 from astropy import log as logger
+import gary.dynamics as gd
 
 # Project
 from ..plot import *
@@ -25,10 +26,10 @@ def test_orbits(tmpdir):
     n = 8
     t = np.linspace(0, 100, 1000).reshape(1000,1)
     x = np.cos(np.random.uniform(1.,8.,size=(1,n))*t).T[None]
-    y = np.cos(np.random.uniform(1.,8.,size=(1,n))*t).T[None]
+    y = np.sin(np.random.uniform(1.,8.,size=(1,n))*t).T[None]
     z = np.cos(np.random.uniform(1.,8.,size=(1,n))*t).T[None]
-
-    w = np.rollaxis(np.vstack((x,y,z)), -1, 1)
+    vx = vy = vz = np.zeros_like(x)
+    w = np.rollaxis(np.vstack((x,y,z,vx,vy,vz)), -1, 1)
 
     fig = plot_orbits(w, linestyle='none', marker='.', alpha=0.25)
     fig.savefig(os.path.join(str(tmpdir), "all_orbits.png"))
