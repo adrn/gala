@@ -1,5 +1,5 @@
 # coding: utf-8
-# cython: boundscheck=True
+# cython: boundscheck=False
 # cython: debug=False
 # cython: nonecheck=False
 # cython: cdivision=True
