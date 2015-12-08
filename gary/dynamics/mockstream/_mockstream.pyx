@@ -24,7 +24,6 @@ from ...potential.cpotential cimport _CPotential
 from ._coord cimport (sat_rotation_matrix, to_sat_coords, from_sat_coords,
                       cyl_to_car, car_to_cyl)
 
-# __all__ = ['streakline_stream', 'fardal_stream', 'dissolved_stream']
 __all__ = ['_mock_stream_dop853']
 
 cdef extern from "math.h":
