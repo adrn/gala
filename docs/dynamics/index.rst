@@ -16,8 +16,8 @@ in this and other subpackages are the `~gary.dynamics.PhaseSpacePosition` and
 
 There are utilities for transforming orbits in phase-space to action-angle
 coordinates, tools for visualizing and computing dynamical quantities from
-orbits, and tools useful for nonlinear dynamics such as Lyapunov exponent
-estimation.
+orbits, tools to generate mock stellar streams, and tools useful for nonlinear
+dynamics such as Lyapunov exponent estimation.
 
 For code blocks below and any pages linked below, I assume the following
 imports have already been excuted::
@@ -86,6 +86,7 @@ More details are provided in the linked pages below:
 
    orbits-in-detail
    actionangle
+   mockstreams
    nonlinear
    orbitfit
 
