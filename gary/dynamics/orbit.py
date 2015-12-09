@@ -9,6 +9,7 @@ from astropy import log as logger
 import astropy.units as u
 uno = u.dimensionless_unscaled
 import numpy as np
+from scipy.signal import argrelmin, argrelmax
 
 # Project
 from .core import CartesianPhaseSpacePosition
@@ -99,8 +100,15 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         kw = dict()
         if self.t is not None:
             kw['t'] = self.t[_slyce[1]]
-        return self.__class__(pos=self.pos[_slyce], vel=self.vel[_slyce],
-                              potential=self.potential, **kw)
+
+        pos = self.pos[_slyce]
+        vel = self.vel[_slyce]
+
+        if pos.shape[1] == 1:
+            return CartesianPhaseSpacePosition(pos=pos[:,0], vel=vel[:,0])
+        else:
+            return self.__class__(pos=pos, vel=vel,
+                                  potential=self.potential, **kw)
 
     @property
     def norbits(self):
@@ -152,6 +160,13 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
     # Computed dynamical quantities
     # ------------------------------------------------------------------------
 
+    @property
+    def r(self):
+        """
+        The orbital radius.
+        """
+        return np.sqrt(np.sum(self.pos**2, axis=0))
+
     def potential_energy(self, potential=None):
         r"""
         The potential energy *per unit mass*:
@@ -184,6 +199,81 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         """
         return self.kinetic_energy() + self.potential_energy(potential)
 
+    def pericenter(self, type=np.mean):
+        """
+        Estimate the pericenter(s) of the orbit. By default, this returns
+        the mean pericenter. To get, e.g., the minimum pericenter,
+        pass in ``type=np.min``. To get all pericenters, pass in
+        ``type=None``.
+
+        Parameters
+        ----------
+        type : func (optional)
+            By default, this returns the mean pericenter. To return all
+            pericenters, pass in ``None``. To get, e.g., the minimum
+            or maximum pericenter, pass in ``np.min`` or ``np.max``.
+
+        Returns
+        -------
+        peri : float, :class:`~numpy.ndarray`
+            Either a single number or an array of pericenters.
+        """
+        r = self.r
+        min_ix = argrelmin(r, mode='wrap')[0]
+        min_ix = min_ix[(min_ix != 0) & (min_ix != (len(r)-1))]
+
+        if type is not None:
+            return type(r[min_ix])
+        else:
+            return r[min_ix]
+
+    def apocenter(self, type=np.mean):
+        """
+        Estimate the apocenter(s) of the orbit. By default, this returns
+        the mean apocenter. To get, e.g., the minimum apocenter,
+        pass in ``type=np.min``. To get all apocenters, pass in
+        ``type=None``.
+
+        Parameters
+        ----------
+        type : func (optional)
+            By default, this returns the mean apocenter. To return all
+            apocenters, pass in ``None``. To get, e.g., the minimum
+            or maximum apocenter, pass in ``np.min`` or ``np.max``.
+
+        Returns
+        -------
+        apo : float, :class:`~numpy.ndarray`
+            Either a single number or an array of apocenters.
+        """
+        r = self.r
+        max_ix = argrelmax(r, mode='wrap')[0]
+        max_ix = max_ix[(max_ix != 0) & (max_ix != (len(r)-1))]
+
+        if type is not None:
+            return type(r[max_ix])
+        else:
+            return r[max_ix]
+
+    def eccentricity(self):
+        r"""
+        Returns the eccentricity computed from the mean apocenter and
+        mean pericenter.
+
+        .. math::
+
+            e = \frac{r_{\rm apo} - r_{\rm per}}{r_{\rm apo} + r_{\rm per}}
+
+        Returns
+        -------
+        ecc : float
+            The orbital eccentricity.
+
+        """
+        ra = self.apocenter()
+        rp = self.pericenter()
+        return (ra - rp) / (ra + rp)
+
     def estimate_period(self, radial=True):
         """
         Estimate the period of the orbit. By default, computes the radial
@@ -208,7 +298,7 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
                              " Specify a time array when creating this object.")
 
         if radial:
-            r = np.sqrt(np.sum(self.pos**2, axis=0)).value
+            r = self.r.value
             if self.norbits == 1:
                 T = peak_to_peak_period(self.t.value, r)
                 T = T * self.t.unit
