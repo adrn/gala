@@ -30,3 +30,5 @@ if not _ASTROPY_SETUP_:
 
         return u.Quantity(float(val), unit)
     u.Quantity.from_string = _parse_quantity
+
+    del u, stuff
