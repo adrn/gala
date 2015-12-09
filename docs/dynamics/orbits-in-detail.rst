@@ -217,7 +217,7 @@ of potential objects that already have the ``time`` and ``potential`` set::
 
     >>> pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=[10.,0,0]*u.kpc,
-    ...                                     vel=[0.,100,0]*u.km/u.s)
+    ...                                     vel=[0.,75,0]*u.km/u.s)
     >>> orbit = pot.integrate_orbit(w0, dt=1., nsteps=500)
     >>> orbit
     <CartesianOrbit N=3, shape=(501,)>
@@ -232,15 +232,15 @@ From an Orbit object, we can quickly compute quantities like the angular momentu
 and estimates for the pericenter, apocenter, eccentricity of the orbit. Estimates
 for the latter few get better with smaller timesteps::
 
-    >>> orbit = pot.integrate_orbit(w0, dt=0.1, nsteps=10000)
-    >>> np.mean(orbit.angular_momentum(), axis=1)
+    >>> orbit = pot.integrate_orbit(w0, dt=0.1, nsteps=100000)
+    >>> np.mean(orbit.angular_momentum(), axis=1) # doctest: +FLOAT_CMP
     <Quantity [ 0.        , 0.        , 0.76703412] kpc2 / Myr>
-    >>> orbit.eccentricity()
-    0.3191640969200451
-    >>> orbit.pericenter()
-    10.000002028941823 kpc
-    >>> orbit.apocenter()
-    19.37565804921789 kpc
+    >>> orbit.eccentricity() # doctest: +FLOAT_CMP
+    <Quantity 0.3191563009914265>
+    >>> orbit.pericenter() # doctest: +FLOAT_CMP
+    <Quantity 10.00000005952518 kpc>
+    >>> orbit.apocenter() # doctest: +FLOAT_CMP
+    <Quantity 19.375317870528118 kpc>
 
 Just like above, we can quickly visualize an orbit using the
 `~gary.dynamics.CartesianOrbit.plot` method::
