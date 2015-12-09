@@ -228,6 +228,20 @@ of potential objects that already have the ``time`` and ``potential`` set::
     >>> orbit.potential
     <PlummerPotential: b=1.00, m=1.00e+10 (kpc,Myr,solMass,rad)>
 
+From an Orbit object, we can quickly compute quantities like the angular momentum,
+and estimates for the pericenter, apocenter, eccentricity of the orbit. Estimates
+for the latter few get better with smaller timesteps::
+
+    >>> orbit = pot.integrate_orbit(w0, dt=0.1, nsteps=10000)
+    >>> np.mean(orbit.angular_momenum(), axis=1)
+    <Quantity [ 0.        , 0.        , 0.76703412] kpc2 / Myr>
+    >>> orbit.eccentricity()
+    0.3191640969200451
+    >>> orbit.pericenter()
+    10.000002028941823 kpc
+    >>> orbit.apocenter()
+    19.37565804921789 kpc
+
 Just like above, we can quickly visualize an orbit using the
 `~gary.dynamics.CartesianOrbit.plot` method::
 
