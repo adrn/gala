@@ -11,10 +11,13 @@ from astropy.coordinates import SphericalRepresentation, Galactic
 import astropy.units as u
 import numpy as np
 import pytest
+import scipy.optimize as so
 
 # Project
+from ..core import CartesianPhaseSpacePosition
 from ..orbit import *
-from ...potential import HernquistPotential, LogarithmicPotential
+from ...integrate import DOPRI853Integrator
+from ...potential import HernquistPotential, LogarithmicPotential, KeplerPotential
 from ...units import galactic, solarsystem
 
 def make_known_orbit(tmpdir, x, vx, potential, name):
@@ -259,6 +262,41 @@ def test_angular_momentum():
     L = o.angular_momentum()
     assert L.unit == (o.vel.unit*o.pos.unit)
     assert L.shape == o.pos.shape
+
+def test_eccentricity():
+    pot = KeplerPotential(m=1., units=solarsystem)
+    w0 = CartesianPhaseSpacePosition(pos=[1,0,0.]*u.au,
+                                     vel=[0.,2*np.pi,0.]*u.au/u.yr)
+    w = pot.integrate_orbit(w0, dt=0.01, nsteps=10000, Integrator=DOPRI853Integrator)
+    e = w.eccentricity()
+    assert np.abs(e) < 1E-3
+
+def test_apocenter_pericenter():
+    pot = KeplerPotential(m=1., units=solarsystem)
+    w0 = CartesianPhaseSpacePosition(pos=[1,0,0.]*u.au,
+                                     vel=[0.,1.5*np.pi,0.]*u.au/u.yr)
+
+    w = pot.integrate_orbit(w0, dt=0.01, nsteps=10000, Integrator=DOPRI853Integrator)
+    apo = w.apocenter()
+    per = w.pericenter()
+
+    assert apo.unit == u.au
+    assert per.unit == u.au
+    assert apo > per
+
+    # see if they're where we expect
+    E = np.mean(w.energy()).decompose(pot.units).value
+    # Phi = np.mean(w.potential_energy()).value
+    L = np.mean(np.sqrt(np.sum(w.angular_momentum()**2, axis=0))).decompose(pot.units).value
+    def func(r):
+        val = 2*(E-pot.value([r,0,0])[0]) - L**2/r**2
+        return val
+
+    pred_apo = so.brentq(func, 0.9, 1.0)
+    pred_per = so.brentq(func, 0.3, 0.5)
+
+    assert np.allclose(apo.value, pred_apo, rtol=1E-2)
+    assert np.allclose(per.value, pred_per, rtol=1E-2)
 
 def test_estimate_period():
     ntimes = 16384
