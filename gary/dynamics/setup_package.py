@@ -36,4 +36,4 @@ def get_extensions():
     return exts
 
 def get_package_data():
-    return {'gary': ['gary/dynamics/mockstream/_coord.pxd']}
+    return {'gary.dynamics': ['*.pxd', 'mockstream/_coord.pxd']}
