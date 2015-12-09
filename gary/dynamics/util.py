@@ -18,7 +18,7 @@ from ..integrate import LeapfrogIntegrator
 
 __all__ = ['peak_to_peak_period', 'estimate_dt_nsteps']
 
-def peak_to_peak_period(t, f, tol=1E-2):
+def peak_to_peak_period(t, f, amplitude_threshold=1E-2):
     """
     Estimate the period of the input time series by measuring the average
     peak-to-peak time.
@@ -29,7 +29,7 @@ def peak_to_peak_period(t, f, tol=1E-2):
         Time grid aligned with the input time series.
     f : array_like
         A periodic time series.
-    tol : numeric (optional)
+    amplitude_threshold : numeric (optional)
         A tolerance parameter. Fails if the mean amplitude of oscillations
         isn't larger than this tolerance.
 
@@ -53,7 +53,7 @@ def peak_to_peak_period(t, f, tol=1E-2):
     min_ix = min_ix[(min_ix != 0) & (min_ix != (len(f)-1))]
 
     # neglect minor oscillations
-    if abs(np.mean(f[max_ix]) - np.mean(f[min_ix])) < tol:
+    if abs(np.mean(f[max_ix]) - np.mean(f[min_ix])) < amplitude_threshold:
         return np.nan
 
     # compute mean peak-to-peak
