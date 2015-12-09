@@ -16,13 +16,58 @@ from .plot import three_panel
 from ..coordinates import velocity_transforms as vtrans
 from ..coordinates import vgal_to_hel
 from ..units import UnitSystem
-from ..util import atleast_2d
+from ..util import inherit_docs,atleast_2d
 
 __all__ = ['CartesianPhaseSpacePosition', 'combine']
 
 class PhaseSpacePosition(object):
-    pass
 
+    # ------------------------------------------------------------------------
+    # Display
+    # ------------------------------------------------------------------------
+    def __repr__(self):
+        return "<{} N={}, shape={}>".format(self.__class__.__name__, self.ndim, self.shape)
+
+    def __str__(self):
+        # TODO: should show some arrays?
+        return "{} {}D, {}".format(self.__class__.__name__, self.ndim, self.shape)
+
+    # ------------------------------------------------------------------------
+    # Shape and size
+    # ------------------------------------------------------------------------
+    @property
+    def ndim(self):
+        """
+        Number of coordinate dimensions. 1/2 of the phase-space dimensionality.
+
+        .. warning::
+
+            This is *not* the number of axes in the position or velocity
+            arrays. That is accessed by doing ``{}.pos.ndim``.
+
+        Returns
+        -------
+        n : int
+
+        """.format(self.__class__.__name__)
+        return self.pos.shape[0]
+
+    @property
+    def shape(self):
+        """
+        .. warning::
+
+            This is *not* the shape of the position or velocity
+            arrays. That is accessed by doing ``{}.pos.shape``.
+
+        Returns
+        -------
+        shp : tuple
+
+        """.format(self.__class__.__name__)
+        return self.pos.shape[1:]
+
+@inherit_docs
 class CartesianPhaseSpacePosition(PhaseSpacePosition):
     """
     Represents phase-space positions in Cartesian coordinates, e.g.,
@@ -87,12 +132,6 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         self.pos = pos
         self.vel = vel
 
-    def __repr__(self):
-        return "<CartesianPhaseSpacePosition N={}, shape={}>".format(self.ndim, self.pos.shape[1:])
-
-    def __str__(self):
-        return "CartesianPhaseSpacePosition"
-
     def __getitem__(self, slyce):
         try:
             _slyce = (slice(None),) + tuple(slyce)
@@ -100,23 +139,6 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
             _slyce = (slice(None),) + (slyce,)
 
         return self.__class__(pos=self.pos[_slyce], vel=self.vel[_slyce])
-
-    @property
-    def ndim(self):
-        """
-        Number of coordinate dimensions. 1/2 of the phase-space dimensionality.
-
-        .. warning::
-
-            This is *not* the number of axes in the position or velocity
-            arrays. That is accessed by doing ``orbit.pos.ndim``.
-
-        Returns
-        -------
-        n : int
-
-        """
-        return self.pos.shape[0]
 
     # ------------------------------------------------------------------------
     # Convert from Cartesian to other representations
