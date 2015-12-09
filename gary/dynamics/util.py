@@ -92,7 +92,8 @@ def _autodetermine_initial_dt(w0, potential, dE_threshold=1E-9, Integrator=Leapf
 
     return dt
 
-def estimate_dt_nsteps(w0, potential, nperiods, nsteps_per_period, dE_threshold=1E-9):
+def estimate_dt_nsteps(w0, potential, nperiods, nsteps_per_period, dE_threshold=1E-9,
+                       func=np.nanmax):
     """
     Estimate the timestep and number of steps to integrate an orbit for
     given its initial conditions and a potential object.
@@ -110,6 +111,10 @@ def estimate_dt_nsteps(w0, potential, nperiods, nsteps_per_period, dE_threshold=
     dE_threshold : numeric (optional)
         Maximum fractional energy difference -- used to determine initial timestep.
         Set to ``None`` to ignore this.
+    func : callable (optional)
+        Determines which period to use. By default, this takes the maximum period using
+        :func:`~numpy.nanmax`. Other options could be :func:`~numpy.nanmin`,
+        :func:`~numpy.nanmean`, :func:`~numpy.nanmedian`.
 
     Returns
     -------
@@ -145,18 +150,16 @@ def estimate_dt_nsteps(w0, potential, nperiods, nsteps_per_period, dE_threshold=
         T = np.array([peak_to_peak_period(orbit.t, f).value for f in orbit.pos])*orbit.t.unit
 
     # timestep from number of steps per period
-    Tmax = T.max()
-    if np.isnan(Tmax):
-        T = T[np.isfinite(T)]
-        Tmax = T.max()
+    T = func(T)
 
-    if np.isnan(Tmax):
+    if np.isnan(T):
         raise RuntimeError("Failed to find period.")
 
-    dt = Tmax / float(nsteps_per_period)
-    nsteps = int(round((nperiods * Tmax / dt).decompose().value))
+    T = T.decompose(potential.units).value
+    dt = T / float(nsteps_per_period)
+    nsteps = int(round(nperiods * T / dt))
 
-    if dt == 0.:
-        raise ValueError("Timestep is zero!")
+    if dt == 0. or dt < 1E-13:
+        raise ValueError("Timestep is zero or very small!")
 
     return dt, nsteps

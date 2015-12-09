@@ -32,7 +32,12 @@ def test_peak_to_peak_period():
     assert np.allclose(T, true_T, atol=1E-3)
 
 def test_estimate_dt_nsteps():
+    nperiods = 128
     pot = SphericalNFWPotential(v_c=1., r_s=10., units=galactic)
     w0 = [10.,0.,0.,0.,0.9,0.]
-    dt,nsteps = estimate_dt_nsteps(w0, pot, nperiods=128, nsteps_per_period=256)
-    print(dt, nsteps)
+    dt,nsteps = estimate_dt_nsteps(w0, pot, nperiods=nperiods, nsteps_per_period=256,
+                                   func=np.nanmin)
+
+    orbit = pot.integrate_orbit(w0, dt=dt, nsteps=nsteps)
+    T = orbit.estimate_period()
+    assert int(round((orbit.t.max()/T).decompose().value)) == nperiods
