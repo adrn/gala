@@ -10,7 +10,9 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import numpy as np
 
 # Project
-from ..util import peak_to_peak_period
+from ..util import peak_to_peak_period, estimate_dt_nsteps
+from ...potential import SphericalNFWPotential
+from ...units import galactic
 
 def test_peak_to_peak_period():
     ntimes = 16384
@@ -28,3 +30,9 @@ def test_peak_to_peak_period():
     f = np.sin(2*np.pi/true_T * t) + 0.1*np.cos(2*np.pi/(10*true_T) * t)
     T = peak_to_peak_period(t, f)
     assert np.allclose(T, true_T, atol=1E-3)
+
+def test_estimate_dt_nsteps():
+    pot = SphericalNFWPotential(v_c=1., r_s=10., units=galactic)
+    w0 = [10.,0.,0.,0.,0.9,0.]
+    dt,nsteps = estimate_dt_nsteps(w0, pot, nperiods=128, nsteps_per_period=256)
+    print(dt, nsteps)
