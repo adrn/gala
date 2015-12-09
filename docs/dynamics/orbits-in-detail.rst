@@ -233,7 +233,7 @@ and estimates for the pericenter, apocenter, eccentricity of the orbit. Estimate
 for the latter few get better with smaller timesteps::
 
     >>> orbit = pot.integrate_orbit(w0, dt=0.1, nsteps=10000)
-    >>> np.mean(orbit.angular_momenum(), axis=1)
+    >>> np.mean(orbit.angular_momentum(), axis=1)
     <Quantity [ 0.        , 0.        , 0.76703412] kpc2 / Myr>
     >>> orbit.eccentricity()
     0.3191640969200451
