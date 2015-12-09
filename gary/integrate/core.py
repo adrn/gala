@@ -11,7 +11,6 @@ import astropy.units as u
 import numpy as np
 
 # This project
-from ..dynamics import CartesianPhaseSpacePosition, CartesianOrbit
 from ..units import UnitSystem
 
 __all__ = ["Integrator"]
@@ -36,7 +35,7 @@ class Integrator(object):
         particularly useful for integrating a large number of orbits or
         integrating a large number of time steps.
         """
-
+        from ..dynamics import CartesianPhaseSpacePosition
         if not isinstance(w0, CartesianPhaseSpacePosition):
             w0 = np.asarray(w0)
             ndim = w0.shape[0]//2
@@ -80,6 +79,7 @@ class Integrator(object):
             t_unit = self._func_units['time']
             vel_unit = pos_unit / t_unit
 
+        from ..dynamics import CartesianOrbit
         orbit = CartesianOrbit(pos=w[:self.ndim]*pos_unit,
                                vel=w[self.ndim:]*vel_unit,
                                t=t*t_unit) # HACK: BADDDD
