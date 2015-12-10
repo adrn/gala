@@ -77,6 +77,9 @@ def mock_stream(potential, w0, prog_mass, k_mean, k_disp,
 
     if not isinstance(potential, CPotentialBase):
         raise ValueError("Input potential must be a CPotentialBase subclass.")
+
+    k_mean = np.atleast_1d(k_mean)
+    k_disp = np.atleast_1d(k_disp)
     # ------------------------------------------------------------------------
 
     # integrate the orbit of the progenitor system
@@ -95,6 +98,10 @@ def mock_stream(potential, w0, prog_mass, k_mean, k_disp,
     # if we integrated backwards, flip it around in time
     if dt < 0:
         prog_orbit = prog_orbit[::-1]
+
+        if k_mean.ndim > 1 and k_mean.shape[0] > 1:
+            k_mean = k_mean[::-1]
+            k_disp = k_disp[::-1]
 
     prog_w = np.ascontiguousarray(prog_orbit.w(potential.units)[...,0].T) # transpose for Cython funcs
     prog_t = np.ascontiguousarray(prog_orbit.t.decompose(potential.units).value)
