@@ -10,6 +10,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import collections
 import sys
 import multiprocessing
+from functools import wraps
 
 # Third-party
 from astropy import log as logger
@@ -110,17 +111,15 @@ class use_backend(object):
         gui, backend = self.shell.enable_matplotlib(self.old_backend)
 
 def inherit_docs(cls):
-    for name, func in vars(cls).items():
-        if not func.__doc__:
+    @wraps(cls)
+    def wrapper():
+        if cls.__doc__ is None:
             for parent in cls.__bases__:
-                try:
-                    parfunc = getattr(parent, name)
-                except AttributeError: # parent doesn't have function
+                if parent.__doc__ is not None:
+                    cls.__doc__ = parent.__doc__
                     break
-                if parfunc and getattr(parfunc, '__doc__', None):
-                    func.__doc__ = parfunc.__doc__
-                    break
-    return cls
+        return cls
+    return wrapper
 
 class ImmutableDict(collections.Mapping):
     def __init__(self, somedict):
