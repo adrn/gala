@@ -78,3 +78,17 @@ class TestPMConvert(object):
         trans_mulb = pm_icrs_to_gal(c, muad)
         assert np.allclose(mulb.value, trans_mulb.value, atol=1E-2)
 
+
+def test_arbitrary_shape():
+    shape = (128, 10)
+    random_ra = np.random.uniform(0,2*np.pi,shape)
+    random_dec = np.random.uniform(-np.pi/2.,np.pi/2.,shape)
+
+    random_mua = np.random.normal(0,2,shape)
+    random_mud = np.random.normal(0,2,shape)
+
+    c = coord.SkyCoord(ra=random_ra*u.deg, dec=random_dec*u.deg)
+    muad = np.vstack((random_mua[None],random_mud[None]))*u.mas/u.yr
+
+    trans_mulb = pm_icrs_to_gal(c, muad)
+    assert trans_mulb[0].shape == shape
