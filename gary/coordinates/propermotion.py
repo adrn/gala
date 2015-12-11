@@ -53,7 +53,7 @@ def pm_gal_to_icrs(coordinate, pm):
     i = coordinate.transform_to(coord.ICRS)
 
     mulcosb,mub = map(np.atleast_1d, pm)
-    n = len(mulcosb)
+    shape = mulcosb.shape
 
     # coordinates of NGP
     ag = coord.Galactic._ngp_J2000.ra
@@ -63,16 +63,17 @@ def pm_gal_to_icrs(coordinate, pm):
     cosphi = (np.sin(dg) - np.sin(i.dec)*np.sin(g.b)) / np.cos(g.b) / np.cos(i.dec)
     sinphi = np.sin(i.ra - ag) * np.cos(dg) / np.cos(g.b)
 
-    R = np.zeros((2,2,n))
+    R = np.zeros((2,2)+shape)
     R[0,0] = cosphi
     R[0,1] = -sinphi
     R[1,0] = sinphi
     R[1,1] = cosphi
 
-    mu = np.vstack((mulcosb.value, mub.to(mulcosb.unit).value))
-    new_mu = np.zeros_like(mu)
-    for i in range(n):
-        new_mu[:,i] = R[...,i].dot(mu[:,i])
+    mu = np.vstack((mulcosb.value[None], mub.to(mulcosb.unit).value[None]))
+    # new_mu = np.zeros_like(mu)
+    # for i in range(n):
+    #     new_mu[:,i] = R[...,i].dot(mu[:,i])
+    new_mu = np.einsum('ijk...,jk...->ik...',R,mu)
 
     if coordinate.isscalar:
         return new_mu.reshape((2,))*mulcosb.unit
@@ -120,7 +121,7 @@ def pm_icrs_to_gal(coordinate, pm):
     i = coordinate.transform_to(coord.ICRS)
 
     muacosd,mud = map(np.atleast_1d, pm)
-    n = len(muacosd)
+    shape = muacosd.shape
 
     # coordinates of NGP
     ag = coord.Galactic._ngp_J2000.ra
@@ -130,16 +131,17 @@ def pm_icrs_to_gal(coordinate, pm):
     cosphi = (np.sin(dg) - np.sin(i.dec)*np.sin(g.b)) / np.cos(g.b) / np.cos(i.dec)
     sinphi = np.sin(i.ra - ag) * np.cos(dg) / np.cos(g.b)
 
-    R = np.zeros((2,2,n))
+    R = np.zeros((2,2)+shape)
     R[0,0] = cosphi
     R[0,1] = sinphi
     R[1,0] = -sinphi
     R[1,1] = cosphi
 
-    mu = np.vstack((muacosd.value, mud.to(muacosd.unit).value))
-    new_mu = np.zeros_like(mu)
-    for i in range(n):
-        new_mu[:,i] = R[...,i].dot(mu[:,i])
+    mu = np.vstack((muacosd.value[None], mud.to(muacosd.unit).value[None]))
+    # new_mu = np.zeros_like(mu)
+    # for i in range(n):
+    #     new_mu[:,i] = R[...,i].dot(mu[:,i])
+    new_mu = np.einsum('ijk...,jk...->ik...',R,mu)
 
     if coordinate.isscalar:
         return new_mu.reshape((2,))*muacosd.unit
