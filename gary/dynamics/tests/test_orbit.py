@@ -206,6 +206,13 @@ def test_to_frame():
     coo,vel = o.to_frame(Galactic)
     assert coo.name == 'galactic'
 
+    # simple / with units and time
+    x = np.random.random(size=(3,128,10))*u.kpc
+    v = np.random.normal(0.,100.,size=(3,128,10))*u.km/u.s
+    o = CartesianOrbit(pos=x, vel=v)
+    coo,vel = o.to_frame(Galactic)
+    assert coo.name == 'galactic'
+
 def test_w():
     # simple / unitless
     x = np.random.random(size=(3,10))
