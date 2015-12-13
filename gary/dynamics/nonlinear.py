@@ -16,7 +16,7 @@ __all__ = ['fast_lyapunov_max', 'lyapunov_max', 'surface_of_section']
 
 def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
                       nsteps_per_pullback=10, noffset_orbits=2, t1=0.,
-                      atol=1E-10, rtol=1E-10, nmax=0):
+                      atol=1E-10, rtol=1E-10, nmax=0, return_orbit=True):
     """
     Compute the maximum Lyapunov exponent using a C-implemented estimator
     that uses the DOPRI853 integrator.
@@ -37,16 +37,18 @@ def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
         Number of offset orbits to run.
     t1 : numeric (optional)
         Time of initial conditions. Assumed to be t=0.
+    return_orbit : bool (optional)
+        Store the full orbit for the parent and all offset orbits.
 
     Returns
     -------
     LEs : :class:`~astropy.units.Quantity`
         Lyapunov exponents calculated from each offset / deviation orbit.
-    orbit : `~gary.dynamics.CartesianOrbit`
+    orbit : `~gary.dynamics.CartesianOrbit` (optional)
 
     """
 
-    from .lyapunov import dop853_lyapunov_max
+    from .lyapunov import dop853_lyapunov_max, dop853_lyapunov_max_dont_save
 
     if not hasattr(potential, 'c_instance'):
         raise TypeError("Input potential must be a CPotential subclass.")
@@ -61,19 +63,32 @@ def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
     if _w0.ndim > 1:
         raise ValueError("Can only compute fast Lyapunov exponent for a single orbit.")
 
-    t,w,l = dop853_lyapunov_max(potential.c_instance, _w0,
-                                dt, nsteps+1, t1,
-                                d0, nsteps_per_pullback, noffset_orbits,
-                                atol, rtol, nmax)
-    w = np.rollaxis(w, -1)
+    if return_orbit:
+        t,w,l = dop853_lyapunov_max(potential.c_instance, _w0,
+                                    dt, nsteps+1, t1,
+                                    d0, nsteps_per_pullback, noffset_orbits,
+                                    atol, rtol, nmax)
+        w = np.rollaxis(w, -1)
 
-    try:
-        tunit = potential.units['time']
-    except (TypeError, AttributeError):
-        tunit = u.dimensionless_unscaled
+        try:
+            tunit = potential.units['time']
+        except (TypeError, AttributeError):
+            tunit = u.dimensionless_unscaled
 
-    orbit = CartesianOrbit.from_w(w=w, units=potential.units, t=t*tunit, potential=potential)
-    return l/tunit, orbit
+        orbit = CartesianOrbit.from_w(w=w, units=potential.units, t=t*tunit, potential=potential)
+        return l/tunit, orbit
+    else:
+        l = dop853_lyapunov_max_dont_save(potential.c_instance, _w0,
+                                          dt, nsteps+1, t1,
+                                          d0, nsteps_per_pullback, noffset_orbits,
+                                          atol, rtol, nmax)
+
+        try:
+            tunit = potential.units['time']
+        except (TypeError, AttributeError):
+            tunit = u.dimensionless_unscaled
+
+        return l/tunit
 
 def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
                  noffset_orbits=8, t1=0., units=None):
