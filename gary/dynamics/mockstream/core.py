@@ -127,7 +127,6 @@ def streakline_stream(potential, prog_orbit, prog_mass, release_every=1,
 
     Returns
     -------
-    prog_orbit : `~gary.dynamics.CartesianOrbit`
     stream : `~gary.dynamics.CartesianPhaseSpacePosition`
 
     """
@@ -182,7 +181,6 @@ def fardal_stream(potential, prog_orbit, prog_mass, release_every=1,
 
     Returns
     -------
-    prog_orbit : `~gary.dynamics.CartesianOrbit`
     stream : `~gary.dynamics.CartesianPhaseSpacePosition`
 
     """
@@ -241,7 +239,6 @@ def dissolved_fardal_stream(potential, prog_orbit, prog_mass, t_disrupt,
 
     Returns
     -------
-    prog_orbit : `~gary.dynamics.CartesianOrbit`
     stream : `~gary.dynamics.CartesianPhaseSpacePosition`
 
     """
