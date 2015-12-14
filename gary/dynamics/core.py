@@ -133,10 +133,14 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         self.vel = vel
 
     def __getitem__(self, slyce):
-        try:
-            _slyce = (slice(None),) + tuple(slyce)
-        except TypeError:
+        if isinstance(slyce, np.ndarray) or isinstance(slyce, list):
+            _slyce = np.array(slyce)
             _slyce = (slice(None),) + (slyce,)
+        else:
+            try:
+                _slyce = (slice(None),) + tuple(slyce)
+            except TypeError:
+                _slyce = (slice(None),) + (slyce,)
 
         return self.__class__(pos=self.pos[_slyce], vel=self.vel[_slyce])
 
