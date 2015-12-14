@@ -214,10 +214,14 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         self.potential = potential
 
     def __getitem__(self, slyce):
-        try:
-            _slyce = (slice(None),) + tuple(slyce)
-        except TypeError:
+        if isinstance(slyce, np.ndarray) or isinstance(slyce, list):
+            _slyce = np.array(slyce)
             _slyce = (slice(None),) + (slyce,)
+        else:
+            try:
+                _slyce = (slice(None),) + tuple(slyce)
+            except TypeError:
+                _slyce = (slice(None),) + (slyce,)
 
         kw = dict()
         if self.t is not None:
