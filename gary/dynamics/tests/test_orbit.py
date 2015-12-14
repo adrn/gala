@@ -172,6 +172,36 @@ def test_slice():
     assert new_o.pos.shape == (3,5,4)
     assert new_o.t.shape == (5,)
 
+    # boolean array
+    x = np.random.random(size=(3,10))
+    v = np.random.random(size=(3,10))
+    t = np.arange(x.shape[1])
+    o = CartesianOrbit(pos=x, vel=v, t=t)
+    ix = np.array([0,0,0,0,0,1,1,1,1,1]).astype(bool)
+    new_o = o[ix]
+    assert new_o.shape == (sum(ix),)
+    assert new_o.t.shape == (5,)
+
+    # boolean array - 3D
+    x = np.random.random(size=(3,10,4))
+    v = np.random.random(size=(3,10,4))
+    t = np.arange(x.shape[1])
+    o = CartesianOrbit(pos=x, vel=v, t=t)
+    ix = np.array([0,0,0,0,0,1,1,1,1,1]).astype(bool)
+    new_o = o[ix]
+    assert new_o.shape == (sum(ix),x.shape[-1])
+    assert new_o.t.shape == (5,)
+
+    # integer array
+    x = np.random.random(size=(3,10))
+    v = np.random.random(size=(3,10))
+    t = np.arange(x.shape[1])
+    o = CartesianOrbit(pos=x, vel=v, t=t)
+    ix = np.array([0,3,5])
+    new_o = o[ix]
+    assert new_o.shape == (len(ix),)
+    assert new_o.t.shape == (len(ix),)
+
 def test_represent_as():
 
     # simple / unitless

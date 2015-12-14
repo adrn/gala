@@ -72,6 +72,22 @@ def test_slice():
     assert new_o.pos.shape == (3,5,4)
     assert new_o.vel.shape == (3,5,4)
 
+    # boolean array
+    x = np.random.random(size=(3,10))
+    v = np.random.random(size=(3,10))
+    o = CartesianPhaseSpacePosition(pos=x, vel=v)
+    ix = np.array([0,0,0,0,0,1,1,1,1,1]).astype(bool)
+    new_o = o[ix]
+    assert new_o.shape == (sum(ix),)
+
+    # integer array
+    x = np.random.random(size=(3,10))
+    v = np.random.random(size=(3,10))
+    o = CartesianPhaseSpacePosition(pos=x, vel=v)
+    ix = np.array([0,3,5])
+    new_o = o[ix]
+    assert new_o.shape == (len(ix),)
+
 # ------------------------------------------------------------------------
 # Convert from Cartesian to other representations
 # ------------------------------------------------------------------------
