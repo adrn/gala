@@ -10,16 +10,15 @@ import astropy.units as u
 import numpy as np
 
 # Project
-from .. import CartesianPhaseSpacePosition
+from .. import CartesianPhaseSpacePosition, Orbit
 from ...potential import CPotentialBase
 from ...integrate import DOPRI853Integrator, LeapfrogIntegrator
 from ._mockstream import _mock_stream_dop853#, _mock_stream_leapfrog
 
 __all__ = ['mock_stream', 'streakline_stream', 'fardal_stream', 'dissolved_fardal_stream']
 
-def mock_stream(potential, w0, prog_mass, k_mean, k_disp,
-                t_f, dt=1., t_0=0., release_every=1,
-                Integrator=LeapfrogIntegrator, Integrator_kwargs=dict()):
+def mock_stream(potential, prog_orbit, prog_mass, k_mean, k_disp,
+                release_every=1, Integrator=LeapfrogIntegrator, Integrator_kwargs=dict()):
     """
     Generate a mock stellar stream in the specified potential with a
     progenitor system that ends up at the specified position.
@@ -28,8 +27,8 @@ def mock_stream(potential, w0, prog_mass, k_mean, k_disp,
     ----------
     potential : `~gary.potential.PotentialBase`
         The gravitational potential.
-    w0 : `~gary.dynamics.PhaseSpacePosition`, array_like
-        Initial conditions.
+    prog_orbit : `~gary.dynamics.Orbit`
+        The orbit of the progenitor system.
     prog_mass : numeric, array_like
         A single mass or an array of masses if the progenitor mass evolves
         with time.
@@ -43,12 +42,6 @@ def mock_stream(potential, w0, prog_mass, k_mean, k_disp,
         the exact prescription for generating the mock stream. The components are for:
         :math:`(R,\phi,z,v_R,v_\phi,v_z)`. If 1D, assumed constant in time. If 2D, time axis
         is axis 0.
-    t_f : numeric
-        The final time for integrating.
-    t_0 : numeric (optional)
-        The initial time for integrating -- the time at which ``w0`` is the position.
-    dt : numeric (optional)
-        The time-step.
     release_every : int (optional)
         Release particles at the Lagrange points every X timesteps.
     Integrator : `~gary.integrate.Integrator` (optional)
@@ -58,7 +51,6 @@ def mock_stream(potential, w0, prog_mass, k_mean, k_disp,
 
     Returns
     -------
-    prog_orbit : `~gary.dynamics.CartesianOrbit`
     stream : `~gary.dynamics.CartesianPhaseSpacePosition`
 
     """
@@ -69,41 +61,29 @@ def mock_stream(potential, w0, prog_mass, k_mean, k_disp,
         raise ValueError("Only Leapfrog and dop853 integration is supported for"
                          " generating mock streams.")
 
-    if not isinstance(w0, CartesianPhaseSpacePosition):
-        w0 = CartesianPhaseSpacePosition.from_w(np.atleast_1d(w0), units=potential.units)
-
-    if w0.pos.shape[1] > 1:
-        raise ValueError("Only a single phase-space position is allowed.")
-
     if not isinstance(potential, CPotentialBase):
         raise ValueError("Input potential must be a CPotentialBase subclass.")
 
+    if not isinstance(prog_orbit, Orbit):
+        raise ValueError("Progenitor orbit must be an Orbit subclass.")
+
     k_mean = np.atleast_1d(k_mean)
     k_disp = np.atleast_1d(k_disp)
+
+    if k_mean.ndim > 1:
+        assert k_mean.shape[0] == prog_orbit.t.size
+        assert k_disp.shape[0] == prog_orbit.t.size
+
     # ------------------------------------------------------------------------
 
-    # integrate the orbit of the progenitor system
-    # TODO: t1 and dt should support units
-    if (t_f-t_0) < 0.:
-        dt = -np.abs(dt) # make sure dt is negative if integrating backwards
-    else:
-        dt = np.abs(dt) # make sure dt is positive if integrating forwards
+    if prog_orbit.t[1] < prog_orbit.t[0]:
+        raise ValueError("Progenitor orbit goes backwards in time. Streams can only "
+                         "be generated on orbits that run forwards. Hint: you can "
+                         "reverse the orbit with prog_orbit[::-1], but make sure the array"
+                         "of k_mean values is ordered correctly.")
 
-    nsteps = int(round(np.abs((t_f-t_0)/dt)))
-    t = np.linspace(t_0, t_f, nsteps)
-
-    # integrate the orbit of the progenitor system
-    prog_orbit = potential.integrate_orbit(w0, t=t, Integrator=Integrator, Integrator_kwargs=Integrator_kwargs)
-
-    # if we integrated backwards, flip it around in time
-    if dt < 0:
-        prog_orbit = prog_orbit[::-1]
-
-        if k_mean.ndim > 1 and k_mean.shape[0] > 1:
-            k_mean = k_mean[::-1]
-            k_disp = k_disp[::-1]
-
-    prog_w = np.ascontiguousarray(prog_orbit.w(potential.units)[...,0].T) # transpose for Cython funcs
+    c_w = np.squeeze(prog_orbit.w(potential.units)).T # transpose for Cython funcs
+    prog_w = np.ascontiguousarray(c_w)
     prog_t = np.ascontiguousarray(prog_orbit.t.decompose(potential.units).value)
 
     if Integrator == LeapfrogIntegrator:
@@ -119,9 +99,9 @@ def mock_stream(potential, w0, prog_mass, k_mean, k_disp,
     else:
         raise RuntimeError("Should never get here...")
 
-    return prog_orbit, CartesianPhaseSpacePosition.from_w(w=stream_w.T, units=potential.units)
+    return CartesianPhaseSpacePosition.from_w(w=stream_w.T, units=potential.units)
 
-def streakline_stream(potential, w0, prog_mass, t_f, dt=1., t_0=0., release_every=1,
+def streakline_stream(potential, prog_orbit, prog_mass, release_every=1,
                       Integrator=LeapfrogIntegrator, Integrator_kwargs=dict()):
     """
     Generate a mock stellar stream in the specified potential with a
@@ -133,17 +113,11 @@ def streakline_stream(potential, w0, prog_mass, t_f, dt=1., t_0=0., release_ever
     ----------
     potential : `~gary.potential.PotentialBase`
         The gravitational potential.
-    w0 : `~gary.dynamics.PhaseSpacePosition`, array_like
-        Initial conditions.
+    prog_orbit : `~gary.dynamics.Orbit`
+            The orbit of the progenitor system.
     prog_mass : numeric, array_like
         A single mass or an array of masses if the progenitor mass evolves
         with time.
-    t_f : numeric
-        The final time for integrating.
-    t_0 : numeric (optional)
-        The initial time for integrating -- the time at which ``w0`` is the position.
-    dt : numeric (optional)
-        The time-step.
     release_every : int (optional)
         Release particles at the Lagrange points every X timesteps.
     Integrator : `~gary.integrate.Integrator` (optional)
@@ -178,12 +152,11 @@ def streakline_stream(potential, w0, prog_mass, t_f, dt=1., t_0=0., release_ever
     k_mean[5] = 0. # vz
     k_disp[5] = 0.
 
-    return mock_stream(potential=potential, w0=w0, prog_mass=prog_mass,
-                       k_mean=k_mean, k_disp=k_disp,
-                       t_f=t_f, dt=dt, t_0=t_0, release_every=release_every,
+    return mock_stream(potential=potential, prog_orbit=prog_orbit, prog_mass=prog_mass,
+                       k_mean=k_mean, k_disp=k_disp, release_every=release_every,
                        Integrator=Integrator, Integrator_kwargs=Integrator_kwargs)
 
-def fardal_stream(potential, w0, prog_mass, t_f, dt=1., t_0=0., release_every=1,
+def fardal_stream(potential, prog_orbit, prog_mass, release_every=1,
                   Integrator=LeapfrogIntegrator, Integrator_kwargs=dict()):
     """
     Generate a mock stellar stream in the specified potential with a
@@ -195,17 +168,11 @@ def fardal_stream(potential, w0, prog_mass, t_f, dt=1., t_0=0., release_every=1,
     ----------
     potential : `~gary.potential.PotentialBase`
         The gravitational potential.
-    w0 : `~gary.dynamics.PhaseSpacePosition`, array_like
-        Initial conditions.
+    prog_orbit : `~gary.dynamics.Orbit`
+            The orbit of the progenitor system.
     prog_mass : numeric, array_like
         A single mass or an array of masses if the progenitor mass evolves
         with time.
-    t_f : numeric
-        The final time for integrating.
-    t_0 : numeric (optional)
-        The initial time for integrating -- the time at which ``w0`` is the position.
-    dt : numeric (optional)
-        The time-step.
     release_every : int (optional)
         Release particles at the Lagrange points every X timesteps.
     Integrator : `~gary.integrate.Integrator` (optional)
@@ -240,12 +207,11 @@ def fardal_stream(potential, w0, prog_mass, t_f, dt=1., t_0=0., release_every=1,
     k_mean[5] = 0. # vz
     k_disp[5] = 0.5
 
-    return mock_stream(potential=potential, w0=w0, prog_mass=prog_mass,
-                       k_mean=k_mean, k_disp=k_disp,
-                       t_f=t_f, dt=dt, t_0=t_0, release_every=release_every,
+    return mock_stream(potential=potential, prog_orbit=prog_orbit, prog_mass=prog_mass,
+                       k_mean=k_mean, k_disp=k_disp, release_every=release_every,
                        Integrator=Integrator, Integrator_kwargs=Integrator_kwargs)
 
-def dissolved_fardal_stream(potential, w0, prog_mass, t_disrupt, t_f, dt=1., t_0=0.,
+def dissolved_fardal_stream(potential, prog_orbit, prog_mass, t_disrupt,
                             release_every=1, Integrator=LeapfrogIntegrator, Integrator_kwargs=dict()):
     """
     Generate a mock stellar stream in the specified potential with a
@@ -259,19 +225,13 @@ def dissolved_fardal_stream(potential, w0, prog_mass, t_disrupt, t_f, dt=1., t_0
     ----------
     potential : `~gary.potential.PotentialBase`
         The gravitational potential.
-    w0 : `~gary.dynamics.PhaseSpacePosition`, array_like
-        Initial conditions.
+    prog_orbit : `~gary.dynamics.Orbit`
+            The orbit of the progenitor system.
     prog_mass : numeric, array_like
         A single mass or an array of masses if the progenitor mass evolves
         with time.
     t_disrupt : numeric
         The time that the progenitor completely disrupts.
-    t_f : numeric
-        The final time for integrating.
-    t_0 : numeric (optional)
-        The initial time for integrating -- the time at which ``w0`` is the position.
-    dt : numeric (optional)
-        The time-step.
     release_every : int (optional)
         Release particles at the Lagrange points every X timesteps.
     Integrator : `~gary.integrate.Integrator` (optional)
@@ -287,12 +247,11 @@ def dissolved_fardal_stream(potential, w0, prog_mass, t_disrupt, t_f, dt=1., t_0
     """
 
     # the time index closest to when the disruption happens
-    nsteps = int(round(np.abs((t_f-t_0)/dt)))
-    t = np.linspace(t_0, t_f, nsteps)
+    t = prog_orbit.t
     disrupt_ix = np.abs(t - t_disrupt).argmin()
 
-    k_mean = np.zeros((nsteps,6))
-    k_disp = np.zeros((nsteps,6))
+    k_mean = np.zeros((t.size,6))
+    k_disp = np.zeros((t.size,6))
 
     k_mean[:,0] = 2. # R
     k_mean[disrupt_ix:,0] = 0.
@@ -313,7 +272,6 @@ def dissolved_fardal_stream(potential, w0, prog_mass, t_disrupt, t_f, dt=1., t_0
     k_mean[:,5] = 0. # vz
     k_disp[:,5] = 0.5
 
-    return mock_stream(potential=potential, w0=w0, prog_mass=prog_mass,
-                       k_mean=k_mean, k_disp=k_disp,
-                       t_f=t_f, dt=dt, t_0=t_0, release_every=release_every,
+    return mock_stream(potential=potential, prog_orbit=prog_orbit, prog_mass=prog_mass,
+                       k_mean=k_mean, k_disp=k_disp, release_every=release_every,
                        Integrator=Integrator, Integrator_kwargs=Integrator_kwargs)
