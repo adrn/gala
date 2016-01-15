@@ -18,9 +18,8 @@ from .cybuiltin import HernquistPotential, MiyamotoNagaiPotential, \
     LeeSutoTriaxialNFWPotential, SphericalNFWPotential, LogarithmicPotential
 from ...units import galactic
 
-__all__ = ['PW14Potential', 'TriaxialMWPotential', 'PyLM10Potential']
+__all__ = ['TriaxialMWPotential']
 
-# TODO: I hacked together value and gradient functions for LM10 but not others
 class PyLM10Potential(CompositePotential):
 
     def __init__(self, units=galactic, disk=dict(), bulge=dict(), halo=dict()):
