@@ -215,30 +215,61 @@ double jaffe_density(double t, double *pars, double *q) {
 /* ---------------------------------------------------------------------------
     Stone-Ostriker potential from Stone & Ostriker (2015)
 */
-double stone_value(double t, double *pars, double *r) {
+double stone_value(double t, double *pars, double *q) {
     /*  pars:
             - G (Gravitational constant)
-            - m (total mass)
+            - M (total mass)
             - r_c (core radius)
-            - r_t (truncation radius)
+            - r_h (halo radius)
     */
-    double rr, u_c, u_t, f;
-    rr = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
-    u_c = rr / pars[2];
-    u_t = rr / pars[3];
-    //f = M_PI * (pars[3]*pars[3] - pars[2]*pars[2]) / (pars[2] + pars[3]);
-    f = 1.;
-    return -pars[0] * pars[1] / f * (atan(u_t)/u_t - atan(u_c)/u_c +
-                      0.5*log((rr*rr + pars[3]*pars[3])/(rr*rr + pars[2]*pars[2])));
+    double r, u_c, u_h, fac;
+
+    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    u_c = r / pars[2];
+    u_h = r / pars[3];
+
+    fac = 2*pars[0]*pars[1] / M_PI / (pars[3] - pars[2]);
+
+    return -fac * (atan(u_h)/u_h - atan(u_c)/u_c +
+                   0.5*log((r*r + pars[3]*pars[3])/(r*r + pars[2]*pars[2])));
 }
 
-void stone_gradient(double t, double *pars, double *r, double *grad) {
-    double dphi_dr, rr;
-    // TODO: not implemented
+void stone_gradient(double t, double *pars, double *q, double *grad) {
+    /*  pars:
+            - G (Gravitational constant)
+            - M (total mass)
+            - r_c (core radius)
+            - r_h (halo radius)
+    */
+    double r, u_c, u_h, fac, dphi_dr;
 
-    grad[0] = dphi_dr*r[0]/rr;
-    grad[1] = dphi_dr*r[1]/rr;
-    grad[2] = dphi_dr*r[2]/rr;
+    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    u_c = r / pars[2];
+    u_h = r / pars[3];
+
+    fac = 2*pars[0]*pars[1] / (M_PI*r*r) / (pars[2] - pars[3]);  // order flipped from value
+    dphi_dr = fac * (pars[3]*atan(u_h) - pars[2]*atan(u_c));
+
+    grad[0] = dphi_dr*q[0]/r;
+    grad[1] = dphi_dr*q[1]/r;
+    grad[2] = dphi_dr*q[2]/r;
+}
+
+double stone_density(double t, double *pars, double *q) {
+    /*  pars:
+            - G (Gravitational constant)
+            - M (total mass)
+            - r_c (core radius)
+            - r_h (halo radius)
+    */
+    double r, u_c, u_t, rho;
+    rho = pars[1] * (pars[2] + pars[3]) / (2*M_PI*M_PI*pars[2]*pars[2]*pars[3]*pars[3]);
+
+    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    u_c = r / pars[2];
+    u_t = r / pars[3];
+
+    return rho / ((1 + u_c*u_c)*(1 + u_t*u_t));
 }
 
 /* ---------------------------------------------------------------------------

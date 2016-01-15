@@ -67,6 +67,7 @@ cdef extern from "src/_cbuiltin.h":
 
     double stone_value(double t, double *pars, double *q) nogil
     void stone_gradient(double t, double *pars, double *q, double *grad) nogil
+    double stone_density(double t, double *pars, double *q) nogil
 
     double sphericalnfw_value(double t, double *pars, double *q) nogil
     void sphericalnfw_gradient(double t, double *pars, double *q, double *grad) nogil
@@ -420,22 +421,22 @@ class MiyamotoNagaiPotential(CPotentialBase):
 #
 cdef class _StonePotential(_CPotential):
 
-    def __cinit__(self, double G, double m_tot, double r_c, double r_t):
-        self._parvec = np.array([G,m_tot,r_c,r_t])
+    def __cinit__(self, double G, double m, double r_c, double r_h):
+        self._parvec = np.array([G,m,r_c,r_h])
         self._parameters = &(self._parvec)[0]
         self.c_value = &stone_value
         self.c_gradient = &stone_gradient
-        self.c_density = &nan_density
+        self.c_density = &stone_density
 
 class StonePotential(CPotentialBase):
     r"""
     StonePotential(m_tot, r_c, r_t, units)
 
-    Stone potential from Stone & Ostriker (2015).
+    Stone potential from [Stone & Ostriker (2015)](http://dx.doi.org/10.1088/2041-8205/806/2/L28).
 
     .. math::
 
-        \Phi(r) = -\frac{wrong}{wrong}\left[ \frac{\arctan(r/r_t)}{r/r_t} - \frac{\arctan(r/r_c)}{r/r_c} + \frac{1}{2}\ln\left(\frac{r^2+r_t^2}{r^2+r_c^2}\right)\right]
+        \Phi(r) = -\frac{2 G M}{\pi(r_h - r_c)}\left[ \frac{\arctan(r/r_h)}{r/r_h} - \frac{\arctan(r/r_c)}{r/r_c} + \frac{1}{2}\ln\left(\frac{r^2+r_h^2}{r^2+r_c^2}\right)\right]
 
     Parameters
     ----------
@@ -443,15 +444,15 @@ class StonePotential(CPotentialBase):
         Total mass.
     r_c : numeric
         Core radius.
-    r_t : numeric
-        Truncation radius.
+    r_h : numeric
+        Halo radius.
     units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, m_tot, r_c, r_t, units):
-        self.parameters = dict(m_tot=m_tot, r_c=r_c, r_t=r_t)
+    def __init__(self, m, r_c, r_h, units):
+        self.parameters = dict(m=m, r_c=r_c, r_h=r_h)
         super(StonePotential, self).__init__(units=units)
         self.G = G.decompose(units).value
         self.c_instance = _StonePotential(G=self.G, **self.parameters)
