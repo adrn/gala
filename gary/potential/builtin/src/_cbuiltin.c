@@ -248,7 +248,7 @@ void stone_gradient(double t, double *pars, double *q, double *grad) {
     u_h = r / pars[3];
 
     fac = 2*pars[0]*pars[1] / (M_PI*r*r) / (pars[2] - pars[3]);  // order flipped from value
-    dphi_dr = fac * (pars[3]*atan(u_h) - pars[2]*atan(u_c));
+    dphi_dr = fac * (pars[2]*atan(u_c) - pars[3]*atan(u_h));
 
     grad[0] = dphi_dr*q[0]/r;
     grad[1] = dphi_dr*q[1]/r;
