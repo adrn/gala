@@ -24,6 +24,7 @@ extern double jaffe_density(double t, double *pars, double *q);
 
 extern double stone_value(double t, double *pars, double *q);
 extern void stone_gradient(double t, double *pars, double *q, double *grad);
+extern void stone_density(double t, double *pars, double *q);
 
 extern double sphericalnfw_value(double t, double *pars, double *q);
 extern void sphericalnfw_gradient(double t, double *pars, double *q, double *grad);
