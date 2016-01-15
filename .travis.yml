@@ -26,7 +26,7 @@ env:
         - NUMPY_VERSION=1.9
         - ASTROPY_VERSION=stable
         - SETUP_CMD='test -a "--assert=plain"' # HACK (1/2): UNTIL ASTROPY CONTAINS PYTEST 2.7.3
-        - PIP_DEPENDENCIES='pygaia'
+        # - PIP_DEPENDENCIES='pygaia'
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
