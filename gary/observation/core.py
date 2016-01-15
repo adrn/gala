@@ -10,64 +10,81 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 import numpy as np
 import astropy.units as u
 
-__all__ = ["apparent_magnitude", "absolute_magnitude", "distance_modulus",
-           "distance"]
+__all__ = ["apparent_magnitude", "absolute_magnitude",
+           "distance_modulus", "distance"]
 
-def apparent_magnitude(M, d):
-    """ Compute the apparent magnitude of a source given an absolute magnitude
-        and a distance.
+def apparent_magnitude(mag_abs, distance):
+    """
+    Compute the apparent magnitude of a source given an absolute magnitude
+    and a distance.
 
-        Parameters
-        ----------
-        M : numeric or iterable
-            Absolute magnitude.
-        d : astropy.units.Quantity
-            The distance to the source as a Quantity object.
+    Parameters
+    ----------
+    mag_abs : numeric or iterable
+        Absolute magnitude.
+    distance : :class:`~astropy.units.Quantity`
+        The distance to the source as a Quantity object.
 
+    Returns
+    -------
+    mag_app : :class:`~numpy.ndarray`
+        The apparent magnitude.
     """
 
-    if not isinstance(d, u.Quantity):
-        raise TypeError("Distance must be an Astropy Quantity object!")
+    # Compute the apparent magnitude
+    return mag_abs + distance_modulus(distance)
 
-    # Compute the apparent magnitude -- ignores extinction
-    return M + distance_modulus(d)
+def absolute_magnitude(mag_app, distance):
+    """
+    Compute the absolute magnitude of a source given an apparent magnitude
+    and a distance.
 
-def absolute_magnitude(m, d):
-    """ Compute the absolute magnitude of a source given an apparent magnitude
-        and a distance.
+    Parameters
+    ----------
+    mag_app : numeric or iterable
+        Apparent magnitude.
+    distance : :class:`~astropy.units.Quantity`
+        The distance to the source as a Quantity object.
 
-        Parameters
-        ----------
-        m : numeric or iterable
-            Apparent magnitude of a source.
-        d : astropy.units.Quantity
-            The distance to the source as a Quantity object.
+    Returns
+    -------
+    mag_abs : :class:`~numpy.ndarray`
+        The absolute magnitude.
     """
 
-    if not isinstance(d, u.Quantity):
-        raise TypeError("Distance must be an Astropy Quantity object!")
+    # Compute the absolute magnitude
+    return mag_app - distance_modulus(distance)
 
-    # Compute the apparent magnitude -- ignores extinction
-    return m - distance_modulus(d)
-
-def distance_modulus(d):
-    """ Compute the distance modulus given a distance.
-
-        Parameters
-        ----------
-        d : astropy.units.Quantity
-            The distance as a Quantity object.
+def distance_modulus(distance):
     """
-    if not isinstance(d, u.Quantity):
-        raise TypeError("Distance must be an Astropy Quantity object!")
+    Compute the distance modulus given a distance.
 
-    return 5.*(np.log10(d.to(u.pc).value) - 1.)
+    Parameters
+    ----------
+    distance : astropy.units.Quantity
+        The distance as a Quantity object.
 
-def distance(distance_modulus):
-    """ Compute the distance from the distance modulus.
-
-        Parameters:
-        dm : numeric or iterable
-            The distance modulus
+    Returns
+    -------
+    distance_mod : :class:`~numpy.ndarray`
+        The distance modulus.
     """
-    return 10**(distance_modulus/5. + 1) * u.pc
+
+    return 5.*(np.log10(distance.to(u.pc).value) - 1.)
+
+def distance(distance_mod):
+    """
+    Compute the distance from the distance modulus.
+
+    Parameters
+    ----------
+    distance_mod : astropy.units.Quantity
+        The distance modulus.
+
+    Returns
+    -------
+    distance : :class:`~astropy.units.Quantity`
+        Distance.
+
+    """
+    return 10**(distance_mod/5. + 1) * u.pc
