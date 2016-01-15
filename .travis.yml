@@ -23,7 +23,7 @@ env:
         # The following versions are the 'default' for tests, unless
         # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
-        - NUMPY_VERSION=1.9
+        - NUMPY_VERSION=1.10
         - ASTROPY_VERSION=stable
         - SETUP_CMD='test -a "--assert=plain"' # HACK (1/2): UNTIL ASTROPY CONTAINS PYTEST 2.7.3
         # - PIP_DEPENDENCIES='pygaia'
