@@ -430,9 +430,9 @@ cdef class _StonePotential(_CPotential):
 
 class StonePotential(CPotentialBase):
     r"""
-    StonePotential(m_tot, r_c, r_t, units)
+    StonePotential(m, r_c, r_h, units)
 
-    Stone potential from [Stone & Ostriker (2015)](http://dx.doi.org/10.1088/2041-8205/806/2/L28).
+    Stone potential from `Stone & Ostriker (2015) <http://dx.doi.org/10.1088/2041-8205/806/2/L28>`_.
 
     .. math::
 
