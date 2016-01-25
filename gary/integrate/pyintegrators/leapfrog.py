@@ -36,8 +36,8 @@ class LeapfrogIntegrator(Integrator):
         ip1 = i+1
         ip1_2 = i+1/2
 
-    Example: Integrating orbits in a Harmonic oscillator potential
-    --------------------------------------------------------------
+    Examples
+    --------
 
     Using ``q`` as our coordinate variable and ``p`` as the conjugate
     momentum, we want to numerically solve for an orbit in the

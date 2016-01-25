@@ -50,4 +50,4 @@ Tutorials
    :maxdepth: 1
    :glob:
 
-   examples/*
+   examples/integrate-potential-example
