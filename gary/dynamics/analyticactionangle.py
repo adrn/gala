@@ -15,13 +15,13 @@ import astropy.coordinates as coord
 import astropy.units as u
 
 # Project
-from ..coordinates import cartesian_to_physicsspherical, physicsspherical_to_cartesian
+from ..potential import PotentialBase, IsochronePotential, HarmonicOscillatorPotential
+from ..coordinates import physicsspherical_to_cartesian
 from ..util import atleast_2d
 
-__all__ = ['isochrone_xv_to_aa', 'isochrone_aa_to_xv',
-           'harmonic_oscillator_xv_to_aa', 'harmonic_oscillator_aa_to_xv']
+__all__ = ['isochrone_to_aa', 'harmonic_oscillator_to_aa']
 
-def isochrone_xv_to_aa(x, v, potential):
+def isochrone_to_aa(w, potential):
     """
     Transform the input cartesian position and velocity to action-angle
     coordinates in the Isochrone potential. See Section 3.5.2 in
@@ -39,17 +39,14 @@ def isochrone_xv_to_aa(x, v, potential):
         to call :meth:`~gary.potential.IsochronePotential.phase_space()`
         instead.
 
-    # TODO: should accept quantities
-
     Parameters
     ----------
-    x : array_like
-        Cartesian positions. Must have shape ``(3,N)`` or ``(3,)``.
-    v : array_like
-        Cartesian velocities. Must have shape ``(3,N)`` or ``(3,)``.
-    potential : :class:`gary.potential.IsochronePotential`
+    w : :class:`gary.dynamics.CartesianPhaseSpacePosition`, :class:`gary.dynamics.CartesianOrbit`
+        TODO: ...
+    potential : :class:`gary.potential.IsochronePotential`, dict
         An instance of the potential to use for computing the transformation
-        to angle-action coordinates.
+        to angle-action coordinates. Or, a dictionary of parameters used to
+        define an :class:`gary.potential.IsochronePotential` instance.
 
     Returns
     -------
@@ -61,32 +58,27 @@ def isochrone_xv_to_aa(x, v, potential):
         An array of frequencies computed from the input positions and velocities.
     """
 
-    x = atleast_2d(x,insert_axis=1)
-    v = atleast_2d(v,insert_axis=1)
+    if not isinstance(potential, PotentialBase):
+        potential = IsochronePotential(**potential)
 
-    _G = G.decompose(potential.units).value
-    GM = _G*potential.parameters['m']
+    usys = potential.units
+    GM = G.decompose(usys).value*potential.parameters['m']
     b = potential.parameters['b']
-    E = potential.total_energy(x, v)
-
-    x = x * u.dimensionless_unscaled
-    v = v * u.dimensionless_unscaled
+    E = w.energy().decompose(usys).value
 
     if np.any(E > 0.):
         raise ValueError("Unbound particle. (E = {})".format(E))
 
     # convert position, velocity to spherical polar coordinates
-    x_rep = coord.CartesianRepresentation(x)
-    x_rep = x_rep.represent_as(coord.PhysicsSphericalRepresentation)
-    v_sph = cartesian_to_physicsspherical(x_rep, v)
-    r,phi,theta = x_rep.r.value, x_rep.phi.value, x_rep.theta.value
-    vr,vphi,vtheta = v_sph.value
+    sph,vsph = w.represent_as(coord.PhysicsSphericalRepresentation)
+    r,phi,theta = sph.r.value, sph.phi.value, sph.theta.value
+    vr,vphi,vtheta = vsph.value
 
     # ----------------------------
-    # Actions
+    # Compute the actions
     # ----------------------------
 
-    L_vec = np.cross(x,v,axis=0)
+    L_vec = w.angular_momentum().decompose(usys).value
     Lz = L_vec[2]
     L = np.linalg.norm(L_vec, axis=0)
 
@@ -94,7 +86,7 @@ def isochrone_xv_to_aa(x, v, potential):
     Jr = GM / np.sqrt(-2*E) - 0.5*(L + np.sqrt(L*L + 4*GM*b))
 
     # compute the three action variables
-    actions = np.array([Jr, Lz, L - np.abs(Lz)])
+    actions = np.array([Jr, Lz, L - np.abs(Lz)]) # Jr, Jphi, Jtheta
 
     # ----------------------------
     # Angles
@@ -152,12 +144,14 @@ def isochrone_xv_to_aa(x, v, potential):
     freqs = np.zeros_like(actions)
     omega_r = GM**2 / (Jr + 0.5*(L + np.sqrt(L*L + 4*GM*b)))**3
     freqs[0] = omega_r
-    freqs[1] = omega_th * omega_r
-    freqs[2] = np.sign(actions[2]) * omega_th
+    freqs[1] = np.sign(actions[1]) * omega_th
+    freqs[2] = omega_th * omega_r
 
-    return actions, angles, freqs
+    a_unit = (1*usys['angular momentum']).decompose(usys).unit
+    f_unit = (1*usys['frequency']).decompose(usys).unit
+    return actions*a_unit, angles*u.radian, freqs*f_unit
 
-def isochrone_aa_to_xv(actions, angles, potential):
+def isochrone_to_xv(actions, angles, potential):
     """
     Transform the input actions and angles to ordinary phase space (position
     and velocity) in cartesian coordinates. See Section 3.5.2 in
@@ -169,8 +163,6 @@ def isochrone_aa_to_xv(actions, angles, potential):
         This function is included as a method of the :class:`~gary.potential.IsochronePotential`
         and it is recommended to call :meth:`~gary.potential.IsochronePotential.action_angle()`
         instead.
-
-    # TODO: should accept quantities
 
     Parameters
     ----------
@@ -192,6 +184,9 @@ def isochrone_aa_to_xv(actions, angles, potential):
         An array of cartesian velocities computed from the input
         angles and actions.
     """
+
+    raise NotImplementedError("Implementation not supported until working with "
+                              "angle-action variables has a better API.")
 
     actions = atleast_2d(actions,insert_axis=1).copy()
     angles = atleast_2d(angles,insert_axis=1).copy()
@@ -292,7 +287,7 @@ def isochrone_aa_to_xv(actions, angles, potential):
     v = physicsspherical_to_cartesian(pos, [vr,vphi,vtheta]*u.dimensionless_unscaled).value
     return x,v
 
-def harmonic_oscillator_xv_to_aa(x, v, potential):
+def harmonic_oscillator_to_aa(w, potential):
     """
     Transform the input cartesian position and velocity to action-angle
     coordinates for the Harmonic Oscillator potential.
@@ -330,7 +325,7 @@ def harmonic_oscillator_xv_to_aa(x, v, potential):
 
     return action, angle % (2.*np.pi)
 
-def harmonic_oscillator_aa_to_xv(actions, angles, potential):
+def harmonic_oscillator_to_xv(actions, angles, potential):
     """
     Transform the input action-angle coordinates to cartesian
     position and velocity for the Harmonic Oscillator potential.
@@ -348,7 +343,8 @@ def harmonic_oscillator_aa_to_xv(actions, angles, potential):
     angles : array_like
     potential : Potential
     """
-    raise NotImplementedError()
+    raise NotImplementedError("Implementation not supported until working with "
+                              "angle-action variables has a better API.")
 
     # TODO: bug in below...
     omega = potential.parameters['omega']
