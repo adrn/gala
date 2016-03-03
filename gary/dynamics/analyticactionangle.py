@@ -64,7 +64,7 @@ def isochrone_to_aa(w, potential):
     usys = potential.units
     GM = G.decompose(usys).value*potential.parameters['m']
     b = potential.parameters['b']
-    E = w.energy().decompose(usys).value
+    E = w.energy(potential).decompose(usys).value
 
     if np.any(E > 0.):
         raise ValueError("Unbound particle. (E = {})".format(E))
@@ -310,8 +310,12 @@ def harmonic_oscillator_to_aa(w, potential):
     """
 
     usys = potential.units
-    x = w.pos.decompose(usys).value
-    v = w.vel.decompose(usys).value
+    if usys is not None:
+        x = w.pos.decompose(usys).value
+        v = w.vel.decompose(usys).value
+    else:
+        x = w.pos.value
+        v = w.vel.value
     _new_omega_shape = (3,) + tuple([1]*(len(x.shape)-1))
 
     # compute actions -- just energy (hamiltonian) over frequency
@@ -329,9 +333,12 @@ def harmonic_oscillator_to_aa(w, potential):
 
     freq = potential.parameters['omega']
 
-    a_unit = (1*usys['angular momentum']).decompose(usys).unit
-    f_unit = (1*usys['frequency']).decompose(usys).unit
-    return action*a_unit, (angle % (2.*np.pi))*u.radian, freq*f_unit
+    if usys is not None:
+        a_unit = (1*usys['angular momentum']).decompose(usys).unit
+        f_unit = (1*usys['frequency']).decompose(usys).unit
+        return action*a_unit, (angle % (2.*np.pi))*u.radian, freq*f_unit
+    else:
+        return action*u.one, (angle % (2.*np.pi))*u.one, freq*u.one
 
 def harmonic_oscillator_to_xv(actions, angles, potential):
     """
