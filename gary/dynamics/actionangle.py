@@ -451,6 +451,7 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
         dxyz = (1,2,2)
         circ = np.sign(w[0,0]*w[4,0]-w[1,0]*w[3,0])
         sign = np.array([1.,circ,1.])
+        orbit = orbit_align
     elif isinstance(toy_potential, HarmonicOscillatorPotential):
         dxyz = (2,2,2)
         sign = 1.
@@ -462,8 +463,8 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
     w = np.squeeze(w) # get rid of extra axis if len=1
 
     # Now find toy actions and angles
-    aaf = toy_potential.action_angle(w[:3], w[3:])
-    aa = np.vstack(aaf[:2])
+    aaf = toy_potential.action_angle(orbit)
+    aa = np.vstack((aaf[0].value, aaf[1].value))
     if np.any(np.isnan(aa)):
         ix = ~np.any(np.isnan(aa),axis=0)
         aa = aa[:,ix]
@@ -494,7 +495,7 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
     theta = angles[:3]
     freqs = angles[3:6]  # * sign
 
-    return dict(actions=J, angles=theta, freqs=freqs,
+    return dict(actions=J*aaf[0].unit, angles=theta*aaf[1].unit, freqs=freqs*aaf[2].unit,
                 Sn=actions[3:], dSn_dJ=angles[6:], nvecs=nvecs)
 
 def find_actions(orbit, N_max, force_harmonic_oscillator=False, toy_potential=None):
@@ -523,7 +524,8 @@ def find_actions(orbit, N_max, force_harmonic_oscillator=False, toy_potential=No
     aaf : dict
         A Python dictionary containing the actions, angles, frequencies, and
         value of the generating function and derivatives for each integer
-        vector. Each value of the dictionary is a :class:`numpy.ndarray`.
+        vector. Each value of the dictionary is a :class:`numpy.ndarray` or
+        :class:`astropy.units.Quantity`.
 
     """
 
@@ -541,11 +543,12 @@ def find_actions(orbit, N_max, force_harmonic_oscillator=False, toy_potential=No
             aaf = _single_orbit_find_actions(orbit[:,n], N_max,
                                              force_harmonic_oscillator=force_harmonic_oscillator,
                                              toy_potential=toy_potential)
-            actions[n] = aaf['actions']
-            angles[n] = aaf['angles']
-            freqs[n] = aaf['freqs']
+            actions[n] = aaf['actions'].value
+            angles[n] = aaf['angles'].value
+            freqs[n] = aaf['freqs'].value
 
-    return dict(actions=actions, angles=angles, freqs=freqs,
+    return dict(actions=actions*aaf['actions'].unit, angles=angles*aaf['angles'].unit,
+                freqs=freqs*aaf['freqs'].unit,
                 Sn=actions[3:], dSn=angles[6:], nvecs=aaf['nvecs'])
 
 # def solve_hessian(relative_actions, relative_freqs):
