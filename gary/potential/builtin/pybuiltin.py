@@ -46,7 +46,7 @@ class HarmonicOscillatorPotential(PotentialBase):
         omega = self.parameters['omega']
         return atleast_2d(omega**2, insert_axis=1)*x
 
-    def action_angle(self, x, v):
+    def action_angle(self, w):
         """
         Transform the input cartesian position and velocity to action-angle
         coordinates the Harmonic Oscillator potential. This transformation
@@ -59,34 +59,32 @@ class HarmonicOscillatorPotential(PotentialBase):
 
         Parameters
         ----------
-        x : array_like
-            Positions.
-        v : array_like
-            Velocities.
+        w : :class:`gary.dynamics.CartesianPhaseSpacePosition`, :class:`gary.dynamics.CartesianOrbit`
+            The positions or orbit to compute the actions, angles, and frequencies at.
         """
-        from ...dynamics.analyticactionangle import harmonic_oscillator_xv_to_aa
-        return harmonic_oscillator_xv_to_aa(x, v, self)
+        from ...dynamics.analyticactionangle import harmonic_oscillator_to_aa
+        return harmonic_oscillator_to_aa(w, self)
 
-    def phase_space(self, actions, angles):
-        """
-        Transform the input action-angle coordinates to cartesian position and velocity
-        assuming a Harmonic Oscillator potential. This transformation
-        is analytic and can be used as a "toy potential" in the
-        Sanders & Binney 2014 formalism for computing action-angle coordinates
-        in _any_ potential.
+    # def phase_space(self, actions, angles):
+    #     """
+    #     Transform the input action-angle coordinates to cartesian position and velocity
+    #     assuming a Harmonic Oscillator potential. This transformation
+    #     is analytic and can be used as a "toy potential" in the
+    #     Sanders & Binney 2014 formalism for computing action-angle coordinates
+    #     in _any_ potential.
 
-        Adapted from Jason Sanders' code
-        `genfunc <https://github.com/jlsanders/genfunc>`_.
+    #     Adapted from Jason Sanders' code
+    #     `genfunc <https://github.com/jlsanders/genfunc>`_.
 
-        Parameters
-        ----------
-        x : array_like
-            Positions.
-        v : array_like
-            Velocities.
-        """
-        from ...dynamics.analyticactionangle import harmonic_oscillator_aa_to_xv
-        return harmonic_oscillator_aa_to_xv(actions, angles, self)
+    #     Parameters
+    #     ----------
+    #     x : array_like
+    #         Positions.
+    #     v : array_like
+    #         Velocities.
+    #     """
+    #     from ...dynamics.analyticactionangle import harmonic_oscillator_aa_to_xv
+    #     return harmonic_oscillator_aa_to_xv(actions, angles, self)
 
 class KuzminPotential(PotentialBase):
     r"""
