@@ -216,7 +216,7 @@ class IsochronePotential(CPotentialBase):
         self.G = G.decompose(units).value
         self.c_instance = _IsochronePotential(G=self.G, **self.parameters)
 
-    def action_angle(self, x, v):
+    def action_angle(self, w):
         """
         Transform the input cartesian position and velocity to action-angle
         coordinates the Isochrone potential. See Section 3.5.2 in
@@ -232,28 +232,26 @@ class IsochronePotential(CPotentialBase):
 
         Parameters
         ----------
-        x : array_like
-            Positions.
-        v : array_like
-            Velocities.
+        w : :class:`gary.dynamics.CartesianPhaseSpacePosition`, :class:`gary.dynamics.CartesianOrbit`
+            The positions or orbit to compute the actions, angles, and frequencies at.
         """
-        from ...dynamics.analyticactionangle import isochrone_xv_to_aa
-        return isochrone_xv_to_aa(x, v, self)
+        from ...dynamics.analyticactionangle import isochrone_to_aa
+        return isochrone_to_aa(w, self)
 
-    def phase_space(self, actions, angles):
-        """
-        Transform the input actions and angles to ordinary phase space (position
-        and velocity) in cartesian coordinates. See Section 3.5.2 in
-        Binney & Tremaine (2008), and be aware of the errata entry for
-        Eq. 3.225.
+    # def phase_space(self, actions, angles):
+    #     """
+    #     Transform the input actions and angles to ordinary phase space (position
+    #     and velocity) in cartesian coordinates. See Section 3.5.2 in
+    #     Binney & Tremaine (2008), and be aware of the errata entry for
+    #     Eq. 3.225.
 
-        Parameters
-        ----------
-        actions : array_like
-        angles : array_like
-        """
-        from ...dynamics.analyticactionangle import isochrone_aa_to_xv
-        return isochrone_aa_to_xv(actions, angles, self)
+    #     Parameters
+    #     ----------
+    #     actions : array_like
+    #     angles : array_like
+    #     """
+    #     from ...dynamics.analyticactionangle import isochrone_aa_to_xv
+    #     return isochrone_aa_to_xv(actions, angles, self)
 
 # ============================================================================
 #    Hernquist Spheroid potential from Hernquist 1990
