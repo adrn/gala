@@ -305,25 +305,33 @@ def harmonic_oscillator_to_aa(w, potential):
 
     Parameters
     ----------
-    x : array_like
-        Positions.
-    v : array_like
-        Velocities.
+    w : :class:`gary.dynamics.CartesianPhaseSpacePosition`, :class:`gary.dynamics.CartesianOrbit`
     potential : Potential
     """
 
+    usys = potential.units
+    x = w.pos.decompose(usys).value
+    v = w.vel.decompose(usys).value
     _new_omega_shape = (3,) + tuple([1]*(len(x.shape)-1))
 
     # compute actions -- just energy (hamiltonian) over frequency
     # E = potential.total_energy(x,v)[:,None]
-    omega = potential.parameters['omega'].reshape(_new_omega_shape)
+    try:
+        omega = potential.parameters['omega'].reshape(_new_omega_shape).decompose(usys).value
+    except AttributeError: # not a Quantity
+        omega = potential.parameters['omega'].reshape(_new_omega_shape)
+
     action = (v**2 + (omega*x)**2)/(2.*omega)
 
     angle = np.arctan(-v / omega / x)
     angle[x == 0] = -np.sign(v[x == 0])*np.pi/2.
     angle[x < 0] += np.pi
 
-    return action, angle % (2.*np.pi)
+    freq = potential.parameters['omega']
+
+    a_unit = (1*usys['angular momentum']).decompose(usys).unit
+    f_unit = (1*usys['frequency']).decompose(usys).unit
+    return action*a_unit, (angle % (2.*np.pi))*u.radian, freq*f_unit
 
 def harmonic_oscillator_to_xv(actions, angles, potential):
     """
