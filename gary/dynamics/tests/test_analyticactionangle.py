@@ -86,7 +86,7 @@ class TestHarmonicOscillator(object):
         for n in range(self.N):
             logger.debug("Orbit {}".format(n))
 
-            actions,angles = harmonic_oscillator_to_aa(self.w[:,n], self.potential)
+            actions,angles,freq = harmonic_oscillator_to_aa(self.w[:,n], self.potential)
             actions = actions.value
             angles = angles.value
 
