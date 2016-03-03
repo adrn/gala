@@ -144,9 +144,9 @@ class ActionsBase(object):
             logger.info("Angle ratio: {}".format(angles / s_angles))
             logger.info("Freq ratio: {}".format(freqs / s_freqs))
 
-            assert np.allclose(actions, s_actions, rtol=1E-5)
-            assert np.allclose(angles, s_angles, rtol=1E-5)
-            assert np.allclose(freqs, s_freqs, rtol=1E-5)
+            assert np.allclose(actions.value, s_actions, rtol=1E-5)
+            assert np.allclose(angles.value, s_angles, rtol=1E-5)
+            assert np.allclose(freqs.value, s_freqs, rtol=1E-5)
 
             # logger.debug("Plotting orbit...")
             # fig = plot_orbits(w, marker='.', alpha=0.2, linestyle='none')
