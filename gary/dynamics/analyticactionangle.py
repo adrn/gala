@@ -144,7 +144,7 @@ def isochrone_to_aa(w, potential):
     freqs = np.zeros_like(actions)
     omega_r = GM**2 / (Jr + 0.5*(L + np.sqrt(L*L + 4*GM*b)))**3
     freqs[0] = omega_r
-    freqs[1] = np.sign(actions[1]) * omega_th
+    freqs[1] = np.sign(actions[1]) * omega_th * omega_r
     freqs[2] = omega_th * omega_r
 
     a_unit = (1*usys['angular momentum']).decompose(usys).unit
