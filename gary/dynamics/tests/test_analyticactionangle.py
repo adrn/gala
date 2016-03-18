@@ -49,8 +49,8 @@ class TestIsochrone(object):
             v = self.w.vel.value[...,n]
             s_v = (v*u.kpc/u.Myr).to(u.km/u.s).value
             s_w = np.vstack((x,s_v))
-            m = self.potential.parameters['m'] / 1E11
-            b = self.potential.parameters['b']
+            m = self.potential.parameters['m'].value / 1E11
+            b = self.potential.parameters['b'].value
             aa = np.array([toy_potentials.angact_iso(s_w[:,i].T, params=(m,b)) for i in range(s_w.shape[1])])
             s_actions = (aa[:,:3]*u.km/u.s*u.kpc).decompose(galactic).value
             s_angles = aa[:,3:]
@@ -97,7 +97,7 @@ class TestHarmonicOscillator(object):
             x = self.w.pos.value[...,n]
             v = self.w.vel.value[...,n]
             s_w = np.vstack((x,v))
-            omega = self.potential.parameters['omega']
+            omega = self.potential.parameters['omega'].value
             aa = np.array([toy_potentials.angact_ho(s_w[:,i].T, omega=omega) for i in range(s_w.shape[1])])
             s_actions = aa[:,:3]
             s_angles = aa[:,3:]
