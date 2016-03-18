@@ -1,6 +1,6 @@
-ctypedef double (*valuefunc)(double t, double *pars, double *q) nogil
-ctypedef double (*densityfunc)(double t, double *pars, double *q) nogil
-ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
+ctypedef public double (*valuefunc)(double t, double *pars, double *q) nogil
+ctypedef public double (*densityfunc)(double t, double *pars, double *q) nogil
+ctypedef public void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
 
 cdef class _CPotential:
     cdef double *_parameters
