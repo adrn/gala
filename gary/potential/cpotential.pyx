@@ -9,6 +9,9 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
+# Standard library
+from collections import OrderedDict
+
 # Third-party
 import numpy as np
 cimport numpy as np
@@ -36,6 +39,13 @@ class CPotentialBase(PotentialBase):
 
     TODO: better description here
     """
+
+    def __init__(self, units):
+        super(CPotentialBase, self).__init__(units=units)
+
+        self._c_parameters = OrderedDict()
+        for k,v in self.parameters.items():
+            self._c_parameters[k] = v.value
 
     def _value(self, q, t=0.):
         sh = q.shape
