@@ -107,6 +107,8 @@ def from_dict(d, module=None):
 def _to_dict_help(potential):
     d = dict()
 
+    d['class'] = potential.__class__.__name__
+
     if potential.units is not None:
         d['units'] = dict([(str(ptype),str(unit)) for ptype,unit in potential.units.to_dict().items()])
 
