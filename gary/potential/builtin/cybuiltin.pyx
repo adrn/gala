@@ -100,7 +100,7 @@ __all__ = ['HenonHeilesPotential', 'KeplerPotential', 'HernquistPotential',
            'LeeSutoTriaxialNFWPotential',
            'LogarithmicPotential', 'JaffePotential',
            'StonePotential', 'IsochronePotential',
-           'LM10Potential', 'RotatingLogarithmicPotential']
+           'RotatingLogarithmicPotential']
 
 # ============================================================================
 #    Hénon-Heiles potential
@@ -175,7 +175,7 @@ class KeplerPotential(CPotentialBase):
         self.parameters = dict(m=m)
         super(KeplerPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
-        self.c_instance = _KeplerPotential(G=self.G, **self.parameters)
+        self.c_instance = _KeplerPotential(G=self.G, **self._c_parameters)
 
 # ============================================================================
 #    Isochrone potential
@@ -214,7 +214,7 @@ class IsochronePotential(CPotentialBase):
         self.parameters = dict(m=m, b=b)
         super(IsochronePotential, self).__init__(units=units)
         self.G = G.decompose(units).value
-        self.c_instance = _IsochronePotential(G=self.G, **self.parameters)
+        self.c_instance = _IsochronePotential(G=self.G, **self._c_parameters)
 
     def action_angle(self, w):
         """
@@ -291,7 +291,7 @@ class HernquistPotential(CPotentialBase):
         self.parameters = dict(m=m, c=c)
         super(HernquistPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
-        self.c_instance = _HernquistPotential(G=self.G, **self.parameters)
+        self.c_instance = _HernquistPotential(G=self.G, **self._c_parameters)
 
 # ============================================================================
 #    Plummer sphere potential
@@ -330,7 +330,7 @@ class PlummerPotential(CPotentialBase):
         self.parameters = dict(m=m, b=b)
         super(PlummerPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
-        self.c_instance = _PlummerPotential(G=self.G, **self.parameters)
+        self.c_instance = _PlummerPotential(G=self.G, **self._c_parameters)
 
 # ============================================================================
 #    Jaffe spheroid potential
@@ -369,7 +369,7 @@ class JaffePotential(CPotentialBase):
         self.parameters = dict(m=m, c=c)
         super(JaffePotential, self).__init__(units=units)
         self.G = G.decompose(units).value
-        self.c_instance = _JaffePotential(G=self.G, **self.parameters)
+        self.c_instance = _JaffePotential(G=self.G, **self._c_parameters)
 
 
 # ============================================================================
@@ -412,7 +412,7 @@ class MiyamotoNagaiPotential(CPotentialBase):
         self.parameters = dict(m=m, a=a, b=b)
         super(MiyamotoNagaiPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
-        self.c_instance = _MiyamotoNagaiPotential(G=self.G, **self.parameters)
+        self.c_instance = _MiyamotoNagaiPotential(G=self.G, **self._c_parameters)
 
 # ============================================================================
 #    Stone and Ostriker potential (2015)
@@ -453,7 +453,7 @@ class StonePotential(CPotentialBase):
         self.parameters = dict(m=m, r_c=r_c, r_h=r_h)
         super(StonePotential, self).__init__(units=units)
         self.G = G.decompose(units).value
-        self.c_instance = _StonePotential(G=self.G, **self.parameters)
+        self.c_instance = _StonePotential(G=self.G, **self._c_parameters)
 
 # ============================================================================
 #    Spherical NFW potential
@@ -493,7 +493,7 @@ class SphericalNFWPotential(CPotentialBase):
         self.parameters = dict(v_c=v_c, r_s=r_s)
         super(SphericalNFWPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
-        self.c_instance = _SphericalNFWPotential(G=self.G, **self.parameters)
+        self.c_instance = _SphericalNFWPotential(G=self.G, **self._c_parameters)
 
 # ============================================================================
 #    Flattened NFW potential
@@ -536,7 +536,7 @@ class FlattenedNFWPotential(CPotentialBase):
         self.parameters = dict(v_c=v_c, r_s=r_s, q_z=q_z)
         super(FlattenedNFWPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
-        self.c_instance = _FlattenedNFWPotential(G=self.G, **self.parameters)
+        self.c_instance = _FlattenedNFWPotential(G=self.G, **self._c_parameters)
 
 # ============================================================================
 #    Lee & Suto (2003) triaxial NFW potential
@@ -765,7 +765,7 @@ class RotatingLogarithmicPotential(CPotentialBase):
         self.parameters = dict(v_c=v_c, r_h=r_h, q1=q1, q2=q2, q3=q3, alpha=alpha, Omega=Omega)
         super(RotatingLogarithmicPotential, self).__init__(units=units)
         self.G = G.decompose(units).value
-        self.c_instance = _RotatingLogarithmicPotential(**self.parameters)
+        self.c_instance = _RotatingLogarithmicPotential(**self._c_parameters)
 
 # ------------------------------------------------------------------------
 # HACK
@@ -787,94 +787,94 @@ cdef class _LM10Potential(_CPotential):
         self.c_gradient = &lm10_gradient
         self.c_density = &nan_density
 
-class LM10Potential(CPotentialBase):
-    r"""
-    LM10Potential(units, bulge=dict(), disk=dict(), halo=dict())
+# class LM10Potential(CPotentialBase):
+#     r"""
+#     LM10Potential(units, bulge=dict(), disk=dict(), halo=dict())
 
-    Three-component Milky Way potential model from Law & Majewski (2010).
+#     Three-component Milky Way potential model from Law & Majewski (2010).
 
-    Parameters
-    ----------
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units.
-    bulge : dict
-        Dictionary of parameter values for a :class:`HernquistPotential`.
-    disk : dict
-        Dictionary of parameter values for a :class:`MiyamotoNagaiPotential`.
-    halo : dict
-        Dictionary of parameter values for a :class:`LogarithmicPotential`.
+#     Parameters
+#     ----------
+#     units : iterable
+#         Unique list of non-reducable units that specify (at minimum) the
+#         length, mass, time, and angle units.
+#     bulge : dict
+#         Dictionary of parameter values for a :class:`HernquistPotential`.
+#     disk : dict
+#         Dictionary of parameter values for a :class:`MiyamotoNagaiPotential`.
+#     halo : dict
+#         Dictionary of parameter values for a :class:`LogarithmicPotential`.
 
-    """
-    def __init__(self, units=galactic, bulge=dict(), disk=dict(), halo=dict()):
-        self.G = G.decompose(units).value
-        self.parameters = dict()
-        default_bulge = dict(m=3.4E10, c=0.7)
-        default_disk = dict(m=1E11, a=6.5, b=0.26)
-        default_halo = dict(q1=1.38, q2=1., q3=1.36, r_h=12.,
-                            phi=(97*u.degree).decompose(units).value,
-                            v_c=np.sqrt(2)*(121.858*u.km/u.s).decompose(units).value,
-                            theta=0., psi=0.)
+#     """
+#     def __init__(self, units=galactic, bulge=dict(), disk=dict(), halo=dict()):
+#         self.G = G.decompose(units).value
+#         self.parameters = dict()
+#         default_bulge = dict(m=3.4E10*u.Msun, c=0.7*u.kpc)
+#         default_disk = dict(m=1E11*u.Msun, a=6.5*u.kpc, b=0.26*u.kpc)
+#         default_halo = dict(q1=1.38, q2=1., q3=1.36, r_h=12.*u.kpc,
+#                             phi=97*u.degree,
+#                             v_c=np.sqrt(2)*(121.858*u.km/u.s),
+#                             theta=0., psi=0.)
 
-        for k,v in default_disk.items():
-            if k not in disk:
-                disk[k] = v
-        self.parameters['disk'] = disk
+#         for k,v in default_disk.items():
+#             if k not in disk:
+#                 disk[k] = v
+#         self.parameters['disk'] = disk
 
-        for k,v in default_bulge.items():
-            if k not in bulge:
-                bulge[k] = v
-        self.parameters['bulge'] = bulge
+#         for k,v in default_bulge.items():
+#             if k not in bulge:
+#                 bulge[k] = v
+#         self.parameters['bulge'] = bulge
 
-        for k,v in default_halo.items():
-            if k not in halo:
-                halo[k] = v
-        self.parameters['halo'] = halo
+#         for k,v in default_halo.items():
+#             if k not in halo:
+#                 halo[k] = v
+#         self.parameters['halo'] = halo
 
-        super(LM10Potential, self).__init__(units=units)
+#         super(LM10Potential, self).__init__(units=units)
 
-        if halo.get('R', None) is None:
-            if halo['theta'] != 0 or halo['phi'] != 0 or halo['psi'] != 0:
-                D = rotation_matrix(halo['phi'], "z", unit=u.radian) # TODO: Bad assuming radians
-                C = rotation_matrix(halo['theta'], "x", unit=u.radian)
-                B = rotation_matrix(halo['psi'], "z", unit=u.radian)
-                R = np.asarray(B.dot(C).dot(D))
+#         if halo.get('R', None) is None:
+#             if halo['theta'] != 0 or halo['phi'] != 0 or halo['psi'] != 0:
+#                 D = rotation_matrix(halo['phi'], "z", unit=u.radian) # TODO: Bad assuming radians
+#                 C = rotation_matrix(halo['theta'], "x", unit=u.radian)
+#                 B = rotation_matrix(halo['psi'], "z", unit=u.radian)
+#                 R = np.asarray(B.dot(C).dot(D))
 
-            else:
-                R = np.eye(3)
-        else:
-            R = halo['R']
+#             else:
+#                 R = np.eye(3)
+#         else:
+#             R = halo['R']
 
-        R = np.ravel(R)
-        if R.size != 9:
-            raise ValueError("Rotation matrix parameter, R, should have 9 elements.")
+#         R = np.ravel(R)
+#         if R.size != 9:
+#             raise ValueError("Rotation matrix parameter, R, should have 9 elements.")
 
-        c_params = dict()
+#         c_params = dict()
 
-        # bulge
-        c_params['G'] = self.G
-        c_params['m_spher'] = bulge['m']
-        c_params['c'] = bulge['c']
+#         # bulge
+#         c_params['G'] = self.G
+#         c_params['m_spher'] = bulge['m']
+#         c_params['c'] = bulge['c']
 
-        # disk
-        c_params['G2'] = self.G
-        c_params['m_disk'] = disk['m']
-        c_params['a'] = disk['a']
-        c_params['b'] = disk['b']
+#         # disk
+#         c_params['G2'] = self.G
+#         c_params['m_disk'] = disk['m']
+#         c_params['a'] = disk['a']
+#         c_params['b'] = disk['b']
 
-        # halo
-        c_params['v_c'] = halo['v_c']
-        c_params['r_h'] = halo['r_h']
-        c_params['q1'] = halo['q1']
-        c_params['q2'] = halo['q2']
-        c_params['q3'] = halo['q3']
-        c_params['R11'] = R[0]
-        c_params['R12'] = R[1]
-        c_params['R13'] = R[2]
-        c_params['R21'] = R[3]
-        c_params['R22'] = R[4]
-        c_params['R23'] = R[5]
-        c_params['R31'] = R[6]
-        c_params['R32'] = R[7]
-        c_params['R33'] = R[8]
-        self.c_instance = _LM10Potential(**c_params)
+#         # halo
+#         c_params['v_c'] = halo['v_c']
+#         c_params['r_h'] = halo['r_h']
+#         c_params['q1'] = halo['q1']
+#         c_params['q2'] = halo['q2']
+#         c_params['q3'] = halo['q3']
+#         c_params['R11'] = R[0]
+#         c_params['R12'] = R[1]
+#         c_params['R13'] = R[2]
+#         c_params['R21'] = R[3]
+#         c_params['R22'] = R[4]
+#         c_params['R23'] = R[5]
+#         c_params['R31'] = R[6]
+#         c_params['R32'] = R[7]
+#         c_params['R33'] = R[8]
+#         self.c_instance = _LM10Potential(**c_params)

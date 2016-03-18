@@ -90,8 +90,8 @@ class TestSphericalNFWPotential(PotentialTestBase):
     def test_mass_enclosed(self):
 
         # true mass profile
-        vc = self.potential.parameters['v_c']
-        rs = self.potential.parameters['r_s']
+        vc = self.potential.parameters['v_c'].value
+        rs = self.potential.parameters['r_s'].value
         G = self.potential.G
 
         r = np.linspace(1., 400, 100)
@@ -118,9 +118,9 @@ class TestLogarithmic(PotentialTestBase):
                                      q1=1.2, q2=1., q3=0.8)
     w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
-class TestLM10(PotentialTestBase):
-    potential = LM10Potential(units=galactic)
-    w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+# class TestLM10(PotentialTestBase):
+#     potential = LM10Potential(units=galactic)
+#     w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
 class TestComposite(PotentialTestBase):
     p1 = LogarithmicPotential(units=galactic,

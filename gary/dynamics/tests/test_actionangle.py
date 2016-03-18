@@ -45,7 +45,7 @@ def test_fit_isochrone():
     orbit = potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., nsteps=10000)
 
     fit_potential = fit_isochrone(orbit)
-    m,b = fit_potential.parameters['m'], fit_potential.parameters['b']
+    m,b = fit_potential.parameters['m'].value, fit_potential.parameters['b'].value
     assert np.allclose(m, true_m, rtol=1E-2)
     assert np.allclose(b, true_b, rtol=1E-2)
 
@@ -56,7 +56,7 @@ def test_fit_harmonic_oscillator():
     orbit = potential.integrate_orbit([15.,1,2,0,0,0], dt=2., nsteps=10000)
 
     fit_potential = fit_harmonic_oscillator(orbit)
-    omegas = fit_potential.parameters['omega']
+    omegas = fit_potential.parameters['omega'].value
     assert np.allclose(omegas, true_omegas, rtol=1E-2)
 
 def test_fit_toy_potential():
@@ -68,7 +68,7 @@ def test_fit_toy_potential():
 
     potential = fit_toy_potential(orbit)
     for k,v in true_potential.parameters.items():
-        assert np.allclose(v, potential.parameters[k], rtol=1E-2)
+        assert np.allclose(v.value, potential.parameters[k], rtol=1E-2)
 
     # -----------------------------------------------------------------
     true_omegas = np.array([0.011, 0.032, 0.045])
@@ -76,8 +76,8 @@ def test_fit_toy_potential():
     orbit = true_potential.integrate_orbit([15.,1,2,0,0,0], dt=2., nsteps=10000)
 
     potential = fit_toy_potential(orbit)
-    assert np.allclose(potential.parameters['omega'],
-                       true_potential.parameters['omega'],
+    assert np.allclose(potential.parameters['omega'].value,
+                       true_potential.parameters['omega'].value,
                        rtol=1E-2)
 
 def test_check_angle_sampling():

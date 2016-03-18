@@ -62,8 +62,8 @@ def isochrone_to_aa(w, potential):
         potential = IsochronePotential(**potential)
 
     usys = potential.units
-    GM = G.decompose(usys).value*potential.parameters['m']
-    b = potential.parameters['b']
+    GM = (G*potential.parameters['m']).decompose(usys).value
+    b = potential.parameters['b'].decompose(usys).value
     E = w.energy(potential).decompose(usys).value
 
     if np.any(E > 0.):
@@ -191,9 +191,8 @@ def isochrone_to_xv(actions, angles, potential):
     actions = atleast_2d(actions,insert_axis=1).copy()
     angles = atleast_2d(angles,insert_axis=1).copy()
 
-    _G = G.decompose(potential.units).value
-    GM = _G*potential.parameters['m']
-    b = potential.parameters['b']
+    GM = (G*potential.parameters['m']).decompose(usys).value
+    b = potential.parameters['b'].decompose(usys).value
 
     # actions
     Jr = actions[0]
@@ -331,7 +330,7 @@ def harmonic_oscillator_to_aa(w, potential):
     angle[x == 0] = -np.sign(v[x == 0])*np.pi/2.
     angle[x < 0] += np.pi
 
-    freq = potential.parameters['omega']
+    freq = potential.parameters['omega'].decompose(usys).value
 
     if usys is not None:
         a_unit = (1*usys['angular momentum']).decompose(usys).unit
@@ -362,7 +361,7 @@ def harmonic_oscillator_to_xv(actions, angles, potential):
                               "angle-action variables has a better API.")
 
     # TODO: bug in below...
-    omega = potential.parameters['omega']
+    omega = potential.parameters['omega'].decompose(potential.units).value
     x = np.sqrt(2*actions/omega[None]) * np.sin(angles)
     v = np.sqrt(2*actions*omega[None]) * np.cos(angles)
 

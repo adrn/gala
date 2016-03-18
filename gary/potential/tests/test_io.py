@@ -19,8 +19,8 @@ from ...units import galactic
 
 def test_read():
     potential = load(get_pkg_data_filename('Plummer.yml'))
-    assert np.allclose(potential.parameters['m'], 100000000000.)
-    assert np.allclose(potential.parameters['b'], 0.26)
+    assert np.allclose(potential.parameters['m'].value, 100000000000.)
+    assert np.allclose(potential.parameters['b'].value, 0.26)
 
     potential = load(get_pkg_data_filename('HarmonicOscillator1D.yml'))
     assert potential.units is None

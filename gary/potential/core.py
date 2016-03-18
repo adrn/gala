@@ -43,7 +43,9 @@ class PotentialBase(object):
 
         for k,v in self.parameters.items():
             if hasattr(v, 'unit'):
-                self.parameters[k] = v.decompose(self.units).value
+                self.parameters[k] = v.decompose(self.units)
+            else:
+                self.parameters[k] = v*u.one
 
     def _value(self):
         raise NotImplementedError()
@@ -205,7 +207,7 @@ class PotentialBase(object):
             keys = self.parameters.keys()
 
         for k in keys:
-            v = self.parameters[k]
+            v = self.parameters[k].value
             par_fmt = "{}"
             post = ""
 
