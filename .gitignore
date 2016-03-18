@@ -54,3 +54,4 @@ distribute-*.tar.gz
 notebooks
 plots
 scripts
+gary/potential/cpotential.h
