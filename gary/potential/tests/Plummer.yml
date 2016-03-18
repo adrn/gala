@@ -1,6 +1,7 @@
 class: PlummerPotential
 parameters:
   b: 0.26
+  b_unit: kpc
   m: 100000000000.0
 units:
   angle: rad

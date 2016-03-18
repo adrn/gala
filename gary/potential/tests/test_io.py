@@ -7,6 +7,7 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
+import astropy.units as u
 from astropy.utils.data import get_pkg_data_filename
 import numpy as np
 
@@ -17,23 +18,24 @@ from ..builtin import IsochronePotential, KeplerPotential
 from ..builtin.special import PW14Potential
 from ...units import galactic
 
-def test_read():
+def test_read_plummer():
     potential = load(get_pkg_data_filename('Plummer.yml'))
     assert np.allclose(potential.parameters['m'].value, 100000000000.)
     assert np.allclose(potential.parameters['b'].value, 0.26)
+    assert potential.parameters['b'].unit == u.kpc
 
+def test_read_harmonic_oscillator():
     potential = load(get_pkg_data_filename('HarmonicOscillator1D.yml'))
     assert potential.units is None
 
+def test_read_composite():
     potential = load(get_pkg_data_filename('Composite.yml'))
+    assert '0' in potential.keys()
     assert 'disk' in potential.keys()
-    assert 'halo' in potential.keys()
     assert str(potential) == "CompositePotential"
 
-def test_write():
-
-    tmp_filename = "/tmp/potential.yml"
-
+tmp_filename = "/tmp/potential.yml"
+def test_write_isochrone():
     # try a simple potential
     potential = IsochronePotential(m=1E11, b=0.76, units=galactic)
 
@@ -42,6 +44,16 @@ def test_write():
 
     save(potential, tmp_filename)
 
+def test_write_isochrone_units():
+    # try a simple potential with units
+    potential = IsochronePotential(m=1E11*u.Msun, b=0.76*u.kpc, units=galactic)
+
+    with open(tmp_filename,'w') as f:
+        save(potential, f)
+
+    save(potential, tmp_filename)
+
+def test_write_pw14():
     # more complex
     potential = PW14Potential()
 
@@ -50,6 +62,7 @@ def test_write():
 
     save(potential, tmp_filename)
 
+def test_write_composite():
     # composite potential
     potential = CompositePotential(halo=KeplerPotential(m=1E11, units=galactic),
                                    bulge=IsochronePotential(m=1E11, b=0.76, units=galactic))
