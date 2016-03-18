@@ -627,7 +627,7 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
         c_params['R32'] = R[7]
         c_params['R33'] = R[8]
         self.c_instance = _LeeSutoTriaxialNFWPotential(G=self.G, **c_params)
-        self.parameters['R'] = np.ravel(R).copy()
+        self.parameters['R'] = np.ravel(R).copy()*u.one
 
 # ============================================================================
 #    Triaxial, Logarithmic potential
@@ -714,7 +714,7 @@ class LogarithmicPotential(CPotentialBase):
         c_params['R32'] = R[7]
         c_params['R33'] = R[8]
         self.c_instance = _LogarithmicPotential(**c_params)
-        self.parameters['R'] = np.ravel(R).copy()
+        self.parameters['R'] = np.ravel(R).copy()*u.one
 
 # ============================================================================
 #    Rotating, triaxial, Logarithmic potential
@@ -787,6 +787,7 @@ cdef class _LM10Potential(_CPotential):
         self.c_gradient = &lm10_gradient
         self.c_density = &nan_density
 
+# BROKEN NOW
 # class LM10Potential(CPotentialBase):
 #     r"""
 #     LM10Potential(units, bulge=dict(), disk=dict(), halo=dict())
