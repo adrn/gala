@@ -618,3 +618,6 @@ class CompositePotential(PotentialBase, OrderedDict):
 
     def density(self, q, t=0.):
         return np.array([p.density(q, t) for p in self.values()]).sum(axis=0)
+
+    def __repr__(self):
+        return "<CompositePotential {}>".format(",".join(self.keys()))
