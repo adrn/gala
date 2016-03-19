@@ -703,7 +703,7 @@ class LogarithmicPotential(CPotentialBase):
         if R.size != 9:
             raise ValueError("Rotation matrix parameter, R, should have 9 elements.")
 
-        c_params = self.parameters.copy()
+        c_params = self._c_parameters.copy()
         c_params['R11'] = R[0]
         c_params['R12'] = R[1]
         c_params['R13'] = R[2]
