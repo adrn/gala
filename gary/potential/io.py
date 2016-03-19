@@ -16,8 +16,6 @@ import numpy as np
 import six
 import yaml
 
-from .. import potential as gp
-
 __all__ = ['load', 'save']
 
 def _unpack_params(p):
@@ -80,6 +78,7 @@ def from_dict(d, module=None):
     """
 
     if 'type' in d and d['type'] == 'composite':
+        from .. import potential as gp
         p = getattr(gp, d['class'])()
         for i,component in enumerate(d['components']):
             c = _parse_component(component, module)
@@ -130,7 +129,7 @@ def to_dict(potential):
         The instantiated :class:`~gary.potential.PotentialBase` object.
 
     """
-
+    from .. import potential as gp
     if isinstance(potential, gp.CompositePotential):
         d = dict()
         d['type'] = 'composite'
