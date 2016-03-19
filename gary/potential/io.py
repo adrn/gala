@@ -12,39 +12,58 @@ import os
 # Third-party
 import astropy.units as u
 from astropy.utils import isiterable
+import numpy as np
+import six
 import yaml
 
 from .. import potential as gp
 
 __all__ = ['load', 'save']
 
-def pythonify(node):
-    for key, item in node.items():
-        if hasattr(item, 'items'):
-            pythonify(item)
+# def pythonify(node):
+#     for key, item in node.items():
+#         if hasattr(item, 'items'):
+#             pythonify(item)
+#         else:
+#             if hasattr(item,'unit'):
+#                 node[key] = item.value
+#                 node[key+'_unit'] = str(item.unit)
+
+#                 if hasattr(node[key], 'tolist'):
+#                     node[key] = node[key].tolist()
+
+#             elif hasattr(item,'tolist'):
+#                 node[key] = item.tolist()
+
+#             elif isiterable(item) and not isinstance(item, str):
+#                 node[key] = map(float, list(item))
+
+#             elif '_unit' in key:
+#                 continue
+
+#             elif key+'_unit' in node:
+#                 node[key] = float(item)*u.Unit(node[key+'_unit'])
+#                 del node[key+'_unit']
+
+#             else:
+#                 node[key] = float(item)
+
+def _unpack_params(p):
+    params = p.copy()
+    for key,item in six.iteritems(p):
+        if '_unit' in key:
+            continue
+
+        if isiterable(item) and not isinstance(item, str):
+            params[key] = np.array(item).astype(float)
         else:
-            if hasattr(item,'unit'):
-                node[key] = item.value
-                node[key+'_unit'] = str(item.unit)
+            params[key] = float(item)
 
-                if hasattr(node[key], 'tolist'):
-                    node[key] = node[key].tolist()
+        if key+'_unit' in params:
+            params[key] = float(item)*u.Unit(params[key+'_unit'])
+            del params[key+'_unit']
 
-            elif hasattr(item,'tolist'):
-                node[key] = item.tolist()
-
-            elif isiterable(item) and not isinstance(item, str):
-                node[key] = map(float, list(item))
-
-            elif '_unit' in key:
-                continue
-
-            elif key+'_unit' in node:
-                node[key] = float(item)*u.Unit(node[key+'_unit'])
-                del node[key+'_unit']
-
-            else:
-                node[key] = float(item)
+    return params
 
 def _parse_component(component, module):
     try:
@@ -62,14 +81,10 @@ def _parse_component(component, module):
             raise KeyError("Potential dictionary must contain a key 'units' with "
                            "a list of strings specifying the unit system.")
 
-    if 'parameters' in component:
-        params = component['parameters']
-    else:
-        params = dict()
+    params = component.get('parameters', {})
 
-    # need to crawl the dictionary structure and make sure everything is float or
-    #   a list of floats
-    pythonify(params)
+    # need to crawl the dictionary structure and unpack quantities
+    params = _unpack_params(params)
 
     if module is None:
         from .. import potential
@@ -104,6 +119,20 @@ def from_dict(d, module=None):
 
     return p
 
+# ----------------------------------------------------------------------------
+
+def _pack_params(p):
+    params = p.copy()
+    for key,item in six.iteritems(p):
+        if hasattr(item,'unit'):
+            params[key] = item.value
+            params[key+'_unit'] = str(item.unit)
+
+        if hasattr(params[key], 'tolist'): # convert array to list
+            params[key] = params[key].tolist()
+
+    return params
+
 def _to_dict_help(potential):
     d = dict()
 
@@ -113,8 +142,7 @@ def _to_dict_help(potential):
         d['units'] = dict([(str(ptype),str(unit)) for ptype,unit in potential.units.to_dict().items()])
 
     if len(potential.parameters) > 0:
-        params = dict(**potential.parameters)
-        pythonify(params)
+        params = _pack_params(**potential.parameters)
         d['parameters'] = params
 
     return d
@@ -145,6 +173,8 @@ def to_dict(potential):
         d = _to_dict_help(potential)
 
     return d
+
+# ----------------------------------------------------------------------------
 
 def load(f, module=None):
     """
