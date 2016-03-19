@@ -318,7 +318,9 @@ def harmonic_oscillator_to_aa(w, potential):
     _new_omega_shape = (3,) + tuple([1]*(len(x.shape)-1))
 
     # compute actions -- just energy (hamiltonian) over frequency
-    # E = potential.total_energy(x,v)[:,None]
+    if usys is None:
+        usys = []
+
     try:
         omega = potential.parameters['omega'].reshape(_new_omega_shape).decompose(usys).value
     except AttributeError: # not a Quantity
@@ -332,7 +334,7 @@ def harmonic_oscillator_to_aa(w, potential):
 
     freq = potential.parameters['omega'].decompose(usys).value
 
-    if usys is not None:
+    if usys is not None and usys:
         a_unit = (1*usys['angular momentum']).decompose(usys).unit
         f_unit = (1*usys['frequency']).decompose(usys).unit
         return action*a_unit, (angle % (2.*np.pi))*u.radian, freq*f_unit
