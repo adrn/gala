@@ -175,3 +175,7 @@ class PotentialTestBase(object):
             p = pickle.load(f)
 
         p.value(self.w0[:self.w0.size//2])
+
+class CompositePotentialTestBase(PotentialTestBase):
+    def test_repr(self):
+        pass

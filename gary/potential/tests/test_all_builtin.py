@@ -16,7 +16,7 @@ import pytest
 from ..core import CompositePotential
 from ..builtin import *
 from ...units import solarsystem, galactic
-from .helpers import PotentialTestBase
+from .helpers import PotentialTestBase, CompositePotentialTestBase
 
 ##############################################################################
 # Python
@@ -122,17 +122,6 @@ class TestLogarithmic(PotentialTestBase):
 #     potential = LM10Potential(units=galactic)
 #     w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
-class TestComposite(PotentialTestBase):
-    p1 = LogarithmicPotential(units=galactic,
-                              v_c=0.17, r_h=10.,
-                              q1=1.2, q2=1., q3=0.8, phi=0.35)
-    p2 = MiyamotoNagaiPotential(units=galactic,
-                                m=1.E11, a=6.5, b=0.26)
-    potential = CompositePotential()
-    potential['disk'] = p2
-    potential['halo'] = p1
-    w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
-
 class TestMisalignedLogarithmic(PotentialTestBase):
     potential = LogarithmicPotential(units=galactic, v_c=0.17, r_h=10.,
                                      q1=1.2, q2=1., q3=0.8, phi=41*u.deg)
@@ -147,15 +136,13 @@ class TestMisalignedLeeSutoNFW(PotentialTestBase):
     w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
     tol = 1E-2
 
-# class TestSCFPotential(PotentialTestBase):
-#     cc = np.array([[[1.509, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [-2.606, 0.0, 0.665, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [6.406, 0.0, -0.66, 0.0, 0.044, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [-5.5859, 0.0, 0.984, 0.0, -0.03, 0.0, 0.001]], [[-0.086, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [-0.221, 0.0, 0.129, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [1.295, 0.0, -0.14, 0.0, -0.012, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], [[-0.033, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [-0.001, 0.0, 0.006, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], [[-0.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]])
-#     sc = np.zeros_like(cc)
-#     potential = SCFPotential(m=1E10, r_s=1.,
-#                              sin_coeff=sc, cos_coeff=cc,
-#                              units=galactic)
-#     w0 = [2.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
-
-# class TestWangZhaoBarPotential(PotentialTestBase):
-#     potential = WangZhaoBarPotential(m=1E10, r_s=1., alpha=0., Omega=0.,
-#                                      units=galactic)
-#     w0 = [3.0,0.7,-0.5,0.0352238,-0.03579493,0.075]
+class TestComposite(CompositePotentialTestBase):
+    p1 = LogarithmicPotential(units=galactic,
+                              v_c=0.17, r_h=10.,
+                              q1=1.2, q2=1., q3=0.8, phi=0.35)
+    p2 = MiyamotoNagaiPotential(units=galactic,
+                                m=1.E11, a=6.5, b=0.26)
+    potential = CompositePotential()
+    potential['disk'] = p2
+    potential['halo'] = p1
+    w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
