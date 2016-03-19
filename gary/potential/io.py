@@ -114,7 +114,7 @@ def _to_dict_help(potential):
         d['units'] = dict([(str(ptype),str(unit)) for ptype,unit in potential.units.to_dict().items()])
 
     if len(potential.parameters) > 0:
-        params = _pack_params(**potential.parameters)
+        params = _pack_params(potential.parameters)
         d['parameters'] = params
 
     return d
