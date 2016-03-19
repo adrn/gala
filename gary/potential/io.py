@@ -20,34 +20,6 @@ from .. import potential as gp
 
 __all__ = ['load', 'save']
 
-# def pythonify(node):
-#     for key, item in node.items():
-#         if hasattr(item, 'items'):
-#             pythonify(item)
-#         else:
-#             if hasattr(item,'unit'):
-#                 node[key] = item.value
-#                 node[key+'_unit'] = str(item.unit)
-
-#                 if hasattr(node[key], 'tolist'):
-#                     node[key] = node[key].tolist()
-
-#             elif hasattr(item,'tolist'):
-#                 node[key] = item.tolist()
-
-#             elif isiterable(item) and not isinstance(item, str):
-#                 node[key] = map(float, list(item))
-
-#             elif '_unit' in key:
-#                 continue
-
-#             elif key+'_unit' in node:
-#                 node[key] = float(item)*u.Unit(node[key+'_unit'])
-#                 del node[key+'_unit']
-
-#             else:
-#                 node[key] = float(item)
-
 def _unpack_params(p):
     params = p.copy()
     for key,item in six.iteritems(p):
