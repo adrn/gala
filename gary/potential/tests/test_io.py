@@ -15,7 +15,7 @@ import numpy as np
 from ..io import load, save
 from ..core import CompositePotential
 from ..builtin import IsochronePotential, KeplerPotential
-from ..builtin.special import PW14Potential
+from ..builtin.special import TriaxialMWPotential
 from ...units import galactic
 
 def test_read_plummer():
@@ -35,7 +35,7 @@ def test_read_composite():
     assert str(potential) == "CompositePotential"
 
 def test_write_isochrone(tmpdir):
-    tmp_filename = tmpdir.join("potential.yml")
+    tmp_filename = str(tmpdir.join("potential.yml"))
 
     # try a simple potential
     potential = IsochronePotential(m=1E11, b=0.76, units=galactic)
@@ -47,7 +47,7 @@ def test_write_isochrone(tmpdir):
     p = load(tmp_filename)
 
 def test_write_isochrone_units(tmpdir):
-    tmp_filename = tmpdir.join("potential.yml")
+    tmp_filename = str(tmpdir.join("potential.yml"))
 
     # try a simple potential with units
     potential = IsochronePotential(m=1E11*u.Msun, b=0.76*u.kpc, units=galactic)
@@ -58,11 +58,11 @@ def test_write_isochrone_units(tmpdir):
     save(potential, tmp_filename)
     p = load(tmp_filename)
 
-def test_write_pw14(tmpdir):
-    tmp_filename = tmpdir.join("potential.yml")
+def test_write_triaxialmw(tmpdir):
+    tmp_filename = str(tmpdir.join("potential.yml"))
 
     # more complex
-    potential = PW14Potential()
+    potential = TriaxialMWPotential()
 
     with open(tmp_filename,'w') as f:
         save(potential, f)
@@ -71,7 +71,7 @@ def test_write_pw14(tmpdir):
     p = load(tmp_filename)
 
 def test_write_composite(tmpdir):
-    tmp_filename = tmpdir.join("potential.yml")
+    tmp_filename = str(tmpdir.join("potential.yml"))
 
     # composite potential
     potential = CompositePotential(halo=KeplerPotential(m=1E11, units=galactic),
@@ -82,7 +82,7 @@ def test_write_composite(tmpdir):
 def test_units(tmpdir):
     import astropy.units as u
 
-    tmp_filename = tmpdir.join("potential.yml")
+    tmp_filename = str(tmpdir.join("potential.yml"))
 
     # try a simple potential
     potential = KeplerPotential(m=1E11, units=[u.kpc,u.Gyr,u.Msun,u.radian])

@@ -32,7 +32,7 @@ def _unpack_params(p):
             params[key] = float(item)
 
         if key+'_unit' in params:
-            params[key] = float(item)*u.Unit(params[key+'_unit'])
+            params[key] = params[key] * u.Unit(params[key+'_unit'])
             del params[key+'_unit']
 
     return params
@@ -162,11 +162,11 @@ def load(f, module=None):
     module : namespace (optional)
 
     """
-    try:
-        with open(os.path.abspath(f)) as fil:
+    if hasattr(f, 'read'):
+        p_dict = yaml.load(f.read())
+    else:
+        with open(os.path.abspath(f), 'r') as fil:
             p_dict = yaml.load(fil.read())
-    except:
-        p_dict = yaml.load(f)
 
     return from_dict(p_dict, module=module)
 
@@ -188,6 +188,6 @@ def save(potential, f):
     if hasattr(f, 'write'):
         yaml.dump(d, f, default_flow_style=False)
     else:
-        with open(f, 'w') as f:
-            yaml.dump(d, f, default_flow_style=False)
+        with open(f, 'w') as f2:
+            yaml.dump(d, f2, default_flow_style=False)
 
