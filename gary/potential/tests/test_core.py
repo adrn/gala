@@ -70,7 +70,12 @@ class MyPotential(PotentialBase):
 
 def test_repr():
     p = MyPotential(m=1.E10*u.Msun, x0=0., units=usys)
-    assert p.__repr__() == "<MyPotential: m=1.00e+10, x0=0.0 (AU,yr,solMass,rad)>"
+    _repr = p.__repr__()
+    assert _repr.startswith("<MyPotential: m=")
+    assert "m=1" in _repr
+    assert "x0=0" in _repr
+    assert _repr.endswith("(AU,yr,solMass,rad)>")
+    # assert p.__repr__() == "<MyPotential: m=1.00e+10, x0=0.00e+00 (AU,yr,solMass,rad)>"
 
 def test_plot():
     p = MyPotential(m=1, x0=[1.,3.,0.], units=usys)
