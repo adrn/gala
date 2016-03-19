@@ -34,8 +34,9 @@ def test_read_composite():
     assert 'disk' in potential.keys()
     assert str(potential) == "CompositePotential"
 
-tmp_filename = "/tmp/potential.yml"
-def test_write_isochrone():
+def test_write_isochrone(tmpdir):
+    tmp_filename = tmpdir.join("potential.yml")
+
     # try a simple potential
     potential = IsochronePotential(m=1E11, b=0.76, units=galactic)
 
@@ -43,8 +44,11 @@ def test_write_isochrone():
         save(potential, f)
 
     save(potential, tmp_filename)
+    p = load(tmp_filename)
 
-def test_write_isochrone_units():
+def test_write_isochrone_units(tmpdir):
+    tmp_filename = tmpdir.join("potential.yml")
+
     # try a simple potential with units
     potential = IsochronePotential(m=1E11*u.Msun, b=0.76*u.kpc, units=galactic)
 
@@ -52,8 +56,11 @@ def test_write_isochrone_units():
         save(potential, f)
 
     save(potential, tmp_filename)
+    p = load(tmp_filename)
 
-def test_write_pw14():
+def test_write_pw14(tmpdir):
+    tmp_filename = tmpdir.join("potential.yml")
+
     # more complex
     potential = PW14Potential()
 
@@ -61,17 +68,21 @@ def test_write_pw14():
         save(potential, f)
 
     save(potential, tmp_filename)
+    p = load(tmp_filename)
 
-def test_write_composite():
+def test_write_composite(tmpdir):
+    tmp_filename = tmpdir.join("potential.yml")
+
     # composite potential
     potential = CompositePotential(halo=KeplerPotential(m=1E11, units=galactic),
                                    bulge=IsochronePotential(m=1E11, b=0.76, units=galactic))
     save(potential, tmp_filename)
+    p = load(tmp_filename)
 
-def test_units():
+def test_units(tmpdir):
     import astropy.units as u
 
-    tmp_filename = "/tmp/potential.yml"
+    tmp_filename = tmpdir.join("potential.yml")
 
     # try a simple potential
     potential = KeplerPotential(m=1E11, units=[u.kpc,u.Gyr,u.Msun,u.radian])
