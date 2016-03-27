@@ -232,7 +232,7 @@ class PotentialBase(object):
 
             pars += ("{}=" + par_fmt + post).format(k,v) + ", "
 
-        if self.units is None:
+        if isinstance(self.units, DimensionlessUnitSystem):
             return "<{}: {} (dimensionless)>".format(self.__class__.__name__, pars.rstrip(", "))
         else:
             return "<{}: {} ({})>".format(self.__class__.__name__, pars.rstrip(", "), ",".join(map(str, self.units._core_units)))
