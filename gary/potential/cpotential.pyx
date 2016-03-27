@@ -150,6 +150,12 @@ class CPotentialBase(PotentialBase):
             c_params.append(self.parameters[k].value)
         self.c_parameters = np.array(c_params)
 
+        # magic to set the c_instance attribute based on the name of the class
+        wrapper_name = '{}Wrapper'.format(self.__class__.__name__.replace('Potential', ''))
+
+        from .builtin import cybuiltin
+        self.c_instance = getattr(cybuiltin, wrapper_name)(self.G, self.c_parameters)
+
     def _value(self, q, t=0.):
         sh = q.shape
         q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
