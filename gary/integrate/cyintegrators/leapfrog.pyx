@@ -17,20 +17,23 @@ cimport numpy as np
 np.import_array()
 
 # Project
-from ...potential.cpotential cimport _CPotential
+from ...potential.cpotential cimport CPotentialWrapper
 
-# ctypedef void (*f_type)(int, double*, double*)
+cdef extern from "src/cpotential.h":
+    ctypedef struct CPotential:
+        pass
+    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
 
-cdef void c_init_velocity(_CPotential p, int ndim, double t, double dt,
+cdef void c_init_velocity(CPotential *p, int ndim, double t, double dt,
                           double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil:
     cdef int k
 
-    p._gradient(t, x_jm1, grad)
+    c_gradient(p, t, x_jm1, grad)
 
     for k in range(ndim):
         v_jm1_2[k] = v_jm1[k] - grad[k] * dt/2.  # acceleration is minus gradient
 
-cdef void c_leapfrog_step(_CPotential p, int ndim, double t, double dt,
+cdef void c_leapfrog_step(CPotential *p, int ndim, double t, double dt,
                           double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil:
     cdef int k
 
@@ -38,7 +41,7 @@ cdef void c_leapfrog_step(_CPotential p, int ndim, double t, double dt,
     for k in range(ndim):
         x_jm1[k] = x_jm1[k] + v_jm1_2[k] * dt
 
-    p._gradient(t, x_jm1, grad)  # compute gradient at new position
+    c_gradient(p, t, x_jm1, grad)  # compute gradient at new position
 
     # step velocity forward by half step, aligned w/ position, then
     #   finish the full step to leapfrog over position
@@ -46,7 +49,7 @@ cdef void c_leapfrog_step(_CPotential p, int ndim, double t, double dt,
         v_jm1[k] = v_jm1_2[k] - grad[k] * dt/2.
         v_jm1_2[k] = v_jm1_2[k] - grad[k] * dt
 
-cpdef leapfrog_integrate_potential(_CPotential potential, double [:,::1] w0,
+cpdef leapfrog_integrate_potential(CPotentialWrapper p, double [:,::1] w0,
                                    double[::1] t):
     """
     CAUTION: Interpretation of axes is different here! We need the
@@ -76,7 +79,7 @@ cpdef leapfrog_integrate_potential(_CPotential potential, double [:,::1] w0,
         # first initialize the velocities so they are evolved by a
         #   half step relative to the positions
         for i in range(n):
-            c_init_velocity(potential, ndim, t[0], dt,
+            c_init_velocity(&(p.cpotential), ndim, t[0], dt,
                             &all_w[0,i,0], &all_w[0,i,ndim], &v_jm1_2[i,0], &grad[0])
 
         for j in range(1,ntimes,1):
@@ -85,7 +88,7 @@ cpdef leapfrog_integrate_potential(_CPotential potential, double [:,::1] w0,
                     all_w[j,i,k] = all_w[j-1,i,k]
                     grad[k] = 0.
 
-                c_leapfrog_step(potential, ndim, t[j], dt,
+                c_leapfrog_step(&(p.cpotential), ndim, t[j], dt,
                                 &all_w[j,i,0], &all_w[j,i,ndim], &v_jm1_2[i,0], &grad[0])
 
     return np.asarray(t), np.asarray(all_w)
