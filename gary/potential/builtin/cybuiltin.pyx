@@ -113,7 +113,7 @@ __all__ = ['HenonHeilesPotential', 'KeplerPotential']
 # ============================================================================
 #    Hénon-Heiles potential
 #
-cdef class HenonHeilesWrapper(_CPotential):
+cdef class HenonHeilesWrapper(CPotentialWrapper):
 
     def __init__(self, G, *args):
         cdef CPotential cp
@@ -124,7 +124,7 @@ cdef class HenonHeilesWrapper(_CPotential):
         cp.gradient[0] = <gradientfunc>(henon_heiles_gradient)
         self._params = np.array([G], dtype=np.float64)
 
-        cp.n_components = n_components
+        cp.n_components = 1
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
@@ -168,7 +168,7 @@ cdef class KeplerPotentialWrapper(CPotentialWrapper):
         self._params = np.array([G] + list(parameters), dtype=np.float64)
 
         # --------------------------------------------------------------------
-        cp.n_components = n_components
+        cp.n_components = 1
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
@@ -905,3 +905,40 @@ class KeplerPotential(CPotentialBase):
 # #         c_params['R32'] = R[7]
 # #         c_params['R33'] = R[8]
 # #         self.c_instance = _LM10Potential(**c_params)
+
+cdef class CCompositePotentialWrapper(CPotentialWrapper):
+
+    def __init__(self, list potentials):
+        cdef:
+            CPotential cp
+            CPotential tmp_cp
+            int i
+            CPotentialWrapper[::1] derp
+
+        derp = np.array(potentials)
+        n_components = len(potentials)
+        self._n_params = np.zeros(n_components, dtype=np.int32)
+        for i in range(n_components):
+            self._n_params[i] = derp[i]._n_params[0]
+
+        cp.n_components = n_components
+        cp.n_params = &(self._n_params[0])
+
+        for i in range(n_components):
+            tmp_cp = derp[i].cpotential
+            cp.parameters[i] = &(derp[i]._params[0])
+            cp.value[i] = tmp_cp.value[0]
+            # cp.density[i] = tmp_cp.density[0]
+            # cp.gradient[i] = tmp_cp.gradient[0]
+
+        self.cpotential = cp
+
+class CCompositePotential(CPotentialBase):
+
+    # TODO: should maybe subclass CompositePotential too? unclear
+    def __init__(self, **potentials):
+        potential_list = []
+        for p in potentials.values():
+            potential_list.append(p.c_instance)
+
+        self.c_instance = CCompositePotentialWrapper(potential_list)
