@@ -30,22 +30,21 @@ class PotentialBase(object):
     subclasses should also define a gradient function. Optionally, they
     may also define functions to compute the density and hessian.
     """
-    def __init__(self, units=None):
+    def __init__(self, parameters, units=None):
         # make sure the units specified are a UnitSystem instance
         if units is not None and not isinstance(units, UnitSystem):
             units = UnitSystem(*units)
         self.units = units
 
-        # must set parameters first...
-        if not hasattr(self, 'parameters'):
-            raise ValueError("Must set parameters of potential subclass before"
-                             " calling super().")
-
-        for k,v in self.parameters.items():
+        # in case the user specified an ordered dict
+        self.parameters = OrderedDict()
+        for k,v in parameters.items():
             if hasattr(v, 'unit'):
                 self.parameters[k] = v.decompose(self.units)
             else:
                 self.parameters[k] = v*u.one
+
+        self.G = G.decompose(self.units).value
 
     def _value(self):
         raise NotImplementedError()
