@@ -16,7 +16,8 @@ from six.moves import cPickle as pickle
 
 # Project
 from ..io import load
-from ...units import UnitSystem
+from ...units import UnitSystem, DimensionlessUnitSystem
+from ...dynamics import CartesianPhaseSpacePosition
 
 def partial_derivative(func, point, dim_ix=0, **kwargs):
     xyz = np.array(point)
@@ -52,7 +53,7 @@ class PotentialTestBase(object):
         cls._valu_return_shapes = [x[1:] for x in cls._grad_return_shapes]
 
     def test_unitsystem(self):
-        assert isinstance(self.potential.units, UnitSystem) or self.potential.units is None
+        assert isinstance(self.potential.units, UnitSystem)
 
     def test_value(self):
         for arr,shp in zip(self.w0s, self._valu_return_shapes):
@@ -69,7 +70,7 @@ class PotentialTestBase(object):
         pass
 
     def test_mass_enclosed(self):
-        if self.potential.units is None:
+        if isinstance(self.potential.units, DimensionlessUnitSystem):
             with pytest.raises(ValueError):
                 self.potential.mass_enclosed(self.w0)
             return
@@ -80,7 +81,7 @@ class PotentialTestBase(object):
 
     def test_repr(self):
         pot_repr = repr(self.potential)
-        if self.potential.units is None:
+        if isinstance(self.potential.units, DimensionlessUnitSystem):
             assert "dimensionless" in pot_repr
         else:
             assert str(self.potential.units['length']) in pot_repr
@@ -152,18 +153,14 @@ class PotentialTestBase(object):
         Make we can integrate an orbit in this potential
         """
         w0 = self.w0
+
         t1 = time.time()
         orbit = self.potential.integrate_orbit(w0, dt=1., nsteps=10000)
         print("Integration time (10000 steps): {}".format(time.time() - t1))
 
-        from ...dynamics import CartesianPhaseSpacePosition
-        if self.potential.units is not None:
-            us = self.potential.units
-            w0 = CartesianPhaseSpacePosition(pos=w0[:self.ndim//2]*us['length'],
-                                             vel=w0[self.ndim//2:]*us['length']/us['time'])
-        else:
-            w0 = CartesianPhaseSpacePosition(pos=w0[:self.ndim//2],
-                                             vel=w0[self.ndim//2:])
+        us = self.potential.units
+        w0 = CartesianPhaseSpacePosition(pos=w0[:self.ndim//2]*us['length'],
+                                         vel=w0[self.ndim//2:]*us['length']/us['time'])
         orbit = self.potential.integrate_orbit(w0, dt=1., nsteps=10000)
 
     def test_pickle(self, tmpdir):
