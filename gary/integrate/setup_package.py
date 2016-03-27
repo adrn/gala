@@ -8,13 +8,13 @@ def get_extensions():
     # malloc
     mac_incl_path = "/usr/include/malloc"
 
-    # cfg = setup_helpers.DistutilsExtensionArgs()
-    # cfg['include_dirs'].append('numpy')
-    # cfg['include_dirs'].append(mac_incl_path)
-    # cfg['include_dirs'].append('gary/potential')
-    # cfg['extra_compile_args'].append('--std=gnu99')
-    # cfg['sources'].append('gary/integrate/cyintegrators/leapfrog.pyx')
-    # exts.append(Extension('gary.integrate.cyintegrators.leapfrog', **cfg))
+    cfg = setup_helpers.DistutilsExtensionArgs()
+    cfg['include_dirs'].append('numpy')
+    cfg['include_dirs'].append(mac_incl_path)
+    cfg['include_dirs'].append('gary/potential')
+    cfg['extra_compile_args'].append('--std=gnu99')
+    cfg['sources'].append('gary/integrate/cyintegrators/leapfrog.pyx')
+    exts.append(Extension('gary.integrate.cyintegrators.leapfrog', **cfg))
 
     cfg = setup_helpers.DistutilsExtensionArgs()
     cfg['include_dirs'].append('numpy')
