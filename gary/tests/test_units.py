@@ -47,14 +47,12 @@ def test_decompose():
     assert usys.decompose(q).unit == u.km/u.s
 
 def test_dimensionless():
-    usys = DimensionlessUnitSystem
-    usys['dimensionless']
+    usys = DimensionlessUnitSystem()
+    assert usys['dimensionless'] == u.one
+    assert usys['length'] == u.one
 
     with pytest.raises(ValueError):
         (15*u.kpc).decompose(usys)
 
     with pytest.raises(ValueError):
         usys.decompose(15*u.kpc)
-
-    with pytest.raises(ValueError):
-        usys['length']
