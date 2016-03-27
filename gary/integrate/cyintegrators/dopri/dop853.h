@@ -183,17 +183,19 @@ nfcnRead    Number of function calls.
 
 #include <stdio.h>
 #include <limits.h>
+#include "src/cpotential.h"
 
-typedef void (*GradFn)(double t, double *pars, double *q, double *grad);
+typedef void (*GradFn)(CPotential *p, double t, double *q, double *grad);
+typedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
+                          CPotential *p, unsigned norbits);
+
 typedef void (*SolTrait)(long nr, double xold, double x, double* y, unsigned n, int* irtrn);
-typedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f, GradFn gradfunc, double *gpars, unsigned norbits);
 
 extern int dop853
  (unsigned n,      /* dimension of the system <= UINT_MAX-1*/
   FcnEqDiff fcn,   /* function computing the value of f(x,y) */
-  GradFn gradfunc, /* ADDED BY ADRN: function to compute gradient */
-  double *gpars,   /* ADDED BY ADRN: parameters for gradient function */
-  unsigned norbits,
+  CPotential *p,   /* ADDED BY ADRN: parameters for gradient function */
+  unsigned n_orbits, /* ADDED BY ADRN: number of orbits */
   double x,        /* initial x-value */
   double* y,       /* initial values for y */
   double xend,     /* final x-value (xend-x may be positive or negative) */
@@ -232,5 +234,5 @@ extern double xRead (void);
 
 /* ADDED BY APW */
 extern void Fwrapper (unsigned ndim, double t, double *w, double *f,
-                      GradFn func, double *pars, unsigned norbits);
+                      CPotential *p, unsigned norbits);
 extern double six_norm (double *x);
