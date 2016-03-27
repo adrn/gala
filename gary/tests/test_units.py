@@ -14,7 +14,7 @@ import numpy as np
 import pytest
 
 # This package
-from ..units import UnitSystem
+from ..units import UnitSystem, DimensionlessUnitSystem
 
 def test_create():
     # dumb
@@ -45,3 +45,16 @@ def test_decompose():
     q = 15.*u.km/u.s
     assert q.decompose(usys).unit == u.kpc/u.Myr # uses the core units
     assert usys.decompose(q).unit == u.km/u.s
+
+def test_dimensionless():
+    usys = DimensionlessUnitSystem
+    usys['dimensionless']
+
+    with pytest.raises(ValueError):
+        (15*u.kpc).decompose(usys)
+
+    with pytest.raises(ValueError):
+        usys.decompose(15*u.kpc)
+
+    with pytest.raises(ValueError):
+        usys['length']
