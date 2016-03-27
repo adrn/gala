@@ -47,7 +47,7 @@ cdef extern from "src/cpotential.h":
     double c_density(CPotential *p, double t, double *q) nogil
     void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
 
-__all__ = ['CPotentialBase', 'CCompositePotential']
+__all__ = ['CPotentialBase']
 
 cdef class CPotentialWrapper:
     """
@@ -108,7 +108,7 @@ cdef class CPotentialWrapper:
         norbits = q.shape[0]
         ndim = q.shape[1]
 
-        cdef double [::1] grad = np.zeros(q.shape)
+        cdef double [:,::1] grad = np.zeros(q.shape)
         for i in range(norbits):
             c_gradient(&(self.cpotential), t, &q[i,0], &grad[i,0])
 
@@ -142,7 +142,7 @@ class CPotentialBase(PotentialBase):
     TODO: better description here
     """
 
-    def __init__(self, units):
+    def __init__(self, parameters, units):
         super(CPotentialBase, self).__init__(parameters, units=units)
 
         c_params = []
@@ -210,45 +210,6 @@ class CPotentialBase(PotentialBase):
             raise ValueError("Potential C instance has no defined "
                              "mass_enclosed function")
         return menc.reshape(sh[1:])
-
-# ============================================================================
-
-cdef class CCompositePotentialWrapper(CPotentialWrapper):
-
-    def __init__(self, list potentials):
-        cdef:
-            CPotential cp
-            CPotential tmp_cp
-            int i
-            CPotentialWrapper[::1] derp
-
-        derp = np.array(potentials)
-        n_components = len(potentials)
-        self._n_params = np.zeros(n_components, dtype=np.int32)
-        for i in range(n_components):
-            self._n_params[i] = derp[i]._n_params[0]
-
-        cp.n_components = n_components
-        cp.n_params = &(self._n_params[0])
-
-        for i in range(n_components):
-            tmp_cp = derp[i].cpotential
-            cp.parameters[i] = &(derp[i]._params[0])
-            cp.value[i] = tmp_cp.value[0]
-            # cp.density[i] = tmp_cp.density[0]
-            # cp.gradient[i] = tmp_cp.gradient[0]
-
-        self.cpotential = cp
-
-class CCompositePotential(CPotentialBase):
-
-    # TODO: should maybe subclass CompositePotential too? unclear
-    def __init__(self, **potentials):
-        potential_list = []
-        for p in potentials.values():
-            potential_list.append(p.c_instance)
-
-        self.c_instance = CCompositePotentialWrapper(potential_list)
 
 # ==============================================================================
 
