@@ -16,7 +16,7 @@ from astropy.utils import isiterable
 # Project
 from ..integrate import *
 from ..util import inherit_docs, ImmutableDict, atleast_2d
-from ..units import UnitSystem
+from ..units import UnitSystem, DimensionlessUnitSystem
 from ..dynamics import CartesianOrbit, CartesianPhaseSpacePosition
 
 __all__ = ["PotentialBase", "CompositePotential"]
@@ -34,6 +34,10 @@ class PotentialBase(object):
         # make sure the units specified are a UnitSystem instance
         if units is not None and not isinstance(units, UnitSystem):
             units = UnitSystem(*units)
+
+        elif units is None:
+            units = DimensionlessUnitSystem()
+
         self.units = units
 
         # in case the user specified an ordered dict
@@ -44,7 +48,10 @@ class PotentialBase(object):
             else:
                 self.parameters[k] = v*u.one
 
-        self.G = G.decompose(self.units).value
+        try:
+            self.G = G.decompose(self.units).value
+        except u.UnitConversionError:
+            self.G = 1. # TODO: this is BAD and could lead to user confusion
 
     def _value(self):
         raise NotImplementedError()
