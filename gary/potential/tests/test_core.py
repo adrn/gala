@@ -28,8 +28,8 @@ def test_new_simple():
 
     class MyPotential(PotentialBase):
         def __init__(self, units=None):
-            self.parameters = OrderedDict()
-            self.units = units
+            super(MyPotential, self).__init__(parameters={},
+                                              units=units)
 
         def _value(self, r, t=0.):
             return -1/r
@@ -51,10 +51,11 @@ def test_new_simple():
 usys = [u.au, u.yr, u.Msun, u.radian]
 class MyPotential(PotentialBase):
     def __init__(self, m, x0, units=None):
-        self.parameters = OrderedDict()
-        self.parameters['m'] = m
-        self.parameters['x0'] = np.array(x0)
-        super(MyPotential, self).__init__(units)
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['x0'] = np.array(x0)
+        super(MyPotential, self).__init__(parameters=parameters,
+                                          units=units)
 
     def _value(self, x, t):
         m = self.parameters['m']
