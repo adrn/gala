@@ -1,14 +1,8 @@
 # coding: utf-8
-"""
-    Test the Potential classes
-"""
 
 from __future__ import absolute_import, unicode_literals, division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
-
-# Standard library
-import os
 
 # Third party
 import pytest

@@ -547,8 +547,6 @@ class CompositePotential(PotentialBase, OrderedDict):
     two point masses or a galactic disk and halo, each with their own
     potential model.
 
-    TODO: needs re-writing
-
     A `CompositePotential` is created like a Python dictionary, e.g.::
 
         >>> p1 = SomePotential(func1) # doctest: +SKIP
