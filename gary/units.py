@@ -52,6 +52,7 @@ class UnitSystem(object):
         Unit("km / s")
 
     """
+
     def __init__(self, units, *args):
 
         self._required_physical_types = ['length', 'time', 'mass', 'angle']
@@ -181,6 +182,9 @@ class DimensionlessUnitSystem(UnitSystem):
 
     def __getitem__(self, key):
         return u.one
+
+    def __str__(self):
+        return "UnitSystem (dimensionless)"
 
     def to_dict(self):
         raise ValueError("Cannot represent dimensionless unit system as dict!")
