@@ -46,6 +46,8 @@ class CompositeHelper(object):
             potential.parameters["m"] = "derp"
 
     def test_plot_composite(self):
+        # TODO: do image comparison or something to compare?
+
         potential = self.Cls()
 
         # Add a kepler potential and a harmonic oscillator
@@ -64,11 +66,14 @@ class CompositeHelper(object):
         potential["one"] = self.p1
         potential["two"] = self.p2
 
-        w = potential.integrate_orbit([1.,0,0, 0,2*np.pi,0], dt=0.01, nsteps=1000,
-                                      Integrator=DOPRI853Integrator, cython_if_possible=True)
-        print(w.pos[0])
-        fig = w.plot()
-        fig.suptitle(self.__class__.__name__)
+        for Integrator in [DOPRI853Integrator, LeapfrogIntegrator]:
+            w_cy = potential.integrate_orbit([1.,0,0, 0,2*np.pi,0], dt=0.01, nsteps=1000,
+                                             Integrator=Integrator, cython_if_possible=True)
+            w_py = potential.integrate_orbit([1.,0,0, 0,2*np.pi,0], dt=0.01, nsteps=1000,
+                                             Integrator=Integrator, cython_if_possible=False)
+
+            for i in range(3):
+                np.testing.assert_allclose(w_cy.pos[i].value, w_cy.pos[i].value)
 
 # ------------------------------------------------------------------------
 
@@ -77,8 +82,3 @@ class TestComposite(CompositeHelper):
 
 class TestCComposite(CompositeHelper):
     Cls = CCompositePotential
-
-
-def test_uh():
-    import matplotlib.pyplot as pl
-    pl.show()
