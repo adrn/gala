@@ -157,10 +157,10 @@ cdef class KeplerWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(kepler_value)
         cp.density[0] = <densityfunc>(nan_density)
         cp.gradient[0] = <gradientfunc>(kepler_gradient)
-        self._params = np.array([G] + list(parameters), dtype=np.float64)
 
         # --------------------------------------------------------------------
         cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
@@ -198,17 +198,17 @@ class KeplerPotential(CPotentialBase):
 
 cdef class IsochroneWrapper(CPotentialWrapper):
 
-    def __init__(self, G, m, b):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
         cp.value[0] = <valuefunc>(isochrone_value)
         cp.density[0] = <densityfunc>(isochrone_density)
         cp.gradient[0] = <gradientfunc>(isochrone_gradient)
-        self._params = np.array([G, m, b], dtype=np.float64)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
@@ -283,17 +283,17 @@ class IsochronePotential(CPotentialBase):
 #
 cdef class HernquistWrapper(CPotentialWrapper):
 
-    def __init__(self, G, m, c):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
         cp.value[0] = <valuefunc>(hernquist_value)
         cp.density[0] = <densityfunc>(hernquist_density)
         cp.gradient[0] = <gradientfunc>(hernquist_gradient)
-        self._params = np.array([G, m, c], dtype=np.float64)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
@@ -329,17 +329,17 @@ class HernquistPotential(CPotentialBase):
 
 cdef class PlummerWrapper(CPotentialWrapper):
 
-    def __init__(self, G, m, b):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
         cp.value[0] = <valuefunc>(plummer_value)
         cp.density[0] = <densityfunc>(plummer_density)
         cp.gradient[0] = <gradientfunc>(plummer_gradient)
-        self._params = np.array([G, m, b], dtype=np.float64)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
@@ -375,17 +375,17 @@ class PlummerPotential(CPotentialBase):
 
 cdef class JaffeWrapper(CPotentialWrapper):
 
-    def __init__(self, G, m, c):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
         cp.value[0] = <valuefunc>(jaffe_value)
         cp.density[0] = <densityfunc>(jaffe_density)
         cp.gradient[0] = <gradientfunc>(jaffe_gradient)
-        self._params = np.array([G, m, c], dtype=np.float64)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
@@ -421,17 +421,17 @@ class JaffePotential(CPotentialBase):
 
 cdef class StoneWrapper(CPotentialWrapper):
 
-    def __init__(self, double G, double m, double r_c, double r_h):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
         cp.value[0] = <valuefunc>(stone_value)
         cp.density[0] = <densityfunc>(stone_density)
         cp.gradient[0] = <gradientfunc>(stone_gradient)
-        self._params = np.array([G, m, r_c, r_h], dtype=np.float64)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
@@ -469,17 +469,17 @@ class StonePotential(CPotentialBase):
 
 cdef class SphericalNFWWrapper(CPotentialWrapper):
 
-    def __init__(self, G, v_c, r_s):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
         cp.value[0] = <valuefunc>(sphericalnfw_value)
         cp.density[0] = <densityfunc>(sphericalnfw_density)
         cp.gradient[0] = <gradientfunc>(sphericalnfw_gradient)
-        self._params = np.array([G, v_c, r_s], dtype=np.float64)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
@@ -516,17 +516,17 @@ class SphericalNFWPotential(CPotentialBase):
 
 cdef class MiyamotoNagaiWrapper(CPotentialWrapper):
 
-    def __init__(self, G, m, a, b):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
         cp.value[0] = <valuefunc>(miyamotonagai_value)
         cp.density[0] = <densityfunc>(miyamotonagai_density)
         cp.gradient[0] = <gradientfunc>(miyamotonagai_gradient)
-        self._params = np.array([G, m, a, b], dtype=np.float64)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
@@ -566,17 +566,17 @@ class MiyamotoNagaiPotential(CPotentialBase):
 
 cdef class FlattenedNFWWrapper(CPotentialWrapper):
 
-    def __init__(self, G, v_c, r_s, q_z):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
         cp.value[0] = <valuefunc>(flattenednfw_value)
         cp.density[0] = <densityfunc>(flattenednfw_density)
         cp.gradient[0] = <gradientfunc>(flattenednfw_gradient)
-        self._params = np.array([G, v_c, r_s, q_z], dtype=np.float64)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
@@ -617,17 +617,17 @@ class FlattenedNFWPotential(CPotentialBase):
 
 cdef class LeeSutoTriaxialNFWWrapper(CPotentialWrapper):
 
-    def __init__(self, G, v_c, r_s, a, b, c):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
         cp.value[0] = <valuefunc>(leesuto_value)
         cp.density[0] = <densityfunc>(leesuto_density)
         cp.gradient[0] = <gradientfunc>(leesuto_gradient)
-        self._params = np.array([G, v_c, r_s, a, b, c], dtype=np.float64)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
@@ -668,17 +668,17 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
 
 cdef class LogarithmicWrapper(CPotentialWrapper):
 
-    def __init__(self, G, v_c, r_h, q1, q2, q3):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
         cp.value[0] = <valuefunc>(logarithmic_value)
         cp.density[0] = <densityfunc>(nan_density)
         cp.gradient[0] = <gradientfunc>(logarithmic_gradient)
-        self._params = np.array([G, v_c, r_h, q1, q2, q3], dtype=np.float64)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
