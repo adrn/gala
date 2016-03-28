@@ -15,7 +15,7 @@ import numpy as np
 from .plot import three_panel
 from ..coordinates import velocity_transforms as vtrans
 from ..coordinates import vgal_to_hel
-from ..units import UnitSystem
+from ..units import UnitSystem, DimensionlessUnitSystem
 from ..util import inherit_docs,atleast_2d
 
 __all__ = ['CartesianPhaseSpacePosition', 'combine']
@@ -245,8 +245,10 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
             Will have shape ``(2*ndim,...)``.
 
         """
-        if units is None and (self.pos.unit == uno and self.vel.unit == uno):
-            units = [uno]
+        if (units is None or isinstance(units, DimensionlessUnitSystem)) \
+            and (self.pos.unit == uno and self.vel.unit == uno):
+            units = DimensionlessUnitSystem()
+
         elif units is None:
             raise ValueError("A UnitSystem must be provided.")
 
@@ -282,7 +284,8 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         pos = w[:ndim]
         vel = w[ndim:]
 
-        if units is not None:
+        # TODO: this is bad form - UnitSystem should know what to do with a Dimensionless
+        if units is not None and not isinstance(units, DimensionlessUnitSystem):
             units = UnitSystem(units)
             pos = pos*units['length']
             vel = vel*units['length']/units['time'] # velocity in w is from _core_units
