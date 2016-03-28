@@ -33,6 +33,8 @@ def test_read_composite():
     assert '0' in potential.keys()
     assert 'disk' in potential.keys()
     assert str(potential) == "CompositePotential"
+    assert potential.units['length'] == u.kpc
+    assert potential.units['speed'] == u.km/u.s
 
 def test_write_isochrone(tmpdir):
     tmp_filename = str(tmpdir.join("potential.yml"))
