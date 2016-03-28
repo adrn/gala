@@ -193,7 +193,7 @@ class PotentialBase(object):
         dPhi_dr_minus = self.value(q - epsilon, t=t)
         diff = dPhi_dr_plus - dPhi_dr_minus
 
-        if self.units is None:
+        if isinstance(self.units, DimensionlessUnitSystem):
             raise ValueError("No units specified when creating potential object.")
         Gee = G.decompose(self.units).value
 
