@@ -1,3 +1,4 @@
+#include <math.h>
 #include "cpotential.h"
 
 double c_value(CPotential *p, double t, double *q) {
@@ -27,4 +28,59 @@ void c_gradient(CPotential *p, double t, double *q, double *grad) {
     for (i=0; i < p->n_components; i++) {
         (p->gradient)[i](t, (p->parameters)[i], q, grad);
     }
+}
+
+double c_d_dr(CPotential *p, double t, double *q, double *epsilon) {
+    double h, r, dPhi_dr;
+    int j;
+
+    // TODO: allow user to specify fractional step-size
+    h = 0.01;
+
+    // Step-size for estimating radial gradient of the potential
+    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+
+    // TODO: instead of hard-setting 3, I need to define p->ndim
+    for (j=0; j < 3; j++)
+        epsilon[j] = h * q[j]/r + q[j];
+
+    dPhi_dr = c_value(p, t, epsilon);
+
+    for (j=0; j < 3; j++)
+        epsilon[j] = h * q[j]/r - q[j];
+
+    dPhi_dr = dPhi_dr - c_value(p, t, epsilon);
+
+    return dPhi_dr / (2.*h);
+}
+
+double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) {
+    double h, r, d2Phi_dr2;
+    int j;
+
+    // TODO: allow user to specify fractional step-size
+    h = 0.01;
+
+    // Step-size for estimating radial gradient of the potential
+    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+
+    // TODO: instead of hard-setting 3, I need to define p->ndim
+    for (j=0; j < 3; j++)
+        epsilon[j] = h * q[j]/r + q[j];
+    d2Phi_dr2 = c_value(p, t, epsilon);
+
+    d2Phi_dr2 = d2Phi_dr2 - 2*c_value(p, t, q);
+
+    for (j=0; j < 3; j++)
+        epsilon[j] = h * q[j]/r - q[j];
+    d2Phi_dr2 = d2Phi_dr2 + c_value(p, t, epsilon);
+
+    return d2Phi_dr2 / (h*h);
+}
+
+double c_mass_enclosed(CPotential *p, double t, double *q, double G, double *epsilon) {
+    double r, dPhi_dr;
+    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    dPhi_dr = c_d_dr(p, t, q, epsilon);
+    return fabs(r*r * dPhi_dr / G);
 }
