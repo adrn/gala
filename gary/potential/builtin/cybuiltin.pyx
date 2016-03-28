@@ -23,6 +23,7 @@ cimport numpy as np
 np.import_array()
 
 # Project
+from ..core import CompositePotential
 from ..cpotential import CPotentialBase
 from ..cpotential cimport CPotentialWrapper
 
@@ -102,7 +103,7 @@ __all__ = ['HenonHeilesPotential', # Misc. potentials
            'JaffePotential', 'SphericalNFWPotential', 'StonePotential', # Spherical models
            'MiyamotoNagaiPotential', 'FlattenedNFWPotential', # Flattened models
            'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential', # Triaxial models
-           ]
+           'CCompositePotential']
 
 # ============================================================================
 
@@ -236,7 +237,9 @@ class IsochronePotential(CPotentialBase):
 
     """
     def __init__(self, m, b, units):
-        parameters = OrderedDict(m=m, b=b)
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['b'] = b
         super(IsochronePotential, self).__init__(parameters=parameters,
                                                  units=units)
 
@@ -278,9 +281,7 @@ class IsochronePotential(CPotentialBase):
     #     return isochrone_aa_to_xv(actions, angles, self)
 
 # ============================================================================
-#    Hernquist Spheroid potential from Hernquist 1990
-#    http://adsabs.harvard.edu/abs/1990ApJ...356..359H
-#
+
 cdef class HernquistWrapper(CPotentialWrapper):
 
     def __init__(self, G, parameters):
@@ -309,6 +310,8 @@ class HernquistPotential(CPotentialBase):
 
         \Phi(r) = -\frac{G M}{r + c}
 
+    See: http://adsabs.harvard.edu/abs/1990ApJ...356..359H
+
     Parameters
     ----------
     m : numeric
@@ -321,7 +324,9 @@ class HernquistPotential(CPotentialBase):
 
     """
     def __init__(self, m, c, units):
-        parameters = OrderedDict(m=m, c=c)
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['c'] = c
         super(HernquistPotential, self).__init__(parameters=parameters,
                                                  units=units)
 
@@ -367,7 +372,9 @@ class PlummerPotential(CPotentialBase):
 
     """
     def __init__(self, m, b, units):
-        parameters = OrderedDict(m=m, b=b)
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['b'] = b
         super(PlummerPotential, self).__init__(parameters=parameters,
                                                units=units)
 
@@ -413,7 +420,9 @@ class JaffePotential(CPotentialBase):
 
     """
     def __init__(self, m, c, units):
-        parameters = OrderedDict(m=m, c=c)
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['c'] = c
         super(JaffePotential, self).__init__(parameters=parameters,
                                              units=units)
 
@@ -461,7 +470,10 @@ class StonePotential(CPotentialBase):
 
     """
     def __init__(self, m, r_c, r_h, units):
-        parameters = OrderedDict(m=m, r_c=r_c, r_h=r_h)
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['r_c'] = r_c
+        parameters['r_h'] = r_h
         super(StonePotential, self).__init__(parameters=parameters,
                                              units=units)
 
@@ -508,7 +520,9 @@ class SphericalNFWPotential(CPotentialBase):
 
     """
     def __init__(self, v_c, r_s, units):
-        parameters = OrderedDict(v_c=v_c, r_s=r_s)
+        parameters = OrderedDict()
+        parameters['v_c'] = v_c
+        parameters['r_s'] = r_s
         super(SphericalNFWPotential, self).__init__(parameters=parameters,
                                                     units=units)
 
@@ -558,7 +572,10 @@ class MiyamotoNagaiPotential(CPotentialBase):
 
     """
     def __init__(self, m, a, b, units):
-        parameters = OrderedDict(m=m, a=a, b=b)
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['a'] = a
+        parameters['b'] = b
         super(MiyamotoNagaiPotential, self).__init__(parameters=parameters,
                                                      units=units)
 
@@ -608,7 +625,10 @@ class FlattenedNFWPotential(CPotentialBase):
 
     """
     def __init__(self, v_c, r_s, q_z, units):
-        parameters = OrderedDict(v_c=v_c, r_s=r_s, q_z=q_z)
+        parameters = OrderedDict()
+        parameters['v_c'] = v_c
+        parameters['r_s'] = r_s
+        parameters['q_z'] = q_z
         super(FlattenedNFWPotential, self).__init__(parameters=parameters,
                                                     units=units)
 
@@ -660,7 +680,12 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
 
     """
     def __init__(self, v_c, r_s, a, b, c, units):
-        parameters = OrderedDict(v_c=v_c, r_s=r_s, a=a, b=b, c=c)
+        parameters = OrderedDict()
+        parameters['v_c'] = v_c
+        parameters['r_s'] = r_s
+        parameters['a'] = a
+        parameters['b'] = b
+        parameters['c'] = c
         super(LeeSutoTriaxialNFWPotential, self).__init__(parameters=parameters,
                                                           units=units)
 
@@ -712,10 +737,16 @@ class LogarithmicPotential(CPotentialBase):
 
     """
     def __init__(self, v_c, r_h, q1, q2, q3, units):
-        parameters = OrderedDict(v_c=v_c, r_h=r_h, q1=q1, q2=q2, q3=q3)
+        parameters = OrderedDict()
+        parameters['v_c'] = v_c
+        parameters['r_h'] = r_h
+        parameters['q1'] = q1
+        parameters['q2'] = q2
+        parameters['q3'] = q3
         super(LogarithmicPotential, self).__init__(parameters=parameters,
                                                    units=units)
 # ============================================================================
+# TODO: why do these have to be in this file?
 
 cdef class CCompositePotentialWrapper(CPotentialWrapper):
 
@@ -744,12 +775,21 @@ cdef class CCompositePotentialWrapper(CPotentialWrapper):
 
         self.cpotential = cp
 
-class CCompositePotential(CPotentialBase):
+class CCompositePotential(CPotentialBase, CompositePotential):
+    """
 
-    # TODO: should maybe subclass CompositePotential too? unclear
+    """
+
     def __init__(self, **potentials):
-        potential_list = []
-        for p in potentials.values():
-            potential_list.append(p.c_instance)
+        CompositePotential.__init__(self, **potentials)
 
-        self.c_instance = CCompositePotentialWrapper(potential_list)
+    def _reset_c_instance(self):
+        self._potential_list = []
+        for p in self.values():
+            self._potential_list.append(p.c_instance)
+
+        self.c_instance = CCompositePotentialWrapper(self._potential_list)
+
+    def __setitem__(self, *args, **kwargs):
+        CompositePotential.__setitem__(self, *args, **kwargs)
+        self._reset_c_instance()
