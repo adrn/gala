@@ -15,7 +15,7 @@ import numpy as np
 from ..io import load, save
 from ..core import CompositePotential
 from ..builtin import IsochronePotential, KeplerPotential
-from ..builtin.special import TriaxialMWPotential
+# from ..builtin.special import TriaxialMWPotential
 from ...units import galactic
 
 def test_read_plummer():
