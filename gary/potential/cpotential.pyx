@@ -24,6 +24,7 @@ from libc.stdio cimport printf
 # Project
 from .core import PotentialBase, CompositePotential
 from ..util import atleast_2d
+from ..units import DimensionlessUnitSystem
 
 cdef extern from "math.h":
     double sqrt(double x) nogil
@@ -263,7 +264,7 @@ class CPotentialBase(PotentialBase):
         q : array_like, numeric
             Position to compute the mass enclosed.
         """
-        if self.units is None:
+        if isinstance(self.units, DimensionlessUnitSystem):
             raise ValueError("No units specified when creating potential object.")
 
         q = atleast_2d(q, insert_axis=1)
