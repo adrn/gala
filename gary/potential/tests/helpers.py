@@ -78,6 +78,7 @@ class PotentialTestBase(object):
         for arr,shp in zip(self.w0s, self._valu_return_shapes):
             g = self.potential.mass_enclosed(arr[:self.ndim])
             assert g.shape == shp
+            assert np.all(g > 0.)
 
     def test_repr(self):
         pot_repr = repr(self.potential)
