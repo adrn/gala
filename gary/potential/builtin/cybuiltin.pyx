@@ -739,8 +739,8 @@ cdef class CCompositePotentialWrapper(CPotentialWrapper):
             tmp_cp = derp[i].cpotential
             cp.parameters[i] = &(derp[i]._params[0])
             cp.value[i] = tmp_cp.value[0]
-            # cp.density[i] = tmp_cp.density[0]
-            # cp.gradient[i] = tmp_cp.gradient[0]
+            cp.density[i] = tmp_cp.density[0]
+            cp.gradient[i] = tmp_cp.gradient[0]
 
         self.cpotential = cp
 
