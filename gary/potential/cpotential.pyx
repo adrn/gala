@@ -108,7 +108,7 @@ cdef class CPotentialWrapper:
         norbits = q.shape[0]
         ndim = q.shape[1]
 
-        cdef double [:,::1] grad = np.zeros(q.shape)
+        cdef double [:,::1] grad = np.zeros((norbits, ndim))
         for i in range(norbits):
             c_gradient(&(self.cpotential), t, &q[i,0], &grad[i,0])
 
@@ -176,7 +176,7 @@ class CPotentialBase(PotentialBase):
         sh = q.shape
         q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
         try:
-            return self.c_instance.gradient(q, t=t).reshape(sh)
+            return self.c_instance.gradient(q, t=t).T.reshape(sh)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
