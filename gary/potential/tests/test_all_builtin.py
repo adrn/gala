@@ -118,28 +118,10 @@ class TestLogarithmic(PotentialTestBase):
                                      q1=1.2, q2=1., q3=0.8)
     w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
-# class TestLM10(PotentialTestBase):
-#     potential = LM10Potential(units=galactic)
-#     w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
-
-class TestMisalignedLogarithmic(PotentialTestBase):
-    potential = LogarithmicPotential(units=galactic, v_c=0.17, r_h=10.,
-                                     q1=1.2, q2=1., q3=0.8, phi=41*u.deg)
-    w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
-    tol = 1E-2
-
-@pytest.mark.skipif(True, reason="known bug")
-class TestMisalignedLeeSutoNFW(PotentialTestBase):
-    potential = LeeSutoTriaxialNFWPotential(units=galactic, v_c=0.35, r_s=12.,
-                                            a=1.4, b=1., c=0.6,
-                                            phi=30.*u.deg, theta=30*u.deg)
-    w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
-    tol = 1E-2
-
 class TestComposite(CompositePotentialTestBase):
     p1 = LogarithmicPotential(units=galactic,
                               v_c=0.17, r_h=10.,
-                              q1=1.2, q2=1., q3=0.8, phi=0.35)
+                              q1=1.2, q2=1., q3=0.8)
     p2 = MiyamotoNagaiPotential(units=galactic,
                                 m=1.E11, a=6.5, b=0.26)
     potential = CompositePotential()
