@@ -453,10 +453,9 @@ double leesuto_value(double t, double *pars, double *r) {
 
     phi0 = pars[1]*pars[1] / (log(2.) - 0.5 + (log(2.)-0.75)*e_b2 + (log(2.)-0.75)*e_c2);
 
-    // pars[6] up are R
-    x = pars[6]*r[0]  + pars[7]*r[1]  + pars[8]*r[2];
-    y = pars[9]*r[0]  + pars[10]*r[1]  + pars[11]*r[2];
-    z = pars[12]*r[0] + pars[13]*r[1] + pars[14]*r[2];
+    x = r[0];
+    y = r[1];
+    z = r[2];
 
     _r = sqrt(x*x + y*y + z*z);
     u = _r / pars[2];
@@ -489,10 +488,9 @@ void leesuto_gradient(double t, double *pars, double *r, double *grad) {
 
     v_h2 = pars[1]*pars[1] / (log(2.) - 0.5 + (log(2.)-0.75)*e_b2 + (log(2.)-0.75)*e_c2);
 
-    // pars[5] up are R
-    x = pars[6]*r[0]  + pars[7]*r[1]  + pars[8]*r[2];
-    y = pars[9]*r[0]  + pars[10]*r[1]  + pars[11]*r[2];
-    z = pars[12]*r[0] + pars[13]*r[1] + pars[14]*r[2];
+    x = r[0];
+    y = r[1];
+    z = r[2];
 
     _r2 = x*x + y*y + z*z;
     _r = sqrt(_r2);
@@ -516,9 +514,9 @@ void leesuto_gradient(double t, double *pars, double *r, double *grad) {
     ay = x2*y*(x17*(x7 - _r2*e_b2) + x22);
     az = x2*z*(x17*(x7 - _r2*e_c2) + x22);
 
-    grad[0] = grad[0] + pars[6]*ax  + pars[9]*ay  + pars[12]*az;
-    grad[1] = grad[1] + pars[7]*ax  + pars[10]*ay  + pars[13]*az;
-    grad[2] = grad[2] + pars[8]*ax  + pars[12]*ay + pars[14]*az;
+    grad[0] = grad[0] + ax;
+    grad[1] = grad[1] + ay;
+    grad[2] = grad[2] + az;
 }
 
 double leesuto_density(double t, double *pars, double *r) {
@@ -538,10 +536,9 @@ double leesuto_density(double t, double *pars, double *r) {
     double e_c2 = 1-c_a2;
     v_h2 = pars[1]*pars[1] / (log(2.) - 0.5 + (log(2.)-0.75)*e_b2 + (log(2.)-0.75)*e_c2);
 
-    // pars[6] up to and including pars[11] are R (matrix)
-    x = pars[6]*r[0]  + pars[7]*r[1]  + pars[8]*r[2];
-    y = pars[9]*r[0]  + pars[10]*r[1]  + pars[11]*r[2];
-    z = pars[12]*r[0] + pars[13]*r[1] + pars[14]*r[2];
+    x = r[0];
+    y = r[1];
+    z = r[2];
 
     u = sqrt(x*x + y*y/b_a2 + z*z/c_a2) / pars[2];
     return v_h2 / (u * (1+u)*(1+u)) / (4.*M_PI*pars[2]*pars[2]*pars[0]);
@@ -553,10 +550,9 @@ double leesuto_density(double t, double *pars, double *r) {
 double logarithmic_value(double t, double *pars, double *r) {
     double x, y, z;
 
-    // pars[5] up to and including pars[10] are R
-    x = pars[5]*r[0]  + pars[6]*r[1]  + pars[7]*r[2];
-    y = pars[8]*r[0]  + pars[9]*r[1]  + pars[10]*r[2];
-    z = pars[11]*r[0] + pars[12]*r[1] + pars[13]*r[2];
+    x = r[0];
+    y = r[1];
+    z = r[2];
 
     return 0.5*pars[0]*pars[0] * log(pars[1]*pars[1] + // scale radius
                                      x*x/(pars[2]*pars[2]) +
@@ -565,89 +561,18 @@ double logarithmic_value(double t, double *pars, double *r) {
 }
 
 void logarithmic_gradient(double t, double *pars, double *r, double *grad) {
-
     double x, y, z, ax, ay, az, fac;
 
-    // pars[5] up to and including pars[10] are R
-    x = pars[5]*r[0]  + pars[6]*r[1]  + pars[7]*r[2];
-    y = pars[8]*r[0]  + pars[9]*r[1]  + pars[10]*r[2];
-    z = pars[11]*r[0] + pars[12]*r[1] + pars[13]*r[2];
+    x = r[0];
+    y = r[1];
+    z = r[2];
 
     fac = pars[0]*pars[0] / (pars[1]*pars[1] + x*x/(pars[2]*pars[2]) + y*y/(pars[3]*pars[3]) + z*z/(pars[4]*pars[4]));
     ax = fac*x/(pars[2]*pars[2]);
     ay = fac*y/(pars[3]*pars[3]);
     az = fac*z/(pars[4]*pars[4]);
 
-    grad[0] = grad[0] + pars[5]*ax  + pars[8]*ay  + pars[11]*az;
-    grad[1] = grad[1] + pars[6]*ax  + pars[9]*ay  + pars[12]*az;
-    grad[2] = grad[2] + pars[7]*ax  + pars[10]*ay + pars[13]*az;
-}
-
-/* ---------------------------------------------------------------------------
-    Rotating Triaxial Logarithmic
-*/
-double rotating_logarithmic_value(double t, double *pars, double *r) {
-    double x, y, z;
-
-    double bar_angle0 = pars[5];
-    double pattern_speed = -pars[6]; // added minus sign to make it rotate clockwise by default
-    double alpha = (-bar_angle0 + pattern_speed*t);
-
-    double cosa = cos(alpha);
-    double sina = sin(alpha);
-    x = cosa*r[0] + sina*r[1];
-    y = -sina*r[0] + cosa*r[1];
-    z = r[2];
-
-    return 0.5*pars[0]*pars[0] * log(pars[1]*pars[1] + // scale radius
-                                     x*x/(pars[2]*pars[2]) +
-                                     y*y/(pars[3]*pars[3]) +
-                                     z*z/(pars[4]*pars[4]));
-}
-
-void rotating_logarithmic_gradient(double t, double *pars, double *r, double *grad) {
-    double x, y, z, fac, tmp1, tmp2;
-
-    double bar_angle0 = pars[5];
-    double pattern_speed = -pars[6]; // added minus sign to make it rotate clockwise by default
-    double alpha = (-bar_angle0 + pattern_speed*t);
-
-    double cosa = cos(alpha);
-    double sina = sin(alpha);
-    x = cosa*r[0] + sina*r[1];
-    y = -sina*r[0] + cosa*r[1];
-    z = r[2];
-
-    fac = pars[0]*pars[0] / (pars[1]*pars[1] + x*x/(pars[2]*pars[2]) + y*y/(pars[3]*pars[3]) + z*z/(pars[4]*pars[4]));
-    grad[0] = grad[0] + fac*x/(pars[2]*pars[2]);
-    grad[1] = grad[1] + fac*y/(pars[3]*pars[3]);
-    grad[2] = grad[2] + fac*z/(pars[4]*pars[4]);
-
-    tmp1 = cosa*grad[0] - sina*grad[1];
-    tmp2 = sina*grad[0] + cosa*grad[1];
-    grad[0] = grad[0] + tmp1;
-    grad[1] = grad[1] + tmp2;
-}
-
-/* TOTAL HACK */
-double lm10_value(double t, double *pars, double*r) {
-    double v = 0.;
-    v += hernquist_value(0., &pars[0], &r[0]);
-    v += miyamotonagai_value(0., &pars[3], &r[0]);
-    v += logarithmic_value(0., &pars[7], &r[0]);
-    return v;
-}
-
-void lm10_gradient(double t, double *pars, double *r, double *grad) {
-    double tmp_grad[3];
-    int i;
-
-    hernquist_gradient(0., &pars[0], &r[0], &tmp_grad[0]);
-    for (i=0; i<3; i++) grad[i] = tmp_grad[i];
-
-    miyamotonagai_gradient(0., &pars[3], &r[0], &tmp_grad[0]);
-    for (i=0; i<3; i++) grad[i] += tmp_grad[i];
-
-    logarithmic_gradient(0., &pars[7], &r[0], &tmp_grad[0]);
-    for (i=0; i<3; i++) grad[i] += tmp_grad[i];
+    grad[0] = grad[0] + ax;
+    grad[1] = grad[1] + ay;
+    grad[2] = grad[2] + az;
 }
