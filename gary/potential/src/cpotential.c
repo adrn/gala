@@ -17,7 +17,14 @@ double c_density(CPotential *p, double t, double *q) {
 }
 
 void c_gradient(CPotential *p, double t, double *q, double *grad) {
-    for (int i=0; i < p->n_components; i++) {
+    int i;
+
+    // TODO: instead of hard-setting 3, I need to define p->ndim
+    for (i=0; i < 3; i++) {
+        grad[i] = 0.;
+    }
+
+    for (i=0; i < p->n_components; i++) {
         (p->gradient)[i](t, (p->parameters)[i], q, grad);
     }
 }
