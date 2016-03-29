@@ -254,7 +254,7 @@ class CPotentialBase(PotentialBase):
     # Overwrite the Python potential method to use Cython method
     def mass_enclosed(self, q, t=0.):
         """
-        mass_enclosed(q)
+        mass_enclosed(q, t)
 
         Estimate the mass enclosed within the given position by assuming the potential
         is spherical. This is not so good!
@@ -275,4 +275,4 @@ class CPotentialBase(PotentialBase):
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "mass_enclosed function")
-        return menc.reshape(sh[1:])
+        return menc.reshape(sh[1:]) * self.units['mass']
