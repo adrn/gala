@@ -15,7 +15,7 @@ import numpy as np
 from ..io import load, save
 from ..core import CompositePotential
 from ..builtin import IsochronePotential, KeplerPotential
-# from ..builtin.special import TriaxialMWPotential
+from ..builtin.special import LM10Potential
 from ...units import DimensionlessUnitSystem, galactic
 
 def test_read_plummer():
@@ -60,11 +60,11 @@ def test_write_isochrone_units(tmpdir):
     save(potential, tmp_filename)
     p = load(tmp_filename)
 
-def test_write_triaxialmw(tmpdir):
+def test_write_lm10(tmpdir):
     tmp_filename = str(tmpdir.join("potential.yml"))
 
     # more complex
-    potential = TriaxialMWPotential()
+    potential = LM10Potential()
 
     with open(tmp_filename,'w') as f:
         save(potential, f)
