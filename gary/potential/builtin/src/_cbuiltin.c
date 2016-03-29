@@ -550,8 +550,8 @@ double leesuto_density(double t, double *pars, double *r) {
 double logarithmic_value(double t, double *pars, double *r) {
     double x, y, z;
 
-    x = r[0];
-    y = r[1];
+    x = r[0]*cos(pars[5]) + r[1]*sin(pars[5]);
+    y = -r[0]*sin(pars[5]) + r[1]*cos(pars[5]);
     z = r[2];
 
     return 0.5*pars[0]*pars[0] * log(pars[1]*pars[1] + // scale radius
@@ -563,8 +563,8 @@ double logarithmic_value(double t, double *pars, double *r) {
 void logarithmic_gradient(double t, double *pars, double *r, double *grad) {
     double x, y, z, ax, ay, az, fac;
 
-    x = r[0];
-    y = r[1];
+    x = r[0]*cos(pars[5]) + r[1]*sin(pars[5]);
+    y = -r[0]*sin(pars[5]) + r[1]*cos(pars[5]);
     z = r[2];
 
     fac = pars[0]*pars[0] / (pars[1]*pars[1] + x*x/(pars[2]*pars[2]) + y*y/(pars[3]*pars[3]) + z*z/(pars[4]*pars[4]));
@@ -572,7 +572,7 @@ void logarithmic_gradient(double t, double *pars, double *r, double *grad) {
     ay = fac*y/(pars[3]*pars[3]);
     az = fac*z/(pars[4]*pars[4]);
 
-    grad[0] = grad[0] + ax;
-    grad[1] = grad[1] + ay;
+    grad[0] = grad[0] + (ax*cos(pars[5]) - ay*sin(pars[5]));
+    grad[1] = grad[1] + (ax*cos(pars[5]) + ay*sin(pars[5]));
     grad[2] = grad[2] + az;
 }
