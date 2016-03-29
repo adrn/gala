@@ -1,90 +1,54 @@
 # coding: utf-8
 
-""" Potential used in Price-Whelan et al. (in prep.) TODO """
-
 from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
-from astropy.constants import G
 import astropy.units as u
 import numpy as np
 
 # Project
 # from .cpotential import CCompositePotential
 # from ..core import CompositePotential
-# from .cybuiltin import HernquistPotential, MiyamotoNagaiPotential, \
-#     LeeSutoTriaxialNFWPotential, SphericalNFWPotential, LogarithmicPotential
-# from ...units import galactic
+from .cybuiltin import HernquistPotential, MiyamotoNagaiPotential, \
+    LeeSutoTriaxialNFWPotential, SphericalNFWPotential, LogarithmicPotential,\
+    CCompositePotential
+from ...units import galactic
 
-# __all__ = ['TriaxialMWPotential']
+__all__ = ['LM10Potential'] # ['TriaxialMWPotential']
 
-# class PyLM10Potential(CompositePotential):
+class LM10Potential(CCompositePotential):
 
-#     def __init__(self, units=galactic, disk=dict(), bulge=dict(), halo=dict()):
+    def __init__(self, units=galactic,
+                 disk=dict(), bulge=dict(), halo=dict()):
 
-#         default_disk = dict(m=1E11, a=6.5, b=0.26)
-#         default_bulge = dict(m=3.4E10, c=0.7)
-#         default_halo = dict(q1=1.38, q2=1., q3=1.36, r_h=12.,
-#                             phi=(97*u.degree).to(u.radian).value,
-#                             v_c=np.sqrt(2)*(121.858*u.km/u.s).to(u.kpc/u.Myr).value)
+        default_disk = dict(m=1E11*u.Msun, a=6.5*u.kpc, b=0.26*u.kpc)
+        default_bulge = dict(m=3.4E10*u.Msun, c=0.7*u.kpc)
+        default_halo = dict(q1=1.38, q2=1., q3=1.36, r_h=12.*u.kpc,
+                            phi=97*u.degree,
+                            v_c=np.sqrt(2)*121.858*u.km/u.s)
 
-#         for k,v in default_disk.items():
-#             if k not in disk:
-#                 disk[k] = v
+        for k,v in default_disk.items():
+            if k not in disk:
+                disk[k] = v
 
-#         for k,v in default_bulge.items():
-#             if k not in bulge:
-#                 bulge[k] = v
+        for k,v in default_bulge.items():
+            if k not in bulge:
+                bulge[k] = v
 
-#         for k,v in default_halo.items():
-#             if k not in halo:
-#                 halo[k] = v
+        for k,v in default_halo.items():
+            if k not in halo:
+                halo[k] = v
 
-#         kwargs = dict()
-#         kwargs["disk"] = MiyamotoNagaiPotential(units=units, **disk)
-#         kwargs["bulge"] = HernquistPotential(units=units, **bulge)
-#         kwargs["halo"] = LogarithmicPotential(units=units, **halo)
-#         super(PyLM10Potential,self).__init__(**kwargs)
+        kwargs = dict()
+        kwargs["disk"] = MiyamotoNagaiPotential(units=units, **disk)
+        kwargs["bulge"] = HernquistPotential(units=units, **bulge)
+        kwargs["halo"] = LogarithmicPotential(units=units, **halo)
+        super(LM10Potential,self).__init__(**kwargs)
 
-# # --------------------------------------------------------------------
-
-# class PW14Potential(CompositePotential):
-
-#     def __init__(self, units=galactic, disk=dict(), bulge=dict(), halo=dict()):
-
-#         default_disk = dict(m=6.5E10, a=6.5, b=0.26)
-#         default_bulge = dict(m=2E10, c=0.3)
-#         default_halo = dict(a=1.4, b=1., c=0.6, v_c=0.247, r_s=30.,
-#                             phi=np.pi/2., theta=np.pi/2., psi=np.pi/2.)
-
-#         for k,v in default_disk.items():
-#             if k not in disk:
-#                 disk[k] = v
-
-#         for k,v in default_bulge.items():
-#             if k not in bulge:
-#                 bulge[k] = v
-
-#         for k,v in default_halo.items():
-#             if k not in halo:
-#                 halo[k] = v
-
-#         kwargs = dict()
-#         kwargs["disk"] = MiyamotoNagaiPotential(units=units, **disk)
-#         kwargs["bulge"] = HernquistPotential(units=units, **bulge)
-
-#         if halo['a'] == 1 and halo['b'] == 1 and halo['c'] == 1:
-#             kwargs["halo"] = SphericalNFWPotential(units=units,
-#                                                    v_c=halo['v_c'],
-#                                                    r_s=halo['r_s'])
-#         else:
-#             kwargs["halo"] = LeeSutoTriaxialNFWPotential(units=units, **halo)
-
-#         super(PW14Potential,self).__init__(**kwargs)
-
-# class TriaxialMWPotential(CompositePotential):
+# --------------------------------------------------------------------
+# class TriaxialMWPotential(CCompositePotential):
 
 #     def __init__(self, units=galactic,
 #                  disk=dict(), bulge=dict(), halo=dict()):
@@ -116,6 +80,7 @@ import numpy as np
 #         kwargs["bulge"] = HernquistPotential(units=units, **bulge)
 #         kwargs["halo"] = LeeSutoTriaxialNFWPotential(units=units, **halo)
 #         super(TriaxialMWPotential,self).__init__(**kwargs)
+# --------------------------------------------------------------------
 
 stuff = """
 def busey():

@@ -26,6 +26,7 @@ np.import_array()
 from ..core import CompositePotential
 from ..cpotential import CPotentialBase
 from ..cpotential cimport CPotentialWrapper
+from ...units import DimensionlessUnitSystem
 
 cdef extern from "src/cpotential.h":
     enum:
@@ -711,7 +712,7 @@ cdef class LogarithmicWrapper(CPotentialWrapper):
 
 class LogarithmicPotential(CPotentialBase):
     r"""
-    LogarithmicPotential(v_c, r_h, q1, q2, q3, units)
+    LogarithmicPotential(v_c, r_h, q1, q2, q3, phi=0, theta=0, psi=0, units)
 
     Triaxial logarithmic potential.
 
@@ -721,9 +722,9 @@ class LogarithmicPotential(CPotentialBase):
 
     Parameters
     ----------
-    v_c : numeric
+    v_c : `~astropy.units.Quantity`, numeric
         Circular velocity.
-    r_h : numeric
+    r_h : `~astropy.units.Quantity`, numeric
         Scale radius.
     q1 : numeric
         Flattening in X.
@@ -731,20 +732,28 @@ class LogarithmicPotential(CPotentialBase):
         Flattening in Y.
     q3 : numeric
         Flattening in Z.
+    phi : `~astropy.units.Quantity`, numeric
+        First euler angle in the z-x-z convention.
     units : `~gary.units.UnitSystem` (optional)
         Set of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_c, r_h, q1, q2, q3, units):
+    def __init__(self, v_c, r_h, q1, q2, q3, phi=0., units=None):
         parameters = OrderedDict()
         parameters['v_c'] = v_c
         parameters['r_h'] = r_h
         parameters['q1'] = q1
         parameters['q2'] = q2
         parameters['q3'] = q3
+        parameters['phi'] = phi
         super(LogarithmicPotential, self).__init__(parameters=parameters,
                                                    units=units)
+
+        if not isinstance(self.units, DimensionlessUnitSystem):
+            if self.units['angle'] != u.radian:
+                raise ValueError("Angle unit must be radian.")
+
 # ============================================================================
 # TODO: why do these have to be in this file?
 
