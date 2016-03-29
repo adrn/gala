@@ -5,6 +5,7 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third party
+import astropy.units as u
 import pytest
 import numpy as np
 
