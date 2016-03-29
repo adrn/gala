@@ -186,7 +186,7 @@ class PotentialBase(object):
 
         Returns
         -------
-        acce : `~numpy.ndarray`
+        acc : `~numpy.ndarray`
             The acceleration. Will have the same shape as the input
             position array, ``q``.
         """
@@ -204,7 +204,7 @@ class PotentialBase(object):
 
         Returns
         -------
-        dens : `~astropy.units.Quantity`
+        menc : `~astropy.units.Quantity`
             The potential energy or value of the potential. If the input
             position has shape ``q.shape``, the output energy will have
             shape ``q.shape[1:]``.
@@ -278,6 +278,11 @@ class PotentialBase(object):
         Plot equipotentials contours. Computes the potential value on a grid
         (specified by the array `grid`).
 
+        .. warning::
+
+            Right now the grid input must be arrays and must already be in
+            the unit system of the potential. Quantity support is coming...
+
         Parameters
         ----------
         grid : tuple
@@ -333,7 +338,7 @@ class PotentialBase(object):
             for ii,slc in _slices:
                 r[ii] = slc
 
-            Z = self.value(r)
+            Z = self.value(r*self.units['length']).value
             ax.plot(x1, Z, **kwargs)
 
             if labels is not None:
@@ -352,7 +357,7 @@ class PotentialBase(object):
             for ii,slc in _slices:
                 r[ii] = slc
 
-            Z = self.value(r)
+            Z = self.value(r*self.units['length']).value
 
             # make default colormap not suck
             cmap = kwargs.pop('cmap', cm.Blues)
@@ -369,6 +374,11 @@ class PotentialBase(object):
         """
         Plot density contours. Computes the density on a grid
         (specified by the array `grid`).
+
+        .. warning::
+
+            Right now the grid input must be arrays and must already be in
+            the unit system of the potential. Quantity support is coming...
 
         Parameters
         ----------
@@ -425,7 +435,7 @@ class PotentialBase(object):
             for ii,slc in _slices:
                 r[:,ii] = slc
 
-            Z = self.density(r)
+            Z = self.density(r*self.units['length']).value
             ax.plot(x1, Z, **kwargs)
 
             if labels is not None:
@@ -444,7 +454,7 @@ class PotentialBase(object):
             for ii,slc in _slices:
                 r[:,ii] = slc
 
-            Z = self.density(r)
+            Z = self.density(r*self.units['length']).value
 
             # make default colormap not suck
             cmap = kwargs.pop('cmap', cm.Blues)
@@ -526,7 +536,9 @@ class PotentialBase(object):
                 w = w[...,0]
 
         else:
-            acc = lambda t,w: np.vstack((w[ndim:], self.acceleration(w[:ndim], t=t)))
+            # TODO: this will be *very* slow because of units shit
+            acc = lambda t,w: np.vstack((w[ndim:],
+                                         self.acceleration(w[:ndim], t=t).decompose(self.units).value))
             integrator = Integrator(acc, func_units=self.units, **Integrator_kwargs)
             orbit = integrator.run(w0, **time_spec)
             orbit.potential = self
