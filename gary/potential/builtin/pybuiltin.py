@@ -39,12 +39,12 @@ class HarmonicOscillatorPotential(PotentialBase):
                                                           parameters=parameters)
 
     def _value(self, x, t):
-        omega = self.parameters['omega']
-        return np.sum(0.5*atleast_2d(omega**2, insert_axis=1)*x**2, axis=0)
+        om = np.array(self.parameters['omega'])
+        return np.sum((0.5 * om**2 * x.T**2).T, axis=0)
 
     def _gradient(self, x, t):
-        omega = self.parameters['omega']
-        return atleast_2d(omega**2, insert_axis=1)*x
+        om = np.array(self.parameters['omega'])
+        return (om**2*x.T).T
 
     def action_angle(self, w):
         """
