@@ -20,8 +20,7 @@ double c_density(CPotential *p, double t, double *q) {
 void c_gradient(CPotential *p, double t, double *q, double *grad) {
     int i;
 
-    // TODO: instead of hard-setting 3, I need to define p->ndim
-    for (i=0; i < 3; i++) {
+    for (i=0; i < (p->n_dim); i++) {
         grad[i] = 0.;
     }
 
@@ -40,13 +39,12 @@ double c_d_dr(CPotential *p, double t, double *q, double *epsilon) {
     // Step-size for estimating radial gradient of the potential
     r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
 
-    // TODO: instead of hard-setting 3, I need to define p->ndim
-    for (j=0; j < 3; j++)
+    for (j=0; j < (p->n_dim); j++)
         epsilon[j] = h * q[j]/r + q[j];
 
     dPhi_dr = c_value(p, t, epsilon);
 
-    for (j=0; j < 3; j++)
+    for (j=0; j < (p->n_dim); j++)
         epsilon[j] = h * q[j]/r - q[j];
 
     dPhi_dr = dPhi_dr - c_value(p, t, epsilon);
@@ -64,14 +62,13 @@ double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) {
     // Step-size for estimating radial gradient of the potential
     r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
 
-    // TODO: instead of hard-setting 3, I need to define p->ndim
-    for (j=0; j < 3; j++)
+    for (j=0; j < (p->n_dim); j++)
         epsilon[j] = h * q[j]/r + q[j];
     d2Phi_dr2 = c_value(p, t, epsilon);
 
     d2Phi_dr2 = d2Phi_dr2 - 2*c_value(p, t, q);
 
-    for (j=0; j < 3; j++)
+    for (j=0; j < (p->n_dim); j++)
         epsilon[j] = h * q[j]/r - q[j];
     d2Phi_dr2 = d2Phi_dr2 + c_value(p, t, epsilon);
 

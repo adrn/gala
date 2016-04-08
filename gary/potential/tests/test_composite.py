@@ -83,3 +83,9 @@ class TestComposite(CompositeHelper):
 
 class TestCComposite(CompositeHelper):
     Cls = CCompositePotential
+
+def test_failures():
+    p = CCompositePotential()
+    p['derp'] = KeplerPotential(m=1.*u.Msun, units=solarsystem)
+    with pytest.raises(ValueError):
+        p['jnsdfn'] = HenonHeilesPotential(units=solarsystem)
