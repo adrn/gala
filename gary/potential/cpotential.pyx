@@ -40,6 +40,7 @@ cdef extern from "src/cpotential.h":
 
     ctypedef struct CPotential:
         int n_components
+        int n_dim
         densityfunc density[MAX_N_COMPONENTS]
         valuefunc value[MAX_N_COMPONENTS]
         gradientfunc gradient[MAX_N_COMPONENTS]
