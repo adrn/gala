@@ -25,7 +25,7 @@ class PotentialBase(object):
     """
     A baseclass for defining pure-Python gravitational potentials.
 
-    Subclasses must define (at minimum) a mathod that evaluates
+    Subclasses must define (at minimum) a method that evaluates
     the value (energy) of the potential at a given position ``q``
     and time ``t``: ``_value(q, t)``. For integration, the subclasses
     must also define a method to evaluate the gradient,
