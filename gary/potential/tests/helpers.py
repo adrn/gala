@@ -37,7 +37,7 @@ class PotentialTestBase(object):
             cls.name = cls.__name__[4:] # remove Test
         print("Testing potential: {}".format(cls.name))
         cls.w0 = np.array(cls.w0)
-        cls.ndim = cls.w0.size
+        cls.ndim = cls.w0.size // 2
 
         # these are arrays we will test the methods on:
         w0_2d = np.repeat(cls.w0[:,None], axis=1, repeats=16)
@@ -161,8 +161,8 @@ class PotentialTestBase(object):
         print("Integration time (10000 steps): {}".format(time.time() - t1))
 
         us = self.potential.units
-        w0 = CartesianPhaseSpacePosition(pos=w0[:self.ndim//2]*us['length'],
-                                         vel=w0[self.ndim//2:]*us['length']/us['time'])
+        w0 = CartesianPhaseSpacePosition(pos=w0[:self.ndim]*us['length'],
+                                         vel=w0[self.ndim:]*us['length']/us['time'])
         orbit = self.potential.integrate_orbit(w0, dt=1., nsteps=10000)
 
     def test_pickle(self, tmpdir):
