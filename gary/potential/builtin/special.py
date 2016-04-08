@@ -22,7 +22,31 @@ from ...units import galactic
 __all__ = ['LM10Potential'] # ['TriaxialMWPotential']
 
 class LM10Potential(CCompositePotential):
+    """
+    The Galactic potential used by Law and Majewski (2010) to represent
+    the Milky Way as a three-component sum of disk, bulge, and halo.
 
+    The disk potential is an axisymmetric
+    :class:`~gary.potential.MiyamotoNagaiPotential`, the bulge potential
+    is a spherical :class:`~gary.potential.HernquistPotential`, and the
+    halo potential is a triaxial :class:`~gary.potential.LogarithmicPotential`.
+
+    Default parameters are fixed to those found in LM10 by fitting N-body
+    simulations to the Sagittarius stream.
+
+    Parameters
+    ----------
+    units : `~gary.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+    disk : dict (optional)
+        Parameters to be passed to the :class:`~gary.potential.MiyamotoNagaiPotential`.
+    bulge : dict (optional)
+        Parameters to be passed to the :class:`~gary.potential.HernquistPotential`.
+    halo : dict (optional)
+        Parameters to be passed to the :class:`~gary.potential.LogarithmicPotential`.
+
+    """
     def __init__(self, units=galactic,
                  disk=dict(), bulge=dict(), halo=dict()):
 
