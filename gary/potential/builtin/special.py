@@ -4,6 +4,9 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
+# Standard lib
+from collections import OrderedDict
+
 # Third-party
 import astropy.units as u
 import numpy as np
@@ -41,11 +44,11 @@ class LM10Potential(CCompositePotential):
             if k not in halo:
                 halo[k] = v
 
-        kwargs = dict()
-        kwargs["disk"] = MiyamotoNagaiPotential(units=units, **disk)
-        kwargs["bulge"] = HernquistPotential(units=units, **bulge)
-        kwargs["halo"] = LogarithmicPotential(units=units, **halo)
-        super(LM10Potential,self).__init__(**kwargs)
+        super(LM10Potential,self).__init__()
+
+        self["disk"] = MiyamotoNagaiPotential(units=units, **disk)
+        self["bulge"] = HernquistPotential(units=units, **bulge)
+        self["halo"] = LogarithmicPotential(units=units, **halo)
 
 # --------------------------------------------------------------------
 # class TriaxialMWPotential(CCompositePotential):

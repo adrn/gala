@@ -777,21 +777,22 @@ cdef class CCompositePotentialWrapper(CPotentialWrapper):
             CPotential cp
             CPotential tmp_cp
             int i
-            CPotentialWrapper[::1] derp
+            CPotentialWrapper[::1] _cpotential_arr
 
-        derp = np.array(potentials)
+        _cpotential_arr = np.array(potentials)
+
         n_components = len(potentials)
         self._n_params = np.zeros(n_components, dtype=np.int32)
         for i in range(n_components):
-            self._n_params[i] = derp[i]._n_params[0]
+            self._n_params[i] = _cpotential_arr[i]._n_params[0]
 
         cp.n_components = n_components
         cp.n_params = &(self._n_params[0])
         cp.n_dim = 0
 
         for i in range(n_components):
-            tmp_cp = derp[i].cpotential
-            cp.parameters[i] = &(derp[i]._params[0])
+            tmp_cp = _cpotential_arr[i].cpotential
+            cp.parameters[i] = &(_cpotential_arr[i]._params[0])
             cp.value[i] = tmp_cp.value[0]
             cp.density[i] = tmp_cp.density[0]
             cp.gradient[i] = tmp_cp.gradient[0]
@@ -818,3 +819,8 @@ class CCompositePotential(CPotentialBase, CompositePotential):
     def __setitem__(self, *args, **kwargs):
         CompositePotential.__setitem__(self, *args, **kwargs)
         self._reset_c_instance()
+
+    def __reduce__(self):
+        """ Properly package the object for pickling """
+        derp = tuple([self.units] + [c.parameters for c in self.values()])
+        return (self.__class__, derp)
