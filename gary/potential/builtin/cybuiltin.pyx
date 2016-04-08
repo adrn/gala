@@ -804,9 +804,6 @@ cdef class CCompositePotentialWrapper(CPotentialWrapper):
         self.cpotential = cp
 
 class CCompositePotential(CPotentialBase, CompositePotential):
-    """
-
-    """
 
     def __init__(self, **potentials):
         CompositePotential.__init__(self, **potentials)
@@ -815,7 +812,7 @@ class CCompositePotential(CPotentialBase, CompositePotential):
         self._potential_list = []
         for p in self.values():
             self._potential_list.append(p.c_instance)
-
+        self.G = p.G
         self.c_instance = CCompositePotentialWrapper(self._potential_list)
 
     def __setitem__(self, *args, **kwargs):
