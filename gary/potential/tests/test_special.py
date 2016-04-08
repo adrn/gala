@@ -7,35 +7,26 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# class TestPW14Potential(PotentialTestBase):
-#     units = (u.kpc, u.M_sun, u.Myr, u.radian)
+# Third-party
+import astropy.units as u
 
-#     def setup(self):
-#         print("\n\n")
-#         print("="*50)
-#         print(self.__class__.__name__)
+# This project
+from .helpers import PotentialTestBase
+from ..builtin.special import *
+# from ...units import galactic
 
-#         self.potential = PW14Potential()
-#         self.w0 = [8.,0.,0.,0.,0.22,0.1]
+class SpecialPotentialTestBase(PotentialTestBase):
+    def test_repr(self):
+        pass
 
-# class TestLM10Potential(PotentialTestBase):
-#     units = (u.kpc, u.M_sun, u.Myr, u.radian)
+class TestLM10Potential(SpecialPotentialTestBase):
+    potential = LM10Potential()
+    w0 = [8.,0.,0.,0.,0.22,0.1]
 
-#     def setup(self):
-#         print("\n\n")
-#         print("="*50)
-#         print(self.__class__.__name__)
+class TestLM10Potential2(PotentialTestBase):
+    potential = LM10Potential(disk={'m': 5E10*u.Msun}, bulge={'m': 5E10*u.Msun})
+    w0 = [8.,0.,0.,0.,0.22,0.1]
 
-#         self.potential = LM10Potential()
-#         self.w0 = [8.,0.,0.,0.,0.22,0.1]
-
-# class TestTriaxialMWPotential(PotentialTestBase):
-#     units = (u.kpc, u.M_sun, u.Myr, u.radian)
-
-#     def setup(self):
-#         print("\n\n")
-#         print("="*50)
-#         print(self.__class__.__name__)
-
-#         self.potential = TriaxialMWPotential()
-#         self.w0 = [8.,0.,0.,0.,0.22,0.1]
+# class TestTriaxialMW(PotentialTestBase):
+#     potential = TriaxialMWPotential()
+#     w0 = [8.,0.,0.,0.,0.22,0.1]
