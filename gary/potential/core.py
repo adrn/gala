@@ -12,16 +12,18 @@ import warnings
 import numpy as np
 from astropy.constants import G
 import astropy.units as u
-from astropy.utils import isiterable
+from astropy.utils import isiterable, InheritDocstrings
+from astropy.extern import six
 
 # Project
 from ..integrate import *
-from ..util import inherit_docs, ImmutableDict, atleast_2d
+from ..util import ImmutableDict, atleast_2d
 from ..units import UnitSystem, DimensionlessUnitSystem
 from ..dynamics import CartesianOrbit, CartesianPhaseSpacePosition
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
+@six.add_metaclass(InheritDocstrings)
 class PotentialBase(object):
     """
     A baseclass for defining pure-Python gravitational potentials.
@@ -534,7 +536,7 @@ class PotentialBase(object):
                 w = w[...,0]
 
         else:
-            # TODO: this will be *very* slow because of units shit
+            # TODO: this will be *very* slow because of units shit -- what do?
             acc = lambda t,w: np.vstack((w[ndim:],
                                          self.acceleration(w[:ndim], t=t).decompose(self.units).value))
             integrator = Integrator(acc, func_units=self.units, **Integrator_kwargs)
@@ -582,7 +584,6 @@ class PotentialBase(object):
         from .io import save
         save(self, f)
 
-@inherit_docs
 class CompositePotential(PotentialBase, OrderedDict):
     """
     A potential composed of several distinct components. For example,
