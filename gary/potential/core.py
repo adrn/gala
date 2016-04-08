@@ -6,6 +6,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 from collections import OrderedDict
+import warnings
 
 # Third-party
 import numpy as np
@@ -63,7 +64,7 @@ class PotentialBase(object):
         except u.UnitConversionError:
             self.G = 1. # TODO: this is a HACK and could lead to user confusion
 
-    def _value(self):
+    def _value(self, q, t=0.):
         raise NotImplementedError()
 
     def value(self, q, t=0.):
@@ -84,13 +85,10 @@ class PotentialBase(object):
             If the input position has shape ``q.shape``, the output energy
             will have shape ``q.shape[1:]``.
         """
-        if hasattr(q, 'unit'):
-            q = q.decompose(self.units).value
-
-        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
+        q = self._prefilter_pos(q)
         return self._value(q, t=t) * self.units['energy'] / self.units['mass']
 
-    def _gradient(self, *args, **kwargs):
+    def _gradient(self, q, t=0.):
         raise NotImplementedError()
 
     def gradient(self, q, t=0.):
@@ -117,7 +115,7 @@ class PotentialBase(object):
         except NotImplementedError:
             raise NotImplementedError("This potential has no specified gradient function.")
 
-    def _density(self, *args, **kwargs):
+    def _density(self, q, t=0.):
         raise NotImplementedError()
 
     def density(self, q, t=0.):
@@ -145,7 +143,7 @@ class PotentialBase(object):
         except NotImplementedError:
             raise NotImplementedError("This potential has no specified density function.")
 
-    def _hessian(self, *args, **kwargs):
+    def _hessian(self, q, t=0.):
         raise NotImplementedError()
 
     def hessian(self, q, t=0.):
@@ -564,7 +562,9 @@ class PotentialBase(object):
         v : array_like, numeric
             Velocity.
         """
-        # TODO: deprecationwarning?
+        warnings.warn("Use the energy methods on Orbit objects instead. In a future "
+                      "release this will be removed.", DeprecationWarning)
+
         v = atleast_2d(v, insert_axis=1)
         return self.value(x) + 0.5*np.sum(v**2, axis=0)
 
