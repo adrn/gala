@@ -128,6 +128,7 @@ class PotentialTestBase(object):
         p = load(fn)
         p.value(self.w0[:self.w0.size//2])
 
+    @pytest.mark.slow
     def test_numerical_gradient_vs_gradient(self):
         """
         Check that the value of the implemented gradient function is close to a
