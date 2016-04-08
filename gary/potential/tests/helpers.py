@@ -92,11 +92,6 @@ class PotentialTestBase(object):
         for k in self.potential.parameters.keys():
             assert "{}=".format(k) in pot_repr
 
-    def test_energy(self):
-        for arr,shp in zip(self.w0s, self._valu_return_shapes):
-            E = self.potential.total_energy(arr[:self.ndim], arr[self.ndim:])
-            assert E.shape == shp
-
     def test_plot(self):
         p = self.potential
         f = p.plot_contours(grid=(np.linspace(-10., 10., 100), 0., 0.),
