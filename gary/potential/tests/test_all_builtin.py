@@ -81,11 +81,11 @@ class TestSphericalNFWPotential(PotentialTestBase):
 
         v1 = other.value(self.w0[:3])
         v2 = self.potential.value(self.w0[:3])
-        assert np.allclose(v1,v2)
+        assert np.allclose(v1.value,v2.value)
 
         a1 = other.gradient(self.w0[:3])
         a2 = self.potential.gradient(self.w0[:3])
-        assert np.allclose(a1,a2)
+        assert np.allclose(a1.value,a2.value)
 
     def test_mass_enclosed(self):
 
@@ -102,7 +102,7 @@ class TestSphericalNFWPotential(PotentialTestBase):
         R[0,:] = r
         esti_mprof = self.potential.mass_enclosed(R)
 
-        assert np.allclose(true_mprof, esti_mprof, rtol=1E-6)
+        assert np.allclose(true_mprof, esti_mprof.value, rtol=1E-6)
 
 class TestFlattenedNFW(PotentialTestBase):
     potential = FlattenedNFWPotential(units=galactic, v_c=0.2, r_s=12., q_z=0.9)
