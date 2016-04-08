@@ -15,7 +15,7 @@ import pytest
 # This project
 from ..core import CompositePotential
 from ..builtin import *
-from ...units import solarsystem, galactic
+from ...units import solarsystem, galactic, DimensionlessUnitSystem
 from .helpers import PotentialTestBase, CompositePotentialTestBase
 
 ##############################################################################
@@ -26,9 +26,9 @@ class TestHarmonicOscillator1D(PotentialTestBase):
     potential = HarmonicOscillatorPotential(omega=1.)
     w0 = [1.,0.]
 
-# class TestHarmonicOscillator2D(PotentialTestBase):
-#     potential = HarmonicOscillatorPotential(omega=[1.,2])
-#     w0 = [1.,0.5,0.,0.1]
+class TestHarmonicOscillator2D(PotentialTestBase):
+    potential = HarmonicOscillatorPotential(omega=[1.,2])
+    w0 = [1.,0.5,0.,0.1]
 
 ##############################################################################
 # Cython
@@ -48,6 +48,10 @@ class TestKeplerUnitInput(PotentialTestBase):
 
 class TestIsochrone(PotentialTestBase):
     potential = IsochronePotential(units=solarsystem, m=1., b=0.1)
+    w0 = [1.,0.,0.,0.,2*np.pi,0.]
+
+class TestIsochroneDimensionless(PotentialTestBase):
+    potential = IsochronePotential(units=DimensionlessUnitSystem(), m=1., b=0.1)
     w0 = [1.,0.,0.,0.,2*np.pi,0.]
 
 class TestHernquist(PotentialTestBase):
