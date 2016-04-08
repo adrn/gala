@@ -23,7 +23,7 @@ def partial_derivative(func, point, dim_ix=0, **kwargs):
     xyz = np.array(point)
     def wraps(a):
         xyz[dim_ix] = a
-        return func(xyz)
+        return func(xyz).value
     return derivative(wraps, point[dim_ix], **kwargs)
 
 class PotentialTestBase(object):
@@ -145,7 +145,7 @@ class PotentialTestBase(object):
         num_grad = np.zeros_like(xyz)
         for i in range(xyz.shape[1]):
             num_grad[:,i] = np.squeeze([partial_derivative(self.potential.value, xyz[:,i], dim_ix=dim_ix, n=1, dx=dx, order=5) for dim_ix in range(self.w0.size//2)])
-        grad = self.potential.gradient(xyz)
+        grad = self.potential.gradient(xyz).value
 
         assert np.allclose(num_grad, grad, rtol=self.tol)
 
