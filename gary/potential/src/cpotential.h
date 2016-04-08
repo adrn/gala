@@ -13,6 +13,7 @@ typedef void (*gradientfunc)(double t, double *pars, double *q, double *grad);
 
     struct _CPotential {
         int n_components; // number of potential components
+        int n_dim; // coordinate system dimensionality
 
         // arrays of pointers to each of the function types above
         densityfunc density[MAX_N_COMPONENTS];

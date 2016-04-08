@@ -38,6 +38,7 @@ cdef extern from "src/cpotential.h":
 
     ctypedef struct CPotential:
         int n_components
+        int n_dim
         densityfunc density[MAX_N_COMPONENTS]
         valuefunc value[MAX_N_COMPONENTS]
         gradientfunc gradient[MAX_N_COMPONENTS]
@@ -124,6 +125,7 @@ cdef class HenonHeilesWrapper(CPotentialWrapper):
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 2
         self.cpotential = cp
 
 class HenonHeilesPotential(CPotentialBase):
@@ -166,6 +168,7 @@ cdef class KeplerWrapper(CPotentialWrapper):
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
         self.cpotential = cp
 
 class KeplerPotential(CPotentialBase):
@@ -214,6 +217,7 @@ cdef class IsochroneWrapper(CPotentialWrapper):
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
         self.cpotential = cp
 
 class IsochronePotential(CPotentialBase):
@@ -299,6 +303,7 @@ cdef class HernquistWrapper(CPotentialWrapper):
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
         self.cpotential = cp
 
 class HernquistPotential(CPotentialBase):
@@ -349,6 +354,7 @@ cdef class PlummerWrapper(CPotentialWrapper):
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
         self.cpotential = cp
 
 class PlummerPotential(CPotentialBase):
@@ -397,6 +403,7 @@ cdef class JaffeWrapper(CPotentialWrapper):
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
         self.cpotential = cp
 
 class JaffePotential(CPotentialBase):
@@ -445,6 +452,7 @@ cdef class StoneWrapper(CPotentialWrapper):
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
         self.cpotential = cp
 
 class StonePotential(CPotentialBase):
@@ -496,6 +504,7 @@ cdef class SphericalNFWWrapper(CPotentialWrapper):
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
         self.cpotential = cp
 
 class SphericalNFWPotential(CPotentialBase):
@@ -545,6 +554,7 @@ cdef class MiyamotoNagaiWrapper(CPotentialWrapper):
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
         self.cpotential = cp
 
 class MiyamotoNagaiPotential(CPotentialBase):
@@ -598,6 +608,7 @@ cdef class FlattenedNFWWrapper(CPotentialWrapper):
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
         self.cpotential = cp
 
 class FlattenedNFWPotential(CPotentialBase):
@@ -652,6 +663,7 @@ cdef class LeeSutoTriaxialNFWWrapper(CPotentialWrapper):
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
         self.cpotential = cp
 
 class LeeSutoTriaxialNFWPotential(CPotentialBase):
@@ -708,6 +720,7 @@ cdef class LogarithmicWrapper(CPotentialWrapper):
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
         self.cpotential = cp
 
 class LogarithmicPotential(CPotentialBase):
@@ -774,6 +787,7 @@ cdef class CCompositePotentialWrapper(CPotentialWrapper):
 
         cp.n_components = n_components
         cp.n_params = &(self._n_params[0])
+        cp.n_dim = 0
 
         for i in range(n_components):
             tmp_cp = derp[i].cpotential
@@ -781,6 +795,11 @@ cdef class CCompositePotentialWrapper(CPotentialWrapper):
             cp.value[i] = tmp_cp.value[0]
             cp.density[i] = tmp_cp.density[0]
             cp.gradient[i] = tmp_cp.gradient[0]
+
+            if cp.n_dim == 0:
+                cp.n_dim = tmp_cp.n_dim
+            elif cp.n_dim != tmp_cp.n_dim:
+                raise ValueError("Input potentials must have same number of coordinate dimensions")
 
         self.cpotential = cp
 
