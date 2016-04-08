@@ -59,7 +59,9 @@ __all__ = ['CPotentialBase']
 
 cdef class CPotentialWrapper:
     """
-    Wrapper class for C struct potential container.
+    Wrapper class for C implementation of potentials. At the C layer, potentials
+    are effectively struct's that maintain pointers to functions specific to a
+    given potential. This provides a Cython wrapper around this C implementation.
     """
 
     cpdef value(self, double[:,::1] q, double t=0.):
@@ -197,10 +199,7 @@ cdef class CPotentialWrapper:
 
 class CPotentialBase(PotentialBase):
     """
-    A base class for representing gravitational potentials with
-    value, gradient, etc. functions implemented in C.
-
-    TODO: better description here
+    A baseclass for defining gravitational potentials implemented in C.
     """
 
     def __init__(self, parameters, units):
