@@ -198,3 +198,6 @@ galactic = UnitSystem(u.kpc, u.Myr, u.Msun, u.radian,
 
 # solar system units
 solarsystem = UnitSystem(u.au, u.M_sun, u.yr, u.radian)
+
+# dimensionless
+dimensionless = DimensionlessUnitSystem()
