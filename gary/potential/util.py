@@ -14,12 +14,12 @@ from .core import PotentialBase
 
 __all__ = ['from_equation']
 
-def _classnamify(s):
-    s = [x.lower() for x in str(s).split()]
-    words = []
-    for word in s:
-        words.append(word[0].upper() + word[1:])
-    return "".join(words)
+# def _classnamify(s):
+#     s = [x.lower() for x in str(s).split()]
+#     words = []
+#     for word in s:
+#         words.append(word.capitalize())
+#     return "".join(words)
 
 def from_equation(expr, vars, pars, name=None, hessian=False):
     r"""
@@ -97,7 +97,7 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
                                                  parameters=kwargs)
 
     if name is not None:
-        name = _classnamify(name)
+        # name = _classnamify(name)
         if "potential" not in name.lower():
             name = name + "Potential"
         CustomPotential.__name__ = name
