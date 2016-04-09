@@ -27,6 +27,10 @@ class TestHarmonicOscillatorFromEquation(PotentialTestBase):
         # Skip for now because these are not picklable
         pass
 
+    def test_save_load(self):
+        # Skip for now because these can't be written to YAML
+        pass
+
 class TestHarmonicOscillatorFromEquationUnits(PotentialTestBase):
     Potential = from_equation("1/2*k*x**2", vars="x", pars="k",
                               name='HarmonicOscillator')
@@ -39,4 +43,8 @@ class TestHarmonicOscillatorFromEquationUnits(PotentialTestBase):
 
     def test_pickle(self):
         # Skip for now because these are not picklable
+        pass
+
+    def test_save_load(self):
+        # Skip for now because these can't be written to YAML
         pass
