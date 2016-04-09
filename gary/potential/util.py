@@ -31,7 +31,8 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
 
     .. warning::
 
-        These potentials are *not* pickle-able.
+        These potentials are *not* pickle-able and cannot be written
+        out to YAML files (using `~gary.potential.PotentialBase.save()`)
 
     Parameters
     ----------
@@ -105,6 +106,9 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
     valuefunc = lambdify(vars + pars, expr, dummify=False)
     def _value(self, w, t):
         kw = self.parameters.copy()
+        for k,v in kw.items():
+            kw[k] = v.value
+
         for i,name in enumerate(var_names):
             kw[name] = w[i]
         return valuefunc(**kw)
@@ -117,10 +121,20 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
 
     def _gradient(self, w, t):
         kw = self.parameters.copy()
+        for k,v in kw.items():
+            kw[k] = v.value
+
         for i,name in enumerate(var_names):
             kw[name] = w[i]
-        return np.vstack([f(**kw) for f in gradfuncs])
+
+        grad = np.vstack([f(**kw) for f in gradfuncs])
+        if len(gradfuncs) == 1 and grad.ndim != w.ndim:
+            return grad[np.newaxis]
+        else:
+            return grad
+
     CustomPotential._gradient = _gradient
+    CustomPotential.save = None
 
     # Hessian
     if hessian:
