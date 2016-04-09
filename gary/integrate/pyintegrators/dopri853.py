@@ -12,11 +12,9 @@ from scipy.integrate import ode
 # Project
 from ..core import Integrator
 from ..timespec import parse_time_specification
-from ...util import inherit_docs
 
 __all__ = ["DOPRI853Integrator"]
 
-@inherit_docs
 class DOPRI853Integrator(Integrator):
     r"""
     This provides a wrapper around ``Scipy``'s implementation of the
