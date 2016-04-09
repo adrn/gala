@@ -12,11 +12,8 @@ import numpy as np
 # Project
 from ..core import Integrator
 from ..timespec import parse_time_specification
-from ...util import inherit_docs
 
 __all__ = ["LeapfrogIntegrator"]
-
-@inherit_docs
 class LeapfrogIntegrator(Integrator):
     r"""
     A symplectic, Leapfrog integrator.

@@ -12,7 +12,6 @@ import numpy as np
 # Project
 from ..core import Integrator
 from ..timespec import parse_time_specification
-from ...util import inherit_docs
 
 __all__ = ["RK5Integrator"]
 
@@ -27,7 +26,6 @@ B = np.array([[        0.0,        0.0,         0.0,            0.0,        0.0]
 C = np.array([37./378., 0., 250./621., 125./594., 0., 512./1771.])
 D = np.array([2825./27648., 0., 18575./48384., 13525./55296., 277./14336., 1./4.])
 
-@inherit_docs
 class RK5Integrator(Integrator):
     r"""
     Initialize a 5th order Runge-Kutta integrator given a function for
