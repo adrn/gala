@@ -103,21 +103,23 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
         CustomPotential.__name__ = name
 
     # Energy / value
-    valuefunc = lambdify(vars + pars, expr, dummify=False)
+    valuefunc = lambdify(vars + pars, expr, dummify=False, modules='numpy')
     def _value(self, w, t):
+        print(w.shape)
         kw = self.parameters.copy()
         for k,v in kw.items():
             kw[k] = v.value
 
         for i,name in enumerate(var_names):
             kw[name] = w[i]
-        return valuefunc(**kw)
+
+        return np.atleast_1d(valuefunc(**kw))
     CustomPotential._value = _value
 
     # Gradient
     gradfuncs = []
     for var in vars:
-        gradfuncs.append(lambdify(vars + pars, sympy.diff(expr,var), dummify=False))
+        gradfuncs.append(lambdify(vars + pars, sympy.diff(expr,var), dummify=False, modules='numpy'))
 
     def _gradient(self, w, t):
         kw = self.parameters.copy()
@@ -127,11 +129,8 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
         for i,name in enumerate(var_names):
             kw[name] = w[i]
 
-        grad = np.vstack([f(**kw) for f in gradfuncs])
-        if len(gradfuncs) == 1 and grad.ndim != w.ndim:
-            return grad[np.newaxis]
-        else:
-            return grad
+        grad = np.vstack([f(**kw)[np.newaxis] for f in gradfuncs])
+        return grad
 
     CustomPotential._gradient = _gradient
     CustomPotential.save = None
