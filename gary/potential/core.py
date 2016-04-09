@@ -536,9 +536,8 @@ class PotentialBase(object):
                 w = w[...,0]
 
         else:
-            # TODO: this will be *very* slow because of units shit -- what do?
-            acc = lambda t,w: np.vstack((w[ndim:],
-                                         self.acceleration(w[:ndim], t=t).decompose(self.units).value))
+            def acc(t, w):
+                return np.vstack((w[ndim:], -self._gradient(w[:ndim], t=t)))
             integrator = Integrator(acc, func_units=self.units, **Integrator_kwargs)
             orbit = integrator.run(w0, **time_spec)
             orbit.potential = self
@@ -654,17 +653,17 @@ class CompositePotential(PotentialBase, OrderedDict):
             params[k] = v.parameters
         return ImmutableDict(params)
 
-    def value(self, q, t=0.):
-        return sum([p.value(q, t) for p in self.values()])
+    def _value(self, q, t=0.):
+        return sum([p._value(q, t) for p in self.values()])
 
-    def gradient(self, q, t=0.):
-        return sum([p.gradient(q, t) for p in self.values()])
+    def _gradient(self, q, t=0.):
+        return sum([p._gradient(q, t) for p in self.values()])
 
-    def hessian(self, w, t=0.):
-        return sum([p.hessian(w, t) for p in self.values()])
+    def _hessian(self, w, t=0.):
+        return sum([p._hessian(w, t) for p in self.values()])
 
-    def density(self, q, t=0.):
-        return sum([p.density(q, t) for p in self.values()])
+    def _density(self, q, t=0.):
+        return sum([p._density(q, t) for p in self.values()])
 
     def __repr__(self):
         return "<CompositePotential {}>".format(",".join(self.keys()))
