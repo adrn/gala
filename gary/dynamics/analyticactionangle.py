@@ -191,6 +191,7 @@ def isochrone_to_xv(actions, angles, potential):
     actions = atleast_2d(actions,insert_axis=1).copy()
     angles = atleast_2d(angles,insert_axis=1).copy()
 
+    usys = potential.units
     GM = (G*potential.parameters['m']).decompose(usys).value
     b = potential.parameters['b'].decompose(usys).value
 

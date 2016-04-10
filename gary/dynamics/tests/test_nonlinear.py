@@ -211,7 +211,7 @@ class TestLogarithmic(object):
         X0 = -0.2
         y0 = 0.
         E0 = -0.4059
-        Y0 = np.sqrt(E0 - self.potential.value([x0,y0,0.]))
+        Y0 = np.sqrt(E0 - self.potential.value([x0,y0,0.]).value)
         chaotic_w0 = [x0,y0,0.,X0,Y0,0.]
 
         # initial conditions from LP-VI documentation:
@@ -297,9 +297,6 @@ class TestLogarithmic(object):
 
             E = orbit2.energy(self.potential).value
             dE_slow = np.abs(E[1:] - E[0])
-
-            print(E.shape)
-            return
 
             assert np.all(dE_fast < 1E-10)
             assert np.all(dE_slow < 1E-10)
