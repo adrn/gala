@@ -328,10 +328,7 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         E : :class:`~astropy.units.Quantity`
             The potential energy.
         """
-        # TODO: will I overhaul how potentials handle units?
-        q = self.pos.decompose(potential.units).value
-        _unit = (potential.units['length']/potential.units['time'])**2
-        return potential.value(q)*_unit
+        return potential.value(self.pos)
 
     def energy(self, potential):
         r"""
