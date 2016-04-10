@@ -14,6 +14,7 @@ def get_extensions():
     cfg['include_dirs'].append('gary/potential')
     cfg['extra_compile_args'].append('--std=gnu99')
     cfg['sources'].append('gary/integrate/cyintegrators/leapfrog.pyx')
+    cfg['sources'].append('gary/potential/src/cpotential.c')
     exts.append(Extension('gary.integrate.cyintegrators.leapfrog', **cfg))
 
     cfg = setup_helpers.DistutilsExtensionArgs()
@@ -21,6 +22,7 @@ def get_extensions():
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gary/potential')
     cfg['extra_compile_args'].append('--std=gnu99')
+    cfg['sources'].append('gary/potential/src/cpotential.c')
     cfg['sources'].append('gary/integrate/cyintegrators/dop853.pyx')
     cfg['sources'].append('gary/integrate/cyintegrators/dopri/dop853.c')
     exts.append(Extension('gary.integrate.cyintegrators.dop853', **cfg))

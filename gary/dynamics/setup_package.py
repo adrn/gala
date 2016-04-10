@@ -22,6 +22,7 @@ def get_extensions():
     cfg = setup_helpers.DistutilsExtensionArgs()
     cfg['include_dirs'].append('numpy')
     cfg['include_dirs'].append(mac_incl_path)
+    cfg['include_dirs'].append('gary/potential')
     cfg['sources'].append('gary/dynamics/mockstream/_coord.pyx')
     cfg['extra_compile_args'].append('--std=gnu99')
     exts.append(Extension('gary.dynamics.mockstream._coord', **cfg))
