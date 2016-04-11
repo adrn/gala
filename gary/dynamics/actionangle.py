@@ -112,7 +112,7 @@ def fit_isochrone(orbit, m0=2E11, b0=1.):
     def f(p,w):
         logm,b = p
         potential = IsochronePotential(m=np.exp(logm), b=b, units=pot.units)
-        H = potential.total_energy(w[:3], w[3:])
+        H = potential.value(w[:3]).decompose(pot.units).value + 0.5*np.sum(w[3:]**2, axis=0)
         return np.squeeze(H - np.mean(H))
 
     logm0 = np.log(m0)
@@ -159,7 +159,7 @@ def fit_harmonic_oscillator(orbit, omega0=[1.,1.,1.]):
 
     def f(omega,w):
         potential = HarmonicOscillatorPotential(omega=omega, units=pot.units)
-        H = potential.total_energy(w[:3], w[3:])
+        H = potential.value(w[:3]).decompose(pot.units).value + 0.5*np.sum(w[3:]**2, axis=0)
         return np.squeeze(H - np.mean(H))
 
     p,ier = leastsq(f, omega0, args=(w,))

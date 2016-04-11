@@ -54,8 +54,9 @@ Let's write it out, then work through what each piece means in detail::
 
     >>> class HenonHeilesPotential(gp.PotentialBase):
     ...    def __init__(self, A, units):
-    ...        self.parameters = dict(A=A)
-    ...        super(HenonHeilesPotential, self).__init__(units=units)
+    ...        pars = dict(A=A)
+    ...        super(HenonHeilesPotential, self).__init__(units=units,
+    ...                                                   parameters=pars)
     ...
     ...    def _value(self, q, t):
     ...        A = self.parameters['A']
@@ -101,8 +102,9 @@ can integrate an orbit in this potential::
     class HenonHeilesPotential(gp.PotentialBase):
 
         def __init__(self, A, units):
-            self.parameters = dict(A=A)
-            super(HenonHeilesPotential, self).__init__(units=units)
+            pars = dict(A=A)
+            super(HenonHeilesPotential, self).__init__(units=units,
+                                                       parameters=pars)
 
         def _value(self, q, t):
             A = self.parameters['A']
@@ -142,8 +144,9 @@ Or, we could create a contour plot of equipotentials::
     class HenonHeilesPotential(gp.PotentialBase):
 
         def __init__(self, A, units):
-            self.parameters = dict(A=A)
-            super(HenonHeilesPotential, self).__init__(units=units)
+            pars = dict(A=A)
+            super(HenonHeilesPotential, self).__init__(units=units,
+                                                       parameters=pars)
 
         def _value(self, q, t):
             A = self.parameters['A']
@@ -168,4 +171,4 @@ Adding a custom potential with Cython
 
 .. todo::
 
-    Coming soon!
+    Need to write this.

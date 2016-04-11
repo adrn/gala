@@ -14,12 +14,12 @@ from .core import PotentialBase
 
 __all__ = ['from_equation']
 
-def _classnamify(s):
-    s = [x.lower() for x in str(s).split()]
-    words = []
-    for word in s:
-        words.append(word[0].upper() + word[1:])
-    return "".join(words)
+# def _classnamify(s):
+#     s = [x.lower() for x in str(s).split()]
+#     words = []
+#     for word in s:
+#         words.append(word.capitalize())
+#     return "".join(words)
 
 def from_equation(expr, vars, pars, name=None, hessian=False):
     r"""
@@ -28,6 +28,11 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
     .. note::
 
         This utility requires having `Sympy <http://www.sympy.org/>`_ installed.
+
+    .. warning::
+
+        These potentials are *not* pickle-able and cannot be written
+        out to YAML files (using `~gary.potential.PotentialBase.save()`)
 
     Parameters
     ----------
@@ -58,7 +63,7 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
         ...                           name='HarmonicOscillator')
         >>> p1 = Potential(k=1.)
         >>> p1
-        <HarmonicoscillatorPotential: k=1.00 (dimensionless)>
+        <HarmonicOscillatorPotential: k=1.00 (dimensionless)>
 
     The potential class (and object) is a fully-fledged subclass of
     `~gary.potential.PotentialBase` and therefore has many useful methods.
@@ -81,46 +86,58 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
     pars = [sympy.sympify(p) for p in pars]
     par_names = [p.name for p in pars]
 
-    class MyPotential(PotentialBase):
+    class CustomPotential(PotentialBase):
 
         def __init__(self, units=None, **kwargs):
-            self.parameters = kwargs
             for par in par_names:
-                if par not in self.parameters:
+                if par not in kwargs:
                     raise ValueError("You must specify a value for "
                                      "parameter '{}'.".format(par))
-            super(MyPotential,self).__init__(units)
+            super(CustomPotential,self).__init__(units=units,
+                                                 parameters=kwargs)
 
     if name is not None:
-        name = _classnamify(name)
+        # name = _classnamify(name)
         if "potential" not in name.lower():
             name = name + "Potential"
-        MyPotential.__name__ = name
+        CustomPotential.__name__ = str(name)
 
     # Energy / value
-    valuefunc = lambdify(vars + pars, expr, dummify=False)
+    valuefunc = lambdify(vars + pars, expr, dummify=False, modules='numpy')
     def _value(self, w, t):
+        print(w.shape)
         kw = self.parameters.copy()
+        for k,v in kw.items():
+            kw[k] = v.value
+
         for i,name in enumerate(var_names):
             kw[name] = w[i]
-        return valuefunc(**kw)
-    MyPotential._value = _value
+
+        return np.atleast_1d(valuefunc(**kw))
+    CustomPotential._value = _value
 
     # Gradient
     gradfuncs = []
     for var in vars:
-        gradfuncs.append(lambdify(vars + pars, sympy.diff(expr,var), dummify=False))
+        gradfuncs.append(lambdify(vars + pars, sympy.diff(expr,var), dummify=False, modules='numpy'))
 
     def _gradient(self, w, t):
         kw = self.parameters.copy()
+        for k,v in kw.items():
+            kw[k] = v.value
+
         for i,name in enumerate(var_names):
             kw[name] = w[i]
-        return np.vstack([f(**kw) for f in gradfuncs])
-    MyPotential._gradient = _gradient
+
+        grad = np.vstack([f(**kw)[np.newaxis] for f in gradfuncs])
+        return grad
+
+    CustomPotential._gradient = _gradient
+    CustomPotential.save = None
 
     # Hessian
     if hessian:
         raise NotImplementedError("Hessian functionality doesn't exist yet...sorry.")
-        hessfuncs = []
+        # hessfuncs = []
 
-    return MyPotential
+    return CustomPotential

@@ -52,7 +52,7 @@ def sanders_act_ang_freq(t, w, circ, N_max=6):
         actions = (actions*u.kpc*u.km/u.s).to(u.kpc**2/u.Myr).value
         freqs = (freqs/u.Gyr).to(1/u.Myr).value
     else:
-        toy_potential = HarmonicOscillatorPotential(omega=np.array(pars))
+        toy_potential = HarmonicOscillatorPotential(omega=np.array(pars), units=galactic)
 
     return actions,angles,freqs,toy_potential
 

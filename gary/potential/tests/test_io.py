@@ -15,8 +15,8 @@ import numpy as np
 from ..io import load, save
 from ..core import CompositePotential
 from ..builtin import IsochronePotential, KeplerPotential
-from ..builtin.special import TriaxialMWPotential
-from ...units import galactic
+from ..builtin.special import LM10Potential
+from ...units import DimensionlessUnitSystem, galactic
 
 def test_read_plummer():
     potential = load(get_pkg_data_filename('Plummer.yml'))
@@ -26,13 +26,15 @@ def test_read_plummer():
 
 def test_read_harmonic_oscillator():
     potential = load(get_pkg_data_filename('HarmonicOscillator1D.yml'))
-    assert potential.units is None
+    assert isinstance(potential.units, DimensionlessUnitSystem)
 
 def test_read_composite():
     potential = load(get_pkg_data_filename('Composite.yml'))
     assert '0' in potential.keys()
     assert 'disk' in potential.keys()
     assert str(potential) == "CompositePotential"
+    assert potential.units['length'] == u.kpc
+    assert potential.units['speed'] == u.km/u.s
 
 def test_write_isochrone(tmpdir):
     tmp_filename = str(tmpdir.join("potential.yml"))
@@ -58,11 +60,11 @@ def test_write_isochrone_units(tmpdir):
     save(potential, tmp_filename)
     p = load(tmp_filename)
 
-def test_write_triaxialmw(tmpdir):
+def test_write_lm10(tmpdir):
     tmp_filename = str(tmpdir.join("potential.yml"))
 
     # more complex
-    potential = TriaxialMWPotential()
+    potential = LM10Potential()
 
     with open(tmp_filename,'w') as f:
         save(potential, f)

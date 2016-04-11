@@ -7,14 +7,16 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
-import astropy.units as u
 import numpy as np
+from astropy.utils import InheritDocstrings
+from astropy.extern import six
 
 # This project
-from ..units import UnitSystem
+from ..units import UnitSystem, DimensionlessUnitSystem
 
 __all__ = ["Integrator"]
 
+@six.add_metaclass(InheritDocstrings)
 class Integrator(object):
 
     def __init__(self, func, func_args=(), func_units=None):
@@ -23,8 +25,11 @@ class Integrator(object):
 
         self.F = func
         self._func_args = func_args
-        if func_units is not None:
+
+        if func_units is not None and not isinstance(func_units, DimensionlessUnitSystem):
             func_units = UnitSystem(func_units)
+        else:
+            func_units = DimensionlessUnitSystem()
         self._func_units = func_units
 
     def _prepare_ws(self, w0, mmap, nsteps):
@@ -70,14 +75,9 @@ class Integrator(object):
         if w.shape[-1] == 1:
             w = w[...,0]
 
-        if self._func_units is None:
-            pos_unit = u.dimensionless_unscaled
-            vel_unit = u.dimensionless_unscaled
-            t_unit = u.dimensionless_unscaled
-        else:
-            pos_unit = self._func_units['length']
-            t_unit = self._func_units['time']
-            vel_unit = pos_unit / t_unit
+        pos_unit = self._func_units['length']
+        t_unit = self._func_units['time']
+        vel_unit = pos_unit / t_unit
 
         from ..dynamics import CartesianOrbit
         orbit = CartesianOrbit(pos=w[:self.ndim]*pos_unit,

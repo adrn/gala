@@ -15,8 +15,8 @@ double henon_heiles_value(double t, double *pars, double *q) {
 
 void henon_heiles_gradient(double t, double *pars, double *q, double *grad) {
     /*  no parameters... */
-    grad[0] = q[0] + 2*q[0]*q[1];
-    grad[1] = q[1] + q[0]*q[0] - q[1]*q[1];
+    grad[0] = grad[0] + q[0] + 2*q[0]*q[1];
+    grad[1] = grad[1] + q[1] + q[0]*q[0] - q[1]*q[1];
 }
 
 /* ---------------------------------------------------------------------------
@@ -41,9 +41,9 @@ void kepler_gradient(double t, double *pars, double *r, double *grad) {
     R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
     fac = pars[0] * pars[1] / (R*R*R);
 
-    grad[0] = fac*r[0];
-    grad[1] = fac*r[1];
-    grad[2] = fac*r[2];
+    grad[0] = grad[0] + fac*r[0];
+    grad[1] = grad[1] + fac*r[1];
+    grad[2] = grad[2] + fac*r[2];
 }
 
 /* ---------------------------------------------------------------------------
@@ -71,9 +71,9 @@ void isochrone_gradient(double t, double *pars, double *r, double *grad) {
     denom = sqrt_r2_b2 * (sqrt_r2_b2 + pars[2])*(sqrt_r2_b2 + pars[2]);
     fac = pars[0] * pars[1] / denom;
 
-    grad[0] = fac*r[0];
-    grad[1] = fac*r[1];
-    grad[2] = fac*r[2];
+    grad[0] = grad[0] + fac*r[0];
+    grad[1] = grad[1] + fac*r[1];
+    grad[2] = grad[2] + fac*r[2];
 }
 
 double isochrone_density(double t, double *pars, double *q) {
@@ -114,9 +114,9 @@ void hernquist_gradient(double t, double *pars, double *r, double *grad) {
     R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
     fac = pars[0] * pars[1] / ((R + pars[2]) * (R + pars[2]) * R);
 
-    grad[0] = fac*r[0];
-    grad[1] = fac*r[1];
-    grad[2] = fac*r[2];
+    grad[0] = grad[0] + fac*r[0];
+    grad[1] = grad[1] + fac*r[1];
+    grad[2] = grad[2] + fac*r[2];
 }
 
 double hernquist_density(double t, double *pars, double *q) {
@@ -154,9 +154,9 @@ void plummer_gradient(double t, double *pars, double *r, double *grad) {
     R2b = r[0]*r[0] + r[1]*r[1] + r[2]*r[2] + pars[2]*pars[2];
     fac = pars[0] * pars[1] / sqrt(R2b) / R2b;
 
-    grad[0] = fac*r[0];
-    grad[1] = fac*r[1];
-    grad[2] = fac*r[2];
+    grad[0] = grad[0] + fac*r[0];
+    grad[1] = grad[1] + fac*r[1];
+    grad[2] = grad[2] + fac*r[2];
 }
 
 double plummer_density(double t, double *pars, double *r) {
@@ -195,9 +195,9 @@ void jaffe_gradient(double t, double *pars, double *r, double *grad){
     R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
     fac = pars[0] * pars[1] / ((R + pars[2]) * R * R);
 
-    grad[0] = fac*r[0];
-    grad[1] = fac*r[1];
-    grad[2] = fac*r[2];
+    grad[0] = grad[0] + fac*r[0];
+    grad[1] = grad[1] + fac*r[1];
+    grad[2] = grad[2] + fac*r[2];
 }
 
 double jaffe_density(double t, double *pars, double *q) {
@@ -250,9 +250,9 @@ void stone_gradient(double t, double *pars, double *q, double *grad) {
     fac = 2*pars[0]*pars[1] / (M_PI*r*r) / (pars[2] - pars[3]);  // order flipped from value
     dphi_dr = fac * (pars[2]*atan(u_c) - pars[3]*atan(u_h));
 
-    grad[0] = dphi_dr*q[0]/r;
-    grad[1] = dphi_dr*q[1]/r;
-    grad[2] = dphi_dr*q[2]/r;
+    grad[0] = grad[0] + dphi_dr*q[0]/r;
+    grad[1] = grad[1] + dphi_dr*q[1]/r;
+    grad[2] = grad[2] + dphi_dr*q[2]/r;
 }
 
 double stone_density(double t, double *pars, double *q) {
@@ -299,9 +299,9 @@ void sphericalnfw_gradient(double t, double *pars, double *r, double *grad) {
     u = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]) / pars[2];
     fac = v_h2 / (u*u*u) / (pars[2]*pars[2]) * (log(1+u) - u/(1+u));
 
-    grad[0] = fac*r[0];
-    grad[1] = fac*r[1];
-    grad[2] = fac*r[2];
+    grad[0] = grad[0] + fac*r[0];
+    grad[1] = grad[1] + fac*r[1];
+    grad[2] = grad[2] + fac*r[2];
 }
 
 double sphericalnfw_density(double t, double *pars, double *q) {
@@ -347,9 +347,9 @@ void flattenednfw_gradient(double t, double *pars, double *r, double *grad) {
 
     fac = v_h2 / (u*u*u) / (pars[2]*pars[2]) * (log(1+u) - u/(1+u));
 
-    grad[0] = fac*r[0];
-    grad[1] = fac*r[1];
-    grad[2] = fac*r[2]/(pars[3]*pars[3]);
+    grad[0] = grad[0] + fac*r[0];
+    grad[1] = grad[1] + fac*r[1];
+    grad[2] = grad[2] + fac*r[2]/(pars[3]*pars[3]);
 }
 
 double flattenednfw_density(double t, double *pars, double *xyz) {
@@ -408,9 +408,9 @@ void miyamotonagai_gradient(double t, double *pars, double *r, double *grad) {
     zd = pars[2] + sqrtz;
     fac = pars[0]*pars[1] * pow(r[0]*r[0] + r[1]*r[1] + zd*zd, -1.5);
 
-    grad[0] = fac*r[0];
-    grad[1] = fac*r[1];
-    grad[2] = fac*r[2] * (1. + pars[2] / sqrtz);
+    grad[0] = grad[0] + fac*r[0];
+    grad[1] = grad[1] + fac*r[1];
+    grad[2] = grad[2] + fac*r[2] * (1. + pars[2] / sqrtz);
 }
 
 double miyamotonagai_density(double t, double *pars, double *q) {
@@ -453,10 +453,9 @@ double leesuto_value(double t, double *pars, double *r) {
 
     phi0 = pars[1]*pars[1] / (log(2.) - 0.5 + (log(2.)-0.75)*e_b2 + (log(2.)-0.75)*e_c2);
 
-    // pars[6] up are R
-    x = pars[6]*r[0]  + pars[7]*r[1]  + pars[8]*r[2];
-    y = pars[9]*r[0]  + pars[10]*r[1]  + pars[11]*r[2];
-    z = pars[12]*r[0] + pars[13]*r[1] + pars[14]*r[2];
+    x = r[0];
+    y = r[1];
+    z = r[2];
 
     _r = sqrt(x*x + y*y + z*z);
     u = _r / pars[2];
@@ -489,10 +488,9 @@ void leesuto_gradient(double t, double *pars, double *r, double *grad) {
 
     v_h2 = pars[1]*pars[1] / (log(2.) - 0.5 + (log(2.)-0.75)*e_b2 + (log(2.)-0.75)*e_c2);
 
-    // pars[5] up are R
-    x = pars[6]*r[0]  + pars[7]*r[1]  + pars[8]*r[2];
-    y = pars[9]*r[0]  + pars[10]*r[1]  + pars[11]*r[2];
-    z = pars[12]*r[0] + pars[13]*r[1] + pars[14]*r[2];
+    x = r[0];
+    y = r[1];
+    z = r[2];
 
     _r2 = x*x + y*y + z*z;
     _r = sqrt(_r2);
@@ -516,9 +514,9 @@ void leesuto_gradient(double t, double *pars, double *r, double *grad) {
     ay = x2*y*(x17*(x7 - _r2*e_b2) + x22);
     az = x2*z*(x17*(x7 - _r2*e_c2) + x22);
 
-    grad[0] = pars[6]*ax  + pars[9]*ay  + pars[12]*az;
-    grad[1] = pars[7]*ax  + pars[10]*ay  + pars[13]*az;
-    grad[2] = pars[8]*ax  + pars[12]*ay + pars[14]*az;
+    grad[0] = grad[0] + ax;
+    grad[1] = grad[1] + ay;
+    grad[2] = grad[2] + az;
 }
 
 double leesuto_density(double t, double *pars, double *r) {
@@ -538,10 +536,9 @@ double leesuto_density(double t, double *pars, double *r) {
     double e_c2 = 1-c_a2;
     v_h2 = pars[1]*pars[1] / (log(2.) - 0.5 + (log(2.)-0.75)*e_b2 + (log(2.)-0.75)*e_c2);
 
-    // pars[6] up to and including pars[11] are R (matrix)
-    x = pars[6]*r[0]  + pars[7]*r[1]  + pars[8]*r[2];
-    y = pars[9]*r[0]  + pars[10]*r[1]  + pars[11]*r[2];
-    z = pars[12]*r[0] + pars[13]*r[1] + pars[14]*r[2];
+    x = r[0];
+    y = r[1];
+    z = r[2];
 
     u = sqrt(x*x + y*y/b_a2 + z*z/c_a2) / pars[2];
     return v_h2 / (u * (1+u)*(1+u)) / (4.*M_PI*pars[2]*pars[2]*pars[0]);
@@ -551,103 +548,33 @@ double leesuto_density(double t, double *pars, double *r) {
     Logarithmic (triaxial)
 */
 double logarithmic_value(double t, double *pars, double *r) {
+    /* pars[0] is G -- unused here */
     double x, y, z;
 
-    // pars[5] up to and including pars[10] are R
-    x = pars[5]*r[0]  + pars[6]*r[1]  + pars[7]*r[2];
-    y = pars[8]*r[0]  + pars[9]*r[1]  + pars[10]*r[2];
-    z = pars[11]*r[0] + pars[12]*r[1] + pars[13]*r[2];
+    x = r[0]*cos(pars[6]) + r[1]*sin(pars[6]);
+    y = -r[0]*sin(pars[6]) + r[1]*cos(pars[6]);
+    z = r[2];
 
-    return 0.5*pars[0]*pars[0] * log(pars[1]*pars[1] + // scale radius
-                                     x*x/(pars[2]*pars[2]) +
-                                     y*y/(pars[3]*pars[3]) +
-                                     z*z/(pars[4]*pars[4]));
+    return 0.5*pars[1]*pars[1] * log(pars[2]*pars[2] + // scale radius
+                                     x*x/(pars[3]*pars[3]) +
+                                     y*y/(pars[4]*pars[4]) +
+                                     z*z/(pars[5]*pars[5]));
 }
 
 void logarithmic_gradient(double t, double *pars, double *r, double *grad) {
-
+    /* pars[0] is G -- unused here */
     double x, y, z, ax, ay, az, fac;
 
-    // pars[5] up to and including pars[10] are R
-    x = pars[5]*r[0]  + pars[6]*r[1]  + pars[7]*r[2];
-    y = pars[8]*r[0]  + pars[9]*r[1]  + pars[10]*r[2];
-    z = pars[11]*r[0] + pars[12]*r[1] + pars[13]*r[2];
-
-    fac = pars[0]*pars[0] / (pars[1]*pars[1] + x*x/(pars[2]*pars[2]) + y*y/(pars[3]*pars[3]) + z*z/(pars[4]*pars[4]));
-    ax = fac*x/(pars[2]*pars[2]);
-    ay = fac*y/(pars[3]*pars[3]);
-    az = fac*z/(pars[4]*pars[4]);
-
-    grad[0] = pars[5]*ax  + pars[8]*ay  + pars[11]*az;
-    grad[1] = pars[6]*ax  + pars[9]*ay  + pars[12]*az;
-    grad[2] = pars[7]*ax  + pars[10]*ay + pars[13]*az;
-}
-
-/* ---------------------------------------------------------------------------
-    Rotating Triaxial Logarithmic
-*/
-double rotating_logarithmic_value(double t, double *pars, double *r) {
-    double x, y, z;
-
-    double bar_angle0 = pars[5];
-    double pattern_speed = -pars[6]; // added minus sign to make it rotate clockwise by default
-    double alpha = (-bar_angle0 + pattern_speed*t);
-
-    double cosa = cos(alpha);
-    double sina = sin(alpha);
-    x = cosa*r[0] + sina*r[1];
-    y = -sina*r[0] + cosa*r[1];
+    x = r[0]*cos(pars[6]) + r[1]*sin(pars[6]);
+    y = -r[0]*sin(pars[6]) + r[1]*cos(pars[6]);
     z = r[2];
 
-    return 0.5*pars[0]*pars[0] * log(pars[1]*pars[1] + // scale radius
-                                     x*x/(pars[2]*pars[2]) +
-                                     y*y/(pars[3]*pars[3]) +
-                                     z*z/(pars[4]*pars[4]));
-}
+    fac = pars[1]*pars[1] / (pars[2]*pars[2] + x*x/(pars[3]*pars[3]) + y*y/(pars[4]*pars[4]) + z*z/(pars[5]*pars[5]));
+    ax = fac*x/(pars[3]*pars[3]);
+    ay = fac*y/(pars[4]*pars[4]);
+    az = fac*z/(pars[5]*pars[5]);
 
-void rotating_logarithmic_gradient(double t, double *pars, double *r, double *grad) {
-    double x, y, z, fac, tmp1, tmp2;
-
-    double bar_angle0 = pars[5];
-    double pattern_speed = -pars[6]; // added minus sign to make it rotate clockwise by default
-    double alpha = (-bar_angle0 + pattern_speed*t);
-
-    double cosa = cos(alpha);
-    double sina = sin(alpha);
-    x = cosa*r[0] + sina*r[1];
-    y = -sina*r[0] + cosa*r[1];
-    z = r[2];
-
-    fac = pars[0]*pars[0] / (pars[1]*pars[1] + x*x/(pars[2]*pars[2]) + y*y/(pars[3]*pars[3]) + z*z/(pars[4]*pars[4]));
-    grad[0] = fac*x/(pars[2]*pars[2]);
-    grad[1] = fac*y/(pars[3]*pars[3]);
-    grad[2] = fac*z/(pars[4]*pars[4]);
-
-    tmp1 = cosa*grad[0] - sina*grad[1];
-    tmp2 = sina*grad[0] + cosa*grad[1];
-    grad[0] = tmp1;
-    grad[1] = tmp2;
-}
-
-/* TOTAL HACK */
-double lm10_value(double t, double *pars, double*r) {
-    double v = 0.;
-    v += hernquist_value(0., &pars[0], &r[0]);
-    v += miyamotonagai_value(0., &pars[3], &r[0]);
-    v += logarithmic_value(0., &pars[7], &r[0]);
-    return v;
-}
-
-void lm10_gradient(double t, double *pars, double *r, double *grad) {
-    double tmp_grad[3];
-    int i;
-
-    hernquist_gradient(0., &pars[0], &r[0], &tmp_grad[0]);
-    for (i=0; i<3; i++) grad[i] = tmp_grad[i];
-
-    miyamotonagai_gradient(0., &pars[3], &r[0], &tmp_grad[0]);
-    for (i=0; i<3; i++) grad[i] += tmp_grad[i];
-
-    logarithmic_gradient(0., &pars[7], &r[0], &tmp_grad[0]);
-    for (i=0; i<3; i++) grad[i] += tmp_grad[i];
+    grad[0] = grad[0] + (ax*cos(pars[6]) - ay*sin(pars[6]));
+    grad[1] = grad[1] + (ax*sin(pars[6]) + ay*cos(pars[6]));
+    grad[2] = grad[2] + az;
 }

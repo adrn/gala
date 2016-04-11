@@ -6,48 +6,67 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 from collections import OrderedDict
+import warnings
 
 # Third-party
 import numpy as np
 from astropy.constants import G
 import astropy.units as u
-from astropy.utils import isiterable
+from astropy.utils import isiterable, InheritDocstrings
+from astropy.extern import six
 
 # Project
 from ..integrate import *
-from ..util import inherit_docs, ImmutableDict, atleast_2d
-from ..units import UnitSystem
+from ..util import ImmutableDict, atleast_2d
+from ..units import UnitSystem, DimensionlessUnitSystem
 from ..dynamics import CartesianOrbit, CartesianPhaseSpacePosition
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
+@six.add_metaclass(InheritDocstrings)
 class PotentialBase(object):
     """
-    A baseclass for defining gravitational potentials.
+    A baseclass for defining pure-Python gravitational potentials.
 
-    Subclasses must define a function that evaluates the value of the
-    potential at a given position and time. For integration, the
-    subclasses should also define a gradient function. Optionally, they
-    may also define functions to compute the density and hessian.
+    Subclasses must define (at minimum) a method that evaluates
+    the value (energy) of the potential at a given position ``q``
+    and time ``t``: ``_value(q, t)``. For integration, the subclasses
+    must also define a method to evaluate the gradient,
+    ``_gradient(q,t)``. Optionally, they may also define methods
+    to compute the density and hessian: ``_density()``, ``_hessian()``.
     """
-    def __init__(self, units=None):
+
+    def _prefilter_pos(self, q):
+        if hasattr(q, 'unit'):
+            q = q.decompose(self.units).value
+
+        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
+        return q
+
+    def __init__(self, parameters, units=None):
         # make sure the units specified are a UnitSystem instance
         if units is not None and not isinstance(units, UnitSystem):
             units = UnitSystem(*units)
+
+        elif units is None:
+            units = DimensionlessUnitSystem()
+
         self.units = units
 
-        # must set parameters first...
-        if not hasattr(self, 'parameters'):
-            raise ValueError("Must set parameters of potential subclass before"
-                             " calling super().")
-
-        for k,v in self.parameters.items():
+        # in case the user specified an ordered dict
+        self.parameters = OrderedDict()
+        for k,v in parameters.items():
             if hasattr(v, 'unit'):
                 self.parameters[k] = v.decompose(self.units)
             else:
                 self.parameters[k] = v*u.one
 
-    def _value(self):
+        try:
+            self.G = G.decompose(self.units).value
+        except u.UnitConversionError:
+            self.G = 1. # TODO: this is a HACK and could lead to user confusion
+
+    def _value(self, q, t=0.):
         raise NotImplementedError()
 
     def value(self, q, t=0.):
@@ -56,20 +75,22 @@ class PotentialBase(object):
 
         Parameters
         ----------
-        q : array_like, numeric
-            Position to compute the value of the potential.
+        q : `~astropy.units.Quantity`, array_like
+            The position to compute the value of the potential. If the
+            input position object has no units (i.e. is an `~numpy.ndarray`),
+            it is assumed to be in the same unit system as the potential.
 
         Returns
         -------
-        E : `~numpy.ndarray`
-            The potential energy, value of the potential. Will have
-            the same shape as the input position, array, ``q``, but
-            without the coordinate axis, ``axis=0``.
+        E : `~astropy.units.Quantity`
+            The potential energy per unit mass or value of the potential.
+            If the input position has shape ``q.shape``, the output energy
+            will have shape ``q.shape[1:]``.
         """
-        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
-        return self._value(q, t=t)
+        q = self._prefilter_pos(q)
+        return self._value(q, t=t) * self.units['energy'] / self.units['mass']
 
-    def _gradient(self, *args, **kwargs):
+    def _gradient(self, q, t=0.):
         raise NotImplementedError()
 
     def gradient(self, q, t=0.):
@@ -78,22 +99,25 @@ class PotentialBase(object):
 
         Parameters
         ----------
-        q : array_like, numeric
-            Position to compute the gradient.
+        q : `~astropy.units.Quantity`, array_like
+            The position to compute the value of the potential. If the
+            input position object has no units (i.e. is an `~numpy.ndarray`),
+            it is assumed to be in the same unit system as the potential.
 
         Returns
         -------
-        grad : `~numpy.ndarray`
+        grad : `~astropy.units.Quantity`
             The gradient of the potential. Will have the same shape as
             the input position array, ``q``.
         """
-        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
+        q = self._prefilter_pos(q)
+
         try:
-            return self._gradient(q, t=t)
+            return self._gradient(q, t=t) * self.units['acceleration']
         except NotImplementedError:
             raise NotImplementedError("This potential has no specified gradient function.")
 
-    def _density(self, *args, **kwargs):
+    def _density(self, q, t=0.):
         raise NotImplementedError()
 
     def density(self, q, t=0.):
@@ -102,22 +126,26 @@ class PotentialBase(object):
 
         Parameters
         ----------
-        q : array_like, numeric
-            Position to compute the density.
+        q : `~astropy.units.Quantity`, array_like
+            The position to compute the value of the potential. If the
+            input position object has no units (i.e. is an `~numpy.ndarray`),
+            it is assumed to be in the same unit system as the potential.
 
         Returns
         -------
-        dens : `~numpy.ndarray`
-            The density. Will have the same shape as the input position,
-            array, ``q``, but without the coordinate axis, ``axis=0``.
+        dens : `~astropy.units.Quantity`
+            The potential energy or value of the potential. If the input
+            position has shape ``q.shape``, the output energy will have
+            shape ``q.shape[1:]``.
         """
-        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
+        q = self._prefilter_pos(q)
+
         try:
-            return self._density(q, t=t)
+            return self._density(q, t=t) * self.units['mass density']
         except NotImplementedError:
             raise NotImplementedError("This potential has no specified density function.")
 
-    def _hessian(self, *args, **kwargs):
+    def _hessian(self, q, t=0.):
         raise NotImplementedError()
 
     def hessian(self, q, t=0.):
@@ -126,12 +154,20 @@ class PotentialBase(object):
 
         Parameters
         ----------
-        q : array_like, numeric
-            Position to compute the Hessian.
+        q : `~astropy.units.Quantity`, array_like
+            The position to compute the value of the potential. If the
+            input position object has no units (i.e. is an `~numpy.ndarray`),
+            it is assumed to be in the same unit system as the potential.
+
+        Returns
+        -------
+        hess : `~astropy.units.Quantity`
+            TODO:
         """
-        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
+        q = self._prefilter_pos(q)
+
         try:
-            return self._hessian(q, t=t)
+            return self._hessian(q, t=t) * self.units['acceleration'] / self.units['length']
         except NotImplementedError:
             raise NotImplementedError("This potential has no specified hessian function.")
 
@@ -150,7 +186,7 @@ class PotentialBase(object):
 
         Returns
         -------
-        acce : `~numpy.ndarray`
+        acc : `~numpy.ndarray`
             The acceleration. Will have the same shape as the input
             position array, ``q``.
         """
@@ -168,12 +204,12 @@ class PotentialBase(object):
 
         Returns
         -------
-        menc : `~numpy.ndarray`
-            The mass. Will have the same shape as the input position,
-            array, ``q``, but without the coordinate axis, ``axis=0``
+        menc : `~astropy.units.Quantity`
+            The potential energy or value of the potential. If the input
+            position has shape ``q.shape``, the output energy will have
+            shape ``q.shape[1:]``.
         """
-
-        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
+        q = self._prefilter_pos(q)
 
         # Fractional step-size in radius
         h = 0.01
@@ -187,11 +223,11 @@ class PotentialBase(object):
         dPhi_dr_minus = self.value(q - epsilon, t=t)
         diff = dPhi_dr_plus - dPhi_dr_minus
 
-        if self.units is None:
+        if isinstance(self.units, DimensionlessUnitSystem):
             raise ValueError("No units specified when creating potential object.")
         Gee = G.decompose(self.units).value
 
-        return np.abs(r*r * diff / Gee / (2.*h))
+        return np.abs(r*r * diff / Gee / (2.*h)) * self.units['mass']
 
     # ========================================================================
     # Python special methods
@@ -226,7 +262,7 @@ class PotentialBase(object):
 
             pars += ("{}=" + par_fmt + post).format(k,v) + ", "
 
-        if self.units is None:
+        if isinstance(self.units, DimensionlessUnitSystem):
             return "<{}: {} (dimensionless)>".format(self.__class__.__name__, pars.rstrip(", "))
         else:
             return "<{}: {} ({})>".format(self.__class__.__name__, pars.rstrip(", "), ",".join(map(str, self.units._core_units)))
@@ -241,6 +277,11 @@ class PotentialBase(object):
         """
         Plot equipotentials contours. Computes the potential value on a grid
         (specified by the array `grid`).
+
+        .. warning::
+
+            Right now the grid input must be arrays and must already be in
+            the unit system of the potential. Quantity support is coming...
 
         Parameters
         ----------
@@ -297,7 +338,7 @@ class PotentialBase(object):
             for ii,slc in _slices:
                 r[ii] = slc
 
-            Z = self.value(r)
+            Z = self.value(r*self.units['length']).value
             ax.plot(x1, Z, **kwargs)
 
             if labels is not None:
@@ -316,7 +357,7 @@ class PotentialBase(object):
             for ii,slc in _slices:
                 r[ii] = slc
 
-            Z = self.value(r)
+            Z = self.value(r*self.units['length']).value
 
             # make default colormap not suck
             cmap = kwargs.pop('cmap', cm.Blues)
@@ -333,6 +374,11 @@ class PotentialBase(object):
         """
         Plot density contours. Computes the density on a grid
         (specified by the array `grid`).
+
+        .. warning::
+
+            Right now the grid input must be arrays and must already be in
+            the unit system of the potential. Quantity support is coming...
 
         Parameters
         ----------
@@ -389,7 +435,7 @@ class PotentialBase(object):
             for ii,slc in _slices:
                 r[:,ii] = slc
 
-            Z = self.density(r)
+            Z = self.density(r*self.units['length']).value
             ax.plot(x1, Z, **kwargs)
 
             if labels is not None:
@@ -408,7 +454,7 @@ class PotentialBase(object):
             for ii,slc in _slices:
                 r[:,ii] = slc
 
-            Z = self.density(r)
+            Z = self.density(r*self.units['length']).value
 
             # make default colormap not suck
             cmap = kwargs.pop('cmap', cm.Blues)
@@ -490,7 +536,8 @@ class PotentialBase(object):
                 w = w[...,0]
 
         else:
-            acc = lambda t,w: np.vstack((w[ndim:], self.acceleration(w[:ndim], t=t)))
+            def acc(t, w):
+                return np.vstack((w[ndim:], -self._gradient(w[:ndim], t=t)))
             integrator = Integrator(acc, func_units=self.units, **Integrator_kwargs)
             orbit = integrator.run(w0, **time_spec)
             orbit.potential = self
@@ -516,7 +563,9 @@ class PotentialBase(object):
         v : array_like, numeric
             Velocity.
         """
-        # TODO: deprecationwarning?
+        warnings.warn("Use the energy methods on Orbit objects instead. In a future "
+                      "release this will be removed.", DeprecationWarning)
+
         v = atleast_2d(v, insert_axis=1)
         return self.value(x) + 0.5*np.sum(v**2, axis=0)
 
@@ -534,14 +583,12 @@ class PotentialBase(object):
         from .io import save
         save(self, f)
 
-@inherit_docs
+@six.add_metaclass(InheritDocstrings)
 class CompositePotential(PotentialBase, OrderedDict):
     """
     A potential composed of several distinct components. For example,
     two point masses or a galactic disk and halo, each with their own
     potential model.
-
-    TODO: needs re-writing
 
     A `CompositePotential` is created like a Python dictionary, e.g.::
 
@@ -607,17 +654,17 @@ class CompositePotential(PotentialBase, OrderedDict):
             params[k] = v.parameters
         return ImmutableDict(params)
 
-    def value(self, q, t=0.):
-        return np.array([p.value(q, t) for p in self.values()]).sum(axis=0)
+    def _value(self, q, t=0.):
+        return sum([p._value(q, t) for p in self.values()])
 
-    def gradient(self, q, t=0.):
-        return np.array([p.gradient(q, t) for p in self.values()]).sum(axis=0)
+    def _gradient(self, q, t=0.):
+        return sum([p._gradient(q, t) for p in self.values()])
 
-    def hessian(self, w, t=0.):
-        return np.array([p.hessian(w, t) for p in self.values()]).sum(axis=0)
+    def _hessian(self, w, t=0.):
+        return sum([p._hessian(w, t) for p in self.values()])
 
-    def density(self, q, t=0.):
-        return np.array([p.density(q, t) for p in self.values()]).sum(axis=0)
+    def _density(self, q, t=0.):
+        return sum([p._density(q, t) for p in self.values()])
 
     def __repr__(self):
         return "<CompositePotential {}>".format(",".join(self.keys()))

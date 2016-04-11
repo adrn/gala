@@ -15,11 +15,13 @@ import pytest
 import numpy as np
 from astropy.constants import G
 import astropy.units as u
+from astropy.tests.helper import quantity_allclose
 import matplotlib.pyplot as pl
 from matplotlib import cm
 
 # This package
 from ..core import PotentialBase, CompositePotential
+from ...units import UnitSystem
 
 units = [u.kpc,u.Myr,u.Msun,u.radian]
 G = G.decompose(units)
@@ -28,8 +30,8 @@ def test_new_simple():
 
     class MyPotential(PotentialBase):
         def __init__(self, units=None):
-            self.parameters = OrderedDict()
-            self.units = units
+            super(MyPotential, self).__init__(parameters={},
+                                              units=units)
 
         def _value(self, r, t=0.):
             return -1/r
@@ -48,13 +50,14 @@ def test_new_simple():
 
 # ----------------------------------------------------------------------------
 
-usys = [u.au, u.yr, u.Msun, u.radian]
+usys = UnitSystem(u.au, u.yr, u.Msun, u.radian)
 class MyPotential(PotentialBase):
     def __init__(self, m, x0, units=None):
-        self.parameters = OrderedDict()
-        self.parameters['m'] = m
-        self.parameters['x0'] = np.array(x0)
-        super(MyPotential, self).__init__(units)
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['x0'] = np.array(x0)
+        super(MyPotential, self).__init__(parameters=parameters,
+                                          units=units)
 
     def _value(self, x, t):
         m = self.parameters['m']
@@ -101,8 +104,8 @@ def test_composite():
     p2 = MyPotential(m=1., x0=[-1.,0.,0.], units=usys)
 
     p = CompositePotential(one=p1, two=p2)
-    assert np.allclose(p.value([0.,0.,0.]), -2)
-    assert np.allclose(p.acceleration([0.,0.,0.]), 0.)
+    assert quantity_allclose(p.value([0.,0.,0.]), -2*usys['energy']/usys['mass'])
+    assert quantity_allclose(p.acceleration([0.,0.,0.]), 0.*usys['acceleration'])
 
     p1 = MyPotential(m=1., x0=[1.,0.,0.], units=usys)
     p2 = MyPotential(m=1., x0=[-1.,0.,0.], units=[u.kpc, u.yr, u.Msun, u.radian])

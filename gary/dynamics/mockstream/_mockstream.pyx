@@ -17,25 +17,29 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-from libc.math cimport M_PI
+from libc.math cimport M_PI, sqrt
 from cpython.exc cimport PyErr_CheckSignals
 
-from ...potential.cpotential cimport _CPotential
+from ...potential.cpotential cimport CPotentialWrapper
 from ._coord cimport (sat_rotation_matrix, to_sat_coords, from_sat_coords,
                       cyl_to_car, car_to_cyl)
 
 __all__ = ['_mock_stream_dop853']
 
-cdef extern from "math.h":
-    double sqrt(double x) nogil
+cdef extern from "src/cpotential.h":
+    ctypedef struct CPotential:
+        pass
+    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
+    double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
 
-cdef extern from "dop853.h":
-    ctypedef void (*GradFn)(double *pars, double *q, double *grad) nogil
+cdef extern from "dopri/dop853.h":
+    ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
+                              CPotential *p, unsigned norbits) nogil
     ctypedef void (*SolTrait)(long nr, double xold, double x, double* y, unsigned n, int* irtrn)
-    ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f, GradFn gradfunc, double *gpars, unsigned norbits) nogil
 
     # See dop853.h for full description of all input parameters
-    int dop853 (unsigned n, FcnEqDiff fcn, GradFn gradfunc, double *gpars, unsigned norbits,
+    int dop853 (unsigned n, FcnEqDiff fn,
+                CPotential *p, unsigned n_orbits,
                 double x, double* y, double xend,
                 double* rtoler, double* atoler, int itoler, SolTrait solout,
                 int iout, FILE* fileout, double uround, double safe, double fac1,
@@ -43,20 +47,19 @@ cdef extern from "dop853.h":
                 long nstiff, unsigned nrdens, unsigned* icont, unsigned licont)
 
     void Fwrapper (unsigned ndim, double t, double *w, double *f,
-                   GradFn func, double *pars, unsigned norbits)
-    double six_norm (double *x)
+                   CPotential *p, unsigned norbits)
 
 cdef extern from "stdio.h":
     ctypedef struct FILE
     FILE *stdout
 
-cpdef _mock_stream_dop853(_CPotential cpotential, double[::1] t, double[:,::1] prog_w,
+cpdef _mock_stream_dop853(CPotentialWrapper cp, double[::1] t, double[:,::1] prog_w,
                           int release_every,
                           _k_mean, _k_disp,
                           double G, _prog_mass,
                           double atol=1E-10, double rtol=1E-10, int nmax=0):
     """
-    _mock_stream(cpotential, t, prog_w, release_every, k_mean, k_disp, G, prog_mass, atol, rtol, nmax)
+    _mock_stream_dop853(cpotential, t, prog_w, release_every, k_mean, k_disp, G, prog_mass, atol, rtol, nmax)
 
     Generate a mock stellar stream using the Streakline method.
 
@@ -183,7 +186,7 @@ cpdef _mock_stream_dop853(_CPotential cpotential, double[::1] t, double[:,::1] p
         Om = np.linalg.norm(np.cross(prog_w[j,:3], prog_w[j,3:]) / d**2)
 
         # gradient of potential in radial direction
-        f = Om*Om - cpotential._d2_dr2(t[j], &prog_w[j,0], &eps[0], G)
+        f = Om*Om - c_d2_dr2(&(cp.cpotential), t[j], &prog_w[j,0], &eps[0])
         r_tide = (G*M / f)**(1/3.)
 
         # the rotation matrix to transform from satellite coords to normal
@@ -226,7 +229,7 @@ cpdef _mock_stream_dop853(_CPotential cpotential, double[::1] t, double[:,::1] p
 
     for i in range(nparticles):
         res = dop853(ndim, <FcnEqDiff> Fwrapper,
-                     <GradFn>cpotential.c_gradient, &(cpotential._parameters[0]), 1,
+                     &(cp.cpotential), 1,
                      t1[i], &w[i*ndim], t_end, &rtol, &atol, 0, NULL, 0,
                      NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0);
 

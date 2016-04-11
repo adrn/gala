@@ -13,8 +13,10 @@ import os
 import astropy.units as u
 from astropy.utils import isiterable
 import numpy as np
-import six
+from astropy.extern import six
 import yaml
+
+from ..units import DimensionlessUnitSystem
 
 __all__ = ['load', 'save']
 
@@ -109,7 +111,7 @@ def _to_dict_help(potential):
 
     d['class'] = potential.__class__.__name__
 
-    if potential.units is not None:
+    if not isinstance(potential.units, DimensionlessUnitSystem):
         d['units'] = dict([(str(ptype),str(unit)) for ptype,unit in potential.units.to_dict().items()])
 
     if len(potential.parameters) > 0:

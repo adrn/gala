@@ -52,6 +52,7 @@ class UnitSystem(object):
         Unit("km / s")
 
     """
+
     def __init__(self, units, *args):
 
         self._required_physical_types = ['length', 'time', 'mass', 'angle']
@@ -172,9 +173,31 @@ class UnitSystem(object):
 
         return c.decompose(self._core_units).value
 
+class DimensionlessUnitSystem(UnitSystem):
+
+    def __init__(self):
+        self._core_units = [u.one]
+        self._registry = dict()
+        self._registry['dimensionless'] = u.one
+
+    def __getitem__(self, key):
+        return u.one
+
+    def __str__(self):
+        return "UnitSystem (dimensionless)"
+
+    def to_dict(self):
+        raise ValueError("Cannot represent dimensionless unit system as dict!")
+
+    def get_constant(self, name):
+        raise ValueError("Cannot get constant in dimensionless units!")
+
 # define galactic unit system
 galactic = UnitSystem(u.kpc, u.Myr, u.Msun, u.radian,
                       u.km/u.s, u.mas/u.yr)
 
 # solar system units
 solarsystem = UnitSystem(u.au, u.M_sun, u.yr, u.radian)
+
+# dimensionless
+dimensionless = DimensionlessUnitSystem()
