@@ -6,6 +6,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
 import numpy as np
+import pytest
 
 # Project
 from ... import potential as gp
@@ -227,7 +228,7 @@ class TestLogarithmic(object):
         noffset = 2
 
         for ii,w0 in enumerate(self.w0s):
-
+            print(ii, w0)
             lyap, orbit = fast_lyapunov_max(w0, self.potential,
                                             dt=self.dt, nsteps=self.nsteps,
                                             d0=d0, noffset_orbits=noffset,
@@ -262,6 +263,7 @@ class TestLogarithmic(object):
             # pl.plot(ws[:,0], ws[:,1], marker='.', linestyle='none', alpha=0.1)
             # pl.savefig(os.path.join(str(tmpdir),"log_orbit_lyap_max_{}.png".format(ii)))
 
+    @pytest.mark.slow
     def test_compare_fast(self, tmpdir):
         nsteps_per_pullback = 10
         d0 = 1e-5
@@ -269,6 +271,7 @@ class TestLogarithmic(object):
 
         integrator = DOPRI853Integrator(self.F)
         for ii,w0 in enumerate(self.w0s):
+            print(ii)
 
             lyap1, orbit1 = fast_lyapunov_max(w0, self.potential,
                                               dt=self.dt, nsteps=self.nsteps,
@@ -276,12 +279,22 @@ class TestLogarithmic(object):
                                               nsteps_per_pullback=nsteps_per_pullback)
             lyap1 = np.mean(lyap1, axis=1)
 
+            # check energy conservation
+            E = orbit1.energy().value
+            dE_fast = np.abs(E[1:] - E[0])
+            assert np.all(dE_fast[:,0] < 1E-10)
+
             lyap2, orbit2 = lyapunov_max(w0.copy(), integrator,
-                                         dt=self.dt, nsteps=self.nsteps,
+                                         dt=self.dt, nsteps=self.nsteps//10,
                                          d0=d0, noffset_orbits=noffset,
                                          nsteps_per_pullback=nsteps_per_pullback,
                                          units=self.potential.units)
             lyap2 = np.mean(lyap2, axis=1)
+
+            # check energy conservation
+            E = orbit2.energy(self.potential).value
+            dE_slow = np.abs(E[1:] - E[0])
+            assert np.all(dE_slow[:,0] < 1E-10)
 
             # lyapunov exp
             # pl.clf()
@@ -289,17 +302,6 @@ class TestLogarithmic(object):
             # pl.loglog(t2[1:-10:10], lyap2, marker=None)
             # pl.show()
             # pl.savefig(os.path.join(str(tmpdir),"log_lyap_compare_{}.png".format(ii)))
-
-            # energy conservation
-            E = orbit1.energy().value
-            dE_fast = np.abs(E[1:] - E[0])
-            print(E.shape)
-
-            E = orbit2.energy(self.potential).value
-            dE_slow = np.abs(E[1:] - E[0])
-
-            assert np.all(dE_fast < 1E-10)
-            assert np.all(dE_slow < 1E-10)
 
             # pl.clf()
             # pl.semilogy(dE_ww, marker=None)
@@ -310,7 +312,9 @@ class TestLogarithmic(object):
             # pl.plot(ws[:,0], ws[:,1], marker='.', linestyle='none', alpha=0.1)
             # pl.savefig(os.path.join(str(tmpdir),"log_orbit_lyap_max_{}.png".format(ii)))
 
+@pytest.mark.skipif(True, reason="too slow")
 def test_surface_of_section(tmpdir):
+    # TODO: needs overhaul
     # from mpl_toolkits.mplot3d import Axes3D
     from ...potential import LogarithmicPotential
     from ...units import galactic
