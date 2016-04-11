@@ -12,7 +12,7 @@ import matplotlib.pyplot as pl
 import numpy as np
 import pytest
 from scipy.misc import derivative
-from six.moves import cPickle as pickle
+from astropy.extern.six.moves import cPickle as pickle
 
 # Project
 from ..io import load
