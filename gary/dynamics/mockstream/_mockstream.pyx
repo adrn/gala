@@ -30,6 +30,7 @@ cdef extern from "src/cpotential.h":
     ctypedef struct CPotential:
         pass
     void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
+    double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
@@ -58,7 +59,7 @@ cpdef _mock_stream_dop853(CPotentialWrapper cp, double[::1] t, double[:,::1] pro
                           double G, _prog_mass,
                           double atol=1E-10, double rtol=1E-10, int nmax=0):
     """
-    _mock_stream(cpotential, t, prog_w, release_every, k_mean, k_disp, G, prog_mass, atol, rtol, nmax)
+    _mock_stream_dop853(cpotential, t, prog_w, release_every, k_mean, k_disp, G, prog_mass, atol, rtol, nmax)
 
     Generate a mock stellar stream using the Streakline method.
 
@@ -144,104 +145,103 @@ cpdef _mock_stream_dop853(CPotentialWrapper cp, double[::1] t, double[:,::1] pro
 
     # -------
 
-    # TODO: need to change cpotential and deal with d2/dr2
-    # # copy over initial conditions from progenitor orbit to each streakline star
-    # i = 0
-    # for j in range(ntimes):
-    #     if (j % release_every) != 0:
-    #         continue
+    # copy over initial conditions from progenitor orbit to each streakline star
+    i = 0
+    for j in range(ntimes):
+        if (j % release_every) != 0:
+            continue
 
-    #     for k in range(ndim):
-    #         w[2*i*ndim + k] = prog_w[j,k]
-    #         w[2*i*ndim + k + ndim] = prog_w[j,k]
+        for k in range(ndim):
+            w[2*i*ndim + k] = prog_w[j,k]
+            w[2*i*ndim + k + ndim] = prog_w[j,k]
 
-    #     i += 1
+        i += 1
 
-    # # now go back to each set of initial conditions and modify initial condition
-    # #   based on mock prescription
-    # i = 0
-    # for j in range(ntimes):
-    #     if (j % release_every) != 0:
-    #         continue
+    # now go back to each set of initial conditions and modify initial condition
+    #   based on mock prescription
+    i = 0
+    for j in range(ntimes):
+        if (j % release_every) != 0:
+            continue
 
-    #     t1[2*i] = t[j]
-    #     t1[2*i+1] = t[j]
+        t1[2*i] = t[j]
+        t1[2*i+1] = t[j]
 
-    #     if prog_mass.shape[0] == 1:
-    #         M = prog_mass[0]
-    #     else:
-    #         M = prog_mass[j]
+        if prog_mass.shape[0] == 1:
+            M = prog_mass[0]
+        else:
+            M = prog_mass[j]
 
-    #     if k_mean.shape[0] == 1:
-    #         mu_k = k_mean[0]
-    #         sigma_k = k_disp[0]
-    #     else:
-    #         mu_k = k_mean[j]
-    #         sigma_k = k_disp[j]
+        if k_mean.shape[0] == 1:
+            mu_k = k_mean[0]
+            sigma_k = k_disp[0]
+        else:
+            mu_k = k_mean[j]
+            sigma_k = k_disp[j]
 
-    #     # angular velocity
-    #     d = sqrt(prog_w[j,0]*prog_w[j,0] +
-    #              prog_w[j,1]*prog_w[j,1] +
-    #              prog_w[j,2]*prog_w[j,2])
-    #     Om = np.linalg.norm(np.cross(prog_w[j,:3], prog_w[j,3:]) / d**2)
+        # angular velocity
+        d = sqrt(prog_w[j,0]*prog_w[j,0] +
+                 prog_w[j,1]*prog_w[j,1] +
+                 prog_w[j,2]*prog_w[j,2])
+        Om = np.linalg.norm(np.cross(prog_w[j,:3], prog_w[j,3:]) / d**2)
 
-    #     # gradient of potential in radial direction
-    #     f = Om*Om - cpotential._d2_dr2(t[j], &prog_w[j,0], &eps[0], G)
-    #     r_tide = (G*M / f)**(1/3.)
+        # gradient of potential in radial direction
+        f = Om*Om - c_d2_dr2(&(cp.cpotential), t[j], &prog_w[j,0], &eps[0])
+        r_tide = (G*M / f)**(1/3.)
 
-    #     # the rotation matrix to transform from satellite coords to normal
-    #     sat_rotation_matrix(&prog_w[j,0], &R[0,0])
-    #     to_sat_coords(&prog_w[j,0], &R[0,0], &prog_w_prime[0])
-    #     car_to_cyl(&prog_w_prime[0], &prog_cyl[0])
+        # the rotation matrix to transform from satellite coords to normal
+        sat_rotation_matrix(&prog_w[j,0], &R[0,0])
+        to_sat_coords(&prog_w[j,0], &R[0,0], &prog_w_prime[0])
+        car_to_cyl(&prog_w_prime[0], &prog_cyl[0])
 
-    #     for k in range(6):
-    #         if sigma_k[k] > 0:
-    #             ks[k] = np.random.normal(mu_k[k], sigma_k[k])
-    #         else:
-    #             ks[k] = mu_k[k]
+        for k in range(6):
+            if sigma_k[k] > 0:
+                ks[k] = np.random.normal(mu_k[k], sigma_k[k])
+            else:
+                ks[k] = mu_k[k]
 
-    #     # eject stars at tidal radius with same angular velocity as progenitor
-    #     cyl[0] = prog_cyl[0] + ks[0]*r_tide
-    #     cyl[1] = prog_cyl[1] + ks[1]*r_tide/prog_cyl[0]
-    #     cyl[2] = ks[2]*r_tide/prog_cyl[0]
-    #     cyl[3] = prog_cyl[3] + ks[3]*prog_cyl[3]
-    #     cyl[4] = prog_cyl[4] + ks[0]*ks[4]*Om*r_tide
-    #     cyl[5] = ks[5]*Om*r_tide
-    #     cyl_to_car(&cyl[0], &w_prime[0])
-    #     from_sat_coords(&w_prime[0], &R[0,0], &w[2*i*ndim])
+        # eject stars at tidal radius with same angular velocity as progenitor
+        cyl[0] = prog_cyl[0] + ks[0]*r_tide
+        cyl[1] = prog_cyl[1] + ks[1]*r_tide/prog_cyl[0]
+        cyl[2] = ks[2]*r_tide/prog_cyl[0]
+        cyl[3] = prog_cyl[3] + ks[3]*prog_cyl[3]
+        cyl[4] = prog_cyl[4] + ks[0]*ks[4]*Om*r_tide
+        cyl[5] = ks[5]*Om*r_tide
+        cyl_to_car(&cyl[0], &w_prime[0])
+        from_sat_coords(&w_prime[0], &R[0,0], &w[2*i*ndim])
 
-    #     for k in range(6):
-    #         if sigma_k[k] > 0:
-    #             ks[k] = np.random.normal(mu_k[k], sigma_k[k])
-    #         else:
-    #             ks[k] = mu_k[k]
+        for k in range(6):
+            if sigma_k[k] > 0:
+                ks[k] = np.random.normal(mu_k[k], sigma_k[k])
+            else:
+                ks[k] = mu_k[k]
 
-    #     cyl[0] = prog_cyl[0] - ks[0]*r_tide
-    #     cyl[1] = prog_cyl[1] - ks[1]*r_tide/prog_cyl[0]
-    #     cyl[2] = ks[2]*r_tide/prog_cyl[0]
-    #     cyl[3] = prog_cyl[3] + ks[3]*prog_cyl[3]
-    #     cyl[4] = prog_cyl[4] - ks[0]*ks[4]*Om*r_tide
-    #     cyl[5] = ks[5]*Om*r_tide
-    #     cyl_to_car(&cyl[0], &w_prime[0])
-    #     from_sat_coords(&w_prime[0], &R[0,0], &w[2*i*ndim + ndim])
+        cyl[0] = prog_cyl[0] - ks[0]*r_tide
+        cyl[1] = prog_cyl[1] - ks[1]*r_tide/prog_cyl[0]
+        cyl[2] = ks[2]*r_tide/prog_cyl[0]
+        cyl[3] = prog_cyl[3] + ks[3]*prog_cyl[3]
+        cyl[4] = prog_cyl[4] - ks[0]*ks[4]*Om*r_tide
+        cyl[5] = ks[5]*Om*r_tide
+        cyl_to_car(&cyl[0], &w_prime[0])
+        from_sat_coords(&w_prime[0], &R[0,0], &w[2*i*ndim + ndim])
 
-    #     i += 1
+        i += 1
 
-    # for i in range(nparticles):
-    #     res = dop853(ndim, <FcnEqDiff> Fwrapper,
-    #                  &(cp.cpotential), 1,
-    #                  t1[i], &w[i*ndim], t_end, &rtol, &atol, 0, NULL, 0,
-    #                  NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0);
+    for i in range(nparticles):
+        res = dop853(ndim, <FcnEqDiff> Fwrapper,
+                     &(cp.cpotential), 1,
+                     t1[i], &w[i*ndim], t_end, &rtol, &atol, 0, NULL, 0,
+                     NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0);
 
-    #     if res == -1:
-    #         raise RuntimeError("Input is not consistent.")
-    #     elif res == -2:
-    #         raise RuntimeError("Larger nmax is needed.")
-    #     elif res == -3:
-    #         raise RuntimeError("Step size becomes too small.")
-    #     elif res == -4:
-    #         raise RuntimeError("The problem is probably stff (interrupted).")
+        if res == -1:
+            raise RuntimeError("Input is not consistent.")
+        elif res == -2:
+            raise RuntimeError("Larger nmax is needed.")
+        elif res == -3:
+            raise RuntimeError("Step size becomes too small.")
+        elif res == -4:
+            raise RuntimeError("The problem is probably stff (interrupted).")
 
-    #     PyErr_CheckSignals()
+        PyErr_CheckSignals()
 
-    # return np.asarray(w).reshape(nparticles, ndim)
+    return np.asarray(w).reshape(nparticles, ndim)
