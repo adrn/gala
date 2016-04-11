@@ -24,7 +24,7 @@ def make_known_orbit(tmpdir, x, vx, potential, name):
     # See Binney & Tremaine (2008) Figure 3.8 and 3.9
     E = -0.337
     y = 0.
-    vy = np.sqrt(2*(E - potential.value([x,y,0.])))[0]
+    vy = np.sqrt(2*(E - potential.value([x,y,0.]).value))[0]
 
     w = [x,y,0.,vx,vy,0.]
     orbit = potential.integrate_orbit(w, dt=0.05, nsteps=10000)
@@ -326,7 +326,7 @@ def test_apocenter_pericenter():
     # Phi = np.mean(w.potential_energy()).value
     L = np.mean(np.sqrt(np.sum(w.angular_momentum()**2, axis=0))).decompose(pot.units).value
     def func(r):
-        val = 2*(E-pot.value([r,0,0])[0]) - L**2/r**2
+        val = 2*(E-pot.value([r,0,0]).value[0]) - L**2/r**2
         return val
 
     pred_apo = so.brentq(func, 0.9, 1.0)
