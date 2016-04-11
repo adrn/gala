@@ -15,30 +15,41 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 from collections import OrderedDict
 
 # Third-party
+from astropy.extern import six
+from astropy.utils import InheritDocstrings
 from astropy.coordinates.angles import rotation_matrix
 from astropy.constants import G
 import astropy.units as u
 import numpy as np
 cimport numpy as np
 np.import_array()
-import cython
-cimport cython
 
 # Project
-from ...units import galactic
-from ..cpotential cimport _CPotential
+from ..core import CompositePotential
 from ..cpotential import CPotentialBase
+from ..cpotential cimport CPotentialWrapper
+from ...units import DimensionlessUnitSystem
 
-cdef extern from "math.h":
-    double sqrt(double x) nogil
-    double cbrt(double x) nogil
-    double sin(double x) nogil
-    double cos(double x) nogil
-    double log(double x) nogil
-    double fabs(double x) nogil
-    double exp(double x) nogil
-    double atan(double x) nogil
-    double pow(double x, double n) nogil
+cdef extern from "src/cpotential.h":
+    enum:
+        MAX_N_COMPONENTS = 16
+
+    ctypedef double (*densityfunc)(double t, double *pars, double *q) nogil
+    ctypedef double (*valuefunc)(double t, double *pars, double *q) nogil
+    ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
+
+    ctypedef struct CPotential:
+        int n_components
+        int n_dim
+        densityfunc density[MAX_N_COMPONENTS]
+        valuefunc value[MAX_N_COMPONENTS]
+        gradientfunc gradient[MAX_N_COMPONENTS]
+        int n_params[MAX_N_COMPONENTS]
+        double *parameters[MAX_N_COMPONENTS]
+
+    double c_value(CPotential *p, double t, double *q) nogil
+    double c_density(CPotential *p, double t, double *q) nogil
+    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
 
 cdef extern from "src/_cbuiltin.h":
     double nan_density(double t, double *pars, double *q) nogil
@@ -91,28 +102,33 @@ cdef extern from "src/_cbuiltin.h":
     double rotating_logarithmic_value(double t, double *pars, double *q) nogil
     void rotating_logarithmic_gradient(double t, double *pars, double *q, double *grad) nogil
 
-    double lm10_value(double t, double *pars, double *q) nogil
-    void lm10_gradient(double t, double *pars, double *q, double *grad) nogil
-
-__all__ = ['HenonHeilesPotential', 'KeplerPotential', 'HernquistPotential',
-           'PlummerPotential', 'MiyamotoNagaiPotential',
-           'SphericalNFWPotential', 'FlattenedNFWPotential',
-           'LeeSutoTriaxialNFWPotential',
-           'LogarithmicPotential', 'JaffePotential',
-           'StonePotential', 'IsochronePotential',
-           'RotatingLogarithmicPotential']
+__all__ = ['HenonHeilesPotential', # Misc. potentials
+           'KeplerPotential', 'HernquistPotential', 'IsochronePotential', 'PlummerPotential',
+           'JaffePotential', 'SphericalNFWPotential', 'StonePotential', # Spherical models
+           'MiyamotoNagaiPotential', 'FlattenedNFWPotential', # Flattened models
+           'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential', # Triaxial models
+           'CCompositePotential']
 
 # ============================================================================
-#    Hénon-Heiles potential
-#
-cdef class _HenonHeilesPotential(_CPotential):
 
-    def __cinit__(self):
-        self._parvec = np.array([])
-        self._parameters = &(self._parvec)[0]
-        self.c_value = &henon_heiles_value
-        self.c_gradient = &henon_heiles_gradient
-        self.c_density = &nan_density
+cdef class HenonHeilesWrapper(CPotentialWrapper):
+
+    def __init__(self, G, *args):
+        cdef CPotential cp
+
+        # This is the only code that needs to change per-potential
+        cp.value[0] = <valuefunc>(henon_heiles_value)
+        cp.density[0] = <densityfunc>(nan_density)
+        cp.gradient[0] = <gradientfunc>(henon_heiles_gradient)
+        self._params = np.array([G], dtype=np.float64)
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        cp.n_components = 1
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+        cp.n_params = &(self._n_params[0])
+        cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 2
+        self.cpotential = cp
 
 class HenonHeilesPotential(CPotentialBase):
     r"""
@@ -126,31 +142,36 @@ class HenonHeilesPotential(CPotentialBase):
 
     Parameters
     ----------
-    units : iterable (optional)
-        Unique list of non-reducable units that specify (at minimum) the
+    units : `~gary.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
     def __init__(self, units=None):
-        self.parameters = dict()
-        super(HenonHeilesPotential, self).__init__(units=units)
-        if units is None:
-            self.G = 1.
-        else:
-            self.G = G.decompose(units).value
-        self.c_instance = _HenonHeilesPotential(G=self.G)
+        parameters = OrderedDict()
+        super(HenonHeilesPotential, self).__init__(parameters=parameters,
+                                                   units=units)
 
 # ============================================================================
-#    Kepler potential
-#
-cdef class _KeplerPotential(_CPotential):
 
-    def __cinit__(self, double G, double m):
-        self._parvec = np.array([G,m])
-        self._parameters = &(self._parvec)[0]
-        self.c_value = &kepler_value
-        self.c_gradient = &kepler_gradient
-        self.c_density = &nan_density
+cdef class KeplerWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters):
+        cdef CPotential cp
+
+        # This is the only code that needs to change per-potential
+        cp.value[0] = <valuefunc>(kepler_value)
+        cp.density[0] = <densityfunc>(nan_density)
+        cp.gradient[0] = <gradientfunc>(kepler_gradient)
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+        cp.n_params = &(self._n_params[0])
+        cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
+        self.cpotential = cp
 
 class KeplerPotential(CPotentialBase):
     r"""
@@ -166,32 +187,44 @@ class KeplerPotential(CPotentialBase):
     ----------
     m : numeric
         Mass.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
+
+    Parameters
+    ----------
+    units : `~gary.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
     def __init__(self, m, units):
-        self.parameters = dict(m=m)
-        super(KeplerPotential, self).__init__(units=units)
-        self.G = G.decompose(units).value
-        self.c_instance = _KeplerPotential(G=self.G, **self._c_parameters)
+        parameters = OrderedDict()
+        parameters['m'] = m
+        super(KeplerPotential, self).__init__(parameters=parameters,
+                                              units=units)
 
 # ============================================================================
-#    Isochrone potential
-#
-cdef class _IsochronePotential(_CPotential):
 
-    def __cinit__(self, double G, double m, double b):
-        self._parvec = np.array([G,m,b])
-        self._parameters = &(self._parvec)[0]
-        self.c_value = &isochrone_value
-        self.c_gradient = &isochrone_gradient
-        self.c_density = &isochrone_density
+cdef class IsochroneWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters):
+        cdef CPotential cp
+
+        # This is the only code that needs to change per-potential
+        cp.value[0] = <valuefunc>(isochrone_value)
+        cp.density[0] = <densityfunc>(isochrone_density)
+        cp.gradient[0] = <gradientfunc>(isochrone_gradient)
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+        cp.n_params = &(self._n_params[0])
+        cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
+        self.cpotential = cp
 
 class IsochronePotential(CPotentialBase):
     r"""
-    IsochronePotential(m, units)
+    IsochronePotential(m, b, units)
 
     The Isochrone potential.
 
@@ -205,16 +238,17 @@ class IsochronePotential(CPotentialBase):
         Mass.
     b : numeric
         Core concentration.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
+    units : `~gary.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
     def __init__(self, m, b, units):
-        self.parameters = dict(m=m, b=b)
-        super(IsochronePotential, self).__init__(units=units)
-        self.G = G.decompose(units).value
-        self.c_instance = _IsochronePotential(G=self.G, **self._c_parameters)
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['b'] = b
+        super(IsochronePotential, self).__init__(parameters=parameters,
+                                                 units=units)
 
     def action_angle(self, w):
         """
@@ -254,17 +288,25 @@ class IsochronePotential(CPotentialBase):
     #     return isochrone_aa_to_xv(actions, angles, self)
 
 # ============================================================================
-#    Hernquist Spheroid potential from Hernquist 1990
-#    http://adsabs.harvard.edu/abs/1990ApJ...356..359H
-#
-cdef class _HernquistPotential(_CPotential):
 
-    def __cinit__(self, double G, double m, double c):
-        self._parvec = np.array([G,m,c])
-        self._parameters = &(self._parvec)[0]
-        self.c_value = &hernquist_value
-        self.c_gradient = &hernquist_gradient
-        self.c_density = &hernquist_density
+cdef class HernquistWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters):
+        cdef CPotential cp
+
+        # This is the only code that needs to change per-potential
+        cp.value[0] = <valuefunc>(hernquist_value)
+        cp.density[0] = <densityfunc>(hernquist_density)
+        cp.gradient[0] = <gradientfunc>(hernquist_gradient)
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+        cp.n_params = &(self._n_params[0])
+        cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
+        self.cpotential = cp
 
 class HernquistPotential(CPotentialBase):
     r"""
@@ -276,34 +318,46 @@ class HernquistPotential(CPotentialBase):
 
         \Phi(r) = -\frac{G M}{r + c}
 
+    See: http://adsabs.harvard.edu/abs/1990ApJ...356..359H
+
     Parameters
     ----------
     m : numeric
         Mass.
     c : numeric
         Core concentration.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
+    units : `~gary.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
     def __init__(self, m, c, units):
-        self.parameters = dict(m=m, c=c)
-        super(HernquistPotential, self).__init__(units=units)
-        self.G = G.decompose(units).value
-        self.c_instance = _HernquistPotential(G=self.G, **self._c_parameters)
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['c'] = c
+        super(HernquistPotential, self).__init__(parameters=parameters,
+                                                 units=units)
 
 # ============================================================================
-#    Plummer sphere potential
-#
-cdef class _PlummerPotential(_CPotential):
 
-    def __cinit__(self, double G, double m, double b):
-        self._parvec = np.array([G,m,b])
-        self._parameters = &(self._parvec)[0]
-        self.c_value = &plummer_value
-        self.c_gradient = &plummer_gradient
-        self.c_density = &plummer_density
+cdef class PlummerWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters):
+        cdef CPotential cp
+
+        # This is the only code that needs to change per-potential
+        cp.value[0] = <valuefunc>(plummer_value)
+        cp.density[0] = <densityfunc>(plummer_density)
+        cp.gradient[0] = <gradientfunc>(plummer_gradient)
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+        cp.n_params = &(self._n_params[0])
+        cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
+        self.cpotential = cp
 
 class PlummerPotential(CPotentialBase):
     r"""
@@ -321,28 +375,38 @@ class PlummerPotential(CPotentialBase):
        Mass.
     b : numeric
         Core concentration.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
+    units : `~gary.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
     def __init__(self, m, b, units):
-        self.parameters = dict(m=m, b=b)
-        super(PlummerPotential, self).__init__(units=units)
-        self.G = G.decompose(units).value
-        self.c_instance = _PlummerPotential(G=self.G, **self._c_parameters)
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['b'] = b
+        super(PlummerPotential, self).__init__(parameters=parameters,
+                                               units=units)
 
 # ============================================================================
-#    Jaffe spheroid potential
-#
-cdef class _JaffePotential(_CPotential):
 
-    def __cinit__(self, double G, double m, double c):
-        self._parvec = np.array([G,m,c])
-        self._parameters = &(self._parvec)[0]
-        self.c_value = &jaffe_value
-        self.c_gradient = &jaffe_gradient
-        self.c_density = &jaffe_density
+cdef class JaffeWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters):
+        cdef CPotential cp
+
+        # This is the only code that needs to change per-potential
+        cp.value[0] = <valuefunc>(jaffe_value)
+        cp.density[0] = <densityfunc>(jaffe_density)
+        cp.gradient[0] = <gradientfunc>(jaffe_gradient)
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+        cp.n_params = &(self._n_params[0])
+        cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
+        self.cpotential = cp
 
 class JaffePotential(CPotentialBase):
     r"""
@@ -360,71 +424,38 @@ class JaffePotential(CPotentialBase):
         Mass.
     c : numeric
         Core concentration.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
+    units : `~gary.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
     def __init__(self, m, c, units):
-        self.parameters = dict(m=m, c=c)
-        super(JaffePotential, self).__init__(units=units)
-        self.G = G.decompose(units).value
-        self.c_instance = _JaffePotential(G=self.G, **self._c_parameters)
-
-
-# ============================================================================
-#    Miyamoto-Nagai Disk potential from Miyamoto & Nagai 1975
-#    http://adsabs.harvard.edu/abs/1975PASJ...27..533M
-#
-cdef class _MiyamotoNagaiPotential(_CPotential):
-
-    def __cinit__(self, double G, double m, double a, double b):
-        self._parvec = np.array([G,m,a,b])
-        self._parameters = &(self._parvec)[0]
-        self.c_value = &miyamotonagai_value
-        self.c_gradient = &miyamotonagai_gradient
-        self.c_density = &miyamotonagai_density
-
-class MiyamotoNagaiPotential(CPotentialBase):
-    r"""
-    MiyamotoNagaiPotential(m, a, b, units)
-
-    Miyamoto-Nagai potential for a flattened mass distribution.
-
-    .. math::
-
-        \Phi(R,z) = -\frac{G M}{\sqrt{R^2 + (a + \sqrt{z^2 + b^2})^2}}
-
-    Parameters
-    ----------
-    m : numeric
-        Mass.
-    a : numeric
-        Scale length.
-    b : numeric
-        Scare height.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units.
-
-    """
-    def __init__(self, m, a, b, units):
-        self.parameters = dict(m=m, a=a, b=b)
-        super(MiyamotoNagaiPotential, self).__init__(units=units)
-        self.G = G.decompose(units).value
-        self.c_instance = _MiyamotoNagaiPotential(G=self.G, **self._c_parameters)
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['c'] = c
+        super(JaffePotential, self).__init__(parameters=parameters,
+                                             units=units)
 
 # ============================================================================
-#    Stone and Ostriker potential (2015)
-#
-cdef class _StonePotential(_CPotential):
 
-    def __cinit__(self, double G, double m, double r_c, double r_h):
-        self._parvec = np.array([G,m,r_c,r_h])
-        self._parameters = &(self._parvec)[0]
-        self.c_value = &stone_value
-        self.c_gradient = &stone_gradient
-        self.c_density = &stone_density
+cdef class StoneWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters):
+        cdef CPotential cp
+
+        # This is the only code that needs to change per-potential
+        cp.value[0] = <valuefunc>(stone_value)
+        cp.density[0] = <densityfunc>(stone_density)
+        cp.gradient[0] = <gradientfunc>(stone_gradient)
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+        cp.n_params = &(self._n_params[0])
+        cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
+        self.cpotential = cp
 
 class StonePotential(CPotentialBase):
     r"""
@@ -444,28 +475,39 @@ class StonePotential(CPotentialBase):
         Core radius.
     r_h : numeric
         Halo radius.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
+    units : `~gary.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
     def __init__(self, m, r_c, r_h, units):
-        self.parameters = dict(m=m, r_c=r_c, r_h=r_h)
-        super(StonePotential, self).__init__(units=units)
-        self.G = G.decompose(units).value
-        self.c_instance = _StonePotential(G=self.G, **self._c_parameters)
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['r_c'] = r_c
+        parameters['r_h'] = r_h
+        super(StonePotential, self).__init__(parameters=parameters,
+                                             units=units)
 
 # ============================================================================
-#    Spherical NFW potential
-#
-cdef class _SphericalNFWPotential(_CPotential):
 
-    def __cinit__(self, double G, double v_c, double r_s):
-        self._parvec = np.array([G, v_c,r_s])
-        self._parameters = &(self._parvec)[0]
-        self.c_value = &sphericalnfw_value
-        self.c_gradient = &sphericalnfw_gradient
-        self.c_density = &sphericalnfw_density
+cdef class SphericalNFWWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters):
+        cdef CPotential cp
+
+        # This is the only code that needs to change per-potential
+        cp.value[0] = <valuefunc>(sphericalnfw_value)
+        cp.density[0] = <densityfunc>(sphericalnfw_density)
+        cp.gradient[0] = <gradientfunc>(sphericalnfw_gradient)
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+        cp.n_params = &(self._n_params[0])
+        cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
+        self.cpotential = cp
 
 class SphericalNFWPotential(CPotentialBase):
     r"""
@@ -476,7 +518,7 @@ class SphericalNFWPotential(CPotentialBase):
 
     .. math::
 
-        \Phi(r) = -\frac{v_h^2}{\sqrt{\ln 2 - \frac{1}{2}}} \frac{\ln(1 + r/r_s)}{r/r_s}
+        \Phi(r) = -\frac{v_c^2}{\sqrt{\ln 2 - \frac{1}{2}}} \frac{\ln(1 + r/r_s)}{r/r_s}
 
     Parameters
     ----------
@@ -484,28 +526,92 @@ class SphericalNFWPotential(CPotentialBase):
         Circular velocity at the scale radius.
     r_s : numeric
         Scale radius.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
+    units : `~gary.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
     def __init__(self, v_c, r_s, units):
-        self.parameters = dict(v_c=v_c, r_s=r_s)
-        super(SphericalNFWPotential, self).__init__(units=units)
-        self.G = G.decompose(units).value
-        self.c_instance = _SphericalNFWPotential(G=self.G, **self._c_parameters)
+        parameters = OrderedDict()
+        parameters['v_c'] = v_c
+        parameters['r_s'] = r_s
+        super(SphericalNFWPotential, self).__init__(parameters=parameters,
+                                                    units=units)
 
 # ============================================================================
-#    Flattened NFW potential
-#
-cdef class _FlattenedNFWPotential(_CPotential):
 
-    def __cinit__(self, double G, double v_c, double r_s, double q_z):
-        self._parvec = np.array([G, v_c,r_s,q_z])
-        self._parameters = &(self._parvec)[0]
-        self.c_value = &flattenednfw_value
-        self.c_gradient = &flattenednfw_gradient
-        self.c_density = &flattenednfw_density
+cdef class MiyamotoNagaiWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters):
+        cdef CPotential cp
+
+        # This is the only code that needs to change per-potential
+        cp.value[0] = <valuefunc>(miyamotonagai_value)
+        cp.density[0] = <densityfunc>(miyamotonagai_density)
+        cp.gradient[0] = <gradientfunc>(miyamotonagai_gradient)
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+        cp.n_params = &(self._n_params[0])
+        cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
+        self.cpotential = cp
+
+class MiyamotoNagaiPotential(CPotentialBase):
+    r"""
+    MiyamotoNagaiPotential(m, a, b, units)
+
+    Miyamoto-Nagai potential for a flattened mass distribution.
+
+    .. math::
+
+        \Phi(R,z) = -\frac{G M}{\sqrt{R^2 + (a + \sqrt{z^2 + b^2})^2}}
+
+    See: http://adsabs.harvard.edu/abs/1975PASJ...27..533M
+
+    Parameters
+    ----------
+    m : numeric
+        Mass.
+    a : numeric
+        Scale length.
+    b : numeric
+        Scare height.
+    units : `~gary.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, m, a, b, units):
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['a'] = a
+        parameters['b'] = b
+        super(MiyamotoNagaiPotential, self).__init__(parameters=parameters,
+                                                     units=units)
+
+# ============================================================================
+
+cdef class FlattenedNFWWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters):
+        cdef CPotential cp
+
+        # This is the only code that needs to change per-potential
+        cp.value[0] = <valuefunc>(flattenednfw_value)
+        cp.density[0] = <densityfunc>(flattenednfw_density)
+        cp.gradient[0] = <gradientfunc>(flattenednfw_gradient)
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+        cp.n_params = &(self._n_params[0])
+        cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
+        self.cpotential = cp
 
 class FlattenedNFWPotential(CPotentialBase):
     r"""
@@ -516,7 +622,7 @@ class FlattenedNFWPotential(CPotentialBase):
 
     .. math::
 
-        \Phi(r) = -\frac{v_h^2}{\sqrt{\ln 2 - \frac{1}{2}}} \frac{\ln(1 + r/r_s)}{r/r_s}\\
+        \Phi(r) = -\frac{v_c^2}{\sqrt{\ln 2 - \frac{1}{2}}} \frac{\ln(1 + r/r_s)}{r/r_s}\\
         r^2 = x^2 + y^2 + z^2/q_z^2
 
     Parameters
@@ -527,45 +633,49 @@ class FlattenedNFWPotential(CPotentialBase):
         Scale radius.
     q_z : numeric
         Flattening.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
+    units : `~gary.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
     def __init__(self, v_c, r_s, q_z, units):
-        self.parameters = dict(v_c=v_c, r_s=r_s, q_z=q_z)
-        super(FlattenedNFWPotential, self).__init__(units=units)
-        self.G = G.decompose(units).value
-        self.c_instance = _FlattenedNFWPotential(G=self.G, **self._c_parameters)
+        parameters = OrderedDict()
+        parameters['v_c'] = v_c
+        parameters['r_s'] = r_s
+        parameters['q_z'] = q_z
+        super(FlattenedNFWPotential, self).__init__(parameters=parameters,
+                                                    units=units)
 
 # ============================================================================
-#    Lee & Suto (2003) triaxial NFW potential
-#    http://adsabs.harvard.edu/abs/2003ApJ...585..151L
 #
-cdef class _LeeSutoTriaxialNFWPotential(_CPotential):
 
-    def __cinit__(self, double G, double v_c, double r_s,
-                  double a, double b, double c,
-                  double R11, double R12, double R13,
-                  double R21, double R22, double R23,
-                  double R31, double R32, double R33):
-        self._parvec = np.array([G, v_c,r_s,a,b,c, R11,R12,R13,R21,R22,R23,R31,R32,R33])
-        self._parameters = &(self._parvec)[0]
-        self.c_value = &leesuto_value
-        self.c_gradient = &leesuto_gradient
-        self.c_density = &leesuto_density
+cdef class LeeSutoTriaxialNFWWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters):
+        cdef CPotential cp
+
+        # This is the only code that needs to change per-potential
+        cp.value[0] = <valuefunc>(leesuto_value)
+        cp.density[0] = <densityfunc>(leesuto_density)
+        cp.gradient[0] = <gradientfunc>(leesuto_gradient)
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+        cp.n_params = &(self._n_params[0])
+        cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
+        self.cpotential = cp
 
 class LeeSutoTriaxialNFWPotential(CPotentialBase):
     r"""
-    LeeSutoTriaxialNFWPotential(v_c, r_s, a, b, c, units, phi=0., theta=0., psi=0.)
+    LeeSutoTriaxialNFWPotential(v_c, r_s, a, b, c, units)
 
     Approximation of a Triaxial NFW Potential with the flattening in the density,
     not the potential. See Lee & Suto (2003) for details.
 
-    .. warning::
-
-        There is a known bug with using the Euler angles to rotate the potential.
-        Avoid this for now.
+    See: http://adsabs.harvard.edu/abs/2003ApJ...585..151L
 
     Parameters
     ----------
@@ -579,75 +689,45 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
         Intermediate axis.
     c : numeric
         Minor axis.
-    phi : numeric (optional)
-        Euler angle for rotation about z-axis (using the x-convention
-        from Goldstein). Allows for specifying a misalignment between
-        the halo and disk potentials.
-    theta : numeric (optional)
-        Euler angle for rotation about x'-axis (using the x-convention
-        from Goldstein). Allows for specifying a misalignment between
-        the halo and disk potentials.
-    psi : numeric (optional)
-        Euler angle for rotation about z'-axis (using the x-convention
-        from Goldstein). Allows for specifying a misalignment between
-        the halo and disk potentials.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
+    units : `~gary.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_c, r_s, a, b, c, units, phi=0., theta=0., psi=0., R=None):
-        self.parameters = dict(v_c=v_c, r_s=r_s, a=a, b=b, c=c)
-        super(LeeSutoTriaxialNFWPotential, self).__init__(units=units)
-        self.G = G.decompose(units).value
-
-        if R is None:
-            if theta != 0 or phi != 0 or psi != 0:
-                D = rotation_matrix(phi, "z", unit=u.radian) # TODO: Bad assuming radians
-                C = rotation_matrix(theta, "x", unit=u.radian)
-                B = rotation_matrix(psi, "z", unit=u.radian)
-                R = np.asarray(B.dot(C).dot(D))
-
-            else:
-                R = np.eye(3)
-
-        # Note: R is the upper triangle of the rotation matrix
-        R = np.ravel(R)
-        if R.size != 9:
-            raise ValueError("Rotation matrix parameter, R, should have 9 elements.")
-
-        c_params = self.parameters.copy()
-        c_params['R11'] = R[0]
-        c_params['R12'] = R[1]
-        c_params['R13'] = R[2]
-        c_params['R21'] = R[3]
-        c_params['R22'] = R[4]
-        c_params['R23'] = R[5]
-        c_params['R31'] = R[6]
-        c_params['R32'] = R[7]
-        c_params['R33'] = R[8]
-        self.c_instance = _LeeSutoTriaxialNFWPotential(G=self.G, **c_params)
-        self.parameters['R'] = np.ravel(R).copy()*u.one
+    def __init__(self, v_c, r_s, a, b, c, units):
+        parameters = OrderedDict()
+        parameters['v_c'] = v_c
+        parameters['r_s'] = r_s
+        parameters['a'] = a
+        parameters['b'] = b
+        parameters['c'] = c
+        super(LeeSutoTriaxialNFWPotential, self).__init__(parameters=parameters,
+                                                          units=units)
 
 # ============================================================================
-#    Triaxial, Logarithmic potential
-#
-cdef class _LogarithmicPotential(_CPotential):
 
-    def __cinit__(self, double v_c, double r_h,
-                  double q1, double q2, double q3,
-                  double R11, double R12, double R13,
-                  double R21, double R22, double R23,
-                  double R31, double R32, double R33):
-        self._parvec = np.array([v_c,r_h,q1,q2,q3, R11,R12,R13,R21,R22,R23,R31,R32,R33])
-        self._parameters = &(self._parvec)[0]
-        self.c_value = &logarithmic_value
-        self.c_gradient = &logarithmic_gradient
-        self.c_density = &nan_density
+cdef class LogarithmicWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters):
+        cdef CPotential cp
+
+        # This is the only code that needs to change per-potential
+        cp.value[0] = <valuefunc>(logarithmic_value)
+        cp.density[0] = <densityfunc>(nan_density)
+        cp.gradient[0] = <gradientfunc>(logarithmic_gradient)
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+        cp.n_params = &(self._n_params[0])
+        cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
+        self.cpotential = cp
 
 class LogarithmicPotential(CPotentialBase):
     r"""
-    LogarithmicPotential(v_c, r_h, q1, q2, q3, units, phi=0., theta=0., psi=0.)
+    LogarithmicPotential(v_c, r_h, q1, q2, q3, phi=0, theta=0, psi=0, units)
 
     Triaxial logarithmic potential.
 
@@ -657,9 +737,9 @@ class LogarithmicPotential(CPotentialBase):
 
     Parameters
     ----------
-    v_c : numeric
+    v_c : `~astropy.units.Quantity`, numeric
         Circular velocity.
-    r_h : numeric
+    r_h : `~astropy.units.Quantity`, numeric
         Scale radius.
     q1 : numeric
         Flattening in X.
@@ -667,215 +747,82 @@ class LogarithmicPotential(CPotentialBase):
         Flattening in Y.
     q3 : numeric
         Flattening in Z.
-    phi : numeric (optional)
-        Euler angle for rotation about z-axis (using the x-convention
-        from Goldstein). Allows for specifying a misalignment between
-        the halo and disk potentials.
-    theta : numeric (optional)
-        Euler angle for rotation about x'-axis (using the x-convention
-        from Goldstein). Allows for specifying a misalignment between
-        the halo and disk potentials.
-    psi : numeric (optional)
-        Euler angle for rotation about z'-axis (using the x-convention
-        from Goldstein). Allows for specifying a misalignment between
-        the halo and disk potentials.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
+    phi : `~astropy.units.Quantity`, numeric
+        First euler angle in the z-x-z convention.
+    units : `~gary.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_c, r_h, q1, q2, q3, units, phi=0., theta=0., psi=0., R=None):
-        self.parameters = dict(v_c=v_c, r_h=r_h, q1=q1, q2=q2, q3=q3)
-        super(LogarithmicPotential, self).__init__(units=units)
-        self.G = G.decompose(units).value
+    def __init__(self, v_c, r_h, q1, q2, q3, phi=0., units=None):
+        parameters = OrderedDict()
+        parameters['v_c'] = v_c
+        parameters['r_h'] = r_h
+        parameters['q1'] = q1
+        parameters['q2'] = q2
+        parameters['q3'] = q3
+        parameters['phi'] = phi
+        super(LogarithmicPotential, self).__init__(parameters=parameters,
+                                                   units=units)
 
-        if R is None:
-            if theta != 0 or phi != 0 or psi != 0:
-                D = rotation_matrix(phi, "z", unit=u.radian) # TODO: Bad assuming radians
-                C = rotation_matrix(theta, "x", unit=u.radian)
-                B = rotation_matrix(psi, "z", unit=u.radian)
-                R = np.asarray(B.dot(C).dot(D))
-
-            else:
-                R = np.eye(3)
-
-        R = np.ravel(R)
-        if R.size != 9:
-            raise ValueError("Rotation matrix parameter, R, should have 9 elements.")
-
-        c_params = self._c_parameters.copy()
-        c_params['R11'] = R[0]
-        c_params['R12'] = R[1]
-        c_params['R13'] = R[2]
-        c_params['R21'] = R[3]
-        c_params['R22'] = R[4]
-        c_params['R23'] = R[5]
-        c_params['R31'] = R[6]
-        c_params['R32'] = R[7]
-        c_params['R33'] = R[8]
-        self.c_instance = _LogarithmicPotential(**c_params)
-        self.parameters['R'] = np.ravel(R).copy()*u.one
+        if not isinstance(self.units, DimensionlessUnitSystem):
+            if self.units['angle'] != u.radian:
+                raise ValueError("Angle unit must be radian.")
 
 # ============================================================================
-#    Rotating, triaxial, Logarithmic potential
-#
-cdef class _RotatingLogarithmicPotential(_CPotential):
+# TODO: why do these have to be in this file?
 
-    def __cinit__(self, double v_c, double r_h,
-                  double q1, double q2, double q3,
-                  double alpha, double Omega):
-        self._parvec = np.array([v_c,r_h,q1,q2,q3,alpha,Omega])
-        self._parameters = &(self._parvec)[0]
-        self.c_value = &rotating_logarithmic_value
-        self.c_gradient = &rotating_logarithmic_gradient
-        self.c_density = &nan_density
+cdef class CCompositePotentialWrapper(CPotentialWrapper):
 
-class RotatingLogarithmicPotential(CPotentialBase):
-    r"""
-    RotatingLogarithmicPotential(v_c, r_h, q1, q2, q3, alpha, Omega, units)
+    def __init__(self, list potentials):
+        cdef:
+            CPotential cp
+            CPotential tmp_cp
+            int i
+            CPotentialWrapper[::1] _cpotential_arr
 
-    Rotating, triaxial logarithmic potential.
+        _cpotential_arr = np.array(potentials)
 
-    .. math::
+        n_components = len(potentials)
+        self._n_params = np.zeros(n_components, dtype=np.int32)
+        for i in range(n_components):
+            self._n_params[i] = _cpotential_arr[i]._n_params[0]
 
-        \Phi(x,y,z) &= \frac{1}{2}v_{c}^2\ln((x/q_1)^2 + (y/q_2)^2 + (z/q_3)^2 + r_h^2)\\
+        cp.n_components = n_components
+        cp.n_params = &(self._n_params[0])
+        cp.n_dim = 0
 
-    Parameters
-    ----------
-    v_c : numeric
-        Circular velocity.
-    r_h : numeric
-        Scale radius.
-    q1 : numeric
-        Flattening in X.
-    q2 : numeric
-        Flattening in Y.
-    q3 : numeric
-        Flattening in Z.
-    alpha : numeric
-        Initial bar angle.
-    Omega : numeric
-        Pattern speed.
-    units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units.
+        for i in range(n_components):
+            tmp_cp = _cpotential_arr[i].cpotential
+            cp.parameters[i] = &(_cpotential_arr[i]._params[0])
+            cp.value[i] = tmp_cp.value[0]
+            cp.density[i] = tmp_cp.density[0]
+            cp.gradient[i] = tmp_cp.gradient[0]
 
-    """
-    def __init__(self, v_c, r_h, q1, q2, q3, alpha, Omega, units):
-        self.parameters = dict(v_c=v_c, r_h=r_h, q1=q1, q2=q2, q3=q3, alpha=alpha, Omega=Omega)
-        super(RotatingLogarithmicPotential, self).__init__(units=units)
-        self.G = G.decompose(units).value
-        self.c_instance = _RotatingLogarithmicPotential(**self._c_parameters)
+            if cp.n_dim == 0:
+                cp.n_dim = tmp_cp.n_dim
+            elif cp.n_dim != tmp_cp.n_dim:
+                raise ValueError("Input potentials must have same number of coordinate dimensions")
 
-# ------------------------------------------------------------------------
-# HACK
-cdef class _LM10Potential(_CPotential):
+        self.cpotential = cp
 
-    def __cinit__(self, double G, double m_spher, double c,
-                  double G2, double m_disk, double a, double b,
-                  double v_c, double r_h,
-                  double q1, double q2, double q3,
-                  double R11, double R12, double R13,
-                  double R21, double R22, double R23,
-                  double R31, double R32, double R33):
-        self._parvec = np.array([G,m_spher,c,
-                                 G,m_disk,a,b,
-                                 v_c,r_h,q1,q2,q3,
-                                 R11,R12,R13,R21,R22,R23,R31,R32,R33])
-        self._parameters = &(self._parvec[0])
-        self.c_value = &lm10_value
-        self.c_gradient = &lm10_gradient
-        self.c_density = &nan_density
+class CCompositePotential(CPotentialBase, CompositePotential):
 
-# BROKEN NOW
-# class LM10Potential(CPotentialBase):
-#     r"""
-#     LM10Potential(units, bulge=dict(), disk=dict(), halo=dict())
+    def __init__(self, **potentials):
+        CompositePotential.__init__(self, **potentials)
 
-#     Three-component Milky Way potential model from Law & Majewski (2010).
+    def _reset_c_instance(self):
+        self._potential_list = []
+        for p in self.values():
+            self._potential_list.append(p.c_instance)
+        self.G = p.G
+        self.c_instance = CCompositePotentialWrapper(self._potential_list)
 
-#     Parameters
-#     ----------
-#     units : iterable
-#         Unique list of non-reducable units that specify (at minimum) the
-#         length, mass, time, and angle units.
-#     bulge : dict
-#         Dictionary of parameter values for a :class:`HernquistPotential`.
-#     disk : dict
-#         Dictionary of parameter values for a :class:`MiyamotoNagaiPotential`.
-#     halo : dict
-#         Dictionary of parameter values for a :class:`LogarithmicPotential`.
+    def __setitem__(self, *args, **kwargs):
+        CompositePotential.__setitem__(self, *args, **kwargs)
+        self._reset_c_instance()
 
-#     """
-#     def __init__(self, units=galactic, bulge=dict(), disk=dict(), halo=dict()):
-#         self.G = G.decompose(units).value
-#         self.parameters = dict()
-#         default_bulge = dict(m=3.4E10*u.Msun, c=0.7*u.kpc)
-#         default_disk = dict(m=1E11*u.Msun, a=6.5*u.kpc, b=0.26*u.kpc)
-#         default_halo = dict(q1=1.38, q2=1., q3=1.36, r_h=12.*u.kpc,
-#                             phi=97*u.degree,
-#                             v_c=np.sqrt(2)*(121.858*u.km/u.s),
-#                             theta=0., psi=0.)
-
-#         for k,v in default_disk.items():
-#             if k not in disk:
-#                 disk[k] = v
-#         self.parameters['disk'] = disk
-
-#         for k,v in default_bulge.items():
-#             if k not in bulge:
-#                 bulge[k] = v
-#         self.parameters['bulge'] = bulge
-
-#         for k,v in default_halo.items():
-#             if k not in halo:
-#                 halo[k] = v
-#         self.parameters['halo'] = halo
-
-#         super(LM10Potential, self).__init__(units=units)
-
-#         if halo.get('R', None) is None:
-#             if halo['theta'] != 0 or halo['phi'] != 0 or halo['psi'] != 0:
-#                 D = rotation_matrix(halo['phi'], "z", unit=u.radian) # TODO: Bad assuming radians
-#                 C = rotation_matrix(halo['theta'], "x", unit=u.radian)
-#                 B = rotation_matrix(halo['psi'], "z", unit=u.radian)
-#                 R = np.asarray(B.dot(C).dot(D))
-
-#             else:
-#                 R = np.eye(3)
-#         else:
-#             R = halo['R']
-
-#         R = np.ravel(R)
-#         if R.size != 9:
-#             raise ValueError("Rotation matrix parameter, R, should have 9 elements.")
-
-#         c_params = dict()
-
-#         # bulge
-#         c_params['G'] = self.G
-#         c_params['m_spher'] = bulge['m']
-#         c_params['c'] = bulge['c']
-
-#         # disk
-#         c_params['G2'] = self.G
-#         c_params['m_disk'] = disk['m']
-#         c_params['a'] = disk['a']
-#         c_params['b'] = disk['b']
-
-#         # halo
-#         c_params['v_c'] = halo['v_c']
-#         c_params['r_h'] = halo['r_h']
-#         c_params['q1'] = halo['q1']
-#         c_params['q2'] = halo['q2']
-#         c_params['q3'] = halo['q3']
-#         c_params['R11'] = R[0]
-#         c_params['R12'] = R[1]
-#         c_params['R13'] = R[2]
-#         c_params['R21'] = R[3]
-#         c_params['R22'] = R[4]
-#         c_params['R23'] = R[5]
-#         c_params['R31'] = R[6]
-#         c_params['R32'] = R[7]
-#         c_params['R33'] = R[8]
-#         self.c_instance = _LM10Potential(**c_params)
+    def __reduce__(self):
+        """ Properly package the object for pickling """
+        derp = tuple([self.units] + [c.parameters for c in self.values()])
+        return (self.__class__, derp)

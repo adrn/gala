@@ -12,17 +12,18 @@ import matplotlib.pyplot as pl
 import numpy as np
 import pytest
 from scipy.misc import derivative
-from six.moves import cPickle as pickle
+from astropy.extern.six.moves import cPickle as pickle
 
 # Project
 from ..io import load
-from ...units import UnitSystem
+from ...units import UnitSystem, DimensionlessUnitSystem
+from ...dynamics import CartesianPhaseSpacePosition
 
 def partial_derivative(func, point, dim_ix=0, **kwargs):
     xyz = np.array(point)
     def wraps(a):
         xyz[dim_ix] = a
-        return func(xyz)
+        return func(xyz).value
     return derivative(wraps, point[dim_ix], **kwargs)
 
 class PotentialTestBase(object):
@@ -36,7 +37,7 @@ class PotentialTestBase(object):
             cls.name = cls.__name__[4:] # remove Test
         print("Testing potential: {}".format(cls.name))
         cls.w0 = np.array(cls.w0)
-        cls.ndim = cls.w0.size
+        cls.ndim = cls.w0.size // 2
 
         # these are arrays we will test the methods on:
         w0_2d = np.repeat(cls.w0[:,None], axis=1, repeats=16)
@@ -52,7 +53,7 @@ class PotentialTestBase(object):
         cls._valu_return_shapes = [x[1:] for x in cls._grad_return_shapes]
 
     def test_unitsystem(self):
-        assert isinstance(self.potential.units, UnitSystem) or self.potential.units is None
+        assert isinstance(self.potential.units, UnitSystem)
 
     def test_value(self):
         for arr,shp in zip(self.w0s, self._valu_return_shapes):
@@ -69,7 +70,7 @@ class PotentialTestBase(object):
         pass
 
     def test_mass_enclosed(self):
-        if self.potential.units is None:
+        if isinstance(self.potential.units, DimensionlessUnitSystem):
             with pytest.raises(ValueError):
                 self.potential.mass_enclosed(self.w0)
             return
@@ -77,10 +78,11 @@ class PotentialTestBase(object):
         for arr,shp in zip(self.w0s, self._valu_return_shapes):
             g = self.potential.mass_enclosed(arr[:self.ndim])
             assert g.shape == shp
+            assert np.all(g > 0.)
 
     def test_repr(self):
         pot_repr = repr(self.potential)
-        if self.potential.units is None:
+        if isinstance(self.potential.units, DimensionlessUnitSystem):
             assert "dimensionless" in pot_repr
         else:
             assert str(self.potential.units['length']) in pot_repr
@@ -89,11 +91,6 @@ class PotentialTestBase(object):
 
         for k in self.potential.parameters.keys():
             assert "{}=".format(k) in pot_repr
-
-    def test_energy(self):
-        for arr,shp in zip(self.w0s, self._valu_return_shapes):
-            E = self.potential.total_energy(arr[:self.ndim], arr[self.ndim:])
-            assert E.shape == shp
 
     def test_plot(self):
         p = self.potential
@@ -126,6 +123,7 @@ class PotentialTestBase(object):
         p = load(fn)
         p.value(self.w0[:self.w0.size//2])
 
+    @pytest.mark.slow
     def test_numerical_gradient_vs_gradient(self):
         """
         Check that the value of the implemented gradient function is close to a
@@ -143,7 +141,7 @@ class PotentialTestBase(object):
         num_grad = np.zeros_like(xyz)
         for i in range(xyz.shape[1]):
             num_grad[:,i] = np.squeeze([partial_derivative(self.potential.value, xyz[:,i], dim_ix=dim_ix, n=1, dx=dx, order=5) for dim_ix in range(self.w0.size//2)])
-        grad = self.potential.gradient(xyz)
+        grad = self.potential.gradient(xyz).value
 
         assert np.allclose(num_grad, grad, rtol=self.tol)
 
@@ -152,18 +150,14 @@ class PotentialTestBase(object):
         Make we can integrate an orbit in this potential
         """
         w0 = self.w0
+
         t1 = time.time()
         orbit = self.potential.integrate_orbit(w0, dt=1., nsteps=10000)
         print("Integration time (10000 steps): {}".format(time.time() - t1))
 
-        from ...dynamics import CartesianPhaseSpacePosition
-        if self.potential.units is not None:
-            us = self.potential.units
-            w0 = CartesianPhaseSpacePosition(pos=w0[:self.ndim//2]*us['length'],
-                                             vel=w0[self.ndim//2:]*us['length']/us['time'])
-        else:
-            w0 = CartesianPhaseSpacePosition(pos=w0[:self.ndim//2],
-                                             vel=w0[self.ndim//2:])
+        us = self.potential.units
+        w0 = CartesianPhaseSpacePosition(pos=w0[:self.ndim]*us['length'],
+                                         vel=w0[self.ndim:]*us['length']/us['time'])
         orbit = self.potential.integrate_orbit(w0, dt=1., nsteps=10000)
 
     def test_pickle(self, tmpdir):

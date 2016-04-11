@@ -22,20 +22,21 @@ env:
         # The following versions are the 'default' for tests, unless
         # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
-        - NUMPY_VERSION=1.10
+        - NUMPY_VERSION=stable
         - ASTROPY_VERSION=stable
-        - SETUP_CMD='test -a "--assert=plain"' # HACK (1/2): UNTIL ASTROPY CONTAINS PYTEST 2.7.3
+        - SETUP_CMD='test'
         # - PIP_DEPENDENCIES='pygaia'
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
-        - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml sympy'
+        - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib==1.5.0 pyyaml sympy'
+        # HACK: matplotlib version until 1.5.2 comes out
 
     matrix:
         # Make sure that egg_info works without dependencies
         - SETUP_CMD='egg_info'
         # Try all python versions with the latest numpy
-        - SETUP_CMD='test -a "--assert=plain"' # HACK (2/2): UNTIL ASTROPY CONTAINS PYTEST 2.7.3
+        - SETUP_CMD='test'
 
 matrix:
     include:
@@ -53,9 +54,9 @@ matrix:
         - python: 3.5
           env: ASTROPY_VERSION=development
 
-        # Try numpy 1.9
+        # Try numpy 1.10
         - python: 3.5
-          env: NUMPY_VERSION=1.9
+          env: NUMPY_VERSION=1.10
 
 before_install:
 
@@ -96,4 +97,6 @@ after_success:
     # If coveralls.io is set up for this package, uncomment the line
     # below and replace "packagename" with the name of your package.
     # The coveragerc file may be customized as needed for your package.
-    - if [[ $SETUP_CMD == 'test --coverage' ]]; then coveralls --rcfile='gary/tests/coveragerc'; fi
+    - if [[ $SETUP_CMD == 'test --coverage' ]]; then
+        coveralls --rcfile='gary/tests/coveragerc';
+      fi

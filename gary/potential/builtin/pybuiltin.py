@@ -9,7 +9,6 @@ from collections import OrderedDict
 
 # Third-party
 import numpy as np
-from astropy.constants import G
 
 from ..core import PotentialBase
 from ...util import atleast_2d
@@ -34,17 +33,18 @@ class HarmonicOscillatorPotential(PotentialBase):
     """
 
     def __init__(self, omega, units=None):
-        self.parameters = OrderedDict()
-        self.parameters['omega'] = np.array(omega)
-        super(HarmonicOscillatorPotential, self).__init__(units=units)
+        parameters = OrderedDict()
+        parameters['omega'] = np.array(omega)
+        super(HarmonicOscillatorPotential, self).__init__(units=units,
+                                                          parameters=parameters)
 
     def _value(self, x, t):
-        omega = self.parameters['omega']
-        return np.sum(0.5*atleast_2d(omega**2, insert_axis=1)*x**2, axis=0)
+        om = np.array(self.parameters['omega'])
+        return np.sum((0.5 * om**2 * x.T**2).T, axis=0)
 
     def _gradient(self, x, t):
-        omega = self.parameters['omega']
-        return atleast_2d(omega**2, insert_axis=1)*x
+        om = np.array(self.parameters['omega'])
+        return (om**2*x.T).T
 
     def action_angle(self, w):
         """
@@ -106,12 +106,11 @@ class KuzminPotential(PotentialBase):
 
     """
     def __init__(self, m, a, units):
-        self.parameters = OrderedDict()
-        self.parameters['m'] = m
-        self.parameters['a'] = a
-
-        super(KuzminPotential, self).__init__(units=units)
-        self.G = G.decompose(units).value
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['a'] = a
+        super(KuzminPotential, self).__init__(units=units,
+                                              parameters=parameters)
 
     def _value(self, q, t):
         x,y,z = q
