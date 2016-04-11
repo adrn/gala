@@ -13,6 +13,8 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 from collections import OrderedDict
 
 # Third-party
+from astropy.extern import six
+from astropy.utils import InheritDocstrings
 import numpy as np
 cimport numpy as np
 np.import_array()
@@ -201,6 +203,7 @@ cdef class CPotentialWrapper:
     def __reduce__(self):
         return (self.__class__, (self._params[0], list(self._params[1:])))
 
+@six.add_metaclass(InheritDocstrings)
 class CPotentialBase(PotentialBase):
     """
     A baseclass for defining gravitational potentials implemented in C.
