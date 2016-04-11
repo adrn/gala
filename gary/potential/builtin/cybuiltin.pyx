@@ -716,7 +716,7 @@ cdef class LogarithmicWrapper(CPotentialWrapper):
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
-        self._params = np.array([G] + list(parameters), dtype=np.float64)
+        self._params = np.array(list(parameters), dtype=np.float64)
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
