@@ -573,6 +573,6 @@ void logarithmic_gradient(double t, double *pars, double *r, double *grad) {
     az = fac*z/(pars[4]*pars[4]);
 
     grad[0] = grad[0] + (ax*cos(pars[5]) - ay*sin(pars[5]));
-    grad[1] = grad[1] + (ax*cos(pars[5]) + ay*sin(pars[5]));
+    grad[1] = grad[1] + (ax*sin(pars[5]) + ay*cos(pars[5]));
     grad[2] = grad[2] + az;
 }
