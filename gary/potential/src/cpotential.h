@@ -32,4 +32,5 @@ extern double c_value(CPotential *p, double t, double *q);
 extern double c_density(CPotential *p, double t, double *q);
 extern void c_gradient(CPotential *p, double t, double *q, double *grad);
 extern double c_d_dr(CPotential *p, double t, double *q, double *epsilon);
+extern double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon);
 extern double c_mass_enclosed(CPotential *p, double t, double *q, double G, double *epsilon);
