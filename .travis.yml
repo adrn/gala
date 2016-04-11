@@ -22,14 +22,15 @@ env:
         # The following versions are the 'default' for tests, unless
         # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
-        - NUMPY_VERSION=1.11
+        - NUMPY_VERSION=stable
         - ASTROPY_VERSION=stable
         - SETUP_CMD='test'
         # - PIP_DEPENDENCIES='pygaia'
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
-        - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml sympy'
+        - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib==1.5.0 pyyaml sympy'
+        # HACK: matplotlib version until 1.5.2 comes out
 
     matrix:
         # Make sure that egg_info works without dependencies
@@ -96,4 +97,6 @@ after_success:
     # If coveralls.io is set up for this package, uncomment the line
     # below and replace "packagename" with the name of your package.
     # The coveragerc file may be customized as needed for your package.
-    - if [[ $SETUP_CMD == 'test --coverage' ]]; then coveralls --rcfile='gary/tests/coveragerc'; fi
+    - if [[ $SETUP_CMD == 'test --coverage' ]]; then
+        coveralls --rcfile='gary/tests/coveragerc';
+      fi
