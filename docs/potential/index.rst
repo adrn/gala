@@ -9,67 +9,91 @@ Gravitational potentials (`gary.potential`)
 Introduction
 ============
 
-This subpackage provides a number of classes for working with parametric
-gravitational potentials. There are base classes for defining custom
-potentials, but more useful are the built-in potentials. These are commonly
-used potentials that have methods for computing the potential value,
-gradient, and (in some cases) Hessian. These are particularly useful in
-combination with the `~gary.integrate` and `~gary.dynamics` subpackages.
+This subpackage provides a number of classes for working with parametric models
+of gravitational potentials. There are base classes for creating custom
+potential classes, but more useful are the built-in potentials. These are
+commonly used potentials that have methods for computing, for example, the
+potential value (energy), gradient, density, or mass profiles. These are
+particularly useful in combination with the `~gary.integrate` and
+`~gary.dynamics` subpackages.
 
-For code blocks below and any pages linked below, I assume the following
-imports have already been excuted::
+For code blocks below and any pages linked below, I assume the following imports
+have already been excuted::
 
     >>> import astropy.units as u
     >>> import numpy as np
     >>> import gary.potential as gp
-    >>> from gary.units import galactic, solarsystem
+    >>> from gary.units import galactic, solarsystem, dimensionless
 
 Getting started: built-in potential classes
 ===========================================
 
 The built-in potentials are all initialized by passing in keyword argument
-parameter values. To see what parameters are available for a given potential,
-check the documentation for the individual classes below. You must also specify
-a `~gary.units.UnitSystem` when initializing a potential. A unit system is a set of
-non-reducible units that define the length, mass, time, and angle units. A few
-common unit systems are built in to the package (e.g., ``solarsystem``).
+parameter values as numeric values or :class:`~astropy.units.Quantity` objects.
+To see what parameters are available for a given potential, check the
+documentation for the individual classes below. You must also specify a
+`~gary.units.UnitSystem` when initializing a potential. A unit system is a set
+of non-reducible units that define the length, mass, time, and angle units. A
+few common unit systems are built in to the package (e.g., ``solarsystem``).
 
-All of the built-in potential objects have defined methods that evaluate
-the value of the potential and the gradient/acceleration at a given
-position(s). For example, here we will create a potential object for a
-2D point mass located at the origin with unit mass::
+All of the built-in potential objects have defined methods that evaluate the
+value of the potential and the gradient/acceleration at a given position(s). For
+example, here we will create a potential object for a 2D point mass located at
+the origin with unit mass::
 
-    >>> ptmass = gp.KeplerPotential(m=1., units=solarsystem)
+    >>> ptmass = gp.KeplerPotential(m=1.*u.Msun, units=solarsystem)
     >>> ptmass
     <KeplerPotential: m=1.00 (AU,yr,solMass,rad)>
 
-We can then evaluate the value of the potential at some other position (note: the
-position array is assumed to be in the unit system of the potential)::
+If you pass in parameters with different units, they will be converted to the
+specified unit system::
+
+    >>> gp.KeplerPotential(m=1047.6115*u.Mjup, units=solarsystem)
+    <KeplerPotential: m=1.00 (AU,yr,solMass,rad)>
+
+If no units are specified for a parameter, it is assumed to already be
+consistent with the `~gary.units.UnitSystem` passed in::
+
+    >>> gp.KeplerPotential(m=1., units=solarsystem)
+    <KeplerPotential: m=1.00 (AU,yr,solMass,rad)>
+
+The potential classes work well with the :mod:`astropy.units` framework, but to
+ignore units you can use the `~gary.units.DimensionlessUnitSystem` by
+importing::
+
+    >>> from gary.units import dimensionless
+    >>> gp.KeplerPotential(m=1., units=dimensionless)
+    <KeplerPotential: m=1.00 (dimensionless)>
+
+We can then evaluate the value of the potential at some position::
+
+    >>> ptmass.value([1.,-1.,0.]*u.au)
+    <Quantity [-27.92216622] AU2 / yr2>
+
+These functions also accept plain :class:`~numpy.ndarray`-like objects where the
+position is assumed to be in the unit system of the potential)::
 
     >>> ptmass.value([1.,-1.,0.])
     <Quantity [-27.92216622] AU2 / yr2>
 
-Or at multiple positions, by passing in a 2D array::
+This also works for multiple positions by passing in a 2D position (but see
+:ref:`conventions` for a description of the interpretation of different axes)::
 
     >>> pos = np.array([[1.,-1.,0],
-    ...                 [2.,3.,0],
-    ...                 [12.,-2.,0]]).T
-    >>> ptmass.value(pos)
-    <Quantity [-27.92216622,-10.95197465, -3.24588589] AU2 / yr2>
+    ...                 [2.,3.,0]]).T
+    >>> ptmass.value(pos*u.au)
+    <Quantity [-27.92216622,-10.95197465] AU2 / yr2>
 
-We may also compute the gradient of the potential or acceleration due to the potential::
+We may also compute the gradient or acceleration::
 
-    >>> ptmass.gradient([1.,-1.,0]) # doctest: +FLOAT_CMP
+    >>> ptmass.gradient([1.,-1.,0]*u.au) # doctest: +FLOAT_CMP
     <Quantity [[ 13.96108311],
                [-13.96108311],
                [  0.        ]] AU / yr2>
-    >>> ptmass.acceleration([1.,-1.,0]) # doctest: +FLOAT_CMP
+    >>> ptmass.acceleration([1.,-1.,0]*u.au) # doctest: +FLOAT_CMP
     <Quantity [[-13.96108311],
                [ 13.96108311],
                [ -0.        ]] AU / yr2>
-
-The position(s) must be specified in the same length units as specified in
-the unit system.
 
 .. These objects also provide more specialized methods such as
 .. :meth:`~gary.potential.Potential.plot_contours`, for plotting isopotential
@@ -155,11 +179,11 @@ Potential objects. This can be done with :func:`gary.potential.save` and
 and method::
 
     >>> from gary.potential import load
-    >>> pot = gp.SphericalNFWPotential(v_c=0.5, r_s=20.,
+    >>> pot = gp.SphericalNFWPotential(v_c=500*u.km/u.s, r_s=20.*u.kpc,
     ...                                units=galactic)
     >>> pot.save("potential.yml")
     >>> load("potential.yml")
-    <SphericalNFWPotential: v_c=0.50, r_s=20.00 (kpc,Myr,solMass,rad)>
+    <SphericalNFWPotential: v_c=0.51, r_s=20.00 (kpc,Myr,solMass,rad)>
 
 Using gary.potential
 ====================
