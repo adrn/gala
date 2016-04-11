@@ -24,7 +24,7 @@ env:
         # to repeat them for all configurations.
         - NUMPY_VERSION=1.10
         - ASTROPY_VERSION=stable
-        - SETUP_CMD='test -a "--assert=plain"' # HACK (1/2): UNTIL ASTROPY CONTAINS PYTEST 2.7.3
+        - SETUP_CMD='test'
         # - PIP_DEPENDENCIES='pygaia'
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
@@ -35,7 +35,7 @@ env:
         # Make sure that egg_info works without dependencies
         - SETUP_CMD='egg_info'
         # Try all python versions with the latest numpy
-        - SETUP_CMD='test -a "--assert=plain"' # HACK (2/2): UNTIL ASTROPY CONTAINS PYTEST 2.7.3
+        - SETUP_CMD='test'
 
 matrix:
     include:
