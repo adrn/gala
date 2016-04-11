@@ -548,31 +548,33 @@ double leesuto_density(double t, double *pars, double *r) {
     Logarithmic (triaxial)
 */
 double logarithmic_value(double t, double *pars, double *r) {
+    /* pars[0] is G -- unused here */
     double x, y, z;
 
-    x = r[0]*cos(pars[5]) + r[1]*sin(pars[5]);
-    y = -r[0]*sin(pars[5]) + r[1]*cos(pars[5]);
+    x = r[0]*cos(pars[6]) + r[1]*sin(pars[6]);
+    y = -r[0]*sin(pars[6]) + r[1]*cos(pars[6]);
     z = r[2];
 
-    return 0.5*pars[0]*pars[0] * log(pars[1]*pars[1] + // scale radius
-                                     x*x/(pars[2]*pars[2]) +
-                                     y*y/(pars[3]*pars[3]) +
-                                     z*z/(pars[4]*pars[4]));
+    return 0.5*pars[1]*pars[1] * log(pars[2]*pars[2] + // scale radius
+                                     x*x/(pars[3]*pars[3]) +
+                                     y*y/(pars[4]*pars[4]) +
+                                     z*z/(pars[5]*pars[5]));
 }
 
 void logarithmic_gradient(double t, double *pars, double *r, double *grad) {
+    /* pars[0] is G -- unused here */
     double x, y, z, ax, ay, az, fac;
 
-    x = r[0]*cos(pars[5]) + r[1]*sin(pars[5]);
-    y = -r[0]*sin(pars[5]) + r[1]*cos(pars[5]);
+    x = r[0]*cos(pars[6]) + r[1]*sin(pars[6]);
+    y = -r[0]*sin(pars[6]) + r[1]*cos(pars[6]);
     z = r[2];
 
-    fac = pars[0]*pars[0] / (pars[1]*pars[1] + x*x/(pars[2]*pars[2]) + y*y/(pars[3]*pars[3]) + z*z/(pars[4]*pars[4]));
-    ax = fac*x/(pars[2]*pars[2]);
-    ay = fac*y/(pars[3]*pars[3]);
-    az = fac*z/(pars[4]*pars[4]);
+    fac = pars[1]*pars[1] / (pars[2]*pars[2] + x*x/(pars[3]*pars[3]) + y*y/(pars[4]*pars[4]) + z*z/(pars[5]*pars[5]));
+    ax = fac*x/(pars[3]*pars[3]);
+    ay = fac*y/(pars[4]*pars[4]);
+    az = fac*z/(pars[5]*pars[5]);
 
-    grad[0] = grad[0] + (ax*cos(pars[5]) - ay*sin(pars[5]));
-    grad[1] = grad[1] + (ax*sin(pars[5]) + ay*cos(pars[5]));
+    grad[0] = grad[0] + (ax*cos(pars[6]) - ay*sin(pars[6]));
+    grad[1] = grad[1] + (ax*sin(pars[6]) + ay*cos(pars[6]));
     grad[2] = grad[2] + az;
 }

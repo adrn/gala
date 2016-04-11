@@ -197,6 +197,10 @@ cdef class CPotentialWrapper:
 
         return np.array(mass)
 
+    # For pickling in Python 2
+    def __reduce__(self):
+        return (self.__class__, (self._params[0], list(self._params[1:])))
+
 class CPotentialBase(PotentialBase):
     """
     A baseclass for defining gravitational potentials implemented in C.
