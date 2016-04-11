@@ -16,6 +16,7 @@ from collections import OrderedDict
 
 # Third-party
 from astropy.extern import six
+from astropy.utils import InheritDocstrings
 from astropy.coordinates.angles import rotation_matrix
 from astropy.constants import G
 import astropy.units as u
