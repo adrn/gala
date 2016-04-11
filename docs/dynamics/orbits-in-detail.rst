@@ -226,7 +226,7 @@ of potential objects that already have the ``time`` and ``potential`` set::
                  10.,  11.,  12.,  13.,  14.,  15.,  16.,  17.,  18.,  19.,
     ...etc.
     >>> orbit.potential
-    <PlummerPotential: b=1.00, m=1.00e+10 (kpc,Myr,solMass,rad)>
+    <PlummerPotential: m=1.00e+10, b=1.00 (kpc,Myr,solMass,rad)>
 
 From an Orbit object, we can quickly compute quantities like the angular momentum,
 and estimates for the pericenter, apocenter, eccentricity of the orbit. Estimates

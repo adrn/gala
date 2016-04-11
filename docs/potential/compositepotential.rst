@@ -28,12 +28,12 @@ is equivalent to::
 The resulting potential object has all of the same properties as individual
 potential objects::
 
-    >>> pot.value([1.,-1.,0.])
-    array([-0.12891172])
-    >>> pot.acceleration([1.,-1.,0.])
-    array([[-0.02271507],
-           [ 0.02271507],
-           [-0.        ]])
+    >>> pot.value([1.,-1.,0.]) # doctest: +FLOAT_CMP
+    <Quantity [-0.12891172] kpc2 / Myr2>
+    >>> pot.acceleration([1.,-1.,0.]) # doctest: +FLOAT_CMP
+    <Quantity [[-0.02271507],
+               [ 0.02271507],
+               [-0.        ]] kpc / Myr2>
     >>> grid = np.linspace(-3.,3.,100)
     >>> fig = pot.plot_contours(grid=(grid,0,grid))
 
