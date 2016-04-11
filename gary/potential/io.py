@@ -13,7 +13,7 @@ import os
 import astropy.units as u
 from astropy.utils import isiterable
 import numpy as np
-import six
+from astropy.extern import six
 import yaml
 
 from ..units import DimensionlessUnitSystem

@@ -583,6 +583,7 @@ class PotentialBase(object):
         from .io import save
         save(self, f)
 
+@six.add_metaclass(InheritDocstrings)
 class CompositePotential(PotentialBase, OrderedDict):
     """
     A potential composed of several distinct components. For example,
