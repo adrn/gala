@@ -21,9 +21,6 @@ from libc.math cimport log
 
 from ...potential.cpotential cimport CPotentialWrapper
 
-# cdef extern from "math.h":
-#     double log(double x) nogil
-
 cdef extern from "src/cpotential.h":
     ctypedef struct CPotential:
         pass
