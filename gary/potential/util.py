@@ -100,7 +100,7 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
         # name = _classnamify(name)
         if "potential" not in name.lower():
             name = name + "Potential"
-        CustomPotential.__name__ = name
+        CustomPotential.__name__ = str(name)
 
     # Energy / value
     valuefunc = lambdify(vars + pars, expr, dummify=False, modules='numpy')
