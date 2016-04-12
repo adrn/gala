@@ -14,7 +14,7 @@ import numpy as np
 # Project
 from ..io import load, save
 from ..core import CompositePotential
-from ..builtin import IsochronePotential, KeplerPotential
+from ..builtin import IsochronePotential, KeplerPotential, CCompositePotential
 from ..builtin.special import LM10Potential
 from ...units import DimensionlessUnitSystem, galactic
 
@@ -74,10 +74,20 @@ def test_write_lm10(tmpdir):
 
 def test_write_composite(tmpdir):
     tmp_filename = str(tmpdir.join("potential.yml"))
+    print(tmp_filename)
 
     # composite potential
     potential = CompositePotential(halo=KeplerPotential(m=1E11, units=galactic),
                                    bulge=IsochronePotential(m=1E11, b=0.76, units=galactic))
+    save(potential, tmp_filename)
+    p = load(tmp_filename)
+
+def test_write_ccomposite(tmpdir):
+    tmp_filename = str(tmpdir.join("potential.yml"))
+
+    # composite potential
+    potential = CCompositePotential(halo=KeplerPotential(m=1E11, units=galactic),
+                                    bulge=IsochronePotential(m=1E11, b=0.76, units=galactic))
     save(potential, tmp_filename)
     p = load(tmp_filename)
 
