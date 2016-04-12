@@ -31,5 +31,6 @@ def get_extensions():
 
 def get_package_data():
     return {'gary.potential': ['*.h', '*.pxd',
+                               'builtin/src/*.h', 'src/*.h',
                                'builtin/src/*.c', 'src/*.c',
                                'tests/*.yml']}
