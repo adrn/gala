@@ -252,7 +252,9 @@ class PotentialBase(object):
                 v = v.value
 
             if isinstance(v, float):
-                if np.log10(v) < -2 or np.log10(v) > 5:
+                if v == 0:
+                    par_fmt = "{:.0f}"
+                elif np.log10(v) < -2 or np.log10(v) > 5:
                     par_fmt = "{:.2e}"
                 else:
                     par_fmt = "{:.2f}"
