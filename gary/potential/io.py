@@ -79,9 +79,13 @@ def from_dict(d, module=None):
 
     """
 
+    if module is None:
+        from .. import potential
+    else:
+        potential = module
+
     if 'type' in d and d['type'] == 'composite':
-        from .. import potential as gp
-        p = getattr(gp, d['class'])()
+        p = getattr(potential, d['class'])()
         for i,component in enumerate(d['components']):
             c = _parse_component(component, module)
             name = component.get('name', str(i))
