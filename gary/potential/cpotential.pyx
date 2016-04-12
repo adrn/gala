@@ -209,7 +209,7 @@ class CPotentialBase(PotentialBase):
     A baseclass for defining gravitational potentials implemented in C.
     """
 
-    def __init__(self, parameters, units):
+    def __init__(self, parameters, units, Wrapper=None):
         super(CPotentialBase, self).__init__(parameters, units=units)
 
         c_params = []
@@ -217,11 +217,15 @@ class CPotentialBase(PotentialBase):
             c_params.append(self.parameters[k].value)
         self.c_parameters = np.array(c_params)
 
-        # magic to set the c_instance attribute based on the name of the class
-        wrapper_name = '{}Wrapper'.format(self.__class__.__name__.replace('Potential', ''))
+        if Wrapper is None:
+            # magic to set the c_instance attribute based on the name of the class
+            wrapper_name = '{}Wrapper'.format(self.__class__.__name__.replace('Potential', ''))
 
-        from .builtin import cybuiltin
-        self.c_instance = getattr(cybuiltin, wrapper_name)(self.G, self.c_parameters)
+            from .builtin import cybuiltin
+            Wrapper = getattr(cybuiltin, wrapper_name)
+
+        self.c_instance = Wrapper(self.G, self.c_parameters)
+
 
     def _value(self, q, t=0.):
         sh = q.shape
