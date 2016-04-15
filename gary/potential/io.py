@@ -17,7 +17,6 @@ from astropy.extern import six
 import yaml
 
 from ..units import DimensionlessUnitSystem
-from .. import potential as gary_potential
 
 __all__ = ['load', 'save']
 
@@ -39,6 +38,9 @@ def _unpack_params(p):
     return params
 
 def _parse_component(component, module):
+    # need this here for circular import
+    from .. import potential as gary_potential
+
     try:
         class_name = component['class']
     except KeyError:
@@ -82,6 +84,8 @@ def from_dict(d, module=None):
     module : namespace (optional)
 
     """
+    # need this here for circular import
+    from .. import potential as gary_potential
 
     if module is None:
         potential = gary_potential
