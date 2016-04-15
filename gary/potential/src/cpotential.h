@@ -3,9 +3,12 @@
     enum {MAX_N_COMPONENTS = 16};
 #endif
 
-typedef double (*densityfunc)(double t, double *pars, double *q);
-typedef double (*valuefunc)(double t, double *pars, double *q);
-typedef void (*gradientfunc)(double t, double *pars, double *q, double *grad);
+#ifndef _FUNCS_
+#define _FUNCS_
+    typedef double (*densityfunc)(double t, double *pars, double *q);
+    typedef double (*valuefunc)(double t, double *pars, double *q);
+    typedef void (*gradientfunc)(double t, double *pars, double *q, double *grad);
+#endif
 
 #ifndef _CPotential_H
 #define _CPotential_H
