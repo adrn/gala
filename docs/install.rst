@@ -6,35 +6,6 @@
 Installation
 ************
 
-Dependencies
-============
-
-This packages has the following dependencies:
-
-- `Python`_ >= 2.7
-
-- `Numpy`_ >= 1.8
-
-- `Cython <http://www.cython.org/>`_: >= 0.21
-
-- `Astropy`_ >= 1.0
-
-- `PyYAML`_ >= 3.10
-
-You can use ``pip`` or ``conda`` to install these automatically.
-
-Optional Dependencies
----------------------
-
-- PyGaia (`pip install pygaia`)
-
-- `Sympy`_
-
-- `emcee`_ (only for running some tests)
-
-Installing
-==========
-
 Development repository
 ----------------------
 
@@ -54,3 +25,26 @@ the cloned ``gary`` directory)::
 To install the project::
 
     python setup.py install
+
+Dependencies
+============
+
+This packages has the following dependencies:
+
+- `Python`_ >= 2.7
+
+- `Numpy`_ >= 1.8
+
+- `Cython <http://www.cython.org/>`_: >= 0.23
+
+- `Astropy`_ >= 1.1
+
+- `PyYAML`_ >= 3.10
+
+You can use ``pip`` or ``conda`` to install these automatically.
+
+Optional Dependencies
+---------------------
+
+- `Sympy`_ for creating `~gary.potential.PotentialBase` objects from a
+    mathematical expression using `~gary.potential.from_equation()`.
