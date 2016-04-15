@@ -46,6 +46,8 @@ class LM10Potential(CCompositePotential):
     halo : dict (optional)
         Parameters to be passed to the :class:`~gary.potential.LogarithmicPotential`.
 
+    Note: in subclassing, order of arguments must match order of potential
+    components added at bottom of init.
     """
     def __init__(self, units=galactic,
                  disk=dict(), bulge=dict(), halo=dict()):
