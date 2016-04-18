@@ -7,6 +7,8 @@ dynamics.
 [![Coverage Status](https://coveralls.io/repos/adrn/gary/badge.svg?branch=master&service=github)](https://coveralls.io/github/adrn/gary?branch=master)
 [![Build status](http://img.shields.io/travis/adrn/gary/master.svg?style=flat)](http://travis-ci.org/adrn/gary)
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/adrn/gary/blob/master/LICENSE)
+[![Documentation Status](https://readthedocs.org/projects/gary/badge/?version=latest)](http://gary.readthedocs.org/en/latest/?badge=latest)
+
 
 Documentation
 =============
