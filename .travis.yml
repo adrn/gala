@@ -50,6 +50,10 @@ matrix:
         - python: 3.5
           env: SETUP_CMD='build_sphinx -w'
 
+        # Also try building docs in 3.4, like read the docs
+        - python: 3.4
+          env: SETUP_CMD='build_sphinx -w'
+
         # Try Astropy development version
         - python: 3.5
           env: ASTROPY_VERSION=development
