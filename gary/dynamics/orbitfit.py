@@ -47,7 +47,7 @@ def compute_stream_rotation_matrix(coordinate, wxyz0=None, align_lon='mean'):
         Initial guess for the quaternion vector that represents the rotation.
     align_lon : str, int (optional)
         Can specify either 'min', 'max', or an integer index. This picks the
-        'pirvot' star, whose longitude is set to 0.
+        'pivot' star, whose longitude is set to 0.
 
     Returns
     -------
