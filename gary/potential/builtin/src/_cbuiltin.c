@@ -209,7 +209,7 @@ double jaffe_density(double t, double *pars, double *q) {
     double r, rho0;
     r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
     rho0 = pars[1]/(2*M_PI*pars[2]*pars[2]*pars[2]);
-    return rho0 / ((r/pars[2]) * pow(1+r/pars[2],3));
+    return rho0 / (pow(r/pars[2],2) * pow(1+r/pars[2],2));
 }
 
 /* ---------------------------------------------------------------------------
