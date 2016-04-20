@@ -54,6 +54,8 @@ def compute_stream_rotation_matrix(coordinate, wxyz0=None, align_lon='mean'):
     R : :class:`~numpy.ndarray`
         A 3 by 3 rotation matrix (has shape ``(3,3)``) to convert heliocentric,
         Cartesian coordinates in the input coordinate frame to stream coordinates.
+
+    TODO: needs to be robustly tested in cases where the stream wraps around 0
     """
     if wxyz0 is None:
         wxyz0 = Quaternion.random().wxyz
@@ -62,23 +64,32 @@ def compute_stream_rotation_matrix(coordinate, wxyz0=None, align_lon='mean'):
     R = Quaternion(res.x).rotation_matrix
 
     new_xyz = R.dot(coordinate.cartesian.xyz.value)
-    lon = np.arctan2(new_xyz[1], new_xyz[0])
+    lon = coord.Angle(np.arctan2(new_xyz[1], new_xyz[0])*u.radian)
+    lon = lon.wrap_at(360*u.degree)
+
+    if np.any(lon < 10*u.degree) and np.any(lon > 350*u.degree): # it's wrapping
+        lon = lon.wrap_at(180*u.degree)
+
     if align_lon == 'mean':
         _lon = np.mean(lon)
         R3 = 1.
+
     elif align_lon == 'min':
         ix = lon.argmin()
         _lon = lon[ix]
         R3 = 1.
+
     elif align_lon == 'max':
         ix = lon.argmax()
         _lon = lon[ix]
         R3 = rotation_matrix(np.pi*u.radian, 'x')
+
     else:
         ix = int(align_lon)
         _lon = lon[ix]
         R3 = 1.
-    R2 = rotation_matrix(_lon*u.radian, 'z')
+
+    R2 = rotation_matrix(_lon, 'z')
     R = R3*R2*R
 
     return R
