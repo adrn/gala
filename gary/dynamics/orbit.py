@@ -230,7 +230,7 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         pos = self.pos[_slyce]
         vel = self.vel[_slyce]
 
-        if pos.ndim == 1:
+        if isinstance(_slyce[1], int) or pos.ndim == 1:
             return CartesianPhaseSpacePosition(pos=pos, vel=vel)
         else:
             return self.__class__(pos=pos, vel=vel,
