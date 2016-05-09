@@ -654,7 +654,7 @@ class CompositePotential(PotentialBase, OrderedDict):
         params = dict()
         for k,v in self.items():
             params[k] = v.parameters
-        return ImmutableDict(params)
+        return ImmutableDict(**params)
 
     def _value(self, q, t=0.):
         return sum([p._value(q, t) for p in self.values()])

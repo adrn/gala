@@ -12,29 +12,8 @@ import pytest
 from ... import potential as gp
 from ..nonlinear import lyapunov_max, fast_lyapunov_max, surface_of_section
 from ...integrate import DOPRI853Integrator
-from ...util import gram_schmidt, atleast_2d
+from ...util import atleast_2d
 from ...units import galactic
-
-def test_gram_schmidt():
-    arr = np.array([
-        [0.159947293111244, -0.402071263039210, 0.781989928439469, 0.157200868935014],
-        [-0.641365729386551, -0.589502248965056, -6.334333712737469E-002, -0.787834065229250],
-        [-0.734648540580147, 0.290410423487680, 0.200395494571665, 0.547331391068177],
-        [0.140516164496874, -0.649328455579330, -0.621863558066490, 0.402036027551737]
-    ])
-
-    fortran_end_arr = np.array([
-        [0.176260247376319, -0.443078334791891, 0.861744738228658, 0.173233716603048],
-        [-0.539192290034099, -0.517682965825117, -2.242518016864357E-002, -0.663907472888126],
-        [-0.823493801368422, 0.237505395299283, 0.194657453290375, 0.477030001352140],
-        [7.871383004849420E-003, -0.692298435168163, -0.467976060614355, 0.549235217994234]
-    ])
-
-    alf = gram_schmidt(arr)
-    fortran_alf = np.array([0.907449612105405,1.17546413803123,0.974054532627089,0.962464733634354])
-
-    assert np.abs(fortran_alf - alf).sum() < 1E-13
-    assert np.abs(arr - fortran_end_arr).sum() < 1E-13
 
 class TestForcedPendulum(object):
 

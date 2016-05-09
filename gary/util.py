@@ -71,60 +71,14 @@ def get_pool(mpi=False, threads=None, **kwargs):
 
     return pool
 
-def gram_schmidt(y):
-    """ Modified Gram-Schmidt orthonormalization of the matrix y(n,n) """
-
-    n = y.shape[0]
-    if y.shape[1] != n:
-        raise ValueError("Invalid shape: {}".format(y.shape))
-    mo = np.zeros(n)
-
-    # Main loop
-    for i in range(n):
-        # Remove component in direction i
-        for j in range(i):
-            esc = np.sum(y[j]*y[i])
-            y[i] -= y[j]*esc
-
-        # Normalization
-        mo[i] = np.linalg.norm(y[i])
-        y[i] /= mo[i]
-
-    return mo
-
-class use_backend(object):
-
-    def __init__(self, backend):
-        import matplotlib.pyplot as plt
-        from IPython.core.interactiveshell import InteractiveShell
-        from IPython.core.pylabtools import backend2gui
-
-        self.shell = InteractiveShell.instance()
-        self.old_backend = backend2gui[str(plt.get_backend())]
-        self.new_backend = backend
-
-    def __enter__(self):
-        gui, backend = self.shell.enable_matplotlib(self.new_backend)
-
-    def __exit__(self, type, value, tb):
-        gui, backend = self.shell.enable_matplotlib(self.old_backend)
-
-def inherit_docs(cls):
-    for name, func in vars(cls).items():
-        if not func.__doc__:
-            for parent in cls.__bases__:
-                try:
-                    parfunc = getattr(parent, name)
-                except AttributeError: # parent doesn't have function
-                    break
-                if parfunc and getattr(parfunc, '__doc__', None):
-                    func.__doc__ = parfunc.__doc__
-                    break
-    return cls
-
 class ImmutableDict(collections.Mapping):
-    def __init__(self, somedict):
-        self._dict = dict(somedict)   # make a copy
+
+    @classmethod
+    def from_dict(cls, somedict):
+        return cls(**somedict)
+
+    def __init__(self, **kwargs):
+        self._dict = kwargs
         self._hash = None
 
     def __getitem__(self, key):
@@ -143,6 +97,12 @@ class ImmutableDict(collections.Mapping):
 
     def __eq__(self, other):
         return self._dict == other._dict
+
+    def __repr__(self):
+        return "<ImmutableDict {}>".format(self._dict.__repr__())
+
+    def __str__(self):
+        return self._dict.__str__()
 
 def rolling_window(arr, window_size, stride=1, return_idx=False):
     """
