@@ -436,7 +436,8 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
     def plot(self, **kwargs):
         """
         Plot the orbit in all projections. This is a thin wrapper around
-        `~gary.dynamics.plot_orbits`.
+        `~gary.dynamics.plot_orbits` -- the docstring for this function is
+        included here.
 
         .. warning::
 
@@ -444,9 +445,23 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
 
         Parameters
         ----------
+        ix : int, array_like (optional)
+            Index or array of indices of orbits to plot. For example, if `x` is an
+            array of shape ``(3,1024,32)`` - 1024 timesteps for 32 orbits in 3D
+            positions -- `ix` would specify which of the 32 orbits to plot.
+        axes : array_like (optional)
+            Array of matplotlib Axes objects.
+        triangle : bool (optional)
+            Make a triangle plot instead of plotting all projections in a single row.
+        subplots_kwargs : dict (optional)
+            Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
+        labels : iterable (optional)
+            List or iterable of axis labels as strings. They should correspond to the
+            dimensions of the input orbit.
         **kwargs
-            All keyword arguments are passed to `~gary.dynamics.plot_orbits`.
-            See the documentation of that function.
+            All other keyword arguments are passed to :func:`~matplotlib.pyplot.plot`.
+            You can pass in any of the usual style kwargs like ``color=...``,
+            ``marker=...``, etc.
 
         Returns
         -------

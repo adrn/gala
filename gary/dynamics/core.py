@@ -382,7 +382,8 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
     def plot(self, **kwargs):
         """
         Plot the positions in all projections. This is a thin wrapper around
-        `~gary.dynamics.three_panel`.
+        `~gary.dynamics.three_panel` -- the docstring for this function is
+        included here.
 
         .. warning::
 
@@ -390,9 +391,23 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
 
         Parameters
         ----------
+        relative_to : bool (optional)
+            Plot the values relative to this value or values.
+        autolim : bool (optional)
+            Automatically set the plot limits to be something sensible.
+        axes : array_like (optional)
+            Array of matplotlib Axes objects.
+        triangle : bool (optional)
+            Make a triangle plot instead of plotting all projections in a single row.
+        subplots_kwargs : dict (optional)
+            Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
+        labels : iterable (optional)
+            List or iterable of axis labels as strings. They should correspond to the
+            dimensions of the input orbit.
         **kwargs
-            All keyword arguments are passed to `~gary.dynamics.three_panel`.
-            See the documentation of that function.
+            All other keyword arguments are passed to :func:`~matplotlib.pyplot.scatter`.
+            You can pass in any of the usual style kwargs like ``color=...``,
+            ``marker=...``, etc.
 
         Returns
         -------
@@ -460,5 +475,4 @@ def combine(args):
     all_vel = np.hstack(all_vel)*vel_unit
 
     return CartesianPhaseSpacePosition(pos=all_pos, vel=all_vel)
-
 
