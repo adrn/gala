@@ -90,6 +90,5 @@ More details are provided in the linked pages below:
    actionangle
    mockstreams
    nonlinear
-   orbitfit
 
 .. automodapi:: gary.dynamics
