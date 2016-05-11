@@ -75,9 +75,9 @@ equivalent to fixing the :math:`k` parameters to:
 
 .. math::
 
-    k_R = 1.
-    k_{v\phi} = 1.
-    k_\phi = k_z = k_{vR} = k_{vz} = 0
+    k_R &= 1.\\
+    k_{v\phi} &= 1.\\
+    k_\phi &= k_z = k_{vR} = k_{vz} = 0
 
 We can set these parameters when generating a stream model with
 `~gary.dynamics.mockstream.mock_stream`, but first we need to specify a
