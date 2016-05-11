@@ -15,7 +15,7 @@ from scipy.signal import argrelmin, argrelmax
 from .core import CartesianPhaseSpacePosition
 from .util import peak_to_peak_period
 from .plot import plot_orbits
-from ..util import inherit_docs, atleast_2d
+from ..util import atleast_2d
 
 __all__ = ['CartesianOrbit', 'combine']
 
@@ -150,7 +150,6 @@ class Orbit(object):
 
         return T
 
-@inherit_docs
 class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
     """
     Represents an orbit in Cartesian coordinates -- positions
