@@ -21,6 +21,10 @@ already executed::
 Unit Systems
 ============
 
+.. warning::
+
+    Unit system support may eventually move to the Astropy project.
+
 At its simplest, a unit system is a container class that holds a
 set of base units that specify length, time, mass, and angle. A
 `~gary.units.UnitSystem` object is created by passing in units with
