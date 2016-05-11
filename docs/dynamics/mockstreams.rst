@@ -258,8 +258,8 @@ Or, again, zooming in around the progenitor:
 References
 ==========
 
-.. [fardal15] Fardal, Huang, Weinberg (2015) `http://arxiv.org/abs/1410.1861`_
-.. [kuepper12] Küpper, Lane, Heggie (2012) `http://arxiv.org/abs/1111.5013`_
+.. [fardal15] `Fardal, Huang, Weinberg (2015) <http://arxiv.org/abs/1410.1861>`_
+.. [kuepper12] `Küpper, Lane, Heggie (2012) <http://arxiv.org/abs/1111.5013>`_
 
 API
 ---
