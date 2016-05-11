@@ -133,11 +133,11 @@ Instead, the orbit is wobbly in the toy potential angles::
 
     >>> toy_actions,toy_angles,toy_freqs = toy_potential.action_angle(w)
     >>> fig,ax = pl.subplots(1,1,figsize=(5,5))
-    >>> ax.plot(toy_angles[0], toy_angles[2], linestyle='none', marker=',')
-    >>> ax.set_xlim(0,2*np.pi)
-    >>> ax.set_ylim(0,2*np.pi)
-    >>> ax.set_xlabel(r"$\theta_1$ [rad]")
-    >>> ax.set_ylabel(r"$\theta_3$ [rad]")
+    >>> ax.plot(toy_angles[0], toy_angles[2], linestyle='none', marker=',') # doctest: +SKIP
+    >>> ax.set_xlim(0,2*np.pi) # doctest: +SKIP
+    >>> ax.set_ylim(0,2*np.pi) # doctest: +SKIP
+    >>> ax.set_xlabel(r"$\theta_1$ [rad]") # doctest: +SKIP
+    >>> ax.set_ylabel(r"$\theta_3$ [rad]") # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -170,9 +170,9 @@ This can also be seen in the value of the action variables, which are not
 time-independent in the toy potential::
 
     >>> fig,ax = pl.subplots(1,1)
-    >>> ax.plot(w.t, toy_actions[0], marker=None)
-    >>> ax.set_xlabel(r"$t$ [Myr]")
-    >>> ax.set_ylabel(r"$J_1$ [rad]")
+    >>> ax.plot(w.t, toy_actions[0], marker=None) # doctest: +SKIP
+    >>> ax.set_xlabel(r"$t$ [Myr]") # doctest: +SKIP
+    >>> ax.set_ylabel(r"$J_1$ [rad]") # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -223,11 +223,11 @@ actions computed using this machinery::
     >>> action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr*u.Msun
     >>>
     >>> fig,ax = pl.subplots(1,1)
-    >>> ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc*u.Msun), marker=None, label='$J_1$')
-    >>> ax.plot(w.t, action_approx[0].to(u.km/u.s*u.kpc*u.Msun), marker=None, label="$J_1'$")
-    >>> ax.set_xlabel(r"$t$ [Myr]")
-    >>> ax.set_ylabel(r"[kpc ${\rm M}_\odot$ km/s]")
-    >>> ax.legend()
+    >>> ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc*u.Msun), marker=None, label='$J_1$') # doctest: +SKIP
+    >>> ax.plot(w.t, action_approx[0].to(u.km/u.s*u.kpc*u.Msun), marker=None, label="$J_1'$") # doctest: +SKIP
+    >>> ax.set_xlabel(r"$t$ [Myr]") # doctest: +SKIP
+    >>> ax.set_ylabel(r"[kpc ${\rm M}_\odot$ km/s]") # doctest: +SKIP
+    >>> ax.legend() # doctest: +SKIP
 
 .. plot::
     :align: center

@@ -123,7 +123,7 @@ from both Lagrange points by setting ``release_every=1``:
 
     >>> stream = mock_stream(pot, prog_orbit, prog_mass,
     ...                      k_mean=k_mean, k_disp=k_disp, release_every=1) # doctest: +SKIP
-    >>> stream.plot(s=1, alpha=0.25)
+    >>> stream.plot(s=1, alpha=0.25) # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -196,7 +196,7 @@ stream using this method:
 
     >>> stream = mock_stream(pot, prog_orbit, prog_mass,
     ...                      k_mean=k_mean, k_disp=k_disp, release_every=1) # doctest: +SKIP
-    >>> stream.plot(s=1, alpha=0.25)
+    >>> stream.plot(s=1, alpha=0.25) # doctest: +SKIP
 
 .. plot::
     :align: center
