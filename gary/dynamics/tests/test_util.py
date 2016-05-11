@@ -35,8 +35,8 @@ def test_estimate_dt_n_steps():
     nperiods = 128
     pot = SphericalNFWPotential(v_c=1., r_s=10., units=galactic)
     w0 = [10.,0.,0.,0.,0.9,0.]
-    dt,n_steps = estimate_dt_n_steps(w0, pot, nperiods=nperiods, n_steps_per_period=256,
-                                   func=np.nanmin)
+    dt,n_steps = estimate_dt_n_steps(w0, pot, n_periods=nperiods, n_steps_per_period=256,
+                                     func=np.nanmin)
 
     orbit = pot.integrate_orbit(w0, dt=dt, n_steps=n_steps)
     T = orbit.estimate_period()
