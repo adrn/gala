@@ -16,7 +16,7 @@ import numpy as np
 
 __all__ = ['parse_time_specification']
 
-def parse_time_specification(dt=None, n_steps=None, nsteps=None, t1=None, t2=None, t=None):
+def parse_time_specification(units, dt=None, n_steps=None, nsteps=None, t1=None, t2=None, t=None):
     """
     Return an array of times given a few combinations of kwargs that are
     accepted -- see below.
@@ -40,6 +40,18 @@ def parse_time_specification(dt=None, n_steps=None, nsteps=None, t1=None, t2=Non
              "Use 'n_steps' instead.")
         n_steps = nsteps
 
+    if hasattr(dt, 'unit'):
+        dt = dt.decompose(units).value
+
+    if hasattr(t1, 'unit'):
+        t1 = t1.decompose(units).value
+
+    if hasattr(t2, 'unit'):
+        t2 = t2.decompose(units).value
+
+    if hasattr(t, 'unit'):
+        t = t.decompose(units).value
+
     # t : array_like
     if t is not None:
         times = t
@@ -54,8 +66,7 @@ def parse_time_specification(dt=None, n_steps=None, nsteps=None, t1=None, t2=Non
             if t1 is None:
                 t1 = 0.
 
-            times = parse_time_specification(dt=np.ones(n_steps+1)*dt,
-                                             t1=t1)
+            times = parse_time_specification(units, dt=np.ones(n_steps+1)*dt, t1=t1)
         # dt, t1, t2 : (numeric, numeric, numeric)
         elif dt is not None and t1 is not None and t2 is not None:
             if t2 < t1 and dt < 0:

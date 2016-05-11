@@ -86,7 +86,7 @@ class RK5Integrator(Integrator):
     def run(self, w0, mmap=None, **time_spec):
 
         # generate the array of times
-        times = parse_time_specification(**time_spec)
+        times = parse_time_specification(self.func_units, **time_spec)
         n_steps = len(times)-1
         dt = times[1]-times[0]
 
