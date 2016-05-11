@@ -92,8 +92,8 @@ def _autodetermine_initial_dt(w0, potential, dE_threshold=1E-9, Integrator=Leapf
 
     return dt
 
-def estimate_dt_n_steps(w0, potential, nperiods, n_steps_per_period, dE_threshold=1E-9,
-                       func=np.nanmax):
+def estimate_dt_n_steps(w0, potential, n_periods, n_steps_per_period, dE_threshold=1E-9,
+                        func=np.nanmax):
     """
     Estimate the timestep and number of steps to integrate an orbit for
     given its initial conditions and a potential object.
@@ -104,7 +104,7 @@ def estimate_dt_n_steps(w0, potential, nperiods, n_steps_per_period, dE_threshol
         Initial conditions.
     potential : :class:`~gary.potential.PotentialBase`
         The potential to integrate the orbit in.
-    nperiods : int
+    n_periods : int
         Number of (max) orbital periods to integrate for.
     n_steps_per_period : int
         Number of steps to take per (max) orbital period.
@@ -157,7 +157,7 @@ def estimate_dt_n_steps(w0, potential, nperiods, n_steps_per_period, dE_threshol
 
     T = T.decompose(potential.units).value
     dt = T / float(n_steps_per_period)
-    n_steps = int(round(nperiods * T / dt))
+    n_steps = int(round(n_periods * T / dt))
 
     if dt == 0. or dt < 1E-13:
         raise ValueError("Timestep is zero or very small!")
