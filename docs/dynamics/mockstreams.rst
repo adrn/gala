@@ -122,7 +122,7 @@ Now we generate the mock stream. We will release a star particle every time-step
 from both Lagrange points by setting ``release_every=1``:
 
     >>> stream = mock_stream(pot, prog_orbit, prog_mass,
-                             k_mean=k_mean, k_disp=k_disp, release_every=1) # doctest: +SKIP
+    ...                      k_mean=k_mean, k_disp=k_disp, release_every=1) # doctest: +SKIP
     >>> stream.plot(s=1, alpha=0.25)
 
 .. plot::
@@ -195,7 +195,7 @@ With the same potential and progenitor orbit as above, we now generate a mock
 stream using this method:
 
     >>> stream = mock_stream(pot, prog_orbit, prog_mass,
-                             k_mean=k_mean, k_disp=k_disp, release_every=1) # doctest: +SKIP
+    ...                      k_mean=k_mean, k_disp=k_disp, release_every=1) # doctest: +SKIP
     >>> stream.plot(s=1, alpha=0.25)
 
 .. plot::

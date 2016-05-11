@@ -517,7 +517,7 @@ class PotentialBase(object):
 
             # array of times
             from ..integrate.timespec import parse_time_specification
-            t = np.ascontiguousarray(parse_time_specification(**time_spec))
+            t = np.ascontiguousarray(parse_time_specification(self.units, **time_spec))
 
             if Integrator == LeapfrogIntegrator:
                 from ..integrate.cyintegrators import leapfrog_integrate_potential
