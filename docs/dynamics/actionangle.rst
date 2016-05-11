@@ -329,7 +329,7 @@ and the same initial conditions as above:
     act_correction = nvecs.T[...,None] * result['Sn'][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
     action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr*u.Msun
 
-    fig,axes = pl.subplots(3,1,figsize=(4,12))
+    fig,axes = pl.subplots(3,1,figsize=(6,14))
 
     for i,ax in enumerate(axes):
         ax.plot(w.t, toy_actions[i].to(u.km/u.s*u.kpc*u.Msun), marker=None, label='$J_{}$'.format(i+1))
@@ -338,6 +338,7 @@ and the same initial conditions as above:
         ax.legend()
 
     ax.set_xlabel(r"$t$ [Myr]")
+    fig.tight_layout()
 
 References
 ==========
