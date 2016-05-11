@@ -87,15 +87,15 @@ class RK5Integrator(Integrator):
 
         # generate the array of times
         times = parse_time_specification(**time_spec)
-        nsteps = len(times)-1
+        n_steps = len(times)-1
         dt = times[1]-times[0]
 
-        w0_obj, w0, ws = self._prepare_ws(w0, mmap, nsteps=nsteps)
+        w0_obj, w0, ws = self._prepare_ws(w0, mmap, n_steps=n_steps)
 
         # Set first step to the initial conditions
         ws[:,0] = w0
         w = w0.copy()
-        for ii in range(1,nsteps+1):
+        for ii in range(1,n_steps+1):
             w = self.step(times[ii], w, dt)
             ws[:,ii] = w
 

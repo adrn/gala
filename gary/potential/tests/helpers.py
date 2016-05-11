@@ -152,13 +152,13 @@ class PotentialTestBase(object):
         w0 = self.w0
 
         t1 = time.time()
-        orbit = self.potential.integrate_orbit(w0, dt=1., nsteps=10000)
+        orbit = self.potential.integrate_orbit(w0, dt=1., n_steps=10000)
         print("Integration time (10000 steps): {}".format(time.time() - t1))
 
         us = self.potential.units
         w0 = CartesianPhaseSpacePosition(pos=w0[:self.ndim]*us['length'],
                                          vel=w0[self.ndim:]*us['length']/us['time'])
-        orbit = self.potential.integrate_orbit(w0, dt=1., nsteps=10000)
+        orbit = self.potential.integrate_orbit(w0, dt=1., n_steps=10000)
 
     def test_pickle(self, tmpdir):
         fn = str(tmpdir.join("{}.pickle".format(self.name)))

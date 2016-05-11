@@ -8,30 +8,37 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
+# Standard library
+from warnings import warn
+
 # Third-party
 import numpy as np
 
 __all__ = ['parse_time_specification']
 
-def parse_time_specification(dt=None, nsteps=None, t1=None, t2=None, t=None):
+def parse_time_specification(dt=None, n_steps=None, nsteps=None, t1=None, t2=None, t=None):
     """
     Return an array of times given a few combinations of kwargs that are
     accepted -- see below.
 
     Parameters
     ----------
-    dt, nsteps[, t1] : (numeric, int[, numeric])
+    dt, n_steps[, t1] : (numeric, int[, numeric])
         A fixed timestep dt and a number of steps to run for.
     dt, t1, t2 : (numeric, numeric, numeric)
         A fixed timestep dt, an initial time, and an final time.
     dt, t1 : (array_like, numeric)
         An array of timesteps dt and an initial time.
-    nsteps, t1, t2 : (int, numeric, numeric)
+    n_steps, t1, t2 : (int, numeric, numeric)
         Number of steps between an initial time, and a final time.
     t : array_like
         An array of times (dts = t[1:] - t[:-1])
 
     """
+    if nsteps is not None:
+        warn("The argument 'nsteps' is deprecated and will be removed in a future version."
+             "Use 'n_steps' instead.")
+        n_steps = nsteps
 
     # t : array_like
     if t is not None:
@@ -39,15 +46,15 @@ def parse_time_specification(dt=None, nsteps=None, t1=None, t2=None, t=None):
         return times
 
     else:
-        if dt is None and (t1 is None or t2 is None or nsteps is None):
+        if dt is None and (t1 is None or t2 is None or n_steps is None):
             raise ValueError("Invalid spec. See docstring.")
 
-        # dt, nsteps[, t1] : (numeric, int[, numeric])
-        elif dt is not None and nsteps is not None:
+        # dt, n_steps[, t1] : (numeric, int[, numeric])
+        elif dt is not None and n_steps is not None:
             if t1 is None:
                 t1 = 0.
 
-            times = parse_time_specification(dt=np.ones(nsteps+1)*dt,
+            times = parse_time_specification(dt=np.ones(n_steps+1)*dt,
                                              t1=t1)
         # dt, t1, t2 : (numeric, numeric, numeric)
         elif dt is not None and t1 is not None and t2 is not None:
@@ -85,9 +92,9 @@ def parse_time_specification(dt=None, nsteps=None, t1=None, t2=None, t=None):
             times = np.cumsum(np.append([0.], dt)) + t1
             times = times[:-1]
 
-        # nsteps, t1, t2 : (int, numeric, numeric)
-        elif dt is None and not (t1 is None or t2 is None or nsteps is None):
-            times = np.linspace(t1, t2, nsteps, endpoint=True)
+        # n_steps, t1, t2 : (int, numeric, numeric)
+        elif dt is None and not (t1 is None or t2 is None or n_steps is None):
+            times = np.linspace(t1, t2, n_steps, endpoint=True)
 
         else:
             raise ValueError("Invalid options. See docstring.")

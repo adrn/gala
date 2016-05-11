@@ -88,7 +88,7 @@ can integrate an orbit in this potential::
 
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=[0.,0.3],
     ...                                     vel=[0.38,0.])
-    >>> orbit = pot.integrate_orbit(w0, dt=0.05, nsteps=10000)
+    >>> orbit = pot.integrate_orbit(w0, dt=0.05, n_steps=10000)
     >>> fig = orbit.plot()
 
 .. plot::
@@ -123,7 +123,7 @@ can integrate an orbit in this potential::
     pot = HenonHeilesPotential(A=1., units=None)
     w0 = gd.CartesianPhaseSpacePosition(pos=[0.,0.3],
                                         vel=[0.38,0.])
-    orbit = pot.integrate_orbit(w0, dt=0.05, nsteps=10000)
+    orbit = pot.integrate_orbit(w0, dt=0.05, n_steps=10000)
     fig = orbit.plot()
 
 Or, we could create a contour plot of equipotentials::

@@ -14,8 +14,8 @@ from . import CartesianPhaseSpacePosition, CartesianOrbit
 
 __all__ = ['fast_lyapunov_max', 'lyapunov_max', 'surface_of_section']
 
-def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
-                      nsteps_per_pullback=10, noffset_orbits=2, t1=0.,
+def fast_lyapunov_max(w0, potential, dt, n_steps, d0=1e-5,
+                      n_steps_per_pullback=10, noffset_orbits=2, t1=0.,
                       atol=1E-10, rtol=1E-10, nmax=0, return_orbit=True):
     """
     Compute the maximum Lyapunov exponent using a C-implemented estimator
@@ -27,11 +27,11 @@ def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
         Initial conditions.
     dt : numeric
         Timestep.
-    nsteps : int
+    n_steps : int
         Number of steps to run for.
     d0 : numeric (optional)
         The initial separation.
-    nsteps_per_pullback : int (optional)
+    n_steps_per_pullback : int (optional)
         Number of steps to run before re-normalizing the offset vectors.
     noffset_orbits : int (optional)
         Number of offset orbits to run.
@@ -65,8 +65,8 @@ def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
 
     if return_orbit:
         t,w,l = dop853_lyapunov_max(potential.c_instance, _w0,
-                                    dt, nsteps+1, t1,
-                                    d0, nsteps_per_pullback, noffset_orbits,
+                                    dt, n_steps+1, t1,
+                                    d0, n_steps_per_pullback, noffset_orbits,
                                     atol, rtol, nmax)
         w = np.rollaxis(w, -1)
 
@@ -79,8 +79,8 @@ def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
         return l/tunit, orbit
     else:
         l = dop853_lyapunov_max_dont_save(potential.c_instance, _w0,
-                                          dt, nsteps+1, t1,
-                                          d0, nsteps_per_pullback, noffset_orbits,
+                                          dt, n_steps+1, t1,
+                                          d0, n_steps_per_pullback, noffset_orbits,
                                           atol, rtol, nmax)
 
         try:
@@ -90,14 +90,14 @@ def fast_lyapunov_max(w0, potential, dt, nsteps, d0=1e-5,
 
         return l/tunit
 
-def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
+def lyapunov_max(w0, integrator, dt, n_steps, d0=1e-5, n_steps_per_pullback=10,
                  noffset_orbits=8, t1=0., units=None):
     """
 
     Compute the maximum Lyapunov exponent of an orbit by integrating many
     nearby orbits (``noffset``) separated with isotropically distributed
     directions but the same initial deviation length, ``d0``. This algorithm
-    re-normalizes the offset orbits every ``nsteps_per_pullback`` steps.
+    re-normalizes the offset orbits every ``n_steps_per_pullback`` steps.
 
     Parameters
     ----------
@@ -107,11 +107,11 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
         An instantiated `~gary.integrate.Integrator` object. Must have a run() method.
     dt : numeric
         Timestep.
-    nsteps : int
+    n_steps : int
         Number of steps to run for.
     d0 : numeric (optional)
         The initial separation.
-    nsteps_per_pullback : int (optional)
+    n_steps_per_pullback : int (optional)
         Number of steps to run before re-normalizing the offset vectors.
     noffset_orbits : int (optional)
         Number of offset orbits to run.
@@ -145,7 +145,7 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
     ndim = 2*w0.ndim
 
     # number of iterations
-    niter = nsteps // nsteps_per_pullback
+    niter = n_steps // n_steps_per_pullback
 
     # define offset vectors to start the offset orbits on
     d0_vec = np.random.uniform(size=(ndim,noffset_orbits))
@@ -156,9 +156,9 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
     all_w0 = np.hstack((_w0,w_offset))
 
     # array to store the full, main orbit
-    full_w = np.zeros((ndim,nsteps+1,noffset_orbits+1))
+    full_w = np.zeros((ndim,n_steps+1,noffset_orbits+1))
     full_w[:,0] = all_w0
-    full_ts = np.zeros((nsteps+1,))
+    full_ts = np.zeros((n_steps+1,))
     full_ts[0] = t1
 
     # arrays to store the Lyapunov exponents and times
@@ -166,12 +166,12 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
     ts = np.zeros_like(LEs)
     time = t1
     for i in range(1,niter+1):
-        ii = i * nsteps_per_pullback
+        ii = i * n_steps_per_pullback
 
-        orbit = integrator.run(all_w0, dt=dt, nsteps=nsteps_per_pullback, t1=time)
+        orbit = integrator.run(all_w0, dt=dt, n_steps=n_steps_per_pullback, t1=time)
         tt = orbit.t.value
         ww = orbit.w(units)
-        time += dt*nsteps_per_pullback
+        time += dt*n_steps_per_pullback
 
         main_w = ww[:,-1,0:1]
         d1 = ww[:,-1,1:] - main_w
@@ -183,8 +183,8 @@ def lyapunov_max(w0, integrator, dt, nsteps, d0=1e-5, nsteps_per_pullback=10,
         w_offset = ww[:,-1,0:1] + d0 * d1 / d1_mag[np.newaxis]
         all_w0 = np.hstack((ww[:,-1,0:1],w_offset))
 
-        full_w[:,(i-1)*nsteps_per_pullback+1:ii+1] = ww[:,1:]
-        full_ts[(i-1)*nsteps_per_pullback+1:ii+1] = tt[1:]
+        full_w[:,(i-1)*n_steps_per_pullback+1:ii+1] = ww[:,1:]
+        full_ts[(i-1)*n_steps_per_pullback+1:ii+1] = tt[1:]
 
     LEs = np.array([LEs[:ii].sum(axis=0)/ts[ii-1] for ii in range(1,niter)])
 

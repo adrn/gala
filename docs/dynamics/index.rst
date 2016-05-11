@@ -39,7 +39,7 @@ we'll start by integrating an orbit in Cartesian coordinates using the
     ...                                 b=0.26*u.kpc, units=galactic)
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=[11., 0., 0.2]*u.kpc,
     ...                                     vel=[0., 200, 100]*u.km/u.s)
-    >>> orbit = pot.integrate_orbit(w0, dt=1., nsteps=1000)
+    >>> orbit = pot.integrate_orbit(w0, dt=1., n_steps=1000)
 
 This will integrate an orbit from the specified initial conditions (``w0``) and
 return an orbit object. There are many useful methods of the
@@ -60,7 +60,7 @@ by plotting the time series in all projections using the
     pot = gp.MiyamotoNagaiPotential(m=2.5E11, a=6.5, b=0.26, units=galactic)
     w0 = gd.CartesianPhaseSpacePosition(pos=[11., 0., 0.2]*u.kpc,
                                         vel=[0., 200, 100]*u.km/u.s)
-    orbit = pot.integrate_orbit(w0, dt=1., nsteps=1000)
+    orbit = pot.integrate_orbit(w0, dt=1., n_steps=1000)
     fig = orbit.plot()
 
 From this object, we can easily compute dynamical quantities such as the energy

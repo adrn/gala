@@ -37,7 +37,7 @@ a set of initial conditions::
     ...                               q1=1., q2=0.8, q3=0.6, units=galactic)
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,5.5]*u.kpc,
     ...                                     vel=[0.,100.,0]*u.km/u.s)
-    >>> lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., nsteps=100000) # doctest: +SKIP
+    >>> lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., n_steps=100000) # doctest: +SKIP
 
 This returns two objects: an `~astropy.units.Quantity` object that
 contains the maximum Lyapunov exponent estimate for each offset orbit,
@@ -60,13 +60,13 @@ the parent orbit and each offset orbit. Let's plot the parent orbit::
                                   q1=1., q2=0.8, q3=0.6, units=galactic)
     w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,5.5]*u.kpc,
                                         vel=[0.,100.,0]*u.km/u.s)
-    lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., nsteps=100000)
+    lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., n_steps=100000)
     fig = orbit[:,0].plot(marker=',', linestyle='none', alpha=0.1)
 
 Visually, this looks like a chaotic orbit. This means the Lyapunov exponent
 should saturate to some value. We'll now plot the estimate of the Lyapunov
 exponent as a function of time -- because the algorithm re-normalizes every
-several time-steps (controllable with the ``nsteps_per_pullback`` argument),
+several time-steps (controllable with the ``n_steps_per_pullback`` argument),
 we have to down-sample the time array to align it with the Lyapunov exponent
 array. This plots one line per offset orbit::
 
@@ -89,7 +89,7 @@ array. This plots one line per offset orbit::
                                   q1=1., q2=0.8, q3=0.6, units=galactic)
     w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,5.5]*u.kpc,
                                         vel=[0.,100.,0]*u.km/u.s)
-    lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., nsteps=100000)
+    lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., n_steps=100000)
 
     pl.figure()
     pl.loglog(orbit.t[11::10], lyap, marker=None)
@@ -106,7 +106,7 @@ To compare, we will compute the estimate for a regular orbit as well::
 
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,0.]*u.kpc,
     ...                                     vel=[0.,140.,25]*u.km/u.s)
-    >>> lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., nsteps=100000) # doctest: +SKIP
+    >>> lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., n_steps=100000) # doctest: +SKIP
     >>> fig = orbit[:,0].plot(marker=',', alpha=0.1, linestyle='none') # doctest: +SKIP
 
 .. plot::
@@ -122,7 +122,7 @@ To compare, we will compute the estimate for a regular orbit as well::
                                   q1=1., q2=0.8, q3=0.6, units=galactic)
     w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,0.]*u.kpc,
                                         vel=[0.,140.,25]*u.km/u.s)
-    lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=1., nsteps=200000)
+    lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=1., n_steps=200000)
     fig = orbit[:,0].plot(marker=',', linestyle='none', alpha=0.1)
 
 Because this is a regular orbit, the estimate continues decreasing,
@@ -147,7 +147,7 @@ following a characteristic power-law (a straight line in a log-log plot)::
                                   q1=1., q2=0.8, q3=0.6, units=galactic)
     w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,0.]*u.kpc,
                                         vel=[0.,140.,25]*u.km/u.s)
-    lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=1., nsteps=200000)
+    lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=1., n_steps=200000)
 
     pl.figure()
     pl.loglog(orbit.t[11::10], lyap, marker=None)

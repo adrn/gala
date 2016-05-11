@@ -90,7 +90,7 @@ initial conditions that place the progenitor on a mildly eccentric orbit:
     >>> prog_mass = 1E4*u.Msun
     >>> prog_w0 = gd.CartesianPhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
     ...                                          vel=[75, 150, 30.]*u.km/u.s)
-    >>> prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, nsteps=4000)
+    >>> prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
     >>> fig = prog_orbit.plot()
 
 .. plot::
@@ -107,7 +107,7 @@ initial conditions that place the progenitor on a mildly eccentric orbit:
     prog_mass = 1E4*u.Msun
     prog_w0 = gd.CartesianPhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
                                              vel=[75, 150, 0.]*u.km/u.s)
-    prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, nsteps=4000)
+    prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
     fig = prog_orbit.plot()
 
 We now have to define the ``k`` parameters. This is done by defining an iterable
@@ -140,7 +140,7 @@ from both Lagrange points by setting ``release_every=1``:
     prog_mass = 1E4*u.Msun
     prog_w0 = gd.CartesianPhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
                                              vel=[75, 150, 0.]*u.km/u.s)
-    prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, nsteps=4000)
+    prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
     k_mean = [1., 0, 0, 0, 1., 0]
     k_disp = np.zeros(6)
     stream = mock_stream(pot, prog_orbit, prog_mass,
@@ -165,7 +165,7 @@ Or, zooming in around the progenitor:
     prog_mass = 1E4*u.Msun
     prog_w0 = gd.CartesianPhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
                                              vel=[75, 150, 30.]*u.km/u.s)
-    prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, nsteps=4000)
+    prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
     k_mean = [1., 0, 0, 0, 1., 0]
     k_disp = np.zeros(6)
     stream = mock_stream(pot, prog_orbit, prog_mass,
@@ -213,7 +213,7 @@ stream using this method:
     prog_mass = 1E4*u.Msun
     prog_w0 = gd.CartesianPhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
                                              vel=[75, 150, 0.]*u.km/u.s)
-    prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, nsteps=4000)
+    prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
     k_mean = [2., 0, 0, 0, 0.3, 0]
     k_disp = [0.5, 0, 0.5, 0, 0.5, 0.5]
     stream = mock_stream(pot, prog_orbit, prog_mass,
@@ -238,7 +238,7 @@ Or, again, zooming in around the progenitor:
     prog_mass = 1E4*u.Msun
     prog_w0 = gd.CartesianPhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
                                              vel=[75, 150, 30.]*u.km/u.s)
-    prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, nsteps=4000)
+    prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
     k_mean = [2., 0, 0, 0, 0.3, 0]
     k_disp = [0.5, 0, 0.5, 0, 0.5, 0.5]
     stream = mock_stream(pot, prog_orbit, prog_mass,

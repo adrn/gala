@@ -79,7 +79,7 @@ We first create a potential and set up our initial conditions::
 
 We will now integrate the orbit and plot it in the meridional plane::
 
-    >>> w = pot.integrate_orbit(w0, dt=0.5, nsteps=10000)
+    >>> w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
     >>> cyl_pos, cyl_vel = w.represent_as(coord.CylindricalRepresentation)
     >>> fig,ax = pl.subplots(1,1,figsize=(6,6))
     >>> ax.plot(cyl_pos.rho.to(u.kpc), cyl_pos.z.to(u.kpc),
@@ -103,7 +103,7 @@ We will now integrate the orbit and plot it in the meridional plane::
     w0 = gd.CartesianPhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
                                         vel=[75, 150, 50.]*u.km/u.s)
 
-    w = pot.integrate_orbit(w0, dt=0.5, nsteps=10000)
+    w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
     cyl_pos, cyl_vel = w.represent_as(coord.CylindricalRepresentation)
     fig,ax = pl.subplots(1,1,figsize=(6,6))
     ax.plot(cyl_pos.rho.to(u.kpc).value, cyl_pos.z.to(u.kpc).value,
@@ -155,7 +155,7 @@ Instead, the orbit is wobbly in the toy potential angles::
     w0 = gd.CartesianPhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
                                         vel=[75, 150, 50.]*u.km/u.s)
 
-    w = pot.integrate_orbit(w0, dt=0.5, nsteps=10000)
+    w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
     toy_potential = gd.fit_isochrone(w)
     actions,angles,freqs = toy_potential.action_angle(w)
     fig,ax = pl.subplots(1,1,figsize=(5,5))
@@ -190,7 +190,7 @@ time-independent in the toy potential::
     w0 = gd.CartesianPhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
                                         vel=[75, 150, 50.]*u.km/u.s)
 
-    w = pot.integrate_orbit(w0, dt=0.5, nsteps=10000)
+    w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
     toy_potential = gd.fit_isochrone(w)
     actions,angles,freqs = toy_potential.action_angle(w)
     fig,ax = pl.subplots(1,1)
@@ -245,7 +245,7 @@ actions computed using this machinery::
     w0 = gd.CartesianPhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
                                         vel=[75, 150, 50.]*u.km/u.s)
 
-    w = pot.integrate_orbit(w0, dt=0.5, nsteps=10000)
+    w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
     toy_potential = gd.fit_isochrone(w)
     toy_actions,toy_angles,toy_freqs = toy_potential.action_angle(w)
     result = gd.find_actions(w, N_max=8, toy_potential=toy_potential)
@@ -313,7 +313,7 @@ and the same initial conditions as above:
                                         vel=[75, 150, 50.]*u.km/u.s)
 
     # integrate orbit
-    w = pot.integrate_orbit(w0, dt=0.5, nsteps=10000)
+    w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
 
     # solve for toy potential parameters
     toy_potential = gd.fit_isochrone(w)

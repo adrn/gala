@@ -32,7 +32,7 @@ class Integrator(object):
             func_units = DimensionlessUnitSystem()
         self._func_units = func_units
 
-    def _prepare_ws(self, w0, mmap, nsteps):
+    def _prepare_ws(self, w0, mmap, n_steps):
         """
         Decide how to make the return array. If mmap is False, this returns a
         full array of zeros, but with the correct shape as the output. If mmap
@@ -51,7 +51,7 @@ class Integrator(object):
         self.ndim,self.norbits = arr_w0.shape
         self.ndim = self.ndim//2
 
-        return_shape = (2*self.ndim,nsteps+1,self.norbits)
+        return_shape = (2*self.ndim,n_steps+1,self.norbits)
         if mmap is None:
             # create the return arrays
             ws = np.zeros(return_shape, dtype=float)
@@ -94,10 +94,10 @@ class Integrator(object):
 
         There are a few combinations of keyword arguments accepted for
         specifying the timestepping. For example, you can specify a fixed
-        timestep (``dt``) and a number of steps (``nsteps``), or an array of
+        timestep (``dt``) and a number of steps (``n_steps``), or an array of
         times::
 
-            dt, nsteps[, t1] : (numeric, int[, numeric])
+            dt, n_steps[, t1] : (numeric, int[, numeric])
                 A fixed timestep dt and a number of steps to run for.
             dt, t1, t2 : (numeric, numeric, numeric)
                 A fixed timestep dt, an initial time, and a final time.

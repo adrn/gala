@@ -73,7 +73,7 @@ class LeapfrogIntegrator(Integrator):
     of initial conditions::
 
         integrator = LeapfrogIntegrator(acceleration)
-        times,ws = integrator.run(w0=[1.,0.], dt=0.1, nsteps=1000)
+        times,ws = integrator.run(w0=[1.,0.], dt=0.1, n_steps=1000)
 
     .. note::
 
@@ -140,10 +140,10 @@ class LeapfrogIntegrator(Integrator):
 
         # generate the array of times
         times = parse_time_specification(**time_spec)
-        nsteps = len(times) - 1
+        n_steps = len(times) - 1
         _dt = times[1] - times[0]
 
-        w0_obj, w0, ws = self._prepare_ws(w0, mmap, nsteps)
+        w0_obj, w0, ws = self._prepare_ws(w0, mmap, n_steps)
         x0 = w0[:self.ndim]
         v0 = w0[self.ndim:]
 
@@ -159,7 +159,7 @@ class LeapfrogIntegrator(Integrator):
         x_im1 = x0
 
         ws[:,0] = w0
-        for ii in range(1,nsteps+1):
+        for ii in range(1,n_steps+1):
             x_i, v_i, v_ip1_2 = self.step(times[ii], x_im1, v_im1_2, dt)
             ws[:self.ndim,ii,:] = x_i
             ws[self.ndim:,ii,:] = v_i
