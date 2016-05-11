@@ -46,7 +46,7 @@ class DOPRI853Integrator(Integrator):
     def run(self, w0, mmap=None, **time_spec):
 
         # generate the array of times
-        times = parse_time_specification(self.func_units, **time_spec)
+        times = parse_time_specification(self._func_units, **time_spec)
         n_steps = len(times)-1
 
         w0, arr_w0, ws = self._prepare_ws(w0, mmap, n_steps)
