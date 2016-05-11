@@ -18,7 +18,7 @@ from ._mockstream import _mock_stream_dop853#, _mock_stream_leapfrog
 __all__ = ['mock_stream', 'streakline_stream', 'fardal_stream', 'dissolved_fardal_stream']
 
 def mock_stream(potential, prog_orbit, prog_mass, k_mean, k_disp,
-                release_every=1, Integrator=LeapfrogIntegrator, Integrator_kwargs=dict()):
+                release_every=1, Integrator=DOPRI853Integrator, Integrator_kwargs=dict()):
     """
     Generate a mock stellar stream in the specified potential with a
     progenitor system that ends up at the specified position.
@@ -102,7 +102,7 @@ def mock_stream(potential, prog_orbit, prog_mass, k_mean, k_disp,
     return CartesianPhaseSpacePosition.from_w(w=stream_w.T, units=potential.units)
 
 def streakline_stream(potential, prog_orbit, prog_mass, release_every=1,
-                      Integrator=LeapfrogIntegrator, Integrator_kwargs=dict()):
+                      Integrator=DOPRI853Integrator, Integrator_kwargs=dict()):
     """
     Generate a mock stellar stream in the specified potential with a
     progenitor system that ends up at the specified position.
@@ -156,7 +156,7 @@ def streakline_stream(potential, prog_orbit, prog_mass, release_every=1,
                        Integrator=Integrator, Integrator_kwargs=Integrator_kwargs)
 
 def fardal_stream(potential, prog_orbit, prog_mass, release_every=1,
-                  Integrator=LeapfrogIntegrator, Integrator_kwargs=dict()):
+                  Integrator=DOPRI853Integrator, Integrator_kwargs=dict()):
     """
     Generate a mock stellar stream in the specified potential with a
     progenitor system that ends up at the specified position.
@@ -210,7 +210,7 @@ def fardal_stream(potential, prog_orbit, prog_mass, release_every=1,
                        Integrator=Integrator, Integrator_kwargs=Integrator_kwargs)
 
 def dissolved_fardal_stream(potential, prog_orbit, prog_mass, t_disrupt,
-                            release_every=1, Integrator=LeapfrogIntegrator, Integrator_kwargs=dict()):
+                            release_every=1, Integrator=DOPRI853Integrator, Integrator_kwargs=dict()):
     """
     Generate a mock stellar stream in the specified potential with a
     progenitor system that ends up at the specified position.
