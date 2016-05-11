@@ -520,8 +520,6 @@ def find_actions(orbit, N_max, force_harmonic_oscillator=False, toy_potential=No
         Force using the harmonic oscillator potential as the toy potential.
     toy_potential : Potential (optional)
         Fix the toy potential class.
-    return_Sn : bool (optional)
-        Return the Sn and dSn/dJ's. Default is False.
 
     Returns
     -------
