@@ -111,12 +111,13 @@ We will now integrate the orbit and plot it in the meridional plane::
     ax.set_xlabel("R [kpc]")
     ax.set_ylabel("z [kpc]")
 
-To solve for the actions in the true potential, we first compute the actions
-in a "toy" potential -- a potential in which we can compute the actions and
-angles analytically. The two simplest potentials for which this is possible are
-the :ref:`IsochronePotential` and :ref:`HarmonicOscillatorPotential`. We will
-use the Isochrone potential as our toy potential for tube orbits and the
-harmonic oscillator for box orbits.
+To solve for the actions in the true potential, we first compute the actions in
+a "toy" potential -- a potential in which we can compute the actions and angles
+analytically. The two simplest potentials for which this is possible are the
+`~gary.potential.IsochronePotential` and
+`~gary.potential.HarmonicOscillatorPotential`. We will use the Isochrone
+potential as our toy potential for tube orbits and the harmonic oscillator for
+box orbits.
 
 We start by finding the parameters of the toy potential (Isochrone in this case)
 by minimizing the dispersion in energy for the orbit::
@@ -335,7 +336,7 @@ and the same initial conditions as above:
         ax.plot(w.t, toy_actions[i].to(u.km/u.s*u.kpc*u.Msun), marker=None, label='$J_{}$'.format(i+1))
         ax.plot(w.t, action_approx[i].to(u.km/u.s*u.kpc*u.Msun), marker=None, label="$J_{}'$".format(i+1))
         ax.set_ylabel(r"[kpc ${\rm M}_\odot$ km/s]")
-        ax.legend()
+        ax.legend(loc='upper left')
 
     ax.set_xlabel(r"$t$ [Myr]")
     fig.tight_layout()
