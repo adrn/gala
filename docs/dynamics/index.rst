@@ -35,16 +35,18 @@ Some simple tools are provided for inspecting and plotting orbits. For example,
 we'll start by integrating an orbit in Cartesian coordinates using the
 :mod:`gary.potential` and :mod:`gary.integrate` subpackages::
 
-    >>> pot = gp.MiyamotoNagaiPotential(m=2.5E11, a=6.5, b=0.26, units=galactic)
+    >>> pot = gp.MiyamotoNagaiPotential(m=2.5E11*u.Msun, a=6.5*u.kpc,
+    ...                                 b=0.26*u.kpc, units=galactic)
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=[11., 0., 0.2]*u.kpc,
     ...                                     vel=[0., 200, 100]*u.km/u.s)
     >>> orbit = pot.integrate_orbit(w0, dt=1., nsteps=1000)
 
 This will integrate an orbit from the specified initial conditions (``w0``) and
-return an orbit object. There are many useful methods of the `~gary.dynamics.Orbit`
-subclasses and many functions that accept `~gary.dynamics.Orbit` objects. For example,
-we can easily visualize the orbit by plotting the time series in all projections
-using the :meth:`~gary.dynamics.CartesianOrbit.plot` method::
+return an orbit object. There are many useful methods of the
+`~gary.dynamics.Orbit` subclasses and many functions that accept
+`~gary.dynamics.Orbit` objects. For example, we can easily visualize the orbit
+by plotting the time series in all projections using the
+:meth:`~gary.dynamics.CartesianOrbit.plot` method::
 
     >>> fig = orbit.plot()
 
