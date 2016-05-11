@@ -59,7 +59,7 @@ returned by the integrator will then also have no associated units. For example,
 to integrate from these initial conditions with a time step of 0.5 for 100
 steps::
 
-    >>> orbit = integrator.run(w0, dt=0.5, nsteps=100)
+    >>> orbit = integrator.run(w0, dt=0.5, n_steps=100)
     >>> orbit.t.unit
     Unit(dimensionless)
     >>> orbit.pos.unit
@@ -74,7 +74,7 @@ units in as initial conditions::
     >>> usys = UnitSystem(u.m, u.s, u.kg, u.radian)
     >>> integrator = gi.LeapfrogIntegrator(F, func_units=usys)
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=100.*u.cm, vel=0*u.cm/u.yr)
-    >>> orbit = integrator.run(w0, dt=0.5, nsteps=100)
+    >>> orbit = integrator.run(w0, dt=0.5, n_steps=100)
     >>> orbit.t.unit
     Unit("s")
 
@@ -121,7 +121,7 @@ or pass in an initial time, end time, and timestep. Or, we could simply pass in 
 number of steps to run for and a timestep. For this example, we will use the last
 option. See the API below under *"Other Parameters"* for more information.::
 
-    >>> orbit = integrator.run([3.,0.], dt=0.1, nsteps=10000)
+    >>> orbit = integrator.run([3.,0.], dt=0.1, n_steps=10000)
 
 We can plot the integrated (chaotic) orbit::
 
@@ -142,7 +142,7 @@ We can plot the integrated (chaotic) orbit::
         return np.array([q_dot, p_dot])
 
     integrator = gi.DOPRI853Integrator(F, func_args=(0.07, 0.75))
-    orbit = integrator.run([3.,0.], dt=0.1, nsteps=10000)
+    orbit = integrator.run([3.,0.], dt=0.1, n_steps=10000)
     fig = orbit.plot()
 
 Example: Lorenz equations
@@ -157,7 +157,7 @@ nonlinear system::
     ...     return np.array([sigma*(y-x), x*(rho-z)-y, x*y-beta*z, 0., 0., 0.]).reshape(w.shape)
     >>> sigma, rho, beta = 10., 28., 8/3.
     >>> integrator = gi.DOPRI853Integrator(F, func_args=(sigma, rho, beta))
-    >>> orbit = integrator.run([0.5,0.5,0.5,0,0,0], dt=1E-2, nsteps=1E4)
+    >>> orbit = integrator.run([0.5,0.5,0.5,0,0,0], dt=1E-2, n_steps=1E4)
     >>> fig = orbit.plot()
 
 .. plot::
@@ -175,7 +175,7 @@ nonlinear system::
     sigma, rho, beta = 10., 28., 8/3.
     integrator = gi.DOPRI853Integrator(F, func_args=(sigma, rho, beta))
 
-    orbit = integrator.run([0.5,0.5,0.5,0,0,0], dt=1E-2, nsteps=1E4)
+    orbit = integrator.run([0.5,0.5,0.5,0,0,0], dt=1E-2, n_steps=1E4)
     fig = orbit.plot()
 
 API

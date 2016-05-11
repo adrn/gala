@@ -47,9 +47,9 @@ class DOPRI853Integrator(Integrator):
 
         # generate the array of times
         times = parse_time_specification(**time_spec)
-        nsteps = len(times)-1
+        n_steps = len(times)-1
 
-        w0, arr_w0, ws = self._prepare_ws(w0, mmap, nsteps)
+        w0, arr_w0, ws = self._prepare_ws(w0, mmap, n_steps)
         _size_1d = 2*self.ndim*self.norbits
 
         # need this to do resizing, and to handle func_args because there is some
@@ -72,7 +72,7 @@ class DOPRI853Integrator(Integrator):
 
         # Integrate the ODE(s) across each delta_t timestep
         k = 1
-        while self._ode.successful() and k < (nsteps+1):
+        while self._ode.successful() and k < (n_steps+1):
             self._ode.integrate(times[k])
             outy = self._ode.y
             ws[:,k] = outy.reshape(2*self.ndim,self.norbits)

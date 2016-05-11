@@ -214,7 +214,7 @@ import warnings
 def orbit_integrate(x,tmax,Pot):
     """ Integrates an orbit with initial coordinates x for time tmax in
     potential Pot using Dormund Prince 8 adaptive step size """
-    solver = ode(orbit_derivs).set_integrator('dopri5', nsteps=1, rtol=1e-10,atol=1e-10)
+    solver = ode(orbit_derivs).set_integrator('dopri5', n_steps=1, rtol=1e-10,atol=1e-10)
     solver.set_initial_value(x,0.).set_f_params(Pot)
     solver._integrator.iwork[2] = -1
     warnings.filterwarnings("ignore", category=UserWarning)

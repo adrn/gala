@@ -68,9 +68,9 @@ class CompositeHelper(object):
         potential["two"] = self.p2
 
         for Integrator in [DOPRI853Integrator, LeapfrogIntegrator]:
-            w_cy = potential.integrate_orbit([1.,0,0, 0,2*np.pi,0], dt=0.01, nsteps=1000,
+            w_cy = potential.integrate_orbit([1.,0,0, 0,2*np.pi,0], dt=0.01, n_steps=1000,
                                              Integrator=Integrator, cython_if_possible=True)
-            w_py = potential.integrate_orbit([1.,0,0, 0,2*np.pi,0], dt=0.01, nsteps=1000,
+            w_py = potential.integrate_orbit([1.,0,0, 0,2*np.pi,0], dt=0.01, n_steps=1000,
                                              Integrator=Integrator, cython_if_possible=False)
 
             for i in range(3):

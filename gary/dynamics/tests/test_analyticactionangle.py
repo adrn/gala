@@ -30,7 +30,7 @@ class TestIsochrone(object):
         w0 = np.vstack((x,v))
 
         self.potential = IsochronePotential(units=galactic, m=1.E11, b=5.)
-        self.w = self.potential.integrate_orbit(w0, dt=0.1, nsteps=10000)
+        self.w = self.potential.integrate_orbit(w0, dt=0.1, n_steps=10000)
         self.w = self.w[::10]
 
     def test(self):
@@ -75,7 +75,7 @@ class TestHarmonicOscillator(object):
         w0 = np.vstack((x,v))
 
         self.potential = HarmonicOscillatorPotential(omega=np.array([0.013, 0.02, 0.005]), units=galactic)
-        self.w = self.potential.integrate_orbit(w0, dt=0.1, nsteps=10000)
+        self.w = self.potential.integrate_orbit(w0, dt=0.1, n_steps=10000)
         self.w = self.w[::10]
 
     def test(self):

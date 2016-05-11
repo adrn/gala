@@ -16,7 +16,7 @@ from scipy.signal import argrelmax, argrelmin
 from .core import CartesianPhaseSpacePosition
 from ..integrate import LeapfrogIntegrator
 
-__all__ = ['peak_to_peak_period', 'estimate_dt_nsteps']
+__all__ = ['peak_to_peak_period', 'estimate_dt_n_steps']
 
 def peak_to_peak_period(t, f, amplitude_threshold=1E-2):
     """
@@ -79,11 +79,11 @@ def _autodetermine_initial_dt(w0, potential, dE_threshold=1E-9, Integrator=Leapf
         return 1.
 
     dts = np.logspace(-3, 1, 8)[::-1]
-    _base_nsteps = 1000
+    _base_n_steps = 1000
 
     for dt in dts:
-        nsteps = int(round(_base_nsteps / dt))
-        orbit = potential.integrate_orbit(w0, dt=dt, nsteps=nsteps, Integrator=Integrator)
+        n_steps = int(round(_base_n_steps / dt))
+        orbit = potential.integrate_orbit(w0, dt=dt, n_steps=n_steps, Integrator=Integrator)
         E = orbit.energy()
         dE = np.abs((E[-1] - E[0]) / E[0]).value
 
@@ -92,7 +92,7 @@ def _autodetermine_initial_dt(w0, potential, dE_threshold=1E-9, Integrator=Leapf
 
     return dt
 
-def estimate_dt_nsteps(w0, potential, nperiods, nsteps_per_period, dE_threshold=1E-9,
+def estimate_dt_n_steps(w0, potential, nperiods, n_steps_per_period, dE_threshold=1E-9,
                        func=np.nanmax):
     """
     Estimate the timestep and number of steps to integrate an orbit for
@@ -106,7 +106,7 @@ def estimate_dt_nsteps(w0, potential, nperiods, nsteps_per_period, dE_threshold=
         The potential to integrate the orbit in.
     nperiods : int
         Number of (max) orbital periods to integrate for.
-    nsteps_per_period : int
+    n_steps_per_period : int
         Number of steps to take per (max) orbital period.
     dE_threshold : numeric (optional)
         Maximum fractional energy difference -- used to determine initial timestep.
@@ -120,7 +120,7 @@ def estimate_dt_nsteps(w0, potential, nperiods, nsteps_per_period, dE_threshold=
     -------
     dt : float
         The timestep.
-    nsteps : int
+    n_steps : int
         The number of timesteps to integrate for.
 
     """
@@ -130,8 +130,8 @@ def estimate_dt_nsteps(w0, potential, nperiods, nsteps_per_period, dE_threshold=
 
     # integrate orbit
     dt = _autodetermine_initial_dt(w0, potential, dE_threshold=dE_threshold)
-    nsteps = int(round(10000 / dt))
-    orbit = potential.integrate_orbit(w0, dt=dt, nsteps=nsteps)
+    n_steps = int(round(10000 / dt))
+    orbit = potential.integrate_orbit(w0, dt=dt, n_steps=n_steps)
 
     # if loop, align circulation with Z and take R period
     circ = orbit.circulation()
@@ -156,10 +156,10 @@ def estimate_dt_nsteps(w0, potential, nperiods, nsteps_per_period, dE_threshold=
         raise RuntimeError("Failed to find period.")
 
     T = T.decompose(potential.units).value
-    dt = T / float(nsteps_per_period)
-    nsteps = int(round(nperiods * T / dt))
+    dt = T / float(n_steps_per_period)
+    n_steps = int(round(nperiods * T / dt))
 
     if dt == 0. or dt < 1E-13:
         raise ValueError("Timestep is zero or very small!")
 
-    return dt, nsteps
+    return dt, n_steps

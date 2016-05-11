@@ -42,7 +42,7 @@ def test_fit_isochrone():
     true_m = 2.81E11
     true_b = 11.
     potential = IsochronePotential(m=true_m, b=true_b, units=galactic)
-    orbit = potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., nsteps=10000)
+    orbit = potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., n_steps=10000)
 
     fit_potential = fit_isochrone(orbit)
     m,b = fit_potential.parameters['m'].value, fit_potential.parameters['b'].value
@@ -53,7 +53,7 @@ def test_fit_harmonic_oscillator():
     # integrate orbit in harmonic oscillator potential, then try to recover it
     true_omegas = np.array([0.011, 0.032, 0.045])
     potential = HarmonicOscillatorPotential(omega=true_omegas, units=galactic)
-    orbit = potential.integrate_orbit([15.,1,2,0,0,0], dt=2., nsteps=10000)
+    orbit = potential.integrate_orbit([15.,1,2,0,0,0], dt=2., n_steps=10000)
 
     fit_potential = fit_harmonic_oscillator(orbit)
     omegas = fit_potential.parameters['omega'].value
@@ -64,7 +64,7 @@ def test_fit_toy_potential():
     true_m = 2.81E11
     true_b = 11.
     true_potential = IsochronePotential(m=true_m, b=true_b, units=galactic)
-    orbit = true_potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., nsteps=10000)
+    orbit = true_potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., n_steps=10000)
 
     potential = fit_toy_potential(orbit)
     for k,v in true_potential.parameters.items():
@@ -73,7 +73,7 @@ def test_fit_toy_potential():
     # -----------------------------------------------------------------
     true_omegas = np.array([0.011, 0.032, 0.045])
     true_potential = HarmonicOscillatorPotential(omega=true_omegas, units=galactic)
-    orbit = true_potential.integrate_orbit([15.,1,2,0,0,0], dt=2., nsteps=10000)
+    orbit = true_potential.integrate_orbit([15.,1,2,0,0,0], dt=2., n_steps=10000)
 
     potential = fit_toy_potential(orbit)
     assert np.allclose(potential.parameters['omega'].value,
@@ -174,10 +174,10 @@ class TestActions(ActionsBase):
         self.N = 8
         np.random.seed(42)
         w0 = isotropic_w0(N=self.N)
-        nsteps = 20000
+        n_steps = 20000
 
         # integrate orbits
-        orbit = self.potential.integrate_orbit(w0, dt=2., nsteps=nsteps,
+        orbit = self.potential.integrate_orbit(w0, dt=2., n_steps=n_steps,
                                                Integrator=DOPRI853Integrator)
         self.orbit = orbit
         self.t = orbit.t.value
@@ -198,11 +198,11 @@ class TestActions(ActionsBase):
 #         self.N = 25
 
 #         w0 = np.loadtxt(os.path.join(test_data_path, "w0.txt"))
-#         nsteps = 200000
+#         n_steps = 200000
 
 #         if not os.path.exists(os.path.join(test_data_path, "w_hard.npy")):
 #             logger.debug("Integrating orbits")
-#             t,w = self.potential.integrate_orbit(w0, dt=0.2, nsteps=nsteps, Integrator=DOPRI853Integrator)
+#             t,w = self.potential.integrate_orbit(w0, dt=0.2, n_steps=n_steps, Integrator=DOPRI853Integrator)
 
 #             logger.debug("Saving orbits")
 #             np.save(os.path.join(test_data_path, "t_hard.npy"), t)

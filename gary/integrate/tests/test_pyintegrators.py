@@ -29,13 +29,13 @@ def test_sho_forward_backward(Integrator):
     integrator = Integrator(sho, func_args=(1.,))
 
     dt = 0.01
-    nsteps = 100
+    n_steps = 100
     if Integrator == LeapfrogIntegrator:
         dt = 1E-4
-        nsteps = int(1E4)
+        n_steps = int(1E4)
 
-    forw = integrator.run([0., 1.], dt=dt, nsteps=nsteps)
-    back = integrator.run([0., 1.], dt=-dt, nsteps=nsteps)
+    forw = integrator.run([0., 1.], dt=dt, n_steps=n_steps)
+    back = integrator.run([0., 1.], dt=-dt, n_steps=n_steps)
 
     assert np.allclose(forw.w()[:,-1], back.w()[:,-1], atol=1E-6)
 
@@ -51,7 +51,7 @@ def test_point_mass(Integrator):
     T = 1.
 
     integrator = Integrator(F)
-    orbit = integrator.run(np.append(q0,p0), t1=0., t2=2*np.pi, nsteps=1E4)
+    orbit = integrator.run(np.append(q0,p0), t1=0., t2=2*np.pi, n_steps=1E4)
 
     assert np.allclose(orbit.w()[:,0], orbit.w()[:,-1], atol=1E-6)
 
@@ -67,7 +67,7 @@ def test_point_mass_multiple(Integrator):
                    [2., 1.0, -1.0, 1.1]]).T
 
     integrator = Integrator(F)
-    orbit = integrator.run(w0, dt=1E-3, nsteps=1E4)
+    orbit = integrator.run(w0, dt=1E-3, n_steps=1E4)
 
 @pytest.mark.parametrize("Integrator", integrator_list)
 def test_driven_pendulum(Integrator):
@@ -76,7 +76,7 @@ def test_driven_pendulum(Integrator):
         return np.array([p,-np.sin(q) + A*np.cos(omega_d*t)])
 
     integrator = Integrator(F, func_args=(0.07, 0.75))
-    orbit = integrator.run([3., 0.], dt=1E-2, nsteps=1E4)
+    orbit = integrator.run([3., 0.], dt=1E-2, n_steps=1E4)
 
 @pytest.mark.parametrize("Integrator", integrator_list)
 def test_lorenz(Integrator):
@@ -87,7 +87,7 @@ def test_lorenz(Integrator):
     sigma, rho, beta = 10., 28., 8/3.
     integrator = Integrator(F, func_args=(sigma, rho, beta))
 
-    orbit = integrator.run([0.5,0.5,0.5,0,0,0], dt=1E-2, nsteps=1E4)
+    orbit = integrator.run([0.5,0.5,0.5,0,0,0], dt=1E-2, n_steps=1E4)
 
     # pl.plot(ws[0], ws[1])
     # pl.show()
@@ -95,9 +95,9 @@ def test_lorenz(Integrator):
 @pytest.mark.parametrize("Integrator", integrator_list)
 def test_memmap(tmpdir, Integrator):
     dt = 0.1
-    nsteps = 1000
+    n_steps = 1000
     nw0 = 10000
-    mmap = np.memmap("/tmp/test_memmap.npy", mode='w+', shape=(2, nsteps+1, nw0))
+    mmap = np.memmap("/tmp/test_memmap.npy", mode='w+', shape=(2, n_steps+1, nw0))
 
     def sho(t,w,T):
         q,p = w
@@ -107,4 +107,4 @@ def test_memmap(tmpdir, Integrator):
 
     integrator = Integrator(sho, func_args=(1.,))
 
-    orbit = integrator.run(w0, dt=dt, nsteps=nsteps, mmap=mmap)
+    orbit = integrator.run(w0, dt=dt, n_steps=n_steps, mmap=mmap)

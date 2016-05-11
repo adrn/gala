@@ -54,25 +54,25 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
     pass
 
 cpdef dop853_lyapunov_max(CPotentialWrapper cp, double[::1] w0,
-                          double dt, int nsteps, double t0,
-                          double d0, int nsteps_per_pullback, int noffset_orbits,
+                          double dt, int n_steps, double t0,
+                          double d0, int n_steps_per_pullback, int noffset_orbits,
                           double atol=1E-10, double rtol=1E-10, int nmax=0):
     cdef:
         int i, j, k, jiter
         int res
         unsigned ndim = w0.size
         unsigned norbits = noffset_orbits + 1
-        unsigned niter = nsteps // nsteps_per_pullback
+        unsigned niter = n_steps // n_steps_per_pullback
         double[::1] w = np.empty(norbits*ndim)
 
         # define full array of times
-        double t_end = (<double>nsteps) * dt
-        double[::1] t = np.linspace(t0, t_end, nsteps) # TODO: should be nsteps+1
+        double t_end = (<double>n_steps) * dt
+        double[::1] t = np.linspace(t0, t_end, n_steps) # TODO: should be n_steps+1
 
         double d1_mag, norm
         double[:,::1] d1 = np.empty((norbits,ndim))
         double[:,::1] LEs = np.zeros((niter,noffset_orbits))
-        double[:,:,::1] all_w = np.zeros((nsteps,norbits,ndim))
+        double[:,:,::1] all_w = np.zeros((n_steps,norbits,ndim))
 
         # temp stuff
         double[:,::1] d0_vec = np.random.uniform(size=(noffset_orbits,ndim))
@@ -94,7 +94,7 @@ cpdef dop853_lyapunov_max(CPotentialWrapper cp, double[::1] w0,
 
     # dummy counter for storing Lyapunov stuff, which only happens every few steps
     jiter = 0
-    for j in range(1,nsteps,1):
+    for j in range(1,n_steps,1):
         res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
                      &(cp.cpotential), norbits,
                      t[j-1], &w[0], t[j], &rtol, &atol, 0, solout, 0,
@@ -114,7 +114,7 @@ cpdef dop853_lyapunov_max(CPotentialWrapper cp, double[::1] w0,
             for k in range(ndim):
                 all_w[j,i,k] = w[i*ndim + k]
 
-        if (j % nsteps_per_pullback) == 0:
+        if (j % n_steps_per_pullback) == 0:
             # get magnitude of deviation vector
             for i in range(1,norbits):
                 for k in range(ndim):
@@ -129,24 +129,24 @@ cpdef dop853_lyapunov_max(CPotentialWrapper cp, double[::1] w0,
 
             jiter += 1
 
-    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j*nsteps_per_pullback] for j in range(1,niter)])
+    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j*n_steps_per_pullback] for j in range(1,niter)])
     return np.asarray(t), np.asarray(all_w), np.asarray(LEs)
 
 cpdef dop853_lyapunov_max_dont_save(CPotentialWrapper cp, double[::1] w0,
-                                    double dt, int nsteps, double t0,
-                                    double d0, int nsteps_per_pullback, int noffset_orbits,
+                                    double dt, int n_steps, double t0,
+                                    double d0, int n_steps_per_pullback, int noffset_orbits,
                                     double atol=1E-10, double rtol=1E-10, int nmax=0):
     cdef:
         int i, j, k, jiter
         int res
         unsigned ndim = w0.size
         unsigned norbits = noffset_orbits + 1
-        unsigned niter = nsteps // nsteps_per_pullback
+        unsigned niter = n_steps // n_steps_per_pullback
         double[::1] w = np.empty(norbits*ndim)
 
         # define full array of times
-        double t_end = (<double>nsteps) * dt
-        double[::1] t = np.linspace(t0, t_end, nsteps) # TODO: should be nsteps+1
+        double t_end = (<double>n_steps) * dt
+        double[::1] t = np.linspace(t0, t_end, n_steps) # TODO: should be n_steps+1
 
         double d1_mag, norm
         double[:,::1] d1 = np.empty((norbits,ndim))
@@ -169,7 +169,7 @@ cpdef dop853_lyapunov_max_dont_save(CPotentialWrapper cp, double[::1] w0,
 
     # dummy counter for storing Lyapunov stuff, which only happens every few steps
     jiter = 0
-    for j in range(1,nsteps,1):
+    for j in range(1,n_steps,1):
         res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
                      &(cp.cpotential), norbits,
                      t[j-1], &w[0], t[j], &rtol, &atol, 0, solout, 0,
@@ -184,7 +184,7 @@ cpdef dop853_lyapunov_max_dont_save(CPotentialWrapper cp, double[::1] w0,
         elif res == -4:
             raise RuntimeError("The problem is probably stff (interrupted).")
 
-        if (j % nsteps_per_pullback) == 0:
+        if (j % n_steps_per_pullback) == 0:
             # get magnitude of deviation vector
             for i in range(1,norbits):
                 for k in range(ndim):
@@ -199,5 +199,5 @@ cpdef dop853_lyapunov_max_dont_save(CPotentialWrapper cp, double[::1] w0,
 
             jiter += 1
 
-    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j*nsteps_per_pullback] for j in range(1,niter)])
+    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j*n_steps_per_pullback] for j in range(1,niter)])
     return np.asarray(LEs)

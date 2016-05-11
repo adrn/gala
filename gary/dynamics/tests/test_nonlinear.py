@@ -33,23 +33,23 @@ class TestForcedPendulum(object):
         self.chaotic_integrator = DOPRI853Integrator(F, func_args=self.chaotic_par)
 
     def test_lyapunov_max(self, tmpdir):
-        nsteps = 20000
+        n_steps = 20000
         dt = 1.
-        nsteps_per_pullback = 10
+        n_steps_per_pullback = 10
         d0 = 1e-5
         noffset = 2
 
         regular_LEs, regular_orbit = lyapunov_max(self.regular_w0, self.regular_integrator,
-                                                  dt=dt, nsteps=nsteps,
-                                                  d0=d0, nsteps_per_pullback=nsteps_per_pullback,
+                                                  dt=dt, n_steps=n_steps,
+                                                  d0=d0, n_steps_per_pullback=n_steps_per_pullback,
                                                   noffset_orbits=noffset)
 
         regular_LEs = np.mean(regular_LEs, axis=1)
         assert regular_LEs[-1] < 1E-3
 
         chaotic_LEs, chaotic_orbit = lyapunov_max(self.chaotic_w0, self.chaotic_integrator,
-                                                  dt=dt, nsteps=nsteps,
-                                                  d0=d0, nsteps_per_pullback=nsteps_per_pullback,
+                                                  dt=dt, n_steps=n_steps,
+                                                  d0=d0, n_steps_per_pullback=n_steps_per_pullback,
                                                   noffset_orbits=noffset)
         chaotic_LEs = np.mean(chaotic_LEs, axis=1)
         assert chaotic_LEs[-1] > 1E-2
@@ -106,28 +106,28 @@ class HenonHeilesBase(object):
     def setup(self):
         # parameter choices
         self.par = (1.,1.,1.,1.)
-        self.nsteps = 2000
+        self.n_steps = 2000
         self.dt = 2.
 
     def test_integrate_orbit(self, tmpdir):
         integrator = DOPRI853Integrator(self.F_max, func_args=self.par)
 
         # pl.clf()
-        orbit = integrator.run(self.w0, dt=self.dt, nsteps=self.nsteps)
+        orbit = integrator.run(self.w0, dt=self.dt, n_steps=self.n_steps)
         # pl.plot(w[:,0,0], w[:,0,1], marker=None)
 
         # pl.savefig(os.path.join(str(tmpdir),"hh_orbit_{}.png".format(self.__class__.__name__)))
 
     def test_lyapunov_max(self, tmpdir):
-        nsteps_per_pullback = 10
+        n_steps_per_pullback = 10
         d0 = 1e-5
         noffset = 2
 
         integrator = DOPRI853Integrator(self.F_max, func_args=self.par)
         lyap, orbit = lyapunov_max(self.w0, integrator,
-                                   dt=self.dt, nsteps=self.nsteps,
+                                   dt=self.dt, n_steps=self.n_steps,
                                    d0=d0, noffset_orbits=noffset,
-                                   nsteps_per_pullback=nsteps_per_pullback)
+                                   n_steps_per_pullback=n_steps_per_pullback)
         lyap = np.mean(lyap, axis=1)
 
         # pl.clf()
@@ -198,24 +198,24 @@ class TestLogarithmic(object):
         self.w0s = np.array([[0.49, 0., 0., 1.3156, 0.4788, 0.],  # regular
                              chaotic_w0])  # chaotic
 
-        self.nsteps = 25000
+        self.n_steps = 25000
         self.dt = 0.004
 
     def test_fast_lyapunov_max(self, tmpdir):
-        nsteps_per_pullback = 10
+        n_steps_per_pullback = 10
         d0 = 1e-5
         noffset = 2
 
         for ii,w0 in enumerate(self.w0s):
             print(ii, w0)
             lyap, orbit = fast_lyapunov_max(w0, self.potential,
-                                            dt=self.dt, nsteps=self.nsteps,
+                                            dt=self.dt, n_steps=self.n_steps,
                                             d0=d0, noffset_orbits=noffset,
-                                            nsteps_per_pullback=nsteps_per_pullback)
+                                            n_steps_per_pullback=n_steps_per_pullback)
             lyap = np.mean(lyap, axis=1)
 
             # also just integrate the orbit to compare dE scaling
-            orbit2 = self.potential.integrate_orbit(w0, dt=self.dt, nsteps=self.nsteps,
+            orbit2 = self.potential.integrate_orbit(w0, dt=self.dt, n_steps=self.n_steps,
                                                     Integrator=DOPRI853Integrator)
 
             # lyapunov exp
@@ -244,7 +244,7 @@ class TestLogarithmic(object):
 
     @pytest.mark.slow
     def test_compare_fast(self, tmpdir):
-        nsteps_per_pullback = 10
+        n_steps_per_pullback = 10
         d0 = 1e-5
         noffset = 2
 
@@ -253,9 +253,9 @@ class TestLogarithmic(object):
             print(ii)
 
             lyap1, orbit1 = fast_lyapunov_max(w0, self.potential,
-                                              dt=self.dt, nsteps=self.nsteps,
+                                              dt=self.dt, n_steps=self.n_steps,
                                               d0=d0, noffset_orbits=noffset,
-                                              nsteps_per_pullback=nsteps_per_pullback)
+                                              n_steps_per_pullback=n_steps_per_pullback)
             lyap1 = np.mean(lyap1, axis=1)
 
             # check energy conservation
@@ -264,9 +264,9 @@ class TestLogarithmic(object):
             assert np.all(dE_fast[:,0] < 1E-10)
 
             lyap2, orbit2 = lyapunov_max(w0.copy(), integrator,
-                                         dt=self.dt, nsteps=self.nsteps//10,
+                                         dt=self.dt, n_steps=self.n_steps//10,
                                          d0=d0, noffset_orbits=noffset,
-                                         nsteps_per_pullback=nsteps_per_pullback,
+                                         n_steps_per_pullback=n_steps_per_pullback,
                                          units=self.potential.units)
             lyap2 = np.mean(lyap2, axis=1)
 
@@ -302,7 +302,7 @@ def test_surface_of_section(tmpdir):
 
     w0 = np.array([[0.,0.8,0.,1.,0.,0.],
                    [0.,0.9,0.,1.,0.,0.]]).T
-    orbit = pot.integrate_orbit(w0, dt=0.02, nsteps=100000)
+    orbit = pot.integrate_orbit(w0, dt=0.02, n_steps=100000)
     sos = surface_of_section(orbit, plane_ix=1)
 
     # plot in 3D

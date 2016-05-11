@@ -24,7 +24,7 @@ def test_mock_stream():
 
     w0 = CartesianPhaseSpacePosition(pos=[0.,15.,0]*u.kpc,
                                      vel=[-0.13,0,0]*u.kpc/u.Myr)
-    prog = potential.integrate_orbit(w0, dt=-2., nsteps=1023)
+    prog = potential.integrate_orbit(w0, dt=-2., n_steps=1023)
     prog = prog[::-1]
 
     k_mean = [1.,0.,0.,0.,1.,0.]
@@ -52,7 +52,7 @@ def test_each_type(mock_func, extra_kwargs):
 
     w0 = CartesianPhaseSpacePosition(pos=[0.,15.,0]*u.kpc,
                                      vel=[-0.13,0,0]*u.kpc/u.Myr)
-    prog = potential.integrate_orbit(w0, dt=-2., nsteps=1023)
+    prog = potential.integrate_orbit(w0, dt=-2., n_steps=1023)
     prog = prog[::-1]
 
     stream = mock_func(potential, prog_orbit=prog, prog_mass=1E4,
