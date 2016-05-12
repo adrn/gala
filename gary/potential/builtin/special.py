@@ -75,6 +75,7 @@ class LM10Potential(CCompositePotential):
         self["disk"] = MiyamotoNagaiPotential(units=units, **disk)
         self["bulge"] = HernquistPotential(units=units, **bulge)
         self["halo"] = LogarithmicPotential(units=units, **halo)
+        self.lock = True
 
 # --------------------------------------------------------------------
 # class TriaxialMWPotential(CCompositePotential):

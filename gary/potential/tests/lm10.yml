@@ -1,0 +1,59 @@
+class: LM10Potential
+type: custom
+components:
+- class: MiyamotoNagaiPotential
+  name: disk
+  parameters: !!python/object/apply:collections.OrderedDict
+    dictitems:
+      a: 10.
+      a_unit: kpc
+      b: 0.26
+      b_unit: kpc
+      m: 150000.
+      m_unit: solMass
+  units:
+    angle: rad
+    angular speed: mas / yr
+    length: kpc
+    mass: solMass
+    speed: km / s
+    time: Myr
+- class: HernquistPotential
+  name: bulge
+  parameters: !!python/object/apply:collections.OrderedDict
+    dictitems:
+      c: 0.7
+      c_unit: kpc
+      m: 34000000000.0
+      m_unit: solMass
+  units:
+    angle: rad
+    angular speed: mas / yr
+    length: kpc
+    mass: solMass
+    speed: km / s
+    time: Myr
+- class: LogarithmicPotential
+  name: halo
+  parameters: !!python/object/apply:collections.OrderedDict
+    dictitems:
+      phi: 1.6929693744344996
+      phi_unit: rad
+      q1: 1.38
+      q1_unit: ''
+      q2: 1.0
+      q2_unit: ''
+      q3: 1.36
+      q3_unit: ''
+      r_h: 12.0
+      r_h_unit: kpc
+      v_c: 0.17624729719037474
+      v_c_unit: kpc / Myr
+  units:
+    angle: rad
+    angular speed: mas / yr
+    length: kpc
+    mass: solMass
+    speed: km / s
+    time: Myr
+

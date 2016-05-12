@@ -89,3 +89,16 @@ def test_failures():
     p['derp'] = KeplerPotential(m=1.*u.Msun, units=solarsystem)
     with pytest.raises(ValueError):
         p['jnsdfn'] = HenonHeilesPotential(units=solarsystem)
+
+def test_lock():
+    p = CompositePotential()
+    p['derp'] = KeplerPotential(m=1.*u.Msun, units=solarsystem)
+    p.lock = True
+    with pytest.raises(ValueError): # try adding potential after lock
+        p['herp'] = KeplerPotential(m=2.*u.Msun, units=solarsystem)
+
+    p = CCompositePotential()
+    p['derp'] = KeplerPotential(m=1.*u.Msun, units=solarsystem)
+    p.lock = True
+    with pytest.raises(ValueError): # try adding potential after lock
+        p['herp'] = KeplerPotential(m=2.*u.Msun, units=solarsystem)

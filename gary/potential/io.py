@@ -99,6 +99,22 @@ def from_dict(d, module=None):
             name = component.get('name', str(i))
             p[name] = c
 
+    elif 'type' in d and d['type'] == 'custom':
+        param_groups = dict()
+        for i,component in enumerate(d['components']):
+            c = _parse_component(component, module)
+
+            try:
+                name = component['name']
+            except KeyError:
+                raise KeyError("For custom potentials, component specification must include "
+                               "the component name (e.g., name: 'blah')")
+
+            params = component.get('parameters', {})
+            params = _unpack_params(params) # unpack quantities
+            param_groups[name] = params
+        p = getattr(potential, d['class'])(**param_groups)
+
     else:
         p = _parse_component(d, module)
 
@@ -144,15 +160,21 @@ def to_dict(potential):
 
     """
     from .. import potential as gp
+
     if isinstance(potential, gp.CompositePotential):
         d = dict()
-        d['type'] = 'composite'
         d['class'] = potential.__class__.__name__
         d['components'] = []
         for k,p in potential.items():
             comp_dict = _to_dict_help(p)
             comp_dict['name'] = k
             d['components'].append(comp_dict)
+
+        if potential.__class__.__name__ == 'CompositePotential' or \
+           potential.__class__.__name__ == 'CCompositePotential':
+            d['type'] = 'composite'
+        else:
+            d['type'] = 'custom'
 
     else:
         d = _to_dict_help(potential)
