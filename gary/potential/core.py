@@ -621,6 +621,7 @@ class CompositePotential(PotentialBase, OrderedDict):
             for i,v in args:
                 kwargs[str(i)] = v
 
+        self.lock = False
         for v in kwargs.values():
             self._check_component(v)
 
@@ -642,6 +643,10 @@ class CompositePotential(PotentialBase, OrderedDict):
             if sorted([str(x) for x in self.units]) != sorted([str(x) for x in p.units]):
                 raise ValueError("Unit system of new potential component must match "
                                  "unit systems of other potential components.")
+
+        if self.lock:
+            raise ValueError("Potential object is locked - new components can only be"
+                             " added to unlocked potentials.")
 
     @property
     def units(self):  # read-only

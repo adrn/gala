@@ -3,6 +3,7 @@ class: CompositePotential
 components:
   -
     class: PlummerPotential
+    name: halo
     parameters:
       b: 0.26
       m: 100000000000.0

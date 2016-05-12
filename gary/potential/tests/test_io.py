@@ -37,6 +37,15 @@ def test_read_composite():
     assert potential.units['length'] == u.kpc
     assert potential.units['speed'] == u.km/u.s
 
+def test_read_lm10():
+    potential = load(get_pkg_data_filename('lm10.yml'))
+    assert 'halo' in potential.keys()
+    assert 'disk' in potential.keys()
+    assert str(potential) == "LM10Potential"
+    assert np.allclose(potential['disk'].parameters['a'].value, 10)
+    assert np.allclose(potential['disk'].parameters['b'].value, 0.26)
+    assert np.allclose(potential['disk'].parameters['m'].value, 150000.)
+
 def test_write_isochrone(tmpdir):
     tmp_filename = str(tmpdir.join("potential.yml"))
 
