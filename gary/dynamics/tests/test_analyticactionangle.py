@@ -58,7 +58,7 @@ class TestIsochrone(object):
             assert np.allclose(actions, s_actions.T, rtol=1E-8)
             assert_angles_allclose(angles, s_angles.T, rtol=1E-8)
 
-            # test roundtrip TODO
+            # TODO: when I fix actionangle -> xv function, re-add this
             # x2,v2 = isochrone_aa_to_xv(actions, angles, self.potential)
 
             # assert np.allclose(x, x2, rtol=1E-8)

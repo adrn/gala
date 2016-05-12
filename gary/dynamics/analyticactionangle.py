@@ -42,7 +42,6 @@ def isochrone_to_aa(w, potential):
     Parameters
     ----------
     w : :class:`gary.dynamics.CartesianPhaseSpacePosition`, :class:`gary.dynamics.CartesianOrbit`
-        TODO: ...
     potential : :class:`gary.potential.IsochronePotential`, dict
         An instance of the potential to use for computing the transformation
         to angle-action coordinates. Or, a dictionary of parameters used to
