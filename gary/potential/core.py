@@ -23,7 +23,6 @@ from ..dynamics import CartesianOrbit, CartesianPhaseSpacePosition
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
-@six.add_metaclass(InheritDocstrings)
 class PotentialBase(object):
     """
     A baseclass for defining pure-Python gravitational potentials.
@@ -585,7 +584,6 @@ class PotentialBase(object):
         from .io import save
         save(self, f)
 
-@six.add_metaclass(InheritDocstrings)
 class CompositePotential(PotentialBase, OrderedDict):
     """
     A potential composed of several distinct components. For example,
