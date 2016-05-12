@@ -86,8 +86,7 @@ def fit_isochrone(orbit, m0=2E11, b0=1.):
 
     Parameters
     ----------
-    orbit : array_like
-        TODO:
+    orbit : `~gary.dynamics.CartesianOrbit`
     m0 : numeric (optional)
         Initial mass guess.
     b0 : numeric (optional)
