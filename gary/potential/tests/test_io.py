@@ -31,7 +31,7 @@ def test_read_harmonic_oscillator():
 
 def test_read_composite():
     potential = load(get_pkg_data_filename('Composite.yml'))
-    assert '0' in potential.keys()
+    assert 'halo' in potential.keys()
     assert 'disk' in potential.keys()
     assert str(potential) == "CompositePotential"
     assert potential.units['length'] == u.kpc
