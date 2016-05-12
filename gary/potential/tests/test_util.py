@@ -35,8 +35,6 @@ class TestHarmonicOscillatorFromEquationUnits(EquationBase):
     w0 = [1.,0.]
 
 class TestKeplerFromEquation(EquationBase):
-    # TODO: This doesn't work
-    # python setup.py test -t gary/potential/tests/test_util.py -a "-k Kepler"
     Potential = from_equation("-G*M/sqrt(x**2+y**2+z**2)", vars=["x","y","z"],
                               pars=["G","M"], name='Kepler')
     potential = Potential(G=1., M=1., units=solarsystem)
