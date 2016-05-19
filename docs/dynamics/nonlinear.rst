@@ -16,9 +16,9 @@ Some imports needed for the code below::
 
     >>> import astropy.units as u
     >>> import numpy as np
-    >>> import gary.potential as gp
-    >>> import gary.dynamics as gd
-    >>> from gary.units import galactic
+    >>> import gala.potential as gp
+    >>> import gala.dynamics as gd
+    >>> from gala.units import galactic
 
 Computing Lyapunov exponents
 ============================
@@ -26,11 +26,11 @@ Computing Lyapunov exponents
 Chaotic orbit
 -------------
 
-There are two ways to compute Lyapunov exponents implemented in `gary.dynamics`.
-In most cases, you'll want to use the `~gary.dynamics.fast_lyapunov_max` function
+There are two ways to compute Lyapunov exponents implemented in `gala.dynamics`.
+In most cases, you'll want to use the `~gala.dynamics.fast_lyapunov_max` function
 because the integration is implemented in C and is quite fast. This function only
 works if the potential you are working with is implemented in C (e.g., it is a
-`~gary.potential.CPotentialBase` subclass). With a potential object and
+`~gala.potential.CPotentialBase` subclass). With a potential object and
 a set of initial conditions::
 
     >>> pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, r_h=0.1*u.kpc,
@@ -42,7 +42,7 @@ a set of initial conditions::
 This returns two objects: an `~astropy.units.Quantity` object that
 contains the maximum Lyapunov exponent estimate for each offset orbit,
 (we can control the number of offset orbits with the ``noffset_orbits``
-argument) and an `~gary.dynamics.CartesianOrbit` object that contains
+argument) and an `~gala.dynamics.CartesianOrbit` object that contains
 the parent orbit and each offset orbit. Let's plot the parent orbit::
 
     >>> fig = orbit[:,0].plot(marker=',', alpha=0.1, linestyle='none') # doctest: +SKIP
@@ -52,9 +52,9 @@ the parent orbit and each offset orbit. Let's plot the parent orbit::
 
     import astropy.units as u
     import matplotlib.pyplot as pl
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
+    import gala.potential as gp
+    import gala.dynamics as gd
+    from gala.units import galactic
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, r_h=0.1*u.kpc,
                                   q1=1., q2=0.8, q3=0.6, units=galactic)
@@ -81,9 +81,9 @@ array. This plots one line per offset orbit::
 
     import astropy.units as u
     import matplotlib.pyplot as pl
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
+    import gala.potential as gp
+    import gala.dynamics as gd
+    from gala.units import galactic
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, r_h=0.1*u.kpc,
                                   q1=1., q2=0.8, q3=0.6, units=galactic)
@@ -114,9 +114,9 @@ To compare, we will compute the estimate for a regular orbit as well::
 
     import astropy.units as u
     import matplotlib.pyplot as pl
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
+    import gala.potential as gp
+    import gala.dynamics as gd
+    from gala.units import galactic
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, r_h=0.1*u.kpc,
                                   q1=1., q2=0.8, q3=0.6, units=galactic)
@@ -139,9 +139,9 @@ following a characteristic power-law (a straight line in a log-log plot)::
 
     import astropy.units as u
     import matplotlib.pyplot as pl
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
+    import gala.potential as gp
+    import gala.dynamics as gd
+    from gala.units import galactic
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, r_h=0.1*u.kpc,
                                   q1=1., q2=0.8, q3=0.6, units=galactic)
@@ -157,6 +157,6 @@ following a characteristic power-law (a straight line in a log-log plot)::
 
 API
 ---
-.. automodapi:: gary.dynamics.nonlinear
+.. automodapi:: gala.dynamics.nonlinear
     :no-heading:
     :headings: ^^

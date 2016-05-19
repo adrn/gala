@@ -3,7 +3,7 @@
 .. _units:
 
 ***************************
-Unit Systems (`gary.units`)
+Unit Systems (`gala.units`)
 ***************************
 
 Introduction
@@ -16,7 +16,7 @@ For the examples below, I assume the following imports have been
 already executed::
 
     >>> import astropy.units as u
-    >>> from gary.units import UnitSystem
+    >>> from gala.units import UnitSystem
 
 Unit Systems
 ============
@@ -27,7 +27,7 @@ Unit Systems
 
 At its simplest, a unit system is a container class that holds a
 set of base units that specify length, time, mass, and angle. A
-`~gary.units.UnitSystem` object is created by passing in units with
+`~gala.units.UnitSystem` object is created by passing in units with
 (at least) these four required physical types::
 
     >>> usys = UnitSystem(u.cm, u.millisecond, u.degree, u.gram)
@@ -41,7 +41,7 @@ unit system using :meth:`~astropy.units.Quantity.decompose`::
     >>> a.decompose(usys)
     <Quantity 1500.0 cm / ms>
 
-`~gary.units.UnitSystem` objects can also act as a dictionary to look up
+`~gala.units.UnitSystem` objects can also act as a dictionary to look up
 a unit for a given physical type. For example, if we want to know what a
 'speed' unit is in a given unit system, simple pass ``'speed'`` in as a key::
 
@@ -80,8 +80,8 @@ it only uses the base units::
     <Quantity 0.15 kpc / Myr>
 
 Because we specified a unit for quantities with a physical type = 'speed',
-we instead want to use the `~gary.units.UnitSystem.decompose` method
-of the `~gary.units.UnitSystem` object, which has exactly opposite
+we instead want to use the `~gala.units.UnitSystem.decompose` method
+of the `~gala.units.UnitSystem` object, which has exactly opposite
 call syntax::
 
     >>> usys2.decompose(q)
@@ -92,6 +92,6 @@ call syntax::
 API
 ===
 
-.. automodapi:: gary.units
+.. automodapi:: gala.units
     :no-inheritance-diagram:
 

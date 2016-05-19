@@ -15,10 +15,10 @@ Some imports needed for the code below::
 
     >>> import astropy.units as u
     >>> import numpy as np
-    >>> import gary.potential as gp
-    >>> import gary.dynamics as gd
-    >>> from gary.dynamics.mockstream import mock_stream
-    >>> from gary.units import galactic
+    >>> import gala.potential as gp
+    >>> import gala.dynamics as gd
+    >>> from gala.dynamics.mockstream import mock_stream
+    >>> from gala.units import galactic
 
 .. warning::
 
@@ -80,7 +80,7 @@ equivalent to fixing the :math:`k` parameters to:
     k_\phi &= k_z = k_{vR} = k_{vz} = 0
 
 We can set these parameters when generating a stream model with
-`~gary.dynamics.mockstream.mock_stream`, but first we need to specify a
+`~gala.dynamics.mockstream.mock_stream`, but first we need to specify a
 potential and integrate the orbit of the progenitor system. We'll use a
 spherical NFW potential, a progenitor mass :math:`m=10^4~{\rm M}_\odot` and
 initial conditions that place the progenitor on a mildly eccentric orbit:
@@ -98,9 +98,9 @@ initial conditions that place the progenitor on a mildly eccentric orbit:
 
     import astropy.units as u
     import numpy as np
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
+    import gala.potential as gp
+    import gala.dynamics as gd
+    from gala.units import galactic
 
     pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
                                    units=galactic)
@@ -130,10 +130,10 @@ from both Lagrange points by setting ``release_every=1``:
 
     import astropy.units as u
     import numpy as np
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
-    from gary.dynamics.mockstream import mock_stream
+    import gala.potential as gp
+    import gala.dynamics as gd
+    from gala.units import galactic
+    from gala.dynamics.mockstream import mock_stream
 
     pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
                                    units=galactic)
@@ -155,10 +155,10 @@ Or, zooming in around the progenitor:
     import astropy.units as u
     import matplotlib.pyplot as pl
     import numpy as np
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
-    from gary.dynamics.mockstream import mock_stream
+    import gala.potential as gp
+    import gala.dynamics as gd
+    from gala.units import galactic
+    from gala.dynamics.mockstream import mock_stream
 
     pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
                                    units=galactic)
@@ -203,10 +203,10 @@ stream using this method:
 
     import astropy.units as u
     import numpy as np
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
-    from gary.dynamics.mockstream import mock_stream
+    import gala.potential as gp
+    import gala.dynamics as gd
+    from gala.units import galactic
+    from gala.dynamics.mockstream import mock_stream
 
     pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
                                    units=galactic)
@@ -228,10 +228,10 @@ Or, again, zooming in around the progenitor:
     import astropy.units as u
     import matplotlib.pyplot as pl
     import numpy as np
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
-    from gary.dynamics.mockstream import mock_stream
+    import gala.potential as gp
+    import gala.dynamics as gd
+    from gala.units import galactic
+    from gala.dynamics.mockstream import mock_stream
 
     pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
                                    units=galactic)
@@ -263,7 +263,7 @@ References
 
 API
 ---
-.. automodapi:: gary.dynamics.mockstream
+.. automodapi:: gala.dynamics.mockstream
     :no-heading:
     :headings: ^^
 

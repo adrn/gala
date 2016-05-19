@@ -142,7 +142,7 @@ htmlhelp_basename = project + 'doc'
 
 # Static files to copy after template files
 html_static_path = ['_static']
-html_style = 'gary.css'
+html_style = 'gala.css'
 
 
 # -- Options for LaTeX output --------------------------------------------------

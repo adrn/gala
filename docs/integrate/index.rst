@@ -3,7 +3,7 @@
 .. _gary-integrate:
 
 ************************************
-Integration (`gary.integrate`)
+Integration (`gala.integrate`)
 ************************************
 
 Introduction
@@ -20,15 +20,15 @@ imports have already been excuted::
 
     >>> import astropy.units as u
     >>> import numpy as np
-    >>> import gary.integrate as gi
-    >>> from gary.units import galactic
+    >>> import gala.integrate as gi
+    >>> from gala.units import galactic
 
 Getting Started
 ===============
 
 All of the integrator classes have the same basic call structure. To create
 an integrator object, you pass in a function that evaluates derivatives of,
-for example, phase-space coordinates, then you call the `~gary.integrate.Integrator.run`
+for example, phase-space coordinates, then you call the `~gala.integrate.Integrator.run`
 method while specifying timestep information.
 
 The integration function must accept, at minimum, two arguments: the current time, ``t``,
@@ -44,7 +44,7 @@ a simple harmonic oscillator) is::
     ...     return np.array([x_dot, -x])
 
 Even though time does not explicitly enter into the equation, the function must still
-accept a time argument. We will now create an instance of `~gary.integrate.LeapfrogIntegrator`
+accept a time argument. We will now create an instance of `~gala.integrate.LeapfrogIntegrator`
 to integrate an orbit::
 
     >>> integrator = gi.LeapfrogIntegrator(F)
@@ -66,11 +66,11 @@ steps::
     Unit(dimensionless)
 
 We can instead specify the unit system that the function (``F``) expects, and
-then pass in a `~gary.dynamics.CartesianPhaseSpacePosition` object with arbitrary
+then pass in a `~gala.dynamics.CartesianPhaseSpacePosition` object with arbitrary
 units in as initial conditions::
 
-    >>> import gary.dynamics as gd
-    >>> from gary.units import UnitSystem
+    >>> import gala.dynamics as gd
+    >>> from gala.units import UnitSystem
     >>> usys = UnitSystem(u.m, u.s, u.kg, u.radian)
     >>> integrator = gi.LeapfrogIntegrator(F, func_units=usys)
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=100.*u.cm, vel=0*u.cm/u.yr)
@@ -113,7 +113,7 @@ object by specifying this function, along with values for the function arguments
 
     >>> integrator = gi.DOPRI853Integrator(F, func_args=(0.07, 0.75))
 
-To integrate an orbit, we use the `~gary.integrate.Integrator.run` method.
+To integrate an orbit, we use the `~gala.integrate.Integrator.run` method.
 We have to specify the initial conditions along with information about how long
 to integrate and with what stepsize. There are several options for how to specify
 the time step information. We could pre-generate an array of times and pass that in,
@@ -133,7 +133,7 @@ We can plot the integrated (chaotic) orbit::
     import astropy.units as u
     import matplotlib.pyplot as pl
     import numpy as np
-    import gary.integrate as gi
+    import gala.integrate as gi
 
     def F(t, w, A, omega_D):
         q,p = w
@@ -166,7 +166,7 @@ nonlinear system::
     import astropy.units as u
     import matplotlib.pyplot as pl
     import numpy as np
-    import gary.integrate as gi
+    import gala.integrate as gi
 
     def F(t,w,sigma,rho,beta):
         x,y,z,px,py,pz = w
@@ -181,4 +181,4 @@ nonlinear system::
 API
 ===
 
-.. automodapi:: gary.integrate
+.. automodapi:: gala.integrate

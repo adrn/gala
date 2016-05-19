@@ -1,23 +1,23 @@
-Gary :man:
+Gala :man:
 ==========
 
-Gary is a Python package for Galactic Astronomy and especially gravitational
+Gala is a Python package for Galactic Astronomy and especially gravitational
 dynamics.
 
 [![Coverage Status](https://coveralls.io/repos/adrn/gary/badge.svg?branch=master&service=github)](https://coveralls.io/github/adrn/gary?branch=master)
 [![Build status](http://img.shields.io/travis/adrn/gary/master.svg?style=flat)](http://travis-ci.org/adrn/gary)
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/adrn/gary/blob/master/LICENSE)
-[![Documentation Status](https://readthedocs.org/projects/gary/badge/?version=latest)](http://gary.readthedocs.org/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/gary/badge/?version=latest)](http://gala.readthedocs.org/en/latest/?badge=latest)
 
 
 Documentation
 =============
 
-[Read the docs](http://gary.adrian.pw)
+[Read the docs](http://gala.adrian.pw)
 
 Installation and Dependencies
 =============================
-See the [installation instructions](http://gary.adrian.pw/install.html) in the [documentation](http://gary.adrian.pw).
+See the [installation instructions](http://gala.adrian.pw/install.html) in the [documentation](http://gala.adrian.pw).
 
 Warning
 =======

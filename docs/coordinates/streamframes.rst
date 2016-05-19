@@ -2,7 +2,7 @@
 
     >>> import astropy.coordinates as coord
     >>> import astropy.units as u
-    >>> import gary.coordinates as gc
+    >>> import gala.coordinates as gc
 
 Stellar Stream Coordinate Frames
 ================================

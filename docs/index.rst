@@ -3,10 +3,10 @@
 .. _gary:
 
 #########
-Meet Gary
+Meet Gala
 #########
 
-Gary is a Python package for Galactic astronomy and gravitational
+Gala is a Python package for Galactic astronomy and gravitational
 dynamics. The bulk of the package centers around implementations of
 `gravitational potentials <potential/index>`_,
 `numerical integration <integrate/index>`_,
