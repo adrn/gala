@@ -3,7 +3,7 @@
 .. _potential:
 
 *************************************************
-Gravitational potentials (`gary.potential`)
+Gravitational potentials (`gala.potential`)
 *************************************************
 
 Introduction
@@ -14,16 +14,16 @@ of gravitational potentials. There are base classes for creating custom
 potential classes, but more useful are the built-in potentials. These are
 commonly used potentials that have methods for computing, for example, the
 potential value (energy), gradient, density, or mass profiles. These are
-particularly useful in combination with the `~gary.integrate` and
-`~gary.dynamics` subpackages.
+particularly useful in combination with the `~gala.integrate` and
+`~gala.dynamics` subpackages.
 
 For code blocks below and any pages linked below, I assume the following imports
 have already been excuted::
 
     >>> import astropy.units as u
     >>> import numpy as np
-    >>> import gary.potential as gp
-    >>> from gary.units import galactic, solarsystem, dimensionless
+    >>> import gala.potential as gp
+    >>> from gala.units import galactic, solarsystem, dimensionless
 
 Getting started: built-in potential classes
 ===========================================
@@ -32,7 +32,7 @@ The built-in potentials are all initialized by passing in keyword argument
 parameter values as numeric values or :class:`~astropy.units.Quantity` objects.
 To see what parameters are available for a given potential, check the
 documentation for the individual classes below. You must also specify a
-`~gary.units.UnitSystem` when initializing a potential. A unit system is a set
+`~gala.units.UnitSystem` when initializing a potential. A unit system is a set
 of non-reducible units that define the length, mass, time, and angle units. A
 few common unit systems are built in to the package (e.g., ``solarsystem``).
 
@@ -52,16 +52,16 @@ specified unit system::
     <KeplerPotential: m=1.00 (AU,yr,solMass,rad)>
 
 If no units are specified for a parameter, it is assumed to already be
-consistent with the `~gary.units.UnitSystem` passed in::
+consistent with the `~gala.units.UnitSystem` passed in::
 
     >>> gp.KeplerPotential(m=1., units=solarsystem)
     <KeplerPotential: m=1.00 (AU,yr,solMass,rad)>
 
 The potential classes work well with the :mod:`astropy.units` framework, but to
-ignore units you can use the `~gary.units.DimensionlessUnitSystem` by
+ignore units you can use the `~gala.units.DimensionlessUnitSystem` by
 importing::
 
-    >>> from gary.units import dimensionless
+    >>> from gala.units import dimensionless
     >>> gp.KeplerPotential(m=1., units=dimensionless)
     <KeplerPotential: m=1.00 (dimensionless)>
 
@@ -96,11 +96,11 @@ We may also compute the gradient or acceleration::
                [ -0.        ]] AU / yr2>
 
 .. These objects also provide more specialized methods such as
-.. :meth:`~gary.potential.Potential.plot_contours`, for plotting isopotential
-.. contours in both 1D and 2D, and :meth:`~gary.potential.Potential.mass_enclosed`,
+.. :meth:`~gala.potential.Potential.plot_contours`, for plotting isopotential
+.. contours in both 1D and 2D, and :meth:`~gala.potential.Potential.mass_enclosed`,
 .. which estimates the mass enclosed within a specified spherical radius.
 
-`~gary.potential.Potential.plot_contours` supports plotting
+`~gala.potential.Potential.plot_contours` supports plotting
 either 1D slices or 2D contour plots of isopotentials. To plot a 1D slice
 over the dimension of interest, pass in a grid of values for that dimension
 and numerical values for the others. For example, to make a 1D plot of the
@@ -114,8 +114,8 @@ potential value as a function of :math:`x` position at :math:`y=0, z=1`::
 
     import astropy.units as u
     import numpy as np
-    import gary.potential as gp
-    from gary.units import galactic, solarsystem
+    import gala.potential as gp
+    from gala.units import galactic, solarsystem
 
     pot = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
     fig = pot.plot_contours(grid=(np.linspace(-15,15,100), 0., 1.))
@@ -133,15 +133,15 @@ for :math:`z` (the meshgridding is taken care of internally)::
 
     import astropy.units as u
     import numpy as np
-    import gary.potential as gp
-    from gary.units import galactic, solarsystem
+    import gala.potential as gp
+    from gala.units import galactic, solarsystem
 
     pot = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
     x = np.linspace(-15,15,100)
     z = np.linspace(-5,5,100)
     pot.plot_contours(grid=(x, 1., z))
 
-:meth:`~gary.potential.PotentialBase.mass_enclosed` is a method that
+:meth:`~gala.potential.PotentialBase.mass_enclosed` is a method that
 numerically estimates the mass enclosed within a spherical shell defined
 by the specified position. This numerically estimates
 :math:`\frac{d \Phi}{d r}` along the vector pointing at the specified position
@@ -161,8 +161,8 @@ be used to compute, for example, a mass profile::
 
     import astropy.units as u
     import numpy as np
-    import gary.potential as gp
-    from gary.units import galactic, solarsystem
+    import gala.potential as gp
+    from gala.units import galactic, solarsystem
     import matplotlib.pyplot as pl
 
     pot = gp.SphericalNFWPotential(v_c=0.5, r_s=20., units=galactic)
@@ -174,18 +174,18 @@ be used to compute, for example, a mass profile::
 Potential objects can be `pickled <https://docs.python.org/2/library/pickle.html>`_
 and can therefore be stored for later use. However, pickles are saved as binary
 files. It may be useful to save to or load from text-based specifications of
-Potential objects. This can be done with :func:`gary.potential.save` and
-:func:`gary.potential.load`, or with the :meth:`~gary.potential.PotentialBase.save`
+Potential objects. This can be done with :func:`gala.potential.save` and
+:func:`gala.potential.load`, or with the :meth:`~gala.potential.PotentialBase.save`
 and method::
 
-    >>> from gary.potential import load
+    >>> from gala.potential import load
     >>> pot = gp.SphericalNFWPotential(v_c=500*u.km/u.s, r_s=20.*u.kpc,
     ...                                units=galactic)
     >>> pot.save("potential.yml")
     >>> load("potential.yml")
     <SphericalNFWPotential: v_c=0.51, r_s=20.00 (kpc,Myr,solMass,rad)>
 
-Using gary.potential
+Using gala.potential
 ====================
 More details are provided in the linked pages below:
 
@@ -198,4 +198,4 @@ More details are provided in the linked pages below:
 API
 ===
 
-.. automodapi:: gary.potential
+.. automodapi:: gala.potential

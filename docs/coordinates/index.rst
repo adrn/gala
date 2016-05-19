@@ -1,13 +1,13 @@
 .. _coordinates:
 
 *********************************************
-Coordinate Systems (`gary.coordinates`)
+Coordinate Systems (`gala.coordinates`)
 *********************************************
 
 Introduction
 ============
 
-The `~gary.coordinates` subpackage provides functions for converting
+The `~gala.coordinates` subpackage provides functions for converting
 velocities between various astronomical coordinate frames and systems.
 This subpackage also provides :mod:`astropy.coordinates` frame classes
 for coordinate sytems defined by the Sagittarius and Orphan streams.
@@ -17,7 +17,7 @@ For the examples below the following imports have already been executed::
     >>> import numpy as np
     >>> import astropy.coordinates as coord
     >>> import astropy.units as u
-    >>> import gary.coordinates as gc
+    >>> import gala.coordinates as gc
 
 Getting Started
 ===============
@@ -46,7 +46,7 @@ to define an Astropy coordinate to specify the position of the object::
     >>> c = coord.SkyCoord(ra=100.68458*u.deg, dec=41.26917*u.deg, distance=1.1*u.kpc)
 
 Then pass this object in to the heliocentric to galactocentric conversion
-function, :func:`~gary.coordinates.vhel_to_gal`::
+function, :func:`~gala.coordinates.vhel_to_gal`::
 
     >>> pm = [1.5, -1.7] * u.mas/u.yr
     >>> rv = 151.1 * u.km/u.s
@@ -73,7 +73,7 @@ keyword argument ``galactocentric_frame`` ::
     <Quantity [-144.5344455 , 221.17957796,  45.50447318] km / s>
 
 The inverse transformations are also available, with the function
-:func:`~gary.coordinates.vgal_to_hel`. Here, because the input coordinate is passed
+:func:`~gala.coordinates.vgal_to_hel`. Here, because the input coordinate is passed
 in after being transformed to the ICRS frame, the output proper motions will also be
 given in the ICRS frame :math:`(\mu_\alpha\cos\delta, \mu_\delta)`::
 
@@ -101,7 +101,7 @@ All of these functions also work on arrays of coordinates and velocities, e.g.::
     >>> gc.vgal_to_hel(xyz.transform_to(coord.ICRS), vxyz) # doctest: +SKIP
     ...
 
-Using gary.coordinates
+Using gala.coordinates
 ======================
 More details are provided in the linked pages below:
 
@@ -116,5 +116,5 @@ More details are provided in the linked pages below:
 API
 ===
 
-.. automodapi:: gary.coordinates
+.. automodapi:: gala.coordinates
     :no-inheritance-diagram:

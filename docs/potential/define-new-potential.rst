@@ -17,8 +17,8 @@ For code blocks below and any pages linked below, I assume the following
 imports have already been excuted::
 
     >>> import numpy as np
-    >>> import gary.potential as gp
-    >>> import gary.dynamics as gd
+    >>> import gala.potential as gp
+    >>> import gala.dynamics as gd
 
 Implementing a new potential with Python
 ========================================
@@ -96,8 +96,8 @@ can integrate an orbit in this potential::
 
     import matplotlib.pyplot as pl
     import numpy as np
-    import gary.dynamics as gd
-    import gary.potential as gp
+    import gala.dynamics as gd
+    import gala.potential as gp
 
     class HenonHeilesPotential(gp.PotentialBase):
 
@@ -138,8 +138,8 @@ Or, we could create a contour plot of equipotentials::
 
     import matplotlib.pyplot as pl
     import numpy as np
-    import gary.dynamics as gd
-    import gary.potential as gp
+    import gala.dynamics as gd
+    import gala.potential as gp
 
     class HenonHeilesPotential(gp.PotentialBase):
 

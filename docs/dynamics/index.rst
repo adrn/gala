@@ -3,7 +3,7 @@
 .. _gary-dynamics:
 
 ********************************
-Dynamics (`gary.dynamics`)
+Dynamics (`gala.dynamics`)
 ********************************
 
 Introduction
@@ -11,8 +11,8 @@ Introduction
 
 This subpackage contains functions and classes useful for gravitational
 dynamics. The fundamental objects used by many of the functions and utilities
-in this and other subpackages are the `~gary.dynamics.PhaseSpacePosition` and
-`~gary.dynamics.Orbit` subclasses.
+in this and other subpackages are the `~gala.dynamics.PhaseSpacePosition` and
+`~gala.dynamics.Orbit` subclasses.
 
 There are utilities for transforming orbits in phase-space to action-angle
 coordinates, tools for visualizing and computing dynamical quantities from
@@ -24,16 +24,16 @@ imports have already been excuted::
 
     >>> import astropy.units as u
     >>> import numpy as np
-    >>> import gary.potential as gp
-    >>> import gary.dynamics as gd
-    >>> from gary.units import galactic
+    >>> import gala.potential as gp
+    >>> import gala.dynamics as gd
+    >>> from gala.units import galactic
 
 Getting started: Working with orbits
 ====================================
 
 Some simple tools are provided for inspecting and plotting orbits. For example,
 we'll start by integrating an orbit in Cartesian coordinates using the
-:mod:`gary.potential` and :mod:`gary.integrate` subpackages::
+:mod:`gala.potential` and :mod:`gala.integrate` subpackages::
 
     >>> pot = gp.MiyamotoNagaiPotential(m=2.5E11*u.Msun, a=6.5*u.kpc,
     ...                                 b=0.26*u.kpc, units=galactic)
@@ -43,10 +43,10 @@ we'll start by integrating an orbit in Cartesian coordinates using the
 
 This will integrate an orbit from the specified initial conditions (``w0``) and
 return an orbit object. There are many useful methods of the
-`~gary.dynamics.Orbit` subclasses and many functions that accept
-`~gary.dynamics.Orbit` objects. For example, we can easily visualize the orbit
+`~gala.dynamics.Orbit` subclasses and many functions that accept
+`~gala.dynamics.Orbit` objects. For example, we can easily visualize the orbit
 by plotting the time series in all projections using the
-:meth:`~gary.dynamics.CartesianOrbit.plot` method::
+:meth:`~gala.dynamics.CartesianOrbit.plot` method::
 
     >>> fig = orbit.plot()
 
@@ -54,9 +54,9 @@ by plotting the time series in all projections using the
     :align: center
 
     import astropy.units as u
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
+    import gala.potential as gp
+    import gala.dynamics as gd
+    from gala.units import galactic
     pot = gp.MiyamotoNagaiPotential(m=2.5E11, a=6.5, b=0.26, units=galactic)
     w0 = gd.CartesianPhaseSpacePosition(pos=[11., 0., 0.2]*u.kpc,
                                         vel=[0., 200, 100]*u.km/u.s)
@@ -79,7 +79,7 @@ angular momentum::
     (<Quantity 4.654233175716351e-06 kpc2 / Myr2>,
      <Quantity 9.675900603446092e-16 kpc2 / Myr>)
 
-Using gary.dynamics
+Using gala.dynamics
 ===================
 More details are provided in the linked pages below:
 
@@ -91,4 +91,4 @@ More details are provided in the linked pages below:
    mockstreams
    nonlinear
 
-.. automodapi:: gary.dynamics
+.. automodapi:: gala.dynamics

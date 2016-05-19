@@ -5,23 +5,23 @@ Creating a multi-component potential
 ************************************
 
 Potential objects can be combined into more complex *composite* potentials
-using the :class:`~gary.potential.CompositePotential` or
-:class:`~gary.potential.CCompositePotential` classes. These classes operate
+using the :class:`~gala.potential.CompositePotential` or
+:class:`~gala.potential.CCompositePotential` classes. These classes operate
 like a Python dictionary in that each component potential must be named, and
 the potentials can either be passed in to the initializer or added after the
 composite potential container is already created.
 
 For composing any of the built-in potentials or any external potentials
 implemented in C, it is always faster to use
-:class:`~gary.potential.CCompositePotential`, where the composition is done at
+:class:`~gala.potential.CCompositePotential`, where the composition is done at
 the C layer rather than in Python.
 
 But with either class, interaction with the class is identical. Each component
 potential must be instantiated before adding it to the composite potential::
 
     >>> import numpy as np
-    >>> import gary.potential as gp
-    >>> from gary.units import galactic
+    >>> import gala.potential as gp
+    >>> from gala.units import galactic
     >>> disk = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
     >>> bulge = gp.HernquistPotential(m=3E10, c=0.7, units=galactic)
     >>> pot = gp.CCompositePotential(disk=disk, bulge=bulge)
@@ -54,9 +54,9 @@ potential objects::
     :align: center
 
     import numpy as np
-    import gary.dynamics as gd
-    import gary.potential as gp
-    from gary.units import galactic
+    import gala.dynamics as gd
+    import gala.potential as gp
+    from gala.units import galactic
 
     disk = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
     bulge = gp.HernquistPotential(m=3E10, c=0.7, units=galactic)

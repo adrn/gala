@@ -7,12 +7,12 @@ We first need to import some relevant packages::
 
    >>> import astropy.units as u
    >>> import numpy as np
-   >>> import gary.integrate as gi
-   >>> import gary.dynamics as gd
-   >>> import gary.potential as gp
-   >>> from gary.units import galactic
+   >>> import gala.integrate as gi
+   >>> import gala.dynamics as gd
+   >>> import gala.potential as gp
+   >>> from gala.units import galactic
 
-In the examples below, we will work use the ``galactic`` `~gary.units.UnitSystem`:
+In the examples below, we will work use the ``galactic`` `~gala.units.UnitSystem`:
 as I define it, this is: :math:`{\rm kpc}`, :math:`{\rm Myr}`, :math:`{\rm M}_\odot`.
 
 We first create a potential object to work with. For this example, we'll
@@ -23,19 +23,19 @@ circular velocity at the scale radius::
 
 As a demonstration, we're going to first integrate a single orbit in this potential.
 
-The easiest way to do this is to use the `~gary.potential.PotentialBase.integrate_orbit`
+The easiest way to do this is to use the `~gala.potential.PotentialBase.integrate_orbit`
 method of the potential object, which accepts a set of initial conditions and
 a specification for the time-stepping. We'll define the initial conditions as a
-`~gary.dynamics.CartesianPhaseSpacePosition` object::
+`~gala.dynamics.CartesianPhaseSpacePosition` object::
 
    >>> ics = gd.CartesianPhaseSpacePosition(pos=[10,0,0.]*u.kpc,
    ...                                      vel=[0,175,0]*u.km/u.s)
    >>> orbit = pot.integrate_orbit(ics, dt=2., n_steps=2000)
 
-This method returns a `~gary.dynamics.CartesianOrbit` object that contains an
+This method returns a `~gala.dynamics.CartesianOrbit` object that contains an
 array of times and the (6D) position at each time-step. By default, this method
 uses Leapfrog integration to compute the orbit
-(:class:`~gary.integrate.LeapfrogIntegrator`), but you can optionally specify
+(:class:`~gala.integrate.LeapfrogIntegrator`), but you can optionally specify
 a different (e.g., more precise) integrator class as a keyword argument::
 
    >>> orbit = pot.integrate_orbit(ics, dt=2., n_steps=2000,
@@ -53,7 +53,7 @@ positional scale of 100 pc, and a velocity scale of 1 km/s)::
    >>> orbits = pot.integrate_orbit(new_ics, dt=2., n_steps=2000)
 
 We'll now plot the final positions of these orbits over isopotential contours.
-We use the :meth:`~gary.potential.Potential.plot_contours` method of the potential
+We use the :meth:`~gala.potential.Potential.plot_contours` method of the potential
 object to plot the potential contours. This function returns a
 :class:`~matplotlib.figure.Figure` object, which we can then use to over-plot
 the orbit points::
@@ -69,10 +69,10 @@ the orbit points::
 
    import astropy.units as u
    import numpy as np
-   import gary.integrate as gi
-   import gary.dynamics as gd
-   import gary.potential as gp
-   from gary.units import galactic
+   import gala.integrate as gi
+   import gala.dynamics as gd
+   import gala.potential as gp
+   from gala.units import galactic
 
    np.random.seed(42)
 

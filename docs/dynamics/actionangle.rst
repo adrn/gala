@@ -32,16 +32,16 @@ this method below with two orbits:
 * :ref:`tube-triaxial`
 
 (see also [binneytremaine]_ and [mcgill90]_) For the examples below, we will use
-the `~gary.units.galactic` unit system and assume the following imports have
+the `~gala.units.galactic` unit system and assume the following imports have
 been executed::
 
     >>> import astropy.coordinates as coord
     >>> import astropy.units as u
     >>> import matplotlib.pyplot as pl
     >>> import numpy as np
-    >>> import gary.potential as gp
-    >>> import gary.dynamics as gd
-    >>> from gary.units import galactic
+    >>> import gala.potential as gp
+    >>> import gala.dynamics as gd
+    >>> from gala.units import galactic
 
 .. _tube-axisymmetric:
 
@@ -94,9 +94,9 @@ We will now integrate the orbit and plot it in the meridional plane::
     import astropy.units as u
     import matplotlib.pyplot as pl
     import numpy as np
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
+    import gala.potential as gp
+    import gala.dynamics as gd
+    from gala.units import galactic
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
                                   units=galactic)
@@ -114,8 +114,8 @@ We will now integrate the orbit and plot it in the meridional plane::
 To solve for the actions in the true potential, we first compute the actions in
 a "toy" potential -- a potential in which we can compute the actions and angles
 analytically. The two simplest potentials for which this is possible are the
-`~gary.potential.IsochronePotential` and
-`~gary.potential.HarmonicOscillatorPotential`. We will use the Isochrone
+`~gala.potential.IsochronePotential` and
+`~gala.potential.HarmonicOscillatorPotential`. We will use the Isochrone
 potential as our toy potential for tube orbits and the harmonic oscillator for
 box orbits.
 
@@ -146,9 +146,9 @@ Instead, the orbit is wobbly in the toy potential angles::
     import astropy.units as u
     import matplotlib.pyplot as pl
     import numpy as np
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
+    import gala.potential as gp
+    import gala.dynamics as gd
+    from gala.units import galactic
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
                                   units=galactic)
@@ -181,9 +181,9 @@ time-independent in the toy potential::
     import astropy.units as u
     import matplotlib.pyplot as pl
     import numpy as np
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
+    import gala.potential as gp
+    import gala.dynamics as gd
+    from gala.units import galactic
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
                                   units=galactic)
@@ -236,9 +236,9 @@ actions computed using this machinery::
     import astropy.units as u
     import matplotlib.pyplot as pl
     import numpy as np
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
+    import gala.potential as gp
+    import gala.dynamics as gd
+    from gala.units import galactic
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
                                   units=galactic)
@@ -300,9 +300,9 @@ and the same initial conditions as above:
     import astropy.units as u
     import matplotlib.pyplot as pl
     import numpy as np
-    import gary.potential as gp
-    import gary.dynamics as gd
-    from gary.units import galactic
+    import gala.potential as gp
+    import gala.dynamics as gd
+    from gala.units import galactic
 
     # define potential
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=0.9, q3=0.8, r_h=0,

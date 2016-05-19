@@ -3,7 +3,7 @@
 .. _util:
 
 *****************************
-Misc. Utilities (`gary.util`)
+Misc. Utilities (`gala.util`)
 *****************************
 
 Introduction
@@ -16,6 +16,6 @@ This subpackage contains miscellaneous utilities.
 API
 ===
 
-.. automodapi:: gary.util
+.. automodapi:: gala.util
     :no-inheritance-diagram:
 
