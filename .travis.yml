@@ -102,5 +102,5 @@ after_success:
     # below and replace "packagename" with the name of your package.
     # The coveragerc file may be customized as needed for your package.
     - if [[ $SETUP_CMD == 'test --coverage' ]]; then
-        coveralls --rcfile='gary/tests/coveragerc';
+        coveralls --rcfile='gala/tests/coveragerc';
       fi

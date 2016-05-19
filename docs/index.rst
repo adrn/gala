@@ -15,7 +15,7 @@ and `nonlinear dynamics <dynamics/index>`_.
 The package is being actively developed in
 `a public repository on GitHub <https://github.com/adrn/gary>`_ so if you
 have any trouble,
-`open an issue <https://github.com/adrn/gary/issues>`_ there.
+`open an issue <https://github.com/adrn/gala/issues>`_ there.
 
 *************
 Documentation
