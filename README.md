@@ -1,8 +1,7 @@
 Gala
 ====
 
-Gala is a Python package for Galactic Astronomy and especially gravitational
-dynamics.
+Gala is a Python package for Galactic and gravitational dynamics.
 
 [![Coverage Status](https://coveralls.io/repos/adrn/gala/badge.svg?branch=master&service=github)](https://coveralls.io/github/adrn/gala?branch=master)
 [![Build status](http://img.shields.io/travis/adrn/gala/master.svg?style=flat)](http://travis-ci.org/adrn/gala)
@@ -17,7 +16,7 @@ Documentation
 
 Installation and Dependencies
 =============================
-See the [installation instructions](http://gala.adrian.pw/install.html) in the
+See the [installation instructions](http://gala.adrian.pw/en/latest/install.html) in the
 [documentation](http://gala.adrian.pw).
 
 Rename
