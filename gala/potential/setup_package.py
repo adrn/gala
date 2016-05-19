@@ -30,7 +30,7 @@ def get_extensions():
     return exts
 
 def get_package_data():
-    return {'gala.potential': ['*.h', '*.pxd',
+    return {'gala.potential': ['*.h', '*.pyx', '*.pxd', '*/*.pyx', '*/*.pxd',
                                'builtin/src/*.h', 'src/*.h',
                                'builtin/src/*.c', 'src/*.c',
                                'tests/*.yml']}

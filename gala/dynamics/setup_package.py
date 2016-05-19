@@ -41,4 +41,4 @@ def get_extensions():
     return exts
 
 def get_package_data():
-    return {'gala.dynamics': ['*.pxd', 'mockstream/_coord.pxd']}
+    return {'gala.dynamics': ['*.pyx', '*.pxd', '*/*.pyx', '*/*.pxd']}

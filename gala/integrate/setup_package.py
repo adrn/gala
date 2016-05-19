@@ -30,5 +30,6 @@ def get_extensions():
     return exts
 
 def get_package_data():
-    return {'gala.integrate': ['cyintegrators/*.pxd', 'cyintegrators/*.c',
+    return {'gala.integrate': ['*.pyx', '*.pxd', '*/*.pyx', '*/*.pxd',
+                               'cyintegrators/*.c',
                                'cyintegrators/dopri/*.c', 'cyintegrators/dopri/*.h']}
