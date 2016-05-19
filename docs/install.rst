@@ -1,6 +1,6 @@
 .. include:: references.txt
 
-.. _gary-install:
+.. _gala-install:
 
 ============
 Installation
@@ -15,7 +15,7 @@ The latest development version of gala can be cloned from
    git clone git://github.com/adrn/gala.git
 
 To build the project (from the root of the source tree, e.g., inside
-the cloned ``gary`` directory)::
+the cloned ``gala`` directory)::
 
     python setup.py build
 

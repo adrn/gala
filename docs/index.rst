@@ -1,10 +1,10 @@
 .. include:: references.txt
 
-.. _gary:
+.. _gala:
 
-#########
-Meet Gala
-#########
+####
+Gala
+####
 
 Gala is a Python package for Galactic astronomy and gravitational
 dynamics. The bulk of the package centers around implementations of
@@ -13,7 +13,7 @@ dynamics. The bulk of the package centers around implementations of
 and `nonlinear dynamics <dynamics/index>`_.
 
 The package is being actively developed in
-`a public repository on GitHub <https://github.com/adrn/gary>`_ so if you
+`a public repository on GitHub <https://github.com/adrn/gala>`_ so if you
 have any trouble,
 `open an issue <https://github.com/adrn/gala/issues>`_ there.
 

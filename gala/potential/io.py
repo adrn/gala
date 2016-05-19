@@ -39,7 +39,7 @@ def _unpack_params(p):
 
 def _parse_component(component, module):
     # need this here for circular import
-    from .. import potential as gary_potential
+    from .. import potential as gala_potential
 
     try:
         class_name = component['class']
@@ -62,14 +62,14 @@ def _parse_component(component, module):
     params = _unpack_params(params)
 
     if module is None:
-        potential = gary_potential
+        potential = gala_potential
     else:
         potential = module
 
     try:
         Potential = getattr(potential, class_name)
     except AttributeError: # HACK: this might be bad to assume
-        Potential = getattr(gary_potential, class_name)
+        Potential = getattr(gala_potential, class_name)
     return Potential(units=unitsys, **params)
 
 def from_dict(d, module=None):
@@ -85,10 +85,10 @@ def from_dict(d, module=None):
 
     """
     # need this here for circular import
-    from .. import potential as gary_potential
+    from .. import potential as gala_potential
 
     if module is None:
-        potential = gary_potential
+        potential = gala_potential
     else:
         potential = module
 
