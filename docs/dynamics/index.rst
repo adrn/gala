@@ -1,6 +1,6 @@
 .. include:: ../references.txt
 
-.. _gary-dynamics:
+.. _gala-dynamics:
 
 ********************************
 Dynamics (`gala.dynamics`)

@@ -111,7 +111,7 @@ More details are provided in the linked pages below:
    propermotion
    streamframes
 
-.. _gary-coordinates-api:
+.. _gala-coordinates-api:
 
 API
 ===

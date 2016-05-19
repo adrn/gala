@@ -39,7 +39,7 @@ axis, and ``axis=2`` are the individual orbits.
 Energy and momentum
 ===================
 
-The `gary` documentation and functions often refer to energy and angular
+The `gala` documentation and functions often refer to energy and angular
 momentum and the respective quantities *per unit mass* interchangibly. Unless
 otherwise specified, all such quantities -- e.g., energy, angular momentum,
 momenta, conjugate momenta -- are in fact used and returned *per unit mass*.
