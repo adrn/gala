@@ -7,7 +7,7 @@ dynamics.
 [![Coverage Status](https://coveralls.io/repos/adrn/gala/badge.svg?branch=master&service=github)](https://coveralls.io/github/adrn/gala?branch=master)
 [![Build status](http://img.shields.io/travis/adrn/gala/master.svg?style=flat)](http://travis-ci.org/adrn/gala)
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/adrn/gala/blob/master/LICENSE)
-[![Documentation Status](https://readthedocs.org/projects/gala/badge/?version=latest)](http://gala.readthedocs.org/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/gala-astro/badge/?version=latest)](http://gala-astro.readthedocs.io/en/latest/?badge=latest)
 
 
 Documentation
