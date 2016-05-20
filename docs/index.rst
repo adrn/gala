@@ -22,10 +22,11 @@ Documentation
 *************
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    install
    conventions
+   why
 ..   getting_started
 
 ***********
@@ -33,7 +34,7 @@ Subpackages
 ***********
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    coordinates/index
    integrate/index
