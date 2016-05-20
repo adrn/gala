@@ -105,7 +105,6 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
     # Energy / value
     valuefunc = lambdify(vars + pars, expr, dummify=False, modules='numpy')
     def _value(self, w, t):
-        print(w.shape)
         kw = self.parameters.copy()
         for k,v in kw.items():
             kw[k] = v.value
