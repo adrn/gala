@@ -85,7 +85,29 @@ Easy visualization
 Numerically integrated orbits can be easily visualized using the
 `~gala.dynamics.CartesianOrbit.plot()` method:
 
-    >>> orbit.plot()
+    >>> orbit.plot() # doctest: +SKIP
+
+.. plot::
+    :align: center
+
+    import astropy.units as u
+    import numpy as np
+    import gala.integrate as gi
+    import gala.dynamics as gd
+    import gala.potential as gp
+    from gala.units import galactic
+
+    bulge = gp.IsochronePotential(m=2E10*u.Msun, b=0.5*u.kpc, units=galactic)
+    disk = gp.MiyamotoNagaiPotential(m=6E10*u.Msun, a=3*u.kpc, b=0.26*u.kpc, units=galactic)
+    pot = gp.CCompositePotential(bulge=bulge, disk=disk)
+
+    w0 = gd.CartesianPhaseSpacePosition(pos=[7.,0,0]*u.kpc,
+                                        vel=[0.,50.,0]*u.km/u.s)
+
+    orbit = pot.integrate_orbit(w0, dt=0.5, n_steps=10000,
+                                Integrator=gi.DOPRI853Integrator)
+
+    fig = orbit.plot()
 
 Astropy units support
 =====================
