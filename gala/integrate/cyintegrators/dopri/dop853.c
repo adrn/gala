@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdio.h>
-#include <malloc.h>
+// #include <malloc.h>
+#include <stdlib.h>
 #include <limits.h>
 #include <memory.h>
 #include "dop853.h"
