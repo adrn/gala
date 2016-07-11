@@ -29,8 +29,7 @@ env:
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
-        - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib==1.5.0 pyyaml sympy'
-        # HACK: matplotlib version until 1.5.2 comes out
+        - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml sympy'
 
     matrix:
         # Make sure that egg_info works without dependencies
