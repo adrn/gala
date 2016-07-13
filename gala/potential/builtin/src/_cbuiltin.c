@@ -428,7 +428,7 @@ double miyamotonagai_density(double t, double *pars, double *q) {
 
     double R2 = q[0]*q[0] + q[1]*q[1];
     double sqrt_zb = sqrt(q[2]*q[2] + b*b);
-    double numer = (b*b*M / (4*M_PI)) * (a*R2 + (a + 2*sqrt_zb)*(a + sqrt_zb)*(a + sqrt_zb));
+    double numer = (b*b*M / (4*M_PI)) * (a*R2 + (a + 3*sqrt_zb)*(a + sqrt_zb)*(a + sqrt_zb));
     double denom = pow(R2 + (a + sqrt_zb)*(a + sqrt_zb), 2.5) * sqrt_zb*sqrt_zb*sqrt_zb;
 
     return numer/denom;
