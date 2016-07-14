@@ -109,7 +109,7 @@ cdef extern from "src/_cbuiltin.h":
 __all__ = ['HenonHeilesPotential', # Misc. potentials
            'KeplerPotential', 'HernquistPotential', 'IsochronePotential', 'PlummerPotential',
            'JaffePotential', 'SphericalNFWPotential', 'StonePotential', # Spherical models
-           'MiyamotoNagaiPotential', 'FlattenedNFWPotential', # Flattened models
+           'SatohPotential', 'MiyamotoNagaiPotential', 'FlattenedNFWPotential', # Flattened models
            'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential', # Triaxial models
            'CCompositePotential']
 
