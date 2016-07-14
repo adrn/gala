@@ -381,6 +381,51 @@ double flattenednfw_density(double t, double *pars, double *xyz) {
 }
 
 /* ---------------------------------------------------------------------------
+    Satoh potential
+*/
+double satoh_value(double t, double *pars, double *r) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - a (length scale 1) TODO
+            - b (length scale 2) TODO
+    */
+    double S2;
+    S2 = r[0]*r[0] + r[1]*r[1] + r[2]*r[2] + pars[2]*(pars[2] + 2*sqrt(r[2]*r[2] + pars[3]*pars[3]));
+    return -pars[0] * pars[1] / sqrt(S2);
+}
+
+void satoh_gradient(double t, double *pars, double *r, double *grad) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - a (length scale 1) TODO
+            - b (length scale 2) TODO
+    */
+
+    double S2 = r[0]*r[0] + r[1]*r[1] + r[2]*r[2] + pars[2]*(pars[2] + 2*sqrt(r[2]*r[2] + pars[3]*pars[3]));
+    double dPhi_dS = pars[0] * pars[1] / S2;
+
+    grad[0] = grad[0] + dPhi_dS*r[0]/sqrt(S2);
+    grad[1] = grad[1] + dPhi_dS*r[1]/sqrt(S2);
+    grad[2] = grad[2] + dPhi_dS/sqrt(S2) * r[2]*(1 + pars[2] / sqrt(r[2]*r[2] + pars[3]*pars[3]));
+}
+
+double satoh_density(double t, double *pars, double *r) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - a (length scale 1) TODO
+            - b (length scale 2) TODO
+    */
+    double z2b2 = r[2]*r[2] + pars[3]*pars[3];
+    double xyz2 = r[0]*r[0] + r[1]*r[1] + r[2]*r[2];
+    double S2 = xyz2 + pars[2]*(pars[2] + 2*sqrt(z2b2));
+    double A = pars[1] * pars[2] * pars[3]*pars[3] / (4*M_PI*S2*sqrt(S2)*z2b2);
+    return A * (1/sqrt(z2b2) + 3/pars[2]*(1 - xyz2/S2));
+}
+
+/* ---------------------------------------------------------------------------
     Miyamoto-Nagai flattened potential
 */
 double miyamotonagai_value(double t, double *pars, double *r) {

@@ -78,6 +78,10 @@ class TestMiyamotoNagai(PotentialTestBase):
     potential = MiyamotoNagaiPotential(units=galactic, m=1.E11, a=6.5, b=0.26)
     w0 = [8.,0.,0.,0.,0.22,0.1]
 
+class TestSatoh(PotentialTestBase):
+    potential = SatohPotential(units=galactic, m=1.E11, a=6.5, b=0.26)
+    w0 = [8.,0.,0.,0.,0.22,0.1]
+
 class TestStone(PotentialTestBase):
     potential = StonePotential(units=galactic, m=1E11, r_c=0.1, r_h=10.)
     w0 = [8.,0.,0.,0.,0.18,0.1]
