@@ -430,11 +430,11 @@ class PotentialBase(object):
         if ndim == 1:
             # 1D curve
             x1 = _grids[0][1]
-            r = np.zeros((len(x1), len(_grids) + len(_slices)))
-            r[:,_grids[0][0]] = x1
+            r = np.zeros((len(_grids) + len(_slices), len(x1)))
+            r[_grids[0][0]] = x1
 
             for ii,slc in _slices:
-                r[:,ii] = slc
+                r[ii] = slc
 
             Z = self.density(r*self.units['length']).value
             ax.plot(x1, Z, **kwargs)
@@ -448,12 +448,12 @@ class PotentialBase(object):
             shp = x1.shape
             x1,x2 = x1.ravel(), x2.ravel()
 
-            r = np.zeros((len(x1), len(_grids) + len(_slices)))
-            r[:,_grids[0][0]] = x1
-            r[:,_grids[1][0]] = x2
+            r = np.zeros((len(_grids) + len(_slices), len(x1)))
+            r[_grids[0][0]] = x1
+            r[_grids[1][0]] = x2
 
             for ii,slc in _slices:
-                r[:,ii] = slc
+                r[ii] = slc
 
             Z = self.density(r*self.units['length']).value
 
