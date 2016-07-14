@@ -1,7 +1,7 @@
 0.2 (unreleased)
 ----------------
 
-- No changes yet.
+- Added a new potential class for the Satoh density (Satoh 1980).
 
 0.1.1 (2016-05-20)
 ------------------
