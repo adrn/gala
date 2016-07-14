@@ -371,7 +371,7 @@ class PotentialBase(object):
 
         return fig
 
-    def plot_densty_contours(self, grid, ax=None, labels=None, subplots_kw=dict(), **kwargs):
+    def plot_density_contours(self, grid, ax=None, labels=None, subplots_kw=dict(), **kwargs):
         """
         Plot density contours. Computes the density on a grid
         (specified by the array `grid`).
