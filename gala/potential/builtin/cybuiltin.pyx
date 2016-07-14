@@ -88,6 +88,10 @@ cdef extern from "src/_cbuiltin.h":
     void flattenednfw_gradient(double t, double *pars, double *q, double *grad) nogil
     double flattenednfw_density(double t, double *pars, double *q) nogil
 
+    double satoh_value(double t, double *pars, double *q) nogil
+    void satoh_gradient(double t, double *pars, double *q, double *grad) nogil
+    double satoh_density(double t, double *pars, double *q) nogil
+
     double miyamotonagai_value(double t, double *pars, double *q) nogil
     void miyamotonagai_gradient(double t, double *pars, double *q, double *grad) nogil
     double miyamotonagai_density(double t, double *pars, double *q) nogil
@@ -537,6 +541,58 @@ class SphericalNFWPotential(CPotentialBase):
         parameters['r_s'] = r_s
         super(SphericalNFWPotential, self).__init__(parameters=parameters,
                                                     units=units)
+
+# ============================================================================
+
+cdef class SatohWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters):
+        cdef CPotential cp
+
+        # This is the only code that needs to change per-potential
+        cp.value[0] = <valuefunc>(satoh_value)
+        cp.density[0] = <densityfunc>(satoh_density)
+        cp.gradient[0] = <gradientfunc>(satoh_gradient)
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+        cp.n_params = &(self._n_params[0])
+        cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
+        self.cpotential = cp
+
+class SatohPotential(CPotentialBase):
+    r"""
+    SatohPotential(m, a, b, units)
+
+    Satoh potential for a flattened mass distribution.
+
+    .. math::
+
+        \Phi(R,z) = -\frac{G M}{\sqrt{R^2 + z^2 + a(a + 2\sqrt{z^2 + b^2})}}
+
+    Parameters
+    ----------
+    m : numeric
+        Mass.
+    a : numeric
+        Scale length.
+    b : numeric
+        Scare height.
+    units : `~gala.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, m, a, b, units):
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['a'] = a
+        parameters['b'] = b
+        super(SatohPotential, self).__init__(parameters=parameters,
+                                             units=units)
 
 # ============================================================================
 
