@@ -1,4 +1,5 @@
 extern double nan_density(double t, double *pars, double *q);
+extern double nan_hessian(double t, double *pars, double *q, double *hess);
 
 extern double henon_heiles_value(double t, double *pars, double *q);
 extern void henon_heiles_gradient(double t, double *pars, double *q, double *grad);
@@ -40,6 +41,7 @@ extern double satoh_density(double t, double *pars, double *q);
 
 extern double miyamotonagai_value(double t, double *pars, double *q);
 extern void miyamotonagai_gradient(double t, double *pars, double *q, double *grad);
+extern void miyamotonagai_hessian(double t, double *pars, double *q, double *hess);
 extern double miyamotonagai_density(double t, double *pars, double *q);
 
 extern double leesuto_value(double t, double *pars, double *q);
