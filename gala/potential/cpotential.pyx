@@ -143,7 +143,7 @@ cdef class CPotentialWrapper:
         norbits = q.shape[0]
         ndim = q.shape[1]
 
-        cdef double[:,:,::1] hess = np.zeros(q.shape + (ndim,ndim))
+        cdef double[:,:,::1] hess = np.zeros((norbits, ndim, ndim))
 
         for i in range(norbits):
             c_hessian(&(self.cpotential), t, &q[i,0], &hess[i,0,0])
