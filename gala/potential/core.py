@@ -39,7 +39,7 @@ class PotentialBase(object):
         if hasattr(q, 'unit'):
             q = q.decompose(self.units).value
 
-        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1))
+        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1).astype(np.float64))
         return q
 
     def __init__(self, parameters, units=None):
