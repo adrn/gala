@@ -5,6 +5,9 @@ double nan_density(double t, double *pars, double *q) {
     return NAN;
 }
 
+void nan_hessian(double t, double *pars, double *q, double *hess) {
+}
+
 /* ---------------------------------------------------------------------------
     Henon-Heiles potential
 */
@@ -477,6 +480,53 @@ double miyamotonagai_density(double t, double *pars, double *q) {
     double denom = pow(R2 + (a + sqrt_zb)*(a + sqrt_zb), 2.5) * sqrt_zb*sqrt_zb*sqrt_zb;
 
     return numer/denom;
+}
+
+void miyamotonagai_hessian(double t, double *pars, double *r, double *hess) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - a (length scale 1) TODO
+            - b (length scale 2) TODO
+    */
+    double G, M, a, b;
+    G = pars[0];
+    M = pars[1];
+    a = pars[2];
+    b = pars[3];
+
+    double tmp0 = r[0]*r[0];
+    double tmp1 = r[1]*r[1];
+    double tmp2 = r[2]*r[2];
+    double tmp3 = b*b + tmp2;
+    double tmp4 = sqrt(tmp3);
+    double tmp5 = a + tmp4;
+    double tmp6 = tmp5*tmp5;
+    double tmp7 = tmp0 + tmp1 + tmp6;
+    double tmp8 = pow(tmp7, -1.5);
+    double tmp9 = G*M*tmp8;
+    double tmp10 = pow(tmp7, -2.5);
+    double tmp11 = 3*G*M*tmp10;
+    double tmp12 = 3*G*M*tmp10*r[0];
+    double tmp13 = -tmp12*r[1];
+    double tmp14 = 1.0/tmp4;
+    double tmp15 = tmp14*tmp5*r[2];
+    double tmp16 = -tmp12*tmp15;
+    double tmp17 = -3*G*M*tmp10*tmp15*r[1];
+    double tmp18 = 1.0/tmp3;
+    double tmp19 = G*M*tmp2*tmp8;
+
+    hess[0] = -tmp0*tmp11 + tmp9;
+    hess[1] = tmp13;
+    hess[2] = tmp16;
+
+    hess[3] = tmp13;
+    hess[4] = -tmp1*tmp11 + tmp9;
+    hess[5] = tmp17;
+
+    hess[6] = tmp16;
+    hess[7] = tmp17;
+    hess[8] = -tmp11*tmp18*tmp2*tmp6 + tmp14*tmp5*tmp9 + tmp18*tmp19 - tmp19*tmp5*pow(tmp3,-1.5);
 }
 
 /* ---------------------------------------------------------------------------

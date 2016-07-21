@@ -37,6 +37,7 @@ cdef extern from "src/cpotential.h":
     ctypedef double (*densityfunc)(double t, double *pars, double *q) nogil
     ctypedef double (*valuefunc)(double t, double *pars, double *q) nogil
     ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
+    ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
 
     ctypedef struct CPotential:
         int n_components
@@ -44,6 +45,7 @@ cdef extern from "src/cpotential.h":
         densityfunc density[MAX_N_COMPONENTS]
         valuefunc value[MAX_N_COMPONENTS]
         gradientfunc gradient[MAX_N_COMPONENTS]
+        hessianfunc hessian[MAX_N_COMPONENTS]
         int n_params[MAX_N_COMPONENTS]
         double *parameters[MAX_N_COMPONENTS]
 
@@ -53,6 +55,7 @@ cdef extern from "src/cpotential.h":
 
 cdef extern from "src/_cbuiltin.h":
     double nan_density(double t, double *pars, double *q) nogil
+    void nan_hessian(double t, double *pars, double *q, double *hess) nogil
 
     double henon_heiles_value(double t, double *pars, double *q) nogil
     void henon_heiles_gradient(double t, double *pars, double *q, double *grad) nogil
@@ -94,6 +97,7 @@ cdef extern from "src/_cbuiltin.h":
 
     double miyamotonagai_value(double t, double *pars, double *q) nogil
     void miyamotonagai_gradient(double t, double *pars, double *q, double *grad) nogil
+    void miyamotonagai_hessian(double t, double *pars, double *q, double *hess) nogil
     double miyamotonagai_density(double t, double *pars, double *q) nogil
 
     double leesuto_value(double t, double *pars, double *q) nogil
@@ -605,6 +609,7 @@ cdef class MiyamotoNagaiWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(miyamotonagai_value)
         cp.density[0] = <densityfunc>(miyamotonagai_density)
         cp.gradient[0] = <gradientfunc>(miyamotonagai_gradient)
+        cp.hessian[0] = <hessianfunc>(miyamotonagai_hessian)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
