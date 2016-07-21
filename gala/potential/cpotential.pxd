@@ -10,7 +10,7 @@ cdef class CPotentialWrapper:
     cpdef value(self, double[:,::1] q, double t=?)
     cpdef density(self, double[:,::1] q, double t=?)
     cpdef gradient(self, double[:,::1] q, double t=?)
-    # cpdef hessian(self, double[:,::1] q, double t=?)
+    cpdef hessian(self, double[:,::1] q, double t=?)
 
     cpdef d_dr(self, double[:,::1] q, double G, double t=?)
     cpdef d2_dr2(self, double[:,::1] q, double G, double t=?)
