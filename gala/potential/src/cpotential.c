@@ -29,6 +29,18 @@ void c_gradient(CPotential *p, double t, double *q, double *grad) {
     }
 }
 
+void c_hessian(CPotential *p, double t, double *q, double *hess) {
+    int i;
+
+    for (i=0; i < pow(p->n_dim,2); i++) {
+        hess[i] = 0.;
+    }
+
+    for (i=0; i < p->n_components; i++) {
+        (p->hessian)[i](t, (p->parameters)[i], q, hess);
+    }
+}
+
 double c_d_dr(CPotential *p, double t, double *q, double *epsilon) {
     double h, r, dPhi_dr;
     int j;

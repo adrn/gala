@@ -39,6 +39,7 @@ cdef extern from "src/cpotential.h":
     ctypedef double (*densityfunc)(double t, double *pars, double *q) nogil
     ctypedef double (*valuefunc)(double t, double *pars, double *q) nogil
     ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
+    ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
 
     ctypedef struct CPotential:
         int n_components
@@ -46,12 +47,14 @@ cdef extern from "src/cpotential.h":
         densityfunc density[MAX_N_COMPONENTS]
         valuefunc value[MAX_N_COMPONENTS]
         gradientfunc gradient[MAX_N_COMPONENTS]
+        hessianfunc hessian[MAX_N_COMPONENTS]
         int n_params[MAX_N_COMPONENTS]
         double *parameters[MAX_N_COMPONENTS]
 
     double c_value(CPotential *p, double t, double *q) nogil
     double c_density(CPotential *p, double t, double *q) nogil
     void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
+    void c_hessian(CPotential *p, double t, double *q, double *hess) nogil
 
     double c_d_dr(CPotential *p, double t, double *q, double *epsilon) nogil
     double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
@@ -120,34 +123,36 @@ cdef class CPotentialWrapper:
         norbits = q.shape[0]
         ndim = q.shape[1]
 
-        cdef double [:,::1] grad = np.zeros((norbits, ndim))
+        cdef double[:,::1] grad = np.zeros((norbits, ndim))
         for i in range(norbits):
             c_gradient(&(self.cpotential), t, &q[i,0], &grad[i,0])
 
         return np.array(grad)
 
-    # cpdef hessian(self, double[:,::1] q, double t=0.):
-    #     """
-    #     CAUTION: Interpretation of axes is different here! We need the
-    #     arrays to be C ordered and easy to iterate over, so here the
-    #     axes are (norbits, ndim).
-    #     """
-    #     cdef int norbits, ndim, i
+    cpdef hessian(self, double[:,::1] q, double t=0.):
+        """
+        CAUTION: Interpretation of axes is different here! We need the
+        arrays to be C ordered and easy to iterate over, so here the
+        axes are (norbits, ndim).
+        """
+        cdef int norbits, ndim, i
 
-    #     if q.ndim != 2:
-    #         raise ValueError("Coordinate array q must have 2 dimensions")
+        if q.ndim != 2:
+            raise ValueError("Coordinate array q must have 2 dimensions")
 
-    #     norbits = q.shape[0]
-    #     ndim = q.shape[1]
+        norbits = q.shape[0]
+        ndim = q.shape[1]
 
-    #     cdef double [::1] hess = np.zeros(q.shape + (ndim,)))
-    #     for i in range(norbits):
-    #         c_hessian(&(self.cpotential), t, &q[i,0], &hess[i,0,0])
+        cdef double[:,:,::1] hess = np.zeros(q.shape + (ndim,ndim))
 
-    #     return np.array(hess)
+        for i in range(norbits):
+            c_hessian(&(self.cpotential), t, &q[i,0], &hess[i,0,0])
 
-    # Second order functionality
+        return np.array(hess)
 
+    # ------------------------------------------------------------------------
+    # Other functionality
+    #
     cpdef d_dr(self, double[:,::1] q, double G, double t=0.):
         """
         CAUTION: Interpretation of axes is different here! We need the
@@ -227,15 +232,15 @@ class CPotentialBase(PotentialBase):
 
 
     def _value(self, q, t=0.):
-        sh = q.shape
-        q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
-        return self.c_instance.value(q, t=t).reshape(sh[1:])
+        orig_shp = q.shape
+        q = np.ascontiguousarray(q.reshape(orig_shp[0], -1).T)
+        return self.c_instance.value(q, t=t).reshape(orig_shp[1:])
 
     def _density(self, q, t=0.):
-        sh = q.shape
-        q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
+        orig_shp = q.shape
+        q = np.ascontiguousarray(q.reshape(orig_shp[0], -1).T)
         try:
-            return self.c_instance.density(q, t=t).reshape(sh[1:])
+            return self.c_instance.density(q, t=t).reshape(orig_shp[1:])
         except AttributeError,TypeError:
             # TODO: if no density function, should this numerically esimate
             #   the density?
@@ -243,19 +248,20 @@ class CPotentialBase(PotentialBase):
                              "density function")
 
     def _gradient(self, q, t=0.):
-        sh = q.shape
-        q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
+        orig_shp = q.shape
+        q = np.ascontiguousarray(q.reshape(orig_shp[0], -1).T)
         try:
-            return self.c_instance.gradient(q, t=t).T.reshape(sh)
+            return self.c_instance.gradient(q, t=t).T.reshape(orig_shp)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "gradient function")
 
     def _hessian(self, q, t=0.):
-        sh = q.shape
-        q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
+        orig_shp = q.shape
+        q = np.ascontiguousarray(q.reshape(orig_shp[0], -1).T)
         try:
-            return self.c_instance.hessian(q, t=t) # TODO: return shape?
+            hess = self.c_instance.hessian(q, t=t)
+            return np.moveaxis(hess, 0, -1).reshape((orig_shp[0], orig_shp[0]) + orig_shp[1:])
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "Hessian function")
