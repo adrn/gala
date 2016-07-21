@@ -161,7 +161,10 @@ class PotentialBase(object):
         Returns
         -------
         hess : `~astropy.units.Quantity`
-            TODO:
+            The Hessian matrix of second derivatives of the potential. If the input
+            position has shape ``q.shape``, the output energy will have shape
+            ``(q.shape[0],q.shape[0]) + q.shape[1:]``. That is, an ``n_dim`` by
+            ``n_dim`` array (matrix) for each position.
         """
         q = self._prefilter_pos(q)
 
