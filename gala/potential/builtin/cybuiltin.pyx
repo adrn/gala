@@ -128,6 +128,7 @@ cdef class HenonHeilesWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(henon_heiles_value)
         cp.density[0] = <densityfunc>(nan_density)
         cp.gradient[0] = <gradientfunc>(henon_heiles_gradient)
+        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
         self._params = np.array([G], dtype=np.float64)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -171,6 +172,7 @@ cdef class KeplerWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(kepler_value)
         cp.density[0] = <densityfunc>(nan_density)
         cp.gradient[0] = <gradientfunc>(kepler_gradient)
+        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
@@ -220,6 +222,7 @@ cdef class IsochroneWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(isochrone_value)
         cp.density[0] = <densityfunc>(isochrone_density)
         cp.gradient[0] = <gradientfunc>(isochrone_gradient)
+        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
@@ -306,6 +309,7 @@ cdef class HernquistWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(hernquist_value)
         cp.density[0] = <densityfunc>(hernquist_density)
         cp.gradient[0] = <gradientfunc>(hernquist_gradient)
+        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
@@ -357,6 +361,7 @@ cdef class PlummerWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(plummer_value)
         cp.density[0] = <densityfunc>(plummer_density)
         cp.gradient[0] = <gradientfunc>(plummer_gradient)
+        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
@@ -406,6 +411,7 @@ cdef class JaffeWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(jaffe_value)
         cp.density[0] = <densityfunc>(jaffe_density)
         cp.gradient[0] = <gradientfunc>(jaffe_gradient)
+        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
@@ -455,6 +461,7 @@ cdef class StoneWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(stone_value)
         cp.density[0] = <densityfunc>(stone_density)
         cp.gradient[0] = <gradientfunc>(stone_gradient)
+        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
@@ -507,6 +514,7 @@ cdef class SphericalNFWWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(sphericalnfw_value)
         cp.density[0] = <densityfunc>(sphericalnfw_density)
         cp.gradient[0] = <gradientfunc>(sphericalnfw_gradient)
+        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
@@ -557,6 +565,7 @@ cdef class SatohWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(satoh_value)
         cp.density[0] = <densityfunc>(satoh_density)
         cp.gradient[0] = <gradientfunc>(satoh_gradient)
+        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
@@ -664,6 +673,7 @@ cdef class FlattenedNFWWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(flattenednfw_value)
         cp.density[0] = <densityfunc>(flattenednfw_density)
         cp.gradient[0] = <gradientfunc>(flattenednfw_gradient)
+        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
@@ -719,6 +729,7 @@ cdef class LeeSutoTriaxialNFWWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(leesuto_value)
         cp.density[0] = <densityfunc>(leesuto_density)
         cp.gradient[0] = <gradientfunc>(leesuto_gradient)
+        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
@@ -776,6 +787,7 @@ cdef class LogarithmicWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(logarithmic_value)
         cp.density[0] = <densityfunc>(nan_density)
         cp.gradient[0] = <gradientfunc>(logarithmic_gradient)
+        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
@@ -859,6 +871,7 @@ cdef class CCompositePotentialWrapper(CPotentialWrapper):
             cp.value[i] = tmp_cp.value[0]
             cp.density[i] = tmp_cp.density[0]
             cp.gradient[i] = tmp_cp.gradient[0]
+            cp.hessian[i] = tmp_cp.hessian[0]
 
             if cp.n_dim == 0:
                 cp.n_dim = tmp_cp.n_dim
