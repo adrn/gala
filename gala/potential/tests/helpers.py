@@ -50,6 +50,11 @@ class PotentialTestBase(object):
                                    w0_3d[:cls.ndim].shape,
                                    cls.w0[:cls.ndim].shape + (1,),
                                    w0_slice[:cls.ndim].shape]
+        cls._hess_return_shapes = [(cls.ndim,) + cls.w0[:cls.ndim].shape + (1,),
+                                   (cls.ndim,) + w0_2d[:cls.ndim].shape,
+                                   (cls.ndim,) + w0_3d[:cls.ndim].shape,
+                                   (cls.ndim,) + cls.w0[:cls.ndim].shape + (1,),
+                                   (cls.ndim,) + w0_slice[:cls.ndim].shape]
         cls._valu_return_shapes = [x[1:] for x in cls._grad_return_shapes]
 
     def test_unitsystem(self):
@@ -65,9 +70,10 @@ class PotentialTestBase(object):
             g = self.potential.gradient(arr[:self.ndim])
             assert g.shape == shp
 
-    @pytest.mark.skipif(True, reason="not implemented")
     def test_hessian(self):
-        pass
+        for arr,shp in zip(self.w0s, self._hess_return_shapes):
+            g = self.potential.hessian(arr[:self.ndim])
+            assert g.shape == shp
 
     def test_mass_enclosed(self):
         if isinstance(self.potential.units, DimensionlessUnitSystem):
