@@ -226,8 +226,10 @@ class PotentialBase(object):
         diff = dPhi_dr_plus - dPhi_dr_minus
 
         if isinstance(self.units, DimensionlessUnitSystem):
-            raise ValueError("No units specified when creating potential object.")
-        Gee = G.decompose(self.units).value
+            Gee = 1.
+            # raise ValueError("No units specified when creating potential object.")
+        else:
+            Gee = G.decompose(self.units).value
 
         return np.abs(r*r * diff / Gee / (2.*h)) * self.units['mass']
 
