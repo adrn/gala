@@ -16,7 +16,7 @@ higher order integration schemes such as a 5th order Runge-Kutta and the
 Dormand-Prince 85(3) method.
 
 For code blocks below and any pages linked below, I assume the following
-imports have already been excuted::
+imports have already been executed::
 
     >>> import astropy.units as u
     >>> import numpy as np
