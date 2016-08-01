@@ -13,7 +13,7 @@ import numpy as np
 from .. import CartesianPhaseSpacePosition, Orbit
 from ...potential import CPotentialBase
 from ...integrate import DOPRI853Integrator, LeapfrogIntegrator
-from ._mockstream import _mock_stream_dop853#, _mock_stream_leapfrog
+from ._mockstream import _mock_stream_dop853, _mock_stream_leapfrog
 
 __all__ = ['mock_stream', 'streakline_stream', 'fardal_stream', 'dissolved_fardal_stream']
 
@@ -87,7 +87,10 @@ def mock_stream(potential, prog_orbit, prog_mass, k_mean, k_disp,
     prog_t = np.ascontiguousarray(prog_orbit.t.decompose(potential.units).value)
 
     if Integrator == LeapfrogIntegrator:
-        pass
+        stream_w = _mock_stream_leapfrog(potential.c_instance, t=prog_t, prog_w=prog_w,
+                                         release_every=release_every,
+                                         _k_mean=k_mean, _k_disp=k_disp, G=potential.G,
+                                         _prog_mass=prog_mass)
 
     elif Integrator == DOPRI853Integrator:
         stream_w = _mock_stream_dop853(potential.c_instance, t=prog_t, prog_w=prog_w,

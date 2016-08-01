@@ -13,13 +13,16 @@ import pytest
 # Custom
 from ....potential import SphericalNFWPotential
 from ....dynamics import CartesianPhaseSpacePosition
-from ....integrate import DOPRI853Integrator
+from ....integrate import DOPRI853Integrator, LeapfrogIntegrator
 from ....units import galactic
 
 # Project
 from ..core import mock_stream, streakline_stream, fardal_stream, dissolved_fardal_stream
 
-def test_mock_stream():
+@pytest.mark.parametrize("Integrator,kwargs",
+                         zip([DOPRI853Integrator, LeapfrogIntegrator],
+                             [dict(), dict()]))
+def test_mock_stream(Integrator, kwargs):
     potential = SphericalNFWPotential(v_c=0.2, r_s=20., units=galactic)
 
     w0 = CartesianPhaseSpacePosition(pos=[0.,15.,0]*u.kpc,
@@ -30,12 +33,16 @@ def test_mock_stream():
     k_mean = [1.,0.,0.,0.,1.,0.]
     k_disp = [0.,0.,0.,0.,0.,0.]
     stream = mock_stream(potential, prog, k_mean=k_mean, k_disp=k_disp,
-                         prog_mass=1E4, Integrator=DOPRI853Integrator)
+                         prog_mass=1E4, Integrator=Integrator, **kwargs)
+
+    # fig = prog.plot(subplots_kwargs=dict(sharex=False,sharey=False))
+    # fig = stream.plot()
 
     # fig = prog.plot(subplots_kwargs=dict(sharex=False,sharey=False))
     # fig = stream.plot(color='#ff0000', alpha=0.5, axes=fig.axes)
-    # fig = stream.plot()
+
     # pl.show()
+    # return
 
     assert stream.pos.shape == (3,2048) # two particles per step
 
