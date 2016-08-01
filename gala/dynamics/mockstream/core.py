@@ -85,12 +85,15 @@ def mock_stream(potential, prog_orbit, prog_mass, k_mean, k_disp,
     c_w = np.squeeze(prog_orbit.w(potential.units)).T # transpose for Cython funcs
     prog_w = np.ascontiguousarray(c_w)
     prog_t = np.ascontiguousarray(prog_orbit.t.decompose(potential.units).value)
+    if hasattr(prog_mass, 'unit'):
+        prog_mass = prog_mass.decompose(potential.units).value
 
     if Integrator == LeapfrogIntegrator:
         stream_w = _mock_stream_leapfrog(potential.c_instance, t=prog_t, prog_w=prog_w,
                                          release_every=release_every,
                                          _k_mean=k_mean, _k_disp=k_disp, G=potential.G,
-                                         _prog_mass=prog_mass)
+                                         _prog_mass=prog_mass,
+                                         **Integrator_kwargs)
 
     elif Integrator == DOPRI853Integrator:
         stream_w = _mock_stream_dop853(potential.c_instance, t=prog_t, prog_w=prog_w,
