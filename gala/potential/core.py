@@ -89,6 +89,14 @@ class PotentialBase(object):
         q = self._prefilter_pos(q)
         return self._value(q, t=t) * self.units['energy'] / self.units['mass']
 
+    def potential(self, q, t=0.):
+        __doc__ = self.value.__doc__
+        return self.value(q, t=t)
+
+    def _potential(self, q, t=0.):
+        __doc__ = self._value.__doc__
+        return self.value(q, t=t)
+
     def _gradient(self, q, t=0.):
         raise NotImplementedError()
 
