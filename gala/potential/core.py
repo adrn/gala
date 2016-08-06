@@ -209,15 +209,15 @@ class PotentialBase(object):
 
         Parameters
         ----------
-        x : array_like, numeric
+        q : array_like, numeric
             Position to estimate the enclossed mass.
 
         Returns
         -------
         menc : `~astropy.units.Quantity`
-            The potential energy or value of the potential. If the input
-            position has shape ``q.shape``, the output energy will have
-            shape ``q.shape[1:]``.
+            Mass enclosed at the given position(s). If the input position
+            has shape ``q.shape``, the output energy will have shape
+            ``q.shape[1:]``.
         """
         q = self._prefilter_pos(q)
 
@@ -239,7 +239,34 @@ class PotentialBase(object):
         else:
             Gee = G.decompose(self.units).value
 
-        return np.abs(r*r * diff / Gee / (2.*h)) * self.units['mass']
+        return np.abs(r*r * diff / Gee / (2.*h)).decompose(self.units) * self.units['mass']
+
+    def circular_velocity(self, q, t=0.):
+        """
+        Estimate the circular velocity at the given position assuming the potential
+        is spherical.
+
+        Parameters
+        ----------
+        q : array_like, numeric
+            Position(s) to estimate the circular velocity.
+
+        Returns
+        -------
+        vcirc : `~astropy.units.Quantity`
+            Circular velocity at the given position(s). If the input position
+            has shape ``q.shape``, the output energy will have shape
+            ``q.shape[1:]``.
+
+        """
+        q = self._prefilter_pos(q)
+
+        # Radius
+        r = np.sqrt(np.sum(q**2, axis=0)) * self.units['length']
+        dPhi_dr = self.gradient(q)
+        grad = np.abs(np.sqrt(np.sum(dPhi_dr**2, axis=0)))
+
+        return self.units.decompose(np.sqrt(r * grad))
 
     # ========================================================================
     # Python special methods
