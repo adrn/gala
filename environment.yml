@@ -1,0 +1,12 @@
+name: gala
+
+channels:
+  - astropy
+
+dependencies:
+  - astropy
+  - numpy
+  - cython
+  - matplotlib
+  - scipy
+  - pyyaml
