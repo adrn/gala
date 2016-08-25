@@ -221,17 +221,17 @@ class PotentialBase(object):
         """
         q = self._prefilter_pos(q)
 
-        # Fractional step-size in radius
-        h = 0.01
+        # small step-size in direction of q
+        h = 1E-3 # MAGIC NUMBER
 
         # Radius
         r = np.sqrt(np.sum(q**2, axis=0))
 
         epsilon = h*q/r[np.newaxis]
 
-        dPhi_dr_plus = self.value(q + epsilon, t=t)
-        dPhi_dr_minus = self.value(q - epsilon, t=t)
-        diff = dPhi_dr_plus - dPhi_dr_minus
+        dPhi_dr_plus = self._value(q + epsilon, t=t)
+        dPhi_dr_minus = self._value(q - epsilon, t=t)
+        diff = (dPhi_dr_plus - dPhi_dr_minus)
 
         if isinstance(self.units, DimensionlessUnitSystem):
             Gee = 1.
@@ -239,7 +239,7 @@ class PotentialBase(object):
         else:
             Gee = G.decompose(self.units).value
 
-        return np.abs(r*r * diff / Gee / (2.*h)).decompose(self.units) * self.units['mass']
+        return np.abs(r*r * diff / Gee / (2.*h)) * self.units['mass']
 
     def circular_velocity(self, q, t=0.):
         """
