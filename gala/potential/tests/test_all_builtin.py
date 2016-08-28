@@ -144,3 +144,14 @@ class TestComposite(CompositePotentialTestBase):
     potential['disk'] = p2
     potential['halo'] = p1
     w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+
+class TestCComposite(CompositePotentialTestBase):
+    p1 = LogarithmicPotential(units=galactic,
+                              v_c=0.17, r_h=10.,
+                              q1=1.2, q2=1., q3=0.8)
+    p2 = MiyamotoNagaiPotential(units=galactic,
+                                m=1.E11, a=6.5, b=0.26)
+    potential = CCompositePotential()
+    potential['disk'] = p2
+    potential['halo'] = p1
+    w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]

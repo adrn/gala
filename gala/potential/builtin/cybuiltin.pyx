@@ -854,6 +854,7 @@ cdef class CCompositePotentialWrapper(CPotentialWrapper):
             int i
             CPotentialWrapper[::1] _cpotential_arr
 
+        self._potentials = potentials
         _cpotential_arr = np.array(potentials)
 
         n_components = len(potentials)
@@ -880,6 +881,9 @@ cdef class CCompositePotentialWrapper(CPotentialWrapper):
 
         self.cpotential = cp
 
+    def __reduce__(self):
+        return (self.__class__, (list(self._potentials),))
+
 class CCompositePotential(CPotentialBase, CompositePotential):
 
     def __init__(self, **potentials):
@@ -896,7 +900,7 @@ class CCompositePotential(CPotentialBase, CompositePotential):
         CompositePotential.__setitem__(self, *args, **kwargs)
         self._reset_c_instance()
 
-    def __reduce__(self):
-        """ Properly package the object for pickling """
-        derp = tuple([self.units] + [c.parameters for c in self.values()])
-        return (self.__class__, derp)
+    # def __reduce__(self):
+    #     """ Properly package the object for pickling """
+    #     derp = tuple([self.units] + [c.parameters for c in self.values()])
+    #     return (self.__class__, derp)
