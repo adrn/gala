@@ -6,6 +6,7 @@ cdef class CPotentialWrapper:
     cdef CPotential cpotential
     cdef double[::1] _params
     cdef int[::1] _n_params
+    cdef list _potentials # HACK: for CCompositePotentialWrapper
 
     cpdef value(self, double[:,::1] q, double t=?)
     cpdef density(self, double[:,::1] q, double t=?)
