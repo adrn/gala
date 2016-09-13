@@ -13,6 +13,7 @@ extern double isochrone_density(double t, double *pars, double *q);
 
 extern double hernquist_value(double t, double *pars, double *q);
 extern void hernquist_gradient(double t, double *pars, double *q, double *grad);
+extern void hernquist_hessian(double t, double *pars, double *q, double *hess);
 extern double hernquist_density(double t, double *pars, double *q);
 
 extern double plummer_value(double t, double *pars, double *q);
@@ -29,6 +30,7 @@ extern void stone_density(double t, double *pars, double *q);
 
 extern double sphericalnfw_value(double t, double *pars, double *q);
 extern void sphericalnfw_gradient(double t, double *pars, double *q, double *grad);
+extern void sphericalnfw_hessian(double t, double *pars, double *q, double *hess);
 extern double sphericalnfw_density(double t, double *pars, double *q);
 
 extern double flattenednfw_value(double t, double *pars, double *q);
