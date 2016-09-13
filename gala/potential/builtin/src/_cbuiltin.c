@@ -134,6 +134,40 @@ double hernquist_density(double t, double *pars, double *q) {
     return rho0 / ((r/pars[2]) * pow(1+r/pars[2],3));
 }
 
+void hernquist_hessian(double t, double *pars, double *q, double *hess) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - c (length scale)
+    */
+    double G, M, c;
+    G = pars[0];
+    M = pars[1];
+    c = pars[2];
+
+    double x = q[0];
+    double y = q[1];
+    double z = q[2];
+    double r = sqrt(x*x + y*y + z*z);
+    double cr = c+r;
+    double cr2 = cr*cr;
+    double cr3 = cr2*cr;
+    double r2 = r*r;
+    double r3 = r2*r;
+
+
+    hess[0] = G*M*(1./(r*cr2) - 2.*x*x/(r2*cr3) - x*x/(r3*cr2));
+    hess[1] = G*M*(- 2.*x*y/(r2*cr3) - x*y/(r3*cr2));
+    hess[2] = G*M*(-2*x*z/(r3*cr3) - x*z/(r3*cr2));
+    hess[3] = G*M*(-2*x*y/(r2*cr3) - x*y/(r3*cr2));
+    hess[4] = G*M*(1./(r*cr2) - 2.*y*y/(r2*cr3) - y*y/(r3*cr2));
+    hess[5] = G*M*(- 2.*y*z/(r2*cr3) - y*z/(r3*cr2));
+    hess[6] = G*M*(-2.*x*z/(r2*cr3) - x*z/(r3*cr2));
+    hess[7] = G*M*(-2.*y*z/(r2*cr3) - y*z/(r3*cr2));
+    hess[8] = G*M*(1./(r*cr2) - 2.*z*z/(r2*cr3) - z*z/(r3*cr2));
+}
+
+
 /* ---------------------------------------------------------------------------
     Plummer sphere
 */
@@ -319,6 +353,38 @@ double sphericalnfw_density(double t, double *pars, double *q) {
 
     rho0 = v_h2 / (4*M_PI*pars[0]*pars[2]*pars[2]);
     return rho0 / ((r/pars[2]) * pow(1+r/pars[2],2));
+}
+
+double sphericalnfw_hessian(double t, double *pars, double *q, double *hess) {
+  /*  pars:
+      - G (Gravitational constant)
+      - v_c (circular velocity at the scale radius)
+      - r_s (scale radius)
+  */
+  double v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+  double rs = pars[2];
+
+  double x = q[0];
+  double y = q[1];
+  double z = q[2];
+  double r = sqrt(x*x + y*y + z*z);
+  double r2 = r*r;
+  double r3 = r2*r;
+  double r4 = r3*r;
+  double r5 = r4*r;
+  double rrs1 = r/rs + 1.0;
+  double ll = log(rrs1);
+
+  hess[0] = v_h2*(-1./(r2*rrs1) + rs/r3*ll + x*x/(r3*rs*rrs1*rrs1) + 3.*x*x/(r4*rrs1) - 3.*rs/r5*x*x*ll);
+  hess[1] = v_h2*(x*y/(r3*rs*rrs1*rrs1) + 3.*x*y/(r4*rrs1) - 3.*rs/r5*x*y*ll);
+  hess[2] = v_h2*(x*z/(r3*rs*rrs1*rrs1) + 3.*x*z/(r4*rrs1) - 3.*rs/r5*x*z*ll);
+  hess[3] = v_h2*(x*y/(r3*rs*rrs1*rrs1) + 3.*x*y/(r4*rrs1) - 3.*rs/r5*x*y*ll);
+  hess[4] = v_h2*(-1./(r2*rrs1) + rs/r3*ll + y*y/(r3*rs*rrs1*rrs1) + 3.*y*y/(r4*rrs1) - 3.*rs/r5*y*y*ll);
+  hess[5] = v_h2*(y*z/(r3*rs*rrs1*rrs1) + 3.*y*z/(r4*rrs1) - 3.*rs/r5*y*z*ll);
+  hess[6] = v_h2*(x*z/(r3*rs*rrs1*rrs1) + 3.*x*z/(r4*rrs1) - 3.*rs/r5*x*z*ll);
+  hess[7] = v_h2*(y*z/(r3*rs*rrs1*rrs1) + 3.*y*z/(r4*rrs1) - 3.*rs/r5*y*z*ll);
+  hess[8] = v_h2*(-1./(r2*rrs1) + rs/r3*ll + z*z/(r3*rs*rrs1*rrs1) + 3.*z*z/(r4*rrs1) - 3.*rs/r5*z*z*ll);
+
 }
 
 /* ---------------------------------------------------------------------------
