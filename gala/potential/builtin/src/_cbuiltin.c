@@ -156,15 +156,15 @@ void hernquist_hessian(double t, double *pars, double *q, double *hess) {
     double r3 = r2*r;
 
 
-    hess[0] = G*M*(1./(r*cr2) - 2.*x*x/(r2*cr3) - x*x/(r3*cr2));
-    hess[1] = G*M*(- 2.*x*y/(r2*cr3) - x*y/(r3*cr2));
-    hess[2] = G*M*(-2*x*z/(r3*cr3) - x*z/(r3*cr2));
-    hess[3] = G*M*(-2*x*y/(r2*cr3) - x*y/(r3*cr2));
-    hess[4] = G*M*(1./(r*cr2) - 2.*y*y/(r2*cr3) - y*y/(r3*cr2));
-    hess[5] = G*M*(- 2.*y*z/(r2*cr3) - y*z/(r3*cr2));
-    hess[6] = G*M*(-2.*x*z/(r2*cr3) - x*z/(r3*cr2));
-    hess[7] = G*M*(-2.*y*z/(r2*cr3) - y*z/(r3*cr2));
-    hess[8] = G*M*(1./(r*cr2) - 2.*z*z/(r2*cr3) - z*z/(r3*cr2));
+    hess[0] = hess[0] + G*M*(1./(r*cr2) - 2.*x*x/(r2*cr3) - x*x/(r3*cr2));
+    hess[1] = hess[1] + G*M*(- 2.*x*y/(r2*cr3) - x*y/(r3*cr2));
+    hess[2] = hess[2] + G*M*(-2*x*z/(r3*cr3) - x*z/(r3*cr2));
+    hess[3] = hess[3] + G*M*(-2*x*y/(r2*cr3) - x*y/(r3*cr2));
+    hess[4] = hess[4] + G*M*(1./(r*cr2) - 2.*y*y/(r2*cr3) - y*y/(r3*cr2));
+    hess[5] = hess[5] + G*M*(- 2.*y*z/(r2*cr3) - y*z/(r3*cr2));
+    hess[6] = hess[6] + G*M*(-2.*x*z/(r2*cr3) - x*z/(r3*cr2));
+    hess[7] = hess[7] + G*M*(-2.*y*z/(r2*cr3) - y*z/(r3*cr2));
+    hess[8] = hess[8] + G*M*(1./(r*cr2) - 2.*z*z/(r2*cr3) - z*z/(r3*cr2));
 }
 
 
@@ -375,15 +375,15 @@ double sphericalnfw_hessian(double t, double *pars, double *q, double *hess) {
   double rrs1 = r/rs + 1.0;
   double ll = log(rrs1);
 
-  hess[0] = v_h2*(-1./(r2*rrs1) + rs/r3*ll + x*x/(r3*rs*rrs1*rrs1) + 3.*x*x/(r4*rrs1) - 3.*rs/r5*x*x*ll);
-  hess[1] = v_h2*(x*y/(r3*rs*rrs1*rrs1) + 3.*x*y/(r4*rrs1) - 3.*rs/r5*x*y*ll);
-  hess[2] = v_h2*(x*z/(r3*rs*rrs1*rrs1) + 3.*x*z/(r4*rrs1) - 3.*rs/r5*x*z*ll);
-  hess[3] = v_h2*(x*y/(r3*rs*rrs1*rrs1) + 3.*x*y/(r4*rrs1) - 3.*rs/r5*x*y*ll);
-  hess[4] = v_h2*(-1./(r2*rrs1) + rs/r3*ll + y*y/(r3*rs*rrs1*rrs1) + 3.*y*y/(r4*rrs1) - 3.*rs/r5*y*y*ll);
-  hess[5] = v_h2*(y*z/(r3*rs*rrs1*rrs1) + 3.*y*z/(r4*rrs1) - 3.*rs/r5*y*z*ll);
-  hess[6] = v_h2*(x*z/(r3*rs*rrs1*rrs1) + 3.*x*z/(r4*rrs1) - 3.*rs/r5*x*z*ll);
-  hess[7] = v_h2*(y*z/(r3*rs*rrs1*rrs1) + 3.*y*z/(r4*rrs1) - 3.*rs/r5*y*z*ll);
-  hess[8] = v_h2*(-1./(r2*rrs1) + rs/r3*ll + z*z/(r3*rs*rrs1*rrs1) + 3.*z*z/(r4*rrs1) - 3.*rs/r5*z*z*ll);
+  hess[0] = hess[0] + v_h2*(-1./(r2*rrs1) + rs/r3*ll + x*x/(r3*rs*rrs1*rrs1) + 3.*x*x/(r4*rrs1) - 3.*rs/r5*x*x*ll);
+  hess[1] = hess[1] + v_h2*(x*y/(r3*rs*rrs1*rrs1) + 3.*x*y/(r4*rrs1) - 3.*rs/r5*x*y*ll);
+  hess[2] = hess[2] + v_h2*(x*z/(r3*rs*rrs1*rrs1) + 3.*x*z/(r4*rrs1) - 3.*rs/r5*x*z*ll);
+  hess[3] = hess[3] + v_h2*(x*y/(r3*rs*rrs1*rrs1) + 3.*x*y/(r4*rrs1) - 3.*rs/r5*x*y*ll);
+  hess[4] = hess[4] + v_h2*(-1./(r2*rrs1) + rs/r3*ll + y*y/(r3*rs*rrs1*rrs1) + 3.*y*y/(r4*rrs1) - 3.*rs/r5*y*y*ll);
+  hess[5] = hess[5] + v_h2*(y*z/(r3*rs*rrs1*rrs1) + 3.*y*z/(r4*rrs1) - 3.*rs/r5*y*z*ll);
+  hess[6] = hess[6] + v_h2*(x*z/(r3*rs*rrs1*rrs1) + 3.*x*z/(r4*rrs1) - 3.*rs/r5*x*z*ll);
+  hess[7] = hess[7] + v_h2*(y*z/(r3*rs*rrs1*rrs1) + 3.*y*z/(r4*rrs1) - 3.*rs/r5*y*z*ll);
+  hess[8] = hess[8] + v_h2*(-1./(r2*rrs1) + rs/r3*ll + z*z/(r3*rs*rrs1*rrs1) + 3.*z*z/(r4*rrs1) - 3.*rs/r5*z*z*ll);
 
 }
 
@@ -582,17 +582,17 @@ void miyamotonagai_hessian(double t, double *pars, double *r, double *hess) {
     double tmp18 = 1.0/tmp3;
     double tmp19 = G*M*tmp2*tmp8;
 
-    hess[0] = -tmp0*tmp11 + tmp9;
-    hess[1] = tmp13;
-    hess[2] = tmp16;
+    hess[0] = hess[0] + -tmp0*tmp11 + tmp9;
+    hess[1] = hess[1] + tmp13;
+    hess[2] = hess[2] + tmp16;
 
-    hess[3] = tmp13;
-    hess[4] = -tmp1*tmp11 + tmp9;
-    hess[5] = tmp17;
+    hess[3] = hess[3] + tmp13;
+    hess[4] = hess[4] + -tmp1*tmp11 + tmp9;
+    hess[5] = hess[5] + tmp17;
 
-    hess[6] = tmp16;
-    hess[7] = tmp17;
-    hess[8] = -tmp11*tmp18*tmp2*tmp6 + tmp14*tmp5*tmp9 + tmp18*tmp19 - tmp19*tmp5*pow(tmp3,-1.5);
+    hess[6] = hess[6] + tmp16;
+    hess[7] = hess[7] + tmp17;
+    hess[8] = hess[8] + -tmp11*tmp18*tmp2*tmp6 + tmp14*tmp5*tmp9 + tmp18*tmp19 - tmp19*tmp5*pow(tmp3,-1.5);
 }
 
 /* ---------------------------------------------------------------------------
