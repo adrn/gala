@@ -69,6 +69,7 @@ cdef extern from "src/_cbuiltin.h":
 
     double hernquist_value(double t, double *pars, double *q) nogil
     void hernquist_gradient(double t, double *pars, double *q, double *grad) nogil
+    void hernquist_hessian(double t, double *pars, double *q, double *hess) nogil
     double hernquist_density(double t, double *pars, double *q) nogil
 
     double plummer_value(double t, double *pars, double *q) nogil
@@ -85,6 +86,7 @@ cdef extern from "src/_cbuiltin.h":
 
     double sphericalnfw_value(double t, double *pars, double *q) nogil
     void sphericalnfw_gradient(double t, double *pars, double *q, double *grad) nogil
+    void sphericalnfw_hessian(double t, double *pars, double *q, double *hess) nogil
     double sphericalnfw_density(double t, double *pars, double *q) nogil
 
     double flattenednfw_value(double t, double *pars, double *q) nogil
@@ -309,7 +311,7 @@ cdef class HernquistWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(hernquist_value)
         cp.density[0] = <densityfunc>(hernquist_density)
         cp.gradient[0] = <gradientfunc>(hernquist_gradient)
-        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
+        cp.hessian[0] = <hessianfunc>(hernquist_hessian)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
@@ -514,7 +516,7 @@ cdef class SphericalNFWWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(sphericalnfw_value)
         cp.density[0] = <densityfunc>(sphericalnfw_density)
         cp.gradient[0] = <gradientfunc>(sphericalnfw_gradient)
-        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
+        cp.hessian[0] = <hessianfunc>(sphericalnfw_hessian)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
