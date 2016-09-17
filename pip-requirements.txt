@@ -1,4 +1,4 @@
-numpy>=1.10
+numpy>=1.11
 scipy>=0.16
 astropy>=1.0
 cython>=0.21
