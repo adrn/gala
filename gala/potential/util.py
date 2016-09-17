@@ -85,6 +85,7 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
     var_names = [v.name for v in vars]
     pars = [sympy.sympify(p) for p in pars]
     par_names = [p.name for p in pars]
+    ndim = len(vars)
 
     class CustomPotential(PotentialBase):
 
@@ -132,11 +133,37 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
         return grad
 
     CustomPotential._gradient = _gradient
-    CustomPotential.save = None
 
     # Hessian
     if hessian:
-        raise NotImplementedError("Hessian functionality doesn't exist yet...sorry.")
-        # hessfuncs = []
+        hessfuncs = []
+        for var1 in vars:
+            for var2 in vars:
+                hessfuncs.append(lambdify(vars + pars, sympy.diff(expr,var1,var2),
+                                          dummify=False, modules='numpy'))
 
+        def _hessian(self, w, t):
+            kw = self.parameters.copy()
+            for k,v in kw.items():
+                kw[k] = v.value
+
+            for i,name in enumerate(var_names):
+                kw[name] = w[i]
+
+            # expand = [np.newaxis] * w[i].ndim
+
+            # This ain't pretty, bub
+            arrs = []
+            for f in hessfuncs:
+                hess_arr = np.array(f(**kw))
+                if hess_arr.shape != w[i].shape:
+                    hess_arr = np.tile(hess_arr, reps=w[i].shape)
+                arrs.append(hess_arr)
+            hess = np.vstack(arrs)
+
+            return hess.reshape((ndim,ndim)+w[i].shape)
+
+        CustomPotential._hessian = _hessian
+
+    CustomPotential.save = None
     return CustomPotential

@@ -24,18 +24,21 @@ class EquationBase(PotentialTestBase):
 
 class TestHarmonicOscillatorFromEquation(EquationBase):
     Potential = from_equation("1/2*k*x**2", vars="x", pars="k",
-                              name='HarmonicOscillator')
+                              name='HarmonicOscillator',
+                              hessian=True)
     potential = Potential(k=1.)
     w0 = [1.,0.]
 
 class TestHarmonicOscillatorFromEquationUnits(EquationBase):
     Potential = from_equation("1/2*k*x**2", vars="x", pars="k",
-                              name='HarmonicOscillator')
+                              name='HarmonicOscillator',
+                              hessian=True)
     potential = Potential(k=1., units=solarsystem)
     w0 = [1.,0.]
 
 class TestKeplerFromEquation(EquationBase):
     Potential = from_equation("-G*M/sqrt(x**2+y**2+z**2)", vars=["x","y","z"],
-                              pars=["G","M"], name='Kepler')
+                              pars=["G","M"], name='Kepler',
+                              hessian=True)
     potential = Potential(G=1., M=1., units=solarsystem)
     w0 = [1.,0.,0.,0.,6.28,0.]
