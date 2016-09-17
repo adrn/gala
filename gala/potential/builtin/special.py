@@ -4,9 +4,6 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Standard lib
-from collections import OrderedDict
-
 # Third-party
 import astropy.units as u
 import numpy as np
@@ -15,8 +12,8 @@ import numpy as np
 # from .cpotential import CCompositePotential
 # from ..core import CompositePotential
 from .cybuiltin import HernquistPotential, MiyamotoNagaiPotential, \
-    LeeSutoTriaxialNFWPotential, SphericalNFWPotential, LogarithmicPotential,\
-    CCompositePotential
+    LeeSutoTriaxialNFWPotential, SphericalNFWPotential, LogarithmicPotential
+from ..ccompositepotential import CCompositePotential
 from ...units import galactic
 
 __all__ = ['LM10Potential'] # ['TriaxialMWPotential']

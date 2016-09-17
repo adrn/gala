@@ -13,6 +13,7 @@ import numpy as np
 from ...integrate import LeapfrogIntegrator, DOPRI853Integrator
 from ..core import *
 from ..builtin import *
+from ..ccompositepotential import *
 from ...units import solarsystem
 
 class CompositeHelper(object):

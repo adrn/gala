@@ -15,7 +15,8 @@ import numpy as np
 # Project
 from ..io import load, save
 from ..core import CompositePotential
-from ..builtin import IsochronePotential, KeplerPotential, CCompositePotential
+from ..ccompositepotential import CCompositePotential
+from ..builtin import IsochronePotential, KeplerPotential
 from ..builtin.special import LM10Potential
 from ...units import DimensionlessUnitSystem, galactic
 

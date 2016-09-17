@@ -15,6 +15,7 @@ import pytest
 # This project
 from ..core import CompositePotential
 from ..builtin import *
+from ..ccompositepotential import *
 from ...units import solarsystem, galactic, DimensionlessUnitSystem
 from .helpers import PotentialTestBase, CompositePotentialTestBase
 
