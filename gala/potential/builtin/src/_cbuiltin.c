@@ -339,7 +339,7 @@ double jaffe_value(double t, double *pars, double *r) {
     */
     double R;
     R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
-    return pars[0] * pars[1] / pars[2] * log(pars[2] / (R + pars[2]));
+    return -pars[0] * pars[1] / pars[2] * log(1 + pars[2]/R);
 }
 
 void jaffe_gradient(double t, double *pars, double *r, double *grad){
@@ -350,11 +350,11 @@ void jaffe_gradient(double t, double *pars, double *r, double *grad){
     */
     double R, fac;
     R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
-    fac = pars[0] * pars[1] / ((R + pars[2]) * R * R);
+    fac = pars[0] * pars[1] / pars[2] * (pars[2] / (R * (pars[2] + R)));
 
-    grad[0] = grad[0] + fac*r[0];
-    grad[1] = grad[1] + fac*r[1];
-    grad[2] = grad[2] + fac*r[2];
+    grad[0] = grad[0] + fac*r[0]/R;
+    grad[1] = grad[1] + fac*r[1]/R;
+    grad[2] = grad[2] + fac*r[2]/R;
 }
 
 double jaffe_density(double t, double *pars, double *q) {
