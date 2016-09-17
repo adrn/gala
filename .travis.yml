@@ -25,11 +25,8 @@ env:
         - NUMPY_VERSION=stable
         - ASTROPY_VERSION=stable
         - SETUP_CMD='test'
-        # - PIP_DEPENDENCIES=''
-        # For this package-template, we include examples of Cython modules,
-        # so Cython is required for testing. If your package does not include
-        # Cython code, you can set CONDA_DEPENDENCIES=''
-        - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml sympy'
+        # HACK: qt=4 see https://github.com/astropy/astroquery/issues/748
+        - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml sympy qt=4'
 
     matrix:
         # Make sure that egg_info works without dependencies
