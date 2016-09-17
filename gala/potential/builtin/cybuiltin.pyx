@@ -905,7 +905,14 @@ class CCompositePotential(CPotentialBase, CompositePotential):
         CompositePotential.__setitem__(self, *args, **kwargs)
         self._reset_c_instance()
 
-    # def __reduce__(self):
-    #     """ Properly package the object for pickling """
-    #     derp = tuple([self.units] + [c.parameters for c in self.values()])
-    #     return (self.__class__, derp)
+    def __setstate__(self, state):
+        # when rebuilding from a pickle, temporarily release lock to add components
+        self.lock = False
+        for name,potential in state:
+            self[name] = potential
+        self._reset_c_instance()
+        self.lock = True
+
+    def __reduce__(self):
+        """ Properly package the object for pickling """
+        return self.__class__, (), list(self.items())
