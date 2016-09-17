@@ -17,6 +17,7 @@ for older versions of matplotlib the following works::
 
 """
 try:
+    import matplotlib
     from matplotlib.colors import ListedColormap
     import matplotlib.pyplot as plt
     HAS_MPL = True
