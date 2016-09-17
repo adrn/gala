@@ -280,8 +280,6 @@ class CPotentialBase(PotentialBase):
         q : array_like, numeric
             Position to compute the mass enclosed.
         """
-        if isinstance(self.units, DimensionlessUnitSystem):
-            raise ValueError("No units specified when creating potential object.")
 
         q = atleast_2d(q, insert_axis=1)
         sh = q.shape
