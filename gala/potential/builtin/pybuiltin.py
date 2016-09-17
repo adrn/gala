@@ -46,6 +46,11 @@ class HarmonicOscillatorPotential(PotentialBase):
         om = np.array(self.parameters['omega'])
         return (om**2*x.T).T
 
+    def _hessian(self, x, t):
+        expand = [slice(None),slice(None)] + [np.newaxis] * (x.ndim - 1)
+        om = np.atleast_1d(self.parameters['omega'])
+        return np.tile(np.diag(om)[expand], reps=x.shape[1:])
+
     def action_angle(self, w):
         """
         Transform the input cartesian position and velocity to action-angle

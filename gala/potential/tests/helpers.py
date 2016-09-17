@@ -76,11 +76,6 @@ class PotentialTestBase(object):
             assert g.shape == shp
 
     def test_mass_enclosed(self):
-        if isinstance(self.potential.units, DimensionlessUnitSystem):
-            with pytest.raises(ValueError):
-                self.potential.mass_enclosed(self.w0)
-            return
-
         for arr,shp in zip(self.w0s, self._valu_return_shapes):
             g = self.potential.mass_enclosed(arr[:self.ndim])
             assert g.shape == shp

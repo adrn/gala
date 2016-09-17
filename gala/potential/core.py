@@ -235,7 +235,6 @@ class PotentialBase(object):
 
         if isinstance(self.units, DimensionlessUnitSystem):
             Gee = 1.
-            # raise ValueError("No units specified when creating potential object.")
         else:
             Gee = G.decompose(self.units).value
 
