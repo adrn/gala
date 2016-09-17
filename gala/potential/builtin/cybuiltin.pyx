@@ -62,19 +62,22 @@ cdef extern from "src/_cbuiltin.h":
 
     double kepler_value(double t, double *pars, double *q) nogil
     void kepler_gradient(double t, double *pars, double *q, double *grad) nogil
+    void kepler_hessian(double t, double *pars, double *q, double *hess) nogil
 
     double isochrone_value(double t, double *pars, double *q) nogil
     void isochrone_gradient(double t, double *pars, double *q, double *grad) nogil
     double isochrone_density(double t, double *pars, double *q) nogil
+    void isochrone_hessian(double t, double *pars, double *q, double *hess) nogil
 
     double hernquist_value(double t, double *pars, double *q) nogil
     void hernquist_gradient(double t, double *pars, double *q, double *grad) nogil
-    void hernquist_hessian(double t, double *pars, double *q, double *hess) nogil
     double hernquist_density(double t, double *pars, double *q) nogil
+    void hernquist_hessian(double t, double *pars, double *q, double *hess) nogil
 
     double plummer_value(double t, double *pars, double *q) nogil
     void plummer_gradient(double t, double *pars, double *q, double *grad) nogil
     double plummer_density(double t, double *pars, double *q) nogil
+    void plummer_hessian(double t, double *pars, double *q, double *hess) nogil
 
     double jaffe_value(double t, double *pars, double *q) nogil
     void jaffe_gradient(double t, double *pars, double *q, double *grad) nogil
@@ -86,8 +89,8 @@ cdef extern from "src/_cbuiltin.h":
 
     double sphericalnfw_value(double t, double *pars, double *q) nogil
     void sphericalnfw_gradient(double t, double *pars, double *q, double *grad) nogil
-    void sphericalnfw_hessian(double t, double *pars, double *q, double *hess) nogil
     double sphericalnfw_density(double t, double *pars, double *q) nogil
+    void sphericalnfw_hessian(double t, double *pars, double *q, double *hess) nogil
 
     double flattenednfw_value(double t, double *pars, double *q) nogil
     void flattenednfw_gradient(double t, double *pars, double *q, double *grad) nogil
@@ -174,7 +177,7 @@ cdef class KeplerWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(kepler_value)
         cp.density[0] = <densityfunc>(nan_density)
         cp.gradient[0] = <gradientfunc>(kepler_gradient)
-        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
+        cp.hessian[0] = <hessianfunc>(kepler_hessian)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
@@ -224,7 +227,7 @@ cdef class IsochroneWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(isochrone_value)
         cp.density[0] = <densityfunc>(isochrone_density)
         cp.gradient[0] = <gradientfunc>(isochrone_gradient)
-        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
+        cp.hessian[0] = <hessianfunc>(isochrone_hessian)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1
@@ -363,7 +366,7 @@ cdef class PlummerWrapper(CPotentialWrapper):
         cp.value[0] = <valuefunc>(plummer_value)
         cp.density[0] = <densityfunc>(plummer_density)
         cp.gradient[0] = <gradientfunc>(plummer_gradient)
-        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
+        cp.hessian[0] = <hessianfunc>(plummer_hessian)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         cp.n_components = 1

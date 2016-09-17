@@ -49,6 +49,36 @@ void kepler_gradient(double t, double *pars, double *r, double *grad) {
     grad[2] = grad[2] + fac*r[2];
 }
 
+void kepler_hessian(double t, double *pars, double *q, double *hess) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+    */
+    double GM = pars[0]*pars[1];
+
+    double tmp0 = x*x;
+    double tmp1 = y*y;
+    double tmp2 = z*z;
+    double tmp3 = tmp0 + tmp1 + tmp2;
+    double tmp4 = GM/pow(tmp3, 1.5);
+    double tmp5 = pow(tmp3, -2.5);
+    double tmp6 = 3*GM*tmp5;
+    double tmp7 = 3*GM*tmp5*x;
+    double tmp8 = -tmp7*y;
+    double tmp9 = -tmp7*z;
+    double tmp10 = -tmp6*y*z;
+
+    hess[0] = hess[0] + -tmp0*tmp6 + tmp4;
+    hess[1] = hess[1] + tmp8;
+    hess[2] = hess[2] + tmp9;
+    hess[3] = hess[3] + tmp8;
+    hess[4] = hess[4] + -tmp1*tmp6 + tmp4;
+    hess[5] = hess[5] + tmp10;
+    hess[6] = hess[6] + tmp9;
+    hess[7] = hess[7] + tmp10;
+    hess[8] = hess[8] + -tmp2*tmp6 + tmp4;
+}
+
 /* ---------------------------------------------------------------------------
     Isochrone potential
 */
@@ -91,6 +121,45 @@ double isochrone_density(double t, double *pars, double *q) {
     a = sqrt(b*b + r2);
 
     return pars[1] * (3*(b+a)*a*a - r2*(b+3*a)) / (4*M_PI*pow(b+a,3)*a*a*a);
+}
+
+void isochrone_hessian(double t, double *pars, double *q, double *hess) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - b (core scale)
+    */
+    double GM = pars[0]*pars[1];
+    double b = pars[2];
+
+    double tmp0 = x*x;
+    double tmp1 = y*y;
+    double tmp2 = z*z;
+    double tmp3 = b*b + tmp0 + tmp1 + tmp2;
+    double tmp4 = sqrt(tmp3);
+    double tmp5 = b + tmp4;
+    double tmp6 = pow(tmp5, -2);
+    double tmp7 = GM*tmp6/tmp4;
+    double tmp8 = 1.0/tmp3;
+    double tmp9 = pow(tmp5, -3);
+    double tmp10 = 2*GM*tmp8*tmp9;
+    double tmp11 = pow(tmp3, -1.5);
+    double tmp12 = GM*tmp11*tmp6;
+    double tmp13 = 2*GM*tmp8*tmp9*x;
+    double tmp14 = GM*tmp11*tmp6*x;
+    double tmp15 = -tmp13*y - tmp14*y;
+    double tmp16 = -tmp13*z - tmp14*z;
+    double tmp17 = y*z;
+    double tmp18 = -tmp10*tmp17 - tmp12*tmp17;
+    hess[0] = hess[0] + -tmp0*tmp10 - tmp0*tmp12 + tmp7;
+    hess[1] = hess[1] + tmp15;
+    hess[2] = hess[2] + tmp16;
+    hess[3] = hess[3] + tmp15;
+    hess[4] = hess[4] + -tmp1*tmp10 - tmp1*tmp12 + tmp7;
+    hess[5] = hess[5] + tmp18;
+    hess[6] = hess[6] + tmp16;
+    hess[7] = hess[7] + tmp18;
+    hess[8] = hess[8] + -tmp10*tmp2 - tmp12*tmp2 + tmp7;
 }
 
 /* ---------------------------------------------------------------------------
@@ -140,31 +209,38 @@ void hernquist_hessian(double t, double *pars, double *q, double *hess) {
             - m (mass scale)
             - c (length scale)
     */
-    double G, M, c;
-    G = pars[0];
-    M = pars[1];
-    c = pars[2];
+    double GM = pars[0] * pars[1];
+    double c = pars[2];
 
-    double x = q[0];
-    double y = q[1];
-    double z = q[2];
-    double r = sqrt(x*x + y*y + z*z);
-    double cr = c+r;
-    double cr2 = cr*cr;
-    double cr3 = cr2*cr;
-    double r2 = r*r;
-    double r3 = r2*r;
+    double tmp0 = x*x;
+    double tmp1 = y*y;
+    double tmp2 = z*z;
+    double tmp3 = tmp0 + tmp1 + tmp2;
+    double tmp4 = sqrt(tmp3);
+    double tmp5 = c + tmp4;
+    double tmp6 = pow(tmp5, -2);
+    double tmp7 = GM*tmp6/tmp4;
+    double tmp8 = 1.0/tmp3;
+    double tmp9 = pow(tmp5, -3);
+    double tmp10 = 2*GM*tmp8*tmp9;
+    double tmp11 = pow(tmp3, -1.5);
+    double tmp12 = GM*tmp11*tmp6;
+    double tmp13 = 2*GM*tmp8*tmp9*x;
+    double tmp14 = GM*tmp11*tmp6*x;
+    double tmp15 = -tmp13*y - tmp14*y;
+    double tmp16 = -tmp13*z - tmp14*z;
+    double tmp17 = y*z;
+    double tmp18 = -tmp10*tmp17 - tmp12*tmp17;
 
-
-    hess[0] = hess[0] + G*M*(1./(r*cr2) - 2.*x*x/(r2*cr3) - x*x/(r3*cr2));
-    hess[1] = hess[1] + G*M*(- 2.*x*y/(r2*cr3) - x*y/(r3*cr2));
-    hess[2] = hess[2] + G*M*(-2*x*z/(r3*cr3) - x*z/(r3*cr2));
-    hess[3] = hess[3] + G*M*(-2*x*y/(r2*cr3) - x*y/(r3*cr2));
-    hess[4] = hess[4] + G*M*(1./(r*cr2) - 2.*y*y/(r2*cr3) - y*y/(r3*cr2));
-    hess[5] = hess[5] + G*M*(- 2.*y*z/(r2*cr3) - y*z/(r3*cr2));
-    hess[6] = hess[6] + G*M*(-2.*x*z/(r2*cr3) - x*z/(r3*cr2));
-    hess[7] = hess[7] + G*M*(-2.*y*z/(r2*cr3) - y*z/(r3*cr2));
-    hess[8] = hess[8] + G*M*(1./(r*cr2) - 2.*z*z/(r2*cr3) - z*z/(r3*cr2));
+    hess[0] = hess[0] + -tmp0*tmp10 - tmp0*tmp12 + tmp7;
+    hess[1] = hess[1] + tmp15;
+    hess[2] = hess[2] + tmp16;
+    hess[3] = hess[3] + tmp15;
+    hess[4] = hess[4] + -tmp1*tmp10 - tmp1*tmp12 + tmp7;
+    hess[5] = hess[5] + tmp18;
+    hess[6] = hess[6] + tmp16;
+    hess[7] = hess[7] + tmp18;
+    hess[8] = hess[8] + -tmp10*tmp2 - tmp12*tmp2 + tmp7;
 }
 
 
@@ -206,10 +282,42 @@ double plummer_density(double t, double *pars, double *r) {
     return 3*pars[1] / (4*M_PI*pars[2]*pars[2]*pars[2]) * pow(1 + r2/(pars[2]*pars[2]), -2.5);
 }
 
+void plummer_hessian(double t, double *pars, double *q, double *hess) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - b (length scale)
+    */
+    double GM = pars[0] * pars[1];
+    double b = pars[2];
+
+    double tmp0 = x*x;
+    double tmp1 = y*y;
+    double tmp2 = z*z;
+    double tmp3 = b*b + tmp0 + tmp1 + tmp2;
+    double tmp4 = GM/pow(tmp3, 1.5);
+    double tmp5 = pow(tmp3, -2.5);
+    double tmp6 = 3*GM*tmp5;
+    double tmp7 = 3*GM*tmp5*x;
+    double tmp8 = -tmp7*y;
+    double tmp9 = -tmp7*z;
+    double tmp10 = -tmp6*y*z;
+
+    hess[0] = hess[0] + -tmp0*tmp6 + tmp4;
+    hess[1] = hess[1] + tmp8;
+    hess[2] = hess[2] + tmp9;
+    hess[3] = hess[3] + tmp8;
+    hess[4] = hess[4] + -tmp1*tmp6 + tmp4;
+    hess[5] = hess[5] + tmp10;
+    hess[6] = hess[6] + tmp9;
+    hess[7] = hess[7] + tmp10;
+    hess[8] = hess[8] + -tmp2*tmp6 + tmp4;
+}
+
 /* ---------------------------------------------------------------------------
     Jaffe sphere
 
-    TODO: I think this is all wrong?
+    TODO: I think this is wrong?
 */
 double jaffe_value(double t, double *pars, double *r) {
     /*  pars:
@@ -219,7 +327,7 @@ double jaffe_value(double t, double *pars, double *r) {
     */
     double R;
     R = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
-    return pars[0] * pars[1] / pars[2] * log(R / (R + pars[2]));
+    return pars[0] * pars[1] / pars[2] * log(pars[2] / (R + pars[2]));
 }
 
 void jaffe_gradient(double t, double *pars, double *r, double *grad){
