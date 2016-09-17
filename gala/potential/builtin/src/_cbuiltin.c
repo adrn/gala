@@ -55,6 +55,9 @@ void kepler_hessian(double t, double *pars, double *q, double *hess) {
             - m (mass scale)
     */
     double GM = pars[0]*pars[1];
+    double x = q[0];
+    double y = q[1];
+    double z = q[2];
 
     double tmp0 = x*x;
     double tmp1 = y*y;
@@ -131,6 +134,9 @@ void isochrone_hessian(double t, double *pars, double *q, double *hess) {
     */
     double GM = pars[0]*pars[1];
     double b = pars[2];
+    double x = q[0];
+    double y = q[1];
+    double z = q[2];
 
     double tmp0 = x*x;
     double tmp1 = y*y;
@@ -211,6 +217,9 @@ void hernquist_hessian(double t, double *pars, double *q, double *hess) {
     */
     double GM = pars[0] * pars[1];
     double c = pars[2];
+    double x = q[0];
+    double y = q[1];
+    double z = q[2];
 
     double tmp0 = x*x;
     double tmp1 = y*y;
@@ -290,6 +299,9 @@ void plummer_hessian(double t, double *pars, double *q, double *hess) {
     */
     double GM = pars[0] * pars[1];
     double b = pars[2];
+    double x = q[0];
+    double y = q[1];
+    double z = q[2];
 
     double tmp0 = x*x;
     double tmp1 = y*y;
