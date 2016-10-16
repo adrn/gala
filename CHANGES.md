@@ -1,4 +1,9 @@
 
+0.1.3 (2016-10-16)
+------------------
+
+- Bugfix: remove adjust_compiler and incorrect entry_points section of setup.cfg.
+
 0.1.2 (2016-07-17)
 ------------------
 
