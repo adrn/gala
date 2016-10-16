@@ -2,8 +2,13 @@ cdef extern from "src/cpotential.h":
     ctypedef struct CPotential:
         pass
 
+cdef extern from "src/cframe.h":
+    ctypedef struct CFrame:
+        pass
+
 cdef class CPotentialWrapper:
     cdef CPotential cpotential
+    cdef CFrame cframe
     cdef double[::1] _params
     cdef int[::1] _n_params
     cdef list _potentials # HACK: for CCompositePotentialWrapper

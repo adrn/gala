@@ -60,6 +60,10 @@ cdef extern from "src/cpotential.h":
     double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
     double c_mass_enclosed(CPotential *p, double t, double *q, double G, double *epsilon) nogil
 
+cdef extern from "src/cframe.h":
+    ctypedef struct CFrame:
+        pass
+
 __all__ = ['CPotentialBase']
 
 cdef class CPotentialWrapper:
@@ -85,7 +89,7 @@ cdef class CPotentialWrapper:
 
         cdef double [::1] pot = np.zeros((norbits,))
         for i in range(norbits):
-            pot[i] = c_value(&(self.cpotential), t, &q[i,0])
+            pot[i] = c_value(&(self.cpotential), &(self.cframe), t, &q[i,0])
 
         return np.array(pot)
 
