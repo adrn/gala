@@ -32,14 +32,15 @@ cdef extern from "math.h":
     double sqrt(double x) nogil
     double fabs(double x) nogil
 
-cdef extern from "src/cpotential.h":
-    enum:
-        MAX_N_COMPONENTS = 16
-
+cdef extern from "src/funcdefs.h":
     ctypedef double (*densityfunc)(double t, double *pars, double *q) nogil
     ctypedef double (*valuefunc)(double t, double *pars, double *q) nogil
     ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
     ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
+
+cdef extern from "src/cpotential.h":
+    enum:
+        MAX_N_COMPONENTS = 16
 
     ctypedef struct CPotential:
         int n_components
@@ -51,18 +52,14 @@ cdef extern from "src/cpotential.h":
         int n_params[MAX_N_COMPONENTS]
         double *parameters[MAX_N_COMPONENTS]
 
-    double c_value(CPotential *p, double t, double *q) nogil
+    double c_value(CPotential *p, CFrame *f, double t, double *q) nogil
     double c_density(CPotential *p, double t, double *q) nogil
-    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
-    void c_hessian(CPotential *p, double t, double *q, double *hess) nogil
+    void c_gradient(CPotential *p, CFrame *f, double t, double *q, double *grad) nogil
+    void c_hessian(CPotential *p, CFrame *f, double t, double *q, double *hess) nogil
 
-    double c_d_dr(CPotential *p, double t, double *q, double *epsilon) nogil
-    double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
-    double c_mass_enclosed(CPotential *p, double t, double *q, double G, double *epsilon) nogil
-
-cdef extern from "src/cframe.h":
-    ctypedef struct CFrame:
-        pass
+    double c_d_dr(CPotential *p, CFrame *f, double t, double *q, double *epsilon) nogil
+    double c_d2_dr2(CPotential *p, CFrame *f, double t, double *q, double *epsilon) nogil
+    double c_mass_enclosed(CPotential *p, CFrame *f, double t, double *q, double G, double *epsilon) nogil
 
 __all__ = ['CPotentialBase']
 
@@ -129,7 +126,7 @@ cdef class CPotentialWrapper:
 
         cdef double[:,::1] grad = np.zeros((norbits, ndim))
         for i in range(norbits):
-            c_gradient(&(self.cpotential), t, &q[i,0], &grad[i,0])
+            c_gradient(&(self.cpotential), &(self.cframe), t, &q[i,0], &grad[i,0])
 
         return np.array(grad)
 
@@ -150,7 +147,7 @@ cdef class CPotentialWrapper:
         cdef double[:,:,::1] hess = np.zeros((norbits, ndim, ndim))
 
         for i in range(norbits):
-            c_hessian(&(self.cpotential), t, &q[i,0], &hess[i,0,0])
+            c_hessian(&(self.cpotential), &(self.cframe), t, &q[i,0], &hess[i,0,0])
 
         return np.array(hess)
 
@@ -170,7 +167,7 @@ cdef class CPotentialWrapper:
             double [::1] dr = np.zeros(norbits, dtype=np.float64)
 
         for i in range(norbits):
-            dr[i] = c_d_dr(&(self.cpotential), t, &q[i,0], &epsilon[0])
+            dr[i] = c_d_dr(&(self.cpotential), &(self.cframe), t, &q[i,0], &epsilon[0])
 
         return np.array(dr)
 
@@ -187,7 +184,7 @@ cdef class CPotentialWrapper:
             double [::1] dr2 = np.zeros(norbits, dtype=np.float64)
 
         for i in range(norbits):
-            dr2[i] = c_d2_dr2(&(self.cpotential), t, &q[i,0], &epsilon[0])
+            dr2[i] = c_d2_dr2(&(self.cpotential), &(self.cframe), t, &q[i,0], &epsilon[0])
 
         return np.array(dr2)
 
@@ -204,13 +201,15 @@ cdef class CPotentialWrapper:
             double [::1] mass = np.zeros(norbits, dtype=np.float64)
 
         for i in range(norbits):
-            mass[i] = c_mass_enclosed(&(self.cpotential), t, &q[i,0], G, &epsilon[0])
+            mass[i] = c_mass_enclosed(&(self.cpotential), &(self.cframe), t, &q[i,0], G, &epsilon[0])
 
         return np.array(mass)
 
     # For pickling in Python 2
     def __reduce__(self):
         return (self.__class__, (self._params[0], list(self._params[1:])))
+
+# ----------------------------------------------------------------------------
 
 class CPotentialBase(PotentialBase):
     """

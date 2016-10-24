@@ -184,10 +184,11 @@ nfcnRead    Number of function calls.
 #include <stdio.h>
 #include <limits.h>
 #include "src/cpotential.h"
+#include "src/cframe.h"
 
 typedef void (*GradFn)(CPotential *p, double t, double *q, double *grad);
 typedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                          CPotential *p, unsigned norbits);
+                          CPotential *p, CFrame *fr, unsigned norbits);
 
 typedef void (*SolTrait)(long nr, double xold, double x, double* y, unsigned n, int* irtrn);
 
@@ -195,6 +196,7 @@ extern int dop853
  (unsigned n,      /* dimension of the system <= UINT_MAX-1*/
   FcnEqDiff fcn,   /* function computing the value of f(x,y) */
   CPotential *p,   /* ADDED BY ADRN: parameters for gradient function */
+  CFrame *fr,       /* ADDED BY ADRN: reference frame */
   unsigned n_orbits, /* ADDED BY ADRN: number of orbits */
   double x,        /* initial x-value */
   double* y,       /* initial values for y */
@@ -234,5 +236,5 @@ extern double xRead (void);
 
 /* ADDED BY APW */
 extern void Fwrapper (unsigned ndim, double t, double *w, double *f,
-                      CPotential *p, unsigned norbits);
+                      CPotential *p, CFrame *fr, unsigned norbits);
 extern double six_norm (double *x);

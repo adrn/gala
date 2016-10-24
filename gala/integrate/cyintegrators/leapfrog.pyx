@@ -19,21 +19,25 @@ np.import_array()
 # Project
 from ...potential.cpotential cimport CPotentialWrapper
 
+cdef extern from "src/cframe.h":
+    ctypedef struct CFrame:
+        pass
+
 cdef extern from "src/cpotential.h":
     ctypedef struct CPotential:
         pass
-    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
+    void c_gradient(CPotential *p, CFrame *fr, double t, double *q, double *grad) nogil
 
-cdef void c_init_velocity(CPotential *p, int ndim, double t, double dt,
+cdef void c_init_velocity(CPotential *p, CFrame *fr, int ndim, double t, double dt,
                           double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil:
     cdef int k
 
-    c_gradient(p, t, x_jm1, grad)
+    c_gradient(p, fr, t, x_jm1, grad)
 
     for k in range(ndim):
         v_jm1_2[k] = v_jm1[k] - grad[k] * dt/2.  # acceleration is minus gradient
 
-cdef void c_leapfrog_step(CPotential *p, int ndim, double t, double dt,
+cdef void c_leapfrog_step(CPotential *p, CFrame *fr, int ndim, double t, double dt,
                           double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil:
     cdef int k
 
@@ -41,7 +45,7 @@ cdef void c_leapfrog_step(CPotential *p, int ndim, double t, double dt,
     for k in range(ndim):
         x_jm1[k] = x_jm1[k] + v_jm1_2[k] * dt
 
-    c_gradient(p, t, x_jm1, grad)  # compute gradient at new position
+    c_gradient(p, fr, t, x_jm1, grad)  # compute gradient at new position
 
     # step velocity forward by half step, aligned w/ position, then
     #   finish the full step to leapfrog over position
@@ -79,7 +83,7 @@ cpdef leapfrog_integrate_potential(CPotentialWrapper p, double [:,::1] w0,
         # first initialize the velocities so they are evolved by a
         #   half step relative to the positions
         for i in range(n):
-            c_init_velocity(&(p.cpotential), ndim, t[0], dt,
+            c_init_velocity(&(p.cpotential), &(p.cframe), ndim, t[0], dt,
                             &all_w[0,i,0], &all_w[0,i,ndim], &v_jm1_2[i,0], &grad[0])
 
         for j in range(1,ntimes,1):
@@ -88,7 +92,7 @@ cpdef leapfrog_integrate_potential(CPotentialWrapper p, double [:,::1] w0,
                     all_w[j,i,k] = all_w[j-1,i,k]
                     grad[k] = 0.
 
-                c_leapfrog_step(&(p.cpotential), ndim, t[j], dt,
+                c_leapfrog_step(&(p.cpotential), &(p.cframe), ndim, t[j], dt,
                                 &all_w[j,i,0], &all_w[j,i,ndim], &v_jm1_2[i,0], &grad[0])
 
     return np.asarray(t), np.asarray(all_w)

@@ -1,5 +1,6 @@
 #include <math.h>
 #include "cpotential.h"
+#include "cframe.h"
 
 // TODO: Frame has to have parameters too
 
@@ -32,7 +33,7 @@ double c_density(CPotential *p, double t, double *qp) {
 void c_gradient(CPotential *p, CFrame *f, double t, double *qp, double *grad) {
     int i;
 
-    // TODO: grad, n_dim now have to be full phase-space dimensionality
+    // TODO: grad, n_dim now have to be full phase-space dimensionality!!
     for (i=0; i < (p->n_dim); i++) {
         grad[i] = 0.;
     }
@@ -41,7 +42,7 @@ void c_gradient(CPotential *p, CFrame *f, double t, double *qp, double *grad) {
         (p->gradient)[i](t, (p->parameters)[i], qp, grad);
     }
 
-    (f->gradient)(t, (f->parameters), qp);
+    (f->gradient)(t, (f->parameters), qp, grad);
 
 }
 
@@ -54,7 +55,7 @@ void c_hessian(CPotential *p, CFrame *f, double t, double *qp, double *hess) {
     }
 
     for (i=0; i < p->n_components; i++) {
-        (p->hessian)[i](t, (p->parameters)[i], q, hess);
+        (p->hessian)[i](t, (p->parameters)[i], qp, hess);
     }
 
     // TODO: can I just add in the terms from the frame here?
@@ -98,7 +99,7 @@ double c_d2_dr2(CPotential *p, CFrame *f, double t, double *qp, double *epsilon)
         epsilon[j] = h * qp[j]/r + qp[j];
     d2Phi_dr2 = c_value(p, f, t, epsilon);
 
-    d2Phi_dr2 = d2Phi_dr2 - 2.*c_value(p, f, t, q);
+    d2Phi_dr2 = d2Phi_dr2 - 2.*c_value(p, f, t, qp);
 
     for (j=0; j < (p->n_dim); j++)
         epsilon[j] = h * qp[j]/r - qp[j];
@@ -109,7 +110,7 @@ double c_d2_dr2(CPotential *p, CFrame *f, double t, double *qp, double *epsilon)
 
 double c_mass_enclosed(CPotential *p, CFrame *f, double t, double *qp, double G, double *epsilon) {
     double r, dPhi_dr;
-    r = sqrt(qp[0]*qp[0] + qp[1]*qp[1] + qp[2]*q[2]);
+    r = sqrt(qp[0]*qp[0] + qp[1]*qp[1] + qp[2]*qp[2]);
     dPhi_dr = c_d_dr(p, f, t, qp, epsilon);
     return fabs(r*r * dPhi_dr / G);
 }

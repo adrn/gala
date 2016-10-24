@@ -30,14 +30,24 @@ from ..cpotential import CPotentialBase
 from ..cpotential cimport CPotentialWrapper
 from ...units import DimensionlessUnitSystem
 
-cdef extern from "src/cpotential.h":
-    enum:
-        MAX_N_COMPONENTS = 16
-
+cdef extern from "src/funcdefs.h":
     ctypedef double (*densityfunc)(double t, double *pars, double *q) nogil
     ctypedef double (*valuefunc)(double t, double *pars, double *q) nogil
     ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
     ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
+
+cdef extern from "src/cframe.h":
+    ctypedef struct CFrame:
+        valuefunc potential
+        gradientfunc gradient
+        hessianfunc hessian
+
+        int n_params
+        double *parameters;
+
+cdef extern from "src/cpotential.h":
+    enum:
+        MAX_N_COMPONENTS = 16
 
     ctypedef struct CPotential:
         int n_components
@@ -48,10 +58,6 @@ cdef extern from "src/cpotential.h":
         hessianfunc hessian[MAX_N_COMPONENTS]
         int n_params[MAX_N_COMPONENTS]
         double *parameters[MAX_N_COMPONENTS]
-
-    double c_value(CPotential *p, double t, double *q) nogil
-    double c_density(CPotential *p, double t, double *q) nogil
-    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
 
 cdef extern from "src/_cbuiltin.h":
     double nan_density(double t, double *pars, double *q) nogil
@@ -128,6 +134,7 @@ cdef class HenonHeilesWrapper(CPotentialWrapper):
 
     def __init__(self, G, *args):
         cdef CPotential cp
+        cdef CFrame cf
 
         # This is the only code that needs to change per-potential
         cp.value[0] = <valuefunc>(henon_heiles_value)
@@ -136,6 +143,14 @@ cdef class HenonHeilesWrapper(CPotentialWrapper):
         cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
         self._params = np.array([G], dtype=np.float64)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        # TODO: How can I set this based on the input? this function should take a frame as input?
+        fr.value = static_frame_value
+        fr.gradient = static_frame_gradient
+        fr.hessian = static_frame_hessian
+        self._frame_params = np.array([], dtype=np.float64)
+        fr.n_params = 0
+        fr.parameters = &(self._frame_params[0])
 
         cp.n_components = 1
         self._n_params = np.array([len(self._params)], dtype=np.int32)

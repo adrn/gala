@@ -21,19 +21,23 @@ from libc.math cimport log
 
 from ...potential.cpotential cimport CPotentialWrapper
 
+cdef extern from "src/cframe.h":
+    ctypedef struct CFrame:
+        pass
+
 cdef extern from "src/cpotential.h":
     ctypedef struct CPotential:
         pass
-    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
+    void c_gradient(CPotential *p, CFrame *fr, double t, double *q, double *grad) nogil
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, unsigned norbits) nogil
+                              CPotential *p, CFrame *fr, unsigned norbits) nogil
     ctypedef void (*SolTrait)(long nr, double xold, double x, double* y, unsigned n, int* irtrn)
 
     # See dop853.h for full description of all input parameters
     int dop853 (unsigned n, FcnEqDiff fn,
-                CPotential *p, unsigned n_orbits,
+                CPotential *p, CFrame *fr, unsigned n_orbits,
                 double x, double* y, double xend,
                 double* rtoler, double* atoler, int itoler, SolTrait solout,
                 int iout, FILE* fileout, double uround, double safe, double fac1,
@@ -41,7 +45,7 @@ cdef extern from "dopri/dop853.h":
                 long nstiff, unsigned nrdens, unsigned* icont, unsigned licont)
 
     void Fwrapper (unsigned ndim, double t, double *w, double *f,
-                   CPotential *p, unsigned norbits)
+                   CPotential *p, CFrame *fr, unsigned norbits)
     double six_norm (double *x)
 
 cdef extern from "stdio.h":
@@ -96,7 +100,7 @@ cpdef dop853_lyapunov_max(CPotentialWrapper cp, double[::1] w0,
     jiter = 0
     for j in range(1,n_steps,1):
         res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
-                     &(cp.cpotential), norbits,
+                     &(cp.cpotential), &(cp.cframe), norbits,
                      t[j-1], &w[0], t[j], &rtol, &atol, 0, solout, 0,
                      NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt, nmax, 0, 1, 0, NULL, 0);
 
@@ -171,7 +175,7 @@ cpdef dop853_lyapunov_max_dont_save(CPotentialWrapper cp, double[::1] w0,
     jiter = 0
     for j in range(1,n_steps,1):
         res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
-                     &(cp.cpotential), norbits,
+                     &(cp.cpotential), &(cp.cframe), norbits,
                      t[j-1], &w[0], t[j], &rtol, &atol, 0, solout, 0,
                      NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt, nmax, 0, 1, 0, NULL, 0);
 

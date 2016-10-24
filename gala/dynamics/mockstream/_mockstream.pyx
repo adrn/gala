@@ -27,20 +27,24 @@ from ._coord cimport (sat_rotation_matrix, to_sat_coords, from_sat_coords,
 
 __all__ = ['_mock_stream_dop853']
 
+cdef extern from "src/cframe.h":
+    ctypedef struct CFrame:
+        pass
+
 cdef extern from "src/cpotential.h":
     ctypedef struct CPotential:
         pass
-    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
-    double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
+    void c_gradient(CPotential *p, CFrame *fr, double t, double *q, double *grad) nogil
+    double c_d2_dr2(CPotential *p, CFrame *fr, double t, double *q, double *epsilon) nogil
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, unsigned norbits) nogil
+                              CPotential *p, CFrame *fr, unsigned norbits) nogil
     ctypedef void (*SolTrait)(long nr, double xold, double x, double* y, unsigned n, int* irtrn)
 
     # See dop853.h for full description of all input parameters
     int dop853 (unsigned n, FcnEqDiff fn,
-                CPotential *p, unsigned n_orbits,
+                CPotential *p, CFrame *fr, unsigned n_orbits,
                 double x, double* y, double xend,
                 double* rtoler, double* atoler, int itoler, SolTrait solout,
                 int iout, FILE* fileout, double uround, double safe, double fac1,
@@ -188,7 +192,7 @@ cpdef _mock_stream_dop853(CPotentialWrapper cp, double[::1] t, double[:,::1] pro
         Om = np.linalg.norm(np.cross(prog_w[j,:3], prog_w[j,3:]) / d**2)
 
         # gradient of potential in radial direction
-        f = Om*Om - c_d2_dr2(&(cp.cpotential), t[j], &prog_w[j,0], &eps[0])
+        f = Om*Om - c_d2_dr2(&(cp.cpotential), &(cp.cframe), t[j], &prog_w[j,0], &eps[0])
         r_tide = (G*M / f)**(1/3.)
 
         # the rotation matrix to transform from satellite coords to normal
@@ -231,7 +235,7 @@ cpdef _mock_stream_dop853(CPotentialWrapper cp, double[::1] t, double[:,::1] pro
 
     for i in range(nparticles):
         res = dop853(ndim, <FcnEqDiff> Fwrapper,
-                     &(cp.cpotential), 1,
+                     &(cp.cpotential), &(cp.cframe), 1,
                      t1[i], &w[i*ndim], t_end, &rtol, &atol, 0, NULL, 0,
                      NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0);
 
@@ -389,7 +393,7 @@ cpdef _mock_stream_leapfrog(CPotentialWrapper cp, double[::1] t, double[:,::1] p
         Om = np.linalg.norm(np.cross(prog_w[j,:3], prog_w[j,3:]) / d**2)
 
         # gradient of potential in radial direction
-        f = Om*Om - c_d2_dr2(&(cp.cpotential), t[j], &prog_w[j,0], &eps[0])
+        f = Om*Om - c_d2_dr2(&(cp.cpotential), &(cp.cframe), t[j], &prog_w[j,0], &eps[0])
         r_tide = (G*M / f)**(1/3.)
 
         # the rotation matrix to transform from satellite coords to normal
@@ -431,7 +435,7 @@ cpdef _mock_stream_leapfrog(CPotentialWrapper cp, double[::1] t, double[:,::1] p
         i += 1
 
     for i in range(nparticles):
-        c_init_velocity(&(cp.cpotential), ndim_2, t1[0], _dt,
+        c_init_velocity(&(cp.cpotential), &(cp.cframe), ndim_2, t1[0], _dt,
                         &w[i*ndim], &w[i*ndim+ndim_2], &v_jm1_2[0], &grad[0])
 
         ntimes = int((t_end - t1[i]) / _dt)
@@ -439,7 +443,7 @@ cpdef _mock_stream_leapfrog(CPotentialWrapper cp, double[::1] t, double[:,::1] p
             for k in range(ndim_2):
                 grad[k] = 0.
 
-            c_leapfrog_step(&(cp.cpotential), ndim_2, t1[j], _dt,
+            c_leapfrog_step(&(cp.cpotential), &(cp.cframe), ndim_2, t1[j], _dt,
                             &w[i*ndim], &w[i*ndim+ndim_2], &v_jm1_2[0], &grad[0])
 
         PyErr_CheckSignals()

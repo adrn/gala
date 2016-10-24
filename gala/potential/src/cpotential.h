@@ -1,14 +1,9 @@
+#include "funcdefs.h"
+#include "cframe.h"
+
 #ifndef MAX_N_COMPONENTS_H
 #define MAX_N_COMPONENTS_H
     enum {MAX_N_COMPONENTS = 16}; // HACK: this is a totally arbitrary number
-#endif
-
-#ifndef _FUNCS_
-#define _FUNCS_
-    typedef double (*densityfunc)(double t, double *pars, double *q);
-    typedef double (*valuefunc)(double t, double *pars, double *q);
-    typedef void (*gradientfunc)(double t, double *pars, double *q, double *grad);
-    typedef void (*hessianfunc)(double t, double *pars, double *q, double *hess);
 #endif
 
 #ifndef _CPotential_H
@@ -33,11 +28,11 @@
     };
 #endif
 
-extern double c_value(CPotential *p, double t, double *q);
+extern double c_value(CPotential *p, CFrame *f, double t, double *q);
 extern double c_density(CPotential *p, double t, double *q);
-extern void c_gradient(CPotential *p, double t, double *q, double *grad);
-extern void c_hessian(CPotential *p, double t, double *q, double *hess);
+extern void c_gradient(CPotential *p, CFrame *f, double t, double *q, double *grad);
+extern void c_hessian(CPotential *p, CFrame *f, double t, double *q, double *hess);
 
-extern double c_d_dr(CPotential *p, double t, double *q, double *epsilon);
-extern double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon);
-extern double c_mass_enclosed(CPotential *p, double t, double *q, double G, double *epsilon);
+extern double c_d_dr(CPotential *p, CFrame *f, double t, double *q, double *epsilon);
+extern double c_d2_dr2(CPotential *p, CFrame *f, double t, double *q, double *epsilon);
+extern double c_mass_enclosed(CPotential *p, CFrame *f, double t, double *q, double G, double *epsilon);

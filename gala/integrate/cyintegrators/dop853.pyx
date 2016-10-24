@@ -21,6 +21,10 @@ from cpython.exc cimport PyErr_CheckSignals
 
 from ...potential.cpotential cimport CPotentialWrapper
 
+cdef extern from "src/cframe.h":
+    ctypedef struct CFrame:
+        pass
+
 cdef extern from "src/cpotential.h":
     ctypedef struct CPotential:
         pass
@@ -28,12 +32,12 @@ cdef extern from "src/cpotential.h":
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, unsigned norbits) nogil
+                              CPotential *p, CFrame *fr, unsigned norbits) nogil
     ctypedef void (*SolTrait)(long nr, double xold, double x, double* y, unsigned n, int* irtrn)
 
     # See dop853.h for full description of all input parameters
     int dop853 (unsigned n, FcnEqDiff fn,
-                CPotential *p, unsigned n_orbits,
+                CPotential *p, CFrame *fr, unsigned n_orbits,
                 double x, double* y, double xend,
                 double* rtoler, double* atoler, int itoler, SolTrait solout,
                 int iout, FILE* fileout, double uround, double safe, double fac1,
@@ -88,7 +92,7 @@ cpdef dop853_integrate_potential(CPotentialWrapper cp, double[:,::1] w0,
 
     for j in range(1,ntimes,1):
         res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
-                     &(cp.cpotential), norbits,
+                     &(cp.cpotential), &(cp.cframe), norbits,
                      t[j-1], &w[0], t[j], &rtol, &atol, 0, solout, iout,
                      NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0);
 
