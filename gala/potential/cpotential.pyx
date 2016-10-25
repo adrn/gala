@@ -27,6 +27,7 @@ from libc.stdio cimport printf
 from .core import PotentialBase, CompositePotential
 from ..util import atleast_2d
 from ..units import DimensionlessUnitSystem
+# from .builtin.frames import StaticFrame
 
 cdef extern from "math.h":
     double sqrt(double x) nogil
@@ -216,7 +217,7 @@ class CPotentialBase(PotentialBase):
     A baseclass for defining gravitational potentials implemented in C.
     """
 
-    def __init__(self, parameters, units, Wrapper=None):
+    def __init__(self, parameters, units, Wrapper=None, frame=None):
         super(CPotentialBase, self).__init__(parameters, units=units)
 
         c_params = []
@@ -231,7 +232,11 @@ class CPotentialBase(PotentialBase):
             from .builtin import cybuiltin
             Wrapper = getattr(cybuiltin, wrapper_name)
 
-        self.c_instance = Wrapper(self.G, self.c_parameters)
+        if frame is None:
+            from .builtin.frames import StaticFrame
+            frame = StaticFrame()
+
+        self.c_instance = Wrapper(frame.c_instance, self.G, self.c_parameters)
 
 
     def _value(self, q, t=0.):

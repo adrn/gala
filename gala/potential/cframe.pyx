@@ -28,25 +28,12 @@ from .core import PotentialBase, CompositePotential
 from ..util import atleast_2d
 from ..units import DimensionlessUnitSystem
 
-cdef extern from "src/funcdefs.h":
-    ctypedef double (*densityfunc)(double t, double *pars, double *q) nogil
-    ctypedef double (*valuefunc)(double t, double *pars, double *q) nogil
-    ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
-    ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
+__all__ = ['StaticFrame'] #, 'ConstantRotatingFrame']
 
-cdef extern from "src/cframe.h":
-    ctypedef struct CFrame:
-        valuefunc potential;
-        gradientfunc gradient;
-        hessianfunc hessian;
-
-        int n_params;
-        double *parameters;
-
-__all__ = ['StaticFrame', 'ConstantRotatingFrame']
-
-cdef class StaticFrame:
+cdef class CFrameWrapper:
     pass
 
-cdef class ConstantRotatingFrame:
-    pass
+class CFrameBase(object):
+
+    def __init__(self, c_instance):
+        self.c_instance = c_instance
