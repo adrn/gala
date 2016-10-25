@@ -978,21 +978,12 @@ double contd8 (unsigned ii, double x)
 /* ADDED BY APW */
 void Fwrapper (unsigned full_ndim, double t, double *w, double *f,
                CPotential *p, CFrame *fr, unsigned norbits) {
-    int i, k;
-    unsigned ndim = full_ndim/norbits;
-    unsigned half_ndim = ndim / 2;
+    int i;
+    unsigned ndim = full_ndim / norbits; // phase-space dimensionality
 
-    // call gradient function
     for (i=0; i < norbits; i++) {
-        // TODO: FIX THIS TO USE FRAME
-        c_gradient(p, fr, t, &w[i*ndim], &f[i*ndim + half_ndim]);
-
-        for (k=0; k < half_ndim; k++) {
-            // f[k] = w[k+half_ndim]
-            f[i*ndim + k] = w[i*ndim + k + half_ndim];
-            // f[k+half_ndim] = -f[k+half_ndim]
-            f[i*ndim + k + half_ndim] = -f[i*ndim + k + half_ndim];
-        }
+        // call gradient function
+        hamiltonian_gradient(p, fr, t, &w[i*ndim], &f[i*ndim]);
     }
 }
 

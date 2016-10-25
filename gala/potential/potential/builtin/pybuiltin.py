@@ -11,7 +11,7 @@ from collections import OrderedDict
 import numpy as np
 
 from ..core import PotentialBase
-from ...util import atleast_2d
+from ....util import atleast_2d
 
 __all__ = ["HarmonicOscillatorPotential", "KuzminPotential"]
 

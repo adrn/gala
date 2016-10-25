@@ -29,22 +29,13 @@ from ..core import CompositePotential
 from ..cpotential import CPotentialBase
 from ..cpotential cimport CPotentialWrapper
 from ...frame.cframe cimport CFrameWrapper
-from ...units import DimensionlessUnitSystem
+from ....units import DimensionlessUnitSystem
 
 cdef extern from "src/funcdefs.h":
     ctypedef double (*densityfunc)(double t, double *pars, double *q) nogil
     ctypedef double (*valuefunc)(double t, double *pars, double *q) nogil
     ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
     ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
-
-cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrame:
-        valuefunc potential
-        gradientfunc gradient
-        hessianfunc hessian
-
-        int n_params
-        double *parameters;
 
 cdef extern from "potential/src/cpotential.h":
     enum:
@@ -133,7 +124,7 @@ __all__ = ['HenonHeilesPotential', # Misc. potentials
 
 cdef class HenonHeilesWrapper(CPotentialWrapper):
 
-    def __init__(self, CFrameWrapper frame, G, *args):
+    def __init__(self, G, *args):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
@@ -151,7 +142,6 @@ cdef class HenonHeilesWrapper(CPotentialWrapper):
         cp.parameters[0] = &(self._params[0])
 
         self.cpotential = cp
-        self.cframe = frame.cframe
 
 class HenonHeilesPotential(CPotentialBase):
     r"""
@@ -179,7 +169,7 @@ class HenonHeilesPotential(CPotentialBase):
 
 cdef class KeplerWrapper(CPotentialWrapper):
 
-    def __init__(self, CFrameWrapper frame, G, parameters):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
@@ -229,7 +219,7 @@ class KeplerPotential(CPotentialBase):
 
 cdef class IsochroneWrapper(CPotentialWrapper):
 
-    def __init__(self, CFrameWrapper frame, G, parameters):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
@@ -316,7 +306,7 @@ class IsochronePotential(CPotentialBase):
 
 cdef class HernquistWrapper(CPotentialWrapper):
 
-    def __init__(self, CFrameWrapper frame, G, parameters):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
@@ -334,7 +324,6 @@ cdef class HernquistWrapper(CPotentialWrapper):
         cp.parameters[0] = &(self._params[0])
 
         self.cpotential = cp
-        self.cframe = frame.cframe
 
 class HernquistPotential(CPotentialBase):
     r"""
@@ -370,7 +359,7 @@ class HernquistPotential(CPotentialBase):
 
 cdef class PlummerWrapper(CPotentialWrapper):
 
-    def __init__(self, CFrameWrapper frame, G, parameters):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
@@ -420,7 +409,7 @@ class PlummerPotential(CPotentialBase):
 
 cdef class JaffeWrapper(CPotentialWrapper):
 
-    def __init__(self, CFrameWrapper frame, G, parameters):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
@@ -470,7 +459,7 @@ class JaffePotential(CPotentialBase):
 
 cdef class StoneWrapper(CPotentialWrapper):
 
-    def __init__(self, CFrameWrapper frame, G, parameters):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
@@ -523,7 +512,7 @@ class StonePotential(CPotentialBase):
 
 cdef class SphericalNFWWrapper(CPotentialWrapper):
 
-    def __init__(self, CFrameWrapper frame, G, parameters):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
@@ -574,7 +563,7 @@ class SphericalNFWPotential(CPotentialBase):
 
 cdef class SatohWrapper(CPotentialWrapper):
 
-    def __init__(self, CFrameWrapper frame, G, parameters):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
@@ -627,7 +616,7 @@ class SatohPotential(CPotentialBase):
 
 cdef class MiyamotoNagaiWrapper(CPotentialWrapper):
 
-    def __init__(self, CFrameWrapper frame, G, parameters):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
@@ -682,7 +671,7 @@ class MiyamotoNagaiPotential(CPotentialBase):
 
 cdef class FlattenedNFWWrapper(CPotentialWrapper):
 
-    def __init__(self, CFrameWrapper frame, G, parameters):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
@@ -738,7 +727,7 @@ class FlattenedNFWPotential(CPotentialBase):
 
 cdef class LeeSutoTriaxialNFWWrapper(CPotentialWrapper):
 
-    def __init__(self, CFrameWrapper frame, G, parameters):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
@@ -796,7 +785,7 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
 
 cdef class LogarithmicWrapper(CPotentialWrapper):
 
-    def __init__(self, CFrameWrapper frame, G, parameters):
+    def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential

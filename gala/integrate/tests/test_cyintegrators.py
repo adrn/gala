@@ -8,7 +8,6 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
-import os
 import time
 
 # Third-party
@@ -18,14 +17,14 @@ import pytest
 
 # Project
 from ..pyintegrators.leapfrog import LeapfrogIntegrator
-from ..cyintegrators.leapfrog import leapfrog_integrate_potential
+from ..cyintegrators.leapfrog import leapfrog_integrate_hamiltonian
 from ..pyintegrators.dopri853 import DOPRI853Integrator
-from ..cyintegrators.dop853 import dop853_integrate_potential
-from ...potential import HernquistPotential
+from ..cyintegrators.dop853 import dop853_integrate_hamiltonian
+from ...potential import Hamiltonian, HernquistPotential
 from ...units import galactic
 
 integrator_list = [LeapfrogIntegrator, DOPRI853Integrator]
-func_list = [leapfrog_integrate_potential, dop853_integrate_potential]
+func_list = [leapfrog_integrate_hamiltonian, dop853_integrate_hamiltonian]
 _list = zip(integrator_list, func_list)
 
 # ----------------------------------------------------------------------------
@@ -33,6 +32,7 @@ _list = zip(integrator_list, func_list)
 @pytest.mark.parametrize(("Integrator","integrate_func"), _list)
 def test_compare_to_py(Integrator, integrate_func):
     p = HernquistPotential(m=1E11, c=0.5, units=galactic)
+    H = Hamiltonian(potential=p)
 
     def F(t,w):
         dq = w[3:]
@@ -48,7 +48,7 @@ def test_compare_to_py(Integrator, integrate_func):
     dt = 2.
     t = np.linspace(0,dt*n_steps,n_steps+1)
 
-    cy_t,cy_w = integrate_func(p.c_instance, cy_w0, t)
+    cy_t,cy_w = integrate_func(H, cy_w0, t)
     cy_w = np.rollaxis(cy_w, -1)
 
     integrator = Integrator(F)

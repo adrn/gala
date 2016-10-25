@@ -17,9 +17,7 @@ cimport numpy as np
 np.import_array()
 
 # Project
-from ...potential.potential.cpotential cimport CPotentialWrapper
-
-# TODO: these need to deal with passing qp to c_gradient!!
+from ...potential.frame import StaticFrame
 
 cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrame:
@@ -28,18 +26,20 @@ cdef extern from "frame/src/cframe.h":
 cdef extern from "potential/src/cpotential.h":
     ctypedef struct CPotential:
         pass
-    void c_gradient(CPotential *p, CFrame *fr, double t, double *q, double *grad) nogil
 
-cdef void c_init_velocity(CPotential *p, CFrame *fr, int half_ndim, double t, double dt,
+cdef extern from "potential/src/cpotential.h":
+    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
+
+cdef void c_init_velocity(CPotential *p, int half_ndim, double t, double dt,
                           double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil:
     cdef int k
 
-    c_gradient(p, fr, t, x_jm1, grad)
+    c_gradient(p, t, x_jm1, grad)
 
     for k in range(half_ndim):
         v_jm1_2[k] = v_jm1[k] - grad[k] * dt/2.  # acceleration is minus gradient
 
-cdef void c_leapfrog_step(CPotential *p, CFrame *fr, int half_ndim, double t, double dt,
+cdef void c_leapfrog_step(CPotential *p, int half_ndim, double t, double dt,
                           double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil:
     cdef int k
 
@@ -47,7 +47,7 @@ cdef void c_leapfrog_step(CPotential *p, CFrame *fr, int half_ndim, double t, do
     for k in range(half_ndim):
         x_jm1[k] = x_jm1[k] + v_jm1_2[k] * dt
 
-    c_gradient(p, fr, t, x_jm1, grad)  # compute gradient at new position
+    c_gradient(p, t, x_jm1, grad)  # compute gradient at new position
 
     # step velocity forward by half step, aligned w/ position, then
     #   finish the full step to leapfrog over position
@@ -55,13 +55,21 @@ cdef void c_leapfrog_step(CPotential *p, CFrame *fr, int half_ndim, double t, do
         v_jm1[k] = v_jm1_2[k] - grad[k] * dt/2.
         v_jm1_2[k] = v_jm1_2[k] - grad[k] * dt
 
-cpdef leapfrog_integrate_potential(CPotentialWrapper p, double [:,::1] w0,
-                                   double[::1] t):
+cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:,::1] w0, double[::1] t):
     """
     CAUTION: Interpretation of axes is different here! We need the
     arrays to be C ordered and easy to iterate over, so here the
     axes are (norbits, ndim).
     """
+
+    if not hamiltonian.c_enabled:
+        raise TypeError("Input Hamiltonian object does not support C-level access.")
+
+    if not isinstance(hamiltonian.frame, StaticFrame):
+        raise TypeError("Leapfrog integration is currently only supported "
+                        "for StaticFrame, not {}."
+                        .format(hamiltonian.frame.__class__.__name__))
+
     cdef:
         # temporary scalars
         int i,j,k
@@ -73,11 +81,14 @@ cpdef leapfrog_integrate_potential(CPotentialWrapper p, double [:,::1] w0,
         double dt = t[1]-t[0]
 
         # temporary array containers
-        double[::1] grad = np.zeros(ndim)
+        double[::1] grad = np.zeros(half_ndim)
         double[:,::1] v_jm1_2 = np.zeros((n,half_ndim))
 
         # return arrays
         double[:,:,::1] all_w = np.zeros((ntimes,n,ndim))
+
+        # whoa, so many dots
+        CPotential cp = hamiltonian.potential.c_instance.cpotential
 
     # TODO: there should be a way to check that half_ndim == p.cpotential.ndim
 
@@ -88,7 +99,7 @@ cpdef leapfrog_integrate_potential(CPotentialWrapper p, double [:,::1] w0,
         # first initialize the velocities so they are evolved by a
         #   half step relative to the positions
         for i in range(n):
-            c_init_velocity(&(p.cpotential), &(p.cframe), half_ndim, t[0], dt,
+            c_init_velocity(&cp, half_ndim, t[0], dt,
                             &all_w[0,i,0], &all_w[0,i,half_ndim], &v_jm1_2[i,0], &grad[0])
 
         for j in range(1,ntimes,1):
@@ -99,7 +110,7 @@ cpdef leapfrog_integrate_potential(CPotentialWrapper p, double [:,::1] w0,
                 for k in range(ndim):
                     grad[k] = 0.
 
-                c_leapfrog_step(&(p.cpotential), &(p.cframe), half_ndim, t[j], dt,
-                                &all_w[j,i,0], &all_w[j,i,ndim], &v_jm1_2[i,0], &grad[0])
+                c_leapfrog_step(&cp, half_ndim, t[j], dt,
+                                &all_w[j,i,0], &all_w[j,i,half_ndim], &v_jm1_2[i,0], &grad[0])
 
     return np.asarray(t), np.asarray(all_w)

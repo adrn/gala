@@ -36,6 +36,8 @@ cdef extern from "frame/builtin/builtin_frames.h":
     void static_frame_gradient(double t, double *pars, double *qp, double *grad) nogil
     void static_frame_hessian(double t, double *pars, double *qp, double *hess) nogil
 
+__all__ = ['StaticFrame']
+
 cdef class StaticFrameWrapper(CFrameWrapper):
 
     def __init__(self):

@@ -24,11 +24,11 @@ cimport cython
 from libc.stdio cimport printf
 
 # Project
-from .core import PotentialBase, CompositePotential
-from ..util import atleast_2d
-from ..units import DimensionlessUnitSystem
+from ..potential.core import PotentialBase, CompositePotential
+from ...util import atleast_2d
+from ...units import DimensionlessUnitSystem
 
-__all__ = ['StaticFrame'] #, 'ConstantRotatingFrame']
+__all__ = ['CFrameBase'] #, 'ConstantRotatingFrame']
 
 cdef class CFrameWrapper:
     pass

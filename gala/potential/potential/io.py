@@ -16,7 +16,7 @@ import numpy as np
 from astropy.extern import six
 import yaml
 
-from ..units import DimensionlessUnitSystem
+from ...units import DimensionlessUnitSystem
 
 __all__ = ['load', 'save']
 

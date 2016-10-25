@@ -12,14 +12,11 @@ import warnings
 import numpy as np
 from astropy.constants import G
 import astropy.units as u
-from astropy.utils import isiterable, InheritDocstrings
-from astropy.extern import six
+from astropy.utils import isiterable
 
 # Project
-from ..integrate import *
-from ..util import ImmutableDict, atleast_2d
-from ..units import UnitSystem, DimensionlessUnitSystem
-from ..dynamics import CartesianOrbit, CartesianPhaseSpacePosition
+from ...util import ImmutableDict, atleast_2d
+from ...units import UnitSystem, DimensionlessUnitSystem
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
@@ -509,7 +506,7 @@ class PotentialBase(object):
 
         return fig
 
-    def integrate_orbit(self, w0, Integrator=LeapfrogIntegrator,
+    def integrate_orbit(self, w0, Integrator=None,
                         Integrator_kwargs=dict(), cython_if_possible=True,
                         **time_spec):
         """
@@ -540,54 +537,8 @@ class PotentialBase(object):
 
         """
 
-        if not isinstance(w0, CartesianPhaseSpacePosition):
-            w0 = np.asarray(w0)
-            ndim = w0.shape[0]//2
-            w0 = CartesianPhaseSpacePosition(pos=w0[:ndim],
-                                             vel=w0[ndim:])
-
-        ndim = w0.ndim
-        arr_w0 = w0.w(self.units)
-        if hasattr(self, 'c_instance') and cython_if_possible:
-            # WARNING TO SELF: this transpose is there because the Cython
-            #   functions expect a shape: (norbits, ndim)
-            arr_w0 = np.ascontiguousarray(arr_w0.T)
-
-            # array of times
-            from ..integrate.timespec import parse_time_specification
-            t = np.ascontiguousarray(parse_time_specification(self.units, **time_spec))
-
-            if Integrator == LeapfrogIntegrator:
-                from ..integrate.cyintegrators import leapfrog_integrate_potential
-                t,w = leapfrog_integrate_potential(self.c_instance, arr_w0, t)
-
-            elif Integrator == DOPRI853Integrator:
-                from ..integrate.cyintegrators import dop853_integrate_potential
-                t,w = dop853_integrate_potential(self.c_instance, arr_w0, t,
-                                                 Integrator_kwargs.get('atol', 1E-10),
-                                                 Integrator_kwargs.get('rtol', 1E-10),
-                                                 Integrator_kwargs.get('nmax', 0))
-            else:
-                raise ValueError("Cython integration not supported for '{}'".format(Integrator))
-
-            # because shape is different from normal integrator return
-            w = np.rollaxis(w, -1)
-            if w.shape[-1] == 1:
-                w = w[...,0]
-
-        else:
-            def acc(t, w):
-                return np.vstack((w[ndim:], -self._gradient(w[:ndim], t=t)))
-            integrator = Integrator(acc, func_units=self.units, **Integrator_kwargs)
-            orbit = integrator.run(w0, **time_spec)
-            orbit.potential = self
-            return orbit
-
-        try:
-            tunit = self.units['time']
-        except (TypeError, AttributeError):
-            tunit = u.dimensionless_unscaled
-        return CartesianOrbit.from_w(w=w, units=self.units, t=t*tunit, potential=self)
+        # TODO: deprecationwarning and use Hamiltonian with StaticFrame
+        pass
 
     def total_energy(self, x, v):
         """

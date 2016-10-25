@@ -1,18 +1,13 @@
 #include <math.h>
 #include "cpotential.h"
-#include "frame/src/cframe.h"
 
-// TODO: Frame has to have parameters too
-
-double c_value(CPotential *p, CFrame *f, double t, double *qp) {
+double c_value(CPotential *p, double t, double *qp) {
     double v = 0;
     int i;
 
     for (i=0; i < p->n_components; i++) {
         v = v + (p->value)[i](t, (p->parameters)[i], qp);
     }
-
-    v = v + (f->potential)(t, (f->parameters), qp);
 
     return v;
 }
@@ -25,12 +20,10 @@ double c_density(CPotential *p, double t, double *qp) {
         v = v + (p->density)[i](t, (p->parameters)[i], qp);
     }
 
-    // TODO: I don't think a frame will ever contribute here...
-
     return v;
 }
 
-void c_gradient(CPotential *p, CFrame *f, double t, double *qp, double *grad) {
+void c_gradient(CPotential *p, double t, double *qp, double *grad) {
     int i;
 
     for (i=0; i < 2*(p->n_dim); i++) {
@@ -41,11 +34,9 @@ void c_gradient(CPotential *p, CFrame *f, double t, double *qp, double *grad) {
         (p->gradient)[i](t, (p->parameters)[i], qp, grad);
     }
 
-    (f->gradient)(t, (f->parameters), qp, grad);
-
 }
 
-void c_hessian(CPotential *p, CFrame *f, double t, double *qp, double *hess) {
+void c_hessian(CPotential *p, double t, double *qp, double *hess) {
     int i;
 
     for (i=0; i < pow(2*(p->n_dim),2); i++) {
@@ -56,11 +47,9 @@ void c_hessian(CPotential *p, CFrame *f, double t, double *qp, double *hess) {
         (p->hessian)[i](t, (p->parameters)[i], qp, hess);
     }
 
-    // TODO: can I just add in the terms from the frame here?
-    // (f->hessian)(t, (f->parameters), qp);
 }
 
-double c_d_dr(CPotential *p, CFrame *f, double t, double *qp, double *epsilon) {
+double c_d_dr(CPotential *p, double t, double *qp, double *epsilon) {
     double h, r, dPhi_dr;
     int j;
 
@@ -73,17 +62,17 @@ double c_d_dr(CPotential *p, CFrame *f, double t, double *qp, double *epsilon) {
     for (j=0; j < (p->n_dim); j++)
         epsilon[j] = h * qp[j]/r + qp[j];
 
-    dPhi_dr = c_value(p, f, t, epsilon);
+    dPhi_dr = c_value(p, t, epsilon);
 
     for (j=0; j < (p->n_dim); j++)
         epsilon[j] = h * qp[j]/r - qp[j];
 
-    dPhi_dr = dPhi_dr - c_value(p, f, t, epsilon);
+    dPhi_dr = dPhi_dr - c_value(p, t, epsilon);
 
     return dPhi_dr / (2.*h);
 }
 
-double c_d2_dr2(CPotential *p, CFrame *f, double t, double *qp, double *epsilon) {
+double c_d2_dr2(CPotential *p, double t, double *qp, double *epsilon) {
     double h, r, d2Phi_dr2;
     int j;
 
@@ -95,20 +84,20 @@ double c_d2_dr2(CPotential *p, CFrame *f, double t, double *qp, double *epsilon)
 
     for (j=0; j < (p->n_dim); j++)
         epsilon[j] = h * qp[j]/r + qp[j];
-    d2Phi_dr2 = c_value(p, f, t, epsilon);
+    d2Phi_dr2 = c_value(p, t, epsilon);
 
-    d2Phi_dr2 = d2Phi_dr2 - 2.*c_value(p, f, t, qp);
+    d2Phi_dr2 = d2Phi_dr2 - 2.*c_value(p, t, qp);
 
     for (j=0; j < (p->n_dim); j++)
         epsilon[j] = h * qp[j]/r - qp[j];
-    d2Phi_dr2 = d2Phi_dr2 + c_value(p, f, t, epsilon);
+    d2Phi_dr2 = d2Phi_dr2 + c_value(p, t, epsilon);
 
     return d2Phi_dr2 / (h*h);
 }
 
-double c_mass_enclosed(CPotential *p, CFrame *f, double t, double *qp, double G, double *epsilon) {
+double c_mass_enclosed(CPotential *p, double t, double *qp, double G, double *epsilon) {
     double r, dPhi_dr;
     r = sqrt(qp[0]*qp[0] + qp[1]*qp[1] + qp[2]*qp[2]);
-    dPhi_dr = c_d_dr(p, f, t, qp, epsilon);
+    dPhi_dr = c_d_dr(p, t, qp, epsilon);
     return fabs(r*r * dPhi_dr / G);
 }

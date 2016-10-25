@@ -25,9 +25,8 @@ from libc.stdio cimport printf
 
 # Project
 from .core import PotentialBase, CompositePotential
-from ..util import atleast_2d
-from ..units import DimensionlessUnitSystem
-# from .builtin.frames import StaticFrame
+from ...util import atleast_2d
+from ...units import DimensionlessUnitSystem
 
 cdef extern from "math.h":
     double sqrt(double x) nogil
@@ -53,14 +52,14 @@ cdef extern from "potential/src/cpotential.h":
         int n_params[MAX_N_COMPONENTS]
         double *parameters[MAX_N_COMPONENTS]
 
-    double c_value(CPotential *p, CFrame *f, double t, double *q) nogil
+    double c_value(CPotential *p, double t, double *q) nogil
     double c_density(CPotential *p, double t, double *q) nogil
-    void c_gradient(CPotential *p, CFrame *f, double t, double *q, double *grad) nogil
-    void c_hessian(CPotential *p, CFrame *f, double t, double *q, double *hess) nogil
+    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
+    void c_hessian(CPotential *p, double t, double *q, double *hess) nogil
 
-    double c_d_dr(CPotential *p, CFrame *f, double t, double *q, double *epsilon) nogil
-    double c_d2_dr2(CPotential *p, CFrame *f, double t, double *q, double *epsilon) nogil
-    double c_mass_enclosed(CPotential *p, CFrame *f, double t, double *q, double G, double *epsilon) nogil
+    double c_d_dr(CPotential *p, double t, double *q, double *epsilon) nogil
+    double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
+    double c_mass_enclosed(CPotential *p, double t, double *q, double G, double *epsilon) nogil
 
 __all__ = ['CPotentialBase']
 
@@ -87,7 +86,7 @@ cdef class CPotentialWrapper:
 
         cdef double [::1] pot = np.zeros((norbits,))
         for i in range(norbits):
-            pot[i] = c_value(&(self.cpotential), &(self.cframe), t, &q[i,0])
+            pot[i] = c_value(&(self.cpotential), t, &q[i,0])
 
         return np.array(pot)
 
@@ -127,7 +126,7 @@ cdef class CPotentialWrapper:
 
         cdef double[:,::1] grad = np.zeros((norbits, ndim))
         for i in range(norbits):
-            c_gradient(&(self.cpotential), &(self.cframe), t, &q[i,0], &grad[i,0])
+            c_gradient(&(self.cpotential), t, &q[i,0], &grad[i,0])
 
         return np.array(grad)
 
@@ -148,7 +147,7 @@ cdef class CPotentialWrapper:
         cdef double[:,:,::1] hess = np.zeros((norbits, ndim, ndim))
 
         for i in range(norbits):
-            c_hessian(&(self.cpotential), &(self.cframe), t, &q[i,0], &hess[i,0,0])
+            c_hessian(&(self.cpotential), t, &q[i,0], &hess[i,0,0])
 
         return np.array(hess)
 
@@ -168,7 +167,7 @@ cdef class CPotentialWrapper:
             double [::1] dr = np.zeros(norbits, dtype=np.float64)
 
         for i in range(norbits):
-            dr[i] = c_d_dr(&(self.cpotential), &(self.cframe), t, &q[i,0], &epsilon[0])
+            dr[i] = c_d_dr(&(self.cpotential), t, &q[i,0], &epsilon[0])
 
         return np.array(dr)
 
@@ -185,7 +184,7 @@ cdef class CPotentialWrapper:
             double [::1] dr2 = np.zeros(norbits, dtype=np.float64)
 
         for i in range(norbits):
-            dr2[i] = c_d2_dr2(&(self.cpotential), &(self.cframe), t, &q[i,0], &epsilon[0])
+            dr2[i] = c_d2_dr2(&(self.cpotential), t, &q[i,0], &epsilon[0])
 
         return np.array(dr2)
 
@@ -202,7 +201,7 @@ cdef class CPotentialWrapper:
             double [::1] mass = np.zeros(norbits, dtype=np.float64)
 
         for i in range(norbits):
-            mass[i] = c_mass_enclosed(&(self.cpotential), &(self.cframe), t, &q[i,0], G, &epsilon[0])
+            mass[i] = c_mass_enclosed(&(self.cpotential), t, &q[i,0], G, &epsilon[0])
 
         return np.array(mass)
 
@@ -217,7 +216,7 @@ class CPotentialBase(PotentialBase):
     A baseclass for defining gravitational potentials implemented in C.
     """
 
-    def __init__(self, parameters, units, Wrapper=None, frame=None):
+    def __init__(self, parameters, units, Wrapper=None):
         super(CPotentialBase, self).__init__(parameters, units=units)
 
         c_params = []
@@ -232,11 +231,7 @@ class CPotentialBase(PotentialBase):
             from .builtin import cybuiltin
             Wrapper = getattr(cybuiltin, wrapper_name)
 
-        if frame is None:
-            from .builtin.frames import StaticFrame
-            frame = StaticFrame()
-
-        self.c_instance = Wrapper(frame.c_instance, self.G, self.c_parameters)
+        self.c_instance = Wrapper(self.G, self.c_parameters)
 
 
     def _value(self, q, t=0.):
