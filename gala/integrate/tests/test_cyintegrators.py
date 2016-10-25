@@ -40,7 +40,8 @@ def test_compare_to_py(Integrator, integrate_func):
         return np.vstack((dq,dp))
 
     cy_w0 = np.array([[0.,10.,0.,0.2,0.,0.],
-                      [10.,0.,0.,0.,0.2,0.]])
+                      [10.,0.,0.,0.,0.2,0.],
+                      [0.,10.,0.,0.,0.,0.2]])
     py_w0 = np.ascontiguousarray(cy_w0.T)
 
     n_steps = 10000
@@ -52,6 +53,7 @@ def test_compare_to_py(Integrator, integrate_func):
 
     integrator = Integrator(F)
     orbit = integrator.run(py_w0, dt=dt, n_steps=n_steps)
+
     py_t = orbit.t.value
     py_w = orbit.w()
 

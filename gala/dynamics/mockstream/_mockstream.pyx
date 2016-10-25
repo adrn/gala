@@ -20,18 +20,18 @@ np.import_array()
 from libc.math cimport M_PI, sqrt
 from cpython.exc cimport PyErr_CheckSignals
 
-from ...potential.cpotential cimport CPotentialWrapper
+from ...potential.potential.cpotential cimport CPotentialWrapper
 from ...integrate.cyintegrators.leapfrog cimport c_init_velocity, c_leapfrog_step
 from ._coord cimport (sat_rotation_matrix, to_sat_coords, from_sat_coords,
                       cyl_to_car, car_to_cyl)
 
 __all__ = ['_mock_stream_dop853']
 
-cdef extern from "src/cframe.h":
+cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrame:
         pass
 
-cdef extern from "src/cpotential.h":
+cdef extern from "potential/src/cpotential.h":
     ctypedef struct CPotential:
         pass
     void c_gradient(CPotential *p, CFrame *fr, double t, double *q, double *grad) nogil

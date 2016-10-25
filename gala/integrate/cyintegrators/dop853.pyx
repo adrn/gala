@@ -19,13 +19,13 @@ np.import_array()
 from libc.stdio cimport printf
 from cpython.exc cimport PyErr_CheckSignals
 
-from ...potential.cpotential cimport CPotentialWrapper
+from ...potential.potential.cpotential cimport CPotentialWrapper
 
-cdef extern from "src/cframe.h":
+cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrame:
         pass
 
-cdef extern from "src/cpotential.h":
+cdef extern from "potential/src/cpotential.h":
     ctypedef struct CPotential:
         pass
     void c_gradient(CPotential *p, double t, double *q, double *grad) nogil

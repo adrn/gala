@@ -158,15 +158,28 @@ class PotentialTestBase(object):
         Make we can integrate an orbit in this potential
         """
         w0 = self.w0
+        w0 = np.vstack((w0,w0,w0)).T
 
         t1 = time.time()
         orbit = self.potential.integrate_orbit(w0, dt=1., n_steps=10000)
         print("Integration time (10000 steps): {}".format(time.time() - t1))
 
+        if self.show_plots:
+            f = orbit.plot()
+            f.suptitle("Vector w0")
+            plt.show()
+            plt.close(f)
+
         us = self.potential.units
         w0 = CartesianPhaseSpacePosition(pos=w0[:self.ndim]*us['length'],
                                          vel=w0[self.ndim:]*us['length']/us['time'])
         orbit = self.potential.integrate_orbit(w0, dt=1., n_steps=10000)
+
+        if self.show_plots:
+            f = orbit.plot()
+            f.suptitle("Object w0")
+            plt.show()
+            plt.close(f)
 
     def test_pickle(self, tmpdir):
         fn = str(tmpdir.join("{}.pickle".format(self.name)))

@@ -11,34 +11,37 @@ def get_extensions():
     cfg = setup_helpers.DistutilsExtensionArgs()
     cfg['include_dirs'].append('numpy')
     cfg['include_dirs'].append(mac_incl_path)
-    cfg['include_dirs'].append('gala/integrate/cyintegrators')
     cfg['include_dirs'].append('gala/potential')
     cfg['extra_compile_args'].append('--std=gnu99')
+    cfg['sources'].append('gala/potential/potential/cpotential.pyx')
     cfg['sources'].append('gala/potential/potential/src/cpotential.c')
-    cfg['sources'].append('gala/integrate/cyintegrators/dopri/dop853.c')
-    cfg['sources'].append('gala/dynamics/lyapunov/dop853_lyapunov.pyx')
-    exts.append(Extension('gala.dynamics.lyapunov.dop853_lyapunov', **cfg))
+    exts.append(Extension('gala.potential.potential.cpotential', **cfg))
 
     cfg = setup_helpers.DistutilsExtensionArgs()
     cfg['include_dirs'].append('numpy')
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/potential')
-    cfg['sources'].append('gala/dynamics/mockstream/_coord.pyx')
     cfg['extra_compile_args'].append('--std=gnu99')
-    exts.append(Extension('gala.dynamics.mockstream._coord', **cfg))
+    cfg['sources'].append('gala/potential/potential/ccompositepotential.pyx')
+    cfg['sources'].append('gala/potential/potential/src/cpotential.c')
+    exts.append(Extension('gala.potential.potential.ccompositepotential', **cfg))
 
     cfg = setup_helpers.DistutilsExtensionArgs()
     cfg['include_dirs'].append('numpy')
-    cfg['include_dirs'].append('gala/integrate/cyintegrators')
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/potential')
-    cfg['sources'].append('gala/potential/potential/src/cpotential.c')
-    cfg['sources'].append('gala/dynamics/mockstream/_mockstream.pyx')
-    cfg['sources'].append('gala/integrate/cyintegrators/dopri/dop853.c')
     cfg['extra_compile_args'].append('--std=gnu99')
-    exts.append(Extension('gala.dynamics.mockstream._mockstream', **cfg))
+    cfg['sources'].append('gala/potential/potential/builtin/cybuiltin.pyx')
+    cfg['sources'].append('gala/potential/potential/builtin/builtin_potentials.c')
+    cfg['sources'].append('gala/potential/potential/src/cpotential.c')
+    exts.append(Extension('gala.potential.potential.builtin.cybuiltin', **cfg))
 
     return exts
 
 def get_package_data():
-    return {'gala.dynamics': ['*.pyx', '*.pxd', '*/*.pyx', '*/*.pxd']}
+
+    return {'gala.potential.potential':
+            ['*.h', '*.pyx', '*.pxd', '*/*.pyx', '*/*.pxd',
+             'builtin/builtin_potentials.h',
+             'builtin/builtin_potentials.c'
+             'src/cpotential.h', 'src/potential.c']}

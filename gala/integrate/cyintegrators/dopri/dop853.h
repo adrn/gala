@@ -183,8 +183,8 @@ nfcnRead    Number of function calls.
 
 #include <stdio.h>
 #include <limits.h>
-#include "src/cpotential.h"
-#include "src/cframe.h"
+#include "potential/src/cpotential.h"
+#include "frame/src/cframe.h"
 
 typedef void (*GradFn)(CPotential *p, double t, double *q, double *grad);
 typedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,

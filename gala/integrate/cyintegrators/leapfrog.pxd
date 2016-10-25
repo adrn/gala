@@ -1,8 +1,8 @@
-cdef extern from "src/cframe.h":
+cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrame:
         pass
 
-cdef extern from "src/cpotential.h":
+cdef extern from "potential/src/cpotential.h":
     ctypedef struct CPotential:
         pass
 

@@ -1,4 +1,4 @@
-cdef extern from "src/cframe.h":
+cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrame:
         pass
 

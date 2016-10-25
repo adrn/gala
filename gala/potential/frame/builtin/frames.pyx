@@ -22,7 +22,7 @@ cdef extern from "src/funcdefs.h":
     ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
     ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
 
-cdef extern from "src/cframe.h":
+cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrame:
         valuefunc potential
         gradientfunc gradient
@@ -31,7 +31,7 @@ cdef extern from "src/cframe.h":
         int n_params
         double *parameters;
 
-cdef extern from "src/builtin_frames.h":
+cdef extern from "frame/builtin/builtin_frames.h":
     double static_frame_potential(double t, double *pars, double *qp) nogil
     void static_frame_gradient(double t, double *pars, double *qp, double *grad) nogil
     void static_frame_hessian(double t, double *pars, double *qp, double *hess) nogil

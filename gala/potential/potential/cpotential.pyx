@@ -39,7 +39,7 @@ cdef extern from "src/funcdefs.h":
     ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
     ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
 
-cdef extern from "src/cpotential.h":
+cdef extern from "potential/src/cpotential.h":
     enum:
         MAX_N_COMPONENTS = 16
 

@@ -1,5 +1,5 @@
-#include "funcdefs.h"
-#include "cframe.h"
+#include "src/funcdefs.h"
+#include "frame/src/cframe.h"
 
 #ifndef MAX_N_COMPONENTS_H
 #define MAX_N_COMPONENTS_H

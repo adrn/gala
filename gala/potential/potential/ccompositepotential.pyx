@@ -28,7 +28,7 @@ from .core import CompositePotential
 from .cpotential import CPotentialBase
 from .cpotential cimport CPotentialWrapper
 
-cdef extern from "src/cpotential.h":
+cdef extern from "potential/src/cpotential.h":
     enum:
         MAX_N_COMPONENTS = 16
 

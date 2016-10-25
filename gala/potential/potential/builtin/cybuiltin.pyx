@@ -28,7 +28,7 @@ np.import_array()
 from ..core import CompositePotential
 from ..cpotential import CPotentialBase
 from ..cpotential cimport CPotentialWrapper
-from ..cframe cimport CFrameWrapper
+from ...frame.cframe cimport CFrameWrapper
 from ...units import DimensionlessUnitSystem
 
 cdef extern from "src/funcdefs.h":
@@ -37,7 +37,7 @@ cdef extern from "src/funcdefs.h":
     ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
     ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
 
-cdef extern from "src/cframe.h":
+cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrame:
         valuefunc potential
         gradientfunc gradient
@@ -46,7 +46,7 @@ cdef extern from "src/cframe.h":
         int n_params
         double *parameters;
 
-cdef extern from "src/cpotential.h":
+cdef extern from "potential/src/cpotential.h":
     enum:
         MAX_N_COMPONENTS = 16
 
@@ -60,7 +60,7 @@ cdef extern from "src/cpotential.h":
         int n_params[MAX_N_COMPONENTS]
         double *parameters[MAX_N_COMPONENTS]
 
-cdef extern from "src/builtin_potentials.h":
+cdef extern from "potential/builtin/builtin_potentials.h":
     double nan_density(double t, double *pars, double *q) nogil
     void nan_hessian(double t, double *pars, double *q, double *hess) nogil
 
@@ -151,7 +151,6 @@ cdef class HenonHeilesWrapper(CPotentialWrapper):
         cp.parameters[0] = &(self._params[0])
 
         self.cpotential = cp
-        print("derp", frame, dir(frame))
         self.cframe = frame.cframe
 
 class HenonHeilesPotential(CPotentialBase):
@@ -327,13 +326,15 @@ cdef class HernquistWrapper(CPotentialWrapper):
         cp.hessian[0] = <hessianfunc>(hernquist_hessian)
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+        cp.n_dim = 3
         cp.n_components = 1
         self._params = np.array([G] + list(parameters), dtype=np.float64)
         self._n_params = np.array([len(self._params)], dtype=np.int32)
         cp.n_params = &(self._n_params[0])
         cp.parameters[0] = &(self._params[0])
-        cp.n_dim = 3
+
         self.cpotential = cp
+        self.cframe = frame.cframe
 
 class HernquistPotential(CPotentialBase):
     r"""

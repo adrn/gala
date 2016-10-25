@@ -66,6 +66,7 @@ class TestIsochroneDimensionless(PotentialTestBase):
 class TestHernquist(PotentialTestBase):
     potential = HernquistPotential(units=galactic, m=1.E11, c=0.26)
     w0 = [1.,0.,0.,0.,0.1,0.1]
+    show_plots = True
 
 class TestPlummer(PotentialTestBase):
     potential = PlummerPotential(units=galactic, m=1.E11, b=0.26)

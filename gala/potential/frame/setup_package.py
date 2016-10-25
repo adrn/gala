@@ -13,23 +13,23 @@ def get_extensions():
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/potential')
     cfg['extra_compile_args'].append('--std=gnu99')
-    cfg['sources'].append('gala/integrate/cyintegrators/leapfrog.pyx')
-    cfg['sources'].append('gala/potential/potential/src/cpotential.c')
-    exts.append(Extension('gala.integrate.cyintegrators.leapfrog', **cfg))
+    cfg['sources'].append('gala/potential/frame/cframe.pyx')
+    exts.append(Extension('gala.potential.frame.cframe', **cfg))
 
     cfg = setup_helpers.DistutilsExtensionArgs()
     cfg['include_dirs'].append('numpy')
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/potential')
     cfg['extra_compile_args'].append('--std=gnu99')
-    cfg['sources'].append('gala/potential/potential/src/cpotential.c')
-    cfg['sources'].append('gala/integrate/cyintegrators/dop853.pyx')
-    cfg['sources'].append('gala/integrate/cyintegrators/dopri/dop853.c')
-    exts.append(Extension('gala.integrate.cyintegrators.dop853', **cfg))
+    cfg['sources'].append('gala/potential/frame/builtin/frames.pyx')
+    cfg['sources'].append('gala/potential/frame/builtin/builtin_frames.c')
+    exts.append(Extension('gala.potential.frame.builtin.frames', **cfg))
 
     return exts
 
 def get_package_data():
-    return {'gala.integrate': ['*.pyx', '*.pxd', '*/*.pyx', '*/*.pxd',
-                               'cyintegrators/*.c',
-                               'cyintegrators/dopri/*.c', 'cyintegrators/dopri/*.h']}
+    return {'gala.potential.frame':
+            ['*.h', '*.pyx', '*.pxd', '*/*.pyx', '*/*.pxd',
+             'builtin/*.h', 'src/*.h',
+             'builtin/builtin_frames.c', 'src/*.c',
+             'tests/*.yml']}

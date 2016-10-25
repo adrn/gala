@@ -1,6 +1,6 @@
 #include <math.h>
 #include "cpotential.h"
-#include "cframe.h"
+#include "frame/src/cframe.h"
 
 // TODO: Frame has to have parameters too
 
@@ -33,8 +33,7 @@ double c_density(CPotential *p, double t, double *qp) {
 void c_gradient(CPotential *p, CFrame *f, double t, double *qp, double *grad) {
     int i;
 
-    // TODO: grad, n_dim now have to be full phase-space dimensionality!!
-    for (i=0; i < (p->n_dim); i++) {
+    for (i=0; i < 2*(p->n_dim); i++) {
         grad[i] = 0.;
     }
 
@@ -49,8 +48,7 @@ void c_gradient(CPotential *p, CFrame *f, double t, double *qp, double *grad) {
 void c_hessian(CPotential *p, CFrame *f, double t, double *qp, double *hess) {
     int i;
 
-    // TODO: hessian is now a bigger matrix...need to write to the correct submatrix in p->hessian
-    for (i=0; i < pow(p->n_dim,2); i++) {
+    for (i=0; i < pow(2*(p->n_dim),2); i++) {
         hess[i] = 0.;
     }
 
