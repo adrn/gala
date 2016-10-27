@@ -187,7 +187,6 @@ nfcnRead    Number of function calls.
 #include "frame/src/cframe.h"
 #include "hamiltonian/src/chamiltonian.h"
 
-typedef void (*GradFn)(CPotential *p, double t, double *q, double *grad);
 typedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
                           CPotential *p, CFrame *fr, unsigned norbits);
 
@@ -238,4 +237,4 @@ extern double xRead (void);
 /* ADDED BY APW */
 extern void Fwrapper (unsigned ndim, double t, double *w, double *f,
                       CPotential *p, CFrame *fr, unsigned norbits);
-extern double six_norm (double *x);
+extern double six_norm (double *x); /* Needed for Lyapunov */

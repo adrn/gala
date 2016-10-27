@@ -29,16 +29,19 @@ class Hamiltonian(object):
 
         self.potential = potential
         self.frame = frame
-        self.n_dim = 2 * self.potential.n_dim
+
+        # TODO: need to have n_dim on potentials
+        # self.n_dim = 2 * self.potential.n_dim
+        self.n_dim = 2 * 3
 
         # TODO: document this attribute
         if isinstance(self.potential, CPotentialBase) and isinstance(self.frame, CFrameBase):
             self.c_enabled = True
+
         else:
             self.c_enabled = False
 
     def _value(self, w, t=0.):
-        # TODO: is this right?
         return self.potential._value(w[:self.n_dim]) + self.frame._value(w)
 
     def value(self, w, t=0.):
@@ -169,7 +172,7 @@ class Hamiltonian(object):
     def __str__(self):
         return self.__class__.__name__
 
-    def integrate_orbit(self, w0, Integrator=LeapfrogIntegrator,
+    def integrate_orbit(self, w0, Integrator=None,
                         Integrator_kwargs=dict(), cython_if_possible=True,
                         **time_spec):
         """
@@ -182,7 +185,9 @@ class Hamiltonian(object):
         w0 : `~gala.dynamics.PhaseSpacePosition`, array_like
             Initial conditions.
         Integrator : `~gala.integrate.Integrator` (optional)
-            Integrator class to use.
+            Integrator class to use. By default, uses
+            `~gala.integrate.LeapfrogIntegrator` if the frame is static and
+            `~gala.integrate.DOPRI853Integrator` else.
         Integrator_kwargs : dict (optional)
             Any extra keyword argumets to pass to the integrator class
             when initializing. Only works in non-Cython mode.
@@ -199,6 +204,14 @@ class Hamiltonian(object):
         orbit : `~gala.dynamics.CartesianOrbit`
 
         """
+
+        if Integrator is None and isinstance(self.frame, StaticFrame):
+            Integrator = LeapfrogIntegrator
+        elif Integrator is None:
+            Integrator = DOPRI853Integrator
+        else:
+            # use the Integrator provided
+            pass
 
         if not isinstance(w0, CartesianPhaseSpacePosition):
             w0 = np.asarray(w0)

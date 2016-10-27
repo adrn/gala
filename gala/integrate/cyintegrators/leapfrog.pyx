@@ -17,6 +17,7 @@ cimport numpy as np
 np.import_array()
 
 # Project
+from ...potential.potential.cpotential cimport CPotentialWrapper
 from ...potential.frame import StaticFrame
 
 cdef extern from "frame/src/cframe.h":
@@ -88,9 +89,7 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:,::1] w0, double[::1]
         double[:,:,::1] all_w = np.zeros((ntimes,n,ndim))
 
         # whoa, so many dots
-        CPotential cp = hamiltonian.potential.c_instance.cpotential
-
-    # TODO: there should be a way to check that half_ndim == p.cpotential.ndim
+        CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
 
     # save initial conditions
     all_w[0,:,:] = w0.copy()

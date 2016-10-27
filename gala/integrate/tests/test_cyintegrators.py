@@ -12,7 +12,6 @@ import time
 
 # Third-party
 import numpy as np
-import matplotlib.pyplot as pl
 import pytest
 
 # Project
@@ -26,8 +25,6 @@ from ...units import galactic
 integrator_list = [LeapfrogIntegrator, DOPRI853Integrator]
 func_list = [leapfrog_integrate_hamiltonian, dop853_integrate_hamiltonian]
 _list = zip(integrator_list, func_list)
-
-# ----------------------------------------------------------------------------
 
 @pytest.mark.parametrize(("Integrator","integrate_func"), _list)
 def test_compare_to_py(Integrator, integrate_func):
@@ -44,7 +41,7 @@ def test_compare_to_py(Integrator, integrate_func):
                       [0.,10.,0.,0.,0.,0.2]])
     py_w0 = np.ascontiguousarray(cy_w0.T)
 
-    n_steps = 10000
+    n_steps = 1024
     dt = 2.
     t = np.linspace(0,dt*n_steps,n_steps+1)
 
@@ -59,26 +56,6 @@ def test_compare_to_py(Integrator, integrate_func):
 
     assert py_w.shape == cy_w.shape
     assert np.allclose(cy_w[:,-1], py_w[:,-1])
-
-@pytest.mark.skipif(True, reason="For timing locally")
-def test_time_integration():
-    niter = 100
-
-    p = HernquistPotential(m=1E11, c=0.5, units=galactic)
-
-    cy_w0 = np.array([[0.,10.,0.,0.2,0.,0.],
-                      [10.,0.,0.,0.,0.2,0.]])
-
-    n_steps = 10000
-    dt = 2.
-    t = np.linspace(0,dt*n_steps,n_steps+1)
-
-    time0 = time.time()
-    for i in range(niter):
-        t,w = dop853_integrate_potential(p.c_instance, cy_w0, t)
-
-    exec_time = (time.time()-time0) / niter
-    print("{:.3f} per loop iteration".format(exec_time))
 
 @pytest.mark.skipif(True, reason="Slow test - mainly for plotting locally")
 @pytest.mark.parametrize(("Integrator","integrate_func"), _list)

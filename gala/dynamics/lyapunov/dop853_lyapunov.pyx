@@ -20,6 +20,7 @@ from libc.stdio cimport printf
 from libc.math cimport log
 
 from ...potential.potential.cpotential cimport CPotentialWrapper
+from ...potential.frame.cframe cimport CFrameWrapper
 
 cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrame:
@@ -28,7 +29,6 @@ cdef extern from "frame/src/cframe.h":
 cdef extern from "potential/src/cpotential.h":
     ctypedef struct CPotential:
         pass
-    void c_gradient(CPotential *p, CFrame *fr, double t, double *q, double *grad) nogil
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
@@ -57,7 +57,7 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
     #   http://www.unige.ch/~hairer/prog/nonstiff/dr_dop853.f
     pass
 
-cpdef dop853_lyapunov_max(CPotentialWrapper cp, double[::1] w0,
+cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
                           double dt, int n_steps, double t0,
                           double d0, int n_steps_per_pullback, int noffset_orbits,
                           double atol=1E-10, double rtol=1E-10, int nmax=0):
@@ -81,6 +81,10 @@ cpdef dop853_lyapunov_max(CPotentialWrapper cp, double[::1] w0,
         # temp stuff
         double[:,::1] d0_vec = np.random.uniform(size=(noffset_orbits,ndim))
 
+        # whoa, so many dots
+        CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
+        CFrame cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
+
     # store initial conditions
     for i in range(norbits):
         if i == 0:  # store initial conditions for parent orbit
@@ -100,7 +104,7 @@ cpdef dop853_lyapunov_max(CPotentialWrapper cp, double[::1] w0,
     jiter = 0
     for j in range(1,n_steps,1):
         res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
-                     &(cp.cpotential), &(cp.cframe), norbits,
+                     &cp, &cf, norbits,
                      t[j-1], &w[0], t[j], &rtol, &atol, 0, solout, 0,
                      NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt, nmax, 0, 1, 0, NULL, 0);
 
@@ -136,7 +140,7 @@ cpdef dop853_lyapunov_max(CPotentialWrapper cp, double[::1] w0,
     LEs = np.array([np.sum(LEs[:j],axis=0)/t[j*n_steps_per_pullback] for j in range(1,niter)])
     return np.asarray(t), np.asarray(all_w), np.asarray(LEs)
 
-cpdef dop853_lyapunov_max_dont_save(CPotentialWrapper cp, double[::1] w0,
+cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
                                     double dt, int n_steps, double t0,
                                     double d0, int n_steps_per_pullback, int noffset_orbits,
                                     double atol=1E-10, double rtol=1E-10, int nmax=0):
@@ -159,6 +163,10 @@ cpdef dop853_lyapunov_max_dont_save(CPotentialWrapper cp, double[::1] w0,
         # temp stuff
         double[:,::1] d0_vec = np.random.uniform(size=(noffset_orbits,ndim))
 
+        # whoa, so many dots
+        CPotential cp = <CPotential>(hamiltonian.potential.c_instance.cpotential)
+        CFrame cf = hamiltonian.frame.c_instance.cframe
+
     # store initial conditions
     for i in range(norbits):
         if i == 0:  # store initial conditions for parent orbit
@@ -175,7 +183,7 @@ cpdef dop853_lyapunov_max_dont_save(CPotentialWrapper cp, double[::1] w0,
     jiter = 0
     for j in range(1,n_steps,1):
         res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
-                     &(cp.cpotential), &(cp.cframe), norbits,
+                     &cp, &cf, norbits,
                      t[j-1], &w[0], t[j], &rtol, &atol, 0, solout, 0,
                      NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt, nmax, 0, 1, 0, NULL, 0);
 

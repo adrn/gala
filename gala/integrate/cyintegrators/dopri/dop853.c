@@ -978,8 +978,9 @@ double contd8 (unsigned ii, double x)
 /* ADDED BY APW */
 void Fwrapper (unsigned full_ndim, double t, double *w, double *f,
                CPotential *p, CFrame *fr, unsigned norbits) {
-    int i;
+    int i, k;
     unsigned ndim = full_ndim / norbits; // phase-space dimensionality
+    unsigned half_ndim = ndim / 2;
 
     for (i=0; i < norbits; i++) {
         // call gradient function
@@ -987,6 +988,7 @@ void Fwrapper (unsigned full_ndim, double t, double *w, double *f,
     }
 }
 
+/* Needed for Lyapunov */
 double six_norm (double *x) {
     double norm = 0;
     for (int i=0; i<6; i++) {

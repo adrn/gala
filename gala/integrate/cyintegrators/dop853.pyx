@@ -17,6 +17,8 @@ cimport numpy as np
 np.import_array()
 
 from cpython.exc cimport PyErr_CheckSignals
+from ...potential.potential.cpotential cimport CPotentialWrapper
+from ...potential.frame.cframe cimport CFrameWrapper
 
 cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrame:
@@ -77,8 +79,8 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:,::1] w0, double[::1] t,
         double[:,:,::1] all_w = np.empty((ntimes,norbits,ndim))
 
         # whoa, so many dots
-        CPotential cp = hamiltonian.potential.c_instance.cpotential
-        CFrame cf = hamiltonian.frame.c_instance.cframe
+        CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
+        CFrame cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
     # store initial conditions
     for i in range(norbits):

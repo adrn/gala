@@ -506,10 +506,16 @@ class PotentialBase(object):
 
         return fig
 
-    def integrate_orbit(self, w0, Integrator=None,
-                        Integrator_kwargs=dict(), cython_if_possible=True,
-                        **time_spec):
+    def integrate_orbit(self, **kwargs):
         """
+
+        .. warning::
+
+            This is now deprecated. Convenient orbit integration should
+            happen using the `gala.potential.Hamiltonian` class. With a
+            static reference frame, you just need to pass your potential
+            in to the `~gala.potential.Hamiltonian` constructor.
+
         Integrate an orbit in the current potential using the integrator class
         provided. Uses same time specification as `Integrator.run()` -- see
         the documentation for `gala.integrate` for more information.
@@ -537,8 +543,14 @@ class PotentialBase(object):
 
         """
 
-        # TODO: deprecationwarning and use Hamiltonian with StaticFrame
-        pass
+        warnings.warn("Use `Hamiltonian.integrate_orbit()` instead. If you are using a "
+                      "static reference frame, you just need to pass your "
+                      "potential object in to the Hamiltonian constructor to use, e.g., "
+                      "orbit = Hamiltonian(potential).integrate_orbit(...).",
+                      DeprecationWarning)
+
+        from ..hamiltonian import Hamiltonian
+        return Hamiltonian(self).integrate_orbit(**kwargs)
 
     def total_energy(self, x, v):
         """

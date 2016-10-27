@@ -1,16 +1,17 @@
 #include <math.h>
-
-// TODO: Frame has to have parameters too
+#include "potential/src/cpotential.h"
+#include "frame/src/cframe.h"
 
 double hamiltonian_value(CPotential *p, CFrame *fr, double t, double *qp) {
     double v = 0;
     int i;
 
+    v = v + (fr->energy)(t, (fr->parameters), qp);
+
     for (i=0; i < p->n_components; i++) {
+        // TODO: change potential 'value' -> 'energy'
         v = v + (p->value)[i](t, (p->parameters)[i], qp);
     }
-
-    v = v + (fr->potential)(t, (fr->parameters), qp);
 
     return v;
 }
@@ -22,25 +23,26 @@ void hamiltonian_gradient(CPotential *p, CFrame *fr, double t, double *qp, doubl
         dH[i] = 0.;
     }
 
+    (fr->gradient)(t, (fr->parameters), qp, dH);
+
     for (i=0; i < p->n_components; i++) {
-        (p->gradient)[i](t, (p->parameters)[i], qp, dH);
+        (p->gradient)[i](t, (p->parameters)[i], qp, &(dH[p->n_dim]));
     }
 
-    (fr->gradient)(t, (fr->parameters), qp, dH);
+    for (i=p->n_dim; i < 2*(p->n_dim); i++) {
+        dH[i] = -dH[i]; // pdot = -dH/dq
+    }
 
 }
 
 void hamiltonian_hessian(CPotential *p, CFrame *fr, double t, double *qp, double *d2H) {
     int i;
 
-    for (i=0; i < pow(2*(p->n_dim),2); i++) {
-        d2H[i] = 0.;
-    }
-
     for (i=0; i < p->n_components; i++) {
         (p->hessian)[i](t, (p->parameters)[i], qp, d2H);
     }
 
+    // TODO: not implemented!!
     // TODO: can I just add in the terms from the frame here?
     // (fr->hessian)(t, (fr->parameters), qp, d2H);
 }

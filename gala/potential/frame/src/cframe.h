@@ -6,7 +6,7 @@
 
     struct _CFrame {
         // arrays of pointers to each of the function types above
-        valuefunc potential;
+        valuefunc energy;
         gradientfunc gradient;
         hessianfunc hessian;
 
@@ -16,3 +16,7 @@
         double *parameters;
     };
 #endif
+
+extern double frame_hamiltonian(CFrame *fr, double t, double *qp);
+extern void frame_gradient(CFrame *fr, double t, double *qp, double *dH);
+extern void frame_hessian(CFrame *fr, double t, double *qp, double *d2H);

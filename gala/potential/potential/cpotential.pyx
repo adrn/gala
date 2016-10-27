@@ -233,7 +233,6 @@ class CPotentialBase(PotentialBase):
 
         self.c_instance = Wrapper(self.G, self.c_parameters)
 
-
     def _value(self, q, t=0.):
         orig_shp = q.shape
         q = np.ascontiguousarray(q.reshape(orig_shp[0], -1).T)
