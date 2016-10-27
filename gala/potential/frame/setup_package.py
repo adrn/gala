@@ -14,6 +14,7 @@ def get_extensions():
     cfg['include_dirs'].append('gala/potential')
     cfg['extra_compile_args'].append('--std=gnu99')
     cfg['sources'].append('gala/potential/frame/cframe.pyx')
+    cfg['sources'].append('gala/potential/frame/src/cframe.c')
     exts.append(Extension('gala.potential.frame.cframe', **cfg))
 
     cfg = setup_helpers.DistutilsExtensionArgs()
@@ -23,6 +24,7 @@ def get_extensions():
     cfg['extra_compile_args'].append('--std=gnu99')
     cfg['sources'].append('gala/potential/frame/builtin/frames.pyx')
     cfg['sources'].append('gala/potential/frame/builtin/builtin_frames.c')
+    cfg['sources'].append('gala/potential/frame/src/cframe.c')
     exts.append(Extension('gala.potential.frame.builtin.frames', **cfg))
 
     return exts
