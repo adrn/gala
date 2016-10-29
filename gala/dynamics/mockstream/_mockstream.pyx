@@ -18,8 +18,8 @@ cimport numpy as np
 np.import_array()
 
 from libc.math cimport sqrt
-from cpython.exc cimport PyErr_CheckSignals
 
+from ...integrate.cyintegrators.dop853 cimport dop853_helper
 from ...potential.potential.cpotential cimport CPotentialWrapper
 from ...potential.frame.cframe cimport CFrameWrapper
 from ...integrate.cyintegrators.leapfrog cimport c_init_velocity, c_leapfrog_step
@@ -241,21 +241,9 @@ cpdef _mock_stream_dop853(hamiltonian, double[::1] t, double[:,::1] prog_w,
 
         i += 1
 
-    for i in range(nparticles):
-        res = dop853(ndim, <FcnEqDiff> Fwrapper,
-                     &cp, &cf, 1, t1[i], &w[i*ndim], t_end, &rtol, &atol, 0, NULL, 0,
-                     NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0);
-
-        if res == -1:
-            raise RuntimeError("Input is not consistent.")
-        elif res == -2:
-            raise RuntimeError("Larger nmax is needed.")
-        elif res == -3:
-            raise RuntimeError("Step size becomes too small.")
-        elif res == -4:
-            raise RuntimeError("The problem is probably stff (interrupted).")
-
-        PyErr_CheckSignals()
+    w = dop853_helper(&cp, &cf, w.reshape(nparticles*ndim,1), t,
+                      1, nparticles*ndim, ntimes,
+                      atol, rtol, nmax)
 
     return np.asarray(w).reshape(nparticles, ndim)
 

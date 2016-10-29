@@ -19,6 +19,7 @@ np.import_array()
 from libc.stdio cimport printf
 from libc.math cimport log
 
+from ...integrate.cyintegrators.dop853 cimport dop853_step
 from ...potential.potential.cpotential cimport CPotentialWrapper
 from ...potential.frame.cframe cimport CFrameWrapper
 
@@ -31,31 +32,7 @@ cdef extern from "potential/src/cpotential.h":
         pass
 
 cdef extern from "dopri/dop853.h":
-    ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, CFrame *fr, unsigned norbits) nogil
-    ctypedef void (*SolTrait)(long nr, double xold, double x, double* y, unsigned n, int* irtrn)
-
-    # See dop853.h for full description of all input parameters
-    int dop853 (unsigned n, FcnEqDiff fn,
-                CPotential *p, CFrame *fr, unsigned n_orbits,
-                double x, double* y, double xend,
-                double* rtoler, double* atoler, int itoler, SolTrait solout,
-                int iout, FILE* fileout, double uround, double safe, double fac1,
-                double fac2, double beta, double hmax, double h, long nmax, int meth,
-                long nstiff, unsigned nrdens, unsigned* icont, unsigned licont)
-
-    void Fwrapper (unsigned ndim, double t, double *w, double *f,
-                   CPotential *p, CFrame *fr, unsigned norbits)
     double six_norm (double *x)
-
-cdef extern from "stdio.h":
-    ctypedef struct FILE
-    FILE *stdout
-
-cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irtrn):
-    # TODO: see here for example in FORTRAN:
-    #   http://www.unige.ch/~hairer/prog/nonstiff/dr_dop853.f
-    pass
 
 cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
                           double dt, int n_steps, double t0,
@@ -103,19 +80,8 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
     # dummy counter for storing Lyapunov stuff, which only happens every few steps
     jiter = 0
     for j in range(1,n_steps,1):
-        res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
-                     &cp, &cf, norbits,
-                     t[j-1], &w[0], t[j], &rtol, &atol, 0, solout, 0,
-                     NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt, nmax, 0, 1, 0, NULL, 0);
-
-        if res == -1:
-            raise RuntimeError("Input is not consistent.")
-        elif res == -2:
-            raise RuntimeError("Larger nmax is needed.")
-        elif res == -3:
-            raise RuntimeError("Step size becomes too small.")
-        elif res == -4:
-            raise RuntimeError("The problem is probably stff (interrupted).")
+        dop853_step(&cp, &cf, &w[0], t[j-1], t[j], ndim, norbits, n_steps,
+                    atol, rtol, nmax, 0)
 
         # store position of main orbit
         for i in range(norbits):
@@ -137,7 +103,8 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
 
             jiter += 1
 
-    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j*n_steps_per_pullback] for j in range(1,niter)])
+    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j*n_steps_per_pullback]
+                    for j in range(1,niter)])
     return np.asarray(t), np.asarray(all_w), np.asarray(LEs)
 
 cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
@@ -182,19 +149,8 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
     # dummy counter for storing Lyapunov stuff, which only happens every few steps
     jiter = 0
     for j in range(1,n_steps,1):
-        res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
-                     &cp, &cf, norbits,
-                     t[j-1], &w[0], t[j], &rtol, &atol, 0, solout, 0,
-                     NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt, nmax, 0, 1, 0, NULL, 0);
-
-        if res == -1:
-            raise RuntimeError("Input is not consistent.")
-        elif res == -2:
-            raise RuntimeError("Larger nmax is needed.")
-        elif res == -3:
-            raise RuntimeError("Step size becomes too small.")
-        elif res == -4:
-            raise RuntimeError("The problem is probably stff (interrupted).")
+        dop853_step(&cp, &cf, &w[0], t[j-1], t[j], ndim, norbits, n_steps,
+                    atol, rtol, nmax, 0)
 
         if (j % n_steps_per_pullback) == 0:
             # get magnitude of deviation vector

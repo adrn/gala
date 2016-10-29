@@ -53,6 +53,87 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
     # TODO: see here for example in FORTRAN: http://www.unige.ch/~hairer/prog/nonstiff/dr_dop853.f
     pass
 
+cdef void dop853_step(CPotential *cp, CFrame *cf,
+                      double *w, double t1, double t2,
+                      int ndim, int norbits, int ntimes,
+                      double atol, double rtol, int nmax, int iout):
+    cdef double dt0 = t2 - t1
+
+    res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
+                 cp, cf, norbits, t1, w, t2,
+                 &rtol, &atol, 0, solout, iout,
+                 NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0);
+
+    if res == -1:
+        raise RuntimeError("Input is not consistent.")
+    elif res == -2:
+        raise RuntimeError("Larger nmax is needed.")
+    elif res == -3:
+        raise RuntimeError("Step size becomes too small.")
+    elif res == -4:
+        raise RuntimeError("The problem is probably stiff (interrupted).")
+
+cdef dop853_helper(CPotential *cp, CFrame *cf,
+                   double[:,::1] w0, double[::1] t,
+                   int ndim, int norbits, int ntimes,
+                   double atol, double rtol, int nmax):
+
+    cdef:
+        int i, j, k, res
+        double dt0 = t[1] - t[0]
+
+        # ignores any dense output, solout calls
+        int iout = 0
+
+        double[::1] w = np.empty(ndim*norbits)
+
+    # store initial conditions
+    for i in range(norbits):
+        for k in range(ndim):
+            w[i*ndim + k] = w0[i,k]
+
+    for j in range(1,ntimes,1):
+        dop853_step(cp, cf, &w[0], t[j-1], t[j], ndim, norbits, ntimes,
+                    atol, rtol, nmax, iout)
+
+        PyErr_CheckSignals()
+
+    return w
+
+cdef dop853_helper_save_all(CPotential *cp, CFrame *cf,
+                            double[:,::1] w0, double[::1] t,
+                            int ndim, int norbits, int ntimes,
+                            double atol, double rtol, int nmax):
+
+    cdef:
+        int i, j, k, res
+        double dt0 = t[1] - t[0]
+
+        # ignores any dense output, solout calls
+        int iout = 0
+
+        double[::1] w = np.empty(ndim*norbits)
+        double[:,:,::1] all_w = np.empty((ntimes,norbits,ndim))
+
+    # store initial conditions
+    for i in range(norbits):
+        for k in range(ndim):
+            w[i*ndim + k] = w0[i,k]
+            all_w[0,i,k] = w0[i,k]
+
+
+    for j in range(1,ntimes,1):
+        dop853_step(cp, cf, &w[0], t[j-1], t[j], ndim, norbits, ntimes,
+                    atol, rtol, nmax, iout)
+
+        for k in range(ndim):
+            for i in range(norbits):
+                all_w[j,i,k] = w[i*ndim + k]
+
+        PyErr_CheckSignals()
+
+    return all_w
+
 cpdef dop853_integrate_hamiltonian(hamiltonian, double[:,::1] w0, double[::1] t,
                                    double atol=1E-10, double rtol=1E-10, int nmax=0):
     """
@@ -66,50 +147,18 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:,::1] w0, double[::1] t,
 
     cdef:
         int i, j, k
-        int res, iout
         unsigned norbits = w0.shape[0]
         unsigned ndim = w0.shape[1]
 
         # define full array of times
         int ntimes = len(t)
-        double dt0 = t[1]-t[0]
-        double[::1] w = np.empty(ndim*norbits)
-
-        # Note: icont not needed because nrdens == ndim
-        double[:,:,::1] all_w = np.empty((ntimes,norbits,ndim))
 
         # whoa, so many dots
         CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
         CFrame cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
-    # store initial conditions
-    for i in range(norbits):
-        for k in range(ndim):
-            w[i*ndim + k] = w0[i,k]
-            all_w[0,i,k] = w0[i,k]
-
-    # TODO: any way to support dense output?
-    iout = 0  # no solout calls
-
-    for j in range(1,ntimes,1):
-        res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
-                     &cp, &cf, norbits, t[j-1], &w[0], t[j],
-                     &rtol, &atol, 0, solout, iout,
-                     NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0);
-
-        if res == -1:
-            raise RuntimeError("Input is not consistent.")
-        elif res == -2:
-            raise RuntimeError("Larger nmax is needed.")
-        elif res == -3:
-            raise RuntimeError("Step size becomes too small.")
-        elif res == -4:
-            raise RuntimeError("The problem is probably stiff (interrupted).")
-
-        for k in range(ndim):
-            for i in range(norbits):
-                all_w[j,i,k] = w[i*ndim + k]
-
-        PyErr_CheckSignals()
+    all_w = dop853_helper_save_all(&cp, &cf, w0, t,
+                                   ndim, norbits, ntimes,
+                                   atol, rtol, nmax)
 
     return np.asarray(t), np.asarray(all_w)
