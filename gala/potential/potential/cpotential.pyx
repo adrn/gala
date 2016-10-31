@@ -12,6 +12,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 # Standard library
 from collections import OrderedDict
 import sys
+import warnings
 
 # Third-party
 from astropy.extern import six
@@ -35,7 +36,7 @@ cdef extern from "math.h":
 
 cdef extern from "src/funcdefs.h":
     ctypedef double (*densityfunc)(double t, double *pars, double *q) nogil
-    ctypedef double (*valuefunc)(double t, double *pars, double *q) nogil
+    ctypedef double (*energyfunc)(double t, double *pars, double *q) nogil
     ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
     ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
 
@@ -47,13 +48,13 @@ cdef extern from "potential/src/cpotential.h":
         int n_components
         int n_dim
         densityfunc density[MAX_N_COMPONENTS]
-        valuefunc value[MAX_N_COMPONENTS]
+        energyfunc value[MAX_N_COMPONENTS]
         gradientfunc gradient[MAX_N_COMPONENTS]
         hessianfunc hessian[MAX_N_COMPONENTS]
         int n_params[MAX_N_COMPONENTS]
         double *parameters[MAX_N_COMPONENTS]
 
-    double c_value(CPotential *p, double t, double *q) nogil
+    double c_potential(CPotential *p, double t, double *q) nogil
     double c_density(CPotential *p, double t, double *q) nogil
     void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
     void c_hessian(CPotential *p, double t, double *q, double *hess) nogil
@@ -71,7 +72,7 @@ cdef class CPotentialWrapper:
     given potential. This provides a Cython wrapper around this C implementation.
     """
 
-    cpdef value(self, double[:,::1] q, double t=0.):
+    cpdef energy(self, double[:,::1] q, double t=0.):
         """
         CAUTION: Interpretation of axes is different here! We need the
         arrays to be C ordered and easy to iterate over, so here the
@@ -87,7 +88,7 @@ cdef class CPotentialWrapper:
 
         cdef double [::1] pot = np.zeros((norbits,))
         for i in range(norbits):
-            pot[i] = c_value(&(self.cpotential), t, &q[i,0])
+            pot[i] = c_potential(&(self.cpotential), t, &q[i,0])
 
         return np.array(pot)
 
@@ -220,10 +221,7 @@ class CPotentialBase(PotentialBase):
     def __init__(self, parameters, units, Wrapper=None):
         super(CPotentialBase, self).__init__(parameters, units=units)
 
-        c_params = []
-        for k,v in self.parameters.items():
-            c_params.append(self.parameters[k].value)
-        self.c_parameters = np.array(c_params)
+        self.c_parameters = np.array(list(self.parameters.values()))
 
         if Wrapper is None:
             # magic to set the c_instance attribute based on the name of the class
@@ -234,14 +232,16 @@ class CPotentialBase(PotentialBase):
 
         self.c_instance = Wrapper(self.G, self.c_parameters)
 
-    def _value(self, q, t=0.):
-        orig_shp = q.shape
-        q = np.ascontiguousarray(q.reshape(orig_shp[0], -1).T)
-        return self.c_instance.value(q, t=t).reshape(orig_shp[1:])
+    def _energy(self, q, t=0.):
+        orig_shp,q = self._get_c_valid_arr(q)
+        return self.c_instance.energy(q, t=t).reshape(orig_shp[1:])
+
+    def _value(self, *args, **kwargs):
+        warnings.warn("Use `energy()` instead.", DeprecationWarning)
+        return self._energy(*args, **kwargs)
 
     def _density(self, q, t=0.):
-        orig_shp = q.shape
-        q = np.ascontiguousarray(q.reshape(orig_shp[0], -1).T)
+        orig_shp,q = self._get_c_valid_arr(q)
         try:
             return self.c_instance.density(q, t=t).reshape(orig_shp[1:])
         except AttributeError,TypeError:
@@ -251,8 +251,7 @@ class CPotentialBase(PotentialBase):
                              "density function")
 
     def _gradient(self, q, t=0.):
-        orig_shp = q.shape
-        q = np.ascontiguousarray(q.reshape(orig_shp[0], -1).T)
+        orig_shp,q = self._get_c_valid_arr(q)
         try:
             return self.c_instance.gradient(q, t=t).T.reshape(orig_shp)
         except AttributeError,TypeError:
@@ -260,8 +259,7 @@ class CPotentialBase(PotentialBase):
                              "gradient function")
 
     def _hessian(self, q, t=0.):
-        orig_shp = q.shape
-        q = np.ascontiguousarray(q.reshape(orig_shp[0], -1).T)
+        orig_shp,q = self._get_c_valid_arr(q)
         try:
             hess = self.c_instance.hessian(q, t=t)
             return np.moveaxis(hess, 0, -1).reshape((orig_shp[0], orig_shp[0]) + orig_shp[1:])
@@ -285,11 +283,10 @@ class CPotentialBase(PotentialBase):
         """
 
         q = atleast_2d(q, insert_axis=1)
-        sh = q.shape
-        q = np.ascontiguousarray(q.reshape(sh[0],np.prod(sh[1:])).T)
+        orig_shp,q = self._get_c_valid_arr(q)
         try:
             menc = self.c_instance.mass_enclosed(q, self.G, t=t)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "mass_enclosed function")
-        return menc.reshape(sh[1:]) * self.units['mass']
+        return menc.reshape(orig_shp[1:]) * self.units['mass']

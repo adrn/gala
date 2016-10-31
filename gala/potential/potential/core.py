@@ -15,59 +15,41 @@ import astropy.units as u
 from astropy.utils import isiterable
 
 # Project
+from ..common import PotentialCommonBase
 from ...util import ImmutableDict, atleast_2d
-from ...units import UnitSystem, DimensionlessUnitSystem
+from ...units import DimensionlessUnitSystem
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
-class PotentialBase(object):
+class PotentialBase(PotentialCommonBase):
     """
     A baseclass for defining pure-Python gravitational potentials.
 
     Subclasses must define (at minimum) a method that evaluates
-    the value (energy) of the potential at a given position ``q``
-    and time ``t``: ``_value(q, t)``. For integration, the subclasses
+    the potential energy at a given position ``q``
+    and time ``t``: ``_energy(q, t)``. For integration, the subclasses
     must also define a method to evaluate the gradient,
     ``_gradient(q,t)``. Optionally, they may also define methods
     to compute the density and hessian: ``_density()``, ``_hessian()``.
     """
 
-    def _prefilter_pos(self, q):
-        if hasattr(q, 'unit'):
-            q = q.decompose(self.units).value
-
-        q = np.ascontiguousarray(atleast_2d(q, insert_axis=1).astype(np.float64))
-        return q
-
-    def __init__(self, parameters, units=None):
-        # make sure the units specified are a UnitSystem instance
-        if units is not None and not isinstance(units, UnitSystem):
-            units = UnitSystem(*units)
-
-        elif units is None:
-            units = DimensionlessUnitSystem()
-
-        self.units = units
-
-        # in case the user specified an ordered dict
-        self.parameters = OrderedDict()
-        for k,v in parameters.items():
-            if hasattr(v, 'unit'):
-                self.parameters[k] = v.decompose(self.units)
-            else:
-                self.parameters[k] = v*u.one
+    def __init__(self, parameters, ndim=3, units=None):
+        self.units = self._validate_units(units)
+        self.parameters = self._prepare_parameters(parameters, self.units)
 
         try:
             self.G = G.decompose(self.units).value
         except u.UnitConversionError:
             self.G = 1. # TODO: this is a HACK and could lead to user confusion
 
-    def _value(self, q, t=0.):
+        self.ndim = ndim
+
+    def _energy(self, q, t=0.):
         raise NotImplementedError()
 
-    def value(self, q, t=0.):
+    def energy(self, q, t=0.):
         """
-        Compute the value of the potential at the given position(s).
+        Compute the potential energy at the given position(s).
 
         Parameters
         ----------
@@ -83,16 +65,17 @@ class PotentialBase(object):
             If the input position has shape ``q.shape``, the output energy
             will have shape ``q.shape[1:]``.
         """
-        q = self._prefilter_pos(q)
-        return self._value(q, t=t) * self.units['energy'] / self.units['mass']
+        q = self._remove_units_prepare_shape(q)
+        return self._energy(q, t=t) * self.units['energy'] / self.units['mass']
 
-    def potential(self, q, t=0.):
-        __doc__ = self.value.__doc__
-        return self.value(q, t=t)
+    def _value(self, q, t=0.):
+        warnings.warn("Use `_energy()` instead.", DeprecationWarning)
+        return self._energy(q, t=t)
 
-    def _potential(self, q, t=0.):
-        __doc__ = self._value.__doc__
-        return self.value(q, t=t)
+    def value(self, *args, **kwargs):
+        __doc__ = self.energy.__doc__
+        warnings.warn("Use `energy()` instead.", DeprecationWarning)
+        return self.energy(*args, **kwargs)
 
     def _gradient(self, q, t=0.):
         raise NotImplementedError()
@@ -114,7 +97,7 @@ class PotentialBase(object):
             The gradient of the potential. Will have the same shape as
             the input position array, ``q``.
         """
-        q = self._prefilter_pos(q)
+        q = self._remove_units_prepare_shape(q)
 
         try:
             return self._gradient(q, t=t) * self.units['acceleration']
@@ -142,7 +125,7 @@ class PotentialBase(object):
             position has shape ``q.shape``, the output energy will have
             shape ``q.shape[1:]``.
         """
-        q = self._prefilter_pos(q)
+        q = self._remove_units_prepare_shape(q)
 
         try:
             return self._density(q, t=t) * self.units['mass density']
@@ -171,7 +154,7 @@ class PotentialBase(object):
             ``(q.shape[0],q.shape[0]) + q.shape[1:]``. That is, an ``n_dim`` by
             ``n_dim`` array (matrix) for each position.
         """
-        q = self._prefilter_pos(q)
+        q = self._remove_units_prepare_shape(q)
 
         try:
             return self._hessian(q, t=t) * self.units['acceleration'] / self.units['length']
@@ -216,7 +199,7 @@ class PotentialBase(object):
             has shape ``q.shape``, the output energy will have shape
             ``q.shape[1:]``.
         """
-        q = self._prefilter_pos(q)
+        q = self._remove_units_prepare_shape(q)
 
         # small step-size in direction of q
         h = 1E-3 # MAGIC NUMBER
@@ -226,8 +209,8 @@ class PotentialBase(object):
 
         epsilon = h*q/r[np.newaxis]
 
-        dPhi_dr_plus = self._value(q + epsilon, t=t)
-        dPhi_dr_minus = self._value(q - epsilon, t=t)
+        dPhi_dr_plus = self._energy(q + epsilon, t=t)
+        dPhi_dr_minus = self._energy(q - epsilon, t=t)
         diff = (dPhi_dr_plus - dPhi_dr_minus)
 
         if isinstance(self.units, DimensionlessUnitSystem):
@@ -255,7 +238,7 @@ class PotentialBase(object):
             ``q.shape[1:]``.
 
         """
-        q = self._prefilter_pos(q)
+        q = self._remove_units_prepare_shape(q)
 
         # Radius
         r = np.sqrt(np.sum(q**2, axis=0)) * self.units['length']
@@ -268,7 +251,7 @@ class PotentialBase(object):
     # Python special methods
     #
     def __call__(self, q):
-        return self.value(q)
+        return self.energy(q)
 
     def __repr__(self):
         pars = ""
@@ -312,7 +295,7 @@ class PotentialBase(object):
     #
     def plot_contours(self, grid, ax=None, labels=None, subplots_kw=dict(), **kwargs):
         """
-        Plot equipotentials contours. Computes the potential value on a grid
+        Plot equipotentials contours. Computes the potential energy on a grid
         (specified by the array `grid`).
 
         .. warning::
@@ -375,7 +358,7 @@ class PotentialBase(object):
             for ii,slc in _slices:
                 r[ii] = slc
 
-            Z = self.value(r*self.units['length']).value
+            Z = self.energy(r*self.units['length']).value
             ax.plot(x1, Z, **kwargs)
 
             if labels is not None:
@@ -394,7 +377,7 @@ class PotentialBase(object):
             for ii,slc in _slices:
                 r[ii] = slc
 
-            Z = self.value(r*self.units['length']).value
+            Z = self.energy(r*self.units['length']).value
 
             # make default colormap not suck
             cmap = kwargs.pop('cmap', cm.Blues)
@@ -570,7 +553,7 @@ class PotentialBase(object):
                       "release this will be removed.", DeprecationWarning)
 
         v = atleast_2d(v, insert_axis=1)
-        return self.value(x) + 0.5*np.sum(v**2, axis=0)
+        return self.energy(x) + 0.5*np.sum(v**2, axis=0)
 
     def save(self, f):
         """
@@ -663,6 +646,9 @@ class CompositePotential(PotentialBase, OrderedDict):
 
     def _value(self, q, t=0.):
         return sum([p._value(q, t) for p in self.values()])
+
+    def _energy(self, q, t=0.):
+        return sum([p._energy(q, t) for p in self.values()])
 
     def _gradient(self, q, t=0.):
         return sum([p._gradient(q, t) for p in self.values()])

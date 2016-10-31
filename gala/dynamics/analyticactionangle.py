@@ -15,7 +15,8 @@ import astropy.coordinates as coord
 import astropy.units as u
 
 # Project
-from ..potential import PotentialBase, IsochronePotential, HarmonicOscillatorPotential
+from ..potential import (Hamiltonian, PotentialBase,
+                         IsochronePotential, HarmonicOscillatorPotential)
 from ..coordinates import physicsspherical_to_cartesian
 from ..util import atleast_2d
 
@@ -63,7 +64,7 @@ def isochrone_to_aa(w, potential):
     usys = potential.units
     GM = (G*potential.parameters['m']).decompose(usys).value
     b = potential.parameters['b'].decompose(usys).value
-    E = w.energy(potential).decompose(usys).value
+    E = w.energy(Hamiltonian(potential)).decompose(usys).value
 
     if np.any(E > 0.):
         raise ValueError("Unbound particle. (E = {})".format(E))

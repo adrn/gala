@@ -15,7 +15,7 @@
 
         // arrays of pointers to each of the function types above
         densityfunc density[MAX_N_COMPONENTS];
-        valuefunc value[MAX_N_COMPONENTS];
+        energyfunc value[MAX_N_COMPONENTS];
         gradientfunc gradient[MAX_N_COMPONENTS];
         hessianfunc hessian[MAX_N_COMPONENTS];
 
@@ -27,7 +27,7 @@
     };
 #endif
 
-extern double c_value(CPotential *p, double t, double *q);
+extern double c_potential(CPotential *p, double t, double *q);
 extern double c_density(CPotential *p, double t, double *q);
 extern void c_gradient(CPotential *p, double t, double *q, double *grad);
 extern void c_hessian(CPotential *p, double t, double *q, double *hess);

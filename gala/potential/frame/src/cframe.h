@@ -6,7 +6,7 @@
 
     struct _CFrame {
         // arrays of pointers to each of the function types above
-        valuefunc energy;
+        energyfunc energy;
         gradientfunc gradient;
         hessianfunc hessian;
 

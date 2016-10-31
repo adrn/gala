@@ -53,12 +53,14 @@ def test_fit_harmonic_oscillator():
     # integrate orbit in harmonic oscillator potential, then try to recover it
     true_omegas = np.array([0.011, 0.032, 0.045])
     potential = HarmonicOscillatorPotential(omega=true_omegas, units=galactic)
+
     orbit = potential.integrate_orbit([15.,1,2,0,0,0], dt=2., n_steps=10000)
 
     fit_potential = fit_harmonic_oscillator(orbit)
     omegas = fit_potential.parameters['omega'].value
     assert np.allclose(omegas, true_omegas, rtol=1E-2)
 
+# TODO: check on this after fixing HarmonicOscillatorPotential
 def test_fit_toy_potential():
     # integrate orbit in both toy potentials, make sure correct one is chosen
     true_m = 2.81E11
@@ -76,6 +78,7 @@ def test_fit_toy_potential():
     orbit = true_potential.integrate_orbit([15.,1,2,0,0,0], dt=2., n_steps=10000)
 
     potential = fit_toy_potential(orbit)
+
     assert np.allclose(potential.parameters['omega'].value,
                        true_potential.parameters['omega'].value,
                        rtol=1E-2)

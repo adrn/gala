@@ -1,7 +1,7 @@
 #include <math.h>
 #include "cpotential.h"
 
-double c_value(CPotential *p, double t, double *qp) {
+double c_potential(CPotential *p, double t, double *qp) {
     double v = 0;
     int i;
 
@@ -62,12 +62,12 @@ double c_d_dr(CPotential *p, double t, double *qp, double *epsilon) {
     for (j=0; j < (p->n_dim); j++)
         epsilon[j] = h * qp[j]/r + qp[j];
 
-    dPhi_dr = c_value(p, t, epsilon);
+    dPhi_dr = c_potential(p, t, epsilon);
 
     for (j=0; j < (p->n_dim); j++)
         epsilon[j] = h * qp[j]/r - qp[j];
 
-    dPhi_dr = dPhi_dr - c_value(p, t, epsilon);
+    dPhi_dr = dPhi_dr - c_potential(p, t, epsilon);
 
     return dPhi_dr / (2.*h);
 }
@@ -84,13 +84,13 @@ double c_d2_dr2(CPotential *p, double t, double *qp, double *epsilon) {
 
     for (j=0; j < (p->n_dim); j++)
         epsilon[j] = h * qp[j]/r + qp[j];
-    d2Phi_dr2 = c_value(p, t, epsilon);
+    d2Phi_dr2 = c_potential(p, t, epsilon);
 
     d2Phi_dr2 = d2Phi_dr2 - 2.*c_value(p, t, qp);
 
     for (j=0; j < (p->n_dim); j++)
         epsilon[j] = h * qp[j]/r - qp[j];
-    d2Phi_dr2 = d2Phi_dr2 + c_value(p, t, epsilon);
+    d2Phi_dr2 = d2Phi_dr2 + c_potential(p, t, epsilon);
 
     return d2Phi_dr2 / (h*h);
 }

@@ -33,7 +33,7 @@ cdef extern from "potential/src/cpotential.h":
         MAX_N_COMPONENTS = 16
 
     ctypedef double (*densityfunc)(double t, double *pars, double *q) nogil
-    ctypedef double (*valuefunc)(double t, double *pars, double *q) nogil
+    ctypedef double (*energyfunc)(double t, double *pars, double *q) nogil
     ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
     ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
 
@@ -41,13 +41,13 @@ cdef extern from "potential/src/cpotential.h":
         int n_components
         int n_dim
         densityfunc density[MAX_N_COMPONENTS]
-        valuefunc value[MAX_N_COMPONENTS]
+        energyfunc value[MAX_N_COMPONENTS]
         gradientfunc gradient[MAX_N_COMPONENTS]
         hessianfunc hessian[MAX_N_COMPONENTS]
         int n_params[MAX_N_COMPONENTS]
         double *parameters[MAX_N_COMPONENTS]
 
-    double c_value(CPotential *p, double t, double *q) nogil
+    double c_potential(CPotential *p, double t, double *q) nogil
     double c_density(CPotential *p, double t, double *q) nogil
     void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
 

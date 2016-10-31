@@ -12,10 +12,11 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
+from ..common import PotentialCommonBase
 from ...dynamics import CartesianPhaseSpacePosition
 
 cdef extern from "src/funcdefs.h":
-    ctypedef double (*valuefunc)(double t, double *pars, double *q) nogil
+    ctypedef double (*energyfunc)(double t, double *pars, double *q) nogil
     ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
     ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
 
@@ -84,10 +85,13 @@ cdef class CFrameWrapper:
         return np.array(d2H)
 
 # TODO: make sure this doesn't appear in docs - Frames are really only used internally
-class CFrameBase(object):
+class CFrameBase(PotentialCommonBase):
 
-    def __init__(self, c_instance):
-        self.c_instance = c_instance
+    def __init__(self, Wrapper, parameters, units):
+        self.units = self._validate_units(units)
+        self.parameters = self._prepare_parameters(parameters, self.units)
+        self.c_parameters = np.array(list(self.parameters.values()))
+        self.c_instance = Wrapper(*self.c_parameters)
 
     def _energy(self, w, t=0.):
         orig_shp = w.shape

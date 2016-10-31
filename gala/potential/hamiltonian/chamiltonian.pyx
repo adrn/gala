@@ -29,11 +29,8 @@ class Hamiltonian(object):
 
         self.potential = potential
         self.frame = frame
-
-        # TODO: need to have n_dim on potentials
-        # self.n_dim = 2 * self.potential.n_dim
-        self._pot_n_dim = 3
-        self.n_dim = 2 * self._pot_n_dim
+        self._pot_ndim = self.potential.ndim
+        self.ndim = 2 * self._pot_ndim
 
         # TODO: document this attribute
         if isinstance(self.potential, CPotentialBase) and isinstance(self.frame, CFrameBase):
@@ -47,7 +44,7 @@ class Hamiltonian(object):
         return self.potential.units
 
     def _value(self, w, t=0.):
-        return self.potential._value(w[:self._pot_n_dim]) + self.frame._energy(w)
+        return self.potential._value(q=w[:self._pot_ndim], t=t) + self.frame._energy(w=w, t=t)
 
     def value(self, w, t=0.):
         """
@@ -71,17 +68,18 @@ class Hamiltonian(object):
         if isinstance(w, PhaseSpacePosition):
             w = w.w(units=self.units) # wtf
 
-        return self._value(w, t=t) * self.units['energy'] / self.units['mass']
+        # TODO: figure out units and shit
+        return self._value(w, t=t).reshape(w.shape[1:]) * self.units['energy'] / self.units['mass']
 
     def _gradient(self, w, t=0.):
 
         grad = np.zeros_like(w)
 
         # extra terms from the frame
-        grad += self.frame._gradient(w)
+        grad += self.frame._gradient(w=w, t=t)
 
         # p_dot = -dH/dq
-        grad[self._pot_n_dim:] += -self.potential._gradient(w[:self._pot_n_dim])
+        grad[self._pot_ndim:] += -self.potential._gradient(q=w[:self._pot_ndim], t=t)
 
         return grad
 
@@ -258,7 +256,7 @@ class Hamiltonian(object):
 
         else:
             def acc(t, w):
-                return np.vstack((w[ndim:], -self._gradient(w[:ndim], t=t)))
+                return -self._gradient(w, t=t)
             integrator = Integrator(acc, func_units=self.units, **Integrator_kwargs)
             orbit = integrator.run(w0, **time_spec)
             orbit.hamiltonian = self

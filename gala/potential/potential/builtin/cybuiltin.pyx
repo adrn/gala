@@ -33,7 +33,7 @@ from ....units import DimensionlessUnitSystem
 
 cdef extern from "src/funcdefs.h":
     ctypedef double (*densityfunc)(double t, double *pars, double *q) nogil
-    ctypedef double (*valuefunc)(double t, double *pars, double *q) nogil
+    ctypedef double (*energyfunc)(double t, double *pars, double *q) nogil
     ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
     ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
 
@@ -45,7 +45,7 @@ cdef extern from "potential/src/cpotential.h":
         int n_components
         int n_dim
         densityfunc density[MAX_N_COMPONENTS]
-        valuefunc value[MAX_N_COMPONENTS]
+        energyfunc value[MAX_N_COMPONENTS]
         gradientfunc gradient[MAX_N_COMPONENTS]
         hessianfunc hessian[MAX_N_COMPONENTS]
         int n_params[MAX_N_COMPONENTS]
@@ -128,7 +128,7 @@ cdef class HenonHeilesWrapper(CPotentialWrapper):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
-        cp.value[0] = <valuefunc>(henon_heiles_value)
+        cp.value[0] = <energyfunc>(henon_heiles_value)
         cp.density[0] = <densityfunc>(nan_density)
         cp.gradient[0] = <gradientfunc>(henon_heiles_gradient)
         cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
@@ -163,6 +163,7 @@ class HenonHeilesPotential(CPotentialBase):
     def __init__(self, units=None):
         parameters = OrderedDict()
         super(HenonHeilesPotential, self).__init__(parameters=parameters,
+                                                   ndim=2,
                                                    units=units)
 
 # ============================================================================
@@ -173,7 +174,7 @@ cdef class KeplerWrapper(CPotentialWrapper):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
-        cp.value[0] = <valuefunc>(kepler_value)
+        cp.value[0] = <energyfunc>(kepler_value)
         cp.density[0] = <densityfunc>(nan_density)
         cp.gradient[0] = <gradientfunc>(kepler_gradient)
         cp.hessian[0] = <hessianfunc>(kepler_hessian)
@@ -223,7 +224,7 @@ cdef class IsochroneWrapper(CPotentialWrapper):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
-        cp.value[0] = <valuefunc>(isochrone_value)
+        cp.value[0] = <energyfunc>(isochrone_value)
         cp.density[0] = <densityfunc>(isochrone_density)
         cp.gradient[0] = <gradientfunc>(isochrone_gradient)
         cp.hessian[0] = <hessianfunc>(isochrone_hessian)
@@ -284,7 +285,7 @@ class IsochronePotential(CPotentialBase):
         w : :class:`gala.dynamics.CartesianPhaseSpacePosition`, :class:`gala.dynamics.CartesianOrbit`
             The positions or orbit to compute the actions, angles, and frequencies at.
         """
-        from ...dynamics.analyticactionangle import isochrone_to_aa
+        from ....dynamics.analyticactionangle import isochrone_to_aa
         return isochrone_to_aa(w, self)
 
     # def phase_space(self, actions, angles):
@@ -310,7 +311,7 @@ cdef class HernquistWrapper(CPotentialWrapper):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
-        cp.value[0] = <valuefunc>(hernquist_value)
+        cp.value[0] = <energyfunc>(hernquist_value)
         cp.density[0] = <densityfunc>(hernquist_density)
         cp.gradient[0] = <gradientfunc>(hernquist_gradient)
         cp.hessian[0] = <hessianfunc>(hernquist_hessian)
@@ -363,7 +364,7 @@ cdef class PlummerWrapper(CPotentialWrapper):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
-        cp.value[0] = <valuefunc>(plummer_value)
+        cp.value[0] = <energyfunc>(plummer_value)
         cp.density[0] = <densityfunc>(plummer_density)
         cp.gradient[0] = <gradientfunc>(plummer_gradient)
         cp.hessian[0] = <hessianfunc>(plummer_hessian)
@@ -413,7 +414,7 @@ cdef class JaffeWrapper(CPotentialWrapper):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
-        cp.value[0] = <valuefunc>(jaffe_value)
+        cp.value[0] = <energyfunc>(jaffe_value)
         cp.density[0] = <densityfunc>(jaffe_density)
         cp.gradient[0] = <gradientfunc>(jaffe_gradient)
         cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
@@ -463,7 +464,7 @@ cdef class StoneWrapper(CPotentialWrapper):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
-        cp.value[0] = <valuefunc>(stone_value)
+        cp.value[0] = <energyfunc>(stone_value)
         cp.density[0] = <densityfunc>(stone_density)
         cp.gradient[0] = <gradientfunc>(stone_gradient)
         cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
@@ -516,7 +517,7 @@ cdef class SphericalNFWWrapper(CPotentialWrapper):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
-        cp.value[0] = <valuefunc>(sphericalnfw_value)
+        cp.value[0] = <energyfunc>(sphericalnfw_value)
         cp.density[0] = <densityfunc>(sphericalnfw_density)
         cp.gradient[0] = <gradientfunc>(sphericalnfw_gradient)
         cp.hessian[0] = <hessianfunc>(sphericalnfw_hessian)
@@ -567,7 +568,7 @@ cdef class SatohWrapper(CPotentialWrapper):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
-        cp.value[0] = <valuefunc>(satoh_value)
+        cp.value[0] = <energyfunc>(satoh_value)
         cp.density[0] = <densityfunc>(satoh_density)
         cp.gradient[0] = <gradientfunc>(satoh_gradient)
         cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
@@ -620,7 +621,7 @@ cdef class MiyamotoNagaiWrapper(CPotentialWrapper):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
-        cp.value[0] = <valuefunc>(miyamotonagai_value)
+        cp.value[0] = <energyfunc>(miyamotonagai_value)
         cp.density[0] = <densityfunc>(miyamotonagai_density)
         cp.gradient[0] = <gradientfunc>(miyamotonagai_gradient)
         cp.hessian[0] = <hessianfunc>(miyamotonagai_hessian)
@@ -675,7 +676,7 @@ cdef class FlattenedNFWWrapper(CPotentialWrapper):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
-        cp.value[0] = <valuefunc>(flattenednfw_value)
+        cp.value[0] = <energyfunc>(flattenednfw_value)
         cp.density[0] = <densityfunc>(flattenednfw_density)
         cp.gradient[0] = <gradientfunc>(flattenednfw_gradient)
         cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
@@ -731,7 +732,7 @@ cdef class LeeSutoTriaxialNFWWrapper(CPotentialWrapper):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
-        cp.value[0] = <valuefunc>(leesuto_value)
+        cp.value[0] = <energyfunc>(leesuto_value)
         cp.density[0] = <densityfunc>(leesuto_density)
         cp.gradient[0] = <gradientfunc>(leesuto_gradient)
         cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
@@ -789,7 +790,7 @@ cdef class LogarithmicWrapper(CPotentialWrapper):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
-        cp.value[0] = <valuefunc>(logarithmic_value)
+        cp.value[0] = <energyfunc>(logarithmic_value)
         cp.density[0] = <densityfunc>(nan_density)
         cp.gradient[0] = <gradientfunc>(logarithmic_gradient)
         cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO

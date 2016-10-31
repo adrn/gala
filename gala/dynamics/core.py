@@ -4,6 +4,9 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
+# Standard library
+import warnings
+
 # Third-party
 from astropy import log as logger
 import astropy.coordinates as coord
@@ -343,6 +346,18 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         E : :class:`~astropy.units.Quantity`
             The total energy.
         """
+        from ..potential import PotentialBase
+        if isinstance(hamiltonian, PotentialBase):
+            from ..potential import Hamiltonian
+
+            warnings.warn("This function now expects a `Hamiltonian` instance instead of "
+                          "a `PotentialBase` subclass instance. If you are using a "
+                          "static reference frame, you just need to pass your "
+                          "potential object in to the Hamiltonian constructor to use, e.g., "
+                          "Hamiltonian(potential).", DeprecationWarning)
+
+            hamiltonian = Hamiltonian(hamiltonian)
+
         return hamiltonian(self)
 
     def angular_momentum(self):

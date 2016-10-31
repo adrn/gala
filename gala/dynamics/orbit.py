@@ -329,6 +329,19 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         if self.hamiltonian is None and hamiltonian is None:
             raise ValueError("To compute the total energy, a hamiltonian"
                              " object must be provided!")
+
+        from ..potential import PotentialBase
+        if isinstance(hamiltonian, PotentialBase):
+            from ..potential import Hamiltonian
+
+            warnings.warn("This function now expects a `Hamiltonian` instance instead of "
+                          "a `PotentialBase` subclass instance. If you are using a "
+                          "static reference frame, you just need to pass your "
+                          "potential object in to the Hamiltonian constructor to use, e.g., "
+                          "Hamiltonian(potential).", DeprecationWarning)
+
+            hamiltonian = Hamiltonian(hamiltonian)
+
         if hamiltonian is None:
             hamiltonian = self.hamiltonian
 

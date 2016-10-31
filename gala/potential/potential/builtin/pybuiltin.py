@@ -36,20 +36,21 @@ class HarmonicOscillatorPotential(PotentialBase):
         parameters = OrderedDict()
         parameters['omega'] = np.array(omega)
         super(HarmonicOscillatorPotential, self).__init__(units=units,
-                                                          parameters=parameters)
+                                                          parameters=parameters,
+                                                          ndim=len(parameters['omega']))
 
-    def _value(self, x, t):
+    def _value(self, q, t):
         om = np.array(self.parameters['omega'])
-        return np.sum((0.5 * om**2 * x.T**2).T, axis=0)
+        return np.sum((0.5 * om**2 * q.T**2).T, axis=0)
 
-    def _gradient(self, x, t):
+    def _gradient(self, q, t):
         om = np.array(self.parameters['omega'])
-        return (om**2*x.T).T
+        return (om**2*q.T).T
 
-    def _hessian(self, x, t):
-        expand = [slice(None),slice(None)] + [np.newaxis] * (x.ndim - 1)
+    def _hessian(self, q, t):
+        expand = [slice(None),slice(None)] + [np.newaxis] * (q.ndim - 1)
         om = np.atleast_1d(self.parameters['omega'])
-        return np.tile(np.diag(om)[expand], reps=x.shape[1:])
+        return np.tile(np.diag(om)[expand], reps=q.shape[1:])
 
     def action_angle(self, w):
         """
@@ -67,7 +68,7 @@ class HarmonicOscillatorPotential(PotentialBase):
         w : :class:`gala.dynamics.CartesianPhaseSpacePosition`, :class:`gala.dynamics.CartesianOrbit`
             The positions or orbit to compute the actions, angles, and frequencies at.
         """
-        from ...dynamics.analyticactionangle import harmonic_oscillator_to_aa
+        from ....dynamics.analyticactionangle import harmonic_oscillator_to_aa
         return harmonic_oscillator_to_aa(w, self)
 
     # def phase_space(self, actions, angles):
