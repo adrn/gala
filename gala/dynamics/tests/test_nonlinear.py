@@ -10,9 +10,9 @@ import pytest
 
 # Project
 from ... import potential as gp
+from ...potential import Hamiltonian
 from ..nonlinear import lyapunov_max, fast_lyapunov_max, surface_of_section
 from ...integrate import DOPRI853Integrator
-from ...util import atleast_2d
 from ...units import galactic
 
 class TestForcedPendulum(object):
@@ -173,25 +173,20 @@ class TestHenonHeilesStableChaos2(HenonHeilesBase):
 
 class TestLogarithmic(object):
 
-    def F(self,t,w):
-        x,y,z,px,py,pz = w
-        term1 = atleast_2d([px, py, pz], insert_axis=1)
-        term2 = self.potential.acceleration(w[:3])
-        return np.vstack((term1,term2))
-
     def setup(self):
 
         # set the potential
-        self.potential = gp.LogarithmicPotential(v_c=np.sqrt(2), r_h=0.1,
-                                                 q1=1., q2=0.9, q3=1.,
-                                                 units=galactic)
+        potential = gp.LogarithmicPotential(v_c=np.sqrt(2), r_h=0.1,
+                                            q1=1., q2=0.9, q3=1.,
+                                            units=galactic)
+        self.hamiltonian = Hamiltonian(potential)
 
         # see figure 1 from Papaphillipou & Laskar
         x0 = -0.01
         X0 = -0.2
         y0 = 0.
         E0 = -0.4059
-        Y0 = np.sqrt(E0 - self.potential.value([x0,y0,0.]).value)
+        Y0 = np.sqrt(E0 - self.hamiltonian.potential.value([x0,y0,0.]).value)
         chaotic_w0 = [x0,y0,0.,X0,Y0,0.]
 
         # initial conditions from LP-VI documentation:
@@ -208,15 +203,15 @@ class TestLogarithmic(object):
 
         for ii,w0 in enumerate(self.w0s):
             print(ii, w0)
-            lyap, orbit = fast_lyapunov_max(w0, self.potential,
+            lyap, orbit = fast_lyapunov_max(w0, self.hamiltonian,
                                             dt=self.dt, n_steps=self.n_steps,
                                             d0=d0, noffset_orbits=noffset,
                                             n_steps_per_pullback=n_steps_per_pullback)
             lyap = np.mean(lyap, axis=1)
 
             # also just integrate the orbit to compare dE scaling
-            orbit2 = self.potential.integrate_orbit(w0, dt=self.dt, n_steps=self.n_steps,
-                                                    Integrator=DOPRI853Integrator)
+            orbit2 = self.hamiltonian.integrate_orbit(w0, dt=self.dt, n_steps=self.n_steps,
+                                                      Integrator=DOPRI853Integrator)
 
             # lyapunov exp
             # pl.figure()
@@ -230,17 +225,18 @@ class TestLogarithmic(object):
             E = orbit2.energy().value
             dE_ww = np.abs(E[1:] - E[0])
 
+            # import matplotlib.pyplot as plt
+            # plt.semilogy(dE, marker='')
+            # plt.semilogy(dE_ww, marker='')
+
+            # fig,axes = plt.subplots(1,2,figsize=(10,5))
+            # axes[0].plot(orbit.pos[0,:,0], orbit.pos[1,:,0], marker='') # ignore offset orbits
+            # axes[1].plot(orbit2.pos[0], orbit2.pos[1], marker='')
+            # fig.savefig(os.path.join(str(tmpdir),"log_orbit_lyap_max_{}.png".format(ii)))
+
+            # plt.show()
+
             assert np.allclose(dE_ww[-100:], dE[-100:], rtol=1E-1)
-
-            # pl.figure()
-            # pl.semilogy(dE_ww, marker=None)
-            # pl.semilogy(dE, marker=None)
-            # pl.show()
-            # pl.savefig(os.path.join(str(tmpdir),"log_dE_{}.png".format(ii)))
-
-            # pl.figure(figsize=(6,6))
-            # pl.plot(ws[:,0], ws[:,1], marker='.', linestyle='none', alpha=0.1)
-            # pl.savefig(os.path.join(str(tmpdir),"log_orbit_lyap_max_{}.png".format(ii)))
 
     @pytest.mark.slow
     def test_compare_fast(self, tmpdir):
@@ -248,12 +244,16 @@ class TestLogarithmic(object):
         d0 = 1e-5
         noffset = 2
 
-        integrator = DOPRI853Integrator(self.F)
+        # TODO: should Integrator's reverse order of w, t?! I think yes...
+        def F(t, w):
+            return self.hamiltonian._gradient(w, t)
+
+        integrator = DOPRI853Integrator(F)
         for ii,w0 in enumerate(self.w0s):
             print(ii)
 
-            lyap1, orbit1 = fast_lyapunov_max(w0, self.potential,
-                                              dt=self.dt, n_steps=self.n_steps,
+            lyap1, orbit1 = fast_lyapunov_max(w0, self.hamiltonian,
+                                              dt=self.dt, n_steps=self.n_steps//8,
                                               d0=d0, noffset_orbits=noffset,
                                               n_steps_per_pullback=n_steps_per_pullback)
             lyap1 = np.mean(lyap1, axis=1)
@@ -264,32 +264,52 @@ class TestLogarithmic(object):
             assert np.all(dE_fast[:,0] < 1E-10)
 
             lyap2, orbit2 = lyapunov_max(w0.copy(), integrator,
-                                         dt=self.dt, n_steps=self.n_steps//10,
+                                         dt=self.dt, n_steps=self.n_steps//8,
                                          d0=d0, noffset_orbits=noffset,
                                          n_steps_per_pullback=n_steps_per_pullback,
-                                         units=self.potential.units)
+                                         units=self.hamiltonian.units)
             lyap2 = np.mean(lyap2, axis=1)
 
             # check energy conservation
-            E = orbit2.energy(self.potential).value
+            E = orbit2.energy(self.hamiltonian).value
             dE_slow = np.abs(E[1:] - E[0])
+
+            if not np.all(dE_slow[:,0] < 1E-10):
+                import matplotlib.pyplot as plt
+
+                plt.figure()
+                plt.plot(orbit2.pos[0,-128:,0], orbit2.pos[1,-128:,0], marker='.')
+                plt.plot(orbit2.pos[0,-128:,0], orbit2.pos[2,-128:,0], marker='.')
+
+                plt.figure()
+                plt.semilogy(dE_slow[:,0], marker='.')
+
+                plt.show()
+
             assert np.all(dE_slow[:,0] < 1E-10)
 
-            # lyapunov exp
-            # pl.clf()
-            # pl.loglog(t1[1:-10:10], lyap1, marker=None)
-            # pl.loglog(t2[1:-10:10], lyap2, marker=None)
-            # pl.show()
-            # pl.savefig(os.path.join(str(tmpdir),"log_lyap_compare_{}.png".format(ii)))
+            # plots
+            # import matplotlib.pyplot as plt
 
-            # pl.clf()
-            # pl.semilogy(dE_ww, marker=None)
-            # pl.semilogy(dE, marker=None)
-            # pl.savefig(os.path.join(str(tmpdir),"log_dE_{}.png".format(ii)))
+            # plt.figure()
+            # plt.loglog(orbit1.t[1:-10:10], lyap1, marker='')
+            # plt.loglog(orbit2.t[1:-10:10], lyap2, marker='')
+            # plt.savefig(os.path.join(str(tmpdir),"log_lyap_compare_{}.png".format(ii)))
 
-            # pl.figure(figsize=(6,6))
-            # pl.plot(ws[:,0], ws[:,1], marker='.', linestyle='none', alpha=0.1)
-            # pl.savefig(os.path.join(str(tmpdir),"log_orbit_lyap_max_{}.png".format(ii)))
+            # plt.figure()
+            # plt.semilogy(dE_fast[:,0], marker='')
+            # plt.semilogy(dE_slow[:,0], marker='')
+            # # plt.savefig(os.path.join(str(tmpdir),"log_dE_{}.png".format(ii)))
+
+            # fig,axes = plt.subplots(1,2,figsize=(6,6))
+            # axes[0].plot(orbit1.pos[0,:,0], orbit1.pos[1,:,0],
+            #              marker='.', linestyle='none', alpha=0.1)
+            # axes[1].plot(orbit2.pos[0,:,0], orbit2.pos[1,:,0],
+            #              marker='.', linestyle='none', alpha=0.1)
+            # plt.savefig(os.path.join(str(tmpdir),"log_orbit_lyap_max_{}.png".format(ii)))
+
+            # plt.show()
+            # plt.close('all')
 
 @pytest.mark.skipif(True, reason="too slow")
 def test_surface_of_section(tmpdir):

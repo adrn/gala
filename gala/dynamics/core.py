@@ -329,21 +329,21 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         """
         return potential.value(self.pos)
 
-    def energy(self, potential):
+    def energy(self, hamiltonian):
         r"""
         The total energy *per unit mass* (e.g., kinetic + potential):
 
         Parameters
         ----------
-        potential : `gala.potential.PotentialBase`
-            The potential object to compute the energy from.
+        hamiltonian : `gala.potential.Hamiltonian`
+            The Hamiltonian object to evaluate the energy.
 
         Returns
         -------
         E : :class:`~astropy.units.Quantity`
             The total energy.
         """
-        return self.kinetic_energy() + self.potential_energy(potential)
+        return hamiltonian(self)
 
     def angular_momentum(self):
         r"""

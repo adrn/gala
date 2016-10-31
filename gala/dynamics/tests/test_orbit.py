@@ -17,7 +17,7 @@ import scipy.optimize as so
 from ..core import CartesianPhaseSpacePosition
 from ..orbit import *
 from ...integrate import DOPRI853Integrator
-from ...potential import HernquistPotential, LogarithmicPotential, KeplerPotential
+from ...potential import Hamiltonian, HernquistPotential, LogarithmicPotential, KeplerPotential
 from ...units import galactic, solarsystem
 
 def make_known_orbit(tmpdir, x, vx, potential, name):
@@ -27,7 +27,8 @@ def make_known_orbit(tmpdir, x, vx, potential, name):
     vy = np.sqrt(2*(E - potential.value([x,y,0.]).value))[0]
 
     w = [x,y,0.,vx,vy,0.]
-    orbit = potential.integrate_orbit(w, dt=0.05, n_steps=10000)
+    ham = Hamiltonian(potential)
+    orbit = ham.integrate_orbit(w, dt=0.05, n_steps=10000)
 
     # fig,ax = pl.subplots(1,1)
     # ax.plot(ws[0], ws[1])
@@ -304,7 +305,8 @@ def test_eccentricity():
     pot = KeplerPotential(m=1., units=solarsystem)
     w0 = CartesianPhaseSpacePosition(pos=[1,0,0.]*u.au,
                                      vel=[0.,2*np.pi,0.]*u.au/u.yr)
-    w = pot.integrate_orbit(w0, dt=0.01, n_steps=10000, Integrator=DOPRI853Integrator)
+    ham = Hamiltonian(pot)
+    w = ham.integrate_orbit(w0, dt=0.01, n_steps=10000, Integrator=DOPRI853Integrator)
     e = w.eccentricity()
     assert np.abs(e) < 1E-3
 
@@ -313,7 +315,8 @@ def test_apocenter_pericenter():
     w0 = CartesianPhaseSpacePosition(pos=[1,0,0.]*u.au,
                                      vel=[0.,1.5*np.pi,0.]*u.au/u.yr)
 
-    w = pot.integrate_orbit(w0, dt=0.01, n_steps=10000, Integrator=DOPRI853Integrator)
+    ham = Hamiltonian(pot)
+    w = ham.integrate_orbit(w0, dt=0.01, n_steps=10000, Integrator=DOPRI853Integrator)
     apo = w.apocenter()
     per = w.pericenter()
 

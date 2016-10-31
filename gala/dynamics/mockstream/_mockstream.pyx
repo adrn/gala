@@ -37,29 +37,6 @@ cdef extern from "potential/src/cpotential.h":
         pass
     double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
 
-cdef extern from "dopri/dop853.h":
-    ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, CFrame *fr, unsigned norbits) nogil
-    ctypedef void (*SolTrait)(long nr, double xold, double x, double* y, unsigned n, int* irtrn)
-
-    # See dop853.h for full description of all input parameters
-    int dop853 (unsigned n, FcnEqDiff fn,
-                CPotential *p, CFrame *fr, unsigned n_orbits,
-                double x, double* y, double xend,
-                double* rtoler, double* atoler, int itoler, SolTrait solout,
-                int iout, FILE* fileout, double uround, double safe, double fac1,
-                double fac2, double beta, double hmax, double h, long nmax, int meth,
-                long nstiff, unsigned nrdens, unsigned* icont, unsigned licont)
-
-    void Fwrapper (unsigned ndim, double t, double *w, double *f,
-                   CPotential *p, CFrame *fr, unsigned norbits)
-
-cdef extern from "stdio.h":
-    ctypedef struct FILE
-    FILE *stdout
-
-# TODO: break out common functionality from the functions below
-
 cpdef _mock_stream_dop853(hamiltonian, double[::1] t, double[:,::1] prog_w,
                           int release_every,
                           _k_mean, _k_disp,

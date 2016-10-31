@@ -26,7 +26,7 @@ double c_density(CPotential *p, double t, double *qp) {
 void c_gradient(CPotential *p, double t, double *qp, double *grad) {
     int i;
 
-    for (i=0; i < 2*(p->n_dim); i++) {
+    for (i=0; i < p->n_dim; i++) {
         grad[i] = 0.;
     }
 
@@ -39,7 +39,7 @@ void c_gradient(CPotential *p, double t, double *qp, double *grad) {
 void c_hessian(CPotential *p, double t, double *qp, double *hess) {
     int i;
 
-    for (i=0; i < pow(2*(p->n_dim),2); i++) {
+    for (i=0; i < pow(p->n_dim,2); i++) {
         hess[i] = 0.;
     }
 

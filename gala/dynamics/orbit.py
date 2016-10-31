@@ -4,6 +4,9 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
+# Standard library
+import warnings
+
 # Third-party
 from astropy import log as logger
 import astropy.units as u
@@ -191,11 +194,11 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
     t : array_like, :class:`~astropy.units.Quantity` (optional)
         Array of times. If a numpy array (e.g., has no units), this will be
         stored as a dimensionless :class:`~astropy.units.Quantity`.
-    potential : `~gala.potential.PotentialBase` (optional)
-        The potential that the orbit was integrated in.
+    hamiltonian : `~gala.potential.Hamiltonian` (optional)
+        The Hamiltonian that the orbit was integrated in.
 
     """
-    def __init__(self, pos, vel, t=None, potential=None):
+    def __init__(self, pos, vel, t=None, hamiltonian=None, potential=None):
 
         super(CartesianOrbit, self).__init__(pos=pos, vel=vel)
 
@@ -210,7 +213,14 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
                 t = t * uno
 
         self.t = t
-        self.potential = potential
+
+        if potential is not None and hamiltonian is None:
+            warnings.warn("Use the `hamiltonian=` argument instead.", DeprecationWarning)
+
+            from ..potential import Hamiltonian
+            hamiltonian = Hamiltonian(potential)
+
+        self.hamiltonian = hamiltonian
 
     def __getitem__(self, slyce):
         if isinstance(slyce, np.ndarray) or isinstance(slyce, list):
@@ -233,7 +243,7 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
             return CartesianPhaseSpacePosition(pos=pos, vel=vel)
         else:
             return self.__class__(pos=pos, vel=vel,
-                                  potential=self.potential, **kw)
+                                  hamiltonian=self.hamiltonian, **kw)
 
     def w(self, units=None):
         """
@@ -256,16 +266,16 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
             units = [uno]
 
         else:
-            if units is None and self.potential is None:
+            if units is None and self.hamiltonian is None:
                 raise ValueError("If no UnitSystem is specified, the orbit must have "
-                                 "an associated potential object.")
+                                 "an associated hamiltonian object.")
 
-            if units is None and self.potential.units is None:
-                raise ValueError("If no UnitSystem is specified, the potential object "
+            if units is None and self.hamiltonian.units is None:
+                raise ValueError("If no UnitSystem is specified, the hamiltonian object "
                                  "associated with this orbit must have a UnitSystem defined.")
 
             if units is None:
-                units = self.potential.units
+                units = self.hamiltonian.units
 
         x = self.pos.decompose(units).value
         v = self.vel.decompose(units).value
@@ -298,24 +308,31 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         E : :class:`~astropy.units.Quantity`
             The potential energy.
         """
-        if self.potential is None and potential is None:
+        if self.hamiltonian is None and potential is None:
             raise ValueError("To compute the potential energy, a potential"
                              " object must be provided!")
         if potential is None:
-            potential = self.potential
+            potential = self.hamiltonian.potential
 
         return super(CartesianOrbit,self).potential_energy(potential)
 
-    def energy(self, potential=None):
+    def energy(self, hamiltonian=None):
         r"""
-        The total energy *per unit mass* (e.g., kinetic + potential):
+        The total energy *per unit mass*:
 
         Returns
         -------
         E : :class:`~astropy.units.Quantity`
             The total energy.
         """
-        return self.kinetic_energy() + self.potential_energy(potential)
+
+        if self.hamiltonian is None and hamiltonian is None:
+            raise ValueError("To compute the total energy, a hamiltonian"
+                             " object must be provided!")
+        if hamiltonian is None:
+            hamiltonian = self.hamiltonian
+
+        return hamiltonian(self)
 
     # ------------------------------------------------------------------------
     # Misc. useful methods
@@ -430,7 +447,7 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
             new_vel[circ,:,n] = vel[2,:,n]
             new_vel[2,:,n] = vel[circ,:,n]
 
-        return self.__class__(pos=new_pos, vel=new_vel, t=self.t, potential=self.potential)
+        return self.__class__(pos=new_pos, vel=new_vel, t=self.t, hamiltonian=self.hamiltonian)
 
     def plot(self, **kwargs):
         """
@@ -488,7 +505,7 @@ def combine(args, along_time_axis=False):
     """
     Combine the input `Orbit` objects into a single object.
 
-    The `Orbits` must all have the same potential and time array.
+    The `Orbits` must all have the same hamiltonian and time array.
 
     Parameters
     ----------
@@ -524,7 +541,7 @@ def combine(args, along_time_axis=False):
                 t_unit = time.unit
             else:
                 t_unit = None
-            pot = x.potential
+            pot = x.hamiltonian
             cls = x.__class__
         else:
             if x.__class__.__name__ != cls.__name__:
@@ -538,8 +555,8 @@ def combine(args, along_time_axis=False):
                     if x.t is None or len(x.t) != len(time) or np.any(x.t.to(time.unit).value != time.value):
                         raise ValueError("All orbits must have the same time array.")
 
-            if x.potential != pot:
-                raise ValueError("All orbits must have the same Potential object.")
+            if x.hamiltonian != pot:
+                raise ValueError("All orbits must have the same Hamiltonian object.")
 
         pos = x.pos
         if pos.ndim < 3:
@@ -578,4 +595,4 @@ def combine(args, along_time_axis=False):
         else:
             all_time = None
 
-    return cls(pos=all_pos, vel=all_vel, t=all_time, potential=args[0].potential)
+    return cls(pos=all_pos, vel=all_vel, t=all_time, hamiltonian=args[0].hamiltonian)

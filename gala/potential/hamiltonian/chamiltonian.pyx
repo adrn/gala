@@ -8,7 +8,7 @@ import astropy.units as u
 
 # Project
 from ...integrate import LeapfrogIntegrator, DOPRI853Integrator
-from ...dynamics import CartesianOrbit, CartesianPhaseSpacePosition
+from ...dynamics import PhaseSpacePosition, CartesianOrbit, CartesianPhaseSpacePosition
 from ..potential import CPotentialBase
 from ..frame import CFrameBase, StaticFrame
 
@@ -32,7 +32,8 @@ class Hamiltonian(object):
 
         # TODO: need to have n_dim on potentials
         # self.n_dim = 2 * self.potential.n_dim
-        self.n_dim = 2 * 3
+        self._pot_n_dim = 3
+        self.n_dim = 2 * self._pot_n_dim
 
         # TODO: document this attribute
         if isinstance(self.potential, CPotentialBase) and isinstance(self.frame, CFrameBase):
@@ -41,8 +42,12 @@ class Hamiltonian(object):
         else:
             self.c_enabled = False
 
+    @property
+    def units(self):
+        return self.potential.units
+
     def _value(self, w, t=0.):
-        return self.potential._value(w[:self.n_dim]) + self.frame._value(w)
+        return self.potential._value(w[:self._pot_n_dim]) + self.frame._energy(w)
 
     def value(self, w, t=0.):
         """
@@ -62,8 +67,10 @@ class Hamiltonian(object):
             phase-space position has shape ``w.shape``, the output energy
             will have shape ``w.shape[1:]``.
         """
-        # TODO: strip units from w
-        # w = w...
+
+        if isinstance(w, PhaseSpacePosition):
+            w = w.w(units=self.units) # wtf
+
         return self._value(w, t=t) * self.units['energy'] / self.units['mass']
 
     def _gradient(self, w, t=0.):
@@ -74,7 +81,7 @@ class Hamiltonian(object):
         grad += self.frame._gradient(w)
 
         # p_dot = -dH/dq
-        grad[self.n_dim:] += -self.potential._gradient(w[:self.n_dim])
+        grad[self._pot_n_dim:] += -self.potential._gradient(w[:self._pot_n_dim])
 
         return grad
 
@@ -97,8 +104,9 @@ class Hamiltonian(object):
             the input phase-space position, ``w``.
         """
 
-        # TODO: strip units from w
-        # w = w...
+        if isinstance(w, PhaseSpacePosition):
+            w = w.w(units=self.units) # wtf
+
         return self._gradient(w, t=t) # TODO: see TODO about units about
 
     def _hessian(self, w, t=0.):
@@ -221,22 +229,22 @@ class Hamiltonian(object):
 
         ndim = w0.ndim
         arr_w0 = w0.w(self.units)
-        if hasattr(self, 'c_instance') and cython_if_possible:
+        if self.c_enabled and cython_if_possible:
             # WARNING TO SELF: this transpose is there because the Cython
             #   functions expect a shape: (norbits, ndim)
             arr_w0 = np.ascontiguousarray(arr_w0.T)
 
             # array of times
-            from ..integrate.timespec import parse_time_specification
+            from ...integrate.timespec import parse_time_specification
             t = np.ascontiguousarray(parse_time_specification(self.units, **time_spec))
 
             if Integrator == LeapfrogIntegrator:
-                from ..integrate.cyintegrators import leapfrog_integrate_hamiltonian
-                t,w = leapfrog_integrate_hamiltonian(self.c_instance, arr_w0, t)
+                from ...integrate.cyintegrators import leapfrog_integrate_hamiltonian
+                t,w = leapfrog_integrate_hamiltonian(self, arr_w0, t)
 
             elif Integrator == DOPRI853Integrator:
-                from ..integrate.cyintegrators import dop853_integrate_hamiltonian
-                t,w = dop853_integrate_hamiltonian(self.c_instance, arr_w0, t,
+                from ...integrate.cyintegrators import dop853_integrate_hamiltonian
+                t,w = dop853_integrate_hamiltonian(self, arr_w0, t,
                                                    Integrator_kwargs.get('atol', 1E-10),
                                                    Integrator_kwargs.get('rtol', 1E-10),
                                                    Integrator_kwargs.get('nmax', 0))
@@ -253,14 +261,14 @@ class Hamiltonian(object):
                 return np.vstack((w[ndim:], -self._gradient(w[:ndim], t=t)))
             integrator = Integrator(acc, func_units=self.units, **Integrator_kwargs)
             orbit = integrator.run(w0, **time_spec)
-            orbit.potential = self
+            orbit.hamiltonian = self
             return orbit
 
         try:
             tunit = self.units['time']
         except (TypeError, AttributeError):
             tunit = u.dimensionless_unscaled
-        return CartesianOrbit.from_w(w=w, units=self.units, t=t*tunit, potential=self)
+        return CartesianOrbit.from_w(w=w, units=self.units, t=t*tunit, hamiltonian=self)
 
     def save(self, f):
         """

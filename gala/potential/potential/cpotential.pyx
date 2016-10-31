@@ -11,6 +11,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 from collections import OrderedDict
+import sys
 
 # Third-party
 from astropy.extern import six
