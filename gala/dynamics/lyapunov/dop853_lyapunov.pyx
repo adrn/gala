@@ -49,6 +49,7 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
         # define full array of times
         double t_end = (<double>n_steps) * dt
         double[::1] t = np.linspace(t0, t_end, n_steps) # TODO: should be n_steps+1
+        double dt0 = t[1] - t[0]
 
         double d1_mag, norm
         double[:,::1] d1 = np.empty((norbits,ndim))
@@ -80,8 +81,8 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
     # dummy counter for storing Lyapunov stuff, which only happens every few steps
     jiter = 0
     for j in range(1,n_steps,1):
-        dop853_step(&cp, &cf, &w[0], t[j-1], t[j], ndim, norbits, n_steps,
-                    atol, rtol, nmax, 0)
+        dop853_step(&cp, &cf, &w[0], t[j-1], t[j], dt0, ndim, norbits,
+                    atol, rtol, nmax)
 
         # store position of main orbit
         for i in range(norbits):
@@ -122,6 +123,7 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
         # define full array of times
         double t_end = (<double>n_steps) * dt
         double[::1] t = np.linspace(t0, t_end, n_steps) # TODO: should be n_steps+1
+        double dt0 = t[1]-t[0]
 
         double d1_mag, norm
         double[:,::1] d1 = np.empty((norbits,ndim))
@@ -149,8 +151,8 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
     # dummy counter for storing Lyapunov stuff, which only happens every few steps
     jiter = 0
     for j in range(1,n_steps,1):
-        dop853_step(&cp, &cf, &w[0], t[j-1], t[j], ndim, norbits, n_steps,
-                    atol, rtol, nmax, 0)
+        dop853_step(&cp, &cf, &w[0], t[j-1], t[j], dt0, ndim, norbits,
+                    atol, rtol, nmax)
 
         if (j % n_steps_per_pullback) == 0:
             # get magnitude of deviation vector

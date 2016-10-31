@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 # Custom
-from ....potential import SphericalNFWPotential
+from ....potential import Hamiltonian, SphericalNFWPotential
 from ....dynamics import CartesianPhaseSpacePosition
 from ....integrate import DOPRI853Integrator, LeapfrogIntegrator
 from ....units import galactic
@@ -23,15 +23,16 @@ from ..core import mock_stream, streakline_stream, fardal_stream, dissolved_fard
                              [dict(), dict()]))
 def test_mock_stream(Integrator, kwargs):
     potential = SphericalNFWPotential(v_c=0.2, r_s=20., units=galactic)
+    ham = Hamiltonian(potential)
 
     w0 = CartesianPhaseSpacePosition(pos=[0.,15.,0]*u.kpc,
                                      vel=[-0.13,0,0]*u.kpc/u.Myr)
-    prog = potential.integrate_orbit(w0, dt=-2., n_steps=1023)
+    prog = ham.integrate_orbit(w0, dt=-2., n_steps=1023)
     prog = prog[::-1]
 
     k_mean = [1.,0.,0.,0.,1.,0.]
     k_disp = [0.,0.,0.,0.,0.,0.]
-    stream = mock_stream(potential, prog, k_mean=k_mean, k_disp=k_disp,
+    stream = mock_stream(ham, prog, k_mean=k_mean, k_disp=k_disp,
                          prog_mass=1E4, Integrator=Integrator, **kwargs)
 
     # fig = prog.plot(subplots_kwargs=dict(sharex=False,sharey=False))
@@ -55,19 +56,21 @@ all_extra_args = [dict(), dict(), dict(t_disrupt=-250.*u.Myr)]
 @pytest.mark.parametrize("mock_func, extra_kwargs", zip(mock_funcs, all_extra_args))
 def test_each_type(mock_func, extra_kwargs):
     potential = SphericalNFWPotential(v_c=0.2, r_s=20., units=galactic)
+    ham = Hamiltonian(potential)
 
     w0 = CartesianPhaseSpacePosition(pos=[0.,15.,0]*u.kpc,
                                      vel=[-0.13,0,0]*u.kpc/u.Myr)
-    prog = potential.integrate_orbit(w0, dt=-2., n_steps=1023)
+    prog = ham.integrate_orbit(w0, dt=-2., n_steps=1023)
     prog = prog[::-1]
 
-    stream = mock_func(potential, prog_orbit=prog, prog_mass=1E4,
+    stream = mock_func(ham, prog_orbit=prog, prog_mass=1E4,
                        Integrator=DOPRI853Integrator, **extra_kwargs)
 
+    # import matplotlib.pyplot as plt
     # fig = prog.plot(subplots_kwargs=dict(sharex=False,sharey=False))
     # fig = stream.plot(color='#ff0000', alpha=0.5, axes=fig.axes)
     # fig = stream.plot()
-    # pl.show()
+    # plt.show()
 
     assert prog.t.shape == (1024,)
     assert stream.pos.shape == (3,2048) # two particles per step

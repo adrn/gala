@@ -4,18 +4,21 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
+# Standard library
+import warnings
+
 # Third-party
 import numpy as np
 
 # Project
 from .. import CartesianPhaseSpacePosition, Orbit
-from ...potential import CPotentialBase
+from ...potential import Hamiltonian, CPotentialBase
 from ...integrate import DOPRI853Integrator, LeapfrogIntegrator
 from ._mockstream import _mock_stream_dop853, _mock_stream_leapfrog
 
 __all__ = ['mock_stream', 'streakline_stream', 'fardal_stream', 'dissolved_fardal_stream']
 
-def mock_stream(potential, prog_orbit, prog_mass, k_mean, k_disp,
+def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
                 release_every=1, Integrator=DOPRI853Integrator, Integrator_kwargs=dict()):
     """
     Generate a mock stellar stream in the specified potential with a
@@ -23,8 +26,8 @@ def mock_stream(potential, prog_orbit, prog_mass, k_mean, k_disp,
 
     Parameters
     ----------
-    potential : `~gala.potential.PotentialBase`
-        The gravitational potential.
+    hamiltonian : `~gala.potential.Hamiltonian`
+        The system Hamiltonian.
     prog_orbit : `~gala.dynamics.Orbit`
         The orbit of the progenitor system.
     prog_mass : numeric, array_like
@@ -53,14 +56,23 @@ def mock_stream(potential, prog_orbit, prog_mass, k_mean, k_disp,
 
     """
 
+    if isinstance(hamiltonian, CPotentialBase):
+        warnings.warn("This function now expects a `Hamiltonian` instance instead of "
+                      "a `PotentialBase` subclass instance. If you are using a "
+                      "static reference frame, you just need to pass your "
+                      "potential object in to the Hamiltonian constructor to use, e.g., "
+                      "Hamiltonian(potential).", DeprecationWarning)
+
+        hamiltonian = Hamiltonian(hamiltonian)
+
     # ------------------------------------------------------------------------
     # Some initial checks to short-circuit if input is bad
     if Integrator not in [LeapfrogIntegrator, DOPRI853Integrator]:
         raise ValueError("Only Leapfrog and dop853 integration is supported for"
                          " generating mock streams.")
 
-    if not isinstance(potential, CPotentialBase):
-        raise ValueError("Input potential must be a CPotentialBase subclass.")
+    if not isinstance(hamiltonian, Hamiltonian) or not hamiltonian.c_enabled:
+        raise TypeError("Input potential must be a CPotentialBase subclass.")
 
     if not isinstance(prog_orbit, Orbit):
         raise ValueError("Progenitor orbit must be an Orbit subclass.")
@@ -80,32 +92,34 @@ def mock_stream(potential, prog_orbit, prog_mass, k_mean, k_disp,
                          "reverse the orbit with prog_orbit[::-1], but make sure the array"
                          "of k_mean values is ordered correctly.")
 
-    c_w = np.squeeze(prog_orbit.w(potential.units)).T # transpose for Cython funcs
+    c_w = np.squeeze(prog_orbit.w(hamiltonian.units)).T # transpose for Cython funcs
     prog_w = np.ascontiguousarray(c_w)
-    prog_t = np.ascontiguousarray(prog_orbit.t.decompose(potential.units).value)
+    prog_t = np.ascontiguousarray(prog_orbit.t.decompose(hamiltonian.units).value)
     if hasattr(prog_mass, 'unit'):
-        prog_mass = prog_mass.decompose(potential.units).value
+        prog_mass = prog_mass.decompose(hamiltonian.units).value
 
     if Integrator == LeapfrogIntegrator:
-        stream_w = _mock_stream_leapfrog(potential.c_instance, t=prog_t, prog_w=prog_w,
+        stream_w = _mock_stream_leapfrog(hamiltonian, t=prog_t, prog_w=prog_w,
                                          release_every=release_every,
-                                         _k_mean=k_mean, _k_disp=k_disp, G=potential.G,
+                                         _k_mean=k_mean, _k_disp=k_disp,
+                                         G=hamiltonian.potential.G,
                                          _prog_mass=prog_mass,
                                          **Integrator_kwargs)
 
     elif Integrator == DOPRI853Integrator:
-        stream_w = _mock_stream_dop853(potential.c_instance, t=prog_t, prog_w=prog_w,
+        stream_w = _mock_stream_dop853(hamiltonian, t=prog_t, prog_w=prog_w,
                                        release_every=release_every,
-                                       _k_mean=k_mean, _k_disp=k_disp, G=potential.G,
+                                       _k_mean=k_mean, _k_disp=k_disp,
+                                       G=hamiltonian.potential.G,
                                        _prog_mass=prog_mass,
                                        **Integrator_kwargs)
 
     else:
         raise RuntimeError("Should never get here...")
 
-    return CartesianPhaseSpacePosition.from_w(w=stream_w.T, units=potential.units)
+    return CartesianPhaseSpacePosition.from_w(w=stream_w.T, units=hamiltonian.units)
 
-def streakline_stream(potential, prog_orbit, prog_mass, release_every=1,
+def streakline_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
                       Integrator=DOPRI853Integrator, Integrator_kwargs=dict()):
     """
     Generate a mock stellar stream in the specified potential with a
@@ -115,8 +129,8 @@ def streakline_stream(potential, prog_orbit, prog_mass, release_every=1,
 
     Parameters
     ----------
-    potential : `~gala.potential.PotentialBase`
-        The gravitational potential.
+    hamiltonian : `~gala.potential.Hamiltonian`
+        The system Hamiltonian.
     prog_orbit : `~gala.dynamics.Orbit`
             The orbit of the progenitor system.
     prog_mass : numeric, array_like
@@ -155,11 +169,11 @@ def streakline_stream(potential, prog_orbit, prog_mass, release_every=1,
     k_mean[5] = 0. # vz
     k_disp[5] = 0.
 
-    return mock_stream(potential=potential, prog_orbit=prog_orbit, prog_mass=prog_mass,
+    return mock_stream(hamiltonian=hamiltonian, prog_orbit=prog_orbit, prog_mass=prog_mass,
                        k_mean=k_mean, k_disp=k_disp, release_every=release_every,
                        Integrator=Integrator, Integrator_kwargs=Integrator_kwargs)
 
-def fardal_stream(potential, prog_orbit, prog_mass, release_every=1,
+def fardal_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
                   Integrator=DOPRI853Integrator, Integrator_kwargs=dict()):
     """
     Generate a mock stellar stream in the specified potential with a
@@ -169,8 +183,8 @@ def fardal_stream(potential, prog_orbit, prog_mass, release_every=1,
 
     Parameters
     ----------
-    potential : `~gala.potential.PotentialBase`
-        The gravitational potential.
+    hamiltonian : `~gala.potential.Hamiltonian`
+            The system Hamiltonian.
     prog_orbit : `~gala.dynamics.Orbit`
             The orbit of the progenitor system.
     prog_mass : numeric, array_like
@@ -209,11 +223,11 @@ def fardal_stream(potential, prog_orbit, prog_mass, release_every=1,
     k_mean[5] = 0. # vz
     k_disp[5] = 0.5
 
-    return mock_stream(potential=potential, prog_orbit=prog_orbit, prog_mass=prog_mass,
+    return mock_stream(hamiltonian=hamiltonian, prog_orbit=prog_orbit, prog_mass=prog_mass,
                        k_mean=k_mean, k_disp=k_disp, release_every=release_every,
                        Integrator=Integrator, Integrator_kwargs=Integrator_kwargs)
 
-def dissolved_fardal_stream(potential, prog_orbit, prog_mass, t_disrupt,
+def dissolved_fardal_stream(hamiltonian, prog_orbit, prog_mass, t_disrupt,
                             release_every=1, Integrator=DOPRI853Integrator, Integrator_kwargs=dict()):
     """
     Generate a mock stellar stream in the specified potential with a
@@ -225,8 +239,8 @@ def dissolved_fardal_stream(potential, prog_orbit, prog_mass, t_disrupt,
 
     Parameters
     ----------
-    potential : `~gala.potential.PotentialBase`
-        The gravitational potential.
+    hamiltonian : `~gala.potential.Hamiltonian`
+            The system Hamiltonian.
     prog_orbit : `~gala.dynamics.Orbit`
             The orbit of the progenitor system.
     prog_mass : numeric, array_like
@@ -273,6 +287,6 @@ def dissolved_fardal_stream(potential, prog_orbit, prog_mass, t_disrupt,
     k_mean[:,5] = 0. # vz
     k_disp[:,5] = 0.5
 
-    return mock_stream(potential=potential, prog_orbit=prog_orbit, prog_mass=prog_mass,
+    return mock_stream(hamiltonian=hamiltonian, prog_orbit=prog_orbit, prog_mass=prog_mass,
                        k_mean=k_mean, k_disp=k_disp, release_every=release_every,
                        Integrator=Integrator, Integrator_kwargs=Integrator_kwargs)

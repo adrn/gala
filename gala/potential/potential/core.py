@@ -506,7 +506,7 @@ class PotentialBase(object):
 
         return fig
 
-    def integrate_orbit(self, **kwargs):
+    def integrate_orbit(self, *args, **kwargs):
         """
 
         .. warning::
@@ -550,7 +550,7 @@ class PotentialBase(object):
                       DeprecationWarning)
 
         from ..hamiltonian import Hamiltonian
-        return Hamiltonian(self).integrate_orbit(**kwargs)
+        return Hamiltonian(self).integrate_orbit(*args, **kwargs)
 
     def total_energy(self, x, v):
         """

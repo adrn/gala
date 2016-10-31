@@ -54,14 +54,13 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
     pass
 
 cdef void dop853_step(CPotential *cp, CFrame *cf,
-                      double *w, double t1, double t2,
-                      int ndim, int norbits, int ntimes,
-                      double atol, double rtol, int nmax, int iout):
-    cdef double dt0 = t2 - t1
+                      double *w, double t1, double t2, double dt0,
+                      int ndim, int norbits,
+                      double atol, double rtol, int nmax):
 
     res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
                  cp, cf, norbits, t1, w, t2,
-                 &rtol, &atol, 0, solout, iout,
+                 &rtol, &atol, 0, solout, 0,
                  NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0);
 
     if res == -1:
@@ -82,9 +81,6 @@ cdef dop853_helper(CPotential *cp, CFrame *cf,
         int i, j, k, res
         double dt0 = t[1] - t[0]
 
-        # ignores any dense output, solout calls
-        int iout = 0
-
         double[::1] w = np.empty(ndim*norbits)
 
     # store initial conditions
@@ -93,8 +89,9 @@ cdef dop853_helper(CPotential *cp, CFrame *cf,
             w[i*ndim + k] = w0[i,k]
 
     for j in range(1,ntimes,1):
-        dop853_step(cp, cf, &w[0], t[j-1], t[j], ndim, norbits, ntimes,
-                    atol, rtol, nmax, iout)
+        dop853_step(cp, cf, &w[0], t[j-1], t[j], dt0,
+                    ndim, norbits,
+                    atol, rtol, nmax)
 
         PyErr_CheckSignals()
 
@@ -109,9 +106,6 @@ cdef dop853_helper_save_all(CPotential *cp, CFrame *cf,
         int i, j, k, res
         double dt0 = t[1] - t[0]
 
-        # ignores any dense output, solout calls
-        int iout = 0
-
         double[::1] w = np.empty(ndim*norbits)
         double[:,:,::1] all_w = np.empty((ntimes,norbits,ndim))
 
@@ -123,8 +117,8 @@ cdef dop853_helper_save_all(CPotential *cp, CFrame *cf,
 
 
     for j in range(1,ntimes,1):
-        dop853_step(cp, cf, &w[0], t[j-1], t[j], ndim, norbits, ntimes,
-                    atol, rtol, nmax, iout)
+        dop853_step(cp, cf, &w[0], t[j-1], t[j], dt0, ndim, norbits,
+                    atol, rtol, nmax)
 
         for k in range(ndim):
             for i in range(norbits):
