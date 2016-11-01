@@ -86,7 +86,7 @@ double c_d2_dr2(CPotential *p, double t, double *qp, double *epsilon) {
         epsilon[j] = h * qp[j]/r + qp[j];
     d2Phi_dr2 = c_potential(p, t, epsilon);
 
-    d2Phi_dr2 = d2Phi_dr2 - 2.*c_value(p, t, qp);
+    d2Phi_dr2 = d2Phi_dr2 - 2.*c_potential(p, t, qp);
 
     for (j=0; j < (p->n_dim); j++)
         epsilon[j] = h * qp[j]/r - qp[j];

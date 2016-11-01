@@ -43,12 +43,12 @@ class Hamiltonian(object):
     def units(self):
         return self.potential.units
 
-    def _value(self, w, t=0.):
-        return self.potential._value(q=w[:self._pot_ndim], t=t) + self.frame._energy(w=w, t=t)
+    def _energy(self, w, t=0.):
+        return self.potential._energy(q=w[:self._pot_ndim], t=t) + self.frame._energy(w=w, t=t)
 
-    def value(self, w, t=0.):
+    def energy(self, w, t=0.):
         """
-        Compute the value of the Hamiltonian at the given phase-space position(s).
+        Compute the energy (the value of the Hamiltonian) at the given phase-space position(s).
 
         Parameters
         ----------
@@ -69,7 +69,7 @@ class Hamiltonian(object):
             w = w.w(units=self.units) # wtf
 
         # TODO: figure out units and shit
-        return self._value(w, t=t).reshape(w.shape[1:]) * self.units['energy'] / self.units['mass']
+        return self._energy(w, t=t).reshape(w.shape[1:]) * self.units['energy'] / self.units['mass']
 
     def _gradient(self, w, t=0.):
 
@@ -139,7 +139,7 @@ class Hamiltonian(object):
     # Python special methods
     #
     def __call__(self, w):
-        return self.value(w)
+        return self.energy(w)
 
     # def __repr__(self):
     #     pars = ""

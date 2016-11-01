@@ -25,7 +25,7 @@ void static_frame_gradient(double t, double *pars, double *qp, double *dH) {
 }
 
 void static_frame_hessian(double t, double *pars, double *qp, double *d2H) {
-    /* TODO: */
+    /* TODO: this is just potential Hessian and identity matrix for d2H/dp2*/
 }
 
 /*

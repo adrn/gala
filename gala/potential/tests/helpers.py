@@ -2,195 +2,105 @@
 
 from __future__ import division, print_function
 
-__author__ = "adrn <adrn@astro.columbia.edu>"
-
-# Standard library
-import time
-
 # Third-party
-import matplotlib.pyplot as plt
+import astropy.units as u
 import numpy as np
-import pytest
-from scipy.misc import derivative
-from astropy.extern.six.moves import cPickle as pickle
 
 # Project
-from ..io import load
-from ...units import UnitSystem, DimensionlessUnitSystem
-from ...dynamics import CartesianPhaseSpacePosition
+from ...dynamics import CartesianPhaseSpacePosition, CartesianOrbit
+from ...units import galactic
+PSP = CartesianPhaseSpacePosition
+ORB = CartesianOrbit
 
-def partial_derivative(func, point, dim_ix=0, **kwargs):
-    xyz = np.array(point)
-    def wraps(a):
-        xyz[dim_ix] = a
-        return func(xyz).value
-    return derivative(wraps, point[dim_ix], **kwargs)
-
-class PotentialTestBase(object):
-    name = None
-    potential = None # MUST SET THIS
-    tol = 1E-5
-    show_plots = False
+class _TestBase(object):
+    use_half_ndim = False
 
     @classmethod
     def setup_class(cls):
-        if cls.name is None:
-            cls.name = cls.__name__[4:] # remove Test
-        print("Testing potential: {}".format(cls.name))
-        cls.w0 = np.array(cls.w0)
-        cls.ndim = cls.w0.size // 2
+        np.random.seed(42)
 
-        # these are arrays we will test the methods on:
-        w0_2d = np.repeat(cls.w0[:,None], axis=1, repeats=16)
-        w0_3d = np.repeat(w0_2d[...,None], axis=2, repeats=8)
-        w0_list = list(cls.w0)
-        w0_slice = w0_2d[:,:4]
-        cls.w0s = [cls.w0, w0_2d, w0_3d, w0_list, w0_slice]
-        cls._grad_return_shapes = [cls.w0[:cls.ndim].shape + (1,),
-                                   w0_2d[:cls.ndim].shape,
-                                   w0_3d[:cls.ndim].shape,
-                                   cls.w0[:cls.ndim].shape + (1,),
-                                   w0_slice[:cls.ndim].shape]
-        cls._hess_return_shapes = [(cls.ndim,) + cls.w0[:cls.ndim].shape + (1,),
-                                   (cls.ndim,) + w0_2d[:cls.ndim].shape,
-                                   (cls.ndim,) + w0_3d[:cls.ndim].shape,
-                                   (cls.ndim,) + cls.w0[:cls.ndim].shape + (1,),
-                                   (cls.ndim,) + w0_slice[:cls.ndim].shape]
-        cls._valu_return_shapes = [x[1:] for x in cls._grad_return_shapes]
+        ndim = 6
+        r_ndim = ndim # return ndim
+        if cls.use_half_ndim:
+            r_ndim = r_ndim // 2
+        norbits = 16
+        ntimes = 8
 
-    def test_unitsystem(self):
-        assert isinstance(self.potential.units, UnitSystem)
+        # some position or phase-space position arrays we will test methods on:
+        cls.w0s = []
+        cls.energy_return_shapes = []
+        cls.gradient_return_shapes = []
+        cls.hessian_return_shapes = []
 
-    def test_value(self):
-        for arr,shp in zip(self.w0s, self._valu_return_shapes):
-            v = self.potential.value(arr[:self.ndim])
+        # 1D - phase-space position
+        cls.w0s.append(PSP(pos=np.random.random(size=ndim//2),
+                           vel=np.random.random(size=ndim//2)))
+        cls.w0s.append(PSP(pos=np.random.random(size=ndim//2)*u.kpc,
+                           vel=np.random.random(size=ndim//2)*u.km/u.s))
+        cls.energy_return_shapes += [(1,)]*2
+        cls.gradient_return_shapes += [(r_ndim,1)]*2
+        cls.hessian_return_shapes += [(r_ndim,r_ndim,1)]*2
+
+        # 2D - phase-space position
+        cls.w0s.append(PSP(pos=np.random.random(size=(ndim//2,norbits)),
+                           vel=np.random.random(size=(ndim//2,norbits))))
+        cls.w0s.append(PSP(pos=np.random.random(size=(ndim//2,norbits))*u.kpc,
+                           vel=np.random.random(size=(ndim//2,norbits))*u.km/u.s))
+        cls.energy_return_shapes += [(norbits,)]*2
+        cls.gradient_return_shapes += [(r_ndim,norbits)]*2
+        cls.hessian_return_shapes += [(r_ndim,r_ndim,norbits)]*2
+
+        # 3D - phase-space position
+        cls.w0s.append(PSP(pos=np.random.random(size=(ndim//2,norbits,ntimes)),
+                           vel=np.random.random(size=(ndim//2,norbits,ntimes))))
+        cls.w0s.append(PSP(pos=np.random.random(size=(ndim//2,norbits,ntimes))*u.kpc,
+                           vel=np.random.random(size=(ndim//2,norbits,ntimes))*u.km/u.s))
+        cls.energy_return_shapes += [(norbits,ntimes)]*2
+        cls.gradient_return_shapes += [(r_ndim,norbits,ntimes)]*2
+        cls.hessian_return_shapes += [(r_ndim,r_ndim,norbits,ntimes)]*2
+
+        # 2D - orbit
+        cls.w0s.append(ORB(pos=np.random.random(size=(ndim//2,ntimes)),
+                           vel=np.random.random(size=(ndim//2,ntimes))))
+        cls.w0s.append(ORB(pos=np.random.random(size=(ndim//2,ntimes))*u.kpc,
+                           vel=np.random.random(size=(ndim//2,ntimes))*u.km/u.s))
+        cls.energy_return_shapes += [(ntimes,1)]*2
+        cls.gradient_return_shapes += [(r_ndim,ntimes,1)]*2
+        cls.hessian_return_shapes += [(r_ndim,r_ndim,ntimes,1)]*2
+
+        # 3D - orbit
+        cls.w0s.append(ORB(pos=np.random.random(size=(ndim//2,ntimes,norbits)),
+                           vel=np.random.random(size=(ndim//2,ntimes,norbits))))
+        cls.w0s.append(ORB(pos=np.random.random(size=(ndim//2,ntimes,norbits))*u.kpc,
+                           vel=np.random.random(size=(ndim//2,ntimes,norbits))*u.km/u.s))
+        cls.energy_return_shapes += [(ntimes,norbits)]*2
+        cls.gradient_return_shapes += [(r_ndim,ntimes,norbits)]*2
+        cls.hessian_return_shapes += [(r_ndim,r_ndim,ntimes,norbits)]*2
+
+        _obj_w0s = cls.w0s.copy()
+        for w0,eshp,gshp,hshp in zip(_obj_w0s,
+                                     cls.energy_return_shapes,
+                                     cls.gradient_return_shapes,
+                                     cls.hessian_return_shapes):
+            cls.w0s.append(w0.w(galactic))
+            cls.energy_return_shapes.append(eshp)
+            cls.gradient_return_shapes.append(gshp)
+            cls.hessian_return_shapes.append(hshp)
+
+    def test_energy(self):
+        for arr,shp in zip(self.w0s, self.energy_return_shapes):
+            v = self.obj.energy(arr)
             assert v.shape == shp
+            assert v.unit.is_equivalent(u.erg/u.kg)
 
     def test_gradient(self):
-        for arr,shp in zip(self.w0s, self._grad_return_shapes):
-            g = self.potential.gradient(arr[:self.ndim])
-            assert g.shape == shp
+        for arr,shp in zip(self.w0s, self.gradient_return_shapes):
+            v = self.obj.gradient(arr)
+            assert v.shape == shp
+            # TODO: check return units
 
     def test_hessian(self):
-        for arr,shp in zip(self.w0s, self._hess_return_shapes):
-            g = self.potential.hessian(arr[:self.ndim])
+        for arr,shp in zip(self.w0s, self.hessian_return_shapes):
+            g = self.obj.hessian(arr)
             assert g.shape == shp
-
-    def test_mass_enclosed(self):
-        for arr,shp in zip(self.w0s, self._valu_return_shapes):
-            g = self.potential.mass_enclosed(arr[:self.ndim])
-            assert g.shape == shp
-            assert np.all(g > 0.)
-
-    def test_repr(self):
-        pot_repr = repr(self.potential)
-        if isinstance(self.potential.units, DimensionlessUnitSystem):
-            assert "dimensionless" in pot_repr
-        else:
-            assert str(self.potential.units['length']) in pot_repr
-            assert str(self.potential.units['time']) in pot_repr
-            assert str(self.potential.units['mass']) in pot_repr
-
-        for k in self.potential.parameters.keys():
-            assert "{}=".format(k) in pot_repr
-
-    def test_plot(self):
-        p = self.potential
-        f = p.plot_contours(grid=(np.linspace(-10., 10., 100), 0., 0.),
-                            labels=["X"])
-        # f.suptitle("slice off from 0., won't have cusp")
-        # f.savefig(os.path.join(plot_path, "contour_x.png"))
-        if self.show_plots:
-            plt.show()
-        plt.close(f)
-
-        f = p.plot_contours(grid=(np.linspace(-10., 10., 100),
-                                  np.linspace(-10., 10., 100),
-                                  0.),
-                            cmap='Blues')
-        # f.savefig(os.path.join(plot_path, "contour_xy.png"))
-        if self.show_plots:
-            plt.show()
-        plt.close(f)
-
-        f = p.plot_contours(grid=(np.linspace(-10., 10., 100),
-                                  1.,
-                                  np.linspace(-10., 10., 100)),
-                            cmap='Blues', labels=["X", "Z"])
-        # f.savefig(os.path.join(plot_path, "contour_xz.png"))
-        if self.show_plots:
-            plt.show()
-        plt.close(f)
-
-    def test_save_load(self, tmpdir):
-        """
-        Test writing to a YAML file, and reading back in
-        """
-        fn = str(tmpdir.join("{}.yml".format(self.name)))
-        self.potential.save(fn)
-        p = load(fn)
-        p.value(self.w0[:self.w0.size//2])
-
-    @pytest.mark.slow
-    def test_numerical_gradient_vs_gradient(self):
-        """
-        Check that the value of the implemented gradient function is close to a
-        numerically estimated value. This is to check the coded-up version.
-        """
-
-        dx = 1E-3 * np.sqrt(np.sum(self.w0[:self.w0.size//2]**2))
-        max_x = np.sqrt(np.sum([x**2 for x in self.w0[:self.w0.size//2]]))
-
-        grid = np.linspace(-max_x,max_x,8)
-        grid = grid[grid != 0.]
-        grids = [grid for i in range(self.w0.size//2)]
-        xyz = np.vstack(map(np.ravel, np.meshgrid(*grids)))
-
-        num_grad = np.zeros_like(xyz)
-        for i in range(xyz.shape[1]):
-            num_grad[:,i] = np.squeeze([partial_derivative(self.potential.value, xyz[:,i], dim_ix=dim_ix, n=1, dx=dx, order=5) for dim_ix in range(self.w0.size//2)])
-        grad = self.potential.gradient(xyz).value
-
-        assert np.allclose(num_grad, grad, rtol=self.tol)
-
-    def test_orbit_integration(self):
-        """
-        Make we can integrate an orbit in this potential
-        """
-        w0 = self.w0
-        w0 = np.vstack((w0,w0,w0)).T
-
-        t1 = time.time()
-        orbit = self.potential.integrate_orbit(w0, dt=1., n_steps=10000)
-        print("Integration time (10000 steps): {}".format(time.time() - t1))
-
-        if self.show_plots:
-            f = orbit.plot()
-            f.suptitle("Vector w0")
-            plt.show()
-            plt.close(f)
-
-        us = self.potential.units
-        w0 = CartesianPhaseSpacePosition(pos=w0[:self.ndim]*us['length'],
-                                         vel=w0[self.ndim:]*us['length']/us['time'])
-        orbit = self.potential.integrate_orbit(w0, dt=1., n_steps=10000)
-
-        if self.show_plots:
-            f = orbit.plot()
-            f.suptitle("Object w0")
-            plt.show()
-            plt.close(f)
-
-    def test_pickle(self, tmpdir):
-        fn = str(tmpdir.join("{}.pickle".format(self.name)))
-        with open(fn, "wb") as f:
-            pickle.dump(self.potential, f)
-
-        with open(fn, "rb") as f:
-            p = pickle.load(f)
-
-        p.value(self.w0[:self.w0.size//2])
-
-class CompositePotentialTestBase(PotentialTestBase):
-    def test_repr(self):
-        pass
+            # TODO: check return units

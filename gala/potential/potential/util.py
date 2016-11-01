@@ -105,7 +105,7 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
 
     # Energy / value
     energyfunc = lambdify(vars + pars, expr, dummify=False, modules='numpy')
-    def _value(self, w, t):
+    def _energy(self, w, t):
         kw = self.parameters.copy()
         for k,v in kw.items():
             kw[k] = v.value
@@ -114,7 +114,7 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
             kw[name] = w[i]
 
         return np.atleast_1d(energyfunc(**kw))
-    CustomPotential._value = _value
+    CustomPotential._energy = _energy
 
     # Gradient
     gradfuncs = []

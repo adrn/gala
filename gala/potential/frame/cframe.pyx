@@ -13,6 +13,7 @@ cimport numpy as np
 np.import_array()
 
 from ..common import PotentialCommonBase
+from ..potential.cpotential import _validate_pos_arr
 from ...dynamics import CartesianPhaseSpacePosition
 
 cdef extern from "src/funcdefs.h":
@@ -31,12 +32,6 @@ cdef extern from "frame/src/cframe.h":
 cdef class CFrameWrapper:
     """ Wrapper class for C implementation of reference frames. """
 
-    cpdef _validate_w(self, double[:,::1] w):
-        if w.ndim != 2:
-            raise ValueError("Phase-space coordinate array w must have 2 dimensions")
-
-        return w.shape[0], w.shape[1]
-
     cpdef energy(self, double[:,::1] w, double t=0.):
         """
         w should have shape (n, ndim).
@@ -44,8 +39,7 @@ cdef class CFrameWrapper:
         cdef:
             int n, ndim, i
             CFrame cf = self.cframe
-
-        n,ndim = self._validate_w(w)
+        n,ndim = _validate_pos_arr(w)
 
         cdef double [::1] pot = np.zeros((n,))
         for i in range(n):
@@ -60,7 +54,7 @@ cdef class CFrameWrapper:
         cdef:
             int n, ndim, i
             CFrame cf = self.cframe
-        n,ndim = self._validate_w(w)
+        n,ndim = _validate_pos_arr(w)
 
         cdef double[:,::1] dH = np.zeros((n, ndim))
         for i in range(n):
@@ -75,7 +69,7 @@ cdef class CFrameWrapper:
         cdef:
             int n, ndim, i
             CFrame cf = self.cframe
-        n,ndim = self._validate_w(w)
+        n,ndim = _validate_pos_arr(w)
 
         cdef double[:,:,::1] d2H = np.zeros((n, ndim, ndim))
 

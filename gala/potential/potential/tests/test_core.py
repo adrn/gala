@@ -33,7 +33,7 @@ def test_new_simple():
             super(MyPotential, self).__init__(parameters={},
                                               units=units)
 
-        def _value(self, r, t=0.):
+        def _energy(self, r, t=0.):
             return -1/r
 
         def _gradient(self, r, t=0.):
@@ -41,11 +41,11 @@ def test_new_simple():
 
     p = MyPotential()
     assert p(0.5) == -2.
-    assert p.value(0.5) == -2.
+    assert p.energy(0.5) == -2.
     assert p.acceleration(0.5) == -4.
 
     p(np.arange(0.5, 11.5, 0.5))
-    p.value(np.arange(0.5, 11.5, 0.5))
+    p.energy(np.arange(0.5, 11.5, 0.5))
     p.acceleration(np.arange(0.5, 11.5, 0.5))
 
 # ----------------------------------------------------------------------------
@@ -59,7 +59,7 @@ class MyPotential(PotentialBase):
         super(MyPotential, self).__init__(parameters=parameters,
                                           units=units)
 
-    def _value(self, x, t):
+    def _energy(self, x, t):
         m = self.parameters['m']
         x0 = self.parameters['x0']
         r = np.sqrt(np.sum((x-x0[:,None])**2, axis=0))
@@ -104,7 +104,7 @@ def test_composite():
     p2 = MyPotential(m=1., x0=[-1.,0.,0.], units=usys)
 
     p = CompositePotential(one=p1, two=p2)
-    assert quantity_allclose(p.value([0.,0.,0.]), -2*usys['energy']/usys['mass'])
+    assert quantity_allclose(p.energy([0.,0.,0.]), -2*usys['energy']/usys['mass'])
     assert quantity_allclose(p.acceleration([0.,0.,0.]), 0.*usys['acceleration'])
 
     p1 = MyPotential(m=1., x0=[1.,0.,0.], units=usys)

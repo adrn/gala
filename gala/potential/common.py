@@ -10,10 +10,11 @@ import astropy.units as u
 import numpy as np
 
 # Project
-from ...util import atleast_2d
-from ...units import UnitSystem, DimensionlessUnitSystem
+from ..dynamics import PhaseSpacePosition
+from ..util import atleast_2d
+from ..units import UnitSystem, DimensionlessUnitSystem
 
-class PotentialCommmonBase(object):
+class PotentialCommonBase(object):
 
     def _validate_units(self, units):
 
@@ -38,6 +39,10 @@ class PotentialCommmonBase(object):
     def _remove_units_prepare_shape(self, x):
         if hasattr(x, 'unit'):
             x = x.decompose(self.units).value
+
+        elif isinstance(x, PhaseSpacePosition):
+            x = x.w(self.units)
+
         x = atleast_2d(x, insert_axis=1).astype(np.float64)
         return np.ascontiguousarray(x)
 
@@ -45,3 +50,19 @@ class PotentialCommmonBase(object):
         orig_shape = x.shape
         x = np.ascontiguousarray(x.reshape(orig_shape[0], -1)) # ravel to (ndim, all_others)
         return orig_shape, x
+
+    def energy(self, w, t=0.):
+        w = self._remove_units_prepare_shape(w)
+        return self._energy(w, t=t) * self.units['energy'] / self.units['mass']
+
+    def gradient(self, w, t=0.):
+        w = self._remove_units_prepare_shape(w)
+        return self._gradient(w, t=t) # TODO: what to do about units here?
+
+    def hessian(self, w, t=0.):
+        w = self._remove_units_prepare_shape(w)
+
+        try:
+            return self._hessian(w, t=t) # TODO: what to do about units here?
+        except NotImplementedError:
+            raise NotImplementedError("This potential has no specified hessian function.")

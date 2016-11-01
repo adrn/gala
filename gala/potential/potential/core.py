@@ -65,8 +65,7 @@ class PotentialBase(PotentialCommonBase):
             If the input position has shape ``q.shape``, the output energy
             will have shape ``q.shape[1:]``.
         """
-        q = self._remove_units_prepare_shape(q)
-        return self._energy(q, t=t) * self.units['energy'] / self.units['mass']
+        return super(PotentialBase,self).energy(q, t=t)
 
     def _value(self, q, t=0.):
         warnings.warn("Use `_energy()` instead.", DeprecationWarning)
@@ -97,12 +96,7 @@ class PotentialBase(PotentialCommonBase):
             The gradient of the potential. Will have the same shape as
             the input position array, ``q``.
         """
-        q = self._remove_units_prepare_shape(q)
-
-        try:
-            return self._gradient(q, t=t) * self.units['acceleration']
-        except NotImplementedError:
-            raise NotImplementedError("This potential has no specified gradient function.")
+        return super(PotentialBase,self).gradient(q, t=t)
 
     def _density(self, q, t=0.):
         raise NotImplementedError()
@@ -154,12 +148,7 @@ class PotentialBase(PotentialCommonBase):
             ``(q.shape[0],q.shape[0]) + q.shape[1:]``. That is, an ``n_dim`` by
             ``n_dim`` array (matrix) for each position.
         """
-        q = self._remove_units_prepare_shape(q)
-
-        try:
-            return self._hessian(q, t=t) * self.units['acceleration'] / self.units['length']
-        except NotImplementedError:
-            raise NotImplementedError("This potential has no specified hessian function.")
+        return super(PotentialBase,self).hessian(q, t=t)
 
     # ========================================================================
     # Things that use the base methods

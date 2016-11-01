@@ -42,7 +42,7 @@ cdef extern from "frame/builtin/builtin_frames.h":
     void constant_rotating_frame_gradient(double t, double *pars, double *qp, double *grad) nogil
     void constant_rotating_frame_hessian(double t, double *pars, double *qp, double *hess) nogil
 
-__all__ = ['StaticFrame'] #, 'ConstantRotatingFrame']
+__all__ = ['StaticFrame', 'ConstantRotatingFrame']
 
 cdef class StaticFrameWrapper(CFrameWrapper):
 

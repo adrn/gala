@@ -65,6 +65,11 @@ cdef extern from "potential/src/cpotential.h":
 
 __all__ = ['CPotentialBase']
 
+cpdef _validate_pos_arr(double[:,::1] arr):
+    if arr.ndim != 2:
+        raise ValueError("Phase-space coordinate array must have 2 dimensions")
+    return arr.shape[0], arr.shape[1]
+
 cdef class CPotentialWrapper:
     """
     Wrapper class for C implementation of potentials. At the C layer, potentials
@@ -78,16 +83,11 @@ cdef class CPotentialWrapper:
         arrays to be C ordered and easy to iterate over, so here the
         axes are (norbits, ndim).
         """
-        cdef int norbits, ndim, i
+        cdef int n, ndim, i
+        n,ndim = _validate_pos_arr(q)
 
-        if q.ndim != 2:
-            raise ValueError("Coordinate array q must have 2 dimensions")
-
-        norbits = q.shape[0]
-        ndim = q.shape[1]
-
-        cdef double [::1] pot = np.zeros((norbits,))
-        for i in range(norbits):
+        cdef double [::1] pot = np.zeros(n)
+        for i in range(n):
             pot[i] = c_potential(&(self.cpotential), t, &q[i,0])
 
         return np.array(pot)
@@ -98,16 +98,11 @@ cdef class CPotentialWrapper:
         arrays to be C ordered and easy to iterate over, so here the
         axes are (norbits, ndim).
         """
-        cdef int norbits, ndim, i
+        cdef int n, ndim, i
+        n,ndim = _validate_pos_arr(q)
 
-        if q.ndim != 2:
-            raise ValueError("Coordinate array q must have 2 dimensions")
-
-        norbits = q.shape[0]
-        ndim = q.shape[1]
-
-        cdef double [::1] dens = np.zeros((norbits,))
-        for i in range(norbits):
+        cdef double [::1] dens = np.zeros(n)
+        for i in range(n):
             dens[i] = c_density(&(self.cpotential), t, &q[i,0])
 
         return np.array(dens)
@@ -118,16 +113,11 @@ cdef class CPotentialWrapper:
         arrays to be C ordered and easy to iterate over, so here the
         axes are (norbits, ndim).
         """
-        cdef int norbits, ndim, i
+        cdef int n, ndim, i
+        n,ndim = _validate_pos_arr(q)
 
-        if q.ndim != 2:
-            raise ValueError("Coordinate array q must have 2 dimensions")
-
-        norbits = q.shape[0]
-        ndim = q.shape[1]
-
-        cdef double[:,::1] grad = np.zeros((norbits, ndim))
-        for i in range(norbits):
+        cdef double[:,::1] grad = np.zeros((n, ndim))
+        for i in range(n):
             c_gradient(&(self.cpotential), t, &q[i,0], &grad[i,0])
 
         return np.array(grad)
@@ -138,17 +128,12 @@ cdef class CPotentialWrapper:
         arrays to be C ordered and easy to iterate over, so here the
         axes are (norbits, ndim).
         """
-        cdef int norbits, ndim, i
+        cdef int n, ndim, i
+        n,ndim = _validate_pos_arr(q)
 
-        if q.ndim != 2:
-            raise ValueError("Coordinate array q must have 2 dimensions")
+        cdef double[:,:,::1] hess = np.zeros((n, ndim, ndim))
 
-        norbits = q.shape[0]
-        ndim = q.shape[1]
-
-        cdef double[:,:,::1] hess = np.zeros((norbits, ndim, ndim))
-
-        for i in range(norbits):
+        for i in range(n):
             c_hessian(&(self.cpotential), t, &q[i,0], &hess[i,0,0])
 
         return np.array(hess)
@@ -162,13 +147,13 @@ cdef class CPotentialWrapper:
         arrays to be C ordered and easy to iterate over, so here the
         axes are (norbits, ndim).
         """
-        cdef:
-            int i
-            int norbits = q.shape[0]
-            double [::1] epsilon = np.zeros(3, dtype=np.float64)
-            double [::1] dr = np.zeros(norbits, dtype=np.float64)
+        cdef int n, ndim, i
+        n,ndim = _validate_pos_arr(q)
 
-        for i in range(norbits):
+        cdef double [::1] dr = np.zeros(n, dtype=np.float64)
+        cdef double [::1] epsilon = np.zeros(3, dtype=np.float64)
+
+        for i in range(n):
             dr[i] = c_d_dr(&(self.cpotential), t, &q[i,0], &epsilon[0])
 
         return np.array(dr)
@@ -179,13 +164,13 @@ cdef class CPotentialWrapper:
         arrays to be C ordered and easy to iterate over, so here the
         axes are (norbits, ndim).
         """
-        cdef:
-            int i
-            int norbits = q.shape[0]
-            double [::1] epsilon = np.zeros(3, dtype=np.float64)
-            double [::1] dr2 = np.zeros(norbits, dtype=np.float64)
+        cdef int n, ndim, i
+        n,ndim = _validate_pos_arr(q)
 
-        for i in range(norbits):
+        cdef double [::1] dr2 = np.zeros(n, dtype=np.float64)
+        cdef double [::1] epsilon = np.zeros(3, dtype=np.float64)
+
+        for i in range(n):
             dr2[i] = c_d2_dr2(&(self.cpotential), t, &q[i,0], &epsilon[0])
 
         return np.array(dr2)
@@ -196,13 +181,13 @@ cdef class CPotentialWrapper:
         arrays to be C ordered and easy to iterate over, so here the
         axes are (norbits, ndim).
         """
-        cdef:
-            int i
-            int norbits = q.shape[0]
-            double [::1] epsilon = np.zeros(3, dtype=np.float64)
-            double [::1] mass = np.zeros(norbits, dtype=np.float64)
+        cdef int n, ndim, i
+        n,ndim = _validate_pos_arr(q)
 
-        for i in range(norbits):
+        cdef double [::1] mass = np.zeros(n, dtype=np.float64)
+        cdef double [::1] epsilon = np.zeros(3, dtype=np.float64)
+
+        for i in range(n):
             mass[i] = c_mass_enclosed(&(self.cpotential), t, &q[i,0], G, &epsilon[0])
 
         return np.array(mass)
