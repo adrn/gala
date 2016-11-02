@@ -217,9 +217,10 @@ class CPotentialBase(PotentialBase):
 
         self.c_instance = Wrapper(self.G, self.c_parameters)
 
+    # FUCK: shape issues or repeating calling get_c_valid_arr.........wat do?
     def _energy(self, q, t=0.):
         orig_shp,q = self._get_c_valid_arr(q)
-        return self.c_instance.energy(q, t=t).reshape(orig_shp[1:])
+        return self.c_instance.energy(q, t=t).T.reshape(orig_shp[1:])
 
     def _value(self, *args, **kwargs):
         warnings.warn("Use `energy()` instead.", DeprecationWarning)

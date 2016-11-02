@@ -44,16 +44,20 @@ class PotentialCommonBase(object):
             x = x.w(self.units)
 
         x = atleast_2d(x, insert_axis=1).astype(np.float64)
-        return np.ascontiguousarray(x)
+        return x
 
     def _get_c_valid_arr(self, x):
+        """
+        Warning! Interpretation of axes is different for C code.
+        """
         orig_shape = x.shape
-        x = np.ascontiguousarray(x.reshape(orig_shape[0], -1)) # ravel to (ndim, all_others)
+        x = np.ascontiguousarray(x.reshape(orig_shape[0], -1).T)
         return orig_shape, x
 
     def energy(self, w, t=0.):
         w = self._remove_units_prepare_shape(w)
-        return self._energy(w, t=t) * self.units['energy'] / self.units['mass']
+        orig_shape,w = self._get_c_valid_arr(w)
+        return self._energy(w, t=t).T.reshape(orig_shape[1:]) * self.units['energy'] / self.units['mass']
 
     def gradient(self, w, t=0.):
         w = self._remove_units_prepare_shape(w)

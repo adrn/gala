@@ -7,14 +7,15 @@ import numpy as np
 import astropy.units as u
 
 # Project
-from ...integrate import LeapfrogIntegrator, DOPRI853Integrator
-from ...dynamics import PhaseSpacePosition, CartesianOrbit, CartesianPhaseSpacePosition
+from ..common import PotentialCommonBase
 from ..potential import CPotentialBase
 from ..frame import CFrameBase, StaticFrame
+from ...integrate import LeapfrogIntegrator, DOPRI853Integrator
+from ...dynamics import PhaseSpacePosition, CartesianOrbit, CartesianPhaseSpacePosition
 
 __all__ = ["Hamiltonian"]
 
-class Hamiltonian(object):
+class Hamiltonian(PotentialCommonBase):
     """
     TODO:
     """
@@ -44,7 +45,15 @@ class Hamiltonian(object):
         return self.potential.units
 
     def _energy(self, w, t=0.):
-        return self.potential._energy(q=w[:self._pot_ndim], t=t) + self.frame._energy(w=w, t=t)
+        print(w.shape)
+        print(np.ascontiguousarray(w[:,:self._pot_ndim]).shape)
+        import sys
+        sys.exit(0)
+
+        # pot_E = self.potential._energy(w[:self._pot_ndim], t=t)
+        # other_E = self.frame._energy(w=w, t=t)
+        # print("sadfasdf", pot_E.shape, other_E.shape, orig_shp[1:])
+        # return (pot_E + other_E).reshape(orig_shp[1:])
 
     def energy(self, w, t=0.):
         """
@@ -64,12 +73,7 @@ class Hamiltonian(object):
             phase-space position has shape ``w.shape``, the output energy
             will have shape ``w.shape[1:]``.
         """
-
-        if isinstance(w, PhaseSpacePosition):
-            w = w.w(units=self.units) # wtf
-
-        # TODO: figure out units and shit
-        return self._energy(w, t=t).reshape(w.shape[1:]) * self.units['energy'] / self.units['mass']
+        return super(Hamiltonian,self).energy(w, t=t)
 
     def _gradient(self, w, t=0.):
 
@@ -101,11 +105,7 @@ class Hamiltonian(object):
             The gradient of the potential. Will have the same shape as
             the input phase-space position, ``w``.
         """
-
-        if isinstance(w, PhaseSpacePosition):
-            w = w.w(units=self.units) # wtf
-
-        return self._gradient(w, t=t) # TODO: see TODO about units about
+        return super(Hamiltonian,self).gradient(w, t=t)
 
     def _hessian(self, w, t=0.):
         raise NotImplementedError()
@@ -131,9 +131,7 @@ class Hamiltonian(object):
             ``n_dim`` array (matrix) for each position, where the dimensionality of
             phase-space is ``n_dim``.
         """
-        # TODO: strip units from w
-        # w = w...
-        return self._hessian(w, t=t) # TODO: see TODO about units about
+        return super(Hamiltonian,self).hessian(w, t=t)
 
     # ========================================================================
     # Python special methods

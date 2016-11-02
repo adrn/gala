@@ -41,7 +41,7 @@ cdef class CFrameWrapper:
             CFrame cf = self.cframe
         n,ndim = _validate_pos_arr(w)
 
-        cdef double [::1] pot = np.zeros((n,))
+        cdef double [::1] pot = np.zeros(n)
         for i in range(n):
             pot[i] = frame_hamiltonian(&cf, t, &w[i,0])
 
