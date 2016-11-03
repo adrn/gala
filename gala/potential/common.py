@@ -14,7 +14,7 @@ from ..dynamics import PhaseSpacePosition
 from ..util import atleast_2d
 from ..units import UnitSystem, DimensionlessUnitSystem
 
-class PotentialCommonBase(object):
+class CommonBase(object):
 
     def _validate_units(self, units):
 
@@ -56,17 +56,60 @@ class PotentialCommonBase(object):
 
     def energy(self, w, t=0.):
         w = self._remove_units_prepare_shape(w)
-        orig_shape,w = self._get_c_valid_arr(w)
-        return self._energy(w, t=t).T.reshape(orig_shape[1:]) * self.units['energy'] / self.units['mass']
+        return self._energy(w, t=t) * self.units['energy'] / self.units['mass']
 
     def gradient(self, w, t=0.):
+        # TODO: what to do about units here?
         w = self._remove_units_prepare_shape(w)
         return self._gradient(w, t=t) # TODO: what to do about units here?
 
     def hessian(self, w, t=0.):
+        # TODO: what to do about units here?
         w = self._remove_units_prepare_shape(w)
-
         try:
             return self._hessian(w, t=t) # TODO: what to do about units here?
+        except NotImplementedError:
+            raise NotImplementedError("This potential has no specified hessian function.")
+
+class CCommonBase(CommonBase):
+
+    def _energy(self, w, t=0.):
+        """ NOW ONLY ACCEPTS 2D INPUT """
+        return self.c_instance.energy(w, t=t).T
+
+    def _gradient(self, w, t=0.):
+        """ NOW ONLY ACCEPTS 2D INPUT """
+        try:
+            return self.c_instance.gradient(w, t=t).T
+        except (AttributeError,TypeError):
+            raise ValueError("{} instance has no defined gradient function"
+                             .format(self.__class__.__name__))
+
+    def _hessian(self, w, t=0.):
+        """ NOW ONLY ACCEPTS 2D INPUT """
+        try:
+            hess = self.c_instance.hessian(w, t=t)
+            return np.moveaxis(hess, 0, -1)
+        except (AttributeError,TypeError):
+            raise ValueError("{} instance has no defined Hessian function"
+                             .format(self.__class__.__name__))
+
+    def energy(self, w, t=0.):
+        w = self._remove_units_prepare_shape(w)
+        orig_shape,w = self._get_c_valid_arr(w)
+        return self._energy(w, t=t).reshape(orig_shape[1:]) * self.units['energy'] / self.units['mass']
+
+    def gradient(self, w, t=0.):
+        # TODO: what to do about units here?
+        w = self._remove_units_prepare_shape(w)
+        orig_shape,w = self._get_c_valid_arr(w)
+        return self._gradient(w, t=t).reshape(orig_shape)
+
+    def hessian(self, w, t=0.):
+        # TODO: what to do about units here?
+        w = self._remove_units_prepare_shape(w)
+        orig_shape,w = self._get_c_valid_arr(w)
+        try:
+            return self._hessian(w, t=t).reshape((orig_shape[0], orig_shape[0]) + orig_shape[1:])
         except NotImplementedError:
             raise NotImplementedError("This potential has no specified hessian function.")

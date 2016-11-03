@@ -7,7 +7,7 @@ import numpy as np
 import astropy.units as u
 
 # Project
-from ..common import PotentialCommonBase
+from ..common import CCommonBase
 from ..potential import CPotentialBase
 from ..frame import CFrameBase, StaticFrame
 from ...integrate import LeapfrogIntegrator, DOPRI853Integrator
@@ -15,7 +15,7 @@ from ...dynamics import PhaseSpacePosition, CartesianOrbit, CartesianPhaseSpaceP
 
 __all__ = ["Hamiltonian"]
 
-class Hamiltonian(PotentialCommonBase):
+class Hamiltonian(CCommonBase):
     """
     TODO:
     """
@@ -45,67 +45,60 @@ class Hamiltonian(PotentialCommonBase):
         return self.potential.units
 
     def _energy(self, w, t=0.):
-        print(w.shape)
-        print(np.ascontiguousarray(w[:,:self._pot_ndim]).shape)
-        import sys
-        sys.exit(0)
+        pot_E = self.potential._energy(np.ascontiguousarray(w[:,:self._pot_ndim]), t=t)
+        other_E = self.frame._energy(w, t=t)
+        return pot_E + other_E
 
-        # pot_E = self.potential._energy(w[:self._pot_ndim], t=t)
-        # other_E = self.frame._energy(w=w, t=t)
-        # print("sadfasdf", pot_E.shape, other_E.shape, orig_shp[1:])
-        # return (pot_E + other_E).reshape(orig_shp[1:])
+    # def energy(self, w, t=0.):
+    #     """
+    #     Compute the energy (the value of the Hamiltonian) at the given phase-space position(s).
 
-    def energy(self, w, t=0.):
-        """
-        Compute the energy (the value of the Hamiltonian) at the given phase-space position(s).
+    #     Parameters
+    #     ----------
+    #     w : `~gala.dynamics.PhaseSpacePosition`, array_like
+    #         The phase-space position to compute the value of the Hamiltonian.
+    #         If the input object has no units (i.e. is an `~numpy.ndarray`), it
+    #         is assumed to be in the same unit system as the potential class.
 
-        Parameters
-        ----------
-        w : `~gala.dynamics.PhaseSpacePosition`, array_like
-            The phase-space position to compute the value of the Hamiltonian.
-            If the input object has no units (i.e. is an `~numpy.ndarray`), it
-            is assumed to be in the same unit system as the potential class.
-
-        Returns
-        -------
-        H : `~astropy.units.Quantity`
-            Energy per unit mass or value of the Hamiltonian. If the input
-            phase-space position has shape ``w.shape``, the output energy
-            will have shape ``w.shape[1:]``.
-        """
-        return super(Hamiltonian,self).energy(w, t=t)
+    #     Returns
+    #     -------
+    #     H : `~astropy.units.Quantity`
+    #         Energy per unit mass or value of the Hamiltonian. If the input
+    #         phase-space position has shape ``w.shape``, the output energy
+    #         will have shape ``w.shape[1:]``.
+    #     """
+    #     return super(Hamiltonian,self).energy(w, t=t)
 
     def _gradient(self, w, t=0.):
-
-        grad = np.zeros_like(w)
+        grad = np.zeros_like(w.T)
 
         # extra terms from the frame
-        grad += self.frame._gradient(w=w, t=t)
+        grad += self.frame._gradient(w, t=t)
 
         # p_dot = -dH/dq
-        grad[self._pot_ndim:] += -self.potential._gradient(q=w[:self._pot_ndim], t=t)
+        grad[self._pot_ndim:] += -self.potential._gradient(np.ascontiguousarray(w[:,:self._pot_ndim]), t=t)
 
         return grad
 
-    def gradient(self, w, t=0.):
-        """
-        Compute the gradient of the Hamiltonian at the given phase-space position(s).
+    # def gradient(self, w, t=0.):
+    #     """
+    #     Compute the gradient of the Hamiltonian at the given phase-space position(s).
 
-        Parameters
-        ----------
-        w : `~gala.dynamics.PhaseSpacePosition`, array_like
-            The phase-space position to compute the value of the Hamiltonian.
-            If the input object has no units (i.e. is an `~numpy.ndarray`), it
-            is assumed to be in the same unit system as the potential class.
+    #     Parameters
+    #     ----------
+    #     w : `~gala.dynamics.PhaseSpacePosition`, array_like
+    #         The phase-space position to compute the value of the Hamiltonian.
+    #         If the input object has no units (i.e. is an `~numpy.ndarray`), it
+    #         is assumed to be in the same unit system as the potential class.
 
-        Returns
-        -------
-        TODO: this can't return a quantity, because units are different dH/dq vs. dH/dp
-        grad : `~astropy.units.Quantity`
-            The gradient of the potential. Will have the same shape as
-            the input phase-space position, ``w``.
-        """
-        return super(Hamiltonian,self).gradient(w, t=t)
+    #     Returns
+    #     -------
+    #     TODO: this can't return a quantity, because units are different dH/dq vs. dH/dp
+    #     grad : `~astropy.units.Quantity`
+    #         The gradient of the potential. Will have the same shape as
+    #         the input phase-space position, ``w``.
+    #     """
+    #     return super(Hamiltonian,self).gradient(w, t=t)
 
     def _hessian(self, w, t=0.):
         raise NotImplementedError()

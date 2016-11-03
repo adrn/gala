@@ -27,6 +27,7 @@ from libc.stdio cimport printf
 
 # Project
 from .core import PotentialBase, CompositePotential
+from ..common import CCommonBase
 from ...util import atleast_2d
 from ...units import DimensionlessUnitSystem
 
@@ -198,7 +199,9 @@ cdef class CPotentialWrapper:
 
 # ----------------------------------------------------------------------------
 
-class CPotentialBase(PotentialBase):
+# TODO: docstrings are now fucked for energy, gradient, etc.
+
+class CPotentialBase(CCommonBase, PotentialBase):
     """
     A baseclass for defining gravitational potentials implemented in C.
     """
@@ -217,11 +220,6 @@ class CPotentialBase(PotentialBase):
 
         self.c_instance = Wrapper(self.G, self.c_parameters)
 
-    # FUCK: shape issues or repeating calling get_c_valid_arr.........wat do?
-    def _energy(self, q, t=0.):
-        orig_shp,q = self._get_c_valid_arr(q)
-        return self.c_instance.energy(q, t=t).T.reshape(orig_shp[1:])
-
     def _value(self, *args, **kwargs):
         warnings.warn("Use `energy()` instead.", DeprecationWarning)
         return self._energy(*args, **kwargs)
@@ -229,29 +227,12 @@ class CPotentialBase(PotentialBase):
     def _density(self, q, t=0.):
         orig_shp,q = self._get_c_valid_arr(q)
         try:
-            return self.c_instance.density(q, t=t).reshape(orig_shp[1:])
+            return self.c_instance.density(q, t=t).T
         except AttributeError,TypeError:
             # TODO: if no density function, should this numerically esimate
             #   the density?
             raise ValueError("Potential C instance has no defined "
                              "density function")
-
-    def _gradient(self, q, t=0.):
-        orig_shp,q = self._get_c_valid_arr(q)
-        try:
-            return self.c_instance.gradient(q, t=t).T.reshape(orig_shp)
-        except AttributeError,TypeError:
-            raise ValueError("Potential C instance has no defined "
-                             "gradient function")
-
-    def _hessian(self, q, t=0.):
-        orig_shp,q = self._get_c_valid_arr(q)
-        try:
-            hess = self.c_instance.hessian(q, t=t)
-            return np.moveaxis(hess, 0, -1).reshape((orig_shp[0], orig_shp[0]) + orig_shp[1:])
-        except AttributeError,TypeError:
-            raise ValueError("Potential C instance has no defined "
-                             "Hessian function")
 
     # ----------------------------------------------------------
     # Overwrite the Python potential method to use Cython method

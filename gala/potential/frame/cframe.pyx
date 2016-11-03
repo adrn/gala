@@ -12,7 +12,7 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-from ..common import PotentialCommonBase
+from ..common import CCommonBase
 from ..potential.cpotential import _validate_pos_arr
 from ...dynamics import CartesianPhaseSpacePosition
 
@@ -79,27 +79,11 @@ cdef class CFrameWrapper:
         return np.array(d2H)
 
 # TODO: make sure this doesn't appear in docs - Frames are really only used internally
-class CFrameBase(PotentialCommonBase):
+class CFrameBase(CCommonBase):
 
     def __init__(self, Wrapper, parameters, units):
         self.units = self._validate_units(units)
         self.parameters = self._prepare_parameters(parameters, self.units)
         self.c_parameters = np.array(list(self.parameters.values()))
         self.c_instance = Wrapper(*self.c_parameters)
-
-    def _energy(self, w, t=0.):
-        orig_shp = w.shape
-        w = np.ascontiguousarray(w.reshape(orig_shp[0], -1).T)
-        return self.c_instance.energy(w, t=t).reshape(orig_shp[1:])
-
-    def _gradient(self, w, t=0.):
-        orig_shp = w.shape
-        w = np.ascontiguousarray(w.reshape(orig_shp[0], -1).T)
-        return self.c_instance.gradient(w, t=t).T.reshape(orig_shp)
-
-    def _hessian(self, w, t=0.):
-        orig_shp = w.shape
-        w = np.ascontiguousarray(w.reshape(orig_shp[0], -1).T)
-        hess = self.c_instance.hessian(w, t=t)
-        return np.moveaxis(hess, 0, -1).reshape((orig_shp[0], orig_shp[0]) + orig_shp[1:])
 

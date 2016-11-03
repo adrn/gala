@@ -15,13 +15,13 @@ import astropy.units as u
 from astropy.utils import isiterable
 
 # Project
-from ..common import PotentialCommonBase
+from ..common import CommonBase
 from ...util import ImmutableDict, atleast_2d
 from ...units import DimensionlessUnitSystem
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
-class PotentialBase(PotentialCommonBase):
+class PotentialBase(CommonBase):
     """
     A baseclass for defining pure-Python gravitational potentials.
 
