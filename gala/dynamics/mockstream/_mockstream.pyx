@@ -12,6 +12,9 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
+# Standard library
+import warnings
+
 # Third-party
 import numpy as np
 cimport numpy as np
@@ -97,6 +100,9 @@ cpdef _mock_stream_dop853(CPotentialWrapper cp, double[::1] t, double[:,::1] pro
     nmax : int (optional)
         Passed to the integrator.
     """
+
+    np.random.seed(42)
+
     cdef:
         int i, j, k # indexing
         int res # result from calling dop853
@@ -445,3 +451,244 @@ cpdef _mock_stream_leapfrog(CPotentialWrapper cp, double[::1] t, double[:,::1] p
         PyErr_CheckSignals()
 
     return np.asarray(w).reshape(nparticles, ndim)
+
+cpdef _mock_stream_animate(snapshot_filename, CPotentialWrapper cp,
+                           double[::1] t, double[:,::1] prog_w,
+                           int release_every,
+                           _k_mean, _k_disp,
+                           double G, _prog_mass,
+                           double atol=1E-10, double rtol=1E-10, int nmax=0,
+                           int check_filesize=1):
+    """
+    _mock_stream_animate(cpotential, t, prog_w, release_every, k_mean, k_disp, G, prog_mass, atol, rtol, nmax)
+
+    WARNING: only use this if you want to make an animation of a stream forming!
+
+    Parameters
+    ----------
+    snapshot_filename : str
+        The filename of the HDF5 snapshot file to write.
+    cpotential : `gala.potential._CPotential`
+        An instance of a ``_CPotential`` representing the gravitational potential.
+    t : `numpy.ndarray`
+        An array of times. Should have shape ``(ntimesteps,)``.
+    prog_w : `numpy.ndarray`
+        The 6D coordinates for the orbit of the progenitor system at all times.
+        Should have shape ``(ntimesteps,6)``.
+    release_every : int
+        Release particles at the Lagrange points every X timesteps.
+    k_mean : `numpy.ndarray`
+        Array of mean ``k`` values (see Fardal et al. 2015). These are used to determine
+        the exact prescription for generating the mock stream. The components are for:
+        ``(R,phi,z,vR,vphi,vz)``. If 1D, assumed constant in time. If 2D, time axis is axis 0.
+    k_disp : `numpy.ndarray`
+        Array of ``k`` value dispersions (see Fardal et al. 2015). These are used to determine
+        the exact prescription for generating the mock stream. The components are for:
+        ``(R,phi,z,vR,vphi,vz)``. If 1D, assumed constant in time. If 2D, time axis is axis 0.
+    G : numeric
+        The value of the gravitational constant, G, in the unit system used.
+    prog_mass : float or `numpy.ndarray`
+        The mass of the progenitor or the mass at each time. Should be a scalar or have
+        shape ``(ntimesteps,)``.
+    atol : numeric (optional)
+        Passed to the integrator. Absolute tolerance parameter. Default is 1E-10.
+    rtol : numeric (optional)
+        Passed to the integrator. Relative tolerance parameter. Default is 1E-10.
+    nmax : int (optional)
+        Passed to the integrator.
+    check_filesize : bool (optional)
+        Check the output filesize and warn the user if it is larger than
+        10GB. Default = True.
+    """
+
+    np.random.seed(42)
+
+    import h5py
+
+    cdef:
+        int i, j, k # indexing
+        int res # result from calling dop853
+        int ntimes = t.shape[0] # number of times
+        int nparticles # total number of test particles released
+
+        unsigned ndim = prog_w.shape[1] # phase-space dimensionality
+        unsigned ndim_2 = ndim / 2 # configuration-space dimensionality
+
+        double dt0 = t[1] - t[0] # initial timestep
+
+        double[::1] w_prime = np.zeros(6) # 6-position of stripped star
+        double[::1] cyl = np.zeros(6) # 6-position in cylindrical coords
+        double[::1] prog_w_prime = np.zeros(6) # 6-position of progenitor rotated
+        double[::1] prog_cyl = np.zeros(6) # 6-position of progenitor in cylindrical coords
+
+        # k-factors for parametrized model of Fardal et al. (2015)
+        double[::1] ks = np.zeros(6)
+
+        # used for figuring out how many orbits to integrate at any given release time
+        unsigned this_ndim, this_norbits
+
+        double Om # angular velocity squared
+        double d, sigma_r # distance, dispersion in release positions
+        double r_tide, menc, f # tidal radius, mass enclosed, f factor
+
+        double[::1] eps = np.zeros(3) # used for 2nd derivative estimation
+        double[:,::1] R = np.zeros((3,3)) # rotation matrix
+
+        double[::1] prog_mass = np.ascontiguousarray(np.atleast_1d(_prog_mass))
+        double[:,::1] k_mean = np.ascontiguousarray(np.atleast_2d(_k_mean))
+        double[:,::1] k_disp = np.ascontiguousarray(np.atleast_2d(_k_disp))
+        double[::1] mu_k
+        double[::1] sigma_k
+
+        double t_j
+
+    # figure out how many particles are going to be released into the "stream"
+    if ntimes % release_every == 0:
+        nparticles = 2 * (ntimes // release_every)
+    else:
+        nparticles = 2 * (ntimes // release_every + 1)
+
+    # estimate size of output file and warn user if it's large
+    if check_filesize:
+        est_filesize_GB = nparticles * ntimes / 2 * 8 / 1024 / 1024 / 1024
+        if est_filesize_GB >= 10.:
+            warnings.warn("gala.dynamics.mockstream: Estimated output "
+                          "filesize is >= 10 GB!")
+
+    # container for only current positions of all particles
+    cdef double[::1] w = np.empty(nparticles*ndim)
+    cdef double[:,::1] one_particle_w = np.empty((ntimes,ndim))
+
+    # beginning times for each particle
+    cdef double[::1] t1 = np.empty(nparticles)
+    cdef int[::1] all_ntimes = np.zeros(nparticles, dtype=np.int32)
+    cdef double t_end = t[ntimes-1]
+
+    # -------
+
+    # copy over initial conditions from progenitor orbit to each streakline star
+    i = 0
+    for j in range(ntimes):
+        if (j % release_every) != 0:
+            continue
+
+        for k in range(ndim):
+            w[2*i*ndim + k] = prog_w[j,k]
+            w[2*i*ndim + k + ndim] = prog_w[j,k]
+
+        i += 1
+
+    # now go back to each set of initial conditions and modify initial condition
+    #   based on mock prescription
+    i = 0
+    for j in range(ntimes):
+        if (j % release_every) != 0:
+            continue
+
+        t1[2*i] = t[j]
+        t1[2*i+1] = t[j]
+        all_ntimes[2*i] = ntimes - j
+        all_ntimes[2*i+1] = ntimes - j
+
+        if prog_mass.shape[0] == 1:
+            M = prog_mass[0]
+        else:
+            M = prog_mass[j]
+
+        if k_mean.shape[0] == 1:
+            mu_k = k_mean[0]
+            sigma_k = k_disp[0]
+        else:
+            mu_k = k_mean[j]
+            sigma_k = k_disp[j]
+
+        # angular velocity
+        d = sqrt(prog_w[j,0]*prog_w[j,0] +
+                 prog_w[j,1]*prog_w[j,1] +
+                 prog_w[j,2]*prog_w[j,2])
+        Om = np.linalg.norm(np.cross(prog_w[j,:3], prog_w[j,3:]) / d**2)
+
+        # gradient of potential in radial direction
+        f = Om*Om - c_d2_dr2(&(cp.cpotential), t[j], &prog_w[j,0], &eps[0])
+        r_tide = (G*M / f)**(1/3.)
+
+        # the rotation matrix to transform from satellite coords to normal
+        sat_rotation_matrix(&prog_w[j,0], &R[0,0])
+        to_sat_coords(&prog_w[j,0], &R[0,0], &prog_w_prime[0])
+        car_to_cyl(&prog_w_prime[0], &prog_cyl[0])
+
+        for k in range(6):
+            if sigma_k[k] > 0:
+                ks[k] = np.random.normal(mu_k[k], sigma_k[k])
+            else:
+                ks[k] = mu_k[k]
+
+        # eject stars at tidal radius with same angular velocity as progenitor
+        cyl[0] = prog_cyl[0] + ks[0]*r_tide
+        cyl[1] = prog_cyl[1] + ks[1]*r_tide/prog_cyl[0]
+        cyl[2] = ks[2]*r_tide/prog_cyl[0]
+        cyl[3] = prog_cyl[3] + ks[3]*prog_cyl[3]
+        cyl[4] = prog_cyl[4] + ks[0]*ks[4]*Om*r_tide
+        cyl[5] = ks[5]*Om*r_tide
+        cyl_to_car(&cyl[0], &w_prime[0])
+        from_sat_coords(&w_prime[0], &R[0,0], &w[2*i*ndim])
+
+        for k in range(6):
+            if sigma_k[k] > 0:
+                ks[k] = np.random.normal(mu_k[k], sigma_k[k])
+            else:
+                ks[k] = mu_k[k]
+
+        cyl[0] = prog_cyl[0] - ks[0]*r_tide
+        cyl[1] = prog_cyl[1] - ks[1]*r_tide/prog_cyl[0]
+        cyl[2] = ks[2]*r_tide/prog_cyl[0]
+        cyl[3] = prog_cyl[3] + ks[3]*prog_cyl[3]
+        cyl[4] = prog_cyl[4] - ks[0]*ks[4]*Om*r_tide
+        cyl[5] = ks[5]*Om*r_tide
+        cyl_to_car(&cyl[0], &w_prime[0])
+        from_sat_coords(&w_prime[0], &R[0,0], &w[2*i*ndim + ndim])
+
+        i += 1
+
+    # create the output file
+    with h5py.File(str(snapshot_filename), 'w') as h5f:
+        h5f.create_dataset('pos', dtype='f8', shape=(ndim_2, ntimes, nparticles),
+                           fillvalue=np.nan, compression='gzip', compression_opts=9)
+        h5f.create_dataset('vel', dtype='f8', shape=(ndim_2, ntimes, nparticles),
+                           fillvalue=np.nan, compression='gzip', compression_opts=9)
+        h5f.create_dataset('t', data=np.array(t))
+
+    for i in range(nparticles):
+        t_j = t1[i]
+
+        for k in range(ndim):
+            one_particle_w[0,k] = w[i*ndim + k]
+
+        for j in range(1,all_ntimes[i]+1,1):
+
+            res = dop853(ndim, <FcnEqDiff> Fwrapper,
+                         &(cp.cpotential), 1,
+                         t_j, &w[i*ndim], t_j+dt0, &rtol, &atol, 0, NULL, 0,
+                         NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0);
+
+            if res == -1:
+                raise RuntimeError("Input is not consistent.")
+            elif res == -2:
+                raise RuntimeError("Larger nmax is needed.")
+            elif res == -3:
+                raise RuntimeError("Step size becomes too small.")
+            elif res == -4:
+                raise RuntimeError("The problem is probably stff (interrupted).")
+
+            PyErr_CheckSignals()
+
+            for k in range(ndim):
+                one_particle_w[j,k] = w[i*ndim + k]
+
+            t_j = t_j+dt0
+
+        with h5py.File(str(snapshot_filename), 'a') as h5f:
+            j = ntimes - all_ntimes[i]
+            h5f['pos'][:,j:,i] = np.array(one_particle_w[:all_ntimes[i], :ndim_2]).T
+            h5f['vel'][:,j:,i] = np.array(one_particle_w[:all_ntimes[i], ndim_2:]).T
+
