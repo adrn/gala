@@ -6,6 +6,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 import warnings
+import os
 
 # Third-party
 import numpy as np
@@ -14,12 +15,13 @@ import numpy as np
 from .. import CartesianPhaseSpacePosition, Orbit
 from ...potential import Hamiltonian, CPotentialBase
 from ...integrate import DOPRI853Integrator, LeapfrogIntegrator
-from ._mockstream import _mock_stream_dop853, _mock_stream_leapfrog
+from ._mockstream import _mock_stream_dop853, _mock_stream_leapfrog, _mock_stream_animate
 
 __all__ = ['mock_stream', 'streakline_stream', 'fardal_stream', 'dissolved_fardal_stream']
 
 def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
-                release_every=1, Integrator=DOPRI853Integrator, Integrator_kwargs=dict()):
+                release_every=1, Integrator=DOPRI853Integrator, Integrator_kwargs=dict(),
+                snapshot_filename=None):
     """
     Generate a mock stellar stream in the specified potential with a
     progenitor system that ends up at the specified position.
@@ -77,6 +79,9 @@ def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
     if not isinstance(prog_orbit, Orbit):
         raise ValueError("Progenitor orbit must be an Orbit subclass.")
 
+    if save_snapshots and Integrator != DOPRI853Integrator:
+        raise ValueError("If saving snapshots, must use the DOP853Integrator.")
+
     k_mean = np.atleast_1d(k_mean)
     k_disp = np.atleast_1d(k_disp)
 
@@ -107,12 +112,33 @@ def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
                                          **Integrator_kwargs)
 
     elif Integrator == DOPRI853Integrator:
-        stream_w = _mock_stream_dop853(hamiltonian, t=prog_t, prog_w=prog_w,
-                                       release_every=release_every,
-                                       _k_mean=k_mean, _k_disp=k_disp,
-                                       G=hamiltonian.potential.G,
-                                       _prog_mass=prog_mass,
-                                       **Integrator_kwargs)
+        if snapshot_filename is not None:
+            if os.path.exists(snapshot_filename):
+                raise IOError("Mockstream save file '{}' already exists.")
+
+            import h5py
+
+            _mock_stream_animate(snapshot_filename, hamiltonian, t=prog_t, prog_w=prog_w,
+                                 release_every=release_every,
+                                 _k_mean=k_mean, _k_disp=k_disp,
+                                 G=hamiltonian.potential.G,
+                                 _prog_mass=prog_mass,
+                                 **Integrator_kwargs)
+
+            with h5py.File(str(snapshot_filename), 'a') as h5f:
+                h5f['pos'].attrs['unit'] = str(hamiltonian.units['length'])
+                h5f['vel'].attrs['unit'] = str(hamiltonian.units['length']/hamiltonian.units['time'])
+                h5f['t'].attrs['unit'] = str(hamiltonian.units['time'])
+
+            return None
+
+        else:
+            stream_w = _mock_stream_dop853(hamiltonian, t=prog_t, prog_w=prog_w,
+                                           release_every=release_every,
+                                           _k_mean=k_mean, _k_disp=k_disp,
+                                           G=hamiltonian.potential.G,
+                                           _prog_mass=prog_mass,
+                                           **Integrator_kwargs)
 
     else:
         raise RuntimeError("Should never get here...")
@@ -120,7 +146,8 @@ def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
     return CartesianPhaseSpacePosition.from_w(w=stream_w.T, units=hamiltonian.units)
 
 def streakline_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
-                      Integrator=DOPRI853Integrator, Integrator_kwargs=dict()):
+                      Integrator=DOPRI853Integrator, Integrator_kwargs=dict(),
+                      snapshot_filename=None):
     """
     Generate a mock stellar stream in the specified potential with a
     progenitor system that ends up at the specified position.
@@ -171,10 +198,12 @@ def streakline_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
 
     return mock_stream(hamiltonian=hamiltonian, prog_orbit=prog_orbit, prog_mass=prog_mass,
                        k_mean=k_mean, k_disp=k_disp, release_every=release_every,
-                       Integrator=Integrator, Integrator_kwargs=Integrator_kwargs)
+                       Integrator=Integrator, Integrator_kwargs=Integrator_kwargs,
+                       snapshot_filename=snapshot_filename)
 
 def fardal_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
-                  Integrator=DOPRI853Integrator, Integrator_kwargs=dict()):
+                  Integrator=DOPRI853Integrator, Integrator_kwargs=dict(),
+                  snapshot_filename=None):
     """
     Generate a mock stellar stream in the specified potential with a
     progenitor system that ends up at the specified position.
@@ -225,10 +254,12 @@ def fardal_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
 
     return mock_stream(hamiltonian=hamiltonian, prog_orbit=prog_orbit, prog_mass=prog_mass,
                        k_mean=k_mean, k_disp=k_disp, release_every=release_every,
-                       Integrator=Integrator, Integrator_kwargs=Integrator_kwargs)
+                       Integrator=Integrator, Integrator_kwargs=Integrator_kwargs,
+                       snapshot_filename=snapshot_filename)
 
-def dissolved_fardal_stream(hamiltonian, prog_orbit, prog_mass, t_disrupt,
-                            release_every=1, Integrator=DOPRI853Integrator, Integrator_kwargs=dict()):
+def dissolved_fardal_stream(hamiltonian, prog_orbit, prog_mass, t_disrupt, release_every=1,
+                            Integrator=DOPRI853Integrator, Integrator_kwargs=dict(),
+                            snapshot_filename=None):
     """
     Generate a mock stellar stream in the specified potential with a
     progenitor system that ends up at the specified position.
@@ -289,4 +320,5 @@ def dissolved_fardal_stream(hamiltonian, prog_orbit, prog_mass, t_disrupt,
 
     return mock_stream(hamiltonian=hamiltonian, prog_orbit=prog_orbit, prog_mass=prog_mass,
                        k_mean=k_mean, k_disp=k_disp, release_every=release_every,
-                       Integrator=Integrator, Integrator_kwargs=Integrator_kwargs)
+                       Integrator=Integrator, Integrator_kwargs=Integrator_kwargs,
+                       snapshot_filename=snapshot_filename)
