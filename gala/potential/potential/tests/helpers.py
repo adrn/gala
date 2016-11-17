@@ -16,8 +16,8 @@ from astropy.extern.six.moves import cPickle as pickle
 
 # Project
 from ..io import load
-from ...units import UnitSystem, DimensionlessUnitSystem
-from ...dynamics import CartesianPhaseSpacePosition
+from ....units import UnitSystem, DimensionlessUnitSystem
+from ....dynamics import CartesianPhaseSpacePosition
 
 def partial_derivative(func, point, dim_ix=0, **kwargs):
     xyz = np.array(point)
@@ -102,7 +102,7 @@ class PotentialTestBase(object):
         # f.savefig(os.path.join(plot_path, "contour_x.png"))
         if self.show_plots:
             plt.show()
-        plt.close(f)
+            plt.close(f)
 
         f = p.plot_contours(grid=(np.linspace(-10., 10., 100),
                                   np.linspace(-10., 10., 100),
@@ -111,7 +111,7 @@ class PotentialTestBase(object):
         # f.savefig(os.path.join(plot_path, "contour_xy.png"))
         if self.show_plots:
             plt.show()
-        plt.close(f)
+            plt.close(f)
 
         f = p.plot_contours(grid=(np.linspace(-10., 10., 100),
                                   1.,
@@ -120,7 +120,7 @@ class PotentialTestBase(object):
         # f.savefig(os.path.join(plot_path, "contour_xz.png"))
         if self.show_plots:
             plt.show()
-        plt.close(f)
+            plt.close(f)
 
     def test_save_load(self, tmpdir):
         """

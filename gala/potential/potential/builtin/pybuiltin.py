@@ -34,7 +34,7 @@ class HarmonicOscillatorPotential(PotentialBase):
 
     def __init__(self, omega, units=None):
         parameters = OrderedDict()
-        parameters['omega'] = np.array(omega)
+        parameters['omega'] = np.atleast_1d(omega)
         super(HarmonicOscillatorPotential, self).__init__(units=units,
                                                           parameters=parameters,
                                                           ndim=len(parameters['omega']))

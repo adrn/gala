@@ -206,10 +206,11 @@ class CPotentialBase(CCommonBase, PotentialBase):
     A baseclass for defining gravitational potentials implemented in C.
     """
 
-    def __init__(self, parameters, units, Wrapper=None):
-        super(CPotentialBase, self).__init__(parameters, units=units)
+    def __init__(self, parameters, units, ndim=3, Wrapper=None):
+        super(CPotentialBase, self).__init__(parameters, units=units,
+                                             ndim=ndim)
 
-        self.c_parameters = np.array(list(self.parameters.values()))
+        self.c_parameters = np.array([v.value for v in self.parameters.values()])
 
         if Wrapper is None:
             # magic to set the c_instance attribute based on the name of the class
@@ -233,6 +234,26 @@ class CPotentialBase(CCommonBase, PotentialBase):
             #   the density?
             raise ValueError("Potential C instance has no defined "
                              "density function")
+
+    def gradient(self, q, t=0.):
+        """
+        Compute the gradient of the potential at the given position(s).
+
+        Parameters
+        ----------
+        q : `~astropy.units.Quantity`, array_like
+            The position to compute the value of the potential. If the
+            input position object has no units (i.e. is an `~numpy.ndarray`),
+            it is assumed to be in the same unit system as the potential.
+
+        Returns
+        -------
+        grad : `~astropy.units.Quantity`
+            The gradient of the potential. Will have the same shape as
+            the input position array, ``q``.
+        """
+        uu = self.units['length'] / self.units['time']**2
+        return super(CPotentialBase,self).gradient(q, t=t) * uu
 
     # ----------------------------------------------------------
     # Overwrite the Python potential method to use Cython method

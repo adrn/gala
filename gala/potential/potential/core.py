@@ -96,7 +96,8 @@ class PotentialBase(CommonBase):
             The gradient of the potential. Will have the same shape as
             the input position array, ``q``.
         """
-        return super(PotentialBase,self).gradient(q, t=t)
+        uu = self.units['length'] / self.units['time']**2
+        return super(PotentialBase,self).gradient(q, t=t) * uu
 
     def _density(self, q, t=0.):
         raise NotImplementedError()
