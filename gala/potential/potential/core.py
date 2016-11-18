@@ -5,6 +5,7 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
+import abc
 from collections import OrderedDict
 import warnings
 
@@ -13,14 +14,17 @@ import numpy as np
 from astropy.constants import G
 import astropy.units as u
 from astropy.utils import isiterable
+import six
 
 # Project
 from ..common import CommonBase
+from ...dynamics import PhaseSpacePosition
 from ...util import ImmutableDict, atleast_2d
 from ...units import DimensionlessUnitSystem
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
+@six.add_metaclass(abc.ABCMeta)
 class PotentialBase(CommonBase):
     """
     A baseclass for defining pure-Python gravitational potentials.
@@ -44,16 +48,51 @@ class PotentialBase(CommonBase):
 
         self.ndim = ndim
 
+    # ========================================================================
+    # Abstract methods that must be implemented by subclasses
+    #
+    @abc.abstractmethod
     def _energy(self, q, t=0.):
-        raise NotImplementedError()
+        pass
 
+    @abc.abstractmethod
+    def _gradient(self, q, t=0.):
+        pass
+
+    @abc.abstractmethod
+    def _density(self, q, t=0.):
+        pass
+
+    def _hessian(self, q, t=0.):
+        raise NotImplementedError("This Potential has no implemented Hessian.")
+
+    # ========================================================================
+    # Utility methods
+    #
+    def _remove_units_prepare_shape(self, x):
+        """
+        This is similar to that implemented by `gala.potential.common.CommonBase`,
+        but returns just the position if the input is a `PhaseSpacePosition`.
+        """
+        if hasattr(x, 'unit'):
+            x = x.decompose(self.units).value
+
+        elif isinstance(x, PhaseSpacePosition):
+            x = x.pos.decompose(self.units).value
+
+        x = atleast_2d(x, insert_axis=1).astype(np.float64)
+        return x
+
+    # ========================================================================
+    # Core methods that use the above implemented functions
+    #
     def energy(self, q, t=0.):
         """
         Compute the potential energy at the given position(s).
 
         Parameters
         ----------
-        q : `~astropy.units.Quantity`, array_like
+        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
             The position to compute the value of the potential. If the
             input position object has no units (i.e. is an `~numpy.ndarray`),
             it is assumed to be in the same unit system as the potential.
@@ -62,22 +101,11 @@ class PotentialBase(CommonBase):
         -------
         E : `~astropy.units.Quantity`
             The potential energy per unit mass or value of the potential.
-            If the input position has shape ``q.shape``, the output energy
-            will have shape ``q.shape[1:]``.
         """
-        return super(PotentialBase,self).energy(q, t=t)
-
-    def _value(self, q, t=0.):
-        warnings.warn("Use `_energy()` instead.", DeprecationWarning)
-        return self._energy(q, t=t)
-
-    def value(self, *args, **kwargs):
-        __doc__ = self.energy.__doc__
-        warnings.warn("Use `energy()` instead.", DeprecationWarning)
-        return self.energy(*args, **kwargs)
-
-    def _gradient(self, q, t=0.):
-        raise NotImplementedError()
+        q = self._remove_units_prepare_shape(q)
+        orig_shape,q = self._get_c_valid_arr(q)
+        ret_unit = self.units['energy'] / self.units['mass']
+        return self._energy(q, t=t).T.reshape(orig_shape[1:]) * ret_unit
 
     def gradient(self, q, t=0.):
         """
@@ -85,7 +113,7 @@ class PotentialBase(CommonBase):
 
         Parameters
         ----------
-        q : `~astropy.units.Quantity`, array_like
+        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
             The position to compute the value of the potential. If the
             input position object has no units (i.e. is an `~numpy.ndarray`),
             it is assumed to be in the same unit system as the potential.
@@ -94,13 +122,12 @@ class PotentialBase(CommonBase):
         -------
         grad : `~astropy.units.Quantity`
             The gradient of the potential. Will have the same shape as
-            the input position array, ``q``.
+            the input position.
         """
-        uu = self.units['length'] / self.units['time']**2
-        return super(PotentialBase,self).gradient(q, t=t) * uu
-
-    def _density(self, q, t=0.):
-        raise NotImplementedError()
+        q = self._remove_units_prepare_shape(q)
+        orig_shape,q = self._get_c_valid_arr(q)
+        ret_unit = self.units['length'] / self.units['time']**2
+        return (self._gradient(q, t=t).T.reshape(orig_shape) * ret_unit).to(self.units['acceleration'])
 
     def density(self, q, t=0.):
         """
@@ -108,7 +135,7 @@ class PotentialBase(CommonBase):
 
         Parameters
         ----------
-        q : `~astropy.units.Quantity`, array_like
+        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
             The position to compute the value of the potential. If the
             input position object has no units (i.e. is an `~numpy.ndarray`),
             it is assumed to be in the same unit system as the potential.
@@ -121,14 +148,9 @@ class PotentialBase(CommonBase):
             shape ``q.shape[1:]``.
         """
         q = self._remove_units_prepare_shape(q)
-
-        try:
-            return self._density(q, t=t) * self.units['mass density']
-        except NotImplementedError:
-            raise NotImplementedError("This potential has no specified density function.")
-
-    def _hessian(self, q, t=0.):
-        raise NotImplementedError()
+        orig_shape,q = self._get_c_valid_arr(q)
+        ret_unit = self.units['mass'] / self.units['length']**3
+        return (self._density(q, t=t).T * ret_unit).to(self.units['mass density'])
 
     def hessian(self, q, t=0.):
         """
@@ -136,7 +158,7 @@ class PotentialBase(CommonBase):
 
         Parameters
         ----------
-        q : `~astropy.units.Quantity`, array_like
+        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
             The position to compute the value of the potential. If the
             input position object has no units (i.e. is an `~numpy.ndarray`),
             it is assumed to be in the same unit system as the potential.
@@ -149,24 +171,27 @@ class PotentialBase(CommonBase):
             ``(q.shape[0],q.shape[0]) + q.shape[1:]``. That is, an ``n_dim`` by
             ``n_dim`` array (matrix) for each position.
         """
-        return super(PotentialBase,self).hessian(q, t=t)
+        q = self._remove_units_prepare_shape(q)
+        orig_shape,q = self._get_c_valid_arr(q)
+        ret_unit = 1 / self.units['time']**2
+        hess = np.moveaxis(self._hessian(q, t=t), 0, -1)
+        return hess.reshape((orig_shape[0], orig_shape[0]) + orig_shape[1:]) * ret_unit
 
     # ========================================================================
-    # Things that use the base methods
+    # Convenience methods that make use the base methods
     #
     def acceleration(self, q, t=0.):
         """
-        Compute the acceleration due to the potential at the given
-        position(s).
+        Compute the acceleration due to the potential at the given position(s).
 
         Parameters
         ----------
-        q : array_like, numeric
+        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
             Position to compute the acceleration at.
 
         Returns
         -------
-        acc : `~numpy.ndarray`
+        acc : `~astropy.units.Quantity`
             The acceleration. Will have the same shape as the input
             position array, ``q``.
         """
@@ -179,8 +204,8 @@ class PotentialBase(CommonBase):
 
         Parameters
         ----------
-        q : array_like, numeric
-            Position to estimate the enclossed mass.
+        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
+            Position(s) to estimate the enclossed mass.
 
         Returns
         -------
@@ -190,14 +215,15 @@ class PotentialBase(CommonBase):
             ``q.shape[1:]``.
         """
         q = self._remove_units_prepare_shape(q)
+        orig_shape,q = self._get_c_valid_arr(q)
 
         # small step-size in direction of q
         h = 1E-3 # MAGIC NUMBER
 
         # Radius
-        r = np.sqrt(np.sum(q**2, axis=0))
+        r = np.sqrt(np.sum(q**2, axis=1))
 
-        epsilon = h*q/r[np.newaxis]
+        epsilon = h*q/r[:,np.newaxis]
 
         dPhi_dr_plus = self._energy(q + epsilon, t=t)
         dPhi_dr_minus = self._energy(q - epsilon, t=t)
@@ -208,7 +234,7 @@ class PotentialBase(CommonBase):
         else:
             Gee = G.decompose(self.units).value
 
-        return np.abs(r*r * diff / Gee / (2.*h)) * self.units['mass']
+        return np.abs(r*r * diff / Gee / (2.*h)). * self.units['mass']
 
     def circular_velocity(self, q, t=0.):
         """
@@ -559,6 +585,18 @@ class PotentialBase(CommonBase):
         from .io import save
         save(self, f)
 
+    # ========================================================================
+    # Deprecated methods
+    #
+    def _value(self, q, t=0.):
+        warnings.warn("Use `_energy()` instead.", DeprecationWarning)
+        return self._energy(q, t=t)
+
+    def value(self, *args, **kwargs):
+        __doc__ = self.energy.__doc__
+        warnings.warn("Use `energy()` instead.", DeprecationWarning)
+        return self.energy(*args, **kwargs)
+
 class CompositePotential(PotentialBase, OrderedDict):
     """
     A potential composed of several distinct components. For example,
@@ -588,6 +626,7 @@ class CompositePotential(PotentialBase, OrderedDict):
     """
     def __init__(self, *args, **kwargs):
         self._units = None
+        self.ndim = None
 
         if len(args) > 0 and isinstance(args[0], list):
             for k,v in args[0]:
@@ -613,11 +652,16 @@ class CompositePotential(PotentialBase, OrderedDict):
 
         if self.units is None:
             self._units = p.units
+            self.ndim = p.ndim
 
         else:
             if sorted([str(x) for x in self.units]) != sorted([str(x) for x in p.units]):
                 raise ValueError("Unit system of new potential component must match "
                                  "unit systems of other potential components.")
+
+            if p.ndim != self.ndim:
+                raise ValueError("All potential components must have the same number of "
+                                 "phase-space dimensions ({} in this case)".format(self.ndim))
 
         if self.lock:
             raise ValueError("Potential object is locked - new components can only be"
@@ -634,20 +678,23 @@ class CompositePotential(PotentialBase, OrderedDict):
             params[k] = v.parameters
         return ImmutableDict(**params)
 
-    def _value(self, q, t=0.):
-        return sum([p._value(q, t) for p in self.values()])
-
     def _energy(self, q, t=0.):
-        return sum([p._energy(q, t) for p in self.values()])
+        for p in self.values():
+            print(q.shape, p._energy(q, t).shape)
+        return np.sum([p._energy(q, t) for p in self.values()], axis=0)
+        # return sum([p._energy(q, t) for p in self.values()])
+
+    def _value(self, q, t=0.):
+        return self._energy(q, t=t)
 
     def _gradient(self, q, t=0.):
-        return sum([p._gradient(q, t) for p in self.values()])
+        return np.sum([p._gradient(q, t) for p in self.values()], axis=0)
 
     def _hessian(self, w, t=0.):
-        return sum([p._hessian(w, t) for p in self.values()])
+        return np.sum([p._hessian(w, t) for p in self.values()], axis=0)
 
     def _density(self, q, t=0.):
-        return sum([p._density(q, t) for p in self.values()])
+        return np.sum([p._density(q, t) for p in self.values()], axis=0)
 
     def __repr__(self):
         return "<CompositePotential {}>".format(",".join(self.keys()))

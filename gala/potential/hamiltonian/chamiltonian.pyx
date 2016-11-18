@@ -70,13 +70,15 @@ class Hamiltonian(CCommonBase):
     #     return super(Hamiltonian,self).energy(w, t=t)
 
     def _gradient(self, w, t=0.):
-        grad = np.zeros_like(w.T)
+        grad = np.zeros_like(w)
 
         # extra terms from the frame
-        grad += self.frame._gradient(w, t=t)
+        grad += self.frame.gradient(w, t=t)
 
         # p_dot = -dH/dq
-        grad[self._pot_ndim:] += -self.potential._gradient(np.ascontiguousarray(w[:,:self._pot_ndim]), t=t)
+        # print(w.shape)
+        # print(np.ascontiguousarray(w[:,:self._pot_ndim]).shape)
+        grad[self._pot_ndim:] += -self.potential.gradient(w[:self._pot_ndim], t=t)
 
         return grad
 
@@ -249,7 +251,7 @@ class Hamiltonian(CCommonBase):
             def acc(t, w):
                 return -self._gradient(w, t=t)
             integrator = Integrator(acc, func_units=self.units, **Integrator_kwargs)
-            orbit = integrator.run(w0, **time_spec)
+            orbit = integrator.run(arr_w0, **time_spec)
             orbit.hamiltonian = self
             return orbit
 

@@ -62,6 +62,8 @@ class PotentialTestBase(object):
         assert isinstance(self.potential.units, UnitSystem)
 
     def test_value(self):
+        assert self.ndim == self.potential.ndim
+
         for arr,shp in zip(self.w0s, self._valu_return_shapes):
             v = self.potential.energy(arr[:self.ndim])
             assert v.shape == shp

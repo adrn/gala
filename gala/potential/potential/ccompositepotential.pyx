@@ -32,10 +32,10 @@ cdef extern from "potential/src/cpotential.h":
     enum:
         MAX_N_COMPONENTS = 16
 
-    ctypedef double (*densityfunc)(double t, double *pars, double *q) nogil
-    ctypedef double (*energyfunc)(double t, double *pars, double *q) nogil
-    ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
-    ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
+    ctypedef double (*densityfunc)(double t, double *pars, double *q, int n_dim) nogil
+    ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim) nogil
+    ctypedef void (*gradientfunc)(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    ctypedef void (*hessianfunc)(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     ctypedef struct CPotential:
         int n_components

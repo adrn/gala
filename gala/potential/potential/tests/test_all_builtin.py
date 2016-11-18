@@ -33,7 +33,7 @@ class TestHarmonicOscillator1D(PotentialTestBase):
 
 class TestHarmonicOscillator2D(PotentialTestBase):
     potential = HarmonicOscillatorPotential(omega=[1.,2])
-    w0 = [1.,0.5,0.,0.1]
+    w0 = [1.,0.5, 0.,0.1]
 
     def test_plot(self):
         # Skip for now because contour plotting assumes 3D
@@ -45,11 +45,12 @@ class TestHarmonicOscillator2D(PotentialTestBase):
 
 class TestHenonHeiles(PotentialTestBase):
     potential = HenonHeilesPotential()
-    w0 = [1.,0.,0.,0.,2*np.pi,0.]
+    w0 = [1.,0.,0.,2*np.pi]
 
 class TestKepler(PotentialTestBase):
     potential = KeplerPotential(units=solarsystem, m=1.)
     w0 = [1.,0.,0.,0.,2*np.pi,0.]
+    # show_plots = True
 
 class TestKeplerUnitInput(PotentialTestBase):
     potential = KeplerPotential(units=solarsystem, m=1E-3*u.ksolMass)
@@ -66,7 +67,6 @@ class TestIsochroneDimensionless(PotentialTestBase):
 class TestHernquist(PotentialTestBase):
     potential = HernquistPotential(units=galactic, m=1.E11, c=0.26)
     w0 = [1.,0.,0.,0.,0.1,0.1]
-    show_plots = True
 
 class TestPlummer(PotentialTestBase):
     potential = PlummerPotential(units=galactic, m=1.E11, b=0.26)

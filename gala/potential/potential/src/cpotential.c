@@ -6,7 +6,7 @@ double c_potential(CPotential *p, double t, double *qp) {
     int i;
 
     for (i=0; i < p->n_components; i++) {
-        v = v + (p->value)[i](t, (p->parameters)[i], qp);
+        v = v + (p->value)[i](t, (p->parameters)[i], qp, p->n_dim);
     }
 
     return v;
@@ -17,7 +17,7 @@ double c_density(CPotential *p, double t, double *qp) {
     int i;
 
     for (i=0; i < p->n_components; i++) {
-        v = v + (p->density)[i](t, (p->parameters)[i], qp);
+        v = v + (p->density)[i](t, (p->parameters)[i], qp, p->n_dim);
     }
 
     return v;
@@ -31,7 +31,7 @@ void c_gradient(CPotential *p, double t, double *qp, double *grad) {
     }
 
     for (i=0; i < p->n_components; i++) {
-        (p->gradient)[i](t, (p->parameters)[i], qp, grad);
+        (p->gradient)[i](t, (p->parameters)[i], qp, p->n_dim, grad);
     }
 
 }
@@ -44,7 +44,7 @@ void c_hessian(CPotential *p, double t, double *qp, double *hess) {
     }
 
     for (i=0; i < p->n_components; i++) {
-        (p->hessian)[i](t, (p->parameters)[i], qp, hess);
+        (p->hessian)[i](t, (p->parameters)[i], qp, p->n_dim, hess);
     }
 
 }

@@ -4,8 +4,7 @@
 /*
     Static, inertial frame
 */
-double static_frame_hamiltonian(double t, double *pars, double *qp) {
-    int n_dim = 3; // TODO: HACK: damn, how do I get the n_dim from potential in here
+double static_frame_hamiltonian(double t, double *pars, double *qp, int n_dim) {
     int i;
     double E = 0.;
 
@@ -15,8 +14,7 @@ double static_frame_hamiltonian(double t, double *pars, double *qp) {
     return 0.5*E; // kinetic term
 }
 
-void static_frame_gradient(double t, double *pars, double *qp, double *dH) {
-    int n_dim = 3; // TODO: HACK: damn, how do I get the n_dim from potential in here
+void static_frame_gradient(double t, double *pars, double *qp, int n_dim, double *dH) {
     int i;
 
     for (i=0; i < n_dim; i++) {
@@ -24,18 +22,17 @@ void static_frame_gradient(double t, double *pars, double *qp, double *dH) {
     }
 }
 
-void static_frame_hessian(double t, double *pars, double *qp, double *d2H) {
+void static_frame_hessian(double t, double *pars, double *qp, int n_dim, double *d2H) {
     /* TODO: this is just potential Hessian and identity matrix for d2H/dp2*/
 }
 
 /*
     Constantly rotating frame
 */
-double constant_rotating_frame_hamiltonian(double t, double *pars, double *qp) {
+double constant_rotating_frame_hamiltonian(double t, double *pars, double *qp, int n_dim) {
     /*
         Omega = pars
     */
-    int n_dim = 3; // TODO: HACK: damn, how do I get the n_dim from potential in here
     int i;
     double E = 0.;
     double Lx, Ly, Lz;
@@ -53,8 +50,7 @@ double constant_rotating_frame_hamiltonian(double t, double *pars, double *qp) {
     return 0.5*E - (pars[0]*Lx + pars[1]*Ly + pars[2]*Lz);
 }
 
-void constant_rotating_frame_gradient(double t, double *pars, double *qp, double *dH) {
-    int n_dim = 3; // TODO: HACK: damn, how do I get the n_dim from potential in here
+void constant_rotating_frame_gradient(double t, double *pars, double *qp, int n_dim, double *dH) {
     double Cx, Cy, Cz; // used in cross-products below
 
     // Omega x q
@@ -74,6 +70,6 @@ void constant_rotating_frame_gradient(double t, double *pars, double *qp, double
     dH[5] = dH[5] + Cz;
 }
 
-void constant_rotating_frame_hessian(double t, double *pars, double *qp, double *d2H) {
+void constant_rotating_frame_hessian(double t, double *pars, double *qp, int n_dim, double *d2H) {
     /* TODO: */
 }

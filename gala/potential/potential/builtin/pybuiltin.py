@@ -39,7 +39,7 @@ class HarmonicOscillatorPotential(PotentialBase):
                                                           parameters=parameters,
                                                           ndim=len(parameters['omega']))
 
-    def _value(self, q, t):
+    def _energy(self, q, t):
         om = np.array(self.parameters['omega'])
         return np.sum((0.5 * om**2 * q.T**2).T, axis=0)
 
@@ -118,7 +118,7 @@ class KuzminPotential(PotentialBase):
         super(KuzminPotential, self).__init__(units=units,
                                               parameters=parameters)
 
-    def _value(self, q, t):
+    def _energy(self, q, t):
         x,y,z = q
         m = self.parameters['m']
         a = self.parameters['a']

@@ -17,6 +17,6 @@
     };
 #endif
 
-extern double frame_hamiltonian(CFrame *fr, double t, double *qp);
-extern void frame_gradient(CFrame *fr, double t, double *qp, double *dH);
-extern void frame_hessian(CFrame *fr, double t, double *qp, double *d2H);
+extern double frame_hamiltonian(CFrame *fr, double t, double *qp, int n_dim);
+extern void frame_gradient(CFrame *fr, double t, double *qp, int n_dim, double *dH);
+extern void frame_hessian(CFrame *fr, double t, double *qp, int n_dim, double *d2H);

@@ -17,17 +17,17 @@ from ..potential.cpotential import _validate_pos_arr
 from ...dynamics import CartesianPhaseSpacePosition
 
 cdef extern from "src/funcdefs.h":
-    ctypedef double (*energyfunc)(double t, double *pars, double *q) nogil
-    ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
-    ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
+    ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim) nogil
+    ctypedef void (*gradientfunc)(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    ctypedef void (*hessianfunc)(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
 cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrame:
         pass
 
-    double frame_hamiltonian(CFrame *fr, double t, double *qp) nogil
-    void frame_gradient(CFrame *fr, double t, double *qp, double *dH) nogil
-    void frame_hessian(CFrame *fr, double t, double *qp, double *d2H) nogil
+    double frame_hamiltonian(CFrame *fr, double t, double *qp, int n_dim) nogil
+    void frame_gradient(CFrame *fr, double t, double *qp, int n_dim, double *dH) nogil
+    void frame_hessian(CFrame *fr, double t, double *qp, int n_dim, double *d2H) nogil
 
 cdef class CFrameWrapper:
     """ Wrapper class for C implementation of reference frames. """
@@ -43,7 +43,7 @@ cdef class CFrameWrapper:
 
         cdef double [::1] pot = np.zeros(n)
         for i in range(n):
-            pot[i] = frame_hamiltonian(&cf, t, &w[i,0])
+            pot[i] = frame_hamiltonian(&cf, t, &w[i,0], ndim)
 
         return np.array(pot)
 
@@ -58,7 +58,7 @@ cdef class CFrameWrapper:
 
         cdef double[:,::1] dH = np.zeros((n, ndim))
         for i in range(n):
-            frame_gradient(&cf, t, &w[i,0], &dH[i,0])
+            frame_gradient(&cf, t, &w[i,0], ndim, &dH[i,0])
 
         return np.array(dH)
 
@@ -74,7 +74,7 @@ cdef class CFrameWrapper:
         cdef double[:,:,::1] d2H = np.zeros((n, ndim, ndim))
 
         for i in range(n):
-            frame_hessian(&cf, t, &w[i,0], &d2H[i,0,0])
+            frame_hessian(&cf, t, &w[i,0], ndim, &d2H[i,0,0])
 
         return np.array(d2H)
 

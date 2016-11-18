@@ -20,9 +20,9 @@ from ..cframe import CFrameBase
 from ..cframe cimport CFrameWrapper
 
 cdef extern from "src/funcdefs.h":
-    ctypedef double (*energyfunc)(double t, double *pars, double *q) nogil
-    ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
-    ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
+    ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim) nogil
+    ctypedef void (*gradientfunc)(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    ctypedef void (*hessianfunc)(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
 cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrame:
@@ -34,13 +34,13 @@ cdef extern from "frame/src/cframe.h":
         double *parameters;
 
 cdef extern from "frame/builtin/builtin_frames.h":
-    double static_frame_hamiltonian(double t, double *pars, double *qp) nogil
-    void static_frame_gradient(double t, double *pars, double *qp, double *grad) nogil
-    void static_frame_hessian(double t, double *pars, double *qp, double *hess) nogil
+    double static_frame_hamiltonian(double t, double *pars, double *qp, int n_dim) nogil
+    void static_frame_gradient(double t, double *pars, double *qp, int n_dim, double *grad) nogil
+    void static_frame_hessian(double t, double *pars, double *qp, int n_dim, double *hess) nogil
 
-    double constant_rotating_frame_hamiltonian(double t, double *pars, double *qp) nogil
-    void constant_rotating_frame_gradient(double t, double *pars, double *qp, double *grad) nogil
-    void constant_rotating_frame_hessian(double t, double *pars, double *qp, double *hess) nogil
+    double constant_rotating_frame_hamiltonian(double t, double *pars, double *qp, int n_dim) nogil
+    void constant_rotating_frame_gradient(double t, double *pars, double *qp, int n_dim, double *grad) nogil
+    void constant_rotating_frame_hessian(double t, double *pars, double *qp, int n_dim, double *hess) nogil
 
 __all__ = ['StaticFrame', 'ConstantRotatingFrame']
 
