@@ -142,12 +142,16 @@ class PotentialTestBase(object):
         grid = np.linspace(-max_x,max_x,8)
         grid = grid[grid != 0.]
         grids = [grid for i in range(self.w0.size//2)]
-        xyz = np.vstack(map(np.ravel, np.meshgrid(*grids)))
+        xyz = np.ascontiguousarray(np.vstack(map(np.ravel, np.meshgrid(*grids))).T)
+
+        def energy_wrap(xyz):
+            xyz = np.ascontiguousarray(xyz[:,None])
+            return self.potential._energy(xyz)[0]
 
         num_grad = np.zeros_like(xyz)
-        for i in range(xyz.shape[1]):
-            num_grad[:,i] = np.squeeze([partial_derivative(self.potential.energy, xyz[:,i], dim_ix=dim_ix, n=1, dx=dx, order=5) for dim_ix in range(self.w0.size//2)])
-        grad = self.potential.gradient(xyz).value
+        for i in range(xyz.shape[0]):
+            num_grad[i] = np.squeeze([partial_derivative(energy_wrap, xyz[i], dim_ix=dim_ix, n=1, dx=dx, order=5) for dim_ix in range(self.w0.size//2)])
+        grad = self.potential._gradient(xyz)
 
         assert np.allclose(num_grad, grad, rtol=self.tol)
 
