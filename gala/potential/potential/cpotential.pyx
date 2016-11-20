@@ -151,7 +151,7 @@ cdef class CPotentialWrapper:
         n,ndim = _validate_pos_arr(q)
 
         cdef double [::1] dr = np.zeros(n, dtype=np.float64)
-        cdef double [::1] epsilon = np.zeros(3, dtype=np.float64)
+        cdef double [::1] epsilon = np.zeros(ndim, dtype=np.float64)
 
         for i in range(n):
             dr[i] = c_d_dr(&(self.cpotential), t, &q[i,0], &epsilon[0])
@@ -168,7 +168,7 @@ cdef class CPotentialWrapper:
         n,ndim = _validate_pos_arr(q)
 
         cdef double [::1] dr2 = np.zeros(n, dtype=np.float64)
-        cdef double [::1] epsilon = np.zeros(3, dtype=np.float64)
+        cdef double [::1] epsilon = np.zeros(ndim, dtype=np.float64)
 
         for i in range(n):
             dr2[i] = c_d2_dr2(&(self.cpotential), t, &q[i,0], &epsilon[0])
@@ -185,7 +185,7 @@ cdef class CPotentialWrapper:
         n,ndim = _validate_pos_arr(q)
 
         cdef double [::1] mass = np.zeros(n, dtype=np.float64)
-        cdef double [::1] epsilon = np.zeros(3, dtype=np.float64)
+        cdef double [::1] epsilon = np.zeros(ndim, dtype=np.float64)
 
         for i in range(n):
             mass[i] = c_mass_enclosed(&(self.cpotential), t, &q[i,0], G, &epsilon[0])

@@ -20,7 +20,7 @@ from ....units import UnitSystem, DimensionlessUnitSystem
 from ....dynamics import CartesianPhaseSpacePosition
 
 def partial_derivative(func, point, dim_ix=0, **kwargs):
-    xyz = np.array(point)
+    xyz = np.array(point, copy=True)
     def wraps(a):
         xyz[dim_ix] = a
         return func(xyz)
@@ -80,6 +80,7 @@ class PotentialTestBase(object):
 
     def test_mass_enclosed(self):
         for arr,shp in zip(self.w0s, self._valu_return_shapes):
+            print(shp)
             g = self.potential.mass_enclosed(arr[:self.ndim])
             assert g.shape == shp
             assert np.all(g > 0.)
@@ -144,8 +145,8 @@ class PotentialTestBase(object):
         xyz = np.ascontiguousarray(np.vstack(map(np.ravel, np.meshgrid(*grids))).T)
 
         def energy_wrap(xyz):
-            xyz = np.ascontiguousarray(xyz[:,None])
-            return self.potential._energy(xyz)[0]
+            xyz = np.ascontiguousarray(xyz[None])
+            return self.potential._energy(xyz, t=0.)[0]
 
         num_grad = np.zeros_like(xyz)
         for i in range(xyz.shape[0]):

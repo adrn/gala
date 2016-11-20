@@ -52,12 +52,16 @@ void c_hessian(CPotential *p, double t, double *qp, double *hess) {
 double c_d_dr(CPotential *p, double t, double *qp, double *epsilon) {
     double h, r, dPhi_dr;
     int j;
+    double r2 = 0;
+    for (j=0; j<p->n_dim; j++) {
+        r2 = r2 + qp[j]*qp[j];
+    }
 
     // TODO: allow user to specify fractional step-size
     h = 0.01;
 
     // Step-size for estimating radial gradient of the potential
-    r = sqrt(qp[0]*qp[0] + qp[1]*qp[1] + qp[2]*qp[2]);
+    r = sqrt(r2);
 
     for (j=0; j < (p->n_dim); j++)
         epsilon[j] = h * qp[j]/r + qp[j];
@@ -75,12 +79,16 @@ double c_d_dr(CPotential *p, double t, double *qp, double *epsilon) {
 double c_d2_dr2(CPotential *p, double t, double *qp, double *epsilon) {
     double h, r, d2Phi_dr2;
     int j;
+    double r2 = 0;
+    for (j=0; j<p->n_dim; j++) {
+        r2 = r2 + qp[j]*qp[j];
+    }
 
     // TODO: allow user to specify fractional step-size
-    h = 0.01;
+    h = 0.001;
 
     // Step-size for estimating radial gradient of the potential
-    r = sqrt(qp[0]*qp[0] + qp[1]*qp[1] + qp[2]*qp[2]);
+    r = sqrt(r2);
 
     for (j=0; j < (p->n_dim); j++)
         epsilon[j] = h * qp[j]/r + qp[j];
@@ -96,8 +104,13 @@ double c_d2_dr2(CPotential *p, double t, double *qp, double *epsilon) {
 }
 
 double c_mass_enclosed(CPotential *p, double t, double *qp, double G, double *epsilon) {
-    double r, dPhi_dr;
-    r = sqrt(qp[0]*qp[0] + qp[1]*qp[1] + qp[2]*qp[2]);
+    double r2, dPhi_dr;
+    int j;
+
+    r2 = 0;
+    for (j=0; j<p->n_dim; j++) {
+        r2 = r2 + qp[j]*qp[j];
+    }
     dPhi_dr = c_d_dr(p, t, qp, epsilon);
-    return fabs(r*r * dPhi_dr / G);
+    return fabs(r2 * dPhi_dr / G);
 }

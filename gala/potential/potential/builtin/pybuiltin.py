@@ -39,15 +39,15 @@ class HarmonicOscillatorPotential(PotentialBase):
                                                           parameters=parameters,
                                                           ndim=len(parameters['omega']))
 
-    def _energy(self, q, t):
+    def _energy(self, q, t=0.):
         om = np.atleast_1d(self.parameters['omega'])
         return np.sum(0.5 * om[None]**2 * q**2, axis=1)
 
-    def _gradient(self, q, t):
+    def _gradient(self, q, t=0.):
         om = np.atleast_1d(self.parameters['omega'])
         return om[None]**2 * q
 
-    def _hessian(self, q, t):
+    def _hessian(self, q, t=0.):
         om = np.atleast_1d(self.parameters['omega'])
         return np.tile(np.diag(om)[:,:,None], reps=(1,1,q.shape[0]))
 
