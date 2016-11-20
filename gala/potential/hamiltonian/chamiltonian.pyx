@@ -7,7 +7,7 @@ import numpy as np
 import astropy.units as u
 
 # Project
-from ..common import CCommonBase
+from ..common import CommonBase
 from ..potential import CPotentialBase
 from ..frame import CFrameBase, StaticFrame
 from ...integrate import LeapfrogIntegrator, DOPRI853Integrator
@@ -15,7 +15,7 @@ from ...dynamics import PhaseSpacePosition, CartesianOrbit, CartesianPhaseSpaceP
 
 __all__ = ["Hamiltonian"]
 
-class Hamiltonian(CCommonBase):
+class Hamiltonian(CommonBase):
     """
     TODO:
     """
@@ -49,61 +49,69 @@ class Hamiltonian(CCommonBase):
         other_E = self.frame._energy(w, t=t)
         return pot_E + other_E
 
-    # def energy(self, w, t=0.):
-    #     """
-    #     Compute the energy (the value of the Hamiltonian) at the given phase-space position(s).
-
-    #     Parameters
-    #     ----------
-    #     w : `~gala.dynamics.PhaseSpacePosition`, array_like
-    #         The phase-space position to compute the value of the Hamiltonian.
-    #         If the input object has no units (i.e. is an `~numpy.ndarray`), it
-    #         is assumed to be in the same unit system as the potential class.
-
-    #     Returns
-    #     -------
-    #     H : `~astropy.units.Quantity`
-    #         Energy per unit mass or value of the Hamiltonian. If the input
-    #         phase-space position has shape ``w.shape``, the output energy
-    #         will have shape ``w.shape[1:]``.
-    #     """
-    #     return super(Hamiltonian,self).energy(w, t=t)
-
     def _gradient(self, w, t=0.):
-        grad = np.zeros_like(w)
+        q = np.ascontiguousarray(w[:,:self._pot_ndim])
+
+        dH = np.zeros_like(w)
 
         # extra terms from the frame
-        grad += self.frame.gradient(w, t=t)
+        dH += self.frame._gradient(w, t=t)
+        dH[:,self._pot_ndim:] += -self.potential._gradient(q, t=t)
 
-        # p_dot = -dH/dq
-        # print(w.shape)
-        # print(np.ascontiguousarray(w[:,:self._pot_ndim]).shape)
-        grad[self._pot_ndim:] += -self.potential.gradient(w[:self._pot_ndim], t=t)
-
-        return grad
-
-    # def gradient(self, w, t=0.):
-    #     """
-    #     Compute the gradient of the Hamiltonian at the given phase-space position(s).
-
-    #     Parameters
-    #     ----------
-    #     w : `~gala.dynamics.PhaseSpacePosition`, array_like
-    #         The phase-space position to compute the value of the Hamiltonian.
-    #         If the input object has no units (i.e. is an `~numpy.ndarray`), it
-    #         is assumed to be in the same unit system as the potential class.
-
-    #     Returns
-    #     -------
-    #     TODO: this can't return a quantity, because units are different dH/dq vs. dH/dp
-    #     grad : `~astropy.units.Quantity`
-    #         The gradient of the potential. Will have the same shape as
-    #         the input phase-space position, ``w``.
-    #     """
-    #     return super(Hamiltonian,self).gradient(w, t=t)
+        return dH
 
     def _hessian(self, w, t=0.):
         raise NotImplementedError()
+
+    # ========================================================================
+    # Core methods that use the above implemented functions
+    #
+    def energy(self, w, t=0.):
+        """
+        Compute the energy (the value of the Hamiltonian) at the given phase-space position(s).
+
+        Parameters
+        ----------
+        w : `~gala.dynamics.PhaseSpacePosition`, array_like
+            The phase-space position to compute the value of the Hamiltonian.
+            If the input object has no units (i.e. is an `~numpy.ndarray`), it
+            is assumed to be in the same unit system as the potential class.
+
+        Returns
+        -------
+        H : `~astropy.units.Quantity`
+            Energy per unit mass or value of the Hamiltonian. If the input
+            phase-space position has shape ``w.shape``, the output energy
+            will have shape ``w.shape[1:]``.
+        """
+        w = self._remove_units_prepare_shape(w)
+        orig_shape,w = self._get_c_valid_arr(w)
+        return self._energy(w, t=t).T.reshape(orig_shape[1:]) * self.units['energy'] / self.units['mass']
+
+    def gradient(self, w, t=0.):
+        """
+        Compute the gradient of the Hamiltonian at the given phase-space position(s).
+
+        Parameters
+        ----------
+        w : `~gala.dynamics.PhaseSpacePosition`, array_like
+            The phase-space position to compute the value of the Hamiltonian.
+            If the input object has no units (i.e. is an `~numpy.ndarray`), it
+            is assumed to be in the same unit system as the potential class.
+
+        Returns
+        -------
+        TODO: this can't return a quantity, because units are different dH/dq vs. dH/dp
+        grad : `~astropy.units.Quantity`
+            The gradient of the potential. Will have the same shape as
+            the input phase-space position, ``w``.
+        """
+        w = self._remove_units_prepare_shape(w)
+        orig_shape,w = self._get_c_valid_arr(w)
+
+        # TODO: wat do about units here?
+        # ret_unit = self.units['length'] / self.units['time']**2
+        return self._gradient(w, t=t).T.reshape(orig_shape)
 
     def hessian(self, w, t=0.):
         """
@@ -126,7 +134,7 @@ class Hamiltonian(CCommonBase):
             ``n_dim`` array (matrix) for each position, where the dimensionality of
             phase-space is ``n_dim``.
         """
-        return super(Hamiltonian,self).hessian(w, t=t)
+        raise NotImplementedError()
 
     # ========================================================================
     # Python special methods
@@ -220,11 +228,12 @@ class Hamiltonian(CCommonBase):
 
         ndim = w0.ndim
         arr_w0 = w0.w(self.units)
-        if self.c_enabled and cython_if_possible:
-            # WARNING TO SELF: this transpose is there because the Cython
-            #   functions expect a shape: (norbits, ndim)
-            arr_w0 = np.ascontiguousarray(arr_w0.T)
 
+        # WARNING TO SELF: this transpose is there because the Cython
+        #   and underscored functions expect a shape: (norbits, ndim)
+        arr_w0 = np.ascontiguousarray(arr_w0.T)
+
+        if self.c_enabled and cython_if_possible:
             # array of times
             from ...integrate.timespec import parse_time_specification
             t = np.ascontiguousarray(parse_time_specification(self.units, **time_spec))

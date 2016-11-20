@@ -27,7 +27,6 @@ from libc.stdio cimport printf
 
 # Project
 from .core import PotentialBase, CompositePotential
-from ..common import CCommonBase
 from ...util import atleast_2d
 from ...units import DimensionlessUnitSystem
 
@@ -201,7 +200,7 @@ cdef class CPotentialWrapper:
 
 # TODO: docstrings are now fucked for energy, gradient, etc.
 
-class CPotentialBase(CCommonBase, PotentialBase):
+class CPotentialBase(PotentialBase):
     """
     A baseclass for defining gravitational potentials implemented in C.
     """
