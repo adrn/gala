@@ -221,39 +221,17 @@ class CPotentialBase(CCommonBase, PotentialBase):
 
         self.c_instance = Wrapper(self.G, self.c_parameters)
 
-    def _value(self, *args, **kwargs):
-        warnings.warn("Use `energy()` instead.", DeprecationWarning)
-        return self._energy(*args, **kwargs)
+    def _energy(self, q, t=0.):
+        return self.c_instance.energy(q, t=t)
+
+    def _gradient(self, q, t=0.):
+        return self.c_instance.gradient(q, t=t)
 
     def _density(self, q, t=0.):
-        orig_shp,q = self._get_c_valid_arr(q)
-        try:
-            return self.c_instance.density(q, t=t).T
-        except AttributeError,TypeError:
-            # TODO: if no density function, should this numerically esimate
-            #   the density?
-            raise ValueError("Potential C instance has no defined "
-                             "density function")
+        return self.c_instance.density(q, t=t)
 
-    def gradient(self, q, t=0.):
-        """
-        Compute the gradient of the potential at the given position(s).
-
-        Parameters
-        ----------
-        q : `~astropy.units.Quantity`, array_like
-            The position to compute the value of the potential. If the
-            input position object has no units (i.e. is an `~numpy.ndarray`),
-            it is assumed to be in the same unit system as the potential.
-
-        Returns
-        -------
-        grad : `~astropy.units.Quantity`
-            The gradient of the potential. Will have the same shape as
-            the input position array, ``q``.
-        """
-        uu = self.units['length'] / self.units['time']**2
-        return super(CPotentialBase,self).gradient(q, t=t) * uu
+    def _hessian(self, q, t=0.):
+        return self.c_instance.hessian(q, t=t)
 
     # ----------------------------------------------------------
     # Overwrite the Python potential method to use Cython method

@@ -59,9 +59,8 @@ class PotentialBase(CommonBase):
     def _gradient(self, q, t=0.):
         pass
 
-    @abc.abstractmethod
     def _density(self, q, t=0.):
-        pass
+        raise NotImplementedError("This Potential has no implemented density function.")
 
     def _hessian(self, q, t=0.):
         raise NotImplementedError("This Potential has no implemented Hessian.")
@@ -105,6 +104,7 @@ class PotentialBase(CommonBase):
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
         ret_unit = self.units['energy'] / self.units['mass']
+
         return self._energy(q, t=t).T.reshape(orig_shape[1:]) * ret_unit
 
     def gradient(self, q, t=0.):
@@ -234,7 +234,7 @@ class PotentialBase(CommonBase):
         else:
             Gee = G.decompose(self.units).value
 
-        return np.abs(r*r * diff / Gee / (2.*h)). * self.units['mass']
+        return np.abs(r*r * diff / Gee / (2.*h)) * self.units['mass']
 
     def circular_velocity(self, q, t=0.):
         """
@@ -679,13 +679,7 @@ class CompositePotential(PotentialBase, OrderedDict):
         return ImmutableDict(**params)
 
     def _energy(self, q, t=0.):
-        for p in self.values():
-            print(q.shape, p._energy(q, t).shape)
         return np.sum([p._energy(q, t) for p in self.values()], axis=0)
-        # return sum([p._energy(q, t) for p in self.values()])
-
-    def _value(self, q, t=0.):
-        return self._energy(q, t=t)
 
     def _gradient(self, q, t=0.):
         return np.sum([p._gradient(q, t) for p in self.values()], axis=0)

@@ -16,12 +16,11 @@ import numpy as np
 from astropy.constants import G
 import astropy.units as u
 from astropy.tests.helper import quantity_allclose
-import matplotlib.pyplot as pl
 from matplotlib import cm
 
 # This package
 from ..core import PotentialBase, CompositePotential
-from ...units import UnitSystem
+from ....units import UnitSystem
 
 units = [u.kpc,u.Myr,u.Msun,u.radian]
 G = G.decompose(units)
@@ -44,9 +43,9 @@ def test_new_simple():
     assert p.energy(0.5) == -2.
     assert p.acceleration(0.5) == -4.
 
-    p(np.arange(0.5, 11.5, 0.5))
-    p.energy(np.arange(0.5, 11.5, 0.5))
-    p.acceleration(np.arange(0.5, 11.5, 0.5))
+    p(np.arange(0.5, 11.5, 0.5).reshape(1,-1))
+    p.energy(np.arange(0.5, 11.5, 0.5).reshape(1,-1))
+    p.acceleration(np.arange(0.5, 11.5, 0.5).reshape(1,-1))
 
 # ----------------------------------------------------------------------------
 
@@ -62,14 +61,14 @@ class MyPotential(PotentialBase):
     def _energy(self, x, t):
         m = self.parameters['m']
         x0 = self.parameters['x0']
-        r = np.sqrt(np.sum((x-x0[:,None])**2, axis=0))
+        r = np.sqrt(np.sum((x-x0[None])**2, axis=1))
         return -m/r
 
     def _gradient(self, x, t):
         m = self.parameters['m']
         x0 = self.parameters['x0']
-        r = np.sqrt(np.sum((x-x0[:,None])**2, axis=0))
-        return m*(x-x0[:,None])/r**3
+        r = np.sqrt(np.sum((x-x0[None])**2, axis=1))
+        return m*(x-x0[None])/r**3
 
 def test_repr():
     p = MyPotential(m=1.E10*u.Msun, x0=0., units=usys)
