@@ -40,17 +40,16 @@ class HarmonicOscillatorPotential(PotentialBase):
                                                           ndim=len(parameters['omega']))
 
     def _energy(self, q, t):
-        om = np.array(self.parameters['omega'])
-        return np.sum((0.5 * om**2 * q.T**2).T, axis=0)
+        om = np.atleast_1d(self.parameters['omega'])
+        return np.sum(0.5 * om[None]**2 * q**2, axis=1)
 
     def _gradient(self, q, t):
-        om = np.array(self.parameters['omega'])
-        return (om**2*q.T).T
+        om = np.atleast_1d(self.parameters['omega'])
+        return om[None]**2 * q
 
     def _hessian(self, q, t):
-        expand = [slice(None),slice(None)] + [np.newaxis] * (q.ndim - 1)
         om = np.atleast_1d(self.parameters['omega'])
-        return np.tile(np.diag(om)[expand], reps=q.shape[1:])
+        return np.tile(np.diag(om)[:,:,None], reps=(1,1,q.shape[0]))
 
     def action_angle(self, w):
         """

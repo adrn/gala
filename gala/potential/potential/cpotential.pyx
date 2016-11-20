@@ -235,6 +235,7 @@ class CPotentialBase(CCommonBase, PotentialBase):
 
     # ----------------------------------------------------------
     # Overwrite the Python potential method to use Cython method
+    # TODO: fix this shite
     def mass_enclosed(self, q, t=0.):
         """
         mass_enclosed(q, t)
@@ -248,11 +249,13 @@ class CPotentialBase(CCommonBase, PotentialBase):
             Position to compute the mass enclosed.
         """
 
-        q = atleast_2d(q, insert_axis=1)
-        orig_shp,q = self._get_c_valid_arr(q)
+        q = self._remove_units_prepare_shape(q)
+        orig_shape,q = self._get_c_valid_arr(q)
+
         try:
             menc = self.c_instance.mass_enclosed(q, self.G, t=t)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "mass_enclosed function")
-        return menc.reshape(orig_shp[1:]) * self.units['mass']
+
+        return menc.reshape(orig_shape[1:]) * self.units['mass']

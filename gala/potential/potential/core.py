@@ -234,7 +234,10 @@ class PotentialBase(CommonBase):
         else:
             Gee = G.decompose(self.units).value
 
-        return np.abs(r*r * diff / Gee / (2.*h)) * self.units['mass']
+        Menc = np.abs(r*r * diff / Gee / (2.*h))
+        Menc = Menc.reshape(orig_shape[1:])
+
+        return Menc * self.units['mass']
 
     def circular_velocity(self, q, t=0.):
         """
