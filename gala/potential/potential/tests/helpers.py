@@ -98,31 +98,27 @@ class PotentialTestBase(object):
 
     def test_plot(self):
         p = self.potential
-        f = p.plot_contours(grid=(np.linspace(-10., 10., 100), 0., 0.),
-                            labels=["X"])
-        # f.suptitle("slice off from 0., won't have cusp")
-        # f.savefig(os.path.join(plot_path, "contour_x.png"))
-        if self.show_plots:
-            plt.show()
-            plt.close(f)
 
-        f = p.plot_contours(grid=(np.linspace(-10., 10., 100),
-                                  np.linspace(-10., 10., 100),
-                                  0.),
-                            cmap='Blues')
-        # f.savefig(os.path.join(plot_path, "contour_xy.png"))
         if self.show_plots:
-            plt.show()
-            plt.close(f)
+            f = p.plot_contours(grid=(np.linspace(-10., 10., 100), 0., 0.),
+                                labels=["X"])
+            # f.suptitle("slice off from 0., won't have cusp")
+            # f.savefig(os.path.join(plot_path, "contour_x.png"))
 
-        f = p.plot_contours(grid=(np.linspace(-10., 10., 100),
-                                  1.,
-                                  np.linspace(-10., 10., 100)),
-                            cmap='Blues', labels=["X", "Z"])
-        # f.savefig(os.path.join(plot_path, "contour_xz.png"))
-        if self.show_plots:
+            f = p.plot_contours(grid=(np.linspace(-10., 10., 100),
+                                      np.linspace(-10., 10., 100),
+                                      0.),
+                                cmap='Blues')
+            # f.savefig(os.path.join(plot_path, "contour_xy.png"))
+
+            f = p.plot_contours(grid=(np.linspace(-10., 10., 100),
+                                      1.,
+                                      np.linspace(-10., 10., 100)),
+                                cmap='Blues', labels=["X", "Z"])
+            # f.savefig(os.path.join(plot_path, "contour_xz.png"))
+
             plt.show()
-            plt.close(f)
+            plt.close('all')
 
     def test_save_load(self, tmpdir):
         """

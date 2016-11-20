@@ -228,10 +228,8 @@ class Hamiltonian(CommonBase):
 
         ndim = w0.ndim
         arr_w0 = w0.w(self.units)
-
-        # WARNING TO SELF: this transpose is there because the Cython
-        #   and underscored functions expect a shape: (norbits, ndim)
-        arr_w0 = np.ascontiguousarray(arr_w0.T)
+        arr_w0 = self._remove_units_prepare_shape(arr_w0)
+        orig_shape,arr_w0 = self._get_c_valid_arr(arr_w0)
 
         if self.c_enabled and cython_if_possible:
             # array of times
@@ -258,9 +256,11 @@ class Hamiltonian(CommonBase):
 
         else:
             def acc(t, w):
-                return -self._gradient(w, t=t)
+                # TODO: these Transposes are shitty and probably make it much slower?
+                w = np.ascontiguousarray(w.T)
+                return -self._gradient(w, t=t).T
             integrator = Integrator(acc, func_units=self.units, **Integrator_kwargs)
-            orbit = integrator.run(arr_w0, **time_spec)
+            orbit = integrator.run(arr_w0.T, **time_spec)
             orbit.hamiltonian = self
             return orbit
 
