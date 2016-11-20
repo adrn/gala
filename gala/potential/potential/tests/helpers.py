@@ -23,7 +23,7 @@ def partial_derivative(func, point, dim_ix=0, **kwargs):
     xyz = np.array(point)
     def wraps(a):
         xyz[dim_ix] = a
-        return func(xyz).value
+        return func(xyz)
     return derivative(wraps, point[dim_ix], **kwargs)
 
 class PotentialTestBase(object):
@@ -129,7 +129,6 @@ class PotentialTestBase(object):
         p = load(fn)
         p.energy(self.w0[:self.w0.size//2])
 
-    @pytest.mark.slow
     def test_numerical_gradient_vs_gradient(self):
         """
         Check that the value of the implemented gradient function is close to a
@@ -150,7 +149,8 @@ class PotentialTestBase(object):
 
         num_grad = np.zeros_like(xyz)
         for i in range(xyz.shape[0]):
-            num_grad[i] = np.squeeze([partial_derivative(energy_wrap, xyz[i], dim_ix=dim_ix, n=1, dx=dx, order=5) for dim_ix in range(self.w0.size//2)])
+            num_grad[i] = np.squeeze([partial_derivative(energy_wrap, xyz[i], dim_ix=dim_ix, n=1, dx=dx, order=5)
+                                      for dim_ix in range(self.w0.size//2)])
         grad = self.potential._gradient(xyz)
 
         assert np.allclose(num_grad, grad, rtol=self.tol)
