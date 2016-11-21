@@ -43,7 +43,7 @@ cdef class CFrameWrapper:
 
         cdef double [::1] pot = np.zeros(n)
         for i in range(n):
-            pot[i] = frame_hamiltonian(&cf, t, &w[i,0], ndim)
+            pot[i] = frame_hamiltonian(&cf, t, &w[i,0], ndim//2)
 
         return np.array(pot)
 
@@ -58,7 +58,7 @@ cdef class CFrameWrapper:
 
         cdef double[:,::1] dH = np.zeros((n, ndim))
         for i in range(n):
-            frame_gradient(&cf, t, &w[i,0], ndim, &dH[i,0])
+            frame_gradient(&cf, t, &w[i,0], ndim//2, &dH[i,0])
 
         return np.array(dH)
 
@@ -74,7 +74,7 @@ cdef class CFrameWrapper:
         cdef double[:,:,::1] d2H = np.zeros((n, ndim, ndim))
 
         for i in range(n):
-            frame_hessian(&cf, t, &w[i,0], ndim, &d2H[i,0,0])
+            frame_hessian(&cf, t, &w[i,0], ndim//2, &d2H[i,0,0])
 
         return np.array(d2H)
 

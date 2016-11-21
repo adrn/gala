@@ -31,10 +31,9 @@ def test_compare_to_py(Integrator, integrate_func):
     p = HernquistPotential(m=1E11, c=0.5, units=galactic)
     H = Hamiltonian(potential=p)
 
-    def F(t,w):
-        dq = w[3:]
-        dp = -p._gradient(w[:3])
-        return np.vstack((dq,dp))
+    def F(t, w):
+        w_T = np.ascontiguousarray(w.T)
+        return H._gradient(w_T).T
 
     cy_w0 = np.array([[0.,10.,0.,0.2,0.,0.],
                       [10.,0.,0.,0.,0.2,0.],
