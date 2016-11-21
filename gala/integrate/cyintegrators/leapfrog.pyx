@@ -106,7 +106,7 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:,::1] w0, double[::1]
                 for k in range(half_ndim):
                     all_w[j,i,k] = all_w[j-1,i,k]
 
-                for k in range(ndim):
+                for k in range(half_ndim):
                     grad[k] = 0.
 
                 c_leapfrog_step(&cp, half_ndim, t[j], dt,

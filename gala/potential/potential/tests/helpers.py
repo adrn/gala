@@ -15,6 +15,7 @@ from scipy.misc import derivative
 from astropy.extern.six.moves import cPickle as pickle
 
 # Project
+from ....integrate import DOPRI853Integrator, LeapfrogIntegrator
 from ..io import load
 from ....units import UnitSystem, DimensionlessUnitSystem
 from ....dynamics import CartesianPhaseSpacePosition
@@ -61,7 +62,7 @@ class PotentialTestBase(object):
     def test_unitsystem(self):
         assert isinstance(self.potential.units, UnitSystem)
 
-    def test_value(self):
+    def test_energy(self):
         assert self.ndim == self.potential.ndim
 
         for arr,shp in zip(self.w0s, self._valu_return_shapes):
@@ -80,7 +81,6 @@ class PotentialTestBase(object):
 
     def test_mass_enclosed(self):
         for arr,shp in zip(self.w0s, self._valu_return_shapes):
-            print(shp)
             g = self.potential.mass_enclosed(arr[:self.ndim])
             assert g.shape == shp
             assert np.all(g > 0.)
@@ -164,7 +164,8 @@ class PotentialTestBase(object):
         w0 = np.vstack((w0,w0,w0)).T
 
         t1 = time.time()
-        orbit = self.potential.integrate_orbit(w0, dt=1., n_steps=10000)
+        orbit = self.potential.integrate_orbit(w0, dt=1., n_steps=10000,
+                                               Integrator=LeapfrogIntegrator)
         print("Integration time (10000 steps): {}".format(time.time() - t1))
 
         if self.show_plots:
@@ -176,7 +177,8 @@ class PotentialTestBase(object):
         us = self.potential.units
         w0 = CartesianPhaseSpacePosition(pos=w0[:self.ndim]*us['length'],
                                          vel=w0[self.ndim:]*us['length']/us['time'])
-        orbit = self.potential.integrate_orbit(w0, dt=1., n_steps=10000)
+        orbit = self.potential.integrate_orbit(w0, dt=1., n_steps=10000,
+                                               Integrator=LeapfrogIntegrator)
 
         if self.show_plots:
             f = orbit.plot()

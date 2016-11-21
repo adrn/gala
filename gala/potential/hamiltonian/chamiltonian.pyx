@@ -255,11 +255,11 @@ class Hamiltonian(CommonBase):
                 w = w[...,0]
 
         else:
-            def acc(t, w):
+            def F(t, w):
                 # TODO: these Transposes are shitty and probably make it much slower?
-                w = np.ascontiguousarray(w.T)
-                return -self._gradient(w, t=t).T
-            integrator = Integrator(acc, func_units=self.units, **Integrator_kwargs)
+                w_T = np.ascontiguousarray(w.T)
+                return self._gradient(w_T, t=t).T
+            integrator = Integrator(F, func_units=self.units, **Integrator_kwargs)
             orbit = integrator.run(arr_w0.T, **time_spec)
             orbit.hamiltonian = self
             return orbit
