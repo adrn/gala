@@ -244,9 +244,9 @@ class TestLogarithmic(object):
         d0 = 1e-5
         noffset = 2
 
-        # TODO: should Integrator's reverse order of w, t?! I think yes...
         def F(t, w):
-            return self.hamiltonian._gradient(w, t)
+            w_T = np.ascontiguousarray(w.T)
+            return self.hamiltonian._gradient(w_T, t).T
 
         integrator = DOPRI853Integrator(F)
         for ii,w0 in enumerate(self.w0s):

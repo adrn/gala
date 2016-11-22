@@ -536,7 +536,7 @@ def combine(args, along_time_axis=False):
 
     ndim = None
     time = None
-    pot = None
+    ham = None
     pos_unit = None
     vel_unit = None
     cls = None
@@ -554,7 +554,7 @@ def combine(args, along_time_axis=False):
                 t_unit = time.unit
             else:
                 t_unit = None
-            pot = x.hamiltonian
+            ham = x.hamiltonian
             cls = x.__class__
         else:
             if x.__class__.__name__ != cls.__name__:
@@ -568,7 +568,7 @@ def combine(args, along_time_axis=False):
                     if x.t is None or len(x.t) != len(time) or np.any(x.t.to(time.unit).value != time.value):
                         raise ValueError("All orbits must have the same time array.")
 
-            if x.hamiltonian != pot:
+            if x.hamiltonian != ham:
                 raise ValueError("All orbits must have the same Hamiltonian object.")
 
         pos = x.pos

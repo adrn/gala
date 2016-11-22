@@ -53,6 +53,8 @@ double constant_rotating_frame_hamiltonian(double t, double *pars, double *qp, i
 void constant_rotating_frame_gradient(double t, double *pars, double *qp, int n_dim, double *dH) {
     double Cx, Cy, Cz; // used in cross-products below
 
+    // printf("%f %f %f\n", pars[0], pars[1], pars[2]);
+
     // Omega x q
     Cx = pars[1]*qp[2] - pars[2]*qp[1];
     Cy = -pars[0]*qp[2] + pars[2]*qp[0];

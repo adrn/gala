@@ -87,6 +87,15 @@ class CFrameBase(CommonBase):
         self.c_parameters = np.array(list(self.parameters.values()))
         self.c_instance = Wrapper(*self.c_parameters)
 
+    def __str__(self):
+        return self.__class__.__name__
+
+    def __eq__(self, other):
+        return (self.parameters == other.parameters) and (str(self) == str(other))
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def _energy(self, q, t=0.):
         return self.c_instance.energy(q, t=t)
 

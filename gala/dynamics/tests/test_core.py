@@ -14,7 +14,7 @@ import pytest
 
 # Project
 from ..core import *
-from ...potential import HernquistPotential
+from ...potential import Hamiltonian, HernquistPotential
 from ...util import assert_quantities_allclose
 from ...units import galactic, solarsystem
 
@@ -170,11 +170,12 @@ def test_energy():
 
     # with units and potential
     p = HernquistPotential(units=galactic, m=1E11, c=0.25)
+    H = Hamiltonian(p)
     x = np.random.random(size=(3,10))*u.kpc
     v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
     o = CartesianPhaseSpacePosition(pos=x, vel=v)
-    PE = o.potential_energy(potential=p)
-    E = o.energy(potential=p)
+    PE = o.potential_energy(p)
+    E = o.energy(H)
 
 def test_angular_momentum():
 

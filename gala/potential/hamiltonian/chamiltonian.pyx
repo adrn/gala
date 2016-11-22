@@ -179,6 +179,12 @@ class Hamiltonian(CommonBase):
     def __str__(self):
         return self.__class__.__name__
 
+    def __eq__(self, other):
+        return (self.potential == other.potential) and (self.frame == other.frame)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def integrate_orbit(self, w0, Integrator=None,
                         Integrator_kwargs=dict(), cython_if_possible=True,
                         **time_spec):

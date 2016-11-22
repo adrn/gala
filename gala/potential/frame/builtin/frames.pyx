@@ -72,13 +72,14 @@ cdef class ConstantRotatingFrameWrapper(CFrameWrapper):
     def __init__(self, double Omega_x, double Omega_y, double Omega_z):
         cdef:
             CFrame cf
-            double[::1] pars = np.array([Omega_x, Omega_y, Omega_z])
+
+        self._params = np.array([Omega_x, Omega_y, Omega_z], dtype=np.float64)
 
         cf.energy = <energyfunc>(constant_rotating_frame_hamiltonian)
         cf.gradient = <gradientfunc>(constant_rotating_frame_gradient)
         cf.hessian = <hessianfunc>(constant_rotating_frame_hessian)
         cf.n_params = 3
-        cf.parameters = &(pars[0])
+        cf.parameters = &(self._params[0])
 
         self.cframe = cf
 

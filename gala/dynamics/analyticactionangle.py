@@ -65,20 +65,21 @@ def isochrone_to_aa(w, potential):
     GM = (G*potential.parameters['m']).decompose(usys).value
     b = potential.parameters['b'].decompose(usys).value
     E = w.energy(Hamiltonian(potential)).decompose(usys).value
+    E = np.squeeze(E)
 
     if np.any(E > 0.):
         raise ValueError("Unbound particle. (E = {})".format(E))
 
     # convert position, velocity to spherical polar coordinates
     sph,vsph = w.represent_as(coord.PhysicsSphericalRepresentation)
-    r,phi,theta = sph.r.value, sph.phi.value, sph.theta.value
-    vr,vphi,vtheta = vsph.value
+    r,phi,theta = map(np.squeeze, [sph.r.value, sph.phi.value, sph.theta.value])
+    vr,vphi,vtheta = map(np.squeeze, vsph.value)
 
     # ----------------------------
     # Compute the actions
     # ----------------------------
 
-    L_vec = w.angular_momentum().decompose(usys).value
+    L_vec = np.squeeze(w.angular_momentum().decompose(usys).value)
     Lz = L_vec[2]
     L = np.linalg.norm(L_vec, axis=0)
 

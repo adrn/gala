@@ -25,7 +25,7 @@ from ..core import *
 from ..plot import *
 from .helpers import *
 
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.DEBUG)
 
 def test_generate_n_vectors():
     # test against Sanders' method
@@ -127,25 +127,25 @@ class ActionsBase(object):
         N_max = 6
         for n in range(self.N):
             print("\n\n")
-            logger.info("======================= Orbit {} =======================".format(n))
+            print("======================= Orbit {} =======================".format(n))
             # w = self.w[:,::10,n]
             w = self.w[...,n]
             orb = self.orbit[:,n]
             circ = orb.circulation()
 
             # get values from Sanders' code
-            logger.debug("Computing actions from genfunc...")
+            print("Computing actions from genfunc...")
             s_actions,s_angles,s_freqs,toy_potential = sanders_act_ang_freq(t, w, circ, N_max=N_max)
 
-            logger.debug("Computing actions...")
+            print("Computing actions with gala...")
             ret = find_actions(orb, N_max=N_max, toy_potential=toy_potential)
             actions = ret['actions']
             angles = ret['angles']
             freqs = ret['freqs']
 
-            logger.info("Action ratio: {}".format(actions / s_actions))
-            logger.info("Angle ratio: {}".format(angles / s_angles))
-            logger.info("Freq ratio: {}".format(freqs / s_freqs))
+            print("Action ratio: {}".format(actions / s_actions))
+            print("Angle ratio: {}".format(angles / s_angles))
+            print("Freq ratio: {}".format(freqs / s_freqs))
 
             assert np.allclose(actions.value, s_actions, rtol=1E-5)
             assert np.allclose(angles.value, s_angles, rtol=1E-5)

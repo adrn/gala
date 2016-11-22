@@ -309,6 +309,12 @@ class PotentialBase(CommonBase):
     def __str__(self):
         return self.__class__.__name__
 
+    def __eq__(self, other):
+        return (self.parameters == other.parameters) and (str(self) == str(other))
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     # ========================================================================
     # Convenience methods that do fancy things
     #
