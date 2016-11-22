@@ -21,7 +21,7 @@ __all__ = ['mock_stream', 'streakline_stream', 'fardal_stream', 'dissolved_farda
 
 def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
                 release_every=1, Integrator=DOPRI853Integrator, Integrator_kwargs=dict(),
-                snapshot_filename=None):
+                snapshot_filename=None, seed=None):
     """
     Generate a mock stellar stream in the specified potential with a
     progenitor system that ends up at the specified position.
@@ -51,6 +51,12 @@ def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
         Integrator to use.
     Integrator_kwargs : dict (optional)
         Any extra keyword argumets to pass to the integrator function.
+    snapshot_filename : str (optional)
+        Filename to save all incremental snapshots of particle positions and
+        velocities. Warning: this can make very large files if you are not
+        careful!
+    seed : int (optional)
+        A random number seed for initializing the particle positions.
 
     Returns
     -------
@@ -79,7 +85,7 @@ def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
     if not isinstance(prog_orbit, Orbit):
         raise ValueError("Progenitor orbit must be an Orbit subclass.")
 
-    if save_snapshots and Integrator != DOPRI853Integrator:
+    if snapshot_filename is not None and Integrator != DOPRI853Integrator:
         raise ValueError("If saving snapshots, must use the DOP853Integrator.")
 
     k_mean = np.atleast_1d(k_mean)
@@ -108,7 +114,7 @@ def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
                                          release_every=release_every,
                                          _k_mean=k_mean, _k_disp=k_disp,
                                          G=hamiltonian.potential.G,
-                                         _prog_mass=prog_mass,
+                                         _prog_mass=prog_mass, seed=seed,
                                          **Integrator_kwargs)
 
     elif Integrator == DOPRI853Integrator:
@@ -122,7 +128,7 @@ def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
                                  release_every=release_every,
                                  _k_mean=k_mean, _k_disp=k_disp,
                                  G=hamiltonian.potential.G,
-                                 _prog_mass=prog_mass,
+                                 _prog_mass=prog_mass, seed=seed,
                                  **Integrator_kwargs)
 
             with h5py.File(str(snapshot_filename), 'a') as h5f:
@@ -137,7 +143,7 @@ def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
                                            release_every=release_every,
                                            _k_mean=k_mean, _k_disp=k_disp,
                                            G=hamiltonian.potential.G,
-                                           _prog_mass=prog_mass,
+                                           _prog_mass=prog_mass, seed=seed,
                                            **Integrator_kwargs)
 
     else:
@@ -147,7 +153,7 @@ def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
 
 def streakline_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
                       Integrator=DOPRI853Integrator, Integrator_kwargs=dict(),
-                      snapshot_filename=None):
+                      snapshot_filename=None, seed=None):
     """
     Generate a mock stellar stream in the specified potential with a
     progenitor system that ends up at the specified position.
@@ -169,6 +175,12 @@ def streakline_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
         Integrator to use.
     Integrator_kwargs : dict (optional)
         Any extra keyword argumets to pass to the integrator function.
+    snapshot_filename : str (optional)
+        Filename to save all incremental snapshots of particle positions and
+        velocities. Warning: this can make very large files if you are not
+        careful!
+    seed : int (optional)
+        A random number seed for initializing the particle positions.
 
     Returns
     -------
@@ -199,11 +211,11 @@ def streakline_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
     return mock_stream(hamiltonian=hamiltonian, prog_orbit=prog_orbit, prog_mass=prog_mass,
                        k_mean=k_mean, k_disp=k_disp, release_every=release_every,
                        Integrator=Integrator, Integrator_kwargs=Integrator_kwargs,
-                       snapshot_filename=snapshot_filename)
+                       snapshot_filename=snapshot_filename, seed=seed)
 
 def fardal_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
                   Integrator=DOPRI853Integrator, Integrator_kwargs=dict(),
-                  snapshot_filename=None):
+                  snapshot_filename=None, seed=None):
     """
     Generate a mock stellar stream in the specified potential with a
     progenitor system that ends up at the specified position.
@@ -225,6 +237,12 @@ def fardal_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
         Integrator to use.
     Integrator_kwargs : dict (optional)
         Any extra keyword argumets to pass to the integrator function.
+    snapshot_filename : str (optional)
+        Filename to save all incremental snapshots of particle positions and
+        velocities. Warning: this can make very large files if you are not
+        careful!
+    seed : int (optional)
+        A random number seed for initializing the particle positions.
 
     Returns
     -------
@@ -255,11 +273,11 @@ def fardal_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
     return mock_stream(hamiltonian=hamiltonian, prog_orbit=prog_orbit, prog_mass=prog_mass,
                        k_mean=k_mean, k_disp=k_disp, release_every=release_every,
                        Integrator=Integrator, Integrator_kwargs=Integrator_kwargs,
-                       snapshot_filename=snapshot_filename)
+                       snapshot_filename=snapshot_filename, seed=seed)
 
 def dissolved_fardal_stream(hamiltonian, prog_orbit, prog_mass, t_disrupt, release_every=1,
                             Integrator=DOPRI853Integrator, Integrator_kwargs=dict(),
-                            snapshot_filename=None):
+                            snapshot_filename=None, seed=None):
     """
     Generate a mock stellar stream in the specified potential with a
     progenitor system that ends up at the specified position.
@@ -285,6 +303,12 @@ def dissolved_fardal_stream(hamiltonian, prog_orbit, prog_mass, t_disrupt, relea
         Integrator to use.
     Integrator_kwargs : dict (optional)
         Any extra keyword argumets to pass to the integrator function.
+    snapshot_filename : str (optional)
+        Filename to save all incremental snapshots of particle positions and
+        velocities. Warning: this can make very large files if you are not
+        careful!
+    seed : int (optional)
+        A random number seed for initializing the particle positions.
 
     Returns
     -------
@@ -321,4 +345,4 @@ def dissolved_fardal_stream(hamiltonian, prog_orbit, prog_mass, t_disrupt, relea
     return mock_stream(hamiltonian=hamiltonian, prog_orbit=prog_orbit, prog_mass=prog_mass,
                        k_mean=k_mean, k_disp=k_disp, release_every=release_every,
                        Integrator=Integrator, Integrator_kwargs=Integrator_kwargs,
-                       snapshot_filename=snapshot_filename)
+                       snapshot_filename=snapshot_filename, seed=seed)

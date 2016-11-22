@@ -86,10 +86,11 @@ def test_animate(tmpdir):
                                 Integrator=DOPRI853Integrator)
 
     fardal_stream(pot, orbit, prog_mass=1E5*u.Msun, release_every=10,
-                  save_snapshots=True,
-                  snapshot_filename=os.path.join(str(tmpdir), "test.hdf5"))
+                  snapshot_filename=os.path.join(str(tmpdir), "test.hdf5"),
+                  seed=42)
 
-    stream = fardal_stream(pot, orbit, prog_mass=1E5*u.Msun, release_every=10)
+    stream = fardal_stream(pot, orbit, prog_mass=1E5*u.Msun, release_every=10,
+                           seed=42)
 
     import h5py
     with h5py.File(os.path.join(str(tmpdir), "test.hdf5")) as f:

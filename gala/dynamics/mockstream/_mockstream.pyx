@@ -47,10 +47,10 @@ cdef extern from "potential/src/cpotential.h":
 cpdef _mock_stream_dop853(hamiltonian, double[::1] t, double[:,::1] prog_w,
                           int release_every,
                           _k_mean, _k_disp,
-                          double G, _prog_mass,
+                          double G, _prog_mass, seed,
                           double atol=1E-10, double rtol=1E-10, int nmax=0):
     """
-    _mock_stream_dop853(hamiltonian, t, prog_w, release_every, k_mean, k_disp, G, prog_mass, atol, rtol, nmax)
+    _mock_stream_dop853(hamiltonian, t, prog_w, release_every, k_mean, k_disp, G, prog_mass, seed, atol, rtol, nmax)
 
     Generate a mock stellar stream using the Streakline method.
 
@@ -78,6 +78,8 @@ cpdef _mock_stream_dop853(hamiltonian, double[::1] t, double[:,::1] prog_w,
     prog_mass : float or `numpy.ndarray`
         The mass of the progenitor or the mass at each time. Should be a scalar or have
         shape ``(ntimesteps,)``.
+    seed : int (optional)
+        A random number seed for initializing the particle positions.
     atol : numeric (optional)
         Passed to the integrator. Absolute tolerance parameter. Default is 1E-10.
     rtol : numeric (optional)
@@ -147,6 +149,9 @@ cpdef _mock_stream_dop853(hamiltonian, double[::1] t, double[:,::1] prog_w,
     cdef double t_end = t[ntimes-1]
 
     # -------
+
+    if seed is not None:
+        np.random.seed(seed)
 
     # copy over initial conditions from progenitor orbit to each streakline star
     i = 0
@@ -242,10 +247,10 @@ cpdef _mock_stream_dop853(hamiltonian, double[::1] t, double[:,::1] prog_w,
 cpdef _mock_stream_leapfrog(hamiltonian, double[::1] t, double[:,::1] prog_w,
                             int release_every,
                             _k_mean, _k_disp,
-                            double G, double _prog_mass,
+                            double G, double _prog_mass, seed,
                             dt=None):
     """
-    _mock_stream_leapfrog(cpotential, t, prog_w, release_every, k_mean, k_disp, G, prog_mass)
+    _mock_stream_leapfrog(cpotential, t, prog_w, release_every, k_mean, k_disp, G, prog_mass, seed)
 
     Generate a mock stellar stream using the Streakline method.
 
@@ -273,6 +278,8 @@ cpdef _mock_stream_leapfrog(hamiltonian, double[::1] t, double[:,::1] prog_w,
     prog_mass : float or `numpy.ndarray`
         The mass of the progenitor or the mass at each time. Should be a scalar or have
         shape ``(ntimesteps,)``.
+    seed : int (optional)
+        A random number seed for initializing the particle positions.
     dt : float (optional)
         Timestep for integrating the orbits of each particle in the stream. Uses the
         same timestep as the progenitor orbit by default.
@@ -351,6 +358,9 @@ cpdef _mock_stream_leapfrog(hamiltonian, double[::1] t, double[:,::1] prog_w,
     cdef double t_end = t[ntimes-1]
 
     # -------
+
+    if seed is not None:
+        np.random.seed(seed)
 
     # copy over initial conditions from progenitor orbit to each streakline star
     i = 0
@@ -454,11 +464,11 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
                            double[::1] t, double[:,::1] prog_w,
                            int release_every,
                            _k_mean, _k_disp,
-                           double G, _prog_mass,
+                           double G, _prog_mass, seed,
                            double atol=1E-10, double rtol=1E-10, int nmax=0,
                            int check_filesize=1):
     """
-    _mock_stream_animate(cpotential, t, prog_w, release_every, k_mean, k_disp, G, prog_mass, atol, rtol, nmax)
+    _mock_stream_animate(filename, cpotential, t, prog_w, release_every, k_mean, k_disp, G, prog_mass, seed, atol, rtol, nmax)
 
     WARNING: only use this if you want to make an animation of a stream forming!
 
@@ -488,6 +498,8 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
     prog_mass : float or `numpy.ndarray`
         The mass of the progenitor or the mass at each time. Should be a scalar or have
         shape ``(ntimesteps,)``.
+    seed : int (optional)
+        A random number seed for initializing the particle positions.
     atol : numeric (optional)
         Passed to the integrator. Absolute tolerance parameter. Default is 1E-10.
     rtol : numeric (optional)
@@ -571,6 +583,9 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
     cdef double t_end = t[ntimes-1]
 
     # -------
+
+    if seed is not None:
+        np.random.seed(seed)
 
     # copy over initial conditions from progenitor orbit to each streakline star
     i = 0
