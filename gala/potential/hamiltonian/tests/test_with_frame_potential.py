@@ -109,15 +109,24 @@ class TestKeplerRotatingFrame(_TestBase):
         pass
 
     def test_integrate(self):
+        Omega = [0,0,1.]*u.one
+
         w0 = CartesianPhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.,0.])
 
         orbit = self.obj.integrate_orbit(w0, dt=1., n_steps=1000,
-                                         cython_if_possible=False,
                                          Integrator=DOPRI853Integrator)
 
         assert np.allclose(orbit.pos.value[0], 1.)
         assert np.allclose(orbit.pos.value[1:], 0.)
 
+        # --------------------------------------------------------------
+        # when Omega is off from orbital frequency
+        w0 = CartesianPhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.2,0.])
+
+        orbit = self.obj.integrate_orbit(w0, dt=1., n_steps=1000,
+                                         Integrator=DOPRI853Integrator)
+
+        rot_orbit = to_rotating_frame(Omega, orbit)
 
 # class TestLogPotentialRotatingFrame(_TestBase):
 #     obj = Hamiltonian(SphericalNFWPotential(v_c=0.2, r_s=20., units=galactic),
