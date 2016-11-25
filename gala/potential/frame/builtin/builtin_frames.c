@@ -38,7 +38,7 @@ double constant_rotating_frame_hamiltonian(double t, double *pars, double *qp, i
     double Lx, Ly, Lz;
 
     for (i=0; i<n_dim; i++) {
-        E += qp[i+n_dim]*qp[i+n_dim]; // p^2
+        E += 0.5*qp[i+n_dim]*qp[i+n_dim]; // p^2
     }
 
     Lx = qp[1]*qp[2+n_dim] - qp[2]*qp[1+n_dim];
@@ -47,7 +47,7 @@ double constant_rotating_frame_hamiltonian(double t, double *pars, double *qp, i
 
     // kinetic term and effective potential for rotation:
     //  - Omega dot L
-    return 0.5*E - (pars[0]*Lx + pars[1]*Ly + pars[2]*Lz);
+    return E - (pars[0]*Lx + pars[1]*Ly + pars[2]*Lz);
 }
 
 void constant_rotating_frame_gradient(double t, double *pars, double *qp, int n_dim, double *dH) {
@@ -67,9 +67,9 @@ void constant_rotating_frame_gradient(double t, double *pars, double *qp, int n_
     Cx = pars[1]*qp[2+n_dim] - pars[2]*qp[1+n_dim];
     Cy = -pars[0]*qp[2+n_dim] + pars[2]*qp[0+n_dim];
     Cz = pars[0]*qp[1+n_dim] - pars[1]*qp[0+n_dim];
-    dH[3] = dH[3] + Cx;
-    dH[4] = dH[4] + Cy;
-    dH[5] = dH[5] + Cz;
+    dH[3] = dH[3] - Cx;
+    dH[4] = dH[4] - Cy;
+    dH[5] = dH[5] - Cz;
 }
 
 void constant_rotating_frame_hessian(double t, double *pars, double *qp, int n_dim, double *d2H) {

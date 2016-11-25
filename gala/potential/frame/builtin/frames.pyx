@@ -88,6 +88,7 @@ class ConstantRotatingFrame(CFrameBase):
     def __init__(self, Omega, units=None):
         """
         TODO: write docstring
+        TODO: always convert to rad/<time unit>
         """
         Omega = np.array(Omega)
 
