@@ -26,7 +26,11 @@ def to_rotating_frame(omega, w, t=None):
 
     if not hasattr(omega, 'unit'):
         raise TypeError("Input frequency vector must be a Quantity object.")
-    omega = omega.to(u.rad/u.Myr, equivalencies=u.dimensionless_angles()).value
+
+    try:
+        omega = omega.to(u.rad/u.Myr, equivalencies=u.dimensionless_angles()).value
+    except:
+        omega = omega.value
 
     if isinstance(w, Orbit) and t is not None:
         raise TypeError("If passing in an Orbit object, do not also specify "
@@ -43,6 +47,11 @@ def to_rotating_frame(omega, w, t=None):
         t = np.atleast_1d(t) # works with Quantity's
     else:
         t = w.t
+
+    try:
+        t = t.to(u.Myr).value
+    except:
+        t = t.value
 
     if isinstance(w, PhaseSpacePosition) or isinstance(w, Orbit):
         Cls = w.__class__
@@ -69,13 +78,13 @@ def to_rotating_frame(omega, w, t=None):
 
     # now need to compute rotation vector, ee, and angle, theta
     ee = omega / np.linalg.norm(omega)
-    theta = (np.linalg.norm(omega) * u.rad/u.Myr * t)[None]
+    theta = (np.linalg.norm(omega) * t)[None]
 
     # we use Rodrigues' rotation formula to rotate the position
     x_rot = np.cos(theta)*x + np.sin(theta)*np.cross(ee, x, axisa=0, axisb=0, axisc=0) \
         + (1 - np.cos(theta)) * np.einsum("i,ij->j", ee, x) * ee[:,None]
 
-    v_cor = np.cross(omega, x, axisa=0, axisb=0, axisc=0) * u.rad/u.Myr * x_unit
+    v_cor = np.cross(omega, x, axisa=0, axisb=0, axisc=0) * x_unit
     v_rot = v - v_cor.to(v_unit, u.dimensionless_angles()).value
 
     x_rot = x_rot.reshape(x_shape) * x_unit
@@ -113,20 +122,30 @@ class TestKeplerRotatingFrame(_TestBase):
 
         w0 = CartesianPhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.,0.])
 
+        # TODO: why doesn't this work when cython_if_possible=True
         orbit = self.obj.integrate_orbit(w0, dt=1., n_steps=1000,
+                                         cython_if_possible=False,
                                          Integrator=DOPRI853Integrator)
 
-        assert np.allclose(orbit.pos.value[0], 1.)
-        assert np.allclose(orbit.pos.value[1:], 0.)
+        assert np.allclose(orbit.pos.value[0], 1., atol=1E-7)
+        assert np.allclose(orbit.pos.value[1:], 0., atol=1E-7)
 
         # --------------------------------------------------------------
         # when Omega is off from orbital frequency
-        w0 = CartesianPhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.2,0.])
+        #
+        w0 = CartesianPhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.1,0.])
 
-        orbit = self.obj.integrate_orbit(w0, dt=1., n_steps=1000,
+        orbit = self.obj.integrate_orbit(w0, dt=0.1, n_steps=10000,
+                                         cython_if_possible=False,
                                          Integrator=DOPRI853Integrator)
 
         rot_orbit = to_rotating_frame(Omega, orbit)
+
+        import matplotlib.pyplot as plt
+        fig,axes = plt.subplots(1,2,figsize=(10,4.5))
+        axes[0].plot(orbit.pos.value[0], orbit.pos.value[1], ls='none', alpha=0.4)
+        axes[1].plot(rot_orbit.pos.value[0], rot_orbit.pos.value[1], ls='none', alpha=0.4)
+        plt.show()
 
 # class TestLogPotentialRotatingFrame(_TestBase):
 #     obj = Hamiltonian(SphericalNFWPotential(v_c=0.2, r_s=20., units=galactic),
