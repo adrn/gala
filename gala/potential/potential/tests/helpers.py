@@ -98,6 +98,13 @@ class PotentialTestBase(object):
             assert "{}=".format(k) in pot_repr
 
     def test_compare(self):
+        # skip if composite potentials
+        if 'Composite' in self.potential.__class__.__name__:
+            return
+
+        elif len(self.potential.parameters) == 0:
+            return
+
         other = self.potential.__class__(units=self.potential.units, **self.potential.parameters)
         assert other == self.potential
 

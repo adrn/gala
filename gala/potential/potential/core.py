@@ -310,7 +310,7 @@ class PotentialBase(CommonBase):
         return self.__class__.__name__
 
     def __eq__(self, other):
-        return (self.parameters == other.parameters) and (str(self) == str(other))
+        return np.all(self.parameters == other.parameters) and (str(self) == str(other))
 
     def __ne__(self, other):
         return not self.__eq__(other)
