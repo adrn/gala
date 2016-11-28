@@ -56,7 +56,9 @@ class Hamiltonian(CommonBase):
 
         # extra terms from the frame
         dH += self.frame._gradient(w, t=t)
-        dH[:,self._pot_ndim:] += -self.potential._gradient(q, t=t)
+        dH[:,self._pot_ndim:] += self.potential._gradient(q, t=t)
+        for i in range(self._pot_ndim):
+            dH[:,self._pot_ndim+i] = -dH[:,self._pot_ndim+i]
 
         return dH
 

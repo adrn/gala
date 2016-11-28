@@ -124,13 +124,13 @@ class TestKeplerRotatingFrame(_TestBase):
 
         w0 = CartesianPhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.,0.])
 
-        # TODO: why doesn't this work when cython_if_possible=True
-        orbit = self.obj.integrate_orbit(w0, dt=1., n_steps=1000,
-                                         cython_if_possible=True,
-                                         Integrator=DOPRI853Integrator)
+        for bl in [True, False]:
+            orbit = self.obj.integrate_orbit(w0, dt=1., n_steps=1000,
+                                             cython_if_possible=bl,
+                                             Integrator=DOPRI853Integrator)
 
-        assert np.allclose(orbit.pos.value[0], 1., atol=1E-7)
-        assert np.allclose(orbit.pos.value[1:], 0., atol=1E-7)
+            assert np.allclose(orbit.pos.value[0], 1., atol=1E-7)
+            assert np.allclose(orbit.pos.value[1:], 0., atol=1E-7)
 
 class TestKepler2RotatingFrame(_TestBase):
     Omega = [1.,1.,1.]*u.one
@@ -149,17 +149,17 @@ class TestKepler2RotatingFrame(_TestBase):
         #
         w0 = CartesianPhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.1,0.])
 
-        orbit = self.obj.integrate_orbit(w0, dt=0.1, n_steps=10000,
-                                         cython_if_possible=False,
-                                         Integrator=DOPRI853Integrator)
+        for bl in [True, False]:
+            orbit = self.obj.integrate_orbit(w0, dt=0.1, n_steps=10000,
+                                             cython_if_possible=bl,
+                                             Integrator=DOPRI853Integrator)
 
-        L = orbit.angular_momentum()
-        C = orbit.energy()[:,0] - np.sum(self.Omega[:,None] * L, axis=0)
-        dC = np.abs((C[1:]-C[0])/C[0])
-        assert np.all(dC < 1E-9) # conserve Jacobi constant
+            L = orbit.angular_momentum()
+            C = orbit.energy()[:,0] - np.sum(self.Omega[:,None] * L, axis=0)
+            dC = np.abs((C[1:]-C[0])/C[0])
+            assert np.all(dC < 1E-9) # conserve Jacobi constant
 
         # rot_orbit = to_rotating_frame(self.Omega, orbit)
-
         # import matplotlib.pyplot as plt
         # fig,axes = plt.subplots(1,2,figsize=(10,4.5))
         # axes[0].plot(orbit.pos.value[0], orbit.pos.value[1], ls='none', alpha=0.4)
