@@ -110,25 +110,36 @@ class TestLogPotentialStaticFrame(_TestBase):
         pass
 
 class TestKeplerRotatingFrame(_TestBase):
+    Omega = [0., 0, 1.]*u.one
     obj = Hamiltonian(KeplerPotential(m=1., units=dimensionless),
-                      ConstantRotatingFrame(Omega=[0,0,1.], units=dimensionless))
+                      ConstantRotatingFrame(Omega=Omega, units=dimensionless))
 
     @pytest.mark.skip("Not implemented")
     def test_hessian(self):
         pass
 
     def test_integrate(self):
-        Omega = [0,0,1.]*u.one
 
         w0 = CartesianPhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.,0.])
 
         # TODO: why doesn't this work when cython_if_possible=True
         orbit = self.obj.integrate_orbit(w0, dt=1., n_steps=1000,
-                                         cython_if_possible=False,
+                                         cython_if_possible=True,
                                          Integrator=DOPRI853Integrator)
 
         assert np.allclose(orbit.pos.value[0], 1., atol=1E-7)
         assert np.allclose(orbit.pos.value[1:], 0., atol=1E-7)
+
+class TestKepler2RotatingFrame(_TestBase):
+    Omega = [1.,1.,1.]*u.one
+    obj = Hamiltonian(KeplerPotential(m=1., units=dimensionless),
+                      ConstantRotatingFrame(Omega=Omega, units=dimensionless))
+
+    @pytest.mark.skip("Not implemented")
+    def test_hessian(self):
+        pass
+
+    def test_integrate(self):
 
         # --------------------------------------------------------------
         # when Omega is off from orbital frequency
@@ -139,47 +150,28 @@ class TestKeplerRotatingFrame(_TestBase):
                                          cython_if_possible=False,
                                          Integrator=DOPRI853Integrator)
 
-        rot_orbit = to_rotating_frame(Omega, orbit)
+        L = orbit.angular_momentum()
+        C = orbit.energy()[:,0] - np.sum(self.Omega[:,None] * L, axis=0)
+        dC = np.abs((C[1:]-C[0])/C[0])
+        assert np.all(dC < 1E-9) # conserve Jacobi constant
 
-        import matplotlib.pyplot as plt
-        fig,axes = plt.subplots(1,2,figsize=(10,4.5))
-        axes[0].plot(orbit.pos.value[0], orbit.pos.value[1], ls='none', alpha=0.4)
-        axes[1].plot(rot_orbit.pos.value[0], rot_orbit.pos.value[1], ls='none', alpha=0.4)
-        plt.show()
+        # rot_orbit = to_rotating_frame(self.Omega, orbit)
 
-# class TestLogPotentialRotatingFrame(_TestBase):
-#     obj = Hamiltonian(SphericalNFWPotential(v_c=0.2, r_s=20., units=galactic),
-#                       ConstantRotatingFrame(Omega=[0,0,20.]*u.km/u.s/u.kpc, units=galactic))
+        # import matplotlib.pyplot as plt
+        # fig,axes = plt.subplots(1,2,figsize=(10,4.5))
+        # axes[0].plot(orbit.pos.value[0], orbit.pos.value[1], ls='none', alpha=0.4)
+        # axes[1].plot(rot_orbit.pos.value[0], rot_orbit.pos.value[1], ls='none', alpha=0.4)
 
-#     @pytest.mark.skip("Not implemented")
-#     def test_hessian(self):
-#         pass
+        # fig,axes = plt.subplots(1,2,figsize=(10,4.5))
 
-#     def test_integrate(self):
-#         import matplotlib.pyplot as plt
+        # L = orbit.angular_momentum()
+        # C = orbit.energy()[:,0] - np.sum(self.Omega[:,None] * L, axis=0)
+        # print(C.shape)
+        # axes[0].semilogy(np.abs((C[1:]-C[0])/C[0]), marker='')
 
-#         Omega = [0,0,20.]*u.km/u.s/u.kpc
-#         w0 = CartesianPhaseSpacePosition(pos=[10.,0,0.]*u.kpc,
-#                                          vel=[0,200,0.]*u.km/u.s)
-#         rot_w0 = to_rotating_frame(Omega, w0, t=0*u.Myr)
+        # L = rot_orbit.angular_momentum()
+        # C = rot_orbit.energy(self.obj)[:,0] - np.sum(self.Omega[:,None] * L, axis=0)
+        # print(C.shape)
+        # axes[1].semilogy(np.abs((C[1:]-C[0])/C[0]), marker='')
 
-#         orbit = self.obj.integrate_orbit(rot_w0, dt=1., n_steps=1000,
-#                                          cython_if_possible=False,
-#                                          Integrator=DOPRI853Integrator)
-#         orbit.plot(linestyle='none', alpha=0.25)
-#         plt.show()
-
-#         return
-
-#         # ---
-#         H2 = Hamiltonian(SphericalNFWPotential(v_c=0.2, r_s=20., units=galactic),
-#                          StaticFrame(units=galactic))
-#         w02 = CartesianPhaseSpacePosition(pos=[10.,0,0.]*u.kpc,
-#                                           vel=[0,200,0.]*u.km/u.s)
-#         orbit2 = H2.integrate_orbit(w02, dt=0.5, n_steps=10000)
-#         orbit2.plot(linestyle='none', alpha=0.25)
-
-#         rot_orbit = to_rotating_frame(-Omega, orbit2)
-#         rot_orbit.plot(linestyle='none', alpha=0.25)
-
-#         plt.show()
+        # plt.show()
