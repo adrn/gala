@@ -10,15 +10,15 @@ import time
 # Third-party
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 from scipy.misc import derivative
 from astropy.extern.six.moves import cPickle as pickle
 
 # Project
-from ....integrate import DOPRI853Integrator, LeapfrogIntegrator
 from ..io import load
+from ..core import CompositePotential
 from ....units import UnitSystem, DimensionlessUnitSystem
 from ....dynamics import CartesianPhaseSpacePosition
+from ....integrate import LeapfrogIntegrator
 
 def partial_derivative(func, point, dim_ix=0, **kwargs):
     xyz = np.array(point, copy=True)
@@ -99,7 +99,7 @@ class PotentialTestBase(object):
 
     def test_compare(self):
         # skip if composite potentials
-        if 'Composite' in self.potential.__class__.__name__:
+        if isinstance(self.potential, CompositePotential):
             return
 
         elif len(self.potential.parameters) == 0:
