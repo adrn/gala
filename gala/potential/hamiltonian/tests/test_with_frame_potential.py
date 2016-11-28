@@ -5,10 +5,10 @@ import astropy.units as u
 import pytest
 
 # Project
+from .helpers import _TestBase
 from .. import Hamiltonian
 from ...potential.builtin import SphericalNFWPotential, KeplerPotential
 from ...frame.builtin import StaticFrame, ConstantRotatingFrame
-from ...tests.helpers import _TestBase
 from ....units import galactic, dimensionless
 from ....dynamics import CartesianPhaseSpacePosition
 from ....integrate import DOPRI853Integrator
@@ -22,6 +22,7 @@ from gala.dynamics import PhaseSpacePosition, Orbit
 def to_rotating_frame(omega, w, t=None):
     """
     TODO: figure out units shit for omega and t
+    TODO: move this to be a ConstantRotatingFrame method
     """
 
     if not hasattr(omega, 'unit'):
@@ -111,6 +112,7 @@ class TestLogPotentialStaticFrame(_TestBase):
 
 class TestKeplerRotatingFrame(_TestBase):
     Omega = [0., 0, 1.]*u.one
+    E_unit = u.one
     obj = Hamiltonian(KeplerPotential(m=1., units=dimensionless),
                       ConstantRotatingFrame(Omega=Omega, units=dimensionless))
 
@@ -132,6 +134,7 @@ class TestKeplerRotatingFrame(_TestBase):
 
 class TestKepler2RotatingFrame(_TestBase):
     Omega = [1.,1.,1.]*u.one
+    E_unit = u.one
     obj = Hamiltonian(KeplerPotential(m=1., units=dimensionless),
                       ConstantRotatingFrame(Omega=Omega, units=dimensionless))
 

@@ -5,7 +5,7 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # This project
-from ...units import solarsystem
+from ....units import solarsystem
 from ..util import from_equation
 from .helpers import PotentialTestBase
 
@@ -29,16 +29,20 @@ class TestHarmonicOscillatorFromEquation(EquationBase):
     potential = Potential(k=1.)
     w0 = [1.,0.]
 
-class TestHarmonicOscillatorFromEquationUnits(EquationBase):
-    Potential = from_equation("1/2*k*x**2", vars="x", pars="k",
-                              name='HarmonicOscillator',
-                              hessian=True)
-    potential = Potential(k=1., units=solarsystem)
-    w0 = [1.,0.]
+    def test_derp(self):
+        import numpy as np
+        self.potential.gradient(np.random.random(size=(1,13)))
 
-class TestKeplerFromEquation(EquationBase):
-    Potential = from_equation("-G*M/sqrt(x**2+y**2+z**2)", vars=["x","y","z"],
-                              pars=["G","M"], name='Kepler',
-                              hessian=True)
-    potential = Potential(G=1., M=1., units=solarsystem)
-    w0 = [1.,0.,0.,0.,6.28,0.]
+# class TestHarmonicOscillatorFromEquationUnits(EquationBase):
+#     Potential = from_equation("1/2*k*x**2", vars="x", pars="k",
+#                               name='HarmonicOscillator',
+#                               hessian=True)
+#     potential = Potential(k=1., units=solarsystem)
+#     w0 = [1.,0.]
+
+# class TestKeplerFromEquation(EquationBase):
+#     Potential = from_equation("-G*M/sqrt(x**2+y**2+z**2)", vars=["x","y","z"],
+#                               pars=["G","M"], name='Kepler',
+#                               hessian=True)
+#     potential = Potential(G=1., M=1., units=solarsystem)
+#     w0 = [1.,0.,0.,0.,6.28,0.]

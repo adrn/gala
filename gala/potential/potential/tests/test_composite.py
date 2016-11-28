@@ -10,11 +10,11 @@ import pytest
 import numpy as np
 
 # This project
-from ...integrate import LeapfrogIntegrator, DOPRI853Integrator
 from ..core import *
 from ..builtin import *
 from ..ccompositepotential import *
-from ...units import solarsystem
+from ....integrate import LeapfrogIntegrator, DOPRI853Integrator
+from ....units import solarsystem
 
 class CompositeHelper(object):
 

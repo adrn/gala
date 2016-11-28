@@ -14,7 +14,7 @@ import numpy as np
 from .cybuiltin import HernquistPotential, MiyamotoNagaiPotential, \
     LeeSutoTriaxialNFWPotential, SphericalNFWPotential, LogarithmicPotential
 from ..ccompositepotential import CCompositePotential
-from ...units import galactic
+from ....units import galactic
 
 __all__ = ['LM10Potential'] # ['TriaxialMWPotential']
 

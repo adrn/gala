@@ -14,6 +14,7 @@ ORB = CartesianOrbit
 
 class _TestBase(object):
     use_half_ndim = False
+    E_unit = u.erg/u.kg
 
     @classmethod
     def setup_class(cls):
@@ -91,7 +92,7 @@ class _TestBase(object):
         for arr,shp in zip(self.w0s, self.energy_return_shapes):
             v = self.obj.energy(arr)
             assert v.shape == shp
-            assert v.unit.is_equivalent(u.erg/u.kg)
+            assert v.unit.is_equivalent(self.E_unit)
 
     def test_gradient(self):
         for arr,shp in zip(self.w0s, self.gradient_return_shapes):

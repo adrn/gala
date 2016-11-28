@@ -18,7 +18,7 @@ from ..core import CompositePotential
 from ..ccompositepotential import CCompositePotential
 from ..builtin import IsochronePotential, KeplerPotential
 from ..builtin.special import LM10Potential
-from ...units import DimensionlessUnitSystem, galactic
+from ....units import DimensionlessUnitSystem, galactic
 
 def test_read_plummer():
     potential = load(get_pkg_data_filename('Plummer.yml'))
