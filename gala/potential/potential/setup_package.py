@@ -44,4 +44,5 @@ def get_package_data():
             ['*.h', '*.pyx', '*.pxd', '*/*.pyx', '*/*.pxd',
              'builtin/builtin_potentials.h',
              'builtin/builtin_potentials.c'
-             'src/cpotential.h', 'src/potential.c']}
+             'src/cpotential.h', 'src/potential.c',
+             'tests/*.yml']}
