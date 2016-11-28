@@ -98,14 +98,14 @@ class PotentialTestBase(object):
             assert "{}=".format(k) in pot_repr
 
     def test_compare(self):
-        other = self.potential.__class__(self.potential.units, **self.potential.parameters)
+        other = self.potential.__class__(units=self.potential.units, **self.potential.parameters)
         assert other == self.potential
 
         pars = self.potential.parameters.copy()
         for k in pars.keys():
             if k != 0:
                 pars[k] = 1.1*pars[k]
-        other = self.potential.__class__(self.potential.units, **pars)
+        other = self.potential.__class__(units=self.potential.units, **pars)
         assert other != self.potential
 
     def test_plot(self):
