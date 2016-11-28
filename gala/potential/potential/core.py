@@ -310,7 +310,10 @@ class PotentialBase(CommonBase):
         return self.__class__.__name__
 
     def __eq__(self, other):
-        return np.all(self.parameters == other.parameters) and (str(self) == str(other))
+        # the funkiness in the below is in case there are array parameters:
+        par_bool = [(k1==k2) and np.all(self.parameters[k1] == other.parameters[k2])
+                    for k1,k2 in zip(self.parameters.keys(), other.parameters.keys())]
+        return np.all(par_bool) and (str(self) == str(other))
 
     def __ne__(self, other):
         return not self.__eq__(other)
