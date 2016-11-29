@@ -133,8 +133,8 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
         double[:,::1] d0_vec = np.random.uniform(size=(noffset_orbits,ndim))
 
         # whoa, so many dots
-        CPotential cp = <CPotential>(hamiltonian.potential.c_instance.cpotential)
-        CFrame cf = hamiltonian.frame.c_instance.cframe
+        CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
+        CFrame cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
     # store initial conditions
     for i in range(norbits):
