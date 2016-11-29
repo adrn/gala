@@ -138,6 +138,16 @@ class Hamiltonian(CommonBase):
         """
         raise NotImplementedError()
 
+    def jacobi_energy(self, w):
+        """
+        TODO: docstring
+        TODO: if not rotating frame, raise error
+        """
+        L = w.angular_momentum()
+        E = w.energy(self)
+        C = E - np.einsum('i,i...->...', self.frame.Omega, L).reshape(E.shape)
+        return C
+
     # ========================================================================
     # Python special methods
     #

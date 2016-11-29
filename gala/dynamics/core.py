@@ -6,6 +6,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 import warnings
+import inspect
 
 # Third-party
 from astropy import log as logger
@@ -185,8 +186,52 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
 
         return new_pos, new_vel
 
-    def to_frame(self, frame, galactocentric_frame=coord.Galactocentric(),
-                 vcirc=None, vlsr=None):
+    def to_frame(self, frame, current_frame, t=0., **kwargs):
+        """
+        TODO:
+
+        Parameters
+        ----------
+        frame : `gala.potential.CFrameBase`
+            The frame to transform to.
+        current_frame : `gala.potential.CFrameBase`
+            The current frame the phase-space position is in.
+        t : numeric, quantity_like, array_like (optional)
+            The time to do the transformation.
+
+        Returns
+        -------
+        psp : `gala.dynamics.CartesianPhaseSpacePosition`
+            The phase-space position in the new reference frame.
+
+        """
+
+        from ..potential.frame.builtin import StaticFrame, ConstantRotatingFrame
+        from ..potential.frame.builtin.transformations import (static_to_constant_rotating,
+                                                               constant_rotating_to_static)
+
+        if (inspect.isclass(frame) and issubclass(frame, coord.BaseCoordinateFrame)) \
+            or isinstance(frame, coord.BaseCoordinateFrame):
+            import warnings
+            warnings.warn("This function now expects a `gala.potential.Frame` instance. To "
+                          " transform to an Astropy coordinate frame, use the `.to_coord_frame()`"
+                          " method instead.", DeprecationWarning)
+            return self.to_coord_frame(frame=frame, **kwargs)
+
+        if isinstance(frame, StaticFrame) and isinstance(current_frame, ConstantRotatingFrame):
+            pos,vel = static_to_constant_rotating(frame, current_frame, self, t=t)
+
+        elif isinstance(frame, ConstantRotatingFrame) and isinstance(current_frame, StaticFrame):
+            pos,vel = constant_rotating_to_static(current_frame, frame, self, t=t)
+
+        else:
+            raise ValueError("Unsupported frame transformation: {} to {}".format(current_frame,
+                                                                                 frame))
+
+        return CartesianPhaseSpacePosition(pos=pos, vel=vel)
+
+    def to_coord_frame(self, frame, galactocentric_frame=coord.Galactocentric(),
+                       vcirc=None, vlsr=None):
         """
         Transform the orbit from Galactocentric, cartesian coordinates to
         Heliocentric coordinates in the specified Astropy coordinate frame.

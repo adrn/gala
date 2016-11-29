@@ -6,8 +6,10 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 import warnings
+import inspect
 
 # Third-party
+import astropy.coordinates as coord
 from astropy import log as logger
 import astropy.units as u
 uno = u.dimensionless_unscaled
@@ -346,6 +348,57 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
             hamiltonian = self.hamiltonian
 
         return hamiltonian(self)
+
+    def to_frame(self, frame, current_frame=None, **kwargs):
+        """
+        TODO:
+
+        Parameters
+        ----------
+        frame : `gala.potential.CFrameBase`
+            The frame to transform to.
+        current_frame : `gala.potential.CFrameBase` (optional)
+            If the Orbit has no associated Hamiltonian, this specifies the
+            current frame of the orbit.
+
+        Returns
+        -------
+        orbit : `gala.dynamics.CartesianOrbit`
+            The orbit in the new reference frame.
+
+        """
+        from ..potential.frame.builtin import StaticFrame, ConstantRotatingFrame
+        from ..potential.frame.builtin.transformations import (static_to_constant_rotating,
+                                                               constant_rotating_to_static)
+
+        if (inspect.isclass(frame) and issubclass(frame, coord.BaseCoordinateFrame)) \
+            or isinstance(frame, coord.BaseCoordinateFrame):
+            import warnings
+            warnings.warn("This function now expects a `gala.potential.Frame` instance. To "
+                          " transform to an Astropy coordinate frame, use the `.to_coord_frame()`"
+                          " method instead.", DeprecationWarning)
+            return self.to_coord_frame(frame=frame, **kwargs)
+
+        if not hasattr(self, 'hamiltonian') or self.hamiltonian is None:
+            if current_frame is None:
+                raise ValueError("If this object has no associated Hamiltonian, you must "
+                                 "provide the current frame using current_frame.")
+
+        else:
+            current_frame = self.hamiltonian.frame
+
+        if isinstance(frame, StaticFrame) and isinstance(current_frame, ConstantRotatingFrame):
+            pos,vel = static_to_constant_rotating(frame, current_frame, self)
+
+        elif isinstance(frame, ConstantRotatingFrame) and isinstance(current_frame, StaticFrame):
+            pos,vel = constant_rotating_to_static(current_frame, frame, self)
+
+        else:
+            raise ValueError("Unsupported frame transformation: {} to {}".format(current_frame,
+                                                                                 frame))
+
+        # TODO: bad - Hamiltonian is dropped!
+        return CartesianOrbit(pos=pos, vel=vel, t=self.t)
 
     # ------------------------------------------------------------------------
     # Misc. useful methods

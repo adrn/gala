@@ -1,1 +1,1 @@
-from .frames import *
+from .frames import StaticFrame, ConstantRotatingFrame

@@ -7,7 +7,7 @@ import pytest
 # Project
 from .helpers import _TestBase
 from .. import Hamiltonian
-from ...potential.builtin import SphericalNFWPotential, KeplerPotential
+from ...potential.builtin import SphericalNFWPotential, KeplerPotential, HernquistPotential
 from ...frame.builtin import StaticFrame, ConstantRotatingFrame
 from ....units import galactic, dimensionless
 from ....dynamics import CartesianPhaseSpacePosition
@@ -159,22 +159,35 @@ class TestKepler2RotatingFrame(_TestBase):
             dC = np.abs((C[1:]-C[0])/C[0])
             assert np.all(dC < 1E-9) # conserve Jacobi constant
 
-        # rot_orbit = to_rotating_frame(self.Omega, orbit)
-        # import matplotlib.pyplot as plt
-        # fig,axes = plt.subplots(1,2,figsize=(10,4.5))
-        # axes[0].plot(orbit.pos.value[0], orbit.pos.value[1], ls='none', alpha=0.4)
-        # axes[1].plot(rot_orbit.pos.value[0], rot_orbit.pos.value[1], ls='none', alpha=0.4)
+@pytest.mark.parametrize("name,Omega", [
+    ("z-aligned co-rotating", [0, 0, 1.]*u.one),
+    ("z-aligned", [0, 0, 1.5834]*u.one),
+    ("random", [0.95792653, 0.82760659, 0.66443135]*u.one),
+])
+def test_velocity_rot_frame(name, Omega):
+    # _i = inertial
+    # _r = rotating
 
-        # fig,axes = plt.subplots(1,2,figsize=(10,4.5))
+    r0 = 1.245246
+    potential = HernquistPotential(m=1., c=0.2, units=dimensionless)
+    vc = potential.circular_velocity([r0,0,0]).value[0]
+    w0 = CartesianPhaseSpacePosition(pos=[r0, 0, 0.],
+                                     vel=[0, vc, 0.])
+    Omega = Omega * [0., 0., vc/r0]
 
-        # L = orbit.angular_momentum()
-        # C = orbit.energy()[:,0] - np.sum(self.Omega[:,None] * L, axis=0)
-        # print(C.shape)
-        # axes[0].semilogy(np.abs((C[1:]-C[0])/C[0]), marker='')
+    H_r = Hamiltonian(potential, ConstantRotatingFrame(Omega=Omega, units=dimensionless))
+    H = Hamiltonian(potential, StaticFrame(units=dimensionless))
 
-        # L = rot_orbit.angular_momentum()
-        # C = rot_orbit.energy(self.obj)[:,0] - np.sum(self.Omega[:,None] * L, axis=0)
-        # print(C.shape)
-        # axes[1].semilogy(np.abs((C[1:]-C[0])/C[0]), marker='')
+    orbit_i = H.integrate_orbit(w0, dt=0.1, n_steps=1000, Integrator=DOPRI853Integrator)
+    orbit_r = H_r.integrate_orbit(w0, dt=0.1, n_steps=1000, Integrator=DOPRI853Integrator)
 
-        # plt.show()
+    orbit_i2r = orbit_i.to_frame(ConstantRotatingFrame(Omega=Omega, units=dimensionless))
+    orbit_r2i = orbit_r.to_frame(StaticFrame(units=dimensionless))
+
+    dx = lambda x1,x2: np.sqrt(np.sum((x1-x2)**2, axis=0))
+
+    assert np.all(dx(orbit_i.pos.value, orbit_r2i.pos.value) < 1E-12)
+    assert np.all(dx(orbit_i.vel.value, orbit_r2i.vel.value) < 1E-12)
+
+    assert np.all(dx(orbit_r.pos.value, orbit_i2r.pos.value) < 1E-12)
+    assert np.all(dx(orbit_r.vel.value, orbit_i2r.vel.value) < 1E-12)

@@ -11,6 +11,7 @@ from __future__ import division, print_function
 from collections import OrderedDict
 
 # Third-party
+import astropy.units as u
 import numpy as np
 cimport numpy as np
 np.import_array()
@@ -18,6 +19,7 @@ np.import_array()
 # Project
 from ..cframe import CFrameBase
 from ..cframe cimport CFrameWrapper
+from ....units import dimensionless
 
 cdef extern from "src/funcdefs.h":
     ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim) nogil
@@ -88,16 +90,24 @@ class ConstantRotatingFrame(CFrameBase):
     def __init__(self, Omega, units=None):
         """
         TODO: write docstring
-        TODO: always convert to rad/<time unit>
+        TODO: always convert to rad/<time unit> ?
         """
-        Omega = np.array(Omega)
+        self.Omega = Omega
+        if units is None and not hasattr(Omega, 'unit'):
+            units = dimensionless
+            self.Omega = self.Omega*u.one
 
-        if not Omega.shape == (3,):
+        if not hasattr(self.Omega, 'unit'):
+            raise TypeError('Input rotation vector must be a Quantity.')
+
+        self.Omega = self.Omega.to(units['angle']/units['time'], u.dimensionless_angles())
+
+        if not self.Omega.shape == (3,):
             raise ValueError("Invalid input for rotation vector Omega.")
 
         p = OrderedDict()
-        p['Omega_x'] = Omega[0]
-        p['Omega_y'] = Omega[1]
-        p['Omega_z'] = Omega[2]
+        p['Omega_x'] = self.Omega[0].value
+        p['Omega_y'] = self.Omega[1].value
+        p['Omega_z'] = self.Omega[2].value
         super(ConstantRotatingFrame, self).__init__(ConstantRotatingFrameWrapper,
                                                     p, units)
