@@ -12,7 +12,7 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-from ..common import CommonBase
+from .core import FrameBase
 from ..potential.cpotential import _validate_pos_arr
 from ...dynamics import CartesianPhaseSpacePosition
 
@@ -79,7 +79,7 @@ cdef class CFrameWrapper:
         return np.array(d2H)
 
 # TODO: make sure this doesn't appear in docs - Frames are really only used internally
-class CFrameBase(CommonBase):
+class CFrameBase(FrameBase):
 
     def __init__(self, Wrapper, parameters, units):
         self.units = self._validate_units(units)
