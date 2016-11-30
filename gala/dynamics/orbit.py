@@ -200,7 +200,7 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         The Hamiltonian that the orbit was integrated in.
 
     """
-    def __init__(self, pos, vel, t=None, hamiltonian=None, potential=None):
+    def __init__(self, pos, vel, t=None, hamiltonian=None, potential=None, frame=None):
 
         super(CartesianOrbit, self).__init__(pos=pos, vel=vel)
 
@@ -216,13 +216,26 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
 
         self.t = t
 
-        if potential is not None and hamiltonian is None:
-            warnings.warn("Use the `hamiltonian=` argument instead.", DeprecationWarning)
+        if hamiltonian is not None:
 
-            from ..potential import Hamiltonian
-            hamiltonian = Hamiltonian(potential)
+            if potential is not None or frame is not None:
+                raise ValueError("If passing in a Hamiltonian, do not also pass a potential "
+                                 "or frame.")
 
-        self.hamiltonian = hamiltonian
+            self.potential = hamiltonian.potential
+            self.frame = hamiltonian.frame
+
+        elif potential is not None and frame is not None:
+            self.potential = potential
+            self.frame = frame
+
+        elif potential is None and frame is None:
+            self.potential = None
+            self.frame = None
+
+        else:
+            raise ValueError("Invalid initialization - you must either specify (1) both a "
+                             "potential and a frame, (2) a Hamiltonian instance, or (3) neither.")
 
     def __getitem__(self, slyce):
         if isinstance(slyce, np.ndarray) or isinstance(slyce, list):
@@ -242,7 +255,8 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         vel = self.vel[_slyce]
 
         if isinstance(_slyce[1], int) or pos.ndim == 1:
-            return CartesianPhaseSpacePosition(pos=pos, vel=vel)
+            return CartesianPhaseSpacePosition(pos=pos, vel=vel, frame=self.frame)
+
         else:
             return self.__class__(pos=pos, vel=vel,
                                   hamiltonian=self.hamiltonian, **kw)
@@ -286,10 +300,22 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
             w = w[...,np.newaxis] # one orbit
         return w
 
+    @property
+    def hamiltonian(self):
+        if self.potential is None and self.frame is None:
+            return None
+
+        try:
+            return self._hamiltonian
+        except AttributeError:
+            from ..potential import Hamiltonian
+            self._hamiltonian = Hamiltonian(potential=self.potential, frame=self.frame)
+
+        return self._hamiltonian
+
     # ------------------------------------------------------------------------
     # Computed dynamical quantities
-    # ------------------------------------------------------------------------
-
+    #
     @property
     def r(self):
         """
@@ -367,38 +393,20 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
             The orbit in the new reference frame.
 
         """
-        from ..potential.frame.builtin import StaticFrame, ConstantRotatingFrame
-        from ..potential.frame.builtin.transformations import (static_to_constant_rotating,
-                                                               constant_rotating_to_static)
 
-        if (inspect.isclass(frame) and issubclass(frame, coord.BaseCoordinateFrame)) \
-            or isinstance(frame, coord.BaseCoordinateFrame):
-            import warnings
-            warnings.warn("This function now expects a `gala.potential.Frame` instance. To "
-                          " transform to an Astropy coordinate frame, use the `.to_coord_frame()`"
-                          " method instead.", DeprecationWarning)
-            return self.to_coord_frame(frame=frame, **kwargs)
+        kw = kwargs.copy()
 
-        if not hasattr(self, 'hamiltonian') or self.hamiltonian is None:
-            if current_frame is None:
-                raise ValueError("If this object has no associated Hamiltonian, you must "
-                                 "provide the current frame using current_frame.")
+        # TODO: need a better way to do this!
+        from ..potential.frame.builtin import ConstantRotatingFrame
+        for fr in [frame, current_frame, self.frame]:
+            if isinstance(fr, ConstantRotatingFrame):
+                if 't' not in kw:
+                    kw['t'] = self.t
 
-        else:
-            current_frame = self.hamiltonian.frame
+        psp = super(CartesianOrbit, self).to_frame(frame, current_frame, **kw)
 
-        if isinstance(frame, StaticFrame) and isinstance(current_frame, ConstantRotatingFrame):
-            pos,vel = static_to_constant_rotating(frame, current_frame, self)
-
-        elif isinstance(frame, ConstantRotatingFrame) and isinstance(current_frame, StaticFrame):
-            pos,vel = constant_rotating_to_static(current_frame, frame, self)
-
-        else:
-            raise ValueError("Unsupported frame transformation: {} to {}".format(current_frame,
-                                                                                 frame))
-
-        # TODO: bad - Hamiltonian is dropped!
-        return CartesianOrbit(pos=pos, vel=vel, t=self.t)
+        return CartesianOrbit(pos=psp.pos, vel=psp.vel, t=self.t,
+                              frame=frame, potential=self.potential)
 
     # ------------------------------------------------------------------------
     # Misc. useful methods

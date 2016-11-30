@@ -72,7 +72,7 @@ def static_to_constant_rotating(frame_i, frame_r, w, t=None):
 
     return x_i2r * frame_i.units['length'], v_i2r * frame_i.units['length']/frame_i.units['time']
 
-def constant_rotating_to_static(frame_i, frame_r, w, t=None):
+def constant_rotating_to_static(frame_r, frame_i, w, t=None):
     """
     Transform from a constantly rotating frame to a static, inertial frame.
 

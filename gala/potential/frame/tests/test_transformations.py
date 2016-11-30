@@ -36,12 +36,12 @@ def _helper(fi, fr, w, t=None):
 
     pos_r,vel_r = static_to_constant_rotating(fi, fr, w, t=t)
     w2 = CartesianOrbit(pos=pos_r, vel=vel_r, t=t)
-    pos_i,vel_i = constant_rotating_to_static(fi, fr, w2, t=t)
+    pos_i,vel_i = constant_rotating_to_static(fr, fi, w2, t=t)
 
     assert quantity_allclose(pos_i, w.pos)
     assert quantity_allclose(vel_i, w.vel)
 
-    pos_i,vel_i = constant_rotating_to_static(fi, fr, w, t=t)
+    pos_i,vel_i = constant_rotating_to_static(fr, fi, w, t=t)
     w2 = CartesianOrbit(pos=pos_i, vel=vel_i, t=t)
     pos_r,vel_r = static_to_constant_rotating(fi, fr, w2, t=t)
 
