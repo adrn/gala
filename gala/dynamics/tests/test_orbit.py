@@ -18,6 +18,7 @@ from ..core import CartesianPhaseSpacePosition
 from ..orbit import *
 from ...integrate import DOPRI853Integrator
 from ...potential import Hamiltonian, HernquistPotential, LogarithmicPotential, KeplerPotential
+from ...potential.frame import StaticFrame, ConstantRotatingFrame
 from ...units import galactic, solarsystem
 
 def make_known_orbit(tmpdir, x, vx, potential, name):
@@ -141,6 +142,29 @@ def test_initialize():
     v = np.random.random(size=(2,10))
     o = CartesianOrbit(pos=x, vel=v)
     assert o.ndim == 2
+    assert o.hamiltonian is None
+
+    # Check that passing in frame and potential or Hamiltonian works
+    x = np.random.random(size=(3,10))*u.kpc
+    v = np.random.random(size=(3,10))*u.km/u.s
+    frame = StaticFrame(galactic)
+    potential = LogarithmicPotential(v_c=1., r_h=0.14, q1=1., q2=0.9, q3=1.,
+                                     units=galactic)
+
+    o = CartesianOrbit(pos=x, vel=v, frame=frame)
+    assert o.hamiltonian is None
+    assert o.potential is None
+
+    o = CartesianOrbit(pos=x, vel=v, potential=potential)
+    assert o.hamiltonian is None
+    assert o.frame is None
+
+    o = CartesianOrbit(pos=x, vel=v, potential=potential, frame=frame)
+    o = CartesianOrbit(pos=x, vel=v,
+                       hamiltonian=Hamiltonian(potential, frame=frame))
+    assert isinstance(o.hamiltonian, Hamiltonian)
+    assert isinstance(o.potential, LogarithmicPotential)
+    assert isinstance(o.frame, StaticFrame)
 
 def test_from_w():
 
@@ -221,27 +245,27 @@ def test_represent_as():
     sph_pos, sph_vel = o.represent_as(SphericalRepresentation)
     assert sph_pos.distance.unit == u.kpc
 
-def test_to_frame():
+def test_to_coord_frame():
     # simple / unitless
     x = np.random.random(size=(3,10))
     v = np.random.random(size=(3,10))
     o = CartesianOrbit(pos=x, vel=v)
 
     with pytest.raises(u.UnitConversionError):
-        o.to_frame(Galactic)
+        o.to_coord_frame(Galactic)
 
     # simple / with units
     x = np.random.random(size=(3,10))*u.kpc
     v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
     o = CartesianOrbit(pos=x, vel=v)
-    coo,vel = o.to_frame(Galactic)
+    coo,vel = o.to_coord_frame(Galactic)
     assert coo.name == 'galactic'
 
     # simple / with units and time
     x = np.random.random(size=(3,128,10))*u.kpc
     v = np.random.normal(0.,100.,size=(3,128,10))*u.km/u.s
     o = CartesianOrbit(pos=x, vel=v)
-    coo,vel = o.to_frame(Galactic)
+    coo,vel = o.to_coord_frame(Galactic)
     assert coo.name == 'galactic'
 
 def test_w():
@@ -266,7 +290,7 @@ def test_w():
     p = HernquistPotential(units=galactic, m=1E11, c=0.25)
     x = np.random.random(size=(3,10))*u.kpc
     v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
-    o = CartesianOrbit(pos=x, vel=v, potential=p)
+    o = CartesianOrbit(pos=x, vel=v, potential=p, frame=StaticFrame(galactic))
     w = o.w()
     assert np.allclose(x.value, w[:3,:,0])
     assert np.allclose(v.value, (w[3:,:,0]*u.kpc/u.Myr).to(u.km/u.s).value)
@@ -288,7 +312,7 @@ def test_energy():
     p = HernquistPotential(units=galactic, m=1E11, c=0.25)
     x = np.random.random(size=(3,10))*u.kpc
     v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
-    o = CartesianOrbit(pos=x, vel=v, potential=p)
+    o = CartesianOrbit(pos=x, vel=v, potential=p, frame=StaticFrame(galactic))
     PE = o.potential_energy()
     E = o.energy()
 
@@ -392,3 +416,26 @@ def test_combine():
     assert o.pos.shape == (3,30,1)
     assert o.vel.shape == (3,30,1)
     assert o.t.shape == (30,)
+
+def test_frame_transform():
+    static = StaticFrame(galactic)
+    rotating = ConstantRotatingFrame(Omega=[0.53,1.241,0.9394]*u.rad/u.Myr, units=galactic)
+
+    x = np.random.random(size=(3,10))*u.kpc
+    v = np.random.random(size=(3,10))*u.km/u.s
+    t = np.linspace(0,1,10)*u.Myr
+
+    # no frame specified at init
+    o = CartesianOrbit(pos=x, vel=v, t=t)
+    with pytest.raises(ValueError):
+        o.to_frame(rotating)
+
+    o.to_frame(rotating, current_frame=static, t=o.t)
+    o.to_frame(rotating, current_frame=static)
+
+    # frame specified at init
+    o = CartesianOrbit(pos=x, vel=v, t=t,
+                       frame=static,
+                       potential=HernquistPotential(m=1E10, c=0.5, units=galactic))
+    o.to_frame(rotating)
+    o.to_frame(rotating, t=o.t)

@@ -3,13 +3,12 @@
 from __future__ import division, print_function
 
 # Third-party
-import astropy.units as u
 import numpy as np
 
 # Gala
 from ....dynamics import Orbit
 
-__all__ = ['static_to_constant_rotating', 'constant_rotating_to_static']
+__all__ = ['static_to_constantrotating', 'constantrotating_to_static']
 
 def rodrigues_axis_angle_rotate(x, vec, theta):
     """
@@ -32,7 +31,7 @@ def rodrigues_axis_angle_rotate(x, vec, theta):
 
     return out.T
 
-def static_to_constant_rotating(frame_i, frame_r, w, t=None):
+def static_to_constantrotating(frame_i, frame_r, w, t=None):
     """
     Transform from an inertial static frame to a rotating frame.
 
@@ -72,7 +71,7 @@ def static_to_constant_rotating(frame_i, frame_r, w, t=None):
 
     return x_i2r * frame_i.units['length'], v_i2r * frame_i.units['length']/frame_i.units['time']
 
-def constant_rotating_to_static(frame_r, frame_i, w, t=None):
+def constantrotating_to_static(frame_r, frame_i, w, t=None):
     """
     Transform from a constantly rotating frame to a static, inertial frame.
 

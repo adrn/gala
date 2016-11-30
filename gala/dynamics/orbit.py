@@ -6,10 +6,8 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 import warnings
-import inspect
 
 # Third-party
-import astropy.coordinates as coord
 from astropy import log as logger
 import astropy.units as u
 uno = u.dimensionless_unscaled
@@ -217,25 +215,12 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         self.t = t
 
         if hamiltonian is not None:
-
-            if potential is not None or frame is not None:
-                raise ValueError("If passing in a Hamiltonian, do not also pass a potential "
-                                 "or frame.")
-
             self.potential = hamiltonian.potential
             self.frame = hamiltonian.frame
 
-        elif potential is not None and frame is not None:
+        else:
             self.potential = potential
             self.frame = frame
-
-        elif potential is None and frame is None:
-            self.potential = None
-            self.frame = None
-
-        else:
-            raise ValueError("Invalid initialization - you must either specify (1) both a "
-                             "potential and a frame, (2) a Hamiltonian instance, or (3) neither.")
 
     def __getitem__(self, slyce):
         if isinstance(slyce, np.ndarray) or isinstance(slyce, list):
@@ -259,7 +244,8 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
 
         else:
             return self.__class__(pos=pos, vel=vel,
-                                  hamiltonian=self.hamiltonian, **kw)
+                                  potential=self.potential,
+                                  frame=self.frame, **kw)
 
     def w(self, units=None):
         """
@@ -302,7 +288,7 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
 
     @property
     def hamiltonian(self):
-        if self.potential is None and self.frame is None:
+        if self.potential is None or self.frame is None:
             return None
 
         try:
