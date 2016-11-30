@@ -166,8 +166,10 @@ class HenonHeilesPotential(CPotentialBase):
                                                    ndim=2,
                                                    units=units)
 
-# ============================================================================
 
+# ============================================================================
+# Spherical models
+#
 cdef class KeplerWrapper(CPotentialWrapper):
 
     def __init__(self, G, parameters):
@@ -216,7 +218,6 @@ class KeplerPotential(CPotentialBase):
         super(KeplerPotential, self).__init__(parameters=parameters,
                                               units=units)
 
-# ============================================================================
 
 cdef class IsochroneWrapper(CPotentialWrapper):
 
@@ -303,7 +304,6 @@ class IsochronePotential(CPotentialBase):
     #     from ...dynamics.analyticactionangle import isochrone_aa_to_xv
     #     return isochrone_aa_to_xv(actions, angles, self)
 
-# ============================================================================
 
 cdef class HernquistWrapper(CPotentialWrapper):
 
@@ -356,7 +356,6 @@ class HernquistPotential(CPotentialBase):
         super(HernquistPotential, self).__init__(parameters=parameters,
                                                  units=units)
 
-# ============================================================================
 
 cdef class PlummerWrapper(CPotentialWrapper):
 
@@ -406,7 +405,6 @@ class PlummerPotential(CPotentialBase):
         super(PlummerPotential, self).__init__(parameters=parameters,
                                                units=units)
 
-# ============================================================================
 
 cdef class JaffeWrapper(CPotentialWrapper):
 
@@ -456,7 +454,6 @@ class JaffePotential(CPotentialBase):
         super(JaffePotential, self).__init__(parameters=parameters,
                                              units=units)
 
-# ============================================================================
 
 cdef class StoneWrapper(CPotentialWrapper):
 
@@ -509,7 +506,6 @@ class StonePotential(CPotentialBase):
         super(StonePotential, self).__init__(parameters=parameters,
                                              units=units)
 
-# ============================================================================
 
 cdef class SphericalNFWWrapper(CPotentialWrapper):
 
@@ -561,7 +557,8 @@ class SphericalNFWPotential(CPotentialBase):
                                                     units=units)
 
 # ============================================================================
-
+# Flattened, axisymmetric models
+#
 cdef class SatohWrapper(CPotentialWrapper):
 
     def __init__(self, G, parameters):
@@ -613,7 +610,6 @@ class SatohPotential(CPotentialBase):
         super(SatohPotential, self).__init__(parameters=parameters,
                                              units=units)
 
-# ============================================================================
 
 cdef class MiyamotoNagaiWrapper(CPotentialWrapper):
 
@@ -668,7 +664,6 @@ class MiyamotoNagaiPotential(CPotentialBase):
         super(MiyamotoNagaiPotential, self).__init__(parameters=parameters,
                                                      units=units)
 
-# ============================================================================
 
 cdef class FlattenedNFWWrapper(CPotentialWrapper):
 
@@ -724,8 +719,8 @@ class FlattenedNFWPotential(CPotentialBase):
                                                     units=units)
 
 # ============================================================================
+# Triaxial models
 #
-
 cdef class LeeSutoTriaxialNFWWrapper(CPotentialWrapper):
 
     def __init__(self, G, parameters):
@@ -782,7 +777,6 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
         super(LeeSutoTriaxialNFWPotential, self).__init__(parameters=parameters,
                                                           units=units)
 
-# ============================================================================
 
 cdef class LogarithmicWrapper(CPotentialWrapper):
 
@@ -847,73 +841,3 @@ class LogarithmicPotential(CPotentialBase):
         if not isinstance(self.units, DimensionlessUnitSystem):
             if self.units['angle'] != u.radian:
                 raise ValueError("Angle unit must be radian.")
-
-# ============================================================================
-# TODO: why do these have to be in this file?
-
-# cdef class CCompositePotentialWrapper(CPotentialWrapper):
-
-#     def __init__(self, list potentials):
-#         cdef:
-#             CPotential cp
-#             CPotential tmp_cp
-#             int i
-#             CPotentialWrapper[::1] _cpotential_arr
-
-#         self._potentials = potentials
-#         _cpotential_arr = np.array(potentials)
-
-#         n_components = len(potentials)
-#         self._n_params = np.zeros(n_components, dtype=np.int32)
-#         for i in range(n_components):
-#             self._n_params[i] = _cpotential_arr[i]._n_params[0]
-
-#         cp.n_components = n_components
-#         cp.n_params = &(self._n_params[0])
-#         cp.n_dim = 0
-
-#         for i in range(n_components):
-#             tmp_cp = _cpotential_arr[i].cpotential
-#             cp.parameters[i] = &(_cpotential_arr[i]._params[0])
-#             cp.value[i] = tmp_cp.value[0]
-#             cp.density[i] = tmp_cp.density[0]
-#             cp.gradient[i] = tmp_cp.gradient[0]
-#             cp.hessian[i] = tmp_cp.hessian[0]
-
-#             if cp.n_dim == 0:
-#                 cp.n_dim = tmp_cp.n_dim
-#             elif cp.n_dim != tmp_cp.n_dim:
-#                 raise ValueError("Input potentials must have same number of coordinate dimensions")
-
-#         self.cpotential = cp
-
-#     def __reduce__(self):
-#         return (self.__class__, (list(self._potentials),))
-
-# class CCompositePotential(CPotentialBase, CompositePotential):
-
-#     def __init__(self, **potentials):
-#         CompositePotential.__init__(self, **potentials)
-
-#     def _reset_c_instance(self):
-#         self._potential_list = []
-#         for p in self.values():
-#             self._potential_list.append(p.c_instance)
-#         self.G = p.G
-#         self.c_instance = CCompositePotentialWrapper(self._potential_list)
-
-#     def __setitem__(self, *args, **kwargs):
-#         CompositePotential.__setitem__(self, *args, **kwargs)
-#         self._reset_c_instance()
-
-#     def __setstate__(self, state):
-#         # when rebuilding from a pickle, temporarily release lock to add components
-#         self.lock = False
-#         for name,potential in state:
-#             self[name] = potential
-#         self._reset_c_instance()
-#         self.lock = True
-
-#     def __reduce__(self):
-#         """ Properly package the object for pickling """
-#         return self.__class__, (), list(self.items())
