@@ -8,8 +8,8 @@ import pytest
 
 # Project
 from ..builtin import StaticFrame, ConstantRotatingFrame
-from ..builtin.transformations import (static_to_constant_rotating,
-                                       constant_rotating_to_static,
+from ..builtin.transformations import (static_to_constantrotating,
+                                       constantrotating_to_static,
                                        rodrigues_axis_angle_rotate)
 from ....dynamics import CartesianOrbit, CartesianPhaseSpacePosition
 from ....units import galactic, dimensionless
@@ -34,16 +34,16 @@ def test_axis_angle_rotate():
 
 def _helper(fi, fr, w, t=None):
 
-    pos_r,vel_r = static_to_constant_rotating(fi, fr, w, t=t)
+    pos_r,vel_r = static_to_constantrotating(fi, fr, w, t=t)
     w2 = CartesianOrbit(pos=pos_r, vel=vel_r, t=t)
-    pos_i,vel_i = constant_rotating_to_static(fr, fi, w2, t=t)
+    pos_i,vel_i = constantrotating_to_static(fr, fi, w2, t=t)
 
     assert quantity_allclose(pos_i, w.pos)
     assert quantity_allclose(vel_i, w.vel)
 
-    pos_i,vel_i = constant_rotating_to_static(fr, fi, w, t=t)
+    pos_i,vel_i = constantrotating_to_static(fr, fi, w, t=t)
     w2 = CartesianOrbit(pos=pos_i, vel=vel_i, t=t)
-    pos_r,vel_r = static_to_constant_rotating(fi, fr, w2, t=t)
+    pos_r,vel_r = static_to_constantrotating(fi, fr, w2, t=t)
 
     assert quantity_allclose(pos_r, w.pos)
     assert quantity_allclose(vel_r, w.vel)

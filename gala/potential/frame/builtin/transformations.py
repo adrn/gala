@@ -60,7 +60,7 @@ def static_to_constantrotating(frame_i, frame_r, w, t=None):
         t = w.t.decompose(frame_i.units).value
 
     # get rotation angle, axis vs. time
-    vec = Omega / np.linalg.norm(Omega)
+    vec = -Omega / np.linalg.norm(Omega)
     theta = np.linalg.norm(Omega) * t
 
     pos = w.pos.decompose(frame_i.units).value
@@ -90,7 +90,7 @@ def constantrotating_to_static(frame_r, frame_i, w, t=None):
     vel : `~astropy.units.Quantity`
         Velocity in static, inertial frame.
     """
-    Omega = frame_r.Omega.decompose(frame_i.units).value
+    Omega = -frame_r.Omega.decompose(frame_i.units).value
 
     if not isinstance(w, Orbit) and t is None:
         raise ValueError("Time array must be provided if not passing an "

@@ -159,12 +159,12 @@ class TestKepler2RotatingFrame(_TestBase):
             dC = np.abs((C[1:]-C[0])/C[0])
             assert np.all(dC < 1E-9) # conserve Jacobi constant
 
-@pytest.mark.parametrize("name,Omega", [
-    ("z-aligned co-rotating", [0, 0, 1.]*u.one),
-    ("z-aligned", [0, 0, 1.5834]*u.one),
-    ("random", [0.95792653, 0.82760659, 0.66443135]*u.one),
+@pytest.mark.parametrize("name,Omega,tol", [
+    ("z-aligned co-rotating", [0, 0, 1.]*u.one, 1E-12),
+    ("z-aligned", [0, 0, 1.5834]*u.one, 1E-12),
+    ("random", [0.95792653, 0.82760659, 0.66443135]*u.one, 1E-10),
 ])
-def test_velocity_rot_frame(name, Omega):
+def test_velocity_rot_frame(name, Omega, tol):
     # _i = inertial
     # _r = rotating
 
@@ -173,7 +173,7 @@ def test_velocity_rot_frame(name, Omega):
     vc = potential.circular_velocity([r0,0,0]).value[0]
     w0 = CartesianPhaseSpacePosition(pos=[r0, 0, 0.],
                                      vel=[0, vc, 0.])
-    Omega = Omega * [0., 0., vc/r0]
+    Omega = Omega * [1., 1., vc/r0]
 
     H_r = Hamiltonian(potential, ConstantRotatingFrame(Omega=Omega, units=dimensionless))
     H = Hamiltonian(potential, StaticFrame(units=dimensionless))
@@ -186,8 +186,13 @@ def test_velocity_rot_frame(name, Omega):
 
     dx = lambda x1,x2: np.sqrt(np.sum((x1-x2)**2, axis=0))
 
-    assert np.all(dx(orbit_i.pos.value, orbit_r2i.pos.value) < 1E-12)
-    assert np.all(dx(orbit_i.vel.value, orbit_r2i.vel.value) < 1E-12)
+    # import matplotlib.pyplot as plt
+    # plt.plot(orbit_i.pos.value[0], orbit_i.pos.value[1])
+    # plt.plot(orbit_r2i.pos.value[0], orbit_r2i.pos.value[1])
+    # plt.show()
 
-    assert np.all(dx(orbit_r.pos.value, orbit_i2r.pos.value) < 1E-12)
-    assert np.all(dx(orbit_r.vel.value, orbit_i2r.vel.value) < 1E-12)
+    assert np.all(dx(orbit_i.pos.value, orbit_r2i.pos.value) < tol)
+    assert np.all(dx(orbit_i.vel.value, orbit_r2i.vel.value) < tol)
+
+    assert np.all(dx(orbit_r.pos.value, orbit_i2r.pos.value) < tol)
+    assert np.all(dx(orbit_r.vel.value, orbit_i2r.vel.value) < tol)
