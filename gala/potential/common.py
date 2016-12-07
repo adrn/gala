@@ -27,13 +27,21 @@ class CommonBase(object):
 
         return units
 
-    def _prepare_parameters(self, parameters, units):
+    def _prepare_parameters(self, parameters, ptypes, units):
         pars = OrderedDict()
         for k,v in parameters.items():
             if hasattr(v, 'unit'):
                 pars[k] = v.decompose(units)
+
+            elif k in ptypes:
+                # HACK TODO: remove when fix potentials that ask for scale velocity
+                if ptypes[k] == 'velocity':
+                    pars[k] = v * units['length']/units['time']
+                else:
+                    pars[k] = v * units[ptypes[k]]
+
             else:
-                pars[k] = v*u.one
+                pars[k] = v * u.one
         return pars
 
     def _remove_units_prepare_shape(self, x):

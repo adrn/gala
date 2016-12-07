@@ -128,7 +128,6 @@ def isochrone_to_aa(w, potential):
 
     LR = Lz/L
     sinu = (LR/np.sqrt(1.-LR*LR)/np.tan(theta))
-    sinu = sinu
     uu = np.arcsin(sinu)
 
     uu[sinu > 1.] = np.pi/2.

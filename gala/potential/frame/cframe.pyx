@@ -81,9 +81,14 @@ cdef class CFrameWrapper:
 # TODO: make sure this doesn't appear in docs - Frames are really only used internally
 class CFrameBase(FrameBase):
 
-    def __init__(self, Wrapper, parameters, units):
+    def __init__(self, Wrapper, parameters, units, parameter_physical_types=None):
         self.units = self._validate_units(units)
-        self.parameters = self._prepare_parameters(parameters, self.units)
+
+        if parameter_physical_types is None:
+            parameter_physical_types = dict()
+        self._ptypes = parameter_physical_types
+
+        self.parameters = self._prepare_parameters(parameters, self._ptypes, self.units)
         self.c_parameters = np.array(list(self.parameters.values()))
         self.c_instance = Wrapper(*self.c_parameters)
 

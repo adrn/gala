@@ -163,6 +163,7 @@ class HenonHeilesPotential(CPotentialBase):
     def __init__(self, units=None):
         parameters = OrderedDict()
         super(HenonHeilesPotential, self).__init__(parameters=parameters,
+                                                   parameter_physical_types=dict(),
                                                    ndim=2,
                                                    units=units)
 
@@ -214,8 +215,13 @@ class KeplerPotential(CPotentialBase):
     """
     def __init__(self, m, units):
         parameters = OrderedDict()
+        ptypes = OrderedDict()
+
         parameters['m'] = m
+        ptypes['m'] = 'mass'
+
         super(KeplerPotential, self).__init__(parameters=parameters,
+                                              parameter_physical_types=ptypes,
                                               units=units)
 
 
@@ -261,10 +267,17 @@ class IsochronePotential(CPotentialBase):
 
     """
     def __init__(self, m, b, units):
+        ptypes = OrderedDict()
         parameters = OrderedDict()
+
         parameters['m'] = m
+        ptypes['m'] = 'mass'
+
         parameters['b'] = b
+        ptypes['b'] = 'length'
+
         super(IsochronePotential, self).__init__(parameters=parameters,
+                                                 parameter_physical_types=ptypes,
                                                  units=units)
 
     def action_angle(self, w):
@@ -351,9 +364,16 @@ class HernquistPotential(CPotentialBase):
     """
     def __init__(self, m, c, units):
         parameters = OrderedDict()
+        ptypes = OrderedDict()
+
         parameters['m'] = m
+        ptypes['m'] = 'mass'
+
         parameters['c'] = c
+        ptypes['c'] = 'length'
+
         super(HernquistPotential, self).__init__(parameters=parameters,
+                                                 parameter_physical_types=ptypes,
                                                  units=units)
 
 
@@ -400,9 +420,16 @@ class PlummerPotential(CPotentialBase):
     """
     def __init__(self, m, b, units):
         parameters = OrderedDict()
+        ptypes = OrderedDict()
+
         parameters['m'] = m
+        ptypes['m'] = 'mass'
+
         parameters['b'] = b
+        ptypes['b'] = 'length'
+
         super(PlummerPotential, self).__init__(parameters=parameters,
+                                               parameter_physical_types=ptypes,
                                                units=units)
 
 
@@ -449,9 +476,16 @@ class JaffePotential(CPotentialBase):
     """
     def __init__(self, m, c, units):
         parameters = OrderedDict()
+        ptypes = OrderedDict()
+
         parameters['m'] = m
+        ptypes['m'] = 'mass'
+
         parameters['c'] = c
+        ptypes['c'] = 'length'
+
         super(JaffePotential, self).__init__(parameters=parameters,
+                                             parameter_physical_types=ptypes,
                                              units=units)
 
 
@@ -500,10 +534,19 @@ class StonePotential(CPotentialBase):
     """
     def __init__(self, m, r_c, r_h, units):
         parameters = OrderedDict()
+        ptypes = OrderedDict()
+
         parameters['m'] = m
+        ptypes['m'] = 'mass'
+
         parameters['r_c'] = r_c
+        ptypes['r_c'] = 'length'
+
         parameters['r_h'] = r_h
+        ptypes['r_h'] = 'r_h'
+
         super(StonePotential, self).__init__(parameters=parameters,
+                                             parameter_physical_types=ptypes,
                                              units=units)
 
 
@@ -551,9 +594,16 @@ class SphericalNFWPotential(CPotentialBase):
     """
     def __init__(self, v_c, r_s, units):
         parameters = OrderedDict()
+        ptypes = OrderedDict()
+
         parameters['v_c'] = v_c
+        ptypes['v_c'] = 'velocity'
+
         parameters['r_s'] = r_s
+        ptypes['r_s'] = 'length'
+
         super(SphericalNFWPotential, self).__init__(parameters=parameters,
+                                                    parameter_physical_types=ptypes,
                                                     units=units)
 
 # ============================================================================
@@ -604,10 +654,19 @@ class SatohPotential(CPotentialBase):
     """
     def __init__(self, m, a, b, units):
         parameters = OrderedDict()
+        ptypes = OrderedDict()
+
         parameters['m'] = m
+        ptypes['m'] = 'mass'
+
         parameters['a'] = a
+        ptypes['a'] = 'length'
+
         parameters['b'] = b
+        ptypes['b'] = 'length'
+
         super(SatohPotential, self).__init__(parameters=parameters,
+                                             parameter_physical_types=ptypes,
                                              units=units)
 
 
@@ -658,10 +717,19 @@ class MiyamotoNagaiPotential(CPotentialBase):
     """
     def __init__(self, m, a, b, units):
         parameters = OrderedDict()
+        ptypes = OrderedDict()
+
         parameters['m'] = m
+        ptypes['m'] = 'mass'
+
         parameters['a'] = a
+        ptypes['a'] = 'length'
+
         parameters['b'] = b
+        ptypes['b'] = 'length'
+
         super(MiyamotoNagaiPotential, self).__init__(parameters=parameters,
+                                                     parameter_physical_types=ptypes,
                                                      units=units)
 
 
@@ -712,10 +780,18 @@ class FlattenedNFWPotential(CPotentialBase):
     """
     def __init__(self, v_c, r_s, q_z, units):
         parameters = OrderedDict()
+        ptypes = OrderedDict()
+
         parameters['v_c'] = v_c
+        ptypes['v_c'] = 'velocity'
+
         parameters['r_s'] = r_s
+        ptypes['r_s'] = 'length'
+
         parameters['q_z'] = q_z
+
         super(FlattenedNFWPotential, self).__init__(parameters=parameters,
+                                                    parameter_physical_types=ptypes,
                                                     units=units)
 
 # ============================================================================
@@ -769,12 +845,20 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
     """
     def __init__(self, v_c, r_s, a, b, c, units):
         parameters = OrderedDict()
+        ptypes = OrderedDict()
+
         parameters['v_c'] = v_c
+        ptypes['v_c'] = 'velocity'
+
         parameters['r_s'] = r_s
+        ptypes['r_s'] = 'length'
+
         parameters['a'] = a
         parameters['b'] = b
         parameters['c'] = c
+
         super(LeeSutoTriaxialNFWPotential, self).__init__(parameters=parameters,
+                                                          parameter_physical_types=ptypes,
                                                           units=units)
 
 
@@ -829,13 +913,23 @@ class LogarithmicPotential(CPotentialBase):
     """
     def __init__(self, v_c, r_h, q1, q2, q3, phi=0., units=None):
         parameters = OrderedDict()
+        ptypes = OrderedDict()
+
         parameters['v_c'] = v_c
+        ptypes['v_c'] = 'velocity'
+
         parameters['r_h'] = r_h
+        ptypes['r_h'] = 'length'
+
         parameters['q1'] = q1
         parameters['q2'] = q2
         parameters['q3'] = q3
+
         parameters['phi'] = phi
+        ptypes['phi'] = 'angle'
+
         super(LogarithmicPotential, self).__init__(parameters=parameters,
+                                                   parameter_physical_types=ptypes,
                                                    units=units)
 
         if not isinstance(self.units, DimensionlessUnitSystem):
