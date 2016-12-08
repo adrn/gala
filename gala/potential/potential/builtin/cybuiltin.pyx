@@ -29,7 +29,7 @@ from ..core import CompositePotential
 from ..cpotential import CPotentialBase
 from ..cpotential cimport CPotentialWrapper
 from ...frame.cframe cimport CFrameWrapper
-from ....units import DimensionlessUnitSystem
+from ....units import dimensionless, DimensionlessUnitSystem
 
 cdef extern from "src/funcdefs.h":
     ctypedef double (*densityfunc)(double t, double *pars, double *q, int n_dim, int n_dim) nogil
@@ -92,7 +92,9 @@ cdef extern from "potential/builtin/builtin_potentials.h":
 
     double flattenednfw_value(double t, double *pars, double *q, int n_dim) nogil
     void flattenednfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double flattenednfw_density(double t, double *pars, double *q, int n_dim) nogil
+
+    double triaxialnfw_value(double t, double *pars, double *q, int n_dim) nogil
+    void triaxialnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
 
     double satoh_value(double t, double *pars, double *q, int n_dim) nogil
     void satoh_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
@@ -115,9 +117,10 @@ cdef extern from "potential/builtin/builtin_potentials.h":
 
 __all__ = ['HenonHeilesPotential', # Misc. potentials
            'KeplerPotential', 'HernquistPotential', 'IsochronePotential', 'PlummerPotential',
-           'JaffePotential', 'SphericalNFWPotential', 'StonePotential', # Spherical models
-           'SatohPotential', 'MiyamotoNagaiPotential', 'FlattenedNFWPotential', # Flattened models
-           'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential', # Triaxial models
+           'JaffePotential', 'StonePotential', # Spherical models
+           'SatohPotential', 'MiyamotoNagaiPotential', # Disk models
+           'NFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential', # Triaxial models
+           'SphericalNFWPotential', 'FlattenedNFWPotential' # Deprecated
            ]
 
 # ============================================================================
@@ -543,68 +546,12 @@ class StonePotential(CPotentialBase):
         ptypes['r_c'] = 'length'
 
         parameters['r_h'] = r_h
-        ptypes['r_h'] = 'r_h'
+        ptypes['r_h'] = 'length'
 
         super(StonePotential, self).__init__(parameters=parameters,
                                              parameter_physical_types=ptypes,
                                              units=units)
 
-
-cdef class SphericalNFWWrapper(CPotentialWrapper):
-
-    def __init__(self, G, parameters):
-        cdef CPotential cp
-
-        # This is the only code that needs to change per-potential
-        cp.value[0] = <energyfunc>(sphericalnfw_value)
-        cp.density[0] = <densityfunc>(sphericalnfw_density)
-        cp.gradient[0] = <gradientfunc>(sphericalnfw_gradient)
-        cp.hessian[0] = <hessianfunc>(sphericalnfw_hessian)
-        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-        cp.n_components = 1
-        self._params = np.array([G] + list(parameters), dtype=np.float64)
-        self._n_params = np.array([len(self._params)], dtype=np.int32)
-        cp.n_params = &(self._n_params[0])
-        cp.parameters[0] = &(self._params[0])
-        cp.n_dim = 3
-        self.cpotential = cp
-
-class SphericalNFWPotential(CPotentialBase):
-    r"""
-    SphericalNFWPotential(v_c, r_s, units)
-
-    Spherical NFW potential. Separate from the triaxial potential below to
-    optimize for speed. Much faster than computing the triaxial case.
-
-    .. math::
-
-        \Phi(r) = -\frac{v_c^2}{\sqrt{\ln 2 - \frac{1}{2}}} \frac{\ln(1 + r/r_s)}{r/r_s}
-
-    Parameters
-    ----------
-    v_c : numeric
-        Circular velocity at the scale radius.
-    r_s : numeric
-        Scale radius.
-    units : `~gala.units.UnitSystem` (optional)
-        Set of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units.
-
-    """
-    def __init__(self, v_c, r_s, units):
-        parameters = OrderedDict()
-        ptypes = OrderedDict()
-
-        parameters['v_c'] = v_c
-        ptypes['v_c'] = 'velocity'
-
-        parameters['r_s'] = r_s
-        ptypes['r_s'] = 'length'
-
-        super(SphericalNFWPotential, self).__init__(parameters=parameters,
-                                                    parameter_physical_types=ptypes,
-                                                    units=units)
 
 # ============================================================================
 # Flattened, axisymmetric models
@@ -733,6 +680,30 @@ class MiyamotoNagaiPotential(CPotentialBase):
                                                      units=units)
 
 
+# ============================================================================
+# Triaxial models
+#
+
+cdef class SphericalNFWWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters):
+        cdef CPotential cp
+
+        # This is the only code that needs to change per-potential
+        cp.value[0] = <energyfunc>(sphericalnfw_value)
+        cp.density[0] = <densityfunc>(sphericalnfw_density)
+        cp.gradient[0] = <gradientfunc>(sphericalnfw_gradient)
+        cp.hessian[0] = <hessianfunc>(sphericalnfw_hessian)
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+        cp.n_params = &(self._n_params[0])
+        cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
+        self.cpotential = cp
+
 cdef class FlattenedNFWWrapper(CPotentialWrapper):
 
     def __init__(self, G, parameters):
@@ -740,7 +711,7 @@ cdef class FlattenedNFWWrapper(CPotentialWrapper):
 
         # This is the only code that needs to change per-potential
         cp.value[0] = <energyfunc>(flattenednfw_value)
-        cp.density[0] = <densityfunc>(flattenednfw_density)
+        cp.density[0] = <densityfunc>(nan_density)
         cp.gradient[0] = <gradientfunc>(flattenednfw_gradient)
         cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -753,59 +724,15 @@ cdef class FlattenedNFWWrapper(CPotentialWrapper):
         cp.n_dim = 3
         self.cpotential = cp
 
-class FlattenedNFWPotential(CPotentialBase):
-    r"""
-    FlattenedNFWPotential(v_c, r_s, q_z, units)
-
-    Flattened NFW potential. Separate from the triaxial potential below to
-    optimize for speed. Much faster than computing the triaxial case.
-
-    .. math::
-
-        \Phi(r) = -\frac{v_c^2}{\sqrt{\ln 2 - \frac{1}{2}}} \frac{\ln(1 + r/r_s)}{r/r_s}\\
-        r^2 = x^2 + y^2 + z^2/q_z^2
-
-    Parameters
-    ----------
-    v_c : numeric
-        Circular velocity at the scale radius.
-    r_s : numeric
-        Scale radius.
-    q_z : numeric
-        Flattening.
-    units : `~gala.units.UnitSystem` (optional)
-        Set of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units.
-
-    """
-    def __init__(self, v_c, r_s, q_z, units):
-        parameters = OrderedDict()
-        ptypes = OrderedDict()
-
-        parameters['v_c'] = v_c
-        ptypes['v_c'] = 'velocity'
-
-        parameters['r_s'] = r_s
-        ptypes['r_s'] = 'length'
-
-        parameters['q_z'] = q_z
-
-        super(FlattenedNFWPotential, self).__init__(parameters=parameters,
-                                                    parameter_physical_types=ptypes,
-                                                    units=units)
-
-# ============================================================================
-# Triaxial models
-#
-cdef class LeeSutoTriaxialNFWWrapper(CPotentialWrapper):
+cdef class TriaxialNFWWrapper(CPotentialWrapper):
 
     def __init__(self, G, parameters):
         cdef CPotential cp
 
         # This is the only code that needs to change per-potential
-        cp.value[0] = <energyfunc>(leesuto_value)
-        cp.density[0] = <densityfunc>(leesuto_density)
-        cp.gradient[0] = <gradientfunc>(leesuto_gradient)
+        cp.value[0] = <energyfunc>(triaxialnfw_value)
+        cp.density[0] = <densityfunc>(nan_density) # TODO?
+        cp.gradient[0] = <gradientfunc>(triaxialnfw_gradient)
         cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -817,33 +744,128 @@ cdef class LeeSutoTriaxialNFWWrapper(CPotentialWrapper):
         cp.n_dim = 3
         self.cpotential = cp
 
-class LeeSutoTriaxialNFWPotential(CPotentialBase):
+class NFWPotential(CPotentialBase):
     r"""
-    LeeSutoTriaxialNFWPotential(v_c, r_s, a, b, c, units)
+    NFWPotential(m, r_s, a=1, b=1, c=1, units)
 
-    Approximation of a Triaxial NFW Potential with the flattening in the density,
-    not the potential. See Lee & Suto (2003) for details.
+    General Navarro-Frenk-White potential. Supports spherical, flattened, and
+    triaxiality but the flattening is introduced into the potential, not the
+    density, and can therefore lead to unphysical mass distributions. For a
+    triaxial NFW potential that supports flattening in the density, see
+    :class:`gala.potential.LeeSutoTriaxialNFWPotential`.
 
-    See: http://adsabs.harvard.edu/abs/2003ApJ...585..151L
+    .. math::
+
+        \Phi(r) = -\frac{v_c^2}{\sqrt{\ln 2 - \frac{1}{2}}} \frac{\ln(1 + r/r_s)}{r/r_s}
 
     Parameters
     ----------
-    v_c : numeric
-        Circular velocity.
-    r_s : numeric
+    m : :class:`~astropy.units.Quantity`, numeric [mass]
+        Scale mass.
+    r_s : :class:`~astropy.units.Quantity`, numeric [length]
         Scale radius.
     a : numeric
-        Major axis.
+        Major axis scale.
     b : numeric
-        Intermediate axis.
+        Intermediate axis scale.
     c : numeric
-        Minor axis.
+        Minor axis scale.
     units : `~gala.units.UnitSystem` (optional)
         Set of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
-    def __init__(self, v_c, r_s, a, b, c, units):
+    def __init__(self, m=None, r_s=None, a=1., b=1., c=1., v_c=None, units=dimensionless):
+        # TODO: v_c included in above for backwards-compatibility (and m, r_s default to None)
+
+        if v_c is not None and m is None:
+            import warnings
+            warnings.warn("NFWPotential now expects a scale mass in the default initializer. "
+                          "To initialize from a circular velocity, use the classmethod "
+                          "from_circular_velocity() instead instead.", DeprecationWarning)
+
+            parameters = OrderedDict()
+            ptypes = OrderedDict()
+
+            parameters['v_c'] = v_c
+            ptypes['v_c'] = 'velocity'
+
+            parameters['r_s'] = r_s
+            ptypes['r_s'] = 'length'
+
+            # get appropriate units:
+            parameters = CPotentialBase._prepare_parameters(parameters, ptypes, units)
+
+            # r_ref = r_s for old parametrization
+            m = NFWPotential._vc_rs_rref_to_m(parameters['v_c'], parameters['r_s'],
+                                              parameters['r_s'])
+            m = m.to(units['mass'])
+
+        parameters = OrderedDict()
+        ptypes = OrderedDict()
+
+        parameters['m'] = m
+        ptypes['m'] = 'mass'
+
+        parameters['r_s'] = r_s
+        ptypes['r_s'] = 'length'
+
+        if np.allclose([a, b, c], 1.):
+            NFWWrapper = SphericalNFWWrapper
+
+        elif np.allclose([a, b], 1.):
+            NFWWrapper = FlattenedNFWWrapper
+            parameters['c'] = c
+
+        else:
+            NFWWrapper = TriaxialNFWWrapper
+            parameters['a'] = a
+            parameters['b'] = b
+            parameters['c'] = c
+
+        super(NFWPotential, self).__init__(parameters=parameters,
+                                           parameter_physical_types=ptypes,
+                                           units=units,
+                                           Wrapper=NFWWrapper)
+
+    @staticmethod
+    def from_circular_velocity(v_c, r_s, a=1., b=1., c=1., r_ref=None, units=dimensionless):
+        r"""
+        from_circular_velocity(v_c, r_s, a=1., b=1., c=1., r_ref=None, units=dimensionless)
+
+        Initialize an NFW potential from a circular velocity, scale radius, and
+        reference radius for the circular velocity.
+
+        For scale mass :math:`m_s`, scale radius :math:`r_s`, scaled
+        reference radius :math:`u_{\rm ref} = r_{\rm ref}/r_s`:
+
+        .. math::
+
+            \frac{G\,m_s}{r_s} = \frac{v_c^2}{u_{\rm ref}} \,
+                \left[\frac{u_{\rm ref}}{1+u_{\rm ref}} -
+                \frac{\ln(1+u_{\rm ref})}{u_{\rm ref}^2} \right]^{-1}
+
+        Parameters
+        ----------
+        v_c : :class:`~astropy.units.Quantity`, numeric [velocity]
+            Circular velocity at the reference radius ``r_ref`` (see below).
+        r_s : :class:`~astropy.units.Quantity`, numeric [length]
+            Scale radius.
+        a : numeric
+            Major axis scale.
+        b : numeric
+            Intermediate axis scale.
+        c : numeric
+            Minor axis scale.
+        r_ref : :class:`~astropy.units.Quantity`, numeric [length] (optional)
+            Reference radius at which the circular velocity is given. By default,
+            this is assumed to be the scale radius, ``r_s``.
+
+        """
+
+        if r_ref is None:
+            r_ref = r_s
+
         parameters = OrderedDict()
         ptypes = OrderedDict()
 
@@ -853,13 +875,46 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
         parameters['r_s'] = r_s
         ptypes['r_s'] = 'length'
 
-        parameters['a'] = a
-        parameters['b'] = b
-        parameters['c'] = c
+        parameters['r_ref'] = r_ref
+        ptypes['r_ref'] = 'length'
 
-        super(LeeSutoTriaxialNFWPotential, self).__init__(parameters=parameters,
-                                                          parameter_physical_types=ptypes,
-                                                          units=units)
+        # get appropriate units:
+        parameters = CPotentialBase._prepare_parameters(parameters, ptypes, units)
+
+        m = NFWPotential._vc_rs_rref_to_m(parameters['v_c'], parameters['r_s'], parameters['r_ref'])
+        m = m.to(units['mass'])
+
+        return NFWPotential(m=m, r_s=r_s, a=a, b=b, c=c, units=units)
+
+    @staticmethod
+    def _vc_rs_rref_to_m(v_c, r_s, r_ref):
+        uu = r_ref / r_s
+        vs2 = v_c**2 / uu / (np.log(1+uu)/uu**2 - 1/(uu*(1+uu)))
+        return (r_s*vs2 / G)
+
+# TODO: remove these in next full version
+class SphericalNFWPotential(NFWPotential):
+
+    def __init__(self, v_c, r_s, units=dimensionless):
+        import warnings
+        warnings.warn("This class is now superseded by the single interface to all NFW "
+                      "potentials, `NFWPotential`. Use that instead.", DeprecationWarning)
+        super(SphericalNFWPotential, self).__init__(v_c=v_c, r_s=r_s, units=units)
+
+    def save(self, *args, **kwargs):
+        raise NotImplementedError("Use NFWPotential instead!")
+
+class FlattenedNFWPotential(NFWPotential):
+
+    def __init__(self, v_c, r_s, q_z, units=dimensionless):
+        import warnings
+        warnings.warn("This class is now superseded by the single interface to all NFW "
+                      "potentials, `NFWPotential`. Use that instead.", DeprecationWarning)
+
+        super(FlattenedNFWPotential, self).__init__(v_c=v_c, r_s=r_s, c=q_z, units=units)
+
+    def save(self, *args, **kwargs):
+        raise NotImplementedError("Use NFWPotential instead!")
 
 
 cdef class LogarithmicWrapper(CPotentialWrapper):
@@ -935,3 +990,70 @@ class LogarithmicPotential(CPotentialBase):
         if not isinstance(self.units, DimensionlessUnitSystem):
             if self.units['angle'] != u.radian:
                 raise ValueError("Angle unit must be radian.")
+
+
+cdef class LeeSutoTriaxialNFWWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters):
+        cdef CPotential cp
+
+        # This is the only code that needs to change per-potential
+        cp.value[0] = <energyfunc>(leesuto_value)
+        cp.density[0] = <densityfunc>(leesuto_density)
+        cp.gradient[0] = <gradientfunc>(leesuto_gradient)
+        cp.hessian[0] = <hessianfunc>(nan_hessian) # TODO
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+        cp.n_params = &(self._n_params[0])
+        cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
+        self.cpotential = cp
+
+class LeeSutoTriaxialNFWPotential(CPotentialBase):
+    r"""
+    LeeSutoTriaxialNFWPotential(v_c, r_s, a, b, c, units)
+
+    Approximation of a Triaxial NFW Potential with the flattening in the density,
+    not the potential.
+    See `Lee & Suto (2003) <http://adsabs.harvard.edu/abs/2003ApJ...585..151L>`_
+    for details.
+
+    Parameters
+    ----------
+    v_c : `~astropy.units.Quantity`, numeric
+        Circular velocity at the scale radius.
+    r_h : `~astropy.units.Quantity`, numeric
+        Scale radius.
+    a : numeric
+        Major axis.
+    b : numeric
+        Intermediate axis.
+    c : numeric
+        Minor axis.
+    units : `~gala.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, v_c, r_s, a, b, c, units):
+
+        parameters = OrderedDict()
+        ptypes = OrderedDict()
+
+        parameters['v_c'] = v_c
+        ptypes['v_c'] = 'velocity'
+
+        parameters['r_s'] = r_s
+        ptypes['r_s'] = 'length'
+
+        parameters['a'] = a
+        parameters['b'] = b
+        parameters['c'] = c
+
+        super(LeeSutoTriaxialNFWPotential, self).__init__(parameters=parameters,
+                                                          parameter_physical_types=ptypes,
+                                                          units=units)
+

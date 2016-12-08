@@ -70,6 +70,7 @@ def _parse_component(component, module):
         Potential = getattr(potential, class_name)
     except AttributeError: # HACK: this might be bad to assume
         Potential = getattr(gala_potential, class_name)
+
     return Potential(units=unitsys, **params)
 
 def from_dict(d, module=None):

@@ -435,23 +435,25 @@ double stone_density(double t, double *pars, double *q, int n_dim) {
 double sphericalnfw_value(double t, double *pars, double *q, int n_dim) {
     /*  pars:
             - G (Gravitational constant)
-            - v_c (circular velocity at the scale radius)
+            - m (mass scale)
             - r_s (scale radius)
     */
     double u, v_h2;
-    v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+    // v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+    v_h2 = -pars[0] * pars[1] / pars[2];
     u = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]) / pars[2];
-    return -v_h2 * log(1 + u) / u;
+    return v_h2 * log(1 + u) / u;
 }
 
 void sphericalnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
     /*  pars:
             - G (Gravitational constant)
-            - v_c (circular velocity at the scale radius)
+            - m (mass scale)
             - r_s (scale radius)
     */
     double fac, u, v_h2;
-    v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+    // v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+    v_h2 = pars[0] * pars[1] / pars[2];
 
     u = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]) / pars[2];
     fac = v_h2 / (u*u*u) / (pars[2]*pars[2]) * (log(1+u) - u/(1+u));
@@ -464,10 +466,11 @@ void sphericalnfw_gradient(double t, double *pars, double *q, int n_dim, double 
 double sphericalnfw_density(double t, double *pars, double *q, int n_dim) {
     /*  pars:
             - G (Gravitational constant)
-            - v_c (circular velocity at the scale radius)
+            - m (mass scale)
             - r_s (scale radius)
     */
-    double v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+    // double v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+    double v_h2 = pars[0] * pars[1] / pars[2];
     double r, rho0;
     r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
 
@@ -477,11 +480,12 @@ double sphericalnfw_density(double t, double *pars, double *q, int n_dim) {
 
 double sphericalnfw_hessian(double t, double *pars, double *q, int n_dim, double *hess) {
   /*  pars:
-      - G (Gravitational constant)
-      - v_c (circular velocity at the scale radius)
-      - r_s (scale radius)
+        - G (Gravitational constant)
+        - m (mass scale)
+        - r_s (scale radius)
   */
-  double v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+  // double v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+  double v_h2 = -pars[0] * pars[1] / pars[2];
   double rs = pars[2];
 
   double x = q[0];
@@ -513,25 +517,27 @@ double sphericalnfw_hessian(double t, double *pars, double *q, int n_dim, double
 double flattenednfw_value(double t, double *pars, double *q, int n_dim) {
     /*  pars:
             - G (Gravitational constant)
-            - v_c (circular velocity at the scale radius)
+            - m (scale mass)
             - r_s (scale radius)
-            - q (flattening)
+            - qz (flattening)
     */
     double u, v_h2;
-    v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+    // v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+    v_h2 = -pars[0] * pars[1] / pars[2];
     u = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]/(pars[3]*pars[3])) / pars[2];
-    return -v_h2 * log(1 + u) / u;
+    return v_h2 * log(1 + u) / u;
 }
 
 void flattenednfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
     /*  pars:
             - G (Gravitational constant)
-            - v_c (circular velocity at the scale radius)
+            - m (scale mass)
             - r_s (scale radius)
-            - q (flattening)
+            - qz (flattening)
     */
     double fac, u, v_h2;
-    v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+    // v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+    v_h2 = pars[0] * pars[1] / pars[2];
     u = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]/(pars[3]*pars[3])) / pars[2];
 
     fac = v_h2 / (u*u*u) / (pars[2]*pars[2]) * (log(1+u) - u/(1+u));
@@ -541,32 +547,46 @@ void flattenednfw_gradient(double t, double *pars, double *q, int n_dim, double 
     grad[2] = grad[2] + fac*q[2]/(pars[3]*pars[3]);
 }
 
-double flattenednfw_density(double t, double *pars, double *q, int n_dim) {
+/* ---------------------------------------------------------------------------
+    Triaxial NFW - triaxiality in potential!
+*/
+double triaxialnfw_value(double t, double *pars, double *q, int n_dim) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (scale mass)
+            - r_s (scale radius)
+            - a (major axis)
+            - b (intermediate axis)
+            - c (minor axis)
+    */
+    double u, v_h2;
+    // v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+    v_h2 = -pars[0] * pars[1] / pars[2];
+    u = sqrt(q[0]*q[0]/(pars[3]*pars[3])
+           + q[1]*q[1]/(pars[4]*pars[4])
+           + q[2]*q[2]/(pars[5]*pars[5])) / pars[2];
+    return v_h2 * log(1 + u) / u;
+}
+
+void triaxialnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
     /*  pars:
             - G (Gravitational constant)
             - v_c (circular velocity at the scale radius)
             - r_s (scale radius)
-            - qz (flattening)
+            - q (flattening)
     */
-    double v = pars[1]*pars[1] / (log(2.) - 0.5);
-    double s = pars[2];
-    double qz = pars[3];
-    double x = q[0];
-    double y = q[1];
-    double z = q[2];
+    double fac, u, v_h2;
+    // v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
+    v_h2 = pars[0] * pars[1] / pars[2];
+    u = sqrt(q[0]*q[0]/(pars[3]*pars[3])
+           + q[1]*q[1]/(pars[4]*pars[4])
+           + q[2]*q[2]/(pars[5]*pars[5])) / pars[2];
 
-    return -((2*(s*s)*(v*v)*((-(pow(qz,6)*pow((x*x) + (y*y),2)*
-                 ((-1 + 2*(qz*qz))*(s*s) +
-                   (-1 + 4*(qz*qz))*((x*x) + (y*y)))) -
-              pow(qz,4)*((x*x) + (y*y))*
-               (2*(s*s) + 3*(1 + 2*(qz*qz))*((x*x) + (y*y)))*(z*z) +
-              (qz*qz)*((-3 + 2*(qz*qz))*(s*s) - 9*((x*x) + (y*y)))*
-               pow(z,4) + (-5 + 2*(qz*qz))*pow(z,6))/
-            pow((qz*qz)*((s*s) + (x*x) + (y*y)) + (z*z),2) +
-           ((qz*qz)*(-1 + 2*(qz*qz))*((x*x) + (y*y)) +
-              (3 - 2*(qz*qz))*(z*z))*
-            log(1 + ((x*x) + (y*y) + (z*z)/(qz*qz))/(s*s))))/
-       (pow(qz,4)*pow((x*x) + (y*y) + (z*z)/(qz*qz),3))) / (4*M_PI*pars[0]);
+    fac = v_h2 / (u*u*u) / (pars[2]*pars[2]) * (log(1+u) - u/(1+u));
+
+    grad[0] = grad[0] + fac*q[0]/(pars[3]*pars[3]);
+    grad[1] = grad[1] + fac*q[1]/(pars[4]*pars[4]);
+    grad[2] = grad[2] + fac*q[2]/(pars[5]*pars[5]);
 }
 
 /* ---------------------------------------------------------------------------

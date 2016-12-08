@@ -104,6 +104,10 @@ class ImmutableDict(collections.Mapping):
     def __str__(self):
         return self._dict.__str__()
 
+    def copy(self):
+        import copy
+        return copy.deepcopy(self._dict)
+
 def rolling_window(arr, window_size, stride=1, return_idx=False):
     """
     There is an example of an iterator for pure-Python objects in:

@@ -27,7 +27,8 @@ class CommonBase(object):
 
         return units
 
-    def _prepare_parameters(self, parameters, ptypes, units):
+    @classmethod
+    def _prepare_parameters(cls, parameters, ptypes, units):
         pars = OrderedDict()
         for k,v in parameters.items():
             if hasattr(v, 'unit'):

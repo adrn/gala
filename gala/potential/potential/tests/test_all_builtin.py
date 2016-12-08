@@ -10,6 +10,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 # Third-party
 import numpy as np
 import astropy.units as u
+from astropy.tests.helper import quantity_allclose
 import pytest
 
 # This project
@@ -88,33 +89,52 @@ class TestStone(PotentialTestBase):
     potential = StonePotential(units=galactic, m=1E11, r_c=0.1, r_h=10.)
     w0 = [8.,0.,0.,0.,0.18,0.1]
 
-class TestSphericalNFWPotential(PotentialTestBase):
-    potential = SphericalNFWPotential(units=galactic, v_c=0.35, r_s=12.)
+class TestSphericalNFW(PotentialTestBase):
+    potential = NFWPotential(units=galactic, m=1E11, r_s=12.)
     w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+
+class TestTriaxialNFW(PotentialTestBase):
+    potential = NFWPotential(units=galactic, m=1E11, r_s=12., a=1., b=0.95, c=0.9)
+    w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+
+class TestSphericalNFWFromCircVel(PotentialTestBase):
+    potential = NFWPotential.from_circular_velocity(v_c=220.*u.km/u.s, r_s=20*u.kpc,
+                                                    r_ref=8.*u.kpc, units=galactic)
+    w0 = [19.0,2.7,-0.9,0.00352238,-0.165134,0.0075]
+
+    def test_circ_vel(self):
+        for r_ref in [3., 8., 21.7234]:
+            pot = NFWPotential.from_circular_velocity(v_c=220.*u.km/u.s, r_s=20*u.kpc,
+                                                      r_ref=r_ref*u.kpc, units=galactic)
+            vc = pot.circular_velocity([r_ref,0,0]*u.kpc) # at the reference velocity
+            assert quantity_allclose(vc, 220*u.km/u.s)
 
     def test_against_triaxial(self):
         other = LeeSutoTriaxialNFWPotential(units=galactic,
-                                            v_c=0.35, r_s=12.,
+                                            v_c=200.*u.km/u.s, r_s=20.*u.kpc,
                                             a=1., b=1., c=1.)
 
         v1 = other.value(self.w0[:3])
         v2 = self.potential.value(self.w0[:3])
-        assert np.allclose(v1.value,v2.value)
+        assert quantity_allclose(v1, v2)
 
         a1 = other.gradient(self.w0[:3])
         a2 = self.potential.gradient(self.w0[:3])
-        assert np.allclose(a1.value,a2.value)
+        assert quantity_allclose(a1, a2)
+
+        d1 = other.density(self.w0[:3])
+        d2 = self.potential.density(self.w0[:3])
+        assert quantity_allclose(d1, d2)
 
     def test_mass_enclosed(self):
 
         # true mass profile
-        vc = self.potential.parameters['v_c'].value
+        m = self.potential.parameters['m'].value
         rs = self.potential.parameters['r_s'].value
-        G = self.potential.G
 
         r = np.linspace(1., 400, 100)
         fac = np.log(1 + r/rs) - (r/rs) / (1 + (r/rs))
-        true_mprof = vc**2*rs / (np.log(2)-0.5) / G * fac
+        true_mprof = m * fac
 
         R = np.zeros((3,len(r)))
         R[0,:] = r
@@ -122,9 +142,80 @@ class TestSphericalNFWPotential(PotentialTestBase):
 
         assert np.allclose(true_mprof, esti_mprof.value, rtol=1E-6)
 
-class TestFlattenedNFW(PotentialTestBase):
+class TestSphericalNFWClass(PotentialTestBase):
+    potential = SphericalNFWPotential(units=galactic, v_c=0.2, r_s=12.)
+    w0 = [0.,20.,0.,0.0352238,-0.03579493,0.175]
+
+    @pytest.mark.skip(reason="q_z named different from c")
+    def test_compare(self):
+        pass
+
+    def test_save_load(self, tmpdir):
+        fn = str(tmpdir.join("{}.yml".format(self.name)))
+        with pytest.raises(NotImplementedError):
+            self.potential.save(fn)
+
+class TestFlattenedNFWClass(PotentialTestBase):
     potential = FlattenedNFWPotential(units=galactic, v_c=0.2, r_s=12., q_z=0.9)
     w0 = [0.,20.,0.,0.0352238,-0.03579493,0.175]
+
+    @pytest.mark.skip(reason="q_z named different from c")
+    def test_compare(self):
+        pass
+
+    def test_save_load(self, tmpdir):
+        fn = str(tmpdir.join("{}.yml".format(self.name)))
+        with pytest.raises(NotImplementedError):
+            self.potential.save(fn)
+
+class TestNFW(PotentialTestBase):
+    potential = NFWPotential(m=6E11*u.Msun, r_s=20*u.kpc, a=1., b=0.9, c=0.75,
+                             units=galactic)
+    w0 = [19.0,2.7,-0.9,0.00352238,-0.15134,0.0075]
+
+    def test_compare(self):
+
+        sph = NFWPotential(m=6E11*u.Msun, r_s=20*u.kpc, units=galactic)
+        fla = NFWPotential(m=6E11*u.Msun, r_s=20*u.kpc, c=0.8, units=galactic)
+        tri = NFWPotential(m=6E11*u.Msun, r_s=20*u.kpc, b=0.9, c=0.8, units=galactic)
+
+        xyz = np.zeros((3,128))
+        xyz[0] = np.logspace(-1., 3, xyz.shape[1])
+
+        assert quantity_allclose(sph.value(xyz), fla.value(xyz))
+        assert quantity_allclose(sph.value(xyz), tri.value(xyz))
+
+        assert quantity_allclose(sph.gradient(xyz), fla.gradient(xyz))
+        assert quantity_allclose(sph.gradient(xyz), tri.gradient(xyz))
+
+        # assert quantity_allclose(sph.density(xyz), fla.density(xyz)) # TODO: fla density not implemented
+        # assert quantity_allclose(sph.density(xyz), tri.density(xyz)) # TODO: tri density not implemented
+
+        # ---
+
+        tri = NFWPotential(m=6E11*u.Msun, r_s=20*u.kpc, a=0.9, c=0.8, units=galactic)
+
+        xyz = np.zeros((3,128))
+        xyz[1] = np.logspace(-1., 3, xyz.shape[1])
+
+        assert quantity_allclose(sph.value(xyz), fla.value(xyz))
+        assert quantity_allclose(sph.value(xyz), tri.value(xyz))
+
+        assert quantity_allclose(sph.gradient(xyz), fla.gradient(xyz))
+        assert quantity_allclose(sph.gradient(xyz), tri.gradient(xyz))
+
+        # assert quantity_allclose(sph.density(xyz), fla.density(xyz)) # TODO: fla density not implemented
+        # assert quantity_allclose(sph.density(xyz), tri.density(xyz)) # TODO: tri density not implemented
+
+        # ---
+
+        xyz = np.zeros((3,128))
+        xyz[0] = np.logspace(-1., 3, xyz.shape[1])
+        xyz[1] = np.logspace(-1., 3, xyz.shape[1])
+
+        assert quantity_allclose(sph.value(xyz), fla.value(xyz))
+        assert quantity_allclose(sph.gradient(xyz), fla.gradient(xyz))
+        # assert quantity_allclose(sph.density(xyz), fla.density(xyz)) # TODO: fla density not implemented
 
 class TestLeeSutoTriaxialNFW(PotentialTestBase):
     potential = LeeSutoTriaxialNFWPotential(units=galactic, v_c=0.35, r_s=12.,

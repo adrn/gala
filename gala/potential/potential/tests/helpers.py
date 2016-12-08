@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.misc import derivative
 from astropy.extern.six.moves import cPickle as pickle
+import pytest
 
 # Project
 from ..io import load
@@ -99,10 +100,7 @@ class PotentialTestBase(object):
 
     def test_compare(self):
         # skip if composite potentials
-        if isinstance(self.potential, CompositePotential):
-            return
-
-        elif len(self.potential.parameters) == 0:
+        if len(self.potential.parameters) == 0:
             return
 
         other = self.potential.__class__(units=self.potential.units, **self.potential.parameters)
@@ -147,6 +145,7 @@ class PotentialTestBase(object):
         self.potential.save(fn)
         p = load(fn)
         p.energy(self.w0[:self.w0.size//2])
+        p.gradient(self.w0[:self.w0.size//2])
 
     def test_numerical_gradient_vs_gradient(self):
         """
@@ -215,5 +214,10 @@ class PotentialTestBase(object):
         p.energy(self.w0[:self.w0.size//2])
 
 class CompositePotentialTestBase(PotentialTestBase):
+    @pytest.mark.skip(reason="Skip composite potential repr test")
     def test_repr(self):
+        pass
+
+    @pytest.mark.skip(reason="Skip composite potential compare test")
+    def test_compare(self):
         pass

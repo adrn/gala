@@ -265,10 +265,10 @@ class PotentialBase(CommonBase):
 
         # Radius
         r = np.sqrt(np.sum(q**2, axis=0)) * self.units['length']
-        dPhi_dr = self.gradient(q)
-        grad = np.abs(np.sqrt(np.sum(dPhi_dr**2, axis=0)))
+        dPhi_dxyz = self.gradient(q)
+        dPhi_dr = np.sum(dPhi_dxyz * q/r.value, axis=0)
 
-        return self.units.decompose(np.sqrt(r * grad))
+        return self.units.decompose(np.sqrt(r * np.abs(dPhi_dr)))
 
     # ========================================================================
     # Python special methods
