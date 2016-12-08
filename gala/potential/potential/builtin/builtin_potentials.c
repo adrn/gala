@@ -909,7 +909,7 @@ double longmuralibar_value(double t, double *pars, double *q, int n_dim) {
     Tm = sqrt((a-x)*(a-x) + y*y + pow(b + sqrt(c*c+z*z),2));
     Tp = sqrt((a+x)*(a+x) + y*y + pow(b + sqrt(c*c+z*z),2));
 
-    return pars[0]*pars[1]/(2*a) * log((x - a + Tm) / (x + a + Tp))
+    return pars[0]*pars[1]/(2*a) * log((x - a + Tm) / (x + a + Tp));
 }
 
 void longmuralibar_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
@@ -936,17 +936,17 @@ void longmuralibar_gradient(double t, double *pars, double *q, int n_dim, double
     b = pars[3];
     c = pars[4];
 
+    bcz = b + sqrt(c*c + z*z);
     Tm = sqrt((a-x)*(a-x) + y*y + bcz*bcz);
     Tp = sqrt((a+x)*(a+x) + y*y + bcz*bcz);
 
-    bcz = b + sqrt(c*c + z*z);
-    fac1 = pars[0]*pars[1]/(2*Tm*Tp);
+    fac1 = pars[0]*pars[1] / (2*Tm*Tp);
     fac2 = 1 / (y*y + bcz*bcz);
     fac3 = Tp + Tm - (4*x*x)/(Tp+Tm);
 
-    gx = fac1 * x / (Tp + Tm);
+    gx = 4 * fac1 * x / (Tp + Tm);
     gy = fac1 * y * fac2 * fac3;
-    gz = fac1 * y * fac2 * fac3 * bcz / sqrt(z*z + c*c);
+    gz = fac1 * z * fac2 * fac3 * bcz / sqrt(z*z + c*c);
 
     grad[0] = grad[0] + (gx*cos(pars[5]) - gy*sin(pars[5]));
     grad[1] = grad[1] + (gx*sin(pars[5]) + gy*cos(pars[5]));

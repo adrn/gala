@@ -119,7 +119,8 @@ __all__ = ['HenonHeilesPotential', # Misc. potentials
            'KeplerPotential', 'HernquistPotential', 'IsochronePotential', 'PlummerPotential',
            'JaffePotential', 'StonePotential', # Spherical models
            'SatohPotential', 'MiyamotoNagaiPotential', # Disk models
-           'NFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential', # Triaxial models
+           'NFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential',
+           'LongMuraliBarPotential', # Triaxial models
            'SphericalNFWPotential', 'FlattenedNFWPotential' # Deprecated
            ]
 

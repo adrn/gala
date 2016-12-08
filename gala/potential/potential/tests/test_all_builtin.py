@@ -227,6 +227,12 @@ class TestLogarithmic(PotentialTestBase):
                                      q1=1.2, q2=1., q3=0.8)
     w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
 
+class TestLongMuraliBar(PotentialTestBase):
+    potential = LongMuraliBarPotential(units=galactic, m=1E11,
+                                       a=4.*u.kpc, b=1*u.kpc, c=1.*u.kpc)
+    vc = potential.circular_velocity([19.,0,0]*u.kpc).decompose(galactic).value[0]
+    w0 = [19.0,0.2,-0.9,0.,vc,0.]
+
 class TestComposite(CompositePotentialTestBase):
     p1 = LogarithmicPotential(units=galactic,
                               v_c=0.17, r_h=10.,
