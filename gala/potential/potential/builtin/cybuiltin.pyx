@@ -206,8 +206,8 @@ class KeplerPotential(CPotentialBase):
 
     Parameters
     ----------
-    m : numeric
-        Mass.
+    m : :class:`~astropy.units.Quantity`, numeric [mass]
+        Point mass value.
 
     Parameters
     ----------
@@ -260,9 +260,9 @@ class IsochronePotential(CPotentialBase):
 
     Parameters
     ----------
-    m : numeric
+    m : :class:`~astropy.units.Quantity`, numeric [mass]
         Mass.
-    b : numeric
+    b : :class:`~astropy.units.Quantity`, numeric [length]
         Core concentration.
     units : `~gala.units.UnitSystem` (optional)
         Set of non-reducable units that specify (at minimum) the
@@ -356,9 +356,9 @@ class HernquistPotential(CPotentialBase):
 
     Parameters
     ----------
-    m : numeric
+    m : :class:`~astropy.units.Quantity`, numeric [mass]
         Mass.
-    c : numeric
+    c : :class:`~astropy.units.Quantity`, numeric [length]
         Core concentration.
     units : `~gala.units.UnitSystem` (optional)
         Set of non-reducable units that specify (at minimum) the
@@ -412,9 +412,9 @@ class PlummerPotential(CPotentialBase):
 
     Parameters
     ----------
-    m : numeric
+    m : :class:`~astropy.units.Quantity`, numeric [mass]
        Mass.
-    b : numeric
+    b : :class:`~astropy.units.Quantity`, numeric [length]
         Core concentration.
     units : `~gala.units.UnitSystem` (optional)
         Set of non-reducable units that specify (at minimum) the
@@ -468,9 +468,9 @@ class JaffePotential(CPotentialBase):
 
     Parameters
     ----------
-    m : numeric
+    m : :class:`~astropy.units.Quantity`, numeric [mass]
         Mass.
-    c : numeric
+    c : :class:`~astropy.units.Quantity`, numeric [length]
         Core concentration.
     units : `~gala.units.UnitSystem` (optional)
         Set of non-reducable units that specify (at minimum) the
@@ -524,11 +524,11 @@ class StonePotential(CPotentialBase):
 
     Parameters
     ----------
-    m_tot : numeric
+    m_tot : :class:`~astropy.units.Quantity`, numeric [mass]
         Total mass.
-    r_c : numeric
+    r_c : :class:`~astropy.units.Quantity`, numeric [length]
         Core radius.
-    r_h : numeric
+    r_h : :class:`~astropy.units.Quantity`, numeric [length]
         Halo radius.
     units : `~gala.units.UnitSystem` (optional)
         Set of non-reducable units that specify (at minimum) the
@@ -588,11 +588,11 @@ class SatohPotential(CPotentialBase):
 
     Parameters
     ----------
-    m : numeric
+    m : :class:`~astropy.units.Quantity`, numeric [mass]
         Mass.
-    a : numeric
+    a : :class:`~astropy.units.Quantity`, numeric [length]
         Scale length.
-    b : numeric
+    b : :class:`~astropy.units.Quantity`, numeric [length]
         Scare height.
     units : `~gala.units.UnitSystem` (optional)
         Set of non-reducable units that specify (at minimum) the
@@ -651,11 +651,11 @@ class MiyamotoNagaiPotential(CPotentialBase):
 
     Parameters
     ----------
-    m : numeric
+    m : :class:`~astropy.units.Quantity`, numeric [mass]
         Mass.
-    a : numeric
+    a : :class:`~astropy.units.Quantity`, numeric [length]
         Scale length.
-    b : numeric
+    b : :class:`~astropy.units.Quantity`, numeric [length]
         Scare height.
     units : `~gala.units.UnitSystem` (optional)
         Set of non-reducable units that specify (at minimum) the
@@ -949,9 +949,9 @@ class LogarithmicPotential(CPotentialBase):
 
     Parameters
     ----------
-    v_c : `~astropy.units.Quantity`, numeric
+    v_c : :class:`~astropy.units.Quantity`, numeric [velocity]
         Circular velocity.
-    r_h : `~astropy.units.Quantity`, numeric
+    r_h : :class:`~astropy.units.Quantity`, numeric [length]
         Scale radius.
     q1 : numeric
         Flattening in X.
@@ -1023,9 +1023,9 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
 
     Parameters
     ----------
-    v_c : `~astropy.units.Quantity`, numeric
+    v_c : `~astropy.units.Quantity`, numeric [velocity]
         Circular velocity at the scale radius.
-    r_h : `~astropy.units.Quantity`, numeric
+    r_h : `~astropy.units.Quantity`, numeric [length]
         Scale radius.
     a : numeric
         Major axis.
