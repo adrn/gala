@@ -879,3 +879,76 @@ void logarithmic_gradient(double t, double *pars, double *q, int n_dim, double *
     grad[1] = grad[1] + (ax*sin(pars[6]) + ay*cos(pars[6]));
     grad[2] = grad[2] + az;
 }
+
+/* ---------------------------------------------------------------------------
+    Logarithmic (triaxial)
+*/
+double longmuralibar_value(double t, double *pars, double *q, int n_dim) {
+    /*  http://adsabs.harvard.edu/abs/1992ApJ...397...44L
+
+        pars:
+        - G (Gravitational constant)
+        - m (mass scale)
+        - a
+        - b
+        - c
+        - alpha
+    */
+    double x, y, z;
+    double a, b, c;
+    double Tm, Tp;
+
+    x = q[0]*cos(pars[5]) + q[1]*sin(pars[5]);
+    y = -q[0]*sin(pars[5]) + q[1]*cos(pars[5]);
+    z = q[2];
+
+    a = pars[2];
+    b = pars[3];
+    c = pars[4];
+
+    Tm = sqrt((a-x)*(a-x) + y*y + pow(b + sqrt(c*c+z*z),2));
+    Tp = sqrt((a+x)*(a+x) + y*y + pow(b + sqrt(c*c+z*z),2));
+
+    return pars[0]*pars[1]/(2*a) * log((x - a + Tm) / (x + a + Tp))
+}
+
+void longmuralibar_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
+    /*  http://adsabs.harvard.edu/abs/1992ApJ...397...44L
+
+        pars:
+        - G (Gravitational constant)
+        - m (mass scale)
+        - a
+        - b
+        - c
+        - alpha
+    */
+    double x, y, z;
+    double a, b, c;
+    double Tm, Tp, fac1, fac2, fac3, bcz;
+    double gx, gy, gz;
+
+    x = q[0]*cos(pars[5]) + q[1]*sin(pars[5]);
+    y = -q[0]*sin(pars[5]) + q[1]*cos(pars[5]);
+    z = q[2];
+
+    a = pars[2];
+    b = pars[3];
+    c = pars[4];
+
+    Tm = sqrt((a-x)*(a-x) + y*y + bcz*bcz);
+    Tp = sqrt((a+x)*(a+x) + y*y + bcz*bcz);
+
+    bcz = b + sqrt(c*c + z*z);
+    fac1 = pars[0]*pars[1]/(2*Tm*Tp);
+    fac2 = 1 / (y*y + bcz*bcz);
+    fac3 = Tp + Tm - (4*x*x)/(Tp+Tm);
+
+    gx = fac1 * x / (Tp + Tm);
+    gy = fac1 * y * fac2 * fac3;
+    gz = fac1 * y * fac2 * fac3 * bcz / sqrt(z*z + c*c);
+
+    grad[0] = grad[0] + (gx*cos(pars[5]) - gy*sin(pars[5]));
+    grad[1] = grad[1] + (gx*sin(pars[5]) + gy*cos(pars[5]));
+    grad[2] = grad[2] + gz;
+}

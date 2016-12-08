@@ -112,8 +112,8 @@ cdef extern from "potential/builtin/builtin_potentials.h":
     double logarithmic_value(double t, double *pars, double *q, int n_dim) nogil
     void logarithmic_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
 
-    double rotating_logarithmic_value(double t, double *pars, double *q, int n_dim) nogil
-    void rotating_logarithmic_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    double longmuralibar_value(double t, double *pars, double *q, int n_dim) nogil
+    void longmuralibar_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
 
 __all__ = ['HenonHeilesPotential', # Misc. potentials
            'KeplerPotential', 'HernquistPotential', 'IsochronePotential', 'PlummerPotential',
@@ -1056,4 +1056,68 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
         super(LeeSutoTriaxialNFWPotential, self).__init__(parameters=parameters,
                                                           parameter_physical_types=ptypes,
                                                           units=units)
+
+
+cdef class LongMuraliBarWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters):
+        cdef CPotential cp
+
+        # This is the only code that needs to change per-potential
+        cp.value[0] = <energyfunc>(longmuralibar_value)
+        cp.density[0] = <densityfunc>(nan_density)
+        cp.gradient[0] = <gradientfunc>(longmuralibar_gradient)
+        cp.hessian[0] = <hessianfunc>(nan_hessian)
+        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        cp.n_components = 1
+        self._params = np.array([G] + list(parameters), dtype=np.float64)
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+        cp.n_params = &(self._n_params[0])
+        cp.parameters[0] = &(self._params[0])
+        cp.n_dim = 3
+        self.cpotential = cp
+
+class LongMuraliBarPotential(CPotentialBase):
+    r"""
+    LongMuraliBarPotential(m, a, b, c, alpha=0, units=None)
+
+    A simple, triaxial model for a galaxy bar. This is a softened "needle"
+    density distribution with an analytic potential form.
+    See `Long & Murali (1992) <http://adsabs.harvard.edu/abs/1992ApJ...397...44L>`_
+    for details.
+
+    Parameters
+    ----------
+    m : `~astropy.units.Quantity`, numeric [mass]
+        Mass scale.
+    a : `~astropy.units.Quantity`, numeric [length]
+        Bar half-length.
+    b : `~astropy.units.Quantity`, numeric [length]
+        Like the Miyamoto-Nagai ``b`` parameter.
+    c : `~astropy.units.Quantity`, numeric [length]
+        Like the Miyamoto-Nagai ``c`` parameter.
+    units : `~gala.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, m, a, b, c, alpha=0., units=None):
+
+        parameters = OrderedDict()
+        ptypes = OrderedDict()
+
+        parameters['m'] = m
+        ptypes['m'] = 'mass'
+
+        for name in 'abc':
+            parameters[name] = eval(name)
+            ptypes[name] = 'length'
+
+        parameters['alpha'] = alpha
+        ptypes['alpha'] = 'angle'
+
+        super(LongMuraliBarPotential, self).__init__(parameters=parameters,
+                                                     parameter_physical_types=ptypes,
+                                                     units=units)
 
