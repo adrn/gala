@@ -26,12 +26,21 @@ class Hamiltonian(CommonBase):
         # TODO: validate frame
 
         if frame is None:
-            frame = StaticFrame()
+            frame = StaticFrame(potential.units)
 
         self.potential = potential
         self.frame = frame
         self._pot_ndim = self.potential.ndim
         self.ndim = 2 * self._pot_ndim
+
+        if frame is not None:
+            if frame.units != potential.units:
+                raise ValueError("Potential and Frame must have compatible unit systems "
+                                 "({} vs {})".format(potential.units, frame.units))
+
+            if frame.ndim is not None and frame.ndim != potential.ndim:
+                raise ValueError("Potential and Frame must have compatible phase-space "
+                                 "dimensionality ({} vs {})".format(potential.ndim, frame.ndim))
 
         # TODO: document this attribute
         if isinstance(self.potential, CPotentialBase) and isinstance(self.frame, CFrameBase):
