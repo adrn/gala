@@ -48,7 +48,7 @@ def _helper(fi, fr, w, t=None):
     assert quantity_allclose(pos_r, w.pos)
     assert quantity_allclose(vel_r, w.vel)
 
-def test_frame_transforms():
+def test_frame_transforms_3d():
     frame_i = StaticFrame(units=galactic)
     frame_r = ConstantRotatingFrame(Omega=[0.112, 1.235, 0.8656]*u.rad/u.Myr,
                                     units=galactic)
@@ -65,6 +65,28 @@ def test_frame_transforms():
 
     w = CartesianPhaseSpacePosition(pos=np.random.random(size=3)*u.kpc,
                                     vel=np.random.random(size=3)*u.kpc/u.Myr)
+    with pytest.raises(ValueError):
+        _helper(frame_i, frame_r, w)
+    _helper(frame_i, frame_r, w, t=0.*u.Myr)
+    _helper(frame_i, frame_r, w, t=0.)
+
+def test_frame_transforms_2d():
+    frame_i = StaticFrame(units=galactic)
+    frame_r = ConstantRotatingFrame(Omega=0.529*u.rad/u.Myr,
+                                    units=galactic)
+
+    w = CartesianOrbit(pos=np.random.random(size=(2,32))*u.kpc,
+                       vel=np.random.random(size=(2,32))*u.kpc/u.Myr,
+                       t=np.linspace(0,1,32)*u.Myr)
+    _helper(frame_i, frame_r, w, t=w.t)
+
+    w = CartesianOrbit(pos=np.random.random(size=(2,32,8))*u.kpc,
+                       vel=np.random.random(size=(2,32,8))*u.kpc/u.Myr,
+                       t=np.linspace(0,1,32)*u.Myr)
+    _helper(frame_i, frame_r, w, t=w.t)
+
+    w = CartesianPhaseSpacePosition(pos=np.random.random(size=2)*u.kpc,
+                                    vel=np.random.random(size=2)*u.kpc/u.Myr)
     with pytest.raises(ValueError):
         _helper(frame_i, frame_r, w)
     _helper(frame_i, frame_r, w, t=0.*u.Myr)

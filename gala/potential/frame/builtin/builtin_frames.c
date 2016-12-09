@@ -29,7 +29,47 @@ void static_frame_hessian(double t, double *pars, double *qp, int n_dim, double 
 /*
     Constantly rotating frame
 */
-double constant_rotating_frame_hamiltonian(double t, double *pars, double *qp, int n_dim) {
+double constant_rotating_frame_hamiltonian_2d(double t, double *pars, double *qp, int n_dim) {
+    /*
+        Omega = pars
+        TODO: this is klugy, n_dim has to equal 2!
+    */
+    int i;
+    double E = 0.;
+    double R2;
+
+    for (i=0; i<n_dim; i++) {
+        E += 0.5*qp[i+n_dim]*qp[i+n_dim]; // p^2
+    }
+
+    R2 = qp[0]*qp[0] + qp[1]*qp[1];
+    return E - 0.5 * pars[0]*pars[0] * R2;
+}
+
+void constant_rotating_frame_gradient_2d(double t, double *pars, double *qp, int n_dim, double *dH) {
+    /*
+        TODO: this is klugy, n_dim has to equal 2!
+    */
+    double Cx, Cy; // used in cross-products below
+
+    // Omega x q
+    Cx = -pars[0]*qp[1];
+    Cy = pars[0]*qp[0];
+    dH[0] = dH[0] + qp[0+n_dim] - Cx;
+    dH[1] = dH[1] + qp[1+n_dim] - Cy;
+
+    // Omega x p
+    Cx = -pars[0]*qp[1+n_dim];
+    Cy = pars[0]*qp[0+n_dim];
+    dH[2] = dH[3] + Cx;
+    dH[3] = dH[4] + Cy;
+}
+
+void constant_rotating_frame_hessian_2d(double t, double *pars, double *qp, int n_dim, double *d2H) {
+    /* TODO: */
+}
+
+double constant_rotating_frame_hamiltonian_3d(double t, double *pars, double *qp, int n_dim) {
     /*
         Omega = pars
     */
@@ -50,7 +90,7 @@ double constant_rotating_frame_hamiltonian(double t, double *pars, double *qp, i
     return E - (pars[0]*Lx + pars[1]*Ly + pars[2]*Lz);
 }
 
-void constant_rotating_frame_gradient(double t, double *pars, double *qp, int n_dim, double *dH) {
+void constant_rotating_frame_gradient_3d(double t, double *pars, double *qp, int n_dim, double *dH) {
     double Cx, Cy, Cz; // used in cross-products below
 
     // Omega x q
@@ -70,6 +110,6 @@ void constant_rotating_frame_gradient(double t, double *pars, double *qp, int n_
     dH[5] = dH[5] + Cz;
 }
 
-void constant_rotating_frame_hessian(double t, double *pars, double *qp, int n_dim, double *d2H) {
+void constant_rotating_frame_hessian_3d(double t, double *pars, double *qp, int n_dim, double *d2H) {
     /* TODO: */
 }

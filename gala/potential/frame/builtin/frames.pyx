@@ -11,6 +11,7 @@ from __future__ import division, print_function
 from collections import OrderedDict
 
 # Third-party
+from astropy.utils.misc import isiterable
 import astropy.units as u
 import numpy as np
 cimport numpy as np
@@ -19,7 +20,7 @@ np.import_array()
 # Project
 from ..cframe import CFrameBase
 from ..cframe cimport CFrameWrapper
-from ....units import dimensionless
+from ....units import dimensionless, DimensionlessUnitSystem
 
 cdef extern from "src/funcdefs.h":
     ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim) nogil
@@ -40,9 +41,13 @@ cdef extern from "frame/builtin/builtin_frames.h":
     void static_frame_gradient(double t, double *pars, double *qp, int n_dim, double *grad) nogil
     void static_frame_hessian(double t, double *pars, double *qp, int n_dim, double *hess) nogil
 
-    double constant_rotating_frame_hamiltonian(double t, double *pars, double *qp, int n_dim) nogil
-    void constant_rotating_frame_gradient(double t, double *pars, double *qp, int n_dim, double *grad) nogil
-    void constant_rotating_frame_hessian(double t, double *pars, double *qp, int n_dim, double *hess) nogil
+    double constant_rotating_frame_hamiltonian_2d(double t, double *pars, double *qp, int n_dim) nogil
+    void constant_rotating_frame_gradient_2d(double t, double *pars, double *qp, int n_dim, double *grad) nogil
+    void constant_rotating_frame_hessian_2d(double t, double *pars, double *qp, int n_dim, double *hess) nogil
+
+    double constant_rotating_frame_hamiltonian_3d(double t, double *pars, double *qp, int n_dim) nogil
+    void constant_rotating_frame_gradient_3d(double t, double *pars, double *qp, int n_dim, double *grad) nogil
+    void constant_rotating_frame_hessian_3d(double t, double *pars, double *qp, int n_dim, double *hess) nogil
 
 __all__ = ['StaticFrame', 'ConstantRotatingFrame']
 
@@ -65,11 +70,28 @@ class StaticFrame(CFrameBase):
         """
         TODO:
         """
-        super(StaticFrame, self).__init__(StaticFrameWrapper, dict(), units)
+        # TODO: ndim = None means it can support any number of ndim
+        super(StaticFrame, self).__init__(StaticFrameWrapper, dict(), units, ndim=None)
 
 # ---
 
-cdef class ConstantRotatingFrameWrapper(CFrameWrapper):
+cdef class ConstantRotatingFrameWrapper2D(CFrameWrapper):
+
+    def __init__(self, double Omega):
+        cdef:
+            CFrame cf
+
+        self._params = np.array([Omega], dtype=np.float64)
+
+        cf.energy = <energyfunc>(constant_rotating_frame_hamiltonian_2d)
+        cf.gradient = <gradientfunc>(constant_rotating_frame_gradient_2d)
+        cf.hessian = <hessianfunc>(constant_rotating_frame_hessian_2d)
+        cf.n_params = 1
+        cf.parameters = &(self._params[0])
+
+        self.cframe = cf
+
+cdef class ConstantRotatingFrameWrapper3D(CFrameWrapper):
 
     def __init__(self, double Omega_x, double Omega_y, double Omega_z):
         cdef:
@@ -77,9 +99,9 @@ cdef class ConstantRotatingFrameWrapper(CFrameWrapper):
 
         self._params = np.array([Omega_x, Omega_y, Omega_z], dtype=np.float64)
 
-        cf.energy = <energyfunc>(constant_rotating_frame_hamiltonian)
-        cf.gradient = <gradientfunc>(constant_rotating_frame_gradient)
-        cf.hessian = <hessianfunc>(constant_rotating_frame_hessian)
+        cf.energy = <energyfunc>(constant_rotating_frame_hamiltonian_3d)
+        cf.gradient = <gradientfunc>(constant_rotating_frame_gradient_3d)
+        cf.hessian = <hessianfunc>(constant_rotating_frame_hessian_3d)
         cf.n_params = 3
         cf.parameters = &(self._params[0])
 
@@ -92,22 +114,33 @@ class ConstantRotatingFrame(CFrameBase):
         TODO: write docstring
         TODO: always convert to rad/<time unit> ?
         """
-        self.Omega = Omega
-        if units is None and not hasattr(Omega, 'unit'):
+
+        if units is None:
             units = dimensionless
-            self.Omega = self.Omega*u.one
 
-        if not hasattr(self.Omega, 'unit'):
-            raise TypeError('Input rotation vector must be a Quantity.')
+        Omega = np.atleast_1d(Omega)
 
-        self.Omega = self.Omega.to(units['angle']/units['time'], u.dimensionless_angles())
+        if Omega.shape == (1,):
+            # assumes ndim=2, must be associated with a 2D potential
+            Omega = np.squeeze(Omega)
+            ndim = 2
+            ConstantRotatingFrameWrapper = ConstantRotatingFrameWrapper2D
 
-        if not self.Omega.shape == (3,):
+        elif Omega.shape == (3,):
+            # assumes ndim=3, must be associated with a 3D potential
+            ndim = 3
+            ConstantRotatingFrameWrapper = ConstantRotatingFrameWrapper3D
+
+        else:
             raise ValueError("Invalid input for rotation vector Omega.")
 
-        p = OrderedDict()
-        p['Omega_x'] = self.Omega[0].value
-        p['Omega_y'] = self.Omega[1].value
-        p['Omega_z'] = self.Omega[2].value
+        pars = OrderedDict()
+        ptypes = OrderedDict()
+        pars['Omega'] = Omega
+        ptypes['Omega'] = 'frequency'
+
         super(ConstantRotatingFrame, self).__init__(ConstantRotatingFrameWrapper,
-                                                    p, units)
+                                                    pars, units, ndim=ndim)
+
+        if self.parameters['Omega'].unit != u.one and isinstance(units, DimensionlessUnitSystem):
+            raise ValueError("If frequency vector has units, you must pass in a unit system.")

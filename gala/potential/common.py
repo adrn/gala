@@ -36,7 +36,7 @@ class CommonBase(object):
 
             elif k in ptypes:
                 # HACK TODO: remove when fix potentials that ask for scale velocity
-                if ptypes[k] == 'velocity':
+                if ptypes[k] == 'speed':
                     pars[k] = v * units['length']/units['time']
                 else:
                     pars[k] = v * units[ptypes[k]]
@@ -62,4 +62,14 @@ class CommonBase(object):
         orig_shape = x.shape
         x = np.ascontiguousarray(x.reshape(orig_shape[0], -1).T)
         return orig_shape, x
+
+    # For comparison operations
+    def __eq__(self, other):
+        # the funkiness in the below is in case there are array parameters:
+        par_bool = [(k1==k2) and np.all(self.parameters[k1] == other.parameters[k2])
+                    for k1,k2 in zip(self.parameters.keys(), other.parameters.keys())]
+        return np.all(par_bool) and (str(self) == str(other)) and (self.units == other.units)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 

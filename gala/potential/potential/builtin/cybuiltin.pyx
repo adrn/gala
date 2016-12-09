@@ -789,7 +789,7 @@ class NFWPotential(CPotentialBase):
             ptypes = OrderedDict()
 
             parameters['v_c'] = v_c
-            ptypes['v_c'] = 'velocity'
+            ptypes['v_c'] = 'speed'
 
             parameters['r_s'] = r_s
             ptypes['r_s'] = 'length'
@@ -871,7 +871,7 @@ class NFWPotential(CPotentialBase):
         ptypes = OrderedDict()
 
         parameters['v_c'] = v_c
-        ptypes['v_c'] = 'velocity'
+        ptypes['v_c'] = 'speed'
 
         parameters['r_s'] = r_s
         ptypes['r_s'] = 'length'
@@ -972,7 +972,7 @@ class LogarithmicPotential(CPotentialBase):
         ptypes = OrderedDict()
 
         parameters['v_c'] = v_c
-        ptypes['v_c'] = 'velocity'
+        ptypes['v_c'] = 'speed'
 
         parameters['r_h'] = r_h
         ptypes['r_h'] = 'length'
@@ -1045,7 +1045,7 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
         ptypes = OrderedDict()
 
         parameters['v_c'] = v_c
-        ptypes['v_c'] = 'velocity'
+        ptypes['v_c'] = 'speed'
 
         parameters['r_s'] = r_s
         ptypes['r_s'] = 'length'

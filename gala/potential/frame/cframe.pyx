@@ -81,7 +81,7 @@ cdef class CFrameWrapper:
 # TODO: make sure this doesn't appear in docs - Frames are really only used internally
 class CFrameBase(FrameBase):
 
-    def __init__(self, Wrapper, parameters, units, parameter_physical_types=None):
+    def __init__(self, Wrapper, parameters, units, parameter_physical_types=None, ndim=3):
         self.units = self._validate_units(units)
 
         if parameter_physical_types is None:
@@ -89,17 +89,13 @@ class CFrameBase(FrameBase):
         self._ptypes = parameter_physical_types
 
         self.parameters = self._prepare_parameters(parameters, self._ptypes, self.units)
-        self.c_parameters = np.array(list(self.parameters.values()))
+        self.c_parameters = np.ravel([v.value for v in self.parameters.values()])
         self.c_instance = Wrapper(*self.c_parameters)
+
+        self.ndim = ndim
 
     def __str__(self):
         return self.__class__.__name__
-
-    def __eq__(self, other):
-        return (self.parameters == other.parameters) and (str(self) == str(other))
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     def _energy(self, q, t=0.):
         return self.c_instance.energy(q, t=t)
