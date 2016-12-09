@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 # Custom
-from ....potential import Hamiltonian, SphericalNFWPotential, HernquistPotential
+from ....potential import Hamiltonian, NFWPotential, HernquistPotential
 from ....dynamics import CartesianPhaseSpacePosition
 from ....integrate import DOPRI853Integrator, LeapfrogIntegrator
 from ....units import galactic
@@ -24,7 +24,8 @@ from ..core import mock_stream, streakline_stream, fardal_stream, dissolved_fard
                          zip([DOPRI853Integrator, LeapfrogIntegrator],
                              [dict(), dict()]))
 def test_mock_stream(Integrator, kwargs):
-    potential = SphericalNFWPotential(v_c=0.2, r_s=20., units=galactic)
+    potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.,
+                                                    units=galactic)
     ham = Hamiltonian(potential)
 
     w0 = CartesianPhaseSpacePosition(pos=[0.,15.,0]*u.kpc,
@@ -57,7 +58,8 @@ mock_funcs = [streakline_stream, fardal_stream, dissolved_fardal_stream]
 all_extra_args = [dict(), dict(), dict(t_disrupt=-250.*u.Myr)]
 @pytest.mark.parametrize("mock_func, extra_kwargs", zip(mock_funcs, all_extra_args))
 def test_each_type(mock_func, extra_kwargs):
-    potential = SphericalNFWPotential(v_c=0.2, r_s=20., units=galactic)
+    potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.,
+                                                    units=galactic)
     ham = Hamiltonian(potential)
 
     w0 = CartesianPhaseSpacePosition(pos=[0.,15.,0]*u.kpc,

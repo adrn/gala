@@ -11,8 +11,9 @@ import numpy as np
 # Project
 # from .cpotential import CCompositePotential
 # from ..core import CompositePotential
-from .cybuiltin import HernquistPotential, MiyamotoNagaiPotential, \
-    LeeSutoTriaxialNFWPotential, SphericalNFWPotential, LogarithmicPotential
+from .cybuiltin import (HernquistPotential,
+                        MiyamotoNagaiPotential,
+                        LogarithmicPotential)
 from ..ccompositepotential import CCompositePotential
 from ....units import galactic
 

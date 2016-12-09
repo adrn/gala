@@ -7,7 +7,7 @@ import pytest
 # Project
 from .helpers import _TestBase
 from .. import Hamiltonian
-from ...potential.builtin import SphericalNFWPotential, KeplerPotential, HernquistPotential
+from ...potential.builtin import NFWPotential, KeplerPotential, HernquistPotential
 from ...frame.builtin import StaticFrame, ConstantRotatingFrame
 from ....units import galactic, dimensionless
 from ....dynamics import CartesianPhaseSpacePosition
@@ -102,8 +102,8 @@ def to_rotating_frame(omega, w, t=None):
 
 # ----------------------------------------------------------------------------
 
-class TestLogPotentialStaticFrame(_TestBase):
-    obj = Hamiltonian(SphericalNFWPotential(v_c=0.2, r_s=20., units=galactic),
+class TestWithPotentialStaticFrame(_TestBase):
+    obj = Hamiltonian(NFWPotential.from_circular_velocity(v_c=0.2, r_s=20., units=galactic),
                       StaticFrame(units=galactic))
 
     @pytest.mark.skip("Not implemented")
