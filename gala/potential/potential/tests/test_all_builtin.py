@@ -110,20 +110,21 @@ class TestSphericalNFWFromCircVel(PotentialTestBase):
             assert quantity_allclose(vc, 220*u.km/u.s)
 
     def test_against_triaxial(self):
+        this = NFWPotential.from_circular_velocity(v_c=220.*u.km/u.s, r_s=20*u.kpc, units=galactic)
         other = LeeSutoTriaxialNFWPotential(units=galactic,
-                                            v_c=200.*u.km/u.s, r_s=20.*u.kpc,
+                                            v_c=220.*u.km/u.s, r_s=20.*u.kpc,
                                             a=1., b=1., c=1.)
 
-        v1 = other.value(self.w0[:3])
-        v2 = self.potential.value(self.w0[:3])
+        v1 = this.value(self.w0[:3])
+        v2 = other.value(self.w0[:3])
         assert quantity_allclose(v1, v2)
 
-        a1 = other.gradient(self.w0[:3])
-        a2 = self.potential.gradient(self.w0[:3])
+        a1 = this.gradient(self.w0[:3])
+        a2 = other.gradient(self.w0[:3])
         assert quantity_allclose(a1, a2)
 
-        d1 = other.density(self.w0[:3])
-        d2 = self.potential.density(self.w0[:3])
+        d1 = this.density(self.w0[:3])
+        d2 = other.density(self.w0[:3])
         assert quantity_allclose(d1, d2)
 
     def test_mass_enclosed(self):
