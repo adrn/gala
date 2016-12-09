@@ -58,7 +58,7 @@ Let's write it out, then work through what each piece means in detail::
     ...        super(HenonHeilesPotential, self).__init__(units=units,
     ...                                                   parameters=pars)
     ...
-    ...    def _value(self, q, t):
+    ...    def _energy(self, q, t):
     ...        A = self.parameters['A']
     ...        x,y = q
     ...        return 0.5*(x**2 + y**2) + A*(x**2*y - y**3/3)
@@ -106,7 +106,7 @@ can integrate an orbit in this potential::
             super(HenonHeilesPotential, self).__init__(units=units,
                                                        parameters=pars)
 
-        def _value(self, q, t):
+        def _energy(self, q, t):
             A = self.parameters['A']
             x,y = q
             return 0.5*(x**2 + y**2) + A*(x**2*y - y**3/3)
@@ -148,7 +148,7 @@ Or, we could create a contour plot of equipotentials::
             super(HenonHeilesPotential, self).__init__(units=units,
                                                        parameters=pars)
 
-        def _value(self, q, t):
+        def _energy(self, q, t):
             A = self.parameters['A']
             x,y = q
             return 0.5*(x**2 + y**2) + A*(x**2*y - y**3/3)

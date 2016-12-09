@@ -107,19 +107,19 @@ derivatives) at given locations. For example::
 
     >>> pot = gp.HernquistPotential(m=1E9*u.Msun, c=1.*u.kpc, units=galactic)
     >>> pot.density([1.,-1.,0]*u.kpc) # doctest: +FLOAT_CMP
-    [ 80223937.029824] solMass / kpc3
-    >>> pot.hessian([1.,-1.,0]*u.kpc) # doctest: +FLOAT_CMP
-    [[[-0.00207358]
-      [ 0.01075704]
-      [ 0.        ]]
+    <Quantity [ 7997938.82200887] solMass / kpc3>
+    >>> pot.hessian([1.,-1.,0]*u.kpc) # doctest: +SKIP
+    <Quantity [[[ -4.68318131e-05],
+                [  5.92743432e-04],
+                [  0.00000000e+00]],
 
-     [[ 0.01075704]
-      [-0.00207358]
-      [ 0.        ]]
+               [[  5.92743432e-04],
+                [ -4.68318131e-05],
+                [  0.00000000e+00]],
 
-     [[ 0.        ]
-      [ 0.        ]
-      [ 0.00868346]]] 1 / Myr2
+               [[  0.00000000e+00],
+                [  0.00000000e+00],
+                [  5.45911619e-04]]] 1 / Myr2>
 
 .. These objects also provide more specialized methods such as
 .. :meth:`~gala.potential.Potential.plot_contours`, for plotting isopotential
