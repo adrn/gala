@@ -110,6 +110,20 @@ class UnitSystem(object):
     def __repr__(self):
         return "<{0}>".format(self.__str__())
 
+    def __eq__(self, other):
+        for k in self._registry:
+            if not self[k] == other[k]:
+                return False
+
+        for k in other._registry:
+            if not self[k] == other[k]:
+                return False
+
+        return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def to_dict(self):
         """
         Return a dictionary representation of the unit system with keys
