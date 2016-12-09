@@ -7,6 +7,8 @@ Defining your own potential class
 Introduction
 ============
 
+TODO: update this for new array convention in functions!!
+
 There are two ways to define a new potential class: with pure-Python, or with
 Cython. The advantage to writing a new class in Cython is that the
 computations can execute with C-like speeds, however only certain integrators
@@ -53,25 +55,26 @@ a position, and a time. Because this potential has a free parameter, our
 Let's write it out, then work through what each piece means in detail::
 
     >>> class HenonHeilesPotential(gp.PotentialBase):
-    ...    def __init__(self, A, units):
-    ...        pars = dict(A=A)
-    ...        super(HenonHeilesPotential, self).__init__(units=units,
-    ...                                                   parameters=pars)
     ...
-    ...    def _energy(self, q, t):
-    ...        A = self.parameters['A']
-    ...        x,y = q
-    ...        return 0.5*(x**2 + y**2) + A*(x**2*y - y**3/3)
+    ...     def __init__(self, A, units):
+    ...         pars = dict(A=A)
+    ...         super(HenonHeilesPotential, self).__init__(units=units,
+    ...                                                    parameters=pars,
+    ...                                                    ndim=2)
     ...
-    ...    def _gradient(self, q, t):
-    ...        A = self.parameters['A']
-    ...        x,y = q
+    ...     def _energy(self, q, t):
+    ...         A = self.parameters['A']
+    ...         x,y = q.T
+    ...         return 0.5*(x**2 + y**2) + A*(x**2*y - y**3/3)
     ...
-    ...        grad = np.zeros_like(q)
-    ...        grad[0] = x + 2*A*x*y
-    ...        grad[1] = y + A*(x**2 - y**2)
+    ...     def _gradient(self, q, t):
+    ...         A = self.parameters['A']
+    ...         x,y = q.T
     ...
-    ...        return grad
+    ...         grad = np.zeros_like(q)
+    ...         grad[:,0] = x + 2*A*x*y
+    ...         grad[:,1] = y + A*(x**2 - y**2)
+    ...         return grad
 
 The value and gradient methods simply compute the numerical value and
 gradient of the potential. The ``__init__`` method must take a single
@@ -104,20 +107,21 @@ can integrate an orbit in this potential::
         def __init__(self, A, units):
             pars = dict(A=A)
             super(HenonHeilesPotential, self).__init__(units=units,
-                                                       parameters=pars)
+                                                       parameters=pars,
+                                                       ndim=2)
 
         def _energy(self, q, t):
             A = self.parameters['A']
-            x,y = q
+            x,y = q.T
             return 0.5*(x**2 + y**2) + A*(x**2*y - y**3/3)
 
         def _gradient(self, q, t):
             A = self.parameters['A']
-            x,y = q
-            print(x)
+            x,y = q.T
+
             grad = np.zeros_like(q)
-            grad[0] = x + 2*A*x*y
-            grad[1] = y + A*(x**2 - y**2)
+            grad[:,0] = x + 2*A*x*y
+            grad[:,1] = y + A*(x**2 - y**2)
             return grad
 
     pot = HenonHeilesPotential(A=1., units=None)
@@ -146,20 +150,21 @@ Or, we could create a contour plot of equipotentials::
         def __init__(self, A, units):
             pars = dict(A=A)
             super(HenonHeilesPotential, self).__init__(units=units,
-                                                       parameters=pars)
+                                                       parameters=pars,
+                                                       ndim=2)
 
         def _energy(self, q, t):
             A = self.parameters['A']
-            x,y = q
+            x,y = q.T
             return 0.5*(x**2 + y**2) + A*(x**2*y - y**3/3)
 
         def _gradient(self, q, t):
             A = self.parameters['A']
-            x,y = q
-            print(x)
+            x,y = q.T
+
             grad = np.zeros_like(q)
-            grad[0] = x + 2*A*x*y
-            grad[1] = y + A*(x**2 - y**2)
+            grad[:,0] = x + 2*A*x*y
+            grad[:,1] = y + A*(x**2 - y**2)
             return grad
 
     pot = HenonHeilesPotential(A=1., units=None)
