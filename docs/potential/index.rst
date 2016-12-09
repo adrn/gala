@@ -11,11 +11,15 @@ Introduction
 
 This subpackage provides a number of classes for working with parametric models
 of gravitational potentials. There are base classes for creating custom
-potential classes, but more useful are the built-in potentials. These are
-commonly used potentials that have methods for computing, for example, the
-potential value (energy), gradient, density, or mass profiles. These are
-particularly useful in combination with the `~gala.integrate` and
-`~gala.dynamics` subpackages.
+potential classes, but there are a number of built-in potentials implemented in
+C and Cython for speed. These are commonly used potentials that have methods for
+computing, for example, the potential energy, gradient, density, or mass
+profiles. These are particularly useful in combination with the
+`~gala.integrate` and `~gala.dynamics` subpackages.
+
+Also defined in this subpackage are a set of reference frames which can be used
+for numerical integration of orbits in non-static reference frames. See the
+page on :ref:`reference-frames` for more information.
 
 For code blocks below and any pages linked below, I assume the following imports
 have already been excuted::
@@ -29,17 +33,18 @@ Getting started: built-in potential classes
 ===========================================
 
 The built-in potentials are all initialized by passing in keyword argument
-parameter values as numeric values or :class:`~astropy.units.Quantity` objects.
-To see what parameters are available for a given potential, check the
-documentation for the individual classes below. You must also specify a
-`~gala.units.UnitSystem` when initializing a potential. A unit system is a set
-of non-reducible units that define the length, mass, time, and angle units. A
-few common unit systems are built in to the package (e.g., ``solarsystem``).
+parameter values as :class:`~astropy.units.Quantity` objects or as numeric
+values in a specified unit system. To see what parameters are available for a
+given potential, check the documentation for the individual classes below. You
+must also specify a `~gala.units.UnitSystem` when initializing a potential. A
+unit system is a set of non-reducible units that define the length, mass, time,
+and angle units. A few common unit systems are built in to the package (e.g.,
+``galactic``, ``solarsystem``, ``dimensionless``).
 
-All of the built-in potential objects have defined methods that evaluate the
-value of the potential and the gradient/acceleration at a given position(s). For
-example, here we will create a potential object for a 2D point mass located at
-the origin with unit mass::
+All of the built-in potential objects have defined methods to evaluate the value
+of the potential energy and the gradient/acceleration at a given position(s).
+For example, here we will create a potential object for a 2D point mass located
+at the origin with unit mass::
 
     >>> ptmass = gp.KeplerPotential(m=1.*u.Msun, units=solarsystem)
     >>> ptmass
@@ -65,13 +70,14 @@ importing::
     >>> gp.KeplerPotential(m=1., units=dimensionless)
     <KeplerPotential: m=1.00 (dimensionless)>
 
-We can then evaluate the value of the potential at some position::
+With a potential object, we can evaluate the potential energy at some position::
 
-    >>> ptmass.value([1.,-1.,0.]*u.au)
+    >>> ptmass.energy([1.,-1.,0.]*u.au)
     <Quantity [-27.92216622] AU2 / yr2>
 
-These functions also accept plain :class:`~numpy.ndarray`-like objects where the
-position is assumed to be in the unit system of the potential)::
+These functions also accept both :class:`~astropy.units.Quantity` objects or
+plain :class:`~numpy.ndarray`-like objects (in which case the position is
+assumed to be in the unit system of the potential)::
 
     >>> ptmass.value([1.,-1.,0.])
     <Quantity [-27.92216622] AU2 / yr2>
@@ -94,6 +100,26 @@ We may also compute the gradient or acceleration::
     <Quantity [[-13.96108311],
                [ 13.96108311],
                [ -0.        ]] AU / yr2>
+
+Some of the potential objects also have methods implemented for computing the
+corresponding mass density and the Hessian of the potential (matrix of 2nd
+derivatives) at given locations. For example::
+
+    >>> pot = gp.HernquistPotential(m=1E9*u.Msun, c=1.*u.kpc, units=galactic)
+    >>> pot.density([1.,-1.,0]*u.kpc) # doctest: +FLOAT_CMP
+    [ 80223937.029824] solMass / kpc3
+    >>> pot.hessian([1.,-1.,0]*u.kpc) # doctest: +FLOAT_CMP
+    [[[-0.00207358]
+      [ 0.01075704]
+      [ 0.        ]]
+
+     [[ 0.01075704]
+      [-0.00207358]
+      [ 0.        ]]
+
+     [[ 0.        ]
+      [ 0.        ]
+      [ 0.00868346]]] 1 / Myr2
 
 .. These objects also provide more specialized methods such as
 .. :meth:`~gala.potential.Potential.plot_contours`, for plotting isopotential
@@ -150,11 +176,11 @@ and estimates the enclosed mass simply as
 be used to compute, for example, a mass profile::
 
     >>> import matplotlib.pyplot as pl
-    >>> pot = gp.SphericalNFWPotential(v_c=0.5, r_s=20., units=galactic)
-    >>> pos = np.zeros((3,100))
-    >>> pos[0] = np.logspace(np.log10(20./100.), np.log10(20*100.), pos.shape[1])
+    >>> pot = gp.NFWPotential(m=1E11*u.Msun, r_s=20.*u.kpc, units=galactic)
+    >>> pos = np.zeros((3,100)) * u.kpc
+    >>> pos[0] = np.logspace(np.log10(20./100.), np.log10(20*100.), pos.shape[1]) * u.kpc
     >>> m_profile = pot.mass_enclosed(pos)
-    >>> pl.loglog(pos, m_profile, marker=None) # doctest: +SKIP
+    >>> pl.loglog(pos[0], m_profile, marker=None) # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -165,9 +191,9 @@ be used to compute, for example, a mass profile::
     from gala.units import galactic, solarsystem
     import matplotlib.pyplot as pl
 
-    pot = gp.SphericalNFWPotential(v_c=0.5, r_s=20., units=galactic)
-    pos = np.zeros((3,100))
-    pos[0] = np.logspace(np.log10(20./100.), np.log10(20*100.), pos.shape[1])
+    pot = gp.NFWPotential(m=1E11*u.Msun, r_s=20.*u.kpc, units=galactic)
+    pos = np.zeros((3,100)) * u.kpc
+    pos[0] = np.logspace(np.log10(20./100.), np.log10(20*100.), pos.shape[1]) * u.kpc
     m_profile = pot.mass_enclosed(pos)
     pl.loglog(pos[0], m_profile, marker=None) # doctest: +SKIP
 
@@ -179,11 +205,11 @@ Potential objects. This can be done with :func:`gala.potential.save` and
 and method::
 
     >>> from gala.potential import load
-    >>> pot = gp.SphericalNFWPotential(v_c=500*u.km/u.s, r_s=20.*u.kpc,
-    ...                                units=galactic)
+    >>> pot = gp.NFWPotential(m=6E11*u.Msun, r_s=20.*u.kpc,
+    ...                       units=galactic)
     >>> pot.save("potential.yml")
     >>> load("potential.yml")
-    <SphericalNFWPotential: v_c=0.51, r_s=20.00 (kpc,Myr,solMass,rad)>
+    <NFWPotential: m=6.00e+11, r_s=20.00 (kpc,Myr,solMass,rad)>
 
 Using gala.potential
 ====================
