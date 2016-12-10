@@ -56,7 +56,7 @@ def test_mock_stream(Integrator, kwargs):
 
 mock_funcs = [streakline_stream, fardal_stream, dissolved_fardal_stream]
 all_extra_args = [dict(), dict(), dict(t_disrupt=-250.*u.Myr)]
-@pytest.mark.parametrize("mock_func, extra_kwargs", zip(mock_funcs[:2], all_extra_args[:2])) # HACK:
+@pytest.mark.parametrize("mock_func, extra_kwargs", zip(mock_funcs, all_extra_args))
 def test_each_type(mock_func, extra_kwargs):
     potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.,
                                                     units=galactic)
