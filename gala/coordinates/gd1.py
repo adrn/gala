@@ -9,9 +9,20 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 # Third-party
 import numpy as np
 
-from astropy.coordinates import frame_transform_graph
-from astropy.coordinates.matrix_utilities import matrix_transpose
 import astropy.coordinates as coord
+from astropy.coordinates import frame_transform_graph
+try:
+    from astropy.coordinates.matrix_utilities import matrix_transpose
+    ASTROPY_1_3 = True
+except ImportError:
+    from .matrix_utilities import matrix_transpose
+    ASTROPY_1_3 = False
+
+if not ASTROPY_1_3:
+    import astropy
+    import warnings
+    warnings.warn("We recommend using Astropy v1.3 or later. You have: {}"
+                  .format(astropy.__version__), DeprecationWarning)
 
 __all__ = ["GD1"]
 
