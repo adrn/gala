@@ -23,7 +23,7 @@ env:
         # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
         - NUMPY_VERSION=stable
-        - ASTROPY_VERSION=stable
+        - ASTROPY_VERSION=development # TODO: until 1.3 is out
         - SETUP_CMD='test'
         # HACK: qt=4 see https://github.com/astropy/astroquery/issues/748
         - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml sympy qt=4'

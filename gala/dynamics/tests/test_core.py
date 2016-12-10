@@ -135,8 +135,12 @@ def test_to_coord_frame():
     with warnings.catch_warnings(record=True) as wa:
         warnings.simplefilter('always')
         o.to_frame(Galactic)
-        assert len(wa) == 1
-        assert issubclass(wa[-1].category, DeprecationWarning)
+        # assert len(wa) == 1
+
+        check = False
+        for www in wa:
+            check = check or issubclass(www.category, DeprecationWarning)
+        assert check
 
 def test_w():
     # simple / unitless
