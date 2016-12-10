@@ -15,14 +15,13 @@ frames (e.g., :class:`~astropy.coordinates.ICRS` or
 other astropy coordinate frames::
 
     >>> c = coord.SkyCoord(ra=100.68458*u.degree, dec=41.26917*u.degree)
-    >>> c.transform_to(gc.Sagittarius) # doctest: +FLOAT_CMP
-    <SkyCoord (Sagittarius): (Lambda, Beta) in deg
-        ( 179.58511054, -12.55845019)>
-    >>> s = gc.Sagittarius(Lambda=156.342*u.degree, Beta=1.1*u.degree)
-    >>> c = coord.SkyCoord(s)
-    >>> c.galactic # doctest: +FLOAT_CMP
-    <SkyCoord (Galactic): (l, b) in deg
-        ( 182.59220904, -9.53969209)>
+    >>> sgr = c.transform_to(gc.Sagittarius)
+    >>> (sgr.Lambda, sgr.Beta) # doctest: +FLOAT_CMP
+    (<Longitude 179.58511053544734 deg>, <Latitude -12.558450192162654 deg>)
+    >>> sgr = gc.Sagittarius(Lambda=156.342*u.degree, Beta=1.1*u.degree)
+    >>> c = coord.SkyCoord(sgr)
+    >>> (c.galactic.l, c.galactic.b) # doctest: +FLOAT_CMP
+    (<Longitude 182.5922090437946 deg>, <Latitude -9.539692094685893 deg>)
 
 References
 ----------
