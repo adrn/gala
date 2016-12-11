@@ -10,16 +10,20 @@ Introduction
 ============
 
 This subpackage provides a number of classes for working with parametric models
-of gravitational potentials. There are base classes for creating custom
-potential classes, but there are a number of built-in potentials implemented in
-C and Cython for speed. These are commonly used potentials that have methods for
-computing, for example, the potential energy, gradient, density, or mass
-profiles. These are particularly useful in combination with the
+of gravitational potentials. There are a number of built-in potentials
+implemented in C and Cython for speed and there are base classes to allow for
+easy creation of new custom potential classes in pure-Python. The potential
+objects have methods for computing, for example, the potential energy, gradient,
+density, or mass profiles. These are particularly useful in combination with the
 `~gala.integrate` and `~gala.dynamics` subpackages.
 
 Also defined in this subpackage are a set of reference frames which can be used
 for numerical integration of orbits in non-static reference frames. See the
 page on :ref:`reference-frames` for more information.
+
+Potential objects can be combined with a reference frame and stored in a
+`~gala.potential.Hamiltonian` object that provides an easy interface to
+numerical orbit  integration.
 
 For code blocks below and any pages linked below, I assume the following imports
 have already been excuted::
@@ -37,9 +41,9 @@ parameter values as :class:`~astropy.units.Quantity` objects or as numeric
 values in a specified unit system. To see what parameters are available for a
 given potential, check the documentation for the individual classes below. You
 must also specify a `~gala.units.UnitSystem` when initializing a potential. A
-unit system is a set of non-reducible units that define the length, mass, time,
-and angle units. A few common unit systems are built in to the package (e.g.,
-``galactic``, ``solarsystem``, ``dimensionless``).
+unit system is a set of non-reducible units that define (at minimum) the length,
+mass, time, and angle units. A few common unit systems are built in to the
+package (e.g., ``galactic``, ``solarsystem``, ``dimensionless``).
 
 All of the built-in potential objects have defined methods to evaluate the value
 of the potential energy and the gradient/acceleration at a given position(s).
@@ -63,14 +67,15 @@ consistent with the `~gala.units.UnitSystem` passed in::
     <KeplerPotential: m=1.00 (AU,yr,solMass,rad)>
 
 The potential classes work well with the :mod:`astropy.units` framework, but to
-ignore units you can use the `~gala.units.DimensionlessUnitSystem` by
-importing::
+ignore units you can use the `~gala.units.DimensionlessUnitSystem` or pass
+``None`` as the unit system::
 
-    >>> from gala.units import dimensionless
-    >>> gp.KeplerPotential(m=1., units=dimensionless)
+    >>> gp.KeplerPotential(m=1., units=None)
     <KeplerPotential: m=1.00 (dimensionless)>
 
-With a potential object, we can evaluate the potential energy at some position::
+With an instantiated potential object, we can evaluate the potential energy at
+some position or a set of positions. Here, we'll evaluate a 3D point mass
+potential at the 3D position (1,-1,0)::
 
     >>> ptmass.energy([1.,-1.,0.]*u.au)
     <Quantity [-27.92216622] AU2 / yr2>
