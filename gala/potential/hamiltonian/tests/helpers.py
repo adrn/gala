@@ -78,7 +78,7 @@ class _TestBase(object):
         cls.gradient_return_shapes += [(r_ndim,ntimes,norbits)]*2
         cls.hessian_return_shapes += [(r_ndim,r_ndim,ntimes,norbits)]*2
 
-        _obj_w0s = cls.w0s.copy()
+        _obj_w0s = cls.w0s[:]
         for w0,eshp,gshp,hshp in zip(_obj_w0s,
                                      cls.energy_return_shapes,
                                      cls.gradient_return_shapes,

@@ -225,6 +225,7 @@ More details are provided in the linked pages below:
 
    define-new-potential
    compositepotential
+   reference-frames
 
 API
 ===

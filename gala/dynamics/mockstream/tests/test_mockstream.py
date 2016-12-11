@@ -79,7 +79,8 @@ def test_each_type(mock_func, extra_kwargs):
     assert prog.t.shape == (1024,)
     assert stream.pos.shape == (3,2048) # two particles per step
 
-@pytest.mark.skip("For some reason, doesn't work on Travis")
+@pytest.mark.skipif('CI' in os.environ and os.environ['CI'],
+                    reason="For some reason, doesn't work on Travis/CI")
 def test_animate(tmpdir):
 
     np.random.seed(42)

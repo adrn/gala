@@ -7,9 +7,20 @@ from __future__ import division, print_function
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
 from astropy.coordinates import frame_transform_graph
-from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product, matrix_transpose
 import astropy.coordinates as coord
 import astropy.units as u
+try:
+    from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product, matrix_transpose
+    ASTROPY_1_3 = True
+except ImportError:
+    from .matrix_utilities import rotation_matrix, matrix_product, matrix_transpose
+    ASTROPY_1_3 = False
+
+if not ASTROPY_1_3:
+    import astropy
+    import warnings
+    warnings.warn("We recommend using Astropy v1.3 or later. You have: {}"
+                  .format(astropy.__version__), DeprecationWarning)
 
 __all__ = ["Orphan"]
 

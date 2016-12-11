@@ -321,10 +321,8 @@ class PotentialBase(CommonBase):
         Plot equipotentials contours. Computes the potential energy on a grid
         (specified by the array `grid`).
 
-        .. warning::
-
-            Right now the grid input must be arrays and must already be in
-            the unit system of the potential. Quantity support is coming...
+        .. warning:: Right now the grid input must be arrays and must already
+            be in the unit system of the potential. Quantity support is coming...
 
         Parameters
         ----------
@@ -418,9 +416,7 @@ class PotentialBase(CommonBase):
         Plot density contours. Computes the density on a grid
         (specified by the array `grid`).
 
-        .. warning::
-
-            Right now the grid input must be arrays and must already be in
+        .. warning:: Right now the grid input must be arrays and must already be in
             the unit system of the potential. Quantity support is coming...
 
         Parameters
@@ -515,9 +511,7 @@ class PotentialBase(CommonBase):
     def integrate_orbit(self, *args, **kwargs):
         """
 
-        .. warning::
-
-            This is now deprecated. Convenient orbit integration should
+        .. warning:: This is now deprecated. Convenient orbit integration should
             happen using the `gala.potential.Hamiltonian` class. With a
             static reference frame, you just need to pass your potential
             in to the `~gala.potential.Hamiltonian` constructor.
