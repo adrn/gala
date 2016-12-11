@@ -8,8 +8,8 @@ import astropy.units as u
 
 # Project
 from ..common import CommonBase
-from ..potential import CPotentialBase
-from ..frame import CFrameBase, StaticFrame
+from ..potential import PotentialBase, CPotentialBase
+from ..frame import FrameBase, CFrameBase, StaticFrame
 from ...integrate import LeapfrogIntegrator, DOPRI853Integrator
 from ...dynamics import PhaseSpacePosition, CartesianOrbit, CartesianPhaseSpacePosition
 
@@ -17,16 +17,33 @@ __all__ = ["Hamiltonian"]
 
 class Hamiltonian(CommonBase):
     """
-    TODO:
+    Represents a composition of a gravitational potential and a reference frame.
+
+    This class is used to integrate orbits and compute quantities when working
+    in non-inertial reference frames. The input potential and frame objects
+    must have the same dimensionality and the same unit system. If both the
+    potential and the frame are implemented in C, numerical orbit integration
+    will use the C-implemented integrators and will be fast (to check if your
+    object is C-enabled, check the ``.c_enabled`` attribute).
+
+    Parameters
+    ----------
+    potential : :class:`~gala.potential.potential.PotentialBase` subclass
+        The gravitational potential.
+    frame : :class:`~gala.potential.frame.FrameBase` subclass (optional)
+        The reference frame.
+
     """
-
     def __init__(self, potential, frame=None):
-
-        # TODO: validate potential
-        # TODO: validate frame
 
         if frame is None:
             frame = StaticFrame(potential.units)
+
+        elif not isinstance(frame, FrameBase):
+            raise ValueError("Invalid input for reference frame. Must be a FrameBase subclass.")
+
+        if not isinstance(potential, PotentialBase):
+            raise ValueError("Invalid input for potential. Must be a PotentialBase subclass.")
 
         self.potential = potential
         self.frame = frame

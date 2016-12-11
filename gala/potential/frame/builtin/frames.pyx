@@ -65,12 +65,18 @@ cdef class StaticFrameWrapper(CFrameWrapper):
         self.cframe = cf
 
 class StaticFrame(CFrameBase):
+    """
+    Represents a static intertial reference frame.
 
+    Parameters
+    ----------
+    units : `~gala.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
     def __init__(self, units=None):
-        """
-        TODO:
-        """
-        # TODO: ndim = None means it can support any number of ndim
+        # ndim = None means it can support any number of ndim
         super(StaticFrame, self).__init__(StaticFrameWrapper, dict(), units, ndim=None)
 
 # ---
@@ -108,12 +114,24 @@ cdef class ConstantRotatingFrameWrapper3D(CFrameWrapper):
         self.cframe = cf
 
 class ConstantRotatingFrame(CFrameBase):
+    """
+    Represents a constantly rotating reference frame.
 
+    The reference frame rotates with constant angular velocity set by the
+    magnitude of the vector parameter ``Omega`` around the axis defined by
+    the unit vector computed from the input frequency vector.
+
+    Parameters
+    ----------
+    Omega : :class:`~astropy.units.Quantity`
+        The frequency vector, which specifies the axis of rotation and the
+        angular velocity of the frame.
+    units : `~gala.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
     def __init__(self, Omega, units=None):
-        """
-        TODO: write docstring
-        TODO: always convert to rad/<time unit> ?
-        """
 
         if units is None:
             units = dimensionless

@@ -78,7 +78,6 @@ cdef class CFrameWrapper:
 
         return np.array(d2H)
 
-# TODO: make sure this doesn't appear in docs - Frames are really only used internally
 class CFrameBase(FrameBase):
 
     def __init__(self, Wrapper, parameters, units, parameter_physical_types=None, ndim=3):
