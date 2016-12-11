@@ -316,7 +316,7 @@ class PotentialBase(CommonBase):
     # ========================================================================
     # Convenience methods that do fancy things
     #
-    def plot_contours(self, grid, ax=None, labels=None, subplots_kw=dict(), **kwargs):
+    def plot_contours(self, grid, filled=True, ax=None, labels=None, subplots_kw=dict(), **kwargs):
         """
         Plot equipotentials contours. Computes the potential energy on a grid
         (specified by the array `grid`).
@@ -329,6 +329,9 @@ class PotentialBase(CommonBase):
         grid : tuple
             Coordinate grids or slice value for each dimension. Should be a
             tuple of 1D arrays or numbers.
+        filled : bool (optional)
+            Use :func:`~matplotlib.pyplot.contourf` instead of
+            :func:`~matplotlib.pyplot.contour`. Default is ``True``.
         ax : matplotlib.Axes (optional)
         labels : iterable (optional)
             List of axis labels.
@@ -402,8 +405,12 @@ class PotentialBase(CommonBase):
 
             # make default colormap not suck
             cmap = kwargs.pop('cmap', cm.Blues)
-            cs = ax.contourf(x1.reshape(shp), x2.reshape(shp), Z.reshape(shp),
-                             cmap=cmap, **kwargs)
+            if filled:
+                cs = ax.contourf(x1.reshape(shp), x2.reshape(shp), Z.reshape(shp),
+                                 cmap=cmap, **kwargs)
+            else:
+                cs = ax.contour(x1.reshape(shp), x2.reshape(shp), Z.reshape(shp),
+                                cmap=cmap, **kwargs)
 
             if labels is not None:
                 ax.set_xlabel(labels[0])
