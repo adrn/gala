@@ -20,9 +20,10 @@ subpackages.
 
 Also defined in this subpackage are a set of reference frames which can be used
 for numerical integration of orbits in non-static reference frames. See the page
-on :ref:`reference-frames` for more information. Potential objects can be
-combined with a reference frame and stored in a `~gala.potential.Hamiltonian`
-object that provides an easy interface to numerical orbit integration.
+on :ref:`hamiltonian-reference-frames` for more information. Potential objects
+can be combined with a reference frame and stored in a
+`~gala.potential.Hamiltonian` object that provides an easy interface to
+numerical orbit integration.
 
 For code blocks below and any pages linked below, I assume the following imports
 have already been excuted::
@@ -238,7 +239,7 @@ More details are provided in the linked pages below:
 
    define-new-potential
    compositepotential
-   reference-frames
+   hamiltonian-reference-frames
 
 API
 ===
