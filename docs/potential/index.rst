@@ -11,30 +11,30 @@ Introduction
 
 This subpackage provides a number of classes for working with parametric models
 of gravitational potentials. There are a number of built-in potentials
-implemented in C and Cython for speed and there are base classes to allow for
-easy creation of new custom potential classes in pure-Python. The potential
-objects have methods for computing, for example, the potential energy, gradient,
-density, or mass profiles. These are particularly useful in combination with the
-`~gala.integrate` and `~gala.dynamics` subpackages.
+implemented in C and Cython for speed and there are base classes that allow for
+easy creation of `new custom potential classes <define-new-potential.html>`_ in
+pure-Python. The potential objects have methods for computing, for example, the
+potential energy, gradient, density, or mass profiles. These are particularly
+useful in combination with the `~gala.integrate` and `~gala.dynamics`
+subpackages.
 
 Also defined in this subpackage are a set of reference frames which can be used
-for numerical integration of orbits in non-static reference frames. See the
-page on :ref:`reference-frames` for more information.
-
-Potential objects can be combined with a reference frame and stored in a
-`~gala.potential.Hamiltonian` object that provides an easy interface to
-numerical orbit  integration.
+for numerical integration of orbits in non-static reference frames. See the page
+on :ref:`reference-frames` for more information. Potential objects can be
+combined with a reference frame and stored in a `~gala.potential.Hamiltonian`
+object that provides an easy interface to numerical orbit integration.
 
 For code blocks below and any pages linked below, I assume the following imports
 have already been excuted::
 
     >>> import astropy.units as u
+    >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> import gala.potential as gp
     >>> from gala.units import galactic, solarsystem, dimensionless
 
-Getting started: built-in potential classes
-===========================================
+Getting started: built-in methods of potential classes
+======================================================
 
 The built-in potentials are all initialized by passing in keyword argument
 parameter values as :class:`~astropy.units.Quantity` objects or as numeric
@@ -45,8 +45,8 @@ unit system is a set of non-reducible units that define (at minimum) the length,
 mass, time, and angle units. A few common unit systems are built in to the
 package (e.g., ``galactic``, ``solarsystem``, ``dimensionless``).
 
-All of the built-in potential objects have defined methods to evaluate the value
-of the potential energy and the gradient/acceleration at a given position(s).
+All of the built-in potential objects have defined methods to evaluate the
+potential energy and the gradient/acceleration at a given position(s).
 For example, here we will create a potential object for a 2D point mass located
 at the origin with unit mass::
 
@@ -84,7 +84,7 @@ These functions also accept both :class:`~astropy.units.Quantity` objects or
 plain :class:`~numpy.ndarray`-like objects (in which case the position is
 assumed to be in the unit system of the potential)::
 
-    >>> ptmass.value([1.,-1.,0.])
+    >>> ptmass.energy([1.,-1.,0.])
     <Quantity [-27.92216622] AU2 / yr2>
 
 This also works for multiple positions by passing in a 2D position (but see
@@ -92,7 +92,7 @@ This also works for multiple positions by passing in a 2D position (but see
 
     >>> pos = np.array([[1.,-1.,0],
     ...                 [2.,3.,0]]).T
-    >>> ptmass.value(pos*u.au)
+    >>> ptmass.energy(pos*u.au)
     <Quantity [-27.92216622,-10.95197465] AU2 / yr2>
 
 We may also compute the gradient or acceleration::
@@ -126,54 +126,8 @@ derivatives) at given locations. For example::
                 [  0.00000000e+00],
                 [  5.45911619e-04]]] 1 / Myr2>
 
-.. These objects also provide more specialized methods such as
-.. :meth:`~gala.potential.Potential.plot_contours`, for plotting isopotential
-.. contours in both 1D and 2D, and :meth:`~gala.potential.Potential.mass_enclosed`,
-.. which estimates the mass enclosed within a specified spherical radius.
-
-`~gala.potential.Potential.plot_contours` supports plotting
-either 1D slices or 2D contour plots of isopotentials. To plot a 1D slice
-over the dimension of interest, pass in a grid of values for that dimension
-and numerical values for the others. For example, to make a 1D plot of the
-potential value as a function of :math:`x` position at :math:`y=0, z=1`::
-
-    >>> p = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
-    >>> p.plot_contours(grid=(np.linspace(-15,15,100), 0., 1.)) # doctest: +SKIP
-
-.. plot::
-    :align: center
-
-    import astropy.units as u
-    import numpy as np
-    import gala.potential as gp
-    from gala.units import galactic, solarsystem
-
-    pot = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
-    fig = pot.plot_contours(grid=(np.linspace(-15,15,100), 0., 1.))
-
-To instead make a 2D contour plot over :math:`x` and :math:`z` along with
-:math:`y=0`, pass in a 1D grid of values for :math:`x` and a 1D grid of values
-for :math:`z` (the meshgridding is taken care of internally)::
-
-    >>> x = np.linspace(-15,15,100)
-    >>> z = np.linspace(-5,5,100)
-    >>> p.plot_contours(grid=(x, 1., z)) # doctest: +SKIP
-
-.. plot::
-    :align: center
-
-    import astropy.units as u
-    import numpy as np
-    import gala.potential as gp
-    from gala.units import galactic, solarsystem
-
-    pot = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
-    x = np.linspace(-15,15,100)
-    z = np.linspace(-5,5,100)
-    pot.plot_contours(grid=(x, 1., z))
-
-:meth:`~gala.potential.PotentialBase.mass_enclosed` is a method that
-numerically estimates the mass enclosed within a spherical shell defined
+Another useful method is :meth:`~gala.potential.PotentialBase.mass_enclosed`,
+which numerically estimates the mass enclosed within a spherical shell defined
 by the specified position. This numerically estimates
 :math:`\frac{d \Phi}{d r}` along the vector pointing at the specified position
 and estimates the enclosed mass simply as
@@ -201,6 +155,65 @@ be used to compute, for example, a mass profile::
     pos[0] = np.logspace(np.log10(20./100.), np.log10(20*100.), pos.shape[1]) * u.kpc
     m_profile = pot.mass_enclosed(pos)
     pl.loglog(pos[0], m_profile, marker=None) # doctest: +SKIP
+
+Plotting isopotentials
+======================
+
+Potential objects also provide more specialized methods such as
+:meth:`~gala.potential.PotentialBase.plot_contours`, which is a fast way to plot
+either 1D slices or 2D contour plots of isopotentials. To plot a 1D slice
+over the dimension of interest, pass in a grid of values for that dimension
+and numerical values for the others. For example, to make a 1D plot of the
+potential value as a function of :math:`x` position at :math:`y=0, z=1`::
+
+    >>> p = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
+    >>> p.plot_contours(grid=(np.linspace(-15,15,100), 0., 1.)) # doctest: +SKIP
+
+.. plot::
+    :align: center
+
+    import astropy.units as u
+    import numpy as np
+    import gala.potential as gp
+    from gala.units import galactic, solarsystem
+
+    pot = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
+    fig = pot.plot_contours(grid=(np.linspace(-15,15,100), 0., 1.))
+
+To instead make a 2D contour plot over :math:`x` and :math:`z` along with
+:math:`y=0`, pass in a 1D grid of values for :math:`x` and a 1D grid of values
+for :math:`z` (the meshgridding is taken care of internally). Here, we choose
+to draw on a pre-defined `matplotlib` axes object so we can set the labels and
+aspect ratio of the plot::
+
+    >>> fig,ax = plt.subplots(1, 1, figsize=(12,4))
+    >>> x = np.linspace(-15,15,100)
+    >>> z = np.linspace(-5,5,100)
+    >>> p.plot_contours(grid=(x, 1., z), ax=ax) # doctest: +SKIP
+    >>> ax.set_xlabel("$x$ [kpc]") # doctest: +SKIP
+    >>> ax.set_ylabel("$z$ [kpc]") # doctest: +SKIP
+
+.. plot::
+    :align: center
+
+    import astropy.units as u
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import gala.potential as gp
+    from gala.units import galactic, solarsystem
+
+    pot = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
+    x = np.linspace(-15,15,100)
+    z = np.linspace(-5,5,100)
+
+    fig,ax = plt.subplots(1, 1, figsize=(12,4))
+    pot.plot_contours(grid=(x, 1., z), ax=ax)
+    ax.set_xlabel("$x$ [kpc]")
+    ax.set_ylabel("$z$ [kpc]")
+    fig.tight_layout()
+
+Saving / loading potential objects
+==================================
 
 Potential objects can be `pickled <https://docs.python.org/2/library/pickle.html>`_
 and can therefore be stored for later use. However, pickles are saved as binary
@@ -230,4 +243,6 @@ More details are provided in the linked pages below:
 API
 ===
 
-.. automodapi:: gala.potential
+.. automodapi:: gala.potential.potential
+    :skip: SphericalNFWPotential
+    :skip: FlattenedNFWPotential
