@@ -81,7 +81,7 @@ what each piece means in detail::
     ...         A = self.parameters['A'].value
     ...         x,y = xy.T
     ...
-    ...         grad = np.zeros_like(q)
+    ...         grad = np.zeros_like(xy)
     ...         grad[:,0] = x + 2*A*x*y
     ...         grad[:,1] = y + A*(x**2 - y**2)
     ...         return grad

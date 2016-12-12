@@ -21,7 +21,7 @@ Introduction
 When :ref:`integrating orbits using the potential classes directly
 <integrate_potential_example>`, for example:
 
-    >>> pot = gd.HernquistPotential(m=1E10*u.Msun, c=1.*u.kpc,
+    >>> pot = gp.HernquistPotential(m=1E10*u.Msun, c=1.*u.kpc,
     ...                             units=galactic)
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=[5.,0,0]*u.kpc,
     ...                                     vel=[0,0,50.]*u.km/u.s)
