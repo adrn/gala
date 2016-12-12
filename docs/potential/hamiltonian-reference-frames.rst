@@ -226,7 +226,7 @@ kpc}^{-1}`. We'll create a
 frequency::
 
     >>> Om_bar = 42. * u.km/u.s/u.kpc
-    >>> frame = gp.ConstantRotatingFrame(Omega=[0,0,Om_bar.value]*Om_bar.unit
+    >>> frame = gp.ConstantRotatingFrame(Omega=[0,0,Om_bar.value]*Om_bar.unit,
     ...                                  units=galactic)
     >>> H = gp.Hamiltonian(potential=pot, frame=frame)
 
@@ -241,16 +241,16 @@ radius::
     >>> res = so.minimize(func, x0=10., method='powell')
     >>>
     >>> r_corot = res.x * u.kpc
-    >>> v_circ = Om_b * r_corot * u.kpc
+    >>> v_circ = Om_bar * r_corot * u.kpc
     >>>
     >>> w0 = gd.CartesianPhaseSpacePosition(pos=[r_corot.value, 0, 0] * r_corot.unit,
-                                    vel=[0,v_circ.value, 0.] * v_circ.unit)
+    ...                                     vel=[0, v_circ.value, 0.] * v_circ.unit)
     >>> orbit = H.integrate_orbit(w0, dt=0.1, n_steps=40000,
     ...                           Integrator=gi.DOPRI853Integrator)
     >>> fig = orbit.plot(marker=',', linestyle='none', alpha=0.5) # doctest: +SKIP
-    >>> for ax in fig.axes:
-    ...     ax.set_xlim(-15,15)
-    ...     ax.set_ylim(-15,15)
+    >>> for ax in fig.axes: # doctest: +SKIP
+    ...     ax.set_xlim(-15,15) # doctest: +SKIP
+    ...     ax.set_ylim(-15,15) # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -303,9 +303,9 @@ orbit looks like in an inertial frame::
 
     >>> inertial_orbit = orbit.to_frame(gp.StaticFrame(galactic))
     >>> fig = inertial_orbit.plot(marker=',', linestyle='none', alpha=0.5) # doctest: +SKIP
-    >>> for ax in fig.axes:
-    ...     ax.set_xlim(-15,15)
-    ...     ax.set_ylim(-15,15)
+    >>> for ax in fig.axes: # doctest: +SKIP
+    ...     ax.set_xlim(-15,15) # doctest: +SKIP
+    ...     ax.set_ylim(-15,15) # doctest: +SKIP
 
 .. plot::
     :align: center

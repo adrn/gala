@@ -153,7 +153,7 @@ Or, we could create a contour plot of equipotentials::
     >>> fig, ax = plt.subplots(1, 1, figsize=(5,5))
     >>> fig = pot.plot_contours(grid=(grid,grid),
     ...                         levels=np.logspace(-3, 1, 10),
-    ...                         norm=colors.LogNorm())
+    ...                         norm=colors.LogNorm(),
     ...                         cmap='Blues', ax=ax)
 
 .. plot::
