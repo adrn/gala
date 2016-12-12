@@ -145,15 +145,9 @@ def test_to_coord_frame():
     coo,vel = o.to_coord_frame(Galactic)
     assert coo.name == 'galactic'
 
-    with warnings.catch_warnings(record=True) as wa:
-        warnings.simplefilter('always')
+    warnings.simplefilter('always')
+    with pytest.warns(DeprecationWarning):
         o.to_frame(Galactic)
-        # assert len(wa) == 1
-
-        check = False
-        for www in wa:
-            check = check or issubclass(www.category, DeprecationWarning)
-        assert check
 
     # doesn't work for 2D
     x = np.random.random(size=(2,10))*u.kpc
@@ -214,14 +208,9 @@ def test_energy():
     PE = o.potential_energy(p)
     E = o.energy(H)
 
-    with warnings.catch_warnings(record=True) as wa:
-        warnings.simplefilter('always')
+    warnings.simplefilter('always')
+    with pytest.warns(DeprecationWarning):
         o.energy(p)
-
-        check = False
-        for www in wa:
-            check = check or issubclass(www.category, DeprecationWarning)
-        assert check
 
 def test_angular_momentum():
 

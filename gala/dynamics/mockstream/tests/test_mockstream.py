@@ -82,16 +82,10 @@ def test_each_type(mock_func, extra_kwargs):
     # Test expected failures:
 
     # Deprecation warning for passing in potential
-    with warnings.catch_warnings(record=True) as wa:
-        warnings.simplefilter('always')
-
+    warnings.simplefilter('always')
+    with pytest.warns(DeprecationWarning):
         stream = mock_func(potential, prog_orbit=prog, prog_mass=1E4*u.Msun,
                            Integrator=DOPRI853Integrator, **extra_kwargs)
-
-        check = False
-        for www in wa:
-            check = check or issubclass(www.category, DeprecationWarning)
-        assert check
 
     # Integrator not supported
     with pytest.raises(ValueError):
