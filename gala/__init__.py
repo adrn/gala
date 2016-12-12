@@ -14,6 +14,8 @@ if not _ASTROPY_SETUP_:
     from . import util
     from . import mpl_style
 
+    # TODO: remove with Astropy v1.3, which supports this
+
     # Monkey-patch Quantity
     import astropy.units as u
 
