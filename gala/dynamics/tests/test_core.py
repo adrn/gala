@@ -48,6 +48,9 @@ def test_initialize():
     assert o.frame is not None
     assert isinstance(o.frame, StaticFrame)
 
+    with pytest.raises(TypeError):
+        o = CartesianPhaseSpacePosition(pos=x, vel=v, frame="blah blah blah")
+
 def test_from_w():
 
     w = np.random.random(size=(6,10))
@@ -105,6 +108,9 @@ def test_represent_as():
     v = np.random.random(size=(3,10))
     o = CartesianPhaseSpacePosition(pos=x, vel=v)
     sph_pos, sph_vel = o.represent_as(SphericalRepresentation)
+    o.spherical
+    o.cylindrical
+    o.cartesian
 
     assert sph_pos.distance.unit == u.dimensionless_unscaled
     assert sph_vel.unit == u.dimensionless_unscaled
@@ -115,6 +121,13 @@ def test_represent_as():
     o = CartesianPhaseSpacePosition(pos=x, vel=v)
     sph_pos, sph_vel = o.represent_as(SphericalRepresentation)
     assert sph_pos.distance.unit == u.kpc
+
+    # doesn't work for 2D
+    x = np.random.random(size=(2,10))
+    v = np.random.random(size=(2,10))
+    o = CartesianPhaseSpacePosition(pos=x, vel=v)
+    with pytest.raises(ValueError):
+        o.represent_as(SphericalRepresentation)
 
 def test_to_coord_frame():
     # simple / unitless
@@ -141,6 +154,13 @@ def test_to_coord_frame():
         for www in wa:
             check = check or issubclass(www.category, DeprecationWarning)
         assert check
+
+    # doesn't work for 2D
+    x = np.random.random(size=(2,10))*u.kpc
+    v = np.random.normal(0.,100.,size=(2,10))*u.km/u.s
+    o = CartesianPhaseSpacePosition(pos=x, vel=v)
+    with pytest.raises(ValueError):
+        o.to_coord_frame(Galactic)
 
 def test_w():
     # simple / unitless
@@ -194,6 +214,15 @@ def test_energy():
     PE = o.potential_energy(p)
     E = o.energy(H)
 
+    with warnings.catch_warnings(record=True) as wa:
+        warnings.simplefilter('always')
+        o.energy(p)
+
+        check = False
+        for www in wa:
+            check = check or issubclass(www.category, DeprecationWarning)
+        assert check
+
 def test_angular_momentum():
 
     w = CartesianPhaseSpacePosition([1.,0.,0.], [0.,0.,1.])
@@ -241,6 +270,13 @@ def test_combine():
     o = combine((o1, o2))
     assert o.pos.unit == galactic['length']
     assert o.vel.unit == galactic['length']/galactic['time']
+
+    o1 = CartesianPhaseSpacePosition.from_w(np.random.random(size=6), units=galactic)
+    x = np.random.random(size=(2,10))*u.kpc
+    v = np.random.normal(0.,100.,size=(2,10))*u.km/u.s
+    o2 = CartesianPhaseSpacePosition(pos=x, vel=v)
+    with pytest.raises(ValueError):
+        o = combine((o1, o2))
 
 def test_frame_transform():
     static = StaticFrame(galactic)
