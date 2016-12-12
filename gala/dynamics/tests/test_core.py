@@ -10,6 +10,7 @@ import warnings
 # Third-party
 import astropy.units as u
 from astropy.coordinates import SphericalRepresentation, Galactic
+from astropy.tests.helper import quantity_allclose
 import numpy as np
 import pytest
 
@@ -17,7 +18,6 @@ import pytest
 from ..core import *
 from ...potential import Hamiltonian, HernquistPotential
 from ...potential.frame import StaticFrame, ConstantRotatingFrame
-from ...util import assert_quantities_allclose
 from ...units import galactic, solarsystem
 
 def test_initialize():
@@ -206,7 +206,7 @@ def test_angular_momentum():
     assert np.allclose(np.squeeze(w.angular_momentum()), [1., 0, 0])
 
     w = CartesianPhaseSpacePosition([1.,0,0]*u.kpc, [0.,200.,0]*u.pc/u.Myr)
-    assert_quantities_allclose(np.squeeze(w.angular_momentum()), [0,0,0.2]*u.kpc**2/u.Myr)
+    assert quantity_allclose(np.squeeze(w.angular_momentum()), [0,0,0.2]*u.kpc**2/u.Myr)
 
     # multiple - known
     q = np.array([[1.,0.,0.],[1.,0.,0.],[0,1.,0.]]).T

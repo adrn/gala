@@ -83,7 +83,7 @@ def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
         raise TypeError("Input potential must be a CPotentialBase subclass.")
 
     if not isinstance(prog_orbit, Orbit):
-        raise ValueError("Progenitor orbit must be an Orbit subclass.")
+        raise TypeError("Progenitor orbit must be an Orbit subclass.")
 
     if snapshot_filename is not None and Integrator != DOPRI853Integrator:
         raise ValueError("If saving snapshots, must use the DOP853Integrator.")
@@ -316,8 +316,12 @@ def dissolved_fardal_stream(hamiltonian, prog_orbit, prog_mass, t_disrupt, relea
 
     """
 
-    # the time index closest to when the disruption happens
-    t = prog_orbit.t
+    try:
+        # the time index closest to when the disruption happens
+        t = prog_orbit.t
+    except AttributeError:
+        raise TypeError("Input progenitor orbit must be an Orbit subclass instance.")
+
     disrupt_ix = np.abs(t - t_disrupt).argmin()
 
     k_mean = np.zeros((t.size,6))

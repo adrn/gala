@@ -2,9 +2,8 @@
 
 from __future__ import division, print_function
 
-__author__ = "adrn <adrn@astro.columbia.edu>"
-
 import os
+import warnings
 
 # Third-party
 import astropy.units as u
@@ -14,7 +13,7 @@ import pytest
 # Custom
 from ....potential import Hamiltonian, NFWPotential, HernquistPotential
 from ....dynamics import CartesianPhaseSpacePosition
-from ....integrate import DOPRI853Integrator, LeapfrogIntegrator
+from ....integrate import DOPRI853Integrator, LeapfrogIntegrator, RK5Integrator
 from ....units import galactic
 
 # Project
@@ -78,6 +77,31 @@ def test_each_type(mock_func, extra_kwargs):
 
     assert prog.t.shape == (1024,)
     assert stream.pos.shape == (3,2048) # two particles per step
+
+    # -----------------------
+    # Test expected failures:
+
+    # Deprecation warning for passing in potential
+    with warnings.catch_warnings(record=True) as wa:
+        warnings.simplefilter('always')
+
+        stream = mock_func(potential, prog_orbit=prog, prog_mass=1E4*u.Msun,
+                           Integrator=DOPRI853Integrator, **extra_kwargs)
+
+        check = False
+        for www in wa:
+            check = check or issubclass(www.category, DeprecationWarning)
+        assert check
+
+    # Integrator not supported
+    with pytest.raises(ValueError):
+        stream = mock_func(potential, prog_orbit=prog, prog_mass=1E4*u.Msun,
+                           Integrator=RK5Integrator, **extra_kwargs)
+
+    # Passed a phase-space position, not orbit
+    with pytest.raises(TypeError):
+        stream = mock_func(potential, prog_orbit=prog[0], prog_mass=1E4*u.Msun,
+                           Integrator=DOPRI853Integrator, **extra_kwargs)
 
 @pytest.mark.skipif('CI' in os.environ,
                     reason="For some reason, doesn't work on Travis/CI")
