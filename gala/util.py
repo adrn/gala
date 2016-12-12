@@ -4,72 +4,13 @@
 
 from __future__ import division, print_function
 
-__author__ = "adrn <adrn@astro.columbia.edu>"
-
 # Standard library
 import collections
-import sys
-import multiprocessing
 
 # Third-party
-from astropy import log as logger
 import numpy as np
 
-__all__ = ['get_pool', 'rolling_window', 'atleast_2d',
-           'assert_angles_allclose', 'assert_quantities_allclose']
-
-class SerialPool(object):
-
-    def close(self):
-        return
-
-    def map(self, function, tasks, callback=None):
-        results = []
-        for task in tasks:
-            result = function(task)
-            if callback is not None:
-                callback(result)
-            results.append(result)
-        return results
-
-def get_pool(mpi=False, threads=None, **kwargs):
-    """ Get a pool object to pass to emcee for parallel processing.
-        If mpi is False and threads is None, pool is None.
-
-        Parameters
-        ----------
-        mpi : bool
-            Use MPI or not. If specified, ignores the threads kwarg.
-        threads : int (optional)
-            If mpi is False and threads is specified, use a Python
-            multiprocessing pool with the specified number of threads.
-        **kwargs
-            Any other keyword arguments are passed through to the pool
-            initializers.
-    """
-
-    if mpi:
-        from mpipool import MPIPool
-
-        # Initialize the MPI pool
-        pool = MPIPool(**kwargs)
-
-        # Make sure the thread we're running on is the master
-        if not pool.is_master():
-            pool.wait()
-            sys.exit(0)
-        logger.debug("Running with MPI...")
-
-    elif threads is not None and threads > 1:
-        logger.debug("Running with multiprocessing on {} cores..."
-                     .format(threads))
-        pool = multiprocessing.Pool(threads, **kwargs)
-
-    else:
-        logger.debug("Running serial...")
-        pool = SerialPool(**kwargs)
-
-    return pool
+__all__ = ['rolling_window', 'atleast_2d', 'assert_angles_allclose']
 
 class ImmutableDict(collections.Mapping):
 
@@ -242,11 +183,3 @@ def assert_angles_allclose(x, y, **kwargs):
     c2 = (np.sin(x)-np.sin(y))**2 + (np.cos(x)-np.cos(y))**2
     diff = np.arccos((2.0 - c2)/2.0) # a = b = 1
     assert np.allclose(diff, 0.0, **kwargs)
-
-def assert_quantities_allclose(x, y, **kwargs):
-    """
-    Like numpy's assert_allclose, but for quantities.
-    """
-    y = y.to(x.unit).value
-    x = x.value
-    assert np.allclose(x, y, **kwargs)
