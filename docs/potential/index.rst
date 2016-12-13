@@ -135,12 +135,13 @@ and estimates the enclosed mass simply as
 :math:`M(<r)\approx\frac{r^2}{G} \frac{d \Phi}{d r}`. This function can
 be used to compute, for example, a mass profile::
 
-    >>> import matplotlib.pyplot as pl
     >>> pot = gp.NFWPotential(m=1E11*u.Msun, r_s=20.*u.kpc, units=galactic)
     >>> pos = np.zeros((3,100)) * u.kpc
     >>> pos[0] = np.logspace(np.log10(20./100.), np.log10(20*100.), pos.shape[1]) * u.kpc
     >>> m_profile = pot.mass_enclosed(pos)
-    >>> pl.loglog(pos[0], m_profile, marker=None) # doctest: +SKIP
+    >>> plt.loglog(pos[0], m_profile, marker='') # doctest: +SKIP
+    >>> plt.xlabel("$r$ [{}]".format(pos.unit.to_string(format='latex'))) # doctest: +SKIP
+    >>> plt.ylabel("$M(<r)$ [{}]".format(m_profile.unit.to_string(format='latex'))) # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -149,26 +150,34 @@ be used to compute, for example, a mass profile::
     import numpy as np
     import gala.potential as gp
     from gala.units import galactic, solarsystem
-    import matplotlib.pyplot as pl
+    import matplotlib.pyplot as plt
 
     pot = gp.NFWPotential(m=1E11*u.Msun, r_s=20.*u.kpc, units=galactic)
     pos = np.zeros((3,100)) * u.kpc
     pos[0] = np.logspace(np.log10(20./100.), np.log10(20*100.), pos.shape[1]) * u.kpc
     m_profile = pot.mass_enclosed(pos)
-    pl.loglog(pos[0], m_profile, marker=None) # doctest: +SKIP
+
+    plt.figure()
+    plt.loglog(pos[0], m_profile, marker='') # doctest: +SKIP
+    plt.xlabel("$r$ [{}]".format(pos.unit.to_string(format='latex')))
+    plt.ylabel("$M(<r)$ [{}]".format(m_profile.unit.to_string(format='latex')))
 
 Plotting isopotentials
 ======================
 
 Potential objects also provide more specialized methods such as
-:meth:`~gala.potential.PotentialBase.plot_contours`, which is a fast way to plot
-either 1D slices or 2D contour plots of isopotentials. To plot a 1D slice
-over the dimension of interest, pass in a grid of values for that dimension
-and numerical values for the others. For example, to make a 1D plot of the
-potential value as a function of :math:`x` position at :math:`y=0, z=1`::
+:meth:`~gala.potential.potential.PotentialBase.plot_contours`, which is a fast
+way to plot either 1D slices or 2D contour plots of isopotentials. To plot a 1D
+slice over the dimension of interest, pass in a grid of values for that
+dimension and numerical values for the others. For example, to make a 1D plot of
+the potential value as a function of :math:`x` position at :math:`y=0, z=1`::
 
     >>> p = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
-    >>> p.plot_contours(grid=(np.linspace(-15,15,100), 0., 1.)) # doctest: +SKIP
+    >>> fig, ax = plt.subplots(1,1) # doctest: +SKIP
+    >>> p.plot_contours(grid=(np.linspace(-15,15,100), 0., 1.), marker='', ax=ax) # doctest: +SKIP
+    >>> E_unit = p.units['energy'] / p.units['mass']
+    >>> ax.set_xlabel("$x$ [{}]".format(p.units['length'].to_string(format='latex'))) # doctest: +SKIP
+    >>> ax.set_ylabel("$\Phi(x,0,1)$ [{}]".format(E_unit.to_string(format='latex'))) # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -179,7 +188,13 @@ potential value as a function of :math:`x` position at :math:`y=0, z=1`::
     from gala.units import galactic, solarsystem
 
     pot = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
-    fig = pot.plot_contours(grid=(np.linspace(-15,15,100), 0., 1.))
+
+    fig, ax = plt.subplots(1,1) # doctest: +SKIP
+    pot.plot_contours(grid=(np.linspace(-15,15,100), 0., 1.), marker='', ax=ax) # doctest: +SKIP
+    E_unit = pot.units['energy'] / pot.units['mass']
+    ax.set_xlabel("$x$ [{}]".format(pot.units['length'].to_string(format='latex'))) # doctest: +SKIP
+    ax.set_ylabel("$\Phi(x,0,1)$ [{}]".format(E_unit.to_string(format='latex'))) # doctest: +SKIP
+    fig.tight_layout()
 
 To instead make a 2D contour plot over :math:`x` and :math:`z` along with
 :math:`y=0`, pass in a 1D grid of values for :math:`x` and a 1D grid of values
