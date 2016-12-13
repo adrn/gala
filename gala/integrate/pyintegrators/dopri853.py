@@ -56,7 +56,8 @@ class DOPRI853Integrator(Integrator):
         #   issue with the args stuff in scipy...
         def func_wrapper(t,x):
             _x = x.reshape((2*self.ndim,self.norbits))
-            return self.F(t, _x, *self._func_args).reshape((_size_1d,))
+            val = self.F(t, _x, *self._func_args)
+            return val.reshape((_size_1d,))
 
         self._ode = ode(func_wrapper, jac=None)
         self._ode = self._ode.set_integrator('dop853', **self._ode_kwargs)

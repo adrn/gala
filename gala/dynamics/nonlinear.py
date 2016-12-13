@@ -11,10 +11,11 @@ from scipy.signal import argrelmin
 
 # Project
 from . import CartesianPhaseSpacePosition, CartesianOrbit
+from ..potential.potential import PotentialBase
 
 __all__ = ['fast_lyapunov_max', 'lyapunov_max', 'surface_of_section']
 
-def fast_lyapunov_max(w0, potential, dt, n_steps, d0=1e-5,
+def fast_lyapunov_max(w0, hamiltonian, dt, n_steps, d0=1e-5,
                       n_steps_per_pullback=10, noffset_orbits=2, t1=0.,
                       atol=1E-10, rtol=1E-10, nmax=0, return_orbit=True):
     """
@@ -25,6 +26,7 @@ def fast_lyapunov_max(w0, potential, dt, n_steps, d0=1e-5,
     ----------
     w0 : `~gala.dynamics.PhaseSpacePosition`, array_like
         Initial conditions.
+    hamiltonian : `~gala.potential.Hamiltonian`
     dt : numeric
         Timestep.
     n_steps : int
@@ -50,8 +52,14 @@ def fast_lyapunov_max(w0, potential, dt, n_steps, d0=1e-5,
 
     from .lyapunov import dop853_lyapunov_max, dop853_lyapunov_max_dont_save
 
-    if not hasattr(potential, 'c_instance'):
-        raise TypeError("Input potential must be a CPotential subclass.")
+    # TODO: remove in v1.0
+    if isinstance(hamiltonian, PotentialBase):
+        from ..potential import Hamiltonian
+        hamiltonian = Hamiltonian(hamiltonian)
+
+    if not hamiltonian.c_enabled:
+        raise TypeError("Input Hamiltonian must contain a C-implemented "
+                        "potential and frame.")
 
     if not isinstance(w0, CartesianPhaseSpacePosition):
         w0 = np.asarray(w0)
@@ -59,32 +67,34 @@ def fast_lyapunov_max(w0, potential, dt, n_steps, d0=1e-5,
         w0 = CartesianPhaseSpacePosition(pos=w0[:ndim],
                                          vel=w0[ndim:])
 
-    _w0 = np.squeeze(w0.w(potential.units))
+    _w0 = np.squeeze(w0.w(hamiltonian.units))
     if _w0.ndim > 1:
         raise ValueError("Can only compute fast Lyapunov exponent for a single orbit.")
 
     if return_orbit:
-        t,w,l = dop853_lyapunov_max(potential.c_instance, _w0,
+        t,w,l = dop853_lyapunov_max(hamiltonian, _w0,
                                     dt, n_steps+1, t1,
                                     d0, n_steps_per_pullback, noffset_orbits,
                                     atol, rtol, nmax)
         w = np.rollaxis(w, -1)
 
         try:
-            tunit = potential.units['time']
+            tunit = hamiltonian.units['time']
         except (TypeError, AttributeError):
             tunit = u.dimensionless_unscaled
 
-        orbit = CartesianOrbit.from_w(w=w, units=potential.units, t=t*tunit, potential=potential)
+        orbit = CartesianOrbit.from_w(w=w, units=hamiltonian.units,
+                                      t=t*tunit, hamiltonian=hamiltonian)
         return l/tunit, orbit
+
     else:
-        l = dop853_lyapunov_max_dont_save(potential.c_instance, _w0,
+        l = dop853_lyapunov_max_dont_save(hamiltonian, _w0,
                                           dt, n_steps+1, t1,
                                           d0, n_steps_per_pullback, noffset_orbits,
                                           atol, rtol, nmax)
 
         try:
-            tunit = potential.units['time']
+            tunit = hamiltonian.units['time']
         except (TypeError, AttributeError):
             tunit = u.dimensionless_unscaled
 
@@ -165,6 +175,7 @@ def lyapunov_max(w0, integrator, dt, n_steps, d0=1e-5, n_steps_per_pullback=10,
     LEs = np.zeros((niter,noffset_orbits))
     ts = np.zeros_like(LEs)
     time = t1
+    total_steps_taken = 0
     for i in range(1,niter+1):
         ii = i * n_steps_per_pullback
 
@@ -186,6 +197,8 @@ def lyapunov_max(w0, integrator, dt, n_steps, d0=1e-5, n_steps_per_pullback=10,
         full_w[:,(i-1)*n_steps_per_pullback+1:ii+1] = ww[:,1:]
         full_ts[(i-1)*n_steps_per_pullback+1:ii+1] = tt[1:]
 
+        total_steps_taken += n_steps_per_pullback
+
     LEs = np.array([LEs[:ii].sum(axis=0)/ts[ii-1] for ii in range(1,niter)])
 
     try:
@@ -193,7 +206,8 @@ def lyapunov_max(w0, integrator, dt, n_steps, d0=1e-5, n_steps_per_pullback=10,
     except (TypeError, AttributeError):
         t_unit = u.dimensionless_unscaled
 
-    orbit = CartesianOrbit.from_w(w=full_w, units=units, t=full_ts*t_unit)
+    orbit = CartesianOrbit.from_w(w=full_w[:,:total_steps_taken],
+                                  units=units, t=full_ts[:total_steps_taken]*t_unit)
     return LEs/t_unit, orbit
 
 def surface_of_section(orbit, plane_ix, interpolate=False):

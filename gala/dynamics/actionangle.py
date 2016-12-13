@@ -84,6 +84,9 @@ def fit_isochrone(orbit, m0=2E11, b0=1.):
 
         f(m,b) = \sum_i (\frac{1}{2}v_i^2 + \Phi_{\rm iso}(x_i\,|\,m,b) - <E>)^2
 
+    TODO: This should fail if the Hamiltonian associated with the orbit has
+          a frame other than StaticFrame
+
     Parameters
     ----------
     orbit : `~gala.dynamics.CartesianOrbit`
@@ -100,7 +103,7 @@ def fit_isochrone(orbit, m0=2E11, b0=1.):
         Best-fit core radius for the Isochrone potential.
 
     """
-    pot = orbit.potential
+    pot = orbit.hamiltonian.potential
     if pot is None:
         raise ValueError("The orbit object must have an associated potential")
 
@@ -134,6 +137,9 @@ def fit_harmonic_oscillator(orbit, omega0=[1.,1.,1.]):
 
         f(\boldsymbol{\omega}) = \sum_i (\frac{1}{2}v_i^2 + \Phi_{\rm sho}(x_i\,|\,\boldsymbol{\omega}) - <E>)^2
 
+    TODO: This should fail if the Hamiltonian associated with the orbit has
+          a frame other than StaticFrame
+
     Parameters
     ----------
     orbit : `~gala.dynamics.CartesianOrbit`
@@ -148,7 +154,7 @@ def fit_harmonic_oscillator(orbit, omega0=[1.,1.,1.]):
     """
     omega0 = np.atleast_1d(omega0)
 
-    pot = orbit.potential
+    pot = orbit.hamiltonian.potential
     if pot is None:
         raise ValueError("The orbit object must have an associated potential")
 
@@ -156,7 +162,7 @@ def fit_harmonic_oscillator(orbit, omega0=[1.,1.,1.]):
     if w.ndim > 2:
         raise ValueError("Input orbit object must be a single orbit.")
 
-    def f(omega,w):
+    def f(omega, w):
         potential = HarmonicOscillatorPotential(omega=omega, units=pot.units)
         H = potential.value(w[:3]).decompose(pot.units).value + 0.5*np.sum(w[3:]**2, axis=0)
         return np.squeeze(H - np.mean(H))

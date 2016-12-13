@@ -4,18 +4,20 @@
 
 from __future__ import division, print_function
 
-__author__ = "adrn <adrn@astro.columbia.edu>"
+# Standard library
+import warnings
 
 # Third-party
 import astropy.units as u
 from astropy.coordinates import SphericalRepresentation, Galactic
+from astropy.tests.helper import quantity_allclose
 import numpy as np
 import pytest
 
 # Project
 from ..core import *
-from ...potential import HernquistPotential
-from ...util import assert_quantities_allclose
+from ...potential import Hamiltonian, HernquistPotential
+from ...potential.frame import StaticFrame, ConstantRotatingFrame
 from ...units import galactic, solarsystem
 
 def test_initialize():
@@ -40,6 +42,14 @@ def test_initialize():
     v = np.random.random(size=(2,10))
     o = CartesianPhaseSpacePosition(pos=x, vel=v)
     assert o.ndim == 2
+
+    o = CartesianPhaseSpacePosition(pos=x, vel=v, frame=StaticFrame(galactic))
+    assert o.ndim == 2
+    assert o.frame is not None
+    assert isinstance(o.frame, StaticFrame)
+
+    with pytest.raises(TypeError):
+        o = CartesianPhaseSpacePosition(pos=x, vel=v, frame="blah blah blah")
 
 def test_from_w():
 
@@ -98,6 +108,9 @@ def test_represent_as():
     v = np.random.random(size=(3,10))
     o = CartesianPhaseSpacePosition(pos=x, vel=v)
     sph_pos, sph_vel = o.represent_as(SphericalRepresentation)
+    o.spherical
+    o.cylindrical
+    o.cartesian
 
     assert sph_pos.distance.unit == u.dimensionless_unscaled
     assert sph_vel.unit == u.dimensionless_unscaled
@@ -109,21 +122,39 @@ def test_represent_as():
     sph_pos, sph_vel = o.represent_as(SphericalRepresentation)
     assert sph_pos.distance.unit == u.kpc
 
-def test_to_frame():
+    # doesn't work for 2D
+    x = np.random.random(size=(2,10))
+    v = np.random.random(size=(2,10))
+    o = CartesianPhaseSpacePosition(pos=x, vel=v)
+    with pytest.raises(ValueError):
+        o.represent_as(SphericalRepresentation)
+
+def test_to_coord_frame():
     # simple / unitless
     x = np.random.random(size=(3,10))
     v = np.random.random(size=(3,10))
     o = CartesianPhaseSpacePosition(pos=x, vel=v)
 
     with pytest.raises(u.UnitConversionError):
-        o.to_frame(Galactic)
+        o.to_coord_frame(Galactic)
 
     # simple / with units
     x = np.random.random(size=(3,10))*u.kpc
     v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
     o = CartesianPhaseSpacePosition(pos=x, vel=v)
-    coo,vel = o.to_frame(Galactic)
+    coo,vel = o.to_coord_frame(Galactic)
     assert coo.name == 'galactic'
+
+    warnings.simplefilter('always')
+    with pytest.warns(DeprecationWarning):
+        o.to_frame(Galactic)
+
+    # doesn't work for 2D
+    x = np.random.random(size=(2,10))*u.kpc
+    v = np.random.normal(0.,100.,size=(2,10))*u.km/u.s
+    o = CartesianPhaseSpacePosition(pos=x, vel=v)
+    with pytest.raises(ValueError):
+        o.to_coord_frame(Galactic)
 
 def test_w():
     # simple / unitless
@@ -170,11 +201,16 @@ def test_energy():
 
     # with units and potential
     p = HernquistPotential(units=galactic, m=1E11, c=0.25)
+    H = Hamiltonian(p)
     x = np.random.random(size=(3,10))*u.kpc
     v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
     o = CartesianPhaseSpacePosition(pos=x, vel=v)
-    PE = o.potential_energy(potential=p)
-    E = o.energy(potential=p)
+    PE = o.potential_energy(p)
+    E = o.energy(H)
+
+    warnings.simplefilter('always')
+    with pytest.warns(DeprecationWarning):
+        o.energy(p)
 
 def test_angular_momentum():
 
@@ -188,7 +224,7 @@ def test_angular_momentum():
     assert np.allclose(np.squeeze(w.angular_momentum()), [1., 0, 0])
 
     w = CartesianPhaseSpacePosition([1.,0,0]*u.kpc, [0.,200.,0]*u.pc/u.Myr)
-    assert_quantities_allclose(np.squeeze(w.angular_momentum()), [0,0,0.2]*u.kpc**2/u.Myr)
+    assert quantity_allclose(np.squeeze(w.angular_momentum()), [0,0,0.2]*u.kpc**2/u.Myr)
 
     # multiple - known
     q = np.array([[1.,0.,0.],[1.,0.,0.],[0,1.,0.]]).T
@@ -223,3 +259,28 @@ def test_combine():
     o = combine((o1, o2))
     assert o.pos.unit == galactic['length']
     assert o.vel.unit == galactic['length']/galactic['time']
+
+    o1 = CartesianPhaseSpacePosition.from_w(np.random.random(size=6), units=galactic)
+    x = np.random.random(size=(2,10))*u.kpc
+    v = np.random.normal(0.,100.,size=(2,10))*u.km/u.s
+    o2 = CartesianPhaseSpacePosition(pos=x, vel=v)
+    with pytest.raises(ValueError):
+        o = combine((o1, o2))
+
+def test_frame_transform():
+    static = StaticFrame(galactic)
+    rotating = ConstantRotatingFrame(Omega=[0.53,1.241,0.9394]*u.rad/u.Myr, units=galactic)
+
+    x = np.array([[10.,-0.2,0.3],[-0.232,8.1,0.1934]]).T * u.kpc
+    v = np.array([[0.0034,0.2,0.0014],[0.0001,0.002532,-0.2]]).T * u.kpc/u.Myr
+
+    # no frame specified at init
+    psp = CartesianPhaseSpacePosition(pos=x, vel=v)
+    with pytest.raises(ValueError):
+        psp.to_frame(rotating)
+
+    psp.to_frame(rotating, current_frame=static, t=0.4*u.Myr)
+
+    # frame specified at init
+    psp = CartesianPhaseSpacePosition(pos=x, vel=v, frame=static)
+    psp.to_frame(rotating, t=0.4*u.Myr)

@@ -12,6 +12,7 @@ import logging
 # Third-party
 import numpy as np
 from astropy import log as logger
+from astropy.tests.helper import quantity_allclose
 from scipy.linalg import solve
 import pytest
 
@@ -25,7 +26,7 @@ from ..core import *
 from ..plot import *
 from .helpers import *
 
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.DEBUG)
 
 def test_generate_n_vectors():
     # test against Sanders' method
@@ -53,12 +54,14 @@ def test_fit_harmonic_oscillator():
     # integrate orbit in harmonic oscillator potential, then try to recover it
     true_omegas = np.array([0.011, 0.032, 0.045])
     potential = HarmonicOscillatorPotential(omega=true_omegas, units=galactic)
+
     orbit = potential.integrate_orbit([15.,1,2,0,0,0], dt=2., n_steps=10000)
 
     fit_potential = fit_harmonic_oscillator(orbit)
     omegas = fit_potential.parameters['omega'].value
     assert np.allclose(omegas, true_omegas, rtol=1E-2)
 
+# TODO: check on this after fixing HarmonicOscillatorPotential
 def test_fit_toy_potential():
     # integrate orbit in both toy potentials, make sure correct one is chosen
     true_m = 2.81E11
@@ -68,7 +71,7 @@ def test_fit_toy_potential():
 
     potential = fit_toy_potential(orbit)
     for k,v in true_potential.parameters.items():
-        assert np.allclose(v.value, potential.parameters[k], rtol=1E-2)
+        assert quantity_allclose(v, potential.parameters[k], rtol=1E-2)
 
     # -----------------------------------------------------------------
     true_omegas = np.array([0.011, 0.032, 0.045])
@@ -76,9 +79,9 @@ def test_fit_toy_potential():
     orbit = true_potential.integrate_orbit([15.,1,2,0,0,0], dt=2., n_steps=10000)
 
     potential = fit_toy_potential(orbit)
-    assert np.allclose(potential.parameters['omega'].value,
-                       true_potential.parameters['omega'].value,
-                       rtol=1E-2)
+
+    assert quantity_allclose(potential.parameters['omega'],
+                             true_potential.parameters['omega'], rtol=1E-2)
 
 def test_check_angle_sampling():
 
@@ -124,25 +127,25 @@ class ActionsBase(object):
         N_max = 6
         for n in range(self.N):
             print("\n\n")
-            logger.info("======================= Orbit {} =======================".format(n))
+            print("======================= Orbit {} =======================".format(n))
             # w = self.w[:,::10,n]
             w = self.w[...,n]
             orb = self.orbit[:,n]
             circ = orb.circulation()
 
             # get values from Sanders' code
-            logger.debug("Computing actions from genfunc...")
+            print("Computing actions from genfunc...")
             s_actions,s_angles,s_freqs,toy_potential = sanders_act_ang_freq(t, w, circ, N_max=N_max)
 
-            logger.debug("Computing actions...")
+            print("Computing actions with gala...")
             ret = find_actions(orb, N_max=N_max, toy_potential=toy_potential)
             actions = ret['actions']
             angles = ret['angles']
             freqs = ret['freqs']
 
-            logger.info("Action ratio: {}".format(actions / s_actions))
-            logger.info("Angle ratio: {}".format(angles / s_angles))
-            logger.info("Freq ratio: {}".format(freqs / s_freqs))
+            print("Action ratio: {}".format(actions / s_actions))
+            print("Angle ratio: {}".format(angles / s_angles))
+            print("Freq ratio: {}".format(freqs / s_freqs))
 
             assert np.allclose(actions.value, s_actions, rtol=1E-5)
             assert np.allclose(angles.value, s_angles, rtol=1E-5)

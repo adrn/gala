@@ -9,10 +9,20 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 # Third-party
 import numpy as np
 
-from astropy.coordinates import frame_transform_graph
-from astropy.coordinates.angles import rotation_matrix
 import astropy.coordinates as coord
-import astropy.units as u
+from astropy.coordinates import frame_transform_graph
+try:
+    from astropy.coordinates.matrix_utilities import matrix_transpose
+    ASTROPY_1_3 = True
+except ImportError:
+    from .matrix_utilities import matrix_transpose
+    ASTROPY_1_3 = False
+
+if not ASTROPY_1_3:
+    import astropy
+    import warnings
+    warnings.warn("We recommend using Astropy v1.3 or later. You have: {}"
+                  .format(astropy.__version__), DeprecationWarning)
 
 __all__ = ["GD1"]
 
@@ -64,4 +74,4 @@ def gd1_to_icrs():
     """ Compute the transformation from heliocentric GD1 coordinates to
         spherical Galactic.
     """
-    return icrs_to_gd1().T
+    return matrix_transpose(icrs_to_gd1())

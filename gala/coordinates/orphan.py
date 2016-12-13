@@ -6,13 +6,21 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
-# Third-party
-import numpy as np
-
 from astropy.coordinates import frame_transform_graph
-from astropy.coordinates.angles import rotation_matrix
 import astropy.coordinates as coord
 import astropy.units as u
+try:
+    from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product, matrix_transpose
+    ASTROPY_1_3 = True
+except ImportError:
+    from .matrix_utilities import rotation_matrix, matrix_product, matrix_transpose
+    ASTROPY_1_3 = False
+
+if not ASTROPY_1_3:
+    import astropy
+    import warnings
+    warnings.warn("We recommend using Astropy v1.3 or later. You have: {}"
+                  .format(astropy.__version__), DeprecationWarning)
 
 __all__ = ["Orphan"]
 
@@ -48,15 +56,15 @@ class Orphan(coord.BaseCoordinateFrame):
     }
 
 # Define the Euler angles
-phi = np.radians(128.79)
-theta = np.radians(54.39)
-psi = np.radians(90.70)
+phi = 128.79 * u.degree
+theta = 54.39 * u.degree
+psi = 90.70 * u.degree
 
 # Generate the rotation matrix using the x-convention (see Goldstein)
-D = rotation_matrix(phi, "z", unit=u.radian)
-C = rotation_matrix(theta, "x", unit=u.radian)
-B = rotation_matrix(psi, "z", unit=u.radian)
-R = np.array(B.dot(C).dot(D))
+D = rotation_matrix(phi, "z")
+C = rotation_matrix(theta, "x")
+B = rotation_matrix(psi, "z")
+R = matrix_product(B, C, D)
 
 @frame_transform_graph.transform(coord.StaticMatrixTransform, coord.Galactic, Orphan)
 def galactic_to_orp():
@@ -71,4 +79,4 @@ def oph_to_galactic():
     """ Compute the transformation from heliocentric Orphan coordinates to
         spherical Galactic.
     """
-    return galactic_to_orp().T
+    return matrix_transpose(galactic_to_orp())

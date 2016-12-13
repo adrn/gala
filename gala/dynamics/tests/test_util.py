@@ -11,7 +11,7 @@ import numpy as np
 
 # Project
 from ..util import peak_to_peak_period, estimate_dt_n_steps
-from ...potential import SphericalNFWPotential
+from ...potential import Hamiltonian, NFWPotential
 from ...units import galactic
 
 def test_peak_to_peak_period():
@@ -33,11 +33,11 @@ def test_peak_to_peak_period():
 
 def test_estimate_dt_n_steps():
     nperiods = 128
-    pot = SphericalNFWPotential(v_c=1., r_s=10., units=galactic)
+    pot = NFWPotential.from_circular_velocity(v_c=1., r_s=10., units=galactic)
     w0 = [10.,0.,0.,0.,0.9,0.]
     dt,n_steps = estimate_dt_n_steps(w0, pot, n_periods=nperiods, n_steps_per_period=256,
                                      func=np.nanmin)
 
-    orbit = pot.integrate_orbit(w0, dt=dt, n_steps=n_steps)
+    orbit = Hamiltonian(pot).integrate_orbit(w0, dt=dt, n_steps=n_steps)
     T = orbit.estimate_period()
     assert int(round((orbit.t.max()/T).decompose().value)) == nperiods

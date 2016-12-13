@@ -15,7 +15,8 @@ import astropy.coordinates as coord
 import astropy.units as u
 
 # Project
-from ..potential import PotentialBase, IsochronePotential, HarmonicOscillatorPotential
+from ..potential import (Hamiltonian, PotentialBase,
+                         IsochronePotential, HarmonicOscillatorPotential)
 from ..coordinates import physicsspherical_to_cartesian
 from ..util import atleast_2d
 
@@ -63,21 +64,22 @@ def isochrone_to_aa(w, potential):
     usys = potential.units
     GM = (G*potential.parameters['m']).decompose(usys).value
     b = potential.parameters['b'].decompose(usys).value
-    E = w.energy(potential).decompose(usys).value
+    E = w.energy(Hamiltonian(potential)).decompose(usys).value
+    E = np.squeeze(E)
 
     if np.any(E > 0.):
         raise ValueError("Unbound particle. (E = {})".format(E))
 
     # convert position, velocity to spherical polar coordinates
     sph,vsph = w.represent_as(coord.PhysicsSphericalRepresentation)
-    r,phi,theta = sph.r.value, sph.phi.value, sph.theta.value
-    vr,vphi,vtheta = vsph.value
+    r,phi,theta = map(np.squeeze, [sph.r.value, sph.phi.value, sph.theta.value])
+    vr,vphi,vtheta = map(np.squeeze, vsph.value)
 
     # ----------------------------
     # Compute the actions
     # ----------------------------
 
-    L_vec = w.angular_momentum().decompose(usys).value
+    L_vec = np.squeeze(w.angular_momentum().decompose(usys).value)
     Lz = L_vec[2]
     L = np.linalg.norm(L_vec, axis=0)
 
@@ -126,7 +128,6 @@ def isochrone_to_aa(w, potential):
 
     LR = Lz/L
     sinu = (LR/np.sqrt(1.-LR*LR)/np.tan(theta))
-    sinu = sinu
     uu = np.arcsin(sinu)
 
     uu[sinu > 1.] = np.pi/2.

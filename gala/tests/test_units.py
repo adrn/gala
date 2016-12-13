@@ -56,3 +56,19 @@ def test_dimensionless():
 
     with pytest.raises(ValueError):
         usys.decompose(15*u.kpc)
+
+def test_compare():
+    usys1 = UnitSystem(u.kpc, u.Myr, u.radian, u.Msun, u.mas/u.yr)
+    usys1_clone = UnitSystem(u.kpc, u.Myr, u.radian, u.Msun, u.mas/u.yr)
+
+    usys2 = UnitSystem(u.kpc, u.Myr, u.radian, u.Msun, u.kiloarcsecond/u.yr)
+    usys3 = UnitSystem(u.kpc, u.Myr, u.radian, u.kg, u.mas/u.yr)
+
+    assert usys1 == usys1_clone
+    assert usys1_clone == usys1
+
+    assert usys1 != usys2
+    assert usys2 != usys1
+
+    assert usys1 != usys3
+    assert usys3 != usys1

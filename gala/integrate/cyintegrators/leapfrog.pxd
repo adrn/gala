@@ -1,4 +1,4 @@
-cdef extern from "src/cpotential.h":
+cdef extern from "potential/src/cpotential.h":
     ctypedef struct CPotential:
         pass
 

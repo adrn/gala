@@ -219,8 +219,6 @@ cpdef _test_cyl_to_car_roundtrip():
             # assert np.allclose(cyl[i,j], cyl2[j])
             if not np.allclose(cyl[i,j], cyl2[j]):
                 print(i,j,cyl[i,j], cyl2[j])
-        print()
-
 
 # cdef void car_to_sph(double *xyz, double *sph):
 #     # TODO: note this isn't consistent with the velocity transform because of theta

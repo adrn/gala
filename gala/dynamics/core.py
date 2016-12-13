@@ -4,6 +4,10 @@ from __future__ import division, print_function
 
 __author__ = "adrn <adrn@astro.columbia.edu>"
 
+# Standard library
+import warnings
+import inspect
+
 # Third-party
 from astropy import log as logger
 import astropy.coordinates as coord
@@ -24,17 +28,17 @@ class PhaseSpacePosition(object):
 
     # ------------------------------------------------------------------------
     # Display
-    # ------------------------------------------------------------------------
+    #
     def __repr__(self):
         return "<{} N={}, shape={}>".format(self.__class__.__name__, self.ndim, self.shape)
 
     def __str__(self):
-        # TODO: should show some arrays?
+        # TODO: should show some arrays instead -- get inspiration from CartesianRepresentation
         return "{} {}D, {}".format(self.__class__.__name__, self.ndim, self.shape)
 
     # ------------------------------------------------------------------------
     # Shape and size
-    # ------------------------------------------------------------------------
+    #
     @property
     def ndim(self):
         """
@@ -77,7 +81,7 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         This is an experimental class. The API may change in a future release!
 
     The position and velocity quantities (arrays) can have an arbitrary
-    number of dimensions, but the first axis (0, 1) has special meaning::
+    number of dimensions, but the first axis (0) has special meaning::
 
         - `axis=0` is the coordinate dimension (e.g., x, y, z)
 
@@ -86,7 +90,7 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
     etc.). The same is true for velocity. The position and velocity arrays
     must have the same shape.
 
-    If the input position and velocity are arrays rather than
+    If the input position and velocity are arrays or array-like rather than
     :class:`~astropy.units.Quantity` objects, they are internally stored with
     dimensionles units.
 
@@ -100,9 +104,10 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         Velocities. If a numpy array (e.g., has no units), this will be
         stored as a dimensionless :class:`~astropy.units.Quantity`. See
         the note above about the assumed meaning of the axes of this object.
-
+    frame : :class:`~gala.potential.FrameBase` (optional)
+        The reference frame of the input phase-space positions.
     """
-    def __init__(self, pos, vel):
+    def __init__(self, pos, vel, frame=None):
 
         # make sure position and velocity input are 2D
         pos = atleast_2d(pos, insert_axis=1)
@@ -128,8 +133,14 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
                 raise ValueError("Position and velocity must have the same shape "
                                  "{} vs {}".format(pos.shape, vel.shape))
 
+        from ..potential.frame import FrameBase
+        if frame is not None and not isinstance(frame, FrameBase):
+            raise TypeError("Input reference frame must be a gala.potential.FrameBase "
+                            "subclass instance.")
+
         self.pos = pos
         self.vel = vel
+        self.frame = frame
 
     def __getitem__(self, slyce):
         if isinstance(slyce, np.ndarray) or isinstance(slyce, list):
@@ -141,11 +152,13 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
             except TypeError:
                 _slyce = (slice(None),) + (slyce,)
 
-        return self.__class__(pos=self.pos[_slyce], vel=self.vel[_slyce])
+        return self.__class__(pos=self.pos[_slyce],
+                              vel=self.vel[_slyce],
+                              frame=self.frame)
 
     # ------------------------------------------------------------------------
     # Convert from Cartesian to other representations
-    # ------------------------------------------------------------------------
+    #
     def represent_as(self, Representation):
         """
         Represent the position and velocity of the orbit in an alternate
@@ -182,8 +195,61 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
 
         return new_pos, new_vel
 
-    def to_frame(self, frame, galactocentric_frame=coord.Galactocentric(),
-                 vcirc=None, vlsr=None):
+    def to_frame(self, frame, current_frame=None, **kwargs):
+        """
+        Transform to a new reference frame.
+
+        Parameters
+        ----------
+        frame : `~gala.potential.FrameBase`
+            The frame to transform to.
+        current_frame : `gala.potential.CFrameBase`
+            The current frame the phase-space position is in.
+        **kwargs
+            Any additional arguments are passed through to the individual frame
+            transformation functions (see: `~gala.potential.frame.builtin.transformations`).
+
+        Returns
+        -------
+        psp : `gala.dynamics.CartesianPhaseSpacePosition`
+            The phase-space position in the new reference frame.
+
+        """
+
+        from ..potential.frame.builtin import StaticFrame, ConstantRotatingFrame
+        from ..potential.frame.builtin import transformations as frame_trans
+
+        if ((inspect.isclass(frame) and issubclass(frame, coord.BaseCoordinateFrame)) or
+            isinstance(frame, coord.BaseCoordinateFrame)):
+            import warnings
+            warnings.warn("This function now expects a `gala.potential.FrameBase` instance. To "
+                          " transform to an Astropy coordinate frame, use the `.to_coord_frame()`"
+                          " method instead.", DeprecationWarning)
+            return self.to_coord_frame(frame=frame, **kwargs)
+
+        if self.frame is None and current_frame is None:
+            raise ValueError("If no frame was specified when this {} was initialized, you must "
+                             "pass the current frame in via the current_frame argument to "
+                             "transform to a new frame.")
+
+        elif self.frame is not None and current_frame is None:
+            current_frame = self.frame
+
+        name1 = current_frame.__class__.__name__.rstrip('Frame').lower()
+        name2 = frame.__class__.__name__.rstrip('Frame').lower()
+        func_name = "{}_to_{}".format(name1, name2)
+
+        if not hasattr(frame_trans, func_name):
+            raise ValueError("Unsupported frame transformation: {} to {}"
+                             .format(current_frame, frame))
+        else:
+            trans_func = getattr(frame_trans, func_name)
+
+        pos,vel = trans_func(current_frame, frame, self, **kwargs)
+        return CartesianPhaseSpacePosition(pos=pos, vel=vel, frame=frame)
+
+    def to_coord_frame(self, frame, galactocentric_frame=coord.Galactocentric(),
+                       vcirc=None, vlsr=None):
         """
         Transform the orbit from Galactocentric, cartesian coordinates to
         Heliocentric coordinates in the specified Astropy coordinate frame.
@@ -225,6 +291,19 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
 
         v = vgal_to_hel(c, self.vel, **kw)
         return c, v
+
+    # Convenience attributes
+    @property
+    def cartesian(self):
+        return self.pos, self.vel
+
+    @property
+    def spherical(self):
+        return self.represent_as(coord.PhysicsSphericalRepresentation)
+
+    @property
+    def cylindrical(self):
+        return self.represent_as(coord.CylindricalRepresentation)
 
     # Pseudo-backwards compatibility
     def w(self, units=None):
@@ -293,7 +372,7 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
 
     # ------------------------------------------------------------------------
     # Computed dynamical quantities
-    # ------------------------------------------------------------------------
+    #
     def kinetic_energy(self):
         r"""
         The kinetic energy *per unit mass*:
@@ -329,21 +408,33 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         """
         return potential.value(self.pos)
 
-    def energy(self, potential):
+    def energy(self, hamiltonian):
         r"""
         The total energy *per unit mass* (e.g., kinetic + potential):
 
         Parameters
         ----------
-        potential : `gala.potential.PotentialBase`
-            The potential object to compute the energy from.
+        hamiltonian : `gala.potential.Hamiltonian`
+            The Hamiltonian object to evaluate the energy.
 
         Returns
         -------
         E : :class:`~astropy.units.Quantity`
             The total energy.
         """
-        return self.kinetic_energy() + self.potential_energy(potential)
+        from ..potential import PotentialBase
+        if isinstance(hamiltonian, PotentialBase):
+            from ..potential import Hamiltonian
+
+            warnings.warn("This function now expects a `Hamiltonian` instance instead of "
+                          "a `PotentialBase` subclass instance. If you are using a "
+                          "static reference frame, you just need to pass your "
+                          "potential object in to the Hamiltonian constructor to use, e.g., "
+                          "Hamiltonian(potential).", DeprecationWarning)
+
+            hamiltonian = Hamiltonian(hamiltonian)
+
+        return hamiltonian(self)
 
     def angular_momentum(self):
         r"""
@@ -377,7 +468,7 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
 
     # ------------------------------------------------------------------------
     # Misc. useful methods
-    # ------------------------------------------------------------------------
+    #
     def plot(self, **kwargs):
         """
         Plot the positions in all projections. This is a thin wrapper around

@@ -14,8 +14,7 @@ if not _ASTROPY_SETUP_:
     from . import util
     from . import mpl_style
 
-    from .potential.builtin.special import stuff
-    exec(stuff)
+    # TODO: remove with Astropy v1.3, which supports this
 
     # Monkey-patch Quantity
     import astropy.units as u
@@ -31,4 +30,4 @@ if not _ASTROPY_SETUP_:
         return u.Quantity(float(val), unit)
     u.Quantity.from_string = _parse_quantity
 
-    del u, stuff
+    del u

@@ -8,9 +8,9 @@ Gala
 
 Gala is a Python package for Galactic astronomy and gravitational
 dynamics. The bulk of the package centers around implementations of
-`gravitational potentials <potential/index>`_,
-`numerical integration <integrate/index>`_,
-and `nonlinear dynamics <dynamics/index>`_.
+`gravitational potentials <potential/index.html>`_,
+`numerical integration <integrate/index.html>`_,
+and `nonlinear dynamics <dynamics/index.html>`_.
 
 The package is being actively developed in
 `a public repository on GitHub <https://github.com/adrn/gala>`_ so if you

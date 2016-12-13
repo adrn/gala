@@ -19,41 +19,22 @@ np.import_array()
 from libc.stdio cimport printf
 from libc.math cimport log
 
-from ...potential.cpotential cimport CPotentialWrapper
+from ...integrate.cyintegrators.dop853 cimport dop853_step
+from ...potential.potential.cpotential cimport CPotentialWrapper
+from ...potential.frame.cframe cimport CFrameWrapper
 
-cdef extern from "src/cpotential.h":
+cdef extern from "frame/src/cframe.h":
+    ctypedef struct CFrame:
+        pass
+
+cdef extern from "potential/src/cpotential.h":
     ctypedef struct CPotential:
         pass
-    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
 
 cdef extern from "dopri/dop853.h":
-    ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, unsigned norbits) nogil
-    ctypedef void (*SolTrait)(long nr, double xold, double x, double* y, unsigned n, int* irtrn)
-
-    # See dop853.h for full description of all input parameters
-    int dop853 (unsigned n, FcnEqDiff fn,
-                CPotential *p, unsigned n_orbits,
-                double x, double* y, double xend,
-                double* rtoler, double* atoler, int itoler, SolTrait solout,
-                int iout, FILE* fileout, double uround, double safe, double fac1,
-                double fac2, double beta, double hmax, double h, long nmax, int meth,
-                long nstiff, unsigned nrdens, unsigned* icont, unsigned licont)
-
-    void Fwrapper (unsigned ndim, double t, double *w, double *f,
-                   CPotential *p, unsigned norbits)
     double six_norm (double *x)
 
-cdef extern from "stdio.h":
-    ctypedef struct FILE
-    FILE *stdout
-
-cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irtrn):
-    # TODO: see here for example in FORTRAN:
-    #   http://www.unige.ch/~hairer/prog/nonstiff/dr_dop853.f
-    pass
-
-cpdef dop853_lyapunov_max(CPotentialWrapper cp, double[::1] w0,
+cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
                           double dt, int n_steps, double t0,
                           double d0, int n_steps_per_pullback, int noffset_orbits,
                           double atol=1E-10, double rtol=1E-10, int nmax=0):
@@ -68,6 +49,7 @@ cpdef dop853_lyapunov_max(CPotentialWrapper cp, double[::1] w0,
         # define full array of times
         double t_end = (<double>n_steps) * dt
         double[::1] t = np.linspace(t0, t_end, n_steps) # TODO: should be n_steps+1
+        double dt0 = t[1] - t[0]
 
         double d1_mag, norm
         double[:,::1] d1 = np.empty((norbits,ndim))
@@ -76,6 +58,10 @@ cpdef dop853_lyapunov_max(CPotentialWrapper cp, double[::1] w0,
 
         # temp stuff
         double[:,::1] d0_vec = np.random.uniform(size=(noffset_orbits,ndim))
+
+        # whoa, so many dots
+        CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
+        CFrame cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
     # store initial conditions
     for i in range(norbits):
@@ -95,19 +81,8 @@ cpdef dop853_lyapunov_max(CPotentialWrapper cp, double[::1] w0,
     # dummy counter for storing Lyapunov stuff, which only happens every few steps
     jiter = 0
     for j in range(1,n_steps,1):
-        res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
-                     &(cp.cpotential), norbits,
-                     t[j-1], &w[0], t[j], &rtol, &atol, 0, solout, 0,
-                     NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt, nmax, 0, 1, 0, NULL, 0);
-
-        if res == -1:
-            raise RuntimeError("Input is not consistent.")
-        elif res == -2:
-            raise RuntimeError("Larger nmax is needed.")
-        elif res == -3:
-            raise RuntimeError("Step size becomes too small.")
-        elif res == -4:
-            raise RuntimeError("The problem is probably stff (interrupted).")
+        dop853_step(&cp, &cf, &w[0], t[j-1], t[j], dt0, ndim, norbits,
+                    atol, rtol, nmax)
 
         # store position of main orbit
         for i in range(norbits):
@@ -129,10 +104,11 @@ cpdef dop853_lyapunov_max(CPotentialWrapper cp, double[::1] w0,
 
             jiter += 1
 
-    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j*n_steps_per_pullback] for j in range(1,niter)])
+    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j*n_steps_per_pullback]
+                    for j in range(1,niter)])
     return np.asarray(t), np.asarray(all_w), np.asarray(LEs)
 
-cpdef dop853_lyapunov_max_dont_save(CPotentialWrapper cp, double[::1] w0,
+cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
                                     double dt, int n_steps, double t0,
                                     double d0, int n_steps_per_pullback, int noffset_orbits,
                                     double atol=1E-10, double rtol=1E-10, int nmax=0):
@@ -147,6 +123,7 @@ cpdef dop853_lyapunov_max_dont_save(CPotentialWrapper cp, double[::1] w0,
         # define full array of times
         double t_end = (<double>n_steps) * dt
         double[::1] t = np.linspace(t0, t_end, n_steps) # TODO: should be n_steps+1
+        double dt0 = t[1]-t[0]
 
         double d1_mag, norm
         double[:,::1] d1 = np.empty((norbits,ndim))
@@ -154,6 +131,10 @@ cpdef dop853_lyapunov_max_dont_save(CPotentialWrapper cp, double[::1] w0,
 
         # temp stuff
         double[:,::1] d0_vec = np.random.uniform(size=(noffset_orbits,ndim))
+
+        # whoa, so many dots
+        CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
+        CFrame cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
     # store initial conditions
     for i in range(norbits):
@@ -170,19 +151,8 @@ cpdef dop853_lyapunov_max_dont_save(CPotentialWrapper cp, double[::1] w0,
     # dummy counter for storing Lyapunov stuff, which only happens every few steps
     jiter = 0
     for j in range(1,n_steps,1):
-        res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
-                     &(cp.cpotential), norbits,
-                     t[j-1], &w[0], t[j], &rtol, &atol, 0, solout, 0,
-                     NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt, nmax, 0, 1, 0, NULL, 0);
-
-        if res == -1:
-            raise RuntimeError("Input is not consistent.")
-        elif res == -2:
-            raise RuntimeError("Larger nmax is needed.")
-        elif res == -3:
-            raise RuntimeError("Step size becomes too small.")
-        elif res == -4:
-            raise RuntimeError("The problem is probably stff (interrupted).")
+        dop853_step(&cp, &cf, &w[0], t[j-1], t[j], dt0, ndim, norbits,
+                    atol, rtol, nmax)
 
         if (j % n_steps_per_pullback) == 0:
             # get magnitude of deviation vector

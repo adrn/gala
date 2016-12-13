@@ -26,7 +26,7 @@ env:
         - ASTROPY_VERSION=stable
         - SETUP_CMD='test'
         # HACK: qt=4 see https://github.com/astropy/astroquery/issues/748
-        - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml sympy qt=4'
+        - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml h5py sympy qt=4'
 
     matrix:
         # Make sure that egg_info works without dependencies

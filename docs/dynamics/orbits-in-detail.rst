@@ -109,7 +109,7 @@ object is a tuple with proper motions and radial velocity,
 :math:`(\mu_l, \mu_b, v_r)`::
 
     >>> from astropy.coordinates import Galactic
-    >>> gal_c, gal_v = w.to_frame(Galactic)
+    >>> gal_c, gal_v = w.to_coord_frame(Galactic)
     >>> gal_c # doctest: +SKIP
     <Galactic Coordinate: (l, b, distance) in (deg, deg, kpc)
         [(17.67673481, 31.15412806, 10.19473889),
