@@ -161,6 +161,7 @@ be used to compute, for example, a mass profile::
     plt.loglog(pos[0], m_profile, marker='') # doctest: +SKIP
     plt.xlabel("$r$ [{}]".format(pos.unit.to_string(format='latex')))
     plt.ylabel("$M(<r)$ [{}]".format(m_profile.unit.to_string(format='latex')))
+    plt.tight_layout()
 
 Plotting isopotentials
 ======================
@@ -224,8 +225,8 @@ aspect ratio of the plot::
 
     fig,ax = plt.subplots(1, 1, figsize=(12,4))
     pot.plot_contours(grid=(x, 1., z), ax=ax)
-    ax.set_xlabel("$x$ [kpc]")
-    ax.set_ylabel("$z$ [kpc]")
+    ax.set_xlabel("$x$ [{}]".format(pot.units['length'].to_string(format='latex')))
+    ax.set_ylabel("$z$ [{}]".format(pot.units['length'].to_string(format='latex')))
     fig.tight_layout()
 
 Saving / loading potential objects
