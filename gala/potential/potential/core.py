@@ -86,6 +86,16 @@ class PotentialBase(CommonBase):
         x = atleast_2d(x, insert_axis=1).astype(np.float64)
         return x
 
+    def _validate_prepare_time(self, t, pos):
+        # TODO: do I want to make this an array even if input is scalar?
+        if hasattr(t, 'unit'):
+            t = t.decompose(self.units).value
+
+        if not isiterable(t):
+            t = np.atleast_1d(t)
+
+        return t
+
     # ========================================================================
     # Core methods that use the above implemented functions
     #
@@ -105,6 +115,7 @@ class PotentialBase(CommonBase):
         E : `~astropy.units.Quantity`
             The potential energy per unit mass or value of the potential.
         """
+        t = self._validate_prepare_time(t)
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
         ret_unit = self.units['energy'] / self.units['mass']
@@ -128,6 +139,7 @@ class PotentialBase(CommonBase):
             The gradient of the potential. Will have the same shape as
             the input position.
         """
+        t = self._validate_prepare_time(t)
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
         ret_unit = self.units['length'] / self.units['time']**2
@@ -151,6 +163,7 @@ class PotentialBase(CommonBase):
             position has shape ``q.shape``, the output energy will have
             shape ``q.shape[1:]``.
         """
+        t = self._validate_prepare_time(t)
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
         ret_unit = self.units['mass'] / self.units['length']**3
@@ -175,6 +188,7 @@ class PotentialBase(CommonBase):
             ``(q.shape[0],q.shape[0]) + q.shape[1:]``. That is, an ``n_dim`` by
             ``n_dim`` array (matrix) for each position.
         """
+        t = self._validate_prepare_time(t)
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
         ret_unit = 1 / self.units['time']**2
@@ -218,6 +232,7 @@ class PotentialBase(CommonBase):
             has shape ``q.shape``, the output energy will have shape
             ``q.shape[1:]``.
         """
+        t = self._validate_prepare_time(t)
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
 
@@ -261,11 +276,12 @@ class PotentialBase(CommonBase):
             ``q.shape[1:]``.
 
         """
+        t = self._validate_prepare_time(t)
         q = self._remove_units_prepare_shape(q)
 
         # Radius
         r = np.sqrt(np.sum(q**2, axis=0)) * self.units['length']
-        dPhi_dxyz = self.gradient(q)
+        dPhi_dxyz = self.gradient(q, t=t)
         dPhi_dr = np.sum(dPhi_dxyz * q/r.value, axis=0)
 
         return self.units.decompose(np.sqrt(r * np.abs(dPhi_dr)))

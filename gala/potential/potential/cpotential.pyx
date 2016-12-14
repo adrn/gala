@@ -77,7 +77,7 @@ cdef class CPotentialWrapper:
     given potential. This provides a Cython wrapper around this C implementation.
     """
 
-    cpdef energy(self, double[:,::1] q, double t=0.):
+    cpdef energy(self, double[:,::1] q, double[::1] t):
         """
         CAUTION: Interpretation of axes is different here! We need the
         arrays to be C ordered and easy to iterate over, so here the
@@ -87,12 +87,17 @@ cdef class CPotentialWrapper:
         n,ndim = _validate_pos_arr(q)
 
         cdef double [::1] pot = np.zeros(n)
-        for i in range(n):
-            pot[i] = c_potential(&(self.cpotential), t, &q[i,0])
+
+        if len(t) == 1:
+            for i in range(n):
+                pot[i] = c_potential(&(self.cpotential), t[0], &q[i,0])
+        else:
+            for i in range(n):
+                pot[i] = c_potential(&(self.cpotential), t[i], &q[i,0])
 
         return np.array(pot)
 
-    cpdef density(self, double[:,::1] q, double t=0.):
+    cpdef density(self, double[:,::1] q, double[::1] t):
         """
         CAUTION: Interpretation of axes is different here! We need the
         arrays to be C ordered and easy to iterate over, so here the
@@ -102,12 +107,17 @@ cdef class CPotentialWrapper:
         n,ndim = _validate_pos_arr(q)
 
         cdef double [::1] dens = np.zeros(n)
-        for i in range(n):
-            dens[i] = c_density(&(self.cpotential), t, &q[i,0])
+
+        if len(t) == 1:
+            for i in range(n):
+                dens[i] = c_density(&(self.cpotential), t[0], &q[i,0])
+        else:
+            for i in range(n):
+                dens[i] = c_density(&(self.cpotential), t[i], &q[i,0])
 
         return np.array(dens)
 
-    cpdef gradient(self, double[:,::1] q, double t=0.):
+    cpdef gradient(self, double[:,::1] q, double[::1] t):
         """
         CAUTION: Interpretation of axes is different here! We need the
         arrays to be C ordered and easy to iterate over, so here the
@@ -117,12 +127,17 @@ cdef class CPotentialWrapper:
         n,ndim = _validate_pos_arr(q)
 
         cdef double[:,::1] grad = np.zeros((n, ndim))
-        for i in range(n):
-            c_gradient(&(self.cpotential), t, &q[i,0], &grad[i,0])
+
+        if len(t) == 1:
+            for i in range(n):
+                c_gradient(&(self.cpotential), t[0], &q[i,0], &grad[i,0])
+        else:
+            for i in range(n):
+                c_gradient(&(self.cpotential), t[i], &q[i,0], &grad[i,0])
 
         return np.array(grad)
 
-    cpdef hessian(self, double[:,::1] q, double t=0.):
+    cpdef hessian(self, double[:,::1] q, double[::1] t):
         """
         CAUTION: Interpretation of axes is different here! We need the
         arrays to be C ordered and easy to iterate over, so here the
@@ -133,15 +148,19 @@ cdef class CPotentialWrapper:
 
         cdef double[:,:,::1] hess = np.zeros((n, ndim, ndim))
 
-        for i in range(n):
-            c_hessian(&(self.cpotential), t, &q[i,0], &hess[i,0,0])
+        if len(t) == 1:
+            for i in range(n):
+                c_hessian(&(self.cpotential), t[0], &q[i,0], &hess[i,0,0])
+        else:
+            for i in range(n):
+                c_hessian(&(self.cpotential), t[i], &q[i,0], &hess[i,0,0])
 
         return np.array(hess)
 
     # ------------------------------------------------------------------------
     # Other functionality
     #
-    cpdef d_dr(self, double[:,::1] q, double G, double t=0.):
+    cpdef d_dr(self, double[:,::1] q, double G, double[::1] t):
         """
         CAUTION: Interpretation of axes is different here! We need the
         arrays to be C ordered and easy to iterate over, so here the
@@ -153,12 +172,16 @@ cdef class CPotentialWrapper:
         cdef double [::1] dr = np.zeros(n, dtype=np.float64)
         cdef double [::1] epsilon = np.zeros(ndim, dtype=np.float64)
 
-        for i in range(n):
-            dr[i] = c_d_dr(&(self.cpotential), t, &q[i,0], &epsilon[0])
+        if len(t) == 1:
+            for i in range(n):
+                dr[i] = c_d_dr(&(self.cpotential), t[0], &q[i,0], &epsilon[0])
+        else:
+            for i in range(n):
+                dr[i] = c_d_dr(&(self.cpotential), t[i], &q[i,0], &epsilon[0])
 
         return np.array(dr)
 
-    cpdef d2_dr2(self, double[:,::1] q, double G, double t=0.):
+    cpdef d2_dr2(self, double[:,::1] q, double G, double[::1] t):
         """
         CAUTION: Interpretation of axes is different here! We need the
         arrays to be C ordered and easy to iterate over, so here the
@@ -170,12 +193,16 @@ cdef class CPotentialWrapper:
         cdef double [::1] dr2 = np.zeros(n, dtype=np.float64)
         cdef double [::1] epsilon = np.zeros(ndim, dtype=np.float64)
 
-        for i in range(n):
-            dr2[i] = c_d2_dr2(&(self.cpotential), t, &q[i,0], &epsilon[0])
+        if len(t) == 1:
+            for i in range(n):
+                dr2[i] = c_d2_dr2(&(self.cpotential), t[0], &q[i,0], &epsilon[0])
+        else:
+            for i in range(n):
+                dr2[i] = c_d2_dr2(&(self.cpotential), t[i], &q[i,0], &epsilon[0])
 
         return np.array(dr2)
 
-    cpdef mass_enclosed(self, double[:,::1] q, double G, double t=0.):
+    cpdef mass_enclosed(self, double[:,::1] q, double G, double[::1] t):
         """
         CAUTION: Interpretation of axes is different here! We need the
         arrays to be C ordered and easy to iterate over, so here the
@@ -187,8 +214,12 @@ cdef class CPotentialWrapper:
         cdef double [::1] mass = np.zeros(n, dtype=np.float64)
         cdef double [::1] epsilon = np.zeros(ndim, dtype=np.float64)
 
-        for i in range(n):
-            mass[i] = c_mass_enclosed(&(self.cpotential), t, &q[i,0], G, &epsilon[0])
+        if len(t) == 1:
+            for i in range(n):
+                mass[i] = c_mass_enclosed(&(self.cpotential), t[0], &q[i,0], G, &epsilon[0])
+        else:
+            for i in range(n):
+                mass[i] = c_mass_enclosed(&(self.cpotential), t[i], &q[i,0], G, &epsilon[0])
 
         return np.array(mass)
 
@@ -220,16 +251,16 @@ class CPotentialBase(PotentialBase):
 
         self.c_instance = Wrapper(self.G, self.c_parameters)
 
-    def _energy(self, q, t=0.):
+    def _energy(self, q, t):
         return self.c_instance.energy(q, t=t)
 
-    def _gradient(self, q, t=0.):
+    def _gradient(self, q, t):
         return self.c_instance.gradient(q, t=t)
 
-    def _density(self, q, t=0.):
+    def _density(self, q, t):
         return self.c_instance.density(q, t=t)
 
-    def _hessian(self, q, t=0.):
+    def _hessian(self, q, t):
         return self.c_instance.hessian(q, t=t)
 
     # ----------------------------------------------------------
@@ -247,7 +278,7 @@ class CPotentialBase(PotentialBase):
         q : array_like, numeric
             Position to compute the mass enclosed.
         """
-
+        t = self._validate_prepare_time(t)
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
 
