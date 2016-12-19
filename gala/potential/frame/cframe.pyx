@@ -32,7 +32,7 @@ cdef extern from "frame/src/cframe.h":
 cdef class CFrameWrapper:
     """ Wrapper class for C implementation of reference frames. """
 
-    cpdef energy(self, double[:,::1] w, double t=0.):
+    cpdef energy(self, double[:,::1] w, double[::1] t):
         """
         w should have shape (n, ndim).
         """
@@ -42,12 +42,17 @@ cdef class CFrameWrapper:
         n,ndim = _validate_pos_arr(w)
 
         cdef double [::1] pot = np.zeros(n)
-        for i in range(n):
-            pot[i] = frame_hamiltonian(&cf, t, &w[i,0], ndim//2)
+        if len(t) == 1:
+            for i in range(n):
+                pot[i] = frame_hamiltonian(&cf, t[0], &w[i,0], ndim//2)
+        else:
+            for i in range(n):
+                pot[i] = frame_hamiltonian(&cf, t[i], &w[i,0], ndim//2)
+
 
         return np.array(pot)
 
-    cpdef gradient(self, double[:,::1] w, double t=0.):
+    cpdef gradient(self, double[:,::1] w, double[::1] t):
         """
         w should have shape (n, ndim).
         """
@@ -57,12 +62,17 @@ cdef class CFrameWrapper:
         n,ndim = _validate_pos_arr(w)
 
         cdef double[:,::1] dH = np.zeros((n, ndim))
-        for i in range(n):
-            frame_gradient(&cf, t, &w[i,0], ndim//2, &dH[i,0])
+        if len(t) == 1:
+            for i in range(n):
+                frame_gradient(&cf, t[0], &w[i,0], ndim//2, &dH[i,0])
+        else:
+            for i in range(n):
+                frame_gradient(&cf, t[i], &w[i,0], ndim//2, &dH[i,0])
+
 
         return np.array(dH)
 
-    cpdef hessian(self, double[:,::1] w, double t=0.):
+    cpdef hessian(self, double[:,::1] w, double[::1] t):
         """
         w should have shape (n, ndim).
         """
@@ -72,9 +82,12 @@ cdef class CFrameWrapper:
         n,ndim = _validate_pos_arr(w)
 
         cdef double[:,:,::1] d2H = np.zeros((n, ndim, ndim))
-
-        for i in range(n):
-            frame_hessian(&cf, t, &w[i,0], ndim//2, &d2H[i,0,0])
+        if len(t) == 1:
+            for i in range(n):
+                frame_hessian(&cf, t[0], &w[i,0], ndim//2, &d2H[i,0,0])
+        else:
+            for i in range(n):
+                frame_hessian(&cf, t[i], &w[i,0], ndim//2, &d2H[i,0,0])
 
         return np.array(d2H)
 
@@ -96,14 +109,14 @@ class CFrameBase(FrameBase):
     def __str__(self):
         return self.__class__.__name__
 
-    def _energy(self, q, t=0.):
+    def _energy(self, q, t):
         return self.c_instance.energy(q, t=t)
 
-    def _gradient(self, q, t=0.):
+    def _gradient(self, q, t):
         return self.c_instance.gradient(q, t=t)
 
-    def _density(self, q, t=0.):
+    def _density(self, q, t):
         return self.c_instance.density(q, t=t)
 
-    def _hessian(self, q, t=0.):
+    def _hessian(self, q, t):
         return self.c_instance.hessian(q, t=t)

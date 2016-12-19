@@ -86,16 +86,6 @@ class PotentialBase(CommonBase):
         x = atleast_2d(x, insert_axis=1).astype(np.float64)
         return x
 
-    def _validate_prepare_time(self, t, pos):
-        # TODO: do I want to make this an array even if input is scalar?
-        if hasattr(t, 'unit'):
-            t = t.decompose(self.units).value
-
-        if not isiterable(t):
-            t = np.atleast_1d(t)
-
-        return t
-
     # ========================================================================
     # Core methods that use the above implemented functions
     #
@@ -115,9 +105,9 @@ class PotentialBase(CommonBase):
         E : `~astropy.units.Quantity`
             The potential energy per unit mass or value of the potential.
         """
-        t = self._validate_prepare_time(t)
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
+        t = self._validate_prepare_time(t, q)
         ret_unit = self.units['energy'] / self.units['mass']
 
         return self._energy(q, t=t).T.reshape(orig_shape[1:]) * ret_unit
@@ -139,9 +129,9 @@ class PotentialBase(CommonBase):
             The gradient of the potential. Will have the same shape as
             the input position.
         """
-        t = self._validate_prepare_time(t)
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
+        t = self._validate_prepare_time(t, q)
         ret_unit = self.units['length'] / self.units['time']**2
         return (self._gradient(q, t=t).T.reshape(orig_shape) * ret_unit).to(self.units['acceleration'])
 
@@ -163,9 +153,9 @@ class PotentialBase(CommonBase):
             position has shape ``q.shape``, the output energy will have
             shape ``q.shape[1:]``.
         """
-        t = self._validate_prepare_time(t)
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
+        t = self._validate_prepare_time(t, q)
         ret_unit = self.units['mass'] / self.units['length']**3
         return (self._density(q, t=t).T * ret_unit).to(self.units['mass density'])
 
@@ -188,9 +178,9 @@ class PotentialBase(CommonBase):
             ``(q.shape[0],q.shape[0]) + q.shape[1:]``. That is, an ``n_dim`` by
             ``n_dim`` array (matrix) for each position.
         """
-        t = self._validate_prepare_time(t)
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
+        t = self._validate_prepare_time(t, q)
         ret_unit = 1 / self.units['time']**2
         hess = np.moveaxis(self._hessian(q, t=t), 0, -1)
         return hess.reshape((orig_shape[0], orig_shape[0]) + orig_shape[1:]) * ret_unit
@@ -232,9 +222,9 @@ class PotentialBase(CommonBase):
             has shape ``q.shape``, the output energy will have shape
             ``q.shape[1:]``.
         """
-        t = self._validate_prepare_time(t)
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
+        t = self._validate_prepare_time(t, q)
 
         # small step-size in direction of q
         h = 1E-3 # MAGIC NUMBER
@@ -276,7 +266,6 @@ class PotentialBase(CommonBase):
             ``q.shape[1:]``.
 
         """
-        t = self._validate_prepare_time(t)
         q = self._remove_units_prepare_shape(q)
 
         # Radius

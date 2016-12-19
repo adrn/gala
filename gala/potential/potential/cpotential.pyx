@@ -278,9 +278,9 @@ class CPotentialBase(PotentialBase):
         q : array_like, numeric
             Position to compute the mass enclosed.
         """
-        t = self._validate_prepare_time(t)
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
+        t = self._validate_prepare_time(t, q)
 
         try:
             menc = self.c_instance.mass_enclosed(q, self.G, t=t)

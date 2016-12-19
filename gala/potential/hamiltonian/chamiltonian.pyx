@@ -70,12 +70,12 @@ class Hamiltonian(CommonBase):
     def units(self):
         return self.potential.units
 
-    def _energy(self, w, t=0.):
+    def _energy(self, w, t):
         pot_E = self.potential._energy(np.ascontiguousarray(w[:,:self._pot_ndim]), t=t)
         other_E = self.frame._energy(w, t=t)
         return pot_E + other_E
 
-    def _gradient(self, w, t=0.):
+    def _gradient(self, w, t):
         q = np.ascontiguousarray(w[:,:self._pot_ndim])
 
         dH = np.zeros_like(w)
@@ -88,7 +88,7 @@ class Hamiltonian(CommonBase):
 
         return dH
 
-    def _hessian(self, w, t=0.):
+    def _hessian(self, w, t):
         raise NotImplementedError()
 
     # ========================================================================
@@ -114,6 +114,7 @@ class Hamiltonian(CommonBase):
         """
         w = self._remove_units_prepare_shape(w)
         orig_shape,w = self._get_c_valid_arr(w)
+        t = self._validate_prepare_time(t, w)
         return self._energy(w, t=t).T.reshape(orig_shape[1:]) * self.units['energy'] / self.units['mass']
 
     def gradient(self, w, t=0.):
@@ -136,6 +137,7 @@ class Hamiltonian(CommonBase):
         """
         w = self._remove_units_prepare_shape(w)
         orig_shape,w = self._get_c_valid_arr(w)
+        t = self._validate_prepare_time(t, w)
 
         # TODO: wat do about units here?
         # ret_unit = self.units['length'] / self.units['time']**2
@@ -302,7 +304,7 @@ class Hamiltonian(CommonBase):
             def F(t, w):
                 # TODO: these Transposes are shitty and probably make it much slower?
                 w_T = np.ascontiguousarray(w.T)
-                return self._gradient(w_T, t=t).T
+                return self._gradient(w_T, t=np.array([t])).T
             integrator = Integrator(F, func_units=self.units, **Integrator_kwargs)
             orbit = integrator.run(arr_w0.T, **time_spec)
             orbit.potential = self.potential
