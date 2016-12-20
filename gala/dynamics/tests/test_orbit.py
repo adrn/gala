@@ -341,6 +341,7 @@ def test_apocenter_pericenter():
 
     ham = Hamiltonian(pot)
     w = ham.integrate_orbit(w0, dt=0.01, n_steps=10000, Integrator=DOPRI853Integrator)
+
     apo = w.apocenter()
     per = w.pericenter()
 
@@ -350,7 +351,6 @@ def test_apocenter_pericenter():
 
     # see if they're where we expect
     E = np.mean(w.energy()).decompose(pot.units).value
-    # Phi = np.mean(w.potential_energy()).value
     L = np.mean(np.sqrt(np.sum(w.angular_momentum()**2, axis=0))).decompose(pot.units).value
     def func(r):
         val = 2*(E-pot.value([r,0,0]).value[0]) - L**2/r**2
@@ -361,6 +361,16 @@ def test_apocenter_pericenter():
 
     assert np.allclose(apo.value, pred_apo, rtol=1E-2)
     assert np.allclose(per.value, pred_per, rtol=1E-2)
+
+    # Return all peris, apos
+    apos = w.apocenter(func=None)
+    pers = w.pericenter(func=None)
+
+    dapo = np.std(apos) / np.mean(apos)
+    assert (dapo > 0) and np.allclose(dapo, 0., atol=1E-5)
+
+    dper = np.std(pers) / np.mean(pers)
+    assert (dper > 0) and np.allclose(dper, 0., atol=1E-5)
 
 def test_estimate_period():
     ntimes = 16384

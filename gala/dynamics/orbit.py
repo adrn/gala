@@ -13,6 +13,8 @@ import astropy.units as u
 uno = u.dimensionless_unscaled
 import numpy as np
 from scipy.signal import argrelmin, argrelmax
+from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.optimize import minimize
 
 # Project
 from .core import CartesianPhaseSpacePosition
@@ -41,61 +43,159 @@ class Orbit(object):
     # ------------------------------------------------------------------------
     # Computed dynamical quantities
     # ------------------------------------------------------------------------
-    def pericenter(self, type=np.mean):
+    def pericenter(self, return_times=False, func=np.mean,
+                   interp_kwargs=None, minimize_kwargs=None):
         """
-        Estimate the pericenter(s) of the orbit. By default, this returns
-        the mean pericenter. To get, e.g., the minimum pericenter,
-        pass in ``type=np.min``. To get all pericenters, pass in
-        ``type=None``.
+        Estimate the pericenter(s) of the orbit by identifying local minima in
+        the spherical radius and interpolating between timesteps near the
+        minima.
+
+        By default, this returns the mean of all local minima (pericenters). To
+        get, e.g., the minimum pericenter, pass in ``func=np.min``. To get
+        all pericenters, pass in ``func=None``.
 
         Parameters
         ----------
-        type : func (optional)
-            By default, this returns the mean pericenter. To return all
-            pericenters, pass in ``None``. To get, e.g., the minimum
-            or maximum pericenter, pass in ``np.min`` or ``np.max``.
+        func : func (optional)
+            A function to evaluate on all of the identified pericenter times.
+        return_times : bool (optional)
+            Also return the pericenter times.
+        interp_kwargs : dict (optional)
+            Keyword arguments to be passed to
+            :class:`scipy.interpolate.InterpolatedUnivariateSpline`.
+        minimize_kwargs : dict (optional)
+            Keyword arguments to be passed to :class:`scipy.optimize.minimize`.
 
         Returns
         -------
         peri : float, :class:`~numpy.ndarray`
             Either a single number or an array of pericenters.
-        """
-        r = self.r
-        min_ix = argrelmin(r, mode='wrap')[0]
-        min_ix = min_ix[(min_ix != 0) & (min_ix != (len(r)-1))]
+        times : :class:`~numpy.ndarray` (optional, see ``return_times``)
+            If ``return_times=True``, also returns an array of the pericenter
+            times.
 
-        if type is not None:
-            return type(r[min_ix])
+        """
+
+        if return_times and func is None:
+            raise ValueError("Cannot return times if reducing pericenters "
+                             "using an input function. Pass `func=None` if "
+                             "you want to return all individual pericenters "
+                             "and times.")
+
+        if interp_kwargs is None:
+            interp_kwargs = dict()
+
+        if minimize_kwargs is None:
+            minimize_kwargs = dict()
+
+        if func is None:
+            func = lambda x: x
+
+        # default scipy function kwargs
+        interp_kwargs.setdefault('k', 3)
+        interp_kwargs.setdefault('ext', 3) # don't extrapolate, return boundary val
+        minimize_kwargs.setdefault('method', 'powell')
+
+        # orbital radius
+        r = self.r.value
+        t = self.t.value
+        _ix = argrelmin(r, mode='wrap')[0]
+
+        # remove 0'th index and final index, if present, to remove ambiguity
+        _ix = _ix[(_ix != 0) & (_ix != (len(r)-1))]
+
+        # interpolating function to upsample orbit
+        interp_func = InterpolatedUnivariateSpline(t, r, **interp_kwargs)
+
+        refined_times = np.zeros(_ix.shape, dtype=float)
+        for i,j in enumerate(_ix):
+            res = minimize(interp_func, t[j], **minimize_kwargs)
+            refined_times[i] = res.x
+
+        peri = interp_func(refined_times) * self.r.unit
+
+        if return_times:
+            return peri, refined_times
+
         else:
-            return r[min_ix]
+            return func(peri)
 
-    def apocenter(self, type=np.mean):
+    def apocenter(self, return_times=False, func=np.mean,
+                  interp_kwargs=None, minimize_kwargs=None):
         """
-        Estimate the apocenter(s) of the orbit. By default, this returns
-        the mean apocenter. To get, e.g., the minimum apocenter,
-        pass in ``type=np.min``. To get all apocenters, pass in
-        ``type=None``.
+        Estimate the apocenter(s) of the orbit by identifying local maxima in
+        the spherical radius and interpolating between timesteps near the
+        maxima.
+
+        By default, this returns the mean of all local maxima (apocenters). To
+        get, e.g., the largest apocenter, pass in ``func=np.min``. To get
+        all apocenters, pass in ``func=None``.
 
         Parameters
         ----------
-        type : func (optional)
-            By default, this returns the mean apocenter. To return all
-            apocenters, pass in ``None``. To get, e.g., the minimum
-            or maximum apocenter, pass in ``np.min`` or ``np.max``.
+        func : func (optional)
+            A function to evaluate on all of the identified apocenter times.
+        return_times : bool (optional)
+            Also return the apocenter times.
+        interp_kwargs : dict (optional)
+            Keyword arguments to be passed to
+            :class:`scipy.interpolate.InterpolatedUnivariateSpline`.
+        minimize_kwargs : dict (optional)
+            Keyword arguments to be passed to :class:`scipy.optimize.minimize`.
 
         Returns
         -------
         apo : float, :class:`~numpy.ndarray`
             Either a single number or an array of apocenters.
-        """
-        r = self.r
-        max_ix = argrelmax(r, mode='wrap')[0]
-        max_ix = max_ix[(max_ix != 0) & (max_ix != (len(r)-1))]
+        times : :class:`~numpy.ndarray` (optional, see ``return_times``)
+            If ``return_times=True``, also returns an array of the apocenter
+            times.
 
-        if type is not None:
-            return type(r[max_ix])
+        """
+
+        if return_times and func is None:
+            raise ValueError("Cannot return times if reducing apocenters "
+                             "using an input function. Pass `func=None` if "
+                             "you want to return all individual apocenters "
+                             "and times.")
+
+        if interp_kwargs is None:
+            interp_kwargs = dict()
+
+        if minimize_kwargs is None:
+            minimize_kwargs = dict()
+
+        if func is None:
+            func = lambda x: x
+
+        # default scipy function kwargs
+        interp_kwargs.setdefault('k', 3)
+        interp_kwargs.setdefault('ext', 3) # don't extrapolate, return boundary val
+        minimize_kwargs.setdefault('method', 'powell')
+
+        # orbital radius
+        r = self.r.value
+        t = self.t.value
+        _ix = argrelmax(r, mode='wrap')[0]
+
+        # remove 0'th index and final index, if present, to remove ambiguity
+        _ix = _ix[(_ix != 0) & (_ix != (len(r)-1))]
+
+        # interpolating function to upsample orbit
+        interp_func = InterpolatedUnivariateSpline(t, r, **interp_kwargs)
+
+        refined_times = np.zeros(_ix.shape, dtype=float)
+        for i,ix in enumerate(_ix):
+            res = minimize(lambda x: -interp_func(x), t[ix], **minimize_kwargs)
+            refined_times[i] = res.x
+
+        apo = interp_func(refined_times) * self.r.unit
+
+        if return_times:
+            return apo, refined_times
+
         else:
-            return r[max_ix]
+            return func(apo)
 
     def eccentricity(self):
         r"""
