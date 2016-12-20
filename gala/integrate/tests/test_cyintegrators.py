@@ -33,7 +33,7 @@ def test_compare_to_py(Integrator, integrate_func):
 
     def F(t, w):
         w_T = np.ascontiguousarray(w.T)
-        return H._gradient(w_T).T
+        return H._gradient(w_T, np.array([0.])).T
 
     cy_w0 = np.array([[0.,10.,0.,0.2,0.,0.],
                       [10.,0.,0.,0.,0.2,0.],
@@ -63,7 +63,7 @@ def test_scaling(tmpdir, Integrator, integrate_func):
 
     def F(t,w):
         dq = w[3:]
-        dp = -p._gradient(w[:3])
+        dp = -p._gradient(w[:3], t=np.array([0.]))
         return np.vstack((dq,dp))
 
     step_bins = np.logspace(2,np.log10(25000),7)

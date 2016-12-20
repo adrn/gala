@@ -42,6 +42,8 @@ class PotentialTestBase(object):
         cls.w0 = np.array(cls.w0)
         cls.ndim = cls.w0.size // 2
 
+        # TODO: need to test also quantity objects and phasespacepositions!
+
         # these are arrays we will test the methods on:
         w0_2d = np.repeat(cls.w0[:,None], axis=1, repeats=16)
         w0_3d = np.repeat(w0_2d[...,None], axis=2, repeats=8)
@@ -70,21 +72,62 @@ class PotentialTestBase(object):
             v = self.potential.energy(arr[:self.ndim])
             assert v.shape == shp
 
+            g = self.potential.energy(arr[:self.ndim], t=0.1)
+            g = self.potential.energy(arr[:self.ndim], t=0.1*self.potential.units['time'])
+
+            t = np.zeros(np.array(arr).shape[1:]) + 0.1
+            g = self.potential.energy(arr[:self.ndim], t=t)
+            g = self.potential.energy(arr[:self.ndim], t=t*self.potential.units['time'])
+
     def test_gradient(self):
         for arr,shp in zip(self.w0s, self._grad_return_shapes):
             g = self.potential.gradient(arr[:self.ndim])
             assert g.shape == shp
+
+            g = self.potential.gradient(arr[:self.ndim], t=0.1)
+            g = self.potential.gradient(arr[:self.ndim], t=0.1*self.potential.units['time'])
+
+            t = np.zeros(np.array(arr).shape[1:]) + 0.1
+            g = self.potential.gradient(arr[:self.ndim], t=t)
+            g = self.potential.gradient(arr[:self.ndim], t=t*self.potential.units['time'])
 
     def test_hessian(self):
         for arr,shp in zip(self.w0s, self._hess_return_shapes):
             g = self.potential.hessian(arr[:self.ndim])
             assert g.shape == shp
 
+            g = self.potential.hessian(arr[:self.ndim], t=0.1)
+            g = self.potential.hessian(arr[:self.ndim], t=0.1*self.potential.units['time'])
+
+            t = np.zeros(np.array(arr).shape[1:]) + 0.1
+            g = self.potential.hessian(arr[:self.ndim], t=t)
+            g = self.potential.hessian(arr[:self.ndim], t=t*self.potential.units['time'])
+
     def test_mass_enclosed(self):
         for arr,shp in zip(self.w0s, self._valu_return_shapes):
             g = self.potential.mass_enclosed(arr[:self.ndim])
             assert g.shape == shp
             assert np.all(g > 0.)
+
+            g = self.potential.mass_enclosed(arr[:self.ndim], t=0.1)
+            g = self.potential.mass_enclosed(arr[:self.ndim], t=0.1*self.potential.units['time'])
+
+            t = np.zeros(np.array(arr).shape[1:]) + 0.1
+            g = self.potential.mass_enclosed(arr[:self.ndim], t=t)
+            g = self.potential.mass_enclosed(arr[:self.ndim], t=t*self.potential.units['time'])
+
+    def test_circular_velocity(self):
+        for arr,shp in zip(self.w0s, self._valu_return_shapes):
+            g = self.potential.circular_velocity(arr[:self.ndim])
+            assert g.shape == shp
+            assert np.all(g > 0.)
+
+            g = self.potential.circular_velocity(arr[:self.ndim], t=0.1)
+            g = self.potential.circular_velocity(arr[:self.ndim], t=0.1*self.potential.units['time'])
+
+            t = np.zeros(np.array(arr).shape[1:]) + 0.1
+            g = self.potential.circular_velocity(arr[:self.ndim], t=t)
+            g = self.potential.circular_velocity(arr[:self.ndim], t=t*self.potential.units['time'])
 
     def test_repr(self):
         pot_repr = repr(self.potential)
@@ -163,13 +206,13 @@ class PotentialTestBase(object):
 
         def energy_wrap(xyz):
             xyz = np.ascontiguousarray(xyz[None])
-            return self.potential._energy(xyz, t=0.)[0]
+            return self.potential._energy(xyz, t=np.array([0.]))[0]
 
         num_grad = np.zeros_like(xyz)
         for i in range(xyz.shape[0]):
             num_grad[i] = np.squeeze([partial_derivative(energy_wrap, xyz[i], dim_ix=dim_ix, n=1, dx=dx, order=5)
                                       for dim_ix in range(self.w0.size//2)])
-        grad = self.potential._gradient(xyz)
+        grad = self.potential._gradient(xyz, t=np.array([0.]))
 
         assert np.allclose(num_grad, grad, rtol=self.tol)
 

@@ -7,6 +7,7 @@ from collections import OrderedDict
 
 # Third-party
 import astropy.units as u
+from astropy.utils import isiterable
 import numpy as np
 
 # Project
@@ -62,6 +63,25 @@ class CommonBase(object):
         orig_shape = x.shape
         x = np.ascontiguousarray(x.reshape(orig_shape[0], -1).T)
         return orig_shape, x
+
+    def _validate_prepare_time(self, t, pos_c):
+        """
+        Make sure that t is a 1D array and compatible with the C position array.
+        """
+        if hasattr(t, 'unit'):
+            t = t.decompose(self.units).value
+
+        if not isiterable(t):
+            t = np.atleast_1d(t)
+
+        t = np.ascontiguousarray(t.ravel())
+
+        if len(t) > 1:
+            if len(t) != pos_c.shape[0]:
+                raise ValueError("If passing in an array of times, it must have a shape "
+                                 "compatible with the input position(s).")
+
+        return t
 
     # For comparison operations
     def __eq__(self, other):

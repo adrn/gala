@@ -98,6 +98,11 @@ class _TestBase(object):
             assert v.shape == shp
             assert v.unit.is_equivalent(self.E_unit)
 
+            t = np.zeros(np.array(arr).shape[1:]) + 0.1
+            self.obj.energy(arr, t=0.1)
+            self.obj.energy(arr, t=t)
+            self.obj.energy(arr, t=0.1*self.obj.units['time'])
+
     def test_gradient(self):
         for arr,shp in zip(self.w0s, self.gradient_return_shapes):
             if self.E_unit.is_equivalent(u.one) and hasattr(arr, 'pos') and \
@@ -107,6 +112,11 @@ class _TestBase(object):
             v = self.obj.gradient(arr)
             assert v.shape == shp
             # TODO: check return units
+
+            t = np.zeros(np.array(arr).shape[1:]) + 0.1
+            self.obj.gradient(arr, t=0.1)
+            self.obj.gradient(arr, t=t)
+            self.obj.gradient(arr, t=0.1*self.obj.units['time'])
 
     def test_hessian(self):
         for arr,shp in zip(self.w0s, self.hessian_return_shapes):

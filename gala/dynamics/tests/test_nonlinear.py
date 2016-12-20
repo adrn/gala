@@ -246,7 +246,7 @@ class TestLogarithmic(object):
 
         def F(t, w):
             w_T = np.ascontiguousarray(w.T)
-            return self.hamiltonian._gradient(w_T, t).T
+            return self.hamiltonian._gradient(w_T, np.array([t])).T
 
         integrator = DOPRI853Integrator(F)
         for ii,w0 in enumerate(self.w0s):

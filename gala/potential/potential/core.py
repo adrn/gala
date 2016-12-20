@@ -107,6 +107,7 @@ class PotentialBase(CommonBase):
         """
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
+        t = self._validate_prepare_time(t, q)
         ret_unit = self.units['energy'] / self.units['mass']
 
         return self._energy(q, t=t).T.reshape(orig_shape[1:]) * ret_unit
@@ -130,6 +131,7 @@ class PotentialBase(CommonBase):
         """
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
+        t = self._validate_prepare_time(t, q)
         ret_unit = self.units['length'] / self.units['time']**2
         return (self._gradient(q, t=t).T.reshape(orig_shape) * ret_unit).to(self.units['acceleration'])
 
@@ -153,6 +155,7 @@ class PotentialBase(CommonBase):
         """
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
+        t = self._validate_prepare_time(t, q)
         ret_unit = self.units['mass'] / self.units['length']**3
         return (self._density(q, t=t).T * ret_unit).to(self.units['mass density'])
 
@@ -177,6 +180,7 @@ class PotentialBase(CommonBase):
         """
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
+        t = self._validate_prepare_time(t, q)
         ret_unit = 1 / self.units['time']**2
         hess = np.moveaxis(self._hessian(q, t=t), 0, -1)
         return hess.reshape((orig_shape[0], orig_shape[0]) + orig_shape[1:]) * ret_unit
@@ -220,6 +224,7 @@ class PotentialBase(CommonBase):
         """
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
+        t = self._validate_prepare_time(t, q)
 
         # small step-size in direction of q
         h = 1E-3 # MAGIC NUMBER
@@ -265,7 +270,7 @@ class PotentialBase(CommonBase):
 
         # Radius
         r = np.sqrt(np.sum(q**2, axis=0)) * self.units['length']
-        dPhi_dxyz = self.gradient(q)
+        dPhi_dxyz = self.gradient(q, t=t)
         dPhi_dr = np.sum(dPhi_dxyz * q/r.value, axis=0)
 
         return self.units.decompose(np.sqrt(r * np.abs(dPhi_dr)))

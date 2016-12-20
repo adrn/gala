@@ -57,9 +57,6 @@
 
 #     return exts
 
-# def get_package_data():
-#     return {'gala.potential': ['*.h', '*.pyx', '*.pxd', '*/*.pyx', '*/*.pxd',
-#                                'builtin/src/*.h', 'src/*.h',
-#                                'builtin/src/*.c', 'src/*.c',
-#                                'tests/*.yml']}
+def get_package_data():
+    return {'gala.potential': ['src/funcdefs.h', 'potential/src/cpotential.h']}
 
