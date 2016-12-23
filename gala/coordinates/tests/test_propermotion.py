@@ -16,7 +16,7 @@ import astropy.units as u
 import numpy as np
 
 # This package
-from ..propermotion import *
+from ..propermotion import transform_proper_motion, pm_gal_to_icrs, pm_icrs_to_gal
 
 _txt = """ # from here: http://www.astrostudio.org/xhipreadme.html
 # HIPID ra dec pmra pmdec pml pmb
@@ -40,15 +40,16 @@ class TestPMConvert(object):
             temp.seek(0)
             self.data = np.genfromtxt(temp, names=True, skip_header=1)
 
-    def test_pm_gal_to_icrs(self):
+    def test_gal_to_icrs(self):
 
         # test single entry's
         for row in self.data:
             c = coord.SkyCoord(ra=row['ra']*u.deg, dec=row['dec']*u.deg)
             muad = [row['pmra'],row['pmdec']]*u.mas/u.yr
             mulb = [row['pml'],row['pmb']]*u.mas/u.yr
+            c_gal = c.transform_to(coord.Galactic)
 
-            trans_muad = pm_gal_to_icrs(c, mulb)
+            trans_muad = transform_proper_motion(c_gal, mulb, coord.ICRS)
             assert np.allclose(muad.value, trans_muad.value, atol=1E-2)
 
         # multiple entries
@@ -56,10 +57,14 @@ class TestPMConvert(object):
         muad = np.vstack((self.data['pmra'],self.data['pmdec']))*u.mas/u.yr
         mulb = np.vstack((self.data['pml'],self.data['pmb']))*u.mas/u.yr
 
-        trans_muad = pm_gal_to_icrs(c, mulb)
-        assert np.allclose(muad.value, trans_muad.value, atol=1E-2)
+        trans_muad = transform_proper_motion(c.transform_to(coord.Galactic), mulb, coord.ICRS)
+        assert np.allclose(muad.value, np.round(trans_muad.value,2), atol=1E-2)
 
-    def test_pm_icrs_to_gal(self):
+        # compare with old functions
+        trans_muad2 = pm_gal_to_icrs(c, mulb)
+        assert np.allclose(trans_muad.value, trans_muad2.value, atol=1E-2)
+
+    def test_icrs_to_gal(self):
 
         # test single entrys
         for row in self.data:
@@ -67,7 +72,7 @@ class TestPMConvert(object):
             muad = [row['pmra'],row['pmdec']]*u.mas/u.yr
             mulb = [row['pml'],row['pmb']]*u.mas/u.yr
 
-            trans_mulb = pm_icrs_to_gal(c, muad)
+            trans_mulb = transform_proper_motion(c, muad, coord.Galactic)
             assert np.allclose(mulb.value, trans_mulb.value, atol=1E-2)
 
         # multiple entries
@@ -75,8 +80,12 @@ class TestPMConvert(object):
         muad = np.vstack((self.data['pmra'],self.data['pmdec']))*u.mas/u.yr
         mulb = np.vstack((self.data['pml'],self.data['pmb']))*u.mas/u.yr
 
-        trans_mulb = pm_icrs_to_gal(c, muad)
-        assert np.allclose(mulb.value, trans_mulb.value, atol=1E-2)
+        trans_mulb = transform_proper_motion(c, muad, coord.Galactic)
+        assert np.allclose(mulb.value, np.round(trans_mulb.value,2), atol=1E-2)
+
+        # compare with old functions
+        trans_mulb2 = pm_icrs_to_gal(c, muad)
+        assert np.allclose(trans_mulb.value, trans_mulb2.value, atol=1E-2)
 
 
 def test_arbitrary_shape():
@@ -90,5 +99,5 @@ def test_arbitrary_shape():
     c = coord.SkyCoord(ra=random_ra*u.deg, dec=random_dec*u.deg)
     muad = np.vstack((random_mua[None],random_mud[None]))*u.mas/u.yr
 
-    trans_mulb = pm_icrs_to_gal(c, muad)
+    trans_mulb = transform_proper_motion(c, muad, coord.Galactic)
     assert trans_mulb[0].shape == shape
