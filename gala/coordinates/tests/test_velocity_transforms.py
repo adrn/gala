@@ -16,7 +16,7 @@ import astropy.coordinates as coord
 import astropy.units as u
 
 # This project
-from ..velocity_transforms import *
+from ..velocity_coord_transforms import *
 
 logger.setLevel(logging.DEBUG)
 

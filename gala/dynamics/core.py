@@ -17,7 +17,7 @@ import numpy as np
 
 # Project
 from .plot import three_panel
-from ..coordinates import velocity_transforms as vtrans
+from ..coordinates import velocity_coord_transforms as vtrans
 from ..coordinates import vgal_to_hel
 from ..units import UnitSystem, DimensionlessUnitSystem
 from ..util import atleast_2d
