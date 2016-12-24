@@ -19,7 +19,7 @@ import astropy.units as u
 from astropy.utils.data import get_pkg_data_filename
 
 # This package
-from ..core import *
+from ..velocity_frame_transforms import *
 
 def test_vgsr_to_vhel():
     filename = get_pkg_data_filename('idl_vgsr_vhel.txt')
