@@ -59,7 +59,7 @@ the proper motion is also in this frame, e.g., that the proper motion components
 the Galactic frame, the components are assumed to be :math:`(\mu_l\cos b, \mu_b)` ::
 
     >>> gc.vhel_to_gal(c.galactic, pm=pm, rv=rv)
-    <Quantity [-137.63839042, 232.10966635,  40.73819003] km / s>
+    <Quantity [-137.63839061, 232.10966761,  40.73818895] km / s>
 
 The velocity transformation functions allow specifying the circular velocity at the Sun
 (``vcirc``) and a 3-vector specifying the Sun's velocity with respect to the local
