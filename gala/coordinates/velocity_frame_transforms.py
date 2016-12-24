@@ -15,99 +15,15 @@ import astropy.units as u
 from astropy.coordinates.angles import rotation_matrix
 from astropy.coordinates.builtin_frames.galactocentric import _ROLL0 as ROLL0
 
+# Package
 from .propermotion import pm_gal_to_icrs, pm_icrs_to_gal
 
-__all__ = ["vgsr_to_vhel", "vhel_to_vgsr", "vgal_to_hel", "vhel_to_gal"]
+__all__ = ["vgal_to_hel", "vhel_to_gal", "vgsr_to_vhel", "vhel_to_vgsr"]
 
 # This is the default circular velocity and LSR peculiar velocity of the Sun
 # TODO: make this a config item?
 VCIRC = 220.*u.km/u.s
 VLSR = [10., 5.25, 7.17]*u.km/u.s
-
-def vgsr_to_vhel(coordinate, vgsr, vcirc=VCIRC, vlsr=VLSR):
-    """
-    Convert a radial velocity in the Galactic standard of rest (GSR) to
-    a barycentric radial velocity.
-
-    Parameters
-    ----------
-    coordinate : :class:`~astropy.coordinates.SkyCoord`
-        An Astropy SkyCoord object or anything object that can be passed
-        to the SkyCoord initializer.
-    vgsr : :class:`~astropy.units.Quantity`
-        GSR line-of-sight velocity.
-    vcirc : :class:`~astropy.units.Quantity`
-        Circular velocity of the Sun.
-    vlsr : :class:`~astropy.units.Quantity`
-        Velocity of the Sun relative to the local standard
-        of rest (LSR).
-
-    Returns
-    -------
-    vhel : :class:`~astropy.units.Quantity`
-        Radial velocity in a barycentric rest frame.
-
-    """
-
-    c = coord.SkyCoord(coordinate)
-    g = c.galactic
-    l,b = g.l, g.b
-
-    if not isinstance(vgsr, u.Quantity):
-        raise TypeError("vgsr must be a Quantity subclass")
-
-    # compute the velocity relative to the LSR
-    lsr = vgsr - vcirc*sin(l)*cos(b)
-
-    # velocity correction for Sun relative to LSR
-    v_correct = vlsr[0]*cos(b)*cos(l) + \
-        vlsr[1]*cos(b)*sin(l) + \
-        vlsr[2]*sin(b)
-    vhel = lsr - v_correct
-
-    return vhel
-
-def vhel_to_vgsr(coordinate, vhel, vcirc=VCIRC, vlsr=VLSR):
-    """
-    Convert a velocity from a heliocentric radial velocity to
-    the Galactic standard of rest (GSR).
-
-    Parameters
-    ----------
-    coordinate : :class:`~astropy.coordinates.SkyCoord`
-        An Astropy SkyCoord object or anything object that can be passed
-        to the SkyCoord initializer.
-    vhel : :class:`~astropy.units.Quantity`
-        Barycentric line-of-sight velocity.
-    vcirc : :class:`~astropy.units.Quantity`
-        Circular velocity of the Sun.
-    vlsr : :class:`~astropy.units.Quantity`
-        Velocity of the Sun relative to the local standard
-        of rest (LSR).
-
-    Returns
-    -------
-    vgsr : :class:`~astropy.units.Quantity`
-        Radial velocity in a galactocentric rest frame.
-
-    """
-
-    c = coord.SkyCoord(coordinate)
-    g = c.galactic
-    l,b = g.l, g.b
-
-    if not isinstance(vhel, u.Quantity):
-        raise TypeError("vhel must be a Quantity subclass")
-
-    lsr = vhel + vcirc*sin(l)*cos(b)
-
-    # velocity correction for Sun relative to LSR
-    v_correct = vlsr[0]*cos(b)*cos(l) + \
-        vlsr[1]*cos(b)*sin(l) + \
-        vlsr[2]*sin(b)
-    vgsr = lsr + v_correct
-
-    return vgsr
 
 def _icrs_gctc_velocity_matrix(galactocentric_frame):
     """
@@ -347,3 +263,91 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame
         return v_gc.reshape((3,))
     else:
         return v_gc
+
+
+# -----------------------------------------------------------------------------
+
+def vgsr_to_vhel(coordinate, vgsr, vcirc=VCIRC, vlsr=VLSR):
+    """
+    Convert a radial velocity in the Galactic standard of rest (GSR) to
+    a barycentric radial velocity.
+
+    Parameters
+    ----------
+    coordinate : :class:`~astropy.coordinates.SkyCoord`
+        An Astropy SkyCoord object or anything object that can be passed
+        to the SkyCoord initializer.
+    vgsr : :class:`~astropy.units.Quantity`
+        GSR line-of-sight velocity.
+    vcirc : :class:`~astropy.units.Quantity`
+        Circular velocity of the Sun.
+    vlsr : :class:`~astropy.units.Quantity`
+        Velocity of the Sun relative to the local standard
+        of rest (LSR).
+
+    Returns
+    -------
+    vhel : :class:`~astropy.units.Quantity`
+        Radial velocity in a barycentric rest frame.
+
+    """
+
+    c = coord.SkyCoord(coordinate)
+    g = c.galactic
+    l,b = g.l, g.b
+
+    if not isinstance(vgsr, u.Quantity):
+        raise TypeError("vgsr must be a Quantity subclass")
+
+    # compute the velocity relative to the LSR
+    lsr = vgsr - vcirc*sin(l)*cos(b)
+
+    # velocity correction for Sun relative to LSR
+    v_correct = vlsr[0]*cos(b)*cos(l) + \
+        vlsr[1]*cos(b)*sin(l) + \
+        vlsr[2]*sin(b)
+    vhel = lsr - v_correct
+
+    return vhel
+
+def vhel_to_vgsr(coordinate, vhel, vcirc=VCIRC, vlsr=VLSR):
+    """
+    Convert a velocity from a heliocentric radial velocity to
+    the Galactic standard of rest (GSR).
+
+    Parameters
+    ----------
+    coordinate : :class:`~astropy.coordinates.SkyCoord`
+        An Astropy SkyCoord object or anything object that can be passed
+        to the SkyCoord initializer.
+    vhel : :class:`~astropy.units.Quantity`
+        Barycentric line-of-sight velocity.
+    vcirc : :class:`~astropy.units.Quantity`
+        Circular velocity of the Sun.
+    vlsr : :class:`~astropy.units.Quantity`
+        Velocity of the Sun relative to the local standard
+        of rest (LSR).
+
+    Returns
+    -------
+    vgsr : :class:`~astropy.units.Quantity`
+        Radial velocity in a galactocentric rest frame.
+
+    """
+
+    c = coord.SkyCoord(coordinate)
+    g = c.galactic
+    l,b = g.l, g.b
+
+    if not isinstance(vhel, u.Quantity):
+        raise TypeError("vhel must be a Quantity subclass")
+
+    lsr = vhel + vcirc*sin(l)*cos(b)
+
+    # velocity correction for Sun relative to LSR
+    v_correct = vlsr[0]*cos(b)*cos(l) + \
+        vlsr[1]*cos(b)*sin(l) + \
+        vlsr[2]*sin(b)
+    vgsr = lsr + v_correct
+
+    return vgsr
