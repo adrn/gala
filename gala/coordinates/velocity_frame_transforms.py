@@ -12,8 +12,19 @@ from numpy import cos, sin
 
 import astropy.coordinates as coord
 import astropy.units as u
-from astropy.coordinates.angles import rotation_matrix
 from astropy.coordinates.builtin_frames.galactocentric import _ROLL0 as ROLL0
+try:
+    from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_transpose, matrix_product
+    ASTROPY_1_3 = True
+except ImportError:
+    from .matrix_utilities import rotation_matrix, matrix_transpose, matrix_product
+    ASTROPY_1_3 = False
+
+if not ASTROPY_1_3:
+    import astropy
+    import warnings
+    warnings.warn("We recommend using Astropy v1.3 or later. You have: {}"
+                  .format(astropy.__version__), DeprecationWarning)
 
 # Package
 from .propermotion import transform_proper_motion
@@ -44,7 +55,7 @@ def _icrs_gctc_velocity_matrix(galactocentric_frame):
     z_d = (galactocentric_frame.z_sun / galactocentric_frame.galcen_distance).decompose()
     M4 = rotation_matrix(-np.arcsin(z_d), 'y')
 
-    return M4*M3*M1*M2  # this is right: 4,3,1,2
+    return matrix_product(M4, M3, M1, M2)  # this is right: 4,3,1,2
 
 def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=None):
     r"""
