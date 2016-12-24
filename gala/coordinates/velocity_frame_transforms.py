@@ -16,7 +16,7 @@ from astropy.coordinates.angles import rotation_matrix
 from astropy.coordinates.builtin_frames.galactocentric import _ROLL0 as ROLL0
 
 # Package
-from .propermotion import pm_gal_to_icrs, pm_icrs_to_gal
+from .propermotion import transform_proper_motion
 
 __all__ = ["vgal_to_hel", "vhel_to_gal", "vgsr_to_vhel", "vhel_to_vgsr"]
 
@@ -136,13 +136,9 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
     if c.name == 'icrs':
         pm = u.Quantity(map(np.atleast_1d,pm_radec))
 
-    elif c.name == 'galactic':
-        # transform to ICRS proper motions
-        pm = pm_icrs_to_gal(c, pm_radec)
-
     else:
-        raise NotImplementedError("Proper motions in the {} system are not "
-                                  "currently supported.".format(c.name))
+        # transform ICRS proper motions to whatever frame
+        pm = transform_proper_motion(c.transform_to(coord.ICRS), pm_radec, c)
 
     if c.isscalar:
         vr = vr.reshape(())
@@ -227,14 +223,9 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame
         pm_radec = u.Quantity(map(np.atleast_1d,pm))
         icrs = c
 
-    elif c.name == 'galactic':
-        # transform to ICRS proper motions
-        pm_radec = pm_gal_to_icrs(c, pm)
-        icrs = c.transform_to(coord.ICRS)
-
     else:
-        raise NotImplementedError("Proper motions in the {} system are not "
-                                  "currently supported.".format(c.name))
+        pm_radec = transform_proper_motion(c, pm, coord.ICRS)
+        icrs = c.transform_to(coord.ICRS)
 
     # I'm so fired
     a,d,D = icrs.ra, icrs.dec, c.distance

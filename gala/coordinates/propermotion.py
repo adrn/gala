@@ -6,6 +6,7 @@ from __future__ import division, print_function
 
 # Standard library
 import warnings
+import inspect
 
 # Third-party
 import numpy as np
@@ -113,6 +114,12 @@ def get_full_transformation_matrix(fromcoord, toframe):
 
     if isinstance(fromcoord, coord.SkyCoord):
         fromcoord = fromcoord.frame
+
+    if isinstance(toframe, coord.SkyCoord):
+        toframe = toframe.frame
+
+    if not inspect.isclass(toframe):
+        toframe = toframe.__class__
 
     composite_trans = frame_transform_graph.get_transform(fromcoord.__class__, toframe)
 
