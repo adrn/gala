@@ -4,3 +4,8 @@ div.topbar a.brand {
     background: none;
     background-image: none;
 }
+
+div.topbar ul li a.homelink {
+    background: none;
+    background-image: none;
+}
