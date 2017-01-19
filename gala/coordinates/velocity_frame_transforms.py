@@ -129,7 +129,7 @@ def vgal_to_hel(coordinate, vxyz, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame=N
 
     orig_shape = vxyz.shape
     # v_icrs = np.linalg.inv(R).dot(vxyz.reshape(vxyz.shape[0], np.prod(vxyz.shape[1:]))).reshape(orig_shape)
-    v_icrs = R.T.dot(vxyz.reshape(vxyz.shape[0], np.prod(vxyz.shape[1:]))).reshape(orig_shape)
+    v_icrs = R.T.dot(vxyz.reshape(vxyz.shape[0], -1)).reshape(orig_shape)
 
     # get cartesian heliocentric
     x_icrs = c.transform_to(coord.ICRS).cartesian.xyz
@@ -254,7 +254,7 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=VCIRC, vlsr=VLSR, galactocentric_frame
     R = _icrs_gctc_velocity_matrix(galactocentric_frame)
 
     orig_shape = v_icrs.shape
-    v_gc = R.dot(v_icrs.reshape(v_icrs.shape[0], np.prod(v_icrs.shape[1:]))).reshape(orig_shape)
+    v_gc = R.dot(v_icrs.reshape(v_icrs.shape[0], -1)).reshape(orig_shape)
 
     # remove circular and LSR velocities
     v_gc[1] = v_gc[1] + vcirc
