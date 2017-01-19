@@ -58,7 +58,7 @@ double c_d_dr(CPotential *p, double t, double *qp, double *epsilon) {
     }
 
     // TODO: allow user to specify fractional step-size
-    h = 0.01;
+    h = 0.001;
 
     // Step-size for estimating radial gradient of the potential
     r = sqrt(r2);
