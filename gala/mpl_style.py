@@ -551,6 +551,23 @@ if HAS_MPL:
     plt.register_cmap(cmap=laguna)
     plt.register_cmap(cmap=laguna_r)
 
+    # Concatenate maps back to back so that the central value
+    # is de-emphasized, and make the inverse scale "_r" as well:
+    center_emph = ListedColormap((_hesperia_data[::-1][:192] + _laguna_data[1:][64:])[10:-10],
+                                 name="center_emph")
+    center_emph_r = ListedColormap(center_emph.colors[::-1],
+                                   name="center_emph_r")
+    plt.register_cmap(cmap=center_emph)
+    plt.register_cmap(cmap=center_emph_r)
+
+    # Now do the same thing, but to emphasize the central value instead:
+    center_deemph = ListedColormap((_hesperia_data[:-1][64:] + _laguna_data[::-1][:192])[20:-20],
+                                   name="center_deemph")
+    center_deemph_r = ListedColormap(center_deemph.colors[::-1],
+                                     name="center_deemph_r")
+    plt.register_cmap(cmap=center_emph)
+    plt.register_cmap(cmap=center_emph_r)
+
 mpl_style = {
 
     # Lines
