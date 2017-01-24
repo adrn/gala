@@ -565,8 +565,8 @@ if HAS_MPL:
                                    name="center_deemph")
     center_deemph_r = ListedColormap(center_deemph.colors[::-1],
                                      name="center_deemph_r")
-    plt.register_cmap(cmap=center_emph)
-    plt.register_cmap(cmap=center_emph_r)
+    plt.register_cmap(cmap=center_deemph)
+    plt.register_cmap(cmap=center_deemph_r)
 
 mpl_style = {
 
