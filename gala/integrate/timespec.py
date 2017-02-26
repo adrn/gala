@@ -40,6 +40,9 @@ def parse_time_specification(units, dt=None, n_steps=None, nsteps=None, t1=None,
              "Use 'n_steps' instead.")
         n_steps = nsteps
 
+    if n_steps is not None: # parse and validate n_steps
+        n_steps = int(n_steps)
+
     if hasattr(dt, 'unit'):
         dt = dt.decompose(units).value
 
