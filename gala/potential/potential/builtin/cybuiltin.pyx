@@ -32,10 +32,10 @@ from ...frame.cframe cimport CFrameWrapper
 from ....units import dimensionless, DimensionlessUnitSystem
 
 cdef extern from "src/funcdefs.h":
-    ctypedef double (*densityfunc)(double t, double *pars, double *q, int n_dim, int n_dim) nogil
-    ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim, int n_dim) nogil
-    ctypedef void (*gradientfunc)(double t, double *pars, double *q, int n_dim, int n_dim, double *grad) nogil
-    ctypedef void (*hessianfunc)(double t, double *pars, double *q, int n_dim, int n_dim, double *hess) nogil
+    ctypedef double (*densityfunc)(double t, double *pars, double *q, int n_dim) nogil
+    ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim) nogil
+    ctypedef void (*gradientfunc)(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    ctypedef void (*hessianfunc)(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
 cdef extern from "potential/src/cpotential.h":
     enum:
