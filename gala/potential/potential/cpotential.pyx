@@ -240,7 +240,12 @@ class CPotentialBase(PotentialBase):
         super(CPotentialBase, self).__init__(parameters, units=units, ndim=ndim,
                                              parameter_physical_types=parameter_physical_types)
 
-        self.c_parameters = np.array([v.value for v in self.parameters.values()])
+        # to support array parameters, but they get unraveled
+        arrs = [np.atleast_1d(v.value) for v in self.parameters.values()]
+        if len(arrs) > 0:
+            self.c_parameters = np.concatenate(arrs)
+        else:
+            self.c_parameters = np.array([])
 
         if Wrapper is None:
             # magic to set the c_instance attribute based on the name of the class
