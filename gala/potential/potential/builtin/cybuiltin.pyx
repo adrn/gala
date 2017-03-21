@@ -27,29 +27,16 @@ np.import_array()
 # Project
 from ..core import CompositePotential
 from ..cpotential import CPotentialBase
-from ..cpotential cimport CPotentialWrapper
+from ..cpotential cimport CPotential, CPotentialWrapper
+from ..cpotential cimport densityfunc, energyfunc, gradientfunc, hessianfunc
 from ...frame.cframe cimport CFrameWrapper
 from ....units import dimensionless, DimensionlessUnitSystem
 
-cdef extern from "src/funcdefs.h":
-    ctypedef double (*densityfunc)(double t, double *pars, double *q, int n_dim) nogil
-    ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim) nogil
-    ctypedef void (*gradientfunc)(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    ctypedef void (*hessianfunc)(double t, double *pars, double *q, int n_dim, double *hess) nogil
-
-cdef extern from "potential/src/cpotential.h":
-    enum:
-        MAX_N_COMPONENTS = 16
-
-    ctypedef struct CPotential:
-        int n_components
-        int n_dim
-        densityfunc density[MAX_N_COMPONENTS]
-        energyfunc value[MAX_N_COMPONENTS]
-        gradientfunc gradient[MAX_N_COMPONENTS]
-        hessianfunc hessian[MAX_N_COMPONENTS]
-        int n_params[MAX_N_COMPONENTS]
-        double *parameters[MAX_N_COMPONENTS]
+# cdef extern from "src/funcdefs.h":
+#     ctypedef double (*densityfunc)(double t, double *pars, double *q, int n_dim) nogil
+#     ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim) nogil
+#     ctypedef void (*gradientfunc)(double t, double *pars, double *q, int n_dim, double *grad) nogil
+#     ctypedef void (*hessianfunc)(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
 cdef extern from "potential/builtin/builtin_potentials.h":
     double nan_density(double t, double *pars, double *q, int n_dim) nogil

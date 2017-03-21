@@ -34,35 +34,6 @@ cdef extern from "math.h":
     double sqrt(double x) nogil
     double fabs(double x) nogil
 
-cdef extern from "src/funcdefs.h":
-    ctypedef double (*densityfunc)(double t, double *pars, double *q) nogil
-    ctypedef double (*energyfunc)(double t, double *pars, double *q) nogil
-    ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
-    ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
-
-cdef extern from "potential/src/cpotential.h":
-    enum:
-        MAX_N_COMPONENTS = 16
-
-    ctypedef struct CPotential:
-        int n_components
-        int n_dim
-        densityfunc density[MAX_N_COMPONENTS]
-        energyfunc value[MAX_N_COMPONENTS]
-        gradientfunc gradient[MAX_N_COMPONENTS]
-        hessianfunc hessian[MAX_N_COMPONENTS]
-        int n_params[MAX_N_COMPONENTS]
-        double *parameters[MAX_N_COMPONENTS]
-
-    double c_potential(CPotential *p, double t, double *q) nogil
-    double c_density(CPotential *p, double t, double *q) nogil
-    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
-    void c_hessian(CPotential *p, double t, double *q, double *hess) nogil
-
-    double c_d_dr(CPotential *p, double t, double *q, double *epsilon) nogil
-    double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
-    double c_mass_enclosed(CPotential *p, double t, double *q, double G, double *epsilon) nogil
-
 __all__ = ['CPotentialBase']
 
 cpdef _validate_pos_arr(double[:,::1] arr):
