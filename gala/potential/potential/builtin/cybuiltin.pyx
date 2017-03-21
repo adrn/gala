@@ -31,9 +31,6 @@ from ...frame.cframe cimport CFrameWrapper
 from ....units import dimensionless, DimensionlessUnitSystem
 
 cdef extern from "potential/builtin/builtin_potentials.h":
-    double nan_density(double t, double *pars, double *q, int n_dim) nogil
-    void nan_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
-
     double henon_heiles_value(double t, double *pars, double *q, int n_dim) nogil
     void henon_heiles_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
 
