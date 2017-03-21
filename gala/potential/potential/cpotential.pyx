@@ -236,7 +236,8 @@ class CPotentialBase(PotentialBase):
     A baseclass for defining gravitational potentials implemented in C.
     """
 
-    def __init__(self, parameters, units, parameter_physical_types=None, ndim=3, Wrapper=None):
+    def __init__(self, parameters, units, parameter_physical_types=None, ndim=3, Wrapper=None,
+                 c_only=None):
         super(CPotentialBase, self).__init__(parameters, units=units, ndim=ndim,
                                              parameter_physical_types=parameter_physical_types)
 
@@ -255,6 +256,11 @@ class CPotentialBase(PotentialBase):
             Wrapper = getattr(cybuiltin, wrapper_name)
 
         self.c_instance = Wrapper(self.G, self.c_parameters)
+
+        # remove C-only parameters from parameter dictionary
+        if c_only is not None:
+            for name in c_only:
+                del self.parameters[name]
 
     def _energy(self, q, t):
         return self.c_instance.energy(q, t=t)
