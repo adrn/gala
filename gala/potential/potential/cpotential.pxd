@@ -39,6 +39,8 @@ cdef class CPotentialWrapper:
     cdef int[::1] _n_params
     cdef list _potentials # HACK: for CCompositePotentialWrapper
 
+    cpdef init(self, list parameters, int n_dim=?)
+
     cpdef energy(self, double[:,::1] q, double[::1] t)
     cpdef density(self, double[:,::1] q, double[::1] t)
     cpdef gradient(self, double[:,::1] q, double[::1] t)

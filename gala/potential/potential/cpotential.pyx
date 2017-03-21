@@ -34,6 +34,12 @@ cdef extern from "math.h":
 
 __all__ = ['CPotentialBase']
 
+cdef extern from "potential/builtin/builtin_potentials.h":
+    double nan_density(double t, double *pars, double *q, int n_dim) nogil
+    double nan_value(double t, double *pars, double *q, int n_dim) nogil
+    void nan_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    void nan_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+
 cpdef _validate_pos_arr(double[:,::1] arr):
     if arr.ndim != 2:
         raise ValueError("Phase-space coordinate array must have 2 dimensions")
@@ -45,6 +51,31 @@ cdef class CPotentialWrapper:
     are effectively struct's that maintain pointers to functions specific to a
     given potential. This provides a Cython wrapper around this C implementation.
     """
+
+    cpdef init(self, list parameters, int n_dim=3):
+
+        # save the array of parameters so it doesn't get garbage-collected
+        self._params = np.array(parameters, dtype=np.float64)
+
+        # an array of number of parameter counts for composite potentials
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+
+        # store pointers to the above arrays
+        self.cpotential.n_params = &(self._n_params[0])
+        self.cpotential.parameters[0] = &(self._params[0])
+
+        # phase-space half-dimensionality of the potential
+        self.cpotential.n_dim = n_dim
+
+        # number of components in the potential. for a simple potential, this is
+        #   always one - composite potentials override this.
+        self.cpotential.n_components = 1
+
+        # set the function pointers to nan defaults
+        self.cpotential.value[0] = <energyfunc>(nan_value)
+        self.cpotential.density[0] = <densityfunc>(nan_density)
+        self.cpotential.gradient[0] = <gradientfunc>(nan_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(nan_hessian)
 
     cpdef energy(self, double[:,::1] q, double[::1] t):
         """
