@@ -7,7 +7,6 @@ Utilities for estimating actions and angles for an arbitrary orbit in an
 arbitrary potential.
 """
 
-__author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 import time

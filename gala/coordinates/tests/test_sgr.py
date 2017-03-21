@@ -5,7 +5,6 @@
 
 from __future__ import absolute_import, unicode_literals, division, print_function
 
-__author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
 import astropy.coordinates as coord

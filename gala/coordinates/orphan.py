@@ -4,7 +4,6 @@
 
 from __future__ import division, print_function
 
-__author__ = "adrn <adrn@astro.columbia.edu>"
 
 from astropy.coordinates import frame_transform_graph
 import astropy.coordinates as coord

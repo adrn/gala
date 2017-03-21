@@ -2,7 +2,6 @@
 
 from __future__ import division, print_function
 
-__author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Project
 from .._coord import (_test_sat_rotation_matrix, _test_to_sat_coords_roundtrip,
