@@ -21,81 +21,39 @@ from ..coordinates import vgal_to_hel
 from ..units import UnitSystem, DimensionlessUnitSystem
 from ..util import atleast_2d
 
-__all__ = ['CartesianPhaseSpacePosition', 'combine']
+__all__ = ['PhaseSpacePosition', 'CartesianPhaseSpacePosition', 'combine']
 
 class PhaseSpacePosition(object):
-
-    # ------------------------------------------------------------------------
-    # Display
-    #
-    def __repr__(self):
-        return "<{} N={}, shape={}>".format(self.__class__.__name__, self.ndim, self.shape)
-
-    def __str__(self):
-        # TODO: should show some arrays instead -- get inspiration from CartesianRepresentation
-        return "{} {}D, {}".format(self.__class__.__name__, self.ndim, self.shape)
-
-    # ------------------------------------------------------------------------
-    # Shape and size
-    #
-    @property
-    def ndim(self):
-        """
-        Number of coordinate dimensions. 1/2 of the phase-space dimensionality.
-
-        .. warning::
-
-            This is *not* the number of axes in the position or velocity
-            arrays. That is accessed by doing ``{}.pos.ndim``.
-
-        Returns
-        -------
-        n : int
-
-        """.format(self.__class__.__name__)
-        return self.pos.shape[0]
-
-    @property
-    def shape(self):
-        """
-        .. warning::
-
-            This is *not* the shape of the position or velocity
-            arrays. That is accessed by doing ``{}.pos.shape``.
-
-        Returns
-        -------
-        shp : tuple
-
-        """.format(self.__class__.__name__)
-        return self.pos.shape[1:]
-
-class CartesianPhaseSpacePosition(PhaseSpacePosition):
     """
-    Represents phase-space positions in Cartesian coordinates, e.g.,
-    positions and conjugate momenta (velocities).
+    Represents phase-space positions, i.e. positions and conjugate momenta
+    (velocities).
 
-    .. warning::
+    The class can be instantiated with Astropy representation objects (e.g.,
+    :class:`~astropy.coordinates.CartesianRepresentation`), Astropy
+    :class:`~astropy.units.Quantity` objects, or plain Numpy arrays.
 
-        This is an experimental class. The API may change in a future release!
+    If passing in representation objects, the default representation is taken to
+    be the class that is passed in, but the values are stored internally in
+    Cartesian coordinates. Currently, there is no support for storing velocities
+    in representations in Astropy (but this is underdevelopment); if specifying
+    a representation for positions, the input velocity is assumed to be in the
+    same representation.
 
-    The position and velocity quantities (arrays) can have an arbitrary
-    number of dimensions, but the first axis (0) has special meaning::
+    If passing in Quantity or Numpy array instances for both position and
+    velocity, they are assumed to be Cartesian. Array inputs are interpreted as
+    dimensionless quantities. The input position and velocity objects can have
+    an arbitrary number of (broadcastable) dimensions. For Quantity or array
+    inputs, the first axis (0) has special meaning::
 
-        - `axis=0` is the coordinate dimension (e.g., x, y, z)
+        - `axis=0` is the coordinate dimension (e.g., x, y, z for Cartesian)
 
     So if the input position array, `pos`, has shape `pos.shape = (3, 100)`,
     this would represent 100 3D positions (`pos[0]` is `x`, `pos[1]` is `y`,
-    etc.). The same is true for velocity. The position and velocity arrays
-    must have the same shape.
-
-    If the input position and velocity are arrays or array-like rather than
-    :class:`~astropy.units.Quantity` objects, they are internally stored with
-    dimensionles units.
+    etc.). The same is true for velocity.
 
     Parameters
     ----------
-    pos : :class:`~astropy.units.Quantity`, array_like
+    pos : :class:`~astropy.coordinates.BaseRepresentation`, :class:`~astropy.units.Quantity`, array_like
         Positions. If a numpy array (e.g., has no units), this will be
         stored as a dimensionless :class:`~astropy.units.Quantity`. See
         the note above about the assumed meaning of the axes of this object.
@@ -105,8 +63,17 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
         the note above about the assumed meaning of the axes of this object.
     frame : :class:`~gala.potential.FrameBase` (optional)
         The reference frame of the input phase-space positions.
+
+    TODO
+    ----
+    Add support for Representation differentials when added to Astropy.
+
     """
     def __init__(self, pos, vel, frame=None):
+
+        # TODO: logic for pos as representation
+        # if isinstance(pos, coord.BaseRepresentation):
+            # if not isinstance(coord.CartesianRepresentation):
 
         # make sure position and velocity input are 2D
         pos = atleast_2d(pos, insert_axis=1)
@@ -520,6 +487,64 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
 
         return three_panel(self.pos.value, **kwargs)
 
+    # ------------------------------------------------------------------------
+    # Display
+    #
+    def __repr__(self):
+        return "<{} N={}, shape={}>".format(self.__class__.__name__,
+                                            self.ndim, self.shape)
+
+    def __str__(self):
+        # TODO: should show some arrays instead -- get inspiration from
+        # CartesianRepresentation
+        return "{} {}D, {}".format(self.__class__.__name__,
+                                   self.ndim, self.shape)
+
+    # ------------------------------------------------------------------------
+    # Shape and size
+    #
+    @property
+    def ndim(self):
+        """
+        Number of coordinate dimensions. 1/2 of the phase-space dimensionality.
+
+        .. warning::
+
+            This is *not* the number of axes in the position or velocity
+            arrays. That is accessed by doing ``{}.pos.ndim``.
+
+        Returns
+        -------
+        n : int
+
+        """.format(self.__class__.__name__)
+        return self.pos.shape[0]
+
+    @property
+    def shape(self):
+        """
+        .. warning::
+
+            This is *not* the shape of the position or velocity
+            arrays. That is accessed by doing ``{}.pos.shape``.
+
+        Returns
+        -------
+        shp : tuple
+
+        """.format(self.__class__.__name__)
+        return self.pos.shape[1:]
+
+class CartesianPhaseSpacePosition(PhaseSpacePosition):
+
+    def __init__(self, pos, vel, frame=None):
+
+        warnings.warn("This class is now deprecated! Use the general interface "
+                      "provided by PhaseSpacePosition instead.",
+                      DeprecationWarning)
+
+        super(CartesianPhaseSpacePosition, self).__init__(pos, vel, frame=frame)
+
 def combine(args):
     """
     Combine the input `PhaseSpacePosition` objects into a single object.
@@ -564,4 +589,3 @@ def combine(args):
     all_vel = np.hstack(all_vel)*vel_unit
 
     return CartesianPhaseSpacePosition(pos=all_pos, vel=all_vel)
-
