@@ -223,7 +223,8 @@ def three_panel(q, relative_to=None, autolim=True, axes=None,
     q = q.copy()
 
     # get axes object from arguments
-    axes = _get_axes(dim=3, axes=axes, triangle=triangle, subplots_kwargs=subplots_kwargs)
+    axes = _get_axes(dim=3, axes=axes, triangle=triangle,
+                     subplots_kwargs=subplots_kwargs)
 
     # if the quantities are relative
     if relative_to is not None:
