@@ -11,6 +11,7 @@ from __future__ import division, print_function
 from collections import OrderedDict
 import sys
 import warnings
+import uuid
 
 # Third-party
 from astropy.extern import six
@@ -300,3 +301,53 @@ class CPotentialBase(PotentialBase):
                              "mass_enclosed function")
 
         return menc.reshape(orig_shape[1:]) * self.units['mass']
+
+    def __add__(self, other):
+        """
+        If all components are Cython, return a CCompositePotential.
+        Otherwise, return a standard CompositePotential.
+        """
+        from .ccompositepotential import CCompositePotential
+
+        if not isinstance(other, PotentialBase):
+            raise TypeError('Cannot add a {} to a {}'
+                            .format(self.__class__.__name__,
+                                    other.__class__.__name__))
+
+        components = OrderedDict()
+
+        if isinstance(self, CompositePotential):
+            for k,v in self.items():
+                components[k] = v
+
+        else:
+            k = str(uuid.uuid4())
+            components[k] = self
+
+        if isinstance(other, CompositePotential):
+            for k,v in self.items():
+                if k in components:
+                    raise KeyError('Potential component "{}" already exists --'
+                                   'duplicate key provided in potential '
+                                   'addition')
+                components[k] = v
+
+        else:
+            k = str(uuid.uuid4())
+            components[k] = other
+
+        cython_only = True
+        for k,pot in components.items():
+            if not isinstance(pot, CPotentialBase):
+                cython_only = False
+                break
+
+        if cython_only:
+            new_pot = CCompositePotential()
+        else:
+            new_pot = CompositePotential()
+
+        for k,pot in components.items():
+            new_pot[k] = pot
+
+        return new_pot

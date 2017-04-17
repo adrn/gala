@@ -7,6 +7,7 @@ from __future__ import division, print_function
 import abc
 from collections import OrderedDict
 import warnings
+import uuid
 
 # Third-party
 import numpy as np
@@ -316,6 +317,36 @@ class PotentialBase(CommonBase):
 
     def __str__(self):
         return self.__class__.__name__
+
+    def __add__(self, other):
+        if not isinstance(other, PotentialBase):
+            raise TypeError('Cannot add a {} to a {}'
+                            .format(self.__class__.__name__,
+                                    other.__class__.__name__))
+
+        new_pot = CompositePotential()
+
+        if isinstance(self, CompositePotential):
+            for k,v in self.items():
+                new_pot[k] = v
+
+        else:
+            k = str(uuid.uuid4())
+            new_pot[k] = self
+
+        if isinstance(other, CompositePotential):
+            for k,v in self.items():
+                if k in new_pot:
+                    raise KeyError('Potential component "{}" already exists --'
+                                   'duplicate key provided in potential '
+                                   'addition')
+                new_pot[k] = v
+
+        else:
+            k = str(uuid.uuid4())
+            new_pot[k] = other
+
+        return new_pot
 
     # ========================================================================
     # Convenience methods that do fancy things
