@@ -14,6 +14,7 @@ def get_extensions():
     cfg['include_dirs'].append('gala/potential')
     cfg['extra_compile_args'].append('--std=gnu99')
     cfg['sources'].append('gala/potential/potential/cpotential.pyx')
+    cfg['sources'].append('gala/potential/potential/builtin/builtin_potentials.c')
     cfg['sources'].append('gala/potential/potential/src/cpotential.c')
     exts.append(Extension('gala.potential.potential.cpotential', **cfg))
 

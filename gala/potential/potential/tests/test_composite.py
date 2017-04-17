@@ -2,19 +2,21 @@
 
 from __future__ import absolute_import, unicode_literals, division, print_function
 
-__author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third party
 import astropy.units as u
 import pytest
 import numpy as np
+from collections import OrderedDict
 
 # This project
-from ..core import *
-from ..builtin import *
-from ..ccompositepotential import *
+from ..core import PotentialBase, CompositePotential
+from ..builtin import (KeplerPotential, HernquistPotential,
+                       HenonHeilesPotential)
+
+from ..ccompositepotential import CCompositePotential
 from ....integrate import LeapfrogIntegrator, DOPRI853Integrator
-from ....units import solarsystem
+from ....units import solarsystem, galactic
 
 class CompositeHelper(object):
 
@@ -103,3 +105,66 @@ def test_lock():
     p.lock = True
     with pytest.raises(ValueError): # try adding potential after lock
         p['herp'] = KeplerPotential(m=2.*u.Msun, units=solarsystem)
+
+# -------------------------------------------------------
+
+class MyPotential(PotentialBase):
+    def __init__(self, m, x0, units=None):
+        parameters = OrderedDict()
+        parameters['m'] = m
+        parameters['x0'] = np.array(x0)
+        super(MyPotential, self).__init__(parameters=parameters,
+                                          units=units)
+
+    def _energy(self, x, t):
+        m = self.parameters['m']
+        x0 = self.parameters['x0']
+        r = np.sqrt(np.sum((x-x0[None])**2, axis=1))
+        return -m/r
+
+    def _gradient(self, x, t):
+        m = self.parameters['m']
+        x0 = self.parameters['x0']
+        r = np.sqrt(np.sum((x-x0[None])**2, axis=1))
+        return m*(x-x0[None])/r**3
+
+def test_add():
+    """ Test adding potentials to get a composite """
+    p1 = KeplerPotential(units=galactic, m=1*u.Msun)
+    p2 = HernquistPotential(units=galactic,
+                            m=1.E11, c=0.26)
+
+    comp1 = CompositePotential()
+    comp1['0'] = p1
+    comp1['1'] = p2
+
+    py_p1 = MyPotential(m=1., x0=[1.,0.,0.], units=galactic)
+    py_p2 = MyPotential(m=4., x0=[-1.,0.,0.], units=galactic)
+
+    # python + python
+    new_p = py_p1 + py_p2
+    assert isinstance(new_p, CompositePotential)
+    assert not isinstance(new_p, CCompositePotential)
+    assert len(new_p.keys()) == 2
+
+    # python + python + python
+    new_p = py_p1 + py_p2 + py_p2
+    assert isinstance(new_p, CompositePotential)
+    assert len(new_p.keys()) == 3
+
+    # cython + cython
+    new_p = p1 + p2
+    assert isinstance(new_p, CCompositePotential)
+    assert len(new_p.keys()) == 2
+
+    # cython + python
+    new_p = py_p1 + p2
+    assert isinstance(new_p, CompositePotential)
+    assert not isinstance(new_p, CCompositePotential)
+    assert len(new_p.keys()) == 2
+
+    # cython + cython + python
+    new_p = p1 + p2 + py_p1
+    assert isinstance(new_p, CompositePotential)
+    assert not isinstance(new_p, CCompositePotential)
+    assert len(new_p.keys()) == 3

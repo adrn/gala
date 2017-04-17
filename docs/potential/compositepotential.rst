@@ -6,9 +6,9 @@ Creating a composite (multi-component ) potential
 
 Potential objects can be combined into more complex *composite* potentials
 using the :class:`~gala.potential.potential.CompositePotential` or
-:class:`~gala.potential.potential.CCompositePotential` classes. These classes operate
-like a Python dictionary in that each component potential must be named, and
-the potentials can either be passed in to the initializer or added after the
+:class:`~gala.potential.potential.CCompositePotential` classes. These classes
+operate like a Python dictionary in that each component potential must be named,
+and the potentials can either be passed in to the initializer or added after the
 composite potential container is already created.
 
 For composing any of the built-in potentials or any external potentials
@@ -16,15 +16,39 @@ implemented in C, it is always faster to use
 :class:`~gala.potential.potential.CCompositePotential`, where the composition is
 done at the C layer rather than in Python.
 
-But with either class, interaction with the class is identical. Each component
-potential must be instantiated before adding it to the composite potential::
+With either class, interaction with the class is identical. To compose
+potentials with unique but arbitrary names, you can simply add pre-defined
+potential class instances::
 
     >>> import numpy as np
     >>> import gala.potential as gp
     >>> from gala.units import galactic
     >>> disk = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
     >>> bulge = gp.HernquistPotential(m=3E10, c=0.7, units=galactic)
+    >>> pot = disk + bulge
+    >>> print(pot.__class__.__name__)
+    CCompositePotential
+    >>> list(pot.keys()) # doctest: +SKIP
+    ['c655f07d-a1fe-4905-bdb2-e8a202d15c81',
+     '8098cb0b-ebad-4388-b685-2f93a874296e']
+
+The two components are assigned unique names and composed into a
+:class:`~gala.potential.potential.CCompositePotential` instance because the two
+component potentials are implemented in C (i.e. are
+:class:`~gala.potential.potential.CPotential`subclass instances). If any of the
+individual potential components are Python-only, the resulting object will be
+an instance of :class:`~gala.potential.potential.CompositePotential` instead.
+
+Alternatively, the potentials can be composed directly into the object by
+treating it like a dictionary. This allows you to specify the keys or names of
+the components in the resulting
+:class:`~gala.potential.potential.CCompositePotential` instance::
+
+    >>> disk = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
+    >>> bulge = gp.HernquistPotential(m=3E10, c=0.7, units=galactic)
     >>> pot = gp.CCompositePotential(disk=disk, bulge=bulge)
+    >>> list(pot.keys()) # doctest: +SKIP
+    ['disk', 'bulge']
 
 is equivalent to::
 
@@ -34,9 +58,10 @@ is equivalent to::
 
 In detail, the composite potential classes subclass
 :class:`~collections.OrderedDict`, so in this sense there is a slight difference
-between the two examples above. By defining components after creating the
-instance, the order is preserved. In the above example, the disk potential
-would always be called first and the bulge would always be called second.
+between the two examples above (if you are using a Python version < 3.6). By
+defining components after creating the instance, the order is preserved. In the
+above example, the disk potential would always be called first and the bulge
+would always be called second.
 
 The resulting potential object has all of the same properties as individual
 potential objects::

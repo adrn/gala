@@ -1,12 +1,10 @@
 #include <math.h>
 #include <string.h>
 
-double nan_density(double t, double *pars, double *q, int n_dim) {
-    return NAN;
-}
-
-void nan_hessian(double t, double *pars, double *q, int n_dim, double *hess) {
-}
+double nan_density(double t, double *pars, double *q, int n_dim) { return NAN; }
+double nan_value(double t, double *pars, double *q, int n_dim) { return NAN; }
+void nan_gradient(double t, double *pars, double *q, int n_dim, double *grad) {}
+void nan_hessian(double t, double *pars, double *q, int n_dim, double *hess) {}
 
 /* ---------------------------------------------------------------------------
     Henon-Heiles potential

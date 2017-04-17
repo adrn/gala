@@ -7,7 +7,6 @@
 
 from __future__ import division, print_function
 
-__author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 from collections import OrderedDict
@@ -26,30 +25,7 @@ from libc.stdio cimport printf
 # Project
 from .core import CompositePotential
 from .cpotential import CPotentialBase
-from .cpotential cimport CPotentialWrapper
-
-cdef extern from "potential/src/cpotential.h":
-    enum:
-        MAX_N_COMPONENTS = 16
-
-    ctypedef double (*densityfunc)(double t, double *pars, double *q, int n_dim) nogil
-    ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim) nogil
-    ctypedef void (*gradientfunc)(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    ctypedef void (*hessianfunc)(double t, double *pars, double *q, int n_dim, double *hess) nogil
-
-    ctypedef struct CPotential:
-        int n_components
-        int n_dim
-        densityfunc density[MAX_N_COMPONENTS]
-        energyfunc value[MAX_N_COMPONENTS]
-        gradientfunc gradient[MAX_N_COMPONENTS]
-        hessianfunc hessian[MAX_N_COMPONENTS]
-        int n_params[MAX_N_COMPONENTS]
-        double *parameters[MAX_N_COMPONENTS]
-
-    double c_potential(CPotential *p, double t, double *q) nogil
-    double c_density(CPotential *p, double t, double *q) nogil
-    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
+from .cpotential cimport CPotentialWrapper, CPotential
 
 __all__ = ['CCompositePotential']
 

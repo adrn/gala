@@ -7,12 +7,11 @@
 
 from __future__ import division, print_function
 
-__author__ = "adrn <adrn@astro.columbia.edu>"
-
 # Standard library
 from collections import OrderedDict
 import sys
 import warnings
+import uuid
 
 # Third-party
 from astropy.extern import six
@@ -34,36 +33,13 @@ cdef extern from "math.h":
     double sqrt(double x) nogil
     double fabs(double x) nogil
 
-cdef extern from "src/funcdefs.h":
-    ctypedef double (*densityfunc)(double t, double *pars, double *q) nogil
-    ctypedef double (*energyfunc)(double t, double *pars, double *q) nogil
-    ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
-    ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
-
-cdef extern from "potential/src/cpotential.h":
-    enum:
-        MAX_N_COMPONENTS = 16
-
-    ctypedef struct CPotential:
-        int n_components
-        int n_dim
-        densityfunc density[MAX_N_COMPONENTS]
-        energyfunc value[MAX_N_COMPONENTS]
-        gradientfunc gradient[MAX_N_COMPONENTS]
-        hessianfunc hessian[MAX_N_COMPONENTS]
-        int n_params[MAX_N_COMPONENTS]
-        double *parameters[MAX_N_COMPONENTS]
-
-    double c_potential(CPotential *p, double t, double *q) nogil
-    double c_density(CPotential *p, double t, double *q) nogil
-    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
-    void c_hessian(CPotential *p, double t, double *q, double *hess) nogil
-
-    double c_d_dr(CPotential *p, double t, double *q, double *epsilon) nogil
-    double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
-    double c_mass_enclosed(CPotential *p, double t, double *q, double G, double *epsilon) nogil
-
 __all__ = ['CPotentialBase']
+
+cdef extern from "potential/builtin/builtin_potentials.h":
+    double nan_density(double t, double *pars, double *q, int n_dim) nogil
+    double nan_value(double t, double *pars, double *q, int n_dim) nogil
+    void nan_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    void nan_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
 cpdef _validate_pos_arr(double[:,::1] arr):
     if arr.ndim != 2:
@@ -76,6 +52,31 @@ cdef class CPotentialWrapper:
     are effectively struct's that maintain pointers to functions specific to a
     given potential. This provides a Cython wrapper around this C implementation.
     """
+
+    cpdef init(self, list parameters, int n_dim=3):
+
+        # save the array of parameters so it doesn't get garbage-collected
+        self._params = np.array(parameters, dtype=np.float64)
+
+        # an array of number of parameter counts for composite potentials
+        self._n_params = np.array([len(self._params)], dtype=np.int32)
+
+        # store pointers to the above arrays
+        self.cpotential.n_params = &(self._n_params[0])
+        self.cpotential.parameters[0] = &(self._params[0])
+
+        # phase-space half-dimensionality of the potential
+        self.cpotential.n_dim = n_dim
+
+        # number of components in the potential. for a simple potential, this is
+        #   always one - composite potentials override this.
+        self.cpotential.n_components = 1
+
+        # set the function pointers to nan defaults
+        self.cpotential.value[0] = <energyfunc>(nan_value)
+        self.cpotential.density[0] = <densityfunc>(nan_density)
+        self.cpotential.gradient[0] = <gradientfunc>(nan_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(nan_hessian)
 
     cpdef energy(self, double[:,::1] q, double[::1] t):
         """
@@ -236,7 +237,8 @@ class CPotentialBase(PotentialBase):
     A baseclass for defining gravitational potentials implemented in C.
     """
 
-    def __init__(self, parameters, units, parameter_physical_types=None, ndim=3, Wrapper=None):
+    def __init__(self, parameters, units, parameter_physical_types=None, ndim=3, Wrapper=None,
+                 c_only=None):
         super(CPotentialBase, self).__init__(parameters, units=units, ndim=ndim,
                                              parameter_physical_types=parameter_physical_types)
 
@@ -255,6 +257,11 @@ class CPotentialBase(PotentialBase):
             Wrapper = getattr(cybuiltin, wrapper_name)
 
         self.c_instance = Wrapper(self.G, self.c_parameters)
+
+        # remove C-only parameters from parameter dictionary
+        if c_only is not None:
+            for name in c_only:
+                del self.parameters[name]
 
     def _energy(self, q, t):
         return self.c_instance.energy(q, t=t)
@@ -294,3 +301,53 @@ class CPotentialBase(PotentialBase):
                              "mass_enclosed function")
 
         return menc.reshape(orig_shape[1:]) * self.units['mass']
+
+    def __add__(self, other):
+        """
+        If all components are Cython, return a CCompositePotential.
+        Otherwise, return a standard CompositePotential.
+        """
+        from .ccompositepotential import CCompositePotential
+
+        if not isinstance(other, PotentialBase):
+            raise TypeError('Cannot add a {} to a {}'
+                            .format(self.__class__.__name__,
+                                    other.__class__.__name__))
+
+        components = OrderedDict()
+
+        if isinstance(self, CompositePotential):
+            for k,v in self.items():
+                components[k] = v
+
+        else:
+            k = str(uuid.uuid4())
+            components[k] = self
+
+        if isinstance(other, CompositePotential):
+            for k,v in self.items():
+                if k in components:
+                    raise KeyError('Potential component "{}" already exists --'
+                                   'duplicate key provided in potential '
+                                   'addition')
+                components[k] = v
+
+        else:
+            k = str(uuid.uuid4())
+            components[k] = other
+
+        cython_only = True
+        for k,pot in components.items():
+            if not isinstance(pot, CPotentialBase):
+                cython_only = False
+                break
+
+        if cython_only:
+            new_pot = CCompositePotential()
+        else:
+            new_pot = CompositePotential()
+
+        for k,pot in components.items():
+            new_pot[k] = pot
+
+        return new_pot

@@ -2,6 +2,8 @@
 Gala.
 """
 
+__author__ = 'adrn <adrianmpw@gmail.com>'
+
 from ._astropy_init import *
 
 # For egg_info test builds to pass, put package imports here.

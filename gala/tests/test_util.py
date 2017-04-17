@@ -1,4 +1,3 @@
-__author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Third-party
 import pytest

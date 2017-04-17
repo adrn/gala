@@ -14,20 +14,8 @@ np.import_array()
 
 from .core import FrameBase
 from ..potential.cpotential import _validate_pos_arr
+from ..potential.cpotential cimport energyfunc, gradientfunc, hessianfunc
 from ...dynamics import CartesianPhaseSpacePosition
-
-cdef extern from "src/funcdefs.h":
-    ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim) nogil
-    ctypedef void (*gradientfunc)(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    ctypedef void (*hessianfunc)(double t, double *pars, double *q, int n_dim, double *hess) nogil
-
-cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrame:
-        pass
-
-    double frame_hamiltonian(CFrame *fr, double t, double *qp, int n_dim) nogil
-    void frame_gradient(CFrame *fr, double t, double *qp, int n_dim, double *dH) nogil
-    void frame_hessian(CFrame *fr, double t, double *qp, int n_dim, double *d2H) nogil
 
 cdef class CFrameWrapper:
     """ Wrapper class for C implementation of reference frames. """
