@@ -9,39 +9,268 @@ import warnings
 # Third-party
 from astropy import log as logger
 import astropy.units as u
-uno = u.dimensionless_unscaled
 import numpy as np
 from scipy.signal import argrelmin, argrelmax
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import minimize
 
 # Project
-from .core import CartesianPhaseSpacePosition
+from .core import PhaseSpacePosition
+from .extern import representation as rep
 from .util import peak_to_peak_period
 from .plot import plot_orbits
 from ..util import atleast_2d
+from ..units import dimensionless
 
-__all__ = ['CartesianOrbit', 'combine']
+__all__ = ['Orbit', 'CartesianOrbit']
 
-class Orbit(object):
+class Orbit(PhaseSpacePosition):
+    """
+    Represents an orbit: positions and velocities (conjugate momenta) as a
+    function of time.
+
+    The class can be instantiated with Astropy representation objects (e.g.,
+    :class:`~astropy.coordinates.CartesianRepresentation`), Astropy
+    :class:`~astropy.units.Quantity` objects, or plain Numpy arrays.
+
+    If passing in Quantity or Numpy array instances for both position and
+    velocity, they are assumed to be Cartesian. Array inputs are interpreted as
+    dimensionless quantities. The input position and velocity objects can have
+    an arbitrary number of (broadcastable) dimensions. For Quantity or array
+    inputs, the first axes have special meaning::
+
+        - `axis=0` is the coordinate dimension (e.g., x, y, z)
+        - `axis=1` is the time dimension
+
+    So if the input position array, `pos`, has shape `pos.shape = (3, 100)`,
+    this would be a 3D orbit at 100 times (`pos[0]` is `x`, `pos[1]` is `y`,
+    etc.). For representing multiple orbits, the position array could have 3
+    axes, e.g., it might have shape `pos.shape = (3, 100, 8)`, where this is
+    interpreted as a 3D position at 100 times for 8 different orbits. The same
+    is true for velocity. The position and velocity arrays must have the same
+    shape.
+
+    If a time argument is specified, the position and velocity arrays must have
+    the same number of timesteps as the length of the time object::
+
+        len(t) == pos.shape[1]
+
+    Parameters
+    ----------
+    pos : :class:`~astropy.coordinates.BaseRepresentation`, :class:`~astropy.units.Quantity`, array_like
+        Positions. If a numpy array (e.g., has no units), this will be
+        stored as a dimensionless :class:`~astropy.units.Quantity`. See
+        the note above about the assumed meaning of the axes of this object.
+    vel : :class:`~astropy.coordinates.BaseDifferential`, :class:`~astropy.units.Quantity`, array_like
+        Velocities. If a numpy array (e.g., has no units), this will be
+        stored as a dimensionless :class:`~astropy.units.Quantity`. See
+        the note above about the assumed meaning of the axes of this object.
+    t : array_like, :class:`~astropy.units.Quantity` (optional)
+        Array of times. If a numpy array (e.g., has no units), this will be
+        stored as a dimensionless :class:`~astropy.units.Quantity`.
+    hamiltonian : `~gala.potential.Hamiltonian` (optional)
+        The Hamiltonian that the orbit was integrated in.
+
+    """
+    def __init__(self, pos, vel, t=None,
+                 hamiltonian=None, potential=None, frame=None):
+
+        if pos.ndim < 1:
+            pos = pos.reshape(-1,1)
+
+        if vel.ndim < 1:
+            vel = vel.reshape(-1,1)
+
+        super(Orbit, self).__init__(pos=pos, vel=vel)
+
+        if t is not None:
+            t = np.atleast_1d(t)
+            if self.pos.shape[0] != len(t):
+                raise ValueError("Position and velocity must have the same "
+                                 "length along axis=1 as the length of the "
+                                 "time array {} vs {}"
+                                 .format(len(t), self.pos.shape[0]))
+
+            if not hasattr(t, 'unit'):
+                t = t * u.one
+
+        self.t = t
+
+        if hamiltonian is not None:
+            self.potential = hamiltonian.potential
+            self.frame = hamiltonian.frame
+
+        else:
+            self.potential = potential
+            self.frame = frame
+
+    def __getitem__(self, slice_):
+
+        if isinstance(slice_, np.ndarray) or isinstance(slice_, list):
+            slice_ = (slice_,)
+
+        try:
+            slice_ = tuple(slice_)
+        except TypeError:
+            slice_ = (slice_,)
+
+        kw = dict()
+        if self.t is not None:
+            kw['t'] = self.t[slice_[0]]
+
+        pos = self.pos[slice_]
+        vel = self.vel[slice_]
+
+        # if one time is sliced out, return a phasespaceposition
+        if isinstance(slice_[0], int):
+            return PhaseSpacePosition(pos=pos, vel=vel, frame=self.frame)
+
+        else:
+            return self.__class__(pos=pos, vel=vel,
+                                  potential=self.potential,
+                                  frame=self.frame, **kw)
+
+    @property
+    def hamiltonian(self):
+        if self.potential is None or self.frame is None:
+            return None
+
+        try:
+            return self._hamiltonian
+        except AttributeError:
+            from ..potential import Hamiltonian
+            self._hamiltonian = Hamiltonian(potential=self.potential,
+                                            frame=self.frame)
+
+        return self._hamiltonian
+
+    def w(self, units=None):
+        """
+        This returns a single array containing the phase-space positions.
+
+        Parameters
+        ----------
+        units : `~gala.units.UnitSystem` (optional)
+            The unit system to represent the position and velocity in
+            before combining into the full array.
+
+        Returns
+        -------
+        w : `~numpy.ndarray`
+            A numpy array of all positions and velocities, without units.
+            Will have shape ``(2*ndim,...)``.
+
+        """
+
+        if units is None:
+            if self.hamiltonian is None:
+                units = dimensionless
+            else:
+                units = self.hamiltonian.units
+
+        return super(Orbit, self).w(units=units)
+
+    # ------------------------------------------------------------------------
+    # Convert from Cartesian to other representations
+    #
+    def represent_as(self, Representation):
+        """
+        Represent the position and velocity of the orbit in an alternate
+        coordinate system. Supports any of the Astropy coordinates
+        representation classes.
+
+        Parameters
+        ----------
+        Representation : :class:`~astropy.coordinates.BaseRepresentation`
+            The class for the desired representation.
+
+        Returns
+        -------
+        new_phase_sp : `gala.dynamics.PhaseSpacePosition`
+        """
+
+        # get the name of the desired representation
+        Representation = rep.REPRESENTATION_CLASSES[Representation.get_name()]
+        base_name = Representation.__name__[:-len('Representation')]
+        Differential = getattr(rep, base_name+'Differential')
+
+        new_pos = self.pos.represent_as(Representation)
+        new_vel = self.vel.represent_as(Differential, self.pos)
+
+        return self.__class__(pos=new_pos, vel=new_vel, t=self.t,
+                              hamiltonian=self.hamiltonian)
 
     # ------------------------------------------------------------------------
     # Shape and size
     # ------------------------------------------------------------------------
     @property
     def ntimes(self):
-        return self.pos.shape[1]
+        return self.shape[0]
 
     @property
     def norbits(self):
         if self.pos.ndim < 3:
             return 1
         else:
-            return self.pos.shape[2]
+            return self.shape[2]
 
     # ------------------------------------------------------------------------
     # Computed dynamical quantities
-    # ------------------------------------------------------------------------
+    #
+
+    def potential_energy(self, potential=None):
+        r"""
+        The potential energy *per unit mass*:
+
+        .. math::
+
+            E_\Phi = \Phi(\boldsymbol{q})
+
+        Returns
+        -------
+        E : :class:`~astropy.units.Quantity`
+            The potential energy.
+        """
+        if self.hamiltonian is None and potential is None:
+            raise ValueError("To compute the potential energy, a potential"
+                             " object must be provided!")
+        if potential is None:
+            potential = self.hamiltonian.potential
+
+        return super(Orbit,self).potential_energy(potential)
+
+    def energy(self, hamiltonian=None):
+        r"""
+        The total energy *per unit mass*:
+
+        Returns
+        -------
+        E : :class:`~astropy.units.Quantity`
+            The total energy.
+        """
+
+        if self.hamiltonian is None and hamiltonian is None:
+            raise ValueError("To compute the total energy, a hamiltonian"
+                             " object must be provided!")
+
+        from ..potential import PotentialBase
+        if isinstance(hamiltonian, PotentialBase):
+            from ..potential import Hamiltonian
+
+            warnings.warn("This function now expects a `Hamiltonian` instance "
+                          "instead of a `PotentialBase` subclass instance. If "
+                          "you are using a static reference frame, you just "
+                          "need to pass your potential object in to the "
+                          "Hamiltonian constructor to use, e.g., Hamiltonian"
+                          "(potential).", DeprecationWarning)
+
+            hamiltonian = Hamiltonian(hamiltonian)
+
+        if hamiltonian is None:
+            hamiltonian = self.hamiltonian
+
+        return hamiltonian(self)
+
     def pericenter(self, return_times=False, func=np.mean,
                    interp_kwargs=None, minimize_kwargs=None):
         """
@@ -92,11 +321,11 @@ class Orbit(object):
 
         # default scipy function kwargs
         interp_kwargs.setdefault('k', 3)
-        interp_kwargs.setdefault('ext', 3) # don't extrapolate, return boundary val
+        interp_kwargs.setdefault('ext', 3) # don't extrapolate, return boundary
         minimize_kwargs.setdefault('method', 'powell')
 
         # orbital radius
-        r = self.r.value
+        r = self.spherical.pos.r.value
         t = self.t.value
         _ix = argrelmin(r, mode='wrap')[0]
 
@@ -111,7 +340,7 @@ class Orbit(object):
             res = minimize(interp_func, t[j], **minimize_kwargs)
             refined_times[i] = res.x
 
-        peri = interp_func(refined_times) * self.r.unit
+        peri = interp_func(refined_times) * self.cartesian.pos.x.unit
 
         if return_times:
             return peri, refined_times
@@ -169,11 +398,11 @@ class Orbit(object):
 
         # default scipy function kwargs
         interp_kwargs.setdefault('k', 3)
-        interp_kwargs.setdefault('ext', 3) # don't extrapolate, return boundary val
+        interp_kwargs.setdefault('ext', 3) # don't extrapolate, return boundary
         minimize_kwargs.setdefault('method', 'powell')
 
         # orbital radius
-        r = self.r.value
+        r = self.spherical.pos.r.value
         t = self.t.value
         _ix = argrelmax(r, mode='wrap')[0]
 
@@ -188,7 +417,7 @@ class Orbit(object):
             res = minimize(lambda x: -interp_func(x), t[ix], **minimize_kwargs)
             refined_times[i] = res.x
 
-        apo = interp_func(refined_times) * self.r.unit
+        apo = interp_func(refined_times) * self.cartesian.pos.x.unit
 
         if return_times:
             return apo, refined_times
@@ -239,259 +468,19 @@ class Orbit(object):
                              " Specify a time array when creating this object.")
 
         if radial:
-            r = self.r.value
+            r = self.spherical.pos.r.value
             if self.norbits == 1:
                 T = peak_to_peak_period(self.t.value, r)
                 T = T * self.t.unit
             else:
-                T = [peak_to_peak_period(self.t.value, r[:,n]) for n in range(r.shape[1])]
+                T = [peak_to_peak_period(self.t.value, r[:,n])
+                     for n in range(r.shape[1])]
                 T = T * self.t.unit
 
         else:
             raise NotImplementedError("sorry 'bout that...")
 
         return T
-
-class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
-    """
-    Represents an orbit in Cartesian coordinates -- positions
-    and velocities (conjugate momenta) at different times.
-
-    .. warning::
-
-        This is an experimental class. The API may change in a future release!
-
-    The position and velocity quantities (arrays) can have an arbitrary
-    number of dimensions, but the first two axes (0, 1) have
-    special meaning::
-
-        - `axis=0` is the coordinate dimension (e.g., x, y, z)
-        - `axis=1` is the time dimension
-
-    So if the input position array, `pos`, has shape `pos.shape = (3, 100)`, this
-    would be a 3D orbit (`pos[0]` is `x`, `pos[1]` is `y`, etc.). For representing
-    multiple orbits, the position array could have 3 axes, e.g., it might have shape
-    `pos.shape = (3, 100, 8)`, where this is interpreted as a 3D position at 100 times
-    for 8 different orbits. The same is true for velocity. The position and velocity
-    arrays must have the same shape.
-
-    If a time argument is specified, the position and velocity arrays must have
-    the same number of timesteps as the length of the time object::
-
-        len(t) == pos.shape[1]
-
-    Parameters
-    ----------
-    pos : :class:`~astropy.units.Quantity`, array_like
-        Positions. If a numpy array (e.g., has no units), this will be
-        stored as a dimensionless :class:`~astropy.units.Quantity`. See
-        the note above about the assumed meaning of the axes of this object.
-    vel : :class:`~astropy.units.Quantity`, array_like
-        Velocities. If a numpy array (e.g., has no units), this will be
-        stored as a dimensionless :class:`~astropy.units.Quantity`. See
-        the note above about the assumed meaning of the axes of this object.
-    t : array_like, :class:`~astropy.units.Quantity` (optional)
-        Array of times. If a numpy array (e.g., has no units), this will be
-        stored as a dimensionless :class:`~astropy.units.Quantity`.
-    hamiltonian : `~gala.potential.Hamiltonian` (optional)
-        The Hamiltonian that the orbit was integrated in.
-
-    """
-    def __init__(self, pos, vel, t=None, hamiltonian=None, potential=None, frame=None):
-
-        super(CartesianOrbit, self).__init__(pos=pos, vel=vel)
-
-        if t is not None:
-            t = np.atleast_1d(t)
-            if self.pos.shape[1] != len(t):
-                raise ValueError("Position and velocity must have the same length "
-                                 "along axis=1 as the length of the time array "
-                                 "{} vs {}".format(len(t), self.pos.shape[1]))
-
-            if not hasattr(t, 'unit'):
-                t = t * uno
-
-        self.t = t
-
-        if hamiltonian is not None:
-            self.potential = hamiltonian.potential
-            self.frame = hamiltonian.frame
-
-        else:
-            self.potential = potential
-            self.frame = frame
-
-    def __getitem__(self, slyce):
-        if isinstance(slyce, np.ndarray) or isinstance(slyce, list):
-            _slyce = np.array(slyce)
-            _slyce = (slice(None),) + (slyce,)
-        else:
-            try:
-                _slyce = (slice(None),) + tuple(slyce)
-            except TypeError:
-                _slyce = (slice(None),) + (slyce,)
-
-        kw = dict()
-        if self.t is not None:
-            kw['t'] = self.t[_slyce[1]]
-
-        pos = self.pos[_slyce]
-        vel = self.vel[_slyce]
-
-        if isinstance(_slyce[1], int) or pos.ndim == 1:
-            return CartesianPhaseSpacePosition(pos=pos, vel=vel, frame=self.frame)
-
-        else:
-            return self.__class__(pos=pos, vel=vel,
-                                  potential=self.potential,
-                                  frame=self.frame, **kw)
-
-    def w(self, units=None):
-        """
-        This returns a single array containing the phase-space positions.
-
-        Parameters
-        ----------
-        units : `~gala.units.UnitSystem` (optional)
-            The unit system to represent the position and velocity in
-            before combining into the full array.
-
-        Returns
-        -------
-        w : `~numpy.ndarray`
-            A numpy array of all positions and velocities, without units.
-            Will have shape ``(2*ndim,...)``.
-
-        """
-        if self.pos.unit == uno and self.vel.unit == uno and units is None:
-            units = [uno]
-
-        else:
-            if units is None and self.hamiltonian is None:
-                raise ValueError("If no UnitSystem is specified, the orbit must have "
-                                 "an associated hamiltonian object.")
-
-            if units is None and self.hamiltonian.units is None:
-                raise ValueError("If no UnitSystem is specified, the hamiltonian object "
-                                 "associated with this orbit must have a UnitSystem defined.")
-
-            if units is None:
-                units = self.hamiltonian.units
-
-        x = self.pos.decompose(units).value
-        v = self.vel.decompose(units).value
-        w = np.vstack((x,v))
-        if w.ndim < 3:
-            w = w[...,np.newaxis] # one orbit
-        return w
-
-    @property
-    def hamiltonian(self):
-        if self.potential is None or self.frame is None:
-            return None
-
-        try:
-            return self._hamiltonian
-        except AttributeError:
-            from ..potential import Hamiltonian
-            self._hamiltonian = Hamiltonian(potential=self.potential, frame=self.frame)
-
-        return self._hamiltonian
-
-    # ------------------------------------------------------------------------
-    # Computed dynamical quantities
-    #
-    @property
-    def r(self):
-        """
-        The orbital radius.
-        """
-        return np.sqrt(np.sum(self.pos**2, axis=0))
-
-    def potential_energy(self, potential=None):
-        r"""
-        The potential energy *per unit mass*:
-
-        .. math::
-
-            E_\Phi = \Phi(\boldsymbol{q})
-
-        Returns
-        -------
-        E : :class:`~astropy.units.Quantity`
-            The potential energy.
-        """
-        if self.hamiltonian is None and potential is None:
-            raise ValueError("To compute the potential energy, a potential"
-                             " object must be provided!")
-        if potential is None:
-            potential = self.hamiltonian.potential
-
-        return super(CartesianOrbit,self).potential_energy(potential)
-
-    def energy(self, hamiltonian=None):
-        r"""
-        The total energy *per unit mass*:
-
-        Returns
-        -------
-        E : :class:`~astropy.units.Quantity`
-            The total energy.
-        """
-
-        if self.hamiltonian is None and hamiltonian is None:
-            raise ValueError("To compute the total energy, a hamiltonian"
-                             " object must be provided!")
-
-        from ..potential import PotentialBase
-        if isinstance(hamiltonian, PotentialBase):
-            from ..potential import Hamiltonian
-
-            warnings.warn("This function now expects a `Hamiltonian` instance instead of "
-                          "a `PotentialBase` subclass instance. If you are using a "
-                          "static reference frame, you just need to pass your "
-                          "potential object in to the Hamiltonian constructor to use, e.g., "
-                          "Hamiltonian(potential).", DeprecationWarning)
-
-            hamiltonian = Hamiltonian(hamiltonian)
-
-        if hamiltonian is None:
-            hamiltonian = self.hamiltonian
-
-        return hamiltonian(self)
-
-    def to_frame(self, frame, current_frame=None, **kwargs):
-        """
-        TODO:
-
-        Parameters
-        ----------
-        frame : `gala.potential.CFrameBase`
-            The frame to transform to.
-        current_frame : `gala.potential.CFrameBase` (optional)
-            If the Orbit has no associated Hamiltonian, this specifies the
-            current frame of the orbit.
-
-        Returns
-        -------
-        orbit : `gala.dynamics.CartesianOrbit`
-            The orbit in the new reference frame.
-
-        """
-
-        kw = kwargs.copy()
-
-        # TODO: need a better way to do this!
-        from ..potential.frame.builtin import ConstantRotatingFrame
-        for fr in [frame, current_frame, self.frame]:
-            if isinstance(fr, ConstantRotatingFrame):
-                if 't' not in kw:
-                    kw['t'] = self.t
-
-        psp = super(CartesianOrbit, self).to_frame(frame, current_frame, **kw)
-
-        return CartesianOrbit(pos=psp.pos, vel=psp.vel, t=self.t,
-                              frame=frame, potential=self.potential)
 
     # ------------------------------------------------------------------------
     # Misc. useful methods
@@ -517,7 +506,8 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         circulation : :class:`numpy.ndarray`
             An array that specifies whether there is circulation about any of
             the axes of the input orbit. For a single orbit, will return a
-            1D array, but for multiple orbits, the shape will be ``(3, norbits)``.
+            1D array, but for multiple orbits, the shape will be
+            ``(3, norbits)``.
 
         """
         L = self.angular_momentum()
@@ -556,31 +546,37 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
         Parameters
         ----------
         circulation : array_like (optional)
-            Array of bits that specify the axis about which the orbit circulates. If
-            not provided, will compute this using
-            :meth:`~gala.dynamics.CartesianOrbit.circulation`. See that method for
-            more information.
+            Array of bits that specify the axis about which the orbit
+            circulates. If not provided, will compute this using
+            :meth:`~gala.dynamics.Orbit.circulation`. See that method for more
+            information.
 
         Returns
         -------
-        orb : :class:`~gala.dynamics.CartesianOrbit`
-            A copy of the original orbit object with circulation aligned with the z axis.
+        orb : :class:`~gala.dynamics.Orbit`
+            A copy of the original orbit object with circulation aligned with
+            the z axis.
         """
 
         if circulation is None:
             circulation = self.circulation()
         circulation = atleast_2d(circulation, insert_axis=1)
 
-        if self.pos.ndim < 3:
-            pos = self.pos[...,np.newaxis]
-            vel = self.vel[...,np.newaxis]
-        else:
-            pos = self.pos
-            vel = self.vel
+        cart = self.cartesian
+        pos = cart.pos.xyz
+        vel = np.vstack((cart.vel.d_x.value[None],
+                         cart.vel.d_y.value[None],
+                         cart.vel.d_z.value[None])) * cart.vel.d_x.unit
 
-        if circulation.shape[0] != self.ndim or circulation.shape[1] != pos.shape[2]:
-            raise ValueError("Shape of 'circulation' array should match the shape"
-                             " of the position/velocity (minus the time axis).")
+        if pos.ndim < 3:
+            pos = pos[...,np.newaxis]
+            vel = vel[...,np.newaxis]
+
+        if (circulation.shape[0] != self.ndim or
+                circulation.shape[1] != pos.shape[2]):
+            raise ValueError("Shape of 'circulation' array should match the "
+                             "shape of the position/velocity (minus the time "
+                             "axis).")
 
         new_pos = pos.copy()
         new_vel = vel.copy()
@@ -606,7 +602,8 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
             new_vel[circ,:,n] = vel[2,:,n]
             new_vel[2,:,n] = vel[circ,:,n]
 
-        return self.__class__(pos=new_pos, vel=new_vel, t=self.t, hamiltonian=self.hamiltonian)
+        return self.__class__(pos=new_pos, vel=new_vel, t=self.t,
+                              hamiltonian=self.hamiltonian)
 
     def plot(self, **kwargs):
         """
@@ -660,98 +657,49 @@ class CartesianOrbit(CartesianPhaseSpacePosition, Orbit):
 
         return plot_orbits(self.pos.value, **kwargs)
 
-def combine(args, along_time_axis=False):
-    """
-    Combine the input `Orbit` objects into a single object.
+    def to_frame(self, frame, current_frame=None, **kwargs):
+        """
+        TODO:
 
-    The `Orbits` must all have the same hamiltonian and time array.
+        Parameters
+        ----------
+        frame : `gala.potential.CFrameBase`
+            The frame to transform to.
+        current_frame : `gala.potential.CFrameBase` (optional)
+            If the Orbit has no associated Hamiltonian, this specifies the
+            current frame of the orbit.
 
-    Parameters
-    ----------
-    args : iterable
-        Multiple instances of `Orbit` objects.
-    along_time_axis : bool (optional)
-        If True, will combine single orbits along the time axis.
+        Returns
+        -------
+        orbit : `gala.dynamics.Orbit`
+            The orbit in the new reference frame.
 
-    Returns
-    -------
-    obj : orbit_like
-        A single objct with positions and velocities stacked along the last axis.
+        """
 
-    """
+        kw = kwargs.copy()
 
-    ndim = None
-    time = None
-    ham = None
-    pos_unit = None
-    vel_unit = None
-    cls = None
+        # TODO: need a better way to do this!
+        from ..potential.frame.builtin import ConstantRotatingFrame
+        for fr in [frame, current_frame, self.frame]:
+            if isinstance(fr, ConstantRotatingFrame):
+                if 't' not in kw:
+                    kw['t'] = self.t
 
-    all_pos = []
-    all_vel = []
-    all_time = []
-    for x in args:
-        if ndim is None:
-            ndim = x.ndim
-            pos_unit = x.pos.unit
-            vel_unit = x.vel.unit
-            time = x.t
-            if time is not None:
-                t_unit = time.unit
-            else:
-                t_unit = None
-            ham = x.hamiltonian
-            cls = x.__class__
-        else:
-            if x.__class__.__name__ != cls.__name__:
-                raise ValueError("All objects must have the same class.")
+        psp = super(Orbit, self).to_frame(frame, current_frame, **kw)
 
-            if x.ndim != ndim:
-                raise ValueError("All objects must have the same dimensionality.")
+        return Orbit(pos=psp.pos, vel=psp.vel, t=self.t,
+                     frame=frame, potential=self.potential)
 
-            if not along_time_axis:
-                if time is not None:
-                    if x.t is None or len(x.t) != len(time) or np.any(x.t.to(time.unit).value != time.value):
-                        raise ValueError("All orbits must have the same time array.")
+class CartesianOrbit(Orbit):
 
-            if x.hamiltonian != ham:
-                raise ValueError("All orbits must have the same Hamiltonian object.")
+    def __init__(self, pos, vel, t=None,
+                 hamiltonian=None, potential=None, frame=None):
 
-        pos = x.pos
-        if pos.ndim < 3:
-            pos = pos[...,np.newaxis]
+        warnings.warn("This class is now deprecated! Use the general interface "
+                      "provided by Orbit instead.",
+                      DeprecationWarning)
 
-        vel = x.vel
-        if vel.ndim < 3:
-            vel = vel[...,np.newaxis]
-
-        all_pos.append(pos.to(pos_unit).value)
-        all_vel.append(vel.to(vel_unit).value)
-        if time is not None:
-            all_time.append(x.t.to(t_unit).value)
-
-    norbits = np.array([pos.shape[-1] for pos in all_pos] + [pos.shape[-1] for pos in all_vel])
-    if along_time_axis:
-        if np.all(norbits == norbits[0]):
-            all_pos = np.hstack(all_pos)*pos_unit
-            all_vel = np.hstack(all_vel)*vel_unit
-            if len(all_time) > 0:
-                all_time = np.concatenate(all_time)*t_unit
-            else:
-                all_time = None
-        else:
-            raise ValueError("To combine along time axis, all orbit objects must have "
-                             "the same number of orbits.")
-        if args[0].pos.ndim == 2:
-            all_pos = all_pos[...,0]
-            all_vel = all_vel[...,0]
-
-    else:
-        all_pos = np.dstack(all_pos)*pos_unit
-        all_vel = np.dstack(all_vel)*vel_unit
-        if len(all_time) > 0:
-            all_time = all_time[0]*t_unit
-        else:
-            all_time = None
-
-    return cls(pos=all_pos, vel=all_vel, t=all_time, hamiltonian=args[0].hamiltonian)
+        super(CartesianOrbit, self).__init__(pos, vel, t=t,
+                                             hamiltonian=hamiltonian,
+                                             potential=potential,
+                                             frame=frame)

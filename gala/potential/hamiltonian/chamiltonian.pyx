@@ -11,7 +11,7 @@ from ..common import CommonBase
 from ..potential import PotentialBase, CPotentialBase
 from ..frame import FrameBase, CFrameBase, StaticFrame
 from ...integrate import LeapfrogIntegrator, DOPRI853Integrator
-from ...dynamics import PhaseSpacePosition, CartesianOrbit, CartesianPhaseSpacePosition
+from ...dynamics import PhaseSpacePosition, Orbit
 
 __all__ = ["Hamiltonian"]
 
@@ -266,11 +266,10 @@ class Hamiltonian(CommonBase):
             # use the Integrator provided
             pass
 
-        if not isinstance(w0, CartesianPhaseSpacePosition):
+        if not isinstance(w0, PhaseSpacePosition):
             w0 = np.asarray(w0)
             ndim = w0.shape[0]//2
-            w0 = CartesianPhaseSpacePosition(pos=w0[:ndim],
-                                             vel=w0[ndim:])
+            w0 = PhaseSpacePosition(pos=w0[:ndim], vel=w0[ndim:])
 
         ndim = w0.ndim
         arr_w0 = w0.w(self.units)
@@ -315,7 +314,7 @@ class Hamiltonian(CommonBase):
             tunit = self.units['time']
         except (TypeError, AttributeError):
             tunit = u.dimensionless_unscaled
-        return CartesianOrbit.from_w(w=w, units=self.units, t=t*tunit, hamiltonian=self)
+        return Orbit.from_w(w=w, units=self.units, t=t*tunit, hamiltonian=self)
 
     def save(self, f):
         """

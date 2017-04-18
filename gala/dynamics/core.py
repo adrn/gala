@@ -16,6 +16,7 @@ from .extern import representation as rep
 from .plot import three_panel
 from ..coordinates import vgal_to_hel
 from ..units import UnitSystem, DimensionlessUnitSystem
+from ..util import atleast_2d
 
 __all__ = ['PhaseSpacePosition', 'CartesianPhaseSpacePosition']
 
@@ -123,11 +124,7 @@ class PhaseSpacePosition(object):
 
         Returns
         -------
-        pos : `~astropy.coordinates.BaseRepresentation`
-        vel : `~astropy.units.Quantity`
-            The velocity in the new representation. All components
-            have units of velocity -- e.g., to get an angular velocity
-            in spherical representations, you'll need to divide by the radius.
+        new_phase_sp : `gala.dynamics.PhaseSpacePosition`
         """
 
         # get the name of the desired representation
@@ -246,9 +243,15 @@ class PhaseSpacePosition(object):
 
         # HACK: TODO:
         cart_vel = self.vel.represent_as(rep.CartesianDifferential, self.pos)
-        d_xyz = np.vstack((cart_vel.d_x.value,
-                           cart_vel.d_y.value,
-                           cart_vel.d_z.value)) * cart_vel.d_x.unit
+        if cart_vel.d_x.ndim > 1:
+            d_xyz = np.vstack((cart_vel.d_x.value[None],
+                               cart_vel.d_y.value[None],
+                               cart_vel.d_z.value[None])) * cart_vel.d_x.unit
+        else:
+            d_xyz = np.vstack((cart_vel.d_x.value,
+                               cart_vel.d_y.value,
+                               cart_vel.d_z.value)) * cart_vel.d_x.unit
+
         v = vgal_to_hel(c, d_xyz, **kw)
         return c, v
 
@@ -294,11 +297,19 @@ class PhaseSpacePosition(object):
             raise ValueError("A UnitSystem must be provided.")
 
         x = cart.pos.xyz.decompose(units).value
+        if x.ndim < 2:
+            x = atleast_2d(x, insert_axis=1)
 
         # TODO: update this if/when d_xyz exists
-        d_xyz = np.vstack((cart.vel.d_x.value,
-                           cart.vel.d_y.value,
-                           cart.vel.d_z.value)) * cart.vel.d_x.unit
+        if cart.vel.d_x.ndim >= 1:
+            d_xyz = np.vstack((cart.vel.d_x.value[None],
+                               cart.vel.d_y.value[None],
+                               cart.vel.d_z.value[None])) * cart.vel.d_x.unit
+        else: # scalar arrays, but vstack adds a dimension
+            d_xyz = np.vstack((cart.vel.d_x.value,
+                               cart.vel.d_y.value,
+                               cart.vel.d_z.value)) * cart.vel.d_x.unit
+
         v = d_xyz.decompose(units).value
 
         return np.vstack((x,v))
