@@ -53,6 +53,7 @@ def z_angle_rotate(xy, theta):
     return out.T
 
 def _constantrotating_static_helper(frame_r, frame_i, w, t=None, sign=1.):
+    # TODO: use representation arithmetic instead
     Omega = -frame_r.parameters['Omega'].decompose(frame_i.units).value
 
     if not isinstance(w, Orbit) and t is None:
@@ -67,8 +68,10 @@ def _constantrotating_static_helper(frame_r, frame_i, w, t=None, sign=1.):
 
     t = t.decompose(frame_i.units).value
 
-    pos = w.pos.decompose(frame_i.units).value
-    vel = w.vel.decompose(frame_i.units).value
+    cart = w.cartesian
+    pos = cart.pos.xyz.decompose(frame_i.units).value
+    vel = np.vstack([getattr(cart.vel, name).decompose(frame_i.units).value
+                     for name in cart.vel.components])
 
     # get rotation angle, axis vs. time
     if isiterable(Omega): # 3D

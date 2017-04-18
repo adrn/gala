@@ -2,26 +2,22 @@
 
 from __future__ import division, print_function
 
-
 # Standard library
 import warnings
 import inspect
 
 # Third-party
-from astropy import log as logger
 import astropy.coordinates as coord
 import astropy.units as u
-uno = u.dimensionless_unscaled
 import numpy as np
 
 # Project
+from .extern import representation as rep
 from .plot import three_panel
-from ..coordinates import velocity_coord_transforms as vtrans
 from ..coordinates import vgal_to_hel
 from ..units import UnitSystem, DimensionlessUnitSystem
-from ..util import atleast_2d
 
-__all__ = ['PhaseSpacePosition', 'CartesianPhaseSpacePosition', 'combine']
+__all__ = ['PhaseSpacePosition', 'CartesianPhaseSpacePosition']
 
 class PhaseSpacePosition(object):
     """
@@ -33,11 +29,7 @@ class PhaseSpacePosition(object):
     :class:`~astropy.units.Quantity` objects, or plain Numpy arrays.
 
     If passing in representation objects, the default representation is taken to
-    be the class that is passed in, but the values are stored internally in
-    Cartesian coordinates. Currently, there is no support for storing velocities
-    in representations in Astropy (but this is underdevelopment); if specifying
-    a representation for positions, the input velocity is assumed to be in the
-    same representation.
+    be the class that is passed in.
 
     If passing in Quantity or Numpy array instances for both position and
     velocity, they are assumed to be Cartesian. Array inputs are interpreted as
@@ -57,7 +49,7 @@ class PhaseSpacePosition(object):
         Positions. If a numpy array (e.g., has no units), this will be
         stored as a dimensionless :class:`~astropy.units.Quantity`. See
         the note above about the assumed meaning of the axes of this object.
-    vel : :class:`~astropy.units.Quantity`, array_like
+    vel : :class:`~astropy.coordinates.BaseDifferential`, :class:`~astropy.units.Quantity`, array_like
         Velocities. If a numpy array (e.g., has no units), this will be
         stored as a dimensionless :class:`~astropy.units.Quantity`. See
         the note above about the assumed meaning of the axes of this object.
@@ -66,42 +58,44 @@ class PhaseSpacePosition(object):
 
     TODO
     ----
-    Add support for Representation differentials when added to Astropy.
+    Add a hack to support array input when ndim < 3?
 
     """
     def __init__(self, pos, vel, frame=None):
 
-        # TODO: logic for pos as representation
-        # if isinstance(pos, coord.BaseRepresentation):
-            # if not isinstance(coord.CartesianRepresentation):
+        if not isinstance(pos, rep.BaseRepresentation):
+            # assume Cartesian if not specified
+            if not hasattr(pos, 'unit'):
+                pos = pos * u.one
 
-        # make sure position and velocity input are 2D
-        pos = atleast_2d(pos, insert_axis=1)
-        vel = atleast_2d(vel, insert_axis=1)
+            # TODO: HACK: until this stuff is in astropy core
+            if isinstance(pos, coord.BaseRepresentation):
+                kw = [(k,getattr(pos,k)) for k in pos.components]
+                pos = getattr(rep, pos.__class__.__name__)(**kw)
 
-        # make sure position and velocity have at least a dimensionless unit!
-        if not hasattr(pos, 'unit'):
-            pos = pos * uno
+            else:
+                pos = rep.CartesianRepresentation(pos)
 
-        if not hasattr(vel, 'unit'):
-            vel = vel * uno
+        default_rep = pos.__class__
+        default_rep_name = default_rep.get_name().capitalize()
 
-        if (pos.unit == uno and vel.unit != uno):
-            logger.warning("Position unit is dimensionless but velocity unit is not."
-                           "Are you sure that's what you want?")
-        elif (vel.unit == uno and pos.unit != uno):
-            logger.warning("Velocity unit is dimensionless but position unit is not."
-                           "Are you sure that's what you want?")
+        if not isinstance(vel, rep.BaseDifferential):
+            Diff = getattr(rep, default_rep_name+'Differential')
+
+            # assume representation is same as pos if not specified
+            if not hasattr(vel, 'unit'):
+                vel = vel * u.one
+
+            vel = Diff(vel)
 
         # make sure shape is the same
-        for i in range(pos.ndim):
-            if pos.shape[i] != vel.shape[i]:
-                raise ValueError("Position and velocity must have the same shape "
-                                 "{} vs {}".format(pos.shape, vel.shape))
+        if pos.shape != vel.shape:
+            raise ValueError("Position and velocity must have the same shape "
+                             "{} vs {}".format(pos.shape, vel.shape))
 
         from ..potential.frame import FrameBase
         if frame is not None and not isinstance(frame, FrameBase):
-            raise TypeError("Input reference frame must be a gala.potential.FrameBase "
+            raise TypeError("Input reference frame must be a FrameBase "
                             "subclass instance.")
 
         self.pos = pos
@@ -109,17 +103,8 @@ class PhaseSpacePosition(object):
         self.frame = frame
 
     def __getitem__(self, slyce):
-        if isinstance(slyce, np.ndarray) or isinstance(slyce, list):
-            _slyce = np.array(slyce)
-            _slyce = (slice(None),) + (slyce,)
-        else:
-            try:
-                _slyce = (slice(None),) + tuple(slyce)
-            except TypeError:
-                _slyce = (slice(None),) + (slyce,)
-
-        return self.__class__(pos=self.pos[_slyce],
-                              vel=self.vel[_slyce],
+        return self.__class__(pos=self.pos[slyce],
+                              vel=self.vel[slyce],
                               frame=self.frame)
 
     # ------------------------------------------------------------------------
@@ -144,22 +129,18 @@ class PhaseSpacePosition(object):
             have units of velocity -- e.g., to get an angular velocity
             in spherical representations, you'll need to divide by the radius.
         """
-        if self.ndim != 3:
-            raise ValueError("Representation changes require a 3D (ndim=3) "
-                             "position and velocity.")
 
         # get the name of the desired representation
-        rep_name = Representation.get_name()
+        Representation = rep.REPRESENTATION_CLASSES[Representation.get_name()]
+        base_name = Representation.__name__[:-len('Representation')]
+        Differential = getattr(rep, base_name+'Differential')
 
-        # transform the position
-        car_pos = coord.CartesianRepresentation(self.pos)
-        new_pos = car_pos.represent_as(Representation)
+        new_pos = self.pos.represent_as(Representation)
+        new_vel = self.vel.represent_as(Differential, self.pos)
 
-        # transform the velocity
-        vfunc = getattr(vtrans, "cartesian_to_{}".format(rep_name))
-        new_vel = vfunc(car_pos, self.vel)
-
-        return new_pos, new_vel
+        return self.__class__(pos=new_pos,
+                              vel=new_vel,
+                              frame=self.frame)
 
     def to_frame(self, frame, current_frame=None, **kwargs):
         """
@@ -173,7 +154,8 @@ class PhaseSpacePosition(object):
             The current frame the phase-space position is in.
         **kwargs
             Any additional arguments are passed through to the individual frame
-            transformation functions (see: `~gala.potential.frame.builtin.transformations`).
+            transformation functions (see:
+            `~gala.potential.frame.builtin.transformations`).
 
         Returns
         -------
@@ -182,21 +164,23 @@ class PhaseSpacePosition(object):
 
         """
 
-        from ..potential.frame.builtin import StaticFrame, ConstantRotatingFrame
         from ..potential.frame.builtin import transformations as frame_trans
 
         if ((inspect.isclass(frame) and issubclass(frame, coord.BaseCoordinateFrame)) or
-            isinstance(frame, coord.BaseCoordinateFrame)):
+                isinstance(frame, coord.BaseCoordinateFrame)):
             import warnings
-            warnings.warn("This function now expects a `gala.potential.FrameBase` instance. To "
-                          " transform to an Astropy coordinate frame, use the `.to_coord_frame()`"
-                          " method instead.", DeprecationWarning)
+            warnings.warn("This function now expects a "
+                          "`gala.potential.FrameBase` instance. To transform to"
+                          " an Astropy coordinate frame, use the "
+                          "`.to_coord_frame()` method instead.",
+                          DeprecationWarning)
             return self.to_coord_frame(frame=frame, **kwargs)
 
         if self.frame is None and current_frame is None:
-            raise ValueError("If no frame was specified when this {} was initialized, you must "
-                             "pass the current frame in via the current_frame argument to "
-                             "transform to a new frame.")
+            raise ValueError("If no frame was specified when this {} was "
+                             "initialized, you must pass the current frame in "
+                             "via the current_frame argument to transform to a "
+                             "new frame.")
 
         elif self.frame is not None and current_frame is None:
             current_frame = self.frame
@@ -211,11 +195,11 @@ class PhaseSpacePosition(object):
         else:
             trans_func = getattr(frame_trans, func_name)
 
-        pos,vel = trans_func(current_frame, frame, self, **kwargs)
-        return CartesianPhaseSpacePosition(pos=pos, vel=vel, frame=frame)
+        pos, vel = trans_func(current_frame, frame, self, **kwargs)
+        return PhaseSpacePosition(pos=pos, vel=vel, frame=frame)
 
-    def to_coord_frame(self, frame, galactocentric_frame=coord.Galactocentric(),
-                       vcirc=None, vlsr=None):
+    def to_coord_frame(self, frame,
+                       galactocentric_frame=None, vcirc=None, vlsr=None):
         """
         Transform the orbit from Galactocentric, cartesian coordinates to
         Heliocentric coordinates in the specified Astropy coordinate frame.
@@ -240,36 +224,46 @@ class PhaseSpacePosition(object):
 
         """
 
-        if self.ndim != 3:
-            raise ValueError("Frame transformations require a 3D (ndim=3) "
-                             "position and velocity.")
+        if galactocentric_frame is None:
+            galactocentric_frame = coord.Galactocentric()
 
-        car_pos = coord.CartesianRepresentation(self.pos)
-        gc_c = galactocentric_frame.realize_frame(car_pos)
+        # TODO: HACK: need to convert to an astropy representation
+        kw = dict([(k,getattr(self.pos,k)) for k in self.pos.components])
+        astropy_pos = getattr(coord, self.pos.__class__.__name__)(**kw)
+
+        gc_c = galactocentric_frame.realize_frame(astropy_pos)
         c = gc_c.transform_to(frame)
 
         kw = dict()
-        kw['galactocentric_frame'] = galactocentric_frame
+        if galactocentric_frame is not None:
+            kw['galactocentric_frame'] = galactocentric_frame
+
         if vcirc is not None:
             kw['vcirc'] = vcirc
+
         if vlsr is not None:
             kw['vlsr'] = vlsr
 
-        v = vgal_to_hel(c, self.vel, **kw)
+        # HACK: TODO:
+        cart_vel = self.vel.represent_as(rep.CartesianDifferential, self.pos)
+        d_xyz = np.vstack((cart_vel.d_x.value,
+                           cart_vel.d_y.value,
+                           cart_vel.d_z.value)) * cart_vel.d_x.unit
+        v = vgal_to_hel(c, d_xyz, **kw)
         return c, v
 
     # Convenience attributes
     @property
     def cartesian(self):
-        return self.pos, self.vel
+        return self.represent_as(rep.CartesianRepresentation)
 
     @property
     def spherical(self):
-        return self.represent_as(coord.PhysicsSphericalRepresentation)
+        return self.represent_as(rep.PhysicsSphericalRepresentation)
 
     @property
     def cylindrical(self):
-        return self.represent_as(coord.CylindricalRepresentation)
+        return self.represent_as(rep.CylindricalRepresentation)
 
     # Pseudo-backwards compatibility
     def w(self, units=None):
@@ -289,15 +283,23 @@ class PhaseSpacePosition(object):
             Will have shape ``(2*ndim,...)``.
 
         """
-        if (units is None or isinstance(units, DimensionlessUnitSystem)) \
-            and (self.pos.unit == uno and self.vel.unit == uno):
+        cart = self.cartesian
+        x_unit = cart.pos.x.unit
+        v_unit = cart.vel.d_x.unit
+        if ((units is None or isinstance(units, DimensionlessUnitSystem)) and
+                (x_unit == u.one and v_unit == u.one)):
             units = DimensionlessUnitSystem()
 
         elif units is None:
             raise ValueError("A UnitSystem must be provided.")
 
-        x = self.pos.decompose(units).value
-        v = self.vel.decompose(units).value
+        x = cart.pos.xyz.decompose(units).value
+
+        # TODO: update this if/when d_xyz exists
+        d_xyz = np.vstack((cart.vel.d_x.value,
+                           cart.vel.d_y.value,
+                           cart.vel.d_z.value)) * cart.vel.d_x.unit
+        v = d_xyz.decompose(units).value
 
         return np.vstack((x,v))
 
@@ -328,11 +330,12 @@ class PhaseSpacePosition(object):
         pos = w[:ndim]
         vel = w[ndim:]
 
-        # TODO: this is bad form - UnitSystem should know what to do with a Dimensionless
+        # TODO: this is bad form - UnitSystem should know what to do with a
+        # Dimensionless
         if units is not None and not isinstance(units, DimensionlessUnitSystem):
             units = UnitSystem(units)
             pos = pos*units['length']
-            vel = vel*units['length']/units['time'] # velocity in w is from _core_units
+            vel = vel*units['length']/units['time'] # from _core_units
 
         return cls(pos=pos, vel=vel, **kwargs)
 
@@ -352,7 +355,7 @@ class PhaseSpacePosition(object):
         E : :class:`~astropy.units.Quantity`
             The kinetic energy.
         """
-        return 0.5*np.sum(self.vel**2, axis=0)
+        return 0.5 * self.vel.norm(self.pos)**2
 
     def potential_energy(self, potential):
         r"""
@@ -372,7 +375,7 @@ class PhaseSpacePosition(object):
         E : :class:`~astropy.units.Quantity`
             The potential energy.
         """
-        return potential.value(self.pos)
+        return potential.value(self)
 
     def energy(self, hamiltonian):
         r"""
@@ -392,10 +395,11 @@ class PhaseSpacePosition(object):
         if isinstance(hamiltonian, PotentialBase):
             from ..potential import Hamiltonian
 
-            warnings.warn("This function now expects a `Hamiltonian` instance instead of "
-                          "a `PotentialBase` subclass instance. If you are using a "
-                          "static reference frame, you just need to pass your "
-                          "potential object in to the Hamiltonian constructor to use, e.g., "
+            warnings.warn("This function now expects a `Hamiltonian` instance "
+                          "instead of  a `PotentialBase` subclass instance. If "
+                          "you are using a static reference frame, you just "
+                          "need to pass your potential object in to the "
+                          "Hamiltonian constructor to use, e.g., "
                           "Hamiltonian(potential).", DeprecationWarning)
 
             hamiltonian = Hamiltonian(hamiltonian)
@@ -426,27 +430,26 @@ class PhaseSpacePosition(object):
             >>> import astropy.units as u
             >>> pos = np.array([1., 0, 0]) * u.au
             >>> vel = np.array([0, 2*np.pi, 0]) * u.au/u.yr
-            >>> w = {}(pos, vel)
+            >>> w = PhaseSpacePosition(pos, vel)
             >>> w.angular_momentum()
             <Quantity [ 0.        , 0.        , 6.28318531] AU2 / yr>
-        """.format(self.__class__.__name__)
-        return np.cross(self.pos.value, self.vel.value, axis=0) * self.pos.unit * self.vel.unit
+        """
+        cart = self.represent_as(rep.CartesianRepresentation)
+        return cart.pos.cross(cart.vel).xyz
 
     # ------------------------------------------------------------------------
     # Misc. useful methods
     #
-    def plot(self, **kwargs):
+    def plot(self, units=None, **kwargs):
         """
         Plot the positions in all projections. This is a thin wrapper around
         `~gala.dynamics.three_panel` -- the docstring for this function is
         included here.
 
-        .. warning::
-
-            This will currently fail for orbits with fewer than 3 dimensions.
-
         Parameters
         ----------
+        units : iterable (optional)
+            A list of units to display the components in.
         relative_to : bool (optional)
             Plot the values relative to this value or values.
         autolim : bool (optional)
@@ -454,32 +457,50 @@ class PhaseSpacePosition(object):
         axes : array_like (optional)
             Array of matplotlib Axes objects.
         triangle : bool (optional)
-            Make a triangle plot instead of plotting all projections in a single row.
+            Make a triangle plot instead of plotting all projections in a single
+            row.
         subplots_kwargs : dict (optional)
             Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
         labels : iterable (optional)
-            List or iterable of axis labels as strings. They should correspond to the
-            dimensions of the input orbit.
+            List or iterable of axis labels as strings. They should correspond
+            to the dimensions of the input orbit.
         **kwargs
-            All other keyword arguments are passed to :func:`~matplotlib.pyplot.scatter`.
-            You can pass in any of the usual style kwargs like ``color=...``,
-            ``marker=...``, etc.
+            All other keyword arguments are passed to
+            :func:`~matplotlib.pyplot.scatter`. You can pass in any of the usual
+            style kwargs like ``color=...``, ``marker=...``, etc.
 
         Returns
         -------
         fig : `~matplotlib.Figure`
 
+        TODO
+        ----
+        Add option to plot velocities too? Or specify components to plot?
+
         """
-        _label_unit = ''
-        if self.pos.unit != u.dimensionless_unscaled:
-            _label_unit = ' [{}]'.format(self.pos.unit)
+
+        if units is not None and len(units) != 3:
+            raise ValueError('You must specify 3 units if any.')
+
+        labels = []
+        for i,name in enumerate(self.pos.components):
+            val = getattr(self, name)
+
+            if units is not None:
+                val = val.to(units[i])
+
+            if val.unit != u.one:
+                uu = units[i].to_string(format='latex_inline')
+                unit_str = ' [{}]'.format(uu)
+            else:
+                unit_str = ''
+
+            labels.append('${}$' + unit_str)
 
         default_kwargs = {
             'marker': '.',
             'color': 'k',
-            'labels': ('$x${}'.format(_label_unit),
-                       '$y${}'.format(_label_unit),
-                       '$z${}'.format(_label_unit))
+            'labels': labels
         }
 
         for k,v in default_kwargs.items():
@@ -491,14 +512,12 @@ class PhaseSpacePosition(object):
     # Display
     #
     def __repr__(self):
-        return "<{} N={}, shape={}>".format(self.__class__.__name__,
-                                            self.ndim, self.shape)
+        return "<{}, shape={}, frame={}>".format(self.__class__.__name__,
+                                                 self.pos.shape,
+                                                 self.frame)
 
     def __str__(self):
-        # TODO: should show some arrays instead -- get inspiration from
-        # CartesianRepresentation
-        return "{} {}D, {}".format(self.__class__.__name__,
-                                   self.ndim, self.shape)
+        return "pos={}\nvel={}".format(self.pos, self.vel)
 
     # ------------------------------------------------------------------------
     # Shape and size
@@ -511,14 +530,15 @@ class PhaseSpacePosition(object):
         .. warning::
 
             This is *not* the number of axes in the position or velocity
-            arrays. That is accessed by doing ``{}.pos.ndim``.
+            arrays. That is accessed by doing ``obj.pos.ndim``.
 
         Returns
         -------
         n : int
 
-        """.format(self.__class__.__name__)
-        return self.pos.shape[0]
+        """
+        # TODO: keep this?
+        return 3
 
     @property
     def shape(self):
@@ -526,14 +546,14 @@ class PhaseSpacePosition(object):
         .. warning::
 
             This is *not* the shape of the position or velocity
-            arrays. That is accessed by doing ``{}.pos.shape``.
+            arrays. That is accessed by doing ``obj.pos.shape``.
 
         Returns
         -------
         shp : tuple
 
-        """.format(self.__class__.__name__)
-        return self.pos.shape[1:]
+        """
+        return self.pos.shape
 
 class CartesianPhaseSpacePosition(PhaseSpacePosition):
 
@@ -544,48 +564,3 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
                       DeprecationWarning)
 
         super(CartesianPhaseSpacePosition, self).__init__(pos, vel, frame=frame)
-
-def combine(args):
-    """
-    Combine the input `PhaseSpacePosition` objects into a single object.
-
-    Parameters
-    ----------
-    args : iterable
-        Multiple instances of `PhaseSpacePosition`.
-
-    Returns
-    -------
-    obj : `~gala.dynamics.PhaseSpacePosition`
-        A single objct with positions and velocities stacked along the last axis.
-    """
-
-    ndim = None
-    pos_unit = None
-    vel_unit = None
-    all_pos = []
-    all_vel = []
-    for x in args:
-        if ndim is None:
-            ndim = x.ndim
-            pos_unit = x.pos.unit
-            vel_unit = x.vel.unit
-        else:
-            if x.ndim != ndim:
-                raise ValueError("All objects must have the same dimensionality.")
-
-        pos = x.pos
-        if pos.ndim < 2:
-            pos = pos[...,np.newaxis]
-
-        vel = x.vel
-        if vel.ndim < 2:
-            vel = vel[...,np.newaxis]
-
-        all_pos.append(pos.to(pos_unit).value)
-        all_vel.append(vel.to(vel_unit).value)
-
-    all_pos = np.hstack(all_pos)*pos_unit
-    all_vel = np.hstack(all_vel)*vel_unit
-
-    return CartesianPhaseSpacePosition(pos=all_pos, vel=all_vel)
