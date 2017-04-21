@@ -54,6 +54,24 @@ def test_initialize():
     # assert o.frame is not None
     # assert isinstance(o.frame, StaticFrame)
 
+    pos = CartesianRepresentation(np.random.random(size=(3,10))*u.one)
+    vel = CartesianDifferential(np.random.random(size=(3,10))*u.one)
+    o = PhaseSpacePosition(pos=pos, vel=vel)
+    assert hasattr(o, 'x')
+    assert hasattr(o, 'y')
+    assert hasattr(o, 'z')
+    assert hasattr(o, 'd_x')
+    assert hasattr(o, 'd_y')
+    assert hasattr(o, 'd_z')
+
+    o = o.represent_as(SphericalRepresentation)
+    assert hasattr(o, 'distance')
+    assert hasattr(o, 'lat')
+    assert hasattr(o, 'lon')
+    assert hasattr(o, 'd_distance')
+    assert hasattr(o, 'd_lat')
+    assert hasattr(o, 'd_lon')
+
     with pytest.raises(TypeError):
         o = PhaseSpacePosition(pos=x, vel=v, frame="blah blah blah")
 

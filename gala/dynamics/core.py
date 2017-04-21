@@ -103,6 +103,12 @@ class PhaseSpacePosition(object):
         self.vel = vel
         self.frame = frame
 
+        for name in pos.components:
+            setattr(self, name, getattr(pos,name))
+
+        for name in vel.components:
+            setattr(self, name, getattr(vel,name))
+
     def __getitem__(self, slyce):
         return self.__class__(pos=self.pos[slyce],
                               vel=self.vel[slyce],
