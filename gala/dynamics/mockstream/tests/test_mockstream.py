@@ -46,9 +46,9 @@ def test_mock_stream(Integrator, kwargs):
     # pl.show()
     # return
 
-    assert stream.pos.shape == (3,2048) # two particles per step
+    assert stream.pos.shape == (2048,) # two particles per step
 
-    diff = np.abs(stream[-2:].pos - prog[-1].pos)
+    diff = np.abs(stream[-2:].pos.xyz - prog[-1:].pos.xyz)
     assert np.allclose(diff[0].value, 0.)
     assert np.allclose(diff[1,0].value, diff[1,1].value)
     assert np.allclose(diff[2].value, 0.)
@@ -76,7 +76,7 @@ def test_each_type(mock_func, extra_kwargs):
     # plt.show()
 
     assert prog.t.shape == (1024,)
-    assert stream.pos.shape == (3,2048) # two particles per step
+    assert stream.pos.shape == (2048,) # two particles per step
 
     # -----------------------
     # Test expected failures:
@@ -123,5 +123,5 @@ def test_animate(tmpdir):
     assert np.allclose(t, orbit.t.value)
 
     for idx in range(pos.shape[2]):
-        assert np.allclose(pos[:,-1,idx], stream.pos.value[:,idx], rtol=1E-4)
-        assert np.allclose(vel[:,-1,idx], stream.vel.value[:,idx], rtol=1E-4)
+        assert np.allclose(pos[:,-1,idx], stream.pos.xyz.value[:,idx], rtol=1E-4)
+        assert np.allclose(vel[:,-1,idx], stream.vel.d_xyz.value[:,idx], rtol=1E-4)
