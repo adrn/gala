@@ -1781,6 +1781,47 @@ class CartesianDifferential(BaseDifferential):
     def from_cartesian(cls, other, base=None):
         return cls(*[getattr(other, c) for c in other.components])
 
+    def get_d_xyz(self, xyz_axis=0):
+        """Return a vector array of the x, y, and z coordinates.
+
+        Parameters
+        ----------
+        xyz_axis : int, optional
+            The axis in the final array along which the x, y, z components
+            should be stored (default: 0).
+
+        Returns
+        -------
+        xyz : `~astropy.units.Quantity`
+            With dimension 3 along ``xyz_axis``.
+        """
+        # Add new axis in x, y, z so one can concatenate them around it.
+        # NOTE: just use np.stack once our minimum numpy version is 1.10.
+        result_ndim = self.ndim + 1
+        if not -result_ndim <= xyz_axis < result_ndim:
+            raise IndexError('xyz_axis {0} out of bounds [-{1}, {1})'
+                             .format(xyz_axis, result_ndim))
+        if xyz_axis < 0:
+            xyz_axis += result_ndim
+
+        # Get x, y, z to the same units (this is very fast for identical units)
+        # since np.concatenate cannot deal with quantity.
+        cls = self._d_x.__class__
+        x = self._d_x
+        y = cls(self._d_y, x.unit, copy=False)
+        z = cls(self._d_z, x.unit, copy=False)
+        if NUMPY_LT_1_8:  # pragma: no cover
+            # numpy 1.7 has problems concatenating broadcasted arrays.
+            x, y, z = [(c.copy() if 0 in c.strides else c) for c in (x, y, z)]
+
+        sh = self.shape
+        sh = sh[:xyz_axis] + (1,) + sh[xyz_axis:]
+        dxyz_value = np.concatenate([c.reshape(sh).value for c in (x, y, z)],
+                                    axis=xyz_axis)
+        return cls(dxyz_value, unit=x.unit, copy=False)
+
+    d_xyz = property(get_d_xyz)
+
 
 class BaseSphericalDifferential(BaseDifferential):
     def _combine_operation(self, op, other, reverse=False):
