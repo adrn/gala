@@ -70,9 +70,17 @@ def isochrone_to_aa(w, potential):
         raise ValueError("Unbound particle. (E = {})".format(E))
 
     # convert position, velocity to spherical polar coordinates
-    sph,vsph = w.represent_as(coord.PhysicsSphericalRepresentation)
-    r,phi,theta = map(np.squeeze, [sph.r.value, sph.phi.value, sph.theta.value])
-    vr,vphi,vtheta = map(np.squeeze, vsph.value)
+    w_sph = w.represent_as(coord.PhysicsSphericalRepresentation)
+    r,phi,theta = map(np.squeeze, [w_sph.r.decompose(usys).value,
+                                   w_sph.phi.radian,
+                                   w_sph.theta.radian])
+
+    ang_unit = u.radian/usys['time']
+    vr,phi_dot,theta_dot = map(np.squeeze, [w_sph.d_r.decompose(usys).value,
+                                            w_sph.d_phi.to(ang_unit).value,
+                                            w_sph.d_theta.to(ang_unit).value])
+    vphi = r*np.sin(theta) * phi_dot
+    vtheta = r*theta_dot
 
     # ----------------------------
     # Compute the actions
@@ -310,11 +318,11 @@ def harmonic_oscillator_to_aa(w, potential):
 
     usys = potential.units
     if usys is not None:
-        x = w.pos.decompose(usys).value
-        v = w.vel.decompose(usys).value
+        x = w.pos.xyz.decompose(usys).value
+        v = w.vel.d_xyz.decompose(usys).value
     else:
-        x = w.pos.value
-        v = w.vel.value
+        x = w.pos.xyz.value
+        v = w.vel.d_xyz.value
     _new_omega_shape = (3,) + tuple([1]*(len(x.shape)-1))
 
     # compute actions -- just energy (hamiltonian) over frequency
