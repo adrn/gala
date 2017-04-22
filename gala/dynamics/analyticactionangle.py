@@ -41,7 +41,7 @@ def isochrone_to_aa(w, potential):
 
     Parameters
     ----------
-    w : :class:`gala.dynamics.CartesianPhaseSpacePosition`, :class:`gala.dynamics.CartesianOrbit`
+    w : :class:`gala.dynamics.PhaseSpacePosition`, :class:`gala.dynamics.Orbit`
     potential : :class:`gala.potential.IsochronePotential`, dict
         An instance of the potential to use for computing the transformation
         to angle-action coordinates. Or, a dictionary of parameters used to
@@ -312,7 +312,7 @@ def harmonic_oscillator_to_aa(w, potential):
 
     Parameters
     ----------
-    w : :class:`gala.dynamics.CartesianPhaseSpacePosition`, :class:`gala.dynamics.CartesianOrbit`
+    w : :class:`gala.dynamics.PhaseSpacePosition`, :class:`gala.dynamics.Orbit`
     potential : Potential
     """
 

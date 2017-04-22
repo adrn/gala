@@ -15,7 +15,7 @@ np.import_array()
 from .core import FrameBase
 from ..potential.cpotential import _validate_pos_arr
 from ..potential.cpotential cimport energyfunc, gradientfunc, hessianfunc
-from ...dynamics import CartesianPhaseSpacePosition
+from ...dynamics import PhaseSpacePosition
 
 cdef class CFrameWrapper:
     """ Wrapper class for C implementation of reference frames. """

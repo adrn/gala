@@ -601,7 +601,7 @@ class PotentialBase(CommonBase):
 
         Returns
         -------
-        orbit : `~gala.dynamics.CartesianOrbit`
+        orbit : `~gala.dynamics.Orbit`
 
         """
 

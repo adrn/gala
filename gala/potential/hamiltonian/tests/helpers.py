@@ -7,10 +7,10 @@ import astropy.units as u
 import numpy as np
 
 # Project
-from ....dynamics import CartesianPhaseSpacePosition, CartesianOrbit
+from ....dynamics import PhaseSpacePosition, Orbit
 from ....units import galactic
-PSP = CartesianPhaseSpacePosition
-ORB = CartesianOrbit
+PSP = PhaseSpacePosition
+ORB = Orbit
 
 class _TestBase(object):
     use_half_ndim = False

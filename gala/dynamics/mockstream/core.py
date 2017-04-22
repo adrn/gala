@@ -11,7 +11,7 @@ import os
 import numpy as np
 
 # Project
-from .. import CartesianPhaseSpacePosition, Orbit
+from .. import PhaseSpacePosition, Orbit
 from ...potential import Hamiltonian, CPotentialBase
 from ...integrate import DOPRI853Integrator, LeapfrogIntegrator
 from ._mockstream import _mock_stream_dop853, _mock_stream_leapfrog, _mock_stream_animate
@@ -59,7 +59,7 @@ def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
 
     Returns
     -------
-    stream : `~gala.dynamics.CartesianPhaseSpacePosition`
+    stream : `~gala.dynamics.PhaseSpacePosition`
 
     """
 
@@ -148,7 +148,7 @@ def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
     else:
         raise RuntimeError("Should never get here...")
 
-    return CartesianPhaseSpacePosition.from_w(w=stream_w.T, units=hamiltonian.units)
+    return PhaseSpacePosition.from_w(w=stream_w.T, units=hamiltonian.units)
 
 def streakline_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
                       Integrator=DOPRI853Integrator, Integrator_kwargs=dict(),
@@ -183,7 +183,7 @@ def streakline_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
 
     Returns
     -------
-    stream : `~gala.dynamics.CartesianPhaseSpacePosition`
+    stream : `~gala.dynamics.PhaseSpacePosition`
 
     """
     k_mean = np.zeros(6)
@@ -245,7 +245,7 @@ def fardal_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
 
     Returns
     -------
-    stream : `~gala.dynamics.CartesianPhaseSpacePosition`
+    stream : `~gala.dynamics.PhaseSpacePosition`
 
     """
     k_mean = np.zeros(6)
@@ -311,7 +311,7 @@ def dissolved_fardal_stream(hamiltonian, prog_orbit, prog_mass, t_disrupt, relea
 
     Returns
     -------
-    stream : `~gala.dynamics.CartesianPhaseSpacePosition`
+    stream : `~gala.dynamics.PhaseSpacePosition`
 
     """
 

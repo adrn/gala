@@ -10,7 +10,7 @@ from .. import Hamiltonian
 from ...potential.builtin import NFWPotential, KeplerPotential, HernquistPotential
 from ...frame.builtin import StaticFrame, ConstantRotatingFrame
 from ....units import galactic, dimensionless
-from ....dynamics import CartesianPhaseSpacePosition
+from ....dynamics import PhaseSpacePosition
 from ....integrate import DOPRI853Integrator
 
 # ----------------------------------------------------------------------------
@@ -122,7 +122,7 @@ class TestKeplerRotatingFrame(_TestBase):
 
     def test_integrate(self):
 
-        w0 = CartesianPhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.,0.])
+        w0 = PhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.,0.])
 
         for bl in [True, False]:
             orbit = self.obj.integrate_orbit(w0, dt=1., n_steps=1000,
@@ -147,7 +147,7 @@ class TestKepler2RotatingFrame(_TestBase):
         # --------------------------------------------------------------
         # when Omega is off from orbital frequency
         #
-        w0 = CartesianPhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.1,0.])
+        w0 = PhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.1,0.])
 
         for bl in [True, False]:
             orbit = self.obj.integrate_orbit(w0, dt=0.1, n_steps=10000,
@@ -171,8 +171,8 @@ def test_velocity_rot_frame(name, Omega, tol):
     r0 = 1.245246
     potential = HernquistPotential(m=1., c=0.2, units=dimensionless)
     vc = potential.circular_velocity([r0,0,0]).value[0]
-    w0 = CartesianPhaseSpacePosition(pos=[r0, 0, 0.],
-                                     vel=[0, vc, 0.])
+    w0 = PhaseSpacePosition(pos=[r0, 0, 0.],
+                            vel=[0, vc, 0.])
     Omega = Omega * [1., 1., vc/r0]
 
     H_r = Hamiltonian(potential, ConstantRotatingFrame(Omega=Omega, units=dimensionless))

@@ -63,7 +63,7 @@ class HarmonicOscillatorPotential(PotentialBase):
 
         Parameters
         ----------
-        w : :class:`gala.dynamics.CartesianPhaseSpacePosition`, :class:`gala.dynamics.CartesianOrbit`
+        w : :class:`gala.dynamics.PhaseSpacePosition`, :class:`gala.dynamics.Orbit`
             The positions or orbit to compute the actions, angles, and frequencies at.
         """
         from ....dynamics.analyticactionangle import harmonic_oscillator_to_aa

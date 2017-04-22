@@ -12,7 +12,7 @@ import numpy as np
 from scipy.signal import argrelmax, argrelmin
 
 # This package
-from .core import CartesianPhaseSpacePosition
+from .core import PhaseSpacePosition
 from ..integrate import LeapfrogIntegrator
 
 __all__ = ['peak_to_peak_period', 'estimate_dt_n_steps']
@@ -123,9 +123,9 @@ def estimate_dt_n_steps(w0, potential, n_periods, n_steps_per_period, dE_thresho
         The number of timesteps to integrate for.
 
     """
-    if not isinstance(w0, CartesianPhaseSpacePosition):
+    if not isinstance(w0, PhaseSpacePosition):
         w0 = np.asarray(w0)
-        w0 = CartesianPhaseSpacePosition.from_w(w0, units=potential.units)
+        w0 = PhaseSpacePosition.from_w(w0, units=potential.units)
 
     # integrate orbit
     dt = _autodetermine_initial_dt(w0, potential, dE_threshold=dE_threshold)

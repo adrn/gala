@@ -39,12 +39,12 @@ class Integrator(object):
         particularly useful for integrating a large number of orbits or
         integrating a large number of time steps.
         """
-        from ..dynamics import CartesianPhaseSpacePosition
-        if not isinstance(w0, CartesianPhaseSpacePosition):
+        from ..dynamics import PhaseSpacePosition
+        if not isinstance(w0, PhaseSpacePosition):
             w0 = np.asarray(w0)
             ndim = w0.shape[0]//2
-            w0 = CartesianPhaseSpacePosition(pos=w0[:ndim],
-                                             vel=w0[ndim:])
+            w0 = PhaseSpacePosition(pos=w0[:ndim],
+                                    vel=w0[ndim:])
 
         arr_w0 = w0.w(self._func_units)
         self.ndim,self.norbits = arr_w0.shape
@@ -78,17 +78,17 @@ class Integrator(object):
         t_unit = self._func_units['time']
         vel_unit = pos_unit / t_unit
 
-        from ..dynamics import CartesianOrbit
-        orbit = CartesianOrbit(pos=w[:self.ndim]*pos_unit,
-                               vel=w[self.ndim:]*vel_unit,
-                               t=t*t_unit) # HACK: BADDDD
+        from ..dynamics import Orbit
+        orbit = Orbit(pos=w[:self.ndim]*pos_unit,
+                      vel=w[self.ndim:]*vel_unit,
+                      t=t*t_unit) # HACK: BADDDD
 
         return orbit
 
     def run(self):
         """
         Run the integrator starting from the specified phase-space position.
-        The initial conditions ``w0`` should be a `~gala.dynamics.CartesianPhaseSpacePosition`
+        The initial conditions ``w0`` should be a `~gala.dynamics.PhaseSpacePosition`
         instance.
 
         There are a few combinations of keyword arguments accepted for
@@ -105,7 +105,7 @@ class Integrator(object):
 
         .. warning::
 
-            Right now, this always returns a `~gala.dynamics.CartesianOrbit` instance.
+            Right now, this always returns a `~gala.dynamics.Orbit` instance.
             This is wrong and will change!
 
         .. todo::
@@ -114,7 +114,7 @@ class Integrator(object):
 
         Parameters
         ----------
-        w0 : `~gala.dynamics.CartesianPhaseSpacePosition`
+        w0 : `~gala.dynamics.PhaseSpacePosition`
             Initial conditions.
         **time_spec
             Timestep information passed to
@@ -122,7 +122,7 @@ class Integrator(object):
 
         Returns
         -------
-        orbit : `~gala.dynamics.CartesianOrbit`
+        orbit : `~gala.dynamics.Orbit`
 
         """
         pass

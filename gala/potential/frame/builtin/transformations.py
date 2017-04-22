@@ -98,7 +98,7 @@ def static_to_constantrotating(frame_i, frame_r, w, t=None):
     ----------
     frame_i : `~gala.potential.StaticFrame`
     frame_r : `~gala.potential.ConstantRotatingFrame`
-    w : `~gala.dynamics.CartesianPhaseSpacePosition`, `~gala.dynamics.CartesianOrbit`
+    w : `~gala.dynamics.PhaseSpacePosition`, `~gala.dynamics.Orbit`
     t : quantity_like (optional)
         Required if input coordinates are just a phase-space position.
 
@@ -120,7 +120,7 @@ def constantrotating_to_static(frame_r, frame_i, w, t=None):
     ----------
     frame_i : `~gala.potential.StaticFrame`
     frame_r : `~gala.potential.ConstantRotatingFrame`
-    w : `~gala.dynamics.CartesianPhaseSpacePosition`, `~gala.dynamics.CartesianOrbit`
+    w : `~gala.dynamics.PhaseSpacePosition`, `~gala.dynamics.Orbit`
     t : quantity_like (optional)
         Required if input coordinates are just a phase-space position.
 
