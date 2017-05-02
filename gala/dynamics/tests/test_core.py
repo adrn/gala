@@ -43,17 +43,23 @@ def test_initialize():
     assert o.pos.xyz.unit == u.kpc
     assert o.vel.d_x.unit == u.km/u.s
 
-    # TODO: unsupported??
-    # x = np.random.random(size=(2,10))
-    # v = np.random.random(size=(2,10))
-    # o = PhaseSpacePosition(pos=x, vel=v)
-    # assert o.ndim == 2
+    # Not 3D
+    x = np.random.random(size=(2,10))
+    v = np.random.random(size=(2,10))
+    o = PhaseSpacePosition(pos=x, vel=v)
+    assert o.ndim == 2
 
-    # o = PhaseSpacePosition(pos=x, vel=v, frame=StaticFrame(galactic))
-    # assert o.ndim == 2
-    # assert o.frame is not None
-    # assert isinstance(o.frame, StaticFrame)
+    o = PhaseSpacePosition(pos=x, vel=v, frame=StaticFrame(galactic))
+    assert o.ndim == 2
+    assert o.frame is not None
+    assert isinstance(o.frame, StaticFrame)
 
+    x = np.random.random(size=(4,10))
+    v = np.random.random(size=(4,10))
+    o = PhaseSpacePosition(pos=x, vel=v)
+    assert o.ndim == 4
+
+    # back to 3D
     pos = CartesianRepresentation(np.random.random(size=(3,10))*u.one)
     vel = CartesianDifferential(np.random.random(size=(3,10))*u.one)
     o = PhaseSpacePosition(pos=pos, vel=vel)
@@ -150,13 +156,12 @@ def test_represent_as():
     sph = o.represent_as(SphericalRepresentation)
     assert sph.pos.distance.unit == u.kpc
 
-    # TODO:
     # doesn't work for 2D
-    # x = np.random.random(size=(2,10))
-    # v = np.random.random(size=(2,10))
-    # o = PhaseSpacePosition(pos=x, vel=v)
-    # with pytest.raises(ValueError):
-    #     o.represent_as(SphericalRepresentation)
+    x = np.random.random(size=(2,10))
+    v = np.random.random(size=(2,10))
+    o = PhaseSpacePosition(pos=x, vel=v)
+    with pytest.raises(ValueError):
+        o.represent_as(SphericalRepresentation)
 
 def test_to_coord_frame():
     # simple / unitless
@@ -178,13 +183,12 @@ def test_to_coord_frame():
     with pytest.warns(DeprecationWarning):
         o.to_frame(Galactic)
 
-    # TODO:
     # doesn't work for 2D
-    # x = np.random.random(size=(2,10))*u.kpc
-    # v = np.random.normal(0.,100.,size=(2,10))*u.km/u.s
-    # o = PhaseSpacePosition(pos=x, vel=v)
-    # with pytest.raises(ValueError):
-    #     o.to_coord_frame(Galactic)
+    x = np.random.random(size=(2,10))*u.kpc
+    v = np.random.normal(0.,100.,size=(2,10))*u.km/u.s
+    o = PhaseSpacePosition(pos=x, vel=v)
+    with pytest.raises(ValueError):
+        o.to_coord_frame(Galactic)
 
 def test_w():
     # simple / unitless
@@ -193,6 +197,25 @@ def test_w():
     o = PhaseSpacePosition(pos=x, vel=v)
     w = o.w()
     assert w.shape == (6,10)
+
+    x = np.random.random(size=3)
+    v = np.random.random(size=3)
+    o = PhaseSpacePosition(pos=x, vel=v)
+    w = o.w()
+    assert w.shape == (6,1)
+
+    # simple / unitless, 2D
+    x = np.random.random(size=(2,10))
+    v = np.random.random(size=(2,10))
+    o = PhaseSpacePosition(pos=x, vel=v)
+    w = o.w()
+    assert w.shape == (4,10)
+
+    x = np.random.random(size=2)
+    v = np.random.random(size=2)
+    o = PhaseSpacePosition(pos=x, vel=v)
+    w = o.w()
+    assert w.shape == (4,1)
 
     # simple / with units
     x = np.random.random(size=(3,10))*u.kpc

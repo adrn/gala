@@ -13,6 +13,7 @@ import numpy as np
 
 # Project
 from .extern import representation as rep
+from . import representation_nd as rep_nd
 from .plot import three_panel
 from ..coordinates import vgal_to_hel
 from ..units import UnitSystem, DimensionlessUnitSystem
@@ -69,25 +70,43 @@ class PhaseSpacePosition(object):
             if not hasattr(pos, 'unit'):
                 pos = pos * u.one
 
-            # TODO: HACK: until this stuff is in astropy core
-            if isinstance(pos, coord.BaseRepresentation):
-                kw = [(k,getattr(pos,k)) for k in pos.components]
-                pos = getattr(rep, pos.__class__.__name__)(**kw)
+            # 3D coordinates get special treatment
+            ndim = pos.shape[0]
+            if ndim == 3:
+                # TODO: HACK: until this stuff is in astropy core
+                if isinstance(pos, coord.BaseRepresentation):
+                    kw = [(k,getattr(pos,k)) for k in pos.components]
+                    pos = getattr(rep, pos.__class__.__name__)(**kw)
+
+                else:
+                    pos = rep.CartesianRepresentation(pos)
 
             else:
-                pos = rep.CartesianRepresentation(pos)
+                pos = rep_nd.NDCartesianRepresentation(*pos)
 
-        default_rep = pos.__class__
-        default_rep_name = default_rep.get_name().capitalize()
+        else:
+            ndim = 3
 
         if not isinstance(vel, rep.BaseDifferential):
-            Diff = getattr(rep, default_rep_name+'Differential')
+
+            if ndim == 3:
+                default_rep = pos.__class__
+                default_rep_name = default_rep.get_name().capitalize()
+                Diff = getattr(rep, default_rep_name+'Differential')
+
+            else:
+                Diff = rep_nd.NDCartesianDifferential
 
             # assume representation is same as pos if not specified
             if not hasattr(vel, 'unit'):
                 vel = vel * u.one
 
-            vel = Diff(vel)
+            vel = Diff(*vel)
+
+        else:
+            # assume Cartesian if not specified
+            if not hasattr(vel, 'unit'):
+                vel = vel * u.one
 
         # make sure shape is the same
         if pos.shape != vel.shape:
@@ -102,6 +121,7 @@ class PhaseSpacePosition(object):
         self.pos = pos
         self.vel = vel
         self.frame = frame
+        self.ndim = ndim
 
         for name in pos.components:
             setattr(self, name, getattr(pos,name))
@@ -132,6 +152,10 @@ class PhaseSpacePosition(object):
         -------
         new_phase_sp : `gala.dynamics.PhaseSpacePosition`
         """
+
+        if self.ndim != 3:
+            raise ValueError("Can only change representation for "
+                             "ndim=3 instances.")
 
         # get the name of the desired representation
         Representation = rep.REPRESENTATION_CLASSES[Representation.get_name()]
@@ -227,6 +251,10 @@ class PhaseSpacePosition(object):
 
         """
 
+        if self.ndim != 3:
+            raise ValueError("Can only change representation for "
+                             "ndim=3 instances.")
+
         if galactocentric_frame is None:
             galactocentric_frame = coord.Galactocentric()
 
@@ -292,9 +320,16 @@ class PhaseSpacePosition(object):
             Will have shape ``(2*ndim,...)``.
 
         """
-        cart = self.cartesian
-        x_unit = cart.pos.x.unit
-        v_unit = cart.vel.d_x.unit
+        if self.ndim == 3:
+            cart = self.cartesian
+        else:
+            cart = self
+
+        xyz = cart.pos.xyz
+        d_xyz = cart.vel.d_xyz
+
+        x_unit = xyz.unit
+        v_unit = d_xyz.unit
         if ((units is None or isinstance(units, DimensionlessUnitSystem)) and
                 (x_unit == u.one and v_unit == u.one)):
             units = DimensionlessUnitSystem()
@@ -302,21 +337,13 @@ class PhaseSpacePosition(object):
         elif units is None:
             raise ValueError("A UnitSystem must be provided.")
 
-        x = cart.pos.xyz.decompose(units).value
+        x = xyz.decompose(units).value
         if x.ndim < 2:
             x = atleast_2d(x, insert_axis=1)
 
-        # TODO: update this if/when d_xyz exists
-        if cart.vel.d_x.ndim >= 1:
-            d_xyz = np.vstack((cart.vel.d_x.value[None],
-                               cart.vel.d_y.value[None],
-                               cart.vel.d_z.value[None])) * cart.vel.d_x.unit
-        else: # scalar arrays, but vstack adds a dimension
-            d_xyz = np.vstack((cart.vel.d_x.value,
-                               cart.vel.d_y.value,
-                               cart.vel.d_z.value)) * cart.vel.d_x.unit
-
         v = d_xyz.decompose(units).value
+        if v.ndim < 2:
+            v = atleast_2d(v, insert_axis=1)
 
         return np.vstack((x,v))
 
@@ -372,7 +399,7 @@ class PhaseSpacePosition(object):
         E : :class:`~astropy.units.Quantity`
             The kinetic energy.
         """
-        return 0.5 * self.vel.norm(self.pos)**2
+        return 0.5 * self.vel.norm()**2
 
     def potential_energy(self, potential):
         r"""
@@ -392,6 +419,7 @@ class PhaseSpacePosition(object):
         E : :class:`~astropy.units.Quantity`
             The potential energy.
         """
+        # TODO: check that potential ndim is consistent with here
         return potential.value(self)
 
     def energy(self, hamiltonian):
@@ -496,6 +524,8 @@ class PhaseSpacePosition(object):
 
         """
 
+        # TODO: handle ndim < 3
+
         if units is not None and len(units) != 3:
             raise ValueError('You must specify 3 units if any.')
 
@@ -539,23 +569,6 @@ class PhaseSpacePosition(object):
     # ------------------------------------------------------------------------
     # Shape and size
     #
-    @property
-    def ndim(self):
-        """
-        Number of coordinate dimensions. 1/2 of the phase-space dimensionality.
-
-        .. warning::
-
-            This is *not* the number of axes in the position or velocity
-            arrays. That is accessed by doing ``obj.pos.ndim``.
-
-        Returns
-        -------
-        n : int
-
-        """
-        # TODO: keep this?
-        return 3
 
     @property
     def shape(self):

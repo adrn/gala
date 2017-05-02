@@ -70,9 +70,11 @@ def peak_to_peak_period(t, f, amplitude_threshold=1E-2):
     # then take the mean of these two
     return np.mean([T_max, T_min]) * t_unit
 
-def _autodetermine_initial_dt(w0, potential, dE_threshold=1E-9, Integrator=LeapfrogIntegrator):
-    if w0.shape[0] > 1:
-        raise ValueError("Only one set of initial conditions may be passed in at a time.")
+def _autodetermine_initial_dt(w0, potential, dE_threshold=1E-9,
+                              Integrator=LeapfrogIntegrator):
+    if w0.shape and w0.shape[0] > 1:
+        raise ValueError("Only one set of initial conditions may be passed "
+                         "in at a time.")
 
     if dE_threshold is None:
         return 1.
@@ -82,7 +84,8 @@ def _autodetermine_initial_dt(w0, potential, dE_threshold=1E-9, Integrator=Leapf
 
     for dt in dts:
         n_steps = int(round(_base_n_steps / dt))
-        orbit = potential.integrate_orbit(w0, dt=dt, n_steps=n_steps, Integrator=Integrator)
+        orbit = potential.integrate_orbit(w0, dt=dt, n_steps=n_steps,
+                                          Integrator=Integrator)
         E = orbit.energy()
         dE = np.abs((E[-1] - E[0]) / E[0]).value
 
@@ -91,8 +94,8 @@ def _autodetermine_initial_dt(w0, potential, dE_threshold=1E-9, Integrator=Leapf
 
     return dt
 
-def estimate_dt_n_steps(w0, potential, n_periods, n_steps_per_period, dE_threshold=1E-9,
-                        func=np.nanmax):
+def estimate_dt_n_steps(w0, potential, n_periods, n_steps_per_period,
+                        dE_threshold=1E-9, func=np.nanmax):
     """
     Estimate the timestep and number of steps to integrate an orbit for
     given its initial conditions and a potential object.
@@ -108,12 +111,12 @@ def estimate_dt_n_steps(w0, potential, n_periods, n_steps_per_period, dE_thresho
     n_steps_per_period : int
         Number of steps to take per (max) orbital period.
     dE_threshold : numeric (optional)
-        Maximum fractional energy difference -- used to determine initial timestep.
-        Set to ``None`` to ignore this.
+        Maximum fractional energy difference -- used to determine initial
+        timestep. Set to ``None`` to ignore this.
     func : callable (optional)
-        Determines which period to use. By default, this takes the maximum period using
-        :func:`~numpy.nanmax`. Other options could be :func:`~numpy.nanmin`,
-        :func:`~numpy.nanmean`, :func:`~numpy.nanmedian`.
+        Determines which period to use. By default, this takes the maximum
+        period using :func:`~numpy.nanmax`. Other options could be
+        :func:`~numpy.nanmin`, :func:`~numpy.nanmean`, :func:`~numpy.nanmedian`.
 
     Returns
     -------
@@ -136,17 +139,19 @@ def estimate_dt_n_steps(w0, potential, n_periods, n_steps_per_period, dE_thresho
     circ = orbit.circulation()
     if np.any(circ):
         orbit = orbit.align_circulation_with_z(circulation=circ)
-        cyl,_ = orbit.represent_as(coord.CylindricalRepresentation) # ignore velocity return
+        cyl = orbit.represent_as(coord.CylindricalRepresentation)
 
         # convert to cylindrical coordinates
         R = cyl.rho.value
         phi = cyl.phi.value
         z = cyl.z.value
 
-        T = np.array([peak_to_peak_period(orbit.t, f).value for f in [R, phi, z]])*orbit.t.unit
+        T = np.array([peak_to_peak_period(orbit.t, f).value
+                      for f in [R, phi, z]])*orbit.t.unit
 
     else:
-        T = np.array([peak_to_peak_period(orbit.t, f).value for f in orbit.pos])*orbit.t.unit
+        T = np.array([peak_to_peak_period(orbit.t, f).value
+                      for f in orbit.pos])*orbit.t.unit
 
     # timestep from number of steps per period
     T = func(T)

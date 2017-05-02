@@ -83,6 +83,8 @@ class Orbit(PhaseSpacePosition):
 
         super(Orbit, self).__init__(pos=pos, vel=vel)
 
+        # TODO: check that Hamiltonian ndim is consistent with here
+
         if t is not None:
             t = np.atleast_1d(t)
             if self.pos.shape[0] != len(t):
@@ -209,7 +211,7 @@ class Orbit(PhaseSpacePosition):
 
     @property
     def norbits(self):
-        if self.pos.ndim < 3:
+        if self.pos.xyz.ndim < 3:
             return 1
         else:
             return self.shape[2]

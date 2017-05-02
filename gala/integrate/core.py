@@ -41,12 +41,10 @@ class Integrator(object):
         """
         from ..dynamics import PhaseSpacePosition
         if not isinstance(w0, PhaseSpacePosition):
-            w0 = np.asarray(w0)
-            ndim = w0.shape[0]//2
-            w0 = PhaseSpacePosition(pos=w0[:ndim],
-                                    vel=w0[ndim:])
+            w0 = PhaseSpacePosition.from_w(w0)
 
         arr_w0 = w0.w(self._func_units)
+
         self.ndim,self.norbits = arr_w0.shape
         self.ndim = self.ndim//2
 
