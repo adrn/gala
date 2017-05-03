@@ -76,8 +76,8 @@ class CompositeHelper(object):
             w_py = potential.integrate_orbit([1.,0,0, 0,2*np.pi,0], dt=0.01, n_steps=1000,
                                              Integrator=Integrator, cython_if_possible=False)
 
-            for i in range(3):
-                np.testing.assert_allclose(w_cy.pos[i].value, w_cy.pos[i].value)
+            assert np.allclose(w_cy.pos.xyz.value, w_py.pos.xyz.value)
+            assert np.allclose(w_cy.vel.d_xyz.value, w_py.vel.d_xyz.value)
 
 # ------------------------------------------------------------------------
 
