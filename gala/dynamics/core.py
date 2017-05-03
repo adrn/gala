@@ -370,6 +370,8 @@ class PhaseSpacePosition(object):
 
         """.format(name=cls.__name__)
 
+        w = np.array(w)
+
         ndim = w.shape[0]//2
         pos = w[:ndim]
         vel = w[ndim:]
