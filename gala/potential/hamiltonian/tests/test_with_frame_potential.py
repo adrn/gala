@@ -153,7 +153,7 @@ class TestKepler2RotatingFrame(_TestBase):
                                              Integrator=DOPRI853Integrator)
 
             L = orbit.angular_momentum()
-            C = orbit.energy()[:,0] - np.sum(self.Omega[:,None] * L, axis=0)
+            C = orbit.energy() - np.sum(self.Omega[:,None] * L, axis=0)
             dC = np.abs((C[1:]-C[0])/C[0])
             assert np.all(dC < 1E-9) # conserve Jacobi constant
 

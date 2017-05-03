@@ -65,9 +65,9 @@ class _TestBase(object):
                            vel=np.random.random(size=(ndim//2,ntimes))))
         cls.w0s.append(ORB(pos=np.random.random(size=(ndim//2,ntimes))*u.kpc,
                            vel=np.random.random(size=(ndim//2,ntimes))*u.km/u.s))
-        cls.energy_return_shapes += [(ntimes,1)]*2
-        cls.gradient_return_shapes += [(r_ndim,ntimes,1)]*2
-        cls.hessian_return_shapes += [(r_ndim,r_ndim,ntimes,1)]*2
+        cls.energy_return_shapes += [(ntimes,)]*2
+        cls.gradient_return_shapes += [(r_ndim,ntimes,)]*2
+        cls.hessian_return_shapes += [(r_ndim,r_ndim,ntimes,)]*2
 
         # 3D - orbit
         cls.w0s.append(ORB(pos=np.random.random(size=(ndim//2,ntimes,norbits)),
@@ -91,7 +91,7 @@ class _TestBase(object):
     def test_energy(self):
         for arr,shp in zip(self.w0s, self.energy_return_shapes):
             if self.E_unit.is_equivalent(u.one) and hasattr(arr, 'pos') and \
-                not arr.pos.unit.is_equivalent(u.one):
+                not arr.pos.xyz.unit.is_equivalent(u.one):
                 continue
 
             v = self.obj.energy(arr)
@@ -106,7 +106,7 @@ class _TestBase(object):
     def test_gradient(self):
         for arr,shp in zip(self.w0s, self.gradient_return_shapes):
             if self.E_unit.is_equivalent(u.one) and hasattr(arr, 'pos') and \
-                not arr.pos.unit.is_equivalent(u.one):
+                not arr.pos.xyz.unit.is_equivalent(u.one):
                 continue
 
             v = self.obj.gradient(arr)
@@ -121,7 +121,7 @@ class _TestBase(object):
     def test_hessian(self):
         for arr,shp in zip(self.w0s, self.hessian_return_shapes):
             if self.E_unit.is_equivalent(u.one) and hasattr(arr, 'pos') and \
-                not arr.pos.unit.is_equivalent(u.one):
+                not arr.pos.xyz.unit.is_equivalent(u.one):
                 continue
 
             g = self.obj.hessian(arr)
