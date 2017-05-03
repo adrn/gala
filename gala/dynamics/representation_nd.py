@@ -4,15 +4,10 @@ from __future__ import division, print_function
 
 # Standard library
 from collections import OrderedDict
-import functools
-import operator
 
 # Third-party
 import astropy.units as u
 import numpy as np
-from astropy.utils.compat.numpy import broadcast_to
-from astropy.utils.compat import NUMPY_LT_1_8, NUMPY_LT_1_12
-from astropy.utils.misc import isiterable
 
 # Project
 from .extern import representation as rep
