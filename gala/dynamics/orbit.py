@@ -7,6 +7,7 @@ from __future__ import division, print_function
 import warnings
 
 # Third-party
+import astropy.coordinates as coord
 from astropy import log as logger
 import astropy.units as u
 import numpy as np
@@ -20,7 +21,7 @@ from .extern import representation as rep
 from .util import peak_to_peak_period
 from .plot import plot_orbits
 from ..util import atleast_2d
-from ..units import dimensionless
+from ..units import dimensionless, _greek_letters
 
 __all__ = ['Orbit', 'CartesianOrbit']
 
@@ -605,7 +606,7 @@ class Orbit(PhaseSpacePosition):
         return self.__class__(pos=new_pos, vel=new_vel, t=self.t,
                               hamiltonian=self.hamiltonian)
 
-    def plot(self, **kwargs):
+    def plot(self, units=None, rep=None, **kwargs):
         """
         Plot the orbit in all projections. This is a thin wrapper around
         `~gala.dynamics.plot_orbits` -- the docstring for this function is
@@ -617,6 +618,10 @@ class Orbit(PhaseSpacePosition):
 
         Parameters
         ----------
+        units : `~astropy.units.UnitBase`, iterable (optional)
+            A single unit or list of units to display the components in.
+        rep : str, `~astropy.coordinates.BaseRepresentation` (optional)
+            The representation to plot the  orbit in. Default is Cartesian.
         ix : int, array_like (optional)
             Index or array of indices of orbits to plot. For example, if `x` is an
             array of shape ``(3,1024,32)`` - 1024 timesteps for 32 orbits in 3D
@@ -640,22 +645,63 @@ class Orbit(PhaseSpacePosition):
         fig : `~matplotlib.Figure`
 
         """
-        _label_unit = ''
-        if self.pos.unit != u.dimensionless_unscaled:
-            _label_unit = ' [{}]'.format(self.pos.unit)
+
+        if rep is None:
+            rep = coord.CartesianRepresentation
+
+        # allow user to specify representation
+        psp = self.represent_as(rep)
+
+        if units is not None:
+            if isinstance(units, u.UnitBase):
+                units = [units]*3 # HACK
+
+            elif len(units) != 3:
+                raise ValueError('You must specify a unit for each axis, or a '
+                                 'single unit for all axes.')
+
+        labels = []
+        pos = []
+        for i,name in enumerate(psp.pos.components):
+            val = getattr(psp, name)
+
+            if units is not None:
+                val = val.to(units[i])
+                unit = units[i]
+            else:
+                unit = val.unit
+
+            if val.unit != u.one:
+                uu = unit.to_string(format='latex_inline')
+                unit_str = ' [{}]'.format(uu)
+            else:
+                unit_str = ''
+
+            if name.lower() in _greek_letters:
+                labels.append(r'$\{}$'.format(name) + unit_str)
+            else:
+                labels.append('${}$'.format(name) + unit_str)
+
+            pos.append(val.value)
 
         default_kwargs = {
             'marker': None,
             'linestyle': '-',
-            'labels': ('$x${}'.format(_label_unit),
-                       '$y${}'.format(_label_unit),
-                       '$z${}'.format(_label_unit))
+            'labels': labels
         }
 
         for k,v in default_kwargs.items():
             kwargs[k] = kwargs.get(k, v)
 
-        return plot_orbits(self.pos.value, **kwargs)
+        if psp.pos.get_name() == 'cartesian':
+            subplots_kwargs = dict(sharex=True, sharey=True)
+        else:
+            subplots_kwargs = dict(sharex=False, sharey=False)
+
+        if 'subplots_kwargs' not in kwargs:
+            kwargs['subplots_kwargs'] = subplots_kwargs
+
+        return plot_orbits(pos, **kwargs)
 
     def to_frame(self, frame, current_frame=None, **kwargs):
         """

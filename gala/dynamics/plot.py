@@ -254,8 +254,12 @@ def three_panel(q, relative_to=None, autolim=True, axes=None,
     if autolim:
         lims = []
         for i in range(3):
-            mx,mi = q[i].max(), q[i].min()
+            mx,mi = np.max(q[i]), np.min(q[i])
             delta = mx-mi
+
+            if delta == 0.:
+                delta = 1.
+
             lims.append((mi-delta*0.05, mx+delta*0.05))
 
         axes[0].set_xlim(lims[0])

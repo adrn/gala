@@ -487,7 +487,7 @@ class PhaseSpacePosition(object):
     # ------------------------------------------------------------------------
     # Misc. useful methods
     #
-    def plot(self, units=None, **kwargs):
+    def plot(self, units=None, rep=None, **kwargs):
         """
         Plot the positions in all projections. This is a thin wrapper around
         `~gala.dynamics.three_panel` -- the docstring for this function is
@@ -495,8 +495,10 @@ class PhaseSpacePosition(object):
 
         Parameters
         ----------
-        units : iterable (optional)
-            A list of units to display the components in.
+        units : `~astropy.units.UnitBase`, iterable (optional)
+            A single unit or list of units to display the components in.
+        rep : str, `~astropy.coordinates.BaseRepresentation` (optional)
+            The representation to plot the  orbit in. Default is Cartesian.
         relative_to : bool (optional)
             Plot the values relative to this value or values.
         autolim : bool (optional)
@@ -528,23 +530,39 @@ class PhaseSpacePosition(object):
 
         # TODO: handle ndim < 3
 
-        if units is not None and len(units) != 3:
-            raise ValueError('You must specify 3 units if any.')
+        if rep is None:
+            rep = coord.CartesianRepresentation
+
+        # allow user to specify representation
+        psp = self.represent_as(rep)
+
+        if units is not None:
+            if isinstance(units, u.UnitBase):
+                units = [units]*3 # HACK
+
+            elif len(units) != 3:
+                raise ValueError('You must specify a unit for each axis, or a '
+                                 'single unit for all axes.')
 
         labels = []
-        for i,name in enumerate(self.pos.components):
-            val = getattr(self, name)
+        pos = []
+        for i,name in enumerate(psp.pos.components):
+            val = getattr(psp, name)
 
             if units is not None:
                 val = val.to(units[i])
+                unit = units[i]
+            else:
+                unit = val.unit
 
             if val.unit != u.one:
-                uu = units[i].to_string(format='latex_inline')
+                uu = unit.to_string(format='latex_inline')
                 unit_str = ' [{}]'.format(uu)
             else:
                 unit_str = ''
 
-            labels.append('${}$' + unit_str)
+            labels.append('${}$'.format(name) + unit_str)
+            pos.append(val.value)
 
         default_kwargs = {
             'marker': '.',
@@ -555,7 +573,7 @@ class PhaseSpacePosition(object):
         for k,v in default_kwargs.items():
             kwargs[k] = kwargs.get(k, v)
 
-        return three_panel(self.pos.value, **kwargs)
+        return three_panel(pos, **kwargs)
 
     # ------------------------------------------------------------------------
     # Display
