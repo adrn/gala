@@ -35,18 +35,24 @@ def test_axis_angle_rotate():
 def _helper(fi, fr, w, t=None):
 
     pos_r,vel_r = static_to_constantrotating(fi, fr, w, t=t)
-    w2 = Orbit(pos=pos_r, vel=vel_r, t=t)
+    if isinstance(w, Orbit):
+        w2 = Orbit(pos=pos_r, vel=vel_r, t=t)
+    else:
+        w2 = PhaseSpacePosition(pos=pos_r, vel=vel_r)
     pos_i,vel_i = constantrotating_to_static(fr, fi, w2, t=t)
 
-    assert quantity_allclose(pos_i, w.pos)
-    assert quantity_allclose(vel_i, w.vel)
+    assert quantity_allclose(pos_i, w.pos.xyz)
+    assert quantity_allclose(vel_i, w.vel.d_xyz)
 
     pos_i,vel_i = constantrotating_to_static(fr, fi, w, t=t)
-    w2 = Orbit(pos=pos_i, vel=vel_i, t=t)
+    if isinstance(w, Orbit):
+        w2 = Orbit(pos=pos_i, vel=vel_i, t=t)
+    else:
+        w2 = PhaseSpacePosition(pos=pos_i, vel=vel_i)
     pos_r,vel_r = static_to_constantrotating(fi, fr, w2, t=t)
 
-    assert quantity_allclose(pos_r, w.pos)
-    assert quantity_allclose(vel_r, w.vel)
+    assert quantity_allclose(pos_r, w.pos.xyz)
+    assert quantity_allclose(vel_r, w.vel.d_xyz)
 
 def test_frame_transforms_3d():
     frame_i = StaticFrame(units=galactic)

@@ -27,8 +27,8 @@ def rodrigues_axis_angle_rotate(x, vec, theta):
     vec = np.array(vec).T
     theta = np.array(theta).T[...,None]
 
-    out = np.cos(theta)*x + np.sin(theta)*np.cross(vec, x) \
-            + (1 - np.cos(theta)) * (vec * x).sum(axis=-1)[...,None] * vec
+    out = np.cos(theta)*x + np.sin(theta)*np.cross(vec, x) + \
+        (1 - np.cos(theta)) * (vec * x).sum(axis=-1)[...,None] * vec
 
     return out.T
 
@@ -66,12 +66,23 @@ def _constantrotating_static_helper(frame_r, frame_i, w, t=None, sign=1.):
     elif not hasattr(t, 'unit'):
         t = t * frame_i.units['time']
 
+    if t is None:
+        raise ValueError('Time must be supplied either through the input '
+                         'Orbit class instance or through the t argument.')
     t = t.decompose(frame_i.units).value
 
-    cart = w.cartesian
-    pos = cart.pos.xyz.decompose(frame_i.units).value
-    vel = np.vstack([getattr(cart.vel, name).decompose(frame_i.units).value
-                     for name in cart.vel.components])
+    # HACK: this is a little bit crazy...this makes it so that !=3D
+    #   representations will work here
+    if hasattr(w.pos, 'xyz'):
+        pos = w.pos
+        vel = w.vel
+    else:
+        cart = w.cartesian
+        pos = cart.pos
+        vel = cart.vel
+
+    pos = pos.xyz.decompose(frame_i.units).value
+    vel = vel.d_xyz.decompose(frame_i.units).value
 
     # get rotation angle, axis vs. time
     if isiterable(Omega): # 3D

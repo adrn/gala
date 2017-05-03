@@ -75,13 +75,11 @@ class Orbit(PhaseSpacePosition):
     def __init__(self, pos, vel, t=None,
                  hamiltonian=None, potential=None, frame=None):
 
-        if pos.ndim < 1:
-            pos = pos.reshape(-1,1)
-
-        if vel.ndim < 1:
-            vel = vel.reshape(-1,1)
-
         super(Orbit, self).__init__(pos=pos, vel=vel)
+
+        if self.pos.ndim < 1:
+            self.pos = self.pos.reshape(1)
+            self.vel = self.vel.reshape(1)
 
         # TODO: check that Hamiltonian ndim is consistent with here
 
