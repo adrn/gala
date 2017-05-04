@@ -43,8 +43,8 @@ We'll start by integrating an orbit using the :mod:`gala.potential` and
 This numerically integrates an orbit from the specified initial conditions,
 ``w0``, and returns an `~gala.dynamics.Orbit` object. By default, the position
 and velocity are assumed to be Cartesian coordinates but other coordinate
-systems are supported (see the `orbits-in-detail` and `nd-representations`
-pages for more information).
+systems are supported (see the :ref:`orbits-in-detail` and
+:ref:`nd-representations` pages for more information).
 
 The `~gala.dynamics.Orbit` object contains many useful methods, and can be
 passed to many of the analysis functions implemented in Gala. For example, we
@@ -96,7 +96,7 @@ example, both are Cartesian, so to access the individual components we do, e.g.,
     <Quantity [ 0.        ,-0.00567747,-0.01130248,...,  0.186418  ,
                 0.18174341, 0.17698051] kpc / Myr>
 
-Continue to the `orbits-in-detail` page for more information.
+Continue to the :ref:`orbits-in-detail` page for more information.
 
 Using gala.dynamics
 ===================
