@@ -3,6 +3,7 @@
 from __future__ import division, print_function
 
 # Standard library
+from collections import OrderedDict
 import warnings
 import inspect
 
@@ -265,6 +266,13 @@ class PhaseSpacePosition(object):
         gc_c = galactocentric_frame.realize_frame(astropy_pos)
         c = gc_c.transform_to(frame)
 
+        # TODO: HACK: convert back to gala representation here for differential
+        Rep = getattr(rep, c.representation.__name__)
+        derp = getattr(c, c.representation.get_name())
+        kw = OrderedDict([(comp, getattr(derp, comp))
+                          for comp in derp.components])
+        base = Rep(**kw)
+
         kw = dict()
         if galactocentric_frame is not None:
             kw['galactocentric_frame'] = galactocentric_frame
@@ -276,17 +284,12 @@ class PhaseSpacePosition(object):
             kw['vlsr'] = vlsr
 
         # HACK: TODO:
+        new_Diff = getattr(rep, Rep.__name__[:-14] + 'Differential')
         cart_vel = self.vel.represent_as(rep.CartesianDifferential, self.pos)
-        if cart_vel.d_x.ndim > 1:
-            d_xyz = np.vstack((cart_vel.d_x.value[None],
-                               cart_vel.d_y.value[None],
-                               cart_vel.d_z.value[None])) * cart_vel.d_x.unit
-        else:
-            d_xyz = np.vstack((cart_vel.d_x.value,
-                               cart_vel.d_y.value,
-                               cart_vel.d_z.value)) * cart_vel.d_x.unit
+        v = vgal_to_hel(c, cart_vel.d_xyz, **kw)
+        v = rep.CartesianDifferential(v)\
+               .represent_as(new_Diff, base=base)
 
-        v = vgal_to_hel(c, d_xyz, **kw)
         return c, v
 
     # Convenience attributes
