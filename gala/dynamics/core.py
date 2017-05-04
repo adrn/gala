@@ -609,7 +609,6 @@ class PhaseSpacePosition(object):
 
         default_kwargs = {
             'marker': '.',
-            'color': 'k',
             'labels': labels,
             'plot_function': plt.scatter,
             'autolim': False
@@ -622,7 +621,7 @@ class PhaseSpacePosition(object):
 
         if rep is None or rep.get_name() == 'cartesian':
             for ax in fig.axes:
-                ax.set(aspect='equal')
+                ax.set(aspect='equal', adjustable='datalim')
 
         return fig
 

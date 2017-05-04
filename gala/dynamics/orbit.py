@@ -663,7 +663,6 @@ class Orbit(PhaseSpacePosition):
         default_kwargs = {
             'marker': '',
             'linestyle': '-',
-            'color': 'k',
             'labels': labels,
             'plot_function': plt.plot
         }
