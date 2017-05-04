@@ -19,9 +19,9 @@ from scipy.optimize import minimize
 from .core import PhaseSpacePosition
 from .extern import representation as rep
 from .util import peak_to_peak_period
-from .plot import plot_orbits
+from .plot import plot_projections
 from ..util import atleast_2d
-from ..units import dimensionless, _greek_letters
+from ..units import dimensionless
 
 __all__ = ['Orbit', 'CartesianOrbit']
 
@@ -606,37 +606,41 @@ class Orbit(PhaseSpacePosition):
         return self.__class__(pos=new_pos, vel=new_vel, t=self.t,
                               hamiltonian=self.hamiltonian)
 
-    def plot(self, units=None, rep=None, **kwargs):
+    def plot(self, components=None, units=None, rep=None, **kwargs):
         """
-        Plot the orbit in all projections. This is a thin wrapper around
-        `~gala.dynamics.plot_orbits` -- the docstring for this function is
-        included here.
-
-        .. warning::
-
-            This will currently fail for orbits with fewer than 3 dimensions.
+        Plot the positions in all projections. This is a wrapper around
+        `~gala.dynamics.plot_projections` for fast access and quick
+        visualization. All extra keyword arguments are passed to that function
+        (the docstring for this function is included here for convenience).
 
         Parameters
         ----------
+        components : iterable (optional)
+            A list of component names (strings) to plot. By default, this is the
+            Cartesian positions ``['x', 'y', 'z']``. To plot Cartesian
+            velocities, pass in the velocity component names
+            ``['d_x', 'd_y', 'd_z']``.
         units : `~astropy.units.UnitBase`, iterable (optional)
             A single unit or list of units to display the components in.
         rep : str, `~astropy.coordinates.BaseRepresentation` (optional)
-            The representation to plot the  orbit in. Default is Cartesian.
-        ix : int, array_like (optional)
-            Index or array of indices of orbits to plot. For example, if `x` is an
-            array of shape ``(3,1024,32)`` - 1024 timesteps for 32 orbits in 3D
-            positions -- `ix` would specify which of the 32 orbits to plot.
+            The representation to plot the object in. Default is cartesian.
+        relative_to : bool (optional)
+            Plot the values relative to this value or values.
+        autolim : bool (optional)
+            Automatically set the plot limits to be something sensible.
         axes : array_like (optional)
             Array of matplotlib Axes objects.
-        triangle : bool (optional)
-            Make a triangle plot instead of plotting all projections in a single row.
         subplots_kwargs : dict (optional)
             Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
         labels : iterable (optional)
-            List or iterable of axis labels as strings. They should correspond to the
-            dimensions of the input orbit.
+            List or iterable of axis labels as strings. They should correspond to
+            the dimensions of the input orbit.
+        plot_function : callable (optional)
+            The ``matplotlib`` plot function to use. By default, this is
+            :func:`~matplotlib.pyplot.scatter`, but can also be, e.g.,
+            :func:`~matplotlib.pyplot.plot`.
         **kwargs
-            All other keyword arguments are passed to :func:`~matplotlib.pyplot.plot`.
+            All other keyword arguments are passed to the ``plot_function``.
             You can pass in any of the usual style kwargs like ``color=...``,
             ``marker=...``, etc.
 
@@ -646,62 +650,34 @@ class Orbit(PhaseSpacePosition):
 
         """
 
-        if rep is None:
-            rep = coord.CartesianRepresentation
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError:
+            msg = 'matplotlib is required for visualization.'
+            raise ImportError(msg)
 
-        # allow user to specify representation
-        psp = self.represent_as(rep)
-
-        if units is not None:
-            if isinstance(units, u.UnitBase):
-                units = [units]*3 # HACK
-
-            elif len(units) != 3:
-                raise ValueError('You must specify a unit for each axis, or a '
-                                 'single unit for all axes.')
-
-        labels = []
-        pos = []
-        for i,name in enumerate(psp.pos.components):
-            val = getattr(psp, name)
-
-            if units is not None:
-                val = val.to(units[i])
-                unit = units[i]
-            else:
-                unit = val.unit
-
-            if val.unit != u.one:
-                uu = unit.to_string(format='latex_inline')
-                unit_str = ' [{}]'.format(uu)
-            else:
-                unit_str = ''
-
-            if name.lower() in _greek_letters:
-                labels.append(r'$\{}$'.format(name) + unit_str)
-            else:
-                labels.append('${}$'.format(name) + unit_str)
-
-            pos.append(val.value)
+        x,labels = self._plot_prepare(components=components,
+                                      units=units,
+                                      rep=rep)
 
         default_kwargs = {
-            'marker': None,
+            'marker': '',
             'linestyle': '-',
-            'labels': labels
+            'color': 'k',
+            'labels': labels,
+            'plot_function': plt.plot
         }
 
         for k,v in default_kwargs.items():
             kwargs[k] = kwargs.get(k, v)
 
-        if psp.pos.get_name() == 'cartesian':
-            subplots_kwargs = dict(sharex=True, sharey=True)
-        else:
-            subplots_kwargs = dict(sharex=False, sharey=False)
+        fig = plot_projections(x, **kwargs)
 
-        if 'subplots_kwargs' not in kwargs:
-            kwargs['subplots_kwargs'] = subplots_kwargs
+        if rep is None or rep.get_name() == 'cartesian':
+            for ax in fig.axes:
+                ax.set(aspect='equal', adjustable='datalim')
 
-        return plot_orbits(pos, **kwargs)
+        return fig
 
     def to_frame(self, frame, current_frame=None, **kwargs):
         """

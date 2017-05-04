@@ -14,9 +14,9 @@ import numpy as np
 # Project
 from .extern import representation as rep
 from . import representation_nd as rep_nd
-from .plot import three_panel
+from .plot import plot_projections
 from ..coordinates import vgal_to_hel
-from ..units import UnitSystem, DimensionlessUnitSystem
+from ..units import UnitSystem, DimensionlessUnitSystem, _greek_letters
 from ..util import atleast_2d
 
 __all__ = ['PhaseSpacePosition', 'CartesianPhaseSpacePosition']
@@ -487,67 +487,41 @@ class PhaseSpacePosition(object):
     # ------------------------------------------------------------------------
     # Misc. useful methods
     #
-    def plot(self, units=None, rep=None, **kwargs):
+    def _plot_prepare(self, components, units, rep):
         """
-        Plot the positions in all projections. This is a thin wrapper around
-        `~gala.dynamics.three_panel` -- the docstring for this function is
-        included here.
-
-        Parameters
-        ----------
-        units : `~astropy.units.UnitBase`, iterable (optional)
-            A single unit or list of units to display the components in.
-        rep : str, `~astropy.coordinates.BaseRepresentation` (optional)
-            The representation to plot the  orbit in. Default is Cartesian.
-        relative_to : bool (optional)
-            Plot the values relative to this value or values.
-        autolim : bool (optional)
-            Automatically set the plot limits to be something sensible.
-        axes : array_like (optional)
-            Array of matplotlib Axes objects.
-        triangle : bool (optional)
-            Make a triangle plot instead of plotting all projections in a single
-            row.
-        subplots_kwargs : dict (optional)
-            Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
-        labels : iterable (optional)
-            List or iterable of axis labels as strings. They should correspond
-            to the dimensions of the input orbit.
-        **kwargs
-            All other keyword arguments are passed to
-            :func:`~matplotlib.pyplot.scatter`. You can pass in any of the usual
-            style kwargs like ``color=...``, ``marker=...``, etc.
-
-        Returns
-        -------
-        fig : `~matplotlib.Figure`
-
-        TODO
-        ----
-        Add option to plot velocities too? Or specify components to plot?
-
+        Prepare the ``PhaseSpacePosition`` or subclass for passing to a plotting
+        routine to plot all projections of the object.
         """
 
-        # TODO: handle ndim < 3
-
+        # re-represent if specified and ndim==3
         if rep is None:
             rep = coord.CartesianRepresentation
 
-        # allow user to specify representation
-        psp = self.represent_as(rep)
+        if self.ndim == 3:
+            # allow user to specify representation
+            obj = self.represent_as(rep)
 
+        else:
+            obj = self
+
+        # components to plot
+        if components is None:
+            components = obj.pos.components
+        n_comps = len(components)
+
+        # if units not specified, get units from the components
         if units is not None:
             if isinstance(units, u.UnitBase):
-                units = [units]*3 # HACK
+                units = [units]*n_comps # global unit
 
-            elif len(units) != 3:
+            elif len(units) != n_comps:
                 raise ValueError('You must specify a unit for each axis, or a '
                                  'single unit for all axes.')
 
         labels = []
-        pos = []
-        for i,name in enumerate(psp.pos.components):
-            val = getattr(psp, name)
+        x = []
+        for i,name in enumerate(components):
+            val = getattr(obj, name)
 
             if units is not None:
                 val = val.to(units[i])
@@ -561,19 +535,96 @@ class PhaseSpacePosition(object):
             else:
                 unit_str = ''
 
+            # Figure out how to fancy display the component name
+            if name.startswith('d_'):
+                dot = True
+                name = name[2:]
+            else:
+                dot = False
+
+            if name in _greek_letters:
+                name = r"\{}".format(name)
+
+            if dot:
+                name = "\dot{{{}}}".format(name)
+
             labels.append('${}$'.format(name) + unit_str)
-            pos.append(val.value)
+            x.append(val.value)
+
+        return x, labels
+
+    def plot(self, components=None, units=None, rep=None, **kwargs):
+        """
+        Plot the positions in all projections. This is a wrapper around
+        `~gala.dynamics.plot_projections` for fast access and quick
+        visualization. All extra keyword arguments are passed to that function
+        (the docstring for this function is included here for convenience).
+
+        Parameters
+        ----------
+        components : iterable (optional)
+            A list of component names (strings) to plot. By default, this is the
+            Cartesian positions ``['x', 'y', 'z']``. To plot Cartesian
+            velocities, pass in the velocity component names
+            ``['d_x', 'd_y', 'd_z']``.
+        units : `~astropy.units.UnitBase`, iterable (optional)
+            A single unit or list of units to display the components in.
+        rep : str, `~astropy.coordinates.BaseRepresentation` (optional)
+            The representation to plot the object in. Default is cartesian.
+        relative_to : bool (optional)
+            Plot the values relative to this value or values.
+        autolim : bool (optional)
+            Automatically set the plot limits to be something sensible.
+        axes : array_like (optional)
+            Array of matplotlib Axes objects.
+        subplots_kwargs : dict (optional)
+            Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
+        labels : iterable (optional)
+            List or iterable of axis labels as strings. They should correspond to
+            the dimensions of the input orbit.
+        plot_function : callable (optional)
+            The ``matplotlib`` plot function to use. By default, this is
+            :func:`~matplotlib.pyplot.scatter`, but can also be, e.g.,
+            :func:`~matplotlib.pyplot.plot`.
+        **kwargs
+            All other keyword arguments are passed to the ``plot_function``.
+            You can pass in any of the usual style kwargs like ``color=...``,
+            ``marker=...``, etc.
+
+        Returns
+        -------
+        fig : `~matplotlib.Figure`
+
+        """
+
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError:
+            msg = 'matplotlib is required for visualization.'
+            raise ImportError(msg)
+
+        x,labels = self._plot_prepare(components=components,
+                                      units=units,
+                                      rep=rep)
 
         default_kwargs = {
             'marker': '.',
             'color': 'k',
-            'labels': labels
+            'labels': labels,
+            'plot_function': plt.scatter,
+            'autolim': False
         }
 
         for k,v in default_kwargs.items():
             kwargs[k] = kwargs.get(k, v)
 
-        return three_panel(pos, **kwargs)
+        fig = plot_projections(x, **kwargs)
+
+        if rep is None or rep.get_name() == 'cartesian':
+            for ax in fig.axes:
+                ax.set(aspect='equal')
+
+        return fig
 
     # ------------------------------------------------------------------------
     # Display
