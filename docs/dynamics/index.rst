@@ -19,10 +19,10 @@ Introduction
 ============
 
 This subpackage contains functions and classes useful for gravitational
-dynamics. There are utilities for transforming orbits in phase-space to action-angle
-coordinates, tools for visualizing and computing dynamical quantities from
-orbits, tools to generate mock stellar streams, and tools useful for nonlinear
-dynamics such as Lyapunov exponent estimation.
+dynamics. There are utilities for transforming orbits in phase-space to
+action-angle coordinates, tools for visualizing and computing dynamical
+quantities from orbits, tools to generate mock stellar streams, and tools useful
+for nonlinear dynamics such as Lyapunov exponent estimation.
 
 The fundamental objects used by many of the functions and utilities in this and
 other subpackages are the `~gala.dynamics.PhaseSpacePosition` and
