@@ -99,7 +99,7 @@ def plot_projections(x, relative_to=None, autolim=True, axes=None,
             if delta == 0.:
                 delta = 1.
 
-            lims.append([min_ - delta*0.05, max_ + delta*0.05])
+            lims.append([min_ - delta*0.02, max_ + delta*0.02])
 
     k = 0
     for i in range(ndim):

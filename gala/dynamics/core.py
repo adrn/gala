@@ -584,6 +584,9 @@ class PhaseSpacePosition(object):
             msg = 'matplotlib is required for visualization.'
             raise ImportError(msg)
 
+        if components is None:
+            components = self.pos.components
+
         x,labels = self._plot_prepare(components=components,
                                       units=units)
 
@@ -599,7 +602,8 @@ class PhaseSpacePosition(object):
 
         fig = plot_projections(x, **kwargs)
 
-        if self.pos.get_name() == 'cartesian':
+        if self.pos.get_name() == 'cartesian' and \
+                all([not c.startswith('d_') for c in components]):
             for ax in fig.axes:
                 ax.set(aspect='equal', adjustable='datalim')
 
@@ -609,9 +613,10 @@ class PhaseSpacePosition(object):
     # Display
     #
     def __repr__(self):
-        return "<{}, shape={}, frame={}>".format(self.__class__.__name__,
-                                                 self.pos.shape,
-                                                 self.frame)
+        return "<{} {}, dim={}, shape={}>".format(self.__class__.__name__,
+                                                  self.pos.get_name(),
+                                                  self.ndim,
+                                                  self.pos.shape)
 
     def __str__(self):
         return "pos={}\nvel={}".format(self.pos, self.vel)
