@@ -7,18 +7,19 @@ from __future__ import absolute_import, division, print_function
 
 
 # Standard library
-import os
-import pytest
-import numpy as np
 import tempfile
 
 # Third-party
 import astropy.coordinates as coord
 import astropy.units as u
 from astropy.utils.data import get_pkg_data_filename
+from astropy.tests.helper import quantity_allclose
+import pytest
+import numpy as np
 
 # This package
-from ..velocity_frame_transforms import *
+from ..velocity_frame_transforms import (vgal_to_hel, vhel_to_gal,
+                                         vgsr_to_vhel, vhel_to_vgsr)
 
 def test_vgsr_to_vhel():
     filename = get_pkg_data_filename('idl_vgsr_vhel.txt')
@@ -130,186 +131,200 @@ class TestVHelGalConvert(object):
             temp.seek(0)
             self.data = np.genfromtxt(temp, names=True, skip_header=1)
 
-    def test_vhel_to_gal_single(self):
+        # This should make the transformations more compatible
+        g = coord.Galactic(l=0*u.deg, b=0*u.deg).transform_to(coord.ICRS)
+        self.galcen_frame = coord.Galactocentric(galcen_ra=g.ra, galcen_dec=g.dec,
+                                                 z_sun=0*u.kpc)
 
+    def test_vhel_to_gal_single(self):
         # test a single entry
         row = self.data[0]
-        c = coord.SkyCoord(ra=row['ra']*u.deg, dec=row['dec']*u.deg, distance=row['dist']*u.pc)
-        pm = [row['pml'], row['pmb']]*u.mas/u.yr
-        rv = row['rv']*u.km/u.s
+        c = coord.SkyCoord(ra=row['ra']*u.deg, dec=row['dec']*u.deg,
+                           distance=row['dist']*u.pc)
+        v_hel = coord.SphericalDifferential(d_lon=row['pml']*u.mas/u.yr,
+                                            d_lat=row['pmb']*u.mas/u.yr,
+                                            d_distance=row['rv']*u.km/u.s)
 
         # stupid check
-        vxyz_i = vhel_to_gal(c.icrs, pm=pm, rv=rv,
+        vxyz_i = vhel_to_gal(c.icrs, v_hel,
                              vcirc=0*u.km/u.s,
                              vlsr=[0.,0,0]*u.km/u.s)
 
-        vxyz = vhel_to_gal(c.galactic, pm=pm, rv=rv,
+        vxyz = vhel_to_gal(c.galactic, v_hel,
                            vcirc=0*u.km/u.s,
                            vlsr=[0.,0,0]*u.km/u.s)
 
         assert vxyz_i.shape == vxyz.shape
 
-        true_UVW = [row['U'],row['V'],row['W']]*u.km/u.s
-        found_UVW = vxyz
-        np.testing.assert_allclose(true_UVW.value, found_UVW.value, atol=1.)
-
-        # some sanity checks - first, some convenience definitions
-        g = coord.Galactic(l=0*u.deg, b=0*u.deg).transform_to(coord.ICRS)
-        galcen_frame = coord.Galactocentric(galcen_ra=g.ra,
-                                            galcen_dec=g.dec,
-                                            z_sun=0*u.kpc)
+        true_UVW = [row['U'], row['V'], row['W']]*u.km/u.s
+        found_UVW = vxyz.d_xyz
+        assert np.allclose(true_UVW.value, found_UVW.value, atol=1.)
 
         # --------------------------------------------------------------------
         # l = 0
         # without LSR and circular velocity
-        c = coord.SkyCoord(ra=galcen_frame.galcen_ra, dec=galcen_frame.galcen_dec, distance=2*u.kpc)
-        pm = [0., 0]*u.mas/u.yr
-        rv = 20*u.km/u.s
-        vxyz = vhel_to_gal(c.galactic, pm=pm, rv=rv,
+        c = coord.SkyCoord(ra=self.galcen_frame.galcen_ra,
+                           dec=self.galcen_frame.galcen_dec,
+                           distance=2*u.kpc)
+        v_hel = coord.SphericalDifferential(d_lon=0*u.mas/u.yr,
+                                            d_lat=0*u.mas/u.yr,
+                                            d_distance=20*u.km/u.s)
+        vxyz = vhel_to_gal(c.galactic, v_hel,
                            vcirc=0*u.km/u.s,
                            vlsr=[0.,0,0]*u.km/u.s,
-                           galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(vxyz.to(u.km/u.s).value, [20,0,0.], atol=1E-12)
+                           galactocentric_frame=self.galcen_frame)
+        assert np.allclose(vxyz.d_xyz.to(u.km/u.s).value, [20,0,0.],
+                           atol=1E-12)
 
         # with LSR and circular velocity
-        c = coord.SkyCoord(ra=galcen_frame.galcen_ra, dec=galcen_frame.galcen_dec, distance=2*u.kpc)
-        pm = [0., 0]*u.mas/u.yr
-        rv = 20*u.km/u.s
-        vxyz = vhel_to_gal(c.galactic, pm=pm, rv=rv,
+        c = coord.SkyCoord(ra=self.galcen_frame.galcen_ra,
+                           dec=self.galcen_frame.galcen_dec,
+                           distance=2*u.kpc)
+        vxyz = vhel_to_gal(c.galactic, v_hel,
                            vcirc=200*u.km/u.s,
                            vlsr=[-20.,0,10]*u.km/u.s,
-                           galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(vxyz.to(u.km/u.s).value, [0,200,10], atol=1E-12)
+                           galactocentric_frame=self.galcen_frame)
+        assert np.allclose(vxyz.d_xyz.to(u.km/u.s).value, [0,200,10],
+                           atol=1E-12)
 
         # l = 90
         # with LSR and circular velocity
-        c = coord.SkyCoord(l=90*u.deg, b=0*u.deg, distance=2*u.kpc, frame=coord.Galactic)
-        pm = [0., 0]*u.mas/u.yr
-        rv = 20*u.km/u.s
-        vxyz = vhel_to_gal(c.galactic, pm=pm, rv=rv,
+        c = coord.SkyCoord(l=90*u.deg, b=0*u.deg,
+                           distance=2*u.kpc, frame=coord.Galactic)
+        vxyz = vhel_to_gal(c.galactic, v_hel,
                            vcirc=200*u.km/u.s,
                            vlsr=[-20.,0,10]*u.km/u.s,
-                           galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(vxyz.to(u.km/u.s).value, [-20,220,10], atol=1E-5)
+                           galactocentric_frame=self.galcen_frame)
+        assert np.allclose(vxyz.d_xyz.to(u.km/u.s).value, [-20,220,10],
+                           atol=1E-5)
 
         # l = 180
         # with LSR and circular velocity
-        c = coord.SkyCoord(l=180*u.deg, b=0*u.deg, distance=2*u.kpc, frame=coord.Galactic)
-        pm = [0., 0]*u.mas/u.yr
-        rv = 20*u.km/u.s
-        vxyz = vhel_to_gal(c.galactic, pm=pm, rv=rv,
+        c = coord.SkyCoord(l=180*u.deg, b=0*u.deg,
+                           distance=2*u.kpc, frame=coord.Galactic)
+        vxyz = vhel_to_gal(c.galactic, v_hel,
                            vcirc=200*u.km/u.s,
                            vlsr=[-20.,0,10]*u.km/u.s,
-                           galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(vxyz.to(u.km/u.s).value, [-40,200,10], atol=1E-12)
+                           galactocentric_frame=self.galcen_frame)
+        assert np.allclose(vxyz.d_xyz.to(u.km/u.s).value, [-40,200,10],
+                           atol=1E-12)
 
         # l = 270
         # with LSR and circular velocity
-        c = coord.SkyCoord(l=270*u.deg, b=0*u.deg, distance=2*u.kpc, frame=coord.Galactic)
-        pm = [0., 0]*u.mas/u.yr
-        rv = 20*u.km/u.s
-        vxyz = vhel_to_gal(c.galactic, pm=pm, rv=rv,
+        c = coord.SkyCoord(l=270*u.deg, b=0*u.deg,
+                           distance=2*u.kpc, frame=coord.Galactic)
+        vxyz = vhel_to_gal(c.galactic, v_hel,
                            vcirc=200*u.km/u.s,
                            vlsr=[-20.,0,10]*u.km/u.s,
-                           galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(vxyz.to(u.km/u.s).value, [-20,180,10], atol=1E-5)
+                           galactocentric_frame=self.galcen_frame)
+        assert np.allclose(vxyz.d_xyz.to(u.km/u.s).value, [-20,180,10],
+                           atol=1E-5)
 
     def test_vhel_to_gal_array(self):
         # test all together
         d = self.data
-        c = coord.SkyCoord(ra=d['ra']*u.deg, dec=d['dec']*u.deg, distance=d['dist']*u.pc)
-        pm = np.vstack((d['pml'], d['pmb']))*u.mas/u.yr
-        rv = d['rv']*u.km/u.s
+        c = coord.SkyCoord(ra=d['ra']*u.deg, dec=d['dec']*u.deg,
+                           distance=d['dist']*u.pc)
+        v_hel = coord.SphericalDifferential(d_lon=d['pml']*u.mas/u.yr,
+                                            d_lat=d['pmb']*u.mas/u.yr,
+                                            d_distance=d['rv']*u.km/u.s)
 
         # stupid check
-        vxyz_i = vhel_to_gal(c.icrs, pm=pm, rv=rv,
+        vxyz_i = vhel_to_gal(c.icrs, v_hel,
                              vcirc=0*u.km/u.s,
                              vlsr=[0.,0,0]*u.km/u.s)
-        vxyz = vhel_to_gal(c.galactic, pm=pm, rv=rv,
+        vxyz = vhel_to_gal(c.galactic, v_hel,
                            vcirc=0*u.km/u.s,
                            vlsr=[0.,0,0]*u.km/u.s)
         assert vxyz_i.shape == vxyz.shape
 
         # check values
-        true_UVW = np.vstack((d['U'],d['V'],d['W']))*u.km/u.s
-        found_UVW = vxyz
-        np.testing.assert_allclose(true_UVW.value, found_UVW.value, atol=1.)
+        true_UVW = np.vstack((d['U'], d['V'], d['W']))
+        found_UVW = vxyz.d_xyz.value
+        assert np.allclose(true_UVW, found_UVW, atol=1.) # TODO: why so bad?
 
     def test_vgal_to_hel_single(self):
 
         # test a single entry
         row = self.data[0]
-        c = coord.SkyCoord(ra=row['ra']*u.deg, dec=row['dec']*u.deg, distance=row['dist']*u.pc)
-        pm = [row['pml'],row['pmb']]*u.mas/u.yr
-        rv = row['rv']*u.km/u.s
+        c = coord.SkyCoord(ra=row['ra']*u.deg, dec=row['dec']*u.deg,
+                           distance=row['dist']*u.pc)
 
-        true_pmrv = (pm[0], pm[1], rv)
-        vxyz = [row['U'],row['V'],row['W']]*u.km/u.s
-        pmrv = vgal_to_hel(c.galactic, vxyz=vxyz,
-                           vcirc=0.*u.km/u.s,
-                           vlsr=[0.,0,0]*u.km/u.s)
+        vxyz = [row['U'], row['V'], row['W']] * u.km/u.s
+        v_hel = vgal_to_hel(c.galactic, vxyz,
+                            vcirc=0.*u.km/u.s,
+                            vlsr=[0.,0,0]*u.km/u.s,
+                            galactocentric_frame=self.galcen_frame)
 
-        for i in range(3):
-            np.testing.assert_allclose(pmrv[i].to(true_pmrv[i].unit).value,
-                                       true_pmrv[i].value,
-                                       atol=1.)
-
-        # some sanity checks - first, some convenience definitions
-        g = coord.Galactic(l=0*u.deg, b=0*u.deg).transform_to(coord.ICRS)
-        frargs = dict(galcen_ra=g.ra,
-                      galcen_dec=g.dec,
-                      z_sun=0*u.kpc,
-                      galcen_distance=8*u.kpc)
-        galcen_frame = coord.Galactocentric(**frargs)
+        assert quantity_allclose(v_hel.d_lon, row['pml'] * u.mas/u.yr, rtol=1E-3)
+        assert quantity_allclose(v_hel.d_lat, row['pmb'] * u.mas/u.yr, rtol=1E-3)
+        assert quantity_allclose(v_hel.d_distance, row['rv'] * u.km/u.s, rtol=2E-3)
 
         # --------------------------------------------------------------------
         # l = 0
         # without LSR and circular velocity
-        # c = coord.Galactocentric([6,0,0]*u.kpc,**frargs)
-        c = coord.SkyCoord(l=0*u.deg, b=0*u.deg, distance=2*u.kpc, frame=coord.Galactic)
-        vxyz = [20.,0,0]*u.km/u.s
-        pmv = vgal_to_hel(c.galactic, vxyz,
-                          vcirc=0*u.km/u.s,
-                          vlsr=[0.,0,0]*u.km/u.s,
-                          galactocentric_frame=galcen_frame)
-        np.testing.assert_allclose(pmv[0].to(u.mas/u.yr).value, 0., atol=1E-12)
-        np.testing.assert_allclose(pmv[1].to(u.mas/u.yr).value, 0., atol=1E-12)
-        np.testing.assert_allclose(pmv[2].to(u.km/u.s).value, 20., atol=1E-12)
+        c = coord.SkyCoord(l=0*u.deg, b=0*u.deg, distance=2*u.kpc,
+                           frame=coord.Galactic)
+        vxyz = [20., 0, 0]*u.km/u.s
+        vhel = vgal_to_hel(c.galactic, vxyz,
+                           vcirc=0*u.km/u.s,
+                           vlsr=[0.,0,0]*u.km/u.s,
+                           galactocentric_frame=self.galcen_frame)
+
+        assert np.allclose(vhel.d_lon.value, 0., atol=1E-12)
+        assert np.allclose(vhel.d_lat.value, 0., atol=1E-12)
+        assert np.allclose(vhel.d_distance.to(u.km/u.s).value, 20., atol=1E-12)
+
+        vxyz = [20., 0, 50]*u.km/u.s
+        vhel = vgal_to_hel(c.galactic, vxyz,
+                           vcirc=0*u.km/u.s,
+                           vlsr=[0.,0,0]*u.km/u.s,
+                           galactocentric_frame=self.galcen_frame)
+
+        assert np.allclose(vhel.d_lon.value, 0., atol=1E-5) # TODO: astropy precision issues
+        with u.set_enabled_equivalencies(u.dimensionless_angles()):
+            assert quantity_allclose(vhel.d_lat, 50*u.km/u.s / (2*u.kpc),
+                                     atol=1E-10*u.mas/u.yr)
+        assert quantity_allclose(vhel.d_distance.to(u.km/u.s), vxyz[0],
+                                 atol=1E-10*u.km/u.s)
 
         # with LSR and circular velocity
-        c = coord.SkyCoord(l=0*u.deg, b=0*u.deg, distance=2*u.kpc, frame=coord.Galactic)
-        vxyz = [20.,0,0]*u.km/u.s
-        pmv = vgal_to_hel(c.galactic, vxyz,
-                          vcirc=-200*u.km/u.s,
-                          vlsr=[0.,0,10]*u.km/u.s,
-                          galactocentric_frame=galcen_frame)
+        vxyz = [20., 0, 50]*u.km/u.s
+        vhel = vgal_to_hel(c.galactic, vxyz,
+                           vcirc=-200*u.km/u.s,
+                           vlsr=[0., 0, 10]*u.km/u.s,
+                           galactocentric_frame=self.galcen_frame)
 
         with u.set_enabled_equivalencies(u.dimensionless_angles()):
-            np.testing.assert_allclose(pmv[0].to(u.mas/u.yr).value,
-                                       ((200.*u.km/u.s)/(2*u.kpc)).to(u.mas/u.yr).value,
-                                       atol=1E-12)
-            np.testing.assert_allclose(pmv[1].to(u.mas/u.yr).value,
-                                       ((-10.*u.km/u.s)/(2*u.kpc)).to(u.mas/u.yr).value,
-                                       atol=1E-4)
-        np.testing.assert_allclose(pmv[2].to(u.km/u.s).value, 20., atol=1E-12)
+            assert quantity_allclose(vhel.d_lon,
+                                     (200.*u.km/u.s) / (2*u.kpc),
+                                     atol=1E-10*u.mas/u.yr)
+            assert quantity_allclose(vhel.d_lat,
+                                     (40.*u.km/u.s) / (2*u.kpc),
+                                     atol=1E-6*u.mas/u.yr)
+
+        assert quantity_allclose(vhel.d_distance, 20.*u.km/u.s,
+                                 atol=1E-10*u.km/u.s)
 
     def test_vgal_to_hel_array(self):
         # test all together
         d = self.data
-        c = coord.SkyCoord(ra=d['ra']*u.deg, dec=d['dec']*u.deg, distance=d['dist']*u.pc)
+        c = coord.SkyCoord(ra=d['ra']*u.deg, dec=d['dec']*u.deg,
+                           distance=d['dist']*u.pc)
+
         pm = np.vstack([d['pml'],d['pmb']])*u.mas/u.yr
         rv = d['rv']*u.km/u.s
 
-        true_pmrv = (pm[0], pm[1], rv)
-        vxyz = np.vstack((d['U'],d['V'],d['W']))*u.km/u.s
-        pmrv = vgal_to_hel(c.galactic, vxyz=vxyz,
+        vxyz = np.vstack((d['U'], d['V'], d['W']))*u.km/u.s
+        vhel = vgal_to_hel(c.galactic, vxyz,
                            vcirc=0.*u.km/u.s,
-                           vlsr=[0.,0,0]*u.km/u.s)
+                           vlsr=[0.,0,0]*u.km/u.s,
+                           galactocentric_frame=self.galcen_frame)
 
-        for i in range(3):
-            np.testing.assert_allclose(pmrv[i].to(true_pmrv[i].unit).value,
-                                       true_pmrv[i].value,
-                                       atol=1.)
+        # TODO: why is precision so bad?
+        assert quantity_allclose(vhel.d_lon, pm[0], rtol=5E-3)
+        assert quantity_allclose(vhel.d_lat, pm[1], rtol=5E-3)
+        assert quantity_allclose(vhel.d_distance, rv, rtol=5E-3)
 
     def test_roundtrip_icrs(self):
         np.random.seed(42)
@@ -322,20 +337,18 @@ class TestVHelGalConvert(object):
 
         pm = np.random.uniform(-20,20,size=(2,n)) * u.mas/u.yr
         vr = np.random.normal(0., 75., size=n)*u.km/u.s
-        mua,mud = pm  # initial
+        vhel = coord.SphericalDifferential(d_lon=pm[0], d_lat=pm[1],
+                                           d_distance=vr)
 
         # first to galactocentric
-        vxyz = vhel_to_gal(c.icrs, pm=pm, rv=vr)
+        vxyz = vhel_to_gal(c.icrs, vhel)
 
         # then back again, wooo
-        pmv = vgal_to_hel(c.icrs, vxyz=vxyz)
+        vhel2 = vgal_to_hel(c.icrs, vxyz)
 
-        mua2,mud2 = pmv[:2]
-        vr2 = pmv[2]
-
-        np.testing.assert_allclose(mua.to(u.mas/u.yr).value, mua2.to(u.mas/u.yr).value, atol=1e-12)
-        np.testing.assert_allclose(mud.to(u.mas/u.yr).value, mud2.to(u.mas/u.yr).value, atol=1e-12)
-        np.testing.assert_allclose(vr.to(u.km/u.s).value, vr2.to(u.km/u.s).value, atol=1e-12)
+        for c in vhel.components:
+            assert quantity_allclose(getattr(vhel, c), getattr(vhel2, c),
+                                     rtol=1e-12)
 
     def test_roundtrip_gal(self):
         np.random.seed(42)
@@ -348,18 +361,16 @@ class TestVHelGalConvert(object):
 
         pm = np.random.uniform(-20,20,size=(2,n)) * u.mas/u.yr
         vr = np.random.normal(0., 75., size=n)*u.km/u.s
-        mul,mub = pm  # initial
+        vhel = coord.SphericalDifferential(d_lon=pm[0], d_lat=pm[1],
+                                           d_distance=vr)
 
         # first to galactocentric
-        vxyz = vhel_to_gal(c.galactic, pm=pm, rv=vr)
+        vxyz = vhel_to_gal(c.galactic, vhel)
 
         # then back again, wooo
-        pmv = vgal_to_hel(c.galactic, vxyz=vxyz)
+        vhel2 = vgal_to_hel(c.galactic, vxyz)
 
-        mul2,mub2 = pmv[:2]
-        vr2 = pmv[2]
-
-        # TODO: why such bad roundtripping?
-        np.testing.assert_allclose(mul.to(u.mas/u.yr).value, mul2.to(u.mas/u.yr).value, rtol=1E-4, atol=1e-12)
-        np.testing.assert_allclose(mub.to(u.mas/u.yr).value, mub2.to(u.mas/u.yr).value, rtol=1E-4, atol=1e-12)
-        np.testing.assert_allclose(vr.to(u.km/u.s).value, vr2.to(u.km/u.s).value, rtol=1E-4, atol=1e-12)
+        # TODO: why such bad roundtripping???
+        for c in vhel.components:
+            assert quantity_allclose(getattr(vhel, c), getattr(vhel2, c),
+                                     rtol=1e-4)

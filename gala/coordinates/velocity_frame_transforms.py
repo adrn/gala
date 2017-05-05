@@ -28,14 +28,13 @@ if not ASTROPY_1_3:
 
 # Package
 from .propermotion import transform_proper_motion
-from ..dynamics.extern import representation as rep
 
 __all__ = ["vgal_to_hel", "vhel_to_gal", "vgsr_to_vhel", "vhel_to_vgsr"]
 
 # This is the default circular velocity and LSR peculiar velocity of the Sun
 # TODO: make this a config item?
-VCIRC = 220.*u.km/u.s
-VLSR = [10., 5.25, 7.17]*u.km/u.s
+VCIRC = 220. * u.km/u.s
+VLSR = [10., 5.25, 7.17] * u.km/u.s
 
 def _icrs_gctc_velocity_matrix(galactocentric_frame):
     """
@@ -100,17 +99,23 @@ def vgal_to_hel(coordinate, velocity, vcirc=None, vlsr=None,
 
         >>> import astropy.units as u
         >>> import astropy.coordinates as coord
-        >>> c = coord.Galactocentric(x=15.*u.kpc, y=13.*u.kpc, z=2.*u.kpc)
+        >>> c = coord.Galactocentric([15., 13, 2]*u.kpc)
         >>> vxyz = [-115., 100., 95.]*u.km/u.s
         >>> icrs = c.transform_to(coord.ICRS)
         >>> vgal_to_hel(icrs, vxyz) # doctest: +FLOAT_CMP
-        (<Quantity -0.876885123328934 mas / yr>, <Quantity 0.024501209459030334 mas / yr>, <Quantity -163.24449462243052 km / s>)
+        <SphericalDifferential (d_lon, d_lat, d_distance) in (mas / yr, mas / yr, km / s)
+            (-0.87688512,  0.02450121, -163.24449462)>
 
-        >>> c = coord.Galactocentric([[15.,11.],[13,21.],[2.,-7]]*u.kpc)
-        >>> vxyz = [[-115.,11.], [100.,-21.], [95.,103]]*u.km/u.s
+        >>> c = coord.Galactocentric([[15.,11.], [13,21.], [2.,-7]]*u.kpc)
+        >>> vxyz = [[-115.,11.], [100.,-21.], [95.,103]] * u.km/u.s
         >>> icrs = c.transform_to(coord.ICRS)
-        >>> vgal_to_hel(icrs, vxyz) # doctest: +FLOAT_CMP
-        (<Quantity [-0.87688512,-0.91157482] mas / yr>, <Quantity [ 0.02450121,-0.86124895] mas / yr>, <Quantity [-163.24449462,-198.31241148] km / s>)
+        >>> vhel = vgal_to_hel(icrs, vxyz)
+        >>> vhel # doctest: +FLOAT_CMP
+        <SphericalDifferential (d_lon, d_lat, d_distance) in (mas / yr, mas / yr, km / s)
+            [(-0.87688512,  0.02450121, -163.24449462),
+             (-0.91157482, -0.86124895, -198.31241148)]>
+        >>> vhel.d_lon # doctest: +FLOAT_CMP
+        <Quantity [-0.87688512,-0.91157482] mas / yr>
 
     """
 
@@ -123,13 +128,15 @@ def vgal_to_hel(coordinate, velocity, vcirc=None, vlsr=None,
     if galactocentric_frame is None:
         galactocentric_frame = coord.Galactocentric
 
-    # TODO: do something with velocity
-    if not isinstance(velocity, rep.BaseDifferential):
-        velocity = rep.CartesianDifferential(*velocity)
-
-    vxyz = velocity.cartesian.d_xyz
-
     c = coordinate
+    v = velocity
+    if isinstance(v, coord.BaseDifferential):
+        pos = c.represent_as(v.base_representation)
+        vxyz = v.represent_as(coord.CartesianDifferential, base=pos).d_xyz
+
+    else:
+        vxyz = v
+
     R = _icrs_gctc_velocity_matrix(galactocentric_frame)
 
     # remove circular and LSR velocities
@@ -169,7 +176,7 @@ def vgal_to_hel(coordinate, velocity, vcirc=None, vlsr=None,
         vr = vr.reshape(())
         pm = (pm[0].reshape(()), pm[1].reshape(()))
 
-    return rep.SphericalDifferential(d_lon=pm[0], d_lat=pm[1], d_distance=vr)
+    return coord.SphericalDifferential(d_lon=pm[0], d_lat=pm[1], d_distance=vr)
 
 def vhel_to_gal(coordinate, velocity, vcirc=None, vlsr=None,
                 galactocentric_frame=None):
@@ -214,19 +221,26 @@ def vhel_to_gal(coordinate, velocity, vcirc=None, vlsr=None,
 
         >>> import astropy.units as u
         >>> import astropy.coordinates as coord
-        >>> c = coord.SkyCoord(ra=196.5*u.degree, dec=-10.33*u.deg, distance=16.2*u.kpc)
-        >>> pm = [-1.53, 3.5]*u.mas/u.yr
-        >>> rv = 161.4*u.km/u.s
-        >>> vhel_to_gal(c, pm=pm, rv=rv) # doctest: +FLOAT_CMP
-        <Quantity [-137.29984564, 262.64052249, 305.50786499] km / s>
+        >>> c = coord.SkyCoord(ra=196.5*u.degree, dec=-10.33*u.deg,
+        ...                    distance=16.2*u.kpc)
+        >>> vhel = coord.SphericalDifferential(d_lon=-1.53*u.mas/u.yr,
+        ...                                    d_lat=3.5*u.mas/u.yr,
+        ...                                    d_distance=161.4*u.km/u.s)
+        >>> vgal = vhel_to_gal(c, vhel)
+        >>> vgal # doctest: +FLOAT_CMP
+        <CartesianDifferential (d_x, d_y, d_z) in km / s
+            (-137.29984564,  262.64052249,  305.50786499)>
 
-        >>> c = coord.SkyCoord(ra=[196.5,51.3]*u.degree, dec=[-10.33,2.1]*u.deg, distance=[16.2,11.]*u.kpc)
-        >>> pm = [[-1.53,4.5], [3.5,10.9]]*u.mas/u.yr
-        >>> rv = [161.4,-210.2]*u.km/u.s
-        >>> vhel_to_gal(c, pm=pm, rv=rv) # doctest: +FLOAT_CMP
-        <Quantity [[-137.29984564,-212.10415701],
-                   [ 262.64052249, 496.85687803],
-                   [ 305.50786499, 554.16562628]] km / s>
+        >>> c = coord.SkyCoord(ra=[196.5,51.3]*u.degree, dec=[-10.33,2.1]*u.deg,
+        ...                    distance=[16.2,11.]*u.kpc)
+        >>> vhel = coord.SphericalDifferential(d_lon=[-1.53, 4.5]*u.mas/u.yr,
+        ...                                    d_lat=[3.5, 10.9]*u.mas/u.yr,
+        ...                                    d_distance=[161.4, -210.2]*u.km/u.s)
+        >>> vgal = vhel_to_gal(c, vhel)
+        >>> vgal # doctest: +FLOAT_CMP
+        <CartesianDifferential (d_x, d_y, d_z) in km / s
+            [(-137.29984564,  262.64052249,  305.50786499),
+             (-212.10415701,  496.85687803,  554.16562628)]>
 
     """
 
@@ -239,8 +253,18 @@ def vhel_to_gal(coordinate, velocity, vcirc=None, vlsr=None,
     if galactocentric_frame is None:
         galactocentric_frame = coord.Galactocentric
 
-    # make sure this is a coordinate and get the frame for later use
     c = coordinate
+    v = velocity
+    if isinstance(v, coord.BaseDifferential):
+        pos = c.represent_as(v.base_representation)
+        vsph = v.represent_as(coord.SphericalDifferential, base=pos)
+        vsph = [vsph.d_lon, vsph.d_lat, vsph.d_distance]
+
+    else:
+        vsph = v
+
+    pm = vsph[:2]
+    rv = vsph[2]
 
     if c.name == 'icrs':
         pm_radec = u.Quantity(map(np.atleast_1d,pm))
@@ -274,10 +298,9 @@ def vhel_to_gal(coordinate, velocity, vcirc=None, vlsr=None,
         v_gc[i] = v_gc[i] + vlsr[i]
 
     if c.isscalar:
-        return v_gc.reshape((3,))
-    else:
-        return v_gc
+        v_gc = v_gc.reshape((3,))
 
+    return coord.CartesianDifferential(*v_gc)
 
 # -----------------------------------------------------------------------------
 
