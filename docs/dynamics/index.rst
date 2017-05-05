@@ -31,8 +31,8 @@ other subpackages are the `~gala.dynamics.PhaseSpacePosition` and
 Getting started: Working with orbits
 ====================================
 
-We'll start by integrating an orbit using the :mod:`gala.potential` and
-:mod:`gala.integrate` subpackages::
+As a demonstration of how to use these objects, we'll start by integrating an
+orbit using the :mod:`gala.potential` and :mod:`gala.integrate` subpackages::
 
     >>> pot = gp.MiyamotoNagaiPotential(m=2.5E11*u.Msun, a=6.5*u.kpc,
     ...                                 b=0.26*u.kpc, units=galactic)
@@ -46,10 +46,10 @@ and velocity are assumed to be Cartesian coordinates but other coordinate
 systems are supported (see the :ref:`orbits-in-detail` and
 :ref:`nd-representations` pages for more information).
 
-The `~gala.dynamics.Orbit` object contains many useful methods, and can be
-passed to many of the analysis functions implemented in Gala. For example, we
-can easily visualize the orbit by plotting the time series in all Cartesian
-projections using the :meth:`~gala.dynamics.Orbit.plot` method::
+The `~gala.dynamics.Orbit` object that is returned contains many useful methods,
+and can be passed to many of the analysis functions implemented in Gala. For
+example, we can easily visualize the orbit by plotting the time series in all
+Cartesian projections using the :meth:`~gala.dynamics.Orbit.plot` method::
 
     >>> fig = orbit.plot()
 
@@ -65,6 +65,25 @@ projections using the :meth:`~gala.dynamics.Orbit.plot` method::
                                vel=[0., 200, 100]*u.km/u.s)
     orbit = pot.integrate_orbit(w0, dt=1., n_steps=1000)
     fig = orbit.plot()
+
+Or, we can visualize the orbit in just one projection of some transformed
+coordinate representation, for example, cylindrical radius :math:`\rho` and
+:math:`z`::
+
+    >>> fig = orbit.represent_as('cylindrical').plot(['rho', 'z'])
+
+.. plot::
+    :align: center
+
+    import astropy.units as u
+    import gala.potential as gp
+    import gala.dynamics as gd
+    from gala.units import galactic
+    pot = gp.MiyamotoNagaiPotential(m=2.5E11, a=6.5, b=0.26, units=galactic)
+    w0 = gd.PhaseSpacePosition(pos=[11., 0., 0.2]*u.kpc,
+                               vel=[0., 200, 100]*u.km/u.s)
+    orbit = pot.integrate_orbit(w0, dt=1., n_steps=1000)
+    _ = orbit.represent_as('cylindrical').plot(['rho', 'z'])
 
 From the `~gala.dynamics.Orbit` object, we can also easily compute dynamical
 quantities such as the energy or angular momentum (we take the 0th element
@@ -86,8 +105,9 @@ We can access the position and velocity components of the orbit separately using
 the attributes ``.pos`` and ``.vel``. These objects are
 `~astropy.coordinates.BaseRepresentation` and
 `~astropy.coordinates.BaseDifferential` subclasses. By default, as in this
-example, both are Cartesian, so to access the individual components we do, e.g.,
-::
+example, both are Cartesian (`~astropy.coordinates.CartesianRepresentation` and
+`~astropy.coordinates.CartesianDifferential`), so to access the individual
+components, e.g., ``x``, we use::
 
     >>> orbit.pos.x # doctest: +FLOAT_CMP
     <Quantity [ 11.        , 10.99714901, 10.98864505,...,   6.42504843,
