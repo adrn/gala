@@ -189,8 +189,8 @@ function and any keyword arguments are passed through to that function::
     np.random.seed(42)
     x = np.random.uniform(-10,10,size=(3,128))
     v = np.random.uniform(-200,200,size=(3,128))
-    w = gd.CartesianPhaseSpacePosition(pos=x*u.kpc,
-                                       vel=v*u.km/u.s)
+    w = gd.PhaseSpacePosition(pos=x*u.kpc,
+                              vel=v*u.km/u.s)
     fig = w.plot(components=['x', 'd_z'], color='r',
                  facecolor='', marker='o', s=20, alpha=0.5)
 
@@ -199,6 +199,7 @@ Phase-space position API
 .. automodapi:: gala.dynamics.core
     :no-heading:
     :headings: ^^
+    :skip: CartesianPhaseSpacePosition
 
 .. _orbit:
 
@@ -242,15 +243,15 @@ orbits, each with the same 128 times::
     >>> vel = np.stack((-5*np.sin(angle), np.cos(angle))).value * u.kpc/u.Myr
     >>> orbit = gd.Orbit(pos=pos, vel=vel)
     >>> orbit
-    <CartesianOrbit N=2, shape=(128, 16)>
+    <Orbit N=2, shape=(128, 16)>
 
 To make full use of the orbit functionality, you must also pass in an array with
 the time values and an instance of a `~gala.potential.PotentialBase` subclass
 that represents the potential that the orbit was integrated in::
 
     >>> pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
-    >>> orbit = gd.CartesianOrbit(pos=pos*u.kpc, vel=vel*u.km/u.s,
-    ...                           t=t*u.Myr, potential=pot)
+    >>> orbit = gd.Orbit(pos=pos*u.kpc, vel=vel*u.km/u.s,
+    ...                  t=t*u.Myr, potential=pot)
 
 (note, in this case ``pos`` and ``vel`` were not generated from integrating
 an orbit in the potential ``pot``!). However, most of the time you won't need to
@@ -329,3 +330,4 @@ Orbit API
 .. automodapi:: gala.dynamics.orbit
     :no-heading:
     :headings: ^^
+    :skip: CartesianOrbit
