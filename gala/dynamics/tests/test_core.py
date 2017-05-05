@@ -154,8 +154,9 @@ def test_represent_as():
     assert sph.pos.distance.unit == u.kpc
 
     sph2 = o.represent_as('spherical')
-    for c in sph.components:
-        assert quantity_allclose(getattr(sph, c), getattr(sph2, c),
+    for c in sph.pos.components:
+        assert quantity_allclose(getattr(sph.pos, c),
+                                 getattr(sph2.pos, c),
                                  rtol=1E-12)
 
     # doesn't work for 2D

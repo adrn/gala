@@ -90,10 +90,8 @@ class PhaseSpacePosition(object):
         if not isinstance(vel, coord.BaseDifferential):
 
             if ndim == 3:
-                default_rep = pos.__class__
-                default_rep_name = default_rep.get_name().capitalize()
-                Diff = getattr(coord, default_rep_name+'Differential')
-
+                name = pos.__class__.get_name()
+                Diff = coord.representation.DIFFERENTIAL_CLASSES[name]
             else:
                 Diff = rep_nd.NDCartesianDifferential
 
@@ -158,11 +156,13 @@ class PhaseSpacePosition(object):
                              "ndim=3 instances.")
 
         # get the name of the desired representation
-        if not isinstance(Representation, string_types):
+        if isinstance(Representation, string_types):
+            name = Representation
+        else:
             name = Representation.get_name()
+
         Representation = coord.representation.REPRESENTATION_CLASSES[name]
-        base_name = Representation.__name__[:-len('Representation')]
-        Differential = getattr(coord, base_name+'Differential')
+        Differential = coord.representation.DIFFERENTIAL_CLASSES[name]
 
         new_pos = self.pos.represent_as(Representation)
         new_vel = self.vel.represent_as(Differential, self.pos)
