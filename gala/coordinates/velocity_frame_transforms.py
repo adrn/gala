@@ -104,7 +104,7 @@ def vgal_to_hel(coordinate, velocity, vcirc=None, vlsr=None,
         >>> icrs = c.transform_to(coord.ICRS)
         >>> vgal_to_hel(icrs, vxyz) # doctest: +FLOAT_CMP
         <SphericalDifferential (d_lon, d_lat, d_distance) in (mas / yr, mas / yr, km / s)
-            (-0.87688512,  0.02450121, -163.24449462)>
+            (-0.87712464,  0.02450121, -163.24449462)>
 
         >>> c = coord.Galactocentric([[15.,11.], [13,21.], [2.,-7]]*u.kpc)
         >>> vxyz = [[-115.,11.], [100.,-21.], [95.,103]] * u.km/u.s
@@ -112,10 +112,10 @@ def vgal_to_hel(coordinate, velocity, vcirc=None, vlsr=None,
         >>> vhel = vgal_to_hel(icrs, vxyz)
         >>> vhel # doctest: +FLOAT_CMP
         <SphericalDifferential (d_lon, d_lat, d_distance) in (mas / yr, mas / yr, km / s)
-            [(-0.87688512,  0.02450121, -163.24449462),
-             (-0.91157482, -0.86124895, -198.31241148)]>
+            [(-0.87712464,  0.02450121, -163.24449462),
+             (-0.91690268, -0.86124895, -198.31241148)]>
         >>> vhel.d_lon # doctest: +FLOAT_CMP
-        <Quantity [-0.87688512,-0.91157482] mas / yr>
+        <Quantity [-0.87712464,-0.91690268] mas / yr>
 
     """
 
@@ -176,7 +176,10 @@ def vgal_to_hel(coordinate, velocity, vcirc=None, vlsr=None,
         vr = vr.reshape(())
         pm = (pm[0].reshape(()), pm[1].reshape(()))
 
-    return coord.SphericalDifferential(d_lon=pm[0], d_lat=pm[1], d_distance=vr)
+    # NOTE: remember that d_lon does not include the cos(lat) term!
+    return coord.SphericalDifferential(d_lon=pm[0] / np.cos(c.spherical.lat),
+                                       d_lat=pm[1],
+                                       d_distance=vr)
 
 def vhel_to_gal(coordinate, velocity, vcirc=None, vlsr=None,
                 galactocentric_frame=None):
@@ -193,12 +196,11 @@ def vhel_to_gal(coordinate, velocity, vcirc=None, vlsr=None,
         This is most commonly a :class:`~astropy.coordinates.SkyCoord` object,
         but alternatively, it can be any coordinate frame object that is
         transformable to the Galactocentric frame.
-    velocity : :class:`~astropy.coordinates.BaseDifferential`, :class:`~astropy.units.Quantity`, iterable
-        If not provided as a Differential instance, the velocity components are
-        assumed to be Cartesian :math:`(v_x,v_y,v_z)` and should either
-        be a single :class:`~astropy.units.Quantity` object with shape ``(3,N)``
-        or an iterable object with 3 :class:`~astropy.units.Quantity` objects as
-        elements.
+    velocity : :class:`~astropy.coordinates.BaseDifferential`, iterable
+        If not provided as a Differential instance, the velocity input is
+        assumed to be a length-3 iterable containing proper motion components
+        and radial velocity. The proper motion in longitude should *not* contain
+        the cos(latitude) term.
     vcirc : :class:`~astropy.units.Quantity` (optional)
         Circular velocity of the Sun.
     vlsr : :class:`~astropy.units.Quantity` (optional)
@@ -229,7 +231,7 @@ def vhel_to_gal(coordinate, velocity, vcirc=None, vlsr=None,
         >>> vgal = vhel_to_gal(c, vhel)
         >>> vgal # doctest: +FLOAT_CMP
         <CartesianDifferential (d_x, d_y, d_z) in km / s
-            (-137.29984564,  262.64052249,  305.50786499)>
+            (-135.73494236,  263.72006872,  305.39515348)>
 
         >>> c = coord.SkyCoord(ra=[196.5,51.3]*u.degree, dec=[-10.33,2.1]*u.deg,
         ...                    distance=[16.2,11.]*u.kpc)
@@ -239,8 +241,8 @@ def vhel_to_gal(coordinate, velocity, vcirc=None, vlsr=None,
         >>> vgal = vhel_to_gal(c, vhel)
         >>> vgal # doctest: +FLOAT_CMP
         <CartesianDifferential (d_x, d_y, d_z) in km / s
-            [(-137.29984564,  262.64052249,  305.50786499),
-             (-212.10415701,  496.85687803,  554.16562628)]>
+            [(-135.73494236,  263.72006872,  305.39515348),
+             (-212.0251261 ,  496.96148064,  554.07817075)]>
 
     """
 
@@ -267,10 +269,13 @@ def vhel_to_gal(coordinate, velocity, vcirc=None, vlsr=None,
     rv = vsph[2]
 
     if c.name == 'icrs':
-        pm_radec = u.Quantity(map(np.atleast_1d,pm))
+        pm_radec = u.Quantity([np.atleast_1d(pm[0]) * np.cos(c.dec),
+                               np.atleast_1d(pm[1])])
         icrs = c
 
     else:
+        pm[0] = pm[0] * np.cos(c.spherical.lat)
+        # pmra *includes* cos(dec) term!
         pm_radec = transform_proper_motion(c, pm, coord.ICRS)
         icrs = c.transform_to(coord.ICRS)
 

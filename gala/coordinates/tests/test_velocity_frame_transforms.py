@@ -133,32 +133,37 @@ class TestVHelGalConvert(object):
 
         # This should make the transformations more compatible
         g = coord.Galactic(l=0*u.deg, b=0*u.deg).transform_to(coord.ICRS)
-        self.galcen_frame = coord.Galactocentric(galcen_ra=g.ra, galcen_dec=g.dec,
+        self.galcen_frame = coord.Galactocentric(galcen_ra=g.ra,
+                                                 galcen_dec=g.dec,
                                                  z_sun=0*u.kpc)
 
     def test_vhel_to_gal_single(self):
-        # test a single entry
-        row = self.data[0]
-        c = coord.SkyCoord(ra=row['ra']*u.deg, dec=row['dec']*u.deg,
-                           distance=row['dist']*u.pc)
-        v_hel = coord.SphericalDifferential(d_lon=row['pml']*u.mas/u.yr,
-                                            d_lat=row['pmb']*u.mas/u.yr,
-                                            d_distance=row['rv']*u.km/u.s)
 
-        # stupid check
-        vxyz_i = vhel_to_gal(c.icrs, v_hel,
-                             vcirc=0*u.km/u.s,
-                             vlsr=[0.,0,0]*u.km/u.s)
+        for row in self.data: # test one entry at a time
+            c = coord.SkyCoord(ra=row['ra']*u.deg, dec=row['dec']*u.deg,
+                               distance=row['dist']*u.pc)
+            icrs = c.icrs
+            gal = c.galactic
+            v_hel = coord.SphericalDifferential(d_lon=row['pml']/np.cos(gal.b)*u.mas/u.yr,
+                                                d_lat=row['pmb']*u.mas/u.yr,
+                                                d_distance=row['rv']*u.km/u.s)
 
-        vxyz = vhel_to_gal(c.galactic, v_hel,
-                           vcirc=0*u.km/u.s,
-                           vlsr=[0.,0,0]*u.km/u.s)
+            # stupid check
+            vxyz_i = vhel_to_gal(icrs, v_hel,
+                                 vcirc=0*u.km/u.s,
+                                 vlsr=[0.,0,0]*u.km/u.s)
 
-        assert vxyz_i.shape == vxyz.shape
+            vxyz = vhel_to_gal(gal, v_hel,
+                               vcirc=0*u.km/u.s,
+                               vlsr=[0.,0,0]*u.km/u.s)
 
-        true_UVW = [row['U'], row['V'], row['W']]*u.km/u.s
-        found_UVW = vxyz.d_xyz
-        assert np.allclose(true_UVW.value, found_UVW.value, atol=1.)
+            assert vxyz_i.shape == vxyz.shape
+
+            true_UVW = np.array([row['U'], row['V'], row['W']])
+            UVW = vxyz.d_xyz.to(u.km/u.s).value
+
+            # catalog values are rounded
+            assert np.allclose(UVW, true_UVW, rtol=1E-2, atol=0.1)
 
         # --------------------------------------------------------------------
         # l = 0
@@ -225,40 +230,48 @@ class TestVHelGalConvert(object):
         d = self.data
         c = coord.SkyCoord(ra=d['ra']*u.deg, dec=d['dec']*u.deg,
                            distance=d['dist']*u.pc)
-        v_hel = coord.SphericalDifferential(d_lon=d['pml']*u.mas/u.yr,
+        icrs = c.icrs
+        gal = c.galactic
+        v_hel = coord.SphericalDifferential(d_lon=d['pml']/np.cos(gal.b)*u.mas/u.yr,
                                             d_lat=d['pmb']*u.mas/u.yr,
                                             d_distance=d['rv']*u.km/u.s)
 
         # stupid check
-        vxyz_i = vhel_to_gal(c.icrs, v_hel,
+        vxyz_i = vhel_to_gal(icrs, v_hel,
                              vcirc=0*u.km/u.s,
                              vlsr=[0.,0,0]*u.km/u.s)
-        vxyz = vhel_to_gal(c.galactic, v_hel,
+        vxyz = vhel_to_gal(gal, v_hel,
                            vcirc=0*u.km/u.s,
                            vlsr=[0.,0,0]*u.km/u.s)
         assert vxyz_i.shape == vxyz.shape
 
         # check values
-        true_UVW = np.vstack((d['U'], d['V'], d['W']))
-        found_UVW = vxyz.d_xyz.value
-        assert np.allclose(true_UVW, found_UVW, atol=1.) # TODO: why so bad?
+        true_UVW = np.array([d['U'], d['V'], d['W']])
+        UVW = vxyz.d_xyz.to(u.km/u.s).value
+
+        # catalog values are rounded
+        assert np.allclose(UVW, true_UVW, rtol=1E-2, atol=0.1)
 
     def test_vgal_to_hel_single(self):
 
-        # test a single entry
-        row = self.data[0]
-        c = coord.SkyCoord(ra=row['ra']*u.deg, dec=row['dec']*u.deg,
-                           distance=row['dist']*u.pc)
+        for row in self.data: # test one entry at a time
+            c = coord.SkyCoord(ra=row['ra']*u.deg, dec=row['dec']*u.deg,
+                               distance=row['dist']*u.pc)
+            gal = c.galactic
+            vxyz = [row['U'], row['V'], row['W']] * u.km/u.s
 
-        vxyz = [row['U'], row['V'], row['W']] * u.km/u.s
-        v_hel = vgal_to_hel(c.galactic, vxyz,
-                            vcirc=0.*u.km/u.s,
-                            vlsr=[0.,0,0]*u.km/u.s,
-                            galactocentric_frame=self.galcen_frame)
+            vhel = vgal_to_hel(gal, vxyz,
+                               vcirc=0.*u.km/u.s,
+                               vlsr=[0.,0,0]*u.km/u.s,
+                               galactocentric_frame=self.galcen_frame)
 
-        assert quantity_allclose(v_hel.d_lon, row['pml'] * u.mas/u.yr, rtol=1E-3)
-        assert quantity_allclose(v_hel.d_lat, row['pmb'] * u.mas/u.yr, rtol=1E-3)
-        assert quantity_allclose(v_hel.d_distance, row['rv'] * u.km/u.s, rtol=2E-3)
+            # tolerance set by the catalog rounded numbers
+            assert quantity_allclose(vhel.d_lon * np.cos(gal.b),
+                                     row['pml'] * u.mas/u.yr, rtol=1E-2)
+            assert quantity_allclose(vhel.d_lat, row['pmb'] * u.mas/u.yr,
+                                     rtol=1E-2)
+            assert quantity_allclose(vhel.d_distance, row['rv'] * u.km/u.s,
+                                     rtol=1E-2)
 
         # --------------------------------------------------------------------
         # l = 0
@@ -321,9 +334,10 @@ class TestVHelGalConvert(object):
                            vlsr=[0.,0,0]*u.km/u.s,
                            galactocentric_frame=self.galcen_frame)
 
-        # TODO: why is precision so bad?
-        assert quantity_allclose(vhel.d_lon, pm[0], rtol=5E-3)
-        assert quantity_allclose(vhel.d_lat, pm[1], rtol=5E-3)
+        # tolerance set by the catalog rounded numbers
+        assert quantity_allclose(vhel.d_lon * np.cos(c.galactic.b), pm[0],
+                                 rtol=1E-2)
+        assert quantity_allclose(vhel.d_lat, pm[1], rtol=1E-2)
         assert quantity_allclose(vhel.d_distance, rv, rtol=5E-3)
 
     def test_roundtrip_icrs(self):
