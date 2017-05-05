@@ -2,12 +2,9 @@
 
 from __future__ import division, print_function
 
-# Standard library
-import warnings
-
 # Third-party
 import astropy.units as u
-from astropy.coordinates import Galactic
+from astropy.coordinates import Galactic, CartesianRepresentation
 from astropy.tests.helper import quantity_allclose
 import numpy as np
 import pytest
@@ -19,9 +16,6 @@ from ...potential.frame import StaticFrame, ConstantRotatingFrame
 from ...units import galactic, solarsystem
 from ..representation_nd import (NDCartesianRepresentation,
                                  NDCartesianDifferential)
-
-# HACK: for now
-from ..extern.representation import CartesianRepresentation
 
 def test_init_repr():
     with pytest.raises(ValueError):

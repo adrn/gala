@@ -6,15 +6,13 @@ from __future__ import division, print_function
 from collections import OrderedDict
 
 # Third-party
+import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 
-# Project
-from .extern import representation as rep
-
 __all__ = ['NDCartesianRepresentation', 'NDCartesianDifferential']
 
-class NDCartesianRepresentation(rep.CartesianRepresentation):
+class NDCartesianRepresentation(coord.CartesianRepresentation):
     """
     Representation of points in ND cartesian coordinates.
 
@@ -30,7 +28,7 @@ class NDCartesianRepresentation(rep.CartesianRepresentation):
         If `True` (default), arrays will be copied rather than referenced.
     """
 
-    attr_classes = []
+    attr_classes = OrderedDict()
 
     def __init__(self, *x, unit=None, copy=True):
 
@@ -49,7 +47,7 @@ class NDCartesianRepresentation(rep.CartesianRepresentation):
         self.attr_classes = OrderedDict([('x'+str(i), u.Quantity)
                                          for i in range(1, len(x)+1)])
 
-        super(rep.CartesianRepresentation, self).__init__(*x, copy=copy)
+        super(coord.CartesianRepresentation, self).__init__(*x, copy=copy)
 
         ptype = None
         for name,_ in self.attr_classes.items():
@@ -64,7 +62,7 @@ class NDCartesianRepresentation(rep.CartesianRepresentation):
             cls = self.__class__
             if not hasattr(cls, name):
                 setattr(cls, name,
-                        property(rep._make_getter(name),
+                        property(coord.representation._make_getter(name),
                                  doc=("The '{0}' component of the points(s)."
                                       .format(name))))
 
@@ -104,7 +102,7 @@ class NDCartesianRepresentation(rep.CartesianRepresentation):
 
     xyz = property(get_xyz)
 
-class NDCartesianDifferential(rep.CartesianDifferential):
+class NDCartesianDifferential(coord.CartesianDifferential):
     """Differentials in of points in ND cartesian coordinates.
 
     Parameters
@@ -119,7 +117,7 @@ class NDCartesianDifferential(rep.CartesianDifferential):
         If `True` (default), arrays will be copied rather than referenced.
     """
     base_representation = NDCartesianRepresentation
-    attr_classes = []
+    attr_classes = OrderedDict()
 
     def __init__(self, *d_x, unit=None, copy=True):
 
@@ -138,7 +136,7 @@ class NDCartesianDifferential(rep.CartesianDifferential):
         self.attr_classes = OrderedDict([('d_x'+str(i), u.Quantity)
                                          for i in range(1, len(d_x)+1)])
 
-        super(rep.CartesianDifferential, self).__init__(*d_x, copy=copy)
+        super(coord.CartesianDifferential, self).__init__(*d_x, copy=copy)
 
         ptype = None
         for name,_ in self.attr_classes.items():
@@ -153,7 +151,7 @@ class NDCartesianDifferential(rep.CartesianDifferential):
             cls = self.__class__
             if not hasattr(cls, name):
                 setattr(cls, name,
-                        property(rep._make_getter(name),
+                        property(coord.representation._make_getter(name),
                                  doc=("The '{0}' component of the points(s)."
                                       .format(name))))
 

@@ -16,7 +16,6 @@ import astropy.units as u
 # Project
 from ..potential import (Hamiltonian, PotentialBase,
                          IsochronePotential, HarmonicOscillatorPotential)
-from ..coordinates import physicsspherical_to_cartesian
 from ..util import atleast_2d
 
 __all__ = ['isochrone_to_aa', 'harmonic_oscillator_to_aa']
@@ -276,6 +275,9 @@ def isochrone_to_xv(actions, angles, potential):
     vtheta = -L*sini*np.cos(psi)/np.sin(theta)/r
     vphi = Lz / (r*np.sin(theta))
 
+    d_phi = vphi / (r*np.sin(theta))
+    d_theta = vtheta / r
+
     # phi
     sinu = np.sin(psi)*cosi/np.sin(theta)
 
@@ -290,9 +292,13 @@ def isochrone_to_xv(actions, angles, potential):
     # We now need to convert from spherical polar coord to cart. coord.
     pos = coord.PhysicsSphericalRepresentation(r=r*u.dimensionless_unscaled,
                                                phi=phi*u.rad, theta=theta*u.rad)
-    x = pos.represent_as(coord.CartesianRepresentation).xyz.value
-    v = physicsspherical_to_cartesian(pos, [vr,vphi,vtheta]*u.dimensionless_unscaled).value
-    return x,v
+    pos = pos.represent_as(coord.CartesianRepresentation)
+    x = pos.xyz.value
+
+    vel = coord.PhysicsSphericalDifferential(d_phi=d_phi, d_theta=d_theta, d_r=vr)
+    v = vel.represent_as(coord.CartesianDifferential, base=pos).d_xyz.value
+
+    return x, v
 
 def harmonic_oscillator_to_aa(w, potential):
     """

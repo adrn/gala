@@ -9,7 +9,9 @@ import warnings
 
 # Third-party
 import astropy.units as u
-from astropy.coordinates import Galactic
+from astropy.coordinates import (Galactic, CartesianRepresentation,
+                                 SphericalRepresentation, CartesianDifferential,
+                                 SphericalDifferential)
 from astropy.tests.helper import quantity_allclose
 import numpy as np
 import pytest
@@ -19,11 +21,6 @@ from ..core import PhaseSpacePosition
 from ...potential import Hamiltonian, HernquistPotential
 from ...potential.frame import StaticFrame, ConstantRotatingFrame
 from ...units import galactic, solarsystem
-# HACK: for now
-from ..extern.representation import (CartesianRepresentation,
-                                     SphericalRepresentation,
-                                     CartesianDifferential,
-                                     SphericalDifferential)
 
 def test_initialize():
 
@@ -155,6 +152,11 @@ def test_represent_as():
     o = PhaseSpacePosition(pos=x, vel=v)
     sph = o.represent_as(SphericalRepresentation)
     assert sph.pos.distance.unit == u.kpc
+
+    sph2 = o.represent_as('spherical')
+    for c in sph.components:
+        assert quantity_allclose(getattr(sph, c), getattr(sph2, c),
+                                 rtol=1E-12)
 
     # doesn't work for 2D
     x = np.random.random(size=(2,10))

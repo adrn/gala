@@ -3,7 +3,6 @@
 from __future__ import division, print_function
 
 # Standard library
-from collections import OrderedDict
 import warnings
 import inspect
 
@@ -11,9 +10,9 @@ import inspect
 import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
+from six import string_types
 
 # Project
-from .extern import representation as rep
 from . import representation_nd as rep_nd
 from .plot import plot_projections
 from ..coordinates import vgal_to_hel
@@ -66,7 +65,7 @@ class PhaseSpacePosition(object):
     """
     def __init__(self, pos, vel, frame=None):
 
-        if not isinstance(pos, rep.BaseRepresentation):
+        if not isinstance(pos, coord.BaseRepresentation):
             # assume Cartesian if not specified
             if not hasattr(pos, 'unit'):
                 pos = pos * u.one
@@ -77,10 +76,10 @@ class PhaseSpacePosition(object):
                 # TODO: HACK: until this stuff is in astropy core
                 if isinstance(pos, coord.BaseRepresentation):
                     kw = [(k,getattr(pos,k)) for k in pos.components]
-                    pos = getattr(rep, pos.__class__.__name__)(**kw)
+                    pos = getattr(coord, pos.__class__.__name__)(**kw)
 
                 else:
-                    pos = rep.CartesianRepresentation(pos)
+                    pos = coord.CartesianRepresentation(pos)
 
             else:
                 pos = rep_nd.NDCartesianRepresentation(*pos)
@@ -88,12 +87,12 @@ class PhaseSpacePosition(object):
         else:
             ndim = 3
 
-        if not isinstance(vel, rep.BaseDifferential):
+        if not isinstance(vel, coord.BaseDifferential):
 
             if ndim == 3:
                 default_rep = pos.__class__
                 default_rep_name = default_rep.get_name().capitalize()
-                Diff = getattr(rep, default_rep_name+'Differential')
+                Diff = getattr(coord, default_rep_name+'Differential')
 
             else:
                 Diff = rep_nd.NDCartesianDifferential
@@ -151,7 +150,7 @@ class PhaseSpacePosition(object):
 
         Returns
         -------
-        new_phase_sp : `gala.dynamics.PhaseSpacePosition`
+        new_psp : `gala.dynamics.PhaseSpacePosition`
         """
 
         if self.ndim != 3:
@@ -159,9 +158,11 @@ class PhaseSpacePosition(object):
                              "ndim=3 instances.")
 
         # get the name of the desired representation
-        Representation = rep.REPRESENTATION_CLASSES[Representation.get_name()]
+        if not isinstance(Representation, string_types):
+            name = Representation.get_name()
+        Representation = coord.representation.REPRESENTATION_CLASSES[name]
         base_name = Representation.__name__[:-len('Representation')]
-        Differential = getattr(rep, base_name+'Differential')
+        Differential = getattr(coord, base_name+'Differential')
 
         new_pos = self.pos.represent_as(Representation)
         new_vel = self.vel.represent_as(Differential, self.pos)
@@ -259,51 +260,41 @@ class PhaseSpacePosition(object):
         if galactocentric_frame is None:
             galactocentric_frame = coord.Galactocentric()
 
-        # TODO: HACK: need to convert to an astropy representation
-        kw = dict([(k,getattr(self.pos,k)) for k in self.pos.components])
-        astropy_pos = getattr(coord, self.pos.__class__.__name__)(**kw)
-
-        gc_c = galactocentric_frame.realize_frame(astropy_pos)
-        c = gc_c.transform_to(frame)
-
-        # TODO: HACK: convert back to gala representation here for differential
-        Rep = getattr(rep, c.representation.__name__)
-        derp = getattr(c, c.representation.get_name())
-        kw = OrderedDict([(comp, getattr(derp, comp))
-                          for comp in derp.components])
-        base = Rep(**kw)
-
         kw = dict()
-        if galactocentric_frame is not None:
-            kw['galactocentric_frame'] = galactocentric_frame
+        kw['galactocentric_frame'] = galactocentric_frame
+        kw['vcirc'] = vcirc
+        kw['vlsr'] = vlsr
 
-        if vcirc is not None:
-            kw['vcirc'] = vcirc
+        # first we need to turn the position into a Galactocentric instance
+        gc_c = galactocentric_frame.realize_frame(self.pos)
+        c = gc_c.transform_to(frame)
+        rep = c.represent_as(c.representation)
 
-        if vlsr is not None:
-            kw['vlsr'] = vlsr
-
-        # HACK: TODO:
-        new_Diff = getattr(rep, Rep.__name__[:-14] + 'Differential')
-        cart_vel = self.vel.represent_as(rep.CartesianDifferential, self.pos)
-        v = vgal_to_hel(c, cart_vel.d_xyz, **kw)
-        v = rep.CartesianDifferential(v)\
-               .represent_as(new_Diff, base=base)
+        # HACK: until there is easy lookup for Differential classes
+        new_Diff = getattr(coord, rep.__class__.__name__[:-14] + 'Differential')
+        vxyz = self.vel.represent_as(coord.CartesianDifferential,
+                                     base=rep).d_xyz
+        v = vgal_to_hel(c, vxyz, galactocentric_frame=galactocentric_frame)
+        v = v.represent_as(new_Diff, base=rep)
 
         return c, v
 
     # Convenience attributes
     @property
     def cartesian(self):
-        return self.represent_as(rep.CartesianRepresentation)
+        return self.represent_as(coord.CartesianRepresentation)
 
     @property
     def spherical(self):
-        return self.represent_as(rep.PhysicsSphericalRepresentation)
+        return self.represent_as(coord.SphericalRepresentation)
+
+    @property
+    def spherical(self):
+        return self.represent_as(coord.PhysicsSphericalRepresentation)
 
     @property
     def cylindrical(self):
-        return self.represent_as(rep.CylindricalRepresentation)
+        return self.represent_as(coord.CylindricalRepresentation)
 
     # Pseudo-backwards compatibility
     def w(self, units=None):
@@ -484,7 +475,7 @@ class PhaseSpacePosition(object):
             >>> w.angular_momentum()
             <Quantity [ 0.        , 0.        , 6.28318531] AU2 / yr>
         """
-        cart = self.represent_as(rep.CartesianRepresentation)
+        cart = self.represent_as(coord.CartesianRepresentation)
         return cart.pos.cross(cart.vel).xyz
 
     # ------------------------------------------------------------------------

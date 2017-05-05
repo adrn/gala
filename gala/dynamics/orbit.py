@@ -14,10 +14,10 @@ import numpy as np
 from scipy.signal import argrelmin, argrelmax
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import minimize
+from six import string_types
 
 # Project
 from .core import PhaseSpacePosition
-from .extern import representation as rep
 from .util import peak_to_peak_period
 from .plot import plot_projections
 from ..util import atleast_2d
@@ -187,18 +187,25 @@ class Orbit(PhaseSpacePosition):
 
         Returns
         -------
-        new_phase_sp : `gala.dynamics.PhaseSpacePosition`
+        new_orbit : `gala.dynamics.Orbit`
         """
 
+        if self.ndim != 3:
+            raise ValueError("Can only change representation for "
+                             "ndim=3 instances.")
+
         # get the name of the desired representation
-        Representation = rep.REPRESENTATION_CLASSES[Representation.get_name()]
+        if not isinstance(Representation, string_types):
+            name = Representation.get_name()
+        Representation = coord.representation.REPRESENTATION_CLASSES[name]
         base_name = Representation.__name__[:-len('Representation')]
-        Differential = getattr(rep, base_name+'Differential')
+        Differential = getattr(coord, base_name+'Differential')
 
         new_pos = self.pos.represent_as(Representation)
         new_vel = self.vel.represent_as(Differential, self.pos)
 
-        return self.__class__(pos=new_pos, vel=new_vel, t=self.t,
+        return self.__class__(pos=new_pos,
+                              vel=new_vel,
                               hamiltonian=self.hamiltonian)
 
     # ------------------------------------------------------------------------
