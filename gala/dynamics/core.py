@@ -269,12 +269,13 @@ class PhaseSpacePosition(object):
         c = gc_c.transform_to(frame)
         rep = c.represent_as(c.representation)
 
-        # HACK: until there is easy lookup for Differential classes
-        new_Diff = getattr(coord, rep.__class__.__name__[:-14] + 'Differential')
+        # get the corresponding differential class
+        new_Diff = coord.representation.DIFFERENTIAL_CLASSES[rep.get_name()]
         vxyz = self.vel.represent_as(coord.CartesianDifferential,
-                                     base=rep).d_xyz
+                                     base=self.pos).d_xyz
         v = vgal_to_hel(c, vxyz, galactocentric_frame=galactocentric_frame)
-        v = v.represent_as(new_Diff, base=rep)
+        v = v.represent_as(new_Diff,
+                           base=self.pos.represent_as(v.base_representation))
 
         return c, v
 

@@ -10,8 +10,8 @@ We'll assume the following imports have already been executed::
     >>> import numpy as np
     >>> import gala.potential as gp
     >>> import gala.dynamics as gd
-    >>> from gala.dynamics.extern import (CylindricalRepresentation,
-    ...                                   CylindricalDifferential)
+    >>> from astrop.coordinates import (CylindricalRepresentation,
+    ...                                 CylindricalDifferential)
     >>> from gala.units import galactic
     >>> np.random.seed(42)
 
@@ -38,23 +38,24 @@ Phase-space positions
 
 The `~gala.dynamics.PhaseSpacePosition` class provides an interface for
 representing full phase-space positions--coordinate positions and momenta
-(velocities). This class is useful for encapsulating initial condition
-information and for transforming phase-space positions to new coordinate
-representations or frames.
+(velocities). This class is useful as a container for initial conditions
+and for transforming phase-space positions to new coordinate representations or
+reference frames.
 
 The easiest way to create a `~gala.dynamics.PhaseSpacePosition` object is to
-pass in a pair of `~astropy.units.Quantity` objects that represent the 3-space
-position and velocity vectors::
+pass in a pair of `~astropy.units.Quantity` objects that represent the
+Cartesian position and velocity vectors::
 
     >>> gd.PhaseSpacePosition(pos=[4.,8.,15.]*u.kpc,
     ...                       vel=[-150.,50.,15.]*u.km/u.s)
     <PhaseSpacePosition, shape=(), frame=None>
 
-By default, these are interpreted as Cartesian coordinates and velocities. This
-works with arrays of positions and velocities as well::
+By default, passing in `~astropy.units.Quantity`'s are interpreted as Cartesian
+coordinates and velocities. This works with arrays of positions and velocities
+as well::
 
-    >>> x = np.random.uniform(-10, 10, size=(3,8))
-    >>> v = np.random.uniform(-200, 200, size=(3,8))
+    >>> x = np.arange(24).reshape(3,8)
+    >>> v = np.arange(24).reshape(3,8)
     >>> w = gd.PhaseSpacePosition(pos=x * u.kpc,
     ...                           vel=v * u.km/u.s)
     >>> w
@@ -64,69 +65,100 @@ This is interpreted as 8, 6-dimensional phase-space positions.
 
 The class internally stores the positions and velocities as
 `~astropy.coordinates.BaseRepresentation` and
-`~astropy.coordinates.BaseDifferential` subclasses. All of the components of
-these classes are added as attributes of the phase-space position class for
-convenience. For example, to access the ``x`` component of the position and
-the ``d_x`` component of the velocity::
+`~astropy.coordinates.BaseDifferential` subclasses; in this case,
+`~astropy.coordinates.CartesianRepresentation` and
+`~astropy.coordinates.CartesianDifferential`::
+
+    >>> w.pos
+    <CartesianRepresentation (x, y, z) in kpc
+        [( 0.,   8.,  16.), ( 1.,   9.,  17.), ( 2.,  10.,  18.),
+         ( 3.,  11.,  19.), ( 4.,  12.,  20.), ( 5.,  13.,  21.),
+         ( 6.,  14.,  22.), ( 7.,  15.,  23.)]>
+    >>> w.vel
+    <CartesianDifferential (d_x, d_y, d_z) in km / s
+        [( 0.,   8.,  16.), ( 1.,   9.,  17.), ( 2.,  10.,  18.),
+         ( 3.,  11.,  19.), ( 4.,  12.,  20.), ( 5.,  13.,  21.),
+         ( 6.,  14.,  22.), ( 7.,  15.,  23.)]>
+
+All of the components of these classes are added as attributes of the
+phase-space position class for convenience. For example, to access the ``x``
+component of the position and the ``d_x`` component of the velocity::
 
     >>> w.x, w.d_x # doctest: +FLOAT_CMP
-    (<Quantity [-2.50919762, 9.01428613, 4.63987884, 1.97316968,-6.87962719,
-                -6.88010959,-8.83832776, 7.32352292] kpc>,
-     <Quantity [ -17.57200631, 114.07038456,-120.13048714,   5.69377537,
-                  36.96582754,-181.41983491,  43.01794076,-131.79035053] km / s>)
+    (<Quantity [ 0., 1., 2., 3., 4., 5., 6., 7.] kpc>,
+     <Quantity [ 0., 1., 2., 3., 4., 5., 6., 7.] km / s>)
 
 The default representation is Cartesian, but the class can also be instantiated
-with representation objects::
+with representation objects instead of `~astropy.units.Quantity`'s::
 
-    >>> pos = CylindricalRepresentation(rho=np.random.uniform(1., 10., size=8) * u.kpc,
-    ...                                 phi=np.random.uniform(0, 2*np.pi, size=8) * u.rad,
-    ...                                 z=np.random.uniform(-1, 1., size=8) * u.kpc)
-    >>> vel = CylindricalDifferential(d_rho=np.random.uniform(100, 150., size=8) * u.km/u.s,
-    ...                               d_phi=np.random.uniform(-0.1, 0.1, size=8) * u.rad/u.Myr,
-    ...                               d_z=np.random.uniform(-15, 15., size=8) * u.km/u.s)
+    >>> pos = CylindricalRepresentation(rho=np.linspace(1., 4, 4) * u.kpc,
+    ...                                 phi=np.linspace(0, np.pi, 4) * u.rad,
+    ...                                 z=np.linspace(-1, 1., 4) * u.kpc)
+    >>> vel = CylindricalDifferential(d_rho=np.linspace(100, 150, 4) * u.km/u.s,
+    ...                               d_phi=np.linspace(-1, 1, 4) * u.rad/u.Myr,
+    ...                               d_z=np.linspace(-15, 15., 4) * u.km/u.s)
     >>> w = gd.PhaseSpacePosition(pos=pos, vel=vel)
     >>> w
-    <PhaseSpacePosition, shape=(8,), frame=None>
-    >>> w.rho # doctest: +SKIP
-    <Quantity [ 4.01701598, 3.59795742, 4.77271308, 9.93452517, 6.64624698,
-                5.52105132, 9.44344862, 5.91498428] kpc>
+    <PhaseSpacePosition, shape=(4,), frame=None>
+    >>> w.rho
+    <Quantity [ 1., 2., 3., 4.] kpc>
 
 We can easily transform the full phase-space vector to new representations or
 coordinate frames. These transformations use the :mod:`astropy.coordinates`
-`representations framework <http://docs.astropy.org/en/latest/coordinates/skycoord.html#astropy-skycoord-representations>`_
-and the velocity transforms from `gala.coordinates`.
+`representations framework <http://docs.astropy.org/en/latest/coordinates/skycoord.html#astropy-skycoord-representations>`_::
 
-    >>> from astropy.coordinates import CartesianRepresentation
-    >>> cart = w.represent_as(CartesianRepresentation)
-    >>> cart.x # doctest: +SKIP
-    <Quantity [ 3.26170991, 2.99882353,-4.77123661, 9.74250792,-6.16304849,
-                1.24929222,-9.23722316,-4.07817788] kpc>
+    >>> cart = w.represent_as('cartesian')
+    >>> cart.x
+    <Quantity [ 1. , 1. ,-1.5,-4. ] kpc>
+    >>> sph = w.represent_as('spherical')
+    >>> sph.distance
+    <Distance [ 1.41421356, 2.02758751, 3.01846171, 4.12310563] kpc>
 
-[TODO: frame transforming]
+There is also support for transforming the positions and velocities (assumed to
+be in a `~astropy.coordinates.Galactocentric` frame) to any of the other
+coordinate frames. The transformation returns two objects: an
+initialized coordinate frame for the position, and a ``Differential`` class
+instance for the velocity (usually
+`~astropy.coordinates.SphericalDifferential`).
 
-There is also support for transforming the cartesian positions and velocities
-(assumed to be in a `~astropy.coordinates.Galactocentric` frame) to any of
-the other coordinate frames. The transformation returns two objects: an
-initialized coordinate frame for the position, and a tuple of
-:class:`~astropy.units.Quantity` objects for the velocity. Here, velocities
-are represented in angular velocities for the velocities conjugate to angle
-variables. For example, in the below transformation to
-:class:`~astropy.coordinates.Galactic` coordinates, the returned velocity
-object is a tuple with proper motions and radial velocity,
-:math:`(\mu_l, \mu_b, v_r)`::
+The velocities are represented in angular velocities conjugate to the angle
+variables in the output coordinate frame. For example, in the below
+transformation to :class:`~astropy.coordinates.Galactic` coordinates, the
+returned velocity object is a tuple with angular velocities and radial velocity
+in the :class:`~astropy.coordinates.Galactic` frame::
 
     >>> from astropy.coordinates import Galactic
     >>> gal_c, gal_v = w.to_coord_frame(Galactic)
-    >>> gal_c # doctest: +SKIP
+    >>> gal_c # doctest: +FLOAT_CMP
     <Galactic Coordinate: (l, b, distance) in (deg, deg, kpc)
-        [(17.67673481, 31.15412806, 10.19473889),
-    ...etc.
-    >>> gal_v[0].unit, gal_v[1].unit, gal_v[2].unit
-    (Unit("mas / yr"), Unit("mas / yr"), Unit("km / s"))
+        [(  4.42801092e-05,  -6.11537341,  9.35649038),
+         (  1.05488650e+01,  -1.99824507,  9.46673245),
+         (  2.09134381e+01,   2.58371838,  7.28582479),
+         (  7.26282965e-05,  12.9365465 ,  4.40866775)]>
+    >>> gal_v # doctest: +FLOAT_CMP
+    <SphericalDifferential (d_lon, d_lat, d_distance) in (mas / yr, mas / yr, km / s)
+        [( -27.27877808, -0.27405446,    91.88965124),
+         ( -12.36897173,  0.17751085,   520.16905768),
+         (  -6.65463066,  1.25520907, -1075.45206142),
+         (-203.07712066,  2.05538314,  -154.32652722)]>
 
-We can easily plot projections of the positions using the
-`~gala.dynamics.CartesianPhaseSpacePosition.plot` method::
+It's important to note that the longitudinal angular velocity component in the
+`~astropy.coordinates.SphericalDifferential` class does *not* include the
+:math:`\cos{\rm lat}` term. For this example, to get :math:`\mu_l\,cos{b}` you
+would need to do::
 
+    >>> pm_l = gal_v.d_lon * np.cos(gal_c.b)
+    >>> pm_l
+    <Quantity [ -27.12354536, -12.3614501 ,  -6.6478657 ,-197.92273788] mas / yr>
+
+We can easily plot projections of the phase-space positions using the
+`~gala.dynamics.PhaseSpacePosition.plot` method::
+
+    >>> np.random.seed(42)
+    >>> x = np.random.uniform(-10, 10, size=(3,128))
+    >>> v = np.random.uniform(-200, 200, size=(3,128))
+    >>> w = gd.PhaseSpacePosition(pos=x * u.kpc,
+    ...                           vel=v * u.km/u.s)
     >>> fig = w.plot()
 
 .. plot::
@@ -138,11 +170,11 @@ We can easily plot projections of the positions using the
     np.random.seed(42)
     x = np.random.uniform(-10,10,size=(3,128))
     v = np.random.uniform(-200,200,size=(3,128))
-    w = gd.CartesianPhaseSpacePosition(pos=x*u.kpc,
-                                       vel=v*u.km/u.s)
+    w = gd.PhaseSpacePosition(pos=x*u.kpc,
+                              vel=v*u.km/u.s)
     fig = w.plot()
 
-This is a thin wrapper around the `~gala.dynamics.three_panel`
+This is a thin wrapper around the `~gala.dynamics.plot_projections`
 function and any keyword arguments are passed through to that function::
 
     >>> fig = w.plot(marker='o', s=40, alpha=0.5)
