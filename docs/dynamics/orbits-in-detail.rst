@@ -48,7 +48,7 @@ Cartesian position and velocity vectors::
 
     >>> gd.PhaseSpacePosition(pos=[4.,8.,15.]*u.kpc,
     ...                       vel=[-150.,50.,15.]*u.km/u.s)
-    <PhaseSpacePosition, shape=(), frame=None>
+    <PhaseSpacePosition cartesian, dim=3, shape=()>
 
 By default, passing in `~astropy.units.Quantity`'s are interpreted as Cartesian
 coordinates and velocities. This works with arrays of positions and velocities
@@ -59,7 +59,7 @@ as well::
     >>> w = gd.PhaseSpacePosition(pos=x * u.kpc,
     ...                           vel=v * u.km/u.s)
     >>> w
-    <PhaseSpacePosition, shape=(8,), frame=None>
+    <PhaseSpacePosition cartesian, dim=3, shape=(8,)>
 
 This is interpreted as 8, 6-dimensional phase-space positions.
 
@@ -99,7 +99,7 @@ with representation objects instead of `~astropy.units.Quantity`'s::
     ...                               d_z=np.linspace(-15, 15., 4) * u.km/u.s)
     >>> w = gd.PhaseSpacePosition(pos=pos, vel=vel)
     >>> w
-    <PhaseSpacePosition, shape=(4,), frame=None>
+    <PhaseSpacePosition cylindrical, dim=3, shape=(4,)>
     >>> w.rho
     <Quantity [ 1., 2., 3., 4.] kpc>
 
@@ -177,7 +177,8 @@ We can easily plot projections of the phase-space positions using the
 This is a thin wrapper around the `~gala.dynamics.plot_projections`
 function and any keyword arguments are passed through to that function::
 
-    >>> fig = w.plot(marker='o', s=40, alpha=0.5)
+    >>> fig = w.plot(components=['x', 'd_z'], color='r',
+    ...              facecolor='', marker='o', s=20, alpha=0.5)
 
 .. plot::
     :align: center
@@ -190,7 +191,8 @@ function and any keyword arguments are passed through to that function::
     v = np.random.uniform(-200,200,size=(3,128))
     w = gd.CartesianPhaseSpacePosition(pos=x*u.kpc,
                                        vel=v*u.km/u.s)
-    fig = w.plot(marker='o', s=40, alpha=0.5)
+    fig = w.plot(components=['x', 'd_z'], color='r',
+                 facecolor='', marker='o', s=20, alpha=0.5)
 
 Phase-space position API
 ------------------------
@@ -203,86 +205,75 @@ Phase-space position API
 Orbits
 ======
 
-The `~gala.dynamics.Orbit` subclasses all inherit the functionality described
-above from `~gala.dynamics.PhaseSpacePosition`, but similarly, at present only the
-`~gala.dynamics.CartesianOrbit` is fully implemented. There are some differences
-between the methods and some functionality that is particular to the orbit classes.
+The `~gala.dynamics.Orbit` class inherits much of the functionality from
+`~gala.dynamics.PhaseSpacePosition` (described above) and adds some additional
+features that are useful for time-series orbits.
 
-A `~gala.dynamics.CartesianOrbit` is initialized much like the
-`~gala.dynamics.CartesianPhaseSpacePosition`. `~gala.dynamics.CartesianOrbit`s can be
-created with just position and velocity information, however now the
-interpretation of the input object shapes is different. Whereas an input position with
-shape ``(2,128)`` to a `~gala.dynamics.CartesianPhaseSpacePosition` represents
-128, 2D positions, for an orbit it would represent a single orbit's positions
-at 128 timesteps::
+An `~gala.dynamics.Orbit` instance is initialized like the
+`~gala.dynamics.PhaseSpacePosition`--with arrays of positions and velocities--
+but usually also requires specifying a time array as well. Also, the extra
+axes in these arrays hold special meaning for the ``Orbit`` class. The position
+and velocity arrays passed to `~gala.dynamics.PhaseSpacePosition` can have
+arbitrary numbers of dimensions as long as the 0th axis specifies the
+dimensionality. For the `~gala.dynamics.Orbit` class, the 0th axis remains the
+axis of dimensionality, but the 1st axis now is always assumed to be the time
+axis. For example, an input position with shape ``(2,128)`` to a
+`~gala.dynamics.PhaseSpacePosition` represents 128 independent 2D positions, but
+to a `~gala.dynamics.Orbit` it represents a single orbit's positions at 128
+times::
 
-    >>> t = np.linspace(0,10,128)
-    >>> pos,vel = np.zeros((2,128)),np.zeros((2,128))
-    >>> pos[0] = np.cos(t)
-    >>> pos[1] = np.sin(t)
-    >>> vel[0] = -np.sin(t)
-    >>> vel[1] = np.cos(t)
-    >>> orbit = gd.CartesianOrbit(pos=pos*u.kpc, vel=vel*u.km/u.s)
+    >>> t = np.linspace(0, 100, 128) * u.Myr
+    >>> Om = 1E-1 * u.rad / u.Myr
+    >>> pos = np.vstack((5*np.cos(Om*t), np.sin(Om*t))).value * u.kpc
+    >>> vel = np.vstack((-5*np.sin(Om*t), np.cos(Om*t))).value * u.kpc/u.Myr
+    >>> orbit = gd.Orbit(pos=pos, vel=vel)
     >>> orbit
-    <CartesianOrbit N=2, shape=(128,)>
+    <Orbit ndcartesian, dim=2, shape=(128,)>
 
-To create a single object that contains multiple orbits, the input position object
-should have 3 axes. The last axis (``axis=2``) contains each orbit. So, an input
-position with shape ``(2,128,16)`` would represent 16, 2D orbits with 128 timesteps::
+To create a single object that contains multiple orbits, the input position
+object should have 3 axes. The last axis (``axis=2``) specifies the number of
+orbits. So, an input position with shape ``(2,128,16)`` would represent 16, 2D
+orbits, each with the same 128 times::
 
-    >>> t = np.linspace(0,10,128)
-    >>> pos,vel = np.zeros((2,128,16)),np.zeros((2,128,16))
-    >>> Omega = np.random.uniform(size=16)
-    >>> pos[0] = np.cos(Omega[np.newaxis]*t[:,np.newaxis])
-    >>> pos[1] = np.sin(Omega[np.newaxis]*t[:,np.newaxis])
-    >>> vel[0] = -np.sin(Omega[np.newaxis]*t[:,np.newaxis])
-    >>> vel[1] = np.cos(Omega[np.newaxis]*t[:,np.newaxis])
-    >>> orbit = gd.CartesianOrbit(pos=pos*u.kpc, vel=vel*u.km/u.s)
+    >>> t = np.linspace(0, 100, 128) * u.Myr
+    >>> Om = np.random.uniform(size=16) * u.rad / u.Myr
+    >>> angle = Om[None] * t[:,None]
+    >>> pos = np.stack((5*np.cos(angle), np.sin(angle))).value * u.kpc
+    >>> vel = np.stack((-5*np.sin(angle), np.cos(angle))).value * u.kpc/u.Myr
+    >>> orbit = gd.Orbit(pos=pos, vel=vel)
     >>> orbit
     <CartesianOrbit N=2, shape=(128, 16)>
 
 To make full use of the orbit functionality, you must also pass in an array with
-the time values and an instance of a `~gala.potential.PotentialBase` subclass that
-represents the potential that the orbit was integrated in::
+the time values and an instance of a `~gala.potential.PotentialBase` subclass
+that represents the potential that the orbit was integrated in::
 
     >>> pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
     >>> orbit = gd.CartesianOrbit(pos=pos*u.kpc, vel=vel*u.km/u.s,
     ...                           t=t*u.Myr, potential=pot)
 
 (note, in this case ``pos`` and ``vel`` were not generated from integrating
-an orbit in the potential ``pot``!) Orbit objects
-are returned by the `~gala.potential.PotentialBase.integrate_orbit` method
-of potential objects that already have the ``time`` and ``potential`` set::
+an orbit in the potential ``pot``!). However, most of the time you won't need to
+create `~gala.dynamics.Orbit` objects from scratch! They are returned from any
+of the numerical intergration routines provided in `gala`. For example, they are
+returned by the `~gala.potential.PotentialBase.integrate_orbit` method of
+potential objects and will automatically contain the ``time`` array and
+``potential`` object. For example::
 
-    >>> pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
-    >>> w0 = gd.CartesianPhaseSpacePosition(pos=[10.,0,0]*u.kpc,
-    ...                                     vel=[0.,75,0]*u.km/u.s)
-    >>> orbit = pot.integrate_orbit(w0, dt=1., n_steps=500)
+    >>> pot = gp.PlummerPotential(m=1E10 * u.Msun, b=1. * u.kpc, units=galactic)
+    >>> w0 = gd.PhaseSpacePosition(pos=[10.,0,0] * u.kpc,
+    ...                            vel=[0.,75,0] * u.km/u.s)
+    >>> orbit = pot.integrate_orbit(w0, dt=1., n_steps=5000)
     >>> orbit
-    <CartesianOrbit N=3, shape=(501,)>
-    >>> orbit.t # doctest: +SKIP
-    <Quantity [   0.,   1.,   2.,   3.,   4.,   5.,   6.,   7.,   8.,   9.,
-                 10.,  11.,  12.,  13.,  14.,  15.,  16.,  17.,  18.,  19.,
-    ...etc.
+    <Orbit cartesian, dim=3, shape=(5001,)>
+    >>> orbit.t
+    <Quantity [  0.00000000e+00,  1.00000000e+00,  2.00000000e+00,...,
+                 4.99800000e+03,  4.99900000e+03,  5.00000000e+03] Myr>
     >>> orbit.potential
     <PlummerPotential: m=1.00e+10, b=1.00 (kpc,Myr,solMass,rad)>
 
-From an Orbit object, we can quickly compute quantities like the angular momentum,
-and estimates for the pericenter, apocenter, eccentricity of the orbit. Estimates
-for the latter few get better with smaller timesteps::
-
-    >>> orbit = pot.integrate_orbit(w0, dt=0.1, n_steps=100000)
-    >>> np.mean(orbit.angular_momentum(), axis=1) # doctest: +FLOAT_CMP
-    <Quantity [ 0.        , 0.        , 0.76703412] kpc2 / Myr>
-    >>> orbit.eccentricity() # doctest: +FLOAT_CMP
-    <Quantity 0.3191563009914265>
-    >>> orbit.pericenter() # doctest: +FLOAT_CMP
-    <Quantity 10.00000005952518 kpc>
-    >>> orbit.apocenter() # doctest: +FLOAT_CMP
-    <Quantity 19.375317870528118 kpc>
-
-Just like above, we can quickly visualize an orbit using the
-`~gala.dynamics.CartesianOrbit.plot` method::
+Just like for `~gala.dynamics.PhaseSpacePosition`, we can quickly visualize an
+orbit using the `~gala.dynamics.Orbit.plot` method::
 
     >>> fig = orbit.plot()
 
@@ -294,13 +285,13 @@ Just like above, we can quickly visualize an orbit using the
     import gala.potential as gp
     from gala.units import galactic
 
-    pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[1.,0,0]*u.kpc,
-                                        vel=[0.,50,0]*u.km/u.s)
-    orbit = pot.integrate_orbit(w0, dt=1., n_steps=500)
+    pot = gp.PlummerPotential(m=1E10 * u.Msun, b=1. * u.kpc, units=galactic)
+    w0 = gd.PhaseSpacePosition(pos=[10.,0,0] * u.kpc,
+                               vel=[0.,75,0] * u.km/u.s)
+    orbit = pot.integrate_orbit(w0, dt=1., n_steps=5000)
     fig = orbit.plot()
 
-This is a thin wrapper around the `~gala.dynamics.plot_projections`
+Again, this is a thin wrapper around the `~gala.dynamics.plot_projections`
 function and any keyword arguments are passed through to that function::
 
     >>> fig = orbit.plot(linewidth=4., alpha=0.5, color='r')
@@ -313,14 +304,25 @@ function and any keyword arguments are passed through to that function::
     import gala.potential as gp
     from gala.units import galactic
 
-    pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[1.,0,0]*u.kpc,
-                                        vel=[0.,50,0]*u.km/u.s)
-    orbit = pot.integrate_orbit(w0, dt=1., n_steps=500)
+    pot = gp.PlummerPotential(m=1E10 * u.Msun, b=1. * u.kpc, units=galactic)
+    w0 = gd.PhaseSpacePosition(pos=[10.,0,0] * u.kpc,
+                               vel=[0.,75,0] * u.km/u.s)
+    orbit = pot.integrate_orbit(w0, dt=1., n_steps=5000)
     fig = orbit.plot(linewidth=4., alpha=0.5, color='r')
-    fig.axes[0].set_xlim(-1.5,1.5)
-    fig.axes[0].set_ylim(-1.5,1.5)
 
+We can also quickly compute quantities like the angular momentum, and estimates
+for the pericenter, apocenter, eccentricity of the orbit. Estimates for the
+latter few get better with smaller timesteps::
+
+    >>> orbit = pot.integrate_orbit(w0, dt=0.1, n_steps=100000)
+    >>> np.mean(orbit.angular_momentum(), axis=1) # doctest: +FLOAT_CMP
+    <Quantity [ 0.        , 0.        , 0.76703412] kpc2 / Myr>
+    >>> orbit.eccentricity() # doctest: +FLOAT_CMP
+    <Quantity 0.3191563009914265>
+    >>> orbit.pericenter() # doctest: +FLOAT_CMP
+    <Quantity 10.00000005952518 kpc>
+    >>> orbit.apocenter() # doctest: +FLOAT_CMP
+    <Quantity 19.375317870528118 kpc>
 
 Orbit API
 ---------
