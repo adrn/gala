@@ -247,9 +247,8 @@ class PhaseSpacePosition(object):
         -------
         c : :class:`~astropy.coordinates.BaseCoordinateFrame`
             An instantiated coordinate frame.
-        v : tuple
-            A tuple of velocities represented as
-            :class:`~astropy.units.Quantity` objects.
+        v : :class:`~astropy.coordinates.BaseDifferential`
+            An astropy differential class containing the velocity components.
 
         """
 
