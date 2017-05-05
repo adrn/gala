@@ -480,26 +480,15 @@ class PhaseSpacePosition(object):
     # ------------------------------------------------------------------------
     # Misc. useful methods
     #
-    def _plot_prepare(self, components, units, rep):
+    def _plot_prepare(self, components, units):
         """
         Prepare the ``PhaseSpacePosition`` or subclass for passing to a plotting
         routine to plot all projections of the object.
         """
 
-        # re-represent if specified and ndim==3
-        if rep is None:
-            rep = coord.CartesianRepresentation
-
-        if self.ndim == 3:
-            # allow user to specify representation
-            obj = self.represent_as(rep)
-
-        else:
-            obj = self
-
         # components to plot
         if components is None:
-            components = obj.pos.components
+            components = self.pos.components
         n_comps = len(components)
 
         # if units not specified, get units from the components
@@ -514,7 +503,7 @@ class PhaseSpacePosition(object):
         labels = []
         x = []
         for i,name in enumerate(components):
-            val = getattr(obj, name)
+            val = getattr(self, name)
 
             if units is not None:
                 val = val.to(units[i])
@@ -546,7 +535,7 @@ class PhaseSpacePosition(object):
 
         return x, labels
 
-    def plot(self, components=None, units=None, rep=None, **kwargs):
+    def plot(self, components=None, units=None, **kwargs):
         """
         Plot the positions in all projections. This is a wrapper around
         `~gala.dynamics.plot_projections` for fast access and quick
@@ -562,8 +551,6 @@ class PhaseSpacePosition(object):
             ``['d_x', 'd_y', 'd_z']``.
         units : `~astropy.units.UnitBase`, iterable (optional)
             A single unit or list of units to display the components in.
-        rep : str, `~astropy.coordinates.BaseRepresentation` (optional)
-            The representation to plot the object in. Default is cartesian.
         relative_to : bool (optional)
             Plot the values relative to this value or values.
         autolim : bool (optional)
@@ -597,8 +584,7 @@ class PhaseSpacePosition(object):
             raise ImportError(msg)
 
         x,labels = self._plot_prepare(components=components,
-                                      units=units,
-                                      rep=rep)
+                                      units=units)
 
         default_kwargs = {
             'marker': '.',
@@ -612,7 +598,7 @@ class PhaseSpacePosition(object):
 
         fig = plot_projections(x, **kwargs)
 
-        if rep is None or rep.get_name() == 'cartesian':
+        if self.pos.get_name() == 'cartesian':
             for ax in fig.axes:
                 ax.set(aspect='equal', adjustable='datalim')
 

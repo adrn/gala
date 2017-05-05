@@ -42,6 +42,7 @@ class TestPlotting(object):
     def test_plot_projections(self):
         import matplotlib.pyplot as plt
 
+        # TODO: need major test improvements here
         # let the function create the figure
         for p in self.psps:
             _ = p.plot()
