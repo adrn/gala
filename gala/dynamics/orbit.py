@@ -615,7 +615,7 @@ class Orbit(PhaseSpacePosition):
         return self.__class__(pos=new_pos, vel=new_vel, t=self.t,
                               hamiltonian=self.hamiltonian)
 
-    def plot(self, components=None, units=None, **kwargs):
+    def plot(self, components=None, units=None, auto_aspect=True, **kwargs):
         """
         Plot the positions in all projections. This is a wrapper around
         `~gala.dynamics.plot_projections` for fast access and quick
@@ -631,6 +631,8 @@ class Orbit(PhaseSpacePosition):
             ``['d_x', 'd_y', 'd_z']``.
         units : `~astropy.units.UnitBase`, iterable (optional)
             A single unit or list of units to display the components in.
+        auto_aspect : bool (optional)
+            Automatically enforce an equal aspect ratio.
         relative_to : bool (optional)
             Plot the values relative to this value or values.
         autolim : bool (optional)
@@ -686,7 +688,8 @@ class Orbit(PhaseSpacePosition):
 
         if self.pos.get_name() == 'cartesian' and \
                 all([not c.startswith('d_') for c in components]) and \
-                't' not in components:
+                't' not in components and \
+                auto_aspect:
             for ax in fig.axes:
                 ax.set(aspect='equal', adjustable='datalim')
 

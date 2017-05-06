@@ -526,7 +526,7 @@ class PhaseSpacePosition(object):
 
         return x, labels
 
-    def plot(self, components=None, units=None, **kwargs):
+    def plot(self, components=None, units=None, auto_aspect=True, **kwargs):
         """
         Plot the positions in all projections. This is a wrapper around
         `~gala.dynamics.plot_projections` for fast access and quick
@@ -542,6 +542,8 @@ class PhaseSpacePosition(object):
             ``['d_x', 'd_y', 'd_z']``.
         units : `~astropy.units.UnitBase`, iterable (optional)
             A single unit or list of units to display the components in.
+        auto_aspect : bool (optional)
+            Automatically enforce an equal aspect ratio.
         relative_to : bool (optional)
             Plot the values relative to this value or values.
         autolim : bool (optional)
@@ -593,7 +595,8 @@ class PhaseSpacePosition(object):
         fig = plot_projections(x, **kwargs)
 
         if self.pos.get_name() == 'cartesian' and \
-                all([not c.startswith('d_') for c in components]):
+                all([not c.startswith('d_') for c in components]) and \
+                auto_aspect:
             for ax in fig.axes:
                 ax.set(aspect='equal', adjustable='datalim')
 
