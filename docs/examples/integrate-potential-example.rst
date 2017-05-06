@@ -69,7 +69,8 @@ the orbit points::
    >>> grid = np.linspace(-15,15,64)
    >>> fig,ax = plt.subplots(1, 1, figsize=(5,5))
    >>> fig = pot.plot_contours(grid=(grid,grid,0), cmap='Greys', ax=ax)
-   >>> orbits[-1].plot(['x', 'y'], axes=[ax], auto_aspect=False)
+   >>> orbits[-1].plot(['x', 'y'], color='#9ecae1', s=1., alpha=0.5,
+   ...                 axes=[ax], auto_aspect=False)
 
 .. plot::
    :align: center
@@ -102,6 +103,7 @@ the orbit points::
    grid = np.linspace(-15,15,64)
    fig,ax = plt.subplots(1, 1, figsize=(5,5))
    fig = pot.plot_contours(grid=(grid,grid,0), cmap='Greys', ax=ax)
-   orbits[-1].plot(['x', 'y'], axes=[ax], auto_aspect=False)
+   orbits[-1].plot(['x', 'y'], color='#9ecae1', s=1., alpha=0.5,
+                   axes=[ax], auto_aspect=False)
    fig.tight_layout()
 
