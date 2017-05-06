@@ -1,5 +1,6 @@
 .. _integrate_potential_example:
 
+=====================================================
 Integrating and plotting an orbit in an NFW potential
 =====================================================
 
