@@ -9,11 +9,8 @@ N-dimensional representation classes
 Introduction
 ============
 
-The Astropy |astropyrep| presently only support 3D positions and differential
+The Astropy |astropyrep|_ presently only support 3D positions and differential
 objects.
-
-TODO: astropy only supports 3D...
-
 
     >>> fig = w.plot(marker='o', s=40, alpha=0.5)
 

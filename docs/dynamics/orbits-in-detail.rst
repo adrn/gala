@@ -105,7 +105,7 @@ with representation objects instead of `~astropy.units.Quantity`'s::
 
 We can easily transform the full phase-space vector to new representations or
 coordinate frames. These transformations use the :mod:`astropy.coordinates`
-|astropyrep|::
+|astropyrep|_::
 
     >>> cart = w.represent_as('cartesian')
     >>> cart.x
