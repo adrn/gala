@@ -194,111 +194,111 @@ def isochrone_to_xv(actions, angles, potential):
     raise NotImplementedError("Implementation not supported until working with "
                               "angle-action variables has a better API.")
 
-    actions = atleast_2d(actions,insert_axis=1).copy()
-    angles = atleast_2d(angles,insert_axis=1).copy()
+    # actions = atleast_2d(actions,insert_axis=1).copy()
+    # angles = atleast_2d(angles,insert_axis=1).copy()
 
-    usys = potential.units
-    GM = (G*potential.parameters['m']).decompose(usys).value
-    b = potential.parameters['b'].decompose(usys).value
+    # usys = potential.units
+    # GM = (G*potential.parameters['m']).decompose(usys).value
+    # b = potential.parameters['b'].decompose(usys).value
 
-    # actions
-    Jr = actions[0]
-    Lz = actions[1]
-    L = actions[2] + np.abs(Lz)
+    # # actions
+    # Jr = actions[0]
+    # Lz = actions[1]
+    # L = actions[2] + np.abs(Lz)
 
-    # angles
-    theta_r,theta_phi,theta_theta = angles
+    # # angles
+    # theta_r,theta_phi,theta_theta = angles
 
-    # get longitude of ascending node
-    theta_1 = theta_phi - np.sign(Lz)*theta_theta
-    Omega = theta_1
+    # # get longitude of ascending node
+    # theta_1 = theta_phi - np.sign(Lz)*theta_theta
+    # Omega = theta_1
 
-    # Ly = -np.cos(Omega) * np.sqrt(L**2 - Lz**2)
-    # Lx = np.sqrt(L**2 - Ly**2 - Lz**2)
-    cosi = Lz/L
-    sini = np.sqrt(1 - cosi**2)
+    # # Ly = -np.cos(Omega) * np.sqrt(L**2 - Lz**2)
+    # # Lx = np.sqrt(L**2 - Ly**2 - Lz**2)
+    # cosi = Lz/L
+    # sini = np.sqrt(1 - cosi**2)
 
-    # Hamiltonian (energy)
-    H = -2. * GM**2 / (2.*Jr + L + np.sqrt(4.*b*GM + L**2))**2
+    # # Hamiltonian (energy)
+    # H = -2. * GM**2 / (2.*Jr + L + np.sqrt(4.*b*GM + L**2))**2
 
-    if np.any(H > 0.):
-        raise ValueError("Unbound particle. (E = {})".format(H))
+    # if np.any(H > 0.):
+    #     raise ValueError("Unbound particle. (E = {})".format(H))
 
-    # Eq. 3.240
-    c = -GM / (2.*H) - b
-    e = np.sqrt(1 - L*L*(1 + b/c) / GM / c)
+    # # Eq. 3.240
+    # c = -GM / (2.*H) - b
+    # e = np.sqrt(1 - L*L*(1 + b/c) / GM / c)
 
-    # solve for eta
-    theta_3 = theta_r
-    eta_func = lambda x: x - e*c/(b+c)*np.sin(x) - theta_3
-    eta_func_prime = lambda x: 1 - e*c/(b+c)*np.cos(x)
+    # # solve for eta
+    # theta_3 = theta_r
+    # eta_func = lambda x: x - e*c/(b+c)*np.sin(x) - theta_3
+    # eta_func_prime = lambda x: 1 - e*c/(b+c)*np.cos(x)
 
-    # use newton's method to find roots
-    niter = 100
-    eta = np.ones_like(theta_3)*np.pi/2.
-    for i in range(niter):
-        eta -= eta_func(eta)/eta_func_prime(eta)
+    # # use newton's method to find roots
+    # niter = 100
+    # eta = np.ones_like(theta_3)*np.pi/2.
+    # for i in range(niter):
+    #     eta -= eta_func(eta)/eta_func_prime(eta)
 
-    # TODO: when to do this???
-    eta -= 2*np.pi
+    # # TODO: when to do this???
+    # eta -= 2*np.pi
 
-    r = c*np.sqrt((1-e*np.cos(eta)) * (1-e*np.cos(eta) + 2*b/c))
-    vr = np.sqrt(GM/(b+c))*(c*e*np.sin(eta))/r
+    # r = c*np.sqrt((1-e*np.cos(eta)) * (1-e*np.cos(eta) + 2*b/c))
+    # vr = np.sqrt(GM/(b+c))*(c*e*np.sin(eta))/r
 
-    theta_2 = theta_theta
-    Omega_23 = 0.5*(1 + L / np.sqrt(L**2 + 4*GM*b))
+    # theta_2 = theta_theta
+    # Omega_23 = 0.5*(1 + L / np.sqrt(L**2 + 4*GM*b))
 
-    a = np.sqrt((1+e) / (1-e))
-    ap = np.sqrt((1 + e + 2*b/c) / (1 - e + 2*b/c))
+    # a = np.sqrt((1+e) / (1-e))
+    # ap = np.sqrt((1 + e + 2*b/c) / (1 - e + 2*b/c))
 
-    def F(x, y):
-        z = np.zeros_like(x)
+    # def F(x, y):
+    #     z = np.zeros_like(x)
 
-        ix = y>np.pi/2.
-        z[ix] = np.pi/2. - np.arctan(np.tan(np.pi/2.-0.5*y[ix])/x[ix])
+    #     ix = y>np.pi/2.
+    #     z[ix] = np.pi/2. - np.arctan(np.tan(np.pi/2.-0.5*y[ix])/x[ix])
 
-        ix = y<-np.pi/2.
-        z[ix] = -np.pi/2. + np.arctan(np.tan(np.pi/2.+0.5*y[ix])/x[ix])
+    #     ix = y<-np.pi/2.
+    #     z[ix] = -np.pi/2. + np.arctan(np.tan(np.pi/2.+0.5*y[ix])/x[ix])
 
-        ix = (y<=np.pi/2) & (y>=-np.pi/2)
-        z[ix] = np.arctan(x[ix]*np.tan(0.5*y[ix]))
-        return z
+    #     ix = (y<=np.pi/2) & (y>=-np.pi/2)
+    #     z[ix] = np.arctan(x[ix]*np.tan(0.5*y[ix]))
+    #     return z
 
-    theta_2[Lz < 0] -= 2*np.pi
-    theta_3 -= 2*np.pi
-    A = Omega_23*theta_3 - F(a,eta) - F(ap,eta)/np.sqrt(1 + 4*GM*b/L/L)
-    psi = theta_2 - A
+    # theta_2[Lz < 0] -= 2*np.pi
+    # theta_3 -= 2*np.pi
+    # A = Omega_23*theta_3 - F(a,eta) - F(ap,eta)/np.sqrt(1 + 4*GM*b/L/L)
+    # psi = theta_2 - A
 
-    # theta
-    theta = np.arccos(np.sin(psi)*sini)
-    vtheta = L*sini*np.cos(psi)/np.cos(theta)
-    vtheta = -L*sini*np.cos(psi)/np.sin(theta)/r
-    vphi = Lz / (r*np.sin(theta))
+    # # theta
+    # theta = np.arccos(np.sin(psi)*sini)
+    # vtheta = L*sini*np.cos(psi)/np.cos(theta)
+    # vtheta = -L*sini*np.cos(psi)/np.sin(theta)/r
+    # vphi = Lz / (r*np.sin(theta))
 
-    d_phi = vphi / (r*np.sin(theta))
-    d_theta = vtheta / r
+    # d_phi = vphi / (r*np.sin(theta))
+    # d_theta = vtheta / r
 
-    # phi
-    sinu = np.sin(psi)*cosi/np.sin(theta)
+    # # phi
+    # sinu = np.sin(psi)*cosi/np.sin(theta)
 
-    uu = np.arcsin(sinu)
-    uu[sinu > 1.] = np.pi/2.
-    uu[sinu < -1.] = -np.pi/2.
-    uu[vtheta > 0.] = np.pi - uu[vtheta > 0.]
+    # uu = np.arcsin(sinu)
+    # uu[sinu > 1.] = np.pi/2.
+    # uu[sinu < -1.] = -np.pi/2.
+    # uu[vtheta > 0.] = np.pi - uu[vtheta > 0.]
 
-    sinu = cosi/sini * np.cos(theta)/np.sin(theta)
-    phi = (uu + Omega) % (2*np.pi)
+    # sinu = cosi/sini * np.cos(theta)/np.sin(theta)
+    # phi = (uu + Omega) % (2*np.pi)
 
-    # We now need to convert from spherical polar coord to cart. coord.
-    pos = coord.PhysicsSphericalRepresentation(r=r*u.dimensionless_unscaled,
-                                               phi=phi*u.rad, theta=theta*u.rad)
-    pos = pos.represent_as(coord.CartesianRepresentation)
-    x = pos.xyz.value
+    # # We now need to convert from spherical polar coord to cart. coord.
+    # pos = coord.PhysicsSphericalRepresentation(r=r*u.dimensionless_unscaled,
+    #                                            phi=phi*u.rad, theta=theta*u.rad)
+    # pos = pos.represent_as(coord.CartesianRepresentation)
+    # x = pos.xyz.value
 
-    vel = coord.PhysicsSphericalDifferential(d_phi=d_phi, d_theta=d_theta, d_r=vr)
-    v = vel.represent_as(coord.CartesianDifferential, base=pos).d_xyz.value
+    # vel = coord.PhysicsSphericalDifferential(d_phi=d_phi, d_theta=d_theta, d_r=vr)
+    # v = vel.represent_as(coord.CartesianDifferential, base=pos).d_xyz.value
 
-    return x, v
+    # return x, v
 
 def harmonic_oscillator_to_aa(w, potential):
     """
@@ -377,8 +377,8 @@ def harmonic_oscillator_to_xv(actions, angles, potential):
                               "angle-action variables has a better API.")
 
     # TODO: bug in below...
-    omega = potential.parameters['omega'].decompose(potential.units).value
-    x = np.sqrt(2*actions/omega[None]) * np.sin(angles)
-    v = np.sqrt(2*actions*omega[None]) * np.cos(angles)
+    # omega = potential.parameters['omega'].decompose(potential.units).value
+    # x = np.sqrt(2*actions/omega[None]) * np.sin(angles)
+    # v = np.sqrt(2*actions*omega[None]) * np.cos(angles)
 
-    return x,v
+    # return x,v
