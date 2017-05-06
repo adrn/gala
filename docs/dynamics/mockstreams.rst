@@ -91,10 +91,11 @@ initial conditions that place the progenitor on a mildly eccentric orbit:
     >>> prog_w0 = gd.PhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
     ...                                 vel=[75, 150, 30.]*u.km/u.s)
     >>> prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
-    >>> fig = prog_orbit.plot()
+    >>> fig = prog_orbit.plot(['x', 'y'])
 
 .. plot::
     :align: center
+    :context: close-figs
 
     import astropy.units as u
     import numpy as np
@@ -102,13 +103,13 @@ initial conditions that place the progenitor on a mildly eccentric orbit:
     import gala.dynamics as gd
     from gala.units import galactic
 
-    pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
-                                   units=galactic)
+    pot = gp.NFWPotential.from_circular_velocity(v_c=175*u.km/u.s, r_s=10*u.kpc,
+                                                 units=galactic)
     prog_mass = 1E4*u.Msun
     prog_w0 = gd.PhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
                                     vel=[75, 150, 0.]*u.km/u.s)
     prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
-    fig = prog_orbit.plot()
+    fig = prog_orbit.plot(['x', 'y'])
 
 We now have to define the ``k`` parameters. This is done by defining an iterable
 with 6 elements corresponding to
@@ -122,65 +123,32 @@ Now we generate the mock stream. We will release a star particle every time-step
 from both Lagrange points by setting ``release_every=1``:
 
     >>> stream = mock_stream(pot, prog_orbit, prog_mass,
-    ...                      k_mean=k_mean, k_disp=k_disp, release_every=1) # doctest: +SKIP
-    >>> stream.plot(s=1, alpha=0.25) # doctest: +SKIP
+    ...                      k_mean=k_mean, k_disp=k_disp, release_every=1)
+    >>> fig = stream.plot(['x', 'y'], marker='.', alpha=0.25)
 
 .. plot::
     :align: center
+    :context: close-figs
 
-    import astropy.units as u
-    import numpy as np
-    import gala.potential as gp
-    import gala.dynamics as gd
-    from gala.units import galactic
     from gala.dynamics.mockstream import mock_stream
 
-    pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
-                                   units=galactic)
-    prog_mass = 1E4*u.Msun
-    prog_w0 = gd.PhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
-                                    vel=[75, 150, 0.]*u.km/u.s)
-    prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
     k_mean = [1., 0, 0, 0, 1., 0]
     k_disp = np.zeros(6)
     stream = mock_stream(pot, prog_orbit, prog_mass,
                          k_mean=k_mean, k_disp=k_disp, release_every=1)
-    stream.plot()
+    stream.plot(['x', 'y'], marker='.', alpha=0.25)
 
 Or, zooming in around the progenitor:
 
 .. plot::
     :align: center
+    :context: close-figs
 
-    import astropy.units as u
-    import matplotlib.pyplot as pl
-    import numpy as np
-    import gala.potential as gp
-    import gala.dynamics as gd
-    from gala.units import galactic
-    from gala.dynamics.mockstream import mock_stream
+    fig = stream.plot(['x', 'y'], marker='.', alpha=0.25)
 
-    pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
-                                   units=galactic)
-    prog_mass = 1E4*u.Msun
-    prog_w0 = gd.PhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
-                                    vel=[75, 150, 30.]*u.km/u.s)
-    prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
-    k_mean = [1., 0, 0, 0, 1., 0]
-    k_disp = np.zeros(6)
-    stream = mock_stream(pot, prog_orbit, prog_mass,
-                         k_mean=k_mean, k_disp=k_disp, release_every=1)
-
-    fig,ax = pl.subplots(1,1,figsize=(6,6))
-
-    ax.plot(stream.pos[0], stream.pos[1], ls='none', marker='.', alpha=0.25)
-
-    x = prog_orbit[-1].pos.value
-    ax.set_xlim(x[0]-1., x[0]+1.)
-    ax.set_ylim(x[1]-1., x[1]+1.)
-
-    ax.set_xlabel("x [kpc]")
-    ax.set_ylabel("y [kpc]")
+    prog_end = prog_orbit[-1]
+    fig.axes[0].set_xlim(prog_end.x.value-1., prog_end.x.value+1.)
+    fig.axes[0].set_ylim(prog_end.y.value-1., prog_end.y.value+1.)
 
 Fardal streams
 --------------
@@ -194,66 +162,32 @@ matching to *N*-body simulations. For this method, these are set to:
 With the same potential and progenitor orbit as above, we now generate a mock
 stream using this method:
 
-    >>> stream = mock_stream(pot, prog_orbit, prog_mass,
-    ...                      k_mean=k_mean, k_disp=k_disp, release_every=1) # doctest: +SKIP
-    >>> stream.plot(s=1, alpha=0.25) # doctest: +SKIP
+    >>> stream2 = mock_stream(pot, prog_orbit, prog_mass,
+    ...                       k_mean=k_mean, k_disp=k_disp,
+    ...                       release_every=1)
+    >>> stream2.plot(['x', 'y'], marker='.', alpha=0.25)
 
 .. plot::
     :align: center
+    :context: close-figs
 
-    import astropy.units as u
-    import numpy as np
-    import gala.potential as gp
-    import gala.dynamics as gd
-    from gala.units import galactic
-    from gala.dynamics.mockstream import mock_stream
-
-    pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
-                                   units=galactic)
-    prog_mass = 1E4*u.Msun
-    prog_w0 = gd.PhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
-                                    vel=[75, 150, 0.]*u.km/u.s)
-    prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
     k_mean = [2., 0, 0, 0, 0.3, 0]
     k_disp = [0.5, 0, 0.5, 0, 0.5, 0.5]
-    stream = mock_stream(pot, prog_orbit, prog_mass,
-                         k_mean=k_mean, k_disp=k_disp, release_every=1)
-    stream.plot()
+    stream2 = mock_stream(pot, prog_orbit, prog_mass,
+                          k_mean=k_mean, k_disp=k_disp, release_every=1)
+    stream2.plot(['x', 'y'], marker='.', alpha=0.25)
 
 Or, again, zooming in around the progenitor:
 
 .. plot::
     :align: center
+    :context: close-figs
 
-    import astropy.units as u
-    import matplotlib.pyplot as pl
-    import numpy as np
-    import gala.potential as gp
-    import gala.dynamics as gd
-    from gala.units import galactic
-    from gala.dynamics.mockstream import mock_stream
+    fig = stream2.plot(['x', 'y'], marker='.', alpha=0.25)
 
-    pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
-                                   units=galactic)
-    prog_mass = 1E4*u.Msun
-    prog_w0 = gd.PhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
-                                    vel=[75, 150, 30.]*u.km/u.s)
-    prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
-    k_mean = [2., 0, 0, 0, 0.3, 0]
-    k_disp = [0.5, 0, 0.5, 0, 0.5, 0.5]
-    stream = mock_stream(pot, prog_orbit, prog_mass,
-                         k_mean=k_mean, k_disp=k_disp, release_every=1)
-
-    fig,ax = pl.subplots(1,1,figsize=(6,6))
-
-    ax.plot(stream.pos[0], stream.pos[1], ls='none', marker='.', alpha=0.25)
-
-    x = prog_orbit[-1].pos.value
-    ax.set_xlim(x[0]-1., x[0]+1.)
-    ax.set_ylim(x[1]-1., x[1]+1.)
-
-    ax.set_xlabel("x [kpc]")
-    ax.set_ylabel("y [kpc]")
+    prog_end = prog_orbit[-1]
+    fig.axes[0].set_xlim(prog_end.x.value-1., prog_end.x.value+1.)
+    fig.axes[0].set_ylim(prog_end.y.value-1., prog_end.y.value+1.)
 
 References
 ==========
