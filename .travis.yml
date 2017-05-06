@@ -23,9 +23,11 @@ env:
         # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
         - NUMPY_VERSION=stable
-        - ASTROPY_VERSION=stable
+        # - ASTROPY_VERSION=stable # HACK: to use mhvk's branch
         - SETUP_CMD='test'
         - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml h5py sympy qt'
+        # HACK: to use mhvk's branch
+        - PIP_DEPENDENCIES='git+https://github.com/mhvk/astropy.git@representation-differentials'
 
     matrix:
         # Make sure that egg_info works without dependencies
