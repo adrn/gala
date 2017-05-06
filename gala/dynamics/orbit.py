@@ -725,7 +725,9 @@ class CartesianOrbit(Orbit):
 
     def __init__(self, pos, vel, t=None,
                  hamiltonian=None, potential=None, frame=None):
-
+        """
+        Deprecated.
+        """
         warnings.warn("This class is now deprecated! Use the general interface "
                       "provided by Orbit instead.",
                       DeprecationWarning)

@@ -58,10 +58,6 @@ class PhaseSpacePosition(object):
     frame : :class:`~gala.potential.FrameBase` (optional)
         The reference frame of the input phase-space positions.
 
-    TODO
-    ----
-    Add a hack to support array input when ndim < 3?
-
     """
     def __init__(self, pos, vel, frame=None):
 
@@ -82,29 +78,23 @@ class PhaseSpacePosition(object):
                     pos = coord.CartesianRepresentation(pos)
 
             else:
-                pos = rep_nd.NDCartesianRepresentation(*pos)
+                pos = rep_nd.NDCartesianRepresentation(pos)
 
         else:
             ndim = 3
 
         if not isinstance(vel, coord.BaseDifferential):
-
-            if ndim == 3:
-                name = pos.__class__.get_name()
-                Diff = coord.representation.DIFFERENTIAL_CLASSES[name]
-            else:
-                Diff = rep_nd.NDCartesianDifferential
-
             # assume representation is same as pos if not specified
             if not hasattr(vel, 'unit'):
                 vel = vel * u.one
 
-            vel = Diff(*vel)
-
-        else:
-            # assume Cartesian if not specified
-            if not hasattr(vel, 'unit'):
-                vel = vel * u.one
+            if ndim == 3:
+                name = pos.__class__.get_name()
+                Diff = coord.representation.DIFFERENTIAL_CLASSES[name]
+                vel = Diff(*vel)
+            else:
+                Diff = rep_nd.NDCartesianDifferential
+                vel = Diff(vel)
 
         # make sure shape is the same
         if pos.shape != vel.shape:
@@ -629,7 +619,6 @@ class PhaseSpacePosition(object):
     def shape(self):
         """
         .. warning::
-
             This is *not* the shape of the position or velocity
             arrays. That is accessed by doing ``obj.pos.shape``.
 
@@ -643,6 +632,9 @@ class PhaseSpacePosition(object):
 class CartesianPhaseSpacePosition(PhaseSpacePosition):
 
     def __init__(self, pos, vel, frame=None):
+        """
+        Deprecated.
+        """
 
         warnings.warn("This class is now deprecated! Use the general interface "
                       "provided by PhaseSpacePosition instead.",

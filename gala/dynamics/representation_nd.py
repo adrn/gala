@@ -4,6 +4,7 @@ from __future__ import division, print_function
 
 # Standard library
 from collections import OrderedDict
+import operator
 
 # Third-party
 import astropy.coordinates as coord
@@ -12,7 +13,40 @@ import numpy as np
 
 __all__ = ['NDCartesianRepresentation', 'NDCartesianDifferential']
 
-class NDCartesianRepresentation(coord.CartesianRepresentation):
+class NDMixin(object):
+
+    def _apply(self, method, *args, **kwargs):
+        """Create a new representation with ``method`` applied to the arrays.
+
+        In typical usage, the method is any of the shape-changing methods for
+        `~numpy.ndarray` (``reshape``, ``swapaxes``, etc.), as well as those
+        picking particular elements (``__getitem__``, ``take``, etc.), which
+        are all defined in `~astropy.utils.misc.ShapedLikeNDArray`. It will be
+        applied to the underlying arrays (e.g., ``x``, ``y``, and ``z`` for
+        `~astropy.coordinates.CartesianRepresentation`), with the results used
+        to create a new instance.
+
+        Internally, it is also used to apply functions to the components
+        (in particular, `~numpy.broadcast_to`).
+
+        Parameters
+        ----------
+        method : str or callable
+            If str, it is the name of a method that is applied to the internal
+            ``components``. If callable, the function is applied.
+        args : tuple
+            Any positional arguments for ``method``.
+        kwargs : dict
+            Any keyword arguments for ``method``.
+        """
+        if callable(method):
+            apply_method = lambda array: method(array, *args, **kwargs)
+        else:
+            apply_method = operator.methodcaller(method, *args, **kwargs)
+        return self.__class__([apply_method(getattr(self, component))
+                               for component in self.components], copy=False)
+
+class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
     """
     Representation of points in ND cartesian coordinates.
 
@@ -30,10 +64,7 @@ class NDCartesianRepresentation(coord.CartesianRepresentation):
 
     attr_classes = OrderedDict()
 
-    def __init__(self, *x, unit=None, copy=True):
-
-        if not x:
-            raise ValueError('You must pass in at least 1D data.')
+    def __init__(self, x, unit=None, copy=True):
 
         if unit is None:
             if not hasattr(x[0], 'unit'):
@@ -102,7 +133,7 @@ class NDCartesianRepresentation(coord.CartesianRepresentation):
 
     xyz = property(get_xyz)
 
-class NDCartesianDifferential(coord.CartesianDifferential):
+class NDCartesianDifferential(NDMixin, coord.CartesianDifferential):
     """Differentials in of points in ND cartesian coordinates.
 
     Parameters
@@ -119,10 +150,7 @@ class NDCartesianDifferential(coord.CartesianDifferential):
     base_representation = NDCartesianRepresentation
     attr_classes = OrderedDict()
 
-    def __init__(self, *d_x, unit=None, copy=True):
-
-        if not d_x:
-            raise ValueError('You must pass in at least 1D data.')
+    def __init__(self, d_x, unit=None, copy=True):
 
         if unit is None:
             if not hasattr(d_x[0], 'unit'):

@@ -18,22 +18,13 @@ from ..representation_nd import (NDCartesianRepresentation,
                                  NDCartesianDifferential)
 
 def test_init_repr():
-    with pytest.raises(ValueError):
-        rep = NDCartesianRepresentation()
 
-    # Passing in x1, 2 elements
+    # Passing in x1, x2
     rep = NDCartesianRepresentation([1., 1.])
-    assert rep.xyz.shape == (1,2)
-    rep[:1]
-
-    # Passing in x1, x2
-    rep = NDCartesianRepresentation(1., 1.)
     assert rep.xyz.shape == (2,)
-    with pytest.raises(TypeError):
-        rep[:1]
 
     # Passing in x1, x2
-    rep = NDCartesianRepresentation(*np.random.random(size=(2, 8)))
+    rep = NDCartesianRepresentation(np.random.random(size=(2, 8)))
     assert rep.xyz.shape == (2,8)
     rep[:1]
 
@@ -41,7 +32,7 @@ def test_init_repr():
         print('N: '+str(n))
 
         xs = np.random.uniform(size=(n, 16)) * u.one
-        rep = NDCartesianRepresentation(*xs)
+        rep = NDCartesianRepresentation(xs)
         for i in range(1, n+1):
             assert hasattr(rep, 'x'+str(i))
 
@@ -54,22 +45,15 @@ def test_init_repr():
         assert rep2.shape == (8,)
 
 def test_init_diff():
-    with pytest.raises(ValueError):
-        rep = NDCartesianDifferential()
-
-    # Passing in x1, 2 elements
-    rep = NDCartesianDifferential([1., 1.])
-    assert rep.d_xyz.shape == (1,2)
-    rep[:1]
 
     # Passing in x1, x2
-    rep = NDCartesianDifferential(1., 1.)
+    rep = NDCartesianDifferential([1., 1.])
     assert rep.d_xyz.shape == (2,)
     with pytest.raises(TypeError):
         rep[:1]
 
     # Passing in x1, x2
-    rep = NDCartesianDifferential(*np.random.random(size=(2, 8)))
+    rep = NDCartesianDifferential(np.random.random(size=(2, 8)))
     assert rep.d_xyz.shape == (2,8)
     rep[:1]
 
@@ -77,7 +61,7 @@ def test_init_diff():
         print('N: '+str(n))
 
         xs = np.random.uniform(size=(n, 16)) * u.one
-        rep = NDCartesianDifferential(*xs)
+        rep = NDCartesianDifferential(xs)
         for i in range(1, n+1):
             assert hasattr(rep, 'd_x'+str(i))
 
