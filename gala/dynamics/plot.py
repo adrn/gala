@@ -22,7 +22,10 @@ def _get_axes(dim, subplots_kwargs=dict()):
 
     import matplotlib.pyplot as plt
 
-    n_panels = int(dim * (dim - 1) / 2)
+    if dim > 1:
+        n_panels = int(dim * (dim - 1) / 2)
+    else:
+        n_panels = 1
     figsize = subplots_kwargs.pop('figsize', (4*n_panels, 4))
     fig, axes = plt.subplots(1, n_panels, figsize=figsize,
                              **subplots_kwargs)

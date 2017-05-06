@@ -664,7 +664,10 @@ class Orbit(PhaseSpacePosition):
             raise ImportError(msg)
 
         if components is None:
-            components = self.pos.components
+            if self.ndim == 1: # only a 1D orbit, so just plot time series
+                components = ['t', self.pos.components[0]]
+            else:
+                components = self.pos.components
 
         x,labels = self._plot_prepare(components=components,
                                       units=units)
@@ -682,7 +685,8 @@ class Orbit(PhaseSpacePosition):
         fig = plot_projections(x, **kwargs)
 
         if self.pos.get_name() == 'cartesian' and \
-                all([not c.startswith('d_') for c in components]):
+                all([not c.startswith('d_') for c in components]) and \
+                't' not in components:
             for ax in fig.axes:
                 ax.set(aspect='equal', adjustable='datalim')
 
