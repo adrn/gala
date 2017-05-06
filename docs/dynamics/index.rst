@@ -25,8 +25,7 @@ quantities from orbits, tools to generate mock stellar streams, and tools useful
 for nonlinear dynamics such as Lyapunov exponent estimation.
 
 The fundamental objects used by many of the functions and utilities in this and
-other subpackages are the `~gala.dynamics.PhaseSpacePosition` and
-`~gala.dynamics.Orbit` classes.
+other subpackages are the |psp| and |orb| classes.
 
 Getting started: Working with orbits
 ====================================
@@ -41,15 +40,15 @@ orbit using the :mod:`gala.potential` and :mod:`gala.integrate` subpackages::
     >>> orbit = pot.integrate_orbit(w0, dt=1., n_steps=1000)
 
 This numerically integrates an orbit from the specified initial conditions,
-``w0``, and returns an `~gala.dynamics.Orbit` object. By default, the position
-and velocity are assumed to be Cartesian coordinates but other coordinate
-systems are supported (see the :ref:`orbits-in-detail` and
-:ref:`nd-representations` pages for more information).
+``w0``, and returns an |orb| object. By default, the position and velocity are
+assumed to be Cartesian coordinates but other coordinate systems are supported
+(see the :ref:`orbits-in-detail` and :ref:`nd-representations` pages for more
+information).
 
-The `~gala.dynamics.Orbit` object that is returned contains many useful methods,
-and can be passed to many of the analysis functions implemented in Gala. For
-example, we can easily visualize the orbit by plotting the time series in all
-Cartesian projections using the :meth:`~gala.dynamics.Orbit.plot` method::
+The |orb| object that is returned contains many useful methods, and can be
+passed to many of the analysis functions implemented in Gala. For example, we
+can easily visualize the orbit by plotting the time series in all Cartesian
+projections using the :meth:`~gala.dynamics.Orbit.plot` method::
 
     >>> fig = orbit.plot()
 
@@ -85,9 +84,9 @@ coordinate representation, for example, cylindrical radius :math:`\rho` and
     orbit = pot.integrate_orbit(w0, dt=1., n_steps=1000)
     _ = orbit.represent_as('cylindrical').plot(['rho', 'z'])
 
-From the `~gala.dynamics.Orbit` object, we can also easily compute dynamical
-quantities such as the energy or angular momentum (we take the 0th element
-because these functions return the quantities computed at every timestep)::
+From the |orb| object, we can also easily compute dynamical quantities such as
+the energy or angular momentum (we take the 0th element because these functions
+return the quantities computed at every timestep)::
 
     >>> E = orbit.energy()
     >>> E[0] # doctest: +FLOAT_CMP

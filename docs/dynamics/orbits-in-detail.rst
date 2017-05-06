@@ -1,3 +1,5 @@
+.. include:: references.txt
+
 .. _orbits-in-detail:
 
 *****************************************************
@@ -19,14 +21,13 @@ Introduction
 ============
 
 The `astropy.units` subpackage is excellent for working with numbers and
-associated units, but dynamical quantities often contain many
-quantities with mixed units. An example is a position in phase-space, which
-may contain some quantities with length units and some quantities with
-velocity or momentum units. The `~gala.dynamics.PhaseSpacePosition` and
-`~gala.dynamics.Orbit` classes are designed to work with these data structures
-and provide a consistent API for visualizing and computing further dynamical
-quantities. Click these shortcuts to jump to a section below, or start reading
-below:
+associated units, but dynamical quantities often contain many quantities with
+mixed units. An example is a position in phase-space, which may contain some
+quantities with length units and some quantities with velocity or momentum
+units. The |psp| and |orb| classes are designed to work with these data
+structures and provide a consistent API for visualizing and computing further
+dynamical quantities. Click these shortcuts to jump to a section below, or start
+reading below:
 
  * :ref:`phase-space-position`
  * :ref:`orbit`
@@ -36,15 +37,14 @@ below:
 Phase-space positions
 =====================
 
-The `~gala.dynamics.PhaseSpacePosition` class provides an interface for
-representing full phase-space positions--coordinate positions and momenta
-(velocities). This class is useful as a container for initial conditions
-and for transforming phase-space positions to new coordinate representations or
-reference frames.
+The |psp| class provides an interface for representing full phase-space
+positions--coordinate positions and momenta (velocities). This class is useful
+as a container for initial conditions and for transforming phase-space positions
+to new coordinate representations or reference frames.
 
-The easiest way to create a `~gala.dynamics.PhaseSpacePosition` object is to
-pass in a pair of `~astropy.units.Quantity` objects that represent the
-Cartesian position and velocity vectors::
+The easiest way to create a |psp| object is to pass in a pair of
+`~astropy.units.Quantity` objects that represent the Cartesian position and
+velocity vectors::
 
     >>> gd.PhaseSpacePosition(pos=[4.,8.,15.]*u.kpc,
     ...                       vel=[-150.,50.,15.]*u.km/u.s)
@@ -105,7 +105,7 @@ with representation objects instead of `~astropy.units.Quantity`'s::
 
 We can easily transform the full phase-space vector to new representations or
 coordinate frames. These transformations use the :mod:`astropy.coordinates`
-`representations framework <http://docs.astropy.org/en/latest/coordinates/skycoord.html#astropy-skycoord-representations>`_::
+|astropyrep|::
 
     >>> cart = w.represent_as('cartesian')
     >>> cart.x
@@ -206,22 +206,18 @@ Phase-space position API
 Orbits
 ======
 
-The `~gala.dynamics.Orbit` class inherits much of the functionality from
-`~gala.dynamics.PhaseSpacePosition` (described above) and adds some additional
-features that are useful for time-series orbits.
+The |orb| class inherits much of the functionality from |psp| (described above)
+and adds some additional features that are useful for time-series orbits.
 
-An `~gala.dynamics.Orbit` instance is initialized like the
-`~gala.dynamics.PhaseSpacePosition`--with arrays of positions and velocities--
-but usually also requires specifying a time array as well. Also, the extra
-axes in these arrays hold special meaning for the ``Orbit`` class. The position
-and velocity arrays passed to `~gala.dynamics.PhaseSpacePosition` can have
-arbitrary numbers of dimensions as long as the 0th axis specifies the
-dimensionality. For the `~gala.dynamics.Orbit` class, the 0th axis remains the
-axis of dimensionality, but the 1st axis now is always assumed to be the time
-axis. For example, an input position with shape ``(2,128)`` to a
-`~gala.dynamics.PhaseSpacePosition` represents 128 independent 2D positions, but
-to a `~gala.dynamics.Orbit` it represents a single orbit's positions at 128
-times::
+An |orb| instance is initialized like the |psp|--with arrays of positions and
+velocities-- but usually also requires specifying a time array as well. Also,
+the extra axes in these arrays hold special meaning for the |orb| class. The
+position and velocity arrays passed to |psp| can have arbitrary numbers of
+dimensions as long as the 0th axis specifies the dimensionality. For the |orb|
+class, the 0th axis remains the axis of dimensionality, but the 1st axis now is
+always assumed to be the time axis. For example, an input position with shape
+``(2,128)`` to a |psp| represents 128 independent 2D positions, but to a |orb|
+it represents a single orbit's positions at 128 times::
 
     >>> t = np.linspace(0, 100, 128) * u.Myr
     >>> Om = 1E-1 * u.rad / u.Myr
@@ -255,11 +251,11 @@ that represents the potential that the orbit was integrated in::
 
 (note, in this case ``pos`` and ``vel`` were not generated from integrating
 an orbit in the potential ``pot``!). However, most of the time you won't need to
-create `~gala.dynamics.Orbit` objects from scratch! They are returned from any
-of the numerical intergration routines provided in `gala`. For example, they are
-returned by the `~gala.potential.PotentialBase.integrate_orbit` method of
-potential objects and will automatically contain the ``time`` array and
-``potential`` object. For example::
+create |orb| objects from scratch! They are returned from any of the numerical
+intergration routines provided in `gala`. For example, they are returned by the
+`~gala.potential.PotentialBase.integrate_orbit` method of potential objects and
+will automatically contain the ``time`` array and ``potential`` object. For
+example::
 
     >>> pot = gp.PlummerPotential(m=1E10 * u.Msun, b=1. * u.kpc, units=galactic)
     >>> w0 = gd.PhaseSpacePosition(pos=[10.,0,0] * u.kpc,
@@ -273,8 +269,8 @@ potential objects and will automatically contain the ``time`` array and
     >>> orbit.potential
     <PlummerPotential: m=1.00e+10, b=1.00 (kpc,Myr,solMass,rad)>
 
-Just like for `~gala.dynamics.PhaseSpacePosition`, we can quickly visualize an
-orbit using the `~gala.dynamics.Orbit.plot` method::
+Just like for |psp|, we can quickly visualize an orbit using the
+`~gala.dynamics.Orbit.plot` method::
 
     >>> fig = orbit.plot()
 
@@ -331,3 +327,15 @@ Orbit API
     :no-heading:
     :headings: ^^
     :skip: CartesianOrbit
+
+More information
+================
+
+Internally, both of the above classes rely on the Astropy representation
+transformation framework (i.e. the subclasses of
+`~astropy.coordinates.BaseRepresentation` and
+`~astropy.coordinates.BaseDifferential`). However, at present these classes only
+support 3D positions and differentials (velocities). The |psp| and |orb| classes
+both support arbitrary numbers of dimensions and, when relevant, rely on custom
+subclasses of the representation classes to handle such cases. See the
+:ref:`nd-representations` page for more information about these classes.
