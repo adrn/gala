@@ -88,8 +88,8 @@ initial conditions that place the progenitor on a mildly eccentric orbit:
     >>> pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
     ...                                units=galactic)
     >>> prog_mass = 1E4*u.Msun
-    >>> prog_w0 = gd.CartesianPhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
-    ...                                          vel=[75, 150, 30.]*u.km/u.s)
+    >>> prog_w0 = gd.PhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
+    ...                                 vel=[75, 150, 30.]*u.km/u.s)
     >>> prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
     >>> fig = prog_orbit.plot()
 
@@ -105,8 +105,8 @@ initial conditions that place the progenitor on a mildly eccentric orbit:
     pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
                                    units=galactic)
     prog_mass = 1E4*u.Msun
-    prog_w0 = gd.CartesianPhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
-                                             vel=[75, 150, 0.]*u.km/u.s)
+    prog_w0 = gd.PhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
+                                    vel=[75, 150, 0.]*u.km/u.s)
     prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
     fig = prog_orbit.plot()
 
@@ -138,8 +138,8 @@ from both Lagrange points by setting ``release_every=1``:
     pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
                                    units=galactic)
     prog_mass = 1E4*u.Msun
-    prog_w0 = gd.CartesianPhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
-                                             vel=[75, 150, 0.]*u.km/u.s)
+    prog_w0 = gd.PhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
+                                    vel=[75, 150, 0.]*u.km/u.s)
     prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
     k_mean = [1., 0, 0, 0, 1., 0]
     k_disp = np.zeros(6)
@@ -163,8 +163,8 @@ Or, zooming in around the progenitor:
     pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
                                    units=galactic)
     prog_mass = 1E4*u.Msun
-    prog_w0 = gd.CartesianPhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
-                                             vel=[75, 150, 30.]*u.km/u.s)
+    prog_w0 = gd.PhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
+                                    vel=[75, 150, 30.]*u.km/u.s)
     prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
     k_mean = [1., 0, 0, 0, 1., 0]
     k_disp = np.zeros(6)
@@ -211,8 +211,8 @@ stream using this method:
     pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
                                    units=galactic)
     prog_mass = 1E4*u.Msun
-    prog_w0 = gd.CartesianPhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
-                                             vel=[75, 150, 0.]*u.km/u.s)
+    prog_w0 = gd.PhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
+                                    vel=[75, 150, 0.]*u.km/u.s)
     prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
     k_mean = [2., 0, 0, 0, 0.3, 0]
     k_disp = [0.5, 0, 0.5, 0, 0.5, 0.5]
@@ -236,8 +236,8 @@ Or, again, zooming in around the progenitor:
     pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
                                    units=galactic)
     prog_mass = 1E4*u.Msun
-    prog_w0 = gd.CartesianPhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
-                                             vel=[75, 150, 30.]*u.km/u.s)
+    prog_w0 = gd.PhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
+                                    vel=[75, 150, 30.]*u.km/u.s)
     prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
     k_mean = [2., 0, 0, 0, 0.3, 0]
     k_disp = [0.5, 0, 0.5, 0, 0.5, 0.5]

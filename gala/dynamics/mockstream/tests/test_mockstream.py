@@ -12,7 +12,7 @@ import pytest
 
 # Custom
 from ....potential import Hamiltonian, NFWPotential, HernquistPotential
-from ....dynamics import CartesianPhaseSpacePosition
+from ....dynamics import PhaseSpacePosition
 from ....integrate import DOPRI853Integrator, LeapfrogIntegrator, RK5Integrator
 from ....units import galactic
 
@@ -27,8 +27,8 @@ def test_mock_stream(Integrator, kwargs):
                                                     units=galactic)
     ham = Hamiltonian(potential)
 
-    w0 = CartesianPhaseSpacePosition(pos=[0.,15.,0]*u.kpc,
-                                     vel=[-0.13,0,0]*u.kpc/u.Myr)
+    w0 = PhaseSpacePosition(pos=[0.,15.,0]*u.kpc,
+                            vel=[-0.13,0,0]*u.kpc/u.Myr)
     prog = ham.integrate_orbit(w0, dt=-2., n_steps=1023)
     prog = prog[::-1]
 
@@ -61,8 +61,8 @@ def test_each_type(mock_func, extra_kwargs):
                                                     units=galactic)
     ham = Hamiltonian(potential)
 
-    w0 = CartesianPhaseSpacePosition(pos=[0.,15.,0]*u.kpc,
-                                     vel=[-0.13,0,0]*u.kpc/u.Myr)
+    w0 = PhaseSpacePosition(pos=[0.,15.,0]*u.kpc,
+                            vel=[-0.13,0,0]*u.kpc/u.Myr)
     prog = ham.integrate_orbit(w0, dt=-2., n_steps=1023)
     prog = prog[::-1]
 
@@ -103,7 +103,7 @@ def test_animate(tmpdir):
 
     np.random.seed(42)
     pot = HernquistPotential(m=1E11, c=1., units=galactic)
-    w0 = CartesianPhaseSpacePosition(pos=[5.,0,0]*u.kpc, vel=[0,0.1,0]*u.kpc/u.Myr)
+    w0 = PhaseSpacePosition(pos=[5.,0,0]*u.kpc, vel=[0,0.1,0]*u.kpc/u.Myr)
     orbit = pot.integrate_orbit(w0, dt=1., n_steps=1000,
                                 Integrator=DOPRI853Integrator)
 

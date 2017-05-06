@@ -23,8 +23,8 @@ When :ref:`integrating orbits using the potential classes directly
 
     >>> pot = gp.HernquistPotential(m=1E10*u.Msun, c=1.*u.kpc,
     ...                             units=galactic)
-    >>> w0 = gd.CartesianPhaseSpacePosition(pos=[5.,0,0]*u.kpc,
-    ...                                     vel=[0,0,50.]*u.km/u.s)
+    >>> w0 = gd.PhaseSpacePosition(pos=[5.,0,0]*u.kpc,
+    ...                            vel=[0,0,50.]*u.km/u.s)
     >>> orbit = pot.integrate_orbit(w0, dt=0.5, n_steps=1000)
 
 it is implicitly assumed that the initial conditions and orbit are in an
@@ -68,8 +68,8 @@ object and a :class:`~gala.potential.frame.Staticframe` instance::
     ...                             units=galactic)
     >>> frame = gp.StaticFrame(units=galactic)
     >>> H = gp.Hamiltonian(potential=pot, frame=frame)
-    >>> w0 = gd.CartesianPhaseSpacePosition(pos=[5.,0,0]*u.kpc,
-    ...                                     vel=[0,0,50.]*u.km/u.s)
+    >>> w0 = gd.PhaseSpacePosition(pos=[5.,0,0]*u.kpc,
+    ...                            vel=[0,0,50.]*u.km/u.s)
     >>> orbit = H.integrate_orbit(w0, dt=0.5, n_steps=1000)
 
 In this case, the ``orbit`` object returned from integration knows what
@@ -102,8 +102,8 @@ rotation around that axis::
                                 units=galactic)
     frame = gp.StaticFrame(units=galactic)
     H = gp.Hamiltonian(potential=pot, frame=frame)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[5.,0,0]*u.kpc,
-                                        vel=[0,0,50.]*u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[5.,0,0]*u.kpc,
+                               vel=[0,0,50.]*u.km/u.s)
     orbit = H.integrate_orbit(w0, dt=0.5, n_steps=1000)
 
     rotation_axis = np.array([8.2, -1.44, 3.25])
@@ -143,8 +143,8 @@ frame::
 
     pot = gp.HernquistPotential(m=1E10*u.Msun, c=1.*u.kpc,
                                 units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[5.,0,0]*u.kpc,
-                                        vel=[0,0,50.]*u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[5.,0,0]*u.kpc,
+                               vel=[0,0,50.]*u.km/u.s)
 
     rotation_axis = np.array([8.2, -1.44, 3.25])
     rotation_axis /= np.linalg.norm(rotation_axis) # make a unit vector
@@ -243,8 +243,8 @@ radius::
     >>> r_corot = res.x * u.kpc
     >>> v_circ = Om_bar * r_corot * u.kpc
     >>>
-    >>> w0 = gd.CartesianPhaseSpacePosition(pos=[r_corot.value, 0, 0] * r_corot.unit,
-    ...                                     vel=[0, v_circ.value, 0.] * v_circ.unit)
+    >>> w0 = gd.PhaseSpacePosition(pos=[r_corot.value, 0, 0] * r_corot.unit,
+    ...                            vel=[0, v_circ.value, 0.] * v_circ.unit)
     >>> orbit = H.integrate_orbit(w0, dt=0.1, n_steps=40000,
     ...                           Integrator=gi.DOPRI853Integrator)
     >>> fig = orbit.plot(marker=',', linestyle='none', alpha=0.5) # doctest: +SKIP
@@ -287,8 +287,8 @@ radius::
     r_corot = res.x * u.kpc
     v_circ = Om_bar * r_corot
 
-    w0 = gd.CartesianPhaseSpacePosition(pos=[r_corot.value, 0, 0] * r_corot.unit,
-                                vel=[0,v_circ.value, 0.] * v_circ.unit)
+    w0 = gd.PhaseSpacePosition(pos=[r_corot.value, 0, 0] * r_corot.unit,
+                               vel=[0,v_circ.value, 0.] * v_circ.unit)
 
     orbit = H.integrate_orbit(w0, dt=0.1, n_steps=40000,
                               Integrator=gi.DOPRI853Integrator)
@@ -342,8 +342,8 @@ orbit looks like in an inertial frame::
     r_corot = res.x * u.kpc
     v_circ = Om_bar * r_corot
 
-    w0 = gd.CartesianPhaseSpacePosition(pos=[r_corot.value, 0, 0] * r_corot.unit,
-                                vel=[0,v_circ.value, 0.] * v_circ.unit)
+    w0 = gd.PhaseSpacePosition(pos=[r_corot.value, 0, 0] * r_corot.unit,
+                               vel=[0,v_circ.value, 0.] * v_circ.unit)
 
     orbit = H.integrate_orbit(w0, dt=0.1, n_steps=40000,
                               Integrator=gi.DOPRI853Integrator)

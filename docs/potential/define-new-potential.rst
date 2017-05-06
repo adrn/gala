@@ -104,8 +104,8 @@ dimensionless quantities::
 That's it! Now we have a fully-fledged potential object. For example, we
 can integrate an orbit in this potential::
 
-    >>> w0 = gd.CartesianPhaseSpacePosition(pos=[0.,0.3],
-    ...                                     vel=[0.38,0.])
+    >>> w0 = gd.PhaseSpacePosition(pos=[0.,0.3],
+    ...                            vel=[0.38,0.])
     >>> orbit = pot.integrate_orbit(w0, dt=0.05, n_steps=10000)
     >>> fig = orbit.plot(marker=',', linestyle='none', alpha=0.5)
 
@@ -140,8 +140,8 @@ can integrate an orbit in this potential::
             return grad
 
     pot = HenonHeilesPotential(A=1., units=None)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[0.,0.3],
-                                        vel=[0.38,0.])
+    w0 = gd.PhaseSpacePosition(pos=[0.,0.3],
+                               vel=[0.38,0.])
     orbit = pot.integrate_orbit(w0, dt=0.05, n_steps=10000)
     fig = orbit.plot(marker=',', linestyle='none', alpha=0.5)
 

@@ -12,8 +12,8 @@ We'll assume the following imports have already been executed::
     >>> import numpy as np
     >>> import gala.potential as gp
     >>> import gala.dynamics as gd
-    >>> from astrop.coordinates import (CylindricalRepresentation,
-    ...                                 CylindricalDifferential)
+    >>> from astropy.coordinates import (CylindricalRepresentation,
+    ...                                  CylindricalDifferential)
     >>> from gala.units import galactic
     >>> np.random.seed(42)
 
@@ -239,7 +239,7 @@ orbits, each with the same 128 times::
     >>> vel = np.stack((-5*np.sin(angle), np.cos(angle))).value * u.kpc/u.Myr
     >>> orbit = gd.Orbit(pos=pos, vel=vel)
     >>> orbit
-    <Orbit N=2, shape=(128, 16)>
+    <Orbit ndcartesian, dim=2, shape=(128, 16)>
 
 To make full use of the orbit functionality, you must also pass in an array with
 the time values and an instance of a `~gala.potential.PotentialBase` subclass

@@ -77,18 +77,14 @@ We first create a potential and set up our initial conditions::
 
     >>> pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
     ...                               units=galactic)
-    >>> w0 = gd.CartesianPhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
-    ...                                     vel=[75, 150, 50.]*u.km/u.s)
+    >>> w0 = gd.PhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
+    ...                            vel=[75, 150, 50.]*u.km/u.s)
 
 We will now integrate the orbit and plot it in the meridional plane::
 
     >>> w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
-    >>> cyl_pos, cyl_vel = w.represent_as(coord.CylindricalRepresentation)
-    >>> fig,ax = plt.subplots(1,1,figsize=(6,6))
-    >>> ax.plot(cyl_pos.rho.to(u.kpc), cyl_pos.z.to(u.kpc),
-    ...         marker=None, linestyle='-') # doctest: +SKIP
-    >>> ax.set_xlabel("R [kpc]") # doctest: +SKIP
-    >>> ax.set_ylabel("z [kpc]") # doctest: +SKIP
+    >>> cyl = w.represent_as('cylindrical')
+    >>> fig = cyl.plot(['rho', 'z'], linestyle='-')
 
 .. plot::
     :align: center
@@ -103,16 +99,12 @@ We will now integrate the orbit and plot it in the meridional plane::
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
                                   units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
-                                        vel=[75, 150, 50.]*u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
+                               vel=[75, 150, 50.]*u.km/u.s)
 
     w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
-    cyl_pos, cyl_vel = w.represent_as(coord.CylindricalRepresentation)
-    fig,ax = plt.subplots(1,1,figsize=(6,6))
-    ax.plot(cyl_pos.rho.to(u.kpc).value, cyl_pos.z.to(u.kpc).value,
-            marker=None, linestyle='-')
-    ax.set_xlabel("R [kpc]")
-    ax.set_ylabel("z [kpc]")
+    cyl = w.represent_as('cylindrical')
+    cyl.plot(['rho', 'z'], linestyle='-')
 
 To solve for the actions in the true potential, we first compute the actions in
 a "toy" potential -- a potential in which we can compute the actions and angles
@@ -155,8 +147,8 @@ Instead, the orbit is wobbly in the toy potential angles::
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
                                   units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
-                                        vel=[75, 150, 50.]*u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
+                               vel=[75, 150, 50.]*u.km/u.s)
 
     w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
     toy_potential = gd.fit_isochrone(w)
@@ -190,8 +182,8 @@ time-independent in the toy potential::
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
                                   units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
-                                        vel=[75, 150, 50.]*u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
+                               vel=[75, 150, 50.]*u.km/u.s)
 
     w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
     toy_potential = gd.fit_isochrone(w)
@@ -245,8 +237,8 @@ actions computed using this machinery::
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
                                   units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
-                                        vel=[75, 150, 50.]*u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
+                               vel=[75, 150, 50.]*u.km/u.s)
 
     w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
     toy_potential = gd.fit_isochrone(w)
@@ -312,8 +304,8 @@ and the same initial conditions as above:
                                   units=galactic)
 
     # define initial conditions
-    w0 = gd.CartesianPhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
-                                        vel=[75, 150, 50.]*u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
+                               vel=[75, 150, 50.]*u.km/u.s)
 
     # integrate orbit
     w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)

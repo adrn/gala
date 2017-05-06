@@ -89,7 +89,7 @@ the energy or angular momentum (we take the 0th element because these functions
 return the quantities computed at every timestep)::
 
     >>> E = orbit.energy()
-    >>> E[0] # doctest: +FLOAT_CMP
+    >>> E[0] # doctest: +SKIP
     <Quantity −0.060740198 kpc2 / Myr2>
 
 Let's see how well the integrator conserves energy and the ``z`` component of
