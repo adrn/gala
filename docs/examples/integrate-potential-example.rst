@@ -7,6 +7,7 @@ Integrating and plotting an orbit in an NFW potential
 We first need to import some relevant packages::
 
    >>> import astropy.units as u
+   >>> import matplotlib.pyplot as plt
    >>> import numpy as np
    >>> import gala.integrate as gi
    >>> import gala.dynamics as gd
@@ -69,8 +70,8 @@ the orbit points::
    >>> grid = np.linspace(-15,15,64)
    >>> fig,ax = plt.subplots(1, 1, figsize=(5,5))
    >>> fig = pot.plot_contours(grid=(grid,grid,0), cmap='Greys', ax=ax)
-   >>> orbits[-1].plot(['x', 'y'], color='#9ecae1', s=1., alpha=0.5,
-   ...                 axes=[ax], auto_aspect=False)
+   >>> fig = orbits[-1].plot(['x', 'y'], color='#9ecae1', s=1., alpha=0.5,
+   ...                       axes=[ax], auto_aspect=False)
 
 .. plot::
    :align: center

@@ -165,7 +165,7 @@ stream using this method:
     >>> stream2 = mock_stream(pot, prog_orbit, prog_mass,
     ...                       k_mean=k_mean, k_disp=k_disp,
     ...                       release_every=1)
-    >>> stream2.plot(['x', 'y'], marker='.', alpha=0.25)
+    >>> fig = stream2.plot(['x', 'y'], marker='.', alpha=0.25)
 
 .. plot::
     :align: center
