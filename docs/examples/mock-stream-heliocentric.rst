@@ -1,4 +1,4 @@
-.. _integrate_potential_example:
+.. _mockstream-heliocentric:
 
 ===========================================================================
 Generating a mock stellar stream and converting to Heliocentric coordinates
@@ -30,11 +30,11 @@ potential to represent a dark matter halo.
 
 We'll use the Palomar 5 globular cluster and stream as a motivation for this
 example. For the position and velocity of the cluster, we'll use
-:math:`(\alpha, \delta) = (229, −0.124)~{\rm deg}` ([odenkirchen02]_),
-:math:`d = 22.9~{\rm kpc}` ([bovy16]_),
-:math:`v_r = -58.7~{\rm km}~{\rm s}^{-1}` ([bovy16]_), and
+:math:`(\alpha, \delta) = (229, −0.124)~{\rm deg}` [odenkirchen02]_,
+:math:`d = 22.9~{\rm kpc}` [bovy16]_,
+:math:`v_r = -58.7~{\rm km}~{\rm s}^{-1}` [bovy16]_, and
 :math:`(\mu_{\alpha,*}, \mu_\delta) = (-2.296,-2.257)~{\rm mas}~{\rm yr}^{-1}`
-([fritz15]_)::
+[fritz15]_::
 
    >>> c = coord.SkyCoord(ra=229 * u.deg, dec=-0.124 * u.deg,
    ...                    distance=22.9 * u.kpc)
@@ -149,4 +149,3 @@ References
 .. [odenkirchen02] `Odenkirchen et al. (2002) <https://arxiv.org/abs/astro-ph/0206276>`_
 .. [fritz15] `Fritz & Kallivayali (2015) <https://arxiv.org/abs/1508.06647>`_
 .. [bovy16] `Bovy et al. (2016) <https://arxiv.org/abs/1609.01298>`_
-.. [fardal15] `Fardal, Huang, Weinberg (2015) <http://arxiv.org/abs/1410.1861>`_
