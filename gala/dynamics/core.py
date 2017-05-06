@@ -618,14 +618,8 @@ class PhaseSpacePosition(object):
     @property
     def shape(self):
         """
-        .. warning::
-            This is *not* the shape of the position or velocity
-            arrays. That is accessed by doing ``obj.pos.shape``.
-
-        Returns
-        -------
-        shp : tuple
-
+        This is *not* the shape of the position or velocity arrays. That is
+        accessed by doing, e.g., ``obj.pos.x.shape``.
         """
         return self.pos.shape
 
