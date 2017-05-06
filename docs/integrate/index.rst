@@ -38,7 +38,7 @@ norbits)`` where ``ndim`` is the full dimensionality of the phase-space (e.g., 6
 for a 3D coordinate system) and ``norbits`` is the number of orbits. These
 inputs will *not* have units associated with them (e.g., they are not
 :class:`astropy.units.Quantity` objects). An example of such a function (that
-    represents a simple harmonic oscillator) is::
+represents a simple harmonic oscillator) is::
 
     >>> def F(t, w):
     ...     x,x_dot = w
