@@ -59,7 +59,6 @@ orbit backwards (using a negative time-step) from its present-day position for 4
 Gyr::
 
    >>> pal5_orbit = pot.integrate_orbit(pal5, dt=-0.5*u.Myr, n_steps=8000)
-   >>> pal5_orbit.plot()
    >>> fig = pal5_orbit.plot()
 
 .. plot::
