@@ -37,13 +37,16 @@ class PotentialBase(CommonBase):
     to compute the density and hessian: ``_density()``, ``_hessian()``.
     """
 
-    def __init__(self, parameters, parameter_physical_types=None, ndim=3, units=None):
+    def __init__(self, parameters, origin=None, parameter_physical_types=None,
+                 ndim=3, units=None):
+
         self.units = self._validate_units(units)
 
         if parameter_physical_types is None:
             parameter_physical_types = dict()
         self._ptypes = parameter_physical_types
-        self.parameters = self._prepare_parameters(parameters, self._ptypes, self.units)
+        self.parameters = self._prepare_parameters(parameters, self._ptypes,
+                                                   self.units)
 
         try:
             self.G = G.decompose(self.units).value
@@ -51,6 +54,10 @@ class PotentialBase(CommonBase):
             self.G = 1. # TODO: this is a HACK and could lead to user confusion
 
         self.ndim = ndim
+
+        if origin is None:
+            origin = np.zeros(self.ndim)
+        self.origin = self._remove_units(origin)
 
     # ========================================================================
     # Abstract methods that must be implemented by subclasses
@@ -72,6 +79,19 @@ class PotentialBase(CommonBase):
     # ========================================================================
     # Utility methods
     #
+    def _remove_units(self, x):
+        """
+        Always returns an array. If a Quantity is passed in, it converts to the
+        units associated with this object and returns the value.
+        """
+        if hasattr(x, 'unit'):
+            x = x.decompose(self.units).value
+
+        else:
+            x = np.array(x)
+
+        return x
+
     def _remove_units_prepare_shape(self, x):
         """
         This is similar to that implemented by `gala.potential.common.CommonBase`,

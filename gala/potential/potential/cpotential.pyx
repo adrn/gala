@@ -53,7 +53,7 @@ cdef class CPotentialWrapper:
     given potential. This provides a Cython wrapper around this C implementation.
     """
 
-    cpdef init(self, list parameters, int n_dim=3):
+    cpdef init(self, list parameters, double[::1] q0, int n_dim=3):
 
         # save the array of parameters so it doesn't get garbage-collected
         self._params = np.array(parameters, dtype=np.float64)
@@ -77,6 +77,11 @@ cdef class CPotentialWrapper:
         self.cpotential.density[0] = <densityfunc>(nan_density)
         self.cpotential.gradient[0] = <gradientfunc>(nan_gradient)
         self.cpotential.hessian[0] = <hessianfunc>(nan_hessian)
+
+        # set the
+        self._q0 = np.array(q0)
+        assert len(self._q0) == n_dim
+        self.cpotential.q0[0] = &(self._q0[0])
 
     cpdef energy(self, double[:,::1] q, double[::1] t):
         """
@@ -226,7 +231,7 @@ cdef class CPotentialWrapper:
 
     # For pickling in Python 2
     def __reduce__(self):
-        return (self.__class__, (self._params[0], list(self._params[1:])))
+        return (self.__class__, (self._params[0], list(self._params[1:]), np.array(self._q0)))
 
 # ----------------------------------------------------------------------------
 
@@ -237,9 +242,9 @@ class CPotentialBase(PotentialBase):
     A baseclass for defining gravitational potentials implemented in C.
     """
 
-    def __init__(self, parameters, units, parameter_physical_types=None, ndim=3, Wrapper=None,
-                 c_only=None):
-        super(CPotentialBase, self).__init__(parameters, units=units, ndim=ndim,
+    def __init__(self, parameters, units, origin=None, parameter_physical_types=None, ndim=3,
+                 Wrapper=None, c_only=None):
+        super(CPotentialBase, self).__init__(parameters, origin=origin, units=units, ndim=ndim,
                                              parameter_physical_types=parameter_physical_types)
 
         # to support array parameters, but they get unraveled
@@ -256,7 +261,7 @@ class CPotentialBase(PotentialBase):
             from .builtin import cybuiltin
             Wrapper = getattr(cybuiltin, wrapper_name)
 
-        self.c_instance = Wrapper(self.G, self.c_parameters)
+        self.c_instance = Wrapper(self.G, self.c_parameters, q0=self.origin)
 
         # remove C-only parameters from parameter dictionary
         if c_only is not None:

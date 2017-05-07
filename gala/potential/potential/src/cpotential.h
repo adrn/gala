@@ -24,6 +24,9 @@
 
         // pointer to array of pointers to the parameter arrays for each component
         double *parameters[MAX_N_COMPONENTS];
+
+        // pointer to array of pointers containing the origin coordinates for each
+        double *q0[MAX_N_COMPONENTS];
     };
 #endif
 

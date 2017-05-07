@@ -21,6 +21,7 @@ cdef extern from "potential/src/cpotential.h":
         hessianfunc hessian[MAX_N_COMPONENTS]
         int n_params[MAX_N_COMPONENTS]
         double *parameters[MAX_N_COMPONENTS]
+        double *q0[MAX_N_COMPONENTS]
 
     double c_potential(CPotential *p, double t, double *q) nogil
     double c_density(CPotential *p, double t, double *q) nogil
@@ -38,8 +39,9 @@ cdef class CPotentialWrapper:
     cdef double[::1] _params
     cdef int[::1] _n_params
     cdef list _potentials # HACK: for CCompositePotentialWrapper
+    cdef double[::1] _q0
 
-    cpdef init(self, list parameters, int n_dim=?)
+    cpdef init(self, list parameters, double[::1] q0, int n_dim=?)
 
     cpdef energy(self, double[:,::1] q, double[::1] t)
     cpdef density(self, double[:,::1] q, double[::1] t)
