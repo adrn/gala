@@ -121,6 +121,8 @@ ICRS coordinate system and plot some of the Heliocentric kinematic quantities::
    :align: center
    :context: close-figs
 
+   stream_c, stream_v = stream.to_coord_frame(coord.ICRS)
+
    style = dict(marker='.', s=1, alpha=0.5)
 
    fig, axes = plt.subplots(1, 2, figsize=(10,5), sharex=True)
