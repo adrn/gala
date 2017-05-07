@@ -32,16 +32,68 @@ speed for the bar. We'll use :math:`\Omega_p = 40~{\rm km}~{\rm s}^{-1}~{\rm
 kpc}^{-1}`. We then have to solve for the co-rotation radius using the circular
 ::
 
+   >>> disk = gp.MiyamotoNagaiPotential(m=6E10*u.Msun,
+   ...                                  a=3.5*u.kpc, b=280*u.pc,
+   ...                                  units=galactic)
    >>> Omega = 40. * u.km/u.s/u.kpc
-   >>> def corot_func(r):
-   ...
+   >>> def corot_func(r, Omega, potential):
+   ...     x = r[0]
+   ...     xyz = [x, 0., 0.] * u.kpc
+   ...     v_bar = Omega * (x * u.kpc)
+   ...     v_circ = disk.circular_velocity(xyz).to(u.km/u.s)
+   ...     return (v_bar - v_circ).value ** 2
+   >>> res = minimize(corot_func, x0=4., args=(Omega, disk))
+   >>> corot_rad = res.x[0] * u.kpc
+   >>> corot_rad # doctest: +FLOAT_CMP
+   <Quantity 3.9175069560019287 kpc>
 
+We can now define the bar component::
+
+   >>> bar = gp.LongMuraliBarPotential(m=1E10*u.Msun, a=corot_rad,
+   ...                                 b=0.8*u.kpc, c=0.25*u.kpc,
+   ...                                 units=galactic)
    >>> pot = gp.CCompositePotential()
-   >>> pot['disk'] = gp.MiyamotoNagaiPotential(m=6E10*u.Msun,
-   ...                                         a=3.5*u.kpc, b=280*u.pc,
-   ...                                         units=galactic)
-   >>> pot['bar'] = gp.LongMuraliBarPotential(m=1E10, a=XX, b=XX, c=XX,
-   ...                                        units=galactic)
+   >>> pot['disk'] = disk
+   >>> pot['bar'] = bar
+   >>> grid = np.linspace(-10, 10, 128)
+   >>> fig,ax = plt.subplots(1, 1, figsize=(5,5))
+   >>> fig = pot.plot_contours(grid=(grid, grid, 0), ax=ax)
+
+.. plot::
+   :align: center
+   :context: close-figs
+
+   import astropy.units as u
+   import matplotlib.pyplot as plt
+   import numpy as np
+   import gala.integrate as gi
+   import gala.dynamics as gd
+   import gala.potential as gp
+   from gala.units import galactic
+   from scipy.optimize import minimize
+
+   disk = gp.MiyamotoNagaiPotential(m=6E10*u.Msun,
+                                    a=3.5*u.kpc, b=280*u.pc,
+                                    units=galactic)
+   Omega = 40. * u.km/u.s/u.kpc
+   def corot_func(r, Omega, potential):
+       x = r[0]
+       xyz = [x, 0., 0.] * u.kpc
+       v_bar = Omega * (x * u.kpc)
+       v_circ = disk.circular_velocity(xyz).to(u.km/u.s)
+       return (v_bar - v_circ).value ** 2
+   res = minimize(corot_func, x0=4., args=(Omega, disk))
+   corot_rad = res.x[0] * u.kpc
+
+   bar = gp.LongMuraliBarPotential(m=1E10*u.Msun, a=corot_rad,
+                                   b=0.8*u.kpc, c=0.25*u.kpc,
+                                   units=galactic)
+   pot = gp.CCompositePotential()
+   pot['disk'] = disk
+   pot['bar'] = bar
+   grid = np.linspace(-10, 10, 128)
+   fig,ax = plt.subplots(1, 1, figsize=(5,5))
+   fig = pot.plot_contours(grid=(grid, grid, 0), ax=ax)
 
 ----------------------------------------------------
 Orbits in the circular restricted three-body problem

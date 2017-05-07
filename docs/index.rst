@@ -53,4 +53,5 @@ Tutorials
    :glob:
 
    examples/integrate-potential-example
+   examples/integrate-rotating-frame
    examples/mock-stream-heliocentric
