@@ -3,10 +3,15 @@
 
 double c_potential(CPotential *p, double t, double *qp) {
     double v = 0;
-    int i;
+    int i, j;
+    double _qp[p->n_dim];
 
     for (i=0; i < p->n_components; i++) {
-        v = v + (p->value)[i](t, (p->parameters)[i], qp, p->n_dim);
+        // this looks like it sucks, but doesn't add much time...
+        for (j=0; j < p->n_dim; j++) {
+            _qp[j] = qp[j] - (p->q0)[i][j];
+        }
+        v = v + (p->value)[i](t, (p->parameters)[i], &_qp[0], p->n_dim);
     }
 
     return v;
@@ -14,37 +19,52 @@ double c_potential(CPotential *p, double t, double *qp) {
 
 double c_density(CPotential *p, double t, double *qp) {
     double v = 0;
-    int i;
+    int i, j;
+    double _qp[p->n_dim];
 
     for (i=0; i < p->n_components; i++) {
-        v = v + (p->density)[i](t, (p->parameters)[i], qp, p->n_dim);
+        // this looks like it sucks, but doesn't add much time...
+        for (j=0; j < p->n_dim; j++) {
+            _qp[j] = qp[j] - (p->q0)[i][j];
+        }
+        v = v + (p->density)[i](t, (p->parameters)[i], &_qp[0], p->n_dim);
     }
 
     return v;
 }
 
 void c_gradient(CPotential *p, double t, double *qp, double *grad) {
-    int i;
+    int i, j;
+    double _qp[p->n_dim];
 
     for (i=0; i < p->n_dim; i++) {
         grad[i] = 0.;
     }
 
     for (i=0; i < p->n_components; i++) {
-        (p->gradient)[i](t, (p->parameters)[i], qp, p->n_dim, grad);
+        // this looks like it sucks, but doesn't add much time...
+        for (j=0; j < p->n_dim; j++) {
+            _qp[j] = qp[j] - (p->q0)[i][j];
+        }
+        (p->gradient)[i](t, (p->parameters)[i], &_qp[0], p->n_dim, grad);
     }
 
 }
 
 void c_hessian(CPotential *p, double t, double *qp, double *hess) {
-    int i;
+    int i, j;
+    double _qp[p->n_dim];
 
     for (i=0; i < pow(p->n_dim,2); i++) {
         hess[i] = 0.;
     }
 
     for (i=0; i < p->n_components; i++) {
-        (p->hessian)[i](t, (p->parameters)[i], qp, p->n_dim, hess);
+        // this looks like it sucks, but doesn't add much time...
+        for (j=0; j < p->n_dim; j++) {
+            _qp[j] = qp[j] - (p->q0)[i][j];
+        }
+        (p->hessian)[i](t, (p->parameters)[i], &_qp[0], p->n_dim, hess);
     }
 
 }
