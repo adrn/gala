@@ -24,6 +24,7 @@ imports have already been excuted::
     >>> import gala.potential as gp
     >>> import gala.dynamics as gd
 
+========================================
 Implementing a new potential with Python
 ========================================
 
@@ -194,10 +195,22 @@ Or, we could create a contour plot of equipotentials::
                             levels=np.logspace(-3, 1, 10),
                             norm=colors.LogNorm(), ax=ax)
 
+=====================================
 Adding a custom potential with Cython
--------------------------------------
+=====================================
 
-.. todo::
+Adding a new Cython potential class is a little more involved as it requires
+writing C-code and setting it up properly to compile when the code is built.
+For this example, we'll work through how to define a new C-implemented potential
+class representation of a Keplerian (point-mass) potential. Because this example
+requires using Cython to build code, we provide a separate
+`demo GitHub repository <https://github.com/adrn/gala-cpotential-demo>`_ with an
+implementation of this potential with a demonstration of a build system that
+successfully sets up the code.
 
-    More info coming soon. For now, contact `adrn <https://github.com/adrn>`_
-    for help.
+New Cython potentials are implemented by subclassing
+:class:`~gala.potential.potential.CPotentialBase`, subclassing
+:class:`~gala.potential.potential.CPotentialWrapper`, and defining C functions
+that compute (at minimum) the energy and gradient of the potential. This
+requires creating (at minimum) a Cython file (.pyx), a C header file (.h), and a
+C source file (.c).
