@@ -258,8 +258,8 @@ class CPotentialBase(PotentialBase):
             # magic to set the c_instance attribute based on the name of the class
             wrapper_name = '{}Wrapper'.format(self.__class__.__name__.replace('Potential', ''))
 
-            from .builtin import cybuiltin
-            Wrapper = getattr(cybuiltin, wrapper_name)
+            module = sys.modules[self.__module__]
+            Wrapper = getattr(module, wrapper_name)  # try to find wrapper in the same module
 
         self.c_instance = Wrapper(self.G, self.c_parameters, q0=self.origin)
 
