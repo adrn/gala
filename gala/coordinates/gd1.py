@@ -10,18 +10,7 @@ import numpy as np
 
 import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
-try:
-    from astropy.coordinates.matrix_utilities import matrix_transpose
-    ASTROPY_1_3 = True
-except ImportError:
-    from .matrix_utilities import matrix_transpose
-    ASTROPY_1_3 = False
-
-if not ASTROPY_1_3:
-    import astropy
-    import warnings
-    warnings.warn("We recommend using Astropy v1.3 or later. You have: {}"
-                  .format(astropy.__version__), DeprecationWarning)
+from astropy.coordinates.matrix_utilities import matrix_transpose
 
 __all__ = ["GD1"]
 
@@ -38,6 +27,7 @@ class GD1(coord.BaseCoordinateFrame):
     ----------
     representation : :class:`~astropy.coordinates.BaseRepresentation` or None
         A representation object or None to have no data (or use the other keywords)
+
     phi1 : angle_like, optional, must be keyword
         The longitude-like angle corresponding to Orphan's orbit.
     phi2 : angle_like, optional, must be keyword
@@ -45,16 +35,40 @@ class GD1(coord.BaseCoordinateFrame):
     distance : :class:`~astropy.units.Quantity`, optional, must be keyword
         The Distance for this object along the line-of-sight.
 
+    pm_phi1_cosphi2 : :class:`~astropy.units.Quantity`, optional, must be keyword
+        The proper motion in the longitude-like direction corresponding to
+        the Orphan stream's orbit.
+    pm_phi2 : :class:`~astropy.units.Quantity`, optional, must be keyword
+        The proper motion in the latitude-like direction perpendicular to the
+        Orphan stream's orbit.
+    radial_velocity : :class:`~astropy.units.Quantity`, optional, must be keyword
+        The Distance for this object along the line-of-sight.
+
     """
     default_representation = coord.SphericalRepresentation
+    default_differential = coord.SphericalCosLatDifferential
 
     frame_specific_representation_info = {
-        'spherical': [coord.RepresentationMapping('lon', 'phi1'),
-                      coord.RepresentationMapping('lat', 'phi2'),
-                      coord.RepresentationMapping('distance', 'distance')],
-        'unitspherical': [coord.RepresentationMapping('lon', 'phi1'),
-                          coord.RepresentationMapping('lat', 'phi2')]
+        coord.SphericalRepresentation: [
+            coord.RepresentationMapping('lon', 'phi1'),
+            coord.RepresentationMapping('lat', 'phi2'),
+            coord.RepresentationMapping('distance', 'distance')],
+        coord.SphericalCosLatDifferential: [
+            coord.RepresentationMapping('d_lon_coslat', 'pm_phi1_cosphi2'),
+            coord.RepresentationMapping('d_lat', 'pm_phi2'),
+            coord.RepresentationMapping('d_distance', 'radial_velocity')],
+        coord.SphericalDifferential: [
+            coord.RepresentationMapping('d_lon', 'pm_phi1'),
+            coord.RepresentationMapping('d_lat', 'pm_phi2'),
+            coord.RepresentationMapping('d_distance', 'radial_velocity')]
     }
+
+    frame_specific_representation_info[coord.UnitSphericalRepresentation] = \
+        frame_specific_representation_info[coord.SphericalRepresentation]
+    frame_specific_representation_info[coord.UnitSphericalCosLatDifferential] = \
+        frame_specific_representation_info[coord.SphericalCosLatDifferential]
+    frame_specific_representation_info[coord.UnitSphericalDifferential] = \
+        frame_specific_representation_info[coord.SphericalDifferential]
 
 # Rotation matrix as defined in the Appendix of Koposov et al. (2010)
 R = np.array([[-0.4776303088, -0.1738432154, 0.8611897727],
