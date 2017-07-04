@@ -6,17 +6,16 @@ from __future__ import division, print_function
 
 
 # Third-party
-import matplotlib.pyplot as pl
 import numpy as np
 from astropy import log as logger
 import astropy.units as u
 
 # Project
-from ..analyticactionangle import *
+from ..analyticactionangle import isochrone_to_aa, harmonic_oscillator_to_aa
 from ...potential import IsochronePotential, HarmonicOscillatorPotential
 from ...units import galactic
 from ...util import assert_angles_allclose
-from .helpers import *
+from .helpers import toy_potentials
 
 class TestIsochrone(object):
 
