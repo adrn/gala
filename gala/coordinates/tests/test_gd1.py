@@ -10,7 +10,7 @@ from astropy.utils.data import get_pkg_data_filename
 import numpy as np
 
 # This package
-from ..gd1 import *
+from ..gd1 import GD1
 
 def test_simple():
     c = coord.ICRS(coord.Angle(217.2141, u.degree),
@@ -62,7 +62,6 @@ def test_koposov():
     # print(k10_gd1)
     # print("--")
     # print(gala_gd1)
-
 
     import matplotlib.pyplot as plt
 
