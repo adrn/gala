@@ -14,7 +14,6 @@ omit =
    {packagename}/dynamics/_genfunc/*
    {packagename}/coordinates/quaternion.py
    {packagename}/coordinates/poincarepolar.py
-   {packagename}/dynamics/extern/*
 
 [report]
 exclude_lines =
