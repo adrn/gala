@@ -3,12 +3,15 @@
 from __future__ import division, print_function
 
 # Standard library
+from collections import namedtuple, OrderedDict
 import warnings
 import inspect
 
 # Third-party
 import astropy.coordinates as coord
+from astropy.coordinates import representation as r
 import astropy.units as u
+from astropy.utils.compat.misc import override__dir__
 import numpy as np
 from six import string_types
 
@@ -21,45 +24,94 @@ from ..util import atleast_2d
 
 __all__ = ['PhaseSpacePosition', 'CartesianPhaseSpacePosition']
 
+_RepresentationMappingBase = \
+    namedtuple('RepresentationMapping',
+               ('repr_name', 'new_name', 'default_unit'))
+
+class RepresentationMapping(_RepresentationMappingBase):
+    """
+    This `~collections.namedtuple` is used to override the representation and
+    differential class component names in the `PhaseSpacePosition` and `Orbit`
+    classes.
+    """
+
+    def __new__(cls, repr_name, new_name, default_unit='recommended'):
+        # this trick just provides some defaults
+        return super(RepresentationMapping, cls).__new__(cls, repr_name,
+                                                         new_name,
+                                                         default_unit)
+
 class PhaseSpacePosition(object):
-    """
-    Represents phase-space positions, i.e. positions and conjugate momenta
-    (velocities).
 
-    The class can be instantiated with Astropy representation objects (e.g.,
-    :class:`~astropy.coordinates.CartesianRepresentation`), Astropy
-    :class:`~astropy.units.Quantity` objects, or plain Numpy arrays.
+    representation_mappings = {
+        r.CartesianRepresentation: [
+            RepresentationMapping('xyz', 'xyz')
+        ],
+        r.SphericalCosLatDifferential: [
+            RepresentationMapping('d_lon_coslat', 'pm_lon_coslat', u.mas/u.yr),
+            RepresentationMapping('d_lat', 'pm_lat', u.mas/u.yr),
+            RepresentationMapping('d_distance', 'radial_velocity')
+        ],
+        r.SphericalDifferential: [
+            RepresentationMapping('d_lon', 'pm_lon', u.mas/u.yr),
+            RepresentationMapping('d_lat', 'pm_lat', u.mas/u.yr),
+            RepresentationMapping('d_distance', 'radial_velocity')
+        ],
+        r.CartesianDifferential: [
+            RepresentationMapping('d_x', 'v_x'),
+            RepresentationMapping('d_y', 'v_y'),
+            RepresentationMapping('d_z', 'v_z'),
+            RepresentationMapping('d_xyz', 'v_xyz')
+        ],
+        r.CylindricalDifferential: [
+            RepresentationMapping('d_rho', 'v_rho'),
+            RepresentationMapping('d_phi', 'pm_phi'),
+            RepresentationMapping('d_z', 'v_z')
+        ]
+    }
+    representation_mappings[r.UnitSphericalCosLatDifferential] = \
+        representation_mappings[r.SphericalCosLatDifferential]
+    representation_mappings[r.UnitSphericalDifferential] = \
+        representation_mappings[r.SphericalDifferential]
 
-    If passing in representation objects, the default representation is taken to
-    be the class that is passed in.
-
-    If passing in Quantity or Numpy array instances for both position and
-    velocity, they are assumed to be Cartesian. Array inputs are interpreted as
-    dimensionless quantities. The input position and velocity objects can have
-    an arbitrary number of (broadcastable) dimensions. For Quantity or array
-    inputs, the first axis (0) has special meaning::
-
-        - `axis=0` is the coordinate dimension (e.g., x, y, z for Cartesian)
-
-    So if the input position array, `pos`, has shape `pos.shape = (3, 100)`,
-    this would represent 100 3D positions (`pos[0]` is `x`, `pos[1]` is `y`,
-    etc.). The same is true for velocity.
-
-    Parameters
-    ----------
-    pos : :class:`~astropy.coordinates.BaseRepresentation`, :class:`~astropy.units.Quantity`, array_like
-        Positions. If a numpy array (e.g., has no units), this will be
-        stored as a dimensionless :class:`~astropy.units.Quantity`. See
-        the note above about the assumed meaning of the axes of this object.
-    vel : :class:`~astropy.coordinates.BaseDifferential`, :class:`~astropy.units.Quantity`, array_like
-        Velocities. If a numpy array (e.g., has no units), this will be
-        stored as a dimensionless :class:`~astropy.units.Quantity`. See
-        the note above about the assumed meaning of the axes of this object.
-    frame : :class:`~gala.potential.FrameBase` (optional)
-        The reference frame of the input phase-space positions.
-
-    """
     def __init__(self, pos, vel, frame=None):
+        """
+        Represents phase-space positions, i.e. positions and conjugate momenta
+        (velocities).
+
+        The class can be instantiated with Astropy representation objects (e.g.,
+        :class:`~astropy.coordinates.CartesianRepresentation`), Astropy
+        :class:`~astropy.units.Quantity` objects, or plain Numpy arrays.
+
+        If passing in representation objects, the default representation is
+        taken to be the class that is passed in.
+
+        If passing in Quantity or Numpy array instances for both position and
+        velocity, they are assumed to be Cartesian. Array inputs are interpreted
+        as dimensionless quantities. The input position and velocity objects can
+        have an arbitrary number of (broadcastable) dimensions. For Quantity or
+        array inputs, the first axis (0) has special meaning::
+
+            - `axis=0` is the coordinate dimension (e.g., x, y, z for Cartesian)
+
+        So if the input position array, `pos`, has shape `pos.shape = (3, 100)`,
+        this would represent 100 3D positions (`pos[0]` is `x`, `pos[1]` is `y`,
+        etc.). The same is true for velocity.
+
+        Parameters
+        ----------
+        pos : :class:`~astropy.coordinates.BaseRepresentation`, :class:`~astropy.units.Quantity`, array_like
+            Positions. If a numpy array (e.g., has no units), this will be
+            stored as a dimensionless :class:`~astropy.units.Quantity`. See
+            the note above about the assumed meaning of the axes of this object.
+        vel : :class:`~astropy.coordinates.BaseDifferential`, :class:`~astropy.units.Quantity`, array_like
+            Velocities. If a numpy array (e.g., has no units), this will be
+            stored as a dimensionless :class:`~astropy.units.Quantity`. See
+            the note above about the assumed meaning of the axes of this object.
+        frame : :class:`~gala.potential.FrameBase` (optional)
+            The reference frame of the input phase-space positions.
+
+        """
 
         if not isinstance(pos, coord.BaseRepresentation):
             # assume Cartesian if not specified
@@ -111,16 +163,96 @@ class PhaseSpacePosition(object):
         self.frame = frame
         self.ndim = ndim
 
-        for name in pos.components:
-            setattr(self, name, getattr(pos,name))
-
-        for name in vel.components:
-            setattr(self, name, getattr(vel,name))
-
     def __getitem__(self, slyce):
         return self.__class__(pos=self.pos[slyce],
                               vel=self.vel[slyce],
                               frame=self.frame)
+
+    def get_components(self, which):
+        """
+        Get the component name dictionary for the desired object.
+
+        The returned dictionary maps component names on this class to component
+        names on the desired object.
+
+        Parameters
+        ----------
+        which : str
+            Can either be ``'pos'`` or ``'vel'`` to get the components for the
+            position or velocity object.
+        """
+        _map = self.representation_mappings.get(getattr(self, which).__class__, [])
+        _name_map = dict([(m.repr_name, m.new_name) for m in _map])
+
+        mapping = OrderedDict()
+        for name in getattr(self, which).components:
+            mapping[_name_map.get(name, name)] = name
+
+        return mapping
+
+    @property
+    def pos_components(self):
+        return self.get_components('pos')
+
+    @property
+    def vel_components(self):
+        return self.get_components('vel')
+
+    def _get_extra_mappings(self, which):
+        _map = self.representation_mappings.get(
+            getattr(self, which).__class__, [])
+
+        extra = OrderedDict()
+        for mapping in _map:
+            if mapping.new_name not in self.get_components(which):
+                extra[mapping.new_name] = mapping.repr_name
+        return extra
+
+    @override__dir__
+    def __dir__(self):
+        """
+        Override the builtin `dir` behavior to include representation and
+        differential names.
+        """
+        dir_values = set(self.pos_components.keys())
+        dir_values |= set(self.vel_components.keys())
+        dir_values |= set(self._get_extra_mappings('pos').keys())
+        dir_values |= set(self._get_extra_mappings('vel').keys())
+        dir_values |= set(r.REPRESENTATION_CLASSES.keys())
+        return dir_values
+
+    def __getattr__(self, attr):
+        """
+        Allow access to attributes on the ``pos`` and ``vel`` representation and
+        differential objects.
+        """
+
+        # Prevent infinite recursion here.
+        if attr.startswith('_'):
+            return self.__getattribute__(attr)  # Raise AttributeError.
+
+        # TODO: with >3.5 support, can do:
+        # pos_comps = {**self.pos_components,
+        #              **self._get_extra_mappings('pos')}
+        pos_comps = self.pos_components.copy()
+        pos_comps.update(self._get_extra_mappings('pos'))
+        if attr in pos_comps:
+            val = getattr(self.pos, pos_comps[attr])
+            return val
+
+        # TODO: with >3.5 support, can do:
+        # pos_comps = {**self.vel_components,
+        #              **self._get_extra_mappings('vel')}
+        vel_comps = self.vel_components.copy()
+        vel_comps.update(self._get_extra_mappings('vel'))
+        if attr in vel_comps:
+            val = getattr(self.vel, vel_comps[attr])
+            return val
+
+        if attr in r.REPRESENTATION_CLASSES:
+            return self.represent_as(attr)
+
+        return self.__getattribute__(attr)  # Raise AttributeError.
 
     # ------------------------------------------------------------------------
     # Convert from Cartesian to other representations
@@ -268,23 +400,6 @@ class PhaseSpacePosition(object):
                            base=self.pos.represent_as(v.base_representation))
 
         return c, v
-
-    # Convenience attributes
-    @property
-    def cartesian(self):
-        return self.represent_as(coord.CartesianRepresentation)
-
-    @property
-    def spherical(self):
-        return self.represent_as(coord.SphericalRepresentation)
-
-    @property
-    def spherical(self):
-        return self.represent_as(coord.PhysicsSphericalRepresentation)
-
-    @property
-    def cylindrical(self):
-        return self.represent_as(coord.CylindricalRepresentation)
 
     # Pseudo-backwards compatibility
     def w(self, units=None):
