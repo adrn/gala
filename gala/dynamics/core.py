@@ -393,19 +393,10 @@ class PhaseSpacePosition(object):
         kw['vlsr'] = vlsr
 
         # first we need to turn the position into a Galactocentric instance
-        gc_c = galactocentric_frame.realize_frame(self.pos)
+        gc_c = galactocentric_frame.realize_frame(
+            self.pos.with_differentials(self.vel))
         c = gc_c.transform_to(frame)
-        rep = c.represent_as(c.representation)
-
-        # get the corresponding differential class
-        new_Diff = coord.representation.DIFFERENTIAL_CLASSES[rep.get_name()]
-        vxyz = self.vel.represent_as(coord.CartesianDifferential,
-                                     base=self.pos).d_xyz
-        v = vgal_to_hel(c, vxyz, galactocentric_frame=galactocentric_frame)
-        v = v.represent_as(new_Diff,
-                           base=self.pos.represent_as(v.base_representation))
-
-        return c, v
+        return c
 
     # Pseudo-backwards compatibility
     def w(self, units=None):
