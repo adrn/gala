@@ -54,12 +54,12 @@ def to_rotating_frame(omega, w, t=None):
 
     if isinstance(w, PhaseSpacePosition) or isinstance(w, Orbit):
         Cls = w.__class__
-        x_shape = w.pos.xyz.shape
-        x_unit = w.pos.x.unit
-        v_unit = w.vel.d_x.unit
+        x_shape = w.xyz.shape
+        x_unit = w.x.unit
+        v_unit = w.v_x.unit
 
-        x = w.pos.xyz.reshape(3,-1).value
-        v = w.vel.d_xyz.reshape(3,-1).value
+        x = w.xyz.reshape(3,-1).value
+        v = w.v_xyz.reshape(3,-1).value
 
     else:
         Cls = None
@@ -127,8 +127,8 @@ class TestKeplerRotatingFrame(_TestBase):
                                              cython_if_possible=bl,
                                              Integrator=DOPRI853Integrator)
 
-            assert np.allclose(orbit.pos.x.value, 1., atol=1E-7)
-            assert np.allclose(orbit.pos.xyz.value[1:], 0., atol=1E-7)
+            assert np.allclose(orbit.x.value, 1., atol=1E-7)
+            assert np.allclose(orbit.xyz.value[1:], 0., atol=1E-7)
 
 class TestKepler2RotatingFrame(_TestBase):
     Omega = [1.,1.,1.]*u.one
@@ -182,10 +182,10 @@ def test_velocity_rot_frame(name, Omega, tol):
     orbit_i2r = orbit_i.to_frame(ConstantRotatingFrame(Omega=Omega, units=dimensionless))
     orbit_r2i = orbit_r.to_frame(StaticFrame(units=dimensionless))
 
-    assert quantity_allclose(orbit_i.pos.xyz, orbit_r2i.pos.xyz, atol=tol)
-    assert quantity_allclose(orbit_i.vel.d_xyz, orbit_r2i.vel.d_xyz, atol=tol)
+    assert quantity_allclose(orbit_i.xyz, orbit_r2i.xyz, atol=tol)
+    assert quantity_allclose(orbit_i.v_xyz, orbit_r2i.v_xyz, atol=tol)
 
-    assert quantity_allclose(orbit_r.pos.xyz, orbit_i2r.pos.xyz, atol=tol)
-    assert quantity_allclose(orbit_r.vel.d_xyz, orbit_i2r.vel.d_xyz, atol=tol)
+    assert quantity_allclose(orbit_r.xyz, orbit_i2r.xyz, atol=tol)
+    assert quantity_allclose(orbit_r.v_xyz, orbit_i2r.v_xyz, atol=tol)
 
 

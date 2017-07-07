@@ -43,8 +43,8 @@ def test_initialize():
     x = np.random.random(size=(3,10))*u.kpc
     v = np.random.random(size=(3,10))*u.km/u.s
     o = Orbit(pos=x, vel=v)
-    assert o.pos.xyz.unit == u.kpc
-    assert o.vel.d_x.unit == u.km/u.s
+    assert o.xyz.unit == u.kpc
+    assert o.v_x.unit == u.km/u.s
 
     # TODO: don't support < 3 dim?
     # x = np.random.random(size=(2,10))
@@ -85,8 +85,8 @@ def test_from_w():
 
     w = np.random.random(size=(6,10))
     o = Orbit.from_w(w, galactic)
-    assert o.pos.xyz.unit == u.kpc
-    assert o.vel.d_x.unit == u.kpc/u.Myr
+    assert o.xyz.unit == u.kpc
+    assert o.v_x.unit == u.kpc/u.Myr
 
 def test_slice():
 
@@ -239,7 +239,7 @@ def test_energy():
     v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
     o = Orbit(pos=x, vel=v)
     KE = o.kinetic_energy()
-    assert KE.unit == (o.vel.d_x.unit)**2
+    assert KE.unit == (o.v_x.unit)**2
     assert KE.shape == o.pos.shape
 
     # with units and potential
@@ -256,7 +256,7 @@ def test_angular_momentum():
     v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
     o = Orbit(pos=x, vel=v)
     L = o.angular_momentum()
-    assert L.unit == (o.vel.d_x.unit*o.pos.x.unit)
+    assert L.unit == (o.v_x.unit*o.x.unit)
     assert L.shape == ((3,) + o.shape)
 
 def test_eccentricity():

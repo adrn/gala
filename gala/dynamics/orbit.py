@@ -219,7 +219,7 @@ class Orbit(PhaseSpacePosition):
 
     @property
     def norbits(self):
-        if self.pos.xyz.ndim < 3:
+        if self.xyz.ndim < 3:
             return 1
         else:
             return self.shape[2]
@@ -350,7 +350,7 @@ class Orbit(PhaseSpacePosition):
             res = minimize(interp_func, t[j], **minimize_kwargs)
             refined_times[i] = res.x
 
-        peri = interp_func(refined_times) * self.cartesian.pos.x.unit
+        peri = interp_func(refined_times) * self.cartesian.x.unit
 
         if return_times:
             return peri, refined_times
@@ -427,7 +427,7 @@ class Orbit(PhaseSpacePosition):
             res = minimize(lambda x: -interp_func(x), t[ix], **minimize_kwargs)
             refined_times[i] = res.x
 
-        apo = interp_func(refined_times) * self.cartesian.pos.x.unit
+        apo = interp_func(refined_times) * self.cartesian.x.unit
 
         if return_times:
             return apo, refined_times
@@ -573,10 +573,10 @@ class Orbit(PhaseSpacePosition):
         circulation = atleast_2d(circulation, insert_axis=1)
 
         cart = self.cartesian
-        pos = cart.pos.xyz
-        vel = np.vstack((cart.vel.d_x.value[None],
-                         cart.vel.d_y.value[None],
-                         cart.vel.d_z.value[None])) * cart.vel.d_x.unit
+        pos = cart.xyz
+        vel = np.vstack((cart.v_x.value[None],
+                         cart.v_y.value[None],
+                         cart.v_z.value[None])) * cart.v_x.unit
 
         if pos.ndim < 3:
             pos = pos[...,np.newaxis]

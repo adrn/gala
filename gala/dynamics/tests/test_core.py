@@ -37,8 +37,8 @@ def test_initialize():
     x = np.random.random(size=(3,10))*u.kpc
     v = np.random.random(size=(3,10))*u.km/u.s
     o = PhaseSpacePosition(pos=x, vel=v)
-    assert o.pos.xyz.unit == u.kpc
-    assert o.vel.d_x.unit == u.km/u.s
+    assert o.xyz.unit == u.kpc
+    assert o.v_x.unit == u.km/u.s
 
     # Not 3D
     x = np.random.random(size=(2,10))
@@ -88,8 +88,8 @@ def test_from_w():
 
     w = np.random.random(size=(6,10))
     o = PhaseSpacePosition.from_w(w, galactic)
-    assert o.pos.x.unit == u.kpc
-    assert o.vel.d_x.unit == u.kpc/u.Myr
+    assert o.x.unit == u.kpc
+    assert o.v_x.unit == u.kpc/u.Myr
     assert o.shape == (10,)
 
 def test_slice():
@@ -252,7 +252,7 @@ def test_energy():
     v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
     o = PhaseSpacePosition(pos=x, vel=v)
     KE = o.kinetic_energy()
-    assert KE.unit == (o.vel.d_x.unit)**2
+    assert KE.unit == (o.v_x.unit)**2
     assert KE.shape == o.shape
 
     # with units and potential

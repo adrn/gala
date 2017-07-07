@@ -50,7 +50,7 @@ class TestPlotting(object):
         for o in self.orbits:
             _ = o.plot()
 
-        x = self.psps[0].pos.xyz.value
+        x = self.psps[0].xyz.value
         fig,axes = plt.subplots(1,2)
         fig = plot_projections(x[:2], autolim=True, axes=axes,
                                subplots_kwargs=dict(sharex=True),

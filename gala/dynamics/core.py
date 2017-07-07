@@ -67,7 +67,13 @@ class PhaseSpacePosition(object):
             RepresentationMapping('d_rho', 'v_rho'),
             RepresentationMapping('d_phi', 'pm_phi'),
             RepresentationMapping('d_z', 'v_z')
-        ]
+        ],
+        rep_nd.NDCartesianRepresentation: [
+            RepresentationMapping('xyz', 'xyz')
+        ],
+        rep_nd.NDCartesianDifferential: [
+            RepresentationMapping('d_xyz', 'v_xyz')
+        ],
     }
     representation_mappings[r.UnitSphericalCosLatDifferential] = \
         representation_mappings[r.SphericalCosLatDifferential]
@@ -424,8 +430,8 @@ class PhaseSpacePosition(object):
         else:
             cart = self
 
-        xyz = cart.pos.xyz
-        d_xyz = cart.vel.d_xyz
+        xyz = cart.xyz
+        d_xyz = cart.v_xyz
 
         x_unit = xyz.unit
         v_unit = d_xyz.unit
@@ -737,7 +743,7 @@ class PhaseSpacePosition(object):
     def shape(self):
         """
         This is *not* the shape of the position or velocity arrays. That is
-        accessed by doing, e.g., ``obj.pos.x.shape``.
+        accessed by doing, e.g., ``obj.x.shape``.
         """
         return self.pos.shape
 

@@ -324,11 +324,11 @@ def harmonic_oscillator_to_aa(w, potential):
 
     usys = potential.units
     if usys is not None:
-        x = w.pos.xyz.decompose(usys).value
-        v = w.vel.d_xyz.decompose(usys).value
+        x = w.xyz.decompose(usys).value
+        v = w.v_xyz.decompose(usys).value
     else:
-        x = w.pos.xyz.value
-        v = w.vel.d_xyz.value
+        x = w.xyz.value
+        v = w.v_xyz.value
     _new_omega_shape = (3,) + tuple([1]*(len(x.shape)-1))
 
     # compute actions -- just energy (hamiltonian) over frequency
