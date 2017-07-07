@@ -335,7 +335,7 @@ class Orbit(PhaseSpacePosition):
         minimize_kwargs.setdefault('method', 'powell')
 
         # orbital radius
-        r = self.spherical.pos.r.value
+        r = self.physicsspherical.r.value
         t = self.t.value
         _ix = argrelmin(r, mode='wrap')[0]
 
@@ -412,7 +412,7 @@ class Orbit(PhaseSpacePosition):
         minimize_kwargs.setdefault('method', 'powell')
 
         # orbital radius
-        r = self.spherical.pos.r.value
+        r = self.physicsspherical.r.value
         t = self.t.value
         _ix = argrelmax(r, mode='wrap')[0]
 
@@ -478,7 +478,7 @@ class Orbit(PhaseSpacePosition):
                              " Specify a time array when creating this object.")
 
         if radial:
-            r = self.spherical.pos.r.value
+            r = self.physicsspherical.r.value
             if self.norbits == 1:
                 T = peak_to_peak_period(self.t.value, r)
                 T = T * self.t.unit
