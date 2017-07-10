@@ -6,7 +6,7 @@ from scipy.optimize import fmin_bfgs, leastsq, fmin_powell,fmin
 
 # in units kpc, km/s and 10^11 M_solar
 # Grav = 430091.5694
-Grav = 430211.34883729415 # This was a bug in Sanders' code!
+Grav = 430091.7270069976 # This was a bug in Sanders' code!
 
 # Triaxial harmonic
 
