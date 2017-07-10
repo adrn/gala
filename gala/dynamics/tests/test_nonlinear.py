@@ -110,12 +110,7 @@ class HenonHeilesBase(object):
 
     def test_integrate_orbit(self, tmpdir):
         integrator = DOPRI853Integrator(self.F_max, func_args=self.par)
-
-        # pl.clf()
         orbit = integrator.run(self.w0, dt=self.dt, n_steps=self.n_steps)
-        # pl.plot(w[:,0,0], w[:,0,1], marker=None)
-
-        # pl.savefig(os.path.join(str(tmpdir),"hh_orbit_{}.png".format(self.__class__.__name__)))
 
     def test_lyapunov_max(self, tmpdir):
         n_steps_per_pullback = 10

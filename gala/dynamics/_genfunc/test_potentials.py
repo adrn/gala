@@ -4,7 +4,7 @@
 import numpy as np
 from scipy.integrate import quad, ode
 
-Grav = 430091.5694
+Grav = 430091.7270069976
 
 class LMPot(object):
     """ Potential used in Law-Majewski 2010 """

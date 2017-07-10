@@ -2,7 +2,9 @@
 
 # Third-party
 import astropy.units as u
+from astropy.tests.helper import quantity_allclose
 import pytest
+import numpy as np
 
 # Project
 from .helpers import _TestBase
@@ -10,14 +12,10 @@ from .. import Hamiltonian
 from ...potential.builtin import NFWPotential, KeplerPotential, HernquistPotential
 from ...frame.builtin import StaticFrame, ConstantRotatingFrame
 from ....units import galactic, dimensionless
-from ....dynamics import CartesianPhaseSpacePosition
+from ....dynamics import PhaseSpacePosition, Orbit
 from ....integrate import DOPRI853Integrator
 
 # ----------------------------------------------------------------------------
-
-import astropy.units as u
-import numpy as np
-from gala.dynamics import PhaseSpacePosition, Orbit
 
 def to_rotating_frame(omega, w, t=None):
     """
@@ -56,12 +54,12 @@ def to_rotating_frame(omega, w, t=None):
 
     if isinstance(w, PhaseSpacePosition) or isinstance(w, Orbit):
         Cls = w.__class__
-        x_shape = w.pos.shape
-        x_unit = w.pos.unit
-        v_unit = w.vel.unit
+        x_shape = w.xyz.shape
+        x_unit = w.x.unit
+        v_unit = w.v_x.unit
 
-        x = w.pos.reshape(3,-1).value
-        v = w.vel.reshape(3,-1).value
+        x = w.xyz.reshape(3,-1).value
+        v = w.v_xyz.reshape(3,-1).value
 
     else:
         Cls = None
@@ -122,15 +120,15 @@ class TestKeplerRotatingFrame(_TestBase):
 
     def test_integrate(self):
 
-        w0 = CartesianPhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.,0.])
+        w0 = PhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.,0.])
 
         for bl in [True, False]:
             orbit = self.obj.integrate_orbit(w0, dt=1., n_steps=1000,
                                              cython_if_possible=bl,
                                              Integrator=DOPRI853Integrator)
 
-            assert np.allclose(orbit.pos.value[0], 1., atol=1E-7)
-            assert np.allclose(orbit.pos.value[1:], 0., atol=1E-7)
+            assert np.allclose(orbit.x.value, 1., atol=1E-7)
+            assert np.allclose(orbit.xyz.value[1:], 0., atol=1E-7)
 
 class TestKepler2RotatingFrame(_TestBase):
     Omega = [1.,1.,1.]*u.one
@@ -147,7 +145,7 @@ class TestKepler2RotatingFrame(_TestBase):
         # --------------------------------------------------------------
         # when Omega is off from orbital frequency
         #
-        w0 = CartesianPhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.1,0.])
+        w0 = PhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.1,0.])
 
         for bl in [True, False]:
             orbit = self.obj.integrate_orbit(w0, dt=0.1, n_steps=10000,
@@ -155,7 +153,7 @@ class TestKepler2RotatingFrame(_TestBase):
                                              Integrator=DOPRI853Integrator)
 
             L = orbit.angular_momentum()
-            C = orbit.energy()[:,0] - np.sum(self.Omega[:,None] * L, axis=0)
+            C = orbit.energy() - np.sum(self.Omega[:,None] * L, axis=0)
             dC = np.abs((C[1:]-C[0])/C[0])
             assert np.all(dC < 1E-9) # conserve Jacobi constant
 
@@ -171,8 +169,8 @@ def test_velocity_rot_frame(name, Omega, tol):
     r0 = 1.245246
     potential = HernquistPotential(m=1., c=0.2, units=dimensionless)
     vc = potential.circular_velocity([r0,0,0]).value[0]
-    w0 = CartesianPhaseSpacePosition(pos=[r0, 0, 0.],
-                                     vel=[0, vc, 0.])
+    w0 = PhaseSpacePosition(pos=[r0, 0, 0.],
+                            vel=[0, vc, 0.])
     Omega = Omega * [1., 1., vc/r0]
 
     H_r = Hamiltonian(potential, ConstantRotatingFrame(Omega=Omega, units=dimensionless))
@@ -184,15 +182,10 @@ def test_velocity_rot_frame(name, Omega, tol):
     orbit_i2r = orbit_i.to_frame(ConstantRotatingFrame(Omega=Omega, units=dimensionless))
     orbit_r2i = orbit_r.to_frame(StaticFrame(units=dimensionless))
 
-    dx = lambda x1,x2: np.sqrt(np.sum((x1-x2)**2, axis=0))
+    assert quantity_allclose(orbit_i.xyz, orbit_r2i.xyz, atol=tol)
+    assert quantity_allclose(orbit_i.v_xyz, orbit_r2i.v_xyz, atol=tol)
 
-    # import matplotlib.pyplot as plt
-    # plt.plot(orbit_i.pos.value[0], orbit_i.pos.value[1])
-    # plt.plot(orbit_r2i.pos.value[0], orbit_r2i.pos.value[1])
-    # plt.show()
+    assert quantity_allclose(orbit_r.xyz, orbit_i2r.xyz, atol=tol)
+    assert quantity_allclose(orbit_r.v_xyz, orbit_i2r.v_xyz, atol=tol)
 
-    assert np.all(dx(orbit_i.pos.value, orbit_r2i.pos.value) < tol)
-    assert np.all(dx(orbit_i.vel.value, orbit_r2i.vel.value) < tol)
 
-    assert np.all(dx(orbit_r.pos.value, orbit_i2r.pos.value) < tol)
-    assert np.all(dx(orbit_r.vel.value, orbit_i2r.vel.value) < tol)

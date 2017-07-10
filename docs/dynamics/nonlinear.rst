@@ -35,14 +35,14 @@ a set of initial conditions::
 
     >>> pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, r_h=0.1*u.kpc,
     ...                               q1=1., q2=0.8, q3=0.6, units=galactic)
-    >>> w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,5.5]*u.kpc,
-    ...                                     vel=[0.,100.,0]*u.km/u.s)
+    >>> w0 = gd.PhaseSpacePosition(pos=[5.5,0.,5.5]*u.kpc,
+    ...                            vel=[0.,100.,0]*u.km/u.s)
     >>> lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., n_steps=100000) # doctest: +SKIP
 
 This returns two objects: an `~astropy.units.Quantity` object that
 contains the maximum Lyapunov exponent estimate for each offset orbit,
 (we can control the number of offset orbits with the ``noffset_orbits``
-argument) and an `~gala.dynamics.CartesianOrbit` object that contains
+argument) and an `~gala.dynamics.Orbit` object that contains
 the parent orbit and each offset orbit. Let's plot the parent orbit::
 
     >>> fig = orbit[:,0].plot(marker=',', alpha=0.1, linestyle='none') # doctest: +SKIP
@@ -58,8 +58,8 @@ the parent orbit and each offset orbit. Let's plot the parent orbit::
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, r_h=0.1*u.kpc,
                                   q1=1., q2=0.8, q3=0.6, units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,5.5]*u.kpc,
-                                        vel=[0.,100.,0]*u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[5.5,0.,5.5]*u.kpc,
+                               vel=[0.,100.,0]*u.km/u.s)
     lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., n_steps=100000)
     fig = orbit[:,0].plot(marker=',', linestyle='none', alpha=0.1)
 
@@ -87,8 +87,8 @@ array. This plots one line per offset orbit::
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, r_h=0.1*u.kpc,
                                   q1=1., q2=0.8, q3=0.6, units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,5.5]*u.kpc,
-                                        vel=[0.,100.,0]*u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[5.5,0.,5.5]*u.kpc,
+                               vel=[0.,100.,0]*u.km/u.s)
     lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., n_steps=100000)
 
     pl.figure()
@@ -104,8 +104,8 @@ Regular orbit
 
 To compare, we will compute the estimate for a regular orbit as well::
 
-    >>> w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,0.]*u.kpc,
-    ...                                     vel=[0.,140.,25]*u.km/u.s)
+    >>> w0 = gd.PhaseSpacePosition(pos=[5.5,0.,0.]*u.kpc,
+    ...                            vel=[0.,140.,25]*u.km/u.s)
     >>> lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., n_steps=100000) # doctest: +SKIP
     >>> fig = orbit[:,0].plot(marker=',', alpha=0.1, linestyle='none') # doctest: +SKIP
 
@@ -120,8 +120,8 @@ To compare, we will compute the estimate for a regular orbit as well::
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, r_h=0.1*u.kpc,
                                   q1=1., q2=0.8, q3=0.6, units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,0.]*u.kpc,
-                                        vel=[0.,140.,25]*u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[5.5,0.,0.]*u.kpc,
+                               vel=[0.,140.,25]*u.km/u.s)
     lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=1., n_steps=200000)
     fig = orbit[:,0].plot(marker=',', linestyle='none', alpha=0.1)
 
@@ -145,8 +145,8 @@ following a characteristic power-law (a straight line in a log-log plot)::
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, r_h=0.1*u.kpc,
                                   q1=1., q2=0.8, q3=0.6, units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[5.5,0.,0.]*u.kpc,
-                                        vel=[0.,140.,25]*u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[5.5,0.,0.]*u.kpc,
+                               vel=[0.,140.,25]*u.km/u.s)
     lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=1., n_steps=200000)
 
     pl.figure()

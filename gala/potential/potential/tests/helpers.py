@@ -17,7 +17,7 @@ import pytest
 from ..io import load
 from ..core import CompositePotential
 from ....units import UnitSystem, DimensionlessUnitSystem
-from ....dynamics import CartesianPhaseSpacePosition
+from ....dynamics import PhaseSpacePosition
 from ....integrate import LeapfrogIntegrator
 
 def partial_derivative(func, point, dim_ix=0, **kwargs):
@@ -234,8 +234,8 @@ class PotentialTestBase(object):
             plt.close(f)
 
         us = self.potential.units
-        w0 = CartesianPhaseSpacePosition(pos=w0[:self.ndim]*us['length'],
-                                         vel=w0[self.ndim:]*us['length']/us['time'])
+        w0 = PhaseSpacePosition(pos=w0[:self.ndim]*us['length'],
+                                vel=w0[self.ndim:]*us['length']/us['time'])
         orbit = self.potential.integrate_orbit(w0, dt=1., n_steps=10000,
                                                Integrator=LeapfrogIntegrator)
 

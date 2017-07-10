@@ -11,19 +11,7 @@ import numpy as np
 from astropy.coordinates import frame_transform_graph
 import astropy.coordinates as coord
 import astropy.units as u
-
-try:
-    from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product, matrix_transpose
-    ASTROPY_1_3 = True
-except ImportError:
-    from .matrix_utilities import rotation_matrix, matrix_product, matrix_transpose
-    ASTROPY_1_3 = False
-
-if not ASTROPY_1_3:
-    import astropy
-    import warnings
-    warnings.warn("We recommend using Astropy v1.3 or later. You have: {}"
-                  .format(astropy.__version__), DeprecationWarning)
+from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product, matrix_transpose
 
 __all__ = ["Sagittarius"]
 
@@ -31,34 +19,56 @@ class Sagittarius(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
     of the Sagittarius dwarf galaxy, as described in
-    Majewski et al. 2003 (see: `<http://adsabs.harvard.edu/abs/2003ApJ...599.1082M>`_)
-    and further explained at
-    `this website <http://www.astro.virginia.edu/~srm4n/Sgr/>`_.
-
-    For more information about this class, see the Astropy documentation
-    on `Coordinate Frames <http://docs.astropy.org/en/latest/coordinates/frames.html>`_.
+    http://adsabs.harvard.edu/abs/2003ApJ...599.1082M
+    and further explained in http://www.stsci.edu/~dlaw/Sgr/.
 
     Parameters
     ----------
-    representation : :class:`~astropy.coordinates.BaseRepresentation` or None
-        A representation object or None to have no data (or use the other keywords)
-    Lambda : angle_like, optional, must be keyword
+    representation : `BaseRepresentation` or None
+        A representation object or None to have no data (or use the other
+        keywords).
+
+    Lambda : `Angle`, optional, must be keyword
         The longitude-like angle corresponding to Sagittarius' orbit.
-    Beta : angle_like, optional, must be keyword
+    Beta : `Angle`, optional, must be keyword
         The latitude-like angle corresponding to Sagittarius' orbit.
-    distance : :class:`~astropy.units.Quantity`, optional, must be keyword
+    distance : `Quantity`, optional, must be keyword
         The Distance for this object along the line-of-sight.
+
+    pm_Lambda_cosBeta : :class:`~astropy.units.Quantity`, optional, must be keyword
+        The proper motion along the stream in ``Lambda`` (including the
+        ``cos(Beta)`` factor) for this object (``pm_Beta`` must also be given).
+    pm_Beta : :class:`~astropy.units.Quantity`, optional, must be keyword
+        The proper motion in Declination for this object (``pm_ra_cosdec`` must
+        also be given).
+    radial_velocity : :class:`~astropy.units.Quantity`, optional, must be keyword
+        The radial velocity of this object.
 
     """
     default_representation = coord.SphericalRepresentation
+    default_differential = coord.SphericalCosLatDifferential
 
     frame_specific_representation_info = {
-        'spherical': [coord.RepresentationMapping('lon', 'Lambda'),
-                      coord.RepresentationMapping('lat', 'Beta'),
-                      coord.RepresentationMapping('distance', 'distance')],
-        'unitspherical': [coord.RepresentationMapping('lon', 'Lambda'),
-                          coord.RepresentationMapping('lat', 'Beta')]
+        coord.SphericalRepresentation: [
+            coord.RepresentationMapping('lon', 'Lambda'),
+            coord.RepresentationMapping('lat', 'Beta'),
+            coord.RepresentationMapping('distance', 'distance')],
+        coord.SphericalCosLatDifferential: [
+            coord.RepresentationMapping('d_lon_coslat', 'pm_Lambda_cosBeta'),
+            coord.RepresentationMapping('d_lat', 'pm_Beta'),
+            coord.RepresentationMapping('d_distance', 'radial_velocity')],
+        coord.SphericalDifferential: [
+            coord.RepresentationMapping('d_lon', 'pm_Lambda'),
+            coord.RepresentationMapping('d_lat', 'pm_Beta'),
+            coord.RepresentationMapping('d_distance', 'radial_velocity')]
     }
+
+    frame_specific_representation_info[coord.UnitSphericalRepresentation] = \
+        frame_specific_representation_info[coord.SphericalRepresentation]
+    frame_specific_representation_info[coord.UnitSphericalCosLatDifferential] = \
+        frame_specific_representation_info[coord.SphericalCosLatDifferential]
+    frame_specific_representation_info[coord.UnitSphericalDifferential] = \
+        frame_specific_representation_info[coord.SphericalDifferential]
 
 # Define the Euler angles (from Law & Majewski 2010)
 phi = (180+3.75) * u.degree

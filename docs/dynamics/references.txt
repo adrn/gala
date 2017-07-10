@@ -1,0 +1,4 @@
+.. |psp| replace:: `~gala.dynamics.PhaseSpacePosition`
+.. |orb| replace:: `~gala.dynamics.Orbit`
+.. |astropyrep| replace:: representations framework
+.. _astropyrep: http://docs.astropy.org/en/latest/coordinates/skycoord.html#astropy-skycoord-representations

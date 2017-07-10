@@ -14,7 +14,6 @@ import numpy as np
 # Project
 # from ..actionangle import classify_orbit
 from ...units import galactic
-from ...coordinates import physicsspherical_to_cartesian
 from ...potential import HarmonicOscillatorPotential, IsochronePotential
 from .._genfunc import genfunc_3d, solver, toy_potentials
 
@@ -123,9 +122,16 @@ def isotropic_w0(N=100):
                                                theta=theta*u.radian)
     x = rep.represent_as(coord.CartesianRepresentation).xyz.T.value
 
-    vr = vr.decompose(galactic).value
-    vphi = vphi.decompose(galactic).value
-    vtheta = vtheta.decompose(galactic).value
-    v = physicsspherical_to_cartesian(rep, [vr,vphi,vtheta]*u.dimensionless_unscaled).T.value
+    vr = vr.decompose(galactic).value * u.one
+    vphi = vphi.decompose(galactic).value * u.one
+    vtheta = vtheta.decompose(galactic).value * u.one
+
+    vsph = coord.PhysicsSphericalDifferential(d_phi=vphi/(d*np.sin(theta)),
+                                              d_theta=vtheta/d,
+                                              d_r=vr)
+
+    with u.set_enabled_equivalencies(u.dimensionless_angles()):
+        v = vsph.represent_as(coord.CartesianDifferential,
+                              base=rep).d_xyz.value.T
 
     return np.hstack((x,v)).T

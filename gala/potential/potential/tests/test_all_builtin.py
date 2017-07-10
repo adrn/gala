@@ -53,7 +53,7 @@ class TestKepler(PotentialTestBase):
     # show_plots = True
 
 class TestKeplerUnitInput(PotentialTestBase):
-    potential = KeplerPotential(units=solarsystem, m=1E-3*u.ksolMass)
+    potential = KeplerPotential(units=solarsystem, m=(1*u.Msun).to(u.Mjup))
     w0 = [1.,0.,0.,0.,2*np.pi,0.]
 
 class TestIsochrone(PotentialTestBase):

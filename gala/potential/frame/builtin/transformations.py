@@ -27,8 +27,8 @@ def rodrigues_axis_angle_rotate(x, vec, theta):
     vec = np.array(vec).T
     theta = np.array(theta).T[...,None]
 
-    out = np.cos(theta)*x + np.sin(theta)*np.cross(vec, x) \
-            + (1 - np.cos(theta)) * (vec * x).sum(axis=-1)[...,None] * vec
+    out = np.cos(theta)*x + np.sin(theta)*np.cross(vec, x) + \
+        (1 - np.cos(theta)) * (vec * x).sum(axis=-1)[...,None] * vec
 
     return out.T
 
@@ -53,6 +53,7 @@ def z_angle_rotate(xy, theta):
     return out.T
 
 def _constantrotating_static_helper(frame_r, frame_i, w, t=None, sign=1.):
+    # TODO: use representation arithmetic instead
     Omega = -frame_r.parameters['Omega'].decompose(frame_i.units).value
 
     if not isinstance(w, Orbit) and t is None:
@@ -65,10 +66,23 @@ def _constantrotating_static_helper(frame_r, frame_i, w, t=None, sign=1.):
     elif not hasattr(t, 'unit'):
         t = t * frame_i.units['time']
 
+    if t is None:
+        raise ValueError('Time must be supplied either through the input '
+                         'Orbit class instance or through the t argument.')
     t = t.decompose(frame_i.units).value
 
-    pos = w.pos.decompose(frame_i.units).value
-    vel = w.vel.decompose(frame_i.units).value
+    # HACK: this is a little bit crazy...this makes it so that !=3D
+    #   representations will work here
+    if hasattr(w.pos, 'xyz'):
+        pos = w.pos
+        vel = w.vel
+    else:
+        cart = w.cartesian
+        pos = cart.pos
+        vel = cart.vel
+
+    pos = pos.xyz.decompose(frame_i.units).value
+    vel = vel.d_xyz.decompose(frame_i.units).value
 
     # get rotation angle, axis vs. time
     if isiterable(Omega): # 3D
@@ -95,7 +109,7 @@ def static_to_constantrotating(frame_i, frame_r, w, t=None):
     ----------
     frame_i : `~gala.potential.StaticFrame`
     frame_r : `~gala.potential.ConstantRotatingFrame`
-    w : `~gala.dynamics.CartesianPhaseSpacePosition`, `~gala.dynamics.CartesianOrbit`
+    w : `~gala.dynamics.PhaseSpacePosition`, `~gala.dynamics.Orbit`
     t : quantity_like (optional)
         Required if input coordinates are just a phase-space position.
 
@@ -117,7 +131,7 @@ def constantrotating_to_static(frame_r, frame_i, w, t=None):
     ----------
     frame_i : `~gala.potential.StaticFrame`
     frame_r : `~gala.potential.ConstantRotatingFrame`
-    w : `~gala.dynamics.CartesianPhaseSpacePosition`, `~gala.dynamics.CartesianOrbit`
+    w : `~gala.dynamics.PhaseSpacePosition`, `~gala.dynamics.Orbit`
     t : quantity_like (optional)
         Required if input coordinates are just a phase-space position.
 

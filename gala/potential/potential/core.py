@@ -101,7 +101,7 @@ class PotentialBase(CommonBase):
             x = x.decompose(self.units).value
 
         elif isinstance(x, PhaseSpacePosition):
-            x = x.pos.decompose(self.units).value
+            x = x.cartesian.xyz.decompose(self.units).value
 
         x = atleast_2d(x, insert_axis=1).astype(np.float64)
         return x
@@ -601,7 +601,7 @@ class PotentialBase(CommonBase):
 
         Returns
         -------
-        orbit : `~gala.dynamics.CartesianOrbit`
+        orbit : `~gala.dynamics.Orbit`
 
         """
 

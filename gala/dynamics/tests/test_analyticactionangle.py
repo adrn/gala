@@ -6,17 +6,16 @@ from __future__ import division, print_function
 
 
 # Third-party
-import matplotlib.pyplot as pl
 import numpy as np
 from astropy import log as logger
 import astropy.units as u
 
 # Project
-from ..analyticactionangle import *
+from ..analyticactionangle import isochrone_to_aa, harmonic_oscillator_to_aa
 from ...potential import IsochronePotential, HarmonicOscillatorPotential
 from ...units import galactic
 from ...util import assert_angles_allclose
-from .helpers import *
+from .helpers import toy_potentials
 
 class TestIsochrone(object):
 
@@ -44,8 +43,8 @@ class TestIsochrone(object):
                 assert np.allclose(actions[i,1:], actions[i,0], rtol=1E-5)
 
             # Compare to genfunc
-            x = self.w.pos.value[...,n]
-            v = self.w.vel.value[...,n]
+            x = self.w.xyz.value[...,n]
+            v = self.w.v_xyz.value[...,n]
             s_v = (v*u.kpc/u.Myr).to(u.km/u.s).value
             s_w = np.vstack((x,s_v))
             m = self.potential.parameters['m'].value / 1E11
@@ -93,8 +92,8 @@ class TestHarmonicOscillator(object):
                 assert np.allclose(actions[i,1:], actions[i,0], rtol=1E-5)
 
             # Compare to genfunc
-            x = self.w.pos.value[...,n]
-            v = self.w.vel.value[...,n]
+            x = self.w.xyz.value[...,n]
+            v = self.w.v_xyz.value[...,n]
             s_w = np.vstack((x,v))
             omega = self.potential.parameters['omega'].value
             aa = np.array([toy_potentials.angact_ho(s_w[:,i].T, omega=omega) for i in range(s_w.shape[1])])

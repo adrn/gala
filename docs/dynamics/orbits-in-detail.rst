@@ -1,125 +1,150 @@
+.. include:: references.txt
+
 .. _orbits-in-detail:
 
 *****************************************************
 Orbit and phase-space position objects in more detail
 *****************************************************
 
-Introduction
-============
-
-The `astropy.units` subpackage is excellent for working with numbers and
-associated units, however, dynamical quantities often contain many
-quantities with mixed units. An example is a position in phase-space, which
-may contain some quantities with length units and some quantities with
-velocity units. The `~gala.dynamics.PhaseSpacePosition` and
-`~gala.dynamics.Orbit` subclasses are designed to work with these structures --
-click these shortcuts to jump to a section below:
-
- * :ref:`phase-space-position`
- * :ref:`orbit`
-
-Some imports needed for the code below::
+We'll assume the following imports have already been executed::
 
     >>> import astropy.units as u
     >>> import numpy as np
     >>> import gala.potential as gp
     >>> import gala.dynamics as gd
+    >>> from astropy.coordinates import (CylindricalRepresentation,
+    ...                                  CylindricalDifferential)
     >>> from gala.units import galactic
     >>> np.random.seed(42)
+
+Introduction
+============
+
+The `astropy.units` subpackage is excellent for working with numbers and
+associated units, but dynamical quantities often contain many quantities with
+mixed units. An example is a position in phase-space, which may contain some
+quantities with length units and some quantities with velocity or momentum
+units. The |psp| and |orb| classes are designed to work with these data
+structures and provide a consistent API for visualizing and computing further
+dynamical quantities. Click these shortcuts to jump to a section below, or start
+reading below:
+
+ * :ref:`phase-space-position`
+ * :ref:`orbit`
 
 .. _phase-space-position:
 
 Phase-space positions
 =====================
 
-It is often useful to represent full phase-space positions quantities jointly.
-For example, if you need to transform the velocities to a new coordinate
-representation or frame, the positions often enter into the transformations.
-The `~gala.dynamics.PhaseSpacePosition` subclasses provide an interface for
-handling these numbers. At present, only the
-`~gala.dynamics.CartesianPhaseSpacePosition` is fully implemented.
+The |psp| class provides an interface for representing full phase-space
+positions--coordinate positions and momenta (velocities). This class is useful
+as a container for initial conditions and for transforming phase-space positions
+to new coordinate representations or reference frames.
 
-To create a `~gala.dynamics.CartesianPhaseSpacePosition` object, pass in a
-cartesian position and velocity to the initializer::
+The easiest way to create a |psp| object is to pass in a pair of
+`~astropy.units.Quantity` objects that represent the Cartesian position and
+velocity vectors::
 
-    >>> gd.CartesianPhaseSpacePosition(pos=[4.,8.,15.]*u.kpc,
-    ...                                vel=[-150.,50.,15.]*u.km/u.s)
-    <CartesianPhaseSpacePosition N=3, shape=(1,)>
+    >>> gd.PhaseSpacePosition(pos=[4.,8.,15.]*u.kpc,
+    ...                       vel=[-150.,50.,15.]*u.km/u.s)
+    <PhaseSpacePosition cartesian, dim=3, shape=()>
 
-Of course, this works with arrays of positions and velocities as well::
+By default, passing in `~astropy.units.Quantity`'s are interpreted as Cartesian
+coordinates and velocities. This works with arrays of positions and velocities
+as well::
 
-    >>> x = np.random.uniform(-10,10,size=(3,128))
-    >>> v = np.random.uniform(-200,200,size=(3,128))
-    >>> gd.CartesianPhaseSpacePosition(pos=x*u.kpc,
-    ...                                vel=v*u.km/u.s)
-    <CartesianPhaseSpacePosition N=3, shape=(128,)>
-
-This works for arbitrary numbers of dimensions, e.g., we define a position::
-
-    >>> w = gd.CartesianPhaseSpacePosition(pos=[4.,8.]*u.kpc,
-    ...                                    vel=[-150,45.]*u.km/u.s)
+    >>> x = np.arange(24).reshape(3,8)
+    >>> v = np.arange(24).reshape(3,8)
+    >>> w = gd.PhaseSpacePosition(pos=x * u.kpc,
+    ...                           vel=v * u.km/u.s)
     >>> w
-    <CartesianPhaseSpacePosition N=2, shape=(1,)>
+    <PhaseSpacePosition cartesian, dim=3, shape=(8,)>
 
-We can check the dimensionality using the `~gala.dynamics.CartesianPhaseSpacePosition.ndim`
-attribute::
+This is interpreted as 8, 6-dimensional phase-space positions.
 
-    >>> w.ndim
-    2
+The class internally stores the positions and velocities as
+`~astropy.coordinates.BaseRepresentation` and
+`~astropy.coordinates.BaseDifferential` subclasses; in this case,
+`~astropy.coordinates.CartesianRepresentation` and
+`~astropy.coordinates.CartesianDifferential`::
 
-For objects with ``ndim=3``, we can also easily transform the full
-phase-space vector to new representations or coordinate frames. These
-transformations use the :mod:`astropy.coordinates` framework and the
-velocity transforms from `gala.coordinates`.
+    >>> w.pos
+    <CartesianRepresentation (x, y, z) in kpc
+        [( 0.,   8.,  16.), ( 1.,   9.,  17.), ( 2.,  10.,  18.),
+         ( 3.,  11.,  19.), ( 4.,  12.,  20.), ( 5.,  13.,  21.),
+         ( 6.,  14.,  22.), ( 7.,  15.,  23.)]>
+    >>> w.vel
+    <CartesianDifferential (d_x, d_y, d_z) in km / s
+        [( 0.,   8.,  16.), ( 1.,   9.,  17.), ( 2.,  10.,  18.),
+         ( 3.,  11.,  19.), ( 4.,  12.,  20.), ( 5.,  13.,  21.),
+         ( 6.,  14.,  22.), ( 7.,  15.,  23.)]>
 
-    >>> from astropy.coordinates import CylindricalRepresentation
-    >>> x = np.random.uniform(-10,10,size=(3,128))
-    >>> v = np.random.uniform(-200,200,size=(3,128))
-    >>> w = gd.CartesianPhaseSpacePosition(pos=x*u.kpc,
-    ...                                    vel=v*u.km/u.s)
-    >>> cyl_pos, cyl_vel = w.represent_as(CylindricalRepresentation)
+All of the components of these classes are mapped to attributes of the
+phase-space position class for convenience, but with more user-friendly names.
+These mappings are defined in the class definition of
+`~gala.dynamics.PhaseSpacePosition`. For example, to access the ``x`` component
+of the position and the ``v_x`` component of the velocity::
 
-The `~gala.dynamics.CartesianPhaseSpacePosition.represent_as` method returns two
-objects that contain the position in the new representation, and the velocity
-in the new representation. The position is returned as a
-:class:`~astropy.coordinates.BaseRepresentation` subclass. The velocity is
-presently returned as a single :class:`~astropy.units.Quantity` object with
-the velocity components represented in velocity units (not in angular velocity
-units!) but this will change in the future when velocity support is added
-to Astropy::
+    >>> w.x, w.v_x # doctest: +FLOAT_CMP
+    (<Quantity [ 0., 1., 2., 3., 4., 5., 6., 7.] kpc>,
+     <Quantity [ 0., 1., 2., 3., 4., 5., 6., 7.] km / s>)
 
-    >>> cyl_pos # doctest: +SKIP
-    <CylindricalRepresentation (rho, phi, z) in (kpc, rad, kpc)
-        [(2.64929392, 1.5595981, 5.27411405),
-    ...etc.
-    >>> cyl_vel # doctest: +SKIP
-    <Quantity [[-185.61668456, 160.10813427, -75.14559842, 138.36905651,
-                 -60.93410629,  95.60242757,  41.89615149, 128.34632582,
-    ...etc.
+The default representation is Cartesian, but the class can also be instantiated
+with representation objects instead of `~astropy.units.Quantity`'s -- this is
+useful for creating |psp| or |orb| instances from non-Cartesian
+representations of the position and velocity::
 
-There is also support for transforming the cartesian positions and velocities
-(assumed to be in a `~astropy.coordinates.Galactocentric` frame) to any of
-the other coordinate frames. The transformation returns two objects: an
-initialized coordinate frame for the position, and a tuple of
-:class:`~astropy.units.Quantity` objects for the velocity. Here, velocities
-are represented in angular velocities for the velocities conjugate to angle
-variables. For example, in the below transformation to
-:class:`~astropy.coordinates.Galactic` coordinates, the returned velocity
-object is a tuple with proper motions and radial velocity,
-:math:`(\mu_l, \mu_b, v_r)`::
+    >>> pos = CylindricalRepresentation(rho=np.linspace(1., 4, 4) * u.kpc,
+    ...                                 phi=np.linspace(0, np.pi, 4) * u.rad,
+    ...                                 z=np.linspace(-1, 1., 4) * u.kpc)
+    >>> vel = CylindricalDifferential(d_rho=np.linspace(100, 150, 4) * u.km/u.s,
+    ...                               d_phi=np.linspace(-1, 1, 4) * u.rad/u.Myr,
+    ...                               d_z=np.linspace(-15, 15., 4) * u.km/u.s)
+    >>> w = gd.PhaseSpacePosition(pos=pos, vel=vel)
+    >>> w
+    <PhaseSpacePosition cylindrical, dim=3, shape=(4,)>
+    >>> w.rho
+    <Quantity [ 1., 2., 3., 4.] kpc>
+
+We can easily transform the full phase-space vector to new representations or
+coordinate frames. These transformations use the :mod:`astropy.coordinates`
+|astropyrep|_::
+
+    >>> cart = w.represent_as('cartesian')
+    >>> cart.x
+    <Quantity [ 1. , 1. ,-1.5,-4. ] kpc>
+    >>> sph = w.represent_as('spherical')
+    >>> sph.distance
+    <Distance [ 1.41421356, 2.02758751, 3.01846171, 4.12310563] kpc>
+
+There is also support for transforming the positions and velocities (assumed to
+be in a `~astropy.coordinates.Galactocentric` frame) to any of the other
+coordinate frames. For example, to transform to
+:class:`~astropy.coordinates.Galactic` coordinates::
 
     >>> from astropy.coordinates import Galactic
-    >>> gal_c, gal_v = w.to_coord_frame(Galactic)
-    >>> gal_c # doctest: +SKIP
+    >>> gal_c = w.to_coord_frame(Galactic)
+    >>> gal_c # doctest: +FLOAT_CMP
     <Galactic Coordinate: (l, b, distance) in (deg, deg, kpc)
-        [(17.67673481, 31.15412806, 10.19473889),
-    ...etc.
-    >>> gal_v[0].unit, gal_v[1].unit, gal_v[2].unit
-    (Unit("mas / yr"), Unit("mas / yr"), Unit("km / s"))
+        [(  4.42801092e-05,  -6.11537341,  9.35649038),
+         (  1.05488650e+01,  -1.99824507,  9.46673245),
+         (  2.09134381e+01,   2.58371838,  7.28582479),
+         (  7.26282965e-05,  12.9365465 ,  4.40866775)]
+     (pm_l_cosb, pm_b, radial_velocity) in (mas / yr, mas / yr, km / s)
+        [( -27.28114046, -0.27857153,    90.80507879),
+         ( -12.51009123,  0.17381423,   517.81257826),
+         (  -6.82555151,  1.25738866, -1078.97465657),
+         (-198.25720126,  2.06324888,  -155.41705887)]>
 
-We can easily plot projections of the positions using the
-`~gala.dynamics.CartesianPhaseSpacePosition.plot` method::
+We can easily plot projections of the phase-space positions using the
+`~gala.dynamics.PhaseSpacePosition.plot` method::
 
+    >>> np.random.seed(42)
+    >>> x = np.random.uniform(-10, 10, size=(3,128))
+    >>> v = np.random.uniform(-200, 200, size=(3,128))
+    >>> w = gd.PhaseSpacePosition(pos=x * u.kpc,
+    ...                           vel=v * u.km/u.s)
     >>> fig = w.plot()
 
 .. plot::
@@ -131,14 +156,15 @@ We can easily plot projections of the positions using the
     np.random.seed(42)
     x = np.random.uniform(-10,10,size=(3,128))
     v = np.random.uniform(-200,200,size=(3,128))
-    w = gd.CartesianPhaseSpacePosition(pos=x*u.kpc,
-                                       vel=v*u.km/u.s)
+    w = gd.PhaseSpacePosition(pos=x*u.kpc,
+                              vel=v*u.km/u.s)
     fig = w.plot()
 
-This is a thin wrapper around the `~gala.dynamics.three_panel`
+This is a thin wrapper around the `~gala.dynamics.plot_projections`
 function and any keyword arguments are passed through to that function::
 
-    >>> fig = w.plot(marker='o', s=40, alpha=0.5)
+    >>> fig = w.plot(components=['x', 'v_z'], color='r',
+    ...              facecolor='', marker='o', s=20, alpha=0.5)
 
 .. plot::
     :align: center
@@ -149,101 +175,88 @@ function and any keyword arguments are passed through to that function::
     np.random.seed(42)
     x = np.random.uniform(-10,10,size=(3,128))
     v = np.random.uniform(-200,200,size=(3,128))
-    w = gd.CartesianPhaseSpacePosition(pos=x*u.kpc,
-                                       vel=v*u.km/u.s)
-    fig = w.plot(marker='o', s=40, alpha=0.5)
+    w = gd.PhaseSpacePosition(pos=x*u.kpc,
+                              vel=v*u.km/u.s)
+    fig = w.plot(components=['x', 'v_z'], color='r',
+                 facecolor='', marker='o', s=20, alpha=0.5)
 
 Phase-space position API
 ------------------------
 .. automodapi:: gala.dynamics.core
     :no-heading:
     :headings: ^^
+    :skip: CartesianPhaseSpacePosition
 
 .. _orbit:
 
 Orbits
 ======
 
-The `~gala.dynamics.Orbit` subclasses all inherit the functionality described
-above from `~gala.dynamics.PhaseSpacePosition`, but similarly, at present only the
-`~gala.dynamics.CartesianOrbit` is fully implemented. There are some differences
-between the methods and some functionality that is particular to the orbit classes.
+The |orb| class inherits much of the functionality from |psp| (described above)
+and adds some additional features that are useful for time-series orbits.
 
-A `~gala.dynamics.CartesianOrbit` is initialized much like the
-`~gala.dynamics.CartesianPhaseSpacePosition`. `~gala.dynamics.CartesianOrbit`s can be
-created with just position and velocity information, however now the
-interpretation of the input object shapes is different. Whereas an input position with
-shape ``(2,128)`` to a `~gala.dynamics.CartesianPhaseSpacePosition` represents
-128, 2D positions, for an orbit it would represent a single orbit's positions
-at 128 timesteps::
+An |orb| instance is initialized like the |psp|--with arrays of positions and
+velocities-- but usually also requires specifying a time array as well. Also,
+the extra axes in these arrays hold special meaning for the |orb| class. The
+position and velocity arrays passed to |psp| can have arbitrary numbers of
+dimensions as long as the 0th axis specifies the dimensionality. For the |orb|
+class, the 0th axis remains the axis of dimensionality, but the 1st axis now is
+always assumed to be the time axis. For example, an input position with shape
+``(2,128)`` to a |psp| represents 128 independent 2D positions, but to a |orb|
+it represents a single orbit's positions at 128 times::
 
-    >>> t = np.linspace(0,10,128)
-    >>> pos,vel = np.zeros((2,128)),np.zeros((2,128))
-    >>> pos[0] = np.cos(t)
-    >>> pos[1] = np.sin(t)
-    >>> vel[0] = -np.sin(t)
-    >>> vel[1] = np.cos(t)
-    >>> orbit = gd.CartesianOrbit(pos=pos*u.kpc, vel=vel*u.km/u.s)
+    >>> t = np.linspace(0, 100, 128) * u.Myr
+    >>> Om = 1E-1 * u.rad / u.Myr
+    >>> pos = np.vstack((5*np.cos(Om*t), np.sin(Om*t))).value * u.kpc
+    >>> vel = np.vstack((-5*np.sin(Om*t), np.cos(Om*t))).value * u.kpc/u.Myr
+    >>> orbit = gd.Orbit(pos=pos, vel=vel)
     >>> orbit
-    <CartesianOrbit N=2, shape=(128,)>
+    <Orbit ndcartesian, dim=2, shape=(128,)>
 
-To create a single object that contains multiple orbits, the input position object
-should have 3 axes. The last axis (``axis=2``) contains each orbit. So, an input
-position with shape ``(2,128,16)`` would represent 16, 2D orbits with 128 timesteps::
+To create a single object that contains multiple orbits, the input position
+object should have 3 axes. The last axis (``axis=2``) specifies the number of
+orbits. So, an input position with shape ``(2,128,16)`` would represent 16, 2D
+orbits, each with the same 128 times::
 
-    >>> t = np.linspace(0,10,128)
-    >>> pos,vel = np.zeros((2,128,16)),np.zeros((2,128,16))
-    >>> Omega = np.random.uniform(size=16)
-    >>> pos[0] = np.cos(Omega[np.newaxis]*t[:,np.newaxis])
-    >>> pos[1] = np.sin(Omega[np.newaxis]*t[:,np.newaxis])
-    >>> vel[0] = -np.sin(Omega[np.newaxis]*t[:,np.newaxis])
-    >>> vel[1] = np.cos(Omega[np.newaxis]*t[:,np.newaxis])
-    >>> orbit = gd.CartesianOrbit(pos=pos*u.kpc, vel=vel*u.km/u.s)
+    >>> t = np.linspace(0, 100, 128) * u.Myr
+    >>> Om = np.random.uniform(size=16) * u.rad / u.Myr
+    >>> angle = Om[None] * t[:,None]
+    >>> pos = np.stack((5*np.cos(angle), np.sin(angle))).value * u.kpc
+    >>> vel = np.stack((-5*np.sin(angle), np.cos(angle))).value * u.kpc/u.Myr
+    >>> orbit = gd.Orbit(pos=pos, vel=vel)
     >>> orbit
-    <CartesianOrbit N=2, shape=(128, 16)>
+    <Orbit ndcartesian, dim=2, shape=(128, 16)>
 
 To make full use of the orbit functionality, you must also pass in an array with
-the time values and an instance of a `~gala.potential.PotentialBase` subclass that
-represents the potential that the orbit was integrated in::
+the time values and an instance of a `~gala.potential.PotentialBase` subclass
+that represents the potential that the orbit was integrated in::
 
     >>> pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
-    >>> orbit = gd.CartesianOrbit(pos=pos*u.kpc, vel=vel*u.km/u.s,
-    ...                           t=t*u.Myr, potential=pot)
+    >>> orbit = gd.Orbit(pos=pos*u.kpc, vel=vel*u.km/u.s,
+    ...                  t=t*u.Myr, potential=pot)
 
 (note, in this case ``pos`` and ``vel`` were not generated from integrating
-an orbit in the potential ``pot``!) Orbit objects
-are returned by the `~gala.potential.PotentialBase.integrate_orbit` method
-of potential objects that already have the ``time`` and ``potential`` set::
+an orbit in the potential ``pot``!). However, most of the time you won't need to
+create |orb| objects from scratch! They are returned from any of the numerical
+intergration routines provided in `gala`. For example, they are returned by the
+`~gala.potential.PotentialBase.integrate_orbit` method of potential objects and
+will automatically contain the ``time`` array and ``potential`` object. For
+example::
 
-    >>> pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
-    >>> w0 = gd.CartesianPhaseSpacePosition(pos=[10.,0,0]*u.kpc,
-    ...                                     vel=[0.,75,0]*u.km/u.s)
-    >>> orbit = pot.integrate_orbit(w0, dt=1., n_steps=500)
+    >>> pot = gp.PlummerPotential(m=1E10 * u.Msun, b=1. * u.kpc, units=galactic)
+    >>> w0 = gd.PhaseSpacePosition(pos=[10.,0,0] * u.kpc,
+    ...                            vel=[0.,75,0] * u.km/u.s)
+    >>> orbit = pot.integrate_orbit(w0, dt=1., n_steps=5000)
     >>> orbit
-    <CartesianOrbit N=3, shape=(501,)>
-    >>> orbit.t # doctest: +SKIP
-    <Quantity [   0.,   1.,   2.,   3.,   4.,   5.,   6.,   7.,   8.,   9.,
-                 10.,  11.,  12.,  13.,  14.,  15.,  16.,  17.,  18.,  19.,
-    ...etc.
+    <Orbit cartesian, dim=3, shape=(5001,)>
+    >>> orbit.t
+    <Quantity [  0.00000000e+00,  1.00000000e+00,  2.00000000e+00,...,
+                 4.99800000e+03,  4.99900000e+03,  5.00000000e+03] Myr>
     >>> orbit.potential
     <PlummerPotential: m=1.00e+10, b=1.00 (kpc,Myr,solMass,rad)>
 
-From an Orbit object, we can quickly compute quantities like the angular momentum,
-and estimates for the pericenter, apocenter, eccentricity of the orbit. Estimates
-for the latter few get better with smaller timesteps::
-
-    >>> orbit = pot.integrate_orbit(w0, dt=0.1, n_steps=100000)
-    >>> np.mean(orbit.angular_momentum(), axis=1) # doctest: +FLOAT_CMP
-    <Quantity [ 0.        , 0.        , 0.76703412] kpc2 / Myr>
-    >>> orbit.eccentricity() # doctest: +FLOAT_CMP
-    <Quantity 0.3191563009914265>
-    >>> orbit.pericenter() # doctest: +FLOAT_CMP
-    <Quantity 10.00000005952518 kpc>
-    >>> orbit.apocenter() # doctest: +FLOAT_CMP
-    <Quantity 19.375317870528118 kpc>
-
-Just like above, we can quickly visualize an orbit using the
-`~gala.dynamics.CartesianOrbit.plot` method::
+Just like for |psp|, we can quickly visualize an orbit using the
+`~gala.dynamics.Orbit.plot` method::
 
     >>> fig = orbit.plot()
 
@@ -255,18 +268,16 @@ Just like above, we can quickly visualize an orbit using the
     import gala.potential as gp
     from gala.units import galactic
 
-    pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[1.,0,0]*u.kpc,
-                                        vel=[0.,50,0]*u.km/u.s)
-    orbit = pot.integrate_orbit(w0, dt=1., n_steps=500)
+    pot = gp.PlummerPotential(m=1E10 * u.Msun, b=1. * u.kpc, units=galactic)
+    w0 = gd.PhaseSpacePosition(pos=[10.,0,0] * u.kpc,
+                               vel=[0.,75,0] * u.km/u.s)
+    orbit = pot.integrate_orbit(w0, dt=1., n_steps=5000)
     fig = orbit.plot()
 
-This is a thin wrapper around the `~gala.dynamics.plot_orbits`
+Again, this is a thin wrapper around the `~gala.dynamics.plot_projections`
 function and any keyword arguments are passed through to that function::
 
     >>> fig = orbit.plot(linewidth=4., alpha=0.5, color='r')
-    >>> fig.axes[0].set_xlim(-1.5,1.5) # doctest: +SKIP
-    >>> fig.axes[0].set_ylim(-1.5,1.5) # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -276,17 +287,41 @@ function and any keyword arguments are passed through to that function::
     import gala.potential as gp
     from gala.units import galactic
 
-    pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[1.,0,0]*u.kpc,
-                                        vel=[0.,50,0]*u.km/u.s)
-    orbit = pot.integrate_orbit(w0, dt=1., n_steps=500)
+    pot = gp.PlummerPotential(m=1E10 * u.Msun, b=1. * u.kpc, units=galactic)
+    w0 = gd.PhaseSpacePosition(pos=[10.,0,0] * u.kpc,
+                               vel=[0.,75,0] * u.km/u.s)
+    orbit = pot.integrate_orbit(w0, dt=1., n_steps=5000)
     fig = orbit.plot(linewidth=4., alpha=0.5, color='r')
-    fig.axes[0].set_xlim(-1.5,1.5)
-    fig.axes[0].set_ylim(-1.5,1.5)
 
+We can also quickly compute quantities like the angular momentum, and estimates
+for the pericenter, apocenter, eccentricity of the orbit. Estimates for the
+latter few get better with smaller timesteps::
+
+    >>> orbit = pot.integrate_orbit(w0, dt=0.1, n_steps=100000)
+    >>> np.mean(orbit.angular_momentum(), axis=1) # doctest: +FLOAT_CMP
+    <Quantity [ 0.        , 0.        , 0.76703412] kpc2 / Myr>
+    >>> orbit.eccentricity() # doctest: +FLOAT_CMP
+    <Quantity 0.31951765618193967>
+    >>> orbit.pericenter() # doctest: +FLOAT_CMP
+    <Quantity 10.00000005952518 kpc>
+    >>> orbit.apocenter() # doctest: +FLOAT_CMP
+    <Quantity 19.390916871970223 kpc>
 
 Orbit API
 ---------
 .. automodapi:: gala.dynamics.orbit
     :no-heading:
     :headings: ^^
+    :skip: CartesianOrbit
+
+More information
+================
+
+Internally, both of the above classes rely on the Astropy representation
+transformation framework (i.e. the subclasses of
+`~astropy.coordinates.BaseRepresentation` and
+`~astropy.coordinates.BaseDifferential`). However, at present these classes only
+support 3D positions and differentials (velocities). The |psp| and |orb| classes
+both support arbitrary numbers of dimensions and, when relevant, rely on custom
+subclasses of the representation classes to handle such cases. See the
+:ref:`nd-representations` page for more information about these classes.

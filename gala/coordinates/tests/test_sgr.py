@@ -13,7 +13,7 @@ from astropy.utils.data import get_pkg_data_filename
 import numpy as np
 
 # This package
-from ..sgr import *
+from ..sgr import Sagittarius
 
 def test_simple():
     c = coord.ICRS(coord.Angle(217.2141, u.degree),

@@ -9,7 +9,7 @@ import numpy as np
 from scipy.signal import argrelmin
 
 # Project
-from . import CartesianPhaseSpacePosition, CartesianOrbit
+from . import PhaseSpacePosition, Orbit
 from ..potential.potential import PotentialBase
 
 __all__ = ['fast_lyapunov_max', 'lyapunov_max', 'surface_of_section']
@@ -45,7 +45,7 @@ def fast_lyapunov_max(w0, hamiltonian, dt, n_steps, d0=1e-5,
     -------
     LEs : :class:`~astropy.units.Quantity`
         Lyapunov exponents calculated from each offset / deviation orbit.
-    orbit : `~gala.dynamics.CartesianOrbit` (optional)
+    orbit : `~gala.dynamics.Orbit` (optional)
 
     """
 
@@ -60,11 +60,11 @@ def fast_lyapunov_max(w0, hamiltonian, dt, n_steps, d0=1e-5,
         raise TypeError("Input Hamiltonian must contain a C-implemented "
                         "potential and frame.")
 
-    if not isinstance(w0, CartesianPhaseSpacePosition):
+    if not isinstance(w0, PhaseSpacePosition):
         w0 = np.asarray(w0)
         ndim = w0.shape[0]//2
-        w0 = CartesianPhaseSpacePosition(pos=w0[:ndim],
-                                         vel=w0[ndim:])
+        w0 = PhaseSpacePosition(pos=w0[:ndim],
+                                vel=w0[ndim:])
 
     _w0 = np.squeeze(w0.w(hamiltonian.units))
     if _w0.ndim > 1:
@@ -82,8 +82,8 @@ def fast_lyapunov_max(w0, hamiltonian, dt, n_steps, d0=1e-5,
         except (TypeError, AttributeError):
             tunit = u.dimensionless_unscaled
 
-        orbit = CartesianOrbit.from_w(w=w, units=hamiltonian.units,
-                                      t=t*tunit, hamiltonian=hamiltonian)
+        orbit = Orbit.from_w(w=w, units=hamiltonian.units,
+                             t=t*tunit, hamiltonian=hamiltonian)
         return l/tunit, orbit
 
     else:
@@ -134,7 +134,7 @@ def lyapunov_max(w0, integrator, dt, n_steps, d0=1e-5, n_steps_per_pullback=10,
     -------
     LEs : :class:`~astropy.units.Quantity`
         Lyapunov exponents calculated from each offset / deviation orbit.
-    orbit : `~gala.dynamics.CartesianOrbit`
+    orbit : `~gala.dynamics.Orbit`
     """
 
     if units is not None:
@@ -144,11 +144,11 @@ def lyapunov_max(w0, integrator, dt, n_steps, d0=1e-5, n_steps_per_pullback=10,
         pos_unit = u.dimensionless_unscaled
         vel_unit = u.dimensionless_unscaled
 
-    if not isinstance(w0, CartesianPhaseSpacePosition):
+    if not isinstance(w0, PhaseSpacePosition):
         w0 = np.asarray(w0)
         ndim = w0.shape[0]//2
-        w0 = CartesianPhaseSpacePosition(pos=w0[:ndim]*pos_unit,
-                                         vel=w0[ndim:]*vel_unit)
+        w0 = PhaseSpacePosition(pos=w0[:ndim]*pos_unit,
+                                vel=w0[ndim:]*vel_unit)
 
     _w0 = w0.w(units)
     ndim = 2*w0.ndim
@@ -205,8 +205,8 @@ def lyapunov_max(w0, integrator, dt, n_steps, d0=1e-5, n_steps_per_pullback=10,
     except (TypeError, AttributeError):
         t_unit = u.dimensionless_unscaled
 
-    orbit = CartesianOrbit.from_w(w=full_w[:,:total_steps_taken],
-                                  units=units, t=full_ts[:total_steps_taken]*t_unit)
+    orbit = Orbit.from_w(w=full_w[:,:total_steps_taken],
+                         units=units, t=full_ts[:total_steps_taken]*t_unit)
     return LEs/t_unit, orbit
 
 def surface_of_section(orbit, plane_ix, interpolate=False):
@@ -219,7 +219,7 @@ def surface_of_section(orbit, plane_ix, interpolate=False):
 
     Parameters
     ----------
-    orbit : `~gala.dynamics.CartesianOrbit`
+    orbit : `~gala.dynamics.Orbit`
     plane_ix : int
         Integer that represents the coordinate to record crossings in. For
         example, for a 2D Hamiltonian where you want to make a SoS in

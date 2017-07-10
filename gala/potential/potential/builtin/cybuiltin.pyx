@@ -15,7 +15,6 @@ from collections import OrderedDict
 # Third-party
 from astropy.extern import six
 from astropy.utils import InheritDocstrings
-from astropy.coordinates.angles import rotation_matrix
 from astropy.constants import G
 import astropy.units as u
 import numpy as np
@@ -239,7 +238,7 @@ class IsochronePotential(CPotentialBase):
 
         Parameters
         ----------
-        w : :class:`gala.dynamics.CartesianPhaseSpacePosition`, :class:`gala.dynamics.CartesianOrbit`
+        w : :class:`gala.dynamics.PhaseSpacePosition`, :class:`gala.dynamics.Orbit`
             The positions or orbit to compute the actions, angles, and frequencies at.
         """
         from ....dynamics.analyticactionangle import isochrone_to_aa

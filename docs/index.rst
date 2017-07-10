@@ -10,7 +10,6 @@ Gala is a Python package for Galactic astronomy and gravitational
 dynamics. The bulk of the package centers around implementations of
 `gravitational potentials <potential/index.html>`_,
 `numerical integration <integrate/index.html>`_,
-`velocity transformations <coordinates/index.html>`_,
 and `nonlinear dynamics <dynamics/index.html>`_.
 
 The package is being actively developed in
@@ -53,3 +52,5 @@ Tutorials
    :glob:
 
    examples/integrate-potential-example
+   examples/integrate-rotating-frame
+   examples/mock-stream-heliocentric

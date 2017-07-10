@@ -39,15 +39,15 @@ class HarmonicOscillatorPotential(PotentialBase):
                                                           ndim=len(parameters['omega']))
 
     def _energy(self, q, t=0.):
-        om = np.atleast_1d(self.parameters['omega'])
+        om = np.atleast_1d(self.parameters['omega'].value)
         return np.sum(0.5 * om[None]**2 * q**2, axis=1)
 
     def _gradient(self, q, t=0.):
-        om = np.atleast_1d(self.parameters['omega'])
+        om = np.atleast_1d(self.parameters['omega'].value)
         return om[None]**2 * q
 
     def _hessian(self, q, t=0.):
-        om = np.atleast_1d(self.parameters['omega'])
+        om = np.atleast_1d(self.parameters['omega'].value)
         return np.tile(np.diag(om)[:,:,None], reps=(1,1,q.shape[0]))
 
     def action_angle(self, w):
@@ -63,7 +63,7 @@ class HarmonicOscillatorPotential(PotentialBase):
 
         Parameters
         ----------
-        w : :class:`gala.dynamics.CartesianPhaseSpacePosition`, :class:`gala.dynamics.CartesianOrbit`
+        w : :class:`gala.dynamics.PhaseSpacePosition`, :class:`gala.dynamics.Orbit`
             The positions or orbit to compute the actions, angles, and frequencies at.
         """
         from ....dynamics.analyticactionangle import harmonic_oscillator_to_aa

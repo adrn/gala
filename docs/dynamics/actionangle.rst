@@ -37,11 +37,14 @@ been executed::
 
     >>> import astropy.coordinates as coord
     >>> import astropy.units as u
-    >>> import matplotlib.pyplot as pl
+    >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> import gala.potential as gp
     >>> import gala.dynamics as gd
     >>> from gala.units import galactic
+
+For many more options for action calculation, see
+`tact <https://github.com/jls713/tact>`_.
 
 .. _tube-axisymmetric:
 
@@ -74,25 +77,21 @@ We first create a potential and set up our initial conditions::
 
     >>> pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
     ...                               units=galactic)
-    >>> w0 = gd.CartesianPhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
-    ...                                     vel=[75, 150, 50.]*u.km/u.s)
+    >>> w0 = gd.PhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
+    ...                            vel=[75, 150, 50.]*u.km/u.s)
 
 We will now integrate the orbit and plot it in the meridional plane::
 
     >>> w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
-    >>> cyl_pos, cyl_vel = w.represent_as(coord.CylindricalRepresentation)
-    >>> fig,ax = pl.subplots(1,1,figsize=(6,6))
-    >>> ax.plot(cyl_pos.rho.to(u.kpc), cyl_pos.z.to(u.kpc),
-    ...         marker=None, linestyle='-') # doctest: +SKIP
-    >>> ax.set_xlabel("R [kpc]") # doctest: +SKIP
-    >>> ax.set_ylabel("z [kpc]") # doctest: +SKIP
+    >>> cyl = w.represent_as('cylindrical')
+    >>> fig = cyl.plot(['rho', 'z'], linestyle='-')
 
 .. plot::
     :align: center
 
     import astropy.coordinates as coord
     import astropy.units as u
-    import matplotlib.pyplot as pl
+    import matplotlib.pyplot as plt
     import numpy as np
     import gala.potential as gp
     import gala.dynamics as gd
@@ -100,16 +99,12 @@ We will now integrate the orbit and plot it in the meridional plane::
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
                                   units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
-                                        vel=[75, 150, 50.]*u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
+                               vel=[75, 150, 50.]*u.km/u.s)
 
     w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
-    cyl_pos, cyl_vel = w.represent_as(coord.CylindricalRepresentation)
-    fig,ax = pl.subplots(1,1,figsize=(6,6))
-    ax.plot(cyl_pos.rho.to(u.kpc).value, cyl_pos.z.to(u.kpc).value,
-            marker=None, linestyle='-')
-    ax.set_xlabel("R [kpc]")
-    ax.set_ylabel("z [kpc]")
+    cyl = w.represent_as('cylindrical')
+    cyl.plot(['rho', 'z'], linestyle='-')
 
 To solve for the actions in the true potential, we first compute the actions in
 a "toy" potential -- a potential in which we can compute the actions and angles
@@ -132,7 +127,7 @@ angles would be perfectly straight lines with slope equal to the frequencies.
 Instead, the orbit is wobbly in the toy potential angles::
 
     >>> toy_actions,toy_angles,toy_freqs = toy_potential.action_angle(w)
-    >>> fig,ax = pl.subplots(1,1,figsize=(5,5))
+    >>> fig,ax = plt.subplots(1,1,figsize=(5,5))
     >>> ax.plot(toy_angles[0], toy_angles[2], linestyle='none', marker=',') # doctest: +SKIP
     >>> ax.set_xlim(0,2*np.pi) # doctest: +SKIP
     >>> ax.set_ylim(0,2*np.pi) # doctest: +SKIP
@@ -144,7 +139,7 @@ Instead, the orbit is wobbly in the toy potential angles::
 
     import astropy.coordinates as coord
     import astropy.units as u
-    import matplotlib.pyplot as pl
+    import matplotlib.pyplot as plt
     import numpy as np
     import gala.potential as gp
     import gala.dynamics as gd
@@ -152,13 +147,13 @@ Instead, the orbit is wobbly in the toy potential angles::
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
                                   units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
-                                        vel=[75, 150, 50.]*u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
+                               vel=[75, 150, 50.]*u.km/u.s)
 
     w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
     toy_potential = gd.fit_isochrone(w)
     actions,angles,freqs = toy_potential.action_angle(w)
-    fig,ax = pl.subplots(1,1,figsize=(5,5))
+    fig,ax = plt.subplots(1,1,figsize=(5,5))
     ax.plot(angles[0], angles[2], linestyle='none', marker=',')
     ax.set_xlim(0,2*np.pi)
     ax.set_ylim(0,2*np.pi)
@@ -169,7 +164,7 @@ Instead, the orbit is wobbly in the toy potential angles::
 This can also be seen in the value of the action variables, which are not
 time-independent in the toy potential::
 
-    >>> fig,ax = pl.subplots(1,1)
+    >>> fig,ax = plt.subplots(1,1)
     >>> ax.plot(w.t, toy_actions[0], marker=None) # doctest: +SKIP
     >>> ax.set_xlabel(r"$t$ [Myr]") # doctest: +SKIP
     >>> ax.set_ylabel(r"$J_1$ [rad]") # doctest: +SKIP
@@ -179,7 +174,7 @@ time-independent in the toy potential::
 
     import astropy.coordinates as coord
     import astropy.units as u
-    import matplotlib.pyplot as pl
+    import matplotlib.pyplot as plt
     import numpy as np
     import gala.potential as gp
     import gala.dynamics as gd
@@ -187,13 +182,13 @@ time-independent in the toy potential::
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
                                   units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
-                                        vel=[75, 150, 50.]*u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
+                               vel=[75, 150, 50.]*u.km/u.s)
 
     w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
     toy_potential = gd.fit_isochrone(w)
     actions,angles,freqs = toy_potential.action_angle(w)
-    fig,ax = pl.subplots(1,1)
+    fig,ax = plt.subplots(1,1)
     ax.plot(w.t, actions[0].to(u.km/u.s*u.kpc*u.Msun), marker=None)
     ax.set_xlabel(r"$t$ [Myr]")
     ax.set_ylabel(r"$J_1$ [kpc ${\rm M}_\odot$ km/s]")
@@ -222,7 +217,7 @@ actions computed using this machinery::
     >>> act_correction = nvecs.T[...,None] * result['Sn'][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
     >>> action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr*u.Msun
     >>>
-    >>> fig,ax = pl.subplots(1,1)
+    >>> fig,ax = plt.subplots(1,1)
     >>> ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc*u.Msun), marker=None, label='$J_1$') # doctest: +SKIP
     >>> ax.plot(w.t, action_approx[0].to(u.km/u.s*u.kpc*u.Msun), marker=None, label="$J_1'$") # doctest: +SKIP
     >>> ax.set_xlabel(r"$t$ [Myr]") # doctest: +SKIP
@@ -234,7 +229,7 @@ actions computed using this machinery::
 
     import astropy.coordinates as coord
     import astropy.units as u
-    import matplotlib.pyplot as pl
+    import matplotlib.pyplot as plt
     import numpy as np
     import gala.potential as gp
     import gala.dynamics as gd
@@ -242,8 +237,8 @@ actions computed using this machinery::
 
     pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
                                   units=galactic)
-    w0 = gd.CartesianPhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
-                                        vel=[75, 150, 50.]*u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
+                               vel=[75, 150, 50.]*u.km/u.s)
 
     w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
     toy_potential = gd.fit_isochrone(w)
@@ -252,7 +247,7 @@ actions computed using this machinery::
     nvecs = gd.generate_n_vectors(8, dx=1, dy=2, dz=2)
     act_correction = nvecs.T[...,None] * result['Sn'][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
     action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr*u.Msun
-    fig,ax = pl.subplots(1,1)
+    fig,ax = plt.subplots(1,1)
     ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc*u.Msun), marker=None, label='$J_1$')
     ax.plot(w.t, action_approx[0].to(u.km/u.s*u.kpc*u.Msun), marker=None, label="$J_1'$")
     ax.set_xlabel(r"$t$ [Myr]")
@@ -298,7 +293,7 @@ and the same initial conditions as above:
 
     import astropy.coordinates as coord
     import astropy.units as u
-    import matplotlib.pyplot as pl
+    import matplotlib.pyplot as plt
     import numpy as np
     import gala.potential as gp
     import gala.dynamics as gd
@@ -309,8 +304,8 @@ and the same initial conditions as above:
                                   units=galactic)
 
     # define initial conditions
-    w0 = gd.CartesianPhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
-                                        vel=[75, 150, 50.]*u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
+                               vel=[75, 150, 50.]*u.km/u.s)
 
     # integrate orbit
     w = pot.integrate_orbit(w0, dt=0.5, n_steps=10000)
@@ -330,7 +325,7 @@ and the same initial conditions as above:
     act_correction = nvecs.T[...,None] * result['Sn'][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
     action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr*u.Msun
 
-    fig,axes = pl.subplots(3,1,figsize=(6,14))
+    fig,axes = plt.subplots(3,1,figsize=(6,14))
 
     for i,ax in enumerate(axes):
         ax.plot(w.t, toy_actions[i].to(u.km/u.s*u.kpc*u.Msun), marker=None, label='$J_{}$'.format(i+1))

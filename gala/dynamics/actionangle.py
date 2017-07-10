@@ -88,7 +88,7 @@ def fit_isochrone(orbit, m0=2E11, b0=1.):
 
     Parameters
     ----------
-    orbit : `~gala.dynamics.CartesianOrbit`
+    orbit : `~gala.dynamics.Orbit`
     m0 : numeric (optional)
         Initial mass guess.
     b0 : numeric (optional)
@@ -141,7 +141,7 @@ def fit_harmonic_oscillator(orbit, omega0=[1.,1.,1.]):
 
     Parameters
     ----------
-    orbit : `~gala.dynamics.CartesianOrbit`
+    orbit : `~gala.dynamics.Orbit`
     omega0 : array_like (optional)
         Initial frequency guess.
 
@@ -185,7 +185,7 @@ def fit_toy_potential(orbit, force_harmonic_oscillator=False):
 
     Parameters
     ----------
-    orbit : `~gala.dynamics.CartesianOrbit`
+    orbit : `~gala.dynamics.Orbit`
     force_harmonic_oscillator : bool (optional)
         Force using the harmonic oscillator potential as the toy potential.
 
@@ -430,7 +430,7 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
 
     Parameters
     ----------
-    orbit : `~gala.dynamics.CartesianOrbit`
+    orbit : `~gala.dynamics.Orbit`
     N_max : int
         Maximum integer Fourier mode vector length, |n|.
     toy_potential : Potential (optional)
@@ -517,7 +517,7 @@ def find_actions(orbit, N_max, force_harmonic_oscillator=False, toy_potential=No
 
     Parameters
     ----------
-    orbit : `~gala.dynamics.CartesianOrbit`
+    orbit : `~gala.dynamics.Orbit`
     N_max : int
         Maximum integer Fourier mode vector length, :math:`|\boldsymbol{n}|`.
     force_harmonic_oscillator : bool (optional)
