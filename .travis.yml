@@ -23,7 +23,7 @@ env:
         # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
         - NUMPY_VERSION=stable
-        - ASTROPY_VERSION=development # HACK: to use master, v2.0
+        - ASTROPY_VERSION=stable
         - SETUP_CMD='test'
         - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml h5py sympy qt'
 
