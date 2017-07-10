@@ -220,3 +220,4 @@ API
     :skip: vgsr_to_vhel
     :skip: vhel_to_gal
     :skip: vhel_to_vgsr
+    :skip: Quaternion
