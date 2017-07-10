@@ -80,7 +80,7 @@ class PhaseSpacePosition(object):
     representation_mappings[r.UnitSphericalDifferential] = \
         representation_mappings[r.SphericalDifferential]
 
-    def __init__(self, pos, vel, frame=None):
+    def __init__(self, pos, vel=None, frame=None):
         """
         Represents phase-space positions, i.e. positions and conjugate momenta
         (velocities).
@@ -140,6 +140,13 @@ class PhaseSpacePosition(object):
 
         else:
             ndim = 3
+
+        if vel is None:
+            if 's' not in pos.differentials:
+                raise TypeError("You must specify velocity data when creating "
+                                "a {0} object.".format(self.__class__.__name__))
+            else:
+                vel = pos.differentials.pop('s')
 
         if not isinstance(vel, coord.BaseDifferential):
             # assume representation is same as pos if not specified

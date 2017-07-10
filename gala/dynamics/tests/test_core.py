@@ -67,6 +67,17 @@ def test_initialize():
     assert hasattr(o, 'v_y')
     assert hasattr(o, 'v_z')
 
+    # passing a representation with a differential attached
+    pos = CartesianRepresentation(np.random.random(size=(3,10))*u.kpc)
+    vel = CartesianDifferential(np.random.random(size=(3,10))*u.km/u.s)
+    o = PhaseSpacePosition(pos.with_differentials({'s': vel}))
+    assert hasattr(o, 'x')
+    assert hasattr(o, 'y')
+    assert hasattr(o, 'z')
+    assert hasattr(o, 'v_x')
+    assert hasattr(o, 'v_y')
+    assert hasattr(o, 'v_z')
+
     o = o.represent_as(SphericalRepresentation)
     assert hasattr(o, 'distance')
     assert hasattr(o, 'lat')
