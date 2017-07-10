@@ -355,8 +355,7 @@ class PhaseSpacePosition(object):
         pos, vel = trans_func(current_frame, frame, self, **kwargs)
         return PhaseSpacePosition(pos=pos, vel=vel, frame=frame)
 
-    def to_coord_frame(self, frame,
-                       galactocentric_frame=None, vcirc=None, vlsr=None):
+    def to_coord_frame(self, frame, galactocentric_frame=None, **kwargs):
         """
         Transform the orbit from Galactocentric, cartesian coordinates to
         Heliocentric coordinates in the specified Astropy coordinate frame.
@@ -364,19 +363,20 @@ class PhaseSpacePosition(object):
         Parameters
         ----------
         frame : :class:`~astropy.coordinates.BaseCoordinateFrame`
+            The class or frame instance specifying the desired output frame.
+            For example, :class:`~astropy.coordinates.ICRS`.
         galactocentric_frame : :class:`~astropy.coordinates.Galactocentric`
-        vcirc : :class:`~astropy.units.Quantity`
-            Circular velocity of the Sun. Passed to velocity transformation.
-        vlsr : :class:`~astropy.units.Quantity`
-            Velocity of the Sun relative to the LSR. Passed to
-            velocity transformation.
+            This is the assumed frame that the position and velocity of this
+            object are in. The ``Galactocentric`` instand should have parameters
+            specifying the position and motion of the sun in the Galactocentric
+            frame, but no data.
 
         Returns
         -------
         c : :class:`~astropy.coordinates.BaseCoordinateFrame`
-            An instantiated coordinate frame.
-        v : :class:`~astropy.coordinates.BaseDifferential`
-            An astropy differential class containing the velocity components.
+            An instantiated coordinate frame containing the positions and
+            velocities from this object transformed to the specified coordinate
+            frame.
 
         """
 
@@ -387,10 +387,12 @@ class PhaseSpacePosition(object):
         if galactocentric_frame is None:
             galactocentric_frame = coord.Galactocentric()
 
-        kw = dict()
-        kw['galactocentric_frame'] = galactocentric_frame
-        kw['vcirc'] = vcirc
-        kw['vlsr'] = vlsr
+        if 'vcirc' in kwargs or 'vlsr' in kwargs:
+            import warnings
+            warnings.warn("Instead of passing in 'vcirc' and 'vlsr', specify "
+                          "these parameters to the input Galactocentric frame "
+                          "using the `galcen_v_sun` argument.",
+                          DeprecationWarning)
 
         # first we need to turn the position into a Galactocentric instance
         gc_c = galactocentric_frame.realize_frame(
