@@ -30,8 +30,9 @@ transforming to Sagittarius, Orphan, and GD1 stream coordinates (as defined in t
 references below). These classes behave like the built-in astropy coordinates
 frames (e.g., :class:`~astropy.coordinates.ICRS` or
 :class:`~astropy.coordinates.Galactic`) and can be transformed to and from
-other astropy coordinate frames. For example, to convert a set of ``ICRS`` (RA,
-Dec) coordinates to the `~gala.coordinates.Sagittarius` frame::
+other astropy coordinate frames. For example, to convert a set of
+`~astropy.coordinates.ICRS` (RA, Dec) coordinates to the
+`~gala.coordinates.Sagittarius` frame::
 
     >>> c = coord.ICRS(ra=100.68458*u.degree, dec=41.26917*u.degree)
     >>> sgr = c.transform_to(gc.Sagittarius)
@@ -39,7 +40,7 @@ Dec) coordinates to the `~gala.coordinates.Sagittarius` frame::
     (<Longitude 179.58511053544734 deg>, <Latitude -12.558450192162654 deg>)
 
 Or, to transform from `~gala.coordinates.Sagittarius` coordinates to the
-``Galactic`` frame
+`~astropy.coordinates.Galactic` frame
     >>> sgr = gc.Sagittarius(Lambda=156.342*u.degree, Beta=1.1*u.degree)
     >>> c = sgr.transform_to(coord.Galactic)
     >>> (c.l, c.b) # doctest: +FLOAT_CMP
