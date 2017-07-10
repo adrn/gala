@@ -63,17 +63,17 @@ def test_initialize():
     assert hasattr(o, 'x')
     assert hasattr(o, 'y')
     assert hasattr(o, 'z')
-    assert hasattr(o, 'd_x')
-    assert hasattr(o, 'd_y')
-    assert hasattr(o, 'd_z')
+    assert hasattr(o, 'v_x')
+    assert hasattr(o, 'v_y')
+    assert hasattr(o, 'v_z')
 
     o = o.represent_as(SphericalRepresentation)
     assert hasattr(o, 'distance')
     assert hasattr(o, 'lat')
     assert hasattr(o, 'lon')
-    assert hasattr(o, 'd_distance')
-    assert hasattr(o, 'd_lat')
-    assert hasattr(o, 'd_lon')
+    assert hasattr(o, 'radial_velocity')
+    assert hasattr(o, 'pm_lon')
+    assert hasattr(o, 'pm_lat')
 
     with pytest.raises(TypeError):
         o = PhaseSpacePosition(pos=x, vel=v, frame="blah blah blah")

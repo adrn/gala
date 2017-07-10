@@ -628,7 +628,10 @@ class Orbit(PhaseSpacePosition):
             A list of component names (strings) to plot. By default, this is the
             Cartesian positions ``['x', 'y', 'z']``. To plot Cartesian
             velocities, pass in the velocity component names
-            ``['d_x', 'd_y', 'd_z']``.
+            ``['v_x', 'v_y', 'v_z']``. If the representation is different, the
+            component names will be different. For example, for a Cylindrical
+            representation, the components are ``['rho', 'phi', 'z']`` and
+            ``['v_rho', 'pm_phi', 'v_z']``.
         units : `~astropy.units.UnitBase`, iterable (optional)
             A single unit or list of units to display the components in.
         auto_aspect : bool (optional)

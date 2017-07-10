@@ -51,10 +51,8 @@ object::
 Then pass this object in to the heliocentric to galactocentric conversion
 function, :func:`~gala.coordinates.vhel_to_gal`::
 
-    >>> vhel = coord.SphericalDifferential(d_lon=1.5 * u.mas/u.yr,
-    ...                                    d_lat=-1.7 * u.mas/u.yr,
-    ...                                    d_distance=151.1 * u.km/u.s)
-    >>> gc.vhel_to_gal(c.icrs, vhel)
+    >>> gc.vhel_to_gal(c.icrs, pm=[1.5, -1.7]*u.mas/u.yr,
+    ...                rv=151.1 * u.km/u.s)
     <CartesianDifferential (d_x, d_y, d_z) in km / s
         (-134.86592639,  229.212658,  51.24398172)>
 
