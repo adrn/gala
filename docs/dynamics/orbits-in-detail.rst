@@ -82,9 +82,9 @@ The class internally stores the positions and velocities as
 
 All of the components of these classes are added as attributes of the
 phase-space position class for convenience. For example, to access the ``x``
-component of the position and the ``d_x`` component of the velocity::
+component of the position and the ``v_x`` component of the velocity::
 
-    >>> w.x, w.d_x # doctest: +FLOAT_CMP
+    >>> w.x, w.v_x # doctest: +FLOAT_CMP
     (<Quantity [ 0., 1., 2., 3., 4., 5., 6., 7.] kpc>,
      <Quantity [ 0., 1., 2., 3., 4., 5., 6., 7.] km / s>)
 
@@ -128,28 +128,26 @@ returned velocity object is a tuple with angular velocities and radial velocity
 in the :class:`~astropy.coordinates.Galactic` frame::
 
     >>> from astropy.coordinates import Galactic
-    >>> gal_c, gal_v = w.to_coord_frame(Galactic)
+    >>> gal_c = w.to_coord_frame(Galactic)
     >>> gal_c # doctest: +FLOAT_CMP
     <Galactic Coordinate: (l, b, distance) in (deg, deg, kpc)
         [(  4.42801092e-05,  -6.11537341,  9.35649038),
          (  1.05488650e+01,  -1.99824507,  9.46673245),
          (  2.09134381e+01,   2.58371838,  7.28582479),
-         (  7.26282965e-05,  12.9365465 ,  4.40866775)]>
-    >>> gal_v # doctest: +FLOAT_CMP
-    <SphericalDifferential (d_lon, d_lat, d_distance) in (mas / yr, mas / yr, km / s)
-        [( -27.27877808, -0.27405446,    91.88965124),
-         ( -12.36897173,  0.17751085,   520.16905768),
-         (  -6.65463066,  1.25520907, -1075.45206142),
-         (-203.07712066,  2.05538314,  -154.32652722)]>
+         (  7.26282965e-05,  12.9365465 ,  4.40866775)]
+     (pm_l_cosb, pm_b, radial_velocity) in (mas / yr, mas / yr, km / s)
+        [( -27.28114046, -0.27857153,    90.80507879),
+         ( -12.51009123,  0.17381423,   517.81257826),
+         (  -6.82555151,  1.25738866, -1078.97465657),
+         (-198.25720126,  2.06324888,  -155.41705887)]>
 
 It's important to note that the longitudinal angular velocity component in the
 `~astropy.coordinates.SphericalDifferential` class does *not* include the
 :math:`\cos{\rm lat}` term. For this example, to get :math:`\mu_l\,cos{b}` you
 would need to do::
 
-    >>> pm_l = gal_v.d_lon * np.cos(gal_c.b)
-    >>> pm_l
-    <Quantity [ -27.12354536, -12.3614501 ,  -6.6478657 ,-197.92273788] mas / yr>
+    >>> gal_c.pm_l_cosb
+    <Quantity [ -27.28114046, -12.51009123,  -6.82555151,-198.25720126] mas / yr>
 
 We can easily plot projections of the phase-space positions using the
 `~gala.dynamics.PhaseSpacePosition.plot` method::
@@ -177,7 +175,7 @@ We can easily plot projections of the phase-space positions using the
 This is a thin wrapper around the `~gala.dynamics.plot_projections`
 function and any keyword arguments are passed through to that function::
 
-    >>> fig = w.plot(components=['x', 'd_z'], color='r',
+    >>> fig = w.plot(components=['x', 'v_z'], color='r',
     ...              facecolor='', marker='o', s=20, alpha=0.5)
 
 .. plot::
@@ -191,7 +189,7 @@ function and any keyword arguments are passed through to that function::
     v = np.random.uniform(-200,200,size=(3,128))
     w = gd.PhaseSpacePosition(pos=x*u.kpc,
                               vel=v*u.km/u.s)
-    fig = w.plot(components=['x', 'd_z'], color='r',
+    fig = w.plot(components=['x', 'v_z'], color='r',
                  facecolor='', marker='o', s=20, alpha=0.5)
 
 Phase-space position API
@@ -315,11 +313,11 @@ latter few get better with smaller timesteps::
     >>> np.mean(orbit.angular_momentum(), axis=1) # doctest: +FLOAT_CMP
     <Quantity [ 0.        , 0.        , 0.76703412] kpc2 / Myr>
     >>> orbit.eccentricity() # doctest: +FLOAT_CMP
-    <Quantity 0.3191563009914265>
+    <Quantity 0.31951765618193967>
     >>> orbit.pericenter() # doctest: +FLOAT_CMP
     <Quantity 10.00000005952518 kpc>
     >>> orbit.apocenter() # doctest: +FLOAT_CMP
-    <Quantity 19.375317870528118 kpc>
+    <Quantity 19.390916871970223 kpc>
 
 Orbit API
 ---------

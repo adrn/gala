@@ -19,7 +19,7 @@ a given position:
 
     >>> pot = gp.IsochronePotential(m=1E10*u.Msun, b=15.*u.kpc, units=galactic)
     >>> pot.value([8.,6.,7.]*u.kpc) # doctest: +FLOAT_CMP
-    <Quantity [-0.00131039] kpc2 / Myr2>
+    <Quantity [-0.00131002] kpc2 / Myr2>
     >>> pot.gradient([8.,6.,7.]*u.kpc) # doctest: +FLOAT_CMP
     <Quantity [[  1.57857635e-05],
                [  1.18393226e-05],

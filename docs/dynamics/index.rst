@@ -109,11 +109,11 @@ example, both are Cartesian (`~astropy.coordinates.CartesianRepresentation` and
 components, e.g., ``x``, we use::
 
     >>> orbit.pos.x # doctest: +FLOAT_CMP
-    <Quantity [ 11.        , 10.99714901, 10.98864505,...,   6.42504843,
-                 6.60915155,  6.78853526] kpc>
+    <Quantity [ 11.        , 10.99714981, 10.98864821,...,   6.37610364,
+                 6.56131833,  6.74183739] kpc>
     >>> orbit.vel.d_x # doctest: +FLOAT_CMP
-    <Quantity [ 0.        ,-0.00567747,-0.01130248,...,  0.186418  ,
-                0.18174341, 0.17698051] kpc / Myr>
+    <Quantity [ 0.        ,-0.00567589,-0.01129934,...,  0.18751756,
+                0.18286687, 0.17812762] kpc / Myr>
 
 Continue to the :ref:`orbits-in-detail` page for more information.
 

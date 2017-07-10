@@ -36,22 +36,20 @@ example. For the position and velocity of the cluster, we'll use
 :math:`(\mu_{\alpha,*}, \mu_\delta) = (-2.296,-2.257)~{\rm mas}~{\rm yr}^{-1}`
 [fritz15]_::
 
-   >>> c = coord.SkyCoord(ra=229 * u.deg, dec=-0.124 * u.deg,
-   ...                    distance=22.9 * u.kpc)
-   >>> v = coord.SphericalDifferential(d_lon=-2.296/np.cos(c.dec) * u.mas/u.yr,
-   ...                                 d_lat=-2.257 * u.mas/u.yr,
-   ...                                 d_distance=-58.7 * u.km/u.s)
+   >>> c = coord.ICRS(ra=229 * u.deg, dec=-0.124 * u.deg,
+   ...                distance=22.9 * u.kpc,
+   ...                pm_ra_cosdec=-2.296 * u.mas/u.yr,
+   ...                pm_dec=-2.257 * u.mas/u.yr,
+   ...                radial_velocity=-58.7 * u.km/u.s)
 
 We'll first convert this position and velocity to Galactocentric coordinates::
 
    >>> c_gc = c.transform_to(coord.Galactocentric).cartesian
-   >>> v_gc = gc.vhel_to_gal(c, v)
-   >>> c_gc, v_gc
-   (<CartesianRepresentation (x, y, z) in kpc
-        ( 7.69726478,  0.22748727,  16.41135761)>,
-    <CartesianDifferential (d_x, d_y, d_z) in km / s
-        (-45.27067041, -124.04384674, -16.05904468)>)
-   >>> pal5 = gd.PhaseSpacePosition(pos=c_gc, vel=v_gc)
+   >>> c_gc
+   <CartesianRepresentation (x, y, z) in kpc
+       ( 7.69726478,  0.22748727,  16.41135761)
+    (has differentials w.r.t.: 's')>
+   >>> pal5 = gd.PhaseSpacePosition(pos=c_gc.xyz, vel=c_gc.differentials['s'].d_xyz)
 
 We can now integrate an orbit in the previously defined gravitational potential
 using Pal 5's position and velocity as initial conditions. We'll integrate the
@@ -115,13 +113,13 @@ Galactocentric coordinate frame. To convert these to observable, Heliocentric
 coordinates, we have to specify a desired coordinate frame. We'll convert to the
 ICRS coordinate system and plot some of the Heliocentric kinematic quantities::
 
-   >>> stream_c, stream_v = stream.to_coord_frame(coord.ICRS)
+   >>> stream_c = stream.to_coord_frame(coord.ICRS)
 
 .. plot::
    :align: center
    :context: close-figs
 
-   stream_c, stream_v = stream.to_coord_frame(coord.ICRS)
+   stream_c = stream.to_coord_frame(coord.ICRS)
 
    style = dict(marker='.', s=1, alpha=0.5)
 
@@ -133,7 +131,7 @@ ICRS coordinate system and plot some of the Heliocentric kinematic quantities::
    axes[0].set_ylim(-15, 15)
 
    axes[1].scatter(stream_c.ra.degree,
-                   stream_v.d_distance.to(u.km/u.s), **style)
+                   stream_c.radial_velocity.to(u.km/u.s), **style)
    axes[1].set_xlim(250, 220)
    axes[1].set_ylim(-100, 0)
 

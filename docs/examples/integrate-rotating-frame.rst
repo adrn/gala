@@ -45,7 +45,7 @@ kpc}^{-1}`. We then have to solve for the co-rotation radius using the circular
    >>> res = minimize(corot_func, x0=4., args=(Omega, disk))
    >>> corot_rad = res.x[0] * u.kpc
    >>> corot_rad # doctest: +FLOAT_CMP
-   <Quantity 3.9175069560019287 kpc>
+   <Quantity 3.9168057182291167 kpc>
 
 We can now define the bar component::
 

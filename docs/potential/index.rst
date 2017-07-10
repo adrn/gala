@@ -79,14 +79,14 @@ some position or a set of positions. Here, we'll evaluate a 3D point mass
 potential at the 3D position (1,-1,0)::
 
     >>> ptmass.energy([1.,-1.,0.]*u.au)
-    <Quantity [-27.92216622] AU2 / yr2>
+    <Quantity [-27.91440236] AU2 / yr2>
 
 These functions also accept both :class:`~astropy.units.Quantity` objects or
 plain :class:`~numpy.ndarray`-like objects (in which case the position is
 assumed to be in the unit system of the potential)::
 
     >>> ptmass.energy([1.,-1.,0.])
-    <Quantity [-27.92216622] AU2 / yr2>
+    <Quantity [-27.91440236] AU2 / yr2>
 
 This also works for multiple positions by passing in a 2D position (but see
 :ref:`conventions` for a description of the interpretation of different axes)::
@@ -94,17 +94,17 @@ This also works for multiple positions by passing in a 2D position (but see
     >>> pos = np.array([[1.,-1.,0],
     ...                 [2.,3.,0]]).T
     >>> ptmass.energy(pos*u.au)
-    <Quantity [-27.92216622,-10.95197465] AU2 / yr2>
+    <Quantity [-27.91440236,-10.94892941] AU2 / yr2>
 
 We may also compute the gradient or acceleration::
 
     >>> ptmass.gradient([1.,-1.,0]*u.au) # doctest: +FLOAT_CMP
-    <Quantity [[ 13.96108311],
-               [-13.96108311],
+    <Quantity [[ 13.95720118],
+               [-13.95720118],
                [  0.        ]] AU / yr2>
     >>> ptmass.acceleration([1.,-1.,0]*u.au) # doctest: +FLOAT_CMP
-    <Quantity [[-13.96108311],
-               [ 13.96108311],
+    <Quantity [[-13.95720118],
+               [ 13.95720118],
                [ -0.        ]] AU / yr2>
 
 Some of the potential objects also have methods implemented for computing the

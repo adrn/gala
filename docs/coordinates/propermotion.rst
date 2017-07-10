@@ -20,7 +20,7 @@ to Galactic::
 
     >>> pm = [1.53, -2.1] * u.mas/u.yr
     >>> gc.pm_icrs_to_gal(c, pm)
-    <Quantity [ 2.52366087, 0.61809041] mas / yr>
+    <Quantity [ 2.5236609 , 0.61809034] mas / yr>
 
 Of course, these functions also work on arrays. The first axis of the input
 proper motion arrays should have length=2::
