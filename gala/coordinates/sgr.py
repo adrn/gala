@@ -19,14 +19,14 @@ class Sagittarius(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
     of the Sagittarius dwarf galaxy, as described in
-        http://adsabs.harvard.edu/abs/2003ApJ...599.1082M
-    and further explained in
-        http://www.stsci.edu/~dlaw/Sgr/.
+    http://adsabs.harvard.edu/abs/2003ApJ...599.1082M
+    and further explained in http://www.stsci.edu/~dlaw/Sgr/.
 
     Parameters
     ----------
     representation : `BaseRepresentation` or None
-        A representation object or None to have no data (or use the other keywords)
+        A representation object or None to have no data (or use the other
+        keywords).
 
     Lambda : `Angle`, optional, must be keyword
         The longitude-like angle corresponding to Sagittarius' orbit.

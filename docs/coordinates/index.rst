@@ -40,7 +40,8 @@ other astropy coordinate frames. For example, to convert a set of
     (<Longitude 179.58511053544734 deg>, <Latitude -12.558450192162654 deg>)
 
 Or, to transform from `~gala.coordinates.Sagittarius` coordinates to the
-`~astropy.coordinates.Galactic` frame
+`~astropy.coordinates.Galactic` frame::
+
     >>> sgr = gc.Sagittarius(Lambda=156.342*u.degree, Beta=1.1*u.degree)
     >>> c = sgr.transform_to(coord.Galactic)
     >>> (c.l, c.b) # doctest: +FLOAT_CMP
@@ -207,15 +208,8 @@ API
 
 .. automodapi:: gala.coordinates
     :no-inheritance-diagram:
-    :skip: cartesian_to_cylindrical
-    :skip: cartesian_to_physicsspherical
-    :skip: cartesian_to_poincare_polar
-    :skip: cartesian_to_spherical
-    :skip: cylindrical_to_cartesian
-    :skip: physicsspherical_to_cartesian
     :skip: pm_gal_to_icrs
     :skip: pm_icrs_to_gal
-    :skip: spherical_to_cartesian
     :skip: transform_proper_motion
     :skip: vgal_to_hel
     :skip: vgsr_to_vhel

@@ -123,9 +123,9 @@ Meaning, we can access these components by doing, e.g.::
 For a Cylindrical representation, these are instead::
 
     >>> cyl_orbit = orbit.represent_as('cylindrical')
-    >>> cyl_orbit.pos_components.keys()
+    >>> cyl_orbit.pos_components.keys() # doctest: +SKIP
     odict_keys(['rho', 'phi', 'z'])
-    >>> cyl_orbit.vel_components.keys()
+    >>> cyl_orbit.vel_components.keys() # doctest: +SKIP
     odict_keys(['v_rho', 'pm_phi', 'v_z'])
     >>> cyl_orbit.v_rho
     <Quantity [ 0.        ,-0.00187214,-0.00369183,...,  0.01699321,
