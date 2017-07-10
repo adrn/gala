@@ -394,6 +394,12 @@ class PhaseSpacePosition(object):
                           "using the `galcen_v_sun` argument.",
                           DeprecationWarning)
 
+        if (getattr(self, self.pos_components.keys()[0]).unit == u.one or
+                getattr(self, self.vel_components.keys()[0]).unit == u.one):
+            raise u.UnitConversionError("Position and velocity must have "
+                                        "dimensioned units to convert to a "
+                                        "coordinate frame.")
+
         # first we need to turn the position into a Galactocentric instance
         gc_c = galactocentric_frame.realize_frame(
             self.pos.with_differentials(self.vel))

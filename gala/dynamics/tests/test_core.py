@@ -179,7 +179,7 @@ def test_to_coord_frame():
     x = np.random.random(size=(3,10))*u.kpc
     v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
     o = PhaseSpacePosition(pos=x, vel=v)
-    coo,vel = o.to_coord_frame(Galactic)
+    coo = o.to_coord_frame(Galactic)
     assert coo.name == 'galactic'
 
     warnings.simplefilter('always')
