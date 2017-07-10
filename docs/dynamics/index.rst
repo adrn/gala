@@ -109,9 +109,9 @@ For example, for a Cartesian representation, the position components are ``['x',
 |orb| or |psp| instance, you can check the valid compnent names using the
 attributes ``.pos_components`` and ``.vel_components``::
 
-    >>> orbit.pos_components.keys()
+    >>> orbit.pos_components.keys() # doctest: +SKIP
     odict_keys(['x', 'y', 'z'])
-    >>> orbit.vel_components.keys()
+    >>> orbit.vel_components.keys() # doctest: +SKIP
     odict_keys(['v_x', 'v_y', 'v_z'])
 
 Meaning, we can access these components by doing, e.g.::

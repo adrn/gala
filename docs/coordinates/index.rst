@@ -54,7 +54,7 @@ motions::
     >>> gd1 = gc.GD1(phi1=-35.00*u.degree, phi2=0*u.degree,
     ...              pm_phi1_cosphi2=-12.20*u.mas/u.yr,
     ...              pm_phi2=-3.10*u.mas/u.yr)
-    >>> gd1.transform_to(coord.Galactic)
+    >>> gd1.transform_to(coord.Galactic) # doctest: +FLOAT_CMP
     <Galactic Coordinate: (l, b) in deg
         ( 181.28968151,  54.84972806)
      (pm_l_cosb, pm_b) in mas / yr
@@ -69,7 +69,7 @@ position and velocity, we can transform to a
     ...              pm_phi1_cosphi2=-12.20*u.mas/u.yr,
     ...              pm_phi2=-3.10*u.mas/u.yr,
     ...              radial_velocity=-32*u.km/u.s)
-    >>> gd1.transform_to(coord.Galactocentric)
+    >>> gd1.transform_to(coord.Galactocentric) # doctest: +FLOAT_CMP
     <Galactocentric Coordinate (galcen_coord=<ICRS Coordinate: (ra, dec) in deg
         ( 266.4051, -28.936175)>, galcen_distance=8.3 kpc, galcen_v_sun=( 11.1,  232.24,  7.25) km / s, z_sun=27.0 pc, roll=0.0 deg): (x, y, z) in kpc
         (-12.78977138, -0.09870921,  6.44110283)
@@ -173,7 +173,7 @@ radial velocity. Let's start with coordinates in the ICRS frame::
 
 We again use the ``transform_to()`` method to do the transformation::
 
-    >>> icrs.transform_to(gc)
+    >>> icrs.transform_to(gc) # doctest: +FLOAT_CMP
     <Galactocentric Coordinate (galcen_coord=<ICRS Coordinate: (ra, dec) in deg
         ( 266.4051, -28.936175)>, galcen_distance=8.0 kpc, galcen_v_sun=( 10.,  250.,  7.) km / s, z_sun=27.0 pc, roll=0.0 deg): (x, y, z) in pc
         (-8011.25186648,  18.02217595,  25.27812036)
@@ -192,12 +192,12 @@ ICRS proper motions to Galactic proper motions::
     >>> icrs = coord.ICRS(ra=11.23*u.degree, dec=58.13*u.degree,
     ...                   pm_ra_cosdec=-55.89*u.mas/u.yr, pm_dec=71*u.mas/u.yr)
     >>> gal = icrs.transform_to(coord.Galactic)
-    >>> gal
+    >>> gal # doctest: +FLOAT_CMP
     <Galactic Coordinate: (l, b) in deg
         ( 122.06871373, -4.73082278)
      (pm_l_cosb, pm_b) in mas / yr
         (-54.0689922,  72.39638239)>
-    >>> gal.pm_l_cosb
+    >>> gal.pm_l_cosb # doctest: +FLOAT_CMP
     <Quantity -54.06899219513397 mas / yr>
 
 .. _gala-coordinates-api:
