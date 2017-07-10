@@ -80,16 +80,20 @@ The class internally stores the positions and velocities as
          ( 3.,  11.,  19.), ( 4.,  12.,  20.), ( 5.,  13.,  21.),
          ( 6.,  14.,  22.), ( 7.,  15.,  23.)]>
 
-All of the components of these classes are added as attributes of the
-phase-space position class for convenience. For example, to access the ``x``
-component of the position and the ``v_x`` component of the velocity::
+All of the components of these classes are mapped to attributes of the
+phase-space position class for convenience, but with more user-friendly names.
+These mappings are defined in the class definition of
+`~gala.dynamics.PhaseSpacePosition`. For example, to access the ``x`` component
+of the position and the ``v_x`` component of the velocity::
 
     >>> w.x, w.v_x # doctest: +FLOAT_CMP
     (<Quantity [ 0., 1., 2., 3., 4., 5., 6., 7.] kpc>,
      <Quantity [ 0., 1., 2., 3., 4., 5., 6., 7.] km / s>)
 
 The default representation is Cartesian, but the class can also be instantiated
-with representation objects instead of `~astropy.units.Quantity`'s::
+with representation objects instead of `~astropy.units.Quantity`'s -- this is
+useful for creating |psp| or |orb| instances from non-Cartesian
+representations of the position and velocity::
 
     >>> pos = CylindricalRepresentation(rho=np.linspace(1., 4, 4) * u.kpc,
     ...                                 phi=np.linspace(0, np.pi, 4) * u.rad,
@@ -116,16 +120,8 @@ coordinate frames. These transformations use the :mod:`astropy.coordinates`
 
 There is also support for transforming the positions and velocities (assumed to
 be in a `~astropy.coordinates.Galactocentric` frame) to any of the other
-coordinate frames. The transformation returns two objects: an
-initialized coordinate frame for the position, and a ``Differential`` class
-instance for the velocity (usually
-`~astropy.coordinates.SphericalDifferential`).
-
-The velocities are represented in angular velocities conjugate to the angle
-variables in the output coordinate frame. For example, in the below
-transformation to :class:`~astropy.coordinates.Galactic` coordinates, the
-returned velocity object is a tuple with angular velocities and radial velocity
-in the :class:`~astropy.coordinates.Galactic` frame::
+coordinate frames. For example, to transform to
+:class:`~astropy.coordinates.Galactic` coordinates::
 
     >>> from astropy.coordinates import Galactic
     >>> gal_c = w.to_coord_frame(Galactic)
@@ -140,14 +136,6 @@ in the :class:`~astropy.coordinates.Galactic` frame::
          ( -12.51009123,  0.17381423,   517.81257826),
          (  -6.82555151,  1.25738866, -1078.97465657),
          (-198.25720126,  2.06324888,  -155.41705887)]>
-
-It's important to note that the longitudinal angular velocity component in the
-`~astropy.coordinates.SphericalDifferential` class does *not* include the
-:math:`\cos{\rm lat}` term. For this example, to get :math:`\mu_l\,cos{b}` you
-would need to do::
-
-    >>> gal_c.pm_l_cosb
-    <Quantity [ -27.28114046, -12.51009123,  -6.82555151,-198.25720126] mas / yr>
 
 We can easily plot projections of the phase-space positions using the
 `~gala.dynamics.PhaseSpacePosition.plot` method::

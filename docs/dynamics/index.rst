@@ -101,19 +101,35 @@ angular momentum::
      <Quantity 9.675900603446092e-16 kpc2 / Myr>)
 
 We can access the position and velocity components of the orbit separately using
-the attributes ``.pos`` and ``.vel``. These objects are
-`~astropy.coordinates.BaseRepresentation` and
-`~astropy.coordinates.BaseDifferential` subclasses. By default, as in this
-example, both are Cartesian (`~astropy.coordinates.CartesianRepresentation` and
-`~astropy.coordinates.CartesianDifferential`), so to access the individual
-components, e.g., ``x``, we use::
+attributes that map to the underlying `~astropy.coordinates.BaseRepresentation`
+and `~astropy.coordinates.BaseDifferential` subclass instances that store the
+position and velocity data. The attribute names depend on the representation.
+For example, for a Cartesian representation, the position components are ``['x',
+'y', 'z']`` and the velocity components are ``['v_x', 'v_y', 'v_z']``. With a
+|orb| or |psp| instance, you can check the valid compnent names using the
+attributes ``.pos_components`` and ``.vel_components``::
 
-    >>> orbit.pos.x # doctest: +FLOAT_CMP
-    <Quantity [ 11.        , 10.99714981, 10.98864821,...,   6.37610364,
-                 6.56131833,  6.74183739] kpc>
-    >>> orbit.vel.d_x # doctest: +FLOAT_CMP
+    >>> orbit.pos_components.keys()
+    odict_keys(['x', 'y', 'z'])
+    >>> orbit.vel_components.keys()
+    odict_keys(['v_x', 'v_y', 'v_z'])
+
+Meaning, we can access these components by doing, e.g.::
+
+    >>> orbit.v_x
     <Quantity [ 0.        ,-0.00567589,-0.01129934,...,  0.18751756,
                 0.18286687, 0.17812762] kpc / Myr>
+
+For a Cylindrical representation, these are instead::
+
+    >>> cyl_orbit = orbit.represent_as('cylindrical')
+    >>> cyl_orbit.pos_components.keys()
+    odict_keys(['rho', 'phi', 'z'])
+    >>> cyl_orbit.vel_components.keys()
+    odict_keys(['v_rho', 'pm_phi', 'v_z'])
+    >>> cyl_orbit.v_rho
+    <Quantity [ 0.        ,-0.00187214,-0.00369183,...,  0.01699321,
+                0.01930216, 0.02159477] kpc / Myr>
 
 Continue to the :ref:`orbits-in-detail` page for more information.
 
