@@ -77,16 +77,14 @@ Gyr::
                                            units=galactic)
    pot['halo'] = gp.NFWPotential(m=1E12, r_s=20*u.kpc, units=galactic)
 
-   c = coord.SkyCoord(ra=229 * u.deg, dec=-0.124 * u.deg,
-                      distance=22.9 * u.kpc)
-   v = coord.SphericalDifferential(d_lon=-2.296/np.cos(c.dec) * u.mas/u.yr,
-                                   d_lat=-2.257 * u.mas/u.yr,
-                                   d_distance=-58.7 * u.km/u.s)
+   c = coord.ICRS(ra=229 * u.deg, dec=-0.124 * u.deg,
+                  distance=22.9 * u.kpc,
+                  pm_ra_cosdec=-2.296 * u.mas/u.yr,
+                  pm_dec=-2.257 * u.mas/u.yr,
+                  radial_velocity=-58.7 * u.km/u.s)
 
    c_gc = c.transform_to(coord.Galactocentric).cartesian
-   v_gc = gc.vhel_to_gal(c, v)
-
-   pal5 = gd.PhaseSpacePosition(pos=c_gc, vel=v_gc)
+   pal5 = gd.PhaseSpacePosition(c_gc)
    pal5_orbit = pot.integrate_orbit(pal5, dt=-0.5*u.Myr, n_steps=8000)
    fig = pal5_orbit.plot()
 
