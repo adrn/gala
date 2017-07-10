@@ -116,9 +116,3 @@ All functions and classes have Astropy unit support built in: they accept and
 return `~astropy.units.Quantity` objects wherever possible. In addition, this
 package uses an experimental new `~gala.units.UnitSystem` class for storing
 systems of units and default representations.
-
-Astropy coordinates support
-===========================
-
-Gala also contains functionality for transforming velocities between certain
-Astropy coordinate frames. See :ref:`coordinates` for more information.
