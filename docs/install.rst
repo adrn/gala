@@ -6,6 +6,17 @@
 Installation
 ============
 
+With ``pip``
+============
+
+To install the latest stable version using ``pip``, use::
+
+    pip install astro-gala
+
+To install the development version::
+
+    pip install git+https://github.com/adrn/gala
+
 Cloning, Building, Installing
 =============================
 
@@ -23,19 +34,19 @@ To install the project::
 
     python setup.py install
 
-
 Dependencies
 ============
 
-This packages has the following dependencies:
+This packages has the following dependencies (note that the version requirements
+below indicate the versions for which Gala is tested with and should work with):
 
 - `Python`_ >= 2.7
 
-- `Numpy`_ >= 1.8
+- `Numpy`_ >= 1.12
 
-- `Cython <http://www.cython.org/>`_: >= 0.23
+- `Cython <http://www.cython.org/>`_: >= 0.25
 
-- `Astropy`_ >= 1.1
+- `Astropy`_ >= 2
 
 - `PyYAML`_ >= 3.10
 
