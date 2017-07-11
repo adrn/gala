@@ -55,6 +55,9 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
     x : `~astropy.units.Quantity` or array
         The Cartesian coordinates of the point(s). If not quantity,
         ``unit`` should be set.
+    differentials : dict, `NDCartesianDifferential` (optional)
+        Any differential classes that should be associated with this
+        representation.
     unit : `~astropy.units.Unit` or str
         If given, the coordinates will be converted to this unit (or taken to
         be in this unit if not given.
@@ -64,7 +67,7 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
 
     attr_classes = OrderedDict()
 
-    def __init__(self, x, unit=None, copy=True):
+    def __init__(self, x, differentials=None, unit=None, copy=True):
 
         if unit is None:
             if not hasattr(x[0], 'unit'):
@@ -78,7 +81,8 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
         self.attr_classes = OrderedDict([('x'+str(i), u.Quantity)
                                          for i in range(1, len(x)+1)])
 
-        super(coord.CartesianRepresentation, self).__init__(*x, copy=copy)
+        super(coord.CartesianRepresentation, self).__init__(
+            *x, differentials=differentials, copy=copy)
 
         ptype = None
         for name,_ in self.attr_classes.items():

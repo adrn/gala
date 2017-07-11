@@ -6,6 +6,7 @@ from __future__ import division, print_function
 from collections import namedtuple, OrderedDict
 import warnings
 import inspect
+import re
 
 # Third-party
 import astropy.coordinates as coord
@@ -41,6 +42,13 @@ class RepresentationMapping(_RepresentationMappingBase):
                                                          new_name,
                                                          default_unit)
 
+class RegexRepresentationMapping(RepresentationMapping):
+    """
+    A representation mapping that uses a regex to map the original attribute
+    name to the new attribute name.
+    """
+    pass
+
 class PhaseSpacePosition(object):
 
     representation_mappings = {
@@ -74,10 +82,11 @@ class PhaseSpacePosition(object):
             RepresentationMapping('d_z', 'v_z')
         ],
         rep_nd.NDCartesianRepresentation: [
-            RepresentationMapping('xyz', 'xyz')
+            RepresentationMapping('xyz', 'xs')
         ],
         rep_nd.NDCartesianDifferential: [
-            RepresentationMapping('d_xyz', 'v_xyz')
+            RepresentationMapping('d_xyz', 'v_xs'),
+            RegexRepresentationMapping('d_x([0-9])', 'v_x{0}')
         ],
     }
     representation_mappings[r.UnitSphericalCosLatDifferential] = \
@@ -199,12 +208,22 @@ class PhaseSpacePosition(object):
             Can either be ``'pos'`` or ``'vel'`` to get the components for the
             position or velocity object.
         """
-        _map = self.representation_mappings.get(getattr(self, which).__class__, [])
-        _name_map = dict([(m.repr_name, m.new_name) for m in _map])
+        mappings = self.representation_mappings.get(
+            getattr(self, which).__class__, [])
+
+        old_to_new = dict()
+        for name in getattr(self, which).components:
+            for m in mappings:
+                if isinstance(m, RegexRepresentationMapping):
+                    pattr = re.match(m.repr_name, name)
+                    old_to_new[name] = m.new_name.format(*pattr.groups())
+
+                elif m.repr_name == name:
+                    old_to_new[name] = m.new_name
 
         mapping = OrderedDict()
         for name in getattr(self, which).components:
-            mapping[_name_map.get(name, name)] = name
+            mapping[old_to_new.get(name, name)] = name
 
         return mapping
 
@@ -217,13 +236,14 @@ class PhaseSpacePosition(object):
         return self.get_components('vel')
 
     def _get_extra_mappings(self, which):
-        _map = self.representation_mappings.get(
+        mappings = self.representation_mappings.get(
             getattr(self, which).__class__, [])
 
         extra = OrderedDict()
-        for mapping in _map:
-            if mapping.new_name not in self.get_components(which):
-                extra[mapping.new_name] = mapping.repr_name
+        for m in mappings:
+            if (m.new_name not in self.get_components(which) and
+                    not isinstance(m, RegexRepresentationMapping)):
+                extra[m.new_name] = m.repr_name
         return extra
 
     @override__dir__
@@ -450,11 +470,12 @@ class PhaseSpacePosition(object):
         """
         if self.ndim == 3:
             cart = self.cartesian
+            xyz = cart.xyz
+            d_xyz = cart.v_xyz
         else:
             cart = self
-
-        xyz = cart.xyz
-        d_xyz = cart.v_xyz
+            xyz = cart.xs
+            d_xyz = cart.v_xs
 
         x_unit = xyz.unit
         v_unit = d_xyz.unit

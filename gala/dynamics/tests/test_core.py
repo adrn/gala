@@ -225,6 +225,18 @@ def test_represent_as_expected_attributes():
     assert hasattr(new_o, 'v_z')
     assert hasattr(new_o, 'v_xyz')
 
+    # Check that this works with the NDCartesian classes too
+    x = np.random.random(size=(2,10))*u.kpc
+    v = np.random.normal(0.,100.,size=(2,10))*u.km/u.s
+    new_o = PhaseSpacePosition(pos=x, vel=v)
+
+    assert hasattr(new_o, 'x1')
+    assert hasattr(new_o, 'x2')
+    assert hasattr(new_o, 'xs')
+    assert hasattr(new_o, 'v_x1')
+    assert hasattr(new_o, 'v_x2')
+    assert hasattr(new_o, 'v_xs')
+
 def test_to_coord_frame():
     # simple / unitless
     x = np.random.random(size=(3,10))
