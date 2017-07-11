@@ -82,10 +82,10 @@ class PhaseSpacePosition(object):
             RepresentationMapping('d_z', 'v_z')
         ],
         rep_nd.NDCartesianRepresentation: [
-            RepresentationMapping('xyz', 'xs')
+            RepresentationMapping('xyz', 'xyz')
         ],
         rep_nd.NDCartesianDifferential: [
-            RepresentationMapping('d_xyz', 'v_xs'),
+            RepresentationMapping('d_xyz', 'v_xyz'),
             RegexRepresentationMapping('d_x([0-9])', 'v_x{0}')
         ],
     }
@@ -470,12 +470,11 @@ class PhaseSpacePosition(object):
         """
         if self.ndim == 3:
             cart = self.cartesian
-            xyz = cart.xyz
-            d_xyz = cart.v_xyz
         else:
             cart = self
-            xyz = cart.xs
-            d_xyz = cart.v_xs
+
+        xyz = cart.xyz
+        d_xyz = cart.v_xyz
 
         x_unit = xyz.unit
         v_unit = d_xyz.unit

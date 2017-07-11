@@ -75,9 +75,9 @@ def isochrone_to_aa(w, potential):
                                    w_sph.theta.radian])
 
     ang_unit = u.radian/usys['time']
-    vr,phi_dot,theta_dot = map(np.squeeze, [w_sph.d_r.decompose(usys).value,
-                                            w_sph.d_phi.to(ang_unit).value,
-                                            w_sph.d_theta.to(ang_unit).value])
+    vr,phi_dot,theta_dot = map(np.squeeze, [w_sph.radial_velocity.decompose(usys).value,
+                                            w_sph.pm_phi.to(ang_unit).value,
+                                            w_sph.pm_theta.to(ang_unit).value])
     vphi = r*np.sin(theta) * phi_dot
     vtheta = r*theta_dot
 

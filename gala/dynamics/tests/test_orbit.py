@@ -235,10 +235,10 @@ def test_represent_as_expected_attributes():
 
     assert hasattr(new_o, 'x1')
     assert hasattr(new_o, 'x2')
-    assert hasattr(new_o, 'xs')
+    assert hasattr(new_o, 'xyz')
     assert hasattr(new_o, 'v_x1')
     assert hasattr(new_o, 'v_x2')
-    assert hasattr(new_o, 'v_xs')
+    assert hasattr(new_o, 'v_xyz')
 
 def test_to_coord_frame():
     # simple / unitless
