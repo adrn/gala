@@ -57,6 +57,11 @@ class PhaseSpacePosition(object):
             RepresentationMapping('d_lat', 'pm_lat', u.mas/u.yr),
             RepresentationMapping('d_distance', 'radial_velocity')
         ],
+        r.PhysicsSphericalDifferential: [
+            RepresentationMapping('d_phi', 'pm_phi', u.mas/u.yr),
+            RepresentationMapping('d_theta', 'pm_theta', u.mas/u.yr),
+            RepresentationMapping('d_r', 'radial_velocity')
+        ],
         r.CartesianDifferential: [
             RepresentationMapping('d_x', 'v_x'),
             RepresentationMapping('d_y', 'v_y'),
@@ -270,7 +275,7 @@ class PhaseSpacePosition(object):
     # ------------------------------------------------------------------------
     # Convert from Cartesian to other representations
     #
-    def represent_as(self, Representation):
+    def represent_as(self, new_pos, new_vel=None):
         """
         Represent the position and velocity of the orbit in an alternate
         coordinate system. Supports any of the Astropy coordinates
@@ -278,8 +283,13 @@ class PhaseSpacePosition(object):
 
         Parameters
         ----------
-        Representation : :class:`~astropy.coordinates.BaseRepresentation`
-            The class for the desired representation.
+        new_pos : :class:`~astropy.coordinates.BaseRepresentation`
+            The type of representation to generate. Must be a class (not an
+            instance), or the string name of the representation class.
+        new_vel : :class:`~astropy.coordinates.BaseDifferential` (optional)
+            Class in which any velocities should be represented. Must be a class
+            (not an instance), or the string name of the differential class. If
+            None, uses the default differential for the new position class.
 
         Returns
         -------
@@ -291,13 +301,20 @@ class PhaseSpacePosition(object):
                              "ndim=3 instances.")
 
         # get the name of the desired representation
-        if isinstance(Representation, string_types):
-            name = Representation
+        if isinstance(new_pos, string_types):
+            pos_name = new_pos
         else:
-            name = Representation.get_name()
+            pos_name = new_pos.get_name()
 
-        Representation = coord.representation.REPRESENTATION_CLASSES[name]
-        Differential = coord.representation.DIFFERENTIAL_CLASSES[name]
+        if isinstance(new_vel, string_types):
+            vel_name = new_vel
+        elif new_vel is None:
+            vel_name = pos_name
+        else:
+            vel_name = new_vel.get_name()
+
+        Representation = coord.representation.REPRESENTATION_CLASSES[pos_name]
+        Differential = coord.representation.DIFFERENTIAL_CLASSES[vel_name]
 
         new_pos = self.pos.represent_as(Representation)
         new_vel = self.vel.represent_as(Differential, self.pos)

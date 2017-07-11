@@ -11,7 +11,8 @@ import warnings
 import astropy.units as u
 from astropy.coordinates import (Galactic, CartesianRepresentation,
                                  SphericalRepresentation, CartesianDifferential,
-                                 SphericalDifferential)
+                                 SphericalDifferential,
+                                 SphericalCosLatDifferential)
 from astropy.tests.helper import quantity_allclose
 import numpy as np
 import pytest
@@ -176,6 +177,53 @@ def test_represent_as():
     o = PhaseSpacePosition(pos=x, vel=v)
     with pytest.raises(ValueError):
         o.represent_as(SphericalRepresentation)
+
+def test_represent_as_expected_attributes():
+    x = np.random.random(size=(3,10))
+    v = np.random.random(size=(3,10))
+    o = PhaseSpacePosition(pos=x, vel=v)
+
+    new_o = o.spherical
+    assert hasattr(new_o, 'distance')
+    assert hasattr(new_o, 'lat')
+    assert hasattr(new_o, 'lon')
+    assert hasattr(new_o, 'radial_velocity')
+    assert hasattr(new_o, 'pm_lat')
+    assert hasattr(new_o, 'pm_lon')
+
+    new_o = o.represent_as(SphericalRepresentation, SphericalCosLatDifferential)
+    assert hasattr(new_o, 'distance')
+    assert hasattr(new_o, 'lat')
+    assert hasattr(new_o, 'lon')
+    assert hasattr(new_o, 'radial_velocity')
+    assert hasattr(new_o, 'pm_lat')
+    assert hasattr(new_o, 'pm_lon_coslat')
+
+    new_o = o.physicsspherical
+    assert hasattr(new_o, 'r')
+    assert hasattr(new_o, 'phi')
+    assert hasattr(new_o, 'theta')
+    assert hasattr(new_o, 'radial_velocity')
+    assert hasattr(new_o, 'pm_theta')
+    assert hasattr(new_o, 'pm_phi')
+
+    new_o = o.cylindrical
+    assert hasattr(new_o, 'rho')
+    assert hasattr(new_o, 'phi')
+    assert hasattr(new_o, 'z')
+    assert hasattr(new_o, 'v_rho')
+    assert hasattr(new_o, 'pm_phi')
+    assert hasattr(new_o, 'v_z')
+
+    new_o = new_o.cartesian
+    assert hasattr(new_o, 'x')
+    assert hasattr(new_o, 'y')
+    assert hasattr(new_o, 'z')
+    assert hasattr(new_o, 'xyz')
+    assert hasattr(new_o, 'v_x')
+    assert hasattr(new_o, 'v_y')
+    assert hasattr(new_o, 'v_z')
+    assert hasattr(new_o, 'v_xyz')
 
 def test_to_coord_frame():
     # simple / unitless

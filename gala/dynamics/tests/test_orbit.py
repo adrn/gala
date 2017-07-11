@@ -6,7 +6,8 @@ from __future__ import division, print_function
 import warnings
 
 # Third-party
-from astropy.coordinates import SphericalRepresentation, Galactic
+from astropy.coordinates import (SphericalRepresentation, Galactic,
+                                 SphericalCosLatDifferential)
 import astropy.units as u
 import numpy as np
 import pytest
@@ -16,7 +17,8 @@ import scipy.optimize as so
 from ..core import PhaseSpacePosition
 from ..orbit import Orbit
 from ...integrate import DOPRI853Integrator
-from ...potential import Hamiltonian, HernquistPotential, LogarithmicPotential, KeplerPotential
+from ...potential import (Hamiltonian, HernquistPotential, LogarithmicPotential,
+                          KeplerPotential)
 from ...potential.frame import StaticFrame, ConstantRotatingFrame
 from ...units import galactic, solarsystem
 
@@ -178,6 +180,53 @@ def test_represent_as():
     sph = o.represent_as(SphericalRepresentation)
     assert sph.pos.distance.unit == u.kpc
     assert sph.vel.d_distance.unit == u.km/u.s
+
+def test_represent_as_expected_attributes():
+    x = np.random.random(size=(3,10))*u.kpc
+    v = np.random.normal(0.,100.,size=(3,10))*u.km/u.s
+    o = Orbit(pos=x, vel=v)
+
+    new_o = o.spherical
+    assert hasattr(new_o, 'distance')
+    assert hasattr(new_o, 'lat')
+    assert hasattr(new_o, 'lon')
+    assert hasattr(new_o, 'radial_velocity')
+    assert hasattr(new_o, 'pm_lat')
+    assert hasattr(new_o, 'pm_lon')
+
+    new_o = o.represent_as(SphericalRepresentation, SphericalCosLatDifferential)
+    assert hasattr(new_o, 'distance')
+    assert hasattr(new_o, 'lat')
+    assert hasattr(new_o, 'lon')
+    assert hasattr(new_o, 'radial_velocity')
+    assert hasattr(new_o, 'pm_lat')
+    assert hasattr(new_o, 'pm_lon_coslat')
+
+    new_o = o.physicsspherical
+    assert hasattr(new_o, 'r')
+    assert hasattr(new_o, 'phi')
+    assert hasattr(new_o, 'theta')
+    assert hasattr(new_o, 'radial_velocity')
+    assert hasattr(new_o, 'pm_theta')
+    assert hasattr(new_o, 'pm_phi')
+
+    new_o = o.cylindrical
+    assert hasattr(new_o, 'rho')
+    assert hasattr(new_o, 'phi')
+    assert hasattr(new_o, 'z')
+    assert hasattr(new_o, 'v_rho')
+    assert hasattr(new_o, 'pm_phi')
+    assert hasattr(new_o, 'v_z')
+
+    new_o = new_o.cartesian
+    assert hasattr(new_o, 'x')
+    assert hasattr(new_o, 'y')
+    assert hasattr(new_o, 'z')
+    assert hasattr(new_o, 'xyz')
+    assert hasattr(new_o, 'v_x')
+    assert hasattr(new_o, 'v_y')
+    assert hasattr(new_o, 'v_z')
+    assert hasattr(new_o, 'v_xyz')
 
 def test_to_coord_frame():
     # simple / unitless
