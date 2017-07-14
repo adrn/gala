@@ -19,7 +19,7 @@ from six import string_types
 # Project
 from . import representation_nd as rep_nd
 from .plot import plot_projections
-from ..coordinates import vgal_to_hel
+from ..io import quantity_to_hdf5, quantity_from_hdf5
 from ..units import UnitSystem, DimensionlessUnitSystem, _greek_letters
 from ..util import atleast_2d
 
@@ -532,6 +532,87 @@ class PhaseSpacePosition(object):
             vel = vel*units['length']/units['time'] # from _core_units
 
         return cls(pos=pos, vel=vel, **kwargs)
+
+    # ------------------------------------------------------------------------
+    # Input / output
+    #
+    def to_hdf5(self, f):
+        """
+        Serialize this object to an HDF5 file.
+
+        Requires ``h5py``.
+
+        Parameters
+        ----------
+        f : str, :class:`h5py.File`
+            Either the filename or an open HDF5 file.
+        """
+
+        if isinstance(f, string_types):
+            import h5py
+            f = h5py.File(f)
+
+        if self.frame is not None:
+            frame_group = f.create_group('frame')
+            frame_group.attrs['module'] = self.frame.__module__
+            frame_group.attrs['class'] = self.frame.__class__.__name__
+
+            units = [str(x).encode('utf8')
+                     for x in self.frame.units.to_dict().values()]
+            frame_group.create_dataset('units', data=units)
+
+            d = frame_group.create_group('parameters')
+            for k, par in self.frame.parameters.items():
+                quantity_to_hdf5(d, k, par)
+
+        cart = self.represent_as('cartesian')
+        quantity_to_hdf5(f, 'pos', cart.xyz)
+        quantity_to_hdf5(f, 'vel', cart.v_xyz)
+
+        return f
+
+    @classmethod
+    def from_hdf5(cls, f):
+        """
+        Load an object from an HDF5 file.
+
+        Requires ``h5py``.
+
+        Parameters
+        ----------
+        f : str, :class:`h5py.File`
+            Either the filename or an open HDF5 file.
+        """
+        if isinstance(f, string_types):
+            import h5py
+            f = h5py.File(f)
+
+        pos = quantity_from_hdf5(f['pos'])
+        vel = quantity_from_hdf5(f['vel'])
+
+        frame = None
+        if 'frame' in f:
+            g = f['frame']
+
+            frame_mod = g.attrs['module']
+            frame_cls = g.attrs['class']
+            frame_units = [u.Unit(x.decode('utf-8')) for x in g['units']]
+
+            if u.dimensionless_unscaled in frame_units:
+                units = DimensionlessUnitSystem()
+            else:
+                units = UnitSystem(*frame_units)
+
+            pars = dict()
+            for k in g['parameters']:
+                pars[k] = quantity_from_hdf5(g['parameters/'+k])
+
+            exec("from {0} import {1}".format(frame_mod, frame_cls))
+            frame_cls = eval(frame_cls)
+
+            frame = frame_cls(units=units, **pars)
+
+        return cls(pos=pos, vel=vel, frame=frame)
 
     # ------------------------------------------------------------------------
     # Computed dynamical quantities
