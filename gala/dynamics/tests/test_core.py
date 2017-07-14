@@ -369,7 +369,8 @@ def test_angular_momentum():
 
 def test_frame_transform():
     static = StaticFrame(galactic)
-    rotating = ConstantRotatingFrame(Omega=[0.53,1.241,0.9394]*u.rad/u.Myr, units=galactic)
+    rotating = ConstantRotatingFrame(Omega=[0.53,1.241,0.9394]*u.rad/u.Myr,
+                                     units=galactic)
 
     x = np.array([[10.,-0.2,0.3],[-0.232,8.1,0.1934]]).T * u.kpc
     v = np.array([[0.0034,0.2,0.0014],[0.0001,0.002532,-0.2]]).T * u.kpc/u.Myr
@@ -384,3 +385,22 @@ def test_frame_transform():
     # frame specified at init
     psp = PhaseSpacePosition(pos=x, vel=v, frame=static)
     psp.to_frame(rotating, t=0.4*u.Myr)
+
+@pytest.mark.parametrize('obj', [
+    PhaseSpacePosition([1,2,3.]*u.kpc, [1,2,3.]*u.km/u.s),
+    PhaseSpacePosition([1,2,3.]*u.kpc, [1,2,3.]*u.km/u.s,
+                       StaticFrame(galactic)),
+    PhaseSpacePosition([1,2,3.]*u.kpc, [1,2,3.]*u.km/u.s,
+                       ConstantRotatingFrame([1.,0,0]*u.rad/u.Myr, galactic)),
+])
+def test_io(tmpdir, obj):
+    import h5py
+
+    filename = str(tmpdir.join('thing.hdf5'))
+    with h5py.File(filename, 'w') as f:
+        obj.to_hdf5(f)
+
+    obj2 = PhaseSpacePosition.from_hdf5(filename)
+    assert quantity_allclose(obj.xyz, obj2.xyz)
+    assert quantity_allclose(obj.v_xyz, obj2.v_xyz)
+    assert obj.frame == obj2.frame
