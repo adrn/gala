@@ -75,6 +75,7 @@ the orbit points::
 
 .. plot::
    :align: center
+   :context: close-figs
 
    import astropy.units as u
    import numpy as np
