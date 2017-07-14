@@ -54,3 +54,4 @@ Tutorials
    examples/integrate-potential-example
    examples/integrate-rotating-frame
    examples/mock-stream-heliocentric
+   examples/circ-restricted-3body
