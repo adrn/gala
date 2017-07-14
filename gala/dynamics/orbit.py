@@ -7,7 +7,6 @@ from __future__ import division, print_function
 import warnings
 
 # Third-party
-import astropy.coordinates as coord
 from astropy import log as logger
 import astropy.units as u
 import numpy as np
@@ -20,8 +19,9 @@ from six import string_types
 from .core import PhaseSpacePosition
 from .util import peak_to_peak_period
 from .plot import plot_projections
+from ..io import quantity_to_hdf5, quantity_from_hdf5
 from ..util import atleast_2d
-from ..units import dimensionless
+from ..units import dimensionless, UnitSystem, DimensionlessUnitSystem
 
 __all__ = ['Orbit', 'CartesianOrbit']
 
@@ -213,6 +213,89 @@ class Orbit(PhaseSpacePosition):
             return 1
         else:
             return self.shape[2]
+
+    # ------------------------------------------------------------------------
+    # Input / output
+    #
+    def to_hdf5(self, f):
+        """
+        Serialize this object to an HDF5 file.
+
+        Requires ``h5py``.
+
+        Parameters
+        ----------
+        f : str, :class:`h5py.File`
+            Either the filename or an open HDF5 file.
+        """
+
+        f = super(Orbit, self).to_hdf5(f)
+
+        if self.potential is not None:
+            import yaml
+            from ..potential.potential.io import to_dict
+            f['potential'] = yaml.dump(to_dict(self.potential)).encode('utf-8')
+
+        if self.t:
+            quantity_to_hdf5(f, 'time', self.t)
+
+        return f
+
+    @classmethod
+    def from_hdf5(cls, f):
+        """
+        Load an object from an HDF5 file.
+
+        Requires ``h5py``.
+
+        Parameters
+        ----------
+        f : str, :class:`h5py.File`
+            Either the filename or an open HDF5 file.
+        """
+        # TODO: this is duplicated code from PhaseSpacePosition
+        if isinstance(f, string_types):
+            import h5py
+            f = h5py.File(f)
+
+        pos = quantity_from_hdf5(f['pos'])
+        vel = quantity_from_hdf5(f['vel'])
+
+        time = None
+        if 'time' in f:
+            time = quantity_from_hdf5(f['time'])
+
+        frame = None
+        if 'frame' in f:
+            g = f['frame']
+
+            frame_mod = g.attrs['module']
+            frame_cls = g.attrs['class']
+            frame_units = [u.Unit(x.decode('utf-8')) for x in g['units']]
+
+            if u.dimensionless_unscaled in frame_units:
+                units = DimensionlessUnitSystem()
+            else:
+                units = UnitSystem(*frame_units)
+
+            pars = dict()
+            for k in g['parameters']:
+                pars[k] = quantity_from_hdf5(g['parameters/'+k])
+
+            exec("from {0} import {1}".format(frame_mod, frame_cls))
+            frame_cls = eval(frame_cls)
+
+            frame = frame_cls(units=units, **pars)
+
+        potential = None
+        if 'potential' in f:
+            import yaml
+            from ..potential.potential.io import from_dict
+            _dict = yaml.load(f['potential'][()].decode('utf-8'))
+            potential = from_dict(_dict)
+
+        return cls(pos=pos, vel=vel, t=time,
+                   frame=frame, potential=potential)
 
     # ------------------------------------------------------------------------
     # Computed dynamical quantities

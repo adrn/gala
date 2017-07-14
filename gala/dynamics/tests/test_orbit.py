@@ -9,6 +9,7 @@ import warnings
 from astropy.coordinates import (SphericalRepresentation, Galactic,
                                  SphericalCosLatDifferential)
 import astropy.units as u
+from astropy.tests.helper import quantity_allclose
 import numpy as np
 import pytest
 import scipy.optimize as so
@@ -498,3 +499,30 @@ def test_frame_transform():
               potential=HernquistPotential(m=1E10, c=0.5, units=galactic))
     o.to_frame(rotating)
     o.to_frame(rotating, t=o.t)
+
+_x = ([[1,2,3.],[1,2,3.]]*u.kpc).T
+_v = ([[1,2,3.],[1,2,3.]]*u.km/u.s).T
+@pytest.mark.parametrize('obj', [
+    Orbit(_x, _v),
+    Orbit(_x, _v, t=[5, 99]*u.Myr),
+    Orbit(_x, _v, t=[5, 99]*u.Myr,
+          frame=StaticFrame(galactic)),
+    Orbit(_x, _v, t=[5, 99]*u.Myr,
+          frame=StaticFrame(galactic),
+          potential=HernquistPotential(m=1E10, c=0.5, units=galactic)),
+])
+def test_io(tmpdir, obj):
+    import h5py
+
+    filename = str(tmpdir.join('thing.hdf5'))
+    with h5py.File(filename, 'w') as f:
+        obj.to_hdf5(f)
+
+    obj2 = Orbit.from_hdf5(filename)
+    assert quantity_allclose(obj.xyz, obj2.xyz)
+    assert quantity_allclose(obj.v_xyz, obj2.v_xyz)
+    if obj.t:
+        assert quantity_allclose(obj.t, obj2.t)
+
+    assert obj.frame == obj2.frame
+    assert obj.potential == obj2.potential
