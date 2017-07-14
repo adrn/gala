@@ -23,9 +23,10 @@ void hamiltonian_gradient(CPotential *p, CFrame *fr, double t, double *qp, doubl
         dH[i] = 0.;
     }
 
-    (fr->gradient)(t, (fr->parameters), qp, p->n_dim, dH);
-
+    // potential gradient has to be first
     c_gradient(p, t, qp, &(dH[p->n_dim]));
+
+    (fr->gradient)(t, (fr->parameters), qp, p->n_dim, dH);
 
     for (i=p->n_dim; i < 2*(p->n_dim); i++) {
         dH[i] = -dH[i]; // pdot = -dH/dq
