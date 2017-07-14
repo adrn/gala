@@ -980,7 +980,6 @@ void Fwrapper (unsigned full_ndim, double t, double *w, double *f,
                CPotential *p, CFrame *fr, unsigned norbits) {
     int i, k;
     unsigned ndim = full_ndim / norbits; // phase-space dimensionality
-    unsigned half_ndim = ndim / 2;
 
     for (i=0; i < norbits; i++) {
         // call gradient function

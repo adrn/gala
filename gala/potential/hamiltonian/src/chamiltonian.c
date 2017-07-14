@@ -25,14 +25,11 @@ void hamiltonian_gradient(CPotential *p, CFrame *fr, double t, double *qp, doubl
 
     (fr->gradient)(t, (fr->parameters), qp, p->n_dim, dH);
 
-    for (i=0; i < p->n_components; i++) {
-        (p->gradient)[i](t, (p->parameters)[i], qp, p->n_dim, &(dH[p->n_dim]));
-    }
+    c_gradient(p, t, qp, &(dH[p->n_dim]));
 
     for (i=p->n_dim; i < 2*(p->n_dim); i++) {
         dH[i] = -dH[i]; // pdot = -dH/dq
     }
-
 }
 
 void hamiltonian_hessian(CPotential *p, CFrame *fr, double t, double *qp, double *d2H) {

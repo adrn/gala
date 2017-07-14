@@ -114,7 +114,6 @@ cdef dop853_helper_save_all(CPotential *cp, CFrame *cf,
             w[i*ndim + k] = w0[i,k]
             all_w[0,i,k] = w0[i,k]
 
-
     for j in range(1,ntimes,1):
         dop853_step(cp, cf, &w[0], t[j-1], t[j], dt0, ndim, norbits,
                     atol, rtol, nmax)
