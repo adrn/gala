@@ -160,7 +160,7 @@ class PhaseSpacePosition(object):
                 raise TypeError("You must specify velocity data when creating "
                                 "a {0} object.".format(self.__class__.__name__))
             else:
-                vel = pos.differentials.pop('s')
+                vel = pos.differentials.get('s', None)
 
         if not isinstance(vel, coord.BaseDifferential):
             # assume representation is same as pos if not specified

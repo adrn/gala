@@ -628,6 +628,7 @@ mpl_style = {
     'figure.facecolor': '1.0',
     'figure.edgecolor': '0.50',
     'figure.subplot.hspace': 0.5,
+    'figure.dpi': 300,
 
     # Other
     'savefig.dpi': 300,

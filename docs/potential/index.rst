@@ -256,6 +256,7 @@ More details are provided in the linked pages below:
    define-new-potential
    compositepotential
    hamiltonian-reference-frames
+   define-milky-way-model
 
 API
 ===

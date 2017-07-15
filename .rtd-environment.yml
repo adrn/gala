@@ -11,3 +11,8 @@ dependencies:
   - matplotlib
   - scipy
   - pyyaml
+  - IPython
+  - jupyter_client
+  - ipykernel
+  - pip:
+    - nbsphinx

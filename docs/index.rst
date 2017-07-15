@@ -51,6 +51,7 @@ Tutorials
    :maxdepth: 1
    :glob:
 
+   examples/Milky-Way-model.ipynb
    examples/integrate-potential-example
    examples/integrate-rotating-frame
    examples/mock-stream-heliocentric

@@ -19,7 +19,7 @@ Introduction
 ============
 
 When :ref:`integrating orbits using the potential classes directly
-<integrate_potential_example>`, for example:
+<integrate_potential_example>`, for example::
 
     >>> pot = gp.HernquistPotential(m=1E10*u.Msun, c=1.*u.kpc,
     ...                             units=galactic)
