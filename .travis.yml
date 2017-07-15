@@ -44,7 +44,7 @@ matrix:
         # Check for sphinx doc build warnings - we do this first because it
         # may run for a long time
         - python: 3.6
-          env: SETUP_CMD='build_sphinx -w'
+          env: SETUP_CMD='install build_sphinx -w' # install needed for nbsphinx to run, for some reason
 
         # Try Astropy development version
         - python: 3.6
