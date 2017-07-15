@@ -127,14 +127,9 @@ radius::
 
 .. plot::
     :align: center
+    :context: close-figs
 
-    import matplotlib.pyplot as plt
-    import astropy.units as u
-    import numpy as np
-    import gala.dynamics as gd
     import gala.integrate as gi
-    import gala.potential as gp
-    from gala.units import galactic
     import scipy.optimize as so
 
     pot = gp.CCompositePotential()
@@ -182,15 +177,7 @@ orbit looks like in an inertial frame::
 
 .. plot::
     :align: center
-
-    import matplotlib.pyplot as plt
-    import astropy.units as u
-    import numpy as np
-    import gala.dynamics as gd
-    import gala.integrate as gi
-    import gala.potential as gp
-    from gala.units import galactic
-    import scipy.optimize as so
+    :context: close-figs
 
     pot = gp.CCompositePotential()
     pot['bar'] = gp.LongMuraliBarPotential(m=2E10*u.Msun, a=4*u.kpc,
