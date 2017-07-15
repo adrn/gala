@@ -13,5 +13,6 @@ dependencies:
   - pyyaml
   - IPython
   - jupyter_client
+  - ipykernel
   - pip:
     - nbsphinx
