@@ -23,6 +23,7 @@ def get_extensions():
     cfg['include_dirs'].append('gala/potential')
     cfg['extra_compile_args'].append('--std=gnu99')
     cfg['sources'].append('gala/potential/hamiltonian/src/chamiltonian.c')
+    cfg['sources'].append('gala/potential/potential/src/cpotential.c')
     cfg['sources'].append('gala/integrate/cyintegrators/dop853.pyx')
     cfg['sources'].append('gala/integrate/cyintegrators/dopri/dop853.c')
     exts.append(Extension('gala.integrate.cyintegrators.dop853', **cfg))
