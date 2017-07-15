@@ -1,0 +1,6 @@
+# radius,Menc,pos_err,neg_err,source
+150,7.5E11,2.5E11,2.5E11,Deason et al. 2012
+0.12,8E8,2E8,2E8,Launhardt et al. 2002
+0.01000001,3E7,1E7,1E7,Feldmeier et al. 2014
+0.004,1.3E7,2E7,2E7,Chatzopoulos et al. 2015
+0.001,5.1E6,5E5,5E5,Chatzopoulos et al. 2015
