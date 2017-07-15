@@ -12,6 +12,6 @@ dependencies:
   - scipy
   - pyyaml
   - IPython
-  - jupyter
+  - jupyter_client
   - pip:
     - nbsphinx
