@@ -82,7 +82,7 @@ value of the Jacobi energy (see Section 3.3.2 in Binney and Tremaine 2008)::
    ...                  y_grid.ravel(),
    ...                  np.zeros_like(x_grid.ravel())))
    >>> Om_cross_x = np.cross(Omega, xyz.T)
-   >>> E_J = H.potential.energy(xyz) - 0.5*Om_cross_x.dot(Om_cross_x)
+   >>> E_J = H.potential.energy(xyz) - 0.5*np.sum(Om_cross_x**2, axis=1)
    >>> E_J_levels = [-1.82, -1.73, -1.7, -1.5]
 
 .. plot::
@@ -167,7 +167,7 @@ starts from the y axis at :math:`x = 0.5` and solve for the y velocity,
    ...     xdot0 = [0, res.x[0], 0.]
    ...     w0 = np.concatenate(xxdot_to_qp(x0, xdot0, Omega))
    ...     orbit = H.integrate_orbit(w0, dt=1E-2, n_steps=100000,
-                                     Integrator=gi.DOPRI853Integrator)
+   ...                               Integrator=gi.DOPRI853Integrator)
    ...     orbits.append(orbit)
 
 .. plot::
