@@ -402,6 +402,10 @@ class Orbit(PhaseSpacePosition):
         if func is None:
             func = lambda x: x
 
+        # time must increase
+        if self.t[-1] < self.t[0]:
+            self = self[::-1]
+
         # default scipy function kwargs
         interp_kwargs.setdefault('k', 3)
         interp_kwargs.setdefault('ext', 3) # don't extrapolate, return boundary
@@ -426,7 +430,7 @@ class Orbit(PhaseSpacePosition):
         peri = interp_func(refined_times) * self.cartesian.x.unit
 
         if return_times:
-            return peri, refined_times
+            return peri, refined_times * self.t.unit
 
         else:
             return func(peri)
@@ -479,6 +483,10 @@ class Orbit(PhaseSpacePosition):
         if func is None:
             func = lambda x: x
 
+        # time must increase
+        if self.t[-1] < self.t[0]:
+            self = self[::-1]
+
         # default scipy function kwargs
         interp_kwargs.setdefault('k', 3)
         interp_kwargs.setdefault('ext', 3) # don't extrapolate, return boundary
@@ -503,7 +511,7 @@ class Orbit(PhaseSpacePosition):
         apo = interp_func(refined_times) * self.cartesian.x.unit
 
         if return_times:
-            return apo, refined_times
+            return apo, refined_times * self.t.unit
 
         else:
             return func(apo)
