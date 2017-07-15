@@ -11,3 +11,5 @@ dependencies:
   - matplotlib
   - scipy
   - pyyaml
+  - pip:
+    - nbsphinx

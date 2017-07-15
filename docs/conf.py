@@ -182,3 +182,6 @@ if eval(setup_cfg.get('edit_on_github')):
 
 # show inherited members for classes
 automodsumm_inherited_members = True
+
+# Add nbsphinx
+extensions += ['nbsphinx', 'IPython.sphinxext.ipython_console_highlighting']
