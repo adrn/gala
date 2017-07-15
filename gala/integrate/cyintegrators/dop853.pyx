@@ -27,6 +27,8 @@ cdef extern from "potential/src/cpotential.h":
     ctypedef struct CPotential:
         pass
 
+    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
+
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
                               CPotential *p, CFrame *fr, unsigned norbits) nogil
