@@ -17,6 +17,7 @@ New Features
   gravitational potential.
 - Gravitational potential class instances can now be composed by just adding the
   instances.
+- Added a ``MilkyWayPotential`` class.
 
 API-breaking changes
 --------------------
