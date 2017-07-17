@@ -23,7 +23,7 @@ Array shapes
 ============
 
 The arrays and :class:`~astropy.units.Quantity` objects expected as input and
-returned as ouput throughout ``Gary`` have shapes that follow a particular
+returned as ouput throughout ``Gala`` have shapes that follow a particular
 convention, unless otherwise specified in function or class docstrings.
 
 For arrays containing coordinate or kinematic information, ``axis=0`` is assumed
