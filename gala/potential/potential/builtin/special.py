@@ -81,6 +81,10 @@ class MilkyWayPotential(CCompositePotential):
     A simple mass-model for the Milky Way consisting of a spherical nucleus and
     bulge, a Miyamoto-Nagai disk, and a spherical NFW dark matter halo.
 
+    The disk model is taken from `Bovy (2015)
+    <https://ui.adsabs.harvard.edu/#abs/2015ApJS..216...29B/abstract>`_ - if you
+    use this potential, please also cite that work.
+
     Default parameters are fixed by fitting to a compilation of recent mass
     measurements of the Milky Way, from 10 pc to ~150 pc.
 
