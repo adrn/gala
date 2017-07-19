@@ -1,3 +1,12 @@
+0.2.1 (2017-07-19)
+==================
+
+Bug fixes
+---------
+- Array parameters are now numpy.ravel'd before being passed to the
+  ``CPotentialWrapper`` class methods.
+- Added attribution to Bovy 2015 for disk potential in MilkyWayPotential
+
 0.2 (2017-07-15)
 ================
 
