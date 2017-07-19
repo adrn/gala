@@ -248,7 +248,7 @@ class CPotentialBase(PotentialBase):
                                              parameter_physical_types=parameter_physical_types)
 
         # to support array parameters, but they get unraveled
-        arrs = [np.atleast_1d(v.value) for v in self.parameters.values()]
+        arrs = [np.atleast_1d(v.value).ravel() for v in self.parameters.values()]
         if len(arrs) > 0:
             self.c_parameters = np.concatenate(arrs)
         else:
