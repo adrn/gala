@@ -70,10 +70,10 @@ class Pal5(coord.BaseCoordinateFrame):
     frame_specific_representation_info[coord.UnitSphericalDifferential] = \
         frame_specific_representation_info[coord.SphericalDifferential]
 
-# Rotation matrix defined by Ana Bonaca
-R = np.array([[-0.74539153, 0.23807542, -0.62266489],
-              [-0.44065128, -0.87685261, 0.19223932],
-              [-0.50021788, 0.41767164, 0.75850674]])
+# Rotation matrix defined by trying to align the stream to the equator
+R = np.array([[-0.65019243, -0.75969758, -0.01045969],
+              [-0.62969142, 0.54652698, -0.55208422],
+              [0.42513354, -0.3523746, -0.83372274]])
 
 @frame_transform_graph.transform(coord.StaticMatrixTransform, coord.ICRS, Pal5)
 def icrs_to_pal5():
