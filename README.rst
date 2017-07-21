@@ -23,6 +23,24 @@ See the `installation
 instructions <http://gala.adrian.pw/en/latest/install.html>`_ in the
 `documentation <http://gala.adrian.pw>`_ for more information.
 
+Attribution
+-----------
+
+If you make use of this code, for now please cite the Zenodo DOI |DOI| as a
+software citation. A paper describing this package will be submitted soon. ::
+
+    @misc{Price-Whelan:2017,
+      author       = {Adrian Price-Whelan and
+                      Brigitta Sipocz and
+                      Syrtis Major and
+                      Semyeong Oh},
+      title        = {adrn/gala: v0.2.1},
+      month        = jul,
+      year         = 2017,
+      doi          = {10.5281/zenodo.833339},
+      url          = {https://doi.org/10.5281/zenodo.833339}
+    }
+
 License
 -------
 
