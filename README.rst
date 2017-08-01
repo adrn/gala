@@ -3,11 +3,12 @@ Gala
 
 Gala is a Python package for Galactic and gravitational dynamics.
 
-|Coverage Status| |Build status| |License| |PyPI| |Documentation Status|
-|Affiliated package| |DOI|
+|PyPI| |Affiliated package| |Coverage Status| |Build status|
 
 Documentation
 -------------
+
+|Documentation Status|
 
 The documentation for ``Gala`` is hosted on `Read the docs
 <http://gala.adrian.pw>`_.
@@ -26,6 +27,8 @@ instructions <http://gala.adrian.pw/en/latest/install.html>`_ in the
 Attribution
 -----------
 
+|DOI| |ASCL|
+
 If you make use of this code, for now please cite the Zenodo DOI |DOI| as a
 software citation. A paper describing this package will be submitted soon. ::
 
@@ -43,6 +46,8 @@ software citation. A paper describing this package will be submitted soon. ::
 
 License
 -------
+
+|License|
 
 Copyright 2013-2017 Adrian Price-Whelan and contributors.
 
@@ -63,3 +68,5 @@ the `LICENSE <https://github.com/adrn/gala/blob/master/LICENSE>`_ file.
    :target: http://astropy.org/affiliated
 .. |DOI| image:: https://zenodo.org/badge/17577779.svg
    :target: https://zenodo.org/badge/latestdoi/17577779
+.. |ASCL| image:: https://img.shields.io/badge/ascl-1707.006-blue.svg?colorB=262255
+   :target: http://ascl.net/1707.006
