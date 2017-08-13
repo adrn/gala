@@ -25,8 +25,8 @@ env:
         - NUMPY_VERSION=stable
         - ASTROPY_VERSION=stable
         - SETUP_CMD='test'
-        - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml h5py sympy qt ipython jupyter notebook ipykernel'
-        - PIP_DEPENDENCIES='pandoc nbsphinx'
+        - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml h5py sympy qt ipython jupyter notebook ipykernel' # SEE PANDOC HACK BELOW
+        - PIP_DEPENDENCIES='nbsphinx'
 
     matrix:
         # Make sure that egg_info works without dependencies
@@ -44,7 +44,7 @@ matrix:
         # Check for sphinx doc build warnings - we do this first because it
         # may run for a long time
         - python: 3.6
-          env: SETUP_CMD='install build_sphinx -w' # install needed for nbsphinx to run, for some reason
+          env: SETUP_CMD='install build_sphinx -w' # install needed for nbsphinx to run
 
         # Try Astropy development version
         - python: 3.6
@@ -58,29 +58,9 @@ before_install:
     - sh -e /etc/init.d/xvfb start
 
 install:
-
-    # We now use the ci-helpers package to set up our testing environment.
-    # This is done by using Miniconda and then using conda and pip to install
-    # dependencies. Which dependencies are installed using conda and pip is
-    # determined by the CONDA_DEPDENDENCIES and PIP_DEPENDENCIES variables,
-    # which should be space-delimited lists of package names. See the README
-    # in https://github.com/astropy/ci-helpers for information about the full
-    # list of environment variables that can be used to customize your
-    # environment. In some cases, ci-helpers may not offer enough flexibility
-    # in how to install a package, in which case you can have additional
-    # commands in the install: section below.
-
     - git clone git://github.com/astropy/ci-helpers.git
     - source ci-helpers/travis/setup_conda.sh
-
-    # As described above, using ci-helpers, you should be able to set up an
-    # environment with dependencies installed using conda and pip, but in some
-    # cases this may not provide enough flexibility in how to install a
-    # specific dependency (and it will not be able to install non-Python
-    # dependencies). Therefore, you can also include commands below (as
-    # well as at the start of the install section or in the before_install
-    # section if they are needed before setting up conda) to install any
-    # other dependencies.
+    - conda install -c conda-forge pandoc
 
 script:
    - python setup.py $SETUP_CMD
