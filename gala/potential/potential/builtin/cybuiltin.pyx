@@ -664,7 +664,8 @@ class NFWPotential(CPotentialBase):
         super(NFWPotential, self).__init__(parameters=parameters,
                                            parameter_physical_types=ptypes,
                                            units=units,
-                                           Wrapper=NFWWrapper)
+                                           Wrapper=NFWWrapper,
+                                           origin=origin)
 
     @staticmethod
     def from_circular_velocity(v_c, r_s, a=1., b=1., c=1., r_ref=None, units=None, origin=None):
