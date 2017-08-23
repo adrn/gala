@@ -8,14 +8,17 @@ from __future__ import division, print_function
 # Third-party
 import astropy.units as u
 import astropy.coordinates as coord
+from astropy.tests.helper import quantity_allclose
+from astropy.utils.misc import isiterable
 import numpy as np
 from scipy.signal import argrelmax, argrelmin
 
 # This package
 from .core import PhaseSpacePosition
 from ..integrate import LeapfrogIntegrator
+from ..util import atleast_2d
 
-__all__ = ['peak_to_peak_period', 'estimate_dt_n_steps']
+__all__ = ['peak_to_peak_period', 'estimate_dt_n_steps', 'combine']
 
 def peak_to_peak_period(t, f, amplitude_threshold=1E-2):
     """
@@ -167,3 +170,111 @@ def estimate_dt_n_steps(w0, potential, n_periods, n_steps_per_period,
         raise ValueError("Timestep is zero or very small!")
 
     return dt, n_steps
+
+def combine(objs):
+    """Combine the specified `~gala.dynamics.PhaseSpacePosition` or
+    `~gala.dynamics.Orbit` objects.
+
+    Parameters
+    ----------
+    objs : iterable
+        An iterable of either `~gala.dynamics.PhaseSpacePosition` or
+        `~gala.dynamics.Orbit` objects.
+    """
+    from .orbit import Orbit
+
+    # have to special-case this because they are iterable
+    if isinstance(objs, PhaseSpacePosition) or isinstance(objs, Orbit):
+        raise ValueError("You must pass a non-empty iterable to combine.")
+
+    elif not isiterable(objs) or len(objs) < 1:
+        raise ValueError("You must pass a non-empty iterable to combine.")
+
+    elif len(objs) == 1: # short circuit
+        return objs[0]
+
+    # We only support these two types to combine:
+    if objs[0].__class__ not in [PhaseSpacePosition, Orbit]:
+        raise TypeError("Objects must be either PhaseSpacePosition or Orbit "
+                        "instances.")
+
+    # Validate objects:
+    # - check type
+    # - check dimensionality
+    # - check frame, potential
+    # - Right now, we only support Cartesian
+    for obj in objs:
+        # Check to see if they are all the same type of object:
+        if obj.__class__ != objs[0].__class__:
+            raise TypeError("All objects must have the same type.")
+
+        # Make sure they have same dimensionality
+        if obj.ndim != objs[0].ndim:
+            raise ValueError("All objects must have the same ndim.")
+
+        # Check that all objects have the same reference frame
+        if obj.frame != objs[0].frame:
+            raise ValueError("All objects must have the same frame.")
+
+        # Check that (for orbits) they all have the same potential
+        if hasattr(obj, 'potential') and obj.potential != objs[0].potential:
+            raise ValueError("All objects must have the same potential.")
+
+        # For orbits, time arrays must be the same
+        if (hasattr(obj, 't') and obj.t is not None and objs[0].t is not None
+                and not quantity_allclose(obj.t, objs[0].t,
+                                          atol=1E-13*objs[0].t.unit)):
+            raise ValueError("All orbits must have the same time array.")
+
+        if 'cartesian' not in obj.pos.get_name():
+            raise NotImplementedError("Currently, combine only works for "
+                                      "Cartesian-represented objects.")
+
+    # Now we prepare the positions, velocities:
+    if objs[0].__class__ == PhaseSpacePosition:
+        pos = []
+        vel = []
+
+        for i, obj in enumerate(objs):
+            if i == 0:
+                pos_unit = obj.pos.xyz.unit
+                vel_unit = obj.vel.d_xyz.unit
+
+            pos.append(atleast_2d(obj.pos.xyz.to(pos_unit).value,
+                                  insert_axis=1))
+            vel.append(atleast_2d(obj.vel.d_xyz.to(vel_unit).value,
+                                  insert_axis=1))
+
+        pos = np.concatenate(pos, axis=1) * pos_unit
+        vel = np.concatenate(vel, axis=1) * vel_unit
+
+        return PhaseSpacePosition(pos=pos, vel=vel, frame=objs[0].frame)
+
+    elif objs[0].__class__ == Orbit:
+        pos = []
+        vel = []
+
+        for i, obj in enumerate(objs):
+            if i == 0:
+                pos_unit = obj.pos.xyz.unit
+                vel_unit = obj.vel.d_xyz.unit
+
+            p = obj.pos.xyz.to(pos_unit).value
+            v = obj.vel.d_xyz.to(vel_unit).value
+
+            if p.ndim < 3:
+                p = p.reshape(p.shape + (1,))
+                v = v.reshape(v.shape + (1,))
+
+            pos.append(p)
+            vel.append(v)
+
+        pos = np.concatenate(pos, axis=2) * pos_unit
+        vel = np.concatenate(vel, axis=2) * vel_unit
+
+        return Orbit(pos=pos, vel=vel,
+                     t=objs[0].t, frame=objs[0].frame,
+                     potential=objs[0].potential)
+
+    else:
+        raise RuntimeError("should never get here...")

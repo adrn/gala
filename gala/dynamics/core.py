@@ -178,7 +178,7 @@ class PhaseSpacePosition(object):
         # make sure shape is the same
         if pos.shape != vel.shape:
             raise ValueError("Position and velocity must have the same shape "
-                             "{} vs {}".format(pos.shape, vel.shape))
+                             "{0} vs {0}".format(pos.shape, vel.shape))
 
         from ..potential.frame import FrameBase
         if frame is not None and not isinstance(frame, FrameBase):
@@ -883,3 +883,4 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
                       DeprecationWarning)
 
         super(CartesianPhaseSpacePosition, self).__init__(pos, vel, frame=frame)
+
