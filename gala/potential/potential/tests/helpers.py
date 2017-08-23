@@ -145,7 +145,8 @@ class PotentialTestBase(object):
         if len(self.potential.parameters) == 0:
             return
 
-        other = self.potential.__class__(units=self.potential.units, **self.potential.parameters)
+        other = self.potential.__class__(units=self.potential.units,
+                                         **self.potential.parameters)
         assert other == self.potential
 
         pars = self.potential.parameters.copy()
@@ -154,6 +155,10 @@ class PotentialTestBase(object):
                 pars[k] = 1.1*pars[k]
         other = self.potential.__class__(units=self.potential.units, **pars)
         assert other != self.potential
+
+        # check that comparing to non-potentials works
+        assert not self.potential == "sup"
+        assert not self.potential == None
 
     def test_plot(self):
         p = self.potential
