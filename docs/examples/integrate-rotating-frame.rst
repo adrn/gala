@@ -44,6 +44,7 @@ now define the bar component::
 
     >>> bar = gp.LongMuraliBarPotential(m=1E10*u.Msun, a=4*u.kpc,
     ...                                 b=0.8*u.kpc, c=0.25*u.kpc,
+    ...                                 alpha=25*u.degree,
     ...                                 units=galactic)
 
 The full potential is the composition of the three potential objects. We can
