@@ -14,4 +14,4 @@ if not _ASTROPY_SETUP_:
     from . import potential
     from . import units
     from . import util
-    from . import mpl_style
+    # from . import mpl_style
