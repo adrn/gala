@@ -327,16 +327,16 @@ class Hamiltonian(CommonBase):
             tunit = u.dimensionless_unscaled
         return Orbit.from_w(w=w, units=self.units, t=t*tunit, hamiltonian=self)
 
-    def save(self, f):
-        """
-        Save the potential to a text file. See :func:`~gala.potential.save`
-        for more information.
+    # def save(self, f):
+    #     """
+    #     Save the potential to a text file. See :func:`~gala.potential.save`
+    #     for more information.
 
-        Parameters
-        ----------
-        f : str, file_like
-            A filename or file-like object to write the input potential object to.
+    #     Parameters
+    #     ----------
+    #     f : str, file_like
+    #         A filename or file-like object to write the input potential object to.
 
-        """
-        from .io import save
-        save(self, f)
+    #     """
+    #     from .io import save
+    #     save(self, f)
