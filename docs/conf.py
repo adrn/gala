@@ -89,10 +89,15 @@ copyright = '{0}, {1}'.format(
 
 __import__(setup_cfg['package_name'])
 package = sys.modules[setup_cfg['package_name']]
+try:
+    exec('from {0}.mpl_style import mpl_style'.format(setup_cfg['package_name']))
+except ImportError:
+    mpl_style = None
 
-# TODO: Use the astropy style when building docs
-plot_rcparams = package.mpl_style.mpl_style
-plot_apply_rcparams = True
+# TODO: Use Gala style when building docs
+if mpl_style is not None:
+    plot_rcparams = mpl_style
+    plot_apply_rcparams = True
 
 # The short X.Y version.
 version = package.__version__.split('-', 1)[0]
