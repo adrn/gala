@@ -97,7 +97,7 @@ def _autodetermine_initial_dt(w0, potential, dE_threshold=1E-9,
 
     return dt
 
-def estimate_dt_n_steps(w0, potential, n_periods, n_steps_per_period,
+def estimate_dt_n_steps(w0, hamiltonian, n_periods, n_steps_per_period,
                         dE_threshold=1E-9, func=np.nanmax):
     """
     Estimate the timestep and number of steps to integrate an orbit for
@@ -131,12 +131,12 @@ def estimate_dt_n_steps(w0, potential, n_periods, n_steps_per_period,
     """
     if not isinstance(w0, PhaseSpacePosition):
         w0 = np.asarray(w0)
-        w0 = PhaseSpacePosition.from_w(w0, units=potential.units)
+        w0 = PhaseSpacePosition.from_w(w0, units=hamiltonian.units)
 
     # integrate orbit
-    dt = _autodetermine_initial_dt(w0, potential, dE_threshold=dE_threshold)
+    dt = _autodetermine_initial_dt(w0, hamiltonian, dE_threshold=dE_threshold)
     n_steps = int(round(10000 / dt))
-    orbit = potential.integrate_orbit(w0, dt=dt, n_steps=n_steps)
+    orbit = hamiltonian.integrate_orbit(w0, dt=dt, n_steps=n_steps)
 
     # if loop, align circulation with Z and take R period
     circ = orbit.circulation()
@@ -162,7 +162,7 @@ def estimate_dt_n_steps(w0, potential, n_periods, n_steps_per_period,
     if np.isnan(T):
         raise RuntimeError("Failed to find period.")
 
-    T = T.decompose(potential.units).value
+    T = T.decompose(hamiltonian.units).value
     dt = T / float(n_steps_per_period)
     n_steps = int(round(n_periods * T / dt))
 
