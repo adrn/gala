@@ -89,6 +89,7 @@ cdef extern from "potential/builtin/builtin_potentials.h":
 
     double longmuralibar_value(double t, double *pars, double *q, int n_dim) nogil
     void longmuralibar_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    double longmuralibar_density(double t, double *pars, double *q, int n_dim) nogil
 
 __all__ = ['HenonHeilesPotential', # Misc. potentials
            'KeplerPotential', 'HernquistPotential', 'IsochronePotential', 'PlummerPotential',
@@ -881,6 +882,7 @@ cdef class LongMuraliBarWrapper(CPotentialWrapper):
         self.init([G] + list(parameters), np.ascontiguousarray(q0))
         self.cpotential.value[0] = <energyfunc>(longmuralibar_value)
         self.cpotential.gradient[0] = <gradientfunc>(longmuralibar_gradient)
+        self.cpotential.density[0] = <densityfunc>(longmuralibar_density)
 
 class LongMuraliBarPotential(CPotentialBase):
     r"""
