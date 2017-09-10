@@ -74,7 +74,7 @@ def peak_to_peak_period(t, f, amplitude_threshold=1E-2):
     return np.mean([T_max, T_min]) * t_unit
 
 def _autodetermine_initial_dt(w0, potential, dE_threshold=1E-9,
-                              Integrator=LeapfrogIntegrator):
+                              **integrate_kwargs):
     if w0.shape and w0.shape[0] > 1:
         raise ValueError("Only one set of initial conditions may be passed "
                          "in at a time.")
@@ -88,7 +88,7 @@ def _autodetermine_initial_dt(w0, potential, dE_threshold=1E-9,
     for dt in dts:
         n_steps = int(round(_base_n_steps / dt))
         orbit = potential.integrate_orbit(w0, dt=dt, n_steps=n_steps,
-                                          Integrator=Integrator)
+                                          **integrate_kwargs)
         E = orbit.energy()
         dE = np.abs((E[-1] - E[0]) / E[0]).value
 
@@ -98,7 +98,8 @@ def _autodetermine_initial_dt(w0, potential, dE_threshold=1E-9,
     return dt
 
 def estimate_dt_n_steps(w0, hamiltonian, n_periods, n_steps_per_period,
-                        dE_threshold=1E-9, func=np.nanmax):
+                        dE_threshold=1E-9, func=np.nanmax,
+                        **integrate_kwargs):
     """
     Estimate the timestep and number of steps to integrate an orbit for
     given its initial conditions and a potential object.
@@ -134,9 +135,11 @@ def estimate_dt_n_steps(w0, hamiltonian, n_periods, n_steps_per_period,
         w0 = PhaseSpacePosition.from_w(w0, units=hamiltonian.units)
 
     # integrate orbit
-    dt = _autodetermine_initial_dt(w0, hamiltonian, dE_threshold=dE_threshold)
+    dt = _autodetermine_initial_dt(w0, hamiltonian, dE_threshold=dE_threshold,
+                                   **integrate_kwargs)
     n_steps = int(round(10000 / dt))
-    orbit = hamiltonian.integrate_orbit(w0, dt=dt, n_steps=n_steps)
+    orbit = hamiltonian.integrate_orbit(w0, dt=dt, n_steps=n_steps,
+                                        **integrate_kwargs)
 
     # if loop, align circulation with Z and take R period
     circ = orbit.circulation()
