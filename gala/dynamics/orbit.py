@@ -693,7 +693,9 @@ class Orbit(PhaseSpacePosition):
             new_vel[circ,:,n] = vel[2,:,n]
             new_vel[2,:,n] = vel[circ,:,n]
 
-        return self.__class__(pos=new_pos, vel=new_vel, t=self.t,
+        return self.__class__(pos=new_pos.reshape(cart.xyz.shape),
+                              vel=new_vel.reshape(cart.xyz.shape),
+                              t=self.t,
                               hamiltonian=self.hamiltonian)
 
     def plot(self, components=None, units=None, auto_aspect=True, **kwargs):
