@@ -152,8 +152,8 @@ class TestVHelGalConvert(object):
         # --------------------------------------------------------------------
         # l = 0
         # without LSR and circular velocity
-        c = coord.SkyCoord(ra=self.galcen_frame.galcen_ra,
-                           dec=self.galcen_frame.galcen_dec,
+        c = coord.SkyCoord(ra=self.galcen_frame.galcen_coord.ra,
+                           dec=self.galcen_frame.galcen_coord.dec,
                            distance=2*u.kpc)
         pm = [0,0]*u.mas/u.yr
         rv = 20*u.km/u.s
@@ -165,8 +165,8 @@ class TestVHelGalConvert(object):
                            atol=1E-12)
 
         # with LSR and circular velocity
-        c = coord.SkyCoord(ra=self.galcen_frame.galcen_ra,
-                           dec=self.galcen_frame.galcen_dec,
+        c = coord.SkyCoord(ra=self.galcen_frame.galcen_coord.ra,
+                           dec=self.galcen_frame.galcen_coord.dec,
                            distance=2*u.kpc)
         vxyz = vhel_to_gal(c.galactic, pm=pm, rv=rv,
                            vcirc=200*u.km/u.s,

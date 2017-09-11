@@ -37,7 +37,7 @@ orbit using the :mod:`gala.potential` and :mod:`gala.integrate` subpackages::
     ...                                 b=0.26*u.kpc, units=galactic)
     >>> w0 = gd.PhaseSpacePosition(pos=[11., 0., 0.2]*u.kpc,
     ...                            vel=[0., 200, 100]*u.km/u.s)
-    >>> orbit = pot.integrate_orbit(w0, dt=1., n_steps=1000)
+    >>> orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=1000)
 
 This numerically integrates an orbit from the specified initial conditions,
 ``w0``, and returns an |orb| object. By default, the position and velocity are
@@ -62,7 +62,7 @@ projections using the :meth:`~gala.dynamics.Orbit.plot` method::
     pot = gp.MiyamotoNagaiPotential(m=2.5E11, a=6.5, b=0.26, units=galactic)
     w0 = gd.PhaseSpacePosition(pos=[11., 0., 0.2]*u.kpc,
                                vel=[0., 200, 100]*u.km/u.s)
-    orbit = pot.integrate_orbit(w0, dt=1., n_steps=1000)
+    orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=1000)
     fig = orbit.plot()
 
 Or, we can visualize the orbit in just one projection of some transformed
@@ -81,7 +81,7 @@ coordinate representation, for example, cylindrical radius :math:`\rho` and
     pot = gp.MiyamotoNagaiPotential(m=2.5E11, a=6.5, b=0.26, units=galactic)
     w0 = gd.PhaseSpacePosition(pos=[11., 0., 0.2]*u.kpc,
                                vel=[0., 200, 100]*u.km/u.s)
-    orbit = pot.integrate_orbit(w0, dt=1., n_steps=1000)
+    orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=1000)
     _ = orbit.represent_as('cylindrical').plot(['rho', 'z'])
 
 From the |orb| object, we can also easily compute dynamical quantities such as

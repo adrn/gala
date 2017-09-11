@@ -25,7 +25,7 @@ When :ref:`integrating orbits using the potential classes directly
     ...                             units=galactic)
     >>> w0 = gd.PhaseSpacePosition(pos=[5.,0,0]*u.kpc,
     ...                            vel=[0,0,50.]*u.km/u.s)
-    >>> orbit = pot.integrate_orbit(w0, dt=0.5, n_steps=1000)
+    >>> orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.5, n_steps=1000)
 
 it is implicitly assumed that the initial conditions and orbit are in an
 intertial (static) reference frame. In this case, the total energy or value

@@ -56,7 +56,7 @@ using Pal 5's position and velocity as initial conditions. We'll integrate the
 orbit backwards (using a negative time-step) from its present-day position for 4
 Gyr::
 
-   >>> pal5_orbit = pot.integrate_orbit(pal5, dt=-0.5*u.Myr, n_steps=8000)
+   >>> pal5_orbit = gp.Hamiltonian(pot).integrate_orbit(pal5, dt=-0.5*u.Myr, n_steps=8000)
    >>> fig = pal5_orbit.plot()
 
 .. plot::
@@ -85,7 +85,7 @@ Gyr::
 
    c_gc = c.transform_to(coord.Galactocentric).cartesian
    pal5 = gd.PhaseSpacePosition(c_gc)
-   pal5_orbit = pot.integrate_orbit(pal5, dt=-0.5*u.Myr, n_steps=8000)
+   pal5_orbit = gp.Hamiltonian(pot).integrate_orbit(pal5, dt=-0.5*u.Myr, n_steps=8000)
    fig = pal5_orbit.plot()
 
 We can now generate a :ref:`mock stellar stream <mockstreams>` using the orbit

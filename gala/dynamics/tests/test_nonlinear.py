@@ -316,7 +316,7 @@ def test_surface_of_section(tmpdir):
 
     w0 = np.array([[0.,0.8,0.,1.,0.,0.],
                    [0.,0.9,0.,1.,0.,0.]]).T
-    orbit = pot.integrate_orbit(w0, dt=0.02, n_steps=100000)
+    orbit = Hamiltonian(pot).integrate_orbit(w0, dt=0.02, n_steps=100000)
     sos = surface_of_section(orbit, plane_ix=1)
 
     # plot in 3D

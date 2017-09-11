@@ -112,7 +112,7 @@ def vgal_to_hel(coordinate, vxyz, vcirc=None, vlsr=None,
         An instantiated :class:`~astropy.coordinates.Galactocentric` frame
         object with custom parameters for the Galactocentric coordinates. For
         example, if you want to set your own position of the Galactic center,
-        you can pass in a frame with custom `galcen_ra` and `galcen_dec`.
+        you can pass in a frame with custom attributes.
     """
 
     url = "http://docs.astropy.org/en/stable/coordinates/velocities.html"
@@ -187,7 +187,7 @@ def vhel_to_gal(coordinate, pm, rv, vcirc=None, vlsr=None,
         An instantiated :class:`~astropy.coordinates.Galactocentric` frame
         object with custom parameters for the Galactocentric coordinates. For
         example, if you want to set your own position of the Galactic center,
-        you can pass in a frame with custom `galcen_ra` and `galcen_dec`.
+        you can pass in a frame with custom attributes.
 
     Returns
     -------

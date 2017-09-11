@@ -82,19 +82,19 @@ def test_each_type(mock_func, extra_kwargs):
     # Test expected failures:
 
     # Deprecation warning for passing in potential
-    warnings.simplefilter('always')
+    # warnings.simplefilter('always')
     with pytest.warns(DeprecationWarning):
         stream = mock_func(potential, prog_orbit=prog, prog_mass=1E4*u.Msun,
                            Integrator=DOPRI853Integrator, **extra_kwargs)
 
     # Integrator not supported
     with pytest.raises(ValueError):
-        stream = mock_func(potential, prog_orbit=prog, prog_mass=1E4*u.Msun,
+        stream = mock_func(ham, prog_orbit=prog, prog_mass=1E4*u.Msun,
                            Integrator=RK5Integrator, **extra_kwargs)
 
     # Passed a phase-space position, not orbit
     with pytest.raises(TypeError):
-        stream = mock_func(potential, prog_orbit=prog[0], prog_mass=1E4*u.Msun,
+        stream = mock_func(ham, prog_orbit=prog[0], prog_mass=1E4*u.Msun,
                            Integrator=DOPRI853Integrator, **extra_kwargs)
 
 @pytest.mark.skipif('CI' in os.environ,
@@ -104,8 +104,8 @@ def test_animate(tmpdir):
     np.random.seed(42)
     pot = HernquistPotential(m=1E11, c=1., units=galactic)
     w0 = PhaseSpacePosition(pos=[5.,0,0]*u.kpc, vel=[0,0.1,0]*u.kpc/u.Myr)
-    orbit = pot.integrate_orbit(w0, dt=1., n_steps=1000,
-                                Integrator=DOPRI853Integrator)
+    orbit = Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=1000,
+                                             Integrator=DOPRI853Integrator)
 
     fardal_stream(pot, orbit, prog_mass=1E5*u.Msun, release_every=10,
                   snapshot_filename=os.path.join(str(tmpdir), "test.hdf5"),

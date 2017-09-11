@@ -90,7 +90,7 @@ initial conditions that place the progenitor on a mildly eccentric orbit:
     >>> prog_mass = 1E4*u.Msun
     >>> prog_w0 = gd.PhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
     ...                                 vel=[75, 150, 30.]*u.km/u.s)
-    >>> prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
+    >>> prog_orbit = gp.Hamiltonian(pot).integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
     >>> fig = prog_orbit.plot(['x', 'y'])
 
 .. plot::
@@ -108,7 +108,7 @@ initial conditions that place the progenitor on a mildly eccentric orbit:
     prog_mass = 1E4*u.Msun
     prog_w0 = gd.PhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
                                     vel=[75, 150, 0.]*u.km/u.s)
-    prog_orbit = pot.integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
+    prog_orbit = gp.Hamiltonian(pot).integrate_orbit(prog_w0, dt=0.5, n_steps=4000)
     fig = prog_orbit.plot(['x', 'y'])
 
 We now have to define the ``k`` parameters. This is done by defining an iterable

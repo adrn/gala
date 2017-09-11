@@ -107,7 +107,7 @@ can integrate an orbit in this potential::
 
     >>> w0 = gd.PhaseSpacePosition(pos=[0.,0.3],
     ...                            vel=[0.38,0.])
-    >>> orbit = pot.integrate_orbit(w0, dt=0.05, n_steps=10000)
+    >>> orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.05, n_steps=10000)
     >>> fig = orbit.plot(marker=',', linestyle='none', alpha=0.5)
 
 .. plot::
@@ -143,7 +143,7 @@ can integrate an orbit in this potential::
     pot = HenonHeilesPotential(A=1., units=None)
     w0 = gd.PhaseSpacePosition(pos=[0.,0.3],
                                vel=[0.38,0.])
-    orbit = pot.integrate_orbit(w0, dt=0.05, n_steps=10000)
+    orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.05, n_steps=10000)
     fig = orbit.plot(marker=',', linestyle='none', alpha=0.5)
 
 Or, we could create a contour plot of equipotentials::

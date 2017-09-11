@@ -246,7 +246,7 @@ example::
     >>> pot = gp.PlummerPotential(m=1E10 * u.Msun, b=1. * u.kpc, units=galactic)
     >>> w0 = gd.PhaseSpacePosition(pos=[10.,0,0] * u.kpc,
     ...                            vel=[0.,75,0] * u.km/u.s)
-    >>> orbit = pot.integrate_orbit(w0, dt=1., n_steps=5000)
+    >>> orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=5000)
     >>> orbit
     <Orbit cartesian, dim=3, shape=(5001,)>
     >>> orbit.t
@@ -271,7 +271,7 @@ Just like for |psp|, we can quickly visualize an orbit using the
     pot = gp.PlummerPotential(m=1E10 * u.Msun, b=1. * u.kpc, units=galactic)
     w0 = gd.PhaseSpacePosition(pos=[10.,0,0] * u.kpc,
                                vel=[0.,75,0] * u.km/u.s)
-    orbit = pot.integrate_orbit(w0, dt=1., n_steps=5000)
+    orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=5000)
     fig = orbit.plot()
 
 Again, this is a thin wrapper around the `~gala.dynamics.plot_projections`
@@ -290,14 +290,14 @@ function and any keyword arguments are passed through to that function::
     pot = gp.PlummerPotential(m=1E10 * u.Msun, b=1. * u.kpc, units=galactic)
     w0 = gd.PhaseSpacePosition(pos=[10.,0,0] * u.kpc,
                                vel=[0.,75,0] * u.km/u.s)
-    orbit = pot.integrate_orbit(w0, dt=1., n_steps=5000)
+    orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=5000)
     fig = orbit.plot(linewidth=4., alpha=0.5, color='r')
 
 We can also quickly compute quantities like the angular momentum, and estimates
 for the pericenter, apocenter, eccentricity of the orbit. Estimates for the
 latter few get better with smaller timesteps::
 
-    >>> orbit = pot.integrate_orbit(w0, dt=0.1, n_steps=100000)
+    >>> orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.1, n_steps=100000)
     >>> np.mean(orbit.angular_momentum(), axis=1) # doctest: +FLOAT_CMP
     <Quantity [ 0.        , 0.        , 0.76703412] kpc2 / Myr>
     >>> orbit.eccentricity() # doctest: +FLOAT_CMP

@@ -58,7 +58,7 @@ composite potentials:
     >>> w0 = gd.PhaseSpacePosition(pos=[7.,0,0]*u.kpc,
     ...                            vel=[0.,50.,0]*u.km/u.s)
     >>> import timeit
-    >>> timeit.timeit(lambda: pot.integrate_orbit(w0, dt=0.5, n_steps=10000), number=100) / 100. # doctest: +SKIP
+    >>> timeit.timeit(lambda: gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.5, n_steps=10000), number=100) / 100. # doctest: +SKIP
     0.0028513244865462184
 
 For a composite potential:
@@ -66,7 +66,7 @@ For a composite potential:
     >>> bulge = gp.IsochronePotential(m=2E10*u.Msun, b=0.5*u.kpc, units=galactic)
     >>> disk = gp.MiyamotoNagaiPotential(m=6E10*u.Msun, a=3*u.kpc, b=0.26*u.kpc, units=galactic)
     >>> pot = gp.CCompositePotential(bulge=bulge, disk=disk)
-    >>> timeit.timeit(lambda: pot.integrate_orbit(w0, dt=0.5, n_steps=10000), number=100) / 100. # doctest: +SKIP
+    >>> timeit.timeit(lambda: gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.5, n_steps=10000), number=100) / 100. # doctest: +SKIP
     0.0031369362445548177
 
 Precise integrators
@@ -76,7 +76,7 @@ The default orbit integration routine uses `~gala.integrate.LeapfrogIntegrator`,
 but the high-order Dormand-Prince 853 integration scheme is also implemented as
 `~gala.integrate.DOPRI853Integrator`:
 
-    >>> orbit = pot.integrate_orbit(w0, dt=0.5, n_steps=10000,
+    >>> orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.5, n_steps=10000,
     ...                             Integrator=gi.DOPRI853Integrator)
 
 Easy visualization
@@ -104,7 +104,7 @@ Numerically integrated orbits can be easily visualized using the
     w0 = gd.PhaseSpacePosition(pos=[7.,0,0]*u.kpc,
                                vel=[0.,50.,0]*u.km/u.s)
 
-    orbit = pot.integrate_orbit(w0, dt=0.5, n_steps=10000,
+    orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.5, n_steps=10000,
                                 Integrator=gi.DOPRI853Integrator)
 
     fig = orbit.plot()
