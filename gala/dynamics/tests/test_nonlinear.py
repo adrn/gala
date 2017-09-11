@@ -54,19 +54,19 @@ class TestForcedPendulum(object):
         assert chaotic_LEs[-1] > 1E-2
 
         # pl.figure()
-        # pl.loglog(regular_LEs, marker=None)
+        # pl.loglog(regular_LEs, marker='')
         # pl.savefig(os.path.join(str(tmpdir),"pend_regular.png"))
 
         # pl.figure()
-        # pl.plot(t, regular_ws[:,0], marker=None)
+        # pl.plot(t, regular_ws[:,0], marker='')
         # pl.savefig(os.path.join(str(tmpdir),"pend_orbit_regular.png"))
 
         # pl.figure()
-        # pl.loglog(chaotic_LEs, marker=None)
+        # pl.loglog(chaotic_LEs, marker='')
         # pl.savefig(os.path.join(str(tmpdir),"pend_chaotic.png"))
 
         # pl.figure()
-        # pl.plot(t, chaotic_ws[:,0], marker=None)
+        # pl.plot(t, chaotic_ws[:,0], marker='')
         # pl.savefig(os.path.join(str(tmpdir),"pend_orbit_chaotic.png"))
 
         # pl.close('all')
@@ -125,11 +125,11 @@ class HenonHeilesBase(object):
         lyap = np.mean(lyap, axis=1)
 
         # pl.clf()
-        # pl.loglog(lyap, marker=None)
+        # pl.loglog(lyap, marker='')
         # pl.savefig(os.path.join(str(tmpdir),"hh_lyap_max_{}.png".format(self.__class__.__name__)))
 
         # pl.clf()
-        # pl.plot(ws[...,0], ws[...,1], marker=None)
+        # pl.plot(ws[...,0], ws[...,1], marker='')
         # pl.savefig(os.path.join(str(tmpdir),"hh_orbit_lyap_max_{}.png".format(self.__class__.__name__)))
 
 # initial conditions from LP-VI documentation:
@@ -209,7 +209,7 @@ class TestLogarithmic(object):
 
             # lyapunov exp
             # pl.figure()
-            # pl.loglog(lyap, marker=None)
+            # pl.loglog(lyap, marker='')
             # pl.savefig(os.path.join(str(tmpdir),"log_lyap_max_{}.png".format(ii)))
 
             # energy conservation

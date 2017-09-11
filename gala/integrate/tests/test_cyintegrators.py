@@ -92,9 +92,9 @@ def test_scaling(tmpdir, Integrator, integrate_func):
             orbit = integrator.run(py_w0, dt=dt, n_steps=n_steps)
             py_times.append(time.time() - t0)
 
-    #     pl.loglog(x, cy_times, linestyle='-', lw=2., c=c, marker=None,
+    #     pl.loglog(x, cy_times, linestyle='-', lw=2., c=c, marker='',
     #               label="cy: {} orbits".format(nparticles))
-    #     pl.loglog(x, py_times, linestyle='--', lw=2., c=c, marker=None,
+    #     pl.loglog(x, py_times, linestyle='--', lw=2., c=c, marker='',
     #               label="py: {} orbits".format(nparticles))
 
     # pl.title(Integrator.__name__)

@@ -88,6 +88,7 @@ We will now integrate the orbit and plot it in the meridional plane::
 
 .. plot::
     :align: center
+    :context: close-figs
 
     import astropy.coordinates as coord
     import astropy.units as u
@@ -136,25 +137,12 @@ Instead, the orbit is wobbly in the toy potential angles::
 
 .. plot::
     :align: center
+    :context: close-figs
 
-    import astropy.coordinates as coord
-    import astropy.units as u
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import gala.potential as gp
-    import gala.dynamics as gd
-    from gala.units import galactic
-
-    pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
-                                  units=galactic)
-    w0 = gd.PhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
-                               vel=[75, 150, 50.]*u.km/u.s)
-
-    w = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.5, n_steps=10000)
     toy_potential = gd.fit_isochrone(w)
-    actions,angles,freqs = toy_potential.action_angle(w)
+    toy_actions,toy_angles,toy_freqs = toy_potential.action_angle(w)
     fig,ax = plt.subplots(1,1,figsize=(5,5))
-    ax.plot(angles[0], angles[2], linestyle='none', marker=',')
+    ax.plot(toy_angles[0], toy_angles[2], linestyle='none', marker=',')
     ax.set_xlim(0,2*np.pi)
     ax.set_ylim(0,2*np.pi)
     ax.set_xlabel(r"$\theta_1$ [rad]")
@@ -165,33 +153,18 @@ This can also be seen in the value of the action variables, which are not
 time-independent in the toy potential::
 
     >>> fig,ax = plt.subplots(1,1)
-    >>> ax.plot(w.t, toy_actions[0], marker=None) # doctest: +SKIP
+    >>> ax.plot(w.t, toy_actions[0], marker='') # doctest: +SKIP
     >>> ax.set_xlabel(r"$t$ [Myr]") # doctest: +SKIP
     >>> ax.set_ylabel(r"$J_1$ [rad]") # doctest: +SKIP
 
 .. plot::
     :align: center
+    :context: close-figs
 
-    import astropy.coordinates as coord
-    import astropy.units as u
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import gala.potential as gp
-    import gala.dynamics as gd
-    from gala.units import galactic
-
-    pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
-                                  units=galactic)
-    w0 = gd.PhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
-                               vel=[75, 150, 50.]*u.km/u.s)
-
-    w = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.5, n_steps=10000)
-    toy_potential = gd.fit_isochrone(w)
-    actions,angles,freqs = toy_potential.action_angle(w)
     fig,ax = plt.subplots(1,1)
-    ax.plot(w.t, actions[0].to(u.km/u.s*u.kpc*u.Msun), marker=None)
+    ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc*u.Msun), marker='')
     ax.set_xlabel(r"$t$ [Myr]")
-    ax.set_ylabel(r"$J_1$ [kpc ${\rm M}_\odot$ km/s]")
+    ax.set_ylabel(r"$J_1$ [kpc km/s]")
     fig.tight_layout()
 
 We can now find approximations to the actions in the true potential. We have to
@@ -199,57 +172,46 @@ choose the maximum integer vector norm, `N_max`, which here we arbitrarilty set
 to 8. This will change depending on the convergence of the action correction
 (the properties of the orbit and potential) and the accuracy desired::
 
-    >>> result = gd.find_actions(w, N_max=8, toy_potential=toy_potential)
+    >>> result = gd.find_actions(w, N_max=8, toy_potential=toy_potential) # doctest: +SKIP
     >>> result.keys() # doctest: +SKIP
     dict_keys(['Sn', 'nvecs', 'freqs', 'dSn_dJ', 'angles', 'actions'])
 
 The value of the actions, frequencies, and the angles at t=0 are returned in
 the result dictionary::
 
-    >>> result['actions'] # doctest: +FLOAT_CMP
+    >>> result['actions'] # doctest: +SKIP
     <Quantity [ 0.12472277, 1.22725461, 0.05847431] kpc2 solMass / Myr>
 
 To visualize how the actions are computed, we again plot the actions in the
 toy potential and then plot the "corrected" actions -- the approximation to the
 actions computed using this machinery::
 
-    >>> nvecs = gd.generate_n_vectors(8, dx=1, dy=2, dz=2)
-    >>> act_correction = nvecs.T[...,None] * result['Sn'][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
-    >>> action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr*u.Msun
+    >>> nvecs = gd.generate_n_vectors(8, dx=1, dy=2, dz=2) # doctest: +SKIP
+    >>> act_correction = nvecs.T[...,None] * result['Sn'][None,:,None] * np.cos(nvecs.dot(toy_angles))[None] # doctest: +SKIP
+    >>> action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr*u.Msun # doctest: +SKIP
     >>>
-    >>> fig,ax = plt.subplots(1,1)
-    >>> ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc*u.Msun), marker=None, label='$J_1$') # doctest: +SKIP
-    >>> ax.plot(w.t, action_approx[0].to(u.km/u.s*u.kpc*u.Msun), marker=None, label="$J_1'$") # doctest: +SKIP
+    >>> fig,ax = plt.subplots(1,1) # doctest: +SKIP
+    >>> ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc*u.Msun), marker='', label='$J_1$') # doctest: +SKIP
+    >>> ax.plot(w.t, action_approx[0].to(u.km/u.s*u.kpc*u.Msun), marker='', label="$J_1'$") # doctest: +SKIP
     >>> ax.set_xlabel(r"$t$ [Myr]") # doctest: +SKIP
     >>> ax.set_ylabel(r"[kpc ${\rm M}_\odot$ km/s]") # doctest: +SKIP
     >>> ax.legend() # doctest: +SKIP
 
 .. plot::
     :align: center
+    :context: close-figs
 
-    import astropy.coordinates as coord
-    import astropy.units as u
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import gala.potential as gp
-    import gala.dynamics as gd
-    from gala.units import galactic
+    import warnings
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("ignore")
+        result = gd.find_actions(w, N_max=8, toy_potential=toy_potential)
 
-    pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
-                                  units=galactic)
-    w0 = gd.PhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
-                               vel=[75, 150, 50.]*u.km/u.s)
-
-    w = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.5, n_steps=10000)
-    toy_potential = gd.fit_isochrone(w)
-    toy_actions,toy_angles,toy_freqs = toy_potential.action_angle(w)
-    result = gd.find_actions(w, N_max=8, toy_potential=toy_potential)
     nvecs = gd.generate_n_vectors(8, dx=1, dy=2, dz=2)
     act_correction = nvecs.T[...,None] * result['Sn'][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
     action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr*u.Msun
     fig,ax = plt.subplots(1,1)
-    ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc*u.Msun), marker=None, label='$J_1$')
-    ax.plot(w.t, action_approx[0].to(u.km/u.s*u.kpc*u.Msun), marker=None, label="$J_1'$")
+    ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc*u.Msun), marker='', label='$J_1$')
+    ax.plot(w.t, action_approx[0].to(u.km/u.s*u.kpc*u.Msun), marker='', label="$J_1'$")
     ax.set_xlabel(r"$t$ [Myr]")
     ax.set_ylabel(r"[kpc ${\rm M}_\odot$ km/s]")
     ax.legend()
@@ -317,7 +279,10 @@ and the same initial conditions as above:
     toy_actions,toy_angles,toy_freqs = toy_potential.action_angle(w)
 
     # find approximations to the actions in the true potential
-    result = gd.find_actions(w, N_max=8, toy_potential=toy_potential)
+    import warnings
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("ignore")
+        result = gd.find_actions(w, N_max=8, toy_potential=toy_potential)
 
     # for visualization, compute the action correction used to transform the
     #   toy potential actions to the approximate true potential actions
@@ -328,8 +293,8 @@ and the same initial conditions as above:
     fig,axes = plt.subplots(3,1,figsize=(6,14))
 
     for i,ax in enumerate(axes):
-        ax.plot(w.t, toy_actions[i].to(u.km/u.s*u.kpc*u.Msun), marker=None, label='$J_{}$'.format(i+1))
-        ax.plot(w.t, action_approx[i].to(u.km/u.s*u.kpc*u.Msun), marker=None, label="$J_{}'$".format(i+1))
+        ax.plot(w.t, toy_actions[i].to(u.km/u.s*u.kpc*u.Msun), marker='', label='$J_{}$'.format(i+1))
+        ax.plot(w.t, action_approx[i].to(u.km/u.s*u.kpc*u.Msun), marker='', label="$J_{}'$".format(i+1))
         ax.set_ylabel(r"[kpc ${\rm M}_\odot$ km/s]")
         ax.legend(loc='upper left')
 

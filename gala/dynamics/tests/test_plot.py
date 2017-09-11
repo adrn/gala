@@ -80,13 +80,13 @@ class TestPlotting(object):
 #                       labels=("herp","derp","merp"))
 #     fig.savefig(os.path.join(str(tmpdir), "one_orbit_labels.png"))
 
-#     fig = plot_orbits(w, triangle=True, linestyle='-', marker=None)
+#     fig = plot_orbits(w, triangle=True, linestyle='-', marker='')
 #     fig.savefig(os.path.join(str(tmpdir), "all_orbits_triangle.png"))
 
-#     fig = plot_orbits(w, ix=0, triangle=True, linestyle='-', marker=None)
+#     fig = plot_orbits(w, ix=0, triangle=True, linestyle='-', marker='')
 #     fig.savefig(os.path.join(str(tmpdir), "one_orbit_triangle.png"))
 
-#     fig = plot_orbits(w, ix=0, triangle=True, linestyle='-', marker=None,
+#     fig = plot_orbits(w, ix=0, triangle=True, linestyle='-', marker='',
 #                       labels=("herp","derp","merp"))
 #     fig.savefig(os.path.join(str(tmpdir), "one_orbit_triangle_labels.png"))
 

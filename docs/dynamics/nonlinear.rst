@@ -71,7 +71,7 @@ we have to down-sample the time array to align it with the Lyapunov exponent
 array. This plots one line per offset orbit::
 
     >>> pl.figure() # doctest: +SKIP
-    >>> pl.loglog(orbit.t[11::10], lyap, marker=None) # doctest: +SKIP
+    >>> pl.loglog(orbit.t[11::10], lyap, marker='') # doctest: +SKIP
     >>> pl.xlabel("Time [{}]".format(orbit.t.unit)) # doctest: +SKIP
     >>> pl.ylabel(r"$\lambda_{{\rm max}}$ [{}]".format(lyap.unit)) # doctest: +SKIP
     >>> pl.tight_layout() # doctest: +SKIP
@@ -92,7 +92,7 @@ array. This plots one line per offset orbit::
     lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., n_steps=100000)
 
     pl.figure()
-    pl.loglog(orbit.t[11::10], lyap, marker=None)
+    pl.loglog(orbit.t[11::10], lyap, marker='')
     pl.xlabel("Time [{}]".format(orbit.t.unit))
     pl.ylabel(r"$\lambda_{{\rm max}}$ [{}]".format(lyap.unit))
     pl.tight_layout()
@@ -129,7 +129,7 @@ Because this is a regular orbit, the estimate continues decreasing,
 following a characteristic power-law (a straight line in a log-log plot)::
 
     >>> pl.figure() # doctest: +SKIP
-    >>> pl.loglog(orbit.t[11::10], lyap, marker=None) # doctest: +SKIP
+    >>> pl.loglog(orbit.t[11::10], lyap, marker='') # doctest: +SKIP
     >>> pl.xlabel("Time [{}]".format(orbit.t.unit)) # doctest: +SKIP
     >>> pl.ylabel(r"$\lambda_{{\rm max}}$ [{}]".format(lyap.unit)) # doctest: +SKIP
     >>> pl.tight_layout() # doctest: +SKIP
@@ -150,7 +150,7 @@ following a characteristic power-law (a straight line in a log-log plot)::
     lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=1., n_steps=200000)
 
     pl.figure()
-    pl.loglog(orbit.t[11::10], lyap, marker=None)
+    pl.loglog(orbit.t[11::10], lyap, marker='')
     pl.xlabel("Time [{}]".format(orbit.t.unit))
     pl.ylabel(r"$\lambda_{{\rm max}}$ [{}]".format(lyap.unit))
     pl.tight_layout()

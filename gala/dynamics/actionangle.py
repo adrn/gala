@@ -10,6 +10,7 @@ arbitrary potential.
 
 # Standard library
 import time
+import warnings
 
 # Third-party
 import numpy as np
@@ -239,7 +240,6 @@ def check_angle_sampling(nvecs, angles):
     failed_nvecs = []
     failures = []
 
-    logger.debug("Checking modes:")
     for i,vec in enumerate(nvecs):
         # N = np.linalg.norm(vec)
         # X = np.dot(angles,vec)
@@ -247,13 +247,15 @@ def check_angle_sampling(nvecs, angles):
         diff = float(np.abs(X.max() - X.min()))
 
         if diff < (2.*np.pi):
-            logger.warning("Need a longer integration window for mode " + str(vec))
+            warnings.warn("Need a longer integration window for mode {0}"
+                          .format(vec))
             failed_nvecs.append(vec.tolist())
             # P.append(2.*np.pi - diff)
             failures.append(0)
 
         elif (diff/len(X)) > np.pi:
-            logger.warning("Need a finer sampling for mode " + str(vec))
+            warnings.warning("Need a finer sampling for mode {0}"
+                             .format(str(vec)))
             failed_nvecs.append(vec.tolist())
             # P.append(np.pi - diff/len(X))
             failures.append(1)
@@ -477,7 +479,7 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
         ix = ~np.any(np.isnan(aa),axis=0)
         aa = aa[:,ix]
         t = t[ix]
-        logger.warning("NaN value in toy actions or angles!")
+        warnings.warn("NaN value in toy actions or angles!")
         if sum(ix) > 1:
             raise ValueError("Too many NaN value in toy actions or angles!")
 
@@ -497,7 +499,7 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
 
     # Just some checks
     if len(angles) > len(aa):
-        logger.warning("More unknowns than equations!")
+        warnings.warn("More unknowns than equations!")
 
     J = actions[:3]  # * sign
     theta = angles[:3]
