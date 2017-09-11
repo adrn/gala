@@ -254,8 +254,8 @@ def check_angle_sampling(nvecs, angles):
             failures.append(0)
 
         elif (diff/len(X)) > np.pi:
-            warnings.warning("Need a finer sampling for mode {0}"
-                             .format(str(vec)))
+            warnings.warn("Need a finer sampling for mode {0}"
+                          .format(str(vec)))
             failed_nvecs.append(vec.tolist())
             # P.append(np.pi - diff/len(X))
             failures.append(1)
