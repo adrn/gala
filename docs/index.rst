@@ -56,3 +56,9 @@ Tutorials
    examples/integrate-rotating-frame
    examples/mock-stream-heliocentric
    examples/circ-restricted-3body
+
+************
+Contributors
+************
+
+.. include:: ../AUTHORS.rst
