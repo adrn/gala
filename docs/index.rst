@@ -26,7 +26,7 @@ Documentation
 
    install
    conventions
-   why
+   benefits
 ..   getting_started
 
 ***********
