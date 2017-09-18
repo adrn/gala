@@ -227,7 +227,11 @@ cdef class CPotentialWrapper:
             for i in range(n):
                 mass[i] = c_mass_enclosed(&(self.cpotential), t[i], &q[i,0], G, &epsilon[0])
 
-        return np.array(mass)
+        sgn = 1.
+        if 'm' in self.parameters and self.parameters['m'] < 0:
+            sgn = -1.
+
+        return sgn * np.array(mass)
 
     # For pickling in Python 2
     def __reduce__(self):

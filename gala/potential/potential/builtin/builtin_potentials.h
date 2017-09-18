@@ -7,6 +7,7 @@ extern double henon_heiles_value(double t, double *pars, double *q, int n_dim);
 extern void henon_heiles_gradient(double t, double *pars, double *q, int n_dim, double *grad);
 
 extern double kepler_value(double t, double *pars, double *q, int n_dim);
+extern double kepler_density(double t, double *pars, double *q, int n_dim);
 extern void kepler_gradient(double t, double *pars, double *q, int n_dim, double *grad);
 extern void kepler_hessian(double t, double *pars, double *q, int n_dim, double *hess);
 

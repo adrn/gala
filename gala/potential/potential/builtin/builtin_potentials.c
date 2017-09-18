@@ -52,10 +52,10 @@ double kepler_density(double t, double *pars, double *q, int n_dim) {
             - G (Gravitational constant)
             - m (mass scale)
     */
-    double r;
-    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    double r2;
+    r2 = q[0]*q[0] + q[1]*q[1] + q[2]*q[2];
 
-    if (r == 0) {
+    if (r2 == 0.) {
         return INFINITY;
     } else {
         return 0.;

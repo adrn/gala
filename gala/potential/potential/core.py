@@ -266,12 +266,16 @@ class PotentialBase(CommonBase):
         Menc = np.abs(r*r * diff / Gee / (2.*h))
         Menc = Menc.reshape(orig_shape[1:])
 
-        return Menc * self.units['mass']
+        sgn = 1.
+        if 'm' in self.parameters and self.parameters['m'] < 0:
+            sgn = -1.
+
+        return sgn * Menc * self.units['mass']
 
     def circular_velocity(self, q, t=0.):
         """
-        Estimate the circular velocity at the given position assuming the potential
-        is spherical.
+        Estimate the circular velocity at the given position assuming the
+        potential is spherical.
 
         Parameters
         ----------

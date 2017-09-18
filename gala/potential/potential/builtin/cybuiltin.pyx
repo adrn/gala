@@ -35,6 +35,7 @@ cdef extern from "potential/builtin/builtin_potentials.h":
 
     double kepler_value(double t, double *pars, double *q, int n_dim) nogil
     void kepler_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    double kepler_density(double t, double *pars, double *q, int n_dim) nogil
     void kepler_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double isochrone_value(double t, double *pars, double *q, int n_dim) nogil
@@ -143,6 +144,7 @@ cdef class KeplerWrapper(CPotentialWrapper):
     def __init__(self, G, parameters, q0):
         self.init([G] + list(parameters), np.ascontiguousarray(q0))
         self.cpotential.value[0] = <energyfunc>(kepler_value)
+        self.cpotential.density[0] = <densityfunc>(kepler_density)
         self.cpotential.gradient[0] = <gradientfunc>(kepler_gradient)
         self.cpotential.hessian[0] = <hessianfunc>(kepler_hessian)
 
