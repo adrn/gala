@@ -47,6 +47,21 @@ void kepler_gradient(double t, double *pars, double *q, int n_dim, double *grad)
     grad[2] = grad[2] + fac*q[2];
 }
 
+double kepler_density(double t, double *pars, double *q, int n_dim) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+    */
+    double r;
+    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+
+    if (r == 0) {
+        return INFINITY;
+    } else {
+        return 0.;
+    }
+}
+
 void kepler_hessian(double t, double *pars, double *q, int n_dim, double *hess) {
     /*  pars:
             - G (Gravitational constant)
