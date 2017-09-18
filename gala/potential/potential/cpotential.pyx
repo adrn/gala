@@ -227,11 +227,7 @@ cdef class CPotentialWrapper:
             for i in range(n):
                 mass[i] = c_mass_enclosed(&(self.cpotential), t[i], &q[i,0], G, &epsilon[0])
 
-        sgn = 1.
-        if 'm' in self.parameters and self.parameters['m'] < 0:
-            sgn = -1.
-
-        return sgn * np.array(mass)
+        return np.array(mass)
 
     # For pickling in Python 2
     def __reduce__(self):
@@ -303,13 +299,17 @@ class CPotentialBase(PotentialBase):
         orig_shape,q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, q)
 
+        sgn = 1.
+        if 'm' in self.parameters and self.parameters['m'] < 0:
+            sgn = -1.
+
         try:
             menc = self.c_instance.mass_enclosed(q, self.G, t=t)
         except AttributeError,TypeError:
             raise ValueError("Potential C instance has no defined "
                              "mass_enclosed function")
 
-        return menc.reshape(orig_shape[1:]) * self.units['mass']
+        return sgn * menc.reshape(orig_shape[1:]) * self.units['mass']
 
     def __add__(self, other):
         """
