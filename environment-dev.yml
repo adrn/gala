@@ -1,0 +1,14 @@
+name: gala-dev
+
+channels:
+  - astropy
+
+dependencies:
+  - astropy>=2
+  - numpy
+  - cython
+  - matplotlib
+  - scipy
+  - pyyaml
+  - sympy
+  - h5py
