@@ -78,6 +78,15 @@ Tutorials
    examples/mock-stream-heliocentric
    examples/circ-restricted-3body
 
+*****************
+How to contribute
+*****************
+
+We welcome contributions from anyone via pull requests on `GitHub
+<https://github.com/adrn/gala>`_. If you don't feel comfortable modifying or
+adding functionality, we also welcome feature requests and bug reports as
+`GitHub issues <https://github.com/adrn/gala/issues>`_.
+
 ************
 Contributors
 ************
