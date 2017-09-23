@@ -47,6 +47,7 @@ Documentation
    install
    conventions
    benefits
+   testing
 ..   getting_started
 
 ***********
