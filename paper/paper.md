@@ -50,4 +50,9 @@ scientific explorations of forthcoming data releases from the *Gaia* mission
 [@gaia] by students and experts alike. The source code for ``Gala`` has been
 archived to Zenodo with the linked DOI: [@zenodo]
 
+# Acknowledgements
+
+We acknowledge contributions from Brigitta Sipocz, Syrtis Major, and Semyeong
+Oh, and support from Kathryn Johnston during the genesis of this project.
+
 # References
