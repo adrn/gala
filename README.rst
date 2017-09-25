@@ -70,3 +70,9 @@ the `LICENSE <https://github.com/adrn/gala/blob/master/LICENSE>`_ file.
    :target: https://zenodo.org/badge/latestdoi/17577779
 .. |ASCL| image:: https://img.shields.io/badge/ascl-1707.006-blue.svg?colorB=262255
    :target: http://ascl.net/1707.006
+
+Contributors
+------------
+
+See the `AUTHORS.rst <https://github.com/adrn/gala/blob/master/AUTHORS.rst>`_
+file for a complete list of contributors to the project.
