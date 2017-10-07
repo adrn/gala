@@ -1,11 +1,21 @@
-0.3 (unreleased)
-================
+0.2.2 (2017-10-07)
+==================
 
-New Features
+New features
 ------------
+- Added a new coordinate frame aligned with the Palomar 5 stream.
+- Added a function ``gala.dynamics.combine`` to combine ``PhaseSpacePosition``
+  or ``Orbit`` objects.
 
-API-breaking changes
---------------------
+Bug fixes
+---------
+- Added a density function for the Kepler potential.
+- Added a density function for the Long & Murali bar potential
+
+Other changes
+-------------
+- Added JOSS paper.
+- Cleaned up some tests and documentation to use the ``Hamiltonian`` object.
 
 0.2.1 (2017-07-19)
 ==================
