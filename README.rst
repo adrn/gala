@@ -43,6 +43,7 @@ paper::
       author = {Adrian M. Price-Whelan},
       title = {Gala: A Python package for galactic dynamics},
       journal = {The Journal of Open Source Software}
+    }
 
 Please consider also citing the Zenodo DOI |DOI| as a software citation::
 
