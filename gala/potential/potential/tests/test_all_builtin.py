@@ -43,6 +43,36 @@ class TestHarmonicOscillator2D(PotentialTestBase):
 # Cython
 ##############################################################################
 
+class TestNull(PotentialTestBase):
+    potential = NullPotential()
+    w0 = [1.,0.,0.,0.,2*np.pi,0.]
+
+    def test_mass_enclosed(self):
+        for arr,shp in zip(self.w0s, self._valu_return_shapes):
+            g = self.potential.mass_enclosed(arr[:self.ndim])
+            assert g.shape == shp
+            assert np.all(g == 0.)
+
+            g = self.potential.mass_enclosed(arr[:self.ndim], t=0.1)
+            g = self.potential.mass_enclosed(arr[:self.ndim], t=0.1*self.potential.units['time'])
+
+            t = np.zeros(np.array(arr).shape[1:]) + 0.1
+            g = self.potential.mass_enclosed(arr[:self.ndim], t=t)
+            g = self.potential.mass_enclosed(arr[:self.ndim], t=t*self.potential.units['time'])
+
+    def test_circular_velocity(self):
+        for arr,shp in zip(self.w0s, self._valu_return_shapes):
+            g = self.potential.circular_velocity(arr[:self.ndim])
+            assert g.shape == shp
+            assert np.all(g == 0.)
+
+            g = self.potential.circular_velocity(arr[:self.ndim], t=0.1)
+            g = self.potential.circular_velocity(arr[:self.ndim], t=0.1*self.potential.units['time'])
+
+            t = np.zeros(np.array(arr).shape[1:]) + 0.1
+            g = self.potential.circular_velocity(arr[:self.ndim], t=t)
+            g = self.potential.circular_velocity(arr[:self.ndim], t=t*self.potential.units['time'])
+
 class TestHenonHeiles(PotentialTestBase):
     potential = HenonHeilesPotential()
     w0 = [1.,0.,0.,2*np.pi]

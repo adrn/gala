@@ -97,7 +97,7 @@ cdef extern from "potential/builtin/builtin_potentials.h":
     void longmuralibar_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double longmuralibar_density(double t, double *pars, double *q, int n_dim) nogil
 
-__all__ = ['HenonHeilesPotential', # Misc. potentials
+__all__ = ['NullPotential', 'HenonHeilesPotential', # Misc. potentials
            'KeplerPotential', 'HernquistPotential', 'IsochronePotential', 'PlummerPotential',
            'JaffePotential', 'StonePotential', # Spherical models
            'SatohPotential', 'MiyamotoNagaiPotential', # Disk models
@@ -950,7 +950,7 @@ class LongMuraliBarPotential(CPotentialBase):
 cdef class NullWrapper(CPotentialWrapper):
 
     def __init__(self, G, parameters, q0):
-        self.init([G] + list(parameters), np.ascontiguousarray(q0))
+        self.init([G], np.ascontiguousarray(q0))
         self.cpotential.value[0] = <energyfunc>(null_value)
         self.cpotential.density[0] = <densityfunc>(null_density)
         self.cpotential.gradient[0] = <gradientfunc>(null_gradient)
