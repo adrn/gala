@@ -4,6 +4,8 @@
 New Features
 ------------
 
+- Added a ``NullPotential`` class that has 0 mass and serves as a placeholder.
+
 API-breaking changes
 --------------------
 
