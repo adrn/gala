@@ -30,6 +30,11 @@ from ...frame.cframe cimport CFrameWrapper
 from ....units import dimensionless, DimensionlessUnitSystem
 
 cdef extern from "potential/builtin/builtin_potentials.h":
+    double null_value(double t, double *pars, double *q, int n_dim) nogil
+    void null_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    double null_density(double t, double *pars, double *q, int n_dim) nogil
+    void null_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+
     double henon_heiles_value(double t, double *pars, double *q, int n_dim) nogil
     void henon_heiles_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
 
@@ -130,7 +135,7 @@ class HenonHeilesPotential(CPotentialBase):
     def __init__(self, units=None, origin=None):
         parameters = OrderedDict()
         super(HenonHeilesPotential, self).__init__(parameters=parameters,
-                                                   parameter_physical_types=dict(),
+                                                   parameter_physical_types={},
                                                    ndim=2,
                                                    units=units,
                                                    origin=origin)
@@ -242,15 +247,16 @@ class IsochronePotential(CPotentialBase):
         Parameters
         ----------
         w : :class:`gala.dynamics.PhaseSpacePosition`, :class:`gala.dynamics.Orbit`
-            The positions or orbit to compute the actions, angles, and frequencies at.
+            The positions or orbit to compute the actions, angles, and
+            frequencies at.
         """
         from ....dynamics.analyticactionangle import isochrone_to_aa
         return isochrone_to_aa(w, self)
 
     # def phase_space(self, actions, angles):
     #     """
-    #     Transform the input actions and angles to ordinary phase space (position
-    #     and velocity) in cartesian coordinates. See Section 3.5.2 in
+    #     Transform the input actions and angles to ordinary phase space
+    #     (position and velocity) in cartesian coordinates. See Section 3.5.2 in
     #     Binney & Tremaine (2008), and be aware of the errata entry for
     #     Eq. 3.225.
 
@@ -305,10 +311,9 @@ class HernquistPotential(CPotentialBase):
         parameters['c'] = c
         ptypes['c'] = 'length'
 
-        super(HernquistPotential, self).__init__(parameters=parameters,
-                                                 parameter_physical_types=ptypes,
-                                                 units=units,
-                                                 origin=origin)
+        super(HernquistPotential, self).__init__(
+            parameters=parameters, parameter_physical_types=ptypes,
+            units=units, origin=origin)
 
 
 cdef class PlummerWrapper(CPotentialWrapper):
@@ -552,10 +557,9 @@ class MiyamotoNagaiPotential(CPotentialBase):
         parameters['b'] = b
         ptypes['b'] = 'length'
 
-        super(MiyamotoNagaiPotential, self).__init__(parameters=parameters,
-                                                     parameter_physical_types=ptypes,
-                                                     units=units,
-                                                     origin=origin)
+        super(MiyamotoNagaiPotential, self).__init__(
+            parameters=parameters, parameter_physical_types=ptypes, units=units,
+            origin=origin)
 
 
 # ============================================================================
@@ -616,14 +620,18 @@ class NFWPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, m=None, r_s=None, a=1., b=1., c=1., v_c=None, units=None, origin=None):
-        # TODO: v_c included in above for backwards-compatibility (and m, r_s default to None)
+    def __init__(self, m=None, r_s=None, a=1., b=1., c=1., v_c=None, units=None,
+                 origin=None):
+        # TODO: v_c included in above for backwards-compatibility (and m, r_s
+        # default to None)
 
         if v_c is not None and m is None:
             import warnings
-            warnings.warn("NFWPotential now expects a scale mass in the default initializer. "
-                          "To initialize from a circular velocity, use the classmethod "
-                          "from_circular_velocity() instead instead.", DeprecationWarning)
+            warnings.warn("NFWPotential now expects a scale mass in the default"
+                          " initializer. To initialize from a circular "
+                          "velocity, use the classmethod "
+                          "from_circular_velocity() instead instead.",
+                          DeprecationWarning)
 
             parameters = OrderedDict()
             ptypes = OrderedDict()
@@ -635,10 +643,12 @@ class NFWPotential(CPotentialBase):
             ptypes['r_s'] = 'length'
 
             # get appropriate units:
-            parameters = CPotentialBase._prepare_parameters(parameters, ptypes, units)
+            parameters = CPotentialBase._prepare_parameters(parameters, ptypes,
+                                                            units)
 
             # r_ref = r_s for old parametrization
-            m = NFWPotential._vc_rs_rref_to_m(parameters['v_c'], parameters['r_s'],
+            m = NFWPotential._vc_rs_rref_to_m(parameters['v_c'],
+                                              parameters['r_s'],
                                               parameters['r_s'])
             m = m.to(units['mass'])
 
@@ -671,7 +681,8 @@ class NFWPotential(CPotentialBase):
                                            origin=origin)
 
     @staticmethod
-    def from_circular_velocity(v_c, r_s, a=1., b=1., c=1., r_ref=None, units=None, origin=None):
+    def from_circular_velocity(v_c, r_s, a=1., b=1., c=1., r_ref=None,
+                               units=None, origin=None):
         r"""
         from_circular_velocity(v_c, r_s, a=1., b=1., c=1., r_ref=None, units=None, origin=None)
 
@@ -721,9 +732,11 @@ class NFWPotential(CPotentialBase):
         ptypes['r_ref'] = 'length'
 
         # get appropriate units:
-        parameters = CPotentialBase._prepare_parameters(parameters, ptypes, units)
+        parameters = CPotentialBase._prepare_parameters(parameters, ptypes,
+                                                        units)
 
-        m = NFWPotential._vc_rs_rref_to_m(parameters['v_c'], parameters['r_s'], parameters['r_ref'])
+        m = NFWPotential._vc_rs_rref_to_m(parameters['v_c'], parameters['r_s'],
+                                          parameters['r_ref'])
         m = m.to(units['mass'])
 
         return NFWPotential(m=m, r_s=r_s, a=a, b=b, c=c, units=units, origin=origin)
@@ -739,9 +752,11 @@ class SphericalNFWPotential(NFWPotential):
 
     def __init__(self, v_c, r_s, units=None, origin=None):
         import warnings
-        warnings.warn("This class is now superseded by the single interface to all NFW "
-                      "potentials, `NFWPotential`. Use that instead.", DeprecationWarning)
-        super(SphericalNFWPotential, self).__init__(v_c=v_c, r_s=r_s, units=units, origin=origin)
+        warnings.warn("This class is now superseded by the single interface to "
+                      "all NFW potentials, `NFWPotential`. Use that instead.",
+                      DeprecationWarning)
+        super(SphericalNFWPotential, self).__init__(v_c=v_c, r_s=r_s,
+                                                    units=units, origin=origin)
 
     def save(self, *args, **kwargs):
         raise NotImplementedError("Use NFWPotential instead!")
@@ -750,11 +765,12 @@ class FlattenedNFWPotential(NFWPotential):
 
     def __init__(self, v_c, r_s, q_z, units=None, origin=None):
         import warnings
-        warnings.warn("This class is now superseded by the single interface to all NFW "
-                      "potentials, `NFWPotential`. Use that instead.", DeprecationWarning)
+        warnings.warn("This class is now superseded by the single interface to "
+                      "all NFW potentials, `NFWPotential`. Use that instead.",
+                      DeprecationWarning)
 
-        super(FlattenedNFWPotential, self).__init__(v_c=v_c, r_s=r_s, c=q_z, units=units,
-                                                    origin=origin)
+        super(FlattenedNFWPotential, self).__init__(v_c=v_c, r_s=r_s, c=q_z,
+                                                    units=units, origin=origin)
 
     def save(self, *args, **kwargs):
         raise NotImplementedError("Use NFWPotential instead!")
@@ -813,10 +829,9 @@ class LogarithmicPotential(CPotentialBase):
         parameters['phi'] = phi
         ptypes['phi'] = 'angle'
 
-        super(LogarithmicPotential, self).__init__(parameters=parameters,
-                                                   parameter_physical_types=ptypes,
-                                                   units=units,
-                                                   origin=origin)
+        super(LogarithmicPotential, self).__init__(
+            parameters=parameters, parameter_physical_types=ptypes, units=units,
+            origin=origin)
 
         if not isinstance(self.units, DimensionlessUnitSystem):
             if self.units['angle'] != u.radian:
@@ -872,10 +887,9 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
         parameters['b'] = b
         parameters['c'] = c
 
-        super(LeeSutoTriaxialNFWPotential, self).__init__(parameters=parameters,
-                                                          parameter_physical_types=ptypes,
-                                                          units=units,
-                                                          origin=origin)
+        super(LeeSutoTriaxialNFWPotential, self).__init__(
+            parameters=parameters, parameter_physical_types=ptypes, units=units,
+            origin=origin)
 
 
 cdef class LongMuraliBarWrapper(CPotentialWrapper):
@@ -925,8 +939,41 @@ class LongMuraliBarPotential(CPotentialBase):
         parameters['alpha'] = alpha
         ptypes['alpha'] = 'angle'
 
-        super(LongMuraliBarPotential, self).__init__(parameters=parameters,
-                                                     parameter_physical_types=ptypes,
-                                                     units=units,
-                                                     origin=origin)
+        super(LongMuraliBarPotential, self).__init__(
+            parameters=parameters, parameter_physical_types=ptypes, units=units,
+            origin=origin)
 
+
+# ==============================================================================
+# Special
+#
+cdef class NullWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters, q0):
+        self.init([G] + list(parameters), np.ascontiguousarray(q0))
+        self.cpotential.value[0] = <energyfunc>(null_value)
+        self.cpotential.density[0] = <densityfunc>(null_density)
+        self.cpotential.gradient[0] = <gradientfunc>(null_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(null_hessian)
+
+class NullPotential(CPotentialBase):
+    r"""
+    NullPotential(units=None, origin=None)
+
+    A null potential with 0 mass. Does nothing.
+
+    Parameters
+    ----------
+    units : `~gala.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, units=None, origin=None):
+        parameters = OrderedDict()
+        ptypes = OrderedDict()
+
+        super(NullPotential, self).__init__(parameters=parameters,
+                                            parameter_physical_types=ptypes,
+                                            units=units,
+                                            origin=origin)

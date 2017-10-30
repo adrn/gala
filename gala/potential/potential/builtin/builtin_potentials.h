@@ -3,6 +3,11 @@ extern double nan_value(double t, double *pars, double *q, int n_dim);
 extern void nan_gradient(double t, double *pars, double *q, int n_dim, double *grad);
 extern void nan_hessian(double t, double *pars, double *q, int n_dim, double *hess);
 
+extern double null_density(double t, double *pars, double *q, int n_dim);
+extern double null_value(double t, double *pars, double *q, int n_dim);
+extern void null_gradient(double t, double *pars, double *q, int n_dim, double *grad);
+extern void null_hessian(double t, double *pars, double *q, int n_dim, double *hess);
+
 extern double henon_heiles_value(double t, double *pars, double *q, int n_dim);
 extern void henon_heiles_gradient(double t, double *pars, double *q, int n_dim, double *grad);
 

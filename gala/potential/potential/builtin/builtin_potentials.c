@@ -6,6 +6,11 @@ double nan_value(double t, double *pars, double *q, int n_dim) { return NAN; }
 void nan_gradient(double t, double *pars, double *q, int n_dim, double *grad) {}
 void nan_hessian(double t, double *pars, double *q, int n_dim, double *hess) {}
 
+double null_density(double t, double *pars, double *q, int n_dim) { return 0; }
+double null_value(double t, double *pars, double *q, int n_dim) { return 0; }
+void null_gradient(double t, double *pars, double *q, int n_dim, double *grad){}
+void null_hessian(double t, double *pars, double *q, int n_dim, double *hess) {}
+
 /* ---------------------------------------------------------------------------
     Henon-Heiles potential
 */
