@@ -45,7 +45,7 @@ Classes created this way can then be instantiated and used like any other
 
     >>> pot = SHOPotential(k=1.)
     >>> pot.value([1.])
-    <Quantity [ 0.5]>
+    <Quantity [0.5]>
 
 Extremely fast orbit integration
 ================================

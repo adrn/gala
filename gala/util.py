@@ -137,15 +137,15 @@ def atleast_2d(*arys, **kwargs):
     Examples
     --------
     >>> atleast_2d(3.0)
-    array([[ 3.]])
+    array([[3.]])
 
     >>> x = np.arange(3.0)
     >>> atleast_2d(x)
-    array([[ 0.,  1.,  2.]])
+    array([[0., 1., 2.]])
     >>> atleast_2d(x, insert_axis=-1)
-    array([[ 0.],
-           [ 1.],
-           [ 2.]])
+    array([[0.],
+           [1.],
+           [2.]])
     >>> atleast_2d(x).base is x
     True
 

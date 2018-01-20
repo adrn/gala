@@ -708,7 +708,7 @@ class PhaseSpacePosition(object):
             >>> vel = np.array([0, 2*np.pi, 0]) * u.au/u.yr
             >>> w = PhaseSpacePosition(pos, vel)
             >>> w.angular_momentum()
-            <Quantity [ 0.        , 0.        , 6.28318531] AU2 / yr>
+            <Quantity [0.        , 0.        , 6.28318531] AU2 / yr>
         """
         cart = self.represent_as(coord.CartesianRepresentation)
         return cart.pos.cross(cart.vel).xyz
@@ -883,4 +883,3 @@ class CartesianPhaseSpacePosition(PhaseSpacePosition):
                       DeprecationWarning)
 
         super(CartesianPhaseSpacePosition, self).__init__(pos, vel, frame=frame)
-

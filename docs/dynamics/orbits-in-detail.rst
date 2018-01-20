@@ -71,14 +71,12 @@ The class internally stores the positions and velocities as
 
     >>> w.pos
     <CartesianRepresentation (x, y, z) in kpc
-        [( 0.,   8.,  16.), ( 1.,   9.,  17.), ( 2.,  10.,  18.),
-         ( 3.,  11.,  19.), ( 4.,  12.,  20.), ( 5.,  13.,  21.),
-         ( 6.,  14.,  22.), ( 7.,  15.,  23.)]>
+        [(0.,  8., 16.), (1.,  9., 17.), (2., 10., 18.), (3., 11., 19.),
+         (4., 12., 20.), (5., 13., 21.), (6., 14., 22.), (7., 15., 23.)]>
     >>> w.vel
     <CartesianDifferential (d_x, d_y, d_z) in km / s
-        [( 0.,   8.,  16.), ( 1.,   9.,  17.), ( 2.,  10.,  18.),
-         ( 3.,  11.,  19.), ( 4.,  12.,  20.), ( 5.,  13.,  21.),
-         ( 6.,  14.,  22.), ( 7.,  15.,  23.)]>
+        [(0.,  8., 16.), (1.,  9., 17.), (2., 10., 18.), (3., 11., 19.),
+         (4., 12., 20.), (5., 13., 21.), (6., 14., 22.), (7., 15., 23.)]>
 
 All of the components of these classes are mapped to attributes of the
 phase-space position class for convenience, but with more user-friendly names.
@@ -105,7 +103,7 @@ representations of the position and velocity::
     >>> w
     <PhaseSpacePosition cylindrical, dim=3, shape=(4,)>
     >>> w.rho
-    <Quantity [ 1., 2., 3., 4.] kpc>
+    <Quantity [1., 2., 3., 4.] kpc>
 
 We can easily transform the full phase-space vector to new representations or
 coordinate frames. These transformations use the :mod:`astropy.coordinates`
@@ -113,10 +111,10 @@ coordinate frames. These transformations use the :mod:`astropy.coordinates`
 
     >>> cart = w.represent_as('cartesian')
     >>> cart.x
-    <Quantity [ 1. , 1. ,-1.5,-4. ] kpc>
+    <Quantity [ 1. ,  1. , -1.5, -4. ] kpc>
     >>> sph = w.represent_as('spherical')
     >>> sph.distance
-    <Distance [ 1.41421356, 2.02758751, 3.01846171, 4.12310563] kpc>
+    <Distance [1.41421356, 2.02758751, 3.01846171, 4.12310563] kpc>
 
 There is also support for transforming the positions and velocities (assumed to
 be in a `~astropy.coordinates.Galactocentric` frame) to any of the other
@@ -250,8 +248,8 @@ example::
     >>> orbit
     <Orbit cartesian, dim=3, shape=(5001,)>
     >>> orbit.t
-    <Quantity [  0.00000000e+00,  1.00000000e+00,  2.00000000e+00,...,
-                 4.99800000e+03,  4.99900000e+03,  5.00000000e+03] Myr>
+    <Quantity [0.000e+00, 1.000e+00, 2.000e+00, ..., 4.998e+03, 4.999e+03,
+               5.000e+03] Myr>
     >>> orbit.potential
     <PlummerPotential: m=1.00e+10, b=1.00 (kpc,Myr,solMass,rad)>
 

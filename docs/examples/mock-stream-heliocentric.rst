@@ -47,7 +47,7 @@ We'll first convert this position and velocity to Galactocentric coordinates::
    >>> c_gc = c.transform_to(coord.Galactocentric).cartesian
    >>> c_gc
    <CartesianRepresentation (x, y, z) in kpc
-       ( 7.69726478,  0.22748727,  16.41135761)
+       (7.69726478, 0.22748727, 16.41135761)
     (has differentials w.r.t.: 's')>
    >>> pal5 = gd.PhaseSpacePosition(pos=c_gc.xyz, vel=c_gc.differentials['s'].d_xyz)
 

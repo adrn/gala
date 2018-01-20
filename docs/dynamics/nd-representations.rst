@@ -26,8 +26,8 @@ coordinates::
     >>> rep = gd.NDCartesianRepresentation(xy)
     >>> rep
     <NDCartesianRepresentation (x1, x2) in kpc
-        [( 0.,   8.), ( 1.,   9.), ( 2.,  10.), ( 3.,  11.), ( 4.,  12.),
-         ( 5.,  13.), ( 6.,  14.), ( 7.,  15.)]>
+        [(0.,  8.), (1.,  9.), (2., 10.), (3., 11.), (4., 12.), (5., 13.),
+         (6., 14.), (7., 15.)]>
 
 4D coordinates::
 
@@ -35,8 +35,8 @@ coordinates::
     >>> rep = gd.NDCartesianRepresentation(x)
     >>> rep
     <NDCartesianRepresentation (x1, x2, x3, x4) in kpc
-        [( 0.,  4.,   8.,  12.), ( 1.,  5.,   9.,  13.),
-         ( 2.,  6.,  10.,  14.), ( 3.,  7.,  11.,  15.)]>
+        [(0., 4.,  8., 12.), (1., 5.,  9., 13.), (2., 6., 10., 14.),
+         (3., 7., 11., 15.)]>
 
 These can be passed in to the |psp| or |orb| classes as with any of the Astropy
 core representation objects::

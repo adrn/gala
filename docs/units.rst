@@ -39,7 +39,7 @@ unit system using :meth:`~astropy.units.Quantity.decompose`::
 
     >>> a = 15*u.km/u.s
     >>> a.decompose(usys)
-    <Quantity 1500.0 cm / ms>
+    <Quantity 1500. cm / ms>
 
 `~gala.units.UnitSystem` objects can also act as a dictionary to look up
 a unit for a given physical type. For example, if we want to know what a
@@ -85,7 +85,7 @@ of the `~gala.units.UnitSystem` object, which has exactly opposite
 call syntax::
 
     >>> usys2.decompose(q)
-    <Quantity 146.66883325096924 km / s>
+    <Quantity 146.66883325 km / s>
 
 .. _units-api:
 
@@ -94,4 +94,3 @@ API
 
 .. automodapi:: gala.units
     :no-inheritance-diagram:
-

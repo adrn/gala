@@ -117,8 +117,8 @@ attributes ``.pos_components`` and ``.vel_components``::
 Meaning, we can access these components by doing, e.g.::
 
     >>> orbit.v_x
-    <Quantity [ 0.        ,-0.00567589,-0.01129934,...,  0.18751756,
-                0.18286687, 0.17812762] kpc / Myr>
+    <Quantity [ 0.        , -0.00567589, -0.01129934, ...,  0.18751756,
+                0.18286687,  0.17812762] kpc / Myr>
 
 For a Cylindrical representation, these are instead::
 
@@ -128,8 +128,8 @@ For a Cylindrical representation, these are instead::
     >>> cyl_orbit.vel_components.keys() # doctest: +SKIP
     odict_keys(['v_rho', 'pm_phi', 'v_z'])
     >>> cyl_orbit.v_rho
-    <Quantity [ 0.        ,-0.00187214,-0.00369183,...,  0.01699321,
-                0.01930216, 0.02159477] kpc / Myr>
+    <Quantity [ 0.        , -0.00187214, -0.00369183, ...,  0.01699321,
+                0.01930216,  0.02159477] kpc / Myr>
 
 Continue to the :ref:`orbits-in-detail` page for more information.
 
