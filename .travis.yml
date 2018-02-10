@@ -27,6 +27,7 @@ env:
         - SETUP_CMD='test'
         - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml h5py sympy qt ipython jupyter notebook ipykernel' # SEE PANDOC HACK BELOW
         - PIP_DEPENDENCIES='nbsphinx'
+        - CONDA_CHANNELS='astropy-ci-extras astropy'
 
     matrix:
         # Make sure that egg_info works without dependencies
@@ -37,8 +38,7 @@ env:
 matrix:
     include:
 
-        # Do a coverage test in Python 2.
-        - python: 2.7
+        - python: 3.6
           env: SETUP_CMD='test --coverage'
 
         # Check for sphinx doc build warnings - we do this first because it
@@ -49,6 +49,13 @@ matrix:
         # Try Astropy development version
         - python: 3.6
           env: ASTROPY_VERSION=development
+
+        # For some reason, numpy 1.14 isn't in the standard conda channel for
+        # Python 2.7?
+        - python: 2.7
+          env:
+            - SETUP_CMD='test'
+            - NUMPY_VERSION=dev
 
 before_install:
 
@@ -63,7 +70,7 @@ install:
     - conda install -c conda-forge pandoc
 
 script:
-   - python setup.py $SETUP_CMD
+    - python setup.py $SETUP_CMD
 
 after_success:
     # If coveralls.io is set up for this package, uncomment the line
