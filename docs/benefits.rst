@@ -21,9 +21,9 @@ a given position:
     >>> pot.value([8.,6.,7.]*u.kpc) # doctest: +FLOAT_CMP
     <Quantity [-0.00131002] kpc2 / Myr2>
     >>> pot.gradient([8.,6.,7.]*u.kpc) # doctest: +FLOAT_CMP
-    <Quantity [[  1.57857635e-05],
-               [  1.18393226e-05],
-               [  1.38125430e-05]] kpc / Myr2>
+    <Quantity [[1.57813742e-05],
+               [1.18360306e-05],
+               [1.38087024e-05]] kpc / Myr2>
 
 Extensible and easy to define new potentials
 ============================================

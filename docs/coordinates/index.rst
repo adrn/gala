@@ -57,9 +57,9 @@ motions::
     ...              pm_phi2=-3.10*u.mas/u.yr)
     >>> gd1.transform_to(coord.Galactic) # doctest: +FLOAT_CMP
     <Galactic Coordinate: (l, b) in deg
-        ( 181.28968151,  54.84972806)
+        (181.28968151, 54.84972806)
      (pm_l_cosb, pm_b) in mas / yr
-        ( 12.03209393, -3.69847479)>
+        (12.03209393, -3.69847479)>
 
 As with the other Astropy coordinate frames, with a full specification of the 3D
 position and velocity, we can transform to a
@@ -72,8 +72,8 @@ position and velocity, we can transform to a
     ...              radial_velocity=-32*u.km/u.s)
     >>> gd1.transform_to(coord.Galactocentric) # doctest: +FLOAT_CMP
     <Galactocentric Coordinate (galcen_coord=<ICRS Coordinate: (ra, dec) in deg
-        ( 266.4051, -28.936175)>, galcen_distance=8.3 kpc, galcen_v_sun=( 11.1,  232.24,  7.25) km / s, z_sun=27.0 pc, roll=0.0 deg): (x, y, z) in kpc
-        (-12.78977138, -0.09870921,  6.44110283)
+        (266.4051, -28.936175)>, galcen_distance=8.3 kpc, galcen_v_sun=(11.1, 232.24, 7.25) km / s, z_sun=27.0 pc, roll=0.0 deg): (x, y, z) in kpc
+        (-12.78977138, -0.09870921, 6.44110283)
      (v_x, v_y, v_z) in km / s
         (-73.01933674, -216.37648654, -97.60065189)>
 
@@ -144,9 +144,9 @@ From the new frame, we can access the sky positions, Barycentric distances,
 proper motion components, and Barycentric radial velocity. For example::
 
     >>> icrs.distance # doctest: +FLOAT_CMP
-    <Distance [ 34.17535632, 41.00810092] kpc>
+    <Distance [34.17535632,41.00810092] kpc>
     >>> icrs.pm_ra_cosdec # doctest: +FLOAT_CMP
-    <Quantity [ 1.78185606, 0.92782761] mas / yr>
+    <Quantity [1.78185606,0.92782761] mas / yr>
     >>> icrs.radial_velocity # doctest: +FLOAT_CMP
     <Quantity [  46.14528132,-305.74417355] km / s>
 
@@ -176,10 +176,10 @@ We again use the ``transform_to()`` method to do the transformation::
 
     >>> icrs.transform_to(gc) # doctest: +FLOAT_CMP
     <Galactocentric Coordinate (galcen_coord=<ICRS Coordinate: (ra, dec) in deg
-        ( 266.4051, -28.936175)>, galcen_distance=8.0 kpc, galcen_v_sun=( 10.,  250.,  7.) km / s, z_sun=27.0 pc, roll=0.0 deg): (x, y, z) in pc
-        (-8011.25186648,  18.02217595,  25.27812036)
+        (266.4051, -28.936175)>, galcen_distance=8.0 kpc, galcen_v_sun=(10., 250., 7.) km / s, z_sun=27.0 pc, roll=0.0 deg): (x, y, z) in pc
+        (-8011.25186648, 18.02217595, 25.27812036)
      (v_x, v_y, v_z) in km / s
-        (-97.06296832,  431.12942421, -2.69495881)>
+        (-97.06296832, 431.12942421, -2.69495881)>
 
 Convert proper motions between the ``ICRS`` and ``Galactic`` frames
 -------------------------------------------------------------------
@@ -195,9 +195,9 @@ ICRS proper motions to Galactic proper motions::
     >>> gal = icrs.transform_to(coord.Galactic)
     >>> gal # doctest: +FLOAT_CMP
     <Galactic Coordinate: (l, b) in deg
-        ( 122.06871373, -4.73082278)
+        (122.06871373, -4.73082278)
      (pm_l_cosb, pm_b) in mas / yr
-        (-54.0689922,  72.39638239)>
+        (-54.0689922, 72.39638239)>
     >>> gal.pm_l_cosb # doctest: +FLOAT_CMP
     <Quantity -54.06899219513397 mas / yr>
 

@@ -29,6 +29,7 @@ _RepresentationMappingBase = \
     namedtuple('RepresentationMapping',
                ('repr_name', 'new_name', 'default_unit'))
 
+
 class RepresentationMapping(_RepresentationMappingBase):
     """
     This `~collections.namedtuple` is used to override the representation and
@@ -42,12 +43,14 @@ class RepresentationMapping(_RepresentationMappingBase):
                                                          new_name,
                                                          default_unit)
 
+
 class RegexRepresentationMapping(RepresentationMapping):
     """
     A representation mapping that uses a regex to map the original attribute
     name to the new attribute name.
     """
     pass
+
 
 class PhaseSpacePosition(object):
 
@@ -143,7 +146,7 @@ class PhaseSpacePosition(object):
             if ndim == 3:
                 # TODO: HACK: until this stuff is in astropy core
                 if isinstance(pos, coord.BaseRepresentation):
-                    kw = [(k,getattr(pos,k)) for k in pos.components]
+                    kw = [(k, getattr(pos, k)) for k in pos.components]
                     pos = getattr(coord, pos.__class__.__name__)(**kw)
 
                 else:
@@ -707,8 +710,8 @@ class PhaseSpacePosition(object):
             >>> pos = np.array([1., 0, 0]) * u.au
             >>> vel = np.array([0, 2*np.pi, 0]) * u.au/u.yr
             >>> w = PhaseSpacePosition(pos, vel)
-            >>> w.angular_momentum()
-            <Quantity [0.        , 0.        , 6.28318531] AU2 / yr>
+            >>> w.angular_momentum() # doctest: +FLOAT_CMP
+            <Quantity [0.        ,0.        ,6.28318531] AU2 / yr>
         """
         cart = self.represent_as(coord.CartesianRepresentation)
         return cart.pos.cross(cart.vel).xyz

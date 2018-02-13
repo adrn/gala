@@ -85,8 +85,7 @@ These mappings are defined in the class definition of
 of the position and the ``v_x`` component of the velocity::
 
     >>> w.x, w.v_x # doctest: +FLOAT_CMP
-    (<Quantity [ 0., 1., 2., 3., 4., 5., 6., 7.] kpc>,
-     <Quantity [ 0., 1., 2., 3., 4., 5., 6., 7.] km / s>)
+    (<Quantity [0.,1.,2.,3.,4.,5.,6.,7.] kpc>, <Quantity [0.,1.,2.,3.,4.,5.,6.,7.] km / s>)
 
 The default representation is Cartesian, but the class can also be instantiated
 with representation objects instead of `~astropy.units.Quantity`'s -- this is
@@ -103,7 +102,7 @@ representations of the position and velocity::
     >>> w
     <PhaseSpacePosition cylindrical, dim=3, shape=(4,)>
     >>> w.rho
-    <Quantity [1., 2., 3., 4.] kpc>
+    <Quantity [1.,2.,3.,4.] kpc>
 
 We can easily transform the full phase-space vector to new representations or
 coordinate frames. These transformations use the :mod:`astropy.coordinates`
@@ -111,10 +110,10 @@ coordinate frames. These transformations use the :mod:`astropy.coordinates`
 
     >>> cart = w.represent_as('cartesian')
     >>> cart.x
-    <Quantity [ 1. ,  1. , -1.5, -4. ] kpc>
+    <Quantity [ 1. , 1. ,-1.5,-4. ] kpc>
     >>> sph = w.represent_as('spherical')
     >>> sph.distance
-    <Distance [1.41421356, 2.02758751, 3.01846171, 4.12310563] kpc>
+    <Distance [1.41421356,2.02758751,3.01846171,4.12310563] kpc>
 
 There is also support for transforming the positions and velocities (assumed to
 be in a `~astropy.coordinates.Galactocentric` frame) to any of the other
@@ -125,10 +124,10 @@ coordinate frames. For example, to transform to
     >>> gal_c = w.to_coord_frame(Galactic)
     >>> gal_c # doctest: +FLOAT_CMP
     <Galactic Coordinate: (l, b, distance) in (deg, deg, kpc)
-        [(  4.42801092e-05,  -6.11537341,  9.35649038),
-         (  1.05488650e+01,  -1.99824507,  9.46673245),
-         (  2.09134381e+01,   2.58371838,  7.28582479),
-         (  7.26282965e-05,  12.9365465 ,  4.40866775)]
+        [(4.42801092e-05, -6.11537341, 9.35649038),
+         (1.05488650e+01, -1.99824507, 9.46673245),
+         (2.09134381e+01,  2.58371838, 7.28582479),
+         (7.26282965e-05, 12.9365465 , 4.40866775)]
      (pm_l_cosb, pm_b, radial_velocity) in (mas / yr, mas / yr, km / s)
         [( -27.28114046, -0.27857153,    90.80507879),
          ( -12.51009123,  0.17381423,   517.81257826),
@@ -248,8 +247,7 @@ example::
     >>> orbit
     <Orbit cartesian, dim=3, shape=(5001,)>
     >>> orbit.t
-    <Quantity [0.000e+00, 1.000e+00, 2.000e+00, ..., 4.998e+03, 4.999e+03,
-               5.000e+03] Myr>
+    <Quantity [0.000e+00,1.000e+00,2.000e+00,...,4.998e+03,4.999e+03,5.000e+03] Myr>
     >>> orbit.potential
     <PlummerPotential: m=1.00e+10, b=1.00 (kpc,Myr,solMass,rad)>
 
@@ -297,7 +295,7 @@ latter few get better with smaller timesteps::
 
     >>> orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.1, n_steps=100000)
     >>> np.mean(orbit.angular_momentum(), axis=1) # doctest: +FLOAT_CMP
-    <Quantity [ 0.        , 0.        , 0.76703412] kpc2 / Myr>
+    <Quantity [0.        ,0.        ,0.76703412] kpc2 / Myr>
     >>> orbit.eccentricity() # doctest: +FLOAT_CMP
     <Quantity 0.31951765618193967>
     >>> orbit.pericenter() # doctest: +FLOAT_CMP
