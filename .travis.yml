@@ -1,7 +1,7 @@
 language: python
 
 python:
-    - 2.7
+    # - 2.7 # TEMPORARILY DISABLED: until numpy 1.14.1 is out, einsum bug
     - 3.5
     - 3.6
 
