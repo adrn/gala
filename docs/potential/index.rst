@@ -94,7 +94,7 @@ This also works for multiple positions by passing in a 2D position (but see
     >>> pos = np.array([[1.,-1.,0],
     ...                 [2.,3.,0]]).T
     >>> ptmass.energy(pos*u.au)
-    <Quantity [-27.91440236,-10.94892941] AU2 / yr2>
+    <Quantity [-27.91440236, -10.94892941] AU2 / yr2>
 
 We may also compute the gradient or acceleration::
 
