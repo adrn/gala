@@ -1,7 +1,6 @@
 language: python
 
 python:
-    # - 2.7 # TEMPORARILY DISABLED: until numpy 1.14.1 is out, einsum bug
     - 3.5
     - 3.6
 
@@ -49,13 +48,6 @@ matrix:
         # Try Astropy development version
         - python: 3.6
           env: ASTROPY_VERSION=development
-
-        # For some reason, numpy 1.14 isn't in the standard conda channel for
-        # Python 2.7?
-        - python: 2.7
-          env:
-            - SETUP_CMD='test'
-            - NUMPY_VERSION=dev
 
 before_install:
 
