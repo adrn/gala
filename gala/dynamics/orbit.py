@@ -455,7 +455,10 @@ class Orbit(PhaseSpacePosition):
                              "and times.")
 
         if func is None:
+            reduce = False
             func = lambda x: x
+        else:
+            reduce = True
 
         # time must increase
         if self.t[-1] < self.t[0]:
@@ -472,7 +475,9 @@ class Orbit(PhaseSpacePosition):
             times.append(t)
 
         if return_times:
-            return u.Quantity(vals), u.Quantity(times)
+            return vals, times
+        elif reduce:
+            return u.Quantity(vals).reshape(self.shape[1:])
         else:
             return u.Quantity(vals)
 
@@ -519,7 +524,10 @@ class Orbit(PhaseSpacePosition):
                              "and times.")
 
         if func is None:
+            reduce = False
             func = lambda x: x
+        else:
+            reduce = True
 
         # time must increase
         if self.t[-1] < self.t[0]:
@@ -536,7 +544,9 @@ class Orbit(PhaseSpacePosition):
             times.append(t)
 
         if return_times:
-            return u.Quantity(vals), u.Quantity(times)
+            return vals, times
+        elif reduce:
+            return u.Quantity(vals).reshape(self.shape[1:])
         else:
             return u.Quantity(vals)
 
@@ -583,7 +593,10 @@ class Orbit(PhaseSpacePosition):
                              "and times.")
 
         if func is None:
+            reduce = False
             func = lambda x: x
+        else:
+            reduce = True
 
         # time must increase
         if self.t[-1] < self.t[0]:
@@ -600,7 +613,9 @@ class Orbit(PhaseSpacePosition):
             times.append(t)
 
         if return_times:
-            return u.Quantity(vals), u.Quantity(times)
+            return vals, times
+        elif reduce:
+            return u.Quantity(vals).reshape(self.shape[1:])
         else:
             return u.Quantity(vals)
 

@@ -342,6 +342,9 @@ def test_apocenter_pericenter():
     apo = w.apocenter()
     per = w.pericenter()
     zmax = w.zmax()
+    assert apo.shape == ()
+    assert per.shape == ()
+    assert zmax.shape == ()
 
     assert apo.unit == u.au
     assert per.unit == u.au
