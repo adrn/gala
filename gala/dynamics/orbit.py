@@ -212,7 +212,7 @@ class Orbit(PhaseSpacePosition):
         if self.xyz.ndim < 3:
             return 1
         else:
-            return self.shape[2]
+            return self.shape[1]
 
     # ------------------------------------------------------------------------
     # Input / output
@@ -297,6 +297,17 @@ class Orbit(PhaseSpacePosition):
         return cls(pos=pos, vel=vel, t=time,
                    frame=frame, potential=potential)
 
+    def orbit_gen(self):
+        """
+        Generator for iterating over each orbit.
+        """
+        if self.norbits == 1:
+            yield self
+
+        else:
+            for i in range(self.norbits):
+                yield self[:, i]
+
     # ------------------------------------------------------------------------
     # Computed dynamical quantities
     #
@@ -354,8 +365,69 @@ class Orbit(PhaseSpacePosition):
 
         return hamiltonian(self)
 
+    def _max_helper(self, arr, approximate=False,
+                    interp_kwargs=None, minimize_kwargs=None):
+        """
+        Helper function for computing extrema (apocenter, pericenter, z_height)
+        and times of extrema.
+
+        Parameters
+        ----------
+        arr : `numpy.ndarray`
+        """
+        assert self.norbits == 1
+        assert self.t[-1] > self.t[0] # time must increase
+
+        _ix = argrelmax(arr.value, mode='wrap')[0]
+        _ix = _ix[(_ix != 0) & (_ix != (len(arr)-1))] # remove edges
+        t = self.t.value
+
+        approx_arr = arr[_ix]
+        approx_t = t[_ix]
+
+        if approximate:
+            return approx_arr, approx_t * self.t.unit
+
+        if interp_kwargs is None:
+            interp_kwargs = dict()
+
+        if minimize_kwargs is None:
+            minimize_kwargs = dict()
+
+        # default scipy function kwargs
+        interp_kwargs.setdefault('k', 3)
+        interp_kwargs.setdefault('ext', 3) # don't extrapolate, use boundary
+        minimize_kwargs.setdefault('method', 'powell')
+
+        # Interpolating function to upsample array:
+        # Negative sign because we assume we're always finding the maxima
+        interp_func = InterpolatedUnivariateSpline(t, -arr.value,
+                                                   **interp_kwargs)
+
+        better_times = np.zeros(_ix.shape, dtype=float)
+        for i, j in enumerate(_ix):
+            res = minimize(interp_func, t[j], **minimize_kwargs)
+            better_times[i] = res.x
+
+        better_arr = -interp_func(better_times)
+        return better_arr * arr.unit, better_times * self.t.unit
+
+    def _max_return_helper(self, vals, times, return_times, reduce):
+        if return_times:
+            if len(vals) == 1:
+                return vals[0], times[0]
+            else:
+                return vals, times
+
+        elif reduce:
+            return u.Quantity(vals).reshape(self.shape[1:])
+
+        else:
+            return u.Quantity(vals)
+
     def pericenter(self, return_times=False, func=np.mean,
-                   interp_kwargs=None, minimize_kwargs=None):
+                   interp_kwargs=None, minimize_kwargs=None,
+                   approximate=False):
         """
         Estimate the pericenter(s) of the orbit by identifying local minima in
         the spherical radius and interpolating between timesteps near the
@@ -376,6 +448,8 @@ class Orbit(PhaseSpacePosition):
             :class:`scipy.interpolate.InterpolatedUnivariateSpline`.
         minimize_kwargs : dict (optional)
             Keyword arguments to be passed to :class:`scipy.optimize.minimize`.
+        approximate : bool (optional)
+            Compute an approximate pericenter by skipping interpolation.
 
         Returns
         -------
@@ -393,57 +467,38 @@ class Orbit(PhaseSpacePosition):
                              "you want to return all individual pericenters "
                              "and times.")
 
-        if interp_kwargs is None:
-            interp_kwargs = dict()
-
-        if minimize_kwargs is None:
-            minimize_kwargs = dict()
-
         if func is None:
+            reduce = False
             func = lambda x: x
+        else:
+            reduce = True
 
         # time must increase
         if self.t[-1] < self.t[0]:
             self = self[::-1]
 
-        # default scipy function kwargs
-        interp_kwargs.setdefault('k', 3)
-        interp_kwargs.setdefault('ext', 3) # don't extrapolate, return boundary
-        minimize_kwargs.setdefault('method', 'powell')
+        vals = []
+        times = []
+        for orbit in self.orbit_gen():
+            v, t = orbit._max_helper(-orbit.physicsspherical.r, # pericenter
+                                     interp_kwargs=interp_kwargs,
+                                     minimize_kwargs=minimize_kwargs,
+                                     approximate=approximate)
+            vals.append(func(-v)) # negative for pericenter
+            times.append(t)
 
-        # orbital radius
-        r = self.physicsspherical.r.value
-        t = self.t.value
-        _ix = argrelmin(r, mode='wrap')[0]
-
-        # remove 0'th index and final index, if present, to remove ambiguity
-        _ix = _ix[(_ix != 0) & (_ix != (len(r)-1))]
-
-        # interpolating function to upsample orbit
-        interp_func = InterpolatedUnivariateSpline(t, r, **interp_kwargs)
-
-        refined_times = np.zeros(_ix.shape, dtype=float)
-        for i,j in enumerate(_ix):
-            res = minimize(interp_func, t[j], **minimize_kwargs)
-            refined_times[i] = res.x
-
-        peri = interp_func(refined_times) * self.cartesian.x.unit
-
-        if return_times:
-            return peri, refined_times * self.t.unit
-
-        else:
-            return func(peri)
+        return self._max_return_helper(vals, times, return_times, reduce)
 
     def apocenter(self, return_times=False, func=np.mean,
-                  interp_kwargs=None, minimize_kwargs=None):
+                  interp_kwargs=None, minimize_kwargs=None,
+                  approximate=False):
         """
         Estimate the apocenter(s) of the orbit by identifying local maxima in
         the spherical radius and interpolating between timesteps near the
         maxima.
 
         By default, this returns the mean of all local maxima (apocenters). To
-        get, e.g., the largest apocenter, pass in ``func=np.min``. To get
+        get, e.g., the largest apocenter, pass in ``func=np.max``. To get
         all apocenters, pass in ``func=None``.
 
         Parameters
@@ -457,6 +512,8 @@ class Orbit(PhaseSpacePosition):
             :class:`scipy.interpolate.InterpolatedUnivariateSpline`.
         minimize_kwargs : dict (optional)
             Keyword arguments to be passed to :class:`scipy.optimize.minimize`.
+        approximate : bool (optional)
+            Compute an approximate apocenter by skipping interpolation.
 
         Returns
         -------
@@ -474,49 +531,93 @@ class Orbit(PhaseSpacePosition):
                              "you want to return all individual apocenters "
                              "and times.")
 
-        if interp_kwargs is None:
-            interp_kwargs = dict()
-
-        if minimize_kwargs is None:
-            minimize_kwargs = dict()
-
         if func is None:
+            reduce = False
             func = lambda x: x
+        else:
+            reduce = True
 
         # time must increase
         if self.t[-1] < self.t[0]:
             self = self[::-1]
 
-        # default scipy function kwargs
-        interp_kwargs.setdefault('k', 3)
-        interp_kwargs.setdefault('ext', 3) # don't extrapolate, return boundary
-        minimize_kwargs.setdefault('method', 'powell')
+        vals = []
+        times = []
+        for orbit in self.orbit_gen():
+            v, t = orbit._max_helper(orbit.physicsspherical.r, # apocenter
+                                     interp_kwargs=interp_kwargs,
+                                     minimize_kwargs=minimize_kwargs,
+                                     approximate=approximate)
+            vals.append(func(v))
+            times.append(t)
 
-        # orbital radius
-        r = self.physicsspherical.r.value
-        t = self.t.value
-        _ix = argrelmax(r, mode='wrap')[0]
+        return self._max_return_helper(vals, times, return_times, reduce)
 
-        # remove 0'th index and final index, if present, to remove ambiguity
-        _ix = _ix[(_ix != 0) & (_ix != (len(r)-1))]
+    def zmax(self, return_times=False, func=np.mean,
+             interp_kwargs=None, minimize_kwargs=None,
+             approximate=False):
+        """
+        Estimate the maximum ``z`` height of the orbit by identifying local
+        maxima in the absolute value of the ``z`` position and interpolating
+        between timesteps near the maxima.
 
-        # interpolating function to upsample orbit
-        interp_func = InterpolatedUnivariateSpline(t, r, **interp_kwargs)
+        By default, this returns the mean of all local maxima. To get, e.g., the
+        largest ``z`` excursion, pass in ``func=np.max``. To get all ``z``
+        maxima, pass in ``func=None``.
 
-        refined_times = np.zeros(_ix.shape, dtype=float)
-        for i,ix in enumerate(_ix):
-            res = minimize(lambda x: -interp_func(x), t[ix], **minimize_kwargs)
-            refined_times[i] = res.x
+        Parameters
+        ----------
+        func : func (optional)
+            A function to evaluate on all of the identified z maximum times.
+        return_times : bool (optional)
+            Also return the times of maximum.
+        interp_kwargs : dict (optional)
+            Keyword arguments to be passed to
+            :class:`scipy.interpolate.InterpolatedUnivariateSpline`.
+        minimize_kwargs : dict (optional)
+            Keyword arguments to be passed to :class:`scipy.optimize.minimize`.
+        approximate : bool (optional)
+            Compute approximate values by skipping interpolation.
 
-        apo = interp_func(refined_times) * self.cartesian.x.unit
+        Returns
+        -------
+        zs : float, :class:`~numpy.ndarray`
+            Either a single number or an array of maximum z heights.
+        times : :class:`~numpy.ndarray` (optional, see ``return_times``)
+            If ``return_times=True``, also returns an array of the apocenter
+            times.
 
-        if return_times:
-            return apo, refined_times * self.t.unit
+        """
 
+        if return_times and func is None:
+            raise ValueError("Cannot return times if reducing "
+                             "using an input function. Pass `func=None` if "
+                             "you want to return all individual values "
+                             "and times.")
+
+        if func is None:
+            reduce = False
+            func = lambda x: x
         else:
-            return func(apo)
+            reduce = True
 
-    def eccentricity(self):
+        # time must increase
+        if self.t[-1] < self.t[0]:
+            self = self[::-1]
+
+        vals = []
+        times = []
+        for orbit in self.orbit_gen():
+            v, t = orbit._max_helper(np.abs(orbit.cylindrical.z),
+                                     interp_kwargs=interp_kwargs,
+                                     minimize_kwargs=minimize_kwargs,
+                                     approximate=approximate)
+            vals.append(func(v))
+            times.append(t)
+
+        return self._max_return_helper(vals, times, return_times, reduce)
+
+    def eccentricity(self, **kw):
         r"""
         Returns the eccentricity computed from the mean apocenter and
         mean pericenter.
@@ -525,14 +626,20 @@ class Orbit(PhaseSpacePosition):
 
             e = \frac{r_{\rm apo} - r_{\rm per}}{r_{\rm apo} + r_{\rm per}}
 
+        Parameters
+        ----------
+        **kw
+            Any keyword arguments passed to ``apocenter()`` and
+            ``pericenter()``. For example, ``approximate=True``.
+
         Returns
         -------
         ecc : float
             The orbital eccentricity.
 
         """
-        ra = self.apocenter()
-        rp = self.pericenter()
+        ra = self.apocenter(**kw)
+        rp = self.pericenter(**kw)
         return (ra - rp) / (ra + rp)
 
     def estimate_period(self, radial=True):
