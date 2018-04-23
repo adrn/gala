@@ -568,7 +568,7 @@ class Orbit(PhaseSpacePosition):
         Parameters
         ----------
         func : func (optional)
-            A function to evaluate on all of the identified |z| maximum times.
+            A function to evaluate on all of the identified z maximum times.
         return_times : bool (optional)
             Also return the times of maximum.
         interp_kwargs : dict (optional)
@@ -582,7 +582,7 @@ class Orbit(PhaseSpacePosition):
         Returns
         -------
         zs : float, :class:`~numpy.ndarray`
-            Either a single number or an array of maximum |z| heights.
+            Either a single number or an array of maximum z heights.
         times : :class:`~numpy.ndarray` (optional, see ``return_times``)
             If ``return_times=True``, also returns an array of the apocenter
             times.
