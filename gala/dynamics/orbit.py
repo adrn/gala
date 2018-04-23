@@ -412,6 +412,19 @@ class Orbit(PhaseSpacePosition):
         better_arr = -interp_func(better_times)
         return better_arr * arr.unit, better_times * self.t.unit
 
+    def _max_return_helper(self, vals, times, return_times, reduce):
+        if return_times:
+            if len(vals) == 1:
+                return vals[0], times[0]
+            else:
+                return vals, times
+
+        elif reduce:
+            return u.Quantity(vals).reshape(self.shape[1:])
+
+        else:
+            return u.Quantity(vals)
+
     def pericenter(self, return_times=False, func=np.mean,
                    interp_kwargs=None, minimize_kwargs=None,
                    approximate=False):
@@ -474,12 +487,7 @@ class Orbit(PhaseSpacePosition):
             vals.append(func(-v)) # negative for pericenter
             times.append(t)
 
-        if return_times:
-            return vals, times
-        elif reduce:
-            return u.Quantity(vals).reshape(self.shape[1:])
-        else:
-            return u.Quantity(vals)
+        return self._max_return_helper(vals, times, return_times, reduce)
 
     def apocenter(self, return_times=False, func=np.mean,
                   interp_kwargs=None, minimize_kwargs=None,
@@ -543,12 +551,7 @@ class Orbit(PhaseSpacePosition):
             vals.append(func(v))
             times.append(t)
 
-        if return_times:
-            return vals, times
-        elif reduce:
-            return u.Quantity(vals).reshape(self.shape[1:])
-        else:
-            return u.Quantity(vals)
+        return self._max_return_helper(vals, times, return_times, reduce)
 
     def zmax(self, return_times=False, func=np.mean,
              interp_kwargs=None, minimize_kwargs=None,
@@ -612,12 +615,7 @@ class Orbit(PhaseSpacePosition):
             vals.append(func(v))
             times.append(t)
 
-        if return_times:
-            return vals, times
-        elif reduce:
-            return u.Quantity(vals).reshape(self.shape[1:])
-        else:
-            return u.Quantity(vals)
+        return self._max_return_helper(vals, times, return_times, reduce)
 
     def eccentricity(self, **kw):
         r"""
