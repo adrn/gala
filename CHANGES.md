@@ -5,9 +5,18 @@ New Features
 ------------
 
 - Added a ``NullPotential`` class that has 0 mass and serves as a placeholder.
+- Added a new ``zmax()`` method on the ``Orbit`` class to compute the maximum z
+  heights and times, or the mean maximum z height. Similar to ``apocenter()``
+  and ``pericenter()``.
+- Added a new generator method on the ``Orbit`` class for easy iteration over
+  orbits.
 
-API-breaking changes
---------------------
+Bug fixes
+---------
+
+- ``Orbit.norbits`` now works...oops.
+- ``apocenter()`` and ``pericenter()`` now work when more than one orbit is
+  stored in an ``Orbit`` class.
 
 0.2.2 (2017-10-07)
 ==================

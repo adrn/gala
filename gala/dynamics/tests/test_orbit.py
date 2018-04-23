@@ -336,13 +336,19 @@ def test_apocenter_pericenter():
                             vel=[0.,1.5*np.pi,0.]*u.au/u.yr)
 
     ham = Hamiltonian(pot)
-    w = ham.integrate_orbit(w0, dt=0.01, n_steps=10000, Integrator=DOPRI853Integrator)
+    w = ham.integrate_orbit(w0, dt=0.01, n_steps=10000,
+                            Integrator=DOPRI853Integrator)
 
     apo = w.apocenter()
     per = w.pericenter()
+    zmax = w.zmax()
+    assert apo.shape == ()
+    assert per.shape == ()
+    assert zmax.shape == ()
 
     assert apo.unit == u.au
     assert per.unit == u.au
+    assert zmax.unit == u.au
     assert apo > per
 
     # see if they're where we expect
@@ -361,12 +367,25 @@ def test_apocenter_pericenter():
     # Return all peris, apos
     apos = w.apocenter(func=None)
     pers = w.pericenter(func=None)
+    zmax = w.zmax(func=None)
 
     dapo = np.std(apos) / np.mean(apos)
     assert (dapo > 0) and np.allclose(dapo, 0., atol=1E-5)
 
     dper = np.std(pers) / np.mean(pers)
     assert (dper > 0) and np.allclose(dper, 0., atol=1E-5)
+
+    # Now try for expected behavior when multiple orbits are integrated:
+    w0 = PhaseSpacePosition(pos=([[1,0,0.], [1.1,0,0]]*u.au).T,
+                            vel=([[0.,1.5*np.pi,0.],
+                                  [0.,1.5*np.pi,0.]]*u.au/u.yr).T)
+
+    w = ham.integrate_orbit(w0, dt=0.01, n_steps=10000)
+
+    per = w.pericenter(approximate=True)
+    apo = w.apocenter(approximate=True)
+    zmax = w.zmax(approximate=True)
+    ecc = w.eccentricity(approximate=True)
 
 def test_estimate_period():
     ntimes = 16384
