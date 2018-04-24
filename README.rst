@@ -50,6 +50,7 @@ Please also consider citing the Zenodo DOI |DOI| as a software citation::
     @misc{Price-Whelan:2018,
       author       = {Adrian Price-Whelan and
                       Brigitta Sipocz and
+                      Daniel Lenz and
                       Syrtis Major and
                       Semyeong Oh},
       title        = {adrn/gala: v0.3},

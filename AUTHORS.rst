@@ -2,8 +2,9 @@ Main author:
 
 Adrian Price-Whelan (`@adrn <https://github.com/adrn>`_)
 
-Contributors:
+Contributors (alphabetical last name):
 
-- Brigitta Sipocz
+- Daniel Lenz
 - Syrtis Major
 - Semyeong Oh
+- Brigitta Sipocz
