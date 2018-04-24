@@ -35,6 +35,7 @@ docs/*/_*
 dist
 build
 eggs
+.eggs
 parts
 bin
 var
@@ -54,4 +55,3 @@ distribute-*.tar.gz
 notebooks
 plots
 scripts
-
