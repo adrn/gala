@@ -18,3 +18,4 @@ dependencies:
   - ipykernel
   - pip:
     - nbsphinx==0.3.1
+    - sphinx_astropy
