@@ -162,7 +162,7 @@ time-independent in the toy potential::
     :context: close-figs
 
     fig,ax = plt.subplots(1,1)
-    ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc*u.Msun), marker='')
+    ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc), marker='')
     ax.set_xlabel(r"$t$ [Myr]")
     ax.set_ylabel(r"$J_1$ [kpc km/s]")
     fig.tight_layout()
@@ -188,11 +188,11 @@ actions computed using this machinery::
 
     >>> nvecs = gd.generate_n_vectors(8, dx=1, dy=2, dz=2) # doctest: +SKIP
     >>> act_correction = nvecs.T[...,None] * result['Sn'][None,:,None] * np.cos(nvecs.dot(toy_angles))[None] # doctest: +SKIP
-    >>> action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr*u.Msun # doctest: +SKIP
+    >>> action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr # doctest: +SKIP
     >>>
     >>> fig,ax = plt.subplots(1,1) # doctest: +SKIP
-    >>> ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc*u.Msun), marker='', label='$J_1$') # doctest: +SKIP
-    >>> ax.plot(w.t, action_approx[0].to(u.km/u.s*u.kpc*u.Msun), marker='', label="$J_1'$") # doctest: +SKIP
+    >>> ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc), marker='', label='$J_1$') # doctest: +SKIP
+    >>> ax.plot(w.t, action_approx[0].to(u.km/u.s*u.kpc), marker='', label="$J_1'$") # doctest: +SKIP
     >>> ax.set_xlabel(r"$t$ [Myr]") # doctest: +SKIP
     >>> ax.set_ylabel(r"[kpc ${\rm M}_\odot$ km/s]") # doctest: +SKIP
     >>> ax.legend() # doctest: +SKIP
@@ -208,10 +208,10 @@ actions computed using this machinery::
 
     nvecs = gd.generate_n_vectors(8, dx=1, dy=2, dz=2)
     act_correction = nvecs.T[...,None] * result['Sn'][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
-    action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr*u.Msun
+    action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr
     fig,ax = plt.subplots(1,1)
-    ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc*u.Msun), marker='', label='$J_1$')
-    ax.plot(w.t, action_approx[0].to(u.km/u.s*u.kpc*u.Msun), marker='', label="$J_1'$")
+    ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc), marker='', label='$J_1$')
+    ax.plot(w.t, action_approx[0].to(u.km/u.s*u.kpc), marker='', label="$J_1'$")
     ax.set_xlabel(r"$t$ [Myr]")
     ax.set_ylabel(r"[kpc ${\rm M}_\odot$ km/s]")
     ax.legend()
@@ -288,13 +288,13 @@ and the same initial conditions as above:
     #   toy potential actions to the approximate true potential actions
     nvecs = gd.generate_n_vectors(8, dx=1, dy=2, dz=2)
     act_correction = nvecs.T[...,None] * result['Sn'][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
-    action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr*u.Msun
+    action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr
 
     fig,axes = plt.subplots(3,1,figsize=(6,14))
 
     for i,ax in enumerate(axes):
-        ax.plot(w.t, toy_actions[i].to(u.km/u.s*u.kpc*u.Msun), marker='', label='$J_{}$'.format(i+1))
-        ax.plot(w.t, action_approx[i].to(u.km/u.s*u.kpc*u.Msun), marker='', label="$J_{}'$".format(i+1))
+        ax.plot(w.t, toy_actions[i].to(u.km/u.s*u.kpc), marker='', label='$J_{}$'.format(i+1))
+        ax.plot(w.t, action_approx[i].to(u.km/u.s*u.kpc), marker='', label="$J_{}'$".format(i+1))
         ax.set_ylabel(r"[kpc ${\rm M}_\odot$ km/s]")
         ax.legend(loc='upper left')
 
