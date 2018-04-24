@@ -45,18 +45,18 @@ paper::
       journal = {The Journal of Open Source Software}
     }
 
-Please consider also citing the Zenodo DOI |DOI| as a software citation::
+Please also consider citing the Zenodo DOI |DOI| as a software citation::
 
-    @misc{Price-Whelan:2017,
+    @misc{Price-Whelan:2018,
       author       = {Adrian Price-Whelan and
                       Brigitta Sipocz and
                       Syrtis Major and
                       Semyeong Oh},
-      title        = {adrn/gala: v0.2.1},
-      month        = jul,
-      year         = 2017,
-      doi          = {10.5281/zenodo.833339},
-      url          = {https://doi.org/10.5281/zenodo.833339}
+      title        = {adrn/gala: v0.3},
+      month        = apr,
+      year         = 2018,
+      doi          = {10.5281/zenodo.1227457},
+      url          = {https://doi.org/10.5281/zenodo.1227457}
     }
 
 License
