@@ -6,6 +6,7 @@ from __future__ import division, print_function
 
 
 # Third-party
+import astropy.units as u
 import numpy as np
 
 from astropy.coordinates import frame_transform_graph

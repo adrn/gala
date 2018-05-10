@@ -8,6 +8,7 @@ from __future__ import division, print_function
 # Third-party
 import numpy as np
 
+import astropy.units as u
 import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import matrix_transpose
