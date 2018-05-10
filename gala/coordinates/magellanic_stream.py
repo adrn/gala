@@ -60,6 +60,7 @@ class MagellanicStream(BaseCoordinateFrame):
 
     def __init__(self, *args, **kwargs):
         wrap = kwargs.pop('wrap_longitude', True)
+        super().__init__(*args, **kwargs)
         if wrap and isinstance(self._data, (r.UnitSphericalRepresentation,
                                             r.SphericalRepresentation)):
             self._data.lon.wrap_angle = self._default_wrap_angle
