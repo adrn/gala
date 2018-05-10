@@ -461,7 +461,7 @@ class Orbit(PhaseSpacePosition):
 
         """
 
-        if return_times and func is None:
+        if return_times and func is not None:
             raise ValueError("Cannot return times if reducing pericenters "
                              "using an input function. Pass `func=None` if "
                              "you want to return all individual pericenters "
@@ -525,7 +525,7 @@ class Orbit(PhaseSpacePosition):
 
         """
 
-        if return_times and func is None:
+        if return_times and func is not None:
             raise ValueError("Cannot return times if reducing apocenters "
                              "using an input function. Pass `func=None` if "
                              "you want to return all individual apocenters "
@@ -589,7 +589,7 @@ class Orbit(PhaseSpacePosition):
 
         """
 
-        if return_times and func is None:
+        if return_times and func is not None:
             raise ValueError("Cannot return times if reducing "
                              "using an input function. Pass `func=None` if "
                              "you want to return all individual values "
