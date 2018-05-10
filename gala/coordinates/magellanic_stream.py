@@ -56,6 +56,14 @@ class MagellanicStream(BaseCoordinateFrame):
     _ngp = Galactic(l=188.5*u.deg, b=-7.5*u.deg)
     _lon0 = Galactic(l=280.47*u.deg, b=-32.75*u.deg)
 
+    _default_wrap_angle = 180*u.deg
+
+    def __init__(self, *args, **kwargs):
+        wrap = kwargs.pop('wrap_longitude', True)
+        if wrap and isinstance(self._data, (r.UnitSphericalRepresentation,
+                                            r.SphericalRepresentation)):
+            self._data.lon.wrap_angle = self._default_wrap_angle
+
 
 @frame_transform_graph.transform(StaticMatrixTransform,
                                  Galactic, MagellanicStream)

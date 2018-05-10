@@ -52,23 +52,16 @@ class Sagittarius(coord.BaseCoordinateFrame):
         coord.SphericalRepresentation: [
             coord.RepresentationMapping('lon', 'Lambda'),
             coord.RepresentationMapping('lat', 'Beta'),
-            coord.RepresentationMapping('distance', 'distance')],
-        coord.SphericalCosLatDifferential: [
-            coord.RepresentationMapping('d_lon_coslat', 'pm_Lambda_cosBeta'),
-            coord.RepresentationMapping('d_lat', 'pm_Beta'),
-            coord.RepresentationMapping('d_distance', 'radial_velocity')],
-        coord.SphericalDifferential: [
-            coord.RepresentationMapping('d_lon', 'pm_Lambda'),
-            coord.RepresentationMapping('d_lat', 'pm_Beta'),
-            coord.RepresentationMapping('d_distance', 'radial_velocity')]
+            coord.RepresentationMapping('distance', 'distance')]
     }
 
-    frame_specific_representation_info[coord.UnitSphericalRepresentation] = \
-        frame_specific_representation_info[coord.SphericalRepresentation]
-    frame_specific_representation_info[coord.UnitSphericalCosLatDifferential] = \
-        frame_specific_representation_info[coord.SphericalCosLatDifferential]
-    frame_specific_representation_info[coord.UnitSphericalDifferential] = \
-        frame_specific_representation_info[coord.SphericalDifferential]
+    _default_wrap_angle = 180*u.deg
+
+    def __init__(self, *args, **kwargs):
+        wrap = kwargs.pop('wrap_longitude', True)
+        if wrap and isinstance(self._data, (coord.UnitSphericalRepresentation,
+                                            coord.SphericalRepresentation)):
+            self._data.lon.wrap_angle = self._default_wrap_angle
 
 # Define the Euler angles (from Law & Majewski 2010)
 phi = (180+3.75) * u.degree

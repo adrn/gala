@@ -52,23 +52,16 @@ class Pal5(coord.BaseCoordinateFrame):
         coord.SphericalRepresentation: [
             coord.RepresentationMapping('lon', 'phi1'),
             coord.RepresentationMapping('lat', 'phi2'),
-            coord.RepresentationMapping('distance', 'distance')],
-        coord.SphericalCosLatDifferential: [
-            coord.RepresentationMapping('d_lon_coslat', 'pm_phi1_cosphi2'),
-            coord.RepresentationMapping('d_lat', 'pm_phi2'),
-            coord.RepresentationMapping('d_distance', 'radial_velocity')],
-        coord.SphericalDifferential: [
-            coord.RepresentationMapping('d_lon', 'pm_phi1'),
-            coord.RepresentationMapping('d_lat', 'pm_phi2'),
-            coord.RepresentationMapping('d_distance', 'radial_velocity')]
+            coord.RepresentationMapping('distance', 'distance')]
     }
 
-    frame_specific_representation_info[coord.UnitSphericalRepresentation] = \
-        frame_specific_representation_info[coord.SphericalRepresentation]
-    frame_specific_representation_info[coord.UnitSphericalCosLatDifferential] = \
-        frame_specific_representation_info[coord.SphericalCosLatDifferential]
-    frame_specific_representation_info[coord.UnitSphericalDifferential] = \
-        frame_specific_representation_info[coord.SphericalDifferential]
+    _default_wrap_angle = 180*u.deg
+
+    def __init__(self, *args, **kwargs):
+        wrap = kwargs.pop('wrap_longitude', True)
+        if wrap and isinstance(self._data, (coord.UnitSphericalRepresentation,
+                                            coord.SphericalRepresentation)):
+            self._data.lon.wrap_angle = self._default_wrap_angle
 
 # Rotation matrix defined by trying to align the stream to the equator
 R = np.array([[-0.65019243, -0.75969758, -0.01045969],
