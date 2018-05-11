@@ -9,10 +9,12 @@ Introduction
 
 The `~gala.coordinates` subpackage primarily provides specialty
 :mod:`astropy.coordinates` frame classes for coordinate systems defined by the
-Sagittarius, Orphan, and GD1 streams. It also contains functions for converting
-velocities between various astronomical coordinate frames and systems, but these
-are now deprecated with v0.2 because Astropy v2.0 `now supports velocity
-transformations
+Sagittarius, Orphan, and GD1 streams, and for other common Galactic dynamics
+tasks like removing solar reflex motion from proper motions or radial
+velocities.
+It also contains deprecated functions for converting velocities between various
+astronomical coordinate frames and systems, but these will be removed soon
+because Astropy v2.0 `now supports velocity transformations
 <http://docs.astropy.org/en/stable/coordinates/velocities.html>`_.
 
 For the examples below the following imports have already been executed::
@@ -77,6 +79,78 @@ position and velocity, we can transform to a
      (v_x, v_y, v_z) in km / s
         (-73.01933674, -216.37648654, -97.60065189)>
 
+
+Correcting velocities for solar reflex motion
+---------------------------------------------
+
+The `~gala.coordinates.reflex_correct` function accepts an Astropy
+`~astropy.coordinates.SkyCoord` object with position and velocity information,
+and returns a coordinate object with the solar motion added back in to the
+velocity components. This is useful for computing velocities in a Galactocentric
+reference frame, rather than a solar system barycentric frame.
+
+To use, you pass in a coordinate object with scalar or array values::
+
+    >>> c = coord.SkyCoord(ra=[180.323, 1.523]*u.deg,
+    ...                    dec=[-17, 29]*u.deg,
+    ...                    distance=[172, 412]*u.pc,
+    ...                    pm_ra_cosdec=[-11, 3]*u.mas/u.yr,
+    ...                    pm_dec=[4, 8]*u.mas/u.yr,
+    ...                    radial_velocity=[114, -21]*u.km/u.s)
+    >>> c_gal = gc.reflex_correct(c) # doctest: +FLOAT_CMP
+    <ICRS Coordinate: (ra, dec, distance) in (deg, deg, pc)
+        [(180.323, -17., 172.), (  1.523,  29., 412.)]
+     (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
+        [(130.07952506, 166.6468671 , -38.61764069),
+         (-57.03358538,  58.77444739, 153.72743857)]>
+
+By default, this uses the default solar location and velocity from the
+`astropy.coordinates.Galactocentric` frame class. To modify these, for example,
+to change the solar velocity, or the sun's height above the Galactic midplane,
+use the arguments of that class::
+
+    >>> vsun = coord.CartesianDifferential([11., 245., 7.]*u.km/u.s)
+    >>> gc_frame = coord.Galactocentric(galcen_v_sun=vsun, z_sun=0*u.pc)
+    >>> c_gal = gc.reflex_correct(c, gc_frame) # doctest: +FLOAT_CMP
+    <ICRS Coordinate: (ra, dec, distance) in (deg, deg, pc)
+        [(180.323, -17., 172.), (  1.523,  29., 412.)]
+     (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
+        [(136.93481249, 175.37627916, -47.6177433 ),
+         (-59.96484921,  61.41044742, 163.90707073)]>
+
+If you don't have radial velocity information and want to correct the proper
+motions, pass in zeros for the radial velocity (and ignore the output value of
+the radial velocity)::
+
+    >>> c = coord.SkyCoord(ra=162*u.deg,
+    ...                    dec=-17*u.deg,
+    ...                    distance=172*u.pc,
+    ...                    pm_ra_cosdec=-11*u.mas/u.yr,
+    ...                    pm_dec=4*u.mas/u.yr,
+    ...                    radial_velocity=0*u.km/u.s)
+    >>> reflex(c) # doctest: +FLOAT_CMP
+    <ICRS Coordinate: (ra, dec, distance) in (deg, deg, pc)
+        (162., -17., 172.)
+     (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
+        (81.60359171, 155.62817259, -182.00367694)>
+
+Similarly, if you don't have proper motion information and want to correct the
+proper motions, pass in zeros for the proper motions (and ignore the output
+values of the proper motions) -- this is sometimes called "v_GSR"::
+
+    >>> c = coord.SkyCoord(ra=162*u.deg,
+    ...                    dec=-17*u.deg,
+    ...                    distance=172*u.pc,
+    ...                    pm_ra_cosdec=0*u.mas/u.yr,
+    ...                    pm_dec=0*u.mas/u.yr,
+    ...                    radial_velocity=127*u.km/u.s)
+    >>> reflex(c) # doctest: +FLOAT_CMP
+    <ICRS Coordinate: (ra, dec, distance) in (deg, deg, pc)
+        (162., -17., 172.)
+     (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
+        (92.60359171, 151.62817259, -55.00367694)>
+
+
 References
 ----------
 
@@ -125,9 +199,9 @@ setting frame attributes of the `astropy.coordinates.Galactocentric` frame. This
 is a right-handed coordinate system with defaults for the position of the
 Galactic center in ICRS coordinates, the sun-galactic-center distance, the
 height of the sun above the Galactic midplane, and the solar velocity vector. We
-can modify all of these parameters, but for the sake of example we'll just
-change the distance and solar velocity (full velocity of the sun, including the
-circular velocity and motion with respect to the local standard of rest)::
+can modify all of these parameters, but for the sake of example we'll change the
+distance and solar velocity (full velocity of the sun, including the circular
+velocity and motion with respect to the local standard of rest)::
 
     >>> v_sun = coord.CartesianDifferential([10, 250., 7] * u.km/u.s)
     >>> gc = coord.Galactocentric(x=xyz[0], y=xyz[1], z=xyz[2],
@@ -186,8 +260,8 @@ Convert proper motions between the ``ICRS`` and ``Galactic`` frames
 
 The above Galactocentric coordinate transformations require full 3D position and
 velocity information. However, transforming proper motion components between
-different Barycentric coordinate frames is just a rotation, and can therefore be
-done with just sky position and proper motions. For example, to convert from
+different Barycentric coordinate frames is a pure rotation, and can therefore be
+done with only sky position and proper motions. For example, to convert from
 ICRS proper motions to Galactic proper motions::
 
     >>> icrs = coord.ICRS(ra=11.23*u.degree, dec=58.13*u.degree,
