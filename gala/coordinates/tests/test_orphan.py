@@ -37,8 +37,7 @@ def test_table():
         galactic = coord.Galactic(l=line['l']*u.deg, b=line['b']*u.deg)
 
         orp = galactic.transform_to(Orphan)
-        true_orp = Orphan(Lambda=line['Lambda']*u.deg, Beta=line['Beta']*u.deg)
+        true_orp = Orphan(phi1=line['Lambda']*u.deg, phi2=line['Beta']*u.deg)
 
         # TODO: why does this suck so badly?
         assert true_orp.separation(orp) < 20*u.arcsec
-

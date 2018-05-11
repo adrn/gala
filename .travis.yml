@@ -22,7 +22,7 @@ env:
         # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
         - NUMPY_VERSION=stable
-        - ASTROPY_VERSION=stable
+        - ASTROPY_VERSION=development # TEMPORARY HACK
         - SETUP_CMD='test'
         - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml h5py sympy qt ipython jupyter notebook ipykernel' # SEE PANDOC HACK BELOW
         - PIP_DEPENDENCIES='nbsphinx==0.3.1'
