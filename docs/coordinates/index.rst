@@ -97,7 +97,7 @@ To use, you pass in a coordinate object with scalar or array values::
     ...                    pm_ra_cosdec=[-11, 3]*u.mas/u.yr,
     ...                    pm_dec=[4, 8]*u.mas/u.yr,
     ...                    radial_velocity=[114, -21]*u.km/u.s)
-    >>> c_gal = gc.reflex_correct(c) # doctest: +FLOAT_CMP
+    >>> gc.reflex_correct(c) # doctest: +FLOAT_CMP
     <ICRS Coordinate: (ra, dec, distance) in (deg, deg, pc)
         [(180.323, -17., 172.), (  1.523,  29., 412.)]
      (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
@@ -128,7 +128,7 @@ the radial velocity)::
     ...                    pm_ra_cosdec=-11*u.mas/u.yr,
     ...                    pm_dec=4*u.mas/u.yr,
     ...                    radial_velocity=0*u.km/u.s)
-    >>> reflex(c) # doctest: +FLOAT_CMP
+    >>> gc.reflex_correct(c) # doctest: +FLOAT_CMP
     <ICRS Coordinate: (ra, dec, distance) in (deg, deg, pc)
         (162., -17., 172.)
      (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
@@ -144,7 +144,7 @@ values of the proper motions) -- this is sometimes called "v_GSR"::
     ...                    pm_ra_cosdec=0*u.mas/u.yr,
     ...                    pm_dec=0*u.mas/u.yr,
     ...                    radial_velocity=127*u.km/u.s)
-    >>> reflex(c) # doctest: +FLOAT_CMP
+    >>> gc.reflex_correct(c) # doctest: +FLOAT_CMP
     <ICRS Coordinate: (ra, dec, distance) in (deg, deg, pc)
         (162., -17., 172.)
      (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
