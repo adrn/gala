@@ -40,7 +40,7 @@ class MagellanicStream(BaseCoordinateFrame):
         >>> ms = c.transform_to(MagellanicStream)
         >>> print(ms)
         <MagellanicStream Coordinate: (L, B) in deg
-            (359.86313884, 2.42583948)>
+            (-0.13686116, 2.42583948)>
     """
 
     frame_specific_representation_info = {

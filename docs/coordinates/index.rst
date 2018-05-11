@@ -111,7 +111,7 @@ use the arguments of that class::
 
     >>> vsun = coord.CartesianDifferential([11., 245., 7.]*u.km/u.s)
     >>> gc_frame = coord.Galactocentric(galcen_v_sun=vsun, z_sun=0*u.pc)
-    >>> c_gal = gc.reflex_correct(c, gc_frame) # doctest: +FLOAT_CMP
+    >>> gc.reflex_correct(c, gc_frame) # doctest: +FLOAT_CMP
     <ICRS Coordinate: (ra, dec, distance) in (deg, deg, pc)
         [(180.323, -17., 172.), (  1.523,  29., 412.)]
      (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
