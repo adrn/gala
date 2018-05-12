@@ -98,7 +98,7 @@ To use, you pass in a coordinate object with scalar or array values::
     ...                    pm_dec=[4, 8]*u.mas/u.yr,
     ...                    radial_velocity=[114, -21]*u.km/u.s)
     >>> gc.reflex_correct(c) # doctest: +FLOAT_CMP
-    <ICRS Coordinate: (ra, dec, distance) in (deg, deg, pc)
+    <SkyCoord (ICRS): (ra, dec, distance) in (deg, deg, pc)
         [(180.323, -17., 172.), (  1.523,  29., 412.)]
      (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
         [(130.07952506, 166.6468671 , -38.61764069),
@@ -112,7 +112,7 @@ use the arguments of that class::
     >>> vsun = coord.CartesianDifferential([11., 245., 7.]*u.km/u.s)
     >>> gc_frame = coord.Galactocentric(galcen_v_sun=vsun, z_sun=0*u.pc)
     >>> gc.reflex_correct(c, gc_frame) # doctest: +FLOAT_CMP
-    <ICRS Coordinate: (ra, dec, distance) in (deg, deg, pc)
+    <SkyCoord (ICRS): (ra, dec, distance) in (deg, deg, pc)
         [(180.323, -17., 172.), (  1.523,  29., 412.)]
      (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
         [(136.93481249, 175.37627916, -47.6177433 ),
@@ -129,7 +129,7 @@ the radial velocity)::
     ...                    pm_dec=4*u.mas/u.yr,
     ...                    radial_velocity=0*u.km/u.s)
     >>> gc.reflex_correct(c) # doctest: +FLOAT_CMP
-    <ICRS Coordinate: (ra, dec, distance) in (deg, deg, pc)
+    <SkyCoord (ICRS): (ra, dec, distance) in (deg, deg, pc)
         (162., -17., 172.)
      (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
         (81.60359171, 155.62817259, -182.00367694)>
@@ -145,7 +145,7 @@ values of the proper motions) -- this is sometimes called "v_GSR"::
     ...                    pm_dec=0*u.mas/u.yr,
     ...                    radial_velocity=127*u.km/u.s)
     >>> gc.reflex_correct(c) # doctest: +FLOAT_CMP
-    <ICRS Coordinate: (ra, dec, distance) in (deg, deg, pc)
+    <SkyCoord (ICRS): (ra, dec, distance) in (deg, deg, pc)
         (162., -17., 172.)
      (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
         (92.60359171, 151.62817259, -55.00367694)>
