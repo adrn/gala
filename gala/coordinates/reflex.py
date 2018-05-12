@@ -36,4 +36,5 @@ def reflex_correct(coords, galactocentric_frame=None):
     observed = c.transform_to(galactocentric_frame)
     rep = observed.cartesian.without_differentials()
     rep = rep.with_differentials(observed.cartesian.differentials['s'] + v_sun)
-    return galactocentric_frame.realize_frame(rep).transform_to(c.frame)
+    fr = galactocentric_frame.realize_frame(rep).transform_to(c.frame)
+    return coord.SkyCoord(fr)
