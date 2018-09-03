@@ -154,8 +154,9 @@ def atleast_2d(*arys, **kwargs):
 
     """
     insert_axis = kwargs.pop('insert_axis', 0)
-    slc = [slice(None)]*2
+    slc = tuple([slice(None)]*2)
     slc[insert_axis] = None
+    slc = tuple(slc)
 
     res = []
     for ary in arys:
