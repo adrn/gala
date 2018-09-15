@@ -1,7 +1,19 @@
 0.4 (unreleased)
 ================
 
-- 
+New Features
+------------
+- Added a new coordinate frame for great circle coordinate systems defined by a
+  pole and longitude zero point.
+
+
+Bug fixes
+---------
+
+API changes
+-----------
+- Stream classes have been renamed to reflect the author that defined them.
+
 
 0.3 (2018-04-23)
 ================
