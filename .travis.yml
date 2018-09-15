@@ -3,6 +3,7 @@ language: python
 python:
     - 3.5
     - 3.6
+    - 3.7
 
 # Setting sudo to false opts in to Travis-CI container-based builds.
 sudo: false
@@ -22,7 +23,7 @@ env:
         # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
         - NUMPY_VERSION=stable
-        - ASTROPY_VERSION=development # TEMPORARY HACK
+        - ASTROPY_VERSION=stable
         - SETUP_CMD='test'
         - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml h5py sympy qt ipython jupyter notebook ipykernel' # SEE PANDOC HACK BELOW
         - PIP_DEPENDENCIES='nbsphinx==0.3.1'
