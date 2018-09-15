@@ -6,9 +6,12 @@
 import astropy.coordinates as coord
 import astropy.units as u
 from astropy.io import ascii
+from astropy.table import Table
+from astropy.utils.data import get_pkg_data_filename
+import numpy as np
 
 # This project
-from ..orphan import Orphan
+from ..orphan import Orphan, KoposovOrphan
 
 def test_table():
     """ Test the transformation code against table 2 values from
@@ -37,3 +40,16 @@ def test_table():
 
         # TODO: why does this suck so badly?
         assert true_orp.separation(orp) < 20*u.arcsec
+
+
+def test_kopsov():
+    tbl = Table.read(get_pkg_data_filename('sergey_orphan.txt'),
+                     format='ascii')
+    c = coord.SkyCoord(ra=tbl['ra']*u.deg,
+                       dec=tbl['dec']*u.deg)
+    orp_gc = c.transform_to(KoposovOrphan)
+
+    assert np.allclose(tbl['phi1'],
+                       orp_gc.phi1.wrap_at(180*u.deg).degree)
+    assert np.allclose(tbl['phi2'],
+                       orp_gc.phi2.degree)

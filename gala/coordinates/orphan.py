@@ -1,13 +1,20 @@
-""" Astropy coordinate class for the Sagittarius coordinate system """
+""" Astropy coordinate class for the Orphan stream coordinate systems """
 
-from astropy.coordinates import frame_transform_graph
 import astropy.coordinates as coord
 import astropy.units as u
-from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product, matrix_transpose
+from astropy.coordinates import frame_transform_graph, DynamicMatrixTransform
+from astropy.coordinates.matrix_utilities import (rotation_matrix,
+                                                  matrix_product,
+                                                  matrix_transpose)
 
-__all__ = ["Orphan"]
+from .greatcircle import (GreatCircleICRSFrame,
+                          greatcircle_transforms)
 
-class Orphan(coord.BaseCoordinateFrame):
+
+__all__ = ["Orphan", "NewbergOrphan", "KoposovOrphan"]
+
+
+class NewbergOrphan(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
     of the Orphan stream, as described in
@@ -60,6 +67,14 @@ class Orphan(coord.BaseCoordinateFrame):
                                             coord.SphericalRepresentation)):
             self._data.lon.wrap_angle = self._default_wrap_angle
 
+
+class Orphan(NewbergOrphan):
+    def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn("This frame is deprecated. Use NewbergOrphan or "
+                      "KoposovOrphan instead.", DeprecationWarning)
+        super().__init__(*args, **kwargs)
+
 # Define the Euler angles
 phi = 128.79 * u.degree
 theta = 54.39 * u.degree
@@ -71,7 +86,8 @@ C = rotation_matrix(theta, "x")
 B = rotation_matrix(psi, "z")
 R = matrix_product(B, C, D)
 
-@frame_transform_graph.transform(coord.StaticMatrixTransform, coord.Galactic, Orphan)
+@frame_transform_graph.transform(coord.StaticMatrixTransform, coord.Galactic,
+                                 Orphan)
 def galactic_to_orp():
     """ Compute the transformation from Galactic spherical to
         heliocentric Orphan coordinates.
@@ -79,9 +95,39 @@ def galactic_to_orp():
     return R
 
 # Oph to Galactic coordinates
-@frame_transform_graph.transform(coord.StaticMatrixTransform, Orphan, coord.Galactic)
+@frame_transform_graph.transform(coord.StaticMatrixTransform, Orphan,
+                                 coord.Galactic)
 def oph_to_galactic():
     """ Compute the transformation from heliocentric Orphan coordinates to
         spherical Galactic.
     """
     return matrix_transpose(galactic_to_orp())
+
+
+# ------------------------------------------------------------------------------
+
+@greatcircle_transforms(self_transform=False)
+class KoposovOrphan(GreatCircleICRSFrame):
+    """A coordinate frame for the Orphan stream defined by Sergey Koposov.
+
+    Parameters
+    ----------
+    phi1 : `~astropy.units.Quantity`
+        Longitude component.
+    phi2 : `~astropy.units.Quantity`
+        Latitude component.
+    distance : `~astropy.units.Quantity`
+        Distance.
+
+    pm_phi1_cosphi2 : `~astropy.units.Quantity`
+        Proper motion in longitude.
+    pm_phi2 : `~astropy.units.Quantity`
+        Proper motion in latitude.
+    radial_velocity : `~astropy.units.Quantity`
+        Line-of-sight or radial velocity.
+    """
+
+    pole = coord.ICRS(ra=72.2643 * u.deg,
+                      dec=-20.6575 * u.deg)
+    ra0 = 160 * u.deg
+    rotation = 0 * u.deg
