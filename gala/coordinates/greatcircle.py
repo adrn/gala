@@ -8,6 +8,8 @@ from astropy.coordinates.attributes import (CoordinateAttribute,
 from astropy.coordinates.matrix_utilities import (rotation_matrix,
                                                   matrix_product,
                                                   matrix_transpose)
+from astropy.coordinates.baseframe import base_doc
+from astropy.utils.decorators import format_doc
 import numpy as np
 
 
@@ -72,16 +74,7 @@ def greatcircle_transforms(self_transform=False):
     return set_greatcircle_transforms
 
 
-@greatcircle_transforms(self_transform=True)
-class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
-    """A frame rotated into great circle coordinates with the pole and longitude
-    specified as frame attributes.
-
-    ``GreatCircleFrame``s always have component names for spherical coordinates
-    of ``phi1``/``phi2``.
-
-    Parameters
-    ----------
+_components = """
     phi1 : `~astropy.units.Quantity`
         Longitude component.
     phi2 : `~astropy.units.Quantity`
@@ -95,17 +88,28 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
         Proper motion in latitude.
     radial_velocity : `~astropy.units.Quantity`
         Line-of-sight or radial velocity.
+"""
 
-    Frame attributes
-    ----------------
-    pole : `~astropy.coordinates.SkyCoord`, `~astropy.coordinates.ICRS`
-        The coordinate specifying the pole of this frame.
-    ra0 : `~astropy.coordinates.Angle`, `~astropy.units.Quantity` [angle]
-        The right ascension (RA) of the zero point of the longitude of this
-        frame.
-    rotation : `~astropy.coordinates.Angle`, `~astropy.units.Quantity` [angle]
-        The final rotation of the frame about the pole.
+_footer = """
+Frame attributes
+----------------
+pole : `~astropy.coordinates.SkyCoord`, `~astropy.coordinates.ICRS`
+    The coordinate specifying the pole of this frame.
+ra0 : `~astropy.coordinates.Angle`, `~astropy.units.Quantity` [angle]
+    The right ascension (RA) of the zero point of the longitude of this
+    frame.
+rotation : `~astropy.coordinates.Angle`, `~astropy.units.Quantity` [angle]
+    The final rotation of the frame about the pole.
+"""
 
+@format_doc(base_doc, components=_components, footer=_footer)
+@greatcircle_transforms(self_transform=True)
+class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
+    """A frame rotated into great circle coordinates with the pole and longitude
+    specified as frame attributes.
+
+    ``GreatCircleFrame``s always have component names for spherical coordinates
+    of ``phi1``/``phi2``.
     """
 
     pole = CoordinateAttribute(default=None, frame=coord.ICRS)
@@ -130,3 +134,18 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
         if wrap and isinstance(self._data, (coord.UnitSphericalRepresentation,
                                             coord.SphericalRepresentation)):
             self._data.lon.wrap_angle = self._default_wrap_angle
+
+
+def make_greatcircle_cls(cls_name, docstring_header=None, **kwargs):
+    @format_doc(base_doc, components=_components, footer=_footer)
+    @greatcircle_transforms(self_transform=False)
+    class GCFrame(GreatCircleICRSFrame):
+        pole = kwargs.get('pole', None)
+        ra0 = kwargs.get('ra0', 0*u.deg)
+        rotation = kwargs.get('rotation', 0*u.deg)
+
+    GCFrame.__name__ = cls_name
+    if docstring_header:
+        GCFrame.__doc__ = "{0}\n{1}".format(docstring_header, GCFrame.__doc__)
+
+    return GCFrame

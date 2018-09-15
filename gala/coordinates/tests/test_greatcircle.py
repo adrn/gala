@@ -4,7 +4,7 @@ import astropy.units as u
 import numpy as np
 
 # This project
-from ..greatcircle import GreatCircleICRSFrame
+from ..greatcircle import GreatCircleICRSFrame, make_greatcircle_cls
 
 def test_cls_init():
     pole = coord.SkyCoord(ra=72.2643*u.deg, dec=-20.6575*u.deg)
@@ -35,3 +35,17 @@ def test_transform_against_koposov():
         phi1 = apw.phi1.wrap_at(180*u.deg).degree
         assert np.allclose(kop[0], phi1)
         assert np.allclose(kop[1], apw.phi2.degree)
+
+
+def test_make_function():
+    pole = coord.SkyCoord(ra=72.2643*u.deg, dec=-20.6575*u.deg)
+
+    kwargs = [dict(pole=pole),
+              dict(pole=pole, ra0=100*u.deg),
+              dict(pole=pole, rotation=50*u.deg),
+              dict(pole=pole, ra0=100*u.deg, rotation=50*u.deg)]
+    for kw in kwargs:
+        cls = make_greatcircle_cls('Michael', 'This is the docstring header',
+                                   **kw)
+        fr = cls(phi1=100*u.deg, phi2=10*u.deg)
+        fr.transform_to(coord.ICRS)
