@@ -1,9 +1,4 @@
-# coding: utf-8
-
 """ Wrapper around SciPy DOPRI853 integrator. """
-
-from __future__ import division, print_function
-
 
 # Third-party
 from scipy.integrate import ode

@@ -1,10 +1,6 @@
-# coding: utf-8
 """
     Test the integrators.
 """
-
-from __future__ import absolute_import, unicode_literals, division, print_function
-
 
 # Third-party
 import pytest

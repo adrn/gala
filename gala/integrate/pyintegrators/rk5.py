@@ -1,9 +1,4 @@
-# coding: utf-8
-
 """ 5th order Runge-Kutta integration. """
-
-from __future__ import division, print_function
-
 
 # Third-party
 import numpy as np
