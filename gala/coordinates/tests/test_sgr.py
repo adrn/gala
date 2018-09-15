@@ -1,10 +1,6 @@
-# coding: utf-8
 """
     Test the coordinates class that represents the plane of orbit of the Sgr dwarf galaxy.
 """
-
-from __future__ import absolute_import, unicode_literals, division, print_function
-
 
 # Third-party
 import astropy.coordinates as coord

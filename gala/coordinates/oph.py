@@ -1,5 +1,3 @@
-# coding: utf-8
-
 """ Astropy coordinate class for the Ophiuchus coordinate system """
 
 # Third-party

@@ -1,9 +1,6 @@
-# coding: utf-8
-
 # Third-party
 import astropy.coordinates as coord
 import astropy.units as u
-import numpy as np
 
 # This package
 from ..reflex import reflex_correct

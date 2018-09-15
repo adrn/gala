@@ -1,8 +1,3 @@
-# coding: utf-8
-
-from __future__ import absolute_import, unicode_literals, division, print_function
-
-
 # Third-party
 import astropy.coordinates as coord
 import astropy.units as u
@@ -80,4 +75,3 @@ def test_koposov():
              max(k10_gd1.phi2.degree.max(),gala_gd1.phi2.degree.max()))
 
     plt.show()
-
