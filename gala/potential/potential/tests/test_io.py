@@ -1,9 +1,4 @@
-# coding: utf-8
-
 """ test reading/writing potentials to files """
-
-from __future__ import division, print_function
-
 
 # Third-party
 import astropy.units as u

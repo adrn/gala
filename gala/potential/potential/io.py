@@ -1,9 +1,4 @@
-# coding: utf-8
-
 """ Read and write potentials to text (YAML) files. """
-
-from __future__ import division, print_function
-
 
 # Standard library
 import os
@@ -225,4 +220,3 @@ def save(potential, f):
     else:
         with open(f, 'w') as f2:
             yaml.dump(d, f2, default_flow_style=False)
-

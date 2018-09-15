@@ -1,4 +1,3 @@
-# coding: utf-8
 # cython: boundscheck=False
 # cython: nonecheck=False
 # cython: cdivision=True
@@ -6,8 +5,6 @@
 # cython: profile=False
 
 """ Built-in potentials implemented in Cython """
-
-from __future__ import division, print_function
 
 # Standard library
 from collections import OrderedDict

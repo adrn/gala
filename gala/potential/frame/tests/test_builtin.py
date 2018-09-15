@@ -1,5 +1,3 @@
-# coding: utf-8
-
 # Third-party
 import astropy.units as u
 import pytest

@@ -1,8 +1,4 @@
-# coding: utf-8
-
 """ General utilities. """
-
-from __future__ import division, print_function
 
 # Standard library
 import collections

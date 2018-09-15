@@ -1,5 +1,3 @@
-# coding: utf-8
-
 # Third-party
 import astropy.units as u
 from astropy.tests.helper import quantity_allclose
@@ -97,4 +95,3 @@ def test_frame_transforms_2d():
         _helper(frame_i, frame_r, w)
     _helper(frame_i, frame_r, w, t=0.*u.Myr)
     _helper(frame_i, frame_r, w, t=0.)
-

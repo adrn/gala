@@ -1,5 +1,3 @@
-# coding: utf-8
-
 # Third-party
 import astropy.units as u
 from astropy.tests.helper import quantity_allclose
@@ -187,5 +185,3 @@ def test_velocity_rot_frame(name, Omega, tol):
 
     assert quantity_allclose(orbit_r.xyz, orbit_i2r.xyz, atol=tol)
     assert quantity_allclose(orbit_r.v_xyz, orbit_i2r.v_xyz, atol=tol)
-
-
