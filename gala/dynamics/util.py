@@ -1,9 +1,4 @@
-# coding: utf-8
-
 """ General dynamics utilities. """
-
-from __future__ import division, print_function
-
 
 # Third-party
 import astropy.units as u
@@ -15,7 +10,6 @@ from scipy.signal import argrelmax, argrelmin
 
 # This package
 from .core import PhaseSpacePosition
-from ..integrate import LeapfrogIntegrator
 from ..util import atleast_2d
 
 __all__ = ['peak_to_peak_period', 'estimate_dt_n_steps', 'combine']

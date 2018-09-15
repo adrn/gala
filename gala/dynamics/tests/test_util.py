@@ -1,9 +1,3 @@
-# coding: utf-8
-
-""" Test utilities  """
-
-from __future__ import division, print_function
-
 # Third-party
 import astropy.units as u
 import numpy as np
@@ -132,4 +126,3 @@ class TestCombine(object):
             assert new_orb.pos.shape == shp
             assert new_orb.frame == orb.frame
             assert new_orb.potential == orb.potential
-

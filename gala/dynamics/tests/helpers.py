@@ -1,9 +1,4 @@
-# coding: utf-8
-
 """ Test helpers """
-
-from __future__ import division, print_function
-
 
 # Third-party
 import astropy.coordinates as coord

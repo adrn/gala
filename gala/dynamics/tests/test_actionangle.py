@@ -1,9 +1,4 @@
-# coding: utf-8
-
 """ Test action-angle stuff """
-
-from __future__ import division, print_function
-
 
 # Standard library
 import logging

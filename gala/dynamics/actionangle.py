@@ -1,12 +1,7 @@
-# coding: utf-8
-
-from __future__ import division, print_function
-
 """
 Utilities for estimating actions and angles for an arbitrary orbit in an
 arbitrary potential.
 """
-
 
 # Standard library
 import time

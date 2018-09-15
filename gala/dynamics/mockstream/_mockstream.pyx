@@ -1,4 +1,3 @@
-# coding: utf-8
 # cython: boundscheck=False
 # cython: debug=False
 # cython: nonecheck=False
@@ -7,8 +6,6 @@
 # cython: profile=False
 
 """ Generate mock streams. """
-
-from __future__ import division, print_function
 
 
 # Standard library
@@ -700,4 +697,3 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
             j = ntimes - all_ntimes[i]
             h5f['pos'][:,j:,i] = np.array(one_particle_w[:all_ntimes[i], :ndim_2]).T
             h5f['vel'][:,j:,i] = np.array(one_particle_w[:all_ntimes[i], ndim_2:]).T
-

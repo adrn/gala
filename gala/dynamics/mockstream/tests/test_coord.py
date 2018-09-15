@@ -1,8 +1,3 @@
-# coding: utf-8
-
-from __future__ import division, print_function
-
-
 # Project
 from .._coord import (_test_sat_rotation_matrix, _test_to_sat_coords_roundtrip,
                       _test_car_to_cyl_roundtrip, _test_cyl_to_car_roundtrip)

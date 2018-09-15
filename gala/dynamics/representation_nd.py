@@ -1,7 +1,3 @@
-# coding: utf-8
-
-from __future__ import division, print_function
-
 # Standard library
 from collections import OrderedDict
 import operator

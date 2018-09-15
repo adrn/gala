@@ -1,10 +1,3 @@
-# coding: utf-8
-
-""" Test ...  """
-
-from __future__ import division, print_function
-
-
 # Third-party
 import numpy as np
 from astropy import log as logger

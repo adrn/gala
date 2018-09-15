@@ -1,4 +1,3 @@
-# coding: utf-8
 # cython: boundscheck=False
 # cython: debug=False
 # cython: nonecheck=False
@@ -7,9 +6,6 @@
 # cython: profile=False
 
 """ Coordinate help for generating mock streams. """
-
-from __future__ import division, print_function
-
 
 from libc.math cimport M_PI
 
@@ -265,4 +261,3 @@ cpdef _test_cyl_to_car_roundtrip():
 #     vxyz[0] = vsph[0]*xyz[0]/dxy*dxy/d - xyz[1]/dxy*vsph[1] - xyz[0]/dxy*xyz[2]/d*vsph[2]
 #     vxyz[1] = vsph[0]*xyz[1]/dxy*dxy/d + xyz[0]/dxy*vsph[1] - xyz[1]/dxy*xyz[2]/d*vsph[2]
 #     vxyz[2] = vsph[0]*xyz[2]/d + dxy/d*vsph[2]
-
