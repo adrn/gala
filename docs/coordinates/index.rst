@@ -282,11 +282,6 @@ API
 
 .. automodapi:: gala.coordinates
     :no-inheritance-diagram:
-    :skip: pm_gal_to_icrs
-    :skip: pm_icrs_to_gal
-    :skip: transform_proper_motion
-    :skip: vgal_to_hel
     :skip: vgsr_to_vhel
-    :skip: vhel_to_gal
     :skip: vhel_to_vgsr
     :skip: Quaternion

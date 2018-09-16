@@ -20,12 +20,12 @@ def check_each_direction(n,angs,ifprint=True):
         X = np.dot(angs,i)
         if(np.abs(np.max(X)-np.min(X))<2.*np.pi):
             if(ifprint):
-                print "Need a longer integration window for mode ", i
+                print("Need a longer integration window for mode ", i)
             checks=np.append(checks,i)
             P = np.append(P,(2.*np.pi-np.abs(np.max(X)-np.min(X))))
         elif(np.abs(np.max(X)-np.min(X))/len(X)>np.pi):
             if(ifprint):
-                print "Need a finer sampling for mode ", i
+                print("Need a finer sampling for mode ", i)
             checks=np.append(checks,i)
             P = np.append(P,(2.*np.pi-np.abs(np.max(X)-np.min(X))))
     if(ifprint):
