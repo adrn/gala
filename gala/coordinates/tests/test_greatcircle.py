@@ -41,8 +41,8 @@ def test_transform_against_koposov():
     # Test with no RA zero point
     fr = GreatCircleICRSFrame(pole=pole)
     apw = c.transform_to(fr)
-    assert np.isfinite(apw.phi1)
-    assert np.isfinite(apw.phi2)
+    assert np.isfinite(apw.phi1).all()
+    assert np.isfinite(apw.phi2).all()
 
 
 def test_make_function():
