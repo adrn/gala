@@ -1,6 +1,7 @@
 # Third-party
 import astropy.coordinates as coord
 import astropy.units as u
+from astropy.tests.helper import quantity_allclose
 import numpy as np
 
 # This project
@@ -56,10 +57,10 @@ def test_pole_from_endpoints():
     c1 = coord.SkyCoord(0*u.deg, 0*u.deg)
     c2 = coord.SkyCoord(90*u.deg, 0*u.deg)
     pole = pole_from_endpoints(c1, c2)
-    assert np.allclose(pole.dec, 90*u.deg)
+    assert quantity_allclose(pole.dec, 90*u.deg)
 
     c1 = coord.SkyCoord(0*u.deg, 0*u.deg)
     c2 = coord.SkyCoord(0*u.deg, 90*u.deg)
     pole = pole_from_endpoints(c1, c2)
-    assert np.allclose(pole.ra, 270*u.deg)
-    assert np.allclose(pole.dec, 0*u.deg)
+    assert quantity_allclose(pole.ra, 270*u.deg)
+    assert quantity_allclose(pole.dec, 0*u.deg)
