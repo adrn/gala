@@ -437,8 +437,10 @@ class PhaseSpacePosition(object):
                           "using the `galcen_v_sun` argument.",
                           DeprecationWarning)
 
-        if (getattr(self, self.pos_components.keys()[0]).unit == u.one or
-                getattr(self, self.vel_components.keys()[0]).unit == u.one):
+        pos_keys = list(self.pos_components.keys())
+        vel_keys = list(self.vel_components.keys())
+        if (getattr(self, pos_keys[0]).unit == u.one or
+                getattr(self, vel_keys[0]).unit == u.one):
             raise u.UnitConversionError("Position and velocity must have "
                                         "dimensioned units to convert to a "
                                         "coordinate frame.")

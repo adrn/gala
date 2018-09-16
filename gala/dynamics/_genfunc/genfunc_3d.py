@@ -12,11 +12,11 @@ import time
 Grav = 430091.7270069976
 Conv = 0.9777922216
 
-import toy_potentials as toy
-import test_potentials as pot
-import solver
-import visualize_surfaces as vs
-from solver import unroll_angles as ua
+from . import toy_potentials as toy
+from . import test_potentials as pot
+from . import  solver
+from . import  visualize_surfaces as vs
+from .solver import unroll_angles as ua
 
 
 def choose_NT(N_max,iffreq=True):
@@ -261,7 +261,7 @@ def find_actions(results, t, N_matrix=8, use_box=False, ifloop=False, ifprint = 
 ###################
 #  Plotting tests #
 ###################
-from solver import check_each_direction as ced
+from .solver import check_each_direction as ced
 
 def plot_Sn_timesamples(PSP):
     """ Plots Fig. 5 from Sanders & Binney (2014) """
