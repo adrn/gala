@@ -12,6 +12,8 @@ from astropy.coordinates.baseframe import base_doc
 from astropy.utils.decorators import format_doc
 import numpy as np
 
+__all__ = ['GreatCircleICRSFrame', 'make_greatcircle_cls',
+           'pole_from_endpoints']
 
 def greatcircle_to_greatcircle(from_greatcircle_coord,
                                to_greatcircle_frame):
