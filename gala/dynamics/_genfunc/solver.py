@@ -77,8 +77,6 @@ def solver(AA, N_max, symNx = 2, throw_out_modes=False):
 
     return np.array(solve(a,b)), n_vectors
 
-from itertools import izip
-
 
 def unroll_angles(A,sign):
     """ Unrolls the angles, A, so they increase continuously """
@@ -129,7 +127,7 @@ def angle_solver(AA, timeseries, N_max, sign, symNx = 2, throw_out_modes=False):
     a[3:6,:3]=a[:3,3:6]
     a[3:6,3:6]=np.sum(timeseries*timeseries)*np.identity(3)
 
-    for i,j in izip(angs,timeseries):
+    for i,j in zip(angs,timeseries):
         a[6:6+nv,0]+=-2.*np.sin(np.dot(n_vectors,i))
         a[6:6+nv,3]+=-2.*j*np.sin(np.dot(n_vectors,i))
         a[6:6+nv,6:6+nv]+=4.*np.outer(np.sin(np.dot(n_vectors,i)),np.sin(np.dot(n_vectors,i)))
