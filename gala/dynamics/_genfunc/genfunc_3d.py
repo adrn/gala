@@ -238,7 +238,7 @@ def find_actions(results, t, N_matrix=8, use_box=False, ifloop=False, ifprint = 
         L = loop_actions(flip_coords(results,loop),t,N_matrix, ifprint)
         if(L==None):
             if(ifprint):
-                print "Failed to find actions for this orbit"
+                print("Failed to find actions for this orbit")
             return
         # Used for switching J_2 and J_3 for long-axis loop orbits
         # This is so the orbit classes form a continuous plane in action space
@@ -251,7 +251,7 @@ def find_actions(results, t, N_matrix=8, use_box=False, ifloop=False, ifprint = 
         L = box_actions(results,t,N_matrix, ifprint)
         if(L==None):
             if(ifprint):
-                print "Failed to find actions for this orbit"
+                print("Failed to find actions for this orbit")
             return
     if(ifloop):
         return L,loop
@@ -291,7 +291,6 @@ def plot_Sn_timesamples(PSP):
             else:
                 maxgap = 0
             diffact[k] = act[:3]/TT.action(results[0])
-            print i,j,print_max_average(n_vec,toy_aa.T[3:].T,act[3:]),str(ang[3:6]-TT.freq(results[0])).replace('[','').replace(']',''),str(np.abs(act[:3]-TT.action(results[0]))).replace('[','').replace(']',''),len(checks),maxgap
             MAXGAPS = np.append(MAXGAPS,maxgap)
             difffreq[k] = ang[3:6]/TT.freq(results[0])
         size = 15
@@ -332,12 +331,6 @@ def plot3D_stacktriax(initial,final_t,N_MAT,file_output):
     # Integrate initial condition in toy potential
     timeseries_2=np.linspace(0.,2.*final_t,3500)
     results_toy = odeint(pot.orbit_derivs2,initial,timeseries_2,args=(toy_pot,))
-
-    print "True actions: ", TT.action(results[0])
-    print "Found actions: ", act[:3]
-    print "True frequencies: ",TT.freq(results[0])
-    print "Found frequencies: ",ang[3:6]
-
 
     # and plot
     f,a = plt.subplots(2,3,figsize=[3.32,5.5])
