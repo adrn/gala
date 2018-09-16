@@ -1,12 +1,14 @@
-language: python
+language: c
 
-python:
-    - 3.5
-    - 3.6
-    - 3.7
+compiler: gcc
 
 # Setting sudo to false opts in to Travis-CI container-based builds.
 sudo: false
+
+os:
+    - linux
+
+stage: Comprehensive tests
 
 # The apt packages below are needed for sphinx builds, which can no longer
 # be installed with sudo apt-get.
@@ -22,6 +24,8 @@ env:
         # The following versions are the 'default' for tests, unless
         # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
+        - PYTHON_VERSION=3.6
+        - MAIN_CMD='python setup.py'
         - NUMPY_VERSION=stable
         - ASTROPY_VERSION=stable
         - SETUP_CMD='test'
@@ -36,19 +40,32 @@ env:
         - SETUP_CMD='test'
 
 matrix:
-    include:
+    # Don't wait for allowed failures
+    fast_finish: true
 
-        - python: 3.6
-          env: SETUP_CMD='test --coverage'
+    include:
 
         # Check for sphinx doc build warnings - we do this first because it
         # may run for a long time
-        - python: 3.6
+        - os: linux
           env: SETUP_CMD='install build_sphinx -w' # install needed for nbsphinx to run
 
+        - os: linux
+          env: SETUP_CMD='test --coverage'
+
         # Try Astropy development version
-        - python: 3.6
+        - os: linux
           env: ASTROPY_VERSION=development
+
+        # Try Numpy development version
+        - os: linux
+          env: NUMPY_VERSION=development
+
+        - os: linux
+          env: PYTHON_VERSION=3.5
+
+        - os: linux
+          env: PYTHON_VERSION=3.7
 
 before_install:
 
@@ -63,7 +80,7 @@ install:
     - conda install -c conda-forge pandoc
 
 script:
-    - python setup.py $SETUP_CMD
+    - $MAIN_CMD $SETUP_CMD
 
 after_success:
     # If coveralls.io is set up for this package, uncomment the line
