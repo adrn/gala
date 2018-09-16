@@ -83,7 +83,7 @@ def unroll_angles(A,sign):
     n = np.array([0,0,0])
     P = np.zeros(np.shape(A))
     P[0]=A[0]
-    for i in xrange(1,len(A)):
+    for i in range(1,len(A)):
         n = n+((A[i]-A[i-1]+0.5*sign*np.pi)*sign<0)*np.ones(3)*2.*np.pi
         P[i] = A[i]+sign*n
     return P
