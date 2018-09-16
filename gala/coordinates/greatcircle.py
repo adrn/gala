@@ -149,3 +149,32 @@ def make_greatcircle_cls(cls_name, docstring_header=None, **kwargs):
         GCFrame.__doc__ = "{0}\n{1}".format(docstring_header, GCFrame.__doc__)
 
     return GCFrame
+
+
+def pole_from_endpoints(coord1, coord2):
+    """Compute the pole from a great circle that connects the two specified
+    coordinates.
+
+    This assumes a right-handed rule from coord1 to coord2: the pole is the
+    north pole under that assumption.
+
+    Parameters
+    ----------
+    c1 : `~astropy.coordinates.SkyCoord`
+        Coordinate of one point on a great circle.
+    c2 : `~astropy.coordinates.SkyCoord`
+        Coordinate of the other point on a great circle.
+
+    Returns
+    -------
+    pole : `~astropy.coordinates.SkyCoord`
+        The coordinates of the pole.
+    """
+    c1 = coord1.cartesian / coord1.cartesian.norm()
+
+    coord2 = coord2.transform_to(coord1.frame)
+    c2 = coord2.cartesian / coord2.cartesian.norm()
+
+    pole = c1.cross(c2)
+    pole = pole / pole.norm()
+    return coord1.frame.realize_frame(pole)

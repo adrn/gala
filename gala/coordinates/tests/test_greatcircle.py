@@ -4,7 +4,8 @@ import astropy.units as u
 import numpy as np
 
 # This project
-from ..greatcircle import GreatCircleICRSFrame, make_greatcircle_cls
+from ..greatcircle import (GreatCircleICRSFrame, make_greatcircle_cls,
+                           pole_from_endpoints)
 
 def test_cls_init():
     pole = coord.SkyCoord(ra=72.2643*u.deg, dec=-20.6575*u.deg)
@@ -49,3 +50,16 @@ def test_make_function():
                                    **kw)
         fr = cls(phi1=100*u.deg, phi2=10*u.deg)
         fr.transform_to(coord.ICRS)
+
+
+def test_pole_from_endpoints():
+    c1 = coord.SkyCoord(0*u.deg, 0*u.deg)
+    c2 = coord.SkyCoord(90*u.deg, 0*u.deg)
+    pole = pole_from_endpoints(c1, c2)
+    assert np.allclose(pole.dec, 90*u.deg)
+
+    c1 = coord.SkyCoord(0*u.deg, 0*u.deg)
+    c2 = coord.SkyCoord(0*u.deg, 90*u.deg)
+    pole = pole_from_endpoints(c1, c2)
+    assert np.allclose(pole.ra, 270*u.deg)
+    assert np.allclose(pole.dec, 0*u.deg)
