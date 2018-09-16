@@ -13,6 +13,8 @@ Bug fixes
 API changes
 -----------
 - Stream classes have been renamed to reflect the author that defined them.
+- Proper motion and coordinate velocity transformations have now been removed in
+  favor of the implementations in Astropy.
 
 
 0.3 (2018-04-23)
