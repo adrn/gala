@@ -6,7 +6,7 @@ import warnings
 import astropy.coordinates as coord
 import astropy.units as u
 
-__all__ = ["vgal_to_hel", "vhel_to_gal", "vgsr_to_vhel", "vhel_to_vgsr"]
+__all__ = ["vgsr_to_vhel", "vhel_to_vgsr"]
 
 def _get_vproj(c, vsun):
     gal = c.transform_to(coord.Galactic)
