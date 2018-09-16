@@ -38,12 +38,18 @@ def reference_to_greatcircle(reference_frame, greatcircle_frame):
 
     R_rot = rotation_matrix(greatcircle_frame.rotation, 'z')
 
-    xaxis = np.array([np.cos(ra0), np.sin(ra0), 0.])
-    zaxis = pole.cartesian.xyz.value
-    xaxis[2] = -(zaxis[0]*xaxis[0] + zaxis[1]*xaxis[1]) / zaxis[2] # what?
-    xaxis = xaxis / np.sqrt(np.sum(xaxis**2))
-    yaxis = np.cross(zaxis, xaxis)
-    R = np.stack((xaxis, yaxis, zaxis))
+    if np.isnan(ra0):
+        R2 = rotation_matrix(pole.dec, 'y')
+        R1 = rotation_matrix(pole.ra, 'z')
+        R = matrix_product(R2, R1)
+
+    else:
+        xaxis = np.array([np.cos(ra0), np.sin(ra0), 0.])
+        zaxis = pole.cartesian.xyz.value
+        xaxis[2] = -(zaxis[0]*xaxis[0] + zaxis[1]*xaxis[1]) / zaxis[2] # what?
+        xaxis = xaxis / np.sqrt(np.sum(xaxis**2))
+        yaxis = np.cross(zaxis, xaxis)
+        R = np.stack((xaxis, yaxis, zaxis))
 
     return matrix_product(R_rot, R)
 
@@ -115,7 +121,7 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
     """
 
     pole = CoordinateAttribute(default=None, frame=coord.ICRS)
-    ra0 = QuantityAttribute(default=0, unit=u.deg)
+    ra0 = QuantityAttribute(default=np.nan*u.deg, unit=u.deg)
     rotation = QuantityAttribute(default=0, unit=u.deg)
 
     frame_specific_representation_info = {
@@ -143,7 +149,7 @@ def make_greatcircle_cls(cls_name, docstring_header=None, **kwargs):
     @greatcircle_transforms(self_transform=False)
     class GCFrame(GreatCircleICRSFrame):
         pole = kwargs.get('pole', None)
-        ra0 = kwargs.get('ra0', 0*u.deg)
+        ra0 = kwargs.get('ra0', np.nan*u.deg)
         rotation = kwargs.get('rotation', 0*u.deg)
 
     GCFrame.__name__ = cls_name

@@ -38,6 +38,12 @@ def test_transform_against_koposov():
         assert np.allclose(kop[0], phi1)
         assert np.allclose(kop[1], apw.phi2.degree)
 
+    # Test with no RA zero point
+    fr = GreatCircleICRSFrame(pole=pole)
+    apw = c.transform_to(fr)
+    assert np.isfinite(apw.phi1)
+    assert np.isfinite(apw.phi2)
+
 
 def test_make_function():
     pole = coord.SkyCoord(ra=72.2643*u.deg, dec=-20.6575*u.deg)
