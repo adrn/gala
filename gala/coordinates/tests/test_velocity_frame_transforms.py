@@ -2,19 +2,14 @@
     Test conversions in core.py
 """
 
-# Standard library
-import tempfile
-
 # Third-party
 import astropy.coordinates as coord
 import astropy.units as u
 from astropy.utils.data import get_pkg_data_filename
-from astropy.tests.helper import quantity_allclose
 import numpy as np
 
 # This package
-from ..velocity_frame_transforms import (vgal_to_hel, vhel_to_gal,
-                                         vgsr_to_vhel, vhel_to_vgsr)
+from ..velocity_frame_transforms import vgsr_to_vhel, vhel_to_vgsr
 
 
 def test_vgsr_to_vhel():
