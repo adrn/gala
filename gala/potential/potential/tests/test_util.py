@@ -1,8 +1,3 @@
-# coding: utf-8
-
-from __future__ import absolute_import, unicode_literals, division, print_function
-
-
 # This project
 from ....units import solarsystem
 from ..util import from_equation

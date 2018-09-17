@@ -20,12 +20,12 @@ def check_each_direction(n,angs,ifprint=True):
         X = np.dot(angs,i)
         if(np.abs(np.max(X)-np.min(X))<2.*np.pi):
             if(ifprint):
-                print "Need a longer integration window for mode ", i
+                print("Need a longer integration window for mode ", i)
             checks=np.append(checks,i)
             P = np.append(P,(2.*np.pi-np.abs(np.max(X)-np.min(X))))
         elif(np.abs(np.max(X)-np.min(X))/len(X)>np.pi):
             if(ifprint):
-                print "Need a finer sampling for mode ", i
+                print("Need a finer sampling for mode ", i)
             checks=np.append(checks,i)
             P = np.append(P,(2.*np.pi-np.abs(np.max(X)-np.min(X))))
     if(ifprint):
@@ -77,15 +77,13 @@ def solver(AA, N_max, symNx = 2, throw_out_modes=False):
 
     return np.array(solve(a,b)), n_vectors
 
-from itertools import izip
-
 
 def unroll_angles(A,sign):
     """ Unrolls the angles, A, so they increase continuously """
     n = np.array([0,0,0])
     P = np.zeros(np.shape(A))
     P[0]=A[0]
-    for i in xrange(1,len(A)):
+    for i in range(1,len(A)):
         n = n+((A[i]-A[i-1]+0.5*sign*np.pi)*sign<0)*np.ones(3)*2.*np.pi
         P[i] = A[i]+sign*n
     return P
@@ -129,7 +127,7 @@ def angle_solver(AA, timeseries, N_max, sign, symNx = 2, throw_out_modes=False):
     a[3:6,:3]=a[:3,3:6]
     a[3:6,3:6]=np.sum(timeseries*timeseries)*np.identity(3)
 
-    for i,j in izip(angs,timeseries):
+    for i,j in zip(angs,timeseries):
         a[6:6+nv,0]+=-2.*np.sin(np.dot(n_vectors,i))
         a[6:6+nv,3]+=-2.*j*np.sin(np.dot(n_vectors,i))
         a[6:6+nv,6:6+nv]+=4.*np.outer(np.sin(np.dot(n_vectors,i)),np.sin(np.dot(n_vectors,i)))

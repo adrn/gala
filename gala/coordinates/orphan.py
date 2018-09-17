@@ -1,9 +1,4 @@
-# coding: utf-8
-
 """ Astropy coordinate class for the Sagittarius coordinate system """
-
-from __future__ import division, print_function
-
 
 from astropy.coordinates import frame_transform_graph
 import astropy.coordinates as coord

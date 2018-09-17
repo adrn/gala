@@ -1,9 +1,3 @@
-# coding: utf-8
-
-""" Test core dynamics.  """
-
-from __future__ import division, print_function
-
 # Standard library
 import warnings
 

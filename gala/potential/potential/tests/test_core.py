@@ -1,10 +1,6 @@
-# coding: utf-8
 """
     Test the core Potential classes
 """
-
-from __future__ import absolute_import, unicode_literals, division, print_function
-
 
 # Standard library
 from collections import OrderedDict

@@ -1,12 +1,8 @@
-# coding: utf-8
 # cython: boundscheck=False
 # cython: nonecheck=False
 # cython: cdivision=True
 # cython: wraparound=False
 # cython: profile=False
-
-from __future__ import division, print_function
-
 
 # Standard library
 from collections import OrderedDict

@@ -1,7 +1,3 @@
-# coding: utf-8
-
-from __future__ import division, print_function
-
 # Standard library
 from collections import OrderedDict
 
@@ -92,4 +88,3 @@ class CommonBase(object):
         par_bool = [(k1==k2) and np.all(self.parameters[k1] == other.parameters[k2])
                     for k1,k2 in zip(self.parameters.keys(), other.parameters.keys())]
         return np.all(par_bool) and (str(self) == str(other)) and (self.units == other.units)
-

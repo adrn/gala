@@ -1,8 +1,3 @@
-# coding: utf-8
-
-from __future__ import division, print_function
-
-
 # Third-party
 import astropy.units as u
 from astropy.units.physical import _physical_unit_mapping

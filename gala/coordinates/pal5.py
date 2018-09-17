@@ -1,9 +1,4 @@
-# coding: utf-8
-
 """ Astropy coordinate class for the Palomar 5 stream coordinate system """
-
-from __future__ import division, print_function
-
 
 # Third-party
 import numpy as np

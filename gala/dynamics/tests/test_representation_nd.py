@@ -1,7 +1,3 @@
-# coding: utf-8
-
-from __future__ import division, print_function
-
 # Third-party
 import astropy.units as u
 from astropy.coordinates import Galactic, CartesianRepresentation

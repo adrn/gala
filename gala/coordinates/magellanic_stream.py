@@ -1,8 +1,4 @@
-# coding: utf-8
-
 """ Astropy coordinate class for the Magellanic Stream coordinate system """
-
-from __future__ import division, print_function
 
 from astropy.coordinates.matrix_utilities import (rotation_matrix,
                                                   matrix_product,

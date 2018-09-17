@@ -1,8 +1,3 @@
-# coding: utf-8
-
-from __future__ import division, print_function
-
-
 # Standard library
 import warnings
 import os
@@ -16,7 +11,8 @@ from ...potential import Hamiltonian, CPotentialBase
 from ...integrate import DOPRI853Integrator, LeapfrogIntegrator
 from ._mockstream import _mock_stream_dop853, _mock_stream_leapfrog, _mock_stream_animate
 
-__all__ = ['mock_stream', 'streakline_stream', 'fardal_stream', 'dissolved_fardal_stream']
+__all__ = ['mock_stream', 'streakline_stream', 'fardal_stream',
+           'dissolved_fardal_stream']
 
 def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
                 release_every=1, Integrator=DOPRI853Integrator, Integrator_kwargs=dict(),

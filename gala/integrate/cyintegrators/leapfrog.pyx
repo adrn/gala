@@ -1,4 +1,3 @@
-# coding: utf-8
 # cython: boundscheck=False
 # cython: nonecheck=False
 # cython: cdivision=True
@@ -6,9 +5,6 @@
 # cython: profile=False
 
 """ Leapfrog integration in Cython. """
-
-from __future__ import division, print_function
-
 
 # Third-party
 import numpy as np

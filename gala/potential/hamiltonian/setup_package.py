@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from distutils.core import Extension
 from astropy_helpers import setup_helpers
 

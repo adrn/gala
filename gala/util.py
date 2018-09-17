@@ -1,8 +1,4 @@
-# coding: utf-8
-
 """ General utilities. """
-
-from __future__ import division, print_function
 
 # Standard library
 import collections
@@ -136,13 +132,13 @@ def atleast_2d(*arys, **kwargs):
 
     Examples
     --------
-    >>> atleast_2d(3.0)
+    >>> atleast_2d(3.0) # doctest: +FLOAT_CMP
     array([[3.]])
 
     >>> x = np.arange(3.0)
-    >>> atleast_2d(x)
+    >>> atleast_2d(x) # doctest: +FLOAT_CMP
     array([[0., 1., 2.]])
-    >>> atleast_2d(x, insert_axis=-1)
+    >>> atleast_2d(x, insert_axis=-1) # doctest: +FLOAT_CMP
     array([[0.],
            [1.],
            [2.]])

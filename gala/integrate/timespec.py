@@ -1,11 +1,6 @@
-# coding: utf-8
-
 """ Helper function for turning different ways of specifying the integration
     times into an array of times.
 """
-
-from __future__ import division, print_function
-
 
 # Standard library
 from warnings import warn
