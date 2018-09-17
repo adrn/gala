@@ -13,8 +13,7 @@ __all__ = ["Pal5"]
 class Pal5(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
-    of the GD1 stream, as described in
-    Koposov et al. 2010 (see: `<http://arxiv.org/abs/0907.1085>`_).
+    of the Pal 5 stream.
 
     For more information about this class, see the Astropy documentation
     on coordinate frames in :mod:`~astropy.coordinates`.

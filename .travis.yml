@@ -29,7 +29,7 @@ env:
         - NUMPY_VERSION=stable
         - ASTROPY_VERSION=stable
         - SETUP_CMD='test'
-        - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml h5py sympy qt ipython jupyter notebook ipykernel' # SEE PANDOC HACK BELOW
+        - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml h5py sympy qt ipython jupyter notebook ipykernel numexpr' # SEE PANDOC HACK BELOW
         - PIP_DEPENDENCIES='nbsphinx==0.3.1'
         - CONDA_CHANNELS='astropy-ci-extras astropy'
 
