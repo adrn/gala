@@ -193,4 +193,4 @@ extensions += ['nbsphinx', 'IPython.sphinxext.ipython_console_highlighting']
 exclude_patterns += ['_build', '**.ipynb_checkpoints']
 
 # Custom setting for nbsphinx - timeout for executing one cell
-nbsphinx_timeout = 600
+nbsphinx_timeout = 60
