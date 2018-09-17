@@ -160,6 +160,17 @@ References
   stellar stream <https://arxiv.org/abs/0907.1085>`_
 
 
+Using gala.coordinates
+======================
+
+More details are provided in the linked pages below:
+
+.. toctree::
+   :maxdepth: 1
+
+   greatcircle
+
+
 .. _gala-coordinates-api:
 
 API
