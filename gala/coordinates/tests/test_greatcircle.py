@@ -13,6 +13,17 @@ def test_cls_init():
     GreatCircleICRSFrame(pole=pole)
     GreatCircleICRSFrame(pole=pole, ra0=160*u.deg)
 
+    points = coord.SkyCoord(ra=[-38.8, 4.7]*u.deg, dec=[-45.1, -51.7]*u.deg)
+    fr = GreatCircleICRSFrame.from_endpoints(points[0], points[1])
+    assert quantity_allclose(fr.pole.ra, 359.1*u.deg, atol=1e-1*u.deg)
+    assert quantity_allclose(fr.pole.dec, 38.2*u.deg, atol=1e-1*u.deg)
+
+    fr = GreatCircleICRSFrame.from_endpoints(points[0], points[1],
+                                             ra0=100*u.deg)
+
+    fr = GreatCircleICRSFrame.from_endpoints(points[0], points[1],
+                                             rotation=100*u.deg)
+
 
 def test_transform_against_koposov():
     from .helpers import sphere_rotate
