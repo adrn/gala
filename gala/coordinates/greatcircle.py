@@ -116,8 +116,8 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
     """A frame rotated into great circle coordinates with the pole and longitude
     specified as frame attributes.
 
-    ``GreatCircleFrame``s always have component names for spherical coordinates
-    of ``phi1``/``phi2``.
+    ``GreatCircleICRSFrame``s always have component names for spherical
+    coordinates of ``phi1``/``phi2``.
     """
 
     pole = CoordinateAttribute(default=None, frame=coord.ICRS)
@@ -142,6 +142,26 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
         if wrap and isinstance(self._data, (coord.UnitSphericalRepresentation,
                                             coord.SphericalRepresentation)):
             self._data.lon.wrap_angle = self._default_wrap_angle
+
+    @classmethod
+    def from_endpoints(cls, coord1, coord2, ra0=None, rotation=None):
+        """TODO
+        """
+
+        pole = pole_from_endpoints(coord1, coord2)
+
+        kw = dict(pole=pole)
+        if ra0 is not None:
+            kw['ra0'] = ra0
+
+        if rotation is not None:
+            kw['rotation'] = rotation
+
+        if ra0 is None and rotation is None:
+            midpt = sph_midpoint(coord1, coord2)
+            kw['ra0'] = midpt.ra
+
+        return cls(**kw)
 
 
 def make_greatcircle_cls(cls_name, docstring_header=None, **kwargs):
@@ -168,9 +188,9 @@ def pole_from_endpoints(coord1, coord2):
 
     Parameters
     ----------
-    c1 : `~astropy.coordinates.SkyCoord`
+    coord1 : `~astropy.coordinates.SkyCoord`
         Coordinate of one point on a great circle.
-    c2 : `~astropy.coordinates.SkyCoord`
+    coord2 : `~astropy.coordinates.SkyCoord`
         Coordinate of the other point on a great circle.
 
     Returns
@@ -186,3 +206,29 @@ def pole_from_endpoints(coord1, coord2):
     pole = c1.cross(c2)
     pole = pole / pole.norm()
     return coord1.frame.realize_frame(pole)
+
+
+def sph_midpoint(coord1, coord2):
+    """Compute the midpoint between two points on the sphere.
+
+    Parameters
+    ----------
+    coord1 : `~astropy.coordinates.SkyCoord`
+        Coordinate of one point on a great circle.
+    coord2 : `~astropy.coordinates.SkyCoord`
+        Coordinate of the other point on a great circle.
+
+    Returns
+    -------
+    midpt : `~astropy.coordinates.SkyCoord`
+        The coordinates of the spherical midpoint.
+    """
+    c1 = coord1.cartesian / coord1.cartesian.norm()
+
+    coord2 = coord2.transform_to(coord1.frame)
+    c2 = coord2.cartesian / coord2.cartesian.norm()
+
+    midpt = 0.5 * (c1 + c2)
+    usph = midpt.represent_as(coord.UnitSphericalRepresentation)
+
+    return coord1.frame.realize_frame(usph)

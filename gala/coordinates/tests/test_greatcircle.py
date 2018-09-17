@@ -6,7 +6,7 @@ import numpy as np
 
 # This project
 from ..greatcircle import (GreatCircleICRSFrame, make_greatcircle_cls,
-                           pole_from_endpoints)
+                           pole_from_endpoints, sph_midpoint)
 
 def test_cls_init():
     pole = coord.SkyCoord(ra=72.2643*u.deg, dec=-20.6575*u.deg)
@@ -70,3 +70,17 @@ def test_pole_from_endpoints():
     pole = pole_from_endpoints(c1, c2)
     assert quantity_allclose(pole.ra, 270*u.deg)
     assert quantity_allclose(pole.dec, 0*u.deg)
+
+
+def test_sph_midpoint():
+    c1 = coord.SkyCoord(0*u.deg, 0*u.deg)
+    c2 = coord.SkyCoord(90*u.deg, 0*u.deg)
+    midpt = sph_midpoint(c1, c2)
+    assert quantity_allclose(midpt.ra, 45*u.deg)
+    assert quantity_allclose(midpt.dec, 0*u.deg)
+
+    c1 = coord.SkyCoord(0*u.deg, 0*u.deg)
+    c2 = coord.SkyCoord(0*u.deg, 90*u.deg)
+    midpt = sph_midpoint(c1, c2)
+    assert quantity_allclose(midpt.ra, 0*u.deg)
+    assert quantity_allclose(midpt.dec, 45*u.deg)
