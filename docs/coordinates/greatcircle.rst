@@ -1,11 +1,12 @@
-.. _greatcircle:
-
-We'll assume the following imports have already been executed::
+For the examples below, we assume the following imports have already been
+executed::
 
     >>> import astropy.units as u
     >>> import astropy.coordinates as coord
     >>> import numpy as np
     >>> import gala.coordinates as gc
+
+.. _greatcircle:
 
 *************************************************
 Great circle and stellar stream coordinate frames
@@ -97,7 +98,10 @@ class from two endpoints of an arc that define a great circle::
     ...                         dec=[-45.1, -51.7]*u.deg)
     >>> fr = gc.GreatCircleICRSFrame.from_endpoints(points[0], points[1])
 
-Without specifying a longitude zeropoint, the default behavior of the above method is to take the spherical midpoint of the two points as the zeropoint. However, a custom zeropoint can be specified using the ``ra0`` or ``rotation`` keyword arguments. For example::
+Without specifying a longitude zeropoint, the default behavior of the above
+method is to take the spherical midpoint of the two points as the zeropoint.
+However, a custom zeropoint can be specified using the ``ra0`` or ``rotation``
+keyword arguments. For example::
 
     >>> fr = gc.GreatCircleICRSFrame.from_endpoints(points[0], points[1],
     ...                                             ra0=150*u.deg)
