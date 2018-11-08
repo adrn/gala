@@ -51,14 +51,14 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
     # TODO: see here for example in FORTRAN: http://www.unige.ch/~hairer/prog/nonstiff/dr_dop853.f
     pass
 
-cdef void dop853_step(CPotential *cp, CFrame *cf,
+cdef void dop853_step(CPotential *cp, CFrame *cf, FcnEqDiff F,
                       double *w, double t1, double t2, double dt0,
                       int ndim, int norbits,
                       double atol, double rtol, int nmax) except *:
 
     cdef int res
 
-    res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
+    res = dop853(ndim*norbits, <FcnEqDiff> F,
                  cp, cf, norbits, t1, w, t2,
                  &rtol, &atol, 0, solout, 0,
                  NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0);
@@ -72,7 +72,7 @@ cdef void dop853_step(CPotential *cp, CFrame *cf,
     elif res == -4:
         raise RuntimeError("The problem is probably stiff (interrupted).")
 
-cdef dop853_helper(CPotential *cp, CFrame *cf,
+cdef dop853_helper(CPotential *cp, CFrame *cf, FcnEqDiff F,
                    double[:,::1] w0, double[::1] t,
                    int ndim, int norbits, int ntimes,
                    double atol, double rtol, int nmax):
@@ -89,7 +89,8 @@ cdef dop853_helper(CPotential *cp, CFrame *cf,
             w[i*ndim + k] = w0[i,k]
 
     for j in range(1,ntimes,1):
-        dop853_step(cp, cf, &w[0], t[j-1], t[j], dt0,
+        dop853_step(cp, cf, F,
+                    &w[0], t[j-1], t[j], dt0,
                     ndim, norbits,
                     atol, rtol, nmax)
 
@@ -97,7 +98,7 @@ cdef dop853_helper(CPotential *cp, CFrame *cf,
 
     return w
 
-cdef dop853_helper_save_all(CPotential *cp, CFrame *cf,
+cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
                             double[:,::1] w0, double[::1] t,
                             int ndim, int norbits, int ntimes,
                             double atol, double rtol, int nmax):
@@ -116,7 +117,8 @@ cdef dop853_helper_save_all(CPotential *cp, CFrame *cf,
             all_w[0,i,k] = w0[i,k]
 
     for j in range(1,ntimes,1):
-        dop853_step(cp, cf, &w[0], t[j-1], t[j], dt0, ndim, norbits,
+        dop853_step(cp, cf, F,
+                    &w[0], t[j-1], t[j], dt0, ndim, norbits,
                     atol, rtol, nmax)
 
         for k in range(ndim):
@@ -150,7 +152,8 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:,::1] w0, double[::1] t,
         CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
         CFrame cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
-    all_w = dop853_helper_save_all(&cp, &cf, w0, t,
+    all_w = dop853_helper_save_all(&cp, &cf, <FcnEqDiff> Fwrapper,
+                                   w0, t,
                                    ndim, norbits, ntimes,
                                    atol, rtol, nmax)
 

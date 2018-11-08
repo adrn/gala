@@ -978,13 +978,49 @@ double contd8 (unsigned ii, double x)
 /* ADDED BY APW */
 void Fwrapper (unsigned full_ndim, double t, double *w, double *f,
                CPotential *p, CFrame *fr, unsigned norbits) {
-    int i, k;
+    int i;
     unsigned ndim = full_ndim / norbits; // phase-space dimensionality
 
     for (i=0; i < norbits; i++) {
         // call gradient function
         hamiltonian_gradient(p, fr, t, &w[i*ndim], &f[i*ndim]);
     }
+}
+
+void Fwrapper_direct_nbody (unsigned full_ndim, double t, double *w, double *f,
+                            CPotential *p, CFrame *fr, unsigned norbits) {
+    int i, j, k;
+    unsigned ndim = full_ndim / norbits; // phase-space dimensionality
+
+    // Used for N-body
+    double dx, dy, dz, fac;
+
+    for (i=0; i < norbits; i++) {
+        // call gradient function
+        hamiltonian_gradient(p, fr, t, &w[i*ndim], &f[i*ndim]);
+    }
+
+    // TODO: so now I need to hack the dop853 shit to take Fwrapper, and need to
+    // hack the direct_nbody cython to add a set of parameters at the end of the
+    // parameter array with all of the particle masses
+    k = p->n_components;
+    for (i=0; i < norbits; i++) {
+        for (j=0; j < norbits; j++) {
+            if (i != j) {
+                // Whenever we're doing N-body, we use a unit system with G=1,
+                // so Kepler is just M / dr^3 * dx
+                dx = w[i*ndim] - w[j*ndim];
+                dy = w[i*ndim+1] - w[j*ndim+1];
+                dz = w[i*ndim+2] - w[j*ndim+2];
+                fac = (p->parameters)[k][j] / pow(dx*dx + dy*dy + dz*dz, 1.5);
+
+                f[i*ndim] = f[i*ndim] + fac * dx;
+                f[i*ndim+1] = f[i*ndim+1] + fac * dy;
+                f[i*ndim+2] = f[i*ndim+2] + fac * dz;
+            }
+        }
+    }
+
 }
 
 /* Needed for Lyapunov */

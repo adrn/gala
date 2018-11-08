@@ -41,6 +41,12 @@ cdef extern from "potential/src/cpotential.h":
         pass
     double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
 
+cdef extern from "dopri/dop853.h":
+    ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
+                              CPotential *p, CFrame *fr, unsigned norbits) nogil
+    void Fwrapper (unsigned ndim, double t, double *w, double *f,
+                   CPotential *p, CFrame *fr, unsigned norbits)
+
 cpdef _mock_stream_dop853(hamiltonian, double[::1] t, double[:,::1] prog_w,
                           int release_every,
                           _k_mean, _k_disp,
@@ -233,7 +239,8 @@ cpdef _mock_stream_dop853(hamiltonian, double[::1] t, double[:,::1] prog_w,
         i += 1
 
     for i in range(nparticles):
-        dop853_step(&cp, &cf, &_w[i,0], t1[i], t_end, dt0,
+        dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper,
+                    &_w[i,0], t1[i], t_end, dt0,
                     ndim, 1,
                     atol, rtol, nmax)
 
@@ -693,8 +700,9 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
             one_particle_w[0, k] = w[i*ndim + k]
 
         n = 0
-        for j in range(1, all_ntimes[i], 1):
-            dop853_step(&cp, &cf, &w[i*ndim], t_j, t_j+dt0, dt0,
+        for j in range(1, all_ntimes[i]+1, 1):
+            dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper,
+                        &w[i*ndim], t_j, t_j+dt0, dt0,
                         ndim, 1,
                         atol, rtol, nmax)
 

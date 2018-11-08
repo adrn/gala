@@ -237,4 +237,6 @@ extern double xRead (void);
 /* ADDED BY APW */
 extern void Fwrapper (unsigned ndim, double t, double *w, double *f,
                       CPotential *p, CFrame *fr, unsigned norbits);
+extern void Fwrapper_direct_nbody(unsigned ndim, double t, double *w, double *f,
+                                  CPotential *p, CFrame *fr, unsigned norbits);
 extern double six_norm (double *x); /* Needed for Lyapunov */
