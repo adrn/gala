@@ -7,9 +7,20 @@ __pycache__
 
 # Ignore .c files by default to avoid including generated code. If you want to
 # add a non-generated .c extension, use `git add -f filename.c`.
-*.c
-!*/*/*/src/*.c
-!*/*/*/builtin/builtin_*.c
+# *.c
+gala/_compiler.c
+gala/dynamics/lyapunov/dop853_lyapunov.c
+gala/dynamics/mockstream/_coord.c
+gala/dynamics/mockstream/_mockstream.c
+gala/dynamics/nbody/
+gala/integrate/cyintegrators/dop853.c
+gala/integrate/cyintegrators/leapfrog.c
+gala/potential/frame/builtin/frames.c
+gala/potential/frame/cframe.c
+gala/potential/hamiltonian/chamiltonian.c
+gala/potential/potential/builtin/cybuiltin.c
+gala/potential/potential/ccompositepotential.c
+gala/potential/potential/cpotential.c
 
 # Other generated files
 */version.py
