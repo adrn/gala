@@ -25,6 +25,7 @@ gala/potential/scf/computecoeff.c
 gala/potential/scf/bfe.c
 gala/extra_compile_macros.h
 gala/cconfig.c
+gala/dynamics/nbody/_nbody.c
 
 # Other generated files
 */version.py
