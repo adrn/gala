@@ -60,14 +60,19 @@ def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
     vecs = np.meshgrid(np.arange(-N_max, N_max+1, dx),
                        np.arange(-N_max, N_max+1, dy),
                        np.arange(-N_max, N_max+1, dz))
-    vecs = np.vstack(map(np.ravel,vecs)).T
-    vecs = vecs[np.linalg.norm(vecs,axis=1) <= N_max]
+    vecs = np.vstack(map(np.ravel, vecs)).T
+    vecs = vecs[np.linalg.norm(vecs, axis=1) <= N_max]
 
     if half_lattice:
-        ix = ((vecs[:,2] > 0) | ((vecs[:,2] == 0) & (vecs[:,1] > 0)) | ((vecs[:,2] == 0) & (vecs[:,1] == 0) & (vecs[:,0] > 0)))
+        ix = ((vecs[:, 2] > 0) |
+              ((vecs[:, 2] == 0) &
+               (vecs[:, 1] > 0)) |
+              ((vecs[:, 2] == 0) &
+               (vecs[:, 1] == 0) &
+               (vecs[:, 0] > 0)))
         vecs = vecs[ix]
 
-    vecs = np.array(sorted(vecs, key=lambda x: (x[0],x[1],x[2])))
+    vecs = np.array(sorted(vecs, key=lambda x: (x[0], x[1], x[2])))
     return vecs
 
 def fit_isochrone(orbit, m0=2E11, b0=1.):
@@ -106,24 +111,25 @@ def fit_isochrone(orbit, m0=2E11, b0=1.):
     if w.ndim > 2:
         raise ValueError("Input orbit object must be a single orbit.")
 
-    def f(p,w):
-        logm,b = p
+    def f(p, w):
+        logm, b = p
         potential = IsochronePotential(m=np.exp(logm), b=b, units=pot.units)
-        H = potential.value(w[:3]).decompose(pot.units).value + 0.5*np.sum(w[3:]**2, axis=0)
+        H = (potential.value(w[:3]).decompose(pot.units).value +
+             0.5*np.sum(w[3:]**2, axis=0))
         return np.squeeze(H - np.mean(H))
 
     logm0 = np.log(m0)
-    p,ier = leastsq(f, np.array([logm0, b0]), args=(w,))
+    p, ier = leastsq(f, np.array([logm0, b0]), args=(w,))
 
     if ier < 1 or ier > 4:
         raise ValueError("Failed to fit toy potential to orbit.")
 
-    logm,b = np.abs(p)
+    logm, b = np.abs(p)
     m = np.exp(logm)
 
     return IsochronePotential(m=m, b=b, units=pot.units)
 
-def fit_harmonic_oscillator(orbit, omega0=[1.,1.,1.]):
+def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1]):
     r"""
     Fit the toy harmonic oscillator potential to the sum of the energy
     residuals relative to the mean energy by minimizing the function
@@ -159,10 +165,11 @@ def fit_harmonic_oscillator(orbit, omega0=[1.,1.,1.]):
 
     def f(omega, w):
         potential = HarmonicOscillatorPotential(omega=omega, units=pot.units)
-        H = potential.value(w[:3]).decompose(pot.units).value + 0.5*np.sum(w[3:]**2, axis=0)
+        H = (potential.value(w[:3]).decompose(pot.units).value +
+             0.5*np.sum(w[3:]**2, axis=0))
         return np.squeeze(H - np.mean(H))
 
-    p,ier = leastsq(f, omega0, args=(w,))
+    p, ier = leastsq(f, omega0, args=(w,))
     if ier < 1 or ier > 4:
         raise ValueError("Failed to fit toy potential to orbit.")
 
@@ -205,7 +212,8 @@ def fit_toy_potential(orbit, force_harmonic_oscillator=False):
         logger.debug("Using triaxial harmonic oscillator toy potential")
 
         toy_potential = fit_harmonic_oscillator(orbit)
-        logger.debug("Best omegas ({})".format(toy_potential.parameters['omega']))
+        logger.debug("Best omegas ({})"
+                     .format(toy_potential.parameters['omega']))
 
     return toy_potential
 
@@ -235,10 +243,10 @@ def check_angle_sampling(nvecs, angles):
     failed_nvecs = []
     failures = []
 
-    for i,vec in enumerate(nvecs):
+    for i, vec in enumerate(nvecs):
         # N = np.linalg.norm(vec)
         # X = np.dot(angles,vec)
-        X = (angles*vec[:,None]).sum(axis=0)
+        X = (angles*vec[:, None]).sum(axis=0)
         diff = float(np.abs(X.max() - X.min()))
 
         if diff < (2.*np.pi):
@@ -293,7 +301,7 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1., throw_out_modes=False):
     nvecs = generate_n_vectors(N_max, dx, dy, dz)
 
     # make sure we have enough angle coverage
-    modes,P = check_angle_sampling(nvecs, angles)
+    modes, P = check_angle_sampling(nvecs, angles)
 
     # throw out modes?
     # if throw_out_modes:
@@ -301,30 +309,31 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1., throw_out_modes=False):
 
     n = len(nvecs) + 3
     b = np.zeros(shape=(n, ))
-    A = np.zeros(shape=(n,n))
+    A = np.zeros(shape=(n, n))
 
     # top left block matrix: identity matrix summed over timesteps
-    A[:3,:3] = aa.shape[1]*np.identity(3)
+    A[:3, :3] = aa.shape[1]*np.identity(3)
 
     actions = aa[:3]
     angles = aa[3:]
 
     # top right block matrix: transpose of C_nk matrix (Eq. 12)
-    C_T = 2.*nvecs.T * np.sum(np.cos(np.dot(nvecs,angles)), axis=-1)
+    C_T = 2.*nvecs.T * np.sum(np.cos(np.dot(nvecs, angles)), axis=-1)
     A[:3,3:] = C_T
-    A[3:,:3] = C_T.T
+    A[3:, :3] = C_T.T
 
     # lower right block matrix: C_nk dotted with C_nk^T
-    cosv = np.cos(np.dot(nvecs,angles))
-    A[3:,3:] = 4.*np.dot(nvecs,nvecs.T)*np.einsum('it,jt->ij', cosv, cosv)
+    cosv = np.cos(np.dot(nvecs, angles))
+    A[3:,3:] = 4.*np.dot(nvecs, nvecs.T)*np.einsum('it,jt->ij', cosv, cosv)
 
     # b vector first three is just sum of toy actions
     b[:3] = np.sum(actions, axis=1)
 
     # rest of the vector is C dotted with actions
-    b[3:] = 2*np.sum(np.dot(nvecs,actions)*np.cos(np.dot(nvecs,angles)), axis=1)
+    b[3:] = 2*np.sum(np.dot(nvecs, actions)*np.cos(np.dot(nvecs, angles)),
+                     axis=1)
 
-    return A,b,nvecs
+    return A, b, nvecs
 
 def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
     """
@@ -365,7 +374,7 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
     nvecs = generate_n_vectors(N_max, dx, dy, dz)
 
     # make sure we have enough angle coverage
-    modes,P = check_angle_sampling(nvecs, angles)
+    modes, P = check_angle_sampling(nvecs, angles)
 
     # TODO: throw out modes?
     # if(throw_out_modes):
@@ -375,41 +384,44 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
     n = 3 + 3 + 3*nv # angle(0)'s, freqs, 3 derivatives of Sn
 
     b = np.zeros(shape=(n,))
-    A = np.zeros(shape=(n,n))
+    A = np.zeros(shape=(n, n))
 
     # top left block matrix: identity matrix summed over timesteps
-    A[:3,:3] = aa.shape[1]*np.identity(3)
+    A[:3, :3] = aa.shape[1]*np.identity(3)
 
     # identity matrices summed over times
-    A[:3,3:6] = A[3:6,:3] = np.sum(t)*np.identity(3)
-    A[3:6,3:6] = np.sum(t*t)*np.identity(3)
+    A[:3, 3:6] = A[3:6, :3] = np.sum(t)*np.identity(3)
+    A[3:6, 3:6] = np.sum(t*t)*np.identity(3)
 
     # S1,2,3
-    A[6:6+nv,0] = -2.*np.sum(np.sin(np.dot(nvecs,angles)),axis=1)
-    A[6+nv:6+2*nv,1] = A[6:6+nv,0]
-    A[6+2*nv:6+3*nv,2] = A[6:6+nv,0]
+    A[6:6+nv, 0] = -2.*np.sum(np.sin(np.dot(nvecs, angles)), axis=1)
+    A[6+nv:6+2*nv, 1] = A[6:6+nv, 0]
+    A[6+2*nv:6+3*nv, 2] = A[6:6+nv, 0]
 
     # t*S1,2,3
-    A[6:6+nv,3] = -2.*np.sum(t[None,:]*np.sin(np.dot(nvecs,angles)),axis=1)
-    A[6+nv:6+2*nv,4] = A[6:6+nv,3]
-    A[6+2*nv:6+3*nv,5] = A[6:6+nv,3]
+    A[6:6+nv, 3] = -2.*np.sum(t[None, :]*np.sin(np.dot(nvecs, angles)),
+                              axis=1)
+    A[6+nv:6+2*nv, 4] = A[6:6+nv, 3]
+    A[6+2*nv:6+3*nv, 5] = A[6:6+nv, 3]
 
     # lower right block structure: S dot S^T
-    sinv = np.sin(np.dot(nvecs,angles))
+    sinv = np.sin(np.dot(nvecs, angles))
     SdotST = np.einsum('it,jt->ij', sinv, sinv)
-    A[6:6+nv,6:6+nv] = A[6+nv:6+2*nv,6+nv:6+2*nv] = \
-        A[6+2*nv:6+3*nv,6+2*nv:6+3*nv] = 4*SdotST
+    A[6:6+nv, 6:6+nv] = A[6+nv:6+2*nv, 6+nv:6+2*nv] = \
+        A[6+2*nv:6+3*nv, 6+2*nv:6+3*nv] = 4*SdotST
 
     # top rectangle
-    A[:6,:] = A[:,:6].T
+    A[:6, :] = A[:, :6].T
 
     b[:3] = np.sum(angles.T, axis=0)
-    b[3:6] = np.sum(t[:,None]*angles.T, axis=0)
-    b[6:6+nv] = -2.*np.sum(angles[0]*np.sin(np.dot(nvecs,angles)), axis=1)
-    b[6+nv:6+2*nv] = -2.*np.sum(angles[1]*np.sin(np.dot(nvecs,angles)), axis=1)
-    b[6+2*nv:6+3*nv] = -2.*np.sum(angles[2]*np.sin(np.dot(nvecs,angles)), axis=1)
+    b[3:6] = np.sum(t[:, None]*angles.T, axis=0)
+    b[6:6+nv] = -2.*np.sum(angles[0]*np.sin(np.dot(nvecs, angles)), axis=1)
+    b[6+nv:6+2*nv] = -2.*np.sum(angles[1]*np.sin(np.dot(nvecs, angles)),
+                                axis=1)
+    b[6+2*nv:6+3*nv] = -2.*np.sum(angles[2]*np.sin(np.dot(nvecs, angles)),
+                                  axis=1)
 
-    return A,b,nvecs
+    return A, b, nvecs
 
 def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
                                force_harmonic_oscillator=False):
@@ -440,21 +452,23 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
         raise ValueError("must be a single orbit")
 
     if toy_potential is None:
-        toy_potential = fit_toy_potential(orbit, force_harmonic_oscillator=force_harmonic_oscillator)
+        toy_potential = fit_toy_potential(
+            orbit, force_harmonic_oscillator=force_harmonic_oscillator)
 
     else:
-        logger.debug("Using *fixed* toy potential: {}".format(toy_potential.parameters))
+        logger.debug("Using *fixed* toy potential: {}"
+                     .format(toy_potential.parameters))
 
     if isinstance(toy_potential, IsochronePotential):
         orbit_align = orbit.align_circulation_with_z()
         w = orbit_align.w()
 
-        dxyz = (1,2,2)
-        circ = np.sign(w[0,0]*w[4,0]-w[1,0]*w[3,0])
-        sign = np.array([1.,circ,1.])
+        dxyz = (1, 2, 2)
+        circ = np.sign(w[0, 0]*w[4, 0]-w[1, 0]*w[3, 0])
+        sign = np.array([1., circ, 1.])
         orbit = orbit_align
     elif isinstance(toy_potential, HarmonicOscillatorPotential):
-        dxyz = (2,2,2)
+        dxyz = (2, 2, 2)
         sign = 1.
         w = orbit.w()
     else:
@@ -466,31 +480,32 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
     aaf = toy_potential.action_angle(orbit)
 
     if aaf[0].ndim > 2:
-        aa = np.vstack((aaf[0].value[...,0], aaf[1].value[...,0]))
+        aa = np.vstack((aaf[0].value[..., 0], aaf[1].value[..., 0]))
     else:
         aa = np.vstack((aaf[0].value, aaf[1].value))
 
     if np.any(np.isnan(aa)):
-        ix = ~np.any(np.isnan(aa),axis=0)
-        aa = aa[:,ix]
+        ix = ~np.any(np.isnan(aa), axis=0)
+        aa = aa[:, ix]
         t = t[ix]
         warnings.warn("NaN value in toy actions or angles!")
         if sum(ix) > 1:
             raise ValueError("Too many NaN value in toy actions or angles!")
 
     t1 = time.time()
-    A,b,nvecs = _action_prepare(aa, N_max, dx=dxyz[0], dy=dxyz[1], dz=dxyz[2])
+    A, b, nvecs = _action_prepare(aa, N_max, dx=dxyz[0], dy=dxyz[1], dz=dxyz[2])
     actions = np.array(solve(A,b))
     logger.debug("Action solution found for N_max={}, size {} symmetric"
                  " matrix in {} seconds"
-                 .format(N_max,len(actions),time.time()-t1))
+                 .format(N_max, len(actions), time.time()-t1))
 
     t1 = time.time()
-    A,b,nvecs = _angle_prepare(aa, t, N_max, dx=dxyz[0], dy=dxyz[1], dz=dxyz[2], sign=sign)
-    angles = np.array(solve(A,b))
+    A, b, nvecs = _angle_prepare(aa, t, N_max, dx=dxyz[0],
+                                 dy=dxyz[1], dz=dxyz[2], sign=sign)
+    angles = np.array(solve(A, b))
     logger.debug("Angle solution found for N_max={}, size {} symmetric"
                  " matrix in {} seconds"
-                 .format(N_max,len(angles),time.time()-t1))
+                 .format(N_max, len(angles), time.time()-t1))
 
     # Just some checks
     if len(angles) > len(aa):
@@ -500,7 +515,8 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
     theta = angles[:3]
     freqs = angles[3:6]  # * sign
 
-    return dict(actions=J*aaf[0].unit, angles=theta*aaf[1].unit, freqs=freqs*aaf[2].unit,
+    return dict(actions=J*aaf[0].unit, angles=theta*aaf[1].unit,
+                freqs=freqs*aaf[2].unit,
                 Sn=actions[3:], dSn_dJ=angles[6:], nvecs=nvecs)
 
 def find_actions(orbit, N_max, force_harmonic_oscillator=False, toy_potential=None):
@@ -533,24 +549,27 @@ def find_actions(orbit, N_max, force_harmonic_oscillator=False, toy_potential=No
     """
 
     if orbit.norbits == 1:
-        return _single_orbit_find_actions(orbit, N_max,
-                                          force_harmonic_oscillator=force_harmonic_oscillator,
-                                          toy_potential=toy_potential)
+        return _single_orbit_find_actions(
+            orbit, N_max,
+            force_harmonic_oscillator=force_harmonic_oscillator,
+            toy_potential=toy_potential)
 
     else:
         norbits = orbit.norbits
-        actions = np.zeros((3,norbits))
-        angles = np.zeros((3,norbits))
-        freqs = np.zeros((3,norbits))
+        actions = np.zeros((3, norbits))
+        angles = np.zeros((3, norbits))
+        freqs = np.zeros((3, norbits))
         for n in range(norbits):
-            aaf = _single_orbit_find_actions(orbit[:,n], N_max,
-                                             force_harmonic_oscillator=force_harmonic_oscillator,
-                                             toy_potential=toy_potential)
+            aaf = _single_orbit_find_actions(
+                orbit[:, n], N_max,
+                force_harmonic_oscillator=force_harmonic_oscillator,
+                toy_potential=toy_potential)
             actions[n] = aaf['actions'].value
             angles[n] = aaf['angles'].value
             freqs[n] = aaf['freqs'].value
 
-    return dict(actions=actions*aaf['actions'].unit, angles=angles*aaf['angles'].unit,
+    return dict(actions=actions*aaf['actions'].unit,
+                angles=angles*aaf['angles'].unit,
                 freqs=freqs*aaf['freqs'].unit,
                 Sn=actions[3:], dSn=angles[6:], nvecs=aaf['nvecs'])
 
