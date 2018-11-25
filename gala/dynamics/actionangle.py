@@ -11,7 +11,7 @@ import warnings
 import numpy as np
 from astropy import log as logger
 from scipy.linalg import solve
-from scipy.optimize import leastsq
+from scipy.optimize import minimize, leastsq
 
 # Project
 from ..potential import HarmonicOscillatorPotential, IsochronePotential
@@ -112,20 +112,25 @@ def fit_isochrone(orbit, m0=2E11, b0=1.):
         raise ValueError("Input orbit object must be a single orbit.")
 
     def f(p, w):
-        logm, b = p
-        potential = IsochronePotential(m=np.exp(logm), b=b, units=pot.units)
+        logm, logb = p
+        potential = IsochronePotential(m=np.exp(logm), b=np.exp(logb),
+                                       units=pot.units)
         H = (potential.value(w[:3]).decompose(pot.units).value +
              0.5*np.sum(w[3:]**2, axis=0))
-        return np.squeeze(H - np.mean(H))
+        return np.sum(np.squeeze(H - np.mean(H))**2)
 
     logm0 = np.log(m0)
-    p, ier = leastsq(f, np.array([logm0, b0]), args=(w,))
+    logb0 = np.log(b0)
 
-    if ier < 1 or ier > 4:
+    # p, ier = leastsq(f, np.array([logm0, b0]), args=(w,))
+    res = minimize(f, x0=np.array([logm0, logb0]), args=(w,))
+
+    if not res.success:
         raise ValueError("Failed to fit toy potential to orbit.")
 
-    logm, b = np.abs(p)
+    logm, logb = np.abs(res.x)
     m = np.exp(logm)
+    b = np.exp(logb)
 
     return IsochronePotential(m=m, b=b, units=pot.units)
 

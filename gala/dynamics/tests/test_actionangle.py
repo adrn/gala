@@ -40,7 +40,8 @@ def test_fit_isochrone():
     orbit = potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., n_steps=10000)
 
     fit_potential = fit_isochrone(orbit)
-    m,b = fit_potential.parameters['m'].value, fit_potential.parameters['b'].value
+    m, b = (fit_potential.parameters['m'].value,
+            fit_potential.parameters['b'].value)
     assert np.allclose(m, true_m, rtol=1E-2)
     assert np.allclose(b, true_b, rtol=1E-2)
 
@@ -232,3 +233,30 @@ def test_compare_action_prepare():
     # assert np.allclose(ang_apw, ang_san)
 
     # TODO: this could be critical -- why don't our angles agree?
+
+
+def test_regression_113():
+    """Test that fit_isochrone succeeds for a variety of orbits. See issue:
+    https://github.com/adrn/gala/issues/113
+    """
+    from ...potential import MilkyWayPotential, Hamiltonian
+    from ...dynamics import PhaseSpacePosition
+
+    pot = MilkyWayPotential()
+
+    dt = 0.01
+    n_steps = 50000
+
+    rvec = [0.3, 0, 0]*u.kpc
+    vinit = pot.circular_velocity(rvec)[0].to(u.km/u.s).value
+    vvec = [0, vinit*np.cos(0.01), vinit*np.sin(0.01)]*u.km/u.s
+    vvec = 0.999*vvec
+
+    ics = PhaseSpacePosition(pos=rvec, vel=vvec)
+    orbit = Hamiltonian(pot).integrate_orbit(ics, dt=dt, n_steps=n_steps)
+    toy_potential = fit_isochrone(orbit)
+
+    m = toy_potential.parameters['m'].value
+    b = toy_potential.parameters['b'].value
+    assert np.log10(m) > 11 and np.log10(m) < 12
+    assert np.log10(b) > 0 and np.log10(b) < 1
