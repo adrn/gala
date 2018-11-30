@@ -1,5 +1,5 @@
-numpy>=1.11
-scipy>=0.16
-astropy>=2
-cython>=0.21
+numpy>=1.15
+scipy>=1
+astropy>=3
+cython>=0.28
 pyyaml
