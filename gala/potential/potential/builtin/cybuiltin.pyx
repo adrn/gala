@@ -59,6 +59,10 @@ cdef extern from "potential/builtin/builtin_potentials.h":
     void jaffe_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double jaffe_density(double t, double *pars, double *q, int n_dim) nogil
 
+    double powerlawcutoff_value(double t, double *pars, double *q, int n_dim) nogil
+    void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    double powerlawcutoff_density(double t, double *pars, double *q, int n_dim) nogil
+
     double stone_value(double t, double *pars, double *q, int n_dim) nogil
     void stone_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double stone_density(double t, double *pars, double *q, int n_dim) nogil
@@ -96,7 +100,7 @@ cdef extern from "potential/builtin/builtin_potentials.h":
 
 __all__ = ['NullPotential', 'HenonHeilesPotential', # Misc. potentials
            'KeplerPotential', 'HernquistPotential', 'IsochronePotential', 'PlummerPotential',
-           'JaffePotential', 'StonePotential', # Spherical models
+           'JaffePotential', 'StonePotential', 'PowerLawCutoffPotential', # Spherical models
            'SatohPotential', 'MiyamotoNagaiPotential', # Disk models
            'NFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential',
            'LongMuraliBarPotential', # Triaxial models
@@ -452,6 +456,56 @@ class StonePotential(CPotentialBase):
                                              parameter_physical_types=ptypes,
                                              units=units,
                                              origin=origin)
+
+
+cdef class PowerLawCutoffWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters, q0):
+        print(list(parameters))
+        self.init([G] + list(parameters), np.ascontiguousarray(q0))
+        self.cpotential.value[0] = <energyfunc>(powerlawcutoff_value)
+        self.cpotential.density[0] = <densityfunc>(powerlawcutoff_density)
+        self.cpotential.gradient[0] = <gradientfunc>(powerlawcutoff_gradient)
+
+class PowerLawCutoffPotential(CPotentialBase):
+    r"""
+    PowerLawCutoffPotential(m, alpha, r_c, units=None, origin=None)
+
+    TODO:
+
+    .. math::
+
+        \rho(r) = \frac{A}{r^\alpha} \, \exp{-\frac{r^2}{c^2}}\\
+        A = \frac{m}{2\pi} \, \frac{c^{\alpha-3}}{\Gamma(\frac{3-\alpha}{2})}
+
+    Parameters
+    ----------
+    m : :class:`~astropy.units.Quantity`, numeric [mass]
+        Total mass.
+    alpha : numeric
+        Power law index. Must satisfy: ``alpha < 3``
+    r_c : :class:`~astropy.units.Quantity`, numeric [length]
+        Cutoff radius.
+    units : `~gala.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, m, alpha, r_c, units=None, origin=None):
+        parameters = OrderedDict()
+        ptypes = OrderedDict()
+
+        parameters['m'] = m
+        ptypes['m'] = 'mass'
+
+        parameters['alpha'] = alpha
+
+        parameters['r_c'] = r_c
+        ptypes['r_c'] = 'length'
+
+        super(PowerLawCutoffPotential, self).__init__(
+            parameters=parameters, parameter_physical_types=ptypes,
+            units=units, origin=origin)
 
 
 # ============================================================================

@@ -115,6 +115,10 @@ class TestStone(PotentialTestBase):
     potential = StonePotential(units=galactic, m=1E11, r_c=0.1, r_h=10.)
     w0 = [8.,0.,0.,0.,0.18,0.1]
 
+class TestPowerLawCutoff(PotentialTestBase):
+    potential = PowerLawCutoffPotential(units=galactic, m=1E10, r_c=1., alpha=1.8)
+    w0 = [8.,0.,0.,0.,0.1,0.1]
+
 class TestSphericalNFW(PotentialTestBase):
     potential = NFWPotential(units=galactic, m=1E11, r_s=12.)
     w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]

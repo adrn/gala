@@ -8,11 +8,12 @@ import numpy as np
 from .cybuiltin import (HernquistPotential,
                         MiyamotoNagaiPotential,
                         LogarithmicPotential,
-                        NFWPotential)
+                        NFWPotential,
+                        PowerLawCutoffPotential)
 from ..ccompositepotential import CCompositePotential
 from ....units import galactic
 
-__all__ = ['LM10Potential', 'MilkyWayPotential']
+__all__ = ['LM10Potential', 'MilkyWayPotential', 'BovyMWPotential2014']
 
 class LM10Potential(CCompositePotential):
     """
@@ -141,6 +142,76 @@ class MilkyWayPotential(CCompositePotential):
         self["disk"] = MiyamotoNagaiPotential(units=units, **disk)
         self["bulge"] = HernquistPotential(units=units, **bulge)
         self["nucleus"] = HernquistPotential(units=units, **nucleus)
+        self["halo"] = NFWPotential(units=units, **halo)
+        self.lock = True
+
+
+class BovyMWPotential2014(CCompositePotential):
+    """
+    TODO:
+
+    A simple mass-model for the Milky Way consisting of a spherical nucleus and
+    bulge, a Miyamoto-Nagai disk, and a spherical NFW dark matter halo.
+
+    The disk model is taken from `Bovy (2015)
+    <https://ui.adsabs.harvard.edu/#abs/2015ApJS..216...29B/abstract>`_ - if you
+    use this potential, please also cite that work.
+
+    Default parameters are fixed by fitting to a compilation of recent mass
+    measurements of the Milky Way, from 10 pc to ~150 pc.
+
+    Parameters
+    ----------
+    units : `~gala.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+    disk : dict (optional)
+        Parameters to be passed to the :class:`~gala.potential.MiyamotoNagaiPotential`.
+    bulge : dict (optional)
+        Parameters to be passed to the :class:`~gala.potential.HernquistPotential`.
+    halo : dict (optional)
+        Parameters to be passed to the :class:`~gala.potential.LogarithmicPotential`.
+    nucleus : dict (optional)
+        Parameters to be passed to the :class:`~gala.potential.HernquistPotential`.
+
+    Note: in subclassing, order of arguments must match order of potential
+    components added at bottom of init.
+    """
+    def __init__(self, units=galactic,
+                 disk=None, halo=None, bulge=None):
+
+        default_disk = dict(m=6.8e10*u.Msun, a=3.*u.kpc, b=280*u.pc)
+        default_bulge = dict(m=5e9*u.Msun, alpha=1.8, c=1.9*u.kpc)
+        default_halo = dict(m=*u.Msun, r_s=16*u.kpc)
+
+        if disk is None:
+            disk = dict()
+
+        if halo is None:
+            halo = dict()
+
+        if bulge is None:
+            bulge = dict()
+
+        if nucleus is None:
+            nucleus = dict()
+
+        for k,v in default_disk.items():
+            if k not in disk:
+                disk[k] = v
+
+        for k,v in default_bulge.items():
+            if k not in bulge:
+                bulge[k] = v
+
+        for k,v in default_halo.items():
+            if k not in halo:
+                halo[k] = v
+
+        super(BovyMWPotential2014, self).__init__()
+
+        self["disk"] = MiyamotoNagaiPotential(units=units, **disk)
+        self["bulge"] = PowerLawCutoffPotential(units=units, **bulge)
         self["halo"] = NFWPotential(units=units, **halo)
         self.lock = True
 

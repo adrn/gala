@@ -1,5 +1,6 @@
 #include <math.h>
 #include <string.h>
+#include "gsl/gsl_sf_gamma.h"
 
 double nan_density(double t, double *pars, double *q, int n_dim) { return NAN; }
 double nan_value(double t, double *pars, double *q, int n_dim) { return NAN; }
@@ -385,6 +386,58 @@ double jaffe_density(double t, double *pars, double *q, int n_dim) {
     r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
     rho0 = pars[1]/(2*M_PI*pars[2]*pars[2]*pars[2]);
     return rho0 / (pow(r/pars[2],2) * pow(1+r/pars[2],2));
+}
+
+/* ---------------------------------------------------------------------------
+    Power-law potential with exponential cutoff
+*/
+double powerlawcutoff_value(double t, double *pars, double *q, int n_dim) {
+    /*  pars:
+            0 - G (Gravitational constant)
+            1 - m (total mass)
+            2 - a (power-law index)
+            3 - c (cutoff radius)
+    */
+    double r;
+    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+
+    if (r == 0.) {
+        return -INFINITY;
+    } else {
+        return (pars[0] * pars[1] / (pars[3] * r) / gamma((3-pars[2])/2) *
+            (pars[3] * gsl_sf_gamma((3.-pars[2]) / 2) * gsl_sf_gamma_inc_P((3.-pars[2]) / 2, r*r/(pars[3]*pars[3])) -
+                   r * gsl_sf_gamma((2.-pars[2]) / 2) * gsl_sf_gamma_inc_P((2.-pars[2]) / 2, r*r/(pars[3]*pars[3]))));
+    }
+}
+
+double powerlawcutoff_density(double t, double *pars, double *q, int n_dim) {
+    /*  pars:
+            0 - G (Gravitational constant)
+            1 - m (total mass)
+            2 - a (power-law index)
+            3 - c (cutoff radius)
+    */
+    double r, A;
+    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    A = pars[1] / (2*M_PI) * pow(pars[3], pars[2]-3) / gsl_sf_gamma(0.5 * (3-pars[2]));
+    return A * pow(r, -pars[2]) * exp(-r*r / (pars[3]*pars[3]));
+}
+
+void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
+    /*  pars:
+            0 - G (Gravitational constant)
+            1 - m (total mass)
+            2 - a (power-law index)
+            3 - c (cutoff radius)
+    */
+    double r, A, dPhi_dr;
+    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    dPhi_dr = (pars[0] * pars[1] / (r*r) *
+        gsl_sf_gamma_inc_P(0.5 * (3-pars[2]), r*r/(pars[3]*pars[3]))); // / gsl_sf_gamma(0.5 * (3-pars[2])));
+
+    grad[0] = grad[0] + dPhi_dr * q[0]/r;
+    grad[1] = grad[1] + dPhi_dr * q[1]/r;
+    grad[2] = grad[2] + dPhi_dr * q[2]/r;
 }
 
 /* ---------------------------------------------------------------------------
