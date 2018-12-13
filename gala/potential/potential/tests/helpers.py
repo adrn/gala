@@ -212,7 +212,6 @@ class PotentialTestBase(object):
             num_grad[i] = np.squeeze([partial_derivative(energy_wrap, xyz[i], dim_ix=dim_ix, n=1, dx=dx, order=5)
                                       for dim_ix in range(self.w0.size//2)])
         grad = self.potential._gradient(xyz, t=np.array([0.]))
-
         assert np.allclose(num_grad, grad, rtol=self.tol)
 
     def test_orbit_integration(self):

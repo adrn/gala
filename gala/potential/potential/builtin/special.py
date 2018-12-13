@@ -182,7 +182,7 @@ class BovyMWPotential2014(CCompositePotential):
 
         default_disk = dict(m=6.8e10*u.Msun, a=3.*u.kpc, b=280*u.pc)
         default_bulge = dict(m=5e9*u.Msun, alpha=1.8, c=1.9*u.kpc)
-        default_halo = dict(m=*u.Msun, r_s=16*u.kpc)
+        default_halo = dict(m=4.320497213800700e11*u.Msun, r_s=16*u.kpc)
 
         if disk is None:
             disk = dict()
@@ -192,9 +192,6 @@ class BovyMWPotential2014(CCompositePotential):
 
         if bulge is None:
             bulge = dict()
-
-        if nucleus is None:
-            nucleus = dict()
 
         for k,v in default_disk.items():
             if k not in disk:
