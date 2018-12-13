@@ -461,7 +461,6 @@ class StonePotential(CPotentialBase):
 cdef class PowerLawCutoffWrapper(CPotentialWrapper):
 
     def __init__(self, G, parameters, q0):
-        print(list(parameters))
         self.init([G] + list(parameters), np.ascontiguousarray(q0))
         self.cpotential.value[0] = <energyfunc>(powerlawcutoff_value)
         self.cpotential.density[0] = <densityfunc>(powerlawcutoff_density)
