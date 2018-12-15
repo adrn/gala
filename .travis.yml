@@ -83,7 +83,7 @@ install:
     - source ci-helpers/travis/setup_conda.sh
     - conda install -c conda-forge pandoc
     - if [[ $INSTALL_GSL == 1 ]]; then
-        - conda install -c conda-forge gsl;
+        conda install -c conda-forge gsl;
       fi
 
 script:
