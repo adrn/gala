@@ -69,7 +69,7 @@ matrix:
           env: PYTHON_VERSION=3.7
 
         - os: linux
-          env: INSTALL_GSL=0 SETUP_CMD='install --nogsl'
+          env: INSTALL_GSL=0 SETUP_CMD='build --nogsl; python setup.py install'
 
 before_install:
 
