@@ -1,6 +1,10 @@
 #include <math.h>
 #include <string.h>
+#include "extra_compile_macros.h"
+
+#if USE_GSL == 1
 #include "gsl/gsl_sf_gamma.h"
+#endif
 
 double nan_density(double t, double *pars, double *q, int n_dim) { return NAN; }
 double nan_value(double t, double *pars, double *q, int n_dim) { return NAN; }
@@ -391,6 +395,7 @@ double jaffe_density(double t, double *pars, double *q, int n_dim) {
 /* ---------------------------------------------------------------------------
     Power-law potential with exponential cutoff
 */
+#if USE_GSL == 1
 double powerlawcutoff_value(double t, double *pars, double *q, int n_dim) {
     /*  pars:
             0 - G (Gravitational constant)
@@ -439,6 +444,7 @@ void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, doubl
     grad[1] = grad[1] + dPhi_dr * q[1]/r;
     grad[2] = grad[2] + dPhi_dr * q[2]/r;
 }
+#endif
 
 /* ---------------------------------------------------------------------------
     Stone-Ostriker potential from Stone & Ostriker (2015)

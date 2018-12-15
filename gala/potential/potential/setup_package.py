@@ -11,17 +11,19 @@ def get_extensions():
     cfg['include_dirs'].append('numpy')
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/potential')
+    cfg['include_dirs'].append('gala')
     cfg['extra_compile_args'].append('--std=gnu99')
     cfg['sources'].append('gala/potential/potential/cpotential.pyx')
     cfg['sources'].append('gala/potential/potential/builtin/builtin_potentials.c')
     cfg['sources'].append('gala/potential/potential/src/cpotential.c')
-    cfg['libraries'] = ['gsl', 'gslcblas'] # TODO: make this configurable!
+    # cfg['libraries'] = ['gsl', 'gslcblas'] # TODO: make this configurable!
     exts.append(Extension('gala.potential.potential.cpotential', **cfg))
 
     cfg = setup_helpers.DistutilsExtensionArgs()
     cfg['include_dirs'].append('numpy')
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/potential')
+    cfg['include_dirs'].append('gala')
     cfg['extra_compile_args'].append('--std=gnu99')
     cfg['sources'].append('gala/potential/potential/ccompositepotential.pyx')
     cfg['sources'].append('gala/potential/potential/src/cpotential.c')
@@ -31,11 +33,12 @@ def get_extensions():
     cfg['include_dirs'].append('numpy')
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/potential')
+    cfg['include_dirs'].append('gala')
     cfg['extra_compile_args'].append('--std=gnu99')
     cfg['sources'].append('gala/potential/potential/builtin/cybuiltin.pyx')
     cfg['sources'].append('gala/potential/potential/builtin/builtin_potentials.c')
     cfg['sources'].append('gala/potential/potential/src/cpotential.c')
-    cfg['libraries'] = ['gsl', 'gslcblas'] # TODO: make this configurable!
+    # cfg['libraries'] = ['gsl', 'gslcblas'] # TODO: make this configurable!
     exts.append(Extension('gala.potential.potential.builtin.cybuiltin', **cfg))
 
     return exts

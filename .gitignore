@@ -21,6 +21,7 @@ gala/potential/hamiltonian/chamiltonian.c
 gala/potential/potential/builtin/cybuiltin.c
 gala/potential/potential/ccompositepotential.c
 gala/potential/potential/cpotential.c
+gala/extra_compile_macros.h
 
 # Other generated files
 */version.py

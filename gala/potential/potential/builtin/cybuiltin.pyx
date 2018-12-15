@@ -8,6 +8,7 @@
 
 # Standard library
 from collections import OrderedDict
+import warnings
 
 # Third-party
 from astropy.extern import six
@@ -26,7 +27,10 @@ from ..cpotential cimport densityfunc, energyfunc, gradientfunc, hessianfunc
 from ...frame.cframe cimport CFrameWrapper
 from ....units import dimensionless, DimensionlessUnitSystem
 
-cdef extern from "potential/builtin/builtin_potentials.h":
+cdef extern from "extra_compile_macros.h":
+    int USE_GSL
+
+cdef extern from "potential/potential/builtin/builtin_potentials.h":
     double null_value(double t, double *pars, double *q, int n_dim) nogil
     void null_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double null_density(double t, double *pars, double *q, int n_dim) nogil
@@ -462,9 +466,18 @@ cdef class PowerLawCutoffWrapper(CPotentialWrapper):
 
     def __init__(self, G, parameters, q0):
         self.init([G] + list(parameters), np.ascontiguousarray(q0))
-        self.cpotential.value[0] = <energyfunc>(powerlawcutoff_value)
-        self.cpotential.density[0] = <densityfunc>(powerlawcutoff_density)
-        self.cpotential.gradient[0] = <gradientfunc>(powerlawcutoff_gradient)
+
+        if USE_GSL == 1:
+            self.cpotential.value[0] = <energyfunc>(powerlawcutoff_value)
+            self.cpotential.density[0] = <densityfunc>(powerlawcutoff_density)
+            self.cpotential.gradient[0] = <gradientfunc>(powerlawcutoff_gradient)
+        else:
+            warnings.warn("Gala was compiled without GSL and so this potential "
+                          "-- PowerLawCutoffPotential -- will not work. See "
+                          "the gala documentation for more information about "
+                          "installing and using GSL with gala: "
+                          "http://gala.adrian.pw/en/latest/install.html",
+                          RuntimeWarning)
 
 class PowerLawCutoffPotential(CPotentialBase):
     r"""
@@ -676,7 +689,6 @@ class NFWPotential(CPotentialBase):
         # default to None)
 
         if v_c is not None and m is None:
-            import warnings
             warnings.warn("NFWPotential now expects a scale mass in the default"
                           " initializer. To initialize from a circular "
                           "velocity, use the classmethod "
