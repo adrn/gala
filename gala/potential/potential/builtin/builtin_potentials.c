@@ -3,7 +3,7 @@
 #include "extra_compile_macros.h"
 
 #if USE_GSL == 1
-#include "gsl/gsl_sf_gamma.h"
+#include <gsl/gsl_sf_gamma.h>
 #endif
 
 double nan_density(double t, double *pars, double *q, int n_dim) { return NAN; }
