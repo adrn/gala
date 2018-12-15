@@ -32,6 +32,7 @@ env:
         - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml h5py sympy qt ipython jupyter notebook ipykernel numexpr' # SEE PANDOC HACK BELOW
         - PIP_DEPENDENCIES='nbsphinx==0.3.1'
         - CONDA_CHANNELS='astropy-ci-extras astropy'
+        - INSTALL_GSL=1
 
     matrix:
         # Make sure that egg_info works without dependencies
@@ -67,6 +68,10 @@ matrix:
         - os: linux
           env: PYTHON_VERSION=3.7
 
+        - os: linux
+          env: INSTALL_GSL=0
+          env: SETUP_CMD='install --nogsl'
+
 before_install:
 
     # If there are matplotlib tests, comment these out to
@@ -78,6 +83,9 @@ install:
     - git clone git://github.com/astropy/ci-helpers.git
     - source ci-helpers/travis/setup_conda.sh
     - conda install -c conda-forge pandoc
+    - if [[ $INSTALL_GSL == 1 ]]; then
+        - conda install -c conda-forge gsl
+      fi
 
 script:
     - $MAIN_CMD $SETUP_CMD
