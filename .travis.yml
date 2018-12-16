@@ -18,6 +18,7 @@ addons:
             - graphviz
             - texlive-latex-extra
             - dvipng
+            - gsl-bin
 
 env:
     global:
@@ -32,7 +33,6 @@ env:
         - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml h5py sympy qt ipython jupyter notebook ipykernel numexpr' # SEE PANDOC HACK BELOW
         - PIP_DEPENDENCIES='nbsphinx==0.3.1'
         - CONDA_CHANNELS='astropy-ci-extras astropy'
-        - INSTALL_GSL=1
 
     matrix:
         # Make sure that egg_info works without dependencies
@@ -69,7 +69,7 @@ matrix:
           env: PYTHON_VERSION=3.7
 
         - os: linux
-          env: INSTALL_GSL=0 SETUP_CMD='build --nogsl; python setup.py install'
+          env: SETUP_CMD='build --nogsl test'
 
 before_install:
 
@@ -82,9 +82,6 @@ install:
     - git clone git://github.com/astropy/ci-helpers.git
     - source ci-helpers/travis/setup_conda.sh
     - conda install -c conda-forge pandoc
-    - if [[ $INSTALL_GSL == 1 ]]; then
-        conda install -c conda-forge gsl;
-      fi
 
 script:
     - $MAIN_CMD $SETUP_CMD
