@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 # Third-party
 import numpy as np
 import astropy.units as u
