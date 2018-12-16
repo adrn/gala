@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 cdef extern from "potential/src/cpotential.h":
     ctypedef struct CPotential:
         pass

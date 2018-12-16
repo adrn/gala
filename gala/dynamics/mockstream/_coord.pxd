@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 cdef void sat_rotation_matrix(double *w, double *R)
 
 cdef void to_sat_coords(double *w, double *R,

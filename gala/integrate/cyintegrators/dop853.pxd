@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrame:
         pass

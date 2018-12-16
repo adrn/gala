@@ -995,9 +995,12 @@ class LongMuraliBarPotential(CPotentialBase):
         parameters['m'] = m
         ptypes['m'] = 'mass'
 
-        for name in 'abc':
-            parameters[name] = eval(name)
-            ptypes[name] = 'length'
+        parameters['a'] = a
+        ptypes['a'] = 'length'
+        parameters['b'] = b
+        ptypes['b'] = 'length'
+        parameters['c'] = c
+        ptypes['c'] = 'length'
 
         parameters['alpha'] = alpha
         ptypes['alpha'] = 'angle'
