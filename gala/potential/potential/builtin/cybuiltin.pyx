@@ -472,19 +472,20 @@ cdef class PowerLawCutoffWrapper(CPotentialWrapper):
             self.cpotential.value[0] = <energyfunc>(powerlawcutoff_value)
             self.cpotential.density[0] = <densityfunc>(powerlawcutoff_density)
             self.cpotential.gradient[0] = <gradientfunc>(powerlawcutoff_gradient)
-        else:
-            warnings.warn("Gala was compiled without GSL and so this potential "
-                          "-- PowerLawCutoffPotential -- will not work. See "
-                          "the gala documentation for more information about "
-                          "installing and using GSL with gala: "
-                          "http://gala.adrian.pw/en/latest/install.html",
-                          RuntimeWarning)
 
 class PowerLawCutoffPotential(CPotentialBase):
     r"""
     PowerLawCutoffPotential(m, alpha, r_c, units=None, origin=None)
 
-    TODO:
+    A spherical power-law density profile with an exponential cutoff.
+
+    The power law index must be ``0 <= alpha < 3``.
+
+    .. note::
+
+        This potential requires GSL to be installed, and Gala must have been
+        built and installed with GSL support enaled (the default behavior).
+        See http://gala.adrian.pw/en/latest/install.html for more information.
 
     .. math::
 
@@ -505,6 +506,13 @@ class PowerLawCutoffPotential(CPotentialBase):
 
     """
     def __init__(self, m, alpha, r_c, units=None, origin=None):
+        warnings.warn("Gala was compiled without GSL and so this potential "
+                      "-- PowerLawCutoffPotential -- will not work. See "
+                      "the gala documentation for more information about "
+                      "installing and using GSL with gala: "
+                      "http://gala.adrian.pw/en/latest/install.html",
+                      RuntimeWarning)
+
         parameters = OrderedDict()
         ptypes = OrderedDict()
 

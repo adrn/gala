@@ -94,7 +94,7 @@ class MilkyWayPotential(CCompositePotential):
     bulge : dict (optional)
         Parameters to be passed to the :class:`~gala.potential.HernquistPotential`.
     halo : dict (optional)
-        Parameters to be passed to the :class:`~gala.potential.LogarithmicPotential`.
+        Parameters to be passed to the :class:`~gala.potential.NFWPotential`.
     nucleus : dict (optional)
         Parameters to be passed to the :class:`~gala.potential.HernquistPotential`.
 
@@ -148,17 +148,20 @@ class MilkyWayPotential(CCompositePotential):
 
 class BovyMWPotential2014(CCompositePotential):
     """
-    TODO:
+    An implementation of the ``MWPotential2014``
+    `from galpy <https://galpy.readthedocs.io/en/latest/potential.html>`_
+    and described in `Bovy (2015)
+    <https://ui.adsabs.harvard.edu/#abs/2015ApJS..216...29B/abstract>`_.
 
-    A simple mass-model for the Milky Way consisting of a spherical nucleus and
-    bulge, a Miyamoto-Nagai disk, and a spherical NFW dark matter halo.
+    This potential consists of a spherical bulge and dark matter halo, and a
+    Miyamoto-Nagai disk component.
 
-    The disk model is taken from `Bovy (2015)
-    <https://ui.adsabs.harvard.edu/#abs/2015ApJS..216...29B/abstract>`_ - if you
-    use this potential, please also cite that work.
+    .. note::
 
-    Default parameters are fixed by fitting to a compilation of recent mass
-    measurements of the Milky Way, from 10 pc to ~150 pc.
+        Because it internally uses the PowerLawCutoffPotential,
+        this potential requires GSL to be installed, and Gala must have been
+        built and installed with GSL support enaled (the default behavior).
+        See http://gala.adrian.pw/en/latest/install.html for more information.
 
     Parameters
     ----------
@@ -168,11 +171,9 @@ class BovyMWPotential2014(CCompositePotential):
     disk : dict (optional)
         Parameters to be passed to the :class:`~gala.potential.MiyamotoNagaiPotential`.
     bulge : dict (optional)
-        Parameters to be passed to the :class:`~gala.potential.HernquistPotential`.
+        Parameters to be passed to the :class:`~gala.potential.PowerLawCutoffPotential`.
     halo : dict (optional)
-        Parameters to be passed to the :class:`~gala.potential.LogarithmicPotential`.
-    nucleus : dict (optional)
-        Parameters to be passed to the :class:`~gala.potential.HernquistPotential`.
+        Parameters to be passed to the :class:`~gala.potential.NFWPotential`.
 
     Note: in subclassing, order of arguments must match order of potential
     components added at bottom of init.
