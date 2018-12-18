@@ -162,8 +162,8 @@ for ext in extensions:
         if gsl_version is not None:
             if 'gsl' not in ext.libraries:
                 ext.libraries.append('gsl')
-            if 'gslcblas' not in ext.libraries:
-                ext.libraries.append('gslcblas')
+            # if 'gslcblas' not in ext.libraries:
+            #     ext.libraries.append('gslcblas')
 
 extra_compile_macros_file = 'gala/extra_compile_macros.h'
 with open(extra_compile_macros_file, 'w') as f:
