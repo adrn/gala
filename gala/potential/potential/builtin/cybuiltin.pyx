@@ -506,12 +506,13 @@ class PowerLawCutoffPotential(CPotentialBase):
 
     """
     def __init__(self, m, alpha, r_c, units=None, origin=None):
-        warnings.warn("Gala was compiled without GSL and so this potential "
-                      "-- PowerLawCutoffPotential -- will not work. See "
-                      "the gala documentation for more information about "
-                      "installing and using GSL with gala: "
-                      "http://gala.adrian.pw/en/latest/install.html",
-                      RuntimeWarning)
+        from ...._cconfig import GSL_ENABLED
+        if not GSL_ENABLED:
+            raise ValueError("Gala was compiled without GSL and so this "
+                             "potential -- PowerLawCutoffPotential -- will not "
+                             "work.  See the gala documentation for more "
+                             "information about installing and using GSL with "
+                             "gala: http://gala.adrian.pw/en/latest/install.html")
 
         parameters = OrderedDict()
         ptypes = OrderedDict()
