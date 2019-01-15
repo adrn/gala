@@ -53,7 +53,9 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
 cdef void dop853_step(CPotential *cp, CFrame *cf,
                       double *w, double t1, double t2, double dt0,
                       int ndim, int norbits,
-                      double atol, double rtol, int nmax):
+                      double atol, double rtol, int nmax) except *:
+
+    cdef int res
 
     res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
                  cp, cf, norbits, t1, w, t2,

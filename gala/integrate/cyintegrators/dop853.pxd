@@ -9,7 +9,7 @@ cdef extern from "potential/src/cpotential.h":
 cdef void dop853_step(CPotential *cp, CFrame *cf,
                       double *w, double t1, double t2, double dt0,
                       int ndim, int norbits,
-                      double atol, double rtol, int nmax)
+                      double atol, double rtol, int nmax)  except *
 
 cdef dop853_helper(CPotential *cp, CFrame *cf,
                    double[:,::1] w0, double[::1] t,
