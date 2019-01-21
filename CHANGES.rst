@@ -5,7 +5,8 @@ New Features
 ------------
 - Added a new coordinate frame for great circle coordinate systems defined by a
   pole and longitude zero point.
-
+- Added a function to transform a proper motion covariance matrix to a new
+  coordinate frame.
 
 Bug fixes
 ---------

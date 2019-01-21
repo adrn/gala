@@ -10,7 +10,8 @@ Introduction
 The `~gala.coordinates` subpackage primarily provides specialty
 :mod:`astropy.coordinates` frame classes for coordinate systems defined by the
 stellar streams, and for other common Galactic dynamics tasks like removing
-solar reflex motion from proper motions or radial velocities.
+solar reflex motion from proper motions or radial velocities, and transforming
+a proper motion covariance matrix from one frame to another.
 
 For the examples below the following imports have already been executed::
 
@@ -148,6 +149,56 @@ values of the proper motions) -- this is sometimes called "v_GSR"::
         (162., -17., 172.)
      (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
         (92.60359171, 151.62817259, -55.00367694)>
+
+
+Transforming a proper motion covariance matrix to a new coordinate frame
+------------------------------------------------------------------------
+
+When working with Gaia or other astrometric data sets, we often need to
+transform the reported covariance matrix between proper motion components into a
+new coordinate system. For example, Gaia data are provided in the
+`~astropy.coordinates.ICRS` (equatorial) coordinate frame, but for Galactic
+science, we often want to instead work in the
+`~astropy.coordinates.Galactic` coordinate system.
+For this and other transformations that only require a rotation (i.e. the origin
+doesn't change), the astrometric covariance matrix can be transformed exactly
+through a projection of the rotation onto the tangent plane at a given location.
+The details of this procedure are explained in `this document from the Gaia data
+processing team
+<https://gea.esac.esa.int/archive/documentation/GDR2/Data_processing/chap_cu3ast/sec_cu3ast_intro/ssec_cu3ast_intro_tansforms.html>`_,
+and this functionality is implemented in gala. Let's first create a coordinate
+object to transform::
+
+    >>> c = coord.SkyCoord(ra=62*u.deg,
+    ...                    dec=17*u.deg,
+    ...                    pm_ra_cosdec=1*u.mas/u.yr,
+    ...                    pm_dec=3*u.mas/u.yr)
+
+and a covariance matrix for the proper motion components, for example, as would
+be constructed from a single row from a Gaia data release source catalog::
+
+    >>> cov = np.array([[0.53510132, 0.16637034],
+    ...                 [0.16637034, 1.1235292 ]])
+
+This matrix specifies the 2D error distribution for the proper motion
+measurement *in the ICRS frame*. To transform this matrix to, e.g., the Galactic
+coordinate system, we can use the function
+`~gala.coordinates.transform_pm_cov`::
+
+    >>> gc.transform_pm_cov(c, cov, coord.Galactic) # doctest: +FLOAT_CMP
+    array([[ 0.69450047, -0.309945  ],
+           [-0.309945  ,  0.96413005]])
+
+Note that this works for all of the great circle or stellar stream coordinate
+frames implemented in gala::
+
+    >>> gc.transform_pm_cov(c, cov, gc.GD1) # doctest: +FLOAT_CMP
+    array([[1.10838914, 0.19067958],
+           [0.19067958, 0.55024138]])
+
+Also note that this works for multiple coordinates (i.e. array coordinates) as
+well, so try to avoid looping over this function and instead apply it to
+array-valued coordinate objects.
 
 
 References
