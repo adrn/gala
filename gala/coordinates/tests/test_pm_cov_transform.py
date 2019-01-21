@@ -72,3 +72,5 @@ def test_transform_correctness(to_frame):
         cov_est = np.cov(new_pm_samples)
         cov_trans = transform_pm_cov(c[i], cov[i], to_frame)
         assert np.allclose(cov_est, cov_trans, atol=1e-2)
+        assert np.allclose(np.sort(np.linalg.eigvals(cov[i])),
+                           np.sort(np.linalg.eigvals(cov_trans)))
