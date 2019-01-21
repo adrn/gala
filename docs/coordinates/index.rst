@@ -157,9 +157,9 @@ Transforming a proper motion covariance matrix to a new coordinate frame
 When working with Gaia or other astrometric data sets, we often need to
 transform the reported covariance matrix between proper motion components into a
 new coordinate system. For example, Gaia data are provided in the
-:ref:`~astropy.coordinates.ICRS` (equatorial) coordinate frame, but for Galactic
+`~astropy.coordinates.ICRS` (equatorial) coordinate frame, but for Galactic
 science, we often want to instead work in the
-:ref:`~astropy.coordinates.Galactic` coordinate system.
+`~astropy.coordinates.Galactic` coordinate system.
 For this and other transformations that only require a rotation (i.e. the origin
 doesn't change), the astrometric covariance matrix can be transformed exactly
 through a projection of the rotation onto the tangent plane at a given location.
