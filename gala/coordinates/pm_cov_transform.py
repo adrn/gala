@@ -12,7 +12,7 @@ def get_uv_tan(c):
     l = c.spherical.lon
     b = c.spherical.lat
 
-    p = np.array([-np.sin(l), np.cos(l), np.zeros(len(l))]).T
+    p = np.array([-np.sin(l), np.cos(l), np.zeros_like(l.value)]).T
     q = np.array([-np.cos(l)*np.sin(b), -np.sin(l)*np.sin(b), np.cos(b)]).T
 
     return np.stack((p, q), axis=-1)
@@ -54,7 +54,7 @@ def get_transform_matrix(from_frame, to_frame):
         if M is None:
             M = Mi
         else:
-            M = matrix_product(Mi, M)
+            M = matrix_product(M, Mi)
 
     return M
 
@@ -90,7 +90,11 @@ def transform_pm_cov(c, cov, to_frame):
                          .format(len(c), cov.shape[0]))
 
     # 3D rotation matrix, to be projected onto the tangent plane
-    R = get_transform_matrix(c.frame.__class__, to_frame)
+    if hasattr(c, 'frame'):
+        frame = c.frame
+    else:
+        frame = c
+    R = get_transform_matrix(frame.__class__, to_frame)
 
     # Get input coordinates in the desired frame:
     c_to = c.transform_to(to_frame)
@@ -98,11 +102,20 @@ def transform_pm_cov(c, cov, to_frame):
     # Get tangent plane coordinates:
     uv_in = get_uv_tan(c)
     uv_to = get_uv_tan(c_to)
-    G = np.einsum('nab,nac->nbc', uv_to,
-                  np.einsum('ji,nik->njk', R, uv_in))
 
-    # transform
-    cov_to = np.einsum('nba,nac->nbc', G,
-                       np.einsum('nij,nki->njk', cov, G))
+    if not c.isscalar:
+        G = np.einsum('nab,nac->nbc', uv_to,
+                      np.einsum('ji,nik->njk', R, uv_in))
+
+        # transform
+        cov_to = np.einsum('nba,nac->nbc', G,
+                           np.einsum('nij,nki->njk', cov, G))
+    else:
+        G = np.einsum('ab,ac->bc', uv_to,
+                      np.einsum('ji,ik->jk', R, uv_in))
+
+        # transform
+        cov_to = np.einsum('ba,ac->bc', G,
+                           np.einsum('ij,ki->jk', cov, G))
 
     return cov_to
