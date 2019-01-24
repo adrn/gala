@@ -72,6 +72,9 @@ matrix:
         - os: linux
           env: SETUP_CMD='build --nogsl test'
 
+        - os: linux
+          env: CONDA_DEPENDENCIES+=" galpy"
+
 before_install:
 
     # If there are matplotlib tests, comment these out to
