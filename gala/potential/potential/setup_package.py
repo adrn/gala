@@ -16,7 +16,6 @@ def get_extensions():
     cfg['sources'].append('gala/potential/potential/cpotential.pyx')
     cfg['sources'].append('gala/potential/potential/builtin/builtin_potentials.c')
     cfg['sources'].append('gala/potential/potential/src/cpotential.c')
-    # cfg['libraries'] = ['gsl', 'gslcblas'] # TODO: make this configurable!
     exts.append(Extension('gala.potential.potential.cpotential', **cfg))
 
     cfg = setup_helpers.DistutilsExtensionArgs()
@@ -38,7 +37,6 @@ def get_extensions():
     cfg['sources'].append('gala/potential/potential/builtin/cybuiltin.pyx')
     cfg['sources'].append('gala/potential/potential/builtin/builtin_potentials.c')
     cfg['sources'].append('gala/potential/potential/src/cpotential.c')
-    # cfg['libraries'] = ['gsl', 'gslcblas'] # TODO: make this configurable!
     exts.append(Extension('gala.potential.potential.builtin.cybuiltin', **cfg))
 
     return exts
