@@ -119,9 +119,14 @@ class TestStone(PotentialTestBase):
 @pytest.mark.skipif(not GSL_ENABLED,
                     reason="requires GSL to run this test")
 class TestPowerLawCutoff(PotentialTestBase):
-    potential = PowerLawCutoffPotential(units=galactic, m=1E10, r_c=1., alpha=1.8)
     w0 = [8.,0.,0.,0.,0.1,0.1]
     atol = 1e-3
+
+    @classmethod
+    def setup_class(cls):
+        cls.potential = PowerLawCutoffPotential(units=galactic,
+                                                m=1E10, r_c=1., alpha=1.8)
+        PotentialTestBase.setup_class(cls)
 
 class TestSphericalNFW(PotentialTestBase):
     potential = NFWPotential(units=galactic, m=1E11, r_s=12.)

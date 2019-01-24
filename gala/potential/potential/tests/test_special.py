@@ -27,5 +27,9 @@ class TestMilkyWayPotential(CompositePotentialTestBase):
 @pytest.mark.skipif(not GSL_ENABLED,
                     reason="requires GSL to run this test")
 class TestBovyMWPotential2014(CompositePotentialTestBase):
-    potential = BovyMWPotential2014()
     w0 = [8.,0.,0.,0.,0.22,0.1]
+
+    @classmethod
+    def setup_class(cls):
+        cls.potential = BovyMWPotential2014()
+        CompositePotentialTestBase.setup_class(cls)
