@@ -29,7 +29,5 @@ class TestMilkyWayPotential(CompositePotentialTestBase):
 class TestBovyMWPotential2014(CompositePotentialTestBase):
     w0 = [8.,0.,0.,0.,0.22,0.1]
 
-    @classmethod
-    def setup_class(cls):
-        cls.potential = BovyMWPotential2014()
-        CompositePotentialTestBase.setup_class(cls)
+    def setup(self):
+        self.potential = BovyMWPotential2014()

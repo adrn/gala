@@ -122,11 +122,9 @@ class TestPowerLawCutoff(PotentialTestBase):
     w0 = [8.,0.,0.,0.,0.1,0.1]
     atol = 1e-3
 
-    @classmethod
-    def setup_class(cls):
-        cls.potential = PowerLawCutoffPotential(units=galactic,
-                                                m=1E10, r_c=1., alpha=1.8)
-        PotentialTestBase.setup_class(cls)
+    def setup(self):
+        self.potential = PowerLawCutoffPotential(units=galactic,
+                                                 m=1E10, r_c=1., alpha=1.8)
 
 class TestSphericalNFW(PotentialTestBase):
     potential = NFWPotential(units=galactic, m=1E11, r_s=12.)
