@@ -181,9 +181,9 @@ class BovyMWPotential2014(CCompositePotential):
     def __init__(self, units=galactic,
                  disk=None, halo=None, bulge=None):
 
-        default_disk = dict(m=6.8e10*u.Msun, a=3.*u.kpc, b=280*u.pc)
-        default_bulge = dict(m=5e9*u.Msun, alpha=1.8, r_c=1.9*u.kpc)
-        default_halo = dict(m=4.320497213800700e11*u.Msun, r_s=16*u.kpc)
+        default_disk = dict(m=68193902782.346756*u.Msun, a=3.*u.kpc, b=280*u.pc)
+        default_bulge = dict(m=4501365375.06545*u.Msun, alpha=1.8, r_c=1.9*u.kpc)
+        default_halo = dict(m=4.3683325e11*u.Msun, r_s=16*u.kpc)
 
         if disk is None:
             disk = dict()
