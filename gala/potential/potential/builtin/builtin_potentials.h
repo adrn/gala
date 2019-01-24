@@ -35,6 +35,10 @@ extern double jaffe_value(double t, double *pars, double *q, int n_dim);
 extern void jaffe_gradient(double t, double *pars, double *q, int n_dim, double *grad);
 extern double jaffe_density(double t, double *pars, double *q, int n_dim);
 
+extern double powerlawcutoff_value(double t, double *pars, double *q, int n_dim);
+extern void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, double *grad);
+extern double powerlawcutoff_density(double t, double *pars, double *q, int n_dim);
+
 extern double stone_value(double t, double *pars, double *q, int n_dim);
 extern void stone_gradient(double t, double *pars, double *q, int n_dim, double *grad);
 extern void stone_density(double t, double *pars, double *q, int n_dim);

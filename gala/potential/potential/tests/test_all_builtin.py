@@ -15,6 +15,7 @@ from ..builtin import *
 from ..ccompositepotential import *
 from ....units import solarsystem, galactic, DimensionlessUnitSystem
 from .helpers import PotentialTestBase, CompositePotentialTestBase
+from ...._cconfig import GSL_ENABLED
 
 ##############################################################################
 # Python
@@ -114,6 +115,16 @@ class TestSatoh(PotentialTestBase):
 class TestStone(PotentialTestBase):
     potential = StonePotential(units=galactic, m=1E11, r_c=0.1, r_h=10.)
     w0 = [8.,0.,0.,0.,0.18,0.1]
+
+@pytest.mark.skipif(not GSL_ENABLED,
+                    reason="requires GSL to run this test")
+class TestPowerLawCutoff(PotentialTestBase):
+    w0 = [8.,0.,0.,0.,0.1,0.1]
+    atol = 1e-3
+
+    def setup(self):
+        self.potential = PowerLawCutoffPotential(units=galactic,
+                                                 m=1E10, r_c=1., alpha=1.8)
 
 class TestSphericalNFW(PotentialTestBase):
     potential = NFWPotential(units=galactic, m=1E11, r_s=12.)

@@ -18,6 +18,8 @@ addons:
             - graphviz
             - texlive-latex-extra
             - dvipng
+            - gsl-bin
+            - libgsl0-dev
 
 env:
     global:
@@ -66,6 +68,12 @@ matrix:
 
         - os: linux
           env: PYTHON_VERSION=3.7
+
+        - os: linux
+          env: SETUP_CMD='build --nogsl test'
+
+        - os: linux
+          env: CONDA_DEPENDENCIES+=" galpy"
 
 before_install:
 

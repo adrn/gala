@@ -7,6 +7,11 @@ New Features
   pole and longitude zero point.
 - Added a function to transform a proper motion covariance matrix to a new
   coordinate frame.
+- Added support for compiling with or without GSL.
+- Added a new ``PowerLawCutoffPotential`` class for a power-law density
+  distribution with an exponential cutoff.
+- Added an implementation of the ``MWPotential2014`` from ``galpy`` (called
+  ``BovyMWPotential2014`` in ``gala``).
 
 Bug fixes
 ---------

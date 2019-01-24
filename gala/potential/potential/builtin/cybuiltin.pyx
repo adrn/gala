@@ -3,11 +3,13 @@
 # cython: cdivision=True
 # cython: wraparound=False
 # cython: profile=False
+# cython: language_level=3
 
 """ Built-in potentials implemented in Cython """
 
 # Standard library
 from collections import OrderedDict
+import warnings
 
 # Third-party
 from astropy.extern import six
@@ -26,7 +28,10 @@ from ..cpotential cimport densityfunc, energyfunc, gradientfunc, hessianfunc
 from ...frame.cframe cimport CFrameWrapper
 from ....units import dimensionless, DimensionlessUnitSystem
 
-cdef extern from "potential/builtin/builtin_potentials.h":
+cdef extern from "extra_compile_macros.h":
+    int USE_GSL
+
+cdef extern from "potential/potential/builtin/builtin_potentials.h":
     double null_value(double t, double *pars, double *q, int n_dim) nogil
     void null_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double null_density(double t, double *pars, double *q, int n_dim) nogil
@@ -58,6 +63,10 @@ cdef extern from "potential/builtin/builtin_potentials.h":
     double jaffe_value(double t, double *pars, double *q, int n_dim) nogil
     void jaffe_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double jaffe_density(double t, double *pars, double *q, int n_dim) nogil
+
+    double powerlawcutoff_value(double t, double *pars, double *q, int n_dim) nogil
+    void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    double powerlawcutoff_density(double t, double *pars, double *q, int n_dim) nogil
 
     double stone_value(double t, double *pars, double *q, int n_dim) nogil
     void stone_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
@@ -96,7 +105,7 @@ cdef extern from "potential/builtin/builtin_potentials.h":
 
 __all__ = ['NullPotential', 'HenonHeilesPotential', # Misc. potentials
            'KeplerPotential', 'HernquistPotential', 'IsochronePotential', 'PlummerPotential',
-           'JaffePotential', 'StonePotential', # Spherical models
+           'JaffePotential', 'StonePotential', 'PowerLawCutoffPotential', # Spherical models
            'SatohPotential', 'MiyamotoNagaiPotential', # Disk models
            'NFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential',
            'LongMuraliBarPotential', # Triaxial models
@@ -454,6 +463,73 @@ class StonePotential(CPotentialBase):
                                              origin=origin)
 
 
+cdef class PowerLawCutoffWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters, q0):
+        self.init([G] + list(parameters), np.ascontiguousarray(q0))
+
+        if USE_GSL == 1:
+            self.cpotential.value[0] = <energyfunc>(powerlawcutoff_value)
+            self.cpotential.density[0] = <densityfunc>(powerlawcutoff_density)
+            self.cpotential.gradient[0] = <gradientfunc>(powerlawcutoff_gradient)
+
+class PowerLawCutoffPotential(CPotentialBase):
+    r"""
+    PowerLawCutoffPotential(m, alpha, r_c, units=None, origin=None)
+
+    A spherical power-law density profile with an exponential cutoff.
+
+    The power law index must be ``0 <= alpha < 3``.
+
+    .. note::
+
+        This potential requires GSL to be installed, and Gala must have been
+        built and installed with GSL support enaled (the default behavior).
+        See http://gala.adrian.pw/en/latest/install.html for more information.
+
+    .. math::
+
+        \rho(r) = \frac{A}{r^\alpha} \, \exp{-\frac{r^2}{c^2}}\\
+        A = \frac{m}{2\pi} \, \frac{c^{\alpha-3}}{\Gamma(\frac{3-\alpha}{2})}
+
+    Parameters
+    ----------
+    m : :class:`~astropy.units.Quantity`, numeric [mass]
+        Total mass.
+    alpha : numeric
+        Power law index. Must satisfy: ``alpha < 3``
+    r_c : :class:`~astropy.units.Quantity`, numeric [length]
+        Cutoff radius.
+    units : `~gala.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+
+    """
+    def __init__(self, m, alpha, r_c, units=None, origin=None):
+        from ...._cconfig import GSL_ENABLED
+        if not GSL_ENABLED:
+            raise ValueError("Gala was compiled without GSL and so this "
+                             "potential -- PowerLawCutoffPotential -- will not "
+                             "work.  See the gala documentation for more "
+                             "information about installing and using GSL with "
+                             "gala: http://gala.adrian.pw/en/latest/install.html")
+
+        parameters = OrderedDict()
+        ptypes = OrderedDict()
+
+        parameters['m'] = m
+        ptypes['m'] = 'mass'
+
+        parameters['alpha'] = alpha
+
+        parameters['r_c'] = r_c
+        ptypes['r_c'] = 'length'
+
+        super(PowerLawCutoffPotential, self).__init__(
+            parameters=parameters, parameter_physical_types=ptypes,
+            units=units, origin=origin)
+
+
 # ============================================================================
 # Flattened, axisymmetric models
 #
@@ -623,7 +699,6 @@ class NFWPotential(CPotentialBase):
         # default to None)
 
         if v_c is not None and m is None:
-            import warnings
             warnings.warn("NFWPotential now expects a scale mass in the default"
                           " initializer. To initialize from a circular "
                           "velocity, use the classmethod "
@@ -929,9 +1004,12 @@ class LongMuraliBarPotential(CPotentialBase):
         parameters['m'] = m
         ptypes['m'] = 'mass'
 
-        for name in 'abc':
-            parameters[name] = eval(name)
-            ptypes[name] = 'length'
+        parameters['a'] = a
+        ptypes['a'] = 'length'
+        parameters['b'] = b
+        ptypes['b'] = 'length'
+        parameters['c'] = c
+        ptypes['c'] = 'length'
 
         parameters['alpha'] = alpha
         ptypes['alpha'] = 'angle'

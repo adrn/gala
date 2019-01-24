@@ -4,6 +4,7 @@
 # cython: cdivision=True
 # cython: wraparound=False
 # cython: profile=False
+# cython: language_level=3
 
 """ Generate mock streams. """
 

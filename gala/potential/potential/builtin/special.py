@@ -8,11 +8,12 @@ import numpy as np
 from .cybuiltin import (HernquistPotential,
                         MiyamotoNagaiPotential,
                         LogarithmicPotential,
-                        NFWPotential)
+                        NFWPotential,
+                        PowerLawCutoffPotential)
 from ..ccompositepotential import CCompositePotential
 from ....units import galactic
 
-__all__ = ['LM10Potential', 'MilkyWayPotential']
+__all__ = ['LM10Potential', 'MilkyWayPotential', 'BovyMWPotential2014']
 
 class LM10Potential(CCompositePotential):
     """
@@ -93,7 +94,7 @@ class MilkyWayPotential(CCompositePotential):
     bulge : dict (optional)
         Parameters to be passed to the :class:`~gala.potential.HernquistPotential`.
     halo : dict (optional)
-        Parameters to be passed to the :class:`~gala.potential.LogarithmicPotential`.
+        Parameters to be passed to the :class:`~gala.potential.NFWPotential`.
     nucleus : dict (optional)
         Parameters to be passed to the :class:`~gala.potential.HernquistPotential`.
 
@@ -141,6 +142,74 @@ class MilkyWayPotential(CCompositePotential):
         self["disk"] = MiyamotoNagaiPotential(units=units, **disk)
         self["bulge"] = HernquistPotential(units=units, **bulge)
         self["nucleus"] = HernquistPotential(units=units, **nucleus)
+        self["halo"] = NFWPotential(units=units, **halo)
+        self.lock = True
+
+
+class BovyMWPotential2014(CCompositePotential):
+    """
+    An implementation of the ``MWPotential2014``
+    `from galpy <https://galpy.readthedocs.io/en/latest/potential.html>`_
+    and described in `Bovy (2015)
+    <https://ui.adsabs.harvard.edu/#abs/2015ApJS..216...29B/abstract>`_.
+
+    This potential consists of a spherical bulge and dark matter halo, and a
+    Miyamoto-Nagai disk component.
+
+    .. note::
+
+        Because it internally uses the PowerLawCutoffPotential,
+        this potential requires GSL to be installed, and Gala must have been
+        built and installed with GSL support enaled (the default behavior).
+        See http://gala.adrian.pw/en/latest/install.html for more information.
+
+    Parameters
+    ----------
+    units : `~gala.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+    disk : dict (optional)
+        Parameters to be passed to the :class:`~gala.potential.MiyamotoNagaiPotential`.
+    bulge : dict (optional)
+        Parameters to be passed to the :class:`~gala.potential.PowerLawCutoffPotential`.
+    halo : dict (optional)
+        Parameters to be passed to the :class:`~gala.potential.NFWPotential`.
+
+    Note: in subclassing, order of arguments must match order of potential
+    components added at bottom of init.
+    """
+    def __init__(self, units=galactic,
+                 disk=None, halo=None, bulge=None):
+
+        default_disk = dict(m=68193902782.346756*u.Msun, a=3.*u.kpc, b=280*u.pc)
+        default_bulge = dict(m=4501365375.06545*u.Msun, alpha=1.8, r_c=1.9*u.kpc)
+        default_halo = dict(m=4.3683325e11*u.Msun, r_s=16*u.kpc)
+
+        if disk is None:
+            disk = dict()
+
+        if halo is None:
+            halo = dict()
+
+        if bulge is None:
+            bulge = dict()
+
+        for k,v in default_disk.items():
+            if k not in disk:
+                disk[k] = v
+
+        for k,v in default_bulge.items():
+            if k not in bulge:
+                bulge[k] = v
+
+        for k,v in default_halo.items():
+            if k not in halo:
+                halo[k] = v
+
+        super(BovyMWPotential2014, self).__init__()
+
+        self["disk"] = MiyamotoNagaiPotential(units=units, **disk)
+        self["bulge"] = PowerLawCutoffPotential(units=units, **bulge)
         self["halo"] = NFWPotential(units=units, **halo)
         self.lock = True
 
