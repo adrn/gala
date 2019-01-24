@@ -43,8 +43,8 @@ def helper(gala_pot, galpy_pot):
     assert np.allclose(gala_pot.energy(xyz).to_value((u.km / u.s)**2),
                        galpy_pot(R=Rs.to_value(ro), z=zs.to_value(ro)))
 
-    assert np.allclose(gala_pot.gradient(xyz).to_value((u.km/u.s) * u.pc/u.Myr / u.pc),
-                       -galpy_pot.Rforce(R=Rs.to_value(ro), z=zs.to_value(ro)))
+    assert np.allclose(gala_pot.gradient(xyz).to_value((u.km/u.s) * u.pc/u.Myr / u.pc)[2],
+                       -galpy_pot.zforce(R=Rs.to_value(ro), z=zs.to_value(ro)))
 
 
 @pytest.mark.skipif(not GALPY_INSTALLED,
