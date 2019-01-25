@@ -28,7 +28,6 @@ def get_extensions():
     cfg['extra_compile_args'].append('--std=gnu99')
     cfg['sources'].append('gala/potential/scf/computecoeff.pyx')
     cfg['sources'].append('gala/potential/scf/src/bfe_helper.c')
-    # coeff_cfg['libraries'] = ['gsl', 'gslcblas'] # TODO: repeat the optional thing in setup.py
     exts.append(Extension('gala.potential.scf._computecoeff', **cfg))
 
     cfg = setup_helpers.DistutilsExtensionArgs()
@@ -41,7 +40,6 @@ def get_extensions():
     cfg['sources'].append('gala/potential/scf/bfe.pyx')
     cfg['sources'].append('gala/potential/scf/src/bfe.c')
     cfg['sources'].append('gala/potential/scf/src/bfe_helper.c')
-    # coeff_cfg['libraries'] = ['gsl', 'gslcblas'] # TODO: repeat the optional thing in setup.py
     exts.append(Extension('gala.potential.scf._bfe', **cfg))
 
     cfg = setup_helpers.DistutilsExtensionArgs()
@@ -53,7 +51,6 @@ def get_extensions():
     cfg['sources'].append('gala/potential/scf/bfe_class.pyx')
     cfg['sources'].append('gala/potential/scf/src/bfe.c')
     cfg['sources'].append('gala/potential/scf/src/bfe_helper.c')
-    # coeff_cfg['libraries'] = ['gsl', 'gslcblas'] # TODO: repeat the optional thing in setup.py
     exts.append(Extension('gala.potential.scf._bfe_class', **cfg))
 
     return exts
