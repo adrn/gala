@@ -2,7 +2,6 @@ name: gala
 
 channels:
   - astropy
-  - asmeurer
 
 dependencies:
   - python==3.6
@@ -17,7 +16,6 @@ dependencies:
   - jupyter
   - notebook
   - ipykernel
-  - gsl=1.16
   - pip:
     - nbsphinx==0.3.1
     - sphinx_astropy

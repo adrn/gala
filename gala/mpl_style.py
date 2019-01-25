@@ -589,7 +589,7 @@ mpl_style = {
     'image.cmap': 'hesperia',
 
     # Font
-    'font.size': 14.0,
+    'font.size': 18.0,
     'text.latex.preamble': r'\usepackage{amsmath}',
     'axes.unicode_minus': False,
 
@@ -633,25 +633,3 @@ mpl_style = {
     # Other
     'savefig.dpi': 300,
 }
-
-try:
-    from cycler import cycler
-    mpl_style['axes.prop_cycle'] = cycler('color', ['#1A1A1A', # black
-                                                    '#2166AC', # blue
-                                                    '#006837', # green
-                                                    '#B2182B', # red
-                                                    '#762A83', # purple
-                                                    '#E08214',
-                                                    '#80CDC1',
-                                                    '#C51B7D',
-                                                    '#FEE08B'])
-except ImportError:
-    mpl_style['axes.color_cycle'] = ['#1A1A1A', # black
-                                     '#2166AC', # blue
-                                     '#006837', # green
-                                     '#B2182B', # red
-                                     '#762A83', # purple
-                                     '#E08214',
-                                     '#80CDC1',
-                                     '#C51B7D',
-                                     '#FEE08B']
