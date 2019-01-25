@@ -4,12 +4,18 @@
 import astropy.units as u
 from astropy.constants import G as _G
 import numpy as np
+import pytest
 
 # Project
+from gala._cconfig import GSL_ENABLED
 from gala.units import galactic
 from .._bfe import density, potential, gradient
 
 G = _G.decompose(galactic).value
+
+if not GSL_ENABLED:
+    pytest.skip("skipping SCF tests: they depend on GSL",
+                allow_module_level=True)
 
 # Check that we get A000=1. for putting in hernquist density
 def hernquist_density(xyz, M, r_s):

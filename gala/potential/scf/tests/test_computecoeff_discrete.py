@@ -6,14 +6,20 @@ import os
 import numpy as np
 from astropy.utils.data import get_pkg_data_filename
 from astropy.constants import G
+import pytest
 
 # Project
 import gala.potential as gp
 from gala.units import galactic
+from gala._cconfig import GSL_ENABLED
 from ..core import compute_coeffs_discrete
 from .._bfe import potential
 
 _G = G.decompose(galactic).value
+
+if not GSL_ENABLED:
+    pytest.skip("skipping SCF tests: they depend on GSL",
+                allow_module_level=True)
 
 def test_plummer():
     pos_path = os.path.abspath(get_pkg_data_filename('data/plummer-pos.dat.gz'))

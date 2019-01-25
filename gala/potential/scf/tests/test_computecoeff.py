@@ -9,14 +9,20 @@ import matplotlib as mpl
 import matplotlib.pyplot as pl
 import numpy as np
 from scipy.integrate import quad
+import pytest
 
 # Project
 import gala.potential as gp
 from gala.units import galactic
+from gala._cconfig import GSL_ENABLED
 from ..core import compute_coeffs
 from .._bfe import potential, density, gradient
 
 G = _G.decompose(galactic).value
+
+if not GSL_ENABLED:
+    pytest.skip("skipping SCF tests: they depend on GSL",
+                allow_module_level=True)
 
 # Check that we get A000=1. for putting in hernquist density
 def hernquist_density(x, y, z, M, r_s):

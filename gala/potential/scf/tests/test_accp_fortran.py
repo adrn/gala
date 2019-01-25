@@ -7,14 +7,19 @@ from math import factorial
 # Third-party
 from astropy.constants import G as _G
 from astropy.utils.data import get_pkg_data_filename
-from astropy.tests.helper import pytest
 import numpy as np
+import pytest
 
 # Project
 from gala.units import galactic
+from gala._cconfig import GSL_ENABLED
 from .._bfe import density, potential, gradient
 
 G = _G.decompose(galactic).value
+
+if not GSL_ENABLED:
+    pytest.skip("skipping SCF tests: they depend on GSL",
+                allow_module_level=True)
 
 @pytest.mark.parametrize("basename", [
     'simple-hernquist', 'multi-hernquist', 'simple-nonsph', 'random', 'wang-zhao',

@@ -6,11 +6,16 @@ from math import factorial
 
 # Third-party
 from astropy.utils.data import get_pkg_data_filename
-from astropy.tests.helper import pytest
 import numpy as np
+import pytest
 
 # Project
+from gala._cconfig import GSL_ENABLED
 from ..core import compute_coeffs_discrete
+
+if not GSL_ENABLED:
+    pytest.skip("skipping SCF tests: they depend on GSL",
+                allow_module_level=True)
 
 # Compare coefficients computed with Fortran to Biff
 

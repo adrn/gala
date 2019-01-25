@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 
 # Project
+from gala._cconfig import GSL_ENABLED
 from gala.units import galactic
 import gala.potential as gp
 from gala.potential.potential.tests.helpers import PotentialTestBase
@@ -14,6 +15,11 @@ from gala.potential.potential.io import load
 from .. import _bfe_class
 
 G = _G.decompose(galactic).value
+
+if not GSL_ENABLED:
+    pytest.skip("skipping SCF tests: they depend on GSL",
+                allow_module_level=True)
+    
 
 def test_hernquist():
     nmax = 6
