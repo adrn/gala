@@ -13,7 +13,7 @@ This release includes:
 
 * :ref:`whatsnew-1.0-greatcircle`
 * :ref:`whatsnew-1.0-new-potentials`
-* :ref:`whatsnew-1.0-covmatrix`
+* :ref:`whatsnew-1.0-cov-matrix`
 * :ref:`whatsnew-1.0-stream-frame-naming`
 
 
