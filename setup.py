@@ -172,7 +172,7 @@ else:
 
 extensions = package_info['ext_modules']
 for ext in extensions:
-    if 'potential.potential' in ext.name:
+    if 'potential.potential' in ext.name or 'scf' in ext.name:
         if gsl_version is not None:
             if 'gsl' not in ext.libraries:
                 ext.libraries.append('gsl')
