@@ -1,16 +1,11 @@
 # coding: utf-8
 
-from __future__ import division, print_function
-
-
 import os
 
 # Third-party
-from astropy import log as logger
 import astropy.units as u
 from astropy.utils.data import get_pkg_data_filename
 from astropy.constants import G as _G
-G = _G.decompose([u.kpc,u.Myr,u.Msun]).value
 import matplotlib as mpl
 import matplotlib.pyplot as pl
 import numpy as np
@@ -22,10 +17,13 @@ from scipy.integrate import quad
 from ..core import compute_coeffs
 from .._bfe import potential, density, gradient
 
+G = _G.decompose([u.kpc,u.Myr,u.Msun]).value
+
 # Check that we get A000=1. for putting in hernquist density
 def hernquist_density(x, y, z, M, r_s):
     r = np.sqrt(x**2 + y**2 + z**2)
     return M/(2*np.pi) * r_s / (r * (r+r_s)**3)
+
 
 def test_hernquist():
     for M in [1E5, 1E10]:
@@ -38,6 +36,7 @@ def test_hernquist():
 
             np.testing.assert_allclose(T, 0.)
             np.testing.assert_allclose(Terr, 0., atol=1E-10)
+
 
 def test_hernquist_spherical():
     (S,Serr),(T,Terr) = compute_coeffs(hernquist_density, nmax=8, lmax=8,
@@ -55,6 +54,7 @@ def test_hernquist_spherical():
 def _plummer_density(x, y, z, M, r_s):
     r2 = x*x + y*y + z*z
     return (3*M / (4*np.pi*r_s**3)) * (1 + r2/r_s**2)**(-5/2.)
+
 
 def test_plummer():
     true_M = 1/G
@@ -100,20 +100,24 @@ def test_plummer():
     # print(np.abs((bfe_pot - true_pot) / true_pot).max())
     # print(np.abs((bfe_grad[:,0] - true_grad[:,0]) / true_grad[:,0]).max())
 
+
 # ----------------------------------------------------------------------------
 # Non-spherical, axisymmetric
 
 def flattened_hernquist_density_s(s, M, a, q):
     return M*a / (2*np.pi) / (s * (a + s)**3)
 
+
 def flattened_hernquist_density(x, y, z, M, a, q):
     s = np.sqrt(x*x + y*y + z*z/(q*q))
     return flattened_hernquist_density_s(s, M, a, q)
+
 
 def _integrand_helper(tau, xyz, M, a, q):
     x,y,z = xyz
     m = a*np.sqrt((x*x + y*y) / (a*a + tau) + z*z / (q*q + tau))
     return flattened_hernquist_density_s(m, M, a, q) / ((tau+a*a)*np.sqrt(tau+q*q))
+
 
 def integrand(tau, i, xyz, M, a, q):
     if i in [0,1]:
@@ -125,6 +129,7 @@ def integrand(tau, i, xyz, M, a, q):
 
     return _integrand_helper(tau, xyz, M, a, q) * xyz[i] / denom
 
+
 def flattened_hernquist_gradient(x, y, z, G, M, a, q):
     A = 2*np.pi*G*a**2*q
     gx = A * quad(integrand, 0, np.inf, args=(0, (x, y, z), M, a, q), limit=1000)[0]
@@ -132,6 +137,7 @@ def flattened_hernquist_gradient(x, y, z, G, M, a, q):
     gz = A * quad(integrand, 0, np.inf, args=(2, (x, y, z), M, a, q))[0]
 
     return np.array([gx, gy, gz])
+
 
 def test_flattened_hernquist():
     """

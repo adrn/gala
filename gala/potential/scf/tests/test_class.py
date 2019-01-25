@@ -1,21 +1,20 @@
 # coding: utf-8
 
-from __future__ import division, print_function
-
 # Third-party
 import astropy.units as u
 from astropy.constants import G as _G
-G = _G.decompose([u.kpc,u.Myr,u.Msun]).value
 import numpy as np
 import pytest
 import gala.potential as gp
-from gala.units import galactic
-from gala.potential.potential.tests.helpers import PotentialTestBase
-from gala.potential.potential.io import load
+
+from .....units import galactic
+from ...potential.tests.helpers import PotentialTestBase
+from ...potential.io import load
 
 # Project
 from .. import bfe_class
-# from ..hack import HackPotential
+
+G = _G.decompose([u.kpc, u.Myr, u.Msun]).value
 
 def test_hernquist():
     nmax = 6
@@ -48,6 +47,7 @@ def test_hernquist():
     bfe_grad = scf_potential.gradient(xyz).value
     true_grad = hernquist.gradient(xyz).value
     np.testing.assert_allclose(bfe_grad, true_grad)
+
 
 class TestSCFPotential(PotentialTestBase):
     nmax = 6

@@ -1,8 +1,5 @@
 # coding: utf-8
 
-from __future__ import division, print_function
-
-
 import os
 
 # Third-party
@@ -11,11 +8,12 @@ from astropy.utils.data import get_pkg_data_filename
 from astropy.constants import G
 import gala.potential as gp
 from gala.units import galactic
-_G = G.decompose(galactic).value
 
 # Project
 from ..core import compute_coeffs_discrete
 from .._bfe import potential
+
+_G = G.decompose(galactic).value
 
 def test_plummer():
     pos_path = os.path.abspath(get_pkg_data_filename('data/plummer-pos.dat.gz'))
@@ -41,14 +39,5 @@ def test_plummer():
     # plot discrete vs. analytic potential
     true_pot = pot.value(xyz.T).value
     bfe_pot = potential(xyz, Snlm, Tnlm, G, M, r_s)
-
-    # import matplotlib.pyplot as pl
-
-    # pl.figure()
-    # pl.semilogx(x, true_pot, marker='.', ls='none')
-    # pl.semilogx(x, bfe_pot, marker=None)
-    # # pl.semilogx(x, (true_pot-bfe_pot)/true_pot, marker=None)
-    # pl.show()
-    # # return
-
+    
     assert np.allclose(true_pot, bfe_pot, rtol=1E-2)
