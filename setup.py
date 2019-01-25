@@ -129,9 +129,9 @@ if on_rtd:
     C_INCLUDE_PATH = '/home/docs/checkouts/readthedocs.org/user_builds/gala-astro/conda/latest/include/'
 
     env = os.environ.copy()
-    env['PATH'] += ":" + PATH
-    env['LD_LIBRARY_PATH'] += ":" + LD_LIBRARY_PATH
-    env['C_INCLUDE_PATH'] += ":" + C_INCLUDE_PATH
+    env['PATH'] = env.get('PATH', "") + ":" + PATH
+    env['LD_LIBRARY_PATH'] = env.get('LD_LIBRARY_PATH', "") + ":" + LD_LIBRARY_PATH
+    env['C_INCLUDE_PATH'] = env.get('C_INCLUDE_PATH', "") + ":" + C_INCLUDE_PATH
 else:
     env = None
 
