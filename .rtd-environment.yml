@@ -2,6 +2,7 @@ name: gala
 
 channels:
   - astropy
+  - conda-forge
 
 dependencies:
   - python==3.6
@@ -16,6 +17,7 @@ dependencies:
   - jupyter
   - notebook
   - ipykernel
+  - gsl
   - pip:
     - nbsphinx==0.3.1
     - sphinx_astropy

@@ -119,6 +119,22 @@ package_info['package_data'][PACKAGENAME].extend(c_files)
 # GSL support
 #
 
+# Note: on RTD, they now support conda environments, but don't activate the
+# conda environment that gets created, and so the C stuff installed with GSL
+# aren't picked up. This is my attempt to hack around that!
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
+if on_rtd:
+    PATH = '/home/docs/checkouts/readthedocs.org/user_builds/gala-astro/conda/latest/bin/'
+    LD_LIBRARY_PATH = '/home/docs/checkouts/readthedocs.org/user_builds/gala-astro/conda/latest/lib/'
+    C_INCLUDE_PATH = '/home/docs/checkouts/readthedocs.org/user_builds/gala-astro/conda/latest/include/'
+
+    env = os.environ.copy()
+    env['PATH'] += ":" + PATH
+    env['LD_LIBRARY_PATH'] += ":" + LD_LIBRARY_PATH
+    env['C_INCLUDE_PATH'] += ":" + C_INCLUDE_PATH
+else:
+    env = None
+
 # First, see if the user wants to install without GSL:
 nogsl = get_distutils_build_option('nogsl')
 
@@ -126,7 +142,7 @@ nogsl = get_distutils_build_option('nogsl')
 if not nogsl or nogsl is None: # GSL support enabled
     cmd = ['gsl-config', '--version']
     try:
-        gsl_version = check_output(cmd)
+        gsl_version = check_output(cmd, env=env)
     except (OSError, CalledProcessError):
         gsl_version = None
     else:
