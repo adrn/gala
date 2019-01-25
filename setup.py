@@ -125,13 +125,8 @@ package_info['package_data'][PACKAGENAME].extend(c_files)
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 if on_rtd:
     PATH = '/home/docs/checkouts/readthedocs.org/user_builds/gala-astro/conda/latest/bin/'
-    LD_LIBRARY_PATH = '/home/docs/checkouts/readthedocs.org/user_builds/gala-astro/conda/latest/lib/'
-    C_INCLUDE_PATH = '/home/docs/checkouts/readthedocs.org/user_builds/gala-astro/conda/latest/include/'
-
     env = os.environ.copy()
     env['PATH'] = env.get('PATH', "") + ":" + PATH
-    env['LD_LIBRARY_PATH'] = env.get('LD_LIBRARY_PATH', "") + ":" + LD_LIBRARY_PATH
-    env['C_INCLUDE_PATH'] = env.get('C_INCLUDE_PATH', "") + ":" + C_INCLUDE_PATH
 else:
     env = None
 
@@ -170,7 +165,10 @@ elif gsl_version < ['1', '14']:
 else:
     print("GSL version {0} found: installing with GSL support"
           .format('.'.join(gsl_version)))
-print()
+
+    # Now get the gsl install location
+    cmd = ['gsl-config', '--prefix']
+    gsl_prefix = check_output(cmd, encoding='utf-8').strip()
 
 extensions = package_info['ext_modules']
 for ext in extensions:
@@ -178,6 +176,9 @@ for ext in extensions:
         if gsl_version is not None:
             if 'gsl' not in ext.libraries:
                 ext.libraries.append('gsl')
+                ext.library_dirs.append(os.path.join(gsl_prefix, 'lib'))
+                ext.include_dirs.append(os.path.join(gsl_prefix, 'include'))
+
             if 'gslcblas' not in ext.libraries:
                 ext.libraries.append('gslcblas')
 
