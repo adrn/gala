@@ -10,8 +10,8 @@ import pytest
 from gala.units import galactic
 import gala.potential as gp
 from gala.potential.potential.tests.helpers import PotentialTestBase
-from gala.potential.io import load
-from .. import bfe_class
+from gala.potential.potential.io import load
+from .. import _bfe_class
 
 G = _G.decompose(galactic).value
 
@@ -25,7 +25,7 @@ def test_hernquist():
     cos_coeff = np.zeros((nmax+1,lmax+1,lmax+1))
     sin_coeff = np.zeros((nmax+1,lmax+1,lmax+1))
     cos_coeff[0,0,0] = 1.
-    scf_potential = bfe_class.SCFPotential(m=M, r_s=r_s,
+    scf_potential = _bfe_class.SCFPotential(m=M, r_s=r_s,
                                            Snlm=cos_coeff, Tnlm=sin_coeff,
                                            units=galactic)
     # scf_potential = HackPotential(m=10., units=galactic)
@@ -57,14 +57,14 @@ class TestSCFPotential(PotentialTestBase):
     Snlm[2,0,0] = 0.5
     Snlm[4,0,0] = 0.25
 
-    potential = bfe_class.SCFPotential(m=1E11*u.Msun, r_s=10*u.kpc,
+    potential = _bfe_class.SCFPotential(m=1E11*u.Msun, r_s=10*u.kpc,
                                        Snlm=Snlm, Tnlm=Tnlm, units=galactic)
     w0 = [4.0,0.7,-0.9,0.0352238,0.1579493,0.02]
 
     def test_save_load(self, tmpdir):
         fn = str(tmpdir.join("{}.yml".format(self.name)))
         self.potential.save(fn)
-        p = load(fn, module=bfe_class)
+        p = load(fn, module=_bfe_class)
         p.value(self.w0[:self.w0.size//2])
 
     @pytest.mark.skipif(True, reason='no hessian implemented')

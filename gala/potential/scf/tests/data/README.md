@@ -1,1 +1,1 @@
-This directory contains data files used by the package or tests.
+Note: the data in here was generated using the scripts in https://github.com/adrn/biff
