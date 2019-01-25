@@ -98,6 +98,7 @@ except ImportError:
 if mpl_style is not None:
     plot_rcparams = mpl_style
     plot_apply_rcparams = True
+plot_formats = [('png', 250)]
 
 # The short X.Y version.
 version = package.__version__.split('-', 1)[0]
