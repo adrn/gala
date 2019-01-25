@@ -6,10 +6,10 @@ import os
 import numpy as np
 from astropy.utils.data import get_pkg_data_filename
 from astropy.constants import G
-import gala.potential as gp
-from gala.units import galactic
 
 # Project
+import gala.potential as gp
+from gala.units import galactic
 from ..core import compute_coeffs_discrete
 from .._bfe import potential
 
@@ -39,5 +39,5 @@ def test_plummer():
     # plot discrete vs. analytic potential
     true_pot = pot.value(xyz.T).value
     bfe_pot = potential(xyz, Snlm, Tnlm, G, M, r_s)
-    
+
     assert np.allclose(true_pot, bfe_pot, rtol=1E-2)

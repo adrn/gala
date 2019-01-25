@@ -5,7 +5,6 @@ import os
 from math import factorial
 
 # Third-party
-import astropy.units as u
 from astropy.utils.data import get_pkg_data_filename
 from astropy.tests.helper import pytest
 import numpy as np

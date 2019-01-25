@@ -5,16 +5,15 @@ import astropy.units as u
 from astropy.constants import G as _G
 import numpy as np
 import pytest
-import gala.potential as gp
-
-from .....units import galactic
-from ...potential.tests.helpers import PotentialTestBase
-from ...potential.io import load
 
 # Project
+from gala.units import galactic
+import gala.potential as gp
+from gala.potential.potential.tests.helpers import PotentialTestBase
+from gala.potential.io import load
 from .. import bfe_class
 
-G = _G.decompose([u.kpc, u.Myr, u.Msun]).value
+G = _G.decompose(galactic).value
 
 def test_hernquist():
     nmax = 6

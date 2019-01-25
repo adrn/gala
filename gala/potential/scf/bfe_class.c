@@ -1170,7 +1170,7 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
 struct __pyx_opt_args_4gala_9potential_9potential_10cpotential_17CPotentialWrapper_init;
 
-/* "potential/cpotential.pxd":46
+/* "gala/potential/potential/cpotential.pxd":46
  *     cdef double[::1] _q0
  * 
  *     cpdef init(self, list parameters, double[::1] q0, int n_dim=?)             # <<<<<<<<<<<<<<
@@ -1182,7 +1182,7 @@ struct __pyx_opt_args_4gala_9potential_9potential_10cpotential_17CPotentialWrapp
   int n_dim;
 };
 
-/* "potential/cpotential.pxd":39
+/* "gala/potential/potential/cpotential.pxd":39
  * cpdef _validate_pos_arr(double[:,::1] arr)
  * 
  * cdef class CPotentialWrapper:             # <<<<<<<<<<<<<<
@@ -1290,7 +1290,7 @@ struct __pyx_memoryviewslice_obj {
 
 
 
-/* "potential/cpotential.pxd":39
+/* "gala/potential/potential/cpotential.pxd":39
  * cpdef _validate_pos_arr(double[:,::1] arr)
  * 
  * cdef class CPotentialWrapper:             # <<<<<<<<<<<<<<
@@ -2324,6 +2324,7 @@ static const char __pyx_k_pyx_state[] = "__pyx_state";
 static const char __pyx_k_reduce_ex[] = "__reduce_ex__";
 static const char __pyx_k_IndexError[] = "IndexError";
 static const char __pyx_k_ValueError[] = "ValueError";
+static const char __pyx_k_gala_units[] = "gala.units";
 static const char __pyx_k_parameters[] = "parameters";
 static const char __pyx_k_pyx_result[] = "__pyx_result";
 static const char __pyx_k_pyx_vtable[] = "__pyx_vtable__";
@@ -2350,7 +2351,6 @@ static const char __pyx_k_pyx_unpickle_Enum[] = "__pyx_unpickle_Enum";
 static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
 static const char __pyx_k_strided_and_direct[] = "<strided and direct>";
 static const char __pyx_k_SCFPotential___init[] = "SCFPotential.__init__";
-static const char __pyx_k_potential_cpotential[] = "potential.cpotential";
 static const char __pyx_k_strided_and_indirect[] = "<strided and indirect>";
 static const char __pyx_k_contiguous_and_direct[] = "<contiguous and direct>";
 static const char __pyx_k_MemoryView_of_r_object[] = "<MemoryView of %r object>";
@@ -2380,6 +2380,7 @@ static const char __pyx_k_Non_native_byte_order_not_suppor[] = "Non-native byte 
 static const char __pyx_k_Out_of_bounds_on_buffer_access_a[] = "Out of bounds on buffer access (axis %d)";
 static const char __pyx_k_Shape_of_coefficient_arrays_must[] = "Shape of coefficient arrays must match! ({} vs {})";
 static const char __pyx_k_Unable_to_convert_item_to_object[] = "Unable to convert item to object";
+static const char __pyx_k_gala_potential_potential_cpotent[] = "gala.potential.potential.cpotential";
 static const char __pyx_k_gala_potential_scf_bfe_class_pyx[] = "gala/potential/scf/bfe_class.pyx";
 static const char __pyx_k_got_differing_extents_in_dimensi[] = "got differing extents in dimension %d (got %d and %d)";
 static const char __pyx_k_ndarray_is_not_Fortran_contiguou[] = "ndarray is not Fortran contiguous";
@@ -2450,8 +2451,10 @@ static PyObject *__pyx_n_s_flags;
 static PyObject *__pyx_n_s_format;
 static PyObject *__pyx_n_s_fortran;
 static PyObject *__pyx_n_u_fortran;
+static PyObject *__pyx_n_s_gala_potential_potential_cpotent;
 static PyObject *__pyx_n_s_gala_potential_scf__bfe_class;
 static PyObject *__pyx_kp_s_gala_potential_scf_bfe_class_pyx;
+static PyObject *__pyx_n_s_gala_units;
 static PyObject *__pyx_n_s_galactic;
 static PyObject *__pyx_n_s_getstate;
 static PyObject *__pyx_kp_s_got_differing_extents_in_dimensi;
@@ -2486,7 +2489,6 @@ static PyObject *__pyx_n_s_pack;
 static PyObject *__pyx_n_s_parameter_physical_types;
 static PyObject *__pyx_n_s_parameters;
 static PyObject *__pyx_n_s_pickle;
-static PyObject *__pyx_n_s_potential_cpotential;
 static PyObject *__pyx_n_s_prepare;
 static PyObject *__pyx_n_s_ptypes;
 static PyObject *__pyx_n_s_pyx_PickleError;
@@ -19836,8 +19838,10 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_format, __pyx_k_format, sizeof(__pyx_k_format), 0, 0, 1, 1},
   {&__pyx_n_s_fortran, __pyx_k_fortran, sizeof(__pyx_k_fortran), 0, 0, 1, 1},
   {&__pyx_n_u_fortran, __pyx_k_fortran, sizeof(__pyx_k_fortran), 0, 1, 0, 1},
+  {&__pyx_n_s_gala_potential_potential_cpotent, __pyx_k_gala_potential_potential_cpotent, sizeof(__pyx_k_gala_potential_potential_cpotent), 0, 0, 1, 1},
   {&__pyx_n_s_gala_potential_scf__bfe_class, __pyx_k_gala_potential_scf__bfe_class, sizeof(__pyx_k_gala_potential_scf__bfe_class), 0, 0, 1, 1},
   {&__pyx_kp_s_gala_potential_scf_bfe_class_pyx, __pyx_k_gala_potential_scf_bfe_class_pyx, sizeof(__pyx_k_gala_potential_scf_bfe_class_pyx), 0, 0, 1, 0},
+  {&__pyx_n_s_gala_units, __pyx_k_gala_units, sizeof(__pyx_k_gala_units), 0, 0, 1, 1},
   {&__pyx_n_s_galactic, __pyx_k_galactic, sizeof(__pyx_k_galactic), 0, 0, 1, 1},
   {&__pyx_n_s_getstate, __pyx_k_getstate, sizeof(__pyx_k_getstate), 0, 0, 1, 1},
   {&__pyx_kp_s_got_differing_extents_in_dimensi, __pyx_k_got_differing_extents_in_dimensi, sizeof(__pyx_k_got_differing_extents_in_dimensi), 0, 0, 1, 0},
@@ -19872,7 +19876,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_parameter_physical_types, __pyx_k_parameter_physical_types, sizeof(__pyx_k_parameter_physical_types), 0, 0, 1, 1},
   {&__pyx_n_s_parameters, __pyx_k_parameters, sizeof(__pyx_k_parameters), 0, 0, 1, 1},
   {&__pyx_n_s_pickle, __pyx_k_pickle, sizeof(__pyx_k_pickle), 0, 0, 1, 1},
-  {&__pyx_n_s_potential_cpotential, __pyx_k_potential_cpotential, sizeof(__pyx_k_potential_cpotential), 0, 0, 1, 1},
   {&__pyx_n_s_prepare, __pyx_k_prepare, sizeof(__pyx_k_prepare), 0, 0, 1, 1},
   {&__pyx_n_s_ptypes, __pyx_k_ptypes, sizeof(__pyx_k_ptypes), 0, 0, 1, 1},
   {&__pyx_n_s_pyx_PickleError, __pyx_k_pyx_PickleError, sizeof(__pyx_k_pyx_PickleError), 0, 0, 1, 1},
@@ -20761,16 +20764,16 @@ if (!__Pyx_RefNanny) {
   /* "gala/potential/scf/bfe_class.pyx":20
  * 
  * # Gala
- * from ....units import galactic             # <<<<<<<<<<<<<<
- * from ..potential.cpotential cimport CPotentialWrapper
- * from ..potential.cpotential import CPotentialBase
+ * from gala.units import galactic             # <<<<<<<<<<<<<<
+ * from gala.potential.potential.cpotential cimport CPotentialWrapper
+ * from gala.potential.potential.cpotential import CPotentialBase
  */
   __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 20, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_n_s_galactic);
   __Pyx_GIVEREF(__pyx_n_s_galactic);
   PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_galactic);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_units, __pyx_t_1, 4); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 20, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_gala_units, __pyx_t_1, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 20, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_galactic); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 20, __pyx_L1_error)
@@ -20780,9 +20783,9 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "gala/potential/scf/bfe_class.pyx":22
- * from ....units import galactic
- * from ..potential.cpotential cimport CPotentialWrapper
- * from ..potential.cpotential import CPotentialBase             # <<<<<<<<<<<<<<
+ * from gala.units import galactic
+ * from gala.potential.potential.cpotential cimport CPotentialWrapper
+ * from gala.potential.potential.cpotential import CPotentialBase             # <<<<<<<<<<<<<<
  * 
  * cdef extern from "src/funcdefs.h":
  */
@@ -20791,7 +20794,7 @@ if (!__Pyx_RefNanny) {
   __Pyx_INCREF(__pyx_n_s_CPotentialBase);
   __Pyx_GIVEREF(__pyx_n_s_CPotentialBase);
   PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_CPotentialBase);
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_potential_cpotential, __pyx_t_2, 2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 22, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_gala_potential_potential_cpotent, __pyx_t_2, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 22, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_1, __pyx_n_s_CPotentialBase); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 22, __pyx_L1_error)

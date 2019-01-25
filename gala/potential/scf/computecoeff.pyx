@@ -7,8 +7,6 @@
 
 """ THIS IS A THIN WRAPPER AROUND THE FUNCTIONS IN coeff_helper.c """
 
-from __future__ import division, print_function
-
 import numpy as np
 cimport numpy as np
 from libc.math cimport M_PI

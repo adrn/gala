@@ -6,9 +6,10 @@ from astropy.constants import G as _G
 import numpy as np
 
 # Project
+from gala.units import galactic
 from .._bfe import density, potential, gradient
 
-G = _G.decompose([u.kpc, u.Myr, u.Msun]).value
+G = _G.decompose(galactic).value
 
 # Check that we get A000=1. for putting in hernquist density
 def hernquist_density(xyz, M, r_s):

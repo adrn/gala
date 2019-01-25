@@ -3,21 +3,20 @@
 import os
 
 # Third-party
-import astropy.units as u
 from astropy.utils.data import get_pkg_data_filename
 from astropy.constants import G as _G
 import matplotlib as mpl
 import matplotlib.pyplot as pl
 import numpy as np
-import gala.potential as gp
-from gala.units import galactic
 from scipy.integrate import quad
 
 # Project
+import gala.potential as gp
+from gala.units import galactic
 from ..core import compute_coeffs
 from .._bfe import potential, density, gradient
 
-G = _G.decompose([u.kpc,u.Myr,u.Msun]).value
+G = _G.decompose(galactic).value
 
 # Check that we get A000=1. for putting in hernquist density
 def hernquist_density(x, y, z, M, r_s):

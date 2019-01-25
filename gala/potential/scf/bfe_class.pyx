@@ -17,9 +17,9 @@ import cython
 cimport cython
 
 # Gala
-from ....units import galactic
-from ..potential.cpotential cimport CPotentialWrapper
-from ..potential.cpotential import CPotentialBase
+from gala.units import galactic
+from gala.potential.potential.cpotential cimport CPotentialWrapper
+from gala.potential.potential.cpotential import CPotentialBase
 
 cdef extern from "src/funcdefs.h":
     ctypedef double (*densityfunc)(double t, double *pars, double *q, int n_dim) nogil

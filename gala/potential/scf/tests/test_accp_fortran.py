@@ -5,16 +5,16 @@ import os
 from math import factorial
 
 # Third-party
-import astropy.units as u
 from astropy.constants import G as _G
 from astropy.utils.data import get_pkg_data_filename
 from astropy.tests.helper import pytest
 import numpy as np
 
 # Project
+from gala.units import galactic
 from .._bfe import density, potential, gradient
 
-G = _G.decompose([u.kpc, u.Myr, u.Msun]).value
+G = _G.decompose(galactic).value
 
 @pytest.mark.parametrize("basename", [
     'simple-hernquist', 'multi-hernquist', 'simple-nonsph', 'random', 'wang-zhao',
