@@ -16,7 +16,7 @@ cdef extern from "math.h":
     double cos(double x) nogil
     double sin(double x) nogil
 
-cdef extern from "src/coeff_helper.h":
+cdef extern from "scf/src/coeff_helper.h":
     double c_Snlm_integrand(double phi, double X, double xsi, double density, int n, int l, int m)
     double c_Tnlm_integrand(double phi, double X, double xsi, double density, int n, int l, int m)
     void c_STnlm_discrete(double *s, double *phi, double *X, double *m_k, int K, int n, int l, int m, double *ST)

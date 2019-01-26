@@ -88,8 +88,11 @@ class SCFPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, m, r_s, Snlm, Tnlm, units=None):
+    def __init__(self, m, r_s, Snlm, Tnlm=None, units=None):
         Snlm = np.array(Snlm)
+
+        if Tnlm is None:
+            Tnlm = np.zeros_like(Snlm)
         Tnlm = np.array(Tnlm)
 
         if Snlm.shape != Tnlm.shape:
