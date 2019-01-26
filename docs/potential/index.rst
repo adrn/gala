@@ -251,7 +251,7 @@ Using gala.potential
 More details are provided in the linked pages below:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    define-new-potential
    compositepotential

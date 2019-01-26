@@ -12,7 +12,7 @@ Lowing et al. (2011; [L11]_).
 
 .. raw:: html
 
-   <video controls src="_static/anim-prof.mp4" width=450 height=320 autoplay loop></video>
+   <video controls src="../_static/anim-prof.mp4" width=450 height=320 autoplay loop></video>
 
 
 Introduction
