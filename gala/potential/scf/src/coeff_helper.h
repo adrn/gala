@@ -1,5 +1,5 @@
 extern double STnlm_integrand_help(double phi, double X, double xsi,
-                                   double density, int n, int l, int m));
+                                   double density, int n, int l, int m);
 
 extern double c_Snlm_integrand(double phi, double X, double xsi,
                                double density, int n, int l, int m);
