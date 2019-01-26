@@ -58,10 +58,10 @@ class SCFPotential(CPotentialBase):
     r"""
     SCFPotential(m, r_s, Snlm, Tnlm, units=None)
 
-    An SCF / basis function expansion potential. Follows the
-    convention used in Hernquist & Ostriker (1992) and
-    Lowing et al. (2011) for representing all coefficients as
-    real quantities.
+    A gravitational potential represented as a basis function expansion.  This
+    uses the self-consistent field (SCF) method of Hernquist & Ostriker (1992)
+    and Lowing et al. (2011), and represents all coefficients as real
+    quantities.
 
     Parameters
     ----------

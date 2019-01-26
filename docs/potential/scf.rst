@@ -25,7 +25,7 @@ The two main steps for using `gala.potential.scf` are:
 #. to evaluate the density, potential, and gradients of a basis function
    expansion representation of a density distribution given this set of
    coefficients.
-   
+
 
 To compute expansion coefficients, the relevant functions are
 `~gala.potential.scf.compute_coeffs` and
@@ -52,7 +52,7 @@ Examples
   scf-examples
 
 API
-===
+---
 
 .. automodapi:: gala.potential.scf
 
