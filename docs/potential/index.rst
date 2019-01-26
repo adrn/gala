@@ -257,6 +257,7 @@ More details are provided in the linked pages below:
    compositepotential
    hamiltonian-reference-frames
    define-milky-way-model
+   scf
 
 API
 ===
