@@ -18,7 +18,7 @@ Lowing et al. (2011; [L11]_).
 Introduction
 ------------
 
-The two main steps for using `gala.potential.scf` are:
+The two main ways to use `gala.potential.scf` are:
 
 #. to compute the expansion coefficients given a continuous density distribution
    or discrete samples from a density distribution, then
