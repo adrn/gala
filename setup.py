@@ -118,6 +118,7 @@ package_info['package_data'][PACKAGENAME].extend(c_files)
 # ----------------------------------------------------------------------------
 # GSL support
 #
+extra_compile_macros_file = 'gala/extra_compile_macros.h'
 
 # Note: on RTD, they now support conda environments, but don't activate the
 # conda environment that gets created, and so the C stuff installed with GSL
@@ -146,6 +147,18 @@ if not nogsl or nogsl is None: # GSL support enabled
 else:
     gsl_version = None
 
+# If the hacky macros file already exists, read from that what to do.
+# This means people experimenting might need to run "git clean" to remove all
+# temp. build products if they want to switch between installing with GSL and
+# no GSL support.
+if os.path.exists(extra_compile_macros_file):
+    with open(extra_compile_macros_file, "r") as f:
+        line = f.read().strip()
+
+    if line.endswith('0'):
+        gsl_version = None
+        nogsl = True
+
 print()
 _see_msg = ("See the gala documentation 'installation' page for more "
             "information about GSL support and installing GSL: "
@@ -168,11 +181,13 @@ else:
 
     # Now get the gsl install location
     cmd = ['gsl-config', '--prefix']
-    gsl_prefix = check_output(cmd, encoding='utf-8').strip()
+    gsl_prefix = str(check_output(cmd)).strip()
+
+print()
 
 extensions = package_info['ext_modules']
 for ext in extensions:
-    if 'potential.potential' in ext.name:
+    if 'potential.potential' in ext.name or 'scf' in ext.name:
         if gsl_version is not None:
             if 'gsl' not in ext.libraries:
                 ext.libraries.append('gsl')
@@ -182,7 +197,6 @@ for ext in extensions:
             if 'gslcblas' not in ext.libraries:
                 ext.libraries.append('gslcblas')
 
-extra_compile_macros_file = 'gala/extra_compile_macros.h'
 with open(extra_compile_macros_file, 'w') as f:
     if gsl_version is not None:
         f.writelines(['#define USE_GSL 1'])

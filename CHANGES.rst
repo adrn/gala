@@ -1,4 +1,4 @@
-0.4 (unreleased)
+1.0 (unreleased)
 ================
 
 New Features
@@ -12,6 +12,8 @@ New Features
   distribution with an exponential cutoff.
 - Added an implementation of the ``MWPotential2014`` from ``galpy`` (called
   ``BovyMWPotential2014`` in ``gala``).
+- Added an implementation of the Self-Consistent Field (SCF) basis function
+  expansion method for representing potential-density pairs.
 
 Bug fixes
 ---------
