@@ -16,6 +16,9 @@ np.import_array()
 import cython
 cimport cython
 
+cdef extern from "extra_compile_macros.h":
+    int USE_GSL
+
 cdef extern from "src/bfe_helper.h":
     double rho_nlm(double s, double phi, double X, int n, int l, int m) nogil
     double phi_nlm(double s, double phi, double X, int n, int l, int m) nogil

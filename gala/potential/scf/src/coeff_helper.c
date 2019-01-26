@@ -1,14 +1,18 @@
 #include <stdlib.h>
-#include "gsl/gsl_sf_legendre.h"
-#include "gsl/gsl_sf_gegenbauer.h"
-#include "gsl/gsl_sf_gamma.h"
+#include "extra_compile_macros.h"
 #include <math.h>
 #include "coeff_helper.h"
 #include "bfe_helper.h"
 #include <complex.h>
+#if USE_GSL == 1
+#include "gsl/gsl_sf_legendre.h"
+#include "gsl/gsl_sf_gegenbauer.h"
+#include "gsl/gsl_sf_gamma.h"
+#endif
 
 #define SQRT_FOURPI 3.544907701811031
 
+#if USE_GSL == 1
 double STnlm_integrand_help(double phi, double X, double xsi,
                             double density, int n, int l, int m) {
     /*
@@ -108,3 +112,4 @@ extern void c_STnlm_var_discrete(double *s, double *phi, double *X, double *m_k,
         ST_var[1] += _tmp * _tmp * sin(m*phi[k]) * sin(m*phi[k]); // var(Tnlm)
     }
 }
+#endif

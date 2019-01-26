@@ -21,6 +21,9 @@ from gala.units import galactic
 from gala.potential.potential.cpotential cimport CPotentialWrapper
 from gala.potential.potential.cpotential import CPotentialBase
 
+cdef extern from "extra_compile_macros.h":
+    int USE_GSL
+
 cdef extern from "src/funcdefs.h":
     ctypedef double (*densityfunc)(double t, double *pars, double *q, int n_dim) nogil
     ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim) nogil
@@ -50,9 +53,10 @@ cdef class SCFWrapper(CPotentialWrapper):
 
     def __init__(self, G, parameters, q0):
         self.init([G] + list(parameters), np.ascontiguousarray(q0))
-        self.cpotential.value[0] = <energyfunc>(scf_value)
-        self.cpotential.density[0] = <densityfunc>(scf_density)
-        self.cpotential.gradient[0] = <gradientfunc>(scf_gradient)
+        if USE_GSL == 1:
+            self.cpotential.value[0] = <energyfunc>(scf_value)
+            self.cpotential.density[0] = <densityfunc>(scf_density)
+            self.cpotential.gradient[0] = <gradientfunc>(scf_gradient)
 
 class SCFPotential(CPotentialBase):
     r"""

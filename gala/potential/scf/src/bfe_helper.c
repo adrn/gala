@@ -1,12 +1,16 @@
 #include <stdlib.h>
+#include "extra_compile_macros.h"
+#include <math.h>
+#include "bfe_helper.h"
+#if USE_GSL == 1
 #include "gsl/gsl_sf_legendre.h"
 #include "gsl/gsl_sf_gegenbauer.h"
 #include "gsl/gsl_sf_gamma.h"
-#include <math.h>
-#include "bfe_helper.h"
+#endif
 
 #define SQRT_FOURPI 3.544907701811031
 
+#if USE_GSL == 1
 double rho_nl(double s, int n, int l) {
     double RR, Knl;
     Knl = 0.5*n*(n+4*l+3) + (l+1)*(2*l+1);
@@ -84,3 +88,4 @@ void sph_grad_phi_nlm(double s, double phi, double X, int n, int l, int m,
     sphgrad[1] = dPhi_dtheta;
     sphgrad[2] = dPhi_dphi;
 }
+#endif
