@@ -21,10 +21,11 @@ Introduction
 The two main steps for using `gala.potential.scf` are:
 
 #. to compute the expansion coefficients given a continuous density distribution
-  or discrete samples from a density distribution, then
+   or discrete samples from a density distribution, then
 #. to evaluate the density, potential, and gradients of a basis function
-  expansion representation of a density distribution given this set of
-  coefficients.
+   expansion representation of a density distribution given this set of
+   coefficients.
+   
 
 To compute expansion coefficients, the relevant functions are
 `~gala.potential.scf.compute_coeffs` and
