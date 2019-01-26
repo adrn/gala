@@ -55,10 +55,11 @@ def test_transform_correctness(to_frame):
     # generate proper motion samples and transform the samples:
     pm = np.vstack((c.pm_ra_cosdec.value,
                     c.pm_dec.value)).T
-
+    rnd = np.random.RandomState(42)
+    
     for i in range(len(c)):
-        pm_samples = np.random.multivariate_normal(pm[i], cov[i],
-                                                   size=2**16)
+        pm_samples = rnd.multivariate_normal(pm[i], cov[i],
+                                             size=2**16)
         c1 = coord.SkyCoord(ra=[c[i].ra.value]*pm_samples.shape[0] * u.deg,
                             dec=[c[i].dec.value]*pm_samples.shape[0] * u.deg,
                             pm_ra_cosdec=pm_samples[:, 0]*u.mas/u.yr,
