@@ -12,7 +12,7 @@ __all__ = ['compute_coeffs', 'compute_coeffs_discrete']
 
 def compute_coeffs(density_func, nmax, lmax, M, r_s, args=(),
                    skip_odd=False, skip_even=False, skip_m=False,
-                   S_only=False, **nquad_opts):
+                   S_only=False, progress=False, **nquad_opts):
     """
     Compute the expansion coefficients for representing the input density function using a basis
     function expansion.
@@ -49,6 +49,8 @@ def compute_coeffs(density_func, nmax, lmax, M, r_s, args=(),
         Ignore terms with :math:`m > 0`.
     S_only : bool (optional)
         Only compute the S coefficients.
+    progress : bool (optional)
+        If ``tqdm`` is installed, display a progress bar.
     **nquad_opts
         Any additional keyword arguments are passed through to
         `~scipy.integrate.nquad` as options, `opts`.
@@ -89,30 +91,43 @@ def compute_coeffs(density_func, nmax, lmax, M, r_s, args=(),
     nquad_opts.setdefault('limit', 256)
     nquad_opts.setdefault('epsrel', 1E-10)
 
-    limits = [[0,2*np.pi], # phi
-              [-1,1.], # X (cos(theta))
-              [-1,1.]] # xsi
+    limits = [[0, 2*np.pi], # phi
+              [-1, 1.], # X (cos(theta))
+              [-1, 1.]] # xsi
 
+    nlms = []
     for n in range(nmax+1):
         for l in range(lmin, lmax+1, lstride):
             for m in range(l+1):
-                if skip_m and m > 0: continue
+                if skip_m and m > 0:
+                    continue
 
-                # logger.debug("Computing coefficients (n,l,m)=({},{},{})"
-                #              .format(n,l,m))
+                nlms.append((n, l, m))
 
-                Snlm[n,l,m],Snlm_e[n,l,m] = si.nquad(
-                    Snlm_integrand, ranges=limits,
-                    args=(density_func, n, l, m, M, r_s, args),
-                    opts=nquad_opts)
+    if progress:
+        try:
+            from tqdm import tqdm
+        except ImportError as e:
+            raise ImportError('tqdm is not installed - you can install it '
+                              'with `pip install tqdm`.\n' + str(e))
+        iterfunc = tqdm
+    else:
+        iterfunc = lambda x: x
 
-                if not S_only:
-                    Tnlm[n,l,m],Tnlm_e[n,l,m] = si.nquad(
-                        Tnlm_integrand, ranges=limits,
-                        args=(density_func, n, l, m, M, r_s, args),
-                        opts=nquad_opts)
+    for n, l, m in iterfunc(nlms):
+        Snlm[n, l, m], Snlm_e[n, l, m] = si.nquad(
+            Snlm_integrand, ranges=limits,
+            args=(density_func, n, l, m, M, r_s, args),
+            opts=nquad_opts)
 
-    return (Snlm,Snlm_e), (Tnlm,Tnlm_e)
+        if not S_only:
+            Tnlm[n, l, m], Tnlm_e[n, l, m] = si.nquad(
+                Tnlm_integrand, ranges=limits,
+                args=(density_func, n, l, m, M, r_s, args),
+                opts=nquad_opts)
+
+    return (Snlm, Snlm_e), (Tnlm, Tnlm_e)
+    
 
 def compute_coeffs_discrete(xyz, mass, nmax, lmax, r_s,
                             skip_odd=False, skip_even=False, skip_m=False,
