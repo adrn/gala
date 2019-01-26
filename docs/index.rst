@@ -77,6 +77,7 @@ Tutorials
    examples/integrate-rotating-frame
    examples/mock-stream-heliocentric
    examples/circ-restricted-3body
+   examples/Arbitrary-density-SCF.ipynb
 
 *****************
 How to contribute
