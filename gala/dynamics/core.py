@@ -291,6 +291,10 @@ class PhaseSpacePosition(object):
 
         return self.__getattribute__(attr)  # Raise AttributeError.
 
+    @property
+    def data(self):
+        return self.pos.with_differentials(self.vel)
+
     # ------------------------------------------------------------------------
     # Convert from Cartesian to other representations
     #

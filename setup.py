@@ -181,7 +181,10 @@ else:
 
     # Now get the gsl install location
     cmd = ['gsl-config', '--prefix']
-    gsl_prefix = str(check_output(cmd)).strip()
+    try:
+        gsl_prefix = check_output(cmd, encoding='utf-8').strip()
+    except:
+        gsl_prefix = str(check_output(cmd)).strip()
 
 print()
 

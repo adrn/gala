@@ -34,6 +34,8 @@ def test_initialize():
     o = PhaseSpacePosition(pos=x, vel=v)
     assert o.xyz.unit == u.kpc
     assert o.v_x.unit == u.km/u.s
+    o.data
+    assert 's' in o.data.differentials
 
     # Not 3D
     x = np.random.random(size=(2,10))
