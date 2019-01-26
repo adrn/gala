@@ -168,7 +168,7 @@ else:
 
     # Now get the gsl install location
     cmd = ['gsl-config', '--prefix']
-    gsl_prefix = check_output(cmd, encoding='utf-8').strip()
+    gsl_prefix = str(check_output(cmd)).strip()
 
 extensions = package_info['ext_modules']
 for ext in extensions:
