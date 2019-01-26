@@ -28,6 +28,7 @@ def get_extensions():
     cfg['extra_compile_args'].append('--std=gnu99')
     cfg['sources'].append('gala/potential/scf/computecoeff.pyx')
     cfg['sources'].append('gala/potential/scf/src/bfe_helper.c')
+    cfg['sources'].append('gala/potential/scf/src/coeff_helper.c')
     exts.append(Extension('gala.potential.scf._computecoeff', **cfg))
 
     cfg = setup_helpers.DistutilsExtensionArgs()
