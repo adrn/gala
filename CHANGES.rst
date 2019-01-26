@@ -23,7 +23,9 @@ API changes
 - Stream classes have been renamed to reflect the author that defined them.
 - Proper motion and coordinate velocity transformations have now been removed in
   favor of the implementations in Astropy.
-
+- Added a ``.data`` attribute to ``PhaseSpacePosition`` objects that returns a
+  ``Representation`` or ``NDRepresentation`` instance with velocity data
+  (differentials) attached.
 
 0.3 (2018-04-23)
 ================
