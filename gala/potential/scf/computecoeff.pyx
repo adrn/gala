@@ -4,12 +4,16 @@
 # cython: cdivision=True
 # cython: wraparound=False
 # cython: profile=False
+# cython: language_level=3
 
 """ THIS IS A THIN WRAPPER AROUND THE FUNCTIONS IN coeff_helper.c """
 
 import numpy as np
 cimport numpy as np
 from libc.math cimport M_PI
+
+cdef extern from "extra_compile_macros.h":
+    int USE_GSL
 
 cdef extern from "math.h":
     double sqrt(double x) nogil
@@ -34,10 +38,13 @@ cpdef Snlm_integrand(double phi, double X, double xsi,
         double x = r * cos(phi) * sqrt(1-X*X)
         double y = r * sin(phi) * sqrt(1-X*X)
         double z = r * X
+        double val = 0.
 
-    return c_Snlm_integrand(phi, X, xsi,
-                            density_func(x, y, z, *args) / M * r_s*r_s*r_s,
-                            n, l, m)
+    if USE_GSL == 1:
+        val = c_Snlm_integrand(phi, X, xsi,
+                               density_func(x, y, z, *args) / M * r_s*r_s*r_s,
+                               n, l, m)
+    return val
 
 cpdef Tnlm_integrand(double phi, double X, double xsi,
                      density_func,
@@ -49,10 +56,13 @@ cpdef Tnlm_integrand(double phi, double X, double xsi,
         double x = r * cos(phi) * sqrt(1-X*X)
         double y = r * sin(phi) * sqrt(1-X*X)
         double z = r * X
+        double val = 0.
 
-    return c_Tnlm_integrand(phi, X, xsi,
-                            density_func(x, y, z, *args) / M * r_s*r_s*r_s,
-                            n, l, m)
+    if USE_GSL == 1:
+        val = c_Tnlm_integrand(phi, X, xsi,
+                               density_func(x, y, z, *args) / M * r_s*r_s*r_s,
+                               n, l, m)
+    return val
 
 cpdef STnlm_discrete(double[::1] s, double[::1] phi, double[::1] X,
                      double[::1] m_k,
@@ -61,8 +71,9 @@ cpdef STnlm_discrete(double[::1] s, double[::1] phi, double[::1] X,
         double[::1] ST = np.zeros(2)
         int K = s.size
 
-    c_STnlm_discrete(&s[0], &phi[0], &X[0],
-                     &m_k[0], K, n, l, m, &ST[0])
+    if USE_GSL == 1:
+        c_STnlm_discrete(&s[0], &phi[0], &X[0],
+                         &m_k[0], K, n, l, m, &ST[0])
     return ST
 
 cpdef STnlm_var_discrete(double[::1] s, double[::1] phi, double[::1] X,
@@ -72,6 +83,7 @@ cpdef STnlm_var_discrete(double[::1] s, double[::1] phi, double[::1] X,
         double[::1] ST_var = np.zeros(2)
         int K = s.size
 
-    c_STnlm_var_discrete(&s[0], &phi[0], &X[0],
-                         &m_k[0], K, n, l, m, &ST_var[0])
+    if USE_GSL == 1:
+        c_STnlm_var_discrete(&s[0], &phi[0], &X[0],
+                             &m_k[0], K, n, l, m, &ST_var[0])
     return ST_var

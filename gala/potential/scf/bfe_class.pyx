@@ -3,6 +3,7 @@
 # cython: nonecheck=False
 # cython: cdivision=True
 # cython: wraparound=False
+# cython: language_level=3
 
 # Standard library
 from collections import OrderedDict
@@ -42,7 +43,7 @@ cdef extern from "potential/src/cpotential.h":
         int n_params[MAX_N_COMPONENTS]
         double *parameters[MAX_N_COMPONENTS]
 
-cdef extern from "bfe.h":
+cdef extern from "scf/src/bfe.h":
     double scf_value(double t, double *pars, double *q, int n_dim) nogil
     double scf_density(double t, double *pars, double *q, int n_dim) nogil
     void scf_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil

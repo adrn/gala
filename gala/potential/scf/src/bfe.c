@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include "bfe_helper.h"
+#include "extra_compile_macros.h"
 
+#if USE_GSL == 1
 void scf_density_helper(double *xyz, int K,
                         double M, double r_s,
                         double *Snlm, double *Tnlm,
@@ -284,3 +286,4 @@ double scf_density(double t, double *pars, double *q, int n_dim) {
     _val = val[0];
     return _val;
 }
+#endif

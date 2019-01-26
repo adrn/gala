@@ -19,12 +19,11 @@ def get_extensions():
     library_dirs = [path.join(sys.prefix, 'lib')]
 
     # all need these:
-    include_dirs.extend(['numpy', mac_incl_path, 'gala'])
+    include_dirs.extend(['numpy', mac_incl_path, 'gala', 'gala/potential'])
 
     cfg = setup_helpers.DistutilsExtensionArgs()
     cfg['include_dirs'].extend(include_dirs)
     cfg['library_dirs'].extend(library_dirs)
-    cfg['include_dirs'].append('gala/potential')
     cfg['extra_compile_args'].append('--std=gnu99')
     cfg['sources'].append('gala/potential/scf/computecoeff.pyx')
     cfg['sources'].append('gala/potential/scf/src/bfe_helper.c')
@@ -34,7 +33,6 @@ def get_extensions():
     cfg = setup_helpers.DistutilsExtensionArgs()
     cfg['include_dirs'].extend(include_dirs)
     cfg['library_dirs'].extend(library_dirs)
-    cfg['include_dirs'].append('gala/potential')
     cfg['extra_compile_args'].append('--std=gnu99')
     cfg['sources'].append('gala/potential/potential/src/cpotential.c')
     cfg['sources'].append('gala/potential/potential/builtin/builtin_potentials.c')
@@ -46,8 +44,6 @@ def get_extensions():
     cfg = setup_helpers.DistutilsExtensionArgs()
     cfg['include_dirs'].extend(include_dirs)
     cfg['library_dirs'].extend(library_dirs)
-    cfg['include_dirs'].append('gala/potential')
-    cfg['include_dirs'].append('gala/potential/scf/src')
     cfg['extra_compile_args'].append('--std=gnu99')
     cfg['sources'].append('gala/potential/scf/bfe_class.pyx')
     cfg['sources'].append('gala/potential/scf/src/bfe.c')

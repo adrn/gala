@@ -3,6 +3,7 @@
 # cython: nonecheck=False
 # cython: cdivision=True
 # cython: wraparound=False
+# cython: language_level=3
 
 # Standard library
 from collections import OrderedDict
@@ -19,12 +20,12 @@ cimport cython
 cdef extern from "extra_compile_macros.h":
     int USE_GSL
 
-cdef extern from "src/bfe_helper.h":
+cdef extern from "scf/src/bfe_helper.h":
     double rho_nlm(double s, double phi, double X, int n, int l, int m) nogil
     double phi_nlm(double s, double phi, double X, int n, int l, int m) nogil
     double sph_grad_phi_nlm(double s, double phi, double X, int n, int l, int m, double *grad) nogil
 
-cdef extern from "src/bfe.h":
+cdef extern from "scf/src/bfe.h":
     void scf_density_helper(double *xyz, int K, double M, double r_s,
                             double *Snlm, double *Tnlm,
                             int nmax, int lmax, double *dens) nogil
@@ -81,9 +82,10 @@ cpdef density(double[:,::1] xyz,
         int nmax = Snlm.shape[0]-1
         int lmax = Snlm.shape[1]-1
 
-    scf_density_helper(&xyz[0,0], ncoords, M, r_s,
-                       &Snlm[0,0,0], &Tnlm[0,0,0],
-                       nmax, lmax, &dens[0])
+    if USE_GSL == 1:
+        scf_density_helper(&xyz[0,0], ncoords, M, r_s,
+                           &Snlm[0,0,0], &Tnlm[0,0,0],
+                           nmax, lmax, &dens[0])
 
     return np.array(dens)
 
@@ -132,9 +134,10 @@ cpdef potential(double[:,::1] xyz,
         int nmax = Snlm.shape[0]-1
         int lmax = Snlm.shape[1]-1
 
-    scf_potential_helper(&xyz[0,0], ncoords, G, M, r_s,
-                         &Snlm[0,0,0], &Tnlm[0,0,0],
-                         nmax, lmax, &potv[0])
+    if USE_GSL == 1:
+        scf_potential_helper(&xyz[0,0], ncoords, G, M, r_s,
+                             &Snlm[0,0,0], &Tnlm[0,0,0],
+                             nmax, lmax, &potv[0])
 
     return np.array(potv)
 
@@ -184,8 +187,9 @@ cpdef gradient(double[:,::1] xyz,
         int nmax = Snlm.shape[0]-1
         int lmax = Snlm.shape[1]-1
 
-    scf_gradient_helper(&xyz[0,0], ncoords, G, M, r_s,
-                        &Snlm[0,0,0], &Tnlm[0,0,0],
-                        nmax, lmax, &grad[0,0])
+    if USE_GSL == 1:
+        scf_gradient_helper(&xyz[0,0], ncoords, G, M, r_s,
+                            &Snlm[0,0,0], &Tnlm[0,0,0],
+                            nmax, lmax, &grad[0,0])
 
     return np.array(grad)
