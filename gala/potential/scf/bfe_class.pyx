@@ -90,6 +90,14 @@ class SCFPotential(CPotentialBase):
 
     """
     def __init__(self, m, r_s, Snlm, Tnlm=None, units=None):
+        from gala._cconfig import GSL_ENABLED
+        if not GSL_ENABLED:
+            raise ValueError("Gala was compiled without GSL and so the "
+                             "SCFPotential class will not work.  See the gala "
+                             "documentation for more information about "
+                             "installing and using GSL with gala: "
+                             "http://gala.adrian.pw/en/latest/install.html")
+
         Snlm = np.array(Snlm)
 
         if Tnlm is None:
