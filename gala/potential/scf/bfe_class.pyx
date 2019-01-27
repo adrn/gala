@@ -52,8 +52,10 @@ __all__ = ['SCFPotential']
 
 cdef class SCFWrapper(CPotentialWrapper):
 
-    def __init__(self, G, parameters, q0):
-        self.init([G] + list(parameters), np.ascontiguousarray(q0))
+    def __init__(self, G, parameters, q0, R):
+        self.init([G] + list(parameters),
+                  np.ascontiguousarray(q0),
+                  np.ascontiguousarray(R))
         if USE_GSL == 1:
             self.cpotential.value[0] = <energyfunc>(scf_value)
             self.cpotential.density[0] = <densityfunc>(scf_density)
