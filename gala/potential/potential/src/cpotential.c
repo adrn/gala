@@ -2,30 +2,47 @@
 #include "cpotential.h"
 
 
-void apply_shift_rotate(double *qp_in, double *q0, double *R, int n_dim,
-                        double *qp_out) {
+void apply_rotate(double *q_in, double *R, int n_dim, int transpose,
+                  double *q_out) {
+    // NOTE: elsewhere, we enforce that rotation matrix only works for
+    // ndim=2 or ndim=3, so here we can assume that!
+    if (n_dim == 3) {
+        if (transpose == 0) {
+            q_out[0] = R[0] * q_in[0] + R[1] * q_in[1] + R[2] * q_in[2];
+            q_out[1] = R[3] * q_in[0] + R[4] * q_in[1] + R[5] * q_in[2];
+            q_out[2] = R[6] * q_in[0] + R[7] * q_in[1] + R[8] * q_in[2];
+        } else {
+            q_out[0] = R[0] * q_in[0] + R[3] * q_in[1] + R[6] * q_in[2];
+            q_out[1] = R[1] * q_in[0] + R[4] * q_in[1] + R[7] * q_in[2];
+            q_out[2] = R[2] * q_in[0] + R[5] * q_in[1] + R[8] * q_in[2];
+        }
+    } else if (n_dim == 2) {
+        if (transpose == 0) {
+            q_out[0] = R[0] * q_in[0] + R[1] * q_in[1];
+            q_out[1] = R[2] * q_in[0] + R[3] * q_in[1];
+        } else {
+            q_out[0] = R[0] * q_in[0] + R[2] * q_in[1];
+            q_out[1] = R[1] * q_in[0] + R[3] * q_in[1];
+        }
+    } else {
+        for (int j=0; j < n_dim; j++)
+            q_out[j] = q_in[j];
+    }
+}
+
+
+void apply_shift_rotate(double *q_in, double *q0, double *R, int n_dim,
+                        int transpose, double *q_out) {
     double tmp[n_dim];
     int j;
 
     // Shift to the specified origin
     for (j=0; j < n_dim; j++) {
-        tmp[j] = qp_in[j] - q0[j];
+        tmp[j] = q_in[j] - q0[j];
     }
 
     // Apply rotation matrix
-    // NOTE: elsewhere, we enforce that rotation matrix only works for
-    // ndim=2 or ndim=3, so here we can assume that!
-    if (n_dim == 3) {
-        qp_out[0] = R[0] * tmp[0] + R[1] * tmp[1] + R[2] * tmp[2];
-        qp_out[1] = R[3] * tmp[0] + R[4] * tmp[1] + R[5] * tmp[2];
-        qp_out[2] = R[6] * tmp[0] + R[7] * tmp[1] + R[8] * tmp[2];
-    } else if (n_dim == 2) {
-        qp_out[0] = R[0] * tmp[0] + R[1] * tmp[1];
-        qp_out[1] = R[2] * tmp[0] + R[3] * tmp[1];
-    } else {
-        for (j=0; j < n_dim; j++)
-            qp_out[j] = tmp[j];
-    }
+    apply_rotate(&tmp[0], R, n_dim, transpose, q_out);
 }
 
 
@@ -35,7 +52,8 @@ double c_potential(CPotential *p, double t, double *qp) {
     double qp_trans[p->n_dim];
 
     for (i=0; i < p->n_components; i++) {
-        apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, &qp_trans[0]);
+        apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
+                           &qp_trans[0]);
         v = v + (p->value)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim);
     }
 
@@ -49,7 +67,8 @@ double c_density(CPotential *p, double t, double *qp) {
     double qp_trans[p->n_dim];
 
     for (i=0; i < p->n_components; i++) {
-        apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, &qp_trans[0]);
+        apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
+                           &qp_trans[0]);
         v = v + (p->density)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim);
     }
 
@@ -66,8 +85,13 @@ void c_gradient(CPotential *p, double t, double *qp, double *grad) {
     }
 
     for (i=0; i < p->n_components; i++) {
-        apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, &qp_trans[0]);
+        apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
+                           &qp_trans[0]);
         (p->gradient)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim, grad);
+        apply_rotate(grad, (p->R)[i], p->n_dim, 1, &qp_trans[0]);
+        for (i=0; i < p->n_dim; i++) {
+            grad[i] = qp_trans[i];
+        }
     }
 
 }
@@ -82,8 +106,10 @@ void c_hessian(CPotential *p, double t, double *qp, double *hess) {
     }
 
     for (i=0; i < p->n_components; i++) {
-        apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, &qp_trans[0]);
+        apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
+                           &qp_trans[0]);
         (p->hessian)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim, hess);
+        // TODO: here - need to apply rotate to the Hessian! damn matrices
     }
 
 }
