@@ -24,6 +24,7 @@ cdef extern from "potential/src/cpotential.h":
         int n_params[MAX_N_COMPONENTS]
         double *parameters[MAX_N_COMPONENTS]
         double *q0[MAX_N_COMPONENTS]
+        double *R[MAX_N_COMPONENTS]
 
     double c_potential(CPotential *p, double t, double *q) nogil
     double c_density(CPotential *p, double t, double *q) nogil
@@ -42,8 +43,10 @@ cdef class CPotentialWrapper:
     cdef int[::1] _n_params
     cdef list _potentials # HACK: for CCompositePotentialWrapper
     cdef double[::1] _q0
+    cdef double[::1] _R
 
-    cpdef init(self, list parameters, double[::1] q0, int n_dim=?)
+    cpdef init(self, list parameters, double[::1] q0, double[:, ::1] R,
+               int n_dim=?)
 
     cpdef energy(self, double[:,::1] q, double[::1] t)
     cpdef density(self, double[:,::1] q, double[::1] t)
