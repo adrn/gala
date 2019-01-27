@@ -125,7 +125,7 @@ class PotentialBase(CommonBase):
             The potential energy per unit mass or value of the potential.
         """
         q = self._remove_units_prepare_shape(q)
-        orig_shape,q = self._get_c_valid_arr(q)
+        orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, q)
         ret_unit = self.units['energy'] / self.units['mass']
 
@@ -149,7 +149,7 @@ class PotentialBase(CommonBase):
             the input position.
         """
         q = self._remove_units_prepare_shape(q)
-        orig_shape,q = self._get_c_valid_arr(q)
+        orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, q)
         ret_unit = self.units['length'] / self.units['time']**2
         return (self._gradient(q, t=t).T.reshape(orig_shape) * ret_unit).to(self.units['acceleration'])
@@ -173,7 +173,7 @@ class PotentialBase(CommonBase):
             shape ``q.shape[1:]``.
         """
         q = self._remove_units_prepare_shape(q)
-        orig_shape,q = self._get_c_valid_arr(q)
+        orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, q)
         ret_unit = self.units['mass'] / self.units['length']**3
         return (self._density(q, t=t).T * ret_unit).to(self.units['mass density'])
@@ -242,7 +242,7 @@ class PotentialBase(CommonBase):
             ``q.shape[1:]``.
         """
         q = self._remove_units_prepare_shape(q)
-        orig_shape,q = self._get_c_valid_arr(q)
+        orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, q)
 
         # small step-size in direction of q
@@ -251,7 +251,7 @@ class PotentialBase(CommonBase):
         # Radius
         r = np.sqrt(np.sum(q**2, axis=1))
 
-        epsilon = h*q/r[:,np.newaxis]
+        epsilon = h*q/r[:, np.newaxis]
 
         dPhi_dr_plus = self._energy(q + epsilon, t=t)
         dPhi_dr_minus = self._energy(q - epsilon, t=t)
@@ -316,7 +316,7 @@ class PotentialBase(CommonBase):
             par_fmt = "{}"
             post = ""
 
-            if hasattr(v,'unit'):
+            if hasattr(v, 'unit'):
                 post = " {}".format(v.unit)
                 v = v.value
 
@@ -331,7 +331,7 @@ class PotentialBase(CommonBase):
             elif isinstance(v, int) and np.log10(v) > 5:
                 par_fmt = "{:.2e}"
 
-            pars += ("{}=" + par_fmt + post).format(k,v) + ", "
+            pars += ("{}=" + par_fmt + post).format(k, v) + ", "
 
         if isinstance(self.units, DimensionlessUnitSystem):
             return "<{}: {} (dimensionless)>".format(self.__class__.__name__, pars.rstrip(", "))
@@ -350,7 +350,7 @@ class PotentialBase(CommonBase):
         new_pot = CompositePotential()
 
         if isinstance(self, CompositePotential):
-            for k,v in self.items():
+            for k, v in self.items():
                 new_pot[k] = v
 
         else:
@@ -358,7 +358,7 @@ class PotentialBase(CommonBase):
             new_pot[k] = self
 
         if isinstance(other, CompositePotential):
-            for k,v in self.items():
+            for k, v in self.items():
                 if k in new_pot:
                     raise KeyError('Potential component "{}" already exists --'
                                    'duplicate key provided in potential '
@@ -412,11 +412,11 @@ class PotentialBase(CommonBase):
         # figure out which elements are iterable, which are numeric
         _grids = []
         _slices = []
-        for ii,g in enumerate(grid):
+        for ii, g in enumerate(grid):
             if isiterable(g):
-                _grids.append((ii,g))
+                _grids.append((ii, g))
             else:
-                _slices.append((ii,g))
+                _slices.append((ii, g))
 
         # figure out the dimensionality
         ndim = len(_grids)
@@ -438,7 +438,7 @@ class PotentialBase(CommonBase):
             r = np.zeros((len(_grids) + len(_slices), len(x1)))
             r[_grids[0][0]] = x1
 
-            for ii,slc in _slices:
+            for ii, slc in _slices:
                 r[ii] = slc
 
             Z = self.energy(r*self.units['length']).value
@@ -449,15 +449,15 @@ class PotentialBase(CommonBase):
                 ax.set_ylabel("potential")
         else:
             # 2D contours
-            x1,x2 = np.meshgrid(_grids[0][1], _grids[1][1])
+            x1, x2 = np.meshgrid(_grids[0][1], _grids[1][1])
             shp = x1.shape
-            x1,x2 = x1.ravel(), x2.ravel()
+            x1, x2 = x1.ravel(), x2.ravel()
 
             r = np.zeros((len(_grids) + len(_slices), len(x1)))
             r[_grids[0][0]] = x1
             r[_grids[1][0]] = x2
 
-            for ii,slc in _slices:
+            for ii, slc in _slices:
                 r[ii] = slc
 
             Z = self.energy(r*self.units['length']).value
@@ -515,11 +515,11 @@ class PotentialBase(CommonBase):
         # figure out which elements are iterable, which are numeric
         _grids = []
         _slices = []
-        for ii,g in enumerate(grid):
+        for ii, g in enumerate(grid):
             if isiterable(g):
-                _grids.append((ii,g))
+                _grids.append((ii, g))
             else:
-                _slices.append((ii,g))
+                _slices.append((ii, g))
 
         # figure out the dimensionality
         ndim = len(_grids)
@@ -541,7 +541,7 @@ class PotentialBase(CommonBase):
             r = np.zeros((len(_grids) + len(_slices), len(x1)))
             r[_grids[0][0]] = x1
 
-            for ii,slc in _slices:
+            for ii, slc in _slices:
                 r[ii] = slc
 
             Z = self.density(r*self.units['length']).value
@@ -552,15 +552,15 @@ class PotentialBase(CommonBase):
                 ax.set_ylabel("potential")
         else:
             # 2D contours
-            x1,x2 = np.meshgrid(_grids[0][1], _grids[1][1])
+            x1, x2 = np.meshgrid(_grids[0][1], _grids[1][1])
             shp = x1.shape
-            x1,x2 = x1.ravel(), x2.ravel()
+            x1, x2 = x1.ravel(), x2.ravel()
 
             r = np.zeros((len(_grids) + len(_slices), len(x1)))
             r[_grids[0][0]] = x1
             r[_grids[1][0]] = x2
 
-            for ii,slc in _slices:
+            for ii, slc in _slices:
                 r[ii] = slc
 
             Z = self.density(r*self.units['length']).value
@@ -705,10 +705,10 @@ class CompositePotential(PotentialBase, OrderedDict):
         self.ndim = None
 
         if len(args) > 0 and isinstance(args[0], list):
-            for k,v in args[0]:
+            for k, v in args[0]:
                 kwargs[k] = v
         else:
-            for i,v in args:
+            for i, v in args:
                 kwargs[str(i)] = v
 
         self.lock = False
@@ -750,7 +750,7 @@ class CompositePotential(PotentialBase, OrderedDict):
     @property
     def parameters(self):
         params = dict()
-        for k,v in self.items():
+        for k, v in self.items():
             params[k] = v.parameters
         return ImmutableDict(**params)
 
