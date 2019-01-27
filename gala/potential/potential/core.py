@@ -32,7 +32,8 @@ class PotentialBase(CommonBase):
     to compute the density and hessian: ``_density()``, ``_hessian()``.
     """
 
-    def __init__(self, parameters, origin=None,
+    def __init__(self, parameters, origin=None, R=None,
+                 parameter_physical_types=None,
                  ndim=3, units=None):
 
         self.units = self._validate_units(units)
@@ -48,6 +49,14 @@ class PotentialBase(CommonBase):
         if origin is None:
             origin = np.zeros(self.ndim)
         self.origin = self._remove_units(origin)
+
+        if R is not None and ndim == 3:
+            raise NotImplementedError('Gala potentials currently only support '
+                                      'rotations when ndim=3.')
+
+        if R is None:
+            R = np.eye(ndim)
+        self.R = R
 
     # ========================================================================
     # Abstract methods that must be implemented by subclasses
