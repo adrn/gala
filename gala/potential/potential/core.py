@@ -50,12 +50,18 @@ class PotentialBase(CommonBase):
             origin = np.zeros(self.ndim)
         self.origin = self._remove_units(origin)
 
-        if R is not None and ndim == 3:
+        if R is not None and ndim not in [2, 3]:
             raise NotImplementedError('Gala potentials currently only support '
-                                      'rotations when ndim=3.')
+                                      'rotations when ndim=2 or ndim=3.')
 
         if R is None:
             R = np.eye(ndim)
+        R = np.array(R)
+        if R.shape != (ndim, ndim):
+            raise ValueError('Rotation matrix passed to potential {0} has '
+                             'an invalid shape: expected {1}, got {2}'
+                             .format(self.__class__.__name__,
+                                     (ndim, ndim), R.shape))
         self.R = R
 
     # ========================================================================

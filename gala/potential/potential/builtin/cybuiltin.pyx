@@ -125,7 +125,7 @@ cdef class HenonHeilesWrapper(CPotentialWrapper):
 
 class HenonHeilesPotential(CPotentialBase):
     r"""
-    HenonHeilesPotential(units=None, origin=None)
+    HenonHeilesPotential(units=None, origin=None, R=None)
 
     The Hénon-Heiles potential.
 
@@ -140,12 +140,13 @@ class HenonHeilesPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, units=None, origin=None):
+    def __init__(self, units=None, origin=None, R=None):
         parameters = OrderedDict()
         super(HenonHeilesPotential, self).__init__(parameters=parameters,
                                                    ndim=2,
                                                    units=units,
-                                                   origin=origin)
+                                                   origin=origin,
+                                                   R=R)
 
 
 # ============================================================================
@@ -164,7 +165,7 @@ cdef class KeplerWrapper(CPotentialWrapper):
 
 class KeplerPotential(CPotentialBase):
     r"""
-    KeplerPotential(m, units=None, origin=None)
+    KeplerPotential(m, units=None, origin=None, R=None)
 
     The Kepler potential for a point mass.
 
@@ -181,14 +182,16 @@ class KeplerPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
+=======
     _physical_types = {'m': 'mass'}
 
-    def __init__(self, m, units=None, origin=None):
+    def __init__(self, m, units=None, origin=None, R=None):
         parameters = OrderedDict()
         parameters['m'] = m
         super(KeplerPotential, self).__init__(parameters=parameters,
                                               units=units,
-                                              origin=origin)
+                                              origin=origin,
+                                              R=R)
 
 
 cdef class IsochroneWrapper(CPotentialWrapper):
@@ -204,7 +207,7 @@ cdef class IsochroneWrapper(CPotentialWrapper):
 
 class IsochronePotential(CPotentialBase):
     r"""
-    IsochronePotential(m, b, units=None, origin=None)
+    IsochronePotential(m, b, units=None, origin=None, R=None)
 
     The Isochrone potential.
 
@@ -226,13 +229,14 @@ class IsochronePotential(CPotentialBase):
     _physical_types = {'m': 'mass',
                        'b': 'length'}
 
-    def __init__(self, m, b, units=None, origin=None):
+    def __init__(self, m, b, units=None, origin=None, R=None):
         parameters = OrderedDict()
         parameters['m'] = m
         parameters['b'] = b
         super(IsochronePotential, self).__init__(parameters=parameters,
                                                  units=units,
-                                                 origin=origin)
+                                                 origin=origin,
+                                                 R=R)
 
     def action_angle(self, w):
         """
@@ -286,7 +290,7 @@ cdef class HernquistWrapper(CPotentialWrapper):
 
 class HernquistPotential(CPotentialBase):
     r"""
-    HernquistPotential(m, c, units=None, origin=None)
+    HernquistPotential(m, c, units=None, origin=None, R=None)
 
     Hernquist potential for a spheroid.
 
@@ -309,12 +313,12 @@ class HernquistPotential(CPotentialBase):
     """
     _physical_types = {'m': 'mass',
                        'c': 'length'}
-    def __init__(self, m, c, units=None, origin=None):
+    def __init__(self, m, c, units=None, origin=None, R=None):
         parameters = OrderedDict()
         parameters['m'] = m
         parameters['c'] = c
         super(HernquistPotential, self).__init__(
-            parameters=parameters, units=units, origin=origin)
+            parameters=parameters, units=units, origin=origin, R=R)
 
 
 cdef class PlummerWrapper(CPotentialWrapper):
@@ -330,7 +334,7 @@ cdef class PlummerWrapper(CPotentialWrapper):
 
 class PlummerPotential(CPotentialBase):
     r"""
-    PlummerPotential(m, b, units=None, origin=None)
+    PlummerPotential(m, b, units=None, origin=None, R=None)
 
     Plummer potential for a spheroid.
 
@@ -351,13 +355,14 @@ class PlummerPotential(CPotentialBase):
     """
     _physical_types = {'m': 'mass',
                        'b': 'length'}
-    def __init__(self, m, b, units=None, origin=None):
+    def __init__(self, m, b, units=None, origin=None, R=None):
         parameters = OrderedDict()
         parameters['m'] = m
         parameters['b'] = b
         super(PlummerPotential, self).__init__(parameters=parameters,
                                                units=units,
-                                               origin=origin)
+                                               origin=origin,
+                                               R=R)
 
 
 cdef class JaffeWrapper(CPotentialWrapper):
@@ -372,7 +377,7 @@ cdef class JaffeWrapper(CPotentialWrapper):
 
 class JaffePotential(CPotentialBase):
     r"""
-    JaffePotential(m, c, units=None, origin=None)
+    JaffePotential(m, c, units=None, origin=None, R=None)
 
     Jaffe potential for a spheroid.
 
@@ -394,13 +399,14 @@ class JaffePotential(CPotentialBase):
     _physical_types = {'m': 'mass',
                        'c': 'length'}
 
-    def __init__(self, m, c, units=None, origin=None):
+    def __init__(self, m, c, units=None, origin=None, R=None):
         parameters = OrderedDict()
         parameters['m'] = m
         parameters['c'] = c
         super(JaffePotential, self).__init__(parameters=parameters,
                                              units=units,
-                                             origin=origin)
+                                             origin=origin,
+                                             R=R)
 
 
 cdef class StoneWrapper(CPotentialWrapper):
@@ -415,7 +421,7 @@ cdef class StoneWrapper(CPotentialWrapper):
 
 class StonePotential(CPotentialBase):
     r"""
-    StonePotential(m, r_c, r_h, units=None, origin=None)
+    StonePotential(m, r_c, r_h, units=None, origin=None, R=None)
 
     Stone potential from `Stone & Ostriker (2015) <http://dx.doi.org/10.1088/2041-8205/806/2/L28>`_.
 
@@ -439,14 +445,15 @@ class StonePotential(CPotentialBase):
     _physical_types = {'m': 'mass',
                        'r_c': 'length',
                        'r_h': 'length'}
-    def __init__(self, m, r_c, r_h, units=None, origin=None):
+    def __init__(self, m, r_c, r_h, units=None, origin=None, R=None):
         parameters = OrderedDict()
         parameters['m'] = m
         parameters['r_c'] = r_c
         parameters['r_h'] = r_h
         super(StonePotential, self).__init__(parameters=parameters,
                                              units=units,
-                                             origin=origin)
+                                             origin=origin,
+                                             R=R)
 
 
 cdef class PowerLawCutoffWrapper(CPotentialWrapper):
@@ -463,7 +470,7 @@ cdef class PowerLawCutoffWrapper(CPotentialWrapper):
 
 class PowerLawCutoffPotential(CPotentialBase):
     r"""
-    PowerLawCutoffPotential(m, alpha, r_c, units=None, origin=None)
+    PowerLawCutoffPotential(m, alpha, r_c, units=None, origin=None, R=None)
 
     A spherical power-law density profile with an exponential cutoff.
 
@@ -497,7 +504,7 @@ class PowerLawCutoffPotential(CPotentialBase):
                        'alpha': 'dimensionless',
                        'r_c': 'length'}
 
-    def __init__(self, m, alpha, r_c, units=None, origin=None):
+    def __init__(self, m, alpha, r_c, units=None, origin=None, R=None):
         from ...._cconfig import GSL_ENABLED
         if not GSL_ENABLED:
             raise ValueError("Gala was compiled without GSL and so this "
@@ -511,7 +518,7 @@ class PowerLawCutoffPotential(CPotentialBase):
         parameters['alpha'] = alpha
         parameters['r_c'] = r_c
         super(PowerLawCutoffPotential, self).__init__(
-            parameters=parameters, units=units, origin=origin)
+            parameters=parameters, units=units, origin=origin, R=R)
 
 
 # ============================================================================
@@ -529,7 +536,7 @@ cdef class SatohWrapper(CPotentialWrapper):
 
 class SatohPotential(CPotentialBase):
     r"""
-    SatohPotential(m, a, b, units=None, origin=None)
+    SatohPotential(m, a, b, units=None, origin=None, R=None)
 
     Satoh potential for a flattened mass distribution.
 
@@ -554,14 +561,15 @@ class SatohPotential(CPotentialBase):
                        'a': 'length',
                        'b': 'length'}
 
-    def __init__(self, m, a, b, units=None, origin=None):
+    def __init__(self, m, a, b, units=None, origin=None, R=None):
         parameters = OrderedDict()
         parameters['m'] = m
         parameters['a'] = a
         parameters['b'] = b
         super(SatohPotential, self).__init__(parameters=parameters,
                                              units=units,
-                                             origin=origin)
+                                             origin=origin,
+                                             R=R)
 
 
 cdef class MiyamotoNagaiWrapper(CPotentialWrapper):
@@ -577,7 +585,7 @@ cdef class MiyamotoNagaiWrapper(CPotentialWrapper):
 
 class MiyamotoNagaiPotential(CPotentialBase):
     r"""
-    MiyamotoNagaiPotential(m, a, b, units=None, origin=None)
+    MiyamotoNagaiPotential(m, a, b, units=None, origin=None, R=None)
 
     Miyamoto-Nagai potential for a flattened mass distribution.
 
@@ -604,13 +612,13 @@ class MiyamotoNagaiPotential(CPotentialBase):
                        'a': 'length',
                        'b': 'length'}
 
-    def __init__(self, m, a, b, units=None, origin=None):
+    def __init__(self, m, a, b, units=None, origin=None, R=None):
         parameters = OrderedDict()
         parameters['m'] = m
         parameters['a'] = a
         parameters['b'] = b
         super(MiyamotoNagaiPotential, self).__init__(
-            parameters=parameters, units=units, origin=origin)
+            parameters=parameters, units=units, origin=origin, R=R)
 
 
 # ============================================================================
@@ -648,7 +656,7 @@ cdef class TriaxialNFWWrapper(CPotentialWrapper):
 
 class NFWPotential(CPotentialBase):
     r"""
-    NFWPotential(m, r_s, a=1, b=1, c=1, units=None, origin=None)
+    NFWPotential(m, r_s, a=1, b=1, c=1, units=None, origin=None, R=None)
 
     General Navarro-Frenk-White potential. Supports spherical, flattened, and
     triaxiality but the flattening is introduced into the potential, not the
@@ -683,6 +691,37 @@ class NFWPotential(CPotentialBase):
                        'b': 'dimensionless',
                        'c': 'dimensionless'}
 
+    def __init__(self, m=None, r_s=None, a=1., b=1., c=1., v_c=None, units=None,
+                 origin=None, R=None):
+        # TODO: v_c included in above for backwards-compatibility (and m, r_s
+        # default to None)
+
+        if v_c is not None and m is None:
+            warnings.warn("NFWPotential now expects a scale mass in the default"
+                          " initializer. To initialize from a circular "
+                          "velocity, use the classmethod "
+                          "from_circular_velocity() instead instead.",
+                          DeprecationWarning)
+
+            parameters = OrderedDict()
+            ptypes = OrderedDict()
+
+            parameters['v_c'] = v_c
+            ptypes['v_c'] = 'speed'
+
+            parameters['r_s'] = r_s
+            ptypes['r_s'] = 'length'
+
+            # get appropriate units:
+            parameters = CPotentialBase._prepare_parameters(parameters, ptypes,
+                                                            units)
+
+            # r_ref = r_s for old parametrization
+            m = NFWPotential._vc_rs_rref_to_m(parameters['v_c'],
+                                              parameters['r_s'],
+                                              parameters['r_s'])
+            m = m.to(units['mass'])
+
     def __init__(self, m, r_s, a=1., b=1., c=1., units=None, origin=None):
         parameters = OrderedDict()
         parameters['m'] = m
@@ -704,13 +743,14 @@ class NFWPotential(CPotentialBase):
         super(NFWPotential, self).__init__(parameters=parameters,
                                            units=units,
                                            Wrapper=NFWWrapper,
-                                           origin=origin)
+                                           origin=origin,
+                                           R=R)
 
     @staticmethod
     def from_circular_velocity(v_c, r_s, a=1., b=1., c=1., r_ref=None,
-                               units=None, origin=None):
+                               units=None, origin=None, R=None):
         r"""
-        from_circular_velocity(v_c, r_s, a=1., b=1., c=1., r_ref=None, units=None, origin=None)
+        from_circular_velocity(v_c, r_s, a=1., b=1., c=1., r_ref=None, units=None, origin=None, R=None)
 
         Initialize an NFW potential from a circular velocity, scale radius, and
         reference radius for the circular velocity.
@@ -755,7 +795,7 @@ class NFWPotential(CPotentialBase):
         m = m.to(units['mass'])
 
         return NFWPotential(m=m, r_s=r_s, a=a, b=b, c=c,
-                            units=units, origin=origin)
+                            units=units, origin=origin, R=R)
 
     @staticmethod
     def _vc_rs_rref_to_m(v_c, r_s, r_ref):
@@ -774,7 +814,7 @@ cdef class LogarithmicWrapper(CPotentialWrapper):
 
 class LogarithmicPotential(CPotentialBase):
     r"""
-    LogarithmicPotential(v_c, r_h, q1, q2, q3, phi=0, theta=0, psi=0, units=None, origin=None)
+    LogarithmicPotential(v_c, r_h, q1, q2, q3, phi=0, theta=0, psi=0, units=None, origin=None, R=None)
 
     Triaxial logarithmic potential.
 
@@ -808,7 +848,8 @@ class LogarithmicPotential(CPotentialBase):
                        'q3': 'dimensionless',
                        'phi': 'angle'}
 
-    def __init__(self, v_c, r_h, q1, q2, q3, phi=0., units=None, origin=None):
+    def __init__(self, v_c, r_h, q1, q2, q3, phi=0., units=None,
+                 origin=None, R=None):
         parameters = OrderedDict()
         parameters['v_c'] = v_c
         parameters['r_h'] = r_h
@@ -818,7 +859,7 @@ class LogarithmicPotential(CPotentialBase):
         parameters['phi'] = phi
 
         super(LogarithmicPotential, self).__init__(
-            parameters=parameters, units=units, origin=origin)
+            parameters=parameters, units=units, origin=origin, R=R)
 
         if not isinstance(self.units, DimensionlessUnitSystem):
             if self.units['angle'] != u.radian:
@@ -837,7 +878,7 @@ cdef class LeeSutoTriaxialNFWWrapper(CPotentialWrapper):
 
 class LeeSutoTriaxialNFWPotential(CPotentialBase):
     r"""
-    LeeSutoTriaxialNFWPotential(v_c, r_s, a, b, c, units=None, origin=None)
+    LeeSutoTriaxialNFWPotential(v_c, r_s, a, b, c, units=None, origin=None, R=None)
 
     Approximation of a Triaxial NFW Potential with the flattening in the density,
     not the potential.
@@ -867,7 +908,7 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
                        'b': 'dimensionless',
                        'c': 'dimensionless'}
 
-    def __init__(self, v_c, r_s, a, b, c, units=None, origin=None):
+    def __init__(self, v_c, r_s, a, b, c, units=None, origin=None, R=None):
         parameters = OrderedDict()
         parameters['v_c'] = v_c
         parameters['r_s'] = r_s
@@ -876,7 +917,7 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
         parameters['c'] = c
 
         super(LeeSutoTriaxialNFWPotential, self).__init__(
-            parameters=parameters, units=units, origin=origin)
+            parameters=parameters, units=units, origin=origin, R=R)
 
 
 cdef class LongMuraliBarWrapper(CPotentialWrapper):
@@ -891,7 +932,7 @@ cdef class LongMuraliBarWrapper(CPotentialWrapper):
 
 class LongMuraliBarPotential(CPotentialBase):
     r"""
-    LongMuraliBarPotential(m, a, b, c, alpha=0, units=None, origin=None)
+    LongMuraliBarPotential(m, a, b, c, alpha=0, units=None, origin=None, R=None)
 
     A simple, triaxial model for a galaxy bar. This is a softened "needle"
     density distribution with an analytic potential form.
@@ -918,7 +959,7 @@ class LongMuraliBarPotential(CPotentialBase):
                        'b': 'length',
                        'c': 'length',
                        'alpha': 'angle'}
-    def __init__(self, m, a, b, c, alpha=0., units=None, origin=None):
+    def __init__(self, m, a, b, c, alpha=0., units=None, origin=None, R=R):
         parameters = OrderedDict()
         parameters['m'] = m
         parameters['a'] = a
@@ -926,7 +967,7 @@ class LongMuraliBarPotential(CPotentialBase):
         parameters['c'] = c
         parameters['alpha'] = alpha
         super(LongMuraliBarPotential, self).__init__(
-            parameters=parameters, units=units, origin=origin)
+            parameters=parameters, units=units, origin=origin, R=R)
 
 
 # ==============================================================================
@@ -945,7 +986,7 @@ cdef class NullWrapper(CPotentialWrapper):
 
 class NullPotential(CPotentialBase):
     r"""
-    NullPotential(units=None, origin=None)
+    NullPotential(units=None, origin=None, R=None)
 
     A null potential with 0 mass. Does nothing.
 
@@ -956,8 +997,9 @@ class NullPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, units=None, origin=None):
+    def __init__(self, units=None, origin=None, R=None):
         parameters = OrderedDict()
         super(NullPotential, self).__init__(parameters=parameters,
                                             units=units,
-                                            origin=origin)
+                                            origin=origin,
+                                            R=R)
