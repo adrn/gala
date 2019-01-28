@@ -8,25 +8,25 @@ void apply_rotate(double *q_in, double *R, int n_dim, int transpose,
     // ndim=2 or ndim=3, so here we can assume that!
     if (n_dim == 3) {
         if (transpose == 0) {
-            q_out[0] = R[0] * q_in[0] + R[1] * q_in[1] + R[2] * q_in[2];
-            q_out[1] = R[3] * q_in[0] + R[4] * q_in[1] + R[5] * q_in[2];
-            q_out[2] = R[6] * q_in[0] + R[7] * q_in[1] + R[8] * q_in[2];
+            q_out[0] = q_out[0] + R[0] * q_in[0] + R[1] * q_in[1] + R[2] * q_in[2];
+            q_out[1] = q_out[1] + R[3] * q_in[0] + R[4] * q_in[1] + R[5] * q_in[2];
+            q_out[2] = q_out[2] + R[6] * q_in[0] + R[7] * q_in[1] + R[8] * q_in[2];
         } else {
-            q_out[0] = R[0] * q_in[0] + R[3] * q_in[1] + R[6] * q_in[2];
-            q_out[1] = R[1] * q_in[0] + R[4] * q_in[1] + R[7] * q_in[2];
-            q_out[2] = R[2] * q_in[0] + R[5] * q_in[1] + R[8] * q_in[2];
+            q_out[0] = q_out[0] + R[0] * q_in[0] + R[3] * q_in[1] + R[6] * q_in[2];
+            q_out[1] = q_out[1] + R[1] * q_in[0] + R[4] * q_in[1] + R[7] * q_in[2];
+            q_out[2] = q_out[2] + R[2] * q_in[0] + R[5] * q_in[1] + R[8] * q_in[2];
         }
     } else if (n_dim == 2) {
         if (transpose == 0) {
-            q_out[0] = R[0] * q_in[0] + R[1] * q_in[1];
-            q_out[1] = R[2] * q_in[0] + R[3] * q_in[1];
+            q_out[0] = q_out[0] + R[0] * q_in[0] + R[1] * q_in[1];
+            q_out[1] = q_out[1] + R[2] * q_in[0] + R[3] * q_in[1];
         } else {
-            q_out[0] = R[0] * q_in[0] + R[2] * q_in[1];
-            q_out[1] = R[1] * q_in[0] + R[3] * q_in[1];
+            q_out[0] = q_out[0] + R[0] * q_in[0] + R[2] * q_in[1];
+            q_out[1] = q_out[1] + R[1] * q_in[0] + R[3] * q_in[1];
         }
     } else {
         for (int j=0; j < n_dim; j++)
-            q_out[j] = q_in[j];
+            q_out[j] = q_out[j] + q_in[j];
     }
 }
 
@@ -51,6 +51,9 @@ double c_potential(CPotential *p, double t, double *qp) {
     int i;
     double qp_trans[p->n_dim];
 
+    for (i=0; i < p->n_dim; i++)
+        qp_trans[i] = 0.;
+
     for (i=0; i < p->n_components; i++) {
         apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
                            &qp_trans[0]);
@@ -66,6 +69,9 @@ double c_density(CPotential *p, double t, double *qp) {
     int i;
     double qp_trans[p->n_dim];
 
+    for (i=0; i < p->n_dim; i++)
+        qp_trans[i] = 0.;
+
     for (i=0; i < p->n_components; i++) {
         apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
                            &qp_trans[0]);
@@ -77,23 +83,30 @@ double c_density(CPotential *p, double t, double *qp) {
 
 
 void c_gradient(CPotential *p, double t, double *qp, double *grad) {
-    int i;
+    int i, j;
     double qp_trans[p->n_dim];
+    double tmp_grad[p->n_dim];
 
     for (i=0; i < p->n_dim; i++) {
         grad[i] = 0.;
+        tmp_grad[i] = 0.;
+        qp_trans[i] = 0.;
     }
 
     for (i=0; i < p->n_components; i++) {
+        for (j=0; j < p->n_dim; j++) {
+            tmp_grad[j] = 0.;
+            qp_trans[j] = 0.;
+        }
+
         apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
                            &qp_trans[0]);
-        (p->gradient)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim, grad);
-        apply_rotate(grad, (p->R)[i], p->n_dim, 1, &qp_trans[0]);
-        for (i=0; i < p->n_dim; i++) {
-            grad[i] = qp_trans[i];
-        }
-    }
 
+        (p->gradient)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim,
+                         &tmp_grad[0]);
+
+        apply_rotate(&tmp_grad[0], (p->R)[i], p->n_dim, 1, &grad[0]);
+    }
 }
 
 
