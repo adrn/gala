@@ -48,13 +48,12 @@ void apply_shift_rotate(double *q_in, double *q0, double *R, int n_dim,
 
 double c_potential(CPotential *p, double t, double *qp) {
     double v = 0;
-    int i;
+    int i, j;
     double qp_trans[p->n_dim];
 
-    for (i=0; i < p->n_dim; i++)
-        qp_trans[i] = 0.;
-
     for (i=0; i < p->n_components; i++) {
+        for (j=0; j < p->n_dim; j++)
+            qp_trans[j] = 0.;
         apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
                            &qp_trans[0]);
         v = v + (p->value)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim);
@@ -66,13 +65,12 @@ double c_potential(CPotential *p, double t, double *qp) {
 
 double c_density(CPotential *p, double t, double *qp) {
     double v = 0;
-    int i;
+    int i, j;
     double qp_trans[p->n_dim];
 
-    for (i=0; i < p->n_dim; i++)
-        qp_trans[i] = 0.;
-
     for (i=0; i < p->n_components; i++) {
+        for (j=0; j < p->n_dim; j++)
+            qp_trans[j] = 0.;
         apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
                            &qp_trans[0]);
         v = v + (p->density)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim);
