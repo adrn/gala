@@ -14,7 +14,7 @@ We first need to import some relevant packages::
    >>> import gala.potential as gp
    >>> from gala.units import galactic
 
-In the examples below, we will work use the ``galactic``
+In the examples below, we will use the ``galactic``
 `~gala.units.UnitSystem`: as I define it, this is: :math:`{\rm kpc}`,
 :math:`{\rm Myr}`, :math:`{\rm M}_\odot`.
 
