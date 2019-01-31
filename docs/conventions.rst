@@ -12,7 +12,7 @@ Common variable names
 
 Unless otherwise stated (in function or class docstrings), this package tries to
 adhere to using standard variable names for function and class arguments, and in
-example code. For shorthand, the variable ``w`` is used to represented arrays of
+example code. For shorthand, the variable ``w`` is used to represent arrays of
 phase-space coordinates (e.g., positions _and_ velocities). When representing
 only positions, the variable ``q`` is used. For just velocities or momenta, the
 variables ``p`` or ``v`` are used.

@@ -30,7 +30,7 @@ Model parametrization
 
 The core implementation follows the parametrization used by [fardal15]_ (except
 where noted below), which outlines a general way to specify the position and
-velocity distributions of of stars stripped from the progenitor system at the
+velocity distributions of stars stripped from the progenitor system at the
 time of stripping. In cylindrical coordinates :math:`(R,\phi,z)` in the orbital
 plane of the progenitor system (at position :math:`(R_p,\phi_p,z_p)`) the
 position of the
@@ -69,7 +69,7 @@ below: the *Streakline* method from [kuepper12]_ and the method from
 Streakline streams
 ------------------
 
-In the *Streakline* method, star particles are release with the same angular
+In the *Streakline* method, star particles are released with the same angular
 velocity as the satellite at the tidal radius with no dispersion. This is
 equivalent to fixing the :math:`k` parameters to:
 
