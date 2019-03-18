@@ -12,10 +12,10 @@ from astropy.coordinates import Galactic
 
 import astropy.units as u
 
-__all__ = ["MagellanicStream"]
+__all__ = ["MagellanicStreamNidever08", "MagellanicStream"]
 
 
-class MagellanicStream(BaseCoordinateFrame):
+class MagellanicStreamNidever08(BaseCoordinateFrame):
     """
     A coordinate or frame aligned with the Magellanic Stream,
     as defined by Nidever et al. (2008,
@@ -63,16 +63,25 @@ class MagellanicStream(BaseCoordinateFrame):
 
 
 @frame_transform_graph.transform(StaticMatrixTransform,
-                                 Galactic, MagellanicStream)
+                                 Galactic, MagellanicStreamNidever08)
 def gal_to_mag():
     mat1 = rotation_matrix(57.275785782128686*u.deg, 'z')
-    mat2 = rotation_matrix(90*u.deg - MagellanicStream._ngp.b, 'y')
-    mat3 = rotation_matrix(MagellanicStream._ngp.l, 'z')
+    mat2 = rotation_matrix(90*u.deg - MagellanicStreamNidever08._ngp.b, 'y')
+    mat3 = rotation_matrix(MagellanicStreamNidever08._ngp.l, 'z')
 
     return matrix_product(mat1, mat2, mat3)
 
 
 @frame_transform_graph.transform(StaticMatrixTransform,
-                                 MagellanicStream, Galactic)
+                                 MagellanicStreamNidever08, Galactic)
 def mag_to_gal():
     return matrix_transpose(gal_to_mag())
+
+
+# TODO: remove this in next version
+class MagellanicStream(MagellanicStreamNidever08):
+    def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn("This frame is deprecated. Use MagellanicStreamNidever08 "
+                      "instead.", DeprecationWarning)
+        super().__init__(*args, **kwargs)

@@ -68,13 +68,6 @@ class NewbergOrphan(coord.BaseCoordinateFrame):
             self._data.lon.wrap_angle = self._default_wrap_angle
 
 
-class Orphan(NewbergOrphan):
-    def __init__(self, *args, **kwargs):
-        import warnings
-        warnings.warn("This frame is deprecated. Use NewbergOrphan or "
-                      "KoposovOrphan instead.", DeprecationWarning)
-        super().__init__(*args, **kwargs)
-
 # Define the Euler angles
 phi = 128.79 * u.degree
 theta = 54.39 * u.degree
@@ -131,3 +124,12 @@ class KoposovOrphan(GreatCircleICRSFrame):
                       dec=-20.6575 * u.deg)
     ra0 = 160 * u.deg
     rotation = 0 * u.deg
+
+
+# TODO: remove this in next version
+class Orphan(NewbergOrphan):
+    def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn("This frame is deprecated. Use NewbergOrphan or "
+                      "KoposovOrphan instead.", DeprecationWarning)
+        super().__init__(*args, **kwargs)

@@ -8,9 +8,9 @@ import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import matrix_transpose
 
-__all__ = ["GD1"]
+__all__ = ["GD1Koposov10", "GD1"]
 
-class GD1(coord.BaseCoordinateFrame):
+class GD1Koposov10(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
     of the GD1 stream, as described in
@@ -65,16 +65,27 @@ R = np.array([[-0.4776303088, -0.1738432154, 0.8611897727],
               [0.510844589, -0.8524449229, 0.111245042],
               [0.7147776536, 0.4930681392, 0.4959603976]])
 
-@frame_transform_graph.transform(coord.StaticMatrixTransform, coord.ICRS, GD1)
+@frame_transform_graph.transform(coord.StaticMatrixTransform, coord.ICRS,
+                                 GD1Koposov10)
 def icrs_to_gd1():
     """ Compute the transformation from Galactic spherical to
         heliocentric GD1 coordinates.
     """
     return R
 
-@frame_transform_graph.transform(coord.StaticMatrixTransform, GD1, coord.ICRS)
+@frame_transform_graph.transform(coord.StaticMatrixTransform, GD1Koposov10,
+                                 coord.ICRS)
 def gd1_to_icrs():
     """ Compute the transformation from heliocentric GD1 coordinates to
         spherical Galactic.
     """
     return matrix_transpose(icrs_to_gd1())
+
+
+# TODO: remove this in next version
+class GD1(GD1Koposov10):
+    def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn("This frame is deprecated. Use GD1Koposov10 instead.",
+                      DeprecationWarning)
+        super().__init__(*args, **kwargs)

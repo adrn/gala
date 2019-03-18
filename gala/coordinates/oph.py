@@ -8,9 +8,9 @@ import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import matrix_transpose
 
-__all__ = ["Ophiuchus"]
+__all__ = ["OphiuchusPricewhelan16", "Ophiuchus"]
 
-class Ophiuchus(coord.BaseCoordinateFrame):
+class OphiuchusPricewhelan16(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
     of the Ophiuchus stream, as described in
@@ -80,3 +80,12 @@ def oph_to_gal():
         spherical Galactic.
     """
     return matrix_transpose(gal_to_oph())
+
+
+# TODO: remove this in next version
+class Ophiuchus(OphiuchusPricewhelan16):
+    def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn("This frame is deprecated. Use OphiuchusPricewhelan16"
+                      " instead.", DeprecationWarning)
+        super().__init__(*args, **kwargs)

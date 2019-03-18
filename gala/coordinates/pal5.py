@@ -8,12 +8,12 @@ import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import matrix_transpose
 
-__all__ = ["Pal5"]
+__all__ = ["Pal5PriceWhelan18", "Pal5"]
 
-class Pal5(coord.BaseCoordinateFrame):
+class Pal5PriceWhelan18(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
-    of the Pal 5 stream.
+    of the Pal 5 stream by A. Price-Whelan (2018).
 
     For more information about this class, see the Astropy documentation
     on coordinate frames in :mod:`~astropy.coordinates`.
@@ -64,16 +64,27 @@ R = np.array([[-0.65019243, -0.75969758, -0.01045969],
               [-0.62969142, 0.54652698, -0.55208422],
               [0.42513354, -0.3523746, -0.83372274]])
 
-@frame_transform_graph.transform(coord.StaticMatrixTransform, coord.ICRS, Pal5)
+@frame_transform_graph.transform(coord.StaticMatrixTransform, coord.ICRS,
+                                 Pal5PriceWhelan18)
 def icrs_to_pal5():
     """ Compute the transformation from Galactic spherical to
         heliocentric Pal 5 coordinates.
     """
     return R
 
-@frame_transform_graph.transform(coord.StaticMatrixTransform, Pal5, coord.ICRS)
+@frame_transform_graph.transform(coord.StaticMatrixTransform, Pal5PriceWhelan18,
+                                 coord.ICRS)
 def pal5_to_icrs():
     """ Compute the transformation from heliocentric Pal 5 coordinates to
         spherical Galactic.
     """
     return matrix_transpose(icrs_to_pal5())
+
+
+# TODO: remove this in next version
+class Pal5(Pal5PriceWhelan18):
+    def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn("This frame is deprecated. Use Pal5PriceWhelan18 "
+                      "instead.", DeprecationWarning)
+        super().__init__(*args, **kwargs)
