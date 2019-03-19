@@ -89,3 +89,11 @@ class Ophiuchus(OphiuchusPriceWhelan16):
         warnings.warn("This frame is deprecated. Use OphiuchusPriceWhelan16"
                       " instead.", DeprecationWarning)
         super().__init__(*args, **kwargs)
+
+
+trans = frame_transform_graph.get_transform(OphiuchusPriceWhelan16,
+                                            coord.ICRS).transforms[0]
+frame_transform_graph.add_transform(Ophiuchus, coord.ICRS, trans)
+trans = frame_transform_graph.get_transform(coord.ICRS,
+                                            OphiuchusPriceWhelan16).transforms[0]
+frame_transform_graph.add_transform(coord.ICRS, Ophiuchus, trans)

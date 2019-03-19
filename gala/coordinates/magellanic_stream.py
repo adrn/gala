@@ -8,7 +8,7 @@ from astropy.coordinates.baseframe import (frame_transform_graph,
                                            RepresentationMapping)
 from astropy.coordinates.transformations import StaticMatrixTransform
 from astropy.coordinates import representation as r
-from astropy.coordinates import Galactic
+from astropy.coordinates import Galactic, ICRS
 
 import astropy.units as u
 
@@ -85,3 +85,11 @@ class MagellanicStream(MagellanicStreamNidever08):
         warnings.warn("This frame is deprecated. Use MagellanicStreamNidever08 "
                       "instead.", DeprecationWarning)
         super().__init__(*args, **kwargs)
+
+
+trans = frame_transform_graph.get_transform(MagellanicStreamNidever08,
+                                            ICRS).transforms[0]
+frame_transform_graph.add_transform(MagellanicStream, ICRS, trans)
+trans = frame_transform_graph.get_transform(ICRS,
+                                            MagellanicStreamNidever08).transforms[0]
+frame_transform_graph.add_transform(ICRS, MagellanicStream, trans)

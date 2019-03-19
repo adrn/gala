@@ -98,3 +98,11 @@ class Sagittarius(SagittariusLaw10):
         warnings.warn("This frame is deprecated. Use SagittariusLaw10 "
                       "instead.", DeprecationWarning)
         super().__init__(*args, **kwargs)
+
+
+trans = frame_transform_graph.get_transform(SagittariusLaw10,
+                                            coord.ICRS).transforms[0]
+frame_transform_graph.add_transform(Sagittarius, coord.ICRS, trans)
+trans = frame_transform_graph.get_transform(coord.ICRS,
+                                            SagittariusLaw10).transforms[0]
+frame_transform_graph.add_transform(coord.ICRS, Sagittarius, trans)
