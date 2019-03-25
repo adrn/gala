@@ -5,32 +5,43 @@ from astropy.utils.data import get_pkg_data_filename
 import numpy as np
 
 # This package
-from ..gd1 import GD1
+from ..gd1 import GD1Koposov10, GD1
 
 def test_simple():
     c = coord.ICRS(coord.Angle(217.2141, u.degree),
                    coord.Angle(-11.4351, u.degree))
-    c.transform_to(GD1)
+    c.transform_to(GD1Koposov10)
 
     c = coord.Galactic(coord.Angle(217.2141, u.degree),
                        coord.Angle(-11.4351, u.degree))
-    c.transform_to(GD1)
+    c.transform_to(GD1Koposov10)
 
-    c = GD1(217.2141*u.degree, -11.4351*u.degree)
+    c = GD1Koposov10(217.2141*u.degree, -11.4351*u.degree)
     c.transform_to(coord.ICRS)
     c.transform_to(coord.Galactic)
 
     c = coord.Galactic(coord.Angle(217.2141, u.degree),
                        coord.Angle(-11.4351, u.degree))
-    s = c.transform_to(GD1)
+    s = c.transform_to(GD1Koposov10)
 
     # with distance
-    c = GD1(coord.Angle(217.2141, u.degree),
-            coord.Angle(-11.4351, u.degree),
-            distance=15*u.kpc)
+    c = GD1Koposov10(coord.Angle(217.2141, u.degree),
+                     coord.Angle(-11.4351, u.degree),
+                     distance=15*u.kpc)
     c.transform_to(coord.ICRS)
     c2 = c.transform_to(coord.Galactic)
     assert np.allclose(c2.distance.value, c.distance.value)
+
+    # TODO: remove this in next version
+    # For now: make sure old class still works
+    from astropy.tests.helper import catch_warnings
+    with catch_warnings(DeprecationWarning) as w:
+        c = GD1(217.2141*u.degree, -11.4351*u.degree)
+    assert len(w) > 0
+    c2 = c.transform_to(coord.Galactic)
+    c3 = c2.transform_to(GD1)
+    assert np.allclose(c3.phi1.degree, c.phi1.degree)
+    assert np.allclose(c3.phi2.degree, c.phi2.degree)
 
 def test_koposov():
     # Compare against Table 1 in Koposov et al. 2010
@@ -42,10 +53,10 @@ def test_koposov():
                               dec=k10_data['dec'].astype(str),
                               unit=(u.hourangle, u.degree))
 
-    k10_gd1 = GD1(phi1=k10_data['phi1']*u.degree,
-                  phi2=k10_data['phi2']*u.degree)
+    k10_gd1 = GD1Koposov10(phi1=k10_data['phi1']*u.degree,
+                           phi2=k10_data['phi2']*u.degree)
 
-    gala_gd1 = k10_icrs.transform_to(GD1)
+    gala_gd1 = k10_icrs.transform_to(GD1Koposov10)
 
     # TODO: why are these so different from the values in Koposov?
     assert np.allclose(k10_gd1.phi1.degree, gala_gd1.phi1.degree,

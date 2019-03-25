@@ -11,7 +11,7 @@ from astropy.utils.data import get_pkg_data_filename
 import numpy as np
 
 # This project
-from ..orphan import Orphan, KoposovOrphan
+from ..orphan import OrphanNewberg10, OrphanKoposov19, Orphan
 
 def test_table():
     """ Test the transformation code against table 2 values from
@@ -35,11 +35,23 @@ def test_table():
     for line in table:
         galactic = coord.Galactic(l=line['l']*u.deg, b=line['b']*u.deg)
 
-        orp = galactic.transform_to(Orphan)
-        true_orp = Orphan(phi1=line['Lambda']*u.deg, phi2=line['Beta']*u.deg)
+        orp = galactic.transform_to(OrphanNewberg10)
+        true_orp = OrphanNewberg10(phi1=line['Lambda']*u.deg,
+                                   phi2=line['Beta']*u.deg)
 
         # TODO: why does this suck so badly?
         assert true_orp.separation(orp) < 20*u.arcsec
+
+    # TODO: remove this in next version
+    # For now: make sure old class still works
+    from astropy.tests.helper import catch_warnings
+    with catch_warnings(DeprecationWarning) as w:
+        c = Orphan(217.2141*u.degree, -11.4351*u.degree)
+    assert len(w) > 0
+    c2 = c.transform_to(coord.Galactic)
+    c3 = c2.transform_to(Orphan)
+    assert np.allclose(c3.phi1.degree, c.phi1.degree)
+    assert np.allclose(c3.phi2.degree, c.phi2.degree)
 
 
 def test_kopsov():
@@ -47,7 +59,7 @@ def test_kopsov():
                      format='ascii')
     c = coord.SkyCoord(ra=tbl['ra']*u.deg,
                        dec=tbl['dec']*u.deg)
-    orp_gc = c.transform_to(KoposovOrphan)
+    orp_gc = c.transform_to(OrphanKoposov19)
 
     assert np.allclose(tbl['phi1'],
                        orp_gc.phi1.wrap_at(180*u.deg).degree)

@@ -9,9 +9,9 @@ import astropy.coordinates as coord
 import astropy.units as u
 from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product, matrix_transpose
 
-__all__ = ["Sagittarius"]
+__all__ = ["SagittariusLaw10", "Sagittarius"]
 
-class Sagittarius(coord.BaseCoordinateFrame):
+class SagittariusLaw10(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
     of the Sagittarius dwarf galaxy, as described in
@@ -73,17 +73,36 @@ A = np.diag([1.,1.,-1.])
 R = matrix_product(A, B, C, D)
 
 # Galactic to Sgr coordinates
-@frame_transform_graph.transform(coord.StaticMatrixTransform, coord.Galactic, Sagittarius)
+@frame_transform_graph.transform(coord.StaticMatrixTransform, coord.Galactic,
+                                 SagittariusLaw10)
 def galactic_to_sgr():
     """ Compute the transformation from Galactic spherical to
-        heliocentric Orphan coordinates.
+        heliocentric Sagittarius coordinates.
     """
     return R
 
 # Sgr to Galactic coordinates
-@frame_transform_graph.transform(coord.StaticMatrixTransform, Sagittarius, coord.Galactic)
+@frame_transform_graph.transform(coord.StaticMatrixTransform, SagittariusLaw10,
+                                 coord.Galactic)
 def sgr_to_galactic():
-    """ Compute the transformation from heliocentric Orphan coordinates to
+    """ Compute the transformation from heliocentric Sagittarius coordinates to
         spherical Galactic.
     """
     return matrix_transpose(galactic_to_sgr())
+
+
+# TODO: remove this in next version
+class Sagittarius(SagittariusLaw10):
+    def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn("This frame is deprecated. Use SagittariusLaw10 "
+                      "instead.", DeprecationWarning)
+        super().__init__(*args, **kwargs)
+
+
+trans = frame_transform_graph.get_transform(SagittariusLaw10,
+                                            coord.Galactic).transforms[0]
+frame_transform_graph.add_transform(Sagittarius, coord.Galactic, trans)
+trans = frame_transform_graph.get_transform(coord.Galactic,
+                                            SagittariusLaw10).transforms[0]
+frame_transform_graph.add_transform(coord.Galactic, Sagittarius, trans)

@@ -11,10 +11,10 @@ from .greatcircle import (GreatCircleICRSFrame,
                           greatcircle_transforms)
 
 
-__all__ = ["Orphan", "NewbergOrphan", "KoposovOrphan"]
+__all__ = ["Orphan", "OrphanNewberg10", "OrphanKoposov19"]
 
 
-class NewbergOrphan(coord.BaseCoordinateFrame):
+class OrphanNewberg10(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
     of the Orphan stream, as described in
@@ -68,13 +68,6 @@ class NewbergOrphan(coord.BaseCoordinateFrame):
             self._data.lon.wrap_angle = self._default_wrap_angle
 
 
-class Orphan(NewbergOrphan):
-    def __init__(self, *args, **kwargs):
-        import warnings
-        warnings.warn("This frame is deprecated. Use NewbergOrphan or "
-                      "KoposovOrphan instead.", DeprecationWarning)
-        super().__init__(*args, **kwargs)
-
 # Define the Euler angles
 phi = 128.79 * u.degree
 theta = 54.39 * u.degree
@@ -87,7 +80,7 @@ B = rotation_matrix(psi, "z")
 R = matrix_product(B, C, D)
 
 @frame_transform_graph.transform(coord.StaticMatrixTransform, coord.Galactic,
-                                 Orphan)
+                                 OrphanNewberg10)
 def galactic_to_orp():
     """ Compute the transformation from Galactic spherical to
         heliocentric Orphan coordinates.
@@ -95,7 +88,7 @@ def galactic_to_orp():
     return R
 
 # Oph to Galactic coordinates
-@frame_transform_graph.transform(coord.StaticMatrixTransform, Orphan,
+@frame_transform_graph.transform(coord.StaticMatrixTransform, OrphanNewberg10,
                                  coord.Galactic)
 def oph_to_galactic():
     """ Compute the transformation from heliocentric Orphan coordinates to
@@ -107,7 +100,7 @@ def oph_to_galactic():
 # ------------------------------------------------------------------------------
 
 @greatcircle_transforms(self_transform=False)
-class KoposovOrphan(GreatCircleICRSFrame):
+class OrphanKoposov19(GreatCircleICRSFrame):
     """A coordinate frame for the Orphan stream defined by Sergey Koposov.
 
     Parameters
@@ -131,3 +124,20 @@ class KoposovOrphan(GreatCircleICRSFrame):
                       dec=-20.6575 * u.deg)
     ra0 = 160 * u.deg
     rotation = 0 * u.deg
+
+
+# TODO: remove this in next version
+class Orphan(OrphanNewberg10):
+    def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn("This frame is deprecated. Use OrphanNewberg10 or "
+                      "OrphanKoposov19 instead.", DeprecationWarning)
+        super().__init__(*args, **kwargs)
+
+
+trans = frame_transform_graph.get_transform(OrphanNewberg10,
+                                            coord.Galactic).transforms[0]
+frame_transform_graph.add_transform(Orphan, coord.Galactic, trans)
+trans = frame_transform_graph.get_transform(coord.Galactic,
+                                            OrphanNewberg10).transforms[0]
+frame_transform_graph.add_transform(coord.Galactic, Orphan, trans)

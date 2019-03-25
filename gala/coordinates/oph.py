@@ -8,9 +8,9 @@ import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import matrix_transpose
 
-__all__ = ["Ophiuchus"]
+__all__ = ["OphiuchusPriceWhelan16", "Ophiuchus"]
 
-class Ophiuchus(coord.BaseCoordinateFrame):
+class OphiuchusPriceWhelan16(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
     of the Ophiuchus stream, as described in
@@ -25,18 +25,18 @@ class Ophiuchus(coord.BaseCoordinateFrame):
         A representation object or None to have no data (or use the other keywords)
 
     phi1 : angle_like, optional, must be keyword
-        The longitude-like angle corresponding to Orphan's orbit.
+        The longitude-like angle corresponding to Ophiuchus's orbit.
     phi2 : angle_like, optional, must be keyword
-        The latitude-like angle corresponding to Orphan's orbit.
+        The latitude-like angle corresponding to Ophiuchus's orbit.
     distance : :class:`~astropy.units.Quantity`, optional, must be keyword
         The Distance for this object along the line-of-sight.
 
     pm_phi1_cosphi2 : :class:`~astropy.units.Quantity`, optional, must be keyword
         The proper motion in the longitude-like direction corresponding to
-        the Orphan stream's orbit.
+        the Ophiuchus stream's orbit.
     pm_phi2 : :class:`~astropy.units.Quantity`, optional, must be keyword
         The proper motion in the latitude-like direction perpendicular to the
-        Orphan stream's orbit.
+        Ophiuchus stream's orbit.
     radial_velocity : :class:`~astropy.units.Quantity`, optional, must be keyword
         The Distance for this object along the line-of-sight.
 
@@ -66,7 +66,7 @@ R = np.array([[0.84922096554, 0.07001279040, 0.52337554476],
               [0.45352820359, -0.60434231606, -0.65504391727]])
 
 @frame_transform_graph.transform(coord.StaticMatrixTransform,
-                                 coord.Galactic, Ophiuchus)
+                                 coord.Galactic, OphiuchusPriceWhelan16)
 def gal_to_oph():
     """ Compute the transformation from Galactic spherical to
         heliocentric Ophiuchus coordinates.
@@ -74,9 +74,26 @@ def gal_to_oph():
     return R
 
 @frame_transform_graph.transform(coord.StaticMatrixTransform,
-                                 Ophiuchus, coord.Galactic)
+                                 OphiuchusPriceWhelan16, coord.Galactic)
 def oph_to_gal():
     """ Compute the transformation from heliocentric Ophiuchus coordinates to
         spherical Galactic.
     """
     return matrix_transpose(gal_to_oph())
+
+
+# TODO: remove this in next version
+class Ophiuchus(OphiuchusPriceWhelan16):
+    def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn("This frame is deprecated. Use OphiuchusPriceWhelan16"
+                      " instead.", DeprecationWarning)
+        super().__init__(*args, **kwargs)
+
+
+trans = frame_transform_graph.get_transform(OphiuchusPriceWhelan16,
+                                            coord.ICRS).transforms[0]
+frame_transform_graph.add_transform(Ophiuchus, coord.ICRS, trans)
+trans = frame_transform_graph.get_transform(coord.ICRS,
+                                            OphiuchusPriceWhelan16).transforms[0]
+frame_transform_graph.add_transform(coord.ICRS, Ophiuchus, trans)

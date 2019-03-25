@@ -8,14 +8,14 @@ from astropy.coordinates.baseframe import (frame_transform_graph,
                                            RepresentationMapping)
 from astropy.coordinates.transformations import StaticMatrixTransform
 from astropy.coordinates import representation as r
-from astropy.coordinates import Galactic
+from astropy.coordinates import Galactic, ICRS
 
 import astropy.units as u
 
-__all__ = ["MagellanicStream"]
+__all__ = ["MagellanicStreamNidever08", "MagellanicStream"]
 
 
-class MagellanicStream(BaseCoordinateFrame):
+class MagellanicStreamNidever08(BaseCoordinateFrame):
     """
     A coordinate or frame aligned with the Magellanic Stream,
     as defined by Nidever et al. (2008,
@@ -30,12 +30,12 @@ class MagellanicStream(BaseCoordinateFrame):
 
         >>> from astropy import coordinates as coord
         >>> from astropy import units as u
-        >>> from gala.coordinates import MagellanicStream
+        >>> from gala.coordinates import MagellanicStreamNidever08
 
         >>> c = coord.Galactic(l=280.4652*u.deg, b=-32.8884*u.deg)
-        >>> ms = c.transform_to(MagellanicStream)
+        >>> ms = c.transform_to(MagellanicStreamNidever08)
         >>> print(ms)
-        <MagellanicStream Coordinate: (L, B) in deg
+        <MagellanicStreamNidever08 Coordinate: (L, B) in deg
             (-0.13686116, 2.42583948)>
     """
 
@@ -63,16 +63,33 @@ class MagellanicStream(BaseCoordinateFrame):
 
 
 @frame_transform_graph.transform(StaticMatrixTransform,
-                                 Galactic, MagellanicStream)
+                                 Galactic, MagellanicStreamNidever08)
 def gal_to_mag():
     mat1 = rotation_matrix(57.275785782128686*u.deg, 'z')
-    mat2 = rotation_matrix(90*u.deg - MagellanicStream._ngp.b, 'y')
-    mat3 = rotation_matrix(MagellanicStream._ngp.l, 'z')
+    mat2 = rotation_matrix(90*u.deg - MagellanicStreamNidever08._ngp.b, 'y')
+    mat3 = rotation_matrix(MagellanicStreamNidever08._ngp.l, 'z')
 
     return matrix_product(mat1, mat2, mat3)
 
 
 @frame_transform_graph.transform(StaticMatrixTransform,
-                                 MagellanicStream, Galactic)
+                                 MagellanicStreamNidever08, Galactic)
 def mag_to_gal():
     return matrix_transpose(gal_to_mag())
+
+
+# TODO: remove this in next version
+class MagellanicStream(MagellanicStreamNidever08):
+    def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn("This frame is deprecated. Use MagellanicStreamNidever08 "
+                      "instead.", DeprecationWarning)
+        super().__init__(*args, **kwargs)
+
+
+trans = frame_transform_graph.get_transform(MagellanicStreamNidever08,
+                                            Galactic).transforms[0]
+frame_transform_graph.add_transform(MagellanicStream, Galactic, trans)
+trans = frame_transform_graph.get_transform(Galactic,
+                                            MagellanicStreamNidever08).transforms[0]
+frame_transform_graph.add_transform(Galactic, MagellanicStream, trans)

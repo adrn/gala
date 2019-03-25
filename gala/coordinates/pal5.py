@@ -8,12 +8,12 @@ import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import matrix_transpose
 
-__all__ = ["Pal5"]
+__all__ = ["Pal5PriceWhelan18", "Pal5"]
 
-class Pal5(coord.BaseCoordinateFrame):
+class Pal5PriceWhelan18(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
-    of the Pal 5 stream.
+    of the Pal 5 stream by A. Price-Whelan (2018).
 
     For more information about this class, see the Astropy documentation
     on coordinate frames in :mod:`~astropy.coordinates`.
@@ -24,18 +24,18 @@ class Pal5(coord.BaseCoordinateFrame):
         A representation object or None to have no data (or use the other keywords)
 
     phi1 : angle_like, optional, must be keyword
-        The longitude-like angle corresponding to Orphan's orbit.
+        The longitude-like angle corresponding to Pal 5's orbit.
     phi2 : angle_like, optional, must be keyword
-        The latitude-like angle corresponding to Orphan's orbit.
+        The latitude-like angle corresponding to Pal 5's orbit.
     distance : :class:`~astropy.units.Quantity`, optional, must be keyword
         The Distance for this object along the line-of-sight.
 
     pm_phi1_cosphi2 : :class:`~astropy.units.Quantity`, optional, must be keyword
         The proper motion in the longitude-like direction corresponding to
-        the Orphan stream's orbit.
+        the Pal 5 stream's orbit.
     pm_phi2 : :class:`~astropy.units.Quantity`, optional, must be keyword
         The proper motion in the latitude-like direction perpendicular to the
-        Orphan stream's orbit.
+        Pal 5 stream's orbit.
     radial_velocity : :class:`~astropy.units.Quantity`, optional, must be keyword
         The Distance for this object along the line-of-sight.
 
@@ -64,16 +64,41 @@ R = np.array([[-0.65019243, -0.75969758, -0.01045969],
               [-0.62969142, 0.54652698, -0.55208422],
               [0.42513354, -0.3523746, -0.83372274]])
 
-@frame_transform_graph.transform(coord.StaticMatrixTransform, coord.ICRS, Pal5)
+# Extra rotation to put the cluster center at (0, 0)
+R2 = np.array([[ 9.99938314e-01,  1.57847502e-03, -1.09943927e-02],
+               [-1.57837962e-03,  9.99998754e-01,  1.73543959e-05],
+               [ 1.09944064e-02,  0.00000000e+00,  9.99939560e-01]])
+R = R2 @ R
+
+@frame_transform_graph.transform(coord.StaticMatrixTransform, coord.ICRS,
+                                 Pal5PriceWhelan18)
 def icrs_to_pal5():
     """ Compute the transformation from Galactic spherical to
         heliocentric Pal 5 coordinates.
     """
     return R
 
-@frame_transform_graph.transform(coord.StaticMatrixTransform, Pal5, coord.ICRS)
+@frame_transform_graph.transform(coord.StaticMatrixTransform, Pal5PriceWhelan18,
+                                 coord.ICRS)
 def pal5_to_icrs():
     """ Compute the transformation from heliocentric Pal 5 coordinates to
         spherical Galactic.
     """
     return matrix_transpose(icrs_to_pal5())
+
+
+# TODO: remove this in next version
+class Pal5(Pal5PriceWhelan18):
+    def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn("This frame is deprecated. Use Pal5PriceWhelan18 "
+                      "instead.", DeprecationWarning)
+        super().__init__(*args, **kwargs)
+
+
+trans = frame_transform_graph.get_transform(Pal5PriceWhelan18,
+                                            coord.ICRS).transforms[0]
+frame_transform_graph.add_transform(Pal5, coord.ICRS, trans)
+trans = frame_transform_graph.get_transform(coord.ICRS,
+                                            Pal5PriceWhelan18).transforms[0]
+frame_transform_graph.add_transform(coord.ICRS, Pal5, trans)
