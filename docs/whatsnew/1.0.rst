@@ -12,6 +12,7 @@ TODO:
 This release includes:
 
 * :ref:`whatsnew-1.0-greatcircle`
+* :ref:`whatsnew-1.0-scf`
 * :ref:`whatsnew-1.0-new-potentials`
 * :ref:`whatsnew-1.0-cov-matrix`
 * :ref:`whatsnew-1.0-stream-frame-naming`
@@ -21,6 +22,14 @@ This release includes:
 
 Great circle coordinate systems
 ===============================
+
+TODO:
+
+
+.. _whatsnew-1.0-scf:
+
+Basis function expansion potential models with the self-consistent field method
+===============================================================================
 
 TODO:
 
