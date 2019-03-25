@@ -135,9 +135,9 @@ class Orphan(OrphanNewberg10):
         super().__init__(*args, **kwargs)
 
 
-trans = frame_transform_graph.get_transform(OrphanKoposov19,
-                                            coord.ICRS).transforms[0]
-frame_transform_graph.add_transform(Orphan, coord.ICRS, trans)
-trans = frame_transform_graph.get_transform(coord.ICRS,
-                                            OrphanKoposov19).transforms[0]
-frame_transform_graph.add_transform(coord.ICRS, Orphan, trans)
+trans = frame_transform_graph.get_transform(OrphanNewberg10,
+                                            coord.Galactic).transforms[0]
+frame_transform_graph.add_transform(Orphan, coord.Galactic, trans)
+trans = frame_transform_graph.get_transform(coord.Galactic,
+                                            OrphanNewberg10).transforms[0]
+frame_transform_graph.add_transform(coord.Galactic, Orphan, trans)

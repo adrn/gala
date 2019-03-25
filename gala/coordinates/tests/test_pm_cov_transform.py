@@ -1,14 +1,12 @@
 # Third-party
 import astropy.coordinates as coord
 import astropy.units as u
-from astropy.io import ascii
-from astropy.table import Table
 from astropy.utils.data import get_pkg_data_filename
 import numpy as np
 import pytest
 
 # This project
-from ..orphan import KoposovOrphan
+from ..orphan import OrphanKoposov19
 from ..pm_cov_transform import transform_pm_cov
 
 
@@ -25,7 +23,7 @@ def setup_function(fn):
 
 @pytest.mark.parametrize("to_frame", [coord.Galactic,
                                       coord.Supergalactic,
-                                      KoposovOrphan])
+                                      OrphanKoposov19])
 def test_transform(to_frame):
     c = test_transform.c
     cov = test_transform.cov
@@ -47,7 +45,7 @@ def test_transform(to_frame):
 
 @pytest.mark.parametrize("to_frame", [coord.Galactic,
                                       coord.Supergalactic,
-                                      KoposovOrphan])
+                                      OrphanKoposov19])
 def test_transform_correctness(to_frame):
     c = test_transform_correctness.c[:4]
     cov = test_transform_correctness.cov[:4]
@@ -56,7 +54,7 @@ def test_transform_correctness(to_frame):
     pm = np.vstack((c.pm_ra_cosdec.value,
                     c.pm_dec.value)).T
     rnd = np.random.RandomState(42)
-    
+
     for i in range(len(c)):
         pm_samples = rnd.multivariate_normal(pm[i], cov[i],
                                              size=2**16)

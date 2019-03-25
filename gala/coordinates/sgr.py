@@ -77,7 +77,7 @@ R = matrix_product(A, B, C, D)
                                  SagittariusLaw10)
 def galactic_to_sgr():
     """ Compute the transformation from Galactic spherical to
-        heliocentric Orphan coordinates.
+        heliocentric Sagittarius coordinates.
     """
     return R
 
@@ -85,7 +85,7 @@ def galactic_to_sgr():
 @frame_transform_graph.transform(coord.StaticMatrixTransform, SagittariusLaw10,
                                  coord.Galactic)
 def sgr_to_galactic():
-    """ Compute the transformation from heliocentric Orphan coordinates to
+    """ Compute the transformation from heliocentric Sagittarius coordinates to
         spherical Galactic.
     """
     return matrix_transpose(galactic_to_sgr())
@@ -101,8 +101,8 @@ class Sagittarius(SagittariusLaw10):
 
 
 trans = frame_transform_graph.get_transform(SagittariusLaw10,
-                                            coord.ICRS).transforms[0]
-frame_transform_graph.add_transform(Sagittarius, coord.ICRS, trans)
-trans = frame_transform_graph.get_transform(coord.ICRS,
+                                            coord.Galactic).transforms[0]
+frame_transform_graph.add_transform(Sagittarius, coord.Galactic, trans)
+trans = frame_transform_graph.get_transform(coord.Galactic,
                                             SagittariusLaw10).transforms[0]
-frame_transform_graph.add_transform(coord.ICRS, Sagittarius, trans)
+frame_transform_graph.add_transform(coord.Galactic, Sagittarius, trans)
