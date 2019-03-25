@@ -260,3 +260,12 @@ def test_regression_113():
     b = toy_potential.parameters['b'].value
     assert np.log10(m) > 11 and np.log10(m) < 12
     assert np.log10(b) > 0 and np.log10(b) < 1
+
+    # try again with Nelder-Mead
+    toy_potential = fit_isochrone(orbit,
+                                  minimize_kwargs=dict(method='Nelder-Mead'))
+
+    m = toy_potential.parameters['m'].value
+    b = toy_potential.parameters['b'].value
+    assert np.log10(m) > 11 and np.log10(m) < 12
+    assert np.log10(b) > 0 and np.log10(b) < 1

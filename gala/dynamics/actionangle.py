@@ -75,7 +75,7 @@ def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
     vecs = np.array(sorted(vecs, key=lambda x: (x[0], x[1], x[2])))
     return vecs
 
-def fit_isochrone(orbit, m0=2E11, b0=1.):
+def fit_isochrone(orbit, m0=2E11, b0=1., minimize_kwargs=None):
     r"""
     Fit the toy Isochrone potential to the sum of the energy residuals relative
     to the mean energy by minimizing the function
@@ -94,6 +94,8 @@ def fit_isochrone(orbit, m0=2E11, b0=1.):
         Initial mass guess.
     b0 : numeric (optional)
         Initial b guess.
+    minimize_kwargs : dict (optional)
+        Keyword arguments to pass through to `scipy.optimize.minimize`.
 
     Returns
     -------
@@ -122,8 +124,11 @@ def fit_isochrone(orbit, m0=2E11, b0=1.):
     logm0 = np.log(m0)
     logb0 = np.log(b0)
 
-    # p, ier = leastsq(f, np.array([logm0, b0]), args=(w,))
-    res = minimize(f, x0=np.array([logm0, logb0]), args=(w,))
+    if minimize_kwargs is None:
+        minimize_kwargs = dict()
+    minimize_kwargs['x0'] = np.array([logm0, logb0])
+    minimize_kwargs['method'] = minimize_kwargs.get('method', 'Nelder-Mead')
+    res = minimize(f, args=(w,), **minimize_kwargs)
 
     if not res.success:
         raise ValueError("Failed to fit toy potential to orbit.")
@@ -134,7 +139,7 @@ def fit_isochrone(orbit, m0=2E11, b0=1.):
 
     return IsochronePotential(m=m, b=b, units=pot.units)
 
-def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1]):
+def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1], minimize_kwargs=None):
     r"""
     Fit the toy harmonic oscillator potential to the sum of the energy
     residuals relative to the mean energy by minimizing the function
@@ -151,6 +156,8 @@ def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1]):
     orbit : `~gala.dynamics.Orbit`
     omega0 : array_like (optional)
         Initial frequency guess.
+    minimize_kwargs : dict (optional)
+        Keyword arguments to pass through to `scipy.optimize.minimize`.
 
     Returns
     -------
@@ -172,13 +179,18 @@ def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1]):
         potential = HarmonicOscillatorPotential(omega=omega, units=pot.units)
         H = (potential.value(w[:3]).decompose(pot.units).value +
              0.5*np.sum(w[3:]**2, axis=0))
-        return np.squeeze(H - np.mean(H))
+        return np.sum(np.squeeze(H - np.mean(H))**2)
 
-    p, ier = leastsq(f, omega0, args=(w,))
-    if ier < 1 or ier > 4:
+    if minimize_kwargs is None:
+        minimize_kwargs = dict()
+    minimize_kwargs['x0'] = omega0
+    minimize_kwargs['method'] = minimize_kwargs.get('method', 'Nelder-Mead')
+    res = minimize(f, args=(w,), **minimize_kwargs)
+
+    if not res.success:
         raise ValueError("Failed to fit toy potential to orbit.")
 
-    best_omega = np.abs(p)
+    best_omega = np.abs(res.x)
     return HarmonicOscillatorPotential(omega=best_omega, units=pot.units)
 
 def fit_toy_potential(orbit, force_harmonic_oscillator=False):
