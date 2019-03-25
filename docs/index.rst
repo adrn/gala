@@ -48,6 +48,7 @@ Documentation
    conventions
    benefits
    testing
+   whatsnew/index
 ..   getting_started
 
 ***********
