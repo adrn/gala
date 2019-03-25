@@ -7,7 +7,8 @@ What's New in gala v1.0?
 Overview
 ========
 
-TODO:
+Gala 1.0 is a major release with significant new functionality (as documented
+below) and a number of bug fixes.
 
 This release includes:
 
@@ -52,10 +53,23 @@ TODO:
 
 .. _whatsnew-1.0-stream-frame-naming:
 
-Stellar stream coordinate frame names now reflect the source
-============================================================
+Stellar stream coordinate frame names now reflect the source reference
+======================================================================
 
-TODO:
+Each of the stellar stream coordinate frames now contains the name of the author
+that defined the frame. For example, the ``GD1`` frame has been renamed to
+`~gala.coordaintes.GD1Koposov10` to indicate that the frame was defined in
+Koposov et al. 2010. This is true for each of the major stellar stream frames:
+
+* ``GD1`` has been renamed `~gala.coordinates.GD1Koposov10`
+* ``Sagittarius`` has been renamed `~gala.coordinates.SagittariusLaw10`
+* ``Orphan`` has been renamed `~gala.coordinates.OrphanNewberg10`, and a new
+  Orphan stream coordinate frame has been added:
+  `~gala.coordinates.OrphanKoposov19`
+* ``Ophiuchus`` has been renamed `~gala.coordinates.OphiuchusPriceWhelan16`
+* ``Pal5`` has been renamed `~gala.coordinates.Pal5PriceWhelan18`
+* ``MagellanicStream`` has been renamed
+  `~gala.coordinates.MagellanicStreamNidever08`
 
 
 .. Astropy now has an implementation of the :ref:`stats-bls`
