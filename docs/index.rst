@@ -134,3 +134,13 @@ Please consider also citing the Zenodo DOI |DOI| as a software citation::
    :target: http://joss.theoj.org/papers/10.21105/joss.00388
 .. |DOI| image:: https://zenodo.org/badge/17577779.svg
    :target: https://zenodo.org/badge/latestdoi/17577779
+
+
+************
+More details
+************
+
+.. toctree::
+   :maxdepth: 1
+
+   whatsnew/index.rst
