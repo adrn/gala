@@ -88,8 +88,8 @@ class MagellanicStream(MagellanicStreamNidever08):
 
 
 trans = frame_transform_graph.get_transform(MagellanicStreamNidever08,
-                                            ICRS).transforms[0]
-frame_transform_graph.add_transform(MagellanicStream, ICRS, trans)
-trans = frame_transform_graph.get_transform(ICRS,
+                                            Galactic).transforms[0]
+frame_transform_graph.add_transform(MagellanicStream, Galactic, trans)
+trans = frame_transform_graph.get_transform(Galactic,
                                             MagellanicStreamNidever08).transforms[0]
-frame_transform_graph.add_transform(ICRS, MagellanicStream, trans)
+frame_transform_graph.add_transform(Galactic, MagellanicStream, trans)
