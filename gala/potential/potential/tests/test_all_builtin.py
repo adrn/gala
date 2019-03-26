@@ -180,32 +180,6 @@ class TestSphericalNFWFromCircVel(PotentialTestBase):
 
         assert np.allclose(true_mprof, esti_mprof.value, rtol=1E-6)
 
-class TestSphericalNFWClass(PotentialTestBase):
-    potential = SphericalNFWPotential(units=galactic, v_c=0.2, r_s=12.)
-    w0 = [0.,20.,0.,0.0352238,-0.03579493,0.175]
-
-    @pytest.mark.skip(reason="q_z named different from c")
-    def test_compare(self):
-        pass
-
-    def test_save_load(self, tmpdir):
-        fn = str(tmpdir.join("{}.yml".format(self.name)))
-        with pytest.raises(NotImplementedError):
-            self.potential.save(fn)
-
-class TestFlattenedNFWClass(PotentialTestBase):
-    potential = FlattenedNFWPotential(units=galactic, v_c=0.2, r_s=12., q_z=0.9)
-    w0 = [0.,20.,0.,0.0352238,-0.03579493,0.175]
-
-    @pytest.mark.skip(reason="q_z named different from c")
-    def test_compare(self):
-        pass
-
-    def test_save_load(self, tmpdir):
-        fn = str(tmpdir.join("{}.yml".format(self.name)))
-        with pytest.raises(NotImplementedError):
-            self.potential.save(fn)
-
 class TestNFW(PotentialTestBase):
     potential = NFWPotential(m=6E11*u.Msun, r_s=20*u.kpc, a=1., b=0.9, c=0.75,
                              units=galactic)

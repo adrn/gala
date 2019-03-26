@@ -240,10 +240,9 @@ class CPotentialBase(PotentialBase):
     A baseclass for defining gravitational potentials implemented in C.
     """
 
-    def __init__(self, parameters, units, origin=None, parameter_physical_types=None, ndim=3,
+    def __init__(self, parameters, units, origin=None, ndim=3,
                  Wrapper=None, c_only=None):
-        super(CPotentialBase, self).__init__(parameters, origin=origin, units=units, ndim=ndim,
-                                             parameter_physical_types=parameter_physical_types)
+        super(CPotentialBase, self).__init__(parameters, origin=origin, units=units, ndim=ndim)
 
         # to support array parameters, but they get unraveled
         arrs = [np.atleast_1d(v.value).ravel() for v in self.parameters.values()]
