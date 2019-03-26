@@ -716,7 +716,7 @@ class NFWPotential(CPotentialBase):
         """
 
         if not hasattr(v_c, 'unit'):
-            v_c = v_c * units['speed']
+            v_c = v_c * units['length'] / units['speed']
 
         if not hasattr(r_s, 'unit'):
             r_s = r_s * units['length']
