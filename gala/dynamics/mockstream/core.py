@@ -15,7 +15,8 @@ __all__ = ['mock_stream', 'streakline_stream', 'fardal_stream',
            'dissolved_fardal_stream']
 
 def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
-                release_every=1, Integrator=DOPRI853Integrator, Integrator_kwargs=dict(),
+                release_every=1, Integrator=DOPRI853Integrator,
+                Integrator_kwargs=dict(),
                 snapshot_filename=None, seed=None):
     """
     Generate a mock stellar stream in the specified potential with a
@@ -31,15 +32,15 @@ def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
         A single mass or an array of masses if the progenitor mass evolves
         with time.
     k_mean : `numpy.ndarray`
-        Array of mean :math:`k` values (see Fardal et al. 2015). These are used to determine
-        the exact prescription for generating the mock stream. The components are for:
-        :math:`(R,\phi,z,v_R,v_\phi,v_z)`. If 1D, assumed constant in time. If 2D, time axis
-        is axis 0.
+        Array of mean :math:`k` values (see Fardal et al. 2015). These are used
+        to determine the exact prescription for generating the mock stream. The
+        components are for: :math:`(R,\phi,z,v_R,v_\phi,v_z)`. If 1D, assumed
+        constant in time. If 2D, time axis is axis 0.
     k_disp : `numpy.ndarray`
-        Array of :math:`k` value dispersions (see Fardal et al. 2015). These are used to determine
-        the exact prescription for generating the mock stream. The components are for:
-        :math:`(R,\phi,z,v_R,v_\phi,v_z)`. If 1D, assumed constant in time. If 2D, time axis
-        is axis 0.
+        Array of :math:`k` value dispersions (see Fardal et al. 2015). These are
+        used to determine the exact prescription for generating the mock stream.
+        The components are for: :math:`(R,\phi,z,v_R,v_\phi,v_z)`. If 1D,
+        assumed constant in time. If 2D, time axis is axis 0.
     release_every : int (optional)
         Release particles at the Lagrange points every X timesteps.
     Integrator : `~gala.integrate.Integrator` (optional)
@@ -60,11 +61,12 @@ def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
     """
 
     if isinstance(hamiltonian, CPotentialBase):
-        warnings.warn("This function now expects a `Hamiltonian` instance instead of "
-                      "a `PotentialBase` subclass instance. If you are using a "
-                      "static reference frame, you just need to pass your "
-                      "potential object in to the Hamiltonian constructor to use, e.g., "
-                      "Hamiltonian(potential).", DeprecationWarning)
+        warnings.warn("This function now expects a `Hamiltonian` instance "
+                      "instead of a `PotentialBase` subclass instance. If you "
+                      "are using a static reference frame, you just need to "
+                      "pass your potential object in to the Hamiltonian "
+                      "constructor to use, e.g., Hamiltonian(potential).",
+                      DeprecationWarning)
 
         hamiltonian = Hamiltonian(hamiltonian)
 
@@ -93,16 +95,25 @@ def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
     # ------------------------------------------------------------------------
 
     if prog_orbit.t[1] < prog_orbit.t[0]:
-        raise ValueError("Progenitor orbit goes backwards in time. Streams can only "
-                         "be generated on orbits that run forwards. Hint: you can "
-                         "reverse the orbit with prog_orbit[::-1], but make sure the array"
-                         "of k_mean values is ordered correctly.")
+        raise ValueError("Progenitor orbit goes backwards in time. Streams can "
+                         "only be generated on orbits that run forwards. Hint: "
+                         "you can reverse the orbit with prog_orbit[::-1], but "
+                         "make sure the array of k_mean values is ordered "
+                         "correctly.")
 
     c_w = np.squeeze(prog_orbit.w(hamiltonian.units)).T # transpose for Cython funcs
     prog_w = np.ascontiguousarray(c_w)
     prog_t = np.ascontiguousarray(prog_orbit.t.decompose(hamiltonian.units).value)
-    if hasattr(prog_mass, 'unit'):
-        prog_mass = prog_mass.decompose(hamiltonian.units).value
+    if not hasattr(prog_mass, 'unit'):
+        prog_mass = prog_mass * hamiltonian.units['mass']
+
+    if not prog_mass.isscalar:
+        if len(prog_mass) != prog_orbit.ntimes:
+            raise ValueError("If passing in an array of progenitor masses, it "
+                             "must have the same length as the number of "
+                             "timesteps in the input orbit.")
+
+    prog_mass = prog_mass.decompose(hamiltonian.units).value
 
     if Integrator == LeapfrogIntegrator:
         stream_w = _mock_stream_leapfrog(hamiltonian, t=prog_t, prog_w=prog_w,
