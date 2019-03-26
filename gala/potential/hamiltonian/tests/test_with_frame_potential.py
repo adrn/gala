@@ -99,7 +99,8 @@ def to_rotating_frame(omega, w, t=None):
 # ----------------------------------------------------------------------------
 
 class TestWithPotentialStaticFrame(_TestBase):
-    obj = Hamiltonian(NFWPotential.from_circular_velocity(v_c=0.2, r_s=20., units=galactic),
+    obj = Hamiltonian(NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.,
+                                                          units=galactic),
                       StaticFrame(units=galactic))
 
     @pytest.mark.skip("Not implemented")
