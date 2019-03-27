@@ -109,7 +109,6 @@ __all__ = ['NullPotential', 'HenonHeilesPotential', # Misc. potentials
            'SatohPotential', 'MiyamotoNagaiPotential', # Disk models
            'NFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential',
            'LongMuraliBarPotential', # Triaxial models
-           'SphericalNFWPotential', 'FlattenedNFWPotential' # Deprecated
            ]
 
 # ============================================================================
@@ -141,7 +140,6 @@ class HenonHeilesPotential(CPotentialBase):
     def __init__(self, units=None, origin=None):
         parameters = OrderedDict()
         super(HenonHeilesPotential, self).__init__(parameters=parameters,
-                                                   parameter_physical_types={},
                                                    ndim=2,
                                                    units=units,
                                                    origin=origin)
@@ -178,15 +176,12 @@ class KeplerPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
+    _physical_types = {'m': 'mass'}
+
     def __init__(self, m, units=None, origin=None):
         parameters = OrderedDict()
-        ptypes = OrderedDict()
-
         parameters['m'] = m
-        ptypes['m'] = 'mass'
-
         super(KeplerPotential, self).__init__(parameters=parameters,
-                                              parameter_physical_types=ptypes,
                                               units=units,
                                               origin=origin)
 
@@ -221,18 +216,14 @@ class IsochronePotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
+    _physical_types = {'m': 'mass',
+                       'b': 'length'}
+
     def __init__(self, m, b, units=None, origin=None):
-        ptypes = OrderedDict()
         parameters = OrderedDict()
-
         parameters['m'] = m
-        ptypes['m'] = 'mass'
-
         parameters['b'] = b
-        ptypes['b'] = 'length'
-
         super(IsochronePotential, self).__init__(parameters=parameters,
-                                                 parameter_physical_types=ptypes,
                                                  units=units,
                                                  origin=origin)
 
@@ -307,19 +298,14 @@ class HernquistPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
+    _physical_types = {'m': 'mass',
+                       'c': 'length'}
     def __init__(self, m, c, units=None, origin=None):
         parameters = OrderedDict()
-        ptypes = OrderedDict()
-
         parameters['m'] = m
-        ptypes['m'] = 'mass'
-
         parameters['c'] = c
-        ptypes['c'] = 'length'
-
         super(HernquistPotential, self).__init__(
-            parameters=parameters, parameter_physical_types=ptypes,
-            units=units, origin=origin)
+            parameters=parameters, units=units, origin=origin)
 
 
 cdef class PlummerWrapper(CPotentialWrapper):
@@ -352,18 +338,13 @@ class PlummerPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
+    _physical_types = {'m': 'mass',
+                       'b': 'length'}
     def __init__(self, m, b, units=None, origin=None):
         parameters = OrderedDict()
-        ptypes = OrderedDict()
-
         parameters['m'] = m
-        ptypes['m'] = 'mass'
-
         parameters['b'] = b
-        ptypes['b'] = 'length'
-
         super(PlummerPotential, self).__init__(parameters=parameters,
-                                               parameter_physical_types=ptypes,
                                                units=units,
                                                origin=origin)
 
@@ -397,18 +378,14 @@ class JaffePotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
+    _physical_types = {'m': 'mass',
+                       'c': 'length'}
+
     def __init__(self, m, c, units=None, origin=None):
         parameters = OrderedDict()
-        ptypes = OrderedDict()
-
         parameters['m'] = m
-        ptypes['m'] = 'mass'
-
         parameters['c'] = c
-        ptypes['c'] = 'length'
-
         super(JaffePotential, self).__init__(parameters=parameters,
-                                             parameter_physical_types=ptypes,
                                              units=units,
                                              origin=origin)
 
@@ -444,21 +421,15 @@ class StonePotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
+    _physical_types = {'m': 'mass',
+                       'r_c': 'length',
+                       'r_h': 'length'}
     def __init__(self, m, r_c, r_h, units=None, origin=None):
         parameters = OrderedDict()
-        ptypes = OrderedDict()
-
         parameters['m'] = m
-        ptypes['m'] = 'mass'
-
         parameters['r_c'] = r_c
-        ptypes['r_c'] = 'length'
-
         parameters['r_h'] = r_h
-        ptypes['r_h'] = 'length'
-
         super(StonePotential, self).__init__(parameters=parameters,
-                                             parameter_physical_types=ptypes,
                                              units=units,
                                              origin=origin)
 
@@ -505,6 +476,10 @@ class PowerLawCutoffPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
+    _physical_types = {'m': 'mass',
+                       'alpha': 'dimensionless',
+                       'r_c': 'length'}
+
     def __init__(self, m, alpha, r_c, units=None, origin=None):
         from ...._cconfig import GSL_ENABLED
         if not GSL_ENABLED:
@@ -515,19 +490,11 @@ class PowerLawCutoffPotential(CPotentialBase):
                              "gala: http://gala.adrian.pw/en/latest/install.html")
 
         parameters = OrderedDict()
-        ptypes = OrderedDict()
-
         parameters['m'] = m
-        ptypes['m'] = 'mass'
-
         parameters['alpha'] = alpha
-
         parameters['r_c'] = r_c
-        ptypes['r_c'] = 'length'
-
         super(PowerLawCutoffPotential, self).__init__(
-            parameters=parameters, parameter_physical_types=ptypes,
-            units=units, origin=origin)
+            parameters=parameters, units=units, origin=origin)
 
 
 # ============================================================================
@@ -564,21 +531,16 @@ class SatohPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
+    _physical_types = {'m': 'mass',
+                       'a': 'length',
+                       'b': 'length'}
+
     def __init__(self, m, a, b, units=None, origin=None):
         parameters = OrderedDict()
-        ptypes = OrderedDict()
-
         parameters['m'] = m
-        ptypes['m'] = 'mass'
-
         parameters['a'] = a
-        ptypes['a'] = 'length'
-
         parameters['b'] = b
-        ptypes['b'] = 'length'
-
         super(SatohPotential, self).__init__(parameters=parameters,
-                                             parameter_physical_types=ptypes,
                                              units=units,
                                              origin=origin)
 
@@ -617,22 +579,17 @@ class MiyamotoNagaiPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
+    _physical_types = {'m': 'mass',
+                       'a': 'length',
+                       'b': 'length'}
+
     def __init__(self, m, a, b, units=None, origin=None):
         parameters = OrderedDict()
-        ptypes = OrderedDict()
-
         parameters['m'] = m
-        ptypes['m'] = 'mass'
-
         parameters['a'] = a
-        ptypes['a'] = 'length'
-
         parameters['b'] = b
-        ptypes['b'] = 'length'
-
         super(MiyamotoNagaiPotential, self).__init__(
-            parameters=parameters, parameter_physical_types=ptypes, units=units,
-            origin=origin)
+            parameters=parameters, units=units, origin=origin)
 
 
 # ============================================================================
@@ -693,45 +650,16 @@ class NFWPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, m=None, r_s=None, a=1., b=1., c=1., v_c=None, units=None,
-                 origin=None):
-        # TODO: v_c included in above for backwards-compatibility (and m, r_s
-        # default to None)
+    _physical_types = {'m': 'mass',
+                       'r_s': 'length',
+                       'a': 'dimensionless',
+                       'b': 'dimensionless',
+                       'c': 'dimensionless'}
 
-        if v_c is not None and m is None:
-            warnings.warn("NFWPotential now expects a scale mass in the default"
-                          " initializer. To initialize from a circular "
-                          "velocity, use the classmethod "
-                          "from_circular_velocity() instead instead.",
-                          DeprecationWarning)
-
-            parameters = OrderedDict()
-            ptypes = OrderedDict()
-
-            parameters['v_c'] = v_c
-            ptypes['v_c'] = 'speed'
-
-            parameters['r_s'] = r_s
-            ptypes['r_s'] = 'length'
-
-            # get appropriate units:
-            parameters = CPotentialBase._prepare_parameters(parameters, ptypes,
-                                                            units)
-
-            # r_ref = r_s for old parametrization
-            m = NFWPotential._vc_rs_rref_to_m(parameters['v_c'],
-                                              parameters['r_s'],
-                                              parameters['r_s'])
-            m = m.to(units['mass'])
-
+    def __init__(self, m, r_s, a=1., b=1., c=1., units=None, origin=None):
         parameters = OrderedDict()
-        ptypes = OrderedDict()
-
         parameters['m'] = m
-        ptypes['m'] = 'mass'
-
         parameters['r_s'] = r_s
-        ptypes['r_s'] = 'length'
 
         if np.allclose([a, b, c], 1.):
             NFWWrapper = SphericalNFWWrapper
@@ -747,7 +675,6 @@ class NFWPotential(CPotentialBase):
             parameters['c'] = c
 
         super(NFWPotential, self).__init__(parameters=parameters,
-                                           parameter_physical_types=ptypes,
                                            units=units,
                                            Wrapper=NFWWrapper,
                                            origin=origin)
@@ -788,65 +715,26 @@ class NFWPotential(CPotentialBase):
 
         """
 
+        if not hasattr(v_c, 'unit'):
+            v_c = v_c * units['length'] / units['time']
+
+        if not hasattr(r_s, 'unit'):
+            r_s = r_s * units['length']
+
         if r_ref is None:
             r_ref = r_s
 
-        parameters = OrderedDict()
-        ptypes = OrderedDict()
-
-        parameters['v_c'] = v_c
-        ptypes['v_c'] = 'speed'
-
-        parameters['r_s'] = r_s
-        ptypes['r_s'] = 'length'
-
-        parameters['r_ref'] = r_ref
-        ptypes['r_ref'] = 'length'
-
-        # get appropriate units:
-        parameters = CPotentialBase._prepare_parameters(parameters, ptypes,
-                                                        units)
-
-        m = NFWPotential._vc_rs_rref_to_m(parameters['v_c'], parameters['r_s'],
-                                          parameters['r_ref'])
+        m = NFWPotential._vc_rs_rref_to_m(v_c, r_s, r_ref)
         m = m.to(units['mass'])
 
-        return NFWPotential(m=m, r_s=r_s, a=a, b=b, c=c, units=units, origin=origin)
+        return NFWPotential(m=m, r_s=r_s, a=a, b=b, c=c,
+                            units=units, origin=origin)
 
     @staticmethod
     def _vc_rs_rref_to_m(v_c, r_s, r_ref):
         uu = r_ref / r_s
         vs2 = v_c**2 / uu / (np.log(1+uu)/uu**2 - 1/(uu*(1+uu)))
         return (r_s*vs2 / G)
-
-# TODO: remove these in next full version
-class SphericalNFWPotential(NFWPotential):
-
-    def __init__(self, v_c, r_s, units=None, origin=None):
-        import warnings
-        warnings.warn("This class is now superseded by the single interface to "
-                      "all NFW potentials, `NFWPotential`. Use that instead.",
-                      DeprecationWarning)
-        super(SphericalNFWPotential, self).__init__(v_c=v_c, r_s=r_s,
-                                                    units=units, origin=origin)
-
-    def save(self, *args, **kwargs):
-        raise NotImplementedError("Use NFWPotential instead!")
-
-class FlattenedNFWPotential(NFWPotential):
-
-    def __init__(self, v_c, r_s, q_z, units=None, origin=None):
-        import warnings
-        warnings.warn("This class is now superseded by the single interface to "
-                      "all NFW potentials, `NFWPotential`. Use that instead.",
-                      DeprecationWarning)
-
-        super(FlattenedNFWPotential, self).__init__(v_c=v_c, r_s=r_s, c=q_z,
-                                                    units=units, origin=origin)
-
-    def save(self, *args, **kwargs):
-        raise NotImplementedError("Use NFWPotential instead!")
-
 
 cdef class LogarithmicWrapper(CPotentialWrapper):
 
@@ -884,26 +772,24 @@ class LogarithmicPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
+    _physical_types = {'v_c': 'speed',
+                       'r_h': 'length',
+                       'q1': 'dimensionless',
+                       'q2': 'dimensionless',
+                       'q3': 'dimensionless',
+                       'phi': 'angle'}
+
     def __init__(self, v_c, r_h, q1, q2, q3, phi=0., units=None, origin=None):
         parameters = OrderedDict()
-        ptypes = OrderedDict()
-
         parameters['v_c'] = v_c
-        ptypes['v_c'] = 'speed'
-
         parameters['r_h'] = r_h
-        ptypes['r_h'] = 'length'
-
         parameters['q1'] = q1
         parameters['q2'] = q2
         parameters['q3'] = q3
-
         parameters['phi'] = phi
-        ptypes['phi'] = 'angle'
 
         super(LogarithmicPotential, self).__init__(
-            parameters=parameters, parameter_physical_types=ptypes, units=units,
-            origin=origin)
+            parameters=parameters, units=units, origin=origin)
 
         if not isinstance(self.units, DimensionlessUnitSystem):
             if self.units['angle'] != u.radian:
@@ -944,24 +830,22 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
+    _physical_types = {'v_c': 'speed',
+                       'r_s': 'length',
+                       'a': 'dimensionless',
+                       'b': 'dimensionless',
+                       'c': 'dimensionless'}
+
     def __init__(self, v_c, r_s, a, b, c, units=None, origin=None):
-
         parameters = OrderedDict()
-        ptypes = OrderedDict()
-
         parameters['v_c'] = v_c
-        ptypes['v_c'] = 'speed'
-
         parameters['r_s'] = r_s
-        ptypes['r_s'] = 'length'
-
         parameters['a'] = a
         parameters['b'] = b
         parameters['c'] = c
 
         super(LeeSutoTriaxialNFWPotential, self).__init__(
-            parameters=parameters, parameter_physical_types=ptypes, units=units,
-            origin=origin)
+            parameters=parameters, units=units, origin=origin)
 
 
 cdef class LongMuraliBarWrapper(CPotentialWrapper):
@@ -996,27 +880,20 @@ class LongMuraliBarPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
+    _physical_types = {'m': 'mass',
+                       'a': 'length',
+                       'b': 'length',
+                       'c': 'length',
+                       'alpha': 'angle'}
     def __init__(self, m, a, b, c, alpha=0., units=None, origin=None):
-
         parameters = OrderedDict()
-        ptypes = OrderedDict()
-
         parameters['m'] = m
-        ptypes['m'] = 'mass'
-
         parameters['a'] = a
-        ptypes['a'] = 'length'
         parameters['b'] = b
-        ptypes['b'] = 'length'
         parameters['c'] = c
-        ptypes['c'] = 'length'
-
         parameters['alpha'] = alpha
-        ptypes['alpha'] = 'angle'
-
         super(LongMuraliBarPotential, self).__init__(
-            parameters=parameters, parameter_physical_types=ptypes, units=units,
-            origin=origin)
+            parameters=parameters, units=units, origin=origin)
 
 
 # ==============================================================================
@@ -1046,9 +923,6 @@ class NullPotential(CPotentialBase):
     """
     def __init__(self, units=None, origin=None):
         parameters = OrderedDict()
-        ptypes = OrderedDict()
-
         super(NullPotential, self).__init__(parameters=parameters,
-                                            parameter_physical_types=ptypes,
                                             units=units,
                                             origin=origin)

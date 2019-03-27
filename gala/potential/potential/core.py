@@ -32,16 +32,11 @@ class PotentialBase(CommonBase):
     to compute the density and hessian: ``_density()``, ``_hessian()``.
     """
 
-    def __init__(self, parameters, origin=None, parameter_physical_types=None,
+    def __init__(self, parameters, origin=None,
                  ndim=3, units=None):
 
         self.units = self._validate_units(units)
-
-        if parameter_physical_types is None:
-            parameter_physical_types = dict()
-        self._ptypes = parameter_physical_types
-        self.parameters = self._prepare_parameters(parameters, self._ptypes,
-                                                   self.units)
+        self.parameters = self._prepare_parameters(parameters, self.units)
 
         try:
             self.G = G.decompose(self.units).value

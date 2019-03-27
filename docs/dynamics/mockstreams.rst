@@ -85,8 +85,9 @@ potential and integrate the orbit of the progenitor system. We'll use a
 spherical NFW potential, a progenitor mass :math:`m=10^4~{\rm M}_\odot` and
 initial conditions that place the progenitor on a mildly eccentric orbit:
 
-    >>> pot = gp.SphericalNFWPotential(v_c=175*u.km/u.s, r_s=10*u.kpc,
-    ...                                units=galactic)
+    >>> pot = gp.NFWPotential.from_circular_velocity(v_c=250*u.km/u.s,
+    ...                                              r_s=10*u.kpc,
+    ...                                              units=galactic)
     >>> prog_mass = 1E4*u.Msun
     >>> prog_w0 = gd.PhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
     ...                                 vel=[75, 150, 30.]*u.km/u.s)
@@ -103,7 +104,7 @@ initial conditions that place the progenitor on a mildly eccentric orbit:
     import gala.dynamics as gd
     from gala.units import galactic
 
-    pot = gp.NFWPotential.from_circular_velocity(v_c=175*u.km/u.s, r_s=10*u.kpc,
+    pot = gp.NFWPotential.from_circular_velocity(v_c=250*u.km/u.s, r_s=10*u.kpc,
                                                  units=galactic)
     prog_mass = 1E4*u.Msun
     prog_w0 = gd.PhaseSpacePosition(pos=[15, 0, 0.]*u.kpc,
@@ -200,4 +201,3 @@ API
 .. automodapi:: gala.dynamics.mockstream
     :no-heading:
     :headings: ^^
-

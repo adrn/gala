@@ -89,6 +89,13 @@ class SCFPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
+    _physical_types = {'m': 'mass',
+                       'r_s': 'length',
+                       'nmax': 'dimensionless',
+                       'lmax': 'dimensionless',
+                       'Snlm': 'dimensionless',
+                       'Tnlm': 'dimensionless'}
+
     def __init__(self, m, r_s, Snlm, Tnlm=None, units=None):
         from gala._cconfig import GSL_ENABLED
         if not GSL_ENABLED:
@@ -113,14 +120,8 @@ class SCFPotential(CPotentialBase):
         lmax = Tnlm.shape[1]-1
 
         parameters = OrderedDict()
-        ptypes = OrderedDict()
-
         parameters['m'] = m
-        ptypes['m'] = 'mass'
-
         parameters['r_s'] = r_s
-        ptypes['r_s'] = 'length'
-
         parameters['nmax'] = nmax
         parameters['lmax'] = lmax
         parameters['Snlm'] = Snlm
@@ -129,7 +130,6 @@ class SCFPotential(CPotentialBase):
         # TODO: I need to save the full 3D Snlm, Tnlm and ravel elsewhere
 
         super(SCFPotential, self).__init__(parameters=parameters,
-                                           parameter_physical_types=ptypes,
                                            units=units,
                                            Wrapper=SCFWrapper,
                                            c_only=['nmax', 'lmax']) # don't expose these in the .parameters dictionary

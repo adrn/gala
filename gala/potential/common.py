@@ -12,6 +12,7 @@ from ..util import atleast_2d
 from ..units import UnitSystem, DimensionlessUnitSystem
 
 class CommonBase(object):
+    _physical_types = None
 
     def _validate_units(self, units):
 
@@ -25,13 +26,17 @@ class CommonBase(object):
         return units
 
     @classmethod
-    def _prepare_parameters(cls, parameters, ptypes, units):
+    def _prepare_parameters(cls, parameters, units):
+        ptypes = cls._physical_types
+        if ptypes is None:
+            ptypes = dict()
+
         pars = OrderedDict()
-        for k,v in parameters.items():
+        for k, v in parameters.items():
             if hasattr(v, 'unit'):
                 pars[k] = v.decompose(units)
 
-            elif k in ptypes:
+            elif k in ptypes and ptypes[k]: # treat empty string as u.one
                 # HACK TODO: remove when fix potentials that ask for scale velocity
                 if ptypes[k] == 'speed':
                     pars[k] = v * units['length']/units['time']

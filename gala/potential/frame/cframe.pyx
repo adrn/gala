@@ -81,14 +81,9 @@ cdef class CFrameWrapper:
 
 class CFrameBase(FrameBase):
 
-    def __init__(self, Wrapper, parameters, units, parameter_physical_types=None, ndim=3):
+    def __init__(self, Wrapper, parameters, units, ndim=3):
         self.units = self._validate_units(units)
-
-        if parameter_physical_types is None:
-            parameter_physical_types = dict()
-        self._ptypes = parameter_physical_types
-
-        self.parameters = self._prepare_parameters(parameters, self._ptypes, self.units)
+        self.parameters = self._prepare_parameters(parameters, self.units)
         self.c_parameters = np.ravel([v.value for v in self.parameters.values()])
         self.c_instance = Wrapper(*self.c_parameters)
 
