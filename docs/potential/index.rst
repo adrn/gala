@@ -263,8 +263,6 @@ API
 ===
 
 .. automodapi:: gala.potential.potential
-    :skip: SphericalNFWPotential
-    :skip: FlattenedNFWPotential
 
 .. automodapi:: gala.potential.frame.builtin
 
