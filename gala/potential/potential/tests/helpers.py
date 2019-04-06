@@ -224,13 +224,13 @@ class PotentialTestBase(object):
 
     def test_orbit_integration(self):
         """
-        Make we can integrate an orbit in this potential
+        Make sure we can integrate an orbit in this potential
         """
         w0 = self.w0
         w0 = np.vstack((w0,w0,w0)).T
 
         t1 = time.time()
-        orbit = self.H.integrate_orbit(w0, dt=1., n_steps=10000)
+        orbit = self.H.integrate_orbit(w0, dt=0.1, n_steps=10000)
         print("Integration time (10000 steps): {}".format(time.time() - t1))
 
         if self.show_plots:
@@ -242,7 +242,7 @@ class PotentialTestBase(object):
         us = self.potential.units
         w0 = PhaseSpacePosition(pos=w0[:self.ndim]*us['length'],
                                 vel=w0[self.ndim:]*us['length']/us['time'])
-        orbit = self.H.integrate_orbit(w0, dt=1., n_steps=10000)
+        orbit = self.H.integrate_orbit(w0, dt=0.1, n_steps=10000)
 
         if self.show_plots:
             f = orbit.plot()
