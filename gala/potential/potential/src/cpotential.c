@@ -120,7 +120,8 @@ void c_hessian(CPotential *p, double t, double *qp, double *hess) {
         apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
                            &qp_trans[0]);
         (p->hessian)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim, hess);
-        // TODO: here - need to apply rotate to the Hessian! damn matrices
+        // TODO: here - need to apply inverse rotation to the Hessian!
+        // - Hessian calculation for potentials with rotations are disabled
     }
 
 }

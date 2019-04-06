@@ -182,7 +182,6 @@ class KeplerPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
-=======
     _physical_types = {'m': 'mass'}
 
     def __init__(self, m, units=None, origin=None, R=None):
@@ -693,36 +692,6 @@ class NFWPotential(CPotentialBase):
 
     def __init__(self, m=None, r_s=None, a=1., b=1., c=1., v_c=None, units=None,
                  origin=None, R=None):
-        # TODO: v_c included in above for backwards-compatibility (and m, r_s
-        # default to None)
-
-        if v_c is not None and m is None:
-            warnings.warn("NFWPotential now expects a scale mass in the default"
-                          " initializer. To initialize from a circular "
-                          "velocity, use the classmethod "
-                          "from_circular_velocity() instead instead.",
-                          DeprecationWarning)
-
-            parameters = OrderedDict()
-            ptypes = OrderedDict()
-
-            parameters['v_c'] = v_c
-            ptypes['v_c'] = 'speed'
-
-            parameters['r_s'] = r_s
-            ptypes['r_s'] = 'length'
-
-            # get appropriate units:
-            parameters = CPotentialBase._prepare_parameters(parameters, ptypes,
-                                                            units)
-
-            # r_ref = r_s for old parametrization
-            m = NFWPotential._vc_rs_rref_to_m(parameters['v_c'],
-                                              parameters['r_s'],
-                                              parameters['r_s'])
-            m = m.to(units['mass'])
-
-    def __init__(self, m, r_s, a=1., b=1., c=1., units=None, origin=None):
         parameters = OrderedDict()
         parameters['m'] = m
         parameters['r_s'] = r_s
@@ -959,7 +928,7 @@ class LongMuraliBarPotential(CPotentialBase):
                        'b': 'length',
                        'c': 'length',
                        'alpha': 'angle'}
-    def __init__(self, m, a, b, c, alpha=0., units=None, origin=None, R=R):
+    def __init__(self, m, a, b, c, alpha=0., units=None, origin=None, R=None):
         parameters = OrderedDict()
         parameters['m'] = m
         parameters['a'] = a
