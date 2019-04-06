@@ -172,7 +172,6 @@ class KeplerPotential(CPotentialBase):
     m : :class:`~astropy.units.Quantity`, numeric [mass]
         Point mass value.
     {common_doc}
-
     """
     _physical_types = {'m': 'mass'}
 
@@ -213,7 +212,6 @@ class IsochronePotential(CPotentialBase):
     b : :class:`~astropy.units.Quantity`, numeric [length]
         Core concentration.
     {common_doc}
-
     """
     _physical_types = {'m': 'mass',
                        'b': 'length'}
@@ -286,7 +284,6 @@ class HernquistPotential(CPotentialBase):
     HernquistPotential(m, c, units=None, origin=None, R=None)
 
     Hernquist potential for a spheroid.
-
     See: http://adsabs.harvard.edu/abs/1990ApJ...356..359H
 
     Parameters
@@ -296,7 +293,6 @@ class HernquistPotential(CPotentialBase):
     c : :class:`~astropy.units.Quantity`, numeric [length]
         Core concentration.
     {common_doc}
-
     """
     _physical_types = {'m': 'mass',
                        'c': 'length'}
@@ -335,7 +331,6 @@ class PlummerPotential(CPotentialBase):
     b : :class:`~astropy.units.Quantity`, numeric [length]
         Core concentration.
     {common_doc}
-
     """
     _physical_types = {'m': 'mass',
                        'b': 'length'}
@@ -376,7 +371,6 @@ class JaffePotential(CPotentialBase):
     c : :class:`~astropy.units.Quantity`, numeric [length]
         Core concentration.
     {common_doc}
-
     """
     _physical_types = {'m': 'mass',
                        'c': 'length'}
@@ -421,7 +415,6 @@ class StonePotential(CPotentialBase):
     r_h : :class:`~astropy.units.Quantity`, numeric [length]
         Halo radius.
     {common_doc}
-
     """
     _physical_types = {'m': 'mass',
                        'r_c': 'length',
@@ -476,7 +469,6 @@ class PowerLawCutoffPotential(CPotentialBase):
     r_c : :class:`~astropy.units.Quantity`, numeric [length]
         Cutoff radius.
     {common_doc}
-
     """
     _physical_types = {'m': 'mass',
                        'alpha': 'dimensionless',
@@ -532,7 +524,6 @@ class SatohPotential(CPotentialBase):
     b : :class:`~astropy.units.Quantity`, numeric [length]
         Scare height.
     {common_doc}
-
     """
     _physical_types = {'m': 'mass',
                        'a': 'length',
@@ -581,7 +572,6 @@ class MiyamotoNagaiPotential(CPotentialBase):
     b : :class:`~astropy.units.Quantity`, numeric [length]
         Scare height.
     {common_doc}
-
     """
     _physical_types = {'m': 'mass',
                        'a': 'length',
@@ -656,7 +646,6 @@ class NFWPotential(CPotentialBase):
     c : numeric
         Minor axis scale.
     {common_doc}
-
     """
     _physical_types = {'m': 'mass',
                        'r_s': 'length',
@@ -781,7 +770,6 @@ class LogarithmicPotential(CPotentialBase):
     phi : `~astropy.units.Quantity`, numeric
         First euler angle in the z-x-z convention.
     {common_doc}
-
     """
     _physical_types = {'v_c': 'speed',
                        'r_h': 'length',
@@ -844,7 +832,6 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
     c : numeric
         Minor axis.
     {common_doc}
-
     """
     _physical_types = {'v_c': 'speed',
                        'r_s': 'length',
@@ -936,7 +923,6 @@ class NullPotential(CPotentialBase):
     Parameters
     ----------
     {common_doc}
-
     """
     def __init__(self, units=None, origin=None, R=None):
         parameters = OrderedDict()

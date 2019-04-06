@@ -786,11 +786,11 @@ class CompositePotential(PotentialBase, OrderedDict):
 
 
 _potential_docstring = """units : `~gala.units.UnitSystem` (optional)
-    Set of non-reducable units that specify (at minimum) the
-    length, mass, time, and angle units.
-origin : `~astropy.units.Quantity` (optional)
-    The origin of the potential, the default being 0.
-R : array_like (optional)
-    A rotation matrix that specifies a rotation of the potential. This is
-    applied *after* the origin shift. Default is the identity matrix.
+        Set of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+    origin : `~astropy.units.Quantity` (optional)
+        The origin of the potential, the default being 0.
+    R : array_like (optional)
+        A rotation matrix that specifies a rotation of the potential. This is
+        applied *after* the origin shift. Default is the identity matrix.
 """
