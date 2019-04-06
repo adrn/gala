@@ -203,6 +203,9 @@ class PotentialBase(CommonBase):
             ``(q.shape[0],q.shape[0]) + q.shape[1:]``. That is, an ``n_dim`` by
             ``n_dim`` array (matrix) for each position.
         """
+        if self.R is not None:
+            raise NotImplementedError("Computing Hessian matrices for rotated "
+                                      "potentials is currently not supported.")
         q = self._remove_units_prepare_shape(q)
         orig_shape,q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, q)
