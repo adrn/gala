@@ -64,6 +64,9 @@ class PotentialBase(CommonBase):
                                      (ndim, ndim), R.shape))
         self.R = R
 
+    def to_latex(self):
+        return ""
+
     # ========================================================================
     # Abstract methods that must be implemented by subclasses
     #
@@ -780,3 +783,14 @@ class CompositePotential(PotentialBase, OrderedDict):
 
     def __repr__(self):
         return "<CompositePotential {}>".format(",".join(self.keys()))
+
+
+_potential_docstring = """units : `~gala.units.UnitSystem` (optional)
+    Set of non-reducable units that specify (at minimum) the
+    length, mass, time, and angle units.
+origin : `~astropy.units.Quantity` (optional)
+    The origin of the potential, the default being 0.
+R : array_like (optional)
+    A rotation matrix that specifies a rotation of the potential. This is
+    applied *after* the origin shift. Default is the identity matrix.
+"""
