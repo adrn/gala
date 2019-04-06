@@ -203,7 +203,8 @@ class PotentialBase(CommonBase):
             ``(q.shape[0],q.shape[0]) + q.shape[1:]``. That is, an ``n_dim`` by
             ``n_dim`` array (matrix) for each position.
         """
-        if self.R is not None:
+        if (self.R is not None and
+                not np.allclose(np.diag(self.R), 1., atol=1e-15, rtol=0)):
             raise NotImplementedError("Computing Hessian matrices for rotated "
                                       "potentials is currently not supported.")
         q = self._remove_units_prepare_shape(q)
@@ -725,6 +726,8 @@ class CompositePotential(PotentialBase, OrderedDict):
             self._check_component(v)
 
         OrderedDict.__init__(self, **kwargs)
+
+        self.R = None # TODO: this is a little messy
 
     def __setitem__(self, key, value):
         self._check_component(value)

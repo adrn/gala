@@ -1,4 +1,3 @@
-
 """
     Test the builtin CPotential classes
 """
@@ -13,6 +12,7 @@ import pytest
 from ..core import CompositePotential
 from ..builtin import *
 from ..ccompositepotential import *
+from ...frame import ConstantRotatingFrame
 from ....units import solarsystem, galactic, DimensionlessUnitSystem
 from .helpers import PotentialTestBase, CompositePotentialTestBase
 from ...._cconfig import GSL_ENABLED
@@ -125,6 +125,7 @@ class TestPowerLawCutoff(PotentialTestBase):
     def setup(self):
         self.potential = PowerLawCutoffPotential(units=galactic,
                                                  m=1E10, r_c=1., alpha=1.8)
+        super().setup()
 
 class TestSphericalNFW(PotentialTestBase):
     potential = NFWPotential(units=galactic, m=1E11, r_s=12.)
@@ -280,3 +281,18 @@ class TestCComposite(CompositePotentialTestBase):
     potential['disk'] = p2
     potential['halo'] = p1
     w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+
+class TestKepler3Body(CompositePotentialTestBase):
+    """ This implicitly tests the origin shift """
+    mu = 1/11.
+    x1 = -mu
+    m1 = 1-mu
+    x2 = 1-mu
+    m2 = mu
+    potential = CCompositePotential()
+    potential['m1'] = KeplerPotential(m=m1, origin=[x1, 0, 0.])
+    potential['m2'] = KeplerPotential(m=m2, origin=[x2, 0, 0.])
+
+    Omega = np.array([0, 0, 1.])
+    frame = ConstantRotatingFrame(Omega=Omega)
+    w0 = [0.5,0,0, 0., 1.05800316, 0.]
