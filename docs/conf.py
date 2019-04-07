@@ -71,7 +71,7 @@ rst_epilog += """
 
 # Add sympy to intersphinx mapping
 intersphinx_mapping['sympy'] = ('http://docs.sympy.org/latest/', None)
-intersphinx_mapping['scipy'] = ('http://docs.scipy.org/doc/scipy/reference',
+intersphinx_mapping['scipy'] = ('https://docs.scipy.org/doc/scipy/reference',
                                 None)
 
 # Show / hide TODO blocks
