@@ -17,8 +17,8 @@ initial testing. If there is a potential class that you think should be
 included, feel free to suggest the new addition as a `GitHub issue
 <https://github.com/adrn/gala/issues>`_!
 
-For code blocks below and any pages linked below, I assume the following
-imports have already been excuted::
+For code blocks below and any pages linked below, we assume the following
+imports have already been executed::
 
     >>> import numpy as np
     >>> import gala.potential as gp
