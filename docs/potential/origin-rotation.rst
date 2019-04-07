@@ -38,7 +38,7 @@ these two objects into a `~gala.potential.CCompositePotential` and visualize the
 potential::
 
     >>> pot = gp.CCompositePotential(p1=p1, p2=p2)
-    >>> fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+    >>> fig, ax = plt.subplots(1, 1, figsize=(5, 5)) # doctest: +SKIP
     >>> grid = np.linspace(-5, 5, 100)
     >>> p.plot_contours(grid=(grid, grid, 0.), ax=ax) # doctest: +SKIP
     >>> ax.set_xlabel("$x$ [kpc]") # doctest: +SKIP
