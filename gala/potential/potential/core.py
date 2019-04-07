@@ -9,7 +9,7 @@ import numpy as np
 from astropy.constants import G
 import astropy.units as u
 from astropy.utils import isiterable
-import six
+from scipy.spatial.transform import Rotation
 
 # Project
 from ..common import CommonBase
@@ -19,8 +19,8 @@ from ...units import DimensionlessUnitSystem
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
-@six.add_metaclass(abc.ABCMeta)
-class PotentialBase(CommonBase):
+
+class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     """
     A baseclass for defining pure-Python gravitational potentials.
 
@@ -56,6 +56,9 @@ class PotentialBase(CommonBase):
 
         if R is None:
             R = np.eye(ndim)
+        elif isinstance(R, Rotation):
+            R = R.as_dcm()
+
         R = np.array(R)
         if R.shape != (ndim, ndim):
             raise ValueError('Rotation matrix passed to potential {0} has '
@@ -790,7 +793,8 @@ _potential_docstring = """units : `~gala.units.UnitSystem` (optional)
         length, mass, time, and angle units.
     origin : `~astropy.units.Quantity` (optional)
         The origin of the potential, the default being 0.
-    R : array_like (optional)
-        A rotation matrix that specifies a rotation of the potential. This is
-        applied *after* the origin shift. Default is the identity matrix.
+    R : `~scipy.spatial.transform.Rotation`, array_like (optional)
+        A Scipy ``Rotation`` object or an array representing a rotation matrix
+        that specifies a rotation of the potential. This is applied *after* the
+        origin shift. Default is the identity matrix.
 """
