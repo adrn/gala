@@ -7,6 +7,7 @@ import numpy as np
 import astropy.units as u
 from astropy.tests.helper import quantity_allclose
 import pytest
+from scipy.spatial.transform import Rotation
 
 # This project
 from ..core import CompositePotential
@@ -252,6 +253,18 @@ class TestLongMuraliBarRotate(PotentialTestBase):
                                        R=np.array([[ 0.63302222,  0.75440651,  0.17364818],
                                                    [-0.76604444,  0.64278761,  0.        ],
                                                    [-0.1116189 , -0.13302222,  0.98480775]]))
+    vc = potential.circular_velocity([19.,0,0]*u.kpc).decompose(galactic).value[0]
+    w0 = [19.0,0.2,-0.9,0.,vc,0.]
+
+    def test_hessian(self):
+        # TODO: when hessian for rotated potentials implemented, remove this
+        with pytest.raises(NotImplementedError):
+            self.potential.hessian([1., 2., 3.])
+
+class TestLongMuraliBarRotationScipy(PotentialTestBase):
+    potential = LongMuraliBarPotential(units=galactic, m=1E11,
+                                       a=4.*u.kpc, b=1*u.kpc, c=1.*u.kpc,
+                                       R=Rotation.from_euler('zxz', [90., 0, 0.], degrees=True))
     vc = potential.circular_velocity([19.,0,0]*u.kpc).decompose(galactic).value[0]
     w0 = [19.0,0.2,-0.9,0.,vc,0.]
 
