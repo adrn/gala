@@ -176,11 +176,6 @@ def format_doc(*args, **kwargs):
         # awkwardly self-inserted docs.
         obj.__doc__ = None
 
-        if not doc:
-            # In case the docstring is empty it's probably not what was wanted.
-            raise ValueError('docstring must be a string or containing a '
-                             'docstring that is not empty.')
-
         # If the original has a not-empty docstring append it to the format
         # kwargs.
         kwargs['__doc__'] = obj.__doc__ or ''
