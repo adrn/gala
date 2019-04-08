@@ -7,7 +7,6 @@ import os
 import astropy.units as u
 from astropy.utils import isiterable
 import numpy as np
-from astropy.extern import six
 import yaml
 
 from ...units import DimensionlessUnitSystem
@@ -16,7 +15,7 @@ __all__ = ['load', 'save']
 
 def _unpack_params(p):
     params = p.copy()
-    for key,item in six.iteritems(p):
+    for key, item in p.items():
         if '_unit' in key:
             continue
 
@@ -45,10 +44,11 @@ def _parse_component(component, module):
         unitsys = None
     else:
         try:
-            unitsys = [u.Unit(unit) for ptype,unit in component['units'].items()]
+            unitsys = [u.Unit(unit)
+                       for ptype, unit in component['units'].items()]
         except KeyError:
-            raise KeyError("Potential dictionary must contain a key 'units' with "
-                           "a list of strings specifying the unit system.")
+            raise KeyError("Potential dictionary must contain a key 'units' "
+                           "with a list of strings specifying the unit system.")
 
     params = component.get('parameters', {})
 
@@ -89,21 +89,22 @@ def from_dict(d, module=None):
 
     if 'type' in d and d['type'] == 'composite':
         p = getattr(potential, d['class'])()
-        for i,component in enumerate(d['components']):
+        for i, component in enumerate(d['components']):
             c = _parse_component(component, module)
             name = component.get('name', str(i))
             p[name] = c
 
     elif 'type' in d and d['type'] == 'custom':
         param_groups = dict()
-        for i,component in enumerate(d['components']):
+        for i, component in enumerate(d['components']):
             c = _parse_component(component, module)
 
             try:
                 name = component['name']
             except KeyError:
-                raise KeyError("For custom potentials, component specification must include "
-                               "the component name (e.g., name: 'blah')")
+                raise KeyError("For custom potentials, component specification "
+                               "must include the component name (e.g., name: "
+                               "'blah')")
 
             params = component.get('parameters', {})
             params = _unpack_params(params) # unpack quantities
@@ -119,8 +120,8 @@ def from_dict(d, module=None):
 
 def _pack_params(p):
     params = p.copy()
-    for key,item in six.iteritems(p):
-        if hasattr(item,'unit'):
+    for key, item in p.items():
+        if hasattr(item, 'unit'):
             params[key] = item.value
             params[key+'_unit'] = str(item.unit)
 
@@ -135,7 +136,8 @@ def _to_dict_help(potential):
     d['class'] = potential.__class__.__name__
 
     if not isinstance(potential.units, DimensionlessUnitSystem):
-        d['units'] = dict([(str(ptype),str(unit)) for ptype,unit in potential.units.to_dict().items()])
+        d['units'] = dict([(str(k), str(v))
+                           for k, v in potential.units.to_dict().items()])
 
     if len(potential.parameters) > 0:
         params = _pack_params(potential.parameters)
@@ -160,7 +162,7 @@ def to_dict(potential):
         d = dict()
         d['class'] = potential.__class__.__name__
         d['components'] = []
-        for k,p in potential.items():
+        for k, p in potential.items():
             comp_dict = _to_dict_help(p)
             comp_dict['name'] = k
             d['components'].append(comp_dict)

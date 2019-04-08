@@ -5,10 +5,9 @@ import warnings
 from astropy import log as logger
 import astropy.units as u
 import numpy as np
-from scipy.signal import argrelmin, argrelmax
+from scipy.signal import argrelmax
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import minimize
-from six import string_types
 
 # Project
 from .core import PhaseSpacePosition
@@ -249,7 +248,7 @@ class Orbit(PhaseSpacePosition):
             Either the filename or an open HDF5 file.
         """
         # TODO: this is duplicated code from PhaseSpacePosition
-        if isinstance(f, string_types):
+        if isinstance(f, str):
             import h5py
             f = h5py.File(f)
 

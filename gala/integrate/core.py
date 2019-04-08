@@ -3,15 +3,14 @@
 # Third-party
 import numpy as np
 from astropy.utils import InheritDocstrings
-from astropy.extern import six
 
 # This project
 from ..units import UnitSystem, DimensionlessUnitSystem
 
 __all__ = ["Integrator"]
 
-@six.add_metaclass(InheritDocstrings)
-class Integrator(object):
+
+class Integrator(object, metaclass=InheritDocstrings):
 
     def __init__(self, func, func_args=(), func_units=None):
         if not hasattr(func, '__call__'):
