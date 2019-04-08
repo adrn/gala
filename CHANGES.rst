@@ -14,6 +14,8 @@ New Features
   ``BovyMWPotential2014`` in ``gala``).
 - Added an implementation of the Self-Consistent Field (SCF) basis function
   expansion method for representing potential-density pairs.
+- Most Potential classes now support rotations and origin shifts through the
+  ``R`` and ``origin`` arguments.
 
 Bug fixes
 ---------

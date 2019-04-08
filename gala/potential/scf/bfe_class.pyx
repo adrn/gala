@@ -52,8 +52,10 @@ __all__ = ['SCFPotential']
 
 cdef class SCFWrapper(CPotentialWrapper):
 
-    def __init__(self, G, parameters, q0):
-        self.init([G] + list(parameters), np.ascontiguousarray(q0))
+    def __init__(self, G, parameters, q0, R):
+        self.init([G] + list(parameters),
+                  np.ascontiguousarray(q0),
+                  np.ascontiguousarray(R))
         if USE_GSL == 1:
             self.cpotential.value[0] = <energyfunc>(scf_value)
             self.cpotential.density[0] = <densityfunc>(scf_density)
@@ -61,7 +63,7 @@ cdef class SCFWrapper(CPotentialWrapper):
 
 class SCFPotential(CPotentialBase):
     r"""
-    SCFPotential(m, r_s, Snlm, Tnlm, units=None)
+    SCFPotential(m, r_s, Snlm, Tnlm, units=None, origin=None, R=None)
 
     A gravitational potential represented as a basis function expansion.  This
     uses the self-consistent field (SCF) method of Hernquist & Ostriker (1992)
@@ -96,7 +98,8 @@ class SCFPotential(CPotentialBase):
                        'Snlm': 'dimensionless',
                        'Tnlm': 'dimensionless'}
 
-    def __init__(self, m, r_s, Snlm, Tnlm=None, units=None):
+    def __init__(self, m, r_s, Snlm, Tnlm=None, units=None,
+                 origin=None, R=None):
         from gala._cconfig import GSL_ENABLED
         if not GSL_ENABLED:
             raise ValueError("Gala was compiled without GSL and so the "
@@ -132,4 +135,6 @@ class SCFPotential(CPotentialBase):
         super(SCFPotential, self).__init__(parameters=parameters,
                                            units=units,
                                            Wrapper=SCFWrapper,
+                                           origin=origin,
+                                           R=R,
                                            c_only=['nmax', 'lmax']) # don't expose these in the .parameters dictionary

@@ -160,3 +160,25 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
 
     CustomPotential.save = None
     return CustomPotential
+
+
+def format_doc(*args, **kwargs):
+    """
+    Replaces the docstring of the decorated object and then formats it.
+
+    Modeled after astropy.utils.decorators.format_doc
+    """
+    def set_docstring(obj):
+
+        # None means: use the objects __doc__
+        doc = obj.__doc__
+        # Delete documentation in this case so we don't end up with
+        # awkwardly self-inserted docs.
+        obj.__doc__ = None
+
+        # If the original has a not-empty docstring append it to the format
+        # kwargs.
+        kwargs['__doc__'] = obj.__doc__ or ''
+        obj.__doc__ = doc.format(*args, **kwargs)
+        return obj
+    return set_docstring

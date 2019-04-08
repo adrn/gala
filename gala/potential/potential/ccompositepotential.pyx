@@ -51,6 +51,7 @@ cdef class CCompositePotentialWrapper(CPotentialWrapper):
             tmp_cp = _cpotential_arr[i].cpotential
             cp.parameters[i] = &(_cpotential_arr[i]._params[0])
             cp.q0[i] = &(_cpotential_arr[i]._q0[0])
+            cp.R[i] = &(_cpotential_arr[i]._R[0])
             cp.value[i] = tmp_cp.value[0]
             cp.density[i] = tmp_cp.density[0]
             cp.gradient[i] = tmp_cp.gradient[0]

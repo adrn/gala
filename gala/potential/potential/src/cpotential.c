@@ -1,78 +1,137 @@
 #include <math.h>
 #include "cpotential.h"
 
+
+void apply_rotate(double *q_in, double *R, int n_dim, int transpose,
+                  double *q_out) {
+    // NOTE: elsewhere, we enforce that rotation matrix only works for
+    // ndim=2 or ndim=3, so here we can assume that!
+    if (n_dim == 3) {
+        if (transpose == 0) {
+            q_out[0] = q_out[0] + R[0] * q_in[0] + R[1] * q_in[1] + R[2] * q_in[2];
+            q_out[1] = q_out[1] + R[3] * q_in[0] + R[4] * q_in[1] + R[5] * q_in[2];
+            q_out[2] = q_out[2] + R[6] * q_in[0] + R[7] * q_in[1] + R[8] * q_in[2];
+        } else {
+            q_out[0] = q_out[0] + R[0] * q_in[0] + R[3] * q_in[1] + R[6] * q_in[2];
+            q_out[1] = q_out[1] + R[1] * q_in[0] + R[4] * q_in[1] + R[7] * q_in[2];
+            q_out[2] = q_out[2] + R[2] * q_in[0] + R[5] * q_in[1] + R[8] * q_in[2];
+        }
+    } else if (n_dim == 2) {
+        if (transpose == 0) {
+            q_out[0] = q_out[0] + R[0] * q_in[0] + R[1] * q_in[1];
+            q_out[1] = q_out[1] + R[2] * q_in[0] + R[3] * q_in[1];
+        } else {
+            q_out[0] = q_out[0] + R[0] * q_in[0] + R[2] * q_in[1];
+            q_out[1] = q_out[1] + R[1] * q_in[0] + R[3] * q_in[1];
+        }
+    } else {
+        for (int j=0; j < n_dim; j++)
+            q_out[j] = q_out[j] + q_in[j];
+    }
+}
+
+
+void apply_shift_rotate(double *q_in, double *q0, double *R, int n_dim,
+                        int transpose, double *q_out) {
+    double tmp[n_dim];
+    int j;
+
+    // Shift to the specified origin
+    for (j=0; j < n_dim; j++) {
+        tmp[j] = q_in[j] - q0[j];
+    }
+
+    // Apply rotation matrix
+    apply_rotate(&tmp[0], R, n_dim, transpose, q_out);
+}
+
+
 double c_potential(CPotential *p, double t, double *qp) {
     double v = 0;
     int i, j;
-    double _qp[p->n_dim];
+    double qp_trans[p->n_dim];
 
     for (i=0; i < p->n_components; i++) {
-        // this looks like it sucks, but doesn't add much time...
-        for (j=0; j < p->n_dim; j++) {
-            _qp[j] = qp[j] - (p->q0)[i][j];
-        }
-        v = v + (p->value)[i](t, (p->parameters)[i], &_qp[0], p->n_dim);
+        for (j=0; j < p->n_dim; j++)
+            qp_trans[j] = 0.;
+        apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
+                           &qp_trans[0]);
+        v = v + (p->value)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim);
     }
 
     return v;
 }
+
 
 double c_density(CPotential *p, double t, double *qp) {
     double v = 0;
     int i, j;
-    double _qp[p->n_dim];
+    double qp_trans[p->n_dim];
 
     for (i=0; i < p->n_components; i++) {
-        // this looks like it sucks, but doesn't add much time...
-        for (j=0; j < p->n_dim; j++) {
-            _qp[j] = qp[j] - (p->q0)[i][j];
-        }
-        v = v + (p->density)[i](t, (p->parameters)[i], &_qp[0], p->n_dim);
+        for (j=0; j < p->n_dim; j++)
+            qp_trans[j] = 0.;
+        apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
+                           &qp_trans[0]);
+        v = v + (p->density)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim);
     }
 
     return v;
 }
 
+
 void c_gradient(CPotential *p, double t, double *qp, double *grad) {
     int i, j;
-    double _qp[p->n_dim];
+    double qp_trans[p->n_dim];
+    double tmp_grad[p->n_dim];
 
     for (i=0; i < p->n_dim; i++) {
         grad[i] = 0.;
+        tmp_grad[i] = 0.;
+        qp_trans[i] = 0.;
     }
 
     for (i=0; i < p->n_components; i++) {
-        // this looks like it sucks, but doesn't add much time...
         for (j=0; j < p->n_dim; j++) {
-            _qp[j] = qp[j] - (p->q0)[i][j];
+            tmp_grad[j] = 0.;
+            qp_trans[j] = 0.;
         }
-        (p->gradient)[i](t, (p->parameters)[i], &_qp[0], p->n_dim, grad);
-    }
 
+        apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
+                           &qp_trans[0]);
+
+        (p->gradient)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim,
+                         &tmp_grad[0]);
+
+        apply_rotate(&tmp_grad[0], (p->R)[i], p->n_dim, 1, &grad[0]);
+    }
 }
 
+
 void c_hessian(CPotential *p, double t, double *qp, double *hess) {
-    int i, j;
-    double _qp[p->n_dim];
+    int i;
+    double qp_trans[p->n_dim];
 
     for (i=0; i < pow(p->n_dim,2); i++) {
         hess[i] = 0.;
     }
 
     for (i=0; i < p->n_components; i++) {
-        // this looks like it sucks, but doesn't add much time...
-        for (j=0; j < p->n_dim; j++) {
-            _qp[j] = qp[j] - (p->q0)[i][j];
-        }
-        (p->hessian)[i](t, (p->parameters)[i], &_qp[0], p->n_dim, hess);
+        apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
+                           &qp_trans[0]);
+        (p->hessian)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim, hess);
+        // TODO: here - need to apply inverse rotation to the Hessian!
+        // - Hessian calculation for potentials with rotations are disabled
     }
 
 }
+
 
 double c_d_dr(CPotential *p, double t, double *qp, double *epsilon) {
     double h, r, dPhi_dr;
     int j;
     double r2 = 0;
+
     for (j=0; j<p->n_dim; j++) {
         r2 = r2 + qp[j]*qp[j];
     }
@@ -95,6 +154,7 @@ double c_d_dr(CPotential *p, double t, double *qp, double *epsilon) {
 
     return dPhi_dr / (2.*h);
 }
+
 
 double c_d2_dr2(CPotential *p, double t, double *qp, double *epsilon) {
     double h, r, d2Phi_dr2;
@@ -123,7 +183,9 @@ double c_d2_dr2(CPotential *p, double t, double *qp, double *epsilon) {
     return d2Phi_dr2 / (h*h);
 }
 
-double c_mass_enclosed(CPotential *p, double t, double *qp, double G, double *epsilon) {
+
+double c_mass_enclosed(CPotential *p, double t, double *qp, double G,
+                       double *epsilon) {
     double r2, dPhi_dr;
     int j;
 

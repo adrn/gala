@@ -51,7 +51,8 @@ cdef class CPotentialWrapper:
     given potential. This provides a Cython wrapper around this C implementation.
     """
 
-    cpdef init(self, list parameters, double[::1] q0, int n_dim=3):
+    cpdef init(self, list parameters, double[::1] q0, double[:, ::1] R,
+               int n_dim=3):
 
         # save the array of parameters so it doesn't get garbage-collected
         self._params = np.array(parameters, dtype=np.float64)
@@ -76,10 +77,14 @@ cdef class CPotentialWrapper:
         self.cpotential.gradient[0] = <gradientfunc>(nan_gradient)
         self.cpotential.hessian[0] = <hessianfunc>(nan_hessian)
 
-        # set the
+        # set the origin of the potentials
         self._q0 = np.array(q0)
         assert len(self._q0) == n_dim
         self.cpotential.q0[0] = &(self._q0[0])
+
+        # set the rotation matrix of the potentials
+        self._R = np.ascontiguousarray(np.array(R).ravel())
+        self.cpotential.R[0] = &(self._R[0])
 
     cpdef energy(self, double[:,::1] q, double[::1] t):
         """
@@ -229,7 +234,11 @@ cdef class CPotentialWrapper:
 
     # For pickling in Python 2
     def __reduce__(self):
-        return (self.__class__, (self._params[0], list(self._params[1:]), np.array(self._q0)))
+        return (self.__class__,
+                (self._params[0], list(self._params[1:]),
+                 np.array(self._q0),
+                 np.array(self._R).reshape(self.cpotential.n_dim,
+                                           self.cpotential.n_dim)))
 
 # ----------------------------------------------------------------------------
 
@@ -240,9 +249,10 @@ class CPotentialBase(PotentialBase):
     A baseclass for defining gravitational potentials implemented in C.
     """
 
-    def __init__(self, parameters, units, origin=None, ndim=3,
-                 Wrapper=None, c_only=None):
-        super(CPotentialBase, self).__init__(parameters, origin=origin, units=units, ndim=ndim)
+    def __init__(self, parameters, units, origin=None, R=None,
+                 ndim=3, Wrapper=None, c_only=None):
+        super(CPotentialBase, self).__init__(
+            parameters, origin=origin, R=R, units=units, ndim=ndim)
 
         # to support array parameters, but they get unraveled
         arrs = [np.atleast_1d(v.value).ravel() for v in self.parameters.values()]
@@ -258,7 +268,8 @@ class CPotentialBase(PotentialBase):
             module = sys.modules[self.__module__]
             Wrapper = getattr(module, wrapper_name)  # try to find wrapper in the same module
 
-        self.c_instance = Wrapper(self.G, self.c_parameters, q0=self.origin)
+        self.c_instance = Wrapper(self.G, self.c_parameters, q0=self.origin,
+                                  R=self.R)
 
         # remove C-only parameters from parameter dictionary
         if c_only is not None:
@@ -279,7 +290,6 @@ class CPotentialBase(PotentialBase):
 
     # ----------------------------------------------------------
     # Overwrite the Python potential method to use Cython method
-    # TODO: fix this shite
     def mass_enclosed(self, q, t=0.):
         """
         mass_enclosed(q, t)

@@ -88,15 +88,17 @@ Python Dependencies
 This packages has the following dependencies (note that the version requirements
 below indicate the versions for which Gala is tested with and should work with):
 
-- `Python`_ >= 2.7
+- `Python`_ >= 3.6
 
-- `Numpy`_ >= 1.12
+- `Numpy`_ >= 1.16
 
-- `Cython <http://www.cython.org/>`_: >= 0.25
+- `Cython <http://www.cython.org/>`_: >= 0.28
 
-- `Astropy`_ >= 2
+- `Astropy`_ >= 3
 
 - `PyYAML`_ >= 3.10
+
+- `scipy`_ >= 1.1
 
 You can use ``pip`` or ``conda`` to install these automatically.
 

@@ -11,9 +11,10 @@ import pytest
 # Project
 from ..io import load
 from ..core import CompositePotential
+from ...frame import StaticFrame
+from ...hamiltonian import Hamiltonian
 from ....units import UnitSystem, DimensionlessUnitSystem
 from ....dynamics import PhaseSpacePosition
-from ....integrate import LeapfrogIntegrator
 
 def partial_derivative(func, point, dim_ix=0, **kwargs):
     xyz = np.array(point, copy=True)
@@ -25,6 +26,7 @@ def partial_derivative(func, point, dim_ix=0, **kwargs):
 class PotentialTestBase(object):
     name = None
     potential = None # MUST SET THIS
+    frame = None
     tol = 1E-5
     show_plots = False
 
@@ -55,6 +57,12 @@ class PotentialTestBase(object):
                                    (cls.ndim,) + cls.w0[:cls.ndim].shape + (1,),
                                    (cls.ndim,) + w0_slice[:cls.ndim].shape]
         cls._valu_return_shapes = [x[1:] for x in cls._grad_return_shapes]
+
+    def setup(self):
+        # set up hamiltonian
+        if self.frame is None:
+            self.frame = StaticFrame(self.potential.units)
+        self.H = Hamiltonian(self.potential, self.frame)
 
     def test_unitsystem(self):
         assert isinstance(self.potential.units, UnitSystem)
@@ -216,14 +224,13 @@ class PotentialTestBase(object):
 
     def test_orbit_integration(self):
         """
-        Make we can integrate an orbit in this potential
+        Make sure we can integrate an orbit in this potential
         """
         w0 = self.w0
         w0 = np.vstack((w0,w0,w0)).T
 
         t1 = time.time()
-        orbit = self.potential.integrate_orbit(w0, dt=1., n_steps=10000,
-                                               Integrator=LeapfrogIntegrator)
+        orbit = self.H.integrate_orbit(w0, dt=0.1, n_steps=10000)
         print("Integration time (10000 steps): {}".format(time.time() - t1))
 
         if self.show_plots:
@@ -235,8 +242,7 @@ class PotentialTestBase(object):
         us = self.potential.units
         w0 = PhaseSpacePosition(pos=w0[:self.ndim]*us['length'],
                                 vel=w0[self.ndim:]*us['length']/us['time'])
-        orbit = self.potential.integrate_orbit(w0, dt=1., n_steps=10000,
-                                               Integrator=LeapfrogIntegrator)
+        orbit = self.H.integrate_orbit(w0, dt=0.1, n_steps=10000)
 
         if self.show_plots:
             f = orbit.plot()

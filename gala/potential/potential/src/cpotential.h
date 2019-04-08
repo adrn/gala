@@ -22,11 +22,14 @@
         // array containing the number of parameters in each component
         int n_params[MAX_N_COMPONENTS];
 
-        // pointer to array of pointers to the parameter arrays for each component
+        // pointer to array of pointers to the parameter arrays
         double *parameters[MAX_N_COMPONENTS];
 
-        // pointer to array of pointers containing the origin coordinates for each
+        // pointer to array of pointers containing the origin coordinates
         double *q0[MAX_N_COMPONENTS];
+
+        // pointer to array of pointers containing rotation matrix elements
+        double *R[MAX_N_COMPONENTS];
     };
 #endif
 

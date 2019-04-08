@@ -1,4 +1,3 @@
-
 """
     Test the builtin CPotential classes
 """
@@ -8,11 +7,13 @@ import numpy as np
 import astropy.units as u
 from astropy.tests.helper import quantity_allclose
 import pytest
+from scipy.spatial.transform import Rotation
 
 # This project
 from ..core import CompositePotential
 from ..builtin import *
 from ..ccompositepotential import *
+from ...frame import ConstantRotatingFrame
 from ....units import solarsystem, galactic, DimensionlessUnitSystem
 from .helpers import PotentialTestBase, CompositePotentialTestBase
 from ...._cconfig import GSL_ENABLED
@@ -125,6 +126,7 @@ class TestPowerLawCutoff(PotentialTestBase):
     def setup(self):
         self.potential = PowerLawCutoffPotential(units=galactic,
                                                  m=1E10, r_c=1., alpha=1.8)
+        super().setup()
 
 class TestSphericalNFW(PotentialTestBase):
     potential = NFWPotential(units=galactic, m=1E11, r_s=12.)
@@ -245,6 +247,32 @@ class TestLongMuraliBar(PotentialTestBase):
     vc = potential.circular_velocity([19.,0,0]*u.kpc).decompose(galactic).value[0]
     w0 = [19.0,0.2,-0.9,0.,vc,0.]
 
+class TestLongMuraliBarRotate(PotentialTestBase):
+    potential = LongMuraliBarPotential(units=galactic, m=1E11,
+                                       a=4.*u.kpc, b=1*u.kpc, c=1.*u.kpc,
+                                       R=np.array([[ 0.63302222,  0.75440651,  0.17364818],
+                                                   [-0.76604444,  0.64278761,  0.        ],
+                                                   [-0.1116189 , -0.13302222,  0.98480775]]))
+    vc = potential.circular_velocity([19.,0,0]*u.kpc).decompose(galactic).value[0]
+    w0 = [19.0,0.2,-0.9,0.,vc,0.]
+
+    def test_hessian(self):
+        # TODO: when hessian for rotated potentials implemented, remove this
+        with pytest.raises(NotImplementedError):
+            self.potential.hessian([1., 2., 3.])
+
+class TestLongMuraliBarRotationScipy(PotentialTestBase):
+    potential = LongMuraliBarPotential(units=galactic, m=1E11,
+                                       a=4.*u.kpc, b=1*u.kpc, c=1.*u.kpc,
+                                       R=Rotation.from_euler('zxz', [90., 0, 0.], degrees=True))
+    vc = potential.circular_velocity([19.,0,0]*u.kpc).decompose(galactic).value[0]
+    w0 = [19.0,0.2,-0.9,0.,vc,0.]
+
+    def test_hessian(self):
+        # TODO: when hessian for rotated potentials implemented, remove this
+        with pytest.raises(NotImplementedError):
+            self.potential.hessian([1., 2., 3.])
+
 class TestComposite(CompositePotentialTestBase):
     p1 = LogarithmicPotential(units=galactic,
                               v_c=0.17, r_h=10.,
@@ -266,3 +294,18 @@ class TestCComposite(CompositePotentialTestBase):
     potential['disk'] = p2
     potential['halo'] = p1
     w0 = [19.0,2.7,-6.9,0.0352238,-0.03579493,0.075]
+
+class TestKepler3Body(CompositePotentialTestBase):
+    """ This implicitly tests the origin shift """
+    mu = 1/11.
+    x1 = -mu
+    m1 = 1-mu
+    x2 = 1-mu
+    m2 = mu
+    potential = CCompositePotential()
+    potential['m1'] = KeplerPotential(m=m1, origin=[x1, 0, 0.])
+    potential['m2'] = KeplerPotential(m=m2, origin=[x2, 0, 0.])
+
+    Omega = np.array([0, 0, 1.])
+    frame = ConstantRotatingFrame(Omega=Omega)
+    w0 = [0.5,0,0, 0., 1.05800316, 0.]
