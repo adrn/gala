@@ -1,16 +1,15 @@
 # Standard library
+import pickle
 import time
 
 # Third-party
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.misc import derivative
-from astropy.extern.six.moves import cPickle as pickle
 import pytest
 
 # Project
 from ..io import load
-from ..core import CompositePotential
 from ...frame import StaticFrame
 from ...hamiltonian import Hamiltonian
 from ....units import UnitSystem, DimensionlessUnitSystem
@@ -18,6 +17,7 @@ from ....dynamics import PhaseSpacePosition
 
 def partial_derivative(func, point, dim_ix=0, **kwargs):
     xyz = np.array(point, copy=True)
+
     def wraps(a):
         xyz[dim_ix] = a
         return func(xyz)
@@ -41,10 +41,10 @@ class PotentialTestBase(object):
         # TODO: need to test also quantity objects and phasespacepositions!
 
         # these are arrays we will test the methods on:
-        w0_2d = np.repeat(cls.w0[:,None], axis=1, repeats=16)
-        w0_3d = np.repeat(w0_2d[...,None], axis=2, repeats=8)
+        w0_2d = np.repeat(cls.w0[:, None], axis=1, repeats=16)
+        w0_3d = np.repeat(w0_2d[..., None], axis=2, repeats=8)
         w0_list = list(cls.w0)
-        w0_slice = w0_2d[:,:4]
+        w0_slice = w0_2d[:, :4]
         cls.w0s = [cls.w0, w0_2d, w0_3d, w0_list, w0_slice]
         cls._grad_return_shapes = [cls.w0[:cls.ndim].shape + (1,),
                                    w0_2d[:cls.ndim].shape,
@@ -70,28 +70,32 @@ class PotentialTestBase(object):
     def test_energy(self):
         assert self.ndim == self.potential.ndim
 
-        for arr,shp in zip(self.w0s, self._valu_return_shapes):
+        for arr,  shp in zip(self.w0s, self._valu_return_shapes):
             v = self.potential.energy(arr[:self.ndim])
             assert v.shape == shp
 
             g = self.potential.energy(arr[:self.ndim], t=0.1)
-            g = self.potential.energy(arr[:self.ndim], t=0.1*self.potential.units['time'])
+            g = self.potential.energy(arr[:self.ndim],
+                                      t=0.1*self.potential.units['time'])
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
             g = self.potential.energy(arr[:self.ndim], t=t)
-            g = self.potential.energy(arr[:self.ndim], t=t*self.potential.units['time'])
+            g = self.potential.energy(arr[:self.ndim],
+                                      t=t*self.potential.units['time'])
 
     def test_gradient(self):
-        for arr,shp in zip(self.w0s, self._grad_return_shapes):
+        for arr, shp in zip(self.w0s, self._grad_return_shapes):
             g = self.potential.gradient(arr[:self.ndim])
             assert g.shape == shp
 
             g = self.potential.gradient(arr[:self.ndim], t=0.1)
-            g = self.potential.gradient(arr[:self.ndim], t=0.1*self.potential.units['time'])
+            g = self.potential.gradient(arr[:self.ndim],
+                                        t=0.1*self.potential.units['time'])
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
             g = self.potential.gradient(arr[:self.ndim], t=t)
-            g = self.potential.gradient(arr[:self.ndim], t=t*self.potential.units['time'])
+            g = self.potential.gradient(arr[:self.ndim],
+                                        t=t*self.potential.units['time'])
 
     def test_hessian(self):
         for arr,shp in zip(self.w0s, self._hess_return_shapes):
@@ -99,37 +103,43 @@ class PotentialTestBase(object):
             assert g.shape == shp
 
             g = self.potential.hessian(arr[:self.ndim], t=0.1)
-            g = self.potential.hessian(arr[:self.ndim], t=0.1*self.potential.units['time'])
+            g = self.potential.hessian(arr[:self.ndim],
+                                       t=0.1*self.potential.units['time'])
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
             g = self.potential.hessian(arr[:self.ndim], t=t)
-            g = self.potential.hessian(arr[:self.ndim], t=t*self.potential.units['time'])
+            g = self.potential.hessian(arr[:self.ndim],
+                                       t=t*self.potential.units['time'])
 
     def test_mass_enclosed(self):
-        for arr,shp in zip(self.w0s, self._valu_return_shapes):
+        for arr, shp in zip(self.w0s, self._valu_return_shapes):
             g = self.potential.mass_enclosed(arr[:self.ndim])
             assert g.shape == shp
             assert np.all(g > 0.)
 
             g = self.potential.mass_enclosed(arr[:self.ndim], t=0.1)
-            g = self.potential.mass_enclosed(arr[:self.ndim], t=0.1*self.potential.units['time'])
+            g = self.potential.mass_enclosed(arr[:self.ndim],
+                                             t=0.1*self.potential.units['time'])
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
             g = self.potential.mass_enclosed(arr[:self.ndim], t=t)
-            g = self.potential.mass_enclosed(arr[:self.ndim], t=t*self.potential.units['time'])
+            g = self.potential.mass_enclosed(arr[:self.ndim],
+                                             t=t*self.potential.units['time'])
 
     def test_circular_velocity(self):
-        for arr,shp in zip(self.w0s, self._valu_return_shapes):
+        for arr, shp in zip(self.w0s, self._valu_return_shapes):
             g = self.potential.circular_velocity(arr[:self.ndim])
             assert g.shape == shp
             assert np.all(g > 0.)
 
             g = self.potential.circular_velocity(arr[:self.ndim], t=0.1)
-            g = self.potential.circular_velocity(arr[:self.ndim], t=0.1*self.potential.units['time'])
+            g = self.potential.circular_velocity(arr[:self.ndim],
+                                                 t=0.1*self.potential.units['time'])
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
             g = self.potential.circular_velocity(arr[:self.ndim], t=t)
-            g = self.potential.circular_velocity(arr[:self.ndim], t=t*self.potential.units['time'])
+            g = self.potential.circular_velocity(arr[:self.ndim],
+                                                 t=t*self.potential.units['time'])
 
     def test_repr(self):
         pot_repr = repr(self.potential)
@@ -161,7 +171,7 @@ class PotentialTestBase(object):
 
         # check that comparing to non-potentials works
         assert not self.potential == "sup"
-        assert not self.potential == None
+        assert not self.potential is None
 
     def test_plot(self):
         p = self.potential
@@ -206,7 +216,7 @@ class PotentialTestBase(object):
         dx = 1E-3 * np.sqrt(np.sum(self.w0[:self.w0.size//2]**2))
         max_x = np.sqrt(np.sum([x**2 for x in self.w0[:self.w0.size//2]]))
 
-        grid = np.linspace(-max_x,max_x,8)
+        grid = np.linspace(-max_x, max_x, 8)
         grid = grid[grid != 0.]
         grids = [grid for i in range(self.w0.size//2)]
         xyz = np.ascontiguousarray(np.vstack(map(np.ravel, np.meshgrid(*grids))).T)
@@ -227,7 +237,7 @@ class PotentialTestBase(object):
         Make sure we can integrate an orbit in this potential
         """
         w0 = self.w0
-        w0 = np.vstack((w0,w0,w0)).T
+        w0 = np.vstack((w0, w0, w0)).T
 
         t1 = time.time()
         orbit = self.H.integrate_orbit(w0, dt=0.1, n_steps=10000)

@@ -10,7 +10,6 @@ from astropy.coordinates import representation as r
 import astropy.units as u
 from astropy.utils.compat.misc import override__dir__
 import numpy as np
-from six import string_types
 
 # Project
 from . import representation_nd as rep_nd
@@ -324,12 +323,12 @@ class PhaseSpacePosition(object):
                              "ndim=3 instances.")
 
         # get the name of the desired representation
-        if isinstance(new_pos, string_types):
+        if isinstance(new_pos, str):
             pos_name = new_pos
         else:
             pos_name = new_pos.get_name()
 
-        if isinstance(new_vel, string_types):
+        if isinstance(new_vel, str):
             vel_name = new_vel
         elif new_vel is None:
             vel_name = pos_name
@@ -553,7 +552,7 @@ class PhaseSpacePosition(object):
             Either the filename or an open HDF5 file.
         """
 
-        if isinstance(f, string_types):
+        if isinstance(f, str):
             import h5py
             f = h5py.File(f)
 
@@ -588,7 +587,7 @@ class PhaseSpacePosition(object):
         f : str, :class:`h5py.File`
             Either the filename or an open HDF5 file.
         """
-        if isinstance(f, string_types):
+        if isinstance(f, str):
             import h5py
             f = h5py.File(f)
 
