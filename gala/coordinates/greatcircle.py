@@ -1,3 +1,6 @@
+# Built-in
+from textwrap import dedent
+
 # Third-party
 import astropy.units as u
 import astropy.coordinates as coord
@@ -83,19 +86,19 @@ def greatcircle_transforms(self_transform=False):
 
 
 _components = """
-    phi1 : `~astropy.units.Quantity`
-        Longitude component.
-    phi2 : `~astropy.units.Quantity`
-        Latitude component.
-    distance : `~astropy.units.Quantity`
-        Distance.
+phi1 : `~astropy.units.Quantity`
+    Longitude component.
+phi2 : `~astropy.units.Quantity`
+    Latitude component.
+distance : `~astropy.units.Quantity`
+    Distance.
 
-    pm_phi1_cosphi2 : `~astropy.units.Quantity`
-        Proper motion in longitude.
-    pm_phi2 : `~astropy.units.Quantity`
-        Proper motion in latitude.
-    radial_velocity : `~astropy.units.Quantity`
-        Line-of-sight or radial velocity.
+pm_phi1_cosphi2 : `~astropy.units.Quantity`
+    Proper motion in longitude.
+pm_phi2 : `~astropy.units.Quantity`
+    Proper motion in latitude.
+radial_velocity : `~astropy.units.Quantity`
+    Line-of-sight or radial velocity.
 """
 
 _footer = """
@@ -103,14 +106,16 @@ Frame attributes
 ----------------
 pole : `~astropy.coordinates.SkyCoord`, `~astropy.coordinates.ICRS`
     The coordinate specifying the pole of this frame.
-ra0 : `~astropy.coordinates.Angle`, `~astropy.units.Quantity` [angle]
-    The right ascension (RA) of the zero point of the longitude of this
-    frame.
-rotation : `~astropy.coordinates.Angle`, `~astropy.units.Quantity` [angle]
-    The final rotation of the frame about the pole.
+ra0 : `~astropy.units.Quantity`, `~astropy.coordinates.Angle` (optional)
+    If specified, an additional transformation will be applied to make
+    this right ascension the longitude zero-point of the resulting
+    coordinate frame.
+rotation : `~astropy.units.Quantity`, `~astropy.coordinates.Angle` (optional)
+    If specified, a final rotation about the pole (i.e. the resulting z
+    axis) applied.
 """
 
-@format_doc(base_doc, components=_components, footer=_footer)
+@format_doc(dedent(base_doc), components=_components, footer=_footer)
 @greatcircle_transforms(self_transform=True)
 class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
     """A frame rotated into great circle coordinates with the pole and longitude
@@ -145,7 +150,22 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
 
     @classmethod
     def from_endpoints(cls, coord1, coord2, ra0=None, rotation=None):
-        """TODO
+        """Compute the great circle frame from two endpoints of an arc on the
+        unit sphere.
+
+        Parameters
+        ----------
+        coord1 : `~astropy.coordinates.SkyCoord`
+            One endpoint of the great circle arc.
+        coord2 : `~astropy.coordinates.SkyCoord`
+            The other endpoint of the great circle arc.
+        ra0 : `~astropy.units.Quantity`, `~astropy.coordinates.Angle` (optional)
+            If specified, an additional transformation will be applied to make
+            this right ascension the longitude zero-point of the resulting
+            coordinate frame.
+        rotation : `~astropy.units.Quantity`, `~astropy.coordinates.Angle` (optional)
+            If specified, a final rotation about the pole (i.e. the resulting z
+            axis) applied.
         """
 
         pole = pole_from_endpoints(coord1, coord2)
