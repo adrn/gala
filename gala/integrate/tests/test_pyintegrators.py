@@ -4,8 +4,12 @@
 
 # Third-party
 import pytest
-import matplotlib.pyplot as pl
 import numpy as np
+try:
+    import tqdm
+    HAS_TQDM = True
+except ImportError:
+    HAS_TQDM = False
 
 # Project
 from .. import LeapfrogIntegrator, RK5Integrator, DOPRI853Integrator
@@ -49,6 +53,22 @@ def test_point_mass(Integrator):
     orbit = integrator.run(np.append(q0,p0), t1=0., t2=2*np.pi, n_steps=1E4)
 
     assert np.allclose(orbit.w()[:,0], orbit.w()[:,-1], atol=1E-6)
+
+@pytest.mark.skipif(not HAS_TQDM,
+                    reason="requires tqdm to run this test")
+@pytest.mark.parametrize("Integrator", integrator_list)
+def test_progress(Integrator):
+    def F(t,w):
+        x,y,px,py = w
+        a = -1./(x*x+y*y)**1.5
+        return np.array([px, py, x*a, y*a])
+
+    q0 = np.array([1., 0.])
+    p0 = np.array([0., 1.])
+    T = 1.
+
+    integrator = Integrator(F, progress=True)
+    orbit = integrator.run(np.append(q0, p0), t1=0., t2=2*np.pi, n_steps=1E2)
 
 @pytest.mark.parametrize("Integrator", integrator_list)
 def test_point_mass_multiple(Integrator):

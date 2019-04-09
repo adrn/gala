@@ -59,9 +59,8 @@ class RK5Integrator(Integrator):
         """
 
         # Runge-Kutta Fehlberg formulas (see: Numerical Recipes)
-        F = lambda t,w: self.F(t,w,*self._func_args)
+        F = lambda t, w: self.F(t, w, *self._func_args)
 
-        n = len(w)
         K = np.zeros((6,)+w.shape)
         K[0] = dt * F(t, w)
         K[1] = dt * F(t + A[1]*dt, w + B[1][0]*K[0])
@@ -89,8 +88,9 @@ class RK5Integrator(Integrator):
         # Set first step to the initial conditions
         ws[:,0] = w0
         w = w0.copy()
-        for ii in range(1,n_steps+1):
+        range_ = self._get_range_func()
+        for ii in range_(1, n_steps+1):
             w = self.step(times[ii], w, dt)
-            ws[:,ii] = w
+            ws[:, ii] = w
 
         return self._handle_output(w0_obj, times, ws)

@@ -12,18 +12,34 @@ __all__ = ["Integrator"]
 
 class Integrator(object, metaclass=InheritDocstrings):
 
-    def __init__(self, func, func_args=(), func_units=None):
+    def __init__(self, func, func_args=(), func_units=None, progress=False):
         if not hasattr(func, '__call__'):
-            raise ValueError("func must be a callable object, e.g., a function.")
+            raise ValueError("func must be a callable object, e.g., "
+                             "a function.")
 
         self.F = func
         self._func_args = func_args
 
-        if func_units is not None and not isinstance(func_units, DimensionlessUnitSystem):
+        if func_units is not None and not isinstance(func_units,
+                                                     DimensionlessUnitSystem):
             func_units = UnitSystem(func_units)
         else:
             func_units = DimensionlessUnitSystem()
         self._func_units = func_units
+
+        self.progress = bool(progress)
+
+    def _get_range_func(self):
+        if self.progress:
+            try:
+                from tqdm import trange
+                return trange
+            except ImportError:
+                raise ImportError("tqdm must be installed to use progress=True "
+                                  "when running {}"
+                                  .format(self.__class__.__name__))
+
+        return range
 
     def _prepare_ws(self, w0, mmap, n_steps):
         """
@@ -39,22 +55,23 @@ class Integrator(object, metaclass=InheritDocstrings):
 
         arr_w0 = w0.w(self._func_units)
 
-        self.ndim,self.norbits = arr_w0.shape
+        self.ndim, self.norbits = arr_w0.shape
         self.ndim = self.ndim//2
 
-        return_shape = (2*self.ndim,n_steps+1,self.norbits)
+        return_shape = (2*self.ndim, n_steps+1, self.norbits)
         if mmap is None:
             # create the return arrays
             ws = np.zeros(return_shape, dtype=float)
 
         else:
             if mmap.shape != return_shape:
-                raise ValueError("Shape of memory-mapped array doesn't match expected shape of "
-                                 "return array ({} vs {})".format(mmap.shape, return_shape))
+                raise ValueError("Shape of memory-mapped array doesn't match "
+                                 "expected shape of return array ({} vs {})"
+                                 .format(mmap.shape, return_shape))
 
             if not mmap.flags.writeable:
-                raise TypeError("Memory-mapped array must be a writable mode, not '{}'"
-                                .format(mmap.mode))
+                raise TypeError("Memory-mapped array must be a writable mode, "
+                                " not '{}'".format(mmap.mode))
 
             ws = mmap
 
@@ -64,7 +81,7 @@ class Integrator(object, metaclass=InheritDocstrings):
         """
         """
         if w.shape[-1] == 1:
-            w = w[...,0]
+            w = w[..., 0]
 
         pos_unit = self._func_units['length']
         t_unit = self._func_units['time']
@@ -80,8 +97,8 @@ class Integrator(object, metaclass=InheritDocstrings):
     def run(self):
         """
         Run the integrator starting from the specified phase-space position.
-        The initial conditions ``w0`` should be a `~gala.dynamics.PhaseSpacePosition`
-        instance.
+        The initial conditions ``w0`` should be a
+        `~gala.dynamics.PhaseSpacePosition` instance.
 
         There are a few combinations of keyword arguments accepted for
         specifying the timestepping. For example, you can specify a fixed

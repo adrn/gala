@@ -16,6 +16,8 @@ New Features
   expansion method for representing potential-density pairs.
 - Most Potential classes now support rotations and origin shifts through the
   ``R`` and ``origin`` arguments.
+- Added a ``progress`` argument to the Python integrators to display a progress
+  bar when stepping the integrators.
 
 Bug fixes
 ---------
