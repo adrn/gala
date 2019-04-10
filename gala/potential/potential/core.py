@@ -9,7 +9,11 @@ import numpy as np
 from astropy.constants import G
 import astropy.units as u
 from astropy.utils import isiterable
-from scipy.spatial.transform import Rotation
+try:
+    from scipy.spatial.transform import Rotation
+except ImportError:
+    raise ImportError("Gala requires scipy>=1.2: make sure you have updated "
+                      "your version of scipy and try importing gala again.")
 
 # Project
 from ..common import CommonBase
