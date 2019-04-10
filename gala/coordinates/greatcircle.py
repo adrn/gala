@@ -38,21 +38,34 @@ def reference_to_greatcircle(reference_frame, greatcircle_frame):
     # relative to the origin.
     pole = greatcircle_frame.pole.transform_to(coord.ICRS)
     ra0 = greatcircle_frame.ra0
-
+    center = greatcircle_frame.center
     R_rot = rotation_matrix(greatcircle_frame.rotation, 'z')
 
-    if np.isnan(ra0):
-        R2 = rotation_matrix(pole.dec, 'y')
-        R1 = rotation_matrix(pole.ra, 'z')
-        R = matrix_product(R2, R1)
-
-    else:
+    if not np.isnan(ra0):
         xaxis = np.array([np.cos(ra0), np.sin(ra0), 0.])
         zaxis = pole.cartesian.xyz.value
-        xaxis[2] = -(zaxis[0]*xaxis[0] + zaxis[1]*xaxis[1]) / zaxis[2] # what?
+        if np.abs(zaxis[2]) >= 1e-15:
+            xaxis[2] = -(zaxis[0]*xaxis[0] + zaxis[1]*xaxis[1]) / zaxis[2] # what?
+        else:
+            xaxis[2] = 0.
         xaxis = xaxis / np.sqrt(np.sum(xaxis**2))
         yaxis = np.cross(zaxis, xaxis)
         R = np.stack((xaxis, yaxis, zaxis))
+
+    elif center is not None:
+        R1 = rotation_matrix(pole.ra, 'z')
+        R2 = rotation_matrix(90*u.deg - pole.dec, 'y')
+        Rtmp = matrix_product(R2, R1)
+
+        rot = center.cartesian.transform(Rtmp)
+        rot_lon = rot.represent_as(coord.UnitSphericalRepresentation).lon
+        R3 = rotation_matrix(rot_lon, 'z')
+        R = matrix_product(R3, R2, R1)
+
+    else:
+        R1 = rotation_matrix(pole.ra, 'z')
+        R2 = rotation_matrix(pole.dec, 'y')
+        R = matrix_product(R2, R1)
 
     return matrix_product(R_rot, R)
 
@@ -126,6 +139,7 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
     """
 
     pole = CoordinateAttribute(default=None, frame=coord.ICRS)
+    center = CoordinateAttribute(default=None, frame=coord.ICRS)
     ra0 = QuantityAttribute(default=np.nan*u.deg, unit=u.deg)
     rotation = QuantityAttribute(default=0, unit=u.deg)
 
@@ -147,6 +161,11 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
         if wrap and isinstance(self._data, (coord.UnitSphericalRepresentation,
                                             coord.SphericalRepresentation)):
             self._data.lon.wrap_angle = self._default_wrap_angle
+
+        if self.center is not None and np.isfinite(self.ra0):
+            raise ValueError("Both `center` and `ra0` were specified for this "
+                             "{} object: you can only specify one or the other."
+                             .format(self.__class__.__name__))
 
     @classmethod
     def from_endpoints(cls, coord1, coord2, ra0=None, rotation=None):
@@ -183,6 +202,46 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
 
         return cls(**kw)
 
+    @classmethod
+    def from_xyz(cls, xnew=None, ynew=None, znew=None):
+        """Compute the great circle frame from a specification of the coordinate
+        axes in the new system.
+
+        Parameters
+        ----------
+        xnew : astropy ``Representation`` object
+            The x-axis in the new system.
+        ynew : astropy ``Representation`` object
+            The y-axis in the new system.
+        znew : astropy ``Representation`` object
+            The z-axis in the new system.
+        """
+        is_none = [xnew is None, ynew is None, znew is None]
+        if np.sum(is_none) > 1:
+            raise ValueError("At least 2 axes must be specified.")
+
+        if xnew is not None:
+            xnew = xnew.to_cartesian()
+
+        if ynew is not None:
+            ynew = ynew.to_cartesian()
+
+        if znew is not None:
+            znew = znew.to_cartesian()
+
+        if znew is None:
+            znew = xnew.cross(ynew)
+
+        if ynew is None:
+            ynew = -xnew.cross(znew)
+
+        if xnew is None:
+            xnew = ynew.cross(znew)
+
+        pole = coord.SkyCoord(znew, frame='icrs')
+        center = coord.SkyCoord(xnew, frame='icrs')
+        return cls(pole=pole, center=center)
+
 
 def make_greatcircle_cls(cls_name, docstring_header=None, **kwargs):
     @format_doc(base_doc, components=_components, footer=_footer)
@@ -190,6 +249,7 @@ def make_greatcircle_cls(cls_name, docstring_header=None, **kwargs):
     class GCFrame(GreatCircleICRSFrame):
         pole = kwargs.get('pole', None)
         ra0 = kwargs.get('ra0', np.nan*u.deg)
+        center = kwargs.get('center', None)
         rotation = kwargs.get('rotation', 0*u.deg)
 
     GCFrame.__name__ = cls_name

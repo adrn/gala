@@ -3,6 +3,7 @@ import astropy.coordinates as coord
 import astropy.units as u
 from astropy.tests.helper import quantity_allclose
 import numpy as np
+import pytest
 
 # This project
 from ..greatcircle import (GreatCircleICRSFrame, make_greatcircle_cls,
@@ -24,6 +25,18 @@ def test_cls_init():
     fr = GreatCircleICRSFrame.from_endpoints(points[0], points[1],
                                              rotation=100*u.deg)
 
+    with pytest.raises(ValueError):
+        GreatCircleICRSFrame(pole=pole, ra0=160*u.deg,
+                             center=pole)
+
+def test_init_center():
+    stupid_gal = GreatCircleICRSFrame(
+        pole=coord.Galactic._ngp_J2000.transform_to(coord.ICRS),
+        center=coord.Galactocentric.galcen_coord)
+    gal = coord.Galactic(50*u.deg, 20*u.deg)
+    gal2 = gal.transform_to(stupid_gal)
+    assert np.isclose(gal.l.degree, gal2.phi1.degree)
+    assert np.isclose(gal.b.degree, gal2.phi2.degree)
 
 def test_transform_against_koposov():
     from .helpers import sphere_rotate
@@ -81,6 +94,26 @@ def test_pole_from_endpoints():
     pole = pole_from_endpoints(c1, c2)
     assert quantity_allclose(pole.ra, 270*u.deg)
     assert quantity_allclose(pole.dec, 0*u.deg)
+
+
+def test_pole_from_xyz():
+    xnew = coord.UnitSphericalRepresentation(185*u.deg, 32.5*u.deg).to_cartesian()
+    ynew = coord.UnitSphericalRepresentation(275*u.deg, 0*u.deg).to_cartesian()
+    znew = xnew.cross(ynew)
+
+    fr1 = GreatCircleICRSFrame.from_xyz(xnew, ynew, znew)
+    fr2 = GreatCircleICRSFrame.from_xyz(xnew, ynew)
+    fr3 = GreatCircleICRSFrame.from_xyz(xnew, znew=znew)
+    fr4 = GreatCircleICRSFrame.from_xyz(ynew=ynew, znew=znew)
+
+    for fr in [fr2, fr3, fr4]:
+        assert np.isclose(fr1.pole.ra.degree, fr.pole.ra.degree)
+        assert np.isclose(fr1.pole.dec.degree, fr.pole.dec.degree)
+        assert np.isclose(fr1.center.ra.degree, fr.center.ra.degree)
+        assert np.isclose(fr1.center.dec.degree, fr.center.dec.degree)
+
+    with pytest.raises(ValueError):
+        GreatCircleICRSFrame.from_xyz(xnew)
 
 
 def test_sph_midpoint():
