@@ -7,16 +7,16 @@ What's New in gala v1.0?
 Overview
 ========
 
-Gala 1.0 is a major release with significant new functionality (as documented
-below) and a number of bug fixes.
+Gala 1.0 is a major release with significant new functionality (some of which is
+described below).
 
-This release includes:
+This release includes (among other things):
 
 * :ref:`whatsnew-1.0-greatcircle`
-* :ref:`whatsnew-1.0-scf`
 * :ref:`whatsnew-1.0-new-potentials`
-* :ref:`whatsnew-1.0-cov-matrix`
+* :ref:`whatsnew-1.0-scf`
 * :ref:`whatsnew-1.0-stream-frame-naming`
+* :ref:`whatsnew-1.0-cov-matrix`
 
 
 .. _whatsnew-1.0-greatcircle:
@@ -24,15 +24,70 @@ This release includes:
 Great circle coordinate systems
 ===============================
 
-TODO:
+Great circle coordinate frames (GCFs) are heliocentric coordinate systems that are
+typically specified as a rotation away from standard equatorial ICRS
+coordinates. The resulting longitude and latitude components of a GCF specify
+the angle along the great circle and the angle perpendicular (in gala, we use
+:math:`\phi_1` / ``phi1`` to represent the longitude, and :math:`\phi_2` /
+``phi2`` to represent the latitude). These frames are typically defined by
+specifying the coordinate of the pole of the great circle, and either the
+origin, :math:`(\phi_1, \phi_2) = (0, 0)`, or the longitude of the old system
+(i.e. ICRS) to put at longitude :math:`\phi_1 = 0` in the new frame. The  new
+``GreatCircleICRSFrame`` supports both of these options, along with two other
+possible ways for defining a GCF: by specifying two points along the great
+circle in the old frame, and by directly specifying the cartesian basis of the
+GCF in the old coordinate system. For example, to create a GCF from a pole and
+longitude zero-point::
 
+    >>> import astropy.units as u
+    >>> from astropy.coordinates import SkyCoord
+    >>> from gala.coordinates import GreatCircleICRSFrame
+    >>> pole = SkyCoord(ra=255*u.deg, dec=-11.5*u.deg)
+    >>> gcf = GreatCircleICRSFrame(pole=pole, ra0=170*u.deg)
 
-.. _whatsnew-1.0-scf:
+Or, to create a GCF from two endpoints along a great circle::
 
-Basis function expansion potential models with the self-consistent field method
-===============================================================================
+    >>> pt1 = SkyCoord(ra=170.*u.deg, dec=23.18*u.deg)
+    >>> pt2 = SkyCoord(ra=125.7*u.deg, dec=-72.2*u.deg)
+    >>> gcf2 = GreatCircleICRSFrame.from_endpoints(pt1, pt2)
 
-TODO:
+However you define a great circle frame, these can be used with the Astropy
+coordinate transformation machinery to transform positions and velocity
+components to and from this and other coordinate frames. For example, to
+transform a grid of points along latitude=0 in one of these systems to Galactic
+coordinates to plot the great circle on the sky, we can do::
+
+    >>> grid_c = SkyCoord(phi1=np.linspace(0, 360, 128)*u.deg, phi2=0*u.deg,
+    ...                   frame=gcf2)
+    >>> grid_c = grid_c.galactic
+
+When plotted, this would show the track of the great circle in Galactic
+coordinates, i.e.:
+
+.. plot::
+    :context: reset
+    :align: center
+
+    import astropy.units as u
+    from astropy.coordinates import SkyCoord
+    from gala.coordinates import GreatCircleICRSFrame
+    import matplotlib.pyplot as plt
+
+    pt1 = SkyCoord(ra=170.*u.deg, dec=23.18*u.deg)
+    pt2 = SkyCoord(ra=125.7*u.deg, dec=-72.2*u.deg)
+    gcf2 = GreatCircleICRSFrame.from_endpoints(pt1, pt2)
+
+    grid_c = SkyCoord(phi1=np.linspace(0, 360, 128)*u.deg, phi2=0*u.deg,
+                     frame=gcf2)
+    grid_c = grid_c.galactic
+
+    plt.figure(figsize=(6, 4))
+    plt.plot(grid_c.l.degree[grid_c.l.degree.argsort()],
+            grid_c.b.degree[grid_c.l.degree.argsort()],
+            ls='-', marker='')
+    plt.xlabel('$l$ [deg]')
+    plt.ylabel('$b$ [deg]')
+    plt.tight_layout()
 
 
 .. _whatsnew-1.0-new-potentials:
@@ -40,13 +95,53 @@ TODO:
 New potential models, including MWPotential2014
 ===============================================
 
-TODO:
+Gala now contains an implementation of the Galpy / `Bovy 2015
+<https://ui.adsabs.harvard.edu/#abs/2015ApJS..216...29B/abstract>`_
+``MWPotential2014``, here called `~gala.potential.BovyMWPotential2014`. This
+potential class can be used like any other potential object in Gala, for
+example, for orbit integration. As a brief demo, here we compare the orbit of a
+Milky Way halo object in `~gala.potential.BovyMWPotential2014` as compared to
+the default Gala Milky Way model implemented as
+`~gala.potential.MilkyWayPotential`::
+
+    >>> import gala.dynamics as gd
+    >>> import gala.potential as gp
+    >>> mw_gala = gp.MilkyWayPotential()
+    >>> mw_bovy = gp.BovyMWPotential2014()
+    >>> w0 = gd.PhaseSpacePosition(pos=[25., 0, 0]*u.kpc,
+    ...                            vel=[0, 0, 200.]*u.km/u.s)
+    >>> orbit_gala = mw_gala.integrate_orbit(w0, dt=1., n_steps=1000)
+    >>> orbit_bovy = mw_bovy.integrate_orbit(w0, dt=1., n_steps=1000)
+
+Here is a comparison of the two orbits over-plotted on the same axes:
+
+.. plot::
+    :context: reset
+    :align: center
+
+    import astropy.units as u
+    import matplotlib.pyplot as plt
+    import gala.dynamics as gd
+    import gala.potential as gp
+
+    mw_gala = gp.MilkyWayPotential()
+    mw_bovy = gp.BovyMWPotential2014()
+    w0 = gd.PhaseSpacePosition(pos=[25., 0, 0]*u.kpc,
+                               vel=[0, 0, 200.]*u.km/u.s)
+    orbit_gala = mw_gala.integrate_orbit(w0, dt=1., n_steps=1000)
+    orbit_bovy = mw_bovy.integrate_orbit(w0, dt=1., n_steps=1000)
+
+    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+    orbit_gala.plot(['x', 'z'], label='Gala', marker='', axes=[ax])
+    orbit_bovy.plot(['x', 'z'], label='Bovy2015', marker='', axes=[ax])
+    plt.legend(loc='best')
+    plt.tight_layout()
 
 
-.. _whatsnew-1.0-cov-matrix:
+.. _whatsnew-1.0-scf:
 
-Transforming proper motion covariances
-======================================
+Basis function expansion potential models with the self-consistent field method
+===============================================================================
 
 TODO:
 
@@ -72,40 +167,9 @@ Koposov et al. 2010. This is true for each of the major stellar stream frames:
   `~gala.coordinates.MagellanicStreamNidever08`
 
 
-.. Astropy now has an implementation of the :ref:`stats-bls`
-.. that is commonly used to detect transiting exoplanets and eclipsing
-.. binary star systems. The interface has been designed to match the
-.. `~astropy.stats.LombScargle` periodogram, and it can be used with a time series
-.. dataset ``time``, ``flux``, and ``flux_err`` as follows::
-..
-..   >>> from astropy import units as u
-..   >>> from astropy.stats import BoxLeastSquares
-..   >>> model = BoxLeastSquares(time * u.day, flux, flux_err=0.01)  # doctest: +SKIP
-..   >>> duration = 0.2 * u.day
-..   >>> periodogram = model.autopower(duration)  # doctest: +SKIP
-..
-.. The resulting periodogram will look something like the following when the time
-.. series includes a transiting planet:
-..
-.. .. plot::
-..    :context: reset
-..    :align: center
-..
-..     import numpy as np
-..     import matplotlib.pyplot as plt
-..     from astropy.stats import BoxLeastSquares
-..
-..     np.random.seed(42)
-..     t = np.random.uniform(0, 20, 2000)
-..     y = np.ones_like(t) - 0.1*((t%3)<0.2) + 0.01*np.random.randn(len(t))
-..     model = BoxLeastSquares(t, y, dy=0.01)
-..     periodogram = model.autopower(0.2)
-..
-..     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8))
-..     ax1.scatter(t, y, c="k", s=1)
-..     ax1.set_xlabel("time [day]")
-..     ax1.set_xlabel("flux [arbitrary]")
-..
-..     ax2.plot(periodogram.period, periodogram.power, "k")
-..     ax2.set_xlabel("period [day]")
-..     ax2.set_ylabel("power")
+.. _whatsnew-1.0-cov-matrix:
+
+Transforming proper motion covariance matrices
+==============================================
+
+TODO:
