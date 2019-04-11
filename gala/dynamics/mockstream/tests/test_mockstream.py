@@ -98,7 +98,7 @@ def test_animate(tmpdir):
 
     np.random.seed(42)
     pot = HernquistPotential(m=1E11, c=1., units=galactic)
-    w0 = PhaseSpacePosition(pos=[5.,0,0]*u.kpc, vel=[0,0.1,0]*u.kpc/u.Myr)
+    w0 = PhaseSpacePosition(pos=[5., 0, 0]*u.kpc, vel=[0, 0.1, 0]*u.kpc/u.Myr)
     orbit = Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=1000,
                                              Integrator=DOPRI853Integrator)
 
@@ -118,5 +118,37 @@ def test_animate(tmpdir):
     assert np.allclose(t, orbit.t.value)
 
     for idx in range(pos.shape[2]):
-        assert np.allclose(pos[:,-1,idx], stream.xyz.value[:,idx], rtol=1E-4)
-        assert np.allclose(vel[:,-1,idx], stream.v_xyz.value[:,idx], rtol=1E-4)
+        assert np.allclose(pos[:, -1, idx], stream.xyz.value[:, idx], rtol=1E-4)
+        assert np.allclose(vel[:, -1, idx], stream.v_xyz.value[:, idx], rtol=1E-4)
+
+
+@pytest.mark.skipif('CI' in os.environ,
+                    reason="For some reason, doesn't work on Travis/CI")
+def test_animate_output_every(tmpdir):
+
+    np.random.seed(42)
+    pot = HernquistPotential(m=1E11, c=1., units=galactic)
+    w0 = PhaseSpacePosition(pos=[5., 0, 0]*u.kpc, vel=[0, 0.1, 0]*u.kpc/u.Myr)
+    orbit = Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=1000,
+                                             Integrator=DOPRI853Integrator)
+
+    fardal_stream(pot, orbit, prog_mass=1E5*u.Msun, release_every=10,
+                  snapshot_filename=os.path.join(str(tmpdir), "test.hdf5"),
+                  output_every=20, seed=42)
+
+    stream = fardal_stream(pot, orbit, prog_mass=1E5*u.Msun, release_every=10,
+                           seed=42)
+
+    import h5py
+    with h5py.File(os.path.join(str(tmpdir), "test.hdf5")) as f:
+        t = f['t'][:]
+        pos = f['pos'][:]
+        vel = f['vel'][:]
+
+    assert np.allclose(t, orbit.t.value)
+
+    for idx in range(pos.shape[2]):
+        assert np.allclose(pos[:, -1, idx], stream.xyz.value[:, idx], rtol=1E-4)
+        assert np.allclose(vel[:, -1, idx], stream.v_xyz.value[:, idx], rtol=1E-4)
+
+    assert pos.shape[1] == (1000 // 20 + 1)

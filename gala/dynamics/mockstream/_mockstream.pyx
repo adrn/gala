@@ -459,7 +459,7 @@ cpdef _mock_stream_leapfrog(hamiltonian, double[::1] t, double[:,::1] prog_w,
 
 cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
                            double[::1] t, double[:,::1] prog_w,
-                           int release_every,
+                           int release_every, int output_every,
                            _k_mean, _k_disp,
                            double G, _prog_mass, seed,
                            double atol=1E-10, double rtol=1E-10, int nmax=0,
@@ -482,6 +482,8 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
         Should have shape ``(ntimesteps,6)``.
     release_every : int
         Release particles at the Lagrange points every X timesteps.
+    output_every : int
+        Save the output file every X timesteps.
     k_mean : `numpy.ndarray`
         Array of mean ``k`` values (see Fardal et al. 2015). These are used to determine
         the exact prescription for generating the mock stream. The components are for:
@@ -517,7 +519,7 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
         raise TypeError("Input Hamiltonian object does not support C-level access.")
 
     cdef:
-        int i, j, k # indexing
+        int i, j, k, n# indexing
         int res # result from calling dop853
         int ntimes = t.shape[0] # number of times
         int nparticles # total number of test particles released
@@ -564,15 +566,19 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
         nparticles = 2 * (ntimes // release_every + 1)
 
     # estimate size of output file and warn user if it's large
+    noutput_times = ntimes // output_every
+    if ntimes % output_every != 0:
+        noutput_times += 1
+
     if check_filesize:
-        est_filesize_GB = nparticles * ntimes / 2 * 8 / 1024 / 1024 / 1024
+        est_filesize_GB = nparticles * noutput_times / 2 * 8 / 1024 / 1024 / 1024
         if est_filesize_GB >= 10.:
             warnings.warn("gala.dynamics.mockstream: Estimated output "
                           "filesize is >= 10 GB!")
 
     # container for only current positions of all particles
     cdef double[::1] w = np.empty(nparticles*ndim)
-    cdef double[:,::1] one_particle_w = np.empty((ntimes,ndim))
+    cdef double[:,::1] one_particle_w = np.empty((noutput_times, ndim))
 
     # beginning times for each particle
     cdef double[::1] t1 = np.empty(nparticles)
@@ -670,9 +676,9 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
 
     # create the output file
     with h5py.File(str(snapshot_filename), 'w') as h5f:
-        h5f.create_dataset('pos', dtype='f8', shape=(ndim_2, ntimes, nparticles),
+        h5f.create_dataset('pos', dtype='f8', shape=(ndim_2, noutput_times, nparticles),
                            fillvalue=np.nan, compression='gzip', compression_opts=9)
-        h5f.create_dataset('vel', dtype='f8', shape=(ndim_2, ntimes, nparticles),
+        h5f.create_dataset('vel', dtype='f8', shape=(ndim_2, noutput_times, nparticles),
                            fillvalue=np.nan, compression='gzip', compression_opts=9)
         h5f.create_dataset('t', data=np.array(t))
 
@@ -680,21 +686,25 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
         t_j = t1[i]
 
         for k in range(ndim):
-            one_particle_w[0,k] = w[i*ndim + k]
+            one_particle_w[0, k] = w[i*ndim + k]
 
-        for j in range(1,all_ntimes[i]+1,1):
+        n = 0
+        for j in range(1, all_ntimes[i]+1, 1):
             dop853_step(&cp, &cf, &w[i*ndim], t_j, t_j+dt0, dt0,
                         ndim, 1,
                         atol, rtol, nmax)
 
             PyErr_CheckSignals()
 
-            for k in range(ndim):
-                one_particle_w[j,k] = w[i*ndim + k]
+            # save output if it's an output step:
+            if j % output_every == 0 or j == all_ntimes[i]:
+                for k in range(ndim):
+                    one_particle_w[n+1, k] = w[i*ndim + k]
+                n += 1
 
             t_j = t_j+dt0
 
         with h5py.File(str(snapshot_filename), 'a') as h5f:
-            j = ntimes - all_ntimes[i]
-            h5f['pos'][:,j:,i] = np.array(one_particle_w[:all_ntimes[i], :ndim_2]).T
-            h5f['vel'][:,j:,i] = np.array(one_particle_w[:all_ntimes[i], ndim_2:]).T
+            j = noutput_times - n
+            h5f['pos'][:, j:, i] = np.array(one_particle_w[:n, :ndim_2]).T
+            h5f['vel'][:, j:, i] = np.array(one_particle_w[:n, ndim_2:]).T
