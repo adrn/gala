@@ -4,16 +4,19 @@
 New Features
 ------------
 - Added a new coordinate frame for great circle coordinate systems defined by a
-  pole and longitude zero point.
+  pole. This frame can be created with a pole and origin, a pole and longitude
+  zero point, by two points along a great circle, or by specifying the cartesian
+  basis vectors of the new frame.
 - Added a function to transform a proper motion covariance matrix to a new
   coordinate frame.
-- Added support for compiling with or without GSL.
+- Added support for compiling Gala with or without the GNU Scientific Library
+  (GSL), which is needed for the new potential classes indicated below.
 - Added a new ``PowerLawCutoffPotential`` class for a power-law density
-  distribution with an exponential cutoff.
+  distribution with an exponential cutoff *(requires GSL)*.
 - Added an implementation of the ``MWPotential2014`` from ``galpy`` (called
-  ``BovyMWPotential2014`` in ``gala``).
+  ``BovyMWPotential2014`` in ``gala``) *(requires GSL)*.
 - Added an implementation of the Self-Consistent Field (SCF) basis function
-  expansion method for representing potential-density pairs.
+  expansion method for representing potential-density pairs *(requires GSL)*.
 - Most Potential classes now support rotations and origin shifts through the
   ``R`` and ``origin`` arguments.
 - Added a ``progress`` argument to the Python integrators to display a progress
