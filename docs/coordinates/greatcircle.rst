@@ -45,7 +45,7 @@ we can transform other coordinate to this new coordinate system using::
     >>> c_fr = c.transform_to(fr)
     >>> c_fr # doctest: +FLOAT_CMP
     <SkyCoord (GreatCircleICRSFrame: pole=<ICRS Coordinate: (ra, dec) in deg
-        ( 32.5,  19.8)>, ra0=nan deg, rotation=0.0 deg): (phi1, phi2) in deg
+        ( 32.5,  19.8)>, center=None, ra0=nan deg, rotation=0.0 deg): (phi1, phi2) in deg
         [( 122.57730371, -22.45454894), (  22.93500359,  27.42365243)]>
 
 The spherical coordinate components of the resulting great circle frame are
