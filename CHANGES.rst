@@ -18,6 +18,9 @@ New Features
   ``R`` and ``origin`` arguments.
 - Added a ``progress`` argument to the Python integrators to display a progress
   bar when stepping the integrators.
+- When generating mock stellar streams and storing snapshots (rather than just
+  the final phase-space positions of the particles) now supports specifying the
+  snapshot frequency with the ``output_every`` argument.
 
 Bug fixes
 ---------
