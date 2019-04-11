@@ -229,6 +229,10 @@ API
 
 .. automodapi:: gala.coordinates
     :no-inheritance-diagram:
-    :skip: vgsr_to_vhel
-    :skip: vhel_to_vgsr
     :skip: Quaternion
+    :skip: GD1
+    :skip: Orphan
+    :skip: Sagittarius
+    :skip: MagellanicStream
+    :skip: Ophiuchus
+    :skip: Pal5
