@@ -345,27 +345,27 @@ def dissolved_fardal_stream(hamiltonian, prog_orbit, prog_mass, t_disrupt, relea
 
     disrupt_ix = np.abs(t - t_disrupt).argmin()
 
-    k_mean = np.zeros((t.size,6))
-    k_disp = np.zeros((t.size,6))
+    k_mean = np.zeros((t.size, 6))
+    k_disp = np.zeros((t.size, 6))
 
-    k_mean[:,0] = 2. # R
-    k_mean[disrupt_ix:,0] = 0.
-    k_disp[:,0] = 0.5
+    k_mean[:, 0] = 2. # R
+    k_mean[disrupt_ix:, 0] = 0.
+    k_disp[:, 0] = 0.5
 
-    k_mean[:,1] = 0. # phi
-    k_disp[:,1] = 0.
+    k_mean[:, 1] = 0. # phi
+    k_disp[:, 1] = 0.
 
-    k_mean[:,2] = 0. # z
-    k_disp[:,2] = 0.5
+    k_mean[:, 2] = 0. # z
+    k_disp[:, 2] = 0.5
 
-    k_mean[:,3] = 0. # vR
-    k_disp[:,3] = 0.
+    k_mean[:, 3] = 0. # vR
+    k_disp[:, 3] = 0.
 
-    k_mean[:,4] = 0.3 # vt
-    k_disp[:,4] = 0.5
+    k_mean[:, 4] = 0.3 # vt
+    k_disp[:, 4] = 0.5
 
-    k_mean[:,5] = 0. # vz
-    k_disp[:,5] = 0.5
+    k_mean[:, 5] = 0. # vz
+    k_disp[:, 5] = 0.5
 
     return mock_stream(hamiltonian=hamiltonian, prog_orbit=prog_orbit,
                        prog_mass=prog_mass,
