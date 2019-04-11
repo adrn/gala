@@ -566,9 +566,9 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
         nparticles = 2 * (ntimes // release_every + 1)
 
     # estimate size of output file and warn user if it's large
-    noutput_times = ntimes // output_every
+    noutput_times = ntimes // output_every + 1 # initial conditions
     if ntimes % output_every != 0:
-        noutput_times += 1
+        noutput_times += 1 # for final conditions
 
     if check_filesize:
         est_filesize_GB = nparticles * noutput_times / 2 * 8 / 1024 / 1024 / 1024
@@ -676,10 +676,14 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
 
     # create the output file
     with h5py.File(str(snapshot_filename), 'w') as h5f:
-        h5f.create_dataset('pos', dtype='f8', shape=(ndim_2, noutput_times, nparticles),
-                           fillvalue=np.nan, compression='gzip', compression_opts=9)
-        h5f.create_dataset('vel', dtype='f8', shape=(ndim_2, noutput_times, nparticles),
-                           fillvalue=np.nan, compression='gzip', compression_opts=9)
+        h5f.create_dataset('pos', dtype='f8',
+                           shape=(ndim_2, noutput_times, nparticles),
+                           fillvalue=np.nan, compression='gzip',
+                           compression_opts=9)
+        h5f.create_dataset('vel', dtype='f8',
+                           shape=(ndim_2, noutput_times, nparticles),
+                           fillvalue=np.nan, compression='gzip',
+                           compression_opts=9)
         h5f.create_dataset('t', data=np.array(t))
 
     for i in range(nparticles):
@@ -689,7 +693,7 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
             one_particle_w[0, k] = w[i*ndim + k]
 
         n = 0
-        for j in range(1, all_ntimes[i]+1, 1):
+        for j in range(1, all_ntimes[i], 1):
             dop853_step(&cp, &cf, &w[i*ndim], t_j, t_j+dt0, dt0,
                         ndim, 1,
                         atol, rtol, nmax)
@@ -697,7 +701,7 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
             PyErr_CheckSignals()
 
             # save output if it's an output step:
-            if j % output_every == 0 or j == all_ntimes[i]:
+            if (all_ntimes[i]-j) % output_every == 0 or j == (all_ntimes[i]-1):
                 for k in range(ndim):
                     one_particle_w[n+1, k] = w[i*ndim + k]
                 n += 1
@@ -705,6 +709,6 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
             t_j = t_j+dt0
 
         with h5py.File(str(snapshot_filename), 'a') as h5f:
-            j = noutput_times - n
-            h5f['pos'][:, j:, i] = np.array(one_particle_w[:n, :ndim_2]).T
-            h5f['vel'][:, j:, i] = np.array(one_particle_w[:n, ndim_2:]).T
+            j = noutput_times - n - 1
+            h5f['pos'][:, j:, i] = np.array(one_particle_w[:n+1, :ndim_2]).T
+            h5f['vel'][:, j:, i] = np.array(one_particle_w[:n+1, ndim_2:]).T
