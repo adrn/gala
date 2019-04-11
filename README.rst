@@ -65,7 +65,7 @@ License
 
 |License|
 
-Copyright 2013-2017 Adrian Price-Whelan and contributors.
+Copyright 2013-2019 Adrian Price-Whelan and contributors.
 
 ``Gala`` is free software made available under the MIT License. For details see
 the `LICENSE <https://github.com/adrn/gala/blob/master/LICENSE>`_ file.
