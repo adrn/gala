@@ -8,7 +8,7 @@ from astropy.coordinates.baseframe import (frame_transform_graph,
                                            RepresentationMapping)
 from astropy.coordinates.transformations import StaticMatrixTransform
 from astropy.coordinates import representation as r
-from astropy.coordinates import Galactic, ICRS
+from astropy.coordinates import Galactic
 
 import astropy.units as u
 
@@ -67,7 +67,7 @@ class MagellanicStreamNidever08(BaseCoordinateFrame):
         r = super().represent_as(base, s=s, in_frame_units=in_frame_units)
         r.lon.wrap_angle = self._default_wrap_angle
         return r
-    represent_as.__doc__ = coord.BaseCoordinateFrame.represent_as.__doc__
+    represent_as.__doc__ = BaseCoordinateFrame.represent_as.__doc__
 
 
 @frame_transform_graph.transform(StaticMatrixTransform,
