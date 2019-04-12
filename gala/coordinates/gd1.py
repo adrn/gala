@@ -7,11 +7,10 @@ import astropy.units as u
 import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import matrix_transpose
-from astropy.utils.misc import InheritDocstrings
 
 __all__ = ["GD1Koposov10", "GD1"]
 
-class GD1Koposov10(coord.BaseCoordinateFrame, metaclass=InheritDocstrings):
+class GD1Koposov10(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
     of the GD1 stream, as described in
