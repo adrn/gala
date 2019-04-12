@@ -6,6 +6,14 @@
 Installation
 ============
 
+With ``conda``
+==============
+
+To install the latest stable version with ``conda``, use the ``conda-forge``
+channel with::
+
+    conda install -c conda-forge astro-gala
+
 With ``pip``
 ============
 
