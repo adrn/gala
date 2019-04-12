@@ -15,7 +15,7 @@ def get_extensions():
 
 def get_package_data():
 
-    return {'gala': ['extra_compile_macros.h']}
+    return {'gala': ['extra_compile_macros.h', 'cconfig.pyx']}
 
 
 def get_build_options():
