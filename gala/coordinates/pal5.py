@@ -59,6 +59,14 @@ class Pal5PriceWhelan18(coord.BaseCoordinateFrame):
                                             coord.SphericalRepresentation)):
             self._data.lon.wrap_angle = self._default_wrap_angle
 
+    # TODO: remove this. This is a hack required as of astropy v3.1 in order
+    # to have the longitude components wrap at the desired angle
+    def represent_as(self, base, s='base', in_frame_units=False):
+        r = super().represent_as(base, s=s, in_frame_units=in_frame_units)
+        r.lon.wrap_angle = self._default_wrap_angle
+        return r
+    represent_as.__doc__ = coord.BaseCoordinateFrame.represent_as.__doc__
+
 # Rotation matrix defined by trying to align the stream to the equator
 R = np.array([[-0.65019243, -0.75969758, -0.01045969],
               [-0.62969142, 0.54652698, -0.55208422],

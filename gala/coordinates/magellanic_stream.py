@@ -8,7 +8,7 @@ from astropy.coordinates.baseframe import (frame_transform_graph,
                                            RepresentationMapping)
 from astropy.coordinates.transformations import StaticMatrixTransform
 from astropy.coordinates import representation as r
-from astropy.coordinates import Galactic, ICRS
+from astropy.coordinates import Galactic
 
 import astropy.units as u
 
@@ -60,6 +60,14 @@ class MagellanicStreamNidever08(BaseCoordinateFrame):
         if wrap and isinstance(self._data, (r.UnitSphericalRepresentation,
                                             r.SphericalRepresentation)):
             self._data.lon.wrap_angle = self._default_wrap_angle
+
+    # TODO: remove this. This is a hack required as of astropy v3.1 in order
+    # to have the longitude components wrap at the desired angle
+    def represent_as(self, base, s='base', in_frame_units=False):
+        r = super().represent_as(base, s=s, in_frame_units=in_frame_units)
+        r.lon.wrap_angle = self._default_wrap_angle
+        return r
+    represent_as.__doc__ = BaseCoordinateFrame.represent_as.__doc__
 
 
 @frame_transform_graph.transform(StaticMatrixTransform,

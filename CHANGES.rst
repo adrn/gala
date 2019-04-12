@@ -27,6 +27,8 @@ New Features
 
 Bug fixes
 ---------
+- Stream frames now properly wrap the longitude (``phi1``) components to the
+  range (-180, 180) deg.
 
 API changes
 -----------
