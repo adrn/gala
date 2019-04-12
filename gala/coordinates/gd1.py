@@ -7,10 +7,11 @@ import astropy.units as u
 import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import matrix_transpose
+from astropy.utils.misc import InheritDocstrings
 
 __all__ = ["GD1Koposov10", "GD1"]
 
-class GD1Koposov10(coord.BaseCoordinateFrame):
+class GD1Koposov10(coord.BaseCoordinateFrame, metaclass=InheritDocstrings):
     """
     A Heliocentric spherical coordinate system defined by the orbit
     of the GD1 stream, as described in
@@ -60,11 +61,14 @@ class GD1Koposov10(coord.BaseCoordinateFrame):
                                             coord.SphericalRepresentation)):
             self._data.lon.wrap_angle = self._default_wrap_angle
 
-<<<<<<< HEAD
-=======
-    def represent_as():
-        pass
->>>>>>> skip whatsnew doctests and link to scf heading
+    # TODO: remove this. This is a hack required as of astropy v3.1 in order
+    # to have the longitude components wrap at the desired angle
+    def represent_as(self, base, s='base', in_frame_units=False):
+        r = super().represent_as(base, s=s, in_frame_units=in_frame_units)
+        r.lon.wrap_angle = self._default_wrap_angle
+        return r
+    represent_as.__doc__ = coord.BaseCoordinateFrame.represent_as.__doc__
+    
 
 # Rotation matrix as defined in the Appendix of Koposov et al. (2010)
 R = np.array([[-0.4776303088, -0.1738432154, 0.8611897727],

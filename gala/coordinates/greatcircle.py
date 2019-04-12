@@ -167,6 +167,14 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
                              "{} object: you can only specify one or the other."
                              .format(self.__class__.__name__))
 
+    # TODO: remove this. This is a hack required as of astropy v3.1 in order
+    # to have the longitude components wrap at the desired angle
+    def represent_as(self, base, s='base', in_frame_units=False):
+        r = super().represent_as(base, s=s, in_frame_units=in_frame_units)
+        r.lon.wrap_angle = self._default_wrap_angle
+        return r
+    represent_as.__doc__ = coord.BaseCoordinateFrame.represent_as.__doc__
+
     @classmethod
     def from_endpoints(cls, coord1, coord2, ra0=None, rotation=None):
         """Compute the great circle frame from two endpoints of an arc on the
