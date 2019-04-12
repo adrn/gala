@@ -60,6 +60,11 @@ class GD1Koposov10(coord.BaseCoordinateFrame):
                                             coord.SphericalRepresentation)):
             self._data.lon.wrap_angle = self._default_wrap_angle
 
+<<<<<<< HEAD
+=======
+    def represent_as():
+        pass
+>>>>>>> skip whatsnew doctests and link to scf heading
 
 # Rotation matrix as defined in the Appendix of Koposov et al. (2010)
 R = np.array([[-0.4776303088, -0.1738432154, 0.8611897727],
