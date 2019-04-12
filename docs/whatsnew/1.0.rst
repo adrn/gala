@@ -57,6 +57,7 @@ components to and from this and other coordinate frames. For example, to
 transform a grid of points along latitude=0 in one of these systems to Galactic
 coordinates to plot the great circle on the sky, we can do::
 
+    >>> import numpy as np
     >>> grid_c = SkyCoord(phi1=np.linspace(0, 360, 128)*u.deg, phi2=0*u.deg,
     ...                   frame=gcf2)
     >>> grid_c = grid_c.galactic
@@ -191,7 +192,6 @@ Gaia proper motion covariance matrix for a source to the ``GD1Koposov10``
 coordinate frame::
 
     >>> from gala.coordinates import transform_pm_cov, GD1Koposov10
-    >>> import numpy as np
     >>> cov = np.array([[ 0.07567177, -0.01698125],
     ...                 [-0.01698125,  0.03907039]])
     >>> c = SkyCoord(ra=130.99*u.deg, dec=34.53*u.deg,
