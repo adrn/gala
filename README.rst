@@ -47,17 +47,19 @@ paper::
 
 Please also consider citing the Zenodo DOI |DOI| as a software citation::
 
-    @misc{Price-Whelan:2018,
+    @misc{gala:zenodo,
       author       = {Adrian Price-Whelan and
                       Brigitta Sipocz and
                       Daniel Lenz and
+                      Johnny Greco and
                       Syrtis Major and
-                      Semyeong Oh},
-      title        = {adrn/gala: v0.3},
+                      Semyeong Oh and
+                      P. L. Lim},
+      title        = {adrn/gala: v1.0},
       month        = apr,
-      year         = 2018,
-      doi          = {10.5281/zenodo.1227457},
-      url          = {https://doi.org/10.5281/zenodo.1227457}
+      year         = 2019,
+      doi          = {10.5281/zenodo.2638307},
+      url          = {https://doi.org/10.5281/zenodo.2638307}
     }
 
 License
