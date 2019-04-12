@@ -1,3 +1,5 @@
+.. doctest-skip-all
+
 .. _whatsnew-1.0:
 
 ************************
@@ -149,7 +151,7 @@ gravitational potential models using the self-consistent field (SCF) basis
 function expansion method. Expansion coefficients can be computed from both
 analytic density distributions or from discrete particle distributions (e.g.,
 from an N-body simulation). For more information about this new subpackage, see
-the `gala.potential.scf` documentation.
+the :ref:`scf` documentation.
 
 
 .. _whatsnew-1.0-stream-frame-naming:
