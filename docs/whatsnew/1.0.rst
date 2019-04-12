@@ -143,7 +143,12 @@ Here is a comparison of the two orbits over-plotted on the same axes:
 Basis function expansion potential models with the self-consistent field method
 ===============================================================================
 
-TODO:
+Gala now contains support for constructing and using flexible (static)
+gravitational potential models using the self-consistent field (SCF) basis
+function expansion method. Expansion coefficients can be computed from both
+analytic density distributions or from discrete particle distributions (e.g.,
+from an N-body simulation). For more information about this new subpackage, see
+the `gala.potential.scf` documentation.
 
 
 .. _whatsnew-1.0-stream-frame-naming:
@@ -172,4 +177,25 @@ Koposov et al. 2010. This is true for each of the major stellar stream frames:
 Transforming proper motion covariance matrices
 ==============================================
 
-TODO:
+The Gaia mission provides full astrometric covariance matrices for each of its
+sources, which not only specify the uncertainty in each parameter, but also
+specify the correlations between the uncertainties of the astrometric
+parameters. These covariance matrices are provided in the ICRS coordinate
+system, but often it is useful to transform the Gaia data to other coordinate
+systems when, e.g., modeling stellar streams. The proper motion covariance
+matrix can be analytically and straightforwardly transformed along with the
+positions and proper motions themselves if the transformation is a rotation away
+from ICRS, such as the case for the new ``GreatCircleICRSFrame`` or stellar
+stream coordinate frames described above. As an example, we will transform the
+Gaia proper motion covariance matrix for a source to the ``GD1Koposov10``
+coordinate frame::
+
+    >>> from gala.coordinates import transform_pm_cov, GD1Koposov10
+    >>> import numpy as np
+    >>> cov = np.array([[ 0.07567177, -0.01698125],
+    ...                 [-0.01698125,  0.03907039]])
+    >>> c = SkyCoord(ra=130.99*u.deg, dec=34.53*u.deg,
+    ...              distance=454.76*u.pc,
+    ...              pm_ra_cosdec=11.5*u.mas/u.yr,
+    ...              pm_dec=-23.46661*u.mas/u.yr)
+    >>> cov_gd1 = transform_pm_cov(c, cov, GD1Koposov10)
