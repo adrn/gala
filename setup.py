@@ -206,7 +206,8 @@ with open(extra_compile_macros_file, 'w') as f:
     else:
         f.writelines(['#define USE_GSL 0'])
 
-setup(name=PACKAGENAME,
+# setup(name=PACKAGENAME,
+setup(name='astro-gala',
       version=VERSION,
       description=DESCRIPTION,
       install_requires=[s.strip() for s in metadata.get('install_requires', 'astropy').split(',')],
