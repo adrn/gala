@@ -3,7 +3,7 @@ Gala
 
 Gala is a Python package for Galactic and gravitational dynamics.
 
-|PyPI| |Affiliated package| |Coverage Status| |Build status|
+|Affiliated package| |Coverage Status| |Build status|
 
 Documentation
 -------------
@@ -16,7 +16,14 @@ The documentation for ``Gala`` is hosted on `Read the docs
 Installation and Dependencies
 -----------------------------
 
-The easiest way to get Gala is to install with pip::
+|conda| |PyPI|
+
+The easiest way to get Gala is to install with conda or pip. To install
+with conda, use the conda-forge channel::
+
+    conda install astro-gala --channel conda-forge
+
+To install with pip::
 
     pip install astro-gala
 
@@ -80,6 +87,8 @@ the `LICENSE <https://github.com/adrn/gala/blob/master/LICENSE>`_ file.
    :target: https://github.com/adrn/gala/blob/master/LICENSE
 .. |PyPI| image:: https://badge.fury.io/py/astro-gala.svg
    :target: https://badge.fury.io/py/astro-gala
+.. |conda| image:: https://anaconda.org/conda-forge/astro-gala/badges/version.svg
+   :target: https://anaconda.org/conda-forge/astro-gala
 .. |Documentation Status| image:: https://readthedocs.org/projects/gala-astro/badge/?version=latest
    :target: http://gala-astro.readthedocs.io/en/latest/?badge=latest
 .. |Affiliated package| image:: https://img.shields.io/badge/astropy-affiliated%20package-orange.svg
