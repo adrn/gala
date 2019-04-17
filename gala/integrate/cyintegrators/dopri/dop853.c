@@ -78,7 +78,7 @@ static double max_d (double a, double b)
 } /* max_d */
 
 
-static double hinit (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsigned norbits,
+static double hinit (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsigned norbits, void *args,
         double x, double* y,
 	      double posneg, double* f0, double* f1, double* yy1, int iord,
 	      double hmax, double* atoler, double* rtoler, int itoler)
@@ -121,7 +121,7 @@ static double hinit (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsig
   /* perform an explicit Euler step */
   for (i = 0; i < n; i++)
     yy1[i] = y[i] + h * f0[i];
-  fcn (n, x+h, yy1, f1, p, fr, norbits);
+  fcn (n, x+h, yy1, f1, p, fr, norbits, args);
 
   /* estimate the second derivative of the solution */
   der2 = 0.0;
@@ -155,7 +155,7 @@ static double hinit (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsig
 
 
 /* core integrator */
-static int dopcor (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsigned norbits,
+static int dopcor (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsigned norbits, void *args,
        double x, double* y, double xend,
 		   double hmax, double h, double* rtoler, double* atoler,
 		   int itoler, FILE* fileout, SolTrait solout, int iout,
@@ -370,11 +370,11 @@ static int dopcor (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsigne
   last  = 0;
   hlamb = 0.0;
   iasti = 0;
-  fcn (n, x, y, k1, p, fr, norbits);
+  fcn (n, x, y, k1, p, fr, norbits, args);
   hmax = fabs (hmax);
   iord = 8;
   if (h == 0.0)
-    h = hinit (n, fcn, p, fr, norbits, x, y, posneg, k1, k2, k3, iord, hmax, atoler, rtoler, itoler);
+    h = hinit (n, fcn, p, fr, norbits, args, x, y, posneg, k1, k2, k3, iord, hmax, atoler, rtoler, itoler);
   nfcn += 2;
   reject = 0;
   xold = x;
@@ -425,44 +425,44 @@ static int dopcor (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsigne
     /* the twelve stages */
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * a21 * k1[i];
-    fcn (n, x+c2*h, yy1, k2, p, fr, norbits);
+    fcn (n, x+c2*h, yy1, k2, p, fr, norbits, args);
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a31*k1[i] + a32*k2[i]);
-    fcn (n, x+c3*h, yy1, k3, p, fr, norbits);
+    fcn (n, x+c3*h, yy1, k3, p, fr, norbits, args);
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a41*k1[i] + a43*k3[i]);
-    fcn (n, x+c4*h, yy1, k4, p, fr, norbits);
+    fcn (n, x+c4*h, yy1, k4, p, fr, norbits, args);
     for (i = 0; i <n; i++)
       yy1[i] = y[i] + h * (a51*k1[i] + a53*k3[i] + a54*k4[i]);
-    fcn (n, x+c5*h, yy1, k5, p, fr, norbits);
+    fcn (n, x+c5*h, yy1, k5, p, fr, norbits, args);
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a61*k1[i] + a64*k4[i] + a65*k5[i]);
-    fcn (n, x+c6*h, yy1, k6, p, fr, norbits);
+    fcn (n, x+c6*h, yy1, k6, p, fr, norbits, args);
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a71*k1[i] + a74*k4[i] + a75*k5[i] + a76*k6[i]);
-    fcn (n, x+c7*h, yy1, k7, p, fr, norbits);
+    fcn (n, x+c7*h, yy1, k7, p, fr, norbits, args);
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a81*k1[i] + a84*k4[i] + a85*k5[i] + a86*k6[i] +
 			  a87*k7[i]);
-    fcn (n, x+c8*h, yy1, k8, p, fr, norbits);
+    fcn (n, x+c8*h, yy1, k8, p, fr, norbits, args);
     for (i = 0; i <n; i++)
       yy1[i] = y[i] + h * (a91*k1[i] + a94*k4[i] + a95*k5[i] + a96*k6[i] +
 			  a97*k7[i] + a98*k8[i]);
-    fcn (n, x+c9*h, yy1, k9, p, fr, norbits);
+    fcn (n, x+c9*h, yy1, k9, p, fr, norbits, args);
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a101*k1[i] + a104*k4[i] + a105*k5[i] + a106*k6[i] +
 			  a107*k7[i] + a108*k8[i] + a109*k9[i]);
-    fcn (n, x+c10*h, yy1, k10, p, fr, norbits);
+    fcn (n, x+c10*h, yy1, k10, p, fr, norbits, args);
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a111*k1[i] + a114*k4[i] + a115*k5[i] + a116*k6[i] +
 			  a117*k7[i] + a118*k8[i] + a119*k9[i] + a1110*k10[i]);
-    fcn (n, x+c11*h, yy1, k2, p, fr, norbits);
+    fcn (n, x+c11*h, yy1, k2, p, fr, norbits, args);
     xph = x + h;
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a121*k1[i] + a124*k4[i] + a125*k5[i] + a126*k6[i] +
 			  a127*k7[i] + a128*k8[i] + a129*k9[i] +
 			  a1210*k10[i] + a1211*k2[i]);
-    fcn (n, xph, yy1, k3, p, fr, norbits);
+    fcn (n, xph, yy1, k3, p, fr, norbits, args);
     nfcn += 11;
     for (i = 0; i < n; i++)
     {
@@ -517,7 +517,7 @@ static int dopcor (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsigne
 
       facold = max_d (err, 1.0E-4);
       naccpt++;
-      fcn (n, xph, k5, k4, p, fr, norbits);
+      fcn (n, xph, k5, k4, p, fr, norbits, args);
       nfcn++;
 
       /* stiffness detection */
@@ -603,17 +603,17 @@ static int dopcor (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsigne
 	  yy1[i] = y[i] + h * (a141*k1[i] + a147*k7[i] + a148*k8[i] +
 			      a149*k9[i] + a1410*k10[i] + a1411*k2[i] +
 			      a1412*k3[i] + a1413*k4[i]);
-	fcn (n, x+c14*h, yy1, k10, p, fr, norbits);
+	fcn (n, x+c14*h, yy1, k10, p, fr, norbits, args);
 	for (i = 0; i < n; i++)
 	  yy1[i] = y[i] + h * (a151*k1[i] + a156*k6[i] + a157*k7[i] + a158*k8[i] +
 			      a1511*k2[i] + a1512*k3[i] + a1513*k4[i] +
 			      a1514*k10[i]);
-	fcn (n, x+c15*h, yy1, k2, p, fr, norbits);
+	fcn (n, x+c15*h, yy1, k2, p, fr, norbits, args);
 	for (i = 0; i < n; i++)
 	  yy1[i] = y[i] + h * (a161*k1[i] + a166*k6[i] + a167*k7[i] + a168*k8[i] +
 			      a169*k9[i] + a1613*k4[i] + a1614*k10[i] +
 			      a1615*k2[i]);
-	fcn (n, x+c16*h, yy1, k3, p, fr, norbits);
+	fcn (n, x+c16*h, yy1, k3, p, fr, norbits, args);
 	nfcn += 3;
 
 	/* final preparation */
@@ -695,7 +695,7 @@ static int dopcor (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsigne
 
 /* front-end */
 int dop853
- (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsigned norbits,
+ (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsigned norbits, void *args,
   double x, double* y, double xend, double* rtoler,
   double* atoler, int itoler, SolTrait solout, int iout, FILE* fileout, double uround,
   double safe, double fac1, double fac2, double beta, double hmax, double h,
@@ -915,7 +915,7 @@ int dop853
   }
   else
   {
-    idid = dopcor (n, fcn, p, fr, norbits, x, y, xend, hmax, h, rtoler, atoler, itoler, fileout,
+    idid = dopcor (n, fcn, p, fr, norbits, args, x, y, xend, hmax, h, rtoler, atoler, itoler, fileout,
 		   solout, iout, nmax, uround, meth, nstiff, safe, beta, fac1, fac2, icont);
     free (k10);
     free (k9);
@@ -977,7 +977,7 @@ double contd8 (unsigned ii, double x)
 
 /* ADDED BY APW */
 void Fwrapper (unsigned full_ndim, double t, double *w, double *f,
-               CPotential *p, CFrame *fr, unsigned norbits) {
+               CPotential *p, CFrame *fr, unsigned norbits, void *args) {
     int i;
     unsigned ndim = full_ndim / norbits; // phase-space dimensionality
 
@@ -988,32 +988,42 @@ void Fwrapper (unsigned full_ndim, double t, double *w, double *f,
 }
 
 void Fwrapper_direct_nbody (unsigned full_ndim, double t, double *w, double *f,
-                            CPotential *p, CFrame *fr, unsigned norbits) {
+                            CPotential *p, CFrame *fr, unsigned norbits,
+                            void *args) {
+    /* Here, the extra args are actually the array of CPotential objects that
+       represent the potentials of the individual particles.
+    */
+    // CPotential **particlepotentials = (CPotential **) args;
+    CPotential *pp;
+    CPotential **cps = (CPotential **) args;
+
+    // Note: only really works with a static frame! This should be enforced
     int i, j, k;
     unsigned ndim = full_ndim / norbits; // phase-space dimensionality
+    double f2[ndim/2];
+    double q0[ndim/2];
 
-    // Used for N-body
-    double dx, dy, dz, fac;
+    for (i=0; i < norbits; i++) {
+        pp = ((CPotential **)args)[i];
+    }
 
     for (i=0; i < norbits; i++) {
         // call gradient function
         hamiltonian_gradient(p, fr, t, &w[i*ndim], &f[i*ndim]);
     }
 
-    k = p->n_components;
-    for (i=0; i < norbits; i++) {
-        for (j=0; j < norbits; j++) {
-            if (i != j) {
-                // Whenever we're doing N-body, we use a unit system with G=1,
-                // so Kepler is just M / dr^3 * dx
-                dx = w[i*ndim  ] - w[j*ndim];
-                dy = w[i*ndim+1] - w[j*ndim+1];
-                dz = w[i*ndim+2] - w[j*ndim+2];
-                fac = (p->parameters)[k][j] / pow(dx*dx + dy*dy + dz*dz, 1.5);
+    for (j=0; j < norbits; j++) { // the particles generating force
+        pp = ((CPotential **)args)[j];
+        (pp->q0)[0] = &w[j*ndim];
 
-                f[i*ndim   + 3] = f[i*ndim   + 3] - fac * dx;
-                f[i*ndim+1 + 3] = f[i*ndim+1 + 3] - fac * dy;
-                f[i*ndim+2 + 3] = f[i*ndim+2 + 3] - fac * dz;
+        for (i=0; i < norbits; i++) {
+            if (i != j) {
+                c_gradient(pp, t, &w[i*ndim], &f2[0]);
+
+                for (k=0; k<p->n_dim; k++)
+                    // minus sign below because hamiltonian gradient computes
+                    // the acceleration!
+                    f[i*ndim + p->n_dim + k] = f[i*ndim + p->n_dim + k] - f2[k];
             }
         }
     }

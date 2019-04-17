@@ -43,9 +43,10 @@ cdef extern from "potential/src/cpotential.h":
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, CFrame *fr, unsigned norbits) nogil
+                              CPotential *p, CFrame *fr, unsigned norbits,
+                              void *args) nogil
     void Fwrapper (unsigned ndim, double t, double *w, double *f,
-                   CPotential *p, CFrame *fr, unsigned norbits)
+                   CPotential *p, CFrame *fr, unsigned norbits, void *args)
 
 cpdef _mock_stream_dop853(hamiltonian, double[::1] t, double[:,::1] prog_w,
                           int release_every,
