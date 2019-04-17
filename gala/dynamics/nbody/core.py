@@ -22,7 +22,8 @@ class DirectNBody:
 
     def __init__(self, w0, particle_potentials, external_potential=None,
                  units=None):
-        """TODO:
+        """Perform orbit integration using direct N-body forces between
+        particles, optionally in an external background potential.
 
         TODO: could add another option, like in other contexts, for "extra_force"
         to support, e.g., dynamical friction
