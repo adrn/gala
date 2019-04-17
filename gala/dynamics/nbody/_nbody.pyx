@@ -92,8 +92,81 @@ cpdef _direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
                                    atol, rtol, nmax)
     return all_w
 
-    # Fwrapper_direct_nbody(2*ndim, 0.,&w0[0,0], &f[0],
-    #                       &cp, &cf, 2)
+
+class DirectNBody:
+
+    def __init__(self, w0, particle_potentials, external_potential=None,
+                 units=None):
+        """TODO:
+
+        TODO: could add another option, like in other contexts, for "extra_force"
+        to support, e.g., dynamical friction
+
+        Parameters
+        ----------
+        w0
+        partcle_potentials
+        external_potential
+        units
+
+
+        """
+        if not isinstance(w0, gd.PhaseSpacePosition):
+            raise TypeError("Initial conditions `w0` must be a "
+                            "gala.dynamics.PhaseSpacePosition object, "
+                            "not '{}'".format(w0.__class__.__name__))
+
+        nbodies = w0.shape[0]
+        if not nbodies == len(particle_potentials):
+            raise ValueError("The number of initial conditions in `w0` must "
+                             "match the number of particle potentials passed "
+                             "in with `particle_potentials`.")
+
+        # First, figure out how to get units - first place to check is the arg
+        if units is None:
+            # Next, check the particle potentials
+            for pp in particle_potentials:
+                if pp is not None:
+                    units = pp.units
+                    break
+
+        # If units is still none, and external_potential is defined, use that:
+        if units is None and external_potential is not None:
+            units = external_potential.units
+
+        # Now, if units are still None, raise an error!
+        if units is None:
+            raise ValueError("Could not determine units from input! You must "
+                             "either (1) pass in the unit system with `units`,"
+                             "(2) set the units on one of the "
+                             "particle_potentials, OR (3) pass in an "
+                             "`external_potential` with valid units.")
+
+        # Now that we have the unit system, enforce that all potentials are in
+        # that system:
+        _particle_potentials = []
+        for pp in particle_potentials:
+            if pp is None:
+                pp = gp.NullPotential(units)
+            else:
+                pp = pp.replace_units(units, copy=True)
+            _particle_potentials.append(pp)
+
+        if external_potential is None:
+            external_potential = gp.NullPotential(units)
+        else:
+            external_potential = external_potential.replace_units(units,
+                                                                  copy=True)
+
+        self.w0 = w0
+        self.units = units
+        self.external_potential = external_potential
+        self.particle_potentials = _particle_potentials
+
+
+    def __repr__(self):
+        return "<{} bodies={}>".format(self.__class__.__name__,
+                                       self.w0.shape[0])
 
 
 # def direct_nbody(ic, external_potential=None,
