@@ -60,7 +60,8 @@ cpdef _direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
                         .format(type(hamiltonian)))
 
     if not hamiltonian.c_enabled:
-        raise TypeError("Input Hamiltonian object does not support C-level access.")
+        raise TypeError("Input Hamiltonian object does not support C-level "
+                        "access.")
 
     cdef:
         unsigned nparticles = w0.shape[0]
