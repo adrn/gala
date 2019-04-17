@@ -700,7 +700,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             If True, returns a copy, if False, changes this object.
         """
         if copy:
-            pot = pycopy.copy(self)
+            pot = pycopy.deepcopy(self)
         else:
             pot = self
 
