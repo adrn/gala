@@ -3,6 +3,9 @@
 
 New Features
 ------------
+- Potential objects now support replacing the unit system with the
+  ``.replace_units()`` method, or by updating the ``.units`` attribute on an
+  existing instance.
 
 Bug fixes
 ---------
