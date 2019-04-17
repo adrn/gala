@@ -17,7 +17,7 @@ from matplotlib import cm
 from ..core import PotentialBase, CompositePotential
 from ....units import UnitSystem
 
-units = [u.kpc,u.Myr,u.Msun,u.radian]
+units = [u.kpc, u.Myr, u.Msun, u.radian]
 G = G.decompose(units)
 
 def test_new_simple():
@@ -42,9 +42,9 @@ def test_new_simple():
     p.energy(np.arange(0.5, 11.5, 0.5).reshape(1,-1))
     p.acceleration(np.arange(0.5, 11.5, 0.5).reshape(1,-1))
 
-# ----------------------------------------------------------------------------
 
 usys = UnitSystem(u.au, u.yr, u.Msun, u.radian)
+
 class MyPotential(PotentialBase):
     def __init__(self, m, x0, units=None):
         parameters = OrderedDict()
@@ -74,6 +74,7 @@ def test_repr():
     assert _repr.endswith("(AU,yr,solMass,rad)>")
     # assert p.__repr__() == "<MyPotential: m=1.00e+10, x0=0.00e+00 (AU,yr,solMass,rad)>"
 
+
 def test_plot():
     p = MyPotential(m=1, x0=[1.,3.,0.], units=usys)
     f = p.plot_contours(grid=(np.linspace(-10., 10., 100), 0., 0.),
@@ -92,6 +93,7 @@ def test_plot():
                               np.linspace(-10., 10., 100)),
                         cmap=cm.Blues, labels=["X", "Z"])
     # f.savefig(os.path.join(plot_path, "contour_xz.png"))
+
 
 def test_composite():
     p1 = MyPotential(m=1., x0=[1.,0.,0.], units=usys)
@@ -112,3 +114,23 @@ def test_composite():
     assert u.au in p.units
     assert u.yr in p.units
     assert u.Msun in p.units
+
+
+def test_replace_units():
+    usys1 = UnitSystem([u.kpc, u.Gyr, u.Msun, u.radian])
+    usys2 = UnitSystem([u.pc, u.Myr, u.Msun, u.degree])
+
+    p = MyPotential(m=1.E10*u.Msun, x0=0., units=usys1)
+    assert p.parameters['m'].unit == usys1['mass']
+
+    p2 = p.replace_units(usys2, copy=True)
+    assert p2.parameters['m'].unit == usys2['mass']
+    assert p.units == usys1
+    assert p2.units == usys2
+
+    p.replace_units(usys2, copy=False)
+    assert p.parameters['m'].unit == usys2['mass']
+    assert p.units == usys2
+
+    p.units = usys1
+    assert p.parameters['m'].unit == usys1['mass']

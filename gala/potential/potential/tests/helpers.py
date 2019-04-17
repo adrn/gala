@@ -1,8 +1,10 @@
 # Standard library
+import copy
 import pickle
 import time
 
 # Third-party
+import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.misc import derivative
@@ -67,10 +69,26 @@ class PotentialTestBase(object):
     def test_unitsystem(self):
         assert isinstance(self.potential.units, UnitSystem)
 
+        # check that we can replace the units as expected
+        usys = UnitSystem([u.pc, u.Gyr, u.degree, u.Msun])
+        pot = copy.deepcopy(self.potential)
+
+        pot2 = pot.replace_units(usys, copy=True)
+        assert pot2.units == usys
+        assert pot.units == self.potential.units
+
+        pot.replace_units(usys, copy=False)
+        assert pot.units == usys
+
+        # try by setting units attribute
+        pot = copy.deepcopy(self.potential)
+        pot.units = usys
+        assert pot.units == usys
+
     def test_energy(self):
         assert self.ndim == self.potential.ndim
 
-        for arr,  shp in zip(self.w0s, self._valu_return_shapes):
+        for arr, shp in zip(self.w0s, self._valu_return_shapes):
             v = self.potential.energy(arr[:self.ndim])
             assert v.shape == shp
 

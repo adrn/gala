@@ -67,7 +67,8 @@ cdef class CCompositePotentialWrapper(CPotentialWrapper):
     def __reduce__(self):
         return (self.__class__, (list(self._potentials),))
 
-class CCompositePotential(CPotentialBase, CompositePotential):
+
+class CCompositePotential(CompositePotential, CPotentialBase):
 
     def __init__(self, **potentials):
         CompositePotential.__init__(self, **potentials)
@@ -84,9 +85,10 @@ class CCompositePotential(CPotentialBase, CompositePotential):
         self._reset_c_instance()
 
     def __setstate__(self, state):
-        # when rebuilding from a pickle, temporarily release lock to add components
+        # when rebuilding from a pickle, temporarily release lock
         self.lock = False
-        for name,potential in state:
+        self._units = None
+        for name, potential in state:
             self[name] = potential
         self._reset_c_instance()
         self.lock = True

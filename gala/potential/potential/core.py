@@ -1,5 +1,6 @@
 # Standard library
 import abc
+import copy as pycopy
 from collections import OrderedDict
 import warnings
 import uuid
@@ -37,10 +38,9 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     """
 
     def __init__(self, parameters, origin=None, R=None,
-                 parameter_physical_types=None,
                  ndim=3, units=None):
 
-        self.units = self._validate_units(units)
+        self._units = self._validate_units(units)
         self.parameters = self._prepare_parameters(parameters, self.units)
 
         try:
@@ -58,17 +58,16 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             raise NotImplementedError('Gala potentials currently only support '
                                       'rotations when ndim=2 or ndim=3.')
 
-        if R is None:
-            R = np.eye(ndim)
-        elif isinstance(R, Rotation):
-            R = R.as_dcm()
+        if R is not None:
+            if isinstance(R, Rotation):
+                R = R.as_dcm()
+            R = np.array(R)
 
-        R = np.array(R)
-        if R.shape != (ndim, ndim):
-            raise ValueError('Rotation matrix passed to potential {0} has '
-                             'an invalid shape: expected {1}, got {2}'
-                             .format(self.__class__.__name__,
-                                     (ndim, ndim), R.shape))
+            if R.shape != (ndim, ndim):
+                raise ValueError('Rotation matrix passed to potential {0} has '
+                                 'an invalid shape: expected {1}, got {2}'
+                                 .format(self.__class__.__name__,
+                                         (ndim, ndim), R.shape))
         self.R = R
 
     def to_latex(self):
@@ -681,6 +680,39 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         from .io import save
         save(self, f)
 
+    @property
+    def units(self):
+        return self._units
+
+    @units.setter
+    def units(self, units):
+        self.replace_units(units, copy=False)
+
+    def replace_units(self, units, copy=True):
+        """Change the unit system of this potential.
+
+        Parameters
+        ----------
+        units : `~gala.units.UnitSystem`
+            Set of non-reducable units that specify (at minimum) the
+            length, mass, time, and angle units.
+        copy : bool (optional)
+            If True, returns a copy, if False, changes this object.
+        """
+        if copy:
+            pot = pycopy.deepcopy(self)
+        else:
+            pot = self
+
+        PotentialBase.__init__(pot,
+                               parameters=self.parameters,
+                               origin=self.origin,
+                               R=self.R,
+                               ndim=self.ndim,
+                               units=units)
+
+        return pot
+
     # ========================================================================
     # Deprecated methods
     #
@@ -753,21 +785,20 @@ class CompositePotential(PotentialBase, OrderedDict):
             self.ndim = p.ndim
 
         else:
-            if sorted([str(x) for x in self.units]) != sorted([str(x) for x in p.units]):
-                raise ValueError("Unit system of new potential component must match "
-                                 "unit systems of other potential components.")
+            if (sorted([str(x) for x in self.units]) !=
+                    sorted([str(x) for x in p.units])):
+                raise ValueError("Unit system of new potential component must "
+                                 "match unit systems of other potential "
+                                 "components.")
 
             if p.ndim != self.ndim:
-                raise ValueError("All potential components must have the same number of "
-                                 "phase-space dimensions ({} in this case)".format(self.ndim))
+                raise ValueError("All potential components must have the same "
+                                 "number of phase-space dimensions ({} in this "
+                                 "case)".format(self.ndim))
 
         if self.lock:
-            raise ValueError("Potential object is locked - new components can only be"
-                             " added to unlocked potentials.")
-
-    @property
-    def units(self):  # read-only
-        return self._units
+            raise ValueError("Potential object is locked - new components can "
+                             "only be added to unlocked potentials.")
 
     @property
     def parameters(self):
@@ -775,6 +806,32 @@ class CompositePotential(PotentialBase, OrderedDict):
         for k, v in self.items():
             params[k] = v.parameters
         return ImmutableDict(**params)
+
+    def replace_units(self, units, copy=True):
+        """Change the unit system of this potential.
+
+        Parameters
+        ----------
+        units : `~gala.units.UnitSystem`
+            Set of non-reducable units that specify (at minimum) the
+            length, mass, time, and angle units.
+        copy : bool (optional)
+            If True, returns a copy, if False, changes this object.
+        """
+        _lock = self.lock
+        if copy:
+            pots = self.__class__()
+        else:
+            pots = self
+
+        pots._units = None
+        pots.lock = False
+
+        for k, v in self.items():
+            pots[k] = v.replace_units(units, copy=copy)
+
+        pots.lock = _lock
+        return pots
 
     def _energy(self, q, t=0.):
         return np.sum([p._energy(q, t) for p in self.values()], axis=0)

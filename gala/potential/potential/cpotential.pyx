@@ -7,6 +7,7 @@
 
 # Standard library
 from collections import OrderedDict
+import copy as pycopy
 import sys
 import warnings
 import uuid
@@ -254,27 +255,39 @@ class CPotentialBase(PotentialBase):
         super(CPotentialBase, self).__init__(
             parameters, origin=origin, R=R, units=units, ndim=ndim)
 
+        self._c_only = c_only
+
+        if Wrapper is None:
+            # magic to set the c_instance attribute based on the name of the class
+            wrapper_name = '{}Wrapper'.format(
+                self.__class__.__name__.replace('Potential', ''))
+            module = sys.modules[self.__module__]
+            Wrapper = getattr(module, wrapper_name)  # try to find wrapper in the same module
+        self._Wrapper = Wrapper
+
+        self._init_c_instance()
+
+    def _init_c_instance(self):
         # to support array parameters, but they get unraveled
-        arrs = [np.atleast_1d(v.value).ravel() for v in self.parameters.values()]
+        arrs = [np.atleast_1d(v.value).ravel()
+                for v in self.parameters.values()]
         if len(arrs) > 0:
             self.c_parameters = np.concatenate(arrs)
         else:
             self.c_parameters = np.array([])
 
-        if Wrapper is None:
-            # magic to set the c_instance attribute based on the name of the class
-            wrapper_name = '{}Wrapper'.format(self.__class__.__name__.replace('Potential', ''))
-
-            module = sys.modules[self.__module__]
-            Wrapper = getattr(module, wrapper_name)  # try to find wrapper in the same module
-
-        self.c_instance = Wrapper(self.G, self.c_parameters, q0=self.origin,
-                                  R=self.R)
+        if self.R is None:
+            self._R = np.eye(self.ndim)
+        else:
+            self._R = self.R
+        self.c_instance = self._Wrapper(self.G, self.c_parameters,
+                                        q0=self.origin, R=self._R)
 
         # remove C-only parameters from parameter dictionary
-        if c_only is not None:
-            for name in c_only:
-                del self.parameters[name]
+        if self._c_only is not None:
+            for name in self._c_only:
+                if name in self.parameters:
+                    del self.parameters[name]
 
     def _energy(self, q, t):
         return self.c_instance.energy(q, t=t)
@@ -367,3 +380,30 @@ class CPotentialBase(PotentialBase):
             new_pot[k] = pot
 
         return new_pot
+
+    def replace_units(self, units, copy=True):
+        """Change the unit system of this potential.
+
+        Parameters
+        ----------
+        units : `~gala.units.UnitSystem`
+            Set of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+        copy : bool (optional)
+            If True, returns a copy, if False, changes this object.
+        """
+        if copy:
+            pot = pycopy.copy(self)
+        else:
+            pot = self
+
+        CPotentialBase.__init__(pot,
+                                parameters=self.parameters,
+                                origin=self.origin,
+                                R=self.R,
+                                ndim=self.ndim,
+                                units=units,
+                                Wrapper=self._Wrapper,
+                                c_only=self._c_only)
+
+        return pot

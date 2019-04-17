@@ -52,19 +52,19 @@ class LM10Potential(CCompositePotential):
                             phi=97*u.degree,
                             v_c=np.sqrt(2)*121.858*u.km/u.s)
 
-        for k,v in default_disk.items():
+        for k, v in default_disk.items():
             if k not in disk:
                 disk[k] = v
 
-        for k,v in default_bulge.items():
+        for k, v in default_bulge.items():
             if k not in bulge:
                 bulge[k] = v
 
-        for k,v in default_halo.items():
+        for k, v in default_halo.items():
             if k not in halo:
                 halo[k] = v
 
-        super(LM10Potential,self).__init__()
+        super().__init__()
 
         self["disk"] = MiyamotoNagaiPotential(units=units, **disk)
         self["bulge"] = HernquistPotential(units=units, **bulge)
@@ -121,23 +121,23 @@ class MilkyWayPotential(CCompositePotential):
         if nucleus is None:
             nucleus = dict()
 
-        for k,v in default_disk.items():
+        for k, v in default_disk.items():
             if k not in disk:
                 disk[k] = v
 
-        for k,v in default_bulge.items():
+        for k, v in default_bulge.items():
             if k not in bulge:
                 bulge[k] = v
 
-        for k,v in default_halo.items():
+        for k, v in default_halo.items():
             if k not in halo:
                 halo[k] = v
 
-        for k,v in default_nucl.items():
+        for k, v in default_nucl.items():
             if k not in nucleus:
                 nucleus[k] = v
 
-        super(MilkyWayPotential, self).__init__()
+        super().__init__()
 
         self["disk"] = MiyamotoNagaiPotential(units=units, **disk)
         self["bulge"] = HernquistPotential(units=units, **bulge)
@@ -194,19 +194,19 @@ class BovyMWPotential2014(CCompositePotential):
         if bulge is None:
             bulge = dict()
 
-        for k,v in default_disk.items():
+        for k, v in default_disk.items():
             if k not in disk:
                 disk[k] = v
 
-        for k,v in default_bulge.items():
+        for k, v in default_bulge.items():
             if k not in bulge:
                 bulge[k] = v
 
-        for k,v in default_halo.items():
+        for k, v in default_halo.items():
             if k not in halo:
                 halo[k] = v
 
-        super(BovyMWPotential2014, self).__init__()
+        super().__init__()
 
         self["disk"] = MiyamotoNagaiPotential(units=units, **disk)
         self["bulge"] = PowerLawCutoffPotential(units=units, **bulge)
