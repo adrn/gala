@@ -286,7 +286,8 @@ class CPotentialBase(PotentialBase):
         # remove C-only parameters from parameter dictionary
         if self._c_only is not None:
             for name in self._c_only:
-                del self.parameters[name]
+                if name in self.parameters:
+                    del self.parameters[name]
 
     def _energy(self, q, t):
         return self.c_instance.energy(q, t=t)
