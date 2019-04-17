@@ -104,6 +104,9 @@ cpdef _mock_stream_dop853(hamiltonian, double[::1] t, double[:,::1] prog_w,
         int ntimes = t.shape[0] # number of times
         int nparticles # total number of test particles released
 
+        # Needed for dop853
+        void *args
+
         unsigned ndim = prog_w.shape[1] # phase-space dimensionality
         unsigned ndim_2 = ndim / 2 # configuration-space dimensionality
 
@@ -242,7 +245,7 @@ cpdef _mock_stream_dop853(hamiltonian, double[::1] t, double[:,::1] prog_w,
     for i in range(nparticles):
         dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper,
                     &_w[i,0], t1[i], t_end, dt0,
-                    ndim, 1,
+                    ndim, 1, args,
                     atol, rtol, nmax)
 
         PyErr_CheckSignals()
@@ -532,6 +535,9 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
         int ntimes = t.shape[0] # number of times
         int nparticles # total number of test particles released
 
+        # Needed for dop853
+        void *args
+
         unsigned ndim = prog_w.shape[1] # phase-space dimensionality
         unsigned ndim_2 = ndim / 2 # configuration-space dimensionality
 
@@ -704,7 +710,7 @@ cpdef _mock_stream_animate(snapshot_filename, hamiltonian,
         for j in range(1, all_ntimes[i]+1, 1):
             dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper,
                         &w[i*ndim], t_j, t_j+dt0, dt0,
-                        ndim, 1,
+                        ndim, 1, args,
                         atol, rtol, nmax)
 
             PyErr_CheckSignals()
