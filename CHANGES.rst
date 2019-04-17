@@ -6,6 +6,8 @@ New Features
 - Potential objects now support replacing the unit system with the
   ``.replace_units()`` method, or by updating the ``.units`` attribute on an
   existing instance.
+- Added a ``DirectNBody`` class that supports direct N-body orbit integration in
+  (optional) external background potentials.
 
 Bug fixes
 ---------
