@@ -123,6 +123,11 @@ def test_slice():
     assert isinstance(new_o, PhaseSpacePosition)
     assert new_o.shape == (8,)
 
+    # REGRESSION TEST: numpy int64 is not an int()
+    new_o = o[np.int64(3)]
+    assert isinstance(new_o, PhaseSpacePosition)
+    assert new_o.shape == (8,)
+
     # 3d slice on 3d
     o = Orbit(pos=x, vel=v, t=t)
     new_o = o[:5,:4]
