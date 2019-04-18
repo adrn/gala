@@ -1,24 +1,21 @@
 name: gala
 
-channels:
-  - astropy
-  - conda-forge
-
 dependencies:
   - python
-  - astropy>=3
-  - astropy-helpers
   - numpy
   - cython
-  - matplotlib
-  - scipy
-  - pyyaml
-  - IPython
-  - jupyter
-  - notebook
-  - ipykernel
   - gsl
+  - pip
   - pip:
+    - astropy
     - nbsphinx
     - sphinx_astropy
+    - astropy-helpers
     - tqdm
+    - matplotlib
+    - scipy
+    - pyyaml
+    - IPython
+    - jupyter
+    - notebook
+    - ipykernel
