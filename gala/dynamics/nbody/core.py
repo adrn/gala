@@ -8,7 +8,7 @@
 # Third-party
 import numpy as np
 
-from ...potential import Hamiltonian, NullPotential
+from ...potential import Hamiltonian, NullPotential, StaticFrame
 from ...units import UnitSystem
 from ...integrate.timespec import parse_time_specification
 from .. import Orbit, PhaseSpacePosition
@@ -21,7 +21,7 @@ __all__ = ['DirectNBody']
 class DirectNBody:
 
     def __init__(self, w0, particle_potentials, external_potential=None,
-                 units=None, save_all=True):
+                 frame=None, units=None, save_all=True):
         """Perform orbit integration using direct N-body forces between
         particles, optionally in an external background potential.
 
@@ -38,6 +38,8 @@ class DirectNBody:
         external_potential : `~gala.potential.PotentialBase` subclass instance (optional)
             The background or external potential to integrate the particle
             orbits in.
+        frame : :class:`~gala.potential.frame.FrameBase` subclass (optional)
+            The reference frame to perform integratiosn in.
         units : `~gala.units.UnitSystem` (optional)
             Set of non-reducable units that specify (at minimum) the
             length, mass, time, and angle units.
@@ -99,14 +101,19 @@ class DirectNBody:
             external_potential = external_potential.replace_units(units,
                                                                   copy=True)
 
+        if frame is None:
+            frame = StaticFrame(units)
+
         self.w0 = w0
         self.units = units
         self.external_potential = external_potential
+        self.frame = frame
         self.particle_potentials = _particle_potentials
         self.save_all = save_all
 
         # This currently only supports non-rotating frames
-        self._ext_ham = Hamiltonian(self.external_potential)
+        self._ext_ham = Hamiltonian(self.external_potential,
+                                    frame=self.frame)
         if not self._ext_ham.c_enabled:
             raise ValueError("Input potential must be C-enabled: one or more "
                              "components in the input external potential are "
@@ -155,7 +162,8 @@ class DirectNBody:
             orbits = Orbit(
                 pos=pos * self.units['length'],
                 vel=vel * self.units['length'] / self.units['time'],
-                t=t * self.units['time'])
+                t=t * self.units['time'],
+                hamiltonian=self._ext_ham)
 
         else:
             pos = np.array(ws[..., :3]).T
@@ -163,6 +171,7 @@ class DirectNBody:
 
             orbits = PhaseSpacePosition(
                 pos=pos * self.units['length'],
-                vel=vel * self.units['length'] / self.units['time'])
+                vel=vel * self.units['length'] / self.units['time'],
+                frame=self.frame)
 
         return orbits

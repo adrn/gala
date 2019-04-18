@@ -5,8 +5,9 @@ import numpy as np
 import pytest
 
 # Custom
-from ....potential import (Hamiltonian, NullPotential, NFWPotential,
-                           HernquistPotential, KuzminPotential)
+from ....potential import (NullPotential, NFWPotential,
+                           HernquistPotential, KuzminPotential,
+                           ConstantRotatingFrame, StaticFrame)
 from ....dynamics import PhaseSpacePosition, combine
 from ....units import UnitSystem, galactic
 
@@ -24,7 +25,7 @@ class TestDirectNBody:
 
         self.particle_potentials = [NullPotential(self.usys), pot_particle2]
 
-        w0_2 = PhaseSpacePosition(pos=[0, 0, 10] * u.kpc,
+        w0_2 = PhaseSpacePosition(pos=[10, 0, 0] * u.kpc,
                                   vel=[0, 83, 0] * u.km/u.s)
         w0_1 = PhaseSpacePosition(pos=w0_2.xyz + [1, 0, 0] * u.pc,
                                   vel=w0_2.v_xyz + [0, 1., 0] * vcirc)
@@ -63,10 +64,10 @@ class TestDirectNBody:
             DirectNBody(self.w0,
                         particle_potentials=self.particle_potentials[:1])
 
-        MAX_NBODY1 = 65536+1
-        w0_max = combine([self.w0[0]]*MAX_NBODY1)
-        with pytest.raises(NotImplementedError):
-            DirectNBody(w0_max, particle_potentials=[None]*MAX_NBODY1)
+        # MAX_NBODY1 = 65536+1
+        # w0_max = combine([self.w0[0]]*MAX_NBODY1)
+        # with pytest.raises(NotImplementedError):
+        #     DirectNBody(w0_max, particle_potentials=[None]*MAX_NBODY1)
 
         with pytest.raises(ValueError):
             DirectNBody(self.w0, particle_potentials=[None, None])
@@ -138,3 +139,27 @@ class TestDirectNBody:
         w2 = orbits[-1]
         assert quantity_allclose(w1.xyz, w2.xyz)
         assert quantity_allclose(w1.v_xyz, w2.v_xyz)
+
+    def test_directnbody_integrate_rotframe(self):
+        # Now compare with/without mass with external potential:
+        frame = ConstantRotatingFrame(Omega=[0,0,1]*self.w0[0].v_y/self.w0[0].x,
+                                      units=self.usys)
+        nbody = DirectNBody(self.w0,
+                            particle_potentials=self.particle_potentials,
+                            units=self.usys,
+                            external_potential=self.ext_pot,
+                            frame=frame)
+        nbody2 = DirectNBody(self.w0,
+                             particle_potentials=self.particle_potentials,
+                             units=self.usys,
+                             external_potential=self.ext_pot)
+
+        orbits = nbody.integrate_orbit(dt=1*self.usys['time'],
+                                       t1=0, t2=1*u.Myr)
+        orbits_static = orbits.to_frame(StaticFrame(self.usys))
+
+        orbits2 = nbody2.integrate_orbit(dt=1*self.usys['time'],
+                                         t1=0, t2=1*u.Myr)
+
+        assert quantity_allclose(orbits_static.xyz, orbits_static.xyz)
+        assert quantity_allclose(orbits2.v_xyz, orbits2.v_xyz)
