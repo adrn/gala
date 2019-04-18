@@ -46,7 +46,7 @@ cdef extern from "dopri/dop853.h":
                                CPotential *p, CFrame *fr, unsigned norbits,
                                void *args)
 
-DEF MAX_NBODY = 1024;
+DEF MAX_NBODY = 65536;
 
 cpdef _direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
                            hamiltonian, list particle_potentials,

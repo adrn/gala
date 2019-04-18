@@ -63,9 +63,10 @@ class TestDirectNBody:
             DirectNBody(self.w0,
                         particle_potentials=self.particle_potentials[:1])
 
-        w01025 = combine([self.w0[0]]*1025)
+        MAX_NBODY1 = 65536+1
+        w0_max = combine([self.w0[0]]*MAX_NBODY1)
         with pytest.raises(NotImplementedError):
-            DirectNBody(w01025, particle_potentials=[None]*1025)
+            DirectNBody(w0_max, particle_potentials=[None]*MAX_NBODY1)
 
         with pytest.raises(ValueError):
             DirectNBody(self.w0, particle_potentials=[None, None])
