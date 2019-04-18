@@ -17,6 +17,7 @@ cdef extern from "potential/src/cpotential.h":
     ctypedef struct CPotential:
         int n_components
         int n_dim
+        int null
         densityfunc density[MAX_N_COMPONENTS]
         energyfunc value[MAX_N_COMPONENTS]
         gradientfunc gradient[MAX_N_COMPONENTS]

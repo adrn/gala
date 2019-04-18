@@ -12,6 +12,7 @@
     struct _CPotential {
         int n_components; // number of potential components
         int n_dim; // coordinate system dimensionality
+        int null; // a short circuit: if null, can skip evaluation
 
         // arrays of pointers to each of the function types above
         densityfunc density[MAX_N_COMPONENTS];

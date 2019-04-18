@@ -1014,6 +1014,10 @@ void Fwrapper_direct_nbody (unsigned full_ndim, double t, double *w, double *f,
 
     for (j=0; j < norbits; j++) { // the particles generating force
         pp = ((CPotential **)args)[j];
+
+        if ((pp->null) == 1)
+            continue;
+
         (pp->q0)[0] = &w[j*ndim];
 
         for (i=0; i < norbits; i++) {
