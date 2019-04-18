@@ -101,6 +101,13 @@ class DirectNBody:
         self.external_potential = external_potential
         self.particle_potentials = _particle_potentials
 
+        # This currently only supports non-rotating frames
+        self._ext_ham = Hamiltonian(self.external_potential)
+        if not self._ext_ham.c_enabled:
+            raise ValueError("Input potential must be C-enabled: one or more "
+                             "components in the input external potential are "
+                             "Python-only.")
+
     def __repr__(self):
         return "<{} bodies={}>".format(self.__class__.__name__,
                                        self.w0.shape[0])
@@ -133,10 +140,7 @@ class DirectNBody:
         # Prepare the time-stepping array
         t = parse_time_specification(self.units, **time_spec)
 
-        # This currently only supports non-rotating frames
-        ext_ham = Hamiltonian(self.external_potential)
-
-        ws = _direct_nbody_dop853(w0, t, ext_ham,
+        ws = _direct_nbody_dop853(w0, t, self._ext_ham,
                                   self.particle_potentials)
         pos = np.rollaxis(np.array(ws[..., :3]), axis=2)
         vel = np.rollaxis(np.array(ws[..., 3:]), axis=2)
