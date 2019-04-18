@@ -5,7 +5,7 @@ channels:
   - conda-forge
 
 dependencies:
-  - python==3.6
+  - python
   - astropy>=3
   - astropy-helpers
   - numpy
@@ -19,6 +19,6 @@ dependencies:
   - ipykernel
   - gsl
   - pip:
-    - nbsphinx==0.3.1
+    - nbsphinx
     - sphinx_astropy
     - tqdm
