@@ -912,6 +912,7 @@ cdef class NullWrapper(CPotentialWrapper):
         self.cpotential.density[0] = <densityfunc>(null_density)
         self.cpotential.gradient[0] = <gradientfunc>(null_gradient)
         self.cpotential.hessian[0] = <hessianfunc>(null_hessian)
+        self.cpotential.null = 1
 
 @format_doc(common_doc=_potential_docstring)
 class NullPotential(CPotentialBase):

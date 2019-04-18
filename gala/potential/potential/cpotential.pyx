@@ -72,6 +72,9 @@ cdef class CPotentialWrapper:
         #   always one - composite potentials override this.
         self.cpotential.n_components = 1
 
+        # by default, don't skip this potential!
+        self.cpotential.null = 0
+
         # set the function pointers to nan defaults
         self.cpotential.value[0] = <energyfunc>(nan_value)
         self.cpotential.density[0] = <densityfunc>(nan_density)

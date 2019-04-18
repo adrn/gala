@@ -28,12 +28,14 @@ cdef extern from "potential/src/cpotential.h":
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, CFrame *fr, unsigned norbits) nogil
-    ctypedef void (*SolTrait)(long nr, double xold, double x, double* y, unsigned n, int* irtrn)
+                              CPotential *p, CFrame *fr, unsigned norbits,
+                              void *args) nogil
+    ctypedef void (*SolTrait)(long nr, double xold, double x, double* y,
+                              unsigned n, int* irtrn)
 
     # See dop853.h for full description of all input parameters
     int dop853 (unsigned n, FcnEqDiff fn,
-                CPotential *p, CFrame *fr, unsigned n_orbits,
+                CPotential *p, CFrame *fr, unsigned n_orbits, void *args,
                 double x, double* y, double xend,
                 double* rtoler, double* atoler, int itoler, SolTrait solout,
                 int iout, FILE* fileout, double uround, double safe, double fac1,
@@ -51,15 +53,15 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
     # TODO: see here for example in FORTRAN: http://www.unige.ch/~hairer/prog/nonstiff/dr_dop853.f
     pass
 
-cdef void dop853_step(CPotential *cp, CFrame *cf,
+cdef void dop853_step(CPotential *cp, CFrame *cf, FcnEqDiff F,
                       double *w, double t1, double t2, double dt0,
-                      int ndim, int norbits,
+                      int ndim, int norbits, void *args,
                       double atol, double rtol, int nmax) except *:
 
     cdef int res
 
-    res = dop853(ndim*norbits, <FcnEqDiff> Fwrapper,
-                 cp, cf, norbits, t1, w, t2,
+    res = dop853(ndim*norbits, <FcnEqDiff> F,
+                 cp, cf, norbits, args, t1, w, t2,
                  &rtol, &atol, 0, solout, 0,
                  NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0);
 
@@ -72,9 +74,9 @@ cdef void dop853_step(CPotential *cp, CFrame *cf,
     elif res == -4:
         raise RuntimeError("The problem is probably stiff (interrupted).")
 
-cdef dop853_helper(CPotential *cp, CFrame *cf,
+cdef dop853_helper(CPotential *cp, CFrame *cf, FcnEqDiff F,
                    double[:,::1] w0, double[::1] t,
-                   int ndim, int norbits, int ntimes,
+                   int ndim, int norbits, void *args, int ntimes,
                    double atol, double rtol, int nmax):
 
     cdef:
@@ -89,17 +91,18 @@ cdef dop853_helper(CPotential *cp, CFrame *cf,
             w[i*ndim + k] = w0[i,k]
 
     for j in range(1,ntimes,1):
-        dop853_step(cp, cf, &w[0], t[j-1], t[j], dt0,
-                    ndim, norbits,
+        dop853_step(cp, cf, F,
+                    &w[0], t[j-1], t[j], dt0,
+                    ndim, norbits, args,
                     atol, rtol, nmax)
 
         PyErr_CheckSignals()
 
     return w
 
-cdef dop853_helper_save_all(CPotential *cp, CFrame *cf,
+cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
                             double[:,::1] w0, double[::1] t,
-                            int ndim, int norbits, int ntimes,
+                            int ndim, int norbits, void *args, int ntimes,
                             double atol, double rtol, int nmax):
 
     cdef:
@@ -116,7 +119,8 @@ cdef dop853_helper_save_all(CPotential *cp, CFrame *cf,
             all_w[0,i,k] = w0[i,k]
 
     for j in range(1,ntimes,1):
-        dop853_step(cp, cf, &w[0], t[j-1], t[j], dt0, ndim, norbits,
+        dop853_step(cp, cf, F,
+                    &w[0], t[j-1], t[j], dt0, ndim, norbits, args,
                     atol, rtol, nmax)
 
         for k in range(ndim):
@@ -142,6 +146,7 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:,::1] w0, double[::1] t,
         int i, j, k
         unsigned norbits = w0.shape[0]
         unsigned ndim = w0.shape[1]
+        void *args
 
         # define full array of times
         int ntimes = len(t)
@@ -150,8 +155,9 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:,::1] w0, double[::1] t,
         CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
         CFrame cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
-    all_w = dop853_helper_save_all(&cp, &cf, w0, t,
-                                   ndim, norbits, ntimes,
+    all_w = dop853_helper_save_all(&cp, &cf, <FcnEqDiff> Fwrapper,
+                                   w0, t,
+                                   ndim, norbits, args, ntimes,
                                    atol, rtol, nmax)
 
     return np.asarray(t), np.asarray(all_w)

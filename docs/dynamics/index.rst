@@ -146,5 +146,6 @@ More details are provided in the linked pages below:
    actionangle
    mockstreams
    nonlinear
+   nbody
 
 .. automodapi:: gala.dynamics
