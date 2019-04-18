@@ -19,3 +19,4 @@ dependencies:
     - jupyter
     - notebook
     - ipykernel
+    - pytest
