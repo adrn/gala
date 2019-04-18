@@ -571,10 +571,11 @@ if HAS_MPL:
 mpl_style = {
 
     # Lines
-    'lines.linewidth': 1.7,
+    'lines.linewidth': 1.,
     'lines.antialiased': True,
-    'lines.marker': '.',
-    'lines.markersize': 5.,
+    'lines.marker': 'o',
+    'lines.markersize': 4,
+    'lines.markeredgewidth': 0.,
 
     # Patches
     'patch.linewidth': 1.0,
@@ -582,15 +583,10 @@ mpl_style = {
     'patch.edgecolor': '#CCCCCC',
     'patch.antialiased': True,
 
-    # images
-    'image.origin': 'upper',
-
     # colormap
     'image.cmap': 'hesperia',
 
     # Font
-    'font.size': 18.0,
-    'text.latex.preamble': r'\usepackage{amsmath}',
     'axes.unicode_minus': False,
 
     # Axes
@@ -598,7 +594,7 @@ mpl_style = {
     'axes.edgecolor': '#AAAAAA',
     'axes.linewidth': 1.0,
     'axes.grid': False,
-    'axes.titlesize': 'x-large',
+    'axes.titlesize': 'large',
     'axes.labelsize': 'large',
     'axes.labelcolor': 'k',
     'axes.axisbelow': True,
@@ -624,10 +620,8 @@ mpl_style = {
     'legend.loc': 'best',
 
     # Figure
-    'figure.figsize': [8, 6],
+    'figure.figsize': [6, 4],
     'figure.facecolor': '1.0',
-    'figure.edgecolor': '0.50',
-    'figure.subplot.hspace': 0.5,
     'figure.dpi': 300,
 
     # Other
