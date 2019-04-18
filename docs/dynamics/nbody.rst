@@ -84,7 +84,7 @@ orbits::
 
 .. plot::
     :align: center
-    :context:
+    :context: close-figs
 
     import astropy.units as u
     import numpy as np
@@ -136,7 +136,7 @@ external potential::
 
 .. plot::
     :align: center
-    :context:
+    :context: close-figs
 
     external_pot = gp.MilkyWayPotential()
     w0_1 = gd.PhaseSpacePosition(pos=[10, 0, 0] * u.kpc,
@@ -165,7 +165,7 @@ should give us a sense of whether particle 2 is bound or unbound to this mass::
 
 .. plot::
     :align: center
-    :context:
+    :context: close-figs
 
     dxyz = orbits[:, 0].xyz - orbits[:, 1].xyz
 
