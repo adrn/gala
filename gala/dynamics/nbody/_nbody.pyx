@@ -22,7 +22,8 @@ from cpython.exc cimport PyErr_CheckSignals
 from ...potential import Hamiltonian
 from ...potential.potential.cpotential cimport CPotentialWrapper
 from ...potential.frame.cframe cimport CFrameWrapper
-from ...integrate.cyintegrators.dop853 cimport dop853_helper_save_all
+from ...integrate.cyintegrators.dop853 cimport (dop853_helper,
+                                                dop853_helper_save_all)
 
 cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrame:
@@ -50,6 +51,7 @@ DEF MAX_NBODY = 65536;
 
 cpdef _direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
                            hamiltonian, list particle_potentials,
+                           save_all=True,
                            double atol=1E-10, double rtol=1E-10, int nmax=0):
     """
     TODO
@@ -83,8 +85,19 @@ cpdef _direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
         c_particle_potentials[i] = &(<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
 
     args = <void *>(&c_particle_potentials[0])
-    all_w = dop853_helper_save_all(&cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
-                                   w0, t,
-                                   ndim, nparticles, args, ntimes,
-                                   atol, rtol, nmax)
+
+    if save_all:
+        all_w = dop853_helper_save_all(&cp, &cf,
+                                       <FcnEqDiff> Fwrapper_direct_nbody,
+                                       w0, t,
+                                       ndim, nparticles, args, ntimes,
+                                       atol, rtol, nmax)
+    else:
+        all_w = dop853_helper(&cp, &cf,
+                              <FcnEqDiff> Fwrapper_direct_nbody,
+                              w0, t,
+                              ndim, nparticles, args, ntimes,
+                              atol, rtol, nmax)
+        all_w = np.array(all_w).reshape(nparticles, ndim)
+
     return all_w

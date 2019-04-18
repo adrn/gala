@@ -117,3 +117,24 @@ class TestDirectNBody:
         dx1 = orbits1[:, 1].xyz - orbits2[:, 1].xyz
         assert quantity_allclose(np.abs(dx1), 0*u.pc, atol=1e-13*u.pc)
         assert np.abs(dx0).max() > 50*u.pc
+
+    def test_directnbody_integrate_dontsaveall(self):
+        # If we set save_all = False, only return the final positions:
+        nbody1 = DirectNBody(self.w0,
+                             particle_potentials=self.particle_potentials,
+                             units=self.usys,
+                             external_potential=self.ext_pot,
+                             save_all=False)
+        nbody2 = DirectNBody(self.w0,
+                             particle_potentials=self.particle_potentials,
+                             units=self.usys,
+                             external_potential=self.ext_pot,
+                             save_all=True)
+
+        w1 = nbody1.integrate_orbit(dt=1*self.usys['time'],
+                                    t1=0, t2=1*u.Myr)
+        orbits = nbody2.integrate_orbit(dt=1*self.usys['time'],
+                                        t1=0, t2=1*u.Myr)
+        w2 = orbits[-1]
+        assert quantity_allclose(w1.xyz, w2.xyz)
+        assert quantity_allclose(w1.v_xyz, w2.v_xyz)

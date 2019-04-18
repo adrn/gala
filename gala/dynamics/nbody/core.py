@@ -21,7 +21,7 @@ __all__ = ['DirectNBody']
 class DirectNBody:
 
     def __init__(self, w0, particle_potentials, external_potential=None,
-                 units=None):
+                 units=None, save_all=True):
         """Perform orbit integration using direct N-body forces between
         particles, optionally in an external background potential.
 
@@ -41,6 +41,9 @@ class DirectNBody:
         units : `~gala.units.UnitSystem` (optional)
             Set of non-reducable units that specify (at minimum) the
             length, mass, time, and angle units.
+        save_all : bool (optional)
+            Save the full orbits of each particle. If ``False``, only returns
+            the final phase-space positions of each particle.
 
         """
         if not isinstance(w0, PhaseSpacePosition):
@@ -100,6 +103,7 @@ class DirectNBody:
         self.units = units
         self.external_potential = external_potential
         self.particle_potentials = _particle_potentials
+        self.save_all = save_all
 
         # This currently only supports non-rotating frames
         self._ext_ham = Hamiltonian(self.external_potential)
@@ -141,13 +145,24 @@ class DirectNBody:
         t = parse_time_specification(self.units, **time_spec)
 
         ws = _direct_nbody_dop853(w0, t, self._ext_ham,
-                                  self.particle_potentials)
-        pos = np.rollaxis(np.array(ws[..., :3]), axis=2)
-        vel = np.rollaxis(np.array(ws[..., 3:]), axis=2)
+                                  self.particle_potentials,
+                                  save_all=self.save_all)
 
-        orbits = Orbit(
-            pos=pos * self.units['length'],
-            vel=vel * self.units['length'] / self.units['time'],
-            t=t * self.units['time'])
+        if self.save_all:
+            pos = np.rollaxis(np.array(ws[..., :3]), axis=2)
+            vel = np.rollaxis(np.array(ws[..., 3:]), axis=2)
+
+            orbits = Orbit(
+                pos=pos * self.units['length'],
+                vel=vel * self.units['length'] / self.units['time'],
+                t=t * self.units['time'])
+
+        else:
+            pos = np.array(ws[..., :3]).T
+            vel = np.array(ws[..., 3:]).T
+
+            orbits = PhaseSpacePosition(
+                pos=pos * self.units['length'],
+                vel=vel * self.units['length'] / self.units['time'])
 
         return orbits
