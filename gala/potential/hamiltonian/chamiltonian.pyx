@@ -33,6 +33,9 @@ class Hamiltonian(CommonBase):
 
     """
     def __init__(self, potential, frame=None):
+        if isinstance(potential, Hamiltonian):
+            frame = potential.frame
+            potential = potential.potential
 
         if frame is None:
             frame = StaticFrame(potential.units)

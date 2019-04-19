@@ -13,6 +13,8 @@ def test_init():
     p = KeplerPotential(m=1.)
     f = StaticFrame()
     H = Hamiltonian(potential=p, frame=f)
+    H2 = Hamiltonian(H)
+    assert H2.potential is H.potential
 
     p = KeplerPotential(m=1., units=solarsystem)
     f = StaticFrame(units=solarsystem)
