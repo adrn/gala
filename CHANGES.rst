@@ -8,6 +8,7 @@ New Features
   existing instance.
 - Added a ``DirectNBody`` class that supports direct N-body orbit integration in
   (optional) external background potentials.
+- Added a coordinate frame for the Jhelum stream, ``JhelumBonaca19``.
 
 Bug fixes
 ---------
