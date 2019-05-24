@@ -18,6 +18,7 @@ from ...potential import (Hamiltonian, HernquistPotential, LogarithmicPotential,
                           KeplerPotential)
 from ...potential.frame import StaticFrame, ConstantRotatingFrame
 from ...units import galactic, solarsystem
+from ..util import combine
 
 # Tests below should be cleaned up a bit...
 def test_initialize():
@@ -331,7 +332,7 @@ def test_eccentricity():
     e = w.eccentricity()
     assert np.abs(e) < 1E-3
 
-def test_apocenter_pericenter():
+def test_apocenter_pericenter_period():
     pot = KeplerPotential(m=1., units=solarsystem)
     w0 = PhaseSpacePosition(pos=[1,0,0.]*u.au,
                             vel=[0.,1.5*np.pi,0.]*u.au/u.yr)
@@ -369,6 +370,7 @@ def test_apocenter_pericenter():
     apos = w.apocenter(func=None)
     pers = w.pericenter(func=None)
     zmax = w.zmax(func=None)
+    T = w.estimate_period()
 
     dapo = np.std(apos) / np.mean(apos)
     assert (dapo > 0) and np.allclose(dapo, 0., atol=1E-5)
@@ -403,6 +405,20 @@ def test_estimate_period():
         orb = Orbit(pos*u.kpc, vel*u.kpc/u.Myr, t=t*u.Gyr)
         T = orb.estimate_period()
         assert np.allclose(T.value, true_T_R, rtol=1E-3)
+
+
+def test_estimate_period_regression():
+    pot = KeplerPotential(m=1., units=solarsystem)
+    w0 = PhaseSpacePosition(pos=[1, 0, 0.]*u.au,
+                            vel=[0., 1.5*np.pi, 0.]*u.au/u.yr)
+    w0 = combine((w0, w0, w0))
+
+    ham = Hamiltonian(pot)
+    w = ham.integrate_orbit(w0, dt=0.01, n_steps=10000,
+                            Integrator=DOPRI853Integrator)
+    T = w.estimate_period()
+    print(T)
+
 
 def make_known_orbits(tmpdir, xs, vxs, potential, names):
     # See Binney & Tremaine (2008) Figure 3.8 and 3.9
