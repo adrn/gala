@@ -4,7 +4,7 @@ import astropy.units as u
 import numpy as np
 
 # This package
-from ..gd1 import JhelumBonaca19
+from ..jhelum import JhelumBonaca19
 
 def test_simple():
     c = coord.ICRS(coord.Angle(217.2141, u.degree),
