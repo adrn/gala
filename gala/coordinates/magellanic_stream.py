@@ -24,8 +24,8 @@ class MagellanicStreamNidever08(BaseCoordinateFrame):
     For more information about this class, see the Astropy documentation
     on coordinate frames in :mod:`~astropy.coordinates`.
 
-    Example
-    -------
+    Examples
+    --------
     Converting the coordinates of the Large Magellanic Cloud:
 
         >>> from astropy import coordinates as coord
