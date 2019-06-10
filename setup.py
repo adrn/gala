@@ -170,10 +170,10 @@ if gsl_version is None:
         print('GSL not found: installing without GSL support. ' + _see_msg)
 
 elif gsl_version < ['1', '14']:
-    gsl_version = None
     print('Warning: GSL version ({0}) is below the minimum required version '
           '(1.16). Installing without GSL support. '
           .format('.'.join(gsl_version)) + _see_msg)
+    gsl_version = None
 
 else:
     print("GSL version {0} found: installing with GSL support"

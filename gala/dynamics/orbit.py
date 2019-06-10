@@ -662,12 +662,10 @@ class Orbit(PhaseSpacePosition):
         if radial:
             r = self.physicsspherical.r.value
             if self.norbits == 1:
-                T = peak_to_peak_period(self.t.value, r)
-                T = T * self.t.unit
+                T = u.Quantity(peak_to_peak_period(self.t, r))
             else:
-                T = [peak_to_peak_period(self.t.value, r[:,n])
-                     for n in range(r.shape[1])]
-                T = T * self.t.unit
+                T = u.Quantity([peak_to_peak_period(self.t, r[:, n])
+                                for n in range(r.shape[1])])
 
         else:
             raise NotImplementedError("sorry 'bout that...")
