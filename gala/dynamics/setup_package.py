@@ -29,6 +29,29 @@ def get_extensions():
 
     cfg = setup_helpers.DistutilsExtensionArgs()
     cfg['include_dirs'].append('numpy')
+    cfg['include_dirs'].append(mac_incl_path)
+    cfg['include_dirs'].append('gala/potential')
+    cfg['sources'].append('gala/dynamics/mockstream/df.pyx')
+    cfg['sources'].append('gala/potential/potential/src/cpotential.c')
+    cfg['extra_compile_args'].append('--std=gnu99')
+    exts.append(Extension('gala.dynamics.mockstream.df', **cfg))
+
+    # HACK:
+    cfg = setup_helpers.DistutilsExtensionArgs()
+    cfg['include_dirs'].append('numpy')
+    cfg['include_dirs'].append('gala/integrate/cyintegrators')
+    cfg['include_dirs'].append(mac_incl_path)
+    cfg['include_dirs'].append('gala/potential')
+    cfg['sources'].append('gala/potential/potential/src/cpotential.c')
+    cfg['sources'].append('gala/potential/hamiltonian/src/chamiltonian.c')
+    cfg['sources'].append('gala/dynamics/mockstream/new_mockstream.pyx')
+    cfg['sources'].append('gala/integrate/cyintegrators/dopri/dop853.c')
+    cfg['extra_compile_args'].append('--std=gnu99')
+    exts.append(Extension('gala.dynamics.mockstream.new_mockstream', **cfg))
+    # ^^ HACK
+
+    cfg = setup_helpers.DistutilsExtensionArgs()
+    cfg['include_dirs'].append('numpy')
     cfg['include_dirs'].append('gala/integrate/cyintegrators')
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/potential')
@@ -47,11 +70,12 @@ def get_extensions():
     cfg['sources'].append('gala/potential/potential/src/cpotential.c')
     cfg['sources'].append('gala/potential/hamiltonian/src/chamiltonian.c')
     cfg['sources'].append('gala/integrate/cyintegrators/dopri/dop853.c')
-    cfg['sources'].append('gala/dynamics/nbody/_nbody.pyx')
+    cfg['sources'].append('gala/dynamics/nbody/nbody.pyx')
     cfg['extra_compile_args'].append('--std=gnu99')
-    exts.append(Extension('gala.dynamics.nbody._nbody', **cfg))
+    exts.append(Extension('gala.dynamics.nbody.nbody', **cfg))
 
     return exts
 
 def get_package_data():
-    return {'gala.dynamics': ['*.pyx', '*.pxd', '*/*.pyx', '*/*.pxd']}
+    return {'gala.dynamics': ['*.pyx', '*.pxd', '*/*.pyx', '*/*.pxd',
+                              '*.h', '*/*.h']}

@@ -47,12 +47,12 @@ cdef extern from "dopri/dop853.h":
                                CPotential *p, CFrame *fr, unsigned norbits,
                                void *args)
 
-DEF MAX_NBODY = 65536;
+DEF MAX_NBODY = 1024 # TODO: figure out a way to export this
 
-cpdef _direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
-                           hamiltonian, list particle_potentials,
-                           save_all=True,
-                           double atol=1E-10, double rtol=1E-10, int nmax=0):
+cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
+                          hamiltonian, list particle_potentials,
+                          save_all=True,
+                          double atol=1E-10, double rtol=1E-10, int nmax=0):
     """
     TODO
     """
@@ -73,13 +73,8 @@ cpdef _direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
         int i
         void *args
         CPotential *c_particle_potentials[MAX_NBODY]
-        CPotential pp
-
         CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
         CFrame cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
-
-        double[::1] f = np.zeros(2*ndim)
-        int n_components = cp.n_components
 
     for i in range(nparticles):
         c_particle_potentials[i] = &(<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential

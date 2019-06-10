@@ -18,6 +18,35 @@ cdef extern from "math.h":
     double atan2(double y, double x) nogil
     double fmod(double y, double x) nogil
 
+
+cdef void cross(double *x, double *y, double *z):
+    z[0] = x[1]*y[2] - x[2]*y[1]
+    z[1] = -x[0]*y[2] + x[2]*y[0]
+    z[2] = x[0]*y[1] - x[1]*y[0]
+
+
+cdef double norm(double *x, int n):
+    cdef:
+        double val = 0.
+        int i
+
+    for i in range(n):
+        val += x[i]**2
+
+    return sqrt(val)
+
+
+cdef void apply_3matrix(double[:, ::1] R, double *x, double *y,
+                        int transpose):
+    cdef int i
+    if transpose == 0:
+        for i in range(3):
+            y[i] = R[i, 0] * x[0] + R[i, 1] * x[1] + R[i, 2] * x[2]
+    else:
+        for i in range(3):
+            y[i] = R[0, i] * x[0] + R[1, i] * x[1] + R[2, i] * x[2]
+
+
 cdef void sat_rotation_matrix(double *w, # in
                               double *R): # out
     cdef:
