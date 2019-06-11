@@ -42,6 +42,7 @@ def get_extensions():
     cfg['include_dirs'].append('gala/integrate/cyintegrators')
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/potential')
+    cfg['include_dirs'].append('gala/dynamics/nbody')
     cfg['sources'].append('gala/potential/potential/src/cpotential.c')
     cfg['sources'].append('gala/potential/hamiltonian/src/chamiltonian.c')
     cfg['sources'].append('gala/dynamics/mockstream/new_mockstream.pyx')
@@ -78,4 +79,4 @@ def get_extensions():
 
 def get_package_data():
     return {'gala.dynamics': ['*.pyx', '*.pxd', '*/*.pyx', '*/*.pxd',
-                              '*.h', '*/*.h']}
+                              '*.h', '*/*.h', 'nbody/nbody_helper.h']}

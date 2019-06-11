@@ -29,6 +29,7 @@ from ...potential.potential.builtin.cybuiltin import NullWrapper
 from ...potential import Hamiltonian
 from ...potential.frame import StaticFrame
 
+from .nbody.nbody cimport MAX_NBODY
 from .df cimport BaseStreamDF
 
 # __all__ = ['_mock_stream_dop853']
@@ -49,8 +50,6 @@ cdef extern from "dopri/dop853.h":
                                CPotential *p, CFrame *fr, unsigned norbits,
                                void *args)
 
-
-DEF MAX_NBODY = 1024 # TODO: import this from nbody.pyx
 
 # TODO: mass-loss should be added and supported by nbody...currently unsupported
 cpdef mockstream_dop853(nbody, double[::1] time,

@@ -11,8 +11,7 @@ cdef extern from "src/funcdefs.h":
     ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
 
 cdef extern from "potential/src/cpotential.h":
-    enum:
-        MAX_N_COMPONENTS = 16
+    const int MAX_N_COMPONENTS
 
     ctypedef struct CPotential:
         int n_components
