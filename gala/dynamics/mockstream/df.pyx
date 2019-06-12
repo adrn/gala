@@ -8,6 +8,8 @@
 # Standard library
 
 # Third-party
+from astropy.utils.misc import isiterable
+import cython
 import astropy.units as u
 import numpy as np
 cimport numpy as np
@@ -15,41 +17,29 @@ cimport numpy as np
 # This package
 from .. import combine
 from ..nbody import DirectNBody
-from ...potential import Hamiltonian, PotentialBase
+from ...potential import hamiltonian, PotentialBase
 
-from ...potential.potential.cpotential cimport CPotentialWrapper
+from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
 from ...potential.frame.cframe cimport CFrameWrapper
 from ...potential.hamiltonian.chamiltonian import Hamiltonian
 
 from ._coord cimport cross, norm, apply_3matrix
 
 cdef extern from "potential/src/cpotential.h":
-    ctypedef struct CPotential:
-        pass
-
-    # double c_potential(CPotential *p, double t, double *q) nogil
-    # double c_density(CPotential *p, double t, double *q) nogil
-    # void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
-    # void c_hessian(CPotential *p, double t, double *q, double *hess) nogil
-
-    # double c_d_dr(CPotential *p, double t, double *q, double *epsilon) nogil
     double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
-    # double c_mass_enclosed(CPotential *p, double t, double *q, double G, double *epsilon) nogil
 
-
-# ---
 
 cdef class BaseStreamDF:
 
-    def __init__(self, H, lead=True, trail=True, **kwargs):
+    @cython.embedsignature(True)
+    def __init__(self, hamiltonian, lead=True, trail=True, **kwargs):
+        """Some stuff here!"""
         self._lead = int(lead)
         self._trail = int(trail)
-        self._potential = H.potential.c_instance
-        self._frame = H.frame.c_instance
-        self.extra_kwargs = kwargs
-
-        # self.H = H
-        self._G = H.potential.G
+        self._potential = hamiltonian.potential.c_instance
+        self._frame = hamiltonian.frame.c_instance
+        self._G = hamiltonian.potential.G
+        self.hamiltonian = hamiltonian
 
         if not self.lead and not self.trail:
             raise ValueError("You must generate either leading or trailing "
@@ -103,14 +93,68 @@ cdef class BaseStreamDF:
 
 
     cpdef _sample(self, double[:, ::1] prog_x, double[:, ::1] prog_v,
-                  double[::1] prog_t, double[::1] prog_m, int[::1] nparticles,
-                  dict extra_kwargs):
+                  double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         pass
 
-    def sample(self, prog_orbit, prog_mass,
-               release_every=None, n_particles=None):
-        """Generate initial conditions... TODO"""
-        pass
+    cpdef sample(self, prog_orbit, prog_mass,
+                 release_every=1, n_particles=1):
+        """sample(prog_orbit, prog_mass, release_every=1, n_particles=1)
+
+        Generate stream particle initial conditions and initial times.
+
+        This method is primarily meant to be used within the
+        ``MockStreamGenerator``.
+
+        TODO: link to docs page with examples
+
+        Parameters
+        ----------
+        prog_orbit : `~gala.dynamics.Orbit`
+            The orbit of the progenitor system.
+        prog_mass : `~astropy.units.Quantity` [mass]
+            The mass of the progenitor system, either a scalar quantity, or as
+            an array with the same shape as the number of timesteps in the orbit
+            to account for mass evolution.
+        release_every : int (optional)
+            Controls how often to release stream particles from each tail.
+            Default: 1, meaning release particles at each timestep.
+        n_particles : int, array_like (optional)
+            If an integer, this controls the number of particles to release in
+            each tail at each release timestep. Alternatively, you can pass in
+            an array with the same shape as the number of timesteps to release
+            bursts of particles at certain times (e.g., pericenter).
+
+        """
+
+        # Coerce the input orbit into C-contiguous numpy arrays in the units of
+        # the hamiltonian
+        _units = self.hamiltonian.units
+        prog_x = np.ascontiguousarray(prog_orbit.xyz.decompose(_units).value.T)
+        prog_v = np.ascontiguousarray(prog_orbit.v_xyz.decompose(_units).value.T)
+        prog_t = prog_orbit.t.decompose(_units).value
+        prog_m = prog_mass.decompose(_units).value
+
+        if not isiterable(prog_m):
+            prog_m = np.ones_like(prog_t) * prog_m
+
+        if isiterable(n_particles):
+            n_particles = np.array(n_particles).astype('i4')
+            if not len(n_particles) == len(prog_t):
+                raise ValueError('If passing in an array n_particles, its '
+                                 'shape must match the number of timesteps in '
+                                 'the progenitor orbit.')
+
+        else:
+            N = int(n_particles)
+            n_particles = np.zeros_like(prog_t, dtype='i4')
+            n_particles[::release_every] = N
+
+        x, v, t1 = self._sample(prog_x, prog_v, prog_t, prog_m, n_particles)
+
+        return (np.array(x) * _units['length'],
+                np.array(v) * _units['length']/_units['time'],
+                np.array(t1) * _units['time'])
+
 
     # ------------------------------------------------------------------------
     # Python-only:
@@ -127,8 +171,7 @@ cdef class BaseStreamDF:
 cdef class StreaklineStreamDF(BaseStreamDF):
 
     cpdef _sample(self, double[:, ::1] prog_x, double[:, ::1] prog_v,
-                  double[::1] prog_t, double[::1] prog_m, int[::1] nparticles,
-                  dict extra_kwargs):
+                  double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         cdef:
             int i, j, k, n
             int ntimes = len(prog_t)
@@ -186,8 +229,7 @@ cdef class StreaklineStreamDF(BaseStreamDF):
 cdef class FardalStreamDF(BaseStreamDF):
 
     cpdef _sample(self, double[:, ::1] prog_x, double[:, ::1] prog_v,
-                  double[::1] prog_t, double[::1] prog_m, int[::1] nparticles,
-                  dict extra_kwargs):
+                  double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         cdef:
             int i, j, k, n
             int ntimes = len(prog_t)
@@ -265,14 +307,19 @@ cdef class FardalStreamDF(BaseStreamDF):
         return particle_x, particle_v, particle_t1
 
 
-cdef class MLCSStreamDF(BaseStreamDF):
+cdef class LagrangeCloudStreamDF(BaseStreamDF):
 
-    def __init__(self, H, lead=True, trail=True, ):
-        super().__init__(H, lead=lead, trail=trail, extra_kwargs=dict())
+    cdef double _v_disp
+
+    @u.quantity_input(v_disp=u.km/u.s)
+    def __init__(self, hamiltonian, v_disp, lead=True, trail=True):
+        super().__init__(hamiltonian, lead=lead, trail=trail)
+
+        self.v_disp = v_disp
+        self._v_disp = self.v_disp.decompose(hamiltonian.units).value
 
     cpdef _sample(self, double[:, ::1] prog_x, double[:, ::1] prog_v,
-                  double[::1] prog_t, double[::1] prog_m, int[::1] nparticles,
-                  dict extra_kwargs):
+                  double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         cdef:
             int i, j, k, n
             int ntimes = len(prog_t)
@@ -289,18 +336,6 @@ cdef class MLCSStreamDF(BaseStreamDF):
             double vj # relative velocity at jacobi radius
             double[:, ::1] R = np.zeros((3, 3)) # rotation to satellite coordinates
 
-            double[::1] v_disp = np.zeros(ntimes)
-
-        if 'v_disp' not in extra_kwargs:
-            raise ValueError('TODO: must supply a velocity dispersion...')
-
-        _v_disp = np.array(extra_kwargs['v_disp'])
-        if _v_disp.shape:
-            v_disp = _v_disp
-        else:
-            for i in range(ntimes):
-                v_disp[i] = _v_disp
-
         j = 0
         for i in range(ntimes):
             self.get_rj_vj_R(&prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
@@ -310,10 +345,10 @@ cdef class MLCSStreamDF(BaseStreamDF):
             if self._trail == 1:
                 for k in range(nparticles[i]):
                     tmp_x[0] = rj
-                    tmp_v[0] = np.random.normal(0, v_disp[i])
-                    tmp_v[1] = np.random.normal(0, v_disp[i])
-                    tmp_v[2] = np.random.normal(0, v_disp[i])
-                    particle_t1[j+k] = prog_t[i]
+                    tmp_v[0] = np.random.normal(0, self._v_disp)
+                    tmp_v[1] = np.random.normal(0, self._v_disp)
+                    tmp_v[2] = np.random.normal(0, self._v_disp)
+                    particle_t1[j + k] = prog_t[i]
 
                     self.transform_from_sat(R,
                                             &tmp_x[0], &tmp_v[0],
@@ -327,10 +362,10 @@ cdef class MLCSStreamDF(BaseStreamDF):
             if self._lead == 1:
                 for k in range(nparticles[i]):
                     tmp_x[0] = -rj
-                    tmp_v[0] = np.random.normal(0, v_disp[i])
-                    tmp_v[1] = np.random.normal(0, v_disp[i])
-                    tmp_v[2] = np.random.normal(0, v_disp[i])
-                    particle_t1[j+k] = prog_t[i]
+                    tmp_v[0] = np.random.normal(0, self._v_disp)
+                    tmp_v[1] = np.random.normal(0, self._v_disp)
+                    tmp_v[2] = np.random.normal(0, self._v_disp)
+                    particle_t1[j + k] = prog_t[i]
 
                     self.transform_from_sat(R,
                                             &tmp_x[0], &tmp_v[0],

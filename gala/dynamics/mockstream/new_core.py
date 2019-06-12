@@ -6,124 +6,138 @@ import astropy.units as u
 import numpy as np
 
 # This package
-from .. import combine
+from .. import combine, PhaseSpacePosition
 from ..nbody import DirectNBody
 from ...potential import Hamiltonian, PotentialBase
 from ...integrate.timespec import parse_time_specification
+from .df import BaseStreamDF
+from .new_mockstream import mockstream_dop853
 
 __all__ = ['MockStreamGenerator']
 
 class MockStreamGenerator:
 
-    def __init__(self, df, H,
-                 progenitor_potential=None,
-                 progenitor_mass_loss=None,
-                 self_gravity=None):
+    def __init__(self, df, hamiltonian,
+                 progenitor_potential=None):
 
-        # TODO: deal with df
+        if not isinstance(df, BaseStreamDF):
+            raise TypeError('The input distribution function (DF) instance '
+                            'must be an instance of a subclass of '
+                            'BaseStreamDF, not {}.'.format(type(df)))
         self.df = df
 
         # Validate the inpute hamiltonian
-        if not isinstance(H, Hamiltonian):
-            H = Hamiltonian(H)
-        self.H = H
+        self.hamiltonian = Hamiltonian(hamiltonian)
 
         if progenitor_potential is not None:
             # validate the potential class
             if not isinstance(progenitor_potential, PotentialBase):
-                raise TypeError("If specified, the `progenitor_potential` must "
+                raise TypeError("If specified, the progenitor_potential must "
                                 "be a gala.potential class instance.")
 
-            if self_gravity is None:
-                self_gravity = True
+            self.self_gravity = True
 
-            elif self_gravity is None:
-                self_gravity = False
         else:
-            if self_gravity is not None:
-                warnings.warn("Ignoring self-gravity setting: you must specify "
-                              "a progenitor potential if self_gravity=True.")
-            self_gravity = False
+            self.self_gravity = False
 
-        self.self_gravity = self_gravity
         self.progenitor_potential = progenitor_potential
 
-        # TODO: only mass-loss currently allowed is uniform mass-loss:
-        if (not isinstance(progenitor_mass_loss, u.Quantity) or
-                not progenitor_mass_loss.isscalar):
-            raise NotImplementedError("The only mass-loss currently supported "
-                                      "is uniform mass-loss, specified by "
-                                      "passing in an astropy Quantity with "
-                                      "unit: <mass unit> / <time unit>")
+    def _get_nbody(self, prog_w0, nbody):
+        """Internal function that adds the progenitor to the list of nbody
+        objects to integrate along with the test particles in the stream.
+        """
 
-    def _get_nbody(self, prog_w0, other_w0=None, save_all=True,
-                   nbody_kwargs=None):
+        kwargs = dict()
+        if nbody is not None:
+            if nbody.external_potential != self.hamiltonian.potential:
+                raise ValueError('The external potential of the input nbody '
+                                 'instance must match the potential of the mock '
+                                 'stream input hamiltonian! {} vs. {}'
+                                 .format(nbody.external_potential,
+                                         self.hamiltonian.potential))
 
-        # Parse the nbody kwargs: this allows passing in other massive bodies,
-        # i.e. perturbers during the mock stream generation
-        if nbody_kwargs is None:
-            nbody_kwargs = dict()
-        nbody_w0 = nbody_kwargs.get('w0', None)
-        nbody_pps = nbody_kwargs.get('particle_potentials', None)
-        nbody_units = nbody_kwargs.get('units', None)
+            if nbody.frame != self.hamiltonian.frame:
+                raise ValueError('The reference frame of the input nbody '
+                                 'instance must match the frame of the mock '
+                                 'stream input hamiltonian! {} vs. {}'
+                                 .format(nbody.frame, self.hamiltonian.frame))
 
-        if ((nbody_w0 is None and nbody_pps is not None) or
-                (nbody_w0 is not None and nbody_pps is None)):
-            raise ValueError("If N-body initial conditions are specified, "
-                             "you must also specify an equal number of "
-                             "N-body particle potentials. The elements "
-                             "of these can be `None`, which tells the "
-                             "integrator to treat them as test particles.")
+            kwargs['w0'] = combine((prog_w0, nbody.w0))
+            kwargs['particle_potentials'] = ([self.progenitor_potential] +
+                                             nbody.particle_potentials)
+            kwargs['external_potential'] = self.hamiltonian.potential
+            kwargs['frame'] = self.hamiltonian.frame
+            kwargs['units'] = self.hamiltonian.units
+            kwargs['save_all'] = nbody.save_all
 
-        w0 = prog_w0
-        if nbody_w0 is not None:
-            w0 = combine((w0, nbody_w0))
-            pps = [self.progenitor_potential] + list(nbody_pps)
         else:
-            pps = [self.progenitor_potential]
+            kwargs['w0'] = prog_w0
+            kwargs['particle_potentials'] = [self.progenitor_potential]
+            kwargs['external_potential'] = self.hamiltonian.potential
+            kwargs['frame'] = self.hamiltonian.frame
+            kwargs['units'] = self.hamiltonian.units
 
-        # Test particle initial conditions to include:
-        if other_w0 is not None:
-            w0 = combine((w0, other_w0))
-            pps = pps + [None] * other_w0.shape[0]
+        return DirectNBody(**kwargs)
 
-        # TODO: possible return slice objects for progenitor, perturbers, particles?
-        # OR: at least the number of other massive bodies?
-        return DirectNBody(w0=w0, particle_potentials=pps,
-                           external_potential=self.H.potential,
-                           frame=self.H.frame, units=nbody_units,
-                           save_all=save_all)
+    def run(self, prog_w0, prog_mass=None, nbody=None,
+            release_every=1, n_particles=1, **time_spec):
+        """
+        Parameters
+        ----------
+        prog_w0 : `~gala.dynamics.PhaseSpacePosition`
+        nbody : `~gala.dynamics.DirectNBody` (optional)
+        release_every : int (optional)
+            Controls how often to release stream particles from each tail.
+            Default: 1, meaning release particles at each timestep.
+        n_particles : int, array_like (optional)
+            If an integer, this controls the number of particles to release in
+            each tail at each release timestep. Alternatively, you can pass in
+            an array with the same shape as the number of timesteps to release
+            bursts of particles at certain times (e.g., pericenter).
+        """
+        units = self.hamiltonian.units
+        t = parse_time_specification(units, **time_spec)
 
-    def run(self, prog_w0, nbody_kwargs=None, **time_spec):
-        t = parse_time_specification(self.H.units, **time_spec)
-
-        prog_nbody = self._get_nbody(prog_w0, nbody_kwargs=nbody_kwargs)
-        prog_orbit = prog_nbody.integrate_orbit(t=t)
+        prog_nbody = self._get_nbody(prog_w0, nbody)
+        nbody_orbits = prog_nbody.integrate_orbit(t=t)
 
         # If the time stepping passed in is negative, assume this means that all
         # of the initial conditions are at *end time*, and we first need to
         # integrate them backwards before treating them as initial conditions
-        # TODO: this does *not* do what is described in this comment ^
         if t[-1] < t[0]:
-            prog_orbit = prog_orbit[::-1]
+            nbody_orbits = nbody_orbits[::-1]
 
-        # TODO: can pre-compute mass vs. time
-        prog_mass = np.full(prog_orbit.ntimes, 1e5) * u.Msun # HACK
+            # TODO: this could be cleaed up...
+            nbody0 = DirectNBody(
+                nbody_orbits[0], prog_nbody.particle_potentials,
+                external_potential=prog_nbody.external_potential,
+                frame=prog_nbody.frame, units=units)
 
-        # generate initial conditions for stream particles
-        w0s, t1s = self._make_ics(prog_orbit, prog_mass, )
-        # TODO: flag to ics to ignore particles obviously bound to progenitor?
+        else:
+            nbody0 = prog_nbody
 
-        # TODO: run integration
-        dt = prog_orbit.t[1] - prog_orbit.t[0]
-        all_ws = []
-        for w0, t1 in zip(w0s, t1s):
-            nbody = self._get_nbody(prog_w0, other_w0=w0, save_all=False,
-                                    nbody_kwargs=nbody_kwargs)
-            if t1 == prog_orbit.t[-1]:
-                break
+        prog_orbit = nbody_orbits[:, 0] # Note: assumption! Progenitor is idx 0
 
-            end_w = nbody.integrate_orbit(dt=dt, t1=t1, t2=prog_orbit.t[-1])
-            all_ws.append(end_w[2:]) # HACK
+        # Generate initial conditions from the DF
+        x0, v0, t1 = self.df.sample(prog_orbit, prog_mass,
+                                    release_every=release_every,
+                                    n_particles=n_particles)
+        w0 = np.hstack((x0.value, v0.value))
 
-        return combine(all_ws)
+        unq_t1s, nstream = np.unique(t1, return_counts=True)
+
+        # Only both iterating over timesteps if we're releasing particles then:
+        time = prog_orbit.t.decompose(units).value.copy()
+        time = time[np.isin(time, unq_t1s)]
+
+        raw_nbody, raw_stream = mockstream_dop853(nbody0, time, w0, unq_t1s,
+                                                  nstream.astype('i4'))
+
+        x_unit = units['length']
+        v_unit = units['length'] / units['time']
+        stream_w = PhaseSpacePosition(pos=raw_stream[:, :3].T * x_unit,
+                                      vel=raw_stream[:, 3:].T * v_unit)
+        nbody_w = PhaseSpacePosition(pos=raw_nbody[:, :3].T * x_unit,
+                                     vel=raw_nbody[:, 3:].T * v_unit)
+
+        return stream_w, nbody_w

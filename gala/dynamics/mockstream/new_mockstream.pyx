@@ -150,6 +150,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
         for k in range(ndim):
             w_final[j, k] = w_tmp[j, k]
 
-    nbody_w = np.asarray(w_final)[:nbodies]
-    stream_w = np.asarray(w_final)[nbodies:]
-    return nbody_w, stream_w
+    return_nbody_w = np.array(w_final)[:nbodies]
+    return_stream_w = np.array(w_final)[nbodies:]
+
+    return return_nbody_w, return_stream_w

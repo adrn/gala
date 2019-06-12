@@ -127,8 +127,11 @@ class DirectNBody:
         self._w0 = np.ascontiguousarray(np.vstack((self._pos, self._vel)).T)
 
     def __repr__(self):
-        return "<{} bodies={}>".format(self.__class__.__name__,
-                                       self.w0.shape[0])
+        if self.w0.shape:
+            return "<{} bodies={}>".format(self.__class__.__name__,
+                                           self.w0.shape[0])
+        else:
+            return "<{} bodies=1>".format(self.__class__.__name__)
 
     def integrate_orbit(self, **time_spec):
         """
