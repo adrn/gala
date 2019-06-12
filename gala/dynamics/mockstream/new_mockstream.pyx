@@ -29,7 +29,7 @@ from ...potential.potential.builtin.cybuiltin import NullWrapper
 from ...potential import Hamiltonian
 from ...potential.frame import StaticFrame
 
-from .nbody.nbody cimport MAX_NBODY
+from ..nbody.nbody cimport MAX_NBODY
 from .df cimport BaseStreamDF
 
 # __all__ = ['_mock_stream_dop853']

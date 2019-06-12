@@ -94,20 +94,6 @@ class MockStreamGenerator:
                            frame=self.H.frame, units=nbody_units,
                            save_all=save_all)
 
-    def _make_ics(self, prog_orbit, prog_m, ):
-        prog_x = np.ascontiguousarray(
-            prog_orbit.xyz.decompose(self.H.units).value.T)
-        prog_v = np.ascontiguousarray(
-            prog_orbit.v_xyz.decompose(self.H.units).value.T)
-        prog_t = prog_orbit.t.decompose(self.H.units).value.T
-
-        # HACKS
-        prog_m = np.zeros_like(prog_t) + 1e5
-        prog_rs = np.zeros_like(prog_t) + 0.01
-        n_particles = np.zeros(len(prog_t), dtype='i4') + 1
-
-        stuff = self.df._sample(prog_x, prog_v, prog_t, prog_m, prog_rs, n_particles)
-
     def run(self, prog_w0, nbody_kwargs=None, **time_spec):
         t = parse_time_specification(self.H.units, **time_spec)
 

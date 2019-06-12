@@ -107,6 +107,11 @@ cdef class BaseStreamDF:
                   dict extra_kwargs):
         pass
 
+    def sample(self, prog_orbit, prog_mass,
+               release_every=None, n_particles=None):
+        """Generate initial conditions... TODO"""
+        pass
+
     # ------------------------------------------------------------------------
     # Python-only:
 
