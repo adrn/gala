@@ -18,7 +18,31 @@ __all__ = ['MockStreamGenerator']
 class MockStreamGenerator:
 
     def __init__(self, df, hamiltonian,
-                 progenitor_potential=None):
+                 progenitor_potential=None,
+                 release_every=1, n_particles=1):
+        """Generate a mock stellar stream in the specified Hamiltonian.
+
+        Parameters
+        ----------
+        df : `~gala.dynamics.BaseStreamDF` subclass instance
+            The stream distribution function (DF) object that specifies how to
+            generate stream star particle initial conditions.
+        hamiltonian : `~gala.potential.Hamiltonian`
+            The external potential and reference frame to numerically integrate
+            orbits in.
+        progenitor_potential : `~gala.potential.PotentialBase` (optional)
+            If specified, the self-gravity of the progenitor system is included
+            in the force calculation and orbit integration. If not specified,
+            self-gravity is not accounted for. Default: ``None``
+        release_every : int (optional)
+            Controls how often to release stream particles from each tail.
+            Default: 1, meaning release particles at each timestep.
+        n_particles : int, array_like (optional)
+            If an integer, this controls the number of particles to release in
+            each tail at each release timestep. Alternatively, you can pass in
+            an array with the same shape as the number of timesteps to release
+            bursts of particles at certain times (e.g., pericenter).
+        """
 
         if not isinstance(df, BaseStreamDF):
             raise TypeError('The input distribution function (DF) instance '
@@ -41,6 +65,8 @@ class MockStreamGenerator:
             self.self_gravity = False
 
         self.progenitor_potential = progenitor_potential
+        self.release_every = release_every
+        self.n_particles = n_particles
 
     def _get_nbody(self, prog_w0, nbody):
         """Internal function that adds the progenitor to the list of nbody
@@ -79,21 +105,35 @@ class MockStreamGenerator:
 
         return DirectNBody(**kwargs)
 
-    def run(self, prog_w0, prog_mass=None, nbody=None,
-            release_every=1, n_particles=1, **time_spec):
-        """
+    def run(self, prog_w0, prog_mass, nbody=None, **time_spec):
+        """Run the mock stream generator with the specified progenitor initial
+        conditions.
+
+        TODO: describe nbody stuff...
+
         Parameters
         ----------
         prog_w0 : `~gala.dynamics.PhaseSpacePosition`
+            The initial or final phase-space position of the progenitor system.
+            If the time-stepping specification (see below) proceeds forward in
+            time, ``prog_w0`` is interpreted as initial conditions and the mock
+            stream is generated forwards. If the time-stepping proceeds
+            backwards in time, the progenitor orbit is first numerically
+            integrated backwards given the time-stepping information, then the
+            stream is generated forward from the past such that ``prog_w0``
+            becomes the final position of the progenitor.
+        prog_mass : `~astropy.units.Quantity` [mass]
+            TODO:
         nbody : `~gala.dynamics.DirectNBody` (optional)
-        release_every : int (optional)
-            Controls how often to release stream particles from each tail.
-            Default: 1, meaning release particles at each timestep.
-        n_particles : int, array_like (optional)
-            If an integer, this controls the number of particles to release in
-            each tail at each release timestep. Alternatively, you can pass in
-            an array with the same shape as the number of timesteps to release
-            bursts of particles at certain times (e.g., pericenter).
+            This allows specifying other massive perturbers (N-bodies) that can
+            gravitationally influence the stream star orbits.
+        **time_spec
+            TODO:
+
+        Returns
+        -------
+        TODO
+
         """
         units = self.hamiltonian.units
         t = parse_time_specification(units, **time_spec)
@@ -120,8 +160,8 @@ class MockStreamGenerator:
 
         # Generate initial conditions from the DF
         x0, v0, t1 = self.df.sample(prog_orbit, prog_mass,
-                                    release_every=release_every,
-                                    n_particles=n_particles)
+                                    release_every=self.release_every,
+                                    n_particles=self.n_particles)
         w0 = np.hstack((x0.value, v0.value))
 
         unq_t1s, nstream = np.unique(t1, return_counts=True)

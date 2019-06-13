@@ -5,8 +5,6 @@
 # cython: profile=False
 # cython: language_level=3
 
-# Standard library
-
 # Third-party
 from astropy.utils.misc import isiterable
 import cython
@@ -17,7 +15,7 @@ cimport numpy as np
 # This package
 from .. import combine
 from ..nbody import DirectNBody
-from ...potential import hamiltonian, PotentialBase
+from ...potential import Hamiltonian, PotentialBase
 
 from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
 from ...potential.frame.cframe cimport CFrameWrapper
@@ -33,13 +31,13 @@ cdef class BaseStreamDF:
 
     @cython.embedsignature(True)
     def __init__(self, hamiltonian, lead=True, trail=True, **kwargs):
-        """Some stuff here!"""
+        """TODO: documentation"""
+        self.hamiltonian = Hamiltonian(hamiltonian)
         self._lead = int(lead)
         self._trail = int(trail)
-        self._potential = hamiltonian.potential.c_instance
-        self._frame = hamiltonian.frame.c_instance
-        self._G = hamiltonian.potential.G
-        self.hamiltonian = hamiltonian
+        self._potential = self.hamiltonian.potential.c_instance
+        self._frame = self.hamiltonian.frame.c_instance
+        self._G = self.hamiltonian.potential.G
 
         if not self.lead and not self.trail:
             raise ValueError("You must generate either leading or trailing "
@@ -48,7 +46,7 @@ cdef class BaseStreamDF:
     cdef void get_rj_vj_R(self, double *prog_x, double *prog_v,
                           double prog_m, double t,
                           double *rj, double *vj, double[:, ::1] R): # outputs
-        # HACK: assuming ndim=3 throughout here
+        # NOTE: assuming ndim=3 throughout here
         cdef:
             int i
             double dist = norm(prog_x, 3)
@@ -59,7 +57,7 @@ cdef class BaseStreamDF:
         cross(prog_x, prog_v, &L[0])
         Lnorm = norm(&L[0], 3)
 
-        # TODO: note that R goes from non-rotating frame to rotating frame!!!
+        # NOTE: R goes from non-rotating frame to rotating frame!!!
         for i in range(3):
             R[0, i] = prog_x[i] / dist
             R[2, i] = L[i] / Lnorm
@@ -96,6 +94,17 @@ cdef class BaseStreamDF:
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         pass
 
+    # ------------------------------------------------------------------------
+    # Python-only:
+
+    @property
+    def lead(self):
+        return self._lead
+
+    @property
+    def trail(self):
+        return self._trail
+
     cpdef sample(self, prog_orbit, prog_mass,
                  release_every=1, n_particles=1):
         """sample(prog_orbit, prog_mass, release_every=1, n_particles=1)
@@ -104,8 +113,6 @@ cdef class BaseStreamDF:
 
         This method is primarily meant to be used within the
         ``MockStreamGenerator``.
-
-        TODO: link to docs page with examples
 
         Parameters
         ----------
@@ -124,6 +131,15 @@ cdef class BaseStreamDF:
             an array with the same shape as the number of timesteps to release
             bursts of particles at certain times (e.g., pericenter).
 
+        Returns
+        -------
+        xyz : `~astropy.units.Quantity` [length]
+            The initial positions for stream star particles.
+        v_xyz : `~astropy.units.Quantity` [speed]
+            The initial velocities for stream star particles.
+        t1 : `~astropy.units.Quantity` [time]
+            The initial times (i.e. times to start integrating from) for stream
+            star particles.
         """
 
         # Coerce the input orbit into C-contiguous numpy arrays in the units of
@@ -154,18 +170,6 @@ cdef class BaseStreamDF:
         return (np.array(x) * _units['length'],
                 np.array(v) * _units['length']/_units['time'],
                 np.array(t1) * _units['time'])
-
-
-    # ------------------------------------------------------------------------
-    # Python-only:
-
-    @property
-    def lead(self):
-        return self._lead
-
-    @property
-    def trail(self):
-        return self._trail
 
 
 cdef class StreaklineStreamDF(BaseStreamDF):
