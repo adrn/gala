@@ -309,6 +309,7 @@ cdef class FardalStreamDF(BaseStreamDF):
 
 cdef class LagrangeCloudStreamDF(BaseStreamDF):
 
+    cdef public object v_disp
     cdef double _v_disp
 
     @u.quantity_input(v_disp=u.km/u.s)
