@@ -30,7 +30,8 @@ cdef extern from "potential/src/cpotential.h":
 cdef class BaseStreamDF:
 
     @cython.embedsignature(True)
-    def __init__(self, hamiltonian, lead=True, trail=True, **kwargs):
+    def __init__(self, hamiltonian, lead=True, trail=True, random_state=None,
+                 **kwargs):
         """TODO: documentation"""
         self.hamiltonian = Hamiltonian(hamiltonian)
         self._lead = int(lead)
@@ -38,6 +39,10 @@ cdef class BaseStreamDF:
         self._potential = self.hamiltonian.potential.c_instance
         self._frame = self.hamiltonian.frame.c_instance
         self._G = self.hamiltonian.potential.G
+
+        if random_state is None:
+            random_state = np.random.RandomState()
+        self.random_state = random_state
 
         if not self.lead and not self.trail:
             raise ValueError("You must generate either leading or trailing "
@@ -275,11 +280,11 @@ cdef class FardalStreamDF(BaseStreamDF):
             # Trailing tail
             if self._trail == 1:
                 for k in range(nparticles[i]):
-                    kx = np.random.normal(k_mean[0], k_disp[0])
+                    kx = self.random_state.normal(k_mean[0], k_disp[0])
                     tmp_x[0] = kx * rj
-                    tmp_x[2] = np.random.normal(k_mean[2], k_disp[2]) * rj
-                    tmp_v[1] = kx * np.random.normal(k_mean[4], k_disp[4]) * vj
-                    tmp_v[2] = np.random.normal(k_mean[5], k_disp[5]) * vj
+                    tmp_x[2] = self.random_state.normal(k_mean[2], k_disp[2]) * rj
+                    tmp_v[1] = kx * self.random_state.normal(k_mean[4], k_disp[4]) * vj
+                    tmp_v[2] = self.random_state.normal(k_mean[5], k_disp[5]) * vj
                     particle_t1[j+k] = prog_t[i]
 
                     self.transform_from_sat(R,
@@ -293,11 +298,11 @@ cdef class FardalStreamDF(BaseStreamDF):
             # Leading tail
             if self._lead == 1:
                 for k in range(nparticles[i]):
-                    kx = np.random.normal(k_mean[0], k_disp[0])
+                    kx = self.random_state.normal(k_mean[0], k_disp[0])
                     tmp_x[0] = kx * -rj
-                    tmp_x[2] = np.random.normal(k_mean[2], k_disp[2]) * -rj
-                    tmp_v[1] = kx * np.random.normal(k_mean[4], k_disp[4]) * -vj
-                    tmp_v[2] = np.random.normal(k_mean[5], k_disp[5]) * -vj
+                    tmp_x[2] = self.random_state.normal(k_mean[2], k_disp[2]) * -rj
+                    tmp_v[1] = kx * self.random_state.normal(k_mean[4], k_disp[4]) * -vj
+                    tmp_v[2] = self.random_state.normal(k_mean[5], k_disp[5]) * -vj
                     particle_t1[j+k] = prog_t[i]
 
                     self.transform_from_sat(R,
@@ -350,9 +355,9 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
             if self._trail == 1:
                 for k in range(nparticles[i]):
                     tmp_x[0] = rj
-                    tmp_v[0] = np.random.normal(0, self._v_disp)
-                    tmp_v[1] = np.random.normal(0, self._v_disp)
-                    tmp_v[2] = np.random.normal(0, self._v_disp)
+                    tmp_v[0] = self.random_state.normal(0, self._v_disp)
+                    tmp_v[1] = self.random_state.normal(0, self._v_disp)
+                    tmp_v[2] = self.random_state.normal(0, self._v_disp)
                     particle_t1[j + k] = prog_t[i]
 
                     self.transform_from_sat(R,
@@ -367,9 +372,9 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
             if self._lead == 1:
                 for k in range(nparticles[i]):
                     tmp_x[0] = -rj
-                    tmp_v[0] = np.random.normal(0, self._v_disp)
-                    tmp_v[1] = np.random.normal(0, self._v_disp)
-                    tmp_v[2] = np.random.normal(0, self._v_disp)
+                    tmp_v[0] = self.random_state.normal(0, self._v_disp)
+                    tmp_v[1] = self.random_state.normal(0, self._v_disp)
+                    tmp_v[2] = self.random_state.normal(0, self._v_disp)
                     particle_t1[j + k] = prog_t[i]
 
                     self.transform_from_sat(R,

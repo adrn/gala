@@ -10,6 +10,7 @@ cdef class BaseStreamDF:
     cdef double _G
     cdef dict extra_kwargs
     cdef public object hamiltonian
+    cdef public object random_state
 
     cdef void get_rj_vj_R(self, double *prog_x, double *prog_v,
                           double prog_m, double t,
