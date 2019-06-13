@@ -15,7 +15,7 @@ cimport numpy as np
 # This package
 from .. import combine
 from ..nbody import DirectNBody
-from ...potential import hamiltonian, PotentialBase
+from ...potential import Hamiltonian, PotentialBase
 
 from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
 from ...potential.frame.cframe cimport CFrameWrapper
@@ -31,13 +31,13 @@ cdef class BaseStreamDF:
 
     @cython.embedsignature(True)
     def __init__(self, hamiltonian, lead=True, trail=True, **kwargs):
-        """Some stuff here!"""
+        """TODO: documentation"""
+        self.hamiltonian = Hamiltonian(hamiltonian)
         self._lead = int(lead)
         self._trail = int(trail)
-        self._potential = hamiltonian.potential.c_instance
-        self._frame = hamiltonian.frame.c_instance
-        self._G = hamiltonian.potential.G
-        self.hamiltonian = hamiltonian
+        self._potential = self.hamiltonian.potential.c_instance
+        self._frame = self.hamiltonian.frame.c_instance
+        self._G = self.hamiltonian.potential.G
 
         if not self.lead and not self.trail:
             raise ValueError("You must generate either leading or trailing "
