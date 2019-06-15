@@ -15,8 +15,7 @@ cimport numpy as np
 # This package
 from .. import combine, Orbit
 from ..nbody import DirectNBody
-from ...frame import StaticFrame
-from ...potential import Hamiltonian, PotentialBase
+from ...potential import Hamiltonian, PotentialBase, StaticFrame
 from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
 from ...potential.hamiltonian.chamiltonian import Hamiltonian
 
@@ -106,9 +105,9 @@ cdef class BaseStreamDF:
     def trail(self):
         return self._trail
 
-    cpdef sample(self, hamiltonian, prog_orbit, prog_mass,
+    cpdef sample(self, prog_orbit, prog_mass, hamiltonian=None,
                  release_every=1, n_particles=1):
-        """sample(hamiltonian, prog_orbit, prog_mass, release_every=1, n_particles=1)
+        """sample(prog_orbit, prog_mass, hamiltonian=None, release_every=1, n_particles=1)
 
         Generate stream particle initial conditions and initial times.
 
@@ -117,14 +116,14 @@ cdef class BaseStreamDF:
 
         Parameters
         ----------
-        hamiltonian :
-            TODO
         prog_orbit : `~gala.dynamics.Orbit`
             The orbit of the progenitor system.
         prog_mass : `~astropy.units.Quantity` [mass]
             The mass of the progenitor system, either a scalar quantity, or as
             an array with the same shape as the number of timesteps in the orbit
             to account for mass evolution.
+        hamiltonian :
+            TODO
         release_every : int (optional)
             Controls how often to release stream particles from each tail.
             Default: 1, meaning release particles at each timestep.
@@ -147,7 +146,13 @@ cdef class BaseStreamDF:
         cdef:
             CPotentialWrapper cpotential
 
-        H = Hamiltonian(hamiltonian)
+        if prog_orbit.hamiltonian is not None:
+            H = prog_orbit.hamiltonian
+        elif hamiltonian is not None:
+            H = Hamiltonian(hamiltonian)
+        else:
+            raise ValueError('TODO')
+
         cpotential = <CPotentialWrapper>(H.potential)
 
         # TODO: if an orbit with non-static frame passed in, convert to static frame before generating
@@ -160,9 +165,11 @@ cdef class BaseStreamDF:
         # Coerce the input orbit into C-contiguous numpy arrays in the units of
         # the hamiltonian
         _units = H.units
-        prog_x = np.ascontiguousarray(prog_orbit.xyz.decompose(_units).value.T)
-        prog_v = np.ascontiguousarray(prog_orbit.v_xyz.decompose(_units).value.T)
-        prog_t = prog_orbit.t.decompose(_units).value
+        prog_x = np.ascontiguousarray(
+            prog_orbit_static.xyz.decompose(_units).value.T)
+        prog_v = np.ascontiguousarray(
+            prog_orbit_static.v_xyz.decompose(_units).value.T)
+        prog_t = prog_orbit_static.t.decompose(_units).value
         prog_m = prog_mass.decompose(_units).value
 
         if not isiterable(prog_m):
@@ -183,8 +190,8 @@ cdef class BaseStreamDF:
         x, v, t1 = self._sample(cpotential, H.potential.G,
                                 prog_x, prog_v, prog_t, prog_m, n_particles)
 
-        out = Orbit(pos=np.array(x) * _units['length'],
-                    vel=np.array(v) * _units['length']/_units['time'],
+        out = Orbit(pos=np.array(x).T * _units['length'],
+                    vel=np.array(v).T * _units['length']/_units['time'],
                     t=np.array(t1) * _units['time'],
                     frame=static_frame)
 

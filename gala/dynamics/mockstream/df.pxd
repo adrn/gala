@@ -20,5 +20,5 @@ cdef class BaseStreamDF:
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles)
 
-    cpdef sample(self, hamiltonian, prog_orbit, prog_mass,
+    cpdef sample(self, prog_orbit, prog_mass, hamiltonian=?,
                  release_every=?, n_particles=?)
