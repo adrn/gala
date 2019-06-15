@@ -43,7 +43,7 @@ cdef class BaseStreamDF:
             raise ValueError("You must generate either leading or trailing "
                              "tails (or both!)")
 
-    cdef void get_rj_vj_R(self, CPotentialWrapper potential,
+    cdef void get_rj_vj_R(self, CPotentialWrapper potential, double G,
                           double *prog_x, double *prog_v,
                           double prog_m, double t,
                           double *rj, double *vj, double[:, ::1] R): # outputs
@@ -68,7 +68,7 @@ cdef class BaseStreamDF:
         Om = Lnorm / dist**2
         d2r = c_d2_dr2(&(potential.cpotential), t, prog_x,
                        &L[0])
-        rj[0] = (self._G * prog_m / (Om*Om - d2r)) ** (1/3.)
+        rj[0] = (G * prog_m / (Om*Om - d2r)) ** (1/3.)
         vj[0] = Om * rj[0]
 
         # re-use the epsilon array to compute cross-product
@@ -91,7 +91,7 @@ cdef class BaseStreamDF:
             out_v[n] += prog_v[n]
 
 
-    cpdef _sample(self, CPotentialWrapper potential,
+    cpdef _sample(self, CPotentialWrapper potential, double G,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         pass
@@ -176,7 +176,7 @@ cdef class BaseStreamDF:
             n_particles = np.zeros_like(prog_t, dtype='i4')
             n_particles[::release_every] = N
 
-        x, v, t1 = self._sample(cpotential,
+        x, v, t1 = self._sample(cpotential, H.potential.G,
                                 prog_x, prog_v, prog_t, prog_m, n_particles)
 
         return (np.array(x) * _units['length'],
@@ -186,7 +186,7 @@ cdef class BaseStreamDF:
 
 cdef class StreaklineStreamDF(BaseStreamDF):
 
-    cpdef _sample(self, CPotentialWrapper potential,
+    cpdef _sample(self, CPotentialWrapper potential, double G,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         cdef:
@@ -207,7 +207,7 @@ cdef class StreaklineStreamDF(BaseStreamDF):
 
         j = 0
         for i in range(ntimes):
-            self.get_rj_vj_R(potential,
+            self.get_rj_vj_R(potential, G,
                              &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
                              &rj, &vj, R) # outputs
 
@@ -246,7 +246,7 @@ cdef class StreaklineStreamDF(BaseStreamDF):
 
 cdef class FardalStreamDF(BaseStreamDF):
 
-    cpdef _sample(self, CPotentialWrapper potential,
+    cpdef _sample(self, CPotentialWrapper potential, double G,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         cdef:
@@ -284,7 +284,7 @@ cdef class FardalStreamDF(BaseStreamDF):
 
         j = 0
         for i in range(ntimes):
-            self.get_rj_vj_R(potential,
+            self.get_rj_vj_R(potential, G,
                              &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
                              &rj, &vj, R) # outputs
 
@@ -339,7 +339,7 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
         self.v_disp = v_disp
         self._v_disp = self.v_disp.decompose(hamiltonian.units).value
 
-    cpdef _sample(self, CPotentialWrapper potential,
+    cpdef _sample(self, CPotentialWrapper potential, double G,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         cdef:
@@ -360,7 +360,7 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
 
         j = 0
         for i in range(ntimes):
-            self.get_rj_vj_R(potential,
+            self.get_rj_vj_R(potential, G,
                              &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
                              &rj, &vj, R) # outputs
 

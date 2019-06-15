@@ -6,7 +6,7 @@ cdef class BaseStreamDF:
     cdef double _trail
     cdef public object random_state
 
-    cdef void get_rj_vj_R(self, CPotentialWrapper potential,
+    cdef void get_rj_vj_R(self, CPotentialWrapper potential, double G,
                           double *prog_x, double *prog_v,
                           double prog_m, double t,
                           double *rj, double *vj, double[:, ::1] R)
@@ -16,7 +16,7 @@ cdef class BaseStreamDF:
                                  double *prog_x, double *prog_v,
                                  double *out_x, double *out_v)
 
-    cpdef _sample(self, CPotentialWrapper potential,
+    cpdef _sample(self, CPotentialWrapper potential, double G,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles)
 
