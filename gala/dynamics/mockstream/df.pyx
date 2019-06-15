@@ -18,7 +18,6 @@ from ..nbody import DirectNBody
 from ...potential import Hamiltonian, PotentialBase
 
 from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
-from ...potential.frame.cframe cimport CFrameWrapper
 from ...potential.hamiltonian.chamiltonian import Hamiltonian
 
 from ._coord cimport cross, norm, apply_3matrix
@@ -27,18 +26,14 @@ cdef extern from "potential/src/cpotential.h":
     double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
 
 
+# TODO: if an orbit with non-static frame passed in, convert to static frame before generating
 cdef class BaseStreamDF:
 
     @cython.embedsignature(True)
-    def __init__(self, hamiltonian, lead=True, trail=True, random_state=None,
-                 **kwargs):
+    def __init__(self, lead=True, trail=True, random_state=None):
         """TODO: documentation"""
-        self.hamiltonian = Hamiltonian(hamiltonian)
         self._lead = int(lead)
         self._trail = int(trail)
-        self._potential = self.hamiltonian.potential.c_instance
-        self._frame = self.hamiltonian.frame.c_instance
-        self._G = self.hamiltonian.potential.G
 
         if random_state is None:
             random_state = np.random.RandomState()
@@ -48,7 +43,8 @@ cdef class BaseStreamDF:
             raise ValueError("You must generate either leading or trailing "
                              "tails (or both!)")
 
-    cdef void get_rj_vj_R(self, double *prog_x, double *prog_v,
+    cdef void get_rj_vj_R(self, CPotentialWrapper potential,
+                          double *prog_x, double *prog_v,
                           double prog_m, double t,
                           double *rj, double *vj, double[:, ::1] R): # outputs
         # NOTE: assuming ndim=3 throughout here
@@ -70,7 +66,7 @@ cdef class BaseStreamDF:
         # Now compute jacobi radius and relative velocity at jacobi radius
         # Note: we re-use the L array as the "epsilon" array needed by d2_dr2
         Om = Lnorm / dist**2
-        d2r = c_d2_dr2(&(self._potential.cpotential), t, prog_x,
+        d2r = c_d2_dr2(&(potential.cpotential), t, prog_x,
                        &L[0])
         rj[0] = (self._G * prog_m / (Om*Om - d2r)) ** (1/3.)
         vj[0] = Om * rj[0]
@@ -95,7 +91,8 @@ cdef class BaseStreamDF:
             out_v[n] += prog_v[n]
 
 
-    cpdef _sample(self, double[:, ::1] prog_x, double[:, ::1] prog_v,
+    cpdef _sample(self, CPotentialWrapper potential,
+                  double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         pass
 
@@ -110,9 +107,9 @@ cdef class BaseStreamDF:
     def trail(self):
         return self._trail
 
-    cpdef sample(self, prog_orbit, prog_mass,
+    cpdef sample(self, hamiltonian, prog_orbit, prog_mass,
                  release_every=1, n_particles=1):
-        """sample(prog_orbit, prog_mass, release_every=1, n_particles=1)
+        """sample(hamiltonian, prog_orbit, prog_mass, release_every=1, n_particles=1)
 
         Generate stream particle initial conditions and initial times.
 
@@ -121,6 +118,8 @@ cdef class BaseStreamDF:
 
         Parameters
         ----------
+        hamiltonian :
+            TODO
         prog_orbit : `~gala.dynamics.Orbit`
             The orbit of the progenitor system.
         prog_mass : `~astropy.units.Quantity` [mass]
@@ -146,10 +145,17 @@ cdef class BaseStreamDF:
             The initial times (i.e. times to start integrating from) for stream
             star particles.
         """
+        cdef:
+            CPotentialWrapper cpotential
+
+        H = Hamiltonian(hamiltonian)
+        cpotential = <CPotentialWrapper>(H.potential)
+
+        # TODO: here, transform to static frame!
 
         # Coerce the input orbit into C-contiguous numpy arrays in the units of
         # the hamiltonian
-        _units = self.hamiltonian.units
+        _units = H.units
         prog_x = np.ascontiguousarray(prog_orbit.xyz.decompose(_units).value.T)
         prog_v = np.ascontiguousarray(prog_orbit.v_xyz.decompose(_units).value.T)
         prog_t = prog_orbit.t.decompose(_units).value
@@ -170,7 +176,8 @@ cdef class BaseStreamDF:
             n_particles = np.zeros_like(prog_t, dtype='i4')
             n_particles[::release_every] = N
 
-        x, v, t1 = self._sample(prog_x, prog_v, prog_t, prog_m, n_particles)
+        x, v, t1 = self._sample(cpotential,
+                                prog_x, prog_v, prog_t, prog_m, n_particles)
 
         return (np.array(x) * _units['length'],
                 np.array(v) * _units['length']/_units['time'],
@@ -179,7 +186,8 @@ cdef class BaseStreamDF:
 
 cdef class StreaklineStreamDF(BaseStreamDF):
 
-    cpdef _sample(self, double[:, ::1] prog_x, double[:, ::1] prog_v,
+    cpdef _sample(self, CPotentialWrapper potential,
+                  double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         cdef:
             int i, j, k, n
@@ -199,7 +207,8 @@ cdef class StreaklineStreamDF(BaseStreamDF):
 
         j = 0
         for i in range(ntimes):
-            self.get_rj_vj_R(&prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
+            self.get_rj_vj_R(potential,
+                             &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
                              &rj, &vj, R) # outputs
 
             # Trailing tail
@@ -237,7 +246,8 @@ cdef class StreaklineStreamDF(BaseStreamDF):
 
 cdef class FardalStreamDF(BaseStreamDF):
 
-    cpdef _sample(self, double[:, ::1] prog_x, double[:, ::1] prog_v,
+    cpdef _sample(self, CPotentialWrapper potential,
+                  double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         cdef:
             int i, j, k, n
@@ -274,7 +284,8 @@ cdef class FardalStreamDF(BaseStreamDF):
 
         j = 0
         for i in range(ntimes):
-            self.get_rj_vj_R(&prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
+            self.get_rj_vj_R(potential,
+                             &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
                              &rj, &vj, R) # outputs
 
             # Trailing tail
@@ -328,7 +339,8 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
         self.v_disp = v_disp
         self._v_disp = self.v_disp.decompose(hamiltonian.units).value
 
-    cpdef _sample(self, double[:, ::1] prog_x, double[:, ::1] prog_v,
+    cpdef _sample(self, CPotentialWrapper potential,
+                  double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         cdef:
             int i, j, k, n
@@ -348,7 +360,8 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
 
         j = 0
         for i in range(ntimes):
-            self.get_rj_vj_R(&prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
+            self.get_rj_vj_R(potential,
+                             &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
                              &rj, &vj, R) # outputs
 
             # Trailing tail

@@ -159,7 +159,7 @@ class MockStreamGenerator:
         prog_orbit = nbody_orbits[:, 0] # Note: assumption! Progenitor is idx 0
 
         # Generate initial conditions from the DF
-        x0, v0, t1 = self.df.sample(prog_orbit, prog_mass,
+        x0, v0, t1 = self.df.sample(self.hamiltonian, prog_orbit, prog_mass,
                                     release_every=self.release_every,
                                     n_particles=self.n_particles)
         w0 = np.hstack((x0.value, v0.value))
