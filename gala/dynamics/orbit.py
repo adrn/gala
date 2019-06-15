@@ -901,6 +901,12 @@ class Orbit(PhaseSpacePosition):
 
         kw = kwargs.copy()
 
+        # TODO: this short-circuit sux
+        if current_frame is None:
+            current_frame = self.frame
+        if frame == current_frame and not kwargs:
+            return self
+
         # TODO: need a better way to do this!
         from ..potential.frame.builtin import ConstantRotatingFrame
         for fr in [frame, current_frame, self.frame]:
@@ -908,6 +914,7 @@ class Orbit(PhaseSpacePosition):
                 if 't' not in kw:
                     kw['t'] = self.t
 
+        # TODO: this needs a re-write...
         psp = super(Orbit, self).to_frame(frame, current_frame, **kw)
 
         return Orbit(pos=psp.pos, vel=psp.vel, t=self.t,
