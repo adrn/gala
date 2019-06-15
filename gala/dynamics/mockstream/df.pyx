@@ -13,10 +13,10 @@ import numpy as np
 cimport numpy as np
 
 # This package
-from .. import combine
+from .. import combine, Orbit
 from ..nbody import DirectNBody
+from ...frame import StaticFrame
 from ...potential import Hamiltonian, PotentialBase
-
 from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
 from ...potential.hamiltonian.chamiltonian import Hamiltonian
 
@@ -26,7 +26,6 @@ cdef extern from "potential/src/cpotential.h":
     double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
 
 
-# TODO: if an orbit with non-static frame passed in, convert to static frame before generating
 cdef class BaseStreamDF:
 
     @cython.embedsignature(True)
@@ -151,7 +150,12 @@ cdef class BaseStreamDF:
         H = Hamiltonian(hamiltonian)
         cpotential = <CPotentialWrapper>(H.potential)
 
-        # TODO: here, transform to static frame!
+        # TODO: if an orbit with non-static frame passed in, convert to static frame before generating
+        static_frame = StaticFrame(H.units)
+        frame = H.frame
+
+        # TODO: we could catch this possible error and make it more specific
+        prog_orbit_static = prog_orbit.to_frame(static_frame)
 
         # Coerce the input orbit into C-contiguous numpy arrays in the units of
         # the hamiltonian
@@ -179,9 +183,13 @@ cdef class BaseStreamDF:
         x, v, t1 = self._sample(cpotential, H.potential.G,
                                 prog_x, prog_v, prog_t, prog_m, n_particles)
 
-        return (np.array(x) * _units['length'],
-                np.array(v) * _units['length']/_units['time'],
-                np.array(t1) * _units['time'])
+        out = Orbit(pos=np.array(x) * _units['length'],
+                    vel=np.array(v) * _units['length']/_units['time'],
+                    t=np.array(t1) * _units['time'],
+                    frame=static_frame)
+
+        # Transform back to the input frame
+        return out.to_frame(frame)
 
 
 cdef class StreaklineStreamDF(BaseStreamDF):
