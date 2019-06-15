@@ -89,7 +89,7 @@ cdef class BaseStreamDF:
             out_v[n] += prog_v[n]
 
 
-    cpdef _sample(self, CPotentialWrapper potential, double G,
+    cpdef _sample(self, CPotentialWrapper potential, double G, list units,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         pass
@@ -187,7 +187,7 @@ cdef class BaseStreamDF:
             n_particles = np.zeros_like(prog_t, dtype='i4')
             n_particles[::release_every] = N
 
-        x, v, t1 = self._sample(cpotential, H.potential.G,
+        x, v, t1 = self._sample(cpotential, H.potential.G, H.units._core_units,
                                 prog_x, prog_v, prog_t, prog_m, n_particles)
 
         out = Orbit(pos=np.array(x).T * _units['length'],
@@ -201,7 +201,7 @@ cdef class BaseStreamDF:
 
 cdef class StreaklineStreamDF(BaseStreamDF):
 
-    cpdef _sample(self, CPotentialWrapper potential, double G,
+    cpdef _sample(self, CPotentialWrapper potential, double G, list units,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         cdef:
@@ -261,7 +261,7 @@ cdef class StreaklineStreamDF(BaseStreamDF):
 
 cdef class FardalStreamDF(BaseStreamDF):
 
-    cpdef _sample(self, CPotentialWrapper potential, double G,
+    cpdef _sample(self, CPotentialWrapper potential, double G, list units,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         cdef:
@@ -345,16 +345,14 @@ cdef class FardalStreamDF(BaseStreamDF):
 cdef class LagrangeCloudStreamDF(BaseStreamDF):
 
     cdef public object v_disp
-    cdef double _v_disp
 
     @u.quantity_input(v_disp=u.km/u.s)
-    def __init__(self, hamiltonian, v_disp, lead=True, trail=True):
-        super().__init__(hamiltonian, lead=lead, trail=trail)
+    def __init__(self, v_disp, lead=True, trail=True):
+        super().__init__(lead=lead, trail=trail)
 
         self.v_disp = v_disp
-        self._v_disp = self.v_disp.decompose(hamiltonian.units).value
 
-    cpdef _sample(self, CPotentialWrapper potential, double G,
+    cpdef _sample(self, CPotentialWrapper potential, double G, list units,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         cdef:
@@ -372,6 +370,8 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
             double rj # jacobi radius
             double vj # relative velocity at jacobi radius
             double[:, ::1] R = np.zeros((3, 3)) # rotation to satellite coordinates
+
+            double _v_disp = self.v_disp.decompose(units).value
 
         j = 0
         for i in range(ntimes):

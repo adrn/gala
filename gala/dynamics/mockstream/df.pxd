@@ -16,7 +16,7 @@ cdef class BaseStreamDF:
                                  double *prog_x, double *prog_v,
                                  double *out_x, double *out_v)
 
-    cpdef _sample(self, CPotentialWrapper potential, double G,
+    cpdef _sample(self, CPotentialWrapper potential, double G, list units,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles)
 
