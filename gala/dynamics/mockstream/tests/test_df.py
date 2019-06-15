@@ -90,19 +90,3 @@ def test_rotating_frame():
 
     assert u.allclose(xvt_static.xyz, xvt_rotating_static.xyz)
     assert u.allclose(xvt_static.v_xyz, xvt_rotating_static.v_xyz)
-
-    return
-
-    import matplotlib.pyplot as plt
-    fig, axes = plt.subplots(1, 3, figsize=(16, 5), sharex=True, sharey=True)
-    axes[0].scatter(xvt_static.x, xvt_static.y, s=10)
-    axes[1].scatter(xvt_rotating.x, xvt_rotating.y, s=10)
-    axes[2].scatter(xvt_rotating_static.x, xvt_rotating_static.y, s=10)
-    fig.tight_layout()
-
-    # fig, axes = plt.subplots(1, 2, figsize=(10, 5), sharex=True, sharey=True)
-    # axes[0].scatter(p1.v_x, p1.v_y, s=5)
-    # axes[1].scatter(p2.v_x, p2.v_y, s=5)
-    # fig.tight_layout()
-
-    plt.show()
