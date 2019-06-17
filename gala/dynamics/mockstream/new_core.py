@@ -121,6 +121,13 @@ class MockStreamGenerator:
         forward from the past such that ``prog_w0`` becomes the final position
         of the progenitor.
 
+        Note that the stream generation also supports including other massive
+        perturbers that can gravitationally influence the stream stars. These
+        other massive bodies must be passed in as a `~gala.dynamics.DirectNBody`
+        instance through the ``nbody`` argument. The phase-space coordinates of
+        the bodies, ``nbody.w0``, are interpreted as initial or final conditions
+        with the same logic as above.
+
         Parameters
         ----------
         prog_w0 : `~gala.dynamics.PhaseSpacePosition`
