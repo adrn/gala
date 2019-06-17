@@ -41,7 +41,7 @@ cdef class BaseStreamDF:
             raise ValueError("You must generate either leading or trailing "
                              "tails (or both!)")
 
-    cdef void get_rj_vj_R(self, CPotentialWrapper potential, double G,
+    cdef void get_rj_vj_R(self, CPotential *cpotential, double G,
                           double *prog_x, double *prog_v,
                           double prog_m, double t,
                           double *rj, double *vj, double[:, ::1] R): # outputs
@@ -64,7 +64,7 @@ cdef class BaseStreamDF:
         # Now compute jacobi radius and relative velocity at jacobi radius
         # Note: we re-use the L array as the "epsilon" array needed by d2_dr2
         Om = Lnorm / dist**2
-        d2r = c_d2_dr2(&(potential.cpotential), t, prog_x,
+        d2r = c_d2_dr2(cpotential, t, prog_x,
                        &L[0])
         rj[0] = (G * prog_m / (Om*Om - d2r)) ** (1/3.)
         vj[0] = Om * rj[0]
@@ -89,7 +89,7 @@ cdef class BaseStreamDF:
             out_v[n] += prog_v[n]
 
 
-    cpdef _sample(self, CPotentialWrapper potential, double G, list units,
+    cpdef _sample(self, potential,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         pass
@@ -143,8 +143,6 @@ cdef class BaseStreamDF:
             The initial times (i.e. times to start integrating from) for stream
             star particles.
         """
-        cdef:
-            CPotentialWrapper cpotential
 
         if prog_orbit.hamiltonian is not None:
             H = prog_orbit.hamiltonian
@@ -152,8 +150,6 @@ cdef class BaseStreamDF:
             H = Hamiltonian(hamiltonian)
         else:
             raise ValueError('TODO')
-
-        cpotential = <CPotentialWrapper>(H.potential)
 
         # TODO: if an orbit with non-static frame passed in, convert to static frame before generating
         static_frame = StaticFrame(H.units)
@@ -187,21 +183,22 @@ cdef class BaseStreamDF:
             n_particles = np.zeros_like(prog_t, dtype='i4')
             n_particles[::release_every] = N
 
-        x, v, t1 = self._sample(cpotential, H.potential.G, H.units._core_units,
-                                prog_x, prog_v, prog_t, prog_m, n_particles)
-
+        x, v, t1 = self._sample(H.potential, prog_x, prog_v,
+                                prog_t, prog_m,
+                                n_particles)
         out = Orbit(pos=np.array(x).T * _units['length'],
                     vel=np.array(v).T * _units['length']/_units['time'],
                     t=np.array(t1) * _units['time'],
                     frame=static_frame)
 
         # Transform back to the input frame
-        return out.to_frame(frame)
+        out = out.to_frame(frame)
+        return out
 
 
 cdef class StreaklineStreamDF(BaseStreamDF):
 
-    cpdef _sample(self, CPotentialWrapper potential, double G, list units,
+    cpdef _sample(self, potential,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         cdef:
@@ -220,9 +217,12 @@ cdef class StreaklineStreamDF(BaseStreamDF):
             double vj # relative velocity at jacobi radius
             double[:, ::1] R = np.zeros((3, 3)) # rotation to satellite coordinates
 
+            CPotential cpotential = (<CPotentialWrapper>(potential.c_instance)).cpotential
+            double G = potential.G
+
         j = 0
         for i in range(ntimes):
-            self.get_rj_vj_R(potential, G,
+            self.get_rj_vj_R(&cpotential, G,
                              &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
                              &rj, &vj, R) # outputs
 
@@ -261,7 +261,7 @@ cdef class StreaklineStreamDF(BaseStreamDF):
 
 cdef class FardalStreamDF(BaseStreamDF):
 
-    cpdef _sample(self, CPotentialWrapper potential, double G, list units,
+    cpdef _sample(self, potential,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         cdef:
@@ -285,6 +285,9 @@ cdef class FardalStreamDF(BaseStreamDF):
             double[::1] k_mean = np.zeros(6)
             double[::1] k_disp = np.zeros(6)
 
+            CPotential cpotential = (<CPotentialWrapper>(potential.c_instance)).cpotential
+            double G = potential.G
+
         k_mean[0] = 2. # R
         k_disp[0] = 0.5
 
@@ -299,7 +302,7 @@ cdef class FardalStreamDF(BaseStreamDF):
 
         j = 0
         for i in range(ntimes):
-            self.get_rj_vj_R(potential, G,
+            self.get_rj_vj_R(&cpotential, G,
                              &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
                              &rj, &vj, R) # outputs
 
@@ -347,12 +350,12 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
     cdef public object v_disp
 
     @u.quantity_input(v_disp=u.km/u.s)
-    def __init__(self, v_disp, lead=True, trail=True):
-        super().__init__(lead=lead, trail=trail)
+    def __init__(self, v_disp, lead=True, trail=True, random_state=None):
+        super().__init__(lead=lead, trail=trail, random_state=random_state)
 
         self.v_disp = v_disp
 
-    cpdef _sample(self, CPotentialWrapper potential, double G, list units,
+    cpdef _sample(self, potential,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
         cdef:
@@ -371,11 +374,13 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
             double vj # relative velocity at jacobi radius
             double[:, ::1] R = np.zeros((3, 3)) # rotation to satellite coordinates
 
-            double _v_disp = self.v_disp.decompose(units).value
+            CPotential cpotential = (<CPotentialWrapper>(potential.c_instance)).cpotential
+            double G = potential.G
+            double _v_disp = self.v_disp.decompose(potential.units).value
 
         j = 0
         for i in range(ntimes):
-            self.get_rj_vj_R(potential, G,
+            self.get_rj_vj_R(&cpotential, G,
                              &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
                              &rj, &vj, R) # outputs
 
@@ -383,9 +388,9 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
             if self._trail == 1:
                 for k in range(nparticles[i]):
                     tmp_x[0] = rj
-                    tmp_v[0] = self.random_state.normal(0, self._v_disp)
-                    tmp_v[1] = self.random_state.normal(0, self._v_disp)
-                    tmp_v[2] = self.random_state.normal(0, self._v_disp)
+                    tmp_v[0] = self.random_state.normal(0, _v_disp)
+                    tmp_v[1] = self.random_state.normal(0, _v_disp)
+                    tmp_v[2] = self.random_state.normal(0, _v_disp)
                     particle_t1[j + k] = prog_t[i]
 
                     self.transform_from_sat(R,
@@ -400,9 +405,9 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
             if self._lead == 1:
                 for k in range(nparticles[i]):
                     tmp_x[0] = -rj
-                    tmp_v[0] = self.random_state.normal(0, self._v_disp)
-                    tmp_v[1] = self.random_state.normal(0, self._v_disp)
-                    tmp_v[2] = self.random_state.normal(0, self._v_disp)
+                    tmp_v[0] = self.random_state.normal(0, _v_disp)
+                    tmp_v[1] = self.random_state.normal(0, _v_disp)
+                    tmp_v[2] = self.random_state.normal(0, _v_disp)
                     particle_t1[j + k] = prog_t[i]
 
                     self.transform_from_sat(R,
