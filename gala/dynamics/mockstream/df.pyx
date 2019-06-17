@@ -26,24 +26,24 @@ cdef extern from "potential/src/cpotential.h":
 
 
 cdef class BaseStreamDF:
+    """A base class for representing distribution functions for generating
+    stellar streams.
 
-    @cython.embedsignature(True)
+    This class specifies how massless star particles should be sampled in
+    order to generate a mock stellar stream.
+
+    Parameters
+    ----------
+    lead : bool (optional)
+        Generate a leading tail. Default: True.
+    trail : bool (optional)
+        Generate a trailing tail. Default: True.
+    random_state : `~numpy.random.RandomState` (optional)
+        To control random number generation.
+
+    """
     def __init__(self, lead=True, trail=True, random_state=None):
-        """A distribution function for stellar streams.
 
-        This class specifies how massless star particles should be sampled in
-        order to generate a mock stellar stream.
-
-        Parameters
-        ----------
-        lead : bool (optional)
-            Generate a leading tail. Default: True.
-        trail : bool (optional)
-            Generate a trailing tail. Default: True.
-        random_state : `~numpy.random.RandomState` (optional)
-            To control random number generation.
-
-        """
         self._lead = int(lead)
         self._trail = int(trail)
 
@@ -211,6 +211,19 @@ cdef class BaseStreamDF:
 
 
 cdef class StreaklineStreamDF(BaseStreamDF):
+    """A class for representing the "streakline" distribution function for
+    generating stellar streams based on `Kuepper et al. 2012
+    <https://ui.adsabs.harvard.edu/abs/2012MNRAS.420.2700K/abstract>`_
+
+    Parameters
+    ----------
+    lead : bool (optional)
+        Generate a leading tail. Default: True.
+    trail : bool (optional)
+        Generate a trailing tail. Default: True.
+    random_state : `~numpy.random.RandomState` (optional)
+        To control random number generation.
+    """
 
     cpdef _sample(self, potential,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
@@ -274,7 +287,19 @@ cdef class StreaklineStreamDF(BaseStreamDF):
 
 
 cdef class FardalStreamDF(BaseStreamDF):
+    """A class for representing the Fardal+2015 distribution function for
+    generating stellar streams based on `Fardal et al. 2015
+    <https://ui.adsabs.harvard.edu/abs/2015MNRAS.452..301F/abstract>`_
 
+    Parameters
+    ----------
+    lead : bool (optional)
+        Generate a leading tail. Default: True.
+    trail : bool (optional)
+        Generate a trailing tail. Default: True.
+    random_state : `~numpy.random.RandomState` (optional)
+        To control random number generation.
+    """
     cpdef _sample(self, potential,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
@@ -360,6 +385,23 @@ cdef class FardalStreamDF(BaseStreamDF):
 
 
 cdef class LagrangeCloudStreamDF(BaseStreamDF):
+    """A class for representing the Lagrange Cloud Stripping distribution
+    function for generating stellar streams. This df is based on `Gibbons et al.
+    2014 <https://ui.adsabs.harvard.edu/abs/2014MNRAS.445.3788G/abstract>`_ but
+    has since been modified by, e.g., `Erkal et al. 2019
+    <https://ui.adsabs.harvard.edu/abs/2019MNRAS.487.2685E/abstract>`_.
+
+    Parameters
+    ----------
+    v_disp : `~astropy.units.Quantity` [speed]
+        The velocity dispersion of the released particles.
+    lead : bool (optional)
+        Generate a leading tail. Default: True.
+    trail : bool (optional)
+        Generate a trailing tail. Default: True.
+    random_state : `~numpy.random.RandomState` (optional)
+        To control random number generation.
+    """
 
     cdef public object v_disp
 
