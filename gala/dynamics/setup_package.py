@@ -36,7 +36,6 @@ def get_extensions():
     cfg['extra_compile_args'].append('--std=gnu99')
     exts.append(Extension('gala.dynamics.mockstream.df', **cfg))
 
-    # HACK:
     cfg = setup_helpers.DistutilsExtensionArgs()
     cfg['include_dirs'].append('numpy')
     cfg['include_dirs'].append('gala/integrate/cyintegrators')
@@ -45,23 +44,10 @@ def get_extensions():
     cfg['include_dirs'].append('gala/dynamics/nbody')
     cfg['sources'].append('gala/potential/potential/src/cpotential.c')
     cfg['sources'].append('gala/potential/hamiltonian/src/chamiltonian.c')
-    cfg['sources'].append('gala/dynamics/mockstream/new_mockstream.pyx')
+    cfg['sources'].append('gala/dynamics/mockstream/mockstream.pyx')
     cfg['sources'].append('gala/integrate/cyintegrators/dopri/dop853.c')
     cfg['extra_compile_args'].append('--std=gnu99')
-    exts.append(Extension('gala.dynamics.mockstream.new_mockstream', **cfg))
-    # ^^ HACK
-
-    cfg = setup_helpers.DistutilsExtensionArgs()
-    cfg['include_dirs'].append('numpy')
-    cfg['include_dirs'].append('gala/integrate/cyintegrators')
-    cfg['include_dirs'].append(mac_incl_path)
-    cfg['include_dirs'].append('gala/potential')
-    cfg['sources'].append('gala/potential/potential/src/cpotential.c')
-    cfg['sources'].append('gala/potential/hamiltonian/src/chamiltonian.c')
-    cfg['sources'].append('gala/dynamics/mockstream/_mockstream.pyx')
-    cfg['sources'].append('gala/integrate/cyintegrators/dopri/dop853.c')
-    cfg['extra_compile_args'].append('--std=gnu99')
-    exts.append(Extension('gala.dynamics.mockstream._mockstream', **cfg))
+    exts.append(Extension('gala.dynamics.mockstream.mockstream', **cfg))
 
     cfg = setup_helpers.DistutilsExtensionArgs()
     cfg['include_dirs'].append('numpy')

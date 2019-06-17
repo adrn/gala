@@ -7,7 +7,7 @@ from ..nbody import DirectNBody
 from ...potential import Hamiltonian, PotentialBase
 from ...integrate.timespec import parse_time_specification
 from .df import BaseStreamDF
-from .new_mockstream import mockstream_dop853
+from .mockstream import mockstream_dop853
 
 __all__ = ['MockStreamGenerator']
 
