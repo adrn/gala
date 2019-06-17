@@ -29,7 +29,21 @@ cdef class BaseStreamDF:
 
     @cython.embedsignature(True)
     def __init__(self, lead=True, trail=True, random_state=None):
-        """TODO: documentation"""
+        """A distribution function for stellar streams.
+
+        This class specifies how massless star particles should be sampled in
+        order to generate a mock stellar stream.
+
+        Parameters
+        ----------
+        lead : bool (optional)
+            Generate a leading tail. Default: True.
+        trail : bool (optional)
+            Generate a trailing tail. Default: True.
+        random_state : `~numpy.random.RandomState` (optional)
+            To control random number generation.
+
+        """
         self._lead = int(lead)
         self._trail = int(trail)
 
