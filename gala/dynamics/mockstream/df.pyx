@@ -25,6 +25,7 @@ cdef extern from "potential/src/cpotential.h":
     double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
 
 
+@cython.embedsignature(True)
 cdef class BaseStreamDF:
     """A base class for representing distribution functions for generating
     stellar streams.
@@ -210,6 +211,7 @@ cdef class BaseStreamDF:
         return out
 
 
+@cython.embedsignature(True)
 cdef class StreaklineStreamDF(BaseStreamDF):
     """A class for representing the "streakline" distribution function for
     generating stellar streams based on `Kuepper et al. 2012
@@ -286,6 +288,7 @@ cdef class StreaklineStreamDF(BaseStreamDF):
         return particle_x, particle_v, particle_t1
 
 
+@cython.embedsignature(True)
 cdef class FardalStreamDF(BaseStreamDF):
     """A class for representing the Fardal+2015 distribution function for
     generating stellar streams based on `Fardal et al. 2015
@@ -384,6 +387,7 @@ cdef class FardalStreamDF(BaseStreamDF):
         return particle_x, particle_v, particle_t1
 
 
+@cython.embedsignature(True)
 cdef class LagrangeCloudStreamDF(BaseStreamDF):
     """A class for representing the Lagrange Cloud Stripping distribution
     function for generating stellar streams. This df is based on `Gibbons et al.
