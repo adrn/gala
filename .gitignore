@@ -11,7 +11,7 @@ __pycache__
 gala/_compiler.c
 gala/dynamics/lyapunov/dop853_lyapunov.c
 gala/dynamics/mockstream/_coord.c
-gala/dynamics/mockstream/_mockstream.c
+gala/dynamics/mockstream/mockstream.c
 gala/dynamics/mockstream/df.c
 gala/integrate/cyintegrators/dop853.c
 gala/integrate/cyintegrators/leapfrog.c
