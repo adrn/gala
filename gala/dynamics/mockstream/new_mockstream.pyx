@@ -23,7 +23,7 @@ from cpython.exc cimport PyErr_CheckSignals
 from ...integrate.cyintegrators.dop853 cimport (dop853_step,
                                                 dop853_helper_save_all)
 from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
-from ...potential.frame.cframe cimport CFrameWrapper
+from ...potential.frame.cframe cimport CFrameWrapper, CFrame
 from ...potential.potential.builtin.cybuiltin import NullWrapper
 
 from ...potential import Hamiltonian
@@ -32,11 +32,8 @@ from ...potential.frame import StaticFrame
 from ..nbody.nbody cimport MAX_NBODY
 from .df cimport BaseStreamDF
 
-# __all__ = ['_mock_stream_dop853']
+__all__ = ['mock_stream_dop853']
 
-cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrame:
-        pass
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
@@ -47,7 +44,6 @@ cdef extern from "dopri/dop853.h":
                                void *args)
 
 
-# TODO: mass-loss should be added and supported by nbody...currently unsupported
 cpdef mockstream_dop853(nbody, double[::1] time,
                         double[:, ::1] stream_w0, double[::1] stream_t1,
                         int[::1] nstream,
@@ -55,7 +51,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
     """
     Parameters
     ----------
-    nbody
+    nbody : `~gala.dynamics.nbody.DirectNBody`
     time : numpy.ndarray (ntimes, )
     stream_w0 : numpy.ndarray (nstreamparticles, 6)
     stream_t1 : numpy.ndarray (ntimes, )

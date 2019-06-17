@@ -1,8 +1,4 @@
-# Standard library
-import warnings
-
 # Third-party
-import astropy.units as u
 import numpy as np
 
 # This package
@@ -17,10 +13,22 @@ __all__ = ['MockStreamGenerator']
 
 class MockStreamGenerator:
 
-    def __init__(self, df, hamiltonian,
-                 progenitor_potential=None,
-                 release_every=1, n_particles=1):
-        """Generate a mock stellar stream in the specified Hamiltonian.
+    def __init__(self, df, hamiltonian, progenitor_potential=None):
+        """Generate a mock stellar stream in the specified external potential.
+
+        By default, you must pass in a specification of the stream distribution
+        function (``df``), and the external gravitational potential and
+        reference frame (via a `~gala.potential.Hamiltonian` object passed in
+        through the ``hamiltonian`` argument).
+
+        Also by default, the stream generation does not include the self-gravity
+        of the progenitor system: star particles are generated using the ``df``
+        object, and released into the external potential specified by the
+        ``hamiltonian``. If you would like the star particles to feel the
+        gravitational field of the progenitor system, you may pass in a
+        potential object to represent the progenitor via the
+        ``progenitor_potential`` argument. This can be any valid gala potential
+        instance.
 
         Parameters
         ----------
@@ -34,14 +42,6 @@ class MockStreamGenerator:
             If specified, the self-gravity of the progenitor system is included
             in the force calculation and orbit integration. If not specified,
             self-gravity is not accounted for. Default: ``None``
-        release_every : int (optional)
-            Controls how often to release stream particles from each tail.
-            Default: 1, meaning release particles at each timestep.
-        n_particles : int, array_like (optional)
-            If an integer, this controls the number of particles to release in
-            each tail at each release timestep. Alternatively, you can pass in
-            an array with the same shape as the number of timesteps to release
-            bursts of particles at certain times (e.g., pericenter).
         """
 
         if not isinstance(df, BaseStreamDF):
@@ -65,8 +65,6 @@ class MockStreamGenerator:
             self.self_gravity = False
 
         self.progenitor_potential = progenitor_potential
-        self.release_every = release_every
-        self.n_particles = n_particles
 
     def _get_nbody(self, prog_w0, nbody):
         """Internal function that adds the progenitor to the list of nbody
@@ -105,34 +103,57 @@ class MockStreamGenerator:
 
         return DirectNBody(**kwargs)
 
-    def run(self, prog_w0, prog_mass, nbody=None, **time_spec):
+    def run(self, prog_w0, prog_mass, nbody=None,
+            release_every=1, n_particles=1,
+            **time_spec):
         """Run the mock stream generator with the specified progenitor initial
         conditions.
 
-        TODO: describe nbody stuff...
+        This method generates the mock stellar stream for the specified
+        progenitor system properties. The progenitor orbit is specified by
+        passing in the initial or final conditions ``prog_w0`` and by specifying
+        time-stepping information via the ``**time_spec`` keyword arguments. If
+        the time-stepping specification proceeds forward in time, ``prog_w0`` is
+        interpreted as initial conditions and the mock stream is generated
+        forwards from this position. If the time-stepping proceeds backwards in
+        time, the progenitor orbit is first numerically integrated backwards
+        given the time-stepping information, then the stream is generated
+        forward from the past such that ``prog_w0`` becomes the final position
+        of the progenitor.
 
         Parameters
         ----------
         prog_w0 : `~gala.dynamics.PhaseSpacePosition`
-            The initial or final phase-space position of the progenitor system.
-            If the time-stepping specification (see below) proceeds forward in
-            time, ``prog_w0`` is interpreted as initial conditions and the mock
-            stream is generated forwards. If the time-stepping proceeds
-            backwards in time, the progenitor orbit is first numerically
-            integrated backwards given the time-stepping information, then the
-            stream is generated forward from the past such that ``prog_w0``
-            becomes the final position of the progenitor.
+            The initial or final phase-space position of the progenitor system
+            (see note above).
         prog_mass : `~astropy.units.Quantity` [mass]
-            TODO:
+            The mass of the progenitor system, passed in to the stream
+            distribution function (df) ``.sample()`` method. This quantity sets
+            the scale mass of the particle release df, but not the mass of the
+            progenitor potential used to compute the self-gravity on the stream
+            particles.
         nbody : `~gala.dynamics.DirectNBody` (optional)
             This allows specifying other massive perturbers (N-bodies) that can
             gravitationally influence the stream star orbits.
+        release_every : int (optional)
+            Controls how often to release stream particles from each tail.
+            Default: 1, meaning release particles at each timestep.
+        n_particles : int, array_like (optional)
+            If an integer, this controls the number of particles to release in
+            each tail at each release timestep. Alternatively, you can pass in
+            an array with the same shape as the number of timesteps to release
+            bursts of particles at certain times (e.g., pericenter).
         **time_spec
-            TODO:
+            Specification of how long to integrate. Most commonly, this is a
+            timestep ``dt`` and number of steps ``n_steps``, or a timestep
+            ``dt``, initial time ``t1``, and final time ``t2``. You may also
+            pass in a time array with ``t``. See documentation for
+            `~gala.integrate.parse_time_specification` for more information.
 
         Returns
         -------
-        TODO
+        stream_w : `~gala.dynamics.PhaseSpacePosition`
+        nbody_w : `~gala.dynamics.PhaseSpacePosition`
 
         """
         units = self.hamiltonian.units
@@ -156,7 +177,7 @@ class MockStreamGenerator:
         else:
             nbody0 = prog_nbody
 
-        prog_orbit = nbody_orbits[:, 0] # Note: assumption! Progenitor is idx 0
+        prog_orbit = nbody_orbits[:, 0] # Note: Progenitor must be idx 0!
 
         # Generate initial conditions from the DF
         x0, v0, t1 = self.df.sample(self.hamiltonian, prog_orbit, prog_mass,
