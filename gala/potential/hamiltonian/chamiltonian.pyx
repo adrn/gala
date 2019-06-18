@@ -1,5 +1,8 @@
 # cython: language_level=3
 
+# Standard-library
+import warnings
+
 # Third-party
 import numpy as np
 import astropy.units as u
@@ -280,6 +283,13 @@ class Hamiltonian(CommonBase):
         else:
             # use the Integrator provided
             pass
+
+        if (Integrator == LeapfrogIntegrator and
+                not isinstance(self.frame, StaticFrame)):
+            warnings.warn("Using leapfrog integration with non-static frames "
+                          "can lead to wildly incorrect orbits. It is "
+                          "recommended that you use DOPRI853Integrator "
+                          "instead.", RuntimeWarning)
 
         if not isinstance(w0, PhaseSpacePosition):
             w0 = np.asarray(w0)
