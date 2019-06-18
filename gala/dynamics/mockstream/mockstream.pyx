@@ -32,7 +32,7 @@ from ...potential.frame import StaticFrame
 from ..nbody.nbody cimport MAX_NBODY
 from .df cimport BaseStreamDF
 
-__all__ = ['mock_stream_dop853']
+__all__ = ['mockstream_dop853']
 
 
 cdef extern from "dopri/dop853.h":

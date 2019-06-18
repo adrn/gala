@@ -48,49 +48,28 @@ def test_mock_stream(Integrator, kwargs):
     assert np.allclose(diff[1,0].value, diff[1,1].value)
     assert np.allclose(diff[2].value, 0.)
 
-mock_funcs = [streakline_stream, fardal_stream, dissolved_fardal_stream]
-all_extra_args = [dict(), dict(), dict(t_disrupt=-250.*u.Myr)]
+
+mock_funcs = [streakline_stream, fardal_stream]
+all_extra_args = [dict(), dict()]
 @pytest.mark.parametrize("mock_func, extra_kwargs", zip(mock_funcs, all_extra_args))
 def test_each_type(mock_func, extra_kwargs):
+    # TODO: remove this test when these functions are removed
     potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.,
                                                     units=galactic)
     ham = Hamiltonian(potential)
 
-    w0 = PhaseSpacePosition(pos=[0.,15.,0]*u.kpc,
-                            vel=[-0.13,0,0]*u.kpc/u.Myr)
+    w0 = PhaseSpacePosition(pos=[0., 15., 0]*u.kpc,
+                            vel=[-0.13, 0, 0]*u.kpc/u.Myr)
     prog = ham.integrate_orbit(w0, dt=-2., n_steps=1023)
     prog = prog[::-1]
 
-    stream = mock_func(ham, prog_orbit=prog, prog_mass=1E4,
-                       Integrator=DOPRI853Integrator, **extra_kwargs)
-
-    # import matplotlib.pyplot as plt
-    # fig = prog.plot(subplots_kwargs=dict(sharex=False,sharey=False))
-    # fig = stream.plot(color='#ff0000', alpha=0.5, axes=fig.axes)
-    # fig = stream.plot()
-    # plt.show()
+    with pytest.warns(DeprecationWarning):
+        stream = mock_func(ham, prog_orbit=prog, prog_mass=1E4*u.Msun,
+                           Integrator=DOPRI853Integrator, **extra_kwargs)
 
     assert prog.t.shape == (1024,)
     assert stream.pos.shape == (2048,) # two particles per step
 
-    # -----------------------
-    # Test expected failures:
-
-    # Deprecation warning for passing in potential
-    # warnings.simplefilter('always')
-    with pytest.warns(DeprecationWarning):
-        stream = mock_func(potential, prog_orbit=prog, prog_mass=1E4*u.Msun,
-                           Integrator=DOPRI853Integrator, **extra_kwargs)
-
-    # Integrator not supported
-    with pytest.raises(ValueError):
-        stream = mock_func(ham, prog_orbit=prog, prog_mass=1E4*u.Msun,
-                           Integrator=RK5Integrator, **extra_kwargs)
-
-    # Passed a phase-space position, not orbit
-    with pytest.raises(TypeError):
-        stream = mock_func(ham, prog_orbit=prog[0], prog_mass=1E4*u.Msun,
-                           Integrator=DOPRI853Integrator, **extra_kwargs)
 
 @pytest.mark.skipif('CI' in os.environ,
                     reason="For some reason, doesn't work on Travis/CI")

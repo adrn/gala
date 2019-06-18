@@ -1,20 +1,19 @@
 # Standard library
 import warnings
-import os
 
 # Third-party
 import numpy as np
 
 # Project
-from .. import PhaseSpacePosition, Orbit
-from ...potential import Hamiltonian, CPotentialBase
-from ...integrate import DOPRI853Integrator, LeapfrogIntegrator
-from ._mockstream import (_mock_stream_dop853, _mock_stream_leapfrog,
-                          _mock_stream_animate)
+from ...integrate import DOPRI853Integrator
+
+from .df import StreaklineStreamDF, FardalStreamDF
+from .mockstream_generator import MockStreamGenerator
 
 __all__ = ['mock_stream', 'streakline_stream', 'fardal_stream',
            'dissolved_fardal_stream']
 
+_transition_guide_url = "TODO"
 
 def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
                 release_every=1, Integrator=DOPRI853Integrator,
@@ -23,16 +22,16 @@ def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
     """DEPRECATED!"""
     raise NotImplementedError(
         "This function has been deprecated by the new mock stream generation "
-        "methodology. See "
-        "http://gala.adrian.pw/en/latest/dynamics/mockstreams.html for "
-        "information about the new functionality.")
+        "methodology. See {} for information about the new functionality."
+        .format(_transition_guide_url))
 
 
 def streakline_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
                       Integrator=DOPRI853Integrator, Integrator_kwargs=dict(),
                       snapshot_filename=None, output_every=1, seed=None):
-    """
-    This function has been deprecated! TODO: link to transition guide...
+    """This function has been deprecated!
+
+    See {} for more information.
 
     Parameters
     ----------
@@ -64,17 +63,29 @@ def streakline_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
     stream : `~gala.dynamics.PhaseSpacePosition`
 
     """
-    pass
+    warnings.warn("This function is deprecated - use the new mock stream "
+                  "generation functionality. See {} for more information."
+                  .format(_transition_guide_url), DeprecationWarning)
+
+    if Integrator is not DOPRI853Integrator:
+        raise ValueError("Integrator must be DOPRI853Integrator.")
+
+    rnd = np.random.RandomState(seed)
+    df = StreaklineStreamDF(random_state=rnd)
+
+    gen = MockStreamGenerator(df=df, hamiltonian=hamiltonian)
+    stream, _ = gen.run(prog_orbit[0], prog_mass=prog_mass,
+                        release_every=release_every, t=prog_orbit.t)
+
+    return stream
 
 
 def fardal_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
                   Integrator=DOPRI853Integrator, Integrator_kwargs=dict(),
                   snapshot_filename=None, seed=None, output_every=1):
-    """
-    Generate a mock stellar stream in the specified potential with a
-    progenitor system that ends up at the specified position.
+    """This function has been deprecated!
 
-    This uses the prescription from Fardal et al. (2015).
+    See {} for more information.
 
     Parameters
     ----------
@@ -106,7 +117,21 @@ def fardal_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
     stream : `~gala.dynamics.PhaseSpacePosition`
 
     """
-    pass
+    warnings.warn("This function is deprecated - use the new mock stream "
+                  "generation functionality. See {} for more information."
+                  .format(_transition_guide_url), DeprecationWarning)
+
+    if Integrator is not DOPRI853Integrator:
+        raise ValueError("Integrator must be DOPRI853Integrator.")
+
+    rnd = np.random.RandomState(seed)
+    df = FardalStreamDF(random_state=rnd)
+
+    gen = MockStreamGenerator(df=df, hamiltonian=hamiltonian)
+    stream, _ = gen.run(prog_orbit[0], prog_mass=prog_mass,
+                        release_every=release_every, t=prog_orbit.t)
+
+    return stream
 
 
 def dissolved_fardal_stream(hamiltonian, prog_orbit, prog_mass, t_disrupt, release_every=1,
@@ -115,6 +140,9 @@ def dissolved_fardal_stream(hamiltonian, prog_orbit, prog_mass, t_disrupt, relea
     """DEPRECATED!"""
     raise NotImplementedError(
         "This function has been deprecated by the new mock stream generation "
-        "methodology. See "
-        "http://gala.adrian.pw/en/latest/dynamics/mockstreams.html for "
-        "information about the new functionality.")
+        "methodology. See {} for information about the new functionality."
+        .format(_transition_guide_url))
+
+
+streakline_stream.__doc__ = streakline_stream.__doc__.format(_transition_guide_url)
+fardal_stream.__doc__ = fardal_stream.__doc__.format(_transition_guide_url)

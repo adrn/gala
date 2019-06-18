@@ -187,12 +187,16 @@ class MockStreamGenerator:
         prog_orbit = nbody_orbits[:, 0] # Note: Progenitor must be idx 0!
 
         # Generate initial conditions from the DF
-        x0, v0, t1 = self.df.sample(self.hamiltonian, prog_orbit, prog_mass,
-                                    release_every=self.release_every,
-                                    n_particles=self.n_particles)
-        w0 = np.hstack((x0.value, v0.value))
+        stream_w0 = self.df.sample(prog_orbit, prog_mass,
+                                   hamiltonian=self.hamiltonian,
+                                   release_every=release_every,
+                                   n_particles=n_particles)
+        w0 = np.vstack((stream_w0.xyz.decompose(units).value,
+                        stream_w0.v_xyz.decompose(units).value)).T
+        w0 = np.ascontiguousarray(w0)
 
-        unq_t1s, nstream = np.unique(t1, return_counts=True)
+        unq_t1s, nstream = np.unique(stream_w0.t.decompose(units),
+                                     return_counts=True)
 
         # Only both iterating over timesteps if we're releasing particles then:
         time = prog_orbit.t.decompose(units).value.copy()

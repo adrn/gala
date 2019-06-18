@@ -137,8 +137,9 @@ cdef class BaseStreamDF:
             The mass of the progenitor system, either a scalar quantity, or as
             an array with the same shape as the number of timesteps in the orbit
             to account for mass evolution.
-        hamiltonian :
-            TODO
+        hamiltonian : `~gala.potential.Hamiltonian`
+            The external potential and reference frame to numerically integrate
+            orbits in.
         release_every : int (optional)
             Controls how often to release stream particles from each tail.
             Default: 1, meaning release particles at each timestep.
