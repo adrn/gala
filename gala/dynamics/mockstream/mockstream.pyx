@@ -47,7 +47,9 @@ cdef extern from "dopri/dop853.h":
 cpdef mockstream_dop853(nbody, double[::1] time,
                         double[:, ::1] stream_w0, double[::1] stream_t1,
                         int[::1] nstream,
-                        double atol=1E-10, double rtol=1E-10, int nmax=0):
+                        double atol=1E-10, double rtol=1E-10, int nmax=0,
+                        int output_every=0, output_filename=None,
+                        int check_filesize=1):
     """
     Parameters
     ----------
@@ -69,7 +71,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
     """
 
     cdef:
-        int i, j, k, n # indexing
+        int i, j, k, l, n # indexing
         unsigned ndim = 6 # TODO: hard-coded, but really must be 6D
 
         # For N-body support:
@@ -100,6 +102,36 @@ cpdef mockstream_dop853(nbody, double[::1] time,
 
         double[:, :, ::1] nbody_w = np.empty((ntimes, nbodies, ndim))
 
+        # for snapshotting:
+        int noutput_times
+
+    if output_every > 0:
+        noutput_times = ntimes // output_every + 1 # +1 for initial conditions
+        if ntimes % output_every != 0:
+            noutput_times += 1 # +1 for final conditions
+
+        est_filesize = total_nstream * noutput_times * 8 * u.byte
+        if est_filesize >= 8 * u.gigabyte and check_filesize:
+            warnings.warn("Estimated mockstream output file is expected to be "
+                          ">8 GB in size! If you're sure, turn this warning "
+                          "off with `check_filesize=False`")
+
+        # create the output file
+        if path.exists(output_filename):
+            raise IOError("Mockstream output file {} already exists!"
+                          .format(output_filename))
+
+        with h5py.File(str(output_filename), 'w') as h5f:
+            h5f.create_dataset('pos', dtype='f8',
+                               shape=(6, noutput_times, total_nstream),
+                               fillvalue=np.nan, compression='gzip',
+                               compression_opts=9)
+            h5f.create_dataset('vel', dtype='f8',
+                               shape=(6, noutput_times, total_nstream),
+                               fillvalue=np.nan, compression='gzip',
+                               compression_opts=9)
+            h5f.create_dataset('t', data=np.array(time))
+
     # set the potential objects of the progenitor (index 0) and any other
     # massive bodies included in the stream generation
     for i in range(nbodies):
@@ -119,6 +151,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
                                      atol, rtol, nmax)
 
     n = 0
+    l = 0
     for i in range(ntimes):
         # set initial conditions for progenitor and N-bodies
         for j in range(nbodies):
@@ -141,6 +174,11 @@ cpdef mockstream_dop853(nbody, double[::1] time,
         PyErr_CheckSignals()
 
         n += nstream[i]
+
+        if i == 0 or (i % output_every) == 0 or i == (ntimes-1):
+            with h5py.File(str(snapshot_filename), 'a') as h5f:
+                h5f['pos'][:, j:, i] = np.array(one_particle_w[:n+1, :ndim_2]).T
+                h5f['vel'][:, j:, i] = np.array(one_particle_w[:n+1, ndim_2:]).T
 
     for j in range(nbodies):
         for k in range(ndim):
