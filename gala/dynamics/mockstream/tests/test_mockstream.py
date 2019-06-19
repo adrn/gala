@@ -53,35 +53,29 @@ def test_run():
                          release_every=1, n_particles=n_particles)
     assert stream3.shape[0] == 2 * n_particles.sum()
 
-    #
-    #
-    # gen = MockStreamGenerator(df=FardalStreamDF(),
-    #                           hamiltonian=H,
-    #                           progenitor_potential=gp.PlummerPotential(),
-    #                           progenitor_mass_loss=1*u.Msun/u.Myr)
-    #
-    # stream = gen.run(prog_w0, nbody=nbody, dt=-1., n_steps=1000)
-
 
 # @pytest.mark.skipif('CI' in os.environ,
 #                     reason="For some reason, doesn't work on Travis/CI")
 def test_animate(tmpdir):
-
-    np.random.seed(42)
-    pot = HernquistPotential(m=1E11, c=1., units=galactic)
-    w0 = PhaseSpacePosition(pos=[5., 0, 0]*u.kpc, vel=[0, 0.1, 0]*u.kpc/u.Myr)
-    orbit = Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=1000,
-                                             Integrator=DOPRI853Integrator)
-
-    fardal_stream(pot, orbit, prog_mass=1E5*u.Msun, release_every=10,
-                  snapshot_filename=os.path.join(str(tmpdir), "test.hdf5"),
-                  seed=42)
-
-    stream = fardal_stream(pot, orbit, prog_mass=1E5*u.Msun, release_every=10,
-                           seed=42)
-
     import h5py
-    with h5py.File(os.path.join(str(tmpdir), "test.hdf5")) as f:
+
+    potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.,
+                                                    units=galactic)
+    H = Hamiltonian(potential)
+    w0 = PhaseSpacePosition(pos=[15., 0., 0]*u.kpc,
+                            vel=[0, 0, 0.13]*u.kpc/u.Myr)
+    mass = 2.5e4 * u.Msun
+    prog_pot = HernquistPotential(mass, 4*u.pc, galactic)
+
+    # The basic run:
+    df = FardalStreamDF()
+    gen = MockStreamGenerator(df=df, hamiltonian=H)
+
+    filename = os.path.join(str(tmpdir), "test.hdf5")
+    stream, _ = gen.run(w0, mass, dt=-1., n_steps=100,
+                        output_every=1, output_filename=filename)
+
+    with h5py.File() as f:
         t = f['t'][:]
         pos = f['pos'][:]
         vel = f['vel'][:]
