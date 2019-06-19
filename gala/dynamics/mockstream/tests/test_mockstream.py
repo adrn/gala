@@ -40,13 +40,19 @@ def test_run():
     stream2, _ = gen.run(w0, mass, dt=-1., n_steps=100)
     assert not u.allclose(stream1.xyz, stream2.xyz)
 
+    # Skipping release steps:
+    gen = MockStreamGenerator(df=df, hamiltonian=H)
+    stream3, _ = gen.run(w0, mass, dt=-1., n_steps=100,
+                         release_every=4, n_particles=4)
+    assert stream3.shape == ((100//4 + 1) * 4 * 2, )
 
-    # gen = MockStreamGenerator(df=FardalStreamDF(),
-    #                           hamiltonian=H,
-    #                           progenitor_potential=gp.PlummerPotential(),
-    #                           progenitor_mass_loss=1*u.Msun/u.Myr)
-    #
-    # stream = gen.run(prog_w0, dt=-1., n_steps=1000)
+    # Custom n_particles:
+    gen = MockStreamGenerator(df=df, hamiltonian=H)
+    n_particles = np.random.randint(0, 4, size=101)
+    stream3, _ = gen.run(w0, mass, dt=-1., n_steps=100,
+                         release_every=1, n_particles=n_particles)
+    assert stream3.shape[0] == 2 * n_particles.sum()
+
     #
     #
     # gen = MockStreamGenerator(df=FardalStreamDF(),
