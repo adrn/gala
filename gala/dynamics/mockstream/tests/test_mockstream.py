@@ -53,6 +53,8 @@ def test_run():
                          release_every=1, n_particles=n_particles)
     assert stream3.shape[0] == 2 * n_particles.sum()
 
+    # TODO: add nbody test
+
 
 # @pytest.mark.skipif('CI' in os.environ,
 #                     reason="For some reason, doesn't work on Travis/CI")
@@ -65,7 +67,6 @@ def test_animate(tmpdir):
     w0 = PhaseSpacePosition(pos=[15., 0., 0]*u.kpc,
                             vel=[0, 0, 0.13]*u.kpc/u.Myr)
     mass = 2.5e4 * u.Msun
-    prog_pot = HernquistPotential(mass, 4*u.pc, galactic)
 
     # The basic run:
     df = FardalStreamDF()
@@ -75,10 +76,11 @@ def test_animate(tmpdir):
     stream, _ = gen.run(w0, mass, dt=-1., n_steps=100,
                         output_every=1, output_filename=filename)
 
-    with h5py.File() as f:
-        t = f['t'][:]
-        pos = f['pos'][:]
-        vel = f['vel'][:]
+    with h5py.File(filename) as f:
+        stream_g = f['stream']
+        nbody_g = f['nbody']
+
+        # TODO: check shapes, make sure nan values make sense, etc.
 
     assert np.allclose(t, orbit.t.value)
 
