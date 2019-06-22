@@ -6,14 +6,28 @@ import numpy as np
 
 # Project
 from ...integrate import DOPRI853Integrator
-
+from .. import PhaseSpacePosition
 from .df import StreaklineStreamDF, FardalStreamDF
 from .mockstream_generator import MockStreamGenerator
 
-__all__ = ['mock_stream', 'streakline_stream', 'fardal_stream',
-           'dissolved_fardal_stream']
+__all__ = ['MockStream',
+           'mock_stream', 'streakline_stream', # DEPRECATED: TODO remove
+           'fardal_stream', 'dissolved_fardal_stream']
 
 _transition_guide_url = "TODO"
+
+
+class MockStream(PhaseSpacePosition):
+
+    def __init__(self, pos, vel=None, frame=None, release_time=None):
+        # TODO: a phase-space position that also knows about release times,
+        # can separate particles by leading/trailing
+        pass
+
+
+# ---------------------------------------------------------------------------
+# DEPRECATED / OLD STUFF BELOW
+# TODO: remove this
 
 def mock_stream(hamiltonian, prog_orbit, prog_mass, k_mean, k_disp,
                 release_every=1, Integrator=DOPRI853Integrator,
