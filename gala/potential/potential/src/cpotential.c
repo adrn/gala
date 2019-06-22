@@ -99,7 +99,6 @@ void c_gradient(CPotential *p, double t, double *qp, double *grad) {
 
         apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
                            &qp_trans[0]);
-
         (p->gradient)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim,
                          &tmp_grad[0]);
 

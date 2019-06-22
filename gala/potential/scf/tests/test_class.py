@@ -19,7 +19,7 @@ G = _G.decompose(galactic).value
 if not GSL_ENABLED:
     pytest.skip("skipping SCF tests: they depend on GSL",
                 allow_module_level=True)
-    
+
 
 def test_hernquist():
     nmax = 6
@@ -93,3 +93,13 @@ class TestSCFPotential(PotentialTestBase):
         print(pars)
         other = self.potential.__class__(units=self.potential.units, **pars)
         assert other != self.potential
+
+    def test_replace_units(self):
+        H = gp.Hamiltonian(self.potential)
+        H2 = gp.Hamiltonian(self.potential.replace_units(self.potential.units))
+
+        ww = [20., 10, 10, 0, 0.2, 0]
+        w1 = H.integrate_orbit(ww, t=np.array([0, 1.]))[-1].w(galactic).T
+        w2 = H2.integrate_orbit(ww, t=np.array([0, 1.]))[-1].w(galactic).T
+
+        assert np.allclose(w1, w2)

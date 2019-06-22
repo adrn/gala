@@ -384,7 +384,7 @@ class CPotentialBase(PotentialBase):
 
         return new_pot
 
-    def replace_units(self, units, copy=True):
+    def replace_units(self, units):
         """Change the unit system of this potential.
 
         Parameters
@@ -392,21 +392,6 @@ class CPotentialBase(PotentialBase):
         units : `~gala.units.UnitSystem`
             Set of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
-        copy : bool (optional)
-            If True, returns a copy, if False, changes this object.
         """
-        if copy:
-            pot = pycopy.copy(self)
-        else:
-            pot = self
-
-        CPotentialBase.__init__(pot,
-                                parameters=self.parameters,
-                                origin=self.origin,
-                                R=self.R,
-                                ndim=self.ndim,
-                                units=units,
-                                Wrapper=self._Wrapper,
-                                c_only=self._c_only)
-
-        return pot
+        return self.__class__(**self.parameters, units=units,
+                              R=self.R, origin=self.origin)

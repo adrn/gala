@@ -26,8 +26,8 @@ class DirectNBody:
         """Perform orbit integration using direct N-body forces between
         particles, optionally in an external background potential.
 
-        TODO: could add another option, like in other contexts, for "extra_force"
-        to support, e.g., dynamical friction
+        TODO: could add another option, like in other contexts, for
+        "extra_force" to support, e.g., dynamical friction
 
         Parameters
         ----------
@@ -56,14 +56,15 @@ class DirectNBody:
 
         if len(w0.shape) > 0:
             if w0.shape[0] != len(particle_potentials):
-                raise ValueError("The number of initial conditions in `w0` must "
-                                 "match the number of particle potentials passed "
-                                 "in with `particle_potentials`.")
+                raise ValueError("The number of initial conditions in `w0` must"
+                                 " match the number of particle potentials "
+                                 "passed in with `particle_potentials`.")
 
             # TODO: this is a MAJOR HACK
             if w0.shape[0] > 65536: # see MAX_NBODY in _nbody.pyx
-                raise NotImplementedError("We currently only support direct N-body "
-                                          "integration for <= 65536 particles.")
+                raise NotImplementedError("We currently only support direct "
+                                          "N-body integration for <= 65536 "
+                                          "particles.")
 
         # First, figure out how to get units - first place to check is the arg
         if units is None:
@@ -93,14 +94,13 @@ class DirectNBody:
             if pp is None:
                 pp = NullPotential(units)
             else:
-                pp = pp.replace_units(units, copy=True)
+                pp = pp.replace_units(units)
             _particle_potentials.append(pp)
 
         if external_potential is None:
             external_potential = NullPotential(units)
         else:
-            external_potential = external_potential.replace_units(units,
-                                                                  copy=True)
+            external_potential = external_potential.replace_units(units)
 
         if frame is None:
             frame = StaticFrame(units)

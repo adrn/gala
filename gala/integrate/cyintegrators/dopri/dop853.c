@@ -993,19 +993,12 @@ void Fwrapper_direct_nbody (unsigned full_ndim, double t, double *w, double *f,
     /* Here, the extra args are actually the array of CPotential objects that
        represent the potentials of the individual particles.
     */
-    // CPotential **particlepotentials = (CPotential **) args;
     CPotential *pp;
-    CPotential **cps = (CPotential **) args;
 
     // Note: only really works with a static frame! This should be enforced
     int i, j, k;
     unsigned ndim = full_ndim / norbits; // phase-space dimensionality
     double f2[ndim/2];
-    double q0[ndim/2];
-
-    for (i=0; i < norbits; i++) {
-        pp = ((CPotential **)args)[i];
-    }
 
     for (i=0; i < norbits; i++) {
         // call gradient function

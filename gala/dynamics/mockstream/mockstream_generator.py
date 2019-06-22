@@ -193,8 +193,8 @@ class MockStreamGenerator:
             # TODO: this could be cleaed up...
             nbody0 = DirectNBody(
                 nbody_orbits[0], prog_nbody.particle_potentials,
-                external_potential=prog_nbody.external_potential,
-                frame=prog_nbody.frame, units=units)
+                external_potential=self.hamiltonian.potential,
+                frame=self.hamiltonian.frame, units=units)
 
         else:
             nbody0 = prog_nbody
