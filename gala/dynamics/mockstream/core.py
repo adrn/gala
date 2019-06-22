@@ -8,8 +8,6 @@ import numpy as np
 # Project
 from ...integrate import DOPRI853Integrator
 from .. import PhaseSpacePosition
-from .df import StreaklineStreamDF, FardalStreamDF
-from .mockstream_generator import MockStreamGenerator
 
 __all__ = ['MockStream',
            'mock_stream', 'streakline_stream', # DEPRECATED: TODO remove
@@ -39,7 +37,7 @@ class MockStream(PhaseSpacePosition):
             self.release_time = release_time
 
         if lead_trail is not None:
-            lead_trail = np.array(lead_trail).astype(bool)
+            lead_trail = np.array(lead_trail)
             if len(lead_trail) != self.pos.shape[0]:
                 raise ValueError('shape mismatch: input leading/trailing array '
                                  'must have the same shape as the input '
@@ -103,6 +101,9 @@ def streakline_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
     stream : `~gala.dynamics.PhaseSpacePosition`
 
     """
+    from .df import StreaklineStreamDF
+    from .mockstream_generator import MockStreamGenerator
+
     warnings.warn("This function is deprecated - use the new mock stream "
                   "generation functionality. See {} for more information."
                   .format(_transition_guide_url), DeprecationWarning)
@@ -157,6 +158,8 @@ def fardal_stream(hamiltonian, prog_orbit, prog_mass, release_every=1,
     stream : `~gala.dynamics.PhaseSpacePosition`
 
     """
+    from .df import FardalStreamDF
+    from .mockstream_generator import MockStreamGenerator
     warnings.warn("This function is deprecated - use the new mock stream "
                   "generation functionality. See {} for more information."
                   .format(_transition_guide_url), DeprecationWarning)

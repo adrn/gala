@@ -20,6 +20,7 @@ from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
 from ...potential.hamiltonian.chamiltonian import Hamiltonian
 
 from ._coord cimport cross, norm, apply_3matrix
+from .core import MockStream
 
 cdef extern from "potential/src/cpotential.h":
     double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
@@ -207,6 +208,19 @@ cdef class BaseStreamDF:
         x, v, t1 = self._sample(H.potential, prog_x, prog_v,
                                 prog_t, prog_m,
                                 n_particles)
+
+        # First out what particles are leading vs. trailing:
+        lt = np.empty(len(t1), dtype='U1')
+        i = 0
+        for n in n_particles:
+            if self._trail:
+                lt[i:i+n] = 't'
+                i += n
+
+            if self._lead:
+                lt[i:i+n] = 'l'
+                i += n
+
         out = Orbit(pos=np.array(x).T * _units['length'],
                     vel=np.array(v).T * _units['length']/_units['time'],
                     t=np.array(t1) * _units['time'],
@@ -214,7 +228,11 @@ cdef class BaseStreamDF:
 
         # Transform back to the input frame
         out = out.to_frame(frame)
-        return out
+
+        w0 = MockStream(pos=out.pos, vel=out.vel, frame=out.frame,
+                        release_time=out.t, lead_trail=lt)
+
+        return w0
 
 
 @cython.embedsignature(True)

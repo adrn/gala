@@ -6,8 +6,8 @@ from .. import combine, PhaseSpacePosition
 from ..nbody import DirectNBody
 from ...potential import Hamiltonian, PotentialBase
 from ...integrate.timespec import parse_time_specification
-from .df import BaseStreamDF
 from .mockstream import mockstream_dop853, mockstream_dop853_snapshot
+from .core import MockStream
 
 __all__ = ['MockStreamGenerator']
 
@@ -43,7 +43,7 @@ class MockStreamGenerator:
             in the force calculation and orbit integration. If not specified,
             self-gravity is not accounted for. Default: ``None``
         """
-
+        from .df import BaseStreamDF
         if not isinstance(df, BaseStreamDF):
             raise TypeError('The input distribution function (DF) instance '
                             'must be an instance of a subclass of '
@@ -210,7 +210,7 @@ class MockStreamGenerator:
                         stream_w0.v_xyz.decompose(units).value)).T
         w0 = np.ascontiguousarray(w0)
 
-        unq_t1s, nstream = np.unique(stream_w0.t.decompose(units),
+        unq_t1s, nstream = np.unique(stream_w0.release_time.decompose(units),
                                      return_counts=True)
 
         # Only both iterating over timesteps if we're releasing particles then:
@@ -232,8 +232,10 @@ class MockStreamGenerator:
 
         x_unit = units['length']
         v_unit = units['length'] / units['time']
-        stream_w = PhaseSpacePosition(pos=raw_stream[:, :3].T * x_unit,
-                                      vel=raw_stream[:, 3:].T * v_unit)
+        stream_w = MockStream(pos=raw_stream[:, :3].T * x_unit,
+                              vel=raw_stream[:, 3:].T * v_unit,
+                              release_time=stream_w0.release_time,
+                              lead_trail=stream_w0.lead_trail)
         nbody_w = PhaseSpacePosition(pos=raw_nbody[:, :3].T * x_unit,
                                      vel=raw_nbody[:, 3:].T * v_unit)
 

@@ -83,7 +83,8 @@ def test_rotating_frame():
 
     df_rotating = DF(trail=False)
     xvt_rotating = df_rotating.sample(orbit_rotating, 1e6*u.Msun)
-    xvt_rotating_static = xvt_rotating.to_frame(H_static.frame)
+    xvt_rotating_static = xvt_rotating.to_frame(H_static.frame,
+                                                t=xvt_rotating.release_time)
 
     assert u.allclose(xvt_static.xyz, xvt_rotating_static.xyz,
                       atol=1e-9*u.kpc)

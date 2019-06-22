@@ -13,8 +13,9 @@ def test_init():
     vxyz = np.random.random(size=(3, 100)) * u.km / u.s
     t1 = np.random.random(size=100) * u.Myr
 
-    lead_trail = np.zeros(100, dtype=bool)
-    lead_trail[::2] = True
+    lead_trail = np.empty(100, dtype='U1')
+    lead_trail[::2] = 't'
+    lead_trail[1::2] = 'l'
 
     stream = MockStream(xyz, vxyz)
     stream = MockStream(xyz, vxyz, release_time=t1)
