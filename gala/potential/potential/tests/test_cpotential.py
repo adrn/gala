@@ -14,17 +14,8 @@ def test_replace_units():
     assert p.parameters['m'].unit == usys1['mass']
     assert p.parameters['c'].unit == usys1['length']
 
-    p2 = p.replace_units(usys2, copy=True)
+    p2 = p.replace_units(usys2)
     assert p2.parameters['m'].unit == usys2['mass']
     assert p2.parameters['c'].unit == usys2['length']
     assert p.units == usys1
     assert p2.units == usys2
-
-    p.replace_units(usys2, copy=False)
-    assert p.parameters['m'].unit == usys2['mass']
-    assert p.parameters['c'].unit == usys2['length']
-    assert p.units == usys2
-
-    p.units = usys1
-    assert p.parameters['m'].unit == usys1['mass']
-    assert p.parameters['c'].unit == usys1['length']

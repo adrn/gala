@@ -684,10 +684,6 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     def units(self):
         return self._units
 
-    @units.setter
-    def units(self, units):
-        self.replace_units(units, copy=False)
-
     def replace_units(self, units, copy=True):
         """Change the unit system of this potential.
 
