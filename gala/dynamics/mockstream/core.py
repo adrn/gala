@@ -2,6 +2,7 @@
 import warnings
 
 # Third-party
+import astropy.units as u
 import numpy as np
 
 # Project
@@ -19,10 +20,35 @@ _transition_guide_url = "TODO"
 
 class MockStream(PhaseSpacePosition):
 
-    def __init__(self, pos, vel=None, frame=None, release_time=None):
-        # TODO: a phase-space position that also knows about release times,
-        # can separate particles by leading/trailing
-        pass
+    @u.quantity_input(release_time=u.Myr)
+    def __init__(self, pos, vel=None, frame=None,
+                 release_time=None, lead_trail=None):
+
+        super().__init__(pos=pos, vel=vel, frame=frame)
+
+        if release_time is not None:
+            release_time = u.Quantity(release_time)
+            if len(release_time) != self.pos.shape[0]:
+                raise ValueError('shape mismatch: input release time array '
+                                 'must have the same shape as the input '
+                                 'phase-space data, minus the component '
+                                 'dimension. expected {}, got {}'
+                                 .format(self.pos.shape[0],
+                                         len(release_time)))
+
+            self.release_time = release_time
+
+        if lead_trail is not None:
+            lead_trail = np.array(lead_trail).astype(bool)
+            if len(lead_trail) != self.pos.shape[0]:
+                raise ValueError('shape mismatch: input leading/trailing array '
+                                 'must have the same shape as the input '
+                                 'phase-space data, minus the component '
+                                 'dimension. expected {}, got {}'
+                                 .format(self.pos.shape[0],
+                                         len(lead_trail)))
+
+            self.lead_trail = lead_trail
 
 
 # ---------------------------------------------------------------------------
