@@ -47,7 +47,7 @@ def get_extensions():
     cfg['sources'].append('gala/dynamics/mockstream/mockstream.pyx')
     cfg['sources'].append('gala/integrate/cyintegrators/dopri/dop853.c')
     cfg['extra_compile_args'].append('--std=gnu99')
-    exts.append(Extension('gala.dynamics.mockstream.mockstream', **cfg))
+    exts.append(Extension('gala.dynamics.mockstream._mockstream', **cfg))
 
     cfg = setup_helpers.DistutilsExtensionArgs()
     cfg['include_dirs'].append('numpy')

@@ -6,7 +6,7 @@ from .. import combine, PhaseSpacePosition
 from ..nbody import DirectNBody
 from ...potential import Hamiltonian, PotentialBase
 from ...integrate.timespec import parse_time_specification
-from .mockstream import mockstream_dop853
+from ._mockstream import mockstream_dop853
 from .core import MockStream
 
 __all__ = ['MockStreamGenerator']
