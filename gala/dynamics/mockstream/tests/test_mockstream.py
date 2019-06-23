@@ -69,17 +69,18 @@ def test_animate(tmpdir):
     mass = 2.5e4 * u.Msun
 
     # The basic run:
-    df = FardalStreamDF()
+    df = FardalStreamDF(trail=False)
     gen = MockStreamGenerator(df=df, hamiltonian=H)
 
     filename = os.path.join(str(tmpdir), "test.hdf5")
-    stream, _ = gen.run(w0, mass, dt=-1., n_steps=4,
-                        output_every=2, output_filename=filename)
+    stream, _ = gen.run(w0, mass, dt=-1., n_steps=3,
+                        output_every=1, output_filename=filename)
 
     with h5py.File(filename) as f:
         stream_orbits = Orbit.from_hdf5(f['stream'])
         nbody_orbits = Orbit.from_hdf5(f['nbody'])
 
+    print(stream_orbits.x.shape)
     print(stream_orbits.x)
 
     # assert np.allclose(t, orbit.t.value)
