@@ -19,6 +19,7 @@ import h5py
 import numpy as np
 cimport numpy as np
 np.import_array()
+from yaml import dump
 
 from libc.math cimport sqrt
 from cpython.exc cimport PyErr_CheckSignals
@@ -31,6 +32,8 @@ from ...potential.potential.builtin.cybuiltin import NullWrapper
 
 from ...potential import Hamiltonian
 from ...potential.frame import StaticFrame
+from ...io import quantity_to_hdf5
+from ...potential.potential.io import to_dict
 
 from ..nbody.nbody cimport MAX_NBODY
 from .df cimport BaseStreamDF
@@ -275,23 +278,33 @@ cpdef mockstream_dop853_snapshot(nbody, double[::1] time,
         stream_g = h5f.create_group('stream')
         nbody_g = h5f.create_group('nbody')
 
-        stream_g.create_dataset('pos', dtype='f8',
-                                shape=(3, noutput_times, total_nstream),
-                                fillvalue=np.nan, compression='gzip',
-                                compression_opts=9)
-        stream_g.create_dataset('vel', dtype='f8',
-                                shape=(3, noutput_times, total_nstream),
-                                fillvalue=np.nan, compression='gzip',
-                                compression_opts=9)
-        stream_g.create_dataset('t', data=np.array(output_times))
+        d = stream_g.create_dataset('pos', dtype='f8',
+                                    shape=(3, noutput_times, total_nstream),
+                                    fillvalue=np.nan, compression='gzip',
+                                    compression_opts=9)
+        d.attrs['unit'] = str(nbody.units['length'])
 
-        nbody_g.create_dataset('pos', dtype='f8',
-                               data=nbody_out[:3],
-                               compression='gzip', compression_opts=9)
-        nbody_g.create_dataset('vel', dtype='f8',
-                               data=nbody_out[3:],
-                               compression='gzip', compression_opts=9)
-        nbody_g.create_dataset('t', data=np.array(output_times))
+        d = stream_g.create_dataset('vel', dtype='f8',
+                                    shape=(3, noutput_times, total_nstream),
+                                    fillvalue=np.nan, compression='gzip',
+                                    compression_opts=9)
+        d.attrs['unit'] = str(nbody.units['length'] / nbody.units['time'])
+
+        d = stream_g.create_dataset('t', data=np.array(output_times))
+        d.attrs['unit'] = str(nbody.units['time'])
+
+        d = nbody_g.create_dataset('pos', dtype='f8',
+                                   data=nbody_out[:3],
+                                   compression='gzip', compression_opts=9)
+        d.attrs['unit'] = str(nbody.units['length'])
+
+        d = nbody_g.create_dataset('vel', dtype='f8',
+                                   data=nbody_out[3:],
+                                   compression='gzip', compression_opts=9)
+        d.attrs['unit'] = str(nbody.units['length'] / nbody.units['time'])
+
+        d = nbody_g.create_dataset('t', data=np.array(output_times))
+        d.attrs['unit'] = str(nbody.units['time'])
 
     h5f = h5py.File(str(output_filename), 'a')
 
@@ -326,7 +339,7 @@ cpdef mockstream_dop853_snapshot(nbody, double[::1] time,
             tmp_t2 = output_times[j]
 
         else:
-            if tmp_t2 <= t2:
+            if tmp_t2 == t2:
                 dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
                             &w_tmp[0, 0], tmp_t1, t2, dt0,
                             ndim, nbodies+nstream[i], args,
@@ -342,6 +355,23 @@ cpdef mockstream_dop853_snapshot(nbody, double[::1] time,
         PyErr_CheckSignals()
 
         n += nstream[i]
+
+    for name in ['stream', 'nbody']:
+        f = h5f[name]
+        f['potential'] = dump(to_dict(nbody.external_potential)).encode('utf-8')
+
+        # frame - TODO: this is a copy-pasta HACK
+        frame_group = f.create_group('frame')
+        frame_group.attrs['module'] = nbody.frame.__module__
+        frame_group.attrs['class'] = nbody.frame.__class__.__name__
+
+        units = [str(x).encode('utf8')
+                 for x in nbody.frame.units.to_dict().values()]
+        frame_group.create_dataset('units', data=units)
+
+        d = frame_group.create_group('parameters')
+        for k, par in nbody.frame.parameters.items():
+            quantity_to_hdf5(d, k, par)
 
     h5f.close()
 

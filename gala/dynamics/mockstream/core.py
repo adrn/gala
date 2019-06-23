@@ -7,6 +7,7 @@ import numpy as np
 
 # Project
 from ...integrate import DOPRI853Integrator
+from ...io import quantity_to_hdf5, quantity_from_hdf5
 from .. import PhaseSpacePosition
 
 __all__ = ['MockStream',
@@ -34,7 +35,7 @@ class MockStream(PhaseSpacePosition):
                                  .format(self.pos.shape[0],
                                          len(release_time)))
 
-            self.release_time = release_time
+        self.release_time = release_time
 
         if lead_trail is not None:
             lead_trail = np.array(lead_trail)
@@ -46,7 +47,70 @@ class MockStream(PhaseSpacePosition):
                                  .format(self.pos.shape[0],
                                          len(lead_trail)))
 
-            self.lead_trail = lead_trail
+        self.lead_trail = lead_trail
+
+    # ------------------------------------------------------------------------
+    # Input / output
+    #
+    def to_hdf5(self, f):
+        """
+        Serialize this object to an HDF5 file.
+
+        Requires ``h5py``.
+
+        Parameters
+        ----------
+        f : str, :class:`h5py.File`
+            Either the filename or an open HDF5 file.
+        """
+
+        f = super().to_hdf5(f)
+
+        if self.potential is not None:
+            import yaml
+            from ..potential.potential.io import to_dict
+            f['potential'] = yaml.dump(to_dict(self.potential)).encode('utf-8')
+
+        if self.release_time:
+            quantity_to_hdf5(f, 'release_time', self.release_time)
+
+        if self.lead_trail:
+            f['lead_trail'] = self.lead_trail
+
+        return f
+
+    @classmethod
+    def from_hdf5(cls, f):
+        """
+        Load an object from an HDF5 file.
+
+        Requires ``h5py``.
+
+        Parameters
+        ----------
+        f : str, :class:`h5py.File`
+            Either the filename or an open HDF5 file.
+        """
+        # TODO: this is duplicated code from PhaseSpacePosition
+        if isinstance(f, str):
+            import h5py
+            f = h5py.File(f)
+
+        obj = PhaseSpacePosition.from_hdf5(f)
+
+        if 'release_time' in f:
+            t = quantity_from_hdf5(f['release_time'])
+        else:
+            t = None
+
+        if 'lead_trail' in f:
+            lt = f['lead_trail'][:]
+        else:
+            lt = None
+
+        return cls(pos=obj.pos, vel=obj.vel,
+                   release_time=t, lead_trail=lt,
+                   frame=obj.frame)
 
 
 # ---------------------------------------------------------------------------
