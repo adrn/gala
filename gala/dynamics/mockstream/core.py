@@ -14,7 +14,7 @@ __all__ = ['MockStream',
            'mock_stream', 'streakline_stream', # DEPRECATED: TODO remove
            'fardal_stream', 'dissolved_fardal_stream']
 
-_transition_guide_url = "TODO"
+_transition_guide_url = "http://gala.adrian.pw/en/latest/dynamics/mockstreams.html"
 
 
 class MockStream(PhaseSpacePosition):
