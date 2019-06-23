@@ -6,7 +6,7 @@ from .. import combine, PhaseSpacePosition
 from ..nbody import DirectNBody
 from ...potential import Hamiltonian, PotentialBase
 from ...integrate.timespec import parse_time_specification
-from .mockstream import mockstream_dop853, mockstream_dop853_snapshot
+from .mockstream import mockstream_dop853
 from .core import MockStream
 
 __all__ = ['MockStreamGenerator']
@@ -225,10 +225,12 @@ class MockStreamGenerator:
                 raise ValueError("If output_every is specified, you must also "
                                  "pass in a filename to store the snapshots in")
 
-            raw_nbody, raw_stream = mockstream_dop853_snapshot(
-                nbody0, time, w0, unq_t1s, nstream.astype('i4'),
-                output_every=output_every, output_filename=output_filename,
-                check_filesize=check_filesize, overwrite=overwrite)
+            raise NotImplementedError("Currently not implemented, but will be "
+                                      "fixed soon!")
+            # raw_nbody, raw_stream = mockstream_dop853_snapshot(
+            #     nbody0, time, w0, unq_t1s, nstream.astype('i4'),
+            #     output_every=output_every, output_filename=output_filename,
+            #     check_filesize=check_filesize, overwrite=overwrite)
 
         x_unit = units['length']
         v_unit = units['length'] / units['time']

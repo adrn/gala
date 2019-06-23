@@ -58,33 +58,33 @@ def test_run():
 
 # @pytest.mark.skipif('CI' in os.environ,
 #                     reason="For some reason, doesn't work on Travis/CI")
-def test_animate(tmpdir):
-    import h5py
-
-    potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.,
-                                                    units=galactic)
-    H = Hamiltonian(potential)
-    w0 = PhaseSpacePosition(pos=[15., 0., 0]*u.kpc,
-                            vel=[0, 0, 0.13]*u.kpc/u.Myr)
-    mass = 2.5e4 * u.Msun
-
-    # The basic run:
-    df = FardalStreamDF(trail=False)
-    gen = MockStreamGenerator(df=df, hamiltonian=H)
-
-    filename = os.path.join(str(tmpdir), "test.hdf5")
-    stream, _ = gen.run(w0, mass, dt=-1., n_steps=3,
-                        output_every=1, output_filename=filename)
-
-    with h5py.File(filename) as f:
-        stream_orbits = Orbit.from_hdf5(f['stream'])
-        nbody_orbits = Orbit.from_hdf5(f['nbody'])
-
-    print(stream_orbits.x.shape)
-    print(stream_orbits.x)
-
-    # assert np.allclose(t, orbit.t.value)
-    #
-    # for idx in range(pos.shape[2]):
-    #     assert np.allclose(pos[:, -1, idx], stream.xyz.value[:, idx], rtol=1E-4)
-    #     assert np.allclose(vel[:, -1, idx], stream.v_xyz.value[:, idx], rtol=1E-4)
+# def test_animate(tmpdir):
+#     import h5py
+#
+#     potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.,
+#                                                     units=galactic)
+#     H = Hamiltonian(potential)
+#     w0 = PhaseSpacePosition(pos=[15., 0., 0]*u.kpc,
+#                             vel=[0, 0, 0.13]*u.kpc/u.Myr)
+#     mass = 2.5e4 * u.Msun
+#
+#     # The basic run:
+#     df = FardalStreamDF(trail=False)
+#     gen = MockStreamGenerator(df=df, hamiltonian=H)
+#
+#     filename = os.path.join(str(tmpdir), "test.hdf5")
+#     stream, _ = gen.run(w0, mass, dt=-1., n_steps=3,
+#                         output_every=1, output_filename=filename)
+#
+#     with h5py.File(filename) as f:
+#         stream_orbits = Orbit.from_hdf5(f['stream'])
+#         nbody_orbits = Orbit.from_hdf5(f['nbody'])
+#
+#     print(stream_orbits.x.shape)
+#     print(stream_orbits.x)
+#
+#     # assert np.allclose(t, orbit.t.value)
+#     #
+#     # for idx in range(pos.shape[2]):
+#     #     assert np.allclose(pos[:, -1, idx], stream.xyz.value[:, idx], rtol=1E-4)
+#     #     assert np.allclose(vel[:, -1, idx], stream.v_xyz.value[:, idx], rtol=1E-4)
