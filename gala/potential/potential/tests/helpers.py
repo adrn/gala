@@ -70,7 +70,7 @@ class PotentialTestBase(object):
         assert isinstance(self.potential.units, UnitSystem)
 
         # check that we can replace the units as expected
-        usys = UnitSystem([u.pc, u.Gyr, u.degree, u.Msun])
+        usys = UnitSystem([u.pc, u.Gyr, u.radian, u.Msun])
         pot = copy.deepcopy(self.potential)
 
         pot2 = pot.replace_units(usys)
