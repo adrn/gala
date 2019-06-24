@@ -70,20 +70,12 @@ class PotentialTestBase(object):
         assert isinstance(self.potential.units, UnitSystem)
 
         # check that we can replace the units as expected
-        usys = UnitSystem([u.pc, u.Gyr, u.degree, u.Msun])
+        usys = UnitSystem([u.pc, u.Gyr, u.radian, u.Msun])
         pot = copy.deepcopy(self.potential)
 
-        pot2 = pot.replace_units(usys, copy=True)
+        pot2 = pot.replace_units(usys)
         assert pot2.units == usys
         assert pot.units == self.potential.units
-
-        pot.replace_units(usys, copy=False)
-        assert pot.units == usys
-
-        # try by setting units attribute
-        pot = copy.deepcopy(self.potential)
-        pot.units = usys
-        assert pot.units == usys
 
     def test_energy(self):
         assert self.ndim == self.potential.ndim

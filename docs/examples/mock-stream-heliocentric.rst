@@ -26,7 +26,7 @@ potential to represent a dark matter halo.
    >>> pot['disk'] = gp.MiyamotoNagaiPotential(m=6E10*u.Msun,
    ...                                         a=3.5*u.kpc, b=280*u.pc,
    ...                                         units=galactic)
-   >>> pot['halo'] = gp.NFWPotential(m=1E12, r_s=20*u.kpc, units=galactic)
+   >>> pot['halo'] = gp.NFWPotential(m=7E11, r_s=15*u.kpc, units=galactic)
 
 We'll use the Palomar 5 globular cluster and stream as a motivation for this
 example. For the position and velocity of the cluster, we'll use
@@ -49,75 +49,87 @@ We'll first convert this position and velocity to Galactocentric coordinates::
    <CartesianRepresentation (x, y, z) in kpc
        (7.69726478, 0.22748727, 16.41135761)
     (has differentials w.r.t.: 's')>
-   >>> pal5 = gd.PhaseSpacePosition(pos=c_gc.xyz, vel=c_gc.differentials['s'].d_xyz)
+   >>> pal5_w0 = gd.PhaseSpacePosition(c_gc)
 
-We can now integrate an orbit in the previously defined gravitational potential
-using Pal 5's position and velocity as initial conditions. We'll integrate the
-orbit backwards (using a negative time-step) from its present-day position for 4
-Gyr::
+We can now use the position and velocity of the cluster to generate a :ref:`mock
+stellar stream <mockstreams>` with a progenitor that ends up at the present-day
+position of the cluster. We will generate a stream using the prescription
+defined in [fardal15]_, but including the self-gravity of the cluster mass
+itself. We will represent the cluster with a Plummer potential, with mass
+:math:`2.5 \times 10^4~{\rm M}_\odot`::
 
-   >>> pal5_orbit = gp.Hamiltonian(pot).integrate_orbit(pal5, dt=-0.5*u.Myr, n_steps=8000)
-   >>> fig = pal5_orbit.plot()
+    >>> pal5_mass = 2.5e4 * u.Msun
+    >>> pal5_pot = gp.PlummerPotential(m=pal5_mass, b=4*u.pc, units=galactic)
 
-.. plot::
-   :align: center
-   :context: close-figs
+We now have to specify that we want to use the Fardal method for generating
+stream particle initial conditions by creating a
+`~gala.dynamics.mockstream.FardalStreamDF` instance::
 
-   import astropy.coordinates as coord
-   import astropy.units as u
-   import numpy as np
-   import gala.coordinates as gc
-   import gala.dynamics as gd
-   import gala.potential as gp
-   from gala.units import galactic
+    >>> from gala.dynamics import mockstream as ms
+    >>> df = ms.FardalStreamDF()
 
-   pot = gp.CCompositePotential()
-   pot['disk'] = gp.MiyamotoNagaiPotential(m=6E10*u.Msun,
-                                           a=3.5*u.kpc, b=280*u.pc,
-                                           units=galactic)
-   pot['halo'] = gp.NFWPotential(m=1E12, r_s=20*u.kpc, units=galactic)
+Finally, we can generate the stream using the
+`~gala.dynamics.mockstream.MockStreamGenerator`::
 
-   c = coord.ICRS(ra=229 * u.deg, dec=-0.124 * u.deg,
-                  distance=22.9 * u.kpc,
-                  pm_ra_cosdec=-2.296 * u.mas/u.yr,
-                  pm_dec=-2.257 * u.mas/u.yr,
-                  radial_velocity=-58.7 * u.km/u.s)
+    >>> gen_pal5 = ms.MockStreamGenerator(df, pot,
+    ...                                   progenitor_potential=pal5_pot)
+    >>> pal5_stream, _ = gen_pal5.run(pal5_w0, pal5_mass,
+    ...                               dt=-1 * u.Myr, n_steps=4000)
 
-   c_gc = c.transform_to(coord.Galactocentric).cartesian
-   pal5 = gd.PhaseSpacePosition(c_gc)
-   pal5_orbit = gp.Hamiltonian(pot).integrate_orbit(pal5, dt=-0.5*u.Myr, n_steps=8000)
-   fig = pal5_orbit.plot()
+Here the negative timestep tells the stream generator to first integrate the orbit of the progenitor (the Pal 5 cluster itself) backwards in time, then generate the stream forwards from the past until present day::
 
-We can now generate a :ref:`mock stellar stream <mockstreams>` using the orbit
-of the progenitor system (the Pal 5 cluster). We'll generate a stream using the
-prescription presented in [fardal15]_::
-
-   >>> from gala.dynamics.mockstream import fardal_stream
-   >>> stream = fardal_stream(pot, pal5_orbit[::-1], prog_mass=1E5*u.Msun,
-   ...                        release_every=4)
-   >>> fig = stream.plot(marker='.', s=1, alpha=0.25)
+    >>> pal5_stream.plot(alpha=0.1) # doctest: +SKIP
 
 .. plot::
-   :align: center
-   :context: close-figs
+    :align: center
+    :context: close-figs
 
-   from gala.dynamics.mockstream import fardal_stream
-   stream = fardal_stream(pot, pal5_orbit[::-1], prog_mass=5E4*u.Msun,
-                          release_every=4)
-   fig = stream.plot(marker='.', s=1, alpha=0.25)
+    import astropy.coordinates as coord
+    import astropy.units as u
+    import numpy as np
+    import gala.coordinates as gc
+    import gala.dynamics as gd
+    import gala.potential as gp
+    from gala.units import galactic
+    from gala.dynamics import mockstream as ms
+
+    pot = gp.CCompositePotential()
+    pot['disk'] = gp.MiyamotoNagaiPotential(m=6E10*u.Msun,
+                                            a=3.5*u.kpc, b=280*u.pc,
+                                            units=galactic)
+    pot['halo'] = gp.NFWPotential(m=1E12, r_s=20*u.kpc, units=galactic)
+
+    c = coord.ICRS(ra=229 * u.deg, dec=-0.124 * u.deg,
+                   distance=22.9 * u.kpc,
+                   pm_ra_cosdec=-2.296 * u.mas/u.yr,
+                   pm_dec=-2.257 * u.mas/u.yr,
+                   radial_velocity=-58.7 * u.km/u.s)
+
+    c_gc = c.transform_to(coord.Galactocentric).cartesian
+    pal5_w0 = gd.PhaseSpacePosition(c_gc)
+
+    pal5_mass = 2.5e4 * u.Msun
+    pal5_pot = gp.PlummerPotential(m=pal5_mass, b=4*u.pc, units=galactic)
+
+    df = ms.FardalStreamDF()
+    gen_pal5 = ms.MockStreamGenerator(df, pot, progenitor_potential=pal5_pot)
+    pal5_stream, _ = gen_pal5.run(pal5_w0, pal5_mass,
+                                 dt=-1 * u.Myr, n_steps=4000)
+
+    pal5_stream.plot(alpha=0.1)
 
 We now have the model stream particle positions and velocities in a
 Galactocentric coordinate frame. To convert these to observable, Heliocentric
 coordinates, we have to specify a desired coordinate frame. We'll convert to the
 ICRS coordinate system and plot some of the Heliocentric kinematic quantities::
 
-   >>> stream_c = stream.to_coord_frame(coord.ICRS)
+   >>> stream_c = pal5_stream.to_coord_frame(coord.ICRS)
 
 .. plot::
    :align: center
    :context: close-figs
 
-   stream_c = stream.to_coord_frame(coord.ICRS)
+   stream_c = pal5_stream.to_coord_frame(coord.ICRS)
 
    style = dict(marker='.', s=1, alpha=0.5)
 
@@ -144,5 +156,5 @@ References
 ==========
 
 .. [odenkirchen02] `Odenkirchen et al. (2002) <https://arxiv.org/abs/astro-ph/0206276>`_
-.. [fritz15] `Fritz & Kallivayali (2015) <https://arxiv.org/abs/1508.06647>`_
+.. [fritz15] `Fritz & Kallivayalil (2015) <https://arxiv.org/abs/1508.06647>`_
 .. [bovy16] `Bovy et al. (2016) <https://arxiv.org/abs/1609.01298>`_

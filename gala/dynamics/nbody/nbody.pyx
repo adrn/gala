@@ -20,7 +20,8 @@ from libc.math cimport sqrt
 from cpython.exc cimport PyErr_CheckSignals
 
 from ...potential import Hamiltonian
-from ...potential.potential.cpotential cimport CPotentialWrapper
+from ...potential.potential.cpotential cimport (CPotentialWrapper,
+                                                MAX_N_COMPONENTS, CPotential)
 from ...potential.frame.cframe cimport CFrameWrapper
 from ...integrate.cyintegrators.dop853 cimport (dop853_helper,
                                                 dop853_helper_save_all)
@@ -28,16 +29,6 @@ from ...integrate.cyintegrators.dop853 cimport (dop853_helper,
 cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrame:
         pass
-
-cdef extern from "potential/src/cpotential.h":
-    enum:
-        MAX_N_COMPONENTS = 16
-
-    ctypedef struct CPotential:
-        int n_components
-        int n_dim
-        int n_params[MAX_N_COMPONENTS]
-        double *parameters[MAX_N_COMPONENTS]
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
@@ -47,24 +38,22 @@ cdef extern from "dopri/dop853.h":
                                CPotential *p, CFrame *fr, unsigned norbits,
                                void *args)
 
-DEF MAX_NBODY = 65536;
+cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
+                          hamiltonian, list particle_potentials,
+                          save_all=True,
+                          double atol=1E-10, double rtol=1E-10, int nmax=0):
+    """Integrate orbits from initial conditions ``w0`` over the time grid ``t``
+    using direct N-body force calculation in the external potential provided via
+    the ``hamiltonian`` argument.
 
-cpdef _direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
-                           hamiltonian, list particle_potentials,
-                           save_all=True,
-                           double atol=1E-10, double rtol=1E-10, int nmax=0):
+    The potential objects for each set of initial conditions must be C-enabled
+    (i.e., must be ``CPotentialBase`` subclasses), and the total number of
+    potential objects must equal the number of initial conditions.
+
+    By default, this integration procedure stores the full time series of all
+    orbits, but this may use a lot of memory. If you just want to store the
+    final state of the orbits, pass ``save_all=False``.
     """
-    TODO
-    """
-
-    if not isinstance(hamiltonian, Hamiltonian):
-        raise TypeError("Input must be a Hamiltonian object, not {}"
-                        .format(type(hamiltonian)))
-
-    if not hamiltonian.c_enabled:
-        raise TypeError("Input Hamiltonian object does not support C-level "
-                        "access.")
-
     cdef:
         unsigned nparticles = w0.shape[0]
         unsigned ndim = w0.shape[1]
@@ -73,17 +62,27 @@ cpdef _direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
         int i
         void *args
         CPotential *c_particle_potentials[MAX_NBODY]
-        CPotential pp
-
         CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
         CFrame cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
-        double[::1] f = np.zeros(2*ndim)
-        int n_components = cp.n_components
+    # Some input validation:
+    if not isinstance(hamiltonian, Hamiltonian):
+        raise TypeError("Input must be a Hamiltonian object, not {}"
+                        .format(type(hamiltonian)))
 
+    if not hamiltonian.c_enabled:
+        raise TypeError("Input Hamiltonian object does not support C-level "
+                        "access.")
+
+    if len(particle_potentials) != nparticles:
+        raise ValueError("The number of particle initial conditions must match "
+                         "the number of particle potentials passed in.")
+
+    # Extract the CPotential objects from the particle potentials.
     for i in range(nparticles):
         c_particle_potentials[i] = &(<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
 
+    # We need a void pointer for any other arguments
     args = <void *>(&c_particle_potentials[0])
 
     if save_all:

@@ -1,8 +1,8 @@
 #include "src/funcdefs.h"
 
 #ifndef MAX_N_COMPONENTS_H
-#define MAX_N_COMPONENTS_H
-    enum {MAX_N_COMPONENTS = 16}; // HACK: this is a totally arbitrary number
+    #define MAX_N_COMPONENTS_H
+    #define MAX_N_COMPONENTS 16
 #endif
 
 #ifndef _CPotential_H

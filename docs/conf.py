@@ -101,7 +101,7 @@ if mpl_style is not None:
     plot_rcparams = mpl_style
     plot_apply_rcparams = True
 plot_formats = [('png', 250)]
-plot_include_source = True
+plot_include_source = False
 
 # The short X.Y version.
 version = package.__version__.split('-', 1)[0]

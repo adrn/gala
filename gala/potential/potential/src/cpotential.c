@@ -99,7 +99,6 @@ void c_gradient(CPotential *p, double t, double *qp, double *grad) {
 
         apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
                            &qp_trans[0]);
-
         (p->gradient)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim,
                          &tmp_grad[0]);
 
@@ -137,7 +136,7 @@ double c_d_dr(CPotential *p, double t, double *qp, double *epsilon) {
     }
 
     // TODO: allow user to specify fractional step-size
-    h = 1E-5;
+    h = 1E-4;
 
     // Step-size for estimating radial gradient of the potential
     r = sqrt(r2);
@@ -165,7 +164,7 @@ double c_d2_dr2(CPotential *p, double t, double *qp, double *epsilon) {
     }
 
     // TODO: allow user to specify fractional step-size
-    h = 1E-5;
+    h = 1E-2;
 
     // Step-size for estimating radial gradient of the potential
     r = sqrt(r2);

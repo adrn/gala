@@ -684,10 +684,6 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     def units(self):
         return self._units
 
-    @units.setter
-    def units(self, units):
-        self.replace_units(units, copy=False)
-
     def replace_units(self, units, copy=True):
         """Change the unit system of this potential.
 
@@ -807,7 +803,7 @@ class CompositePotential(PotentialBase, OrderedDict):
             params[k] = v.parameters
         return ImmutableDict(**params)
 
-    def replace_units(self, units, copy=True):
+    def replace_units(self, units):
         """Change the unit system of this potential.
 
         Parameters
@@ -815,20 +811,15 @@ class CompositePotential(PotentialBase, OrderedDict):
         units : `~gala.units.UnitSystem`
             Set of non-reducable units that specify (at minimum) the
             length, mass, time, and angle units.
-        copy : bool (optional)
-            If True, returns a copy, if False, changes this object.
         """
         _lock = self.lock
-        if copy:
-            pots = self.__class__()
-        else:
-            pots = self
+        pots = self.__class__()
 
         pots._units = None
         pots.lock = False
 
         for k, v in self.items():
-            pots[k] = v.replace_units(units, copy=copy)
+            pots[k] = v.replace_units(units)
 
         pots.lock = _lock
         return pots

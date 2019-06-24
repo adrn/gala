@@ -90,7 +90,7 @@ cdef dop853_helper(CPotential *cp, CFrame *cf, FcnEqDiff F,
         for k in range(ndim):
             w[i*ndim + k] = w0[i,k]
 
-    for j in range(1,ntimes,1):
+    for j in range(1, ntimes, 1):
         dop853_step(cp, cf, F,
                     &w[0], t[j-1], t[j], dt0,
                     ndim, norbits, args,
@@ -110,7 +110,7 @@ cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
         double dt0 = t[1] - t[0]
 
         double[::1] w = np.empty(ndim*norbits)
-        double[:,:,::1] all_w = np.empty((ntimes,norbits,ndim))
+        double[:,:,::1] all_w = np.empty((ntimes, norbits, ndim))
 
     # store initial conditions
     for i in range(norbits):
@@ -118,7 +118,7 @@ cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
             w[i*ndim + k] = w0[i,k]
             all_w[0,i,k] = w0[i,k]
 
-    for j in range(1,ntimes,1):
+    for j in range(1, ntimes, 1):
         dop853_step(cp, cf, F,
                     &w[0], t[j-1], t[j], dt0, ndim, norbits, args,
                     atol, rtol, nmax)
@@ -129,7 +129,7 @@ cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
 
         PyErr_CheckSignals()
 
-    return all_w
+    return np.asarray(all_w)
 
 cpdef dop853_integrate_hamiltonian(hamiltonian, double[:,::1] w0, double[::1] t,
                                    double atol=1E-10, double rtol=1E-10, int nmax=0):

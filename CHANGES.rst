@@ -15,6 +15,9 @@ Bug fixes
 
 API changes
 -----------
+- Overhauled the mock stellar stream generation methodology to allow for more
+  general stream generation. See ``MockStreamGenerator`` and the stream
+  distribution function classes, e.g., ``FardalStreamDF``.
 
 
 1.0 (2019-04-12)

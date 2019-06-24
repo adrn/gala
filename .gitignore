@@ -11,7 +11,8 @@ __pycache__
 gala/_compiler.c
 gala/dynamics/lyapunov/dop853_lyapunov.c
 gala/dynamics/mockstream/_coord.c
-gala/dynamics/mockstream/_mockstream.c
+gala/dynamics/mockstream/mockstream.c
+gala/dynamics/mockstream/df.c
 gala/integrate/cyintegrators/dop853.c
 gala/integrate/cyintegrators/leapfrog.c
 gala/potential/frame/builtin/frames.c
@@ -25,7 +26,7 @@ gala/potential/scf/computecoeff.c
 gala/potential/scf/bfe.c
 gala/extra_compile_macros.h
 gala/cconfig.c
-gala/dynamics/nbody/_nbody.c
+gala/dynamics/nbody/nbody.c
 
 # Other generated files
 */version.py

@@ -1,5 +1,8 @@
 # cython: language_level=3
 
+# Standard-library
+import warnings
+
 # Third-party
 import numpy as np
 import astropy.units as u
@@ -261,8 +264,11 @@ class Hamiltonian(CommonBase):
             and the potential object has a C instance, using Cython
             will be *much* faster.
         **time_spec
-            Specification of how long to integrate. See documentation
-            for `~gala.integrate.parse_time_specification`.
+            Specification of how long to integrate. Most commonly, this is a
+            timestep ``dt`` and number of steps ``n_steps``, or a timestep
+            ``dt``, initial time ``t1``, and final time ``t2``. You may also
+            pass in a time array with ``t``. See documentation for
+            `~gala.integrate.parse_time_specification` for more information.
 
         Returns
         -------
@@ -277,6 +283,13 @@ class Hamiltonian(CommonBase):
         else:
             # use the Integrator provided
             pass
+
+        if (Integrator == LeapfrogIntegrator and
+                not isinstance(self.frame, StaticFrame)):
+            warnings.warn("Using leapfrog integration with non-static frames "
+                          "can lead to wildly incorrect orbits. It is "
+                          "recommended that you use DOPRI853Integrator "
+                          "instead.", RuntimeWarning)
 
         if not isinstance(w0, PhaseSpacePosition):
             w0 = np.asarray(w0)

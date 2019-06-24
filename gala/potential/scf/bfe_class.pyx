@@ -19,7 +19,8 @@ cimport cython
 
 # Gala
 from gala.units import galactic
-from gala.potential.potential.cpotential cimport CPotentialWrapper
+from gala.potential.potential.cpotential cimport (CPotentialWrapper,
+                                                  MAX_N_COMPONENTS, CPotential)
 from gala.potential.potential.cpotential import CPotentialBase
 
 cdef extern from "extra_compile_macros.h":
@@ -29,19 +30,6 @@ cdef extern from "src/funcdefs.h":
     ctypedef double (*densityfunc)(double t, double *pars, double *q, int n_dim) nogil
     ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim) nogil
     ctypedef void (*gradientfunc)(double t, double *pars, double *q, int n_dim, double *grad) nogil
-
-cdef extern from "potential/src/cpotential.h":
-    enum:
-        MAX_N_COMPONENTS = 16
-
-    ctypedef struct CPotential:
-        int n_components
-        int n_dim
-        densityfunc density[MAX_N_COMPONENTS]
-        energyfunc value[MAX_N_COMPONENTS]
-        gradientfunc gradient[MAX_N_COMPONENTS]
-        int n_params[MAX_N_COMPONENTS]
-        double *parameters[MAX_N_COMPONENTS]
 
 cdef extern from "scf/src/bfe.h":
     double scf_value(double t, double *pars, double *q, int n_dim) nogil
