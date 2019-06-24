@@ -15,7 +15,6 @@ from os import path
 
 # Third-party
 import astropy.units as u
-import h5py
 import numpy as np
 cimport numpy as np
 np.import_array()
