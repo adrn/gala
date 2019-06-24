@@ -6,14 +6,53 @@ import numpy as np
 import pytest
 
 # Custom
-from ....potential import Hamiltonian, NFWPotential, HernquistPotential
+from ....potential import (Hamiltonian, NFWPotential, HernquistPotential,
+                           ConstantRotatingFrame)
 from ....dynamics import PhaseSpacePosition, Orbit
 from ....integrate import DOPRI853Integrator
 from ....units import galactic
 
 # Project
+from ...nbody import DirectNBody
 from ..mockstream_generator import MockStreamGenerator
 from ..df import FardalStreamDF
+
+
+def test_init():
+    w0 = PhaseSpacePosition(pos=[15., 0., 0]*u.kpc,
+                            vel=[0, 0, 0.13]*u.kpc/u.Myr)
+    potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.,
+                                                    units=galactic)
+    H = Hamiltonian(potential)
+    df = FardalStreamDF()
+
+    with pytest.raises(TypeError):
+        MockStreamGenerator(df="some df", hamiltonian=H)
+
+    with pytest.raises(TypeError):
+        MockStreamGenerator(df=df, hamiltonian=H, progenitor_potential="stuff")
+
+    # Test validating the input nbody
+    nbody_w0 = PhaseSpacePosition(pos=[25., 0., 0]*u.kpc,
+                                  vel=[0, 0, 0.13]*u.kpc/u.Myr)
+    potential2 = NFWPotential.from_circular_velocity(v_c=0.2, r_s=25.,
+                                                     units=galactic)
+    nbody = DirectNBody(w0=nbody_w0, external_potential=potential2,
+                        particle_potentials=[None])
+    gen = MockStreamGenerator(df=df, hamiltonian=H)
+    with pytest.raises(ValueError):
+        gen._get_nbody(w0, nbody)
+
+    frame2 = ConstantRotatingFrame([0,0,25.]*u.km/u.s/u.kpc, galactic)
+    nbody = DirectNBody(w0=nbody_w0, external_potential=potential, frame=frame2,
+                        particle_potentials=[None])
+    with pytest.raises(ValueError):
+        gen._get_nbody(w0, nbody)
+
+    # we expect success!
+    nbody = DirectNBody(w0=nbody_w0, external_potential=potential,
+                        particle_potentials=[None])
+    new_nbody = gen._get_nbody(w0, nbody)
 
 
 def test_run():
