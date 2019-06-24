@@ -6,7 +6,7 @@ from .. import combine, PhaseSpacePosition
 from ..nbody import DirectNBody
 from ...potential import Hamiltonian, PotentialBase
 from ...integrate.timespec import parse_time_specification
-from ._mockstream import mockstream_dop853, mockstream_dop853_2
+from ._mockstream import mockstream_dop853, mockstream_dop853_animate
 from .core import MockStream
 
 __all__ = ['MockStreamGenerator']
@@ -219,19 +219,18 @@ class MockStreamGenerator:
             all_nstream[orbit_t == t1] = n
 
         if output_every is None: # store snapshots
-            raw_nbody, raw_stream = mockstream_dop853_2(nbody0, orbit_t, w0,
-                                                        all_nstream.astype('i4'))
+            raw_nbody, raw_stream = mockstream_dop853(
+                nbody0, orbit_t[all_nstream != 0], w0, unq_t1s,
+                all_nstream[all_nstream != 0].astype('i4'))
         else:
             if output_filename is None:
                 raise ValueError("If output_every is specified, you must also "
                                  "pass in a filename to store the snapshots in")
 
-            raise NotImplementedError("Currently not implemented, but will be "
-                                      "fixed soon!")
-            # raw_nbody, raw_stream = mockstream_dop853_snapshot(
-            #     nbody0, time, w0, unq_t1s, nstream.astype('i4'),
-            #     output_every=output_every, output_filename=output_filename,
-            #     check_filesize=check_filesize, overwrite=overwrite)
+            raw_nbody, raw_stream = mockstream_dop853_animate(
+                nbody0, orbit_t, w0, nstream.astype('i4'),
+                output_every=output_every, output_filename=output_filename,
+                check_filesize=check_filesize, overwrite=overwrite)
 
         x_unit = units['length']
         v_unit = units['length'] / units['time']

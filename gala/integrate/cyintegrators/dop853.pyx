@@ -61,7 +61,7 @@ cdef void dop853_step(CPotential *cp, CFrame *cf, FcnEqDiff F,
 
     cdef int res
 
-    res = dop853(ndim*norbits, <FcnEqDiff> F,
+    res = dop853(ndim*norbits, F,
                  cp, cf, norbits, nbody, args, t1, w, t2,
                  &rtol, &atol, 0, solout, 0,
                  NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0);
@@ -81,15 +81,15 @@ cdef dop853_helper(CPotential *cp, CFrame *cf, FcnEqDiff F,
                    double atol, double rtol, int nmax):
 
     cdef:
-        int i, j, k, res
+        int i, j
         double dt0 = t[1] - t[0]
 
         double[::1] w = np.empty(ndim*norbits)
 
     # store initial conditions
     for i in range(norbits):
-        for k in range(ndim):
-            w[i*ndim + k] = w0[i,k]
+        for j in range(ndim):
+            w[i*ndim + j] = w0[i, j]
 
     for j in range(1, ntimes, 1):
         dop853_step(cp, cf, F,
@@ -107,7 +107,7 @@ cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
                             int ntimes, double atol, double rtol, int nmax):
 
     cdef:
-        int i, j, k, res
+        int i, j, k
         double dt0 = t[1] - t[0]
 
         double[::1] w = np.empty(ndim*norbits)
@@ -116,8 +116,8 @@ cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
     # store initial conditions
     for i in range(norbits):
         for k in range(ndim):
-            w[i*ndim + k] = w0[i,k]
-            all_w[0,i,k] = w0[i,k]
+            w[i*ndim + k] = w0[i, k]
+            all_w[0, i, k] = w0[i, k]
 
     for j in range(1, ntimes, 1):
         dop853_step(cp, cf, F,
