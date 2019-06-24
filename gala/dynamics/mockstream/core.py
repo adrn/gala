@@ -66,17 +66,16 @@ class MockStream(PhaseSpacePosition):
 
         f = super().to_hdf5(f)
 
-        if self.potential is not None:
-            import yaml
-            from ..potential.potential.io import to_dict
-            f['potential'] = yaml.dump(to_dict(self.potential)).encode('utf-8')
+        # if self.potential is not None:
+        #     import yaml
+        #     from ..potential.potential.io import to_dict
+        #     f['potential'] = yaml.dump(to_dict(self.potential)).encode('utf-8')
 
         if self.release_time:
             quantity_to_hdf5(f, 'release_time', self.release_time)
 
-        if self.lead_trail:
-            f['lead_trail'] = self.lead_trail
-
+        if self.lead_trail is not None:
+            f['lead_trail'] = self.lead_trail.astype('S1') # TODO HACK
         return f
 
     @classmethod
