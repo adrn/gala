@@ -37,16 +37,17 @@ from ...potential.potential.io import to_dict
 from ..nbody.nbody cimport MAX_NBODY
 from .df cimport BaseStreamDF
 
-__all__ = ['mockstream_dop853']
+__all__ = ['mockstream_dop853', 'mockstream_dop853_animate']
 
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, CFrame *fr, unsigned norbits,
+                              CPotential *p, CFrame *fr,
+                              unsigned norbits, unsigned nbody,
                               void *args) nogil
     void Fwrapper_direct_nbody(unsigned ndim, double t, double *w, double *f,
-                               CPotential *p, CFrame *fr, unsigned norbits,
-                               void *args)
+                               CPotential *p, CFrame *fr,
+                               unsigned norbits, unsigned nbody, void *args) nogil
 
 
 cpdef mockstream_dop853(nbody, double[::1] time,
@@ -119,7 +120,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
     nbody_w = dop853_helper_save_all(&cp, &cf,
                                      <FcnEqDiff> Fwrapper_direct_nbody,
                                      nbody_w0, time,
-                                     ndim, nbodies, args, ntimes,
+                                     ndim, nbodies, nbodies, args, ntimes,
                                      atol, rtol, nmax)
 
     n = 0
@@ -135,7 +136,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
 
         dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
                     &w_tmp[0, 0], stream_t1[i], t2, dt0,
-                    ndim, nbodies+nstream[i], args,
+                    ndim, nbodies+nstream[i], nbodies, args,
                     atol, rtol, nmax)
 
         for j in range(nstream[i]):
@@ -152,5 +153,155 @@ cpdef mockstream_dop853(nbody, double[::1] time,
 
     return_nbody_w = np.array(w_final)[:nbodies]
     return_stream_w = np.array(w_final)[nbodies:]
+
+    return return_nbody_w, return_stream_w
+
+
+cpdef mockstream_dop853_animate(nbody, double[::1] t,
+                                double[:, ::1] stream_w0, int[::1] nstream,
+                                output_every=1, output_filename='',
+                                overwrite=False, check_filesize=True,
+                                double atol=1E-10, double rtol=1E-10, int nmax=0):
+    """
+    Parameters
+    ----------
+    nbody : `~gala.dynamics.nbody.DirectNBody`
+    t : numpy.ndarray (ntimes, )
+    stream_w0 : numpy.ndarray (nstreamparticles, 6)
+    nstream : numpy.ndarray (ntimes, )
+        The number of stream particles to be integrated from this timestep.
+        There should be no zero values.
+
+    Notes
+    -----
+    In code, ``nbodies`` are the massive bodies included from the ``nbody``
+    instance passed in. ``nstreamparticles`` are the stream test particles.
+    ``nstream`` is the array containing the number of stream particles released
+    at each timestep.
+
+    """
+
+    cdef:
+        int i, j, k, n # indexing
+        unsigned ndim = 6 # TODO: hard-coded, but really must be 6D
+
+        # Time-stepping parameters:
+        int ntimes = t.shape[0]
+        double dt0 = t[1] - t[0] # initial timestep
+
+        # whoa, so many dots
+        CPotential cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
+        CFrame cf = (<CFrameWrapper>(nbody.H.frame.c_instance)).cframe
+
+        int nbodies = nbody._w0.shape[0] # includes the progenitor
+        double [:, ::1] nbody_w0 = nbody._w0
+
+        int total_nstream = np.sum(nstream)
+        double[:, ::1] w = np.empty((nbodies + total_nstream, ndim))
+
+        # For N-body support:
+        void *args
+        CPotential *c_particle_potentials[MAX_NBODY]
+
+        # Snapshotting:
+        int noutput_times = ntimes // output_every
+        double[::1] output_times
+
+    if ntimes % output_every != 0:
+        noutput_times += 1 # +1 for final conditions
+
+    output_times = np.zeros(noutput_times)
+
+    est_filesize = total_nstream * noutput_times * 8 * u.byte
+    if est_filesize >= 8 * u.gigabyte and check_filesize:
+        warnings.warn("Estimated mockstream output file is expected to be "
+                      ">8 GB in size! If you're sure, turn this warning "
+                      "off with `check_filesize=False`")
+
+    # create the output file
+    if path.exists(output_filename) and overwrite == 0:
+        raise IOError("Mockstream output file {} already exists! Use "
+                      "overwrite=True to overwrite the file."
+                      .format(output_filename))
+
+    # set the potential objects of the progenitor (index 0) and any other
+    # massive bodies included in the stream generation
+    for i in range(nbodies):
+        c_particle_potentials[i] = &(<CPotentialWrapper>(nbody.particle_potentials[i].c_instance)).cpotential
+    args = <void *>(&c_particle_potentials[0])
+
+    # Initialize the output file:
+    import h5py
+    h5f = h5py.File(str(output_filename), 'w')
+    stream_g = h5f.create_group('stream')
+    nbody_g = h5f.create_group('nbody')
+
+    d = stream_g.create_dataset('pos', dtype='f8',
+                                shape=(3, noutput_times, total_nstream),
+                                fillvalue=np.nan, compression='gzip',
+                                compression_opts=9)
+    d.attrs['unit'] = str(nbody.units['length'])
+
+    d = stream_g.create_dataset('vel', dtype='f8',
+                                shape=(3, noutput_times, total_nstream),
+                                fillvalue=np.nan, compression='gzip',
+                                compression_opts=9)
+    d.attrs['unit'] = str(nbody.units['length'] / nbody.units['time'])
+
+    d = nbody_g.create_dataset('pos', dtype='f8',
+                               shape=(3, noutput_times, nbodies),
+                               fillvalue=np.nan, compression='gzip',
+                               compression_opts=9)
+    d.attrs['unit'] = str(nbody.units['length'])
+
+    d = nbody_g.create_dataset('vel', dtype='f8',
+                               shape=(3, noutput_times, nbodies),
+                               fillvalue=np.nan, compression='gzip',
+                               compression_opts=9)
+    d.attrs['unit'] = str(nbody.units['length'] / nbody.units['time'])
+
+    # set initial conditions for progenitor and N-bodies
+    for j in range(nbodies):
+        for k in range(ndim):
+            w[j, k] = nbody_w0[j, k]
+
+    for j in range(total_nstream):
+        for k in range(ndim):
+            w[nbodies+j, k] = stream_w0[j, k]
+
+    n = nstream[0]
+    stream_g['pos'][:, 0, :n] = np.array(w[nbodies:nbodies+n, :]).T[:3]
+    stream_g['vel'][:, 0, :n] = np.array(w[nbodies:nbodies+n, :]).T[3:]
+    nbody_g['pos'][:, 0, :n] = np.array(w[:nbodies, :]).T[:3]
+    nbody_g['vel'][:, 0, :n] = np.array(w[:nbodies, :]).T[3:]
+    output_times[0] = t[0]
+
+    j = 1 # output time index
+    for i in range(1, ntimes):
+        dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
+                    &w[0, 0], t[i-1], t[i], dt0,
+                    ndim, nbodies+n, nbodies, args,
+                    atol, rtol, nmax)
+
+        PyErr_CheckSignals()
+
+        if (i % output_every) == 0:
+            output_times[j] = t[i]
+            stream_g['pos'][:, j, :n] = np.array(w[nbodies:nbodies+n, :]).T[:3]
+            stream_g['vel'][:, j, :n] = np.array(w[nbodies:nbodies+n, :]).T[3:]
+            nbody_g['pos'][:, j, :n] = np.array(w[:nbodies, :]).T[:3]
+            nbody_g['vel'][:, j, :n] = np.array(w[:nbodies, :]).T[3:]
+            j += 1
+
+        n += nstream[i]
+
+    for g in [stream_g, nbody_g]:
+        d = g.create_dataset('time', data=np.array(output_times))
+        d.attrs['unit'] = str(nbody.units['time'])
+
+    h5f.close()
+
+    return_nbody_w = np.array(w)[:nbodies]
+    return_stream_w = np.array(w)[nbodies:]
 
     return return_nbody_w, return_stream_w

@@ -33,10 +33,10 @@ cdef extern from "frame/src/cframe.h":
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
                               CPotential *p, CFrame *fr, unsigned norbits,
-                              void *args) nogil
+                              unsigned nbody, void *args) nogil
     void Fwrapper_direct_nbody(unsigned ndim, double t, double *w, double *f,
                                CPotential *p, CFrame *fr, unsigned norbits,
-                               void *args)
+                               unsigned nbody, void *args)
 
 cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
                           hamiltonian, list particle_potentials,
@@ -85,17 +85,18 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
     # We need a void pointer for any other arguments
     args = <void *>(&c_particle_potentials[0])
 
+    # TODONOW: fix below - need to pass in how many massive particles, total number of orbits and 
     if save_all:
         all_w = dop853_helper_save_all(&cp, &cf,
                                        <FcnEqDiff> Fwrapper_direct_nbody,
                                        w0, t,
-                                       ndim, nparticles, args, ntimes,
-                                       atol, rtol, nmax)
+                                       ndim, nparticles, nparticles, args,
+                                       ntimes, atol, rtol, nmax)
     else:
         all_w = dop853_helper(&cp, &cf,
                               <FcnEqDiff> Fwrapper_direct_nbody,
                               w0, t,
-                              ndim, nparticles, args, ntimes,
+                              ndim, nparticles, nparticles, args, ntimes,
                               atol, rtol, nmax)
         all_w = np.array(all_w).reshape(nparticles, ndim)
 
