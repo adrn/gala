@@ -155,3 +155,81 @@ cpdef mockstream_dop853(nbody, double[::1] time,
     return_stream_w = np.array(w_final)[nbodies:]
 
     return return_nbody_w, return_stream_w
+
+
+cpdef mockstream_dop853_2(nbody, double[::1] t,
+                          double[:, ::1] stream_w0, int[::1] nstream,
+                          double atol=1E-10, double rtol=1E-10, int nmax=0):
+    """
+    Parameters
+    ----------
+    nbody : `~gala.dynamics.nbody.DirectNBody`
+    t : numpy.ndarray (ntimes, )
+    stream_w0 : numpy.ndarray (nstreamparticles, 6)
+    nstream : numpy.ndarray (ntimes, )
+        The number of stream particles to be integrated from this timestep.
+        There should be no zero values.
+
+    Notes
+    -----
+    In code, ``nbodies`` are the massive bodies included from the ``nbody``
+    instance passed in. ``nstreamparticles`` are the stream test particles.
+    ``nstream`` is the array containing the number of stream particles released
+    at each timestep.
+
+    """
+
+    cdef:
+        int i, j, k, n # indexing
+        unsigned ndim = 6 # TODO: hard-coded, but really must be 6D
+
+        # Time-stepping parameters:
+        int ntimes = t.shape[0]
+        double dt0 = t[1] - t[0] # initial timestep
+
+        # whoa, so many dots
+        CPotential cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
+        CFrame cf = (<CFrameWrapper>(nbody.H.frame.c_instance)).cframe
+
+        int nbodies = nbody._w0.shape[0] # includes the progenitor
+        double [:, ::1] nbody_w0 = nbody._w0
+
+        int total_nstream = np.sum(nstream)
+        double[:, ::1] w = np.empty((nbodies + total_nstream, ndim))
+
+        # For N-body support:
+        void *args
+        CPotential *c_particle_potentials[MAX_NBODY]
+
+    # set the potential objects of the progenitor (index 0) and any other
+    # massive bodies included in the stream generation
+    for i in range(nbodies):
+        c_particle_potentials[i] = &(<CPotentialWrapper>(nbody.particle_potentials[i].c_instance)).cpotential
+    args = <void *>(&c_particle_potentials[0])
+
+    # set initial conditions for progenitor and N-bodies
+    for j in range(nbodies):
+        for k in range(ndim):
+            w[j, k] = nbody_w0[j, k]
+
+    for j in range(total_nstream):
+        for k in range(ndim):
+            w[nbodies+j, k] = stream_w0[j, k]
+
+    n = nstream[0]
+    for i in range(1, ntimes):
+        print(i, t[i-1], t[i], dt0, w[0, 1])
+        dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
+                    &w[0, 0], t[i-i], t[i], dt0,
+                    ndim, 1, 1, args,
+                    # ndim, nbodies+n, nbodies, args,
+                    atol, rtol, nmax)
+
+        PyErr_CheckSignals()
+
+        n += nstream[i]
+
+    return_nbody_w = np.array(w)[:nbodies]
+    return_stream_w = np.array(w)[nbodies:]
+
+    return return_nbody_w, return_stream_w

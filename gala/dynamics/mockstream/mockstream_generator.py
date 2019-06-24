@@ -6,7 +6,7 @@ from .. import combine, PhaseSpacePosition
 from ..nbody import DirectNBody
 from ...potential import Hamiltonian, PotentialBase
 from ...integrate.timespec import parse_time_specification
-from ._mockstream import mockstream_dop853
+from ._mockstream import mockstream_dop853, mockstream_dop853_2
 from .core import MockStream
 
 __all__ = ['MockStreamGenerator']
@@ -200,6 +200,7 @@ class MockStreamGenerator:
             nbody0 = prog_nbody
 
         prog_orbit = nbody_orbits[:, 0] # Note: Progenitor must be idx 0!
+        orbit_t = prog_orbit.t.decompose(units).value
 
         # Generate initial conditions from the DF
         stream_w0 = self.df.sample(prog_orbit, prog_mass,
@@ -210,16 +211,16 @@ class MockStreamGenerator:
                         stream_w0.v_xyz.decompose(units).value)).T
         w0 = np.ascontiguousarray(w0)
 
-        unq_t1s, nstream = np.unique(stream_w0.release_time.decompose(units),
+        unq_t1s, nstream = np.unique(stream_w0.release_time.decompose(units).value,
                                      return_counts=True)
 
-        # Only both iterating over timesteps if we're releasing particles then:
-        time = prog_orbit.t.decompose(units).value.copy()
-        time = time[np.isin(time, unq_t1s)]
+        all_nstream = np.zeros(prog_orbit.ntimes, dtype=int)
+        for t1, n in zip(unq_t1s, nstream):
+            all_nstream[orbit_t == t1] = n
 
         if output_every is None: # store snapshots
-            raw_nbody, raw_stream = mockstream_dop853(nbody0, time, w0, unq_t1s,
-                                                      nstream.astype('i4'))
+            raw_nbody, raw_stream = mockstream_dop853_2(nbody0, orbit_t, w0,
+                                                        all_nstream.astype('i4'))
         else:
             if output_filename is None:
                 raise ValueError("If output_every is specified, you must also "
