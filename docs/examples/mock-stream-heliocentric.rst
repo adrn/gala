@@ -71,13 +71,14 @@ stream particle initial conditions by creating a
 Finally, we can generate the stream using the
 `~gala.dynamics.mockstream.MockStreamGenerator`::
 
-    >>> gen_pal5 = ms.MockStreamGenerator(df, mw, progenitor_potential=pal5_pot)
+    >>> gen_pal5 = ms.MockStreamGenerator(df, pot,
+    ...                                   progenitor_potential=pal5_pot)
     >>> pal5_stream, _ = gen_pal5.run(pal5_w0, pal5_mass,
     ...                               dt=-1 * u.Myr, n_steps=4000)
 
 Here the negative timestep tells the stream generator to first integrate the orbit of the progenitor (the Pal 5 cluster itself) backwards in time, then generate the stream forwards from the past until present day::
 
-    >>> pal5_stream.plot(alpha=0.1)
+    >>> pal5_stream.plot(alpha=0.1) # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -111,7 +112,7 @@ Here the negative timestep tells the stream generator to first integrate the orb
     pal5_pot = gp.PlummerPotential(m=pal5_mass, b=4*u.pc, units=galactic)
 
     df = ms.FardalStreamDF()
-    gen_pal5 = ms.MockStreamGenerator(df, mw, progenitor_potential=pal5_pot)
+    gen_pal5 = ms.MockStreamGenerator(df, pot, progenitor_potential=pal5_pot)
     pal5_stream, _ = gen_pal5.run(pal5_w0, pal5_mass,
                                  dt=-1 * u.Myr, n_steps=4000)
 
@@ -122,7 +123,7 @@ Galactocentric coordinate frame. To convert these to observable, Heliocentric
 coordinates, we have to specify a desired coordinate frame. We'll convert to the
 ICRS coordinate system and plot some of the Heliocentric kinematic quantities::
 
-   >>> stream_c = stream.to_coord_frame(coord.ICRS)
+   >>> stream_c = pal5_stream.to_coord_frame(coord.ICRS)
 
 .. plot::
    :align: center
