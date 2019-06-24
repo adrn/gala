@@ -42,11 +42,12 @@ __all__ = ['mockstream_dop853']
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, CFrame *fr, unsigned norbits,
+                              CPotential *p, CFrame *fr,
+                              unsigned norbits, unsigned nbody,
                               void *args) nogil
     void Fwrapper_direct_nbody(unsigned ndim, double t, double *w, double *f,
-                               CPotential *p, CFrame *fr, unsigned norbits,
-                               void *args)
+                               CPotential *p, CFrame *fr,
+                               unsigned norbits, unsigned nbody, void *args) nogil
 
 
 cpdef mockstream_dop853(nbody, double[::1] time,
@@ -119,7 +120,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
     nbody_w = dop853_helper_save_all(&cp, &cf,
                                      <FcnEqDiff> Fwrapper_direct_nbody,
                                      nbody_w0, time,
-                                     ndim, nbodies, args, ntimes,
+                                     ndim, nbodies, nbodies, args, ntimes,
                                      atol, rtol, nmax)
 
     n = 0
@@ -135,7 +136,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
 
         dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
                     &w_tmp[0, 0], stream_t1[i], t2, dt0,
-                    ndim, nbodies+nstream[i], args,
+                    ndim, nbodies+nstream[i], nbodies, args,
                     atol, rtol, nmax)
 
         for j in range(nstream[i]):

@@ -30,9 +30,9 @@ cdef extern from "potential/src/cpotential.h":
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
                               CPotential *p, CFrame *fr, unsigned norbits,
-                              void *args) nogil
+                              unsigned nbody, void *args) nogil
     void Fwrapper (unsigned ndim, double t, double *w, double *f,
-                   CPotential *p, CFrame *fr, unsigned norbits)
+                   CPotential *p, CFrame *fr, unsigned norbits, unsigned nbody)
     double six_norm (double *x)
 
 cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
@@ -85,7 +85,8 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
     jiter = 0
     for j in range(1,n_steps,1):
         dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper,
-                    &w[0], t[j-1], t[j], dt0, ndim, norbits, args,
+                    &w[0], t[j-1], t[j], dt0, ndim,
+                    norbits, 0, args, # 0 is for nbody, ignored here
                     atol, rtol, nmax)
 
         # store position of main orbit
@@ -158,7 +159,8 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
     jiter = 0
     for j in range(1,n_steps,1):
         dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper,
-                    &w[0], t[j-1], t[j], dt0, ndim, norbits, args,
+                    &w[0], t[j-1], t[j], dt0, ndim,
+                    norbits, 0, args, # 0 is for nbody, ignored here
                     atol, rtol, nmax)
 
         if (j % n_steps_per_pullback) == 0:
