@@ -11,6 +11,7 @@
 import numpy as np
 cimport numpy as np
 np.import_array()
+from libc.stdlib cimport malloc, free
 
 from cpython.exc cimport PyErr_CheckSignals
 from ...potential.potential.cpotential cimport CPotentialWrapper
@@ -103,7 +104,7 @@ cdef dop853_helper(CPotential *cp, CFrame *cf, FcnEqDiff F,
 
 """
 TODO: These functions could accept p_params and fr_params arrays or something
-that set the  parameters as a function of time, and CPotential / CFrame could
+that set the parameters as a function of time, and CPotential / CFrame could
 now have a "time_dependent" attribute?
 """
 
@@ -150,7 +151,6 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:,::1] w0, double[::1] t,
         raise TypeError("Input Hamiltonian object does not support C-level access.")
 
     cdef:
-        int i, j, k
         unsigned norbits = w0.shape[0]
         unsigned ndim = w0.shape[1]
         void *args
@@ -167,5 +167,86 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:,::1] w0, double[::1] t,
                                    w0, t,
                                    ndim, norbits, 0, args, ntimes,
                                    atol, rtol, nmax)
+
+    return np.asarray(t), np.asarray(all_w)
+
+
+
+
+cdef dop853_helper_save_all_timedep(CPotential **cp_t, CFrame *cf, FcnEqDiff F,
+                                    double[:, ::1] w0, double[::1] t,
+                                    int ndim, int norbits, int nbody,
+                                    void *args,
+                                    double atol, double rtol, int nmax):
+
+    cdef:
+        int i, j, k
+        double dt0 = t[1] - t[0]
+        int ntimes = len(t)
+
+        double[::1] w = np.empty(ndim*norbits)
+        double[:,:,::1] all_w = np.empty((ntimes, norbits, ndim))
+
+    # store initial conditions
+    for i in range(norbits):
+        for k in range(ndim):
+            w[i*ndim + k] = w0[i, k]
+            all_w[0, i, k] = w0[i, k]
+
+    for j in range(1, ntimes, 1):
+        dop853_step(cp_t[j], cf, F,
+                    &w[0], t[j-1], t[j], dt0, ndim, norbits, nbody, args,
+                    atol, rtol, nmax)
+
+        for k in range(ndim):
+            for i in range(norbits):
+                all_w[j,i,k] = w[i*ndim + k]
+
+        PyErr_CheckSignals()
+
+    return np.asarray(all_w)
+
+cpdef dop853_integrate_hamiltonian_timedep(hamiltonian, double[:,::1] w0,
+                                           double[::1] t,
+                                           double atol=1E-10,
+                                           double rtol=1E-10,
+                                           int nmax=0):
+    """
+    CAUTION: Interpretation of axes is different here! We need the
+    arrays to be C ordered and easy to iterate over, so here the
+    axes are (norbits, ndim).
+    """
+
+    if not hamiltonian.c_enabled:
+        raise TypeError("Input Hamiltonian object does not support "
+                        "C-level access.")
+
+    cdef:
+        int i
+        unsigned norbits = w0.shape[0]
+        unsigned ndim = w0.shape[1]
+        void *args
+
+        # define full array of times
+        int ntimes = len(t)
+
+        # whoa, so many dots
+        CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
+        CFrame cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
+
+        CPotential **cp_t =  <CPotential **> malloc(ntimes * sizeof(int))
+
+    for i in range(ntimes):
+        cp_t[i] = &cp
+
+    # 0 below is for nbody - we ignore that in this test particle integration
+    try:
+        all_w = dop853_helper_save_all_timedep(&cp_t[0], &cf,
+                                               <FcnEqDiff> Fwrapper,
+                                               w0, t,
+                                               ndim, norbits, 0, args,
+                                               atol, rtol, nmax)
+    finally:
+        free(cp_t)
 
     return np.asarray(t), np.asarray(all_w)
