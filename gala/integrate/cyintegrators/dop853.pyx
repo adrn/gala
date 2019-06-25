@@ -101,6 +101,12 @@ cdef dop853_helper(CPotential *cp, CFrame *cf, FcnEqDiff F,
 
     return w
 
+"""
+TODO: These functions could accept p_params and fr_params arrays or something
+that set the  parameters as a function of time, and CPotential / CFrame could
+now have a "time_dependent" attribute?
+"""
+
 cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
                             double[:,::1] w0, double[::1] t,
                             int ndim, int norbits, int nbody, void *args,
