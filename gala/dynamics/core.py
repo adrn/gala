@@ -108,7 +108,7 @@ class PhaseSpacePosition(object):
         velocity, they are assumed to be Cartesian. Array inputs are interpreted
         as dimensionless quantities. The input position and velocity objects can
         have an arbitrary number of (broadcastable) dimensions. For Quantity or
-        array inputs, the first axis (0) has special meaning::
+        array inputs, the first axis (0) has special meaning:
 
             - `axis=0` is the coordinate dimension (e.g., x, y, z for Cartesian)
 

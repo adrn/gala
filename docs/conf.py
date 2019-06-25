@@ -25,33 +25,28 @@
 # Thus, any C-extensions that are needed to build the documentation will *not*
 # be accessible, and the documentation will not build correctly.
 
-import datetime
 import os
 import sys
+import datetime
+from importlib import import_module
 
 try:
-    import astropy_helpers
+    from sphinx_astropy.conf.v1 import *  # noqa
 except ImportError:
-    # Building from inside the docs/ directory?
-    if os.path.basename(os.getcwd()) == 'docs':
-        a_h_path = os.path.abspath(os.path.join('..', 'astropy_helpers'))
-        if os.path.isdir(a_h_path):
-            sys.path.insert(1, a_h_path)
-
-# Load all of the global Astropy configuration
-from sphinx_astropy.conf import *
+    print('ERROR: the documentation requires the sphinx-astropy package to be installed')
+    sys.exit(1)
 
 # Get configuration information from setup.cfg
-try:
-    from ConfigParser import ConfigParser
-except ImportError:
-    from configparser import ConfigParser
-
+from configparser import ConfigParser
 conf = ConfigParser()
+
 conf.read([os.path.join(os.path.dirname(__file__), '..', 'setup.cfg')])
 setup_cfg = dict(conf.items('metadata'))
 
 # -- General configuration ----------------------------------------------------
+
+# By default, highlight as Python 3.
+highlight_language = 'python3'
 
 # If your documentation needs a minimal Sphinx version, state it here.
 needs_sphinx = '1.3'
@@ -80,7 +75,7 @@ todo_include_todos = True
 # -- Project information ------------------------------------------------------
 
 # This does not *have* to match the package name, but typically does
-project = setup_cfg['package_name']
+project = setup_cfg['name']
 author = setup_cfg['author']
 copyright = '{0}, {1}'.format(
     datetime.datetime.now().year, setup_cfg['author'])
@@ -89,18 +84,16 @@ copyright = '{0}, {1}'.format(
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-__import__(setup_cfg['package_name'])
-package = sys.modules[setup_cfg['package_name']]
-try:
-    exec('from {0}.mpl_style import mpl_style'.format(setup_cfg['package_name']))
-except ImportError:
-    mpl_style = None
+import_module(setup_cfg['name'])
+package = sys.modules[setup_cfg['name']]
 
 # TODO: Use Gala style when building docs
+mpl_style = None
+exec('from {0}.mpl_style import mpl_style'.format(setup_cfg['name']))
 if mpl_style is not None:
     plot_rcparams = mpl_style
     plot_apply_rcparams = True
-plot_formats = [('png', 250)]
+plot_formats = [('png', 200)]
 plot_include_source = False
 
 # The short X.Y version.
