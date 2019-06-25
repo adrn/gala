@@ -14,17 +14,10 @@ np.import_array()
 from libc.stdlib cimport malloc, free
 
 from cpython.exc cimport PyErr_CheckSignals
-from ...potential.potential.cpotential cimport CPotentialWrapper
-from ...potential.frame.cframe cimport CFrameWrapper
-
-cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrame:
-        pass
+from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
+from ...potential.frame.cframe cimport CFrameWrapper, CFrame
 
 cdef extern from "potential/src/cpotential.h":
-    ctypedef struct CPotential:
-        pass
-
     void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
 
 cdef extern from "dopri/dop853.h":
@@ -102,11 +95,6 @@ cdef dop853_helper(CPotential *cp, CFrame *cf, FcnEqDiff F,
 
     return w
 
-"""
-TODO: These functions could accept p_params and fr_params arrays or something
-that set the parameters as a function of time, and CPotential / CFrame could
-now have a "time_dependent" attribute?
-"""
 
 cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
                             double[:,::1] w0, double[::1] t,
@@ -171,9 +159,10 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:,::1] w0, double[::1] t,
     return np.asarray(t), np.asarray(all_w)
 
 
+# --------------------------------------------------------------------------
 
 
-cdef dop853_helper_save_all_timedep(CPotential **cp_t, CFrame *cf, FcnEqDiff F,
+cdef dop853_helper_save_all_timedep(CPotential **cps, CFrame **cfs, FcnEqDiff F,
                                     double[:, ::1] w0, double[::1] t,
                                     int ndim, int norbits, int nbody,
                                     void *args,
@@ -185,7 +174,7 @@ cdef dop853_helper_save_all_timedep(CPotential **cp_t, CFrame *cf, FcnEqDiff F,
         int ntimes = len(t)
 
         double[::1] w = np.empty(ndim*norbits)
-        double[:,:,::1] all_w = np.empty((ntimes, norbits, ndim))
+        double[:, :, ::1] all_w = np.empty((ntimes, norbits, ndim))
 
     # store initial conditions
     for i in range(norbits):
@@ -194,7 +183,7 @@ cdef dop853_helper_save_all_timedep(CPotential **cp_t, CFrame *cf, FcnEqDiff F,
             all_w[0, i, k] = w0[i, k]
 
     for j in range(1, ntimes, 1):
-        dop853_step(cp_t[j], cf, F,
+        dop853_step(cps[j-1], cfs[j-1], F,
                     &w[0], t[j-1], t[j], dt0, ndim, norbits, nbody, args,
                     atol, rtol, nmax)
 
@@ -206,7 +195,8 @@ cdef dop853_helper_save_all_timedep(CPotential **cp_t, CFrame *cf, FcnEqDiff F,
 
     return np.asarray(all_w)
 
-cpdef dop853_integrate_hamiltonian_timedep(hamiltonian, double[:,::1] w0,
+
+cpdef dop853_integrate_hamiltonian_timedep(list hamiltonians, double[:, ::1] w0,
                                            double[::1] t,
                                            double atol=1E-10,
                                            double rtol=1E-10,
@@ -217,10 +207,6 @@ cpdef dop853_integrate_hamiltonian_timedep(hamiltonian, double[:,::1] w0,
     axes are (norbits, ndim).
     """
 
-    if not hamiltonian.c_enabled:
-        raise TypeError("Input Hamiltonian object does not support "
-                        "C-level access.")
-
     cdef:
         int i
         unsigned norbits = w0.shape[0]
@@ -230,23 +216,27 @@ cpdef dop853_integrate_hamiltonian_timedep(hamiltonian, double[:,::1] w0,
         # define full array of times
         int ntimes = len(t)
 
-        # whoa, so many dots
-        CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
-        CFrame cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
-
-        CPotential **cp_t =  <CPotential **> malloc(ntimes * sizeof(int))
+        # allocate an array of pointers
+        CPotential **cps = <CPotential **> malloc(ntimes * sizeof(CPotential*))
+        CFrame **cfs = <CFrame **> malloc(ntimes * sizeof(CFrame*))
 
     for i in range(ntimes):
-        cp_t[i] = &cp
+        if not hamiltonians[i].c_enabled:
+            raise TypeError("Input Hamiltonian object does not support "
+                            "C-level access.")
+
+        cps[i] = &(<CPotentialWrapper>(hamiltonians[i].potential.c_instance)).cpotential
+        cfs[i] = &(<CFrameWrapper>(hamiltonians[i].frame.c_instance)).cframe
 
     # 0 below is for nbody - we ignore that in this test particle integration
     try:
-        all_w = dop853_helper_save_all_timedep(&cp_t[0], &cf,
+        all_w = dop853_helper_save_all_timedep(cps, cfs,
                                                <FcnEqDiff> Fwrapper,
                                                w0, t,
                                                ndim, norbits, 0, args,
                                                atol, rtol, nmax)
     finally:
-        free(cp_t)
+        free(cps)
+        free(cfs)
 
     return np.asarray(t), np.asarray(all_w)
