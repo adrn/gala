@@ -88,10 +88,12 @@ import_module(setup_cfg['name'])
 package = sys.modules[setup_cfg['name']]
 
 # TODO: Use Gala style when building docs
-if hasattr(package, 'mpl_style') is not None:
-    plot_rcparams = package.mpl_style.mpl_style
+mpl_style = None
+exec('from {0}.mpl_style import mpl_style'.format(setup_cfg['name']))
+if mpl_style is not None:
+    plot_rcparams = mpl_style
     plot_apply_rcparams = True
-plot_formats = [('png', 250)]
+plot_formats = [('png', 200)]
 plot_include_source = False
 
 # The short X.Y version.
