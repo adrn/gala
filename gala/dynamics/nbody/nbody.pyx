@@ -30,9 +30,6 @@ from ...integrate.cyintegrators.dop853 cimport (dop853_helper,
                                                 dop853_helper_save_all_timedep,
                                                 get_cps_cfs)
 
-# cdef extern from "frame/src/cframe.h":
-#     ctypedef struct CFrame:
-#         pass
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
