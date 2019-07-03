@@ -161,6 +161,45 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:,::1] w0, double[::1] t,
 
 # --------------------------------------------------------------------------
 
+cdef get_cps_cfs(list hamiltonians, int ntimes,
+                 CPotential **cps, CFrame **cfs):
+    cdef:
+        int i
+
+    for i in range(ntimes):
+        if not hamiltonians[i].c_enabled:
+            raise TypeError("Input Hamiltonian object does not support "
+                            "C-level access.")
+
+        cps[i] = &(<CPotentialWrapper>(hamiltonians[i].potential.c_instance)).cpotential
+        cfs[i] = &(<CFrameWrapper>(hamiltonians[i].frame.c_instance)).cframe
+
+
+cdef dop853_helper_timedep(CPotential **cps, CFrame **cfs, FcnEqDiff F,
+                           double[:,::1] w0, double[::1] t,
+                           int ndim, int norbits, int nbody, void *args,
+                           int ntimes, double atol, double rtol, int nmax):
+
+    cdef:
+        int i, j
+        double dt0 = t[1] - t[0]
+        double[::1] w = np.empty(ndim*norbits)
+
+    # store initial conditions
+    for i in range(norbits):
+        for j in range(ndim):
+            w[i*ndim + j] = w0[i, j]
+
+    for j in range(1, ntimes, 1):
+        dop853_step(cps[j-1], cfs[j-1], F,
+                    &w[0], t[j-1], t[j], dt0,
+                    ndim, norbits, nbody, args,
+                    atol, rtol, nmax)
+
+        PyErr_CheckSignals()
+
+    return w
+
 
 cdef dop853_helper_save_all_timedep(CPotential **cps, CFrame **cfs, FcnEqDiff F,
                                     double[:, ::1] w0, double[::1] t,
@@ -220,13 +259,8 @@ cpdef dop853_integrate_hamiltonian_timedep(list hamiltonians, double[:, ::1] w0,
         CPotential **cps = <CPotential **> malloc(ntimes * sizeof(CPotential*))
         CFrame **cfs = <CFrame **> malloc(ntimes * sizeof(CFrame*))
 
-    for i in range(ntimes):
-        if not hamiltonians[i].c_enabled:
-            raise TypeError("Input Hamiltonian object does not support "
-                            "C-level access.")
-
-        cps[i] = &(<CPotentialWrapper>(hamiltonians[i].potential.c_instance)).cpotential
-        cfs[i] = &(<CFrameWrapper>(hamiltonians[i].frame.c_instance)).cframe
+    # Fill the arrays of cpotential and cframe pointers
+    get_cps_cfs(hamiltonians, ntimes, cps, cfs)
 
     # 0 below is for nbody - we ignore that in this test particle integration
     try:

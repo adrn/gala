@@ -6,6 +6,7 @@
 # cython: profile=False
 
 # Standard library
+from libc.stdlib cimport malloc, free
 import warnings
 
 # Third-party
@@ -22,13 +23,16 @@ from cpython.exc cimport PyErr_CheckSignals
 from ...potential import Hamiltonian
 from ...potential.potential.cpotential cimport (CPotentialWrapper,
                                                 MAX_N_COMPONENTS, CPotential)
-from ...potential.frame.cframe cimport CFrameWrapper
+from ...potential.frame.cframe cimport CFrameWrapper, CFrame
 from ...integrate.cyintegrators.dop853 cimport (dop853_helper,
-                                                dop853_helper_save_all)
+                                                dop853_helper_save_all,
+                                                dop853_helper_timedep,
+                                                dop853_helper_save_all_timedep,
+                                                get_cps_cfs)
 
-cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrame:
-        pass
+# cdef extern from "frame/src/cframe.h":
+#     ctypedef struct CFrame:
+#         pass
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
@@ -98,5 +102,66 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
                               ndim, nparticles, nparticles, args, ntimes,
                               atol, rtol, nmax)
         all_w = np.array(all_w).reshape(nparticles, ndim)
+
+    return all_w
+
+
+cpdef direct_nbody_dop853_timedep(double [:, ::1] w0, double[::1] t,
+                                  list hamiltonians, list particle_potentials,
+                                  save_all=True,
+                                  double atol=1E-10, double rtol=1E-10,
+                                  int nmax=0):
+    """Integrate orbits from initial conditions ``w0`` over the time grid ``t``
+    using direct N-body force calculation in the time-dependent external
+    potential provided via the ``hamiltonians`` argument.
+
+    The potential objects for each set of initial conditions must be C-enabled
+    (i.e., must be ``CPotentialBase`` subclasses), and the total number of
+    potential objects must equal the number of initial conditions.
+
+    By default, this integration procedure stores the full time series of all
+    orbits, but this may use a lot of memory. If you just want to store the
+    final state of the orbits, pass ``save_all=False``.
+    """
+    cdef:
+        unsigned nparticles = w0.shape[0]
+        unsigned ndim = w0.shape[1]
+        unsigned ntimes = len(t)
+
+        int i
+        void *args
+        CPotential **c_particle_potentials = <CPotential **> malloc(nparticles * sizeof(CPotential*))
+
+        # allocate an array of pointers
+        CPotential **cps = <CPotential **> malloc(ntimes * sizeof(CPotential*))
+        CFrame **cfs = <CFrame **> malloc(ntimes * sizeof(CFrame*))
+
+    get_cps_cfs(hamiltonians, ntimes, cps, cfs)
+
+    if len(particle_potentials) != nparticles:
+        raise ValueError("The number of particle initial conditions must match "
+                         "the number of particle potentials passed in.")
+
+    # TODO: the particle potentials are *not* time-dependent
+    # Extract the CPotential objects from the particle potentials.
+    for i in range(nparticles):
+        c_particle_potentials[i] = &(<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
+
+    # We need a void pointer for any other arguments
+    args = <void *>(&c_particle_potentials[0])
+
+    if save_all:
+        all_w = dop853_helper_save_all_timedep(
+            cps, cfs, <FcnEqDiff> Fwrapper_direct_nbody,
+            w0, t, ndim, nparticles, nparticles, args,
+            atol, rtol, nmax)
+    else:
+        all_w = dop853_helper_timedep(
+            cps, cfs, <FcnEqDiff> Fwrapper_direct_nbody,
+            w0, t, ndim, nparticles, nparticles, args, ntimes,
+            atol, rtol, nmax)
+        all_w = np.array(all_w).reshape(nparticles, ndim)
+
+    free(c_particle_potentials)
 
     return all_w
