@@ -8,7 +8,8 @@ _greek_letters = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta",
                   "o", "rho", "sigma", "tau", "upsilon", "phi", "chi", "psi",
                   "omega"]
 
-class UnitSystem(object):
+
+class UnitSystem:
     """
     Represents a system of units. At minimum, this consists of a set of
     length, time, mass, and angle units, but may also contain preferred
@@ -55,7 +56,7 @@ class UnitSystem(object):
     def __init__(self, units, *args):
 
         self._required_physical_types = ['length', 'time', 'mass', 'angle']
-        self._core_units = []
+        self._core_units = set()
 
         if isinstance(units, UnitSystem):
             self._registry = units._registry.copy()
@@ -75,7 +76,7 @@ class UnitSystem(object):
         for phys_type in self._required_physical_types:
             if phys_type not in self._registry:
                 raise ValueError("You must specify a unit with physical type '{0}'".format(phys_type))
-            self._core_units.append(self._registry[phys_type])
+            self._core_units.add(self._registry[phys_type])
 
     def __getitem__(self, key):
 
@@ -84,9 +85,10 @@ class UnitSystem(object):
 
         else:
             unit = None
-            for k,v in _physical_unit_mapping.items():
+            for k, v in _physical_unit_mapping.items():
                 if v == key:
-                    unit = u.Unit(" ".join(["{}**{}".format(x,y) for x,y in k]))
+                    unit = u.Unit(" ".join(["{}**{}".format(x, y)
+                                            for x, y in k]))
                     break
 
             if unit is None:
@@ -104,7 +106,8 @@ class UnitSystem(object):
             yield uu
 
     def __str__(self):
-        return "UnitSystem ({0})".format(",".join([str(uu) for uu in self._core_units]))
+        return "UnitSystem ({0})".format(
+            ",".join([str(uu) for uu in self._core_units]))
 
     def __repr__(self):
         return "<{0}>".format(self.__str__())
@@ -186,10 +189,11 @@ class UnitSystem(object):
 
         return c.decompose(self._core_units).value
 
+
 class DimensionlessUnitSystem(UnitSystem):
 
     def __init__(self):
-        self._core_units = [u.one]
+        self._core_units = {u.one}
         self._registry = dict()
         self._registry['dimensionless'] = u.one
 
@@ -204,6 +208,7 @@ class DimensionlessUnitSystem(UnitSystem):
 
     def get_constant(self, name):
         raise ValueError("Cannot get constant in dimensionless units!")
+
 
 # define galactic unit system
 galactic = UnitSystem(u.kpc, u.Myr, u.Msun, u.radian,

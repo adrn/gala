@@ -44,9 +44,9 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         self.parameters = self._prepare_parameters(parameters, self.units)
 
         try:
-            self.G = G.decompose(self.units).value
+            self.G = G.decompose(self._unitset).value
         except u.UnitConversionError:
-            self.G = 1. # TODO: this is a HACK and could lead to user confusion
+            self.G = 1.
 
         self.ndim = ndim
 
@@ -99,7 +99,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         units associated with this object and returns the value.
         """
         if hasattr(x, 'unit'):
-            x = x.decompose(self.units).value
+            x = x.decompose(self._unitset).value
 
         else:
             x = np.array(x)
@@ -112,10 +112,10 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         but returns just the position if the input is a `PhaseSpacePosition`.
         """
         if hasattr(x, 'unit'):
-            x = x.decompose(self.units).value
+            x = x.decompose(self._unitset).value
 
         elif isinstance(x, PhaseSpacePosition):
-            x = x.cartesian.xyz.decompose(self.units).value
+            x = x.cartesian.xyz.decompose(self._unitset).value
 
         x = atleast_2d(x, insert_axis=1).astype(np.float64)
         return x
@@ -279,7 +279,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         if isinstance(self.units, DimensionlessUnitSystem):
             Gee = 1.
         else:
-            Gee = G.decompose(self.units).value
+            Gee = G.decompose(self._unitset).value
 
         Menc = np.abs(r*r * diff / Gee / (2.*h))
         Menc = Menc.reshape(orig_shape[1:])
@@ -683,6 +683,12 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     @property
     def units(self):
         return self._units
+
+    @property
+    def _unitset(self):
+        if not hasattr(self, '__unitset'):
+            self.__unitset = set(self.units)
+        return self.__unitset
 
     def replace_units(self, units, copy=True):
         """Change the unit system of this potential.

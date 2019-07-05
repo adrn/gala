@@ -11,7 +11,8 @@ from ..dynamics import PhaseSpacePosition
 from ..util import atleast_2d
 from ..units import UnitSystem, DimensionlessUnitSystem
 
-class CommonBase(object):
+
+class CommonBase:
     _physical_types = None
 
     def _validate_units(self, units):
@@ -34,12 +35,15 @@ class CommonBase(object):
         pars = OrderedDict()
         for k, v in parameters.items():
             if hasattr(v, 'unit'):
-                pars[k] = v.decompose(units)
+                if v.unit in units._core_units:
+                    pars[k] = v
+                else:
+                    pars[k] = v.decompose(units)
 
-            elif k in ptypes and ptypes[k]: # treat empty string as u.one
+            elif k in ptypes and ptypes[k]:  # treat empty string as u.one
                 # HACK TODO: remove when fix potentials that ask for scale velocity
                 if ptypes[k] == 'speed':
-                    pars[k] = v * units['length']/units['time']
+                    pars[k] = v * units['length'] / units['time']
                 else:
                     pars[k] = v * units[ptypes[k]]
 
@@ -49,7 +53,7 @@ class CommonBase(object):
 
     def _remove_units_prepare_shape(self, x):
         if hasattr(x, 'unit'):
-            x = x.decompose(self.units).value
+            x = x.decompose(self._unitset).value
 
         elif isinstance(x, PhaseSpacePosition):
             x = x.w(self.units)
@@ -70,7 +74,7 @@ class CommonBase(object):
         Make sure that t is a 1D array and compatible with the C position array.
         """
         if hasattr(t, 'unit'):
-            t = t.decompose(self.units).value
+            t = t.decompose(self._unitset).value
 
         if not isiterable(t):
             t = np.atleast_1d(t)
@@ -90,6 +94,6 @@ class CommonBase(object):
             return False
 
         # the funkiness in the below is in case there are array parameters:
-        par_bool = [(k1==k2) and np.all(self.parameters[k1] == other.parameters[k2])
-                    for k1,k2 in zip(self.parameters.keys(), other.parameters.keys())]
+        par_bool = [(k1 == k2) and np.all(self.parameters[k1] == other.parameters[k2])
+                    for k1, k2 in zip(self.parameters.keys(), other.parameters.keys())]
         return np.all(par_bool) and (str(self) == str(other)) and (self.units == other.units)
