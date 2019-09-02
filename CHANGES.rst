@@ -19,6 +19,7 @@ API changes
   general stream generation. See ``MockStreamGenerator`` and the stream
   distribution function classes, e.g., ``FardalStreamDF``.
 - Removed deprecated ``CartesianPhaseSpacePosition`` class.
+- Removed long deprecated ``Quaternion`` class.
 
 
 1.0 (2019-04-12)

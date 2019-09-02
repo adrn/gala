@@ -12,7 +12,6 @@ omit =
    {packagename}/*/*/tests/*
    {packagename}/version*
    {packagename}/dynamics/_genfunc/*
-   {packagename}/coordinates/quaternion.py
    {packagename}/coordinates/poincarepolar.py
    {packagename}/coordinates/velocity_frame_transforms.py
 

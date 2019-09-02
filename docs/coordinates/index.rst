@@ -229,7 +229,6 @@ API
 
 .. automodapi:: gala.coordinates
     :no-inheritance-diagram:
-    :skip: Quaternion
     :skip: GD1
     :skip: Orphan
     :skip: Sagittarius
