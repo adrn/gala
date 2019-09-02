@@ -127,4 +127,4 @@ with open(extra_compile_macros_file, 'w') as f:
     else:
         f.writelines(['#define USE_GSL 0'])
 
-setup(version=version, cmdclass=cmdclass, **package_info)
+setup(name='astro-gala', version=version, cmdclass=cmdclass, **package_info)
