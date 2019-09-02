@@ -2,6 +2,7 @@ import astropy.coordinates as coord
 
 __all__ = ['reflex_correct']
 
+
 def reflex_correct(coords, galactocentric_frame=None):
     """Correct the input Astropy coordinate object for solar reflex motion.
 

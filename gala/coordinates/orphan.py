@@ -2,7 +2,7 @@
 
 import astropy.coordinates as coord
 import astropy.units as u
-from astropy.coordinates import frame_transform_graph, DynamicMatrixTransform
+from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import (rotation_matrix,
                                                   matrix_product,
                                                   matrix_transpose)
