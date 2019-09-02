@@ -38,8 +38,10 @@ env:
         - NUMPY_VERSION=stable
         - ASTROPY_VERSION=stable
         - SETUP_CMD='test'
-        - CONDA_DEPENDENCIES='cython jinja2 scipy matplotlib pyyaml h5py sympy qt ipython jupyter notebook ipykernel numexpr' # SEE PANDOC HACK BELOW
-        - PIP_DEPENDENCIES='nbsphinx tqdm sphinx-astropy'
+        - CONDA_DEPENDENCIES='cython scipy matplotlib pyyaml h5py sympy numexpr'
+        - CONDA_DEPENDENCIES_DOC="${CONDA_DEPENDENCIES} jinja2 ipython jupyter notebook ipykernel"
+        - PIP_DEPENDENCIES=''
+        - PIP_DEPENDENCIES_DOC="${PIP_DEPENDENCIES} nbsphinx tqdm sphinx-astropy"
         - CONDA_CHANNELS='astropy-ci-extras astropy'
 
         # If there are matplotlib or other GUI tests, uncomment the following
@@ -77,6 +79,7 @@ matrix:
         - os: linux
           env: SETUP_CMD='install build_docs -w'
                CONDA_DEPENDENCIES=$CONDA_DEPENDENCIES_DOC
+               PIP_DEPENDENCIES=$PIP_DEPENDENCIES_DOC
 
         # Now try Astropy dev with the latest Python and LTS with and 3.x.
         - os: linux
