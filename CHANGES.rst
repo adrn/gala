@@ -12,6 +12,8 @@ New Features
 
 Bug fixes
 ---------
+- Fixed an issue that led to incorrect ``GreatCircleICRSFrame`` transformations
+  when no ``ra0`` was provided.
 
 API changes
 -----------
