@@ -470,8 +470,8 @@ framework from `gala.integrate` and the convenience method
 
     # when using dimensionless units, we don't need to specify units for the
     # initial conditions
-    w0 = gd.CartesianPhaseSpacePosition(pos=[1.,0,0.25],
-                                        vel=[0.,0.3,0.])
+    w0 = gd.PhaseSpacePosition(pos=[1.,0,0.25],
+                               vel=[0.,0.3,0.])
 
     # by default this uses Leapfrog integration
     orbit = potential.integrate_orbit(w0, dt=0.1, n_steps=10000)
@@ -486,8 +486,8 @@ framework from `gala.integrate` and the convenience method
 
     # when using dimensionless units, we don't need to specify units for the
     # initial conditions
-    w0 = gd.CartesianPhaseSpacePosition(pos=[1.,0,0.25],
-                                        vel=[0.,0.3,0.])
+    w0 = gd.PhaseSpacePosition(pos=[1.,0,0.25],
+                               vel=[0.,0.3,0.])
 
     # by default this uses Leapfrog integration
     orbit = potential.integrate_orbit(w0, dt=0.1, n_steps=10000)

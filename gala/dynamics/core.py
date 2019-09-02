@@ -18,7 +18,7 @@ from ..io import quantity_to_hdf5, quantity_from_hdf5
 from ..units import UnitSystem, DimensionlessUnitSystem, _greek_letters
 from ..util import atleast_2d
 
-__all__ = ['PhaseSpacePosition', 'CartesianPhaseSpacePosition']
+__all__ = ['PhaseSpacePosition']
 
 _RepresentationMappingBase = \
     namedtuple('RepresentationMapping',
@@ -362,7 +362,7 @@ class PhaseSpacePosition(object):
 
         Returns
         -------
-        psp : `gala.dynamics.CartesianPhaseSpacePosition`
+        psp : `gala.dynamics.PhaseSpacePosition`
             The phase-space position in the new reference frame.
 
         """
@@ -875,16 +875,3 @@ class PhaseSpacePosition(object):
         """
         return self.pos.shape
 
-
-class CartesianPhaseSpacePosition(PhaseSpacePosition):
-
-    def __init__(self, pos, vel, frame=None):
-        """
-        Deprecated.
-        """
-
-        warnings.warn("This class is now deprecated! Use the general interface "
-                      "provided by PhaseSpacePosition instead.",
-                      DeprecationWarning)
-
-        super(CartesianPhaseSpacePosition, self).__init__(pos, vel, frame=frame)
