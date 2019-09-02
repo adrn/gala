@@ -9,6 +9,7 @@ import pytest
 from ..greatcircle import (GreatCircleICRSFrame, make_greatcircle_cls,
                            pole_from_endpoints, sph_midpoint)
 
+
 def test_cls_init():
     pole = coord.SkyCoord(ra=72.2643*u.deg, dec=-20.6575*u.deg)
     GreatCircleICRSFrame(pole=pole)
@@ -29,6 +30,7 @@ def test_cls_init():
         GreatCircleICRSFrame(pole=pole, ra0=160*u.deg,
                              center=pole)
 
+
 def test_init_center():
     stupid_gal = GreatCircleICRSFrame(
         pole=coord.Galactic._ngp_J2000.transform_to(coord.ICRS),
@@ -37,6 +39,7 @@ def test_init_center():
     gal2 = gal.transform_to(stupid_gal)
     assert np.isclose(gal.l.degree, gal2.phi1.degree)
     assert np.isclose(gal.b.degree, gal2.phi2.degree)
+
 
 def test_transform_against_koposov():
     from .helpers import sphere_rotate
@@ -133,16 +136,17 @@ def test_sph_midpoint():
 def test_pole_separation90():
     # Regression test for issue #160
 
-    pole = coord.SkyCoord(ra=32.5, dec=19.8, unit='deg')
-    kwargs = [dict(pole=pole),
-              dict(pole=pole, ra0=100*u.deg),
-              dict(pole=pole, rotation=50*u.deg),
-              dict(pole=pole, ra0=100*u.deg, rotation=50*u.deg)]
+    for dec in [19.8, 0, -41.3]:  # random values, but 0 is an important test
+        pole = coord.SkyCoord(ra=32.5, dec=dec, unit='deg')
+        kwargs = [dict(pole=pole),
+                  dict(pole=pole, ra0=100*u.deg),
+                  dict(pole=pole, rotation=50*u.deg),
+                  dict(pole=pole, ra0=100*u.deg, rotation=50*u.deg)]
 
-    for kw in kwargs:
-        gcfr = GreatCircleICRSFrame(**kw)
-        gc = coord.SkyCoord(phi1=np.linspace(0,360,100),
-                            phi2=0,
-                            unit='deg', frame=gcfr)
-        gc = gc.transform_to(coord.ICRS)
-        assert u.allclose(gc.separation(pole), 90*u.deg)
+        for kw in kwargs:
+            gcfr = GreatCircleICRSFrame(**kw)
+            gc = coord.SkyCoord(phi1=np.linspace(0, 360, 100),
+                                phi2=0,
+                                unit='deg', frame=gcfr)
+            gc = gc.transform_to(coord.ICRS)
+            assert u.allclose(gc.separation(pole), 90*u.deg)

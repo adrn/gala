@@ -18,6 +18,7 @@ import numpy as np
 __all__ = ['GreatCircleICRSFrame', 'make_greatcircle_cls',
            'pole_from_endpoints']
 
+
 def greatcircle_to_greatcircle(from_greatcircle_coord,
                                to_greatcircle_frame):
     """Transform between two greatcircle frames."""
@@ -41,15 +42,18 @@ def reference_to_greatcircle(reference_frame, greatcircle_frame):
     center = greatcircle_frame.center
     R_rot = rotation_matrix(greatcircle_frame.rotation, 'z')
 
-    if not np.isnan(ra0):
-        xaxis = np.array([np.cos(ra0), np.sin(ra0), 0.])
+    if not np.isnan(ra0) and np.abs(pole.dec.value) > 1e-15:
         zaxis = pole.cartesian.xyz.value
+        xaxis = np.array([np.cos(ra0), np.sin(ra0), 0.])
         if np.abs(zaxis[2]) >= 1e-15:
-            xaxis[2] = -(zaxis[0]*xaxis[0] + zaxis[1]*xaxis[1]) / zaxis[2] # what?
+            xaxis[2] = -(zaxis[0]*xaxis[0] + zaxis[1]*xaxis[1]) / zaxis[2]
         else:
             xaxis[2] = 0.
         xaxis = xaxis / np.sqrt(np.sum(xaxis**2))
+
         yaxis = np.cross(zaxis, xaxis)
+        yaxis = yaxis / np.sqrt(np.sum(yaxis**2))
+
         R = np.stack((xaxis, yaxis, zaxis))
 
     elif center is not None:
@@ -127,6 +131,7 @@ rotation : `~astropy.units.Quantity`, `~astropy.coordinates.Angle` (optional)
     If specified, a final rotation about the pole (i.e. the resulting z
     axis) applied.
 """
+
 
 @format_doc(dedent(base_doc), components=_components, footer=_footer)
 @greatcircle_transforms(self_transform=True)
