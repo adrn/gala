@@ -128,3 +128,21 @@ def test_sph_midpoint():
     midpt = sph_midpoint(c1, c2)
     assert quantity_allclose(midpt.ra, 0*u.deg)
     assert quantity_allclose(midpt.dec, 45*u.deg)
+
+
+def test_pole_separation90():
+    # Regression test for issue #160
+
+    pole = coord.SkyCoord(ra=32.5, dec=19.8, unit='deg')
+    kwargs = [dict(pole=pole),
+              dict(pole=pole, ra0=100*u.deg),
+              dict(pole=pole, rotation=50*u.deg),
+              dict(pole=pole, ra0=100*u.deg, rotation=50*u.deg)]
+
+    for kw in kwargs:
+        gcfr = GreatCircleICRSFrame(**kw)
+        gc = coord.SkyCoord(phi1=np.linspace(0,360,100),
+                            phi2=0,
+                            unit='deg', frame=gcfr)
+        gc = gc.transform_to(coord.ICRS)
+        assert u.allclose(gc.separation(pole), 90*u.deg)
