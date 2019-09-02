@@ -1,5 +1,6 @@
 # Built-in
 from textwrap import dedent
+from warnings import warn
 
 # Third-party
 import astropy.units as u
@@ -67,6 +68,10 @@ def reference_to_greatcircle(reference_frame, greatcircle_frame):
         R = matrix_product(R3, R2, R1)
 
     else:
+        if not np.isnan(ra0) and np.abs(pole.dec.value) < 1e-15:
+            warn("Ignoring input ra0 because the pole is along dec=0",
+                 RuntimeWarning)
+
         R1 = rotation_matrix(pole.ra, 'z')
         R2 = rotation_matrix(90*u.deg - pole.dec, 'y')
         R = matrix_product(R2, R1)
