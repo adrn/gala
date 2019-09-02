@@ -64,7 +64,7 @@ def reference_to_greatcircle(reference_frame, greatcircle_frame):
 
     else:
         R1 = rotation_matrix(pole.ra, 'z')
-        R2 = rotation_matrix(pole.dec, 'y')
+        R2 = rotation_matrix(90*u.deg - pole.dec, 'y')
         R = matrix_product(R2, R1)
 
     return matrix_product(R_rot, R)
