@@ -103,14 +103,14 @@ matrix:
         # Do a PEP8 test with flake8
         # - os: linux
         #   stage: Initial tests
-        #   env: MAIN_CMD='flake8 packagename --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
+        #   env: MAIN_CMD='flake8 gala --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
 
     allow_failures:
         # Do a PEP8 test with flake8
         # (do allow to fail unless your code completely compliant)
         - os: linux
           stage: Initial tests
-          env: MAIN_CMD='flake8 packagename --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
+          env: MAIN_CMD='flake8 gala --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
 
 install:
     - git clone --depth 1 git://github.com/astropy/ci-helpers.git
