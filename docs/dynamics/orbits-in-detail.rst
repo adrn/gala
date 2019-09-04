@@ -182,7 +182,6 @@ Phase-space position API
 .. automodapi:: gala.dynamics.core
     :no-heading:
     :headings: ^^
-    :skip: CartesianPhaseSpacePosition
 
 .. _orbit:
 

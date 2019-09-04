@@ -10,6 +10,7 @@ from astropy.coordinates.matrix_utilities import matrix_transpose
 
 __all__ = ["OphiuchusPriceWhelan16", "Ophiuchus"]
 
+
 class OphiuchusPriceWhelan16(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
@@ -67,6 +68,7 @@ class OphiuchusPriceWhelan16(coord.BaseCoordinateFrame):
         r.lon.wrap_angle = self._default_wrap_angle
         return r
     represent_as.__doc__ = coord.BaseCoordinateFrame.represent_as.__doc__
+
 
 # Rotation matrix
 R = np.array([[0.84922096554, 0.07001279040, 0.52337554476],

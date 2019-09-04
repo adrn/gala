@@ -10,6 +10,7 @@ from astropy.coordinates.matrix_utilities import matrix_transpose
 
 __all__ = ["GD1Koposov10", "GD1"]
 
+
 class GD1Koposov10(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
@@ -67,7 +68,7 @@ class GD1Koposov10(coord.BaseCoordinateFrame):
         r.lon.wrap_angle = self._default_wrap_angle
         return r
     represent_as.__doc__ = coord.BaseCoordinateFrame.represent_as.__doc__
-    
+
 
 # Rotation matrix as defined in the Appendix of Koposov et al. (2010)
 R = np.array([[-0.4776303088, -0.1738432154, 0.8611897727],

@@ -9,6 +9,7 @@ from ..timespec import parse_time_specification
 
 __all__ = ["DOPRI853Integrator"]
 
+
 class DOPRI853Integrator(Integrator):
     r"""
     This provides a wrapper around ``Scipy``'s implementation of the

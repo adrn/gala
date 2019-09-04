@@ -10,6 +10,7 @@ from astropy.coordinates.matrix_utilities import matrix_transpose
 
 __all__ = ["Pal5PriceWhelan18", "Pal5"]
 
+
 class Pal5PriceWhelan18(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
@@ -67,15 +68,16 @@ class Pal5PriceWhelan18(coord.BaseCoordinateFrame):
         return r
     represent_as.__doc__ = coord.BaseCoordinateFrame.represent_as.__doc__
 
+
 # Rotation matrix defined by trying to align the stream to the equator
 R = np.array([[-0.65019243, -0.75969758, -0.01045969],
               [-0.62969142, 0.54652698, -0.55208422],
               [0.42513354, -0.3523746, -0.83372274]])
 
 # Extra rotation to put the cluster center at (0, 0)
-R2 = np.array([[ 9.99938314e-01,  1.57847502e-03, -1.09943927e-02],
-               [-1.57837962e-03,  9.99998754e-01,  1.73543959e-05],
-               [ 1.09944064e-02,  0.00000000e+00,  9.99939560e-01]])
+R2 = np.array([[9.99938314e-01, 1.57847502e-03, -1.09943927e-02],
+               [-1.57837962e-03, 9.99998754e-01, 1.73543959e-05],
+               [1.09944064e-02, 0.00000000e+00, 9.99939560e-01]])
 R = R2 @ R
 
 @frame_transform_graph.transform(coord.StaticMatrixTransform, coord.ICRS,

@@ -18,7 +18,7 @@ from ..io import quantity_to_hdf5, quantity_from_hdf5
 from ..units import UnitSystem, DimensionlessUnitSystem, _greek_letters
 from ..util import atleast_2d
 
-__all__ = ['PhaseSpacePosition', 'CartesianPhaseSpacePosition']
+__all__ = ['PhaseSpacePosition']
 
 _RepresentationMappingBase = \
     namedtuple('RepresentationMapping',
@@ -362,7 +362,7 @@ class PhaseSpacePosition(object):
 
         Returns
         -------
-        psp : `gala.dynamics.CartesianPhaseSpacePosition`
+        psp : `gala.dynamics.PhaseSpacePosition`
             The phase-space position in the new reference frame.
 
         """
@@ -497,7 +497,7 @@ class PhaseSpacePosition(object):
         if v.ndim < 2:
             v = atleast_2d(v, insert_axis=1)
 
-        return np.vstack((x,v))
+        return np.vstack((x, v))
 
     @classmethod
     def from_w(cls, w, units=None, **kwargs):
@@ -533,7 +533,7 @@ class PhaseSpacePosition(object):
         if units is not None and not isinstance(units, DimensionlessUnitSystem):
             units = UnitSystem(units)
             pos = pos*units['length']
-            vel = vel*units['length']/units['time'] # from _core_units
+            vel = vel*units['length']/units['time']  # from _core_units
 
         return cls(pos=pos, vel=vel, **kwargs)
 
@@ -734,7 +734,7 @@ class PhaseSpacePosition(object):
         # if units not specified, get units from the components
         if units is not None:
             if isinstance(units, u.UnitBase):
-                units = [units]*n_comps # global unit
+                units = [units] * n_comps  # global unit
 
             elif len(units) != n_comps:
                 raise ValueError('You must specify a unit for each axis, or a '
@@ -742,7 +742,7 @@ class PhaseSpacePosition(object):
 
         labels = []
         x = []
-        for i,name in enumerate(components):
+        for i, name in enumerate(components):
             val = getattr(self, name)
 
             if units is not None:
@@ -768,7 +768,7 @@ class PhaseSpacePosition(object):
                 name = r"\{}".format(name)
 
             if dot:
-                name = "\dot{{{}}}".format(name)
+                name = r"\dot{{{}}}".format(name)
 
             labels.append('${}$'.format(name) + unit_str)
             x.append(val.value)
@@ -828,8 +828,8 @@ class PhaseSpacePosition(object):
         if components is None:
             components = self.pos.components
 
-        x,labels = self._plot_prepare(components=components,
-                                      units=units)
+        x, labels = self._plot_prepare(components=components,
+                                       units=units)
 
         default_kwargs = {
             'marker': '.',
@@ -838,7 +838,7 @@ class PhaseSpacePosition(object):
             'autolim': False
         }
 
-        for k,v in default_kwargs.items():
+        for k, v in default_kwargs.items():
             kwargs[k] = kwargs.get(k, v)
 
         fig = plot_projections(x, **kwargs)
@@ -875,15 +875,3 @@ class PhaseSpacePosition(object):
         """
         return self.pos.shape
 
-class CartesianPhaseSpacePosition(PhaseSpacePosition):
-
-    def __init__(self, pos, vel, frame=None):
-        """
-        Deprecated.
-        """
-
-        warnings.warn("This class is now deprecated! Use the general interface "
-                      "provided by PhaseSpacePosition instead.",
-                      DeprecationWarning)
-
-        super(CartesianPhaseSpacePosition, self).__init__(pos, vel, frame=frame)

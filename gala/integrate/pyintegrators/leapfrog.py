@@ -8,6 +8,8 @@ from ..core import Integrator
 from ..timespec import parse_time_specification
 
 __all__ = ["LeapfrogIntegrator"]
+
+
 class LeapfrogIntegrator(Integrator):
     r"""
     A symplectic, Leapfrog integrator.

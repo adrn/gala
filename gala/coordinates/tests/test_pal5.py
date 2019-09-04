@@ -21,7 +21,7 @@ def test_simple():
 
     c = coord.Galactic(coord.Angle(217.2141, u.degree),
                        coord.Angle(-11.4351, u.degree))
-    s = c.transform_to(Pal5PriceWhelan18)
+    c.transform_to(Pal5PriceWhelan18)
 
     # with distance
     c = Pal5PriceWhelan18(coord.Angle(217.2141, u.degree),

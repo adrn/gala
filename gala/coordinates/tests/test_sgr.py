@@ -11,6 +11,7 @@ import numpy as np
 # This package
 from ..sgr import SagittariusLaw10, Sagittarius
 
+
 def test_simple():
     c = coord.ICRS(coord.Angle(217.2141, u.degree),
                    coord.Angle(-11.4351, u.degree))
@@ -27,7 +28,7 @@ def test_simple():
 
     c = coord.Galactic(coord.Angle(217.2141, u.degree),
                        coord.Angle(-11.4351, u.degree))
-    s = c.transform_to(SagittariusLaw10)
+    c.transform_to(SagittariusLaw10)
 
     # with distance
     c = SagittariusLaw10(coord.Angle(217.2141, u.degree),
@@ -47,6 +48,7 @@ def test_simple():
     c3 = c2.transform_to(Sagittarius)
     assert np.allclose(c3.Lambda.degree, c.Lambda.degree)
     assert np.allclose(c3.Beta.degree, c.Beta.degree)
+
 
 def test_against_David_Law():
     """ Test my code against an output file from using David Law's cpp code. Do:

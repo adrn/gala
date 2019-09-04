@@ -86,11 +86,6 @@ def test_initialize():
     with pytest.raises(TypeError):
         o = PhaseSpacePosition(pos=x, vel=v, frame="blah blah blah")
 
-    # check that old class raises deprecation warning
-    from ..core import CartesianPhaseSpacePosition
-    warnings.simplefilter('always')
-    with pytest.warns(DeprecationWarning):
-        o = CartesianPhaseSpacePosition(pos=x, vel=v)
 
 def test_from_w():
 

@@ -8,6 +8,7 @@ from astropy.coordinates.matrix_utilities import matrix_transpose
 
 __all__ = ["JhelumBonaca19"]
 
+
 class JhelumBonaca19(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit

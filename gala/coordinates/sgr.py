@@ -1,7 +1,6 @@
 """ Astropy coordinate class for the Sagittarius coordinate system """
 
 # Third-party
-import astropy.units as u
 import numpy as np
 
 from astropy.coordinates import frame_transform_graph
@@ -10,6 +9,7 @@ import astropy.units as u
 from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product, matrix_transpose
 
 __all__ = ["SagittariusLaw10", "Sagittarius"]
+
 
 class SagittariusLaw10(coord.BaseCoordinateFrame):
     """
@@ -68,6 +68,7 @@ class SagittariusLaw10(coord.BaseCoordinateFrame):
         return r
     represent_as.__doc__ = coord.BaseCoordinateFrame.represent_as.__doc__
 
+
 # Define the Euler angles (from Law & Majewski 2010)
 phi = (180+3.75) * u.degree
 theta = (90-13.46) * u.degree
@@ -77,7 +78,7 @@ psi = (180+14.111534) * u.degree
 D = rotation_matrix(phi, "z")
 C = rotation_matrix(theta, "x")
 B = rotation_matrix(psi, "z")
-A = np.diag([1.,1.,-1.])
+A = np.diag([1., 1., -1.])
 R = matrix_product(A, B, C, D)
 
 # Galactic to Sgr coordinates

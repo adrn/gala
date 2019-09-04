@@ -29,8 +29,8 @@ def test_transform(to_frame):
     cov = test_transform.cov
 
     # First, don't validate, just check input paths:
-    new_cov = transform_pm_cov(c[0], cov[0], to_frame)
-    new_cov = transform_pm_cov(c[:4], cov[:4], to_frame)
+    transform_pm_cov(c[0], cov[0], to_frame)
+    transform_pm_cov(c[:4], cov[:4], to_frame)
 
     with pytest.raises(ValueError):
         transform_pm_cov(c[:4], cov[:8], to_frame)

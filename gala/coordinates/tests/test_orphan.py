@@ -13,6 +13,7 @@ import numpy as np
 # This project
 from ..orphan import OrphanNewberg10, OrphanKoposov19, Orphan
 
+
 def test_table():
     """ Test the transformation code against table 2 values from
         Newberg et al. 2010 (below)

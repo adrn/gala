@@ -5,6 +5,7 @@ from astropy.coordinates.matrix_utilities import matrix_product
 
 __all__ = ['transform_pm_cov']
 
+
 def get_uv_tan(c):
     """Get tangent plane basis vectors on the unit sphere at the given
     spherical coordinates.
