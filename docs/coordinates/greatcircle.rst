@@ -46,16 +46,16 @@ we can transform other coordinate to this new coordinate system using::
     >>> c_fr # doctest: +FLOAT_CMP
     <SkyCoord (GreatCircleICRSFrame: pole=<ICRS Coordinate: (ra, dec) in deg
         ( 32.5,  19.8)>, center=None, ra0=nan deg, rotation=0.0 deg): (phi1, phi2) in deg
-        [( 122.57730371, -22.45454894), (  22.93500359,  27.42365243)]>
+        [(91.68381582, -38.82050866), (64.33692905,  67.43382209)]>
 
 The spherical coordinate components of the resulting great circle frame are
 always named ``phi1`` and ``phi2``, so to access the longitude and latitude in
 the new system, we use::
 
     >>> c_fr.phi1 # doctest: +FLOAT_CMP
-    <Longitude [ 122.57730371,  22.93500359] deg>
+    <Longitude [91.68381582, 64.33692905] deg>
     >>> c_fr.phi2 # doctest: +FLOAT_CMP
-    <Latitude [-22.45454894, 27.42365243] deg>
+    <Latitude [-38.82050866,  67.43382209] deg>
 
 The transformation also works for velocity components. For example, if we have a
 sky position and proper motions, we can transform to the great circle frame in
@@ -66,11 +66,11 @@ the same way::
     ...                    pm_dec=0.3*u.mas/u.yr)
     >>> c_fr = c.transform_to(fr)
     >>> c_fr.phi1 # doctest: +FLOAT_CMP
-    <Longitude 122.57730370813313 deg>
+    <Longitude 91.68381582 deg>
     >>> c_fr.pm_phi1_cosphi2 # doctest: +FLOAT_CMP
-    <Quantity 4.871177131604413 mas / yr>
+    <Quantity 1.71997614 mas / yr>
     >>> c_fr.pm_phi2 # doctest: +FLOAT_CMP
-    <Quantity -1.166890462954516 mas / yr>
+    <Quantity -4.70443217 mas / yr>
 
 The generic great circle frame can also handle transforming from great circle
 coordinates to other coordinate frames. For example, to transform a grid of
@@ -82,8 +82,8 @@ positional data and a specified pole::
     ...                                pole=pole)
     >>> c = c_fr.transform_to(coord.ICRS)
     >>> c.ra # doctest: +FLOAT_CMP
-    <Longitude [  32.5       ,  85.61809962, 134.62018268, 185.39509692,
-                239.60490308, 290.37981732, 339.38190038,  32.5       ] deg>
+    <Longitude [ 32.5       , 107.38324367, 126.92101217, 157.62242086,
+                267.37757914, 298.07898783, 317.61675633,  32.5       ] deg>
 
 
 Creating a great circle frame from two points

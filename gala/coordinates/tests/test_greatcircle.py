@@ -1,13 +1,14 @@
 # Third-party
 import astropy.coordinates as coord
 import astropy.units as u
-from astropy.tests.helper import quantity_allclose
+from astropy.tests.helper import catch_warnings
 import numpy as np
 import pytest
 
 # This project
 from ..greatcircle import (GreatCircleICRSFrame, make_greatcircle_cls,
                            pole_from_endpoints, sph_midpoint)
+
 
 def test_cls_init():
     pole = coord.SkyCoord(ra=72.2643*u.deg, dec=-20.6575*u.deg)
@@ -16,8 +17,8 @@ def test_cls_init():
 
     points = coord.SkyCoord(ra=[-38.8, 4.7]*u.deg, dec=[-45.1, -51.7]*u.deg)
     fr = GreatCircleICRSFrame.from_endpoints(points[0], points[1])
-    assert quantity_allclose(fr.pole.ra, 359.1*u.deg, atol=1e-1*u.deg)
-    assert quantity_allclose(fr.pole.dec, 38.2*u.deg, atol=1e-1*u.deg)
+    assert u.allclose(fr.pole.ra, 359.1*u.deg, atol=1e-1*u.deg)
+    assert u.allclose(fr.pole.dec, 38.2*u.deg, atol=1e-1*u.deg)
 
     fr = GreatCircleICRSFrame.from_endpoints(points[0], points[1],
                                              ra0=100*u.deg)
@@ -29,6 +30,7 @@ def test_cls_init():
         GreatCircleICRSFrame(pole=pole, ra0=160*u.deg,
                              center=pole)
 
+
 def test_init_center():
     stupid_gal = GreatCircleICRSFrame(
         pole=coord.Galactic._ngp_J2000.transform_to(coord.ICRS),
@@ -37,6 +39,7 @@ def test_init_center():
     gal2 = gal.transform_to(stupid_gal)
     assert np.isclose(gal.l.degree, gal2.phi1.degree)
     assert np.isclose(gal.b.degree, gal2.phi2.degree)
+
 
 def test_transform_against_koposov():
     from .helpers import sphere_rotate
@@ -87,13 +90,13 @@ def test_pole_from_endpoints():
     c1 = coord.SkyCoord(0*u.deg, 0*u.deg)
     c2 = coord.SkyCoord(90*u.deg, 0*u.deg)
     pole = pole_from_endpoints(c1, c2)
-    assert quantity_allclose(pole.dec, 90*u.deg)
+    assert u.allclose(pole.dec, 90*u.deg)
 
     c1 = coord.SkyCoord(0*u.deg, 0*u.deg)
     c2 = coord.SkyCoord(0*u.deg, 90*u.deg)
     pole = pole_from_endpoints(c1, c2)
-    assert quantity_allclose(pole.ra, 270*u.deg)
-    assert quantity_allclose(pole.dec, 0*u.deg)
+    assert u.allclose(pole.ra, 270*u.deg)
+    assert u.allclose(pole.dec, 0*u.deg)
 
 
 def test_pole_from_xyz():
@@ -120,11 +123,35 @@ def test_sph_midpoint():
     c1 = coord.SkyCoord(0*u.deg, 0*u.deg)
     c2 = coord.SkyCoord(90*u.deg, 0*u.deg)
     midpt = sph_midpoint(c1, c2)
-    assert quantity_allclose(midpt.ra, 45*u.deg)
-    assert quantity_allclose(midpt.dec, 0*u.deg)
+    assert u.allclose(midpt.ra, 45*u.deg)
+    assert u.allclose(midpt.dec, 0*u.deg)
 
     c1 = coord.SkyCoord(0*u.deg, 0*u.deg)
     c2 = coord.SkyCoord(0*u.deg, 90*u.deg)
     midpt = sph_midpoint(c1, c2)
-    assert quantity_allclose(midpt.ra, 0*u.deg)
-    assert quantity_allclose(midpt.dec, 45*u.deg)
+    assert u.allclose(midpt.ra, 0*u.deg)
+    assert u.allclose(midpt.dec, 45*u.deg)
+
+
+def test_pole_separation90():
+    # Regression test for issue #160
+
+    for dec in [19.8, 0, -41.3]:  # random values, but 0 is an important test
+        pole = coord.SkyCoord(ra=32.5, dec=dec, unit='deg')
+        kwargs = [(dict(pole=pole), None),
+                  (dict(pole=pole, ra0=100*u.deg), RuntimeWarning),
+                  (dict(pole=pole, rotation=50*u.deg), None),
+                  (dict(pole=pole, ra0=100*u.deg, rotation=50*u.deg),
+                   RuntimeWarning)]
+
+        for kw, warning in kwargs:
+            gcfr = GreatCircleICRSFrame(**kw)
+            gc = coord.SkyCoord(phi1=np.linspace(0, 360, 100),
+                                phi2=0,
+                                unit='deg', frame=gcfr)
+            with catch_warnings(RuntimeWarning) as w:
+                gc = gc.transform_to(coord.ICRS)
+            if warning is not None and dec == 0:
+                assert len(w) > 0
+
+            assert u.allclose(gc.separation(pole), 90*u.deg)
