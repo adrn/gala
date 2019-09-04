@@ -9,6 +9,8 @@ New Features
 - Added a ``DirectNBody`` class that supports direct N-body orbit integration in
   (optional) external background potentials.
 - Added a coordinate frame for the Jhelum stream, ``JhelumBonaca19``.
+- Added a function for retrieving a more modern Galactocentric reference frame,
+  ``gala.coordinates.get_galactocentric2019()``.
 
 Bug fixes
 ---------
