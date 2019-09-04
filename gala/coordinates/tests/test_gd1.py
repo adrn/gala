@@ -7,6 +7,7 @@ import numpy as np
 # This package
 from ..gd1 import GD1Koposov10, GD1
 
+
 def test_simple():
     c = coord.ICRS(coord.Angle(217.2141, u.degree),
                    coord.Angle(-11.4351, u.degree))
@@ -22,7 +23,7 @@ def test_simple():
 
     c = coord.Galactic(coord.Angle(217.2141, u.degree),
                        coord.Angle(-11.4351, u.degree))
-    s = c.transform_to(GD1Koposov10)
+    c.transform_to(GD1Koposov10)
 
     # with distance
     c = GD1Koposov10(coord.Angle(217.2141, u.degree),
@@ -42,6 +43,7 @@ def test_simple():
     c3 = c2.transform_to(GD1)
     assert np.allclose(c3.phi1.degree, c.phi1.degree)
     assert np.allclose(c3.phi2.degree, c.phi2.degree)
+
 
 def test_koposov():
     # Compare against Table 1 in Koposov et al. 2010
@@ -63,26 +65,3 @@ def test_koposov():
                        atol=1E-1)
     assert np.allclose(k10_gd1.phi2.degree, gala_gd1.phi2.degree,
                        atol=0.2)
-
-    return
-    # print(k10_gd1)
-    # print("--")
-    # print(gala_gd1)
-
-    import matplotlib.pyplot as plt
-
-    plt.figure(figsize=(5,5))
-    plt.plot(k10_gd1.phi1.degree, gala_gd1.phi1.degree, ls='none')
-    plt.xlim(min(k10_gd1.phi1.degree.min(),gala_gd1.phi1.degree.min()),
-             max(k10_gd1.phi1.degree.max(),gala_gd1.phi1.degree.max()))
-    plt.ylim(min(k10_gd1.phi1.degree.min(),gala_gd1.phi1.degree.min()),
-             max(k10_gd1.phi1.degree.max(),gala_gd1.phi1.degree.max()))
-
-    plt.figure(figsize=(5,5))
-    plt.plot(k10_gd1.phi2.degree, gala_gd1.phi2.degree, ls='none')
-    plt.xlim(min(k10_gd1.phi2.degree.min(),gala_gd1.phi2.degree.min()),
-             max(k10_gd1.phi2.degree.max(),gala_gd1.phi2.degree.max()))
-    plt.ylim(min(k10_gd1.phi2.degree.min(),gala_gd1.phi2.degree.min()),
-             max(k10_gd1.phi2.degree.max(),gala_gd1.phi2.degree.max()))
-
-    plt.show()

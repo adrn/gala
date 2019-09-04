@@ -22,17 +22,16 @@ def test_vgsr_to_vhel():
     b = coord.Angle(row["lat"] * u.degree)
     c = coord.Galactic(l, b)
     vgsr = row["vgsr"] * u.km/u.s
-    vlsr = [row["vx"],row["vy"],row["vz"]]*u.km/u.s # this is right
-    vcirc = row["vcirc"]*u.km/u.s
+    vlsr = [row["vx"], row["vy"], row["vz"]] * u.km/u.s  # this is right
+    vcirc = row["vcirc"] * u.km/u.s
 
-    vsun = vlsr + [0,1,0]*vcirc
+    vsun = vlsr + [0, 1, 0]*vcirc
     vhel = vgsr_to_vhel(c, vgsr, vsun=vsun)
-    return
-    np.testing.assert_almost_equal(vhel.value, row['vhelio'], decimal=4)
+    assert np.allclose(vhel.value, row['vhelio'], atol=1e-3)
 
     # now check still get right answer passing in ICRS coordinates
     vhel = vgsr_to_vhel(c.transform_to(coord.ICRS), vgsr, vsun=vsun)
-    np.testing.assert_almost_equal(vhel.value, row['vhelio'], decimal=4)
+    assert np.allclose(vhel.value, row['vhelio'], atol=1e-3)
 
     # all together now
     l = coord.Angle(data["lon"] * u.degree)
@@ -40,11 +39,11 @@ def test_vgsr_to_vhel():
     c = coord.Galactic(l, b)
     vgsr = data["vgsr"] * u.km/u.s
     vhel = vgsr_to_vhel(c, vgsr, vsun=vsun)
-    np.testing.assert_almost_equal(vhel.value, data['vhelio'], decimal=4)
+    assert np.allclose(vhel.value, data['vhelio'], atol=1e-3)
 
     # now check still get right answer passing in ICRS coordinates
     vhel = vgsr_to_vhel(c.transform_to(coord.ICRS), vgsr, vsun=vsun)
-    np.testing.assert_almost_equal(vhel.value, data['vhelio'], decimal=4)
+    assert np.allclose(vhel.value, data['vhelio'], atol=1e-3)
 
 
 def test_vgsr_to_vhel_misc():
@@ -60,7 +59,7 @@ def test_vgsr_to_vhel_misc():
     vhel1 = vgsr_to_vhel(c1, vgsr)
     vhel2 = vgsr_to_vhel(c2, vgsr)
 
-    np.testing.assert_almost_equal(vhel1.value, vhel2.value, decimal=9)
+    assert np.allclose(vhel1.value, vhel2.value)
 
 
 def test_vhel_to_vgsr():
@@ -73,16 +72,16 @@ def test_vhel_to_vgsr():
     b = coord.Angle(row["lat"] * u.degree)
     c = coord.Galactic(l, b)
     vhel = row["vhelio"] * u.km/u.s
-    vlsr = [row["vx"],row["vy"],row["vz"]]*u.km/u.s # this is right
+    vlsr = [row["vx"], row["vy"], row["vz"]] * u.km/u.s  # this is right
     vcirc = row["vcirc"]*u.km/u.s
 
-    vsun = vlsr + [0,1,0]*vcirc
+    vsun = vlsr + [0, 1, 0] * vcirc
     vgsr = vhel_to_vgsr(c, vhel, vsun=vsun)
-    np.testing.assert_almost_equal(vgsr.value, row['vgsr'], decimal=4)
+    assert np.allclose(vgsr.value, row['vgsr'], atol=1e-3)
 
     # now check still get right answer passing in ICRS coordinates
     vgsr = vhel_to_vgsr(c.transform_to(coord.ICRS), vhel, vsun=vsun)
-    np.testing.assert_almost_equal(vgsr.value, row['vgsr'], decimal=4)
+    assert np.allclose(vgsr.value, row['vgsr'], atol=1e-3)
 
     # all together now
     l = coord.Angle(data["lon"] * u.degree)
@@ -90,8 +89,8 @@ def test_vhel_to_vgsr():
     c = coord.Galactic(l, b)
     vhel = data["vhelio"] * u.km/u.s
     vgsr = vhel_to_vgsr(c, vhel, vsun=vsun)
-    np.testing.assert_almost_equal(vgsr.value, data['vgsr'], decimal=4)
+    assert np.allclose(vgsr.value, data['vgsr'], atol=1e-3)
 
     # now check still get right answer passing in ICRS coordinates
     vgsr = vhel_to_vgsr(c.transform_to(coord.ICRS), vhel, vsun=vsun)
-    np.testing.assert_almost_equal(vgsr.value, data['vgsr'], decimal=4)
+    assert np.allclose(vgsr.value, data['vgsr'], atol=1e-3)

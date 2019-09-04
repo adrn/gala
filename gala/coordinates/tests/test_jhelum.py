@@ -6,6 +6,7 @@ import numpy as np
 # This package
 from ..jhelum import JhelumBonaca19
 
+
 def test_simple():
     c = coord.ICRS(coord.Angle(217.2141, u.degree),
                    coord.Angle(-11.4351, u.degree))
@@ -21,7 +22,7 @@ def test_simple():
 
     c = coord.Galactic(coord.Angle(217.2141, u.degree),
                        coord.Angle(-11.4351, u.degree))
-    s = c.transform_to(JhelumBonaca19)
+    c.transform_to(JhelumBonaca19)
 
     # with distance
     c = JhelumBonaca19(coord.Angle(217.2141, u.degree),
