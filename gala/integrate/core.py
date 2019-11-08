@@ -2,7 +2,6 @@
 
 # Third-party
 import numpy as np
-from astropy.utils import InheritDocstrings
 
 # This project
 from ..units import UnitSystem, DimensionlessUnitSystem
@@ -10,7 +9,7 @@ from ..units import UnitSystem, DimensionlessUnitSystem
 __all__ = ["Integrator"]
 
 
-class Integrator(object, metaclass=InheritDocstrings):
+class Integrator(object):
 
     def __init__(self, func, func_args=(), func_units=None, progress=False):
         if not hasattr(func, '__call__'):
