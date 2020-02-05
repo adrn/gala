@@ -85,7 +85,8 @@ class DirectNBody:
                              "(2) set the units on one of the "
                              "particle_potentials, OR (3) pass in an "
                              "`external_potential` with valid units.")
-        units = UnitSystem(units)
+        if not isinstance(units, UnitSystem):
+            units = UnitSystem(units)
 
         # Now that we have the unit system, enforce that all potentials are in
         # that system:
