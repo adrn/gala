@@ -8,6 +8,7 @@ import astropy.units as u
 
 __all__ = ["vgsr_to_vhel", "vhel_to_vgsr"]
 
+
 def _get_vproj(c, vsun):
     gal = c.transform_to(coord.Galactic)
     cart_data = gal.data.to_cartesian()
@@ -40,7 +41,7 @@ def vgsr_to_vhel(coordinate, vgsr, vsun=None):
     """
 
     if vsun is None:
-        vsun = coord.Galactocentric.galcen_v_sun.to_cartesian().xyz
+        vsun = coord.Galactocentric().galcen_v_sun.to_cartesian().xyz
 
     return vgsr - _get_vproj(coordinate, vsun)
 
@@ -70,6 +71,6 @@ def vhel_to_vgsr(coordinate, vhel, vsun):
     """
 
     if vsun is None:
-        vsun = coord.Galactocentric.galcen_v_sun.to_cartesian().xyz
+        vsun = coord.Galactocentric().galcen_v_sun.to_cartesian().xyz
 
     return vhel + _get_vproj(coordinate, vsun)
