@@ -85,7 +85,7 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
     # We need a void pointer for any other arguments
     args = <void *>(&c_particle_potentials[0])
 
-    # TODONOW: fix below - need to pass in how many massive particles, total number of orbits and 
+    # TODONOW: fix below - need to pass in how many massive particles, total number of orbits and
     if save_all:
         all_w = dop853_helper_save_all(&cp, &cf,
                                        <FcnEqDiff> Fwrapper_direct_nbody,

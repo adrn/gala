@@ -7,6 +7,7 @@
 
 __all__ = ['CFrameBase']
 
+
 # Third-party
 import numpy as np
 cimport numpy as np
@@ -16,6 +17,7 @@ from .core import FrameBase
 from ..potential.cpotential import _validate_pos_arr
 from ..potential.cpotential cimport energyfunc, gradientfunc, hessianfunc
 from ...dynamics import PhaseSpacePosition
+
 
 cdef class CFrameWrapper:
     """ Wrapper class for C implementation of reference frames. """
@@ -78,6 +80,7 @@ cdef class CFrameWrapper:
                 frame_hessian(&cf, t[i], &w[i,0], ndim//2, &d2H[i,0,0])
 
         return np.array(d2H)
+
 
 class CFrameBase(FrameBase):
 
