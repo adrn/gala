@@ -12,7 +12,6 @@ import warnings
 import uuid
 
 # Third-party
-from astropy.extern import six
 from astropy.utils import InheritDocstrings
 import numpy as np
 cimport numpy as np

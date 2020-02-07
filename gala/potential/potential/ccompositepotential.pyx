@@ -9,7 +9,6 @@
 from collections import OrderedDict
 
 # Third-party
-from astropy.extern import six
 from astropy.utils import InheritDocstrings
 import numpy as np
 cimport numpy as np

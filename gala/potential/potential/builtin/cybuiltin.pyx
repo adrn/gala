@@ -12,7 +12,6 @@ from collections import OrderedDict
 import warnings
 
 # Third-party
-from astropy.extern import six
 from astropy.constants import G
 import astropy.units as u
 import numpy as np
