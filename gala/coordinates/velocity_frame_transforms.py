@@ -38,7 +38,7 @@ def vgsr_to_vhel(coordinate, vgsr, vsun=None):
     """
 
     if vsun is None:
-        vsun = coord.Galactocentric.galcen_v_sun.to_cartesian().xyz
+        vsun = coord.Galactocentric().galcen_v_sun.to_cartesian().xyz
 
     return vgsr - _get_vproj(coordinate, vsun)
 
@@ -68,6 +68,6 @@ def vhel_to_vgsr(coordinate, vhel, vsun):
     """
 
     if vsun is None:
-        vsun = coord.Galactocentric.galcen_v_sun.to_cartesian().xyz
+        vsun = coord.Galactocentric().galcen_v_sun.to_cartesian().xyz
 
     return vhel + _get_vproj(coordinate, vsun)
