@@ -34,9 +34,10 @@ def test_cls_init():
 def test_init_center():
     stupid_gal = GreatCircleICRSFrame(
         pole=coord.Galactic._ngp_J2000.transform_to(coord.ICRS),
-        center=coord.Galactocentric.galcen_coord)
+        center=coord.Galactocentric().galcen_coord)
     gal = coord.Galactic(50*u.deg, 20*u.deg)
     gal2 = gal.transform_to(stupid_gal)
+
     assert np.isclose(gal.l.degree, gal2.phi1.degree)
     assert np.isclose(gal.b.degree, gal2.phi2.degree)
 
