@@ -96,8 +96,8 @@ cpdef mockstream_dop853(nbody, double[::1] time,
                                                      np.zeros(3), np.eye(3))
         CPotential null_p = null_wrapper.cpotential
 
-        int nbodies = nbody._w0.shape[0] # includes the progenitor
-        double [:, ::1] nbody_w0 = nbody._w0
+        int nbodies = nbody._c_w0.shape[0] # includes the progenitor
+        double [:, ::1] nbody_w0 = nbody._c_w0
 
         int max_nstream = np.max(nstream)
         int total_nstream = np.sum(nstream)
@@ -193,8 +193,8 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
         CPotential cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
         CFrame cf = (<CFrameWrapper>(nbody.H.frame.c_instance)).cframe
 
-        int nbodies = nbody._w0.shape[0] # includes the progenitor
-        double [:, ::1] nbody_w0 = nbody._w0
+        int nbodies = nbody._c_w0.shape[0] # includes the progenitor
+        double [:, ::1] nbody_w0 = nbody._c_w0
 
         int total_nstream = np.sum(nstream)
         double[:, ::1] w = np.empty((nbodies + total_nstream, ndim))

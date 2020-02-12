@@ -106,7 +106,6 @@ class DirectNBody:
         if frame is None:
             frame = StaticFrame(units)
 
-        self.w0 = w0
         self.units = units
         self.external_potential = external_potential
         self.frame = frame
@@ -120,12 +119,24 @@ class DirectNBody:
                              "components in the input external potential are "
                              "Python-only.")
 
+        self.w0 = w0
+
+    @property
+    def w0(self):
+        return self._w0
+
+    @w0.setter
+    def w0(self, value):
+        self._w0 = value
+        self._cache_w0()
+
+    def _cache_w0(self):
         # cache the position and velocity / prepare the initial conditions
         self._pos = atleast_2d(self.w0.xyz.decompose(self.units).value,
                                insert_axis=1)
         self._vel = atleast_2d(self.w0.v_xyz.decompose(self.units).value,
                                insert_axis=1)
-        self._w0 = np.ascontiguousarray(np.vstack((self._pos, self._vel)).T)
+        self._c_w0 = np.ascontiguousarray(np.vstack((self._pos, self._vel)).T)
 
     def __repr__(self):
         if self.w0.shape:
@@ -157,7 +168,7 @@ class DirectNBody:
         # Prepare the time-stepping array
         t = parse_time_specification(self.units, **time_spec)
 
-        ws = direct_nbody_dop853(self._w0, t, self.H,
+        ws = direct_nbody_dop853(self._c_w0, t, self.H,
                                  self.particle_potentials,
                                  save_all=self.save_all)
 
