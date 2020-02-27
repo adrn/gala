@@ -6,9 +6,7 @@ from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import (rotation_matrix,
                                                   matrix_product,
                                                   matrix_transpose)
-
-from .greatcircle import (GreatCircleICRSFrame,
-                          greatcircle_transforms)
+import numpy as np
 
 
 __all__ = ["Orphan", "OrphanNewberg10", "OrphanKoposov19"]
@@ -107,8 +105,7 @@ def oph_to_galactic():
 
 # ------------------------------------------------------------------------------
 
-@greatcircle_transforms(self_transform=False)
-class OrphanKoposov19(GreatCircleICRSFrame):
+class OrphanKoposov19(coord.BaseCoordinateFrame):
     """A coordinate frame for the Orphan stream defined by Sergey Koposov.
 
     Parameters
@@ -128,10 +125,53 @@ class OrphanKoposov19(GreatCircleICRSFrame):
         Line-of-sight or radial velocity.
     """
 
-    pole = coord.ICRS(ra=72.2643 * u.deg,
-                      dec=-20.6575 * u.deg)
-    ra0 = 160 * u.deg
-    rotation = 0 * u.deg
+    default_representation = coord.SphericalRepresentation
+    default_differential = coord.SphericalCosLatDifferential
+
+    frame_specific_representation_info = {
+        coord.SphericalRepresentation: [
+            coord.RepresentationMapping('lon', 'phi1'),
+            coord.RepresentationMapping('lat', 'phi2'),
+            coord.RepresentationMapping('distance', 'distance')]
+    }
+
+    _default_wrap_angle = 180*u.deg
+
+    def __init__(self, *args, **kwargs):
+        wrap = kwargs.pop('wrap_longitude', True)
+        super().__init__(*args, **kwargs)
+        if wrap and isinstance(self._data, (coord.UnitSphericalRepresentation,
+                                            coord.SphericalRepresentation)):
+            self._data.lon.wrap_angle = self._default_wrap_angle
+
+    # TODO: remove this. This is a hack required as of astropy v3.1 in order
+    # to have the longitude components wrap at the desired angle
+    def represent_as(self, base, s='base', in_frame_units=False):
+        r = super().represent_as(base, s=s, in_frame_units=in_frame_units)
+        r.lon.wrap_angle = self._default_wrap_angle
+        return r
+    represent_as.__doc__ = coord.BaseCoordinateFrame.represent_as.__doc__
+
+
+@frame_transform_graph.transform(coord.StaticMatrixTransform,
+                                 coord.ICRS, OrphanKoposov19)
+def icrs_to_orp19():
+    """ Compute the transformation from ICRS to
+        heliocentric Orphan coordinates.
+    """
+    R = np.array([[-0.44761231, -0.08785756, -0.88990128],
+                  [-0.84246097, 0.37511331, 0.38671632],
+                  [0.29983786, 0.92280606, -0.2419219]])
+    return R
+
+# Oph to Galactic coordinates
+@frame_transform_graph.transform(coord.StaticMatrixTransform,
+                                 OrphanKoposov19, coord.ICRS)
+def oph19_to_icrs():
+    """ Compute the transformation from heliocentric Orphan coordinates to
+        spherical ICRS.
+    """
+    return matrix_transpose(galactic_to_orp())
 
 
 # TODO: remove this in next version
