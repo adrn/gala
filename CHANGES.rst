@@ -11,6 +11,9 @@ New Features
 - Added a coordinate frame for the Jhelum stream, ``JhelumBonaca19``.
 - Added a function for retrieving a more modern Galactocentric reference frame,
   ``gala.coordinates.get_galactocentric2019()``.
+- Added a classmethod to allow initializing a ``GreatCircleICRSFrame`` from a
+  rotation matrix that specifies the transformation from ``ICRS`` to the great
+  circle frame.
 
 Bug fixes
 ---------

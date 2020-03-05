@@ -260,6 +260,33 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
         center = coord.SkyCoord(xnew, frame='icrs')
         return cls(pole=pole, center=center)
 
+    @classmethod
+    def from_R(cls, R, inverse=False):
+        """Compute the great circle frame from a rotation matrix that specifies
+        the transformation from ICRS to the new frame.
+
+        Parameters
+        ----------
+        R : array_like
+            The transformation matrix.
+        inverse : bool (optional)
+            If True, the input rotation matrix is assumed to go from the new
+            frame to the ICRS frame..
+        """
+
+        if inverse:
+            Rinv = R
+        else:
+            Rinv = np.linalg.inv(R)
+
+        pole = coord.CartesianRepresentation([0, 0, 1.]).transform(Rinv)
+        ra0 = coord.CartesianRepresentation([1, 0, 0.]).transform(Rinv)
+
+        pole = coord.SkyCoord(pole, frame='icrs')
+        ra0 = ra0.represent_as(coord.SphericalRepresentation)
+
+        return cls(pole=pole, ra0=ra0.lon)
+
 
 def make_greatcircle_cls(cls_name, docstring_header=None, **kwargs):
     @format_doc(base_doc, components=_components, footer=_footer)

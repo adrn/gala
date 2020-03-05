@@ -156,3 +156,19 @@ def test_pole_separation90():
                 assert len(w) > 0
 
             assert u.allclose(gc.separation(pole), 90*u.deg)
+
+
+def test_init_R():
+    from ..gd1 import R as gd1_R, GD1
+
+    N = 128
+    rnd = np.random.RandomState(42)
+
+    gd1_gc_frame = GreatCircleICRSFrame.from_R(gd1_R)
+    tmp_in = GD1(phi1=rnd.uniform(0, 360, N)*u.deg,
+                 phi2=rnd.uniform(-90, 90, N)*u.deg)
+
+    tmp_out = tmp_in.transform_to(gd1_gc_frame)
+
+    assert u.allclose(tmp_in.phi1, tmp_out.phi1)
+    assert u.allclose(tmp_in.phi2, tmp_out.phi2)
