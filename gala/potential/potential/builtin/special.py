@@ -82,7 +82,7 @@ class MilkyWayPotential(CCompositePotential):
     use this potential, please also cite that work.
 
     Default parameters are fixed by fitting to a compilation of recent mass
-    measurements of the Milky Way, from 10 pc to ~150 pc.
+    measurements of the Milky Way, from 10 pc to ~150 kpc.
 
     Parameters
     ----------
