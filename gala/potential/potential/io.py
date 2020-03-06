@@ -195,12 +195,13 @@ def load(f, module=None):
 
     """
     if hasattr(f, 'read'):
-        p_dict = yaml.load(f.read())
+        p_dict = yaml.load(f.read(), Loader=yaml.Loader)
     else:
         with open(os.path.abspath(f), 'r') as fil:
-            p_dict = yaml.load(fil.read())
+            p_dict = yaml.load(fil.read(), Loader=yaml.Loader)
 
     return from_dict(p_dict, module=module)
+
 
 def save(potential, f):
     """

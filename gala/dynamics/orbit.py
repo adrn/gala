@@ -250,7 +250,10 @@ class Orbit(PhaseSpacePosition):
         # TODO: this is duplicated code from PhaseSpacePosition
         if isinstance(f, str):
             import h5py
-            f = h5py.File(f)
+            f = h5py.File(f, mode='r')
+            close = True
+        else:
+            close = False
 
         pos = quantity_from_hdf5(f['pos'])
         vel = quantity_from_hdf5(f['vel'])
@@ -285,8 +288,12 @@ class Orbit(PhaseSpacePosition):
         if 'potential' in f:
             import yaml
             from ..potential.potential.io import from_dict
-            _dict = yaml.load(f['potential'][()].decode('utf-8'))
+            _dict = yaml.load(f['potential'][()].decode('utf-8'),
+                              Loader=yaml.Loader)
             potential = from_dict(_dict)
+
+        if close:
+            f.close()
 
         return cls(pos=pos, vel=vel, t=time,
                    frame=frame, potential=potential)
