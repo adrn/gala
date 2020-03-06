@@ -3,7 +3,6 @@
 # Third-party
 import astropy.units as u
 import astropy.coordinates as coord
-from astropy.tests.helper import quantity_allclose
 from astropy.utils.misc import isiterable
 import numpy as np
 from scipy.signal import argrelmax, argrelmin
@@ -219,8 +218,8 @@ def combine(objs):
 
         # For orbits, time arrays must be the same
         if (hasattr(obj, 't') and obj.t is not None and objs[0].t is not None
-                and not quantity_allclose(obj.t, objs[0].t,
-                                          atol=1E-13*objs[0].t.unit)):
+                and not u.allclose(obj.t, objs[0].t,
+                                   atol=1E-13*objs[0].t.unit)):
             raise ValueError("All orbits must have the same time array.")
 
         if 'cartesian' not in obj.pos.get_name():

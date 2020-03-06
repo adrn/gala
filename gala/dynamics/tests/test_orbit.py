@@ -5,7 +5,6 @@ import warnings
 from astropy.coordinates import (SphericalRepresentation, Galactic,
                                  SphericalCosLatDifferential)
 import astropy.units as u
-from astropy.tests.helper import quantity_allclose
 import numpy as np
 import pytest
 import scipy.optimize as so
@@ -555,10 +554,10 @@ def test_io(tmpdir, obj):
         obj.to_hdf5(f)
 
     obj2 = Orbit.from_hdf5(filename)
-    assert quantity_allclose(obj.xyz, obj2.xyz)
-    assert quantity_allclose(obj.v_xyz, obj2.v_xyz)
+    assert u.allclose(obj.xyz, obj2.xyz)
+    assert u.allclose(obj.v_xyz, obj2.v_xyz)
     if obj.t:
-        assert quantity_allclose(obj.t, obj2.t)
+        assert u.allclose(obj.t, obj2.t)
 
     assert obj.frame == obj2.frame
     assert obj.potential == obj2.potential

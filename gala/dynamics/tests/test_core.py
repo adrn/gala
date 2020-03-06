@@ -7,7 +7,6 @@ from astropy.coordinates import (Galactic, CartesianRepresentation,
                                  SphericalRepresentation, CartesianDifferential,
                                  SphericalDifferential,
                                  SphericalCosLatDifferential)
-from astropy.tests.helper import quantity_allclose
 import numpy as np
 import pytest
 
@@ -158,9 +157,9 @@ def test_represent_as():
 
     sph2 = o.represent_as('spherical')
     for c in sph.pos.components:
-        assert quantity_allclose(getattr(sph.pos, c),
-                                 getattr(sph2.pos, c),
-                                 rtol=1E-12)
+        assert u.allclose(getattr(sph.pos, c),
+                          getattr(sph2.pos, c),
+                          rtol=1E-12)
 
     # doesn't work for 2D
     x = np.random.random(size=(2,10))
@@ -333,16 +332,16 @@ def test_energy():
 def test_angular_momentum():
 
     w = PhaseSpacePosition([1.,0.,0.], [0.,0.,1.])
-    assert quantity_allclose(np.squeeze(w.angular_momentum()), [0.,-1,0]*u.one)
+    assert u.allclose(np.squeeze(w.angular_momentum()), [0.,-1,0]*u.one)
 
     w = PhaseSpacePosition([1.,0.,0.], [0.,1.,0.])
-    assert quantity_allclose(np.squeeze(w.angular_momentum()), [0.,0, 1]*u.one)
+    assert u.allclose(np.squeeze(w.angular_momentum()), [0.,0, 1]*u.one)
 
     w = PhaseSpacePosition([0.,1.,0.],[0.,0.,1.])
-    assert quantity_allclose(np.squeeze(w.angular_momentum()), [1., 0, 0]*u.one)
+    assert u.allclose(np.squeeze(w.angular_momentum()), [1., 0, 0]*u.one)
 
     w = PhaseSpacePosition([1.,0,0]*u.kpc, [0.,200.,0]*u.pc/u.Myr)
-    assert quantity_allclose(np.squeeze(w.angular_momentum()), [0,0,0.2]*u.kpc**2/u.Myr)
+    assert u.allclose(np.squeeze(w.angular_momentum()), [0,0,0.2]*u.kpc**2/u.Myr)
 
     # multiple - known
     q = np.array([[1.,0.,0.],[1.,0.,0.],[0,1.,0.]]).T
@@ -350,7 +349,7 @@ def test_angular_momentum():
     L = PhaseSpacePosition(q, p).angular_momentum()
     true_L = np.array([[0., -1, 0],[0., 0, 1],[1., 0, 0]]).T * u.one
     assert L.shape == (3,3)
-    assert quantity_allclose(L, true_L)
+    assert u.allclose(L, true_L)
 
     # multiple - random
     q = np.random.uniform(size=(3,128))
@@ -392,6 +391,6 @@ def test_io(tmpdir, obj):
         obj.to_hdf5(f)
 
     obj2 = PhaseSpacePosition.from_hdf5(filename)
-    assert quantity_allclose(obj.xyz, obj2.xyz)
-    assert quantity_allclose(obj.v_xyz, obj2.v_xyz)
+    assert u.allclose(obj.xyz, obj2.xyz)
+    assert u.allclose(obj.v_xyz, obj2.v_xyz)
     assert obj.frame == obj2.frame

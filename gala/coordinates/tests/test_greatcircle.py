@@ -1,7 +1,6 @@
 # Third-party
 import astropy.coordinates as coord
 import astropy.units as u
-from astropy.tests.helper import catch_warnings
 import numpy as np
 import pytest
 
@@ -136,6 +135,7 @@ def test_sph_midpoint():
 
 def test_pole_separation90():
     # Regression test for issue #160
+    from astropy.tests.helper import catch_warnings
 
     for dec in [19.8, 0, -41.3]:  # random values, but 0 is an important test
         pole = coord.SkyCoord(ra=32.5, dec=dec, unit='deg')

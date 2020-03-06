@@ -1,6 +1,5 @@
 # Third-party
 import astropy.units as u
-from astropy.tests.helper import quantity_allclose
 import numpy as np
 import pytest
 
@@ -96,7 +95,7 @@ class TestDirectNBody:
 
         dx0 = orbits1[:, 0].xyz - orbits2[:, 0].xyz
         dx1 = orbits1[:, 1].xyz - orbits2[:, 1].xyz
-        assert quantity_allclose(np.abs(dx1), 0*u.pc, atol=1e-13*u.pc)
+        assert u.allclose(np.abs(dx1), 0*u.pc, atol=1e-13*u.pc)
         assert np.abs(dx0).max() > 50*u.pc
 
         # Now compare with/without mass with external potential:
@@ -116,7 +115,7 @@ class TestDirectNBody:
 
         dx0 = orbits1[:, 0].xyz - orbits2[:, 0].xyz
         dx1 = orbits1[:, 1].xyz - orbits2[:, 1].xyz
-        assert quantity_allclose(np.abs(dx1), 0*u.pc, atol=1e-13*u.pc)
+        assert u.allclose(np.abs(dx1), 0*u.pc, atol=1e-13*u.pc)
         assert np.abs(dx0).max() > 50*u.pc
 
     def test_directnbody_integrate_dontsaveall(self):
@@ -137,8 +136,8 @@ class TestDirectNBody:
         orbits = nbody2.integrate_orbit(dt=1*self.usys['time'],
                                         t1=0, t2=1*u.Myr)
         w2 = orbits[-1]
-        assert quantity_allclose(w1.xyz, w2.xyz)
-        assert quantity_allclose(w1.v_xyz, w2.v_xyz)
+        assert u.allclose(w1.xyz, w2.xyz)
+        assert u.allclose(w1.v_xyz, w2.v_xyz)
 
     def test_directnbody_integrate_rotframe(self):
         # Now compare with/without mass with external potential:
@@ -161,5 +160,5 @@ class TestDirectNBody:
         orbits2 = nbody2.integrate_orbit(dt=1*self.usys['time'],
                                          t1=0, t2=1*u.Myr)
 
-        assert quantity_allclose(orbits_static.xyz, orbits_static.xyz)
-        assert quantity_allclose(orbits2.v_xyz, orbits2.v_xyz)
+        assert u.allclose(orbits_static.xyz, orbits_static.xyz)
+        assert u.allclose(orbits2.v_xyz, orbits2.v_xyz)

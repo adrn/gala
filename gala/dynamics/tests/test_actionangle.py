@@ -6,7 +6,6 @@ import logging
 # Third-party
 import numpy as np
 from astropy import log as logger
-from astropy.tests.helper import quantity_allclose
 from scipy.linalg import solve
 import pytest
 
@@ -66,7 +65,7 @@ def test_fit_toy_potential():
 
     potential = fit_toy_potential(orbit)
     for k,v in true_potential.parameters.items():
-        assert quantity_allclose(v, potential.parameters[k], rtol=1E-2)
+        assert u.allclose(v, potential.parameters[k], rtol=1E-2)
 
     # -----------------------------------------------------------------
     true_omegas = np.array([0.011, 0.032, 0.045])
@@ -75,8 +74,8 @@ def test_fit_toy_potential():
 
     potential = fit_toy_potential(orbit)
 
-    assert quantity_allclose(potential.parameters['omega'],
-                             true_potential.parameters['omega'], rtol=1E-2)
+    assert u.allclose(potential.parameters['omega'],
+                      true_potential.parameters['omega'], rtol=1E-2)
 
 def test_check_angle_sampling():
 
