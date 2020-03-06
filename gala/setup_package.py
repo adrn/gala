@@ -1,10 +1,11 @@
 from distutils.core import Extension
-from astropy_helpers import setup_helpers
+from collections import defaultdict
+
 
 def get_extensions():
     exts = []
 
-    cfg = setup_helpers.DistutilsExtensionArgs()
+    cfg = defaultdict(list)
     cfg['include_dirs'].append('gala')
     cfg['extra_compile_args'].append('--std=gnu99')
     cfg['sources'].append('gala/cconfig.pyx')

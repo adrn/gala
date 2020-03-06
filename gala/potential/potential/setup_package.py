@@ -1,14 +1,17 @@
 from distutils.core import Extension
-from astropy_helpers import setup_helpers
+from collections import defaultdict
+
 
 def get_extensions():
+    import numpy as np
+
     exts = []
 
     # malloc
     mac_incl_path = "/usr/include/malloc"
 
-    cfg = setup_helpers.DistutilsExtensionArgs()
-    cfg['include_dirs'].append('numpy')
+    cfg = defaultdict(list)
+    cfg['include_dirs'].append(np.get_include())
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/potential')
     cfg['include_dirs'].append('gala')
@@ -18,8 +21,8 @@ def get_extensions():
     cfg['sources'].append('gala/potential/potential/src/cpotential.c')
     exts.append(Extension('gala.potential.potential.cpotential', **cfg))
 
-    cfg = setup_helpers.DistutilsExtensionArgs()
-    cfg['include_dirs'].append('numpy')
+    cfg = defaultdict(list)
+    cfg['include_dirs'].append(np.get_include())
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/potential')
     cfg['include_dirs'].append('gala')
@@ -28,8 +31,8 @@ def get_extensions():
     cfg['sources'].append('gala/potential/potential/src/cpotential.c')
     exts.append(Extension('gala.potential.potential.ccompositepotential', **cfg))
 
-    cfg = setup_helpers.DistutilsExtensionArgs()
-    cfg['include_dirs'].append('numpy')
+    cfg = defaultdict(list)
+    cfg['include_dirs'].append(np.get_include())
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/potential')
     cfg['include_dirs'].append('gala')
@@ -40,6 +43,7 @@ def get_extensions():
     exts.append(Extension('gala.potential.potential.builtin.cybuiltin', **cfg))
 
     return exts
+
 
 def get_package_data():
 

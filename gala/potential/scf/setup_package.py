@@ -3,10 +3,12 @@
 import sys
 from os import path
 from distutils.core import Extension
-from distutils.sysconfig import get_python_inc
-from astropy_helpers import setup_helpers
+from collections import defaultdict
+
 
 def get_extensions():
+    import numpy as np
+
     exts = []
 
     # malloc
@@ -19,9 +21,10 @@ def get_extensions():
     library_dirs = [path.join(sys.prefix, 'lib')]
 
     # all need these:
-    include_dirs.extend(['numpy', mac_incl_path, 'gala', 'gala/potential'])
+    include_dirs.extend([np.get_include(), mac_incl_path,
+                         'gala', 'gala/potential'])
 
-    cfg = setup_helpers.DistutilsExtensionArgs()
+    cfg = defaultdict(list)
     cfg['include_dirs'].extend(include_dirs)
     cfg['library_dirs'].extend(library_dirs)
     cfg['extra_compile_args'].append('--std=gnu99')
@@ -30,7 +33,7 @@ def get_extensions():
     cfg['sources'].append('gala/potential/scf/src/coeff_helper.c')
     exts.append(Extension('gala.potential.scf._computecoeff', **cfg))
 
-    cfg = setup_helpers.DistutilsExtensionArgs()
+    cfg = defaultdict(list)
     cfg['include_dirs'].extend(include_dirs)
     cfg['library_dirs'].extend(library_dirs)
     cfg['extra_compile_args'].append('--std=gnu99')
@@ -41,7 +44,7 @@ def get_extensions():
     cfg['sources'].append('gala/potential/scf/src/bfe_helper.c')
     exts.append(Extension('gala.potential.scf._bfe', **cfg))
 
-    cfg = setup_helpers.DistutilsExtensionArgs()
+    cfg = defaultdict(list)
     cfg['include_dirs'].extend(include_dirs)
     cfg['library_dirs'].extend(library_dirs)
     cfg['extra_compile_args'].append('--std=gnu99')
@@ -51,6 +54,7 @@ def get_extensions():
     exts.append(Extension('gala.potential.scf._bfe_class', **cfg))
 
     return exts
+
 
 def get_package_data():
     return {'gala.potential.scf': ['*.pyx',
