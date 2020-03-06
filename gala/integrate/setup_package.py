@@ -31,9 +31,3 @@ def get_extensions():
     exts.append(Extension('gala.integrate.cyintegrators.dop853', **cfg))
 
     return exts
-
-
-def get_package_data():
-    return {'gala.integrate': ['*.pyx', '*.pxd', '*/*.pyx', '*/*.pxd',
-                               'cyintegrators/*.c',
-                               'cyintegrators/dopri/*.c', 'cyintegrators/dopri/*.h']}

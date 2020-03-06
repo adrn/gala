@@ -13,13 +13,3 @@ def get_extensions():
 
     return exts
 
-
-def get_package_data():
-
-    return {'gala': ['extra_compile_macros.h', 'cconfig.pyx']}
-
-
-def get_build_options():
-    return [('nogsl',
-             'Install without the GNU Scientific Library (GSL)',
-             True)]

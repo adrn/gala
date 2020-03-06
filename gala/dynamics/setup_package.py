@@ -65,8 +65,3 @@ def get_extensions():
     exts.append(Extension('gala.dynamics.nbody.nbody', **cfg))
 
     return exts
-
-
-def get_package_data():
-    return {'gala.dynamics': ['*.pyx', '*.pxd', '*/*.pyx', '*/*.pxd',
-                              '*.h', '*/*.h', 'nbody/nbody_helper.h']}
