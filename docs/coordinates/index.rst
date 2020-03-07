@@ -31,29 +31,30 @@ built-in astropy coordinates frames (e.g., :class:`~astropy.coordinates.ICRS` or
 :class:`~astropy.coordinates.Galactic`) and can be transformed to and from other
 astropy coordinate frames. For example, to convert a set of
 `~astropy.coordinates.ICRS` (RA, Dec) coordinates to a coordinate system aligned
-with the Sagittarius stream with the `~gala.coordinates.Sagittarius` frame::
+with the Sagittarius stream with the `~gala.coordinates.SagittariusLaw10`
+frame::
 
     >>> c = coord.ICRS(ra=100.68458*u.degree, dec=41.26917*u.degree)
-    >>> sgr = c.transform_to(gc.Sagittarius)
+    >>> sgr = c.transform_to(gc.SagittariusLaw10)
     >>> (sgr.Lambda, sgr.Beta) # doctest: +FLOAT_CMP
     (<Longitude 179.58511053544734 deg>, <Latitude -12.558450192162654 deg>)
 
-Or, to transform from `~gala.coordinates.Sagittarius` coordinates to the
+Or, to transform from `~gala.coordinates.SagittariusLaw10` coordinates to the
 `~astropy.coordinates.Galactic` frame::
 
-    >>> sgr = gc.Sagittarius(Lambda=156.342*u.degree, Beta=1.1*u.degree)
+    >>> sgr = gc.SagittariusLaw10(Lambda=156.342*u.degree, Beta=1.1*u.degree)
     >>> c = sgr.transform_to(coord.Galactic)
     >>> (c.l, c.b) # doctest: +FLOAT_CMP
     (<Longitude 182.5922090437946 deg>, <Latitude -9.539692094685893 deg>)
 
 These transformations also handle velocities so that proper motion components
 can be transformed between the systems. For example, to transform from
-`~gala.coordinates.GD1` proper motions to `~astropy.coordinates.Galactic` proper
-motions::
+`~gala.coordinates.GD1Koposov10` proper motions to
+`~astropy.coordinates.Galactic` proper motions::
 
-    >>> gd1 = gc.GD1(phi1=-35.00*u.degree, phi2=0*u.degree,
-    ...              pm_phi1_cosphi2=-12.20*u.mas/u.yr,
-    ...              pm_phi2=-3.10*u.mas/u.yr)
+    >>> gd1 = gc.GD1Koposov10(phi1=-35.00*u.degree, phi2=0*u.degree,
+    ...                       pm_phi1_cosphi2=-12.20*u.mas/u.yr,
+    ...                       pm_phi2=-3.10*u.mas/u.yr)
     >>> gd1.transform_to(coord.Galactic) # doctest: +FLOAT_CMP
     <Galactic Coordinate: (l, b) in deg
         (181.28968151, 54.84972806)
@@ -64,11 +65,11 @@ As with the other Astropy coordinate frames, with a full specification of the 3D
 position and velocity, we can transform to a
 `~astropy.coordinates.Galactocentric` frame::
 
-    >>> gd1 = gc.GD1(phi1=-35.00*u.degree, phi2=0.04*u.degree,
-    ...              distance=7.83*u.kpc,
-    ...              pm_phi1_cosphi2=-12.20*u.mas/u.yr,
-    ...              pm_phi2=-3.10*u.mas/u.yr,
-    ...              radial_velocity=-32*u.km/u.s)
+    >>> gd1 = gc.GD1Koposov10(phi1=-35.00*u.degree, phi2=0.04*u.degree,
+    ...                       distance=7.83*u.kpc,
+    ...                       pm_phi1_cosphi2=-12.20*u.mas/u.yr,
+    ...                       pm_phi2=-3.10*u.mas/u.yr,
+    ...                       radial_velocity=-32*u.km/u.s)
     >>> gd1.transform_to(coord.Galactocentric) # doctest: +FLOAT_CMP
     <Galactocentric Coordinate (galcen_coord=<ICRS Coordinate: (ra, dec) in deg
         (266.4051, -28.936175)>, galcen_distance=8.3 kpc, galcen_v_sun=(11.1, 232.24, 7.25) km / s, z_sun=27.0 pc, roll=0.0 deg): (x, y, z) in kpc
