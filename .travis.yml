@@ -101,12 +101,12 @@ matrix:
           stage: Cron tests
           env: TOXENV=py38-test-devdeps
 
-        # Try on Windows.
-        - os: windows
-          language: c
-          name: Python 3.8 with required dependencies
-          stage: Comprehensive tests
-          env: PYTHON_VERSION=3.8 TOXENV=py38-test
+        # Gala doesn't build on Windows...
+        # - os: windows
+        #   language: c
+        #   name: Python 3.8 with required dependencies
+        #   stage: Comprehensive tests
+        #   env: PYTHON_VERSION=3.8 TOXENV=py38-test
 
         # Try other python versions and Numpy versions. Since we can assume that
         # the Numpy developers have taken care of testing Numpy with different

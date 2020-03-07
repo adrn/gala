@@ -227,7 +227,6 @@ class TestLogarithmic(object):
 
             assert np.allclose(dE_ww[-100:], dE[-100:], rtol=1E-1)
 
-    @pytest.mark.slow
     def test_compare_fast(self, tmpdir):
         n_steps_per_pullback = 10
         d0 = 1e-5
