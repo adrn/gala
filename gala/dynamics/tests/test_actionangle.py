@@ -98,12 +98,13 @@ def test_check_angle_sampling():
         # print("Periods:", periods)
         # print("N periods:", t.max() / periods)
 
-        angles = t[np.newaxis] * omegas[:,np.newaxis]
+        angles = t[np.newaxis] * omegas[:, np.newaxis]
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', UserWarning)
-            checks,failures = check_angle_sampling(nvecs, angles)
+            checks, failures = check_angle_sampling(nvecs, angles)
 
         assert np.all(failures == i)
+
 
 class ActionsBase(object):
 
@@ -136,10 +137,14 @@ class ActionsBase(object):
 
             # get values from Sanders' code
             print("Computing actions from genfunc...")
-            s_actions,s_angles,s_freqs,toy_potential = sanders_act_ang_freq(t, w, circ, N_max=N_max)
+            s_actions, s_angles, s_freqs, toy_potential = sanders_act_ang_freq(
+                t, w, circ, N_max=N_max)
 
             print("Computing actions with gala...")
-            ret = find_actions(orb, N_max=N_max, toy_potential=toy_potential)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', UserWarning)
+                ret = find_actions(orb, N_max=N_max,
+                                   toy_potential=toy_potential)
             actions = ret['actions']
             angles = ret['angles']
             freqs = ret['freqs']
