@@ -146,7 +146,7 @@ We can easily plot projections of the phase-space positions using the
 
 .. plot::
     :align: center
-    :context:close-figs
+    :context: close-figs
 
     import astropy.units as u
     import numpy as np
@@ -167,7 +167,7 @@ function and any keyword arguments are passed through to that function::
 
 .. plot::
     :align: center
-    :context:close-figs
+    :context: close-figs
 
     fig = w.plot(components=['x', 'v_z'], color='r',
                  facecolor='none', marker='o', s=20, alpha=0.5)
@@ -253,7 +253,7 @@ Just like for |psp|, we can quickly visualize an orbit using the
 
 .. plot::
     :align: center
-    :context:close-figs
+    :context: close-figs
 
     import astropy.units as u
     import gala.dynamics as gd
@@ -273,7 +273,7 @@ function and any keyword arguments are passed through to that function::
 
 .. plot::
     :align: center
-    :context:close-figs
+    :context: close-figs
 
     fig = orbit.plot(linewidth=4., alpha=0.5, color='r')
 

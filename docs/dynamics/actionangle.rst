@@ -84,7 +84,7 @@ We will now integrate the orbit and plot it in the meridional plane::
 
     >>> w = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.5, n_steps=10000)
     >>> cyl = w.represent_as('cylindrical')
-    >>> fig = cyl.plot(['rho', 'z'], linestyle='-')
+    >>> fig = cyl.plot(['rho', 'z'], linestyle='-') # doctest: +SKIP
 
 .. plot::
     :align: center
