@@ -5,10 +5,12 @@ import astropy.units as u
 
 # Project
 from ..analyticactionangle import isochrone_to_aa, harmonic_oscillator_to_aa
-from ...potential import IsochronePotential, HarmonicOscillatorPotential
+from ...potential import (IsochronePotential, HarmonicOscillatorPotential,
+                          Hamiltonian)
 from ...units import galactic
 from ...util import assert_angles_allclose
 from .helpers import toy_potentials
+
 
 class TestIsochrone(object):
 
