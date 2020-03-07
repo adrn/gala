@@ -9,7 +9,6 @@ from scipy.signal import argrelmax, argrelmin
 
 # This package
 from .core import PhaseSpacePosition
-from ..potential import Hamiltonian
 from ..util import atleast_2d
 
 __all__ = ['peak_to_peak_period', 'estimate_dt_n_steps', 'combine']
@@ -131,6 +130,7 @@ def estimate_dt_n_steps(w0, hamiltonian, n_periods, n_steps_per_period,
         w0 = np.asarray(w0)
         w0 = PhaseSpacePosition.from_w(w0, units=hamiltonian.units)
 
+    from ..potential import Hamiltonian
     hamiltonian = Hamiltonian(hamiltonian)
 
     # integrate orbit
