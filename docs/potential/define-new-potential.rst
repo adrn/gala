@@ -112,7 +112,7 @@ can integrate an orbit in this potential::
 
 .. plot::
     :align: center
-    :context:close-figs
+    :context: close-figs
 
     import matplotlib.pyplot as pl
     import numpy as np
@@ -160,8 +160,13 @@ Or, we could create a contour plot of equipotentials::
 
 .. plot::
     :align: center
-    :context:close-figs
+    :context: close-figs
 
+    from matplotlib import colors
+    import matplotlib.pyplot as plt
+
+    grid = np.linspace(-1., 1., 100)
+    fig, ax = plt.subplots(1, 1, figsize=(5,5))
     fig = pot.plot_contours(grid=(grid,grid), cmap='Blues',
                             levels=np.logspace(-3, 1, 10),
                             norm=colors.LogNorm(), ax=ax)
