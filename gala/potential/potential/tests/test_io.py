@@ -70,8 +70,8 @@ def test_write_lm10(tmpdir):
     # more complex
     potential = LM10Potential(disk=dict(m=5E12*u.Msun))
     potential_default = LM10Potential()
-    v1 = potential.value([4., 0, 0])
-    v2 = potential_default.value([4., 0, 0])
+    v1 = potential.energy([4., 0, 0])
+    v2 = potential_default.energy([4., 0, 0])
 
     with open(tmp_filename,'w') as f:
         save(potential, f)
@@ -79,8 +79,8 @@ def test_write_lm10(tmpdir):
     save(potential, tmp_filename)
     p = load(tmp_filename)
     assert u.allclose(p['disk'].parameters['m'], 5E12*u.Msun)
-    assert u.allclose(v1, p.value([4.,0,0]))
-    assert not u.allclose(v2, p.value([4.,0,0]))
+    assert u.allclose(v1, p.energy([4.,0,0]))
+    assert not u.allclose(v2, p.energy([4.,0,0]))
 
 def test_write_composite(tmpdir):
     tmp_filename = str(tmpdir.join("potential.yml"))

@@ -192,7 +192,7 @@ coordinate system, we can use the function
 Note that this works for all of the great circle or stellar stream coordinate
 frames implemented in gala::
 
-    >>> gc.transform_pm_cov(c, cov, gc.GD1) # doctest: +FLOAT_CMP
+    >>> gc.transform_pm_cov(c, cov, gc.GD1Koposov10) # doctest: +FLOAT_CMP
     array([[1.10838914, 0.19067958],
            [0.19067958, 0.55024138]])
 

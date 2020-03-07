@@ -18,7 +18,7 @@ Create potential objects that know how to compute the gradient, energy, etc. at
 a given position:
 
     >>> pot = gp.IsochronePotential(m=1E10*u.Msun, b=15.*u.kpc, units=galactic)
-    >>> pot.value([8.,6.,7.]*u.kpc) # doctest: +FLOAT_CMP
+    >>> pot.energy([8.,6.,7.]*u.kpc) # doctest: +FLOAT_CMP
     <Quantity [-0.00131002] kpc2 / Myr2>
     >>> pot.gradient([8.,6.,7.]*u.kpc) # doctest: +FLOAT_CMP
     <Quantity [[1.57813742e-05],
@@ -44,7 +44,7 @@ Classes created this way can then be instantiated and used like any other
 `~gala.potential.PotentialBase` subclass:
 
     >>> pot = SHOPotential(k=1.)
-    >>> pot.value([1.])
+    >>> pot.energy([1.])
     <Quantity [0.5]>
 
 Extremely fast orbit integration

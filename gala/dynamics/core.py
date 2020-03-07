@@ -554,7 +554,7 @@ class PhaseSpacePosition(object):
 
         if isinstance(f, str):
             import h5py
-            f = h5py.File(f)
+            f = h5py.File(f, mode='r')
 
         if self.frame is not None:
             frame_group = f.create_group('frame')
@@ -589,7 +589,7 @@ class PhaseSpacePosition(object):
         """
         if isinstance(f, str):
             import h5py
-            f = h5py.File(f)
+            f = h5py.File(f, mode='r')
 
         pos = quantity_from_hdf5(f['pos'])
         vel = quantity_from_hdf5(f['vel'])
@@ -655,7 +655,7 @@ class PhaseSpacePosition(object):
             The potential energy.
         """
         # TODO: check that potential ndim is consistent with here
-        return potential.value(self)
+        return potential.energy(self)
 
     def energy(self, hamiltonian):
         r"""

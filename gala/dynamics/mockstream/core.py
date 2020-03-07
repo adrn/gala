@@ -93,7 +93,7 @@ class MockStream(PhaseSpacePosition):
         # TODO: this is duplicated code from PhaseSpacePosition
         if isinstance(f, str):
             import h5py
-            f = h5py.File(f)
+            f = h5py.File(f, mode='r')
 
         obj = PhaseSpacePosition.from_hdf5(f)
 

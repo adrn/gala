@@ -175,7 +175,7 @@ class TestLogarithmic(object):
         X0 = -0.2
         y0 = 0.
         E0 = -0.4059
-        Y0 = np.sqrt(E0 - self.hamiltonian.potential.value([x0,y0,0.]).value)
+        Y0 = np.sqrt(E0 - self.hamiltonian.potential.energy([x0,y0,0.]).value)
         chaotic_w0 = [x0,y0,0.,X0,Y0,0.]
 
         # initial conditions from LP-VI documentation:

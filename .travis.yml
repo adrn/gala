@@ -10,6 +10,7 @@ os:
 addons:
     apt:
         packages:
+            - pandoc
             - graphviz
             - texlive-latex-extra
             - dvipng

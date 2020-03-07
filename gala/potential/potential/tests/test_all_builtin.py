@@ -153,8 +153,8 @@ class TestSphericalNFWFromCircVel(PotentialTestBase):
                                             v_c=220.*u.km/u.s, r_s=20.*u.kpc,
                                             a=1., b=1., c=1.)
 
-        v1 = this.value(self.w0[:3])
-        v2 = other.value(self.w0[:3])
+        v1 = this.energy(self.w0[:3])
+        v2 = other.energy(self.w0[:3])
         assert u.allclose(v1, v2)
 
         a1 = this.gradient(self.w0[:3])
@@ -195,8 +195,8 @@ class TestNFW(PotentialTestBase):
         xyz = np.zeros((3,128))
         xyz[0] = np.logspace(-1., 3, xyz.shape[1])
 
-        assert u.allclose(sph.value(xyz), fla.value(xyz))
-        assert u.allclose(sph.value(xyz), tri.value(xyz))
+        assert u.allclose(sph.energy(xyz), fla.energy(xyz))
+        assert u.allclose(sph.energy(xyz), tri.energy(xyz))
 
         assert u.allclose(sph.gradient(xyz), fla.gradient(xyz))
         assert u.allclose(sph.gradient(xyz), tri.gradient(xyz))
@@ -211,8 +211,8 @@ class TestNFW(PotentialTestBase):
         xyz = np.zeros((3,128))
         xyz[1] = np.logspace(-1., 3, xyz.shape[1])
 
-        assert u.allclose(sph.value(xyz), fla.value(xyz))
-        assert u.allclose(sph.value(xyz), tri.value(xyz))
+        assert u.allclose(sph.energy(xyz), fla.energy(xyz))
+        assert u.allclose(sph.energy(xyz), tri.energy(xyz))
 
         assert u.allclose(sph.gradient(xyz), fla.gradient(xyz))
         assert u.allclose(sph.gradient(xyz), tri.gradient(xyz))
@@ -226,7 +226,7 @@ class TestNFW(PotentialTestBase):
         xyz[0] = np.logspace(-1., 3, xyz.shape[1])
         xyz[1] = np.logspace(-1., 3, xyz.shape[1])
 
-        assert u.allclose(sph.value(xyz), fla.value(xyz))
+        assert u.allclose(sph.energy(xyz), fla.energy(xyz))
         assert u.allclose(sph.gradient(xyz), fla.gradient(xyz))
 
 

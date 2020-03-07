@@ -229,7 +229,7 @@ class PotentialTestBase(object):
         grid = np.linspace(-max_x, max_x, 8)
         grid = grid[grid != 0.]
         grids = [grid for i in range(self.w0.size//2)]
-        xyz = np.ascontiguousarray(np.vstack(map(np.ravel, np.meshgrid(*grids))).T)
+        xyz = np.ascontiguousarray(np.vstack(list(map(np.ravel, np.meshgrid(*grids)))).T)
 
         def energy_wrap(xyz):
             xyz = np.ascontiguousarray(xyz[None])

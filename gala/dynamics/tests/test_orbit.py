@@ -356,7 +356,7 @@ def test_apocenter_pericenter_period():
     E = np.mean(w.energy()).decompose(pot.units).value
     L = np.mean(np.sqrt(np.sum(w.angular_momentum()**2, axis=0))).decompose(pot.units).value
     def func(r):
-        val = 2*(E-pot.value([r,0,0]).value[0]) - L**2/r**2
+        val = 2*(E-pot.energy([r,0,0]).value[0]) - L**2/r**2
         return val
 
     pred_apo = so.brentq(func, 0.9, 1.0)
@@ -426,7 +426,7 @@ def make_known_orbits(tmpdir, xs, vxs, potential, names):
 
     ws = []
     for x,vx,name in zip(xs, vxs, names):
-        vy = np.sqrt(2*(E - potential.value([x,y,0.]).value))[0]
+        vy = np.sqrt(2*(E - potential.energy([x,y,0.]).value))[0]
         w = [x,y,0.,vx,vy,0.]
         ws.append(w)
     ws = np.array(ws).T

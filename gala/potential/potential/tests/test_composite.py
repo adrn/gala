@@ -25,7 +25,7 @@ class CompositeHelper(object):
         potential = self.Cls(one=self.p1, two=self.p2)
 
         q = np.ascontiguousarray(np.array([[1.1,0,0]]).T)
-        print("val", potential.value(q))
+        print("val", potential.energy(q))
 
         q = np.ascontiguousarray(np.array([[1.1,0,0]]).T)
         print("grad", potential.gradient(q))

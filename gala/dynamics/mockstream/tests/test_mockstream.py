@@ -118,7 +118,7 @@ def test_animate(tmpdir):
                         output_every=output_every, output_filename=filename,
                         overwrite=True)
 
-    with h5py.File(filename) as f:
+    with h5py.File(filename, mode='r') as f:
         stream_orbits = Orbit.from_hdf5(f['stream'])
         nbody_orbits = Orbit.from_hdf5(f['nbody'])
 

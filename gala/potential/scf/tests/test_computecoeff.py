@@ -70,7 +70,7 @@ def test_plummer():
     xyz[:,0] = x
 
     pot = gp.PlummerPotential(m=true_M, b=true_r_s, units=galactic)
-    true_pot = pot.value(xyz.T).value
+    true_pot = pot.energy(xyz.T).value
     true_dens = pot.density(xyz.T).value
     true_grad = pot.gradient(xyz.T).value.T
 

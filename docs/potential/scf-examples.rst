@@ -423,7 +423,7 @@ overlaid::
 By eye, the SCF representation looks pretty good. Let's now create a plot of
 equipotential contours using the `~gala.potential.scf.SCFPotential` instance::
 
-    scf_pot = np.abs(potential.value(xyz))
+    scf_pot = np.abs(potential.energy(xyz))
     scf_pot = scf_pot.value # get numerical value from `~astropy.units.Quantity`
 
     # log-spaced contour levels
@@ -442,7 +442,7 @@ equipotential contours using the `~gala.potential.scf.SCFPotential` instance::
     :align: center
     :context: close-figs
 
-    scf_pot = np.abs(potential.value(xyz))
+    scf_pot = np.abs(potential.energy(xyz))
     scf_pot = scf_pot.value # get numerical value from Astropy Quantity
 
     # log-spaced contour levels
