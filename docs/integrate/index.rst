@@ -128,7 +128,7 @@ information.::
 
 We can plot the integrated (chaotic) orbit::
 
-    >>> fig = orbit.plot(subplots_kwargs=dict(figsize=(8,4)))
+    >>> fig = orbit.plot(subplots_kwargs=dict(figsize=(8,4))) # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -162,7 +162,7 @@ nonlinear system::
     >>> sigma, rho, beta = 10., 28., 8/3.
     >>> integrator = gi.DOPRI853Integrator(F, func_args=(sigma, rho, beta))
     >>> orbit = integrator.run([0.5,0.5,0.5,0,0,0], dt=1E-2, n_steps=1E4)
-    >>> fig = orbit.plot()
+    >>> fig = orbit.plot() # doctest: +SKIP
 
 .. plot::
     :align: center

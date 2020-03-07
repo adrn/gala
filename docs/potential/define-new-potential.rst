@@ -108,7 +108,7 @@ can integrate an orbit in this potential::
     >>> w0 = gd.PhaseSpacePosition(pos=[0.,0.3],
     ...                            vel=[0.38,0.])
     >>> orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.05, n_steps=10000)
-    >>> fig = orbit.plot(marker=',', linestyle='none', alpha=0.5)
+    >>> fig = orbit.plot(marker=',', linestyle='none', alpha=0.5) # doctest: +SKIP
 
 .. plot::
     :align: center

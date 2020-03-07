@@ -71,7 +71,7 @@ the orbit points::
    >>> fig,ax = plt.subplots(1, 1, figsize=(5,5))
    >>> fig = pot.plot_contours(grid=(grid,grid,0), cmap='Greys', ax=ax)
    >>> fig = orbits[-1].plot(['x', 'y'], color='#9ecae1', s=1., alpha=0.5,
-   ...                       axes=[ax], auto_aspect=False)
+   ...                       axes=[ax], auto_aspect=False) # doctest: +SKIP
 
 .. plot::
    :align: center

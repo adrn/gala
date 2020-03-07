@@ -142,7 +142,7 @@ We can easily plot projections of the phase-space positions using the
     >>> v = np.random.uniform(-200, 200, size=(3,128))
     >>> w = gd.PhaseSpacePosition(pos=x * u.kpc,
     ...                           vel=v * u.km/u.s)
-    >>> fig = w.plot()
+    >>> fig = w.plot() # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -163,7 +163,7 @@ This is a thin wrapper around the `~gala.dynamics.plot_projections`
 function and any keyword arguments are passed through to that function::
 
     >>> fig = w.plot(components=['x', 'v_z'], color='r',
-    ...              facecolor='none', marker='o', s=20, alpha=0.5)
+    ...              facecolor='none', marker='o', s=20, alpha=0.5) # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -249,7 +249,7 @@ example::
 Just like for |psp|, we can quickly visualize an orbit using the
 `~gala.dynamics.Orbit.plot` method::
 
-    >>> fig = orbit.plot()
+    >>> fig = orbit.plot() # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -269,7 +269,7 @@ Just like for |psp|, we can quickly visualize an orbit using the
 Again, this is a thin wrapper around the `~gala.dynamics.plot_projections`
 function and any keyword arguments are passed through to that function::
 
-    >>> fig = orbit.plot(linewidth=4., alpha=0.5, color='r')
+    >>> fig = orbit.plot(linewidth=4., alpha=0.5, color='r') # doctest: +SKIP
 
 .. plot::
     :align: center
