@@ -2,6 +2,7 @@
 
 # Standard library
 import logging
+import warnings
 
 # Third-party
 import numpy as np
@@ -98,7 +99,9 @@ def test_check_angle_sampling():
         # print("N periods:", t.max() / periods)
 
         angles = t[np.newaxis] * omegas[:,np.newaxis]
-        checks,failures = check_angle_sampling(nvecs, angles)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', UserWarning)
+            checks,failures = check_angle_sampling(nvecs, angles)
 
         assert np.all(failures == i)
 

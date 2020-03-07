@@ -132,6 +132,7 @@ We can plot the integrated (chaotic) orbit::
 
 .. plot::
     :align: center
+    :context:close-figs
 
     import astropy.units as u
     import matplotlib.pyplot as pl
@@ -165,11 +166,7 @@ nonlinear system::
 
 .. plot::
     :align: center
-
-    import astropy.units as u
-    import matplotlib.pyplot as pl
-    import numpy as np
-    import gala.integrate as gi
+    :context:close-figs
 
     def F(t,w,sigma,rho,beta):
         x,y,z,px,py,pz = w

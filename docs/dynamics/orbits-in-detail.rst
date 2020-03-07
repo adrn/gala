@@ -146,10 +146,12 @@ We can easily plot projections of the phase-space positions using the
 
 .. plot::
     :align: center
+    :context:close-figs
 
     import astropy.units as u
     import numpy as np
     import gala.dynamics as gd
+
     np.random.seed(42)
     x = np.random.uniform(-10,10,size=(3,128))
     v = np.random.uniform(-200,200,size=(3,128))
@@ -161,21 +163,14 @@ This is a thin wrapper around the `~gala.dynamics.plot_projections`
 function and any keyword arguments are passed through to that function::
 
     >>> fig = w.plot(components=['x', 'v_z'], color='r',
-    ...              facecolor='', marker='o', s=20, alpha=0.5)
+    ...              facecolor='none', marker='o', s=20, alpha=0.5)
 
 .. plot::
     :align: center
+    :context:close-figs
 
-    import astropy.units as u
-    import numpy as np
-    import gala.dynamics as gd
-    np.random.seed(42)
-    x = np.random.uniform(-10,10,size=(3,128))
-    v = np.random.uniform(-200,200,size=(3,128))
-    w = gd.PhaseSpacePosition(pos=x*u.kpc,
-                              vel=v*u.km/u.s)
     fig = w.plot(components=['x', 'v_z'], color='r',
-                 facecolor='', marker='o', s=20, alpha=0.5)
+                 facecolor='none', marker='o', s=20, alpha=0.5)
 
 Phase-space position API
 ------------------------
@@ -258,6 +253,7 @@ Just like for |psp|, we can quickly visualize an orbit using the
 
 .. plot::
     :align: center
+    :context:close-figs
 
     import astropy.units as u
     import gala.dynamics as gd
@@ -277,16 +273,8 @@ function and any keyword arguments are passed through to that function::
 
 .. plot::
     :align: center
+    :context:close-figs
 
-    import astropy.units as u
-    import gala.dynamics as gd
-    import gala.potential as gp
-    from gala.units import galactic
-
-    pot = gp.PlummerPotential(m=1E10 * u.Msun, b=1. * u.kpc, units=galactic)
-    w0 = gd.PhaseSpacePosition(pos=[10.,0,0] * u.kpc,
-                               vel=[0.,75,0] * u.km/u.s)
-    orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=5000)
     fig = orbit.plot(linewidth=4., alpha=0.5, color='r')
 
 We can also quickly compute quantities like the angular momentum, and estimates
