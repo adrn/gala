@@ -1,14 +1,8 @@
 name: gala-dev
 
-channels:
-  - astropy
-
 dependencies:
-  - astropy>=3
-  - numpy
-  - cython
-  - matplotlib
-  - scipy
-  - pyyaml
-  - sympy
-  - h5py
+  - python>=3.7
+  - gsl
+  - pip
+  - pip:
+    - -r requirements.txt
