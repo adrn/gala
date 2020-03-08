@@ -20,6 +20,11 @@ For the examples below the following imports have already been executed::
     >>> import astropy.units as u
     >>> import gala.coordinates as gc
 
+We will also set the default Astropy Galactocentric frame parameters to the
+values adopted in Astropy v4.0:
+
+    >>> _ = coord.galactocentric_frame_defaults.set('v4.0')
+
 Stellar stream coordinate frames
 ================================
 
@@ -72,10 +77,10 @@ position and velocity, we can transform to a
     ...                       radial_velocity=-32*u.km/u.s)
     >>> gd1.transform_to(coord.Galactocentric) # doctest: +FLOAT_CMP
     <Galactocentric Coordinate (galcen_coord=<ICRS Coordinate: (ra, dec) in deg
-        (266.4051, -28.936175)>, galcen_distance=8.3 kpc, galcen_v_sun=(11.1, 232.24, 7.25) km / s, z_sun=27.0 pc, roll=0.0 deg): (x, y, z) in kpc
-        (-12.78977138, -0.09870921, 6.44110283)
-     (v_x, v_y, v_z) in km / s
-        (-73.01933674, -216.37648654, -97.60065189)>
+        (266.4051, -28.936175)>, galcen_distance=8.122 kpc, galcen_v_sun=(12.9, 245.6, 7.78) km / s, z_sun=20.8 pc, roll=0.0 deg): (x, y, z) in kpc
+        (-12.61622659, -0.09870921, 6.43179403)
+    (v_x, v_y, v_z) in km / s
+        (-71.14675268, -203.01648654, -97.12884319)>
 
 For custom great circle coordinate systems, and for more information about the
 stellar stream frames, see :ref:`greatcircle`.
@@ -101,9 +106,9 @@ To use, you pass in a coordinate object with scalar or array values::
     >>> gc.reflex_correct(c) # doctest: +FLOAT_CMP
     <SkyCoord (ICRS): (ra, dec, distance) in (deg, deg, pc)
         [(180.323, -17., 172.), (  1.523,  29., 412.)]
-     (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
-        [(130.07952506, 166.6468671 , -38.61764069),
-         (-57.03358538,  58.77444739, 153.72743857)]>
+    (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
+        [(139.47001884, 175.45769809, -47.09032586),
+        (-61.01738781,  61.51055793, 163.36721898)]>
 
 By default, this uses the default solar location and velocity from the
 `astropy.coordinates.Galactocentric` frame class. To modify these, for example,
@@ -115,9 +120,9 @@ use the arguments of that class::
     >>> gc.reflex_correct(c, gc_frame) # doctest: +FLOAT_CMP
     <SkyCoord (ICRS): (ra, dec, distance) in (deg, deg, pc)
         [(180.323, -17., 172.), (  1.523,  29., 412.)]
-     (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
+    (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
         [(136.93481249, 175.37627916, -47.6177433 ),
-         (-59.96484921,  61.41044742, 163.90707073)]>
+        (-59.96484921,  61.41044742, 163.90707073)]>
 
 If you don't have radial velocity information and want to correct the proper
 motions, pass in zeros for the radial velocity (and ignore the output value of
@@ -132,8 +137,8 @@ the radial velocity)::
     >>> gc.reflex_correct(c) # doctest: +FLOAT_CMP
     <SkyCoord (ICRS): (ra, dec, distance) in (deg, deg, pc)
         (162., -17., 172.)
-     (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
-        (81.60359171, 155.62817259, -182.00367694)>
+    (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
+        (88.20380175, 163.68500525, -192.48721942)>
 
 Similarly, if you don't have proper motion information and want to correct the
 proper motions, pass in zeros for the proper motions (and ignore the output
@@ -148,8 +153,8 @@ values of the proper motions) -- this is sometimes called "v_GSR"::
     >>> gc.reflex_correct(c) # doctest: +FLOAT_CMP
     <SkyCoord (ICRS): (ra, dec, distance) in (deg, deg, pc)
         (162., -17., 172.)
-     (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
-        (92.60359171, 151.62817259, -55.00367694)>
+    (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
+        (99.20380175, 159.68500525, -65.48721942)>
 
 
 Transforming a proper motion covariance matrix to a new coordinate frame

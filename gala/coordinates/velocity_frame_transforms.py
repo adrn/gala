@@ -1,7 +1,8 @@
 """ Miscellaneous astronomical velocity transformations. """
 
-# Standard library
 import astropy.coordinates as coord
+
+from .galactocentric import get_galactocentric2019
 
 __all__ = ["vgsr_to_vhel", "vhel_to_vgsr"]
 
@@ -38,7 +39,8 @@ def vgsr_to_vhel(coordinate, vgsr, vsun=None):
     """
 
     if vsun is None:
-        vsun = coord.Galactocentric().galcen_v_sun.to_cartesian().xyz
+        galcen = get_galactocentric2019()
+        vsun = galcen.galcen_v_sun.to_cartesian().xyz
 
     return vgsr - _get_vproj(coordinate, vsun)
 
@@ -68,6 +70,7 @@ def vhel_to_vgsr(coordinate, vhel, vsun):
     """
 
     if vsun is None:
-        vsun = coord.Galactocentric().galcen_v_sun.to_cartesian().xyz
+        galcen = get_galactocentric2019()
+        vsun = galcen.galcen_v_sun.to_cartesian().xyz
 
     return vhel + _get_vproj(coordinate, vsun)

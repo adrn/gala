@@ -7,7 +7,7 @@ import pytest
 # This project
 from ..greatcircle import (GreatCircleICRSFrame, make_greatcircle_cls,
                            pole_from_endpoints, sph_midpoint)
-
+from ..galactocentric import get_galactocentric2019
 
 def test_cls_init():
     pole = coord.SkyCoord(ra=72.2643*u.deg, dec=-20.6575*u.deg)
@@ -31,9 +31,10 @@ def test_cls_init():
 
 
 def test_init_center():
+    galcen = get_galactocentric2019()
     stupid_gal = GreatCircleICRSFrame(
         pole=coord.Galactic._ngp_J2000.transform_to(coord.ICRS),
-        center=coord.Galactocentric().galcen_coord)
+        center=galcen.galcen_coord)
     gal = coord.Galactic(50*u.deg, 20*u.deg)
     gal2 = gal.transform_to(stupid_gal)
 

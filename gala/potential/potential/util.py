@@ -63,7 +63,9 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
     `~gala.potential.PotentialBase` and therefore has many useful methods.
     For example, to integrate an orbit::
 
-        >>> orbit = p1.integrate_orbit([1.,0], dt=0.01, n_steps=1000)
+        >>> from gala.potential import Hamiltonian
+        >>> H = Hamiltonian(p1)
+        >>> orbit = H.integrate_orbit([1.,0], dt=0.01, n_steps=1000)
 
     """
     try:
