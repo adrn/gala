@@ -84,12 +84,14 @@ copyright = '{0}, {1}'.format(
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-import_module(setup_cfg['name'])
-package = sys.modules[setup_cfg['name']]
+# Note: For gala, the package name is different from the project name!
+package_name = 'gala'
+import_module(package_name)
+package = sys.modules[package_name]
 
 # TODO: Use Gala style when building docs
 mpl_style = None
-exec('from {0}.mpl_style import mpl_style'.format(setup_cfg['name']))
+exec('from {0}.mpl_style import mpl_style'.format(package_name))
 if mpl_style is not None:
     plot_rcparams = mpl_style
     plot_apply_rcparams = True
