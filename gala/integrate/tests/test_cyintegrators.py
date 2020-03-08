@@ -31,9 +31,9 @@ def test_compare_to_py(Integrator, integrate_func):
         w_T = np.ascontiguousarray(w.T)
         return H._gradient(w_T, np.array([0.])).T
 
-    cy_w0 = np.array([[0.,10.,0.,0.2,0.,0.],
-                      [10.,0.,0.,0.,0.2,0.],
-                      [0.,10.,0.,0.,0.,0.2]])
+    cy_w0 = np.array([[0., 10., 0., 0.2, 0., 0.],
+                      [10., 0., 0., 0., 0.2, 0.],
+                      [0., 10., 0., 0., 0., 0.2]])
     py_w0 = np.ascontiguousarray(cy_w0.T)
 
     n_steps = 1024
@@ -51,8 +51,11 @@ def test_compare_to_py(Integrator, integrate_func):
 
     assert py_w.shape == cy_w.shape
     assert np.allclose(cy_w[:, -1], py_w[:, -1])
+    assert np.allclose(cy_t, py_t)
 
 
+# TODO: move this to only run if a flag like --remote-data is passed, like
+# --speed-scaling or something?
 @pytest.mark.skipif(True, reason="Slow test - mainly for plotting locally")
 @pytest.mark.parametrize(("Integrator", "integrate_func"), _list)
 def test_scaling(tmpdir, Integrator, integrate_func):
@@ -68,7 +71,7 @@ def test_scaling(tmpdir, Integrator, integrate_func):
     dt = 1.
 
     for c, nparticles in zip(colors, [1, 100, 1000]):
-        cy_w0 = np.array([[0.,10.,0.,0.2,0.,0.]]*nparticles)
+        cy_w0 = np.array([[0., 10., 0., 0.2, 0., 0.]]*nparticles)
         py_w0 = np.ascontiguousarray(cy_w0.T)
 
         x = []
@@ -97,7 +100,7 @@ def test_scaling(tmpdir, Integrator, integrate_func):
 
     # pl.title(Integrator.__name__)
     # pl.legend(loc='upper left')
-    # pl.xlim(90,30000)
+    # pl.xlim(90, 30000)
     # pl.xlabel("N steps")
     # pl.tight_layout()
     # # pl.show()

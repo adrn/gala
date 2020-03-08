@@ -111,15 +111,6 @@ class Integrator(object):
             t : array_like
                 An array of times to solve on.
 
-        .. warning::
-
-            Right now, this always returns a `~gala.dynamics.Orbit` instance.
-            This is wrong and will change!
-
-        .. todo::
-
-            Allow specifying the return orbit class.
-
         Parameters
         ----------
         w0 : `~gala.dynamics.PhaseSpacePosition`
