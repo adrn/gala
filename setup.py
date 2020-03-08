@@ -114,13 +114,13 @@ else:
 # This means people experimenting might need to run "git clean" to remove all
 # temp. build products if they want to switch between installing with GSL and
 # no GSL support.
-if os.path.exists(extra_compile_macros_file):
-    with open(extra_compile_macros_file, "r") as f:
-        line = f.read().strip()
+# if os.path.exists(extra_compile_macros_file):
+#     with open(extra_compile_macros_file, "r") as f:
+#         line = f.read().strip()
 
-    if line.endswith('0'):
-        gsl_version = None
-        nogsl = True
+#     if line.endswith('0'):
+#         gsl_version = None
+#         nogsl = True
 
 print("-" * 79)
 _see_msg = ("See the gala documentation 'installation' page for more "
