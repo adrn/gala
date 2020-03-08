@@ -60,7 +60,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         if R is not None:
             if isinstance(R, Rotation):
-                R = R.as_dcm()
+                R = R.as_matrix()
             R = np.array(R)
 
             if R.shape != (ndim, ndim):

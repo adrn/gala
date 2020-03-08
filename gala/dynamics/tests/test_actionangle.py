@@ -2,18 +2,18 @@
 
 # Standard library
 import logging
+import warnings
 
 # Third-party
 import numpy as np
 from astropy import log as logger
-from astropy.tests.helper import quantity_allclose
 from scipy.linalg import solve
 import pytest
 
 # Project
 from ...integrate import DOPRI853Integrator
 from ...potential import (IsochronePotential, HarmonicOscillatorPotential,
-                          LeeSutoTriaxialNFWPotential)
+                          LeeSutoTriaxialNFWPotential, Hamiltonian)
 from ...units import galactic
 from ..actionangle import *
 from ..core import *
@@ -37,7 +37,8 @@ def test_fit_isochrone():
     true_m = 2.81E11
     true_b = 11.
     potential = IsochronePotential(m=true_m, b=true_b, units=galactic)
-    orbit = potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., n_steps=10000)
+    H = Hamiltonian(potential)
+    orbit = H.integrate_orbit([15.,0,0,0,0.2,0], dt=2., n_steps=10000)
 
     fit_potential = fit_isochrone(orbit)
     m, b = (fit_potential.parameters['m'].value,
@@ -49,8 +50,8 @@ def test_fit_harmonic_oscillator():
     # integrate orbit in harmonic oscillator potential, then try to recover it
     true_omegas = np.array([0.011, 0.032, 0.045])
     potential = HarmonicOscillatorPotential(omega=true_omegas, units=galactic)
-
-    orbit = potential.integrate_orbit([15.,1,2,0,0,0], dt=2., n_steps=10000)
+    H = Hamiltonian(potential)
+    orbit = H.integrate_orbit([15.,1,2,0,0,0], dt=2., n_steps=10000)
 
     fit_potential = fit_harmonic_oscillator(orbit)
     omegas = fit_potential.parameters['omega'].value
@@ -62,21 +63,24 @@ def test_fit_toy_potential():
     true_m = 2.81E11
     true_b = 11.
     true_potential = IsochronePotential(m=true_m, b=true_b, units=galactic)
-    orbit = true_potential.integrate_orbit([15.,0,0,0,0.2,0], dt=2., n_steps=10000)
+    H = Hamiltonian(true_potential)
+    orbit = H.integrate_orbit([15.,0,0,0,0.2,0], dt=2., n_steps=10000)
 
     potential = fit_toy_potential(orbit)
     for k,v in true_potential.parameters.items():
-        assert quantity_allclose(v, potential.parameters[k], rtol=1E-2)
+        assert u.allclose(v, potential.parameters[k], rtol=1E-2)
 
     # -----------------------------------------------------------------
     true_omegas = np.array([0.011, 0.032, 0.045])
-    true_potential = HarmonicOscillatorPotential(omega=true_omegas, units=galactic)
-    orbit = true_potential.integrate_orbit([15.,1,2,0,0,0], dt=2., n_steps=10000)
+    true_potential = HarmonicOscillatorPotential(omega=true_omegas,
+                                                 units=galactic)
+    H = Hamiltonian(true_potential)
+    orbit = H.integrate_orbit([15.,1,2,0,0,0], dt=2., n_steps=10000)
 
     potential = fit_toy_potential(orbit)
 
-    assert quantity_allclose(potential.parameters['omega'],
-                             true_potential.parameters['omega'], rtol=1E-2)
+    assert u.allclose(potential.parameters['omega'],
+                      true_potential.parameters['omega'], rtol=1E-2)
 
 def test_check_angle_sampling():
 
@@ -94,10 +98,13 @@ def test_check_angle_sampling():
         # print("Periods:", periods)
         # print("N periods:", t.max() / periods)
 
-        angles = t[np.newaxis] * omegas[:,np.newaxis]
-        checks,failures = check_angle_sampling(nvecs, angles)
+        angles = t[np.newaxis] * omegas[:, np.newaxis]
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', UserWarning)
+            checks, failures = check_angle_sampling(nvecs, angles)
 
         assert np.all(failures == i)
+
 
 class ActionsBase(object):
 
@@ -130,10 +137,14 @@ class ActionsBase(object):
 
             # get values from Sanders' code
             print("Computing actions from genfunc...")
-            s_actions,s_angles,s_freqs,toy_potential = sanders_act_ang_freq(t, w, circ, N_max=N_max)
+            s_actions, s_angles, s_freqs, toy_potential = sanders_act_ang_freq(
+                t, w, circ, N_max=N_max)
 
             print("Computing actions with gala...")
-            ret = find_actions(orb, N_max=N_max, toy_potential=toy_potential)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', UserWarning)
+                ret = find_actions(orb, N_max=N_max,
+                                   toy_potential=toy_potential)
             actions = ret['actions']
             angles = ret['angles']
             freqs = ret['freqs']
@@ -175,8 +186,9 @@ class TestActions(ActionsBase):
         n_steps = 20000
 
         # integrate orbits
-        orbit = self.potential.integrate_orbit(w0, dt=2., n_steps=n_steps,
-                                               Integrator=DOPRI853Integrator)
+        H = Hamiltonian(self.potential)
+        orbit = H.integrate_orbit(w0, dt=2., n_steps=n_steps,
+                                  Integrator=DOPRI853Integrator)
         self.orbit = orbit
         self.t = orbit.t.value
         self.w = orbit.w()
@@ -253,7 +265,8 @@ def test_regression_113():
     vvec = 0.999*vvec
 
     ics = PhaseSpacePosition(pos=rvec, vel=vvec)
-    orbit = Hamiltonian(pot).integrate_orbit(ics, dt=dt, n_steps=n_steps)
+    H = Hamiltonian(pot)
+    orbit = H.integrate_orbit(ics, dt=dt, n_steps=n_steps)
     toy_potential = fit_isochrone(orbit)
 
     m = toy_potential.parameters['m'].value

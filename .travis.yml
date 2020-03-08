@@ -1,7 +1,8 @@
-language: c
+language: python
 
-# Setting sudo to false opts in to Travis-CI container-based builds.
-sudo: false
+# We need a full clone to make sure setuptools_scm works properly
+git:
+    depth: false
 
 os:
     - linux
@@ -9,14 +10,13 @@ os:
 addons:
     apt:
         packages:
+            - pandoc
             - graphviz
             - texlive-latex-extra
             - dvipng
             - gsl-bin
             - libgsl0-dev
 
-
-stage: Comprehensive tests
 
 stages:
    # Do the style check and a single test job, don't proceed if it fails
@@ -30,28 +30,23 @@ stages:
 
 env:
     global:
+
         # The following versions are the 'default' for tests, unless
-        # overidden underneath. They are defined here in order to save having
+        # overridden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
-        - PYTHON_VERSION=3.7
-        - MAIN_CMD='python setup.py'
-        - NUMPY_VERSION=stable
-        - ASTROPY_VERSION=stable
-        - SETUP_CMD='test'
-        - CONDA_DEPENDENCIES='cython scipy matplotlib pyyaml h5py sympy numexpr'
-        - CONDA_DEPENDENCIES_DOC="${CONDA_DEPENDENCIES} jinja2 ipython jupyter notebook ipykernel"
-        - PIP_DEPENDENCIES=''
-        - PIP_DEPENDENCIES_DOC="${PIP_DEPENDENCIES} nbsphinx tqdm sphinx-astropy"
-        - CONDA_CHANNELS='astropy-ci-extras astropy'
 
-        # If there are matplotlib or other GUI tests, uncomment the following
-        # line to use the X virtual framebuffer.
+        # The following three variables are for tox. TOXENV is a standard
+        # variable that tox uses to determine the environment to run,
+        # TOXARGS are arguments passed to tox, and TOXPOSARGS are arguments
+        # that tox passes through to the {posargs} indicator in tox.ini.
+        # The latter can be used for example to pass arguments to pytest.
+        - TOXENV='test'
+        - TOXARGS='-v'
+        - TOXPOSARGS=''
+
+        # The following is needed to avoid issues if e.g. Matplotlib tries
+        # to open a GUI window.
         - SETUP_XVFB=True
-
-        # If you want to ignore certain flake8 errors, you can list them
-        # in FLAKE8_OPT, for example:
-        # - FLAKE8_OPT='--ignore=E501'
-        - FLAKE8_OPT=''
 
 matrix:
 
@@ -59,70 +54,104 @@ matrix:
     fast_finish: true
 
     include:
-        # Make sure that egg_info works without dependencies
-        - stage: Initial tests
-          env: PYTHON_VERSION=3.7 SETUP_CMD='egg_info'
 
         # Try MacOS X, usually enough only to run from cron as hardly there are
-        # issues that are not picked up by a linux worker
+        # issues that are not picked up by a linux worker. We set language to
+        # 'c' since 'python' doesn't work on non-Linux platforms.
         - os: osx
+          language: c
+          name: Python 3.7 with required dependencies
           stage: Cron tests
-          env: SETUP_CMD='test' EVENT_TYPE='cron'
+          env: PYTHON_VERSION=3.7 TOXENV=py37-test
 
-        # Do a coverage test.
+        # Do a regular build on Linux with Python 3.8, with cov
+        # For Linux we use language: python to avoid using conda.
         - os: linux
+          python: 3.8
+          name: Python 3.8 with required dependencies and measure coverage
           stage: Initial tests
-          env: SETUP_CMD='test --coverage'
+          env: TOXENV=py38-test-cov
 
-        # Check for sphinx doc build warnings - we do this first because it
-        # may run for a long time
+        # Check for sphinx doc build warnings
         - os: linux
-          env: SETUP_CMD='install build_docs -w'
-               CONDA_DEPENDENCIES=$CONDA_DEPENDENCIES_DOC
-               PIP_DEPENDENCIES=$PIP_DEPENDENCIES_DOC
+          python: 3.8
+          name: Documentation build
+          stage: Comprehensive tests
+          env: TOXENV=build_docs
 
-        # Now try Astropy dev with the latest Python and LTS with and 3.x.
+        # Now try Astropy dev with the latest Python
         - os: linux
-          env: ASTROPY_VERSION=development
-               EVENT_TYPE='pull_request push cron'
+          python: 3.8
+          name: Python 3.8 with developer version of astropy
+          stage: Comprehensive tests
+          env: TOXENV=py38-test-devdeps
+
+        # And with an older Python, Astropy LTS, and the oldest supported Numpy
+        - os: linux
+          python: 3.6
+          name: Python 3.6 astropy LTS and Numpy 1.16
+          stage: Comprehensive tests
+          env: TOXENV=py36-test-astropylts-numpy116
 
         # Add a job that runs from cron only and tests against astropy dev and
         # numpy dev to give a change for early discovery of issues and feedback
         # for both developer teams.
         - os: linux
+          python: 3.8
+          name: Python 3.8 latest developer version of key dependencies
           stage: Cron tests
-          env: ASTROPY_VERSION=development NUMPY_VERSION=development
-               EVENT_TYPE='cron'
+          env: TOXENV=py38-test-devdeps
+
+        # Gala doesn't build on Windows...
+        # - os: windows
+        #   language: c
+        #   name: Python 3.8 with required dependencies
+        #   stage: Comprehensive tests
+        #   env: PYTHON_VERSION=3.8 TOXENV=py38-test
+
+        # Try other python versions and Numpy versions. Since we can assume that
+        # the Numpy developers have taken care of testing Numpy with different
+        # versions of Python, we can vary Python and Numpy versions at the same
+        # time.
 
         - os: linux
-          env: PYTHON_VERSION=3.6
+          python: 3.7
+          name: Python 3.7 with astropy 4.0 and Numpy 1.17
+          stage: Comprehensive tests
+          env: TOXENV=py37-test-astropy40-numpy117
 
-        - os: linux
-          env: SETUP_CMD='build --nogsl test'
-
-        - os: linux
-          env: CONDA_DEPENDENCIES+=" galpy"
-
-        # Do a PEP8 test with flake8
-        # - os: linux
-        #   stage: Initial tests
-        #   env: MAIN_CMD='flake8 gala --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
+        # Try installing without gsl:
+        - os: osx
+          language: c
+          name: Python 3.7 with required dependencies, without GSL
+          stage: Comprehensive tests
+          env: PYTHON_VERSION=3.7 TOXENV=py37-test GALA_NOGSL=1
 
     allow_failures:
         # Do a PEP8 test with flake8
         # (do allow to fail unless your code completely compliant)
         - os: linux
-          stage: Initial tests
-          env: MAIN_CMD='flake8 gala --count --show-source --statistics $FLAKE8_OPT' SETUP_CMD=''
+          python: 3.8
+          name: Code style checks
+          stage: Comprehensive tests
+          env: TOXENV=codestyle
 
 install:
-    - git clone --depth 1 git://github.com/astropy/ci-helpers.git
-    - source ci-helpers/travis/setup_conda.sh
+
+    # We now use the ci-helpers package to set up our Python environment
+    # on Windows and MacOS X but we don't set up any other dependencies,
+    # instead using tox to do this. See https://github.com/astropy/ci-helpers
+    # for more information about ci-helpers.
+
+    - if [[ $TRAVIS_OS_NAME != linux ]]; then
+        git clone --depth 1 git://github.com/astropy/ci-helpers.git;
+        source ci-helpers/travis/setup_conda.sh;
+      fi
 
 script:
-   - $MAIN_CMD $SETUP_CMD
+    - pip install tox
+    - tox $TOXARGS -- $TOXPOSARGS
 
 after_success:
-    - if [[ $SETUP_CMD == 'test --coverage' ]]; then
-        coveralls --rcfile='gala/tests/coveragerc';
-      fi
+    - pip install coveralls
+    - coveralls

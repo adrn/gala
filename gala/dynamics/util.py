@@ -3,7 +3,6 @@
 # Third-party
 import astropy.units as u
 import astropy.coordinates as coord
-from astropy.tests.helper import quantity_allclose
 from astropy.utils.misc import isiterable
 import numpy as np
 from scipy.signal import argrelmax, argrelmin
@@ -13,6 +12,7 @@ from .core import PhaseSpacePosition
 from ..util import atleast_2d
 
 __all__ = ['peak_to_peak_period', 'estimate_dt_n_steps', 'combine']
+
 
 def peak_to_peak_period(t, f, amplitude_threshold=1E-2):
     """
@@ -67,7 +67,8 @@ def peak_to_peak_period(t, f, amplitude_threshold=1E-2):
     # then take the mean of these two
     return np.mean([T_max, T_min]) * t_unit
 
-def _autodetermine_initial_dt(w0, potential, dE_threshold=1E-9,
+
+def _autodetermine_initial_dt(w0, H, dE_threshold=1E-9,
                               **integrate_kwargs):
     if w0.shape and w0.shape[0] > 1:
         raise ValueError("Only one set of initial conditions may be passed "
@@ -81,8 +82,8 @@ def _autodetermine_initial_dt(w0, potential, dE_threshold=1E-9,
 
     for dt in dts:
         n_steps = int(round(_base_n_steps / dt))
-        orbit = potential.integrate_orbit(w0, dt=dt, n_steps=n_steps,
-                                          **integrate_kwargs)
+        orbit = H.integrate_orbit(w0, dt=dt, n_steps=n_steps,
+                                  **integrate_kwargs)
         E = orbit.energy()
         dE = np.abs((E[-1] - E[0]) / E[0]).value
 
@@ -90,6 +91,7 @@ def _autodetermine_initial_dt(w0, potential, dE_threshold=1E-9,
             break
 
     return dt
+
 
 def estimate_dt_n_steps(w0, hamiltonian, n_periods, n_steps_per_period,
                         dE_threshold=1E-9, func=np.nanmax,
@@ -127,6 +129,9 @@ def estimate_dt_n_steps(w0, hamiltonian, n_periods, n_steps_per_period,
     if not isinstance(w0, PhaseSpacePosition):
         w0 = np.asarray(w0)
         w0 = PhaseSpacePosition.from_w(w0, units=hamiltonian.units)
+
+    from ..potential import Hamiltonian
+    hamiltonian = Hamiltonian(hamiltonian)
 
     # integrate orbit
     dt = _autodetermine_initial_dt(w0, hamiltonian, dE_threshold=dE_threshold,
@@ -219,8 +224,8 @@ def combine(objs):
 
         # For orbits, time arrays must be the same
         if (hasattr(obj, 't') and obj.t is not None and objs[0].t is not None
-                and not quantity_allclose(obj.t, objs[0].t,
-                                          atol=1E-13*objs[0].t.unit)):
+                and not u.allclose(obj.t, objs[0].t,
+                                   atol=1E-13*objs[0].t.unit)):
             raise ValueError("All orbits must have the same time array.")
 
         if 'cartesian' not in obj.pos.get_name():

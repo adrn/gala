@@ -60,7 +60,7 @@ def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
     vecs = np.meshgrid(np.arange(-N_max, N_max+1, dx),
                        np.arange(-N_max, N_max+1, dy),
                        np.arange(-N_max, N_max+1, dz))
-    vecs = np.vstack(map(np.ravel, vecs)).T
+    vecs = np.vstack(list(map(np.ravel, vecs))).T
     vecs = vecs[np.linalg.norm(vecs, axis=1) <= N_max]
 
     if half_lattice:
@@ -117,7 +117,7 @@ def fit_isochrone(orbit, m0=2E11, b0=1., minimize_kwargs=None):
         logm, logb = p
         potential = IsochronePotential(m=np.exp(logm), b=np.exp(logb),
                                        units=pot.units)
-        H = (potential.value(w[:3]).decompose(pot.units).value +
+        H = (potential.energy(w[:3]).decompose(pot.units).value +
              0.5*np.sum(w[3:]**2, axis=0))
         return np.sum(np.squeeze(H - np.mean(H))**2)
 
@@ -177,7 +177,7 @@ def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1], minimize_kwargs=None):
 
     def f(omega, w):
         potential = HarmonicOscillatorPotential(omega=omega, units=pot.units)
-        H = (potential.value(w[:3]).decompose(pot.units).value +
+        H = (potential.energy(w[:3]).decompose(pot.units).value +
              0.5*np.sum(w[3:]**2, axis=0))
         return np.sum(np.squeeze(H - np.mean(H))**2)
 

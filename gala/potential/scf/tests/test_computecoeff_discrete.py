@@ -43,7 +43,7 @@ def test_plummer():
     xyz[:,0] = x
 
     # plot discrete vs. analytic potential
-    true_pot = pot.value(xyz.T).value
+    true_pot = pot.energy(xyz.T).value
     bfe_pot = potential(xyz, Snlm, Tnlm, G, M, r_s)
 
     assert np.allclose(true_pot, bfe_pot, rtol=1E-2)

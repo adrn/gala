@@ -24,6 +24,12 @@ Some imports needed for the code below::
     >>> from gala.dynamics import mockstream as ms
     >>> from gala.units import galactic
 
+We will also set the default Astropy Galactocentric frame parameters to the
+values adopted in Astropy v4.0:
+
+    >>> import astropy.coordinates as coord
+    >>> _ = coord.galactocentric_frame_defaults.set('v4.0')
+
 Getting started
 ===============
 
@@ -194,6 +200,7 @@ earliest time, then a stream is generated forward from the past time. This is pa
     :context: close-figs
 
     import astropy.coordinates as coord
+    coord.galactocentric_frame_defaults.set('v4.0')
     pal5_c = coord.SkyCoord(ra=229.018*u.degree, dec=-0.124*u.degree,
                             distance=22.9*u.kpc,
                             pm_ra_cosdec=-2.296*u.mas/u.yr,

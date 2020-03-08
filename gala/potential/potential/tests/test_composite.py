@@ -10,6 +10,7 @@ from ..builtin import (KeplerPotential, HernquistPotential,
                        HenonHeilesPotential)
 
 from ..ccompositepotential import CCompositePotential
+from ...hamiltonian import Hamiltonian
 from ....integrate import LeapfrogIntegrator, DOPRI853Integrator
 from ....units import solarsystem, galactic
 
@@ -25,7 +26,7 @@ class CompositeHelper(object):
         potential = self.Cls(one=self.p1, two=self.p2)
 
         q = np.ascontiguousarray(np.array([[1.1,0,0]]).T)
-        print("val", potential.value(q))
+        print("val", potential.energy(q))
 
         q = np.ascontiguousarray(np.array([[1.1,0,0]]).T)
         print("grad", potential.gradient(q))
@@ -66,10 +67,15 @@ class CompositeHelper(object):
         potential["two"] = self.p2
 
         for Integrator in [DOPRI853Integrator, LeapfrogIntegrator]:
-            w_cy = potential.integrate_orbit([1.,0,0, 0,2*np.pi,0], dt=0.01, n_steps=1000,
-                                             Integrator=Integrator, cython_if_possible=True)
-            w_py = potential.integrate_orbit([1.,0,0, 0,2*np.pi,0], dt=0.01, n_steps=1000,
-                                             Integrator=Integrator, cython_if_possible=False)
+            H = Hamiltonian(potential)
+            w_cy = H.integrate_orbit([1.,0,0, 0,2*np.pi,0], dt=0.01,
+                                     n_steps=1000,
+                                     Integrator=Integrator,
+                                     cython_if_possible=True)
+            w_py = H.integrate_orbit([1.,0,0, 0,2*np.pi,0], dt=0.01,
+                                     n_steps=1000,
+                                     Integrator=Integrator,
+                                     cython_if_possible=False)
 
             assert np.allclose(w_cy.xyz.value, w_py.xyz.value)
             assert np.allclose(w_cy.v_xyz.value, w_py.v_xyz.value)

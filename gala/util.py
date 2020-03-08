@@ -1,14 +1,15 @@
 """ General utilities. """
 
 # Standard library
-import collections
+from collections.abc import Mapping
 
 # Third-party
 import numpy as np
 
 __all__ = ['rolling_window', 'atleast_2d', 'assert_angles_allclose']
 
-class ImmutableDict(collections.Mapping):
+
+class ImmutableDict(Mapping):
 
     @classmethod
     def from_dict(cls, somedict):
@@ -44,6 +45,7 @@ class ImmutableDict(collections.Mapping):
     def copy(self):
         import copy
         return copy.deepcopy(self._dict)
+
 
 def rolling_window(arr, window_size, stride=1, return_idx=False):
     """
@@ -110,6 +112,7 @@ def rolling_window(arr, window_size, stride=1, return_idx=False):
             break
         ix1 += stride
 
+
 def atleast_2d(*arys, **kwargs):
     """
     View inputs as arrays with at least two dimensions.
@@ -169,14 +172,11 @@ def atleast_2d(*arys, **kwargs):
     else:
         return res
 
-##############################################################################
-# Testing
-#
 
 def assert_angles_allclose(x, y, **kwargs):
     """
     Like numpy's assert_allclose, but for angles (in radians).
     """
     c2 = (np.sin(x)-np.sin(y))**2 + (np.cos(x)-np.cos(y))**2
-    diff = np.arccos((2.0 - c2)/2.0) # a = b = 1
+    diff = np.arccos((2.0 - c2)/2.0)  # a = b = 1
     assert np.allclose(diff, 0.0, **kwargs)

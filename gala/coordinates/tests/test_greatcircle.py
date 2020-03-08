@@ -1,14 +1,13 @@
 # Third-party
 import astropy.coordinates as coord
 import astropy.units as u
-from astropy.tests.helper import catch_warnings
 import numpy as np
 import pytest
 
 # This project
 from ..greatcircle import (GreatCircleICRSFrame, make_greatcircle_cls,
                            pole_from_endpoints, sph_midpoint)
-
+from ..galactocentric import get_galactocentric2019
 
 def test_cls_init():
     pole = coord.SkyCoord(ra=72.2643*u.deg, dec=-20.6575*u.deg)
@@ -32,9 +31,10 @@ def test_cls_init():
 
 
 def test_init_center():
+    galcen = get_galactocentric2019()
     stupid_gal = GreatCircleICRSFrame(
         pole=coord.Galactic._ngp_J2000.transform_to(coord.ICRS),
-        center=coord.Galactocentric().galcen_coord)
+        center=galcen.galcen_coord)
     gal = coord.Galactic(50*u.deg, 20*u.deg)
     gal2 = gal.transform_to(stupid_gal)
 
@@ -136,6 +136,7 @@ def test_sph_midpoint():
 
 def test_pole_separation90():
     # Regression test for issue #160
+    from astropy.tests.helper import catch_warnings
 
     for dec in [19.8, 0, -41.3]:  # random values, but 0 is an important test
         pole = coord.SkyCoord(ra=32.5, dec=dec, unit='deg')
@@ -159,14 +160,14 @@ def test_pole_separation90():
 
 
 def test_init_R():
-    from ..gd1 import R as gd1_R, GD1
+    from ..gd1 import R as gd1_R, GD1Koposov10
 
     N = 128
     rnd = np.random.RandomState(42)
 
     gd1_gc_frame = GreatCircleICRSFrame.from_R(gd1_R)
-    tmp_in = GD1(phi1=rnd.uniform(0, 360, N)*u.deg,
-                 phi2=rnd.uniform(-90, 90, N)*u.deg)
+    tmp_in = GD1Koposov10(phi1=rnd.uniform(0, 360, N)*u.deg,
+                          phi2=rnd.uniform(-90, 90, N)*u.deg)
 
     tmp_out = tmp_in.transform_to(gd1_gc_frame)
 

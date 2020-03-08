@@ -145,6 +145,7 @@ be used to compute, for example, a mass profile::
 
 .. plot::
     :align: center
+    :context: close-figs
 
     import astropy.units as u
     import numpy as np
@@ -182,11 +183,7 @@ the potential value as a function of :math:`x` position at :math:`y=0, z=1`::
 
 .. plot::
     :align: center
-
-    import astropy.units as u
-    import numpy as np
-    import gala.potential as gp
-    from gala.units import galactic, solarsystem
+    :context: close-figs
 
     pot = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
 
@@ -212,14 +209,8 @@ aspect ratio of the plot::
 
 .. plot::
     :align: center
+    :context: close-figs
 
-    import astropy.units as u
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import gala.potential as gp
-    from gala.units import galactic, solarsystem
-
-    pot = gp.MiyamotoNagaiPotential(m=1E11, a=6.5, b=0.27, units=galactic)
     x = np.linspace(-15,15,100)
     z = np.linspace(-5,5,100)
 

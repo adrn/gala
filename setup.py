@@ -1,44 +1,86 @@
 #!/usr/bin/env python
+# Licensed under an MIT license - see LICENSE
 
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
+# NOTE: The configuration for the package, including the name, version, and
+# other information are set in the setup.cfg file.
 
-import glob
 import os
 import sys
-from subprocess import check_output, CalledProcessError
-
-import builtins
-
-# Ensure that astropy-helpers is available
-import ah_bootstrap  # noqa
 
 from setuptools import setup
-from setuptools.config import read_configuration
 
-from astropy_helpers.setup_helpers import (register_commands, get_package_info,
-                                           get_distutils_build_option)
-from astropy_helpers.version_helpers import generate_version_py
+from extension_helpers import get_extensions
 
-# Store the package name in a built-in variable so it's easy
-# to get from other parts of the setup infrastructure
-builtins._ASTROPY_PACKAGE_NAME_ = read_configuration('setup.cfg')['metadata']['name']
 
-# Create a dictionary with setup command overrides. Note that this gets
-# information about the package (name and version) from the setup.cfg file.
-cmdclass = register_commands()
+# First provide helpful messages if contributors try and run legacy commands
+# for tests or docs.
 
-# Freeze build information in version.py. Note that this gets information
-# about the package (name and version) from the setup.cfg file.
-version = generate_version_py()
+TEST_HELP = """
+Note: running tests is no longer done using 'python setup.py test'. Instead
+you will need to run:
 
-# Get configuration information from all of the various subpackages.
-# See the docstring for setup_helpers.update_package_files for more
-# details.
-package_info = get_package_info()
+    tox -e test
+
+If you don't already have tox installed, you can install it with:
+
+    pip install tox
+
+If you only want to run part of the test suite, you can also use pytest
+directly with::
+
+    pip install -e .[test]
+    pytest
+
+For more information, see:
+
+  http://docs.astropy.org/en/latest/development/testguide.html#running-tests
+"""
+
+if 'test' in sys.argv:
+    print(TEST_HELP)
+    sys.exit(1)
+
+DOCS_HELP = """
+Note: building the documentation is no longer done using
+'python setup.py build_docs'. Instead you will need to run:
+
+    tox -e build_docs
+
+If you don't already have tox installed, you can install it with:
+
+    pip install tox
+
+You can also build the documentation with Sphinx directly using::
+
+    pip install -e .[docs]
+    cd docs
+    make html
+
+For more information, see:
+
+  http://docs.astropy.org/en/latest/install.html#builddocs
+"""
+
+if 'build_docs' in sys.argv or 'build_sphinx' in sys.argv:
+    print(DOCS_HELP)
+    sys.exit(1)
+
+VERSION_TEMPLATE = """
+# Note that we need to fall back to the hard-coded version if either
+# setuptools_scm can't be imported or setuptools_scm can't determine the
+# version, so we catch the generic 'Exception'.
+try:
+    from setuptools_scm import get_version
+    version = get_version(root='..', relative_to=__file__)
+except Exception:
+    version = '{version}'
+""".lstrip()
 
 # ----------------------------------------------------------------------------
 # GSL support
 #
+from subprocess import check_output, CalledProcessError
+
 extra_compile_macros_file = 'gala/extra_compile_macros.h'
 
 # Note: on RTD, they now support conda environments, but don't activate the
@@ -53,7 +95,7 @@ else:
     env = None
 
 # First, see if the user wants to install without GSL:
-nogsl = get_distutils_build_option('nogsl')
+nogsl = bool(int(os.environ.get('GALA_NOGSL', 0)))
 
 # Auto-detect whether GSL is installed
 if not nogsl or nogsl is None: # GSL support enabled
@@ -72,15 +114,15 @@ else:
 # This means people experimenting might need to run "git clean" to remove all
 # temp. build products if they want to switch between installing with GSL and
 # no GSL support.
-if os.path.exists(extra_compile_macros_file):
-    with open(extra_compile_macros_file, "r") as f:
-        line = f.read().strip()
+# if os.path.exists(extra_compile_macros_file):
+#     with open(extra_compile_macros_file, "r") as f:
+#         line = f.read().strip()
 
-    if line.endswith('0'):
-        gsl_version = None
-        nogsl = True
+#     if line.endswith('0'):
+#         gsl_version = None
+#         nogsl = True
 
-print()
+print("-" * 79)
 _see_msg = ("See the gala documentation 'installation' page for more "
             "information about GSL support and installing GSL: "
             "http://gala.adrian.pw/en/latest/install.html")
@@ -107,9 +149,9 @@ else:
     except:
         gsl_prefix = str(check_output(cmd)).strip()
 
-print()
+print("-" * 79)
 
-extensions = package_info['ext_modules']
+extensions = get_extensions()
 for ext in extensions:
     if 'potential.potential' in ext.name or 'scf' in ext.name:
         if gsl_version is not None:
@@ -127,4 +169,7 @@ with open(extra_compile_macros_file, 'w') as f:
     else:
         f.writelines(['#define USE_GSL 0'])
 
-setup(name='astro-gala', version=version, cmdclass=cmdclass, **package_info)
+
+setup(use_scm_version={'write_to': os.path.join('gala', 'version.py'),
+                       'write_to_template': VERSION_TEMPLATE},
+      ext_modules=extensions)

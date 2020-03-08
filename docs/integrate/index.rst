@@ -41,7 +41,7 @@ inputs will *not* have units associated with them (e.g., they are not
 represents a simple harmonic oscillator) is::
 
     >>> def F(t, w):
-    ...     x,x_dot = w
+    ...     x, x_dot = w
     ...     return np.array([x_dot, -x])
 
 Even though time does not explicitly enter into the equation, the function must
@@ -103,10 +103,11 @@ so that
 Our derivative function is then::
 
     >>> def F(t, w, A, omega_D):
-    ...     q,p = w
-    ...     q_dot = p
-    ...     p_dot = -np.sin(q) + A*omega_D*np.cos(omega_D*t)
-    ...     return np.array([q_dot, p_dot])
+    ...     q, p = w
+    ...     wdot = np.zeros_like(w)
+    ...     wdot[0] = p
+    ...     wdot[1] = -np.sin(q) + A*omega_D*np.cos(omega_D*t)
+    ...     return wdot
 
 This function has two arguments -- :math:`A` (``A``), the amplitude of the
 forcing, and :math:`\omega_D` (``omega_D``), the driving frequency. We define an
@@ -124,14 +125,15 @@ in the number of steps to run for and a timestep. For this example, we will use
 the last option. See the API below under *"Other Parameters"* for more
 information.::
 
-    >>> orbit = integrator.run([3.,0.], dt=0.1, n_steps=10000)
+    >>> orbit = integrator.run([3., 0.], dt=0.1, n_steps=10000)
 
 We can plot the integrated (chaotic) orbit::
 
-    >>> fig = orbit.plot(subplots_kwargs=dict(figsize=(8,4)))
+    >>> fig = orbit.plot(subplots_kwargs=dict(figsize=(8,4))) # doctest: +SKIP
 
 .. plot::
     :align: center
+    :context: close-figs
 
     import astropy.units as u
     import matplotlib.pyplot as pl
@@ -139,13 +141,14 @@ We can plot the integrated (chaotic) orbit::
     import gala.integrate as gi
 
     def F(t, w, A, omega_D):
-        q,p = w
-        q_dot = p
-        p_dot = -np.sin(q) + A*omega_D*np.cos(omega_D*t)
-        return np.array([q_dot, p_dot])
+        q, p = w
+        wdot = np.zeros_like(w)
+        wdot[0] = p
+        wdot[1] = -np.sin(q) + A*omega_D*np.cos(omega_D*t)
+        return wdot
 
     integrator = gi.DOPRI853Integrator(F, func_args=(0.07, 0.75))
-    orbit = integrator.run([3.,0.], dt=0.1, n_steps=10000)
+    orbit = integrator.run([3., 0.], dt=0.1, n_steps=10000)
     fig = orbit.plot(subplots_kwargs=dict(figsize=(8,4)))
 
 Example: Lorenz equations
@@ -155,25 +158,29 @@ Here's another example of integrating the
 `Lorenz equations <https://en.wikipedia.org/wiki/Lorenz_system>`_, a 3D
 nonlinear system::
 
-    >>> def F(t,w,sigma,rho,beta):
-    ...     x,y,z,px,py,pz = w
-    ...     return np.array([sigma*(y-x), x*(rho-z)-y, x*y-beta*z, 0., 0., 0.]).reshape(w.shape)
+    >>> def F(t, w, sigma, rho, beta):
+    ...     x, y, z, *_ = w
+    ...     wdot = np.zeros_like(w)
+    ...     wdot[0] = sigma * (y - x)
+    ...     wdot[1] = x * (rho-z) - y
+    ...     wdot[2] = x*y - beta*z
+    ...     return wdot
     >>> sigma, rho, beta = 10., 28., 8/3.
     >>> integrator = gi.DOPRI853Integrator(F, func_args=(sigma, rho, beta))
-    >>> orbit = integrator.run([0.5,0.5,0.5,0,0,0], dt=1E-2, n_steps=1E4)
-    >>> fig = orbit.plot()
+    >>> orbit = integrator.run([0.5, 0.5, 0.5, 0, 0, 0], dt=1E-2, n_steps=1E4)
+    >>> fig = orbit.plot() # doctest: +SKIP
 
 .. plot::
     :align: center
+    :context: close-figs
 
-    import astropy.units as u
-    import matplotlib.pyplot as pl
-    import numpy as np
-    import gala.integrate as gi
-
-    def F(t,w,sigma,rho,beta):
-        x,y,z,px,py,pz = w
-        return np.array([sigma*(y-x), x*(rho-z)-y, x*y-beta*z, 0., 0., 0.]).reshape(w.shape)
+    def F(t, w, sigma, rho, beta):
+        x, y, z, *_ = w
+        wdot = np.zeros_like(w)
+        wdot[0] = sigma * (y - x)
+        wdot[1] = x * (rho-z) - y
+        wdot[2] = x*y - beta*z
+        return wdot
 
     sigma, rho, beta = 10., 28., 8/3.
     integrator = gi.DOPRI853Integrator(F, func_args=(sigma, rho, beta))

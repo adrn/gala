@@ -5,7 +5,6 @@ import warnings
 from astropy.coordinates import (SphericalRepresentation, Galactic,
                                  SphericalCosLatDifferential)
 import astropy.units as u
-from astropy.tests.helper import quantity_allclose
 import numpy as np
 import pytest
 import scipy.optimize as so
@@ -357,7 +356,7 @@ def test_apocenter_pericenter_period():
     E = np.mean(w.energy()).decompose(pot.units).value
     L = np.mean(np.sqrt(np.sum(w.angular_momentum()**2, axis=0))).decompose(pot.units).value
     def func(r):
-        val = 2*(E-pot.value([r,0,0]).value[0]) - L**2/r**2
+        val = 2*(E-pot.energy([r,0,0]).value[0]) - L**2/r**2
         return val
 
     pred_apo = so.brentq(func, 0.9, 1.0)
@@ -427,7 +426,7 @@ def make_known_orbits(tmpdir, xs, vxs, potential, names):
 
     ws = []
     for x,vx,name in zip(xs, vxs, names):
-        vy = np.sqrt(2*(E - potential.value([x,y,0.]).value))[0]
+        vy = np.sqrt(2*(E - potential.energy([x,y,0.]).value))[0]
         w = [x,y,0.,vx,vy,0.]
         ws.append(w)
     ws = np.array(ws).T
@@ -555,10 +554,10 @@ def test_io(tmpdir, obj):
         obj.to_hdf5(f)
 
     obj2 = Orbit.from_hdf5(filename)
-    assert quantity_allclose(obj.xyz, obj2.xyz)
-    assert quantity_allclose(obj.v_xyz, obj2.v_xyz)
+    assert u.allclose(obj.xyz, obj2.xyz)
+    assert u.allclose(obj.v_xyz, obj2.v_xyz)
     if obj.t:
-        assert quantity_allclose(obj.t, obj2.t)
+        assert u.allclose(obj.t, obj2.t)
 
     assert obj.frame == obj2.frame
     assert obj.potential == obj2.potential

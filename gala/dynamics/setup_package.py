@@ -1,14 +1,17 @@
 from distutils.core import Extension
-from astropy_helpers import setup_helpers
+from collections import defaultdict
+
 
 def get_extensions():
+    import numpy as np
+
     exts = []
 
     # malloc
     mac_incl_path = "/usr/include/malloc"
 
-    cfg = setup_helpers.DistutilsExtensionArgs()
-    cfg['include_dirs'].append('numpy')
+    cfg = defaultdict(list)
+    cfg['include_dirs'].append(np.get_include())
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/integrate/cyintegrators')
     cfg['include_dirs'].append('gala/potential')
@@ -19,16 +22,16 @@ def get_extensions():
     cfg['sources'].append('gala/dynamics/lyapunov/dop853_lyapunov.pyx')
     exts.append(Extension('gala.dynamics.lyapunov.dop853_lyapunov', **cfg))
 
-    cfg = setup_helpers.DistutilsExtensionArgs()
-    cfg['include_dirs'].append('numpy')
+    cfg = defaultdict(list)
+    cfg['include_dirs'].append(np.get_include())
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/potential')
     cfg['sources'].append('gala/dynamics/mockstream/_coord.pyx')
     cfg['extra_compile_args'].append('--std=gnu99')
     exts.append(Extension('gala.dynamics.mockstream._coord', **cfg))
 
-    cfg = setup_helpers.DistutilsExtensionArgs()
-    cfg['include_dirs'].append('numpy')
+    cfg = defaultdict(list)
+    cfg['include_dirs'].append(np.get_include())
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/potential')
     cfg['sources'].append('gala/dynamics/mockstream/df.pyx')
@@ -36,8 +39,8 @@ def get_extensions():
     cfg['extra_compile_args'].append('--std=gnu99')
     exts.append(Extension('gala.dynamics.mockstream.df', **cfg))
 
-    cfg = setup_helpers.DistutilsExtensionArgs()
-    cfg['include_dirs'].append('numpy')
+    cfg = defaultdict(list)
+    cfg['include_dirs'].append(np.get_include())
     cfg['include_dirs'].append('gala/integrate/cyintegrators')
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/potential')
@@ -49,8 +52,8 @@ def get_extensions():
     cfg['extra_compile_args'].append('--std=gnu99')
     exts.append(Extension('gala.dynamics.mockstream._mockstream', **cfg))
 
-    cfg = setup_helpers.DistutilsExtensionArgs()
-    cfg['include_dirs'].append('numpy')
+    cfg = defaultdict(list)
+    cfg['include_dirs'].append(np.get_include())
     cfg['include_dirs'].append('gala/integrate/cyintegrators')
     cfg['include_dirs'].append(mac_incl_path)
     cfg['include_dirs'].append('gala/potential')
@@ -62,7 +65,3 @@ def get_extensions():
     exts.append(Extension('gala.dynamics.nbody.nbody', **cfg))
 
     return exts
-
-def get_package_data():
-    return {'gala.dynamics': ['*.pyx', '*.pxd', '*/*.pyx', '*/*.pxd',
-                              '*.h', '*/*.h', 'nbody/nbody_helper.h']}

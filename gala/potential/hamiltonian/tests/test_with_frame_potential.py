@@ -1,6 +1,5 @@
 # Third-party
 import astropy.units as u
-from astropy.tests.helper import quantity_allclose
 import pytest
 import numpy as np
 
@@ -181,8 +180,8 @@ def test_velocity_rot_frame(name, Omega, tol):
     orbit_i2r = orbit_i.to_frame(ConstantRotatingFrame(Omega=Omega, units=dimensionless))
     orbit_r2i = orbit_r.to_frame(StaticFrame(units=dimensionless))
 
-    assert quantity_allclose(orbit_i.xyz, orbit_r2i.xyz, atol=tol)
-    assert quantity_allclose(orbit_i.v_xyz, orbit_r2i.v_xyz, atol=tol)
+    assert u.allclose(orbit_i.xyz, orbit_r2i.xyz, atol=tol)
+    assert u.allclose(orbit_i.v_xyz, orbit_r2i.v_xyz, atol=tol)
 
-    assert quantity_allclose(orbit_r.xyz, orbit_i2r.xyz, atol=tol)
-    assert quantity_allclose(orbit_r.v_xyz, orbit_i2r.v_xyz, atol=tol)
+    assert u.allclose(orbit_r.xyz, orbit_i2r.xyz, atol=tol)
+    assert u.allclose(orbit_r.v_xyz, orbit_i2r.v_xyz, atol=tol)

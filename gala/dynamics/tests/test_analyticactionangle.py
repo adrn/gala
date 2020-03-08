@@ -5,10 +5,12 @@ import astropy.units as u
 
 # Project
 from ..analyticactionangle import isochrone_to_aa, harmonic_oscillator_to_aa
-from ...potential import IsochronePotential, HarmonicOscillatorPotential
+from ...potential import (IsochronePotential, HarmonicOscillatorPotential,
+                          Hamiltonian)
 from ...units import galactic
 from ...util import assert_angles_allclose
 from .helpers import toy_potentials
+
 
 class TestIsochrone(object):
 
@@ -21,7 +23,8 @@ class TestIsochrone(object):
         w0 = np.vstack((x,v))
 
         self.potential = IsochronePotential(units=galactic, m=1.E11, b=5.)
-        self.w = self.potential.integrate_orbit(w0, dt=0.1, n_steps=10000)
+        H = Hamiltonian(self.potential)
+        self.w = H.integrate_orbit(w0, dt=0.1, n_steps=10000)
         self.w = self.w[::10]
 
     def test(self):
@@ -65,8 +68,10 @@ class TestHarmonicOscillator(object):
         v = np.random.uniform(-1., 1., size=(3,self.N)) / 33.
         w0 = np.vstack((x,v))
 
-        self.potential = HarmonicOscillatorPotential(omega=np.array([0.013, 0.02, 0.005]), units=galactic)
-        self.w = self.potential.integrate_orbit(w0, dt=0.1, n_steps=10000)
+        self.potential = HarmonicOscillatorPotential(
+            omega=np.array([0.013, 0.02, 0.005]), units=galactic)
+        H = Hamiltonian(self.potential)
+        self.w = H.integrate_orbit(w0, dt=0.1, n_steps=10000)
         self.w = self.w[::10]
 
     def test(self):

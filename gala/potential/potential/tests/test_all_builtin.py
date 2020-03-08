@@ -5,7 +5,6 @@
 # Third-party
 import numpy as np
 import astropy.units as u
-from astropy.tests.helper import quantity_allclose
 import pytest
 from scipy.spatial.transform import Rotation
 
@@ -146,7 +145,7 @@ class TestSphericalNFWFromCircVel(PotentialTestBase):
             pot = NFWPotential.from_circular_velocity(v_c=220.*u.km/u.s, r_s=20*u.kpc,
                                                       r_ref=r_ref*u.kpc, units=galactic)
             vc = pot.circular_velocity([r_ref,0,0]*u.kpc) # at the reference velocity
-            assert quantity_allclose(vc, 220*u.km/u.s)
+            assert u.allclose(vc, 220*u.km/u.s)
 
     def test_against_triaxial(self):
         this = NFWPotential.from_circular_velocity(v_c=220.*u.km/u.s, r_s=20*u.kpc, units=galactic)
@@ -154,17 +153,17 @@ class TestSphericalNFWFromCircVel(PotentialTestBase):
                                             v_c=220.*u.km/u.s, r_s=20.*u.kpc,
                                             a=1., b=1., c=1.)
 
-        v1 = this.value(self.w0[:3])
-        v2 = other.value(self.w0[:3])
-        assert quantity_allclose(v1, v2)
+        v1 = this.energy(self.w0[:3])
+        v2 = other.energy(self.w0[:3])
+        assert u.allclose(v1, v2)
 
         a1 = this.gradient(self.w0[:3])
         a2 = other.gradient(self.w0[:3])
-        assert quantity_allclose(a1, a2)
+        assert u.allclose(a1, a2)
 
         d1 = this.density(self.w0[:3])
         d2 = other.density(self.w0[:3])
-        assert quantity_allclose(d1, d2)
+        assert u.allclose(d1, d2)
 
     def test_mass_enclosed(self):
 
@@ -196,14 +195,14 @@ class TestNFW(PotentialTestBase):
         xyz = np.zeros((3,128))
         xyz[0] = np.logspace(-1., 3, xyz.shape[1])
 
-        assert quantity_allclose(sph.value(xyz), fla.value(xyz))
-        assert quantity_allclose(sph.value(xyz), tri.value(xyz))
+        assert u.allclose(sph.energy(xyz), fla.energy(xyz))
+        assert u.allclose(sph.energy(xyz), tri.energy(xyz))
 
-        assert quantity_allclose(sph.gradient(xyz), fla.gradient(xyz))
-        assert quantity_allclose(sph.gradient(xyz), tri.gradient(xyz))
+        assert u.allclose(sph.gradient(xyz), fla.gradient(xyz))
+        assert u.allclose(sph.gradient(xyz), tri.gradient(xyz))
 
-        # assert quantity_allclose(sph.density(xyz), fla.density(xyz)) # TODO: fla density not implemented
-        # assert quantity_allclose(sph.density(xyz), tri.density(xyz)) # TODO: tri density not implemented
+        # assert u.allclose(sph.density(xyz), fla.density(xyz)) # TODO: fla density not implemented
+        # assert u.allclose(sph.density(xyz), tri.density(xyz)) # TODO: tri density not implemented
 
         # ---
 
@@ -212,14 +211,14 @@ class TestNFW(PotentialTestBase):
         xyz = np.zeros((3,128))
         xyz[1] = np.logspace(-1., 3, xyz.shape[1])
 
-        assert quantity_allclose(sph.value(xyz), fla.value(xyz))
-        assert quantity_allclose(sph.value(xyz), tri.value(xyz))
+        assert u.allclose(sph.energy(xyz), fla.energy(xyz))
+        assert u.allclose(sph.energy(xyz), tri.energy(xyz))
 
-        assert quantity_allclose(sph.gradient(xyz), fla.gradient(xyz))
-        assert quantity_allclose(sph.gradient(xyz), tri.gradient(xyz))
+        assert u.allclose(sph.gradient(xyz), fla.gradient(xyz))
+        assert u.allclose(sph.gradient(xyz), tri.gradient(xyz))
 
-        # assert quantity_allclose(sph.density(xyz), fla.density(xyz)) # TODO: fla density not implemented
-        # assert quantity_allclose(sph.density(xyz), tri.density(xyz)) # TODO: tri density not implemented
+        # assert u.allclose(sph.density(xyz), fla.density(xyz)) # TODO: fla density not implemented
+        # assert u.allclose(sph.density(xyz), tri.density(xyz)) # TODO: tri density not implemented
 
         # ---
 
@@ -227,9 +226,9 @@ class TestNFW(PotentialTestBase):
         xyz[0] = np.logspace(-1., 3, xyz.shape[1])
         xyz[1] = np.logspace(-1., 3, xyz.shape[1])
 
-        assert quantity_allclose(sph.value(xyz), fla.value(xyz))
-        assert quantity_allclose(sph.gradient(xyz), fla.gradient(xyz))
-        # assert quantity_allclose(sph.density(xyz), fla.density(xyz)) # TODO: fla density not implemented
+        assert u.allclose(sph.energy(xyz), fla.energy(xyz))
+        assert u.allclose(sph.gradient(xyz), fla.gradient(xyz))
+
 
 class TestLeeSutoTriaxialNFW(PotentialTestBase):
     potential = LeeSutoTriaxialNFWPotential(units=galactic, v_c=0.35, r_s=12.,

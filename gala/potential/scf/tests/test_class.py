@@ -71,7 +71,7 @@ class TestSCFPotential(PotentialTestBase):
         fn = str(tmpdir.join("{}.yml".format(self.name)))
         self.potential.save(fn)
         p = load(fn, module=_bfe_class)
-        p.value(self.w0[:self.w0.size//2])
+        p.energy(self.w0[:self.w0.size//2])
 
     @pytest.mark.skipif(True, reason='no hessian implemented')
     def test_hessian(self):

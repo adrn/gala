@@ -92,6 +92,7 @@ orbits::
     import gala.dynamics as gd
     from gala.dynamics.nbody import DirectNBody
     from gala.units import galactic, UnitSystem
+    import matplotlib.pyplot as plt
 
     w0_1 = gd.PhaseSpacePosition(pos=[0, 0, 0] * u.pc,
                                  vel=[0, 1.5, 0] * u.km/u.s)

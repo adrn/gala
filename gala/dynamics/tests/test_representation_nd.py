@@ -1,7 +1,6 @@
 # Third-party
 import astropy.units as u
 from astropy.coordinates import Galactic, CartesianRepresentation
-from astropy.tests.helper import quantity_allclose
 import numpy as np
 import pytest
 
@@ -33,7 +32,7 @@ def test_init_repr():
             assert hasattr(rep, 'x'+str(i))
 
         xs2 = rep.xyz
-        assert quantity_allclose(xs, xs2)
+        assert u.allclose(xs, xs2)
 
         rep2 = rep[:8]
 
@@ -62,7 +61,7 @@ def test_init_diff():
             assert hasattr(rep, 'd_x'+str(i))
 
         xs2 = rep.d_xyz
-        assert quantity_allclose(xs, xs2)
+        assert u.allclose(xs, xs2)
 
         rep2 = rep[:8]
 

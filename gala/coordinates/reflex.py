@@ -1,4 +1,5 @@
 import astropy.coordinates as coord
+from .galactocentric import get_galactocentric2019
 
 __all__ = ['reflex_correct']
 
@@ -30,7 +31,7 @@ def reflex_correct(coords, galactocentric_frame=None):
 
     # If not specified, use the Astropy default Galactocentric frame
     if galactocentric_frame is None:
-        galactocentric_frame = coord.Galactocentric()
+        galactocentric_frame = get_galactocentric2019()
 
     v_sun = galactocentric_frame.galcen_v_sun
 

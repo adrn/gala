@@ -93,7 +93,7 @@ rotation around the z axis (i.e. counter-clockwise) using `astropy.coordinates.m
         array([[ 0.8660254,  0.5      ,  0.       ],
                [-0.5      ,  0.8660254,  0.       ],
                [ 0.       ,  0.       ,  1.       ]])
-        >>> R_scipy.as_dcm()
+        >>> R_scipy.as_matrix()
         array([[ 0.8660254, -0.5      ,  0.       ],
                [ 0.5      ,  0.8660254,  0.       ],
                [ 0.       ,  0.       ,  1.       ]])

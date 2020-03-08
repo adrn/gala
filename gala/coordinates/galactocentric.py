@@ -29,10 +29,8 @@ def get_galactocentric2019():
         The modern (2019) Galactocentric reference frame.
 
     """
-    rsun = 8.122 * u.kpc
-    vsun = coord.CartesianDifferential([12.9, 245.6, 7.78] * u.km/u.s)
-    zsun = 20.8 * u.pc
 
-    return coord.Galactocentric(galcen_distance=rsun,
-                                galcen_v_sun=vsun,
-                                z_sun=zsun)
+    with coord.galactocentric_frame_defaults.set('v4.0'):
+        galcen = coord.Galactocentric()
+
+    return galcen

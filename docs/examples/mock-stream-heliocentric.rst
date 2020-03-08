@@ -14,6 +14,11 @@ We first need to import some relevant packages::
    >>> import gala.potential as gp
    >>> from gala.units import galactic
 
+We will also set the default Astropy Galactocentric frame parameters to the
+values adopted in Astropy v4.0:
+
+    >>> _ = coord.galactocentric_frame_defaults.set('v4.0')
+
 In the examples below, we will use the ``galactic``
 `~gala.units.UnitSystem`: as I define it, this is: :math:`{\rm kpc}`,
 :math:`{\rm Myr}`, :math:`{\rm M}_\odot`.
@@ -47,8 +52,8 @@ We'll first convert this position and velocity to Galactocentric coordinates::
    >>> c_gc = c.transform_to(coord.Galactocentric).cartesian
    >>> c_gc
    <CartesianRepresentation (x, y, z) in kpc
-       (7.69726478, 0.22748727, 16.41135761)
-    (has differentials w.r.t.: 's')>
+      (7.86390455, 0.22748727, 16.41622487)
+   (has differentials w.r.t.: 's')>
    >>> pal5_w0 = gd.PhaseSpacePosition(c_gc)
 
 We can now use the position and velocity of the cluster to generate a :ref:`mock
@@ -92,6 +97,8 @@ Here the negative timestep tells the stream generator to first integrate the orb
     import gala.potential as gp
     from gala.units import galactic
     from gala.dynamics import mockstream as ms
+
+    coord.galactocentric_frame_defaults.set('v4.0')
 
     pot = gp.CCompositePotential()
     pot['disk'] = gp.MiyamotoNagaiPotential(m=6E10*u.Msun,

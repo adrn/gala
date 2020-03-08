@@ -108,10 +108,11 @@ can integrate an orbit in this potential::
     >>> w0 = gd.PhaseSpacePosition(pos=[0.,0.3],
     ...                            vel=[0.38,0.])
     >>> orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.05, n_steps=10000)
-    >>> fig = orbit.plot(marker=',', linestyle='none', alpha=0.5)
+    >>> fig = orbit.plot(marker=',', linestyle='none', alpha=0.5) # doctest: +SKIP
 
 .. plot::
     :align: center
+    :context: close-figs
 
     import matplotlib.pyplot as pl
     import numpy as np
@@ -159,38 +160,13 @@ Or, we could create a contour plot of equipotentials::
 
 .. plot::
     :align: center
+    :context: close-figs
 
     from matplotlib import colors
-    import matplotlib.pyplot as pl
-    import numpy as np
-    import gala.dynamics as gd
-    import gala.potential as gp
+    import matplotlib.pyplot as plt
 
-    class HenonHeilesPotential(gp.PotentialBase):
-
-        def __init__(self, A, units=None):
-            pars = dict(A=A)
-            super(HenonHeilesPotential, self).__init__(units=units,
-                                                       parameters=pars,
-                                                       ndim=2)
-
-        def _energy(self, q, t):
-            A = self.parameters['A'].value
-            x,y = q.T
-            return 0.5*(x**2 + y**2) + A*(x**2*y - y**3/3)
-
-        def _gradient(self, q, t):
-            A = self.parameters['A'].value
-            x,y = q.T
-
-            grad = np.zeros_like(q)
-            grad[:,0] = x + 2*A*x*y
-            grad[:,1] = y + A*(x**2 - y**2)
-            return grad
-
-    pot = HenonHeilesPotential(A=1., units=None)
-    grid = np.linspace(-1.,1.,100)
-    fig,ax = pl.subplots(1, 1, figsize=(5,5))
+    grid = np.linspace(-1., 1., 100)
+    fig, ax = plt.subplots(1, 1, figsize=(5,5))
     fig = pot.plot_contours(grid=(grid,grid), cmap='Blues',
                             levels=np.logspace(-3, 1, 10),
                             norm=colors.LogNorm(), ax=ax)
