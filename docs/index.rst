@@ -48,7 +48,7 @@ Documentation
    conventions
    benefits
    testing
-   whatsnew/1.0.rst
+..   whatsnew/1.0.rst
 ..   getting_started
 
 ***********
