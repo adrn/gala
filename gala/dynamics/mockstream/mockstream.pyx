@@ -1,4 +1,4 @@
-# cython: boundscheck=False
+ # cython: boundscheck=False
 # cython: debug=False
 # cython: nonecheck=False
 # cython: cdivision=True
@@ -204,10 +204,10 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
         CPotential *c_particle_potentials[MAX_NBODY]
 
         # Snapshotting:
-        int noutput_times = ntimes // output_every
+        int noutput_times = (ntimes-1) // output_every + 1
         double[::1] output_times
 
-    if ntimes % output_every != 0:
+    if (ntimes-1) % output_every != 0:
         noutput_times += 1 # +1 for final conditions
 
     output_times = np.zeros(noutput_times)
@@ -278,6 +278,9 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
 
     j = 1 # output time index
     for i in range(1, ntimes):
+        # print(i, j, n,
+        #       len(t), len(nstream), len(output_times))
+
         dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
                     &w[0, 0], t[i-1], t[i], dt0,
                     ndim, nbodies+n, nbodies, args,
@@ -285,15 +288,15 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
 
         PyErr_CheckSignals()
 
-        if (i % output_every) == 0:
+        n += nstream[i]
+
+        if (i % output_every) == 0 or i == ntimes-1:
             output_times[j] = t[i]
             stream_g['pos'][:, j, :n] = np.array(w[nbodies:nbodies+n, :]).T[:3]
             stream_g['vel'][:, j, :n] = np.array(w[nbodies:nbodies+n, :]).T[3:]
             nbody_g['pos'][:, j, :n] = np.array(w[:nbodies, :]).T[:3]
             nbody_g['vel'][:, j, :n] = np.array(w[:nbodies, :]).T[3:]
             j += 1
-
-        n += nstream[i]
 
     for g in [stream_g, nbody_g]:
         d = g.create_dataset('time', data=np.array(output_times))
