@@ -100,7 +100,7 @@ def test_run():
     'dt, nsteps, output_every, release_every, n_particles, trail',
     list(itertools.product([1, -1], [16, 17],
                            [1, 2], [1, 4], [1, 4], [True, False])))
-def test_animate(tmpdir, dt, nstesps, output_every, release_every,
+def test_animate(tmpdir, dt, nsteps, output_every, release_every,
                  n_particles, trail):
     import h5py
 
