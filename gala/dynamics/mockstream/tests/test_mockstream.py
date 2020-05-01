@@ -1,4 +1,5 @@
 import os
+import itertools
 
 # Third-party
 import astropy.units as u
@@ -95,9 +96,12 @@ def test_run():
     # TODO: add nbody test
 
 
-# @pytest.mark.skipif('CI' in os.environ,
-#                     reason="For some reason, doesn't work on Travis/CI")
-def test_animate(tmpdir):
+@pytest.mark.parametrize(
+    'dt, nsteps, output_every, release_every, n_particles, trail',
+    list(itertools.product([1, -1], [16, 17],
+                           [1, 2], [1, 4], [1, 4], [True, False])))
+def test_animate(tmpdir, dt, nsteps, output_every, release_every,
+                 n_particles, trail):
     import h5py
 
     potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.,
@@ -108,13 +112,13 @@ def test_animate(tmpdir):
     mass = 2.5e4 * u.Msun
 
     # The basic run:
-    df = FardalStreamDF(trail=False)
+    df = FardalStreamDF(trail=trail)
     gen = MockStreamGenerator(df=df, hamiltonian=H)
 
     filename = os.path.join(str(tmpdir), "test.hdf5")
-    nsteps = 16
-    output_every = 2
-    stream, _ = gen.run(w0, mass, dt=-1., n_steps=nsteps,
+    stream, _ = gen.run(w0, mass, dt=dt, n_steps=nsteps,
+                        release_every=release_every,
+                        n_particles=n_particles,
                         output_every=output_every, output_filename=filename,
                         overwrite=True)
 
@@ -122,7 +126,15 @@ def test_animate(tmpdir):
         stream_orbits = Orbit.from_hdf5(f['stream'])
         nbody_orbits = Orbit.from_hdf5(f['nbody'])
 
-    assert stream_orbits.shape == (1 + nsteps // output_every, nsteps+1)
+    noutput_times = 1 + nsteps // output_every
+    if nsteps % output_every != 0:
+        noutput_times += 1
+
+    tail_n_particles = (1 + int(trail)) * n_particles
+    expected_shape = (noutput_times,
+                      tail_n_particles * (nsteps // release_every + 1))
+
+    assert stream_orbits.shape == expected_shape
     assert np.isfinite(stream_orbits[:, 0].xyz).all()
     assert np.isfinite(stream_orbits[:, 0].v_xyz).all()
 
