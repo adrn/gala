@@ -97,9 +97,11 @@ def test_run():
 
 
 @pytest.mark.parametrize(
-    'dt, output_every, release_every, n_particles, trail',
-    list(itertools.product([1, -1], [1, 2], [1, 4], [1, 4], [True, False])))
-def test_animate(tmpdir, dt, output_every, release_every, n_particles, trail):
+    'dt, nsteps, output_every, release_every, n_particles, trail',
+    list(itertools.product([1, -1], [16, 17],
+                           [1, 2], [1, 4], [1, 4], [True, False])))
+def test_animate(tmpdir, dt, nstesps, output_every, release_every,
+                 n_particles, trail):
     import h5py
 
     potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.,
@@ -114,7 +116,6 @@ def test_animate(tmpdir, dt, output_every, release_every, n_particles, trail):
     gen = MockStreamGenerator(df=df, hamiltonian=H)
 
     filename = os.path.join(str(tmpdir), "test.hdf5")
-    nsteps = 16
     stream, _ = gen.run(w0, mass, dt=dt, n_steps=nsteps,
                         release_every=release_every,
                         n_particles=n_particles,
