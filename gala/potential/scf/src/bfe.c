@@ -5,6 +5,11 @@
 #include "extra_compile_macros.h"
 
 #if USE_GSL == 1
+#include "gsl/gsl_math.h"
+#include "gsl/gsl_spline.h"
+#endif
+
+#if USE_GSL == 1
 void scf_density_helper(double *xyz, int K,
                         double M, double r_s,
                         double *Snlm, double *Tnlm,
@@ -287,4 +292,136 @@ double scf_density(double t, double *pars, double *q, int n_dim) {
     _val = val[0];
     return _val;
 }
+
+/* Support for interpolation between SCF coefficient snapshots */
+void get_bound_idx(double val, double *arr, int narr, int *idx) {
+    double dist = fabs(arr[0] - val);
+    double newdist;
+    int min_i = 0;
+    for (int i=0; i<narr; i++) {
+        newdist = fabs(arr[i] - val);
+        if (newdist < dist) {
+            min_i = i;
+            dist = newdist;
+        }
+    }
+
+    if (arr[min_i] == val) {
+        idx[0] = min_i;
+        idx[1] = min_i;
+    } else if (arr[min_i] > val) {
+        idx[0] = min_i - 1;
+        idx[1] = min_i;
+    } else {
+        idx[0] = min_i;
+        idx[1] = min_i + 1;
+    }
+}
+
+double scf_interp_value(double t, double *pars, double *q, int n_dim) {
+    /*  pars:
+        - G (Gravitational constant)
+        - m (mass scale)
+        - r_s (length scale)
+        - nmax
+        - lmax
+        - ntimes
+        - Sjnlm[ntimes,nmax,lmax,lmax]
+        - Tjnlm[ntimes,nmax,lmax,lmax]
+        - tj[ntimes]
+        - originj[ntimes,3]
+
+        Logic:
+        - Find index of timestep ahead of and behind time t
+        - Linear (or cubic) interpolate coefficients to time t using those steps
+        - Center input position on interpolated origin at time t
+        - Pass interpolated coefficients, and centered q to scf_*
+    */
+
+    double G = pars[0];
+    double M = pars[1];
+    double r_s = pars[2];
+    int nmax = (int)pars[3];   // TODO: abuse!
+    int lmax = (int)pars[4];   // TODO: abuse!
+    int ntimes = (int)pars[5]; // TODO: abuse!
+
+    int i, j, n, l, m;
+
+    double newq[3]; // recentered position
+    double val;  // return value of the potential
+
+    int n_coeff = 0;
+    for (n=0; n<(nmax+1); n++) {
+        for (l=0; l<(lmax+1); l++) {
+            for (m=0; m<(lmax+1); m++) {
+                n_coeff++;
+            }
+        }
+    }
+    double interp_pars[5 + 2*n_coeff];
+    for (i=0; i<5; i++) {
+        interp_pars[i] = pars[i];
+    }
+
+    // Get the indices in the coefficient time array, tj, that bound the
+    // evaluation time, t. pars[6 + 2*n_coeff] is tj!
+    double idx[2];
+    get_bound_idx(t, &pars[6 + 2*n_coeff*ntimes], ntimes, &idx[0]);
+
+    // Time difference between bounding timesteps
+    double t0 = pars[6 + 2*n_coeff + idx[0]];
+    double dt = pars[6 + 2*n_coeff + idx[1]] - t0;
+    double slope;
+
+    if (idx[0] == idx[1]) {
+        // evaluation time exactly equals one of the coefficient times
+        for (n=0; n<n_coeff; n++) {
+            interp_pars[5+n] = pars[6 + n_coeff*idx[0] + n];
+        }
+    } else {
+        // generic case: we must interpolate!
+        for (n=0; n<n_coeff; n++) {
+            slope = (pars[6 + n_coeff*idx[1] + n] -
+                     pars[6 + n_coeff*idx[0] + n]) / dt;
+            interp_pars[5+n] = slope * (t - t0) + pars[6 + n_coeff*idx[0] + n];
+
+            slope = (pars[6 + n_coeff + n_coeff*idx[1] + n] -
+                     pars[6 + n_coeff + n_coeff*idx[0] + n]) / dt;
+            interp_pars[5+n + n_coeff] = (slope * (t - t0) +
+                pars[6 + n_coeff + n_coeff*idx[0] + n]);
+        }
+    }
+
+    // First, use this variable to compute the interpolated origin. Then, we
+    // shift the q's to the new origin:
+    for (i=0; i<3; i++) {
+        slope = (pars[6 + 2*n_coeff*ntimes + ntimes + 3*idx[1] + i] -
+                 pars[6 + 2*n_coeff*ntimes + ntimes + 3*idx[0] + i]) / dt;
+        newq[i] = (slope * (t-t0) +
+                   pars[6 + 2*n_coeff*ntimes + ntimes + 3*idx[0] + i]);
+        newq[i] = q[i] - newq[i];
+    }
+
+    val = scf_value(t, interp_pars, newq, n_dim);
+
+    return val;
+}
+
+double scf_interp_density(double t, double *pars, double *q, int n_dim) {
+    /*  pars:
+        - G (Gravitational constant)
+        - m (mass scale)
+        - r_s (length scale)
+        - nmax
+        - lmax
+        [- sin_coeff, cos_coeff]
+    */
+    return scf_density(r, pars, q, n_dim);
+}
+
+void scf_interp_gradient(double t, double *pars, double *q, int n_dim,
+                         double *grad) {
+    scf_gradient(t, pars, q, n_dim, grad);
+}
+
 #endif

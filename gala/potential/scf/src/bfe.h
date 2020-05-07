@@ -13,5 +13,11 @@ extern void scf_gradient_helper(double *xyz, int K,
                                 int nmax, int lmax, double *grad);
 
 extern double scf_value(double t, double *pars, double *q, int n_dim);
-extern void scf_gradient(double t, double *pars, double *q, int n_dim, double *grad);
+extern void scf_gradient(double t, double *pars, double *q, int n_dim,
+                         double *grad);
 extern double scf_density(double t, double *pars, double *q, int n_dim);
+
+extern double scf_interp_value(double t, double *pars, double *q, int n_dim);
+extern void scf_interp_gradient(double t, double *pars, double *q, int n_dim,
+                                double *grad);
+extern double scf_interp_density(double t, double *pars, double *q, int n_dim);
