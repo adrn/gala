@@ -190,6 +190,7 @@ def compute_coeffs_discrete(xyz, mass, nmax, lmax, r_s,
     if compute_var:
         Snlm_var = np.zeros((nmax+1, lmax+1, lmax+1))
         Tnlm_var = np.zeros((nmax+1, lmax+1, lmax+1))
+        STnlm_var = np.zeros((nmax+1, lmax+1, lmax+1))
 
     # positions and masses of point masses
     xyz = np.ascontiguousarray(np.atleast_2d(xyz))
@@ -210,10 +211,8 @@ def compute_coeffs_discrete(xyz, mass, nmax, lmax, r_s,
 
                 Snlm[n, l, m], Tnlm[n, l, m] = STnlm_discrete(s, phi, X, mass, n, l, m)
                 if compute_var:
-                    Snlm_var[n, l, m], Tnlm_var[n, l, m] = STnlm_var_discrete(
-                        s, phi, X, mass, n, l, m)
-
+                    Snlm_var[n,l,m], Tnlm_var[n,l,m], STnlm_var[n,l,m] = STnlm_var_discrete(s, phi, X, mass, n, l, m)
     if compute_var:
-        return (Snlm, Snlm_var), (Tnlm, Tnlm_var)
+        return (Snlm,Snlm_var), (Tnlm,Tnlm_var), (STnlm_var)
     else:
         return Snlm, Tnlm

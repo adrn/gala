@@ -106,10 +106,12 @@ void c_STnlm_var_discrete(double *s, double *phi, double *X, double *m_k, int K,
     // zero out coeff storage array
     ST_var[0] = 0.;
     ST_var[1] = 0.;
+    ST_var[2] = 0.;
     for (int k=0; k<K; k++) {
         _tmp = coeff * m_k[k] * phi_nlm(s[k], phi[k], X[k], n, l, m);
         ST_var[0] += _tmp * _tmp * cos(m*phi[k]) * cos(m*phi[k]); // var(Snlm)
         ST_var[1] += _tmp * _tmp * sin(m*phi[k]) * sin(m*phi[k]); // var(Tnlm)
+        ST_var[2] += _tmp * _tmp * sin(m*phi[k]) * cos(m*phi[k]); // covar(Snlm, Tnlm)
     }
 }
 #endif
