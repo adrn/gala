@@ -318,6 +318,62 @@ void get_bound_idx(double val, double *arr, int narr, int *idx) {
     }
 }
 
+void interp_helper(double t, double *q, double *pars, int ntimes, int ncoeff,
+                   double *interp_pars, double *newq) {
+    int i, n;
+    for (i=0; i<5; i++) {
+        interp_pars[i] = pars[i];
+    }
+
+    // Get the indices in the coefficient time array, tj, that bound the
+    // evaluation time, t. pars[6 + 2*ncoeff] is tj!
+    int idx[2];
+    get_bound_idx(t, &pars[6 + 2*ncoeff*ntimes], ntimes, &idx[0]);
+
+    // Time difference between bounding timesteps
+    double t0 = pars[6 + 2*ncoeff*ntimes + idx[0]];
+    double dt = pars[6 + 2*ncoeff*ntimes + idx[1]] - t0;
+    double slope;
+
+    if (idx[0] == idx[1]) {
+        // evaluation time exactly equals one of the coefficient times
+        for (n=0; n<ncoeff; n++) {
+            // pars[6 + ncoeff*idx[0] + n]
+            // pars[6 + ncoeff*idx[0] + ncoeff + n]
+            interp_pars[5+n] = pars[6 + ncoeff*idx[0] + n];
+            interp_pars[5+n + ncoeff] = pars[6 + ncoeff*ntimes +
+                                             ncoeff*idx[0] + n];
+        }
+
+        for (i=0; i<3; i++) {
+            newq[i] = q[i];
+        }
+
+    } else {
+        // generic case: we must interpolate!
+        for (n=0; n<ncoeff; n++) {
+            slope = (pars[6 + ncoeff*idx[1] + n] -
+                     pars[6 + ncoeff*idx[0] + n]) / dt;
+            interp_pars[5+n] = slope * (t - t0) + pars[6 + ncoeff*idx[0] + n];
+
+            slope = (pars[6 + ncoeff*ntimes + ncoeff*idx[1] + n] -
+                     pars[6 + ncoeff*ntimes + ncoeff*idx[0] + n]) / dt;
+            interp_pars[5+n + ncoeff] = (slope * (t - t0) +
+                pars[6 + ncoeff*ntimes + ncoeff*idx[0] + n]);
+        }
+
+        // First, use this variable to compute the interpolated origin. Then, we
+        // shift the q's to the new origin:
+        for (i=0; i<3; i++) {
+            slope = (pars[6 + 2*ncoeff*ntimes + ntimes + 3*idx[1] + i] -
+                     pars[6 + 2*ncoeff*ntimes + ntimes + 3*idx[0] + i]) / dt;
+            newq[i] = (slope * (t-t0) +
+                    pars[6 + 2*ncoeff*ntimes + ntimes + 3*idx[0] + i]);
+            newq[i] = q[i] - newq[i];
+        }
+    }
+}
+
 double scf_interp_value(double t, double *pars, double *q, int n_dim) {
     /*  pars:
         - G (Gravitational constant)
@@ -338,69 +394,25 @@ double scf_interp_value(double t, double *pars, double *q, int n_dim) {
         - Pass interpolated coefficients, and centered q to scf_*
     */
 
-    double G = pars[0];
-    double M = pars[1];
-    double r_s = pars[2];
     int nmax = (int)pars[3];   // TODO: abuse!
     int lmax = (int)pars[4];   // TODO: abuse!
     int ntimes = (int)pars[5]; // TODO: abuse!
 
-    int i, j, n, l, m;
-
-    double newq[3]; // recentered position
+    int n, l, m;
     double val;  // return value of the potential
 
-    int n_coeff = 0;
+    int ncoeff = 0;
     for (n=0; n<(nmax+1); n++) {
         for (l=0; l<(lmax+1); l++) {
             for (m=0; m<(lmax+1); m++) {
-                n_coeff++;
+                ncoeff++;
             }
         }
     }
-    double interp_pars[5 + 2*n_coeff];
-    for (i=0; i<5; i++) {
-        interp_pars[i] = pars[i];
-    }
 
-    // Get the indices in the coefficient time array, tj, that bound the
-    // evaluation time, t. pars[6 + 2*n_coeff] is tj!
-    double idx[2];
-    get_bound_idx(t, &pars[6 + 2*n_coeff*ntimes], ntimes, &idx[0]);
-
-    // Time difference between bounding timesteps
-    double t0 = pars[6 + 2*n_coeff + idx[0]];
-    double dt = pars[6 + 2*n_coeff + idx[1]] - t0;
-    double slope;
-
-    if (idx[0] == idx[1]) {
-        // evaluation time exactly equals one of the coefficient times
-        for (n=0; n<n_coeff; n++) {
-            interp_pars[5+n] = pars[6 + n_coeff*idx[0] + n];
-        }
-    } else {
-        // generic case: we must interpolate!
-        for (n=0; n<n_coeff; n++) {
-            slope = (pars[6 + n_coeff*idx[1] + n] -
-                     pars[6 + n_coeff*idx[0] + n]) / dt;
-            interp_pars[5+n] = slope * (t - t0) + pars[6 + n_coeff*idx[0] + n];
-
-            slope = (pars[6 + n_coeff + n_coeff*idx[1] + n] -
-                     pars[6 + n_coeff + n_coeff*idx[0] + n]) / dt;
-            interp_pars[5+n + n_coeff] = (slope * (t - t0) +
-                pars[6 + n_coeff + n_coeff*idx[0] + n]);
-        }
-    }
-
-    // First, use this variable to compute the interpolated origin. Then, we
-    // shift the q's to the new origin:
-    for (i=0; i<3; i++) {
-        slope = (pars[6 + 2*n_coeff*ntimes + ntimes + 3*idx[1] + i] -
-                 pars[6 + 2*n_coeff*ntimes + ntimes + 3*idx[0] + i]) / dt;
-        newq[i] = (slope * (t-t0) +
-                   pars[6 + 2*n_coeff*ntimes + ntimes + 3*idx[0] + i]);
-        newq[i] = q[i] - newq[i];
-    }
+    double interp_pars[5 + 2*ncoeff];
+    double newq[3];  // recentered position
+    interp_helper(t, q, &pars[0], ntimes, ncoeff, &interp_pars[0], &newq[0]);
 
     val = scf_value(t, interp_pars, newq, n_dim);
 
@@ -414,14 +426,61 @@ double scf_interp_density(double t, double *pars, double *q, int n_dim) {
         - r_s (length scale)
         - nmax
         - lmax
-        [- sin_coeff, cos_coeff]
+        - ntimes
+        - Sjnlm[ntimes,nmax,lmax,lmax]
+        - Tjnlm[ntimes,nmax,lmax,lmax]
+        - tj[ntimes]
+        - originj[ntimes,3]
     */
-    return scf_density(r, pars, q, n_dim);
+    int nmax = (int)pars[3];   // TODO: abuse!
+    int lmax = (int)pars[4];   // TODO: abuse!
+    int ntimes = (int)pars[5]; // TODO: abuse!
+
+    int n, l, m;
+    double val;  // return value of the potential
+
+    int ncoeff = 0;
+    for (n=0; n<(nmax+1); n++) {
+        for (l=0; l<(lmax+1); l++) {
+            for (m=0; m<(lmax+1); m++) {
+                ncoeff++;
+            }
+        }
+    }
+
+    double interp_pars[5 + 2*ncoeff];
+    double newq[3];  // recentered position
+    interp_helper(t, q, &pars[0], ntimes, ncoeff, &interp_pars[0], &newq[0]);
+
+    val = scf_density(t, interp_pars, newq, n_dim);
+
+    return val;
+
 }
 
 void scf_interp_gradient(double t, double *pars, double *q, int n_dim,
                          double *grad) {
-    scf_gradient(t, pars, q, n_dim, grad);
+    int nmax = (int)pars[3];   // TODO: abuse!
+    int lmax = (int)pars[4];   // TODO: abuse!
+    int ntimes = (int)pars[5]; // TODO: abuse!
+
+    int n, l, m;
+    double val;  // return value of the potential
+
+    int ncoeff = 0;
+    for (n=0; n<(nmax+1); n++) {
+        for (l=0; l<(lmax+1); l++) {
+            for (m=0; m<(lmax+1); m++) {
+                ncoeff++;
+            }
+        }
+    }
+
+    double interp_pars[5 + 2*ncoeff];
+    double newq[3];  // recentered position
+    interp_helper(t, q, &pars[0], ntimes, ncoeff, &interp_pars[0], &newq[0]);
+
+    scf_gradient(t, interp_pars, newq, n_dim, grad);
 }
 
 #endif
