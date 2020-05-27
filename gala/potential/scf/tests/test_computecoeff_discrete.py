@@ -48,3 +48,47 @@ def test_plummer():
     bfe_pot = potential(xyz, Snlm, Tnlm, G, M, r_s)
 
     assert np.allclose(true_pot, bfe_pot, rtol=1E-2)
+
+
+def test_coefficients():
+    pos_path = os.path.abspath(get_pkg_data_filename('data/plummer-pos.dat.gz'))
+    coeff_path =  os.path.abspath(get_pkg_data_filename('data/plummer_coeff_nmax10_lmax5.txt'))
+    scfbi = np.loadtxt(pos_path)
+    m_k = scfbi[:,0] # masses sum to 0.1
+    xyz = scfbi[:,1:4]
+
+    scfcoeff = np.loadtxt(coeff_path)
+    Snlm_true = scfcoeff[:,0] 
+    Tnlm_true = scfcoeff[:,1]
+    
+    r_s = 1.
+    nmax = 10
+    lmax = 5
+
+    Snlm, Tnlm = compute_coeffs_discrete(xyz, m_k, nmax=nmax, lmax=lmax, r_s=r_s)
+
+    assert np.allclose(Snlm_true, Snlm.flatten(), rtol=1E-3)
+    assert np.allclose(Tnlm_true, Tnlm.flatten(), rtol=1E-3)
+
+
+
+def test_coeff_variances():
+    pos_path = os.path.abspath(get_pkg_data_filename('data/plummer-pos.dat.gz'))
+    coeff_path =  os.path.abspath(get_pkg_data_filename('data/plummer_coeff_var_nmax10_lmax5.txt'))
+    scfbi = np.loadtxt(pos_path)
+    m_k = scfbi[:,0] # masses sum to 0.1
+    xyz = scfbi[:,1:4]
+
+    scfcoeff = np.loadtxt(coeff_path)
+    Snlm_var_true = scfcoeff[:,0] 
+    Tnlm_var_true = scfcoeff[:,1]
+    STnlm_var_true = scfcoeff[:,2]
+    
+    r_s = 1.
+    nmax = 10
+    lmax = 5
+    
+    Snlm_var, Tnlm_var, STnlm_var = compute_coeffs_discrete(xyz, m_k, nmax=nmax, lmax=lmax, r_s=r_s, compute_var=True)
+    assert np.allclose(Snlm_var_true, Snlm_var[1].flatten(), rtol=1E-3)
+    assert np.allclose(Tnlm_var_true, Tnlm_var[1].flatten(), rtol=1E-3)
+    assert np.allclose(STnlm_var_true, STnlm_var.flatten(), rtol=1E-3)
