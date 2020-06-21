@@ -153,5 +153,7 @@ script:
     - tox $TOXARGS -- $TOXPOSARGS
 
 after_success:
-    - pip install coveralls
-    - coveralls
+    - if [[ $TOXENV == *-cov ]]; then
+        pip install codecov;
+        codecov;
+      fi
