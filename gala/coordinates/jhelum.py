@@ -24,9 +24,9 @@ class JhelumBonaca19(coord.BaseCoordinateFrame):
         A representation object or None to have no data (or use the other keywords)
 
     phi1 : angle_like, optional, must be keyword
-        The longitude-like angle corresponding to GD-1's orbit.
+        The longitude-like angle aligned with the stream.
     phi2 : angle_like, optional, must be keyword
-        The latitude-like angle corresponding to GD-1's orbit.
+        The latitude-like angle aligned perpendicular to the stream.
     distance : :class:`~astropy.units.Quantity`, optional, must be keyword
         The Distance for this object along the line-of-sight.
 
