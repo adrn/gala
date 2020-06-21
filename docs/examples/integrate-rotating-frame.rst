@@ -114,7 +114,7 @@ radius::
     ...     return (Om - Om_bar).to(Om_bar.unit).value**2
     >>> res = so.minimize(func, x0=10., method='powell')
     >>>
-    >>> r_corot = res.x * u.kpc
+    >>> r_corot = res.x[0] * u.kpc
     >>> v_circ = Om_bar * r_corot * u.kpc
     >>>
     >>> w0 = gd.PhaseSpacePosition(pos=[r_corot.value, 0, 0] * r_corot.unit,
