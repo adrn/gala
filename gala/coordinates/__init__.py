@@ -3,6 +3,7 @@ from .orphan import *
 from .gd1 import *
 from .oph import *
 from .pal5 import *
+from .pal13 import *
 from .jhelum import *
 from .velocity_frame_transforms import *
 from .poincarepolar import *
