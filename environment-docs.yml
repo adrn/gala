@@ -6,6 +6,7 @@ dependencies:
   - pip
   - pip:
     - -r requirements.txt
+    - matplotlib
     - sphinx_astropy
     - nbsphinx
     - tqdm
