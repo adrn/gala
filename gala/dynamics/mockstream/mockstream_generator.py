@@ -217,11 +217,11 @@ class MockStreamGenerator:
         for t1, n in zip(unq_t1s, nstream):
             all_nstream[orbit_t == t1] = n
 
-        if output_every is None:  # store snapshots
+        if output_every is None:
             raw_nbody, raw_stream = mockstream_dop853(
-                nbody0, orbit_t[all_nstream != 0], w0, unq_t1s,
+                nbody0, orbit_t[all_nstream != 0], w0, unq_t1s, orbit_t[-1],
                 all_nstream[all_nstream != 0].astype('i4'))
-        else:
+        else:  # store snapshots
             if output_filename is None:
                 raise ValueError("If output_every is specified, you must also "
                                  "pass in a filename to store the snapshots in")
