@@ -278,6 +278,9 @@ cdef class StreaklineStreamDF(BaseStreamDF):
 
         j = 0
         for i in range(ntimes):
+            if prog_m[i] == 0:
+                continue
+
             self.get_rj_vj_R(&cpotential, G,
                              &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
                              &rj, &vj, R) # outputs
@@ -371,9 +374,12 @@ cdef class FardalStreamDF(BaseStreamDF):
 
         j = 0
         for i in range(ntimes):
+            if prog_m[i] == 0:
+                continue
+
             self.get_rj_vj_R(&cpotential, G,
                              &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
-                             &rj, &vj, R) # outputs
+                             &rj, &vj, R)  # outputs
 
             # Trailing tail
             if self._trail == 1:
@@ -467,6 +473,9 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
 
         j = 0
         for i in range(ntimes):
+            if prog_m[i] == 0:
+                continue
+
             self.get_rj_vj_R(&cpotential, G,
                              &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
                              &rj, &vj, R) # outputs

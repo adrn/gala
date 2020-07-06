@@ -52,7 +52,7 @@ cdef extern from "dopri/dop853.h":
 
 cpdef mockstream_dop853(nbody, double[::1] time,
                         double[:, ::1] stream_w0, double[::1] stream_t1,
-                        int[::1] nstream,
+                        double tfinal, int[::1] nstream,
                         double atol=1E-10, double rtol=1E-10, int nmax=0):
     """
     Parameters
@@ -75,8 +75,8 @@ cpdef mockstream_dop853(nbody, double[::1] time,
     """
 
     cdef:
-        int i, j, k, n # indexing
-        unsigned ndim = 6 # TODO: hard-coded, but really must be 6D
+        int i, j, k, n  # indexing
+        unsigned ndim = 6  # TODO: hard-coded, but really must be 6D
 
         # For N-body support:
         void *args
@@ -84,8 +84,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
 
         # Time-stepping parameters:
         int ntimes = time.shape[0]
-        double dt0 = time[1] - time[0] # initial timestep
-        double t2 = time[ntimes-1] # final time
+        double dt0 = time[1] - time[0]  # initial timestep
 
         # whoa, so many dots
         CPotential cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
@@ -96,7 +95,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
                                                      np.zeros(3), np.eye(3))
         CPotential null_p = null_wrapper.cpotential
 
-        int nbodies = nbody._c_w0.shape[0] # includes the progenitor
+        int nbodies = nbody._c_w0.shape[0]  # includes the progenitor
         double [:, ::1] nbody_w0 = nbody._c_w0
 
         int max_nstream = np.max(nstream)
@@ -135,7 +134,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
                 w_tmp[nbodies+j, k] = stream_w0[n+j, k]
 
         dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
-                    &w_tmp[0, 0], stream_t1[i], t2, dt0,
+                    &w_tmp[0, 0], stream_t1[i], tfinal, dt0,
                     ndim, nbodies+nstream[i], nbodies, args,
                     atol, rtol, nmax)
 
