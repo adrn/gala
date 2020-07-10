@@ -27,28 +27,39 @@ def get_transform_matrix(from_frame, to_frame):
     Parameters
     ----------
     from_frame : `~astropy.coordinates.BaseCoordinateFrame` subclass
-        The *class* of the frame you're transforming from.
+        The *class* or instance of the frame you're transforming from.
     to_frame : `~astropy.coordinates.BaseCoordinateFrame` subclass
         The class or instance of the frame you're transforming to.
     """
+    if isinstance(from_frame, coord.BaseCoordinateFrame):
+        from_frame_cls = from_frame.__class__
+    else:
+        from_frame_cls = from_frame
+
     if isinstance(to_frame, coord.BaseCoordinateFrame):
         to_frame_cls = to_frame.__class__
     else:
         to_frame_cls = to_frame
 
     path, distance = coord.frame_transform_graph.find_shortest_path(
-        from_frame, to_frame_cls)
+        from_frame_cls, to_frame_cls)
 
     matrices = []
     currsys = from_frame
     for p in path[1:]:  # first element is fromsys so we skip it
-        trans = coord.frame_transform_graph._graph[currsys][p]
+        if isinstance(currsys, coord.BaseCoordinateFrame):
+            currsys_cls = currsys.__class__
+        else:
+            currsys_cls = currsys
+            currsys = currsys_cls()
+
+        trans = coord.frame_transform_graph._graph[currsys_cls][p]
 
         if isinstance(to_frame, p):
             p = to_frame
 
         if isinstance(trans, coord.DynamicMatrixTransform):
-            M = trans.matrix_func(currsys(), p)
+            M = trans.matrix_func(currsys, p)
         elif isinstance(trans, coord.StaticMatrixTransform):
             M = trans.matrix
         else:
