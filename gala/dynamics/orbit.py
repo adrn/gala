@@ -117,7 +117,12 @@ class Orbit(PhaseSpacePosition):
         vel = self.vel[slice_]
 
         # if one time is sliced out, return a phasespaceposition
-        if isinstance(slice_[0], int) or isinstance(slice_[0], np.int_):
+        try:
+            int_tslice = int(slice_[0])
+        except TypeError:
+            int_tslice = None
+
+        if int_tslice is not None:
             return PhaseSpacePosition(pos=pos, vel=vel, frame=self.frame)
 
         else:

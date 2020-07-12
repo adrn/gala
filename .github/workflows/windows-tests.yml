@@ -4,14 +4,14 @@ on:
   push:
     branches:
       - main
-      - windows
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   build:
     name: "py${{ matrix.python-version }} on ${{ matrix.os }}"
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -32,6 +32,7 @@ jobs:
           conda activate gala
           conda install -c conda-forge -q gsl libpython
           python -m pip install -e .[test]
+          python -m pip install tox
 
       - name: Run tests
         run: |
