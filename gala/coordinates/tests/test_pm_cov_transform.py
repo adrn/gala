@@ -9,6 +9,10 @@ import pytest
 from ..orphan import OrphanKoposov19
 from ..pm_cov_transform import transform_pm_cov
 
+sky_offset_frame = coord.SkyOffsetFrame(
+    origin=coord.ICRS(ra="20d", dec="30d"),
+    rotation=135.7 * u.deg
+)
 
 def setup_function(fn):
     ra, dec, pmra, pmdec = np.load(get_pkg_data_filename('c_pm.npy'))
@@ -21,9 +25,10 @@ def setup_function(fn):
     fn.cov = cov
 
 
-@pytest.mark.parametrize("to_frame", [coord.Galactic,
-                                      coord.Supergalactic,
-                                      OrphanKoposov19])
+@pytest.mark.parametrize("to_frame", [coord.Galactic, coord.Galactic(),
+                                      coord.Supergalactic, coord.Supergalactic(),
+                                      OrphanKoposov19, OrphanKoposov19(),
+                                      sky_offset_frame])
 def test_transform(to_frame):
     c = test_transform.c
     cov = test_transform.cov
@@ -43,9 +48,10 @@ def test_transform(to_frame):
     assert np.allclose(new_cov1, new_cov2)
 
 
-@pytest.mark.parametrize("to_frame", [coord.Galactic,
-                                      coord.Supergalactic,
-                                      OrphanKoposov19])
+@pytest.mark.parametrize("to_frame", [coord.Galactic, coord.Galactic(),
+                                      coord.Supergalactic, coord.Supergalactic(),
+                                      OrphanKoposov19, OrphanKoposov19(),
+                                      sky_offset_frame])
 def test_transform_correctness(to_frame):
     c = test_transform_correctness.c[:4]
     cov = test_transform_correctness.cov[:4]
