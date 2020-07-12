@@ -1,51 +1,105 @@
 name: Wheels
 on:
-  release:
-    types:
-      - published
+  # release:
+  #   types:
+  #     - published
   push:
     branches:
       - wheeltest
 
 env:
   CIBW_BUILD: "cp3?-*"
-  CIBW_SKIP: "*-win32 *-manylinux_i686"
+  CIBW_SKIP: "*-win32 *-manylinux_i686 cp35-*"
   CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
 
 jobs:
-  build_wheels:
-    name: Build ${{ matrix.python-version }} wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  # build_nix_wheels:
+  #   name: Build ${{ matrix.python-version }} wheels on ${{ matrix.os }}
+  #   runs-on: ${{ matrix.os }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [ubuntu-18.04, macos-latest]
+
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: 0
+  #     - uses: actions/setup-python@v2
+  #       name: Install Python
+  #       with:
+  #         # Note: cibuildwheel builds for many Python versions beyond this one
+  #         python-version: "3.7"
+
+  #     # Mac:
+  #     - name: Setup Mac
+  #       if: runner.os == 'macOS'
+  #       run: |
+  #         brew install gsl
+
+  #     # Ubuntu:
+  #     - name: Setup Linux
+  #       if: runner.os == 'Linux'
+  #       run: |
+  #         sudo apt-get install gsl-bin libgsl0-dev
+
+  #     - name: Build wheels
+  #       run: |
+  #         python -m pip install cibuildwheel==1.5.2
+  #         python -m cibuildwheel --output-dir wheelhouse
+
+  #     - uses: actions/upload-artifact@v2
+  #       with:
+  #         path: ./wheelhouse/*.whl
+
+  build_win_wheels:
+    name: Build ${{ matrix.python-version }} wheels on Windows
+    runs-on: windows-latest
     strategy:
       matrix:
-        os: [ubuntu-18.04, windows-latest, macos-latest]
-        python-version: ["3.7", "3.8"]
+        # python-version: [3.6, 3.7, 3.8]
+        python-version: [3.7]
+      fail-fast: false
 
     steps:
       - uses: actions/checkout@v2
         with:
-          submodules: true
-
+          fetch-depth: 0
       - uses: goanpeca/setup-miniconda@v1
         with:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
+          activate-environment: gala-wheels
 
       - name: Install dependencies
+        shell: bash -l {0}
         run: |
-          conda create -n gala-wheels python=${{ matrix.python-version }} -q -c conda-forge
-          conda activate gala-wheels
           conda install -c conda-forge -q gsl libpython
-          python -m pip install cibuildwheel==1.5.1
+          gsl-config --version
 
-      - name: Install Visual C++ for Python 3.7
-        if: runner.os == 'Windows'
-        run: |
-          choco install vcpython37 -f -y
+      # - name: Set environment variables on Windows
+      #   shell: bash -l {0}
+      #   run: |
+      #     # echo ::set-env name=INCLUDE::$CONDA_PREFIX\\Library\\include
+      #     # echo ::set-env name=LIB::$CONDA_PREFIX\\Library\\lib
+      #     # echo ::set-env name=LIBPATH::$CONDA_PREFIX\\Library\\lib
+      #     gsl-config --version
 
       - name: Build wheels
+        shell: bash -l {0}
         run: |
-          python -m cibuildwheel --output-dir wheelhouse
+          which gsl-config
+          export GALA_GSL_VERSION=$(gsl-config --version)
+          # export GALA_GSL_PREFIX=$(gsl-config --prefix)
+          export GALA_GSL_PREFIX="/c/Miniconda/envs/gala-wheels/Library/"
+          # pip install pep517
+          # python -m pep517.build -o wheelhouse .
+
+          pip install setuptools setuptools_scm wheel extension-helpers
+          conda install astropy # because there is no wheel for py38 on windows!
+          pip install -r requirements.txt
+          python setup.py build_ext
+          python setup.py bdist_wheel
 
       - uses: actions/upload-artifact@v2
         with:
@@ -57,39 +111,34 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          submodules: true
-
-      - uses: goanpeca/setup-miniconda@v1
+          fetch-depth: 0
+      - uses: actions/setup-python@v2
+        name: Install Python
         with:
-          auto-update-conda: true
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: |
-          conda create -n gala-wheels python=${{ matrix.python-version }} -q -c conda-forge
-          conda activate gala-wheels
-          conda install -c conda-forge -q gsl libpython
-          python -m pip install cibuildwheel==1.5.1
+          python-version: "3.7"
 
       - name: Build sdist
-        run: python setup.py sdist
+        run: |
+          sudo apt-get install gsl-bin libgsl0-dev
+          pip install pep517
+          python -m pep517.build -s .
 
       - uses: actions/upload-artifact@v2
         with:
           path: dist/*.tar.gz
 
-  upload_pypi:
-    needs: [build_wheels, build_sdist]
-    runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.action == 'published'
-    steps:
-      - uses: actions/download-artifact@v2
-        with:
-          name: artifact
-          path: dist
+  # upload_pypi:
+  #   needs: [build_wheels, build_sdist]
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'release' && github.event.action == 'published'
+  #   steps:
+  #     - uses: actions/download-artifact@v2
+  #       with:
+  #         name: artifact
+  #         path: dist
 
-      - uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.pypi_password }}
-          # To test: repository_url: https://test.pypi.org/legacy/
+  #     - uses: pypa/gh-action-pypi-publish@master
+  #       with:
+  #         user: __token__
+  #         password: ${{ secrets.pypi_password }}
+  #         # To test: repository_url: https://test.pypi.org/legacy/

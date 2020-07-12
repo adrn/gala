@@ -96,19 +96,19 @@ else:
 
 # First, see if the user wants to install without GSL:
 nogsl = bool(int(os.environ.get('GALA_NOGSL', 0)))
+gsl_version = os.environ.get('GALA_GSL_VERSION', None)
+gsl_prefix = os.environ.get('GALA_GSL_PREFIX', None)
 
 # Auto-detect whether GSL is installed
-if not nogsl or nogsl is None: # GSL support enabled
+if (not nogsl or nogsl is None) and gsl_version is None: # GSL support enabled
     cmd = ['gsl-config', '--version']
     try:
-        gsl_version = check_output(cmd, env=env)
+        gsl_version = check_output(cmd, env=env).decode('utf-8')
     except (OSError, CalledProcessError):
         gsl_version = None
-    else:
-        gsl_version = gsl_version.decode('utf-8').strip().split('.')
 
-else:
-    gsl_version = None
+if gsl_version is not None:
+    gsl_version = gsl_version.strip().split('.')
 
 # If the hacky macros file already exists, read from that what to do.
 # This means people experimenting might need to run "git clean" to remove all
@@ -142,12 +142,15 @@ else:
     print("GSL version {0} found: installing with GSL support"
           .format('.'.join(gsl_version)))
 
-    # Now get the gsl install location
-    cmd = ['gsl-config', '--prefix']
-    try:
-        gsl_prefix = check_output(cmd, encoding='utf-8').strip()
-    except:
-        gsl_prefix = str(check_output(cmd)).strip()
+    if gsl_prefix is None:
+        # Now get the gsl install location
+        cmd = ['gsl-config', '--prefix']
+        try:
+            gsl_prefix = check_output(cmd, encoding='utf-8')
+        except:
+            gsl_prefix = str(check_output(cmd, shell=shell))
+
+    gsl_prefix = os.path.normpath(gsl_prefix.strip())
 
 print("-" * 79)
 
