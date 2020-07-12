@@ -1,11 +1,11 @@
 name: Wheels
 on:
-  # release:
-  #   types:
-  #     - published
-  push:
+  release:
+    types:
+      - published
+  pull_request:
     branches:
-      - wheeltest
+      - main
 
 env:
   CIBW_BUILD: "cp3?-*"
