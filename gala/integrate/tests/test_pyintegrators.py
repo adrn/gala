@@ -1,6 +1,7 @@
 """
     Test the integrators.
 """
+import os
 
 # Third-party
 import pytest
@@ -123,7 +124,9 @@ def test_memmap(tmpdir, Integrator):
     dt = 0.1
     n_steps = 1000
     nw0 = 10000
-    mmap = np.memmap("/tmp/test_memmap.npy", mode='w+',
+
+    filename = os.path.join(str(tmpdir), "test_memmap.npy")
+    mmap = np.memmap(filename, mode='w+',
                      shape=(2, n_steps+1, nw0))
 
     w0 = np.random.uniform(-1, 1, size=(2, nw0))
