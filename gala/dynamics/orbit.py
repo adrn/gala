@@ -107,7 +107,7 @@ class Orbit(PhaseSpacePosition):
         try:
             slice_ = tuple(slice_)
         except TypeError:
-            slice_ = (slice_,)
+            slice_ = (int(slice_), )
 
         kw = dict()
         if self.t is not None:
