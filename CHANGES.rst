@@ -1,6 +1,8 @@
 1.2 (unreleased)
 ================
 
+- Gala now builds on Windows!
+
 New Features
 ------------
 

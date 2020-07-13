@@ -43,6 +43,16 @@ To install the project::
     python setup.py install
 
 
+Installing on Windows
+=====================
+
+We have successfully installed Gala on Windows within an Anaconda installation,
+which installs and uses GCC to compile C code. Unfortunately, Gala will not work
+with Microsoft Visual Studio's C compiler because it is not C99 compliant. With Anaconda, you can install ``gsl`` (see below) and then install Gala with ``pip``::
+
+    pip install astro-gala
+
+
 GSL support
 ===========
 
