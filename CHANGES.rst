@@ -6,8 +6,15 @@
 New Features
 ------------
 
+- Added a coordinate frame for the Pal 13 stream, ``Pal13Shipp20``.
+
 Bug fixes
 ---------
+
+- Fixed a bug with the mock stream machinery in which the stream would not
+  integrate for the specified number of timesteps if an array of
+  ``n_particles`` was passed in with 0's near the end of the array.
+
 
 API changes
 -----------
