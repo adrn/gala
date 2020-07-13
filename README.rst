@@ -56,17 +56,20 @@ Please also consider citing the Zenodo DOI |DOI| as a software citation::
 
     @misc{gala:zenodo,
       author       = {Adrian Price-Whelan and
-                      Brigitta Sipocz and
+                      Brigitta Sipőcz and
                       Daniel Lenz and
                       Johnny Greco and
                       Syrtis Major and
+                      Sergey Koposov and
                       Semyeong Oh and
                       P. L. Lim},
-      title        = {adrn/gala: v1.0},
-      month        = apr,
-      year         = 2019,
-      doi          = {10.5281/zenodo.2638307},
-      url          = {https://doi.org/10.5281/zenodo.2638307}
+      title        = {adrn/gala: v1.1},
+      month        = mar,
+      year         = 2020,
+      publisher    = {Zenodo},
+      version      = {v1.1},
+      doi          = {10.5281/zenodo.3700827},
+      url          = {https://doi.org/10.5281/zenodo.3700827}
     }
 
 License
@@ -74,7 +77,7 @@ License
 
 |License|
 
-Copyright 2013-2019 Adrian Price-Whelan and contributors.
+Copyright 2013-2020 Adrian Price-Whelan and contributors.
 
 ``Gala`` is free software made available under the MIT License. For details see
 the `LICENSE <https://github.com/adrn/gala/blob/main/LICENSE>`_ file.

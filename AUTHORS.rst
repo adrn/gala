@@ -12,3 +12,4 @@ All contributors (alphabetical last name):
 - Semyeong Oh
 - Adrian Price-Whelan
 - Brigitta Sipocz
+- Nathaniel Starkman
