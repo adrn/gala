@@ -41,7 +41,7 @@ Bug fixes
 ---------
 - Fixed an issue that led to incorrect ``GreatCircleICRSFrame`` transformations
   when no ``ra0`` was provided.
-- Fixed a bug in the ``OrphanKoposov19`` tranasformation.
+- Fixed a bug in the ``OrphanKoposov19`` transformation.
 
 API changes
 -----------
