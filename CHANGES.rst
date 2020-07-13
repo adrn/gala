@@ -1,4 +1,4 @@
-1.2 (unreleased)
+1.2 (2020-07-13)
 ================
 
 - Gala now builds on Windows!
@@ -15,9 +15,6 @@ Bug fixes
   integrate for the specified number of timesteps if an array of
   ``n_particles`` was passed in with 0's near the end of the array.
 
-
-API changes
------------
 
 
 1.1 (2020-03-08)
