@@ -1,3 +1,16 @@
+1.3 (unreleased)
+================
+
+New Features
+------------
+
+Bug fixes
+---------
+
+API changes
+-----------
+
+
 1.2 (2020-07-13)
 ================
 
@@ -14,7 +27,6 @@ Bug fixes
 - Fixed a bug with the mock stream machinery in which the stream would not
   integrate for the specified number of timesteps if an array of
   ``n_particles`` was passed in with 0's near the end of the array.
-
 
 
 1.1 (2020-03-08)
