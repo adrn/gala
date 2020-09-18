@@ -8,6 +8,7 @@ _greek_letters = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta",
                   "o", "rho", "sigma", "tau", "upsilon", "phi", "chi", "psi",
                   "omega"]
 
+
 class UnitSystem(object):
     """
     Represents a system of units. At minimum, this consists of a set of
@@ -176,7 +177,7 @@ class UnitSystem(object):
 
             >>> usys = UnitSystem(u.kpc, u.Myr, u.radian, u.Msun)
             >>> usys.get_constant('c')
-            306.6013937879527
+            306.6013937855506
 
         """
         try:
