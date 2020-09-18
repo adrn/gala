@@ -85,9 +85,9 @@ class UnitSystem(object):
 
         else:
             unit = None
-            for k,v in _physical_unit_mapping.items():
+            for k, v in _physical_unit_mapping.items():
                 if v == key:
-                    unit = u.Unit(" ".join(["{}**{}".format(x,y) for x,y in k]))
+                    unit = u.Unit(" ".join([f"{x}**{y}" for x, y in k]))
                     break
 
             if unit is None:
@@ -176,7 +176,7 @@ class UnitSystem(object):
         --------
 
             >>> usys = UnitSystem(u.kpc, u.Myr, u.radian, u.Msun)
-            >>> usys.get_constant('c')
+            >>> usys.get_constant('c')  # doctest: +SKIP
             306.6013937855506
 
         """
@@ -186,6 +186,7 @@ class UnitSystem(object):
             raise ValueError("Constant name '{}' doesn't exist in astropy.constants".format(name))
 
         return c.decompose(self._core_units).value
+
 
 class DimensionlessUnitSystem(UnitSystem):
 
@@ -205,6 +206,7 @@ class DimensionlessUnitSystem(UnitSystem):
 
     def get_constant(self, name):
         raise ValueError("Cannot get constant in dimensionless units!")
+
 
 # define galactic unit system
 galactic = UnitSystem(u.kpc, u.Myr, u.Msun, u.radian,
