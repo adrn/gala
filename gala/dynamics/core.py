@@ -176,7 +176,7 @@ class PhaseSpacePosition(object):
         # make sure shape is the same
         if pos.shape != vel.shape:
             raise ValueError("Position and velocity must have the same shape "
-                             "{0} vs {0}".format(pos.shape, vel.shape))
+                             f"{pos.shape} vs. {vel.shape}")
 
         from ..potential.frame import FrameBase
         if frame is not None and not isinstance(frame, FrameBase):
@@ -874,4 +874,3 @@ class PhaseSpacePosition(object):
         accessed by doing, e.g., ``obj.x.shape``.
         """
         return self.pos.shape
-

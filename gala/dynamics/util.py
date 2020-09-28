@@ -173,6 +173,7 @@ def estimate_dt_n_steps(w0, hamiltonian, n_periods, n_steps_per_period,
 
     return dt, n_steps
 
+
 def combine(objs):
     """Combine the specified `~gala.dynamics.PhaseSpacePosition` or
     `~gala.dynamics.Orbit` objects.
@@ -192,7 +193,7 @@ def combine(objs):
     elif not isiterable(objs) or len(objs) < 1:
         raise ValueError("You must pass a non-empty iterable to combine.")
 
-    elif len(objs) == 1: # short circuit
+    elif len(objs) == 1:  # short circuit
         return objs[0]
 
     # We only support these two types to combine:

@@ -11,7 +11,7 @@ import warnings
 import numpy as np
 from astropy import log as logger
 from scipy.linalg import solve
-from scipy.optimize import minimize, leastsq
+from scipy.optimize import minimize
 
 # Project
 from ..potential import HarmonicOscillatorPotential, IsochronePotential
@@ -19,6 +19,7 @@ from ..potential import HarmonicOscillatorPotential, IsochronePotential
 __all__ = ['generate_n_vectors', 'fit_isochrone',
            'fit_harmonic_oscillator', 'fit_toy_potential', 'check_angle_sampling',
            'find_actions']
+
 
 def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
     r"""
@@ -74,6 +75,7 @@ def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
 
     vecs = np.array(sorted(vecs, key=lambda x: (x[0], x[1], x[2])))
     return vecs
+
 
 def fit_isochrone(orbit, m0=2E11, b0=1., minimize_kwargs=None):
     r"""
@@ -139,6 +141,7 @@ def fit_isochrone(orbit, m0=2E11, b0=1., minimize_kwargs=None):
 
     return IsochronePotential(m=m, b=b, units=pot.units)
 
+
 def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1], minimize_kwargs=None):
     r"""
     Fit the toy harmonic oscillator potential to the sum of the energy
@@ -193,6 +196,7 @@ def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1], minimize_kwargs=None):
     best_omega = np.abs(res.x)
     return HarmonicOscillatorPotential(omega=best_omega, units=pot.units)
 
+
 def fit_toy_potential(orbit, force_harmonic_oscillator=False):
     """
     Fit a best fitting toy potential to the orbit provided. If the orbit is a
@@ -233,6 +237,7 @@ def fit_toy_potential(orbit, force_harmonic_oscillator=False):
                      .format(toy_potential.parameters['omega']))
 
     return toy_potential
+
 
 def check_angle_sampling(nvecs, angles):
     """
@@ -281,6 +286,7 @@ def check_angle_sampling(nvecs, angles):
             failures.append(1)
 
     return np.array(failed_nvecs), np.array(failures)
+
 
 def _action_prepare(aa, N_max, dx, dy, dz, sign=1., throw_out_modes=False):
     """
@@ -351,6 +357,7 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1., throw_out_modes=False):
                      axis=1)
 
     return A, b, nvecs
+
 
 def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
     """
@@ -439,6 +446,7 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
                                   axis=1)
 
     return A, b, nvecs
+
 
 def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
                                force_harmonic_oscillator=False):
@@ -536,7 +544,9 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
                 freqs=freqs*aaf[2].unit,
                 Sn=actions[3:], dSn_dJ=angles[6:], nvecs=nvecs)
 
-def find_actions(orbit, N_max, force_harmonic_oscillator=False, toy_potential=None):
+
+def find_actions(orbit, N_max, force_harmonic_oscillator=False,
+                 toy_potential=None):
     r"""
     Find approximate actions and angles for samples of a phase-space orbit.
     Uses toy potentials with known, analytic action-angle transformations to
