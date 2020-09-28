@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include "bfe_helper.h"
 #include "extra_compile_macros.h"
 
