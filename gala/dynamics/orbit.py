@@ -17,7 +17,7 @@ from ..io import quantity_to_hdf5, quantity_from_hdf5
 from ..util import atleast_2d
 from ..units import dimensionless, UnitSystem, DimensionlessUnitSystem
 
-__all__ = ['Orbit', 'CartesianOrbit']
+__all__ = ['Orbit']
 
 
 class Orbit(PhaseSpacePosition):
@@ -71,7 +71,7 @@ class Orbit(PhaseSpacePosition):
     def __init__(self, pos, vel, t=None,
                  hamiltonian=None, potential=None, frame=None):
 
-        super(Orbit, self).__init__(pos=pos, vel=vel)
+        super().__init__(pos=pos, vel=vel)
 
         if self.pos.ndim < 1:
             self.pos = self.pos.reshape(1)
@@ -169,7 +169,7 @@ class Orbit(PhaseSpacePosition):
             else:
                 units = self.hamiltonian.units
 
-        return super(Orbit, self).w(units=units)
+        return super().w(units=units)
 
     # ------------------------------------------------------------------------
     # Convert from Cartesian to other representations
@@ -195,7 +195,7 @@ class Orbit(PhaseSpacePosition):
         new_orbit : `gala.dynamics.Orbit`
         """
 
-        o = super(Orbit, self).represent_as(new_pos=new_pos, new_vel=new_vel)
+        o = super().represent_as(new_pos=new_pos, new_vel=new_vel)
         return self.__class__(pos=o.pos,
                               vel=o.vel,
                               hamiltonian=self.hamiltonian)
@@ -229,7 +229,7 @@ class Orbit(PhaseSpacePosition):
             Either the filename or an open HDF5 file.
         """
 
-        f = super(Orbit, self).to_hdf5(f)
+        f = super().to_hdf5(f)
 
         if self.potential is not None:
             import yaml
@@ -928,24 +928,7 @@ class Orbit(PhaseSpacePosition):
                     kw['t'] = self.t
 
         # TODO: this needs a re-write...
-        psp = super(Orbit, self).to_frame(frame, current_frame, **kw)
+        psp = super().to_frame(frame, current_frame, **kw)
 
         return Orbit(pos=psp.pos, vel=psp.vel, t=self.t,
                      frame=frame, potential=self.potential)
-
-
-class CartesianOrbit(Orbit):
-
-    def __init__(self, pos, vel, t=None,
-                 hamiltonian=None, potential=None, frame=None):
-        """
-        Deprecated.
-        """
-        warnings.warn("This class is now deprecated! Use the general interface "
-                      "provided by Orbit instead.",
-                      DeprecationWarning)
-
-        super(CartesianOrbit, self).__init__(pos, vel, t=t,
-                                             hamiltonian=hamiltonian,
-                                             potential=potential,
-                                             frame=frame)

@@ -79,8 +79,7 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
         self.attr_classes = OrderedDict([('x'+str(i), u.Quantity)
                                          for i in range(1, len(x)+1)])
 
-        super(coord.CartesianRepresentation, self).__init__(
-            *x, differentials=differentials, copy=copy)
+        super().__init__(*x, differentials=differentials, copy=copy)
 
         ptype = None
         for name, _ in self.attr_classes.items():
@@ -167,7 +166,7 @@ class NDCartesianDifferential(NDMixin, coord.CartesianDifferential):
         self.attr_classes = OrderedDict([('d_x'+str(i), u.Quantity)
                                          for i in range(1, len(d_x)+1)])
 
-        super(coord.CartesianDifferential, self).__init__(*d_x, copy=copy)
+        super().__init__(*d_x, copy=copy)
 
         ptype = None
         for name, _ in self.attr_classes.items():

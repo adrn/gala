@@ -34,9 +34,7 @@ class RepresentationMapping(_RepresentationMappingBase):
 
     def __new__(cls, repr_name, new_name, default_unit='recommended'):
         # this trick just provides some defaults
-        return super(RepresentationMapping, cls).__new__(cls, repr_name,
-                                                         new_name,
-                                                         default_unit)
+        return super().__new__(cls, repr_name, new_name, default_unit)
 
 
 class RegexRepresentationMapping(RepresentationMapping):
@@ -369,18 +367,8 @@ class PhaseSpacePosition(object):
 
         from ..potential.frame.builtin import transformations as frame_trans
 
-        if ((inspect.isclass(frame) and issubclass(frame, coord.BaseCoordinateFrame)) or
-                isinstance(frame, coord.BaseCoordinateFrame)):
-            import warnings
-            warnings.warn("This function now expects a "
-                          "`gala.potential.FrameBase` instance. To transform to"
-                          " an Astropy coordinate frame, use the "
-                          "`.to_coord_frame()` method instead.",
-                          DeprecationWarning)
-            return self.to_coord_frame(frame=frame, **kwargs)
-
         if self.frame is None and current_frame is None:
-            raise ValueError("If no frame was specified when this {} was "
+            raise ValueError(f"If no frame was specified when this {self} was "
                              "initialized, you must pass the current frame in "
                              "via the current_frame argument to transform to a "
                              "new frame.")
@@ -390,7 +378,7 @@ class PhaseSpacePosition(object):
 
         name1 = current_frame.__class__.__name__.rstrip('Frame').lower()
         name2 = frame.__class__.__name__.rstrip('Frame').lower()
-        func_name = "{}_to_{}".format(name1, name2)
+        func_name = f"{name1}_to_{name2}"
 
         if not hasattr(frame_trans, func_name):
             raise ValueError("Unsupported frame transformation: {} to {}"
@@ -432,13 +420,6 @@ class PhaseSpacePosition(object):
 
         if galactocentric_frame is None:
             galactocentric_frame = coord.Galactocentric()
-
-        if 'vcirc' in kwargs or 'vlsr' in kwargs:
-            import warnings
-            warnings.warn("Instead of passing in 'vcirc' and 'vlsr', specify "
-                          "these parameters to the input Galactocentric frame "
-                          "using the `galcen_v_sun` argument.",
-                          DeprecationWarning)
 
         pos_keys = list(self.pos_components.keys())
         vel_keys = list(self.vel_components.keys())
