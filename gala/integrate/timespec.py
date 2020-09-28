@@ -65,7 +65,8 @@ def parse_time_specification(units, dt=None, n_steps=None, nsteps=None,
             if t1 is None:
                 t1 = 0.
 
-            times = parse_time_specification(units, dt=np.ones(n_steps+1)*dt, t1=t1)
+            times = parse_time_specification(units, dt=np.ones(n_steps+1)*dt,
+                                             t1=t1)
         # dt, t1, t2 : (numeric, numeric, numeric)
         elif dt is not None and t1 is not None and t2 is not None:
             if t2 < t1 and dt < 0:
@@ -109,4 +110,4 @@ def parse_time_specification(units, dt=None, n_steps=None, nsteps=None,
         else:
             raise ValueError("Invalid options. See docstring.")
 
-        return times
+        return times.astype(np.float64)
