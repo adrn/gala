@@ -10,11 +10,10 @@ import astropy.coordinates as coord
 import astropy.units as u
 
 # Project
-from ..potential import (Hamiltonian, PotentialBase,
-                         IsochronePotential, HarmonicOscillatorPotential)
-from ..util import atleast_2d
+from ..potential import Hamiltonian, PotentialBase, IsochronePotential
 
 __all__ = ['isochrone_to_aa', 'harmonic_oscillator_to_aa']
+
 
 def isochrone_to_aa(w, potential):
     """
@@ -152,6 +151,7 @@ def isochrone_to_aa(w, potential):
     a_unit = (1*usys['angular momentum']/usys['mass']).decompose(usys).unit
     f_unit = (1*usys['frequency']).decompose(usys).unit
     return actions*a_unit, angles*u.radian, freqs*f_unit
+
 
 def isochrone_to_xv(actions, angles, potential):
     """
@@ -296,6 +296,7 @@ def isochrone_to_xv(actions, angles, potential):
 
     # return x, v
 
+
 def harmonic_oscillator_to_aa(w, potential):
     """
     Transform the input cartesian position and velocity to action-angle
@@ -350,6 +351,7 @@ def harmonic_oscillator_to_aa(w, potential):
         return action*a_unit, (angle % (2.*np.pi))*u.radian, freq*f_unit
     else:
         return action*u.one, (angle % (2.*np.pi))*u.one, freq*u.one
+
 
 def harmonic_oscillator_to_xv(actions, angles, potential):
     """

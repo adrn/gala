@@ -9,6 +9,7 @@ import numpy as np
 
 __all__ = ['NDCartesianRepresentation', 'NDCartesianDifferential']
 
+
 class NDMixin(object):
 
     def _apply(self, method, *args, **kwargs):
@@ -36,11 +37,12 @@ class NDMixin(object):
             Any keyword arguments for ``method``.
         """
         if callable(method):
-            apply_method = lambda array: method(array, *args, **kwargs)
+            apply_method = lambda array: method(array, *args, **kwargs)  # noqa
         else:
             apply_method = operator.methodcaller(method, *args, **kwargs)
         return self.__class__([apply_method(getattr(self, component))
                                for component in self.components], copy=False)
+
 
 class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
     """
@@ -81,7 +83,7 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
             *x, differentials=differentials, copy=copy)
 
         ptype = None
-        for name,_ in self.attr_classes.items():
+        for name, _ in self.attr_classes.items():
             if ptype is None:
                 ptype = getattr(self, '_'+name).unit.physical_type
 
@@ -93,9 +95,9 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
             cls = self.__class__
             if not hasattr(cls, name):
                 setattr(cls, name,
-                        property(coord.representation._make_getter(name),
-                                 doc=("The '{0}' component of the points(s)."
-                                      .format(name))))
+                        property(
+                            coord.representation._make_getter(name),
+                            doc=(f"The '{name}' component of the points(s).")))
 
     def get_xyz(self, xyz_axis=0):
         """Return a vector array of the x, y, and z coordinates.
@@ -133,6 +135,7 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
 
     xyz = property(get_xyz)
 
+
 class NDCartesianDifferential(NDMixin, coord.CartesianDifferential):
     """Differentials in of points in ND cartesian coordinates.
 
@@ -167,7 +170,7 @@ class NDCartesianDifferential(NDMixin, coord.CartesianDifferential):
         super(coord.CartesianDifferential, self).__init__(*d_x, copy=copy)
 
         ptype = None
-        for name,_ in self.attr_classes.items():
+        for name, _ in self.attr_classes.items():
             if ptype is None:
                 ptype = getattr(self, '_'+name).unit.physical_type
 

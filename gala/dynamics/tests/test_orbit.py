@@ -74,11 +74,6 @@ def test_initialize():
     assert isinstance(o.potential, LogarithmicPotential)
     assert isinstance(o.frame, StaticFrame)
 
-    # check that old class raises deprecation warning
-    from ..orbit import CartesianOrbit
-    warnings.simplefilter('always')
-    with pytest.warns(DeprecationWarning):
-        o = CartesianOrbit(pos=x, vel=v)
 
 def test_from_w():
 

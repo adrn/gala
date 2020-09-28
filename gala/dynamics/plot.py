@@ -3,6 +3,7 @@ import numpy as np
 
 __all__ = ['plot_projections']
 
+
 def _get_axes(dim, subplots_kwargs=dict()):
     """
     Parameters
@@ -30,6 +31,7 @@ def _get_axes(dim, subplots_kwargs=dict()):
         axes = axes.flat
 
     return axes
+
 
 def plot_projections(x, relative_to=None, autolim=True, axes=None,
                      subplots_kwargs=dict(), labels=None, plot_function=None,
@@ -89,7 +91,7 @@ def plot_projections(x, relative_to=None, autolim=True, axes=None,
     if autolim:
         lims = []
         for i in range(ndim):
-            max_,min_ = np.max(x[i]), np.min(x[i])
+            max_, min_ = np.max(x[i]), np.min(x[i])
             delta = max_ - min_
 
             if delta == 0.:
@@ -101,7 +103,7 @@ def plot_projections(x, relative_to=None, autolim=True, axes=None,
     for i in range(ndim):
         for j in range(ndim):
             if i >= j:
-                continue # skip diagonal, upper triangle
+                continue  # skip diagonal, upper triangle
 
             plot_func = getattr(axes[k], plot_fn_name)
             plot_func(x[i], x[j], **kwargs)

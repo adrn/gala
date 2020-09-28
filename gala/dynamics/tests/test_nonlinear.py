@@ -130,31 +130,31 @@ class HenonHeilesBase(object):
 # initial conditions from LP-VI documentation:
 class TestHenonHeilesStablePeriodic(HenonHeilesBase):
     def setup(self):
-        super(TestHenonHeilesStablePeriodic, self).setup()
+        super().setup()
         self.w0 = np.array([0.,0.295456,0.407308431,0.])
         self.check = lambda x: x < 1E-3
 
 class TestHenonHeilesStableQuasi1(HenonHeilesBase):
     def setup(self):
-        super(TestHenonHeilesStableQuasi1, self).setup()
+        super().setup()
         self.w0 = np.array([0., 0.483, 0.27898039, 0.])
         self.check = lambda x: x < 2E-3
 
 class TestHenonHeilesStableQuasi2(HenonHeilesBase):
     def setup(self):
-        super(TestHenonHeilesStableQuasi2, self).setup()
+        super().setup()
         self.w0 = np.array([0., 0.46912, 0.291124891, 0.])
         self.check = lambda x: x < 2E-3
 
 class TestHenonHeilesStableChaos1(HenonHeilesBase):
     def setup(self):
-        super(TestHenonHeilesStableChaos1, self).setup()
+        super().setup()
         self.w0 = np.array([0., 0.509, 0.254624859, 0.])
         self.check = lambda x: x > 2E-3
 
 class TestHenonHeilesStableChaos2(HenonHeilesBase):
     def setup(self):
-        super(TestHenonHeilesStableChaos2, self).setup()
+        super().setup()
         self.w0 = np.array([0., 0.56, 0.164113781, 0.112])
         self.check = lambda x: x > 1E-2
 

@@ -302,7 +302,6 @@ Orbit API
 .. automodapi:: gala.dynamics.orbit
     :no-heading:
     :headings: ^^
-    :skip: CartesianOrbit
 
 More information
 ================

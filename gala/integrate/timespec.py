@@ -10,7 +10,9 @@ import numpy as np
 
 __all__ = ['parse_time_specification']
 
-def parse_time_specification(units, dt=None, n_steps=None, nsteps=None, t1=None, t2=None, t=None):
+
+def parse_time_specification(units, dt=None, n_steps=None, nsteps=None,
+                             t1=None, t2=None, t=None):
     """
     Return an array of times given a few combinations of kwargs that are
     accepted -- see below.
@@ -34,7 +36,7 @@ def parse_time_specification(units, dt=None, n_steps=None, nsteps=None, t1=None,
              "Use 'n_steps' instead.")
         n_steps = nsteps
 
-    if n_steps is not None: # parse and validate n_steps
+    if n_steps is not None:  # parse and validate n_steps
         n_steps = int(n_steps)
 
     if hasattr(dt, 'unit'):
@@ -63,7 +65,8 @@ def parse_time_specification(units, dt=None, n_steps=None, nsteps=None, t1=None,
             if t1 is None:
                 t1 = 0.
 
-            times = parse_time_specification(units, dt=np.ones(n_steps+1)*dt, t1=t1)
+            times = parse_time_specification(units, dt=np.ones(n_steps+1)*dt,
+                                             t1=t1)
         # dt, t1, t2 : (numeric, numeric, numeric)
         elif dt is not None and t1 is not None and t2 is not None:
             if t2 < t1 and dt < 0:
@@ -107,4 +110,4 @@ def parse_time_specification(units, dt=None, n_steps=None, nsteps=None, t1=None,
         else:
             raise ValueError("Invalid options. See docstring.")
 
-        return times
+        return times.astype(np.float64)

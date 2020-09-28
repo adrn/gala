@@ -248,10 +248,6 @@ def test_to_coord_frame():
         coo = o.to_coord_frame(Galactic)
     assert coo.name == 'galactic'
 
-    warnings.simplefilter('always')
-    with pytest.warns(DeprecationWarning):
-        o.to_frame(Galactic)
-
     # doesn't work for 2D
     x = np.random.random(size=(2,10))*u.kpc
     v = np.random.normal(0.,100.,size=(2,10))*u.km/u.s
