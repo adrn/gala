@@ -149,3 +149,4 @@ More details are provided in the linked pages below:
    nbody
 
 .. automodapi:: gala.dynamics
+   :allowed-package-names: lyapunov

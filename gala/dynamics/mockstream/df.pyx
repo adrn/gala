@@ -241,8 +241,8 @@ cdef class BaseStreamDF:
 @cython.embedsignature(True)
 cdef class StreaklineStreamDF(BaseStreamDF):
     """A class for representing the "streakline" distribution function for
-    generating stellar streams based on `Kuepper et al. 2012
-    <https://ui.adsabs.harvard.edu/abs/2012MNRAS.420.2700K/abstract>`_
+    generating stellar streams based on Kuepper et al. 2012
+    https://ui.adsabs.harvard.edu/abs/2012MNRAS.420.2700K/abstract
 
     Parameters
     ----------
@@ -321,8 +321,8 @@ cdef class StreaklineStreamDF(BaseStreamDF):
 @cython.embedsignature(True)
 cdef class FardalStreamDF(BaseStreamDF):
     """A class for representing the Fardal+2015 distribution function for
-    generating stellar streams based on `Fardal et al. 2015
-    <https://ui.adsabs.harvard.edu/abs/2015MNRAS.452..301F/abstract>`_
+    generating stellar streams based on Fardal et al. 2015
+    https://ui.adsabs.harvard.edu/abs/2015MNRAS.452..301F/abstract
 
     Parameters
     ----------
@@ -423,10 +423,10 @@ cdef class FardalStreamDF(BaseStreamDF):
 @cython.embedsignature(True)
 cdef class LagrangeCloudStreamDF(BaseStreamDF):
     """A class for representing the Lagrange Cloud Stripping distribution
-    function for generating stellar streams. This df is based on `Gibbons et al.
-    2014 <https://ui.adsabs.harvard.edu/abs/2014MNRAS.445.3788G/abstract>`_ but
-    has since been modified by, e.g., `Erkal et al. 2019
-    <https://ui.adsabs.harvard.edu/abs/2019MNRAS.487.2685E/abstract>`_.
+    function for generating stellar streams. This df is based on Gibbons et al.
+    2014 https://ui.adsabs.harvard.edu/abs/2014MNRAS.445.3788G/abstract
+    but has since been modified by, e.g., Erkal et al. 2019
+    https://ui.adsabs.harvard.edu/abs/2019MNRAS.487.2685E/abstract .
 
     Parameters
     ----------
