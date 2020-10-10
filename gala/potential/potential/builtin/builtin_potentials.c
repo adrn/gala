@@ -765,7 +765,8 @@ double miyamotonagai_density(double t, double *pars, double *q, int n_dim) {
     return numer/denom;
 }
 
-void miyamotonagai_hessian(double t, double *pars, double *q, int n_dim, double *hess) {
+void miyamotonagai_hessian(double t, double *pars, double *q, int n_dim,
+                           double *hess) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)

@@ -17,6 +17,12 @@ from ....units import solarsystem, galactic, DimensionlessUnitSystem
 from .helpers import PotentialTestBase, CompositePotentialTestBase
 from ...._cconfig import GSL_ENABLED
 
+try:
+    import sympy
+    HAS_SYMPY = True
+except ImportError:
+    HAS_SYMPY = False
+
 ##############################################################################
 # Python
 ##############################################################################
@@ -107,6 +113,46 @@ class TestJaffe(PotentialTestBase):
 class TestMiyamotoNagai(PotentialTestBase):
     potential = MiyamotoNagaiPotential(units=galactic, m=1.E11, a=6.5, b=0.26)
     w0 = [8.,0.,0.,0.,0.22,0.1]
+
+    @pytest.mark.skipif(not HAS_SYMPY,
+                        reason="requires sympy to run this test")
+    def test_hessian_analytic(self):
+        from astropy.constants import G
+        from sympy import symbols
+        import sympy as sy
+
+        x, y, z = symbols('x y z')
+
+        usys = self.potential.units
+        GM = (G * self.potential.parameters['m']).decompose(usys).value
+        a = self.potential.parameters['a'].decompose(usys).value
+        b = self.potential.parameters['b'].decompose(usys).value
+        Phi = -GM / sy.sqrt(x**2 + y**2 + (a + sy.sqrt(z**2 + b**2))**2)
+
+        d2Phi_dx2 = sy.lambdify((x, y, z), sy.diff(Phi, x, 2))
+        d2Phi_dy2 = sy.lambdify((x, y, z), sy.diff(Phi, y, 2))
+        d2Phi_dz2 = sy.lambdify((x, y, z), sy.diff(Phi, z, 2))
+
+        d2Phi_dxdy = sy.lambdify((x, y, z), sy.diff(Phi, x, y))
+        d2Phi_dxdz = sy.lambdify((x, y, z), sy.diff(Phi, x, z))
+        d2Phi_dydz = sy.lambdify((x, y, z), sy.diff(Phi, y, z))
+
+        rnd = np.random.default_rng(42)
+        xyz = rnd.normal(0, 25, size=(3, 64))
+
+        H1 = self.potential.hessian(xyz).decompose(usys).value
+
+        H2 = np.zeros((3, 3, xyz.shape[1]))
+        H2[0, 0] = d2Phi_dx2(*xyz)
+        H2[1, 1] = d2Phi_dy2(*xyz)
+        H2[2, 2] = d2Phi_dz2(*xyz)
+
+        H2[0, 1] = H2[1, 0] = d2Phi_dxdy(*xyz)
+        H2[0, 2] = H2[2, 0] = d2Phi_dxdz(*xyz)
+        H2[1, 2] = H2[2, 1] = d2Phi_dydz(*xyz)
+
+        assert np.allclose(H1, H2)
+
 
 class TestSatoh(PotentialTestBase):
     potential = SatohPotential(units=galactic, m=1.E11, a=6.5, b=0.26)
