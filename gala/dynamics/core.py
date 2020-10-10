@@ -1,7 +1,6 @@
 # Standard library
 from collections import namedtuple, OrderedDict
 import warnings
-import inspect
 import re
 
 # Third-party
@@ -855,3 +854,51 @@ class PhaseSpacePosition(object):
         accessed by doing, e.g., ``obj.x.shape``.
         """
         return self.pos.shape
+
+    #
+    # Compatibility with other packages
+    #
+
+    def to_galpy_orbit(self, ro=None, vo=None):
+        """Convert this object to a ``galpy.Orbit`` instance.
+
+        Parameters
+        ----------
+        ro : `astropy.units.Quantity` or `astropy.units.UnitBase`
+            Natural length unit, in
+        vo : `astropy.units.Quantity` or `astropy.units.UnitBase`
+        """
+        import galpy
+        from galpy.orbit import Orbit
+
+        if self.frame is not None:
+            from ..potential import StaticFrame
+            w = self.to_frame(StaticFrame(self.frame.units))
+        else:
+            w = self
+
+        if ro is None:
+            ro = galpy.config.__config__.getfloat('normalization', 'ro')
+            ro = ro * u.kpc
+
+        if vo is None:
+            vo = galpy.config.__config__.getfloat('normalization', 'vo')
+            vo = vo * u.km/u.s
+
+        # PhaseSpacePosition or Orbit:
+        cyl = w.cylindrical
+
+        R = cyl.rho.to_value(ro).T
+        phi = cyl.phi.to_value(u.rad).T
+        z = cyl.z.to_value(ro).T
+
+        vR = cyl.v_rho.to_value(vo).T
+        vT = (cyl.rho * cyl.pm_phi).to_value(vo, u.dimensionless_angles()).T
+        vz = cyl.v_z.to_value(vo).T
+
+        o = Orbit(np.array([R, vR, vT, z, vz, phi]).T, ro=ro, vo=vo)
+
+        if hasattr(w, 't'):
+            o.t = w.t.to_value(ro / vo)
+
+        return o
