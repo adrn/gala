@@ -151,7 +151,7 @@ class TestMiyamotoNagai(PotentialTestBase):
         H2[0, 2] = H2[2, 0] = d2Phi_dxdz(*xyz)
         H2[1, 2] = H2[2, 1] = d2Phi_dydz(*xyz)
 
-        assert np.all(np.isclose(H1, H2))
+        assert np.allclose(H1, H2)
 
 
 class TestSatoh(PotentialTestBase):
