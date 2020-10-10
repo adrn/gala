@@ -91,7 +91,7 @@ matrix:
           python: 3.7
           name: Python 3.7 astropy LTS and Numpy 1.17
           stage: Comprehensive tests
-          env: TOXENV=py36-test-astropylts-numpy117
+          env: TOXENV=py37-test-astropylts-numpy117
 
         # Add a job that runs from cron only and tests against astropy dev and
         # numpy dev to give a change for early discovery of issues and feedback
