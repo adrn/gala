@@ -113,6 +113,10 @@ void c_hessian(CPotential *p, double t, double *qp, double *hess) {
 
     for (i=0; i < pow(p->n_dim,2); i++) {
         hess[i] = 0.;
+
+        if (i < p->n_dim) {
+            qp_trans[i] = 0.;
+        }
     }
 
     for (i=0; i < p->n_components; i++) {

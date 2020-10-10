@@ -17,6 +17,7 @@ from ...hamiltonian import Hamiltonian
 from ....units import UnitSystem, DimensionlessUnitSystem
 from ....dynamics import PhaseSpacePosition
 
+
 def partial_derivative(func, point, dim_ix=0, **kwargs):
     xyz = np.array(point, copy=True)
 
@@ -25,9 +26,10 @@ def partial_derivative(func, point, dim_ix=0, **kwargs):
         return func(xyz)
     return derivative(wraps, point[dim_ix], **kwargs)
 
+
 class PotentialTestBase(object):
     name = None
-    potential = None # MUST SET THIS
+    potential = None  # MUST SET THIS
     frame = None
     tol = 1E-5
     show_plots = False
