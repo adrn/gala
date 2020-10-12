@@ -2,6 +2,7 @@
 import abc
 import copy as pycopy
 from collections import OrderedDict
+import inspect
 import warnings
 import uuid
 
@@ -22,7 +23,20 @@ from ...dynamics import PhaseSpacePosition
 from ...util import ImmutableDict, atleast_2d
 from ...units import DimensionlessUnitSystem
 
-__all__ = ["PotentialBase", "CompositePotential"]
+__all__ = ["PotentialBase", "CompositePotential", "PotentialParameter"]
+
+
+class PotentialParameter:
+
+    def __init__(self, name, physical_type, default=None, repr_latex=None):
+
+        if repr_latex is None:
+            repr_latex = name
+
+        self.name = str(name)
+        self.physical_type = str(physical_type)
+        self.repr_latex = repr_latex
+        self.default = default
 
 
 class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
@@ -36,9 +50,70 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     ``_gradient(q,t)``. Optionally, they may also define methods
     to compute the density and hessian: ``_density()``, ``_hessian()``.
     """
+    ndim = 3
 
-    def __init__(self, parameters, origin=None, R=None,
-                 ndim=3, units=None):
+    def __init_subclass__(cls, GSL_only=False, **kwargs):
+
+        # Read the default call signature for the init
+        sig = inspect.signature(cls.__init__)
+
+        # Collect all potential parameters defined on the class:
+        cls._parameters = dict()
+        sig_parameters = []
+        for k, v in cls.__dict__.items():
+            if not isinstance(v, PotentialParameter):
+                continue
+
+            cls._parameters[k] = v
+
+            if v.default is None:
+                default = inspect.Parameter.empty
+            else:
+                default = v.default
+
+            sig_parameters.append(inspect.Parameter(
+                k, inspect.Parameter.KEYWORD_ONLY, default=default))
+
+        for k, param in sig.parameters.items():
+            if k == 'self':
+                continue
+
+            sig_parameters.append(param)
+
+        # Define a new init signature based on the potential parameters:
+        newsig = sig.replace(parameters=tuple(sig_parameters))
+        cls.__signature__ = newsig
+
+        super().__init_subclass__(**kwargs)
+
+        cls._GSL_only = GSL_only
+
+    def __init__(self, *, units=None, origin=None, R=None, **kwargs):
+
+        if self._GSL_only:
+            from ...._cconfig import GSL_ENABLED
+            if not GSL_ENABLED:
+                raise ValueError(
+                    "Gala was compiled without GSL and so this potential -- "
+                    f"{str(self.__class__)} -- will not work.  See the gala "
+                    "documentation for more information about installing and "
+                    "using GSL with gala: "
+                    "http://gala.adrian.pw/en/latest/install.html")
+
+        parameter_values = dict()
+        for k in kwargs:
+            if k not in self._parameters:
+                raise ValueError(f"{self.__class__} received unexpected "
+                                 f"keyword argument '{k}'")
+
+            parameter_values[k] = kwargs[k]
+
+        self._setup_potential(parameters=parameter_values,
+                              origin=origin,
+                              R=R,
+                              units=units)
+
+    def _setup_potential(self, parameters, origin=None, R=None, units=None):
 
         self._units = self._validate_units(units)
         self.parameters = self._prepare_parameters(parameters, self.units)
@@ -48,13 +123,11 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         except u.UnitConversionError:
             self.G = 1. # TODO: this is a HACK and could lead to user confusion
 
-        self.ndim = ndim
-
         if origin is None:
             origin = np.zeros(self.ndim)
         self.origin = self._remove_units(origin)
 
-        if R is not None and ndim not in [2, 3]:
+        if R is not None and self.ndim not in [2, 3]:
             raise NotImplementedError('Gala potentials currently only support '
                                       'rotations when ndim=2 or ndim=3.')
 
@@ -63,11 +136,11 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
                 R = R.as_matrix()
             R = np.array(R)
 
-            if R.shape != (ndim, ndim):
+            if R.shape != (self.ndim, self.ndim):
                 raise ValueError('Rotation matrix passed to potential {0} has '
                                  'an invalid shape: expected {1}, got {2}'
                                  .format(self.__class__.__name__,
-                                         (ndim, ndim), R.shape))
+                                         (self.ndim, self.ndim), R.shape))
         self.R = R
 
     def to_latex(self):

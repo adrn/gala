@@ -15,6 +15,7 @@ from ....units import galactic
 
 __all__ = ['LM10Potential', 'MilkyWayPotential', 'BovyMWPotential2014']
 
+
 class LM10Potential(CCompositePotential):
     """
     The Galactic potential used by Law and Majewski (2010) to represent
