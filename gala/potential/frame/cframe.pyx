@@ -83,14 +83,27 @@ cdef class CFrameWrapper:
 
 
 class CFrameBase(FrameBase):
+    Wrapper = None
 
-    def __init__(self, Wrapper, parameters, units, ndim=3):
-        self.units = self._validate_units(units)
-        self.parameters = self._prepare_parameters(parameters, self.units)
-        self.c_parameters = np.ravel([v.value for v in self.parameters.values()])
-        self.c_instance = Wrapper(*self.c_parameters)
+    def __init__(self, units=None, **kwargs):
+        super().__init__(units=units, **kwargs)
+        self._setup_wrapper()
 
-        self.ndim = ndim
+    def _setup_wrapper(self):
+        if self.Wrapper is None:
+            raise ValueError("C potential wrapper class not defined for "
+                             f"potential class {self.__class__}")
+
+        # to support array parameters, but they get unraveled
+        arrs = [np.atleast_1d(v.value).ravel()
+                for v in self.parameters.values()]
+
+        if len(arrs) > 0:
+            self.c_parameters = np.concatenate(arrs)
+        else:
+            self.c_parameters = np.array([])
+
+        self.c_instance = self.Wrapper(*self.c_parameters)
 
     def __str__(self):
         return self.__class__.__name__

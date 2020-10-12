@@ -1,7 +1,8 @@
 # Third-party
 import numpy as np
 
-from ..core import PotentialBase, PotentialParameter
+from ..core import PotentialBase
+from ...common import PotentialParameter
 
 __all__ = ["HarmonicOscillatorPotential", "KuzminPotential"]
 
@@ -22,12 +23,11 @@ class HarmonicOscillatorPotential(PotentialBase):
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
     """
-    omega = PotentialParameter('m', physical_type='omega')
+    omega = PotentialParameter('omega', physical_type='frequency')
 
     def _setup_potential(self, parameters, origin=None, R=None, units=None):
+        parameters['omega'] = np.atleast_1d(parameters['omega'])
         super()._setup_potential(parameters, origin=origin, R=R, units=units)
-
-        self.parameters['omega'] = np.atleast_1d(self.parameters['omega'])
         self.ndim = len(self.parameters['omega'])
 
     def _energy(self, q, t=0.):

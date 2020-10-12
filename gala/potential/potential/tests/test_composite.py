@@ -4,7 +4,8 @@ import pytest
 import numpy as np
 
 # This project
-from ..core import PotentialBase, CompositePotential, PotentialParameter
+from ..core import PotentialBase, CompositePotential
+from ...common import PotentialParameter
 from ..builtin import (KeplerPotential, HernquistPotential,
                        HenonHeilesPotential)
 

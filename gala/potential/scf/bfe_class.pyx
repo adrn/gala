@@ -19,7 +19,7 @@ cimport cython
 
 # Gala
 from gala.units import galactic
-from gala.potential.potential import PotentialParameter
+from gala.potential.common import PotentialParameter
 from gala.potential.potential.cpotential cimport (CPotentialWrapper,
                                                   MAX_N_COMPONENTS, CPotential)
 from gala.potential.potential.cpotential import CPotentialBase

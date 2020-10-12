@@ -2,9 +2,6 @@
     Test the core Potential classes
 """
 
-# Standard library
-from collections import OrderedDict
-
 # Third party
 import pytest
 import numpy as np
@@ -13,7 +10,8 @@ import astropy.units as u
 from matplotlib import cm
 
 # This package
-from ..core import PotentialBase, CompositePotential, PotentialParameter
+from ..core import PotentialBase, CompositePotential
+from ...common import PotentialParameter
 from ....units import UnitSystem
 
 units = [u.kpc, u.Myr, u.Msun, u.radian]

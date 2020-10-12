@@ -18,6 +18,7 @@ np.import_array()
 # Project
 from ..cframe import CFrameBase
 from ..cframe cimport CFrameWrapper
+from ...common import PotentialParameter
 from ....units import dimensionless, DimensionlessUnitSystem
 
 cdef extern from "src/funcdefs.h":
@@ -73,9 +74,8 @@ class StaticFrame(CFrameBase):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, units=None):
-        # ndim = None means it can support any number of ndim
-        super(StaticFrame, self).__init__(StaticFrameWrapper, dict(), units, ndim=None)
+    Wrapper = StaticFrameWrapper
+    ndim = None
 
 # ---
 
@@ -129,34 +129,22 @@ class ConstantRotatingFrame(CFrameBase):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, Omega, units=None):
+    Omega = PotentialParameter('Omega', physical_type='frequency')
 
-        if units is None:
-            units = dimensionless
+    def _setup_frame(self, parameters, units=None):
+        super()._setup_frame(parameters, units=units)
 
-        Omega = np.atleast_1d(Omega)
+        self.parameters['Omega'] = np.atleast_1d(self.parameters['Omega'])
 
-        if Omega.shape == (1,):
+        if self.parameters['Omega'].shape == (1,):
             # assumes ndim=2, must be associated with a 2D potential
-            Omega = np.squeeze(Omega)
-            ndim = 2
-            ConstantRotatingFrameWrapper = ConstantRotatingFrameWrapper2D
+            self.ndim = 2
+            self.Wrapper = ConstantRotatingFrameWrapper2D
 
-        elif Omega.shape == (3,):
+        elif self.parameters['Omega'].shape == (3,):
             # assumes ndim=3, must be associated with a 3D potential
-            ndim = 3
-            ConstantRotatingFrameWrapper = ConstantRotatingFrameWrapper3D
+            self.ndim = 3
+            self.Wrapper = ConstantRotatingFrameWrapper3D
 
         else:
             raise ValueError("Invalid input for rotation vector Omega.")
-
-        pars = OrderedDict()
-        ptypes = OrderedDict()
-        pars['Omega'] = Omega
-        ptypes['Omega'] = 'frequency'
-
-        super(ConstantRotatingFrame, self).__init__(ConstantRotatingFrameWrapper,
-                                                    pars, units, ndim=ndim)
-
-        if self.parameters['Omega'].unit != u.one and isinstance(units, DimensionlessUnitSystem):
-            raise ValueError("If frequency vector has units, you must pass in a unit system.")

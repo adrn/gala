@@ -19,11 +19,12 @@ cimport numpy as np
 np.import_array()
 
 # Project
-from ..core import CompositePotential, _potential_docstring, PotentialParameter
+from ..core import CompositePotential, _potential_docstring
 from ..util import format_doc
 from ..cpotential import CPotentialBase
 from ..cpotential cimport CPotential, CPotentialWrapper
 from ..cpotential cimport densityfunc, energyfunc, gradientfunc, hessianfunc
+from ...common import PotentialParameter
 from ...frame.cframe cimport CFrameWrapper
 from ....units import dimensionless, DimensionlessUnitSystem
 

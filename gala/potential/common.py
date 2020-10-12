@@ -1,5 +1,5 @@
 # Standard library
-from collections import OrderedDict
+import inspect
 
 # Third-party
 import astropy.units as u
@@ -12,7 +12,61 @@ from ..util import atleast_2d
 from ..units import UnitSystem, DimensionlessUnitSystem
 
 
-class CommonBase(object):
+class PotentialParameter:
+
+    def __init__(self, name, physical_type, default=None, repr_latex=None):
+
+        if repr_latex is None:
+            repr_latex = name
+
+        self.name = str(name)
+        self.physical_type = str(physical_type)
+        self.repr_latex = repr_latex
+        self.default = default
+
+
+class CommonBase:
+
+    def __init_subclass__(cls, GSL_only=False, **kwargs):
+
+        # Read the default call signature for the init
+        sig = inspect.signature(cls.__init__)
+
+        # Collect all potential parameters defined on the class:
+        cls._parameters = dict()
+        sig_parameters = []
+
+        # Also allow passing parameters in to subclassing:
+        subcls_params = kwargs.pop('parameters', {})
+        subcls_params.update(cls.__dict__)
+
+        for k, v in subcls_params.items():
+            if not isinstance(v, PotentialParameter):
+                continue
+
+            cls._parameters[k] = v
+
+            if v.default is None:
+                default = inspect.Parameter.empty
+            else:
+                default = v.default
+
+            sig_parameters.append(inspect.Parameter(
+                k, inspect.Parameter.POSITIONAL_OR_KEYWORD, default=default))
+
+        for k, param in sig.parameters.items():
+            if k == 'self':
+                continue
+            sig_parameters.append(param)
+        sig_parameters = sorted(sig_parameters, key=lambda x: int(x.kind))
+
+        # Define a new init signature based on the potential parameters:
+        newsig = sig.replace(parameters=tuple(sig_parameters))
+        cls.__signature__ = newsig
+
+        super().__init_subclass__(**kwargs)
+
+        cls._GSL_only = GSL_only
 
     def _validate_units(self, units):
 
@@ -28,15 +82,15 @@ class CommonBase(object):
     @classmethod
     def _prepare_parameters(cls, parameters, units):
 
-        pars = OrderedDict()
+        pars = dict()
         for k, v in parameters.items():
             expected_ptype = cls._parameters[k].physical_type
             if hasattr(v, 'unit'):
-                if v.unit.physical_type != expected_ptype:
-                    raise ValueError(
-                        f"Parameter {k} has physical type "
-                        f"'{v.unit.physical_type}', but we expected a physical "
-                        f"type '{expected_ptype}'")
+                # if v.unit.physical_type != expected_ptype:
+                #     raise ValueError(
+                #         f"Parameter {k} has physical type "
+                #         f"'{v.unit.physical_type}', but we expected a physical "
+                #         f"type '{expected_ptype}'")
                 pars[k] = v.decompose(units)
 
             elif expected_ptype is not None:

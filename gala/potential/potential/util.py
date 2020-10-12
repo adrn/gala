@@ -4,7 +4,8 @@
 import numpy as np
 
 # Project
-from .core import PotentialBase, PotentialParameter
+from ..common import PotentialParameter
+from .core import PotentialBase
 
 __all__ = ['from_equation']
 

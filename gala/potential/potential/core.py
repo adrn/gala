@@ -2,7 +2,6 @@
 import abc
 import copy as pycopy
 from collections import OrderedDict
-import inspect
 import warnings
 import uuid
 
@@ -23,20 +22,7 @@ from ...dynamics import PhaseSpacePosition
 from ...util import ImmutableDict, atleast_2d
 from ...units import DimensionlessUnitSystem
 
-__all__ = ["PotentialBase", "CompositePotential", "PotentialParameter"]
-
-
-class PotentialParameter:
-
-    def __init__(self, name, physical_type, default=None, repr_latex=None):
-
-        if repr_latex is None:
-            repr_latex = name
-
-        self.name = str(name)
-        self.physical_type = str(physical_type)
-        self.repr_latex = repr_latex
-        self.default = default
+__all__ = ["PotentialBase", "CompositePotential"]
 
 
 class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
@@ -51,47 +37,6 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     to compute the density and hessian: ``_density()``, ``_hessian()``.
     """
     ndim = 3
-
-    def __init_subclass__(cls, GSL_only=False, **kwargs):
-
-        # Read the default call signature for the init
-        sig = inspect.signature(cls.__init__)
-
-        # Collect all potential parameters defined on the class:
-        cls._parameters = dict()
-        sig_parameters = []
-
-        # Also allow passing parameters in to subclassing:
-        subcls_params = kwargs.pop('parameters', {})
-        subcls_params.update(cls.__dict__)
-
-        for k, v in subcls_params.items():
-            if not isinstance(v, PotentialParameter):
-                continue
-
-            cls._parameters[k] = v
-
-            if v.default is None:
-                default = inspect.Parameter.empty
-            else:
-                default = v.default
-
-            sig_parameters.append(inspect.Parameter(
-                k, inspect.Parameter.KEYWORD_ONLY, default=default))
-
-        for k, param in sig.parameters.items():
-            if k == 'self':
-                continue
-
-            sig_parameters.append(param)
-
-        # Define a new init signature based on the potential parameters:
-        newsig = sig.replace(parameters=tuple(sig_parameters))
-        cls.__signature__ = newsig
-
-        super().__init_subclass__(**kwargs)
-
-        cls._GSL_only = GSL_only
 
     def __init__(self, *, units=None, origin=None, R=None, **kwargs):
 
