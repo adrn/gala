@@ -387,5 +387,13 @@ class CPotentialBase(PotentialBase):
             Set of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
         """
+
+        # TODO: this is repeated code - see equivalent in core.py
+        tmp = [isinstance(units, DimensionlessUnitSystem),
+               isinstance(self.units, DimensionlessUnitSystem)]
+        if not all(tmp) and any(tmp):
+            raise ValueError("Cannot replace a dimensionless unit system with "
+                             "a unit system with physical units, or vice versa")
+
         return self.__class__(**self.parameters, units=units,
                               R=self.R, origin=self.origin)

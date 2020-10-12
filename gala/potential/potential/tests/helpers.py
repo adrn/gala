@@ -71,6 +71,10 @@ class PotentialTestBase(object):
     def test_unitsystem(self):
         assert isinstance(self.potential.units, UnitSystem)
 
+        if isinstance(self.potential.units, DimensionlessUnitSystem):
+            # Don't do a replace_units test for dimensionless potentials
+            return
+
         # check that we can replace the units as expected
         usys = UnitSystem([u.pc, u.Gyr, u.radian, u.Msun])
         pot = copy.deepcopy(self.potential)

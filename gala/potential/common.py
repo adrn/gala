@@ -86,11 +86,12 @@ class CommonBase:
         for k, v in parameters.items():
             expected_ptype = cls._parameters[k].physical_type
             if hasattr(v, 'unit'):
-                # if v.unit.physical_type != expected_ptype:
-                #     raise ValueError(
-                #         f"Parameter {k} has physical type "
-                #         f"'{v.unit.physical_type}', but we expected a physical "
-                #         f"type '{expected_ptype}'")
+                if (not isinstance(units, DimensionlessUnitSystem) and
+                        v.unit.physical_type != expected_ptype):
+                    raise ValueError(
+                        f"Parameter {k} has physical type "
+                        f"'{v.unit.physical_type}', but we expected a physical "
+                        f"type '{expected_ptype}'")
                 pars[k] = v.decompose(units)
 
             elif expected_ptype is not None:

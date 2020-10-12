@@ -724,6 +724,13 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         else:
             pot = self
 
+        # TODO: this is repeated code - see equivalent in cpotential.pyx
+        tmp = [isinstance(units, DimensionlessUnitSystem),
+               isinstance(self.units, DimensionlessUnitSystem)]
+        if not all(tmp) and any(tmp):
+            raise ValueError("Cannot replace a dimensionless unit system with "
+                             "a unit system with physical units, or vice versa")
+
         PotentialBase.__init__(pot,
                                origin=self.origin,
                                R=self.R,
