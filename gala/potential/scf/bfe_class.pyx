@@ -86,6 +86,8 @@ class SCFPotential(CPotentialBase, GSL_only=True):
     Tnlm = PotentialParameter('Tnlm', physical_type='dimensionless',
                               default=None)
 
+    Wrapper = SCFWrapper
+
     def _setup_potential(self, parameters, origin=None, R=None, units=None):
         super()._setup_potential(parameters=parameters,
                                  origin=origin,
