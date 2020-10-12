@@ -780,11 +780,10 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             pot = self
 
         PotentialBase.__init__(pot,
-                               parameters=self.parameters,
                                origin=self.origin,
                                R=self.R,
-                               ndim=self.ndim,
-                               units=units)
+                               units=units,
+                               **self.parameters)
 
         return pot
 
