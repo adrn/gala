@@ -11,8 +11,8 @@ from ..dynamics import PhaseSpacePosition
 from ..util import atleast_2d
 from ..units import UnitSystem, DimensionlessUnitSystem
 
+
 class CommonBase(object):
-    _physical_types = None
 
     def _validate_units(self, units):
 
@@ -27,24 +27,31 @@ class CommonBase(object):
 
     @classmethod
     def _prepare_parameters(cls, parameters, units):
-        ptypes = cls._physical_types
-        if ptypes is None:
-            ptypes = dict()
 
         pars = OrderedDict()
         for k, v in parameters.items():
+            expected_ptype = cls._parameters[k].physical_type
             if hasattr(v, 'unit'):
+                if v.unit.physical_type != expected_ptype:
+                    raise ValueError(
+                        f"Parameter {k} has physical type "
+                        f"'{v.unit.physical_type}', but we expected a physical "
+                        f"type '{expected_ptype}'")
                 pars[k] = v.decompose(units)
 
-            elif k in ptypes and ptypes[k]: # treat empty string as u.one
-                # HACK TODO: remove when fix potentials that ask for scale velocity
-                if ptypes[k] == 'speed':
-                    pars[k] = v * units['length']/units['time']
+            elif expected_ptype is not None:
+                # this is false for empty ptype: treat empty string as u.one
+                # (i.e. this goes to the else clause)
+
+                # TODO: remove when fix potentials that ask for scale velocity!
+                if expected_ptype == 'speed':
+                    pars[k] = v * units['length'] / units['time']
                 else:
-                    pars[k] = v * units[ptypes[k]]
+                    pars[k] = v * units[expected_ptype]
 
             else:
                 pars[k] = v * u.one
+
         return pars
 
     def _remove_units_prepare_shape(self, x):
