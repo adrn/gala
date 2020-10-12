@@ -60,7 +60,12 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         # Collect all potential parameters defined on the class:
         cls._parameters = dict()
         sig_parameters = []
-        for k, v in cls.__dict__.items():
+
+        # Also allow passing parameters in to subclassing:
+        subcls_params = kwargs.pop('parameters', {})
+        subcls_params.update(cls.__dict__)
+
+        for k, v in subcls_params.items():
             if not isinstance(v, PotentialParameter):
                 continue
 
