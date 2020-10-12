@@ -45,14 +45,14 @@ class MyPotential(PotentialBase):
     x0 = PotentialParameter('x0', 'length')
 
     def _energy(self, x, t):
-        m = self.parameters['m']
-        x0 = self.parameters['x0']
+        m = self.parameters['m'].value
+        x0 = self.parameters['x0'].value
         r = np.sqrt(np.sum((x-x0[None])**2, axis=1))
         return -m/r
 
     def _gradient(self, x, t):
-        m = self.parameters['m']
-        x0 = self.parameters['x0']
+        m = self.parameters['m'].value
+        x0 = self.parameters['x0'].value
         r = np.sqrt(np.sum((x-x0[None])**2, axis=1))
         return m*(x-x0[None])/r**3
 
