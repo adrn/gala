@@ -101,12 +101,13 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
                     "http://gala.adrian.pw/en/latest/install.html")
 
         parameter_values = dict()
-        for k in kwargs:
-            if k not in self._parameters:
-                raise ValueError(f"{self.__class__} received unexpected "
-                                 f"keyword argument '{k}'")
+        for k in self._parameters:
+            val = kwargs.pop(k, self._parameters[k].default)
+            parameter_values[k] = val
 
-            parameter_values[k] = kwargs[k]
+        if len(kwargs):
+            raise ValueError(f"{self.__class__} received unexpected keyword "
+                             f"argument(s): {list(kwargs.keys())}")
 
         self._setup_potential(parameters=parameter_values,
                               origin=origin,
