@@ -96,7 +96,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     def __init__(self, *, units=None, origin=None, R=None, **kwargs):
 
         if self._GSL_only:
-            from ...._cconfig import GSL_ENABLED
+            from gala._cconfig import GSL_ENABLED
             if not GSL_ENABLED:
                 raise ValueError(
                     "Gala was compiled without GSL and so this potential -- "
