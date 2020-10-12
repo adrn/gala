@@ -791,7 +791,7 @@ class LongMuraliBarPotential(CPotentialBase):
     a = PotentialParameter('a', physical_type='length')
     b = PotentialParameter('b', physical_type='length')
     c = PotentialParameter('c', physical_type='length')
-    alpha = PotentialParameter('alpha', physical_type='angle')
+    alpha = PotentialParameter('alpha', physical_type='angle', default=0)
 
     Wrapper = LongMuraliBarWrapper
 
