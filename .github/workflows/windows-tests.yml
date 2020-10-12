@@ -28,12 +28,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          conda activate gala
           conda install -c conda-forge -q gsl libpython
           python -m pip install -e .[test]
           python -m pip install tox
 
       - name: Run tests
         run: |
-          conda activate gala
           tox -e py38-test
