@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7", "3.8", "3.9"]
+        python-version: ["3.8"]
         os: ["windows-latest"]
 
     steps:
@@ -28,7 +28,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          conda create -n gala python=3.8 -q -c conda-forge
           conda activate gala
           conda install -c conda-forge -q gsl libpython
           python -m pip install -e .[test]
@@ -37,4 +36,4 @@ jobs:
       - name: Run tests
         run: |
           conda activate gala
-          tox -e py37-test
+          tox -e py38-test
