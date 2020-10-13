@@ -85,8 +85,8 @@ cdef class CFrameWrapper:
 class CFrameBase(FrameBase):
     Wrapper = None
 
-    def __init__(self, units=None, **kwargs):
-        super().__init__(units=units, **kwargs)
+    def __init__(self, *args, units=None, **kwargs):
+        super().__init__(*args, units=units, **kwargs)
         self._setup_wrapper()
 
     def _setup_wrapper(self):

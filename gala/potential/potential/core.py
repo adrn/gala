@@ -38,7 +38,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     """
     ndim = 3
 
-    def __init__(self, *, units=None, origin=None, R=None, **kwargs):
+    def __init__(self, *args, units=None, origin=None, R=None, **kwargs):
 
         if self._GSL_only:
             from gala._cconfig import GSL_ENABLED
@@ -50,15 +50,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
                     "using GSL with gala: "
                     "http://gala.adrian.pw/en/latest/install.html")
 
-        parameter_values = dict()
-        for k in self._parameters:
-            val = kwargs.pop(k, self._parameters[k].default)
-            parameter_values[k] = val
-
-        if len(kwargs):
-            raise ValueError(f"{self.__class__} received unexpected keyword "
-                             f"argument(s): {list(kwargs.keys())}")
-
+        parameter_values = self._parse_parameter_values(*args, **kwargs)
         self._setup_potential(parameters=parameter_values,
                               origin=origin,
                               R=R,
@@ -72,7 +64,8 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         try:
             self.G = G.decompose(self.units).value
         except u.UnitConversionError:
-            self.G = 1. # TODO: this is a HACK and could lead to user confusion
+            # TODO: this is a convention that and could lead to confusion!
+            self.G = 1.
 
         if origin is None:
             origin = np.zeros(self.ndim)
@@ -109,7 +102,8 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         pass
 
     def _density(self, q, t=0.):
-        raise NotImplementedError("This Potential has no implemented density function.")
+        raise NotImplementedError("This Potential has no implemented density "
+                                  "function.")
 
     def _hessian(self, q, t=0.):
         raise NotImplementedError("This Potential has no implemented Hessian.")
@@ -215,7 +209,8 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, q)
         ret_unit = self.units['mass'] / self.units['length']**3
-        return (self._density(q, t=t).T * ret_unit).to(self.units['mass density'])
+        return (self._density(q, t=t).T * ret_unit).to(
+            self.units['mass density'])
 
     def hessian(self, q, t=0.):
         """
@@ -231,21 +226,22 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         Returns
         -------
         hess : `~astropy.units.Quantity`
-            The Hessian matrix of second derivatives of the potential. If the input
-            position has shape ``q.shape``, the output energy will have shape
-            ``(q.shape[0],q.shape[0]) + q.shape[1:]``. That is, an ``n_dim`` by
-            ``n_dim`` array (matrix) for each position.
+            The Hessian matrix of second derivatives of the potential. If the
+            input position has shape ``q.shape``, the output energy will have
+            shape ``(q.shape[0],q.shape[0]) + q.shape[1:]``. That is, an
+            ``n_dim`` by ``n_dim`` array (matrix) for each position.
         """
         if (self.R is not None and
                 not np.allclose(np.diag(self.R), 1., atol=1e-15, rtol=0)):
             raise NotImplementedError("Computing Hessian matrices for rotated "
                                       "potentials is currently not supported.")
         q = self._remove_units_prepare_shape(q)
-        orig_shape,q = self._get_c_valid_arr(q)
+        orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, q)
         ret_unit = 1 / self.units['time']**2
         hess = np.moveaxis(self._hessian(q, t=t), 0, -1)
-        return hess.reshape((orig_shape[0], orig_shape[0]) + orig_shape[1:]) * ret_unit
+        return hess.reshape((orig_shape[0],
+                             orig_shape[0]) + orig_shape[1:]) * ret_unit
 
     # ========================================================================
     # Convenience methods that make use the base methods
@@ -289,7 +285,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         t = self._validate_prepare_time(t, q)
 
         # small step-size in direction of q
-        h = 1E-3 # MAGIC NUMBER
+        h = 1E-3  # MAGIC NUMBER
 
         # Radius
         r = np.sqrt(np.sum(q**2, axis=1))
@@ -347,48 +343,10 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     def __call__(self, q):
         return self.energy(q)
 
-    def __repr__(self):
-        pars = ""
-        if not isinstance(self.parameters, OrderedDict):
-            keys = sorted(self.parameters.keys()) # to ensure the order is always the same
-        else:
-            keys = self.parameters.keys()
-
-        for k in keys:
-            v = self.parameters[k].value
-            par_fmt = "{}"
-            post = ""
-
-            if hasattr(v, 'unit'):
-                post = " {}".format(v.unit)
-                v = v.value
-
-            if isinstance(v, float):
-                if v == 0:
-                    par_fmt = "{:.0f}"
-                elif np.log10(v) < -2 or np.log10(v) > 5:
-                    par_fmt = "{:.2e}"
-                else:
-                    par_fmt = "{:.2f}"
-
-            elif isinstance(v, int) and np.log10(v) > 5:
-                par_fmt = "{:.2e}"
-
-            pars += ("{}=" + par_fmt + post).format(k, v) + ", "
-
-        if isinstance(self.units, DimensionlessUnitSystem):
-            return "<{}: {} (dimensionless)>".format(self.__class__.__name__, pars.rstrip(", "))
-        else:
-            return "<{}: {} ({})>".format(self.__class__.__name__, pars.rstrip(", "), ",".join(map(str, self.units._core_units)))
-
-    def __str__(self):
-        return self.__class__.__name__
-
     def __add__(self, other):
         if not isinstance(other, PotentialBase):
-            raise TypeError('Cannot add a {} to a {}'
-                            .format(self.__class__.__name__,
-                                    other.__class__.__name__))
+            raise TypeError(f'Cannot add a {self.__class__.__name__} to a '
+                            f'{other.__class__.__name__}')
 
         new_pot = CompositePotential()
 
@@ -508,11 +466,11 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             # make default colormap not suck
             cmap = kwargs.pop('cmap', cm.Blues)
             if filled:
-                cs = ax.contourf(x1.reshape(shp), x2.reshape(shp), Z.reshape(shp),
-                                 cmap=cmap, **kwargs)
+                ax.contourf(x1.reshape(shp), x2.reshape(shp), Z.reshape(shp),
+                            cmap=cmap, **kwargs)
             else:
-                cs = ax.contour(x1.reshape(shp), x2.reshape(shp), Z.reshape(shp),
-                                cmap=cmap, **kwargs)
+                ax.contour(x1.reshape(shp), x2.reshape(shp), Z.reshape(shp),
+                           cmap=cmap, **kwargs)
 
             if labels is not None:
                 ax.set_xlabel(labels[0])
@@ -611,11 +569,11 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             # make default colormap not suck
             cmap = kwargs.pop('cmap', cm.Blues)
             if filled:
-                cs = ax.contourf(x1.reshape(shp), x2.reshape(shp), Z.reshape(shp),
-                                 cmap=cmap, **kwargs)
+                ax.contourf(x1.reshape(shp), x2.reshape(shp), Z.reshape(shp),
+                            cmap=cmap, **kwargs)
             else:
-                cs = ax.contour(x1.reshape(shp), x2.reshape(shp), Z.reshape(shp),
-                                cmap=cmap, **kwargs)
+                ax.contour(x1.reshape(shp), x2.reshape(shp), Z.reshape(shp),
+                           cmap=cmap, **kwargs)
 
             # cs.cmap.set_under('w')
             # cs.cmap.set_over('k')
@@ -747,9 +705,10 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         return self._energy(q, t=t)
 
     def value(self, *args, **kwargs):
-        __doc__ = self.energy.__doc__
+        __doc__ = self.energy.__doc__  # noqa
         warnings.warn("Use `energy()` instead.", DeprecationWarning)
         return self.energy(*args, **kwargs)
+
 
 class CompositePotential(PotentialBase, OrderedDict):
     """
@@ -795,7 +754,7 @@ class CompositePotential(PotentialBase, OrderedDict):
 
         OrderedDict.__init__(self, **kwargs)
 
-        self.R = None # TODO: this is a little messy
+        self.R = None  # TODO: this is a little messy
 
     def __setitem__(self, key, value):
         self._check_component(value)

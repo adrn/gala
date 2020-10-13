@@ -1,4 +1,5 @@
 # Standard library
+from collections import OrderedDict
 import inspect
 
 # Third-party
@@ -79,6 +80,30 @@ class CommonBase:
 
         return units
 
+    def _parse_parameter_values(self, *args, **kwargs):
+        expected_parameter_keys = list(self._parameters.keys())
+
+        parameter_values = dict()
+
+        # Get any parameters passed as positional arguments
+        i = 0
+
+        if args:
+            for i in range(len(args)):
+                parameter_values[expected_parameter_keys[i]] = args[i]
+            i += 1
+
+        # Get parameters passed in as keyword arguments:
+        for k in expected_parameter_keys[i:]:
+            val = kwargs.pop(k, self._parameters[k].default)
+            parameter_values[k] = val
+
+        if len(kwargs):
+            raise ValueError(f"{self.__class__} received unexpected keyword "
+                             f"argument(s): {list(kwargs.keys())}")
+
+        return parameter_values
+
     @classmethod
     def _prepare_parameters(cls, parameters, units):
 
@@ -152,6 +177,45 @@ class CommonBase:
             return False
 
         # the funkiness in the below is in case there are array parameters:
-        par_bool = [(k1==k2) and np.all(self.parameters[k1] == other.parameters[k2])
-                    for k1,k2 in zip(self.parameters.keys(), other.parameters.keys())]
+        par_bool = [
+            (k1 == k2) and np.all(self.parameters[k1] == other.parameters[k2])
+            for k1, k2 in zip(self.parameters.keys(), other.parameters.keys())]
         return np.all(par_bool) and (str(self) == str(other)) and (self.units == other.units)
+
+    # String representations:
+    def __repr__(self):
+        pars = ""
+        if not isinstance(self.parameters, OrderedDict):
+            keys = sorted(self.parameters.keys())
+        else:
+            keys = self.parameters.keys()
+
+        for k in keys:
+            v = self.parameters[k].value
+            par_fmt = "{}"
+            post = ""
+
+            if hasattr(v, 'unit'):
+                post = " {}".format(v.unit)
+                v = v.value
+
+            if isinstance(v, float):
+                if v == 0:
+                    par_fmt = "{:.0f}"
+                elif np.log10(v) < -2 or np.log10(v) > 5:
+                    par_fmt = "{:.2e}"
+                else:
+                    par_fmt = "{:.2f}"
+
+            elif isinstance(v, int) and np.log10(v) > 5:
+                par_fmt = "{:.2e}"
+
+            pars += ("{}=" + par_fmt + post).format(k, v) + ", "
+
+        if isinstance(self.units, DimensionlessUnitSystem):
+            return "<{}: {} (dimensionless)>".format(self.__class__.__name__, pars.rstrip(", "))
+        else:
+            return "<{}: {} ({})>".format(self.__class__.__name__, pars.rstrip(", "), ",".join(map(str, self.units._core_units)))
+
+    def __str__(self):
+        return self.__class__.__name__

@@ -252,8 +252,9 @@ class CPotentialBase(PotentialBase):
     """
     Wrapper = None
 
-    def __init__(self, *, units=None, origin=None, R=None, **kwargs):
-        super().__init__(units=units,
+    def __init__(self, *args, units=None, origin=None, R=None, **kwargs):
+        super().__init__(*args,
+                         units=units,
                          origin=origin,
                          R=R,
                          **kwargs)
