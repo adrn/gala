@@ -15,7 +15,8 @@ from ..units import UnitSystem, DimensionlessUnitSystem
 
 class PotentialParameter:
 
-    def __init__(self, name, physical_type, default=None, repr_latex=None):
+    def __init__(self, name, physical_type, default=None, repr_latex=None,
+                 equivalencies=None):
 
         if repr_latex is None:
             repr_latex = name
@@ -24,6 +25,7 @@ class PotentialParameter:
         self.physical_type = str(physical_type)
         self.repr_latex = repr_latex
         self.default = default
+        self.equivalencies = equivalencies
 
 
 class CommonBase:
@@ -118,14 +120,23 @@ class CommonBase:
         pars = dict()
         for k, v in parameters.items():
             expected_ptype = cls._parameters[k].physical_type
+            expected_unit = units[expected_ptype]
+            equiv = cls._parameters[k].equivalencies
+
             if hasattr(v, 'unit'):
                 if (not isinstance(units, DimensionlessUnitSystem) and
-                        v.unit.physical_type != expected_ptype):
-                    raise ValueError(
-                        f"Parameter {k} has physical type "
-                        f"'{v.unit.physical_type}', but we expected a physical "
-                        f"type '{expected_ptype}'")
-                pars[k] = v.decompose(units)
+                        not v.unit.is_equivalent(expected_unit, equiv)):
+                    msg = (f"Parameter {k} has physical type "
+                           f"'{v.unit.physical_type}', but we expected a "
+                           f"physical type '{expected_ptype}'")
+                    if equiv is not None:
+                        msg = (msg +
+                               f" or something equivalent via the {equiv} "
+                               "equivalency.")
+
+                    raise ValueError(msg)
+
+                pars[k] = v.to(expected_unit, equiv).decompose(units)
 
             elif expected_ptype is not None:
                 # this is false for empty ptype: treat empty string as u.one
