@@ -88,9 +88,9 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
                                   dummify=False, modules='numpy'))
 
     parameters = {}
-    for name in par_names:
-        parameters[name] = PotentialParameter(name,
-                                              physical_type='dimensionless')
+    for _name in par_names:
+        parameters[_name] = PotentialParameter(_name,
+                                               physical_type='dimensionless')
 
     class CustomPotential(PotentialBase, parameters=parameters):
         ndim = len(vars)
