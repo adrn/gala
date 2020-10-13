@@ -13,16 +13,29 @@ from ..units import UnitSystem, DimensionlessUnitSystem
 
 
 class PotentialParameter:
+    """A class for defining parameters needed by the potential classes
+
+    Parameters
+    ----------
+    name : str
+        The name of the parameter. For example, "m" for mass.
+    physical_type : str (optional)
+        The physical type (as defined by `astropy.units`) of the expected
+        physical units that this parameter is in. For example, "mass" for a mass
+        parameter.
+    default : numeric, str, array (optional)
+        The default value of the parameter.
+    equivalencies : `astropy.units.equivalencies.Equivalency` (optional)
+        Any equivalencies required for the parameter.
+    """
 
     def __init__(self, name, physical_type="dimensionless", default=None,
-                 repr_latex=None, equivalencies=None):
-
-        if repr_latex is None:
-            repr_latex = name
+                 equivalencies=None):
+        # TODO: could add a "shape" argument?
+        # TODO: need better sanitization and validation here
 
         self.name = str(name)
         self.physical_type = str(physical_type)
-        self.repr_latex = repr_latex
         self.default = default
         self.equivalencies = equivalencies
 
