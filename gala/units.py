@@ -210,7 +210,7 @@ class DimensionlessUnitSystem(UnitSystem):
 
 # define galactic unit system
 galactic = UnitSystem(u.kpc, u.Myr, u.Msun, u.radian,
-                      u.km/u.s, u.mas/u.yr)
+                      u.km/u.s)
 
 # solar system units
 solarsystem = UnitSystem(u.au, u.M_sun, u.yr, u.radian)
