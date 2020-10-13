@@ -97,18 +97,6 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         vars : dict
             A dictionary of sympy symbols used in the expression.
         """
-
-        # This weird implementation (and the underscore classmethod below) is to
-        # avoid having to do this import check in every implementation
-        try:
-            import sympy as sy  # noqa
-        except ImportError:
-            raise ImportError("Converting to a latex expression requires sympy")
-
-        return cls._to_sympy()
-
-    @classmethod
-    def _to_sympy(cls):
         raise NotImplementedError("to_sympy() is not implemented for this "
                                   f"class {cls}")
 
@@ -122,7 +110,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             The latex expression as a Python string.
         """
         try:
-            expr = cls.to_sympy()
+            expr, *_ = cls.to_sympy()
         except NotImplementedError:
             raise NotImplementedError(
                 ".to_latex() requires having a .to_sympy() method implemented "
