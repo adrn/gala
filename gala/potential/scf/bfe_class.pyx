@@ -19,6 +19,8 @@ cimport cython
 
 # Gala
 from gala.units import galactic
+from gala.potential.common import PotentialParameter
+from gala.potential import PotentialBase
 from gala.potential.potential.cpotential cimport (CPotentialWrapper,
                                                   MAX_N_COMPONENTS, CPotential)
 from gala.potential.potential.cpotential import CPotentialBase
@@ -49,7 +51,7 @@ cdef class SCFWrapper(CPotentialWrapper):
             self.cpotential.density[0] = <densityfunc>(scf_density)
             self.cpotential.gradient[0] = <gradientfunc>(scf_gradient)
 
-class SCFPotential(CPotentialBase):
+class SCFPotential(CPotentialBase, GSL_only=True):
     r"""
     SCFPotential(m, r_s, Snlm, Tnlm, units=None, origin=None, R=None)
 
@@ -79,50 +81,31 @@ class SCFPotential(CPotentialBase):
         length, mass, time, and angle units.
 
     """
-    _physical_types = {'m': 'mass',
-                       'r_s': 'length',
-                       'nmax': 'dimensionless',
-                       'lmax': 'dimensionless',
-                       'Snlm': 'dimensionless',
-                       'Tnlm': 'dimensionless'}
+    m = PotentialParameter('m', physical_type='mass')
+    r_s = PotentialParameter('r_s', physical_type='length')
+    Snlm = PotentialParameter('Snlm', physical_type='dimensionless')
+    Tnlm = PotentialParameter('Tnlm', physical_type='dimensionless')
 
-    def __init__(self, m, r_s, Snlm, Tnlm=None, units=None,
-                 origin=None, R=None):
-        from gala._cconfig import GSL_ENABLED
-        if not GSL_ENABLED:
-            raise ValueError("Gala was compiled without GSL and so the "
-                             "SCFPotential class will not work.  See the gala "
-                             "documentation for more information about "
-                             "installing and using GSL with gala: "
-                             "http://gala.adrian.pw/en/latest/install.html")
+    Wrapper = SCFWrapper
 
-        Snlm = np.array(Snlm)
+    def __init__(self, *args, units=None, origin=None, R=None, **kwargs):
+        PotentialBase.__init__(
+            self,
+            *args,
+            units=units,
+            origin=origin,
+            R=R,
+            **kwargs)
 
-        if Tnlm is None:
-            Tnlm = np.zeros_like(Snlm)
-        Tnlm = np.array(Tnlm)
-
-        if Snlm.shape != Tnlm.shape:
-            raise ValueError("Shape of coefficient arrays must match! "
-                             "({} vs {})".format(Snlm.shape, Tnlm.shape))
+        shp1 = self.parameters['Snlm'].shape
+        shp2 = self.parameters['Tnlm'].shape
+        if shp1 != shp2:
+            raise ValueError(
+                "The input coefficient arrays Snlm and Tnlm must have the same "
+                f"shape! Received: {shp1} and {shp2}")
 
         # extra parameters
-        nmax = Tnlm.shape[0]-1
-        lmax = Tnlm.shape[1]-1
+        nmax = self.parameters['Snlm'].shape[0] - 1
+        lmax = self.parameters['Snlm'].shape[1] - 1
 
-        parameters = OrderedDict()
-        parameters['m'] = m
-        parameters['r_s'] = r_s
-        parameters['nmax'] = nmax
-        parameters['lmax'] = lmax
-        parameters['Snlm'] = Snlm
-        parameters['Tnlm'] = Tnlm
-
-        # TODO: I need to save the full 3D Snlm, Tnlm and ravel elsewhere
-
-        super(SCFPotential, self).__init__(parameters=parameters,
-                                           units=units,
-                                           Wrapper=SCFWrapper,
-                                           origin=origin,
-                                           R=R,
-                                           c_only=['nmax', 'lmax']) # don't expose these in the .parameters dictionary
+        self._setup_wrapper({'nmax': nmax, 'lmax': lmax})

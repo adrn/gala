@@ -7,6 +7,7 @@ from ....dynamics import Orbit
 
 __all__ = ['static_to_constantrotating', 'constantrotating_to_static']
 
+
 def rodrigues_axis_angle_rotate(x, vec, theta):
     """
     Rotated the input vector or set of vectors `x` around the axis
@@ -21,12 +22,13 @@ def rodrigues_axis_angle_rotate(x, vec, theta):
     """
     x = np.array(x).T
     vec = np.array(vec).T
-    theta = np.array(theta).T[...,None]
+    theta = np.array(theta).T[..., None]
 
-    out = np.cos(theta)*x + np.sin(theta)*np.cross(vec, x) + \
-        (1 - np.cos(theta)) * (vec * x).sum(axis=-1)[...,None] * vec
+    out = np.cos(theta)*x + np.sin(theta) * np.cross(vec, x) + \
+        (1 - np.cos(theta)) * (vec * x).sum(axis=-1)[..., None] * vec
 
     return out.T
+
 
 def z_angle_rotate(xy, theta):
     """
@@ -43,10 +45,11 @@ def z_angle_rotate(xy, theta):
     theta = np.array(theta).T
 
     out = np.zeros_like(xy)
-    out[...,0] = np.cos(theta)*xy[...,0] - np.sin(theta)*xy[...,1]
-    out[...,1] = np.sin(theta)*xy[...,0] + np.cos(theta)*xy[...,1]
+    out[..., 0] = np.cos(theta)*xy[..., 0] - np.sin(theta)*xy[..., 1]
+    out[..., 1] = np.sin(theta)*xy[..., 0] + np.cos(theta)*xy[..., 1]
 
     return out.T
+
 
 def _constantrotating_static_helper(frame_r, frame_i, w, t=None, sign=1.):
     # TODO: use representation arithmetic instead
@@ -81,21 +84,22 @@ def _constantrotating_static_helper(frame_r, frame_i, w, t=None, sign=1.):
     vel = vel.d_xyz.decompose(frame_i.units).value
 
     # get rotation angle, axis vs. time
-    if isiterable(Omega): # 3D
+    if isiterable(Omega):  # 3D
         vec = Omega / np.linalg.norm(Omega)
         theta = np.linalg.norm(Omega) * t
 
         x_i2r = rodrigues_axis_angle_rotate(pos, vec, sign*theta)
         v_i2r = rodrigues_axis_angle_rotate(vel, vec, sign*theta)
 
-    else: # 2D
-        vec = Omega * np.array([0,0,1.])
+    else:  # 2D
+        vec = Omega * np.array([0, 0, 1.])
         theta = sign * Omega * t
 
         x_i2r = z_angle_rotate(pos, theta)
         v_i2r = z_angle_rotate(vel, theta)
 
     return x_i2r * frame_i.units['length'], v_i2r * frame_i.units['length']/frame_i.units['time']
+
 
 def static_to_constantrotating(frame_i, frame_r, w, t=None):
     """
@@ -118,6 +122,7 @@ def static_to_constantrotating(frame_i, frame_r, w, t=None):
     """
     return _constantrotating_static_helper(frame_r=frame_r, frame_i=frame_i,
                                            w=w, t=t, sign=1.)
+
 
 def constantrotating_to_static(frame_r, frame_i, w, t=None):
     """

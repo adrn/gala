@@ -65,13 +65,9 @@ a parameter argument and store this in the ``parameters`` dictionary attribute
 (a required attribute of any subclass). Let's write it out, then work through
 what each piece means in detail::
 
-    >>> class HenonHeilesPotential(gp.PotentialBase):
-    ...
-    ...     def __init__(self, A, units=None):
-    ...         pars = dict(A=A)
-    ...         super(HenonHeilesPotential, self).__init__(units=units,
-    ...                                                    parameters=pars,
-    ...                                                    ndim=2)
+    >>> class CustomHenonHeilesPotential(gp.PotentialBase):
+    ...     A = gp.PotentialParameter("A")
+    ...     ndim = 2
     ...
     ...     def _energy(self, xy, t):
     ...         A = self.parameters['A'].value
@@ -100,7 +96,7 @@ Let's now create an instance of the class and see how it works. For now, let's
 pass in ``None`` for the unit system to designate that we'll work with
 dimensionless quantities::
 
-    >>> pot = HenonHeilesPotential(A=1., units=None)
+    >>> pot = CustomHenonHeilesPotential(A=1., units=None)
 
 That's it! Now we have a fully-fledged potential object. For example, we
 can integrate an orbit in this potential::
@@ -119,29 +115,22 @@ can integrate an orbit in this potential::
     import gala.dynamics as gd
     import gala.potential as gp
 
-    class HenonHeilesPotential(gp.PotentialBase):
-
-        def __init__(self, A, units=None):
-            pars = dict(A=A)
-            super(HenonHeilesPotential, self).__init__(units=units,
-                                                       parameters=pars,
-                                                       ndim=2)
-
-        def _energy(self, q, t):
+    class CustomHenonHeilesPotential(gp.PotentialBase):
+        A = gp.PotentialParameter("A")
+        ndim = 2
+        def _energy(self, xy, t):
             A = self.parameters['A'].value
-            x,y = q.T
+            x,y = xy.T
             return 0.5*(x**2 + y**2) + A*(x**2*y - y**3/3)
-
-        def _gradient(self, q, t):
+        def _gradient(self, xy, t):
             A = self.parameters['A'].value
-            x,y = q.T
-
-            grad = np.zeros_like(q)
+            x,y = xy.T
+            grad = np.zeros_like(xy)
             grad[:,0] = x + 2*A*x*y
             grad[:,1] = y + A*(x**2 - y**2)
             return grad
 
-    pot = HenonHeilesPotential(A=1., units=None)
+    pot = CustomHenonHeilesPotential(A=1., units=None)
     w0 = gd.PhaseSpacePosition(pos=[0.,0.3],
                                vel=[0.38,0.])
     orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.05, n_steps=10000)

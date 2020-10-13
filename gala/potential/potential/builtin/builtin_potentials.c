@@ -556,36 +556,59 @@ double sphericalnfw_density(double t, double *pars, double *q, int n_dim) {
 }
 
 double sphericalnfw_hessian(double t, double *pars, double *q, int n_dim, double *hess) {
-  /*  pars:
-        - G (Gravitational constant)
-        - m (mass scale)
-        - r_s (scale radius)
-  */
-  // double v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
-  double v_h2 = -pars[0] * pars[1] / pars[2];
-  double rs = pars[2];
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - r_s (scale radius)
+    */
+    double GM = pars[0] * pars[1];
+    double rs = pars[2];
 
-  double x = q[0];
-  double y = q[1];
-  double z = q[2];
-  double r = sqrt(x*x + y*y + z*z);
-  double r2 = r*r;
-  double r3 = r2*r;
-  double r4 = r3*r;
-  double r5 = r4*r;
-  double rrs1 = r/rs + 1.0;
-  double ll = log(rrs1);
+    // Produced with sympy: see Fix-NFW-Hessian.ipynb
+    double x = q[0];
+    double y = q[1];
+    double z = q[2];
 
-  hess[0] = hess[0] + v_h2*(-1./(r2*rrs1) + rs/r3*ll + x*x/(r3*rs*rrs1*rrs1) + 3.*x*x/(r4*rrs1) - 3.*rs/r5*x*x*ll);
-  hess[1] = hess[1] + v_h2*(x*y/(r3*rs*rrs1*rrs1) + 3.*x*y/(r4*rrs1) - 3.*rs/r5*x*y*ll);
-  hess[2] = hess[2] + v_h2*(x*z/(r3*rs*rrs1*rrs1) + 3.*x*z/(r4*rrs1) - 3.*rs/r5*x*z*ll);
-  hess[3] = hess[3] + v_h2*(x*y/(r3*rs*rrs1*rrs1) + 3.*x*y/(r4*rrs1) - 3.*rs/r5*x*y*ll);
-  hess[4] = hess[4] + v_h2*(-1./(r2*rrs1) + rs/r3*ll + y*y/(r3*rs*rrs1*rrs1) + 3.*y*y/(r4*rrs1) - 3.*rs/r5*y*y*ll);
-  hess[5] = hess[5] + v_h2*(y*z/(r3*rs*rrs1*rrs1) + 3.*y*z/(r4*rrs1) - 3.*rs/r5*y*z*ll);
-  hess[6] = hess[6] + v_h2*(x*z/(r3*rs*rrs1*rrs1) + 3.*x*z/(r4*rrs1) - 3.*rs/r5*x*z*ll);
-  hess[7] = hess[7] + v_h2*(y*z/(r3*rs*rrs1*rrs1) + 3.*y*z/(r4*rrs1) - 3.*rs/r5*y*z*ll);
-  hess[8] = hess[8] + v_h2*(-1./(r2*rrs1) + rs/r3*ll + z*z/(r3*rs*rrs1*rrs1) + 3.*z*z/(r4*rrs1) - 3.*rs/r5*z*z*ll);
+    double tmp_0 = pow(x, 2);
+    double tmp_1 = pow(y, 2);
+    double tmp_2 = pow(z, 2);
+    double tmp_3 = tmp_0 + tmp_1 + tmp_2;
+    double tmp_4 = pow(tmp_3, 7);
+    double tmp_5 = 3*tmp_0;
+    double tmp_6 = sqrt(tmp_3);
+    double tmp_7 = rs + tmp_6;
+    double tmp_8 = pow(tmp_3, 13.0/2.0)*tmp_7;
+    double tmp_9 = pow(tmp_7, 2);
+    double tmp_10 = 1.0/rs;
+    double tmp_11 = tmp_9*log(tmp_10*tmp_7);
+    double tmp_12 = tmp_11*pow(tmp_3, 6);
+    double tmp_13 = tmp_11*tmp_4 - pow(tmp_3, 15.0/2.0)*tmp_7;
+    double tmp_14 = GM/tmp_9;
+    double tmp_15 = tmp_14/pow(tmp_3, 17.0/2.0);
+    double tmp_16 = x*y;
+    double tmp_17 = 4*tmp_14/pow(tmp_3, 3.0/2.0);
+    double tmp_18 = 3*tmp_16;
+    double tmp_19 = rs*tmp_14/pow(tmp_3, 2);
+    double tmp_20 = GM*log(tmp_10*tmp_6 + 1)/pow(tmp_3, 5.0/2.0);
+    double tmp_21 = tmp_16*tmp_17 + tmp_18*tmp_19 - tmp_18*tmp_20;
+    double tmp_22 = x*z;
+    double tmp_23 = 3*tmp_19;
+    double tmp_24 = 3*tmp_20;
+    double tmp_25 = tmp_17*tmp_22 + tmp_22*tmp_23 - tmp_22*tmp_24;
+    double tmp_26 = 3*tmp_8;
+    double tmp_27 = 3*tmp_12;
+    double tmp_28 = y*z;
+    double tmp_29 = tmp_17*tmp_28 + tmp_23*tmp_28 - tmp_24*tmp_28;
 
+    hess[0] = hess[0] + tmp_15*(tmp_0*tmp_4 - tmp_12*tmp_5 + tmp_13 + tmp_5*tmp_8);
+    hess[1] = hess[1] + tmp_21;
+    hess[2] = hess[2] + tmp_25;
+    hess[3] = hess[3] + tmp_21;
+    hess[4] = hess[4] + tmp_15*(tmp_1*tmp_26 - tmp_1*tmp_27 + tmp_1*tmp_4 + tmp_13);
+    hess[5] = hess[5] + tmp_29;
+    hess[6] = hess[6] + tmp_25;
+    hess[7] = hess[7] + tmp_29;
+    hess[8] = hess[8] + tmp_15*(tmp_13 + tmp_2*tmp_26 - tmp_2*tmp_27 + tmp_2*tmp_4);
 }
 
 /* ---------------------------------------------------------------------------

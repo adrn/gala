@@ -250,28 +250,32 @@ class CPotentialBase(PotentialBase):
     """
     A baseclass for defining gravitational potentials implemented in C.
     """
+    Wrapper = None
 
-    def __init__(self, parameters, units, origin=None, R=None,
-                 ndim=3, Wrapper=None, c_only=None):
-        super(CPotentialBase, self).__init__(
-            parameters, origin=origin, R=R, units=units, ndim=ndim)
+    def __init__(self, *args, units=None, origin=None, R=None, **kwargs):
+        super().__init__(*args,
+                         units=units,
+                         origin=origin,
+                         R=R,
+                         **kwargs)
+        self._setup_wrapper()
 
-        self._c_only = c_only
+    def _setup_wrapper(self, c_only_parameters=None):
+        if self.Wrapper is None:
+            raise ValueError("C potential wrapper class not defined for "
+                             f"potential class {self.__class__}")
 
-        if Wrapper is None:
-            # magic to set the c_instance attribute based on the name of the class
-            wrapper_name = '{}Wrapper'.format(
-                self.__class__.__name__.replace('Potential', ''))
-            module = sys.modules[self.__module__]
-            Wrapper = getattr(module, wrapper_name)  # try to find wrapper in the same module
-        self._Wrapper = Wrapper
+        if c_only_parameters is None:
+            c_only_parameters = {}
 
-        self._init_c_instance()
+        arrs = []
+        for k, v in c_only_parameters.items():
+            arrs.append(np.atleast_1d(v).ravel())
 
-    def _init_c_instance(self):
         # to support array parameters, but they get unraveled
-        arrs = [np.atleast_1d(v.value).ravel()
-                for v in self.parameters.values()]
+        arrs = arrs + [np.atleast_1d(v.value).ravel()
+                       for v in self.parameters.values()]
+
         if len(arrs) > 0:
             self.c_parameters = np.concatenate(arrs)
         else:
@@ -281,14 +285,8 @@ class CPotentialBase(PotentialBase):
             self._R = np.eye(self.ndim)
         else:
             self._R = self.R
-        self.c_instance = self._Wrapper(self.G, self.c_parameters,
-                                        q0=self.origin, R=self._R)
-
-        # remove C-only parameters from parameter dictionary
-        if self._c_only is not None:
-            for name in self._c_only:
-                if name in self.parameters:
-                    del self.parameters[name]
+        self.c_instance = self.Wrapper(self.G, self.c_parameters,
+                                       q0=self.origin, R=self._R)
 
     def _energy(self, q, t):
         return self.c_instance.energy(q, t=t)
@@ -391,5 +389,13 @@ class CPotentialBase(PotentialBase):
             Set of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
         """
+
+        # TODO: this is repeated code - see equivalent in core.py
+        tmp = [isinstance(units, DimensionlessUnitSystem),
+               isinstance(self.units, DimensionlessUnitSystem)]
+        if not all(tmp) and any(tmp):
+            raise ValueError("Cannot replace a dimensionless unit system with "
+                             "a unit system with physical units, or vice versa")
+
         return self.__class__(**self.parameters, units=units,
                               R=self.R, origin=self.origin)

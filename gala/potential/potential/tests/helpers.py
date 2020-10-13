@@ -37,7 +37,7 @@ class PotentialTestBase(object):
     @classmethod
     def setup_class(cls):
         if cls.name is None:
-            cls.name = cls.__name__[4:] # remove Test
+            cls.name = cls.__name__[4:]  # removes "Test"
         print("Testing potential: {}".format(cls.name))
         cls.w0 = np.array(cls.w0)
         cls.ndim = cls.w0.size // 2
@@ -65,11 +65,15 @@ class PotentialTestBase(object):
     def setup(self):
         # set up hamiltonian
         if self.frame is None:
-            self.frame = StaticFrame(self.potential.units)
+            self.frame = StaticFrame(units=self.potential.units)
         self.H = Hamiltonian(self.potential, self.frame)
 
     def test_unitsystem(self):
         assert isinstance(self.potential.units, UnitSystem)
+
+        if isinstance(self.potential.units, DimensionlessUnitSystem):
+            # Don't do a replace_units test for dimensionless potentials
+            return
 
         # check that we can replace the units as expected
         usys = UnitSystem([u.pc, u.Gyr, u.radian, u.Msun])
@@ -110,7 +114,7 @@ class PotentialTestBase(object):
                                         t=t*self.potential.units['time'])
 
     def test_hessian(self):
-        for arr,shp in zip(self.w0s, self._hess_return_shapes):
+        for arr, shp in zip(self.w0s, self._hess_return_shapes):
             g = self.potential.hessian(arr[:self.ndim])
             assert g.shape == shp
 
@@ -183,7 +187,7 @@ class PotentialTestBase(object):
 
         # check that comparing to non-potentials works
         assert not self.potential == "sup"
-        assert not self.potential is None
+        assert self.potential is not None
 
     def test_plot(self):
         p = self.potential
@@ -281,6 +285,7 @@ class PotentialTestBase(object):
             p = pickle.load(f)
 
         p.energy(self.w0[:self.w0.size//2])
+
 
 class CompositePotentialTestBase(PotentialTestBase):
     @pytest.mark.skip(reason="Skip composite potential repr test")

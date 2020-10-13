@@ -7,8 +7,16 @@ New Features
 Bug fixes
 ---------
 
+- Fixed a bug with ``Potential`` classes ``.replace_units()`` so that classes
+  with dimensionless unit systems cannot be replaced with physical unit systems,
+  and vice versa.
+
 API changes
 -----------
+
+- Changed the way new ``Potential`` classes are defined: they now rely on
+  defining class-level ``PotentialParameter`` objects, which reduces a
+  significant amount of boilerplate code in the built-in potentials.
 
 
 1.2 (2020-07-13)

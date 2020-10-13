@@ -1,13 +1,11 @@
-# Standard library
-from collections import OrderedDict
-
 # Third-party
 import numpy as np
 
 from ..core import PotentialBase
-from ....util import atleast_2d
+from ...common import PotentialParameter
 
 __all__ = ["HarmonicOscillatorPotential", "KuzminPotential"]
+
 
 class HarmonicOscillatorPotential(PotentialBase):
     r"""
@@ -25,13 +23,12 @@ class HarmonicOscillatorPotential(PotentialBase):
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
     """
+    omega = PotentialParameter('omega', physical_type='frequency')
 
-    def __init__(self, omega, units=None):
-        parameters = OrderedDict()
-        parameters['omega'] = np.atleast_1d(omega)
-        super(HarmonicOscillatorPotential, self).__init__(units=units,
-                                                          parameters=parameters,
-                                                          ndim=len(parameters['omega']))
+    def _setup_potential(self, parameters, origin=None, R=None, units=None):
+        parameters['omega'] = np.atleast_1d(parameters['omega'])
+        super()._setup_potential(parameters, origin=origin, R=R, units=units)
+        self.ndim = len(self.parameters['omega'])
 
     def _energy(self, q, t=0.):
         om = np.atleast_1d(self.parameters['omega'].value)
@@ -43,7 +40,7 @@ class HarmonicOscillatorPotential(PotentialBase):
 
     def _hessian(self, q, t=0.):
         om = np.atleast_1d(self.parameters['omega'].value)
-        return np.tile(np.diag(om)[:,:,None], reps=(1,1,q.shape[0]))
+        return np.tile(np.diag(om)[:, :, None], reps=(1, 1, q.shape[0]))
 
     def action_angle(self, w):
         """
@@ -85,6 +82,7 @@ class HarmonicOscillatorPotential(PotentialBase):
     #     from ...dynamics.analyticactionangle import harmonic_oscillator_aa_to_xv
     #     return harmonic_oscillator_aa_to_xv(actions, angles, self)
 
+
 class KuzminPotential(PotentialBase):
     r"""
     The Kuzmin flattened disk potential.
@@ -104,23 +102,19 @@ class KuzminPotential(PotentialBase):
         length, mass, time, and angle units.
 
     """
-    def __init__(self, m, a, units):
-        parameters = OrderedDict()
-        parameters['m'] = m
-        parameters['a'] = a
-        super(KuzminPotential, self).__init__(units=units,
-                                              parameters=parameters)
+    m = PotentialParameter('m', physical_type='mass')
+    a = PotentialParameter('a', physical_type='length')
 
     def _energy(self, q, t):
-        x,y,z = q
+        x, y, z = q
         m = self.parameters['m']
         a = self.parameters['a']
         val = -self.G * m / np.sqrt(x**2 + y**2 + (a + np.abs(z))**2)
         return val
 
     def _gradient(self, q, t):
-        x,y,z = q
+        x, y, z = q
         m = self.parameters['m']
         a = self.parameters['a']
         fac = self.G * m / (x**2 + y**2 + (a + np.abs(z))**2)**1.5
-        return fac[None,...] * q
+        return fac[None, ...] * q

@@ -93,13 +93,13 @@ class DirectNBody:
         _particle_potentials = []
         for pp in particle_potentials:
             if pp is None:
-                pp = NullPotential(units)
+                pp = NullPotential(units=units)
             else:
                 pp = pp.replace_units(units)
             _particle_potentials.append(pp)
 
         if external_potential is None:
-            external_potential = NullPotential(units)
+            external_potential = NullPotential(units=units)
         else:
             external_potential = external_potential.replace_units(units)
 

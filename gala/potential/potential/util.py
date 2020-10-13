@@ -4,16 +4,11 @@
 import numpy as np
 
 # Project
+from ..common import PotentialParameter
 from .core import PotentialBase
 
 __all__ = ['from_equation']
 
-# def _classnamify(s):
-#     s = [x.lower() for x in str(s).split()]
-#     words = []
-#     for word in s:
-#         words.append(word.capitalize())
-#     return "".join(words)
 
 def from_equation(expr, vars, pars, name=None, hessian=False):
     r"""
@@ -89,36 +84,34 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
     # Gradient
     gradfuncs = []
     for var in vars:
-        gradfuncs.append(lambdify(vars + pars, sympy.diff(expr,var), dummify=False, modules='numpy'))
+        gradfuncs.append(lambdify(vars + pars, sympy.diff(expr, var),
+                                  dummify=False, modules='numpy'))
 
-    class CustomPotential(PotentialBase):
+    parameters = {}
+    for _name in par_names:
+        parameters[_name] = PotentialParameter(_name,
+                                               physical_type='dimensionless')
 
-        def __init__(self, units=None, **kwargs):
-            for par in par_names:
-                if par not in kwargs:
-                    raise ValueError("You must specify a value for "
-                                     "parameter '{}'.".format(par))
-            super(CustomPotential,self).__init__(units=units,
-                                                 parameters=kwargs,
-                                                 ndim=ndim)
+    class CustomPotential(PotentialBase, parameters=parameters):
+        ndim = len(vars)
 
         def _energy(self, w, t=0.):
             kw = self.parameters.copy()
-            for k,v in kw.items():
+            for k, v in kw.items():
                 kw[k] = v.value
 
-            for i,name in enumerate(var_names):
-                kw[name] = w[:,i]
+            for i, name in enumerate(var_names):
+                kw[name] = w[:, i]
 
             return np.array(energyfunc(**kw))
 
         def _gradient(self, w, t=0.):
             kw = self.parameters.copy()
-            for k,v in kw.items():
+            for k, v in kw.items():
                 kw[k] = v.value
 
-            for i,name in enumerate(var_names):
-                kw[name] = w[:,i]
+            for i, name in enumerate(var_names):
+                kw[name] = w[:, i]
 
             grad = np.vstack([f(**kw)[np.newaxis] for f in gradfuncs])
             return grad.T
@@ -134,16 +127,17 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
         hessfuncs = []
         for var1 in vars:
             for var2 in vars:
-                hessfuncs.append(lambdify(vars + pars, sympy.diff(expr,var1,var2),
+                hessfuncs.append(lambdify(vars + pars,
+                                          sympy.diff(expr, var1, var2),
                                           dummify=False, modules='numpy'))
 
         def _hessian(self, w, t):
             kw = self.parameters.copy()
-            for k,v in kw.items():
+            for k, v in kw.items():
                 kw[k] = v.value
 
-            for i,name in enumerate(var_names):
-                kw[name] = w[:,i]
+            for i, name in enumerate(var_names):
+                kw[name] = w[:, i]
 
             # expand = [np.newaxis] * w[i].ndim
 
@@ -151,12 +145,12 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
             arrs = []
             for f in hessfuncs:
                 hess_arr = np.array(f(**kw))
-                if hess_arr.shape != w[:,i].shape:
-                    hess_arr = np.tile(hess_arr, reps=w[:,i].shape)
+                if hess_arr.shape != w[:, i].shape:
+                    hess_arr = np.tile(hess_arr, reps=w[:, i].shape)
                 arrs.append(hess_arr)
             hess = np.vstack(arrs)
 
-            return hess.reshape((ndim,ndim,len(w[:,i])))
+            return hess.reshape((ndim, ndim, len(w[:, i])))
 
         CustomPotential._hessian = _hessian
 

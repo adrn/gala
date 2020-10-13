@@ -2,10 +2,10 @@
 import astropy.units as u
 import pytest
 import numpy as np
-from collections import OrderedDict
 
 # This project
 from ..core import PotentialBase, CompositePotential
+from ...common import PotentialParameter
 from ..builtin import (KeplerPotential, HernquistPotential,
                        HenonHeilesPotential)
 
@@ -14,7 +14,8 @@ from ...hamiltonian import Hamiltonian
 from ....integrate import LeapfrogIntegrator, DOPRI853Integrator
 from ....units import solarsystem, galactic
 
-class CompositeHelper(object):
+
+class CompositeHelper:
 
     def setup(self):
         self.units = solarsystem
@@ -25,10 +26,10 @@ class CompositeHelper(object):
     def test_shit(self):
         potential = self.Cls(one=self.p1, two=self.p2)
 
-        q = np.ascontiguousarray(np.array([[1.1,0,0]]).T)
+        q = np.ascontiguousarray(np.array([[1.1, 0, 0]]).T)
         print("val", potential.energy(q))
 
-        q = np.ascontiguousarray(np.array([[1.1,0,0]]).T)
+        q = np.ascontiguousarray(np.array([[1.1, 0, 0]]).T)
         print("grad", potential.gradient(q))
 
     def test_composite_create(self):
@@ -54,11 +55,11 @@ class CompositeHelper(object):
         potential["one"] = self.p1
         potential["two"] = self.p2
 
-        grid = np.linspace(-5.,5)
-        fig = potential.plot_contours(grid=(grid,0.,0.))
+        grid = np.linspace(-5., 5)
+        potential.plot_contours(grid=(grid, 0., 0.))
         # fig.savefig(os.path.join(plot_path, "composite_kepler_sho_1d.png"))
 
-        fig = potential.plot_contours(grid=(grid,grid,0.))
+        potential.plot_contours(grid=(grid, grid, 0.))
         # fig.savefig(os.path.join(plot_path, "composite_kepler_sho_2d.png"))
 
     def test_integrate(self):
@@ -68,11 +69,11 @@ class CompositeHelper(object):
 
         for Integrator in [DOPRI853Integrator, LeapfrogIntegrator]:
             H = Hamiltonian(potential)
-            w_cy = H.integrate_orbit([1.,0,0, 0,2*np.pi,0], dt=0.01,
+            w_cy = H.integrate_orbit([1., 0, 0, 0, 2*np.pi, 0], dt=0.01,
                                      n_steps=1000,
                                      Integrator=Integrator,
                                      cython_if_possible=True)
-            w_py = H.integrate_orbit([1.,0,0, 0,2*np.pi,0], dt=0.01,
+            w_py = H.integrate_orbit([1., 0, 0, 0, 2*np.pi, 0], dt=0.01,
                                      n_steps=1000,
                                      Integrator=Integrator,
                                      cython_if_possible=False)
@@ -82,11 +83,14 @@ class CompositeHelper(object):
 
 # ------------------------------------------------------------------------
 
+
 class TestComposite(CompositeHelper):
     Cls = CompositePotential
 
+
 class TestCComposite(CompositeHelper):
     Cls = CCompositePotential
+
 
 def test_failures():
     p = CCompositePotential()
@@ -94,28 +98,24 @@ def test_failures():
     with pytest.raises(ValueError):
         p['jnsdfn'] = HenonHeilesPotential(units=solarsystem)
 
+
 def test_lock():
     p = CompositePotential()
     p['derp'] = KeplerPotential(m=1.*u.Msun, units=solarsystem)
     p.lock = True
-    with pytest.raises(ValueError): # try adding potential after lock
+    with pytest.raises(ValueError):  # try adding potential after lock
         p['herp'] = KeplerPotential(m=2.*u.Msun, units=solarsystem)
 
     p = CCompositePotential()
     p['derp'] = KeplerPotential(m=1.*u.Msun, units=solarsystem)
     p.lock = True
-    with pytest.raises(ValueError): # try adding potential after lock
+    with pytest.raises(ValueError):  # try adding potential after lock
         p['herp'] = KeplerPotential(m=2.*u.Msun, units=solarsystem)
 
-# -------------------------------------------------------
 
 class MyPotential(PotentialBase):
-    def __init__(self, m, x0, units=None):
-        parameters = OrderedDict()
-        parameters['m'] = m
-        parameters['x0'] = np.array(x0)
-        super(MyPotential, self).__init__(parameters=parameters,
-                                          units=units)
+    m = PotentialParameter('m', physical_type='mass')
+    x0 = PotentialParameter('x0', physical_type='length')
 
     def _energy(self, x, t):
         m = self.parameters['m']
@@ -129,6 +129,7 @@ class MyPotential(PotentialBase):
         r = np.sqrt(np.sum((x-x0[None])**2, axis=1))
         return m*(x-x0[None])/r**3
 
+
 def test_add():
     """ Test adding potentials to get a composite """
     p1 = KeplerPotential(units=galactic, m=1*u.Msun)
@@ -139,8 +140,8 @@ def test_add():
     comp1['0'] = p1
     comp1['1'] = p2
 
-    py_p1 = MyPotential(m=1., x0=[1.,0.,0.], units=galactic)
-    py_p2 = MyPotential(m=4., x0=[-1.,0.,0.], units=galactic)
+    py_p1 = MyPotential(m=1., x0=[1., 0., 0.], units=galactic)
+    py_p2 = MyPotential(m=4., x0=[-1., 0., 0.], units=galactic)
 
     # python + python
     new_p = py_p1 + py_p2

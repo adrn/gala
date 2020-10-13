@@ -16,6 +16,7 @@ from ...dynamics import PhaseSpacePosition, Orbit
 
 __all__ = ["Hamiltonian"]
 
+
 class Hamiltonian(CommonBase):
     """
     Represents a composition of a gravitational potential and a reference frame.
@@ -41,13 +42,15 @@ class Hamiltonian(CommonBase):
             potential = potential.potential
 
         if frame is None:
-            frame = StaticFrame(potential.units)
+            frame = StaticFrame(units=potential.units)
 
         elif not isinstance(frame, FrameBase):
-            raise ValueError("Invalid input for reference frame. Must be a FrameBase subclass.")
+            raise ValueError("Invalid input for reference frame. Must be a "
+                             "FrameBase subclass.")
 
         if not isinstance(potential, PotentialBase):
-            raise ValueError("Invalid input for potential. Must be a PotentialBase subclass.")
+            raise ValueError("Invalid input for potential. Must be a "
+                             "PotentialBase subclass.")
 
         self.potential = potential
         self.frame = frame
@@ -56,12 +59,14 @@ class Hamiltonian(CommonBase):
 
         if frame is not None:
             if frame.units != potential.units:
-                raise ValueError("Potential and Frame must have compatible unit systems "
-                                 "({} vs {})".format(potential.units, frame.units))
+                raise ValueError(
+                    "Potential and Frame must have compatible unit systems "
+                    f"({potential.units} vs {frame.units})")
 
             if frame.ndim is not None and frame.ndim != potential.ndim:
-                raise ValueError("Potential and Frame must have compatible phase-space "
-                                 "dimensionality ({} vs {})".format(potential.ndim, frame.ndim))
+                raise ValueError(
+                    "Potential and Frame must have compatible phase-space "
+                    f"dimensionality ({potential.ndim} vs {frame.ndim})")
 
         # TODO: document this attribute
         if isinstance(self.potential, CPotentialBase) and isinstance(self.frame, CFrameBase):
