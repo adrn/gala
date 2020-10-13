@@ -44,7 +44,7 @@ def test_init():
     with pytest.raises(ValueError):
         gen._get_nbody(w0, nbody)
 
-    frame2 = ConstantRotatingFrame([0,0,25.]*u.km/u.s/u.kpc, galactic)
+    frame2 = ConstantRotatingFrame([0, 0, 25.]*u.km/u.s/u.kpc, units=galactic)
     nbody = DirectNBody(w0=nbody_w0, external_potential=potential, frame=frame2,
                         particle_potentials=[None])
     with pytest.raises(ValueError):
@@ -53,7 +53,7 @@ def test_init():
     # we expect success!
     nbody = DirectNBody(w0=nbody_w0, external_potential=potential,
                         particle_potentials=[None])
-    new_nbody = gen._get_nbody(w0, nbody)
+    new_nbody = gen._get_nbody(w0, nbody)  # noqa
 
 
 def test_run():
@@ -63,7 +63,7 @@ def test_run():
     w0 = PhaseSpacePosition(pos=[15., 0., 0]*u.kpc,
                             vel=[0, 0, 0.13]*u.kpc/u.Myr)
     mass = 2.5e4 * u.Msun
-    prog_pot = HernquistPotential(mass, 4*u.pc, galactic)
+    prog_pot = HernquistPotential(mass, 4*u.pc, units=galactic)
 
     # The basic run:
     df = FardalStreamDF()
