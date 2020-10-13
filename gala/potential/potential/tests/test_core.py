@@ -56,9 +56,9 @@ class MyPotential(PotentialBase):
 
 
 def test_init_potential():
-    MyPotential(1.5*u.Msun, 1*u.au)
-    MyPotential(1.5*u.Msun, x0=1*u.au)
-    MyPotential(m=1.5*u.Msun, x0=1*u.au)
+    MyPotential(1.5, 1)
+    MyPotential(1.5, x0=1)
+    MyPotential(m=1.5, x0=1)
     MyPotential(1.5*u.Msun, 1*u.au, units=usys)
     MyPotential(1.5*u.Msun, x0=1*u.au, units=usys)
     MyPotential(m=1.5*u.Msun, x0=1*u.au, units=usys)
