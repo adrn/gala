@@ -57,15 +57,15 @@ def test_hernquist():
 class TestSCFPotential(PotentialTestBase):
     nmax = 6
     lmax = 2
-    Snlm = np.zeros((nmax+1,lmax+1,lmax+1))
-    Tnlm = np.zeros((nmax+1,lmax+1,lmax+1))
-    Snlm[0,0,0] = 1.
-    Snlm[2,0,0] = 0.5
-    Snlm[4,0,0] = 0.25
+    Snlm = np.zeros((nmax+1, lmax+1, lmax+1))
+    Tnlm = np.zeros((nmax+1, lmax+1, lmax+1))
+    Snlm[0, 0, 0] = 1.
+    Snlm[2, 0, 0] = 0.5
+    Snlm[4, 0, 0] = 0.25
 
     potential = _bfe_class.SCFPotential(m=1E11*u.Msun, r_s=10*u.kpc,
-                                       Snlm=Snlm, Tnlm=Tnlm, units=galactic)
-    w0 = [4.0,0.7,-0.9,0.0352238,0.1579493,0.02]
+                                        Snlm=Snlm, Tnlm=Tnlm, units=galactic)
+    w0 = [4.0, 0.7, -0.9, 0.0352238, 0.1579493, 0.02]
 
     def test_save_load(self, tmpdir):
         fn = str(tmpdir.join("{}.yml".format(self.name)))
@@ -88,9 +88,8 @@ class TestSCFPotential(PotentialTestBase):
         pars = self.potential.parameters.copy()
         for k in pars.keys():
             if k != 0:
-                pars[k] = 1.1*pars[k]
+                pars[k] = 1.1 * pars[k]
 
-        print(pars)
         other = self.potential.__class__(units=self.potential.units, **pars)
         assert other != self.potential
 
