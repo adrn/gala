@@ -114,7 +114,7 @@ class PotentialTestBase(object):
                                         t=t*self.potential.units['time'])
 
     def test_hessian(self):
-        for arr,shp in zip(self.w0s, self._hess_return_shapes):
+        for arr, shp in zip(self.w0s, self._hess_return_shapes):
             g = self.potential.hessian(arr[:self.ndim])
             assert g.shape == shp
 
@@ -187,7 +187,7 @@ class PotentialTestBase(object):
 
         # check that comparing to non-potentials works
         assert not self.potential == "sup"
-        assert not self.potential is None
+        assert self.potential is not None
 
     def test_plot(self):
         p = self.potential
@@ -285,6 +285,7 @@ class PotentialTestBase(object):
             p = pickle.load(f)
 
         p.energy(self.w0[:self.w0.size//2])
+
 
 class CompositePotentialTestBase(PotentialTestBase):
     @pytest.mark.skip(reason="Skip composite potential repr test")
