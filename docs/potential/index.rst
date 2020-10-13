@@ -235,7 +235,7 @@ and method::
     ...                       units=galactic)
     >>> pot.save("potential.yml")
     >>> load("potential.yml")
-    <NFWPotential: m=6.00e+11, r_s=20.00 (kpc,Myr,solMass,rad)>
+    <NFWPotential: m=6.00e+11, r_s=20.00, a=1.00, b=1.00, c=1.00 (kpc,Myr,solMass,rad)>
 
 Using gala.potential
 ====================
