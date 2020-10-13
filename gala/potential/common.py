@@ -1,5 +1,4 @@
 # Standard library
-from collections import OrderedDict
 import inspect
 
 # Third-party
@@ -15,8 +14,8 @@ from ..units import UnitSystem, DimensionlessUnitSystem
 
 class PotentialParameter:
 
-    def __init__(self, name, physical_type, default=None, repr_latex=None,
-                 equivalencies=None):
+    def __init__(self, name, physical_type="dimensionless", default=None,
+                 repr_latex=None, equivalencies=None):
 
         if repr_latex is None:
             repr_latex = name
@@ -210,18 +209,15 @@ class CommonBase:
     # String representations:
     def __repr__(self):
         pars = ""
-        if not isinstance(self.parameters, OrderedDict):
-            keys = sorted(self.parameters.keys())
-        else:
-            keys = self.parameters.keys()
 
+        keys = self.parameters.keys()
         for k in keys:
             v = self.parameters[k].value
             par_fmt = "{}"
             post = ""
 
             if hasattr(v, 'unit'):
-                post = " {}".format(v.unit)
+                post = f" {v.unit}"
                 v = v.value
 
             if isinstance(v, float):
