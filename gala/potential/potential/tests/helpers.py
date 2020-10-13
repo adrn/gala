@@ -37,7 +37,7 @@ class PotentialTestBase(object):
     @classmethod
     def setup_class(cls):
         if cls.name is None:
-            cls.name = cls.__name__[4:] # remove Test
+            cls.name = cls.__name__[4:]  # removes "Test"
         print("Testing potential: {}".format(cls.name))
         cls.w0 = np.array(cls.w0)
         cls.ndim = cls.w0.size // 2

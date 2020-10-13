@@ -84,11 +84,12 @@ class CommonBase:
         expected_parameter_keys = list(self._parameters.keys())
 
         if len(args) > len(expected_parameter_keys):
-            raise ValueError("Too many positional arguments passed in to "
-                             f"{self.__class__}: Potential and Frame classes "
-                             "only accept parameters as positional arguments, "
-                             "all other arguments (e.g., units) must now be "
-                             "passed in as keyword argument.")
+            raise ValueError(
+                "Too many positional arguments passed in to "
+                f"{self.__class__.__name__}: Potential and Frame classes only "
+                "accept parameters as positional arguments, all other "
+                "arguments (e.g., units) must now be passed in as keyword "
+                "argument.")
 
         parameter_values = dict()
 
