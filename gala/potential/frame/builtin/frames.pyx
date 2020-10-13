@@ -77,6 +77,11 @@ class StaticFrame(CFrameBase):
     Wrapper = StaticFrameWrapper
     ndim = None
 
+    # NOTE: this is a workaround to allow units as a positional arg for this
+    # class, because a lot of existing code assumes that...
+    def __init__(self, units=None):
+        super().__init__(units=units)
+
 # ---
 
 cdef class ConstantRotatingFrameWrapper2D(CFrameWrapper):
@@ -129,19 +134,20 @@ class ConstantRotatingFrame(CFrameBase):
         length, mass, time, and angle units.
 
     """
-    Omega = PotentialParameter('Omega', physical_type='frequency')
+    Omega = PotentialParameter('Omega', physical_type='frequency',
+                               equivalencies=u.dimensionless_angles())
 
     def _setup_frame(self, parameters, units=None):
         super()._setup_frame(parameters, units=units)
 
-        self.parameters['Omega'] = np.atleast_1d(self.parameters['Omega'])
+        Omega = np.atleast_1d(self.parameters['Omega'])
 
-        if self.parameters['Omega'].shape == (1,):
+        if Omega.shape == (1,):
             # assumes ndim=2, must be associated with a 2D potential
             self.ndim = 2
             self.Wrapper = ConstantRotatingFrameWrapper2D
 
-        elif self.parameters['Omega'].shape == (3,):
+        elif Omega.shape == (3,):
             # assumes ndim=3, must be associated with a 3D potential
             self.ndim = 3
             self.Wrapper = ConstantRotatingFrameWrapper3D
