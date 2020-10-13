@@ -42,4 +42,5 @@ jobs:
       - name: Run tests
         shell: bash -l {0}
         run: |
-          python -m tox -e py38-test
+          conda activate test
+          tox -e py38-test
