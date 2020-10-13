@@ -58,7 +58,7 @@ class CommonBase:
                 k, inspect.Parameter.POSITIONAL_OR_KEYWORD, default=default))
 
         for k, param in sig.parameters.items():
-            if k == 'self':
+            if k == 'self' or param.kind == param.VAR_POSITIONAL:
                 continue
             sig_parameters.append(param)
         sig_parameters = sorted(sig_parameters, key=lambda x: int(x.kind))
