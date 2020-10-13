@@ -97,10 +97,12 @@ class SCFPotential(CPotentialBase, GSL_only=True):
             R=R,
             **kwargs)
 
-        if self.parameters['Snlm'].shape != self.parameters['Tnlm']:
-            raise ValueError("The input coefficient arrays Snlm and Tnlm must "
-                             f"have the same shape! Received: {Snlm.shape} and "
-                             f"{Tnlm.shape}")
+        shp1 = self.parameters['Snlm'].shape
+        shp2 = self.parameters['Tnlm'].shape
+        if shp1 != shp2:
+            raise ValueError(
+                "The input coefficient arrays Snlm and Tnlm must have the same "
+                f"shape! Received: {shp1} and {shp2}")
 
         # extra parameters
         nmax = self.parameters['Snlm'].shape[0] - 1
