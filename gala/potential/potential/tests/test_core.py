@@ -55,6 +55,15 @@ class MyPotential(PotentialBase):
         return m*(x-x0[None])/r**3
 
 
+def test_init_potential():
+    MyPotential(1.5*u.Msun, 1*u.au)
+    MyPotential(1.5*u.Msun, x0=1*u.au)
+    MyPotential(m=1.5*u.Msun, x0=1*u.au)
+    MyPotential(1.5*u.Msun, 1*u.au, units=usys)
+    MyPotential(1.5*u.Msun, x0=1*u.au, units=usys)
+    MyPotential(m=1.5*u.Msun, x0=1*u.au, units=usys)
+
+
 def test_repr():
     p = MyPotential(m=1.E10*u.Msun, x0=0., units=usys)
     _repr = p.__repr__()

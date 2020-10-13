@@ -387,7 +387,8 @@ def test_frame_transform():
     PhaseSpacePosition([1, 2, 3.]*u.kpc, [1, 2, 3.]*u.km/u.s,
                        StaticFrame(galactic)),
     PhaseSpacePosition([1, 2, 3.]*u.kpc, [1, 2, 3.]*u.km/u.s,
-                       ConstantRotatingFrame([1., 0, 0]*u.rad/u.Myr, galactic)),
+                       ConstantRotatingFrame([1., 0, 0]*u.rad/u.Myr,
+                                             units=galactic)),
 ])
 def test_io(tmpdir, obj):
     import h5py
