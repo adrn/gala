@@ -136,7 +136,11 @@ class CommonBase:
 
                     raise ValueError(msg)
 
-                pars[k] = v.to(expected_unit, equiv).decompose(units)
+                # NOTE: this can lead to some comparison issues in __eq__, which
+                # tests for strong equality between parameter values. Here, the
+                # .to() could cause small rounding issues in comparisons
+                if v.unit.physical_type != expected_ptype:
+                    v = v.to(expected_unit, equiv)
 
             elif expected_ptype is not None:
                 # this is false for empty ptype: treat empty string as u.one
@@ -144,12 +148,14 @@ class CommonBase:
 
                 # TODO: remove when fix potentials that ask for scale velocity!
                 if expected_ptype == 'speed':
-                    pars[k] = v * units['length'] / units['time']
+                    v = v * units['length'] / units['time']
                 else:
-                    pars[k] = v * units[expected_ptype]
+                    v = v * units[expected_ptype]
 
             else:
-                pars[k] = v * u.one
+                v = v * u.one
+
+            pars[k] = v.decompose(units)
 
         return pars
 
