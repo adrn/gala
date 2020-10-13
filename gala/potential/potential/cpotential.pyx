@@ -268,12 +268,13 @@ class CPotentialBase(PotentialBase):
         if c_only_parameters is None:
             c_only_parameters = {}
 
-        # to support array parameters, but they get unraveled
-        arrs = [np.atleast_1d(v.value).ravel()
-                for v in self.parameters.values()]
-
+        arrs = []
         for k, v in c_only_parameters.items():
             arrs.append(np.atleast_1d(v).ravel())
+
+        # to support array parameters, but they get unraveled
+        arrs = arrs + [np.atleast_1d(v.value).ravel()
+                       for v in self.parameters.values()]
 
         if len(arrs) > 0:
             self.c_parameters = np.concatenate(arrs)

@@ -184,18 +184,18 @@ void scf_gradient_helper(double *xyz, int K,
 double scf_value(double t, double *pars, double *q, int n_dim) {
     /*  pars:
         - G (Gravitational constant)
-        - m (mass scale)
-        - r_s (length scale)
         - nmax
         - lmax
+        - m (mass scale)
+        - r_s (length scale)
         [- sin_coeff, cos_coeff]
     */
 
     double G = pars[0];
-    double M = pars[1];
-    double r_s = pars[2];
-    int nmax = (int)pars[3];
-    int lmax = (int)pars[4];
+    int nmax = (int)pars[1];
+    int lmax = (int)pars[2];
+    double M = pars[3];
+    double r_s = pars[4];
 
     double val[1] = {0.};
     double _val;
@@ -222,17 +222,17 @@ double scf_value(double t, double *pars, double *q, int n_dim) {
 void scf_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
     /*  pars:
         - G (Gravitational constant)
-        - m (mass scale)
-        - r_s (length scale)
         - nmax
         - lmax
+        - m (mass scale)
+        - r_s (length scale)
         [- sin_coeff, cos_coeff]
     */
     double G = pars[0];
-    double M = pars[1];
-    double r_s = pars[2];
-    int nmax = (int)pars[3];
-    int lmax = (int)pars[4];
+    int nmax = (int)pars[1];
+    int lmax = (int)pars[2];
+    double M = pars[3];
+    double r_s = pars[4];
 
     int n,l,m;
 
@@ -254,17 +254,17 @@ void scf_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
 double scf_density(double t, double *pars, double *q, int n_dim) {
     /*  pars:
         - G (Gravitational constant)
-        - m (mass scale)
-        - r_s (length scale)
         - nmax
         - lmax
+        - m (mass scale)
+        - r_s (length scale)
         [- sin_coeff, cos_coeff]
     */
     double G = pars[0];
-    double M = pars[1];
-    double r_s = pars[2];
-    int nmax = (int)pars[3];
-    int lmax = (int)pars[4];
+    int nmax = (int)pars[1];
+    int lmax = (int)pars[2];
+    double M = pars[3];
+    double r_s = pars[4];
 
     double val[1] = {0.};
     double _val;

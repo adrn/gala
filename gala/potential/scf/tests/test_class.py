@@ -28,17 +28,17 @@ def test_hernquist():
     M = 1E10
     r_s = 3.5
 
-    cos_coeff = np.zeros((nmax+1,lmax+1,lmax+1))
-    sin_coeff = np.zeros((nmax+1,lmax+1,lmax+1))
-    cos_coeff[0,0,0] = 1.
+    cos_coeff = np.zeros((nmax+1, lmax+1, lmax+1))
+    sin_coeff = np.zeros((nmax+1, lmax+1, lmax+1))
+    cos_coeff[0, 0, 0] = 1.
     scf_potential = _bfe_class.SCFPotential(m=M, r_s=r_s,
-                                           Snlm=cos_coeff, Tnlm=sin_coeff,
-                                           units=galactic)
+                                            Snlm=cos_coeff, Tnlm=sin_coeff,
+                                            units=galactic)
     # scf_potential = HackPotential(m=10., units=galactic)
 
     nbins = 128
-    rr = np.linspace(0.1,10.,nbins)
-    xyz = np.zeros((3,nbins))
+    rr = np.linspace(0.1, 10., nbins)
+    xyz = np.zeros((3, nbins))
     xyz[0] = rr * np.cos(np.pi/4.) * np.sin(np.pi/4.)
     xyz[1] = rr * np.sin(np.pi/4.) * np.sin(np.pi/4.)
     xyz[2] = rr * np.cos(np.pi/4.)

@@ -20,6 +20,7 @@ cimport cython
 # Gala
 from gala.units import galactic
 from gala.potential.common import PotentialParameter
+from gala.potential import PotentialBase
 from gala.potential.potential.cpotential cimport (CPotentialWrapper,
                                                   MAX_N_COMPONENTS, CPotential)
 from gala.potential.potential.cpotential import CPotentialBase
@@ -88,11 +89,14 @@ class SCFPotential(CPotentialBase, GSL_only=True):
 
     Wrapper = SCFWrapper
 
-    def _setup_potential(self, parameters, origin=None, R=None, units=None):
-        super()._setup_potential(parameters=parameters,
-                                 origin=origin,
-                                 R=R,
-                                 units=units)
+    def __init__(self, *args, units=None, origin=None, R=None, **kwargs):
+        PotentialBase.__init__(
+            self,
+            *args,
+            units=units,
+            origin=origin,
+            R=R,
+            **kwargs)
 
         if self.parameters['Tnlm'] is None:
             self.parameters['Tnlm'] = np.zeros_like(self.parameters['Snlm'])
