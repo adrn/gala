@@ -84,8 +84,7 @@ class SCFPotential(CPotentialBase, GSL_only=True):
     m = PotentialParameter('m', physical_type='mass')
     r_s = PotentialParameter('r_s', physical_type='length')
     Snlm = PotentialParameter('Snlm', physical_type='dimensionless')
-    Tnlm = PotentialParameter('Tnlm', physical_type='dimensionless',
-                              default=None)
+    Tnlm = PotentialParameter('Tnlm', physical_type='dimensionless')
 
     Wrapper = SCFWrapper
 
@@ -98,8 +97,10 @@ class SCFPotential(CPotentialBase, GSL_only=True):
             R=R,
             **kwargs)
 
-        if self.parameters['Tnlm'] is None:
-            self.parameters['Tnlm'] = np.zeros_like(self.parameters['Snlm'])
+        if self.parameters['Snlm'].shape != self.parameters['Tnlm']:
+            raise ValueError("The input coefficient arrays Snlm and Tnlm must "
+                             f"have the same shape! Received: {Snlm.shape} and "
+                             f"{Tnlm.shape}")
 
         # extra parameters
         nmax = self.parameters['Snlm'].shape[0] - 1
