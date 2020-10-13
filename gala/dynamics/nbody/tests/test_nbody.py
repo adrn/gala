@@ -22,7 +22,8 @@ class TestDirectNBody:
                                            units=self.usys)
         vcirc = pot_particle2.circular_velocity([1, 0, 0.]*u.pc).to(u.km/u.s)
 
-        self.particle_potentials = [NullPotential(self.usys), pot_particle2]
+        self.particle_potentials = [NullPotential(units=self.usys),
+                                    pot_particle2]
 
         w0_2 = PhaseSpacePosition(pos=[10, 0, 0] * u.kpc,
                                   vel=[0, 83, 0] * u.km/u.s)
