@@ -65,7 +65,7 @@ class PotentialTestBase(object):
     def setup(self):
         # set up hamiltonian
         if self.frame is None:
-            self.frame = StaticFrame(self.potential.units)
+            self.frame = StaticFrame(units=self.potential.units)
         self.H = Hamiltonian(self.potential, self.frame)
 
     def test_unitsystem(self):
