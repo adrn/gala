@@ -134,7 +134,6 @@ class HenonHeilesPotential(CPotentialBase):
     """
     ndim = 2
     Wrapper = HenonHeilesWrapper
-    # TODO: make Wrapper an optional class parameter - set it using init logic in NFWPotential
 
     def to_latex(self):
         return r"\Phi(x,y) = \frac{1}{2}(x^2 + y^2 + 2x^2 y - \frac{2}{3}y^3)"
