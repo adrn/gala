@@ -10,6 +10,7 @@ extern void null_hessian(double t, double *pars, double *q, int n_dim, double *h
 
 extern double henon_heiles_value(double t, double *pars, double *q, int n_dim);
 extern void henon_heiles_gradient(double t, double *pars, double *q, int n_dim, double *grad);
+extern void henon_heiles_hessian(double t, double *pars, double *q, int n_dim, double *hess);
 
 extern double kepler_value(double t, double *pars, double *q, int n_dim);
 extern double kepler_density(double t, double *pars, double *q, int n_dim);
@@ -34,14 +35,17 @@ extern void plummer_hessian(double t, double *pars, double *q, int n_dim, double
 extern double jaffe_value(double t, double *pars, double *q, int n_dim);
 extern void jaffe_gradient(double t, double *pars, double *q, int n_dim, double *grad);
 extern double jaffe_density(double t, double *pars, double *q, int n_dim);
+extern void jaffe_hessian(double t, double *pars, double *q, int n_dim, double *hess);
 
 extern double powerlawcutoff_value(double t, double *pars, double *q, int n_dim);
 extern void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, double *grad);
 extern double powerlawcutoff_density(double t, double *pars, double *q, int n_dim);
+extern void powerlawcutoff_hessian(double t, double *pars, double *q, int n_dim, double *hess);
 
 extern double stone_value(double t, double *pars, double *q, int n_dim);
 extern void stone_gradient(double t, double *pars, double *q, int n_dim, double *grad);
 extern void stone_density(double t, double *pars, double *q, int n_dim);
+extern void stone_hessian(double t, double *pars, double *q, int n_dim, double *hess);
 
 extern double sphericalnfw_value(double t, double *pars, double *q, int n_dim);
 extern void sphericalnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad);
@@ -50,13 +54,16 @@ extern void sphericalnfw_hessian(double t, double *pars, double *q, int n_dim, d
 
 extern double flattenednfw_value(double t, double *pars, double *q, int n_dim);
 extern void flattenednfw_gradient(double t, double *pars, double *q, int n_dim, double *grad);
+extern void flattenednfw_hessian(double t, double *pars, double *q, int n_dim, double *hess);
 
 extern double triaxialnfw_value(double t, double *pars, double *q, int n_dim);
 extern void triaxialnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad);
+extern void triaxialnfw_hessian(double t, double *pars, double *q, int n_dim, double *hess);
 
 extern double satoh_value(double t, double *pars, double *q, int n_dim);
 extern void satoh_gradient(double t, double *pars, double *q, int n_dim, double *grad);
 extern double satoh_density(double t, double *pars, double *q, int n_dim);
+extern void satoh_hessian(double t, double *pars, double *q, int n_dim, double *hess);
 
 extern double miyamotonagai_value(double t, double *pars, double *q, int n_dim);
 extern void miyamotonagai_gradient(double t, double *pars, double *q, int n_dim, double *grad);
@@ -69,7 +76,9 @@ extern double leesuto_density(double t, double *pars, double *q, int n_dim);
 
 extern double logarithmic_value(double t, double *pars, double *q, int n_dim);
 extern void logarithmic_gradient(double t, double *pars, double *q, int n_dim, double *grad);
+extern void logarithmic_hessian(double t, double *pars, double *q, int n_dim, double *hess);
 
 extern double longmuralibar_value(double t, double *pars, double *q, int n_dim);
 extern void longmuralibar_gradient(double t, double *pars, double *q, int n_dim, double *grad);
 extern double longmuralibar_density(double t, double *pars, double *q, int n_dim);
+extern void longmuralibar_hessian(double t, double *pars, double *q, int n_dim, double *hess);

@@ -138,6 +138,7 @@ cdef class HenonHeilesWrapper(CPotentialWrapper):
                   n_dim=2)
         self.cpotential.value[0] = <energyfunc>(henon_heiles_value)
         self.cpotential.gradient[0] = <gradientfunc>(henon_heiles_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(henon_heiles_hessian)
 
 @format_doc(common_doc=_potential_docstring)
 class HenonHeilesPotential(CPotentialBase):
@@ -152,7 +153,7 @@ class HenonHeilesPotential(CPotentialBase):
     Wrapper = HenonHeilesWrapper
 
     @myclassmethod
-    @sympy_wrap
+    @sympy_wrap(var='x y')
     def to_sympy(cls, v, p):
         expr = 1./2 * (v['x']**2 + v['y']**2 +
                       2*v['x']**2 * v['y'] - 2./3*v['y']**3)
@@ -358,6 +359,7 @@ cdef class JaffeWrapper(CPotentialWrapper):
         self.cpotential.value[0] = <energyfunc>(jaffe_value)
         self.cpotential.density[0] = <densityfunc>(jaffe_density)
         self.cpotential.gradient[0] = <gradientfunc>(jaffe_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(jaffe_hessian)
 
 @format_doc(common_doc=_potential_docstring)
 class JaffePotential(CPotentialBase):
@@ -395,6 +397,7 @@ cdef class StoneWrapper(CPotentialWrapper):
         self.cpotential.value[0] = <energyfunc>(stone_value)
         self.cpotential.density[0] = <densityfunc>(stone_density)
         self.cpotential.gradient[0] = <gradientfunc>(stone_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(stone_hessian)
 
 @format_doc(common_doc=_potential_docstring)
 class StonePotential(CPotentialBase):
@@ -443,6 +446,7 @@ cdef class PowerLawCutoffWrapper(CPotentialWrapper):
             self.cpotential.value[0] = <energyfunc>(powerlawcutoff_value)
             self.cpotential.density[0] = <densityfunc>(powerlawcutoff_density)
             self.cpotential.gradient[0] = <gradientfunc>(powerlawcutoff_gradient)
+            self.cpotential.hessian[0] = <hessianfunc>(powerlawcutoff_hessian)
 
 @format_doc(common_doc=_potential_docstring)
 class PowerLawCutoffPotential(CPotentialBase, GSL_only=True):
@@ -505,6 +509,7 @@ cdef class SatohWrapper(CPotentialWrapper):
         self.cpotential.value[0] = <energyfunc>(satoh_value)
         self.cpotential.density[0] = <densityfunc>(satoh_density)
         self.cpotential.gradient[0] = <gradientfunc>(satoh_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(satoh_hessian)
 
 @format_doc(common_doc=_potential_docstring)
 class SatohPotential(CPotentialBase):
@@ -610,6 +615,7 @@ cdef class FlattenedNFWWrapper(CPotentialWrapper):
                   np.ascontiguousarray(R))
         self.cpotential.value[0] = <energyfunc>(flattenednfw_value)
         self.cpotential.gradient[0] = <gradientfunc>(flattenednfw_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(flattenednfw_hessian)
 
 cdef class TriaxialNFWWrapper(CPotentialWrapper):
 
@@ -619,6 +625,7 @@ cdef class TriaxialNFWWrapper(CPotentialWrapper):
                   np.ascontiguousarray(R))
         self.cpotential.value[0] = <energyfunc>(triaxialnfw_value)
         self.cpotential.gradient[0] = <gradientfunc>(triaxialnfw_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(triaxialnfw_hessian)
 
 @format_doc(common_doc=_potential_docstring)
 class NFWPotential(CPotentialBase):
@@ -765,6 +772,7 @@ cdef class LogarithmicWrapper(CPotentialWrapper):
                   np.ascontiguousarray(R))
         self.cpotential.value[0] = <energyfunc>(logarithmic_value)
         self.cpotential.gradient[0] = <gradientfunc>(logarithmic_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(logarithmic_hessian)
 
 @format_doc(common_doc=_potential_docstring)
 class LogarithmicPotential(CPotentialBase):
@@ -864,6 +872,7 @@ cdef class LongMuraliBarWrapper(CPotentialWrapper):
         self.cpotential.value[0] = <energyfunc>(longmuralibar_value)
         self.cpotential.gradient[0] = <gradientfunc>(longmuralibar_gradient)
         self.cpotential.density[0] = <densityfunc>(longmuralibar_density)
+        self.cpotential.hessian[0] = <hessianfunc>(longmuralibar_hessian)
 
 @format_doc(common_doc=_potential_docstring)
 class LongMuraliBarPotential(CPotentialBase):
