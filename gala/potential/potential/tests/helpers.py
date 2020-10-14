@@ -358,3 +358,7 @@ class CompositePotentialTestBase(PotentialTestBase):
     @pytest.mark.skip(reason="Skip composite potential compare test")
     def test_compare(self):
         pass
+
+    @pytest.mark.skip(reason="to_sympy() not implemented yet")
+    def test_against_sympy(self):
+        pass

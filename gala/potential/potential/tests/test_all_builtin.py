@@ -382,10 +382,6 @@ class TestComposite(CompositePotentialTestBase):
     potential['halo'] = p1
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
 
-    @pytest.mark.skip(reason="to_sympy() not implemented yet")
-    def test_against_sympy(self):
-        pass
-
 
 class TestCComposite(CompositePotentialTestBase):
     p1 = p.LogarithmicPotential(units=galactic,
@@ -397,10 +393,6 @@ class TestCComposite(CompositePotentialTestBase):
     potential['disk'] = p2
     potential['halo'] = p1
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
-
-    @pytest.mark.skip(reason="to_sympy() not implemented yet")
-    def test_against_sympy(self):
-        pass
 
 
 class TestKepler3Body(CompositePotentialTestBase):
@@ -417,7 +409,3 @@ class TestKepler3Body(CompositePotentialTestBase):
     Omega = np.array([0, 0, 1.])
     frame = ConstantRotatingFrame(Omega=Omega)
     w0 = [0.5, 0, 0, 0., 1.05800316, 0.]
-
-    @pytest.mark.skip(reason="to_sympy() not implemented yet")
-    def test_against_sympy(self):
-        pass
