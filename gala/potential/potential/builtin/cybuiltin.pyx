@@ -814,7 +814,7 @@ class LogarithmicPotential(CPotentialBase):
         r2 = ((v['x'] / p['q1']) ** 2 +
               (v['y'] / p['q2']) ** 2 +
               (v['z'] / p['q3']) ** 2)
-        expr = -1./2 * p['v_c']**2 * sy.log(p['r_h']**2 + r2)
+        expr = 1./2 * p['v_c']**2 * sy.log(p['r_h']**2 + r2)
         return expr, v, p
 
 
@@ -914,9 +914,9 @@ class LongMuraliBarPotential(CPotentialBase):
         z = v['z']
 
         Tm = sy.sqrt((p['a']-x)**2 + y**2 +
-                     (p['b'] + sy.sqrt(p['c']**2 + z**2)**2))
+                     (p['b'] + sy.sqrt(p['c']**2 + z**2))**2)
         Tp = sy.sqrt((p['a']+x)**2 + y**2 +
-                     (p['b'] + sy.sqrt(p['c']**2 + z**2)**2))
+                     (p['b'] + sy.sqrt(p['c']**2 + z**2))**2)
 
         expr = (p['G'] * p['m'] / (2*p['a']) *
                 sy.log((x - p['a'] + Tm) / (x + p['a'] + Tp)))
