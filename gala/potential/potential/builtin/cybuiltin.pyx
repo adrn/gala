@@ -130,7 +130,7 @@ cdef class HenonHeilesWrapper(CPotentialWrapper):
         self.cpotential.value[0] = <energyfunc>(henon_heiles_value)
         self.cpotential.gradient[0] = <gradientfunc>(henon_heiles_gradient)
 
-# @format_doc(common_doc=_potential_docstring)
+@format_doc(common_doc=_potential_docstring)
 class HenonHeilesPotential(CPotentialBase):
     r"""
     The Hénon-Heiles potential.
@@ -143,10 +143,10 @@ class HenonHeilesPotential(CPotentialBase):
     Wrapper = HenonHeilesWrapper
 
     @myclassmethod
-    @sympy_wrap(var='x, y')
+    @sympy_wrap
     def to_sympy(cls, v, p):
-        expr = 1/2 * (v['x']**2 + v['y']**2 +
-                      2*v['x']**2 * v['y'] - 2/3*v['y']**3)
+        expr = 1./2 * (v['x']**2 + v['y']**2 +
+                      2*v['x']**2 * v['y'] - 2./3*v['y']**3)
         return expr, v, p
 
 
@@ -164,7 +164,7 @@ cdef class KeplerWrapper(CPotentialWrapper):
         self.cpotential.gradient[0] = <gradientfunc>(kepler_gradient)
         self.cpotential.hessian[0] = <hessianfunc>(kepler_hessian)
 
-# @format_doc(common_doc=_potential_docstring)
+@format_doc(common_doc=_potential_docstring)
 class KeplerPotential(CPotentialBase):
     r"""
     The Kepler potential for a point mass.
@@ -417,9 +417,9 @@ class StonePotential(CPotentialBase):
         import sympy as sy
         r = sy.sqrt(v['x']**2 + v['y']**2 + v['z']**2)
         A = - 2 * p['G'] * p['m'] / (np.pi * (p['r_h'] - p['r_c']))
-        expr = A * (p['r_h'] / r * sy.arctan(r / p['r_h']) -
-                    p['r_c'] / r * sy.arctan(r / p['r_c']) +
-                    1/2 * sy.log((r**2 + p['r_h']**2) / (r**2 + p['r_c']**2)))
+        expr = A * (p['r_h'] / r * sy.atan(r / p['r_h']) -
+                    p['r_c'] / r * sy.atan(r / p['r_c']) +
+                    1./2 * sy.log((r**2 + p['r_h']**2) / (r**2 + p['r_c']**2)))
         return expr, v, p
 
 
@@ -474,12 +474,12 @@ class PowerLawCutoffPotential(CPotentialBase, GSL_only=True):
         r_c = p['r_c']
         r = sy.sqrt(v['x']**2 + v['y']**2 + v['z']**2)
 
-        expr = (G*alpha*m* sy.lowergamma(3/2 - alpha/2, r**2/r_c**2) /
-                (2*r* sy.gamma(5/2 - alpha/2)) +
+        expr = (G*alpha*m* sy.lowergamma(3./2 - alpha/2, r**2/r_c**2) /
+                (2*r* sy.gamma(5./2 - alpha/2)) +
                 G*m* sy.lowergamma(1 - alpha/2, r**2/r_c**2) /
-                (r_c* sy.gamma(3/2 - alpha/2)) -
-                3*G*m* sy.lowergamma(3/2 - alpha/2, r**2/r_c**2) /
-                (2*r*sy.gamma(5/2 - alpha/2)))
+                (r_c* sy.gamma(3./2 - alpha/2)) -
+                3*G*m* sy.lowergamma(3./2 - alpha/2, r**2/r_c**2) /
+                (2*r*sy.gamma(5./2 - alpha/2)))
 
         return expr, v, p
 
@@ -797,7 +797,7 @@ class LogarithmicPotential(CPotentialBase):
         r2 = ((v['x'] / p['q1']) ** 2 +
               (v['y'] / p['q2']) ** 2 +
               (v['z'] / p['q3']) ** 2)
-        expr = -1/2 * p['v_c']**2 * sy.log(p['r_h']**2 + r2)
+        expr = -1./2 * p['v_c']**2 * sy.log(p['r_h']**2 + r2)
         return expr, v, p
 
 
