@@ -221,7 +221,7 @@ class IsochronePotential(CPotentialBase):
     def to_sympy(cls, v, p):
         import sympy as sy
         r = sy.sqrt(v['x']**2 + v['y']**2 + v['z']**2)
-        expr = - p['G'] * p['m'] / (sy.sqrt(r**2 + p['b']**2) + b)
+        expr = - p['G'] * p['m'] / (sy.sqrt(r**2 + p['b']**2) + p['b'])
         return expr, v, p
 
     def action_angle(self, w):
@@ -472,6 +472,7 @@ class PowerLawCutoffPotential(CPotentialBase, GSL_only=True):
         m = p['m']
         alpha = p['alpha']
         r_c = p['r_c']
+        r = sy.sqrt(v['x']**2 + v['y']**2 + v['z']**2)
 
         expr = (G*alpha*m* sy.lowergamma(3/2 - alpha/2, r**2/r_c**2) /
                 (2*r* sy.gamma(5/2 - alpha/2)) +
@@ -566,16 +567,13 @@ class MiyamotoNagaiPotential(CPotentialBase):
 
     Wrapper = MiyamotoNagaiWrapper
 
-    def to_latex(self):
-        return r"\Phi(R,z) = -\frac{G M}{\sqrt{R^2 + (a + \sqrt{z^2 + b^2})^2}}"
-
     @myclassmethod
     @sympy_wrap
     def to_sympy(cls, v, p):
         import sympy as sy
         R = sy.sqrt(v['x']**2 + v['y']**2)
         z = v['z']
-        term = R**2 + (p['a'] + sy.sqrt(z**2 + p['b']**2)**2)
+        term = R**2 + (p['a'] + sy.sqrt(z**2 + p['b']**2))**2
         expr = - p['G'] * p['m'] / sy.sqrt(term)
         return expr, v, p
 
