@@ -298,33 +298,56 @@ class PotentialTestBase(object):
     def test_against_sympy(self):
         # compare Gala gradient and hessian to sympy values
 
-        Phi, v, p = self.potential.to_sympy()
+        pot = self.potential
+        Phi, v, p = pot.to_sympy()
 
         # Derive sympy gradient and hessian functions to evaluate:
-        grad = sy.derive_by_array(Phi, list(v.values()))
-        grad_func = sy.lambdify(list(p.values()) + list(v.values()), grad)
+        from scipy.special import gamma, gammainc
+        def lowergamma(a, x):  # noqa
+            # Differences between scipy and sympy lower gamma
+            return gammainc(a, x) * gamma(a)
+        modules = ['numpy',
+                   {'atan': np.arctan,
+                    'lowergamma': lowergamma,
+                    'gamma': gamma}]
 
-        hess = sy.hessian(Phi, list(v.values()))
-        hess_func = sy.lambdify(list(p.values()) + list(v.values()), hess)
+        e_func = sy.lambdify(list(p.values()) + list(v.values()), Phi,
+                             modules=modules)
+
+        grad = sy.derive_by_array(Phi, list(v.values()))
+        grad_func = sy.lambdify(list(p.values()) + list(v.values()), grad,
+                                modules=modules)
+
+        Hess = sy.hessian(Phi, list(v.values()))
+        Hess_func = sy.lambdify(list(p.values()) + list(v.values()), Hess,
+                                modules=modules)
 
         # Make a dict of potential parameter values without units:
         par_vals = {}
-        for k, v in self.potential.parameters.items():
+        for k, v in pot.parameters.items():
             par_vals[k] = v.value
 
         N = 64  # MAGIC NUMBER:
-        trial_x = self.rnd.uniform(-10., 10., size=(self.potential.ndim, N))
+        trial_x = self.rnd.uniform(-10., 10., size=(pot.ndim, N))
         x_dict = {k: v for k, v in zip(['x', 'y', 'z'], trial_x)}
 
-        # Compare gradient values:
-        G_gala = self.potential.gradient(trial_x).value
-        G_sympy = grad_func(G=self.potential.G, **par_vals, **x_dict)
-        # print(G_gala, G_sympy)
-        assert np.allclose(G_gala, G_sympy)
+        f_gala = pot.energy(trial_x).value
+        f_sympy = e_func(G=pot.G, **par_vals, **x_dict)
+        e_close = np.allclose(f_gala, f_sympy)
 
-        H_gala = self.potential.hessian(trial_x).value
-        H_sympy = hess_func(G=self.potential.G, **par_vals, **x_dict)
-        assert np.allclose(H_gala, H_sympy)
+        G_gala = pot.gradient(trial_x).value
+        G_sympy = grad_func(G=pot.G, **par_vals, **x_dict)
+        g_close = np.allclose(G_gala, G_sympy)
+
+        H_gala = pot.hessian(trial_x).value
+        H_sympy = Hess_func(G=pot.G, **par_vals, **x_dict)
+        h_close = np.allclose(H_gala, H_sympy)
+
+        if not all([e_close, g_close, h_close]):
+            print(f'{pot}: energy {e_close}, gradient {g_close}, '
+                  f'hessian {h_close}')
+
+        assert all([e_close, g_close, h_close])
 
 
 class CompositePotentialTestBase(PotentialTestBase):
