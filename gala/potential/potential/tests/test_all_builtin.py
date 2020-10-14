@@ -348,6 +348,10 @@ class TestLongMuraliBarRotate(PotentialTestBase):
         with pytest.raises(NotImplementedError):
             self.potential.hessian([1., 2., 3.])
 
+    @pytest.mark.skip(reason="Not implemented for rotated potentials")
+    def test_against_sympy(self):
+        pass
+
 
 class TestLongMuraliBarRotationScipy(PotentialTestBase):
     potential = p.LongMuraliBarPotential(
@@ -361,6 +365,10 @@ class TestLongMuraliBarRotationScipy(PotentialTestBase):
         # TODO: when hessian for rotated potentials implemented, remove this
         with pytest.raises(NotImplementedError):
             self.potential.hessian([1., 2., 3.])
+
+    @pytest.mark.skip(reason="Not implemented for rotated potentials")
+    def test_against_sympy(self):
+        pass
 
 
 class TestComposite(CompositePotentialTestBase):
