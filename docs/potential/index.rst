@@ -237,6 +237,40 @@ and method::
     >>> load("potential.yml")
     <NFWPotential: m=6.00e+11, r_s=20.00, a=1.00, b=1.00, c=1.00 (kpc,Myr,solMass,rad)>
 
+Exporting potentials as ``sympy`` expressions
+=============================================
+
+Most of the potential classes can be exported to a ``sympy`` expression that can
+be used to manipulate or evaluate the form of the potential. To access this
+functionality, the potential classes have a ``.to_sympy()`` classmethod (note:
+this requires that ``sympy`` is installed):
+
+    >>> expr, vars_, pars = gp.LogarithmicPotential.to_sympy()
+    >>> str(expr)
+    '0.5*v_c**2*log(r_h**2 + z**2/q3**2 + y**2/q2**2 + x**2/q1**2)'
+
+This method also returns a dictionary containing the coordinate variables used
+in the expression as ``sympy`` symbols, here defined as ``vars_``:
+
+    >>> vars
+    {'x': x, 'y': y, 'z': z}
+
+A second dictionary containing the potential parameters as ``sympy`` symbols is
+also returned, here defined as ``pars``:
+
+    >>> pars
+    {'v_c': v_c, 'r_h': r_h, 'q1': q1, 'q2': q2, 'q3': q3, 'phi': phi, 'G': G}
+
+The expressions and variables returned can be used to perform operations on the
+potential expression. For example, to create a ``sympy`` expression for the
+gradient of the potential:
+
+    >>> import sympy as sy
+    >>> grad = sy.derive_by_array(expr, list(vars_.values()))
+    >>> grad[0]  # dPhi/dx
+    '1.0*v_c**2*x/(q1**2*(r_h**2 + z**2/q3**2 + y**2/q2**2 + x**2/q1**2))'
+
+
 Using gala.potential
 ====================
 More details are provided in the linked pages below:
