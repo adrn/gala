@@ -46,6 +46,7 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
 
     double henon_heiles_value(double t, double *pars, double *q, int n_dim) nogil
     void henon_heiles_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    void henon_heiles_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double kepler_value(double t, double *pars, double *q, int n_dim) nogil
     void kepler_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
@@ -70,14 +71,17 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     double jaffe_value(double t, double *pars, double *q, int n_dim) nogil
     void jaffe_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double jaffe_density(double t, double *pars, double *q, int n_dim) nogil
+    void jaffe_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double powerlawcutoff_value(double t, double *pars, double *q, int n_dim) nogil
     void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double powerlawcutoff_density(double t, double *pars, double *q, int n_dim) nogil
+    void powerlawcutoff_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double stone_value(double t, double *pars, double *q, int n_dim) nogil
     void stone_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double stone_density(double t, double *pars, double *q, int n_dim) nogil
+    void stone_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double sphericalnfw_value(double t, double *pars, double *q, int n_dim) nogil
     void sphericalnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
@@ -86,13 +90,16 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
 
     double flattenednfw_value(double t, double *pars, double *q, int n_dim) nogil
     void flattenednfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    void flattenednfw_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double triaxialnfw_value(double t, double *pars, double *q, int n_dim) nogil
     void triaxialnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    void triaxialnfw_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double satoh_value(double t, double *pars, double *q, int n_dim) nogil
     void satoh_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double satoh_density(double t, double *pars, double *q, int n_dim) nogil
+    void satoh_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double miyamotonagai_value(double t, double *pars, double *q, int n_dim) nogil
     void miyamotonagai_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
@@ -105,10 +112,12 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
 
     double logarithmic_value(double t, double *pars, double *q, int n_dim) nogil
     void logarithmic_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    void logarithmic_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double longmuralibar_value(double t, double *pars, double *q, int n_dim) nogil
     void longmuralibar_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double longmuralibar_density(double t, double *pars, double *q, int n_dim) nogil
+    void longmuralibar_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
 __all__ = ['NullPotential', 'HenonHeilesPotential', # Misc. potentials
            'KeplerPotential', 'HernquistPotential', 'IsochronePotential', 'PlummerPotential',
