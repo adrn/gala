@@ -476,6 +476,31 @@ void jaffe_hessian(double t, double *pars, double *q, int n_dim, double *hess) {
     Power-law potential with exponential cutoff
 */
 #if USE_GSL == 1
+
+double safe_gamma_inc(double a, double x) {
+    int N, m, n;
+    double A = 1.;
+    double B = 0.;
+    double tmp;
+
+    if (a > 0) {
+        return gsl_sf_gamma_inc_P(a, x) * gsl_sf_gamma(a);;
+    } else {
+        N = (int) ceil(-a);
+
+        for (n=0; n < N; n++) {
+            A = A * (a + n);
+
+            tmp = 1.;
+            for (m=N-1; m > n; m--) {
+                tmp = tmp * (a + m);
+            }
+            B = B + pow(x, a+n) * exp(-x) * tmp;
+        }
+        return (B + gsl_sf_gamma_inc_P(a + N, x) * gsl_sf_gamma(a + N)) / A;
+    }
+}
+
 double powerlawcutoff_value(double t, double *pars, double *q, int n_dim) {
     /*  pars:
             0 - G (Gravitational constant)
@@ -483,15 +508,26 @@ double powerlawcutoff_value(double t, double *pars, double *q, int n_dim) {
             2 - a (power-law index)
             3 - c (cutoff radius)
     */
-    double r;
-    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    double G = pars[0];
+    double m = pars[1];
+    double alpha = pars[2];
+    double r_c = pars[3];
+    double x = q[0];
+    double y = q[1];
+    double z = q[2];
+    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
 
     if (r == 0.) {
         return -INFINITY;
     } else {
-        return -(pars[0] * pars[1] / (pars[3] * r) / gsl_sf_gamma((3-pars[2])/2) *
-            (pars[3] * gsl_sf_gamma((3.-pars[2]) / 2) * gsl_sf_gamma_inc_P((3.-pars[2]) / 2, r*r/(pars[3]*pars[3])) -
-                   r * gsl_sf_gamma((2.-pars[2]) / 2) * gsl_sf_gamma_inc_P((2.-pars[2]) / 2, r*r/(pars[3]*pars[3]))));
+        double tmp_0 = (1.0/2.0)*alpha;
+        double tmp_1 = -tmp_0;
+        double tmp_2 = tmp_1 + 1.5;
+        double tmp_3 = pow(x, 2) + pow(y, 2) + pow(z, 2);
+        double tmp_4 = tmp_3/pow(r_c, 2);
+        double tmp_5 = G*m;
+        double tmp_6 = tmp_5*safe_gamma_inc(tmp_2, tmp_4)/(sqrt(tmp_3)*tgamma(tmp_1 + 2.5));
+        return tmp_0*tmp_6 - 3.0/2.0*tmp_6 + tmp_5*safe_gamma_inc(tmp_1 + 1, tmp_4)/(r_c*tgamma(tmp_2));
     }
 }
 
@@ -551,7 +587,7 @@ void powerlawcutoff_hessian(double t, double *pars, double *q, int n_dim, double
     double tmp_8 = tmp_3*tmp_7;
     double tmp_9 = G*m;
     double tmp_10 = tmp_9/tgamma(tmp_5 + 2.5);
-    double tmp_11 = tmp_10*gsl_sf_gamma_inc_P(tmp_6, tmp_8);
+    double tmp_11 = tmp_10*safe_gamma_inc(tmp_6, tmp_8);
     double tmp_12 = tmp_11/pow(tmp_3, 5.0/2.0);
     double tmp_13 = (9.0/2.0)*tmp_12;
     double tmp_14 = exp(-tmp_8);
