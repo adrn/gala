@@ -384,7 +384,7 @@ class JaffePotential(CPotentialBase):
     def to_sympy(cls, v, p):
         import sympy as sy
         r = sy.sqrt(v['x']**2 + v['y']**2 + v['z']**2)
-        expr = - p['G'] * p['m'] / p['c'] * sy.log(r / (r + p['c']))
+        expr = p['G'] * p['m'] / p['c'] * sy.log(r / (r + p['c']))
         return expr, v, p
 
 

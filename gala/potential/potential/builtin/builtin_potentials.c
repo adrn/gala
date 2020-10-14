@@ -371,8 +371,6 @@ void plummer_hessian(double t, double *pars, double *q, int n_dim, double *hess)
 
 /* ---------------------------------------------------------------------------
     Jaffe sphere
-
-    TODO: I think this is wrong?
 */
 double jaffe_value(double t, double *pars, double *q, int n_dim) {
     /*  pars:
@@ -451,27 +449,27 @@ void jaffe_hessian(double t, double *pars, double *q, int n_dim, double *hess) {
     double tmp_23 = tmp_19*x;
     double tmp_24 = tmp_4*tmp_8;
     double tmp_25 = tmp_17*x;
-    double tmp_26 = -tmp_14*y + tmp_16*y - tmp_22*(tmp_23*y - tmp_24*y - tmp_25*y);
+    double tmp_26 = tmp_14*y - tmp_16*y + tmp_22*(tmp_23*y - tmp_24*y - tmp_25*y);
     double tmp_27 = tmp_4*z;
-    double tmp_28 = -tmp_13*tmp_27 + tmp_16*z - tmp_22*(tmp_23*z - tmp_24*z - tmp_25*z);
+    double tmp_28 = tmp_13*tmp_27 - tmp_16*z + tmp_22*(tmp_23*z - tmp_24*z - tmp_25*z);
     double tmp_29 = tmp_7*y;
     double tmp_30 = tmp_11*y - tmp_29;
     double tmp_31 = tmp_12*tmp_30;
     double tmp_32 = tmp_15*tmp_21;
     double tmp_33 = tmp_30*tmp_32;
     double tmp_34 = y*z;
-    double tmp_35 = -tmp_22*(-tmp_17*tmp_34 + tmp_19*tmp_34 - tmp_27*tmp_29) - tmp_27*tmp_31 + tmp_33*z;
+    double tmp_35 = tmp_22*(-tmp_17*tmp_34 + tmp_19*tmp_34 - tmp_27*tmp_29) + tmp_27*tmp_31 - tmp_33*z;
     double tmp_36 = tmp_11*z - tmp_7*z;
 
-    hess[0] = hess[0] + -tmp_14*x + tmp_16*x - tmp_22*(-tmp_0*tmp_17 - tmp_0*tmp_18 + tmp_0*tmp_19 + tmp_20);
+    hess[0] = hess[0] + tmp_14*x - tmp_16*x + tmp_22*(-tmp_0*tmp_17 - tmp_0*tmp_18 + tmp_0*tmp_19 + tmp_20);
     hess[1] = hess[1] + tmp_26;
     hess[2] = hess[2] + tmp_28;
     hess[3] = hess[3] + tmp_26;
-    hess[4] = hess[4] + -tmp_22*(-tmp_1*tmp_17 - tmp_1*tmp_18 + tmp_1*tmp_19 + tmp_20) - tmp_31*tmp_4*y + tmp_33*y;
+    hess[4] = hess[4] + tmp_22*(-tmp_1*tmp_17 - tmp_1*tmp_18 + tmp_1*tmp_19 + tmp_20) + tmp_31*tmp_4*y - tmp_33*y;
     hess[5] = hess[5] + tmp_35;
     hess[6] = hess[6] + tmp_28;
     hess[7] = hess[7] + tmp_35;
-    hess[8] = hess[8] + -tmp_12*tmp_27*tmp_36 - tmp_22*(-tmp_17*tmp_2 - tmp_18*tmp_2 + tmp_19*tmp_2 + tmp_20) + tmp_32*tmp_36*z;
+    hess[8] = hess[8] + tmp_12*tmp_27*tmp_36 + tmp_22*(-tmp_17*tmp_2 - tmp_18*tmp_2 + tmp_19*tmp_2 + tmp_20) - tmp_32*tmp_36*z;
 }
 
 /* ---------------------------------------------------------------------------

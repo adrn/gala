@@ -10,6 +10,12 @@ import numpy as np
 from scipy.misc import derivative
 import pytest
 
+try:
+    import sympy as sy  # noqa
+    HAS_SYMPY = True
+except ImportError:
+    HAS_SYMPY = False
+
 # Project
 from ..io import load
 from ...frame import StaticFrame
@@ -67,6 +73,7 @@ class PotentialTestBase(object):
         if self.frame is None:
             self.frame = StaticFrame(units=self.potential.units)
         self.H = Hamiltonian(self.potential, self.frame)
+        self.rnd = np.random.default_rng(seed=42)
 
     def test_unitsystem(self):
         assert isinstance(self.potential.units, UnitSystem)
@@ -285,6 +292,39 @@ class PotentialTestBase(object):
             p = pickle.load(f)
 
         p.energy(self.w0[:self.w0.size//2])
+
+    @pytest.mark.skipif(not HAS_SYMPY,
+                        reason="requires sympy to run this test")
+    def test_against_sympy(self):
+        # compare Gala gradient and hessian to sympy values
+
+        Phi, v, p = self.potential.to_sympy()
+
+        # Derive sympy gradient and hessian functions to evaluate:
+        grad = sy.derive_by_array(Phi, list(v.values()))
+        grad_func = sy.lambdify(list(p.values()) + list(v.values()), grad)
+
+        hess = sy.hessian(Phi, list(v.values()))
+        hess_func = sy.lambdify(list(p.values()) + list(v.values()), hess)
+
+        # Make a dict of potential parameter values without units:
+        par_vals = {}
+        for k, v in self.potential.parameters.items():
+            par_vals[k] = v.value
+
+        N = 64  # MAGIC NUMBER:
+        trial_x = self.rnd.uniform(-10., 10., size=(self.potential.ndim, N))
+        x_dict = {k: v for k, v in zip(['x', 'y', 'z'], trial_x)}
+
+        # Compare gradient values:
+        G_gala = self.potential.gradient(trial_x).value
+        G_sympy = grad_func(G=self.potential.G, **par_vals, **x_dict)
+        # print(G_gala, G_sympy)
+        assert np.allclose(G_gala, G_sympy)
+
+        H_gala = self.potential.hessian(trial_x).value
+        H_sympy = hess_func(G=self.potential.G, **par_vals, **x_dict)
+        assert np.allclose(H_gala, H_sympy)
 
 
 class CompositePotentialTestBase(PotentialTestBase):
