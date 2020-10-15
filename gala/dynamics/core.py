@@ -865,8 +865,14 @@ class PhaseSpacePosition(object):
         Parameters
         ----------
         ro : `astropy.units.Quantity` or `astropy.units.UnitBase`
-            Natural length unit, in
+            "Natural" length unit.
         vo : `astropy.units.Quantity` or `astropy.units.UnitBase`
+            "Natural" velocity unit.
+
+        Returns
+        -------
+        galpy_orbit : `galpy.orbit.Orbit`
+
         """
         import galpy
         from galpy.orbit import Orbit

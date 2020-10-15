@@ -7,6 +7,9 @@ New Features
 - Added a new ``.to_sympy()`` classmethod for the ``Potential`` classes to
   return a sympy expression and variables.
 
+- Added a method, ``.to_galpy_orbit()``, to convert Gala ``Orbit`` instances to
+  Galpy ``Orbit`` objects.
+
 Bug fixes
 ---------
 
