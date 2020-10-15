@@ -3,10 +3,10 @@ name: Windows-tests
 on:
   push:
     branches:
-      - DISABLED
+      - main
   pull_request:
     branches:
-      - DISABLED
+      - main
 
 jobs:
   build:
@@ -21,14 +21,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: goanpeca/setup-miniconda@v1
-        with:
-          auto-update-conda: true
-          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: |
-          conda install -c conda-forge -q gsl libpython
+          choco install python --version 3.8
+          choco --yes install GnuWin
+          python -m pip install --upgrade pip
           python -m pip install -e .[test]
           python -m pip install tox
 
