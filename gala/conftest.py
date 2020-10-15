@@ -15,7 +15,7 @@ from pytest_astropy_header.display import (
 
 def pytest_configure(config):
 
-    config.option.astropy_header = False
+    config.option.astropy_header = True
 
     # Customize the following lines to add/remove entries from the list of
     # packages for which version numbers are displayed when running the tests.
@@ -30,19 +30,12 @@ def pytest_configure(config):
 def pytest_report_header(config):
     from gala._cconfig import GSL_ENABLED
 
-    config.option.astropy_header = True
-    hdr = astropy_header(config)
-    config.option.astropy_header = False
-
-    hdr += "\n"
-
     if GSL_ENABLED:
-        hdr += " +++ Gala compiled with GSL +++"
+        hdr = " +++ Gala compiled with GSL +++"
     else:
-        hdr += " --- Gala compiled without GSL ---"
+        hdr = " --- Gala compiled without GSL ---"
 
-    hdr += "\n"
-    return hdr
+    return hdr + "\n"
 
 
 # Uncomment the last two lines in this block to treat all DeprecationWarnings as
