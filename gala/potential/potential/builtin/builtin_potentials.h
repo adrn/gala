@@ -48,7 +48,7 @@ extern void powerlawcutoff_hessian(double t, double *pars, double *q, int n_dim,
 
 extern double stone_value(double t, double *pars, double *q, int n_dim);
 extern void stone_gradient(double t, double *pars, double *q, int n_dim, double *grad);
-extern void stone_density(double t, double *pars, double *q, int n_dim);
+extern double stone_density(double t, double *pars, double *q, int n_dim);
 extern void stone_hessian(double t, double *pars, double *q, int n_dim, double *hess);
 
 extern double sphericalnfw_value(double t, double *pars, double *q, int n_dim);
