@@ -393,9 +393,9 @@ def test_frame_transform():
 @pytest.mark.parametrize('obj', [
     PhaseSpacePosition([1, 2, 3.]*u.kpc, [1, 2, 3.]*u.km/u.s),
     PhaseSpacePosition([1, 2, 3.]*u.kpc, [1, 2, 3.]*u.km/u.s,
-                       StaticFrame(galactic)),
+                       StaticFrame(units=galactic)),
     PhaseSpacePosition([1, 2, 3.]*u.kpc, [1, 2, 3.]*u.km/u.s,
-                       ConstantRotatingFrame([1., 0, 0]*u.rad/u.Myr,
+                       ConstantRotatingFrame(Omega=[1., 0, 0]*u.rad/u.Myr,
                                              units=galactic)),
 ])
 def test_io(tmpdir, obj):
@@ -412,11 +412,9 @@ def test_io(tmpdir, obj):
 
 
 @pytest.mark.parametrize('obj', [
-    PhaseSpacePosition([1,2,3.]*u.kpc, [1,2,3.]*u.km/u.s),
-    PhaseSpacePosition([1,2,3.]*u.kpc, [1,2,3.]*u.km/u.s,
-                       StaticFrame(galactic)),
-    PhaseSpacePosition([1,2,3.]*u.kpc, [1,2,3.]*u.km/u.s,
-                       ConstantRotatingFrame([1.,0,0]*u.rad/u.Myr, galactic)),
+    PhaseSpacePosition([1, 2, 3.]*u.kpc, [1, 2, 3.]*u.km/u.s),
+    PhaseSpacePosition([1, 2, 3.]*u.kpc, [1, 2, 3.]*u.km/u.s,
+                       StaticFrame(units=galactic)),
 ])
 @pytest.mark.skipif(not HAS_GALPY,
                     reason="requires galpy to run this test")

@@ -3,7 +3,8 @@ from astropy.utils.misc import isiterable
 import numpy as np
 
 # Gala
-from ....dynamics import Orbit
+from gala.dynamics import Orbit
+from gala.units import DimensionlessUnitSystem
 
 __all__ = ['static_to_constantrotating', 'constantrotating_to_static']
 
@@ -145,3 +146,31 @@ def constantrotating_to_static(frame_r, frame_i, w, t=None):
     """
     return _constantrotating_static_helper(frame_r=frame_r, frame_i=frame_i,
                                            w=w, t=t, sign=-1.)
+
+
+def static_to_static(frame_r, frame_i, w, t=None):
+    """
+    No-op transform
+
+    Parameters
+    ----------
+    frame_i : `~gala.potential.StaticFrame`
+    frame_r : `~gala.potential.ConstantRotatingFrame`
+    w : `~gala.dynamics.PhaseSpacePosition`, `~gala.dynamics.Orbit`
+    t : quantity_like (optional)
+        Required if input coordinates are just a phase-space position.
+
+    Returns
+    -------
+    pos : `~astropy.units.Quantity`
+        Position in static, inertial frame.
+    vel : `~astropy.units.Quantity`
+        Velocity in static, inertial frame.
+    """
+    tmp = [isinstance(frame_r.units, DimensionlessUnitSystem),
+           isinstance(frame_i.units, DimensionlessUnitSystem)]
+    if not all(tmp) and any(tmp):
+        raise ValueError(
+            "StaticFrame to StaticFrame transformations are only allowed if "
+            "both unit systems are physical, or both are dimensionless.")
+    return w.pos.xyz, w.vel.d_xyz
