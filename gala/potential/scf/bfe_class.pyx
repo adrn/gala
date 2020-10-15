@@ -33,10 +33,11 @@ cdef extern from "src/funcdefs.h":
     ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim) nogil
     ctypedef void (*gradientfunc)(double t, double *pars, double *q, int n_dim, double *grad) nogil
 
-cdef extern from "scf/src/bfe.h":
-    double scf_value(double t, double *pars, double *q, int n_dim) nogil
-    double scf_density(double t, double *pars, double *q, int n_dim) nogil
-    void scf_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+IF USE_GSL_C == 1:
+    cdef extern from "scf/src/bfe.h":
+        double scf_value(double t, double *pars, double *q, int n_dim) nogil
+        double scf_density(double t, double *pars, double *q, int n_dim) nogil
+        void scf_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
 
 __all__ = ['SCFPotential']
 
@@ -46,7 +47,7 @@ cdef class SCFWrapper(CPotentialWrapper):
         self.init([G] + list(parameters),
                   np.ascontiguousarray(q0),
                   np.ascontiguousarray(R))
-        if USE_GSL == 1:
+        IF USE_GSL_C == 1:
             self.cpotential.value[0] = <energyfunc>(scf_value)
             self.cpotential.density[0] = <densityfunc>(scf_density)
             self.cpotential.gradient[0] = <gradientfunc>(scf_gradient)
