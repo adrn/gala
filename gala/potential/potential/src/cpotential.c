@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <math.h>
 #include "cpotential.h"
 
@@ -33,8 +34,10 @@ void apply_rotate(double *q_in, double *R, int n_dim, int transpose,
 
 void apply_shift_rotate(double *q_in, double *q0, double *R, int n_dim,
                         int transpose, double *q_out) {
-    double tmp[n_dim];
+    double *tmp;
     int j;
+
+    tmp = (double*) malloc(n_dim * sizeof(double));
 
     // Shift to the specified origin
     for (j=0; j < n_dim; j++) {
@@ -43,13 +46,16 @@ void apply_shift_rotate(double *q_in, double *q0, double *R, int n_dim,
 
     // Apply rotation matrix
     apply_rotate(&tmp[0], R, n_dim, transpose, q_out);
+
+    free(tmp);
 }
 
 
 double c_potential(CPotential *p, double t, double *qp) {
     double v = 0;
     int i, j;
-    double qp_trans[p->n_dim];
+    double *qp_trans;
+    qp_trans = (double*) malloc(p->n_dim * sizeof(double));
 
     for (i=0; i < p->n_components; i++) {
         for (j=0; j < p->n_dim; j++)
@@ -58,6 +64,7 @@ double c_potential(CPotential *p, double t, double *qp) {
                            &qp_trans[0]);
         v = v + (p->value)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim);
     }
+    free(qp_trans);
 
     return v;
 }
@@ -66,7 +73,8 @@ double c_potential(CPotential *p, double t, double *qp) {
 double c_density(CPotential *p, double t, double *qp) {
     double v = 0;
     int i, j;
-    double qp_trans[p->n_dim];
+    double *qp_trans;
+    qp_trans = (double*) malloc(p->n_dim * sizeof(double));
 
     for (i=0; i < p->n_components; i++) {
         for (j=0; j < p->n_dim; j++)
@@ -75,6 +83,7 @@ double c_density(CPotential *p, double t, double *qp) {
                            &qp_trans[0]);
         v = v + (p->density)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim);
     }
+    free(qp_trans);
 
     return v;
 }
@@ -82,8 +91,10 @@ double c_density(CPotential *p, double t, double *qp) {
 
 void c_gradient(CPotential *p, double t, double *qp, double *grad) {
     int i, j;
-    double qp_trans[p->n_dim];
-    double tmp_grad[p->n_dim];
+    double *qp_trans;
+    double *tmp_grad;
+    qp_trans = (double*) malloc(p->n_dim * sizeof(double));
+    tmp_grad = (double*) malloc(p->n_dim * sizeof(double));
 
     for (i=0; i < p->n_dim; i++) {
         grad[i] = 0.;
@@ -104,12 +115,15 @@ void c_gradient(CPotential *p, double t, double *qp, double *grad) {
 
         apply_rotate(&tmp_grad[0], (p->R)[i], p->n_dim, 1, &grad[0]);
     }
+    free(qp_trans);
+    free(tmp_grad);
 }
 
 
 void c_hessian(CPotential *p, double t, double *qp, double *hess) {
     int i;
-    double qp_trans[p->n_dim];
+    double *qp_trans;
+    qp_trans = (double*) malloc(p->n_dim * sizeof(double));
 
     for (i=0; i < pow(p->n_dim,2); i++) {
         hess[i] = 0.;
@@ -127,6 +141,7 @@ void c_hessian(CPotential *p, double t, double *qp, double *hess) {
         // - Hessian calculation for potentials with rotations are disabled
     }
 
+    free(qp_trans);
 }
 
 
