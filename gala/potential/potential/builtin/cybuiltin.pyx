@@ -73,11 +73,6 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     double jaffe_density(double t, double *pars, double *q, int n_dim) nogil
     void jaffe_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
-    double powerlawcutoff_value(double t, double *pars, double *q, int n_dim) nogil
-    void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double powerlawcutoff_density(double t, double *pars, double *q, int n_dim) nogil
-    void powerlawcutoff_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
-
     double stone_value(double t, double *pars, double *q, int n_dim) nogil
     void stone_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double stone_density(double t, double *pars, double *q, int n_dim) nogil
@@ -118,6 +113,15 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     void longmuralibar_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double longmuralibar_density(double t, double *pars, double *q, int n_dim) nogil
     void longmuralibar_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+
+
+IF USE_GSL_C == 1:
+    cdef extern from "potential/potential/builtin/builtin_potentials.h":
+        double powerlawcutoff_value(double t, double *pars, double *q, int n_dim) nogil
+        void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+        double powerlawcutoff_density(double t, double *pars, double *q, int n_dim) nogil
+        void powerlawcutoff_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+
 
 __all__ = ['NullPotential', 'HenonHeilesPotential', # Misc. potentials
            'KeplerPotential', 'HernquistPotential', 'IsochronePotential', 'PlummerPotential',
@@ -442,7 +446,7 @@ cdef class PowerLawCutoffWrapper(CPotentialWrapper):
                   np.ascontiguousarray(q0),
                   np.ascontiguousarray(R))
 
-        if USE_GSL == 1:
+        IF USE_GSL_C == 1:
             self.cpotential.value[0] = <energyfunc>(powerlawcutoff_value)
             self.cpotential.density[0] = <densityfunc>(powerlawcutoff_density)
             self.cpotential.gradient[0] = <gradientfunc>(powerlawcutoff_gradient)

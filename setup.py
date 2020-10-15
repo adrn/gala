@@ -168,10 +168,14 @@ for ext in extensions:
 
 with open(extra_compile_macros_file, 'w') as f:
     if gsl_version is not None:
+        GSL_ENABLED = True
         f.writelines(['#define USE_GSL 1'])
     else:
+        GSL_ENABLED = False
         f.writelines(['#define USE_GSL 0'])
 
+for ext in extensions:
+    ext.cython_compile_time_env = {'USE_GSL_C': int(GSL_ENABLED)}
 
 setup(use_scm_version={'write_to': os.path.join('gala', 'version.py'),
                        'write_to_template': VERSION_TEMPLATE},
