@@ -20,21 +20,22 @@ cimport cython
 cdef extern from "extra_compile_macros.h":
     int USE_GSL
 
-cdef extern from "scf/src/bfe_helper.h":
-    double rho_nlm(double s, double phi, double X, int n, int l, int m) nogil
-    double phi_nlm(double s, double phi, double X, int n, int l, int m) nogil
-    double sph_grad_phi_nlm(double s, double phi, double X, int n, int l, int m, double *grad) nogil
+IF USE_GSL_C == 1:
+    cdef extern from "scf/src/bfe_helper.h":
+        double rho_nlm(double s, double phi, double X, int n, int l, int m) nogil
+        double phi_nlm(double s, double phi, double X, int n, int l, int m) nogil
+        double sph_grad_phi_nlm(double s, double phi, double X, int n, int l, int m, double *grad) nogil
 
-cdef extern from "scf/src/bfe.h":
-    void scf_density_helper(double *xyz, int K, double M, double r_s,
-                            double *Snlm, double *Tnlm,
-                            int nmax, int lmax, double *dens) nogil
-    void scf_potential_helper(double *xyz, int K, double G, double M, double r_s,
-                              double *Snlm, double *Tnlm,
-                              int nmax, int lmax, double *potv) nogil
-    void scf_gradient_helper(double *xyz, int K, double G, double M, double r_s,
-                             double *Snlm, double *Tnlm,
-                             int nmax, int lmax, double *grad) nogil
+    cdef extern from "scf/src/bfe.h":
+        void scf_density_helper(double *xyz, int K, double M, double r_s,
+                                double *Snlm, double *Tnlm,
+                                int nmax, int lmax, double *dens) nogil
+        void scf_potential_helper(double *xyz, int K, double G, double M, double r_s,
+                                double *Snlm, double *Tnlm,
+                                int nmax, int lmax, double *potv) nogil
+        void scf_gradient_helper(double *xyz, int K, double G, double M, double r_s,
+                                double *Snlm, double *Tnlm,
+                                int nmax, int lmax, double *grad) nogil
 
 __all__ = ['density', 'potential', 'gradient']
 
@@ -82,7 +83,7 @@ cpdef density(double[:,::1] xyz,
         int nmax = Snlm.shape[0]-1
         int lmax = Snlm.shape[1]-1
 
-    if USE_GSL == 1:
+    IF USE_GSL_C == 1:
         scf_density_helper(&xyz[0,0], ncoords, M, r_s,
                            &Snlm[0,0,0], &Tnlm[0,0,0],
                            nmax, lmax, &dens[0])
@@ -134,7 +135,7 @@ cpdef potential(double[:,::1] xyz,
         int nmax = Snlm.shape[0]-1
         int lmax = Snlm.shape[1]-1
 
-    if USE_GSL == 1:
+    IF USE_GSL_C == 1:
         scf_potential_helper(&xyz[0,0], ncoords, G, M, r_s,
                              &Snlm[0,0,0], &Tnlm[0,0,0],
                              nmax, lmax, &potv[0])
@@ -187,7 +188,7 @@ cpdef gradient(double[:,::1] xyz,
         int nmax = Snlm.shape[0]-1
         int lmax = Snlm.shape[1]-1
 
-    if USE_GSL == 1:
+    IF USE_GSL_C == 1:
         scf_gradient_helper(&xyz[0,0], ncoords, G, M, r_s,
                             &Snlm[0,0,0], &Tnlm[0,0,0],
                             nmax, lmax, &grad[0,0])
