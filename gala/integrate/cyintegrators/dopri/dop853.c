@@ -1002,7 +1002,8 @@ void Fwrapper_direct_nbody (unsigned full_ndim, double t, double *w, double *f,
     // Note: only really works with a static frame! This should be enforced
     int i, j, k;
     unsigned ndim = full_ndim / norbits; // phase-space dimensionality
-    double f2[ndim/2];
+    double *f2;
+    f2 = (double*) malloc(ndim/2 * sizeof(double));
 
     for (i=0; i < norbits; i++) {
         // call gradient function
@@ -1028,6 +1029,8 @@ void Fwrapper_direct_nbody (unsigned full_ndim, double t, double *w, double *f,
             }
         }
     }
+
+    free(f2);
 
 }
 
