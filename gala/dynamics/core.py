@@ -874,8 +874,8 @@ class PhaseSpacePosition(object):
         galpy_orbit : `galpy.orbit.Orbit`
 
         """
-        import galpy
         from galpy.orbit import Orbit
+        from galpy.util.config import __config__ as galpy_config
 
         if self.frame is not None:
             from ..potential import StaticFrame
@@ -884,11 +884,11 @@ class PhaseSpacePosition(object):
             w = self
 
         if ro is None:
-            ro = galpy.config.__config__.getfloat('normalization', 'ro')
+            ro = galpy_config.getfloat('normalization', 'ro')
             ro = ro * u.kpc
 
         if vo is None:
-            vo = galpy.config.__config__.getfloat('normalization', 'vo')
+            vo = galpy_config.getfloat('normalization', 'vo')
             vo = vo * u.km/u.s
 
         # PhaseSpacePosition or Orbit:
@@ -904,7 +904,7 @@ class PhaseSpacePosition(object):
 
         o = Orbit(np.array([R, vR, vT, z, vz, phi]).T, ro=ro, vo=vo)
 
-        if hasattr(w, 't'):
+        if hasattr(w, 't') and w.t is not None:
             o.t = w.t.to_value(ro / vo)
 
         return o
