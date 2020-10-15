@@ -24,8 +24,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          choco install python --version 3.8
-          choco --yes install GnuWin
+          choco install --no-progress python --version 3.8
+          choco --yes install --no-progress GnuWin
           python -m pip install --upgrade pip
           python -m pip install -e .[test]
           python -m pip install tox
