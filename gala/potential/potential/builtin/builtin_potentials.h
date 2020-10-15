@@ -1,3 +1,7 @@
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
+
 extern double nan_density(double t, double *pars, double *q, int n_dim);
 extern double nan_value(double t, double *pars, double *q, int n_dim);
 extern void nan_gradient(double t, double *pars, double *q, int n_dim, double *grad);

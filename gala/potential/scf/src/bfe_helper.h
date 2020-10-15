@@ -8,3 +8,7 @@ extern double phi_nlm(double s, double phi, double X, int n, int l, int m);
 
 extern void sph_grad_phi_nlm(double s, double phi, double X, int n, int l, int m, int lmax, double *sphgrad);
 // #endif
+
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
