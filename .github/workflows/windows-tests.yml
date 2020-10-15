@@ -32,6 +32,7 @@ jobs:
           conda install -c conda-forge -q gsl libpython
           python -m pip install -e .[test]
           python -m pip install virtualenv==20.0.33  # 20.0.34 broken!
+          python -m pip install tox
 
       - name: Run tests
         shell: bash -l {0}
