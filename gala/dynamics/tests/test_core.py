@@ -16,6 +16,14 @@ from ...potential import Hamiltonian, HernquistPotential
 from ...potential.frame import StaticFrame, ConstantRotatingFrame
 from ...units import galactic, solarsystem
 
+try:
+    import galpy
+    import galpy.orbit
+    import galpy.potential
+    HAS_GALPY = True
+except ImportError:
+    HAS_GALPY = False
+
 
 def test_initialize():
 
@@ -401,3 +409,19 @@ def test_io(tmpdir, obj):
     assert u.allclose(obj.xyz, obj2.xyz)
     assert u.allclose(obj.v_xyz, obj2.v_xyz)
     assert obj.frame == obj2.frame
+
+
+@pytest.mark.parametrize('obj', [
+    PhaseSpacePosition([1,2,3.]*u.kpc, [1,2,3.]*u.km/u.s),
+    PhaseSpacePosition([1,2,3.]*u.kpc, [1,2,3.]*u.km/u.s,
+                       StaticFrame(galactic)),
+    PhaseSpacePosition([1,2,3.]*u.kpc, [1,2,3.]*u.km/u.s,
+                       ConstantRotatingFrame([1.,0,0]*u.rad/u.Myr, galactic)),
+])
+@pytest.mark.skipif(not HAS_GALPY,
+                    reason="requires galpy to run this test")
+def test_to_galpy(obj):
+    o1 = obj.to_galpy_orbit()
+    o2 = obj.to_galpy_orbit(ro=8*u.kpc)
+    o3 = obj.to_galpy_orbit(vo=220*u.km/u.s)
+    o4 = obj.to_galpy_orbit(ro=8*u.kpc, vo=220*u.km/u.s)

@@ -18,9 +18,9 @@ try:
     import galpy
     import galpy.orbit
     import galpy.potential
-    GALPY_INSTALLED = True
+    HAS_GALPY = True
 except ImportError:
-    GALPY_INSTALLED = False
+    HAS_GALPY = False
 
 # Set to arbitrary values for testing
 ro = 8.1 * u.kpc
@@ -48,7 +48,7 @@ def helper(gala_pot, galpy_pot):
                        -galpy_pot.zforce(R=Rs.to_value(ro), z=zs.to_value(ro)))
 
 
-@pytest.mark.skipif(not GALPY_INSTALLED,
+@pytest.mark.skipif(not HAS_GALPY,
                     reason="requires galpy to run this test")
 def test_kepler():
     from galpy.potential import KeplerPotential as BovyKeplerPotential
@@ -62,7 +62,7 @@ def test_kepler():
     helper(gala_pot, bovy_pot)
 
 
-@pytest.mark.skipif(not GALPY_INSTALLED,
+@pytest.mark.skipif(not HAS_GALPY,
                     reason="requires galpy to run this test")
 def test_miyamoto():
     from galpy.potential import MiyamotoNagaiPotential as BovyMiyamotoNagaiPotential
@@ -79,7 +79,7 @@ def test_miyamoto():
     helper(gala_pot, bovy_pot)
 
 
-@pytest.mark.skipif(not GALPY_INSTALLED,
+@pytest.mark.skipif(not HAS_GALPY,
                     reason="requires galpy to run this test")
 def test_nfw():
     from galpy.potential import NFWPotential as BovyNFWPotential
@@ -93,7 +93,7 @@ def test_nfw():
     helper(gala_pot, bovy_pot)
 
 
-@pytest.mark.skipif(not GALPY_INSTALLED or not GSL_ENABLED,
+@pytest.mark.skipif(not HAS_GALPY or not GSL_ENABLED,
                     reason="requires galpy and GSL to run this test")
 def test_powerlawcutoff():
     from galpy.potential import PowerSphericalPotentialwCutoff
@@ -112,7 +112,7 @@ def test_powerlawcutoff():
     helper(gala_pot, bovy_pot)
 
 
-@pytest.mark.skipif(not GALPY_INSTALLED or not GSL_ENABLED,
+@pytest.mark.skipif(not HAS_GALPY or not GSL_ENABLED,
                     reason="requires galpy and GSL to run this test")
 def test_mwpotential2014():
     from galpy.potential import (MWPotential2014,

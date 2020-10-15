@@ -19,6 +19,15 @@ from ...potential.frame import StaticFrame, ConstantRotatingFrame
 from ...units import galactic, solarsystem
 from ..util import combine
 
+try:
+    import galpy
+    import galpy.orbit
+    import galpy.potential
+    HAS_GALPY = True
+except ImportError:
+    HAS_GALPY = False
+
+
 # Tests below should be cleaned up a bit...
 def test_initialize():
 
@@ -431,6 +440,7 @@ def make_known_orbits(tmpdir, xs, vxs, potential, names):
 
     return orbit
 
+
 def test_circulation(tmpdir):
 
     potential = LogarithmicPotential(v_c=1., r_h=0.14, q1=1., q2=0.9, q3=1.,
@@ -454,6 +464,7 @@ def test_circulation(tmpdir):
     circ = ws.circulation()
     assert circ.shape == (3,2)
     assert np.allclose(circ.sum(axis=0), [1,0])
+
 
 def test_align_circulation():
 
@@ -507,6 +518,7 @@ def test_align_circulation():
     assert np.all(new_circ[2,:3] == 1.)
     assert np.all(new_circ[:,3] == 0.)
 
+
 def test_frame_transform():
     static = StaticFrame(galactic)
     rotating = ConstantRotatingFrame(Omega=[0.53,1.241,0.9394]*u.rad/u.Myr, units=galactic)
@@ -529,6 +541,7 @@ def test_frame_transform():
               potential=HernquistPotential(m=1E10, c=0.5, units=galactic))
     o.to_frame(rotating)
     o.to_frame(rotating, t=o.t)
+
 
 _x = ([[1,2,3.],[1,2,3.]]*u.kpc).T
 _v = ([[1,2,3.],[1,2,3.]]*u.km/u.s).T
@@ -556,3 +569,21 @@ def test_io(tmpdir, obj):
 
     assert obj.frame == obj2.frame
     assert obj.potential == obj2.potential
+
+
+@pytest.mark.parametrize('obj', [
+    Orbit(_x, _v),
+    Orbit(_x, _v, t=[5, 99]*u.Myr),
+    Orbit(_x, _v, t=[5, 99]*u.Myr,
+          frame=StaticFrame(galactic)),
+    Orbit(_x, _v, t=[5, 99]*u.Myr,
+          frame=StaticFrame(galactic),
+          potential=HernquistPotential(m=1E10, c=0.5, units=galactic)),
+])
+@pytest.mark.skipif(not HAS_GALPY,
+                    reason="requires galpy to run this test")
+def test_orbit_to_galpy(obj):
+    o1 = obj.to_galpy_orbit()
+    o2 = obj.to_galpy_orbit(ro=8*u.kpc)
+    o3 = obj.to_galpy_orbit(vo=220*u.km/u.s)
+    o4 = obj.to_galpy_orbit(ro=8*u.kpc, vo=220*u.km/u.s)
