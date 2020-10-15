@@ -1,3 +1,5 @@
+#include "extra_compile_macros.h"
+
 #ifndef M_PI
     #define M_PI 3.14159265358979323846
 #endif
@@ -41,10 +43,12 @@ extern void jaffe_gradient(double t, double *pars, double *q, int n_dim, double 
 extern double jaffe_density(double t, double *pars, double *q, int n_dim);
 extern void jaffe_hessian(double t, double *pars, double *q, int n_dim, double *hess);
 
+#if USE_GSL == 1
 extern double powerlawcutoff_value(double t, double *pars, double *q, int n_dim);
 extern void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, double *grad);
 extern double powerlawcutoff_density(double t, double *pars, double *q, int n_dim);
 extern void powerlawcutoff_hessian(double t, double *pars, double *q, int n_dim, double *hess);
+#endif
 
 extern double stone_value(double t, double *pars, double *q, int n_dim);
 extern void stone_gradient(double t, double *pars, double *q, int n_dim, double *grad);
