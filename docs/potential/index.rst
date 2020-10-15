@@ -252,7 +252,7 @@ this requires that ``sympy`` is installed):
 This method also returns a dictionary containing the coordinate variables used
 in the expression as ``sympy`` symbols, here defined as ``vars_``:
 
-    >>> vars
+    >>> vars_
     {'x': x, 'y': y, 'z': z}
 
 A second dictionary containing the potential parameters as ``sympy`` symbols is
@@ -268,7 +268,7 @@ gradient of the potential:
     >>> import sympy as sy
     >>> grad = sy.derive_by_array(expr, list(vars_.values()))
     >>> grad[0]  # dPhi/dx
-    '1.0*v_c**2*x/(q1**2*(r_h**2 + z**2/q3**2 + y**2/q2**2 + x**2/q1**2))'
+    1.0*v_c**2*x/(q1**2*(r_h**2 + z**2/q3**2 + y**2/q2**2 + x**2/q1**2))
 
 
 Using gala.potential
