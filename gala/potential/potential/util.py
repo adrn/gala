@@ -1,5 +1,8 @@
 """ Utilities for Potential classes """
 
+# Standard library
+from functools import wraps
+
 # Third-party
 import numpy as np
 
@@ -178,3 +181,50 @@ def format_doc(*args, **kwargs):
         obj.__doc__ = doc.format(*args, **kwargs)
         return obj
     return set_docstring
+
+
+class SympyWrapper:
+
+    @classmethod
+    def as_decorator(cls, func=None, **kwargs):
+        self = cls(**kwargs)
+        if func is not None and not kwargs:
+            return self(func)
+        else:
+            return self
+
+    def __init__(self, func=None, var=None, include_G=True):
+        if var is None:
+            _var = 'x, y, z'
+        else:
+            _var = var
+        self.var = _var
+        self.include_G = include_G
+
+    def __call__(self, wrapped_function):
+        try:
+            import sympy as sy  # noqa
+        except ImportError:
+            raise ImportError("Converting to a latex expression requires "
+                              "the sympy package to be installed")
+
+        @wraps(wrapped_function)
+        def wrapper(cls, *func_args, **func_kwargs):
+            _var = sy.symbols(self.var, seq=True)
+            _var = {v.name: v for v in _var}
+
+            if cls._parameters:
+                par = sy.symbols(' '.join(cls._parameters.keys()), seq=True)
+                par = {v.name: v for v in par}
+            else:
+                par = {}
+
+            if self.include_G:
+                par['G'] = sy.symbols('G')
+
+            return wrapped_function(cls, _var, par)
+
+        return wrapper
+
+
+sympy_wrap = SympyWrapper.as_decorator

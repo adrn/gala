@@ -7,6 +7,13 @@
 
 """ Built-in potentials implemented in Cython """
 
+# HACK: This hack brought to you by a bug in cython, and a solution from here:
+# https://stackoverflow.com/questions/57138496/class-level-classmethod-can-only-be-called-on-a-method-descriptor-or-instance
+try:
+    myclassmethod = __builtins__.classmethod
+except AttributeError:
+    myclassmethod = __builtins__['classmethod']
+
 # Standard library
 from collections import OrderedDict
 import warnings
@@ -20,7 +27,7 @@ np.import_array()
 
 # Project
 from ..core import CompositePotential, _potential_docstring
-from ..util import format_doc
+from ..util import format_doc, sympy_wrap
 from ..cpotential import CPotentialBase
 from ..cpotential cimport CPotential, CPotentialWrapper
 from ..cpotential cimport densityfunc, energyfunc, gradientfunc, hessianfunc
@@ -39,6 +46,7 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
 
     double henon_heiles_value(double t, double *pars, double *q, int n_dim) nogil
     void henon_heiles_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    void henon_heiles_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double kepler_value(double t, double *pars, double *q, int n_dim) nogil
     void kepler_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
@@ -63,14 +71,17 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     double jaffe_value(double t, double *pars, double *q, int n_dim) nogil
     void jaffe_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double jaffe_density(double t, double *pars, double *q, int n_dim) nogil
+    void jaffe_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double powerlawcutoff_value(double t, double *pars, double *q, int n_dim) nogil
     void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double powerlawcutoff_density(double t, double *pars, double *q, int n_dim) nogil
+    void powerlawcutoff_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double stone_value(double t, double *pars, double *q, int n_dim) nogil
     void stone_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double stone_density(double t, double *pars, double *q, int n_dim) nogil
+    void stone_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double sphericalnfw_value(double t, double *pars, double *q, int n_dim) nogil
     void sphericalnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
@@ -79,13 +90,16 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
 
     double flattenednfw_value(double t, double *pars, double *q, int n_dim) nogil
     void flattenednfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    void flattenednfw_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double triaxialnfw_value(double t, double *pars, double *q, int n_dim) nogil
     void triaxialnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    void triaxialnfw_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double satoh_value(double t, double *pars, double *q, int n_dim) nogil
     void satoh_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double satoh_density(double t, double *pars, double *q, int n_dim) nogil
+    void satoh_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double miyamotonagai_value(double t, double *pars, double *q, int n_dim) nogil
     void miyamotonagai_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
@@ -98,10 +112,12 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
 
     double logarithmic_value(double t, double *pars, double *q, int n_dim) nogil
     void logarithmic_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    void logarithmic_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
     double longmuralibar_value(double t, double *pars, double *q, int n_dim) nogil
     void longmuralibar_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double longmuralibar_density(double t, double *pars, double *q, int n_dim) nogil
+    void longmuralibar_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
 __all__ = ['NullPotential', 'HenonHeilesPotential', # Misc. potentials
            'KeplerPotential', 'HernquistPotential', 'IsochronePotential', 'PlummerPotential',
@@ -122,6 +138,7 @@ cdef class HenonHeilesWrapper(CPotentialWrapper):
                   n_dim=2)
         self.cpotential.value[0] = <energyfunc>(henon_heiles_value)
         self.cpotential.gradient[0] = <gradientfunc>(henon_heiles_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(henon_heiles_hessian)
 
 @format_doc(common_doc=_potential_docstring)
 class HenonHeilesPotential(CPotentialBase):
@@ -135,8 +152,12 @@ class HenonHeilesPotential(CPotentialBase):
     ndim = 2
     Wrapper = HenonHeilesWrapper
 
-    def to_latex(self):
-        return r"\Phi(x,y) = \frac{1}{2}(x^2 + y^2 + 2x^2 y - \frac{2}{3}y^3)"
+    @myclassmethod
+    @sympy_wrap(var='x y')
+    def to_sympy(cls, v, p):
+        expr = 1./2 * (v['x']**2 + v['y']**2 +
+                      2*v['x']**2 * v['y'] - 2./3*v['y']**3)
+        return expr, v, p
 
 
 # ============================================================================
@@ -167,8 +188,13 @@ class KeplerPotential(CPotentialBase):
     m = PotentialParameter('m', physical_type='mass')
     Wrapper = KeplerWrapper
 
-    def to_latex(self):
-        return r"\Phi(r) = -\frac{Gm}{r}"
+    @myclassmethod
+    @sympy_wrap
+    def to_sympy(cls, v, p):
+        import sympy as sy
+        r = sy.sqrt(v['x']**2 + v['y']**2 + v['z']**2)
+        expr = - p['G'] * p['m'] / r
+        return expr, v, p
 
 
 cdef class IsochroneWrapper(CPotentialWrapper):
@@ -200,8 +226,13 @@ class IsochronePotential(CPotentialBase):
 
     Wrapper = IsochroneWrapper
 
-    def to_latex(self):
-        return r"\Phi = -\frac{GM}{\sqrt{r^2+b^2} + b}"
+    @myclassmethod
+    @sympy_wrap
+    def to_sympy(cls, v, p):
+        import sympy as sy
+        r = sy.sqrt(v['x']**2 + v['y']**2 + v['z']**2)
+        expr = - p['G'] * p['m'] / (sy.sqrt(r**2 + p['b']**2) + p['b'])
+        return expr, v, p
 
     def action_angle(self, w):
         """
@@ -272,8 +303,14 @@ class HernquistPotential(CPotentialBase):
 
     Wrapper = HernquistWrapper
 
-    def to_latex(self):
-        return r"\Phi(r) = -\frac{G M}{r + c}"
+    @myclassmethod
+    @sympy_wrap
+    def to_sympy(cls, v, p):
+        import sympy as sy
+        r = sy.sqrt(v['x']**2 + v['y']**2 + v['z']**2)
+        expr = - p['G'] * p['m'] / (r + p['c'])
+        return expr, v, p
+
 
 cdef class PlummerWrapper(CPotentialWrapper):
 
@@ -304,8 +341,13 @@ class PlummerPotential(CPotentialBase):
 
     Wrapper = PlummerWrapper
 
-    def to_latex(self):
-        return r"\Phi(r) = -\frac{G M}{\sqrt{r^2 + b^2}}"
+    @myclassmethod
+    @sympy_wrap
+    def to_sympy(cls, v, p):
+        import sympy as sy
+        r = sy.sqrt(v['x']**2 + v['y']**2 + v['z']**2)
+        expr = - p['G'] * p['m'] / sy.sqrt(r**2 + p['b']**2)
+        return expr, v, p
 
 
 cdef class JaffeWrapper(CPotentialWrapper):
@@ -317,6 +359,7 @@ cdef class JaffeWrapper(CPotentialWrapper):
         self.cpotential.value[0] = <energyfunc>(jaffe_value)
         self.cpotential.density[0] = <densityfunc>(jaffe_density)
         self.cpotential.gradient[0] = <gradientfunc>(jaffe_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(jaffe_hessian)
 
 @format_doc(common_doc=_potential_docstring)
 class JaffePotential(CPotentialBase):
@@ -336,8 +379,13 @@ class JaffePotential(CPotentialBase):
 
     Wrapper = JaffeWrapper
 
-    def to_latex(self):
-        return r"\Phi(r) = \frac{G M}{c} \ln(\frac{r}{r + c})"
+    @myclassmethod
+    @sympy_wrap
+    def to_sympy(cls, v, p):
+        import sympy as sy
+        r = sy.sqrt(v['x']**2 + v['y']**2 + v['z']**2)
+        expr = p['G'] * p['m'] / p['c'] * sy.log(r / (r + p['c']))
+        return expr, v, p
 
 
 cdef class StoneWrapper(CPotentialWrapper):
@@ -349,6 +397,7 @@ cdef class StoneWrapper(CPotentialWrapper):
         self.cpotential.value[0] = <energyfunc>(stone_value)
         self.cpotential.density[0] = <densityfunc>(stone_density)
         self.cpotential.gradient[0] = <gradientfunc>(stone_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(stone_hessian)
 
 @format_doc(common_doc=_potential_docstring)
 class StonePotential(CPotentialBase):
@@ -374,8 +423,16 @@ class StonePotential(CPotentialBase):
 
     Wrapper = StoneWrapper
 
-    def to_latex(self):
-        return r"\Phi(r) = -\frac{2 G M}{\pi(r_h - r_c)}\left[ \frac{\arctan(r/r_h)}{r/r_h} - \frac{\arctan(r/r_c)}{r/r_c} + \frac{1}{2}\ln\left(\frac{r^2+r_h^2}{r^2+r_c^2}\right)\right]"
+    @myclassmethod
+    @sympy_wrap
+    def to_sympy(cls, v, p):
+        import sympy as sy
+        r = sy.sqrt(v['x']**2 + v['y']**2 + v['z']**2)
+        A = - 2 * p['G'] * p['m'] / (np.pi * (p['r_h'] - p['r_c']))
+        expr = A * (p['r_h'] / r * sy.atan(r / p['r_h']) -
+                    p['r_c'] / r * sy.atan(r / p['r_c']) +
+                    1./2 * sy.log((r**2 + p['r_h']**2) / (r**2 + p['r_c']**2)))
+        return expr, v, p
 
 
 cdef class PowerLawCutoffWrapper(CPotentialWrapper):
@@ -389,6 +446,7 @@ cdef class PowerLawCutoffWrapper(CPotentialWrapper):
             self.cpotential.value[0] = <energyfunc>(powerlawcutoff_value)
             self.cpotential.density[0] = <densityfunc>(powerlawcutoff_density)
             self.cpotential.gradient[0] = <gradientfunc>(powerlawcutoff_gradient)
+            self.cpotential.hessian[0] = <hessianfunc>(powerlawcutoff_hessian)
 
 @format_doc(common_doc=_potential_docstring)
 class PowerLawCutoffPotential(CPotentialBase, GSL_only=True):
@@ -419,9 +477,24 @@ class PowerLawCutoffPotential(CPotentialBase, GSL_only=True):
 
     Wrapper = PowerLawCutoffWrapper
 
-    def to_latex(self):
-        return (r"\rho(r) = \frac{A}{r^\alpha} \, \exp{-\frac{r^2}{c^2}}\\" +
-        r"A = \frac{m}{2\pi} \, \frac{c^{\alpha-3}}{\Gamma(\frac{3-\alpha}{2})}")
+    @myclassmethod
+    @sympy_wrap
+    def to_sympy(cls, v, p):
+        import sympy as sy
+        G = p['G']
+        m = p['m']
+        alpha = p['alpha']
+        r_c = p['r_c']
+        r = sy.sqrt(v['x']**2 + v['y']**2 + v['z']**2)
+
+        expr = (G*alpha*m* sy.lowergamma(3./2 - alpha/2, r**2/r_c**2) /
+                (2*r* sy.gamma(5./2 - alpha/2)) +
+                G*m* sy.lowergamma(1 - alpha/2, r**2/r_c**2) /
+                (r_c* sy.gamma(3./2 - alpha/2)) -
+                3*G*m* sy.lowergamma(3./2 - alpha/2, r**2/r_c**2) /
+                (2*r*sy.gamma(5./2 - alpha/2)))
+
+        return expr, v, p
 
 
 # ============================================================================
@@ -436,6 +509,7 @@ cdef class SatohWrapper(CPotentialWrapper):
         self.cpotential.value[0] = <energyfunc>(satoh_value)
         self.cpotential.density[0] = <densityfunc>(satoh_density)
         self.cpotential.gradient[0] = <gradientfunc>(satoh_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(satoh_hessian)
 
 @format_doc(common_doc=_potential_docstring)
 class SatohPotential(CPotentialBase):
@@ -460,8 +534,15 @@ class SatohPotential(CPotentialBase):
 
     Wrapper = SatohWrapper
 
-    def to_latex(self):
-        return r"\Phi(R,z) = -\frac{G M}{\sqrt{R^2 + z^2 + a(a + 2\sqrt{z^2 + b^2})}}"
+    @myclassmethod
+    @sympy_wrap
+    def to_sympy(cls, v, p):
+        import sympy as sy
+        R = sy.sqrt(v['x']**2 + v['y']**2)
+        z = v['z']
+        term = R**2 + z**2 + p['a'] * (p['a'] + 2 * sy.sqrt(z**2 + p['b']**2))
+        expr = - p['G'] * p['m'] / sy.sqrt(term)
+        return expr, v, p
 
 
 cdef class MiyamotoNagaiWrapper(CPotentialWrapper):
@@ -500,8 +581,15 @@ class MiyamotoNagaiPotential(CPotentialBase):
 
     Wrapper = MiyamotoNagaiWrapper
 
-    def to_latex(self):
-        return r"\Phi(R,z) = -\frac{G M}{\sqrt{R^2 + (a + \sqrt{z^2 + b^2})^2}}"
+    @myclassmethod
+    @sympy_wrap
+    def to_sympy(cls, v, p):
+        import sympy as sy
+        R = sy.sqrt(v['x']**2 + v['y']**2)
+        z = v['z']
+        term = R**2 + (p['a'] + sy.sqrt(z**2 + p['b']**2))**2
+        expr = - p['G'] * p['m'] / sy.sqrt(term)
+        return expr, v, p
 
 
 # ============================================================================
@@ -527,6 +615,7 @@ cdef class FlattenedNFWWrapper(CPotentialWrapper):
                   np.ascontiguousarray(R))
         self.cpotential.value[0] = <energyfunc>(flattenednfw_value)
         self.cpotential.gradient[0] = <gradientfunc>(flattenednfw_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(flattenednfw_hessian)
 
 cdef class TriaxialNFWWrapper(CPotentialWrapper):
 
@@ -536,6 +625,7 @@ cdef class TriaxialNFWWrapper(CPotentialWrapper):
                   np.ascontiguousarray(R))
         self.cpotential.value[0] = <energyfunc>(triaxialnfw_value)
         self.cpotential.gradient[0] = <gradientfunc>(triaxialnfw_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(triaxialnfw_hessian)
 
 @format_doc(common_doc=_potential_docstring)
 class NFWPotential(CPotentialBase):
@@ -587,8 +677,16 @@ class NFWPotential(CPotentialBase):
         else:
             self.Wrapper = TriaxialNFWWrapper
 
-    def to_latex(self):
-        return r"\Phi(r) = -\frac{v_c^2}{\sqrt{\ln 2 - \frac{1}{2}}} \frac{\ln(1 + r/r_s)}{r/r_s}"
+    @myclassmethod
+    @sympy_wrap
+    def to_sympy(cls, v, p):
+        import sympy as sy
+        uu = sy.sqrt((v['x'] / p['a']) ** 2 +
+                     (v['y'] / p['b']) ** 2 +
+                     (v['z'] / p['c']) ** 2) / p['r_s']
+        v_h2 = p['G'] * p['m'] / p['r_s']
+        expr = - v_h2 * sy.log(1 + uu) / uu
+        return expr, v, p
 
     # TODO: This!!
     @staticmethod
@@ -674,6 +772,7 @@ cdef class LogarithmicWrapper(CPotentialWrapper):
                   np.ascontiguousarray(R))
         self.cpotential.value[0] = <energyfunc>(logarithmic_value)
         self.cpotential.gradient[0] = <gradientfunc>(logarithmic_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(logarithmic_hessian)
 
 @format_doc(common_doc=_potential_docstring)
 class LogarithmicPotential(CPotentialBase):
@@ -708,8 +807,15 @@ class LogarithmicPotential(CPotentialBase):
 
     Wrapper = LogarithmicWrapper
 
-    def to_latex(self):
-        return r"\Phi(x,y,z) &= \frac{1}{2}v_{c}^2\ln((x/q_1)^2 + (y/q_2)^2 + (z/q_3)^2 + r_h^2)"
+    @myclassmethod
+    @sympy_wrap
+    def to_sympy(cls, v, p):
+        import sympy as sy
+        r2 = ((v['x'] / p['q1']) ** 2 +
+              (v['y'] / p['q2']) ** 2 +
+              (v['z'] / p['q3']) ** 2)
+        expr = 1./2 * p['v_c']**2 * sy.log(p['r_h']**2 + r2)
+        return expr, v, p
 
 
 cdef class LeeSutoTriaxialNFWWrapper(CPotentialWrapper):
@@ -754,6 +860,8 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
 
     Wrapper = LeeSutoTriaxialNFWWrapper
 
+    # TODO: implement to_sympy()
+
 
 cdef class LongMuraliBarWrapper(CPotentialWrapper):
 
@@ -764,6 +872,7 @@ cdef class LongMuraliBarWrapper(CPotentialWrapper):
         self.cpotential.value[0] = <energyfunc>(longmuralibar_value)
         self.cpotential.gradient[0] = <gradientfunc>(longmuralibar_gradient)
         self.cpotential.density[0] = <densityfunc>(longmuralibar_density)
+        self.cpotential.hessian[0] = <hessianfunc>(longmuralibar_hessian)
 
 @format_doc(common_doc=_potential_docstring)
 class LongMuraliBarPotential(CPotentialBase):
@@ -794,6 +903,25 @@ class LongMuraliBarPotential(CPotentialBase):
     alpha = PotentialParameter('alpha', physical_type='angle', default=0)
 
     Wrapper = LongMuraliBarWrapper
+
+    @myclassmethod
+    @sympy_wrap
+    def to_sympy(cls, v, p):
+        import sympy as sy
+
+        x = v['x'] * sy.cos(p['alpha']) + v['y'] * sy.sin(p['alpha'])
+        y = -v['x'] * sy.sin(p['alpha']) + v['y'] * sy.cos(p['alpha'])
+        z = v['z']
+
+        Tm = sy.sqrt((p['a']-x)**2 + y**2 +
+                     (p['b'] + sy.sqrt(p['c']**2 + z**2))**2)
+        Tp = sy.sqrt((p['a']+x)**2 + y**2 +
+                     (p['b'] + sy.sqrt(p['c']**2 + z**2))**2)
+
+        expr = (p['G'] * p['m'] / (2*p['a']) *
+                sy.log((x - p['a'] + Tm) / (x + p['a'] + Tp)))
+
+        return expr, v, p
 
 
 # ==============================================================================

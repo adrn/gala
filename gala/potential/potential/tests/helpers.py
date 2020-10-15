@@ -10,6 +10,12 @@ import numpy as np
 from scipy.misc import derivative
 import pytest
 
+try:
+    import sympy as sy  # noqa
+    HAS_SYMPY = True
+except ImportError:
+    HAS_SYMPY = False
+
 # Project
 from ..io import load
 from ...frame import StaticFrame
@@ -67,6 +73,7 @@ class PotentialTestBase(object):
         if self.frame is None:
             self.frame = StaticFrame(units=self.potential.units)
         self.H = Hamiltonian(self.potential, self.frame)
+        self.rnd = np.random.default_rng(seed=42)
 
     def test_unitsystem(self):
         assert isinstance(self.potential.units, UnitSystem)
@@ -286,6 +293,62 @@ class PotentialTestBase(object):
 
         p.energy(self.w0[:self.w0.size//2])
 
+    @pytest.mark.skipif(not HAS_SYMPY,
+                        reason="requires sympy to run this test")
+    def test_against_sympy(self):
+        # compare Gala gradient and hessian to sympy values
+
+        pot = self.potential
+        Phi, v, p = pot.to_sympy()
+
+        # Derive sympy gradient and hessian functions to evaluate:
+        from scipy.special import gamma, gammainc
+        def lowergamma(a, x):  # noqa
+            # Differences between scipy and sympy lower gamma
+            return gammainc(a, x) * gamma(a)
+        modules = ['numpy',
+                   {'atan': np.arctan,
+                    'lowergamma': lowergamma,
+                    'gamma': gamma}]
+
+        e_func = sy.lambdify(list(p.values()) + list(v.values()), Phi,
+                             modules=modules)
+
+        grad = sy.derive_by_array(Phi, list(v.values()))
+        grad_func = sy.lambdify(list(p.values()) + list(v.values()), grad,
+                                modules=modules)
+
+        Hess = sy.hessian(Phi, list(v.values()))
+        Hess_func = sy.lambdify(list(p.values()) + list(v.values()), Hess,
+                                modules=modules)
+
+        # Make a dict of potential parameter values without units:
+        par_vals = {}
+        for k, v in pot.parameters.items():
+            par_vals[k] = v.value
+
+        N = 64  # MAGIC NUMBER:
+        trial_x = self.rnd.uniform(-10., 10., size=(pot.ndim, N))
+        x_dict = {k: v for k, v in zip(['x', 'y', 'z'], trial_x)}
+
+        f_gala = pot.energy(trial_x).value
+        f_sympy = e_func(G=pot.G, **par_vals, **x_dict)
+        e_close = np.allclose(f_gala, f_sympy)
+
+        G_gala = pot.gradient(trial_x).value
+        G_sympy = grad_func(G=pot.G, **par_vals, **x_dict)
+        g_close = np.allclose(G_gala, G_sympy)
+
+        H_gala = pot.hessian(trial_x).value
+        H_sympy = Hess_func(G=pot.G, **par_vals, **x_dict)
+        h_close = np.allclose(H_gala, H_sympy)
+
+        if not all([e_close, g_close, h_close]):
+            print(f'{pot}: energy {e_close}, gradient {g_close}, '
+                  f'hessian {h_close}')
+
+        assert all([e_close, g_close, h_close])
+
 
 class CompositePotentialTestBase(PotentialTestBase):
     @pytest.mark.skip(reason="Skip composite potential repr test")
@@ -294,4 +357,8 @@ class CompositePotentialTestBase(PotentialTestBase):
 
     @pytest.mark.skip(reason="Skip composite potential compare test")
     def test_compare(self):
+        pass
+
+    @pytest.mark.skip(reason="to_sympy() not implemented yet")
+    def test_against_sympy(self):
         pass

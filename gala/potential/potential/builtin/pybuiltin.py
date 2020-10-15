@@ -1,8 +1,9 @@
 # Third-party
 import numpy as np
 
-from ..core import PotentialBase
-from ...common import PotentialParameter
+from gala.potential.potential.core import PotentialBase
+from gala.potential.potential.util import sympy_wrap
+from gala.potential.common import PotentialParameter
 
 __all__ = ["HarmonicOscillatorPotential", "KuzminPotential"]
 
@@ -41,6 +42,12 @@ class HarmonicOscillatorPotential(PotentialBase):
     def _hessian(self, q, t=0.):
         om = np.atleast_1d(self.parameters['omega'].value)
         return np.tile(np.diag(om)[:, :, None], reps=(1, 1, q.shape[0]))
+
+    @classmethod
+    @sympy_wrap(var='x')
+    def to_sympy(cls, v, p):
+        expr = 1/2 * p['omega']**2 * v['x']**2
+        return expr, v, p
 
     def action_angle(self, w):
         """
@@ -98,7 +105,7 @@ class KuzminPotential(PotentialBase):
     a : numeric
         Flattening parameter.
     units : iterable
-        Unique list of non-reducable units that specify (at minimum) the
+        Unique list of non-reducible units that specify (at minimum) the
         length, mass, time, and angle units.
 
     """
@@ -118,3 +125,11 @@ class KuzminPotential(PotentialBase):
         a = self.parameters['a']
         fac = self.G * m / (x**2 + y**2 + (a + np.abs(z))**2)**1.5
         return fac[None, ...] * q
+
+    @classmethod
+    @sympy_wrap()
+    def to_sympy(cls, v, p):
+        import sympy as sy
+        denom = sy.sqrt(v['x']**2 + v['y']**2 + (p['a'] + sy.Abs(v['z']))**2)
+        expr = p['G'] * p['m'] / denom
+        return expr, v, p

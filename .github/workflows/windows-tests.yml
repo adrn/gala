@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     name: "py${{ matrix.python-version }} on ${{ matrix.os }}"
-    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    if: "!contains(toJSON(github.event.commits.*.message), '[skip ci]') && !contains(toJSON(github.event.commits.*.message), '[ci skip]')"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

@@ -77,6 +77,10 @@ class TestSCFPotential(PotentialTestBase):
     def test_hessian(self):
         pass
 
+    @pytest.mark.skip(reason="to_sympy() not implemented yet")
+    def test_against_sympy(self):
+        pass
+
     def test_compare(self):
         # skip if composite potentials
         if len(self.potential.parameters) == 0:

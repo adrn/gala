@@ -87,8 +87,38 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
                                          (self.ndim, self.ndim), R.shape))
         self.R = R
 
-    def to_latex(self):
-        return ""
+    @classmethod
+    def to_sympy(cls):
+        """Return a representation of this potential class as a sympy expression
+
+        Returns
+        -------
+        expr : sympy expression
+        vars : dict
+            A dictionary of sympy symbols used in the expression.
+        """
+        raise NotImplementedError("to_sympy() is not implemented for this "
+                                  f"class {cls}")
+
+    @classmethod
+    def to_latex(cls):
+        """Return a string LaTeX representation of this potential
+
+        Returns
+        -------
+        latex_str : str
+            The latex expression as a Python string.
+        """
+        try:
+            expr, *_ = cls.to_sympy()
+        except NotImplementedError:
+            raise NotImplementedError(
+                ".to_latex() requires having a .to_sympy() method implemented "
+                "on the requesting potential class")
+
+        # testing for this import happens in the sympy method
+        import sympy as sy
+        return sy.latex(expr)
 
     # ========================================================================
     # Abstract methods that must be implemented by subclasses

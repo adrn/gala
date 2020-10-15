@@ -4,12 +4,20 @@
 New Features
 ------------
 
+- Added a new ``.to_sympy()`` classmethod for the ``Potential`` classes to
+  return a sympy expression and variables.
+
 Bug fixes
 ---------
 
 - Fixed a bug with ``Potential`` classes ``.replace_units()`` so that classes
   with dimensionless unit systems cannot be replaced with physical unit systems,
   and vice versa.
+
+- Implemented Hessian functions for most potentials.
+
+- Fixed ``.to_latex()`` to properly return a latex representation of the
+  potential. This uses the new ``.to_sympy()`` method under the hood.
 
 API changes
 -----------

@@ -45,6 +45,10 @@ class TestHarmonicOscillator2D(PotentialTestBase):
         # Skip for now because contour plotting assumes 3D
         pass
 
+    @pytest.mark.skip(reason="to_sympy() won't support multi-dim HO")
+    def test_against_sympy(self):
+        pass
+
 ##############################################################################
 # Cython
 ##############################################################################
@@ -79,6 +83,10 @@ class TestNull(PotentialTestBase):
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
             g = self.potential.circular_velocity(arr[:self.ndim], t=t)
             g = self.potential.circular_velocity(arr[:self.ndim], t=t*self.potential.units['time'])
+
+    @pytest.mark.skip(reason="Nothing to compare to for Null potential!")
+    def test_against_sympy(self):
+        pass
 
 
 class TestHenonHeiles(PotentialTestBase):
@@ -307,6 +315,10 @@ class TestLeeSutoTriaxialNFW(PotentialTestBase):
                                               a=1.3, b=1., c=0.8)
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
 
+    @pytest.mark.skip(reason="to_sympy() not implemented yet")
+    def test_against_sympy(self):
+        pass
+
 
 class TestLogarithmic(PotentialTestBase):
     potential = p.LogarithmicPotential(units=galactic, v_c=0.17, r_h=10.,
@@ -336,6 +348,10 @@ class TestLongMuraliBarRotate(PotentialTestBase):
         with pytest.raises(NotImplementedError):
             self.potential.hessian([1., 2., 3.])
 
+    @pytest.mark.skip(reason="Not implemented for rotated potentials")
+    def test_against_sympy(self):
+        pass
+
 
 class TestLongMuraliBarRotationScipy(PotentialTestBase):
     potential = p.LongMuraliBarPotential(
@@ -349,6 +365,10 @@ class TestLongMuraliBarRotationScipy(PotentialTestBase):
         # TODO: when hessian for rotated potentials implemented, remove this
         with pytest.raises(NotImplementedError):
             self.potential.hessian([1., 2., 3.])
+
+    @pytest.mark.skip(reason="Not implemented for rotated potentials")
+    def test_against_sympy(self):
+        pass
 
 
 class TestComposite(CompositePotentialTestBase):
