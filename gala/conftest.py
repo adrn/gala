@@ -7,33 +7,43 @@ import os
 
 from astropy.version import version as astropy_version
 
-# For Astropy 3.0 and later, we can use the standalone pytest plugin
-if astropy_version < '3.0':
-    from astropy.tests.pytest_plugins import *  # noqa
-    del pytest_report_header
-    ASTROPY_HEADER = True
-else:
-    try:
-        from pytest_astropy_header.display import PYTEST_HEADER_MODULES, TESTED_VERSIONS
-        ASTROPY_HEADER = True
-    except ImportError:
-        ASTROPY_HEADER = False
+from pytest_astropy_header.display import (
+    PYTEST_HEADER_MODULES,
+    TESTED_VERSIONS,
+    pytest_report_header as astropy_header)
 
 
 def pytest_configure(config):
 
-    if ASTROPY_HEADER:
+    config.option.astropy_header = False
 
-        config.option.astropy_header = True
+    # Customize the following lines to add/remove entries from the list of
+    # packages for which version numbers are displayed when running the tests.
+    PYTEST_HEADER_MODULES.pop('Pandas', None)
+    PYTEST_HEADER_MODULES['scikit-image'] = 'skimage'
 
-        # Customize the following lines to add/remove entries from the list of
-        # packages for which version numbers are displayed when running the tests.
-        PYTEST_HEADER_MODULES.pop('Pandas', None)
-        PYTEST_HEADER_MODULES['scikit-image'] = 'skimage'
+    from . import __version__
+    packagename = os.path.basename(os.path.dirname(__file__))
+    TESTED_VERSIONS[packagename] = __version__
 
-        from . import __version__
-        packagename = os.path.basename(os.path.dirname(__file__))
-        TESTED_VERSIONS[packagename] = __version__
+
+def pytest_report_header(config):
+    from gala._cconfig import GSL_ENABLED
+
+    config.option.astropy_header = True
+    hdr = astropy_header(config)
+    config.option.astropy_header = False
+
+    hdr += "\n"
+
+    if GSL_ENABLED:
+        hdr += " +++ Gala compiled with GSL +++"
+    else:
+        hdr += " --- Gala compiled without GSL ---"
+
+    hdr += "\n"
+    return hdr
+
 
 # Uncomment the last two lines in this block to treat all DeprecationWarnings as
 # exceptions. For Astropy v2.0 or later, there are 2 additional keywords,
