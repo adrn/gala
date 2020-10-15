@@ -1,6 +1,7 @@
 #include <math.h>
 #include <string.h>
 #include "extra_compile_macros.h"
+#include "builtin_potentials.h"
 
 #if USE_GSL == 1
 #include <gsl/gsl_sf_gamma.h>
