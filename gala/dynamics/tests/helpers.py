@@ -6,11 +6,20 @@ import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
 
+try:
+    import galpy  # noqa
+    import galpy.orbit  # noqa
+    import galpy.potential  # noqa
+    HAS_GALPY = True
+except ImportError:
+    HAS_GALPY = False
+
 # Project
 # from ..actionangle import classify_orbit
 from ...units import galactic
 from ...potential import HarmonicOscillatorPotential, IsochronePotential
 from .._genfunc import genfunc_3d, solver, toy_potentials
+
 
 def sanders_nvecs(N_max, dx, dy, dz):
     from itertools import product

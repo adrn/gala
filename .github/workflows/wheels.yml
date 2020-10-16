@@ -15,7 +15,6 @@ env:
 jobs:
   build_nix_wheels:
     name: Build ${{ matrix.python-version }} wheels on ${{ matrix.os }}
-    if: github.event_name == 'push' && contains(toJson(github.event.commits), '[ci skip]') == false && contains(toJson(github.event.commits), '[skip ci]') == false
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -55,7 +54,6 @@ jobs:
 
   build_win_wheels:
     name: Build ${{ matrix.python-version }} wheels on Windows
-    if: github.event_name == 'push' && contains(toJson(github.event.commits), '[ci skip]') == false && contains(toJson(github.event.commits), '[skip ci]') == false
     runs-on: windows-latest
     strategy:
       matrix:
@@ -93,7 +91,6 @@ jobs:
 
   build_sdist:
     name: Build source distribution
-    if: github.event_name == 'push' && contains(toJson(github.event.commits), '[ci skip]') == false && contains(toJson(github.event.commits), '[skip ci]') == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

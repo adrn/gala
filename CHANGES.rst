@@ -14,6 +14,9 @@ New Features
   ``NFWPotential.from_M200_c()``, which accepts a virial mass and a
   concentration.
 
+- Added a fast way of computing the Staeckel focal length, ``Delta``, using
+  Gala potential classes, ``gala.dynamics.get_staeckel_fudge_delta``
+
 Bug fixes
 ---------
 
