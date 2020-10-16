@@ -156,8 +156,9 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
     def _remove_units_prepare_shape(self, x):
         """
-        This is similar to that implemented by `gala.potential.common.CommonBase`,
-        but returns just the position if the input is a `PhaseSpacePosition`.
+        This is similar to that implemented by
+        `gala.potential.common.CommonBase`, but returns just the position if the
+        input is a `PhaseSpacePosition`.
         """
         if hasattr(x, 'unit'):
             x = x.decompose(self.units).value
@@ -166,6 +167,12 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             x = x.cartesian.xyz.decompose(self.units).value
 
         x = atleast_2d(x, insert_axis=1).astype(np.float64)
+
+        if x.shape[0] != self.ndim:
+            raise ValueError(
+                f"Input position has ndim={x.shape[0]}, but this potential "
+                f"expects an {self.ndim}-dimensional position.")
+
         return x
 
     # ========================================================================

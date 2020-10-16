@@ -26,6 +26,9 @@ Bug fixes
 - Fixed ``.to_latex()`` to properly return a latex representation of the
   potential. This uses the new ``.to_sympy()`` method under the hood.
 
+- Potential classes now validate that input positions have dimensionality that
+  matches what is expected for each potential.
+
 API changes
 -----------
 

@@ -11,7 +11,9 @@ on:
 jobs:
   build:
     name: "py${{ matrix.python-version }} on ${{ matrix.os }}"
-    if: "!contains(toJSON(github.event.commits.*.message), '[skip ci]') && !contains(toJSON(github.event.commits.*.message), '[ci skip]')"
+    if: "! contains(toJSON(github.event.commits.*.message), '[ci skip]')"
+    if: github.event_name == 'push' && contains(toJson(github.event.commits), '[ci skip]') == false && contains(toJson(github.event.commits), '[skip ci]') == false
+
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
