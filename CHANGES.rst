@@ -10,6 +10,10 @@ New Features
 - Added a method, ``.to_galpy_orbit()``, to convert Gala ``Orbit`` instances to
   Galpy ``Orbit`` objects.
 
+- The ``NFWPotential`` can now be instantiated via a new classmethod:
+  ``NFWPotential.from_M200_c()``, which accepts a virial mass and a
+  concentration.
+
 Bug fixes
 ---------
 

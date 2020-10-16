@@ -688,9 +688,24 @@ class NFWPotential(CPotentialBase):
         expr = - v_h2 * sy.log(1 + uu) / uu
         return expr, v, p
 
-    # TODO: This!!
     @staticmethod
     def from_M200_c(M200, c, rho_c=None, units=None, origin=None, R=None):
+        r"""
+        from_M200_c(M200, c, rho_c=None, units=None, origin=None, R=None)
+
+        Initialize an NFW potential from a virial mass, ``M200``, and a
+        concentration, ``c``.
+
+        Parameters
+        ----------
+        M200 : :class:`~astropy.units.Quantity`, numeric [mass]
+            Virial mass, or mass at 200 times the critical density, ``rho_c``.
+        c : numeric
+            NFW halo concentration.
+        rho_c : :class:`~astropy.units.Quantity`, numeric [density]
+            Critical density at z=0. If not specified, uses the default astropy
+            cosmology to obtain this, `~astropy.cosmology.default_cosmology`.
+        """
         if rho_c is None:
             from astropy.constants import G
             from astropy.cosmology import default_cosmology
