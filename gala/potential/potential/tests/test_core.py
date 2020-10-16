@@ -22,6 +22,8 @@ G = G.decompose(units)
 def test_new_simple():
 
     class MyPotential(PotentialBase):
+        ndim = 1
+
         def _energy(self, r, t=0.):
             return -1/r
 
