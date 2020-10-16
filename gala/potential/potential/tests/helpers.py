@@ -349,6 +349,20 @@ class PotentialTestBase(object):
 
         assert all([e_close, g_close, h_close])
 
+    def test_regression_165(self):
+        if self.potential.ndim == 1:
+            # Skip!
+            return
+
+        with pytest.raises(ValueError):
+            self.potential.energy(8.)
+
+        with pytest.raises(ValueError):
+            self.potential.gradient(8.)
+
+        with pytest.raises(ValueError):
+            self.potential.circular_velocity(8.)
+
 
 class CompositePotentialTestBase(PotentialTestBase):
     @pytest.mark.skip(reason="Skip composite potential repr test")
