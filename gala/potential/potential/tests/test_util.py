@@ -4,6 +4,12 @@ import pytest
 from ..util import from_equation
 from .helpers import PotentialTestBase
 
+try:
+    import sympy # noqa
+    HAS_SYMPY = True
+except ImportError:
+    HAS_SYMPY = False
+
 
 class EquationBase(PotentialTestBase):
     def test_plot(self):
@@ -19,20 +25,21 @@ class EquationBase(PotentialTestBase):
         pass
 
 
-class TestHarmonicOscillatorFromEquation(EquationBase):
-    Potential = from_equation("1/2*k*x**2", vars="x", pars="k",
-                              name='HarmonicOscillator',
-                              hessian=True)
-    potential = Potential(k=1.)
-    w0 = [1., 0.]
+if HAS_SYMPY:
+    class TestHarmonicOscillatorFromEquation(EquationBase):
+        Potential = from_equation("1/2*k*x**2", vars="x", pars="k",
+                                  name='HarmonicOscillator',
+                                  hessian=True)
+        potential = Potential(k=1.)
+        w0 = [1., 0.]
 
-    def test_derp(self):
-        import numpy as np
-        self.potential.gradient(np.random.random(size=(1,13)))
+        def test_derp(self):
+            import numpy as np
+            self.potential.gradient(np.random.random(size=(1,13)))
 
-    @pytest.mark.skip(reason="to_sympy() not implemented")
-    def test_against_sympy(self):
-        pass
+        @pytest.mark.skip(reason="to_sympy() not implemented")
+        def test_against_sympy(self):
+            pass
 
 
 # class TestHarmonicOscillatorFromEquationUnits(EquationBase):
