@@ -202,14 +202,15 @@ class SympyWrapper:
         self.include_G = include_G
 
     def __call__(self, wrapped_function):
-        try:
-            import sympy as sy  # noqa
-        except ImportError:
-            raise ImportError("Converting to a latex expression requires "
-                              "the sympy package to be installed")
 
         @wraps(wrapped_function)
         def wrapper(cls, *func_args, **func_kwargs):
+            try:
+                import sympy as sy  # noqa
+            except ImportError:
+                raise ImportError("Converting to a latex expression requires "
+                                  "the sympy package to be installed")
+
             _var = sy.symbols(self.var, seq=True)
             _var = {v.name: v for v in _var}
 
