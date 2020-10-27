@@ -21,11 +21,11 @@ Installation and Dependencies
 The easiest way to get Gala is to install with conda or pip. To install
 with conda, use the conda-forge channel::
 
-    conda install astro-gala --channel conda-forge
+    conda install gala --channel conda-forge
 
 To install with pip::
 
-    pip install astro-gala
+    pip install gala
 
 See the `installation
 instructions <http://gala.adrian.pw/en/latest/install.html>`_ in the
@@ -90,8 +90,8 @@ the `LICENSE <https://github.com/adrn/gala/blob/main/LICENSE>`_ file.
    :target: https://github.com/adrn/gala/workflows/Windows-tests
 .. |License| image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
    :target: https://github.com/adrn/gala/blob/main/LICENSE
-.. |PyPI| image:: https://badge.fury.io/py/astro-gala.svg
-   :target: https://badge.fury.io/py/astro-gala
+.. |PyPI| image:: https://badge.fury.io/py/gala.svg
+   :target: https://badge.fury.io/py/gala
 .. |conda| image:: https://anaconda.org/conda-forge/astro-gala/badges/version.svg
    :target: https://anaconda.org/conda-forge/astro-gala
 .. |Documentation Status| image:: https://readthedocs.org/projects/gala-astro/badge/?version=latest

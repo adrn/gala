@@ -19,7 +19,7 @@ With ``pip``
 
 To install the latest stable version using ``pip``, use::
 
-    pip install astro-gala
+    pip install gala
 
 To install the development version::
 
@@ -50,7 +50,7 @@ We have successfully installed Gala on Windows within an Anaconda installation,
 which installs and uses GCC to compile C code. Unfortunately, Gala will not work
 with Microsoft Visual Studio's C compiler because it is not C99 compliant. With Anaconda, you can install ``gsl`` (see below) and then install Gala with ``pip``::
 
-    pip install astro-gala
+    pip install gala
 
 
 GSL support
