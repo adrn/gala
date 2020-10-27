@@ -96,11 +96,12 @@ matrix:
         # Add a job that runs from cron only and tests against astropy dev and
         # numpy dev to give a change for early discovery of issues and feedback
         # for both developer teams.
-        - os: linux
-          python: 3.9
-          name: Python 3.9 latest developer version of key dependencies
-          stage: Cron tests
-          env: TOXENV=py39-test-devdeps
+        # TODO: enable this when travis supports
+        # - os: linux
+        #   python: 3.9
+        #   name: Python 3.9 latest developer version of key dependencies
+        #   stage: Cron tests
+        #   env: TOXENV=py39-test-devdeps
 
         # Try other python versions and Numpy versions. Since we can assume that
         # the Numpy developers have taken care of testing Numpy with different
