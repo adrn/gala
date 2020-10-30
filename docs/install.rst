@@ -106,11 +106,11 @@ Python Dependencies
 This packages has the following dependencies (note that the version requirements
 below indicate the versions for which Gala is tested with and should work with):
 
-- `Python`_ >= 3.6
+- `Python`_ >= 3.7
 
-- `Numpy`_ >= 1.16
+- `Numpy`_ >= 1.18
 
-- `Cython <http://www.cython.org/>`_: >= 0.28
+- `Cython <http://www.cython.org/>`_: >= 0.29
 
 - `Astropy`_ >= 3
 
