@@ -209,7 +209,7 @@ class Orbit(PhaseSpacePosition):
 
     @property
     def norbits(self):
-        if self.xyz.ndim < 3:
+        if len(self.shape) < 2:
             return 1
         else:
             return self.shape[1]
