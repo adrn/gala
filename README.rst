@@ -63,13 +63,13 @@ Please also consider citing the Zenodo DOI |DOI| as a software citation::
                       Sergey Koposov and
                       Semyeong Oh and
                       P. L. Lim},
-      title        = {adrn/gala: v1.1},
-      month        = mar,
+      title        = {adrn/gala: v1.3},
+      month        = oct,
       year         = 2020,
       publisher    = {Zenodo},
-      version      = {v1.1},
-      doi          = {10.5281/zenodo.3700827},
-      url          = {https://doi.org/10.5281/zenodo.3700827}
+      version      = {v1.3},
+      doi          = {10.5281/zenodo.4159870},
+      url          = {https://doi.org/10.5281/zenodo.593786}
     }
 
 License
@@ -92,8 +92,8 @@ the `LICENSE <https://github.com/adrn/gala/blob/main/LICENSE>`_ file.
    :target: https://github.com/adrn/gala/blob/main/LICENSE
 .. |PyPI| image:: https://badge.fury.io/py/gala.svg
    :target: https://badge.fury.io/py/gala
-.. |conda| image:: https://anaconda.org/conda-forge/astro-gala/badges/version.svg
-   :target: https://anaconda.org/conda-forge/astro-gala
+.. |conda| image:: https://anaconda.org/conda-forge/gala/badges/version.svg
+   :target: https://anaconda.org/conda-forge/gala
 .. |Documentation Status| image:: https://readthedocs.org/projects/gala-astro/badge/?version=latest
    :target: http://gala-astro.readthedocs.io/en/latest/?badge=latest
 .. |Affiliated package| image:: https://img.shields.io/badge/astropy-affiliated%20package-orange.svg
