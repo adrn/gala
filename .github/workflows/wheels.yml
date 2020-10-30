@@ -3,7 +3,6 @@ on:
   release:
     types:
       - published
-      - edited
   pull_request:
     branches:
       - main
@@ -58,7 +57,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8] # , 3.9  # TODO
+        python-version: [3.7, 3.8, 3.9]
       fail-fast: false
 
     steps:
@@ -115,7 +114,7 @@ jobs:
   upload_pypi:
     needs: [build_nix_wheels, build_win_wheels, build_sdist]
     runs-on: ubuntu-latest
-    if: (github.event_name == 'release' && github.event.action == 'published') || (github.event_name == 'release' && github.event.action == 'edited') |
+    if: github.event_name == 'release' && github.event.action == 'published'
     steps:
       - uses: actions/download-artifact@v2
         with:
