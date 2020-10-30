@@ -207,60 +207,50 @@ def lyapunov_max(w0, integrator, dt, n_steps, d0=1e-5, n_steps_per_pullback=10,
     return LEs/t_unit, orbit
 
 
-def surface_of_section(orbit, plane_ix, interpolate=False):
+def surface_of_section(orbit, constant_idx, constant_val=0.):
     """
     Generate and return a surface of section from the given orbit.
-
-    .. warning::
-
-        This is an experimental function and the API may change.
 
     Parameters
     ----------
     orbit : `~gala.dynamics.Orbit`
-    plane_ix : int
+        The input orbit to generate a surface of section for.
+    constant_idx : int
         Integer that represents the coordinate to record crossings in. For
         example, for a 2D Hamiltonian where you want to make a SoS in
-        :math:`y-p_y`, you would specify ``plane_ix=0`` (crossing the
+        :math:`y-p_y`, you would specify ``constant_idx=0`` (crossing the
         :math:`x` axis), and this will only record crossings for which
         :math:`p_x>0`.
-    interpolate : bool (optional)
-        Whether or not to interpolate on to the plane of interest. This
-        makes it much slower, but will work for orbits with a coarser
-        sampling.
 
     Returns
     -------
+    sos : numpy ndarray
 
-    Examples
-    --------
-    If your orbit of interest is a tube orbit, it probably conserves (at
-    least approximately) some equivalent to angular momentum in the direction
-    of the circulation axis. Therefore, a surface of section in R-z should
-    be instructive for classifying these orbits. TODO...show how to convert
-    an orbit to Cylindrical..etc...
+    TODO:
+    - Implement interpolation to get the other phase-space coordinates truly
+      at the plane, instead of just at the orbital position closest to the
+      plane.
 
     """
 
-    w = orbit.w()
-    if w.ndim == 2:
-        w = w[..., None]
-
-    ndim, ntimes, norbits = w.shape
-    H_dim = ndim // 2
-    p_ix = plane_ix + H_dim
-
-    if interpolate:
+    if orbit.norbits > 1:
         raise NotImplementedError("Not yet implemented, sorry!")
 
+    w = ([getattr(orbit, x) for x in orbit.pos_components] +
+         [getattr(orbit, v) for v in orbit.vel_components])
+
+    ndim = orbit.ndim
+
+    p_ix = constant_idx + ndim
+
     # record position on specified plane when orbit crosses
-    all_sos = np.zeros((ndim, norbits), dtype=object)
-    for n in range(norbits):
-        cross_ix = argrelmin(w[plane_ix, :, n]**2)[0]
-        cross_ix = cross_ix[w[p_ix, cross_ix, n] > 0.]
-        sos = w[:, cross_ix, n]
+    cross_idx = argrelmin((w[constant_idx] - constant_val) ** 2)[0]
+    cross_idx = cross_idx[w[p_ix][cross_idx] > 0.]
 
-        for j in range(ndim):
-            all_sos[j, n] = sos[j, :]
+    sos_pos = [w[i][cross_idx] for i in range(ndim)]
+    sos_pos = orbit.pos.__class__(*sos_pos)
 
-    return all_sos
+    sos_vel = [w[i][cross_idx] for i in range(ndim, 2*ndim)]
+    sos_vel = orbit.vel.__class__(*sos_vel)
+
+    return Orbit(sos_pos, sos_vel)

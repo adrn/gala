@@ -299,32 +299,16 @@ class TestLogarithmic(object):
             # plt.show()
             # plt.close('all')
 
-@pytest.mark.skipif(True, reason="too slow")
-def test_surface_of_section(tmpdir):
-    # TODO: needs overhaul
-    # from mpl_toolkits.mplot3d import Axes3D
+
+def test_surface_of_section():
     from ...potential import LogarithmicPotential
     from ...units import galactic
 
-    pot = LogarithmicPotential(v_c=1., r_h=1., q1=1., q2=0.9, q3=0.8, units=galactic)
+    pot = LogarithmicPotential(v_c=1., r_h=1.,
+                               q1=1., q2=0.9, q3=0.8,
+                               units=galactic)
 
-    w0 = np.array([[0.,0.8,0.,1.,0.,0.],
-                   [0.,0.9,0.,1.,0.,0.]]).T
-    orbit = Hamiltonian(pot).integrate_orbit(w0, dt=0.02, n_steps=100000)
-    sos = surface_of_section(orbit, plane_ix=1)
-
-    # plot in 3D
-    # fig = pl.figure(figsize=(10,10))
-    # ax = fig.add_subplot(111, projection='3d')
-
-    # ax.scatter(np.concatenate(sos[0]), # x
-    #            np.concatenate(sos[3]), # xdot
-    #            np.concatenate(sos[2]), # z
-    #            c=np.concatenate(sos[5])) # zdot
-    # ax.set_xlabel('$x$')
-    # ax.set_ylabel(r'$\dot{x}$')
-    # ax.set_zlabel('$z$')
-
-    # fig.tight_layout()
-    # pl.show()
-    # fig.savefig(os.path.join("sos.png"))
+    w0 = np.array([0., 0.8, 0., 1., 0., 0.])
+    orbit = Hamiltonian(pot).integrate_orbit(w0, dt=0.02, n_steps=100_000)
+    sos = surface_of_section(orbit, constant_idx=1)
+    sos_cyl = surface_of_section(orbit.cylindrical, constant_idx=1)
