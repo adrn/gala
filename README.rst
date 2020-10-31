@@ -18,12 +18,13 @@ Installation and Dependencies
 
 |conda| |PyPI|
 
-The easiest way to get Gala is to install with conda or pip. To install
-with conda, use the conda-forge channel::
+The easiest way to get Gala is to install with conda or pip.
+
+If you are on Linux or Mac, you can install with conda using the conda-forge channel::
 
     conda install gala --channel conda-forge
 
-To install with pip::
+If you prefer pip, or if you are on Windows, you can also install using pip::
 
     pip install gala
 
@@ -84,8 +85,8 @@ the `LICENSE <https://github.com/adrn/gala/blob/main/LICENSE>`_ file.
 
 .. |Coverage Status| image:: https://codecov.io/gh/adrn/gala/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/adrn/gala
-.. |Build status| image:: http://img.shields.io/travis/adrn/gala/main.svg?style=flat
-   :target: http://travis-ci.org/adrn/gala
+.. |Build status| image:: https://github.com/adrn/gala/workflows/nix-tests/badge.svg?branch=main
+   :target: https://github.com/adrn/gala/workflows/nix-tests
 .. |Windows status| image:: https://github.com/adrn/gala/workflows/Windows-tests/badge.svg?branch=main
    :target: https://github.com/adrn/gala/workflows/Windows-tests
 .. |License| image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
