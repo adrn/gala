@@ -163,8 +163,8 @@ class NDCartesianDifferential(NDMixin, coord.CartesianDifferential):
         d_x = u.Quantity(d_x, unit, copy=copy, subok=True)
         copy = False
 
-        self.attr_classes = [('d_x'+str(i), u.Quantity)
-                             for i in range(1, len(d_x)+1)])
+        self.attr_classes = dict([('d_x'+str(i), u.Quantity)
+                                 for i in range(1, len(d_x)+1)])
 
         super(coord.CartesianDifferential, self).__init__(*d_x, copy=copy)
 
