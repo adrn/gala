@@ -31,13 +31,13 @@ def test_coeff(basename):
     coeff = np.atleast_2d(np.loadtxt(coeff_path))
 
     xyz = np.ascontiguousarray(np.loadtxt(pos_path, skiprows=1))
-    S,T = compute_coeffs_discrete(xyz, mass=np.zeros(xyz.shape[0])+1./xyz.shape[0],
+    S, T = compute_coeffs_discrete(xyz, mass=np.zeros(xyz.shape[0])+1./xyz.shape[0],
                                   nmax=nmax, lmax=lmax, r_s=1.)
 
-    S_f77 = np.zeros((nmax+1,lmax+1,lmax+1))
-    T_f77 = np.zeros((nmax+1,lmax+1,lmax+1))
+    S_f77 = np.zeros((nmax+1, lmax+1, lmax+1))
+    T_f77 = np.zeros((nmax+1, lmax+1, lmax+1))
     for row in coeff:
-        n,l,m,cc,sc = row
+        n, l, m, cc, sc = row
 
         # transform from H&O 1992 coefficients to Lowing 2011 coefficients
         if l != 0:

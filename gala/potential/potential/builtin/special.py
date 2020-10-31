@@ -230,15 +230,15 @@ class BovyMWPotential2014(CCompositePotential):
 #                             v_c=0.239225, r_s=30.,
 #                             phi=0., theta=0., psi=0.)
 
-#         for k,v in default_disk.items():
+#         for k, v in default_disk.items():
 #             if k not in disk:
 #                 disk[k] = v
 
-#         for k,v in default_bulge.items():
+#         for k, v in default_bulge.items():
 #             if k not in bulge:
 #                 bulge[k] = v
 
-#         for k,v in default_halo.items():
+#         for k, v in default_halo.items():
 #             if k not in halo:
 #                 halo[k] = v
 
@@ -246,5 +246,5 @@ class BovyMWPotential2014(CCompositePotential):
 #         kwargs["disk"] = MiyamotoNagaiPotential(units=units, **disk)
 #         kwargs["bulge"] = HernquistPotential(units=units, **bulge)
 #         kwargs["halo"] = LeeSutoTriaxialNFWPotential(units=units, **halo)
-#         super(TriaxialMWPotential,self).__init__(**kwargs)
+#         super(TriaxialMWPotential, self).__init__(**kwargs)
 # --------------------------------------------------------------------

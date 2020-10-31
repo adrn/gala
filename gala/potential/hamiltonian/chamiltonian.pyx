@@ -80,20 +80,20 @@ class Hamiltonian(CommonBase):
         return self.potential.units
 
     def _energy(self, w, t):
-        pot_E = self.potential._energy(np.ascontiguousarray(w[:,:self._pot_ndim]), t=t)
+        pot_E = self.potential._energy(np.ascontiguousarray(w[:, :self._pot_ndim]), t=t)
         other_E = self.frame._energy(w, t=t)
         return pot_E + other_E
 
     def _gradient(self, w, t):
-        q = np.ascontiguousarray(w[:,:self._pot_ndim])
+        q = np.ascontiguousarray(w[:, :self._pot_ndim])
 
         dH = np.zeros_like(w)
 
         # extra terms from the frame
         dH += self.frame._gradient(w, t=t)
-        dH[:,self._pot_ndim:] += self.potential._gradient(q, t=t)
+        dH[:, self._pot_ndim:] += self.potential._gradient(q, t=t)
         for i in range(self._pot_ndim):
-            dH[:,self._pot_ndim+i] = -dH[:,self._pot_ndim+i]
+            dH[:, self._pot_ndim+i] = -dH[:, self._pot_ndim+i]
 
         return dH
 
@@ -122,7 +122,7 @@ class Hamiltonian(CommonBase):
             will have shape ``w.shape[1:]``.
         """
         w = self._remove_units_prepare_shape(w)
-        orig_shape,w = self._get_c_valid_arr(w)
+        orig_shape, w = self._get_c_valid_arr(w)
         t = self._validate_prepare_time(t, w)
         return self._energy(w, t=t).T.reshape(orig_shape[1:]) * self.units['energy'] / self.units['mass']
 
@@ -145,7 +145,7 @@ class Hamiltonian(CommonBase):
             the input phase-space position, ``w``.
         """
         w = self._remove_units_prepare_shape(w)
-        orig_shape,w = self._get_c_valid_arr(w)
+        orig_shape, w = self._get_c_valid_arr(w)
         t = self._validate_prepare_time(t, w)
 
         # TODO: wat do about units here?
@@ -186,14 +186,14 @@ class Hamiltonian(CommonBase):
     #                         "to compute the Jacobi energy.")
 
     #     w = self._remove_units_prepare_shape(w)
-    #     orig_shape,w = self._get_c_valid_arr(w)
+    #     orig_shape, w = self._get_c_valid_arr(w)
     #     t = self._validate_prepare_time(t, w)
 
     #     E = self._energy(w, t=t).T.reshape(orig_shape[1:])
-    #     L = np.cross(w[:,:3], w[:,3:])
+    #     L = np.cross(w[:, :3], w[:, 3:])
 
     #     Omega = self.frame.parameters['Omega']
-    #     C = E - np.einsum('i,...i->...', Omega, L).reshape(E.shape)
+    #     C = E - np.einsum('i, ...i->...', Omega, L).reshape(E.shape)
     #     return C * self.units['energy'] / self.units['mass']
 
     # ========================================================================
@@ -229,7 +229,7 @@ class Hamiltonian(CommonBase):
     #         elif isinstance(v, int) and np.log10(v) > 5:
     #             par_fmt = "{:.2e}"
 
-    #         pars += ("{}=" + par_fmt + post).format(k,v) + ", "
+    #         pars += ("{}=" + par_fmt + post).format(k, v) + ", "
 
     #     if isinstance(self.units, DimensionlessUnitSystem):
     #         return "<{}: {} (dimensionless)>".format(self.__class__.__name__, pars.rstrip(", "))
@@ -304,7 +304,7 @@ class Hamiltonian(CommonBase):
         ndim = w0.ndim
         arr_w0 = w0.w(self.units)
         arr_w0 = self._remove_units_prepare_shape(arr_w0)
-        orig_shape,arr_w0 = self._get_c_valid_arr(arr_w0)
+        orig_shape, arr_w0 = self._get_c_valid_arr(arr_w0)
 
         if self.c_enabled and cython_if_possible:
             # array of times
@@ -313,11 +313,11 @@ class Hamiltonian(CommonBase):
 
             if Integrator == LeapfrogIntegrator:
                 from ...integrate.cyintegrators import leapfrog_integrate_hamiltonian
-                t,w = leapfrog_integrate_hamiltonian(self, arr_w0, t)
+                t, w = leapfrog_integrate_hamiltonian(self, arr_w0, t)
 
             elif Integrator == DOPRI853Integrator:
                 from ...integrate.cyintegrators import dop853_integrate_hamiltonian
-                t,w = dop853_integrate_hamiltonian(self, arr_w0, t,
+                t, w = dop853_integrate_hamiltonian(self, arr_w0, t,
                                                    Integrator_kwargs.get('atol', 1E-10),
                                                    Integrator_kwargs.get('rtol', 1E-10),
                                                    Integrator_kwargs.get('nmax', 0))
@@ -327,7 +327,7 @@ class Hamiltonian(CommonBase):
             # because shape is different from normal integrator return
             w = np.rollaxis(w, -1)
             if w.shape[-1] == 1:
-                w = w[...,0]
+                w = w[..., 0]
 
         else:
             def F(t, w):

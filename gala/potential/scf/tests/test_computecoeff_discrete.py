@@ -25,8 +25,8 @@ def test_plummer():
     pos_path = os.path.abspath(get_pkg_data_filename('data/plummer-pos.dat.gz'))
 
     scfbi = scfbi = np.loadtxt(pos_path)
-    m_k = scfbi[:,0]*10 # masses sum to 0.1
-    xyz = scfbi[:,1:4]
+    m_k = scfbi[:, 0]*10 # masses sum to 0.1
+    xyz = scfbi[:, 1:4]
 
     G = 1.
     r_s = 1.
@@ -36,11 +36,11 @@ def test_plummer():
     nmax = 10
     lmax = 0
 
-    Snlm,Tnlm = compute_coeffs_discrete(xyz, m_k, nmax=nmax, lmax=lmax, r_s=r_s)
+    Snlm, Tnlm = compute_coeffs_discrete(xyz, m_k, nmax=nmax, lmax=lmax, r_s=r_s)
 
-    x = np.logspace(-2,1,512)
+    x = np.logspace(-2, 1, 512)
     xyz = np.zeros((len(x),3))
-    xyz[:,0] = x
+    xyz[:, 0] = x
 
     # plot discrete vs. analytic potential
     true_pot = pot.energy(xyz.T).value

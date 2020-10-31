@@ -35,7 +35,7 @@ if HAS_SYMPY:
 
         def test_derp(self):
             import numpy as np
-            self.potential.gradient(np.random.random(size=(1,13)))
+            self.potential.gradient(np.random.random(size=(1, 13)))
 
         @pytest.mark.skip(reason="to_sympy() not implemented")
         def test_against_sympy(self):
@@ -47,11 +47,11 @@ if HAS_SYMPY:
 #                               name='HarmonicOscillator',
 #                               hessian=True)
 #     potential = Potential(k=1., units=solarsystem)
-#     w0 = [1.,0.]
+#     w0 = [1., 0.]
 
 # class TestKeplerFromEquation(EquationBase):
 #     Potential = from_equation("-G*M/sqrt(x**2+y**2+z**2)", vars=["x","y","z"],
 #                               pars=["G","M"], name='Kepler',
 #                               hessian=True)
 #     potential = Potential(G=1., M=1., units=solarsystem)
-#     w0 = [1.,0.,0.,0.,6.28,0.]
+#     w0 = [1., 0., 0., 0., 6.28, 0.]

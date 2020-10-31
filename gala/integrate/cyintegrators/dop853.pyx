@@ -76,7 +76,7 @@ cdef void dop853_step(CPotential *cp, CFrame *cf, FcnEqDiff F,
         raise RuntimeError("The problem is probably stiff (interrupted).")
 
 cdef dop853_helper(CPotential *cp, CFrame *cf, FcnEqDiff F,
-                   double[:,::1] w0, double[::1] t,
+                   double[:, ::1] w0, double[::1] t,
                    int ndim, int norbits, int nbody, void *args, int ntimes,
                    double atol, double rtol, int nmax):
 
@@ -102,7 +102,7 @@ cdef dop853_helper(CPotential *cp, CFrame *cf, FcnEqDiff F,
     return w
 
 cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
-                            double[:,::1] w0, double[::1] t,
+                            double[:, ::1] w0, double[::1] t,
                             int ndim, int norbits, int nbody, void *args,
                             int ntimes, double atol, double rtol, int nmax):
 
@@ -111,7 +111,7 @@ cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
         double dt0 = t[1] - t[0]
 
         double[::1] w = np.empty(ndim*norbits)
-        double[:,:,::1] all_w = np.empty((ntimes, norbits, ndim))
+        double[:, :, ::1] all_w = np.empty((ntimes, norbits, ndim))
 
     # store initial conditions
     for i in range(norbits):
@@ -126,13 +126,13 @@ cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
 
         for k in range(ndim):
             for i in range(norbits):
-                all_w[j,i,k] = w[i*ndim + k]
+                all_w[j, i, k] = w[i*ndim + k]
 
         PyErr_CheckSignals()
 
     return np.asarray(all_w)
 
-cpdef dop853_integrate_hamiltonian(hamiltonian, double[:,::1] w0, double[::1] t,
+cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t,
                                    double atol=1E-10, double rtol=1E-10, int nmax=0):
     """
     CAUTION: Interpretation of axes is different here! We need the

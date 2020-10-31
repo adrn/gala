@@ -79,8 +79,8 @@ def test_write_lm10(tmpdir):
     save(potential, tmp_filename)
     p = load(tmp_filename)
     assert u.allclose(p['disk'].parameters['m'], 5E12*u.Msun)
-    assert u.allclose(v1, p.energy([4.,0,0]))
-    assert not u.allclose(v2, p.energy([4.,0,0]))
+    assert u.allclose(v1, p.energy([4., 0, 0]))
+    assert not u.allclose(v2, p.energy([4., 0, 0]))
 
 def test_write_composite(tmpdir):
     tmp_filename = str(tmpdir.join("potential.yml"))
@@ -107,6 +107,6 @@ def test_units(tmpdir):
     tmp_filename = str(tmpdir.join("potential.yml"))
 
     # try a simple potential
-    potential = KeplerPotential(m=1E11, units=[u.kpc,u.Gyr,u.Msun,u.radian])
+    potential = KeplerPotential(m=1E11, units=[u.kpc, u.Gyr, u.Msun, u.radian])
     save(potential, tmp_filename)
     p = load(tmp_filename)

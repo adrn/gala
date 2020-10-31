@@ -53,12 +53,12 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
         double dt0 = t[1] - t[0]
 
         double d1_mag, norm
-        double[:,::1] d1 = np.empty((norbits,ndim))
-        double[:,::1] LEs = np.zeros((niter,noffset_orbits))
-        double[:,:,::1] all_w = np.zeros((n_steps,norbits,ndim))
+        double[:, ::1] d1 = np.empty((norbits, ndim))
+        double[:, ::1] LEs = np.zeros((niter, noffset_orbits))
+        double[:, :, ::1] all_w = np.zeros((n_steps, norbits, ndim))
 
         # temp stuff
-        double[:,::1] d0_vec = np.random.uniform(size=(noffset_orbits,ndim))
+        double[:, ::1] d0_vec = np.random.uniform(size=(noffset_orbits, ndim))
 
         # whoa, so many dots
         CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
@@ -70,20 +70,20 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
     for i in range(norbits):
         if i == 0:  # store initial conditions for parent orbit
             for k in range(ndim):
-                all_w[0,i,k] = w0[k]
-                w[i*ndim + k] = all_w[0,i,k]
+                all_w[0, i, k] = w0[k]
+                w[i*ndim + k] = all_w[0, i, k]
 
         else:  # offset orbits
             norm = np.linalg.norm(d0_vec[i-1])
             for k in range(ndim):
-                d0_vec[i-1,k] *= d0/norm  # rescale offset vector
+                d0_vec[i-1, k] *= d0/norm  # rescale offset vector
 
-                all_w[0,i,k] = w0[k] + d0_vec[i-1,k]
-                w[i*ndim + k] = all_w[0,i,k]
+                all_w[0, i, k] = w0[k] + d0_vec[i-1, k]
+                w[i*ndim + k] = all_w[0, i, k]
 
     # dummy counter for storing Lyapunov stuff, which only happens every few steps
     jiter = 0
-    for j in range(1,n_steps,1):
+    for j in range(1, n_steps, 1):
         dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper,
                     &w[0], t[j-1], t[j], dt0, ndim,
                     norbits, 0, args, # 0 is for nbody, ignored here
@@ -92,25 +92,25 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
         # store position of main orbit
         for i in range(norbits):
             for k in range(ndim):
-                all_w[j,i,k] = w[i*ndim + k]
+                all_w[j, i, k] = w[i*ndim + k]
 
         if (j % n_steps_per_pullback) == 0:
             # get magnitude of deviation vector
-            for i in range(1,norbits):
+            for i in range(1, norbits):
                 for k in range(ndim):
-                    d1[i,k] = w[i*ndim + k] - w[k]
+                    d1[i, k] = w[i*ndim + k] - w[k]
 
-                d1_mag = six_norm(&d1[i,0])
-                LEs[jiter,i-1] = log(d1_mag / d0)
+                d1_mag = six_norm(&d1[i, 0])
+                LEs[jiter, i-1] = log(d1_mag / d0)
 
                 # renormalize offset orbits
                 for k in range(ndim):
-                    w[i*ndim + k] = w[k] + d0 * d1[i,k] / d1_mag
+                    w[i*ndim + k] = w[k] + d0 * d1[i, k] / d1_mag
 
             jiter += 1
 
     LEs = np.array([np.sum(LEs[:j],axis=0)/t[j*n_steps_per_pullback]
-                    for j in range(1,niter)])
+                    for j in range(1, niter)])
     return np.asarray(t), np.asarray(all_w), np.asarray(LEs)
 
 cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
@@ -131,11 +131,11 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
         double dt0 = t[1]-t[0]
 
         double d1_mag, norm
-        double[:,::1] d1 = np.empty((norbits,ndim))
-        double[:,::1] LEs = np.zeros((niter,noffset_orbits))
+        double[:, ::1] d1 = np.empty((norbits, ndim))
+        double[:, ::1] LEs = np.zeros((niter, noffset_orbits))
 
         # temp stuff
-        double[:,::1] d0_vec = np.random.uniform(size=(noffset_orbits,ndim))
+        double[:, ::1] d0_vec = np.random.uniform(size=(noffset_orbits, ndim))
 
         # whoa, so many dots
         CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
@@ -152,12 +152,12 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
         else:  # offset orbits
             norm = np.linalg.norm(d0_vec[i-1])
             for k in range(ndim):
-                d0_vec[i-1,k] *= d0/norm  # rescale offset vector
-                w[i*ndim + k] = w0[k] + d0_vec[i-1,k]
+                d0_vec[i-1, k] *= d0/norm  # rescale offset vector
+                w[i*ndim + k] = w0[k] + d0_vec[i-1, k]
 
     # dummy counter for storing Lyapunov stuff, which only happens every few steps
     jiter = 0
-    for j in range(1,n_steps,1):
+    for j in range(1, n_steps, 1):
         dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper,
                     &w[0], t[j-1], t[j], dt0, ndim,
                     norbits, 0, args, # 0 is for nbody, ignored here
@@ -165,18 +165,18 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
 
         if (j % n_steps_per_pullback) == 0:
             # get magnitude of deviation vector
-            for i in range(1,norbits):
+            for i in range(1, norbits):
                 for k in range(ndim):
-                    d1[i,k] = w[i*ndim + k] - w[k]
+                    d1[i, k] = w[i*ndim + k] - w[k]
 
-                d1_mag = six_norm(&d1[i,0])
-                LEs[jiter,i-1] = log(d1_mag / d0)
+                d1_mag = six_norm(&d1[i, 0])
+                LEs[jiter, i-1] = log(d1_mag / d0)
 
                 # renormalize offset orbits
                 for k in range(ndim):
-                    w[i*ndim + k] = w[k] + d0 * d1[i,k] / d1_mag
+                    w[i*ndim + k] = w[k] + d0 * d1[i, k] / d1_mag
 
             jiter += 1
 
-    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j*n_steps_per_pullback] for j in range(1,niter)])
+    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j*n_steps_per_pullback] for j in range(1, niter)])
     return np.asarray(LEs)

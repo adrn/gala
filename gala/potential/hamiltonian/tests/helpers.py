@@ -35,47 +35,47 @@ class _TestBase(object):
         cls.w0s.append(PSP(pos=np.random.random(size=ndim//2)*u.kpc,
                            vel=np.random.random(size=ndim//2)*u.km/u.s))
         cls.energy_return_shapes += [(1,)]*2
-        cls.gradient_return_shapes += [(r_ndim,1)]*2
-        cls.hessian_return_shapes += [(r_ndim,r_ndim,1)]*2
+        cls.gradient_return_shapes += [(r_ndim, 1)]*2
+        cls.hessian_return_shapes += [(r_ndim, r_ndim, 1)]*2
 
         # 2D - phase-space position
-        cls.w0s.append(PSP(pos=np.random.random(size=(ndim//2,norbits)),
-                           vel=np.random.random(size=(ndim//2,norbits))))
-        cls.w0s.append(PSP(pos=np.random.random(size=(ndim//2,norbits))*u.kpc,
-                           vel=np.random.random(size=(ndim//2,norbits))*u.km/u.s))
+        cls.w0s.append(PSP(pos=np.random.random(size=(ndim//2, norbits)),
+                           vel=np.random.random(size=(ndim//2, norbits))))
+        cls.w0s.append(PSP(pos=np.random.random(size=(ndim//2, norbits))*u.kpc,
+                           vel=np.random.random(size=(ndim//2, norbits))*u.km/u.s))
         cls.energy_return_shapes += [(norbits,)]*2
-        cls.gradient_return_shapes += [(r_ndim,norbits)]*2
-        cls.hessian_return_shapes += [(r_ndim,r_ndim,norbits)]*2
+        cls.gradient_return_shapes += [(r_ndim, norbits)]*2
+        cls.hessian_return_shapes += [(r_ndim, r_ndim, norbits)]*2
 
         # 3D - phase-space position
-        cls.w0s.append(PSP(pos=np.random.random(size=(ndim//2,norbits,ntimes)),
-                           vel=np.random.random(size=(ndim//2,norbits,ntimes))))
-        cls.w0s.append(PSP(pos=np.random.random(size=(ndim//2,norbits,ntimes))*u.kpc,
-                           vel=np.random.random(size=(ndim//2,norbits,ntimes))*u.km/u.s))
-        cls.energy_return_shapes += [(norbits,ntimes)]*2
-        cls.gradient_return_shapes += [(r_ndim,norbits,ntimes)]*2
-        cls.hessian_return_shapes += [(r_ndim,r_ndim,norbits,ntimes)]*2
+        cls.w0s.append(PSP(pos=np.random.random(size=(ndim//2, norbits, ntimes)),
+                           vel=np.random.random(size=(ndim//2, norbits, ntimes))))
+        cls.w0s.append(PSP(pos=np.random.random(size=(ndim//2, norbits, ntimes))*u.kpc,
+                           vel=np.random.random(size=(ndim//2, norbits, ntimes))*u.km/u.s))
+        cls.energy_return_shapes += [(norbits, ntimes)]*2
+        cls.gradient_return_shapes += [(r_ndim, norbits, ntimes)]*2
+        cls.hessian_return_shapes += [(r_ndim, r_ndim, norbits, ntimes)]*2
 
         # 2D - orbit
-        cls.w0s.append(ORB(pos=np.random.random(size=(ndim//2,ntimes)),
-                           vel=np.random.random(size=(ndim//2,ntimes))))
-        cls.w0s.append(ORB(pos=np.random.random(size=(ndim//2,ntimes))*u.kpc,
-                           vel=np.random.random(size=(ndim//2,ntimes))*u.km/u.s))
+        cls.w0s.append(ORB(pos=np.random.random(size=(ndim//2, ntimes)),
+                           vel=np.random.random(size=(ndim//2, ntimes))))
+        cls.w0s.append(ORB(pos=np.random.random(size=(ndim//2, ntimes))*u.kpc,
+                           vel=np.random.random(size=(ndim//2, ntimes))*u.km/u.s))
         cls.energy_return_shapes += [(ntimes,)]*2
-        cls.gradient_return_shapes += [(r_ndim,ntimes,)]*2
-        cls.hessian_return_shapes += [(r_ndim,r_ndim,ntimes,)]*2
+        cls.gradient_return_shapes += [(r_ndim, ntimes,)]*2
+        cls.hessian_return_shapes += [(r_ndim, r_ndim, ntimes,)]*2
 
         # 3D - orbit
-        cls.w0s.append(ORB(pos=np.random.random(size=(ndim//2,ntimes,norbits)),
-                           vel=np.random.random(size=(ndim//2,ntimes,norbits))))
-        cls.w0s.append(ORB(pos=np.random.random(size=(ndim//2,ntimes,norbits))*u.kpc,
-                           vel=np.random.random(size=(ndim//2,ntimes,norbits))*u.km/u.s))
-        cls.energy_return_shapes += [(ntimes,norbits)]*2
-        cls.gradient_return_shapes += [(r_ndim,ntimes,norbits)]*2
-        cls.hessian_return_shapes += [(r_ndim,r_ndim,ntimes,norbits)]*2
+        cls.w0s.append(ORB(pos=np.random.random(size=(ndim//2, ntimes, norbits)),
+                           vel=np.random.random(size=(ndim//2, ntimes, norbits))))
+        cls.w0s.append(ORB(pos=np.random.random(size=(ndim//2, ntimes, norbits))*u.kpc,
+                           vel=np.random.random(size=(ndim//2, ntimes, norbits))*u.km/u.s))
+        cls.energy_return_shapes += [(ntimes, norbits)]*2
+        cls.gradient_return_shapes += [(r_ndim, ntimes, norbits)]*2
+        cls.hessian_return_shapes += [(r_ndim, r_ndim, ntimes, norbits)]*2
 
         _obj_w0s = cls.w0s[:]
-        for w0,eshp,gshp,hshp in zip(_obj_w0s,
+        for w0, eshp, gshp, hshp in zip(_obj_w0s,
                                      cls.energy_return_shapes,
                                      cls.gradient_return_shapes,
                                      cls.hessian_return_shapes):
@@ -85,7 +85,7 @@ class _TestBase(object):
             cls.hessian_return_shapes.append(hshp)
 
     def test_energy(self):
-        for arr,shp in zip(self.w0s, self.energy_return_shapes):
+        for arr, shp in zip(self.w0s, self.energy_return_shapes):
             if self.E_unit.is_equivalent(u.one) and hasattr(arr, 'pos') and \
                 not arr.xyz.unit.is_equivalent(u.one):
                 continue
@@ -100,7 +100,7 @@ class _TestBase(object):
             self.obj.energy(arr, t=0.1*self.obj.units['time'])
 
     def test_gradient(self):
-        for arr,shp in zip(self.w0s, self.gradient_return_shapes):
+        for arr, shp in zip(self.w0s, self.gradient_return_shapes):
             if self.E_unit.is_equivalent(u.one) and hasattr(arr, 'pos') and \
                 not arr.xyz.unit.is_equivalent(u.one):
                 continue
@@ -115,7 +115,7 @@ class _TestBase(object):
             self.obj.gradient(arr, t=0.1*self.obj.units['time'])
 
     def test_hessian(self):
-        for arr,shp in zip(self.w0s, self.hessian_return_shapes):
+        for arr, shp in zip(self.w0s, self.hessian_return_shapes):
             if self.E_unit.is_equivalent(u.one) and hasattr(arr, 'pos') and \
                 not arr.xyz.unit.is_equivalent(u.one):
                 continue

@@ -70,8 +70,8 @@ def pure_py(xyz, Snlm, Tnlm, nmax, lmax):
     from scipy.special import lpmv, gegenbauer, eval_gegenbauer, gamma
     from math import factorial as f
 
-    Plm = lambda l,m,costh: lpmv(m, l, costh)
-    Ylmth = lambda l,m,costh: np.sqrt((2*l+1)/(4 * np.pi) * f(l-m)/f(l+m)) * Plm(l,m,costh)
+    Plm = lambda l, m, costh: lpmv(m, l, costh)
+    Ylmth = lambda l, m, costh: np.sqrt((2*l+1)/(4 * np.pi) * f(l-m)/f(l+m)) * Plm(l, m, costh)
 
     twopi = 2*np.pi
     sqrtpi = np.sqrt(np.pi)
@@ -97,25 +97,25 @@ def pure_py(xyz, Snlm, Tnlm, nmax, lmax):
                 rho_nl = Knl / twopi * sqrt4pi * r_term1 * Cn(xsi)
                 phi_nl = -sqrt4pi * r_term2 * Cn(xsi)
 
-                density += rho_nl * Ylmth(l,m,X) * (Snlm[n,l,m]*np.cos(m*phi) +
-                                                    Tnlm[n,l,m]*np.sin(m*phi))
-                potenti += phi_nl * Ylmth(l,m,X) * (Snlm[n,l,m]*np.cos(m*phi) +
-                                                    Tnlm[n,l,m]*np.sin(m*phi))
+                density += rho_nl * Ylmth(l, m, X) * (Snlm[n, l, m]*np.cos(m*phi) +
+                                                    Tnlm[n, l, m]*np.sin(m*phi))
+                potenti += phi_nl * Ylmth(l, m, X) * (Snlm[n, l, m]*np.cos(m*phi) +
+                                                    Tnlm[n, l, m]*np.sin(m*phi))
 
                 # derivatives
                 dphinl_dr = (2*sqrtpi*np.power(r,-1 + l)*np.power(1 + r,-3 - 2*l)*
-                              (-2*(3 + 4*l)*r*eval_gegenbauer(-1 + n,2.5 + 2*l,(-1 + r)/(1 + r)) +
-                              (1 + r)*(l*(-1 + r) + r)*eval_gegenbauer(n,1.5 + 2*l,(-1 + r)/(1 + r))))
-                sph_gradien[0] += dphinl_dr * Ylmth(l,m,X) * (Snlm[n,l,m]*np.cos(m*phi) +
-                                                              Tnlm[n,l,m]*np.sin(m*phi))
+                              (-2*(3 + 4*l)*r*eval_gegenbauer(-1 + n, 2.5 + 2*l,(-1 + r)/(1 + r)) +
+                              (1 + r)*(l*(-1 + r) + r)*eval_gegenbauer(n, 1.5 + 2*l,(-1 + r)/(1 + r))))
+                sph_gradien[0] += dphinl_dr * Ylmth(l, m, X) * (Snlm[n, l, m]*np.cos(m*phi) +
+                                                              Tnlm[n, l, m]*np.sin(m*phi))
 
                 A = np.sqrt((2*l+1) / (4*np.pi)) * np.sqrt(gamma(l-m+1) / gamma(l+m+1))
-                dYlm_dth = A / sinth * (l*X*Plm(l,m,X) - (l+m)*Plm(l-1,m,X))
-                sph_gradien[1] += (1/r) * dYlm_dth * phi_nl * (Snlm[n,l,m]*np.cos(m*phi) +
-                                                               Tnlm[n,l,m]*np.sin(m*phi))
+                dYlm_dth = A / sinth * (l*X*Plm(l, m, X) - (l+m)*Plm(l-1, m, X))
+                sph_gradien[1] += (1/r) * dYlm_dth * phi_nl * (Snlm[n, l, m]*np.cos(m*phi) +
+                                                               Tnlm[n, l, m]*np.sin(m*phi))
 
-                sph_gradien[2] += (m/(r*sinth)) * phi_nl * Ylmth(l,m,X) * (-Snlm[n,l,m]*np.sin(m*phi) +
-                                                                           Tnlm[n,l,m]*np.cos(m*phi))
+                sph_gradien[2] += (m/(r*sinth)) * phi_nl * Ylmth(l, m, X) * (-Snlm[n, l, m]*np.sin(m*phi) +
+                                                                           Tnlm[n, l, m]*np.cos(m*phi))
 
     cosphi = np.cos(phi)
     sinphi = np.sin(phi)
@@ -130,17 +130,17 @@ def test_pure_py():
     nmax = 6
     lmax = 4
 
-    # xyz = np.array([[1.,0.,1.],
-    #                 [1.,1.,0.],
-    #                 [0.,1.,1.]])
-    xyz = np.random.uniform(-2.,2.,size=(128,3))
+    # xyz = np.array([[1., 0., 1.],
+    #                 [1., 1., 0.],
+    #                 [0., 1., 1.]])
+    xyz = np.random.uniform(-2., 2., size=(128, 3))
 
     # first try spherical:
-    Snlm = np.zeros((nmax+1,lmax+1,lmax+1))
-    Snlm[:,0,0] = np.logspace(0., -4, nmax+1)
+    Snlm = np.zeros((nmax+1, lmax+1, lmax+1))
+    Snlm[:, 0, 0] = np.logspace(0., -4, nmax+1)
     Tnlm = np.zeros_like(Snlm)
 
-    py_den,py_pot,py_grd = pure_py(xyz.T, Snlm, Tnlm, nmax, lmax)
+    py_den, py_pot, py_grd = pure_py(xyz.T, Snlm, Tnlm, nmax, lmax)
 
     cy_den = density(xyz, Snlm, Tnlm, M=1., r_s=1.)
     cy_pot = potential(xyz, Snlm, Tnlm, G=1., M=1., r_s=1.)
@@ -151,10 +151,10 @@ def test_pure_py():
     assert np.allclose(py_grd, cy_grd)
 
     # non-spherical:
-    Snlm = np.random.uniform(-1,1,size=(nmax+1,lmax+1,lmax+1))
+    Snlm = np.random.uniform(-1, 1, size=(nmax+1, lmax+1, lmax+1))
     Tnlm = np.zeros_like(Snlm)
 
-    py_den,py_pot,py_grd = pure_py(xyz.T, Snlm, Tnlm, nmax, lmax)
+    py_den, py_pot, py_grd = pure_py(xyz.T, Snlm, Tnlm, nmax, lmax)
 
     cy_den = density(xyz, Snlm, Tnlm, M=1., r_s=1.)
     cy_pot = potential(xyz, Snlm, Tnlm, G=1., M=1., r_s=1.)

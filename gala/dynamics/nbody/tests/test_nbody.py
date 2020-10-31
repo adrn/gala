@@ -142,7 +142,7 @@ class TestDirectNBody:
 
     def test_directnbody_integrate_rotframe(self):
         # Now compare with/without mass with external potential:
-        frame = ConstantRotatingFrame(Omega=[0,0,1]*self.w0[0].v_y/self.w0[0].x,
+        frame = ConstantRotatingFrame(Omega=[0, 0, 1]*self.w0[0].v_y/self.w0[0].x,
                                       units=self.usys)
         nbody = DirectNBody(self.w0,
                             particle_potentials=self.particle_potentials,

@@ -38,8 +38,8 @@ cdef extern from "scf/src/bfe.h":
 
 __all__ = ['density', 'potential', 'gradient']
 
-cpdef density(double[:,::1] xyz,
-              double[:,:,::1] Snlm, double[:,:,::1] Tnlm,
+cpdef density(double[:, ::1] xyz,
+              double[:, :, ::1] Snlm, double[:, :, ::1] Tnlm,
               double M=1., double r_s=1.):
     """
     density(xyz, Snlm, Tnlm, M=1, r_s=1)
@@ -55,12 +55,12 @@ cpdef density(double[:,::1] xyz,
     Snlm : `~numpy.ndarray`
         A 3D array of expansion coefficients for the cosine terms
         of the expansion. This notation follows Lowing et al. (2011).
-        The array should have shape ``(nmax+1,lmax+1,lmax+1)`` and any
+        The array should have shape ``(nmax+1, lmax+1, lmax+1)`` and any
         invalid terms (e.g., when m > l) will be ignored.
     Tnlm : `~numpy.ndarray`
         A 3D array of expansion coefficients for the sine terms
         of the expansion. This notation follows Lowing et al. (2011).
-        The array should have shape ``(nmax+1,lmax+1,lmax+1)`` and any
+        The array should have shape ``(nmax+1, lmax+1, lmax+1)`` and any
         invalid terms (e.g., when m > l) will be ignored.
     M : numeric (optional)
         Mass scale. Leave unset for dimensionless units.
@@ -83,14 +83,14 @@ cpdef density(double[:,::1] xyz,
         int lmax = Snlm.shape[1]-1
 
     if USE_GSL == 1:
-        scf_density_helper(&xyz[0,0], ncoords, M, r_s,
-                           &Snlm[0,0,0], &Tnlm[0,0,0],
+        scf_density_helper(&xyz[0, 0], ncoords, M, r_s,
+                           &Snlm[0, 0, 0], &Tnlm[0, 0, 0],
                            nmax, lmax, &dens[0])
 
     return np.array(dens)
 
-cpdef potential(double[:,::1] xyz,
-                double[:,:,::1] Snlm, double[:,:,::1] Tnlm,
+cpdef potential(double[:, ::1] xyz,
+                double[:, :, ::1] Snlm, double[:, :, ::1] Tnlm,
                 double G=1., double M=1., double r_s=1.):
     """
     potential(xyz, Snlm, Tnlm, G=1, M=1, r_s=1)
@@ -106,12 +106,12 @@ cpdef potential(double[:,::1] xyz,
     Snlm : `~numpy.ndarray`
         A 3D array of expansion coefficients for the cosine terms
         of the expansion. This notation follows Lowing et al. (2011).
-        The array should have shape ``(nmax+1,lmax+1,lmax+1)`` and any
+        The array should have shape ``(nmax+1, lmax+1, lmax+1)`` and any
         invalid terms (e.g., when m > l) will be ignored.
     Tnlm : `~numpy.ndarray`
         A 3D array of expansion coefficients for the sine terms
         of the expansion. This notation follows Lowing et al. (2011).
-        The array should have shape ``(nmax+1,lmax+1,lmax+1)`` and any
+        The array should have shape ``(nmax+1, lmax+1, lmax+1)`` and any
         invalid terms (e.g., when m > l) will be ignored.
     G : numeric (optional)
         Gravitational constant. Leave unset for dimensionless units.
@@ -135,14 +135,14 @@ cpdef potential(double[:,::1] xyz,
         int lmax = Snlm.shape[1]-1
 
     if USE_GSL == 1:
-        scf_potential_helper(&xyz[0,0], ncoords, G, M, r_s,
-                             &Snlm[0,0,0], &Tnlm[0,0,0],
+        scf_potential_helper(&xyz[0, 0], ncoords, G, M, r_s,
+                             &Snlm[0, 0, 0], &Tnlm[0, 0, 0],
                              nmax, lmax, &potv[0])
 
     return np.array(potv)
 
-cpdef gradient(double[:,::1] xyz,
-               double[:,:,::1] Snlm, double[:,:,::1] Tnlm,
+cpdef gradient(double[:, ::1] xyz,
+               double[:, :, ::1] Snlm, double[:, :, ::1] Tnlm,
                double G=1, double M=1, double r_s=1):
     """
     gradient(xyz, Snlm, Tnlm, G=1, M=1, r_s=1)
@@ -159,12 +159,12 @@ cpdef gradient(double[:,::1] xyz,
     Snlm : `~numpy.ndarray`
         A 3D array of expansion coefficients for the cosine terms
         of the expansion. This notation follows Lowing et al. (2011).
-        The array should have shape ``(nmax+1,lmax+1,lmax+1)`` and any
+        The array should have shape ``(nmax+1, lmax+1, lmax+1)`` and any
         invalid terms (e.g., when m > l) will be ignored.
     Tnlm : `~numpy.ndarray`
         A 3D array of expansion coefficients for the sine terms
         of the expansion. This notation follows Lowing et al. (2011).
-        The array should have shape ``(nmax+1,lmax+1,lmax+1)`` and any
+        The array should have shape ``(nmax+1, lmax+1, lmax+1)`` and any
         invalid terms (e.g., when m > l) will be ignored.
     G : numeric (optional)
         Gravitational constant. Leave unset for dimensionless units.
@@ -182,14 +182,14 @@ cpdef gradient(double[:,::1] xyz,
     """
     cdef:
         int ncoords = xyz.shape[0]
-        double[:,::1] grad = np.zeros((ncoords,3))
+        double[:, ::1] grad = np.zeros((ncoords, 3))
 
         int nmax = Snlm.shape[0]-1
         int lmax = Snlm.shape[1]-1
 
     if USE_GSL == 1:
-        scf_gradient_helper(&xyz[0,0], ncoords, G, M, r_s,
-                            &Snlm[0,0,0], &Tnlm[0,0,0],
-                            nmax, lmax, &grad[0,0])
+        scf_gradient_helper(&xyz[0, 0], ncoords, G, M, r_s,
+                            &Snlm[0, 0, 0], &Tnlm[0, 0, 0],
+                            nmax, lmax, &grad[0, 0])
 
     return np.array(grad)

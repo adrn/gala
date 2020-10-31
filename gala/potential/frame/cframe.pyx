@@ -22,62 +22,62 @@ from ...dynamics import PhaseSpacePosition
 cdef class CFrameWrapper:
     """ Wrapper class for C implementation of reference frames. """
 
-    cpdef energy(self, double[:,::1] w, double[::1] t):
+    cpdef energy(self, double[:, ::1] w, double[::1] t):
         """
         w should have shape (n, ndim).
         """
         cdef:
             int n, ndim, i
             CFrame cf = self.cframe
-        n,ndim = _validate_pos_arr(w)
+        n, ndim = _validate_pos_arr(w)
 
         cdef double [::1] pot = np.zeros(n)
         if len(t) == 1:
             for i in range(n):
-                pot[i] = frame_hamiltonian(&cf, t[0], &w[i,0], ndim//2)
+                pot[i] = frame_hamiltonian(&cf, t[0], &w[i, 0], ndim//2)
         else:
             for i in range(n):
-                pot[i] = frame_hamiltonian(&cf, t[i], &w[i,0], ndim//2)
+                pot[i] = frame_hamiltonian(&cf, t[i], &w[i, 0], ndim//2)
 
 
         return np.array(pot)
 
-    cpdef gradient(self, double[:,::1] w, double[::1] t):
+    cpdef gradient(self, double[:, ::1] w, double[::1] t):
         """
         w should have shape (n, ndim).
         """
         cdef:
             int n, ndim, i
             CFrame cf = self.cframe
-        n,ndim = _validate_pos_arr(w)
+        n, ndim = _validate_pos_arr(w)
 
-        cdef double[:,::1] dH = np.zeros((n, ndim))
+        cdef double[:, ::1] dH = np.zeros((n, ndim))
         if len(t) == 1:
             for i in range(n):
-                frame_gradient(&cf, t[0], &w[i,0], ndim//2, &dH[i,0])
+                frame_gradient(&cf, t[0], &w[i, 0], ndim//2, &dH[i, 0])
         else:
             for i in range(n):
-                frame_gradient(&cf, t[i], &w[i,0], ndim//2, &dH[i,0])
+                frame_gradient(&cf, t[i], &w[i, 0], ndim//2, &dH[i, 0])
 
 
         return np.array(dH)
 
-    cpdef hessian(self, double[:,::1] w, double[::1] t):
+    cpdef hessian(self, double[:, ::1] w, double[::1] t):
         """
         w should have shape (n, ndim).
         """
         cdef:
             int n, ndim, i
             CFrame cf = self.cframe
-        n,ndim = _validate_pos_arr(w)
+        n, ndim = _validate_pos_arr(w)
 
-        cdef double[:,:,::1] d2H = np.zeros((n, ndim, ndim))
+        cdef double[:, :, ::1] d2H = np.zeros((n, ndim, ndim))
         if len(t) == 1:
             for i in range(n):
-                frame_hessian(&cf, t[0], &w[i,0], ndim//2, &d2H[i,0,0])
+                frame_hessian(&cf, t[0], &w[i, 0], ndim//2, &d2H[i, 0, 0])
         else:
             for i in range(n):
-                frame_hessian(&cf, t[i], &w[i,0], ndim//2, &d2H[i,0,0])
+                frame_hessian(&cf, t[i], &w[i, 0], ndim//2, &d2H[i, 0, 0])
 
         return np.array(d2H)
 
