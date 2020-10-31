@@ -47,17 +47,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install tox tox-gh-actions
 
-      - name: Test with tox
+      - name: Initial fast test
+        run: |
+          tox -e py38-test
+
+      - name: Full test suite with tox
         run: tox  # This relies on tox-gh-actions
 
       - name: Check coverage.yml existence
         id: check_files
         uses: andstor/file-existence-action@v1
+        if: runner.os == 'Linux'
         with:
           files: "coverage.xml"
 
       - name: Upload coverage report to codecov
         uses: codecov/codecov-action@v1
-        if: steps.check_files.outputs.files_exists == 'true'
+        if: steps.check_files.outputs.files_exists == 'true' && runner.os == 'Linux'
         with:
           file: ./coverage.xml # optional
