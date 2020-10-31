@@ -11,11 +11,11 @@ from ..gd1 import GD1Koposov10, GD1
 def test_simple():
     c = coord.ICRS(coord.Angle(217.2141, u.degree),
                    coord.Angle(-11.4351, u.degree))
-    c.transform_to(GD1Koposov10)
+    c.transform_to(GD1Koposov10())
 
     c = coord.Galactic(coord.Angle(217.2141, u.degree),
                        coord.Angle(-11.4351, u.degree))
-    c.transform_to(GD1Koposov10)
+    c.transform_to(GD1Koposov10())
 
     c = GD1Koposov10(217.2141*u.degree, -11.4351*u.degree)
     c.transform_to(coord.ICRS)
@@ -23,7 +23,7 @@ def test_simple():
 
     c = coord.Galactic(coord.Angle(217.2141, u.degree),
                        coord.Angle(-11.4351, u.degree))
-    c.transform_to(GD1Koposov10)
+    c.transform_to(GD1Koposov10())
 
     # with distance
     c = GD1Koposov10(coord.Angle(217.2141, u.degree),
@@ -40,7 +40,7 @@ def test_simple():
         c = GD1(217.2141*u.degree, -11.4351*u.degree)
     assert len(w) > 0
     c2 = c.transform_to(coord.Galactic)
-    c3 = c2.transform_to(GD1)
+    c3 = c2.transform_to(GD1())
     assert np.allclose(c3.phi1.degree, c.phi1.degree)
     assert np.allclose(c3.phi2.degree, c.phi2.degree)
 
@@ -58,7 +58,7 @@ def test_koposov():
     k10_gd1 = GD1Koposov10(phi1=k10_data['phi1']*u.degree,
                            phi2=k10_data['phi2']*u.degree)
 
-    gala_gd1 = k10_icrs.transform_to(GD1Koposov10)
+    gala_gd1 = k10_icrs.transform_to(GD1Koposov10())
 
     # TODO: why are these so different from the values in Koposov?
     assert np.allclose(k10_gd1.phi1.degree, gala_gd1.phi1.degree,

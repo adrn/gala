@@ -9,6 +9,7 @@ from ..greatcircle import (GreatCircleICRSFrame, make_greatcircle_cls,
                            pole_from_endpoints, sph_midpoint)
 from ..galactocentric import get_galactocentric2019
 
+
 def test_cls_init():
     pole = coord.SkyCoord(ra=72.2643*u.deg, dec=-20.6575*u.deg)
     GreatCircleICRSFrame(pole=pole)
@@ -33,7 +34,7 @@ def test_cls_init():
 def test_init_center():
     galcen = get_galactocentric2019()
     stupid_gal = GreatCircleICRSFrame(
-        pole=coord.Galactic._ngp_J2000.transform_to(coord.ICRS),
+        pole=coord.Galactic._ngp_J2000.transform_to(coord.ICRS()),
         center=galcen.galcen_coord)
     gal = coord.Galactic(50*u.deg, 20*u.deg)
     gal2 = gal.transform_to(stupid_gal)
@@ -84,7 +85,7 @@ def test_make_function():
         cls = make_greatcircle_cls('Michael', 'This is the docstring header',
                                    **kw)
         fr = cls(phi1=100*u.deg, phi2=10*u.deg)
-        fr.transform_to(coord.ICRS)
+        fr.transform_to(coord.ICRS())
 
 
 def test_pole_from_endpoints():
@@ -152,7 +153,7 @@ def test_pole_separation90():
                                 phi2=0,
                                 unit='deg', frame=gcfr)
             with catch_warnings(RuntimeWarning) as w:
-                gc = gc.transform_to(coord.ICRS)
+                gc = gc.transform_to(coord.ICRS())
             if warning is not None and dec == 0:
                 assert len(w) > 0
 

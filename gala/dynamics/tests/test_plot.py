@@ -9,6 +9,7 @@ from ..core import PhaseSpacePosition
 from ..orbit import Orbit
 from ..plot import plot_projections
 
+
 class TestPlotting(object):
 
     def setup(self):
@@ -16,21 +17,21 @@ class TestPlotting(object):
         psps = []
         psps.append(PhaseSpacePosition(pos=np.random.random(size=3),
                                        vel=np.random.random(size=3)))
-        psps.append(PhaseSpacePosition(pos=np.random.random(size=(3,16)),
-                                       vel=np.random.random(size=(3,16))))
-        psps.append(PhaseSpacePosition(pos=np.random.random(size=(3,16))*u.kpc,
-                                       vel=np.random.random(size=(3,16))*u.km/u.s))
+        psps.append(PhaseSpacePosition(pos=np.random.random(size=(3, 16)),
+                                       vel=np.random.random(size=(3, 16))))
+        psps.append(PhaseSpacePosition(pos=np.random.random(size=(3, 16))*u.kpc,
+                                       vel=np.random.random(size=(3, 16))*u.km/u.s))
 
         orbits = []
-        orbits.append(Orbit(pos=np.random.random(size=(3,16)),
-                            vel=np.random.random(size=(3,16)),
-                            t=np.linspace(0,1,16)))
-        orbits.append(Orbit(pos=np.random.random(size=(3,16,2)),
-                            vel=np.random.random(size=(3,16,2)),
-                            t=np.linspace(0,1,16)))
-        orbits.append(Orbit(pos=np.random.random(size=(3,16))*u.kpc,
-                            vel=np.random.random(size=(3,16))*u.km/u.s,
-                            t=np.linspace(0,1,16)*u.Myr))
+        orbits.append(Orbit(pos=np.random.random(size=(3, 16)),
+                            vel=np.random.random(size=(3, 16)),
+                            t=np.linspace(0, 1, 16)))
+        orbits.append(Orbit(pos=np.random.random(size=(3, 16, 2)),
+                            vel=np.random.random(size=(3, 16, 2)),
+                            t=np.linspace(0, 1, 16)))
+        orbits.append(Orbit(pos=np.random.random(size=(3, 16))*u.kpc,
+                            vel=np.random.random(size=(3, 16))*u.km/u.s,
+                            t=np.linspace(0, 1, 16)*u.Myr))
 
         self.psps = psps
         self.orbits = orbits
@@ -47,8 +48,8 @@ class TestPlotting(object):
             _ = o.plot()
 
         x = self.psps[0].xyz.value
-        fig,axes = plt.subplots(1,2)
-        fig = plot_projections(x[:2], autolim=True, axes=axes,
+        fig, axes = plt.subplots(1, 2)
+        fig = plot_projections(x[:2], autolim=True, axes=axes,  # noqa
                                subplots_kwargs=dict(sharex=True),
                                labels=['x', 'y'],
                                plot_function=plt.plot,
@@ -59,12 +60,12 @@ class TestPlotting(object):
 
 #     # generate an "orbit"
 #     n = 8
-#     t = np.linspace(0, 100, 1000).reshape(1000,1)
-#     x = np.cos(np.random.uniform(1.,8.,size=(1,n))*t).T[None]
-#     y = np.sin(np.random.uniform(1.,8.,size=(1,n))*t).T[None]
-#     z = np.cos(np.random.uniform(1.,8.,size=(1,n))*t).T[None]
+#     t = np.linspace(0, 100, 1000).reshape(1000, 1)
+#     x = np.cos(np.random.uniform(1., 8., size=(1, n))*t).T[None]
+#     y = np.sin(np.random.uniform(1., 8., size=(1, n))*t).T[None]
+#     z = np.cos(np.random.uniform(1., 8., size=(1, n))*t).T[None]
 #     vx = vy = vz = np.zeros_like(x)
-#     w = np.rollaxis(np.vstack((x,y,z,vx,vy,vz)), -1, 1)
+#     w = np.rollaxis(np.vstack((x, y, z, vx, vy, vz)), -1, 1)
 
 #     fig = plot_orbits(w, linestyle='none', marker='.', alpha=0.25)
 #     fig.savefig(os.path.join(str(tmpdir), "all_orbits.png"))
@@ -88,8 +89,8 @@ class TestPlotting(object):
 
 # def test_three_panel(tmpdir):
 
-#     q = np.random.uniform(0.,10.,size=(1000,3))
-#     q0 = np.array([5,5,5])
+#     q = np.random.uniform(0., 10., size=(1000, 3))
+#     q0 = np.array([5, 5, 5])
 
 #     fig = three_panel(q)
 #     fig.savefig(os.path.join(str(tmpdir), "three-panel-random.png"))
@@ -105,7 +106,7 @@ class TestPlotting(object):
 
 # def test_1d(tmpdir):
 
-#     t = np.linspace(0,100.,1000)
+#     t = np.linspace(0, 100., 1000)
 #     q = np.cos(2*np.pi*t/10.)[None]
 
 #     fig = plot_orbits(q, labels=(r"$\theta$",))
@@ -116,11 +117,11 @@ class TestPlotting(object):
 
 # def test_2d(tmpdir):
 
-#     t = np.linspace(0,100.,1000)
+#     t = np.linspace(0, 100., 1000)
 
-#     q = np.zeros((2,len(t)))
-#     q[0,:] = np.cos(2*np.pi*t/10.)
-#     q[1,:] = np.sin(2*np.pi*t/5.5)
+#     q = np.zeros((2, len(t)))
+#     q[0, :] = np.cos(2*np.pi*t/10.)
+#     q[1, :] = np.sin(2*np.pi*t/5.5)
 
 #     fig = plot_orbits(q, labels=(r"$\theta$",r"$\omega$"))
 #     fig.savefig(os.path.join(str(tmpdir), "2d-orbit-labels.png"))

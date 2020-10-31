@@ -238,14 +238,14 @@ def test_to_coord_frame():
 
     with coord.galactocentric_frame_defaults.set('v4.0'):
         with pytest.raises(u.UnitConversionError):
-            o.to_coord_frame(Galactic)
+            o.to_coord_frame(Galactic())
 
     # simple / with units
     x = np.random.random(size=(3, 10))*u.kpc
     v = np.random.normal(0., 100., size=(3, 10))*u.km/u.s
     o = PhaseSpacePosition(pos=x, vel=v)
     with coord.galactocentric_frame_defaults.set('v4.0'):
-        coo = o.to_coord_frame(Galactic)
+        coo = o.to_coord_frame(Galactic())
     assert coo.name == 'galactic'
 
     # doesn't work for 2D
@@ -254,7 +254,7 @@ def test_to_coord_frame():
     o = PhaseSpacePosition(pos=x, vel=v)
     with coord.galactocentric_frame_defaults.set('v4.0'):
         with pytest.raises(ValueError):
-            o.to_coord_frame(Galactic)
+            o.to_coord_frame(Galactic())
 
 
 def test_w():

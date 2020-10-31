@@ -33,7 +33,7 @@ class MagellanicStreamNidever08(BaseCoordinateFrame):
         >>> from gala.coordinates import MagellanicStreamNidever08
 
         >>> c = coord.Galactic(l=280.4652*u.deg, b=-32.8884*u.deg)
-        >>> ms = c.transform_to(MagellanicStreamNidever08)
+        >>> ms = c.transform_to(MagellanicStreamNidever08())
         >>> print(ms)
         <MagellanicStreamNidever08 Coordinate: (L, B) in deg
             (-0.13686116, 2.42583948)>

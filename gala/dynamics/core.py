@@ -396,7 +396,7 @@ class PhaseSpacePosition(object):
         Parameters
         ----------
         frame : :class:`~astropy.coordinates.BaseCoordinateFrame`
-            The class or frame instance specifying the desired output frame.
+            The frame instance specifying the desired output frame.
             For example, :class:`~astropy.coordinates.ICRS`.
         galactocentric_frame : :class:`~astropy.coordinates.Galactocentric`
             This is the assumed frame that the position and velocity of this
