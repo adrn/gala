@@ -9,7 +9,7 @@ from ...potential import (IsochronePotential, HarmonicOscillatorPotential,
                           Hamiltonian)
 from ...units import galactic
 from ...util import assert_angles_allclose
-from .helpers import toy_potentials
+from .._genfunc import toy_potentials
 
 
 class TestIsochrone(object):
