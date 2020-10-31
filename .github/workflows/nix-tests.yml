@@ -31,16 +31,16 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       # Mac:
-      - name: Setup Mac
+      - name: Setup Mac - GSL and Pandoc
         if: runner.os == 'macOS'
         run: |
-          brew install gsl
+          brew install gsl pandoc
 
       # Ubuntu:
       - name: Setup Linux
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get install gsl-bin libgsl0-dev
+          sudo apt-get install gsl-bin libgsl0-dev build-essential pandoc
 
       - name: Install Python dependencies
         run: |
