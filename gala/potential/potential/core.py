@@ -33,7 +33,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     the potential energy at a given position ``q``
     and time ``t``: ``_energy(q, t)``. For integration, the subclasses
     must also define a method to evaluate the gradient,
-    ``_gradient(q,t)``. Optionally, they may also define methods
+    ``_gradient(q, t)``. Optionally, they may also define methods
     to compute the density and hessian: ``_density()``, ``_hessian()``.
     """
     ndim = 3
@@ -670,7 +670,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         Compute the total energy (per unit mass) of a point in phase-space
         in this potential. Assumes the last axis of the input position /
         velocity is the dimension axis, e.g., for 100 points in 3-space,
-        the arrays should have shape (100,3).
+        the arrays should have shape (100, 3).
 
         Parameters
         ----------
@@ -771,7 +771,7 @@ class CompositePotential(PotentialBase, OrderedDict):
 
         >>> from gala.potential import HernquistPotential
         >>> cp = CompositePotential()
-        >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., units=(u.kpc,u.Myr,u.Msun,u.radian))
+        >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., units=(u.kpc, u.Myr, u.Msun, u.radian))
 
     """
     def __init__(self, *args, **kwargs):

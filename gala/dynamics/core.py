@@ -449,7 +449,7 @@ class PhaseSpacePosition(object):
         -------
         w : `~numpy.ndarray`
             A numpy array of all positions and velocities, without units.
-            Will have shape ``(2*ndim,...)``.
+            Will have shape ``(2*ndim, ...)``.
 
         """
         if self.ndim == 3:

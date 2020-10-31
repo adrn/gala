@@ -38,7 +38,7 @@ def test_fit_isochrone():
     true_b = 11.
     potential = IsochronePotential(m=true_m, b=true_b, units=galactic)
     H = Hamiltonian(potential)
-    orbit = H.integrate_orbit([15.,0,0,0,0.2,0], dt=2., n_steps=10000)
+    orbit = H.integrate_orbit([15., 0, 0, 0, 0.2, 0], dt=2., n_steps=10000)
 
     fit_potential = fit_isochrone(orbit)
     m, b = (fit_potential.parameters['m'].value,
@@ -51,7 +51,7 @@ def test_fit_harmonic_oscillator():
     true_omegas = np.array([0.011, 0.032, 0.045])
     potential = HarmonicOscillatorPotential(omega=true_omegas, units=galactic)
     H = Hamiltonian(potential)
-    orbit = H.integrate_orbit([15.,1,2,0,0,0], dt=2., n_steps=10000)
+    orbit = H.integrate_orbit([15., 1, 2, 0, 0, 0], dt=2., n_steps=10000)
 
     fit_potential = fit_harmonic_oscillator(orbit)
     omegas = fit_potential.parameters['omega'].value
@@ -64,10 +64,10 @@ def test_fit_toy_potential():
     true_b = 11.
     true_potential = IsochronePotential(m=true_m, b=true_b, units=galactic)
     H = Hamiltonian(true_potential)
-    orbit = H.integrate_orbit([15.,0,0,0,0.2,0], dt=2., n_steps=10000)
+    orbit = H.integrate_orbit([15., 0, 0, 0, 0.2, 0], dt=2., n_steps=10000)
 
     potential = fit_toy_potential(orbit)
-    for k,v in true_potential.parameters.items():
+    for k, v in true_potential.parameters.items():
         assert u.allclose(v, potential.parameters[k], rtol=1E-2)
 
     # -----------------------------------------------------------------
@@ -75,7 +75,7 @@ def test_fit_toy_potential():
     true_potential = HarmonicOscillatorPotential(omega=true_omegas,
                                                  units=galactic)
     H = Hamiltonian(true_potential)
-    orbit = H.integrate_orbit([15.,1,2,0,0,0], dt=2., n_steps=10000)
+    orbit = H.integrate_orbit([15., 1, 2, 0, 0, 0], dt=2., n_steps=10000)
 
     potential = fit_toy_potential(orbit)
 
@@ -93,7 +93,7 @@ def test_check_angle_sampling():
     # loop over times with known failures:
     #   - first one fails needing longer integration time
     #   - second one fails needing finer sampling
-    for i,t in enumerate([np.linspace(0,50,500), np.linspace(0,8000,8000)]):
+    for i, t in enumerate([np.linspace(0, 50, 500), np.linspace(0, 8000, 8000)]):
         # periods = 2*np.pi/omegas
         # print("Periods:", periods)
         # print("N periods:", t.max() / periods)
@@ -118,9 +118,9 @@ class ActionsBase(object):
 
         # compare to Sanders'
         for j in range(self.N):
-            sdrs = genfunc_3d.assess_angmom(self.w[...,j].T)
-            logger.debug("APW: {}, Sanders: {}".format(orb_type[:,j], sdrs))
-            assert np.all(orb_type[:,j] == sdrs)
+            sdrs = genfunc_3d.assess_angmom(self.w[..., j].T)
+            logger.debug("APW: {}, Sanders: {}".format(orb_type[:, j], sdrs))
+            assert np.all(orb_type[:, j] == sdrs)
 
     def test_actions(self):
         # t = self.t[::10]
@@ -130,9 +130,9 @@ class ActionsBase(object):
         for n in range(self.N):
             print("\n\n")
             print("======================= Orbit {} =======================".format(n))
-            # w = self.w[:,::10,n]
-            w = self.w[...,n]
-            orb = self.orbit[:,n]
+            # w = self.w[:, ::10, n]
+            w = self.w[..., n]
+            orb = self.orbit[:, n]
             circ = orb.circulation()
 
             # get values from Sanders' code
@@ -161,10 +161,10 @@ class ActionsBase(object):
             # fig = plot_orbits(w, marker='.', alpha=0.2, linestyle='none')
             # fig.savefig(str(self.plot_path.join("orbit_{}.png".format(n))))
 
-            # fig = plot_angles(t,angles,freqs)
+            # fig = plot_angles(t, angles, freqs)
             # fig.savefig(str(self.plot_path.join("angles_{}.png".format(n))))
 
-            # fig = plot_angles(t,s_angles,s_freqs)
+            # fig = plot_angles(t, s_angles, s_freqs)
             # fig.savefig(str(self.plot_path.join("angles_sanders_{}.png".format(n))))
 
             # plt.close('all')
@@ -212,7 +212,7 @@ class TestActions(ActionsBase):
 
 #         if not os.path.exists(os.path.join(test_data_path, "w_hard.npy")):
 #             logger.debug("Integrating orbits")
-#             t,w = self.potential.integrate_orbit(w0, dt=0.2, n_steps=n_steps, Integrator=DOPRI853Integrator)
+#             t, w = self.potential.integrate_orbit(w0, dt=0.2, n_steps=n_steps, Integrator=DOPRI853Integrator)
 
 #             logger.debug("Saving orbits")
 #             np.save(os.path.join(test_data_path, "t_hard.npy"), t)
@@ -230,16 +230,16 @@ def test_compare_action_prepare():
     from ..actionangle import _action_prepare, _angle_prepare
 
     logger.setLevel(logging.ERROR)
-    AA = np.random.uniform(0., 100., size=(1000,6))
+    AA = np.random.uniform(0., 100., size=(1000, 6))
     t = np.linspace(0., 100., 1000)
 
-    act_san,n_vectors = solver.solver(AA, N_max=6, symNx=2)
-    A2,b2,n = _action_prepare(AA.T, N_max=6, dx=2, dy=2, dz=2)
-    act_apw = np.array(solve(A2,b2))
+    act_san, n_vectors = solver.solver(AA, N_max=6, symNx=2)
+    A2, b2, n = _action_prepare(AA.T, N_max=6, dx=2, dy=2, dz=2)
+    act_apw = np.array(solve(A2, b2))
 
     ang_san = solver.angle_solver(AA, t, N_max=6, symNx=2, sign=1)
-    A2,b2,n = _angle_prepare(AA.T, t, N_max=6, dx=2, dy=2, dz=2)
-    ang_apw = np.array(solve(A2,b2))
+    A2, b2, n = _angle_prepare(AA.T, t, N_max=6, dx=2, dy=2, dz=2)
+    ang_apw = np.array(solve(A2, b2))
 
     assert np.allclose(act_apw, act_san)
     # assert np.allclose(ang_apw, ang_san)

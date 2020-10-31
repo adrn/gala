@@ -14,7 +14,7 @@ def cartesian_to_poincare_polar(w):
     ----------
     w : array_like
         Input array of 6D Cartesian phase-space positions. Should have
-        shape ``(norbits,6)``.
+        shape ``(norbits, 6)``.
 
     Returns
     -------

@@ -20,7 +20,7 @@ def test_init_repr():
 
     # Passing in x1, x2
     rep = NDCartesianRepresentation(np.random.random(size=(2, 8)))
-    assert rep.xyz.shape == (2,8)
+    assert rep.xyz.shape == (2, 8)
     rep[:1]
 
     for n in range(1, 6+1):
@@ -49,7 +49,7 @@ def test_init_diff():
 
     # Passing in x1, x2
     rep = NDCartesianDifferential(np.random.random(size=(2, 8)))
-    assert rep.d_xyz.shape == (2,8)
+    assert rep.d_xyz.shape == (2, 8)
     rep[:1]
 
     for n in range(1, 6+1):

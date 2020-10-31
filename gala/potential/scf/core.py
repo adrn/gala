@@ -25,7 +25,7 @@ def compute_coeffs(density_func, nmax, lmax, M, r_s, args=(),
     ----------
     density_func : function, callable
         A function or callable object that evaluates the density at a given position. The call
-        format must be of the form: ``density_func(x, y, z, M, r_s, args)`` where ``x,y,z`` are
+        format must be of the form: ``density_func(x, y, z, M, r_s, args)`` where ``x, y, z`` are
         cartesian coordinates, ``M`` is a scale mass, ``r_s`` a scale radius, and ``args`` is an
         iterable containing any other arguments needed by the density function.
     nmax : int
@@ -41,10 +41,10 @@ def compute_coeffs(density_func, nmax, lmax, M, r_s, args=(),
         function.
     skip_odd : bool (optional)
         Skip the odd terms in the angular portion of the expansion. For example, only
-        take :math:`l=0,2,4,...`
+        take :math:`l=0, 2, 4, ...`
     skip_even : bool (optional)
         Skip the even terms in the angular portion of the expansion. For example, only
-        take :math:`l=1,3,5,...`
+        take :math:`l=1, 3, 5, ...`
     skip_m : bool (optional)
         Ignore terms with :math:`m > 0`.
     S_only : bool (optional)
@@ -127,7 +127,7 @@ def compute_coeffs(density_func, nmax, lmax, M, r_s, args=(),
                 opts=nquad_opts)
 
     return (Snlm, Snlm_e), (Tnlm, Tnlm_e)
-    
+
 
 def compute_coeffs_discrete(xyz, mass, nmax, lmax, r_s,
                             skip_odd=False, skip_even=False, skip_m=False,
@@ -144,7 +144,7 @@ def compute_coeffs_discrete(xyz, mass, nmax, lmax, r_s,
     Parameters
     ----------
     xyz : array_like
-        Samples from the density distribution. Should have shape ``(n_samples,3)``.
+        Samples from the density distribution. Should have shape ``(n_samples, 3)``.
     mass : array_like
         Mass of each sample. Should have shape ``(n_samples,)``.
     nmax : int
@@ -155,10 +155,10 @@ def compute_coeffs_discrete(xyz, mass, nmax, lmax, r_s,
         Scale radius.
     skip_odd : bool (optional)
         Skip the odd terms in the angular portion of the expansion. For example, only
-        take :math:`l=0,2,4,...`
+        take :math:`l=0, 2, 4, ...`
     skip_even : bool (optional)
         Skip the even terms in the angular portion of the expansion. For example, only
-        take :math:`l=1,3,5,...`
+        take :math:`l=1, 3, 5, ...`
     skip_m : bool (optional)
         Ignore terms with :math:`m > 0`.
     compute_var : bool (optional)
@@ -196,21 +196,21 @@ def compute_coeffs_discrete(xyz, mass, nmax, lmax, r_s,
 
     r = np.sqrt(np.sum(xyz**2, axis=-1))
     s = r / r_s
-    phi = np.arctan2(xyz[:,1], xyz[:,0])
-    X = xyz[:,2] / r
+    phi = np.arctan2(xyz[:, 1], xyz[:, 0])
+    X = xyz[:, 2] / r
 
     for n in range(nmax+1):
         for l in range(lmin, lmax+1, lstride):
             for m in range(l+1):
                 if skip_m and m > 0: continue
 
-                # logger.debug("Computing coefficients (n,l,m)=({},{},{})".format(n,l,m))
+                # logger.debug("Computing coefficients (n, l, m)=({},{},{})".format(n, l, m))
 
-                Snlm[n,l,m], Tnlm[n,l,m] = STnlm_discrete(s, phi, X, mass, n, l, m)
+                Snlm[n, l, m], Tnlm[n, l, m] = STnlm_discrete(s, phi, X, mass, n, l, m)
                 if compute_var:
-                    Snlm_var[n,l,m], Tnlm_var[n,l,m] = STnlm_var_discrete(s, phi, X, mass, n, l, m)
+                    Snlm_var[n, l, m], Tnlm_var[n, l, m] = STnlm_var_discrete(s, phi, X, mass, n, l, m)
 
     if compute_var:
-        return (Snlm,Snlm_var), (Tnlm,Tnlm_var)
+        return (Snlm, Snlm_var), (Tnlm, Tnlm_var)
     else:
         return Snlm, Tnlm

@@ -67,7 +67,7 @@ def rolling_window(arr, window_size, stride=1, return_idx=False):
 
     Examples
     --------
-    >>> a = np.array([1,2,3,4,5,6])
+    >>> a = np.array([1, 2, 3, 4, 5, 6])
     >>> for x in rolling_window(a, 3):
     ...     print(x)
     [1 2 3]
@@ -79,7 +79,7 @@ def rolling_window(arr, window_size, stride=1, return_idx=False):
     [1 2]
     [3 4]
     [5 6]
-    >>> for (i1,i2),x in rolling_window(a, 2, stride=2, return_idx=True): # doctest: +SKIP
+    >>> for (i1, i2),x in rolling_window(a, 2, stride=2, return_idx=True): # doctest: +SKIP
     ...     print(i1, i2, x)
     (0, 2, array([1, 2]))
     (2, 4, array([3, 4]))
@@ -96,7 +96,7 @@ def rolling_window(arr, window_size, stride=1, return_idx=False):
     arr_len = len(arr)
     if arr_len < window_size:
         if return_idx:
-            yield (0,arr_len),arr
+            yield (0, arr_len),arr
         else:
             yield arr
 
@@ -105,7 +105,7 @@ def rolling_window(arr, window_size, stride=1, return_idx=False):
         ix2 = ix1 + window_size
         result = arr[ix1:ix2]
         if return_idx:
-            yield (ix1,ix2),result
+            yield (ix1, ix2),result
         else:
             yield result
         if len(result) < window_size or ix2 >= arr_len:

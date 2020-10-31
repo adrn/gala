@@ -125,18 +125,18 @@ def transform_pm_cov(c, cov, to_frame):
     uv_to = get_uv_tan(c_to)
 
     if not c.isscalar:
-        G = np.einsum('nab,nac->nbc', uv_to,
-                      np.einsum('ji,nik->njk', R, uv_in))
+        G = np.einsum('nab, nac->nbc', uv_to,
+                      np.einsum('ji, nik->njk', R, uv_in))
 
         # transform
-        cov_to = np.einsum('nba,nac->nbc', G,
-                           np.einsum('nij,nki->njk', cov, G))
+        cov_to = np.einsum('nba, nac->nbc', G,
+                           np.einsum('nij, nki->njk', cov, G))
     else:
-        G = np.einsum('ab,ac->bc', uv_to,
-                      np.einsum('ji,ik->jk', R, uv_in))
+        G = np.einsum('ab, ac->bc', uv_to,
+                      np.einsum('ji, ik->jk', R, uv_in))
 
         # transform
-        cov_to = np.einsum('ba,ac->bc', G,
-                           np.einsum('ij,ki->jk', cov, G))
+        cov_to = np.einsum('ba, ac->bc', G,
+                           np.einsum('ij, ki->jk', cov, G))
 
     return cov_to

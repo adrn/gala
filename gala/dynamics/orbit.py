@@ -159,7 +159,7 @@ class Orbit(PhaseSpacePosition):
         -------
         w : `~numpy.ndarray`
             A numpy array of all positions and velocities, without units.
-            Will have shape ``(2*ndim,...)``.
+            Will have shape ``(2*ndim, ...)``.
 
         """
 
@@ -700,9 +700,9 @@ class Orbit(PhaseSpacePosition):
 
         For example, for a single 3D orbit:
 
-        - Box and boxlet = [0,0,0]
-        - z-axis (short-axis) tube = [0,0,1]
-        - x-axis (long-axis) tube = [1,0,0]
+        - Box and boxlet = [0, 0, 0]
+        - z-axis (short-axis) tube = [0, 0, 1]
+        - x-axis (long-axis) tube = [1, 0, 0]
 
         Returns
         -------

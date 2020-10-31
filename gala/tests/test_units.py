@@ -4,7 +4,7 @@
 
 # Third party
 import astropy.units as u
-from astropy.constants import G,c
+from astropy.constants import G, c
 import numpy as np
 import pytest
 

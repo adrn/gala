@@ -65,12 +65,12 @@ def isochrone_to_aa(w, potential):
 
     # convert position, velocity to spherical polar coordinates
     w_sph = w.represent_as(coord.PhysicsSphericalRepresentation)
-    r,phi,theta = map(np.squeeze, [w_sph.r.decompose(usys).value,
+    r, phi, theta = map(np.squeeze, [w_sph.r.decompose(usys).value,
                                    w_sph.phi.radian,
                                    w_sph.theta.radian])
 
     ang_unit = u.radian/usys['time']
-    vr,phi_dot,theta_dot = map(np.squeeze, [w_sph.radial_velocity.decompose(usys).value,
+    vr, phi_dot, theta_dot = map(np.squeeze, [w_sph.radial_velocity.decompose(usys).value,
                                             w_sph.pm_phi.to(ang_unit).value,
                                             w_sph.pm_theta.to(ang_unit).value])
     vphi = r*np.sin(theta) * phi_dot
@@ -99,7 +99,7 @@ def isochrone_to_aa(w, potential):
     # Compute theta_r using eta
     tmp1 = r*vr / np.sqrt(-2.*E)
     tmp2 = b + c - np.sqrt(b*b + r*r)
-    eta = np.arctan2(tmp1,tmp2)
+    eta = np.arctan2(tmp1, tmp2)
     thetar = eta - e*c*np.sin(eta) / (c + b)  # same as theta3
 
     # Compute theta_z
@@ -124,7 +124,7 @@ def isochrone_to_aa(w, potential):
         z[ix] = np.arctan(x[ix]*np.tan(0.5*y[ix]))
         return z
 
-    A = omega_th*thetar - F(a,eta) - F(ap,eta)/np.sqrt(1 + 4*GM*b/L/L)
+    A = omega_th*thetar - F(a, eta) - F(ap, eta)/np.sqrt(1 + 4*GM*b/L/L)
     thetaz = psi + A
 
     LR = Lz/L
@@ -169,9 +169,9 @@ def isochrone_to_xv(actions, angles, potential):
     Parameters
     ----------
     actions : array_like
-        Action variables. Must have shape ``(3,N)`` or ``(3,)``.
+        Action variables. Must have shape ``(3, N)`` or ``(3,)``.
     angles : array_like
-        Angle variables. Must have shape ``(3,N)`` or ``(3,)``.
+        Angle variables. Must have shape ``(3, N)`` or ``(3,)``.
         Should be in radians.
     potential : :class:`gala.potential.IsochronePotential`
         An instance of the potential to use for computing the transformation
@@ -190,8 +190,8 @@ def isochrone_to_xv(actions, angles, potential):
     raise NotImplementedError("Implementation not supported until working with "
                               "angle-action variables has a better API.")
 
-    # actions = atleast_2d(actions,insert_axis=1).copy()
-    # angles = atleast_2d(angles,insert_axis=1).copy()
+    # actions = atleast_2d(actions, insert_axis=1).copy()
+    # angles = atleast_2d(angles, insert_axis=1).copy()
 
     # usys = potential.units
     # GM = (G*potential.parameters['m']).decompose(usys).value
@@ -203,7 +203,7 @@ def isochrone_to_xv(actions, angles, potential):
     # L = actions[2] + np.abs(Lz)
 
     # # angles
-    # theta_r,theta_phi,theta_theta = angles
+    # theta_r, theta_phi, theta_theta = angles
 
     # # get longitude of ascending node
     # theta_1 = theta_phi - np.sign(Lz)*theta_theta
@@ -262,7 +262,7 @@ def isochrone_to_xv(actions, angles, potential):
 
     # theta_2[Lz < 0] -= 2*np.pi
     # theta_3 -= 2*np.pi
-    # A = Omega_23*theta_3 - F(a,eta) - F(ap,eta)/np.sqrt(1 + 4*GM*b/L/L)
+    # A = Omega_23*theta_3 - F(a, eta) - F(ap, eta)/np.sqrt(1 + 4*GM*b/L/L)
     # psi = theta_2 - A
 
     # # theta
@@ -379,4 +379,4 @@ def harmonic_oscillator_to_xv(actions, angles, potential):
     # x = np.sqrt(2*actions/omega[None]) * np.sin(angles)
     # v = np.sqrt(2*actions*omega[None]) * np.cos(angles)
 
-    # return x,v
+    # return x, v
