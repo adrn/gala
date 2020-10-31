@@ -37,7 +37,7 @@ class ImmutableDict(Mapping):
         return self._dict == other._dict
 
     def __repr__(self):
-        return "<ImmutableDict {}>".format(self._dict.__repr__())
+        return f"<ImmutableDict {self._dict.__repr__()}>"
 
     def __str__(self):
         return self._dict.__str__()
@@ -79,7 +79,7 @@ def rolling_window(arr, window_size, stride=1, return_idx=False):
     [1 2]
     [3 4]
     [5 6]
-    >>> for (i1, i2),x in rolling_window(a, 2, stride=2, return_idx=True): # doctest: +SKIP
+    >>> for (i1, i2), x in rolling_window(a, 2, stride=2, return_idx=True): # doctest: +SKIP
     ...     print(i1, i2, x)
     (0, 2, array([1, 2]))
     (2, 4, array([3, 4]))
@@ -96,7 +96,7 @@ def rolling_window(arr, window_size, stride=1, return_idx=False):
     arr_len = len(arr)
     if arr_len < window_size:
         if return_idx:
-            yield (0, arr_len),arr
+            yield (0, arr_len), arr
         else:
             yield arr
 
@@ -105,7 +105,7 @@ def rolling_window(arr, window_size, stride=1, return_idx=False):
         ix2 = ix1 + window_size
         result = arr[ix1:ix2]
         if return_idx:
-            yield (ix1, ix2),result
+            yield (ix1, ix2), result
         else:
             yield result
         if len(result) < window_size or ix2 >= arr_len:
@@ -153,7 +153,7 @@ def atleast_2d(*arys, **kwargs):
 
     """
     insert_axis = kwargs.pop('insert_axis', 0)
-    slc = [slice(None)]*2
+    slc = [slice(None)] * 2
     slc[insert_axis] = None
     slc = tuple(slc)
 

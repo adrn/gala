@@ -104,8 +104,8 @@ def pure_py(xyz, Snlm, Tnlm, nmax, lmax):
 
                 # derivatives
                 dphinl_dr = (2*sqrtpi*np.power(r,-1 + l)*np.power(1 + r,-3 - 2*l)*
-                              (-2*(3 + 4*l)*r*eval_gegenbauer(-1 + n, 2.5 + 2*l,(-1 + r)/(1 + r)) +
-                              (1 + r)*(l*(-1 + r) + r)*eval_gegenbauer(n, 1.5 + 2*l,(-1 + r)/(1 + r))))
+                              (-2*(3 + 4*l)*r*eval_gegenbauer(-1 + n, 2.5 + 2*l, (-1 + r)/(1 + r)) +
+                              (1 + r)*(l*(-1 + r) + r)*eval_gegenbauer(n, 1.5 + 2*l, (-1 + r)/(1 + r))))
                 sph_gradien[0] += dphinl_dr * Ylmth(l, m, X) * (Snlm[n, l, m]*np.cos(m*phi) +
                                                               Tnlm[n, l, m]*np.sin(m*phi))
 

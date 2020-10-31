@@ -171,7 +171,7 @@ def loop_actions(results, times, N_matrix, ifprint):
     np.savetxt("GF.Sn_loop",np.vstack((act[1].T, act[0][3:])).T)
 
     # Find angles
-    sign = np.array([1., np.sign(results[0][0]*results[0][4]-results[0][1]*results[0][3]),1.])
+    sign = np.array([1., np.sign(results[0][0]*results[0][4]-results[0][1]*results[0][3]), 1.])
     ang = solver.angle_solver(AA, times, N_matrix, sign, symNx = 1)
     if(ifprint):
         print("Angle solution found for N_max = "+str(N_matrix)+", size "+str(len(ang))+" symmetric matrix in "+str(time.time()-t)+" seconds")
@@ -213,7 +213,7 @@ def assess_angmom(X):
 def flip_coords(X, loop):
     """ Align circulation with z-axis """
     if(loop[0]==1):
-        return np.array(map(lambda i: np.array([i[2],i[1],i[0],i[5],i[4],i[3]]),X))
+        return np.array(map(lambda i: np.array([i[2],i[1],i[0],i[5],i[4],i[3]]), X))
     else:
         return X
 
@@ -235,7 +235,7 @@ def find_actions(results, t, N_matrix=8, use_box=False, ifloop=False, ifprint = 
     loop = assess_angmom(results)
     arethereloops = np.any(loop>0)
     if(arethereloops and not use_box):
-        L = loop_actions(flip_coords(results, loop),t, N_matrix, ifprint)
+        L = loop_actions(flip_coords(results, loop), t, N_matrix, ifprint)
         if(L==None):
             if(ifprint):
                 print("Failed to find actions for this orbit")
@@ -275,14 +275,14 @@ def plot_Sn_timesamples(PSP):
 
     # Loop over length of integration window
     for i, P, C in zip(Times,['.','s','D','^'],['k','r','b','g']):
-        diffact = np.zeros((len(Sr),3))
-        difffreq = np.zeros((len(Sr),3))
+        diffact = np.zeros((len(Sr), 3))
+        difffreq = np.zeros((len(Sr), 3))
         MAXGAPS = np.array([])
         # Loop over N_max
         for k, j in enumerate(Sr):
             NT = choose_NT(j)
             timeseries=np.linspace(0., i*LowestPeriod, NT)
-            results = odeint(pot.orbit_derivs2, PSP, timeseries, args=(TT,),rtol=1e-13, atol=1e-13)
+            results = odeint(pot.orbit_derivs2, PSP, timeseries, args=(TT,), rtol=1e-13, atol=1e-13)
             act, ang, n_vec, toy_aa, pars = find_actions(results, timeseries, N_matrix=j, ifprint=False, use_box=True)
             # Check all modes
             checks, maxgap = ced(n_vec, ua(toy_aa.T[3:].T, np.ones(3)))
@@ -297,13 +297,13 @@ def plot_Sn_timesamples(PSP):
         if(P=='.'):
             size = 30
         LW = np.array(map(lambda i: 0.5+i*0.5, MAXGAPS))
-        a[0].scatter(Sr, np.log10(np.abs(diffact.T[2]-1)),marker=P, s=size, color=C, facecolors="none",lw=LW, label=r'$T =\,$'+str(i)+r'$\,T_F$')
-        a[1].scatter(Sr, np.log10(np.abs(difffreq.T[2]-1)),marker=P, s=size, color=C, facecolors="none", lw=LW)
+        a[0].scatter(Sr, np.log10(np.abs(diffact.T[2]-1)), marker=P, s=size, color=C, facecolors="none",lw=LW, label=r'$T =\,$'+str(i)+r'$\,T_F$')
+        a[1].scatter(Sr, np.log10(np.abs(difffreq.T[2]-1)), marker=P, s=size, color=C, facecolors="none", lw=LW)
     a[1].get_yticklabels()[-1].set_visible(False)
     a[0].set_xticklabels([])
     a[0].set_xlim(1, 13)
     a[0].set_ylabel(r"$\log_{10}|J_3^\prime/J_{3, \rm true}-1|$")
-    leg = a[0].legend(loc='upper center',bbox_to_anchor=(0.5, 1.4),ncol=2, scatterpoints = 1)
+    leg = a[0].legend(loc='upper center',bbox_to_anchor=(0.5, 1.4), ncol=2, scatterpoints = 1)
     leg.draw_frame(False)
     a[1].set_xlim(1, 13)
     a[1].set_xlabel(r'$N_{\rm max}$')
@@ -319,9 +319,9 @@ def plot3D_stacktriax(initial, final_t, N_MAT, file_output):
     times = choose_NT(N_MAT)
     timeseries=np.linspace(0., final_t, times)
     # Integrate orbit
-    results = odeint(pot.orbit_derivs2, initial, timeseries, args=(TT,),rtol=1e-13, atol=1e-13)
+    results = odeint(pot.orbit_derivs2, initial, timeseries, args=(TT,), rtol=1e-13, atol=1e-13)
     # Find actions, angles and frequencies
-    (act, ang, n_vec, toy_aa, pars),loop = find_actions(results, timeseries, N_matrix=N_MAT, ifloop=True)
+    (act, ang, n_vec, toy_aa, pars), loop = find_actions(results, timeseries, N_matrix=N_MAT, ifloop=True)
 
     toy_pot = 0
     if(loop[2]>0.5 or loop[0]>0.5):
@@ -338,7 +338,7 @@ def plot3D_stacktriax(initial, final_t, N_MAT, file_output):
     a[1, 0] = plt.subplot2grid((3, 2), (0, 1))
     a[0, 1] = plt.subplot2grid((3, 2), (1, 0))
     a[1, 1] = plt.subplot2grid((3, 2), (1, 1))
-    a[0, 2] = plt.subplot2grid((3, 2), (2, 0),colspan=2)
+    a[0, 2] = plt.subplot2grid((3, 2), (2, 0), colspan=2)
     plt.subplots_adjust(wspace=0.5, hspace=0.45)
 
     # xy orbit
@@ -362,23 +362,23 @@ def plot3D_stacktriax(initial, final_t, N_MAT, file_output):
     # Arrows to show approx. actions
     arrow_end = a[0, 2].get_xlim()[1]
     arrowd = 0.08*(arrow_end-a[0, 2].get_xlim()[0])
-    a[0, 2].annotate('',(arrow_end+arrowd, act[0]),(arrow_end, act[0]),arrowprops=dict(arrowstyle='<-',color='k'),annotation_clip=False)
-    a[0, 2].annotate('',(arrow_end+arrowd, act[1]),(arrow_end, act[1]),arrowprops=dict(arrowstyle='<-',color='r'),annotation_clip=False)
-    a[0, 2].annotate('',(arrow_end+arrowd, act[2]),(arrow_end, act[2]),arrowprops=dict(arrowstyle='<-',color='b'),annotation_clip=False)
+    a[0, 2].annotate('',(arrow_end+arrowd, act[0]), (arrow_end, act[0]), arrowprops=dict(arrowstyle='<-',color='k'), annotation_clip=False)
+    a[0, 2].annotate('',(arrow_end+arrowd, act[1]), (arrow_end, act[1]), arrowprops=dict(arrowstyle='<-',color='r'), annotation_clip=False)
+    a[0, 2].annotate('',(arrow_end+arrowd, act[2]), (arrow_end, act[2]), arrowprops=dict(arrowstyle='<-',color='b'), annotation_clip=False)
     # True actions
     a[0, 2].plot(Conv*timeseries, TT.action(results[0])[0]*np.ones(len(timeseries)),'k',label='True action')
     a[0, 2].plot(Conv*timeseries, TT.action(results[0])[1]*np.ones(len(timeseries)),'k')
     a[0, 2].plot(Conv*timeseries, TT.action(results[0])[2]*np.ones(len(timeseries)),'k')
     a[0, 2].set_xlabel(r'$t/{\rm Gyr}$')
     a[0, 2].set_ylabel(r'$J/{\rm kpc\,km\,s}^{-1}$')
-    leg = a[0, 2].legend(loc='upper center',bbox_to_anchor=(0.5, 1.2),ncol=3, numpoints = 1)
+    leg = a[0, 2].legend(loc='upper center',bbox_to_anchor=(0.5, 1.2), ncol=3, numpoints = 1)
     leg.draw_frame(False)
 
     # Toy angle coverage
-    a[0, 1].plot(toy_aa.T[3]/(np.pi),toy_aa.T[4]/(np.pi),'k.',markersize=0.4)
+    a[0, 1].plot(toy_aa.T[3]/(np.pi), toy_aa.T[4]/(np.pi),'k.',markersize=0.4)
     a[0, 1].set_xlabel(r'$\theta_1/\pi$')
     a[0, 1].set_ylabel(r'$\theta_2/\pi$')
-    a[1, 1].plot(toy_aa.T[3]/(np.pi),toy_aa.T[5]/(np.pi),'k.',markersize=0.4)
+    a[1, 1].plot(toy_aa.T[3]/(np.pi), toy_aa.T[5]/(np.pi),'k.',markersize=0.4)
     a[1, 1].set_xlabel(r'$\theta_1/\pi$')
     a[1, 1].set_ylabel(r'$\theta_3/\pi$')
 

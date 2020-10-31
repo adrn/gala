@@ -45,7 +45,7 @@ def test_coeff(basename):
             cc /= fac
             sc /= fac
 
-        S_f77[int(n),int(l),int(m)] = -cc
-        T_f77[int(n),int(l),int(m)] = -sc
+        S_f77[int(n), int(l), int(m)] = -cc
+        T_f77[int(n), int(l), int(m)] = -sc
 
     assert np.allclose(S_f77, S)

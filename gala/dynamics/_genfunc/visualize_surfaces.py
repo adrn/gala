@@ -83,7 +83,7 @@ def Sn_plots(inp, outp, actions, loop):
     for j, i in enumerate(S):
         R[j]=i[length_y/2]
 
-    cNorm = colors.Normalize(vmin=np.min(conts),vmax=np.max(conts))
+    cNorm = colors.Normalize(vmin=np.min(conts), vmax=np.max(conts))
     sM = cmx.ScalarMappable(norm=cNorm)
     sM._A = []
     C = a[1].contour(x, z, R.T, levels=conts)
@@ -92,7 +92,7 @@ def Sn_plots(inp, outp, actions, loop):
     a[1].set_xlabel(r'$n_1$')
     a[1].set_ylabel(r'$n_3$')
     a[1].text(2, 4.5, r'$n_2=0$')
-    # a[1].set_xlim(np.min(y),np.max(y))
+    # a[1].set_xlim(np.min(y), np.max(y))
     cbar_ax = f.add_axes([0.75, 0.15, 0.05, 0.7])
     ccc = f.colorbar(sM, cax=cbar_ax)
     ccc.set_label(r'$\log(|S_n / \rm{kpc}\,\rm{km}\,\rm{s}^{-1}|+0.1)$')

@@ -22,12 +22,12 @@ def check_each_direction(n, angs, ifprint=True):
             if(ifprint):
                 print("Need a longer integration window for mode ", i)
             checks=np.append(checks, i)
-            P = np.append(P,(2.*np.pi-np.abs(np.max(X)-np.min(X))))
+            P = np.append(P, (2.*np.pi-np.abs(np.max(X)-np.min(X))))
         elif(np.abs(np.max(X)-np.min(X))/len(X)>np.pi):
             if(ifprint):
                 print("Need a finer sampling for mode ", i)
             checks=np.append(checks, i)
-            P = np.append(P,(2.*np.pi-np.abs(np.max(X)-np.min(X))))
+            P = np.append(P, (2.*np.pi-np.abs(np.max(X)-np.min(X))))
     if(ifprint):
         print("====\n")
     return checks, P
@@ -59,7 +59,7 @@ def solver(AA, N_max, symNx = 2, throw_out_modes=False):
     xxx = check_each_direction(n_vectors, angs)
 
     if(throw_out_modes):
-        n_vectors = np.delete(n_vectors, check_each_direction(n_vectors, angs),axis=0)
+        n_vectors = np.delete(n_vectors, check_each_direction(n_vectors, angs), axis=0)
 
     n = len(n_vectors)+3
     b = np.zeros(shape=(n, ))
@@ -69,7 +69,7 @@ def solver(AA, N_max, symNx = 2, throw_out_modes=False):
 
     for i in AA:
         a[:3, 3:]+=2.*n_vectors.T[:3]*np.cos(np.dot(n_vectors, i[3:]))
-        a[3:, 3:]+=4.*np.dot(n_vectors, n_vectors.T)*np.outer(np.cos(np.dot(n_vectors, i[3:])),np.cos(np.dot(n_vectors, i[3:])))
+        a[3:, 3:]+=4.*np.dot(n_vectors, n_vectors.T)*np.outer(np.cos(np.dot(n_vectors, i[3:])), np.cos(np.dot(n_vectors, i[3:])))
         b[:3]+=i[:3]
         b[3:]+=2.*np.dot(n_vectors, i[:3])*np.cos(np.dot(n_vectors, i[3:]))
 
@@ -114,7 +114,7 @@ def angle_solver(AA, timeseries, N_max, sign, symNx = 2, throw_out_modes=False):
                              )])
 
     if(throw_out_modes):
-        n_vectors = np.delete(n_vectors, check_each_direction(n_vectors, angs),axis=0)
+        n_vectors = np.delete(n_vectors, check_each_direction(n_vectors, angs), axis=0)
 
     nv = len(n_vectors)
     n = 3*nv+6
@@ -130,7 +130,7 @@ def angle_solver(AA, timeseries, N_max, sign, symNx = 2, throw_out_modes=False):
     for i, j in zip(angs, timeseries):
         a[6:6+nv, 0]+=-2.*np.sin(np.dot(n_vectors, i))
         a[6:6+nv, 3]+=-2.*j*np.sin(np.dot(n_vectors, i))
-        a[6:6+nv, 6:6+nv]+=4.*np.outer(np.sin(np.dot(n_vectors, i)),np.sin(np.dot(n_vectors, i)))
+        a[6:6+nv, 6:6+nv]+=4.*np.outer(np.sin(np.dot(n_vectors, i)), np.sin(np.dot(n_vectors, i)))
 
         b[:3]+=i
         b[3:6]+=j*i

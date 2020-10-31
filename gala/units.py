@@ -70,12 +70,13 @@ class UnitSystem(object):
         for unit in units:
             typ = unit.physical_type
             if typ in self._registry:
-                raise ValueError("Multiple units passed in with type '{0}'".format(typ))
+                raise ValueError(f"Multiple units passed in with type '{typ}'")
             self._registry[typ] = unit
 
         for phys_type in self._required_physical_types:
             if phys_type not in self._registry:
-                raise ValueError("You must specify a unit with physical type '{0}'".format(phys_type))
+                raise ValueError("You must specify a unit for the physical type"
+                                 f"'{phys_type}'")
             self._core_units.append(self._registry[phys_type])
 
     def __getitem__(self, key):
@@ -91,7 +92,8 @@ class UnitSystem(object):
                     break
 
             if unit is None:
-                raise ValueError("Physical type '{0}' doesn't exist in unit registry.".format(key))
+                raise ValueError(f"Physical type '{key}' doesn't exist in unit "
+                                 "registry.")
 
             unit = unit.decompose(self._core_units)
             unit._scale = 1.
@@ -105,10 +107,11 @@ class UnitSystem(object):
             yield uu
 
     def __str__(self):
-        return "UnitSystem ({0})".format(",".join([str(uu) for uu in self._core_units]))
+        core_units = ",".join([str(uu) for uu in self._core_units])
+        return f"UnitSystem ({core_units})"
 
     def __repr__(self):
-        return "<{0}>".format(self.__str__())
+        return f"<{self.__str__()}>"
 
     def __eq__(self, other):
         for k in self._registry:
@@ -151,7 +154,7 @@ class UnitSystem(object):
             ptype = q.unit.physical_type
         except AttributeError:
             raise TypeError("Object must be an astropy.units.Quantity, not "
-                            "a '{}'.".format(q.__class__.__name__))
+                            f"a '{q.__class__.__name__}'.")
 
         if ptype in self._registry:
             return q.to(self._registry[ptype])
@@ -183,7 +186,8 @@ class UnitSystem(object):
         try:
             c = getattr(const, name)
         except AttributeError:
-            raise ValueError("Constant name '{}' doesn't exist in astropy.constants".format(name))
+            raise ValueError(f"Constant name '{name}' doesn't exist in "
+                             "astropy.constants")
 
         return c.decompose(self._core_units).value
 

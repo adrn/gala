@@ -33,7 +33,7 @@ def hernquist_density(x, y, z, M, r_s):
 def test_hernquist():
     for M in [1E5, 1E10]:
         for r_s in np.logspace(-1, 2, 4):
-            (S, Serr),(T, Terr) = compute_coeffs(hernquist_density, nmax=0, lmax=0,
+            (S, Serr), (T, Terr) = compute_coeffs(hernquist_density, nmax=0, lmax=0,
                                                M=M, r_s=r_s, args=(M, r_s))
 
             np.testing.assert_allclose(S, 1.)
@@ -44,7 +44,7 @@ def test_hernquist():
 
 
 def test_hernquist_spherical():
-    (S, Serr),(T, Terr) = compute_coeffs(hernquist_density, nmax=8, lmax=8,
+    (S, Serr), (T, Terr) = compute_coeffs(hernquist_density, nmax=8, lmax=8,
                                        M=1., r_s=1., args=(1., 1.), skip_m=True)
 
     np.testing.assert_allclose(S[0, 0, 0], 1., atol=1E-13)
@@ -66,7 +66,7 @@ def test_plummer():
     true_r_s = 1.
 
     x = np.logspace(-2, 1, 512)
-    xyz = np.zeros((len(x),3))
+    xyz = np.zeros((len(x), 3))
     xyz[:, 0] = x
 
     pot = gp.PlummerPotential(m=true_M, b=true_r_s, units=galactic)
@@ -77,7 +77,7 @@ def test_plummer():
     nmax = 16
     lmax = 0
 
-    (S, S_err),(T, T_err) = compute_coeffs(_plummer_density, nmax=nmax, lmax=lmax,
+    (S, S_err), (T, T_err) = compute_coeffs(_plummer_density, nmax=nmax, lmax=lmax,
                                          M=true_M, r_s=true_r_s, args=(true_M, true_r_s),
                                          epsrel=1E-9)
 
@@ -162,7 +162,7 @@ def test_flattened_hernquist():
     nmax = 8
     lmax = 8
 
-    (Snlm, Serr),(Tnlm, Terr) = compute_coeffs(flattened_hernquist_density,
+    (Snlm, Serr), (Tnlm, Terr) = compute_coeffs(flattened_hernquist_density,
                                              nmax=nmax, lmax=lmax, skip_odd=True, skip_m=True,
                                              M=M, r_s=a, args=(M, a, q))
 
@@ -237,7 +237,7 @@ def test_flattened_hernquist():
     x = r*np.sin(t)
     z = r*np.cos(t)
 
-    _xyz = np.vstack((x.ravel(),np.zeros_like(x.ravel()),z.ravel()))
+    _xyz = np.vstack((x.ravel(), np.zeros_like(x.ravel()), z.ravel()))
     bfe_dens = density(np.ascontiguousarray(_xyz.T), Snlm, Tnlm, M, a)
     true_dens = flattened_hernquist_density(_xyz[0], _xyz[1], _xyz[2], M, a, q)
 

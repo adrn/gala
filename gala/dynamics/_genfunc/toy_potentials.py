@@ -80,7 +80,7 @@ def angact_iso(x, params):
 
     c=GM/(-2*E)-params[1]
     e=np.sqrt(1-L*L*(1+params[1]/c)/GM/c)
-    eta=np.arctan2(r*vr/np.sqrt(-2.*E),params[1]+c-np.sqrt(params[1]**2+r*r))
+    eta=np.arctan2(r*vr/np.sqrt(-2.*E), params[1]+c-np.sqrt(params[1]**2+r*r))
     OmR=np.power(-2*E, 1.5)/GM
     Omp=0.5*OmR*(1+L/np.sqrt(L*L+4*GM*params[1]))
     thetar=eta-e*c*np.sin(eta)/(c+params[1])
@@ -124,7 +124,7 @@ def deltaH_iso(params, p, r):
 def Jac_deltaH_iso(params, p, r):
     H_o = -Grav/(params[1]+np.sqrt(params[1]**2+r))
     H_1 = Grav*params[0]*(1.+params[1]/np.sqrt(params[1]**2+r))/(params[1]+np.sqrt(params[1]**2+r))**2
-    return np.array([(H_o-np.mean(H_o)),(H_1-np.mean(H_1))])
+    return np.array([(H_o-np.mean(H_o)), (H_1-np.mean(H_1))])
 
 
 def findbestparams_iso(xsamples):

@@ -402,7 +402,7 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
 
     # TODO: throw out modes?
     # if(throw_out_modes):
-    #     n_vectors = np.delete(n_vectors, check_each_direction(n_vectors, angs),axis=0)
+    #     n_vectors = np.delete(n_vectors, check_each_direction(n_vectors, angs), axis=0)
 
     nv = len(nvecs)
     n = 3 + 3 + 3*nv # angle(0)'s, freqs, 3 derivatives of Sn

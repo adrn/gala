@@ -17,7 +17,7 @@ for older versions of matplotlib the following works::
 
 """
 try:
-    import matplotlib
+    import matplotlib  # noqa
     from matplotlib.colors import ListedColormap
     import matplotlib.pyplot as plt
     HAS_MPL = True
@@ -25,7 +25,8 @@ except ImportError:
     HAS_MPL = False
 
 # custom colormaps from http://inversed.ru/Blog_2.htm#Proposed
-_hesperia_data = [(0, 0, 0),
+_hesperia_data = [
+    (0, 0, 0),
     (0.008680399042477699, 0.00013116305198120114, 0.0499894378955346),
     (0.015688806352492674, 0.0004574270049853096, 0.08685339309628601),
     (0.02150865143471113, 0.0009088537966835834, 0.11462751931896643),
@@ -282,7 +283,8 @@ _hesperia_data = [(0, 0, 0),
     (0.9999997040126264, 0.9960601712666104, 0.9770247496863707),
     (1, 1, 1)]
 
-_laguna_data = [(0, 0, 0),
+_laguna_data = [
+    (0, 0, 0),
     (0.01205234584720917, 0.003029763753462933, 0.012181626096951531),
     (0.024009539946322607, 0.006071259935558802, 0.024527387123832605),
     (0.035866440730114246, 0.009126443061956018, 0.03703306618444314),

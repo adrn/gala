@@ -54,7 +54,7 @@ class LMPot(object):
 
     def halo_force(self, x, y, z):
         p = -self.vhalo2/(self.C_1*x*x+self.C_2*y*y+self.C_3*x*y+(z/self.q_z)**2+self.rhalo2)
-        return np.array([(2.*x*self.C_1+self.C_3*y)*p,(2.*y*self.C_2+self.C_3*x)*p, 2.*z*p/self.q_z**2])
+        return np.array([(2.*x*self.C_1+self.C_3*y)*p, (2.*y*self.C_2+self.C_3*x)*p, 2.*z*p/self.q_z**2])
 
     def tot_pot(self, x, y, z):
         return self.disk_pot(x, y, z)+self.bulge_pot(x, y, z)+self.halo_pot(x, y, z)
@@ -114,7 +114,7 @@ class quartic(object):
         for i in range(3):
             En = 0.5*x[i+3]**2+0.25*self.lambd[i]*x[i]**4
             xlim=(4.*En/self.lambd[i])**0.25
-            acts[i]=2.*quad(lambda y:np.sqrt(2.*En-0.5*self.lambd[i]*y**4),0., xlim)[0]/np.pi
+            acts[i]=2.*quad(lambda y:np.sqrt(2.*En-0.5*self.lambd[i]*y**4), 0., xlim)[0]/np.pi
         return acts
 
     def freq(self, x):
@@ -123,7 +123,7 @@ class quartic(object):
         for i in range(3):
             En = 0.5*x[i+3]**2+0.25*self.lambd[i]*x[i]**4
             xlim=(4.*En/self.lambd[i])**0.25
-            freq[i]=np.pi/quad(lambda y:2./np.sqrt(2.*En-0.5*self.lambd[i]*y**4),0., xlim)[0]
+            freq[i]=np.pi/quad(lambda y:2./np.sqrt(2.*En-0.5*self.lambd[i]*y**4), 0., xlim)[0]
         return freq
 
 import sys

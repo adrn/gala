@@ -39,7 +39,7 @@ def test_plummer():
     Snlm, Tnlm = compute_coeffs_discrete(xyz, m_k, nmax=nmax, lmax=lmax, r_s=r_s)
 
     x = np.logspace(-2, 1, 512)
-    xyz = np.zeros((len(x),3))
+    xyz = np.zeros((len(x), 3))
     xyz[:, 0] = x
 
     # plot discrete vs. analytic potential
