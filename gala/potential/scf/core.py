@@ -10,6 +10,7 @@ from ._computecoeff import (Snlm_integrand, Tnlm_integrand,
 
 __all__ = ['compute_coeffs', 'compute_coeffs_discrete']
 
+
 def compute_coeffs(density_func, nmax, lmax, M, r_s, args=(),
                    skip_odd=False, skip_even=False, skip_m=False,
                    S_only=False, progress=False, **nquad_opts):
@@ -91,9 +92,9 @@ def compute_coeffs(density_func, nmax, lmax, M, r_s, args=(),
     nquad_opts.setdefault('limit', 256)
     nquad_opts.setdefault('epsrel', 1E-10)
 
-    limits = [[0, 2*np.pi], # phi
-              [-1, 1.], # X (cos(theta))
-              [-1, 1.]] # xsi
+    limits = [[0, 2*np.pi],  # phi
+              [-1, 1.],  # X (cos(theta))
+              [-1, 1.]]  # xsi
 
     nlms = []
     for n in range(nmax+1):
@@ -112,7 +113,7 @@ def compute_coeffs(density_func, nmax, lmax, M, r_s, args=(),
                               'with `pip install tqdm`.\n' + str(e))
         iterfunc = tqdm
     else:
-        iterfunc = lambda x: x
+        iterfunc = lambda x: x  # noqa
 
     for n, l, m in iterfunc(nlms):
         Snlm[n, l, m], Snlm_e[n, l, m] = si.nquad(
@@ -202,13 +203,15 @@ def compute_coeffs_discrete(xyz, mass, nmax, lmax, r_s,
     for n in range(nmax+1):
         for l in range(lmin, lmax+1, lstride):
             for m in range(l+1):
-                if skip_m and m > 0: continue
+                if skip_m and m > 0:
+                    continue
 
                 # logger.debug("Computing coefficients (n, l, m)=({},{},{})".format(n, l, m))
 
                 Snlm[n, l, m], Tnlm[n, l, m] = STnlm_discrete(s, phi, X, mass, n, l, m)
                 if compute_var:
-                    Snlm_var[n, l, m], Tnlm_var[n, l, m] = STnlm_var_discrete(s, phi, X, mass, n, l, m)
+                    Snlm_var[n, l, m], Tnlm_var[n, l, m] = STnlm_var_discrete(
+                        s, phi, X, mass, n, l, m)
 
     if compute_var:
         return (Snlm, Snlm_var), (Tnlm, Tnlm_var)

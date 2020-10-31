@@ -149,7 +149,8 @@ def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1], minimize_kwargs=None):
 
     .. math::
 
-        f(\boldsymbol{\omega}) = \sum_i (\frac{1}{2}v_i^2 + \Phi_{\rm sho}(x_i\,|\,\boldsymbol{\omega}) - <E>)^2
+        f(\boldsymbol{\omega}) = \sum_i (\frac{1}{2}v_i^2 +
+            \Phi_{\rm sho}(x_i\,|\,\boldsymbol{\omega}) - <E>)^2
 
     TODO: This should fail if the Hamiltonian associated with the orbit has
           a frame other than StaticFrame
@@ -215,8 +216,8 @@ def fit_toy_potential(orbit, force_harmonic_oscillator=False):
 
     Returns
     -------
-    potential : :class:`~gala.potential.IsochronePotential` or :class:`~gala.potential.HarmonicOscillatorPotential`
-        The best-fit potential object.
+    potential
+        The best-fit potential instance.
 
     """
     circulation = orbit.circulation()
@@ -405,7 +406,7 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
     #     n_vectors = np.delete(n_vectors, check_each_direction(n_vectors, angs), axis=0)
 
     nv = len(nvecs)
-    n = 3 + 3 + 3*nv # angle(0)'s, freqs, 3 derivatives of Sn
+    n = 3 + 3 + 3 * nv  # angle(0)'s, freqs, 3 derivatives of Sn
 
     b = np.zeros(shape=(n,))
     A = np.zeros(shape=(n, n))

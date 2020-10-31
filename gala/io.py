@@ -1,6 +1,7 @@
 # Third-party
 import astropy.units as u
 
+
 def quantity_from_hdf5(dset):
     """
     Return an Astropy Quantity object from a key in an HDF5 file,
@@ -23,6 +24,7 @@ def quantity_from_hdf5(dset):
         unit = 1.
 
     return dset[:] * unit
+
 
 def quantity_to_hdf5(f, key, q):
     """

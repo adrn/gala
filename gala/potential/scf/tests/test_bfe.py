@@ -17,6 +17,7 @@ if not GSL_ENABLED:
     pytest.skip("skipping SCF tests: they depend on GSL",
                 allow_module_level=True)
 
+
 # Check that we get A000=1. for putting in hernquist density
 def hernquist_density(xyz, M, r_s):
     r = np.sqrt(np.sum(xyz**2, axis=0))
@@ -70,15 +71,18 @@ def pure_py(xyz, Snlm, Tnlm, nmax, lmax):
     from scipy.special import lpmv, gegenbauer, eval_gegenbauer, gamma
     from math import factorial as f
 
-    Plm = lambda l, m, costh: lpmv(m, l, costh)
-    Ylmth = lambda l, m, costh: np.sqrt((2*l+1)/(4 * np.pi) * f(l-m)/f(l+m)) * Plm(l, m, costh)
+    def Plm(l, m, costh):
+        return lpmv(m, l, costh)
+
+    def Ylmth(l, m, costh):
+        return np.sqrt((2*l+1)/(4 * np.pi) * f(l-m)/f(l+m)) * Plm(l, m, costh)
 
     twopi = 2*np.pi
     sqrtpi = np.sqrt(np.pi)
     sqrt4pi = np.sqrt(4*np.pi)
 
     r = np.sqrt(np.sum(xyz**2, axis=0))
-    X = xyz[2]/r # cos(theta)
+    X = xyz[2] / r  # cos(theta)
     sinth = np.sqrt(1 - X**2)
     phi = np.arctan2(xyz[1], xyz[0])
     xsi = (r - 1) / (r + 1)
@@ -98,24 +102,25 @@ def pure_py(xyz, Snlm, Tnlm, nmax, lmax):
                 phi_nl = -sqrt4pi * r_term2 * Cn(xsi)
 
                 density += rho_nl * Ylmth(l, m, X) * (Snlm[n, l, m]*np.cos(m*phi) +
-                                                    Tnlm[n, l, m]*np.sin(m*phi))
+                                                      Tnlm[n, l, m]*np.sin(m*phi))
                 potenti += phi_nl * Ylmth(l, m, X) * (Snlm[n, l, m]*np.cos(m*phi) +
-                                                    Tnlm[n, l, m]*np.sin(m*phi))
+                                                      Tnlm[n, l, m]*np.sin(m*phi))
 
                 # derivatives
-                dphinl_dr = (2*sqrtpi*np.power(r,-1 + l)*np.power(1 + r,-3 - 2*l)*
-                              (-2*(3 + 4*l)*r*eval_gegenbauer(-1 + n, 2.5 + 2*l, (-1 + r)/(1 + r)) +
-                              (1 + r)*(l*(-1 + r) + r)*eval_gegenbauer(n, 1.5 + 2*l, (-1 + r)/(1 + r))))
+                dphinl_dr = (
+                    2*sqrtpi*np.power(r, -1 + l)*np.power(1 + r, -3 - 2*l) *
+                    (-2*(3 + 4*l)*r*eval_gegenbauer(-1 + n, 2.5 + 2*l, (-1 + r)/(1 + r)) +
+                     (1 + r)*(l*(-1 + r) + r)*eval_gegenbauer(n, 1.5 + 2*l, (-1 + r)/(1 + r))))
                 sph_gradien[0] += dphinl_dr * Ylmth(l, m, X) * (Snlm[n, l, m]*np.cos(m*phi) +
-                                                              Tnlm[n, l, m]*np.sin(m*phi))
+                                                                Tnlm[n, l, m]*np.sin(m*phi))
 
                 A = np.sqrt((2*l+1) / (4*np.pi)) * np.sqrt(gamma(l-m+1) / gamma(l+m+1))
                 dYlm_dth = A / sinth * (l*X*Plm(l, m, X) - (l+m)*Plm(l-1, m, X))
                 sph_gradien[1] += (1/r) * dYlm_dth * phi_nl * (Snlm[n, l, m]*np.cos(m*phi) +
                                                                Tnlm[n, l, m]*np.sin(m*phi))
 
-                sph_gradien[2] += (m/(r*sinth)) * phi_nl * Ylmth(l, m, X) * (-Snlm[n, l, m]*np.sin(m*phi) +
-                                                                           Tnlm[n, l, m]*np.cos(m*phi))
+                sph_gradien[2] += (m/(r*sinth)) * phi_nl * Ylmth(l, m, X) * (
+                    -Snlm[n, l, m]*np.sin(m*phi) + Tnlm[n, l, m]*np.cos(m*phi))
 
     cosphi = np.cos(phi)
     sinphi = np.sin(phi)
@@ -124,6 +129,7 @@ def pure_py(xyz, Snlm, Tnlm, nmax, lmax):
     gradien[2] = X*sph_gradien[0] - sinth*sph_gradien[1]
 
     return density, potenti, gradien
+
 
 def test_pure_py():
 

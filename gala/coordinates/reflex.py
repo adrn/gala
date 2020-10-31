@@ -7,7 +7,9 @@ __all__ = ['reflex_correct']
 def reflex_correct(coords, galactocentric_frame=None):
     """Correct the input Astropy coordinate object for solar reflex motion.
 
-    The input coordinate instance must have distance and radial velocity information. If the radial velocity is not known, fill the
+    The input coordinate instance must have distance and radial velocity information.
+    So, if the radial velocity is not known, fill the radial velocity values with zeros
+    to reflex-correct the proper motions.
 
     Parameters
     ----------

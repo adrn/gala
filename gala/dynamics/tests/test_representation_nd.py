@@ -1,16 +1,12 @@
 # Third-party
 import astropy.units as u
-from astropy.coordinates import Galactic, CartesianRepresentation
 import numpy as np
 import pytest
 
 # Project
-from ..core import PhaseSpacePosition
-from ...potential import Hamiltonian, HernquistPotential
-from ...potential.frame import StaticFrame, ConstantRotatingFrame
-from ...units import galactic, solarsystem
 from ..representation_nd import (NDCartesianRepresentation,
                                  NDCartesianDifferential)
+
 
 def test_init_repr():
 
@@ -38,6 +34,7 @@ def test_init_repr():
 
         assert rep.shape == (16,)
         assert rep2.shape == (8,)
+
 
 def test_init_diff():
 

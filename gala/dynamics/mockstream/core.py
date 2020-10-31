@@ -67,7 +67,7 @@ class MockStream(PhaseSpacePosition):
             quantity_to_hdf5(f, 'release_time', self.release_time)
 
         if self.lead_trail is not None:
-            f['lead_trail'] = self.lead_trail.astype('S1') # TODO HACK
+            f['lead_trail'] = self.lead_trail.astype('S1')  # TODO HACK
         return f
 
     @classmethod

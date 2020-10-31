@@ -71,7 +71,7 @@ class Pal13Shipp20(coord.BaseCoordinateFrame):
 
 # Rotation matrix defined by trying to align the stream to the equator
 R = np.array([[0.94906836, -0.22453560, 0.22102719],
-             [-0.06325861,  0.55143610, 0.83181523],
+             [-0.06325861, 0.55143610, 0.83181523],
              [-0.30865450, -0.80343138, 0.50914675]])
 
 

@@ -1,3 +1,7 @@
+"""
+Note: these functions are only used in tests to compare against Koposov's implementation.
+"""
+
 from numpy import sin, cos, deg2rad, rad2deg, arctan2, sqrt
 import numpy
 import numexpr

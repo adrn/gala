@@ -19,6 +19,7 @@ _DF_KWARGS = [{}, {}, {'v_disp': 1*u.km/u.s}]
 _TEST_POTENTIALS = [HernquistPotential(m=1e12, c=5, units=galactic),
                     MilkyWayPotential()]
 
+
 @pytest.mark.parametrize('DF, DF_kwargs', zip(_DF_CLASSES, _DF_KWARGS))
 @pytest.mark.parametrize('pot', _TEST_POTENTIALS)
 def test_init_sample(DF, DF_kwargs, pot):
@@ -55,6 +56,7 @@ def test_expected_failure(DF, DF_kwargs):
     # Expected failure:
     with pytest.raises(ValueError):
         DF(lead=False, trail=False, **DF_kwargs)
+
 
 def test_rotating_frame():
     DF = _DF_CLASSES[0]

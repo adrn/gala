@@ -15,9 +15,9 @@ from ..builtin import (KeplerPotential, MiyamotoNagaiPotential,
                        BovyMWPotential2014)
 
 try:
-    import galpy
-    import galpy.orbit
-    import galpy.potential
+    import galpy  # noqa
+    import galpy.orbit  # noqa
+    import galpy.potential  # noqa
     HAS_GALPY = True
 except ImportError:
     HAS_GALPY = False
@@ -26,6 +26,7 @@ except ImportError:
 ro = 8.1 * u.kpc
 vo = 240 * u.km/u.s
 ntest = 128
+
 
 def helper(gala_pot, galpy_pot):
     Rs = np.random.uniform(1, 15, size=ntest) * u.kpc
@@ -103,7 +104,8 @@ def test_powerlawcutoff():
     gala_pot = PowerLawCutoffPotential(m=M, alpha=alpha, r_c=15*u.kpc,
                                        units=galactic)
     r_c = gala_pot.parameters['r_c']
-    amp = (G*M).to_value(vo**2 * ro) * ((1/(2*np.pi) * r_c.to_value(ro)**(alpha - 3) / (gamma(3/2 - alpha/2))))
+    amp = (G*M).to_value(vo**2 * ro) * ((1/(2*np.pi) * r_c.to_value(ro)**(alpha - 3) /
+                                         (gamma(3/2 - alpha/2))))
     bovy_pot = PowerSphericalPotentialwCutoff(amp,
                                               alpha=gala_pot.parameters['alpha'].value,
                                               rc=r_c.to_value(ro),

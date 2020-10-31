@@ -21,11 +21,12 @@ if not GSL_ENABLED:
     pytest.skip("skipping SCF tests: they depend on GSL",
                 allow_module_level=True)
 
+
 def test_plummer():
     pos_path = os.path.abspath(get_pkg_data_filename('data/plummer-pos.dat.gz'))
 
     scfbi = scfbi = np.loadtxt(pos_path)
-    m_k = scfbi[:, 0]*10 # masses sum to 0.1
+    m_k = scfbi[:, 0] * 10  # masses sum to 0.1
     xyz = scfbi[:, 1:4]
 
     G = 1.

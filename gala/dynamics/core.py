@@ -115,11 +115,11 @@ class PhaseSpacePosition(object):
 
         Parameters
         ----------
-        pos : :class:`~astropy.coordinates.BaseRepresentation`, :class:`~astropy.units.Quantity`, array_like
+        pos : representation, quantity_like, or array_like
             Positions. If a numpy array (e.g., has no units), this will be
             stored as a dimensionless :class:`~astropy.units.Quantity`. See
             the note above about the assumed meaning of the axes of this object.
-        vel : :class:`~astropy.coordinates.BaseDifferential`, :class:`~astropy.units.Quantity`, array_like
+        vel : differential, quantity_like, or array_like
             Velocities. If a numpy array (e.g., has no units), this will be
             stored as a dimensionless :class:`~astropy.units.Quantity`. See
             the note above about the assumed meaning of the axes of this object.

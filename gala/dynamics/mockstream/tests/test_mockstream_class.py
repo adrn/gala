@@ -19,7 +19,7 @@ def test_init():
 
     stream = MockStream(xyz, vxyz)
     stream = MockStream(xyz, vxyz, release_time=t1)
-    stream = MockStream(xyz, vxyz, lead_trail=lead_trail)
+    stream = MockStream(xyz, vxyz, lead_trail=lead_trail)  # noqa
 
     with pytest.raises(ValueError):
         MockStream(xyz, vxyz, release_time=t1[:-1])

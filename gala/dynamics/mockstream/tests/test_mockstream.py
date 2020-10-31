@@ -10,7 +10,6 @@ import pytest
 from ....potential import (Hamiltonian, NFWPotential, HernquistPotential,
                            ConstantRotatingFrame)
 from ....dynamics import PhaseSpacePosition, Orbit
-from ....integrate import DOPRI853Integrator
 from ....units import galactic
 
 # Project

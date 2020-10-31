@@ -14,6 +14,7 @@ from ....integrate import DOPRI853Integrator
 
 # ----------------------------------------------------------------------------
 
+
 def to_rotating_frame(omega, w, t=None):
     """
     TODO: figure out units shit for omega and t
@@ -25,7 +26,7 @@ def to_rotating_frame(omega, w, t=None):
 
     try:
         omega = omega.to(u.rad/u.Myr, equivalencies=u.dimensionless_angles()).value
-    except:
+    except:  # noqa
         omega = omega.value
 
     if isinstance(w, Orbit) and t is not None:
@@ -40,13 +41,13 @@ def to_rotating_frame(omega, w, t=None):
         raise TypeError("Input time must be a Quantity object.")
 
     if t is not None:
-        t = np.atleast_1d(t) # works with Quantity's
+        t = np.atleast_1d(t)  # works with Quantity's
     else:
         t = w.t
 
     try:
         t = t.to(u.Myr).value
-    except:
+    except:  # noqa
         t = t.value
 
     if isinstance(w, PhaseSpacePosition) or isinstance(w, Orbit):
@@ -55,8 +56,8 @@ def to_rotating_frame(omega, w, t=None):
         x_unit = w.x.unit
         v_unit = w.v_x.unit
 
-        x = w.xyz.reshape(3,-1).value
-        v = w.v_xyz.reshape(3,-1).value
+        x = w.xyz.reshape(3, -1).value
+        v = w.v_xyz.reshape(3, -1).value
 
     else:
         Cls = None
@@ -97,6 +98,7 @@ def to_rotating_frame(omega, w, t=None):
 
 # ----------------------------------------------------------------------------
 
+
 class TestWithPotentialStaticFrame(_TestBase):
     obj = Hamiltonian(NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.,
                                                           units=galactic),
@@ -105,6 +107,7 @@ class TestWithPotentialStaticFrame(_TestBase):
     @pytest.mark.skip("Not implemented")
     def test_hessian(self):
         pass
+
 
 class TestKeplerRotatingFrame(_TestBase):
     Omega = [0., 0, 1.]*u.one
@@ -127,6 +130,7 @@ class TestKeplerRotatingFrame(_TestBase):
 
             assert np.allclose(orbit.x.value, 1., atol=1E-7)
             assert np.allclose(orbit.xyz.value[1:], 0., atol=1E-7)
+
 
 class TestKepler2RotatingFrame(_TestBase):
     Omega = [1., 1., 1.]*u.one
@@ -153,7 +157,8 @@ class TestKepler2RotatingFrame(_TestBase):
             L = orbit.angular_momentum()
             C = orbit.energy() - np.sum(self.Omega[:, None] * L, axis=0)
             dC = np.abs((C[1:]-C[0])/C[0])
-            assert np.all(dC < 1E-9) # conserve Jacobi constant
+            assert np.all(dC < 1E-9)  # conserve Jacobi constant
+
 
 @pytest.mark.parametrize("name, Omega, tol", [
     ("z-aligned co-rotating", [0, 0, 1.]*u.one, 1E-12),

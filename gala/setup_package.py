@@ -12,4 +12,3 @@ def get_extensions():
     exts.append(Extension('gala._cconfig', **cfg))
 
     return exts
-

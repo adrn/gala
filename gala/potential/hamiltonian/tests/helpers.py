@@ -8,6 +8,7 @@ from ....units import galactic
 PSP = PhaseSpacePosition
 ORB = Orbit
 
+
 class _TestBase(object):
     use_half_ndim = False
     E_unit = u.erg/u.kg
@@ -17,7 +18,7 @@ class _TestBase(object):
         np.random.seed(42)
 
         ndim = 6
-        r_ndim = ndim # return ndim
+        r_ndim = ndim  # return ndim
         if cls.use_half_ndim:
             r_ndim = r_ndim // 2
         norbits = 16
@@ -76,9 +77,9 @@ class _TestBase(object):
 
         _obj_w0s = cls.w0s[:]
         for w0, eshp, gshp, hshp in zip(_obj_w0s,
-                                     cls.energy_return_shapes,
-                                     cls.gradient_return_shapes,
-                                     cls.hessian_return_shapes):
+                                        cls.energy_return_shapes,
+                                        cls.gradient_return_shapes,
+                                        cls.hessian_return_shapes):
             cls.w0s.append(w0.w(galactic))
             cls.energy_return_shapes.append(eshp)
             cls.gradient_return_shapes.append(gshp)
@@ -87,7 +88,7 @@ class _TestBase(object):
     def test_energy(self):
         for arr, shp in zip(self.w0s, self.energy_return_shapes):
             if self.E_unit.is_equivalent(u.one) and hasattr(arr, 'pos') and \
-                not arr.xyz.unit.is_equivalent(u.one):
+                    not arr.xyz.unit.is_equivalent(u.one):
                 continue
 
             v = self.obj.energy(arr)
@@ -102,7 +103,7 @@ class _TestBase(object):
     def test_gradient(self):
         for arr, shp in zip(self.w0s, self.gradient_return_shapes):
             if self.E_unit.is_equivalent(u.one) and hasattr(arr, 'pos') and \
-                not arr.xyz.unit.is_equivalent(u.one):
+                    not arr.xyz.unit.is_equivalent(u.one):
                 continue
 
             v = self.obj.gradient(arr)
@@ -117,7 +118,7 @@ class _TestBase(object):
     def test_hessian(self):
         for arr, shp in zip(self.w0s, self.hessian_return_shapes):
             if self.E_unit.is_equivalent(u.one) and hasattr(arr, 'pos') and \
-                not arr.xyz.unit.is_equivalent(u.one):
+                    not arr.xyz.unit.is_equivalent(u.one):
                 continue
 
             g = self.obj.hessian(arr)

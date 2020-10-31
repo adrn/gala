@@ -5,6 +5,7 @@ import logging
 import warnings
 
 # Third-party
+import astropy.units as u
 import numpy as np
 from astropy import log as logger
 from scipy.linalg import solve
@@ -15,12 +16,13 @@ from ...integrate import DOPRI853Integrator
 from ...potential import (IsochronePotential, HarmonicOscillatorPotential,
                           LeeSutoTriaxialNFWPotential, Hamiltonian)
 from ...units import galactic
-from ..actionangle import *
-from ..core import *
-from ..plot import *
-from .helpers import *
+from ..actionangle import (fit_isochrone, fit_harmonic_oscillator, fit_toy_potential,
+                           check_angle_sampling, find_actions, generate_n_vectors)
+from .._genfunc import genfunc_3d, solver
+from .helpers import sanders_nvecs, sanders_act_ang_freq, isotropic_w0
 
 logger.setLevel(logging.DEBUG)
+
 
 def test_generate_n_vectors():
     # test against Sanders' method
@@ -31,6 +33,7 @@ def test_generate_n_vectors():
     nvecs = generate_n_vectors(N_max=6, dx=1, dy=1, dz=1)
     nvecs_sanders = sanders_nvecs(N_max=6, dx=1, dy=1, dz=1)
     assert np.all(nvecs == nvecs_sanders)
+
 
 def test_fit_isochrone():
     # integrate orbit in Isochrone potential, then try to recover it
@@ -46,6 +49,7 @@ def test_fit_isochrone():
     assert np.allclose(m, true_m, rtol=1E-2)
     assert np.allclose(b, true_b, rtol=1E-2)
 
+
 def test_fit_harmonic_oscillator():
     # integrate orbit in harmonic oscillator potential, then try to recover it
     true_omegas = np.array([0.011, 0.032, 0.045])
@@ -57,7 +61,7 @@ def test_fit_harmonic_oscillator():
     omegas = fit_potential.parameters['omega'].value
     assert np.allclose(omegas, true_omegas, rtol=1E-2)
 
-# TODO: check on this after fixing HarmonicOscillatorPotential
+
 def test_fit_toy_potential():
     # integrate orbit in both toy potentials, make sure correct one is chosen
     true_m = 2.81E11
@@ -81,6 +85,7 @@ def test_fit_toy_potential():
 
     assert u.allclose(potential.parameters['omega'],
                       true_potential.parameters['omega'], rtol=1E-2)
+
 
 def test_check_angle_sampling():
 
@@ -171,6 +176,7 @@ class ActionsBase(object):
 
             # print("Plots saved at:", self.plot_path)
 
+
 class TestActions(ActionsBase):
 
     def setup(self):
@@ -193,37 +199,6 @@ class TestActions(ActionsBase):
         self.t = orbit.t.value
         self.w = orbit.w()
 
-# TODO: need to fix this -- or assess whether needed?
-# class TestHardActions(ActionsBase):
-
-#     def setup(self):
-#         self.plot_path = self.tmpdir.mkdir("hard")
-
-#         self.units = (u.kpc, u.Msun, u.Myr)
-#         params = {'disk': {'a': 6.5, 'b': 0.26, 'm': 65000000000.0},
-#                   'bulge': {'c': 0.3, 'm': 20000000000.0},
-#                   'halo': {'psi': 1.570796, 'theta': 1.570796, 'phi': 1.570796,
-#                            'a': 1., 'b': 0.77, 'c': 0.61, 'r_s': 30.0, 'v_c': 0.22}}
-#         self.potential = PW14Potential(**params)
-#         self.N = 25
-
-#         w0 = np.loadtxt(os.path.join(test_data_path, "w0.txt"))
-#         n_steps = 200000
-
-#         if not os.path.exists(os.path.join(test_data_path, "w_hard.npy")):
-#             logger.debug("Integrating orbits")
-#             t, w = self.potential.integrate_orbit(w0, dt=0.2, n_steps=n_steps, Integrator=DOPRI853Integrator)
-
-#             logger.debug("Saving orbits")
-#             np.save(os.path.join(test_data_path, "t_hard.npy"), t)
-#             np.save(os.path.join(test_data_path, "w_hard.npy"), w)
-#         else:
-#             logger.debug("Loaded orbits")
-#             t = np.load(os.path.join(test_data_path, "t_hard.npy"))
-#             w = np.load(os.path.join(test_data_path, "w_hard.npy"))
-
-#         self.t = t
-#         self.w = w
 
 def test_compare_action_prepare():
 
@@ -259,9 +234,9 @@ def test_regression_113():
     dt = 0.01
     n_steps = 50000
 
-    rvec = [0.3, 0, 0]*u.kpc
+    rvec = [0.3, 0, 0] * u.kpc
     vinit = pot.circular_velocity(rvec)[0].to(u.km/u.s).value
-    vvec = [0, vinit*np.cos(0.01), vinit*np.sin(0.01)]*u.km/u.s
+    vvec = [0, vinit*np.cos(0.01), vinit*np.sin(0.01)] * u.km/u.s
     vvec = 0.999*vvec
 
     ics = PhaseSpacePosition(pos=rvec, vel=vvec)

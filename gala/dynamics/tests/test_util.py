@@ -8,8 +8,9 @@ from ..core import PhaseSpacePosition
 from ..orbit import Orbit
 from ..util import peak_to_peak_period, estimate_dt_n_steps, combine
 from ...potential import Hamiltonian, NFWPotential
-from ...potential.frame import StaticFrame, ConstantRotatingFrame
+from ...potential.frame import StaticFrame
 from ...units import galactic
+
 
 def test_peak_to_peak_period():
     ntimes = 16384
@@ -28,6 +29,7 @@ def test_peak_to_peak_period():
     T = peak_to_peak_period(t, f)
     assert np.allclose(T, true_T, atol=1E-3)
 
+
 def test_estimate_dt_n_steps():
     nperiods = 128
     pot = NFWPotential.from_circular_velocity(v_c=1., r_s=10., units=galactic)
@@ -35,8 +37,8 @@ def test_estimate_dt_n_steps():
 
     H = Hamiltonian(pot)
     dt, n_steps = estimate_dt_n_steps(w0, H, n_periods=nperiods,
-                                     n_steps_per_period=256,
-                                     func=np.nanmin)
+                                      n_steps_per_period=256,
+                                      func=np.nanmin)
 
     orbit = H.integrate_orbit(w0, dt=dt, n_steps=n_steps)
     T = orbit.estimate_period()

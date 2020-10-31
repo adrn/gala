@@ -222,7 +222,8 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, q)
         ret_unit = self.units['length'] / self.units['time']**2
-        return (self._gradient(q, t=t).T.reshape(orig_shape) * ret_unit).to(self.units['acceleration'])
+        uu = self.units['acceleration']
+        return (self._gradient(q, t=t).T.reshape(orig_shape) * ret_unit).to(uu)
 
     def density(self, q, t=0.):
         """
@@ -771,7 +772,8 @@ class CompositePotential(PotentialBase, OrderedDict):
 
         >>> from gala.potential import HernquistPotential
         >>> cp = CompositePotential()
-        >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., units=(u.kpc, u.Myr, u.Msun, u.radian))
+        >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10.,
+        ...                                     units=(u.kpc, u.Myr, u.Msun, u.radian))
 
     """
     def __init__(self, *args, **kwargs):

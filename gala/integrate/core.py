@@ -89,7 +89,7 @@ class Integrator(object):
         from ..dynamics import Orbit
         orbit = Orbit(pos=w[:self.ndim]*pos_unit,
                       vel=w[self.ndim:]*vel_unit,
-                      t=t*t_unit) # HACK: BADDDD
+                      t=t*t_unit)  # HACK: BADDDD
 
         return orbit
 

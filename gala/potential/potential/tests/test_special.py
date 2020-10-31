@@ -36,5 +36,3 @@ class TestBovyMWPotential2014(CompositePotentialTestBase):
     def setup(self):
         self.potential = BovyMWPotential2014()
         super().setup()
-
-

@@ -24,6 +24,7 @@ if not GSL_ENABLED:
     pytest.skip("skipping SCF tests: they depend on GSL",
                 allow_module_level=True)
 
+
 # Check that we get A000=1. for putting in hernquist density
 def hernquist_density(x, y, z, M, r_s):
     r = np.sqrt(x**2 + y**2 + z**2)
@@ -34,7 +35,7 @@ def test_hernquist():
     for M in [1E5, 1E10]:
         for r_s in np.logspace(-1, 2, 4):
             (S, Serr), (T, Terr) = compute_coeffs(hernquist_density, nmax=0, lmax=0,
-                                               M=M, r_s=r_s, args=(M, r_s))
+                                                  M=M, r_s=r_s, args=(M, r_s))
 
             np.testing.assert_allclose(S, 1.)
             np.testing.assert_allclose(Serr, 0., atol=1E-10)
@@ -45,7 +46,7 @@ def test_hernquist():
 
 def test_hernquist_spherical():
     (S, Serr), (T, Terr) = compute_coeffs(hernquist_density, nmax=8, lmax=8,
-                                       M=1., r_s=1., args=(1., 1.), skip_m=True)
+                                          M=1., r_s=1., args=(1., 1.), skip_m=True)
 
     np.testing.assert_allclose(S[0, 0, 0], 1., atol=1E-13)
     np.testing.assert_allclose(S[1:, :, :], 0., atol=1E-13)
@@ -55,6 +56,7 @@ def test_hernquist_spherical():
     np.testing.assert_allclose(Terr, 0., atol=1E-10)
 
 # ----------------------------------------------------------------------------
+
 
 def _plummer_density(x, y, z, M, r_s):
     r2 = x*x + y*y + z*z
@@ -78,8 +80,8 @@ def test_plummer():
     lmax = 0
 
     (S, S_err), (T, T_err) = compute_coeffs(_plummer_density, nmax=nmax, lmax=lmax,
-                                         M=true_M, r_s=true_r_s, args=(true_M, true_r_s),
-                                         epsrel=1E-9)
+                                            M=true_M, r_s=true_r_s, args=(true_M, true_r_s),
+                                            epsrel=1E-9)
 
     bfe_dens = density(xyz, S, T, true_M, true_r_s)
     bfe_pot = potential(xyz, S, T, G, true_M, true_r_s)
@@ -163,22 +165,22 @@ def test_flattened_hernquist():
     lmax = 8
 
     (Snlm, Serr), (Tnlm, Terr) = compute_coeffs(flattened_hernquist_density,
-                                             nmax=nmax, lmax=lmax, skip_odd=True, skip_m=True,
-                                             M=M, r_s=a, args=(M, a, q))
+                                                nmax=nmax, lmax=lmax, skip_odd=True, skip_m=True,
+                                                M=M, r_s=a, args=(M, a, q))
 
     for l in range(1, lmax+1, 2):
         for m in range(lmax+1):
             assert Snlm[0, l, m] == 0.
 
     m_Snl0 = np.loadtxt(coeff_path, delimiter=',')
-    m_Snl0 = m_Snl0[:, ::2] # every other l
+    m_Snl0 = m_Snl0[:, ::2]  # every other l
 
     assert np.allclose(Snlm[0, ::2, 0], m_Snl0[0])
 
     # check that random points match in gradient and density
     np.random.seed(42)
     n_test = 1024
-    r = 10.*np.cbrt(np.random.uniform(0.1**3, 1, size=n_test)) # 1 to 10
+    r = 10.*np.cbrt(np.random.uniform(0.1**3, 1, size=n_test))  # 1 to 10
     t = np.arccos(2*np.random.uniform(size=n_test) - 1)
     ph = np.random.uniform(0, 2*np.pi, size=n_test)
     x = r*np.cos(ph)*np.sin(t)
@@ -189,7 +191,7 @@ def test_flattened_hernquist():
     # confirmed by testing...
     tru_dens = flattened_hernquist_density(xyz[0], xyz[1], xyz[2], M, a, q)
     bfe_dens = density(np.ascontiguousarray(xyz.T), Snlm, Tnlm, M, a)
-    assert np.all((np.abs(bfe_dens - tru_dens) / tru_dens) < 0.05) # <5%
+    assert np.all((np.abs(bfe_dens - tru_dens) / tru_dens) < 0.05)  # <5%
 
     tru_grad = np.array([flattened_hernquist_gradient(xyz[0, i], xyz[1, i], xyz[2, i], G, M, a, q)
                         for i in range(xyz.shape[1])]).T
@@ -200,7 +202,7 @@ def test_flattened_hernquist():
     #     pl.hist(np.abs((bfe_grad[j]-tru_grad[j])/tru_grad[j]))
 
     for j in range(3):
-        assert np.all(np.abs((bfe_grad[j]-tru_grad[j])/tru_grad[j]) < 0.005) # 0.5%
+        assert np.all(np.abs((bfe_grad[j]-tru_grad[j])/tru_grad[j]) < 0.005)  # 0.5%
 
     return
 
@@ -223,7 +225,7 @@ def test_flattened_hernquist():
     ax.set_xlabel('$n$')
     ax.set_ylabel('$l$')
 
-    tickloc = np.concatenate((-10.**np.arange(2,-5-1,-1),
+    tickloc = np.concatenate((-10.**np.arange(2, -5-1, -1),
                               10.**np.arange(-5, 2+1, 1)))
     fig.colorbar(c, ticks=tickloc, format='%.0e')
     fig.tight_layout()

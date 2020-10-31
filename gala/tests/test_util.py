@@ -4,6 +4,7 @@ import pytest
 # Project
 from ..util import ImmutableDict
 
+
 def test_immutabledict():
     a = dict(a=5, c=6)
     b = ImmutableDict(**a)

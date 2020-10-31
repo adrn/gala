@@ -66,14 +66,14 @@ def isochrone_to_aa(w, potential):
     # convert position, velocity to spherical polar coordinates
     w_sph = w.represent_as(coord.PhysicsSphericalRepresentation)
     r, phi, theta = map(np.squeeze, [w_sph.r.decompose(usys).value,
-                                   w_sph.phi.radian,
-                                   w_sph.theta.radian])
+                                     w_sph.phi.radian,
+                                     w_sph.theta.radian])
 
     ang_unit = u.radian/usys['time']
-    vr, phi_dot, theta_dot = map(np.squeeze, [w_sph.radial_velocity.decompose(usys).value,
-                                            w_sph.pm_phi.to(ang_unit).value,
-                                            w_sph.pm_theta.to(ang_unit).value])
-    vphi = r*np.sin(theta) * phi_dot
+    vr, phi_dot, theta_dot = map(np.squeeze,
+                                 [w_sph.radial_velocity.decompose(usys).value,
+                                  w_sph.pm_phi.to(ang_unit).value,
+                                  w_sph.pm_theta.to(ang_unit).value])
     vtheta = r*theta_dot
 
     # ----------------------------
@@ -88,7 +88,7 @@ def isochrone_to_aa(w, potential):
     Jr = GM / np.sqrt(-2*E) - 0.5*(L + np.sqrt(L*L + 4*GM*b))
 
     # compute the three action variables
-    actions = np.array([Jr, Lz, L - np.abs(Lz)]) # Jr, Jphi, Jtheta
+    actions = np.array([Jr, Lz, L - np.abs(Lz)])  # Jr, Jphi, Jtheta
 
     # ----------------------------
     # Angles
@@ -114,13 +114,13 @@ def isochrone_to_aa(w, potential):
     def F(x, y):
         z = np.zeros_like(x)
 
-        ix = y>np.pi/2.
+        ix = y > np.pi/2.
         z[ix] = np.pi/2. - np.arctan(np.tan(np.pi/2.-0.5*y[ix])/x[ix])
 
-        ix = y<-np.pi/2.
+        ix = y < -np.pi/2.
         z[ix] = -np.pi/2. + np.arctan(np.tan(np.pi/2.+0.5*y[ix])/x[ix])
 
-        ix = (y<=np.pi/2) & (y>=-np.pi/2)
+        ix = (y <= np.pi/2) & (y >= -np.pi/2)
         z[ix] = np.arctan(x[ix]*np.tan(0.5*y[ix]))
         return z
 
@@ -162,9 +162,10 @@ def isochrone_to_xv(actions, angles, potential):
 
     .. note::
 
-        This function is included as a method of the :class:`~gala.potential.IsochronePotential`
-        and it is recommended to call :meth:`~gala.potential.IsochronePotential.action_angle()`
-        instead.
+        This function is included as a method of the
+        :class:`~gala.potential.IsochronePotential`
+        and it is recommended to call
+        :meth:`~gala.potential.IsochronePotential.action_angle()` instead.
 
     Parameters
     ----------
@@ -311,7 +312,8 @@ def harmonic_oscillator_to_aa(w, potential):
         This function is included as a method of the
         :class:`~gala.potential.HarmonicOscillatorPotential`
         and it is recommended to call
-        :meth:`~gala.potential.HarmonicOscillatorPotential.action_angle()` instead.
+        :meth:`~gala.potential.HarmonicOscillatorPotential.action_angle()`
+        instead.
 
     Parameters
     ----------
@@ -334,7 +336,7 @@ def harmonic_oscillator_to_aa(w, potential):
 
     try:
         omega = potential.parameters['omega'].reshape(_new_omega_shape).decompose(usys).value
-    except AttributeError: # not a Quantity
+    except AttributeError:  # not a Quantity
         omega = potential.parameters['omega'].reshape(_new_omega_shape)
 
     action = (v**2 + (omega*x)**2)/(2.*omega)

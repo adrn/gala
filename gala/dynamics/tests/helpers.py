@@ -18,7 +18,7 @@ except ImportError:
 # from ..actionangle import classify_orbit
 from ...units import galactic
 from ...potential import HarmonicOscillatorPotential, IsochronePotential
-from .._genfunc import genfunc_3d, solver, toy_potentials
+from .._genfunc import genfunc_3d
 
 
 def sanders_nvecs(N_max, dx, dy, dz):
@@ -27,23 +27,24 @@ def sanders_nvecs(N_max, dx, dy, dz):
     NNy = range(-N_max, N_max+1, dy)
     NNz = range(-N_max, N_max+1, dz)
     n_vectors = np.array([[i, j, k] for (i, j, k) in product(NNx, NNy, NNz)
-                          if(not(i==0 and j==0 and k==0)            # exclude zero vector
-                             and (k>0                               # northern hemisphere
-                                  or (k==0 and j>0)                 # half of x-y plane
-                                  or (k==0 and j==0 and i>0))       # half of x axis
-                             and np.sqrt(i*i+j*j+k*k)<=N_max)])     # inside sphere
+                          if (not (i == 0 and j == 0 and k == 0)        # exclude zero vector
+                              and (k > 0                                # northern hemisphere
+                                   or (k == 0 and j > 0)                # half of x-y plane
+                                   or (k == 0 and j == 0 and i > 0))    # half of x axis
+                              and np.sqrt(i*i + j*j + k*k) <= N_max)])  # inside sphere
     return n_vectors
+
 
 def sanders_act_ang_freq(t, w, circ, N_max=6):
     w2 = w.copy()
 
     if np.any(circ):
         w2[3:] = (w2[3:]*u.kpc/u.Myr).to(u.km/u.s).value
-        (act, ang, n_vec, toy_aa, pars), loop2 = genfunc_3d.find_actions(w2.T, t/1000.,
-                                                                    N_matrix=N_max, ifloop=True)
+        (act, ang, n_vec, toy_aa, pars), loop2 = genfunc_3d.find_actions(
+            w2.T, t/1000., N_matrix=N_max, ifloop=True)
     else:
-        (act, ang, n_vec, toy_aa, pars), loop2 = genfunc_3d.find_actions(w2.T, t,
-                                                                    N_matrix=N_max, ifloop=True)
+        (act, ang, n_vec, toy_aa, pars), loop2 = genfunc_3d.find_actions(
+            w2.T, t, N_matrix=N_max, ifloop=True)
 
     actions = act[:3]
     angles = ang[:3]
@@ -57,6 +58,7 @@ def sanders_act_ang_freq(t, w, circ, N_max=6):
         toy_potential = HarmonicOscillatorPotential(omega=np.array(pars), units=galactic)
 
     return actions, angles, freqs, toy_potential
+
 
 def _crazy_angle_loop(theta1, theta2, ax):
     cnt = 0
@@ -88,6 +90,7 @@ def _crazy_angle_loop(theta1, theta2, ax):
 
         ix1 = ix2+1
 
+
 def plot_angles(t, angles, freqs, subsample_factor=1000):
     theta = (angles[:, None] + freqs[:, None]*t[np.newaxis])
     subsample = theta.shape[1]//subsample_factor
@@ -105,6 +108,7 @@ def plot_angles(t, angles, freqs, subsample_factor=1000):
     return fig
     # axes[1].scatter(theta[0, ix], theta[2], alpha=0.5, marker='o', c=t)
 
+
 def isotropic_w0(N=100):
     # positions
     d = np.random.lognormal(mean=np.log(25), sigma=0.5, size=N)
@@ -117,7 +121,7 @@ def isotropic_w0(N=100):
 
     # rotate to be random position angle
     pa = np.random.uniform(0, 2*np.pi, size=N)
-    M = np.array([[np.cos(pa), -np.sin(pa)],[np.sin(pa), np.cos(pa)]]).T
+    M = np.array([[np.cos(pa), -np.sin(pa)], [np.sin(pa), np.cos(pa)]]).T
     vt = np.array([vv.dot(MM) for (vv, MM) in zip(vt, M)])*u.km/u.s
     vphi, vtheta = vt.T
 
