@@ -204,10 +204,7 @@ class Hamiltonian(CommonBase):
 
     # def __repr__(self):
     #     pars = ""
-    #     if not isinstance(self.parameters, OrderedDict):
-    #         keys = sorted(self.parameters.keys()) # to ensure the order is always the same
-    #     else:
-    #         keys = self.parameters.keys()
+    #     keys = self.parameters.keys()
 
     #     for k in keys:
     #         v = self.parameters[k].value

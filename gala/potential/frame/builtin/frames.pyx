@@ -5,9 +5,6 @@
 # cython: profile=False
 # cython: language_level=3
 
-# Standard library
-from collections import OrderedDict
-
 # Third-party
 from astropy.utils.misc import isiterable
 import astropy.units as u

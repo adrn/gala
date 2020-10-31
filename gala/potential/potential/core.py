@@ -1,7 +1,6 @@
 # Standard library
 import abc
 import copy as pycopy
-from collections import OrderedDict
 import warnings
 import uuid
 
@@ -748,7 +747,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         return self.energy(*args, **kwargs)
 
 
-class CompositePotential(PotentialBase, OrderedDict):
+class CompositePotential(PotentialBase, dict):
     """
     A potential composed of several distinct components. For example,
     two point masses or a galactic disk and halo, each with their own
@@ -760,7 +759,7 @@ class CompositePotential(PotentialBase, OrderedDict):
         >>> p2 = SomePotential(func2) # doctest: +SKIP
         >>> cp = CompositePotential(component1=p1, component2=p2) # doctest: +SKIP
 
-    This object actually acts like an `OrderedDict`, so if you want to
+    This object actually acts like a dictionary, so if you want to
     preserve the order of the potential components, use::
 
         >>> cp = CompositePotential() # doctest: +SKIP
@@ -791,7 +790,7 @@ class CompositePotential(PotentialBase, OrderedDict):
         for v in kwargs.values():
             self._check_component(v)
 
-        OrderedDict.__init__(self, **kwargs)
+        dict.__init__(self, **kwargs)
 
         self.R = None  # TODO: this is a little messy
 

@@ -6,7 +6,6 @@
 # cython: language_level=3
 
 # Standard library
-from collections import OrderedDict
 from libc.math cimport M_PI
 
 # Third party

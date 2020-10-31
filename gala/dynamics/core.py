@@ -1,5 +1,5 @@
 # Standard library
-from collections import namedtuple, OrderedDict
+from collections import namedtuple
 import warnings
 import re
 
@@ -216,7 +216,7 @@ class PhaseSpacePosition(object):
                 elif m.repr_name == name:
                     old_to_new[name] = m.new_name
 
-        mapping = OrderedDict()
+        mapping = dict()
         for name in getattr(self, which).components:
             mapping[old_to_new.get(name, name)] = name
 
@@ -234,7 +234,7 @@ class PhaseSpacePosition(object):
         mappings = self.representation_mappings.get(
             getattr(self, which).__class__, [])
 
-        extra = OrderedDict()
+        extra = dict()
         for m in mappings:
             if (m.new_name not in self.get_components(which) and
                     not isinstance(m, RegexRepresentationMapping)):

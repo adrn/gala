@@ -6,7 +6,6 @@
 # cython: language_level=3
 
 # Standard library
-from collections import OrderedDict
 import copy as pycopy
 import sys
 import warnings
@@ -342,7 +341,7 @@ class CPotentialBase(PotentialBase):
                             .format(self.__class__.__name__,
                                     other.__class__.__name__))
 
-        components = OrderedDict()
+        components = dict()
 
         if isinstance(self, CompositePotential):
             for k, v in self.items():

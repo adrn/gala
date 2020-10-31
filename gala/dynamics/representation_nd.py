@@ -1,5 +1,4 @@
 # Standard library
-from collections import OrderedDict
 import operator
 
 # Third-party
@@ -63,7 +62,7 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
         If `True` (default), arrays will be copied rather than referenced.
     """
 
-    attr_classes = OrderedDict()
+    attr_classes = dict()
 
     def __init__(self, x, differentials=None, unit=None, copy=True):
 
@@ -76,8 +75,8 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
         x = u.Quantity(x, unit, copy=copy, subok=True)
         copy = False
 
-        self.attr_classes = OrderedDict([('x'+str(i), u.Quantity)
-                                         for i in range(1, len(x)+1)])
+        self.attr_classes = dict([('x'+str(i), u.Quantity)
+                                  for i in range(1, len(x)+1)])
 
         super(coord.CartesianRepresentation, self).__init__(
             *x, differentials=differentials, copy=copy)
@@ -151,7 +150,7 @@ class NDCartesianDifferential(NDMixin, coord.CartesianDifferential):
         If `True` (default), arrays will be copied rather than referenced.
     """
     base_representation = NDCartesianRepresentation
-    attr_classes = OrderedDict()
+    attr_classes = dict()
 
     def __init__(self, d_x, unit=None, copy=True):
 
@@ -164,8 +163,8 @@ class NDCartesianDifferential(NDMixin, coord.CartesianDifferential):
         d_x = u.Quantity(d_x, unit, copy=copy, subok=True)
         copy = False
 
-        self.attr_classes = OrderedDict([('d_x'+str(i), u.Quantity)
-                                         for i in range(1, len(d_x)+1)])
+        self.attr_classes = [('d_x'+str(i), u.Quantity)
+                             for i in range(1, len(d_x)+1)])
 
         super(coord.CartesianDifferential, self).__init__(*d_x, copy=copy)
 
