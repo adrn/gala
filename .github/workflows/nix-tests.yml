@@ -34,13 +34,13 @@ jobs:
       - name: Setup Mac - GSL and Pandoc
         if: runner.os == 'macOS'
         run: |
-          brew install gsl pandoc
+          brew install gsl pandoc graphviz
 
       # Ubuntu:
       - name: Setup Linux
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get install gsl-bin libgsl0-dev build-essential pandoc
+          sudo apt-get install gsl-bin libgsl0-dev build-essential pandoc graphviz
 
       - name: Install Python dependencies
         run: |
