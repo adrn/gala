@@ -199,6 +199,7 @@ def test_represent_as_expected_attributes():
     assert hasattr(new_o, 'radial_velocity')
     assert hasattr(new_o, 'pm_lat')
     assert hasattr(new_o, 'pm_lon')
+    assert new_o.norbits == o.norbits
 
     new_o = o.represent_as(SphericalRepresentation, SphericalCosLatDifferential)
     assert hasattr(new_o, 'distance')
@@ -215,6 +216,7 @@ def test_represent_as_expected_attributes():
     assert hasattr(new_o, 'radial_velocity')
     assert hasattr(new_o, 'pm_theta')
     assert hasattr(new_o, 'pm_phi')
+    assert new_o.norbits == o.norbits
 
     new_o = o.cylindrical
     assert hasattr(new_o, 'rho')
@@ -223,6 +225,7 @@ def test_represent_as_expected_attributes():
     assert hasattr(new_o, 'v_rho')
     assert hasattr(new_o, 'pm_phi')
     assert hasattr(new_o, 'v_z')
+    assert new_o.norbits == o.norbits
 
     new_o = new_o.cartesian
     assert hasattr(new_o, 'x')

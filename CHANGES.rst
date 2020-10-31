@@ -8,6 +8,8 @@ New Features
 Bug fixes
 ---------
 
+- Fixes a bug when calling `orbit.norbits` when the representation is not
+  cartesian.
 
 
 API changes
