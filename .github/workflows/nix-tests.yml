@@ -47,10 +47,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install tox tox-gh-actions
 
-      - name: Initial fast test
-        run: |
-          tox -e py38-test
-
       - name: Full test suite with tox
         run: tox  # This relies on tox-gh-actions
 
