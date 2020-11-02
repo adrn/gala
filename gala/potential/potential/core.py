@@ -1,5 +1,6 @@
 # Standard library
 import abc
+from collections import OrderedDict
 import copy as pycopy
 import warnings
 import uuid
@@ -747,7 +748,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         return self.energy(*args, **kwargs)
 
 
-class CompositePotential(PotentialBase, dict):
+class CompositePotential(PotentialBase, OrderedDict):
     """
     A potential composed of several distinct components. For example,
     two point masses or a galactic disk and halo, each with their own
@@ -790,7 +791,7 @@ class CompositePotential(PotentialBase, dict):
         for v in kwargs.values():
             self._check_component(v)
 
-        dict.__init__(self, **kwargs)
+        OrderedDict.__init__(self, **kwargs)
 
         self.R = None  # TODO: this is a little messy
 
