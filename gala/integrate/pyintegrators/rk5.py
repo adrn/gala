@@ -62,8 +62,7 @@ class RK5Integrator(Integrator):
         """
 
         # Runge-Kutta Fehlberg formulas (see: Numerical Recipes)
-        def F(t, q):
-            return self.F(t, w, *self._func_args)
+        F = lambda t, w: self.F(t, w, *self._func_args)  # noqa
 
         K = np.zeros((6,)+w.shape)
         K[0] = dt * F(t, w)
