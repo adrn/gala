@@ -253,7 +253,7 @@ class CommonBase:
         if isinstance(self.units, DimensionlessUnitSystem):
             return f"<{self.__class__.__name__}: {par_str} (dimensionless)>"
         else:
-            core_units_str = ", ".join(map(str, self.units._core_units))
+            core_units_str = ",".join(map(str, self.units._core_units))
             return f"<{self.__class__.__name__}: {par_str} ({core_units_str})>"
 
     def __str__(self):
