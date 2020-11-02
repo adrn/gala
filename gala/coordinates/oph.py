@@ -75,6 +75,7 @@ R = np.array([[0.84922096554, 0.07001279040, 0.52337554476],
               [-0.27043653641, -0.79364259852, 0.54497294023],
               [0.45352820359, -0.60434231606, -0.65504391727]])
 
+
 @frame_transform_graph.transform(coord.StaticMatrixTransform,
                                  coord.Galactic, OphiuchusPriceWhelan16)
 def gal_to_oph():
@@ -82,6 +83,7 @@ def gal_to_oph():
         heliocentric Ophiuchus coordinates.
     """
     return R
+
 
 @frame_transform_graph.transform(coord.StaticMatrixTransform,
                                  OphiuchusPriceWhelan16, coord.Galactic)

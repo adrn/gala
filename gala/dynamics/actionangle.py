@@ -27,13 +27,13 @@ def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
     :math:`|\boldsymbol{n}| < N_{\rm max}`.
 
     If ``half_lattice=True``, only return half of the three-dimensional
-    lattice. If the set N = {(i,j,k)} defines the lattice, we restrict to
+    lattice. If the set N = {(i, j, k)} defines the lattice, we restrict to
     the cases such that ``(k > 0)``, ``(k = 0, j > 0)``, and
     ``(k = 0, j = 0, i > 0)``.
 
     .. todo::
 
-        Return shape should be (3,N) to be consistent.
+        Return shape should be (3, N) to be consistent.
 
     Parameters
     ----------
@@ -55,7 +55,7 @@ def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
     -------
     vecs : :class:`numpy.ndarray`
         A 2D array of integers with :math:`|\boldsymbol{n}| < N_{\rm max}`
-        with shape (N,3).
+        with shape (N, 3).
 
     """
     vecs = np.meshgrid(np.arange(-N_max, N_max+1, dx),
@@ -84,7 +84,7 @@ def fit_isochrone(orbit, m0=2E11, b0=1., minimize_kwargs=None):
 
     .. math::
 
-        f(m,b) = \sum_i (\frac{1}{2}v_i^2 + \Phi_{\rm iso}(x_i\,|\,m,b) - <E>)^2
+        f(m, b) = \sum_i (\frac{1}{2}v_i^2 + \Phi_{\rm iso}(x_i\,|\,m, b) - <E>)^2
 
     TODO: This should fail if the Hamiltonian associated with the orbit has
           a frame other than StaticFrame
@@ -149,7 +149,8 @@ def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1], minimize_kwargs=None):
 
     .. math::
 
-        f(\boldsymbol{\omega}) = \sum_i (\frac{1}{2}v_i^2 + \Phi_{\rm sho}(x_i\,|\,\boldsymbol{\omega}) - <E>)^2
+        f(\boldsymbol{\omega}) = \sum_i (\frac{1}{2}v_i^2 +
+            \Phi_{\rm sho}(x_i\,|\,\boldsymbol{\omega}) - <E>)^2
 
     TODO: This should fail if the Hamiltonian associated with the orbit has
           a frame other than StaticFrame
@@ -215,8 +216,8 @@ def fit_toy_potential(orbit, force_harmonic_oscillator=False):
 
     Returns
     -------
-    potential : :class:`~gala.potential.IsochronePotential` or :class:`~gala.potential.HarmonicOscillatorPotential`
-        The best-fit potential object.
+    potential
+        The best-fit potential instance.
 
     """
     circulation = orbit.circulation()
@@ -255,7 +256,7 @@ def check_angle_sampling(nvecs, angles):
     Returns
     -------
     failed_nvecs : :class:`numpy.ndarray`
-        Array of all integer vectors that failed checks. Has shape (N,3).
+        Array of all integer vectors that failed checks. Has shape (N, 3).
     failures : :class:`numpy.ndarray`
         Array of flags that designate whether this failed needing a longer
         integration window (0) or finer sampling (1).
@@ -267,7 +268,7 @@ def check_angle_sampling(nvecs, angles):
 
     for i, vec in enumerate(nvecs):
         # N = np.linalg.norm(vec)
-        # X = np.dot(angles,vec)
+        # X = np.dot(angles, vec)
         X = (angles*vec[:, None]).sum(axis=0)
         diff = float(np.abs(X.max() - X.min()))
 
@@ -296,12 +297,12 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1., throw_out_modes=False):
 
     .. todo::
 
-        Wrong shape for aa -- should be (6,n) as usual...
+        Wrong shape for aa -- should be (6, n) as usual...
 
     Parameters
     ----------
     aa : array_like
-        Shape ``(6,ntimes)`` array of toy actions and angles.
+        Shape ``(6, ntimes)`` array of toy actions and angles.
     N_max : int
         Maximum norm of the integer vector.
     dx : int
@@ -328,7 +329,7 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1., throw_out_modes=False):
 
     # throw out modes?
     # if throw_out_modes:
-    #     nvecs = np.delete(nvecs, (modes,P), axis=0)
+    #     nvecs = np.delete(nvecs, (modes, P), axis=0)
 
     n = len(nvecs) + 3
     b = np.zeros(shape=(n, ))
@@ -342,12 +343,12 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1., throw_out_modes=False):
 
     # top right block matrix: transpose of C_nk matrix (Eq. 12)
     C_T = 2.*nvecs.T * np.sum(np.cos(np.dot(nvecs, angles)), axis=-1)
-    A[:3,3:] = C_T
+    A[:3, 3:] = C_T
     A[3:, :3] = C_T.T
 
     # lower right block matrix: C_nk dotted with C_nk^T
     cosv = np.cos(np.dot(nvecs, angles))
-    A[3:,3:] = 4.*np.dot(nvecs, nvecs.T)*np.einsum('it,jt->ij', cosv, cosv)
+    A[3:, 3:] = 4.*np.dot(nvecs, nvecs.T)*np.einsum('it, jt->ij', cosv, cosv)
 
     # b vector first three is just sum of toy actions
     b[:3] = np.sum(actions, axis=1)
@@ -368,12 +369,12 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
 
     .. todo::
 
-        Wrong shape for aa -- should be (6,n) as usual...
+        Wrong shape for aa -- should be (6, n) as usual...
 
     Parameters
     ----------
     aa : array_like
-        Shape ``(6,ntimes)`` array of toy actions and angles.
+        Shape ``(6, ntimes)`` array of toy actions and angles.
     t : array_like
         Array of times.
     N_max : int
@@ -402,10 +403,10 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
 
     # TODO: throw out modes?
     # if(throw_out_modes):
-    #     n_vectors = np.delete(n_vectors,check_each_direction(n_vectors,angs),axis=0)
+    #     n_vectors = np.delete(n_vectors, check_each_direction(n_vectors, angs), axis=0)
 
     nv = len(nvecs)
-    n = 3 + 3 + 3*nv # angle(0)'s, freqs, 3 derivatives of Sn
+    n = 3 + 3 + 3 * nv  # angle(0)'s, freqs, 3 derivatives of Sn
 
     b = np.zeros(shape=(n,))
     A = np.zeros(shape=(n, n))
@@ -417,12 +418,12 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
     A[:3, 3:6] = A[3:6, :3] = np.sum(t)*np.identity(3)
     A[3:6, 3:6] = np.sum(t*t)*np.identity(3)
 
-    # S1,2,3
+    # S1, 2, 3
     A[6:6+nv, 0] = -2.*np.sum(np.sin(np.dot(nvecs, angles)), axis=1)
     A[6+nv:6+2*nv, 1] = A[6:6+nv, 0]
     A[6+2*nv:6+3*nv, 2] = A[6:6+nv, 0]
 
-    # t*S1,2,3
+    # t*S1, 2, 3
     A[6:6+nv, 3] = -2.*np.sum(t[None, :]*np.sin(np.dot(nvecs, angles)),
                               axis=1)
     A[6+nv:6+2*nv, 4] = A[6:6+nv, 3]
@@ -430,7 +431,7 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
 
     # lower right block structure: S dot S^T
     sinv = np.sin(np.dot(nvecs, angles))
-    SdotST = np.einsum('it,jt->ij', sinv, sinv)
+    SdotST = np.einsum('it, jt->ij', sinv, sinv)
     A[6:6+nv, 6:6+nv] = A[6+nv:6+2*nv, 6+nv:6+2*nv] = \
         A[6+2*nv:6+3*nv, 6+2*nv:6+3*nv] = 4*SdotST
 
@@ -460,7 +461,7 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
 
     .. todo::
 
-        Wrong shape for w -- should be (6,n) as usual...
+        Wrong shape for w -- should be (6, n) as usual...
 
     Parameters
     ----------
@@ -519,7 +520,7 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
 
     t1 = time.time()
     A, b, nvecs = _action_prepare(aa, N_max, dx=dxyz[0], dy=dxyz[1], dz=dxyz[2])
-    actions = np.array(solve(A,b))
+    actions = np.array(solve(A, b))
     logger.debug("Action solution found for N_max={}, size {} symmetric"
                  " matrix in {} seconds"
                  .format(N_max, len(actions), time.time()-t1))
@@ -613,20 +614,20 @@ def find_actions(orbit, N_max, force_harmonic_oscillator=False,
 #     N = dJ.shape[0]
 
 #     Y = np.ravel(dF)
-#     A = np.zeros((3*N,9))
-#     A[::3,:3] = dJ
-#     A[1::3,3:6] = dJ
-#     A[2::3,6:9] = dJ
+#     A = np.zeros((3*N, 9))
+#     A[::3, :3] = dJ
+#     A[1::3, 3:6] = dJ
+#     A[2::3, 6:9] = dJ
 
 #     # Solve for 'parameters' - the Hessian elements
-#     X,res,rank,s = np.linalg.lstsq(A, Y)
+#     X, res, rank, s = np.linalg.lstsq(A, Y)
 
 #     # Symmetrize
-#     D0 = X.reshape(3,3)
-#     D0[0,1] = D0[1,0] = (D0[0,1] + D0[1,0])/2.
-#     D0[0,2] = D0[2,0] = (D0[0,2] + D0[2,0])/2.
-#     D0[1,2] = D0[2,1] = (D0[1,2] + D0[2,1])/2.
+#     D0 = X.reshape(3, 3)
+#     D0[0, 1] = D0[1, 0] = (D0[0, 1] + D0[1, 0])/2.
+#     D0[0, 2] = D0[2, 0] = (D0[0, 2] + D0[2, 0])/2.
+#     D0[1, 2] = D0[2, 1] = (D0[1, 2] + D0[2, 1])/2.
 
 #     print("Residual: " + str(res[0]))
 
-#     return D0,np.linalg.eigh(D0) # symmetric matrix
+#     return D0, np.linalg.eigh(D0) # symmetric matrix

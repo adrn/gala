@@ -221,12 +221,11 @@ class CommonBase:
 
     # String representations:
     def __repr__(self):
-        pars = ""
+        pars = []
 
         keys = self.parameters.keys()
         for k in keys:
             v = self.parameters[k].value
-            par_fmt = "{}"
             post = ""
 
             if hasattr(v, 'unit'):
@@ -235,21 +234,27 @@ class CommonBase:
 
             if isinstance(v, float):
                 if v == 0:
-                    par_fmt = "{:.0f}"
+                    par = f"{v:.0f}"
                 elif np.log10(v) < -2 or np.log10(v) > 5:
-                    par_fmt = "{:.2e}"
+                    par = f"{v:.2e}"
                 else:
-                    par_fmt = "{:.2f}"
+                    par = f"{v:.2f}"
 
             elif isinstance(v, int) and np.log10(v) > 5:
-                par_fmt = "{:.2e}"
+                par = f"{v:.2e}"
 
-            pars += ("{}=" + par_fmt + post).format(k, v) + ", "
+            else:
+                par = str(v)
+
+            pars.append(f"{k}={par}{post}")
+
+        par_str = ", ".join(pars)
 
         if isinstance(self.units, DimensionlessUnitSystem):
-            return "<{}: {} (dimensionless)>".format(self.__class__.__name__, pars.rstrip(", "))
+            return f"<{self.__class__.__name__}: {par_str} (dimensionless)>"
         else:
-            return "<{}: {} ({})>".format(self.__class__.__name__, pars.rstrip(", "), ",".join(map(str, self.units._core_units)))
+            core_units_str = ",".join(map(str, self.units._core_units))
+            return f"<{self.__class__.__name__}: {par_str} ({core_units_str})>"
 
     def __str__(self):
         return self.__class__.__name__

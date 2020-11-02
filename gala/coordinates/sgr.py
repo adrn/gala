@@ -81,6 +81,7 @@ B = rotation_matrix(psi, "z")
 A = np.diag([1., 1., -1.])
 R = matrix_product(A, B, C, D)
 
+
 # Galactic to Sgr coordinates
 @frame_transform_graph.transform(coord.StaticMatrixTransform, coord.Galactic,
                                  SagittariusLaw10)
@@ -89,6 +90,7 @@ def galactic_to_sgr():
         heliocentric Sagittarius coordinates.
     """
     return R
+
 
 # Sgr to Galactic coordinates
 @frame_transform_graph.transform(coord.StaticMatrixTransform, SagittariusLaw10,

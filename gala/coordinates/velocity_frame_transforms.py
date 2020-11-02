@@ -8,7 +8,7 @@ __all__ = ["vgsr_to_vhel", "vhel_to_vgsr"]
 
 
 def _get_vproj(c, vsun):
-    gal = c.transform_to(coord.Galactic)
+    gal = c.transform_to(coord.Galactic())
     cart_data = gal.data.to_cartesian()
     unit_vector = cart_data / cart_data.norm()
     return coord.CartesianRepresentation(vsun).dot(unit_vector)

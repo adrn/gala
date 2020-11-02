@@ -30,7 +30,7 @@ def test_vgsr_to_vhel():
     assert np.allclose(vhel.value, row['vhelio'], atol=1e-3)
 
     # now check still get right answer passing in ICRS coordinates
-    vhel = vgsr_to_vhel(c.transform_to(coord.ICRS), vgsr, vsun=vsun)
+    vhel = vgsr_to_vhel(c.transform_to(coord.ICRS()), vgsr, vsun=vsun)
     assert np.allclose(vhel.value, row['vhelio'], atol=1e-3)
 
     # all together now
@@ -42,7 +42,7 @@ def test_vgsr_to_vhel():
     assert np.allclose(vhel.value, data['vhelio'], atol=1e-3)
 
     # now check still get right answer passing in ICRS coordinates
-    vhel = vgsr_to_vhel(c.transform_to(coord.ICRS), vgsr, vsun=vsun)
+    vhel = vgsr_to_vhel(c.transform_to(coord.ICRS()), vgsr, vsun=vsun)
     assert np.allclose(vhel.value, data['vhelio'], atol=1e-3)
 
 
@@ -80,7 +80,7 @@ def test_vhel_to_vgsr():
     assert np.allclose(vgsr.value, row['vgsr'], atol=1e-3)
 
     # now check still get right answer passing in ICRS coordinates
-    vgsr = vhel_to_vgsr(c.transform_to(coord.ICRS), vhel, vsun=vsun)
+    vgsr = vhel_to_vgsr(c.transform_to(coord.ICRS()), vhel, vsun=vsun)
     assert np.allclose(vgsr.value, row['vgsr'], atol=1e-3)
 
     # all together now
@@ -92,5 +92,5 @@ def test_vhel_to_vgsr():
     assert np.allclose(vgsr.value, data['vgsr'], atol=1e-3)
 
     # now check still get right answer passing in ICRS coordinates
-    vgsr = vhel_to_vgsr(c.transform_to(coord.ICRS), vhel, vsun=vsun)
+    vgsr = vhel_to_vgsr(c.transform_to(coord.ICRS()), vhel, vsun=vsun)
     assert np.allclose(vgsr.value, data['vgsr'], atol=1e-3)

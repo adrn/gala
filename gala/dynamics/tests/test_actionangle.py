@@ -5,6 +5,7 @@ import logging
 import warnings
 
 # Third-party
+import astropy.units as u
 import numpy as np
 from astropy import log as logger
 from scipy.linalg import solve
@@ -15,12 +16,13 @@ from ...integrate import DOPRI853Integrator
 from ...potential import (IsochronePotential, HarmonicOscillatorPotential,
                           LeeSutoTriaxialNFWPotential, Hamiltonian)
 from ...units import galactic
-from ..actionangle import *
-from ..core import *
-from ..plot import *
-from .helpers import *
+from ..actionangle import (fit_isochrone, fit_harmonic_oscillator, fit_toy_potential,
+                           check_angle_sampling, find_actions, generate_n_vectors)
+from .._genfunc import genfunc_3d, solver
+from .helpers import sanders_nvecs, sanders_act_ang_freq, isotropic_w0
 
 logger.setLevel(logging.DEBUG)
+
 
 def test_generate_n_vectors():
     # test against Sanders' method
@@ -32,13 +34,14 @@ def test_generate_n_vectors():
     nvecs_sanders = sanders_nvecs(N_max=6, dx=1, dy=1, dz=1)
     assert np.all(nvecs == nvecs_sanders)
 
+
 def test_fit_isochrone():
     # integrate orbit in Isochrone potential, then try to recover it
     true_m = 2.81E11
     true_b = 11.
     potential = IsochronePotential(m=true_m, b=true_b, units=galactic)
     H = Hamiltonian(potential)
-    orbit = H.integrate_orbit([15.,0,0,0,0.2,0], dt=2., n_steps=10000)
+    orbit = H.integrate_orbit([15., 0, 0, 0, 0.2, 0], dt=2., n_steps=10000)
 
     fit_potential = fit_isochrone(orbit)
     m, b = (fit_potential.parameters['m'].value,
@@ -46,28 +49,29 @@ def test_fit_isochrone():
     assert np.allclose(m, true_m, rtol=1E-2)
     assert np.allclose(b, true_b, rtol=1E-2)
 
+
 def test_fit_harmonic_oscillator():
     # integrate orbit in harmonic oscillator potential, then try to recover it
     true_omegas = np.array([0.011, 0.032, 0.045])
     potential = HarmonicOscillatorPotential(omega=true_omegas, units=galactic)
     H = Hamiltonian(potential)
-    orbit = H.integrate_orbit([15.,1,2,0,0,0], dt=2., n_steps=10000)
+    orbit = H.integrate_orbit([15., 1, 2, 0, 0, 0], dt=2., n_steps=10000)
 
     fit_potential = fit_harmonic_oscillator(orbit)
     omegas = fit_potential.parameters['omega'].value
     assert np.allclose(omegas, true_omegas, rtol=1E-2)
 
-# TODO: check on this after fixing HarmonicOscillatorPotential
+
 def test_fit_toy_potential():
     # integrate orbit in both toy potentials, make sure correct one is chosen
     true_m = 2.81E11
     true_b = 11.
     true_potential = IsochronePotential(m=true_m, b=true_b, units=galactic)
     H = Hamiltonian(true_potential)
-    orbit = H.integrate_orbit([15.,0,0,0,0.2,0], dt=2., n_steps=10000)
+    orbit = H.integrate_orbit([15., 0, 0, 0, 0.2, 0], dt=2., n_steps=10000)
 
     potential = fit_toy_potential(orbit)
-    for k,v in true_potential.parameters.items():
+    for k, v in true_potential.parameters.items():
         assert u.allclose(v, potential.parameters[k], rtol=1E-2)
 
     # -----------------------------------------------------------------
@@ -75,12 +79,13 @@ def test_fit_toy_potential():
     true_potential = HarmonicOscillatorPotential(omega=true_omegas,
                                                  units=galactic)
     H = Hamiltonian(true_potential)
-    orbit = H.integrate_orbit([15.,1,2,0,0,0], dt=2., n_steps=10000)
+    orbit = H.integrate_orbit([15., 1, 2, 0, 0, 0], dt=2., n_steps=10000)
 
     potential = fit_toy_potential(orbit)
 
     assert u.allclose(potential.parameters['omega'],
                       true_potential.parameters['omega'], rtol=1E-2)
+
 
 def test_check_angle_sampling():
 
@@ -93,7 +98,7 @@ def test_check_angle_sampling():
     # loop over times with known failures:
     #   - first one fails needing longer integration time
     #   - second one fails needing finer sampling
-    for i,t in enumerate([np.linspace(0,50,500), np.linspace(0,8000,8000)]):
+    for i, t in enumerate([np.linspace(0, 50, 500), np.linspace(0, 8000, 8000)]):
         # periods = 2*np.pi/omegas
         # print("Periods:", periods)
         # print("N periods:", t.max() / periods)
@@ -118,9 +123,9 @@ class ActionsBase(object):
 
         # compare to Sanders'
         for j in range(self.N):
-            sdrs = genfunc_3d.assess_angmom(self.w[...,j].T)
-            logger.debug("APW: {}, Sanders: {}".format(orb_type[:,j], sdrs))
-            assert np.all(orb_type[:,j] == sdrs)
+            sdrs = genfunc_3d.assess_angmom(self.w[..., j].T)
+            logger.debug("APW: {}, Sanders: {}".format(orb_type[:, j], sdrs))
+            assert np.all(orb_type[:, j] == sdrs)
 
     def test_actions(self):
         # t = self.t[::10]
@@ -130,9 +135,9 @@ class ActionsBase(object):
         for n in range(self.N):
             print("\n\n")
             print("======================= Orbit {} =======================".format(n))
-            # w = self.w[:,::10,n]
-            w = self.w[...,n]
-            orb = self.orbit[:,n]
+            # w = self.w[:, ::10, n]
+            w = self.w[..., n]
+            orb = self.orbit[:, n]
             circ = orb.circulation()
 
             # get values from Sanders' code
@@ -161,15 +166,16 @@ class ActionsBase(object):
             # fig = plot_orbits(w, marker='.', alpha=0.2, linestyle='none')
             # fig.savefig(str(self.plot_path.join("orbit_{}.png".format(n))))
 
-            # fig = plot_angles(t,angles,freqs)
+            # fig = plot_angles(t, angles, freqs)
             # fig.savefig(str(self.plot_path.join("angles_{}.png".format(n))))
 
-            # fig = plot_angles(t,s_angles,s_freqs)
+            # fig = plot_angles(t, s_angles, s_freqs)
             # fig.savefig(str(self.plot_path.join("angles_sanders_{}.png".format(n))))
 
             # plt.close('all')
 
             # print("Plots saved at:", self.plot_path)
+
 
 class TestActions(ActionsBase):
 
@@ -193,53 +199,22 @@ class TestActions(ActionsBase):
         self.t = orbit.t.value
         self.w = orbit.w()
 
-# TODO: need to fix this -- or assess whether needed?
-# class TestHardActions(ActionsBase):
-
-#     def setup(self):
-#         self.plot_path = self.tmpdir.mkdir("hard")
-
-#         self.units = (u.kpc, u.Msun, u.Myr)
-#         params = {'disk': {'a': 6.5, 'b': 0.26, 'm': 65000000000.0},
-#                   'bulge': {'c': 0.3, 'm': 20000000000.0},
-#                   'halo': {'psi': 1.570796, 'theta': 1.570796, 'phi': 1.570796,
-#                            'a': 1., 'b': 0.77, 'c': 0.61, 'r_s': 30.0, 'v_c': 0.22}}
-#         self.potential = PW14Potential(**params)
-#         self.N = 25
-
-#         w0 = np.loadtxt(os.path.join(test_data_path, "w0.txt"))
-#         n_steps = 200000
-
-#         if not os.path.exists(os.path.join(test_data_path, "w_hard.npy")):
-#             logger.debug("Integrating orbits")
-#             t,w = self.potential.integrate_orbit(w0, dt=0.2, n_steps=n_steps, Integrator=DOPRI853Integrator)
-
-#             logger.debug("Saving orbits")
-#             np.save(os.path.join(test_data_path, "t_hard.npy"), t)
-#             np.save(os.path.join(test_data_path, "w_hard.npy"), w)
-#         else:
-#             logger.debug("Loaded orbits")
-#             t = np.load(os.path.join(test_data_path, "t_hard.npy"))
-#             w = np.load(os.path.join(test_data_path, "w_hard.npy"))
-
-#         self.t = t
-#         self.w = w
 
 def test_compare_action_prepare():
 
     from ..actionangle import _action_prepare, _angle_prepare
 
     logger.setLevel(logging.ERROR)
-    AA = np.random.uniform(0., 100., size=(1000,6))
+    AA = np.random.uniform(0., 100., size=(1000, 6))
     t = np.linspace(0., 100., 1000)
 
-    act_san,n_vectors = solver.solver(AA, N_max=6, symNx=2)
-    A2,b2,n = _action_prepare(AA.T, N_max=6, dx=2, dy=2, dz=2)
-    act_apw = np.array(solve(A2,b2))
+    act_san, n_vectors = solver.solver(AA, N_max=6, symNx=2)
+    A2, b2, n = _action_prepare(AA.T, N_max=6, dx=2, dy=2, dz=2)
+    act_apw = np.array(solve(A2, b2))
 
     ang_san = solver.angle_solver(AA, t, N_max=6, symNx=2, sign=1)
-    A2,b2,n = _angle_prepare(AA.T, t, N_max=6, dx=2, dy=2, dz=2)
-    ang_apw = np.array(solve(A2,b2))
+    A2, b2, n = _angle_prepare(AA.T, t, N_max=6, dx=2, dy=2, dz=2)
+    ang_apw = np.array(solve(A2, b2))
 
     assert np.allclose(act_apw, act_san)
     # assert np.allclose(ang_apw, ang_san)
@@ -259,9 +234,9 @@ def test_regression_113():
     dt = 0.01
     n_steps = 50000
 
-    rvec = [0.3, 0, 0]*u.kpc
+    rvec = [0.3, 0, 0] * u.kpc
     vinit = pot.circular_velocity(rvec)[0].to(u.km/u.s).value
-    vvec = [0, vinit*np.cos(0.01), vinit*np.sin(0.01)]*u.km/u.s
+    vvec = [0, vinit*np.cos(0.01), vinit*np.sin(0.01)] * u.km/u.s
     vvec = 0.999*vvec
 
     ics = PhaseSpacePosition(pos=rvec, vel=vvec)

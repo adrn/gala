@@ -78,7 +78,8 @@ class TestNull(PotentialTestBase):
             assert np.all(g == 0.)
 
             g = self.potential.circular_velocity(arr[:self.ndim], t=0.1)
-            g = self.potential.circular_velocity(arr[:self.ndim], t=0.1*self.potential.units['time'])
+            g = self.potential.circular_velocity(arr[:self.ndim],
+                                                 t=0.1*self.potential.units['time'])
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
             g = self.potential.circular_velocity(arr[:self.ndim], t=t)

@@ -36,7 +36,7 @@ def test_table():
     for line in table:
         galactic = coord.Galactic(l=line['l']*u.deg, b=line['b']*u.deg)
 
-        orp = galactic.transform_to(OrphanNewberg10)
+        orp = galactic.transform_to(OrphanNewberg10())
         true_orp = OrphanNewberg10(phi1=line['Lambda']*u.deg,
                                    phi2=line['Beta']*u.deg)
 
@@ -49,8 +49,8 @@ def test_table():
     with catch_warnings(DeprecationWarning) as w:
         c = Orphan(217.2141*u.degree, -11.4351*u.degree)
     assert len(w) > 0
-    c2 = c.transform_to(coord.Galactic)
-    c3 = c2.transform_to(Orphan)
+    c2 = c.transform_to(coord.Galactic())
+    c3 = c2.transform_to(Orphan())
     assert np.allclose(c3.phi1.degree, c.phi1.degree)
     assert np.allclose(c3.phi2.degree, c.phi2.degree)
 
@@ -60,5 +60,5 @@ def test_kopsov():
                      format='ascii')
     c = coord.SkyCoord(ra=tbl['ra']*u.deg,
                        dec=tbl['dec']*u.deg)
-    orp_gc = c.transform_to(OrphanKoposov19)
+    orp_gc = c.transform_to(OrphanKoposov19())
     assert np.percentile(orp_gc.phi2.degree, 95) < 5

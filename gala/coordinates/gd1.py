@@ -75,6 +75,7 @@ R = np.array([[-0.4776303088, -0.1738432154, 0.8611897727],
               [0.510844589, -0.8524449229, 0.111245042],
               [0.7147776536, 0.4930681392, 0.4959603976]])
 
+
 @frame_transform_graph.transform(coord.StaticMatrixTransform, coord.ICRS,
                                  GD1Koposov10)
 def icrs_to_gd1():
@@ -82,6 +83,7 @@ def icrs_to_gd1():
         heliocentric GD1 coordinates.
     """
     return R
+
 
 @frame_transform_graph.transform(coord.StaticMatrixTransform, GD1Koposov10,
                                  coord.ICRS)

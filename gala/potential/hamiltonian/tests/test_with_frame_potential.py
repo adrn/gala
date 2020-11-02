@@ -14,6 +14,7 @@ from ....integrate import DOPRI853Integrator
 
 # ----------------------------------------------------------------------------
 
+
 def to_rotating_frame(omega, w, t=None):
     """
     TODO: figure out units shit for omega and t
@@ -25,7 +26,7 @@ def to_rotating_frame(omega, w, t=None):
 
     try:
         omega = omega.to(u.rad/u.Myr, equivalencies=u.dimensionless_angles()).value
-    except:
+    except:  # noqa
         omega = omega.value
 
     if isinstance(w, Orbit) and t is not None:
@@ -40,13 +41,13 @@ def to_rotating_frame(omega, w, t=None):
         raise TypeError("Input time must be a Quantity object.")
 
     if t is not None:
-        t = np.atleast_1d(t) # works with Quantity's
+        t = np.atleast_1d(t)  # works with Quantity's
     else:
         t = w.t
 
     try:
         t = t.to(u.Myr).value
-    except:
+    except:  # noqa
         t = t.value
 
     if isinstance(w, PhaseSpacePosition) or isinstance(w, Orbit):
@@ -55,8 +56,8 @@ def to_rotating_frame(omega, w, t=None):
         x_unit = w.x.unit
         v_unit = w.v_x.unit
 
-        x = w.xyz.reshape(3,-1).value
-        v = w.v_xyz.reshape(3,-1).value
+        x = w.xyz.reshape(3, -1).value
+        v = w.v_xyz.reshape(3, -1).value
 
     else:
         Cls = None
@@ -78,7 +79,7 @@ def to_rotating_frame(omega, w, t=None):
 
     # we use Rodrigues' rotation formula to rotate the position
     x_rot = np.cos(theta)*x + np.sin(theta)*np.cross(ee, x, axisa=0, axisb=0, axisc=0) \
-        + (1 - np.cos(theta)) * np.einsum("i,ij->j", ee, x) * ee[:,None]
+        + (1 - np.cos(theta)) * np.einsum("i, ij->j", ee, x) * ee[:, None]
 
     v_cor = np.cross(omega, x, axisa=0, axisb=0, axisc=0) * x_unit
     v_rot = v - v_cor.to(v_unit, u.dimensionless_angles()).value
@@ -97,6 +98,7 @@ def to_rotating_frame(omega, w, t=None):
 
 # ----------------------------------------------------------------------------
 
+
 class TestWithPotentialStaticFrame(_TestBase):
     obj = Hamiltonian(NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.,
                                                           units=galactic),
@@ -105,6 +107,7 @@ class TestWithPotentialStaticFrame(_TestBase):
     @pytest.mark.skip("Not implemented")
     def test_hessian(self):
         pass
+
 
 class TestKeplerRotatingFrame(_TestBase):
     Omega = [0., 0, 1.]*u.one
@@ -118,7 +121,7 @@ class TestKeplerRotatingFrame(_TestBase):
 
     def test_integrate(self):
 
-        w0 = PhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.,0.])
+        w0 = PhaseSpacePosition(pos=[1., 0, 0.], vel=[0, 1., 0.])
 
         for bl in [True, False]:
             orbit = self.obj.integrate_orbit(w0, dt=1., n_steps=1000,
@@ -128,8 +131,9 @@ class TestKeplerRotatingFrame(_TestBase):
             assert np.allclose(orbit.x.value, 1., atol=1E-7)
             assert np.allclose(orbit.xyz.value[1:], 0., atol=1E-7)
 
+
 class TestKepler2RotatingFrame(_TestBase):
-    Omega = [1.,1.,1.]*u.one
+    Omega = [1., 1., 1.]*u.one
     E_unit = u.one
     obj = Hamiltonian(KeplerPotential(m=1., units=dimensionless),
                       ConstantRotatingFrame(Omega=Omega, units=dimensionless))
@@ -143,7 +147,7 @@ class TestKepler2RotatingFrame(_TestBase):
         # --------------------------------------------------------------
         # when Omega is off from orbital frequency
         #
-        w0 = PhaseSpacePosition(pos=[1.,0,0.], vel=[0,1.1,0.])
+        w0 = PhaseSpacePosition(pos=[1., 0, 0.], vel=[0, 1.1, 0.])
 
         for bl in [True, False]:
             orbit = self.obj.integrate_orbit(w0, dt=0.1, n_steps=10000,
@@ -151,11 +155,12 @@ class TestKepler2RotatingFrame(_TestBase):
                                              Integrator=DOPRI853Integrator)
 
             L = orbit.angular_momentum()
-            C = orbit.energy() - np.sum(self.Omega[:,None] * L, axis=0)
+            C = orbit.energy() - np.sum(self.Omega[:, None] * L, axis=0)
             dC = np.abs((C[1:]-C[0])/C[0])
-            assert np.all(dC < 1E-9) # conserve Jacobi constant
+            assert np.all(dC < 1E-9)  # conserve Jacobi constant
 
-@pytest.mark.parametrize("name,Omega,tol", [
+
+@pytest.mark.parametrize("name, Omega, tol", [
     ("z-aligned co-rotating", [0, 0, 1.]*u.one, 1E-12),
     ("z-aligned", [0, 0, 1.5834]*u.one, 1E-12),
     ("random", [0.95792653, 0.82760659, 0.66443135]*u.one, 1E-10),
@@ -166,7 +171,7 @@ def test_velocity_rot_frame(name, Omega, tol):
 
     r0 = 1.245246
     potential = HernquistPotential(m=1., c=0.2, units=dimensionless)
-    vc = potential.circular_velocity([r0,0,0]).value[0]
+    vc = potential.circular_velocity([r0, 0, 0]).value[0]
     w0 = PhaseSpacePosition(pos=[r0, 0, 0.],
                             vel=[0, vc, 0.])
     Omega = Omega * [1., 1., vc/r0]

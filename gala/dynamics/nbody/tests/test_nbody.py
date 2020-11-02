@@ -13,6 +13,7 @@ from ....units import UnitSystem, galactic
 # Project
 from ..core import DirectNBody
 
+
 class TestDirectNBody:
 
     def setup(self):
@@ -53,7 +54,7 @@ class TestDirectNBody:
                             external_potential=self.ext_pot, units=usys2)
         nbody = DirectNBody(self.w0, particle_potentials=[None, None],
                             units=usys2)
-        nbody = DirectNBody(self.w0, particle_potentials=[None, None],
+        nbody = DirectNBody(self.w0, particle_potentials=[None, None],  # noqa
                             external_potential=self.ext_pot)
 
         # Different INVALID ways to initialize
@@ -142,7 +143,7 @@ class TestDirectNBody:
 
     def test_directnbody_integrate_rotframe(self):
         # Now compare with/without mass with external potential:
-        frame = ConstantRotatingFrame(Omega=[0,0,1]*self.w0[0].v_y/self.w0[0].x,
+        frame = ConstantRotatingFrame(Omega=[0, 0, 1]*self.w0[0].v_y/self.w0[0].x,
                                       units=self.usys)
         nbody = DirectNBody(self.w0,
                             particle_potentials=self.particle_potentials,

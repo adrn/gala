@@ -3,11 +3,11 @@ import astropy.units as u
 import pytest
 
 # Project
-from .helpers import _TestBase
 from .. import Hamiltonian
 from ...potential.builtin import KeplerPotential
 from ...frame.builtin import StaticFrame, ConstantRotatingFrame
-from ....units import solarsystem, galactic, dimensionless
+from ....units import solarsystem, galactic
+
 
 def test_init():
     p = KeplerPotential(m=1.)

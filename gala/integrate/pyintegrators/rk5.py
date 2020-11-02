@@ -62,7 +62,7 @@ class RK5Integrator(Integrator):
         """
 
         # Runge-Kutta Fehlberg formulas (see: Numerical Recipes)
-        F = lambda t, w: self.F(t, w, *self._func_args)
+        F = lambda t, w: self.F(t, w, *self._func_args)  # noqa
 
         K = np.zeros((6,)+w.shape)
         K[0] = dt * F(t, w)
@@ -70,7 +70,8 @@ class RK5Integrator(Integrator):
         K[2] = dt * F(t + A[2]*dt, w + B[2][0]*K[0] + B[2][1]*K[1])
         K[3] = dt * F(t + A[3]*dt, w + B[3][0]*K[0] + B[3][1]*K[1] + B[3][2]*K[2])
         K[4] = dt * F(t + A[4]*dt, w + B[4][0]*K[0] + B[4][1]*K[1] + B[4][2]*K[2] + B[4][3]*K[3])
-        K[5] = dt * F(t + A[5]*dt, w + B[5][0]*K[0] + B[5][1]*K[1] + B[5][2]*K[2] + B[5][3]*K[3] + B[5][4]*K[4])
+        K[5] = dt * F(t + A[5]*dt,
+                      w + B[5][0]*K[0] + B[5][1]*K[1] + B[5][2]*K[2] + B[5][3]*K[3] + B[5][4]*K[4])
 
         # shift
         dw = np.zeros_like(w)

@@ -1,5 +1,5 @@
 # Standard library
-from collections import namedtuple, OrderedDict
+from collections import namedtuple
 import warnings
 import re
 
@@ -115,11 +115,11 @@ class PhaseSpacePosition(object):
 
         Parameters
         ----------
-        pos : :class:`~astropy.coordinates.BaseRepresentation`, :class:`~astropy.units.Quantity`, array_like
+        pos : representation, quantity_like, or array_like
             Positions. If a numpy array (e.g., has no units), this will be
             stored as a dimensionless :class:`~astropy.units.Quantity`. See
             the note above about the assumed meaning of the axes of this object.
-        vel : :class:`~astropy.coordinates.BaseDifferential`, :class:`~astropy.units.Quantity`, array_like
+        vel : differential, quantity_like, or array_like
             Velocities. If a numpy array (e.g., has no units), this will be
             stored as a dimensionless :class:`~astropy.units.Quantity`. See
             the note above about the assumed meaning of the axes of this object.
@@ -216,7 +216,7 @@ class PhaseSpacePosition(object):
                 elif m.repr_name == name:
                     old_to_new[name] = m.new_name
 
-        mapping = OrderedDict()
+        mapping = dict()
         for name in getattr(self, which).components:
             mapping[old_to_new.get(name, name)] = name
 
@@ -234,7 +234,7 @@ class PhaseSpacePosition(object):
         mappings = self.representation_mappings.get(
             getattr(self, which).__class__, [])
 
-        extra = OrderedDict()
+        extra = dict()
         for m in mappings:
             if (m.new_name not in self.get_components(which) and
                     not isinstance(m, RegexRepresentationMapping)):
@@ -396,7 +396,7 @@ class PhaseSpacePosition(object):
         Parameters
         ----------
         frame : :class:`~astropy.coordinates.BaseCoordinateFrame`
-            The class or frame instance specifying the desired output frame.
+            The frame instance specifying the desired output frame.
             For example, :class:`~astropy.coordinates.ICRS`.
         galactocentric_frame : :class:`~astropy.coordinates.Galactocentric`
             This is the assumed frame that the position and velocity of this
@@ -449,7 +449,7 @@ class PhaseSpacePosition(object):
         -------
         w : `~numpy.ndarray`
             A numpy array of all positions and velocities, without units.
-            Will have shape ``(2*ndim,...)``.
+            Will have shape ``(2*ndim, ...)``.
 
         """
         if self.ndim == 3:

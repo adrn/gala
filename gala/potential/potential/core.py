@@ -1,7 +1,7 @@
 # Standard library
 import abc
-import copy as pycopy
 from collections import OrderedDict
+import copy as pycopy
 import warnings
 import uuid
 
@@ -33,7 +33,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     the potential energy at a given position ``q``
     and time ``t``: ``_energy(q, t)``. For integration, the subclasses
     must also define a method to evaluate the gradient,
-    ``_gradient(q,t)``. Optionally, they may also define methods
+    ``_gradient(q, t)``. Optionally, they may also define methods
     to compute the density and hessian: ``_density()``, ``_hessian()``.
     """
     ndim = 3
@@ -222,7 +222,8 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, q)
         ret_unit = self.units['length'] / self.units['time']**2
-        return (self._gradient(q, t=t).T.reshape(orig_shape) * ret_unit).to(self.units['acceleration'])
+        uu = self.units['acceleration']
+        return (self._gradient(q, t=t).T.reshape(orig_shape) * ret_unit).to(uu)
 
     def density(self, q, t=0.):
         """
@@ -670,7 +671,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         Compute the total energy (per unit mass) of a point in phase-space
         in this potential. Assumes the last axis of the input position /
         velocity is the dimension axis, e.g., for 100 points in 3-space,
-        the arrays should have shape (100,3).
+        the arrays should have shape (100, 3).
 
         Parameters
         ----------
@@ -759,7 +760,7 @@ class CompositePotential(PotentialBase, OrderedDict):
         >>> p2 = SomePotential(func2) # doctest: +SKIP
         >>> cp = CompositePotential(component1=p1, component2=p2) # doctest: +SKIP
 
-    This object actually acts like an `OrderedDict`, so if you want to
+    This object actually acts like a dictionary, so if you want to
     preserve the order of the potential components, use::
 
         >>> cp = CompositePotential() # doctest: +SKIP
@@ -771,7 +772,8 @@ class CompositePotential(PotentialBase, OrderedDict):
 
         >>> from gala.potential import HernquistPotential
         >>> cp = CompositePotential()
-        >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10., units=(u.kpc,u.Myr,u.Msun,u.radian))
+        >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10.,
+        ...                                     units=(u.kpc, u.Myr, u.Msun, u.radian))
 
     """
     def __init__(self, *args, **kwargs):

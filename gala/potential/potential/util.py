@@ -63,7 +63,7 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
 
         >>> from gala.potential import Hamiltonian
         >>> H = Hamiltonian(p1)
-        >>> orbit = H.integrate_orbit([1.,0], dt=0.01, n_steps=1000)
+        >>> orbit = H.integrate_orbit([1., 0], dt=0.01, n_steps=1000)
 
     """
     try:

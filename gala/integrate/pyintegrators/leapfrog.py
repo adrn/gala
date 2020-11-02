@@ -39,7 +39,7 @@ class LeapfrogIntegrator(Integrator):
     .. math::
 
         \Phi &= \frac{1}{2}q^2\\
-        H(q,p) &= \frac{1}{2}(p^2 + q^2)
+        H(q, p) &= \frac{1}{2}(p^2 + q^2)
 
 
     In this system,
@@ -51,10 +51,10 @@ class LeapfrogIntegrator(Integrator):
 
 
     We will use the variable ``w`` to represent the full phase-space vector,
-    :math:`w = (q,p)`. We define a function that computes the time derivates
+    :math:`w = (q, p)`. We define a function that computes the time derivates
     at any given time, ``t``, and phase-space position, ``w``::
 
-        def F(t,w):
+        def F(t, w):
             dw = [w[1], -w[0]]
             return dw
 
@@ -69,13 +69,13 @@ class LeapfrogIntegrator(Integrator):
     of initial conditions::
 
         integrator = LeapfrogIntegrator(acceleration)
-        times,ws = integrator.run(w0=[1.,0.], dt=0.1, n_steps=1000)
+        times, ws = integrator.run(w0=[1., 0.], dt=0.1, n_steps=1000)
 
     .. note::
 
         When integrating a single vector of initial conditions, the return
         array will have 2 axes. In the above example, the returned array will
-        have shape ``(2,1001)``. If an array of initial conditions are passed
+        have shape ``(2, 1001)``. If an array of initial conditions are passed
         in, the return array will have 3 axes, where the last axis is for the
         individual orbits.
 

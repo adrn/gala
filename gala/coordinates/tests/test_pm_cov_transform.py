@@ -14,6 +14,7 @@ sky_offset_frame = coord.SkyOffsetFrame(
     rotation=135.7 * u.deg
 )
 
+
 def setup_function(fn):
     ra, dec, pmra, pmdec = np.load(get_pkg_data_filename('c_pm.npy'))
     c = coord.SkyCoord(ra=ra*u.deg, dec=dec*u.deg,

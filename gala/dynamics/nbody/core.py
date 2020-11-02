@@ -61,7 +61,7 @@ class DirectNBody:
                                  "passed in with `particle_potentials`.")
 
             # TODO: this is a MAJOR HACK
-            if w0.shape[0] > 65536: # see MAX_NBODY in _nbody.pyx
+            if w0.shape[0] > 65536:  # see MAX_NBODY in _nbody.pyx
                 raise NotImplementedError("We currently only support direct "
                                           "N-body integration for <= 65536 "
                                           "particles.")

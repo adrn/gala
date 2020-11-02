@@ -13,6 +13,7 @@ from ...units import DimensionlessUnitSystem
 
 __all__ = ['load', 'save']
 
+
 def _unpack_params(p):
     params = p.copy()
     for key, item in p.items():
@@ -29,6 +30,7 @@ def _unpack_params(p):
             del params[key+'_unit']
 
     return params
+
 
 def _parse_component(component, module):
     # need this here for circular import
@@ -62,10 +64,11 @@ def _parse_component(component, module):
 
     try:
         Potential = getattr(potential, class_name)
-    except AttributeError: # HACK: this might be bad to assume
+    except AttributeError:  # HACK: this might be bad to assume
         Potential = getattr(gala_potential, class_name)
 
     return Potential(units=unitsys, **params)
+
 
 def from_dict(d, module=None):
     """
@@ -107,7 +110,7 @@ def from_dict(d, module=None):
                                "'blah')")
 
             params = component.get('parameters', {})
-            params = _unpack_params(params) # unpack quantities
+            params = _unpack_params(params)  # unpack quantities
             param_groups[name] = params
         p = getattr(potential, d['class'])(**param_groups)
 
@@ -118,6 +121,7 @@ def from_dict(d, module=None):
 
 # ----------------------------------------------------------------------------
 
+
 def _pack_params(p):
     params = p.copy()
     for key, item in p.items():
@@ -125,10 +129,11 @@ def _pack_params(p):
             params[key] = item.value
             params[key+'_unit'] = str(item.unit)
 
-        if hasattr(params[key], 'tolist'): # convert array to list
+        if hasattr(params[key], 'tolist'):  # convert array to list
             params[key] = params[key].tolist()
 
     return params
+
 
 def _to_dict_help(potential):
     d = dict()
@@ -144,6 +149,7 @@ def _to_dict_help(potential):
         d['parameters'] = params
 
     return d
+
 
 def to_dict(potential):
     """
@@ -179,6 +185,7 @@ def to_dict(potential):
     return d
 
 # ----------------------------------------------------------------------------
+
 
 def load(f, module=None):
     """

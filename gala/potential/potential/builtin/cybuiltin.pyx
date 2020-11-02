@@ -15,7 +15,6 @@ except AttributeError:
     myclassmethod = __builtins__['classmethod']
 
 # Standard library
-from collections import OrderedDict
 import warnings
 
 # Third-party

@@ -1,6 +1,5 @@
 # Third-party
 import numpy as np
-import pytest
 
 # Project
 from ... import potential as gp
@@ -9,20 +8,21 @@ from ..nonlinear import lyapunov_max, fast_lyapunov_max, surface_of_section
 from ...integrate import DOPRI853Integrator
 from ...units import galactic
 
+
 class TestForcedPendulum(object):
 
     def setup(self):
 
-        def F(t,x,A,omega_d):
-            q,p = x
-            return np.array([p,-np.sin(q) + A*np.cos(omega_d*t)])
+        def F(t, x, A, omega_d):
+            q, p = x
+            return np.array([p, -np.sin(q) + A*np.cos(omega_d*t)])
 
         # initial conditions and parameter choices for chaotic / regular pendulum
-        self.regular_w0 = np.array([1.,0.])
+        self.regular_w0 = np.array([1., 0.])
         self.regular_par = (0.055, 0.7)
         self.regular_integrator = DOPRI853Integrator(F, func_args=self.regular_par)
 
-        self.chaotic_w0 = np.array([3.,0.])
+        self.chaotic_w0 = np.array([3., 0.])
         self.chaotic_par = (0.07, 0.75)
         self.chaotic_integrator = DOPRI853Integrator(F, func_args=self.chaotic_par)
 
@@ -53,7 +53,7 @@ class TestForcedPendulum(object):
         # pl.savefig(os.path.join(str(tmpdir),"pend_regular.png"))
 
         # pl.figure()
-        # pl.plot(t, regular_ws[:,0], marker='')
+        # pl.plot(t, regular_ws[:, 0], marker='')
         # pl.savefig(os.path.join(str(tmpdir),"pend_orbit_regular.png"))
 
         # pl.figure()
@@ -61,45 +61,46 @@ class TestForcedPendulum(object):
         # pl.savefig(os.path.join(str(tmpdir),"pend_chaotic.png"))
 
         # pl.figure()
-        # pl.plot(t, chaotic_ws[:,0], marker='')
+        # pl.plot(t, chaotic_ws[:, 0], marker='')
         # pl.savefig(os.path.join(str(tmpdir),"pend_orbit_chaotic.png"))
 
         # pl.close('all')
 
 # --------------------------------------------------------------------
 
+
 class HenonHeilesBase(object):
 
-    def potential(self,w,A,B,C,D):
-        x,y = w[:2]
+    def potential(self, w, A, B, C, D):
+        x, y = w[:2]
         term1 = 0.5*(A*x**2 + B*y**2)
         term2 = D*x**2*y - C/3.*y**3
         return term1 + term2
 
-    def acceleration(self,w,A,B,C,D):
-        x,y = w[:2]
+    def acceleration(self, w, A, B, C, D):
+        x, y = w[:2]
         ax = -(A*x + 2*D*x*y)
         ay = -(B*y + D*x*x - C*y*y)
         return np.array([ax, ay])
 
-    def jerk(self,w,A,B,C,D):
-        x,y = w[:2]
-        dx,dy = w[4:6]
+    def jerk(self, w, A, B, C, D):
+        x, y = w[:2]
+        dx, dy = w[4:6]
 
         dax = -(A+2*D*y)*dx - 2*D*x*dy
         day = -2*D*x*dx - (B-2*C*y)*dy
 
-        return np.array([dax,day])
+        return np.array([dax, day])
 
-    def F_max(self,t,w,*args):
-        x,y,px,py = w
+    def F_max(self, t, w, *args):
+        x, y, px, py = w
         term1 = np.array([px, py])
         term2 = self.acceleration(w, *args)
-        return np.vstack((term1,term2))
+        return np.vstack((term1, term2))
 
     def setup(self):
         # parameter choices
-        self.par = (1.,1.,1.,1.)
+        self.par = (1., 1., 1., 1.)
         self.n_steps = 2000
         self.dt = 2.
 
@@ -124,15 +125,17 @@ class HenonHeilesBase(object):
         # pl.savefig(os.path.join(str(tmpdir),"hh_lyap_max_{}.png".format(self.__class__.__name__)))
 
         # pl.clf()
-        # pl.plot(ws[...,0], ws[...,1], marker='')
+        # pl.plot(ws[..., 0], ws[..., 1], marker='')
         # pl.savefig(os.path.join(str(tmpdir),"hh_orbit_lyap_max_{}.png".format(self.__class__.__name__)))
+
 
 # initial conditions from LP-VI documentation:
 class TestHenonHeilesStablePeriodic(HenonHeilesBase):
     def setup(self):
         super().setup()
-        self.w0 = np.array([0.,0.295456,0.407308431,0.])
+        self.w0 = np.array([0., 0.295456, 0.407308431, 0.])
         self.check = lambda x: x < 1E-3
+
 
 class TestHenonHeilesStableQuasi1(HenonHeilesBase):
     def setup(self):
@@ -140,17 +143,20 @@ class TestHenonHeilesStableQuasi1(HenonHeilesBase):
         self.w0 = np.array([0., 0.483, 0.27898039, 0.])
         self.check = lambda x: x < 2E-3
 
+
 class TestHenonHeilesStableQuasi2(HenonHeilesBase):
     def setup(self):
         super().setup()
         self.w0 = np.array([0., 0.46912, 0.291124891, 0.])
         self.check = lambda x: x < 2E-3
 
+
 class TestHenonHeilesStableChaos1(HenonHeilesBase):
     def setup(self):
         super().setup()
         self.w0 = np.array([0., 0.509, 0.254624859, 0.])
         self.check = lambda x: x > 2E-3
+
 
 class TestHenonHeilesStableChaos2(HenonHeilesBase):
     def setup(self):
@@ -159,6 +165,7 @@ class TestHenonHeilesStableChaos2(HenonHeilesBase):
         self.check = lambda x: x > 1E-2
 
 # --------------------------------------------------------------------
+
 
 class TestLogarithmic(object):
 
@@ -175,8 +182,8 @@ class TestLogarithmic(object):
         X0 = -0.2
         y0 = 0.
         E0 = -0.4059
-        Y0 = np.sqrt(E0 - self.hamiltonian.potential.energy([x0,y0,0.]).value)
-        chaotic_w0 = [x0,y0,0.,X0,Y0,0.]
+        Y0 = np.sqrt(E0 - self.hamiltonian.potential.energy([x0, y0, 0.]).value)
+        chaotic_w0 = [x0, y0, 0., X0, Y0, 0.]
 
         # initial conditions from LP-VI documentation:
         self.w0s = np.array([[0.49, 0., 0., 1.3156, 0.4788, 0.],  # regular
@@ -190,7 +197,7 @@ class TestLogarithmic(object):
         d0 = 1e-5
         noffset = 2
 
-        for ii,w0 in enumerate(self.w0s):
+        for ii, w0 in enumerate(self.w0s):
             print(ii, w0)
             lyap, orbit = fast_lyapunov_max(w0, self.hamiltonian,
                                             dt=self.dt, n_steps=self.n_steps,
@@ -208,7 +215,7 @@ class TestLogarithmic(object):
             # pl.savefig(os.path.join(str(tmpdir),"log_lyap_max_{}.png".format(ii)))
 
             # energy conservation
-            E = orbit[:,0].energy().value # returns 3 orbits
+            E = orbit[:, 0].energy().value  # returns 3 orbits
             dE = np.abs(E[1:] - E[0])
 
             E = orbit2.energy().value
@@ -218,8 +225,8 @@ class TestLogarithmic(object):
             # plt.semilogy(dE, marker='')
             # plt.semilogy(dE_ww, marker='')
 
-            # fig,axes = plt.subplots(1,2,figsize=(10,5))
-            # axes[0].plot(orbit.pos[0,:,0], orbit.pos[1,:,0], marker='') # ignore offset orbits
+            # fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+            # axes[0].plot(orbit.pos[0, :, 0], orbit.pos[1, :, 0], marker='') # ignore offset orbits
             # axes[1].plot(orbit2.pos[0], orbit2.pos[1], marker='')
             # fig.savefig(os.path.join(str(tmpdir),"log_orbit_lyap_max_{}.png".format(ii)))
 
@@ -237,9 +244,7 @@ class TestLogarithmic(object):
             return self.hamiltonian._gradient(w_T, np.array([t])).T
 
         integrator = DOPRI853Integrator(F)
-        for ii,w0 in enumerate(self.w0s):
-            print(ii)
-
+        for ii, w0 in enumerate(self.w0s):
             lyap1, orbit1 = fast_lyapunov_max(w0, self.hamiltonian,
                                               dt=self.dt, n_steps=self.n_steps//8,
                                               d0=d0, noffset_orbits=noffset,
@@ -249,7 +254,7 @@ class TestLogarithmic(object):
             # check energy conservation
             E = orbit1.energy().value
             dE_fast = np.abs(E[1:] - E[0])
-            assert np.all(dE_fast[:,0] < 1E-10)
+            assert np.all(dE_fast[:, 0] < 1E-10)
 
             lyap2, orbit2 = lyapunov_max(w0.copy(), integrator,
                                          dt=self.dt, n_steps=self.n_steps//8,
@@ -262,19 +267,19 @@ class TestLogarithmic(object):
             E = orbit2.energy(self.hamiltonian).value
             dE_slow = np.abs(E[1:] - E[0])
 
-            if not np.all(dE_slow[:,0] < 1E-10):
+            if not np.all(dE_slow[:, 0] < 1E-10):
                 import matplotlib.pyplot as plt
 
                 plt.figure()
-                plt.plot(orbit2.pos[0,-128:,0], orbit2.pos[1,-128:,0], marker='.')
-                plt.plot(orbit2.pos[0,-128:,0], orbit2.pos[2,-128:,0], marker='.')
+                plt.plot(orbit2.pos[0, -128:, 0], orbit2.pos[1, -128:, 0], marker='.')
+                plt.plot(orbit2.pos[0, -128:, 0], orbit2.pos[2, -128:, 0], marker='.')
 
                 plt.figure()
-                plt.semilogy(dE_slow[:,0], marker='.')
+                plt.semilogy(dE_slow[:, 0], marker='.')
 
                 plt.show()
 
-            assert np.all(dE_slow[:,0] < 1E-10)
+            assert np.all(dE_slow[:, 0] < 1E-10)
 
             # plots
             # import matplotlib.pyplot as plt
@@ -285,14 +290,14 @@ class TestLogarithmic(object):
             # plt.savefig(os.path.join(str(tmpdir),"log_lyap_compare_{}.png".format(ii)))
 
             # plt.figure()
-            # plt.semilogy(dE_fast[:,0], marker='')
-            # plt.semilogy(dE_slow[:,0], marker='')
+            # plt.semilogy(dE_fast[:, 0], marker='')
+            # plt.semilogy(dE_slow[:, 0], marker='')
             # # plt.savefig(os.path.join(str(tmpdir),"log_dE_{}.png".format(ii)))
 
-            # fig,axes = plt.subplots(1,2,figsize=(6,6))
-            # axes[0].plot(orbit1.pos[0,:,0], orbit1.pos[1,:,0],
+            # fig, axes = plt.subplots(1, 2, figsize=(6, 6))
+            # axes[0].plot(orbit1.pos[0, :, 0], orbit1.pos[1, :, 0],
             #              marker='.', linestyle='none', alpha=0.1)
-            # axes[1].plot(orbit2.pos[0,:,0], orbit2.pos[1,:,0],
+            # axes[1].plot(orbit2.pos[0, :, 0], orbit2.pos[1, :, 0],
             #              marker='.', linestyle='none', alpha=0.1)
             # plt.savefig(os.path.join(str(tmpdir),"log_orbit_lyap_max_{}.png".format(ii)))
 

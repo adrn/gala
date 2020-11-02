@@ -52,9 +52,9 @@ cdef void sat_rotation_matrix(double *w, # in
     cdef:
         double x1_norm, x2_norm, x3_norm = 0.
         unsigned int i
-        double *x1 = [0.,0.,0.]
-        double *x2 = [0.,0.,0.]
-        double *x3 = [0.,0.,0.]
+        double *x1 = [0., 0., 0.]
+        double *x2 = [0., 0., 0.]
+        double *x3 = [0., 0., 0.]
 
     x1[0] = w[0]
     x1[1] = w[1]
@@ -157,12 +157,12 @@ cpdef _test_sat_rotation_matrix():
         double[::1] w = np.zeros(6)
         double[::1] wrot = np.zeros(6)
         double[::1] w2 = np.zeros(6)
-        double[:,::1] R = np.zeros((3,3))
+        double[:, ::1] R = np.zeros((3, 3))
         unsigned int i, j
 
     for i in range(n):
         w = np.random.uniform(size=6)
-        sat_rotation_matrix(&w[0], &R[0,0])
+        sat_rotation_matrix(&w[0], &R[0, 0])
 
         x = np.array(R).dot(np.array(w)[:3])
         assert x[0] > 0
@@ -190,9 +190,9 @@ cpdef _test_to_sat_coords_roundtrip():
     n = 1024
 
     cdef:
-        double[:,::1] w = np.random.uniform(size=(n,6))
-        double[:,::1] w_sat = np.random.uniform(size=(n,6))
-        double[:,::1] R = np.zeros((3,3))
+        double[:, ::1] w = np.random.uniform(size=(n, 6))
+        double[:, ::1] w_sat = np.random.uniform(size=(n, 6))
+        double[:, ::1] R = np.zeros((3, 3))
 
         double[::1] w_prime = np.zeros(6)
         double[::1] w2 = np.zeros(6)
@@ -200,12 +200,12 @@ cpdef _test_to_sat_coords_roundtrip():
         unsigned int i, j
 
     for i in range(n):
-        sat_rotation_matrix(&w_sat[i,0], &R[0,0])
-        to_sat_coords(&w[i,0], &R[0,0], &w_prime[0])
-        from_sat_coords(&w_prime[0], &R[0,0], &w2[0])
+        sat_rotation_matrix(&w_sat[i, 0], &R[0, 0])
+        to_sat_coords(&w[i, 0], &R[0, 0], &w_prime[0])
+        from_sat_coords(&w_prime[0], &R[0, 0], &w2[0])
 
         for j in range(6):
-            assert np.allclose(w[i,j], w2[j])
+            assert np.allclose(w[i, j], w2[j])
 
 cpdef _test_car_to_cyl_roundtrip():
     import numpy as np
@@ -213,17 +213,17 @@ cpdef _test_car_to_cyl_roundtrip():
     n = 1024
 
     cdef:
-        double[:,::1] w = np.random.uniform(-10,10,size=(n,6))
+        double[:, ::1] w = np.random.uniform(-10, 10, size=(n, 6))
         double[::1] cyl = np.zeros(6)
         double[::1] w2 = np.zeros(6)
 
         unsigned int i, j
 
     for i in range(n):
-        car_to_cyl(&w[i,0], &cyl[0])
+        car_to_cyl(&w[i, 0], &cyl[0])
         cyl_to_car(&cyl[0], &w2[0])
         for j in range(6):
-            assert np.allclose(w[i,j], w2[j])
+            assert np.allclose(w[i, j], w2[j])
 
 cpdef _test_cyl_to_car_roundtrip():
     import numpy as np
@@ -231,19 +231,19 @@ cpdef _test_cyl_to_car_roundtrip():
     n = 1024
 
     cdef:
-        double[:,::1] cyl = np.random.uniform(0,2*np.pi,size=(n,6))
+        double[:, ::1] cyl = np.random.uniform(0, 2*np.pi, size=(n, 6))
         double[::1] w = np.zeros(6)
         double[::1] cyl2 = np.zeros(6)
 
         unsigned int i, j
 
     for i in range(n):
-        cyl_to_car(&cyl[i,0], &w[0])
+        cyl_to_car(&cyl[i, 0], &w[0])
         car_to_cyl(&w[0], &cyl2[0])
         for j in range(6):
-            # assert np.allclose(cyl[i,j], cyl2[j])
-            if not np.allclose(cyl[i,j], cyl2[j]):
-                print(i,j,cyl[i,j], cyl2[j])
+            # assert np.allclose(cyl[i, j], cyl2[j])
+            if not np.allclose(cyl[i, j], cyl2[j]):
+                print(i, j, cyl[i, j], cyl2[j])
 
 # cdef void car_to_sph(double *xyz, double *sph):
 #     # TODO: note this isn't consistent with the velocity transform because of theta

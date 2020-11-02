@@ -21,6 +21,7 @@ if not GSL_ENABLED:
     pytest.skip("skipping SCF tests: they depend on GSL",
                 allow_module_level=True)
 
+
 @pytest.mark.parametrize("basename", [
     'simple-hernquist', 'multi-hernquist', 'simple-nonsph', 'random', 'wang-zhao',
 ])
@@ -32,8 +33,8 @@ def test_density(basename):
     xyz = np.ascontiguousarray(np.loadtxt(pos_path, skiprows=1).T)
     coeff = np.atleast_2d(np.loadtxt(coeff_path, skiprows=1))
 
-    nmax = coeff[:,0].astype(int).max()
-    lmax = coeff[:,1].astype(int).max()
+    nmax = coeff[:, 0].astype(int).max()
+    lmax = coeff[:, 1].astype(int).max()
 
     cos_coeff = np.zeros((nmax+1, lmax+1, lmax+1))
     sin_coeff = np.zeros((nmax+1, lmax+1, lmax+1))
@@ -106,8 +107,8 @@ def test_gradient(basename):
     coeff = np.atleast_2d(np.loadtxt(coeff_path, skiprows=1))
     accp = np.loadtxt(accp_path)
 
-    nmax = coeff[:,0].astype(int).max()
-    lmax = coeff[:,1].astype(int).max()
+    nmax = coeff[:, 0].astype(int).max()
+    lmax = coeff[:, 1].astype(int).max()
 
     cos_coeff = np.zeros((nmax+1, lmax+1, lmax+1))
     sin_coeff = np.zeros((nmax+1, lmax+1, lmax+1))
