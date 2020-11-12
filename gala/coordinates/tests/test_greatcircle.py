@@ -100,6 +100,17 @@ def test_pole_from_endpoints():
     assert u.allclose(pole.ra, 270*u.deg)
     assert u.allclose(pole.dec, 0*u.deg)
 
+    # Should work even if coord has velocities:
+    c1 = coord.SkyCoord(0*u.deg, 0*u.deg,
+                        pm_ra_cosdec=10*u.mas/u.yr,
+                        pm_dec=-0.5*u.mas/u.yr)
+    c2 = coord.SkyCoord(0*u.deg, 90*u.deg,
+                        pm_ra_cosdec=10*u.mas/u.yr,
+                        pm_dec=-0.5*u.mas/u.yr)
+    pole = pole_from_endpoints(c1, c2)
+    assert u.allclose(pole.ra, 270*u.deg)
+    assert u.allclose(pole.dec, 0*u.deg)
+
 
 def test_pole_from_xyz():
     xnew = coord.UnitSphericalRepresentation(185*u.deg, 32.5*u.deg).to_cartesian()

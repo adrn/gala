@@ -38,7 +38,7 @@ def reference_to_greatcircle(reference_frame, greatcircle_frame):
 
     # Define rotation matrices along the position angle vector, and
     # relative to the origin.
-    pole = greatcircle_frame.pole.transform_to(coord.ICRS)
+    pole = greatcircle_frame.pole.transform_to(coord.ICRS())
     ra0 = greatcircle_frame.ra0
     center = greatcircle_frame.center
     R_rot = rotation_matrix(greatcircle_frame.rotation, 'z')
@@ -323,14 +323,23 @@ def pole_from_endpoints(coord1, coord2):
     pole : `~astropy.coordinates.SkyCoord`
         The coordinates of the pole.
     """
-    c1 = coord1.cartesian / coord1.cartesian.norm()
+    cart1 = coord1.cartesian.without_differentials()
+    cart2 = coord2.cartesian.without_differentials()
+    if isinstance(coord1, coord.SkyCoord):
+        frame1 = coord1.frame
+    elif isinstance(coord1, coord.BaseCoordinateFrame):
+        frame1 = coord1
+    else:
+        raise TypeError('Input coordinate must be a SkyCoord or coordinate frame instance.')
 
-    coord2 = coord2.transform_to(coord1.frame)
-    c2 = coord2.cartesian / coord2.cartesian.norm()
+    c1 = cart1 / cart1.norm()
+
+    coord2 = coord2.transform_to(frame1)
+    c2 = cart2 / cart2.norm()
 
     pole = c1.cross(c2)
     pole = pole / pole.norm()
-    return coord1.frame.realize_frame(pole)
+    return frame1.realize_frame(pole)
 
 
 def sph_midpoint(coord1, coord2):
@@ -348,12 +357,21 @@ def sph_midpoint(coord1, coord2):
     midpt : `~astropy.coordinates.SkyCoord`
         The coordinates of the spherical midpoint.
     """
-    c1 = coord1.cartesian / coord1.cartesian.norm()
+    cart1 = coord1.cartesian.without_differentials()
+    cart2 = coord2.cartesian.without_differentials()
+    if isinstance(coord1, coord.SkyCoord):
+        frame1 = coord1.frame
+    elif isinstance(coord1, coord.BaseCoordinateFrame):
+        frame1 = coord1
+    else:
+        raise TypeError('Input coordinate must be a SkyCoord or coordinate frame instance.')
 
-    coord2 = coord2.transform_to(coord1.frame)
-    c2 = coord2.cartesian / coord2.cartesian.norm()
+    c1 = cart1 / cart1.norm()
+
+    coord2 = coord2.transform_to(frame1)
+    c2 = cart2 / cart2.norm()
 
     midpt = 0.5 * (c1 + c2)
     usph = midpt.represent_as(coord.UnitSphericalRepresentation)
 
-    return coord1.frame.realize_frame(usph)
+    return frame1.realize_frame(usph)
