@@ -8,8 +8,11 @@ New Features
 Bug fixes
 ---------
 
-- Fixes a bug when calling `orbit.norbits` when the representation is not
+- Fixed a bug when calling `orbit.norbits` when the representation is not
   cartesian.
+
+- Fixed a bug with ``GreatCircleICRSFrame.from_endpoints()`` that caused an
+  error when the input coordinates had associated velocity data.
 
 
 API changes
