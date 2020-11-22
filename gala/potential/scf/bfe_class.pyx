@@ -165,7 +165,6 @@ class InterpolatedSCFPotential(CPotentialBase, GSL_only=True):
         length, mass, time, and angle units.
 
     """
-<<<<<<< HEAD
     m = PotentialParameter('m', physical_type='mass')
     r_s = PotentialParameter('r_s', physical_type='length')
     Sjnlm = PotentialParameter('Sjnlm', physical_type='dimensionless')
@@ -191,26 +190,6 @@ class InterpolatedSCFPotential(CPotentialBase, GSL_only=True):
             raise ValueError(
                 "The input coefficient arrays must have the same "
                 f"shape! Received: {shp1} and {shp2}")
-=======
-    _physical_types = {'m': 'mass',
-                       'r_s': 'length',
-                       'nmax': 'dimensionless',
-                       'lmax': 'dimensionless',
-                       'Sjnlm': 'dimensionless',
-                       'Tjnlm': 'dimensionless',
-                       'tj': 'time',
-                       'originj': 'length'}
-
-    def __init__(self, m, r_s, Sjnlm, Tjnlm, tj, originj=None, units=None,
-                 R=None, origin=None): # TODO: don't allow passing in these
-        from gala._cconfig import GSL_ENABLED
-        if not GSL_ENABLED:
-            raise ValueError(gsl_err_msg.format('InterpolatedSCFPotential'))
-
-        Sjnlm = np.array(Sjnlm)
-        Tjnlm = np.array(Tjnlm)
-        tj = np.array(tj)
->>>>>>> TODO
 
         # extra parameters
         ntimes = self.parameters['Sjnlm'].shape[0]
