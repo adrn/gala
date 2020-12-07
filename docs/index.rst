@@ -2,6 +2,10 @@
 
 .. _gala:
 
+.. raw:: html
+
+   <img src="_static/Gala_Logo_RGB.png" width="50%" />
+
 ####
 Gala
 ####

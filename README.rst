@@ -1,5 +1,9 @@
-Gala
-====
+.. raw:: html
+
+   <a href="https://gala.adrian.pw">
+      <img src="https://gala.adrian.pw/en/latest/_static/Gala_Logo_RGB.png" width="50%" />
+   </a>
+
 
 Gala is a Python package for Galactic and gravitational dynamics.
 
@@ -86,9 +90,9 @@ the `LICENSE <https://github.com/adrn/gala/blob/main/LICENSE>`_ file.
 .. |Coverage Status| image:: https://codecov.io/gh/adrn/gala/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/adrn/gala
 .. |Build status| image:: https://github.com/adrn/gala/workflows/nix-tests/badge.svg?branch=main
-   :target: https://github.com/adrn/gala/workflows/nix-tests
+   :target: https://github.com/adrn/gala/actions?query=workflow%3Anix-tests
 .. |Windows status| image:: https://github.com/adrn/gala/workflows/Windows-tests/badge.svg?branch=main
-   :target: https://github.com/adrn/gala/workflows/Windows-tests
+   :target: https://github.com/adrn/gala/actions?query=workflow%3AWindows-tests
 .. |License| image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
    :target: https://github.com/adrn/gala/blob/main/LICENSE
 .. |PyPI| image:: https://badge.fury.io/py/gala.svg
