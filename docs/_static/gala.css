@@ -9,3 +9,7 @@ div.topbar ul li a.homelink {
     background: none;
     background-image: none;
 }
+
+span#logotext2 {
+    color: #764099;
+}
