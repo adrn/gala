@@ -180,3 +180,5 @@ exclude_patterns += ['_build', '**.ipynb_checkpoints']
 
 # Custom setting for nbsphinx - timeout for executing one cell
 nbsphinx_timeout = 300
+if 'NBSPHINX_KERNEL_NAME' in os.environ:
+    nbsphinx_kernel_name = os.environ['NBSPHINX_KERNEL_NAME']

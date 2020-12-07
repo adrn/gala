@@ -2,13 +2,13 @@
 
 .. _gala:
 
+.. raw:: html
+
+   <img src="_static/Gala_Logo_RGB.png" width="50%" />
+
 ####
 Gala
 ####
-
-.. raw:: html
-
-   <img src="../_static/Gala_Logo_RGB.png" width="100%" />
 
 The forces on stars, galaxies, and dark matter under external gravitational
 fields lead to the dynamical evolution of structures in the universe. The orbits

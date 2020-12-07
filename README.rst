@@ -1,5 +1,9 @@
-Gala
-====
+.. raw:: html
+
+   <a href="https://gala.adrian.pw">
+      <img src="https://gala.adrian.pw/en/latest/_static/Gala_Logo_RGB.png" width="50%" />
+   </a>
+
 
 Gala is a Python package for Galactic and gravitational dynamics.
 
