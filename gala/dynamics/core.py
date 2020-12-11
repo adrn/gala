@@ -128,6 +128,9 @@ class PhaseSpacePosition(object):
 
         """
 
+        if isinstance(pos, coord.Galactocentric):
+            pos = pos.data
+
         if not isinstance(pos, coord.BaseRepresentation):
             # assume Cartesian if not specified
             if not hasattr(pos, 'unit'):
