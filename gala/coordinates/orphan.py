@@ -69,7 +69,8 @@ class OrphanNewberg10(coord.BaseCoordinateFrame):
     # to have the longitude components wrap at the desired angle
     def represent_as(self, base, s='base', in_frame_units=False):
         r = super().represent_as(base, s=s, in_frame_units=in_frame_units)
-        r.lon.wrap_angle = self._default_wrap_angle
+        if hasattr(r, "lon"):
+            r.lon.wrap_angle = self._default_wrap_angle
         return r
     represent_as.__doc__ = coord.BaseCoordinateFrame.represent_as.__doc__
 
@@ -150,7 +151,8 @@ class OrphanKoposov19(coord.BaseCoordinateFrame):
     # to have the longitude components wrap at the desired angle
     def represent_as(self, base, s='base', in_frame_units=False):
         r = super().represent_as(base, s=s, in_frame_units=in_frame_units)
-        r.lon.wrap_angle = self._default_wrap_angle
+        if hasattr(r, "lon"):
+            r.lon.wrap_angle = self._default_wrap_angle
         return r
     represent_as.__doc__ = coord.BaseCoordinateFrame.represent_as.__doc__
 
