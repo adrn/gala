@@ -6,6 +6,20 @@
 Installation
 ************
 
+With ``pip`` (recommended)
+==========================
+
+To install the latest stable version using ``pip``, use::
+
+    python -m pip install gala
+
+This is the recommended way to install ``gala``.
+
+To install the development version::
+
+    python -m pip install git+https://github.com/adrn/gala
+
+
 With ``conda``
 ==============
 
@@ -14,33 +28,19 @@ channel with::
 
     conda install -c conda-forge gala
 
-With ``pip``
-============
 
-To install the latest stable version using ``pip``, use::
-
-    pip install gala
-
-To install the development version::
-
-    pip install git+https://github.com/adrn/gala
-
-Cloning, Building, Installing
-=============================
+From Source: Cloning, Building, Installing
+==========================================
 
 The latest development version of gala can be cloned from
 `GitHub <https://github.com/>`_ using ``git``::
 
-   git clone git://github.com/adrn/gala.git
+    git clone git://github.com/adrn/gala.git
 
-To build the project (from the root of the source tree, e.g., inside
+To build and install the project (from the root of the source tree, e.g., inside
 the cloned ``gala`` directory)::
 
-    python setup.py build
-
-To install the project::
-
-    python setup.py install
+    python -m pip install .
 
 
 Installing on Windows
@@ -48,7 +48,9 @@ Installing on Windows
 
 We have successfully installed Gala on Windows within an Anaconda installation,
 which installs and uses GCC to compile C code. Unfortunately, Gala will not work
-with Microsoft Visual Studio's C compiler because it is not C99 compliant. With Anaconda, you can install ``gsl`` (see below) and then install Gala with ``pip``::
+with Microsoft Visual Studio's C compiler because it is not C99 compliant. With
+Anaconda, you can install ``gsl`` (see below) and then install Gala with
+``pip``::
 
     pip install gala
 
@@ -60,7 +62,7 @@ Some functionality in Gala depends on the GNU Scientific Library (GSL), a C
 library for numerical and mathematical programming. By default, Gala will
 determine whether to install with or without GSL support depending on whether it
 can find a GSL installation on your machine. If you are not sure whether you
-have GSL installed or not, try running:
+have GSL installed or not, try running::
 
     gsl-config --version
 
@@ -74,7 +76,7 @@ Installing with ``conda``
 
 If you use a Mac computer, we recommend installing GSL using the `anaconda
 <https://www.anaconda.com/download/>`_ Python package manager. Using ``conda``,
-you can install GSL with:
+you can install GSL with::
 
     conda install -c conda-forge gsl
 
@@ -84,7 +86,7 @@ Installing with ``apt``
 
 If you use Linux, you can install GSL with anaconda (see directions above), or
 with ``apt``. To install with apt, make sure to install both ``gsl-bin`` and
-``libgsl0-dev``:
+``libgsl0-dev``::
 
     apt-get install gsl-bin libgsl0-dev
 
@@ -94,10 +96,9 @@ Forcing gala to install without GSL support
 
 You can force Gala to build without GSL support using the ``--nogsl`` flag
 passed to setup.py. To use this flag, you must install Gala from source by
-cloning the repository (see above) and running:
+cloning the repository (see above) and running::
 
-    python setup.py build --nogsl
-    python setup.py install
+    python -m pip install gala --install-option="--nogsl"
 
 
 Python Dependencies
@@ -106,19 +107,14 @@ Python Dependencies
 This packages has the following dependencies (note that the version requirements
 below indicate the versions for which Gala is tested with and should work with):
 
-- `Python`_ >= 3.7
+* `Python`_ >= 3.7
+* `Numpy`_ >= 1.18
+* `Cython <http://www.cython.org/>`_: >= 0.29
+* `Astropy`_ >= 4
+* `PyYAML`_ >= 3.10
+* `scipy`_ >= 1.1
 
-- `Numpy`_ >= 1.18
-
-- `Cython <http://www.cython.org/>`_: >= 0.29
-
-- `Astropy`_ >= 3
-
-- `PyYAML`_ >= 3.10
-
-- `scipy`_ >= 1.1
-
-You can use ``pip`` or ``conda`` to install these automatically.
+``pip`` and ``conda`` should install and enforce these versions automatically.
 
 Optional
 --------
