@@ -87,7 +87,11 @@ numpydoc_xref_aliases = {
 
 autosummary_generate = True
 
-# automodapi_toctreedirnm = 'api'
+automodapi_toctreedirnm = 'api'
+
+# The reST default role (used for this markup: `text`) to use for all
+# documents. Set to the "smart" one.
+default_role = 'obj'
 
 # Class documentation should contain *both* the class docstring and
 # the __init__ docstring
@@ -215,7 +219,6 @@ automodsumm_inherited_members = True
 # Add nbsphinx
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',

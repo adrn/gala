@@ -7,8 +7,8 @@
    <img src="_static/Gala_Logo_RGB.png" width="50%"
     style="margin-bottom: 32px;"/>
 
-Galactic Dynamics encapsulates the study and modeling of the formation, history,
-and evolution of galaxies. A core component of this are *orbits*:
+Galactic Dynamics is the study and modeling of the formation, history, and
+evolution of galaxies, a core component of which are *orbits*:
 numerically-integrated trajectories for stars, dark matter particles, or
 galaxies and star clusters themselves.
 

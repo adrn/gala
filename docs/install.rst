@@ -120,5 +120,6 @@ should install and enforce these versions automatically.
 Optional
 --------
 
-- `Sympy`_ for creating `~gala.potential.PotentialBase` objects from a
-    mathematical expression using `~gala.potential.from_equation()`.
+- `Sympy`_ for creating :class:`~gala.potential.potential.PotentialBase`
+  subclass instances from a mathematical expression using
+  :func:`~gala.potential.potential.from_equation()`.
