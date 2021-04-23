@@ -1,6 +1,6 @@
-*************
-Gala Glossary
-*************
+*******************************
+Glossary of Documentation Terms
+*******************************
 
 .. glossary::
 

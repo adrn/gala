@@ -33,8 +33,7 @@ new tutorial content, please `open an issue on GitHub
 .. Nav bar (top of docs)
 
 .. toctree::
-   :maxdepth: 3
-   :hidden:
+   :maxdepth: 1
    :titlesonly:
 
    install
@@ -42,7 +41,6 @@ new tutorial content, please `open an issue on GitHub
    tutorials
    reference
    contributing
-   glossary
 
 
 ************
