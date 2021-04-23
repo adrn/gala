@@ -7,36 +7,27 @@
    <img src="_static/Gala_Logo_RGB.png" width="50%"
     style="margin-bottom: 32px;"/>
 
-The forces on stars, galaxies, and dark matter under external gravitational
-fields lead to the dynamical evolution of structures in the universe. The orbits
-of these bodies are therefore key to understanding the formation, history, and
-future state of galaxies. The field of "galactic dynamics," which aims to model
-the gravitating components of galaxies to study their structure and evolution,
-is now well-established, commonly taught, and frequently used in astronomy.
-Aside from toy problems and demonstrations, the majority of problems require
-efficient numerical tools, many of which require the same base code (e.g., for
-performing numerical orbit integration).
+Galactic Dynamics encapsulates the study and modeling of the formation, history,
+and evolution of galaxies. A core component of this are *orbits*:
+numerically-integrated trajectories for stars, dark matter particles, or
+galaxies and star clusters themselves.
 
-``gala`` is an Astropy-affiliated Python package for galactic dynamics. Python
-enables wrapping low-level languages (e.g., C) for speed without losing
-flexibility or ease-of-use in the user-interface. The API for ``gala`` was
-designed to provide a class-based and user-friendly interface to fast (C or
-Cython-optimized) implementations of common operations such as gravitational
-potential and force evaluation, orbit integration, dynamical transformations,
-and chaos indicators for nonlinear dynamics. ``gala`` also relies heavily on and
-interfaces well with the implementations of physical units and astronomical
-coordinate systems in the ``Astropy`` package (`astropy.units` and
-`astropy.coordinates`).
+``gala`` is an Astropy-affiliated Python package that aims to provide efficient
+tools for performing common tasks needed in galactic dynamics research. Much of
+the code here uses Python for flexible, user-friendly interfaces that interact
+with wrappers for low-level code (primarily C) to enable fast computations.
+Common operations include `gravitational potential and force evaluations
+<potential/index.html>`_, `orbit integrations <integrate/index.html>`_,
+`dynamical coordinate transformations <dynamics/index.html>`_, and computing
+`chaos indicators for nonlinear dynamics <dynamics/nonlinear.html>`_. ``gala``
+utilizes the implementations of physical units and astronomical coordinate
+systems in the ``Astropy`` package (:ref:`astropy.units <astropy-units>` and
+:ref:`astropy.coordinates <astropy-coordinates>`).
 
-
-Most of the code in ``gala`` centers around implementations of
-`gravitational potentials <potential/index.html>`_,
-`numerical integration <integrate/index.html>`_,
-and `nonlinear dynamics <dynamics/index.html>`_.
-The package is being actively developed in
-`a public repository on GitHub <https://github.com/adrn/gala>`_ so if you
-have any trouble,
-`open an issue <https://github.com/adrn/gala/issues>`_ there.
+The package is being actively developed in `a public repository on GitHub
+<https://github.com/adrn/gala>`_ so if you have any trouble or have requests for
+new tutorial content, please `open an issue on GitHub
+<https://github.com/adrn/gala/issues>`_.
 
 .. ---------------------
 .. Nav bar (top of docs)
@@ -86,8 +77,8 @@ paper:
       title = {Gala: A Python package for galactic dynamics},
       journal = {The Journal of Open Source Software}
 
-Please consider also citing the Zenodo DOI |DOI| of the version you used as a
-software citation:
+Please also cite the Zenodo DOI |DOI| of the version you used as a software
+citation:
 
 .. include:: ZENODO.rst
 
