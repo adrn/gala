@@ -256,7 +256,7 @@ if not zenodo_path.exists():
     except Exception as e:
         warnings.warn(f"Failed to retrieve Zenodo record for Gala: {str(e)}")
         zenodo_record = ("`Retrieve the Zenodo record here "
-                         "<https://zenodo.org/api/records/4159870>`_")
+                         "<https://zenodo.org/record/4159870>`_")
 
     with open(zenodo_path, 'w') as f:
         f.write(zenodo_record)
