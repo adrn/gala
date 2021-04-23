@@ -7,6 +7,10 @@
    <img src="_static/Gala_Logo_RGB.png" width="50%"
     style="margin-bottom: 32px;"/>
 
+****
+Gala
+****
+
 Galactic Dynamics is the study and modeling of the formation, history, and
 evolution of galaxies, a core component of which are *orbits*:
 numerically-integrated trajectories for stars, dark matter particles, or
@@ -43,15 +47,14 @@ new tutorial content, please `open an issue on GitHub
    contributing
 
 
-************
 Contributors
-************
+============
 
 .. include:: ../AUTHORS.rst
 
-************************
+
 Citation and Attribution
-************************
+========================
 
 |JOSS| |DOI|
 

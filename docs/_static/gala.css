@@ -23,6 +23,17 @@ pre, code {
   line-height: 155%;
 }
 
+/* Make output lighter gray and no italics for the love of all that is holy! */
+.highlight .go {
+  color: #555555;
+  font-style: normal;
+}
+
+/* OMG why would you bold numbers */
+.highlight .mf, .highlight .mi {
+  font-weight: 300;
+}
+
 h1 {
   font-family: "Lato", sans-serif;
   color: #013243; /* warm black */
