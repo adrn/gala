@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
-#
 
 import os
+import pathlib
 import sys
 import datetime
 from importlib import import_module
+import warnings
 
 # Get configuration information from setup.cfg
 from configparser import ConfigParser
@@ -124,23 +124,16 @@ author = setup_cfg['author']
 copyright = '{0}, {1}'.format(
     datetime.datetime.now().year, setup_cfg['author'])
 
-# The version info for the project you're documenting, acts as replacement for
-# |version| and |release|, also used in various other places throughout the
-# built documents.
-
-# Note: For gala, the package name is different from the project name!
 package_name = 'gala'
 import_module(package_name)
 package = sys.modules[package_name]
 
 # TODO: Use Gala style when building docs
-mpl_style = None
-exec('from {0}.mpl_style import mpl_style'.format(package_name))
-if mpl_style is not None:
-    plot_rcparams = mpl_style
-    plot_apply_rcparams = True
+from gala.mpl_style import mpl_style
+plot_rcparams = mpl_style
+plot_apply_rcparams = True
 plot_formats = [('png', 200)]
-plot_include_source = False
+plot_include_source = True
 
 # The short X.Y version.
 version = package.__version__.split('-', 1)[0]
@@ -243,3 +236,24 @@ extensions = [
 nbsphinx_timeout = 300
 if 'NBSPHINX_KERNEL_NAME' in os.environ:
     nbsphinx_kernel_name = os.environ['NBSPHINX_KERNEL_NAME']
+
+
+## -- Retrieve Zenodo record for most recent version of Gala:
+zenodo_path = pathlib.Path('ZENODO.rst')
+if not zenodo_path.exists():
+    import textwrap
+    try:
+        import requests
+        headers = {'accept': 'application/x-bibtex'}
+        response = requests.get('https://zenodo.org/api/records/4159870',
+                                headers=headers)
+        response.encoding = 'utf-8'
+        zenodo_record = (".. code-block:: bibtex\n\n" +
+                         textwrap.indent(response.text, " "*4))
+    except Exception as e:
+        warnings.warn(f"Failed to retrieve Zenodo record for Gala: {str(e)}")
+        zenodo_record = ("`Retrieve the Zenodo record here "
+                         "<https://zenodo.org/api/records/4159870>`_")
+
+    with open(zenodo_path, 'w') as f:
+        f.write(zenodo_record)

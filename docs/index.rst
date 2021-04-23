@@ -4,11 +4,8 @@
 
 .. raw:: html
 
-   <img src="_static/Gala_Logo_RGB.png" width="50%" />
-
-****
-Gala
-****
+   <img src="_static/Gala_Logo_RGB.png" width="50%"
+    style="margin-bottom: 32px;"/>
 
 The forces on stars, galaxies, and dark matter under external gravitational
 fields lead to the dynamical evolution of structures in the universe. The orbits
@@ -69,8 +66,13 @@ Citation and Attribution
 
 |JOSS| |DOI|
 
+`Here is a list of papers that use Gala
+<https://ui.adsabs.harvard.edu/search/q=citations(bibcode%3A2017JOSS....2..388P)&sort=date%20desc%2C%20bibcode%20desc&p_=0>`_
+
 If you make use of this code, please cite the `JOSS <http://joss.theoj.org>`_
-paper::
+paper:
+
+.. code-block:: bibtex
 
     @article{gala,
       doi = {10.21105/joss.00388},
@@ -85,27 +87,9 @@ paper::
       journal = {The Journal of Open Source Software}
 
 Please consider also citing the Zenodo DOI |DOI| of the version you used as a
-software citation::
+software citation:
 
-      @software{gala:zenodo,
-         author       = {Adrian Price-Whelan and
-                        Brigitta Sipőcz and
-                        Daniel Lenz and
-                        Johnny Greco and
-                        Nathaniel Starkman and
-                        Dan Foreman-Mackey and
-                        P. L. Lim and
-                        Semyeong Oh and
-                        Sergey Koposov and
-                        Syrtis Major},
-         title        = {adrn/gala: v1.3},
-         month        = oct,
-         year         = 2020,
-         publisher    = {Zenodo},
-         version      = {v1.3},
-         doi          = {10.5281/zenodo.4159870},
-         url          = {https://doi.org/10.5281/zenodo.4159870}
-      }
+.. include:: ZENODO.rst
 
 .. |JOSS| image:: http://joss.theoj.org/papers/10.21105/joss.00388/status.svg
    :target: http://joss.theoj.org/papers/10.21105/joss.00388
