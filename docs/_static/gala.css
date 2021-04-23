@@ -1,15 +1,47 @@
-@import url("bootstrap-astropy.css");
-
-div.topbar a.brand {
-    background: none;
-    background-image: none;
-}
-
-div.topbar ul li a.homelink {
-    background: none;
-    background-image: none;
-}
-
 span#logotext2 {
     color: #764099;
+}
+
+/* Taken from NumPy */
+
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Open+Sans:ital,wght@0,400;0,600;1,400;1,600&display=swap');
+
+.navbar-brand img {
+   height: 60px;
+}
+.navbar-brand {
+   height: 75px;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  color:#4A4A4A; /* numpy.org body color */
+}
+
+pre, code {
+  font-size: 100%;
+  line-height: 155%;
+}
+
+h1 {
+  font-family: "Lato", sans-serif;
+  color: #013243; /* warm black */
+}
+
+
+h2 {
+  color: #4d77cf; /* han blue */
+  letter-spacing: -.03em;
+}
+
+h3 {
+  color: #013243; /* warm black */
+  letter-spacing: -.03em;
+}
+
+/* Override some aspects of the pydata-sphinx-theme: taken from Pandas */
+
+:root {
+  /* Use softer blue from bootstrap's default info color */
+  --pst-color-info: 23, 162, 184;
 }

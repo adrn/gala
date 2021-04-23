@@ -1,8 +1,8 @@
-.. _gala-why:
+.. _gala-getting-started:
 
-================
-Benefits of Gala
-================
+***************
+Getting Started
+***************
 
     >>> import astropy.units as u
     >>> import numpy as np

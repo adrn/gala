@@ -6,9 +6,9 @@
 
    <img src="_static/Gala_Logo_RGB.png" width="50%" />
 
-####
+****
 Gala
-####
+****
 
 The forces on stars, galaxies, and dark matter under external gravitational
 fields lead to the dynamical evolution of structures in the universe. The orbits
@@ -41,57 +41,21 @@ The package is being actively developed in
 have any trouble,
 `open an issue <https://github.com/adrn/gala/issues>`_ there.
 
-*************
-Documentation
-*************
+.. ---------------------
+.. Nav bar (top of docs)
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 3
+   :hidden:
+   :titlesonly:
 
    install
-   conventions
-   benefits
-   testing
-..   whatsnew/1.0.rst
-..   getting_started
+   getting_started
+   tutorials
+   reference
+   contributing
+   glossary
 
-***********
-Subpackages
-***********
-
-.. toctree::
-   :maxdepth: 1
-
-   coordinates/index
-   integrate/index
-   potential/index
-   dynamics/index
-   units
-   util
-
-*********
-Tutorials
-*********
-
-.. toctree::
-   :maxdepth: 1
-   :glob:
-
-   examples/Milky-Way-model.ipynb
-   examples/integrate-potential-example
-   examples/integrate-rotating-frame
-   examples/mock-stream-heliocentric
-   examples/circ-restricted-3body
-   examples/Arbitrary-density-SCF.ipynb
-
-*****************
-How to contribute
-*****************
-
-We welcome contributions from anyone via pull requests on `GitHub
-<https://github.com/adrn/gala>`_. If you don't feel comfortable modifying or
-adding functionality, we also welcome feature requests and bug reports as
-`GitHub issues <https://github.com/adrn/gala/issues>`_.
 
 ************
 Contributors
@@ -99,9 +63,9 @@ Contributors
 
 .. include:: ../AUTHORS.rst
 
-***********
-Attribution
-***********
+************************
+Citation and Attribution
+************************
 
 |JOSS| |DOI|
 
@@ -120,31 +84,30 @@ paper::
       title = {Gala: A Python package for galactic dynamics},
       journal = {The Journal of Open Source Software}
 
-Please consider also citing the Zenodo DOI |DOI| as a software citation::
+Please consider also citing the Zenodo DOI |DOI| of the version you used as a
+software citation::
 
-    @misc{Price-Whelan:2017,
-      author       = {Adrian Price-Whelan and
-                      Brigitta Sipocz and
-                      Syrtis Major and
-                      Semyeong Oh},
-      title        = {adrn/gala: v0.2.1},
-      month        = jul,
-      year         = 2017,
-      doi          = {10.5281/zenodo.833339},
-      url          = {https://doi.org/10.5281/zenodo.833339}
-    }
+      @software{gala:zenodo,
+         author       = {Adrian Price-Whelan and
+                        Brigitta Sipőcz and
+                        Daniel Lenz and
+                        Johnny Greco and
+                        Nathaniel Starkman and
+                        Dan Foreman-Mackey and
+                        P. L. Lim and
+                        Semyeong Oh and
+                        Sergey Koposov and
+                        Syrtis Major},
+         title        = {adrn/gala: v1.3},
+         month        = oct,
+         year         = 2020,
+         publisher    = {Zenodo},
+         version      = {v1.3},
+         doi          = {10.5281/zenodo.4159870},
+         url          = {https://doi.org/10.5281/zenodo.4159870}
+      }
 
 .. |JOSS| image:: http://joss.theoj.org/papers/10.21105/joss.00388/status.svg
    :target: http://joss.theoj.org/papers/10.21105/joss.00388
 .. |DOI| image:: https://zenodo.org/badge/17577779.svg
    :target: https://zenodo.org/badge/latestdoi/17577779
-
-
-************
-More details
-************
-
-.. toctree::
-   :maxdepth: 1
-
-   whatsnew/index.rst
