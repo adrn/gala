@@ -104,17 +104,18 @@ cloning the repository (see above) and running::
 Python Dependencies
 ===================
 
-This packages has the following dependencies (note that the version requirements
-below indicate the versions for which Gala is tested with and should work with):
+This packages has the following dependencies:
 
 * `Python`_ >= 3.7
-* `Numpy`_ >= 1.18
-* `Cython <http://www.cython.org/>`_: >= 0.29
-* `Astropy`_ >= 4
-* `PyYAML`_ >= 3.10
-* `scipy`_ >= 1.1
+* `Numpy`_
+* `Cython <http://www.cython.org/>`_
+* `Astropy`_
+* `PyYAML`_
+* `scipy`_
 
-``pip`` and ``conda`` should install and enforce these versions automatically.
+Explicit version requirements are specified in the project `setup.cfg
+<https://github.com/adrn/gala/blob/main/setup.cfg>`_. ``pip`` and ``conda``
+should install and enforce these versions automatically.
 
 Optional
 --------
