@@ -1,7 +1,5 @@
 .. include:: references.txt
 
-.. _gala:
-
 .. raw:: html
 
    <img src="_static/Gala_Logo_RGB.png" width="50%"
@@ -11,15 +9,14 @@
 Gala
 ****
 
-Galactic Dynamics is the study and modeling of the formation, history, and
-evolution of galaxies, a core component of which are *orbits*:
-numerically-integrated trajectories for stars, dark matter particles, or
-galaxies and star clusters themselves.
+Galactic Dynamics is the study of the formation, history, and evolution of
+galaxies using the *orbits* of objects — numerically-integrated trajectories of
+stars, dark matter particles, star clusters, or galaxies themselves.
 
 ``gala`` is an Astropy-affiliated Python package that aims to provide efficient
-tools for performing common tasks needed in galactic dynamics research. Much of
-the code here uses Python for flexible, user-friendly interfaces that interact
-with wrappers for low-level code (primarily C) to enable fast computations.
+tools for performing common tasks needed in Galactic Dynamics research. Much of
+this code uses Python for flexible, user-friendly interfaces that interact with
+wrappers for low-level code (primarily C) to enable fast computations.
 Common operations include `gravitational potential and force evaluations
 <potential/index.html>`_, `orbit integrations <integrate/index.html>`_,
 `dynamical coordinate transformations <dynamics/index.html>`_, and computing
