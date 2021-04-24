@@ -16,19 +16,20 @@ stars, dark matter particles, star clusters, or galaxies themselves.
 ``gala`` is an Astropy-affiliated Python package that aims to provide efficient
 tools for performing common tasks needed in Galactic Dynamics research. Much of
 this code uses Python for flexible, user-friendly interfaces that interact with
-wrappers for low-level code (primarily C) to enable fast computations.
+wrappers around low-level code (primarily C) to enable fast computations.
 Common operations include `gravitational potential and force evaluations
 <potential/index.html>`_, `orbit integrations <integrate/index.html>`_,
 `dynamical coordinate transformations <dynamics/index.html>`_, and computing
 `chaos indicators for nonlinear dynamics <dynamics/nonlinear.html>`_. ``gala``
-utilizes the implementations of physical units and astronomical coordinate
-systems in the ``Astropy`` package (:ref:`astropy.units <astropy-units>` and
+heavily uses the units and astronomical coordinate systems defined in the
+``Astropy`` core package (:ref:`astropy.units <astropy-units>` and
 :ref:`astropy.coordinates <astropy-coordinates>`).
 
-The package is being actively developed in `a public repository on GitHub
-<https://github.com/adrn/gala>`_ so if you have any trouble or have requests for
-new tutorial content, please `open an issue on GitHub
-<https://github.com/adrn/gala/issues>`_.
+This package is being actively developed in `a public repository on GitHub
+<https://github.com/adrn/gala>`_, and we are always looking for new
+contributors! No contribution is too small, so if you have any trouble with this
+code, find a typo, or have requests for new content (tutorials or features),
+please `open an issue on GitHub <https://github.com/adrn/gala/issues>`_.
 
 .. ---------------------
 .. Nav bar (top of docs)
