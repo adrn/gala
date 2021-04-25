@@ -104,14 +104,10 @@ rst_epilog = """
 
 # intersphinx
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/',
-               (None, 'http://data.astropy.org/intersphinx/python3.inv')),
-    'numpy': ('https://numpy.org/doc/stable/',
-              (None, 'http://data.astropy.org/intersphinx/numpy.inv')),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/',
-              (None, 'http://data.astropy.org/intersphinx/scipy.inv')),
-    'matplotlib': ('https://matplotlib.org/',
-                   (None, 'http://data.astropy.org/intersphinx/matplotlib.inv')),
+    'python': ('https://docs.python.org/3/', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'matplotlib': ('https://matplotlib.org/', None),
     'astropy': ('https://docs.astropy.org/en/stable/', None),
     'h5py': ('https://docs.h5py.org/en/stable/', None),
     'sympy': ('https://docs.sympy.org/latest/', None)
@@ -137,7 +133,7 @@ from gala.mpl_style import mpl_style
 plot_rcparams = mpl_style
 plot_apply_rcparams = True
 plot_formats = [('png', 200)]
-plot_include_source = True
+plot_include_source = False
 
 # The short X.Y version.
 version = package.__version__.split('-', 1)[0]
@@ -210,9 +206,6 @@ html_css_files = [
 latex_documents = [('index', project + '.tex', project + u' Documentation',
                     author, 'manual')]
 
-
-## -- Options for the edit_on_github extension ----------------------------------------
-
 # show inherited members for classes
 automodsumm_inherited_members = True
 
@@ -233,7 +226,12 @@ extensions = [
     'sphinx.ext.mathjax',
     'nbsphinx',
     'IPython.sphinxext.ipython_console_highlighting',
-    'matplotlib.sphinxext.plot_directive']
+    'matplotlib.sphinxext.plot_directive',
+    'sphinxcontrib.bibtex']
+
+# Bibliography:
+bibtex_bibfiles = ['refs.bib']
+bibtex_reference_style = 'author_year'
 
 # Custom setting for nbsphinx - timeout for executing one cell
 nbsphinx_timeout = 300

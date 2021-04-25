@@ -1,6 +1,6 @@
 .. include:: ../references.txt
 
-.. _gala-integrate:
+.. module:: gala.integrate
 
 ************************************
 Integration (`gala.integrate`)
@@ -192,3 +192,8 @@ API
 ===
 
 .. automodapi:: gala.integrate
+    :no-main-docstr:
+
+.. NOTE : The no-main-docstr option above is so that .. automodule:: is not
+.. run, and therefore no .. module:: gala.integrate is defined here, which would
+.. duplicate the module definition at the top of this page

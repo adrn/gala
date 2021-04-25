@@ -1,6 +1,6 @@
 .. include:: ../references.txt
 
-.. _potential:
+.. module:: gala.potential
 
 *************************************************
 Gravitational potentials (`gala.potential`)

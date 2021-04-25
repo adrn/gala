@@ -5,6 +5,8 @@
    <img src="_static/Gala_Logo_RGB.png" width="50%"
     style="margin-bottom: 32px;"/>
 
+.. module:: gala
+
 ****
 Gala
 ****
