@@ -17,3 +17,12 @@ User Guide
     dynamics/index
     units
     util
+
+
+Recent additions and changes
+============================
+
+.. toctree::
+    :maxdepth: 2
+
+    whatsnew/index
