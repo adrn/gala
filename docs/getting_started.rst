@@ -135,7 +135,7 @@ positions at times::
 `~gala.dynamics.Orbit` objects have many of their own useful methods for
 performing common tasks, like plotting an orbit::
 
-    >>> orbit.plot()  # doctest: +SKIP
+    >>> orbit.plot(['x', 'y'])  # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -152,7 +152,7 @@ performing common tasks, like plotting an orbit::
                                vel=[13, 245, 8.] * u.km/u.s)
     orbit = mw.integrate_orbit(w0, dt=1*u.Myr, t1=0, t2=2*u.Gyr)
 
-    orbit.plot()
+    orbit.plot(['x', 'y'])
 
 `~gala.dynamics.Orbit` objects by default assume and use Cartesian coordinate
 representations, but these can also be transformed into other representations,
