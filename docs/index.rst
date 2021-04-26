@@ -43,7 +43,7 @@ please `open an issue on GitHub <https://github.com/adrn/gala/issues>`_.
    install
    getting_started
    tutorials
-   reference
+   user_guide
    contributing
 
 
