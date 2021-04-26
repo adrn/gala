@@ -1,5 +1,7 @@
 .. include:: references.txt
 
+.. _gala-user-guide:
+
 **********
 User Guide
 **********

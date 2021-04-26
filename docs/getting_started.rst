@@ -154,98 +154,53 @@ performing common tasks, like plotting an orbit::
 
     orbit.plot()
 
+`~gala.dynamics.Orbit` objects by default assume and use Cartesian coordinate
+representations, but these can also be transformed into other representations,
+like Cylindrical coordinates. For example, we could re-represent the orbit in
+cylindrical coordinates and then plot the orbit in the "meridional plane"::
 
-Extensible and easy to define new potentials
-============================================
-
-New potentials can be easily defined by subclassing the base potential class,
-`~gala.potential.PotentialBase`. For faster orbit integration and computation,
-you can also define potentials with functions that evaluate its derived
-quantities in C by subclassing `~gala.potential.CPotentialBase`. For fast
-creation of potentials for quick testing, you can also create a potential
-class directly from an equation that expresses the potential:
-
-    >>> SHOPotential = gp.from_equation("1/2*k*x**2", vars="x", pars="k",
-    ...                                 name='HarmonicOscillator')
-
-(note: this requires `sympy`).
-
-Classes created this way can then be instantiated and used like any other
-`~gala.potential.PotentialBase` subclass:
-
-    >>> pot = SHOPotential(k=1.)
-    >>> pot.energy([1.])
-    <Quantity [0.5]>
-
-Extremely fast orbit integration
-================================
-
-Most of the guts of the `built-in potential classes <potential>`_ are
-implemented in C, enabling extremely fast orbit integration for single or
-composite potentials:
-
-    >>> pot = gp.IsochronePotential(m=1E10*u.Msun, b=15.*u.kpc, units=galactic)
-    >>> w0 = gd.PhaseSpacePosition(pos=[7.,0,0]*u.kpc,
-    ...                            vel=[0.,50.,0]*u.km/u.s)
-    >>> import timeit
-    >>> timeit.timeit(lambda: gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.5, n_steps=10000), number=100) / 100. # doctest: +SKIP
-    0.0028513244865462184
-
-For a composite potential:
-
-    >>> bulge = gp.IsochronePotential(m=2E10*u.Msun, b=0.5*u.kpc, units=galactic)
-    >>> disk = gp.MiyamotoNagaiPotential(m=6E10*u.Msun, a=3*u.kpc, b=0.26*u.kpc, units=galactic)
-    >>> pot = gp.CCompositePotential(bulge=bulge, disk=disk)
-    >>> timeit.timeit(lambda: gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.5, n_steps=10000), number=100) / 100. # doctest: +SKIP
-    0.0031369362445548177
-
-Precise integrators
-===================
-
-The default orbit integration routine uses `~gala.integrate.LeapfrogIntegrator`,
-but the high-order Dormand-Prince 853 integration scheme is also implemented as
-`~gala.integrate.DOPRI853Integrator`:
-
-    >>> orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.5, n_steps=10000,
-    ...                             Integrator=gi.DOPRI853Integrator)
-
-Easy visualization
-==================
-
-Numerically integrated orbits can be easily visualized using the
-`~gala.dynamics.Orbit.plot()` method:
-
-    >>> orbit.plot() # doctest: +SKIP
+    >>> fig = orbit.cylindrical.plot(['rho', 'z'])  # doctest: +SKIP
 
 .. plot::
     :align: center
+    :context: close-figs
 
-    import astropy.units as u
-    import numpy as np
-    import gala.integrate as gi
-    import gala.dynamics as gd
-    import gala.potential as gp
-    from gala.units import galactic
+    fig = orbit.cylindrical.plot(['rho', 'z'])
 
-    bulge = gp.IsochronePotential(m=2E10*u.Msun, b=0.5*u.kpc, units=galactic)
-    disk = gp.MiyamotoNagaiPotential(m=6E10*u.Msun, a=3*u.kpc, b=0.26*u.kpc, units=galactic)
-    pot = gp.CCompositePotential(bulge=bulge, disk=disk)
+Or estimate the pericenter, apocenter, and eccentricity of the orbit::
 
-    w0 = gd.PhaseSpacePosition(pos=[7.,0,0]*u.kpc,
-                               vel=[0.,50.,0]*u.km/u.s)
+    >>> orbit.pericenter()  # doctest: +FLOAT_CMP
+    <Quantity 8.00498069 kpc>
+    >>> orbit.apocenter()  # doctest: +FLOAT_CMP
+    <Quantity 9.30721946 kpc>
+    >>> orbit.eccentricity()  # doctest: +FLOAT_CMP
+    <Quantity 0.07522087>
 
-    orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.5, n_steps=10000,
-                                Integrator=gi.DOPRI853Integrator)
+`gala.potential` ``Potential`` objects and `~gala.dynamics.Orbit` objects have
+many more possibilities, so please do check out the narrative documentation for
+`gala.potential` and `gala.dynamics` if you would like to learn more!
 
-    fig = orbit.plot()
 
-Astropy units support
+What else can ``gala`` do?
+==========================
+
+This page is meant to only show a few initial things you may want to do with
+`gala`. There is much more functionality that you can discover either through
+the :ref:`tutorials <tutorials>` or by perusing the :ref:`user guide
+<gala-user-guide>`. Some other commonly used functionality includes:
+
+- Generating simulated "mock" stellar stream models (`gala.dynamics.mockstream`)
+- stream and great circle coordinates
+- action-angle
+- chaos indicators
+
+
+Where to go from here
 =====================
 
-All functions and classes have Astropy unit support built in: they accept and
-return `~astropy.units.Quantity` objects wherever possible. In addition, this
-package uses an experimental new `~gala.units.UnitSystem` class for storing
-systems of units and default representations.
+TODO:
+Tutorials are narrative walkthroughs
+User guide is reference material, with some narrative description of functionality
 
 
 Bibliography

@@ -1,4 +1,4 @@
-.. _coordinates:
+.. module:: gala.coordinates
 
 *********************************************
 Coordinate Systems (`gala.coordinates`)
@@ -235,6 +235,7 @@ API
 
 .. automodapi:: gala.coordinates
     :no-inheritance-diagram:
+    :no-main-docstr:
     :skip: GD1
     :skip: Orphan
     :skip: Sagittarius

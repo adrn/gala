@@ -178,11 +178,6 @@ function and any keyword arguments are passed through to that function::
     fig = w.plot(components=['x', 'v_z'], color='r',
                  facecolor='none', marker='o', s=20, alpha=0.5)
 
-Phase-space position API
-------------------------
-.. automodapi:: gala.dynamics.core
-    :no-heading:
-    :headings: ^^
 
 .. _orbit:
 
@@ -297,11 +292,6 @@ latter few get better with smaller timesteps::
     >>> orbit.apocenter() # doctest: +FLOAT_CMP
     <Quantity 19.390916871970223 kpc>
 
-Orbit API
----------
-.. automodapi:: gala.dynamics.orbit
-    :no-heading:
-    :headings: ^^
 
 More information
 ================
