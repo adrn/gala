@@ -140,6 +140,7 @@ performing common tasks, like plotting an orbit::
 .. plot::
     :align: center
     :context: close-figs
+    :width: 60%
 
     import astropy.units as u
     import matplotlib.pyplot as plt
@@ -164,6 +165,7 @@ cylindrical coordinates and then plot the orbit in the "meridional plane"::
 .. plot::
     :align: center
     :context: close-figs
+    :width: 60%
 
     fig = orbit.cylindrical.plot(['rho', 'z'])
 

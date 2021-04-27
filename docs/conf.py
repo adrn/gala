@@ -128,11 +128,33 @@ package_name = 'gala'
 import_module(package_name)
 package = sys.modules[package_name]
 
-# TODO: Use Gala style when building docs
-from gala.mpl_style import mpl_style
-plot_rcparams = mpl_style
+from cmastro import cmaps
+plot_formats = [('png', 200), ('pdf', 200)]
 plot_apply_rcparams = True
-plot_formats = [('png', 200)]
+plot_rcparams = {
+    'image.cmap': 'cma:hesperia',
+
+    # Fonts:
+    'font.size': 16,
+    'figure.titlesize': 'x-large',
+    'axes.titlesize': 'large',
+    'axes.labelsize': 'large',
+    'xtick.labelsize': 'medium',
+    'ytick.labelsize': 'medium',
+
+    # Axes:
+    'axes.labelcolor': 'k',
+    'axes.axisbelow': True,
+
+    # Ticks
+    'xtick.color': '#555555',
+    'xtick.direction': 'in',
+    'ytick.color': '#555555',
+    'ytick.direction': 'in',
+
+    'figure.dpi': 300,
+    'savefig.dpi': 300,
+}
 plot_include_source = False
 
 # The short X.Y version.
