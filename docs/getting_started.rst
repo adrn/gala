@@ -191,10 +191,10 @@ This page is meant to only show a few initial things you may want to do with
 the :ref:`tutorials <tutorials>` or by perusing the :ref:`user guide
 <gala-user-guide>`. Some other commonly used functionality includes:
 
-- Generating simulated "mock" stellar stream models (`gala.dynamics.mockstream`)
-- stream and great circle coordinates
-- action-angle
-- chaos indicators
+- :ref:`Generating simulated "mock" stellar stream models <gala-mockstreams>`
+- :ref:`Stellar stream and great circle coordinate systems <gala-coordinates>`
+- :ref:`Transformations to action-angle coordinates <gala-actionangle>`
+- :ref:`Nonlinear dynamics and chaos indicators <gala-nonlinear-dynamics>`
 
 
 Where to go from here

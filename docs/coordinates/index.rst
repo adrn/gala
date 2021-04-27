@@ -1,5 +1,7 @@
 .. module:: gala.coordinates
 
+.. _gala-coordinates:
+
 *********************************************
 Coordinate Systems (`gala.coordinates`)
 *********************************************

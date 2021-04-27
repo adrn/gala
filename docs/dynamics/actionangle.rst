@@ -1,4 +1,4 @@
-.. _actionangle:
+.. _gala-actionangle:
 
 ************************************************
 Transforming to actions, angles, and frequencies

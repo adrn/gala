@@ -1,4 +1,4 @@
-.. _nonlinear:
+.. _gala-nonlinear-dynamics:
 
 ******************
 Nonlinear dynamics
