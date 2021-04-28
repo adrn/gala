@@ -1,0 +1,6 @@
+dependencies:
+  - python=3.8
+  - gsl
+  - pip
+  - pip:
+    - -e .[docs]

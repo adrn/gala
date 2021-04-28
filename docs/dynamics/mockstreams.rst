@@ -1,4 +1,4 @@
-.. _mockstreams:
+.. _gala-mockstreams:
 
 *******************************
 Generating mock stellar streams

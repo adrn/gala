@@ -148,5 +148,11 @@ More details are provided in the linked pages below:
    nonlinear
    nbody
 
+
+API
+===
+
 .. automodapi:: gala.dynamics
-   :allowed-package-names: lyapunov
+    :include: PhaseSpacePosition
+    :include: Orbit
+    :no-inheritance-diagram:

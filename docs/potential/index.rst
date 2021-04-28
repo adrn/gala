@@ -1,6 +1,6 @@
 .. include:: ../references.txt
 
-.. _potential:
+.. module:: gala.potential
 
 *************************************************
 Gravitational potentials (`gala.potential`)
@@ -282,7 +282,6 @@ More details are provided in the linked pages below:
    compositepotential
    origin-rotation
    hamiltonian-reference-frames
-   define-milky-way-model
    scf
 
 API

@@ -1,2 +1,41 @@
-{% extends "autosummary_core/module.rst" %}
-{# The template this is inherited from is in astropy/sphinx/ext/templates/autosummary_core. If you want to modify this template, it is strongly recommended that you still inherit from the astropy template. #}
+{% if referencefile %}
+.. include:: {{ referencefile }}
+{% endif %}
+
+{{ objname }}
+{{ underline }}
+
+.. automodule:: {{ fullname }}
+
+   {% block functions %}
+   {% if functions %}
+   .. rubric:: Functions
+
+   .. autosummary::
+   {% for item in functions %}
+      {{ item }}
+   {%- endfor %}
+   {% endif %}
+   {% endblock %}
+
+   {% block classes %}
+   {% if classes %}
+   .. rubric:: Classes
+
+   .. autosummary::
+   {% for item in classes %}
+      {{ item }}
+   {%- endfor %}
+   {% endif %}
+   {% endblock %}
+
+   {% block exceptions %}
+   {% if exceptions %}
+   .. rubric:: Exceptions
+
+   .. autosummary::
+   {% for item in exceptions %}
+      {{ item }}
+   {%- endfor %}
+   {% endif %}
+   {% endblock %}

@@ -1,112 +1,70 @@
 .. include:: references.txt
 
-.. _gala:
-
 .. raw:: html
 
-   <img src="_static/Gala_Logo_RGB.png" width="50%" />
+   <img src="_static/Gala_Logo_RGB.png" width="50%"
+    style="margin-bottom: 32px;"/>
 
-####
+.. module:: gala
+
+****
 Gala
-####
+****
 
-The forces on stars, galaxies, and dark matter under external gravitational
-fields lead to the dynamical evolution of structures in the universe. The orbits
-of these bodies are therefore key to understanding the formation, history, and
-future state of galaxies. The field of "galactic dynamics," which aims to model
-the gravitating components of galaxies to study their structure and evolution,
-is now well-established, commonly taught, and frequently used in astronomy.
-Aside from toy problems and demonstrations, the majority of problems require
-efficient numerical tools, many of which require the same base code (e.g., for
-performing numerical orbit integration).
+Galactic Dynamics is the study of the formation, history, and evolution of
+galaxies using the *orbits* of objects — numerically-integrated trajectories of
+stars, dark matter particles, star clusters, or galaxies themselves.
 
-``gala`` is an Astropy-affiliated Python package for galactic dynamics. Python
-enables wrapping low-level languages (e.g., C) for speed without losing
-flexibility or ease-of-use in the user-interface. The API for ``gala`` was
-designed to provide a class-based and user-friendly interface to fast (C or
-Cython-optimized) implementations of common operations such as gravitational
-potential and force evaluation, orbit integration, dynamical transformations,
-and chaos indicators for nonlinear dynamics. ``gala`` also relies heavily on and
-interfaces well with the implementations of physical units and astronomical
-coordinate systems in the ``Astropy`` package (`astropy.units` and
-`astropy.coordinates`).
+``gala`` is an Astropy-affiliated Python package that aims to provide efficient
+tools for performing common tasks needed in Galactic Dynamics research. Much of
+this code uses Python for flexible, user-friendly interfaces that interact with
+wrappers around low-level code (primarily C) to enable fast computations.
+Common operations include `gravitational potential and force evaluations
+<potential/index.html>`_, `orbit integrations <integrate/index.html>`_,
+`dynamical coordinate transformations <dynamics/index.html>`_, and computing
+`chaos indicators for nonlinear dynamics <dynamics/nonlinear.html>`_. ``gala``
+heavily uses the units and astronomical coordinate systems defined in the
+``Astropy`` core package (:ref:`astropy.units <astropy-units>` and
+:ref:`astropy.coordinates <astropy-coordinates>`).
 
+This package is being actively developed in `a public repository on GitHub
+<https://github.com/adrn/gala>`_, and we are always looking for new
+contributors! No contribution is too small, so if you have any trouble with this
+code, find a typo, or have requests for new content (tutorials or features),
+please `open an issue on GitHub <https://github.com/adrn/gala/issues>`_.
 
-Most of the code in ``gala`` centers around implementations of
-`gravitational potentials <potential/index.html>`_,
-`numerical integration <integrate/index.html>`_,
-and `nonlinear dynamics <dynamics/index.html>`_.
-The package is being actively developed in
-`a public repository on GitHub <https://github.com/adrn/gala>`_ so if you
-have any trouble,
-`open an issue <https://github.com/adrn/gala/issues>`_ there.
-
-*************
-Documentation
-*************
+.. ---------------------
+.. Nav bar (top of docs)
 
 .. toctree::
    :maxdepth: 1
+   :titlesonly:
 
    install
-   conventions
-   benefits
-   testing
-..   whatsnew/1.0.rst
-..   getting_started
+   getting_started
+   tutorials
+   user_guide
+   contributing
 
-***********
-Subpackages
-***********
 
-.. toctree::
-   :maxdepth: 1
-
-   coordinates/index
-   integrate/index
-   potential/index
-   dynamics/index
-   units
-   util
-
-*********
-Tutorials
-*********
-
-.. toctree::
-   :maxdepth: 1
-   :glob:
-
-   examples/Milky-Way-model.ipynb
-   examples/integrate-potential-example
-   examples/integrate-rotating-frame
-   examples/mock-stream-heliocentric
-   examples/circ-restricted-3body
-   examples/Arbitrary-density-SCF.ipynb
-
-*****************
-How to contribute
-*****************
-
-We welcome contributions from anyone via pull requests on `GitHub
-<https://github.com/adrn/gala>`_. If you don't feel comfortable modifying or
-adding functionality, we also welcome feature requests and bug reports as
-`GitHub issues <https://github.com/adrn/gala/issues>`_.
-
-************
 Contributors
-************
+============
 
 .. include:: ../AUTHORS.rst
 
-***********
-Attribution
-***********
+
+Citation and Attribution
+========================
 
 |JOSS| |DOI|
 
+`Here is a list of papers that use Gala
+<https://ui.adsabs.harvard.edu/search/q=citations(bibcode%3A2017JOSS....2..388P)&sort=date%20desc%2C%20bibcode%20desc&p_=0>`_
+
 If you make use of this code, please cite the `JOSS <http://joss.theoj.org>`_
-paper::
+paper:
+
+.. code-block:: bibtex
 
     @article{gala,
       doi = {10.21105/joss.00388},
@@ -120,31 +78,12 @@ paper::
       title = {Gala: A Python package for galactic dynamics},
       journal = {The Journal of Open Source Software}
 
-Please consider also citing the Zenodo DOI |DOI| as a software citation::
+Please also cite the Zenodo DOI |DOI| of the version you used as a software
+citation:
 
-    @misc{Price-Whelan:2017,
-      author       = {Adrian Price-Whelan and
-                      Brigitta Sipocz and
-                      Syrtis Major and
-                      Semyeong Oh},
-      title        = {adrn/gala: v0.2.1},
-      month        = jul,
-      year         = 2017,
-      doi          = {10.5281/zenodo.833339},
-      url          = {https://doi.org/10.5281/zenodo.833339}
-    }
+.. include:: ZENODO.rst
 
 .. |JOSS| image:: http://joss.theoj.org/papers/10.21105/joss.00388/status.svg
    :target: http://joss.theoj.org/papers/10.21105/joss.00388
 .. |DOI| image:: https://zenodo.org/badge/17577779.svg
    :target: https://zenodo.org/badge/latestdoi/17577779
-
-
-************
-More details
-************
-
-.. toctree::
-   :maxdepth: 1
-
-   whatsnew/index.rst
