@@ -31,7 +31,8 @@ jobs:
 
       - name: Execute the notebooks
         run: |
-          jupytext --to ipynb --execute docs/tutorials/*.py
+          cd docs
+          make exectutorials
 
       - uses: actions/upload-artifact@v2
         with:
