@@ -23,7 +23,7 @@ pre, code {
   line-height: 155%;
 }
 
-div.nboutput div[class^=highlight] pre {
+div.output_area div[class*=highlight] pre {
   white-space: pre-wrap;
 }
 
