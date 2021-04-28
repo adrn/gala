@@ -17,6 +17,7 @@
 get_ipython().magic('config InlineBackend.figure_format = "retina"')  # noqa
 
 import matplotlib.pyplot as plt
+from cmastro import cmaps  # noqa
 
 plt.style.use("default")
 
