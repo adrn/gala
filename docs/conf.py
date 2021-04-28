@@ -259,6 +259,24 @@ bibtex_reference_style = 'author_year'
 nbsphinx_timeout = 300
 nbsphinx_kernel_name = os.environ.get('NBSPHINX_KERNEL_NAME', 'python3')
 
+# nbsphinx hacks (thanks exoplanet)
+import nbsphinx
+from nbsphinx import markdown2rst as original_markdown2rst
+
+nbsphinx.RST_TEMPLATE = nbsphinx.RST_TEMPLATE.replace(
+    "{%- if width %}", "{%- if 0 %}"
+).replace("{%- if height %}", "{%- if 0 %}")
+
+def subber(m):
+    return m.group(0).replace("``", "`")
+
+prog = re.compile(r":(.+):``(.+)``")
+
+def markdown2rst(text):
+    return prog.sub(subber, original_markdown2rst(text))
+
+nbsphinx.markdown2rst = markdown2rst
+
 
 ## -- Retrieve Zenodo record for most recent version of Gala:
 zenodo_path = pathlib.Path('ZENODO.rst')
