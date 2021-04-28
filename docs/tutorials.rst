@@ -4,14 +4,9 @@
 Tutorials
 *********
 
-.. toctree::
-   :maxdepth: 1
-   :glob:
+TODO: intro text here...
 
-   tutorials/Milky-Way-model.ipynb
-   tutorials/define-milky-way-model.ipynb
-   .. examples/integrate-potential-example
-   .. examples/integrate-rotating-frame
-   .. examples/mock-stream-heliocentric
-   .. examples/circ-restricted-3body
-   .. examples/Arbitrary-density-SCF.ipynb
+.. The _tutorials.rst file is auto-generated in conf.py. Add new tutorials to
+.. the list of files in conf.py
+
+.. include:: _tutorials.rst

@@ -319,3 +319,48 @@ if not zenodo_path.exists():
 
     with open(zenodo_path, 'w') as f:
         f.write(zenodo_record)
+
+## -- Check for executed tutorials and only add to toctree if they exist:
+
+tutorial_files = [
+    "tutorials/Milky-Way-model.ipynb",
+    "tutorials/integrate-potential-example.rst",
+    "tutorials/integrate-rotating-frame.rst",
+    "tutorials/mock-stream-heliocentric.rst",
+    "tutorials/circ-restricted-3body.rst",
+    "tutorials/define-milky-way-model.ipynb",
+    "tutorials/Arbitrary-density-SCF.ipynb"
+]
+
+_not_executed = []
+_tutorial_toctree_items = []
+for fn in tutorial_files:
+    if not pathlib.Path(fn).exists():
+        _not_executed.append(fn)
+    else:
+        _tutorial_toctree_items.append(fn)
+
+if _tutorial_toctree_items:
+    _tutorial_toctree_items = '\n    '.join(_tutorial_toctree_items)
+    _tutorial_toctree = f"""
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    {_tutorial_toctree_items}
+    """
+
+else:
+    _tutorial_toctree_items = 'No tutorials found!'
+
+if _not_executed:
+    print(
+        "\n-------- Gala warning --------\n"
+        "Some tutorial notebooks could not be found! This is likely because "
+        "the tutorial notebooks have not been executed. If you are building "
+        "the documentation locally, you may want to run 'make exectutorials' "
+        "before running the sphinx build.")
+    print(f"Missing tutorials: {', '.join(_not_executed)}\n")
+
+with open('_tutorials.rst', 'w') as f:
+    f.write(_tutorial_toctree)
