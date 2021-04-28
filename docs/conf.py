@@ -133,7 +133,7 @@ package = sys.modules[package_name]
 from cmastro import cmaps
 plot_formats = [('png', 200), ('pdf', 200)]
 plot_apply_rcparams = True
-# NOTE: if you update these, also update docs/tutorials/nb_setup.py
+# NOTE: if you update these, also update docs/tutorials/nb_setup
 plot_rcparams = {
     'image.cmap': 'cma:hesperia',
 
