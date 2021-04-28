@@ -9,6 +9,7 @@ Tutorials
    :glob:
 
    tutorials/Milky-Way-model.ipynb
+   tutorials/define-milky-way-model.ipynb
    .. examples/integrate-potential-example
    .. examples/integrate-rotating-frame
    .. examples/mock-stream-heliocentric
