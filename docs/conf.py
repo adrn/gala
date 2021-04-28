@@ -283,6 +283,8 @@ nbsphinx.markdown2rst = markdown2rst
 
 # rtds-action
 if "GITHUB_TOKEN" in os.environ:
+    print("GitHub Token found: retrieving artifact")
+
     # The name of your GitHub repository
     rtds_action_github_repo = setup_cfg['github_project']
 
@@ -336,7 +338,7 @@ tutorial_files = [
 _not_executed = []
 _tutorial_toctree_items = []
 for fn in tutorial_files:
-    if not pathlib.Path(fn).exists():
+    if not pathlib.Path(fn).exists() and "GITHUB_TOKEN" not in os.environ:
         _not_executed.append(fn)
     else:
         _tutorial_toctree_items.append(fn)
