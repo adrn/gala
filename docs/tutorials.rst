@@ -1,3 +1,5 @@
+.. _gala-tutorials:
+
 *********
 Tutorials
 *********

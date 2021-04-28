@@ -27,8 +27,8 @@ because these packages will be generally required::
     >>> import numpy as np
 
 
-Computing your first orbit
-==========================
+Computing your first stellar orbit
+==================================
 
 One of the most common use cases for `gala` is to compute an orbit for a star
 within a mass model for the Milky Way. To do this, we need to specify two
@@ -186,10 +186,10 @@ many more possibilities, so please do check out the narrative documentation for
 What else can ``gala`` do?
 ==========================
 
-This page is meant to only show a few initial things you may want to do with
+This page is meant to demonstrate a few initial things you may want to do with
 `gala`. There is much more functionality that you can discover either through
 the :ref:`tutorials <tutorials>` or by perusing the :ref:`user guide
-<gala-user-guide>`. Some other commonly used functionality includes:
+<gala-user-guide>`. Some other commonly-used functionality includes:
 
 - :ref:`Generating simulated "mock" stellar stream models <gala-mockstreams>`
 - :ref:`Stellar stream and great circle coordinate systems <gala-coordinates>`
@@ -200,9 +200,12 @@ the :ref:`tutorials <tutorials>` or by perusing the :ref:`user guide
 Where to go from here
 =====================
 
-TODO:
-Tutorials are narrative walkthroughs
-User guide is reference material, with some narrative description of functionality
+The two places to learn more are the tutorials and the user guide. The
+:ref:`gala-tutorials` are more narrative demonstrations of functionality that
+walk through simplified, real-world use cases for the tools available in `gala`.
+The :ref:`gala-user-guide` contains more exhaustive descriptions of all of the
+functions and classes available in `gala`, and should be treated more like
+reference material.
 
 
 Bibliography
