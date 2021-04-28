@@ -84,9 +84,9 @@ icrs_err = coord.SkyCoord(
 # Let's start by transforming the measured values to a Galactocentric reference
 # frame so we can integrate an orbit in our Milky Way model. We'll do this using
 # the velocity transformation support in
-# [`astropy.coordinates`](http://docs.astropy.org/en/stable/coordinates/velocities.html)
-# (new to Astropy v2.0). We first have to define the position and motion of the
-# sun relative to the Galactocentric frame, and create an
+# [`astropy.coordinates`](http://docs.astropy.org/en/stable/coordinates/velocities.html).
+# We first have to define the position and motion of the sun relative to the
+# Galactocentric frame, and create an
 # [`astropy.coordinates.Galactocentric`](http://docs.astropy.org/en/stable/api/astropy.coordinates.Galactocentric.html#astropy.coordinates.Galactocentric)
 # object with these parameters. We could specify these things explicitly, but
 # instead we will use the default values that were recently updated in Astropy:
@@ -153,7 +153,8 @@ pm_dec = np.random.normal(icrs.pm_dec.value,
                           icrs_err.pm_dec.value,
                           n_samples) * icrs.pm_dec.unit
 
-rv = np.random.normal(icrs.radial_velocity.value, icrs_err.radial_velocity.value,
+rv = np.random.normal(icrs.radial_velocity.value,
+                      icrs_err.radial_velocity.value,
                       n_samples) * icrs.radial_velocity.unit
 
 ra = np.full(n_samples, icrs.ra.degree) * u.degree
