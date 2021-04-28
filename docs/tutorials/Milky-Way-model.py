@@ -17,7 +17,7 @@
 # %matplotlib inline
 
 # + nbsphinx="hidden"
-# %run notebook_setup
+# %run nb_setup
 # -
 
 # # Integrate an orbit with uncertainties in Milky Way model
@@ -50,7 +50,7 @@ import gala.potential as gp
 # We will also set the default Astropy Galactocentric frame parameters to the
 # values adopted in Astropy v4.0:
 
-coord.galactocentric_frame_defaults.set('v4.0')
+coord.galactocentric_frame_defaults.set('v4.0');
 
 # For the Milky Way model, we'll use the built-in potential class in `gala` (see
 # above for definition):

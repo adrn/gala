@@ -12,7 +12,8 @@ import warnings
 from configparser import ConfigParser
 conf = ConfigParser()
 
-conf.read([os.path.join(os.path.dirname(__file__), '..', 'setup.cfg')])
+docs_root = pathlib.Path(__file__).parent.resolve()
+conf.read([str(docs_root / '..' / 'setup.cfg')])
 setup_cfg = dict(conf.items('metadata'))
 
 # -- General configuration ----------------------------------------------------
@@ -148,10 +149,12 @@ plot_rcparams = {
     'axes.axisbelow': True,
 
     # Ticks
-    'xtick.color': '#555555',
+    'xtick.color': '#333333',
     'xtick.direction': 'in',
-    'ytick.color': '#555555',
+    'ytick.color': '#333333',
     'ytick.direction': 'in',
+    'xtick.top': True,
+    'ytick.right': True,
 
     'figure.dpi': 300,
     'savefig.dpi': 300,
@@ -201,8 +204,7 @@ html_theme_options = {
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-path = os.path.abspath(os.path.join(os.path.dirname(__file__), '_static'))
-html_favicon = os.path.join(path, 'm104.ico')
+html_favicon = str(docs_root / '_static' / 'm104.ico')
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -280,7 +282,7 @@ nbsphinx.markdown2rst = markdown2rst
 
 
 ## -- Retrieve Zenodo record for most recent version of Gala:
-zenodo_path = pathlib.Path('ZENODO.rst')
+zenodo_path = docs_root / 'ZENODO.rst'
 if not zenodo_path.exists():
     import textwrap
     try:

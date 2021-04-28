@@ -22,7 +22,8 @@ import matplotlib.pyplot as plt
 
 plt.style.use("default")
 
-sys.path.append(str(pathlib.Path(__file__).resolve().parent))
+docs_root = (pathlib.Path(__file__).parent / '..').resolve()
+sys.path.append(str(docs_root))
 from conf import plot_rcparams
 
 plt.rcParams.update(plot_rcparams)
