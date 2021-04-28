@@ -23,6 +23,10 @@ pre, code {
   line-height: 155%;
 }
 
+div.nboutput div[class^=highlight] pre {
+  white-space: pre-wrap;
+}
+
 /* Make output lighter gray and no italics for the love of all that is holy! */
 .highlight .go {
   color: #555555;

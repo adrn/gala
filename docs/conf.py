@@ -257,8 +257,7 @@ bibtex_reference_style = 'author_year'
 
 # Custom setting for nbsphinx - timeout for executing one cell
 nbsphinx_timeout = 300
-if 'NBSPHINX_KERNEL_NAME' in os.environ:
-    nbsphinx_kernel_name = os.environ['NBSPHINX_KERNEL_NAME']
+nbsphinx_kernel_name = os.environ.get('NBSPHINX_KERNEL_NAME', 'python3')
 
 
 ## -- Retrieve Zenodo record for most recent version of Gala:
