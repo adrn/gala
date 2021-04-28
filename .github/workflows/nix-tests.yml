@@ -67,7 +67,7 @@ jobs:
   draft-build:  # The lite test suite for draft PRs
     name: "py${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == true
     strategy:
       fail-fast: false
       matrix:
