@@ -39,7 +39,7 @@ jobs:
           path: docs/tutorials
 
       - name: Trigger RTDs build
-        if: ${{ github.event_name != 'pull_request' }}
+        if: contains(github.event.pull_request.labels.*.name, 'docs')
         uses: dfm/rtds-action@v1.0.3
         with:
           webhook_url: ${{ secrets.RTDS_WEBHOOK_URL }}
