@@ -14,7 +14,7 @@ jobs:
   build:  # The main test suite: doesn't run on draft PRs
     name: "py${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only')
     strategy:
       fail-fast: false
       matrix:
@@ -67,7 +67,7 @@ jobs:
   draft-build:  # The lite test suite for draft PRs
     name: "py${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
-    if: github.event.pull_request.draft == true
+    if: github.event.pull_request.draft == true && !contains(github.event.pull_request.labels.*.name, 'docs only')
     strategy:
       fail-fast: false
       matrix:

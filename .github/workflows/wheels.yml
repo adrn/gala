@@ -17,7 +17,7 @@ jobs:
   build_nix_wheels:
     name: Build ${{ matrix.python-version }} wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only')
     strategy:
       fail-fast: false
       matrix:
@@ -57,7 +57,7 @@ jobs:
   build_win_wheels:
     name: Build ${{ matrix.python-version }} wheels on Windows
     runs-on: windows-latest
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only')
     strategy:
       matrix:
         python-version: [3.7, 3.8] # , 3.9  # TODO
