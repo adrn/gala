@@ -40,25 +40,28 @@
 # Third-party
 import astropy.units as u
 import astropy.coordinates as coord
-from astropy.io import ascii
 import matplotlib.pyplot as plt
 import numpy as np
 
 # Gala
 import gala.dynamics as gd
-import gala.integrate as gi
 import gala.potential as gp
-from gala.units import galactic
 
-# We will also set the default Astropy Galactocentric frame parameters to the values adopted in Astropy v4.0:
+# We will also set the default Astropy Galactocentric frame parameters to the
+# values adopted in Astropy v4.0:
 
 coord.galactocentric_frame_defaults.set('v4.0')
 
-# For the Milky Way model, we'll use the built-in potential class in `gala` (see above for definition):
+# For the Milky Way model, we'll use the built-in potential class in `gala` (see
+# above for definition):
 
 potential = gp.MilkyWayPotential()
 
-# For the sky position and distance of Draco, we'll use measurements from [Bonanos et al. 2004](https://arxiv.org/abs/astro-ph/0310477). For proper motion components, we'll use the recent HSTPROMO measurements ([Sohn et al. 2017](https://arxiv.org/abs/1707.02593)) and the line-of-sight velocity from [Walker et al. 2007](https://arxiv.org/abs/0708.0010).
+# For the sky position and distance of Draco, we'll use measurements from
+# [Bonanos et al. 2004](https://arxiv.org/abs/astro-ph/0310477). For proper
+# motion components, we'll use the recent HSTPROMO measurements ([Sohn et al.
+# 2017](https://arxiv.org/abs/1707.02593)) and the line-of-sight velocity from
+# [Walker et al. 2007](https://arxiv.org/abs/0708.0010).
 
 # +
 icrs = coord.SkyCoord(
@@ -78,7 +81,15 @@ icrs_err = coord.SkyCoord(
     radial_velocity=0.1*u.km/u.s)
 # -
 
-# Let's start by transforming the measured values to a Galactocentric reference frame so we can integrate an orbit in our Milky Way model. We'll do this using the velocity transformation support in [`astropy.coordinates`](http://docs.astropy.org/en/stable/coordinates/velocities.html) (new to Astropy v2.0). We first have to define the position and motion of the sun relative to the Galactocentric frame, and create an [`astropy.coordinates.Galactocentric`](http://docs.astropy.org/en/stable/api/astropy.coordinates.Galactocentric.html#astropy.coordinates.Galactocentric) object with these parameters. We could specify these things explicitly, but instead we will use the default values that were recently updated in Astropy:
+# Let's start by transforming the measured values to a Galactocentric reference
+# frame so we can integrate an orbit in our Milky Way model. We'll do this using
+# the velocity transformation support in
+# [`astropy.coordinates`](http://docs.astropy.org/en/stable/coordinates/velocities.html)
+# (new to Astropy v2.0). We first have to define the position and motion of the
+# sun relative to the Galactocentric frame, and create an
+# [`astropy.coordinates.Galactocentric`](http://docs.astropy.org/en/stable/api/astropy.coordinates.Galactocentric.html#astropy.coordinates.Galactocentric)
+# object with these parameters. We could specify these things explicitly, but
+# instead we will use the default values that were recently updated in Astropy:
 
 galcen_frame = coord.Galactocentric()
 galcen_frame
@@ -87,7 +98,10 @@ galcen_frame
 
 galcen = icrs.transform_to(galcen_frame)
 
-# That's it! Now we have to turn the resulting `Galactocentric` object into orbital initial conditions, and integrate the orbit in our Milky Way model. We'll use a timestep of 0.5 Myr and integrate the orbit backwards for 10000 steps (5 Gyr):
+# That's it! Now we have to turn the resulting `Galactocentric` object into
+# orbital initial conditions, and integrate the orbit in our Milky Way model.
+# We'll use a timestep of 0.5 Myr and integrate the orbit backwards for 10000
+# steps (5 Gyr):
 
 w0 = gd.PhaseSpacePosition(galcen.data)
 orbit = potential.integrate_orbit(w0, dt=-0.5*u.Myr, n_steps=10000)
@@ -96,11 +110,14 @@ orbit = potential.integrate_orbit(w0, dt=-0.5*u.Myr, n_steps=10000)
 
 fig = orbit.plot()
 
-# With the `orbit` object, we can easily compute quantities like the pericenter, apocenter, or eccentricity of the orbit:
+# With the `orbit` object, we can easily compute quantities like the pericenter,
+# apocenter, or eccentricity of the orbit:
 
 orbit.pericenter(), orbit.apocenter(), orbit.eccentricity()
 
-# We can also use these functions to get the time of each pericenter or apocenter - let's plot the time of pericenter, and time of apocenter over the time series of the Galactocentric radius of the orbit:
+# We can also use these functions to get the time of each pericenter or
+# apocenter - let's plot the time of pericenter, and time of apocenter over the
+# time series of the Galactocentric radius of the orbit:
 
 # +
 plt.plot(orbit.t, orbit.spherical.distance, marker='None')
@@ -118,7 +135,9 @@ plt.xlabel('$t$ [{0}]'.format(orbit.t.unit.to_string('latex')))
 plt.ylabel('$r$ [{0}]'.format(orbit.x.unit.to_string('latex')))
 # -
 
-# Now we'll sample from the error distribution over the distance, proper motions, and radial velocity, compute orbits, and plot distributions of mean pericenter and apocenter:
+# Now we'll sample from the error distribution over the distance, proper
+# motions, and radial velocity, compute orbits, and plot distributions of mean
+# pericenter and apocenter:
 
 # +
 n_samples = 128
