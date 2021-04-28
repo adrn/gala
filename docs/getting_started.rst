@@ -191,21 +191,23 @@ This page is meant to demonstrate a few initial things you may want to do with
 the :ref:`tutorials <tutorials>` or by perusing the :ref:`user guide
 <gala-user-guide>`. Some other commonly-used functionality includes:
 
-- :ref:`Generating simulated "mock" stellar stream models <gala-mockstreams>`
-- :ref:`Stellar stream and great circle coordinate systems <gala-coordinates>`
-- :ref:`Transformations to action-angle coordinates <gala-actionangle>`
-- :ref:`Nonlinear dynamics and chaos indicators <gala-nonlinear-dynamics>`
+* :ref:`Generating simulated "mock" stellar stream models <gala-mockstreams>`
+* :ref:`Stellar stream and great circle coordinate systems <gala-coordinates>`
+* :ref:`Transformations to action-angle coordinates <gala-actionangle>`
+* :ref:`Nonlinear dynamics and chaos indicators <gala-nonlinear-dynamics>`
 
 
 Where to go from here
 =====================
 
-The two places to learn more are the tutorials and the user guide. The
-:ref:`gala-tutorials` are more narrative demonstrations of functionality that
-walk through simplified, real-world use cases for the tools available in `gala`.
-The :ref:`gala-user-guide` contains more exhaustive descriptions of all of the
-functions and classes available in `gala`, and should be treated more like
-reference material.
+The two places to learn more are the tutorials and the user guide:
+
+* The :ref:`gala-tutorials` are narrative demonstrations of functionality that
+  walk through simplified, real-world use cases for the tools available in
+  ``gala``.
+* The :ref:`gala-user-guide` contains more exhaustive descriptions of all of the
+  functions and classes available in ``gala``, and should be treated more like
+  reference material.
 
 
 Bibliography
