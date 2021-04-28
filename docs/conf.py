@@ -325,6 +325,7 @@ if not zenodo_path.exists():
 tutorial_files = [
     "tutorials/Milky-Way-model.ipynb",
     "tutorials/integrate-potential-example.rst",
+    "tutorials/pyia-gala-orbit.ipynb",
     "tutorials/integrate-rotating-frame.rst",
     "tutorials/mock-stream-heliocentric.rst",
     "tutorials/circ-restricted-3body.rst",
