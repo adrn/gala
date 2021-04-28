@@ -37,6 +37,7 @@
 #
 # Let's start by importing packages we will need:
 
+# +
 # Third-party
 import astropy.units as u
 import astropy.coordinates as coord
@@ -46,6 +47,7 @@ import numpy as np
 # Gala
 import gala.dynamics as gd
 import gala.potential as gp
+# -
 
 # We will also set the default Astropy Galactocentric frame parameters to the
 # values adopted in Astropy v4.0:
