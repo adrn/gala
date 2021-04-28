@@ -9,9 +9,11 @@ on:
       - main
 
 jobs:
+  # The main test suite: doesn't run on draft PRs
   build:
     name: "py${{ matrix.python-version }} on ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false
     strategy:
       fail-fast: false
       matrix:
