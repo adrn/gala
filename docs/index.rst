@@ -24,7 +24,7 @@ Common operations include `gravitational potential and force evaluations
 `dynamical coordinate transformations <dynamics/index.html>`_, and computing
 `chaos indicators for nonlinear dynamics <dynamics/nonlinear.html>`_. ``gala``
 heavily uses the units and astronomical coordinate systems defined in the
-``Astropy`` core package (:ref:`astropy.units <astropy-units>` and
+Astropy core package (:ref:`astropy.units <astropy-units>` and
 :ref:`astropy.coordinates <astropy-coordinates>`).
 
 This package is being actively developed in `a public repository on GitHub
