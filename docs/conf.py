@@ -253,7 +253,8 @@ extensions = [
     'nbsphinx',
     'IPython.sphinxext.ipython_console_highlighting',
     'matplotlib.sphinxext.plot_directive',
-    'sphinxcontrib.bibtex']
+    'sphinxcontrib.bibtex',
+    'rtds_action']
 
 # Bibliography:
 bibtex_bibfiles = ['refs.bib']
@@ -300,7 +301,7 @@ if "GITHUB_TOKEN" in os.environ:
 
     # Whether or not to raise an error on ReadTheDocs if the
     # artifact containing the notebooks can't be downloaded (optional)
-    rtds_action_error_if_missing = False
+    rtds_action_error_if_missing = True
 
 ## -- Retrieve Zenodo record for most recent version of Gala:
 zenodo_path = docs_root / 'ZENODO.rst'
