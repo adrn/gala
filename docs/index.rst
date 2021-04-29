@@ -33,6 +33,12 @@ contributors! No contribution is too small, so if you have any trouble with this
 code, find a typo, or have requests for new content (tutorials or features),
 please `open an issue on GitHub <https://github.com/adrn/gala/issues>`_.
 
+.. note::
+
+   Welcome to the new Gala documentation! The documentation has a new theme and
+   some new content. Use the links in the nav bar above, the page listing below,
+   or the search bar on the left to dive in!
+
 .. ---------------------
 .. Nav bar (top of docs)
 

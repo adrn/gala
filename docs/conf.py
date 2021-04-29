@@ -303,6 +303,11 @@ if "GITHUB_TOKEN" in os.environ:
     # artifact containing the notebooks can't be downloaded (optional)
     rtds_action_error_if_missing = True
 
+else:
+    rtds_action_github_repo = ''
+    rtds_action_github_token = ''
+    rtds_action_path = ''
+
 ## -- Retrieve Zenodo record for most recent version of Gala:
 zenodo_path = docs_root / 'ZENODO.rst'
 if not zenodo_path.exists():
