@@ -67,6 +67,7 @@ numpydoc_xref_ignore.update({
 # Numpy provides some defaults
 # https://github.com/numpy/numpydoc/blob/b352cd7635f2ea7748722f410a31f937d92545cc/numpydoc/xref.py#L62-L94
 # so we only need to define Astropy-specific x-refs
+# TODO use astropy intersphinx glossary references.
 numpydoc_xref_aliases = {
     # ulta-general
     "-like": ":term:`-like`",
@@ -95,7 +96,7 @@ numpydoc_xref_aliases = {
     "writable": ":term:`writable file-like object`",
     "readable": ":term:`readable file-like object`",
 }
-# add physical type aliases from sphinx-astropy
+# add physical type x-ref aliases from sphinx-astropy
 numpydoc_xref_aliases.update(numpydoc_xref_aliases_astropy_physical_type)
 
 autosummary_generate = True
@@ -116,15 +117,9 @@ rst_epilog = """
 """
 
 # intersphinx
-intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'numpy': ('https://numpy.org/doc/stable/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
-    'matplotlib': ('https://matplotlib.org/', None),
-    'astropy': ('https://docs.astropy.org/en/stable/', None),
-    'h5py': ('https://docs.h5py.org/en/stable/', None),
+intersphinx_mapping.update({
     'sympy': ('https://docs.sympy.org/latest/', None)
-}
+})
 
 # Show / hide TODO blocks
 todo_include_todos = True
