@@ -8,6 +8,15 @@ import datetime
 from importlib import import_module
 import warnings
 
+try:
+    # THIRD PARTY
+    from sphinx_astropy.conf.v1 import *  # noqa: F401, F403
+except ImportError:
+    print(
+        "ERROR: documentation requires installing the sphinx-astropy package",
+    )
+    sys.exit(1)
+
 # Get configuration information from setup.cfg
 from configparser import ConfigParser
 conf = ConfigParser()
@@ -43,15 +52,15 @@ numpydoc_xref_param_type = True
 
 # Words not to cross-reference. Most likely, these are common words used in
 # parameter type descriptions that may be confused for classes of the same
-# name.
-numpydoc_xref_ignore = {
-    'type', 'optional', 'default', 'or', 'of', 'method', 'instance', "like",
-    "class", 'subclass', "keyword-only", "default", "thereof", "mixin",
-    # needed in subclassing numpy  # TODO! revisit
+# name. The base set comes from sphinx-astropy. We add more here.
+# TODO! check if there are any repeats here.
+numpydoc_xref_ignore.update({
+    "mixin",
+    # needed in subclassing numpy
     "Arguments", "Path",
     # TODO! not need to ignore.
     "flag", "bits",
-}
+})
 
 # Mappings to fully qualified paths (or correct ReST references) for the
 # aliases/shortcuts used when specifying the types of parameters.
@@ -86,6 +95,8 @@ numpydoc_xref_aliases = {
     "writable": ":term:`writable file-like object`",
     "readable": ":term:`readable file-like object`",
 }
+# add physical type aliases from sphinx-astropy
+numpydoc_xref_aliases.update(numpydoc_xref_aliases_astropy_physical_type)
 
 autosummary_generate = True
 
