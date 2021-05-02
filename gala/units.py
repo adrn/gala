@@ -27,8 +27,8 @@ else:
 class UnitSystem:
     _required_physical_types = [
         get_physical_type('length'),
-        get_physical_type('mass'),
         get_physical_type('time'),
+        get_physical_type('mass'),
         get_physical_type('angle')
     ]
 
@@ -104,6 +104,10 @@ class UnitSystem:
 
     def __getitem__(self, key):
         key = get_physical_type(key)
+
+        # TODO: remove this when astropy 4.3 is min version
+        if key == 'velocity':
+            key = 'speed'
 
         if key in self._registry:
             return self._registry[key]
