@@ -10,6 +10,7 @@ _greek_letters = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta",
                   "omega"]
 
 
+# TODO: this can be removed when gala requires astropy >= 4.3
 import astropy
 ASTROPY_GTR_43 = (
     version.parse(version.parse(astropy.__version__).base_version) >=
