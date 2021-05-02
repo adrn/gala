@@ -69,8 +69,6 @@ numpydoc_xref_ignore.update({
 # so we only need to define Astropy-specific x-refs
 # TODO use astropy intersphinx glossary references.
 numpydoc_xref_aliases.update({
-    # ulta-general
-    "-like": ":term:`-like`",
     # python & adjacent
     "file-like": ":term:`python:file-like object`",
     "path-like": ":term:`python:path-like object`",
@@ -81,20 +79,13 @@ numpydoc_xref_aliases.update({
     # for numpy
     "ints": ":class:`python:int`",
     # for astropy
-    "unit-like": ":term:`unit-like`",
-    "quantity-like": ":term:`quantity-like`",
-    "angle-like": ":term:`angle-like`",
-    "table-like": ":term:`table-like`",
-    "time-like": ":term:`time-like`",
-    "frame-like": ":term:`frame-like`",
-    "coordinate-like": ":term:`coordinate-like`",
     "number": ":term:`number`",
     "Representation": ":class:`~astropy.coordinates.BaseRepresentation`",
     "writable": ":term:`writable file-like object`",
     "readable": ":term:`readable file-like object`",
 })
-# add physical type x-ref aliases from sphinx-astropy
-numpydoc_xref_aliases.update(numpydoc_xref_aliases_astropy_physical_type)
+# add all Astropy x-ref aliases from sphinx-astropy
+numpydoc_xref_aliases.update(numpydoc_xref_astropy_aliases)
 
 autosummary_generate = True
 
