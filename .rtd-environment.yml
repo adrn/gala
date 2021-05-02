@@ -3,4 +3,5 @@ dependencies:
   - gsl
   - pip
   - pip:
+    - astropy  @ git+https://github.com/astropy/astropy.git
     - -e .[docs]
