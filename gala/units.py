@@ -9,53 +9,61 @@ _greek_letters = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta",
                   "omega"]
 
 
-class UnitSystem(object):
-    """
-    Represents a system of units. At minimum, this consists of a set of
-    length, time, mass, and angle units, but may also contain preferred
-    representations for composite units. For example, the base unit system
-    could be ``{kpc, Myr, Msun, radian}``, but you can also specify a preferred
-    speed, such as ``km/s``.
-
-    This class functions like a dictionary with keys set by physical types.
-    If a unit for a particular physical type is not specified on creation,
-    a composite unit will be created with the base units. See Examples below
-    for some demonstrations.
-
-    Parameters
-    ----------
-    *units
-        The units that define the unit system. At minimum, this must
-        contain length, time, mass, and angle units.
-
-    Examples
-    --------
-    If only base units are specified, any physical type specified as a key
-    to this object will be composed out of the base units::
-
-        >>> usys = UnitSystem(u.m, u.s, u.kg, u.radian)
-        >>> usys['energy']
-        Unit("kg m2 / s2")
-
-    However, custom representations for composite units can also be specified
-    when initializing::
-
-        >>> usys = UnitSystem(u.m, u.s, u.kg, u.radian, u.erg)
-        >>> usys['energy']
-        Unit("erg")
-
-    This is useful for Galactic dynamics where lengths and times are usually
-    given in terms of ``kpc`` and ``Myr``, but speeds are given in ``km/s``::
-
-        >>> usys = UnitSystem(u.kpc, u.Myr, u.Msun, u.radian, u.km/u.s)
-        >>> usys['speed']
-        Unit("km / s")
-
-    """
+class UnitSystem:
+    _required_physical_types = [
+        u.get_physical_type('length'),
+        u.get_physical_type('mass'),
+        u.get_physical_type('time'),
+        u.get_physical_type('angle')
+    ]
 
     def __init__(self, units, *args):
+        """
+        Represents a system of units.
 
-        self._required_physical_types = ['length', 'time', 'mass', 'angle']
+        At minimum, this consists of a set of length, time, mass, and angle
+        units, but may also contain preferred representations for composite
+        units. For example, the base unit system could be ``{kpc, Myr, Msun,
+        radian}``, but you can also specify a preferred velocity unit, such as
+        ``km/s``.
+
+        This class behaves like a dictionary with keys set by physical types. If
+        a unit for a particular physical type is not specified on creation, a
+        composite unit will be created with the base units. See the examples
+        below for some demonstrations.
+
+        Parameters
+        ----------
+        *units
+            The units that define the unit system. At minimum, this must
+            contain length, time, mass, and angle units.
+
+        Examples
+        --------
+        If only base units are specified, any physical type specified as a key
+        to this object will be composed out of the base units::
+
+            >>> usys = UnitSystem(u.m, u.s, u.kg, u.radian)
+            >>> usys['energy']
+            Unit("kg m2 / s2")
+
+        However, custom representations for composite units can also be
+        specified when initializing::
+
+            >>> usys = UnitSystem(u.m, u.s, u.kg, u.radian, u.erg)
+            >>> usys['energy']
+            Unit("erg")
+
+        This is useful for Galactic dynamics where lengths and times are usually
+        given in terms of ``kpc`` and ``Myr``, but velocities are given in
+        ``km/s``::
+
+            >>> usys = UnitSystem(u.kpc, u.Myr, u.Msun, u.radian, u.km/u.s)
+            >>> usys['velocity']
+            Unit("km / s")
+
+        """
+
         self._core_units = []
 
         if isinstance(units, UnitSystem):
@@ -80,6 +88,7 @@ class UnitSystem(object):
             self._core_units.append(self._registry[phys_type])
 
     def __getitem__(self, key):
+        key = u.get_physical_type(key)
 
         if key in self._registry:
             return self._registry[key]
@@ -193,11 +202,13 @@ class UnitSystem(object):
 
 
 class DimensionlessUnitSystem(UnitSystem):
+    _required_physical_types = []
 
     def __init__(self):
         self._core_units = [u.one]
-        self._registry = dict()
-        self._registry['dimensionless'] = u.one
+        self._registry = {
+            'dimensionless': u.one
+        }
 
     def __getitem__(self, key):
         return u.one
