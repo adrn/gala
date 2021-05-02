@@ -68,17 +68,14 @@ numpydoc_xref_ignore.update({
 # https://github.com/numpy/numpydoc/blob/b352cd7635f2ea7748722f410a31f937d92545cc/numpydoc/xref.py#L62-L94
 # so we only need to define Astropy-specific x-refs
 # TODO use astropy intersphinx glossary references.
-numpydoc_xref_aliases = {
+numpydoc_xref_aliases.update({
     # ulta-general
     "-like": ":term:`-like`",
     # python & adjacent
     "file-like": ":term:`python:file-like object`",
-    "file": ":term:`python:file object`",
-    "iterator": ":term:`python:iterator`",
     "path-like": ":term:`python:path-like object`",
     "module": ":term:`python:module`",
     "buffer-like": ":term:buffer-like",
-    "function": ":term:`python:function`",
     # for matplotlib
     "color": ":term:`color`",
     # for numpy
@@ -95,7 +92,7 @@ numpydoc_xref_aliases = {
     "Representation": ":class:`~astropy.coordinates.BaseRepresentation`",
     "writable": ":term:`writable file-like object`",
     "readable": ":term:`readable file-like object`",
-}
+})
 # add physical type x-ref aliases from sphinx-astropy
 numpydoc_xref_aliases.update(numpydoc_xref_aliases_astropy_physical_type)
 
