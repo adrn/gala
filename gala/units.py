@@ -2,6 +2,7 @@
 import astropy.units as u
 from astropy.units.physical import _physical_unit_mapping
 import astropy.constants as const
+from packaging import version
 
 _greek_letters = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta",
                   "theta", "iota", "kappa", "lambda", "mu", "nu", "xi", "pi",
@@ -9,12 +10,23 @@ _greek_letters = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta",
                   "omega"]
 
 
+import astropy
+ASTROPY_GTR_43 = (
+    version.parse(version.parse(astropy.__version__).base_version) >=
+    version.parse('4.3')
+)
+if ASTROPY_GTR_43:
+    get_physical_type = u.get_physical_type
+else:
+    get_physical_type = lambda x: str(x)  # noqa
+
+
 class UnitSystem:
     _required_physical_types = [
-        u.get_physical_type('length'),
-        u.get_physical_type('mass'),
-        u.get_physical_type('time'),
-        u.get_physical_type('angle')
+        get_physical_type('length'),
+        get_physical_type('mass'),
+        get_physical_type('time'),
+        get_physical_type('angle')
     ]
 
     def __init__(self, units, *args):
@@ -88,7 +100,7 @@ class UnitSystem:
             self._core_units.append(self._registry[phys_type])
 
     def __getitem__(self, key):
-        key = u.get_physical_type(key)
+        key = get_physical_type(key)
 
         if key in self._registry:
             return self._registry[key]
