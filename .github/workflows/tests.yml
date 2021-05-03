@@ -31,7 +31,7 @@ jobs:
           - name: Python 3.9 with all optional dependencies
             os: ubuntu-latest
             python: 3.9
-            toxenv: py39-test-alldeps
+            toxenv: py39-test-extradeps
             toxposargs: --durations=50
 
           - name: Python 3.9 without GSL

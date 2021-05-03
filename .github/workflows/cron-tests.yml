@@ -27,7 +27,7 @@ jobs:
 
           - name: Python 3.8 with all optional dependencies
             python: 3.8
-            toxenv: py38-test-alldeps
+            toxenv: py38-test-extradeps
             toxargs: -v --develop
 
           - name: Python 3.7
