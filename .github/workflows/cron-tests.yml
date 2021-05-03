@@ -40,7 +40,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python }}
@@ -57,6 +57,7 @@ jobs:
 
     - name: Run tests - Windows
       shell: bash -l {0}
+      if: startsWith(matrix.os, 'windows')
       run: |
         tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}
 
