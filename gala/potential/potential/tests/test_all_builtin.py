@@ -16,12 +16,7 @@ from ...frame import ConstantRotatingFrame
 from ....units import solarsystem, galactic, DimensionlessUnitSystem
 from .helpers import PotentialTestBase, CompositePotentialTestBase
 from ...._cconfig import GSL_ENABLED
-
-try:
-    import sympy  # noqa
-    HAS_SYMPY = True
-except ImportError:
-    HAS_SYMPY = False
+from gala.tests.optional_deps import HAS_SYMPY
 
 ##############################################################################
 # Python

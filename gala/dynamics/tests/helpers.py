@@ -6,19 +6,15 @@ import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
 
-try:
-    import galpy  # noqa
-    import galpy.orbit  # noqa
-    import galpy.potential  # noqa
-    HAS_GALPY = True
-except ImportError:
-    HAS_GALPY = False
-
 # Project
+from gala.tests.optional_deps import (HAS_GALPY, HAS_GALPY_ORBIT,
+                                      HAS_GALPY_POTENTIAL)
 # from ..actionangle import classify_orbit
 from ...units import galactic
 from ...potential import HarmonicOscillatorPotential, IsochronePotential
 from .._genfunc import genfunc_3d
+
+HAS_GALPY = HAS_GALPY and HAS_GALPY_ORBIT and HAS_GALPY_POTENTIAL
 
 
 def sanders_nvecs(N_max, dx, dy, dz):

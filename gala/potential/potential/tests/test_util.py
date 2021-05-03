@@ -3,12 +3,7 @@ import pytest
 # This project
 from ..util import from_equation
 from .helpers import PotentialTestBase
-
-try:
-    import sympy # noqa
-    HAS_SYMPY = True
-except ImportError:
-    HAS_SYMPY = False
+from gala.tests.optional_deps import HAS_SYMPY
 
 
 class EquationBase(PotentialTestBase):

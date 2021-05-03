@@ -245,6 +245,8 @@ be used to manipulate or evaluate the form of the potential. To access this
 functionality, the potential classes have a ``.to_sympy()`` classmethod (note:
 this requires that ``sympy`` is installed):
 
+.. doctest-requires:: sympy
+
     >>> expr, vars_, pars = gp.LogarithmicPotential.to_sympy()
     >>> str(expr)
     '0.5*v_c**2*log(r_h**2 + z**2/q3**2 + y**2/q2**2 + x**2/q1**2)'
@@ -252,11 +254,15 @@ this requires that ``sympy`` is installed):
 This method also returns a dictionary containing the coordinate variables used
 in the expression as ``sympy`` symbols, here defined as ``vars_``:
 
+.. doctest-requires:: sympy
+
     >>> vars_
     {'x': x, 'y': y, 'z': z}
 
 A second dictionary containing the potential parameters as ``sympy`` symbols is
 also returned, here defined as ``pars``:
+
+.. doctest-requires:: sympy
 
     >>> pars
     {'v_c': v_c, 'r_h': r_h, 'q1': q1, 'q2': q2, 'q3': q3, 'phi': phi, 'G': G}
@@ -264,6 +270,8 @@ also returned, here defined as ``pars``:
 The expressions and variables returned can be used to perform operations on the
 potential expression. For example, to create a ``sympy`` expression for the
 gradient of the potential:
+
+.. doctest-requires:: sympy
 
     >>> import sympy as sy
     >>> grad = sy.derive_by_array(expr, list(vars_.values()))
