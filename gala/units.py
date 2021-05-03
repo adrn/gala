@@ -103,11 +103,11 @@ class UnitSystem:
             self._core_units.append(self._registry[phys_type])
 
     def __getitem__(self, key):
-        key = get_physical_type(key)
-
         # TODO: remove this when astropy 4.3 is min version
         if key == 'velocity':
             key = 'speed'
+
+        key = get_physical_type(key)
 
         if key in self._registry:
             return self._registry[key]
