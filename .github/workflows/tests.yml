@@ -71,13 +71,14 @@ jobs:
         python -m pip install tox
 
     - name: Run tests - Windows
+      if: startsWith(matrix.os, 'windows')
       shell: bash -l {0}
       run: |
         tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}
 
     # Mac:
     - name: Setup Mac - GSL
-      if: runner.os == 'macOS'
+      if: startsWith(matrix.os, 'mac')
       run: |
         brew install gsl
 
