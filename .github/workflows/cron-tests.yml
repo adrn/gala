@@ -1,53 +1,38 @@
-name: Tests
+name: Cron tests
 
 on:
-  push:
-    branches:
-    - main
-    tags:
-    - '*'
+  schedule:
+    - cron: "0 10 * * 1"  # Mondays @ 6AM Eastern
   pull_request:
+    # We also want this workflow triggered if the 'Extra CI' label is added
+    # or present when PR is updated
+    types:
+      - synchronize
+      - labeled
 
 jobs:
   tests:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    if: (github.event_name == 'schedule' || contains(github.event.pull_request.labels.*.name, 'Extra CI'))
     strategy:
       fail-fast: true
       matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
         include:
 
-          - name: Code style checks
-            os: ubuntu-latest
-            python: 3.x
-            toxenv: codestyle
-
-          - name: Python 3.9 with minimal dependencies and coverage
-            os: ubuntu-latest
+          - name: Python 3.9 with coverage
             python: 3.9
             toxenv: py39-test-cov
 
-          - name: Python 3.9 with all optional dependencies (MacOS X)
-            os: macos-latest
-            python: 3.9
-            toxenv: py39-test-alldeps
-            toxposargs: --durations=50
-
-          - name: Python 3.9 without GSL
-            os: ubuntu-latest
-            python: 3.9
-            toxenv: py39-test-nogsl
-
-          - name: Python 3.8 with all optional dependencies (Windows)
-            os: windows-latest
+          - name: Python 3.8 with all optional dependencies
             python: 3.8
             toxenv: py38-test-alldeps
-            toxposargs: --durations=50
+            toxargs: -v --develop
 
-          - name: Python 3.7 with oldest supported version of all dependencies
-            os: ubuntu-latest
+          - name: Python 3.7
             python: 3.7
-            toxenv: py37-test-oldestdeps
+            toxenv: py37-test
 
     steps:
     - name: Checkout code
