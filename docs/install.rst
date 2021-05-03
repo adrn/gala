@@ -125,3 +125,5 @@ Optional
   :func:`~gala.potential.potential.from_equation()`.
 - ``galpy``
 - `h5py`
+- `matplotlib`
+-
