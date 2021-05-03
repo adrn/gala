@@ -1,0 +1,104 @@
+name: Tests
+
+on:
+  push:
+    branches:
+    - main
+    tags:
+    - '*'
+  pull_request:
+
+jobs:
+  tests:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+
+          - name: Code style checks
+            os: ubuntu-latest
+            python: 3.x
+            toxenv: codestyle
+
+          - name: Python 3.9 with minimal dependencies
+            os: ubuntu-latest
+            python: 3.9
+            toxenv: py39-test
+
+          - name: Python 3.9 with all optional dependencies (MacOS X)
+            os: macos-latest
+            python: 3.9
+            toxenv: py39-test-alldeps
+            toxposargs: --durations=50
+
+          - name: Python 3.8 with all optional dependencies
+            os: ubuntu-latest
+            python: 3.8
+            toxenv: py38-test-alldeps
+            toxargs: -v --develop
+
+          - name: Python 3.8 with all optional dependencies (Windows)
+            os: windows-latest
+            python: 3.8
+            toxenv: py38-test-alldeps
+            toxposargs: --durations=50
+
+          - name: Python 3.7 with oldest supported version of all dependencies
+            os: ubuntu-16.04
+            python: 3.7
+            toxenv: py37-test-oldestdeps
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+
+    # Windows:
+    - name: Install Python dependencies - Windows
+      if: startsWith(matrix.os, 'windows')
+      shell: bash -l {0}
+      run: |
+        conda install -c conda-forge -q gsl libpython
+        python -m pip install -e .[test]
+        python -m pip install virtualenv==20.0.33  # 20.0.34 broken!
+        python -m pip install tox
+
+    - name: Run tests - Windows
+      shell: bash -l {0}
+      run: |
+        tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}
+
+    # Mac:
+    - name: Setup Mac - GSL
+      if: runner.os == 'macOS'
+      run: |
+        brew install gsl
+
+    # Ubuntu:
+    - name: Setup Linux - GSL
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get install gsl-bin libgsl0-dev build-essential
+
+    # Any *nix:
+    - name: Install Python dependencies - nix
+      if: "!startsWith(matrix.os, 'windows')"
+      run: python -m pip install --upgrade tox codecov
+
+    - name: Run tests - nix
+      run: tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}
+
+    # Coverage:
+    - name: Upload coverage report to codecov
+      uses: codecov/codecov-action@v1
+      if: steps.check_files.outputs.files_exists == 'true' && runner.os == 'Linux'
+      with:
+        file: ./coverage.xml # optional
