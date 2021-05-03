@@ -27,8 +27,9 @@ jobs:
             python: 3.9
             toxenv: py39-test-cov
 
-          - name: Python 3.9 with all optional dependencies (MacOS X)
-            os: macos-latest
+          # Has to happen on ubuntu because galpy is finnicky on macOS
+          - name: Python 3.9 with all optional dependencies
+            os: ubuntu-latest
             python: 3.9
             toxenv: py39-test-alldeps
             toxposargs: --durations=50
@@ -36,18 +37,23 @@ jobs:
           - name: Python 3.9 without GSL
             os: ubuntu-latest
             python: 3.9
-            toxenv: py39-test-nogsl
-
-          # - name: Python 3.8 with all optional dependencies (Windows)
-          #   os: windows-latest
-          #   python: 3.8
-          #   toxenv: py38-test-alldeps
-          #   toxposargs: --durations=50
+            toxenv: nogsl
 
           - name: Python 3.7 with oldest supported version of all dependencies
             os: ubuntu-latest
             python: 3.7
             toxenv: py37-test-oldestdeps
+
+          # Mac and Windows:
+          - name: Python 3.9 standard tests (macOS)
+            os: macos-latest
+            python: 3.9
+            toxenv: py39-test
+
+          # - name: Python 3.9 standard tests (Windows)
+          #   os: windows-latest
+          #   python: 3.9
+          #   toxenv: py39-test
 
     steps:
     - name: Checkout code
