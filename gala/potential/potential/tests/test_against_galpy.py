@@ -13,7 +13,7 @@ from ....units import galactic
 from ..builtin import (KeplerPotential, MiyamotoNagaiPotential,
                        NFWPotential, PowerLawCutoffPotential,
                        BovyMWPotential2014)
-from gala.dynamics.tests.helpers import HAS_GALPY
+from gala.tests.optional_deps import HAS_GALPY
 
 # Set to arbitrary values for testing
 ro = 8.1 * u.kpc

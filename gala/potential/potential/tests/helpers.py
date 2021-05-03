@@ -10,18 +10,13 @@ import numpy as np
 from scipy.misc import derivative
 import pytest
 
-try:
-    import sympy as sy  # noqa
-    HAS_SYMPY = True
-except ImportError:
-    HAS_SYMPY = False
-
 # Project
 from ..io import load
 from ...frame import StaticFrame
 from ...hamiltonian import Hamiltonian
 from ....units import UnitSystem, DimensionlessUnitSystem
 from ....dynamics import PhaseSpacePosition
+from gala.tests.optional_deps import HAS_SYMPY
 
 
 def partial_derivative(func, point, dim_ix=0, **kwargs):

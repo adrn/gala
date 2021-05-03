@@ -15,7 +15,7 @@ from ..core import PhaseSpacePosition
 from ...potential import Hamiltonian, HernquistPotential
 from ...potential.frame import StaticFrame, ConstantRotatingFrame
 from ...units import galactic, solarsystem
-from .helpers import HAS_GALPY
+from gala.tests.optional_deps import HAS_H5PY, HAS_GALPY
 
 
 def test_initialize():
@@ -391,6 +391,7 @@ def test_frame_transform():
                        ConstantRotatingFrame(Omega=[1., 0, 0]*u.rad/u.Myr,
                                              units=galactic)),
 ])
+@pytest.mark.skipif(not HAS_H5PY, reason='h5py required for this test')
 def test_io(tmpdir, obj):
     import h5py
 

@@ -8,7 +8,7 @@ import pytest
 from gala.dynamics import get_staeckel_fudge_delta, PhaseSpacePosition
 import gala.potential as gp
 from gala.units import galactic
-from .helpers import HAS_GALPY
+from gala.tests.optional_deps import HAS_GALPY
 
 
 @pytest.mark.skipif(not HAS_GALPY,
