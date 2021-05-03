@@ -38,11 +38,11 @@ jobs:
             python: 3.9
             toxenv: py39-test-nogsl
 
-          - name: Python 3.8 with all optional dependencies (Windows)
-            os: windows-latest
-            python: 3.8
-            toxenv: py38-test-alldeps
-            toxposargs: --durations=50
+          # - name: Python 3.8 with all optional dependencies (Windows)
+          #   os: windows-latest
+          #   python: 3.8
+          #   toxenv: py38-test-alldeps
+          #   toxposargs: --durations=50
 
           - name: Python 3.7 with oldest supported version of all dependencies
             os: ubuntu-latest
