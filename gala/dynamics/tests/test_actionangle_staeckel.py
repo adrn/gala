@@ -50,6 +50,7 @@ def test_staeckel_fudge_delta():
     paired_potentials.append((potential, galpy_potential))
 
     # TEST:
+    # TODO: remove the randomness here
     N = 1024
     rnd = np.random.default_rng(42)
     w = PhaseSpacePosition(pos=rnd.uniform(-10, 10, size=(3, N)) * u.kpc,
@@ -62,5 +63,4 @@ def test_staeckel_fudge_delta():
         galpy_deltas = estimateDeltaStaeckel(galpy_p, R, z,
                                              no_median=True)
         gala_deltas = get_staeckel_fudge_delta(p, w).value
-        print(p, np.allclose(gala_deltas, galpy_deltas))
-        assert np.allclose(gala_deltas, galpy_deltas, atol=1e-6)
+        assert np.allclose(gala_deltas, galpy_deltas, atol=1e-5, rtol=1e-3)

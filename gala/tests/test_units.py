@@ -2,6 +2,9 @@
     Test the unit system.
 """
 
+# Standard library
+import pickle
+
 # Third party
 import astropy.units as u
 from astropy.constants import G, c
@@ -72,3 +75,13 @@ def test_compare():
 
     assert usys1 != usys3
     assert usys3 != usys1
+
+
+def test_pickle(tmpdir):
+    usys = UnitSystem(u.kpc, u.Myr, u.radian, u.Msun)
+
+    with open(tmpdir / 'test.pkl', 'wb') as f:
+        pickle.dump(usys, f)
+
+    with open(tmpdir / 'test.pkl', 'rb') as f:
+        usys2 = pickle.load(f)
