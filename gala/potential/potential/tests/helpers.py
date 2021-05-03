@@ -292,6 +292,8 @@ class PotentialTestBase(object):
     @pytest.mark.skipif(not HAS_SYMPY,
                         reason="requires sympy to run this test")
     def test_against_sympy(self):
+        import sympy as sy
+
         # compare Gala gradient and hessian to sympy values
 
         pot = self.potential
