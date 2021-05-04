@@ -85,3 +85,14 @@ def test_pickle(tmpdir):
 
     with open(tmpdir / 'test.pkl', 'rb') as f:
         usys2 = pickle.load(f)
+
+
+def test_quantity_units():
+    usys = UnitSystem(
+        5 * u.kpc,
+        50 * u.Myr,
+        1e5 * u.Msun,
+        u.rad)
+
+    assert np.isclose((8*u.Myr).decompose(usys).value, 8/50)
+    usys.get_constant('G')
