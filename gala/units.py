@@ -91,6 +91,11 @@ class UnitSystem:
 
         self._registry = dict()
         for unit in units:
+            if not isinstance(unit, u.UnitBase):  # hopefully a quantity
+                q = unit
+                new_unit = u.def_unit(f'usys({q.unit.physical_type})', q)
+                unit = new_unit
+
             typ = unit.physical_type
             if typ in self._registry:
                 raise ValueError(f"Multiple units passed in with type '{typ}'")
