@@ -31,4 +31,3 @@ if not _ASTROPY_SETUP_:  # noqa
     from . import potential
     from . import units
     from . import util
-    # from . import mpl_style
