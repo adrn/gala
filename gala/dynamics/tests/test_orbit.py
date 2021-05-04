@@ -15,14 +15,7 @@ from ...potential import (Hamiltonian, HernquistPotential, LogarithmicPotential,
 from ...potential.frame import StaticFrame, ConstantRotatingFrame
 from ...units import galactic, solarsystem
 from ..util import combine
-
-try:
-    import galpy  # noqa
-    import galpy.orbit  # noqa
-    import galpy.potential  # noqa
-    HAS_GALPY = True
-except ImportError:
-    HAS_GALPY = False
+from gala.tests.optional_deps import HAS_H5PY, HAS_GALPY
 
 
 # Tests below should be cleaned up a bit...
@@ -565,6 +558,7 @@ _v = ([[1, 2, 3.], [1, 2, 3.]]*u.km/u.s).T
           frame=StaticFrame(galactic),
           potential=HernquistPotential(m=1E10, c=0.5, units=galactic)),
 ])
+@pytest.mark.skipif(not HAS_H5PY, reason='h5py required for this test')
 def test_io(tmpdir, obj):
     import h5py
 

@@ -11,11 +11,10 @@ from ....potential import (Hamiltonian, NFWPotential, HernquistPotential,
                            ConstantRotatingFrame)
 from ....dynamics import PhaseSpacePosition, Orbit
 from ....units import galactic
-
-# Project
 from ...nbody import DirectNBody
 from ..mockstream_generator import MockStreamGenerator
 from ..df import FardalStreamDF
+from gala.tests.optional_deps import HAS_H5PY
 
 
 def test_init():
@@ -99,6 +98,7 @@ def test_run():
     'dt, nsteps, output_every, release_every, n_particles, trail',
     list(itertools.product([1, -1], [16, 17],
                            [1, 2], [1, 4], [1, 4], [True, False])))
+@pytest.mark.skipif(not HAS_H5PY, reason='h5py required for this test')
 def test_animate(tmpdir, dt, nsteps, output_every, release_every,
                  n_particles, trail):
     import h5py

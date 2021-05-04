@@ -6,14 +6,6 @@ import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
 
-try:
-    import galpy  # noqa
-    import galpy.orbit  # noqa
-    import galpy.potential  # noqa
-    HAS_GALPY = True
-except ImportError:
-    HAS_GALPY = False
-
 # Project
 # from ..actionangle import classify_orbit
 from ...units import galactic

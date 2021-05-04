@@ -13,14 +13,7 @@ from ....units import galactic
 from ..builtin import (KeplerPotential, MiyamotoNagaiPotential,
                        NFWPotential, PowerLawCutoffPotential,
                        BovyMWPotential2014)
-
-try:
-    import galpy  # noqa
-    import galpy.orbit  # noqa
-    import galpy.potential  # noqa
-    HAS_GALPY = True
-except ImportError:
-    HAS_GALPY = False
+from gala.tests.optional_deps import HAS_GALPY
 
 # Set to arbitrary values for testing
 ro = 8.1 * u.kpc

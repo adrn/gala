@@ -11,6 +11,7 @@ from ..common import PotentialParameter
 from .core import PotentialBase
 
 __all__ = ['from_equation']
+__doctest_requires__ = {('from_equation', ): ['sympy']}
 
 
 def from_equation(expr, vars, pars, name=None, hessian=False):
@@ -49,7 +50,7 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
     Examples
     --------
     Here we'll create a potential class for the harmonic oscillator
-    potential, :math:`\Phi(x) = \frac{1}{2}\,k\,x^2`::
+    potential, :math:`\Phi(x) = \frac{1}{2}\,k\,x^2`:
 
         >>> Potential = from_equation("1/2*k*x**2", vars="x", pars="k",
         ...                           name='HarmonicOscillator')
@@ -59,7 +60,7 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
 
     The potential class (and object) is a fully-fledged subclass of
     `~gala.potential.PotentialBase` and therefore has many useful methods.
-    For example, to integrate an orbit::
+    For example, to integrate an orbit:
 
         >>> from gala.potential import Hamiltonian
         >>> H = Hamiltonian(p1)

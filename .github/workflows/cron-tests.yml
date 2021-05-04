@@ -1,0 +1,87 @@
+name: Cron tests
+
+on:
+  schedule:
+    - cron: "0 10 * * 1"  # Mondays @ 6AM Eastern
+  pull_request:
+    # We also want this workflow triggered if the 'Extra CI' label is added
+    # or present when PR is updated
+    types:
+      - synchronize
+      - labeled
+
+jobs:
+  tests:
+    name: Python ${{ matrix.python }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    if: (github.event_name == 'schedule' || contains(github.event.pull_request.labels.*.name, 'Extra CI'))
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-latest] # TODO: re-enable windows-latest
+        python: [3.7, 3.8, 3.9]
+        include:
+          # These set options for each python version. So, for example, when any
+          # python 3.7 job in the matrix runs, it should use this toxenv
+          - python: 3.7
+            toxenv: py37-test
+
+          - python: 3.9
+            toxenv: py39-test-cov
+
+          - python: 3.8
+            toxenv: py38-test-extradeps
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+        if: "!startsWith(matrix.os, 'windows')"
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+
+      # Windows:
+      - uses: conda-incubator/setup-miniconda@v2
+        if: startsWith(matrix.os, 'windows')
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Python dependencies - Windows
+        if: startsWith(matrix.os, 'windows')
+        shell: bash -l {0}
+        run: |
+          conda install -c conda-forge -q gsl libpython
+          python -m pip install -e .[test]
+          python -m pip install tox
+
+      - name: Run tests - Windows
+        if: startsWith(matrix.os, 'windows')
+        shell: bash -l {0}
+        run: |
+          tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} ${{ matrix.toxposargs }}
+
+      # Mac:
+      - name: Setup Mac - GSL
+        if: startsWith(matrix.os, 'mac')
+        run: |
+          brew install gsl
+
+      # Ubuntu:
+      - name: Setup Linux - GSL
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install gsl-bin libgsl0-dev build-essential
+
+      # Any *nix:
+      - name: Install Python dependencies - nix
+        if: "!startsWith(matrix.os, 'windows')"
+        run: python -m pip install --upgrade tox codecov
+
+      - name: Run tests - nix
+        if: "!startsWith(matrix.os, 'windows')"
+        run: tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}

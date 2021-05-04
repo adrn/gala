@@ -6,14 +6,10 @@ import os
 # Third-party
 import pytest
 import numpy as np
-try:
-    import tqdm # noqa
-    HAS_TQDM = True
-except ImportError:
-    HAS_TQDM = False
 
 # Project
 from .. import LeapfrogIntegrator, RK5Integrator, DOPRI853Integrator
+from gala.tests.optional_deps import HAS_TQDM
 
 # Integrators to test
 integrator_list = [RK5Integrator, DOPRI853Integrator, LeapfrogIntegrator]
