@@ -31,7 +31,6 @@ jobs:
 
           - python: 3.8
             toxenv: py38-test-extradeps
-            toxargs: -v --develop
 
     steps:
     - name: Checkout code
@@ -58,14 +57,13 @@ jobs:
       run: |
         conda install -c conda-forge -q gsl libpython
         python -m pip install -e .[test]
-        python -m pip install virtualenv==20.0.33  # 20.0.34 broken!
         python -m pip install tox
 
     - name: Run tests - Windows
       shell: bash -l {0}
       if: startsWith(matrix.os, 'windows')
       run: |
-        tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}
+        tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} ${{ matrix.toxposargs }}
 
     # Mac:
     - name: Setup Mac - GSL

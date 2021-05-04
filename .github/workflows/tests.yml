@@ -6,7 +6,7 @@ on:
     - main
     tags:
     - '*'
-  # pull_request:
+  pull_request:
 
 jobs:
   tests:
@@ -22,38 +22,38 @@ jobs:
             python: 3.x
             toxenv: codestyle
 
-          - name: Python 3.9 with minimal dependencies and coverage
-            os: ubuntu-latest
-            python: 3.9
-            toxenv: py39-test-cov
+          # - name: Python 3.9 with minimal dependencies and coverage
+          #   os: ubuntu-latest
+          #   python: 3.9
+          #   toxenv: py39-test-cov
 
-          # Has to happen on ubuntu because galpy is finnicky on macOS
-          - name: Python 3.9 with all optional dependencies
-            os: ubuntu-latest
-            python: 3.9
-            toxenv: py39-test-extradeps
-            toxposargs: --durations=50
+          # # Has to happen on ubuntu because galpy is finnicky on macOS
+          # - name: Python 3.9 with all optional dependencies
+          #   os: ubuntu-latest
+          #   python: 3.9
+          #   toxenv: py39-test-extradeps
+          #   toxposargs: --durations=50
 
-          - name: Python 3.9 without GSL
-            os: ubuntu-latest
-            python: 3.9
-            toxenv: nogsl
+          # - name: Python 3.9 without GSL
+          #   os: ubuntu-latest
+          #   python: 3.9
+          #   toxenv: nogsl
 
-          - name: Python 3.7 with oldest supported version of all dependencies
-            os: ubuntu-latest
-            python: 3.7
-            toxenv: py37-test-oldestdeps
+          # - name: Python 3.7 with oldest supported version of all dependencies
+          #   os: ubuntu-latest
+          #   python: 3.7
+          #   toxenv: py37-test-oldestdeps
 
-          # Mac and Windows:
-          - name: Python 3.9 standard tests (macOS)
-            os: macos-latest
-            python: 3.9
-            toxenv: py39-test
-
-          # - name: Python 3.9 standard tests (Windows)
-          #   os: windows-latest
+          # # Mac and Windows:
+          # - name: Python 3.9 standard tests (macOS)
+          #   os: macos-latest
           #   python: 3.9
           #   toxenv: py39-test
+
+          - name: Python 3.9 standard tests (Windows)
+            os: windows-latest
+            python: 3.9
+            toxenv: py39-test
 
     steps:
     - name: Checkout code
@@ -61,7 +61,8 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+      if: "!startsWith(matrix.os, 'windows')"
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python }}
@@ -73,14 +74,13 @@ jobs:
       run: |
         conda install -c conda-forge -q gsl libpython
         python -m pip install -e .[test]
-        python -m pip install virtualenv==20.0.33  # 20.0.34 broken!
         python -m pip install tox
 
     - name: Run tests - Windows
       if: startsWith(matrix.os, 'windows')
       shell: bash -l {0}
       run: |
-        tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}
+        tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} ${{ matrix.toxposargs }}
 
     # Mac:
     - name: Setup Mac - GSL
