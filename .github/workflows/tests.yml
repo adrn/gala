@@ -68,6 +68,12 @@ jobs:
         python-version: ${{ matrix.python }}
 
     # Windows:
+    - uses: conda-incubator/setup-miniconda@v2
+      if: startsWith(matrix.os, 'windows')
+      with:
+        auto-update-conda: true
+        python-version: ${{ matrix.python-version }}
+
     - name: Install Python dependencies - Windows
       if: startsWith(matrix.os, 'windows')
       shell: bash -l {0}
