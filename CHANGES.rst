@@ -4,11 +4,14 @@
 New Features
 ------------
 
+- ``UnitSystem`` objects can now be created with custom units passed in as
+  Astropy ``Quantity`` objects.
+
 
 Bug fixes
 ---------
 
-- Fixed a bug when calling `orbit.norbits` when the representation is not
+- Fixed a bug when calling ``orbit.norbits`` when the representation is not
   cartesian.
 
 - Fixed a bug with ``GreatCircleICRSFrame.from_endpoints()`` that caused an

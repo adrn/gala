@@ -91,6 +91,11 @@ class UnitSystem:
 
         self._registry = dict()
         for unit in units:
+            if not isinstance(unit, u.UnitBase):  # hopefully a quantity
+                q = unit
+                new_unit = u.def_unit(f'{q!s}', q)
+                unit = new_unit
+
             typ = unit.physical_type
             if typ in self._registry:
                 raise ValueError(f"Multiple units passed in with type '{typ}'")
@@ -135,7 +140,7 @@ class UnitSystem:
             yield uu
 
     def __str__(self):
-        core_units = ",".join([str(uu) for uu in self._core_units])
+        core_units = ", ".join([str(uu) for uu in self._core_units])
         return f"UnitSystem ({core_units})"
 
     def __repr__(self):
