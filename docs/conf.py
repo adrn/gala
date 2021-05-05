@@ -8,6 +8,15 @@ import datetime
 from importlib import import_module
 import warnings
 
+try:
+    # THIRD PARTY
+    from sphinx_astropy.conf.v1 import *  # noqa: F401, F403
+except ImportError:
+    print(
+        "ERROR: documentation requires installing the sphinx-astropy package",
+    )
+    sys.exit(1)
+
 # Get configuration information from setup.cfg
 from configparser import ConfigParser
 conf = ConfigParser()
@@ -43,49 +52,40 @@ numpydoc_xref_param_type = True
 
 # Words not to cross-reference. Most likely, these are common words used in
 # parameter type descriptions that may be confused for classes of the same
-# name.
-numpydoc_xref_ignore = {
-    'type', 'optional', 'default', 'or', 'of', 'method', 'instance', "like",
-    "class", 'subclass', "keyword-only", "default", "thereof", "mixin",
-    # needed in subclassing numpy  # TODO! revisit
+# name. The base set comes from sphinx-astropy. We add more here.
+# TODO! check if there are any repeats here.
+numpydoc_xref_ignore.update({
+    "mixin",
+    # needed in subclassing numpy
     "Arguments", "Path",
     # TODO! not need to ignore.
     "flag", "bits",
-}
+})
 
 # Mappings to fully qualified paths (or correct ReST references) for the
 # aliases/shortcuts used when specifying the types of parameters.
 # Numpy provides some defaults
 # https://github.com/numpy/numpydoc/blob/b352cd7635f2ea7748722f410a31f937d92545cc/numpydoc/xref.py#L62-L94
 # so we only need to define Astropy-specific x-refs
-numpydoc_xref_aliases = {
-    # ulta-general
-    "-like": ":term:`-like`",
+# TODO use astropy intersphinx glossary references.
+numpydoc_xref_aliases.update({
     # python & adjacent
     "file-like": ":term:`python:file-like object`",
-    "file": ":term:`python:file object`",
-    "iterator": ":term:`python:iterator`",
     "path-like": ":term:`python:path-like object`",
     "module": ":term:`python:module`",
     "buffer-like": ":term:buffer-like",
-    "function": ":term:`python:function`",
     # for matplotlib
     "color": ":term:`color`",
     # for numpy
     "ints": ":class:`python:int`",
     # for astropy
-    "unit-like": ":term:`unit-like`",
-    "quantity-like": ":term:`quantity-like`",
-    "angle-like": ":term:`angle-like`",
-    "table-like": ":term:`table-like`",
-    "time-like": ":term:`time-like`",
-    "frame-like": ":term:`frame-like`",
-    "coordinate-like": ":term:`coordinate-like`",
     "number": ":term:`number`",
     "Representation": ":class:`~astropy.coordinates.BaseRepresentation`",
     "writable": ":term:`writable file-like object`",
     "readable": ":term:`readable file-like object`",
-}
+})
+# add all Astropy x-ref aliases from sphinx-astropy
+numpydoc_xref_aliases.update(numpydoc_xref_astropy_aliases)
 
 autosummary_generate = True
 
@@ -105,15 +105,9 @@ rst_epilog = """
 """
 
 # intersphinx
-intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'numpy': ('https://numpy.org/doc/stable/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
-    'matplotlib': ('https://matplotlib.org/', None),
-    'astropy': ('https://docs.astropy.org/en/stable/', None),
-    'h5py': ('https://docs.h5py.org/en/stable/', None),
+intersphinx_mapping.update({
     'sympy': ('https://docs.sympy.org/latest/', None)
-}
+})
 
 # Show / hide TODO blocks
 todo_include_todos = True

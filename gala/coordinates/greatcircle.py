@@ -108,7 +108,7 @@ def greatcircle_transforms(self_transform=False):
 
 
 _components = """
-phi1 : `~astropy.units.Quantity`
+phi1 : `~astropy.units.Quantity` ['angle']
     Longitude component.
 phi2 : `~astropy.units.Quantity`
     Latitude component.
