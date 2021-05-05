@@ -22,15 +22,16 @@ Installation and Dependencies
 
 |conda| |PyPI|
 
-The easiest way to get Gala is to install with conda or pip.
+The easiest way to get Gala is to install with pip or conda.
 
-If you are on Linux or Mac, you can install with conda using the conda-forge channel::
+The recommended install method is to use ``pip``::
+
+   pip install gala
+
+If you are on Linux or Mac, you can also install ``gala`` with conda using the
+conda-forge channel::
 
     conda install gala --channel conda-forge
-
-If you prefer pip, or if you are on Windows, you can also install using pip::
-
-    pip install gala
 
 See the `installation
 instructions <http://gala.adrian.pw/en/latest/install.html>`_ in the
@@ -57,32 +58,17 @@ paper::
       journal = {The Journal of Open Source Software}
     }
 
-Please also consider citing the Zenodo DOI |DOI| as a software citation::
-
-    @misc{gala:zenodo,
-      author       = {Adrian Price-Whelan and
-                      Brigitta Sipőcz and
-                      Daniel Lenz and
-                      Johnny Greco and
-                      Syrtis Major and
-                      Sergey Koposov and
-                      Semyeong Oh and
-                      P. L. Lim},
-      title        = {adrn/gala: v1.3},
-      month        = oct,
-      year         = 2020,
-      publisher    = {Zenodo},
-      version      = {v1.3},
-      doi          = {10.5281/zenodo.4159870},
-      url          = {https://doi.org/10.5281/zenodo.593786}
-    }
+Please also cite the Zenodo DOI |DOI| as a software citation - see the
+`documentation
+<http://gala.adrian.pw/en/latest/index.html#citation-and-attribution>`_ for up
+to date citation information.
 
 License
 -------
 
 |License|
 
-Copyright 2013-2020 Adrian Price-Whelan and contributors.
+Copyright 2013-2021 Adrian Price-Whelan and contributors.
 
 ``Gala`` is free software made available under the MIT License. For details see
 the `LICENSE <https://github.com/adrn/gala/blob/main/LICENSE>`_ file.
