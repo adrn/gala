@@ -29,16 +29,16 @@ class GD1Koposov10(coord.BaseCoordinateFrame):
         The longitude-like angle corresponding to GD-1's orbit.
     phi2 : angle_like, optional, must be keyword
         The latitude-like angle corresponding to GD-1's orbit.
-    distance : :class:`~astropy.units.Quantity`, optional, must be keyword
+    distance : :class:`~astropy.units.Quantity` ['length'], optional, must be keyword
         The Distance for this object along the line-of-sight.
 
-    pm_phi1_cosphi2 : :class:`~astropy.units.Quantity`, optional, must be keyword
+    pm_phi1_cosphi2 : :class:`~astropy.units.Quantity` ['angular speed'], optional, must be keyword
         The proper motion in the longitude-like direction corresponding to
         the GD-1 stream's orbit.
-    pm_phi2 : :class:`~astropy.units.Quantity`, optional, must be keyword
+    pm_phi2 : :class:`~astropy.units.Quantity` ['angular speed'], optional, must be keyword
         The proper motion in the latitude-like direction perpendicular to the
         GD-1 stream's orbit.
-    radial_velocity : :class:`~astropy.units.Quantity`, optional, must be keyword
+    radial_velocity : :class:`~astropy.units.Quantity` ['speed'], optional, must be keyword
         The Distance for this object along the line-of-sight.
 
     """
