@@ -109,7 +109,7 @@ can check by calling the `~gala.potential.potential.PotentialBase.units`
 attribute of your potential object::
 
     >>> mw.units
-    <UnitSystem (kpc,Myr,solMass,rad)>
+    <UnitSystem (kpc, Myr, solMass, rad)>
 
 Here, our Milky Way potential model has a unit system with dimensional units.
 Note that we could have used any length unit for the position and any velocity

@@ -16,6 +16,7 @@ For the examples below, I assume the following imports have already been
 executed::
 
     >>> import astropy.units as u
+    >>> import numpy as np
     >>> from gala.units import UnitSystem
 
 Unit Systems
@@ -27,7 +28,7 @@ units with (at least) these four required physical types::
 
     >>> usys = UnitSystem(u.cm, u.millisecond, u.degree, u.gram)
     >>> usys
-    <UnitSystem (cm,ms,g,deg)>
+    <UnitSystem (cm, ms, g, deg)>
 
 Astropy :class:`~astropy.units.Quantity` objects can be decomposed into this
 unit system using :meth:`~astropy.units.Quantity.decompose`::
