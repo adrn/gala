@@ -39,6 +39,9 @@ class PotentialParameter:
         self.default = default
         self.equivalencies = equivalencies
 
+    def __repr__(self):
+        return f"<PotentialParameter: {self.name} [{self.physical_type}]>"
+
 
 class CommonBase:
 
