@@ -15,7 +15,7 @@ if HAS_GALPY:
 
     # TODO: some potential conversions drop parameters. Might want to add an
     # option for a custom validator function or something to raise warnings?
-    gala_to_galpy = {
+    _gala_to_galpy = {
         gp.HernquistPotential: (
             galpy_gp.HernquistPotential, {
                 'a': 'c',
@@ -24,19 +24,21 @@ if HAS_GALPY:
         ),
         gp.IsochronePotential: (
             galpy_gp.IsochronePotential, {
-                'b': 'a'
+                'b': 'b'
             }
         ),
         gp.JaffePotential: (
             galpy_gp.JaffePotential, {
-                'c': 'a'
+                'a': 'c'
             }
         ),
         gp.KeplerPotential: (
             galpy_gp.KeplerPotential, {}
         ),
         gp.KuzminPotential: (
-            galpy_gp.KuzminDiskPotential, {}
+            galpy_gp.KuzminDiskPotential, {
+                'a': 'a',
+            }
         ),
         gp.LogarithmicPotential: (
             galpy_gp.LogarithmicHaloPotential, {
@@ -68,7 +70,7 @@ if HAS_GALPY:
         ),
         gp.PlummerPotential: (
             galpy_gp.PlummerPotential, {
-                'a': 'b'
+                'b': 'b'
             }
         ),
         gp.PowerLawCutoffPotential: (
@@ -109,12 +111,12 @@ def gala_to_galpy_potential(potential, ro=None, vo=None):
                 gala_to_galpy_potential(potential[k], ro, vo))
 
     else:
-        if potential.__class__ not in gala_to_galpy:
+        if potential.__class__ not in _gala_to_galpy:
             raise TypeError(
                 f"Converting potential class {potential.__class__.__name__} "
                 "to galpy is currently not supported")
 
-        galpy_cls, converters = gala_to_galpy[potential.__class__]
+        galpy_cls, converters = _gala_to_galpy[potential.__class__]
         gala_pars = potential.parameters.copy()
 
         galpy_pars = {}
