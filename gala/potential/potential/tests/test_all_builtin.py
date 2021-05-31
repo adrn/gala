@@ -176,6 +176,12 @@ class TestSatoh(PotentialTestBase):
     w0 = [8., 0., 0., 0., 0.22, 0.1]
 
 
+class TestKuzmin(PotentialTestBase):
+    potential = p.KuzminPotential(units=galactic, m=1.E11, a=3.5)
+    w0 = [8., 0., 0., 0., 0.22, 0.1]
+    sympy_hessian = False
+
+
 class TestStone(PotentialTestBase):
     potential = p.StonePotential(units=galactic, m=1E11, r_c=0.1, r_h=10.)
     w0 = [8., 0., 0., 0., 0.18, 0.1]

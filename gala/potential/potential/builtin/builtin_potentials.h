@@ -65,6 +65,10 @@ extern void satoh_gradient(double t, double *pars, double *q, int n_dim, double 
 extern double satoh_density(double t, double *pars, double *q, int n_dim);
 extern void satoh_hessian(double t, double *pars, double *q, int n_dim, double *hess);
 
+extern double kuzmin_value(double t, double *pars, double *q, int n_dim);
+extern void kuzmin_gradient(double t, double *pars, double *q, int n_dim, double *grad);
+extern double kuzmin_density(double t, double *pars, double *q, int n_dim);
+
 extern double miyamotonagai_value(double t, double *pars, double *q, int n_dim);
 extern void miyamotonagai_gradient(double t, double *pars, double *q, int n_dim, double *grad);
 extern void miyamotonagai_hessian(double t, double *pars, double *q, int n_dim, double *hess);

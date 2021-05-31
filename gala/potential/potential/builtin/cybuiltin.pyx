@@ -100,6 +100,10 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     double satoh_density(double t, double *pars, double *q, int n_dim) nogil
     void satoh_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
+    double kuzmin_value(double t, double *pars, double *q, int n_dim) nogil
+    void kuzmin_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    double kuzmin_density(double t, double *pars, double *q, int n_dim) nogil
+
     double miyamotonagai_value(double t, double *pars, double *q, int n_dim) nogil
     void miyamotonagai_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     void miyamotonagai_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
@@ -121,7 +125,7 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
 __all__ = ['NullPotential', 'HenonHeilesPotential', # Misc. potentials
            'KeplerPotential', 'HernquistPotential', 'IsochronePotential', 'PlummerPotential',
            'JaffePotential', 'StonePotential', 'PowerLawCutoffPotential', # Spherical models
-           'SatohPotential', 'MiyamotoNagaiPotential', # Disk models
+           'SatohPotential', 'KuzminPotential', 'MiyamotoNagaiPotential', # Disk models
            'NFWPotential', 'LeeSutoTriaxialNFWPotential', 'LogarithmicPotential',
            'LongMuraliBarPotential', # Triaxial models
            ]
@@ -541,6 +545,46 @@ class SatohPotential(CPotentialBase):
         z = v['z']
         term = R**2 + z**2 + p['a'] * (p['a'] + 2 * sy.sqrt(z**2 + p['b']**2))
         expr = - p['G'] * p['m'] / sy.sqrt(term)
+        return expr, v, p
+
+
+cdef class KuzminWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters, q0, R):
+        self.init([G] + list(parameters),
+                  np.ascontiguousarray(q0),
+                  np.ascontiguousarray(R))
+        self.cpotential.value[0] = <energyfunc>(kuzmin_value)
+        self.cpotential.density[0] = <densityfunc>(kuzmin_density)
+        self.cpotential.gradient[0] = <gradientfunc>(kuzmin_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(null_hessian)
+
+@format_doc(common_doc=_potential_docstring)
+class KuzminPotential(CPotentialBase):
+    r"""
+    KuzminPotential(m, a, units=None, origin=None, R=None)
+
+    Kuzmin potential for a flattened mass distribution.
+
+    Parameters
+    ----------
+    m : :class:`~astropy.units.Quantity`, numeric [mass]
+        Mass.
+    a : :class:`~astropy.units.Quantity`, numeric [length]
+        Flattening parameter.
+    {common_doc}
+    """
+    m = PotentialParameter('m', physical_type='mass')
+    a = PotentialParameter('a', physical_type='length')
+
+    Wrapper = KuzminWrapper
+
+    @myclassmethod
+    @sympy_wrap
+    def to_sympy(cls, v, p):
+        import sympy as sy
+        denom = sy.sqrt(v['x']**2 + v['y']**2 + (p['a'] + sy.Abs(v['z']))**2)
+        expr = - p['G'] * p['m'] / denom
         return expr, v, p
 
 

@@ -35,6 +35,8 @@ class PotentialTestBase(object):
     tol = 1E-5
     show_plots = False
 
+    sympy_hessian = True
+
     @classmethod
     def setup_class(cls):
         if cls.name is None:
@@ -293,6 +295,7 @@ class PotentialTestBase(object):
                         reason="requires sympy to run this test")
     def test_against_sympy(self):
         import sympy as sy
+        from sympy import Q
 
         # compare Gala gradient and hessian to sympy values
 
@@ -304,21 +307,31 @@ class PotentialTestBase(object):
         def lowergamma(a, x):  # noqa
             # Differences between scipy and sympy lower gamma
             return gammainc(a, x) * gamma(a)
-        modules = ['numpy',
-                   {'atan': np.arctan,
-                    'lowergamma': lowergamma,
-                    'gamma': gamma}]
+        modules = [
+            'numpy',
+            {
+                'atan': np.arctan,
+                'lowergamma': lowergamma,
+                'gamma': gamma,
+                're': np.real,
+                'im': np.imag
+            },
+            'sympy'
+        ]
 
-        e_func = sy.lambdify(list(p.values()) + list(v.values()), Phi,
-                             modules=modules)
+        vars_ = list(p.values()) + list(v.values())
+        assums = np.bitwise_and.reduce([Q.real(x) for x in vars_])
+        Phi = sy.simplify(sy.refine(Phi, assums))
+        e_func = sy.lambdify(vars_, Phi, modules=modules)
 
         grad = sy.derive_by_array(Phi, list(v.values()))
-        grad_func = sy.lambdify(list(p.values()) + list(v.values()), grad,
-                                modules=modules)
+        grad = sy.simplify(sy.refine(grad, assums))
+        grad_func = sy.lambdify(vars_, grad, modules=modules)
 
-        Hess = sy.hessian(Phi, list(v.values()))
-        Hess_func = sy.lambdify(list(p.values()) + list(v.values()), Hess,
-                                modules=modules)
+        if self.sympy_hessian:
+            Hess = sy.hessian(Phi, list(v.values()))
+            Hess = sy.simplify(sy.refine(Hess, assums))
+            Hess_func = sy.lambdify(vars_, Hess, modules=modules)
 
         # Make a dict of potential parameter values without units:
         par_vals = {}
@@ -332,20 +345,28 @@ class PotentialTestBase(object):
         f_gala = pot.energy(trial_x).value
         f_sympy = e_func(G=pot.G, **par_vals, **x_dict)
         e_close = np.allclose(f_gala, f_sympy)
+        test_cases = [e_close]
+        vals = [(f_gala, f_sympy)]
 
         G_gala = pot.gradient(trial_x).value
         G_sympy = grad_func(G=pot.G, **par_vals, **x_dict)
         g_close = np.allclose(G_gala, G_sympy)
+        test_cases.append(g_close)
+        vals.append((G_gala, G_sympy))
 
-        H_gala = pot.hessian(trial_x).value
-        H_sympy = Hess_func(G=pot.G, **par_vals, **x_dict)
-        h_close = np.allclose(H_gala, H_sympy)
+        if self.sympy_hessian:
+            H_gala = pot.hessian(trial_x).value
+            H_sympy = Hess_func(G=pot.G, **par_vals, **x_dict)
+            h_close = np.allclose(H_gala, H_sympy)
+            test_cases.append(h_close)
+            vals.append((H_gala, H_sympy))
 
-        if not all([e_close, g_close, h_close]):
-            print(f'{pot}: energy {e_close}, gradient {g_close}, '
-                  f'hessian {h_close}')
+        if not all(test_cases):
+            names = ['energy', 'gradient', 'hessian']
+            for name, (val1, val2) in zip(names, vals):
+                print(f'{pot}: {name} {val1} {val2}')
 
-        assert all([e_close, g_close, h_close])
+        assert all(test_cases)
 
     def test_regression_165(self):
         if self.potential.ndim == 1:

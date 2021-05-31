@@ -1,5 +1,6 @@
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
 #include "extra_compile_macros.h"
 
 #if USE_GSL == 1
@@ -1220,6 +1221,59 @@ void satoh_hessian(double t, double *pars, double *q, int n_dim, double *hess) {
     hess[6] = hess[6] + tmp_14;
     hess[7] = hess[7] + tmp_15;
     hess[8] = hess[8] + -tmp_13*(-tmp_12*z - z) - tmp_7*(a*tmp_2/pow(tmp_3, 3.0/2.0) - tmp_12 - 1);
+}
+
+/* ---------------------------------------------------------------------------
+    Kuzmin potential
+*/
+double kuzmin_value(double t, double *pars, double *q, int n_dim) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - a (length scale 1) TODO
+    */
+    double S2 = q[0]*q[0] + q[1]*q[1] + pow(pars[2] + fabs(q[2]), 2);
+    return -pars[0] * pars[1] / sqrt(S2);
+}
+
+void kuzmin_gradient(double t, double *pars, double *q, int n_dim,
+                     double *grad) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - a (length scale 1) TODO
+    */
+
+    double S2 = q[0]*q[0] + q[1]*q[1] + pow(pars[2] + fabs(q[2]), 2);
+    double fac = pars[0] * pars[1] * pow(S2, -1.5);
+    double zsign;
+
+    if (q[2] > 0) {
+        zsign = 1.;
+    } else if (q[2] < 0) {
+        zsign = -1.;
+    } else {
+        zsign = 0.;
+    }
+
+    grad[0] = grad[0] + fac * q[0];
+    grad[1] = grad[1] + fac * q[1];
+    grad[2] = grad[2] + fac * zsign * (pars[2] + fabs(q[2]));
+}
+
+double kuzmin_density(double t, double *pars, double *q, int n_dim) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - a (length scale 1) TODO
+    */
+    if (q[2] != 0.) {
+        return 0.;
+    } else {
+        return pars[1] * pars[2] / (2 * M_PI) *
+            pow(q[0]*q[0] + q[1]*q[1] + pars[2]*pars[2], -1.5);
+   }
+
 }
 
 /* ---------------------------------------------------------------------------

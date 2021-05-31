@@ -83,13 +83,15 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
     ndim = len(vars)
 
     # Energy / value
-    energyfunc = lambdify(vars + pars, expr, dummify=False, modules='numpy')
+    energyfunc = lambdify(vars + pars, expr, dummify=False,
+                          modules=['numpy', 'sympy'])
 
     # Gradient
     gradfuncs = []
     for var in vars:
         gradfuncs.append(lambdify(vars + pars, sympy.diff(expr, var),
-                                  dummify=False, modules='numpy'))
+                                  dummify=False,
+                                  modules=['numpy', 'sympy']))
 
     parameters = {}
     for _name in par_names:
@@ -133,7 +135,8 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
             for var2 in vars:
                 hessfuncs.append(lambdify(vars + pars,
                                           sympy.diff(expr, var1, var2),
-                                          dummify=False, modules='numpy'))
+                                          dummify=False,
+                                          modules=['numpy', 'sympy']))
 
         def _hessian(self, w, t):
             kw = self.parameters.copy()
@@ -212,11 +215,12 @@ class SympyWrapper:
                 raise ImportError("Converting to a latex expression requires "
                                   "the sympy package to be installed")
 
-            _var = sy.symbols(self.var, seq=True)
+            _var = sy.symbols(self.var, seq=True, real=True)
             _var = {v.name: v for v in _var}
 
             if cls._parameters:
-                par = sy.symbols(' '.join(cls._parameters.keys()), seq=True)
+                par = sy.symbols(' '.join(cls._parameters.keys()),
+                                 seq=True, real=True)
                 par = {v.name: v for v in par}
             else:
                 par = {}
