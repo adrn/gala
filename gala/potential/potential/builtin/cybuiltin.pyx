@@ -971,9 +971,9 @@ class LongMuraliBarPotential(CPotentialBase):
         y = -v['x'] * sy.sin(p['alpha']) + v['y'] * sy.cos(p['alpha'])
         z = v['z']
 
-        Tm = sy.sqrt((p['a']-x)**2 + y**2 +
+        Tm = sy.sqrt((p['a'] - x)**2 + y**2 +
                      (p['b'] + sy.sqrt(p['c']**2 + z**2))**2)
-        Tp = sy.sqrt((p['a']+x)**2 + y**2 +
+        Tp = sy.sqrt((p['a'] + x)**2 + y**2 +
                      (p['b'] + sy.sqrt(p['c']**2 + z**2))**2)
 
         expr = (p['G'] * p['m'] / (2*p['a']) *
