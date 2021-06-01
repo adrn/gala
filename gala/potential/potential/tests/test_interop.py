@@ -18,6 +18,9 @@ from gala.potential.potential.interop import _gala_to_galpy
 ro = 8.122 * u.kpc
 vo = 245 * u.km/u.s
 
+if HAS_GALPY:
+    import galpy.potential as galpy_gp
+
 
 def pytest_generate_tests(metafunc):
     # Some magic, semi-random numbers below!
@@ -59,6 +62,8 @@ def pytest_generate_tests(metafunc):
                          ids=test_names)
 
 
+@pytest.mark.skipif(not HAS_GALPY,
+                    reason="must have galpy installed to run these tests")
 class TestGalpy:
 
     def setup(self):
@@ -67,15 +72,69 @@ class TestGalpy:
         ntest = 128
 
         Rs = rng.uniform(1, 15, size=ntest) * u.kpc
-        phis = rng.uniform(0, 2*np.pi, size=ntest)
+        phis = rng.uniform(0, 2*np.pi, size=ntest) * u.radian
         zs = rng.uniform(1, 15, size=ntest) * u.kpc
 
-        xyz = CylindricalRepresentation(Rs, phis*u.rad, zs).to_cartesian().xyz
+        cyl = CylindricalRepresentation(Rs, phis, zs)
+        xyz = cyl.to_cartesian().xyz
 
-        self.Rs = Rs
-        self.phis = phis
-        self.zs = zs
+        self.Rs = Rs.to_value(ro)
+        self.phis = phis.to_value(u.rad)
+        self.zs = zs.to_value(ro)
+        self.Rpz_iter = list(zip(self.Rs, self.phis, self.zs))
+
         self.xyz = xyz
+
+        Jac = np.zeros((len(cyl), 3, 3))
+        Jac[:, 0, 0] = xyz[0] / cyl.rho
+        Jac[:, 0, 1] = xyz[1] / cyl.rho
+        Jac[:, 1, 0] = (-xyz[1] / cyl.rho**2).to_value(1 / ro)
+        Jac[:, 1, 1] = (xyz[0] / cyl.rho**2).to_value(1 / ro)
+        Jac[:, 2, 2] = 1.
+        self.Jac = Jac
+
+    def test_density(self, gala_pot, galpy_pot):
+        if isinstance(gala_pot, gp.LogarithmicPotential):
+            pytest.skip()
+
+        gala_val = gala_pot.density(self.xyz).to_value(u.Msun / u.pc**3)
+        galpy_val = np.array([galpy_gp.evaluateDensities(galpy_pot,
+                                                         R=RR, z=zz, phi=pp)
+                              for RR, pp, zz in self.Rpz_iter])
+        assert np.allclose(gala_val, galpy_val)
+
+    def test_energy(self, gala_pot, galpy_pot):
+        gala_val = gala_pot.energy(self.xyz).to_value(u.km**2 / u.s**2)
+        galpy_val = np.array([galpy_gp.evaluatePotentials(galpy_pot,
+                                                          R=RR, z=zz, phi=pp)
+                              for RR, pp, zz in self.Rpz_iter])
+
+        if isinstance(gala_pot, gp.LogarithmicPotential):
+            # Logarithms are weird
+            gala_val -= (0.5 * gala_pot.parameters['v_c']**2 *
+                         np.log(ro.value**2)).to_value((u.km / u.s)**2)
+
+        assert np.allclose(gala_val, galpy_val)
+
+    def test_gradient(self, gala_pot, galpy_pot):
+        gala_grad = gala_pot.gradient(self.xyz)
+        gala_grad = gala_grad.to_value((u.km/u.s) * u.pc/u.Myr / u.pc)
+
+        galpy_dR = np.array([-galpy_gp.evaluateRforces(galpy_pot,
+                                                       R=RR, z=zz, phi=pp)
+                            for RR, pp, zz in self.Rpz_iter])
+        galpy_dp = np.array([-galpy_gp.evaluatephiforces(galpy_pot,
+                                                         R=RR, z=zz, phi=pp)
+                            for RR, pp, zz in self.Rpz_iter])
+        galpy_dz = np.array([-galpy_gp.evaluatezforces(galpy_pot,
+                                                       R=RR, z=zz, phi=pp)
+                            for RR, pp, zz in self.Rpz_iter])
+        galpy_dRpz = np.stack((galpy_dR, galpy_dp, galpy_dz),
+                              axis=1)
+
+        galpy_grad = np.einsum('nij,ni->nj', self.Jac, galpy_dRpz).T
+
+        assert np.allclose(gala_grad, galpy_grad)
 
     def test_vcirc(self, gala_pot, galpy_pot):
         tmp = self.xyz.copy()
@@ -87,5 +146,5 @@ class TestGalpy:
 
         gala_vcirc = gala_pot.circular_velocity(tmp).to_value(u.km/u.s)
         galpy_vcirc = np.array([galpy_pot.vcirc(R=RR)
-                                for RR in self.Rs.to_value(ro)])
+                                for RR, *_ in self.Rpz_iter])
         assert np.allclose(gala_vcirc, galpy_vcirc)
