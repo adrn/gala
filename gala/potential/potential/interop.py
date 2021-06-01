@@ -11,7 +11,16 @@ from gala.tests.optional_deps import HAS_GALPY
 # Galpy
 
 if HAS_GALPY:
+    from scipy.special import gamma
     import galpy.potential as galpy_gp
+
+    def _powerlaw_amp(pars, ro, vo):
+        # I don't really remember why this is like this, but it might be related
+        # to the difference between GSL gamma and scipy gamma??
+        fac = ((1/(2*np.pi) * pars['r_c'].to_value(ro)**(pars['alpha'] - 3) /
+               (gamma(3/2 - pars['alpha']/2))))
+        amp = fac * (G * pars['m']).to_value(vo**2 * ro)
+        return amp
 
     # TODO: some potential conversions drop parameters. Might want to add an
     # option for a custom validator function or something to raise warnings?
@@ -75,7 +84,9 @@ if HAS_GALPY:
         ),
         gp.PowerLawCutoffPotential: (
             galpy_gp.PowerSphericalPotentialwCutoff, {
-                'rc': 'r_c'
+                'amp': _powerlaw_amp,
+                'rc': 'r_c',
+                'alpha': 'alpha'
             }
         ),
     }
