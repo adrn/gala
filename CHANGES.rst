@@ -17,6 +17,9 @@ Bug fixes
 - Fixed a bug with ``GreatCircleICRSFrame.from_endpoints()`` that caused an
   error when the input coordinates had associated velocity data.
 
+- Fixed a bug with the ``JaffePotential`` density evaluation, which was too low
+  by a factor of two.
+
 
 API changes
 -----------
