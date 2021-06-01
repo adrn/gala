@@ -28,7 +28,7 @@ def partial_derivative(func, point, dim_ix=0, **kwargs):
     return derivative(wraps, point[dim_ix], **kwargs)
 
 
-class PotentialTestBase(object):
+class PotentialTestBase:
     name = None
     potential = None  # MUST SET THIS
     frame = None
@@ -36,6 +36,7 @@ class PotentialTestBase(object):
     show_plots = False
 
     sympy_hessian = True
+    sympy_density = True
 
     @classmethod
     def setup_class(cls):
@@ -294,10 +295,12 @@ class PotentialTestBase(object):
     @pytest.mark.skipif(not HAS_SYMPY,
                         reason="requires sympy to run this test")
     def test_against_sympy(self):
+        # TODO: should really split this into separate tests for each check...
+
         import sympy as sy
         from sympy import Q
 
-        # compare Gala gradient and hessian to sympy values
+        # compare Gala gradient, hessian, and density to sympy values
 
         pot = self.potential
         Phi, v, p = pot.to_sympy()
@@ -321,16 +324,22 @@ class PotentialTestBase(object):
 
         vars_ = list(p.values()) + list(v.values())
         assums = np.bitwise_and.reduce([Q.real(x) for x in vars_])
-        Phi = sy.simplify(sy.refine(Phi, assums))
+        Phi = sy.refine(Phi, assums)
         e_func = sy.lambdify(vars_, Phi, modules=modules)
 
+        if self.sympy_density:
+            dens_tmp = sum([sy.diff(Phi, var, 2)
+                            for var in v.values()]) / (4 * sy.pi * p['G'])
+            dens_tmp = sy.refine(dens_tmp, assums)
+            dens_func = sy.lambdify(vars_, dens_tmp, modules=modules)
+
         grad = sy.derive_by_array(Phi, list(v.values()))
-        grad = sy.simplify(sy.refine(grad, assums))
+        grad = sy.refine(grad, assums)
         grad_func = sy.lambdify(vars_, grad, modules=modules)
 
         if self.sympy_hessian:
             Hess = sy.hessian(Phi, list(v.values()))
-            Hess = sy.simplify(sy.refine(Hess, assums))
+            Hess = sy.refine(Hess, assums)
             Hess_func = sy.lambdify(vars_, Hess, modules=modules)
 
         # Make a dict of potential parameter values without units:
@@ -348,6 +357,13 @@ class PotentialTestBase(object):
         test_cases = [e_close]
         vals = [(f_gala, f_sympy)]
 
+        if self.sympy_density:
+            d_gala = pot.density(trial_x).value
+            d_sympy = dens_func(G=pot.G, **par_vals, **x_dict)
+            d_close = np.allclose(d_gala, d_sympy)
+            test_cases.append(d_close)
+            vals.append((d_gala, d_sympy))
+
         G_gala = pot.gradient(trial_x).value
         G_sympy = grad_func(G=pot.G, **par_vals, **x_dict)
         g_close = np.allclose(G_gala, G_sympy)
@@ -362,9 +378,11 @@ class PotentialTestBase(object):
             vals.append((H_gala, H_sympy))
 
         if not all(test_cases):
-            names = ['energy', 'gradient', 'hessian']
-            for name, (val1, val2) in zip(names, vals):
-                print(f'{pot}: {name} {val1} {val2}')
+            names = ['energy', 'density', 'gradient', 'hessian']
+            for name, (val1, val2), test in zip(names, vals, test_cases):
+                if not test:
+                    print(trial_x)
+                    print(f'{pot}: {name}\nGala:{val1}\nSympy:{val2}')
 
         assert all(test_cases)
 
