@@ -116,6 +116,7 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     double logarithmic_value(double t, double *pars, double *q, int n_dim) nogil
     void logarithmic_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     void logarithmic_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+    double logarithmic_density(double t, double *pars, double *q, int n_dim) nogil
 
     double longmuralibar_value(double t, double *pars, double *q, int n_dim) nogil
     void longmuralibar_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
@@ -831,6 +832,7 @@ cdef class LogarithmicWrapper(CPotentialWrapper):
         self.cpotential.value[0] = <energyfunc>(logarithmic_value)
         self.cpotential.gradient[0] = <gradientfunc>(logarithmic_gradient)
         self.cpotential.hessian[0] = <hessianfunc>(logarithmic_hessian)
+        self.cpotential.density[0] = <energyfunc>(logarithmic_density)
 
 @format_doc(common_doc=_potential_docstring)
 class LogarithmicPotential(CPotentialBase):

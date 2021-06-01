@@ -20,6 +20,9 @@ Bug fixes
 - Fixed a bug with the ``JaffePotential`` density evaluation, which was too low
   by a factor of two.
 
+- Implemented a density function for ``LogarithmicPotential``, which was
+  missing previously.
+
 
 API changes
 -----------
