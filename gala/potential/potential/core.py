@@ -768,19 +768,6 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         from .interop import gala_to_galpy_potential
         return gala_to_galpy_potential(self, ro=ro, vo=vo)
 
-    @classmethod
-    def from_galpy(self, galpy_pot, ro=None, vo=None):
-        """Convert a Galpy potential to a Gala potential instance
-
-        Parameters
-        ----------
-        galpy_pot : `galpy.potential.Potential`
-        ro : quantity-like (optional)
-        vo : quantity-like (optional)
-        """
-        from .interop import galpy_to_gala_potential
-        return galpy_to_gala_potential(galpy_pot, ro=ro, vo=vo)
-
 
 class CompositePotential(PotentialBase, OrderedDict):
     """
