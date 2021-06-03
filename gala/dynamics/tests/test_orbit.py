@@ -592,3 +592,8 @@ def test_orbit_to_galpy(obj):
     o2 = obj.to_galpy_orbit(ro=8*u.kpc)  # noqa
     o3 = obj.to_galpy_orbit(vo=220*u.km/u.s)  # noqa
     o4 = obj.to_galpy_orbit(ro=8*u.kpc, vo=220*u.km/u.s)  # noqa
+
+    o1_rt = Orbit.from_galpy_orbit(o1)  # noqa
+    o2_rt = Orbit.from_galpy_orbit(o2)  # noqa
+    o3_rt = Orbit.from_galpy_orbit(o3)  # noqa
+    o4_rt = Orbit.from_galpy_orbit(o4)  # noqa
