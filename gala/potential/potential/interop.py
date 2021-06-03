@@ -1,26 +1,39 @@
 """Interoperability with other dynamics packages"""
 
+import inspect
+import warnings
+
 from astropy.constants import G
 import astropy.units as u
 import numpy as np
 
 import gala.potential as gp
+from gala.units import galactic
 from gala.tests.optional_deps import HAS_GALPY
 
 ###############################################################################
-# Galpy
+# Galpy interoperability
+#
 
 if HAS_GALPY:
     from scipy.special import gamma
     import galpy.potential as galpy_gp
 
-    def _powerlaw_amp(pars, ro, vo):
+    def _powerlaw_amp_to_galpy(pars, ro, vo):
         # I don't really remember why this is like this, but it might be related
         # to the difference between GSL gamma and scipy gamma??
         fac = ((1/(2*np.pi) * pars['r_c'].to_value(ro)**(pars['alpha'] - 3) /
                (gamma(3/2 - pars['alpha']/2))))
         amp = fac * (G * pars['m']).to_value(vo**2 * ro)
         return amp
+
+    def _powerlaw_m_from_galpy(pars, ro, vo):
+        # See note above!
+        fac = ((1/(2*np.pi) * pars['rc']**(pars['alpha'] - 3) /
+               (gamma(3/2 - pars['alpha']/2))))
+        amp = pars['amp'] * vo**2 * ro
+        m = amp / G / fac
+        return m
 
     # TODO: some potential conversions drop parameters. Might want to add an
     # option for a custom validator function or something to raise warnings?
@@ -41,9 +54,7 @@ if HAS_GALPY:
                 'a': 'c'
             }
         ),
-        gp.KeplerPotential: (
-            galpy_gp.KeplerPotential, {}
-        ),
+        gp.KeplerPotential: (galpy_gp.KeplerPotential, {}),
         gp.KuzminPotential: (
             galpy_gp.KuzminDiskPotential, {
                 'a': 'a',
@@ -53,7 +64,7 @@ if HAS_GALPY:
             galpy_gp.LogarithmicHaloPotential, {
                 'amp': lambda pars, ro, vo: pars['v_c'].to_value(vo)**2,
                 'core': 'r_h',
-                'q': lambda pars, *_: pars['q3'],
+                'q': 'q3'
             }
         ),
         gp.LongMuraliBarPotential: (
@@ -61,7 +72,7 @@ if HAS_GALPY:
                 'a': 'a',
                 'b': 'b',
                 'c': 'c',
-                'pa': lambda pars, *_: pars['alpha'].to_value(u.rad)
+                'pa': 'alpha'
             }
         ),
         gp.MiyamotoNagaiPotential: (
@@ -84,12 +95,41 @@ if HAS_GALPY:
         ),
         gp.PowerLawCutoffPotential: (
             galpy_gp.PowerSphericalPotentialwCutoff, {
-                'amp': _powerlaw_amp,
+                'amp': _powerlaw_amp_to_galpy,
                 'rc': 'r_c',
                 'alpha': 'alpha'
             }
         ),
     }
+
+    _galpy_to_gala = {}
+    for gala_cls, (galpy_cls, pars) in _gala_to_galpy.items():
+        galpy_pars = {v: k for k, v in pars.items()
+                      if isinstance(v, (str, int, float, np.ndarray))}
+        _galpy_to_gala[galpy_cls] = (gala_cls, galpy_pars)
+
+    # Special cases:
+    _galpy_to_gala[galpy_gp.HernquistPotential][1]['m'] = \
+        lambda pars, ro, vo: (pars['amp'] * ro * vo**2 / G / 2)
+
+    _galpy_to_gala[galpy_gp.LogarithmicHaloPotential][1]['v_c'] = \
+        lambda pars, ro, vo: np.sqrt(pars['amp'] * vo**2)
+
+    _galpy_to_gala[galpy_gp.TriaxialNFWPotential][1]['m'] = \
+        lambda pars, ro, vo: (
+            pars['amp'] * ro * vo**2 / G * 4*np.pi*pars['a']**3)
+    _galpy_to_gala[galpy_gp.TriaxialNFWPotential][1]['a'] = 1.
+    _galpy_to_gala[galpy_gp.TriaxialNFWPotential][1]['b'] = 'b'
+    _galpy_to_gala[galpy_gp.TriaxialNFWPotential][1]['c'] = 'c'
+
+    _galpy_to_gala[galpy_gp.PowerSphericalPotentialwCutoff][1]['m'] = \
+        _powerlaw_m_from_galpy
+
+    _galpy_to_gala[galpy_gp.NFWPotential] = (
+        gp.NFWPotential, {
+            'r_s': 'a',
+        }
+    )
 
 
 def _get_ro_vo(ro, vo):
@@ -156,10 +196,90 @@ def gala_to_galpy_potential(potential, ro=None, vo=None):
                     galpy_pars[galpy_par_name] = par.to_value(ro)
                 elif par.unit.physical_type == 'dimensionless':
                     galpy_pars[galpy_par_name] = par.value
+                elif par.unit.physical_type == 'angle':
+                    galpy_pars[galpy_par_name] = par.to_value(u.rad)
                 else:
                     # TODO: raise a warning here??
                     galpy_pars[galpy_par_name] = par.value
 
         pot = galpy_cls(**galpy_pars, ro=ro, vo=vo)
+
+    return pot
+
+
+def galpy_to_gala_potential(potential, ro=None, vo=None, units=galactic):
+
+    if not HAS_GALPY:
+        raise ImportError(
+            "Failed to import galpy.potential: Converting a potential to a "
+            "gala potential requires galpy to be installed.")
+
+    ro, vo = _get_ro_vo(ro, vo)
+
+    if isinstance(potential, list):
+        pot = gp.CCompositePotential()
+        for i, sub_pot in enumerate(potential):
+            pot[str(i)] = galpy_to_gala_potential(sub_pot, ro, vo)
+
+    else:
+        if potential.__class__ not in _galpy_to_gala:
+            raise TypeError(
+                f"Converting galpy potential {potential.__class__.__name__} "
+                "to gala is currently not supported")
+
+        gala_cls, converters = _galpy_to_gala[potential.__class__]
+
+        exclude = ['self', 'normalize', 'ro', 'vo']
+        spec = inspect.getfullargspec(potential.__class__)
+        par_names = [arg for arg in spec.args if arg not in exclude]
+
+        # UGH!
+        galpy_pars = {}
+        for name in par_names:
+            galpy_pars[name] = getattr(potential,
+                                       '_' + name,
+                                       getattr(potential, name, None))
+
+        if isinstance(potential, galpy_gp.LogarithmicHaloPotential):
+            galpy_pars['core'] = np.sqrt(potential._core2)
+
+        elif isinstance(potential, galpy_gp.SoftenedNeedleBarPotential):
+            galpy_pars['c'] = np.sqrt(potential._c2)
+
+        if 'm' in inspect.getfullargspec(gala_cls).args:
+            converters.setdefault(
+                'm', lambda pars, ro, vo: pars['amp'] * ro * vo**2 / G
+            )
+
+        gala_pars = {}
+        for gala_par_name, conv in converters.items():
+            if isinstance(conv, str):
+                gala_pars[gala_par_name] = galpy_pars[conv]
+            elif hasattr(conv, '__call__'):
+                gala_pars[gala_par_name] = conv(galpy_pars, ro, vo)
+            elif isinstance(conv, (int, float, u.Quantity, np.ndarray)):
+                gala_pars[gala_par_name] = conv
+            else:
+                # TODO: invalid parameter??
+                print(f"FAIL: {gala_par_name}, {conv}")
+
+            if hasattr(gala_pars[gala_par_name], 'unit'):
+                continue
+
+            gala_par = gala_cls._parameters[gala_par_name]
+            if gala_par.physical_type == 'mass':
+                gala_pars[gala_par_name] = gala_pars[gala_par_name] * u.Msun
+            elif gala_par.physical_type == 'length':
+                gala_pars[gala_par_name] = gala_pars[gala_par_name] * ro
+            elif gala_par.physical_type == 'speed':
+                gala_pars[gala_par_name] = gala_pars[gala_par_name] * vo
+            elif gala_par.physical_type == 'angle':
+                gala_pars[gala_par_name] = gala_pars[gala_par_name] * u.radian
+            elif gala_par.physical_type == 'dimensionless':
+                pass
+            else:
+                print("TODO")
+
+        pot = gala_cls(**gala_pars, units=units)
 
     return pot

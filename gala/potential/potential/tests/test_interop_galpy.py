@@ -12,7 +12,11 @@ import pytest
 import gala.potential as gp
 from gala.units import galactic
 from gala.tests.optional_deps import HAS_GALPY
-from gala.potential.potential.interop import _gala_to_galpy
+from gala.potential.potential.interop import (
+    _gala_to_galpy,
+    _galpy_to_gala,
+    galpy_to_gala_potential
+)
 
 # Set these globally!
 ro = 8.122 * u.kpc
@@ -26,6 +30,8 @@ def pytest_generate_tests(metafunc):
     # Some magic, semi-random numbers below!
     gala_pots = []
     galpy_pots = []
+
+    # Test the Gala -> Galpy direction
     for Potential in _gala_to_galpy.keys():
         init = {}
         len_scale = 1.
@@ -53,6 +59,14 @@ def pytest_generate_tests(metafunc):
     # Make a composite potential too:
     gala_pots.append(gala_pots[0] + gala_pots[1])
     galpy_pots.append([galpy_pots[0], galpy_pots[1]])
+
+    # Test the Galpy -> Gala direction
+    for Potential in _galpy_to_gala.keys():
+        galpy_pot = Potential(ro=ro, vo=vo)  # use defaults
+        pot = galpy_to_gala_potential(galpy_pot, ro=ro, vo=vo)
+
+        gala_pots.append(pot)
+        galpy_pots.append(galpy_pot)
 
     test_names = [f'{g1.__class__.__name__}:{g2.__class__.__name__}'
                   for g1, g2 in zip(gala_pots, galpy_pots)]
@@ -118,7 +132,7 @@ class TestGalpy:
 
     def test_gradient(self, gala_pot, galpy_pot):
         gala_grad = gala_pot.gradient(self.xyz)
-        gala_grad = gala_grad.to_value((u.km/u.s) * u.pc/u.Myr / u.pc)
+        gala_grad = gala_grad.to_value(u.km/u.s/u.Myr)
 
         galpy_dR = np.array([-galpy_gp.evaluateRforces(galpy_pot,
                                                        R=RR, z=zz, phi=pp)
