@@ -13,6 +13,7 @@ more interoperability with any of these packages, please `open an issue
 Here are some imports we will use below in examples::
 
     >>> import astropy.units as u
+    >>> import numpy as np
     >>> import gala.dynamics as gd
     >>> import gala.potential as gp
     >>> from gala.units import galactic
