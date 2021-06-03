@@ -31,6 +31,9 @@ def pytest_generate_tests(metafunc):
     gala_pots = []
     galpy_pots = []
 
+    if not HAS_GALPY:
+        return
+
     # Test the Gala -> Galpy direction
     for Potential in _gala_to_galpy.keys():
         init = {}
