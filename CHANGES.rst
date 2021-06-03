@@ -7,6 +7,10 @@ New Features
 - ``UnitSystem`` objects can now be created with custom units passed in as
   Astropy ``Quantity`` objects.
 
+- Added functionality to convert Gala potential objects to Galpy potential
+  objects, or to create Gala potential objects from a pre-existing Galpy
+  potential.
+
 
 Bug fixes
 ---------
