@@ -757,7 +757,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     ###########################################################################
     # Interoperability with other packages
     #
-    def to_galpy(self, ro=None, vo=None):
+    def to_galpy_potential(self, ro=None, vo=None):
         """Convert a Gala potential to a Galpy potential instance
 
         Parameters

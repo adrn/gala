@@ -858,7 +858,7 @@ class PhaseSpacePosition(object):
         """
         return self.pos.shape
 
-    #
+    # ------------------------------------------------------------------------
     # Compatibility with other packages
     #
 

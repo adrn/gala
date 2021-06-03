@@ -13,12 +13,12 @@ TODO: convert orbits to/from Galpy orbits
 Gala also provides tools for converting potential objects to `galpy` potential
 objects, or creating Gala potential objects from existing `galpy` potentials.
 To convert a Gala potential to a Galpy potential, use the
-:meth:`PotentialBase.to_galpy()` method. For example::
+:meth:`PotentialBase.to_galpy_potential()` method. For example::
 
     >>> import gala.potential as gp
     >>> from gala.units import galactic
     >>> pot = gp.HernquistPotential(m=1e10*u.Msun, c=1.5*u.kpc, units=galactic)
-    >>> galpy_pot = pot.to_galpy()
+    >>> galpy_pot = pot.to_galpy_potential()
     >>> galpy_pot
     <galpy.potential.TwoPowerSphericalPotential.HernquistPotential at 0x7faa00263b20>
     >>> galpy_pot.Rforce(1., 0.)  # doctest: +FLOAT_CMP
