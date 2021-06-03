@@ -541,7 +541,6 @@ double powerlawcutoff_density(double t, double *pars, double *q, int n_dim) {
     */
     double r, A;
     r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    printf("%f\n", r);
     A = pars[1] / (2*M_PI) * pow(pars[3], pars[2] - 3) / gsl_sf_gamma(0.5 * (3 - pars[2]));
     return A * pow(r, -pars[2]) * exp(-r*r / (pars[3]*pars[3]));
 }
