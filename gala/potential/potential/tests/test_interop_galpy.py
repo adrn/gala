@@ -12,11 +12,7 @@ import pytest
 import gala.potential as gp
 from gala.units import galactic
 from gala.tests.optional_deps import HAS_GALPY
-from gala.potential.potential.interop import (
-    _gala_to_galpy,
-    _galpy_to_gala,
-    galpy_to_gala_potential
-)
+from gala.potential.potential.interop import galpy_to_gala_potential
 
 # Set these globally!
 ro = 8.122 * u.kpc
@@ -24,6 +20,11 @@ vo = 245 * u.km/u.s
 
 if HAS_GALPY:
     import galpy.potential as galpy_gp
+
+    from gala.potential.potential.interop import (
+        _gala_to_galpy,
+        _galpy_to_gala
+    )
 
 
 def pytest_generate_tests(metafunc):
