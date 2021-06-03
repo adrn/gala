@@ -11,6 +11,8 @@ import gala.potential as gp
 from gala.units import galactic
 from gala.tests.optional_deps import HAS_GALPY
 
+__all__ = ['gala_to_galpy_potential', 'galpy_to_gala_potential']
+
 ###############################################################################
 # Galpy interoperability
 #
