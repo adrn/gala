@@ -982,7 +982,8 @@ class Orbit(PhaseSpacePosition):
         vz = cyl.v_z.to_value(vo).T
 
         o = Orbit(np.array([R, vR, vT, z, vz, phi]).T, ro=ro, vo=vo)
-        o.t = w.t.to_value(ro / vo)
+        if w.t is not None:
+            o.t = w.t.to_value(ro / vo)
 
         return o
 

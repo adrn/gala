@@ -593,7 +593,16 @@ def test_orbit_to_galpy(obj):
     o3 = obj.to_galpy_orbit(vo=220*u.km/u.s)  # noqa
     o4 = obj.to_galpy_orbit(ro=8*u.kpc, vo=220*u.km/u.s)  # noqa
 
-    o1_rt = Orbit.from_galpy_orbit(o1)  # noqa
-    o2_rt = Orbit.from_galpy_orbit(o2)  # noqa
-    o3_rt = Orbit.from_galpy_orbit(o3)  # noqa
-    o4_rt = Orbit.from_galpy_orbit(o4)  # noqa
+
+@pytest.mark.skipif(not HAS_GALPY,
+                    reason="requires galpy to run this test")
+def test_orbit_from_galpy():
+    import galpy.orbit as galpy_o
+    import galpy.potential as galpy_p
+    mp = galpy_p.MiyamotoNagaiPotential(a=0.5, b=0.0375, amp=1., normalize=1.)
+    galpy_orbit = galpy_o.Orbit([1., 0.1, 1.1, 0., 0.1, 1.])
+    ts = np.linspace(0, 100, 10000)
+    galpy_orbit.integrate(ts, mp, method='odeint')
+    gala_orbit = Orbit.from_galpy_orbit(galpy_orbit)
+
+    assert len(gala_orbit.t) == len(ts)
