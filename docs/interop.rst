@@ -39,8 +39,8 @@ object to a Galpy ``Orbit``, use the
     >>> orbit
     <Orbit cartesian, dim=3, shape=(1001,)>
     >>> galpy_orbit = orbit.to_galpy_orbit()
-    >>> galpy_orbit
-    <galpy.orbit.Orbits.Orbit at 0x7f9f3bfeff40>
+    >>> galpy_orbit  # doctest: +SKIP
+    <galpy.orbit.Orbits.Orbit object at 0x7f99b3c8fe80>
 
 Similarly, a Galpy ``Orbit`` can be converted to a Gala
 :class:`~gala.dynamics.Orbit` using the
@@ -69,7 +69,7 @@ potential object. For example:
 
     >>> pot = gp.HernquistPotential(m=1e10*u.Msun, c=1.5*u.kpc, units=galactic)
     >>> galpy_pot = pot.to_galpy_potential()
-    >>> galpy_pot
+    >>> galpy_pot  # doctest: +SKIP
     <galpy.potential.TwoPowerSphericalPotential.HernquistPotential at 0x7faa00263b20>
     >>> galpy_pot.Rforce(1., 0.)  # doctest: +FLOAT_CMP
     -1.4598592245082576
