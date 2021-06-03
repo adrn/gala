@@ -1,7 +1,6 @@
 """Interoperability with other dynamics packages"""
 
 import inspect
-import warnings
 
 from astropy.constants import G
 import astropy.units as u
