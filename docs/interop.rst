@@ -73,7 +73,7 @@ potential object. For example:
     >>> galpy_pot  # doctest: +SKIP
     <galpy.potential.TwoPowerSphericalPotential.HernquistPotential at 0x7faa00263b20>
     >>> galpy_pot.Rforce(1., 0.)  # doctest: +FLOAT_CMP
-    -1.4598592245082576
+    -0.48737954713808573
 
 To convert from a Galpy potential to a Gala potential, use the
 :func:`~gala.potential.potential.galpy_to_gala_potential()` function. For
