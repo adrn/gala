@@ -7,7 +7,7 @@ from astropy.constants import G
 import astropy.units as u
 import numpy as np
 
-import gala.potential as gp
+import gala.potential.potential.builtin as gp
 from gala.units import galactic
 from gala.tests.optional_deps import HAS_GALPY
 
@@ -217,6 +217,11 @@ def galpy_to_gala_potential(potential, ro=None, vo=None, units=galactic):
             "gala potential requires galpy to be installed.")
 
     ro, vo = _get_ro_vo(ro, vo)
+
+    if potential._roSet:
+        ro = potential._ro * u.kpc
+    if potential._voSet:
+        vo = potential._vo * u.km/u.s
 
     if isinstance(potential, list):
         pot = gp.CCompositePotential()
