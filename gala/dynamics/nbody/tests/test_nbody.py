@@ -5,7 +5,7 @@ import pytest
 
 # Custom
 from ....potential import (NullPotential, NFWPotential,
-                           HernquistPotential, KuzminPotential,
+                           HernquistPotential,
                            ConstantRotatingFrame, StaticFrame)
 from ....dynamics import PhaseSpacePosition, combine
 from ....units import UnitSystem, galactic
