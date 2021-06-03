@@ -15,7 +15,7 @@ from ..core import PhaseSpacePosition
 from ...potential import Hamiltonian, HernquistPotential
 from ...potential.frame import StaticFrame, ConstantRotatingFrame
 from ...units import galactic, solarsystem
-from gala.tests.optional_deps import HAS_H5PY, HAS_GALPY
+from gala.tests.optional_deps import HAS_H5PY
 
 
 def test_initialize():
