@@ -7,6 +7,8 @@ import astropy.units as u
 import numpy as np
 
 import gala.potential.potential.builtin as gp
+from gala.potential.potential.ccompositepotential import CCompositePotential
+from gala.potential.potential.core import CompositePotential
 from gala.units import galactic
 from gala.tests.optional_deps import HAS_GALPY
 
@@ -156,7 +158,7 @@ def gala_to_galpy_potential(potential, ro=None, vo=None):
 
     ro, vo = _get_ro_vo(ro, vo)
 
-    if isinstance(potential, gp.CompositePotential):
+    if isinstance(potential, CompositePotential):
         pot = []
         for k in potential.keys():
             pot.append(
@@ -223,7 +225,7 @@ def galpy_to_gala_potential(potential, ro=None, vo=None, units=galactic):
         vo = potential._vo * u.km/u.s
 
     if isinstance(potential, list):
-        pot = gp.CCompositePotential()
+        pot = CCompositePotential()
         for i, sub_pot in enumerate(potential):
             pot[str(i)] = galpy_to_gala_potential(sub_pot, ro, vo)
 

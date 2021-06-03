@@ -55,7 +55,7 @@ def pytest_generate_tests(metafunc):
             init[k] = val
 
         pot = Potential(**init, units=galactic)
-        galpy_pot = pot.to_galpy(ro=ro, vo=vo)
+        galpy_pot = pot.to_galpy_potential(ro=ro, vo=vo)
 
         gala_pots.append(pot)
         galpy_pots.append(galpy_pot)
