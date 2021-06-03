@@ -12,9 +12,11 @@ import astropy.units as u
 from astropy.utils import isiterable
 try:
     from scipy.spatial.transform import Rotation
-except ImportError:
-    raise ImportError("Gala requires scipy>=1.2: make sure you have updated "
-                      "your version of scipy and try importing gala again.")
+except ImportError as exc:
+    raise ImportError(
+        "Gala requires scipy>=1.2: make sure you have updated your version of "
+        "scipy and try importing gala again."
+    ) from exc
 
 # Project
 from ..common import CommonBase
@@ -29,12 +31,11 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     """
     A baseclass for defining pure-Python gravitational potentials.
 
-    Subclasses must define (at minimum) a method that evaluates
-    the potential energy at a given position ``q``
-    and time ``t``: ``_energy(q, t)``. For integration, the subclasses
-    must also define a method to evaluate the gradient,
-    ``_gradient(q, t)``. Optionally, they may also define methods
-    to compute the density and hessian: ``_density()``, ``_hessian()``.
+    Subclasses must define (at minimum) a method that evaluates the potential
+    energy at a given position ``q`` and time ``t``: ``_energy(q, t)``. For
+    integration, the subclasses must also define a method to evaluate the
+    gradient, ``_gradient(q, t)``. Optionally, they may also define methods to
+    compute the density and hessian: ``_density()``, ``_hessian()``.
     """
     ndim = 3
 
@@ -120,7 +121,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         import sympy as sy
         return sy.latex(expr)
 
-    # ========================================================================
+    ###########################################################################
     # Abstract methods that must be implemented by subclasses
     #
     @abc.abstractmethod
@@ -138,7 +139,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     def _hessian(self, q, t=0.):
         raise NotImplementedError("This Potential has no implemented Hessian.")
 
-    # ========================================================================
+    ###########################################################################
     # Utility methods
     #
     def _remove_units(self, x):
@@ -175,7 +176,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         return x
 
-    # ========================================================================
+    ###########################################################################
     # Core methods that use the above implemented functions
     #
     def energy(self, q, t=0.):
@@ -281,7 +282,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         return hess.reshape((orig_shape[0],
                              orig_shape[0]) + orig_shape[1:]) * ret_unit
 
-    # ========================================================================
+    ###########################################################################
     # Convenience methods that make use the base methods
     #
     def acceleration(self, q, t=0.):
@@ -375,7 +376,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         return self.units.decompose(np.sqrt(r * np.abs(dPhi_dr)))
 
-    # ========================================================================
+    ###########################################################################
     # Python special methods
     #
     def __call__(self, q):
@@ -399,8 +400,8 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         if isinstance(other, CompositePotential):
             for k, v in self.items():
                 if k in new_pot:
-                    raise KeyError('Potential component "{}" already exists --'
-                                   'duplicate key provided in potential '
+                    raise KeyError(f'Potential component "{k}" already exists '
+                                   '-- duplicate key provided in potential '
                                    'addition')
                 new_pot[k] = v
 
@@ -410,7 +411,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         return new_pot
 
-    # ========================================================================
+    ###########################################################################
     # Convenience methods that do fancy things
     #
     def plot_contours(self, grid, filled=True, ax=None, labels=None,
@@ -462,8 +463,10 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         # if ndim > 2, don't know how to handle this!
         if ndim > 2:
-            raise ValueError("ndim > 2: you can only make contours on a 2D grid. For other "
-                             "dimensions, you have to specify values to slice.")
+            raise ValueError(
+                "ndim > 2: you can only make contours on a 2D grid. For other "
+                "dimensions, you have to specify values to slice."
+            )
 
         if ax is None:
             # default figsize
@@ -522,7 +525,9 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         Plot density contours. Computes the density on a grid
         (specified by the array `grid`).
 
-        .. warning:: Right now the grid input must be arrays and must already be in
+        .. warning::
+
+            For now, the grid input must be arrays and must already be in
             the unit system of the potential. Quantity support is coming...
 
         Parameters
@@ -565,8 +570,10 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         # if ndim > 2, don't know how to handle this!
         if ndim > 2:
-            raise ValueError("ndim > 2: you can only make contours on a 2D grid. For other "
-                             "dimensions, you have to specify values to slice.")
+            raise ValueError(
+                "ndim > 2: you can only make contours on a 2D grid. For other "
+                "dimensions, you have to specify values to slice."
+            )
 
         if ax is None:
             # default figsize
@@ -735,7 +742,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         return pot
 
-    # ========================================================================
+    ###########################################################################
     # Deprecated methods
     #
     def _value(self, q, t=0.):
@@ -746,6 +753,20 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         __doc__ = self.energy.__doc__  # noqa
         warnings.warn("Use `energy()` instead.", DeprecationWarning)
         return self.energy(*args, **kwargs)
+
+    ###########################################################################
+    # Interoperability with other packages
+    #
+    def to_galpy_potential(self, ro=None, vo=None):
+        """Convert a Gala potential to a Galpy potential instance
+
+        Parameters
+        ----------
+        ro : quantity-like (optional)
+        vo : quantity-like (optional)
+        """
+        from .interop import gala_to_galpy_potential
+        return gala_to_galpy_potential(self, ro=ro, vo=vo)
 
 
 class CompositePotential(PotentialBase, OrderedDict):

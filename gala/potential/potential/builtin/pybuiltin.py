@@ -5,7 +5,7 @@ from gala.potential.potential.core import PotentialBase
 from gala.potential.potential.util import sympy_wrap
 from gala.potential.common import PotentialParameter
 
-__all__ = ["HarmonicOscillatorPotential", "KuzminPotential"]
+__all__ = ["HarmonicOscillatorPotential"]
 
 
 class HarmonicOscillatorPotential(PotentialBase):
@@ -88,48 +88,3 @@ class HarmonicOscillatorPotential(PotentialBase):
     #     """
     #     from ...dynamics.analyticactionangle import harmonic_oscillator_aa_to_xv
     #     return harmonic_oscillator_aa_to_xv(actions, angles, self)
-
-
-class KuzminPotential(PotentialBase):
-    r"""
-    The Kuzmin flattened disk potential.
-
-    .. math::
-
-        \Phi = -\frac{Gm}{\sqrt{x^2 + y^2 + (a + |z|)^2}}
-
-    Parameters
-    ----------
-    m : numeric
-        Mass.
-    a : numeric
-        Flattening parameter.
-    units : iterable
-        Unique list of non-reducible units that specify (at minimum) the
-        length, mass, time, and angle units.
-
-    """
-    m = PotentialParameter('m', physical_type='mass')
-    a = PotentialParameter('a', physical_type='length')
-
-    def _energy(self, q, t):
-        x, y, z = q
-        m = self.parameters['m']
-        a = self.parameters['a']
-        val = -self.G * m / np.sqrt(x**2 + y**2 + (a + np.abs(z))**2)
-        return val
-
-    def _gradient(self, q, t):
-        x, y, z = q
-        m = self.parameters['m']
-        a = self.parameters['a']
-        fac = self.G * m / (x**2 + y**2 + (a + np.abs(z))**2)**1.5
-        return fac[None, ...] * q
-
-    @classmethod
-    @sympy_wrap()
-    def to_sympy(cls, v, p):
-        import sympy as sy
-        denom = sy.sqrt(v['x']**2 + v['y']**2 + (p['a'] + sy.Abs(v['z']))**2)
-        expr = p['G'] * p['m'] / denom
-        return expr, v, p

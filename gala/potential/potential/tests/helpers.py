@@ -28,12 +28,15 @@ def partial_derivative(func, point, dim_ix=0, **kwargs):
     return derivative(wraps, point[dim_ix], **kwargs)
 
 
-class PotentialTestBase(object):
+class PotentialTestBase:
     name = None
     potential = None  # MUST SET THIS
     frame = None
     tol = 1E-5
     show_plots = False
+
+    sympy_hessian = True
+    sympy_density = True
 
     @classmethod
     def setup_class(cls):
@@ -292,9 +295,12 @@ class PotentialTestBase(object):
     @pytest.mark.skipif(not HAS_SYMPY,
                         reason="requires sympy to run this test")
     def test_against_sympy(self):
-        import sympy as sy
+        # TODO: should really split this into separate tests for each check...
 
-        # compare Gala gradient and hessian to sympy values
+        import sympy as sy
+        from sympy import Q
+
+        # compare Gala gradient, hessian, and density to sympy values
 
         pot = self.potential
         Phi, v, p = pot.to_sympy()
@@ -304,21 +310,37 @@ class PotentialTestBase(object):
         def lowergamma(a, x):  # noqa
             # Differences between scipy and sympy lower gamma
             return gammainc(a, x) * gamma(a)
-        modules = ['numpy',
-                   {'atan': np.arctan,
-                    'lowergamma': lowergamma,
-                    'gamma': gamma}]
+        modules = [
+            'numpy',
+            {
+                'atan': np.arctan,
+                'lowergamma': lowergamma,
+                'gamma': gamma,
+                're': np.real,
+                'im': np.imag
+            },
+            'sympy'
+        ]
 
-        e_func = sy.lambdify(list(p.values()) + list(v.values()), Phi,
-                             modules=modules)
+        vars_ = list(p.values()) + list(v.values())
+        assums = np.bitwise_and.reduce([Q.real(x) for x in vars_])
+        Phi = sy.refine(Phi, assums)
+        e_func = sy.lambdify(vars_, Phi, modules=modules)
+
+        if self.sympy_density:
+            dens_tmp = sum([sy.diff(Phi, var, 2)
+                            for var in v.values()]) / (4 * sy.pi * p['G'])
+            dens_tmp = sy.refine(dens_tmp, assums)
+            dens_func = sy.lambdify(vars_, dens_tmp, modules=modules)
 
         grad = sy.derive_by_array(Phi, list(v.values()))
-        grad_func = sy.lambdify(list(p.values()) + list(v.values()), grad,
-                                modules=modules)
+        grad = sy.refine(grad, assums)
+        grad_func = sy.lambdify(vars_, grad, modules=modules)
 
-        Hess = sy.hessian(Phi, list(v.values()))
-        Hess_func = sy.lambdify(list(p.values()) + list(v.values()), Hess,
-                                modules=modules)
+        if self.sympy_hessian:
+            Hess = sy.hessian(Phi, list(v.values()))
+            Hess = sy.refine(Hess, assums)
+            Hess_func = sy.lambdify(vars_, Hess, modules=modules)
 
         # Make a dict of potential parameter values without units:
         par_vals = {}
@@ -332,20 +354,37 @@ class PotentialTestBase(object):
         f_gala = pot.energy(trial_x).value
         f_sympy = e_func(G=pot.G, **par_vals, **x_dict)
         e_close = np.allclose(f_gala, f_sympy)
+        test_cases = [e_close]
+        vals = [(f_gala, f_sympy)]
+
+        if self.sympy_density:
+            d_gala = pot.density(trial_x).value
+            d_sympy = dens_func(G=pot.G, **par_vals, **x_dict)
+            d_close = np.allclose(d_gala, d_sympy)
+            test_cases.append(d_close)
+            vals.append((d_gala, d_sympy))
 
         G_gala = pot.gradient(trial_x).value
         G_sympy = grad_func(G=pot.G, **par_vals, **x_dict)
         g_close = np.allclose(G_gala, G_sympy)
+        test_cases.append(g_close)
+        vals.append((G_gala, G_sympy))
 
-        H_gala = pot.hessian(trial_x).value
-        H_sympy = Hess_func(G=pot.G, **par_vals, **x_dict)
-        h_close = np.allclose(H_gala, H_sympy)
+        if self.sympy_hessian:
+            H_gala = pot.hessian(trial_x).value
+            H_sympy = Hess_func(G=pot.G, **par_vals, **x_dict)
+            h_close = np.allclose(H_gala, H_sympy)
+            test_cases.append(h_close)
+            vals.append((H_gala, H_sympy))
 
-        if not all([e_close, g_close, h_close]):
-            print(f'{pot}: energy {e_close}, gradient {g_close}, '
-                  f'hessian {h_close}')
+        if not all(test_cases):
+            names = ['energy', 'density', 'gradient', 'hessian']
+            for name, (val1, val2), test in zip(names, vals, test_cases):
+                if not test:
+                    print(trial_x)
+                    print(f'{pot}: {name}\nGala:{val1}\nSympy:{val2}')
 
-        assert all([e_close, g_close, h_close])
+        assert all(test_cases)
 
     def test_regression_165(self):
         if self.potential.ndim == 1:

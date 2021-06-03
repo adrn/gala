@@ -22,6 +22,7 @@ pieces of ``gala`` work together to meet more realistic research needs.
     dynamics/index
     units
     util
+    interop
 
 .. toctree::
     :hidden:

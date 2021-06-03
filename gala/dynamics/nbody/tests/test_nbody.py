@@ -5,7 +5,7 @@ import pytest
 
 # Custom
 from ....potential import (NullPotential, NFWPotential,
-                           HernquistPotential, KuzminPotential,
+                           HernquistPotential,
                            ConstantRotatingFrame, StaticFrame)
 from ....dynamics import PhaseSpacePosition, combine
 from ....units import UnitSystem, galactic
@@ -72,11 +72,6 @@ class TestDirectNBody:
 
         with pytest.raises(ValueError):
             DirectNBody(self.w0, particle_potentials=[None, None])
-
-        py_ext_pot = KuzminPotential(m=1e10*u.Msun, a=0.5*u.kpc, units=galactic)
-        with pytest.raises(ValueError):
-            DirectNBody(self.w0, particle_potentials=self.particle_potentials,
-                        external_potential=py_ext_pot)
 
     def test_directnbody_integrate(self):
         # TODO: this is really a unit test, but we should have some functional tests

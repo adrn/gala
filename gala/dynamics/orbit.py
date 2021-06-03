@@ -3,6 +3,7 @@ import warnings
 
 # Third-party
 from astropy import log as logger
+import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 from scipy.signal import argrelmax
@@ -932,3 +933,89 @@ class Orbit(PhaseSpacePosition):
 
         return Orbit(pos=psp.pos, vel=psp.vel, t=self.t,
                      frame=frame, potential=self.potential)
+
+    # ------------------------------------------------------------------------
+    # Compatibility with other packages
+    #
+
+    def to_galpy_orbit(self, ro=None, vo=None):
+        """Convert this object to a ``galpy.Orbit`` instance.
+
+        Parameters
+        ----------
+        ro : `astropy.units.Quantity` or `astropy.units.UnitBase`
+            "Natural" length unit.
+        vo : `astropy.units.Quantity` or `astropy.units.UnitBase`
+            "Natural" velocity unit.
+
+        Returns
+        -------
+        galpy_orbit : `galpy.orbit.Orbit`
+
+        """
+        from galpy.orbit import Orbit
+        from galpy.util.config import __config__ as galpy_config
+
+        if self.frame is not None:
+            from ..potential import StaticFrame
+            w = self.to_frame(StaticFrame(self.frame.units))
+        else:
+            w = self
+
+        if ro is None:
+            ro = galpy_config.getfloat('normalization', 'ro')
+            ro = ro * u.kpc
+
+        if vo is None:
+            vo = galpy_config.getfloat('normalization', 'vo')
+            vo = vo * u.km/u.s
+
+        # PhaseSpacePosition or Orbit:
+        cyl = w.cylindrical
+
+        R = cyl.rho.to_value(ro).T
+        phi = cyl.phi.to_value(u.rad).T
+        z = cyl.z.to_value(ro).T
+
+        vR = cyl.v_rho.to_value(vo).T
+        vT = (cyl.rho * cyl.pm_phi).to_value(vo, u.dimensionless_angles()).T
+        vz = cyl.v_z.to_value(vo).T
+
+        o = Orbit(np.array([R, vR, vT, z, vz, phi]).T, ro=ro, vo=vo)
+        if w.t is not None:
+            o.t = w.t.to_value(ro / vo)
+
+        return o
+
+    @classmethod
+    def from_galpy_orbit(self, galpy_orbit):
+        """Create a Gala ``PhaseSpacePosition`` or ``Orbit`` instance from a
+        ``galpy.Orbit`` instance.
+
+        Parameters
+        ----------
+        galpy_orbit : :class:`galpy.orbit.Orbit`
+
+        Returns
+        -------
+        orbit : :class:`~gala.dynamics.Orbit`
+
+        """
+        ro = galpy_orbit._ro * u.kpc
+        vo = galpy_orbit._vo * u.km/u.s
+        ts = galpy_orbit.t
+
+        rep = coord.CylindricalRepresentation(
+            rho=galpy_orbit.R(ts) * ro,
+            phi=galpy_orbit.phi(ts) * u.rad,
+            z=galpy_orbit.z(ts) * ro
+        )
+        with u.set_enabled_equivalencies(u.dimensionless_angles()):
+            dif = coord.CylindricalDifferential(
+                d_rho=galpy_orbit.vR(ts) * vo,
+                d_phi=galpy_orbit.vT(ts) * vo / rep.rho,
+                d_z=galpy_orbit.vz(ts) * vo
+            )
+
+        t = galpy_orbit.t * ro / vo
+        return Orbit(rep, dif, t=t)

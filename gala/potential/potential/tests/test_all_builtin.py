@@ -26,6 +26,7 @@ from gala.tests.optional_deps import HAS_SYMPY
 class TestHarmonicOscillator1D(PotentialTestBase):
     potential = p.HarmonicOscillatorPotential(omega=1.)
     w0 = [1., 0.1]
+    sympy_density = False
 
     def test_plot(self):
         # Skip for now because contour plotting assumes 3D
@@ -35,6 +36,7 @@ class TestHarmonicOscillator1D(PotentialTestBase):
 class TestHarmonicOscillator2D(PotentialTestBase):
     potential = p.HarmonicOscillatorPotential(omega=[1., 2])
     w0 = [1., 0.5, 0., 0.1]
+    sympy_density = False
 
     def test_plot(self):
         # Skip for now because contour plotting assumes 3D
@@ -88,6 +90,7 @@ class TestNull(PotentialTestBase):
 class TestHenonHeiles(PotentialTestBase):
     potential = p.HenonHeilesPotential()
     w0 = [1., 0., 0., 2*np.pi]
+    sympy_density = False
 
 
 class TestKepler(PotentialTestBase):
@@ -176,6 +179,13 @@ class TestSatoh(PotentialTestBase):
     w0 = [8., 0., 0., 0., 0.22, 0.1]
 
 
+class TestKuzmin(PotentialTestBase):
+    potential = p.KuzminPotential(units=galactic, m=1.E11, a=3.5)
+    w0 = [8., 0., 0., 0., 0.22, 0.1]
+    sympy_hessian = False
+    sympy_density = False
+
+
 class TestStone(PotentialTestBase):
     potential = p.StonePotential(units=galactic, m=1E11, r_c=0.1, r_h=10.)
     w0 = [8., 0., 0., 0., 0.18, 0.1]
@@ -186,6 +196,7 @@ class TestStone(PotentialTestBase):
 class TestPowerLawCutoff(PotentialTestBase):
     w0 = [8., 0., 0., 0., 0.1, 0.1]
     atol = 1e-3
+    sympy_density = False  # weird underflow issues??
 
     def setup(self):
         self.potential = p.PowerLawCutoffPotential(units=galactic,
@@ -202,6 +213,7 @@ class TestTriaxialNFW(PotentialTestBase):
     potential = p.NFWPotential(units=galactic, m=1E11, r_s=12.,
                                a=1., b=0.95, c=0.9)
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
+    sympy_density = False  # not defined
 
 
 class TestSphericalNFWFromCircVel(PotentialTestBase):
@@ -261,6 +273,7 @@ class TestNFW(PotentialTestBase):
     potential = p.NFWPotential(m=6E11*u.Msun, r_s=20*u.kpc, a=1., b=0.9, c=0.75,
                                units=galactic)
     w0 = [19.0, 2.7, -0.9, 0.00352238, -0.15134, 0.0075]
+    sympy_density = False  # like triaxial case
 
     def test_compare(self):
 

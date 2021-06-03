@@ -15,7 +15,7 @@ from ..core import PhaseSpacePosition
 from ...potential import Hamiltonian, HernquistPotential
 from ...potential.frame import StaticFrame, ConstantRotatingFrame
 from ...units import galactic, solarsystem
-from gala.tests.optional_deps import HAS_H5PY, HAS_GALPY
+from gala.tests.optional_deps import HAS_H5PY
 
 
 def test_initialize():
@@ -403,17 +403,3 @@ def test_io(tmpdir, obj):
     assert u.allclose(obj.xyz, obj2.xyz)
     assert u.allclose(obj.v_xyz, obj2.v_xyz)
     assert obj.frame == obj2.frame
-
-
-@pytest.mark.parametrize('obj', [
-    PhaseSpacePosition([1, 2, 3.]*u.kpc, [1, 2, 3.]*u.km/u.s),
-    PhaseSpacePosition([1, 2, 3.]*u.kpc, [1, 2, 3.]*u.km/u.s,
-                       StaticFrame(units=galactic)),
-])
-@pytest.mark.skipif(not HAS_GALPY,
-                    reason="requires galpy to run this test")
-def test_to_galpy(obj):
-    obj.to_galpy_orbit()
-    obj.to_galpy_orbit(ro=8*u.kpc)
-    obj.to_galpy_orbit(vo=220*u.km/u.s)
-    obj.to_galpy_orbit(ro=8*u.kpc, vo=220*u.km/u.s)

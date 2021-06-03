@@ -1,5 +1,6 @@
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
 #include "extra_compile_macros.h"
 
 #if USE_GSL == 1
@@ -406,7 +407,7 @@ double jaffe_density(double t, double *pars, double *q, int n_dim) {
     */
     double r, rho0;
     r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    rho0 = pars[1]/(2*M_PI*pars[2]*pars[2]*pars[2]);
+    rho0 = pars[1] / (4*M_PI*pars[2]*pars[2]*pars[2]);
     return rho0 / (pow(r/pars[2],2) * pow(1+r/pars[2],2));
 }
 
@@ -540,7 +541,7 @@ double powerlawcutoff_density(double t, double *pars, double *q, int n_dim) {
     */
     double r, A;
     r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    A = pars[1] / (2*M_PI) * pow(pars[3], pars[2]-3) / gsl_sf_gamma(0.5 * (3-pars[2]));
+    A = pars[1] / (2*M_PI) * pow(pars[3], pars[2] - 3) / gsl_sf_gamma(0.5 * (3 - pars[2]));
     return A * pow(r, -pars[2]) * exp(-r*r / (pars[3]*pars[3]));
 }
 
@@ -1223,6 +1224,59 @@ void satoh_hessian(double t, double *pars, double *q, int n_dim, double *hess) {
 }
 
 /* ---------------------------------------------------------------------------
+    Kuzmin potential
+*/
+double kuzmin_value(double t, double *pars, double *q, int n_dim) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - a (length scale 1) TODO
+    */
+    double S2 = q[0]*q[0] + q[1]*q[1] + pow(pars[2] + fabs(q[2]), 2);
+    return -pars[0] * pars[1] / sqrt(S2);
+}
+
+void kuzmin_gradient(double t, double *pars, double *q, int n_dim,
+                     double *grad) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - a (length scale 1) TODO
+    */
+
+    double S2 = q[0]*q[0] + q[1]*q[1] + pow(pars[2] + fabs(q[2]), 2);
+    double fac = pars[0] * pars[1] * pow(S2, -1.5);
+    double zsign;
+
+    if (q[2] > 0) {
+        zsign = 1.;
+    } else if (q[2] < 0) {
+        zsign = -1.;
+    } else {
+        zsign = 0.;
+    }
+
+    grad[0] = grad[0] + fac * q[0];
+    grad[1] = grad[1] + fac * q[1];
+    grad[2] = grad[2] + fac * zsign * (pars[2] + fabs(q[2]));
+}
+
+double kuzmin_density(double t, double *pars, double *q, int n_dim) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - a (length scale 1) TODO
+    */
+    if (q[2] != 0.) {
+        return 0.;
+    } else {
+        return pars[1] * pars[2] / (2 * M_PI) *
+            pow(q[0]*q[0] + q[1]*q[1] + pars[2]*pars[2], -1.5);
+   }
+
+}
+
+/* ---------------------------------------------------------------------------
     Miyamoto-Nagai flattened potential
 */
 double miyamotonagai_value(double t, double *pars, double *q, int n_dim) {
@@ -1455,6 +1509,30 @@ double logarithmic_value(double t, double *pars, double *q, int n_dim) {
                                      x*x/(pars[3]*pars[3]) +
                                      y*y/(pars[4]*pars[4]) +
                                      z*z/(pars[5]*pars[5]));
+}
+
+double logarithmic_density(double t, double *pars, double *q, int n_dim) {
+    /*  pars:
+            - G (Gravitational constant)
+            - v_c (velocity scale)
+            - r_h (length scale)
+            - q1
+            - q2
+            - q3
+    */
+    double tmp_0 = pow(pars[3], 2);
+    double tmp_1 = pow(pars[4], 2);
+    double tmp_2 = tmp_0*tmp_1;
+    double tmp_3 = tmp_2*pow(q[2], 2);
+    double tmp_4 = pow(pars[5], 2);
+    double tmp_5 = tmp_0*tmp_4;
+    double tmp_6 = tmp_5*pow(q[1], 2);
+    double tmp_7 = tmp_1*tmp_4;
+    double tmp_8 = tmp_7*pow(q[0], 2);
+    double tmp_9 = pow(pars[2], 2)*tmp_2*tmp_4;
+    double tmp_10 = tmp_6 + tmp_8 + tmp_9;
+    double tmp_11 = tmp_3 + tmp_9;
+    return pow(pars[1], 2)*(tmp_2*(tmp_10 - tmp_3) + tmp_5*(tmp_11 - tmp_6 + tmp_8) + tmp_7*(tmp_11 + tmp_6 - tmp_8))/pow(tmp_10 + tmp_3, 2) / (4*M_PI*pars[0]);
 }
 
 void logarithmic_gradient(double t, double *pars, double *q, int n_dim, double *grad) {

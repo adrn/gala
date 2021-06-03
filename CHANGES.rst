@@ -7,6 +7,10 @@ New Features
 - ``UnitSystem`` objects can now be created with custom units passed in as
   Astropy ``Quantity`` objects.
 
+- Added functionality to convert Gala potential objects to Galpy potential
+  objects, or to create Gala potential objects from a pre-existing Galpy
+  potential.
+
 
 Bug fixes
 ---------
@@ -16,6 +20,12 @@ Bug fixes
 
 - Fixed a bug with ``GreatCircleICRSFrame.from_endpoints()`` that caused an
   error when the input coordinates had associated velocity data.
+
+- Fixed a bug with the ``JaffePotential`` density evaluation, which was too low
+  by a factor of two.
+
+- Implemented a density function for ``LogarithmicPotential``, which was
+  missing previously.
 
 
 API changes
