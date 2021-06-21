@@ -6,7 +6,7 @@
 Orbit and phase-space position objects in more detail
 *****************************************************
 
-We'll assume the following imports have already been executed::
+For the examples below the following imports have already been executed::
 
     >>> import astropy.units as u
     >>> import numpy as np
@@ -40,7 +40,7 @@ reading below:
 
 .. _phase-space-position:
 
-Phase-space positions
+Phase-space Positions
 =====================
 
 The |psp| class provides an interface for representing full phase-space
@@ -52,16 +52,16 @@ The easiest way to create a |psp| object is to pass in a pair of
 `~astropy.units.Quantity` objects that represent the Cartesian position and
 velocity vectors::
 
-    >>> gd.PhaseSpacePosition(pos=[4.,8.,15.]*u.kpc,
-    ...                       vel=[-150.,50.,15.]*u.km/u.s)
+    >>> gd.PhaseSpacePosition(pos=[4., 8., 15.] * u.kpc,
+    ...                       vel=[-150., 50., 15.] * u.km/u.s)
     <PhaseSpacePosition cartesian, dim=3, shape=()>
 
 By default, passing in `~astropy.units.Quantity`'s are interpreted as Cartesian
 coordinates and velocities. This works with arrays of positions and velocities
 as well::
 
-    >>> x = np.arange(24).reshape(3,8)
-    >>> v = np.arange(24).reshape(3,8)
+    >>> x = np.arange(24).reshape(3, 8)
+    >>> v = np.arange(24).reshape(3, 8)
     >>> w = gd.PhaseSpacePosition(pos=x * u.kpc,
     ...                           vel=v * u.km/u.s)
     >>> w
@@ -90,8 +90,10 @@ These mappings are defined in the class definition of
 `~gala.dynamics.PhaseSpacePosition`. For example, to access the ``x`` component
 of the position and the ``v_x`` component of the velocity::
 
-    >>> w.x, w.v_x # doctest: +FLOAT_CMP
-    (<Quantity [0.,1.,2.,3.,4.,5.,6.,7.] kpc>, <Quantity [0.,1.,2.,3.,4.,5.,6.,7.] km / s>)
+    >>> w.x  # doctest: +FLOAT_CMP
+    <Quantity [0.,1.,2.,3.,4.,5.,6.,7.] kpc>
+    >>> w.v_x  # doctest: +FLOAT_CMP
+    <Quantity [0.,1.,2.,3.,4.,5.,6.,7.] km / s>
 
 The default representation is Cartesian, but the class can also be instantiated
 with representation objects instead of `~astropy.units.Quantity`'s -- this is
@@ -174,6 +176,7 @@ function and any keyword arguments are passed through to that function::
 .. plot::
     :align: center
     :context: close-figs
+    :width: 60%
 
     fig = w.plot(components=['x', 'v_z'], color='r',
                  facecolor='none', marker='o', s=20, alpha=0.5)
@@ -212,7 +215,7 @@ orbits, each with the same 128 times::
 
     >>> t = np.linspace(0, 100, 128) * u.Myr
     >>> Om = np.random.uniform(size=16) * u.rad / u.Myr
-    >>> angle = Om[None] * t[:,None]
+    >>> angle = Om[None] * t[:, None]
     >>> pos = np.stack((5*np.cos(angle), np.sin(angle))).value * u.kpc
     >>> vel = np.stack((-5*np.sin(angle), np.cos(angle))).value * u.kpc/u.Myr
     >>> orbit = gd.Orbit(pos=pos, vel=vel)
@@ -220,8 +223,8 @@ orbits, each with the same 128 times::
     <Orbit ndcartesian, dim=2, shape=(128, 16)>
 
 To make full use of the orbit functionality, you must also pass in an array with
-the time values and an instance of a `~gala.potential.PotentialBase` subclass
-that represents the potential that the orbit was integrated in::
+the time values and an instance of a `~gala.potential.potential.PotentialBase`
+subclass that represents the potential that the orbit was integrated in::
 
     >>> pot = gp.PlummerPotential(m=1E10, b=1., units=galactic)
     >>> orbit = gd.Orbit(pos=pos*u.kpc, vel=vel*u.km/u.s,
@@ -230,10 +233,10 @@ that represents the potential that the orbit was integrated in::
 (note, in this case ``pos`` and ``vel`` were not generated from integrating
 an orbit in the potential ``pot``!). However, most of the time you won't need to
 create |orb| objects from scratch! They are returned from any of the numerical
-intergration routines provided in `gala`. For example, they are returned by the
-`~gala.potential.PotentialBase.integrate_orbit` method of potential objects and
-will automatically contain the ``time`` array and ``potential`` object. For
-example::
+integration routines provided in `gala`. For example, they are returned by the
+`~gala.potential.potential.PotentialBase.integrate_orbit` method of potential
+objects and will automatically contain the ``time`` array and ``potential``
+object. For example::
 
     >>> pot = gp.PlummerPotential(m=1E10 * u.Msun, b=1. * u.kpc, units=galactic)
     >>> w0 = gd.PhaseSpacePosition(pos=[10.,0,0] * u.kpc,

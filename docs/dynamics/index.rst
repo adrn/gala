@@ -6,8 +6,7 @@
 Dynamics (`gala.dynamics`)
 ********************************
 
-For code blocks below and any pages linked below, we'll assume the following
-imports have already been executed::
+For the examples below the following imports have already been executed::
 
     >>> import astropy.units as u
     >>> import numpy as np
@@ -73,6 +72,7 @@ coordinate representation, for example, cylindrical radius :math:`\rho` and
 
 .. plot::
     :align: center
+    :width: 60%
 
     import astropy.units as u
     import gala.potential as gp

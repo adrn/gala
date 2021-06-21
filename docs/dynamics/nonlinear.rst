@@ -1,7 +1,7 @@
 .. _gala-nonlinear-dynamics:
 
 ******************
-Nonlinear dynamics
+Nonlinear Dynamics
 ******************
 
 Introduction
@@ -27,11 +27,12 @@ Chaotic orbit
 -------------
 
 There are two ways to compute Lyapunov exponents implemented in `gala.dynamics`.
-In most cases, you'll want to use the `~gala.dynamics.fast_lyapunov_max` function
-because the integration is implemented in C and is quite fast. This function only
-works if the potential you are working with is implemented in C (e.g., it is a
-`~gala.potential.CPotentialBase` subclass). With a potential object and
-a set of initial conditions::
+In most cases, you'll want to use the
+`~gala.dynamics.nonlinear.fast_lyapunov_max` function because the integration is
+implemented in C and is quite fast. This function only works if the potential
+you are working with is implemented in C (e.g., it is a
+`~gala.potential.potential.CPotentialBase` subclass). With a potential object
+and a set of initial conditions::
 
     >>> pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, r_h=0.1*u.kpc,
     ...                               q1=1., q2=0.8, q3=0.6, units=galactic)
@@ -45,13 +46,13 @@ contains the maximum Lyapunov exponent estimate for each offset orbit,
 argument) and an `~gala.dynamics.Orbit` object that contains
 the parent orbit and each offset orbit. Let's plot the parent orbit::
 
-    >>> fig = orbit[:,0].plot(marker=',', alpha=0.1, linestyle='none') # doctest: +SKIP
+    >>> fig = orbit[:,0].plot(marker=',', alpha=0.25, linestyle='none') # doctest: +SKIP
 
 .. plot::
     :align: center
 
     import astropy.units as u
-    import matplotlib.pyplot as pl
+    import matplotlib.pyplot as plt
     import gala.potential as gp
     import gala.dynamics as gd
     from gala.units import galactic
@@ -61,7 +62,7 @@ the parent orbit and each offset orbit. Let's plot the parent orbit::
     w0 = gd.PhaseSpacePosition(pos=[5.5,0.,5.5]*u.kpc,
                                vel=[0.,100.,0]*u.km/u.s)
     lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., n_steps=100000)
-    fig = orbit[:,0].plot(marker=',', linestyle='none', alpha=0.1)
+    fig = orbit[:,0].plot(marker=',', linestyle='none', alpha=0.25)
 
 Visually, this looks like a chaotic orbit. This means the Lyapunov exponent
 should saturate to some value. We'll now plot the estimate of the Lyapunov
@@ -70,17 +71,18 @@ several time-steps (controllable with the ``n_steps_per_pullback`` argument),
 we have to down-sample the time array to align it with the Lyapunov exponent
 array. This plots one line per offset orbit::
 
-    >>> pl.figure() # doctest: +SKIP
-    >>> pl.loglog(orbit.t[11::10], lyap, marker='') # doctest: +SKIP
-    >>> pl.xlabel("Time [{}]".format(orbit.t.unit)) # doctest: +SKIP
-    >>> pl.ylabel(r"$\lambda_{{\rm max}}$ [{}]".format(lyap.unit)) # doctest: +SKIP
-    >>> pl.tight_layout() # doctest: +SKIP
+    >>> plt.figure() # doctest: +SKIP
+    >>> plt.loglog(orbit.t[11::10], lyap, marker='') # doctest: +SKIP
+    >>> plt.xlabel("Time [{}]".format(orbit.t.unit)) # doctest: +SKIP
+    >>> plt.ylabel(r"$\lambda_{{\rm max}}$ [{}]".format(lyap.unit)) # doctest: +SKIP
+    >>> plt.tight_layout() # doctest: +SKIP
 
 .. plot::
     :align: center
+    :width: 60%
 
     import astropy.units as u
-    import matplotlib.pyplot as pl
+    import matplotlib.pyplot as plt
     import gala.potential as gp
     import gala.dynamics as gd
     from gala.units import galactic
@@ -91,11 +93,11 @@ array. This plots one line per offset orbit::
                                vel=[0.,100.,0]*u.km/u.s)
     lyap,orbit = gd.fast_lyapunov_max(w0, pot, dt=2., n_steps=100000)
 
-    pl.figure()
-    pl.loglog(orbit.t[11::10], lyap, marker='')
-    pl.xlabel("Time [{}]".format(orbit.t.unit))
-    pl.ylabel(r"$\lambda_{{\rm max}}$ [{}]".format(lyap.unit))
-    pl.tight_layout()
+    plt.figure()
+    plt.loglog(orbit.t[11::10], lyap, marker='')
+    plt.xlabel("Time [{}]".format(orbit.t.unit))
+    plt.ylabel(r"$\lambda_{{\rm max}}$ [{}]".format(lyap.unit))
+    plt.tight_layout()
 
 The estimate is clearly starting to diverge from a simple power law decay.
 
@@ -113,7 +115,6 @@ To compare, we will compute the estimate for a regular orbit as well::
     :align: center
 
     import astropy.units as u
-    import matplotlib.pyplot as pl
     import gala.potential as gp
     import gala.dynamics as gd
     from gala.units import galactic
@@ -136,6 +137,7 @@ following a characteristic power-law (a straight line in a log-log plot)::
 
 .. plot::
     :align: center
+    :width: 60%
 
     import astropy.units as u
     import matplotlib.pyplot as pl
