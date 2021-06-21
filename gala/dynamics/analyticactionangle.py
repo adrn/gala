@@ -148,8 +148,8 @@ def isochrone_to_aa(w, potential):
     freqs[1] = np.sign(actions[1]) * omega_th * omega_r
     freqs[2] = omega_th * omega_r
 
-    a_unit = (1*usys['angular momentum']/usys['mass']).decompose(usys).unit
-    f_unit = (1*usys['frequency']).decompose(usys).unit
+    a_unit = (1 * usys['angular momentum'] / usys['mass']).decompose(usys).unit
+    f_unit = (1 * usys['angular speed']).decompose(usys).unit
     return actions*a_unit, angles*u.radian, freqs*f_unit
 
 
@@ -349,7 +349,7 @@ def harmonic_oscillator_to_aa(w, potential):
 
     if usys is not None and usys:
         a_unit = (1*usys['angular momentum']/usys['mass']).decompose(usys).unit
-        f_unit = (1*usys['frequency']).decompose(usys).unit
+        f_unit = (1*usys['angular speed']).decompose(usys).unit
         return action*a_unit, (angle % (2.*np.pi))*u.radian, freq*f_unit
     else:
         return action*u.one, (angle % (2.*np.pi))*u.one, freq*u.one
