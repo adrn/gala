@@ -31,6 +31,8 @@ Bug fixes
 API changes
 -----------
 
+- Removed the deprecated ``gala.coordinates.get_galactocentric2019()`` function.
+
 
 1.3 (2020-10-27)
 ================

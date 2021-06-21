@@ -11,4 +11,3 @@ from .magellanic_stream import *
 from .reflex import *
 from .greatcircle import *
 from .pm_cov_transform import *
-from .galactocentric import get_galactocentric2019

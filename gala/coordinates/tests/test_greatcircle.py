@@ -7,7 +7,6 @@ import pytest
 # This project
 from ..greatcircle import (GreatCircleICRSFrame, make_greatcircle_cls,
                            pole_from_endpoints, sph_midpoint)
-from ..galactocentric import get_galactocentric2019
 
 
 def test_cls_init():
@@ -32,7 +31,7 @@ def test_cls_init():
 
 
 def test_init_center():
-    galcen = get_galactocentric2019()
+    galcen = coord.Galactocentric()
     stupid_gal = GreatCircleICRSFrame(
         pole=coord.Galactic._ngp_J2000.transform_to(coord.ICRS()),
         center=galcen.galcen_coord)
