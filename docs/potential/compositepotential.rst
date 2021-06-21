@@ -16,9 +16,10 @@ implemented in C, it is always faster to use
 :class:`~gala.potential.potential.CCompositePotential`, where the composition is
 done at the C layer rather than in Python.
 
-With either class, interaction with the class is identical. To compose
-potentials with unique but arbitrary names, you can simply add pre-defined
-potential class instances::
+With either class, interaction with the class (e.g., by calling methods) is
+identical to the individual potential classes. To compose potentials with unique
+but arbitrary names, you can also simply add pre-defined potential class
+instances::
 
     >>> import numpy as np
     >>> import gala.potential as gp
@@ -56,27 +57,25 @@ is equivalent to::
     >>> pot['disk'] = disk
     >>> pot['bulge'] = bulge
 
-In detail, the composite potential classes subclass
-:class:`~collections.OrderedDict`, so in this sense there is a slight difference
-between the two examples above (if you are using a Python version < 3.6). By
-defining components after creating the instance, the order is preserved. In the
-above example, the disk potential would always be called first and the bulge
-would always be called second.
+The order of insertion is preserved, and sets the order that the potentials are
+called. In the above example, the disk potential would always be called first
+and the bulge would always be called second.
 
 The resulting potential object has all of the same properties as individual
 potential objects::
 
-    >>> pot.energy([1.,-1.,0.]) # doctest: +FLOAT_CMP
+    >>> pot.energy([1., -1., 0.]) # doctest: +FLOAT_CMP
     <Quantity [-0.12887588] kpc2 / Myr2>
-    >>> pot.acceleration([1.,-1.,0.]) # doctest: +FLOAT_CMP
+    >>> pot.acceleration([1., -1., 0.]) # doctest: +FLOAT_CMP
     <Quantity [[-0.02270876],
                [ 0.02270876],
                [-0.        ]] kpc / Myr2>
-    >>> grid = np.linspace(-3.,3.,100)
-    >>> fig = pot.plot_contours(grid=(grid,0,grid)) # doctest: +SKIP
+    >>> grid = np.linspace(-3., 3., 100)
+    >>> fig = pot.plot_contours(grid=(grid, 0, grid)) # doctest: +SKIP
 
 .. plot::
     :align: center
+    :width: 60%
 
     import numpy as np
     import gala.dynamics as gd
