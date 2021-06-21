@@ -30,7 +30,7 @@ values adopted in Astropy v4.0:
 Stellar stream coordinate frames
 ================================
 
-`Gala` provides Astropy coordinate frame classes for transforming to several
+`gala` provides Astropy coordinate frame classes for transforming to several
 built-in stellar stream stream coordinate frames (as defined in the references
 below), and for transforming positions and velocities to and from coordinate
 systems defined by great circles or poles. These classes behave like the
@@ -42,7 +42,7 @@ with the Sagittarius stream with the `~gala.coordinates.SagittariusLaw10`
 frame::
 
     >>> c = coord.ICRS(ra=100.68458*u.degree, dec=41.26917*u.degree)
-    >>> sgr = c.transform_to(gc.SagittariusLaw10)
+    >>> sgr = c.transform_to(gc.SagittariusLaw10())
     >>> (sgr.Lambda, sgr.Beta) # doctest: +FLOAT_CMP
     (<Longitude 179.58511053544734 deg>, <Latitude -12.558450192162654 deg>)
 
@@ -50,7 +50,7 @@ Or, to transform from `~gala.coordinates.SagittariusLaw10` coordinates to the
 `~astropy.coordinates.Galactic` frame::
 
     >>> sgr = gc.SagittariusLaw10(Lambda=156.342*u.degree, Beta=1.1*u.degree)
-    >>> c = sgr.transform_to(coord.Galactic)
+    >>> c = sgr.transform_to(coord.Galactic())
     >>> (c.l, c.b) # doctest: +FLOAT_CMP
     (<Longitude 182.5922090437946 deg>, <Latitude -9.539692094685893 deg>)
 
@@ -59,10 +59,10 @@ can be transformed between the systems. For example, to transform from
 `~gala.coordinates.GD1Koposov10` proper motions to
 `~astropy.coordinates.Galactic` proper motions::
 
-    >>> gd1 = gc.GD1Koposov10(phi1=-35.00*u.degree, phi2=0*u.degree,
+    >>> gd1 = gc.GD1Koposov10(phi1=-35*u.degree, phi2=0*u.degree,
     ...                       pm_phi1_cosphi2=-12.20*u.mas/u.yr,
     ...                       pm_phi2=-3.10*u.mas/u.yr)
-    >>> gd1.transform_to(coord.Galactic) # doctest: +FLOAT_CMP
+    >>> gd1.transform_to(coord.Galactic()) # doctest: +FLOAT_CMP
     <Galactic Coordinate: (l, b) in deg
         (181.28968151, 54.84972806)
      (pm_l_cosb, pm_b) in mas / yr
@@ -77,7 +77,7 @@ position and velocity, we can transform to a
     ...                       pm_phi1_cosphi2=-12.20*u.mas/u.yr,
     ...                       pm_phi2=-3.10*u.mas/u.yr,
     ...                       radial_velocity=-32*u.km/u.s)
-    >>> gd1.transform_to(coord.Galactocentric) # doctest: +FLOAT_CMP
+    >>> gd1.transform_to(coord.Galactocentric()) # doctest: +FLOAT_CMP
     <Galactocentric Coordinate (galcen_coord=<ICRS Coordinate: (ra, dec) in deg
         (266.4051, -28.936175)>, galcen_distance=8.122 kpc, galcen_v_sun=(12.9, 245.6, 7.78) km / s, z_sun=20.8 pc, roll=0.0 deg): (x, y, z) in kpc
         (-12.61622659, -0.09870921, 6.43179403)
@@ -97,7 +97,8 @@ and returns a coordinate object with the solar motion added back in to the
 velocity components. This is useful for computing velocities in a Galactocentric
 reference frame, rather than a solar system barycentric frame.
 
-To use, you pass in a coordinate object with scalar or array values::
+The `~gala.coordinates.reflex_correct` function accepts a coordinate object with
+scalar or array values::
 
     >>> c = coord.SkyCoord(ra=[180.323, 1.523]*u.deg,
     ...                    dec=[-17, 29]*u.deg,
@@ -112,10 +113,12 @@ To use, you pass in a coordinate object with scalar or array values::
         [(139.47001884, 175.45769809, -47.09032586),
         (-61.01738781,  61.51055793, 163.36721898)]>
 
-By default, this uses the default solar location and velocity from the
-`astropy.coordinates.Galactocentric` frame class. To modify these, for example,
-to change the solar velocity, or the sun's height above the Galactic midplane,
-use the arguments of that class::
+By default, this uses the solar location and velocity from the
+`astropy.coordinates.Galactocentric` frame class. To modify these parameters,
+for example, to change the solar velocity, or the sun's height above the
+Galactic midplane, use the arguments of the `astropy.coordinates.Galactocentric`
+class and pass in an instance of the `astropy.coordinates.Galactocentric`
+frame::
 
     >>> vsun = coord.CartesianDifferential([11., 245., 7.]*u.km/u.s)
     >>> gc_frame = coord.Galactocentric(galcen_v_sun=vsun, z_sun=0*u.pc)
@@ -162,19 +165,18 @@ values of the proper motions) -- this is sometimes called "v_GSR"::
 Transforming a proper motion covariance matrix to a new coordinate frame
 ------------------------------------------------------------------------
 
-When working with Gaia or other astrometric data sets, we often need to
-transform the reported covariance matrix between proper motion components into a
-new coordinate system. For example, Gaia data are provided in the
+When working with Gaia or other astrometric data sets, you may need to transform
+the reported covariance matrix between proper motion components into a new
+coordinate system. For example, Gaia data are provided in the
 `~astropy.coordinates.ICRS` (equatorial) coordinate frame, but for Galactic
-science, we often want to instead work in the
-`~astropy.coordinates.Galactic` coordinate system.
-For this and other transformations that only require a rotation (i.e. the origin
-doesn't change), the astrometric covariance matrix can be transformed exactly
-through a projection of the rotation onto the tangent plane at a given location.
-The details of this procedure are explained in `this document from the Gaia data
-processing team
+science, we often want to instead work in the `~astropy.coordinates.Galactic`
+coordinate system. For this and other transformations that only require a
+rotation (i.e. the origin doesn't change), the astrometric covariance matrix can
+be transformed exactly through a projection of the rotation onto the tangent
+plane at a given location. The details of this procedure are explained in `this
+document from the Gaia data processing team
 <https://gea.esac.esa.int/archive/documentation/GDR2/Data_processing/chap_cu3ast/sec_cu3ast_intro/ssec_cu3ast_intro_tansforms.html>`_,
-and this functionality is implemented in gala. Let's first create a coordinate
+and this functionality is implemented in `gala`. Let's first create a coordinate
 object to transform::
 
     >>> c = coord.SkyCoord(ra=62*u.deg,
@@ -190,23 +192,22 @@ be constructed from a single row from a Gaia data release source catalog::
 
 This matrix specifies the 2D error distribution for the proper motion
 measurement *in the ICRS frame*. To transform this matrix to, e.g., the Galactic
-coordinate system, we can use the function
+coordinate system, use the function
 `~gala.coordinates.transform_pm_cov`::
 
-    >>> gc.transform_pm_cov(c, cov, coord.Galactic) # doctest: +FLOAT_CMP
+    >>> gc.transform_pm_cov(c, cov, coord.Galactic()) # doctest: +FLOAT_CMP
     array([[ 0.69450047, -0.309945  ],
            [-0.309945  ,  0.96413005]])
 
-Note that this works for all of the great circle or stellar stream coordinate
-frames implemented in gala::
+Note that this also works for all of the great circle or stellar stream
+coordinate frames implemented in `gala`::
 
-    >>> gc.transform_pm_cov(c, cov, gc.GD1Koposov10) # doctest: +FLOAT_CMP
+    >>> gc.transform_pm_cov(c, cov, gc.GD1Koposov10()) # doctest: +FLOAT_CMP
     array([[1.10838914, 0.19067958],
            [0.19067958, 0.55024138]])
 
-Also note that this works for multiple coordinates (i.e. array coordinates) as
-well, so try to avoid looping over this function and instead apply it to
-array-valued coordinate objects.
+This works for array-valued coordinates as well, so try to avoid looping over
+this function and instead apply it to array-valued coordinate objects.
 
 
 References

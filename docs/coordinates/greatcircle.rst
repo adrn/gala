@@ -21,14 +21,14 @@ coordinate system, such as the ICRS. The great circle system is defined by a
 specified north pole, with a additional (optional) specification of the
 longitude zero point of the final system.
 
-Currently, ``gala`` supports great circle frames that are defined as a rotation
+`gala` currentlt supports great circle frames that are defined as a rotation
 away from the ICRS (ra, dec) through the
 `~gala.coordinates.GreatCircleICRSFrame` class. To create a new great circle
-frame, you must specify a pole using the ``pole=`` keywrod, and optionally
+frame, you must specify a pole using the ``pole=`` keyword, and optionally
 specify the longitude zero point either by specifying the right ascension of the
 longitude zero point, ``ra0``, or by specifying a final rotation to be applied
 to the transformation, ``rotation``. For example, to define a great circle
-system with the pole at (RA, Dec) = (32.5, 19.8), we first have to create a
+system with the pole at (RA, Dec) = (32.5, 19.8)º, we first have to create a
 coordinate object for the pole::
 
     >>> pole = coord.SkyCoord(ra=32.5*u.deg, dec=19.8*u.deg)
@@ -39,7 +39,7 @@ define our coordinate frame::
     >>> fr = gc.GreatCircleICRSFrame(pole=pole)
 
 We can then use this frame like any other Astropy coordinate frame. For example,
-we can transform other coordinate to this new coordinate system using::
+we can transform other coordinates to this new coordinate system using::
 
     >>> c = coord.SkyCoord(ra=[160, 53]*u.deg, dec=[-11, 9]*u.deg)
     >>> c_fr = c.transform_to(fr)
@@ -61,7 +61,8 @@ The transformation also works for velocity components. For example, if we have a
 sky position and proper motions, we can transform to the great circle frame in
 the same way::
 
-    >>> c = coord.SkyCoord(ra=160*u.deg, dec=-11*u.deg,
+    >>> c = coord.SkyCoord(ra=160*u.deg,
+    ...                    dec=-11*u.deg,
     ...                    pm_ra_cosdec=5*u.mas/u.yr,
     ...                    pm_dec=0.3*u.mas/u.yr)
     >>> c_fr = c.transform_to(fr)
