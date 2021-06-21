@@ -27,6 +27,8 @@ Bug fixes
 - Implemented a density function for ``LogarithmicPotential``, which was
   missing previously.
 
+- The analytic action-angle and ``find_actions()`` utilities now correctly
+  return frequencies with angular frequency units rather than frequency.
 
 API changes
 -----------
