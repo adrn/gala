@@ -541,9 +541,12 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
     theta = angles[:3]
     freqs = angles[3:6]  # * sign
 
-    return dict(actions=J*aaf[0].unit, angles=theta*aaf[1].unit,
-                freqs=freqs*aaf[2].unit,
-                Sn=actions[3:], dSn_dJ=angles[6:], nvecs=nvecs)
+    return dict(actions=J * aaf[0].unit,
+                angles=theta * aaf[1].unit,
+                freqs=freqs * aaf[2].unit,
+                Sn=actions[3:],
+                dSn_dJ=angles[6:],
+                nvecs=nvecs)
 
 
 def find_actions(orbit, N_max, force_harmonic_oscillator=False,
@@ -596,9 +599,9 @@ def find_actions(orbit, N_max, force_harmonic_oscillator=False,
             angles[n] = aaf['angles'].value
             freqs[n] = aaf['freqs'].value
 
-    return dict(actions=actions*aaf['actions'].unit,
-                angles=angles*aaf['angles'].unit,
-                freqs=freqs*aaf['freqs'].unit,
+    return dict(actions=actions * aaf['actions'].unit,
+                angles=angles * aaf['angles'].unit,
+                freqs=freqs * aaf['freqs'].unit,
                 Sn=actions[3:], dSn=angles[6:], nvecs=aaf['nvecs'])
 
 # def solve_hessian(relative_actions, relative_freqs):

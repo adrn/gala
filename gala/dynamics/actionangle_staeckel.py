@@ -52,6 +52,6 @@ def get_staeckel_fudge_delta(potential, w, median=True):
 
     # Median over time if the inputs were orbits
     if len(delta.shape) > 1 and median:
-        delta = np.median(delta, axis=1)
+        delta = np.nanmedian(delta, axis=1)
 
     return delta * potential.units['length']
