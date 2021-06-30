@@ -887,6 +887,94 @@ class Orbit(PhaseSpacePosition):
 
         return fig
 
+    def plot_3d(self, components=None, units=None, auto_aspect=True,
+                subplots_kwargs=None, **kwargs):
+        """
+        Plot the specified 3D components.
+
+        Parameters
+        ----------
+        components : iterable (optional)
+            A list of component names (strings) to plot. By default, this is the
+            Cartesian positions ``['x', 'y', 'z']``. To plot Cartesian
+            velocities, pass in the velocity component names
+            ``['v_x', 'v_y', 'v_z']``. If the representation is different, the
+            component names will be different. For example, for a Cylindrical
+            representation, the components are ``['rho', 'phi', 'z']`` and
+            ``['v_rho', 'pm_phi', 'v_z']``.
+        units : `~astropy.units.UnitBase`, iterable (optional)
+            A single unit or list of units to display the components in.
+        auto_aspect : bool (optional)
+            Automatically enforce an equal aspect ratio.
+        ax : `matplotlib.axes.Axes`
+            The matplotlib Axes object to draw on.
+        subplots_kwargs : dict (optional)
+            Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
+        labels : iterable (optional)
+            List or iterable of axis labels as strings. They should correspond
+            to the dimensions of the input orbit.
+        plot_function : str (optional)
+            The ``matplotlib`` plot function to use. By default, this is 'plot'
+            but can also be, e.g., 'scatter'.
+        **kwargs
+            All other keyword arguments are passed to the ``plot_function``.
+            You can pass in any of the usual style kwargs like ``color=...``,
+            ``marker=...``, etc.
+
+        Returns
+        -------
+        fig : `~matplotlib.Figure`
+
+        """
+        from gala.tests.optional_deps import HAS_MATPLOTLIB
+        if not HAS_MATPLOTLIB:
+            raise ImportError('matplotlib is required for visualization.')
+        import matplotlib.pyplot as plt
+        from mpl_toolkits import mplot3d  # noqa
+
+        if components is None:
+            components = self.pos.components
+
+        if subplots_kwargs is None:
+            subplots_kwargs = dict()
+
+        if len(components) != 3:
+            raise ValueError(
+                f"The number of components ({len(components)}) must be 3")
+
+        x, labels = self._plot_prepare(components=components,
+                                       units=units)
+
+        kwargs.setdefault('marker', '')
+        kwargs.setdefault('linestyle', kwargs.pop('ls', '-'))
+        plot_function_name = kwargs.pop('plot_function', 'plot')
+
+        ax = kwargs.pop('ax', None)
+        subplots_kwargs.setdefault('constrained_layout', True)
+        if ax is None:
+            fig, ax = plt.subplots(figsize=(6, 6),
+                                   subplot_kw=dict(projection='3d'),
+                                   **subplots_kwargs)
+
+        plot_function = getattr(ax, plot_function_name)
+        if x[0].ndim > 1:
+            for n in range(x[0].shape[1]):
+                plot_function(*[xx[:, n] for xx in x], **kwargs)
+        else:
+            plot_function(*x, **kwargs)
+        ax.set_xlabel(labels[0])
+        ax.set_ylabel(labels[1])
+        ax.set_zlabel(labels[2])
+
+        if self.pos.get_name() == 'cartesian' and \
+                all([not c.startswith('d_') for c in components]) and \
+                't' not in components and \
+                auto_aspect:
+            for ax in fig.axes:
+                ax.set(aspect='auto', adjustable='datalim')
+
+        return fig, ax
+
     def to_frame(self, frame, current_frame=None, **kwargs):
         """
         TODO:

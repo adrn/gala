@@ -11,6 +11,8 @@ New Features
   objects, or to create Gala potential objects from a pre-existing Galpy
   potential.
 
+- Added a ``plot_3d()`` method for ``Orbit`` objects to make 3D plots of the
+  orbital trajectories.
 
 Bug fixes
 ---------
