@@ -4,7 +4,7 @@ import numpy as np
 __all__ = ['plot_projections']
 
 
-def _get_axes(dim, subplots_kwargs=dict()):
+def _get_axes(dim, subplots_kwargs=None):
     """
     Parameters
     ----------
@@ -16,13 +16,16 @@ def _get_axes(dim, subplots_kwargs=dict()):
 
     import matplotlib.pyplot as plt
 
+    if subplots_kwargs is None:
+        subplots_kwargs = dict()
+
     if dim > 1:
         n_panels = int(dim * (dim - 1) / 2)
     else:
         n_panels = 1
-    figsize = subplots_kwargs.pop('figsize', (4*n_panels, 4))
-    fig, axes = plt.subplots(1, n_panels, figsize=figsize,
-                             **subplots_kwargs)
+    subplots_kwargs.setdefault('figsize', (4*n_panels, 4))
+    subplots_kwargs.setdefault('constrained_layout', False)
+    fig, axes = plt.subplots(1, n_panels, **subplots_kwargs)
 
     if n_panels == 1:
         axes = [axes]
@@ -34,7 +37,7 @@ def _get_axes(dim, subplots_kwargs=dict()):
 
 
 def plot_projections(x, relative_to=None, autolim=True, axes=None,
-                     subplots_kwargs=dict(), labels=None, plot_function=None,
+                     subplots_kwargs=None, labels=None, plot_function=None,
                      **kwargs):
     """
     Given N-dimensional quantity, ``x``, make a figure containing 2D projections
@@ -118,5 +121,4 @@ def plot_projections(x, relative_to=None, autolim=True, axes=None,
 
             k += 1
 
-    axes[0].figure.tight_layout()
     return axes[0].figure
