@@ -857,12 +857,10 @@ class Orbit(PhaseSpacePosition):
         fig : `~matplotlib.Figure`
 
         """
-
-        try:
-            import matplotlib.pyplot as plt
-        except ImportError:
-            msg = 'matplotlib is required for visualization.'
-            raise ImportError(msg)
+        from gala.tests.optional_deps import HAS_MATPLOTLIB
+        if not HAS_MATPLOTLIB:
+            raise ImportError('matplotlib is required for visualization.')
+        import matplotlib.pyplot as plt
 
         if components is None:
             if self.ndim == 1:  # only a 1D orbit, so just plot time series
@@ -873,15 +871,10 @@ class Orbit(PhaseSpacePosition):
         x, labels = self._plot_prepare(components=components,
                                        units=units)
 
-        default_kwargs = {
-            'marker': '',
-            'linestyle': '-',
-            'labels': labels,
-            'plot_function': plt.plot
-        }
-
-        for k, v in default_kwargs.items():
-            kwargs[k] = kwargs.get(k, v)
+        kwargs.setdefault('marker', '')
+        kwargs.setdefault('linestyle', '-')
+        kwargs.setdefault('labels', labels)
+        kwargs.setdefault('plot_function', plt.plot)
 
         fig = plot_projections(x, **kwargs)
 

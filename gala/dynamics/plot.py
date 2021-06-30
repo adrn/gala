@@ -13,7 +13,9 @@ def _get_axes(dim, subplots_kwargs=None):
     subplots_kwargs : dict (optional)
         Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
     """
-
+    from gala.tests.optional_deps import HAS_MATPLOTLIB
+    if not HAS_MATPLOTLIB:
+        raise ImportError('matplotlib is required for visualization.')
     import matplotlib.pyplot as plt
 
     if subplots_kwargs is None:
@@ -23,8 +25,10 @@ def _get_axes(dim, subplots_kwargs=None):
         n_panels = int(dim * (dim - 1) / 2)
     else:
         n_panels = 1
+
     subplots_kwargs.setdefault('figsize', (4*n_panels, 4))
-    subplots_kwargs.setdefault('constrained_layout', False)
+    subplots_kwargs.setdefault('constrained_layout', True)
+
     fig, axes = plt.subplots(1, n_panels, **subplots_kwargs)
 
     if n_panels == 1:
