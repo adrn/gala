@@ -140,7 +140,7 @@ axes[1].legend(loc='best', fontsize=15)
 # -
 # ### Exercise: How does Kepler-444's orbit differ from the Sun's?
 #
-# What are the guiding center radii of the two orbits? What is the maximum $z$ height reached by each orbit? What are their eccentricities? Can you guess which star is older based on their kinematics? Which star do you think has a higher metallicity?
+# What is the maximum $z$ height reached by each orbit? What are their eccentricities? What are the guiding center radii of the two orbits? Can you guess which star is older based on their kinematics? Which star do you think has a higher metallicity?
 
 
 
