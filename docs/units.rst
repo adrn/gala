@@ -39,7 +39,7 @@ unit system using :meth:`~astropy.units.Quantity.decompose`::
 
 `~gala.units.UnitSystem` objects can also act as a dictionary to look up a unit
 for a given physical type. For example, if we want to know what a 'velocity'
-unit is in a given unit system, pass the key ``'velocity'``::
+unit is in a given unit system, pass the key ``'speed'`` or ``'velocity'``::
 
     >>> usys['speed']
     Unit("cm / ms")

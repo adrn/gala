@@ -23,16 +23,16 @@ Array shapes
 ============
 
 The arrays and :class:`~astropy.units.Quantity` objects expected as input and
-returned as ouput throughout ``Gala`` have shapes that follow a particular
+returned as output throughout ``Gala`` have shapes that follow a particular
 convention, unless otherwise specified in function or class docstrings.
 
 For arrays containing coordinate or kinematic information, ``axis=0`` is assumed
-to be the coordinate dimension. For example, for representing 128 Cartesian 3D
-positions, the object would have shape ``(3,128)``.
+to be the coordinate dimension. For example, for representing 128 different 3D
+Cartesian positions, the object should have shape ``(3, 128)``.
 
-For collections of orbits, arrays have 3 axes. As above, ``axis=0`` is assumed
-to be the coordinate dimension, but now ``axis=1`` is interpreted as the time
-axis, and ``axis=2`` are the individual orbits.
+For collections of orbits, arrays or array-valued objects have three axes: As
+above, ``axis=0`` is assumed to be the coordinate dimension, ``axis=1`` is
+interpreted as the time axis, and ``axis=2`` are the different orbits.
 
 .. _energy-momentum:
 
@@ -40,6 +40,6 @@ Energy and momentum
 ===================
 
 The `gala` documentation and functions often refer to energy and angular
-momentum and the respective quantities *per unit mass* interchangibly. Unless
+momentum and the respective quantities *per unit mass* interchangeably. Unless
 otherwise specified, all such quantities -- e.g., energy, angular momentum,
 momenta, conjugate momenta -- are in fact used and returned *per unit mass*.

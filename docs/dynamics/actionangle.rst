@@ -89,6 +89,7 @@ We will now integrate the orbit and plot it in the meridional plane::
 .. plot::
     :align: center
     :context: close-figs
+    :width: 60%
 
     import astropy.coordinates as coord
     import astropy.units as u
@@ -110,10 +111,10 @@ We will now integrate the orbit and plot it in the meridional plane::
 To solve for the actions in the true potential, we first compute the actions in
 a "toy" potential -- a potential in which we can compute the actions and angles
 analytically. The two simplest potentials for which this is possible are the
-`~gala.potential.IsochronePotential` and
-`~gala.potential.HarmonicOscillatorPotential`. We will use the Isochrone
-potential as our toy potential for tube orbits and the harmonic oscillator for
-box orbits.
+`~gala.potential.potential.IsochronePotential` and
+`~gala.potential.potential.HarmonicOscillatorPotential`. We will use the
+Isochrone potential as our toy potential for tube orbits and the harmonic
+oscillator for box orbits.
 
 We start by finding the parameters of the toy potential (Isochrone in this case)
 by minimizing the dispersion in energy for the orbit::
@@ -138,6 +139,7 @@ Instead, the orbit is wobbly in the toy potential angles::
 .. plot::
     :align: center
     :context: close-figs
+    :width: 60%
 
     toy_potential = gd.fit_isochrone(w)
     toy_actions,toy_angles,toy_freqs = toy_potential.action_angle(w)
@@ -160,6 +162,7 @@ time-independent in the toy potential::
 .. plot::
     :align: center
     :context: close-figs
+    :width: 60%
 
     fig,ax = plt.subplots(1,1)
     ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc), marker='')
@@ -168,7 +171,7 @@ time-independent in the toy potential::
     fig.tight_layout()
 
 We can now find approximations to the actions in the true potential. We have to
-choose the maximum integer vector norm, `N_max`, which here we arbitrarilty set
+choose the maximum integer vector norm, `N_max`, which here we arbitrarily set
 to 8. This will change depending on the convergence of the action correction
 (the properties of the orbit and potential) and the accuracy desired::
 
@@ -200,6 +203,7 @@ actions computed using this machinery::
 .. plot::
     :align: center
     :context: close-figs
+    :width: 60%
 
     import warnings
     with warnings.catch_warnings(record=True):
@@ -252,6 +256,7 @@ and the same initial conditions as above:
 .. plot::
     :align: center
     :include-source:
+    :width: 60%
 
     import astropy.coordinates as coord
     import astropy.units as u

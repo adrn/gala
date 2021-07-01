@@ -63,8 +63,8 @@ Similarly, a Galpy ``Orbit`` can be converted to a Gala
 Gala also provides tools for converting potential objects to `galpy` potential
 objects, or creating Gala potential objects from existing `galpy` potentials.
 To convert a Gala potential to a Galpy potential, use the
-:meth:`~gala.potential.PotentialBase.to_galpy_potential()` method on any Gala
-potential object. For example:
+:meth:`~gala.potential.potential.PotentialBase.to_galpy_potential()` method on
+any Gala potential object. For example:
 
 .. doctest-requires:: galpy
 

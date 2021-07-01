@@ -6,8 +6,7 @@
 N-dimensional representation classes
 ************************************
 
-For code blocks below and any pages linked below, we'll assume the following
-imports have already been executed::
+For the examples below the following imports have already been executed::
 
     >>> import astropy.units as u
     >>> import numpy as np
@@ -17,10 +16,10 @@ Introduction
 ============
 
 The Astropy |astropyrep|_ presently only support 3D positions and differential
-objects. The `~gala.dynamics.NDCartesianRepresentation` and
-`~gala.dynamics.NDCartesianDifferential` classes add Cartesian representation
-classes that can handle arbitrary numbers of dimensions. For example, 2D
-coordinates::
+objects. The `~gala.dynamics.representation_nd.NDCartesianRepresentation` and
+`~gala.dynamics.representation_nd.NDCartesianDifferential` classes add Cartesian
+representation classes that can handle arbitrary numbers of dimensions. For
+example, 2D coordinates::
 
     >>> xy = np.arange(16).reshape(2, 8) * u.kpc
     >>> rep = gd.NDCartesianRepresentation(xy)
@@ -48,6 +47,7 @@ core representation objects::
 
 .. plot::
     :align: center
+    :width: 60%
 
     import astropy.units as u
     import numpy as np

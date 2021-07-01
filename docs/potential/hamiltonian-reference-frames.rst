@@ -4,8 +4,7 @@
 Hamiltonian objects and reference frames
 ****************************************
 
-For code blocks below, I assume the following imports have already been
-excuted::
+For the examples below the following imports have already been executed::
 
     >>> import astropy.units as u
     >>> import numpy as np
@@ -28,7 +27,7 @@ When :ref:`integrating orbits using the potential classes directly
     >>> orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.5, n_steps=1000)
 
 it is implicitly assumed that the initial conditions and orbit are in an
-intertial (static) reference frame. In this case, the total energy or value
+inertial (static) reference frame. In this case, the total energy or value
 of the Hamiltonian (per unit mass) is simply
 
 .. math::
@@ -62,7 +61,7 @@ Using the potential objects and
 :meth:`~gala.potential.potential.PotentialBase.integrate_orbit()` to integrate
 an orbit is equivalent to defining a
 :class:`~gala.potential.hamiltonian.Hamiltonian` object with the potential
-object and a :class:`~gala.potential.frame.Staticframe` instance::
+object and a :class:`~gala.potential.frame.builtin.Staticframe` instance::
 
     >>> pot = gp.HernquistPotential(m=1E10*u.Msun, c=1.*u.kpc,
     ...                             units=galactic)

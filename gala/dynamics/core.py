@@ -802,11 +802,10 @@ class PhaseSpacePosition:
 
         """
 
-        try:
-            import matplotlib.pyplot as plt
-        except ImportError:
-            msg = 'matplotlib is required for visualization.'
-            raise ImportError(msg)
+        from gala.tests.optional_deps import HAS_MATPLOTLIB
+        if not HAS_MATPLOTLIB:
+            raise ImportError('matplotlib is required for visualization.')
+        import matplotlib.pyplot as plt
 
         if components is None:
             components = self.pos.components
@@ -814,15 +813,10 @@ class PhaseSpacePosition:
         x, labels = self._plot_prepare(components=components,
                                        units=units)
 
-        default_kwargs = {
-            'marker': '.',
-            'labels': labels,
-            'plot_function': plt.scatter,
-            'autolim': False
-        }
-
-        for k, v in default_kwargs.items():
-            kwargs[k] = kwargs.get(k, v)
+        kwargs.setdefault('marker', '.')
+        kwargs.setdefault('labels', labels)
+        kwargs.setdefault('plot_function', plt.scatter)
+        kwargs.setdefault('autolim', False)
 
         fig = plot_projections(x, **kwargs)
 

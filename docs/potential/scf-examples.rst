@@ -2,7 +2,7 @@
 Examples
 ********
 
-For code blocks below, the following imports will be needed::
+For the examples below the following imports have already been executed::
 
     import astropy.units as u
     import matplotlib as mpl

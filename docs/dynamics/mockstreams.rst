@@ -45,8 +45,8 @@ km/s, and a scale radius of 15 kpc::
 
 The mock stream generation supports any of the reference frames implemented in
 ``gala`` (e.g., non-static / rotating reference frames), so we must create a
-`~gala.potential.Hamiltonian` object to use when generating streams. By default,
-this will use a static reference frame::
+`~gala.potential.hamiltonian.Hamiltonian` object to use when generating streams.
+By default, this will use a static reference frame::
 
     >>> H = gp.Hamiltonian(pot)
 
@@ -99,6 +99,7 @@ Let's plot the stream::
 .. plot::
     :align: center
     :context: close-figs
+    :width: 60%
 
     import astropy.units as u
     import numpy as np
@@ -143,7 +144,7 @@ Hamiltonian. It is possible to include a potential object for the progenitor
 system to account for the self-gravity of the progenitor as stream star
 particles are released. We can use any of the ``gala.potential`` potential
 objects to represent the progenitor system, but here we will use a simple
-`~gala.potential.PlummerPotential`. We pass this in to the
+`~gala.potential.potential.PlummerPotential`. We pass this in to the
 `~gala.dynamics.mockstream.MockStreamGenerator` - let's see what the stream
 looks like when generated including self-gravity::
 
@@ -156,6 +157,7 @@ looks like when generated including self-gravity::
 .. plot::
     :align: center
     :context: close-figs
+    :width: 60%
 
     prog_pot = gp.PlummerPotential(m=prog_mass, b=2*u.pc, units=galactic)
     gen2 = ms.MockStreamGenerator(df, H, progenitor_potential=prog_pot)

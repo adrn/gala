@@ -1,22 +1,21 @@
 .. _rotate-origin-potential:
 
-For code blocks below, we assume the following imports have already been
-executed::
+**************************************************************
+Specifying rotations or origin shifts in ``Potential`` classes
+**************************************************************
+
+Most of the gravitational potential classes implemented in `gala` support
+shifting the origin of the potential relative to the coordinate system, and
+specifying a rotation of the potential relative to the coordinate system.
+By default, the origin is assumed to be at (0,0,0) or (0,0), and there is no
+rotation assumed.
+
+For the examples below the following imports have already been executed::
 
     >>> import astropy.units as u
     >>> import numpy as np
     >>> import gala.potential as gp
     >>> from gala.units import galactic, solarsystem
-
-**************************************************************
-Specifying rotations or origin shifts to ``Potential`` classes
-**************************************************************
-
-Most of the gravitational potential classes implemented in ``gala`` support
-shifting the origin of the potential relative to the coordinate system, and
-specifying a rotation of the potential relative to the coordinate system.
-By default, the origin is assumed to be at (0,0,0) or (0,0), and there is no
-rotation assumed.
 
 Origin shifts
 =============
@@ -34,8 +33,8 @@ one another such that one potential is at ``(1, 0, 0)`` AU and the other is at
     ...                         units=solarsystem)
 
 To see that these are shifted from the coordinate system origin, let's combine
-these two objects into a `~gala.potential.CCompositePotential` and visualize the
-potential::
+these two objects into a `~gala.potential.potential.CCompositePotential` and
+visualize the potential::
 
     >>> pot = gp.CCompositePotential(p1=p1, p2=p2)
     >>> fig, ax = plt.subplots(1, 1, figsize=(5, 5)) # doctest: +SKIP
@@ -47,6 +46,7 @@ potential::
 .. plot::
     :align: center
     :context: close-figs
+    :width: 60%
 
     import astropy.units as u
     import matplotlib.pyplot as plt
@@ -72,10 +72,13 @@ Rotations
 =========
 
 Rotations can be specified either by passing in a
-`scipy.spatial.transform.Rotation` instance, or by passing in a 2D numpy array
+`scipy.spatial.transform.Rotation` instance, or by passing in a 2D `numpy` array
 specifying a rotation matrix. For example, let's see what happens if we rotate a
-bar potential using these two possible inputs. First, we'll define a rotation matrix specifying a 30 degree
-rotation around the z axis (i.e. counter-clockwise) using `astropy.coordinates.matrix_utilities.rotation_matrix`. Next, we'll define a rotation using a scipy `~scipy.spatial.transform.Rotation` object::
+bar potential using these two possible inputs. First, we'll define a rotation
+matrix specifying a 30 degree rotation around the z axis (i.e.
+counter-clockwise) using `astropy.coordinates.matrix_utilities.rotation_matrix`.
+Next, we'll define a rotation using a `scipy`
+`~scipy.spatial.transform.Rotation` object::
 
     >>> from astropy.coordinates.matrix_utilities import rotation_matrix
     >>> from scipy.spatial.transform import Rotation

@@ -1,4 +1,5 @@
-__all__ = ['UnitSystem', 'galactic', 'dimensionless', 'solarsystem']
+__all__ = ['UnitSystem', 'DimensionlessUnitSystem',
+           'galactic', 'dimensionless', 'solarsystem']
 
 # Third-party
 import astropy.units as u
