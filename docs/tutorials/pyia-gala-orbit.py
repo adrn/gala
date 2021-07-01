@@ -26,8 +26,6 @@
 # ### Notebook Setup and Package Imports
 
 # +
-import pathlib
-
 import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
