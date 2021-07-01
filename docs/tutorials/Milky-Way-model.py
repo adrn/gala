@@ -25,7 +25,7 @@
 # `gala` provides a simple mass model for the Milky Way based on recent
 # measurements of the enclosed mass compiled from the literature. See the
 # [Defining a Milky Way potential
-# model](../potential/define-milky-way-model.ipynb) documentation for more
+# model](define-milky-way-model.html) documentation for more
 # information about how this model was defined.
 #
 # In this example, we will use the position and velocity and uncertainties of

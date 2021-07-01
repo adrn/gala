@@ -2,3 +2,4 @@ ZENODO.rst
 _tutorials.rst
 api/
 _build
+*.csv
