@@ -955,6 +955,8 @@ class Orbit(PhaseSpacePosition):
             fig, ax = plt.subplots(figsize=(6, 6),
                                    subplot_kw=dict(projection='3d'),
                                    **subplots_kwargs)
+        else:
+            fig = ax.figure
 
         plot_function = getattr(ax, plot_function_name)
         if x[0].ndim > 1:
