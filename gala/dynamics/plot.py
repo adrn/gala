@@ -87,6 +87,10 @@ def plot_projections(x, relative_to=None, autolim=True, axes=None,
     if axes is None:
         axes = _get_axes(dim=ndim, subplots_kwargs=subplots_kwargs)
 
+    import matplotlib.pyplot as plt  # mpl import already checked above
+    if isinstance(axes, plt.Axes):
+        axes = [axes]
+
     # if the quantities are relative
     if relative_to is not None:
         x -= relative_to
