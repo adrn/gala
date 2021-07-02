@@ -1,15 +1,7 @@
-1.5 (unreleased)
-================
+1.4.1 (2021-07-01)
+==================
 
-New Features
-------------
-
-Bug fixes
----------
-
-API changes
------------
-
+- Fixed a RST bug that caused the README to fail to render.
 
 
 1.4 (2021-07-01)

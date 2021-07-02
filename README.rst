@@ -1,9 +1,4 @@
-.. raw:: html
-
-   <a href="https://gala.adrian.pw">
-      <img src="https://gala.adrian.pw/en/latest/_static/Gala_Logo_RGB.png" width="50%" />
-   </a>
-
+|logo|
 
 Gala is a Python package for Galactic and gravitational dynamics.
 
@@ -15,7 +10,7 @@ Documentation
 |Documentation Status|
 
 The documentation for ``Gala`` is hosted on `Read the docs
-<http://gala.adrian.pw>`_.
+<http://gala.adrian.pw>`__.
 
 Installation and Dependencies
 -----------------------------
@@ -35,7 +30,7 @@ conda-forge channel::
 
 See the `installation
 instructions <http://gala.adrian.pw/en/latest/install.html>`_ in the
-`documentation <http://gala.adrian.pw>`_ for more information.
+`documentation <http://gala.adrian.pw>`__ for more information.
 
 Attribution
 -----------
@@ -93,6 +88,9 @@ the `LICENSE <https://github.com/adrn/gala/blob/main/LICENSE>`_ file.
    :target: https://zenodo.org/badge/latestdoi/17577779
 .. |ASCL| image:: https://img.shields.io/badge/ascl-1707.006-blue.svg?colorB=262255
    :target: http://ascl.net/1707.006
+.. |logo| image:: https://gala.adrian.pw/en/latest/_static/Gala_Logo_RGB.png
+   :target: https://github.com/adrn/gala
+   :width: 400
 
 Contributors
 ------------
