@@ -586,23 +586,35 @@ def find_actions(orbit, N_max, force_harmonic_oscillator=False,
             toy_potential=toy_potential)
 
     else:
-        norbits = orbit.norbits
-        actions = np.zeros((3, norbits))
-        angles = np.zeros((3, norbits))
-        freqs = np.zeros((3, norbits))
-        for n in range(norbits):
+        result = None
+
+        for n in range(orbit.norbits):
             aaf = _single_orbit_find_actions(
                 orbit[:, n], N_max,
                 force_harmonic_oscillator=force_harmonic_oscillator,
                 toy_potential=toy_potential)
-            actions[n] = aaf['actions'].value
-            angles[n] = aaf['angles'].value
-            freqs[n] = aaf['freqs'].value
 
-    return dict(actions=actions * aaf['actions'].unit,
-                angles=angles * aaf['angles'].unit,
-                freqs=freqs * aaf['freqs'].unit,
-                Sn=actions[3:], dSn=angles[6:], nvecs=aaf['nvecs'])
+            if result is None:
+                result = {}
+                for name in aaf.keys():
+                    if hasattr(aaf, 'unit'):
+                        unit = aaf[name].unit
+                    else:
+                        unit = 1
+
+                    if name != 'nvecs':
+                        result[name] = np.full(aaf[name].shape +
+                                               (orbit.norbits,),
+                                               np.nan * unit)
+
+            for name in aaf.keys():
+                if name != 'nvecs':
+                    result[name][:, n] = aaf[name]
+                else:
+                    result[name] = aaf[name]
+
+    return result
+
 
 # def solve_hessian(relative_actions, relative_freqs):
 #     """ Use ordinary least squares to solve for the Hessian, given a

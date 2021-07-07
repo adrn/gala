@@ -12,6 +12,8 @@ New Features
 Bug fixes
 ---------
 
+- Fixed ``find_actions()`` to accept an ``Orbit`` instance with multiple orbits.
+
 API changes
 -----------
 
