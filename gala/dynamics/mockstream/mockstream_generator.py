@@ -107,7 +107,7 @@ class MockStreamGenerator:
     def run(self, prog_w0, prog_mass, nbody=None,
             release_every=1, n_particles=1,
             output_every=None, output_filename=None,
-            check_filesize=True, overwrite=False,
+            check_filesize=True, overwrite=False, progress=False,
             **time_spec):
         """Run the mock stream generator with the specified progenitor initial
         conditions.
@@ -164,6 +164,8 @@ class MockStreamGenerator:
             is >8GB in size.
         overwrite : bool (optional)
             Overwrite the output file if it exists.
+        progress : bool (optional)
+            Print a very basic progress bar while computing the stream.
         **time_spec
             Specification of how long to integrate. Most commonly, this is a
             timestep ``dt`` and number of steps ``n_steps``, or a timestep
@@ -220,7 +222,8 @@ class MockStreamGenerator:
         if output_every is None:
             raw_nbody, raw_stream = mockstream_dop853(
                 nbody0, orbit_t[all_nstream != 0], w0, unq_t1s, orbit_t[-1],
-                all_nstream[all_nstream != 0].astype('i4'))
+                all_nstream[all_nstream != 0].astype('i4'),
+                progress=int(progress))
         else:  # store snapshots
             if output_filename is None:
                 raise ValueError("If output_every is specified, you must also "
@@ -229,7 +232,8 @@ class MockStreamGenerator:
             raw_nbody, raw_stream = mockstream_dop853_animate(
                 nbody0, orbit_t, w0, all_nstream.astype('i4'),
                 output_every=output_every, output_filename=output_filename,
-                check_filesize=check_filesize, overwrite=overwrite)
+                check_filesize=check_filesize, overwrite=overwrite,
+                progress=int(progress))
 
         x_unit = units['length']
         v_unit = units['length'] / units['time']

@@ -12,6 +12,7 @@
 # Standard library
 import warnings
 from os import path
+import sys
 
 # Third-party
 import astropy.units as u
@@ -53,7 +54,8 @@ cdef extern from "dopri/dop853.h":
 cpdef mockstream_dop853(nbody, double[::1] time,
                         double[:, ::1] stream_w0, double[::1] stream_t1,
                         double tfinal, int[::1] nstream,
-                        double atol=1E-10, double rtol=1E-10, int nmax=0):
+                        double atol=1E-10, double rtol=1E-10, int nmax=0,
+                        int progress=0):
     """
     Parameters
     ----------
@@ -104,6 +106,8 @@ cpdef mockstream_dop853(nbody, double[::1] time,
         double[:, ::1] w_final = np.empty((nbodies + total_nstream, ndim))
         double[:, :, ::1] nbody_w = np.empty((ntimes, nbodies, ndim))
 
+        int prog_out = len(time) // 100
+
     # set the potential objects of the progenitor (index 0) and any other
     # massive bodies included in the stream generation
     for i in range(nbodies):
@@ -120,7 +124,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
                                      <FcnEqDiff> Fwrapper_direct_nbody,
                                      nbody_w0, time,
                                      ndim, nbodies, nbodies, args, ntimes,
-                                     atol, rtol, nmax)
+                                     atol, rtol, nmax, 0)
 
     n = 0
     for i in range(ntimes):
@@ -146,6 +150,19 @@ cpdef mockstream_dop853(nbody, double[::1] time,
 
         n += nstream[i]
 
+        if progress == 1:
+            if i % prog_out == 0:
+                sys.stdout.write('\r')
+                sys.stdout.write(
+                    f"Integrating orbits: {100 * i / ntimes: 3.0f}%")
+                sys.stdout.flush()
+
+    if progress == 1:
+        sys.stdout.write('\r')
+        sys.stdout.write(f"Integrating orbits: {100: 3.0f}%")
+        sys.stdout.flush()
+
+
     for j in range(nbodies):
         for k in range(ndim):
             w_final[j, k] = w_tmp[j, k]
@@ -160,7 +177,8 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
                                 double[:, ::1] stream_w0, int[::1] nstream,
                                 output_every=1, output_filename='',
                                 overwrite=False, check_filesize=True,
-                                double atol=1E-10, double rtol=1E-10, int nmax=0):
+                                double atol=1E-10, double rtol=1E-10,
+                                int nmax=0, int progress=0):
     """
     Parameters
     ----------
@@ -205,6 +223,8 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
         # Snapshotting:
         int noutput_times = (ntimes-1) // output_every + 1
         double[::1] output_times
+
+        int prog_out = len(t) // 100
 
     if (ntimes-1) % output_every != 0:
         noutput_times += 1 # +1 for final conditions
@@ -296,6 +316,18 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
             nbody_g['pos'][:, j, :n] = np.array(w[:nbodies, :]).T[:3]
             nbody_g['vel'][:, j, :n] = np.array(w[:nbodies, :]).T[3:]
             j += 1
+
+        if progress == 1:
+            if i % prog_out == 0:
+                sys.stdout.write('\r')
+                sys.stdout.write(
+                    f"Integrating orbits: {100 * i / ntimes: 3.0f}%")
+                sys.stdout.flush()
+
+    if progress == 1:
+        sys.stdout.write('\r')
+        sys.stdout.write(f"Integrating orbits: {100: 3.0f}%")
+        sys.stdout.flush()
 
     for g in [stream_g, nbody_g]:
         d = g.create_dataset('time', data=np.array(output_times))

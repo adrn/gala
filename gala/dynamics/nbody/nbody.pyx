@@ -91,13 +91,13 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
                                        <FcnEqDiff> Fwrapper_direct_nbody,
                                        w0, t,
                                        ndim, nparticles, nparticles, args,
-                                       ntimes, atol, rtol, nmax)
+                                       ntimes, atol, rtol, nmax, 0)
     else:
         all_w = dop853_helper(&cp, &cf,
                               <FcnEqDiff> Fwrapper_direct_nbody,
                               w0, t,
                               ndim, nparticles, nparticles, args, ntimes,
-                              atol, rtol, nmax)
+                              atol, rtol, nmax, 0)
         all_w = np.array(all_w).reshape(nparticles, ndim)
 
     return all_w

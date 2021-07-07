@@ -4,6 +4,11 @@
 New Features
 ------------
 
+- Implemented a basic progress bar for integrating orbits and mock streams. Pass
+  ``progress=True`` with ``Integrator_kwargs`` when calling
+  ``.integrate_orbit()``, or pass ``progress=True`` to
+  ``MockStreamGenerator.run()``.
+
 Bug fixes
 ---------
 

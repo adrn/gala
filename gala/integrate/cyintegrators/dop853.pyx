@@ -7,6 +7,11 @@
 
 """ DOP853 integration in Cython. """
 
+import sys
+from libc.stdio cimport *
+from libc.stdlib cimport malloc, free
+from libc.string cimport strcpy
+
 # Third-party
 import numpy as np
 cimport numpy as np
@@ -78,7 +83,7 @@ cdef void dop853_step(CPotential *cp, CFrame *cf, FcnEqDiff F,
 cdef dop853_helper(CPotential *cp, CFrame *cf, FcnEqDiff F,
                    double[:, ::1] w0, double[::1] t,
                    int ndim, int norbits, int nbody, void *args, int ntimes,
-                   double atol, double rtol, int nmax):
+                   double atol, double rtol, int nmax, int progress):
 
     cdef:
         int i, j
@@ -86,25 +91,48 @@ cdef dop853_helper(CPotential *cp, CFrame *cf, FcnEqDiff F,
 
         double[::1] w = np.empty(ndim*norbits)
 
+        int prog_out = ntimes // 100
+
     # store initial conditions
     for i in range(norbits):
         for j in range(ndim):
             w[i*ndim + j] = w0[i, j]
 
-    for j in range(1, ntimes, 1):
-        dop853_step(cp, cf, F,
-                    &w[0], t[j-1], t[j], dt0,
-                    ndim, norbits, nbody, args,
-                    atol, rtol, nmax)
+    if progress == 1:
+        for j in range(1, ntimes, 1):
+            dop853_step(cp, cf, F,
+                        &w[0], t[j-1], t[j], dt0,
+                        ndim, norbits, nbody, args,
+                        atol, rtol, nmax)
 
-        PyErr_CheckSignals()
+            PyErr_CheckSignals()
+
+            if j % prog_out == 0:
+                sys.stdout.write('\r')
+                sys.stdout.write(
+                    f"Integrating orbits: {100 * j / ntimes: 3.0f}%")
+                sys.stdout.flush()
+
+        sys.stdout.write('\r')
+        sys.stdout.write(f"Integrating orbits: {100: 3.0f}%")
+        sys.stdout.flush()
+
+    else:
+        for j in range(1, ntimes, 1):
+            dop853_step(cp, cf, F,
+                        &w[0], t[j-1], t[j], dt0,
+                        ndim, norbits, nbody, args,
+                        atol, rtol, nmax)
+
+            PyErr_CheckSignals()
 
     return w
 
 cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
                             double[:, ::1] w0, double[::1] t,
                             int ndim, int norbits, int nbody, void *args,
-                            int ntimes, double atol, double rtol, int nmax):
+                            int ntimes, double atol, double rtol, int nmax,
+                            int progress):
 
     cdef:
         int i, j, k
@@ -113,27 +141,52 @@ cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
         double[::1] w = np.empty(ndim*norbits)
         double[:, :, ::1] all_w = np.empty((ntimes, norbits, ndim))
 
+        int prog_out = ntimes // 100
+
     # store initial conditions
     for i in range(norbits):
         for k in range(ndim):
             w[i*ndim + k] = w0[i, k]
             all_w[0, i, k] = w0[i, k]
 
-    for j in range(1, ntimes, 1):
-        dop853_step(cp, cf, F,
-                    &w[0], t[j-1], t[j], dt0, ndim, norbits, nbody, args,
-                    atol, rtol, nmax)
+    if progress == 1:
+        for j in range(1, ntimes, 1):
+            dop853_step(cp, cf, F,
+                        &w[0], t[j-1], t[j], dt0, ndim, norbits, nbody, args,
+                        atol, rtol, nmax)
 
-        for k in range(ndim):
-            for i in range(norbits):
-                all_w[j, i, k] = w[i*ndim + k]
+            for k in range(ndim):
+                for i in range(norbits):
+                    all_w[j, i, k] = w[i*ndim + k]
 
-        PyErr_CheckSignals()
+            PyErr_CheckSignals()
+
+            if j % prog_out == 0:
+                sys.stdout.write('\r')
+                sys.stdout.write(
+                    f"Integrating orbits: {100 * j / ntimes: 3.0f}%")
+                sys.stdout.flush()
+
+        sys.stdout.write('\r')
+        sys.stdout.write(f"Integrating orbits: {100: 3.0f}%")
+        sys.stdout.flush()
+
+    else:
+        for j in range(1, ntimes, 1):
+            dop853_step(cp, cf, F,
+                        &w[0], t[j-1], t[j], dt0, ndim, norbits, nbody, args,
+                        atol, rtol, nmax)
+
+            for k in range(ndim):
+                for i in range(norbits):
+                    all_w[j, i, k] = w[i*ndim + k]
+
+            PyErr_CheckSignals()
 
     return np.asarray(all_w)
 
 cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t,
-                                   double atol=1E-10, double rtol=1E-10, int nmax=0):
+                                   double atol=1E-10, double rtol=1E-10, int nmax=0, progress=False):
     """
     CAUTION: Interpretation of axes is different here! We need the
     arrays to be C ordered and easy to iterate over, so here the
@@ -160,6 +213,6 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t
     all_w = dop853_helper_save_all(&cp, &cf, <FcnEqDiff> Fwrapper,
                                    w0, t,
                                    ndim, norbits, 0, args, ntimes,
-                                   atol, rtol, nmax)
+                                   atol, rtol, nmax, int(progress))
 
     return np.asarray(t), np.asarray(all_w)

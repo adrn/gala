@@ -317,7 +317,8 @@ class Hamiltonian(CommonBase):
                 t, w = dop853_integrate_hamiltonian(self, arr_w0, t,
                                                    Integrator_kwargs.get('atol', 1E-10),
                                                    Integrator_kwargs.get('rtol', 1E-10),
-                                                   Integrator_kwargs.get('nmax', 0))
+                                                   Integrator_kwargs.get('nmax', 0),
+                                                   Integrator_kwargs.get('progress', False))
             else:
                 raise ValueError("Cython integration not supported for '{}'".format(Integrator))
 

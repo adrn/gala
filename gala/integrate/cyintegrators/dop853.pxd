@@ -21,12 +21,13 @@ cdef void dop853_step(CPotential *cp, CFrame *cf, FcnEqDiff F,
 cdef dop853_helper(CPotential *cp, CFrame *cf, FcnEqDiff F,
                    double[:,::1] w0, double[::1] t,
                    int ndim, int norbits, int nbody, void *args, int ntimes,
-                   double atol, double rtol, int nmax)
+                   double atol, double rtol, int nmax, int progress)
 
 cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
                             double[:,::1] w0, double[::1] t,
                             int ndim, int norbits, int nbody, void *args,
-                            int ntimes, double atol, double rtol, int nmax)
+                            int ntimes, double atol, double rtol, int nmax,
+                            int progress)
 
 # cpdef dop853_integrate_hamiltonian(hamiltonian, double[:,::1] w0, double[::1] t,
 #                                    double atol=?, double rtol=?, int nmax=?)
