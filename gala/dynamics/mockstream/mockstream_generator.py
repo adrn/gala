@@ -212,8 +212,9 @@ class MockStreamGenerator:
                         stream_w0.v_xyz.decompose(units).value)).T
         w0 = np.ascontiguousarray(w0)
 
-        unq_t1s, nstream = np.unique(stream_w0.release_time.decompose(units).value,
-                                     return_counts=True)
+        unq_t1s, nstream = np.unique(
+            stream_w0.release_time.decompose(units).value,
+            return_counts=True)
 
         all_nstream = np.zeros(prog_orbit.ntimes, dtype=int)
         for t1, n in zip(unq_t1s, nstream):

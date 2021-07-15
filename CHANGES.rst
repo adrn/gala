@@ -14,6 +14,9 @@ Bug fixes
 
 - Fixed ``find_actions()`` to accept an ``Orbit`` instance with multiple orbits.
 
+- Fixed a bug that appeared when trying to release all mock stream particles at
+  the same timestep (e.g., pericenter).
+
 API changes
 -----------
 

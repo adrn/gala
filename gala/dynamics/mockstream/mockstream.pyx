@@ -74,6 +74,10 @@ cpdef mockstream_dop853(nbody, double[::1] time,
     ``nstream`` is the array containing the number of stream particles released
     at each timestep.
 
+    TODO
+    ----
+    - `dt0` should be customizable in the Python interface.
+
     """
 
     cdef:
@@ -86,7 +90,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
 
         # Time-stepping parameters:
         int ntimes = time.shape[0]
-        double dt0 = time[1] - time[0]  # initial timestep
+        double dt0 = 1.
 
         # whoa, so many dots
         CPotential cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
@@ -178,7 +182,7 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
                                 output_every=1, output_filename='',
                                 overwrite=False, check_filesize=True,
                                 double atol=1E-10, double rtol=1E-10,
-                                int nmax=0, int progress=0):
+                                int nmax=0, int progress=0, double dt0=1.):
     """
     Parameters
     ----------
@@ -196,6 +200,10 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
     ``nstream`` is the array containing the number of stream particles released
     at each timestep.
 
+    TODO
+    ----
+    - `dt0` should be customizable in the Python interface.
+
     """
 
     cdef:
@@ -204,7 +212,6 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
 
         # Time-stepping parameters:
         int ntimes = t.shape[0]
-        double dt0 = t[1] - t[0] # initial timestep
 
         # whoa, so many dots
         CPotential cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
