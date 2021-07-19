@@ -17,6 +17,9 @@ Bug fixes
 - Fixed a bug that appeared when trying to release all mock stream particles at
   the same timestep (e.g., pericenter).
 
+- Fixed a bug where time arrays returned from ``parse_time_specification``
+  could come back with a non-float64 dtype.
+
 API changes
 -----------
 

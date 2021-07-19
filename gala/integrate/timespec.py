@@ -54,7 +54,7 @@ def parse_time_specification(units, dt=None, n_steps=None, nsteps=None,
     # t : array_like
     if t is not None:
         times = t
-        return times
+        return times.astype(np.float64)
 
     else:
         if dt is None and (t1 is None or t2 is None or n_steps is None):
@@ -81,7 +81,7 @@ def parse_time_specification(units, dt=None, n_steps=None, nsteps=None,
                 if times[-1] != t2:
                     times.append(t2)
 
-                return np.array(times)
+                return np.array(times, dtype=np.float64)
 
             elif t2 > t1 and dt > 0:
 
@@ -92,7 +92,7 @@ def parse_time_specification(units, dt=None, n_steps=None, nsteps=None,
                     times.append(t_i)
                     t_i += dt
 
-                return np.array(times)
+                return np.array(times, dtype=np.float64)
 
             else:
                 raise ValueError("If t2 < t1, dt must be negative. If t1 < t2, "
