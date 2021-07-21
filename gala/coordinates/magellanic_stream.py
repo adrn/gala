@@ -12,6 +12,8 @@ from astropy.coordinates import Galactic
 
 import astropy.units as u
 
+from gala.utils import GalaDeprecationWarning
+
 __all__ = ["MagellanicStreamNidever08", "MagellanicStream"]
 
 
@@ -92,7 +94,7 @@ class MagellanicStream(MagellanicStreamNidever08):
     def __init__(self, *args, **kwargs):
         import warnings
         warnings.warn("This frame is deprecated. Use MagellanicStreamNidever08 "
-                      "instead.", DeprecationWarning)
+                      "instead.", GalaDeprecationWarning)
         super().__init__(*args, **kwargs)
 
 

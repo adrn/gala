@@ -19,6 +19,7 @@ except ImportError as exc:
     ) from exc
 
 # Project
+from gala.utils import GalaDeprecationWarning
 from ..common import CommonBase
 from ...dynamics import PhaseSpacePosition
 from ...util import ImmutableDict, atleast_2d
@@ -631,12 +632,6 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
     def integrate_orbit(self, *args, **kwargs):
         """
-
-        .. warning:: This is now deprecated. Convenient orbit integration should
-            happen using the `gala.potential.Hamiltonian` class. With a
-            static reference frame, you just need to pass your potential
-            in to the `~gala.potential.Hamiltonian` constructor.
-
         Integrate an orbit in the current potential using the integrator class
         provided. Uses same time specification as `Integrator.run()` -- see
         the documentation for `gala.integrate` for more information.
@@ -663,13 +658,6 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         orbit : `~gala.dynamics.Orbit`
 
         """
-
-        warnings.warn("Use `Hamiltonian.integrate_orbit()` instead. If you are using a "
-                      "static reference frame, you just need to pass your "
-                      "potential object in to the Hamiltonian constructor to use, e.g., "
-                      "orbit = Hamiltonian(potential).integrate_orbit(...).",
-                      DeprecationWarning)
-
         from ..hamiltonian import Hamiltonian
         return Hamiltonian(self).integrate_orbit(*args, **kwargs)
 
@@ -687,8 +675,10 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         v : array_like, numeric
             Velocity.
         """
-        warnings.warn("Use the energy methods on Orbit objects instead. In a future "
-                      "release this will be removed.", DeprecationWarning)
+        warnings.warn(
+            "Use the energy methods on Orbit objects instead. In a future "
+            "release this will be removed.",
+            GalaDeprecationWarning)
 
         v = atleast_2d(v, insert_axis=1)
         return self.energy(x) + 0.5*np.sum(v**2, axis=0)
@@ -746,12 +736,12 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     # Deprecated methods
     #
     def _value(self, q, t=0.):
-        warnings.warn("Use `_energy()` instead.", DeprecationWarning)
+        warnings.warn("Use `_energy()` instead.", GalaDeprecationWarning)
         return self._energy(q, t=t)
 
     def value(self, *args, **kwargs):
         __doc__ = self.energy.__doc__  # noqa
-        warnings.warn("Use `energy()` instead.", DeprecationWarning)
+        warnings.warn("Use `energy()` instead.", GalaDeprecationWarning)
         return self.energy(*args, **kwargs)
 
     ###########################################################################

@@ -8,6 +8,8 @@ import astropy.coordinates as coord
 import astropy.units as u
 from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product, matrix_transpose
 
+from gala.utils import GalaDeprecationWarning
+
 __all__ = ["SagittariusLaw10", "Sagittarius"]
 
 
@@ -108,7 +110,7 @@ class Sagittarius(SagittariusLaw10):
     def __init__(self, *args, **kwargs):
         import warnings
         warnings.warn("This frame is deprecated. Use SagittariusLaw10 "
-                      "instead.", DeprecationWarning)
+                      "instead.", GalaDeprecationWarning)
         super().__init__(*args, **kwargs)
 
 

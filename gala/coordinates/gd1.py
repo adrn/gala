@@ -100,7 +100,7 @@ class GD1(GD1Koposov10):
     def __init__(self, *args, **kwargs):
         import warnings
         warnings.warn("This frame is deprecated. Use GD1Koposov10 instead.",
-                      DeprecationWarning)
+                     )
         super().__init__(*args, **kwargs)
 
 

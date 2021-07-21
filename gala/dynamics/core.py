@@ -1,6 +1,5 @@
 # Standard library
 from collections import namedtuple
-import warnings
 import re
 
 # Third-party
@@ -11,6 +10,7 @@ from astropy.utils.compat.misc import override__dir__
 import numpy as np
 
 # Project
+from gala.potential import Hamiltonian
 from . import representation_nd as rep_nd
 from .plot import plot_projections
 from ..io import quantity_to_hdf5, quantity_from_hdf5
@@ -646,27 +646,16 @@ class PhaseSpacePosition:
 
         Parameters
         ----------
-        hamiltonian : `gala.potential.Hamiltonian`
-            The Hamiltonian object to evaluate the energy.
+        hamiltonian : `gala.potential.Hamiltonian`, `gala.potential.PotentialBase` instance
+            The Hamiltonian object to evaluate the energy. If a potential is
+            passed in, this assumes a static reference frame.
 
         Returns
         -------
         E : :class:`~astropy.units.Quantity`
             The total energy.
         """
-        from ..potential import PotentialBase
-        if isinstance(hamiltonian, PotentialBase):
-            from ..potential import Hamiltonian
-
-            warnings.warn("This function now expects a `Hamiltonian` instance "
-                          "instead of  a `PotentialBase` subclass instance. If "
-                          "you are using a static reference frame, you just "
-                          "need to pass your potential object in to the "
-                          "Hamiltonian constructor to use, e.g., "
-                          "Hamiltonian(potential).", DeprecationWarning)
-
-            hamiltonian = Hamiltonian(hamiltonian)
-
+        hamiltonian = Hamiltonian(hamiltonian)
         return hamiltonian(self)
 
     def angular_momentum(self):

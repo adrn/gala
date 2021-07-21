@@ -180,3 +180,10 @@ def assert_angles_allclose(x, y, **kwargs):
     c2 = (np.sin(x)-np.sin(y))**2 + (np.cos(x)-np.cos(y))**2
     diff = np.arccos((2.0 - c2)/2.0)  # a = b = 1
     assert np.allclose(diff, 0.0, **kwargs)
+
+
+class GalaDeprecationWarning(Warning):
+    """
+    A warning class to indicate a deprecated feature. Use this over the built-in
+    DeprecationWarning because those are silenced by default.
+    """

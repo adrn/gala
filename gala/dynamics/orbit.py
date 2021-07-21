@@ -11,6 +11,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import minimize
 
 # Project
+from gala.potential import Hamiltonian
 from .core import PhaseSpacePosition
 from .util import peak_to_peak_period
 from .plot import plot_projections
@@ -345,6 +346,12 @@ class Orbit(PhaseSpacePosition):
         r"""
         The total energy *per unit mass*:
 
+        Parameters
+        ----------
+        hamiltonian : `gala.potential.Hamiltonian`, `gala.potential.PotentialBase` instance
+            The Hamiltonian object to evaluate the energy. If a potential is
+            passed in, this assumes a static reference frame.
+
         Returns
         -------
         E : :class:`~astropy.units.Quantity`
@@ -355,21 +362,10 @@ class Orbit(PhaseSpacePosition):
             raise ValueError("To compute the total energy, a hamiltonian"
                              " object must be provided!")
 
-        from ..potential import PotentialBase
-        if isinstance(hamiltonian, PotentialBase):
-            from ..potential import Hamiltonian
-
-            warnings.warn("This function now expects a `Hamiltonian` instance "
-                          "instead of a `PotentialBase` subclass instance. If "
-                          "you are using a static reference frame, you just "
-                          "need to pass your potential object in to the "
-                          "Hamiltonian constructor to use, e.g., Hamiltonian"
-                          "(potential).", DeprecationWarning)
-
-            hamiltonian = Hamiltonian(hamiltonian)
-
         if hamiltonian is None:
             hamiltonian = self.hamiltonian
+        else:
+            hamiltonian = Hamiltonian(hamiltonian)
 
         return hamiltonian(self)
 
