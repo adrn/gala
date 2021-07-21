@@ -8,7 +8,7 @@ import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import matrix_transpose
 
-from gala.utils import GalaDeprecationWarning
+from gala.util import GalaDeprecationWarning
 
 __all__ = ["Pal5PriceWhelan18", "Pal5"]
 

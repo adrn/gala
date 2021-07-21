@@ -15,7 +15,7 @@ from scipy.linalg import solve
 from scipy.optimize import minimize
 
 # Project
-from gala.utils import GalaDeprecationWarning
+from gala.util import GalaDeprecationWarning
 from gala.potential import HarmonicOscillatorPotential, IsochronePotential
 
 __all__ = ['generate_n_vectors', 'fit_isochrone',  # noqa

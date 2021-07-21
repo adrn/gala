@@ -12,7 +12,7 @@ from astropy.coordinates import Galactic
 
 import astropy.units as u
 
-from gala.utils import GalaDeprecationWarning
+from gala.util import GalaDeprecationWarning
 
 __all__ = ["MagellanicStreamNidever08", "MagellanicStream"]
 

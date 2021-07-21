@@ -8,7 +8,7 @@ from astropy.coordinates.matrix_utilities import (rotation_matrix,
                                                   matrix_transpose)
 import numpy as np
 
-from gala.utils import GalaDeprecationWarning
+from gala.util import GalaDeprecationWarning
 
 __all__ = ["Orphan", "OrphanNewberg10", "OrphanKoposov19"]
 

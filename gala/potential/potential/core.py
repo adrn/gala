@@ -19,7 +19,7 @@ except ImportError as exc:
     ) from exc
 
 # Project
-from gala.utils import GalaDeprecationWarning
+from gala.util import GalaDeprecationWarning
 from ..common import CommonBase
 from ...dynamics import PhaseSpacePosition
 from ...util import ImmutableDict, atleast_2d

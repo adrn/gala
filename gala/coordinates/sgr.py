@@ -8,7 +8,7 @@ import astropy.coordinates as coord
 import astropy.units as u
 from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product, matrix_transpose
 
-from gala.utils import GalaDeprecationWarning
+from gala.util import GalaDeprecationWarning
 
 __all__ = ["SagittariusLaw10", "Sagittarius"]
 
