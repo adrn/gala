@@ -8,8 +8,8 @@ import numpy as np
 
 # Project
 # from ..actionangle import classify_orbit
-from ...units import galactic
-from ...potential import HarmonicOscillatorPotential, IsochronePotential
+from gala.units import galactic
+from gala.potential import HarmonicOscillatorPotential, IsochronePotential
 from .._genfunc import genfunc_3d
 
 
