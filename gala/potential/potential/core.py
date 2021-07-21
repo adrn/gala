@@ -21,7 +21,6 @@ except ImportError as exc:
 # Project
 from gala.util import GalaDeprecationWarning
 from ..common import CommonBase
-from ...dynamics import PhaseSpacePosition
 from ...util import ImmutableDict, atleast_2d
 from ...units import DimensionlessUnitSystem
 
@@ -162,6 +161,8 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         `gala.potential.common.CommonBase`, but returns just the position if the
         input is a `PhaseSpacePosition`.
         """
+        from gala.dynamics import PhaseSpacePosition
+
         if hasattr(x, 'unit'):
             x = x.decompose(self.units).value
 

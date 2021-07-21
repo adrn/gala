@@ -16,11 +16,10 @@ from scipy.optimize import minimize
 
 # Project
 from gala.util import GalaDeprecationWarning
-from gala.potential import HarmonicOscillatorPotential, IsochronePotential
 
-__all__ = ['generate_n_vectors', 'fit_isochrone',  # noqa
+__all__ = ['generate_n_vectors', 'fit_isochrone',
            'fit_harmonic_oscillator', 'fit_toy_potential', 'check_angle_sampling',
-           'find_actions']
+           'find_actions_o2gf', 'find_actions']
 
 
 def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
@@ -109,6 +108,8 @@ def fit_isochrone(orbit, m0=2E11, b0=1., minimize_kwargs=None):
         Best-fit core radius for the Isochrone potential.
 
     """
+    from gala.potential import IsochronePotential
+
     pot = orbit.hamiltonian.potential
     if pot is None:
         raise ValueError("The orbit object must have an associated potential")
@@ -171,6 +172,8 @@ def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1], minimize_kwargs=None):
         Best-fit harmonic oscillator frequencies.
 
     """
+    from gala.potential import HarmonicOscillatorPotential
+
     omega0 = np.atleast_1d(omega0)
 
     pot = orbit.hamiltonian.potential
@@ -475,6 +478,7 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
     force_harmonic_oscillator : bool (optional)
         Force using the harmonic oscillator potential as the toy potential.
     """
+    from gala.potential import HarmonicOscillatorPotential, IsochronePotential
 
     if orbit.norbits > 1:
         raise ValueError("must be a single orbit")
@@ -620,6 +624,9 @@ def find_actions_o2gf(orbit, N_max, force_harmonic_oscillator=False,
                     result[name] = aaf[name]
 
     return result
+
+
+find_actions = find_actions_o2gf
 
 
 # def solve_hessian(relative_actions, relative_freqs):

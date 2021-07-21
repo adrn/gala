@@ -1,6 +1,3 @@
-# Standard library
-import warnings
-
 # Third-party
 from astropy import log as logger
 import astropy.coordinates as coord
@@ -11,7 +8,6 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import minimize
 
 # Project
-from gala.potential import Hamiltonian
 from .core import PhaseSpacePosition
 from .util import peak_to_peak_period
 from .plot import plot_projections
@@ -141,7 +137,7 @@ class Orbit(PhaseSpacePosition):
         try:
             return self._hamiltonian
         except AttributeError:
-            from ..potential import Hamiltonian
+            from gala.potential import Hamiltonian
             self._hamiltonian = Hamiltonian(potential=self.potential,
                                             frame=self.frame)
 
@@ -365,6 +361,7 @@ class Orbit(PhaseSpacePosition):
         if hamiltonian is None:
             hamiltonian = self.hamiltonian
         else:
+            from gala.potential import Hamiltonian
             hamiltonian = Hamiltonian(hamiltonian)
 
         return hamiltonian(self)

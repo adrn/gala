@@ -7,7 +7,6 @@ from astropy.utils import isiterable
 import numpy as np
 
 # Project
-from ..dynamics import PhaseSpacePosition
 from ..util import atleast_2d
 from ..units import UnitSystem, DimensionlessUnitSystem
 
@@ -175,6 +174,8 @@ class CommonBase:
         return pars
 
     def _remove_units_prepare_shape(self, x):
+        from gala.dynamics import PhaseSpacePosition
+
         if hasattr(x, 'unit'):
             x = x.decompose(self.units).value
 

@@ -10,7 +10,6 @@ from astropy.utils.compat.misc import override__dir__
 import numpy as np
 
 # Project
-from gala.potential import Hamiltonian
 from . import representation_nd as rep_nd
 from .plot import plot_projections
 from ..io import quantity_to_hdf5, quantity_from_hdf5
@@ -655,6 +654,7 @@ class PhaseSpacePosition:
         E : :class:`~astropy.units.Quantity`
             The total energy.
         """
+        from gala.potential import Hamiltonian
         hamiltonian = Hamiltonian(hamiltonian)
         return hamiltonian(self)
 
