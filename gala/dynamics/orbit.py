@@ -985,6 +985,120 @@ class Orbit(PhaseSpacePosition):
 
         return fig, ax
 
+    def animate(orbits,
+                stride=1,
+                segment_nsteps=10,
+                underplot_full_orbit=True,
+                marker_style=None,
+                segment_style=None,
+                FuncAnimation_kwargs=None,
+                orbit_plot_kwargs=None,
+                axes=None):
+        """
+        Animate an orbit or collection of orbits.
+
+        Parameters
+        ----------
+        stride : int (optional)
+            How often to draw a new frame, in terms of orbit timesteps.
+        segment_nsteps : int (optional)
+            How many timesteps to draw in an orbit segment trailing
+            the timestep marker. Set this to 0 or None to disable.
+        underplot_full_orbit : bool (optional)
+            Controls whether to under-plot the full orbit as a thin line.
+        marker_style : dict (optional)
+            Matplotlib style arguments passed to `matplotlib.pyplot.plot`
+            that control the plot style of the timestep marker.
+        segment_style : dict (optional)
+            Matplotlib style arguments passed to `matplotlib.pyplot.plot`
+            that control the plot style of the orbit segment.
+        FuncAnimation_kwargs : dict (optional)
+            Keyword arguments passed through to
+            `matplotlib.animation.FuncAnimation`.
+        orbit_plot_kwargs : dict (optional)
+            Keyword arguments passed through to `gala.dynamics.Orbit.plot`.
+        axes : `matplotlib.axes.Axes` (optional)
+            Where to draw the orbit.
+
+        Returns
+        -------
+        fig : `matplotlib.figure.Figure`
+        anim : `matplotlib.animation.FuncAnimation`
+
+        """
+        from matplotlib.animation import FuncAnimation
+
+        if FuncAnimation_kwargs is None:
+            FuncAnimation_kwargs = dict()
+
+        if orbit_plot_kwargs is None:
+            orbit_plot_kwargs = dict()
+        orbit_plot_kwargs.setdefault('zorder', -100)
+        orbit_plot_kwargs.setdefault('color', '#aaaaaa')
+        orbit_plot_kwargs.setdefault('linewidth', '1')
+        orbit_plot_kwargs.setdefault('axes', axes)
+
+        if marker_style is None:
+            marker_style = dict()
+        marker_style.setdefault('marker', 'o')
+        marker_style.setdefault('linestyle', marker_style.pop('ls', 'None'))
+        marker_style.setdefault('markersize', marker_style.pop('ms', 4.))
+        marker_style.setdefault('color', marker_style.pop('c', 'tab:red'))
+
+        if segment_style is None:
+            segment_style = dict()
+        segment_style.setdefault('marker', 'None')
+        segment_style.setdefault('linestyle', segment_style.pop('ls', '-'))
+        segment_style.setdefault('linewidth', segment_style.pop('lw', 2.))
+        segment_style.setdefault('color', segment_style.pop('c', 'tab:blue'))
+        if segment_nsteps is None or segment_nsteps == 0:
+            segment_style['alpha'] = 0
+
+        # Use this to get a figure with axes with the right limits
+        if not underplot_full_orbit:
+            orbit_plot_kwargs['alpha'] = 0
+        fig = orbits.plot(**orbit_plot_kwargs)
+
+        if orbits.norbits == 1 and len(orbits.x.shape) < 2:
+            orbits = orbits.reshape(orbits.shape + (1, ))
+
+        markers = []
+        segments = []
+        for n in range(orbits.norbits):
+            _m = []
+            _s = []
+            for i in range(3):
+                _m.append(fig.axes[i].plot([], [], **marker_style)[0])
+                _s.append(fig.axes[i].plot([], [], **segment_style)[0])
+            markers.append(_m)
+            segments.append(_s)
+
+        def anim_func(n):
+            i = max(0, n - segment_nsteps)
+            for k in range(orbits.norbits):
+                markers[k][0].set_data(orbits.x.value[n:n+1, k],
+                                       orbits.y.value[n:n+1, k])
+                markers[k][1].set_data(orbits.x.value[n:n+1, k],
+                                       orbits.z.value[n:n+1, k])
+                markers[k][2].set_data(orbits.y.value[n:n+1, k],
+                                       orbits.z.value[n:n+1, k])
+
+                segments[k][0].set_data(orbits.x.value[i:n, k],
+                                        orbits.y.value[i:n, k])
+                segments[k][1].set_data(orbits.x.value[i:n, k],
+                                        orbits.z.value[i:n, k])
+                segments[k][2].set_data(orbits.y.value[i:n, k],
+                                        orbits.z.value[i:n, k])
+
+            return (*[m for m in markers for x in m],
+                    *[s for s in segments for x in s])
+
+        anim = FuncAnimation(fig, anim_func,
+                             frames=np.arange(0, orbits.ntimes, stride),
+                             **FuncAnimation_kwargs)
+
+        return fig, anim
+
     def to_frame(self, frame, current_frame=None, **kwargs):
         """
         TODO:
