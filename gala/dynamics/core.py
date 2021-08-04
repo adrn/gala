@@ -840,3 +840,11 @@ class PhaseSpacePosition:
         accessed by doing, e.g., ``obj.x.shape``.
         """
         return self.pos.shape
+
+    def reshape(self, new_shape):
+        """
+        Reshape the underlying position and velocity arrays.
+        """
+        return self.__class__(pos=self.pos.reshape(new_shape),
+                              vel=self.vel.reshape(new_shape),
+                              frame=self.frame)

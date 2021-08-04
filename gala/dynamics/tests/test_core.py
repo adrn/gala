@@ -135,6 +135,15 @@ def test_slice():
     assert new_o.shape == (len(ix),)
 
 
+def test_reshape():
+    x = np.random.random(size=(3, 10))
+    v = np.random.random(size=(3, 10))
+    o = PhaseSpacePosition(pos=x, vel=v)
+    new_o = o.reshape((10, 1))
+    assert new_o.shape == (10, 1)
+    assert new_o.x.shape == (10, 1)
+
+
 def test_represent_as():
 
     # simple / unitless

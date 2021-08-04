@@ -192,11 +192,14 @@ class Orbit(PhaseSpacePosition):
         -------
         new_orbit : `gala.dynamics.Orbit`
         """
-
+        kw = dict()
+        if self.t is not None:
+            kw['t'] = self.t
         o = super().represent_as(new_pos=new_pos, new_vel=new_vel)
         return self.__class__(pos=o.pos,
                               vel=o.vel,
-                              hamiltonian=self.hamiltonian)
+                              hamiltonian=self.hamiltonian,
+                              **kw)
 
     # ------------------------------------------------------------------------
     # Shape and size
@@ -211,6 +214,18 @@ class Orbit(PhaseSpacePosition):
             return 1
         else:
             return self.shape[1]
+
+    def reshape(self, new_shape):
+        """
+        Reshape the underlying position and velocity arrays.
+        """
+        kw = dict()
+        if self.t is not None:
+            kw['t'] = self.t
+        return self.__class__(pos=self.pos.reshape(new_shape),
+                              vel=self.vel.reshape(new_shape),
+                              hamiltonian=self.hamiltonian,
+                              **kw)
 
     # ------------------------------------------------------------------------
     # Input / output
