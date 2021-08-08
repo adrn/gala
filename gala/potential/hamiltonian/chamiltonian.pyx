@@ -12,7 +12,6 @@ from ..common import CommonBase
 from ..potential import PotentialBase, CPotentialBase
 from ..frame import FrameBase, CFrameBase, StaticFrame
 from ...integrate import LeapfrogIntegrator, DOPRI853Integrator
-from ...dynamics import PhaseSpacePosition, Orbit
 
 __all__ = ["Hamiltonian"]
 
@@ -277,6 +276,7 @@ class Hamiltonian(CommonBase):
         orbit : `~gala.dynamics.Orbit`
 
         """
+        from gala.dynamics import PhaseSpacePosition, Orbit
 
         if Integrator is None and isinstance(self.frame, StaticFrame):
             Integrator = LeapfrogIntegrator

@@ -1,6 +1,5 @@
 # Standard library
 from collections import namedtuple
-import warnings
 import re
 
 # Third-party
@@ -646,27 +645,17 @@ class PhaseSpacePosition:
 
         Parameters
         ----------
-        hamiltonian : `gala.potential.Hamiltonian`
-            The Hamiltonian object to evaluate the energy.
+        hamiltonian : `gala.potential.Hamiltonian`, `gala.potential.PotentialBase` instance
+            The Hamiltonian object to evaluate the energy. If a potential is
+            passed in, this assumes a static reference frame.
 
         Returns
         -------
         E : :class:`~astropy.units.Quantity`
             The total energy.
         """
-        from ..potential import PotentialBase
-        if isinstance(hamiltonian, PotentialBase):
-            from ..potential import Hamiltonian
-
-            warnings.warn("This function now expects a `Hamiltonian` instance "
-                          "instead of  a `PotentialBase` subclass instance. If "
-                          "you are using a static reference frame, you just "
-                          "need to pass your potential object in to the "
-                          "Hamiltonian constructor to use, e.g., "
-                          "Hamiltonian(potential).", DeprecationWarning)
-
-            hamiltonian = Hamiltonian(hamiltonian)
-
+        from gala.potential import Hamiltonian
+        hamiltonian = Hamiltonian(hamiltonian)
         return hamiltonian(self)
 
     def angular_momentum(self):
@@ -851,3 +840,11 @@ class PhaseSpacePosition:
         accessed by doing, e.g., ``obj.x.shape``.
         """
         return self.pos.shape
+
+    def reshape(self, new_shape):
+        """
+        Reshape the underlying position and velocity arrays.
+        """
+        return self.__class__(pos=self.pos.reshape(new_shape),
+                              vel=self.vel.reshape(new_shape),
+                              frame=self.frame)

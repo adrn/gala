@@ -8,6 +8,9 @@ import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import matrix_transpose
 
+from gala.util import GalaDeprecationWarning
+
+
 __all__ = ["OphiuchusPriceWhelan16", "Ophiuchus"]
 
 
@@ -100,7 +103,7 @@ class Ophiuchus(OphiuchusPriceWhelan16):
     def __init__(self, *args, **kwargs):
         import warnings
         warnings.warn("This frame is deprecated. Use OphiuchusPriceWhelan16"
-                      " instead.", DeprecationWarning)
+                      " instead.", GalaDeprecationWarning)
         super().__init__(*args, **kwargs)
 
 

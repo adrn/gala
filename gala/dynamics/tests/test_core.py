@@ -1,6 +1,3 @@
-# Standard library
-import warnings
-
 # Third-party
 import astropy.units as u
 from astropy.coordinates import (Galactic, CartesianRepresentation,
@@ -133,6 +130,15 @@ def test_slice():
     ix = np.array([0, 3, 5])
     new_o = o[ix]
     assert new_o.shape == (len(ix),)
+
+
+def test_reshape():
+    x = np.random.random(size=(3, 10))
+    v = np.random.random(size=(3, 10))
+    o = PhaseSpacePosition(pos=x, vel=v)
+    new_o = o.reshape((10, 1))
+    assert new_o.shape == (10, 1)
+    assert new_o.x.shape == (10, 1)
 
 
 def test_represent_as():
@@ -328,10 +334,6 @@ def test_energy(): # noqa
     o = PhaseSpacePosition(pos=x, vel=v)
     PE = o.potential_energy(p) # noqa
     E = o.energy(H) # noqa
-
-    warnings.simplefilter('always')
-    with pytest.warns(DeprecationWarning):
-        o.energy(p)
 
 
 def test_angular_momentum():

@@ -8,6 +8,8 @@ import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import matrix_transpose
 
+from gala.util import GalaDeprecationWarning
+
 __all__ = ["Pal5PriceWhelan18", "Pal5"]
 
 
@@ -105,7 +107,7 @@ class Pal5(Pal5PriceWhelan18):
     def __init__(self, *args, **kwargs):
         import warnings
         warnings.warn("This frame is deprecated. Use Pal5PriceWhelan18 "
-                      "instead.", DeprecationWarning)
+                      "instead.", GalaDeprecationWarning)
         super().__init__(*args, **kwargs)
 
 

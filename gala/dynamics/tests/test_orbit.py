@@ -160,6 +160,17 @@ def test_slice():
     assert new_o.t.shape == (len(ix),)
 
 
+def test_reshape():
+    # 1d slice on 3d
+    x = np.random.random(size=(3, 10, 8))
+    v = np.random.random(size=(3, 10, 8))
+    t = np.arange(x.shape[1])
+    o = Orbit(pos=x, vel=v, t=t)
+    new_o = o.reshape((10, 4, 2))
+    assert new_o.shape == (10, 4, 2)
+    assert new_o.x.shape == (10, 4, 2)
+
+
 def test_represent_as():
 
     # simple / unitless

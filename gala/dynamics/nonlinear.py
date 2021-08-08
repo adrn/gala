@@ -5,7 +5,6 @@ from scipy.signal import argrelmin
 
 # Project
 from . import PhaseSpacePosition, Orbit
-from ..potential.potential import PotentialBase
 
 __all__ = ['fast_lyapunov_max', 'lyapunov_max', 'surface_of_section']
 
@@ -44,7 +43,7 @@ def fast_lyapunov_max(w0, hamiltonian, dt, n_steps, d0=1e-5,
     orbit : `~gala.dynamics.Orbit` (optional)
 
     """
-
+    from gala.potential import PotentialBase
     from .lyapunov import dop853_lyapunov_max, dop853_lyapunov_max_dont_save
 
     # TODO: remove in v1.0

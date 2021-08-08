@@ -225,7 +225,8 @@ class TestActions(ActionsBase):
 
 def test_compare_action_prepare():
 
-    from ..actionangle import _action_prepare, _angle_prepare
+    from gala.dynamics.actionangle.actionangle_o2gf import (
+        _action_prepare, _angle_prepare)
 
     logger.setLevel(logging.ERROR)
     AA = np.random.uniform(0.0, 100.0, size=(1000, 6))
@@ -249,8 +250,8 @@ def test_regression_113():
     """Test that fit_isochrone succeeds for a variety of orbits. See issue:
     https://github.com/adrn/gala/issues/113
     """
-    from ...potential import MilkyWayPotential, Hamiltonian
-    from ...dynamics import PhaseSpacePosition
+    from gala.potential import MilkyWayPotential, Hamiltonian
+    from gala.dynamics import PhaseSpacePosition
 
     pot = MilkyWayPotential()
 

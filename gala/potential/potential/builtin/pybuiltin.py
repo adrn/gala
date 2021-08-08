@@ -65,7 +65,7 @@ class HarmonicOscillatorPotential(PotentialBase):
         w : :class:`gala.dynamics.PhaseSpacePosition`, :class:`gala.dynamics.Orbit`
             The positions or orbit to compute the actions, angles, and frequencies at.
         """
-        from ....dynamics.analyticactionangle import harmonic_oscillator_to_aa
+        from gala.dynamics.actionangle import harmonic_oscillator_to_aa
         return harmonic_oscillator_to_aa(w, self)
 
     # def phase_space(self, actions, angles):
@@ -86,5 +86,5 @@ class HarmonicOscillatorPotential(PotentialBase):
     #     v : array_like
     #         Velocities.
     #     """
-    #     from ...dynamics.analyticactionangle import harmonic_oscillator_aa_to_xv
+    #     from gala.dynamics.actionangle import harmonic_oscillator_aa_to_xv
     #     return harmonic_oscillator_aa_to_xv(actions, angles, self)

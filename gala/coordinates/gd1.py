@@ -8,6 +8,8 @@ import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import matrix_transpose
 
+from gala.util import GalaDeprecationWarning
+
 __all__ = ["GD1Koposov10", "GD1"]
 
 
@@ -100,7 +102,7 @@ class GD1(GD1Koposov10):
     def __init__(self, *args, **kwargs):
         import warnings
         warnings.warn("This frame is deprecated. Use GD1Koposov10 instead.",
-                      DeprecationWarning)
+                      GalaDeprecationWarning)
         super().__init__(*args, **kwargs)
 
 

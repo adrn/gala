@@ -9,9 +9,6 @@ from astropy.constants import G
 import astropy.coordinates as coord
 import astropy.units as u
 
-# Project
-from ..potential import Hamiltonian, PotentialBase, IsochronePotential
-
 __all__ = ['isochrone_to_aa', 'harmonic_oscillator_to_aa']
 
 
@@ -50,6 +47,7 @@ def isochrone_to_aa(w, potential):
     freqs : :class:`numpy.ndarray`
         An array of frequencies computed from the input positions and velocities.
     """
+    from gala.potential import Hamiltonian, PotentialBase, IsochronePotential
 
     if not isinstance(potential, PotentialBase):
         potential = IsochronePotential(**potential)

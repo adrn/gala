@@ -8,6 +8,7 @@ from astropy.coordinates.matrix_utilities import (rotation_matrix,
                                                   matrix_transpose)
 import numpy as np
 
+from gala.util import GalaDeprecationWarning
 
 __all__ = ["Orphan", "OrphanNewberg10", "OrphanKoposov19"]
 
@@ -184,7 +185,7 @@ class Orphan(OrphanNewberg10):
     def __init__(self, *args, **kwargs):
         import warnings
         warnings.warn("This frame is deprecated. Use OrphanNewberg10 or "
-                      "OrphanKoposov19 instead.", DeprecationWarning)
+                      "OrphanKoposov19 instead.", GalaDeprecationWarning)
         super().__init__(*args, **kwargs)
 
 
