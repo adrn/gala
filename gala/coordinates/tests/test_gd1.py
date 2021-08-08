@@ -5,6 +5,7 @@ from astropy.utils.data import get_pkg_data_filename
 import numpy as np
 
 # This package
+from gala.util import GalaDeprecationWarning
 from ..gd1 import GD1Koposov10, GD1
 
 
@@ -36,7 +37,7 @@ def test_simple():
     # TODO: remove this in next version
     # For now: make sure old class still works
     from astropy.tests.helper import catch_warnings
-    with catch_warnings(DeprecationWarning) as w:
+    with catch_warnings(GalaDeprecationWarning) as w:
         c = GD1(217.2141*u.degree, -11.4351*u.degree)
     assert len(w) > 0
     c2 = c.transform_to(coord.Galactic)

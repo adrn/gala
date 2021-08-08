@@ -16,7 +16,7 @@ from ...potential import Hamiltonian, HernquistPotential
 from ...potential.frame import StaticFrame, ConstantRotatingFrame
 from ...units import galactic, solarsystem
 from gala.tests.optional_deps import HAS_H5PY
-
+from gala.util import GalaDeprecationWarning
 
 def test_initialize():
 
@@ -339,7 +339,7 @@ def test_energy(): # noqa
     E = o.energy(H) # noqa
 
     warnings.simplefilter('always')
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(GalaDeprecationWarning):
         o.energy(p)
 
 
