@@ -67,16 +67,18 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
 
     # Some input validation:
     if not isinstance(hamiltonian, Hamiltonian):
-        raise TypeError("Input must be a Hamiltonian object, not {}"
-                        .format(type(hamiltonian)))
+        raise TypeError(
+            f"Input must be a Hamiltonian object, not {type(hamiltonian)}")
 
     if not hamiltonian.c_enabled:
-        raise TypeError("Input Hamiltonian object does not support C-level "
-                        "access.")
+        raise TypeError(
+            "Input Hamiltonian object does not support C-level access.")
 
     if len(particle_potentials) != nparticles:
-        raise ValueError("The number of particle initial conditions must match "
-                         "the number of particle potentials passed in.")
+        raise ValueError(
+            "The number of particle initial conditions must match the number "
+            f"of particle potentials passed in ({nparticles} vs. "
+            f"{len(particle_potentials)}).")
 
     # Extract the CPotential objects from the particle potentials.
     for i in range(nparticles):

@@ -20,6 +20,9 @@ Bug fixes
 - Fixed a bug where time arrays returned from ``parse_time_specification``
   could come back with a non-float64 dtype.
 
+- Fixed a bug with ``DirectNBody`` with composite potentials where only the
+  first potential component would move as a body / particle.
+
 API changes
 -----------
 
