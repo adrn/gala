@@ -258,7 +258,7 @@ class IsochronePotential(CPotentialBase):
             The positions or orbit to compute the actions, angles, and
             frequencies at.
         """
-        from ....dynamics.analyticactionangle import isochrone_to_aa
+        from gala.dynamics.actionangle import isochrone_to_aa
         return isochrone_to_aa(w, self)
 
     # def phase_space(self, actions, angles):
@@ -273,7 +273,7 @@ class IsochronePotential(CPotentialBase):
     #     actions : array_like
     #     angles : array_like
     #     """
-    #     from ...dynamics.analyticactionangle import isochrone_aa_to_xv
+    #     from gala.dynamics.actionangle import isochrone_aa_to_xv
     #     return isochrone_aa_to_xv(actions, angles, self)
 
 

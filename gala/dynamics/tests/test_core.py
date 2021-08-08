@@ -338,10 +338,6 @@ def test_energy(): # noqa
     PE = o.potential_energy(p) # noqa
     E = o.energy(H) # noqa
 
-    warnings.simplefilter('always')
-    with pytest.warns(GalaDeprecationWarning):
-        o.energy(p)
-
 
 def test_angular_momentum():
 
