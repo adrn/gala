@@ -1,6 +1,3 @@
-# Standard library
-import warnings
-
 # Third-party
 import astropy.units as u
 from astropy.coordinates import (Galactic, CartesianRepresentation,
@@ -16,7 +13,7 @@ from ...potential import Hamiltonian, HernquistPotential
 from ...potential.frame import StaticFrame, ConstantRotatingFrame
 from ...units import galactic, solarsystem
 from gala.tests.optional_deps import HAS_H5PY
-from gala.util import GalaDeprecationWarning
+
 
 def test_initialize():
 
