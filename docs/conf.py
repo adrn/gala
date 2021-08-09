@@ -8,13 +8,21 @@ import datetime
 from importlib import import_module
 import warnings
 
+# Load all of the global Astropy configuration
+try:
+    from sphinx_astropy.conf.v1 import *  # noqa
+except ImportError:
+    print('ERROR: Building the documentation for Gala requires the '
+          'sphinx-astropy package to be installed')
+    sys.exit(1)
+
 # Get configuration information from setup.cfg
 from configparser import ConfigParser
 conf = ConfigParser()
 
 docs_root = pathlib.Path(__file__).parent.resolve()
 conf.read([str(docs_root / '..' / 'setup.cfg')])
-setup_cfg = dict(conf.items('metadata'))
+s = dict(conf.items('metadata'))
 
 # -- General configuration ----------------------------------------------------
 
@@ -40,52 +48,6 @@ numpydoc_show_class_members = False
 # Whether to create cross-references for the parameter types in the
 # Parameters, Other Parameters, Returns and Yields sections of the docstring.
 numpydoc_xref_param_type = True
-
-# Words not to cross-reference. Most likely, these are common words used in
-# parameter type descriptions that may be confused for classes of the same
-# name.
-numpydoc_xref_ignore = {
-    'type', 'optional', 'default', 'or', 'of', 'method', 'instance', "like",
-    "class", 'subclass', "keyword-only", "default", "thereof", "mixin",
-    # needed in subclassing numpy  # TODO! revisit
-    "Arguments", "Path",
-    # TODO! not need to ignore.
-    "flag", "bits",
-}
-
-# Mappings to fully qualified paths (or correct ReST references) for the
-# aliases/shortcuts used when specifying the types of parameters.
-# Numpy provides some defaults
-# https://github.com/numpy/numpydoc/blob/b352cd7635f2ea7748722f410a31f937d92545cc/numpydoc/xref.py#L62-L94
-# so we only need to define Astropy-specific x-refs
-numpydoc_xref_aliases = {
-    # ulta-general
-    "-like": ":term:`-like`",
-    # python & adjacent
-    "file-like": ":term:`python:file-like object`",
-    "file": ":term:`python:file object`",
-    "iterator": ":term:`python:iterator`",
-    "path-like": ":term:`python:path-like object`",
-    "module": ":term:`python:module`",
-    "buffer-like": ":term:buffer-like",
-    "function": ":term:`python:function`",
-    # for matplotlib
-    "color": ":term:`color`",
-    # for numpy
-    "ints": ":class:`python:int`",
-    # for astropy
-    "unit-like": ":term:`unit-like`",
-    "quantity-like": ":term:`quantity-like`",
-    "angle-like": ":term:`angle-like`",
-    "table-like": ":term:`table-like`",
-    "time-like": ":term:`time-like`",
-    "frame-like": ":term:`frame-like`",
-    "coordinate-like": ":term:`coordinate-like`",
-    "number": ":term:`number`",
-    "Representation": ":class:`~astropy.coordinates.BaseRepresentation`",
-    "writable": ":term:`writable file-like object`",
-    "readable": ":term:`readable file-like object`",
-}
 
 autosummary_generate = True
 
@@ -236,25 +198,12 @@ latex_documents = [('index', project + '.tex', project + u' Documentation',
 automodsumm_inherited_members = True
 
 # Add nbsphinx
-extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.inheritance_diagram',
-    'sphinx.ext.viewcode',
-    'numpydoc',
-    'sphinx_automodapi.automodapi',
-    'sphinx_automodapi.smart_resolver',
-    'sphinx_astropy.ext.doctest',
-    'sphinx_astropy.ext.generate_config',
-    'sphinx_astropy.ext.missing_static',
-    'sphinx.ext.mathjax',
+extensions += [
     'nbsphinx',
     'IPython.sphinxext.ipython_console_highlighting',
-    'matplotlib.sphinxext.plot_directive',
     'sphinxcontrib.bibtex',
-    'rtds_action']
+    'rtds_action'
+]
 
 # Bibliography:
 bibtex_bibfiles = ['refs.bib']
