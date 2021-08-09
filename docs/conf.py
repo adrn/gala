@@ -22,7 +22,7 @@ conf = ConfigParser()
 
 docs_root = pathlib.Path(__file__).parent.resolve()
 conf.read([str(docs_root / '..' / 'setup.cfg')])
-s = dict(conf.items('metadata'))
+setup_cfg = dict(conf.items('metadata'))
 
 # -- General configuration ----------------------------------------------------
 
