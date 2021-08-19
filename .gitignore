@@ -39,7 +39,7 @@ MANIFEST
 # Sphinx
 docs/api
 docs/_build
-docs/_static/*anim*
+docs/tutorials/*anim*
 docs/*/_*
 
 # Eclipse editor project files
