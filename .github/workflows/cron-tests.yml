@@ -38,14 +38,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # For animation tests
-      - uses: FedericoCarboni/setup-ffmpeg@v1
-        with:
-          # Not strictly necessary, but it may prevent rate limit
-          # errors especially on GitHub-hosted macos machines.
-          token: ${{ secrets.GITHUB_TOKEN }}
-        id: setup-ffmpeg
-
       - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
         if: "!startsWith(matrix.os, 'windows')"
         uses: actions/setup-python@v2

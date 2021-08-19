@@ -16,3 +16,4 @@ Developer documentation
     :maxdepth: 1
 
     testing
+    docs

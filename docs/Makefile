@@ -138,3 +138,7 @@ exectutorials:
 	jupytext --to ipynb --execute tutorials/*.py
 	@echo "Finished executing tutorial notebooks. Look at the executed " \
 	      "notebooks in tutorials/"
+
+animations:
+	python _static_animations.py
+	@echo "Finished generating animation files"
