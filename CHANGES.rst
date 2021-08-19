@@ -12,6 +12,10 @@ New Features
 - Added a new symplectic integrator: The Ruth 4th-order integrator, implemented
   with the class ``Ruth4Integrator``.
 
+- Added a ``Orbit.animate()`` method to make ``matplotlib`` animations of
+  orbits.
+
+
 Bug fixes
 ---------
 
