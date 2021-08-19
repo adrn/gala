@@ -35,14 +35,15 @@ cdef void c_ruth4_step(CPotential *p, int half_ndim, double t, double dt,
         int j, k
 
     for j in range(4):
+        for k in range(half_ndim):
+             grad[k] = 0.
         c_gradient(p, t, w, grad)
         for k in range(half_ndim):
-            w[half_ndim + k] = w[half_ndim + k] + ds[j] * grad[k] * dt
+            w[half_ndim + k] = w[half_ndim + k] - ds[j] * grad[k] * dt
             w[k] = w[k] + cs[j] * w[half_ndim + k] * dt
 
-
 cpdef ruth4_integrate_hamiltonian(hamiltonian,
-                                  double [:, ::1] w0,
+                                  double[:, ::1] w0,
                                   double[::1] t):
     """
     CAUTION: Interpretation of axes is different here! We need the
@@ -66,21 +67,23 @@ cpdef ruth4_integrate_hamiltonian(hamiltonian,
         int half_ndim = ndim // 2
 
         int ntimes = len(t)
-        double dt = t[1]-t[0]
+        double dt = t[1] - t[0]
 
         # Integrator coefficients
+        double two_13 = 2 ** (1./3.)
         double[::1] cs = np.array([
-            1 / (2*(2 - 2**(1/3))),
-            (1 - 2**(1/3)) / (2*(2 - 2**(1/3))),
-            (1 - 2**(1/3)) / (2*(2 - 2**(1/3))),
-            1 / (2*(2 - 2**(1/3)))
-        ])
+            1. / (2. * (2. - two_13)),
+            (1. - two_13) / (2.*(2. - two_13)),
+            (1. - two_13) / (2.*(2. - two_13)),
+            1. / (2.*(2. - two_13))
+        ], dtype='f8')
+
         double[::1] ds = np.array([
-            0,
-            1/(2 - 2**(1/3)),
-            -2**(1/3) / (2 - 2**(1/3)),
-            1/(2 - 2**(1/3))
-        ])
+            0.,
+            1. / (2. - two_13),
+            -two_13 / (2. - two_13),
+            1. / (2. - two_13)
+        ], dtype='f8')
 
         # temporary array containers
         double[::1] grad = np.zeros(half_ndim)
@@ -98,11 +101,9 @@ cpdef ruth4_integrate_hamiltonian(hamiltonian,
 
         for j in range(1, ntimes, 1):
             for i in range(n):
-                for k in range(half_ndim):
+                # Copy previous step w to current step w
+                for k in range(ndim):
                     all_w[j, i, k] = all_w[j-1, i, k]
-
-                for k in range(half_ndim):
-                    grad[k] = 0.
 
                 c_ruth4_step(&cp, half_ndim, t[j], dt,
                              &cs[0], &ds[0],
