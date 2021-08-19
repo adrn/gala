@@ -265,8 +265,8 @@ Just like for |psp|, we can quickly visualize an orbit using the
     from gala.units import galactic
 
     pot = gp.PlummerPotential(m=1E10 * u.Msun, b=1. * u.kpc, units=galactic)
-    w0 = gd.PhaseSpacePosition(pos=[10.,0,0] * u.kpc,
-                               vel=[0.,75,0] * u.km/u.s)
+    w0 = gd.PhaseSpacePosition(pos=[2.,0,0] * u.kpc,
+                               vel=[0.,75,15] * u.km/u.s)
     orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=5000)
     fig = orbit.plot()
 
@@ -280,6 +280,39 @@ function and any keyword arguments are passed through to that function::
     :context: close-figs
 
     fig = orbit.plot(linewidth=4., alpha=0.5, color='r')
+
+Alternatively, for three-dimensional orbits, we can visualize the orbit using
+the 3D projection capabilities in `matplotlib`::
+
+    >>> fig = orbit.plot_3d(alpha=0.5, color='k')  # doctest: +SKIP
+
+.. plot::
+    :align: center
+    :context: close-figs
+
+    fig = orbit.plot_3d(alpha=0.5, color='k')
+
+We can also quickly create an animation of the progression of an orbit using the
+`~gala.dynamics.Orbit.animate` method, which animated projections of the orbit::
+
+    >>> fig, anim = orbit[:1000].animate(stride=10)  # doctest: +SKIP
+
+.. raw:: html
+
+    <video controls src="../_static/orbit-anim1.mp4" width=450 height=320 autoplay loop></video>
+
+The animate method acts like `~gala.dynamics.Orbit.plot`, in that it works for
+any coordinate representation (Cartesian, cylindrical, etc.) and supports only
+animating subsets of the phase-space components. For example, to make an
+animation of an orbit in cylindrical coordinates, showing the orbit proress in
+the R,z meridional plane::
+
+    >>> fig, anim = orbit[:1000].cylindrical.animate(components=['rho', 'z'],  # doctest: +SKIP
+    ...                                              stride=10)
+
+.. raw:: html
+
+    <video controls src="../_static/orbit-anim2.mp4" width=450 height=320 autoplay loop></video>
 
 We can also quickly compute quantities like the angular momentum, and estimates
 for the pericenter, apocenter, eccentricity of the orbit. Estimates for the

@@ -277,6 +277,13 @@ if not zenodo_path.exists():
     with open(zenodo_path, 'w') as f:
         f.write(zenodo_record)
 
+## -- Generate animations for _static
+from _static_generator import make
+static_path = docs_root / "_static"
+print("Generating animations for _static ...")
+make(static_path)
+print("...done generating animations!")
+
 ## -- Check for executed tutorials and only add to toctree if they exist:
 
 tutorial_files = [
