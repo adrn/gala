@@ -9,6 +9,9 @@ New Features
   ``.integrate_orbit()``, or pass ``progress=True`` to
   ``MockStreamGenerator.run()``.
 
+- Added a new symplectic integrator: The Ruth 4th-order integrator, implemented
+  with the class ``Ruth4Integrator``.
+
 Bug fixes
 ---------
 
