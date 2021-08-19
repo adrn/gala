@@ -1,8 +1,5 @@
 """ Leapfrog integration. """
 
-# Third-party
-import numpy as np
-
 # Project
 from ..core import Integrator
 from ..timespec import parse_time_specification
