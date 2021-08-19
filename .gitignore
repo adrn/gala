@@ -15,6 +15,7 @@ gala/dynamics/mockstream/mockstream.c
 gala/dynamics/mockstream/df.c
 gala/integrate/cyintegrators/dop853.c
 gala/integrate/cyintegrators/leapfrog.c
+gala/integrate/cyintegrators/ruth4.c
 gala/potential/frame/builtin/frames.c
 gala/potential/frame/cframe.c
 gala/potential/hamiltonian/chamiltonian.c
