@@ -289,6 +289,7 @@ the 3D projection capabilities in `matplotlib`::
 .. plot::
     :align: center
     :context: close-figs
+    :width: 60%
 
     fig = orbit.plot_3d(alpha=0.5, color='k')
 
@@ -299,7 +300,7 @@ We can also quickly create an animation of the progression of an orbit using the
 
 .. raw:: html
 
-    <video controls src="../_static/orbit-anim1.mp4" width=450 height=320 autoplay loop></video>
+    <video controls src="../_static/orbit-anim1.mp4" width=650 autoplay loop></video>
 
 The animate method acts like `~gala.dynamics.Orbit.plot`, in that it works for
 any coordinate representation (Cartesian, cylindrical, etc.) and supports only
@@ -312,7 +313,7 @@ the R,z meridional plane::
 
 .. raw:: html
 
-    <video controls src="../_static/orbit-anim2.mp4" width=450 height=320 autoplay loop></video>
+    <video controls src="../_static/orbit-anim2.mp4" width=450 autoplay loop></video>
 
 We can also quickly compute quantities like the angular momentum, and estimates
 for the pericenter, apocenter, eccentricity of the orbit. Estimates for the
