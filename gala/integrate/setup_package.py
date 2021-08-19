@@ -30,4 +30,13 @@ def get_extensions():
     cfg['sources'].append('gala/integrate/cyintegrators/dopri/dop853.c')
     exts.append(Extension('gala.integrate.cyintegrators.dop853', **cfg))
 
+    cfg = defaultdict(list)
+    cfg['include_dirs'].append(np.get_include())
+    cfg['include_dirs'].append(mac_incl_path)
+    cfg['include_dirs'].append('gala/potential')
+    cfg['extra_compile_args'].append('--std=gnu99')
+    cfg['sources'].append('gala/integrate/cyintegrators/ruth4.pyx')
+    cfg['sources'].append('gala/potential/potential/src/cpotential.c')
+    exts.append(Extension('gala.integrate.cyintegrators.ruth4', **cfg))
+
     return exts

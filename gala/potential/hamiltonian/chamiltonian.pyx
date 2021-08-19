@@ -11,7 +11,7 @@ import astropy.units as u
 from ..common import CommonBase
 from ..potential import PotentialBase, CPotentialBase
 from ..frame import FrameBase, CFrameBase, StaticFrame
-from ...integrate import LeapfrogIntegrator, DOPRI853Integrator
+from ...integrate import LeapfrogIntegrator, DOPRI853Integrator, Ruth4Integrator
 
 __all__ = ["Hamiltonian"]
 
@@ -286,12 +286,13 @@ class Hamiltonian(CommonBase):
             # use the Integrator provided
             pass
 
-        if (Integrator == LeapfrogIntegrator and
+        symplectic_integrators = [LeapfrogIntegrator, Ruth4Integrator]
+        if (Integrator in symplectic_integrators and
                 not isinstance(self.frame, StaticFrame)):
-            warnings.warn("Using leapfrog integration with non-static frames "
-                          "can lead to wildly incorrect orbits. It is "
-                          "recommended that you use DOPRI853Integrator "
-                          "instead.", RuntimeWarning)
+            warnings.warn(
+                "Using a symplectic integrator with a non-static frame can "
+                "lead to wildly incorrect orbits. It is recommended that you "
+                "use DOPRI853Integrator instead.", RuntimeWarning)
 
         if not isinstance(w0, PhaseSpacePosition):
             w0 = np.asarray(w0)
@@ -308,9 +309,14 @@ class Hamiltonian(CommonBase):
             from ...integrate.timespec import parse_time_specification
             t = np.ascontiguousarray(parse_time_specification(self.units, **time_spec))
 
+            # TODO: these replacements should be defined in gala.integrate...
             if Integrator == LeapfrogIntegrator:
                 from ...integrate.cyintegrators import leapfrog_integrate_hamiltonian
                 t, w = leapfrog_integrate_hamiltonian(self, arr_w0, t)
+
+            elif Integrator == Ruth4Integrator:
+                from ...integrate.cyintegrators import ruth4_integrate_hamiltonian
+                t, w = ruth4_integrate_hamiltonian(self, arr_w0, t)
 
             elif Integrator == DOPRI853Integrator:
                 from ...integrate.cyintegrators import dop853_integrate_hamiltonian
