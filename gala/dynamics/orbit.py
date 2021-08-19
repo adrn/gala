@@ -985,7 +985,9 @@ class Orbit(PhaseSpacePosition):
 
         return fig, ax
 
-    def animate(orbits,
+    def animate(self,
+                components=None,
+                units=None,
                 stride=1,
                 segment_nsteps=10,
                 underplot_full_orbit=True,
@@ -999,6 +1001,16 @@ class Orbit(PhaseSpacePosition):
 
         Parameters
         ----------
+        components : iterable (optional)
+            A list of component names (strings) to plot. By default, this is the
+            Cartesian positions ``['x', 'y', 'z']``. To plot Cartesian
+            velocities, pass in the velocity component names
+            ``['v_x', 'v_y', 'v_z']``. If the representation is different, the
+            component names will be different. For example, for a Cylindrical
+            representation, the components are ``['rho', 'phi', 'z']`` and
+            ``['v_rho', 'pm_phi', 'v_z']``.
+        units : `~astropy.units.UnitBase`, iterable (optional)
+            A single unit or list of units to display the components in.
         stride : int (optional)
             How often to draw a new frame, in terms of orbit timesteps.
         segment_nsteps : int (optional)
@@ -1026,14 +1038,36 @@ class Orbit(PhaseSpacePosition):
         anim : `matplotlib.animation.FuncAnimation`
 
         """
+        from gala.tests.optional_deps import HAS_MATPLOTLIB
+        if not HAS_MATPLOTLIB:
+            raise ImportError('matplotlib is required for visualization.')
         from matplotlib.animation import FuncAnimation
+
+        if components is None:
+            if self.ndim == 1:  # only a 1D orbit, so just plot time series
+                components = ['t', self.pos.components[0]]
+            else:
+                components = self.pos.components
+
+        # Extract the relevant components, in the given unit system
+        xs, _ = self._plot_prepare(components=components,
+                                   units=units)
+        xs = [atleast_2d(xx, insert_axis=1) for xx in xs]
+
+        # Figure out which components to plot on which axes
+        data_paired = []
+        for i in range(len(xs)):
+            for j in range(len(xs)):
+                if i >= j:
+                    continue  # skip diagonal, upper triangle
+                data_paired.append((xs[i], xs[j]))
 
         if FuncAnimation_kwargs is None:
             FuncAnimation_kwargs = dict()
 
         if orbit_plot_kwargs is None:
             orbit_plot_kwargs = dict()
-        orbit_plot_kwargs.setdefault('zorder', -100)
+        orbit_plot_kwargs.setdefault('zorder', 1)
         orbit_plot_kwargs.setdefault('color', '#aaaaaa')
         orbit_plot_kwargs.setdefault('linewidth', '1')
         orbit_plot_kwargs.setdefault('axes', axes)
@@ -1044,6 +1078,7 @@ class Orbit(PhaseSpacePosition):
         marker_style.setdefault('linestyle', marker_style.pop('ls', 'None'))
         marker_style.setdefault('markersize', marker_style.pop('ms', 4.))
         marker_style.setdefault('color', marker_style.pop('c', 'tab:red'))
+        marker_style.setdefault('zorder', 100)
 
         if segment_style is None:
             segment_style = dict()
@@ -1051,23 +1086,24 @@ class Orbit(PhaseSpacePosition):
         segment_style.setdefault('linestyle', segment_style.pop('ls', '-'))
         segment_style.setdefault('linewidth', segment_style.pop('lw', 2.))
         segment_style.setdefault('color', segment_style.pop('c', 'tab:blue'))
-        if segment_nsteps is None or segment_nsteps == 0:
+        segment_style.setdefault('zorder', 10)
+        if segment_nsteps is None or segment_nsteps == 0:  # HACK
             segment_style['alpha'] = 0
 
         # Use this to get a figure with axes with the right limits
+        # Note: Labels are added by .plot()
         if not underplot_full_orbit:
             orbit_plot_kwargs['alpha'] = 0
-        fig = orbits.plot(**orbit_plot_kwargs)
+        fig = self.plot(components=components, units=units,
+                        **orbit_plot_kwargs)
 
-        if orbits.norbits == 1 and len(orbits.x.shape) < 2:
-            orbits = orbits.reshape(orbits.shape + (1, ))
-
+        # Set up all of the (data-less) markers and line segments
         markers = []
         segments = []
-        for n in range(orbits.norbits):
+        for n in range(self.norbits):
             _m = []
             _s = []
-            for i in range(3):
+            for i in range(len(data_paired)):
                 _m.append(fig.axes[i].plot([], [], **marker_style)[0])
                 _s.append(fig.axes[i].plot([], [], **segment_style)[0])
             markers.append(_m)
@@ -1075,33 +1111,26 @@ class Orbit(PhaseSpacePosition):
 
         def anim_func(n):
             i = max(0, n - segment_nsteps)
-            for k in range(orbits.norbits):
-                markers[k][0].set_data(orbits.x.value[n:n+1, k],
-                                       orbits.y.value[n:n+1, k])
-                markers[k][1].set_data(orbits.x.value[n:n+1, k],
-                                       orbits.z.value[n:n+1, k])
-                markers[k][2].set_data(orbits.y.value[n:n+1, k],
-                                       orbits.z.value[n:n+1, k])
 
-                segments[k][0].set_data(orbits.x.value[i:n, k],
-                                        orbits.y.value[i:n, k])
-                segments[k][1].set_data(orbits.x.value[i:n, k],
-                                        orbits.z.value[i:n, k])
-                segments[k][2].set_data(orbits.y.value[i:n, k],
-                                        orbits.z.value[i:n, k])
+            for k in range(self.norbits):
+                for j in range(len(data_paired)):
+                    markers[k][j].set_data(data_paired[j][0][n:n+1, k],
+                                           data_paired[j][1][n:n+1, k])
+                    segments[k][j].set_data(data_paired[j][0][i:n+1, k],
+                                            data_paired[j][1][i:n+1, k])
 
             return (*[m for m in markers for x in m],
                     *[s for s in segments for x in s])
 
         anim = FuncAnimation(fig, anim_func,
-                             frames=np.arange(0, orbits.ntimes, stride),
+                             frames=np.arange(0, self.ntimes, stride),
                              **FuncAnimation_kwargs)
 
         return fig, anim
 
     def to_frame(self, frame, current_frame=None, **kwargs):
         """
-        TODO:
+        Transform to a different reference frame.
 
         Parameters
         ----------
