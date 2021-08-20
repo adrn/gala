@@ -1,5 +1,4 @@
 # Third-party
-from astropy import log as logger
 import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
@@ -8,6 +7,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import minimize
 
 # Project
+from gala.logging import logger
 from .core import PhaseSpacePosition
 from .util import peak_to_peak_period
 from .plot import plot_projections

@@ -7,7 +7,7 @@ import warnings
 # Third-party
 import astropy.units as u
 import numpy as np
-from astropy import log as logger
+from gala.logging import logger
 from scipy.linalg import solve
 import pytest
 

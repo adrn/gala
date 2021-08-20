@@ -9,12 +9,12 @@ import warnings
 
 # Third-party
 import numpy as np
-from astropy import log as logger
 from astropy.utils.decorators import deprecated
 from scipy.linalg import solve
 from scipy.optimize import minimize
 
 # Project
+from gala.logging import logger
 from gala.util import GalaDeprecationWarning
 
 __all__ = ['generate_n_vectors', 'fit_isochrone',

@@ -1,6 +1,5 @@
 # Third-party
 import numpy as np
-from astropy import log as logger
 import astropy.units as u
 
 # Project
@@ -8,6 +7,7 @@ from gala.dynamics.actionangle import (
     isochrone_to_aa,
     harmonic_oscillator_to_aa,
 )
+from gala.logging import logger
 from gala.potential import (
     IsochronePotential,
     HarmonicOscillatorPotential,
