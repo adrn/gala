@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bfe_helper.h"
@@ -325,6 +326,12 @@ void interp_helper(double t, double *q, double *pars, int ntimes, int ncoeff,
         interp_pars[i] = pars[i];
     }
 
+    interp_pars[0] = pars[0];
+    interp_pars[1] = pars[1];
+    interp_pars[2] = pars[2];
+    interp_pars[3] = pars[4]; // skip ntimes
+    interp_pars[4] = pars[5];
+
     // Get the indices in the coefficient time array, tj, that bound the
     // evaluation time, t. pars[6 + 2*ncoeff] is tj!
     int idx[2];
@@ -377,11 +384,11 @@ void interp_helper(double t, double *q, double *pars, int ntimes, int ncoeff,
 double scf_interp_value(double t, double *pars, double *q, int n_dim) {
     /*  pars:
         - G (Gravitational constant)
-        - m (mass scale)
-        - r_s (length scale)
         - nmax
         - lmax
         - ntimes
+        - m (mass scale)
+        - r_s (length scale)
         - Sjnlm[ntimes,nmax,lmax,lmax]
         - Tjnlm[ntimes,nmax,lmax,lmax]
         - tj[ntimes]
@@ -394,9 +401,9 @@ double scf_interp_value(double t, double *pars, double *q, int n_dim) {
         - Pass interpolated coefficients, and centered q to scf_*
     */
 
-    int nmax = (int)pars[3];   // TODO: abuse!
-    int lmax = (int)pars[4];   // TODO: abuse!
-    int ntimes = (int)pars[5]; // TODO: abuse!
+    int nmax = (int)pars[1];   // TODO: abuse!
+    int lmax = (int)pars[2];   // TODO: abuse!
+    int ntimes = (int)pars[3]; // TODO: abuse!
 
     int n, l, m;
     double val;  // return value of the potential
@@ -422,19 +429,19 @@ double scf_interp_value(double t, double *pars, double *q, int n_dim) {
 double scf_interp_density(double t, double *pars, double *q, int n_dim) {
     /*  pars:
         - G (Gravitational constant)
-        - m (mass scale)
-        - r_s (length scale)
         - nmax
         - lmax
         - ntimes
+        - m (mass scale)
+        - r_s (length scale)
         - Sjnlm[ntimes,nmax,lmax,lmax]
         - Tjnlm[ntimes,nmax,lmax,lmax]
         - tj[ntimes]
         - originj[ntimes,3]
     */
-    int nmax = (int)pars[3];   // TODO: abuse!
-    int lmax = (int)pars[4];   // TODO: abuse!
-    int ntimes = (int)pars[5]; // TODO: abuse!
+    int nmax = (int)pars[1];   // TODO: abuse!
+    int lmax = (int)pars[2];   // TODO: abuse!
+    int ntimes = (int)pars[3]; // TODO: abuse!
 
     int n, l, m;
     double val;  // return value of the potential
@@ -460,9 +467,9 @@ double scf_interp_density(double t, double *pars, double *q, int n_dim) {
 
 void scf_interp_gradient(double t, double *pars, double *q, int n_dim,
                          double *grad) {
-    int nmax = (int)pars[3];   // TODO: abuse!
-    int lmax = (int)pars[4];   // TODO: abuse!
-    int ntimes = (int)pars[5]; // TODO: abuse!
+    int nmax = (int)pars[1];   // TODO: abuse!
+    int lmax = (int)pars[2];   // TODO: abuse!
+    int ntimes = (int)pars[3]; // TODO: abuse!
 
     int n, l, m;
     double val;  // return value of the potential

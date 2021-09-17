@@ -192,9 +192,9 @@ class InterpolatedSCFPotential(CPotentialBase, GSL_only=True):
                 f"shape! Received: {shp1} and {shp2}")
 
         # extra parameters
-        ntimes = self.parameters['Sjnlm'].shape[0]
-        nmax = self.parameters['Sjnlm'].shape[1] - 1
-        lmax = self.parameters['Sjnlm'].shape[2] - 1
+        ntimes = shp1[0]
+        nmax = shp1[1] - 1
+        lmax = shp1[2] - 1
 
         self._setup_wrapper({'nmax': nmax, 'lmax': lmax, 'ntimes': ntimes})
 
