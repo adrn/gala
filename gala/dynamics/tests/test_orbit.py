@@ -390,10 +390,10 @@ def test_apocenter_pericenter_period():
     T = w.estimate_period()  # noqa
 
     dapo = np.std(apos) / np.mean(apos)
-    assert (dapo > 0) and np.allclose(dapo, 0., atol=1E-5)
+    assert (dapo > 0) and np.allclose(dapo, 0., atol=1E-4)
 
     dper = np.std(pers) / np.mean(pers)
-    assert (dper > 0) and np.allclose(dper, 0., atol=1E-5)
+    assert (dper > 0) and np.allclose(dper, 0., atol=1E-4)
 
     # Now try for expected behavior when multiple orbits are integrated:
     w0 = PhaseSpacePosition(pos=([[1, 0, 0.], [1.1, 0, 0]]*u.au).T,
