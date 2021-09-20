@@ -15,6 +15,7 @@ New Features
 - Added a ``Orbit.animate()`` method to make ``matplotlib`` animations of
   orbits.
 
+- Modified ``Orbit._max_helper()`` to use a parabola instead of interpolation
 
 Bug fixes
 ---------

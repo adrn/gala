@@ -3,8 +3,6 @@ import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 from scipy.signal import argrelmax
-from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.optimize import minimize
 
 # Project
 from gala.logging import logger
@@ -381,8 +379,7 @@ class Orbit(PhaseSpacePosition):
 
         return hamiltonian(self)
 
-    def _max_helper(self, arr, approximate=False,
-                    interp_kwargs=None, minimize_kwargs=None):
+    def _max_helper(self, arr, approximate=False):
         """
         Helper function for computing extrema (apocenter, pericenter, z_height)
         and times of extrema.
@@ -404,28 +401,16 @@ class Orbit(PhaseSpacePosition):
         if approximate:
             return approx_arr, approx_t * self.t.unit
 
-        if interp_kwargs is None:
-            interp_kwargs = dict()
-
-        if minimize_kwargs is None:
-            minimize_kwargs = dict()
-
-        # default scipy function kwargs
-        interp_kwargs.setdefault('k', 3)
-        interp_kwargs.setdefault('ext', 3)  # don't extrapolate, use boundary
-        minimize_kwargs.setdefault('method', 'powell')
-
-        # Interpolating function to upsample array:
-        # Negative sign because we assume we're always finding the maxima
-        interp_func = InterpolatedUnivariateSpline(t, -arr.value,
-                                                   **interp_kwargs)
-
         better_times = np.zeros(_ix.shape, dtype=float)
+        better_arr = np.zeros(_ix.shape, dtype=float)
         for i, j in enumerate(_ix):
-            res = minimize(interp_func, t[j], **minimize_kwargs)
-            better_times[i] = res.x
+            tvals = t[j-1:j+2]
+            rvals = arr[j-1:j+2].value
+            coeffs = np.polynomial.polynomial.polyfit(tvals, rvals, 2)
+            better_times[i] = (-coeffs[1])/(2*coeffs[2])
+            better_arr[i] = ((coeffs[2] * better_times[i]**2)
+                             + (coeffs[1] * better_times[i]) + coeffs[0])
 
-        better_arr = -interp_func(better_times)
         return better_arr * arr.unit, better_times * self.t.unit
 
     def _max_return_helper(self, vals, times, return_times, reduce):
@@ -442,12 +427,11 @@ class Orbit(PhaseSpacePosition):
             return u.Quantity(vals)
 
     def pericenter(self, return_times=False, func=np.mean,
-                   interp_kwargs=None, minimize_kwargs=None,
                    approximate=False):
         """
         Estimate the pericenter(s) of the orbit by identifying local minima in
-        the spherical radius and interpolating between timesteps near the
-        minima.
+        the spherical radius, fitting a parabola around these local minima and
+        then solving this parabola to find the pericenter(s).
 
         By default, this returns the mean of all local minima (pericenters). To
         get, e.g., the minimum pericenter, pass in ``func=np.min``. To get
@@ -459,11 +443,6 @@ class Orbit(PhaseSpacePosition):
             A function to evaluate on all of the identified pericenter times.
         return_times : bool (optional)
             Also return the pericenter times.
-        interp_kwargs : dict (optional)
-            Keyword arguments to be passed to
-            :class:`scipy.interpolate.InterpolatedUnivariateSpline`.
-        minimize_kwargs : dict (optional)
-            Keyword arguments to be passed to :class:`scipy.optimize.minimize`.
         approximate : bool (optional)
             Compute an approximate pericenter by skipping interpolation.
 
@@ -497,8 +476,6 @@ class Orbit(PhaseSpacePosition):
         times = []
         for orbit in self.orbit_gen():
             v, t = orbit._max_helper(-orbit.physicsspherical.r,  # pericenter
-                                     interp_kwargs=interp_kwargs,
-                                     minimize_kwargs=minimize_kwargs,
                                      approximate=approximate)
             vals.append(func(-v))  # negative for pericenter
             times.append(t)
@@ -506,12 +483,11 @@ class Orbit(PhaseSpacePosition):
         return self._max_return_helper(vals, times, return_times, reduce)
 
     def apocenter(self, return_times=False, func=np.mean,
-                  interp_kwargs=None, minimize_kwargs=None,
                   approximate=False):
         """
         Estimate the apocenter(s) of the orbit by identifying local maxima in
-        the spherical radius and interpolating between timesteps near the
-        maxima.
+        the spherical radius, fitting a parabola around these local maxima and
+        then solving this parabola to find the apocenter(s).
 
         By default, this returns the mean of all local maxima (apocenters). To
         get, e.g., the largest apocenter, pass in ``func=np.max``. To get
@@ -523,11 +499,6 @@ class Orbit(PhaseSpacePosition):
             A function to evaluate on all of the identified apocenter times.
         return_times : bool (optional)
             Also return the apocenter times.
-        interp_kwargs : dict (optional)
-            Keyword arguments to be passed to
-            :class:`scipy.interpolate.InterpolatedUnivariateSpline`.
-        minimize_kwargs : dict (optional)
-            Keyword arguments to be passed to :class:`scipy.optimize.minimize`.
         approximate : bool (optional)
             Compute an approximate apocenter by skipping interpolation.
 
@@ -561,8 +532,6 @@ class Orbit(PhaseSpacePosition):
         times = []
         for orbit in self.orbit_gen():
             v, t = orbit._max_helper(orbit.physicsspherical.r,  # apocenter
-                                     interp_kwargs=interp_kwargs,
-                                     minimize_kwargs=minimize_kwargs,
                                      approximate=approximate)
             vals.append(func(v))
             times.append(t)
@@ -570,12 +539,12 @@ class Orbit(PhaseSpacePosition):
         return self._max_return_helper(vals, times, return_times, reduce)
 
     def zmax(self, return_times=False, func=np.mean,
-             interp_kwargs=None, minimize_kwargs=None,
              approximate=False):
         """
         Estimate the maximum ``z`` height of the orbit by identifying local
-        maxima in the absolute value of the ``z`` position and interpolating
-        between timesteps near the maxima.
+        maxima in the absolute value of the ``z`` position, fitting a parabola
+        around these local maxima and then solving this parabola to find the
+        maximum ``z`` height.
 
         By default, this returns the mean of all local maxima. To get, e.g., the
         largest ``z`` excursion, pass in ``func=np.max``. To get all ``z``
@@ -587,11 +556,6 @@ class Orbit(PhaseSpacePosition):
             A function to evaluate on all of the identified z maximum times.
         return_times : bool (optional)
             Also return the times of maximum.
-        interp_kwargs : dict (optional)
-            Keyword arguments to be passed to
-            :class:`scipy.interpolate.InterpolatedUnivariateSpline`.
-        minimize_kwargs : dict (optional)
-            Keyword arguments to be passed to :class:`scipy.optimize.minimize`.
         approximate : bool (optional)
             Compute approximate values by skipping interpolation.
 
@@ -625,8 +589,6 @@ class Orbit(PhaseSpacePosition):
         times = []
         for orbit in self.orbit_gen():
             v, t = orbit._max_helper(np.abs(orbit.cylindrical.z),
-                                     interp_kwargs=interp_kwargs,
-                                     minimize_kwargs=minimize_kwargs,
                                      approximate=approximate)
             vals.append(func(v))
             times.append(t)
