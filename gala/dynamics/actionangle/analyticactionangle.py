@@ -208,13 +208,13 @@ def isochrone_to_xv(actions, angles, potential):
     sqrt2 = np.sqrt(1 + e + 2*b/c) / np.sqrt(1 - e + 2*b/c)
 
     with u.set_enabled_equivalencies(u.dimensionless_angles()):
-        shit = (
+        terms = (
             0.5 * (1 + L / sqrt_L2_4GMb) * thr
             - F(sqrt1, eta)
             - L / sqrt_L2_4GMb * F(sqrt2, eta)
         )
-    # psi = angles[2] - shit
-    psi = angles[2] - shit - 3*np.pi/2*u.rad  # WT actual F
+    # psi = angles[2] - terms
+    psi = angles[2] - terms - 3*np.pi/2*u.rad  # WT actual F
 
     xyz_prime = np.array([r * np.cos(psi),
                           r * np.sin(psi),
