@@ -9,8 +9,15 @@ from astropy.constants import G
 import astropy.coordinates as coord
 import astropy.units as u
 from astropy.coordinates.matrix_utilities import rotation_matrix
+from astropy.utils.decorators import deprecated
 
-__all__ = ['isochrone_to_aa', 'harmonic_oscillator_to_aa']
+# Gala
+import gala.dynamics as gd
+from gala.util import GalaDeprecationWarning
+from gala.tests.optional_deps import HAS_TWOBODY
+
+__all__ = ['isochrone_xv_to_aa', 'isochrone_aa_to_xv',
+           'harmonic_oscillator_xv_to_aa']
 
 
 def F(x, y):
@@ -27,7 +34,7 @@ def F(x, y):
     return z
 
 
-def isochrone_to_aa(w, potential):
+def isochrone_xv_to_aa(w, potential):
     """
     Transform the input cartesian position and velocity to action-angle
     coordinates in the Isochrone potential. See Section 3.5.2 in
@@ -37,13 +44,6 @@ def isochrone_to_aa(w, potential):
     This transformation is analytic and can be used as a "toy potential"
     in the Sanders & Binney (2014) formalism for computing action-angle
     coordinates in any potential.
-
-    .. note::
-
-        This function is included as a method of the
-        :class:`~gala.potential.IsochronePotential` and it is recommended
-        to call :meth:`~gala.potential.IsochronePotential.phase_space()`
-        instead.
 
     Parameters
     ----------
@@ -55,12 +55,12 @@ def isochrone_to_aa(w, potential):
 
     Returns
     -------
-    actions : :class:`numpy.ndarray`
-        An array of actions computed from the input positions and velocities.
-    angles : :class:`numpy.ndarray`
-        An array of angles computed from the input positions and velocities.
-    freqs : :class:`numpy.ndarray`
-        An array of frequencies computed from the input positions and velocities.
+    actions : :class:`~astropy.units.Quantity`
+        Actions computed from the input positions and velocities.
+    angles : :class:`~astropy.units.Quantity`
+        Angles computed from the input positions and velocities.
+    freqs : :class:`~astropy.units.Quantity`
+        Frequencies computed from the input positions and velocities.
     """
     from gala.potential import Hamiltonian, PotentialBase, IsochronePotential
 
@@ -150,28 +150,53 @@ def isochrone_to_aa(w, potential):
 
     a_unit = (1 * usys['angular momentum'] / usys['mass']).decompose(usys).unit
     f_unit = (1 * usys['angular speed']).decompose(usys).unit
-    return actions*a_unit, angles*u.radian, freqs*f_unit
+    return actions * a_unit, angles * u.radian, freqs * f_unit
 
 
-def isochrone_to_xv(actions, angles, potential):
+@deprecated(since="v1.5",
+            name="isochrone_to_aa",
+            alternative="isochrone_xv_to_aa",
+            warning_type=GalaDeprecationWarning)
+def isochrone_to_aa(*args, **kwargs):
     """
-    TODO: needs a docstring, and tests!
+    Deprecated! Use `gala.dynamics.actionangle.isochrone_xv_to_aa` instead.
+    """
+    return isochrone_xv_to_aa(*args, **kwargs)
+
+
+def isochrone_aa_to_xv(actions, angles, potential):
+    """
+    Transform the input actions and angles to cartesian position and velocity
+    coordinates in the Isochrone potential. See Section 3.5.2 in
+    Binney & Tremaine (2008), and be aware of the errata entry for
+    Eq. 3.225.
 
     Parameters
     ----------
-    actions : quantity-like
-        Assumed to be in order: r, phi, theta
-    angles : quantity-like
-        Assumed to be in order: r, phi, theta
-    potential
+    actions : :class:`~astropy.units.Quantity`
+    angles : :class:`~astropy.units.Quantity`
+    potential : :class:`gala.potential.IsochronePotential`, dict
+        An instance of the potential to use for computing the transformation
+        to angle-action coordinates. Or, a dictionary of parameters used to
+        define an :class:`gala.potential.IsochronePotential` instance.
+
+    Returns
+    -------
+    w : :class:`gala.dynamics.PhaseSpacePosition`
+        The computed positions and velocities.
     """
-    # TODO: depends on twobody...why?
+    if not HAS_TWOBODY:
+        raise ImportError(
+            "Failed to import twobody: Converting from action-angle "
+            "coordinates to position and velocity in the isochrone potential "
+            "requires a Kepler solver, and thus `twobody` must be installed.")
+
     import twobody as tb
 
     Jr, Jphi, Jth = actions
     thr, thphi, thth = angles
 
-    GM = G * potential.parameters['m']
+    GM = (G * potential.parameters['m'])
     b = potential.parameters['b']
 
     Lz = Jphi
@@ -201,7 +226,6 @@ def isochrone_to_xv(actions, angles, potential):
     eta_dot = Omr / (1 - e_eff * np.cos(eta))
     s_dot = e * c / b * np.sin(eta) * eta_dot
     vr = b * (s - 1) * s_dot / np.sqrt((s-1)**2 - 1)
-
     v_tan = L / r
 
     sqrt1 = np.sqrt(1 + e) / np.sqrt(1-e)
@@ -216,13 +240,19 @@ def isochrone_to_xv(actions, angles, potential):
     # psi = angles[2] - terms
     psi = angles[2] - terms - 3*np.pi/2*u.rad  # WT actual F
 
-    xyz_prime = np.array([r * np.cos(psi),
-                          r * np.sin(psi),
-                          np.zeros_like(r)])
+    xyz_prime = np.array([
+        r.value * np.cos(psi),
+        r.value * np.sin(psi),
+        np.zeros_like(r.value)]
+    ) * r.unit
 
-    vxyz_prime = np.array([vr * np.cos(psi) - v_tan * np.sin(psi),
-                           vr * np.sin(psi) + v_tan * np.cos(psi),
-                           np.zeros_like(r)])
+    vx = vr * np.cos(psi) - v_tan * np.sin(psi)
+    vy = vr * np.sin(psi) + v_tan * np.cos(psi)
+    vxyz_prime = np.array([
+        vx.value,
+        vy.to_value(vx.unit),
+        np.zeros_like(r.value)
+    ]) * vx.unit
 
     M1 = rotation_matrix(-i, 'y')
     M2 = rotation_matrix(-lon_nodes, 'z')
@@ -230,10 +260,12 @@ def isochrone_to_xv(actions, angles, potential):
     xyz = np.einsum('ij,jn->ni', M3 @ M2 @ M1, xyz_prime)
     vxyz = np.einsum('ij,jn->ni', M3 @ M2 @ M1, vxyz_prime)
 
-    return xyz, vxyz
+    w = gd.PhaseSpacePosition(pos=xyz.T, vel=vxyz.T)
+
+    return w
 
 
-def harmonic_oscillator_to_aa(w, potential):
+def harmonic_oscillator_xv_to_aa(w, potential):
     """
     Transform the input cartesian position and velocity to action-angle
     coordinates for the Harmonic Oscillator potential.
@@ -242,18 +274,19 @@ def harmonic_oscillator_to_aa(w, potential):
     in the Sanders & Binney (2014) formalism for computing action-angle
     coordinates in any potential.
 
-    .. note::
-
-        This function is included as a method of the
-        :class:`~gala.potential.HarmonicOscillatorPotential`
-        and it is recommended to call
-        :meth:`~gala.potential.HarmonicOscillatorPotential.action_angle()`
-        instead.
-
     Parameters
     ----------
     w : :class:`gala.dynamics.PhaseSpacePosition`, :class:`gala.dynamics.Orbit`
     potential : Potential
+
+    Returns
+    -------
+    actions : :class:`~astropy.units.Quantity`
+        Actions computed from the input positions and velocities.
+    angles : :class:`~astropy.units.Quantity`
+        Angles computed from the input positions and velocities.
+    freqs : :class:`~astropy.units.Quantity`
+        Frequencies computed from the input positions and velocities.
     """
 
     usys = potential.units
@@ -274,7 +307,7 @@ def harmonic_oscillator_to_aa(w, potential):
     except AttributeError:  # not a Quantity
         omega = potential.parameters['omega'].reshape(_new_omega_shape)
 
-    action = (v**2 + (omega*x)**2)/(2.*omega)
+    action = (v**2 + (omega*x)**2) / (2.*omega)
 
     angle = np.arctan(-v / omega / x)
     angle[x == 0] = -np.sign(v[x == 0])*np.pi/2.
@@ -285,9 +318,21 @@ def harmonic_oscillator_to_aa(w, potential):
     if usys is not None and usys:
         a_unit = (1*usys['angular momentum']/usys['mass']).decompose(usys).unit
         f_unit = (1*usys['angular speed']).decompose(usys).unit
-        return action*a_unit, (angle % (2.*np.pi))*u.radian, freq*f_unit
+        return action * a_unit, (angle % (2.*np.pi)) * u.radian, freq * f_unit
     else:
-        return action*u.one, (angle % (2.*np.pi))*u.one, freq*u.one
+        return action * u.one, (angle % (2.*np.pi)) * u.one, freq * u.one
+
+
+@deprecated(since="v1.5",
+            name="harmonic_oscillator_to_aa",
+            alternative="harmonic_oscillator_xv_to_aa",
+            warning_type=GalaDeprecationWarning)
+def harmonic_oscillator_to_aa(*args, **kwargs):
+    """
+    Deprecated! Use `gala.dynamics.actionangle.harmonic_oscillator_xv_to_aa`
+    instead.
+    """
+    return harmonic_oscillator_xv_to_aa(*args, **kwargs)
 
 
 def harmonic_oscillator_to_xv(actions, angles, potential):

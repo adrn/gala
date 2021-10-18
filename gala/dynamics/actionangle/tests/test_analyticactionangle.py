@@ -4,8 +4,9 @@ import astropy.units as u
 
 # Project
 from gala.dynamics.actionangle import (
-    isochrone_to_aa,
-    harmonic_oscillator_to_aa,
+    isochrone_xv_to_aa,
+    isochrone_aa_to_xv,
+    harmonic_oscillator_xv_to_aa,
 )
 from gala.logging import logger
 from gala.potential import (
@@ -36,20 +37,17 @@ class TestIsochrone(object):
         for n in range(self.N):
             logger.debug("Orbit {}".format(n))
 
-            actions, angles, freqs = isochrone_to_aa(
+            actions, angles, freqs = isochrone_xv_to_aa(
                 self.w[:, n], self.potential
             )
-            actions = actions.value
-            angles = angles.value
 
             for i in range(3):
-                assert np.allclose(actions[i, 1:], actions[i, 0], rtol=1e-5)
+                assert u.allclose(actions[i, 1:], actions[i, 0], rtol=1e-5)
 
             # Compare to genfunc
-            x = self.w.xyz.value[..., n]
-            v = self.w.v_xyz.value[..., n]
-            s_v = (v * u.kpc / u.Myr).to(u.km / u.s).value
-            s_w = np.vstack((x, s_v))
+            x = self.w.xyz[..., n]
+            v = self.w.v_xyz[..., n]
+            s_w = np.vstack((x.to_value(u.kpc), v.to_value(u.km / u.s)))
             m = self.potential.parameters["m"].value / 1e11
             b = self.potential.parameters["b"].value
             aa = np.array(
@@ -58,19 +56,16 @@ class TestIsochrone(object):
                     for i in range(s_w.shape[1])
                 ]
             )
-            s_actions = (
-                (aa[:, :3] * u.km / u.s * u.kpc).decompose(galactic).value
-            )
-            s_angles = aa[:, 3:]
+            s_actions = aa[:, :3] * u.km / u.s * u.kpc
+            s_angles = aa[:, 3:] * u.rad
 
-            assert np.allclose(actions, s_actions.T, rtol=1e-8)
+            assert u.allclose(actions, s_actions.T, rtol=1e-8)
             assert_angles_allclose(angles, s_angles.T, rtol=1e-8)
 
-            # TODO: when I fix actionangle -> xv function, re-add this
-            # x2, v2 = isochrone_aa_to_xv(actions, angles, self.potential)
+            w_rt = isochrone_aa_to_xv(actions, angles, self.potential)
 
-            # assert np.allclose(x, x2, rtol=1E-8)
-            # assert np.allclose(v, v2, rtol=1E-8)
+            assert u.allclose(x, w_rt.xyz, atol=1E-10 * u.kpc)
+            assert u.allclose(v, w_rt.v_xyz, atol=1E-10 * u.km/u.s)
 
 
 class TestHarmonicOscillator(object):
@@ -97,7 +92,7 @@ class TestHarmonicOscillator(object):
         for n in range(self.N):
             logger.debug("Orbit {}".format(n))
 
-            actions, angles, freq = harmonic_oscillator_to_aa(
+            actions, angles, freq = harmonic_oscillator_xv_to_aa(
                 self.w[:, n], self.potential
             )
             actions = actions.value

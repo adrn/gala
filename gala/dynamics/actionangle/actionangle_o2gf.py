@@ -555,10 +555,6 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
                 nvecs=nvecs)
 
 
-@deprecated(since="v1.5",
-            name="find_actions",
-            alternative="find_actions_o2gf",
-            warning_type=GalaDeprecationWarning)
 def find_actions_o2gf(orbit, N_max, force_harmonic_oscillator=False,
                       toy_potential=None):
     r"""
@@ -626,7 +622,15 @@ def find_actions_o2gf(orbit, N_max, force_harmonic_oscillator=False,
     return result
 
 
-find_actions = find_actions_o2gf
+@deprecated(since="v1.5",
+            name="find_actions",
+            alternative="find_actions_o2gf",
+            warning_type=GalaDeprecationWarning)
+def find_actions(*args, **kwargs):
+    """
+    Deprecated! Use `gala.dynamics.actionangle.find_actions_o2gf` instead.
+    """
+    return find_actions_o2gf(*args, **kwargs)
 
 
 # def solve_hessian(relative_actions, relative_freqs):
