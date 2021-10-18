@@ -17,6 +17,10 @@ New Features
 
 - Modified ``Orbit._max_helper()`` to use a parabola instead of interpolation
 
+- Added functionality to transform from action-angle coordinates to Cartesian
+  position velocity coordinates in the Isochrone potential:
+  ``gala.dynamics.actionangle.isochrone_aa_to_xv()``.
+
 Bug fixes
 ---------
 
