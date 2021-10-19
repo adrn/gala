@@ -207,9 +207,8 @@ def isochrone_aa_to_xv(actions, angles, potential):
     E = -0.5 * (GM / (Jr + 0.5 * (L + sqrt_L2_4GMb)))**2
 
     # Coordinates orientation crap
-    i = np.mean(np.arccos(Lz / L))
+    i = np.arccos(Lz / L)
     lon_nodes = coord.Angle(thphi - np.sign(Lz) * thth).wrap_at(2*np.pi*u.rad)
-    lon_nodes = np.mean(lon_nodes)
     # TODO: could check that std(i), std(lon_nodes) are small...
 
     # Auxiliary variables (Eq. 3.240)
@@ -240,27 +239,29 @@ def isochrone_aa_to_xv(actions, angles, potential):
     # psi = angles[2] - terms
     psi = angles[2] - terms - 3*np.pi/2*u.rad  # WT actual F
 
-    xyz_prime = np.array([
+    xyz_prime = (np.array([
         r.value * np.cos(psi),
         r.value * np.sin(psi),
         np.zeros_like(r.value)]
-    ) * r.unit
+    ) * r.unit).to(potential.units['length'])
 
     vx = vr * np.cos(psi) - v_tan * np.sin(psi)
     vy = vr * np.sin(psi) + v_tan * np.cos(psi)
-    vxyz_prime = np.array([
+    vxyz_prime = (np.array([
         vx.value,
         vy.to_value(vx.unit),
         np.zeros_like(r.value)
-    ]) * vx.unit
+    ]) * vx.unit).to(potential.units['velocity'])
 
     M1 = rotation_matrix(-i, 'y')
     M2 = rotation_matrix(-lon_nodes, 'z')
     M3 = rotation_matrix(np.pi/2 * u.rad, 'z')  # WT actual F
-    xyz = np.einsum('ij,jn->ni', M3 @ M2 @ M1, xyz_prime)
-    vxyz = np.einsum('ij,jn->ni', M3 @ M2 @ M1, vxyz_prime)
+    M = np.einsum('ij,...jk,...kl->...il', M3, M2, M1)
 
-    w = gd.PhaseSpacePosition(pos=xyz.T, vel=vxyz.T)
+    xyz = np.einsum('...ij,j...->i...', M, xyz_prime)
+    vxyz = np.einsum('...ij,j...->i...', M, vxyz_prime)
+
+    w = gd.PhaseSpacePosition(pos=xyz, vel=vxyz)
 
     return w
 

@@ -34,6 +34,7 @@ class TestIsochrone(object):
         self.w = self.w[::10]
 
     def test(self):
+        # TODO: doesn't need to be a loop?
         for n in range(self.N):
             logger.debug("Orbit {}".format(n))
 
