@@ -17,6 +17,7 @@ from gala.potential import (
 from gala.units import galactic
 from gala.util import assert_angles_allclose
 from gala.dynamics.actionangle._genfunc import toy_potentials
+from gala.tests.optional_deps import HAS_TWOBODY
 
 
 class TestIsochrone(object):
@@ -82,10 +83,12 @@ class TestIsochrone(object):
             assert u.allclose(actions, s_actions.T, rtol=1e-8)
             assert_angles_allclose(angles, s_angles.T, rtol=1e-8)
 
-            w_rt = isochrone_aa_to_xv(actions, angles, self.potential)
+            # Test round-tripping
+            if HAS_TWOBODY:
+                w_rt = isochrone_aa_to_xv(actions, angles, self.potential)
 
-            assert u.allclose(x, w_rt.xyz, atol=1E-10 * u.kpc)
-            assert u.allclose(v, w_rt.v_xyz, atol=1E-10 * u.km/u.s)
+                assert u.allclose(x, w_rt.xyz, atol=1E-10 * u.kpc)
+                assert u.allclose(v, w_rt.v_xyz, atol=1E-10 * u.km/u.s)
 
     def test_many(self):
         actions, angles, freqs = isochrone_xv_to_aa(
@@ -115,11 +118,13 @@ class TestIsochrone(object):
         assert u.allclose(actions[:, 0], s_actions.T, rtol=1e-8)
         assert_angles_allclose(angles[:, 0], s_angles.T, rtol=1e-8)
 
-        # Check round-tripping for full orbits:
-        w_rt = isochrone_aa_to_xv(actions, angles, self.potential)
+        # Test round-tripping
+        if HAS_TWOBODY:
+            # Check round-tripping for full orbits:
+            w_rt = isochrone_aa_to_xv(actions, angles, self.potential)
 
-        assert u.allclose(x, w_rt.xyz, atol=1E-10 * u.kpc)
-        assert u.allclose(v, w_rt.v_xyz, atol=1E-10 * u.km/u.s)
+            assert u.allclose(x, w_rt.xyz, atol=1E-10 * u.kpc)
+            assert u.allclose(v, w_rt.v_xyz, atol=1E-10 * u.km/u.s)
 
 
 class TestHarmonicOscillator(object):
