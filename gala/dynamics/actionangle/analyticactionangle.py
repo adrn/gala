@@ -71,29 +71,39 @@ def isochrone_xv_to_aa(w, potential):
     GM = (G*potential.parameters['m']).decompose(usys).value
     b = potential.parameters['b'].decompose(usys).value
     E = w.energy(Hamiltonian(potential)).decompose(usys).value
-    E = np.squeeze(E)
+    E = np.atleast_1d(E)
 
     if np.any(E > 0.):
         raise ValueError("Unbound particle. (E = {})".format(E))
 
     # convert position, velocity to spherical polar coordinates
     w_sph = w.represent_as(coord.PhysicsSphericalRepresentation)
-    r, phi, theta = map(np.squeeze, [w_sph.r.decompose(usys).value,
-                                     w_sph.phi.radian,
-                                     w_sph.theta.radian])
+    r, phi, theta = map(
+        np.atleast_1d,
+        [
+            w_sph.r.decompose(usys).value,
+            w_sph.phi.radian,
+            w_sph.theta.radian
+        ]
+    )
 
     ang_unit = u.radian/usys['time']
-    vr, phi_dot, theta_dot = map(np.squeeze,
-                                 [w_sph.radial_velocity.decompose(usys).value,
-                                  w_sph.pm_phi.to(ang_unit).value,
-                                  w_sph.pm_theta.to(ang_unit).value])
-    vtheta = r*theta_dot
+    vr, phi_dot, theta_dot = map(
+        np.atleast_1d,
+        [
+            w_sph.radial_velocity.decompose(usys).value,
+            w_sph.pm_phi.to(ang_unit).value,
+            w_sph.pm_theta.to(ang_unit).value
+        ]
+    )
+    vtheta = r * theta_dot
 
     # ----------------------------
     # Compute the actions
     # ----------------------------
 
-    L_vec = np.squeeze(w.angular_momentum().decompose(usys).value)
+    L_vec = [np.atleast_1d(x)
+             for x in w.angular_momentum().decompose(usys).value]
     Lz = L_vec[2]
     L = np.linalg.norm(L_vec, axis=0)
 
@@ -101,7 +111,7 @@ def isochrone_xv_to_aa(w, potential):
     Jr = GM / np.sqrt(-2*E) - 0.5*(L + np.sqrt(L*L + 4*GM*b))
 
     # compute the three action variables
-    actions = np.array([Jr, Lz, L - np.abs(Lz)])  # Jr, Jphi, Jtheta
+    actions = np.array([Jr, Lz, L - np.abs(Lz)]).reshape((3,) + w.shape)
 
     # ----------------------------
     # Angles
@@ -136,7 +146,7 @@ def isochrone_xv_to_aa(w, potential):
     uu[vtheta > 0.] = np.pi - uu[vtheta > 0.]
 
     thetap = phi - uu + np.sign(Lz)*thetat
-    angles = np.array([thetar, thetap, thetat])
+    angles = np.array([thetar, thetap, thetat]).reshape((3,) + w.shape)
     angles = angles % (2*np.pi)
 
     # ----------------------------
@@ -193,8 +203,8 @@ def isochrone_aa_to_xv(actions, angles, potential):
 
     import twobody as tb
 
-    Jr, Jphi, Jth = actions
-    thr, thphi, thth = angles
+    Jr, Jphi, Jth = [np.atleast_1d(x) for x in actions]
+    thr, thphi, thth = [np.atleast_1d(x) for x in angles]
 
     GM = (G * potential.parameters['m'])
     b = potential.parameters['b']
@@ -237,7 +247,7 @@ def isochrone_aa_to_xv(actions, angles, potential):
             - L / sqrt_L2_4GMb * F(sqrt2, eta)
         )
     # psi = angles[2] - terms
-    psi = angles[2] - terms - 3*np.pi/2*u.rad  # WT actual F
+    psi = thth - terms - 3*np.pi/2*u.rad  # WT actual F
 
     xyz_prime = (np.array([
         r.value * np.cos(psi),
@@ -263,7 +273,7 @@ def isochrone_aa_to_xv(actions, angles, potential):
 
     w = gd.PhaseSpacePosition(pos=xyz, vel=vxyz)
 
-    return w
+    return w.reshape(actions.shape[1:])
 
 
 def harmonic_oscillator_xv_to_aa(w, potential):
