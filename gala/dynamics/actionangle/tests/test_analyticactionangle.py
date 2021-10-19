@@ -113,7 +113,7 @@ class TestIsochrone(object):
         s_angles = aa[:, 3:] * u.rad
 
         assert u.allclose(actions[:, 0], s_actions.T, rtol=1e-8)
-        assert_angles_allclose(angles[:, 100], s_angles.T, rtol=1e-8)
+        assert_angles_allclose(angles[:, 0], s_angles.T, rtol=1e-8)
 
         # Check round-tripping for full orbits:
         w_rt = isochrone_aa_to_xv(actions, angles, self.potential)
