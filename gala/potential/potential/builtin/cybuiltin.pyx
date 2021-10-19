@@ -258,23 +258,8 @@ class IsochronePotential(CPotentialBase):
             The positions or orbit to compute the actions, angles, and
             frequencies at.
         """
-        from gala.dynamics.actionangle import isochrone_to_aa
-        return isochrone_to_aa(w, self)
-
-    # def phase_space(self, actions, angles):
-    #     """
-    #     Transform the input actions and angles to ordinary phase space
-    #     (position and velocity) in cartesian coordinates. See Section 3.5.2 in
-    #     Binney & Tremaine (2008), and be aware of the errata entry for
-    #     Eq. 3.225.
-
-    #     Parameters
-    #     ----------
-    #     actions : array_like
-    #     angles : array_like
-    #     """
-    #     from gala.dynamics.actionangle import isochrone_aa_to_xv
-    #     return isochrone_aa_to_xv(actions, angles, self)
+        from gala.dynamics.actionangle import isochrone_xv_to_aa
+        return isochrone_xv_to_aa(w, self)
 
 
 cdef class HernquistWrapper(CPotentialWrapper):

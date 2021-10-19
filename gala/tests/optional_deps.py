@@ -8,7 +8,7 @@ from collections.abc import Sequence
 # TODO: This list is a duplicate of the dependencies in setup.cfg "all", but
 # some of the package names are different from the pip-install name (e.g.,
 # beautifulsoup4 -> bs4).
-_optional_deps = ['h5py', 'sympy', 'tqdm']
+_optional_deps = ['h5py', 'sympy', 'tqdm', 'twobody']
 _deps = {k.upper(): k for k in _optional_deps}
 
 # Any subpackages that have different import behavior:
