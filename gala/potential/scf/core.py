@@ -213,6 +213,6 @@ def compute_coeffs_discrete(xyz, mass, nmax, lmax, r_s,
                 if compute_var:
                     Snlm_var[n,l,m], Tnlm_var[n,l,m], STnlm_var[n,l,m] = STnlm_var_discrete(s, phi, X, mass, n, l, m)
     if compute_var:
-        return (Snlm,Snlm_var), (Tnlm,Tnlm_var), (STnlm_var)
+        return Snlm, Tnlm, np.array([[Snlm_var, STnlm_var], [STnlm_var, Tnlm_var]])
     else:
         return Snlm, Tnlm
