@@ -80,7 +80,7 @@ cpdef STnlm_var_discrete(double[::1] s, double[::1] phi, double[::1] X,
                          double[::1] m_k,
                          int n, int l, int m):
     cdef:
-        double[::1] ST_var = np.zeros(2)
+        double[::1] ST_var = np.zeros(3)
         int K = s.size
 
     if USE_GSL == 1:
