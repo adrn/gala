@@ -96,9 +96,9 @@ def test_coeff_variances():
     nmax = 10
     lmax = 5
 
-    Snlm_var, Tnlm_var, STnlm_var = compute_coeffs_discrete(
+    *_, STnlm_Cov = compute_coeffs_discrete(
         xyz, m_k, nmax=nmax, lmax=lmax, r_s=r_s, compute_var=True
     )
-    assert np.allclose(Snlm_var_true, Snlm_var[1].flatten(), rtol=1e-3)
-    assert np.allclose(Tnlm_var_true, Tnlm_var[1].flatten(), rtol=1e-3)
-    assert np.allclose(STnlm_var_true, STnlm_var.flatten(), rtol=1e-3)
+    assert np.allclose(Snlm_var_true, STnlm_Cov[0, 0].flatten(), rtol=1e-3)
+    assert np.allclose(Tnlm_var_true, STnlm_Cov[1, 1].flatten(), rtol=1e-3)
+    assert np.allclose(STnlm_var_true, STnlm_Cov[0, 1].flatten(), rtol=1e-3)
