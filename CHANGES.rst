@@ -21,6 +21,9 @@ New Features
   position velocity coordinates in the Isochrone potential:
   ``gala.dynamics.actionangle.isochrone_aa_to_xv()``.
 
+- Added a new method on ``DirectNBody`` to enable computing the instantaneous,
+  mutual, N-body acceleration vectors ``DirectNBody.acceleration()``.
+
 Bug fixes
 ---------
 
