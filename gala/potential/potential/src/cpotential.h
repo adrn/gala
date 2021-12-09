@@ -43,3 +43,7 @@ extern void c_hessian(CPotential *p, double t, double *q, double *hess);
 extern double c_d_dr(CPotential *p, double t, double *q, double *epsilon);
 extern double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon);
 extern double c_mass_enclosed(CPotential *p, double t, double *q, double G, double *epsilon);
+
+// TODO: move this elsewhere?
+void c_nbody_acceleration(CPotential **pots, double t, double *qp,
+                          int norbits, int nbody, int ndim, double *acc);

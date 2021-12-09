@@ -115,6 +115,27 @@ class TestDirectNBody:
         assert u.allclose(np.abs(dx1), 0*u.pc, atol=1e-13*u.pc)
         assert np.abs(dx0).max() > 50*u.pc
 
+    def test_directnbody_acceleration(self):
+        pot1 = HernquistPotential(m=1e6*u.Msun, c=0.1*u.pc, units=self.usys)
+        pot2 = HernquistPotential(m=1.6e6*u.Msun, c=0.33*u.pc, units=self.usys)
+
+        nbody = DirectNBody(self.w0,
+                            particle_potentials=[pot1, pot2],
+                            external_potential=self.ext_pot)
+
+        # Compute the acceleration we expect:
+        _pot1 = HernquistPotential(m=1e6*u.Msun, c=0.1*u.pc, units=self.usys,
+                                   origin=self.w0[0].xyz)
+        _pot2 = HernquistPotential(m=1.6e6*u.Msun, c=0.33*u.pc, units=self.usys,
+                                   origin=self.w0[1].xyz)
+        exp_acc = np.zeros((3, 2)) * self.usys['acceleration']
+        exp_acc[:, 0] = _pot2.acceleration(self.w0[0])[:, 0]
+        exp_acc[:, 1] = _pot1.acceleration(self.w0[1])[:, 0]
+        exp_acc += self.ext_pot.acceleration(self.w0)
+
+        acc = nbody.acceleration()
+        assert u.allclose(acc, exp_acc)
+
     def test_directnbody_integrate_dontsaveall(self):
         # If we set save_all = False, only return the final positions:
         nbody1 = DirectNBody(self.w0,
