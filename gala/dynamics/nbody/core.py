@@ -157,14 +157,8 @@ class DirectNBody:
         Compute the acceleration at the location of each N body, including the
         external potential.
         """
-        nbody_acc = self._nbody_acceleration(
-            self._c_w0,
-            t,
-            self.particle_potentials
-        ) * self.units['acceleration']
-
+        nbody_acc = self._nbody_acceleration(t=t) * self.units['acceleration']
         ext_acc = self.external_potential.acceleration(self.w0, t=t)
-
         return nbody_acc + ext_acc
 
     def integrate_orbit(self, **time_spec):
