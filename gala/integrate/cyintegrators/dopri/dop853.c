@@ -997,40 +997,16 @@ void Fwrapper_direct_nbody (unsigned full_ndim, double t, double *w, double *f,
     /* Here, the extra args are actually the array of CPotential objects that
        represent the potentials of the individual particles.
     */
-    CPotential *body_pot;
+    CPotential **pots = (CPotential **)args;
 
     // Note: only really works with a static frame! This should be enforced
-    int i, j, k;
-    unsigned ndim = full_ndim / norbits; // phase-space dimensionality
-    double f2[ndim/2];
+    unsigned ps_ndim = 2 * p->n_dim;  // phase-space dimensionality
 
-    for (i=0; i < norbits; i++) {
-        // call gradient function
-        hamiltonian_gradient(p, fr, t, &w[i*ndim], &f[i*ndim]);
-    }
+    for (int i=0; i < norbits; i++)
+        hamiltonian_gradient(p, fr, t, &w[i * ps_ndim], &f[i * ps_ndim]);
 
-    for (j=0; j < nbody; j++) { // the particles generating force
-        body_pot = ((CPotential **)args)[j];
-
-        if ((body_pot->null) == 1)
-            continue;
-
-        for (i=0; i < body_pot->n_components; i++) {
-            (body_pot->q0)[i] = &w[j*ndim];
-        }
-
-        for (i=0; i < norbits; i++) {
-            if (i != j) {
-                c_gradient(body_pot, t, &w[i*ndim], &f2[0]);
-
-                for (k=0; k<p->n_dim; k++)
-                    // minus sign below because hamiltonian gradient computes
-                    // the acceleration!
-                    f[i*ndim + p->n_dim + k] = f[i*ndim + p->n_dim + k] - f2[k];
-            }
-        }
-    }
-
+    if (norbits > 0)
+        c_nbody_acceleration(pots, t, w, norbits, p->n_dim, f);
 }
 
 /* Needed for Lyapunov */

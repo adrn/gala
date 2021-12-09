@@ -30,6 +30,10 @@ cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrame:
         pass
 
+cdef extern from "potential/src/cpotential.h":
+    void c_nbody_acceleration(CPotential **pots, double t, double *qp,
+                              int nbodies, int ndim, double *acc)
+
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
                               CPotential *p, CFrame *fr, unsigned norbits,
@@ -103,3 +107,37 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
         all_w = np.array(all_w).reshape(nparticles, ndim)
 
     return all_w
+
+
+cpdef nbody_acceleration(double [:, ::1] w0, double t,
+                         list particle_potentials):
+    """
+    Computes the N-body acceleration on a set of bodies at phase-space
+    positions w0.
+    """
+    cdef:
+        unsigned nparticles = w0.shape[0]
+        unsigned ps_ndim = w0.shape[1]
+        unsigned ndim = ps_ndim // 2
+
+        int i
+        CPotential *c_particle_potentials[MAX_NBODY]
+
+        double[:, ::1] acc = np.zeros((nparticles, ps_ndim))
+
+    # Some input validation:
+    if len(particle_potentials) != nparticles:
+        raise ValueError(
+            "The number of particle initial conditions must match the number "
+            f"of particle potentials passed in ({nparticles} vs. "
+            f"{len(particle_potentials)}).")
+
+    # Extract the CPotential objects from the particle potentials.
+    for i in range(nparticles):
+        c_particle_potentials[i] = &(<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
+
+    c_nbody_acceleration(&c_particle_potentials[0], t, &w0[0, 0],
+                         nparticles, ndim, &acc[0, 0])
+
+    # NOTES: Just the acceleration, does not handle frames
+    return np.asarray(acc)[:, ndim:]

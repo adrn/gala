@@ -101,7 +101,6 @@ void c_gradient(CPotential *p, double t, double *qp, double *grad) {
                            &qp_trans[0]);
         (p->gradient)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim,
                          &tmp_grad[0]);
-
         apply_rotate(&tmp_grad[0], (p->R)[i], p->n_dim, 1, &grad[0]);
     }
 }
@@ -198,4 +197,32 @@ double c_mass_enclosed(CPotential *p, double t, double *qp, double G,
     }
     dPhi_dr = c_d_dr(p, t, qp, epsilon);
     return fabs(r2 * dPhi_dr / G);
+}
+
+
+// TODO: This isn't really the right place for this...
+void c_nbody_acceleration(CPotential **pots, double t, double *qp,
+                          int nbodies, int ndim, double *acc) {
+    int i, j, k;
+    CPotential *body_pot;
+    int ps_ndim = 2 * ndim; // 6, for 3D position/velocity
+    double f2[ndim];
+
+    for (j=0; j < nbodies; j++) { // the particles generating force
+        body_pot = pots[j];
+
+        if ((body_pot->null) == 1)
+            continue;
+
+        for (i=0; i < body_pot->n_components; i++)
+            (body_pot->q0)[i] = &qp[j * ps_ndim];
+
+        for (i=0; i < nbodies; i++) {
+            if (i != j) {
+                c_gradient(body_pot, t, &qp[i * ps_ndim], &f2[0]);
+                for (k=0; k < ndim; k++)
+                   acc[i*ps_ndim + ndim + k] += -f2[k];
+            }
+        }
+    }
 }

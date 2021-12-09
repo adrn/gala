@@ -14,7 +14,7 @@ from ...util import atleast_2d
 from ...integrate.timespec import parse_time_specification
 from .. import Orbit, PhaseSpacePosition
 
-from .nbody import direct_nbody_dop853
+from .nbody import direct_nbody_dop853, nbody_acceleration
 
 __all__ = ['DirectNBody']
 
@@ -144,6 +144,28 @@ class DirectNBody:
                                            self.w0.shape[0])
         else:
             return "<{} bodies=1>".format(self.__class__.__name__)
+
+    def _nbody_acceleration(self, t=0.):
+        """
+        Compute the N-body acceleration at the location of each body
+        """
+        nbody_acc = nbody_acceleration(self._c_w0, t, self.particle_potentials)
+        return nbody_acc.T
+
+    def acceleration(self, t=0.):
+        """
+        Compute the acceleration at the location of each N body, including the
+        external potential.
+        """
+        nbody_acc = self._nbody_acceleration(
+            self._c_w0,
+            t,
+            self.particle_potentials
+        ) * self.units['acceleration']
+
+        ext_acc = self.external_potential.acceleration(self.w0, t=t)
+
+        return nbody_acc + ext_acc
 
     def integrate_orbit(self, **time_spec):
         """
