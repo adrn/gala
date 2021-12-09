@@ -46,4 +46,4 @@ extern double c_mass_enclosed(CPotential *p, double t, double *q, double G, doub
 
 // TODO: move this elsewhere?
 void c_nbody_acceleration(CPotential **pots, double t, double *qp,
-                          int nbodies, int ndim, double *acc);
+                          int norbits, int nbody, int ndim, double *acc);

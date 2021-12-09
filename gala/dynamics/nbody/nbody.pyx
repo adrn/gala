@@ -32,7 +32,7 @@ cdef extern from "frame/src/cframe.h":
 
 cdef extern from "potential/src/cpotential.h":
     void c_nbody_acceleration(CPotential **pots, double t, double *qp,
-                              int nbodies, int ndim, double *acc)
+                              int norbits, int nbody, int ndim, double *acc)
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
@@ -137,7 +137,7 @@ cpdef nbody_acceleration(double [:, ::1] w0, double t,
         c_particle_potentials[i] = &(<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
 
     c_nbody_acceleration(&c_particle_potentials[0], t, &w0[0, 0],
-                         nparticles, ndim, &acc[0, 0])
+                         nparticles, nparticles, ndim, &acc[0, 0])
 
     # NOTES: Just the acceleration, does not handle frames
     return np.asarray(acc)[:, ndim:]

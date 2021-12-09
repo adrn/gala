@@ -202,13 +202,13 @@ double c_mass_enclosed(CPotential *p, double t, double *qp, double G,
 
 // TODO: This isn't really the right place for this...
 void c_nbody_acceleration(CPotential **pots, double t, double *qp,
-                          int nbodies, int ndim, double *acc) {
+                          int norbits, int nbody, int ndim, double *acc) {
     int i, j, k;
     CPotential *body_pot;
     int ps_ndim = 2 * ndim; // 6, for 3D position/velocity
     double f2[ndim];
 
-    for (j=0; j < nbodies; j++) { // the particles generating force
+    for (j=0; j < nbody; j++) { // the particles generating force
         body_pot = pots[j];
 
         if ((body_pot->null) == 1)
@@ -217,7 +217,7 @@ void c_nbody_acceleration(CPotential **pots, double t, double *qp,
         for (i=0; i < body_pot->n_components; i++)
             (body_pot->q0)[i] = &qp[j * ps_ndim];
 
-        for (i=0; i < nbodies; i++) {
+        for (i=0; i < norbits; i++) {
             if (i != j) {
                 c_gradient(body_pot, t, &qp[i * ps_ndim], &f2[0]);
                 for (k=0; k < ndim; k++)

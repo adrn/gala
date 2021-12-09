@@ -1005,8 +1005,8 @@ void Fwrapper_direct_nbody (unsigned full_ndim, double t, double *w, double *f,
     for (int i=0; i < norbits; i++)
         hamiltonian_gradient(p, fr, t, &w[i * ps_ndim], &f[i * ps_ndim]);
 
-    if (norbits > 0)
-        c_nbody_acceleration(pots, t, w, norbits, p->n_dim, f);
+    if (nbody > 0)
+        c_nbody_acceleration(pots, t, w, norbits, nbody, p->n_dim, f);
 }
 
 /* Needed for Lyapunov */
