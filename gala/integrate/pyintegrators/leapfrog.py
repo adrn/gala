@@ -137,17 +137,11 @@ class LeapfrogIntegrator(Integrator):
         # generate the array of times
         times = parse_time_specification(self._func_units, **time_spec)
         n_steps = len(times) - 1
-        _dt = times[1] - times[0]
+        dt = times[1] - times[0]
 
         w0_obj, w0, ws = self._prepare_ws(w0, mmap, n_steps)
         x0 = w0[:self.ndim]
         v0 = w0[self.ndim:]
-
-        if _dt < 0.:
-            v0 *= -1.
-            dt = np.abs(_dt)
-        else:
-            dt = _dt
 
         # prime the integrator so velocity is offset from coordinate by a
         #   half timestep
@@ -161,8 +155,5 @@ class LeapfrogIntegrator(Integrator):
             ws[:self.ndim, ii, :] = x_i
             ws[self.ndim:, ii, :] = v_i
             x_im1, v_im1_2 = x_i, v_ip1_2
-
-        if _dt < 0:
-            ws[self.ndim:, ...] *= -1.
 
         return self._handle_output(w0_obj, times, ws)
