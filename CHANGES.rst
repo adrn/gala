@@ -35,6 +35,10 @@ Bug fixes
 - Fixed a bug with ``DirectNBody`` with composite potentials where only the
   first potential component would move as a body / particle.
 
+- Fixed a bug with the Python implementation of Leapfrog integration
+  ``LeapfrogIntegrator`` that led to incorrect orbits for non-conservative
+  systems that were integrated backwards (i.e. with ``dt<<0``).
+
 API changes
 -----------
 
