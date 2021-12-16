@@ -141,7 +141,6 @@ class LeapfrogIntegrator(Integrator):
 
         w0_obj, w0, ws = self._prepare_ws(w0, mmap, n_steps)
         x0 = w0[:self.ndim]
-        v0 = w0[self.ndim:]
 
         # prime the integrator so velocity is offset from coordinate by a
         #   half timestep
