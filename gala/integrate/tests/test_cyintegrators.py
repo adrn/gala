@@ -25,11 +25,17 @@ func_list = [
     dop853_integrate_hamiltonian,
     ruth4_integrate_hamiltonian,
 ]
-_list = zip(integrator_list, func_list)
+
+_list = []
+for dt in [2, -2]:
+    _list.extend([(x, y, dt) for x, y in zip(integrator_list, func_list)])
 
 
-@pytest.mark.parametrize(("Integrator", "integrate_func"), _list)
-def test_compare_to_py(Integrator, integrate_func):
+@pytest.mark.parametrize(
+    ["Integrator", "integrate_func", "dt"],
+    _list
+)
+def test_compare_to_py(Integrator, integrate_func, dt):
     p = HernquistPotential(m=1e11, c=0.5, units=galactic)
     H = Hamiltonian(potential=p)
 
@@ -47,7 +53,6 @@ def test_compare_to_py(Integrator, integrate_func):
     py_w0 = np.ascontiguousarray(cy_w0.T)
 
     n_steps = 1024
-    dt = 2.0
     t = np.linspace(0, dt * n_steps, n_steps + 1)
 
     cy_t, cy_w = integrate_func(H, cy_w0, t)
@@ -67,7 +72,10 @@ def test_compare_to_py(Integrator, integrate_func):
 # TODO: move this to only run if a flag like --remote-data is passed, like
 # --speed-scaling or something?
 @pytest.mark.skipif(True, reason="Slow test - mainly for plotting locally")
-@pytest.mark.parametrize(("Integrator", "integrate_func"), _list)
+@pytest.mark.parametrize(
+    ["Integrator", "integrate_func"],
+    zip(integrator_list, func_list)
+)
 def test_scaling(tmpdir, Integrator, integrate_func):
     p = HernquistPotential(m=1e11, c=0.5, units=galactic)
 
