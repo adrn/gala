@@ -933,12 +933,14 @@ double flattenednfw_value(double t, double *pars, double *q, int n_dim) {
             - G (Gravitational constant)
             - m (scale mass)
             - r_s (scale radius)
-            - qz (flattening)
+            - a (ignore)
+            - b (ignore)
+            - c (z flattening)
     */
     double u, v_h2;
     // v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
     v_h2 = -pars[0] * pars[1] / pars[2];
-    u = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]/(pars[3]*pars[3])) / pars[2];
+    u = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]/(pars[5]*pars[5])) / pars[2];
     return v_h2 * log(1 + u) / u;
 }
 
@@ -947,18 +949,20 @@ void flattenednfw_gradient(double t, double *pars, double *q, int n_dim, double 
             - G (Gravitational constant)
             - m (scale mass)
             - r_s (scale radius)
-            - qz (flattening)
+            - a (ignore)
+            - b (ignore)
+            - c (z flattening)
     */
     double fac, u, v_h2;
     // v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
     v_h2 = pars[0] * pars[1] / pars[2];
-    u = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]/(pars[3]*pars[3])) / pars[2];
+    u = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]/(pars[5]*pars[5])) / pars[2];
 
     fac = v_h2 / (u*u*u) / (pars[2]*pars[2]) * (log(1+u) - u/(1+u));
 
     grad[0] = grad[0] + fac*q[0];
     grad[1] = grad[1] + fac*q[1];
-    grad[2] = grad[2] + fac*q[2]/(pars[3]*pars[3]);
+    grad[2] = grad[2] + fac*q[2]/(pars[5]*pars[5]);
 }
 
 void flattenednfw_hessian(double t, double *pars, double *q, int n_dim, double *hess) {
@@ -966,12 +970,14 @@ void flattenednfw_hessian(double t, double *pars, double *q, int n_dim, double *
             - G (Gravitational constant)
             - m (mass scale)
             - r_s (scale radius)
-            - c (flattening)
+            - a (ignore)
+            - b (ignore)
+            - c (z flattening)
     */
     double G = pars[0];
     double m = pars[1];
     double r_s = pars[2];
-    double c = pars[3];
+    double c = pars[5];
     double x = q[0];
     double y = q[1];
     double z = q[2];
