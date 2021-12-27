@@ -2,6 +2,7 @@
 
 All contributors (alphabetical last name):
 
+* Nico Garavito-Camargo
 * Johnny Greco
 * Sergey Koposov
 * Daniel Lenz
