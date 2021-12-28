@@ -38,6 +38,7 @@ jobs:
         run: |
           conda install -c conda-forge -q gsl libpython
           gsl-config --version
+          echo $PATH
 
       - name: Build wheels
         shell: bash -l {0}
@@ -46,7 +47,7 @@ jobs:
           export GALA_GSL_VERSION=$(gsl-config --version)
           export GALA_GSL_PREFIX="/c/Miniconda/envs/gala-wheels/Library/"
           pip install build
-          python -m build -o wheelhouse -v . --install-option="--compiler=gcc"
+          python -m build -o wheelhouse .
 
       - uses: actions/upload-artifact@v2
         with:
