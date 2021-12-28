@@ -39,6 +39,8 @@ jobs:
           conda install -c conda-forge -q gsl libpython
           gsl-config --version
           echo $PATH
+          echo $CC
+          export CC=/c/Miniconda/envs/gala-wheels/Library/mingw-w64/bin/gcc.exe
 
       - name: Build wheels
         shell: bash -l {0}
