@@ -42,6 +42,10 @@ Bug fixes
   ``LeapfrogIntegrator`` that led to incorrect orbits for non-conservative
   systems that were integrated backwards (i.e. with ``dt<<0``).
 
+- Fixed a bug with the ``FlattenedNFW`` potential class in which the energy and
+  gradient functions were not using the inputted flattening (``c`` value) and
+  were instead defaulting to the spherical NFW model.
+
 API changes
 -----------
 

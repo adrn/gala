@@ -50,10 +50,10 @@ jobs:
             python: 3.9
             toxenv: py39-test
 
-          - name: Python 3.9 standard tests (Windows)
-            os: windows-latest
-            python: 3.9
-            toxenv: py39-test
+          # - name: Python 3.9 standard tests (Windows)
+          #   os: windows-latest
+          #   python: 3.9
+          #   toxenv: py39-test
 
     steps:
       - name: Checkout code
@@ -76,25 +76,25 @@ jobs:
           python-version: ${{ matrix.python }}
 
       # Windows:
-      - uses: conda-incubator/setup-miniconda@v2
-        if: startsWith(matrix.os, 'windows')
-        with:
-          auto-update-conda: true
-          python-version: ${{ matrix.python-version }}
+      # - uses: conda-incubator/setup-miniconda@v2
+      #   if: startsWith(matrix.os, 'windows')
+      #   with:
+      #     auto-update-conda: true
+      #     python-version: ${{ matrix.python-version }}
 
-      - name: Install Python dependencies - Windows
-        if: startsWith(matrix.os, 'windows')
-        shell: bash -l {0}
-        run: |
-          conda install -c conda-forge -q gsl python=3.9 libpython
-          python -m pip install -e .[test]
-          python -m pip install tox
+      # - name: Install Python dependencies - Windows
+      #   if: startsWith(matrix.os, 'windows')
+      #   shell: bash -l {0}
+      #   run: |
+      #     conda install -c conda-forge -q gsl python=3.9 libpython
+      #     python -m pip install -e .[test]
+      #     python -m pip install tox
 
-      - name: Run tests - Windows
-        if: startsWith(matrix.os, 'windows')
-        shell: bash -l {0}
-        run: |
-          tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} ${{ matrix.toxposargs }}
+      # - name: Run tests - Windows
+      #   if: startsWith(matrix.os, 'windows')
+      #   shell: bash -l {0}
+      #   run: |
+      #     tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} ${{ matrix.toxposargs }}
 
       # Mac:
       - name: Setup Mac - GSL

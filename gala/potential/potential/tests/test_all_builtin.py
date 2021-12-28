@@ -209,6 +209,21 @@ class TestSphericalNFW(PotentialTestBase):
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
 
 
+class TestFlattenedNFW(PotentialTestBase):
+    potential = p.NFWPotential(units=galactic, m=1E11, r_s=12., c=0.7)
+    w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
+    sympy_density = False  # not defined
+
+    def test_against_spherical(self):
+        """
+        Note: This is a regression test for Issue #254
+        """
+
+        sph = p.NFWPotential(units=galactic, m=1E11, r_s=12.)
+        assert not u.allclose(self.potential.gradient(self.w0[:3]),
+                              sph.gradient(self.w0[:3]))
+
+
 class TestTriaxialNFW(PotentialTestBase):
     potential = p.NFWPotential(units=galactic, m=1E11, r_s=12.,
                                a=1., b=0.95, c=0.9)

@@ -54,44 +54,6 @@ jobs:
         with:
           path: ./wheelhouse/*.whl
 
-  build_win_wheels:
-    name: Build ${{ matrix.python-version }} wheels on Windows
-    runs-on: windows-latest
-    if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only')
-    strategy:
-      matrix:
-        python-version: [3.7, 3.8] # , 3.9  # TODO
-      fail-fast: false
-
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          auto-update-conda: true
-          python-version: ${{ matrix.python-version }}
-          activate-environment: gala-wheels
-
-      - name: Install dependencies
-        shell: bash -l {0}
-        run: |
-          conda install -c conda-forge -q gsl libpython
-          gsl-config --version
-
-      - name: Build wheels
-        shell: bash -l {0}
-        run: |
-          which gsl-config
-          export GALA_GSL_VERSION=$(gsl-config --version)
-          export GALA_GSL_PREFIX="/c/Miniconda/envs/gala-wheels/Library/"
-          pip install pep517
-          python -m pep517.build -o wheelhouse .
-
-      - uses: actions/upload-artifact@v2
-        with:
-          path: ./wheelhouse/*.whl
-
   build_sdist:
     name: Build source distribution
     runs-on: ubuntu-latest
