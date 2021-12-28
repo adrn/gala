@@ -33,11 +33,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
           activate-environment: gala-wheels
 
-      - name: Choco install gcc
-        uses: crazy-max/ghaction-chocolatey@v1.6.0
-        with:
-          args: install gcc
-
       - name: Install dependencies
         shell: bash -l {0}
         run: |
