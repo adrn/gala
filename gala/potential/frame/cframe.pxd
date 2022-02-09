@@ -11,6 +11,7 @@ cdef extern from "frame/src/cframe.h":
 cdef class CFrameWrapper:
     cdef CFrame cframe
     cdef double[::1] _params
+    cpdef init(self, list parameters)
     cpdef energy(self, double[:,::1] w, double[::1] t)
     cpdef gradient(self, double[:,::1] w, double[::1] t)
     cpdef hessian(self, double[:,::1] w, double[::1] t)

@@ -21,6 +21,10 @@ from ..potential.cpotential cimport energyfunc, gradientfunc, hessianfunc
 cdef class CFrameWrapper:
     """ Wrapper class for C implementation of reference frames. """
 
+    cpdef init(self, list parameters):
+        # save the array of parameters so it doesn't get garbage-collected
+        self._params = np.array(parameters, dtype=np.float64)
+
     cpdef energy(self, double[:, ::1] w, double[::1] t):
         """
         w should have shape (n, ndim).
@@ -80,6 +84,9 @@ cdef class CFrameWrapper:
 
         return np.array(d2H)
 
+    def __reduce__(self):
+        return (self.__class__, (list(self._params), ))
+
 
 class CFrameBase(FrameBase):
     Wrapper = None
@@ -102,7 +109,7 @@ class CFrameBase(FrameBase):
         else:
             self.c_parameters = np.array([])
 
-        self.c_instance = self.Wrapper(*self.c_parameters)
+        self.c_instance = self.Wrapper(list(self.c_parameters))
 
     def __str__(self):
         return self.__class__.__name__

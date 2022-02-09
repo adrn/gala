@@ -1,3 +1,5 @@
+import pickle
+
 # Third-party
 import astropy.units as u
 import pytest
@@ -22,6 +24,18 @@ class TestStaticFrame(object):
 
         fr2 = StaticFrame()
         assert fr1 != fr2
+
+    def test_pickle(self, tmpdir):
+        fr1 = StaticFrame(galactic)
+
+        filename = tmpdir / 'static.pkl'
+        with open(filename, 'wb') as f:
+            pickle.dump(fr1, f)
+
+        with open(filename, 'rb') as f:
+            fr2 = pickle.load(f)
+
+        assert fr1 == fr2
 
 
 class TestConstantRotatingFrame(object):
@@ -61,3 +75,15 @@ class TestConstantRotatingFrame(object):
 
         st_fr = StaticFrame(DimensionlessUnitSystem())
         assert st_fr != fr1
+
+    def test_pickle(self, tmpdir):
+        fr1 = ConstantRotatingFrame(Omega=[1E-3, 0., 0.]/u.Myr, units=galactic)
+
+        filename = tmpdir / 'rotating.pkl'
+        with open(filename, 'wb') as f:
+            pickle.dump(fr1, f)
+
+        with open(filename, 'rb') as f:
+            fr2 = pickle.load(f)
+
+        assert fr1 == fr2

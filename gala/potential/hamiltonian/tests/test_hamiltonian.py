@@ -1,3 +1,5 @@
+import pickle
+
 # Third-party
 import astropy.units as u
 import pytest
@@ -35,3 +37,19 @@ def test_init():
     f = ConstantRotatingFrame(Omega=1./u.yr, units=solarsystem)
     with pytest.raises(ValueError):
         H = Hamiltonian(potential=p, frame=f)
+
+
+def test_pickle(tmpdir):
+    filename = tmpdir / 'hamil.pkl'
+
+    p = KeplerPotential(m=1., units=solarsystem)
+
+    for fr in [StaticFrame(units=solarsystem),
+               ConstantRotatingFrame(Omega=[0, 0, 1]/u.yr, units=solarsystem)]:
+        H = Hamiltonian(potential=p, frame=fr)
+
+        with open(filename, 'wb') as f:
+            pickle.dump(H, f)
+
+        with open(filename, 'rb') as f:
+            H2 = pickle.load(f)

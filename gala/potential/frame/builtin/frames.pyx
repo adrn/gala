@@ -49,8 +49,10 @@ __all__ = ['StaticFrame', 'ConstantRotatingFrame']
 
 cdef class StaticFrameWrapper(CFrameWrapper):
 
-    def __init__(self):
+    def __init__(self, list params):
         cdef CFrame cf
+
+        self.init(params)
 
         cf.energy = <energyfunc>(static_frame_hamiltonian)
         cf.gradient = <gradientfunc>(static_frame_gradient)
@@ -83,11 +85,12 @@ class StaticFrame(CFrameBase):
 
 cdef class ConstantRotatingFrameWrapper2D(CFrameWrapper):
 
-    def __init__(self, double Omega):
+    def __init__(self, list params):
         cdef:
             CFrame cf
 
-        self._params = np.array([Omega], dtype=np.float64)
+        assert len(params) == 1
+        self._params = np.array([params[0]], dtype=np.float64)
 
         cf.energy = <energyfunc>(constant_rotating_frame_hamiltonian_2d)
         cf.gradient = <gradientfunc>(constant_rotating_frame_gradient_2d)
@@ -99,11 +102,13 @@ cdef class ConstantRotatingFrameWrapper2D(CFrameWrapper):
 
 cdef class ConstantRotatingFrameWrapper3D(CFrameWrapper):
 
-    def __init__(self, double Omega_x, double Omega_y, double Omega_z):
+    def __init__(self, list params):
         cdef:
             CFrame cf
 
-        self._params = np.array([Omega_x, Omega_y, Omega_z], dtype=np.float64)
+        assert len(params) == 3
+        self._params = np.array([params[0], params[1], params[2]],
+                                dtype=np.float64)
 
         cf.energy = <energyfunc>(constant_rotating_frame_hamiltonian_3d)
         cf.gradient = <gradientfunc>(constant_rotating_frame_gradient_3d)

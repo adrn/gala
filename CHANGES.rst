@@ -46,6 +46,9 @@ Bug fixes
   gradient functions were not using the inputted flattening (``c`` value) and
   were instead defaulting to the spherical NFW model.
 
+- Enabled pickling ``Frame`` instances and therefore now ``Hamiltonian``
+  instances.
+
 API changes
 -----------
 
