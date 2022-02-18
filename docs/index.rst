@@ -82,7 +82,7 @@ paper:
       number = {18},
       author = {Adrian M. Price-Whelan},
       title = {Gala: A Python package for galactic dynamics},
-      journal = {The Journal of Open Source Software}
+      journal = {The Journal of Open Source Software}}
 
 Please also cite the Zenodo DOI |DOI| of the version you used as a software
 citation:
