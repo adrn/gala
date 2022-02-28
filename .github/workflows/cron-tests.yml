@@ -48,7 +48,7 @@ jobs:
 
       - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
         if: "!startsWith(matrix.os, 'windows')"
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python }}
 
