@@ -7,6 +7,7 @@ import warnings
 # Third-party
 import astropy.units as u
 import numpy as np
+from gala.coordinates.gd1 import R
 from gala.logging import logger
 from scipy.linalg import solve
 import pytest
@@ -129,10 +130,7 @@ def test_check_angle_sampling():
         assert np.all(failures == i)
 
 
-class ActionsBase(object):
-    @pytest.fixture(autouse=True)
-    def set_tmpdir(self, tmpdir):
-        self.tmpdir = tmpdir
+class ActionsBase:
 
     def test_classify(self):
         # my classify
@@ -201,8 +199,10 @@ class ActionsBase(object):
 
 
 class TestActions(ActionsBase):
-    def setup(self):
-        self.plot_path = self.tmpdir.mkdir("normal")
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tmpdir):
+        self.plot_path = tmpdir.mkdir("normal")
 
         self.units = galactic
         self.potential = LeeSutoTriaxialNFWPotential(
