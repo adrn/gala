@@ -124,6 +124,14 @@ def plot_projections(x, relative_to=None, autolim=True, axes=None,
                 axes[k].set_ylabel(labels[j])
 
             if autolim:
+                # ensure new limits only ever expand current axis limits
+                xlims = axes[k].get_xlim()
+                ylims = axes[k].get_ylim()
+                lims[i] = (min(lims[i][0], xlims[0]),
+                           max(lims[i][1], xlims[1]))
+                lims[j] = (min(lims[j][0], ylims[0]),
+                           max(lims[j][1], ylims[1]))
+
                 axes[k].set_xlim(lims[i])
                 axes[k].set_ylim(lims[j])
 
