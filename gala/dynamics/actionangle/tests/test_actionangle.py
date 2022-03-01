@@ -7,7 +7,6 @@ import warnings
 # Third-party
 import astropy.units as u
 import numpy as np
-from gala.coordinates.gd1 import R
 from gala.logging import logger
 from scipy.linalg import solve
 import pytest
