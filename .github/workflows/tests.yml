@@ -27,6 +27,11 @@ jobs:
             python: 3.9
             toxenv: py39-test-cov
 
+          - name: Python 3.10
+            os: ubuntu-latest
+            python: '3.10'
+            toxenv: py310-test
+
           # Has to happen on ubuntu because galpy is finnicky on macOS
           - name: Python 3.9 with all optional dependencies
             os: ubuntu-latest
