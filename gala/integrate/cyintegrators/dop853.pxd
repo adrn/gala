@@ -1,7 +1,7 @@
 # cython: language_level=3
 
 cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrame:
+    ctypedef struct CFrameType:
         pass
 
 cdef extern from "potential/src/cpotential.h":
@@ -10,20 +10,20 @@ cdef extern from "potential/src/cpotential.h":
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, CFrame *fr, unsigned norbits,
+                              CPotential *p, CFrameType *fr, unsigned norbits,
                               unsigned nbody, void *args) nogil
 
-cdef void dop853_step(CPotential *cp, CFrame *cf, FcnEqDiff F,
+cdef void dop853_step(CPotential *cp, CFrameType *cf, FcnEqDiff F,
                       double *w, double t1, double t2, double dt0,
                       int ndim, int norbits, int nbody, void *args,
                       double atol, double rtol, int nmax)  except *
 
-cdef dop853_helper(CPotential *cp, CFrame *cf, FcnEqDiff F,
+cdef dop853_helper(CPotential *cp, CFrameType *cf, FcnEqDiff F,
                    double[:,::1] w0, double[::1] t,
                    int ndim, int norbits, int nbody, void *args, int ntimes,
                    double atol, double rtol, int nmax, int progress)
 
-cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
+cdef dop853_helper_save_all(CPotential *cp, CFrameType *cf, FcnEqDiff F,
                             double[:,::1] w0, double[::1] t,
                             int ndim, int norbits, int nbody, void *args,
                             int ntimes, double atol, double rtol, int nmax,

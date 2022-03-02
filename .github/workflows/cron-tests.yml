@@ -19,12 +19,12 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, macos-latest] # TODO: re-enable windows-latest
-        python: [3.7, 3.8, 3.9]
+        python: ['3.8', '3.9', '3.10']
         include:
           # These set options for each python version. So, for example, when any
-          # python 3.7 job in the matrix runs, it should use this toxenv
-          - python: 3.7
-            toxenv: py37-test
+          # python 3.10 job in the matrix runs, it should use this toxenv
+          - python: '3.10'
+            toxenv: py310-test
 
           - python: 3.9
             toxenv: py39-test-cov

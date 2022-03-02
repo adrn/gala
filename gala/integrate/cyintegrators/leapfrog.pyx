@@ -17,7 +17,7 @@ from ...potential.potential.cpotential cimport CPotentialWrapper
 from ...potential.frame import StaticFrame
 
 cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrame:
+    ctypedef struct CFrameType:
         pass
 
 cdef extern from "potential/src/cpotential.h":

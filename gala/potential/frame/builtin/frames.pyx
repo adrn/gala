@@ -24,7 +24,7 @@ cdef extern from "src/funcdefs.h":
     ctypedef void (*hessianfunc)(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
 cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrame:
+    ctypedef struct CFrameType:
         energyfunc energy
         gradientfunc gradient
         hessianfunc hessian
@@ -50,7 +50,7 @@ __all__ = ['StaticFrame', 'ConstantRotatingFrame']
 cdef class StaticFrameWrapper(CFrameWrapper):
 
     def __init__(self, list params):
-        cdef CFrame cf
+        cdef CFrameType cf
 
         self.init(params)
 
@@ -87,7 +87,7 @@ cdef class ConstantRotatingFrameWrapper2D(CFrameWrapper):
 
     def __init__(self, list params):
         cdef:
-            CFrame cf
+            CFrameType cf
 
         assert len(params) == 1
         self._params = np.array([params[0]], dtype=np.float64)
@@ -104,7 +104,7 @@ cdef class ConstantRotatingFrameWrapper3D(CFrameWrapper):
 
     def __init__(self, list params):
         cdef:
-            CFrame cf
+            CFrameType cf
 
         assert len(params) == 3
         self._params = np.array([params[0], params[1], params[2]],

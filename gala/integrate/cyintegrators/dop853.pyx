@@ -22,7 +22,7 @@ from ...potential.potential.cpotential cimport CPotentialWrapper
 from ...potential.frame.cframe cimport CFrameWrapper
 
 cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrame:
+    ctypedef struct CFrameType:
         pass
 
 cdef extern from "potential/src/cpotential.h":
@@ -33,14 +33,14 @@ cdef extern from "potential/src/cpotential.h":
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, CFrame *fr, unsigned norbits,
+                              CPotential *p, CFrameType *fr, unsigned norbits,
                               unsigned nbody, void *args) nogil
     ctypedef void (*SolTrait)(long nr, double xold, double x, double* y,
                               unsigned n, int* irtrn)
 
     # See dop853.h for full description of all input parameters
     int dop853 (unsigned n, FcnEqDiff fn,
-                CPotential *p, CFrame *fr, unsigned n_orbits, unsigned nbody,
+                CPotential *p, CFrameType *fr, unsigned n_orbits, unsigned nbody,
                 void *args,
                 double x, double* y, double xend,
                 double* rtoler, double* atoler, int itoler, SolTrait solout,
@@ -49,7 +49,7 @@ cdef extern from "dopri/dop853.h":
                 long nstiff, unsigned nrdens, unsigned* icont, unsigned licont)
 
     void Fwrapper (unsigned ndim, double t, double *w, double *f,
-                   CPotential *p, CFrame *fr, unsigned norbits)
+                   CPotential *p, CFrameType *fr, unsigned norbits)
 
 cdef extern from "stdio.h":
     ctypedef struct FILE
@@ -59,7 +59,7 @@ cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irt
     # TODO: see here for example in FORTRAN: http://www.unige.ch/~hairer/prog/nonstiff/dr_dop853.f
     pass
 
-cdef void dop853_step(CPotential *cp, CFrame *cf, FcnEqDiff F,
+cdef void dop853_step(CPotential *cp, CFrameType *cf, FcnEqDiff F,
                       double *w, double t1, double t2, double dt0,
                       int ndim, int norbits, int nbody, void *args,
                       double atol, double rtol, int nmax) except *:
@@ -80,7 +80,7 @@ cdef void dop853_step(CPotential *cp, CFrame *cf, FcnEqDiff F,
     elif res == -4:
         raise RuntimeError("The problem is probably stiff (interrupted).")
 
-cdef dop853_helper(CPotential *cp, CFrame *cf, FcnEqDiff F,
+cdef dop853_helper(CPotential *cp, CFrameType *cf, FcnEqDiff F,
                    double[:, ::1] w0, double[::1] t,
                    int ndim, int norbits, int nbody, void *args, int ntimes,
                    double atol, double rtol, int nmax, int progress):
@@ -128,7 +128,7 @@ cdef dop853_helper(CPotential *cp, CFrame *cf, FcnEqDiff F,
 
     return w
 
-cdef dop853_helper_save_all(CPotential *cp, CFrame *cf, FcnEqDiff F,
+cdef dop853_helper_save_all(CPotential *cp, CFrameType *cf, FcnEqDiff F,
                             double[:, ::1] w0, double[::1] t,
                             int ndim, int norbits, int nbody, void *args,
                             int ntimes, double atol, double rtol, int nmax,
@@ -207,7 +207,7 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t
 
         # whoa, so many dots
         CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
-        CFrame cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
+        CFrameType cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
     # 0 below is for nbody - we ignore that in this test particle integration
     all_w = dop853_helper_save_all(&cp, &cf, <FcnEqDiff> Fwrapper,

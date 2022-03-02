@@ -2,7 +2,7 @@
 #include "potential/src/cpotential.h"
 #include "frame/src/cframe.h"
 
-double hamiltonian_value(CPotential *p, CFrame *fr, double t, double *qp) {
+double hamiltonian_value(CPotential *p, CFrameType *fr, double t, double *qp) {
     double v = 0;
     int i;
 
@@ -16,7 +16,7 @@ double hamiltonian_value(CPotential *p, CFrame *fr, double t, double *qp) {
     return v;
 }
 
-void hamiltonian_gradient(CPotential *p, CFrame *fr, double t, double *qp, double *dH) {
+void hamiltonian_gradient(CPotential *p, CFrameType *fr, double t, double *qp, double *dH) {
     int i;
 
     for (i=0; i < 2*(p->n_dim); i++) {
@@ -33,7 +33,7 @@ void hamiltonian_gradient(CPotential *p, CFrame *fr, double t, double *qp, doubl
     }
 }
 
-void hamiltonian_hessian(CPotential *p, CFrame *fr, double t, double *qp, double *d2H) {
+void hamiltonian_hessian(CPotential *p, CFrameType *fr, double t, double *qp, double *d2H) {
     int i;
 
     for (i=0; i < p->n_components; i++) {

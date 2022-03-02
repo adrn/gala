@@ -20,7 +20,7 @@ from ...potential.potential.cpotential cimport CPotentialWrapper
 from ...potential.frame.cframe cimport CFrameWrapper
 
 cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrame:
+    ctypedef struct CFrameType:
         pass
 
 cdef extern from "potential/src/cpotential.h":
@@ -29,10 +29,10 @@ cdef extern from "potential/src/cpotential.h":
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, CFrame *fr, unsigned norbits,
+                              CPotential *p, CFrameType *fr, unsigned norbits,
                               unsigned nbody, void *args) nogil
     void Fwrapper (unsigned ndim, double t, double *w, double *f,
-                   CPotential *p, CFrame *fr, unsigned norbits, unsigned nbody)
+                   CPotential *p, CFrameType *fr, unsigned norbits, unsigned nbody)
     double six_norm (double *x)
 
 cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
@@ -62,7 +62,7 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
 
         # whoa, so many dots
         CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
-        CFrame cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
+        CFrameType cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
         void *args
 
@@ -139,7 +139,7 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
 
         # whoa, so many dots
         CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
-        CFrame cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
+        CFrameType cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
         void *args
 

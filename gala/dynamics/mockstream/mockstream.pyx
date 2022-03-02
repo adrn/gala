@@ -27,7 +27,7 @@ from cpython.exc cimport PyErr_CheckSignals
 from ...integrate.cyintegrators.dop853 cimport (dop853_step,
                                                 dop853_helper_save_all)
 from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
-from ...potential.frame.cframe cimport CFrameWrapper, CFrame
+from ...potential.frame.cframe cimport CFrameWrapper, CFrameType
 from ...potential.potential.builtin.cybuiltin import NullWrapper
 
 from ...potential import Hamiltonian
@@ -43,11 +43,11 @@ __all__ = ['mockstream_dop853', 'mockstream_dop853_animate']
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, CFrame *fr,
+                              CPotential *p, CFrameType *fr,
                               unsigned norbits, unsigned nbody,
                               void *args) nogil
     void Fwrapper_direct_nbody(unsigned ndim, double t, double *w, double *f,
-                               CPotential *p, CFrame *fr,
+                               CPotential *p, CFrameType *fr,
                                unsigned norbits, unsigned nbody, void *args) nogil
 
 
@@ -94,7 +94,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
 
         # whoa, so many dots
         CPotential cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
-        CFrame cf = (<CFrameWrapper>(nbody.H.frame.c_instance)).cframe
+        CFrameType cf = (<CFrameWrapper>(nbody.H.frame.c_instance)).cframe
 
         # for the test particles
         CPotentialWrapper null_wrapper = NullWrapper(1., [],
@@ -215,7 +215,7 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
 
         # whoa, so many dots
         CPotential cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
-        CFrame cf = (<CFrameWrapper>(nbody.H.frame.c_instance)).cframe
+        CFrameType cf = (<CFrameWrapper>(nbody.H.frame.c_instance)).cframe
 
         int nbodies = nbody._c_w0.shape[0] # includes the progenitor
         double [:, ::1] nbody_w0 = nbody._c_w0

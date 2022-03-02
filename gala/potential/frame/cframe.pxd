@@ -1,15 +1,15 @@
 # cython: language_level=3
 
 cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrame:
+    ctypedef struct CFrameType:
         pass
 
-    double frame_hamiltonian(CFrame *fr, double t, double *qp, int n_dim) nogil
-    void frame_gradient(CFrame *fr, double t, double *qp, int n_dim, double *dH) nogil
-    void frame_hessian(CFrame *fr, double t, double *qp, int n_dim, double *d2H) nogil
+    double frame_hamiltonian(CFrameType *fr, double t, double *qp, int n_dim) nogil
+    void frame_gradient(CFrameType *fr, double t, double *qp, int n_dim, double *dH) nogil
+    void frame_hessian(CFrameType *fr, double t, double *qp, int n_dim, double *d2H) nogil
 
 cdef class CFrameWrapper:
-    cdef CFrame cframe
+    cdef CFrameType cframe
     cdef double[::1] _params
     cpdef init(self, list parameters)
     cpdef energy(self, double[:,::1] w, double[::1] t)
