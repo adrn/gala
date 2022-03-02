@@ -11,3 +11,4 @@ All contributors (alphabetical last name):
 * Semyeong Oh
 * Brigitta Sipocz
 * Nathaniel Starkman
+* Tom Wagg
