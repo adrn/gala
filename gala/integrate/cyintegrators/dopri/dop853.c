@@ -78,7 +78,7 @@ static double max_d (double a, double b)
 } /* max_d */
 
 
-static double hinit (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsigned norbits, unsigned nbody, void *args,
+static double hinit (unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned norbits, unsigned nbody, void *args,
         double x, double* y,
 	      double posneg, double* f0, double* f1, double* yy1, int iord,
 	      double hmax, double* atoler, double* rtoler, int itoler)
@@ -155,7 +155,7 @@ static double hinit (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsig
 
 
 /* core integrator */
-static int dopcor (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsigned norbits, unsigned nbody, void *args,
+static int dopcor (unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned norbits, unsigned nbody, void *args,
        double x, double* y, double xend,
 		   double hmax, double h, double* rtoler, double* atoler,
 		   int itoler, FILE* fileout, SolTrait solout, int iout,
@@ -695,7 +695,7 @@ static int dopcor (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsigne
 
 /* front-end */
 int dop853
- (unsigned n, FcnEqDiff fcn, CPotential *p, CFrame *fr, unsigned norbits, unsigned nbody, void *args,
+ (unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned norbits, unsigned nbody, void *args,
   double x, double* y, double xend, double* rtoler,
   double* atoler, int itoler, SolTrait solout, int iout, FILE* fileout, double uround,
   double safe, double fac1, double fac2, double beta, double hmax, double h,
@@ -977,7 +977,7 @@ double contd8 (unsigned ii, double x)
 
 /* ADDED BY APW */
 void Fwrapper (unsigned full_ndim, double t, double *w, double *f,
-               CPotential *p, CFrame *fr, unsigned norbits, unsigned na,
+               CPotential *p, CFrameType *fr, unsigned norbits, unsigned na,
                void *args) {
     /* na can be ignored here - used in nbody wrapper below */
 
@@ -991,7 +991,7 @@ void Fwrapper (unsigned full_ndim, double t, double *w, double *f,
 }
 
 void Fwrapper_direct_nbody (unsigned full_ndim, double t, double *w, double *f,
-                            CPotential *p, CFrame *fr,
+                            CPotential *p, CFrameType *fr,
                             unsigned norbits, unsigned nbody,
                             void *args) {
     /* Here, the extra args are actually the array of CPotential objects that

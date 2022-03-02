@@ -31,7 +31,7 @@ cdef class CFrameWrapper:
         """
         cdef:
             int n, ndim, i
-            CFrame cf = self.cframe
+            CFrameType cf = self.cframe
         n, ndim = _validate_pos_arr(w)
 
         cdef double [::1] pot = np.zeros(n)
@@ -51,7 +51,7 @@ cdef class CFrameWrapper:
         """
         cdef:
             int n, ndim, i
-            CFrame cf = self.cframe
+            CFrameType cf = self.cframe
         n, ndim = _validate_pos_arr(w)
 
         cdef double[:, ::1] dH = np.zeros((n, ndim))
@@ -71,7 +71,7 @@ cdef class CFrameWrapper:
         """
         cdef:
             int n, ndim, i
-            CFrame cf = self.cframe
+            CFrameType cf = self.cframe
         n, ndim = _validate_pos_arr(w)
 
         cdef double[:, :, ::1] d2H = np.zeros((n, ndim, ndim))

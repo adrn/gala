@@ -188,7 +188,7 @@ nfcnRead    Number of function calls.
 #include "hamiltonian/src/chamiltonian.h"
 
 typedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                          CPotential *p, CFrame *fr, unsigned norbits,
+                          CPotential *p, CFrameType *fr, unsigned norbits,
                           unsigned nbody, void *args);
 
 typedef void (*SolTrait)(long nr, double xold, double x, double* y, unsigned n, int* irtrn);
@@ -197,7 +197,7 @@ extern int dop853
  (unsigned n,      /* dimension of the system <= UINT_MAX-1*/
   FcnEqDiff fcn,   /* function computing the value of f(x,y) */
   CPotential *p,   /* ADDED BY ADRN: parameters for gradient function */
-  CFrame *fr,       /* ADDED BY ADRN: reference frame */
+  CFrameType *fr,       /* ADDED BY ADRN: reference frame */
   unsigned n_orbits, /* ADDED BY ADRN: total number of orbits, i.e. bodies */
   unsigned n_body, /* ADDED BY ADRN: number of nbody particles */
   void *args,      /* ADDED BY ADRN: a container for other stuff */
@@ -239,10 +239,10 @@ extern double xRead (void);
 
 /* ADDED BY APW */
 extern void Fwrapper (unsigned ndim, double t, double *w, double *f,
-                      CPotential *p, CFrame *fr,
+                      CPotential *p, CFrameType *fr,
                       unsigned norbits, unsigned nbody, void *args);
 extern void Fwrapper_direct_nbody(unsigned ndim, double t, double *w, double *f,
-                                  CPotential *p, CFrame *fr,
+                                  CPotential *p, CFrameType *fr,
                                   unsigned norbits, unsigned nbody,
                                   void *args); // here args becomes the particle potentials
 extern double six_norm (double *x); /* Needed for Lyapunov */

@@ -27,7 +27,7 @@ from ...integrate.cyintegrators.dop853 cimport (dop853_helper,
                                                 dop853_helper_save_all)
 
 cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrame:
+    ctypedef struct CFrameType:
         pass
 
 cdef extern from "potential/src/cpotential.h":
@@ -36,10 +36,10 @@ cdef extern from "potential/src/cpotential.h":
 
 cdef extern from "dopri/dop853.h":
     ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, CFrame *fr, unsigned norbits,
+                              CPotential *p, CFrameType *fr, unsigned norbits,
                               unsigned nbody, void *args) nogil
     void Fwrapper_direct_nbody(unsigned ndim, double t, double *w, double *f,
-                               CPotential *p, CFrame *fr, unsigned norbits,
+                               CPotential *p, CFrameType *fr, unsigned norbits,
                                unsigned nbody, void *args)
 
 cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
@@ -67,7 +67,7 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
         void *args
         CPotential *c_particle_potentials[MAX_NBODY]
         CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
-        CFrame cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
+        CFrameType cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
     # Some input validation:
     if not isinstance(hamiltonian, Hamiltonian):
