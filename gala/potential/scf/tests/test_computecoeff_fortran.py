@@ -2,7 +2,7 @@
 
 # Standard library
 import os
-from math import factorial
+from math import factorial as _factorial
 
 # Third-party
 from astropy.utils.data import get_pkg_data_filename
@@ -18,6 +18,9 @@ if not GSL_ENABLED:
                 allow_module_level=True)
 
 # Compare coefficients computed with Fortran to Biff
+
+def factorial(x):
+    return _factorial(int(x))
 
 
 @pytest.mark.parametrize("basename", [

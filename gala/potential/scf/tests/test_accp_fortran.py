@@ -2,7 +2,7 @@
 
 # Standard library
 import os
-from math import factorial
+from math import factorial as _factorial
 
 # Third-party
 from astropy.constants import G as _G
@@ -21,14 +21,19 @@ if not GSL_ENABLED:
     pytest.skip("skipping SCF tests: they depend on GSL",
                 allow_module_level=True)
 
+def factorial(x):
+    return _factorial(int(x))
+
 
 @pytest.mark.parametrize("basename", [
     'simple-hernquist', 'multi-hernquist', 'simple-nonsph', 'random', 'wang-zhao',
 ])
 def test_density(basename):
     pos_path = os.path.abspath(get_pkg_data_filename('data/positions.dat.gz'))
-    coeff_path = os.path.abspath(get_pkg_data_filename('data/{0}.coeff'.format(basename)))
-    accp_path = os.path.abspath(get_pkg_data_filename('data/{0}-accp.dat.gz'.format(basename)))
+    coeff_path = os.path.abspath(
+        get_pkg_data_filename(f'data/{basename}.coeff'))
+    accp_path = os.path.abspath(
+        get_pkg_data_filename(f'data/{basename}-accp.dat.gz'))
 
     xyz = np.ascontiguousarray(np.loadtxt(pos_path, skiprows=1).T)
     coeff = np.atleast_2d(np.loadtxt(coeff_path, skiprows=1))
