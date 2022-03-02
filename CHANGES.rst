@@ -49,6 +49,10 @@ Bug fixes
 - Enabled pickling ``Frame`` instances and therefore now ``Hamiltonian``
   instances.
 
+- Fixed a bug with ``autolim=True`` during Orbit plotting where the axes limits
+  were only dependent on the most recent Orbit rather than all that were present
+  on the axis
+
 API changes
 -----------
 
