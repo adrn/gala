@@ -21,6 +21,7 @@ if not GSL_ENABLED:
     pytest.skip("skipping SCF tests: they depend on GSL",
                 allow_module_level=True)
 
+
 def factorial(x):
     return _factorial(int(x))
 
