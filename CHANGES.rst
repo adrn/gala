@@ -4,6 +4,19 @@
 New Features
 ------------
 
+Bug fixes
+---------
+
+API changes
+-----------
+
+
+1.5 (2022-03-03)
+================
+
+New Features
+------------
+
 - Implemented a basic progress bar for integrating orbits and mock streams. Pass
   ``progress=True`` with ``Integrator_kwargs`` when calling
   ``.integrate_orbit()``, or pass ``progress=True`` to
