@@ -9,8 +9,8 @@ on:
       - main
 
 env:
-  CIBW_BUILD: "cp3?-*"
-  CIBW_SKIP: "*-win32 cp35-* cp36-* cp37-* *musllinux*"
+  CIBW_BUILD: "cp38-* cp39-* cp310-*"
+  CIBW_SKIP: "*-win32 *musllinux*"
   CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
 
 jobs:
