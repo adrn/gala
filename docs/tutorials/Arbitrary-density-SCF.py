@@ -165,6 +165,7 @@ plt.legend(loc='best');
 # \rho(R, z) = \frac{1}{r \, (1 + r)^{3}}\\
 # r^2 = R^2 + \frac{z^2}{q^2}
 # $$
+#
 # where $q$ is the flattening, which we'll set to $q=0.6$.
 #
 # Let's again start by writing a density function that takes a single set of
