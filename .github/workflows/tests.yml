@@ -12,6 +12,7 @@ jobs:
   tests:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only')
     strategy:
       fail-fast: true
       matrix:
