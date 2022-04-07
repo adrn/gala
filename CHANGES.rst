@@ -4,6 +4,9 @@
 New Features
 ------------
 
+- Added a ``.replicate()`` method to Potential classes to enable copying
+  potential objects but modifying some parameter values.
+
 Bug fixes
 ---------
 

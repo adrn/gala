@@ -88,6 +88,31 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
                                          (self.ndim, self.ndim), R.shape))
         self.R = R
 
+    def replicate(self, **kwargs):
+        """
+        Return a copy of the potential instance with some parameter values
+        changed. This always produces copies of any parameter arrays.
+
+        Parameters
+        ----------
+        **kwargs
+            All other keyword arguments are used to overwrite parameter values
+            when making the copy.
+
+        Returns
+        -------
+        replicant : `~gala.potential.PotentialBase` subclass instance
+            The replicated potential.
+        """
+        for k, v in self.parameters.items():
+            kwargs.setdefault(k, pycopy.copy(v))
+
+        for k in ['units', 'origin', 'R']:
+            v = getattr(self, k)
+            kwargs.setdefault(k, pycopy.copy(v))
+
+        return self.__class__(**kwargs)
+
     @classmethod
     def to_sympy(cls):
         """Return a representation of this potential class as a sympy expression

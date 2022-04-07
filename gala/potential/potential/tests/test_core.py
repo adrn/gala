@@ -128,3 +128,14 @@ def test_replace_units():
     assert p2.parameters['m'].unit == usys2['mass']
     assert p.units == usys1
     assert p2.units == usys2
+
+
+def test_replicate():
+    usys = UnitSystem([u.kpc, u.Gyr, u.Msun, u.radian])
+    R = np.diag(np.arange(3))
+    p1 = MyPotential(m=1.E10*u.Msun, x0=0., units=usys, R=R)
+    p2 = p1.replicate(m=2e10*u.Msun, R=None)
+
+    assert p2.R is None
+    assert np.isclose(p2.parameters['m'].value, 2e10)
+    assert np.isclose(p2.parameters['x0'].value, p1.parameters['x0'].value)
