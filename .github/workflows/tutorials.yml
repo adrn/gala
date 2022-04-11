@@ -34,7 +34,7 @@ jobs:
           cd docs
           make exectutorials
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: notebooks-for-${{ github.sha }}
           path: docs/tutorials
