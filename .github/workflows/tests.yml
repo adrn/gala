@@ -125,7 +125,7 @@ jobs:
 
       # Coverage:
       - name: Upload coverage report to codecov
-        uses: codecov/codecov-action@v2.1.0
+        uses: codecov/codecov-action@v3.0.0
         if: steps.check_files.outputs.files_exists == 'true' && runner.os == 'Linux'
         with:
           file: ./coverage.xml # optional
