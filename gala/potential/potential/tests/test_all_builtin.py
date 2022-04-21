@@ -174,6 +174,18 @@ class TestMiyamotoNagai(PotentialTestBase):
         assert np.allclose(H1, H2)
 
 
+class TestMN3(PotentialTestBase):
+    potential = p.MN3ExponentialDiskPotential(
+        units=galactic, m=1.E11, h_R=3.5, b=0.26
+    )
+    w0 = [8., 0., 0., 0., 0.22, 0.1]
+
+    # TODO:
+    @pytest.mark.skip(reason="to_sympy() not implemented yet")
+    def test_against_sympy(self):
+        pass
+
+
 class TestSatoh(PotentialTestBase):
     potential = p.SatohPotential(units=galactic, m=1.E11, a=6.5, b=0.26)
     w0 = [8., 0., 0., 0., 0.22, 0.1]

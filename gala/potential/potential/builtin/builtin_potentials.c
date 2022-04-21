@@ -1384,6 +1384,68 @@ void miyamotonagai_hessian(double t, double *pars, double *q, int n_dim,
 }
 
 /* ---------------------------------------------------------------------------
+    MN3 exponential disk approximation
+
+    pars:
+    - G (Gravitational constant)
+    - m1, a1, b1
+    - m2, a2, b2
+    - m3, a3, b3
+*/
+double mn3_value(double t, double *pars, double *q, int n_dim) {
+    double tmp_pars[4] = {0., 0., 0., 0.};
+    tmp_pars[0] = pars[0];
+
+    double val = 0.;
+    for (int i=0; i < 3; i++) {
+        tmp_pars[1] = pars[1+3*i];
+        tmp_pars[2] = pars[1+3*i+1];
+        tmp_pars[3] = pars[1+3*i+2];
+        val += miyamotonagai_value(t, &tmp_pars, q, n_dim);
+    }
+    return val;
+}
+
+void mn3_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
+    double tmp_pars[4] = {0., 0., 0., 0.};
+    tmp_pars[0] = pars[0];
+
+    for (int i=0; i < 3; i++) {
+        tmp_pars[1] = pars[1+3*i];
+        tmp_pars[2] = pars[1+3*i+1];
+        tmp_pars[3] = pars[1+3*i+2];
+        miyamotonagai_gradient(t, &tmp_pars, q, n_dim, grad);
+    }
+}
+
+double mn3_density(double t, double *pars, double *q, int n_dim) {
+    double tmp_pars[4] = {0., 0., 0., 0.};
+    tmp_pars[0] = pars[0];
+
+    double val = 0.;
+    for (int i=0; i < 3; i++) {
+        tmp_pars[1] = pars[1+3*i];
+        tmp_pars[2] = pars[1+3*i+1];
+        tmp_pars[3] = pars[1+3*i+2];
+        val += miyamotonagai_density(t, &tmp_pars, q, n_dim);
+    }
+    return val;
+}
+
+void mn3_hessian(double t, double *pars, double *q, int n_dim,
+                 double *hess) {
+    double tmp_pars[4] = {0., 0., 0., 0.};
+    tmp_pars[0] = pars[0];
+
+    for (int i=0; i < 3; i++) {
+        tmp_pars[1] = pars[1+3*i];
+        tmp_pars[2] = pars[1+3*i+1];
+        tmp_pars[3] = pars[1+3*i+2];
+        miyamotonagai_hessian(t, &tmp_pars, q, n_dim, hess);
+    }
+}
+
+/* ---------------------------------------------------------------------------
     Lee-Suto triaxial NFW from Lee & Suto (2003)
 */
 double leesuto_value(double t, double *pars, double *q, int n_dim) {

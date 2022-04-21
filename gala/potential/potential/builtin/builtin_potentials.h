@@ -74,6 +74,11 @@ extern void miyamotonagai_gradient(double t, double *pars, double *q, int n_dim,
 extern void miyamotonagai_hessian(double t, double *pars, double *q, int n_dim, double *hess);
 extern double miyamotonagai_density(double t, double *pars, double *q, int n_dim);
 
+extern double mn3_value(double t, double *pars, double *q, int n_dim);
+extern void mn3_gradient(double t, double *pars, double *q, int n_dim, double *grad);
+extern void mn3_hessian(double t, double *pars, double *q, int n_dim, double *hess);
+extern double mn3_density(double t, double *pars, double *q, int n_dim);
+
 extern double leesuto_value(double t, double *pars, double *q, int n_dim);
 extern void leesuto_gradient(double t, double *pars, double *q, int n_dim, double *grad);
 extern double leesuto_density(double t, double *pars, double *q, int n_dim);
