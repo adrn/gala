@@ -61,6 +61,13 @@ def pytest_generate_tests(metafunc):
         gala_pots.append(pot)
         galpy_pots.append(galpy_pot)
 
+        # Custom settings in the MN3 potential:
+        if isinstance(pot, gp.MN3ExponentialDiskPotential):
+            pot = Potential(**init, units=galactic, sech2_z=False)
+            galpy_pot = pot.to_galpy_potential(ro=ro, vo=vo)
+            gala_pots.append(pot)
+            galpy_pots.append(galpy_pot)
+
     # Make a composite potential too:
     gala_pots.append(gala_pots[0] + gala_pots[1])
     galpy_pots.append([galpy_pots[0], galpy_pots[1]])
