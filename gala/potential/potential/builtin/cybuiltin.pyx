@@ -520,7 +520,7 @@ class SatohPotential(CPotentialBase):
     a : :class:`~astropy.units.Quantity`, numeric [length]
         Scale length.
     b : :class:`~astropy.units.Quantity`, numeric [length]
-        Scare height.
+        Scale height.
     {common_doc}
     """
     m = PotentialParameter('m', physical_type='mass')
@@ -607,7 +607,7 @@ class MiyamotoNagaiPotential(CPotentialBase):
     a : :class:`~astropy.units.Quantity`, numeric [length]
         Scale length.
     b : :class:`~astropy.units.Quantity`, numeric [length]
-        Scare height.
+        Scale height.
     {common_doc}
     """
     m = PotentialParameter('m', physical_type='mass')
@@ -652,17 +652,22 @@ class MN3ExponentialDiskPotential(CPotentialBase):
     use this potential class, please also cite that work.
 
     As described in the above reference, this approximation has two options: (1)
-    with the ``positive_density=True`` argument set, this density will be positive
-    everywhere, but is only a good approximation of the exponential density
-    within about 5 disk scale lengths, and (2) with ``positive_density=False``,
-    this density will be negative in some regions, but is a better approximation
-    out to about 7 or 8 disk scale lengths.
+    with the ``positive_density=True`` argument set, this density will be
+    positive everywhere, but is only a good approximation of the exponential
+    density within about 5 disk scale lengths, and (2) with
+    ``positive_density=False``, this density will be negative in some regions,
+    but is a better approximation out to about 7 or 8 disk scale lengths.
 
     Parameters
     ----------
-    units : `~gala.units.UnitSystem` (optional)
-        Set of non-reducable units that specify (at minimum) the
-        length, mass, time, and angle units.
+    m : :class:`~astropy.units.Quantity`, numeric [mass]
+        Mass.
+    h_R : :class:`~astropy.units.Quantity`, numeric [length]
+        Radial (exponential) scale length.
+    h_z : :class:`~astropy.units.Quantity`, numeric [length]
+        If ``sech2_z=True``, this is the scale height in a sech^2 vertical
+        profile. If ``sech2_z=False``, this is an exponential scale height.
+    {common_doc}
 
     """
     m = PotentialParameter('m', physical_type='mass')
