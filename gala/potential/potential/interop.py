@@ -1,6 +1,7 @@
 """Interoperability with other dynamics packages"""
 
 import inspect
+import warnings
 
 from astropy.constants import G
 import astropy.units as u
@@ -37,6 +38,11 @@ if HAS_GALPY:
         amp = pars['amp'] * vo**2 * ro
         m = amp / G / fac
         return m
+
+    def _mn3_amp_to_galpy(pars, ro, vo):
+        num = (G * pars['m']).to_value(ro * vo**2)
+        den = (4*np.pi * pars['h_R'].to_value(ro)**2 * pars['h_z'].to_value(ro))
+        return num / den
 
     # TODO: some potential conversions drop parameters. Might want to add an
     # option for a custom validator function or something to raise warnings?
@@ -82,6 +88,15 @@ if HAS_GALPY:
             galpy_gp.MiyamotoNagaiPotential, {
                 'a': 'a',
                 'b': 'b'
+            }
+        ),
+        gp.MN3ExponentialDiskPotential: (
+            galpy_gp.MN3ExponentialDiskPotential, {
+                'amp': _mn3_amp_to_galpy,
+                'hr': 'h_R',
+                'hz': 'h_z',
+                'posdens': 'positive_density',
+                'sech': 'sech2_z'
             }
         ),
         gp.NFWPotential: (
@@ -179,6 +194,10 @@ def gala_to_galpy_potential(potential, ro=None, vo=None):
                              "converting to a Galpy potential is currently "
                              "not supported.")
 
+        if isinstance(potential, gp.MN3ExponentialDiskPotential):
+            gala_pars['positive_density'] = potential.positive_density
+            gala_pars['sech2_z'] = potential.sech2_z
+
         converters.setdefault(
             'amp', lambda pars, ro, vo: (G * pars['m']).to_value(ro * vo**2))
 
@@ -197,12 +216,19 @@ def gala_to_galpy_potential(potential, ro=None, vo=None):
             if hasattr(par, 'unit'):
                 if par.unit.physical_type == 'length':
                     galpy_pars[galpy_par_name] = par.to_value(ro)
+                elif par.unit.physical_type == 'speed':
+                    galpy_pars[galpy_par_name] = par.to_value(vo)
                 elif par.unit.physical_type == 'dimensionless':
                     galpy_pars[galpy_par_name] = par.value
                 elif par.unit.physical_type == 'angle':
                     galpy_pars[galpy_par_name] = par.to_value(u.rad)
                 else:
-                    # TODO: raise a warning here??
+                    warnings.warn(
+                        f"Unknown unit physical type '{par.unit.physical_type}'"
+                        " - this should have a custom unit converter. Please "
+                        "make a GitHub issue!",
+                        RuntimeWarning
+                    )
                     galpy_pars[galpy_par_name] = par.value
 
         pot = galpy_cls(**galpy_pars, ro=ro, vo=vo)
@@ -234,6 +260,14 @@ def galpy_to_gala_potential(potential, ro=None, vo=None, units=galactic):
             raise TypeError(
                 f"Converting galpy potential {potential.__class__.__name__} "
                 "to gala is currently not supported")
+        elif isinstance(potential, galpy_gp.MN3ExponentialDiskPotential):
+            warnings.warn(
+                "For the MN3ExponentialDiskPotential, galpy does not store "
+                "information to fully reconstruct the potential, so the "
+                "default gala choices will be adopted for the "
+                "'positive_density' and 'sech2_z' potential arguments",
+                RuntimeWarning
+            )
 
         gala_cls, converters = _galpy_to_gala[potential.__class__]
 
@@ -272,6 +306,9 @@ def galpy_to_gala_potential(potential, ro=None, vo=None, units=galactic):
                 print(f"FAIL: {gala_par_name}, {conv}")
 
             if hasattr(gala_pars[gala_par_name], 'unit'):
+                continue
+
+            if gala_par_name not in gala_cls._parameters:
                 continue
 
             gala_par = gala_cls._parameters[gala_par_name]

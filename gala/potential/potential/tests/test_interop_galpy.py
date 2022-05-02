@@ -4,6 +4,7 @@ Test converting the builtin Potential classes to other packages
 
 # Third-party
 from astropy.coordinates import CylindricalRepresentation
+from astropy.tests.helper import catch_warnings
 import astropy.units as u
 import numpy as np
 import pytest
@@ -60,6 +61,13 @@ def pytest_generate_tests(metafunc):
         gala_pots.append(pot)
         galpy_pots.append(galpy_pot)
 
+        # Custom settings in the MN3 potential:
+        if isinstance(pot, gp.MN3ExponentialDiskPotential):
+            pot = Potential(**init, units=galactic, sech2_z=False)
+            galpy_pot = pot.to_galpy_potential(ro=ro, vo=vo)
+            gala_pots.append(pot)
+            galpy_pots.append(galpy_pot)
+
     # Make a composite potential too:
     gala_pots.append(gala_pots[0] + gala_pots[1])
     galpy_pots.append([galpy_pots[0], galpy_pots[1]])
@@ -67,7 +75,12 @@ def pytest_generate_tests(metafunc):
     # Test the Galpy -> Gala direction
     for Potential in _galpy_to_gala.keys():
         galpy_pot = Potential(ro=ro, vo=vo)  # use defaults
-        pot = galpy_to_gala_potential(galpy_pot, ro=ro, vo=vo)
+
+        with catch_warnings(RuntimeWarning) as warns:
+            pot = galpy_to_gala_potential(galpy_pot, ro=ro, vo=vo)
+
+        if isinstance(galpy_pot, galpy_gp.MN3ExponentialDiskPotential):
+            assert len(warns) > 0
 
         gala_pots.append(pot)
         galpy_pots.append(galpy_pot)

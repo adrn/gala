@@ -176,7 +176,7 @@ class TestMiyamotoNagai(PotentialTestBase):
 
 class TestMN3(PotentialTestBase):
     potential = p.MN3ExponentialDiskPotential(
-        units=galactic, m=1.E11, h_R=3.5, b=0.26
+        units=galactic, m=1.E11, h_R=3.5, h_z=0.26
     )
     w0 = [8., 0., 0., 0., 0.22, 0.1]
 
