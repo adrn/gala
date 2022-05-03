@@ -8,8 +8,9 @@ import time
 import warnings
 
 # Third-party
-import numpy as np
+import astropy.table as at
 from astropy.utils.decorators import deprecated
+import numpy as np
 from scipy.linalg import solve
 from scipy.optimize import minimize
 
@@ -203,7 +204,7 @@ def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1], minimize_kwargs=None):
     return HarmonicOscillatorPotential(omega=best_omega, units=pot.units)
 
 
-def fit_toy_potential(orbit, force_harmonic_oscillator=False):
+def fit_toy_potential(orbit, force_harmonic_oscillator=False, **kwargs):
     """
     Fit a best fitting toy potential to the orbit provided. If the orbit is a
     tube (loop) orbit, use the Isochrone potential. If the orbit is a box
@@ -230,7 +231,7 @@ def fit_toy_potential(orbit, force_harmonic_oscillator=False):
         logger.debug("===== Tube orbit =====")
         logger.debug("Using Isochrone toy potential")
 
-        toy_potential = fit_isochrone(orbit)
+        toy_potential = fit_isochrone(orbit, **kwargs)
         logger.debug("Best m={}, b={}".format(toy_potential.parameters['m'],
                                               toy_potential.parameters['b']))
 
@@ -238,7 +239,7 @@ def fit_toy_potential(orbit, force_harmonic_oscillator=False):
         logger.debug("===== Box orbit =====")
         logger.debug("Using triaxial harmonic oscillator toy potential")
 
-        toy_potential = fit_harmonic_oscillator(orbit)
+        toy_potential = fit_harmonic_oscillator(orbit, **kwargs)
         logger.debug("Best omegas ({})"
                      .format(toy_potential.parameters['omega']))
 
@@ -455,7 +456,8 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
 
 
 def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
-                               force_harmonic_oscillator=False):
+                               force_harmonic_oscillator=False,
+                               fit_kwargs=None):
     """
     Find approximate actions and angles for samples of a phase-space orbit,
     `w`, at times `t`. Uses toy potentials with known, analytic action-angle
@@ -477,19 +479,25 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
         Fix the toy potential class.
     force_harmonic_oscillator : bool (optional)
         Force using the harmonic oscillator potential as the toy potential.
+    fit_kwargs : dict (optional)
+        Passed to ``fit_toy_potential()`` and on to the toy potential fitting
+        functions.
     """
     from gala.potential import HarmonicOscillatorPotential, IsochronePotential
 
     if orbit.norbits > 1:
         raise ValueError("must be a single orbit")
 
+    if fit_kwargs is None:
+        fit_kwargs = {}
+
     if toy_potential is None:
         toy_potential = fit_toy_potential(
-            orbit, force_harmonic_oscillator=force_harmonic_oscillator)
+            orbit, force_harmonic_oscillator=force_harmonic_oscillator,
+            **fit_kwargs)
 
     else:
-        logger.debug("Using *fixed* toy potential: {}"
-                     .format(toy_potential.parameters))
+        logger.debug(f"Using *fixed* toy potential: {toy_potential.parameters}")
 
     if isinstance(toy_potential, IsochronePotential):
         orbit_align = orbit.align_circulation_with_z()
@@ -556,8 +564,8 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
 
 
 def find_actions_o2gf(orbit, N_max, force_harmonic_oscillator=False,
-                      toy_potential=None):
-    r"""
+                      toy_potential=None, fit_kwargs=None):
+    """
     Find approximate actions and angles for samples of a phase-space orbit.
     Uses toy potentials with known, analytic action-angle transformations to
     approximate the true coordinates as a Fourier sum.
@@ -577,49 +585,36 @@ def find_actions_o2gf(orbit, N_max, force_harmonic_oscillator=False,
 
     Returns
     -------
-    aaf : dict
-        A Python dictionary containing the actions, angles, frequencies, and
+    aaf : `astropy.table.QTable`
+        An Astropy table containing the actions, angles, and frequencies for
+        each input phase-space position or orbit. The columns also contain the
         value of the generating function and derivatives for each integer
-        vector. Each value of the dictionary is a :class:`numpy.ndarray` or
-        :class:`astropy.units.Quantity`.
+        vector.
 
     """
 
     if orbit.norbits == 1:
-        return _single_orbit_find_actions(
+        result = _single_orbit_find_actions(
             orbit, N_max,
             force_harmonic_oscillator=force_harmonic_oscillator,
-            toy_potential=toy_potential)
+            toy_potential=toy_potential,
+            fit_kwargs=fit_kwargs
+        )
+        rows = [result]
 
     else:
-        result = None
-
+        rows = []
         for n in range(orbit.norbits):
             aaf = _single_orbit_find_actions(
                 orbit[:, n], N_max,
                 force_harmonic_oscillator=force_harmonic_oscillator,
-                toy_potential=toy_potential)
+                toy_potential=toy_potential,
+                fit_kwargs=fit_kwargs
+            )
 
-            if result is None:
-                result = {}
-                for name in aaf.keys():
-                    if hasattr(aaf, 'unit'):
-                        unit = aaf[name].unit
-                    else:
-                        unit = 1
+            rows.append(aaf)
 
-                    if name != 'nvecs':
-                        result[name] = np.full(aaf[name].shape +
-                                               (orbit.norbits,),
-                                               np.nan * unit)
-
-            for name in aaf.keys():
-                if name != 'nvecs':
-                    result[name][:, n] = aaf[name]
-                else:
-                    result[name] = aaf[name]
-
-    return result
+    return at.QTable(rows=rows)
 
 
 @deprecated(since="v1.5",
