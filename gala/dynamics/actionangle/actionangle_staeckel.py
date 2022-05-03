@@ -128,9 +128,6 @@ def find_actions_staeckel(potential, w, mean=True, delta=None,
         if mean:
             aaf['actions'] = np.nanmean(aaf['actions'], axis=0)
             aaf['freqs'] = np.nanmean(aaf['freqs'], axis=0)
-            aaf['angles'] = circmean(
-                aaf['angles'][:, np.isfinite(aaf['angles']).all(axis=0)],
-                axis=0
-            )
+            aaf['angles'] = aaf['angles'][0]
         rows.append(aaf)
     return at.QTable(rows=rows)
