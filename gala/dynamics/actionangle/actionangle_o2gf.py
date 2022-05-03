@@ -327,7 +327,8 @@ def check_angle_sampling(nvecs, angles):
 
     failed_nvecs = []
     failures = []
-
+    warn_longer_window = []
+    warn_finer_sampling = []
     for i, vec in enumerate(nvecs):
         # N = np.linalg.norm(vec)
         # X = np.dot(angles, vec)
@@ -335,18 +336,30 @@ def check_angle_sampling(nvecs, angles):
         diff = float(np.abs(X.max() - X.min()))
 
         if diff < (2.*np.pi):
-            warnings.warn("Need a longer integration window for mode {0}"
-                          .format(vec))
             failed_nvecs.append(vec.tolist())
             # P.append(2.*np.pi - diff)
             failures.append(0)
+            warn_longer_window.append(vec)
 
         elif (diff/len(X)) > np.pi:
-            warnings.warn("Need a finer sampling for mode {0}"
-                          .format(str(vec)))
             failed_nvecs.append(vec.tolist())
             # P.append(np.pi - diff/len(X))
             failures.append(1)
+            warn_finer_sampling.append(vec)
+
+    if len(warn_longer_window) > 0:
+        warn_longer_window = np.array(warn_longer_window)
+        warnings.warn(
+            f"Need a longer integration window for modes: {warn_longer_window}",
+            RuntimeWarning
+        )
+
+    if len(warn_finer_sampling) > 0:
+        warn_finer_sampling = np.array(warn_finer_sampling)
+        warnings.warn(
+            f"Need a finer time sampling for modes: {warn_finer_sampling}",
+            RuntimeWarning
+        )
 
     return np.array(failed_nvecs), np.array(failures)
 
