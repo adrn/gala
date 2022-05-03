@@ -8,11 +8,13 @@ import time
 import warnings
 
 # Third-party
+from astropy.constants import G
 import astropy.table as at
+import astropy.units as u
 from astropy.utils.decorators import deprecated
 import numpy as np
 from scipy.linalg import solve
-from scipy.optimize import minimize
+from scipy.optimize import minimize, root
 
 # Project
 from gala.logging import logger
@@ -79,7 +81,8 @@ def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
     return vecs
 
 
-def fit_isochrone(orbit, m0=2E11, b0=1., minimize_kwargs=None):
+@u.quantity_input(m0=u.Msun, b0=u.kpc)
+def fit_isochrone(orbit, m0=None, b0=None, minimize_kwargs=None):
     r"""
     Fit the toy Isochrone potential to the sum of the energy residuals relative
     to the mean energy by minimizing the function
@@ -95,29 +98,73 @@ def fit_isochrone(orbit, m0=2E11, b0=1., minimize_kwargs=None):
     ----------
     orbit : `~gala.dynamics.Orbit`
     m0 : numeric (optional)
-        Initial mass guess.
+        Initial guess for mass parameter of fitted Isochrone model.
     b0 : numeric (optional)
-        Initial b guess.
+        Initial guess for scale length parameter of fitted Isochrone model.
     minimize_kwargs : dict (optional)
         Keyword arguments to pass through to `scipy.optimize.minimize`.
 
     Returns
     -------
-    m : float
-        Best-fit scale mass for the Isochrone potential.
-    b : float
-        Best-fit core radius for the Isochrone potential.
+    fit_iso : `gala.potential.IsochronePotential`
+        Best-fit Isochrone potential for locally representing true potential.
 
     """
     from gala.potential import IsochronePotential
 
-    pot = orbit.hamiltonian.potential
+    pot = orbit.potential
     if pot is None:
-        raise ValueError("The orbit object must have an associated potential")
+        raise ValueError(
+            "The inputted orbit does not have an associated potential instance "
+            "(i.e. orbit.potential is None). You must provide an orbit instance"
+            " with a specified potential in order to initialize the toy "
+            "potential fitting."
+        )
 
     w = np.squeeze(orbit.w(pot.units))
     if w.ndim > 2:
         raise ValueError("Input orbit object must be a single orbit.")
+
+    if (m0 is not None and b0 is None) or (m0 is None and b0 is not None):
+        raise ValueError("If passing in initial guess for one parameter, you "
+                         "must also pass in an initial guess for the other "
+                         "(m0 and b0).")
+
+    elif m0 is not None and b0 is not None:
+        # both initial guesses provided
+        m0 = m0.decompose(pot.units).value
+        b0 = b0.decompose(pot.units).value
+
+    else:
+        # initial guess not specified: some magic to come up with initialization
+        r0 = np.mean(orbit.physicsspherical.r)
+        Menc0 = pot.mass_enclosed([1, 0, 0] * r0)[0].decompose(pot.units).value
+        Phi0 = pot.energy([1, 0, 0] * r0)[0]
+        Phi0 = Phi0.decompose(pot.units).value
+        r0 = r0.decompose(pot.units).value
+
+        _G = G.decompose(pot.units).value
+
+        def func(b, r0, M0, Phi0):
+            a0 = np.sqrt(r0**2 + b**2)
+            return -_G * M0 / r0**3 * a0 * (b + a0) - Phi0
+
+        res = root(
+            func, x0=10.,
+            args=(r0, Menc0, Phi0),
+        )
+        if not res.success:
+            raise RuntimeError(
+                "Root finding failed: Unable to find local Isochrone potential "
+                "fit for orbit."
+            )
+
+        b = res.x[0]
+        a0 = np.sqrt(b**2 + r0**2)
+        M = Menc0 / r0**3 * a0 * (b + a0)**2
+
+        m0 = M
+        b0 = b
 
     def f(p, w):
         logm, logb = p
@@ -132,21 +179,17 @@ def fit_isochrone(orbit, m0=2E11, b0=1., minimize_kwargs=None):
 
     if minimize_kwargs is None:
         minimize_kwargs = dict()
-    minimize_kwargs['x0'] = np.array([logm0, logb0])
-    minimize_kwargs['method'] = minimize_kwargs.get('method', 'powell')
+    minimize_kwargs.setdefault('x0', np.array([logm0, logb0]))
+    minimize_kwargs.setdefault('method', 'powell')
     res = minimize(f, args=(w,), **minimize_kwargs)
 
     if not res.success:
         raise ValueError("Failed to fit toy potential to orbit.")
 
-    logm, logb = np.abs(res.x)
-    m = np.exp(logm)
-    b = np.exp(logb)
-
-    return IsochronePotential(m=m, b=b, units=pot.units)
+    return IsochronePotential(*np.exp(res.x), units=pot.units)
 
 
-def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1], minimize_kwargs=None):
+def fit_harmonic_oscillator(orbit, omega0=None, minimize_kwargs=None):
     r"""
     Fit the toy harmonic oscillator potential to the sum of the energy
     residuals relative to the mean energy by minimizing the function
@@ -175,11 +218,22 @@ def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1], minimize_kwargs=None):
     """
     from gala.potential import HarmonicOscillatorPotential
 
-    omega0 = np.atleast_1d(omega0)
-
-    pot = orbit.hamiltonian.potential
+    pot = orbit.potential
     if pot is None:
-        raise ValueError("The orbit object must have an associated potential")
+        raise ValueError(
+            "The inputted orbit does not have an associated potential instance "
+            "(i.e. orbit.potential is None). You must provide an orbit instance"
+            " with a specified potential in order to initialize the toy "
+            "potential fitting."
+        )
+
+    if omega0 is None:
+        # Estimate from orbit:
+        P = orbit.cartesian.estimate_period()[0]
+        P = u.Quantity([P[k] for k in P.colnames])
+        omega0 = (2*np.pi / P).decompose(pot.units).value
+    else:
+        omega0 = np.atleast_1d(omega0)
 
     w = np.squeeze(orbit.w(pot.units))
     if w.ndim > 2:
@@ -226,22 +280,24 @@ def fit_toy_potential(orbit, force_harmonic_oscillator=False, **kwargs):
         The best-fit potential instance.
 
     """
+
     circulation = orbit.circulation()
     if np.any(circulation == 1) and not force_harmonic_oscillator:  # tube orbit
         logger.debug("===== Tube orbit =====")
         logger.debug("Using Isochrone toy potential")
 
         toy_potential = fit_isochrone(orbit, **kwargs)
-        logger.debug("Best m={}, b={}".format(toy_potential.parameters['m'],
-                                              toy_potential.parameters['b']))
+        logger.debug(
+            f"Best m={toy_potential.parameters['m']}, "
+            f"b={toy_potential.parameters['b']}"
+        )
 
     else:  # box orbit
         logger.debug("===== Box orbit =====")
         logger.debug("Using triaxial harmonic oscillator toy potential")
 
         toy_potential = fit_harmonic_oscillator(orbit, **kwargs)
-        logger.debug("Best omegas ({})"
-                     .format(toy_potential.parameters['omega']))
+        logger.debug(f"Best omegas ({toy_potential.parameters['omega']})")
 
     return toy_potential
 
