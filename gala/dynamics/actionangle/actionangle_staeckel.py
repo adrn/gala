@@ -1,5 +1,4 @@
 import astropy.coordinates as coord
-from astropy.stats import circmean
 import astropy.table as at
 import astropy.units as u
 import numpy as np

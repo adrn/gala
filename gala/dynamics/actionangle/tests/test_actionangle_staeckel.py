@@ -11,7 +11,6 @@ from gala.dynamics.actionangle import (
     find_actions_staeckel,
     find_actions_o2gf
 )
-import gala.integrate as gi
 import gala.potential as gp
 from gala.units import galactic
 from gala.tests.optional_deps import HAS_GALPY
@@ -35,16 +34,16 @@ def test_staeckel_fudge_delta():
     a = potential.parameters['a'].to_value(ro)
     b = potential.parameters['b'].to_value(ro)
     galpy_potential = galpy_pot.MiyamotoNagaiPotential(amp=amp, a=a, b=b,
-                                                    ro=ro, vo=vo)
+                                                       ro=ro, vo=vo)
     paired_potentials.append((potential, galpy_potential))
 
     # Hernquist
     potential = gp.HernquistPotential(m=6e10*u.Msun, c=0.3*u.kpc,
-                                        units=galactic)
+                                      units=galactic)
     amp = (G * potential.parameters['m']).to_value(vo**2 * ro)
     a = potential.parameters['c'].to_value(ro)
     galpy_potential = galpy_pot.HernquistPotential(amp=amp, a=a,
-                                                ro=ro, vo=vo)
+                                                   ro=ro, vo=vo)
     paired_potentials.append((potential, galpy_potential))
 
     # NFW
@@ -69,7 +68,7 @@ def test_staeckel_fudge_delta():
 
     for p, galpy_p in paired_potentials:
         galpy_deltas = estimateDeltaStaeckel(galpy_p, R, z,
-                                                no_median=True)
+                                             no_median=True)
         gala_deltas = get_staeckel_fudge_delta(p, w).value
         assert np.allclose(gala_deltas, galpy_deltas, atol=1e-5, rtol=1e-3)
 
