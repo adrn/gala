@@ -1,5 +1,6 @@
 # Third-party
 import astropy.coordinates as coord
+import astropy.table as at
 import astropy.units as u
 import numpy as np
 from scipy.signal import argrelmax
@@ -620,7 +621,7 @@ class Orbit(PhaseSpacePosition):
         rp = self.pericenter(**kw)
         return (ra - rp) / (ra + rp)
 
-    def estimate_period(self, radial=True):
+    def estimate_period(self, radial=False):
         """
         Estimate the period of the orbit. By default, computes the radial
         period. If ``radial==False``, this returns period estimates for
@@ -635,8 +636,9 @@ class Orbit(PhaseSpacePosition):
 
         Returns
         -------
-        T : `~astropy.units.Quantity`
-            The period or periods.
+        periods : `~astropy.table.QTable`
+            The estimated orbital periods for each phase-space component, for
+            each orbit.
         """
 
         if self.t is None:
@@ -644,17 +646,35 @@ class Orbit(PhaseSpacePosition):
                              "Specify a time array when creating this object.")
 
         if radial:
+            # TODO: Remove this after deprecation cycle
+            from gala.util import GalaDeprecationWarning
+            import warnings
+            warnings.warn(
+                "Passing radial=True in estimate_period() is now deprecated. "
+                "This method now returns period estimates for all orbital "
+                "components. If you want to get just the radial period, use "
+                "orbits.physicsspherical.estimate_period() instead.",
+                GalaDeprecationWarning
+            )
             r = self.physicsspherical.r.value
             if self.norbits == 1:
                 T = u.Quantity(peak_to_peak_period(self.t, r))
             else:
                 T = u.Quantity([peak_to_peak_period(self.t, r[:, n])
                                 for n in range(r.shape[1])])
+            return T
 
         else:
-            raise NotImplementedError("sorry 'bout that...")
-
-        return T
+            periods = {}
+            for k in self.pos_components.keys():
+                q = getattr(self, k).value
+                if self.norbits == 1:
+                    T = u.Quantity(peak_to_peak_period(self.t, q))
+                else:
+                    T = u.Quantity([peak_to_peak_period(self.t, q[:, n])
+                                    for n in range(q.shape[1])])
+                periods[k] = np.atleast_1d(T)
+            return at.QTable(periods)
 
     # ------------------------------------------------------------------------
     # Misc. useful methods
