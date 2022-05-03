@@ -132,7 +132,7 @@ def fit_isochrone(orbit, m0=2E11, b0=1., minimize_kwargs=None):
     if minimize_kwargs is None:
         minimize_kwargs = dict()
     minimize_kwargs['x0'] = np.array([logm0, logb0])
-    minimize_kwargs['method'] = minimize_kwargs.get('method', 'Nelder-Mead')
+    minimize_kwargs['method'] = minimize_kwargs.get('method', 'powell')
     res = minimize(f, args=(w,), **minimize_kwargs)
 
     if not res.success:
@@ -193,7 +193,7 @@ def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1], minimize_kwargs=None):
     if minimize_kwargs is None:
         minimize_kwargs = dict()
     minimize_kwargs['x0'] = omega0
-    minimize_kwargs['method'] = minimize_kwargs.get('method', 'Nelder-Mead')
+    minimize_kwargs['method'] = minimize_kwargs.get('method', 'powell')
     res = minimize(f, args=(w,), **minimize_kwargs)
 
     if not res.success:
