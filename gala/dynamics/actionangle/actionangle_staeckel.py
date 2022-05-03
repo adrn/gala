@@ -107,7 +107,7 @@ def find_actions_staeckel(potential, w, mean=True, delta=None,
         vo = galpy_potential._vo * u.km/u.s
 
     if not isinstance(w, Orbit):
-        w = Orbit(w.pos, w.vel)
+        w = Orbit(w.pos[None], w.vel[None], t=[0.] * potential.units['time'])
 
     if w.norbits == 1:
         iter_ = [w]
