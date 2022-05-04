@@ -41,8 +41,8 @@ def test_estimate_dt_n_steps():
                                       func=np.nanmin)
 
     orbit = H.integrate_orbit(w0, dt=dt, n_steps=n_steps)
-    T = orbit.estimate_period()
-    assert int(round((orbit.t.max()/T).decompose().value)) == nperiods
+    T = orbit.physicsspherical.estimate_period()['r']
+    assert int(np.round((orbit.t.max()/T).decompose().value)) == nperiods
 
 
 class TestCombine(object):
