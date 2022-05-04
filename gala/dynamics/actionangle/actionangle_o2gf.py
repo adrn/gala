@@ -150,7 +150,7 @@ def fit_isochrone(orbit, m0=None, b0=None, minimize_kwargs=None):
             def func(pars, r0, M0, Phi0):
                 b, const = pars
                 a0 = np.sqrt(r0**2 + b**2)
-                return (-_G * M0 / r0**3 * a0 * (b + a0) - Phi0 + const)**2
+                return (-_G * M0 / r0**3 * a0 * (b + a0) - Phi0 + const) ** 2
 
             res = minimize(
                 func, x0=[r0, 0],
@@ -162,7 +162,7 @@ def fit_isochrone(orbit, m0=None, b0=None, minimize_kwargs=None):
         else:
             def func(b, r0, M0, Phi0):
                 a0 = np.sqrt(r0**2 + b**2)
-                return -_G * M0 / r0**3 * a0 * (b + a0) - Phi0
+                return (-_G * M0 / r0**3 * a0 * (b + a0) - Phi0) ** 2
 
             res = minimize(
                 func, x0=[r0],

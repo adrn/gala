@@ -354,7 +354,7 @@ velocity but varying vertical velocities::
     >>> vcirc = pot.circular_velocity([8, 0, 0])
     >>> vz_grid = np.linspace(0.5, 200, 64) * u.km/u.s
     >>> xyz = np.repeat([[8., 0, 0]], len(vz_grid), axis=0).T * u.kpc
-    >>> vxyz = np.repeat([[0, 1.05, 0]], len(vz_grid), axis=0).T * vcirc
+    >>> vxyz = np.repeat([[0, 1.1, 0]], len(vz_grid), axis=0).T * vcirc
     >>> vxyz[2] = vz_grid
     >>> w0 = gd.PhaseSpacePosition(xyz, vxyz)
 
@@ -414,13 +414,13 @@ values at the initial conditions):
 The returned object (named ``aaf`` above) is an `astropy.table.QTable` instance
 that contains the actions, frequencies, and angles::
 
-    >>> aaf['actions']  # doctest: +ELLIPSIS
+    >>> aaf['actions'] # doctest: +ELLIPSIS, +FLOAT_CMP
     <Quantity [[1.37311419e+01, 2.20230163e+03, 1.18925334e-03],
                [1.37492666e+01, 2.20230163e+03, 6.40453804e-02],
                ...
                [2.12791913e+02, 2.20230163e+03, 3.79360950e+02],
                [2.24373315e+02, 2.20230163e+03, 3.93123827e+02]] km kpc / s>
-    >>> aaf['freqs']  # doctest: +ELLIPSIS
+    >>> aaf['freqs'] # doctest: +ELLIPSIS, +FLOAT_CMP
     <Quantity [[41.18594991, 28.48624486, 93.55643484],
                [41.18106052, 28.48279328, 92.95586775],
                ...
