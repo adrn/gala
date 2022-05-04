@@ -229,7 +229,7 @@ actions computed using this machinery::
         result = gd.find_actions(w, N_max=8, toy_potential=toy_potential)
 
     nvecs = gd.generate_n_vectors(8, dx=1, dy=2, dz=2)
-    act_correction = nvecs.T[...,None] * result['Sn'][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
+    act_correction = nvecs.T[...,None] * result['Sn'][0][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
     action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr
     fig,ax = plt.subplots(1,1)
     ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc), marker='', label='$J_1$')
@@ -310,7 +310,7 @@ and the same initial conditions as above:
     # for visualization, compute the action correction used to transform the
     #   toy potential actions to the approximate true potential actions
     nvecs = gd.generate_n_vectors(8, dx=1, dy=2, dz=2)
-    act_correction = nvecs.T[...,None] * result['Sn'][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
+    act_correction = nvecs.T[...,None] * result['Sn'][0][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
     action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr
 
     fig,axes = plt.subplots(3,1,figsize=(6,14))
@@ -364,11 +364,10 @@ We can now integrate these orbits in the total potential::
     ...     w0, dt=1, t1=0, t2=4*u.Gyr,
     ...     Integrator=gi.DOPRI853Integrator
     ... )
-    >>> orbits.cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',')
+    >>> orbits.cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',')  # doctest: +SKIP
 
 .. plot::
     :align: center
-    :include-source:
     :width: 60%
     :context: close-figs
 
@@ -377,6 +376,7 @@ We can now integrate these orbits in the total potential::
     import matplotlib.pyplot as plt
     import numpy as np
     import gala.potential as gp
+    import gala.integrate as gi
     import gala.dynamics as gd
     from gala.units import galactic
 
@@ -393,7 +393,7 @@ We can now integrate these orbits in the total potential::
     vcirc = pot.circular_velocity([8, 0, 0])
     vz_grid = np.linspace(0.5, 200, 64) * u.km/u.s
     xyz = np.repeat([[8., 0, 0]], len(vz_grid), axis=0).T * u.kpc
-    vxyz = np.repeat([[0, 1.05, 0]], len(vz_grid), axis=0).T * vcirc
+    vxyz = np.repeat([[0, 1.1, 0]], len(vz_grid), axis=0).T * vcirc
     vxyz[2] = vz_grid
     w0 = gd.PhaseSpacePosition(xyz, vxyz)
 
@@ -409,23 +409,92 @@ frequencies with the Staeckel Fudge, which computes actions for the full orbital
 time series and then averages the actions and frequencies (and returns the angle
 values at the initial conditions):
 
-    >>> aaf = gd.find_actions_staeckel(pot, orbits)
+    >>> aaf = gd.find_actions_staeckel(pot, orbits)  # doctest: +IGNORE_WARNINGS
 
-We can then see how the vertical frequency depends on vertical action by
-plotting::
+The returned object (named ``aaf`` above) is an `astropy.table.QTable` instance
+that contains the actions, frequencies, and angles::
 
-    >>> plt.plot(aaf['actions'][:, 2], aaf['freqs'][:, 2]) # doctest: +SKIP
+    >>> aaf['actions']  # doctest: +ELLIPSIS
+    <Quantity [[1.37311419e+01, 2.20230163e+03, 1.18925334e-03],
+               [1.37492666e+01, 2.20230163e+03, 6.40453804e-02],
+               ...
+               [2.12791913e+02, 2.20230163e+03, 3.79360950e+02],
+               [2.24373315e+02, 2.20230163e+03, 3.93123827e+02]] km kpc / s>
+    >>> aaf['freqs']  # doctest: +ELLIPSIS
+    <Quantity [[41.18594991, 28.48624486, 93.55643484],
+               [41.18106052, 28.48279328, 92.95586775],
+               ...
+               [28.34021708, 19.15509891, 22.56426744],
+               [27.97813836, 18.91345658, 22.16993539]] km / (kpc s)>
+
+The coordinate order for each  column is R, phi, z, so for example
+``aaf['actions'][:, 0]`` corresponds to :math:`J_R`, ``aaf['actions'][:, 1]``
+corresponds to :math:`J_\phi`, and ``aaf['actions'][:, 2]`` corresponds to
+:math:`J_z` (and similar for frequencies and angles).
+
+Let's visualize the dependence of the vertical action on the value of the
+vertical velocity we used as initial conditions::
+
+    >>> plt.plot(w0.v_z, aaf['actions'][:, 2])  # doctest: +SKIP
 
 .. plot::
     :align: center
-    :include-source:
     :width: 60%
     :context: close-figs
+
+    aaf = gd.find_actions_staeckel(pot, orbits)
+
+    fig, ax = plt.subplots(figsize=(6, 6), constrained_layout=True)
+    ax.plot(w0.v_z, aaf['actions'][:, 2])
+    ax.set_xlabel(f"$v_z$ [{w0.v_z.unit:latex_inline}]")
+    ax.set_ylabel(rf"$\Omega_z$ [{aaf['freqs'].unit:latex_inline}]")
+
+Or, we can see how the vertical frequency depends on vertical action by
+plotting::
+
+    >>> plt.plot(aaf['actions'][:, 2], aaf['freqs'][:, 2])  # doctest: +SKIP
+
+.. plot::
+    :align: center
+    :width: 60%
+    :context: close-figs
+
+    aaf = gd.find_actions_staeckel(pot, orbits)
 
     fig, ax = plt.subplots(figsize=(6, 6), constrained_layout=True)
     ax.plot(aaf['actions'][:, 2], aaf['freqs'][:, 2])
     ax.set_xlabel(f"$J_z$ [{aaf['actions'].unit:latex_inline}]")
     ax.set_ylabel(rf"$\Omega_z$ [{aaf['freqs'].unit:latex_inline}]")
+
+
+The overall trend looks right, but what is that weird break that occurs around
+:math:`v_z` ~ 120 km/s? Let's visualize orbits with initial conditions just next
+to and within this region::
+
+    >>> i1 = np.abs(w0.v_z.value - 120).argmin()
+    >>> i2 = np.abs(w0.v_z.value - 100).argmin()
+    >>> orbits[:, i1].cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',')  # doctest: +SKIP
+    >>> orbits[:, i2].cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',')  # doctest: +SKIP
+
+.. plot::
+    :align: center
+    :width: 90%
+    :context: close-figs
+
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5),
+                             sharex=True, sharey=True,
+                             constrained_layout=True)
+
+    i1 = np.abs(w0.v_z.value - 120).argmin()
+    i2 = np.abs(w0.v_z.value - 100).argmin()
+    orbits[:, i1].cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',', axes=[axes[0]]);
+    orbits[:, i2].cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',', axes=[axes[1]]);
+
+Aha! This region is special: it is a resonance in the potential. Orbits in this
+region of phase-space have qualitatively different behavior than those outside
+of this region because they are trapped by the resonance. For these orbits,
+where strong potential resonances occur, the Staeckel Fudge approximation will
+return incorrect and potentially misleading action, angle, and frequency values.
 
 
 References
