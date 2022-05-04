@@ -1,3 +1,5 @@
+from collections.abc import Iterable
+
 import astropy.coordinates as coord
 import astropy.table as at
 import astropy.units as u
@@ -56,8 +58,8 @@ def get_staeckel_fudge_delta(potential, w, median=True):
     delta = np.sqrt(a2_c2)
 
     # Median over time if the inputs were orbits
-    if len(delta.shape) > 1 and median:
-        delta = np.nanmedian(delta, axis=1)
+    if (len(delta.shape) > 1 and median) or isinstance(w, Orbit):
+        delta = np.nanmedian(delta, axis=0)
 
     return delta * potential.units['length']
 
@@ -113,10 +115,13 @@ def find_actions_staeckel(potential, w, mean=True, delta=None,
     else:
         iter_ = w.orbit_gen()
 
+    if not isinstance(delta, Iterable):
+        delta = [delta] * w.norbits
+
     rows = []
-    for w_ in iter_:
+    for w_, delta_ in zip(iter_, delta):
         o = w_.to_galpy_orbit(ro, vo)
-        aAS = actionAngleStaeckel(pot=galpy_potential, delta=delta)
+        aAS = actionAngleStaeckel(pot=galpy_potential, delta=delta_)
 
         aaf = aAS.actionsFreqsAngles(o)
         aaf = {
