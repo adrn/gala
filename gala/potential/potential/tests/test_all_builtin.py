@@ -27,6 +27,7 @@ class TestHarmonicOscillator1D(PotentialTestBase):
     potential = p.HarmonicOscillatorPotential(omega=1.)
     w0 = [1., 0.1]
     sympy_density = False
+    check_finite_at_origin = False
 
     def test_plot(self):
         # Skip for now because contour plotting assumes 3D
@@ -37,6 +38,7 @@ class TestHarmonicOscillator2D(PotentialTestBase):
     potential = p.HarmonicOscillatorPotential(omega=[1., 2])
     w0 = [1., 0.5, 0., 0.1]
     sympy_density = False
+    check_finite_at_origin = False
 
     def test_plot(self):
         # Skip for now because contour plotting assumes 3D
@@ -91,17 +93,20 @@ class TestHenonHeiles(PotentialTestBase):
     potential = p.HenonHeilesPotential()
     w0 = [1., 0., 0., 2*np.pi]
     sympy_density = False
+    check_finite_at_origin = False
 
 
 class TestKepler(PotentialTestBase):
     potential = p.KeplerPotential(units=solarsystem, m=1.)
     w0 = [1., 0., 0., 0., 2*np.pi, 0.]
     # show_plots = True
+    check_finite_at_origin = False
 
 
 class TestKeplerUnitInput(PotentialTestBase):
     potential = p.KeplerPotential(units=solarsystem, m=(1*u.Msun).to(u.Mjup))
     w0 = [1., 0., 0., 0., 2*np.pi, 0.]
+    check_finite_at_origin = False
 
 
 class TestIsochrone(PotentialTestBase):
@@ -126,6 +131,7 @@ class TestPlummer(PotentialTestBase):
 
 
 class TestJaffe(PotentialTestBase):
+    check_finite_at_origin = False
     potential = p.JaffePotential(units=galactic, m=1.E11, c=0.26)
     w0 = [1., 0., 0., 0., 0.1, 0.1]
 
@@ -209,6 +215,7 @@ class TestPowerLawCutoff(PotentialTestBase):
     w0 = [8., 0., 0., 0., 0.1, 0.1]
     atol = 1e-3
     sympy_density = False  # weird underflow issues??
+    check_finite_at_origin = False
 
     def setup(self):
         self.potential = p.PowerLawCutoffPotential(units=galactic,

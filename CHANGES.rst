@@ -14,6 +14,10 @@ New Features
 Bug fixes
 ---------
 
+- Fixed a bug where the ``NFWPotential`` energy was nan when evaluating at the
+  origin, and added tests for all potentials to check for a finite value of the
+  potential at the origin (when expected).
+
 API changes
 -----------
 

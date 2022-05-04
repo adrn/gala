@@ -683,8 +683,15 @@ double stone_value(double t, double *pars, double *q, int n_dim) {
 
     fac = 2*pars[0]*pars[1] / M_PI / (pars[3] - pars[2]);
 
-    return -fac * (atan(u_h)/u_h - atan(u_c)/u_c +
-                   0.5*log((r*r + pars[3]*pars[3])/(r*r + pars[2]*pars[2])));
+    if (r == 0) {
+        return -fac * 0.5 * log(pars[3]*pars[3] / (pars[2] * pars[2]));
+    } else {
+        return -fac * (
+            atan(u_h)/u_h - atan(u_c)/u_c +
+            0.5*log((r*r + pars[3]*pars[3])/(r*r + pars[2]*pars[2]))
+        );
+    }
+
 }
 
 void stone_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
@@ -833,7 +840,11 @@ double sphericalnfw_value(double t, double *pars, double *q, int n_dim) {
     // v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
     v_h2 = -pars[0] * pars[1] / pars[2];
     u = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]) / pars[2];
-    return v_h2 * log(1 + u) / u;
+    if (u == 0) {
+        return v_h2;
+    } else {
+        return v_h2 * log(1 + u) / u;
+    }
 }
 
 void sphericalnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
@@ -941,7 +952,11 @@ double flattenednfw_value(double t, double *pars, double *q, int n_dim) {
     // v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
     v_h2 = -pars[0] * pars[1] / pars[2];
     u = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]/(pars[5]*pars[5])) / pars[2];
-    return v_h2 * log(1 + u) / u;
+    if (u == 0) {
+        return v_h2;
+    } else {
+        return v_h2 * log(1 + u) / u;
+    }
 }
 
 void flattenednfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
@@ -1044,7 +1059,12 @@ double triaxialnfw_value(double t, double *pars, double *q, int n_dim) {
     u = sqrt(q[0]*q[0]/(pars[3]*pars[3])
            + q[1]*q[1]/(pars[4]*pars[4])
            + q[2]*q[2]/(pars[5]*pars[5])) / pars[2];
-    return v_h2 * log(1 + u) / u;
+
+    if (u == 0) {
+        return v_h2;
+    } else {
+        return v_h2 * log(1 + u) / u;
+    }
 }
 
 void triaxialnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
@@ -1478,7 +1498,11 @@ double leesuto_value(double t, double *pars, double *q, int n_dim) {
     sinth2 = 1 - costh2;
     sinph2 = y*y / (x*x + y*y);
     //return phi0 * ((e_b2/2 + e_c2/2)*((1/u - 1/(u*u*u))*log(u + 1) - 1 + (2*u*u - 3*u + 6)/(6*u*u)) + (e_b2*y*y/(2*_r*_r) + e_c2*z*z/(2*_r*_r))*((u*u - 3*u - 6)/(2*u*u*(u + 1)) + 3*log(u + 1)/(u*u*u)) - log(u + 1)/u);
-    return phi0 * (F1 + (e_b2+e_c2)/2.*F2 + (e_b2*sinth2*sinph2 + e_c2*costh2)/2. * F3);
+    if (u == 0) {
+        return phi0;
+    } else {
+        return phi0 * (F1 + (e_b2+e_c2)/2.*F2 + (e_b2*sinth2*sinph2 + e_c2*costh2)/2. * F3);
+    }
 }
 
 void leesuto_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
