@@ -853,9 +853,9 @@ class NFWPotential(CPotentialBase):
             from astropy.constants import G
             from astropy.cosmology import default_cosmology
             cosmo = default_cosmology.get()
-            rho_c = 3 * cosmo.H(0.)**2 / (8*np.pi*G)
+            rho_c = (3 * cosmo.H(0.)**2 / (8*np.pi*G)).to(u.Msun/u.kpc**3)
 
-        Rvir = np.cbrt(M200 / (200*rho_c) / (4/3*np.pi))
+        Rvir = np.cbrt(M200 / (200*rho_c) / (4./3 * np.pi)).to(u.kpc)
         r_s = Rvir / c
 
         A_NFW = np.log(1 + c) - c / (1 + c)

@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 from ...potential.potential.cpotential cimport CPotential
 
 cdef class BaseStreamDF:

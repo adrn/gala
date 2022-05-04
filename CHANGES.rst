@@ -18,6 +18,10 @@ Bug fixes
   origin, and added tests for all potentials to check for a finite value of the
   potential at the origin (when expected).
 
+- Fixed a bug in ``NFWPotential.from_M200_c()`` where the incorrect scale radius
+  was computed (Cython does not always use Python 3 division rules for dividing
+  integers!).
+
 API changes
 -----------
 
