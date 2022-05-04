@@ -14,7 +14,7 @@ import astropy.units as u
 from astropy.utils.decorators import deprecated
 import numpy as np
 from scipy.linalg import solve
-from scipy.optimize import minimize, root
+from scipy.optimize import minimize
 
 # Project
 from gala.logging import logger
@@ -110,7 +110,7 @@ def fit_isochrone(orbit, m0=None, b0=None, minimize_kwargs=None):
         Best-fit Isochrone potential for locally representing true potential.
 
     """
-    from gala.potential import IsochronePotential
+    from gala.potential import IsochronePotential, LogarithmicPotential
 
     pot = orbit.potential
     if pot is None:
@@ -145,14 +145,32 @@ def fit_isochrone(orbit, m0=None, b0=None, minimize_kwargs=None):
 
         _G = G.decompose(pot.units).value
 
-        def func(b, r0, M0, Phi0):
-            a0 = np.sqrt(r0**2 + b**2)
-            return -_G * M0 / r0**3 * a0 * (b + a0) - Phi0
+        # Special case the logarithmic potential:
+        if isinstance(pot, LogarithmicPotential):
+            def func(pars, r0, M0, Phi0):
+                b, const = pars
+                a0 = np.sqrt(r0**2 + b**2)
+                return (-_G * M0 / r0**3 * a0 * (b + a0) - Phi0 + const)**2
 
-        res = root(
-            func, x0=10.,
-            args=(r0, Menc0, Phi0),
-        )
+            res = minimize(
+                func, x0=[r0, 0],
+                args=(r0, Menc0, Phi0),
+                method='L-BFGS-B',
+                bounds=[(0, None), (None, None)]
+            )
+
+        else:
+            def func(b, r0, M0, Phi0):
+                a0 = np.sqrt(r0**2 + b**2)
+                return -_G * M0 / r0**3 * a0 * (b + a0) - Phi0
+
+            res = minimize(
+                func, x0=[r0],
+                args=(r0, Menc0, Phi0),
+                method='L-BFGS-B',
+                bounds=[(0, None)]
+            )
+
         if not res.success:
             raise RuntimeError(
                 "Root finding failed: Unable to find local Isochrone potential "
