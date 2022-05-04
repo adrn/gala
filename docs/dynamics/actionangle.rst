@@ -409,10 +409,14 @@ frequencies with the Staeckel Fudge, which computes actions for the full orbital
 time series and then averages the actions and frequencies (and returns the angle
 values at the initial conditions):
 
+.. doctest-requires:: galpy
+
     >>> aaf = gd.find_actions_staeckel(pot, orbits)  # doctest: +IGNORE_WARNINGS
 
 The returned object (named ``aaf`` above) is an `astropy.table.QTable` instance
 that contains the actions, frequencies, and angles::
+
+.. doctest-requires:: galpy
 
     >>> aaf['actions'] # doctest: +ELLIPSIS, +FLOAT_CMP
     <Quantity [[1.37311419e+01, 2.20230163e+03, 1.18925334e-03],
@@ -437,6 +441,8 @@ vertical velocity we used as initial conditions::
 
     >>> plt.plot(w0.v_z, aaf['actions'][:, 2])  # doctest: +SKIP
 
+.. doctest-requires:: galpy
+
 .. plot::
     :align: center
     :width: 60%
@@ -454,12 +460,12 @@ plotting::
 
     >>> plt.plot(aaf['actions'][:, 2], aaf['freqs'][:, 2])  # doctest: +SKIP
 
+.. doctest-requires:: galpy
+
 .. plot::
     :align: center
     :width: 60%
     :context: close-figs
-
-    aaf = gd.find_actions_staeckel(pot, orbits)
 
     fig, ax = plt.subplots(figsize=(6, 6), constrained_layout=True)
     ax.plot(aaf['actions'][:, 2], aaf['freqs'][:, 2])
