@@ -1,5 +1,4 @@
 from collections.abc import Iterable
-from xml.dom import ValidationErr
 
 import astropy.coordinates as coord
 import astropy.table as at
