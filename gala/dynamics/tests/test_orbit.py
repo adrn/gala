@@ -422,7 +422,18 @@ def test_estimate_period():
 
         orb = Orbit(pos*u.kpc, vel*u.kpc/u.Myr, t=t*u.Gyr)
         T = orb.estimate_period()
-        assert np.allclose(T.value, true_T_R, rtol=1E-3)
+        assert 'x' in T.colnames and 'y' in T.colnames and 'z' in T.colnames
+
+        T = orb.cylindrical.estimate_period()
+        assert np.allclose(T['rho'].value, true_T_R, rtol=1E-3)
+        assert np.allclose(T['phi'].value, 1., rtol=1E-3)
+
+    # TODO: remove this in next version
+    from astropy.tests.helper import catch_warnings
+    from gala.util import GalaDeprecationWarning
+    with catch_warnings(GalaDeprecationWarning) as w:
+        orb.estimate_period(radial=True)
+    assert len(w) > 0
 
 
 def test_estimate_period_regression():

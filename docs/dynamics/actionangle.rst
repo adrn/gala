@@ -10,9 +10,8 @@ Introduction
 Regular orbits permit a (local) transformation to a set of canonical coordinates
 such that the momenta are independent, isolating integrals of motion (the
 actions, :math:`\boldsymbol{J}`) and the conjugate coordinate variables (the
-angles, :math:`\boldsymbol{\theta}`) linearly increase time. Action-angle
-coordinates are useful for a number of applications because Hamilton's equations
--- the equations of motion -- are simple:
+angles, :math:`\boldsymbol{\theta}`) linearly increase with time. Action-angle
+coordinates are useful for a number of applications because the equations of motion are very simple:
 
 .. math::
 
@@ -22,25 +21,43 @@ coordinates are useful for a number of applications because Hamilton's equations
 
 Analytic transformations from phase-space to action-angle coordinates are only
 known for a few simple cases where the gravitational potential is separable or
-has many symmetries. However, astronomical systems can often be triaxial or
-have complex radial profiles that are not captured by these simple systems.
-Here we have implemented the method described in [sanders14]_  for computing
-actions and angles for an arbitrary numerically integrated orbit. We demonstrate
-this method below with two orbits:
+has many symmetries. However, astronomical systems can often be approximately axisymmetric or triaxial, or have complex radial profiles that are not captured by these simple gravitational potentials where the transformations are known.
+
+Several numerical methods have been developed over recent years to enable
+approximate transformations between ordinary position and velocity to
+action-angle coordinates -- see [sanders16]_ for a summary of these methods.
+In Gala, we have implemented the method described in [sanders14]_ -- later in
+[sanders16]_ named the "O2GF" method -- for computing actions and angles from
+numerically integrated orbits. Gala also provides an interface to the `galpy
+<https://github.com/jobovy/galpy>`_ implementation of the "Staeckel Fudge"
+method, which is much faster but only useful for axisymmetric or spherical
+potentials.
+
+The O2GF action solver
+======================
+
+As mentioned above, this method was first introduced in [sanders14]_ and later
+described in [sanders16]_. This method is very general in that it works with any
+numerically-integrated orbital time series. However, it is slower than other
+approximate methods: If your system is spherical or axisymmetric, other methods
+will perform much better. If your system is triaxial, this method is your best
+option. We demonstrate this method below with two qualitatively different
+orbits:
 
 * :ref:`tube-axisymmetric`
 * :ref:`tube-triaxial`
 
-(see also [binneytremaine]_ and [mcgill90]_) For the examples below, we will use
-the `~gala.units.galactic` unit system and assume the following imports have
-been executed::
+(see also [binneytremaine]_ and [mcgill90]_ for more context). For the examples
+below, we will use the `~gala.units.galactic` unit system and assume the
+following imports have been executed::
 
     >>> import astropy.coordinates as coord
     >>> import astropy.units as u
     >>> import matplotlib.pyplot as plt
     >>> import numpy as np
-    >>> import gala.potential as gp
     >>> import gala.dynamics as gd
+    >>> import gala.integrate as gi
+    >>> import gala.potential as gp
     >>> from gala.units import galactic
 
 For many more options for action calculation, see
@@ -49,7 +66,7 @@ For many more options for action calculation, see
 .. _tube-axisymmetric:
 
 A tube orbit in an axisymmetric potential
-=========================================
+-----------------------------------------
 
 For an example of an axisymmetric potential, we use a flattened logarithmic
 potential:
@@ -75,8 +92,9 @@ For the orbit, we use initial conditions
 
 We first create a potential and set up our initial conditions::
 
-    >>> pot = gp.LogarithmicPotential(v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
-    ...                               units=galactic)
+    >>> pot = gp.LogarithmicPotential(
+    ...     v_c=150*u.km/u.s, q1=1., q2=1., q3=0.9, r_h=0,
+    ...     units=galactic)
     >>> w0 = gd.PhaseSpacePosition(pos=[8, 0, 0.]*u.kpc,
     ...                            vel=[75, 150, 50.]*u.km/u.s)
 
@@ -175,7 +193,7 @@ choose the maximum integer vector norm, `N_max`, which here we arbitrarily set
 to 8. This will change depending on the convergence of the action correction
 (the properties of the orbit and potential) and the accuracy desired::
 
-    >>> result = gd.find_actions(w, N_max=8, toy_potential=toy_potential) # doctest: +SKIP
+    >>> result = gd.find_actions_o2gf(w, N_max=8, toy_potential=toy_potential) # doctest: +SKIP
     >>> result.keys() # doctest: +SKIP
     dict_keys(['Sn', 'nvecs', 'freqs', 'dSn_dJ', 'angles', 'actions'])
 
@@ -208,10 +226,10 @@ actions computed using this machinery::
     import warnings
     with warnings.catch_warnings(record=True):
         warnings.simplefilter("ignore")
-        result = gd.find_actions(w, N_max=8, toy_potential=toy_potential)
+        result = gd.find_actions_o2gf(w, N_max=8, toy_potential=toy_potential)
 
     nvecs = gd.generate_n_vectors(8, dx=1, dy=2, dz=2)
-    act_correction = nvecs.T[...,None] * result['Sn'][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
+    act_correction = nvecs.T[...,None] * result['Sn'][0][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
     action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr
     fig,ax = plt.subplots(1,1)
     ax.plot(w.t, toy_actions[0].to(u.km/u.s*u.kpc), marker='', label='$J_1$')
@@ -226,7 +244,7 @@ potential.
 .. _tube-triaxial:
 
 A tube orbit in a triaxial potential
-====================================
+------------------------------------
 
 The same procedure works for regular orbits in more complex potentials. We
 demonstrate this below by repeating the above in a triaxial potential. We again
@@ -287,12 +305,12 @@ and the same initial conditions as above:
     import warnings
     with warnings.catch_warnings(record=True):
         warnings.simplefilter("ignore")
-        result = gd.find_actions(w, N_max=8, toy_potential=toy_potential)
+        result = gd.find_actions_o2gf(w, N_max=8, toy_potential=toy_potential)
 
     # for visualization, compute the action correction used to transform the
     #   toy potential actions to the approximate true potential actions
     nvecs = gd.generate_n_vectors(8, dx=1, dy=2, dz=2)
-    act_correction = nvecs.T[...,None] * result['Sn'][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
+    act_correction = nvecs.T[...,None] * result['Sn'][0][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
     action_approx = toy_actions - 2*np.sum(act_correction, axis=1)*u.kpc**2/u.Myr
 
     fig,axes = plt.subplots(3,1,figsize=(6,14))
@@ -306,9 +324,193 @@ and the same initial conditions as above:
     ax.set_xlabel(r"$t$ [Myr]")
     fig.tight_layout()
 
+
+The Staeckel Fudge interface to Galpy
+=====================================
+
+Gala now also provides an interface to the "Staeckel Fudge" [binney12]_
+implementation in `Galpy <https://github.com/jobovy/galpy>`_. This method, as
+implemented, is only applicable for axisymmetric systems, but is *much* faster
+than the O2GF method for estimating actions, angles, and frequencies from
+phase-space positions. As an example of this functionality, below we will
+compute the vertical frequency as a function of action for a grid of orbits in a
+two-component model for a galactic potential (a disk + halo model).
+
+We will start by defining the potential model::
+
+    >>> halo = gp.NFWPotential.from_M200_c(
+    ...     M200=1e12*u.Msun, c=15,
+    ...     units=galactic
+    ... )
+    >>> disk = gp.MN3ExponentialDiskPotential(
+    ...     m=8e10*u.Msun, h_R=3.5*u.kpc, h_z=0.4*u.kpc,
+    ...     units=galactic
+    ... )
+    >>> pot = halo + disk
+
+We next define a grid of orbital initial conditions with close to the circular
+velocity but varying vertical velocities::
+
+    >>> vcirc = pot.circular_velocity([8, 0, 0])
+    >>> vz_grid = np.linspace(0.5, 200, 64) * u.km/u.s
+    >>> xyz = np.repeat([[8., 0, 0]], len(vz_grid), axis=0).T * u.kpc
+    >>> vxyz = np.repeat([[0, 1.1, 0]], len(vz_grid), axis=0).T * vcirc
+    >>> vxyz[2] = vz_grid
+    >>> w0 = gd.PhaseSpacePosition(xyz, vxyz)
+
+We can now integrate these orbits in the total potential::
+
+    >>> orbits = pot.integrate_orbit(
+    ...     w0, dt=1, t1=0, t2=4*u.Gyr,
+    ...     Integrator=gi.DOPRI853Integrator
+    ... )
+    >>> orbits.cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',')  # doctest: +SKIP
+
+.. plot::
+    :align: center
+    :width: 60%
+    :context: close-figs
+
+    import astropy.coordinates as coord
+    import astropy.units as u
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import gala.potential as gp
+    import gala.integrate as gi
+    import gala.dynamics as gd
+    from gala.units import galactic
+
+    halo = gp.NFWPotential.from_M200_c(
+        M200=1e12*u.Msun, c=15,
+        units=galactic
+    )
+    disk = gp.MN3ExponentialDiskPotential(
+        m=8e10*u.Msun, h_R=3.5*u.kpc, h_z=0.4*u.kpc,
+        units=galactic
+    )
+    pot = halo + disk
+
+    vcirc = pot.circular_velocity([8, 0, 0])
+    vz_grid = np.linspace(0.5, 200, 64) * u.km/u.s
+    xyz = np.repeat([[8., 0, 0]], len(vz_grid), axis=0).T * u.kpc
+    vxyz = np.repeat([[0, 1.1, 0]], len(vz_grid), axis=0).T * vcirc
+    vxyz[2] = vz_grid
+    w0 = gd.PhaseSpacePosition(xyz, vxyz)
+
+    orbits = pot.integrate_orbit(
+        w0, dt=1, t1=0, t2=4*u.Gyr,
+        Integrator=gi.DOPRI853Integrator
+    )
+    orbits.cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',')
+
+
+With the orbits in hand, we can compute the approximate actions, angles, and
+frequencies with the Staeckel Fudge, which computes actions for the full orbital
+time series and then averages the actions and frequencies (and returns the angle
+values at the initial conditions):
+
+.. doctest-requires:: galpy
+
+    >>> aaf = gd.find_actions_staeckel(pot, orbits)  # doctest: +IGNORE_WARNINGS
+
+The returned object (named ``aaf`` above) is an `astropy.table.QTable` instance
+that contains the actions, frequencies, and angles:
+
+.. doctest-requires:: galpy
+
+    >>> aaf['actions'] # doctest: +ELLIPSIS, +FLOAT_CMP
+    <Quantity [[1.37311419e+01, 2.20230163e+03, 1.18925334e-03],
+               [1.37492666e+01, 2.20230163e+03, 6.40453804e-02],
+               ...
+               [2.12791913e+02, 2.20230163e+03, 3.79360950e+02],
+               [2.24373315e+02, 2.20230163e+03, 3.93123827e+02]] km kpc / s>
+    >>> aaf['freqs'] # doctest: +ELLIPSIS, +FLOAT_CMP
+    <Quantity [[41.18594991, 28.48624486, 93.55643484],
+               [41.18106052, 28.48279328, 92.95586775],
+               ...
+               [28.34021708, 19.15509891, 22.56426744],
+               [27.97813836, 18.91345658, 22.16993539]] km / (kpc s)>
+
+The coordinate order for each  column is R, phi, z, so for example
+``aaf['actions'][:, 0]`` corresponds to :math:`J_R`, ``aaf['actions'][:, 1]``
+corresponds to :math:`J_\phi`, and ``aaf['actions'][:, 2]`` corresponds to
+:math:`J_z` (and similar for frequencies and angles).
+
+Let's visualize the dependence of the vertical action on the value of the
+vertical velocity we used as initial conditions:
+
+.. doctest-requires:: galpy
+
+    >>> plt.plot(w0.v_z, aaf['actions'][:, 2])  # doctest: +SKIP
+
+.. plot::
+    :align: center
+    :width: 60%
+    :context: close-figs
+
+    aaf = gd.find_actions_staeckel(pot, orbits)
+
+    fig, ax = plt.subplots(figsize=(6, 6), constrained_layout=True)
+    ax.plot(w0.v_z, aaf['actions'][:, 2])
+    ax.set_xlabel(f"$v_z$ [{w0.v_z.unit:latex_inline}]")
+    ax.set_ylabel(rf"$\Omega_z$ [{aaf['freqs'].unit:latex_inline}]")
+
+Or, we can see how the vertical frequency depends on vertical action by
+plotting:
+
+.. doctest-requires:: galpy
+
+    >>> plt.plot(aaf['actions'][:, 2], aaf['freqs'][:, 2])  # doctest: +SKIP
+
+.. plot::
+    :align: center
+    :width: 60%
+    :context: close-figs
+
+    fig, ax = plt.subplots(figsize=(6, 6), constrained_layout=True)
+    ax.plot(aaf['actions'][:, 2], aaf['freqs'][:, 2])
+    ax.set_xlabel(f"$J_z$ [{aaf['actions'].unit:latex_inline}]")
+    ax.set_ylabel(rf"$\Omega_z$ [{aaf['freqs'].unit:latex_inline}]")
+
+
+The overall trend looks right, but what is that weird break that occurs around
+:math:`v_z` ~ 120 km/s? Let's visualize orbits with initial conditions just next
+to and within this region:
+
+.. doctest-requires:: galpy
+
+    >>> i1 = np.abs(w0.v_z.value - 120).argmin()
+    >>> i2 = np.abs(w0.v_z.value - 100).argmin()
+    >>> orbits[:, i1].cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',')  # doctest: +SKIP
+    >>> orbits[:, i2].cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',')  # doctest: +SKIP
+
+.. plot::
+    :align: center
+    :width: 90%
+    :context: close-figs
+
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5),
+                             sharex=True, sharey=True,
+                             constrained_layout=True)
+
+    i1 = np.abs(w0.v_z.value - 120).argmin()
+    i2 = np.abs(w0.v_z.value - 100).argmin()
+    orbits[:, i1].cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',', axes=[axes[0]]);
+    orbits[:, i2].cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',', axes=[axes[1]]);
+
+Aha! This region is special: it is a resonance in the potential. Orbits in this
+region of phase-space have qualitatively different behavior than those outside
+of this region because they are trapped by the resonance. For these orbits,
+where strong potential resonances occur, the Staeckel Fudge approximation will
+return incorrect and potentially misleading action, angle, and frequency values.
+
+
 References
 ==========
 
+.. [binney12] Binney (2012) `Actions for axisymmetric potentials
+ <https://ui.adsabs.harvard.edu/abs/2012MNRAS.426.1324B/abstract>`_
 .. [sanders14] Sanders & Binney (2014) `Actions, angles and frequencies for numerically integrated orbits <http://arxiv.org/abs/1401.3600>`_
+.. [sanders16] Sanders & Binney (2016) `A review of action estimation methods for galactic dynamics <https://ui.adsabs.harvard.edu/abs/2016MNRAS.457.2107S/abstract>`_
 .. [binneytremaine] Binney & Tremaine (2008) `Galactic Dynamics <http://press.princeton.edu/titles/8697.html>`_
 .. [mcgill90] McGill & Binney (1990) `Torus construction in general gravitational potentials <http://articles.adsabs.harvard.edu/cgi-bin/nph-iarticle_query?1990MNRAS.244..634M&amp;data_type=PDF_HIGH&amp;whole_paper=YES&amp;type=PRINTER&amp;filetype=.pdf>`_

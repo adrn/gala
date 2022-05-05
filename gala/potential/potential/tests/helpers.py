@@ -329,22 +329,22 @@ class PotentialTestBase:
 
         vars_ = list(p.values()) + list(v.values())
         assums = np.bitwise_and.reduce([Q.real(x) for x in vars_])
-        Phi = sy.refine(Phi, assums)
+        # Phi = sy.refine(Phi, assums)
         e_func = sy.lambdify(vars_, Phi, modules=modules)
 
         if self.sympy_density:
             dens_tmp = sum([sy.diff(Phi, var, 2)
                             for var in v.values()]) / (4 * sy.pi * p['G'])
-            dens_tmp = sy.refine(dens_tmp, assums)
+            # dens_tmp = sy.refine(dens_tmp, assums)
             dens_func = sy.lambdify(vars_, dens_tmp, modules=modules)
 
         grad = sy.derive_by_array(Phi, list(v.values()))
-        grad = sy.refine(grad, assums)
+        # grad = sy.refine(grad, assums)
         grad_func = sy.lambdify(vars_, grad, modules=modules)
 
         if self.sympy_hessian:
             Hess = sy.hessian(Phi, list(v.values()))
-            Hess = sy.refine(Hess, assums)
+            # Hess = sy.refine(Hess, assums)
             Hess_func = sy.lambdify(vars_, Hess, modules=modules)
 
         # Make a dict of potential parameter values without units:

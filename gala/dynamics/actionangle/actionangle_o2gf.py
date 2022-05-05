@@ -8,8 +8,11 @@ import time
 import warnings
 
 # Third-party
-import numpy as np
+from astropy.constants import G
+import astropy.table as at
+import astropy.units as u
 from astropy.utils.decorators import deprecated
+import numpy as np
 from scipy.linalg import solve
 from scipy.optimize import minimize
 
@@ -78,7 +81,8 @@ def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
     return vecs
 
 
-def fit_isochrone(orbit, m0=2E11, b0=1., minimize_kwargs=None):
+@u.quantity_input(m0=u.Msun, b0=u.kpc)
+def fit_isochrone(orbit, m0=None, b0=None, minimize_kwargs=None):
     r"""
     Fit the toy Isochrone potential to the sum of the energy residuals relative
     to the mean energy by minimizing the function
@@ -94,29 +98,91 @@ def fit_isochrone(orbit, m0=2E11, b0=1., minimize_kwargs=None):
     ----------
     orbit : `~gala.dynamics.Orbit`
     m0 : numeric (optional)
-        Initial mass guess.
+        Initial guess for mass parameter of fitted Isochrone model.
     b0 : numeric (optional)
-        Initial b guess.
+        Initial guess for scale length parameter of fitted Isochrone model.
     minimize_kwargs : dict (optional)
         Keyword arguments to pass through to `scipy.optimize.minimize`.
 
     Returns
     -------
-    m : float
-        Best-fit scale mass for the Isochrone potential.
-    b : float
-        Best-fit core radius for the Isochrone potential.
+    fit_iso : `gala.potential.IsochronePotential`
+        Best-fit Isochrone potential for locally representing true potential.
 
     """
-    from gala.potential import IsochronePotential
+    from gala.potential import IsochronePotential, LogarithmicPotential
 
-    pot = orbit.hamiltonian.potential
+    pot = orbit.potential
     if pot is None:
-        raise ValueError("The orbit object must have an associated potential")
+        raise ValueError(
+            "The inputted orbit does not have an associated potential instance "
+            "(i.e. orbit.potential is None). You must provide an orbit instance"
+            " with a specified potential in order to initialize the toy "
+            "potential fitting."
+        )
 
     w = np.squeeze(orbit.w(pot.units))
     if w.ndim > 2:
         raise ValueError("Input orbit object must be a single orbit.")
+
+    if (m0 is not None and b0 is None) or (m0 is None and b0 is not None):
+        raise ValueError("If passing in initial guess for one parameter, you "
+                         "must also pass in an initial guess for the other "
+                         "(m0 and b0).")
+
+    elif m0 is not None and b0 is not None:
+        # both initial guesses provided
+        m0 = m0.decompose(pot.units).value
+        b0 = b0.decompose(pot.units).value
+
+    else:
+        # initial guess not specified: some magic to come up with initialization
+        r0 = np.mean(orbit.physicsspherical.r)
+        Menc0 = pot.mass_enclosed([1, 0, 0] * r0)[0].decompose(pot.units).value
+        Phi0 = pot.energy([1, 0, 0] * r0)[0]
+        Phi0 = Phi0.decompose(pot.units).value
+        r0 = r0.decompose(pot.units).value
+
+        _G = G.decompose(pot.units).value
+
+        # Special case the logarithmic potential:
+        if isinstance(pot, LogarithmicPotential):
+            def func(pars, r0, M0, Phi0):
+                b, const = pars
+                a0 = np.sqrt(r0**2 + b**2)
+                return (-_G * M0 / r0**3 * a0 * (b + a0) - Phi0 + const) ** 2
+
+            res = minimize(
+                func, x0=[r0, 0],
+                args=(r0, Menc0, Phi0),
+                method='L-BFGS-B',
+                bounds=[(0, None), (None, None)]
+            )
+
+        else:
+            def func(b, r0, M0, Phi0):
+                a0 = np.sqrt(r0**2 + b**2)
+                return (-_G * M0 / r0**3 * a0 * (b + a0) - Phi0) ** 2
+
+            res = minimize(
+                func, x0=[r0],
+                args=(r0, Menc0, Phi0),
+                method='L-BFGS-B',
+                bounds=[(0, None)]
+            )
+
+        if not res.success:
+            raise RuntimeError(
+                "Root finding failed: Unable to find local Isochrone potential "
+                "fit for orbit."
+            )
+
+        b = res.x[0]
+        a0 = np.sqrt(b**2 + r0**2)
+        M = Menc0 / r0**3 * a0 * (b + a0)**2
+
+        m0 = M
+        b0 = b
 
     def f(p, w):
         logm, logb = p
@@ -131,21 +197,17 @@ def fit_isochrone(orbit, m0=2E11, b0=1., minimize_kwargs=None):
 
     if minimize_kwargs is None:
         minimize_kwargs = dict()
-    minimize_kwargs['x0'] = np.array([logm0, logb0])
-    minimize_kwargs['method'] = minimize_kwargs.get('method', 'Nelder-Mead')
+    minimize_kwargs.setdefault('x0', np.array([logm0, logb0]))
+    minimize_kwargs.setdefault('method', 'powell')
     res = minimize(f, args=(w,), **minimize_kwargs)
 
     if not res.success:
         raise ValueError("Failed to fit toy potential to orbit.")
 
-    logm, logb = np.abs(res.x)
-    m = np.exp(logm)
-    b = np.exp(logb)
-
-    return IsochronePotential(m=m, b=b, units=pot.units)
+    return IsochronePotential(*np.exp(res.x), units=pot.units)
 
 
-def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1], minimize_kwargs=None):
+def fit_harmonic_oscillator(orbit, omega0=None, minimize_kwargs=None):
     r"""
     Fit the toy harmonic oscillator potential to the sum of the energy
     residuals relative to the mean energy by minimizing the function
@@ -174,11 +236,22 @@ def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1], minimize_kwargs=None):
     """
     from gala.potential import HarmonicOscillatorPotential
 
-    omega0 = np.atleast_1d(omega0)
-
-    pot = orbit.hamiltonian.potential
+    pot = orbit.potential
     if pot is None:
-        raise ValueError("The orbit object must have an associated potential")
+        raise ValueError(
+            "The inputted orbit does not have an associated potential instance "
+            "(i.e. orbit.potential is None). You must provide an orbit instance"
+            " with a specified potential in order to initialize the toy "
+            "potential fitting."
+        )
+
+    if omega0 is None:
+        # Estimate from orbit:
+        P = orbit.cartesian.estimate_period()[0]
+        P = u.Quantity([P[k] for k in P.colnames])
+        omega0 = (2*np.pi / P).decompose(pot.units).value
+    else:
+        omega0 = np.atleast_1d(omega0)
 
     w = np.squeeze(orbit.w(pot.units))
     if w.ndim > 2:
@@ -193,7 +266,7 @@ def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1], minimize_kwargs=None):
     if minimize_kwargs is None:
         minimize_kwargs = dict()
     minimize_kwargs['x0'] = omega0
-    minimize_kwargs['method'] = minimize_kwargs.get('method', 'Nelder-Mead')
+    minimize_kwargs['method'] = minimize_kwargs.get('method', 'powell')
     res = minimize(f, args=(w,), **minimize_kwargs)
 
     if not res.success:
@@ -203,7 +276,7 @@ def fit_harmonic_oscillator(orbit, omega0=[1., 1, 1], minimize_kwargs=None):
     return HarmonicOscillatorPotential(omega=best_omega, units=pot.units)
 
 
-def fit_toy_potential(orbit, force_harmonic_oscillator=False):
+def fit_toy_potential(orbit, force_harmonic_oscillator=False, **kwargs):
     """
     Fit a best fitting toy potential to the orbit provided. If the orbit is a
     tube (loop) orbit, use the Isochrone potential. If the orbit is a box
@@ -225,22 +298,24 @@ def fit_toy_potential(orbit, force_harmonic_oscillator=False):
         The best-fit potential instance.
 
     """
+
     circulation = orbit.circulation()
     if np.any(circulation == 1) and not force_harmonic_oscillator:  # tube orbit
         logger.debug("===== Tube orbit =====")
         logger.debug("Using Isochrone toy potential")
 
-        toy_potential = fit_isochrone(orbit)
-        logger.debug("Best m={}, b={}".format(toy_potential.parameters['m'],
-                                              toy_potential.parameters['b']))
+        toy_potential = fit_isochrone(orbit, **kwargs)
+        logger.debug(
+            f"Best m={toy_potential.parameters['m']}, "
+            f"b={toy_potential.parameters['b']}"
+        )
 
     else:  # box orbit
         logger.debug("===== Box orbit =====")
         logger.debug("Using triaxial harmonic oscillator toy potential")
 
-        toy_potential = fit_harmonic_oscillator(orbit)
-        logger.debug("Best omegas ({})"
-                     .format(toy_potential.parameters['omega']))
+        toy_potential = fit_harmonic_oscillator(orbit, **kwargs)
+        logger.debug(f"Best omegas ({toy_potential.parameters['omega']})")
 
     return toy_potential
 
@@ -270,7 +345,8 @@ def check_angle_sampling(nvecs, angles):
 
     failed_nvecs = []
     failures = []
-
+    warn_longer_window = []
+    warn_finer_sampling = []
     for i, vec in enumerate(nvecs):
         # N = np.linalg.norm(vec)
         # X = np.dot(angles, vec)
@@ -278,18 +354,30 @@ def check_angle_sampling(nvecs, angles):
         diff = float(np.abs(X.max() - X.min()))
 
         if diff < (2.*np.pi):
-            warnings.warn("Need a longer integration window for mode {0}"
-                          .format(vec))
             failed_nvecs.append(vec.tolist())
             # P.append(2.*np.pi - diff)
             failures.append(0)
+            warn_longer_window.append(vec)
 
         elif (diff/len(X)) > np.pi:
-            warnings.warn("Need a finer sampling for mode {0}"
-                          .format(str(vec)))
             failed_nvecs.append(vec.tolist())
             # P.append(np.pi - diff/len(X))
             failures.append(1)
+            warn_finer_sampling.append(vec)
+
+    if len(warn_longer_window) > 0:
+        warn_longer_window = np.array(warn_longer_window)
+        warnings.warn(
+            f"Need a longer integration window for modes: {warn_longer_window}",
+            RuntimeWarning
+        )
+
+    if len(warn_finer_sampling) > 0:
+        warn_finer_sampling = np.array(warn_finer_sampling)
+        warnings.warn(
+            f"Need a finer time sampling for modes: {warn_finer_sampling}",
+            RuntimeWarning
+        )
 
     return np.array(failed_nvecs), np.array(failures)
 
@@ -455,7 +543,8 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.):
 
 
 def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
-                               force_harmonic_oscillator=False):
+                               force_harmonic_oscillator=False,
+                               fit_kwargs=None):
     """
     Find approximate actions and angles for samples of a phase-space orbit,
     `w`, at times `t`. Uses toy potentials with known, analytic action-angle
@@ -477,19 +566,25 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
         Fix the toy potential class.
     force_harmonic_oscillator : bool (optional)
         Force using the harmonic oscillator potential as the toy potential.
+    fit_kwargs : dict (optional)
+        Passed to ``fit_toy_potential()`` and on to the toy potential fitting
+        functions.
     """
     from gala.potential import HarmonicOscillatorPotential, IsochronePotential
 
     if orbit.norbits > 1:
         raise ValueError("must be a single orbit")
 
+    if fit_kwargs is None:
+        fit_kwargs = {}
+
     if toy_potential is None:
         toy_potential = fit_toy_potential(
-            orbit, force_harmonic_oscillator=force_harmonic_oscillator)
+            orbit, force_harmonic_oscillator=force_harmonic_oscillator,
+            **fit_kwargs)
 
     else:
-        logger.debug("Using *fixed* toy potential: {}"
-                     .format(toy_potential.parameters))
+        logger.debug(f"Using *fixed* toy potential: {toy_potential.parameters}")
 
     if isinstance(toy_potential, IsochronePotential):
         orbit_align = orbit.align_circulation_with_z()
@@ -556,8 +651,8 @@ def _single_orbit_find_actions(orbit, N_max, toy_potential=None,
 
 
 def find_actions_o2gf(orbit, N_max, force_harmonic_oscillator=False,
-                      toy_potential=None):
-    r"""
+                      toy_potential=None, fit_kwargs=None):
+    """
     Find approximate actions and angles for samples of a phase-space orbit.
     Uses toy potentials with known, analytic action-angle transformations to
     approximate the true coordinates as a Fourier sum.
@@ -577,49 +672,36 @@ def find_actions_o2gf(orbit, N_max, force_harmonic_oscillator=False,
 
     Returns
     -------
-    aaf : dict
-        A Python dictionary containing the actions, angles, frequencies, and
+    aaf : `astropy.table.QTable`
+        An Astropy table containing the actions, angles, and frequencies for
+        each input phase-space position or orbit. The columns also contain the
         value of the generating function and derivatives for each integer
-        vector. Each value of the dictionary is a :class:`numpy.ndarray` or
-        :class:`astropy.units.Quantity`.
+        vector.
 
     """
 
     if orbit.norbits == 1:
-        return _single_orbit_find_actions(
+        result = _single_orbit_find_actions(
             orbit, N_max,
             force_harmonic_oscillator=force_harmonic_oscillator,
-            toy_potential=toy_potential)
+            toy_potential=toy_potential,
+            fit_kwargs=fit_kwargs
+        )
+        rows = [result]
 
     else:
-        result = None
-
+        rows = []
         for n in range(orbit.norbits):
             aaf = _single_orbit_find_actions(
                 orbit[:, n], N_max,
                 force_harmonic_oscillator=force_harmonic_oscillator,
-                toy_potential=toy_potential)
+                toy_potential=toy_potential,
+                fit_kwargs=fit_kwargs
+            )
 
-            if result is None:
-                result = {}
-                for name in aaf.keys():
-                    if hasattr(aaf, 'unit'):
-                        unit = aaf[name].unit
-                    else:
-                        unit = 1
+            rows.append(aaf)
 
-                    if name != 'nvecs':
-                        result[name] = np.full(aaf[name].shape +
-                                               (orbit.norbits,),
-                                               np.nan * unit)
-
-            for name in aaf.keys():
-                if name != 'nvecs':
-                    result[name][:, n] = aaf[name]
-                else:
-                    result[name] = aaf[name]
-
-    return result
+    return at.QTable(rows=rows)
 
 
 @deprecated(since="v1.5",

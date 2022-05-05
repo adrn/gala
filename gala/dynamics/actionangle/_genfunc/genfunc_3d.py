@@ -122,7 +122,7 @@ def box_actions(results, times, N_matrix, ifprint):
     if(ifprint):
         print("Action solution found for N_max = "+str(N_matrix)+", size "+str(len(act[0]))+" symmetric matrix in "+str(time.time()-t)+" seconds")
 
-    np.savetxt("GF.Sn_box",np.vstack((act[1].T, act[0][3:])).T)
+    # np.savetxt("GF.Sn_box",np.vstack((act[1].T, act[0][3:])).T)
 
     ang = solver.angle_solver(AA, times, N_matrix, np.ones(3))
     if(ifprint):
@@ -168,7 +168,7 @@ def loop_actions(results, times, N_matrix, ifprint):
         print("Action solution found for N_max = "+str(N_matrix)+", size "+str(len(act[0]))+" symmetric matrix in "+str(time.time()-t)+" seconds")
 
     # Store Sn
-    np.savetxt("GF.Sn_loop",np.vstack((act[1].T, act[0][3:])).T)
+    # np.savetxt("GF.Sn_loop",np.vstack((act[1].T, act[0][3:])).T)
 
     # Find angles
     sign = np.array([1., np.sign(results[0][0]*results[0][4]-results[0][1]*results[0][3]), 1.])

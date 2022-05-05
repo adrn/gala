@@ -25,7 +25,7 @@ from gala.dynamics.actionangle import (
     fit_harmonic_oscillator,
     fit_toy_potential,
     check_angle_sampling,
-    find_actions,
+    find_actions_o2gf,
     generate_n_vectors,
 )
 from gala.dynamics.actionangle._genfunc import genfunc_3d, solver
@@ -167,7 +167,7 @@ class ActionsBase:
             print("Computing actions with gala...")
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)
-                ret = find_actions(
+                ret = find_actions_o2gf(
                     orb, N_max=N_max, toy_potential=toy_potential
                 )
             actions = ret["actions"]
@@ -267,17 +267,4 @@ def test_regression_113():
     orbit = H.integrate_orbit(ics, dt=dt, n_steps=n_steps)
     toy_potential = fit_isochrone(orbit)
 
-    m = toy_potential.parameters["m"].value
-    b = toy_potential.parameters["b"].value
-    assert np.log10(m) > 11 and np.log10(m) < 12
-    assert np.log10(b) > 0 and np.log10(b) < 1
-
-    # try again with Nelder-Mead
-    toy_potential = fit_isochrone(
-        orbit, minimize_kwargs=dict(method="Nelder-Mead")
-    )
-
-    m = toy_potential.parameters["m"].value
-    b = toy_potential.parameters["b"].value
-    assert np.log10(m) > 11 and np.log10(m) < 12
-    assert np.log10(b) > 0 and np.log10(b) < 1
+    assert u.allclose(toy_potential.energy(rvec), pot.energy(rvec), rtol=1e-2)
