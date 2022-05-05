@@ -193,7 +193,7 @@ choose the maximum integer vector norm, `N_max`, which here we arbitrarily set
 to 8. This will change depending on the convergence of the action correction
 (the properties of the orbit and potential) and the accuracy desired::
 
-    >>> result = gd.find_actions(w, N_max=8, toy_potential=toy_potential) # doctest: +SKIP
+    >>> result = gd.find_actions_o2gf(w, N_max=8, toy_potential=toy_potential) # doctest: +SKIP
     >>> result.keys() # doctest: +SKIP
     dict_keys(['Sn', 'nvecs', 'freqs', 'dSn_dJ', 'angles', 'actions'])
 
@@ -226,7 +226,7 @@ actions computed using this machinery::
     import warnings
     with warnings.catch_warnings(record=True):
         warnings.simplefilter("ignore")
-        result = gd.find_actions(w, N_max=8, toy_potential=toy_potential)
+        result = gd.find_actions_o2gf(w, N_max=8, toy_potential=toy_potential)
 
     nvecs = gd.generate_n_vectors(8, dx=1, dy=2, dz=2)
     act_correction = nvecs.T[...,None] * result['Sn'][0][None,:,None] * np.cos(nvecs.dot(toy_angles))[None]
@@ -305,7 +305,7 @@ and the same initial conditions as above:
     import warnings
     with warnings.catch_warnings(record=True):
         warnings.simplefilter("ignore")
-        result = gd.find_actions(w, N_max=8, toy_potential=toy_potential)
+        result = gd.find_actions_o2gf(w, N_max=8, toy_potential=toy_potential)
 
     # for visualization, compute the action correction used to transform the
     #   toy potential actions to the approximate true potential actions
@@ -414,7 +414,7 @@ values at the initial conditions):
     >>> aaf = gd.find_actions_staeckel(pot, orbits)  # doctest: +IGNORE_WARNINGS
 
 The returned object (named ``aaf`` above) is an `astropy.table.QTable` instance
-that contains the actions, frequencies, and angles::
+that contains the actions, frequencies, and angles:
 
 .. doctest-requires:: galpy
 
@@ -437,11 +437,11 @@ corresponds to :math:`J_\phi`, and ``aaf['actions'][:, 2]`` corresponds to
 :math:`J_z` (and similar for frequencies and angles).
 
 Let's visualize the dependence of the vertical action on the value of the
-vertical velocity we used as initial conditions::
-
-    >>> plt.plot(w0.v_z, aaf['actions'][:, 2])  # doctest: +SKIP
+vertical velocity we used as initial conditions:
 
 .. doctest-requires:: galpy
+
+    >>> plt.plot(w0.v_z, aaf['actions'][:, 2])  # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -456,11 +456,11 @@ vertical velocity we used as initial conditions::
     ax.set_ylabel(rf"$\Omega_z$ [{aaf['freqs'].unit:latex_inline}]")
 
 Or, we can see how the vertical frequency depends on vertical action by
-plotting::
-
-    >>> plt.plot(aaf['actions'][:, 2], aaf['freqs'][:, 2])  # doctest: +SKIP
+plotting:
 
 .. doctest-requires:: galpy
+
+    >>> plt.plot(aaf['actions'][:, 2], aaf['freqs'][:, 2])  # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -475,7 +475,9 @@ plotting::
 
 The overall trend looks right, but what is that weird break that occurs around
 :math:`v_z` ~ 120 km/s? Let's visualize orbits with initial conditions just next
-to and within this region::
+to and within this region:
+
+.. doctest-requires:: galpy
 
     >>> i1 = np.abs(w0.v_z.value - 120).argmin()
     >>> i2 = np.abs(w0.v_z.value - 100).argmin()
