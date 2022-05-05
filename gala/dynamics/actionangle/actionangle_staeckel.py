@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from xml.dom import ValidationErr
 
 import astropy.coordinates as coord
 import astropy.table as at
@@ -115,8 +116,16 @@ def find_actions_staeckel(potential, w, mean=True, delta=None,
     else:
         iter_ = w.orbit_gen()
 
+    if isinstance(delta, u.Quantity):
+        delta = np.atleast_1d(delta)
+
     if not isinstance(delta, Iterable):
         delta = [delta] * w.norbits
+
+    if len(delta) != w.norbits:
+        raise ValueError(
+            "Input delta must have same shape as the inputted number of orbits"
+        )
 
     rows = []
     for w_, delta_ in zip(iter_, delta):
