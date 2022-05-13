@@ -145,12 +145,12 @@ double c_d_dr(CPotential *p, double t, double *qp, double *epsilon) {
     r = sqrt(r2);
 
     for (j=0; j < (p->n_dim); j++)
-        epsilon[j] = h * qp[j]/r + qp[j];
+        epsilon[j] = qp[j] + h * qp[j]/r;
 
     dPhi_dr = c_potential(p, t, epsilon);
 
     for (j=0; j < (p->n_dim); j++)
-        epsilon[j] = h * qp[j]/r - qp[j];
+        epsilon[j] = qp[j] - h * qp[j]/r;
 
     dPhi_dr = dPhi_dr - c_potential(p, t, epsilon);
 
@@ -173,13 +173,13 @@ double c_d2_dr2(CPotential *p, double t, double *qp, double *epsilon) {
     r = sqrt(r2);
 
     for (j=0; j < (p->n_dim); j++)
-        epsilon[j] = h * qp[j]/r + qp[j];
+        epsilon[j] = qp[j] + h * qp[j]/r;
     d2Phi_dr2 = c_potential(p, t, epsilon);
 
     d2Phi_dr2 = d2Phi_dr2 - 2.*c_potential(p, t, qp);
 
     for (j=0; j < (p->n_dim); j++)
-        epsilon[j] = h * qp[j]/r - qp[j];
+        epsilon[j] = qp[j] - h * qp[j]/r;
     d2Phi_dr2 = d2Phi_dr2 + c_potential(p, t, epsilon);
 
     return d2Phi_dr2 / (h*h);

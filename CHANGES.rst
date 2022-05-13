@@ -29,6 +29,10 @@ Bug fixes
   was computed (Cython does not always use Python 3 division rules for dividing
   integers!).
 
+- Fixed a bug in the (C-level/internal) estimation of the 2nd derivative of the
+  potential, used to generate mock streams, that affects non-conservative force
+  fields.
+
 API changes
 -----------
 
