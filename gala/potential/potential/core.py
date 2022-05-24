@@ -904,6 +904,36 @@ class CompositePotential(PotentialBase, OrderedDict):
     def __repr__(self):
         return "<CompositePotential {}>".format(",".join(self.keys()))
 
+    def replicate(self, **kwargs):
+        """
+        Return a copy of the potential instance with some parameter values
+        changed. This always produces copies of any parameter arrays.
+
+        Parameters
+        ----------
+        **kwargs
+            All other keyword arguments are used to overwrite parameter values
+            when making the copy. The keywords passed in should be the same as
+            the potential component names, so you can pass in dictionaries to set
+            parameters for different subcomponents of this composite potential.
+
+        Returns
+        -------
+        replicant : `~gala.potential.PotentialBase` subclass instance
+            The replicated potential.
+        """
+        obj = pycopy.copy(self)
+
+        # disable potential lock
+        lock = obj.lock
+        obj.lock = False
+
+        for k, v in kwargs.items():
+            obj[k] = self[k].replicate(**v)
+
+        obj.lock = lock
+        return obj
+
 
 _potential_docstring = """units : `~gala.units.UnitSystem` (optional)
         Set of non-reducable units that specify (at minimum) the
