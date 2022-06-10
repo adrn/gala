@@ -56,4 +56,3 @@ def get_staeckel_fudge_delta(potential, w, median=True):
         delta = np.nanmedian(delta, axis=0)
 
     return delta * potential.units['length']
-
