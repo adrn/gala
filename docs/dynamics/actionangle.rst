@@ -325,11 +325,10 @@ and the same initial conditions as above:
     fig.tight_layout()
 
 
-The Staeckel Fudge interface to Galpy
-=====================================
+Using the Staeckel Fudge in Galpy
+=================================
 
-Gala now also provides an interface to the "Staeckel Fudge" [binney12]_
-implementation in `Galpy <https://github.com/jobovy/galpy>`_. This method, as
+Gala can transform its ``Orbit`` and ``Potential`` objects into `Galpy <https://github.com/jobovy/galpy>`_ ``Orbit`` and ``Potential`` objects, making it possible to easily use the "Staeckel Fudge" [binney12]_ implementation in Galpy. This method, as
 implemented, is only applicable for axisymmetric systems, but is *much* faster
 than the O2GF method for estimating actions, angles, and frequencies from
 phase-space positions. As an example of this functionality, below we will
@@ -405,55 +404,52 @@ We can now integrate these orbits in the total potential::
 
 
 With the orbits in hand, we can compute the approximate actions, angles, and
-frequencies with the Staeckel Fudge, which computes actions for the full orbital
-time series and then averages the actions and frequencies (and returns the angle
-values at the initial conditions):
+frequencies with the Staeckel Fudge using Galpy (for more information, see the
+`Galpy documentation <https://docs.galpy.org/en/v1.7.2/actionAngle.html>`_):
 
 .. doctest-requires:: galpy
 
-    >>> aaf = gd.find_actions_staeckel(pot, orbits)  # doctest: +IGNORE_WARNINGS
-
-The returned object (named ``aaf`` above) is an `astropy.table.QTable` instance
-that contains the actions, frequencies, and angles:
-
-.. doctest-requires:: galpy
-
-    >>> aaf['actions'] # doctest: +ELLIPSIS, +FLOAT_CMP
-    <Quantity [[1.37311419e+01, 2.20230163e+03, 1.18925334e-03],
-               [1.37492666e+01, 2.20230163e+03, 6.40453804e-02],
-               ...
-               [2.12791913e+02, 2.20230163e+03, 3.79360950e+02],
-               [2.24373315e+02, 2.20230163e+03, 3.93123827e+02]] km kpc / s>
-    >>> aaf['freqs'] # doctest: +ELLIPSIS, +FLOAT_CMP
-    <Quantity [[41.18594991, 28.48624486, 93.55643484],
-               [41.18106052, 28.48279328, 92.95586775],
-               ...
-               [28.34021708, 19.15509891, 22.56426744],
-               [27.97813836, 18.91345658, 22.16993539]] km / (kpc s)>
-
-The coordinate order for each  column is R, phi, z, so for example
-``aaf['actions'][:, 0]`` corresponds to :math:`J_R`, ``aaf['actions'][:, 1]``
-corresponds to :math:`J_\phi`, and ``aaf['actions'][:, 2]`` corresponds to
-:math:`J_z` (and similar for frequencies and angles).
+    >>> galpy_potential = pot.to_galpy_potential()
+    >>> J = np.zeros((3, orbits.norbits))
+    >>> Omega = np.zeros((3, orbits.norbits))
+    >>> for n, orbit in enumerate(orbits.orbit_gen()):
+    ...     o = orbit.to_galpy_orbit()
+    ...     delta = get_staeckel_fudge_delta(pot, orbit)
+    ...     staeckel = actionAngleStaeckel(pot=galpy_potential, delta=delta)
+    ...     af = staeckel.actionsFreqs(o)
+    ...     af = np.mean(np.stack(af), axis=1)
+    ...     J[:3, n] = af[:3]
+    ...     Omega[:3, n] = af[3:]
 
 Let's visualize the dependence of the vertical action on the value of the
 vertical velocity we used as initial conditions:
 
 .. doctest-requires:: galpy
 
-    >>> plt.plot(w0.v_z, aaf['actions'][:, 2])  # doctest: +SKIP
+    >>> plt.plot(w0.v_z, J[2])  # doctest: +SKIP
 
 .. plot::
     :align: center
     :width: 60%
     :context: close-figs
 
-    aaf = gd.find_actions_staeckel(pot, orbits)
+    galpy_potential = pot.to_galpy_potential()
+    J = np.zeros((3, orbits.norbits))
+    Omega = np.zeros((3, orbits.norbits))
+    for n, orbit in enumerate(orbits.orbit_gen()):
+        o = orbit.to_galpy_orbit()
+        delta = get_staeckel_fudge_delta(pot, orbit)
+        staeckel = actionAngleStaeckel(pot=galpy_potential, delta=delta)
+        af = staeckel.actionsFreqs(o)
+        af = np.mean(np.stack(af), axis=1)
+
+        J[:3, n] = af[:3]
+        Omega[:3, n] = af[3:]
 
     fig, ax = plt.subplots(figsize=(6, 6), constrained_layout=True)
-    ax.plot(w0.v_z, aaf['actions'][:, 2])
+    ax.plot(w0.v_z, J[2])
     ax.set_xlabel(f"$v_z$ [{w0.v_z.unit:latex_inline}]")
-    ax.set_ylabel(rf"$\Omega_z$ [{aaf['freqs'].unit:latex_inline}]")
+    ax.set_ylabel(rf"$J_z$")
 
 Or, we can see how the vertical frequency depends on vertical action by
 plotting:
@@ -468,8 +464,8 @@ plotting:
     :context: close-figs
 
     fig, ax = plt.subplots(figsize=(6, 6), constrained_layout=True)
-    ax.plot(aaf['actions'][:, 2], aaf['freqs'][:, 2])
-    ax.set_xlabel(f"$J_z$ [{aaf['actions'].unit:latex_inline}]")
+    ax.plot(w0.v_z, Omega[2])
+    ax.set_xlabel(f"$v_z$ [{w0.v_z.unit:latex_inline}]")
     ax.set_ylabel(rf"$\Omega_z$ [{aaf['freqs'].unit:latex_inline}]")
 
 

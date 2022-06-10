@@ -14,10 +14,6 @@ New Features
 - The ``Orbit.estimate_period()`` method now returns period estimates in all
   phase-space components instead of just the radial period.
 
-- Added a new interface to the "Staeckel Fudge" action-angle solver in galpy
-  that works with Gala potential and orbit objects
-  ``gala.dynamics.find_actions_staeckel()``.
-
 Bug fixes
 ---------
 
