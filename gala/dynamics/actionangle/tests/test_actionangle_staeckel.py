@@ -8,9 +8,9 @@ import pytest
 from gala.dynamics import PhaseSpacePosition
 from gala.dynamics.actionangle import (
     get_staeckel_fudge_delta,
-    find_actions_staeckel,
     find_actions_o2gf
 )
+from gala.dynamics.actionangle.tests.staeckel_helpers import galpy_find_actions_staeckel
 import gala.potential as gp
 from gala.units import galactic
 from gala.tests.optional_deps import HAS_GALPY
@@ -109,17 +109,17 @@ def test_find_actions_staeckel():
         (xyz.shape[1], 3)
     ]
     for w, colshape in zip(inputs, shapes):
-        aaf = find_actions_staeckel(pot, w)
+        aaf = galpy_find_actions_staeckel(pot, w)
 
         for colname in ['actions', 'freqs']:
             assert aaf[colname].shape == colshape
 
     # Check that mean=False returns the right shape
-    aaf = find_actions_staeckel(pot, orbit_one, mean=False)
+    aaf = galpy_find_actions_staeckel(pot, orbit_one, mean=False)
     for colname in ['actions', 'freqs', 'angles']:
         assert aaf[colname].shape == (1, orbit_one.ntimes, 3)
 
-    aaf = find_actions_staeckel(pot, orbit_many, mean=False)
+    aaf = galpy_find_actions_staeckel(pot, orbit_many, mean=False)
     for colname in ['actions', 'freqs', 'angles']:
         assert aaf[colname].shape == (xyz.shape[1], orbit_one.ntimes, 3)
 
@@ -148,7 +148,7 @@ def test_compare_staeckel_o2gf():
         dt=1., n_steps=20_000
     )
 
-    aaf_staeckel = find_actions_staeckel(pot, orbits)
+    aaf_staeckel = galpy_find_actions_staeckel(pot, orbits)
     aaf_o2gf = find_actions_o2gf(orbits, N_max=10)
 
     assert u.allclose(aaf_staeckel['actions'], aaf_o2gf['actions'], rtol=1e-3)
