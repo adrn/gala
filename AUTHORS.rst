@@ -2,13 +2,15 @@
 
 All contributors (alphabetical last name):
 
+* Dan Foreman-Mackey
 * Nico Garavito-Camargo
 * Johnny Greco
+* Akeem Hart
 * Sergey Koposov
 * Daniel Lenz
 * Pey Lian Lim
 * Syrtis Major
 * Semyeong Oh
-* Brigitta Sipocz
+* Brigitta Sipőcz
 * Nathaniel Starkman
 * Tom Wagg
