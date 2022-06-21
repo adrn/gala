@@ -130,13 +130,13 @@ def transform_pm_cov(c, cov, to_frame):
 
         # transform
         cov_to = np.einsum('nba, nac->nbc', G,
-                           np.einsum('nij, nki->njk', cov, G))
+                           np.einsum('nij, nkj->nik', cov, G))
     else:
         G = np.einsum('ab, ac->bc', uv_to,
                       np.einsum('ji, ik->jk', R, uv_in))
 
         # transform
         cov_to = np.einsum('ba, ac->bc', G,
-                           np.einsum('ij, ki->jk', cov, G))
+                           np.einsum('ij, kj->ik', cov, G))
 
     return cov_to
