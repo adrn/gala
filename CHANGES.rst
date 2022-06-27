@@ -14,6 +14,9 @@ New Features
 - The ``Orbit.estimate_period()`` method now returns period estimates in all
   phase-space components instead of just the radial period.
 
+- Added a ``store_all`` flag to the integrators to control whether to save
+  phase-space information for all timesteps or only the final timestep.
+
 Bug fixes
 ---------
 

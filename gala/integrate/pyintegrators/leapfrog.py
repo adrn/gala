@@ -147,12 +147,22 @@ class LeapfrogIntegrator(Integrator):
         v_im1_2 = self._init_v(times[0], w0, dt)
         x_im1 = x0
 
-        ws[:, 0] = w0
+        if self.store_all:
+            ws[:, 0] = w0
+
         range_ = self._get_range_func()
         for ii in range_(1, n_steps+1):
             x_i, v_i, v_ip1_2 = self.step(times[ii], x_im1, v_im1_2, dt)
-            ws[:self.ndim, ii, :] = x_i
-            ws[self.ndim:, ii, :] = v_i
+
+            if self.store_all:
+                slc = (ii, slice(None))
+            else:
+                slc = (slice(None), )
+            ws[(slice(None, self.ndim), ) + slc] = x_i
+            ws[(slice(self.ndim, None), ) + slc] = v_i
             x_im1, v_im1_2 = x_i, v_ip1_2
+
+        if not self.store_all:
+            times = times[-1:]
 
         return self._handle_output(w0_obj, times, ws)

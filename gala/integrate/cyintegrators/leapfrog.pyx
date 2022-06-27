@@ -52,7 +52,8 @@ cdef void c_leapfrog_step(CPotential *p, int half_ndim, double t, double dt,
         v_jm1[k] = v_jm1_2[k] - grad[k] * dt/2.
         v_jm1_2[k] = v_jm1_2[k] - grad[k] * dt
 
-cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1] t):
+cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1] t,
+                                     int store_all=1):
     """
     CAUTION: Interpretation of axes is different here! We need the
     arrays to be C ordered and easy to iterate over, so here the
@@ -63,9 +64,10 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
         raise TypeError("Input Hamiltonian object does not support C-level access.")
 
     if not isinstance(hamiltonian.frame, StaticFrame):
-        raise TypeError("Leapfrog integration is currently only supported "
-                        "for StaticFrame, not {}."
-                        .format(hamiltonian.frame.__class__.__name__))
+        raise TypeError(
+            "Leapfrog integration is currently only supported for StaticFrame, "
+            f"not {hamiltonian.frame.__class__.__name__}"
+        )
 
     cdef:
         # temporary scalars
@@ -82,30 +84,43 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
         double[:, ::1] v_jm1_2 = np.zeros((n, half_ndim))
 
         # return arrays
-        double[:, :, ::1] all_w = np.zeros((ntimes, n, ndim))
+        double[:, :, ::1] all_w
+        double[:, ::1] tmp_w = np.zeros((n, ndim))
 
         # whoa, so many dots
         CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
 
-    # save initial conditions
-    all_w[0, :, :] = w0.copy()
+    if store_all:
+        all_w = np.zeros((ntimes, n, ndim))
+
+        # save initial conditions
+        all_w[0, :, :] = w0.copy()
+
+    tmp_w = w0.copy()
 
     with nogil:
         # first initialize the velocities so they are evolved by a
         #   half step relative to the positions
         for i in range(n):
             c_init_velocity(&cp, half_ndim, t[0], dt,
-                            &all_w[0, i, 0], &all_w[0, i, half_ndim], &v_jm1_2[i, 0], &grad[0])
+                            &tmp_w[i, 0], &tmp_w[i, half_ndim],
+                            &v_jm1_2[i, 0], &grad[0])
 
         for j in range(1, ntimes, 1):
             for i in range(n):
                 for k in range(half_ndim):
-                    all_w[j, i, k] = all_w[j-1, i, k]
-
-                for k in range(half_ndim):
                     grad[k] = 0.
 
                 c_leapfrog_step(&cp, half_ndim, t[j], dt,
-                                &all_w[j, i, 0], &all_w[j, i, half_ndim], &v_jm1_2[i, 0], &grad[0])
+                                &tmp_w[i, 0], &tmp_w[i, half_ndim],
+                                &v_jm1_2[i, 0],
+                                &grad[0])
 
-    return np.asarray(t), np.asarray(all_w)
+                if store_all:
+                    for k in range(ndim):
+                        all_w[j, i, k] = tmp_w[i, k]
+
+    if store_all:
+        return np.asarray(t), np.asarray(all_w)
+    else:
+        return np.asarray(t[-1:]), np.asarray(tmp_w)

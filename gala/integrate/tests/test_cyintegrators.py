@@ -3,6 +3,7 @@
 """
 
 # Standard library
+from itertools import product
 import time
 
 # Third-party
@@ -67,6 +68,32 @@ def test_compare_to_py(Integrator, integrate_func, dt):
     assert py_w.shape == cy_w.shape
     assert np.allclose(cy_w[:, -1], py_w[:, -1])
     assert np.allclose(cy_t, py_t)
+
+
+@pytest.mark.parametrize(
+    ["integrate_func", "dt"],
+    product(func_list, [-2., 2])
+)
+def test_store_all(integrate_func, dt):
+    p = HernquistPotential(m=1e11, c=0.5, units=galactic)
+    H = Hamiltonian(potential=p)
+
+    w0 = np.array(
+        [
+            [0.0, 10.0, 0.0, 0.2, 0.0, 0.0],
+            [10.0, 0.0, 0.0, 0.0, 0.2, 0.0],
+            [0.0, 10.0, 0.0, 0.0, 0.0, 0.2],
+        ]
+    )
+
+    # 1024 steps
+    t = np.linspace(0, dt * 1024, 1024 + 1)
+
+    t_all, w_all = integrate_func(H, w0, t)
+    t_f, w_f = integrate_func(H, w0, t, store_all=False)
+
+    assert t_all[-1] == t_f[0]
+    assert np.allclose(w_all[-1], w_f)
 
 
 # TODO: move this to only run if a flag like --remote-data is passed, like
