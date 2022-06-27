@@ -182,7 +182,7 @@ cdef dop853_helper_save_all(CPotential *cp, CFrameType *cf, FcnEqDiff F,
     return np.asarray(all_w)
 
 cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t,
-                                   double atol=1E-10, double rtol=1E-10, int nmax=0, progress=False, int store_all=True):
+                                   double atol=1E-10, double rtol=1E-10, int nmax=0, progress=False, int store_all=1):
     """
     CAUTION: Interpretation of axes is different here! We need the
     arrays to be C ordered and easy to iterate over, so here the

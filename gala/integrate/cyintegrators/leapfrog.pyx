@@ -53,7 +53,7 @@ cdef void c_leapfrog_step(CPotential *p, int half_ndim, double t, double dt,
         v_jm1_2[k] = v_jm1_2[k] - grad[k] * dt
 
 cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1] t,
-                                     int store_all):
+                                     int store_all=1):
     """
     CAUTION: Interpretation of axes is different here! We need the
     arrays to be C ordered and easy to iterate over, so here the
@@ -117,7 +117,7 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
                                 &grad[0])
 
                 if store_all:
-                    for k in range(half_ndim):
+                    for k in range(ndim):
                         all_w[j, i, k] = tmp_w[i, k]
 
     if store_all:
