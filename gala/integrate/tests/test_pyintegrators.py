@@ -135,3 +135,17 @@ def test_memmap(tmpdir, Integrator):
     integrator = Integrator(sho_F, func_args=(1.0,))
 
     _ = integrator.run(w0, dt=dt, n_steps=n_steps, mmap=mmap)
+
+
+@pytest.mark.parametrize("Integrator", integrator_list)
+def test_py_store_all(Integrator):
+    integrator_all = Integrator(sho_F, func_args=(1.3,), store_all=True)
+    integrator_final = Integrator(sho_F, func_args=(1.3,), store_all=False)
+
+    dt = 1e-4
+    n_steps = 10_000
+
+    out_all = integrator_all.run([0.0, 1.0], dt=dt, n_steps=n_steps)
+    out_final = integrator_final.run([0.0, 1.0], dt=dt, n_steps=n_steps)
+
+    assert np.allclose(out_all.w()[:, -1], out_final.w()[:, 0])

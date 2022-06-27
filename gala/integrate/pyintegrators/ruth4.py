@@ -115,10 +115,10 @@ class Ruth4Integrator(Integrator):
         w_i = w.copy()
         for cj, dj in zip(self._cs, self._ds):
             F_i = self.F(t, w_i, *self._func_args)
-            a_i = F_i[self.ndim :]
+            a_i = F_i[self.ndim:]
 
-            w_i[self.ndim :] += dj * a_i * dt
-            w_i[: self.ndim] += cj * w_i[self.ndim :] * dt
+            w_i[self.ndim:] += dj * a_i * dt
+            w_i[: self.ndim] += cj * w_i[self.ndim:] * dt
 
         return w_i
 
@@ -132,11 +132,18 @@ class Ruth4Integrator(Integrator):
         w0_obj, w0, ws = self._prepare_ws(w0, mmap, n_steps=n_steps)
 
         # Set first step to the initial conditions
-        ws[:, 0] = w0
+        if self.store_all:
+            ws[:, 0] = w0
         w = w0.copy()
         range_ = self._get_range_func()
         for ii in range_(1, n_steps + 1):
             w = self.step(times[ii], w, dt)
-            ws[:, ii] = w
+
+            if self.store_all:
+                ws[:, ii] = w
+
+        if not self.store_all:
+            ws = w
+            times = times[-1:]
 
         return self._handle_output(w0_obj, times, ws)

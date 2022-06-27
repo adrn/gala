@@ -36,33 +36,42 @@ class DOPRI853Integrator(Integrator):
 
     """
 
-    def __init__(self, func, func_args=(), func_units=None, progress=False,
-                 **kwargs):
-        super(DOPRI853Integrator, self).__init__(func, func_args, func_units,
-                                                 progress=progress)
+    def __init__(
+        self,
+        func,
+        func_args=(),
+        func_units=None,
+        progress=False,
+        store_all=True,
+        **kwargs
+    ):
+        super(DOPRI853Integrator, self).__init__(
+            func, func_args, func_units, progress=progress, store_all=store_all
+        )
         self._ode_kwargs = kwargs
 
     def run(self, w0, mmap=None, **time_spec):
 
         # generate the array of times
         times = parse_time_specification(self._func_units, **time_spec)
-        n_steps = len(times)-1
+        n_steps = len(times) - 1
 
         w0, arr_w0, ws = self._prepare_ws(w0, mmap, n_steps)
-        _size_1d = 2*self.ndim*self.norbits
+        _size_1d = 2 * self.ndim * self.norbits
 
         # need this to do resizing, and to handle func_args because there is some
         #   issue with the args stuff in scipy...
         def func_wrapper(t, x):
-            _x = x.reshape((2*self.ndim, self.norbits))
+            _x = x.reshape((2 * self.ndim, self.norbits))
             val = self.F(t, _x, *self._func_args)
             return val.reshape((_size_1d,))
 
         self._ode = ode(func_wrapper, jac=None)
-        self._ode = self._ode.set_integrator('dop853', **self._ode_kwargs)
+        self._ode = self._ode.set_integrator("dop853", **self._ode_kwargs)
 
         # create the return arrays
-        ws[:, 0] = arr_w0
+        if self.store_all:
+            ws[:, 0] = arr_w0
 
         # make 1D
         arr_w0 = arr_w0.reshape((_size_1d,))
@@ -72,12 +81,18 @@ class DOPRI853Integrator(Integrator):
 
         # Integrate the ODE(s) across each delta_t timestep
         range_ = self._get_range_func()
-        for k in range_(1, n_steps+1):
+        for k in range_(1, n_steps + 1):
             self._ode.integrate(times[k])
             outy = self._ode.y
-            ws[:, k] = outy.reshape(2*self.ndim, self.norbits)
+
+            if self.store_all:
+                ws[:, k] = outy.reshape(2 * self.ndim, self.norbits)
 
             if not self._ode.successful():
                 raise RuntimeError("ODE integration failed!")
+
+        if not self.store_all:
+            ws = outy.reshape(2 * self.ndim, 1, self.norbits)
+            times = times[-1:]
 
         return self._handle_output(w0, times, ws)

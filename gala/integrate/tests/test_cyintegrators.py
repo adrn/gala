@@ -93,9 +93,6 @@ def test_store_all(integrate_func, dt):
     t_f, w_f = integrate_func(H, w0, t, store_all=False)
 
     assert t_all[-1] == t_f[0]
-
-    print(w_all[-1])
-    print(w_f)
     assert np.allclose(w_all[-1], w_f)
 
 
