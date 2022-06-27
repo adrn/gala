@@ -329,12 +329,14 @@ class Hamiltonian(CommonBase):
 
             elif Integrator == DOPRI853Integrator:
                 from ...integrate.cyintegrators import dop853_integrate_hamiltonian
-                t, w = dop853_integrate_hamiltonian(self, arr_w0, t,
-                                                    Integrator_kwargs.get('atol', 1E-10),
-                                                    Integrator_kwargs.get('rtol', 1E-10),
-                                                    Integrator_kwargs.get('nmax', 0),
-                                                    Integrator_kwargs.get('progress', False),
-                                                    store_all=store_all)
+                t, w = dop853_integrate_hamiltonian(
+                    self, arr_w0, t,
+                    Integrator_kwargs.get('atol', 1E-10),
+                    Integrator_kwargs.get('rtol', 1E-10),
+                    Integrator_kwargs.get('nmax', 0),
+                    Integrator_kwargs.get('progress', False),
+                    store_all=store_all
+                )
             else:
                 raise ValueError(f"Cython integration not supported for '{Integrator!r}'")
 
@@ -354,11 +356,16 @@ class Hamiltonian(CommonBase):
             orbit.frame = self.frame
             return orbit
 
+        if store_all:
+            w = w[:, None]
+
         try:
             tunit = self.units['time']
         except (TypeError, AttributeError):
             tunit = u.dimensionless_unscaled
-        return Orbit.from_w(w=w, units=self.units, t=t*tunit, hamiltonian=self)
+
+        return Orbit.from_w(w=w, units=self.units, t=t*tunit,
+                            hamiltonian=self)
 
     # def save(self, f):
     #     """
