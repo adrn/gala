@@ -241,9 +241,14 @@ class Hamiltonian(CommonBase):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def integrate_orbit(self, w0, Integrator=None,
-                        Integrator_kwargs=dict(), cython_if_possible=True,
-                        **time_spec):
+    def integrate_orbit(self,
+        w0,
+        Integrator=None,
+        Integrator_kwargs=dict(),
+        cython_if_possible=True,
+        store_all=True,
+        **time_spec
+    ):
         """
         Integrate an orbit in the current potential using the integrator class
         provided. Uses same time specification as `Integrator.run()` -- see
@@ -264,6 +269,10 @@ class Hamiltonian(CommonBase):
             If there is a Cython version of the integrator implemented,
             and the potential object has a C instance, using Cython
             will be *much* faster.
+        store_all : bool (optional)
+            Controls whether to store the phase-space position at all intermediate
+            timesteps. Set to False to store only the final values (i.e. the
+            phase-space position(s) at the final timestep). Default is True.
         **time_spec
             Specification of how long to integrate. Most commonly, this is a
             timestep ``dt`` and number of steps ``n_steps``, or a timestep
@@ -312,21 +321,22 @@ class Hamiltonian(CommonBase):
             # TODO: these replacements should be defined in gala.integrate...
             if Integrator == LeapfrogIntegrator:
                 from ...integrate.cyintegrators import leapfrog_integrate_hamiltonian
-                t, w = leapfrog_integrate_hamiltonian(self, arr_w0, t)
+                t, w = leapfrog_integrate_hamiltonian(self, arr_w0, t, store_all=store_all)
 
             elif Integrator == Ruth4Integrator:
                 from ...integrate.cyintegrators import ruth4_integrate_hamiltonian
-                t, w = ruth4_integrate_hamiltonian(self, arr_w0, t)
+                t, w = ruth4_integrate_hamiltonian(self, arr_w0, t, store_all=store_all)
 
             elif Integrator == DOPRI853Integrator:
                 from ...integrate.cyintegrators import dop853_integrate_hamiltonian
                 t, w = dop853_integrate_hamiltonian(self, arr_w0, t,
-                                                   Integrator_kwargs.get('atol', 1E-10),
-                                                   Integrator_kwargs.get('rtol', 1E-10),
-                                                   Integrator_kwargs.get('nmax', 0),
-                                                   Integrator_kwargs.get('progress', False))
+                                                    Integrator_kwargs.get('atol', 1E-10),
+                                                    Integrator_kwargs.get('rtol', 1E-10),
+                                                    Integrator_kwargs.get('nmax', 0),
+                                                    Integrator_kwargs.get('progress', False),
+                                                    store_all=store_all)
             else:
-                raise ValueError("Cython integration not supported for '{}'".format(Integrator))
+                raise ValueError(f"Cython integration not supported for '{Integrator!r}'")
 
             # because shape is different from normal integrator return
             w = np.rollaxis(w, -1)
