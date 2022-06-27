@@ -89,19 +89,15 @@ cdef dop853_helper(CPotential *cp, CFrameType *cf, FcnEqDiff F,
         int i, j
         double dt0 = t[1] - t[0]
 
-        double[::1] w = np.empty(ndim*norbits)
+        # store initial conditions
+        double[:, ::1] w = w0.copy()
 
         int prog_out = ntimes // 100
-
-    # store initial conditions
-    for i in range(norbits):
-        for j in range(ndim):
-            w[i*ndim + j] = w0[i, j]
 
     if progress == 1:
         for j in range(1, ntimes, 1):
             dop853_step(cp, cf, F,
-                        &w[0], t[j-1], t[j], dt0,
+                        &w[0, 0], t[j-1], t[j], dt0,
                         ndim, norbits, nbody, args,
                         atol, rtol, nmax)
 
@@ -120,13 +116,13 @@ cdef dop853_helper(CPotential *cp, CFrameType *cf, FcnEqDiff F,
     else:
         for j in range(1, ntimes, 1):
             dop853_step(cp, cf, F,
-                        &w[0], t[j-1], t[j], dt0,
+                        &w[0, 0], t[j-1], t[j], dt0,
                         ndim, norbits, nbody, args,
                         atol, rtol, nmax)
 
             PyErr_CheckSignals()
 
-    return w
+    return np.asarray(w)
 
 cdef dop853_helper_save_all(CPotential *cp, CFrameType *cf, FcnEqDiff F,
                             double[:, ::1] w0, double[::1] t,
@@ -186,7 +182,7 @@ cdef dop853_helper_save_all(CPotential *cp, CFrameType *cf, FcnEqDiff F,
     return np.asarray(all_w)
 
 cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t,
-                                   double atol=1E-10, double rtol=1E-10, int nmax=0, progress=False):
+                                   double atol=1E-10, double rtol=1E-10, int nmax=0, progress=False, int store_all=True):
     """
     CAUTION: Interpretation of axes is different here! We need the
     arrays to be C ordered and easy to iterate over, so here the
@@ -210,9 +206,19 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t
         CFrameType cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
     # 0 below is for nbody - we ignore that in this test particle integration
-    all_w = dop853_helper_save_all(&cp, &cf, <FcnEqDiff> Fwrapper,
-                                   w0, t,
-                                   ndim, norbits, 0, args, ntimes,
-                                   atol, rtol, nmax, int(progress))
+    if store_all:
+        all_w = dop853_helper_save_all(&cp, &cf, <FcnEqDiff> Fwrapper,
+                                    w0, t,
+                                    ndim, norbits, 0, args, ntimes,
+                                    atol, rtol, nmax, int(progress))
 
-    return np.asarray(t), np.asarray(all_w)
+        return np.asarray(t), np.asarray(all_w)
+
+    else:
+        w = dop853_helper(
+            &cp, &cf, <FcnEqDiff> Fwrapper,
+            w0, t,
+            ndim, norbits, 0, args, ntimes,
+            atol, rtol, nmax, int(progress))
+
+        return np.asarray(t[-1:]), np.asarray(w)

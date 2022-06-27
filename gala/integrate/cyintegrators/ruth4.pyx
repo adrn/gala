@@ -44,7 +44,8 @@ cdef void c_ruth4_step(CPotential *p, int half_ndim, double t, double dt,
 
 cpdef ruth4_integrate_hamiltonian(hamiltonian,
                                   double[:, ::1] w0,
-                                  double[::1] t):
+                                  double[::1] t,
+                                  int store_all):
     """
     CAUTION: Interpretation of axes is different here! We need the
     arrays to be C ordered and easy to iterate over, so here the
@@ -89,24 +90,33 @@ cpdef ruth4_integrate_hamiltonian(hamiltonian,
         double[::1] grad = np.zeros(half_ndim)
 
         # return arrays
-        double[:, :, ::1] all_w = np.zeros((ntimes, n, ndim))
+        double[:, :, ::1] all_w
+        double[:, ::1] tmp_w
 
         # whoa, so many dots
         CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
 
-    # save initial conditions
-    all_w[0, :, :] = w0.copy()
+    if store_all:
+        all_w = np.zeros((ntimes, n, ndim))
+
+        # save initial conditions
+        all_w[0, :, :] = w0.copy()
+
+    tmp_w = w0.copy()
 
     with nogil:
 
         for j in range(1, ntimes, 1):
             for i in range(n):
-                # Copy previous step w to current step w
-                for k in range(ndim):
-                    all_w[j, i, k] = all_w[j-1, i, k]
-
                 c_ruth4_step(&cp, half_ndim, t[j], dt,
                              &cs[0], &ds[0],
-                             &all_w[j, i, 0], &grad[0])
+                             &tmp_w[i, 0], &grad[0])
 
-    return np.asarray(t), np.asarray(all_w)
+                if store_all:
+                    for k in range(half_ndim):
+                        all_w[j, i, k] = tmp_w[i, k]
+
+    if store_all:
+        return np.asarray(t), np.asarray(all_w)
+    else:
+        return np.asarray(t[-1:]), np.asarray(tmp_w)
