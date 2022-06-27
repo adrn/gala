@@ -656,6 +656,67 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         return fig
 
+    def plot_rotation_curve(self, R_grid, ax=None, labels=None, **plot_kwargs):
+        """
+        Plot equipotentials contours. Computes the potential energy on a grid
+        (specified by the array `grid`).
+
+        .. warning:: Right now the grid input must be arrays and must already
+            be in the unit system of the potential. Quantity support is coming...
+
+        Parameters
+        ----------
+        R_grid : array-like
+            A grid of radius values to compute the rotation curve at. This should be a
+            one-dimensional grid.
+        ax : matplotlib.Axes (optional)
+        labels : iterable (optional)
+            List of axis labels. Set to False to disable adding labels.
+        plot_kwargs : dict
+            kwargs passed to plot().
+
+        Returns
+        -------
+        fig : `~matplotlib.Figure`
+        ax : `~matplotlib.Axes`
+
+        """
+
+        if not hasattr(R_grid, 'unit'):
+            R_grid = R_grid * self.units['length']
+
+        xyz = np.zeros((3, ) + R_grid.shape) * self.units['length']
+        xyz[0] = R_grid
+
+        vcirc = self.circular_velocity(xyz)
+
+        if labels is None:
+            labels = [
+                f"$R$ [{self.units['length']:latex_inline}]",
+                r"$v_{\rm circ}$ " + f"[{self.units['speed']:latex_inline}]"
+            ]
+
+        import matplotlib.pyplot as plt
+
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        if labels is not False:
+            ax.set_xlabel(labels[0])
+            ax.set_ylabel(labels[1])
+
+        plot_kwargs.setdefault('marker', '')
+        plot_kwargs.setdefault('linestyle', plot_kwargs.pop('ls', '-'))
+        plot_kwargs.setdefault('linewidth', plot_kwargs.pop('lw', 1))
+
+        ax.plot(
+            R_grid.to_value(self.units['length']),
+            vcirc.to_value(self.units['speed']),
+            **plot_kwargs
+        )
+
+        return fig, ax
+
     def integrate_orbit(self, *args, **kwargs):
         """
         Integrate an orbit in the current potential using the integrator class
