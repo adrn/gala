@@ -658,11 +658,8 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
     def plot_rotation_curve(self, R_grid, ax=None, labels=None, **plot_kwargs):
         """
-        Plot equipotentials contours. Computes the potential energy on a grid
-        (specified by the array `grid`).
-
-        .. warning:: Right now the grid input must be arrays and must already
-            be in the unit system of the potential. Quantity support is coming...
+        Plot the rotation curve or circular velocity curve for this potential on the
+        input grid of cylindrical radii.
 
         Parameters
         ----------
