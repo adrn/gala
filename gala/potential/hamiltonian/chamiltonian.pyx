@@ -356,7 +356,7 @@ class Hamiltonian(CommonBase):
             orbit.frame = self.frame
             return orbit
 
-        if store_all:
+        if not store_all:
             w = w[:, None]
 
         try:
