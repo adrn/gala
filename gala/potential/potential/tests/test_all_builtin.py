@@ -95,6 +95,10 @@ class TestHenonHeiles(PotentialTestBase):
     sympy_density = False
     check_finite_at_origin = False
 
+    @pytest.mark.skip(reason="Not relevant")
+    def test_plot(self):
+        pass
+
 
 class TestKepler(PotentialTestBase):
     potential = p.KeplerPotential(units=solarsystem, m=1.)

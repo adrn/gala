@@ -17,6 +17,9 @@ New Features
 - Added a ``store_all`` flag to the integrators to control whether to save
   phase-space information for all timesteps or only the final timestep.
 
+- Added a ``plot_rotation_curve()`` method to all potential objects to make a 1D plot
+  of the circular velocity curve.
+
 Bug fixes
 ---------
 
