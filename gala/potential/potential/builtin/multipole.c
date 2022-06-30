@@ -4,18 +4,18 @@ and https://github.com/adrn/gala/blob/main/gala/potential/scf/src/bfe_helper.c
 */
 #include <stdlib.h>
 #include <stdio.h>
-// #include "extra_compile_macros.h"
+#include "extra_compile_macros.h"
 #include <math.h>
 #include <string.h>
-// #if USE_GSL == 1
+#if USE_GSL == 1
 #include "gsl/gsl_sf_legendre.h"
 #include "gsl/gsl_sf_gegenbauer.h"
 #include "gsl/gsl_sf_gamma.h"
-// #endif
-#include "potential.h"
+#endif
 
 #define SQRT_FOURPI 3.544907701811031
 
+#if USE_GSL == 1
 /* --------------------------------------------------------------------------
 
     Low-level helper functions
@@ -203,6 +203,7 @@ void mp_potential_helper(double *xyz, int K,
                 i++;
             }
         }
+        if((r==0) && inner) {val[k] = 0.;}
         val[k] *= G*M/r_s;
     }
 }
@@ -567,4 +568,4 @@ double mpetd_density(double t, double *pars, double *q, int n_dim) {
     return val[0];
 }
 
-// #endif
+#endif

@@ -914,7 +914,7 @@ class NullPotential(CPotentialBase):
 # ==============================================================================
 # Multipole
 #
-mep_cache = {}
+mp_cache = {}
 
 
 def make_multipole_cls(lmax, timedep=False):
@@ -928,15 +928,16 @@ def make_multipole_cls(lmax, timedep=False):
 
     """
     if timedep:
-        cls = MultipoleTimeDependentPotential
-        param_default = [0.]
+        raise NotImplementedError("Time dependent potential coming soon!")
+        # cls = MultipoleTimeDependentPotential
+        # param_default = [0.]
     else:
         cls = MultipolePotential
         param_default = 0.
     cls_name = f'{cls.__name__}Lmax{lmax}'
 
-    if cls_name in mep_cache:
-        return mep_cache[cls_name]
+    if cls_name in mp_cache:
+        return mp_cache[cls_name]
 
     parameters = {
         '_lmax': lmax,
@@ -986,8 +987,8 @@ def make_multipole_cls(lmax, timedep=False):
         (cls, ),
         parameters
     )
-    mep_cache[cls_name] = potential_cls
-    return mep_cache[cls_name]
+    mp_cache[cls_name] = potential_cls
+    return mp_cache[cls_name]
 
 
 class MultipolePotential(CPotentialBase, GSL_only=True):
@@ -1082,3 +1083,22 @@ class MultipolePotential(CPotentialBase, GSL_only=True):
         if super().__new__ is object.__new__:
             return super().__new__(cls)
         return super().__new__(cls, *args, **kwargs)
+
+
+def __getattr__(name):
+    if name in __all__ and name in globals():
+        return globals()[name]
+
+    if not (name.startswith('MultipolePotentialLmax')):
+        raise AttributeError(f"Module {__name__!r} has no attribute {name!r}.")
+
+    if name in mp_cache:
+        return mp_cache[name]
+
+    else:
+        try:
+            lmax = int(name.split('Lmax')[1])
+        except Exception:
+            raise ImportError("Invalid")  # shouldn't ever get here!
+
+        return make_multipole_cls(lmax, timedep='TimeDependent' in name)

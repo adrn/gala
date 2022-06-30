@@ -456,3 +456,38 @@ class TestKepler3Body(CompositePotentialTestBase):
     Omega = np.array([0, 0, 1.])
     frame = ConstantRotatingFrame(Omega=Omega)
     w0 = [0.5, 0, 0, 0., 1.05800316, 0.]
+
+
+class TestMultipoleInner(PotentialTestBase):
+    potential_1 = p.NFWPotential(m=1E12, r_s=15., units=galactic)
+    potential = potential_1 + p.MultipolePotential(
+        units=galactic, m=1E10, r_s=15., inner=True,
+        lmax=2, S10=1., S21=0.5)
+    vc = potential.circular_velocity([19., 0, 0]*u.kpc).decompose(galactic).value[0]
+    w0 = [19.0, 0.2, -0.9, 0., vc, 0.]
+
+    @pytest.mark.skip(reason="Not implemented for multipole potentials")
+    def test_hessian(self):
+        pass
+
+    @pytest.mark.skip(reason="Not implemented for multipole potentials")
+    def test_against_sympy(self):
+        pass
+
+
+class TestMultipoleOuter(PotentialTestBase):
+    potential_1 = p.NFWPotential(m=1E12, r_s=15., units=galactic)
+    potential = potential_1 + p.MultipolePotential(
+        units=galactic, m=1E10, r_s=15., inner=False,
+        lmax=2, S10=1., S21=0.5)
+    vc = potential.circular_velocity([19., 0, 0]*u.kpc).decompose(galactic).value[0]
+    w0 = [19.0, 0.2, -0.9, 0., vc, 0.]
+    check_finite_at_origin = False
+    
+    @pytest.mark.skip(reason="Not implemented for multipole potentials")
+    def test_hessian(self):
+        pass
+
+    @pytest.mark.skip(reason="Not implemented for multipole potentials")
+    def test_against_sympy(self):
+        pass
