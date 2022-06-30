@@ -122,13 +122,24 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     void longmuralibar_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
 __all__ = [
-    'NullWrapper', 'HenonHeilesWrapper', # Misc. potentials
-    'KeplerWrapper', 'HernquistWrapper', 'IsochroneWrapper', 'PlummerWrapper',
-    'JaffeWrapper', 'StoneWrapper', 'PowerLawCutoffWrapper', # Spherical models
-    'SatohWrapper', 'KuzminWrapper', 'MiyamotoNagaiWrapper',
+    'NullWrapper',
+    'HenonHeilesWrapper', # Misc. potentials
+    'KeplerWrapper',
+    'HernquistWrapper',
+    'IsochroneWrapper',
+    'PlummerWrapper',
+    'JaffeWrapper',
+    'StoneWrapper',
+    'PowerLawCutoffWrapper', # Spherical models
+    'SatohWrapper',
+    'KuzminWrapper',
+    'MiyamotoNagaiWrapper',
     'MN3ExponentialDiskWrapper', # Disk models
-    'SphericalNFWWrapper', 'FlattenedNFWWrapper', 'TriaxialNFWWrapper',
-    'LeeSutoTriaxialNFWWrapper', 'LogarithmicWrapper',
+    'SphericalNFWWrapper',
+    'FlattenedNFWWrapper',
+    'TriaxialNFWWrapper',
+    'LeeSutoTriaxialNFWWrapper',
+    'LogarithmicWrapper',
     'LongMuraliBarWrapper', # Triaxial models
     'NullWrapper'
 ]
