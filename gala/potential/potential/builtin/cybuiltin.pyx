@@ -121,6 +121,11 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     double longmuralibar_density(double t, double *pars, double *q, int n_dim) nogil
     void longmuralibar_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
+cdef extern from "potential/potential/builtin/multipole.h":
+    double mp_potential(double t, double *pars, double *q, int n_dim) nogil
+    void mp_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    double mp_density(double t, double *pars, double *q, int n_dim) nogil
+
 __all__ = [
     'HenonHeilesWrapper', # Misc. potentials
     'KeplerWrapper',
@@ -140,7 +145,8 @@ __all__ = [
     'LeeSutoTriaxialNFWWrapper',
     'LogarithmicWrapper',
     'LongMuraliBarWrapper', # Triaxial models
-    'NullWrapper'
+    'NullWrapper',
+    'MultipoleWrapper'
 ]
 
 # ============================================================================
@@ -382,3 +388,17 @@ cdef class NullWrapper(CPotentialWrapper):
         self.cpotential.gradient[0] = <gradientfunc>(null_gradient)
         self.cpotential.hessian[0] = <hessianfunc>(null_hessian)
         self.cpotential.null = 1
+
+
+# ==============================================================================
+# Multipole
+#
+cdef class MultipoleWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters, q0, R):
+        self.init([G] + list(parameters),
+                  np.ascontiguousarray(q0),
+                  np.ascontiguousarray(R))
+        self.cpotential.value[0] = <energyfunc>(mp_potential)
+        self.cpotential.density[0] = <densityfunc>(mp_density)
+        self.cpotential.gradient[0] = <gradientfunc>(mp_gradient)
