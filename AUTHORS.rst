@@ -8,6 +8,7 @@ All contributors (alphabetical last name):
 * Akeem Hart
 * Sergey Koposov
 * Daniel Lenz
+* Sophia Lilleengen
 * Pey Lian Lim
 * Syrtis Major
 * Semyeong Oh
