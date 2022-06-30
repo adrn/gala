@@ -3,17 +3,17 @@ import astropy.units as u
 import numpy as np
 
 # Project
-# from .cpotential import CCompositePotential
-# from ..core import CompositePotential
-from .cybuiltin import (HernquistPotential,
-                        MiyamotoNagaiPotential,
-                        LogarithmicPotential,
-                        NFWPotential,
-                        PowerLawCutoffPotential)
-from ..ccompositepotential import CCompositePotential
-from ....units import galactic
+from gala.potential.potential.builtin.core import (
+    HernquistPotential,
+    MiyamotoNagaiPotential,
+    LogarithmicPotential,
+    NFWPotential,
+    PowerLawCutoffPotential,
+)
+from gala.potential.potential.ccompositepotential import CCompositePotential
+from gala.units import galactic
 
-__all__ = ['LM10Potential', 'MilkyWayPotential', 'BovyMWPotential2014']
+__all__ = ["LM10Potential", "MilkyWayPotential", "BovyMWPotential2014"]
 
 
 class LM10Potential(CCompositePotential):
@@ -44,14 +44,19 @@ class LM10Potential(CCompositePotential):
     Note: in subclassing, order of arguments must match order of potential
     components added at bottom of init.
     """
-    def __init__(self, units=galactic,
-                 disk=dict(), bulge=dict(), halo=dict()):
 
-        default_disk = dict(m=1E11*u.Msun, a=6.5*u.kpc, b=0.26*u.kpc)
-        default_bulge = dict(m=3.4E10*u.Msun, c=0.7*u.kpc)
-        default_halo = dict(q1=1.38, q2=1., q3=1.36, r_h=12.*u.kpc,
-                            phi=97*u.degree,
-                            v_c=np.sqrt(2)*121.858*u.km/u.s)
+    def __init__(self, units=galactic, disk=dict(), bulge=dict(), halo=dict()):
+
+        default_disk = dict(m=1e11 * u.Msun, a=6.5 * u.kpc, b=0.26 * u.kpc)
+        default_bulge = dict(m=3.4e10 * u.Msun, c=0.7 * u.kpc)
+        default_halo = dict(
+            q1=1.38,
+            q2=1.0,
+            q3=1.36,
+            r_h=12.0 * u.kpc,
+            phi=97 * u.degree,
+            v_c=np.sqrt(2) * 121.858 * u.km / u.s,
+        )
 
         for k, v in default_disk.items():
             if k not in disk:
@@ -102,13 +107,15 @@ class MilkyWayPotential(CCompositePotential):
     Note: in subclassing, order of arguments must match order of potential
     components added at bottom of init.
     """
-    def __init__(self, units=galactic,
-                 disk=None, halo=None, bulge=None, nucleus=None):
 
-        default_disk = dict(m=6.8E10*u.Msun, a=3.*u.kpc, b=0.28*u.kpc)
-        default_bulge = dict(m=5E9*u.Msun, c=1.0*u.kpc)
-        default_nucl = dict(m=1.71E9*u.Msun, c=0.07*u.kpc)
-        default_halo = dict(m=5.4E11*u.Msun, r_s=15.62*u.kpc)
+    def __init__(
+        self, units=galactic, disk=None, halo=None, bulge=None, nucleus=None
+    ):
+
+        default_disk = dict(m=6.8e10 * u.Msun, a=3.0 * u.kpc, b=0.28 * u.kpc)
+        default_bulge = dict(m=5e9 * u.Msun, c=1.0 * u.kpc)
+        default_nucl = dict(m=1.71e9 * u.Msun, c=0.07 * u.kpc)
+        default_halo = dict(m=5.4e11 * u.Msun, r_s=15.62 * u.kpc)
 
         if disk is None:
             disk = dict()
@@ -179,12 +186,16 @@ class BovyMWPotential2014(CCompositePotential):
     Note: in subclassing, order of arguments must match order of potential
     components added at bottom of init.
     """
-    def __init__(self, units=galactic,
-                 disk=None, halo=None, bulge=None):
 
-        default_disk = dict(m=68193902782.346756*u.Msun, a=3.*u.kpc, b=280*u.pc)
-        default_bulge = dict(m=4501365375.06545*u.Msun, alpha=1.8, r_c=1.9*u.kpc)
-        default_halo = dict(m=4.3683325e11*u.Msun, r_s=16*u.kpc)
+    def __init__(self, units=galactic, disk=None, halo=None, bulge=None):
+
+        default_disk = dict(
+            m=68193902782.346756 * u.Msun, a=3.0 * u.kpc, b=280 * u.pc
+        )
+        default_bulge = dict(
+            m=4501365375.06545 * u.Msun, alpha=1.8, r_c=1.9 * u.kpc
+        )
+        default_halo = dict(m=4.3683325e11 * u.Msun, r_s=16 * u.kpc)
 
         if disk is None:
             disk = dict()
@@ -213,6 +224,7 @@ class BovyMWPotential2014(CCompositePotential):
         self["bulge"] = PowerLawCutoffPotential(units=units, **bulge)
         self["halo"] = NFWPotential(units=units, **halo)
         self.lock = True
+
 
 # --------------------------------------------------------------------
 # class TriaxialMWPotential(CCompositePotential):
