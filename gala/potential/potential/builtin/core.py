@@ -37,7 +37,8 @@ from gala.potential.potential.builtin.cybuiltin import (
     LogarithmicWrapper,
     LongMuraliBarWrapper,
     NullWrapper,
-    MultipoleWrapper
+    MultipoleWrapper,
+    CylSplineWrapper
 )
 
 __all__ = [
@@ -913,7 +914,7 @@ class NullPotential(CPotentialBase):
 
 
 # ==============================================================================
-# Multipole
+# Multipole and flexible potential models
 #
 mp_cache = {}
 
@@ -1084,6 +1085,189 @@ class MultipolePotential(CPotentialBase, GSL_only=True):
         if super().__new__ is object.__new__:
             return super().__new__(cls)
         return super().__new__(cls, *args, **kwargs)
+
+
+
+@format_doc(common_doc=_potential_docstring)
+class CylSplinePotential(CPotentialBase):
+    r"""
+    CylSplinePotential(TODO, units=None, origin=None, R=None)
+
+    TODO
+
+    Parameters
+    ----------
+    m : `~astropy.units.Quantity`, numeric [mass]
+        Mass scale.
+    grid_R : `~astropy.units.Quantity`, numeric [length]
+        TODO
+    grid_z : `~astropy.units.Quantity`, numeric [length]
+        TODO
+    grid_Phi : `~astropy.units.Quantity`, numeric [energy]
+        TODO
+    {common_doc}
+    """
+    m = PotentialParameter('m', physical_type='mass')
+    grid_R = PotentialParameter('grid_R', physical_type='length')
+    grid_z = PotentialParameter('grid_z', physical_type='length')
+    grid_Phi = PotentialParameter('grid_Phi', physical_type='specific energy')
+
+    Wrapper = CylSplineWrapper
+
+    def __init__(self, m, grid_R, grid_z, grid_Phi,
+                 units=None, origin=None, R=None,
+                 **kwargs):
+
+        PotentialBase.__init__(
+            self,
+            m, grid_R, grid_z, grid_Phi,
+            units=units,
+            origin=origin,
+            R=R,
+            **kwargs
+        )
+
+        Phi0 = self.parameters['grid_Phi'][0, 0]  # potential at R=0,z=0
+
+        self.pot, *_ = self._fit_asympt(self.grid_R, self.grid_z, self.grid_Phi)
+        Mtot = -pot.energy([1., 0, 0] * self.grid_R.max()).value[0] * self.grid_R.max().value
+        if Phi0 < 0 and Mtot > 0:
+            # assign Rscale so that it approximately equals -Mtotal/Phi(r=0),
+            Rscale = -Mtot / Phi0  # i.e. would equal the scale radius of a Plummer potential
+        else:
+            Rscale = grid_R[len(grid_R) // 2]  # "rather arbitrary"
+
+        self.Rscale = Rscale * self.units['length']
+
+        # assumed / enforced mmax=0 - different from Agama
+
+        sizeR = len(grid_R)
+
+        # grid in z assumed to only cover half-space z>=0; the density is assumed
+        # to be z-reflection symmetric:
+        sizez_orig = len(grid_z)
+        gridz_orig = grid_z.copy()
+        grid_z = np.concatenate((-grid_z[::-1], grid_z[1:]))
+        sizez = len(grid_z)
+
+        # transform the grid to log-scaled coordinates
+        grid_R_asinh = np.arcsinh(grid_R / Rscale);
+        grid_z_asinh = np.arcsinh(grid_z / Rscale);
+
+        self.logScaling = np.all(grid_Phi < 0)
+
+        # temporary containers of scaled potential and derivatives used to
+        # construct 2d splines
+        val = np.zeros((sizeR, sizez))
+
+        if grid_Phi.shape[0] != sizeR or grid_Phi.shape[1] != sizez_orig:
+            raise ValueError("CylSpline: incorrect coefs array size");
+
+        grid_Phi_full = np.zeros((sizeR, sizez))
+        grid_Phi_full[:, :sizez_orig-1] = grid_Phi[:, :0:-1]
+        grid_Phi_full[:, sizez_orig-1:] = grid_Phi
+        if self.logScaling:
+            val = np.log(-grid_Phi_full)
+        else:
+            val = grid_Phi_full
+
+        self.spl = interp2d(grid_R_asinh, grid_z_asinh, val.T, kind='linear')
+
+        self._grid_z_full = grid_z * self.units['length']
+        self._grid_Phi_full = grid_Phi_full * self.units['specific energy']
+
+
+
+
+
+        c_only = {}
+        for i in range(3):
+            c_only[f'm{i+1}'] = ms_[i]
+            c_only[f'a{i+1}'] = as_[i]
+            c_only[f'b{i+1}'] = b.value
+
+        self._setup_wrapper(c_only)
+
+    def _fit_asympt(self, grid_R, grid_z, grid_Phi, lmax_fit=8):
+        """
+        Assumes z reflection symmetry
+
+        lmax_fit : int
+            Number of meridional harmonics to fit - don't set too large
+
+        """
+
+        sizeR = len(grid_R)
+        sizez = len(grid_z)
+
+        # assemble the boundary points and their indices
+        assert grid_Phi.shape == (sizeR, sizez)
+        maxz = np.max(grid_z.value)
+
+        # first run along R at the max-z and min-z edges
+        points = np.concatenate((
+            [[R, maxz] for R in grid_R.value],
+            [[R, -maxz] for R in grid_R.value]
+        ))
+        Phis = np.concatenate((
+            self.grid_Phi[:, np.argmax(grid_z)].value,
+            self.grid_Phi[:, np.argmax(grid_z)].value
+        ))
+
+        maxR = np.max(grid_R.value)
+        points = np.concatenate((
+            points,
+            [[maxR, z] for z in grid_z.value],
+            [[maxR, -z] for z in grid_z.value],
+        ))
+        Phis = np.concatenate((
+            Phis,
+            self.grid_Phi[np.argmax(grid_R), :].value,
+            self.grid_Phi[np.argmax(grid_R), :].value
+        ))
+
+        npoints = len(points)
+        ncoefs = lmax_fit + 1
+
+        r0 = min(np.max(grid_R), np.max(grid_z))
+
+        i, j = len(grid_R) // 2, len(grid_z) // 2
+        rr = np.sqrt(grid_R[i]**2 + grid_z[j]**2)
+        m = np.abs(grid_Phi[i, j] * rr / G).to(self.units['mass'])
+        scale = (G * m / r0).decompose(self.units).value
+
+        # find values of spherical harmonic coefficients
+        # that best match the potential at the array of boundary points
+
+        # for m-th harmonic, we may have lmax-m+1 different l-terms
+        matr = np.zeros((npoints, lmax_fit+1))
+
+        # The linear system to solve in the least-square sense is M_{p,l} * S_l = R_p,
+        # where R_p = Phi at p-th boundary point (0<=p<npoints),
+        # M_{l,p}   = value of l-th harmonic coefficient at p-th boundary point,
+        # S_l       = the amplitude of l-th coefficient to be determined.
+        r = np.sqrt(points[:, 0]**2 + points[:, 1]**2)
+        theta = np.arctan2(points[:, 0], points[:, 1])
+
+        ls = np.arange(lmax_fit + 1)
+        Pl0 = np.stack([
+            sph_harm(0, l, 0., theta).real for l in ls
+        ]).T
+
+        matr = (r[:, None] / r0.value) ** -(ls[None] + 1) * Pl0
+        y = Phis / scale
+        sol, resid, rank, s = np.linalg.lstsq(matr, y, rcond=None)
+
+        pars = {f'S{l}0': sol[l].real for l in ls}
+        return MultipolePotential(
+            lmax=lmax_fit,
+            m=m,
+            r_s=r0,
+            inner=False,
+            units=galactic,
+            **pars
+        )
+
 
 
 def __getattr__(name):

@@ -121,6 +121,8 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     double longmuralibar_density(double t, double *pars, double *q, int n_dim) nogil
     void longmuralibar_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
+    double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) nogil
+
 cdef extern from "potential/potential/builtin/multipole.h":
     double mp_potential(double t, double *pars, double *q, int n_dim) nogil
     void mp_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
@@ -146,7 +148,8 @@ __all__ = [
     'LogarithmicWrapper',
     'LongMuraliBarWrapper',
     'NullWrapper',
-    'MultipoleWrapper'
+    'MultipoleWrapper',
+    'CylSplineWrapper'
 ]
 
 # ============================================================================
@@ -391,7 +394,7 @@ cdef class NullWrapper(CPotentialWrapper):
 
 
 # ==============================================================================
-# Multipole
+# Multipole and flexible potential models
 #
 cdef class MultipoleWrapper(CPotentialWrapper):
 
@@ -404,3 +407,15 @@ cdef class MultipoleWrapper(CPotentialWrapper):
             self.cpotential.value[0] = <energyfunc>(mp_potential)
             self.cpotential.density[0] = <densityfunc>(mp_density)
             self.cpotential.gradient[0] = <gradientfunc>(mp_gradient)
+
+
+cdef class CylSplineWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters, q0, R):
+        self.init([G] + list(parameters),
+                  np.ascontiguousarray(q0),
+                  np.ascontiguousarray(R))
+        self.cpotential.value[0] = <energyfunc>(axisym_cylspline_value)
+        #self.cpotential.gradient[0] = <gradientfunc>(longmuralibar_gradient)
+        #self.cpotential.density[0] = <densityfunc>(longmuralibar_density)
+        #self.cpotential.hessian[0] = <hessianfunc>(longmuralibar_hessian)
