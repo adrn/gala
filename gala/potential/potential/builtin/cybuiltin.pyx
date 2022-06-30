@@ -122,7 +122,6 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     void longmuralibar_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
 __all__ = [
-    'NullWrapper',
     'HenonHeilesWrapper', # Misc. potentials
     'KeplerWrapper',
     'HernquistWrapper',

@@ -18,7 +18,6 @@ from ..util import format_doc, sympy_wrap
 from ..cpotential import CPotentialBase
 from gala.potential.common import PotentialParameter
 from gala.potential.potential.builtin.cybuiltin import (
-    NullWrapper,
     HenonHeilesWrapper,
     KeplerWrapper,
     HernquistWrapper,
