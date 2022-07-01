@@ -59,7 +59,8 @@ __all__ = [
     "LeeSutoTriaxialNFWPotential",
     "LogarithmicPotential",
     "LongMuraliBarPotential",
-    "MultipolePotential"
+    "MultipolePotential",
+    "CylSplinePotential"
 ]
 
 
