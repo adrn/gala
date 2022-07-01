@@ -37,26 +37,28 @@ from gala.potential.potential.builtin.cybuiltin import (
     LogarithmicWrapper,
     LongMuraliBarWrapper,
     NullWrapper,
+    MultipoleWrapper
 )
 
 __all__ = [
     "NullPotential",
-    "HenonHeilesPotential",  # Misc. potentials
+    "HenonHeilesPotential",
     "KeplerPotential",
     "HernquistPotential",
     "IsochronePotential",
     "PlummerPotential",
     "JaffePotential",
     "StonePotential",
-    "PowerLawCutoffPotential",  # Spherical models
+    "PowerLawCutoffPotential",
     "SatohPotential",
     "KuzminPotential",
     "MiyamotoNagaiPotential",
-    "MN3ExponentialDiskPotential",  # Disk models
+    "MN3ExponentialDiskPotential",
     "NFWPotential",
     "LeeSutoTriaxialNFWPotential",
     "LogarithmicPotential",
-    "LongMuraliBarPotential",  # Triaxial models
+    "LongMuraliBarPotential",
+    "MultipolePotential"
 ]
 
 
@@ -908,3 +910,196 @@ class NullPotential(CPotentialBase):
     {common_doc}
     """
     Wrapper = NullWrapper
+
+
+# ==============================================================================
+# Multipole
+#
+mp_cache = {}
+
+
+def make_multipole_cls(lmax, timedep=False):
+    """Create a MultipolePotential or MultipoleTimeDependentPotential class
+    (not an instance!) with the specified value of lmax.
+
+    Parameters:
+    -----------
+    lmax : int
+    timedep : bool
+
+    """
+    if timedep:
+        raise NotImplementedError("Time dependent potential coming soon!")
+        # cls = MultipoleTimeDependentPotential
+        # param_default = [0.]
+    else:
+        cls = MultipolePotential
+        param_default = 0.
+    cls_name = f'{cls.__name__}Lmax{lmax}'
+
+    if cls_name in mp_cache:
+        return mp_cache[cls_name]
+
+    parameters = {
+        '_lmax': lmax,
+        'inner': PotentialParameter('inner', default=False),
+        'm': PotentialParameter('m', physical_type='mass', default=1.),
+        'r_s': PotentialParameter('r_s', physical_type='length', default=1.),
+    }
+    doc_lines = []
+    ab_callsig = []
+    for l in range(lmax + 1):
+        for m in range(0, l+1):
+            if timedep:
+                a = f'alpha{l}{m}'
+                b = f'beta{l}{m}'
+                dtype = 'array-like'
+            else:
+                a = f'S{l}{m}'
+                b = f'T{l}{m}'
+                dtype = 'float'
+
+            parameters[a] = PotentialParameter(
+                a,
+                physical_type='dimensionless',
+                default=param_default
+            )
+            parameters[b] = PotentialParameter(
+                b,
+                physical_type='dimensionless',
+                default=param_default
+            )
+
+            doc_lines.append(f"{a} : {dtype}\n{b} : {dtype}")
+            ab_callsig.append(f"{a}, {b}")
+
+    ab_callsig = ', '.join(ab_callsig)
+    call_signature = f"{cls.__name__}(m, r_s, {ab_callsig})"
+    parameters['__doc__'] = (
+        call_signature + cls.__doc__ + "\n".join(doc_lines)
+    )
+
+    # https://stackoverflow.com/a/58716798/623453
+    parameters['__module__'] = __name__
+
+    # Create a new SkyOffsetFrame subclass for this frame class.
+    potential_cls = type(
+        cls_name,
+        (cls, ),
+        parameters
+    )
+    mp_cache[cls_name] = potential_cls
+    return mp_cache[cls_name]
+
+
+class MultipolePotential(CPotentialBase, GSL_only=True):
+    r"""
+
+    A perturbing potential represented by a multipole expansion.
+
+    Inner:
+
+    .. math::
+
+        \Phi^l_\mathrm{max}(r,\theta,\phi) = \sum_{l=1}^{l=l_\mathrm{max}}\sum_{m=0}^{m=l}
+            r^l \, (S_{lm} \, \cos{m\,\phi} + T_{lm} \, \sin{m\,\phi})
+            \, P_l^m(\cos\theta)
+
+    Outer:
+
+    .. math::
+
+        \Phi^l_\mathrm{max}(r,\theta,\phi) = \sum_{l=1}^{l=l_\mathrm{max}}\sum_{m=0}^{m=l}
+            r^{-(l+1)} \, (S_{lm} \, \cos{m\,\phi} + T_{lm} \, \sin{m\,\phi})
+            \, P_l^m(\cos\theta)
+
+
+    The allowed coefficient parameter names will depend on how you set ``lmax``, and the
+    default value for all coefficient parameter values is 0.
+
+    Parameters
+    ----------
+    m : numeric
+        Scale mass.
+    r_s : numeric
+        Scale length.
+    lmax : int
+        The maximum ``l`` order.
+    inner : bool (optional)
+        Controls whether to use the inner expansion, or the outer expansion (see above).
+        Default value = ``False``.
+    S00 : float (optional)
+    S10 : float (optional)
+    S11 : float (optional)
+    T11 : float (optional)
+    etc.
+
+    Examples
+    --------
+    To create a potential object with only a dipole:
+
+        >>> pot = MultipolePotential(lmax=1, S10=5.)
+    """
+
+    Wrapper = MultipoleWrapper
+
+    def __init__(
+        self,
+        *args,
+        # coeffs_have_units=False,
+        units=None,
+        origin=None,
+        R=None,
+        **kwargs
+    ):
+        kwargs.pop('lmax', None)
+
+        PotentialBase.__init__(
+            self,
+            *args,
+            units=units,
+            origin=origin,
+            R=R,
+            **kwargs)
+
+        self._setup_wrapper({
+            'lmax': self._lmax,
+            'n_coeffs': sum(range(self._lmax + 2))
+        })
+
+    def __new__(cls, *args, **kwargs):
+        # We don't want to call this method if we've already set up
+        # an skyoffset frame for this class.
+        if not (issubclass(cls, MultipolePotential)
+                and cls is not MultipolePotential):
+            try:
+                lmax = kwargs['lmax']
+            except KeyError:
+                raise TypeError(
+                    "Can't initialize a MultipolePotential without specifying "
+                    "the `lmax` keyword argument.")
+            newcls = make_multipole_cls(lmax)
+            return newcls.__new__(newcls, *args, **kwargs)
+
+        if super().__new__ is object.__new__:
+            return super().__new__(cls)
+        return super().__new__(cls, *args, **kwargs)
+
+
+def __getattr__(name):
+    if name in __all__ and name in globals():
+        return globals()[name]
+
+    if not (name.startswith('MultipolePotentialLmax')):
+        raise AttributeError(f"Module {__name__!r} has no attribute {name!r}.")
+
+    if name in mp_cache:
+        return mp_cache[name]
+
+    else:
+        try:
+            lmax = int(name.split('Lmax')[1])
+        except Exception:
+            raise ImportError("Invalid")  # shouldn't ever get here!
+
+        return make_multipole_cls(lmax, timedep='TimeDependent' in name)

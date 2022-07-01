@@ -39,6 +39,7 @@ def get_extensions():
     cfg['extra_compile_args'].append('--std=gnu99')
     cfg['sources'].append('gala/potential/potential/builtin/cybuiltin.pyx')
     cfg['sources'].append('gala/potential/potential/builtin/builtin_potentials.c')
+    cfg['sources'].append('gala/potential/potential/builtin/multipole.c')
     cfg['sources'].append('gala/potential/potential/src/cpotential.c')
     exts.append(Extension('gala.potential.potential.builtin.cybuiltin', **cfg))
 

@@ -19,6 +19,8 @@ New Features
 
 - Added a ``plot_rotation_curve()`` method to all potential objects to make a 1D plot
   of the circular velocity curve.
+  
+- Added a new potential for representing multipole expansions ``MultipolePotential``.
 
 Bug fixes
 ---------
