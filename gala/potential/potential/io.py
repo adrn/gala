@@ -2,7 +2,6 @@
 
 # Standard library
 import os
-import importlib
 
 # Third-party
 import astropy.units as u
