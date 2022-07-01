@@ -399,6 +399,8 @@ cdef class MultipoleWrapper(CPotentialWrapper):
         self.init([G] + list(parameters),
                   np.ascontiguousarray(q0),
                   np.ascontiguousarray(R))
-        self.cpotential.value[0] = <energyfunc>(mp_potential)
-        self.cpotential.density[0] = <densityfunc>(mp_density)
-        self.cpotential.gradient[0] = <gradientfunc>(mp_gradient)
+
+        if USE_GSL == 1:
+            self.cpotential.value[0] = <energyfunc>(mp_potential)
+            self.cpotential.density[0] = <densityfunc>(mp_density)
+            self.cpotential.gradient[0] = <gradientfunc>(mp_gradient)
