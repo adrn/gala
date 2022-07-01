@@ -1173,7 +1173,6 @@ class CylSplinePotential(CPotentialBase):
         # grid in z assumed to only cover half-space z>=0; the density is assumed
         # to be z-reflection symmetric:
         sizez_orig = len(grid_z)
-        gridz_orig = grid_z.copy()
         grid_z = np.concatenate((-grid_z[::-1], grid_z[1:]))
         sizez = len(grid_z)
 
@@ -1185,10 +1184,9 @@ class CylSplinePotential(CPotentialBase):
 
         # temporary containers of scaled potential and derivatives used to
         # construct 2d splines
-        val = np.zeros((sizeR, sizez))
 
         if grid_Phi.shape[0] != sizeR or grid_Phi.shape[1] != sizez_orig:
-            raise ValueError("CylSpline: incorrect coefs array size");
+            raise ValueError("CylSpline: incorrect coefs array size")
 
         grid_Phi_full = np.zeros((sizeR, sizez))
         grid_Phi_full[:, :sizez_orig-1] = grid_Phi[:, :0:-1]
