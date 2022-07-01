@@ -458,6 +458,8 @@ class TestKepler3Body(CompositePotentialTestBase):
     w0 = [0.5, 0, 0, 0., 1.05800316, 0.]
 
 
+@pytest.mark.skipif(not GSL_ENABLED,
+                    reason="requires GSL to run this test")
 class TestMultipoleInner(CompositePotentialTestBase):
     potential_1 = p.NFWPotential(m=1E12, r_s=15., units=galactic)
     potential = potential_1 + p.MultipolePotential(
@@ -475,6 +477,8 @@ class TestMultipoleInner(CompositePotentialTestBase):
         pass
 
 
+@pytest.mark.skipif(not GSL_ENABLED,
+                    reason="requires GSL to run this test")
 class TestMultipoleOuter(CompositePotentialTestBase):
     potential_1 = p.NFWPotential(m=1E12, r_s=15., units=galactic)
     potential = potential_1 + p.MultipolePotential(
