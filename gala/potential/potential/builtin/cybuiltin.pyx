@@ -128,6 +128,29 @@ cdef extern from "potential/potential/builtin/multipole.h":
 
     double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) nogil
 
+# cdef extern from "gsl/gsl_interp.h":
+#     ctypedef struct gsl_interp_accel:
+#         pass
+
+# cdef extern from "gsl/gsl_interp2d.h":
+#     ctypedef struct gsl_interp2d_type:
+#         pass
+
+#     ctypedef struct gsl_interp2d:
+#         pass
+
+#     gsl_interp2d_type * gsl_interp2d_bicubic
+#     gsl_interp_accel gsl_interp_accel_alloc()
+#     double gsl_interp2d_eval(const gsl_interp2d *, const double xa[], const double ya[], const double za[], const double, const double, gsl_interp_accel *, gsl_interp_accel *)
+
+# cdef extern from "gsl/gsl_spline2d.h":
+#     ctypedef struct gsl_spline2d:
+#         pass
+
+#     int gsl_spline2d_init(gsl_spline2d *spline, const double xa[], const double ya[], const double za[], size_t xsize, size_t ysize)
+#     double gsl_spline2d_eval(const gsl_spline2d *spline, const double x, const double y, gsl_interp_accel *xacc, gsl_interp_accel *yacc)
+
+
 __all__ = [
     'HenonHeilesWrapper',
     'KeplerWrapper',

@@ -1114,8 +1114,6 @@ class CylSplinePotential(CPotentialBase):
 
     Parameters
     ----------
-    m : `~astropy.units.Quantity`, numeric [mass]
-        Mass scale.
     grid_R : `~astropy.units.Quantity`, numeric [length]
         TODO
     grid_z : `~astropy.units.Quantity`, numeric [length]
@@ -1124,7 +1122,6 @@ class CylSplinePotential(CPotentialBase):
         TODO
     {common_doc}
     """
-    m = PotentialParameter('m', physical_type='mass')
     grid_R = PotentialParameter('grid_R', physical_type='length')
     grid_z = PotentialParameter('grid_z', physical_type='length')
     grid_Phi = PotentialParameter('grid_Phi', physical_type='specific energy')
@@ -1148,12 +1145,12 @@ class CylSplinePotential(CPotentialBase):
             **kwargs
         )
 
-        Phi0 = self.parameters['grid_Phi'][0, 0]  # potential at R=0,z=0
         grid_R = self.parameters['grid_R']
         grid_z = self.parameters['grid_z']
         grid_Phi = self.parameters['grid_Phi']
+        Phi0 = grid_Phi[0, 0]  # potential at R=0,z=0
 
-        self._multipole_pot, *_ = self._fit_asympt(
+        self._multipole_pot = self._fit_asympt(
             grid_R,
             grid_z,
             grid_Phi
@@ -1163,11 +1160,10 @@ class CylSplinePotential(CPotentialBase):
 
         if Phi0 < 0 and Mtot > 0:
             # assign Rscale so that it approximately equals -Mtotal/Phi(r=0),
-            Rscale = -Mtot / Phi0  # i.e. would equal the scale radius of a Plummer potential
+            # i.e. would equal the scale radius of a Plummer potential
+            Rscale = (-Mtot / Phi0).to(self.units['length'])
         else:
             Rscale = grid_R[len(grid_R) // 2]  # "rather arbitrary"
-
-        self.Rscale = Rscale * self.units['length']
 
         # APW: assumed / enforced mmax=0 - different from Agama
 
@@ -1181,10 +1177,10 @@ class CylSplinePotential(CPotentialBase):
         sizez = len(grid_z)
 
         # transform the grid to log-scaled coordinates
-        grid_R_asinh = np.arcsinh(grid_R / Rscale)
-        grid_z_asinh = np.arcsinh(grid_z / Rscale)
+        grid_R_asinh = np.arcsinh((grid_R / Rscale).decompose().value)
+        grid_z_asinh = np.arcsinh((grid_z / Rscale).decompose().value)
 
-        self.logScaling = np.all(grid_Phi < 0)
+        logScaling = np.all(grid_Phi < 0)
 
         # temporary containers of scaled potential and derivatives used to
         # construct 2d splines
@@ -1196,27 +1192,32 @@ class CylSplinePotential(CPotentialBase):
         grid_Phi_full = np.zeros((sizeR, sizez))
         grid_Phi_full[:, :sizez_orig-1] = grid_Phi[:, :0:-1]
         grid_Phi_full[:, sizez_orig-1:] = grid_Phi
-        if self.logScaling:
-            val = np.log(-grid_Phi_full)
+        if logScaling:
+            grid_Phi_full = np.log(-grid_Phi_full)
         else:
-            val = grid_Phi_full
+            grid_Phi_full = grid_Phi_full
 
-        self.spl = interp2d(grid_R_asinh, grid_z_asinh, val.T, kind='linear')
+        # self.spl = interp2d(grid_R_asinh, grid_z_asinh, grid_Phi_full.T, kind='linear')
 
-        self._grid_z_full = grid_z * self.units['length']
-        self._grid_Phi_full = grid_Phi_full * self.units['specific energy']
+        # Note: if MultipolePotential parameter order changes, this needs to be updated!
+        multipole_pars = np.concatenate([
+            [self.G,
+             self._multipole_pot._lmax,
+             sum(range(self._multipole_pot._lmax + 2))],
+            [x.value for x in self._multipole_pot.parameters.values()]
+        ])
 
-
-
-
-
-        c_only = {}
-        for i in range(3):
-            c_only[f'm{i+1}'] = ms_[i]
-            c_only[f'a{i+1}'] = as_[i]
-            c_only[f'b{i+1}'] = b.value
-
-        self._setup_wrapper(c_only)
+        self._c_only = {
+            'log_scaling': logScaling,
+            'Rscale': Rscale.value,
+            'sizeR': sizeR,
+            'sizez': sizez,
+            'grid_R_trans': grid_R_asinh,
+            'grid_z_trans': grid_z_asinh,
+            'grid_Phi_trans': grid_Phi_full.T,
+            'multipole_pars': multipole_pars
+        }
+        self._setup_wrapper(self._c_only)
 
     def _fit_asympt(self, grid_R, grid_z, grid_Phi, lmax_fit=8):
         """
@@ -1226,6 +1227,7 @@ class CylSplinePotential(CPotentialBase):
             Number of meridional harmonics to fit - don't set too large
 
         """
+        from scipy.special import sph_harm
 
         sizeR = len(grid_R)
         sizez = len(grid_z)
@@ -1240,8 +1242,8 @@ class CylSplinePotential(CPotentialBase):
             [[R, -maxz] for R in grid_R.value]
         ))
         Phis = np.concatenate((
-            self.grid_Phi[:, np.argmax(grid_z)].value,
-            self.grid_Phi[:, np.argmax(grid_z)].value
+            grid_Phi[:, np.argmax(grid_z)].value,
+            grid_Phi[:, np.argmax(grid_z)].value
         ))
 
         maxR = np.max(grid_R.value)
@@ -1252,12 +1254,12 @@ class CylSplinePotential(CPotentialBase):
         ))
         Phis = np.concatenate((
             Phis,
-            self.grid_Phi[np.argmax(grid_R), :].value,
-            self.grid_Phi[np.argmax(grid_R), :].value
+            grid_Phi[np.argmax(grid_R), :].value,
+            grid_Phi[np.argmax(grid_R), :].value
         ))
 
         npoints = len(points)
-        ncoefs = lmax_fit + 1
+        # ncoefs = lmax_fit + 1
 
         r0 = min(np.max(grid_R), np.max(grid_z))
 
@@ -1294,6 +1296,6 @@ class CylSplinePotential(CPotentialBase):
             m=m,
             r_s=r0,
             inner=False,
-            units=galactic,
+            units=self.units,
             **pars
         )

@@ -579,6 +579,7 @@ double mpetd_density(double t, double *pars, double *q, int n_dim) {
     gridR (length `ngridR`) - not actually R values, arcsinh(R/Rscale)
     gridz (length `ngridz`) - not actually z values, arcsinh(z/Rscale)
     gridPhi (length `ngridR` * `ngridz`) - transformed Phi values
+    multipole_pars
     -- grid_R, grid_z, grid_Phi to ignore --
 */
 
@@ -605,10 +606,8 @@ double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) {
         for (int j=0; j < nz; j++)
             gridPhi[i * nz + j] = pars[5 + nR + nz + i * nz + j];
 
-    // printf("logscalig=%d Rscale=%f sizeR=%d sizez=%d\n", logScaling, Rscale, nR, nz);
-    // printf("R=%f z=%f\n", Rasinh, zasinh);
-    // printf("gridR[0]=%f gridR[sizeR-1]=%f gridz[0]=%f gridz[sizez-1]=%f\n",
-    //        gridR[0], gridR[nR-1], gridz[0], gridz[nz-1]);
+    // TODO: interpolation is very slow I think because this setup is done every
+    // time the function is called...
 
     const gsl_interp2d_type *T = gsl_interp2d_bicubic;
     gsl_spline2d *spline = gsl_spline2d_alloc(T, nR, nz);
@@ -619,18 +618,19 @@ double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) {
         (zasinh >= gridz[0]) && (zasinh <= gridz[nz-1])) { // Use CylSpline
 
         /* initialize interpolation */
+        // TODO: define this in wrapper, make all CPotential's have a void
+        // pointer array to store things like this, all these functions then
+        // need to accept one more parameter (or is there a way to do optional
+        // args in C?), ??, profit.
         gsl_spline2d_init(spline, gridR, gridz, gridPhi, nR, nz);
-        Phi = gsl_interp2d_eval(spline, gridR, gridz, gridPhi, Rasinh, zasinh,
-                                xacc, yacc);
+        Phi = gsl_spline2d_eval(spline, Rasinh, zasinh, xacc, yacc);
 
         if (logScaling)
             Phi = -exp(Phi);
 
     } else {  // Use external Multipole
-        // TODO
-        Phi = 0.;
+        Phi = mp_potential(t, &pars[5 + nR + nz + nR * nz], q, n_dim);
     }
-
 
     return Phi;
 }
