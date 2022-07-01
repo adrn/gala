@@ -42,22 +42,23 @@ from gala.potential.potential.builtin.cybuiltin import (
 
 __all__ = [
     "NullPotential",
-    "HenonHeilesPotential",  # Misc. potentials
+    "HenonHeilesPotential",
     "KeplerPotential",
     "HernquistPotential",
     "IsochronePotential",
     "PlummerPotential",
     "JaffePotential",
     "StonePotential",
-    "PowerLawCutoffPotential",  # Spherical models
+    "PowerLawCutoffPotential",
     "SatohPotential",
     "KuzminPotential",
     "MiyamotoNagaiPotential",
-    "MN3ExponentialDiskPotential",  # Disk models
+    "MN3ExponentialDiskPotential",
     "NFWPotential",
     "LeeSutoTriaxialNFWPotential",
     "LogarithmicPotential",
-    "LongMuraliBarPotential",  # Triaxial models
+    "LongMuraliBarPotential",
+    "MultipolePotential"
 ]
 
 

@@ -127,24 +127,24 @@ cdef extern from "potential/potential/builtin/multipole.h":
     double mp_density(double t, double *pars, double *q, int n_dim) nogil
 
 __all__ = [
-    'HenonHeilesWrapper', # Misc. potentials
+    'HenonHeilesWrapper',
     'KeplerWrapper',
     'HernquistWrapper',
     'IsochroneWrapper',
     'PlummerWrapper',
     'JaffeWrapper',
     'StoneWrapper',
-    'PowerLawCutoffWrapper', # Spherical models
+    'PowerLawCutoffWrapper',
     'SatohWrapper',
     'KuzminWrapper',
     'MiyamotoNagaiWrapper',
-    'MN3ExponentialDiskWrapper', # Disk models
+    'MN3ExponentialDiskWrapper',
     'SphericalNFWWrapper',
     'FlattenedNFWWrapper',
     'TriaxialNFWWrapper',
     'LeeSutoTriaxialNFWWrapper',
     'LogarithmicWrapper',
-    'LongMuraliBarWrapper', # Triaxial models
+    'LongMuraliBarWrapper',
     'NullWrapper',
     'MultipoleWrapper'
 ]

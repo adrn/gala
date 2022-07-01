@@ -2,6 +2,7 @@
 
 # Standard library
 import os
+import importlib
 
 # Third-party
 import astropy.units as u
@@ -9,7 +10,7 @@ from astropy.utils import isiterable
 import numpy as np
 import yaml
 
-from ...units import DimensionlessUnitSystem
+from gala.units import DimensionlessUnitSystem
 
 __all__ = ['load', 'save']
 
@@ -82,8 +83,9 @@ def from_dict(d, module=None):
     module : namespace (optional)
 
     """
-    # need this here for circular import
-    from .. import potential as gala_potential
+
+    # need this here for circular import issues
+    import gala.potential as gala_potential
 
     if module is None:
         potential = gala_potential
