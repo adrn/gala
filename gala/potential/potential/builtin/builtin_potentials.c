@@ -6,8 +6,6 @@
 #if USE_GSL == 1
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_math.h>
-#include <gsl/gsl_interp2d.h>
-#include <gsl/gsl_spline2d.h>
 #endif
 
 double nan_density(double t, double *pars, double *q, int n_dim) { return NAN; }
@@ -1424,7 +1422,7 @@ double mn3_value(double t, double *pars, double *q, int n_dim) {
         tmp_pars[1] = pars[1+3*i];
         tmp_pars[2] = pars[1+3*i+1];
         tmp_pars[3] = pars[1+3*i+2];
-        val += miyamotonagai_value(t, &tmp_pars, q, n_dim);
+        val += miyamotonagai_value(t, &tmp_pars[0], q, n_dim);
     }
     return val;
 }
@@ -1437,7 +1435,7 @@ void mn3_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
         tmp_pars[1] = pars[1+3*i];
         tmp_pars[2] = pars[1+3*i+1];
         tmp_pars[3] = pars[1+3*i+2];
-        miyamotonagai_gradient(t, &tmp_pars, q, n_dim, grad);
+        miyamotonagai_gradient(t, &tmp_pars[0], q, n_dim, grad);
     }
 }
 
@@ -1450,7 +1448,7 @@ double mn3_density(double t, double *pars, double *q, int n_dim) {
         tmp_pars[1] = pars[1+3*i];
         tmp_pars[2] = pars[1+3*i+1];
         tmp_pars[3] = pars[1+3*i+2];
-        val += miyamotonagai_density(t, &tmp_pars, q, n_dim);
+        val += miyamotonagai_density(t, &tmp_pars[0], q, n_dim);
     }
     return val;
 }
@@ -1464,7 +1462,7 @@ void mn3_hessian(double t, double *pars, double *q, int n_dim,
         tmp_pars[1] = pars[1+3*i];
         tmp_pars[2] = pars[1+3*i+1];
         tmp_pars[3] = pars[1+3*i+2];
-        miyamotonagai_hessian(t, &tmp_pars, q, n_dim, hess);
+        miyamotonagai_hessian(t, &tmp_pars[0], q, n_dim, hess);
     }
 }
 
@@ -1982,93 +1980,3 @@ void longmuralibar_hessian(double t, double *pars, double *q, int n_dim,
     hess[7] = hess[7] + tmp_88;
     hess[8] = hess[8] + tmp_38*tmp_76*tmp_94 - tmp_40*tmp_77*tmp_94 + tmp_52*(tmp_14*tmp_92*tmp_96 - tmp_22*tmp_45*tmp_97 - tmp_28*tmp_78*tmp_98 + tmp_35*tmp_48*tmp_97 + tmp_89*tmp_95 - tmp_90*tmp_96 + tmp_91 - tmp_92*tmp_95 - tmp_93 + tmp_50*tmp_98/tmp_17);
 }
-
-
-/* ---------------------------------------------------------------------------
-    Axisymmetric CylSpline (from Agama)
-
-    Parameters
-    ----------
-    G (Gravitational constant)
-    m (mass scale)
-    logScaling (whether the interpolated potential is log scaled)
-    Rscale (length scale)
-    ngridR (number of grid points in R)
-    ngridz (number of grid points in z)
-    gridR (length `ngridR`)
-    gridz (length `ngridz`)
-    gridPhi (length `ngridR` * `ngridz`)
-*/
-
-double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) {
-    int logScaling = (int)pars[2];
-    double Rscale = pars[3];
-    int nR = (int)pars[4];
-    int nz = (int)pars[5];
-
-    double Phi;
-    const double R = sqrt(q[0]*q[0] + q[1]*q[1]);
-    const double z = q[2];
-
-    const double gridR[nR];
-    const double gridz[nz];
-    const double gridPhi[nz * nR];
-    for (int i=0; i < nR; i++)
-        gridR[i] = pars[6 + i];
-    for (int i=0; i < nz; i++)
-        gridz[i] = pars[6 + nR + i];
-    for (int i=0; i < nR; i++)
-        for (int j=0; j < nz; j++)
-            gridPhi[i * nz + j] = pars[6 + nR + nz + i * nz + j];
-
-    const gsl_interp2d_type *T = gsl_interp2d_bicubic;
-    gsl_spline2d *spline = gsl_spline2d_alloc(T, nR, nz);
-    gsl_interp_accel *xacc = gsl_interp_accel_alloc();
-    gsl_interp_accel *yacc = gsl_interp_accel_alloc();
-
-    if ((R > gridR[0]) && (R < gridR[nR]) &&
-        (z > gridz[0]) && (z < gridz[nz])) { // Use CylSpline
-
-        R = asinh(R / Rscale);
-        z = asinh(z / Rscale);
-
-        /* initialize interpolation */
-        gsl_spline2d_init(spline, gridR, gridz, gridPhi, nx, ny);
-        Phi = gsl_interp2d_eval(spline, gridR, gridz, gridPhi, R, z, xacc, yacc);
-
-        if (logScaling)
-            Phi = -exp(Phi);
-
-    } else {  // Use external Multipole
-        // TODO
-        Phi = 0.;
-    }
-
-
-    return Phi;
-}
-
-void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim,
-                               double *grad) {
-
-    // double R, fac;
-    // R = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    // fac = pars[0] * pars[1] / (R*R*R);
-
-    // grad[0] = grad[0] + fac*q[0];
-    // grad[1] = grad[1] + fac*q[1];
-    // grad[2] = grad[2] + fac*q[2];
-}
-
-double axisym_cylspline_density(double t, double *pars, double *q, int n_dim) {
-
-    // double r2;
-    // r2 = q[0]*q[0] + q[1]*q[1] + q[2]*q[2];
-
-    // if (r2 == 0.) {
-    //     return INFINITY;
-    // } else {
-    //     return 0.;
-    // }
-}
-

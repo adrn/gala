@@ -63,6 +63,25 @@ __all__ = [
 ]
 
 
+def __getattr__(name):
+    if name in __all__ and name in globals():
+        return globals()[name]
+
+    if not (name.startswith('MultipolePotentialLmax')):
+        raise AttributeError(f"Module {__name__!r} has no attribute {name!r}.")
+
+    if name in mp_cache:
+        return mp_cache[name]
+
+    else:
+        try:
+            lmax = int(name.split('Lmax')[1])
+        except Exception:
+            raise ImportError("Invalid")  # shouldn't ever get here!
+
+        return make_multipole_cls(lmax, timedep='TimeDependent' in name)
+
+
 @format_doc(common_doc=_potential_docstring)
 class HenonHeilesPotential(CPotentialBase):
     r"""
@@ -1047,7 +1066,6 @@ class MultipolePotential(CPotentialBase, GSL_only=True):
     def __init__(
         self,
         *args,
-        # coeffs_have_units=False,
         units=None,
         origin=None,
         R=None,
@@ -1087,7 +1105,6 @@ class MultipolePotential(CPotentialBase, GSL_only=True):
         return super().__new__(cls, *args, **kwargs)
 
 
-
 @format_doc(common_doc=_potential_docstring)
 class CylSplinePotential(CPotentialBase):
     r"""
@@ -1114,13 +1131,17 @@ class CylSplinePotential(CPotentialBase):
 
     Wrapper = CylSplineWrapper
 
-    def __init__(self, m, grid_R, grid_z, grid_Phi,
-                 units=None, origin=None, R=None,
-                 **kwargs):
-
+    def __init__(
+        self,
+        *args,
+        units=None,
+        origin=None,
+        R=None,
+        **kwargs
+    ):
         PotentialBase.__init__(
             self,
-            m, grid_R, grid_z, grid_Phi,
+            *args,
             units=units,
             origin=origin,
             R=R,
@@ -1128,9 +1149,18 @@ class CylSplinePotential(CPotentialBase):
         )
 
         Phi0 = self.parameters['grid_Phi'][0, 0]  # potential at R=0,z=0
+        grid_R = self.parameters['grid_R']
+        grid_z = self.parameters['grid_z']
+        grid_Phi = self.parameters['grid_Phi']
 
-        self.pot, *_ = self._fit_asympt(self.grid_R, self.grid_z, self.grid_Phi)
-        Mtot = -pot.energy([1., 0, 0] * self.grid_R.max()).value[0] * self.grid_R.max().value
+        self._multipole_pot, *_ = self._fit_asympt(
+            grid_R,
+            grid_z,
+            grid_Phi
+        )
+        Phi_Rmax = self._multipole_pot.energy([1., 0, 0] * grid_R.max())
+        Mtot = -Phi_Rmax[0] * grid_R.max()
+
         if Phi0 < 0 and Mtot > 0:
             # assign Rscale so that it approximately equals -Mtotal/Phi(r=0),
             Rscale = -Mtot / Phi0  # i.e. would equal the scale radius of a Plummer potential
@@ -1139,7 +1169,7 @@ class CylSplinePotential(CPotentialBase):
 
         self.Rscale = Rscale * self.units['length']
 
-        # assumed / enforced mmax=0 - different from Agama
+        # APW: assumed / enforced mmax=0 - different from Agama
 
         sizeR = len(grid_R)
 
@@ -1151,8 +1181,8 @@ class CylSplinePotential(CPotentialBase):
         sizez = len(grid_z)
 
         # transform the grid to log-scaled coordinates
-        grid_R_asinh = np.arcsinh(grid_R / Rscale);
-        grid_z_asinh = np.arcsinh(grid_z / Rscale);
+        grid_R_asinh = np.arcsinh(grid_R / Rscale)
+        grid_z_asinh = np.arcsinh(grid_z / Rscale)
 
         self.logScaling = np.all(grid_Phi < 0)
 
@@ -1267,23 +1297,3 @@ class CylSplinePotential(CPotentialBase):
             units=galactic,
             **pars
         )
-
-
-
-def __getattr__(name):
-    if name in __all__ and name in globals():
-        return globals()[name]
-
-    if not (name.startswith('MultipolePotentialLmax')):
-        raise AttributeError(f"Module {__name__!r} has no attribute {name!r}.")
-
-    if name in mp_cache:
-        return mp_cache[name]
-
-    else:
-        try:
-            lmax = int(name.split('Lmax')[1])
-        except Exception:
-            raise ImportError("Invalid")  # shouldn't ever get here!
-
-        return make_multipole_cls(lmax, timedep='TimeDependent' in name)

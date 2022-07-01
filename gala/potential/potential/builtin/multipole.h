@@ -24,3 +24,6 @@ extern void mp_gradient_helper(double *xyz, int K,
 extern double mp_rho_lm(double r, double phi, double X, int l, int m, int inner);
 extern double mp_phi_lm(double r, double phi, double X, int l, int m, int inner);
 extern void mp_sph_grad_phi_lm(double r, double phi, double X, int l, int m, int lmax, int inner, double *sphgrad);
+
+
+extern double axisym_cylspline_value(double t, double *pars, double *q, int n_dim);

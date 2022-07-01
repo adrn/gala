@@ -7,15 +7,18 @@ and https://github.com/adrn/gala/blob/main/gala/potential/scf/src/bfe_helper.c
 #include "extra_compile_macros.h"
 #include <math.h>
 #include <string.h>
-#if USE_GSL == 1
-#include "gsl/gsl_sf_legendre.h"
-#include "gsl/gsl_sf_gegenbauer.h"
-#include "gsl/gsl_sf_gamma.h"
-#endif
 
 #define SQRT_FOURPI 3.544907701811031
 
 #if USE_GSL == 1
+
+#include "gsl/gsl_sf_legendre.h"
+#include "gsl/gsl_sf_gegenbauer.h"
+#include "gsl/gsl_sf_gamma.h"
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_interp2d.h>
+#include <gsl/gsl_spline2d.h>
+
 /* --------------------------------------------------------------------------
 
     Low-level helper functions
@@ -297,7 +300,6 @@ double mp_potential(double t, double *pars, double *q, int n_dim) {
     double r_s = pars[5];
 
     double val[1] = {0.};
-    int l, m;
 
     double Slm[num_coeff], Tlm[num_coeff];
     for(int i=0; i < num_coeff; i++){
@@ -330,8 +332,6 @@ void mp_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
     double M = pars[4];
     double r_s = pars[5];
 
-    int l, m;
-
     double Slm[num_coeff], Tlm[num_coeff];
     for(int i=0; i<num_coeff; i++){
         Slm[i] = pars[6 + 2*i];
@@ -354,13 +354,11 @@ double mp_density(double t, double *pars, double *q, int n_dim) {
         [- sin_coeff, cos_coeff]
     */
     // double G = pars[0];
-    int lmax = (int)pars[1];
-    int num_coeff = (int)pars[2];
-    int inner = (int)pars[3];
-    double M = pars[4];
-    double r_s = pars[5];
-
-    int l, m;
+    // int lmax = (int)pars[1];
+    // int num_coeff = (int)pars[2];
+    // int inner = (int)pars[3];
+    // double M = pars[4];
+    // double r_s = pars[5];
 
     double val[1] = {0.};
 
@@ -567,5 +565,101 @@ double mpetd_density(double t, double *pars, double *q, int n_dim) {
     val[0] = 0.;
     return val[0];
 }
+
+/* ---------------------------------------------------------------------------
+    Axisymmetric CylSpline (from Agama)
+
+    Parameters
+    ----------
+    G (Gravitational constant)
+    logScaling (whether the interpolated potential is log scaled)
+    Rscale (length scale)
+    ngridR (number of grid points in R)
+    ngridz (number of grid points in z)
+    gridR (length `ngridR`) - not actually R values, arcsinh(R/Rscale)
+    gridz (length `ngridz`) - not actually z values, arcsinh(z/Rscale)
+    gridPhi (length `ngridR` * `ngridz`) - transformed Phi values
+    -- grid_R, grid_z, grid_Phi to ignore --
+*/
+
+double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) {
+    int logScaling = (int)pars[1];
+    double Rscale = pars[2];
+    int nR = (int)pars[3];
+    int nz = (int)pars[4];
+
+    double Phi;
+    double Rasinh = sqrt(q[0]*q[0] + q[1]*q[1]);
+    double zasinh = q[2];
+    Rasinh = asinh(Rasinh / Rscale);
+    zasinh = asinh(zasinh / Rscale);
+
+    double gridR[nR];
+    double gridz[nz];
+    double gridPhi[nz * nR];
+    for (int i=0; i < nR; i++)
+        gridR[i] = pars[5 + i];
+    for (int i=0; i < nz; i++)
+        gridz[i] = pars[5 + nR + i];
+    for (int i=0; i < nR; i++)
+        for (int j=0; j < nz; j++)
+            gridPhi[i * nz + j] = pars[5 + nR + nz + i * nz + j];
+
+    // printf("logscalig=%d Rscale=%f sizeR=%d sizez=%d\n", logScaling, Rscale, nR, nz);
+    // printf("R=%f z=%f\n", Rasinh, zasinh);
+    // printf("gridR[0]=%f gridR[sizeR-1]=%f gridz[0]=%f gridz[sizez-1]=%f\n",
+    //        gridR[0], gridR[nR-1], gridz[0], gridz[nz-1]);
+
+    const gsl_interp2d_type *T = gsl_interp2d_bicubic;
+    gsl_spline2d *spline = gsl_spline2d_alloc(T, nR, nz);
+    gsl_interp_accel *xacc = gsl_interp_accel_alloc();
+    gsl_interp_accel *yacc = gsl_interp_accel_alloc();
+
+    if ((Rasinh >= gridR[0]) && (Rasinh <= gridR[nR-1]) &&
+        (zasinh >= gridz[0]) && (zasinh <= gridz[nz-1])) { // Use CylSpline
+
+        /* initialize interpolation */
+        gsl_spline2d_init(spline, gridR, gridz, gridPhi, nR, nz);
+        Phi = gsl_interp2d_eval(spline, gridR, gridz, gridPhi, Rasinh, zasinh,
+                                xacc, yacc);
+
+        if (logScaling)
+            Phi = -exp(Phi);
+
+    } else {  // Use external Multipole
+        // TODO
+        Phi = 0.;
+    }
+
+
+    return Phi;
+}
+
+void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim,
+                               double *grad) {
+
+    // double R, fac;
+    // R = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    // fac = pars[0] * pars[1] / (R*R*R);
+
+    // grad[0] = grad[0] + fac*q[0];
+    // grad[1] = grad[1] + fac*q[1];
+    // grad[2] = grad[2] + fac*q[2];
+}
+
+double axisym_cylspline_density(double t, double *pars, double *q, int n_dim) {
+
+    // double r2;
+    // r2 = q[0]*q[0] + q[1]*q[1] + q[2]*q[2];
+
+    // if (r2 == 0.) {
+    //     return INFINITY;
+    // } else {
+    //     return 0.;
+    // }
+    return 0.;
+}
+
+
 
 #endif
