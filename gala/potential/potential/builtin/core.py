@@ -1196,7 +1196,8 @@ class CylSplinePotential(CPotentialBase):
         else:
             grid_Phi_full = grid_Phi_full
 
-        # self.spl = interp2d(grid_R_asinh, grid_z_asinh, grid_Phi_full.T, kind='linear')
+        from scipy.interpolate import interp2d
+        self.spl = interp2d(grid_R_asinh, grid_z_asinh, grid_Phi_full.T, kind='cubic')
 
         # Note: if MultipolePotential parameter order changes, this needs to be updated!
         multipole_pars = np.concatenate([

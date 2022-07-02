@@ -108,7 +108,13 @@ void mp_sph_grad_phi_lm(double r, double phi, double X, int l, int m,
             A = sqrt(2*l+1) / SQRT_FOURPI * sqrt(gsl_sf_gamma(l-m+1.)
                                                  / gsl_sf_gamma(l+m+1.));
         }
-        dYlm_dtheta = A / sintheta * (l*X*Plm - (l+m)*Pl1m);
+
+        // fixed at sintheta = 0
+        if (sintheta != 0) {
+            dYlm_dtheta = A / sintheta * (l*X*Plm - (l+m)*Pl1m);
+        } else {
+            dYlm_dtheta = 0;
+        }
     }
     dPhi_dtheta = dYlm_dtheta * Phi_l / r;
 
@@ -119,9 +125,15 @@ void mp_sph_grad_phi_lm(double r, double phi, double X, int l, int m,
     }
     dPhi_dphi *= Ylm * Phi_l;
 
-    sphgrad[0] = dPhil_dr;
-    sphgrad[1] = dPhi_dtheta;
-    sphgrad[2] = dPhi_dphi;
+    if (r > 0) {
+        sphgrad[0] = dPhil_dr;
+        sphgrad[1] = dPhi_dtheta;
+        sphgrad[2] = dPhi_dphi;
+    } else {
+        sphgrad[0] = 0;
+        sphgrad[1] = 0;
+        sphgrad[2] = 0;
+    }
 }
 
 /*
@@ -257,9 +269,16 @@ void mp_gradient_helper(double *xyz, int K,
 
                 mp_sph_grad_phi_lm(s, phi, X, l, m, lmax, inner, &tmp_grad[0]);
                 tmp_grad2[j+0] += tmp_grad[0] * tmp; // r
-                tmp_grad2[j+1] += tmp_grad[1] * tmp; // theta
-                tmp_grad2[j+2] += tmp_grad[2] * (Tlm[i]*cosmphi[m] -
-                                    Slm[i]*sinmphi[m]) / (s * sintheta); // phi
+                tmp_grad2[j+1] += tmp_grad[1] * tmp; // phi??
+
+                if (sintheta != 0) {
+                    tmp_grad2[j+2] += tmp_grad[2] * (
+                        Tlm[i]*cosmphi[m] - Slm[i]*sinmphi[m]
+                    ) / (s * sintheta); // theta??
+                } else {
+                    tmp_grad2[j+2] = 0.;
+                }
+
 
                 i++;
             }
@@ -275,9 +294,9 @@ void mp_gradient_helper(double *xyz, int K,
             + cosphi*tmp_grad[2];
         tmp_grad2[j+2] = X*tmp_grad[0] - sintheta*tmp_grad[1];
 
-        grad[j+0] = grad[j+0] + tmp_grad2[j+0]*G*M/(r_s*r_s);
-        grad[j+1] = grad[j+1] + tmp_grad2[j+1]*G*M/(r_s*r_s);
-        grad[j+2] = grad[j+2] + tmp_grad2[j+2]*G*M/(r_s*r_s);
+        grad[j+0] = grad[j+0] + tmp_grad2[j+0] * G*M/(r_s*r_s);
+        grad[j+1] = grad[j+1] + tmp_grad2[j+1] * G*M/(r_s*r_s);
+        grad[j+2] = grad[j+2] + tmp_grad2[j+2] * G*M/(r_s*r_s);
   }
 }
 
@@ -606,13 +625,13 @@ double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) {
         for (int j=0; j < nz; j++)
             gridPhi[i * nz + j] = pars[5 + nR + nz + i * nz + j];
 
-    // TODO: interpolation is very slow I think because this setup is done every
-    // time the function is called...
-
     const gsl_interp2d_type *T = gsl_interp2d_bicubic;
     gsl_spline2d *spline = gsl_spline2d_alloc(T, nR, nz);
     gsl_interp_accel *xacc = gsl_interp_accel_alloc();
     gsl_interp_accel *yacc = gsl_interp_accel_alloc();
+
+    // TODO: interpolation is very slow I think because this setup is done every
+    // time the function is called...
 
     if ((Rasinh >= gridR[0]) && (Rasinh <= gridR[nR-1]) &&
         (zasinh >= gridz[0]) && (zasinh <= gridz[nz-1])) { // Use CylSpline
@@ -638,13 +657,69 @@ double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) {
 void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim,
                                double *grad) {
 
-    // double R, fac;
-    // R = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    // fac = pars[0] * pars[1] / (R*R*R);
+    int logScaling = (int)pars[1];
+    double Rscale = pars[2];
+    int nR = (int)pars[3];
+    int nz = (int)pars[4];
 
-    // grad[0] = grad[0] + fac*q[0];
-    // grad[1] = grad[1] + fac*q[1];
-    // grad[2] = grad[2] + fac*q[2];
+    double Phi, dPhi_dR, dPhi_dz;
+    double R = sqrt(q[0]*q[0] + q[1]*q[1]);
+    double Rasinh = asinh(R / Rscale);
+    double zasinh = asinh(q[2] / Rscale);
+
+    double gridR[nR];
+    double gridz[nz];
+    double gridPhi[nz * nR];
+    for (int i=0; i < nR; i++)
+        gridR[i] = pars[5 + i];
+    for (int i=0; i < nz; i++)
+        gridz[i] = pars[5 + nR + i];
+    for (int i=0; i < nR; i++)
+        for (int j=0; j < nz; j++)
+            gridPhi[i * nz + j] = pars[5 + nR + nz + i * nz + j];
+
+    const gsl_interp2d_type *T = gsl_interp2d_bicubic;
+    gsl_spline2d *spline = gsl_spline2d_alloc(T, nR, nz);
+    gsl_interp_accel *xacc = gsl_interp_accel_alloc();
+    gsl_interp_accel *yacc = gsl_interp_accel_alloc();
+
+    // TODO: interpolation is very slow I think because this setup is done every
+    // time the function is called...
+
+    if ((Rasinh >= gridR[0]) && (Rasinh <= gridR[nR-1]) &&
+        (zasinh >= gridz[0]) && (zasinh <= gridz[nz-1])) { // Use CylSpline
+
+        /* initialize interpolation */
+        // TODO: define this in wrapper, make all CPotential's have a void
+        // pointer array to store things like this, all these functions then
+        // need to accept one more parameter (or is there a way to do optional
+        // args in C?), ??, profit.
+        gsl_spline2d_init(spline, gridR, gridz, gridPhi, nR, nz);
+
+        dPhi_dR = gsl_spline2d_eval_deriv_x(spline, Rasinh, zasinh, xacc, yacc);
+        dPhi_dR = dPhi_dR / (Rscale * cosh(Rasinh));
+
+        dPhi_dz = gsl_spline2d_eval_deriv_y(spline, Rasinh, zasinh, xacc, yacc);
+        dPhi_dz = dPhi_dz / (Rscale * cosh(zasinh));
+
+        if (logScaling) {
+            Phi = gsl_spline2d_eval(spline, Rasinh, zasinh, xacc, yacc);
+            Phi = -exp(Phi);
+            dPhi_dR = dPhi_dR * Phi;
+            dPhi_dz = dPhi_dz * Phi;
+        }
+
+        if (R > 0) {
+            grad[0] = grad[0] + dPhi_dR * q[0] / R;
+            grad[1] = grad[1] + dPhi_dR * q[1] / R;
+            grad[2] = grad[2] + dPhi_dz;
+        } else {
+            grad[2] = grad[2] + dPhi_dz;
+        }
+
+    } else {  // Use external Multipole
+        mp_gradient(t, &pars[5 + nR + nz + nR * nz], q, n_dim, grad);
+    }
 }
 
 double axisym_cylspline_density(double t, double *pars, double *q, int n_dim) {

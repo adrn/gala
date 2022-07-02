@@ -127,6 +127,8 @@ cdef extern from "potential/potential/builtin/multipole.h":
     double mp_density(double t, double *pars, double *q, int n_dim) nogil
 
     double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) nogil
+    void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    double axisym_cylspline_density(double t, double *pars, double *q, int n_dim) nogil
 
 # cdef extern from "gsl/gsl_interp.h":
 #     ctypedef struct gsl_interp_accel:
@@ -439,6 +441,6 @@ cdef class CylSplineWrapper(CPotentialWrapper):
                   np.ascontiguousarray(q0),
                   np.ascontiguousarray(R))
         self.cpotential.value[0] = <energyfunc>(axisym_cylspline_value)
-        #self.cpotential.gradient[0] = <gradientfunc>(longmuralibar_gradient)
-        #self.cpotential.density[0] = <densityfunc>(longmuralibar_density)
-        #self.cpotential.hessian[0] = <hessianfunc>(longmuralibar_hessian)
+        self.cpotential.gradient[0] = <gradientfunc>(axisym_cylspline_gradient)
+        self.cpotential.density[0] = <densityfunc>(axisym_cylspline_density)
+        #self.cpotential.hessian[0] = <hessianfunc>(axisym_cylspline_hessian)

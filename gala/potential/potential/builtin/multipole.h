@@ -27,3 +27,5 @@ extern void mp_sph_grad_phi_lm(double r, double phi, double X, int l, int m, int
 
 
 extern double axisym_cylspline_value(double t, double *pars, double *q, int n_dim);
+extern void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim, double *grad);
+extern double axisym_cylspline_density(double t, double *pars, double *q, int n_dim);
