@@ -440,7 +440,9 @@ cdef class CylSplineWrapper(CPotentialWrapper):
         self.init([G] + list(parameters),
                   np.ascontiguousarray(q0),
                   np.ascontiguousarray(R))
-        self.cpotential.value[0] = <energyfunc>(axisym_cylspline_value)
-        self.cpotential.gradient[0] = <gradientfunc>(axisym_cylspline_gradient)
-        self.cpotential.density[0] = <densityfunc>(axisym_cylspline_density)
-        #self.cpotential.hessian[0] = <hessianfunc>(axisym_cylspline_hessian)
+
+        if USE_GSL == 1:
+            self.cpotential.value[0] = <energyfunc>(axisym_cylspline_value)
+            self.cpotential.gradient[0] = <gradientfunc>(axisym_cylspline_gradient)
+            self.cpotential.density[0] = <densityfunc>(axisym_cylspline_density)
+            #self.cpotential.hessian[0] = <hessianfunc>(axisym_cylspline_hessian)
