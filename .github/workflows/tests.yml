@@ -112,7 +112,7 @@ jobs:
       - name: Setup Linux - GSL
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get install gsl-bin libgsl0-dev build-essential
+          sudo apt-get install gsl-bin libgsl0-dev build-essential libeigen3-dev
 
       # Any *nix:
       - name: Install Python dependencies - nix
