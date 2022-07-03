@@ -1109,8 +1109,6 @@ class MultipolePotential(CPotentialBase, GSL_only=True):
 @format_doc(common_doc=_potential_docstring)
 class CylSplinePotential(CPotentialBase):
     r"""
-    CylSplinePotential(TODO, units=None, origin=None, R=None)
-
     TODO
 
     Parameters
@@ -1128,6 +1126,40 @@ class CylSplinePotential(CPotentialBase):
     grid_Phi = PotentialParameter('grid_Phi', physical_type='specific energy')
 
     Wrapper = CylSplineWrapper
+
+    @classmethod
+    def from_file(cls, filename, **kwargs):
+        """Load a potential instance from an Agama export file.
+
+        Parameters
+        ----------
+        filename : path-like
+            The path to the Agama expoirt file, either as a string or ``pathlib.Path`` object.
+        **kwargs
+            Other keyword arguments are passed to the initializer.
+        """
+        with open(filename, "r") as f:
+            raw_lines = f.readlines()
+
+        start = "#R(row)\z(col)"
+        Phi_lines = []
+        for i, line in enumerate(raw_lines):
+            if line.startswith(start):
+                Phi_lines.append(
+                    [np.nan] + [float(y) for y in line[len(start):].strip().split('\t')]
+                )
+                break
+
+        Phi_lines.extend([
+            [float(y) for y in x.strip().split('\t')] for x in raw_lines[i+1:]
+        ])
+        Phi_lines = np.array(Phi_lines)
+
+        gridR = Phi_lines[1:, 0] * u.kpc
+        gridz = Phi_lines[0, 1:] * u.kpc
+        gridPhi = Phi_lines[1:, 1:] * (u.km/u.s) ** 2
+
+        return cls(gridR, gridz, gridPhi, **kwargs)
 
     def __init__(
         self,
