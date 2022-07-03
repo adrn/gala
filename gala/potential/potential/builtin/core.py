@@ -1141,7 +1141,7 @@ class CylSplinePotential(CPotentialBase):
         with open(filename, "r") as f:
             raw_lines = f.readlines()
 
-        start = "#R(row)\z(col)"
+        start = r"#R(row)\z(col)"
         Phi_lines = []
         for i, line in enumerate(raw_lines):
             if line.startswith(start):
