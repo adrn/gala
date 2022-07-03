@@ -53,4 +53,4 @@ def get_package_data():
              'builtin/builtin_potentials.h',
              'builtin/builtin_potentials.c'
              'src/cpotential.h', 'src/cpotential.c',
-             'tests/*.yml']}
+             'tests/*.yml', 'tests/*.pot']}

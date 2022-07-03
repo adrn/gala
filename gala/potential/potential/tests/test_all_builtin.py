@@ -4,7 +4,9 @@
 
 # Third-party
 import numpy as np
+import astropy.table as at
 import astropy.units as u
+from astropy.utils.data import get_pkg_data_filename
 import pytest
 from scipy.spatial.transform import Rotation
 
@@ -495,3 +497,37 @@ class TestMultipoleOuter(CompositePotentialTestBase):
     @pytest.mark.skip(reason="Not implemented for multipole potentials")
     def test_against_sympy(self):
         pass
+
+
+@pytest.mark.skipif(not GSL_ENABLED,
+                    reason="requires GSL to run this test")
+class TestCylspline(PotentialTestBase):
+    potential = p.CylSplinePotential.from_file(
+        get_pkg_data_filename('pot_disk_506151.pot'),
+        units=galactic
+    )
+    vc = potential.circular_velocity([19., 0, 0]*u.kpc).decompose(galactic).value[0]
+    w0 = [19.0, 0.2, -0.9, 0., vc, 0.]
+    check_finite_at_origin = True
+
+    @pytest.mark.skip(reason="Not implemented for cylspline potentials")
+    def test_density(self):
+        pass
+
+    @pytest.mark.skip(reason="Not implemented for cylspline potentials")
+    def test_hessian(self):
+        pass
+
+    @pytest.mark.skip(reason="Not implemented for cylspline potentials")
+    def test_against_sympy(self):
+        pass
+
+    def test_against_agama(self):
+        agama_tbl = at.QTable.read(get_pkg_data_filename('agama_cylspline_test.fits'))
+
+        gala_ene = self.potential.energy(agama_tbl['xyz'].T)
+        gala_acc = self.potential.acceleration(agama_tbl['xyz'].T)
+
+        assert u.allclose(gala_ene, agama_tbl['pot'][:, 0], rtol=1e-3)
+        for i in range(3):
+            assert u.allclose(gala_acc[i], agama_tbl['acc'][:, i], rtol=1e-2)
