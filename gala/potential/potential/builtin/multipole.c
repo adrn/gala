@@ -736,7 +736,7 @@ double axisym_cylspline_density(double t, double *pars, double *q, int n_dim) {
     int nR = (int)pars[3];
     int nz = (int)pars[4];
 
-    return nan;
+    return 0.0/0.0;
 
     /* TODO: bug in the below... */
 
