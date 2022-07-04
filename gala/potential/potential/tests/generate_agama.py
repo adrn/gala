@@ -3,12 +3,13 @@ import astropy.table as at
 import astropy.units as u
 import numpy as np
 
-import agama
-
 this_path = pathlib.Path(__file__).absolute().parent
 
 
 def main():
+    # For pytest:
+    import agama
+
     agama.setUnits(mass=1, length=1, time=1)
 
     # Shared by Ana Bonaca

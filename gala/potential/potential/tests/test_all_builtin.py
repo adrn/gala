@@ -17,7 +17,7 @@ from .. import builtin as p
 from ...frame import ConstantRotatingFrame
 from ....units import solarsystem, galactic, DimensionlessUnitSystem
 from .helpers import PotentialTestBase, CompositePotentialTestBase
-from ...._cconfig import GSL_ENABLED
+from gala._cconfig import GSL_ENABLED
 from gala.tests.optional_deps import HAS_SYMPY
 
 ##############################################################################
@@ -502,13 +502,16 @@ class TestMultipoleOuter(CompositePotentialTestBase):
 @pytest.mark.skipif(not GSL_ENABLED,
                     reason="requires GSL to run this test")
 class TestCylspline(PotentialTestBase):
-    potential = p.CylSplinePotential.from_file(
-        get_pkg_data_filename('pot_disk_506151.pot'),
-        units=galactic
-    )
-    vc = potential.circular_velocity([19., 0, 0]*u.kpc).decompose(galactic).value[0]
-    w0 = [19.0, 0.2, -0.9, 0., vc, 0.]
     check_finite_at_origin = True
+
+    def setup(self):
+        self.potential = p.CylSplinePotential.from_file(
+            get_pkg_data_filename('pot_disk_506151.pot'),
+            units=galactic
+        )
+        vc = self.potential.circular_velocity([19., 0, 0]*u.kpc).decompose(galactic)
+        self.w0 = [19.0, 0.2, -0.9, 0., vc.value[0], 0.]
+        super().setup()
 
     @pytest.mark.skip(reason="Not implemented for cylspline potentials")
     def test_density(self):
