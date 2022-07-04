@@ -1109,16 +1109,17 @@ class MultipolePotential(CPotentialBase, GSL_only=True):
 @format_doc(common_doc=_potential_docstring)
 class CylSplinePotential(CPotentialBase):
     r"""
-    TODO
+    A flexible potential model that uses spline interpolation over a 2D grid in
+    cylindrical R-z coordinates.
 
     Parameters
     ----------
     grid_R : `~astropy.units.Quantity`, numeric [length]
-        TODO
+        A 1D grid of cylindrical radius R values. This should start at 0.
     grid_z : `~astropy.units.Quantity`, numeric [length]
-        TODO
-    grid_Phi : `~astropy.units.Quantity`, numeric [energy]
-        TODO
+        A 1D grid of cylindrical z values. This should start at 0.
+    grid_Phi : `~astropy.units.Quantity`, numeric [specific energy]
+        A 2D grid of potential values, evaluated at all R,z locations.
     {common_doc}
     """
     grid_R = PotentialParameter('grid_R', physical_type='length')
