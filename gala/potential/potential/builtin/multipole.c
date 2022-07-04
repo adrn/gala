@@ -651,6 +651,10 @@ double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) {
         Phi = mp_potential(t, &pars[5 + nR + nz + nR * nz], q, n_dim);
     }
 
+    gsl_spline2d_free(spline);
+    gsl_interp_accel_free(xacc);
+    gsl_interp_accel_free(yacc);
+
     return Phi;
 }
 
@@ -720,6 +724,9 @@ void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim,
     } else {  // Use external Multipole
         mp_gradient(t, &pars[5 + nR + nz + nR * nz], q, n_dim, grad);
     }
+    gsl_spline2d_free(spline);
+    gsl_interp_accel_free(xacc);
+    gsl_interp_accel_free(yacc);
 }
 
 double axisym_cylspline_density(double t, double *pars, double *q, int n_dim) {
@@ -791,11 +798,15 @@ double axisym_cylspline_density(double t, double *pars, double *q, int n_dim) {
         }
 
         dens = (dPhi_dR / R + d2Phi_dR2 + d2Phi_dz2) / (4 * M_PI * G);
-        return dens;
 
     } else {  // Use external Multipole
-        return mp_density(t, &pars[5 + nR + nz + nR * nz], q, n_dim);
+        dens = mp_density(t, &pars[5 + nR + nz + nR * nz], q, n_dim);
     }
+    gsl_spline2d_free(spline);
+    gsl_interp_accel_free(xacc);
+    gsl_interp_accel_free(yacc);
+
+    return dens;
 }
 
 
