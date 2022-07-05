@@ -37,7 +37,8 @@ from gala.potential.potential.builtin.cybuiltin import (
     LogarithmicWrapper,
     LongMuraliBarWrapper,
     NullWrapper,
-    MultipoleWrapper
+    MultipoleWrapper,
+    CylSplineWrapper
 )
 
 __all__ = [
@@ -58,8 +59,28 @@ __all__ = [
     "LeeSutoTriaxialNFWPotential",
     "LogarithmicPotential",
     "LongMuraliBarPotential",
-    "MultipolePotential"
+    "MultipolePotential",
+    "CylSplinePotential"
 ]
+
+
+def __getattr__(name):
+    if name in __all__ and name in globals():
+        return globals()[name]
+
+    if not (name.startswith('MultipolePotentialLmax')):
+        raise AttributeError(f"Module {__name__!r} has no attribute {name!r}.")
+
+    if name in mp_cache:
+        return mp_cache[name]
+
+    else:
+        try:
+            lmax = int(name.split('Lmax')[1])
+        except Exception:
+            raise ImportError("Invalid")  # shouldn't ever get here!
+
+        return make_multipole_cls(lmax, timedep='TimeDependent' in name)
 
 
 @format_doc(common_doc=_potential_docstring)
@@ -913,7 +934,7 @@ class NullPotential(CPotentialBase):
 
 
 # ==============================================================================
-# Multipole
+# Multipole and flexible potential models
 #
 mp_cache = {}
 
@@ -1046,7 +1067,6 @@ class MultipolePotential(CPotentialBase, GSL_only=True):
     def __init__(
         self,
         *args,
-        # coeffs_have_units=False,
         units=None,
         origin=None,
         R=None,
@@ -1086,20 +1106,229 @@ class MultipolePotential(CPotentialBase, GSL_only=True):
         return super().__new__(cls, *args, **kwargs)
 
 
-def __getattr__(name):
-    if name in __all__ and name in globals():
-        return globals()[name]
+@format_doc(common_doc=_potential_docstring)
+class CylSplinePotential(CPotentialBase):
+    r"""
+    A flexible potential model that uses spline interpolation over a 2D grid in
+    cylindrical R-z coordinates.
 
-    if not (name.startswith('MultipolePotentialLmax')):
-        raise AttributeError(f"Module {__name__!r} has no attribute {name!r}.")
+    Parameters
+    ----------
+    grid_R : `~astropy.units.Quantity`, numeric [length]
+        A 1D grid of cylindrical radius R values. This should start at 0.
+    grid_z : `~astropy.units.Quantity`, numeric [length]
+        A 1D grid of cylindrical z values. This should start at 0.
+    grid_Phi : `~astropy.units.Quantity`, numeric [specific energy]
+        A 2D grid of potential values, evaluated at all R,z locations.
+    {common_doc}
+    """
+    grid_R = PotentialParameter('grid_R', physical_type='length')
+    grid_z = PotentialParameter('grid_z', physical_type='length')
+    grid_Phi = PotentialParameter('grid_Phi', physical_type='specific energy')
 
-    if name in mp_cache:
-        return mp_cache[name]
+    Wrapper = CylSplineWrapper
 
-    else:
-        try:
-            lmax = int(name.split('Lmax')[1])
-        except Exception:
-            raise ImportError("Invalid")  # shouldn't ever get here!
+    @classmethod
+    def from_file(cls, filename, **kwargs):
+        """Load a potential instance from an Agama export file.
 
-        return make_multipole_cls(lmax, timedep='TimeDependent' in name)
+        Parameters
+        ----------
+        filename : path-like
+            The path to the Agama expoirt file, either as a string or ``pathlib.Path`` object.
+        **kwargs
+            Other keyword arguments are passed to the initializer.
+        """
+        with open(filename, "r") as f:
+            raw_lines = f.readlines()
+
+        start = r"#R(row)\z(col)"
+        Phi_lines = []
+        for i, line in enumerate(raw_lines):
+            if line.startswith(start):
+                Phi_lines.append(
+                    [np.nan] + [float(y) for y in line[len(start):].strip().split('\t')]
+                )
+                break
+
+        Phi_lines.extend([
+            [float(y) for y in x.strip().split('\t')] for x in raw_lines[i+1:]
+        ])
+        Phi_lines = np.array(Phi_lines)
+
+        gridR = Phi_lines[1:, 0] * u.kpc
+        gridz = Phi_lines[0, 1:] * u.kpc
+        gridPhi = Phi_lines[1:, 1:] * (u.km/u.s) ** 2
+
+        return cls(gridR, gridz, gridPhi, **kwargs)
+
+    def __init__(
+        self,
+        *args,
+        units=None,
+        origin=None,
+        R=None,
+        **kwargs
+    ):
+        PotentialBase.__init__(
+            self,
+            *args,
+            units=units,
+            origin=origin,
+            R=R,
+            **kwargs
+        )
+
+        grid_R = self.parameters['grid_R']
+        grid_z = self.parameters['grid_z']
+        grid_Phi = self.parameters['grid_Phi']
+        Phi0 = grid_Phi[0, 0]  # potential at R=0,z=0
+
+        self._multipole_pot = self._fit_asympt(
+            grid_R,
+            grid_z,
+            grid_Phi
+        )
+        Phi_Rmax = self._multipole_pot.energy([1., 0, 0] * grid_R.max())
+        Mtot = -Phi_Rmax[0] * grid_R.max()
+
+        if Phi0 < 0 and Mtot > 0:
+            # assign Rscale so that it approximately equals -Mtotal/Phi(r=0),
+            # i.e. would equal the scale radius of a Plummer potential
+            Rscale = (-Mtot / Phi0).to(self.units['length'])
+        else:
+            Rscale = grid_R[len(grid_R) // 2]  # "rather arbitrary"
+
+        # APW: assumed / enforced mmax=0 - different from Agama
+
+        sizeR = len(grid_R)
+
+        # grid in z assumed to only cover half-space z>=0; the density is assumed
+        # to be z-reflection symmetric:
+        sizez_orig = len(grid_z)
+        grid_z = np.concatenate((-grid_z[::-1], grid_z[1:]))
+        sizez = len(grid_z)
+
+        # transform the grid to log-scaled coordinates
+        grid_R_asinh = np.arcsinh((grid_R / Rscale).decompose().value)
+        grid_z_asinh = np.arcsinh((grid_z / Rscale).decompose().value)
+
+        logScaling = np.all(grid_Phi < 0)
+
+        # temporary containers of scaled potential and derivatives used to
+        # construct 2d splines
+
+        if grid_Phi.shape[0] != sizeR or grid_Phi.shape[1] != sizez_orig:
+            raise ValueError("CylSpline: incorrect coefs array size")
+
+        grid_Phi_full = np.zeros((sizeR, sizez))
+        grid_Phi_full[:, :sizez_orig-1] = grid_Phi[:, :0:-1]
+        grid_Phi_full[:, sizez_orig-1:] = grid_Phi
+        if logScaling:
+            grid_Phi_full = np.log(-grid_Phi_full)
+        else:
+            grid_Phi_full = grid_Phi_full
+
+        from scipy.interpolate import interp2d
+        self.spl = interp2d(grid_R_asinh, grid_z_asinh, grid_Phi_full.T, kind='cubic')
+
+        # Note: if MultipolePotential parameter order changes, this needs to be updated!
+        multipole_pars = np.concatenate([
+            [self.G,
+             self._multipole_pot._lmax,
+             sum(range(self._multipole_pot._lmax + 2))],
+            [x.value for x in self._multipole_pot.parameters.values()]
+        ])
+
+        self._c_only = {
+            'log_scaling': logScaling,
+            'Rscale': Rscale.value,
+            'sizeR': sizeR,
+            'sizez': sizez,
+            'grid_R_trans': grid_R_asinh,
+            'grid_z_trans': grid_z_asinh,
+            'grid_Phi_trans': grid_Phi_full.T,
+            'multipole_pars': multipole_pars
+        }
+        self._setup_wrapper(self._c_only)
+
+    def _fit_asympt(self, grid_R, grid_z, grid_Phi, lmax_fit=8):
+        """
+        Assumes z reflection symmetry
+
+        lmax_fit : int
+            Number of meridional harmonics to fit - don't set too large
+
+        """
+        from scipy.special import sph_harm
+
+        sizeR = len(grid_R)
+        sizez = len(grid_z)
+
+        # assemble the boundary points and their indices
+        assert grid_Phi.shape == (sizeR, sizez)
+        maxz = np.max(grid_z.value)
+
+        # first run along R at the max-z and min-z edges
+        points = np.concatenate((
+            [[R, maxz] for R in grid_R.value],
+            [[R, -maxz] for R in grid_R.value]
+        ))
+        Phis = np.concatenate((
+            grid_Phi[:, np.argmax(grid_z)].value,
+            grid_Phi[:, np.argmax(grid_z)].value
+        ))
+
+        maxR = np.max(grid_R.value)
+        points = np.concatenate((
+            points,
+            [[maxR, z] for z in grid_z.value],
+            [[maxR, -z] for z in grid_z.value],
+        ))
+        Phis = np.concatenate((
+            Phis,
+            grid_Phi[np.argmax(grid_R), :].value,
+            grid_Phi[np.argmax(grid_R), :].value
+        ))
+
+        npoints = len(points)
+        # ncoefs = lmax_fit + 1
+
+        r0 = min(np.max(grid_R), np.max(grid_z))
+
+        i, j = len(grid_R) // 2, len(grid_z) // 2
+        rr = np.sqrt(grid_R[i]**2 + grid_z[j]**2)
+        m = np.abs(grid_Phi[i, j] * rr / G).to(self.units['mass'])
+        scale = (G * m / r0).decompose(self.units).value
+
+        # find values of spherical harmonic coefficients
+        # that best match the potential at the array of boundary points
+
+        # for m-th harmonic, we may have lmax-m+1 different l-terms
+        matr = np.zeros((npoints, lmax_fit+1))
+
+        # The linear system to solve in the least-square sense is M_{p,l} * S_l = R_p,
+        # where R_p = Phi at p-th boundary point (0<=p<npoints),
+        # M_{l,p}   = value of l-th harmonic coefficient at p-th boundary point,
+        # S_l       = the amplitude of l-th coefficient to be determined.
+        r = np.sqrt(points[:, 0]**2 + points[:, 1]**2)
+        theta = np.arctan2(points[:, 0], points[:, 1])
+
+        ls = np.arange(lmax_fit + 1)
+        Pl0 = np.stack([
+            sph_harm(0, l, 0., theta).real for l in ls
+        ]).T
+
+        matr = (r[:, None] / r0.value) ** -(ls[None] + 1) * Pl0
+        y = Phis / scale
+        sol, resid, rank, s = np.linalg.lstsq(matr, y, rcond=None)
+
+        pars = {f'S{l}0': sol[l].real for l in ls}
+        return MultipolePotential(
+            lmax=lmax_fit,
+            m=m,
+            r_s=r0,
+            inner=False,
+            units=self.units,
+            **pars
+        )

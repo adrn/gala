@@ -19,8 +19,12 @@ New Features
 
 - Added a ``plot_rotation_curve()`` method to all potential objects to make a 1D plot
   of the circular velocity curve.
-  
+
 - Added a new potential for representing multipole expansions ``MultipolePotential``.
+
+- Added a new potential ``CylSplinePotential`` for flexible representation of
+  axisymmetric potentials by allowing passing in grids of potential values
+  evaluated grids of R, z values (like the ``CylSpline`` potential in Agama).
 
 Bug fixes
 ---------

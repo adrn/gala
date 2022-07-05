@@ -126,6 +126,33 @@ cdef extern from "potential/potential/builtin/multipole.h":
     void mp_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double mp_density(double t, double *pars, double *q, int n_dim) nogil
 
+    double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) nogil
+    void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    double axisym_cylspline_density(double t, double *pars, double *q, int n_dim) nogil
+
+# cdef extern from "gsl/gsl_interp.h":
+#     ctypedef struct gsl_interp_accel:
+#         pass
+
+# cdef extern from "gsl/gsl_interp2d.h":
+#     ctypedef struct gsl_interp2d_type:
+#         pass
+
+#     ctypedef struct gsl_interp2d:
+#         pass
+
+#     gsl_interp2d_type * gsl_interp2d_bicubic
+#     gsl_interp_accel gsl_interp_accel_alloc()
+#     double gsl_interp2d_eval(const gsl_interp2d *, const double xa[], const double ya[], const double za[], const double, const double, gsl_interp_accel *, gsl_interp_accel *)
+
+# cdef extern from "gsl/gsl_spline2d.h":
+#     ctypedef struct gsl_spline2d:
+#         pass
+
+#     int gsl_spline2d_init(gsl_spline2d *spline, const double xa[], const double ya[], const double za[], size_t xsize, size_t ysize)
+#     double gsl_spline2d_eval(const gsl_spline2d *spline, const double x, const double y, gsl_interp_accel *xacc, gsl_interp_accel *yacc)
+
+
 __all__ = [
     'HenonHeilesWrapper',
     'KeplerWrapper',
@@ -146,7 +173,8 @@ __all__ = [
     'LogarithmicWrapper',
     'LongMuraliBarWrapper',
     'NullWrapper',
-    'MultipoleWrapper'
+    'MultipoleWrapper',
+    'CylSplineWrapper'
 ]
 
 # ============================================================================
@@ -391,7 +419,7 @@ cdef class NullWrapper(CPotentialWrapper):
 
 
 # ==============================================================================
-# Multipole
+# Multipole and flexible potential models
 #
 cdef class MultipoleWrapper(CPotentialWrapper):
 
@@ -404,3 +432,17 @@ cdef class MultipoleWrapper(CPotentialWrapper):
             self.cpotential.value[0] = <energyfunc>(mp_potential)
             self.cpotential.density[0] = <densityfunc>(mp_density)
             self.cpotential.gradient[0] = <gradientfunc>(mp_gradient)
+
+
+cdef class CylSplineWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters, q0, R):
+        self.init([G] + list(parameters),
+                  np.ascontiguousarray(q0),
+                  np.ascontiguousarray(R))
+
+        if USE_GSL == 1:
+            self.cpotential.value[0] = <energyfunc>(axisym_cylspline_value)
+            self.cpotential.gradient[0] = <gradientfunc>(axisym_cylspline_gradient)
+            self.cpotential.density[0] = <densityfunc>(axisym_cylspline_density)
+            #self.cpotential.hessian[0] = <hessianfunc>(axisym_cylspline_hessian)

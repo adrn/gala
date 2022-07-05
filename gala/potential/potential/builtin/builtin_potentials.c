@@ -5,6 +5,7 @@
 
 #if USE_GSL == 1
 #include <gsl/gsl_sf_gamma.h>
+#include <gsl/gsl_math.h>
 #endif
 
 double nan_density(double t, double *pars, double *q, int n_dim) { return NAN; }
@@ -1421,7 +1422,7 @@ double mn3_value(double t, double *pars, double *q, int n_dim) {
         tmp_pars[1] = pars[1+3*i];
         tmp_pars[2] = pars[1+3*i+1];
         tmp_pars[3] = pars[1+3*i+2];
-        val += miyamotonagai_value(t, &tmp_pars, q, n_dim);
+        val += miyamotonagai_value(t, &tmp_pars[0], q, n_dim);
     }
     return val;
 }
@@ -1434,7 +1435,7 @@ void mn3_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
         tmp_pars[1] = pars[1+3*i];
         tmp_pars[2] = pars[1+3*i+1];
         tmp_pars[3] = pars[1+3*i+2];
-        miyamotonagai_gradient(t, &tmp_pars, q, n_dim, grad);
+        miyamotonagai_gradient(t, &tmp_pars[0], q, n_dim, grad);
     }
 }
 
@@ -1447,7 +1448,7 @@ double mn3_density(double t, double *pars, double *q, int n_dim) {
         tmp_pars[1] = pars[1+3*i];
         tmp_pars[2] = pars[1+3*i+1];
         tmp_pars[3] = pars[1+3*i+2];
-        val += miyamotonagai_density(t, &tmp_pars, q, n_dim);
+        val += miyamotonagai_density(t, &tmp_pars[0], q, n_dim);
     }
     return val;
 }
@@ -1461,7 +1462,7 @@ void mn3_hessian(double t, double *pars, double *q, int n_dim,
         tmp_pars[1] = pars[1+3*i];
         tmp_pars[2] = pars[1+3*i+1];
         tmp_pars[3] = pars[1+3*i+2];
-        miyamotonagai_hessian(t, &tmp_pars, q, n_dim, hess);
+        miyamotonagai_hessian(t, &tmp_pars[0], q, n_dim, hess);
     }
 }
 

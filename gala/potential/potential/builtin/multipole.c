@@ -7,15 +7,18 @@ and https://github.com/adrn/gala/blob/main/gala/potential/scf/src/bfe_helper.c
 #include "extra_compile_macros.h"
 #include <math.h>
 #include <string.h>
-#if USE_GSL == 1
-#include "gsl/gsl_sf_legendre.h"
-#include "gsl/gsl_sf_gegenbauer.h"
-#include "gsl/gsl_sf_gamma.h"
-#endif
 
 #define SQRT_FOURPI 3.544907701811031
 
 #if USE_GSL == 1
+
+#include "gsl/gsl_sf_legendre.h"
+#include "gsl/gsl_sf_gegenbauer.h"
+#include "gsl/gsl_sf_gamma.h"
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_interp2d.h>
+#include <gsl/gsl_spline2d.h>
+
 /* --------------------------------------------------------------------------
 
     Low-level helper functions
@@ -105,7 +108,13 @@ void mp_sph_grad_phi_lm(double r, double phi, double X, int l, int m,
             A = sqrt(2*l+1) / SQRT_FOURPI * sqrt(gsl_sf_gamma(l-m+1.)
                                                  / gsl_sf_gamma(l+m+1.));
         }
-        dYlm_dtheta = A / sintheta * (l*X*Plm - (l+m)*Pl1m);
+
+        // fixed at sintheta = 0
+        if (sintheta != 0) {
+            dYlm_dtheta = A / sintheta * (l*X*Plm - (l+m)*Pl1m);
+        } else {
+            dYlm_dtheta = 0;
+        }
     }
     dPhi_dtheta = dYlm_dtheta * Phi_l / r;
 
@@ -116,9 +125,15 @@ void mp_sph_grad_phi_lm(double r, double phi, double X, int l, int m,
     }
     dPhi_dphi *= Ylm * Phi_l;
 
-    sphgrad[0] = dPhil_dr;
-    sphgrad[1] = dPhi_dtheta;
-    sphgrad[2] = dPhi_dphi;
+    if (r > 0) {
+        sphgrad[0] = dPhil_dr;
+        sphgrad[1] = dPhi_dtheta;
+        sphgrad[2] = dPhi_dphi;
+    } else {
+        sphgrad[0] = 0;
+        sphgrad[1] = 0;
+        sphgrad[2] = 0;
+    }
 }
 
 /*
@@ -254,9 +269,16 @@ void mp_gradient_helper(double *xyz, int K,
 
                 mp_sph_grad_phi_lm(s, phi, X, l, m, lmax, inner, &tmp_grad[0]);
                 tmp_grad2[j+0] += tmp_grad[0] * tmp; // r
-                tmp_grad2[j+1] += tmp_grad[1] * tmp; // theta
-                tmp_grad2[j+2] += tmp_grad[2] * (Tlm[i]*cosmphi[m] -
-                                    Slm[i]*sinmphi[m]) / (s * sintheta); // phi
+                tmp_grad2[j+1] += tmp_grad[1] * tmp; // phi??
+
+                if (sintheta != 0) {
+                    tmp_grad2[j+2] += tmp_grad[2] * (
+                        Tlm[i]*cosmphi[m] - Slm[i]*sinmphi[m]
+                    ) / (s * sintheta); // theta??
+                } else {
+                    tmp_grad2[j+2] = 0.;
+                }
+
 
                 i++;
             }
@@ -272,9 +294,9 @@ void mp_gradient_helper(double *xyz, int K,
             + cosphi*tmp_grad[2];
         tmp_grad2[j+2] = X*tmp_grad[0] - sintheta*tmp_grad[1];
 
-        grad[j+0] = grad[j+0] + tmp_grad2[j+0]*G*M/(r_s*r_s);
-        grad[j+1] = grad[j+1] + tmp_grad2[j+1]*G*M/(r_s*r_s);
-        grad[j+2] = grad[j+2] + tmp_grad2[j+2]*G*M/(r_s*r_s);
+        grad[j+0] = grad[j+0] + tmp_grad2[j+0] * G*M/(r_s*r_s);
+        grad[j+1] = grad[j+1] + tmp_grad2[j+1] * G*M/(r_s*r_s);
+        grad[j+2] = grad[j+2] + tmp_grad2[j+2] * G*M/(r_s*r_s);
   }
 }
 
@@ -297,7 +319,6 @@ double mp_potential(double t, double *pars, double *q, int n_dim) {
     double r_s = pars[5];
 
     double val[1] = {0.};
-    int l, m;
 
     double Slm[num_coeff], Tlm[num_coeff];
     for(int i=0; i < num_coeff; i++){
@@ -330,8 +351,6 @@ void mp_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
     double M = pars[4];
     double r_s = pars[5];
 
-    int l, m;
-
     double Slm[num_coeff], Tlm[num_coeff];
     for(int i=0; i<num_coeff; i++){
         Slm[i] = pars[6 + 2*i];
@@ -354,13 +373,11 @@ double mp_density(double t, double *pars, double *q, int n_dim) {
         [- sin_coeff, cos_coeff]
     */
     // double G = pars[0];
-    int lmax = (int)pars[1];
-    int num_coeff = (int)pars[2];
-    int inner = (int)pars[3];
-    double M = pars[4];
-    double r_s = pars[5];
-
-    int l, m;
+    // int lmax = (int)pars[1];
+    // int num_coeff = (int)pars[2];
+    // int inner = (int)pars[3];
+    // double M = pars[4];
+    // double r_s = pars[5];
 
     double val[1] = {0.};
 
@@ -567,5 +584,231 @@ double mpetd_density(double t, double *pars, double *q, int n_dim) {
     val[0] = 0.;
     return val[0];
 }
+
+/* ---------------------------------------------------------------------------
+    Axisymmetric CylSpline (from Agama)
+
+    Parameters
+    ----------
+    G (Gravitational constant)
+    logScaling (whether the interpolated potential is log scaled)
+    Rscale (length scale)
+    ngridR (number of grid points in R)
+    ngridz (number of grid points in z)
+    gridR (length `ngridR`) - not actually R values, arcsinh(R/Rscale)
+    gridz (length `ngridz`) - not actually z values, arcsinh(z/Rscale)
+    gridPhi (length `ngridR` * `ngridz`) - transformed Phi values
+    multipole_pars
+    -- grid_R, grid_z, grid_Phi to ignore --
+*/
+
+double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) {
+    int logScaling = (int)pars[1];
+    double Rscale = pars[2];
+    int nR = (int)pars[3];
+    int nz = (int)pars[4];
+
+    double Phi;
+    double Rasinh = sqrt(q[0]*q[0] + q[1]*q[1]);
+    double zasinh = q[2];
+    Rasinh = asinh(Rasinh / Rscale);
+    zasinh = asinh(zasinh / Rscale);
+
+    double gridR[nR];
+    double gridz[nz];
+    double gridPhi[nz * nR];
+    for (int i=0; i < nR; i++)
+        gridR[i] = pars[5 + i];
+    for (int i=0; i < nz; i++)
+        gridz[i] = pars[5 + nR + i];
+    for (int i=0; i < nR; i++)
+        for (int j=0; j < nz; j++)
+            gridPhi[i * nz + j] = pars[5 + nR + nz + i * nz + j];
+
+    const gsl_interp2d_type *T = gsl_interp2d_bicubic;
+    gsl_spline2d *spline = gsl_spline2d_alloc(T, nR, nz);
+    gsl_interp_accel *xacc = gsl_interp_accel_alloc();
+    gsl_interp_accel *yacc = gsl_interp_accel_alloc();
+
+    // TODO: interpolation is very slow I think because this setup is done every
+    // time the function is called...
+
+    if ((Rasinh >= gridR[0]) && (Rasinh <= gridR[nR-1]) &&
+        (zasinh >= gridz[0]) && (zasinh <= gridz[nz-1])) { // Use CylSpline
+
+        /* initialize interpolation */
+        // TODO: define this in wrapper, make all CPotential's have a void
+        // pointer array to store things like this, all these functions then
+        // need to accept one more parameter (or is there a way to do optional
+        // args in C?), ??, profit.
+        gsl_spline2d_init(spline, gridR, gridz, gridPhi, nR, nz);
+        Phi = gsl_spline2d_eval(spline, Rasinh, zasinh, xacc, yacc);
+
+        if (logScaling)
+            Phi = -exp(Phi);
+
+    } else {  // Use external Multipole
+        Phi = mp_potential(t, &pars[5 + nR + nz + nR * nz], q, n_dim);
+    }
+
+    gsl_spline2d_free(spline);
+    gsl_interp_accel_free(xacc);
+    gsl_interp_accel_free(yacc);
+
+    return Phi;
+}
+
+void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim,
+                               double *grad) {
+
+    int logScaling = (int)pars[1];
+    double Rscale = pars[2];
+    int nR = (int)pars[3];
+    int nz = (int)pars[4];
+
+    double Phi, dPhi_dR, dPhi_dz;
+    double R = sqrt(q[0]*q[0] + q[1]*q[1]);
+    double Rasinh = asinh(R / Rscale);
+    double zasinh = asinh(q[2] / Rscale);
+
+    double gridR[nR];
+    double gridz[nz];
+    double gridPhi[nz * nR];
+    for (int i=0; i < nR; i++)
+        gridR[i] = pars[5 + i];
+    for (int i=0; i < nz; i++)
+        gridz[i] = pars[5 + nR + i];
+    for (int i=0; i < nR; i++)
+        for (int j=0; j < nz; j++)
+            gridPhi[i * nz + j] = pars[5 + nR + nz + i * nz + j];
+
+    const gsl_interp2d_type *T = gsl_interp2d_bicubic;
+    gsl_spline2d *spline = gsl_spline2d_alloc(T, nR, nz);
+    gsl_interp_accel *xacc = gsl_interp_accel_alloc();
+    gsl_interp_accel *yacc = gsl_interp_accel_alloc();
+
+    // TODO: interpolation is very slow I think because this setup is done every
+    // time the function is called...
+
+    if ((Rasinh >= gridR[0]) && (Rasinh <= gridR[nR-1]) &&
+        (zasinh >= gridz[0]) && (zasinh <= gridz[nz-1])) { // Use CylSpline
+
+        /* initialize interpolation */
+        // TODO: define this in wrapper, make all CPotential's have a void
+        // pointer array to store things like this, all these functions then
+        // need to accept one more parameter (or is there a way to do optional
+        // args in C?), ??, profit.
+        gsl_spline2d_init(spline, gridR, gridz, gridPhi, nR, nz);
+
+        dPhi_dR = gsl_spline2d_eval_deriv_x(spline, Rasinh, zasinh, xacc, yacc);
+        dPhi_dR = dPhi_dR / (Rscale * cosh(Rasinh));
+
+        dPhi_dz = gsl_spline2d_eval_deriv_y(spline, Rasinh, zasinh, xacc, yacc);
+        dPhi_dz = dPhi_dz / (Rscale * cosh(zasinh));
+
+        if (logScaling) {
+            Phi = gsl_spline2d_eval(spline, Rasinh, zasinh, xacc, yacc);
+            Phi = -exp(Phi);
+            dPhi_dR = dPhi_dR * Phi;
+            dPhi_dz = dPhi_dz * Phi;
+        }
+
+        if (R > 0) {
+            grad[0] = grad[0] + dPhi_dR * q[0] / R;
+            grad[1] = grad[1] + dPhi_dR * q[1] / R;
+            grad[2] = grad[2] + dPhi_dz;
+        } else {
+            grad[2] = grad[2] + dPhi_dz;
+        }
+
+    } else {  // Use external Multipole
+        mp_gradient(t, &pars[5 + nR + nz + nR * nz], q, n_dim, grad);
+    }
+    gsl_spline2d_free(spline);
+    gsl_interp_accel_free(xacc);
+    gsl_interp_accel_free(yacc);
+}
+
+double axisym_cylspline_density(double t, double *pars, double *q, int n_dim) {
+    double G = pars[0];
+    int logScaling = (int)pars[1];
+    double Rscale = pars[2];
+    int nR = (int)pars[3];
+    int nz = (int)pars[4];
+
+    return 0.0/0.0;
+
+    /* TODO: bug in the below... */
+
+    double dens;
+    double Phi, dPhi_dR, dPhi_dz, d2Phi_dR2, d2Phi_dz2;
+    double R = sqrt(q[0]*q[0] + q[1]*q[1]);
+    double Rasinh = asinh(R / Rscale);
+    double zasinh = asinh(q[2] / Rscale);
+
+    double gridR[nR];
+    double gridz[nz];
+    double gridPhi[nz * nR];
+    for (int i=0; i < nR; i++)
+        gridR[i] = pars[5 + i];
+    for (int i=0; i < nz; i++)
+        gridz[i] = pars[5 + nR + i];
+    for (int i=0; i < nR; i++)
+        for (int j=0; j < nz; j++)
+            gridPhi[i * nz + j] = pars[5 + nR + nz + i * nz + j];
+
+    const gsl_interp2d_type *T = gsl_interp2d_bicubic;
+    gsl_spline2d *spline = gsl_spline2d_alloc(T, nR, nz);
+    gsl_interp_accel *xacc = gsl_interp_accel_alloc();
+    gsl_interp_accel *yacc = gsl_interp_accel_alloc();
+
+    // TODO: interpolation is very slow I think because this setup is done every
+    // time the function is called...
+
+    if ((Rasinh >= gridR[0]) && (Rasinh <= gridR[nR-1]) &&
+        (zasinh >= gridz[0]) && (zasinh <= gridz[nz-1])) { // Use CylSpline
+
+        /* initialize interpolation */
+        // TODO: define this in wrapper, make all CPotential's have a void
+        // pointer array to store things like this, all these functions then
+        // need to accept one more parameter (or is there a way to do optional
+        // args in C?), ??, profit.
+        gsl_spline2d_init(spline, gridR, gridz, gridPhi, nR, nz);
+
+        dPhi_dR = gsl_spline2d_eval_deriv_x(spline, Rasinh, zasinh, xacc, yacc);
+        dPhi_dR = dPhi_dR / (Rscale * cosh(Rasinh));
+
+        dPhi_dz = gsl_spline2d_eval_deriv_y(spline, Rasinh, zasinh, xacc, yacc);
+        dPhi_dz = dPhi_dz / (Rscale * cosh(zasinh));
+
+        d2Phi_dR2 = gsl_spline2d_eval_deriv_xx(spline, Rasinh, zasinh, xacc, yacc);
+        d2Phi_dR2 = d2Phi_dR2 / pow(Rscale * cosh(Rasinh), 2);
+
+        d2Phi_dz2 = gsl_spline2d_eval_deriv_yy(spline, Rasinh, zasinh, xacc, yacc);
+        d2Phi_dz2 = d2Phi_dz2 / pow(Rscale * cosh(zasinh), 2);
+
+        if (logScaling) {
+            Phi = gsl_spline2d_eval(spline, Rasinh, zasinh, xacc, yacc);
+            Phi = -exp(Phi);
+            dPhi_dR = dPhi_dR * Phi;
+            d2Phi_dR2 = (d2Phi_dR2 + pow(dPhi_dR / Phi, 2)) * Phi;
+
+            dPhi_dz = dPhi_dz * Phi;
+            d2Phi_dz2 = (d2Phi_dz2 + pow(dPhi_dz / Phi, 2)) * Phi;
+        }
+
+        dens = (dPhi_dR / R + d2Phi_dR2 + d2Phi_dz2) / (4 * M_PI * G);
+
+    } else {  // Use external Multipole
+        dens = mp_density(t, &pars[5 + nR + nz + nR * nz], q, n_dim);
+    }
+    gsl_spline2d_free(spline);
+    gsl_interp_accel_free(xacc);
+    gsl_interp_accel_free(yacc);
+
+    return dens;
+}
+
+
 
 #endif
