@@ -34,8 +34,7 @@ def compute_coeffs(
     function using a basis function expansion.
 
     Computing the coefficients involves computing triple integrals which are
-    computationally expensive. For an example of how to parallelize the
-    computation of the coefficients, see ``examples/parallel_compute_Anlm.py``.
+    computationally expensive.
 
     Parameters
     ----------
@@ -172,10 +171,6 @@ def compute_coeffs_discrete(
     Compute the expansion coefficients for representing the density distribution
     of input points as a basis function expansion. The points, ``xyz``, are
     assumed to be samples from the density distribution.
-
-    Computing the coefficients involves computing triple integrals which are
-    computationally expensive. For an example of how to parallelize the
-    computation of the coefficients, see ``examples/parallel_compute_Anlm.py``.
 
     Parameters
     ----------
