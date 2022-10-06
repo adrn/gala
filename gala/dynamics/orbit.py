@@ -1000,12 +1000,18 @@ class Orbit(PhaseSpacePosition):
             the timestep marker. Set this to 0 or None to disable.
         underplot_full_orbit : bool (optional)
             Controls whether to under-plot the full orbit as a thin line.
-        marker_style : dict (optional)
+        marker_style : dict or list of dict (optional)
             Matplotlib style arguments passed to `matplotlib.pyplot.plot`
-            that control the plot style of the timestep marker.
+            that control the plot style of the timestep marker. If a single
+            dict is passed then the marker_style is applied to all orbits.
+            If a list of dicts is passed then each dict will be applied to
+            each orbit.
         segment_style : dict (optional)
             Matplotlib style arguments passed to `matplotlib.pyplot.plot`
-            that control the plot style of the orbit segment.
+            that control the plot style of the orbit segment. If a single
+            dict is passed then the segment_style is applied to all orbits.
+            If a list of dicts is passed then each dict will be applied to
+            each orbit.
         FuncAnimation_kwargs : dict (optional)
             Keyword arguments passed through to
             `matplotlib.animation.FuncAnimation`.
@@ -1055,22 +1061,40 @@ class Orbit(PhaseSpacePosition):
         orbit_plot_kwargs.setdefault('axes', axes)
 
         if marker_style is None:
-            marker_style = dict()
-        marker_style.setdefault('marker', 'o')
-        marker_style.setdefault('linestyle', marker_style.pop('ls', 'None'))
-        marker_style.setdefault('markersize', marker_style.pop('ms', 4.))
-        marker_style.setdefault('color', marker_style.pop('c', 'tab:red'))
-        marker_style.setdefault('zorder', 100)
+            marker_style = [dict() for _ in range(self.norbits)]
+
+        # if a single dict is passed then copy it into a list
+        if isinstance(marker_style, dict):
+            marker_style = [marker_style for _ in range(self.norbits)]
+        # otherwise ensure the list is the right length
+        elif len(marker_style) != self.norbits:
+            raise ValueError("Length of `marker_style` list must be equal to the number of orbits")
+
+        for n in range(self.norbits):
+            marker_style[n].setdefault('marker', 'o')
+            marker_style[n].setdefault('linestyle', marker_style[n].pop('ls', 'None'))
+            marker_style[n].setdefault('markersize', marker_style[n].pop('ms', 4.))
+            marker_style[n].setdefault('color', marker_style[n].pop('c', 'tab:red'))
+            marker_style[n].setdefault('zorder', 100)
 
         if segment_style is None:
-            segment_style = dict()
-        segment_style.setdefault('marker', 'None')
-        segment_style.setdefault('linestyle', segment_style.pop('ls', '-'))
-        segment_style.setdefault('linewidth', segment_style.pop('lw', 2.))
-        segment_style.setdefault('color', segment_style.pop('c', 'tab:blue'))
-        segment_style.setdefault('zorder', 10)
-        if segment_nsteps is None or segment_nsteps == 0:  # HACK
-            segment_style['alpha'] = 0
+            segment_style = [dict() for _ in range(self.norbits)]
+
+        # if a single dict is passed then copy it into a list
+        if isinstance(segment_style, dict):
+            segment_style = [segment_style for _ in range(self.norbits)]
+        # otherwise ensure the list is the right length
+        elif len(segment_style) != self.norbits:
+            raise ValueError("Length of `segment_style` list must be equal to the number of orbits")
+
+        for n in range(self.norbits):
+            segment_style[n].setdefault('marker', 'None')
+            segment_style[n].setdefault('linestyle', segment_style[n].pop('ls', '-'))
+            segment_style[n].setdefault('linewidth', segment_style[n].pop('lw', 2.))
+            segment_style[n].setdefault('color', segment_style[n].pop('c', 'tab:blue'))
+            segment_style[n].setdefault('zorder', 10)
+            if segment_nsteps is None or segment_nsteps == 0:  # HACK
+                segment_style[n]['alpha'] = 0
 
         # Use this to get a figure with axes with the right limits
         # Note: Labels are added by .plot()
@@ -1086,8 +1110,8 @@ class Orbit(PhaseSpacePosition):
             _m = []
             _s = []
             for i in range(len(data_paired)):
-                _m.append(fig.axes[i].plot([], [], **marker_style)[0])
-                _s.append(fig.axes[i].plot([], [], **segment_style)[0])
+                _m.append(fig.axes[i].plot([], [], **marker_style[n])[0])
+                _s.append(fig.axes[i].plot([], [], **segment_style[n])[0])
             markers.append(_m)
             segments.append(_s)
 
