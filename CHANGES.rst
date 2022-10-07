@@ -26,6 +26,13 @@ New Features
   axisymmetric potentials by allowing passing in grids of potential values
   evaluated grids of R, z values (like the ``CylSpline`` potential in Agama).
 
+- Added a ``show_time`` flag to ``Orbit.animate()`` to control whether to show the
+  current timestep.
+
+- Changed ``Orbit.animate()`` to allow for different ``marker_style`` and
+  ``segment_style`` options for individual orbits by passing a list of dicts instead
+  of just a dict.
+
 Bug fixes
 ---------
 
