@@ -81,6 +81,10 @@ def test_animate(tmpdir, i, obj):
     fig, anim = obj.animate(segment_nsteps=3)
     anim.save(tmpdir / f'anim{i}.mp4')
 
+    # test hiding the timestep label
+    fig, anim = obj.animate(segment_nsteps=3, show_time=False)
+    anim.save(tmpdir / f'anim{i}_no_time.mp4')
+
     if obj.ndim == 3:
         # Also try cylindrical, and sub-selecting components:
         fig, anim = obj.cylindrical.animate(components=['rho', 'z'])
