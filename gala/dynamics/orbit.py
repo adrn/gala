@@ -973,6 +973,7 @@ class Orbit(PhaseSpacePosition):
                 stride=1,
                 segment_nsteps=10,
                 underplot_full_orbit=True,
+                show_time=True,
                 marker_style=None,
                 segment_style=None,
                 FuncAnimation_kwargs=None,
@@ -1000,6 +1001,8 @@ class Orbit(PhaseSpacePosition):
             the timestep marker. Set this to 0 or None to disable.
         underplot_full_orbit : bool (optional)
             Controls whether to under-plot the full orbit as a thin line.
+        show_time : bool (optional)
+            Controls whether to show a label of the current timestep
         marker_style : dict or list of dict (optional)
             Matplotlib style arguments passed to `matplotlib.pyplot.plot`
             that control the plot style of the timestep marker. If a single
@@ -1115,6 +1118,12 @@ class Orbit(PhaseSpacePosition):
             markers.append(_m)
             segments.append(_s)
 
+        # record the time unit and set up data-less annotates if user wants timestep label
+        if show_time:
+            time_unit = self.t.unit
+            times = [fig.axes[i].annotate('', xy=(0.98, 0.98), xycoords="axes fraction",
+                                          ha="right", va="top") for i in range(len(data_paired))]
+
         def anim_func(n):
             i = max(0, n - segment_nsteps)
 
@@ -1125,8 +1134,18 @@ class Orbit(PhaseSpacePosition):
                     segments[k][j].set_data(data_paired[j][0][i:n+1, k],
                                             data_paired[j][1][i:n+1, k])
 
-            return (*[m for m in markers for x in m],
-                    *[s for s in segments for x in s])
+            if show_time:
+                time_value = self.t[n:n+1].value[0]
+                for time in times:
+                    time.set_text(f"Time={time_value:1.1f} {time_unit}")
+
+                artists = (*[m for m in markers for x in m],
+                           *[s for s in segments for x in s],
+                           *times)
+            else:
+                artists = (*[m for m in markers for x in m],
+                           *[s for s in segments for x in s])
+            return artists
 
         anim = FuncAnimation(fig, anim_func,
                              frames=np.arange(0, self.ntimes, stride),
