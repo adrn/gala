@@ -135,14 +135,13 @@ cdef class InterpolatedSCFWrapper(CPotentialWrapper):
 
 class InterpolatedSCFPotential(CPotentialBase, GSL_only=True):
     r"""
-    InterpolatedSCFPotential(m, r_s, Sjnlm, Tjnlm, tj, comj, units=None, origin=None, R=None)
+    InterpolatedSCFPotential(m, r_s, Sjnlm, Tjnlm, tj, com_xj, com_vj, units=None, origin=None, R=None)
 
-    TODO: update copy-pasta docstring
-
-    A gravitational potential represented as a basis function expansion.  This
-    uses the self-consistent field (SCF) method of Hernquist & Ostriker (1992)
-    and Lowing et al. (2011), and represents all coefficients as real
-    quantities.
+    A gravitational potential represented as a basis function expansion with the
+    Hernquist basis, but where the coefficients are interpolated with linear
+    interpolation to compute the density, potential, or acceleration at a given time.
+    This uses the self-consistent field (SCF) method of Hernquist & Ostriker (1992) and
+    Lowing et al. (2011), and represents all coefficients as real quantities.
 
     Parameters
     ----------
@@ -150,16 +149,23 @@ class InterpolatedSCFPotential(CPotentialBase, GSL_only=True):
         Scale mass.
     r_s : numeric
         Scale length.
-    Snlm : array_like
-        Array of coefficients for the cos() terms of the expansion.
-        This should be a 3D array with shape `(nmax+1, lmax+1, lmax+1)`,
-        where `nmax` is the number of radial expansion terms and `lmax`
-        is the number of spherical harmonic `l` terms.
-    Tnlm : array_like
-        Array of coefficients for the sin() terms of the expansion.
-        This should be a 3D array with shape `(nmax+1, lmax+1, lmax+1)`,
-        where `nmax` is the number of radial expansion terms and `lmax`
-        is the number of spherical harmonic `l` terms.
+    Sjnlm : array_like
+        Array of coefficients for the cos() terms of the expansion. The 0th axis should
+        contain the coefficients at a given time (specified by the ``tj`` argument).
+        This should be a 4D array with shape `(len(tj), nmax+1, lmax+1, lmax+1)`, where
+        `tj` is the array of times that the input coefficients are stored at, `nmax` is
+        the number of radial expansion terms and `lmax` is the number of spherical
+        harmonic `l` terms.
+    Tjnlm : array_like
+        Same as `Sjnlm`, but for the sin() terms of the expansion.
+    tj : array_like
+        The array of times that the input coefficients are specified at.
+    com_xj : array_like
+        The position of the expansion center as a function of time, evaluated at the
+        same times as the input time array `tj`.
+    com_vj : array_like
+        The velocity of the expansion center as a function of time, evaluated at the
+        same times as the input time array `tj`.
     units : iterable
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
@@ -197,8 +203,3 @@ class InterpolatedSCFPotential(CPotentialBase, GSL_only=True):
         lmax = shp1[2] - 1
 
         self._setup_wrapper({'nmax': nmax, 'lmax': lmax, 'ntimes': ntimes})
-
-        # if originj is None:
-        #     originj = np.zeros((ntimes, 3))
-        # else:
-        #     originj = np.array(originj)
