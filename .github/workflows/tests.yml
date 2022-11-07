@@ -123,6 +123,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get install gsl-bin libgsl0-dev build-essential
+          sudo apt-get install libhdf5-serial-dev  # TODO: remove when h5py has 3.11 wheels
 
       # Any *nix:
       - name: Install Python dependencies - nix
