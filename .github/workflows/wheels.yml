@@ -9,7 +9,7 @@ on:
       - main
 
 env:
-  CIBW_BUILD: "cp38-* cp39-* cp310-*"
+  CIBW_BUILD: "cp38-* cp39-* cp310-* cp311-*"
   CIBW_SKIP: "*-win32 *musllinux*"
   CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
 
@@ -31,7 +31,7 @@ jobs:
         name: Install Python
         with:
           # Note: cibuildwheel builds for many Python versions beyond this one
-          python-version: "3.7"
+          python-version: "3.9"
 
       # Mac:
       - name: Setup Mac
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/setup-python@v4
         name: Install Python
         with:
-          python-version: "3.7"
+          python-version: "3.9"
 
       - name: Build sdist
         run: |
