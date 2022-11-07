@@ -46,13 +46,13 @@ jobs:
           # Has to happen on ubuntu because galpy is finnicky on macOS
           - name: Python 3.10 with all optional dependencies
             os: ubuntu-latest
-            python: 3.10
+            python: '3.10'
             toxenv: py310-test-extradeps
             toxposargs: --durations=50
 
           - name: Python 3.10 without GSL
             os: ubuntu-latest
-            python: 3.10
+            python: '3.10'
             toxenv: nogsl
 
           - name: Python 3.8 with oldest supported version of all dependencies
@@ -63,7 +63,7 @@ jobs:
           # Mac and Windows:
           - name: Python 3.10 standard tests (macOS)
             os: macos-latest
-            python: 3.10
+            python: '3.10'
             toxenv: py310-test
 
           # - name: Python 3.9 standard tests (Windows)
