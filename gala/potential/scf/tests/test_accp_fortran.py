@@ -67,8 +67,8 @@ def test_density(basename):
     'simple-hernquist', 'multi-hernquist', 'simple-nonsph', 'random', 'wang-zhao',
 ])
 def test_potential(basename):
-    coeff_path = os.path.abspath(get_pkg_data_filename('data/{0}.coeff'.format(basename)))
-    accp_path = os.path.abspath(get_pkg_data_filename('data/{0}-accp.dat.gz'.format(basename)))
+    coeff_path = os.path.abspath(get_pkg_data_filename(f'data/{basename}.coeff'))
+    accp_path = os.path.abspath(get_pkg_data_filename(f'data/{basename}-accp.dat.gz'))
 
     coeff = np.atleast_2d(np.loadtxt(coeff_path, skiprows=1))
     accp = np.loadtxt(accp_path)
@@ -106,8 +106,8 @@ def test_potential(basename):
 ])
 def test_gradient(basename):
     pos_path = os.path.abspath(get_pkg_data_filename('data/positions.dat.gz'))
-    coeff_path = os.path.abspath(get_pkg_data_filename('data/{0}.coeff'.format(basename)))
-    accp_path = os.path.abspath(get_pkg_data_filename('data/{0}-accp.dat.gz'.format(basename)))
+    coeff_path = os.path.abspath(get_pkg_data_filename(f'data/{basename}.coeff'))
+    accp_path = os.path.abspath(get_pkg_data_filename(f'data/{basename}-accp.dat.gz'))
 
     xyz = np.loadtxt(pos_path, skiprows=1)
     coeff = np.atleast_2d(np.loadtxt(coeff_path, skiprows=1))
