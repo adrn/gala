@@ -133,9 +133,9 @@ cdef class InterpolatedSCFWrapper(CPotentialWrapper):
             self.cpotential.gradient[0] = <gradientfunc>(scf_interp_gradient)
 
 
-class InterpolatedSCFPotential(CPotentialBase, GSL_only=True):
+class SCFInterpolatedPotential(CPotentialBase, GSL_only=True):
     r"""
-    InterpolatedSCFPotential(m, r_s, Sjnlm, Tjnlm, tj, com_xj, com_vj, units=None, origin=None, R=None)
+    SCFInterpolatedPotential(m, r_s, Sjnlm, Tjnlm, tj, com_xj, com_vj, units=None, origin=None, R=None)
 
     A gravitational potential represented as a basis function expansion with the
     Hernquist basis, but where the coefficients are interpolated with linear
@@ -194,8 +194,9 @@ class InterpolatedSCFPotential(CPotentialBase, GSL_only=True):
         shp2 = self.parameters['Tjnlm'].shape
         if shp1 != shp2:
             raise ValueError(
-                "The input coefficient arrays must have the same "
-                f"shape! Received: {shp1} and {shp2}")
+                "The input coefficient arrays must have the same shape! Received: "
+                f"{shp1} and {shp2}"
+            )
 
         # extra parameters
         ntimes = shp1[0]
