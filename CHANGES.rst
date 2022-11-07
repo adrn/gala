@@ -33,6 +33,9 @@ New Features
   ``segment_style`` options for individual orbits by passing a list of dicts instead
   of just a dict.
 
+- Added an experimental new class ``SCFInterpolatedPotential`` that accepts a time
+  series of coefficients and interpolates the coefficient values to any evaluation time.
+
 Bug fixes
 ---------
 
