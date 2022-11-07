@@ -1,16 +1,10 @@
-1.7 (unreleased)
-================
-
-New Features
-------------
-
+1.6.1 (2022-11-07)
+==================
 
 Bug fixes
 ---------
 
-
-API changes
------------
+- Properly incorporate commits related to ``SCFInterpolatedPotential``.
 
 
 1.6 (2022-11-07)
