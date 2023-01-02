@@ -8,6 +8,9 @@ New Features
 Bug fixes
 ---------
 
+- Fixed a bug with the ``OrphanKoposov19()`` coordinate frame that caused the wrong
+  rotation matrix to be returned.
+
 
 API changes
 -----------

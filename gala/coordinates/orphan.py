@@ -177,7 +177,7 @@ def oph19_to_icrs():
     """ Compute the transformation from heliocentric Orphan coordinates to
         spherical ICRS.
     """
-    return matrix_transpose(galactic_to_orp())
+    return matrix_transpose(icrs_to_orp19())
 
 
 # TODO: remove this in next version
