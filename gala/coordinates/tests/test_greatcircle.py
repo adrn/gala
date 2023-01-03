@@ -49,12 +49,14 @@ def test_init_cls(pole):
     # default priority="origin"
     assert f1.origin.ra == new_origin.ra
     assert f1.origin.dec == new_origin.dec
+    assert np.isclose(f1.origin.cartesian.xyz @ f1.pole.cartesian.xyz, 0.)
 
     with pytest.warns():
         f2 = GreatCircleICRSFrame(pole=pole, origin=new_origin, priority="pole")
 
     assert f2.pole.ra == pole.ra
     assert f2.pole.dec == pole.dec
+    assert np.isclose(f2.origin.cartesian.xyz @ f2.pole.cartesian.xyz, 0.)
 
     # points = coord.SkyCoord(ra=[-38.8, 4.7] * u.deg, dec=[-45.1, -51.7] * u.deg)
     # fr = GreatCircleICRSFrame.from_endpoints(points[0], points[1])
