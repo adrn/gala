@@ -37,7 +37,7 @@ def test_koposov():
     # Compare against Table 1 in Koposov et al. 2010
 
     filename = get_pkg_data_filename("gd1_coord.txt")
-    k10_data = np.genfromtxt(filename, names=True, dtype=None)
+    k10_data = np.genfromtxt(filename, names=True, dtype=None, encoding='utf-8')
 
     k10_icrs = coord.SkyCoord(
         ra=k10_data["ra"].astype(str),
