@@ -223,10 +223,10 @@ class TestPowerLawCutoff(PotentialTestBase):
     sympy_density = False  # weird underflow issues??
     check_finite_at_origin = False
 
-    def setup(self):
+    def setup_method(self):
         self.potential = p.PowerLawCutoffPotential(units=galactic,
                                                    m=1E10, r_c=1., alpha=1.8)
-        super().setup()
+        super().setup_method()
 
 
 class TestSphericalNFW(PotentialTestBase):
@@ -504,14 +504,14 @@ class TestMultipoleOuter(CompositePotentialTestBase):
 class TestCylspline(PotentialTestBase):
     check_finite_at_origin = True
 
-    def setup(self):
+    def setup_method(self):
         self.potential = p.CylSplinePotential.from_file(
             get_pkg_data_filename('pot_disk_506151.pot'),
             units=galactic
         )
         vc = self.potential.circular_velocity([19., 0, 0]*u.kpc).decompose(galactic)
         self.w0 = [19.0, 0.2, -0.9, 0., vc.value[0], 0.]
-        super().setup()
+        super().setup_method()
 
     @pytest.mark.skip(reason="Not implemented for cylspline potentials")
     def test_density(self):
