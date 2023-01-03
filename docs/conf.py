@@ -138,9 +138,9 @@ html_logo = '_static/Gala_Logo_RGB.png'
 
 html_theme_options = {
     "logo": {
-        "text": "Gala",
-        "alt_text": "Gala",
-    },
+      "image_light": "_static/Gala_Logo_RGB.png",
+      "image_dark": "_static/Gala_Logo_RGB.png",
+   },
     "icon_links": [
         {
             "name": "GitHub",
