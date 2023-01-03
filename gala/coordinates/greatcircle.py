@@ -67,8 +67,8 @@ def get_origin_from_pole_ra0(pole, ra0, origin_disambiguate=None):
     xhat1 = coord.CartesianRepresentation(get_xhat(pole.cartesian.xyz, ra0))
     xhat2 = -xhat1
 
-    origin1 = coord.SkyCoord(xhat1, frame=pole)
-    origin2 = coord.SkyCoord(xhat2, frame=pole)
+    origin1 = coord.SkyCoord(xhat1, frame=pole, representation_type="unitspherical")
+    origin2 = coord.SkyCoord(xhat2, frame=pole, representation_type="unitspherical")
 
     sep1 = origin_disambiguate.separation(origin1).to_value(u.deg)
     sep2 = origin_disambiguate.separation(origin2).to_value(u.deg)
@@ -173,12 +173,16 @@ def ensure_orthogonal(pole, origin, priority="origin", tol=1e-10):
         if priority == "origin":
             msg = "Keeping the origin fixed and adjusting the pole to be orthogonal."
             z = z - (z @ x) * x
-            pole = pole.realize_frame(coord.CartesianRepresentation(z))
+            pole = pole.realize_frame(
+                coord.CartesianRepresentation(z), representation_type="unitspherical"
+            )
 
         else:  # validated by class attribute, so assume "pole"
             msg = "Keeping the pole fixed and adjusting the origin to be orthogonal."
             x = x - (x @ z) * z
-            origin = origin.realize_frame(coord.CartesianRepresentation(x))
+            origin = origin.realize_frame(
+                coord.CartesianRepresentation(x), representation_type="unitspherical"
+            )
 
         warn(
             f"Input origin and pole are not orthogonal. {msg} Use "
@@ -475,10 +479,14 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
         """
 
         pole = coord.SkyCoord(
-            coord.CartesianRepresentation([0.0, 0.0, 1.0]).transform(R.T), frame="icrs"
+            coord.CartesianRepresentation([0.0, 0.0, 1.0]).transform(R.T),
+            frame="icrs",
+            representation_type="unitspherical",
         )
         origin = coord.SkyCoord(
-            coord.CartesianRepresentation([1.0, 0.0, 0.0]).transform(R.T), frame="icrs"
+            coord.CartesianRepresentation([1.0, 0.0, 0.0]).transform(R.T),
+            frame="icrs",
+            representation_type="unitspherical",
         )
 
         return cls(pole=pole, origin=origin)
