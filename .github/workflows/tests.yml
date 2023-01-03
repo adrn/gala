@@ -128,9 +128,7 @@ jobs:
       # Any *nix:
       - name: Install Python dependencies - nix
         if: "!startsWith(matrix.os, 'windows')"
-        run: |
-          python -m pip install --upgrade tox codecov
-          python -m pip install git+https://github.com/jobovy/galpy
+        run: python -m pip install --upgrade tox codecov
 
       - name: Run tests - nix
         if: "!startsWith(matrix.os, 'windows')"
