@@ -27,6 +27,12 @@ def get_xhat(zhat, ra0, tol=1e-10):
     ra0 = 90 * u.deg - ra0
 
     z1, z2, z3 = zhat
+
+    if np.isclose(z3, 0, atol=tol):  # pole in x-y - can't satisfy ra0
+        raise ValueError(
+            "Pole is in the x-y plane, so can't satisfy the ra0 requirement"
+        )
+
     denom = (
         z2**2
         + z3**2
@@ -35,10 +41,12 @@ def get_xhat(zhat, ra0, tol=1e-10):
     )
     x1 = -np.tan(ra0) * np.sqrt(z3**2 / denom)
     x2 = x1 / np.tan(ra0)
-    if np.isclose(x1**2 + x2**2, 1, atol=tol):
+
+    if np.isclose(z3, 1, atol=tol):
         x3 = 0.0
     else:
-        x3 = np.sqrt(1 - x1**2 - x2**2)
+        x3 = (z2 + z1 * np.tan(ra0)) * np.abs(x2) / z3
+
     return np.array([x1, x2, x3])
 
 
@@ -53,14 +61,14 @@ def get_origin_from_pole_ra0(pole, ra0, origin_disambiguate=None):
     """
 
     if origin_disambiguate is None:
-        origin_disambiguate = coord.SkyCoord(0, 0, unit=u.deg, frame=pole.frame)
+        origin_disambiguate = coord.SkyCoord(0, 0, unit=u.deg, frame=pole)
 
     # figure out origin from ra0
     xhat1 = coord.CartesianRepresentation(get_xhat(pole.cartesian.xyz, ra0))
     xhat2 = -xhat1
 
-    origin1 = coord.SkyCoord(xhat1, frame=pole.frame)
-    origin2 = coord.SkyCoord(xhat2, frame=pole.frame)
+    origin1 = coord.SkyCoord(xhat1, frame=pole)
+    origin2 = coord.SkyCoord(xhat2, frame=pole)
 
     sep1 = origin_disambiguate.separation(origin1).to_value(u.deg)
     sep2 = origin_disambiguate.separation(origin2).to_value(u.deg)
@@ -370,7 +378,7 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
         origin = get_origin_from_pole_ra0(
             pole, ra0, origin_disambiguate=origin_disambiguate
         )
-        cls(pole=pole, origin=origin)
+        return cls(pole=pole, origin=origin)
 
     @classmethod
     def from_endpoints(cls, coord1, coord2, origin=None, ra0=None, priority=None):

@@ -14,23 +14,28 @@ from ..greatcircle import (
 )
 
 rng = np.random.default_rng(seed=42)
+rand_lon = rng.uniform(0, 2 * np.pi, 15) * u.rad
+rand_lat = np.arcsin(rng.uniform(-1, 1, size=15)) * u.rad
 poles = [
     coord.SkyCoord(ra=0 * u.deg, dec=90 * u.deg),
-    coord.SkyCoord(ra=72.2643 * u.deg, dec=-20.6575 * u.deg),
-    coord.SkyCoord(ra=13.5399 * u.deg, dec=0 * u.deg),
-]
+    coord.SkyCoord(ra=0 * u.deg, dec=-90 * u.deg),
+] + [coord.SkyCoord(lon, lat) for lon, lat in zip(rand_lon, rand_lat)]
 
 
-@pytest.mark.parametrize("pole", poles)
-def test_init_cls(pole):
-    zhat = np.squeeze(pole.cartesian.xyz)
+def get_random_orthogonal(skycoord, rng):
+    zhat = np.squeeze(skycoord.cartesian.xyz)
 
     # Random vector orthogonal to the pole:
     x = rng.uniform(size=3)
     x /= np.linalg.norm(x)
     xhat = x - (x @ zhat) * zhat
     xhat /= np.linalg.norm(xhat)
-    origin = coord.SkyCoord(coord.CartesianRepresentation(xhat), frame=pole.frame)
+    return coord.SkyCoord(coord.CartesianRepresentation(xhat), frame=skycoord.frame)
+
+
+@pytest.mark.parametrize("pole", poles)
+def test_init_cls(pole):
+    origin = get_random_orthogonal(pole, rng)
 
     GreatCircleICRSFrame(pole=pole, origin=origin)
     GreatCircleICRSFrame(pole=pole, origin=origin, priority="pole")
@@ -49,86 +54,75 @@ def test_init_cls(pole):
     # default priority="origin"
     assert f1.origin.ra == new_origin.ra
     assert f1.origin.dec == new_origin.dec
-    assert np.isclose(f1.origin.cartesian.xyz @ f1.pole.cartesian.xyz, 0.)
+    assert np.isclose(f1.origin.cartesian.xyz @ f1.pole.cartesian.xyz, 0.0)
 
     with pytest.warns():
         f2 = GreatCircleICRSFrame(pole=pole, origin=new_origin, priority="pole")
 
     assert f2.pole.ra == pole.ra
     assert f2.pole.dec == pole.dec
-    assert np.isclose(f2.origin.cartesian.xyz @ f2.pole.cartesian.xyz, 0.)
-
-    # points = coord.SkyCoord(ra=[-38.8, 4.7] * u.deg, dec=[-45.1, -51.7] * u.deg)
-    # fr = GreatCircleICRSFrame.from_endpoints(points[0], points[1])
-    # assert u.allclose(fr.pole.ra, 359.1 * u.deg, atol=1e-1 * u.deg)
-    # assert u.allclose(fr.pole.dec, 38.2 * u.deg, atol=1e-1 * u.deg)
-
-    # fr = GreatCircleICRSFrame.from_endpoints(points[0], points[1], ra0=100 * u.deg)
-
-    # fr = GreatCircleICRSFrame.from_endpoints(points[0], points[1], rotation=100 * u.deg)
-
-    # with pytest.raises(ValueError):
-    #     GreatCircleICRSFrame(pole=pole, ra0=160 * u.deg, center=pole)
+    assert np.isclose(f2.origin.cartesian.xyz @ f2.pole.cartesian.xyz, 0.0)
 
 
-def test_init_center():
-    galcen = coord.Galactocentric()
-    stupid_gal = GreatCircleICRSFrame(
-        pole=coord.Galactic._ngp_J2000.transform_to(coord.ICRS()),
-        center=galcen.galcen_coord,
+@pytest.mark.parametrize("pole", poles)
+def test_init_from_pole_ra0(pole):
+    GreatCircleICRSFrame.from_pole_ra0(pole, ra0=153 * u.deg)
+
+    disamb = coord.SkyCoord(ra=210 * u.deg, dec=-17 * u.deg)
+    GreatCircleICRSFrame.from_pole_ra0(
+        pole, ra0=153 * u.deg, origin_disambiguate=disamb
     )
-    gal = coord.Galactic(50 * u.deg, 20 * u.deg)
-    gal2 = gal.transform_to(stupid_gal)
-
-    assert np.isclose(gal.l.degree, gal2.phi1.degree)
-    assert np.isclose(gal.b.degree, gal2.phi2.degree)
 
 
-def test_transform_against_koposov():
-    from .helpers import sphere_rotate
-
-    # ra, dec, ra0
-    pole_ra0s = [
-        (71.241, -18.941, 0.0),
-        (151.441, 81.193, 71.4123),
-        (210.412, 7.134, 200.0),
-    ]
-
-    ra = np.random.uniform(0, 360, 128)
-    dec = np.random.uniform(-90, 90, len(ra))
-    c = coord.SkyCoord(ra=ra * u.deg, dec=dec * u.deg)
-
-    for pole_ra, pole_dec, ra0 in pole_ra0s:
-        kop = sphere_rotate(ra, dec, pole_ra, pole_dec, ra0)
-
-        pole = coord.SkyCoord(ra=pole_ra * u.deg, dec=pole_dec * u.deg)
-        fr = GreatCircleICRSFrame(pole=pole, ra0=ra0 * u.deg)
-        apw = c.transform_to(fr)
-
-        phi1 = apw.phi1.wrap_at(180 * u.deg).degree
-        assert np.allclose(kop[0], phi1)
-        assert np.allclose(kop[1], apw.phi2.degree)
-
-    # Test with no RA zero point
-    fr = GreatCircleICRSFrame(pole=pole)
-    apw = c.transform_to(fr)
-    assert np.isfinite(apw.phi1).all()
-    assert np.isfinite(apw.phi2).all()
+fail_poles = [
+    coord.SkyCoord(ra=90 * u.deg, dec=0 * u.deg),
+    coord.SkyCoord(ra=13.5399 * u.deg, dec=0 * u.deg),
+]
 
 
-def test_make_function():
-    pole = coord.SkyCoord(ra=72.2643 * u.deg, dec=-20.6575 * u.deg)
+@pytest.mark.parametrize("pole", fail_poles)
+def test_init_from_pole_ra0_fail(pole):
+    with pytest.raises(ValueError):
+        test_init_from_pole_ra0(pole)
 
-    kwargs = [
-        dict(pole=pole),
-        dict(pole=pole, ra0=100 * u.deg),
-        dict(pole=pole, rotation=50 * u.deg),
-        dict(pole=pole, ra0=100 * u.deg, rotation=50 * u.deg),
-    ]
-    for kw in kwargs:
-        cls = make_greatcircle_cls("Michael", "This is the docstring header", **kw)
-        fr = cls(phi1=100 * u.deg, phi2=10 * u.deg)
-        fr.transform_to(coord.ICRS())
+
+@pytest.mark.parametrize("c1", poles)
+def test_init_from_endpoints(c1):
+    # Random vector for other endpoint:
+    x = rng.uniform(size=3)
+    x /= np.linalg.norm(x)
+    c2 = coord.SkyCoord(coord.CartesianRepresentation(x))
+
+    midpt = coord.SkyCoord(sph_midpoint(c1, c2))
+    origin_off = midpt.spherical_offsets_by(1.423 * u.deg, -2.182 * u.deg)
+
+    f1 = GreatCircleICRSFrame.from_endpoints(c1, c2)
+    f2 = GreatCircleICRSFrame.from_endpoints(c1, c2, origin=midpt)
+    with pytest.warns():
+        f3 = GreatCircleICRSFrame.from_endpoints(c1, c2, origin=origin_off)
+    assert u.isclose(f3.origin.ra, origin_off.ra)
+    assert u.isclose(f3.origin.dec, origin_off.dec)
+
+    if np.abs(c1.dec) != 90 * u.deg:
+        f4 = GreatCircleICRSFrame.from_endpoints(c1, c2, ra0=origin_off.ra)
+
+    with pytest.warns():
+        f5 = GreatCircleICRSFrame.from_endpoints(
+            c1, c2, origin=origin_off, priority="pole"
+        )
+    assert u.isclose(f5.pole.ra, f1.pole.ra)
+    assert u.isclose(f5.pole.dec, f1.pole.dec)
+
+
+@pytest.mark.parametrize("pole", poles)
+def test_make_function(pole):
+    origin = get_random_orthogonal(pole, rng)
+
+    cls = make_greatcircle_cls(
+        "Michael", "This is the docstring header", pole=pole, origin=origin
+    )
+    fr = cls(phi1=100 * u.deg, phi2=10 * u.deg)
+    fr.transform_to(coord.ICRS())
 
 
 def test_pole_from_endpoints():
@@ -158,7 +152,7 @@ def test_pole_from_endpoints():
     assert u.allclose(pole.dec, 0 * u.deg)
 
 
-def test_pole_from_xyz():
+def test_init_pole_from_xyz():
     xnew = coord.UnitSphericalRepresentation(185 * u.deg, 32.5 * u.deg).to_cartesian()
     ynew = coord.UnitSphericalRepresentation(275 * u.deg, 0 * u.deg).to_cartesian()
     znew = xnew.cross(ynew)
@@ -171,8 +165,8 @@ def test_pole_from_xyz():
     for fr in [fr2, fr3, fr4]:
         assert np.isclose(fr1.pole.ra.degree, fr.pole.ra.degree)
         assert np.isclose(fr1.pole.dec.degree, fr.pole.dec.degree)
-        assert np.isclose(fr1.center.ra.degree, fr.center.ra.degree)
-        assert np.isclose(fr1.center.dec.degree, fr.center.dec.degree)
+        assert np.isclose(fr1.origin.ra.degree, fr.origin.ra.degree)
+        assert np.isclose(fr1.origin.dec.degree, fr.origin.dec.degree)
 
     with pytest.raises(ValueError):
         GreatCircleICRSFrame.from_xyz(xnew)
@@ -192,32 +186,7 @@ def test_sph_midpoint():
     assert u.allclose(midpt.dec, 45 * u.deg)
 
 
-def test_pole_separation90():
-    # Regression test for issue #160
-
-    for dec in [19.8, 0, -41.3]:  # random values, but 0 is an important test
-        pole = coord.SkyCoord(ra=32.5, dec=dec, unit="deg")
-        kwargs = [
-            (dict(pole=pole), None),
-            (dict(pole=pole, ra0=100 * u.deg), RuntimeWarning),
-            (dict(pole=pole, rotation=50 * u.deg), None),
-            (dict(pole=pole, ra0=100 * u.deg, rotation=50 * u.deg), RuntimeWarning),
-        ]
-
-        for kw, warning in kwargs:
-            gcfr = GreatCircleICRSFrame(**kw)
-            gc = coord.SkyCoord(
-                phi1=np.linspace(0, 360, 100), phi2=0, unit="deg", frame=gcfr
-            )
-            with catch_warnings(RuntimeWarning) as w:
-                gc = gc.transform_to(coord.ICRS())
-            if warning is not None and dec == 0:
-                assert len(w) > 0
-
-            assert u.allclose(gc.separation(pole), 90 * u.deg)
-
-
-def test_init_R():
+def test_init_from_R():
     from ..gd1 import R as gd1_R, GD1Koposov10
 
     N = 128
