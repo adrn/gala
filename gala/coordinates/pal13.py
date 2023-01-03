@@ -40,54 +40,61 @@ class Pal13Shipp20(coord.BaseCoordinateFrame):
         The Distance for this object along the line-of-sight.
 
     """
+
     default_representation = coord.SphericalRepresentation
     default_differential = coord.SphericalCosLatDifferential
 
     frame_specific_representation_info = {
         coord.SphericalRepresentation: [
-            coord.RepresentationMapping('lon', 'phi1'),
-            coord.RepresentationMapping('lat', 'phi2'),
-            coord.RepresentationMapping('distance', 'distance')]
+            coord.RepresentationMapping("lon", "phi1"),
+            coord.RepresentationMapping("lat", "phi2"),
+            coord.RepresentationMapping("distance", "distance"),
+        ]
     }
 
-    _default_wrap_angle = 180*u.deg
+    _default_wrap_angle = 180 * u.deg
 
     def __init__(self, *args, **kwargs):
-        wrap = kwargs.pop('wrap_longitude', True)
+        wrap = kwargs.pop("wrap_longitude", True)
         super().__init__(*args, **kwargs)
-        if wrap and isinstance(self._data, (coord.UnitSphericalRepresentation,
-                                            coord.SphericalRepresentation)):
+        if wrap and isinstance(
+            self._data,
+            (coord.UnitSphericalRepresentation, coord.SphericalRepresentation),
+        ):
             self._data.lon.wrap_angle = self._default_wrap_angle
 
     # TODO: remove this. This is a hack required as of astropy v3.1 in order
     # to have the longitude components wrap at the desired angle
-    def represent_as(self, base, s='base', in_frame_units=False):
+    def represent_as(self, base, s="base", in_frame_units=False):
         r = super().represent_as(base, s=s, in_frame_units=in_frame_units)
         if hasattr(r, "lon"):
             r.lon.wrap_angle = self._default_wrap_angle
         return r
+
     represent_as.__doc__ = coord.BaseCoordinateFrame.represent_as.__doc__
 
 
 # Rotation matrix defined by trying to align the stream to the equator
-R = np.array([[0.94906836, -0.22453560, 0.22102719],
-             [-0.06325861, 0.55143610, 0.83181523],
-             [-0.30865450, -0.80343138, 0.50914675]])
+R = np.array(
+    [
+        [0.94906836, -0.22453560, 0.22102719],
+        [-0.06325861, 0.55143610, 0.83181523],
+        [-0.30865450, -0.80343138, 0.50914675],
+    ]
+)
 
 
-@frame_transform_graph.transform(coord.StaticMatrixTransform, coord.ICRS,
-                                 Pal13Shipp20)
+@frame_transform_graph.transform(coord.StaticMatrixTransform, coord.ICRS, Pal13Shipp20)
 def icrs_to_pal13():
-    """ Compute the transformation from Galactic spherical to
-        heliocentric Pal 13 coordinates.
+    """Compute the transformation from Galactic spherical to
+    heliocentric Pal 13 coordinates.
     """
     return R
 
 
-@frame_transform_graph.transform(coord.StaticMatrixTransform, Pal13Shipp20,
-                                 coord.ICRS)
+@frame_transform_graph.transform(coord.StaticMatrixTransform, Pal13Shipp20, coord.ICRS)
 def pal13_to_icrs():
-    """ Compute the transformation from heliocentric Pal 13 coordinates to
-        spherical Galactic.
+    """Compute the transformation from heliocentric Pal 13 coordinates to
+    spherical Galactic.
     """
     return icrs_to_pal13()

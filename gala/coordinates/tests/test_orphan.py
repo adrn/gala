@@ -16,8 +16,8 @@ from ..orphan import OrphanNewberg10, OrphanKoposov19, Orphan
 
 
 def test_table():
-    """ Test the transformation code against table 2 values from
-        Newberg et al. 2010 (below)
+    """Test the transformation code against table 2 values from
+    Newberg et al. 2010 (below)
     """
 
     names = ["l", "b", "db", "Lambda", "Beta", "g0", "dg0"]
@@ -35,20 +35,22 @@ def test_table():
     table = ascii.read(table, names=names)
 
     for line in table:
-        galactic = coord.Galactic(l=line['l']*u.deg, b=line['b']*u.deg)
+        galactic = coord.Galactic(l=line["l"] * u.deg, b=line["b"] * u.deg)
 
         orp = galactic.transform_to(OrphanNewberg10())
-        true_orp = OrphanNewberg10(phi1=line['Lambda']*u.deg,
-                                   phi2=line['Beta']*u.deg)
+        true_orp = OrphanNewberg10(
+            phi1=line["Lambda"] * u.deg, phi2=line["Beta"] * u.deg
+        )
 
         # TODO: why does this suck so badly?
-        assert true_orp.separation(orp) < 20*u.arcsec
+        assert true_orp.separation(orp) < 20 * u.arcsec
 
     # TODO: remove this in next version
     # For now: make sure old class still works
     from astropy.tests.helper import catch_warnings
+
     with catch_warnings(GalaDeprecationWarning) as w:
-        c = Orphan(217.2141*u.degree, -11.4351*u.degree)
+        c = Orphan(217.2141 * u.degree, -11.4351 * u.degree)
     assert len(w) > 0
     c2 = c.transform_to(coord.Galactic())
     c3 = c2.transform_to(Orphan())
@@ -57,9 +59,7 @@ def test_table():
 
 
 def test_kopsov():
-    tbl = Table.read(get_pkg_data_filename('sergey_orphan.txt'),
-                     format='ascii')
-    c = coord.SkyCoord(ra=tbl['ra']*u.deg,
-                       dec=tbl['dec']*u.deg)
+    tbl = Table.read(get_pkg_data_filename("sergey_orphan.txt"), format="ascii")
+    c = coord.SkyCoord(ra=tbl["ra"] * u.deg, dec=tbl["dec"] * u.deg)
     orp_gc = c.transform_to(OrphanKoposov19())
     assert np.percentile(orp_gc.phi2.degree, 95) < 5

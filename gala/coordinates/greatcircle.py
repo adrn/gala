@@ -5,29 +5,26 @@ from warnings import warn
 # Third-party
 import astropy.units as u
 import astropy.coordinates as coord
-from astropy.coordinates.transformations import (DynamicMatrixTransform,
-                                                 FunctionTransform)
-from astropy.coordinates.attributes import (CoordinateAttribute,
-                                            QuantityAttribute)
+from astropy.coordinates.transformations import (
+    DynamicMatrixTransform,
+    FunctionTransform,
+)
+from astropy.coordinates.attributes import CoordinateAttribute, QuantityAttribute
 from astropy.coordinates.matrix_utilities import rotation_matrix
 from astropy.coordinates.baseframe import base_doc
 from astropy.utils.decorators import format_doc
 import numpy as np
 
-__all__ = ['GreatCircleICRSFrame', 'make_greatcircle_cls',
-           'pole_from_endpoints']
+__all__ = ["GreatCircleICRSFrame", "make_greatcircle_cls", "pole_from_endpoints"]
 
 
-def greatcircle_to_greatcircle(from_greatcircle_coord,
-                               to_greatcircle_frame):
+def greatcircle_to_greatcircle(from_greatcircle_coord, to_greatcircle_frame):
     """Transform between two greatcircle frames."""
 
     # This transform goes through the parent frames on each side.
     # from_frame -> from_frame.origin -> to_frame.origin -> to_frame
-    intermediate_from = from_greatcircle_coord.transform_to(
-        from_greatcircle_coord.pole)
-    intermediate_to = intermediate_from.transform_to(
-        to_greatcircle_frame.pole)
+    intermediate_from = from_greatcircle_coord.transform_to(from_greatcircle_coord.pole)
+    intermediate_to = intermediate_from.transform_to(to_greatcircle_frame.pole)
     return intermediate_to.transform_to(to_greatcircle_frame)
 
 
@@ -39,15 +36,15 @@ def reference_to_greatcircle(reference_frame, greatcircle_frame):
     pole = greatcircle_frame.pole.transform_to(coord.ICRS())
     ra0 = greatcircle_frame.ra0
     center = greatcircle_frame.center
-    R_rot = rotation_matrix(greatcircle_frame.rotation, 'z')
+    R_rot = rotation_matrix(greatcircle_frame.rotation, "z")
 
     if not np.isnan(ra0) and np.abs(pole.dec.value) > 1e-15:
         zaxis = pole.cartesian.xyz.value
-        xaxis = np.array([np.cos(ra0), np.sin(ra0), 0.])
+        xaxis = np.array([np.cos(ra0), np.sin(ra0), 0.0])
         if np.abs(zaxis[2]) >= 1e-15:
-            xaxis[2] = -(zaxis[0]*xaxis[0] + zaxis[1]*xaxis[1]) / zaxis[2]
+            xaxis[2] = -(zaxis[0] * xaxis[0] + zaxis[1] * xaxis[1]) / zaxis[2]
         else:
-            xaxis[2] = 0.
+            xaxis[2] = 0.0
         xaxis = xaxis / np.sqrt(np.sum(xaxis**2))
 
         yaxis = np.cross(zaxis, xaxis)
@@ -56,22 +53,21 @@ def reference_to_greatcircle(reference_frame, greatcircle_frame):
         R = np.stack((xaxis, yaxis, zaxis))
 
     elif center is not None:
-        R1 = rotation_matrix(pole.ra, 'z')
-        R2 = rotation_matrix(90*u.deg - pole.dec, 'y')
+        R1 = rotation_matrix(pole.ra, "z")
+        R2 = rotation_matrix(90 * u.deg - pole.dec, "y")
         Rtmp = R2 @ R1
 
         rot = center.cartesian.transform(Rtmp)
         rot_lon = rot.represent_as(coord.UnitSphericalRepresentation).lon
-        R3 = rotation_matrix(rot_lon, 'z')
+        R3 = rotation_matrix(rot_lon, "z")
         R = R3 @ R2 @ R1
 
     else:
         if not np.isnan(ra0) and np.abs(pole.dec.value) < 1e-15:
-            warn("Ignoring input ra0 because the pole is along dec=0",
-                 RuntimeWarning)
+            warn("Ignoring input ra0 because the pole is along dec=0", RuntimeWarning)
 
-        R1 = rotation_matrix(pole.ra, 'z')
-        R2 = rotation_matrix(90*u.deg - pole.dec, 'y')
+        R1 = rotation_matrix(pole.ra, "z")
+        R2 = rotation_matrix(90 * u.deg - pole.dec, "y")
         R = R2 @ R1
 
     return R_rot @ R
@@ -88,18 +84,27 @@ def greatcircle_to_reference(greatcircle_coord, reference_frame):
 
 def greatcircle_transforms(self_transform=False):
     def set_greatcircle_transforms(cls):
-        DynamicMatrixTransform(reference_to_greatcircle,
-                               coord.ICRS, cls,
-                               register_graph=coord.frame_transform_graph)
+        DynamicMatrixTransform(
+            reference_to_greatcircle,
+            coord.ICRS,
+            cls,
+            register_graph=coord.frame_transform_graph,
+        )
 
-        DynamicMatrixTransform(greatcircle_to_reference,
-                               cls, coord.ICRS,
-                               register_graph=coord.frame_transform_graph)
+        DynamicMatrixTransform(
+            greatcircle_to_reference,
+            cls,
+            coord.ICRS,
+            register_graph=coord.frame_transform_graph,
+        )
 
         if self_transform:
-            FunctionTransform(greatcircle_to_greatcircle,
-                              cls, cls,
-                              register_graph=coord.frame_transform_graph)
+            FunctionTransform(
+                greatcircle_to_greatcircle,
+                cls,
+                cls,
+                register_graph=coord.frame_transform_graph,
+            )
         return cls
 
     return set_greatcircle_transforms
@@ -148,40 +153,47 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
 
     pole = CoordinateAttribute(default=None, frame=coord.ICRS)
     center = CoordinateAttribute(default=None, frame=coord.ICRS)
-    ra0 = QuantityAttribute(default=np.nan*u.deg, unit=u.deg)
+    ra0 = QuantityAttribute(default=np.nan * u.deg, unit=u.deg)
     rotation = QuantityAttribute(default=0, unit=u.deg)
 
     frame_specific_representation_info = {
         coord.SphericalRepresentation: [
-            coord.RepresentationMapping('lon', 'phi1'),
-            coord.RepresentationMapping('lat', 'phi2'),
-            coord.RepresentationMapping('distance', 'distance')]
+            coord.RepresentationMapping("lon", "phi1"),
+            coord.RepresentationMapping("lat", "phi2"),
+            coord.RepresentationMapping("distance", "distance"),
+        ]
     }
 
     default_representation = coord.SphericalRepresentation
     default_differential = coord.SphericalCosLatDifferential
 
-    _default_wrap_angle = 180*u.deg
+    _default_wrap_angle = 180 * u.deg
 
     def __init__(self, *args, **kwargs):
-        wrap = kwargs.pop('wrap_longitude', True)
+        wrap = kwargs.pop("wrap_longitude", True)
         super().__init__(*args, **kwargs)
-        if wrap and isinstance(self._data, (coord.UnitSphericalRepresentation,
-                                            coord.SphericalRepresentation)):
+        if wrap and isinstance(
+            self._data,
+            (coord.UnitSphericalRepresentation, coord.SphericalRepresentation),
+        ):
             self._data.lon.wrap_angle = self._default_wrap_angle
 
         if self.center is not None and np.isfinite(self.ra0):
-            raise ValueError("Both `center` and `ra0` were specified for this "
-                             "{} object: you can only specify one or the other."
-                             .format(self.__class__.__name__))
+            raise ValueError(
+                "Both `center` and `ra0` were specified for this "
+                "{} object: you can only specify one or the other.".format(
+                    self.__class__.__name__
+                )
+            )
 
     # TODO: remove this. This is a hack required as of astropy v3.1 in order
     # to have the longitude components wrap at the desired angle
-    def represent_as(self, base, s='base', in_frame_units=False):
+    def represent_as(self, base, s="base", in_frame_units=False):
         r = super().represent_as(base, s=s, in_frame_units=in_frame_units)
         if hasattr(r, "lon"):
             r.lon.wrap_angle = self._default_wrap_angle
         return r
+
     represent_as.__doc__ = coord.BaseCoordinateFrame.represent_as.__doc__
 
     @classmethod
@@ -208,14 +220,14 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
 
         kw = dict(pole=pole)
         if ra0 is not None:
-            kw['ra0'] = ra0
+            kw["ra0"] = ra0
 
         if rotation is not None:
-            kw['rotation'] = rotation
+            kw["rotation"] = rotation
 
         if ra0 is None and rotation is None:
             midpt = sph_midpoint(coord1, coord2)
-            kw['ra0'] = midpt.ra
+            kw["ra0"] = midpt.ra
 
         return cls(**kw)
 
@@ -255,8 +267,8 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
         if xnew is None:
             xnew = ynew.cross(znew)
 
-        pole = coord.SkyCoord(znew, frame='icrs')
-        center = coord.SkyCoord(xnew, frame='icrs')
+        pole = coord.SkyCoord(znew, frame="icrs")
+        center = coord.SkyCoord(xnew, frame="icrs")
         return cls(pole=pole, center=center)
 
     @classmethod
@@ -278,10 +290,10 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
         else:
             Rinv = np.linalg.inv(R)
 
-        pole = coord.CartesianRepresentation([0, 0, 1.]).transform(Rinv)
-        ra0 = coord.CartesianRepresentation([1, 0, 0.]).transform(Rinv)
+        pole = coord.CartesianRepresentation([0, 0, 1.0]).transform(Rinv)
+        ra0 = coord.CartesianRepresentation([1, 0, 0.0]).transform(Rinv)
 
-        pole = coord.SkyCoord(pole, frame='icrs')
+        pole = coord.SkyCoord(pole, frame="icrs")
         ra0 = ra0.represent_as(coord.SphericalRepresentation)
 
         return cls(pole=pole, ra0=ra0.lon)
@@ -291,10 +303,10 @@ def make_greatcircle_cls(cls_name, docstring_header=None, **kwargs):
     @format_doc(base_doc, components=_components, footer=_footer)
     @greatcircle_transforms(self_transform=False)
     class GCFrame(GreatCircleICRSFrame):
-        pole = kwargs.get('pole', None)
-        ra0 = kwargs.get('ra0', np.nan*u.deg)
-        center = kwargs.get('center', None)
-        rotation = kwargs.get('rotation', 0*u.deg)
+        pole = kwargs.get("pole", None)
+        ra0 = kwargs.get("ra0", np.nan * u.deg)
+        center = kwargs.get("center", None)
+        rotation = kwargs.get("rotation", 0 * u.deg)
 
     GCFrame.__name__ = cls_name
     if docstring_header:
@@ -329,7 +341,9 @@ def pole_from_endpoints(coord1, coord2):
     elif isinstance(coord1, coord.BaseCoordinateFrame):
         frame1 = coord1
     else:
-        raise TypeError('Input coordinate must be a SkyCoord or coordinate frame instance.')
+        raise TypeError(
+            "Input coordinate must be a SkyCoord or coordinate frame instance."
+        )
 
     c1 = cart1 / cart1.norm()
 
@@ -363,7 +377,9 @@ def sph_midpoint(coord1, coord2):
     elif isinstance(coord1, coord.BaseCoordinateFrame):
         frame1 = coord1
     else:
-        raise TypeError('Input coordinate must be a SkyCoord or coordinate frame instance.')
+        raise TypeError(
+            "Input coordinate must be a SkyCoord or coordinate frame instance."
+        )
 
     c1 = cart1 / cart1.norm()
 
