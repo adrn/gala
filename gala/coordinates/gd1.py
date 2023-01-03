@@ -7,9 +7,7 @@ import astropy.units as u
 import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
 
-from gala.util import GalaDeprecationWarning
-
-__all__ = ["GD1Koposov10", "GD1"]
+__all__ = ["GD1Koposov10"]
 
 
 class GD1Koposov10(coord.BaseCoordinateFrame):
@@ -98,21 +96,3 @@ def gd1_to_icrs():
     Compute the transformation from heliocentric GD1 coordinates to spherical Galactic.
     """
     return icrs_to_gd1().T
-
-
-# TODO: remove this in next version
-class GD1(GD1Koposov10):
-    def __init__(self, *args, **kwargs):
-        import warnings
-
-        warnings.warn(
-            "This frame is deprecated. Use GD1Koposov10 instead.",
-            GalaDeprecationWarning,
-        )
-        super().__init__(*args, **kwargs)
-
-
-trans = frame_transform_graph.get_transform(GD1Koposov10, coord.ICRS).transforms[0]
-frame_transform_graph.add_transform(GD1, coord.ICRS, trans)
-trans = frame_transform_graph.get_transform(coord.ICRS, GD1Koposov10).transforms[0]
-frame_transform_graph.add_transform(coord.ICRS, GD1, trans)

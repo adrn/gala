@@ -95,7 +95,7 @@ def icrs_to_jhelum():
 @frame_transform_graph.transform(
     coord.StaticMatrixTransform, JhelumBonaca19, coord.ICRS
 )
-def gd1_to_icrs():
+def jhelum_to_icrs():
     """
     Compute the transformation from heliocentric Jhelum coordinates to spherical ICRS.
     """

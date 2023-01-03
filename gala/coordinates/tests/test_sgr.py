@@ -1,5 +1,5 @@
 """
-    Test the coordinates class that represents the plane of orbit of the Sgr dwarf galaxy.
+Test the coordinates class that represents the plane of orbit of the Sgr dwarf galaxy.
 """
 
 # Third-party
@@ -9,8 +9,7 @@ from astropy.utils.data import get_pkg_data_filename
 import numpy as np
 
 # This package
-from gala.util import GalaDeprecationWarning
-from ..sgr import SagittariusLaw10, Sagittarius
+from ..sgr import SagittariusLaw10
 
 
 def test_simple():
@@ -38,18 +37,6 @@ def test_simple():
     c.transform_to(coord.ICRS())
     c2 = c.transform_to(coord.Galactic())
     assert np.allclose(c2.distance.value, c.distance.value)
-
-    # TODO: remove this in next version
-    # For now: make sure old class still works
-    from astropy.tests.helper import catch_warnings
-
-    with catch_warnings(GalaDeprecationWarning) as w:
-        c = Sagittarius(217.2141 * u.degree, -11.4351 * u.degree)
-    assert len(w) > 0
-    c2 = c.transform_to(coord.Galactic())
-    c3 = c2.transform_to(Sagittarius())
-    assert np.allclose(c3.Lambda.degree, c.Lambda.degree)
-    assert np.allclose(c3.Beta.degree, c.Beta.degree)
 
 
 def test_against_David_Law():

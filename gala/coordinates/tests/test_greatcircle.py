@@ -1,7 +1,6 @@
 # Third-party
 import astropy.coordinates as coord
 import astropy.units as u
-from astropy.tests.helper import catch_warnings
 import numpy as np
 import pytest
 

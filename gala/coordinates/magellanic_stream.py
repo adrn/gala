@@ -12,9 +12,7 @@ from astropy.coordinates import Galactic
 
 import astropy.units as u
 
-from gala.util import GalaDeprecationWarning
-
-__all__ = ["MagellanicStreamNidever08", "MagellanicStream"]
+__all__ = ["MagellanicStreamNidever08"]
 
 
 class MagellanicStreamNidever08(BaseCoordinateFrame):
@@ -91,25 +89,3 @@ def gal_to_mag():
 )
 def mag_to_gal():
     return gal_to_mag().T
-
-
-# TODO: remove this in next version
-class MagellanicStream(MagellanicStreamNidever08):
-    def __init__(self, *args, **kwargs):
-        import warnings
-
-        warnings.warn(
-            "This frame is deprecated. Use MagellanicStreamNidever08 " "instead.",
-            GalaDeprecationWarning,
-        )
-        super().__init__(*args, **kwargs)
-
-
-trans = frame_transform_graph.get_transform(
-    MagellanicStreamNidever08, Galactic
-).transforms[0]
-frame_transform_graph.add_transform(MagellanicStream, Galactic, trans)
-trans = frame_transform_graph.get_transform(
-    Galactic, MagellanicStreamNidever08
-).transforms[0]
-frame_transform_graph.add_transform(Galactic, MagellanicStream, trans)

@@ -7,9 +7,7 @@ import astropy.units as u
 import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
 
-from gala.util import GalaDeprecationWarning
-
-__all__ = ["Pal5PriceWhelan18", "Pal5"]
+__all__ = ["Pal5PriceWhelan18"]
 
 
 class Pal5PriceWhelan18(coord.BaseCoordinateFrame):
@@ -114,21 +112,3 @@ def pal5_to_icrs():
     spherical Galactic.
     """
     return icrs_to_pal5().T
-
-
-# TODO: remove this in next version
-class Pal5(Pal5PriceWhelan18):
-    def __init__(self, *args, **kwargs):
-        import warnings
-
-        warnings.warn(
-            "This frame is deprecated. Use Pal5PriceWhelan18 " "instead.",
-            GalaDeprecationWarning,
-        )
-        super().__init__(*args, **kwargs)
-
-
-trans = frame_transform_graph.get_transform(Pal5PriceWhelan18, coord.ICRS).transforms[0]
-frame_transform_graph.add_transform(Pal5, coord.ICRS, trans)
-trans = frame_transform_graph.get_transform(coord.ICRS, Pal5PriceWhelan18).transforms[0]
-frame_transform_graph.add_transform(coord.ICRS, Pal5, trans)

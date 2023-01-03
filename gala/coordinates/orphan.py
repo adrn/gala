@@ -6,9 +6,7 @@ from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import rotation_matrix
 import numpy as np
 
-from gala.util import GalaDeprecationWarning
-
-__all__ = ["Orphan", "OrphanNewberg10", "OrphanKoposov19"]
+__all__ = ["OrphanNewberg10", "OrphanKoposov19"]
 
 
 class OrphanNewberg10(coord.BaseCoordinateFrame):
@@ -105,7 +103,7 @@ def galactic_to_orp():
 @frame_transform_graph.transform(
     coord.StaticMatrixTransform, OrphanNewberg10, coord.Galactic
 )
-def oph_to_galactic():
+def orp_to_galactic():
     """Compute the transformation from heliocentric Orphan coordinates to
     spherical Galactic.
     """
@@ -189,31 +187,8 @@ def icrs_to_orp19():
 @frame_transform_graph.transform(
     coord.StaticMatrixTransform, OrphanKoposov19, coord.ICRS
 )
-def oph19_to_icrs():
+def orp19_to_icrs():
     """Compute the transformation from heliocentric Orphan coordinates to
     spherical ICRS.
     """
     return icrs_to_orp19().T
-
-
-# TODO: remove this in next version
-class Orphan(OrphanNewberg10):
-    def __init__(self, *args, **kwargs):
-        import warnings
-
-        warnings.warn(
-            "This frame is deprecated. Use OrphanNewberg10 or "
-            "OrphanKoposov19 instead.",
-            GalaDeprecationWarning,
-        )
-        super().__init__(*args, **kwargs)
-
-
-trans = frame_transform_graph.get_transform(OrphanNewberg10, coord.Galactic).transforms[
-    0
-]
-frame_transform_graph.add_transform(Orphan, coord.Galactic, trans)
-trans = frame_transform_graph.get_transform(coord.Galactic, OrphanNewberg10).transforms[
-    0
-]
-frame_transform_graph.add_transform(coord.Galactic, Orphan, trans)

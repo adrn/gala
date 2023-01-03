@@ -1,5 +1,5 @@
 """
-    Test the coordinates class that represents the plane of orbit of the Sgr dwarf galaxy.
+Test the coordinates class that represents the plane of orbit of the Sgr dwarf galaxy.
 """
 
 # Third-party
@@ -11,8 +11,7 @@ from astropy.utils.data import get_pkg_data_filename
 import numpy as np
 
 # This project
-from gala.util import GalaDeprecationWarning
-from ..orphan import OrphanNewberg10, OrphanKoposov19, Orphan
+from ..orphan import OrphanNewberg10, OrphanKoposov19
 
 
 def test_table():
@@ -44,18 +43,6 @@ def test_table():
 
         # TODO: why does this suck so badly?
         assert true_orp.separation(orp) < 20 * u.arcsec
-
-    # TODO: remove this in next version
-    # For now: make sure old class still works
-    from astropy.tests.helper import catch_warnings
-
-    with catch_warnings(GalaDeprecationWarning) as w:
-        c = Orphan(217.2141 * u.degree, -11.4351 * u.degree)
-    assert len(w) > 0
-    c2 = c.transform_to(coord.Galactic())
-    c3 = c2.transform_to(Orphan())
-    assert np.allclose(c3.phi1.degree, c.phi1.degree)
-    assert np.allclose(c3.phi2.degree, c.phi2.degree)
 
 
 def test_kopsov():

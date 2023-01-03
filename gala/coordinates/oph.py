@@ -7,10 +7,8 @@ import astropy.units as u
 import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
 
-from gala.util import GalaDeprecationWarning
 
-
-__all__ = ["OphiuchusPriceWhelan16", "Ophiuchus"]
+__all__ = ["OphiuchusPriceWhelan16"]
 
 
 class OphiuchusPriceWhelan16(coord.BaseCoordinateFrame):
@@ -106,25 +104,3 @@ def oph_to_gal():
     spherical Galactic.
     """
     return gal_to_oph().T
-
-
-# TODO: remove this in next version
-class Ophiuchus(OphiuchusPriceWhelan16):
-    def __init__(self, *args, **kwargs):
-        import warnings
-
-        warnings.warn(
-            "This frame is deprecated. Use OphiuchusPriceWhelan16" " instead.",
-            GalaDeprecationWarning,
-        )
-        super().__init__(*args, **kwargs)
-
-
-trans = frame_transform_graph.get_transform(
-    OphiuchusPriceWhelan16, coord.ICRS
-).transforms[0]
-frame_transform_graph.add_transform(Ophiuchus, coord.ICRS, trans)
-trans = frame_transform_graph.get_transform(
-    coord.ICRS, OphiuchusPriceWhelan16
-).transforms[0]
-frame_transform_graph.add_transform(coord.ICRS, Ophiuchus, trans)

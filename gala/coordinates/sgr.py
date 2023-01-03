@@ -8,9 +8,7 @@ import astropy.coordinates as coord
 import astropy.units as u
 from astropy.coordinates.matrix_utilities import rotation_matrix
 
-from gala.util import GalaDeprecationWarning
-
-__all__ = ["SagittariusLaw10", "Sagittarius"]
+__all__ = ["SagittariusLaw10"]
 
 
 class SagittariusLaw10(coord.BaseCoordinateFrame):
@@ -110,25 +108,3 @@ def sgr_to_galactic():
     spherical Galactic.
     """
     return galactic_to_sgr().T
-
-
-# TODO: remove this in next version
-class Sagittarius(SagittariusLaw10):
-    def __init__(self, *args, **kwargs):
-        import warnings
-
-        warnings.warn(
-            "This frame is deprecated. Use SagittariusLaw10 " "instead.",
-            GalaDeprecationWarning,
-        )
-        super().__init__(*args, **kwargs)
-
-
-trans = frame_transform_graph.get_transform(
-    SagittariusLaw10, coord.Galactic
-).transforms[0]
-frame_transform_graph.add_transform(Sagittarius, coord.Galactic, trans)
-trans = frame_transform_graph.get_transform(
-    coord.Galactic, SagittariusLaw10
-).transforms[0]
-frame_transform_graph.add_transform(coord.Galactic, Sagittarius, trans)
