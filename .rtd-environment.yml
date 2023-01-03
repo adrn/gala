@@ -1,6 +1,7 @@
 dependencies:
-  - python=3.8
+  - python=3.10
   - gsl
   - pip
   - pip:
     - -e .[docs]
+    - git+https://github.com/jobovy/galpy
