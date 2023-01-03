@@ -137,7 +137,10 @@ html_theme = 'pydata_sphinx_theme'
 html_logo = '_static/Gala_Logo_RGB.png'
 
 html_theme_options = {
-    "logo_link": "index",
+    "logo": {
+        "text": "Gala",
+        "alt_text": "Gala",
+    },
     "icon_links": [
         {
             "name": "GitHub",
