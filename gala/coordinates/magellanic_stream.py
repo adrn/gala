@@ -1,8 +1,6 @@
 """ Astropy coordinate class for the Magellanic Stream coordinate system """
 
-from astropy.coordinates.matrix_utilities import (rotation_matrix,
-                                                  matrix_product,
-                                                  matrix_transpose)
+from astropy.coordinates.matrix_utilities import rotation_matrix
 from astropy.coordinates.baseframe import (frame_transform_graph,
                                            BaseCoordinateFrame,
                                            RepresentationMapping)
@@ -80,13 +78,13 @@ def gal_to_mag():
     mat2 = rotation_matrix(90*u.deg - MagellanicStreamNidever08._ngp.b, 'y')
     mat3 = rotation_matrix(MagellanicStreamNidever08._ngp.l, 'z')
 
-    return matrix_product(mat1, mat2, mat3)
+    return mat1 @ mat2 @ mat3
 
 
 @frame_transform_graph.transform(StaticMatrixTransform,
                                  MagellanicStreamNidever08, Galactic)
 def mag_to_gal():
-    return matrix_transpose(gal_to_mag())
+    return gal_to_mag().T
 
 
 # TODO: remove this in next version

@@ -6,7 +6,6 @@ import numpy as np
 import astropy.units as u
 import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
-from astropy.coordinates.matrix_utilities import matrix_transpose
 
 from gala.util import GalaDeprecationWarning
 
@@ -95,7 +94,7 @@ def oph_to_gal():
     """ Compute the transformation from heliocentric Ophiuchus coordinates to
         spherical Galactic.
     """
-    return matrix_transpose(gal_to_oph())
+    return gal_to_oph().T
 
 
 # TODO: remove this in next version

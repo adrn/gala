@@ -4,7 +4,6 @@ import numpy as np
 import astropy.units as u
 import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
-from astropy.coordinates.matrix_utilities import matrix_transpose
 
 __all__ = ["JhelumBonaca19"]
 
@@ -90,4 +89,4 @@ def gd1_to_icrs():
     """ Compute the transformation from heliocentric Jhelum coordinates to
         spherical ICRS.
     """
-    return matrix_transpose(icrs_to_jhelum())
+    return icrs_to_jhelum().T

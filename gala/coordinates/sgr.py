@@ -6,7 +6,7 @@ import numpy as np
 from astropy.coordinates import frame_transform_graph
 import astropy.coordinates as coord
 import astropy.units as u
-from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product, matrix_transpose
+from astropy.coordinates.matrix_utilities import rotation_matrix
 
 from gala.util import GalaDeprecationWarning
 
@@ -82,7 +82,7 @@ D = rotation_matrix(phi, "z")
 C = rotation_matrix(theta, "x")
 B = rotation_matrix(psi, "z")
 A = np.diag([1., 1., -1.])
-R = matrix_product(A, B, C, D)
+R = A @ B @ C @ D
 
 
 # Galactic to Sgr coordinates
@@ -102,7 +102,7 @@ def sgr_to_galactic():
     """ Compute the transformation from heliocentric Sagittarius coordinates to
         spherical Galactic.
     """
-    return matrix_transpose(galactic_to_sgr())
+    return galactic_to_sgr().T
 
 
 # TODO: remove this in next version

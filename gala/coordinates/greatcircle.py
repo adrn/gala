@@ -9,9 +9,7 @@ from astropy.coordinates.transformations import (DynamicMatrixTransform,
                                                  FunctionTransform)
 from astropy.coordinates.attributes import (CoordinateAttribute,
                                             QuantityAttribute)
-from astropy.coordinates.matrix_utilities import (rotation_matrix,
-                                                  matrix_product,
-                                                  matrix_transpose)
+from astropy.coordinates.matrix_utilities import rotation_matrix
 from astropy.coordinates.baseframe import base_doc
 from astropy.utils.decorators import format_doc
 import numpy as np
@@ -60,12 +58,12 @@ def reference_to_greatcircle(reference_frame, greatcircle_frame):
     elif center is not None:
         R1 = rotation_matrix(pole.ra, 'z')
         R2 = rotation_matrix(90*u.deg - pole.dec, 'y')
-        Rtmp = matrix_product(R2, R1)
+        Rtmp = R2 @ R1
 
         rot = center.cartesian.transform(Rtmp)
         rot_lon = rot.represent_as(coord.UnitSphericalRepresentation).lon
         R3 = rotation_matrix(rot_lon, 'z')
-        R = matrix_product(R3, R2, R1)
+        R = R3 @ R2 @ R1
 
     else:
         if not np.isnan(ra0) and np.abs(pole.dec.value) < 1e-15:
@@ -74,9 +72,9 @@ def reference_to_greatcircle(reference_frame, greatcircle_frame):
 
         R1 = rotation_matrix(pole.ra, 'z')
         R2 = rotation_matrix(90*u.deg - pole.dec, 'y')
-        R = matrix_product(R2, R1)
+        R = R2 @ R1
 
-    return matrix_product(R_rot, R)
+    return R_rot @ R
 
 
 def greatcircle_to_reference(greatcircle_coord, reference_frame):
@@ -85,7 +83,7 @@ def greatcircle_to_reference(greatcircle_coord, reference_frame):
     # use the forward transform, but just invert it
     R = reference_to_greatcircle(reference_frame, greatcircle_coord)
     # transpose is the inverse because R is a rotation matrix
-    return matrix_transpose(R)
+    return R.T
 
 
 def greatcircle_transforms(self_transform=False):

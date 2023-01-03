@@ -6,7 +6,6 @@ import numpy as np
 import astropy.units as u
 import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
-from astropy.coordinates.matrix_utilities import matrix_transpose
 
 from gala.util import GalaDeprecationWarning
 
@@ -99,7 +98,7 @@ def pal5_to_icrs():
     """ Compute the transformation from heliocentric Pal 5 coordinates to
         spherical Galactic.
     """
-    return matrix_transpose(icrs_to_pal5())
+    return icrs_to_pal5().T
 
 
 # TODO: remove this in next version

@@ -6,7 +6,6 @@ import numpy as np
 import astropy.units as u
 import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
-from astropy.coordinates.matrix_utilities import matrix_transpose
 
 from gala.util import GalaDeprecationWarning
 
@@ -94,7 +93,7 @@ def gd1_to_icrs():
     """ Compute the transformation from heliocentric GD1 coordinates to
         spherical Galactic.
     """
-    return matrix_transpose(icrs_to_gd1())
+    return icrs_to_gd1().T
 
 
 # TODO: remove this in next version

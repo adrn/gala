@@ -3,9 +3,7 @@
 import astropy.coordinates as coord
 import astropy.units as u
 from astropy.coordinates import frame_transform_graph
-from astropy.coordinates.matrix_utilities import (rotation_matrix,
-                                                  matrix_product,
-                                                  matrix_transpose)
+from astropy.coordinates.matrix_utilities import rotation_matrix
 import numpy as np
 
 from gala.util import GalaDeprecationWarning
@@ -85,7 +83,7 @@ psi = 90.70 * u.degree
 D = rotation_matrix(phi, "z")
 C = rotation_matrix(theta, "x")
 B = rotation_matrix(psi, "z")
-R = matrix_product(B, C, D)
+R = B @ C @ D
 
 
 @frame_transform_graph.transform(coord.StaticMatrixTransform, coord.Galactic,
@@ -104,7 +102,7 @@ def oph_to_galactic():
     """ Compute the transformation from heliocentric Orphan coordinates to
         spherical Galactic.
     """
-    return matrix_transpose(galactic_to_orp())
+    return galactic_to_orp().T
 
 
 # ------------------------------------------------------------------------------
@@ -177,7 +175,7 @@ def oph19_to_icrs():
     """ Compute the transformation from heliocentric Orphan coordinates to
         spherical ICRS.
     """
-    return matrix_transpose(icrs_to_orp19())
+    return icrs_to_orp19().T
 
 
 # TODO: remove this in next version

@@ -1,7 +1,6 @@
 # Third-party
 import astropy.coordinates as coord
 import numpy as np
-from astropy.coordinates.matrix_utilities import matrix_product
 
 __all__ = ['transform_pm_cov']
 
@@ -75,7 +74,7 @@ def get_transform_matrix(from_frame, to_frame):
         if M is None:
             M = Mi
         else:
-            M = matrix_product(M, Mi)
+            M = M @ Mi
 
     return M
 
