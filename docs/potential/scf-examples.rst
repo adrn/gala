@@ -378,7 +378,7 @@ overlaid::
 
     # we need an array of positions with shape (3,n_samples) for SCFPotential
     xyz = np.vstack((x.ravel(),y.ravel(),z.ravel()))
-    scf_dens = potential.density(xyz)
+    scf_dens = potential.density(xyz).value
 
     # log-spaced contour levels
     levels = np.logspace(np.log10(true_dens.min()), np.log10(true_dens.max()), 16)
@@ -402,7 +402,7 @@ overlaid::
 
     # we need an array of positions with shape (3,n_samples) for SCFPotential
     xyz = np.vstack((x.ravel(),y.ravel(),z.ravel()))
-    scf_dens = potential.density(xyz)
+    scf_dens = potential.density(xyz).value
 
     # log-spaced contour levels
     true_dens = flattened_hernquist_density(x, y, z, M, a, q)

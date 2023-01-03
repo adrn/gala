@@ -124,7 +124,7 @@ value of the Jacobi energy (see Section 3.3.2 in Binney and Tremaine 2008)::
    E_J_levels = [-1.82, -1.73, -1.7, -1.5]
 
    for ax, level in zip(axes.flat, E_J_levels):
-       ax.contourf(x_grid, y_grid, E_J.reshape(128,128),
+       ax.contourf(x_grid, y_grid, E_J.reshape(128,128).value,
                    levels=[level,0], colors='#aaaaaa')
        ax.scatter(-mu, 0, c='k')
        ax.scatter(1-mu, 0, c='k')
@@ -200,7 +200,7 @@ starts from the y axis at :math:`x = 0.5` and solve for the y velocity,
    fig,axes = plt.subplots(2, 2, figsize=(8,8), sharex=True, sharey=True)
 
    for ax, level, orbit in zip(axes.flat, E_J_levels, orbits):
-       ax.contourf(x_grid, y_grid, E_J.reshape(128,128),
+       ax.contourf(x_grid, y_grid, E_J.reshape(128,128).value,
                    levels=[level,0], colors='#aaaaaa')
        ax.scatter(-mu, 0, c='r')
        ax.scatter(1-mu, 0, c='r')
