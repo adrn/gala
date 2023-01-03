@@ -21,7 +21,7 @@ from gala.tests.optional_deps import HAS_TWOBODY
 
 
 class TestIsochrone(object):
-    def setup(self):
+    def setup_method(self):
         logger.info("======== Isochrone ========")
         N = 100
         rng = np.random.default_rng(42)
@@ -128,7 +128,7 @@ class TestIsochrone(object):
 
 
 class TestHarmonicOscillator(object):
-    def setup(self):
+    def setup_method(self):
         logger.info("======== Harmonic Oscillator ========")
         self.N = 100
         np.random.seed(42)

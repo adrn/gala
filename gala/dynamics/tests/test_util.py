@@ -47,7 +47,7 @@ def test_estimate_dt_n_steps():
 
 class TestCombine(object):
 
-    def setup(self):
+    def setup_method(self):
         x = np.random.random(size=(3,))
         v = np.random.random(size=(3,))
         p1 = PhaseSpacePosition(pos=x, vel=v)

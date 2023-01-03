@@ -16,7 +16,7 @@ from ..core import DirectNBody
 
 class TestDirectNBody:
 
-    def setup(self):
+    def setup_method(self):
         self.usys = UnitSystem(u.pc, u.Unit(1e-5*u.Myr),
                                u.Unit(1e6*u.Msun), u.radian)
         pot_particle2 = HernquistPotential(m=1e6*u.Msun, c=0.1*u.pc,

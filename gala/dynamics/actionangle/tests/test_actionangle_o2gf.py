@@ -200,7 +200,7 @@ class ActionsBase:
 class TestActions(ActionsBase):
 
     @pytest.fixture(autouse=True)
-    def setup(self, tmpdir):
+    def setup_method(self, tmpdir):
         self.plot_path = tmpdir.mkdir("normal")
 
         self.units = galactic
