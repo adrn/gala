@@ -9,310 +9,67 @@ from astropy.coordinates.transformations import (
     DynamicMatrixTransform,
     FunctionTransform,
 )
-from astropy.coordinates.attributes import CoordinateAttribute, QuantityAttribute
-from astropy.coordinates.matrix_utilities import rotation_matrix
+from astropy.coordinates.attributes import CoordinateAttribute
 from astropy.coordinates.baseframe import base_doc
 from astropy.utils.decorators import format_doc
 import numpy as np
 
+from .helpers import StringValidatedAttribute
+
 __all__ = ["GreatCircleICRSFrame", "make_greatcircle_cls", "pole_from_endpoints"]
 
 
-def greatcircle_to_greatcircle(from_greatcircle_coord, to_greatcircle_frame):
-    """Transform between two greatcircle frames."""
+def get_xhat(zhat, ra0, tol=1e-10):
+    """
+    Helper to get the x-hat vector along a great circle defined by the input zhat that
+    intersects with the specified longitude (ra0).
+    """
+    ra0 = 90 * u.deg - ra0
 
-    # This transform goes through the parent frames on each side.
-    # from_frame -> from_frame.origin -> to_frame.origin -> to_frame
-    intermediate_from = from_greatcircle_coord.transform_to(from_greatcircle_coord.pole)
-    intermediate_to = intermediate_from.transform_to(to_greatcircle_frame.pole)
-    return intermediate_to.transform_to(to_greatcircle_frame)
-
-
-def reference_to_greatcircle(reference_frame, greatcircle_frame):
-    """Convert a reference coordinate to a great circle frame."""
-
-    # Define rotation matrices along the position angle vector, and
-    # relative to the origin.
-    pole = greatcircle_frame.pole.transform_to(coord.ICRS())
-    ra0 = greatcircle_frame.ra0
-    center = greatcircle_frame.center
-    R_rot = rotation_matrix(greatcircle_frame.rotation, "z")
-
-    if not np.isnan(ra0) and np.abs(pole.dec.value) > 1e-15:
-        zaxis = pole.cartesian.xyz.value
-        xaxis = np.array([np.cos(ra0), np.sin(ra0), 0.0])
-        if np.abs(zaxis[2]) >= 1e-15:
-            xaxis[2] = -(zaxis[0] * xaxis[0] + zaxis[1] * xaxis[1]) / zaxis[2]
-        else:
-            xaxis[2] = 0.0
-        xaxis = xaxis / np.sqrt(np.sum(xaxis**2))
-
-        yaxis = np.cross(zaxis, xaxis)
-        yaxis = yaxis / np.sqrt(np.sum(yaxis**2))
-
-        R = np.stack((xaxis, yaxis, zaxis))
-
-    elif center is not None:
-        R1 = rotation_matrix(pole.ra, "z")
-        R2 = rotation_matrix(90 * u.deg - pole.dec, "y")
-        Rtmp = R2 @ R1
-
-        rot = center.cartesian.transform(Rtmp)
-        rot_lon = rot.represent_as(coord.UnitSphericalRepresentation).lon
-        R3 = rotation_matrix(rot_lon, "z")
-        R = R3 @ R2 @ R1
-
+    z1, z2, z3 = zhat
+    denom = (
+        z2**2
+        + z3**2
+        + 2 * z1 * z2 * np.tan(ra0)
+        + (z1**2 + z3**2) * np.tan(ra0) ** 2
+    )
+    x1 = -np.tan(ra0) * np.sqrt(z3**2 / denom)
+    x2 = x1 / np.tan(ra0)
+    if np.isclose(x1**2 + x2**2, 1, atol=tol):
+        x3 = 0.0
     else:
-        if not np.isnan(ra0) and np.abs(pole.dec.value) < 1e-15:
-            warn("Ignoring input ra0 because the pole is along dec=0", RuntimeWarning)
-
-        R1 = rotation_matrix(pole.ra, "z")
-        R2 = rotation_matrix(90 * u.deg - pole.dec, "y")
-        R = R2 @ R1
-
-    return R_rot @ R
+        x3 = np.sqrt(1 - x1**2 - x2**2)
+    return np.array([x1, x2, x3])
 
 
-def greatcircle_to_reference(greatcircle_coord, reference_frame):
-    """Convert an great circle frame coordinate to the reference frame"""
-
-    # use the forward transform, but just invert it
-    R = reference_to_greatcircle(reference_frame, greatcircle_coord)
-    # transpose is the inverse because R is a rotation matrix
-    return R.T
-
-
-def greatcircle_transforms(self_transform=False):
-    def set_greatcircle_transforms(cls):
-        DynamicMatrixTransform(
-            reference_to_greatcircle,
-            coord.ICRS,
-            cls,
-            register_graph=coord.frame_transform_graph,
-        )
-
-        DynamicMatrixTransform(
-            greatcircle_to_reference,
-            cls,
-            coord.ICRS,
-            register_graph=coord.frame_transform_graph,
-        )
-
-        if self_transform:
-            FunctionTransform(
-                greatcircle_to_greatcircle,
-                cls,
-                cls,
-                register_graph=coord.frame_transform_graph,
-            )
-        return cls
-
-    return set_greatcircle_transforms
-
-
-_components = """
-phi1 : `~astropy.units.Quantity`
-    Longitude component.
-phi2 : `~astropy.units.Quantity`
-    Latitude component.
-distance : `~astropy.units.Quantity`
-    Distance.
-
-pm_phi1_cosphi2 : `~astropy.units.Quantity`
-    Proper motion in longitude.
-pm_phi2 : `~astropy.units.Quantity`
-    Proper motion in latitude.
-radial_velocity : `~astropy.units.Quantity`
-    Line-of-sight or radial velocity.
-"""
-
-_footer = """
-Frame attributes
-----------------
-pole : `~astropy.coordinates.SkyCoord`, `~astropy.coordinates.ICRS`
-    The coordinate specifying the pole of this frame.
-ra0 : `~astropy.units.Quantity`, `~astropy.coordinates.Angle` (optional)
-    If specified, an additional transformation will be applied to make
-    this right ascension the longitude zero-point of the resulting
-    coordinate frame.
-rotation : `~astropy.units.Quantity`, `~astropy.coordinates.Angle` (optional)
-    If specified, a final rotation about the pole (i.e. the resulting z
-    axis) applied.
-"""
-
-
-@format_doc(dedent(base_doc), components=_components, footer=_footer)
-@greatcircle_transforms(self_transform=True)
-class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
-    """A frame rotated into great circle coordinates with the pole and longitude
-    specified as frame attributes.
-
-    ``GreatCircleICRSFrame``s always have component names for spherical
-    coordinates of ``phi1``/``phi2``.
+def get_origin_from_pole_ra0(pole, ra0, origin_disambiguate=None):
+    """
+    Figure out the coordinate system origin (i.e. the x-axis, expressed in the old
+    coordinate frame). Given just a pole and ra0, there is an ambiguity to the direction
+    of the x-axis because the two great circles (defined by pole and ra0) intersect at
+    two points. To resolve this ambiguity, you can specify ``origin_disambiguate``,
+    which is a coordinate in the old system (ICRS) used to pick the x-axis closest to
+    that location. If this is not specified, it uses (RA, Dec)=(0, 0).
     """
 
-    pole = CoordinateAttribute(default=None, frame=coord.ICRS)
-    center = CoordinateAttribute(default=None, frame=coord.ICRS)
-    ra0 = QuantityAttribute(default=np.nan * u.deg, unit=u.deg)
-    rotation = QuantityAttribute(default=0, unit=u.deg)
+    if origin_disambiguate is None:
+        origin_disambiguate = coord.SkyCoord(0, 0, unit=u.deg, frame=pole.frame)
 
-    frame_specific_representation_info = {
-        coord.SphericalRepresentation: [
-            coord.RepresentationMapping("lon", "phi1"),
-            coord.RepresentationMapping("lat", "phi2"),
-            coord.RepresentationMapping("distance", "distance"),
-        ]
-    }
+    # figure out origin from ra0
+    xhat1 = coord.CartesianRepresentation(get_xhat(pole.cartesian.xyz, ra0))
+    xhat2 = -xhat1
 
-    default_representation = coord.SphericalRepresentation
-    default_differential = coord.SphericalCosLatDifferential
+    origin1 = coord.SkyCoord(xhat1, frame=pole.frame)
+    origin2 = coord.SkyCoord(xhat2, frame=pole.frame)
 
-    _default_wrap_angle = 180 * u.deg
+    sep1 = origin_disambiguate.separation(origin1).to_value(u.deg)
+    sep2 = origin_disambiguate.separation(origin2).to_value(u.deg)
 
-    def __init__(self, *args, **kwargs):
-        wrap = kwargs.pop("wrap_longitude", True)
-        super().__init__(*args, **kwargs)
-        if wrap and isinstance(
-            self._data,
-            (coord.UnitSphericalRepresentation, coord.SphericalRepresentation),
-        ):
-            self._data.lon.wrap_angle = self._default_wrap_angle
-
-        if self.center is not None and np.isfinite(self.ra0):
-            raise ValueError(
-                "Both `center` and `ra0` were specified for this "
-                "{} object: you can only specify one or the other.".format(
-                    self.__class__.__name__
-                )
-            )
-
-    # TODO: remove this. This is a hack required as of astropy v3.1 in order
-    # to have the longitude components wrap at the desired angle
-    def represent_as(self, base, s="base", in_frame_units=False):
-        r = super().represent_as(base, s=s, in_frame_units=in_frame_units)
-        if hasattr(r, "lon"):
-            r.lon.wrap_angle = self._default_wrap_angle
-        return r
-
-    represent_as.__doc__ = coord.BaseCoordinateFrame.represent_as.__doc__
-
-    @classmethod
-    def from_endpoints(cls, coord1, coord2, ra0=None, rotation=None):
-        """Compute the great circle frame from two endpoints of an arc on the
-        unit sphere.
-
-        Parameters
-        ----------
-        coord1 : `~astropy.coordinates.SkyCoord`
-            One endpoint of the great circle arc.
-        coord2 : `~astropy.coordinates.SkyCoord`
-            The other endpoint of the great circle arc.
-        ra0 : `~astropy.units.Quantity`, `~astropy.coordinates.Angle` (optional)
-            If specified, an additional transformation will be applied to make
-            this right ascension the longitude zero-point of the resulting
-            coordinate frame.
-        rotation : `~astropy.units.Quantity`, `~astropy.coordinates.Angle` (optional)
-            If specified, a final rotation about the pole (i.e. the resulting z
-            axis) applied.
-        """
-
-        pole = pole_from_endpoints(coord1, coord2)
-
-        kw = dict(pole=pole)
-        if ra0 is not None:
-            kw["ra0"] = ra0
-
-        if rotation is not None:
-            kw["rotation"] = rotation
-
-        if ra0 is None and rotation is None:
-            midpt = sph_midpoint(coord1, coord2)
-            kw["ra0"] = midpt.ra
-
-        return cls(**kw)
-
-    @classmethod
-    def from_xyz(cls, xnew=None, ynew=None, znew=None):
-        """Compute the great circle frame from a specification of the coordinate
-        axes in the new system.
-
-        Parameters
-        ----------
-        xnew : astropy ``Representation`` object
-            The x-axis in the new system.
-        ynew : astropy ``Representation`` object
-            The y-axis in the new system.
-        znew : astropy ``Representation`` object
-            The z-axis in the new system.
-        """
-        is_none = [xnew is None, ynew is None, znew is None]
-        if np.sum(is_none) > 1:
-            raise ValueError("At least 2 axes must be specified.")
-
-        if xnew is not None:
-            xnew = xnew.to_cartesian()
-
-        if ynew is not None:
-            ynew = ynew.to_cartesian()
-
-        if znew is not None:
-            znew = znew.to_cartesian()
-
-        if znew is None:
-            znew = xnew.cross(ynew)
-
-        if ynew is None:
-            ynew = -xnew.cross(znew)
-
-        if xnew is None:
-            xnew = ynew.cross(znew)
-
-        pole = coord.SkyCoord(znew, frame="icrs")
-        center = coord.SkyCoord(xnew, frame="icrs")
-        return cls(pole=pole, center=center)
-
-    @classmethod
-    def from_R(cls, R, inverse=False):
-        """Compute the great circle frame from a rotation matrix that specifies
-        the transformation from ICRS to the new frame.
-
-        Parameters
-        ----------
-        R : array_like
-            The transformation matrix.
-        inverse : bool (optional)
-            If True, the input rotation matrix is assumed to go from the new
-            frame to the ICRS frame..
-        """
-
-        if inverse:
-            Rinv = R
-        else:
-            Rinv = np.linalg.inv(R)
-
-        pole = coord.CartesianRepresentation([0, 0, 1.0]).transform(Rinv)
-        ra0 = coord.CartesianRepresentation([1, 0, 0.0]).transform(Rinv)
-
-        pole = coord.SkyCoord(pole, frame="icrs")
-        ra0 = ra0.represent_as(coord.SphericalRepresentation)
-
-        return cls(pole=pole, ra0=ra0.lon)
-
-
-def make_greatcircle_cls(cls_name, docstring_header=None, **kwargs):
-    @format_doc(base_doc, components=_components, footer=_footer)
-    @greatcircle_transforms(self_transform=False)
-    class GCFrame(GreatCircleICRSFrame):
-        pole = kwargs.get("pole", None)
-        ra0 = kwargs.get("ra0", np.nan * u.deg)
-        center = kwargs.get("center", None)
-        rotation = kwargs.get("rotation", 0 * u.deg)
-
-    GCFrame.__name__ = cls_name
-    if docstring_header:
-        GCFrame.__doc__ = "{0}\n{1}".format(docstring_header, GCFrame.__doc__)
-
-    return GCFrame
+    # Convention:
+    if sep1 <= sep2:
+        return origin1
+    else:
+        return origin2
 
 
 def pole_from_endpoints(coord1, coord2):
@@ -390,3 +147,344 @@ def sph_midpoint(coord1, coord2):
     usph = midpt.represent_as(coord.UnitSphericalRepresentation)
 
     return frame1.realize_frame(usph)
+
+
+def ensure_orthogonal(pole, origin, priority="origin", tol=1e-10):
+    """
+    Parameters
+    ----------
+    x : array_like
+        Must be a unit vector.
+    z : array_like
+        Must be a unit vector.
+
+    """
+    x = np.squeeze(origin.cartesian.xyz)
+    z = np.squeeze(pole.cartesian.xyz)
+    if np.abs(np.dot(x, z)) > tol:
+        if priority == "origin":
+            msg = "Keeping the origin fixed and adjusting the pole to be orthogonal."
+            z = z - (z @ x) * x
+            pole = pole.realize_frame(coord.CartesianRepresentation(z))
+
+        else:  # validated by class attribute, so assume "pole"
+            msg = "Keeping the pole fixed and adjusting the origin to be orthogonal."
+            x = x - (x @ z) * z
+            origin = origin.realize_frame(coord.CartesianRepresentation(x))
+
+        warn(
+            f"Input origin and pole are not orthogonal. {msg} Use "
+            "warnings.simplefilter('ignore') to ignore this warning.",
+            RuntimeWarning,
+        )
+
+    return pole, origin
+
+
+def pole_origin_to_R(pole, origin):
+    """
+    Compute the Cartesian rotation matrix from the given pole and origin.
+
+    This functiona assumes that ``pole`` and ``origin`` are orthogonal.
+    """
+    if not pole.is_equivalent_frame(origin):
+        raise ValueError("The coordinate frame of the input pole and origin must match")
+
+    xaxis = np.squeeze(origin.cartesian.xyz.value)
+    zaxis = np.squeeze(pole.cartesian.xyz.value)
+    xaxis = xaxis / np.sqrt(np.sum(xaxis**2))  # faster than np.linalg.norm()
+    zaxis = zaxis / np.sqrt(np.sum(zaxis**2))
+    yaxis = np.cross(zaxis, xaxis)
+
+    R = np.stack((xaxis, yaxis, zaxis))
+    return R
+
+
+def greatcircle_to_greatcircle(from_greatcircle_coord, to_greatcircle_frame):
+    """Transform between two greatcircle frames."""
+
+    # This transform goes through the parent frames on each side.
+    # from_frame -> from_frame.origin -> to_frame.origin -> to_frame
+    intermediate_from = from_greatcircle_coord.transform_to(from_greatcircle_coord.pole)
+    intermediate_to = intermediate_from.transform_to(to_greatcircle_frame.pole)
+    return intermediate_to.transform_to(to_greatcircle_frame)
+
+
+def reference_to_greatcircle(reference_frame, greatcircle_frame):
+    """Convert a reference coordinate to a great circle frame."""
+    return greatcircle_frame._R
+
+
+def greatcircle_to_reference(greatcircle_coord, reference_frame):
+    """Convert a great circle frame coordinate to the reference frame"""
+
+    # use the forward transform, but just invert it
+    R = reference_to_greatcircle(reference_frame, greatcircle_coord)
+    # transpose is the inverse because R is a rotation matrix
+    return R.T
+
+
+def greatcircle_transforms(self_transform=False):
+    def set_greatcircle_transforms(cls):
+        DynamicMatrixTransform(
+            reference_to_greatcircle,
+            coord.ICRS,
+            cls,
+            register_graph=coord.frame_transform_graph,
+        )
+
+        DynamicMatrixTransform(
+            greatcircle_to_reference,
+            cls,
+            coord.ICRS,
+            register_graph=coord.frame_transform_graph,
+        )
+
+        if self_transform:
+            FunctionTransform(
+                greatcircle_to_greatcircle,
+                cls,
+                cls,
+                register_graph=coord.frame_transform_graph,
+            )
+        return cls
+
+    return set_greatcircle_transforms
+
+
+_components = """
+    phi1 : `~astropy.units.Quantity`
+        Longitude component.
+    phi2 : `~astropy.units.Quantity`
+        Latitude component.
+    distance : `~astropy.units.Quantity`
+        Distance.
+
+    pm_phi1_cosphi2 : `~astropy.units.Quantity`
+        Proper motion in longitude.
+    pm_phi2 : `~astropy.units.Quantity`
+        Proper motion in latitude.
+    radial_velocity : `~astropy.units.Quantity`
+        Line-of-sight or radial velocity.
+"""
+
+_footer = """
+    Frame attributes
+    ----------------
+    pole : `~astropy.coordinates.SkyCoord`, `~astropy.coordinates.ICRS`
+        The pole of the new coordinate frame, defined in the old frame (ICRS).
+    origin : `~astropy.coordinates.SkyCoord`, `~astropy.coordinates.ICRS`
+        The x-axis (spherical origin) of the new coordinate frame, defined in the old
+        frame (ICRS).
+"""
+
+
+@format_doc(dedent(base_doc), components=_components, footer=_footer)
+@greatcircle_transforms(self_transform=True)
+class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
+    """
+    A coordinate frame defined by a pole and origin.
+
+    ``GreatCircleICRSFrame``s always have component names for spherical coordinates of
+    ``phi1`` and ``phi2`` (so, proper motion components are ``pm_phi1_cosphi2``, etc.).
+    """
+
+    pole = CoordinateAttribute(default=None, frame=coord.ICRS)
+    origin = CoordinateAttribute(default=None, frame=coord.ICRS)
+    priority = StringValidatedAttribute(
+        default="origin", valid_values=["origin", "pole"]
+    )
+
+    frame_specific_representation_info = {
+        coord.SphericalRepresentation: [
+            coord.RepresentationMapping("lon", "phi1"),
+            coord.RepresentationMapping("lat", "phi2"),
+            coord.RepresentationMapping("distance", "distance"),
+        ]
+    }
+
+    default_representation = coord.SphericalRepresentation
+    default_differential = coord.SphericalCosLatDifferential
+
+    _default_wrap_angle = 180 * u.deg
+
+    def __init__(self, *args, **kwargs):
+        if "ra0" in kwargs:
+            raise ValueError(
+                "Initializing a GreatCircleICRSFrame with a pole and ra0 is no longer "
+                "supported because this does not uniquely determine a coordinate frame."
+                " To initialize a frame with a pole and ra0 and ignore the ambiguity, "
+                "use the .from_pole_ra0() classmethod."
+            )
+
+        if "rotation" in kwargs:
+            raise ValueError(
+                "Initializing a GreatCircleICRSFrame with a `rotation` is no longer "
+                "supported."
+            )
+
+        wrap = kwargs.pop("wrap_longitude", True)
+        super().__init__(*args, **kwargs)
+
+        if self.pole is None or self.origin is None:
+            raise ValueError("You must specify both a pole and an origin")
+        pole, origin = ensure_orthogonal(self.pole, self.origin, priority=self.priority)
+        self._pole = pole
+        self._origin = origin
+        self._R = pole_origin_to_R(self.pole, self.origin)
+
+        if wrap and isinstance(
+            self._data,
+            (coord.UnitSphericalRepresentation, coord.SphericalRepresentation),
+        ):
+            self._data.lon.wrap_angle = self._default_wrap_angle
+
+    # TODO: remove this. This is a hack required as of astropy v3.1 in order
+    # to have the longitude components wrap at the desired angle
+    def represent_as(self, base, s="base", in_frame_units=False):
+        r = super().represent_as(base, s=s, in_frame_units=in_frame_units)
+        if hasattr(r, "lon"):
+            r.lon.wrap_angle = self._default_wrap_angle
+        return r
+
+    represent_as.__doc__ = coord.BaseCoordinateFrame.represent_as.__doc__
+
+    @classmethod
+    def from_pole_ra0(cls, pole, ra0, origin_disambiguate=None):
+        f"""
+        Compute the great circle frame from a pole and RA of longitude=0.
+
+        {get_origin_from_pole_ra0.__doc__}
+
+        Parameters
+        ----------
+        pole : `~astropy.coordinates.SkyCoord`
+            The pole of the new coordinate frame, defined in the old frame (ICRS).
+        ra0 : `~astropy.units.Quantity`, `~astropy.coordinates.Angle` (optional)
+            Right Ascension of longitude zero.
+        origin_disambiguate :  `~astropy.coordinates.SkyCoord` (optional)
+            A sky coordinate in the old frame (ICRS) used to disambiguate the coordinate
+            system origin. The x-axis closest to this coordinate is chosen as the new
+            system origin / x-axis.
+        """
+        origin = get_origin_from_pole_ra0(
+            pole, ra0, origin_disambiguate=origin_disambiguate
+        )
+        cls(pole=pole, origin=origin)
+
+    @classmethod
+    def from_endpoints(cls, coord1, coord2, origin=None, ra0=None, priority=None):
+        """
+        Compute the great circle frame from two endpoints of an arc on the unit sphere.
+
+        If you specify an ``origin``, it should be orthogonal to the pole of the great
+        circle defined by ``coord1`` and ``coord2``. If it is not orthogonal to the
+        pole, by default, the pole will be adjusted along the great circle connecting
+        the pole to the input ``origin``. If you would instead like to keep the pole
+        fixed and orthogonalize the ``origin``, pass in ``priority='pole'``.
+
+        Parameters
+        ----------
+        coord1 : `~astropy.coordinates.SkyCoord`
+            One endpoint of the great circle arc.
+        coord2 : `~astropy.coordinates.SkyCoord`
+            The other endpoint of the great circle arc.
+        origin : `~astropy.coordinates.SkyCoord` (optional)
+            The x-axis (spherical origin) of the new coordinate frame, defined in the
+            old frame (ICRS). This defines the (phi1,phi2)=(0,0)º coordinate.
+        ra0 : `~astropy.units.Quantity`, `~astropy.coordinates.Angle` (optional)
+            Right Ascension of longitude zero. You can only specify one of ``origin`` or
+            ``ra0``.
+        priority : str (optional)
+            Defines the priority of keeping either the pole or origin fixed when they
+            are not orthogonal based on the input.
+        """
+
+        if ra0 is not None and origin is not None:
+            raise ValueError("You can only pass one of `ra0` or `origin`, not both")
+
+        pole = pole_from_endpoints(coord1, coord2)
+
+        if ra0 is not None:
+            midpt = sph_midpoint(coord1, coord2)
+            origin = get_origin_from_pole_ra0(pole, ra0, midpt)
+        elif ra0 is None and origin is None:
+            origin = sph_midpoint(coord1, coord2)
+
+        return cls(pole=pole, origin=origin, priority=priority)
+
+    @classmethod
+    def from_xyz(cls, xnew=None, ynew=None, znew=None):
+        """
+        Compute the great circle frame from a specification of the coordinate axes in
+        the new system.
+
+        Parameters
+        ----------
+        xnew : astropy ``Representation`` object
+            The x-axis in the new system.
+        ynew : astropy ``Representation`` object
+            The y-axis in the new system.
+        znew : astropy ``Representation`` object
+            The z-axis in the new system.
+        """
+        is_none = [xnew is None, ynew is None, znew is None]
+        if np.sum(is_none) > 1:
+            raise ValueError("At least 2 axes must be specified.")
+
+        if xnew is not None:
+            xnew = xnew.to_cartesian()
+
+        if ynew is not None:
+            ynew = ynew.to_cartesian()
+
+        if znew is not None:
+            znew = znew.to_cartesian()
+
+        if znew is None:
+            znew = xnew.cross(ynew)
+
+        if ynew is None:
+            ynew = -xnew.cross(znew)
+
+        if xnew is None:
+            xnew = ynew.cross(znew)
+
+        pole = coord.SkyCoord(znew, frame="icrs")
+        origin = coord.SkyCoord(xnew, frame="icrs")
+        return cls(pole=pole, origin=origin)
+
+    @classmethod
+    def from_R(cls, R):
+        """
+        Compute the great circle frame from a rotation matrix that specifies the
+        transformation from ICRS to the new frame.
+
+        Parameters
+        ----------
+        R : array_like
+            The transformation matrix.
+        """
+
+        pole = coord.SkyCoord(
+            coord.CartesianRepresentation([0.0, 0.0, 1.0]).transform(R.T), frame="icrs"
+        )
+        origin = coord.SkyCoord(
+            coord.CartesianRepresentation([1.0, 0.0, 0.0]).transform(R.T), frame="icrs"
+        )
+
+        return cls(pole=pole, origin=origin)
+
+
+def make_greatcircle_cls(cls_name, docstring_header=None, **kwargs):
+    @format_doc(base_doc, components=_components, footer=_footer)
+    @greatcircle_transforms(self_transform=False)
+    class GCFrame(GreatCircleICRSFrame):
+        pole = kwargs.get("pole", None)
+        origin = kwargs.get("origin", None)
+
+    GCFrame.__name__ = cls_name
+    if docstring_header:
+        GCFrame.__doc__ = "{0}\n{1}".format(docstring_header, GCFrame.__doc__)
+
+    return GCFrame

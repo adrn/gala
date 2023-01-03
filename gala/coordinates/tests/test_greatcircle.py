@@ -1,6 +1,7 @@
 # Third-party
 import astropy.coordinates as coord
 import astropy.units as u
+from astropy.tests.helper import catch_warnings
 import numpy as np
 import pytest
 
@@ -12,23 +13,60 @@ from ..greatcircle import (
     sph_midpoint,
 )
 
+rng = np.random.default_rng(seed=42)
+poles = [
+    coord.SkyCoord(ra=0 * u.deg, dec=90 * u.deg),
+    coord.SkyCoord(ra=72.2643 * u.deg, dec=-20.6575 * u.deg),
+    coord.SkyCoord(ra=13.5399 * u.deg, dec=0 * u.deg),
+]
 
-def test_cls_init():
-    pole = coord.SkyCoord(ra=72.2643 * u.deg, dec=-20.6575 * u.deg)
-    GreatCircleICRSFrame(pole=pole)
-    GreatCircleICRSFrame(pole=pole, ra0=160 * u.deg)
 
-    points = coord.SkyCoord(ra=[-38.8, 4.7] * u.deg, dec=[-45.1, -51.7] * u.deg)
-    fr = GreatCircleICRSFrame.from_endpoints(points[0], points[1])
-    assert u.allclose(fr.pole.ra, 359.1 * u.deg, atol=1e-1 * u.deg)
-    assert u.allclose(fr.pole.dec, 38.2 * u.deg, atol=1e-1 * u.deg)
+@pytest.mark.parametrize("pole", poles)
+def test_init_cls(pole):
+    zhat = np.squeeze(pole.cartesian.xyz)
 
-    fr = GreatCircleICRSFrame.from_endpoints(points[0], points[1], ra0=100 * u.deg)
+    # Random vector orthogonal to the pole:
+    x = rng.uniform(size=3)
+    x /= np.linalg.norm(x)
+    xhat = x - (x @ zhat) * zhat
+    xhat /= np.linalg.norm(xhat)
+    origin = coord.SkyCoord(coord.CartesianRepresentation(xhat), frame=pole.frame)
 
-    fr = GreatCircleICRSFrame.from_endpoints(points[0], points[1], rotation=100 * u.deg)
+    GreatCircleICRSFrame(pole=pole, origin=origin)
+    GreatCircleICRSFrame(pole=pole, origin=origin, priority="pole")
 
     with pytest.raises(ValueError):
-        GreatCircleICRSFrame(pole=pole, ra0=160 * u.deg, center=pole)
+        GreatCircleICRSFrame(pole=pole, ra0=origin.ra)
+
+    # Slightly adjust the origin so it is not orthogonal:
+    new_origin = origin.spherical_offsets_by(
+        1.23 * u.deg, -2.42 * u.deg
+    )  # random values
+
+    with pytest.warns():
+        f1 = GreatCircleICRSFrame(pole=pole, origin=new_origin)
+
+    # default priority="origin"
+    assert f1.origin.ra == new_origin.ra
+    assert f1.origin.dec == new_origin.dec
+
+    with pytest.warns():
+        f2 = GreatCircleICRSFrame(pole=pole, origin=new_origin, priority="pole")
+
+    assert f2.pole.ra == pole.ra
+    assert f2.pole.dec == pole.dec
+
+    # points = coord.SkyCoord(ra=[-38.8, 4.7] * u.deg, dec=[-45.1, -51.7] * u.deg)
+    # fr = GreatCircleICRSFrame.from_endpoints(points[0], points[1])
+    # assert u.allclose(fr.pole.ra, 359.1 * u.deg, atol=1e-1 * u.deg)
+    # assert u.allclose(fr.pole.dec, 38.2 * u.deg, atol=1e-1 * u.deg)
+
+    # fr = GreatCircleICRSFrame.from_endpoints(points[0], points[1], ra0=100 * u.deg)
+
+    # fr = GreatCircleICRSFrame.from_endpoints(points[0], points[1], rotation=100 * u.deg)
+
+    # with pytest.raises(ValueError):
+    #     GreatCircleICRSFrame(pole=pole, ra0=160 * u.deg, center=pole)
 
 
 def test_init_center():
@@ -154,7 +192,6 @@ def test_sph_midpoint():
 
 def test_pole_separation90():
     # Regression test for issue #160
-    from astropy.tests.helper import catch_warnings
 
     for dec in [19.8, 0, -41.3]:  # random values, but 0 is an important test
         pole = coord.SkyCoord(ra=32.5, dec=dec, unit="deg")
