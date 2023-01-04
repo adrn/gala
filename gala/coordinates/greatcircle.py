@@ -64,7 +64,8 @@ def get_origin_from_pole_ra0(pole, ra0, origin_disambiguate=None):
         origin_disambiguate = coord.SkyCoord(0, 0, unit=u.deg, frame=pole)
 
     # figure out origin from ra0
-    xhat1 = coord.CartesianRepresentation(get_xhat(pole.cartesian.xyz, ra0))
+    zhat = np.squeeze((pole.cartesian / pole.cartesian.norm()).xyz)
+    xhat1 = coord.CartesianRepresentation(get_xhat(zhat, ra0))
     xhat2 = -xhat1
 
     origin1 = coord.SkyCoord(xhat1, frame=pole, representation_type="unitspherical")
@@ -159,6 +160,9 @@ def sph_midpoint(coord1, coord2):
 
 def ensure_orthogonal(pole, origin, priority="origin", tol=1e-10):
     """
+    Makes sure the pole and origin are unit vectors, and are orthogonal. Adjusts either
+    the pole or origin to make orthogonal if not.
+
     Parameters
     ----------
     x : array_like
@@ -168,7 +172,9 @@ def ensure_orthogonal(pole, origin, priority="origin", tol=1e-10):
 
     """
     x = np.squeeze(origin.cartesian.xyz)
+    x /= np.linalg.norm(x)
     z = np.squeeze(pole.cartesian.xyz)
+    z /= np.linalg.norm(z)
     if np.abs(np.dot(x, z)) > tol:
         if priority == "origin":
             msg = "Keeping the origin fixed and adjusting the pole to be orthogonal."

@@ -18,11 +18,12 @@ rand_lat = np.arcsin(rng.uniform(-1, 1, size=15)) * u.rad
 poles = [
     coord.SkyCoord(ra=0 * u.deg, dec=90 * u.deg),
     coord.SkyCoord(ra=0 * u.deg, dec=-90 * u.deg),
+    coord.SkyCoord(ra=12.3 * u.deg, dec=45.6 * u.deg, distance=1 * u.kpc),
 ] + [coord.SkyCoord(lon, lat) for lon, lat in zip(rand_lon, rand_lat)]
 
 
 def get_random_orthogonal(skycoord, rng):
-    zhat = np.squeeze(skycoord.cartesian.xyz)
+    zhat = np.squeeze((skycoord.cartesian / skycoord.cartesian.norm()).xyz)
 
     # Random vector orthogonal to the pole:
     x = rng.uniform(size=3)
