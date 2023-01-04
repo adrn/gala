@@ -107,8 +107,8 @@ convenience classmethod for creating a great circle frame with endpoints::
     ... )
     >>> frame2 = gc.GreatCircleICRSFrame.from_endpoints(endpoints[0], endpoints[1])
     >>> frame2
-    <GreatCircleICRSFrame Frame (pole=<ICRS Coordinate: (ra, dec, distance) in (deg, deg, )
-        (359.1291976, 38.16814051, 1.)>, origin=<ICRS Coordinate: (ra, dec) in deg
+    <GreatCircleICRSFrame Frame (pole=<ICRS Coordinate: (ra, dec) in deg
+        (359.1291976, 38.16814051)>, origin=<ICRS Coordinate: (ra, dec) in deg
         (341.46580563, -50.48035324)>, priority=origin)>
 
 Without specifying a longitude zeropoint, the default behavior of the above classmethod
@@ -120,8 +120,8 @@ example::
     ...     endpoints[0], endpoints[1], ra0=150*u.deg
     ... )
     >>> frame3
-    <GreatCircleICRSFrame Frame (pole=<ICRS Coordinate: (ra, dec, distance) in (deg, deg, )
-        (359.1291976, 38.16814051, 1.)>, origin=<ICRS Coordinate: (ra, dec) in deg
+    <GreatCircleICRSFrame Frame (pole=<ICRS Coordinate: (ra, dec) in deg
+        (359.1291976, 38.16814051)>, origin=<ICRS Coordinate: (ra, dec) in deg
         (330., -48.01820335)>, priority=origin)>
 
 
