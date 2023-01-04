@@ -37,7 +37,7 @@ the mass distribution, and (2) the initial conditions of the star's orbit.
 
 Mass models in `gala` are specified using Python classes that represent
 standard gravitational potential models. For example, most of the standard,
-parametrized gravitational potential models introduced in :cite:t:`Binney2008`
+parametrized gravitational potential models introduced in :cite:`Binney2008`
 are available as classes in the :mod:`gala.potential` module. The standard Milky
 Way model recommended for use in `gala` is the
 `~gala.potential.potential.MilkyWayPotential`, which is a pre-defined,

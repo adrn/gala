@@ -435,6 +435,9 @@ vertical velocity we used as initial conditions:
     :width: 60%
     :context: close-figs
 
+    from gala.dynamics.actionangle import get_staeckel_fudge_delta
+    from galpy.actionAngle import actionAngleStaeckel
+
     galpy_potential = pot.to_galpy_potential()
     J = np.zeros((3, orbits.norbits))
     Omega = np.zeros((3, orbits.norbits))
@@ -453,27 +456,10 @@ vertical velocity we used as initial conditions:
     ax.set_xlabel(f"$v_z$ [{w0.v_z.unit:latex_inline}]")
     ax.set_ylabel(rf"$J_z$")
 
-Or, we can see how the vertical frequency depends on vertical action by
-plotting:
-
-.. doctest-requires:: galpy
-
-    >>> plt.plot(aaf['actions'][:, 2], aaf['freqs'][:, 2])  # doctest: +SKIP
-
-.. plot::
-    :align: center
-    :width: 60%
-    :context: close-figs
-
-    fig, ax = plt.subplots(figsize=(6, 6), constrained_layout=True)
-    ax.plot(w0.v_z, Omega[2])
-    ax.set_xlabel(f"$v_z$ [{w0.v_z.unit:latex_inline}]")
-    ax.set_ylabel(rf"$\Omega_z$ [{aaf['freqs'].unit:latex_inline}]")
-
 
 The overall trend looks right, but what is that weird break that occurs around
-:math:`v_z` ~ 120 km/s? Let's visualize orbits with initial conditions just next
-to and within this region:
+:math:`v_z` ~ 120 km/s? Let's visualize orbits with initial conditions just next to and
+within this region:
 
 .. doctest-requires:: galpy
 
@@ -496,11 +482,11 @@ to and within this region:
     orbits[:, i1].cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',', axes=[axes[0]]);
     orbits[:, i2].cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',', axes=[axes[1]]);
 
-Aha! This region is special: it is a resonance in the potential. Orbits in this
-region of phase-space have qualitatively different behavior than those outside
-of this region because they are trapped by the resonance. For these orbits,
-where strong potential resonances occur, the Staeckel Fudge approximation will
-return incorrect and potentially misleading action, angle, and frequency values.
+Aha! This region is special: it is a resonance in the potential. Orbits in this region
+of phase-space have qualitatively different behavior than those outside of this region
+because they are trapped by the resonance. For these orbits, where strong potential
+resonances occur, the Staeckel Fudge approximation will return incorrect and potentially
+misleading action, angle, and frequency values.
 
 
 References

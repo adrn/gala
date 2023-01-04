@@ -169,11 +169,13 @@ coefficient, we can estimate the signal-to-noise ratio of each expansion term
 and use this to help decide when to truncate the expansion (see [W96]_ for the
 methodology and reasoning behind this)::
 
-    (S,varS),(T,varT) = scf.compute_coeffs_discrete(xyz, mass=mass, r_s=1.,
-                                                    nmax=10, lmax=4, skip_m=True,
-                                                    compute_var=True)
+    S, T, Cov = scf.compute_coeffs_discrete(
+        xyz, mass=mass, r_s=1.,
+        nmax=10, lmax=4, skip_m=True,
+        compute_var=True
+    )
 
-    signal_to_noise = np.sqrt(S**2 / varS)
+    signal_to_noise = np.sqrt(S**2 / Cov[0, 0])
 
     for l in range(S.shape[1]):
         plt.semilogy(signal_to_noise[:,l,0], marker=None, lw=2,
@@ -188,11 +190,13 @@ methodology and reasoning behind this)::
     :align: center
     :context: close-figs
 
-    (S,varS),(T,varT) = scf.compute_coeffs_discrete(xyz, mass=mass, r_s=1.,
-                                                    nmax=10, lmax=4,
-                                                    compute_var=True)
+    S, T, Cov = scf.compute_coeffs_discrete(
+        xyz, mass=mass, r_s=1.,
+        nmax=10, lmax=4, skip_m=True,
+        compute_var=True
+    )
 
-    signal_to_noise = np.sqrt(S**2 / varS)
+    signal_to_noise = np.sqrt(S**2 / Cov[0, 0])
 
     plt.figure(figsize=(6,4))
     for l in range(S.shape[1]):
