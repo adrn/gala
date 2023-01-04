@@ -171,29 +171,36 @@ def ensure_orthogonal(pole, origin, priority="origin", tol=1e-10):
         Must be a unit vector.
 
     """
-    x = np.squeeze((origin.cartesian / origin.cartesian.norm()).xyz)
-    z = np.squeeze((pole.cartesian / pole.cartesian.norm()).xyz)
+
+    origin = origin.realize_frame(
+        origin.represent_as("unitspherical").without_differentials()
+    )
+    pole = pole.realize_frame(
+        pole.represent_as("unitspherical").without_differentials()
+    )
+
+    x = np.squeeze(origin.cartesian.xyz)
+    z = np.squeeze(pole.cartesian.xyz)
     if np.abs(np.dot(x, z)) > tol:
         if priority == "origin":
             msg = "Keeping the origin fixed and adjusting the pole to be orthogonal."
             z = z - (z @ x) * x
+            pole = pole.realize_frame(
+                coord.CartesianRepresentation(z), representation_type="unitspherical"
+            )
 
         else:  # validated by class attribute, so assume "pole"
             msg = "Keeping the pole fixed and adjusting the origin to be orthogonal."
             x = x - (x @ z) * z
+            origin = origin.realize_frame(
+                coord.CartesianRepresentation(x), representation_type="unitspherical"
+            )
 
         warn(
             f"Input origin and pole are not orthogonal. {msg} Use "
             "warnings.simplefilter('ignore') to ignore this warning.",
             RuntimeWarning,
         )
-
-    pole = pole.realize_frame(
-        coord.CartesianRepresentation(z), representation_type="unitspherical"
-    )
-    origin = origin.realize_frame(
-        coord.CartesianRepresentation(x), representation_type="unitspherical"
-    )
 
     return pole, origin
 
