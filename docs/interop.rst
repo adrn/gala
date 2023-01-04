@@ -81,7 +81,7 @@ example:
 
 .. doctest-requires:: galpy
 
-    >>> from galpy.potential.potential.interop import galpy_to_gala_potential
+    >>> from gala.potential.potential.interop import galpy_to_gala_potential
     >>> galpy_pot = galpy_gp.HernquistPotential(amp=1., a=0.5)
     >>> pot = galpy_to_gala_potential(galpy_pot)
     >>> pot
