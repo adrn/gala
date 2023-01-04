@@ -174,10 +174,10 @@ def ensure_orthogonal(pole, origin, priority="origin", tol=1e-10):
 
     origin = origin.realize_frame(
         origin.represent_as("unitspherical").without_differentials()
-    )
+    ).squeeze()
     pole = pole.realize_frame(
         pole.represent_as("unitspherical").without_differentials()
-    )
+    ).squeeze()
 
     x = np.squeeze(origin.cartesian.xyz)
     z = np.squeeze(pole.cartesian.xyz)
@@ -425,13 +425,13 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
         if ra0 is not None and origin is not None:
             raise ValueError("You can only pass one of `ra0` or `origin`, not both")
 
-        pole = pole_from_endpoints(coord1, coord2)
+        pole = pole_from_endpoints(coord1.squeeze(), coord2.squeeze())
 
         if ra0 is not None:
-            midpt = sph_midpoint(coord1, coord2)
+            midpt = sph_midpoint(coord1.squeeze(), coord2.squeeze())
             origin = get_origin_from_pole_ra0(pole, ra0, midpt)
         elif ra0 is None and origin is None:
-            origin = sph_midpoint(coord1, coord2)
+            origin = sph_midpoint(coord1.squeeze(), coord2.squeeze())
 
         return cls(pole=pole, origin=origin, priority=priority)
 

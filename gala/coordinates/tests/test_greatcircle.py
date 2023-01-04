@@ -19,6 +19,7 @@ poles = [
     coord.SkyCoord(ra=0 * u.deg, dec=90 * u.deg),
     coord.SkyCoord(ra=0 * u.deg, dec=-90 * u.deg),
     coord.SkyCoord(ra=12.3 * u.deg, dec=45.6 * u.deg, distance=1 * u.kpc),
+    coord.SkyCoord(ra=[12.3] * u.deg, dec=[45.6] * u.deg),
 ] + [coord.SkyCoord(lon, lat) for lon, lat in zip(rand_lon, rand_lat)]
 
 
@@ -93,7 +94,7 @@ def test_init_from_endpoints(c1):
     x /= np.linalg.norm(x)
     c2 = coord.SkyCoord(coord.CartesianRepresentation(x))
 
-    midpt = coord.SkyCoord(sph_midpoint(c1, c2))
+    midpt = coord.SkyCoord(sph_midpoint(c1.squeeze(), c2))
     origin_off = midpt.spherical_offsets_by(1.423 * u.deg, -2.182 * u.deg)
 
     f1 = GreatCircleICRSFrame.from_endpoints(c1, c2)
