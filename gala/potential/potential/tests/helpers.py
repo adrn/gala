@@ -40,7 +40,7 @@ class PotentialTestBase:
     sympy_density = True
     check_finite_at_origin = True
 
-    def setup(self):
+    def setup_method(self):
         # set up hamiltonian
         if self.frame is None:
             self.frame = StaticFrame(units=self.potential.units)

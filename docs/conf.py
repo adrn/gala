@@ -133,11 +133,13 @@ release = package.__version__
 # -- Options for HTML output ---------------------------------------------------
 
 html_theme = 'pydata_sphinx_theme'
-
 html_logo = '_static/Gala_Logo_RGB.png'
 
 html_theme_options = {
-    "logo_link": "index",
+    "logo": {
+      "image_light": "Gala_Logo_RGB.png",
+      "image_dark": "Gala_Logo_RGB.png",
+   },
     "icon_links": [
         {
             "name": "GitHub",

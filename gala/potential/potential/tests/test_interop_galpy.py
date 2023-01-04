@@ -97,7 +97,7 @@ def pytest_generate_tests(metafunc):
                     reason="must have galpy installed to run these tests")
 class TestGalpy:
 
-    def setup(self):
+    def setup_method(self):
         # Test points:
         rng = np.random.default_rng(42)
         ntest = 4

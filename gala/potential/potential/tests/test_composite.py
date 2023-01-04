@@ -17,7 +17,7 @@ from ....units import solarsystem, galactic
 
 class CompositeHelper:
 
-    def setup(self):
+    def setup_method(self):
         self.units = solarsystem
         self.p1 = KeplerPotential(m=1.*u.Msun, units=self.units)
         self.p2 = HernquistPotential(m=0.5*u.Msun, c=0.1*u.au,

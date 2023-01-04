@@ -169,11 +169,13 @@ coefficient, we can estimate the signal-to-noise ratio of each expansion term
 and use this to help decide when to truncate the expansion (see [W96]_ for the
 methodology and reasoning behind this)::
 
-    (S,varS),(T,varT) = scf.compute_coeffs_discrete(xyz, mass=mass, r_s=1.,
-                                                    nmax=10, lmax=4, skip_m=True,
-                                                    compute_var=True)
+    S, T, Cov = scf.compute_coeffs_discrete(
+        xyz, mass=mass, r_s=1.,
+        nmax=10, lmax=4, skip_m=True,
+        compute_var=True
+    )
 
-    signal_to_noise = np.sqrt(S**2 / varS)
+    signal_to_noise = np.sqrt(S**2 / Cov[0, 0])
 
     for l in range(S.shape[1]):
         plt.semilogy(signal_to_noise[:,l,0], marker=None, lw=2,
@@ -188,11 +190,13 @@ methodology and reasoning behind this)::
     :align: center
     :context: close-figs
 
-    (S,varS),(T,varT) = scf.compute_coeffs_discrete(xyz, mass=mass, r_s=1.,
-                                                    nmax=10, lmax=4,
-                                                    compute_var=True)
+    S, T, Cov = scf.compute_coeffs_discrete(
+        xyz, mass=mass, r_s=1.,
+        nmax=10, lmax=4, skip_m=True,
+        compute_var=True
+    )
 
-    signal_to_noise = np.sqrt(S**2 / varS)
+    signal_to_noise = np.sqrt(S**2 / Cov[0, 0])
 
     plt.figure(figsize=(6,4))
     for l in range(S.shape[1]):
@@ -378,7 +382,7 @@ overlaid::
 
     # we need an array of positions with shape (3,n_samples) for SCFPotential
     xyz = np.vstack((x.ravel(),y.ravel(),z.ravel()))
-    scf_dens = potential.density(xyz)
+    scf_dens = potential.density(xyz).value
 
     # log-spaced contour levels
     levels = np.logspace(np.log10(true_dens.min()), np.log10(true_dens.max()), 16)
@@ -402,7 +406,7 @@ overlaid::
 
     # we need an array of positions with shape (3,n_samples) for SCFPotential
     xyz = np.vstack((x.ravel(),y.ravel(),z.ravel()))
-    scf_dens = potential.density(xyz)
+    scf_dens = potential.density(xyz).value
 
     # log-spaced contour levels
     true_dens = flattened_hernquist_density(x, y, z, M, a, q)

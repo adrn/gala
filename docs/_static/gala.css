@@ -28,8 +28,12 @@ div.output_area div[class*=highlight] pre {
 }
 
 /* Make output lighter gray and no italics for the love of all that is holy! */
-.highlight .go {
+html[data-theme="light"] .highlight .go {
   color: #555555;
+  font-style: normal;
+}
+
+html[data-theme="dark"] .highlight .go {
   font-style: normal;
 }
 
@@ -38,25 +42,28 @@ div.output_area div[class*=highlight] pre {
   font-weight: 300;
 }
 
-h1 {
-  font-family: "Lato", sans-serif;
-  color: #013243; /* warm black */
-}
-
-
-h2 {
-  color: #4d77cf; /* han blue */
-  letter-spacing: -.03em;
-}
-
-h3 {
-  color: #013243; /* warm black */
-  letter-spacing: -.03em;
-}
-
 /* Override some aspects of the pydata-sphinx-theme: taken from Pandas */
 
 :root {
   /* Use softer blue from bootstrap's default info color */
-  --pst-color-info: 23, 162, 184;
+  /* --pst-color-info: 23, 162, 184; */
+  --pst-color-primary: 118, 63, 152;
+  --pst-color-success: 40, 167, 69;
+  --pst-color-info: 0, 123, 255;
+  --pst-color-warning: 255, 193, 7;
+  --pst-color-danger: 220, 53, 69;
+  --pst-color-text-base: 51, 51, 51;
+
+  --pst-font-size-base: 15px;
+
+  --pst-color-link: 118, 63, 152;
+  --pst-color-headerlink-hover: 118, 63, 152;
+
+  /* heading font sizes */
+  --pst-font-size-h1: 28px;
+  --pst-font-size-h2: 25px;
+  --pst-font-size-h3: 20px;
+  --pst-font-size-h4: 18px;
+  --pst-font-size-h5: 16px;
+  --pst-font-size-h6: 15px;
 }

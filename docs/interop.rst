@@ -76,14 +76,15 @@ any Gala potential object. For example:
     -0.48737954713808573
 
 To convert from a Galpy potential to a Gala potential, use the
-:func:`~gala.potential.potential.galpy_to_gala_potential()` function. For
+:func:`~gala.potential.potential.interop.galpy_to_gala_potential()` function. For
 example:
 
 .. doctest-requires:: galpy
 
     >>> import galpy.potential as galpy_gp
+    >>> from gala.potential.potential.interop import galpy_to_gala_potential
     >>> galpy_pot = galpy_gp.HernquistPotential(amp=1., a=0.5)
-    >>> pot = gp.galpy_to_gala_potential(galpy_pot)
+    >>> pot = galpy_to_gala_potential(galpy_pot)
     >>> pot
     <HernquistPotential: m=4.50e+10, c=4.00 (kpc,Myr,solMass,rad)>
 
