@@ -1,9 +1,8 @@
 # Third-party
 import astropy.coordinates as coord
 import numpy as np
-from astropy.coordinates.matrix_utilities import matrix_product
 
-__all__ = ['transform_pm_cov']
+__all__ = ["transform_pm_cov"]
 
 
 def get_uv_tan(c):
@@ -14,7 +13,7 @@ def get_uv_tan(c):
     b = c.spherical.lat
 
     p = np.array([-np.sin(l), np.cos(l), np.zeros_like(l.value)]).T
-    q = np.array([-np.cos(l)*np.sin(b), -np.sin(l)*np.sin(b), np.cos(b)]).T
+    q = np.array([-np.cos(l) * np.sin(b), -np.sin(l) * np.sin(b), np.cos(b)]).T
 
     return np.stack((p, q), axis=-1)
 
@@ -42,7 +41,8 @@ def get_transform_matrix(from_frame, to_frame):
         to_frame_cls = to_frame
 
     path, distance = coord.frame_transform_graph.find_shortest_path(
-        from_frame_cls, to_frame_cls)
+        from_frame_cls, to_frame_cls
+    )
 
     matrices = []
     currsys = from_frame
@@ -63,9 +63,11 @@ def get_transform_matrix(from_frame, to_frame):
         elif isinstance(trans, coord.StaticMatrixTransform):
             M = trans.matrix
         else:
-            raise ValueError("Transform path contains a '{0}': cannot "
-                             "be composed into a single transformation "
-                             "matrix.".format(trans.__class__.__name__))
+            raise ValueError(
+                "Transform path contains a '{0}': cannot "
+                "be composed into a single transformation "
+                "matrix.".format(trans.__class__.__name__)
+            )
 
         matrices.append(M)
         currsys = p
@@ -75,7 +77,7 @@ def get_transform_matrix(from_frame, to_frame):
         if M is None:
             M = Mi
         else:
-            M = matrix_product(M, Mi)
+            M = M @ Mi
 
     return M
 
@@ -101,17 +103,20 @@ def transform_pm_cov(c, cov, to_frame):
 
     """
     if c.isscalar and cov.shape != (2, 2):
-        raise ValueError('If input coordinate object is a scalar coordinate, '
-                         'the proper motion covariance matrix must have shape '
-                         '(2, 2), not {}'.format(cov.shape))
+        raise ValueError(
+            "If input coordinate object is a scalar coordinate, "
+            "the proper motion covariance matrix must have shape "
+            "(2, 2), not {}".format(cov.shape)
+        )
 
     elif not c.isscalar and len(c) != cov.shape[0]:
-        raise ValueError('Input coordinates and covariance matrix must have '
-                         'the same number of entries ({} vs {}).'
-                         .format(len(c), cov.shape[0]))
+        raise ValueError(
+            "Input coordinates and covariance matrix must have "
+            "the same number of entries ({} vs {}).".format(len(c), cov.shape[0])
+        )
 
     # 3D rotation matrix, to be projected onto the tangent plane
-    if hasattr(c, 'frame'):
+    if hasattr(c, "frame"):
         frame = c.frame
     else:
         frame = c
@@ -125,18 +130,14 @@ def transform_pm_cov(c, cov, to_frame):
     uv_to = get_uv_tan(c_to)
 
     if not c.isscalar:
-        G = np.einsum('nab, nac->nbc', uv_to,
-                      np.einsum('ji, nik->njk', R, uv_in))
+        G = np.einsum("nab, nac->nbc", uv_to, np.einsum("ji, nik->njk", R, uv_in))
 
         # transform
-        cov_to = np.einsum('nba, nac->nbc', G,
-                           np.einsum('nij, nkj->nik', cov, G))
+        cov_to = np.einsum("nba, nac->nbc", G, np.einsum("nij, nkj->nik", cov, G))
     else:
-        G = np.einsum('ab, ac->bc', uv_to,
-                      np.einsum('ji, ik->jk', R, uv_in))
+        G = np.einsum("ab, ac->bc", uv_to, np.einsum("ji, ik->jk", R, uv_in))
 
         # transform
-        cov_to = np.einsum('ba, ac->bc', G,
-                           np.einsum('ij, kj->ik', cov, G))
+        cov_to = np.einsum("ba, ac->bc", G, np.einsum("ij, kj->ik", cov, G))
 
     return cov_to

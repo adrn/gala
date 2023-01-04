@@ -15,6 +15,11 @@ Bug fixes
 API changes
 -----------
 
+- Refactored the way ``GreatCircleICRSFrame()`` works to be more consistent and
+  unambiguous with coordinate frame definitions. The frame now requires an input pole
+  and origin, but can be initialized in old ways using the ``from_*()`` class methods
+  (e.g., with ``pole`` and ``ra0`` values).
+
 
 1.6.1 (2022-11-07)
 ==================

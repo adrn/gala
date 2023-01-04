@@ -239,9 +239,3 @@ API
 .. automodapi:: gala.coordinates
     :no-inheritance-diagram:
     :no-main-docstr:
-    :skip: GD1
-    :skip: Orphan
-    :skip: Sagittarius
-    :skip: MagellanicStream
-    :skip: Ophiuchus
-    :skip: Pal5
