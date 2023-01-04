@@ -171,30 +171,29 @@ def ensure_orthogonal(pole, origin, priority="origin", tol=1e-10):
         Must be a unit vector.
 
     """
-    x = np.squeeze(origin.cartesian.xyz)
-    x /= np.linalg.norm(x)
-    z = np.squeeze(pole.cartesian.xyz)
-    z /= np.linalg.norm(z)
+    x = np.squeeze((origin.cartesian / origin.cartesian.norm()).xyz)
+    z = np.squeeze((pole.cartesian / pole.cartesian.norm()).xyz)
     if np.abs(np.dot(x, z)) > tol:
         if priority == "origin":
             msg = "Keeping the origin fixed and adjusting the pole to be orthogonal."
             z = z - (z @ x) * x
-            pole = pole.realize_frame(
-                coord.CartesianRepresentation(z), representation_type="unitspherical"
-            )
 
         else:  # validated by class attribute, so assume "pole"
             msg = "Keeping the pole fixed and adjusting the origin to be orthogonal."
             x = x - (x @ z) * z
-            origin = origin.realize_frame(
-                coord.CartesianRepresentation(x), representation_type="unitspherical"
-            )
 
         warn(
             f"Input origin and pole are not orthogonal. {msg} Use "
             "warnings.simplefilter('ignore') to ignore this warning.",
             RuntimeWarning,
         )
+
+    pole = pole.realize_frame(
+        coord.CartesianRepresentation(z), representation_type="unitspherical"
+    )
+    origin = origin.realize_frame(
+        coord.CartesianRepresentation(x), representation_type="unitspherical"
+    )
 
     return pole, origin
 
@@ -208,10 +207,8 @@ def pole_origin_to_R(pole, origin):
     if not pole.is_equivalent_frame(origin):
         raise ValueError("The coordinate frame of the input pole and origin must match")
 
-    xaxis = np.squeeze(origin.cartesian.xyz.value)
-    zaxis = np.squeeze(pole.cartesian.xyz.value)
-    xaxis = xaxis / np.sqrt(np.sum(xaxis**2))  # faster than np.linalg.norm()
-    zaxis = zaxis / np.sqrt(np.sum(zaxis**2))
+    xaxis = np.squeeze((origin.cartesian / origin.cartesian.norm()).xyz)
+    zaxis = np.squeeze((pole.cartesian / pole.cartesian.norm()).xyz)
     yaxis = np.cross(zaxis, xaxis)
 
     R = np.stack((xaxis, yaxis, zaxis))
