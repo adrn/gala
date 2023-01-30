@@ -6,7 +6,6 @@ import re
 import astropy.coordinates as coord
 from astropy.coordinates import representation as r
 import astropy.units as u
-from astropy.utils.compat.misc import override__dir__
 import numpy as np
 
 # Project
@@ -243,7 +242,6 @@ class PhaseSpacePosition:
                 extra[m.new_name] = m.repr_name
         return extra
 
-    @override__dir__
     def __dir__(self):
         """
         Override the builtin `dir` behavior to include representation and
@@ -254,7 +252,8 @@ class PhaseSpacePosition:
         dir_values |= set(self._get_extra_mappings('pos').keys())
         dir_values |= set(self._get_extra_mappings('vel').keys())
         dir_values |= set(r.REPRESENTATION_CLASSES.keys())
-        return dir_values
+        dir_values |= set(super().__dir__())
+        return sorted(dir_values)
 
     def __getattr__(self, attr):
         """

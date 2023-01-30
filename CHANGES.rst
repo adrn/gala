@@ -11,6 +11,8 @@ Bug fixes
 - Fixed a bug with the ``OrphanKoposov19()`` coordinate frame that caused the wrong
   rotation matrix to be returned.
 
+- Fixed an ``AstropyDeprecationWarning`` resulting from the use of ``override__dir__``.
+  
 
 API changes
 -----------
