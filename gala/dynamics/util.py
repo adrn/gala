@@ -50,7 +50,7 @@ def peak_to_peak_period(t, f, amplitude_threshold=1E-2):
 
     # neglect minor oscillations
     if abs(np.mean(f[max_ix]) - np.mean(f[min_ix])) < amplitude_threshold:
-        return np.nan
+        return np.nan * t_unit
 
     # compute mean peak-to-peak
     if len(max_ix) > 0:

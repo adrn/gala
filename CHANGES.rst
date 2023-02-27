@@ -12,7 +12,9 @@ Bug fixes
   rotation matrix to be returned.
 
 - Fixed an ``AstropyDeprecationWarning`` resulting from the use of ``override__dir__``.
-  
+
+- Fixed a bug in ``Orbit.estimate_period()`` that would cause the method to fail with a
+  ``UnitsError`` if one orbit returned a nan value for the period.
 
 API changes
 -----------
