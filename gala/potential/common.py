@@ -239,12 +239,12 @@ class CommonBase:
             if isinstance(v, float):
                 if v == 0:
                     par = f"{v:.0f}"
-                elif np.log10(v) < -2 or np.log10(v) > 5:
+                elif np.log10(np.abs(v)) < -2 or np.log10(np.abs(v)) > 5:
                     par = f"{v:.2e}"
                 else:
                     par = f"{v:.2f}"
 
-            elif isinstance(v, int) and np.log10(v) > 5:
+            elif isinstance(v, int) and np.log10(np.abs(v)) > 5:
                 par = f"{v:.2e}"
 
             else:
