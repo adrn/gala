@@ -585,13 +585,13 @@ class MN3ExponentialDiskPotential(CPotentialBase):
 
         self._ms = param_vec[:3] * self.parameters["m"].value
         self._as = param_vec[3:] * self.parameters["h_R"].value
-        self._bs = b_hR * self.parameters["h_R"]
+        self._b = b_hR * self.parameters["h_R"]
 
         c_only = {}
         for i in range(3):
             c_only[f"m{i+1}"] = self._ms[i]
             c_only[f"a{i+1}"] = self._as[i]
-            c_only[f"b{i+1}"] = self._bs.value
+            c_only[f"b{i+1}"] = self._b.value
 
         self._setup_wrapper(c_only)
 
@@ -606,7 +606,7 @@ class MN3ExponentialDiskPotential(CPotentialBase):
             pots[name] = MiyamotoNagaiPotential(
                 m=self._ms[i],
                 a=self._as[i],
-                b=self._bs[i],
+                b=self._b,
                 units=self.units
             )
         return pots
