@@ -4,6 +4,9 @@
 New Features
 ------------
 
+- Added a method to export the internal components of an
+  ``MN3ExponentialDiskPotential()`` to three ``MiyamotoNagaiPotential`` instances.
+
 
 Bug fixes
 ---------
@@ -15,6 +18,7 @@ Bug fixes
 
 - Fixed a bug in ``Orbit.estimate_period()`` that would cause the method to fail with a
   ``UnitsError`` if one orbit returned a nan value for the period.
+
 
 API changes
 -----------
