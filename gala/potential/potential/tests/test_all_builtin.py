@@ -197,6 +197,10 @@ class TestMN3(PotentialTestBase):
     def test_against_sympy(self):
         pass
 
+    def test_get_three(self):
+        pots = self.potential.get_three_potentials()
+        assert len(pots) == 3
+
 
 class TestSatoh(PotentialTestBase):
     potential = p.SatohPotential(units=galactic, m=1.E11, a=6.5, b=0.26)

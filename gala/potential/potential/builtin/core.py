@@ -583,17 +583,33 @@ class MN3ExponentialDiskPotential(CPotentialBase):
 
         param_vec = K @ x
 
-        ms_ = param_vec[:3] * self.parameters["m"].value
-        as_ = param_vec[3:] * self.parameters["h_R"].value
-        b = b_hR * self.parameters["h_R"]
+        self._ms = param_vec[:3] * self.parameters["m"].value
+        self._as = param_vec[3:] * self.parameters["h_R"].value
+        self._bs = b_hR * self.parameters["h_R"]
 
         c_only = {}
         for i in range(3):
-            c_only[f"m{i+1}"] = ms_[i]
-            c_only[f"a{i+1}"] = as_[i]
-            c_only[f"b{i+1}"] = b.value
+            c_only[f"m{i+1}"] = self._ms[i]
+            c_only[f"a{i+1}"] = self._as[i]
+            c_only[f"b{i+1}"] = self._bs.value
 
         self._setup_wrapper(c_only)
+
+    def get_three_potentials(self):
+        """
+        Return three MiyamotoNagaiPotential instances that represent the three internal
+        components of this MN3 potential model
+        """
+        pots = {}
+        for i in range(3):
+            name = f"disk{i+1}"
+            pots[name] = MiyamotoNagaiPotential(
+                m=self._ms[i],
+                a=self._as[i],
+                b=self._bs[i],
+                units=self.units
+            )
+        return pots
 
 
 # ============================================================================
