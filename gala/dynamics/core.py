@@ -801,10 +801,12 @@ class PhaseSpacePosition:
         x, labels = self._plot_prepare(components=components,
                                        units=units)
 
-        kwargs.setdefault('marker', '.')
-        kwargs.setdefault('labels', labels)
         kwargs.setdefault('plot_function', plt.scatter)
-        kwargs.setdefault('autolim', False)
+        if kwargs['plot_function'] in [plt.plot, plt.scatter]:
+            kwargs.setdefault('marker', '.')
+            kwargs.setdefault('labels', labels)
+            kwargs.setdefault('plot_function', plt.scatter)
+            kwargs.setdefault('autolim', False)
 
         fig = plot_projections(x, **kwargs)
 
