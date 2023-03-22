@@ -238,11 +238,17 @@ class MockStreamGenerator:
 
         x_unit = units['length']
         v_unit = units['length'] / units['time']
-        stream_w = MockStream(pos=raw_stream[:, :3].T * x_unit,
-                              vel=raw_stream[:, 3:].T * v_unit,
-                              release_time=stream_w0.release_time,
-                              lead_trail=stream_w0.lead_trail)
-        nbody_w = PhaseSpacePosition(pos=raw_nbody[:, :3].T * x_unit,
-                                     vel=raw_nbody[:, 3:].T * v_unit)
+        stream_w = MockStream(
+            pos=raw_stream[:, :3].T * x_unit,
+            vel=raw_stream[:, 3:].T * v_unit,
+            release_time=stream_w0.release_time,
+            lead_trail=stream_w0.lead_trail,
+            frame=self.hamiltonian.frame
+        )
+        nbody_w = PhaseSpacePosition(
+            pos=raw_nbody[:, :3].T * x_unit,
+            vel=raw_nbody[:, 3:].T * v_unit,
+            frame=self.hamiltonian.frame
+        )
 
         return stream_w, nbody_w
