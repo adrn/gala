@@ -240,7 +240,7 @@ class MockStreamGenerator:
 
         all_nstream = np.zeros(prog_orbit.ntimes, dtype=int)
         for t1, n in zip(unq_t1s, nstream):
-            all_nstream[orbit_t == t1] = n
+            all_nstream[np.isclose(orbit_t, t1)] = n
 
         if output_every is None:
             raw_nbody, raw_stream = mockstream_dop853(
