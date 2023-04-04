@@ -68,6 +68,7 @@ jobs:
 
       - name: Build sdist
         run: |
+          sudo apt-get update
           sudo apt-get install gsl-bin libgsl0-dev
           pip install pep517
           python -m pep517.build -s .

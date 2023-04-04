@@ -861,10 +861,13 @@ class Orbit(PhaseSpacePosition):
         x, labels = self._plot_prepare(components=components,
                                        units=units)
 
-        kwargs.setdefault('marker', '')
-        kwargs.setdefault('linestyle', '-')
-        kwargs.setdefault('labels', labels)
         kwargs.setdefault('plot_function', plt.plot)
+        if kwargs['plot_function'] in [plt.plot, plt.scatter]:
+            kwargs.setdefault('marker', '')
+            kwargs.setdefault('labels', labels)
+
+            if kwargs['plot_function'] == plt.plot:
+                kwargs.setdefault('linestyle', '-')
 
         fig = plot_projections(x, **kwargs)
 
