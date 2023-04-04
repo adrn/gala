@@ -110,7 +110,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
         double[:, ::1] w_final = np.empty((nbodies + total_nstream, ndim))
         double[:, :, ::1] nbody_w = np.empty((ntimes, nbodies, ndim))
 
-        int prog_out = len(time) // 100
+        int prog_out = max(len(time) // 100, 1)
 
     # set the potential objects of the progenitor (index 0) and any other
     # massive bodies included in the stream generation
@@ -231,7 +231,7 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
         int noutput_times = (ntimes-1) // output_every + 1
         double[::1] output_times
 
-        int prog_out = len(t) // 100
+        int prog_out = max(len(t) // 100, 1)
 
     if (ntimes-1) % output_every != 0:
         noutput_times += 1 # +1 for final conditions
