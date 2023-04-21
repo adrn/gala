@@ -61,9 +61,9 @@ class DirectNBody:
                                  "passed in with `particle_potentials`.")
 
             # TODO: this is a MAJOR HACK
-            if w0.shape[0] > 65536:  # see MAX_NBODY in _nbody.pyx
+            if w0.shape[0] > 524288:  # see MAX_NBODY in _nbody.pyx
                 raise NotImplementedError("We currently only support direct "
-                                          "N-body integration for <= 65536 "
+                                          "N-body integration for <= 524288 "
                                           "particles.")
 
         # First, figure out how to get units - first place to check is the arg
