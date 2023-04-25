@@ -8,21 +8,26 @@
 # Third-party
 import numpy as np
 
+from ...integrate.timespec import parse_time_specification
 from ...potential import Hamiltonian, NullPotential, StaticFrame
 from ...units import UnitSystem
 from ...util import atleast_2d
-from ...integrate.timespec import parse_time_specification
 from .. import Orbit, PhaseSpacePosition
-
 from .nbody import direct_nbody_dop853, nbody_acceleration
 
-__all__ = ['DirectNBody']
+__all__ = ["DirectNBody"]
 
 
 class DirectNBody:
-
-    def __init__(self, w0, particle_potentials, external_potential=None,
-                 frame=None, units=None, save_all=True):
+    def __init__(
+        self,
+        w0,
+        particle_potentials,
+        external_potential=None,
+        frame=None,
+        units=None,
+        save_all=True,
+    ):
         """Perform orbit integration using direct N-body forces between
         particles, optionally in an external background potential.
 
@@ -50,21 +55,27 @@ class DirectNBody:
 
         """
         if not isinstance(w0, PhaseSpacePosition):
-            raise TypeError("Initial conditions `w0` must be a "
-                            "gala.dynamics.PhaseSpacePosition object, "
-                            "not '{}'".format(w0.__class__.__name__))
+            raise TypeError(
+                "Initial conditions `w0` must be a "
+                "gala.dynamics.PhaseSpacePosition object, "
+                "not '{}'".format(w0.__class__.__name__)
+            )
 
         if len(w0.shape) > 0:
             if w0.shape[0] != len(particle_potentials):
-                raise ValueError("The number of initial conditions in `w0` must"
-                                 " match the number of particle potentials "
-                                 "passed in with `particle_potentials`.")
+                raise ValueError(
+                    "The number of initial conditions in `w0` must"
+                    " match the number of particle potentials "
+                    "passed in with `particle_potentials`."
+                )
 
             # TODO: this is a MAJOR HACK
             if w0.shape[0] > 524288:  # see MAX_NBODY in _nbody.pyx
-                raise NotImplementedError("We currently only support direct "
-                                          "N-body integration for <= 524288 "
-                                          "particles.")
+                raise NotImplementedError(
+                    "We currently only support direct "
+                    "N-body integration for <= 524288 "
+                    "particles."
+                )
 
         # First, figure out how to get units - first place to check is the arg
         if units is None:
@@ -80,11 +91,13 @@ class DirectNBody:
 
         # Now, if units are still None, raise an error!
         if units is None:
-            raise ValueError("Could not determine units from input! You must "
-                             "either (1) pass in the unit system with `units`,"
-                             "(2) set the units on one of the "
-                             "particle_potentials, OR (3) pass in an "
-                             "`external_potential` with valid units.")
+            raise ValueError(
+                "Could not determine units from input! You must "
+                "either (1) pass in the unit system with `units`,"
+                "(2) set the units on one of the "
+                "particle_potentials, OR (3) pass in an "
+                "`external_potential` with valid units."
+            )
         if not isinstance(units, UnitSystem):
             units = UnitSystem(units)
 
@@ -112,12 +125,13 @@ class DirectNBody:
         self.particle_potentials = _particle_potentials
         self.save_all = save_all
 
-        self.H = Hamiltonian(self.external_potential,
-                             frame=self.frame)
+        self.H = Hamiltonian(self.external_potential, frame=self.frame)
         if not self.H.c_enabled:
-            raise ValueError("Input potential must be C-enabled: one or more "
-                             "components in the input external potential are "
-                             "Python-only.")
+            raise ValueError(
+                "Input potential must be C-enabled: one or more "
+                "components in the input external potential are "
+                "Python-only."
+            )
 
         self.w0 = w0
 
@@ -132,32 +146,29 @@ class DirectNBody:
 
     def _cache_w0(self):
         # cache the position and velocity / prepare the initial conditions
-        self._pos = atleast_2d(self.w0.xyz.decompose(self.units).value,
-                               insert_axis=1)
-        self._vel = atleast_2d(self.w0.v_xyz.decompose(self.units).value,
-                               insert_axis=1)
+        self._pos = atleast_2d(self.w0.xyz.decompose(self.units).value, insert_axis=1)
+        self._vel = atleast_2d(self.w0.v_xyz.decompose(self.units).value, insert_axis=1)
         self._c_w0 = np.ascontiguousarray(np.vstack((self._pos, self._vel)).T)
 
     def __repr__(self):
         if self.w0.shape:
-            return "<{} bodies={}>".format(self.__class__.__name__,
-                                           self.w0.shape[0])
+            return "<{} bodies={}>".format(self.__class__.__name__, self.w0.shape[0])
         else:
             return "<{} bodies=1>".format(self.__class__.__name__)
 
-    def _nbody_acceleration(self, t=0.):
+    def _nbody_acceleration(self, t=0.0):
         """
         Compute the N-body acceleration at the location of each body
         """
         nbody_acc = nbody_acceleration(self._c_w0, t, self.particle_potentials)
         return nbody_acc.T
 
-    def acceleration(self, t=0.):
+    def acceleration(self, t=0.0):
         """
         Compute the acceleration at the location of each N body, including the
         external potential.
         """
-        nbody_acc = self._nbody_acceleration(t=t) * self.units['acceleration']
+        nbody_acc = self._nbody_acceleration(t=t) * self.units["acceleration"]
         ext_acc = self.external_potential.acceleration(self.w0, t=t)
         return nbody_acc + ext_acc
 
@@ -184,27 +195,49 @@ class DirectNBody:
         # Prepare the time-stepping array
         t = parse_time_specification(self.units, **time_spec)
 
-        ws = direct_nbody_dop853(self._c_w0, t, self.H,
-                                 self.particle_potentials,
-                                 save_all=self.save_all)
+        # Reorganize orbits so that massive bodies are first:
+        front_idx = []
+        front_pp = []
+        end_idx = []
+        end_pp = []
+        for i, pp in enumerate(self.particle_potentials):
+            if not isinstance(pp, NullPotential):
+                front_idx.append(i)
+                front_pp.append(pp)
+            else:
+                end_idx.append(i)
+                end_pp.append(pp)
+        idx = np.array(front_idx + end_idx)
+        pps = front_pp + end_pp
+
+        reorg_w0 = np.ascontiguousarray(self._c_w0[idx])
+
+        ws = direct_nbody_dop853(reorg_w0, t, self.H, pps, save_all=self.save_all)
 
         if self.save_all:
-            pos = np.rollaxis(np.array(ws[..., :3]), axis=2)
+            pos = np.rollaxis(np.array(ws[..., :3]), axis=2)  # should this be axis=-1?
             vel = np.rollaxis(np.array(ws[..., 3:]), axis=2)
 
             orbits = Orbit(
-                pos=pos * self.units['length'],
-                vel=vel * self.units['length'] / self.units['time'],
-                t=t * self.units['time'],
-                hamiltonian=self.H)
+                pos=pos * self.units["length"],
+                vel=vel * self.units["length"] / self.units["time"],
+                t=t * self.units["time"],
+                hamiltonian=self.H,
+            )
 
         else:
             pos = np.array(ws[..., :3]).T
             vel = np.array(ws[..., 3:]).T
 
             orbits = PhaseSpacePosition(
-                pos=pos * self.units['length'],
-                vel=vel * self.units['length'] / self.units['time'],
-                frame=self.frame)
+                pos=pos * self.units["length"],
+                vel=vel * self.units["length"] / self.units["time"],
+                frame=self.frame,
+            )
 
-        return orbits
+        # Reorder orbits:
+        remap_idx = np.zeros((orbits.shape[-1], orbits.shape[-1]), dtype=int)
+        remap_idx[idx, np.arange(orbits.shape[-1])] = 1
+        _, undo_idx = np.where(remap_idx == 1)
+
+        return orbits[..., undo_idx]
