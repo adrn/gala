@@ -47,3 +47,8 @@ extern double c_mass_enclosed(CPotential *p, double t, double *q, double G, doub
 // TODO: move this elsewhere?
 void c_nbody_acceleration(CPotential **pots, double t, double *qp,
                           int norbits, int nbody, int ndim, double *acc);
+void c_nbody_gradient_symplectic(
+    CPotential **pots, double t, double *q,
+    double *nbody_q, int nbody, int nbody_i,
+    int ndim, double *grad
+);

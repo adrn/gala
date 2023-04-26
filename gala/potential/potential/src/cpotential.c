@@ -226,3 +226,29 @@ void c_nbody_acceleration(CPotential **pots, double t, double *qp,
         }
     }
 }
+
+// TODO: this is a hack to get nbody leapfrog working
+void c_nbody_gradient_symplectic(
+    CPotential **pots, double t, double *w,
+    double *nbody_w, int nbody, int nbody_i,
+    int ndim, double *grad
+) {
+    int i, j, k;
+    CPotential *body_pot;
+    double f2[ndim];
+
+    for (j=0; j < nbody; j++) { // the particles generating force
+        body_pot = pots[j];
+
+        if ((body_pot->null == 1) || (j == nbody_i))
+            continue;
+
+        for (i=0; i < body_pot->n_components; i++) {
+            (body_pot->q0)[i] = &nbody_w[j * 2 * ndim]; // p-s ndim
+        }
+
+        c_gradient(body_pot, t, w, &f2[0]);
+        for (k=0; k < ndim; k++)
+            grad[k] += f2[k];
+    }
+}
