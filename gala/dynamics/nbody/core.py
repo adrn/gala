@@ -9,6 +9,7 @@
 import numpy as np
 
 from ...integrate.cyintegrators.leapfrog import leapfrog_integrate_nbody
+from ...integrate.cyintegrators.ruth4 import ruth4_integrate_nbody
 from ...integrate.timespec import parse_time_specification
 from ...potential import Hamiltonian, NullPotential, StaticFrame
 from ...units import UnitSystem
@@ -192,7 +193,11 @@ class DirectNBody:
             The orbits of the particles.
 
         """
-        from gala.integrate import DOPRI853Integrator, LeapfrogIntegrator
+        from gala.integrate import (
+            DOPRI853Integrator,
+            LeapfrogIntegrator,
+            Ruth4Integrator,
+        )
 
         if Integrator is None:
             Integrator = DOPRI853Integrator
@@ -219,6 +224,10 @@ class DirectNBody:
 
         if Integrator == LeapfrogIntegrator:
             _, ws = leapfrog_integrate_nbody(
+                self.H, reorg_w0, t, pps, store_all=int(self.save_all)
+            )
+        elif Integrator == Ruth4Integrator:
+            _, ws = ruth4_integrate_nbody(
                 self.H, reorg_w0, t, pps, store_all=int(self.save_all)
             )
         elif Integrator == DOPRI853Integrator:
@@ -252,6 +261,10 @@ class DirectNBody:
 
         # Reorder orbits:
         remap_idx = np.zeros((orbits.shape[-1], orbits.shape[-1]), dtype=int)
+        remap_idx[idx, np.arange(orbits.shape[-1])] = 1
+        _, undo_idx = np.where(remap_idx == 1)
+
+        return orbits[..., undo_idx]
         remap_idx[idx, np.arange(orbits.shape[-1])] = 1
         _, undo_idx = np.where(remap_idx == 1)
 
