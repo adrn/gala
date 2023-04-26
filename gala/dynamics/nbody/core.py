@@ -8,6 +8,7 @@
 # Third-party
 import numpy as np
 
+from ...integrate.cyintegrators.leapfrog import leapfrog_integrate_nbody
 from ...integrate.timespec import parse_time_specification
 from ...potential import Hamiltonian, NullPotential, StaticFrame
 from ...units import UnitSystem
@@ -172,7 +173,7 @@ class DirectNBody:
         ext_acc = self.external_potential.acceleration(self.w0, t=t)
         return nbody_acc + ext_acc
 
-    def integrate_orbit(self, **time_spec):
+    def integrate_orbit(self, Integrator=None, Integrator_kwargs=dict(), **time_spec):
         """
         Integrate the initial conditions in the combined external potential
         plus N-body forces.
@@ -191,6 +192,10 @@ class DirectNBody:
             The orbits of the particles.
 
         """
+        from gala.integrate import DOPRI853Integrator, LeapfrogIntegrator
+
+        if Integrator is None:
+            Integrator = DOPRI853Integrator
 
         # Prepare the time-stepping array
         t = parse_time_specification(self.units, **time_spec)
@@ -212,7 +217,17 @@ class DirectNBody:
 
         reorg_w0 = np.ascontiguousarray(self._c_w0[idx])
 
-        ws = direct_nbody_dop853(reorg_w0, t, self.H, pps, save_all=self.save_all)
+        if Integrator == LeapfrogIntegrator:
+            _, ws = leapfrog_integrate_nbody(
+                self.H, reorg_w0, t, pps, store_all=int(self.save_all)
+            )
+        elif Integrator == DOPRI853Integrator:
+            ws = direct_nbody_dop853(reorg_w0, t, self.H, pps, save_all=self.save_all)
+        else:
+            raise NotImplementedError(
+                "N-body integration is currently not supported with the {Integrator} "
+                "integrator class"
+            )
 
         if self.save_all:
             pos = np.rollaxis(np.array(ws[..., :3]), axis=2)  # should this be axis=-1?
