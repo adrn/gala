@@ -52,7 +52,10 @@ def parse_time_specification(units, dt=None, n_steps=None, t1=None, t2=None, t=N
 
     else:
         if dt is None and (t1 is None or t2 is None or n_steps is None):
-            raise ValueError("Invalid spec. See docstring.")
+            raise ValueError(
+                "Invalid specification of integration time. See docstring for more "
+                "information."
+            )
 
         # dt, n_steps[, t1] : (numeric, int[, numeric])
         elif dt is not None and n_steps is not None:
@@ -60,6 +63,7 @@ def parse_time_specification(units, dt=None, n_steps=None, t1=None, t2=None, t=N
                 t1 = 0.0
 
             times = parse_time_specification(units, dt=np.ones(n_steps + 1) * dt, t1=t1)
+
         # dt, t1, t2 : (numeric, numeric, numeric)
         elif dt is not None and t1 is not None and t2 is not None:
             if t2 < t1 and dt < 0:
@@ -86,10 +90,13 @@ def parse_time_specification(units, dt=None, n_steps=None, t1=None, t2=None, t=N
                 return np.array(times, dtype=np.float64)
 
             else:
-                raise ValueError(
-                    "If t2 < t1, dt must be negative. If t1 < t2, "
-                    "dt should be positive."
-                )
+                if dt == 0:
+                    raise ValueError("dt must be non-zero.")
+                else:
+                    raise ValueError(
+                        "If t2 < t1, dt must be negative. If t1 < t2, dt must be "
+                        "positive."
+                    )
 
         # dt, t1 : (array_like, numeric)
         elif isinstance(dt, np.ndarray) and t1 is not None:
