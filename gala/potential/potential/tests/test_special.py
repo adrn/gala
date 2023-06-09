@@ -48,7 +48,3 @@ class TestBovyMWPotential2014(CompositePotentialTestBase):
         super().setup_method()
 
     check_finite_at_origin = False
-
-    def setup_method(self):
-        self.potential = BovyMWPotential2014()
-        super().setup_method()
