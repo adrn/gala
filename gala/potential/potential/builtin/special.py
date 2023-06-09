@@ -5,15 +5,21 @@ import numpy as np
 # Project
 from gala.potential.potential.builtin.core import (
     HernquistPotential,
-    MiyamotoNagaiPotential,
     LogarithmicPotential,
+    MiyamotoNagaiPotential,
+    MN3ExponentialDiskPotential,
     NFWPotential,
     PowerLawCutoffPotential,
 )
 from gala.potential.potential.ccompositepotential import CCompositePotential
 from gala.units import galactic
 
-__all__ = ["LM10Potential", "MilkyWayPotential", "BovyMWPotential2014"]
+__all__ = [
+    "LM10Potential",
+    "MilkyWayPotential",
+    "MilkyWayPotential2022",
+    "BovyMWPotential2014",
+]
 
 
 class LM10Potential(CCompositePotential):
@@ -46,7 +52,6 @@ class LM10Potential(CCompositePotential):
     """
 
     def __init__(self, units=galactic, disk=dict(), bulge=dict(), halo=dict()):
-
         default_disk = dict(m=1e11 * u.Msun, a=6.5 * u.kpc, b=0.26 * u.kpc)
         default_bulge = dict(m=3.4e10 * u.Msun, c=0.7 * u.kpc)
         default_halo = dict(
@@ -108,10 +113,7 @@ class MilkyWayPotential(CCompositePotential):
     components added at bottom of init.
     """
 
-    def __init__(
-        self, units=galactic, disk=None, halo=None, bulge=None, nucleus=None
-    ):
-
+    def __init__(self, units=galactic, disk=None, halo=None, bulge=None, nucleus=None):
         default_disk = dict(m=6.8e10 * u.Msun, a=3.0 * u.kpc, b=0.28 * u.kpc)
         default_bulge = dict(m=5e9 * u.Msun, c=1.0 * u.kpc)
         default_nucl = dict(m=1.71e9 * u.Msun, c=0.07 * u.kpc)
@@ -154,6 +156,81 @@ class MilkyWayPotential(CCompositePotential):
         self.lock = True
 
 
+class MilkyWayPotential2022(CCompositePotential):
+    """
+    A mass-model for the Milky Way consisting of a spherical nucleus and bulge, a
+    3-component sum of Miyamoto-Nagai disks to represent an exponential disk, and a
+    spherical NFW dark matter halo.
+
+    The disk model is fit to the Eilers et al. 2019 rotation curve for the radial
+    dependence, and the shape of the phase-space spiral in the solar neighborhood is
+    used to set the vertical structure in Darragh-Ford et al. 2023.
+
+    Other parameters are fixed by fitting to a compilation of recent mass measurements
+    of the Milky Way, from 10 pc to ~150 kpc.
+
+    Parameters
+    ----------
+    units : `~gala.units.UnitSystem` (optional)
+        Set of non-reducable units that specify (at minimum) the
+        length, mass, time, and angle units.
+    disk : dict (optional)
+        Parameters to be passed to the
+        :class:`~gala.potential.MN3ExponentialDiskPotential`.
+    bulge : dict (optional)
+        Parameters to be passed to the :class:`~gala.potential.HernquistPotential`.
+    halo : dict (optional)
+        Parameters to be passed to the :class:`~gala.potential.NFWPotential`.
+    nucleus : dict (optional)
+        Parameters to be passed to the :class:`~gala.potential.HernquistPotential`.
+
+    Note: in subclassing, order of arguments must match order of potential
+    components added at bottom of init.
+    """
+
+    def __init__(self, units=galactic, disk=None, halo=None, bulge=None, nucleus=None):
+        default_disk = dict(m=4.7717e10 * u.Msun, h_R=2.6 * u.kpc, h_z=0.3 * u.kpc)
+        default_bulge = dict(m=5e9 * u.Msun, c=1.0 * u.kpc)
+        default_nucl = dict(m=1.8142e9 * u.Msun, c=0.0688867 * u.kpc)
+        default_halo = dict(m=5.5427e11 * u.Msun, r_s=15.626 * u.kpc)
+
+        if disk is None:
+            disk = dict()
+
+        if halo is None:
+            halo = dict()
+
+        if bulge is None:
+            bulge = dict()
+
+        if nucleus is None:
+            nucleus = dict()
+
+        for k, v in default_disk.items():
+            if k not in disk:
+                disk[k] = v
+
+        for k, v in default_bulge.items():
+            if k not in bulge:
+                bulge[k] = v
+
+        for k, v in default_halo.items():
+            if k not in halo:
+                halo[k] = v
+
+        for k, v in default_nucl.items():
+            if k not in nucleus:
+                nucleus[k] = v
+
+        super().__init__()
+
+        self["disk"] = MN3ExponentialDiskPotential(units=units, **disk)
+        self["bulge"] = HernquistPotential(units=units, **bulge)
+        self["nucleus"] = HernquistPotential(units=units, **nucleus)
+        self["halo"] = NFWPotential(units=units, **halo)
+        self.lock = True
+
+
 class BovyMWPotential2014(CCompositePotential):
     """
     An implementation of the ``MWPotential2014``
@@ -188,13 +265,8 @@ class BovyMWPotential2014(CCompositePotential):
     """
 
     def __init__(self, units=galactic, disk=None, halo=None, bulge=None):
-
-        default_disk = dict(
-            m=68193902782.346756 * u.Msun, a=3.0 * u.kpc, b=280 * u.pc
-        )
-        default_bulge = dict(
-            m=4501365375.06545 * u.Msun, alpha=1.8, r_c=1.9 * u.kpc
-        )
+        default_disk = dict(m=68193902782.346756 * u.Msun, a=3.0 * u.kpc, b=280 * u.pc)
+        default_bulge = dict(m=4501365375.06545 * u.Msun, alpha=1.8, r_c=1.9 * u.kpc)
         default_halo = dict(m=4.3683325e11 * u.Msun, r_s=16 * u.kpc)
 
         if disk is None:

@@ -2,9 +2,6 @@
     times into an array of times.
 """
 
-# Standard library
-from warnings import warn
-
 # Third-party
 import numpy as np
 

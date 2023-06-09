@@ -1,23 +1,51 @@
-__all__ = ['UnitSystem', 'DimensionlessUnitSystem',
-           'galactic', 'dimensionless', 'solarsystem']
+__all__ = [
+    "UnitSystem",
+    "DimensionlessUnitSystem",
+    "galactic",
+    "dimensionless",
+    "solarsystem",
+]
+
+import astropy.constants as const
 
 # Third-party
 import astropy.units as u
 from astropy.units.physical import _physical_unit_mapping
-import astropy.constants as const
 
-_greek_letters = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta",
-                  "theta", "iota", "kappa", "lambda", "mu", "nu", "xi", "pi",
-                  "o", "rho", "sigma", "tau", "upsilon", "phi", "chi", "psi",
-                  "omega"]
+_greek_letters = [
+    "alpha",
+    "beta",
+    "gamma",
+    "delta",
+    "epsilon",
+    "zeta",
+    "eta",
+    "theta",
+    "iota",
+    "kappa",
+    "lambda",
+    "mu",
+    "nu",
+    "xi",
+    "pi",
+    "o",
+    "rho",
+    "sigma",
+    "tau",
+    "upsilon",
+    "phi",
+    "chi",
+    "psi",
+    "omega",
+]
 
 
 class UnitSystem:
     _required_physical_types = [
-        u.get_physical_type('length'),
-        u.get_physical_type('time'),
-        u.get_physical_type('mass'),
-        u.get_physical_type('angle')
+        u.get_physical_type("length"),
+        u.get_physical_type("time"),
+        u.get_physical_type("mass"),
+        u.get_physical_type("angle"),
     ]
 
     def __init__(self, units, *args):
@@ -47,7 +75,7 @@ class UnitSystem:
         to this object will be composed out of the base units::
 
             >>> usys = UnitSystem(u.m, u.s, u.kg, u.radian)
-            >>> usys['energy']
+            >>> usys['energy']  # doctest: +SKIP
             Unit("kg m2 / s2")
 
         However, custom representations for composite units can also be
@@ -81,7 +109,7 @@ class UnitSystem:
         for unit in units:
             if not isinstance(unit, u.UnitBase):  # hopefully a quantity
                 q = unit
-                new_unit = u.def_unit(f'{q!s}', q)
+                new_unit = u.def_unit(f"{q!s}", q)
                 unit = new_unit
 
             typ = unit.physical_type
@@ -91,8 +119,9 @@ class UnitSystem:
 
         for phys_type in self._required_physical_types:
             if phys_type not in self._registry:
-                raise ValueError("You must specify a unit for the physical type"
-                                 f"'{phys_type}'")
+                raise ValueError(
+                    "You must specify a unit for the physical type" f"'{phys_type}'"
+                )
             self._core_units.append(self._registry[phys_type])
 
     def __getitem__(self, key):
@@ -109,11 +138,12 @@ class UnitSystem:
                     break
 
             if unit is None:
-                raise ValueError(f"Physical type '{key}' doesn't exist in unit "
-                                 "registry.")
+                raise ValueError(
+                    f"Physical type '{key}' doesn't exist in unit " "registry."
+                )
 
             unit = unit.decompose(self._core_units)
-            unit._scale = 1.
+            unit._scale = 1.0
             return unit
 
     def __len__(self):
@@ -170,8 +200,10 @@ class UnitSystem:
         try:
             ptype = q.unit.physical_type
         except AttributeError:
-            raise TypeError("Object must be an astropy.units.Quantity, not "
-                            f"a '{q.__class__.__name__}'.")
+            raise TypeError(
+                "Object must be an astropy.units.Quantity, not "
+                f"a '{q.__class__.__name__}'."
+            )
 
         if ptype in self._registry:
             return q.to(self._registry[ptype])
@@ -203,8 +235,9 @@ class UnitSystem:
         try:
             c = getattr(const, name)
         except AttributeError:
-            raise ValueError(f"Constant name '{name}' doesn't exist in "
-                             "astropy.constants")
+            raise ValueError(
+                f"Constant name '{name}' doesn't exist in " "astropy.constants"
+            )
 
         return c.decompose(self._core_units).value
 
@@ -214,9 +247,7 @@ class DimensionlessUnitSystem(UnitSystem):
 
     def __init__(self):
         self._core_units = [u.one]
-        self._registry = {
-            'dimensionless': u.one
-        }
+        self._registry = {"dimensionless": u.one}
 
     def __getitem__(self, key):
         return u.one
@@ -232,8 +263,7 @@ class DimensionlessUnitSystem(UnitSystem):
 
 
 # define galactic unit system
-galactic = UnitSystem(u.kpc, u.Myr, u.Msun, u.radian,
-                      u.km/u.s)
+galactic = UnitSystem(u.kpc, u.Myr, u.Msun, u.radian, u.km / u.s)
 
 # solar system units
 solarsystem = UnitSystem(u.au, u.M_sun, u.yr, u.radian)
