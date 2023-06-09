@@ -7,6 +7,9 @@ New Features
 - Added a method to export the internal components of an
   ``MN3ExponentialDiskPotential()`` to three ``MiyamotoNagaiPotential`` instances.
 
+- Added a new Milky Way potential model: ``MilkyWayPotential2022``, which is based on
+  updated measurements of the disk structure and circular velocity curve of the disk.
+
 
 Bug fixes
 ---------
