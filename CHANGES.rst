@@ -4,6 +4,12 @@
 New Features
 ------------
 
+- Added stream coordinate frames from Shipp et al 2019:
+  ``JhelumShipp19``, ``AtlasShipp19``, ``ChenabShipp19``, ``ElquiShipp19``,
+  ``IndusShipp19``, ``MolongloShipp19``, ``PhoenixShipp19``, ``RaviShipp19``,
+  ``TurbioShipp19``, ``TurranburraShipp19``, ``WambelongShipp19``,
+  ``WillkaYakuShipp2019``.
+
 - Added a method to export the internal components of an
   ``MN3ExponentialDiskPotential()`` to three ``MiyamotoNagaiPotential`` instances.
 
