@@ -55,16 +55,15 @@ cdef extern from "stdio.h":
     ctypedef struct FILE
     FILE *stdout
 
-cdef void solout(long nr, double xold, double x, double* y, unsigned n, int* irtrn):
-    # TODO: see here for example in FORTRAN: http://www.unige.ch/~hairer/prog/nonstiff/dr_dop853.f
-    pass
 
 cdef void dop853_step(CPotential *cp, CFrameType *cf, FcnEqDiff F,
                       double *w, double t1, double t2, double dt0,
                       int ndim, int norbits, int nbody, void *args,
                       double atol, double rtol, int nmax) except *:
 
-    cdef int res
+    cdef:
+        int res
+        SolTrait solout = NULL
 
     res = dop853(ndim*norbits, F,
                  cp, cf, norbits, nbody, args, t1, w, t2,

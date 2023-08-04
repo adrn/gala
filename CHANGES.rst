@@ -22,6 +22,7 @@ Bug fixes
 - Fixed a bug in ``Orbit.estimate_period()`` that would cause the method to fail with a
   ``UnitsError`` if one orbit returned a nan value for the period.
 
+- Fixed a bug when compiling the ``dop853`` integrator.
 
 API changes
 -----------
