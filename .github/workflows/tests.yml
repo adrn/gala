@@ -86,7 +86,7 @@ jobs:
         id: setup-ffmpeg
 
       - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
-        if: "!startsWith(matrix.os, 'windows')"
+        if: !startsWith(matrix.os, 'windows')
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
