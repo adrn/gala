@@ -10,6 +10,8 @@ New Features
 - Added a new Milky Way potential model: ``MilkyWayPotential2022``, which is based on
   updated measurements of the disk structure and circular velocity curve of the disk.
 
+- Added the ability to use leapfrog integration within the ``DirectNBody`` integrator.
+
 
 Bug fixes
 ---------

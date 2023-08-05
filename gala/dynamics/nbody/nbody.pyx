@@ -20,7 +20,7 @@ np.import_array()
 from libc.math cimport sqrt
 from cpython.exc cimport PyErr_CheckSignals
 
-from ...potential import Hamiltonian
+from ...potential import Hamiltonian, NullPotential
 from ...potential.potential.cpotential cimport (CPotentialWrapper,
                                                 MAX_N_COMPONENTS, CPotential)
 from ...potential.frame.cframe cimport CFrameWrapper
@@ -58,9 +58,13 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
     By default, this integration procedure stores the full time series of all
     orbits, but this may use a lot of memory. If you just want to store the
     final state of the orbits, pass ``save_all=False``.
+
+    NOTE: This assumes that all massive bodies are organized at the start of w0 and
+    particle_potentials, and all test particles are *after* the massive bodies.
     """
     cdef:
         unsigned nparticles = w0.shape[0]
+        unsigned nbody = 0
         unsigned ndim = w0.shape[1]
         unsigned ntimes = len(t)
 
@@ -85,6 +89,10 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
             f"of particle potentials passed in ({nparticles} vs. "
             f"{len(particle_potentials)}).")
 
+    for pot in particle_potentials:
+        if not isinstance(pot, NullPotential):
+            nbody += 1
+
     # Extract the CPotential objects from the particle potentials.
     for i in range(nparticles):
         c_particle_potentials[i] = &(<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
@@ -92,18 +100,17 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
     # We need a void pointer for any other arguments
     args = <void *>(&c_particle_potentials[0])
 
-    # TODONOW: fix below - need to pass in how many massive particles, total number of orbits and
     if save_all:
         all_w = dop853_helper_save_all(&cp, &cf,
                                        <FcnEqDiff> Fwrapper_direct_nbody,
                                        w0, t,
-                                       ndim, nparticles, nparticles, args,
+                                       ndim, nparticles, nbody, args,
                                        ntimes, atol, rtol, nmax, 0)
     else:
         all_w = dop853_helper(&cp, &cf,
                               <FcnEqDiff> Fwrapper_direct_nbody,
                               w0, t,
-                              ndim, nparticles, nparticles, args, ntimes,
+                              ndim, nparticles, nbody, args, ntimes,
                               atol, rtol, nmax, 0)
         all_w = np.array(all_w).reshape(nparticles, ndim)
 
