@@ -1,10 +1,198 @@
+[project]
+name = "gala"
+authors = [
+    {name = "Adrian Price-Whelan", email = "adrianmpw@gmail.com"},
+]
+description = "Galactic dynamics in Python"
+readme = "README.rst"
+requires-python = ">=3.9"
+keywords = ["astronomy", "dynamics"]
+license = {file = "LICENSE"}
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering :: Astronomy"
+]
+dependencies = [
+    "numpy>=1.20",
+    "scipy>=1.8",
+    "astropy>=5.0",
+    "pyyaml",
+    "cython>=0.29"
+]
+dynamic = ["version"]
+
+[project.urls]
+Documentation = "https://gala.adrian.pw"
+Repository = "https://github.com/adrn/gala.git"
+
+[project.optional-dependencies]
+shared = [
+    "matplotlib",
+    "numexpr",
+    "h5py",
+    "tqdm",
+]
+test = [
+    "gala[shared]",
+    "pytest",
+    "pytest-astropy",
+]
+extra = [
+    "galpy",
+    "sympy",
+    "twobody",
+]
+docs = [
+    "gala[shared,extra]",
+    "numpydoc",
+    "IPython",
+    "nbsphinx",
+    "ipython_genutils",
+    "pydata_sphinx_theme",
+    "sphinx",
+    "sphinxcontrib-bibtex",
+    "sphinx-astrorefs",
+    "sphinx_automodapi",
+    "sphinx_astropy",
+    "rtds_action",
+    "cmastro",
+    "requests"
+]
+tutorials = [
+    "gala[shared,extra]",
+    "cmastro",
+    "IPython",
+    "nbconvert",
+    "ipython_genutils",
+    "jupyter_client",
+    "ipykernel",
+    "jupytext",
+    "pyia",
+    "astroquery"
+]
+
 [build-system]
+requires = [
+    "setuptools>=42",
+    "wheel",
+    "setuptools_scm",
+    "extension-helpers",
+    "oldest-supported-numpy",
+    "cython"
+]
+build-backend = "setuptools.build_meta"
 
-requires = ["setuptools",
-            "setuptools_scm",
-            "wheel",
-            "extension-helpers",
-            "oldest-supported-numpy",
-            "cython"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gala"]
 
-build-backend = 'setuptools.build_meta'
+[tool.setuptools.package-data]
+"*" = ["*.c"]
+"gala" = ["extra_compile_macros.h", "cconfig.pyx", "*.c"]
+"gala.coordinates.tests" = ["*.txt", "*.npy", "SgrCoord_data", "*.csv"]
+"gala.dynamics" = ["*/*.pyx", "*/*.pxd", "*/*.h", "nbody/nbody_helper.h"]
+"gala.integrate" = [
+    "*/*.pyx",
+    "*/*.pxd",
+    "cyintegrators/*.c",
+    "cyintegrators/dopri/*.c",
+    "cyintegrators/dopri/*.h"
+]
+"gala.potential" = [
+    "src/funcdefs.h",
+    "potential/src/cpotential.h",
+    "frame/src/cframe.h",
+    "*/*.pyx",
+    "*/*.pxd",
+    "scf/tests/data/*",
+    "potential/tests/*.yml",
+    "potential/tests/*.pot",
+    "potential/tests/*.fits"
+]
+
+[tool.pytest]
+testpaths = ["gala", "docs"]
+astropy_header = true
+doctest_plus = "enabled"
+text_file_format = "rst"
+addopts = ["--doctest-rst"]
+norecursedirs = [
+    "docs/tutorials/*",
+    "docs/_*"
+]
+doctest_norecursedirs = [
+    "docs/tutorials/*",
+    "docs/_*"
+]
+
+[tool.coverage.run]
+omit = [
+    "gala/_astropy_init*",
+    "gala/conftest*",
+    "gala/cython_version*",
+    "gala/setup_package*",
+    "gala/*/setup_package*",
+    "gala/*/*/setup_package*",
+    "gala/tests/*",
+    "gala/*/tests/*",
+    "gala/*/*/tests/*",
+    "gala/version*",
+    "gala/dynamics/_genfunc/*",
+    "gala/coordinates/poincarepolar.py",
+    "gala/coordinates/velocity_frame_transforms.py",
+    "*/gala/_astropy_init*",
+    "*/gala/conftest*",
+    "*/gala/cython_version*",
+    "*/gala/setup_package*",
+    "*/gala/*/setup_package*",
+    "*/gala/*/*/setup_package*",
+    "*/gala/tests/*",
+    "*/gala/*/tests/*",
+    "*/gala/*/*/tests/*",
+    "*/gala/version*",
+    "*/gala/dynamics/_genfunc/*",
+    "*/gala/coordinates/poincarepolar.py",
+    "*/gala/coordinates/velocity_frame_transforms.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    # Have to re-enable the standard pragma
+    "pragma: no cover",
+    # Don't complain about packages we have installed
+    "except ImportError",
+    # Don't complain if tests don't hit assertions
+    "raise AssertionError",
+    "raise NotImplementedError",
+    # Don't complain about script hooks
+    "def main\\(.*\\):",
+    # Ignore branches that don't pertain to this version of Python
+    "pragma: py{ignore_python_version}",
+    # Don't complain about IPython completion helper
+    "def _ipython_key_completions_"
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F"]
+force-exclude = true
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
+"test*.py" = ["F841"]
+"docs/tutorials/*" = ["E703"]
