@@ -1,0 +1,25 @@
+[flake8]
+max-line-length = 100
+per-file-ignores =
+    # imported but unused
+    __init__.py: F401, F403
+    # local variable assigned but never used
+    test*.py: F841
+    helpers.py: F841
+    docs/tutorials/*: E703
+ignore =
+    E203
+    E226
+    E402
+    E741
+    W503
+    W504
+exclude =
+    extern
+    sphinx
+    *parsetab.py
+    conftest.py
+    docs/conf.py
+    setup.py
+    gala/dynamics/actionangle/_genfunc
+    gala/coordinates/tests/helpers.py
