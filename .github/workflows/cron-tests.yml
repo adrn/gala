@@ -19,7 +19,7 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, macos-latest]  # TODO: re-enable windows-latest
-        python: ['3.8', '3.9', '3.10', '3.11']
+        python: ['3.9', '3.10', '3.11']
         include:
           # These set options for each python version. So, for example, when any
           # python 3.11 job in the matrix runs, it should use this toxenv
@@ -32,8 +32,8 @@ jobs:
           - python: 3.9
             toxenv: py39-test-cov
 
-          - python: 3.8
-            toxenv: py38-test-extradeps
+          - python: 3.11
+            toxenv: py311-test-extradeps
 
     steps:
       - name: Checkout code

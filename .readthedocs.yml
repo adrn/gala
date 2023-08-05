@@ -7,7 +7,7 @@ conda:
   environment: .rtd-environment.yml
 
 python:
-  version: 3.8
+  version: 3.11
   install:
     - method: pip
       path: .

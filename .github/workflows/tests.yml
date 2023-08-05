@@ -23,10 +23,10 @@ jobs:
             python: 3.x
             toxenv: codestyle
 
-          - name: Python 3.9 with minimal dependencies and coverage
+          - name: Python 3.10 with minimal dependencies and coverage
             os: ubuntu-latest
-            python: 3.9
-            toxenv: py39-test-cov
+            python: 3.10
+            toxenv: py310-test-cov
 
           - name: Python 3.9
             os: ubuntu-latest
@@ -55,10 +55,10 @@ jobs:
             python: '3.10'
             toxenv: nogsl
 
-          - name: Python 3.8 with oldest supported version of all dependencies
+          - name: Python 3.9 with oldest supported version of all dependencies
             os: ubuntu-latest
-            python: 3.8
-            toxenv: py38-test-oldestdeps
+            python: 3.9
+            toxenv: py39-test-oldestdeps
 
           # Mac and Windows:
           - name: Python 3.10 standard tests (macOS)
