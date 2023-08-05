@@ -4,12 +4,13 @@ Test the coordinates class that represents the plane of orbit of the Sgr dwarf g
 
 # Third-party
 import astropy.coordinates as coord
+import astropy.table as at
 import astropy.units as u
 from astropy.utils.data import get_pkg_data_filename
 import numpy as np
 
 # This package
-from ..sgr import SagittariusLaw10
+from ..sgr import SagittariusLaw10, SagittariusVasiliev21
 
 
 def test_simple():
@@ -59,3 +60,14 @@ def test_against_David_Law():
 
     sep = sgr_coords.separation(law_sgr_coords).arcsec * u.arcsec
     assert np.all(sep < 1.0 * u.arcsec)
+
+
+def test_v21():
+    filename = get_pkg_data_filename("Vasiliev2020-Sagittarius-subset.csv")
+    test_data = at.Table.read(filename, format="ascii.csv")
+
+    c = coord.SkyCoord(test_data["ra"] * u.deg, test_data["dec"] * u.deg)
+    sgr_c = c.transform_to(SagittariusVasiliev21())
+
+    assert np.allclose(sgr_c.Lambda.degree, test_data["Lambda"], atol=1e-3)
+    assert np.allclose(sgr_c.Beta.degree, test_data["Beta"], atol=1e-3)

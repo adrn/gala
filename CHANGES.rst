@@ -12,6 +12,8 @@ New Features
 
 - Added the ability to use leapfrog integration within the ``DirectNBody`` integrator.
 
+- Added a new coordinate frame for the Vasiliev+2021 Sagittarius stream coordinate
+  system, ``SagittariusVasiliev21``.
 
 Bug fixes
 ---------
