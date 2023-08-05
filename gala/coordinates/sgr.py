@@ -8,8 +8,6 @@ import astropy.coordinates as coord
 import astropy.units as u
 from astropy.coordinates.matrix_utilities import rotation_matrix
 
-from gala.coordinates.greatcircle import get_origin_from_pole_ra0, pole_origin_to_R
-
 __all__ = ["SagittariusLaw10", "SagittariusVasiliev21"]
 
 
