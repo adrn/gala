@@ -1,4 +1,9 @@
-1.7 (unreleased)
+1.7.1 (2023-08-05)
+==================
+
+- Switched build system to use pyproject.toml instead of setup.cfg
+
+1.7 (2023-08-05)
 ================
 
 New Features
