@@ -9,7 +9,7 @@ on:
       - main
 
 env:
-  CIBW_BUILD: "cp38-* cp39-* cp310-* cp311-*"
+  CIBW_BUILD: "cp39-* cp310-* cp311-*"
   CIBW_SKIP: "*-win32 *musllinux*"
   CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
 
