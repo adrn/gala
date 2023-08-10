@@ -6,7 +6,8 @@ on:
       - edited
   pull_request:
     branches:
-      - main
+      # - main
+      - DISABLED
 
 env:
   CIBW_BUILD: "cp39-* cp310-* cp311-*"
