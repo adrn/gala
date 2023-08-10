@@ -33,7 +33,7 @@ void apply_rotate(double *q_in, double *R, int n_dim, int transpose,
 
 void apply_shift_rotate(double *q_in, double *q0, double *R, int n_dim,
                         int transpose, double *q_out) {
-    double tmp[n_dim];
+    double *tmp = calloc(sizeof(double), n_dim);
     int j;
 
     // Shift to the specified origin
@@ -43,13 +43,14 @@ void apply_shift_rotate(double *q_in, double *q0, double *R, int n_dim,
 
     // Apply rotation matrix
     apply_rotate(&tmp[0], R, n_dim, transpose, q_out);
+    free(tmp);
 }
 
 
 double c_potential(CPotential *p, double t, double *qp) {
     double v = 0;
     int i, j;
-    double qp_trans[p->n_dim];
+    double *qp_trans = calloc(sizeof(double), p->n_dim);
 
     for (i=0; i < p->n_components; i++) {
         for (j=0; j < p->n_dim; j++)
@@ -59,6 +60,8 @@ double c_potential(CPotential *p, double t, double *qp) {
         v = v + (p->value)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim);
     }
 
+    free(qp_trans);
+
     return v;
 }
 
@@ -66,7 +69,7 @@ double c_potential(CPotential *p, double t, double *qp) {
 double c_density(CPotential *p, double t, double *qp) {
     double v = 0;
     int i, j;
-    double qp_trans[p->n_dim];
+    double *qp_trans = calloc(sizeof(double), p->n_dim);
 
     for (i=0; i < p->n_components; i++) {
         for (j=0; j < p->n_dim; j++)
@@ -76,14 +79,16 @@ double c_density(CPotential *p, double t, double *qp) {
         v = v + (p->density)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim);
     }
 
+    free(qp_trans);
+
     return v;
 }
 
 
 void c_gradient(CPotential *p, double t, double *qp, double *grad) {
     int i, j;
-    double qp_trans[p->n_dim];
-    double tmp_grad[p->n_dim];
+    double *qp_trans = calloc(sizeof(double), p->n_dim);
+    double *tmp_grad = calloc(sizeof(double), p->n_dim);
 
     for (i=0; i < p->n_dim; i++) {
         grad[i] = 0.;
@@ -103,12 +108,15 @@ void c_gradient(CPotential *p, double t, double *qp, double *grad) {
                          &tmp_grad[0]);
         apply_rotate(&tmp_grad[0], (p->R)[i], p->n_dim, 1, &grad[0]);
     }
+
+    free(qp_trans);
+    free(tmp_grad);
 }
 
 
 void c_hessian(CPotential *p, double t, double *qp, double *hess) {
     int i;
-    double qp_trans[p->n_dim];
+    double *qp_trans = calloc(sizeof(double), p->n_dim);
 
     for (i=0; i < pow(p->n_dim,2); i++) {
         hess[i] = 0.;
@@ -125,7 +133,7 @@ void c_hessian(CPotential *p, double t, double *qp, double *hess) {
         // TODO: here - need to apply inverse rotation to the Hessian!
         // - Hessian calculation for potentials with rotations are disabled
     }
-
+    free(qp_trans);
 }
 
 
@@ -206,7 +214,7 @@ void c_nbody_acceleration(CPotential **pots, double t, double *qp,
     int i, j, k;
     CPotential *body_pot;
     int ps_ndim = 2 * ndim; // 6, for 3D position/velocity
-    double f2[ndim];
+    double *f2 = calloc(sizeof(double), ndim);
 
     for (j=0; j < nbody; j++) { // the particles generating force
         body_pot = pots[j];
@@ -225,6 +233,7 @@ void c_nbody_acceleration(CPotential **pots, double t, double *qp,
             }
         }
     }
+    free(f2);
 }
 
 // TODO: this is a hack to get nbody leapfrog working
@@ -235,7 +244,7 @@ void c_nbody_gradient_symplectic(
 ) {
     int i, j, k;
     CPotential *body_pot;
-    double f2[ndim];
+    double *f2 = calloc(sizeof(double), ndim);
 
     for (j=0; j < nbody; j++) { // the particles generating force
         body_pot = pots[j];
@@ -251,4 +260,5 @@ void c_nbody_gradient_symplectic(
         for (k=0; k < ndim; k++)
             grad[k] += f2[k];
     }
+    free(f2);
 }
