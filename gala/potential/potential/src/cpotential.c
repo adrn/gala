@@ -1,5 +1,6 @@
 #include <math.h>
 #include "cpotential.h"
+#include <stdlib.h>
 
 
 void apply_rotate(double *q_in, double *R, int n_dim, int transpose,
