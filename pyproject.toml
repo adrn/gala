@@ -86,7 +86,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["gala", "gala.*"]
+# include = ["gala", "gala.*"]
+include = ["gala*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.c"]
