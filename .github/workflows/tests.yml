@@ -149,11 +149,15 @@ jobs:
       # Any *nix:
       - name: Install Python dependencies - nix
         # if: ${{ !startsWith(matrix.os, 'windows') }}
-        run: python -m pip install --upgrade tox codecov pip wheel build
+        run: python -m pip install --upgrade tox codecov pip wheel build pytest
 
       - name: Run tests - nix
-        # if: ${{ !startsWith(matrix.os, 'windows') }}
+        if: ${{ !startsWith(matrix.os, 'windows') }}
         run: tox -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}
+
+      - name: Run test - Windows
+        if: ${{ startsWith(matrix.os, 'windows') }}
+        run: pytest .
 
       # Coverage:
       - name: Upload coverage report to codecov
