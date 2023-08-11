@@ -135,6 +135,12 @@ jobs:
           python -m pip install --upgrade tox codecov
           micromamba info
 
+      - name: TEMP - install gala
+        if: ${{ startsWith(matrix.os, 'windows') }}
+        shell: bash -l {0}
+        run: |
+          python -m pip install . -v
+
       - name: Run tests - Windows
         if: ${{ startsWith(matrix.os, 'windows') }}
         shell: bash -l {0}
