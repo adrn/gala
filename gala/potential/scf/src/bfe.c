@@ -491,3 +491,28 @@ void scf_interp_gradient(double t, double *pars, double *q, int n_dim,
 }
 
 #endif
+
+// NOTE: Only Windows needs the definitions here to link... not sure why
+#if USE_GSL == 1
+void scf_density_helper(double *xyz, int K, double M, double r_s,
+                        double *Snlm, double *Tnlm,
+                        int nmax, int lmax, double *dens) {}
+
+void scf_potential_helper(double *xyz, int K,
+                          double G, double M, double r_s,
+                          double *Snlm, double *Tnlm,
+                          int nmax, int lmax, double *val) {}
+
+void scf_gradient_helper(double *xyz, int K,
+                         double G, double M, double r_s,
+                         double *Snlm, double *Tnlm,
+                         int nmax, int lmax, double *grad) {}
+
+double scf_value(double t, double *pars, double *q, int n_dim) { return 0.; }
+void scf_gradient(double t, double *pars, double *q, int n_dim, double *grad) {}
+double scf_density(double t, double *pars, double *q, int n_dim) { return 0.; }
+
+double scf_interp_value(double t, double *pars, double *q, int n_dim) { return 0.; }
+void scf_interp_gradient(double t, double *pars, double *q, int n_dim, double *grad) {}
+double scf_interp_density(double t, double *pars, double *q, int n_dim) {return 0.; }
+#endif

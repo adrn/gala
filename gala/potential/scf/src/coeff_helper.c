@@ -115,3 +115,12 @@ void c_STnlm_var_discrete(double *s, double *phi, double *X, double *m_k, int K,
     }
 }
 #endif
+
+
+// NOTE: Only Windows needs the definitions here to link... not sure why
+#if USE_GSL == 1
+double c_Snlm_integrand(double phi, double X, double xsi, double density, int n, int l, int m) { return 0.; }
+double c_Tnlm_integrand(double phi, double X, double xsi, double density, int n, int l, int m) { return 0.; }
+void c_STnlm_discrete(double *s, double *phi, double *X, double *m_k, int K, int n, int l, int m, double *ST) {}
+void c_STnlm_var_discrete(double *s, double *phi, double *X, double *m_k, int K, int n, int l, int m, double *ST_var) {}
+#endif
