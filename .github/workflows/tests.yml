@@ -157,6 +157,7 @@ jobs:
 
       - name: Run test - Windows
         if: ${{ startsWith(matrix.os, 'windows') }}
+        shell: bash -l {0}
         run: |
           python -m pip install .[test]
           pytest gala
