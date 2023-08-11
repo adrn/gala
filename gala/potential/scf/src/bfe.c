@@ -493,7 +493,7 @@ void scf_interp_gradient(double t, double *pars, double *q, int n_dim,
 #endif
 
 // NOTE: Only Windows needs the definitions here to link... not sure why
-#if USE_GSL == 1
+#if USE_GSL == 0
 void scf_density_helper(double *xyz, int K, double M, double r_s,
                         double *Snlm, double *Tnlm,
                         int nmax, int lmax, double *dens) {}
