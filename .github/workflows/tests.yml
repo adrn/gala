@@ -157,7 +157,9 @@ jobs:
 
       - name: Run test - Windows
         if: ${{ startsWith(matrix.os, 'windows') }}
-        run: pytest .
+        run: |
+          python -m pip install .[test]
+          pytest gala
 
       # Coverage:
       - name: Upload coverage report to codecov
