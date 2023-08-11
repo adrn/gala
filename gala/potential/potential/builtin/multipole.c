@@ -809,6 +809,16 @@ double axisym_cylspline_density(double t, double *pars, double *q, int n_dim) {
     return dens;
 }
 
+#endif
 
 
+// NOTE: Only Windows needs the definitions here to link... not sure why
+#if USE_GSL == 0
+    double mp_potential(double t, double *pars, double *q, int n_dim) { return 0.; }
+    void mp_gradient(double t, double *pars, double *q, int n_dim, double *grad) {}
+    double mp_density(double t, double *pars, double *q, int n_dim) { return 0.; }
+
+    double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) { return 0.; }
+    void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim, double *grad) {}
+    double axisym_cylspline_density(double t, double *pars, double *q, int n_dim) { return 0.; }
 #endif

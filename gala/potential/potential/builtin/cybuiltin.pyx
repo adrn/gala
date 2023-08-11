@@ -65,11 +65,6 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     double jaffe_density(double t, double *pars, double *q, int n_dim) nogil
     void jaffe_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
-    double powerlawcutoff_value(double t, double *pars, double *q, int n_dim) nogil
-    void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double powerlawcutoff_density(double t, double *pars, double *q, int n_dim) nogil
-    void powerlawcutoff_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
-
     double stone_value(double t, double *pars, double *q, int n_dim) nogil
     void stone_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double stone_density(double t, double *pars, double *q, int n_dim) nogil
@@ -120,6 +115,13 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     void longmuralibar_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double longmuralibar_density(double t, double *pars, double *q, int n_dim) nogil
     void longmuralibar_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+
+# NOTE: these should probably be conditionally included, but I couldn't get that to work
+cdef extern from "potential/potential/builtin/builtin_potentials.h":
+    double powerlawcutoff_value(double t, double *pars, double *q, int n_dim) nogil
+    void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    double powerlawcutoff_density(double t, double *pars, double *q, int n_dim) nogil
+    void powerlawcutoff_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
 cdef extern from "potential/potential/builtin/multipole.h":
     double mp_potential(double t, double *pars, double *q, int n_dim) nogil
