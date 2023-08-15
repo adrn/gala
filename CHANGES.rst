@@ -7,6 +7,9 @@ New Features
 Bug fixes
 ---------
 
+- Fixed a bug with the ``plot_contours()`` and ``plot_density_contours()`` methods so
+  that times specified are now passed through correctly to the potential methods.
+
 API changes
 -----------
 
