@@ -459,7 +459,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     def plot_contours(
         self,
         grid,
-        t=None,
+        t=0.0,
         filled=True,
         ax=None,
         labels=None,
@@ -584,7 +584,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     def plot_density_contours(
         self,
         grid,
-        t=None,
+        t=0.0,
         filled=True,
         ax=None,
         labels=None,
@@ -711,7 +711,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         return fig
 
-    def plot_rotation_curve(self, R_grid, t=None, ax=None, labels=None, **plot_kwargs):
+    def plot_rotation_curve(self, R_grid, t=0.0, ax=None, labels=None, **plot_kwargs):
         """
         Plot the rotation curve or circular velocity curve for this potential on the
         input grid of cylindrical radii.
