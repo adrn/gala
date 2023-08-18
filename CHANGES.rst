@@ -10,6 +10,9 @@ Bug fixes
 - Fixed a bug with the ``plot_contours()`` and ``plot_density_contours()`` methods so
   that times specified are now passed through correctly to the potential methods.
 
+- Fixed the YAML output to use ``default_flow_style=None`` for serializing potential
+  objects, which leads to a more efficient array output.
+
 API changes
 -----------
 
