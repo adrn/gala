@@ -11,13 +11,13 @@ import yaml
 
 from gala.units import DimensionlessUnitSystem
 
-__all__ = ['load', 'save']
+__all__ = ["load", "save"]
 
 
 def _unpack_params(p):
     params = p.copy()
     for key, item in p.items():
-        if '_unit' in key:
+        if "_unit" in key:
             continue
 
         if isiterable(item) and not isinstance(item, str):
@@ -25,9 +25,9 @@ def _unpack_params(p):
         else:
             params[key] = float(item)
 
-        if key+'_unit' in params:
-            params[key] = params[key] * u.Unit(params[key+'_unit'])
-            del params[key+'_unit']
+        if key + "_unit" in params:
+            params[key] = params[key] * u.Unit(params[key + "_unit"])
+            del params[key + "_unit"]
 
     return params
 
@@ -37,22 +37,25 @@ def _parse_component(component, module):
     from .. import potential as gala_potential
 
     try:
-        class_name = component['class']
+        class_name = component["class"]
     except KeyError:
-        raise KeyError("Potential dictionary must contain a key 'class' for "
-                       "specifying the name of the Potential class.")
+        raise KeyError(
+            "Potential dictionary must contain a key 'class' for "
+            "specifying the name of the Potential class."
+        )
 
-    if 'units' not in component:
+    if "units" not in component:
         unitsys = None
     else:
         try:
-            unitsys = [u.Unit(unit)
-                       for ptype, unit in component['units'].items()]
+            unitsys = [u.Unit(unit) for ptype, unit in component["units"].items()]
         except KeyError:
-            raise KeyError("Potential dictionary must contain a key 'units' "
-                           "with a list of strings specifying the unit system.")
+            raise KeyError(
+                "Potential dictionary must contain a key 'units' "
+                "with a list of strings specifying the unit system."
+            )
 
-    params = component.get('parameters', {})
+    params = component.get("parameters", {})
 
     # need to crawl the dictionary structure and unpack quantities
     params = _unpack_params(params)
@@ -91,34 +94,37 @@ def from_dict(d, module=None):
     else:
         potential = module
 
-    if 'type' in d and d['type'] == 'composite':
-        p = getattr(potential, d['class'])()
-        for i, component in enumerate(d['components']):
+    if "type" in d and d["type"] == "composite":
+        p = getattr(potential, d["class"])()
+        for i, component in enumerate(d["components"]):
             c = _parse_component(component, module)
-            name = component.get('name', str(i))
+            name = component.get("name", str(i))
             p[name] = c
 
-    elif 'type' in d and d['type'] == 'custom':
+    elif "type" in d and d["type"] == "custom":
         param_groups = dict()
-        for i, component in enumerate(d['components']):
+        for i, component in enumerate(d["components"]):
             c = _parse_component(component, module)
 
             try:
-                name = component['name']
+                name = component["name"]
             except KeyError:
-                raise KeyError("For custom potentials, component specification "
-                               "must include the component name (e.g., name: "
-                               "'blah')")
+                raise KeyError(
+                    "For custom potentials, component specification "
+                    "must include the component name (e.g., name: "
+                    "'blah')"
+                )
 
-            params = component.get('parameters', {})
+            params = component.get("parameters", {})
             params = _unpack_params(params)  # unpack quantities
             param_groups[name] = params
-        p = getattr(potential, d['class'])(**param_groups)
+        p = getattr(potential, d["class"])(**param_groups)
 
     else:
         p = _parse_component(d, module)
 
     return p
+
 
 # ----------------------------------------------------------------------------
 
@@ -126,11 +132,11 @@ def from_dict(d, module=None):
 def _pack_params(p):
     params = p.copy()
     for key, item in p.items():
-        if hasattr(item, 'unit'):
+        if hasattr(item, "unit"):
             params[key] = item.value
-            params[key+'_unit'] = str(item.unit)
+            params[key + "_unit"] = str(item.unit)
 
-        if hasattr(params[key], 'tolist'):  # convert array to list
+        if hasattr(params[key], "tolist"):  # convert array to list
             params[key] = params[key].tolist()
 
     return params
@@ -139,15 +145,16 @@ def _pack_params(p):
 def _to_dict_help(potential):
     d = dict()
 
-    d['class'] = potential.__class__.__name__
+    d["class"] = potential.__class__.__name__
 
     if not isinstance(potential.units, DimensionlessUnitSystem):
-        d['units'] = dict([(str(k), str(v))
-                           for k, v in potential.units.to_dict().items()])
+        d["units"] = dict(
+            [(str(k), str(v)) for k, v in potential.units.to_dict().items()]
+        )
 
     if len(potential.parameters) > 0:
         params = _pack_params(potential.parameters)
-        d['parameters'] = params
+        d["parameters"] = params
 
     return d
 
@@ -167,23 +174,26 @@ def to_dict(potential):
 
     if isinstance(potential, gp.CompositePotential):
         d = dict()
-        d['class'] = potential.__class__.__name__
-        d['components'] = []
+        d["class"] = potential.__class__.__name__
+        d["components"] = []
         for k, p in potential.items():
             comp_dict = _to_dict_help(p)
-            comp_dict['name'] = k
-            d['components'].append(comp_dict)
+            comp_dict["name"] = k
+            d["components"].append(comp_dict)
 
-        if potential.__class__.__name__ == 'CompositePotential' or \
-           potential.__class__.__name__ == 'CCompositePotential':
-            d['type'] = 'composite'
+        if (
+            potential.__class__.__name__ == "CompositePotential"
+            or potential.__class__.__name__ == "CCompositePotential"
+        ):
+            d["type"] = "composite"
         else:
-            d['type'] = 'custom'
+            d["type"] = "custom"
 
     else:
         d = _to_dict_help(potential)
 
     return d
+
 
 # ----------------------------------------------------------------------------
 
@@ -202,10 +212,10 @@ def load(f, module=None):
     module : namespace (optional)
 
     """
-    if hasattr(f, 'read'):
+    if hasattr(f, "read"):
         p_dict = yaml.load(f.read(), Loader=yaml.Loader)
     else:
-        with open(os.path.abspath(f), 'r') as fil:
+        with open(os.path.abspath(f), "r") as fil:
             p_dict = yaml.load(fil.read(), Loader=yaml.Loader)
 
     return from_dict(p_dict, module=module)
@@ -226,8 +236,8 @@ def save(potential, f):
     """
     d = to_dict(potential)
 
-    if hasattr(f, 'write'):
-        yaml.dump(d, f, default_flow_style=False)
+    if hasattr(f, "write"):
+        yaml.dump(d, f, default_flow_style=None)
     else:
-        with open(f, 'w') as f2:
-            yaml.dump(d, f2, default_flow_style=False)
+        with open(f, "w") as f2:
+            yaml.dump(d, f2, default_flow_style=None)
