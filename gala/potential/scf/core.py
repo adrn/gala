@@ -207,6 +207,16 @@ def compute_coeffs_discrete(
         matrix of the coefficients.
 
     """
+    from gala._cconfig import GSL_ENABLED
+
+    if not GSL_ENABLED:
+        raise ValueError(
+            "Gala was compiled without GSL and so this function "
+            "will not work.  See the gala documentation for more "
+            "information about installing and using GSL with "
+            "gala: http://gala.adrian.pw/en/latest/install.html"
+        )
+
     lmin = 0
     lstride = 1
 
