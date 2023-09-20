@@ -36,6 +36,11 @@ def compute_coeffs(
     Computing the coefficients involves computing triple integrals which are
     computationally expensive.
 
+    .. warning::
+
+        GSL is required for this function, see the
+        `Installation instructions <http://gala.adrian.pw/en/latest/install.html>`_ for more details
+
     Parameters
     ----------
     density_func : function, callable
@@ -172,6 +177,11 @@ def compute_coeffs_discrete(
     of input points as a basis function expansion. The points, ``xyz``, are
     assumed to be samples from the density distribution.
 
+    .. warning::
+
+        GSL is required for this function, see the
+        `Installation instructions <http://gala.adrian.pw/en/latest/install.html>`_ for more details
+
     Parameters
     ----------
     xyz : array_like
@@ -207,6 +217,16 @@ def compute_coeffs_discrete(
         matrix of the coefficients.
 
     """
+    from gala._cconfig import GSL_ENABLED
+
+    if not GSL_ENABLED:
+        raise ValueError(
+            "Gala was compiled without GSL and so this function "
+            "will not work.  See the gala documentation for more "
+            "information about installing and using GSL with "
+            "gala: http://gala.adrian.pw/en/latest/install.html"
+        )
+
     lmin = 0
     lstride = 1
 
