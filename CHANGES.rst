@@ -16,6 +16,8 @@ Bug fixes
 - ``scf.compute_coeffs_discrete`` now raises an error if GSL is not enabled rather than silently returning
   zeros
 
+- ``SCFPotential`` will now work with IO functions (``save`` & ``load``)
+
 API changes
 -----------
 

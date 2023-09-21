@@ -16,5 +16,9 @@ def __getattr__(name):
     elif name.startswith('MultipolePotentialLmax'):
         return getattr(builtin.core, name)
 
+    elif name.startswith('SCF'):
+        from .. import scf
+        return getattr(scf, name)
+
     else:
         raise AttributeError("huh")
