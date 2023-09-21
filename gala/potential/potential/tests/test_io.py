@@ -4,6 +4,7 @@
 import astropy.units as u
 from astropy.utils.data import get_pkg_data_filename
 import numpy as np
+import pytest
 
 # Project
 from ..io import load, save
@@ -13,6 +14,7 @@ from ..builtin import IsochronePotential, KeplerPotential
 from ..builtin.special import LM10Potential
 from ...scf import SCFPotential
 from ....units import DimensionlessUnitSystem, galactic
+from gala._cconfig import GSL_ENABLED
 
 
 def test_read_plummer():
@@ -123,6 +125,8 @@ def test_units(tmpdir):
     p = load(tmp_filename)
 
 
+@pytest.mark.skipif(not GSL_ENABLED,
+                    reason="requires GSL to run this test")
 def test_read_write_SCF(tmpdir):
     tmp_filename = str(tmpdir.join("potential.yml"))
 
