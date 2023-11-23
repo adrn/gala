@@ -719,35 +719,12 @@ class PhaseSpacePosition:
         Rg : :class:`~astropy.units.Quantity`
             Guiding-center radius.
         """
-        from scipy.optimize import root
-
-        def _R_g_helper(R, Lz, potential, t):
-            dPhi_dR = potential.c_instance.d_dr(
-                np.array([[R[0], 0.0, 0.0]]), potential.G, t=np.array([t])
-            )
-            vc = np.sqrt(R * np.abs(dPhi_dR))
-            return Lz - R * vc
 
         R0s = np.atleast_1d(
             np.sqrt(self.x**2 + self.y**2).decompose(potential.units).value
         )
         Lzs = np.atleast_1d(self.angular_momentum()[2].decompose(potential.units).value)
-
-        if potential is None:
-            potential = self.potential
-        if potential is None:
-            raise ValueError("You must specify a potential...")
-
-        root_kwargs.setdefault("options", dict(xtol=1e-5))
-        root_kwargs.setdefault("method", "hybr")
-
-        Rgs = np.zeros_like(R0s)
-        for i, (R0, Lz) in enumerate(zip(R0s, Lzs)):
-            res = root(_R_g_helper, R0, args=(np.abs(Lz), potential, t), **root_kwargs)
-            if res.success:
-                Rgs[i] = res.x[0]
-            else:
-                Rgs[i] = np.nan
+        Rgs = _guiding_radius_helper(R0s, Lzs, potential, t, **root_kwargs)
 
         return Rgs.reshape(self.shape) * potential.units["length"]
 
@@ -917,3 +894,30 @@ class PhaseSpacePosition:
             vel=self.vel.reshape(new_shape),
             frame=self.frame,
         )
+
+
+def _guiding_radius_rootfunc(R, Lz, potential, t):
+    dPhi_dR = potential.c_instance.d_dr(
+        np.array([[R[0], 0.0, 0.0]]), potential.G, t=np.array([t])
+    )
+    vc = np.sqrt(R * np.abs(dPhi_dR))
+    return Lz - R * vc
+
+
+def _guiding_radius_helper(R0s, Lzs, potential, t, **root_kwargs):
+    from scipy.optimize import root
+
+    root_kwargs.setdefault("options", dict(xtol=1e-5))
+    root_kwargs.setdefault("method", "hybr")
+
+    Rgs = np.zeros_like(R0s)
+    for i, (R0, Lz) in enumerate(zip(R0s, Lzs)):
+        res = root(
+            _guiding_radius_rootfunc, R0, args=(np.abs(Lz), potential, t), **root_kwargs
+        )
+        if res.success:
+            Rgs[i] = res.x[0]
+        else:
+            Rgs[i] = np.nan
+
+    return Rgs
