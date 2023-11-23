@@ -17,6 +17,7 @@ from ...potential import (
     HernquistPotential,
     KeplerPotential,
     LogarithmicPotential,
+    NFWPotential,
 )
 from ...potential.frame import ConstantRotatingFrame, StaticFrame
 from ...units import galactic, solarsystem
@@ -354,6 +355,26 @@ def test_eccentricity():
     assert np.abs(e) < 1e-3
 
 
+def test_guiding_radius():
+    q = [10.0, 0, 0] * u.kpc
+    pot = HernquistPotential(m=1e10, c=10.0, units=galactic)
+    vc = pot.circular_velocity(q).to_value(u.km / u.s)
+    w0 = PhaseSpacePosition(pos=q, vel=[0.0, 1.3, 0.0] * vc)
+    ham = Hamiltonian(pot)
+    w = ham.integrate_orbit(w0, dt=0.5, n_steps=1000, Integrator=DOPRI853Integrator)
+    w.guiding_radius()
+
+    # Check that orbit in non-axisymmetric potential raises a warning
+    pot = NFWPotential(m=1e10, r_s=10.0, b=0.95, units=galactic)
+    vc = pot.circular_velocity(q).to_value(u.km / u.s)
+    w0 = PhaseSpacePosition(pos=q, vel=[0.0, 1.3, 0.0] * vc)
+    ham = Hamiltonian(pot)
+    orbit = ham.integrate_orbit(w0, dt=0.5, n_steps=1000, Integrator=DOPRI853Integrator)
+
+    with pytest.warns(RuntimeWarning):
+        orbit.guiding_radius()
+
+
 def test_apocenter_pericenter_period():
     pot = KeplerPotential(m=1.0, units=solarsystem)
     w0 = PhaseSpacePosition(
@@ -440,13 +461,10 @@ def test_estimate_period():
         assert np.allclose(T["phi"].value, 1.0, rtol=1e-3)
 
     # TODO: remove this in next version
-    from astropy.tests.helper import catch_warnings
-
     from gala.util import GalaDeprecationWarning
 
-    with catch_warnings(GalaDeprecationWarning) as w:
+    with pytest.warns(GalaDeprecationWarning):
         orb.estimate_period(radial=True)
-    assert len(w) > 0
 
 
 def test_estimate_period_regression():

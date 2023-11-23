@@ -1,25 +1,26 @@
 # Standard library
-from collections import namedtuple
 import re
+from collections import namedtuple
 
 # Third-party
 import astropy.coordinates as coord
-from astropy.coordinates import representation as r
 import astropy.units as u
 import numpy as np
+from astropy.coordinates import representation as r
+
+from ..io import quantity_from_hdf5, quantity_to_hdf5
+from ..units import DimensionlessUnitSystem, UnitSystem, _greek_letters
+from ..util import atleast_2d
 
 # Project
 from . import representation_nd as rep_nd
 from .plot import plot_projections
-from ..io import quantity_to_hdf5, quantity_from_hdf5
-from ..units import UnitSystem, DimensionlessUnitSystem, _greek_letters
-from ..util import atleast_2d
 
-__all__ = ['PhaseSpacePosition']
+__all__ = ["PhaseSpacePosition"]
 
-_RepresentationMappingBase = \
-    namedtuple('RepresentationMapping',
-               ('repr_name', 'new_name', 'default_unit'))
+_RepresentationMappingBase = namedtuple(
+    "RepresentationMapping", ("repr_name", "new_name", "default_unit")
+)
 
 
 class RepresentationMapping(_RepresentationMappingBase):
@@ -29,7 +30,7 @@ class RepresentationMapping(_RepresentationMappingBase):
     classes.
     """
 
-    def __new__(cls, repr_name, new_name, default_unit='recommended'):
+    def __new__(cls, repr_name, new_name, default_unit="recommended"):
         # this trick just provides some defaults
         return super().__new__(cls, repr_name, new_name, default_unit)
 
@@ -39,53 +40,51 @@ class RegexRepresentationMapping(RepresentationMapping):
     A representation mapping that uses a regex to map the original attribute
     name to the new attribute name.
     """
+
     pass
 
 
 class PhaseSpacePosition:
-
     representation_mappings = {
-        r.CartesianRepresentation: [
-            RepresentationMapping('xyz', 'xyz')
-        ],
+        r.CartesianRepresentation: [RepresentationMapping("xyz", "xyz")],
         r.SphericalCosLatDifferential: [
-            RepresentationMapping('d_lon_coslat', 'pm_lon_coslat', u.mas/u.yr),
-            RepresentationMapping('d_lat', 'pm_lat', u.mas/u.yr),
-            RepresentationMapping('d_distance', 'radial_velocity')
+            RepresentationMapping("d_lon_coslat", "pm_lon_coslat", u.mas / u.yr),
+            RepresentationMapping("d_lat", "pm_lat", u.mas / u.yr),
+            RepresentationMapping("d_distance", "radial_velocity"),
         ],
         r.SphericalDifferential: [
-            RepresentationMapping('d_lon', 'pm_lon', u.mas/u.yr),
-            RepresentationMapping('d_lat', 'pm_lat', u.mas/u.yr),
-            RepresentationMapping('d_distance', 'radial_velocity')
+            RepresentationMapping("d_lon", "pm_lon", u.mas / u.yr),
+            RepresentationMapping("d_lat", "pm_lat", u.mas / u.yr),
+            RepresentationMapping("d_distance", "radial_velocity"),
         ],
         r.PhysicsSphericalDifferential: [
-            RepresentationMapping('d_phi', 'pm_phi', u.mas/u.yr),
-            RepresentationMapping('d_theta', 'pm_theta', u.mas/u.yr),
-            RepresentationMapping('d_r', 'radial_velocity')
+            RepresentationMapping("d_phi", "pm_phi", u.mas / u.yr),
+            RepresentationMapping("d_theta", "pm_theta", u.mas / u.yr),
+            RepresentationMapping("d_r", "radial_velocity"),
         ],
         r.CartesianDifferential: [
-            RepresentationMapping('d_x', 'v_x'),
-            RepresentationMapping('d_y', 'v_y'),
-            RepresentationMapping('d_z', 'v_z'),
-            RepresentationMapping('d_xyz', 'v_xyz')
+            RepresentationMapping("d_x", "v_x"),
+            RepresentationMapping("d_y", "v_y"),
+            RepresentationMapping("d_z", "v_z"),
+            RepresentationMapping("d_xyz", "v_xyz"),
         ],
         r.CylindricalDifferential: [
-            RepresentationMapping('d_rho', 'v_rho'),
-            RepresentationMapping('d_phi', 'pm_phi'),
-            RepresentationMapping('d_z', 'v_z')
+            RepresentationMapping("d_rho", "v_rho"),
+            RepresentationMapping("d_phi", "pm_phi"),
+            RepresentationMapping("d_z", "v_z"),
         ],
-        rep_nd.NDCartesianRepresentation: [
-            RepresentationMapping('xyz', 'xyz')
-        ],
+        rep_nd.NDCartesianRepresentation: [RepresentationMapping("xyz", "xyz")],
         rep_nd.NDCartesianDifferential: [
-            RepresentationMapping('d_xyz', 'v_xyz'),
-            RegexRepresentationMapping('d_x([0-9])', 'v_x{0}')
+            RepresentationMapping("d_xyz", "v_xyz"),
+            RegexRepresentationMapping("d_x([0-9])", "v_x{0}"),
         ],
     }
-    representation_mappings[r.UnitSphericalCosLatDifferential] = \
-        representation_mappings[r.SphericalCosLatDifferential]
-    representation_mappings[r.UnitSphericalDifferential] = \
-        representation_mappings[r.SphericalDifferential]
+    representation_mappings[
+        r.UnitSphericalCosLatDifferential
+    ] = representation_mappings[r.SphericalCosLatDifferential]
+    representation_mappings[r.UnitSphericalDifferential] = representation_mappings[
+        r.SphericalDifferential
+    ]
 
     def __init__(self, pos, vel=None, frame=None):
         """
@@ -131,7 +130,7 @@ class PhaseSpacePosition:
 
         if not isinstance(pos, coord.BaseRepresentation):
             # assume Cartesian if not specified
-            if not hasattr(pos, 'unit'):
+            if not hasattr(pos, "unit"):
                 pos = pos * u.one
 
             # 3D coordinates get special treatment
@@ -152,15 +151,17 @@ class PhaseSpacePosition:
             ndim = 3
 
         if vel is None:
-            if 's' not in pos.differentials:
-                raise TypeError("You must specify velocity data when creating "
-                                "a {0} object.".format(self.__class__.__name__))
+            if "s" not in pos.differentials:
+                raise TypeError(
+                    "You must specify velocity data when creating "
+                    "a {0} object.".format(self.__class__.__name__)
+                )
             else:
-                vel = pos.differentials.get('s', None)
+                vel = pos.differentials.get("s", None)
 
         if not isinstance(vel, coord.BaseDifferential):
             # assume representation is same as pos if not specified
-            if not hasattr(vel, 'unit'):
+            if not hasattr(vel, "unit"):
                 vel = vel * u.one
 
             if ndim == 3:
@@ -173,13 +174,17 @@ class PhaseSpacePosition:
 
         # make sure shape is the same
         if pos.shape != vel.shape:
-            raise ValueError("Position and velocity must have the same shape "
-                             f"{pos.shape} vs. {vel.shape}")
+            raise ValueError(
+                "Position and velocity must have the same shape "
+                f"{pos.shape} vs. {vel.shape}"
+            )
 
         from ..potential.frame import FrameBase
+
         if frame is not None and not isinstance(frame, FrameBase):
-            raise TypeError("Input reference frame must be a FrameBase "
-                            "subclass instance.")
+            raise TypeError(
+                "Input reference frame must be a FrameBase " "subclass instance."
+            )
 
         self.pos = pos
         self.vel = vel
@@ -187,9 +192,9 @@ class PhaseSpacePosition:
         self.ndim = ndim
 
     def __getitem__(self, slyce):
-        return self.__class__(pos=self.pos[slyce],
-                              vel=self.vel[slyce],
-                              frame=self.frame)
+        return self.__class__(
+            pos=self.pos[slyce], vel=self.vel[slyce], frame=self.frame
+        )
 
     def get_components(self, which):
         """
@@ -204,8 +209,7 @@ class PhaseSpacePosition:
             Can either be ``'pos'`` or ``'vel'`` to get the components for the
             position or velocity object.
         """
-        mappings = self.representation_mappings.get(
-            getattr(self, which).__class__, [])
+        mappings = self.representation_mappings.get(getattr(self, which).__class__, [])
 
         old_to_new = dict()
         for name in getattr(self, which).components:
@@ -225,20 +229,20 @@ class PhaseSpacePosition:
 
     @property
     def pos_components(self):
-        return self.get_components('pos')
+        return self.get_components("pos")
 
     @property
     def vel_components(self):
-        return self.get_components('vel')
+        return self.get_components("vel")
 
     def _get_extra_mappings(self, which):
-        mappings = self.representation_mappings.get(
-            getattr(self, which).__class__, [])
+        mappings = self.representation_mappings.get(getattr(self, which).__class__, [])
 
         extra = dict()
         for m in mappings:
-            if (m.new_name not in self.get_components(which) and
-                    not isinstance(m, RegexRepresentationMapping)):
+            if m.new_name not in self.get_components(which) and not isinstance(
+                m, RegexRepresentationMapping
+            ):
                 extra[m.new_name] = m.repr_name
         return extra
 
@@ -249,8 +253,8 @@ class PhaseSpacePosition:
         """
         dir_values = set(self.pos_components.keys())
         dir_values |= set(self.vel_components.keys())
-        dir_values |= set(self._get_extra_mappings('pos').keys())
-        dir_values |= set(self._get_extra_mappings('vel').keys())
+        dir_values |= set(self._get_extra_mappings("pos").keys())
+        dir_values |= set(self._get_extra_mappings("vel").keys())
         dir_values |= set(r.REPRESENTATION_CLASSES.keys())
         dir_values |= set(super().__dir__())
         return sorted(dir_values)
@@ -262,14 +266,14 @@ class PhaseSpacePosition:
         """
 
         # Prevent infinite recursion here.
-        if attr.startswith('_'):
+        if attr.startswith("_"):
             return self.__getattribute__(attr)  # Raise AttributeError.
 
         # TODO: with >3.5 support, can do:
         # pos_comps = {**self.pos_components,
         #              **self._get_extra_mappings('pos')}
         pos_comps = self.pos_components.copy()
-        pos_comps.update(self._get_extra_mappings('pos'))
+        pos_comps.update(self._get_extra_mappings("pos"))
         if attr in pos_comps:
             val = getattr(self.pos, pos_comps[attr])
             return val
@@ -278,7 +282,7 @@ class PhaseSpacePosition:
         # pos_comps = {**self.vel_components,
         #              **self._get_extra_mappings('vel')}
         vel_comps = self.vel_components.copy()
-        vel_comps.update(self._get_extra_mappings('vel'))
+        vel_comps.update(self._get_extra_mappings("vel"))
         if attr in vel_comps:
             val = getattr(self.vel, vel_comps[attr])
             return val
@@ -317,8 +321,7 @@ class PhaseSpacePosition:
         """
 
         if self.ndim != 3:
-            raise ValueError("Can only change representation for "
-                             "ndim=3 instances.")
+            raise ValueError("Can only change representation for " "ndim=3 instances.")
 
         # get the name of the desired representation
         if isinstance(new_pos, str):
@@ -339,9 +342,7 @@ class PhaseSpacePosition:
         new_pos = self.pos.represent_as(Representation)
         new_vel = self.vel.represent_as(Differential, self.pos)
 
-        return self.__class__(pos=new_pos,
-                              vel=new_vel,
-                              frame=self.frame)
+        return self.__class__(pos=new_pos, vel=new_vel, frame=self.frame)
 
     def to_frame(self, frame, current_frame=None, **kwargs):
         """
@@ -368,21 +369,26 @@ class PhaseSpacePosition:
         from ..potential.frame.builtin import transformations as frame_trans
 
         if self.frame is None and current_frame is None:
-            raise ValueError(f"If no frame was specified when this {self} was "
-                             "initialized, you must pass the current frame in "
-                             "via the current_frame argument to transform to a "
-                             "new frame.")
+            raise ValueError(
+                f"If no frame was specified when this {self} was "
+                "initialized, you must pass the current frame in "
+                "via the current_frame argument to transform to a "
+                "new frame."
+            )
 
         elif self.frame is not None and current_frame is None:
             current_frame = self.frame
 
-        name1 = current_frame.__class__.__name__.rstrip('Frame').lower()
-        name2 = frame.__class__.__name__.rstrip('Frame').lower()
+        name1 = current_frame.__class__.__name__.rstrip("Frame").lower()
+        name2 = frame.__class__.__name__.rstrip("Frame").lower()
         func_name = f"{name1}_to_{name2}"
 
         if not hasattr(frame_trans, func_name):
-            raise ValueError("Unsupported frame transformation: {} to {}"
-                             .format(current_frame, frame))
+            raise ValueError(
+                "Unsupported frame transformation: {} to {}".format(
+                    current_frame, frame
+                )
+            )
         else:
             trans_func = getattr(frame_trans, func_name)
 
@@ -415,23 +421,25 @@ class PhaseSpacePosition:
         """
 
         if self.ndim != 3:
-            raise ValueError("Can only change representation for "
-                             "ndim=3 instances.")
+            raise ValueError("Can only change representation for " "ndim=3 instances.")
 
         if galactocentric_frame is None:
             galactocentric_frame = coord.Galactocentric()
 
         pos_keys = list(self.pos_components.keys())
         vel_keys = list(self.vel_components.keys())
-        if (getattr(self, pos_keys[0]).unit == u.one or
-                getattr(self, vel_keys[0]).unit == u.one):
-            raise u.UnitConversionError("Position and velocity must have "
-                                        "dimensioned units to convert to a "
-                                        "coordinate frame.")
+        if (
+            getattr(self, pos_keys[0]).unit == u.one
+            or getattr(self, vel_keys[0]).unit == u.one
+        ):
+            raise u.UnitConversionError(
+                "Position and velocity must have "
+                "dimensioned units to convert to a "
+                "coordinate frame."
+            )
 
         # first we need to turn the position into a Galactocentric instance
-        gc_c = galactocentric_frame.realize_frame(
-            self.pos.with_differentials(self.vel))
+        gc_c = galactocentric_frame.realize_frame(self.pos.with_differentials(self.vel))
         c = gc_c.transform_to(frame)
         return c
 
@@ -463,8 +471,9 @@ class PhaseSpacePosition:
 
         x_unit = xyz.unit
         v_unit = d_xyz.unit
-        if ((units is None or isinstance(units, DimensionlessUnitSystem)) and
-                (x_unit == u.one and v_unit == u.one)):
+        if (units is None or isinstance(units, DimensionlessUnitSystem)) and (
+            x_unit == u.one and v_unit == u.one
+        ):
             units = DimensionlessUnitSystem()
 
         elif units is None:
@@ -501,11 +510,13 @@ class PhaseSpacePosition:
         -------
         obj : `~gala.dynamics.{name}`
 
-        """.format(name=cls.__name__)
+        """.format(
+            name=cls.__name__
+        )
 
         w = np.array(w)
 
-        ndim = w.shape[0]//2
+        ndim = w.shape[0] // 2
         pos = w[:ndim]
         vel = w[ndim:]
 
@@ -513,8 +524,8 @@ class PhaseSpacePosition:
         # Dimensionless
         if units is not None and not isinstance(units, DimensionlessUnitSystem):
             units = UnitSystem(units)
-            pos = pos*units['length']
-            vel = vel*units['length']/units['time']  # from _core_units
+            pos = pos * units["length"]
+            vel = vel * units["length"] / units["time"]  # from _core_units
 
         return cls(pos=pos, vel=vel, **kwargs)
 
@@ -535,24 +546,24 @@ class PhaseSpacePosition:
 
         if isinstance(f, str):
             import h5py
-            f = h5py.File(f, mode='r')
+
+            f = h5py.File(f, mode="r")
 
         if self.frame is not None:
-            frame_group = f.create_group('frame')
-            frame_group.attrs['module'] = self.frame.__module__
-            frame_group.attrs['class'] = self.frame.__class__.__name__
+            frame_group = f.create_group("frame")
+            frame_group.attrs["module"] = self.frame.__module__
+            frame_group.attrs["class"] = self.frame.__class__.__name__
 
-            units = [str(x).encode('utf8')
-                     for x in self.frame.units.to_dict().values()]
-            frame_group.create_dataset('units', data=units)
+            units = [str(x).encode("utf8") for x in self.frame.units.to_dict().values()]
+            frame_group.create_dataset("units", data=units)
 
-            d = frame_group.create_group('parameters')
+            d = frame_group.create_group("parameters")
             for k, par in self.frame.parameters.items():
                 quantity_to_hdf5(d, k, par)
 
-        cart = self.represent_as('cartesian')
-        quantity_to_hdf5(f, 'pos', cart.xyz)
-        quantity_to_hdf5(f, 'vel', cart.v_xyz)
+        cart = self.represent_as("cartesian")
+        quantity_to_hdf5(f, "pos", cart.xyz)
+        quantity_to_hdf5(f, "vel", cart.v_xyz)
 
         return f
 
@@ -570,18 +581,19 @@ class PhaseSpacePosition:
         """
         if isinstance(f, str):
             import h5py
-            f = h5py.File(f, mode='r')
 
-        pos = quantity_from_hdf5(f['pos'])
-        vel = quantity_from_hdf5(f['vel'])
+            f = h5py.File(f, mode="r")
+
+        pos = quantity_from_hdf5(f["pos"])
+        vel = quantity_from_hdf5(f["vel"])
 
         frame = None
-        if 'frame' in f:
-            g = f['frame']
+        if "frame" in f:
+            g = f["frame"]
 
-            frame_mod = g.attrs['module']
-            frame_cls = g.attrs['class']
-            frame_units = [u.Unit(x.decode('utf-8')) for x in g['units']]
+            frame_mod = g.attrs["module"]
+            frame_cls = g.attrs["class"]
+            frame_units = [u.Unit(x.decode("utf-8")) for x in g["units"]]
 
             if u.dimensionless_unscaled in frame_units:
                 units = DimensionlessUnitSystem()
@@ -589,8 +601,8 @@ class PhaseSpacePosition:
                 units = UnitSystem(*frame_units)
 
             pars = dict()
-            for k in g['parameters']:
-                pars[k] = quantity_from_hdf5(g['parameters/'+k])
+            for k in g["parameters"]:
+                pars[k] = quantity_from_hdf5(g["parameters/" + k])
 
             exec("from {0} import {1}".format(frame_mod, frame_cls))
             frame_cls = eval(frame_cls)
@@ -615,7 +627,7 @@ class PhaseSpacePosition:
         E : :class:`~astropy.units.Quantity`
             The kinetic energy.
         """
-        return 0.5 * self.vel.norm()**2
+        return 0.5 * self.vel.norm() ** 2
 
     def potential_energy(self, potential):
         r"""
@@ -654,6 +666,7 @@ class PhaseSpacePosition:
             The total energy.
         """
         from gala.potential import Hamiltonian
+
         hamiltonian = Hamiltonian(hamiltonian)
         return hamiltonian(self)
 
@@ -688,6 +701,33 @@ class PhaseSpacePosition:
         cart = self.represent_as(coord.CartesianRepresentation)
         return cart.pos.cross(cart.vel).xyz
 
+    def guiding_radius(self, potential, t=0.0, **root_kwargs):
+        """
+        Compute the guiding-center radius
+
+        Parameters
+        ----------
+        potential : `gala.potential.PotentialBase` subclass instance
+            The potential to compute the guiding radius in.
+        t : quantity-like (optional)
+            Time.
+        **root_kwargs
+            Any additional keyword arguments are passed to `~scipy.optimize.root`.
+
+        Returns
+        -------
+        Rg : :class:`~astropy.units.Quantity`
+            Guiding-center radius.
+        """
+
+        R0s = np.atleast_1d(
+            np.sqrt(self.x**2 + self.y**2).decompose(potential.units).value
+        )
+        Lzs = np.atleast_1d(self.angular_momentum()[2].decompose(potential.units).value)
+        Rgs = _guiding_radius_helper(R0s, Lzs, potential, t, **root_kwargs)
+
+        return Rgs.reshape(self.shape) * potential.units["length"]
+
     # ------------------------------------------------------------------------
     # Misc. useful methods
     #
@@ -708,8 +748,10 @@ class PhaseSpacePosition:
                 units = [units] * n_comps  # global unit
 
             elif len(units) != n_comps:
-                raise ValueError('You must specify a unit for each axis, or a '
-                                 'single unit for all axes.')
+                raise ValueError(
+                    "You must specify a unit for each axis, or a "
+                    "single unit for all axes."
+                )
 
         labels = []
         x = []
@@ -723,13 +765,13 @@ class PhaseSpacePosition:
                 unit = val.unit
 
             if val.unit != u.one:
-                uu = unit.to_string(format='latex_inline')
-                unit_str = ' [{}]'.format(uu)
+                uu = unit.to_string(format="latex_inline")
+                unit_str = " [{}]".format(uu)
             else:
-                unit_str = ''
+                unit_str = ""
 
             # Figure out how to fancy display the component name
-            if name.startswith('d_'):
+            if name.startswith("d_"):
                 dot = True
                 name = name[2:]
             else:
@@ -741,7 +783,7 @@ class PhaseSpacePosition:
             if dot:
                 name = r"\dot{{{}}}".format(name)
 
-            labels.append('${}$'.format(name) + unit_str)
+            labels.append("${}$".format(name) + unit_str)
             x.append(val.value)
 
         return x, labels
@@ -791,30 +833,32 @@ class PhaseSpacePosition:
         """
 
         from gala.tests.optional_deps import HAS_MATPLOTLIB
+
         if not HAS_MATPLOTLIB:
-            raise ImportError('matplotlib is required for visualization.')
+            raise ImportError("matplotlib is required for visualization.")
         import matplotlib.pyplot as plt
 
         if components is None:
             components = self.pos.components
 
-        x, labels = self._plot_prepare(components=components,
-                                       units=units)
+        x, labels = self._plot_prepare(components=components, units=units)
 
-        kwargs.setdefault('plot_function', plt.scatter)
-        if kwargs['plot_function'] in [plt.plot, plt.scatter]:
-            kwargs.setdefault('marker', '.')
-            kwargs.setdefault('labels', labels)
-            kwargs.setdefault('plot_function', plt.scatter)
-            kwargs.setdefault('autolim', False)
+        kwargs.setdefault("plot_function", plt.scatter)
+        if kwargs["plot_function"] in [plt.plot, plt.scatter]:
+            kwargs.setdefault("marker", ".")
+            kwargs.setdefault("labels", labels)
+            kwargs.setdefault("plot_function", plt.scatter)
+            kwargs.setdefault("autolim", False)
 
         fig = plot_projections(x, **kwargs)
 
-        if self.pos.get_name() == 'cartesian' and \
-                all([not c.startswith('d_') for c in components]) and \
-                auto_aspect:
+        if (
+            self.pos.get_name() == "cartesian"
+            and all([not c.startswith("d_") for c in components])
+            and auto_aspect
+        ):
             for ax in fig.axes:
-                ax.set(aspect='equal', adjustable='datalim')
+                ax.set(aspect="equal", adjustable="datalim")
 
         return fig
 
@@ -822,10 +866,9 @@ class PhaseSpacePosition:
     # Display
     #
     def __repr__(self):
-        return "<{} {}, dim={}, shape={}>".format(self.__class__.__name__,
-                                                  self.pos.get_name(),
-                                                  self.ndim,
-                                                  self.pos.shape)
+        return "<{} {}, dim={}, shape={}>".format(
+            self.__class__.__name__, self.pos.get_name(), self.ndim, self.pos.shape
+        )
 
     def __str__(self):
         return "pos={}\nvel={}".format(self.pos, self.vel)
@@ -846,6 +889,35 @@ class PhaseSpacePosition:
         """
         Reshape the underlying position and velocity arrays.
         """
-        return self.__class__(pos=self.pos.reshape(new_shape),
-                              vel=self.vel.reshape(new_shape),
-                              frame=self.frame)
+        return self.__class__(
+            pos=self.pos.reshape(new_shape),
+            vel=self.vel.reshape(new_shape),
+            frame=self.frame,
+        )
+
+
+def _guiding_radius_rootfunc(R, Lz, potential, t):
+    dPhi_dR = potential.c_instance.d_dr(
+        np.array([[R[0], 0.0, 0.0]]), potential.G, t=np.array([t])
+    )
+    vc = np.sqrt(R * np.abs(dPhi_dR))
+    return Lz - R * vc
+
+
+def _guiding_radius_helper(R0s, Lzs, potential, t, **root_kwargs):
+    from scipy.optimize import root
+
+    root_kwargs.setdefault("options", dict(xtol=1e-5))
+    root_kwargs.setdefault("method", "hybr")
+
+    Rgs = np.zeros_like(R0s)
+    for i, (R0, Lz) in enumerate(zip(R0s, Lzs)):
+        res = root(
+            _guiding_radius_rootfunc, R0, args=(np.abs(Lz), potential, t), **root_kwargs
+        )
+        if res.success:
+            Rgs[i] = res.x[0]
+        else:
+            Rgs[i] = np.nan
+
+    return Rgs

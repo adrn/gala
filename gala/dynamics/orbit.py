@@ -1,3 +1,5 @@
+import warnings
+
 # Third-party
 import astropy.coordinates as coord
 import astropy.table as at
@@ -551,6 +553,51 @@ class Orbit(PhaseSpacePosition):
             times.append(t)
 
         return self._max_return_helper(vals, times, return_times, reduce)
+
+    def guiding_radius(self, potential=None, t=0.0, **root_kwargs):
+        """
+        Compute the guiding-center radius
+
+        Parameters
+        ----------
+        potential : `gala.potential.PotentialBase` subclass instance (optional)
+            The potential to compute the guiding radius in.
+        t : quantity-like (optional)
+            Time.
+        **root_kwargs
+            Any additional keyword arguments are passed to `~scipy.optimize.root`.
+
+        Returns
+        -------
+        Rg : :class:`~astropy.units.Quantity`
+            Guiding-center radius.
+        """
+        from .core import _guiding_radius_helper
+
+        if potential is None:
+            potential = self.potential
+        if potential is None:
+            raise ValueError(
+                "You must specify a potential if it is not already defined on the orbit"
+            )
+
+        R0s = np.atleast_1d(
+            np.mean(self.cylindrical.rho).decompose(potential.units).value
+        )
+        Lzs = self.angular_momentum()[2].decompose(potential.units).value
+        mean_Lzs = np.atleast_1d(np.mean(Lzs, axis=0))
+        check = np.abs(np.std(Lzs, axis=0) / mean_Lzs) > 1e-8
+        if np.any(check):
+            warnings.warn(
+                f"{check.sum()} orbits do not have constant Lz (see orbits at indices: "
+                f"{list(np.where(check)[0][:10])}, ...). Are you sure you are using an"
+                " axisymmetric potential?",
+                RuntimeWarning,
+            )
+
+        Rgs = _guiding_radius_helper(R0s, mean_Lzs, potential, t=t, **root_kwargs)
+
+        return Rgs.reshape(self.shape[1:]) * potential.units["length"]
 
     def zmax(self, return_times=False, func=np.mean, approximate=False):
         """
