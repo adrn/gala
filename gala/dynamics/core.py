@@ -744,7 +744,10 @@ class PhaseSpacePosition:
         Rgs = np.zeros_like(R0s)
         for i, (R0, Lz) in enumerate(zip(R0s, Lzs)):
             res = root(_R_g_helper, R0, args=(np.abs(Lz), potential, t), **root_kwargs)
-            Rgs[i] = res.x[0]
+            if res.success:
+                Rgs[i] = res.x[0]
+            else:
+                Rgs[i] = np.nan
 
         return Rgs.reshape(self.shape) * potential.units["length"]
 
