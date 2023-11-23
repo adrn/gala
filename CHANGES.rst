@@ -4,6 +4,9 @@
 New Features
 ------------
 
+- Added a ``.guiding_center()`` method to ``PhaseSpacePosition`` and ``Orbit`` to
+  compute the guiding center radius.
+
 Bug fixes
 ---------
 
