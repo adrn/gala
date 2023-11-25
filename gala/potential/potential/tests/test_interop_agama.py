@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 # This project
-from gala.potential import LogarithmicPotential
+from gala.potential import JaffePotential, LogarithmicPotential, MiyamotoNagaiPotential
 from gala.tests.optional_deps import HAS_AGAMA
 from gala.units import galactic
 
@@ -93,15 +93,16 @@ class TestAgamaInterop:
         other_val = other_pot.force(self.xyz.decompose(gala_pot.units).value.T).T
         assert np.allclose(gala_val, other_val)
 
-    # def test_vcirc(self, gala_pot, galpy_pot):
-    #     tmp = self.xyz.copy()
-    #     tmp[2] = 0.0
+    def test_Menc(self, gala_pot, other_pot):
+        if isinstance(
+            gala_pot, (LogarithmicPotential, JaffePotential, MiyamotoNagaiPotential)
+        ):
+            # TODO: Agama has an inconsistency with Gala's log potential energy
+            pytest.skip()
 
-    #     if not hasattr(galpy_pot, "vcirc") or isinstance(
-    #         gala_pot, gp.LongMuraliBarPotential
-    #     ):
-    #         pytest.skip()
+        grid = np.zeros((3, 128))
+        grid[0] = np.geomspace(1e-3, 100.0, 128)
 
-    #     gala_vcirc = gala_pot.circular_velocity(tmp).to_value(u.km / u.s)
-    #     galpy_vcirc = np.array([galpy_pot.vcirc(R=RR) for RR, *_ in self.Rpz_iter])
-    #     assert np.allclose(gala_vcirc, galpy_vcirc)
+        gala_val = gala_pot.mass_enclosed(grid).value
+        agama_val = other_pot.enclosedMass(grid[0])
+        assert np.allclose(gala_val, agama_val)
