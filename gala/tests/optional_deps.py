@@ -2,18 +2,20 @@
 `PEP 562 <https://www.python.org/dev/peps/pep-0562/>`_.
 """
 import importlib
+import io
 from collections.abc import Sequence
+from contextlib import redirect_stdout
 
 # First, the top-level packages:
 # TODO: This list is a duplicate of the dependencies in setup.cfg "all", but
 # some of the package names are different from the pip-install name (e.g.,
 # beautifulsoup4 -> bs4).
-_optional_deps = ['h5py', 'sympy', 'tqdm', 'twobody']
+_optional_deps = ["h5py", "sympy", "tqdm", "twobody", "agama"]
 _deps = {k.upper(): k for k in _optional_deps}
 
 # Any subpackages that have different import behavior:
-_deps['MATPLOTLIB'] = ('matplotlib', 'matplotlib.pyplot')
-_deps['GALPY'] = ('galpy', 'galpy.orbit', 'galpy.potential')
+_deps["MATPLOTLIB"] = ("matplotlib", "matplotlib.pyplot")
+_deps["GALPY"] = ("galpy", "galpy.orbit", "galpy.potential")
 
 __all__ = [f"HAS_{pkg}" for pkg in _deps]
 
@@ -28,7 +30,8 @@ def __getattr__(name):
 
         for module in modules:
             try:
-                importlib.import_module(module)
+                with redirect_stdout(io.StringIO()):
+                    importlib.import_module(module)
             except (ImportError, ModuleNotFoundError):
                 return False
             return True
