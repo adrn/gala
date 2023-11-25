@@ -7,6 +7,8 @@ New Features
 - Added a ``.guiding_center()`` method to ``PhaseSpacePosition`` and ``Orbit`` to
   compute the guiding center radius.
 
+- Added a way to convert Gala potential instances to Agama potential instances.
+
 Bug fixes
 ---------
 
@@ -23,6 +25,10 @@ Bug fixes
 
 API changes
 -----------
+
+- Changed the way potential interoperability is done with other Galactic dynamics
+  packages (Agama, galpy, etc.). It is now handled by the ``Potential.as_interop()``
+  method on all potential class instances.
 
 
 1.7.1 (2023-08-05)

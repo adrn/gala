@@ -3,17 +3,17 @@ Test converting the builtin Potential classes to other packages
 """
 
 # Third-party
-from astropy.coordinates import CylindricalRepresentation
-from astropy.tests.helper import catch_warnings
 import astropy.units as u
 import numpy as np
 import pytest
+from astropy.coordinates import CylindricalRepresentation
+from astropy.tests.helper import catch_warnings
 
 # This project
 import gala.potential as gp
-from gala.units import galactic
-from gala.tests.optional_deps import HAS_GALPY
 from gala.potential.potential.interop import galpy_to_gala_potential
+from gala.tests.optional_deps import HAS_GALPY
+from gala.units import galactic
 
 # Set these globally!
 ro = 8.122 * u.kpc
@@ -53,7 +53,7 @@ def pytest_generate_tests(metafunc):
             init[k] = val
 
         pot = Potential(**init, units=galactic)
-        galpy_pot = pot.to_galpy_potential(ro=ro, vo=vo)
+        galpy_pot = pot.as_interop("galpy", ro=ro, vo=vo)
 
         gala_pots.append(pot)
         galpy_pots.append(galpy_pot)
