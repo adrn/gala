@@ -913,7 +913,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         ro : quantity-like (optional)
         vo : quantity-like (optional)
         """
-        return self.export("galpy", ro=ro, vo=vo)
+        return self.as_interop("galpy", ro=ro, vo=vo)
 
     def as_interop(self, package, **kwargs):
         """Interoperability with other Galactic dynamics packages
