@@ -1,15 +1,17 @@
 # Standard library
 import abc
-from collections import OrderedDict
 import copy as pycopy
-import warnings
 import uuid
+import warnings
+from collections import OrderedDict
+
+import astropy.units as u
 
 # Third-party
 import numpy as np
 from astropy.constants import G
-import astropy.units as u
 from astropy.utils import isiterable
+from astropy.utils.decorators import deprecated
 
 try:
     from scipy.spatial.transform import Rotation
@@ -21,9 +23,10 @@ except ImportError as exc:
 
 # Project
 from gala.util import GalaDeprecationWarning
-from ..common import CommonBase
-from ...util import ImmutableDict, atleast_2d
+
 from ...units import DimensionlessUnitSystem
+from ...util import ImmutableDict, atleast_2d
+from ..common import CommonBase
 
 __all__ = ["PotentialBase", "CompositePotential"]
 
@@ -897,6 +900,11 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     ###########################################################################
     # Interoperability with other packages
     #
+    @deprecated(
+        since="v1.8",
+        message="This has been replaced by a more general interoperability framework.",
+        alternative="interop",
+    )
     def to_galpy_potential(self, ro=None, vo=None):
         """Convert a Gala potential to a Galpy potential instance
 
@@ -905,9 +913,36 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         ro : quantity-like (optional)
         vo : quantity-like (optional)
         """
-        from .interop import gala_to_galpy_potential
+        return self.export("galpy", ro=ro, vo=vo)
 
-        return gala_to_galpy_potential(self, ro=ro, vo=vo)
+    def as_interop(self, package, **kwargs):
+        """Interoperability with other Galactic dynamics packages
+
+        Parameters
+        ----------
+        package : str
+            The package to export the potential to. Currently supported packages are
+            ``"galpy"`` and ``"agama"``.
+        kwargs
+            Any additional keyword arguments are passed to the interop function.
+        """
+        if package == "galpy":
+            from .interop import gala_to_galpy_potential
+
+            kwargs.setdefault("ro", None)
+            kwargs.setdefault("vo", None)
+            return gala_to_galpy_potential(self, **kwargs)
+        elif package == "agama":
+            import agama
+
+            from .interop import gala_to_agama_potential
+
+            agama_pot = gala_to_agama_potential(self, **kwargs)
+            if not isinstance(agama_pot, agama.Potential):
+                agama_pot = agama.Potential(*agama_pot)
+            return agama_pot
+        else:
+            raise ValueError(f"Unsupported package: {package}")
 
 
 class CompositePotential(PotentialBase, OrderedDict):
