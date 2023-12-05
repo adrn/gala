@@ -7,7 +7,6 @@ import astropy.units as u
 import numpy as np
 import pytest
 from astropy.coordinates import CylindricalRepresentation
-from astropy.tests.helper import catch_warnings
 
 # This project
 import gala.potential as gp
@@ -73,11 +72,11 @@ def pytest_generate_tests(metafunc):
     for Potential in _galpy_to_gala.keys():
         galpy_pot = Potential(ro=ro, vo=vo)  # use defaults
 
-        with catch_warnings(RuntimeWarning) as warns:
-            pot = galpy_to_gala_potential(galpy_pot, ro=ro, vo=vo)
-
         if isinstance(galpy_pot, galpy_gp.MN3ExponentialDiskPotential):
-            assert len(warns) > 0
+            with pytest.warns():
+                pot = galpy_to_gala_potential(galpy_pot, ro=ro, vo=vo)
+        else:
+            pot = galpy_to_gala_potential(galpy_pot, ro=ro, vo=vo)
 
         gala_pots.append(pot)
         galpy_pots.append(galpy_pot)
