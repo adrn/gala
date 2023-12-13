@@ -8,6 +8,12 @@ import numpy as np
 
 __all__ = ['NDCartesianRepresentation', 'NDCartesianDifferential']
 
+# TODO: Remove when astropy min version >=v6.0
+try:
+    _make_getter = coord.representation._make_getter
+except AttributeError:
+    _make_getter = coord.representation.base._make_getter
+
 
 class NDMixin(object):
 
@@ -95,8 +101,9 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
             if not hasattr(cls, name):
                 setattr(cls, name,
                         property(
-                            coord.representation._make_getter(name),
-                            doc=(f"The '{name}' component of the points(s).")))
+                            _make_getter(name),
+                            doc=(f"The '{name}' component of the points(s)."))
+                        )
 
     def get_xyz(self, xyz_axis=0):
         """Return a vector array of the x, y, and z coordinates.
@@ -181,7 +188,7 @@ class NDCartesianDifferential(NDMixin, coord.CartesianDifferential):
             cls = self.__class__
             if not hasattr(cls, name):
                 setattr(cls, name,
-                        property(coord.representation._make_getter(name),
+                        property(_make_getter(name),
                                  doc=("The '{0}' component of the points(s)."
                                       .format(name))))
 

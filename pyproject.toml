@@ -69,7 +69,7 @@ tutorials = [
     "jupyter_client",
     "ipykernel",
     "jupytext",
-    "pyia",
+    "pyia @ git+https://github.com/adrn/pyia",
     "astroquery"
 ]
 
