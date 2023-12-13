@@ -18,10 +18,12 @@ Bug fixes
 - Fixed the YAML output to use ``default_flow_style=None`` for serializing potential
   objects, which leads to a more efficient array output.
 
-- ``scf.compute_coeffs_discrete`` now raises an error if GSL is not enabled rather than silently returning
-  zeros
+- ``scf.compute_coeffs_discrete`` now raises an error if GSL is not enabled rather than
+  silently returning zeros
 
 - ``SCFPotential`` will now work with IO functions (``save`` & ``load``)
+
+- Fixes compatibility with Astropy v6.0
 
 API changes
 -----------
