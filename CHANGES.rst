@@ -1,16 +1,8 @@
-1.9 (unlreleased)
-=================
+1.8.1 (2023-12-31)
+==================
 
-New Features
-------------
-
-
-Bug fixes
----------
-
-
-API changes
------------
+- New release to fix upload to PyPI from GitHub Actions and invalid pin in pyia
+  dependency.
 
 
 1.8 (2023-12-23)
