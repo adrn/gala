@@ -7,6 +7,9 @@ on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - main
 
 env:
   CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-*"
