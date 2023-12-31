@@ -39,20 +39,21 @@
 
 # +
 # Third-party
-import astropy.units as u
 import astropy.coordinates as coord
+import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
 
 # Gala
 import gala.dynamics as gd
 import gala.potential as gp
+
 # -
 
 # We will also set the default Astropy Galactocentric frame parameters to the
 # values adopted in Astropy v4.0:
 
-coord.galactocentric_frame_defaults.set('v4.0');
+coord.galactocentric_frame_defaults.set("v4.0")
 
 # For the Milky Way model, we'll use the built-in potential class in `gala` (see
 # above for definition):
@@ -67,20 +68,22 @@ potential = gp.MilkyWayPotential()
 
 # +
 icrs = coord.SkyCoord(
-    ra=coord.Angle('17h 20m 12.4s'),
-    dec=coord.Angle('+57° 54′ 55″'),
-    distance=76*u.kpc,
-    pm_ra_cosdec=0.0569*u.mas/u.yr,
-    pm_dec=-0.1673*u.mas/u.yr,
-    radial_velocity=-291*u.km/u.s)
+    ra=coord.Angle("17h 20m 12.4s"),
+    dec=coord.Angle("+57° 54′ 55″"),
+    distance=76 * u.kpc,
+    pm_ra_cosdec=0.0569 * u.mas / u.yr,
+    pm_dec=-0.1673 * u.mas / u.yr,
+    radial_velocity=-291 * u.km / u.s,
+)
 
 icrs_err = coord.SkyCoord(
-    ra=0*u.deg,
-    dec=0*u.deg,
-    distance=6*u.kpc,
-    pm_ra_cosdec=0.009*u.mas/u.yr,
-    pm_dec=0.009*u.mas/u.yr,
-    radial_velocity=0.1*u.km/u.s)
+    ra=0 * u.deg,
+    dec=0 * u.deg,
+    distance=6 * u.kpc,
+    pm_ra_cosdec=0.009 * u.mas / u.yr,
+    pm_dec=0.009 * u.mas / u.yr,
+    radial_velocity=0.1 * u.km / u.s,
+)
 # -
 
 # Let's start by transforming the measured values to a Galactocentric reference
@@ -106,7 +109,7 @@ galcen = icrs.transform_to(galcen_frame)
 # steps (5 Gyr):
 
 w0 = gd.PhaseSpacePosition(galcen.data)
-orbit = potential.integrate_orbit(w0, dt=-0.5*u.Myr, n_steps=10000)
+orbit = potential.integrate_orbit(w0, dt=-0.5 * u.Myr, n_steps=10000)
 
 # Let's visualize the orbit:
 
@@ -122,19 +125,19 @@ orbit.pericenter(), orbit.apocenter(), orbit.eccentricity()
 # time series of the Galactocentric radius of the orbit:
 
 # +
-plt.plot(orbit.t, orbit.spherical.distance, marker='None')
+plt.plot(orbit.t, orbit.spherical.distance, marker="None")
 
 per, per_times = orbit.pericenter(return_times=True, func=None)
 apo, apo_times = orbit.apocenter(return_times=True, func=None)
 
 for t in per_times:
-    plt.axvline(t.value, color='#67a9cf')
+    plt.axvline(t.value, color="#67a9cf")
 
 for t in apo_times:
-    plt.axvline(t.value, color='#ef8a62')
+    plt.axvline(t.value, color="#ef8a62")
 
-plt.xlabel('$t$ [{0}]'.format(orbit.t.unit.to_string('latex')))
-plt.ylabel('$r$ [{0}]'.format(orbit.x.unit.to_string('latex')))
+plt.xlabel("$t$ [{0}]".format(orbit.t.unit.to_string("latex")))
+plt.ylabel("$r$ [{0}]".format(orbit.x.unit.to_string("latex")))
 # -
 
 # Now we'll sample from the error distribution over the distance, proper
@@ -144,35 +147,47 @@ plt.ylabel('$r$ [{0}]'.format(orbit.x.unit.to_string('latex')))
 # +
 n_samples = 128
 
-dist = np.random.normal(icrs.distance.value, icrs_err.distance.value,
-                        n_samples) * icrs.distance.unit
+dist = (
+    np.random.normal(icrs.distance.value, icrs_err.distance.value, n_samples)
+    * icrs.distance.unit
+)
 
-pm_ra_cosdec = np.random.normal(icrs.pm_ra_cosdec.value,
-                                icrs_err.pm_ra_cosdec.value,
-                                n_samples) * icrs.pm_ra_cosdec.unit
+pm_ra_cosdec = (
+    np.random.normal(icrs.pm_ra_cosdec.value, icrs_err.pm_ra_cosdec.value, n_samples)
+    * icrs.pm_ra_cosdec.unit
+)
 
-pm_dec = np.random.normal(icrs.pm_dec.value,
-                          icrs_err.pm_dec.value,
-                          n_samples) * icrs.pm_dec.unit
+pm_dec = (
+    np.random.normal(icrs.pm_dec.value, icrs_err.pm_dec.value, n_samples)
+    * icrs.pm_dec.unit
+)
 
-rv = np.random.normal(icrs.radial_velocity.value,
-                      icrs_err.radial_velocity.value,
-                      n_samples) * icrs.radial_velocity.unit
+rv = (
+    np.random.normal(
+        icrs.radial_velocity.value, icrs_err.radial_velocity.value, n_samples
+    )
+    * icrs.radial_velocity.unit
+)
 
 ra = np.full(n_samples, icrs.ra.degree) * u.degree
 dec = np.full(n_samples, icrs.dec.degree) * u.degree
 # -
 
-icrs_samples = coord.SkyCoord(ra=ra, dec=dec, distance=dist,
-                              pm_ra_cosdec=pm_ra_cosdec,
-                              pm_dec=pm_dec, radial_velocity=rv)
+icrs_samples = coord.SkyCoord(
+    ra=ra,
+    dec=dec,
+    distance=dist,
+    pm_ra_cosdec=pm_ra_cosdec,
+    pm_dec=pm_dec,
+    radial_velocity=rv,
+)
 
 icrs_samples.shape
 
 galcen_samples = icrs_samples.transform_to(galcen_frame)
 
 w0_samples = gd.PhaseSpacePosition(galcen_samples.data)
-orbit_samples = potential.integrate_orbit(w0_samples, dt=-1*u.Myr, n_steps=4000)
+orbit_samples = potential.integrate_orbit(w0_samples, dt=-1 * u.Myr, n_steps=4000)
 
 orbit_samples.shape
 
@@ -187,10 +202,10 @@ eccs = orbit_samples.eccentricity(approximate=True)
 fig, axes = plt.subplots(1, 3, figsize=(12, 4), sharey=True)
 
 axes[0].hist(peris.to_value(u.kpc), bins=np.linspace(20, 80, 32))
-axes[0].set_xlabel('pericenter [kpc]')
+axes[0].set_xlabel("pericenter [kpc]")
 
 axes[1].hist(apos.to_value(u.kpc), bins=np.linspace(60, 140, 32))
-axes[1].set_xlabel('apocenter [kpc]')
+axes[1].set_xlabel("apocenter [kpc]")
 
 axes[2].hist(eccs.value, bins=np.linspace(0.3, 0.5, 41))
-axes[2].set_xlabel('eccentricity');
+axes[2].set_xlabel("eccentricity")

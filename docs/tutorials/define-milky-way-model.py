@@ -23,15 +23,16 @@
 
 # +
 # Third-party dependencies
-from astropy.io import ascii
 import astropy.units as u
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+from astropy.io import ascii
 from scipy.optimize import leastsq
 
 # Gala
 import gala.potential as gp
 from gala.units import galactic
+
 # -
 
 # ## Introduction
@@ -43,7 +44,7 @@ from gala.units import galactic
 # measurements are provided with the documentation of `gala` and are shown
 # below. The radius units are kpc, and mass units are solar masses:
 
-tbl = ascii.read('data/MW_mass_enclosed.csv')
+tbl = ascii.read("data/MW_mass_enclosed.csv")
 
 tbl
 
@@ -52,19 +53,28 @@ tbl
 # +
 fig, ax = plt.subplots(1, 1, figsize=(4, 4))
 
-ax.errorbar(tbl['r'], tbl['Menc'], yerr=(tbl['Menc_err_neg'],
-                                         tbl['Menc_err_pos']),
-            marker='o', markersize=2, color='k', alpha=1., ecolor='#aaaaaa',
-            capthick=0, linestyle='none', elinewidth=1.)
+ax.errorbar(
+    tbl["r"],
+    tbl["Menc"],
+    yerr=(tbl["Menc_err_neg"], tbl["Menc_err_pos"]),
+    marker="o",
+    markersize=2,
+    color="k",
+    alpha=1.0,
+    ecolor="#aaaaaa",
+    capthick=0,
+    linestyle="none",
+    elinewidth=1.0,
+)
 
-ax.set_xlim(1E-3, 10**2.6)
-ax.set_ylim(7E6, 10**12.25)
+ax.set_xlim(1e-3, 10**2.6)
+ax.set_ylim(7e6, 10**12.25)
 
-ax.set_xlabel('$r$ [kpc]')
-ax.set_ylabel('$M(<r)$ [M$_\odot$]')
+ax.set_xlabel("$r$ [kpc]")
+ax.set_ylabel("$M(<r)$ [M$_\odot$]")
 
-ax.set_xscale('log')
-ax.set_yscale('log')
+ax.set_xscale("log")
+ax.set_yscale("log")
 
 fig.tight_layout()
 
@@ -86,14 +96,19 @@ fig.tight_layout()
 # these parameters in log-space, so we'll first define a function that returns a
 # `gala.potential.CCompositePotential` object given these four parameters:
 
+
 def get_potential(log_M_h, log_r_s, log_M_n, log_a):
     mw_potential = gp.CCompositePotential()
-    mw_potential['bulge'] = gp.HernquistPotential(m=5E9, c=1., units=galactic)
-    mw_potential['disk'] = gp.MiyamotoNagaiPotential(m=6.8E10*u.Msun, a=3*u.kpc, b=280*u.pc,
-                                                     units=galactic)
-    mw_potential['nucl'] = gp.HernquistPotential(m=np.exp(log_M_n), c=np.exp(log_a)*u.pc,
-                                                 units=galactic)
-    mw_potential['halo'] = gp.NFWPotential(m=np.exp(log_M_h), r_s=np.exp(log_r_s), units=galactic)
+    mw_potential["bulge"] = gp.HernquistPotential(m=5e9, c=1.0, units=galactic)
+    mw_potential["disk"] = gp.MiyamotoNagaiPotential(
+        m=6.8e10 * u.Msun, a=3 * u.kpc, b=280 * u.pc, units=galactic
+    )
+    mw_potential["nucl"] = gp.HernquistPotential(
+        m=np.exp(log_M_n), c=np.exp(log_a) * u.pc, units=galactic
+    )
+    mw_potential["halo"] = gp.NFWPotential(
+        m=np.exp(log_M_h), r_s=np.exp(log_r_s), units=galactic
+    )
 
     return mw_potential
 
@@ -103,7 +118,7 @@ def get_potential(log_M_h, log_r_s, log_M_n, log_a):
 
 # Initial guess for the parameters- units are:
 #     [Msun, kpc, Msun, pc]
-x0 = [np.log(6E11), np.log(20.), np.log(2E9), np.log(100.)]
+x0 = [np.log(6e11), np.log(20.0), np.log(2e9), np.log(100.0)]
 init_potential = get_potential(*x0)
 
 # +
@@ -112,22 +127,31 @@ xyz[0] = np.logspace(-3, 3, 256)
 
 fig, ax = plt.subplots(1, 1, figsize=(4, 4))
 
-ax.errorbar(tbl['r'], tbl['Menc'], yerr=(tbl['Menc_err_neg'], tbl['Menc_err_pos']),
-            marker='o', markersize=2, color='k', alpha=1., ecolor='#aaaaaa',
-            capthick=0, linestyle='none', elinewidth=1.)
+ax.errorbar(
+    tbl["r"],
+    tbl["Menc"],
+    yerr=(tbl["Menc_err_neg"], tbl["Menc_err_pos"]),
+    marker="o",
+    markersize=2,
+    color="k",
+    alpha=1.0,
+    ecolor="#aaaaaa",
+    capthick=0,
+    linestyle="none",
+    elinewidth=1.0,
+)
 
-fit_menc = init_potential.mass_enclosed(xyz*u.kpc)
-ax.loglog(xyz[0], fit_menc.value, marker='', color="#3182bd",
-          linewidth=2, alpha=0.7)
+fit_menc = init_potential.mass_enclosed(xyz * u.kpc)
+ax.loglog(xyz[0], fit_menc.value, marker="", color="#3182bd", linewidth=2, alpha=0.7)
 
-ax.set_xlim(1E-3, 10**2.6)
-ax.set_ylim(7E6, 10**12.25)
+ax.set_xlim(1e-3, 10**2.6)
+ax.set_ylim(7e6, 10**12.25)
 
-ax.set_xlabel('$r$ [kpc]')
-ax.set_ylabel('$M(<r)$ [M$_\odot$]')
+ax.set_xlabel("$r$ [kpc]")
+ax.set_ylabel("$M(<r)$ [M$_\odot$]")
 
-ax.set_xscale('log')
-ax.set_yscale('log')
+ax.set_xscale("log")
+ax.set_yscale("log")
 
 fig.tight_layout()
 
@@ -137,6 +161,7 @@ fig.tight_layout()
 # It looks pretty good already! But let's now use least-squares fitting to
 # optimize our nucleus and halo parameters. We first need to define an error
 # function:
+
 
 def err_func(p, r, Menc, Menc_err):
     pot = get_potential(*p)
@@ -151,9 +176,9 @@ def err_func(p, r, Menc, Menc_err):
 # that the uncertainties in the mass measurements are Gaussian (a bad but simple
 # assumption):
 
-err = np.max([tbl['Menc_err_pos'], tbl['Menc_err_neg']], axis=0)
-p_opt, ier = leastsq(err_func, x0=x0, args=(tbl['r'], tbl['Menc'], err))
-assert ier in range(1, 4+1), "least-squares fit failed!"
+err = np.max([tbl["Menc_err_pos"], tbl["Menc_err_neg"]], axis=0)
+p_opt, ier = leastsq(err_func, x0=x0, args=(tbl["r"], tbl["Menc"], err))
+assert ier in range(1, 4 + 1), "least-squares fit failed!"
 fit_potential = get_potential(*p_opt)
 
 # Now we have a best-fit potential! Let's plot the enclosed mass of the fit potential over the data:
@@ -164,22 +189,31 @@ xyz[0] = np.logspace(-3, 3, 256)
 
 fig, ax = plt.subplots(1, 1, figsize=(4, 4))
 
-ax.errorbar(tbl['r'], tbl['Menc'], yerr=(tbl['Menc_err_neg'], tbl['Menc_err_pos']),
-            marker='o', markersize=2, color='k', alpha=1., ecolor='#aaaaaa',
-            capthick=0, linestyle='none', elinewidth=1.)
+ax.errorbar(
+    tbl["r"],
+    tbl["Menc"],
+    yerr=(tbl["Menc_err_neg"], tbl["Menc_err_pos"]),
+    marker="o",
+    markersize=2,
+    color="k",
+    alpha=1.0,
+    ecolor="#aaaaaa",
+    capthick=0,
+    linestyle="none",
+    elinewidth=1.0,
+)
 
-fit_menc = fit_potential.mass_enclosed(xyz*u.kpc)
-ax.loglog(xyz[0], fit_menc.value, marker='', color="#3182bd",
-          linewidth=2, alpha=0.7)
+fit_menc = fit_potential.mass_enclosed(xyz * u.kpc)
+ax.loglog(xyz[0], fit_menc.value, marker="", color="#3182bd", linewidth=2, alpha=0.7)
 
-ax.set_xlim(1E-3, 10**2.6)
-ax.set_ylim(7E6, 10**12.25)
+ax.set_xlim(1e-3, 10**2.6)
+ax.set_ylim(7e6, 10**12.25)
 
-ax.set_xlabel('$r$ [kpc]')
-ax.set_ylabel('$M(<r)$ [M$_\odot$]')
+ax.set_xlabel("$r$ [kpc]")
+ax.set_ylabel("$M(<r)$ [M$_\odot$]")
 
-ax.set_xscale('log')
-ax.set_yscale('log')
+ax.set_xscale("log")
+ax.set_yscale("log")
 
 fig.tight_layout()
 # -
