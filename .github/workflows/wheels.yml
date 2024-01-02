@@ -70,7 +70,7 @@ jobs:
           CIBW_BUILD: ${{ matrix.python }}
           CIBW_SKIP: "*-win32 *musllinux* pp* *-manylinux_i686"
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
 
@@ -94,7 +94,7 @@ jobs:
           pip install build
           python -m build -s .
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: dist/*.tar.gz
 
