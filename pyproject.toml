@@ -112,6 +112,9 @@ include = ["gala", "gala.*"]
     "potential/tests/*.fits"
 ]
 
+[tool.setuptools_scm]
+local_scheme = "no-local-version"
+
 [tool.pytest]
 testpaths = ["gala", "docs"]
 astropy_header = true
