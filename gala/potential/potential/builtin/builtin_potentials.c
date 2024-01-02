@@ -1,3 +1,6 @@
+// For Windows...
+#define _USE_MATH_DEFINES
+
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
@@ -664,6 +667,14 @@ void powerlawcutoff_hessian(double t, double *pars, double *q, int n_dim, double
     hess[8] = hess[8] + -tmp_13*tmp_2 + tmp_2*tmp_39 - tmp_2*tmp_41 - tmp_22*tmp_70 + tmp_22*tmp_73 - tmp_25*tmp_72 - tmp_32*tmp_71 + tmp_37 + tmp_43*tmp_69 + tmp_70 - tmp_73;
 }
 
+#endif
+
+// NOTE: Only Windows needs the definitions here to link... not sure why
+#if USE_GSL == 0
+double powerlawcutoff_density(double t, double *pars, double *q, int n_dim) { return 0; }
+double powerlawcutoff_value(double t, double *pars, double *q, int n_dim) { return 0; }
+void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, double *grad){}
+void powerlawcutoff_hessian(double t, double *pars, double *q, int n_dim, double *hess) {}
 #endif
 
 /* ---------------------------------------------------------------------------

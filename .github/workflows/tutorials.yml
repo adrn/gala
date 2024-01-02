@@ -5,7 +5,8 @@ on:
       - main
   pull_request:
     branches:
-      - main
+      # - main
+      - DISABLED
   release:
     types:
       - published
