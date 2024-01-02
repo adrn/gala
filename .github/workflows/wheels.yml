@@ -15,40 +15,40 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-*"
-  CIBW_SKIP: "*-win32 *musllinux* pp* *-manylinux_i686"
-  CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-  CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
-  CIBW_ARCHS_LINUX: auto aarch64
-  CIBW_ARCHS_MACOS: x86_64 arm64
-
 jobs:
   build_nix_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.os }} - ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
     if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only')
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # Building wheels on linux takes too much time: split wheels into multiple runs
+        python:
+          - "cp39-* cp310-*"
+          - "cp311-* cp312-*"
+        os:
+          - "macos-latest"
+          - "ubuntu-latest"
+        linux_archs:
+          # only used on linux
+          - "x86_64"
+          # - "aarch64"  # TODO: disabled beause they are too slow (done w/ emulation)
+        macos_archs:
+          # only used on mac
+          - "x86_64"
+          - "arm64"
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up QEMU  # For emulation on Linux
-        if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: all
-
-      - uses: actions/setup-python@v5
-        name: Install Python
-        with:
-          # Note: cibuildwheel builds for many Python versions beyond this one
-          python-version: "3.9"
+      # - name: Set up QEMU  # For emulation on Linux
+      #   if: runner.os == 'Linux'
+      #   uses: docker/setup-qemu-action@v3
+      #   with:
+      #     platforms: all
 
       # Mac:
       - name: Setup Mac
@@ -63,9 +63,12 @@ jobs:
           sudo apt-get install gsl-bin libgsl0-dev
 
       - name: Build wheels
-        run: |
-          python -m pip install cibuildwheel
-          python -m cibuildwheel --output-dir wheelhouse
+        uses: pypa/cibuildwheel@v2.16.2
+        env:
+          CIBW_ARCHS_LINUX: ${{ matrix.linux_archs }}
+          CIBW_ARCHS_MACOS: ${{ matrix.macos_archs }}
+          CIBW_BUILD: ${{ matrix.python }}
+          CIBW_SKIP: "*-win32 *musllinux* pp* *-manylinux_i686"
 
       - uses: actions/upload-artifact@v3
         with:
