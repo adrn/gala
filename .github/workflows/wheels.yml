@@ -70,8 +70,9 @@ jobs:
           CIBW_BUILD: ${{ matrix.python }}
           CIBW_SKIP: "*-win32 *musllinux* pp* *-manylinux_i686"
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: wheels-${{ matrix.os }}-${{ matrix.python-version }}
           path: ./wheelhouse/*.whl
 
   build_sdist:
@@ -94,8 +95,9 @@ jobs:
           pip install build
           python -m build -s .
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: sdist
           path: dist/*.tar.gz
 
   test_upload_pypi:
@@ -106,10 +108,15 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: artifact
+          name: sdist
           path: dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: wheels-*
 
       - name: Publish package distributions to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
@@ -127,7 +134,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: artifact
           path: dist
