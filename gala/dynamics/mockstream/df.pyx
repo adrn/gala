@@ -361,13 +361,13 @@ cdef class FardalStreamDF(BaseStreamDF):
             double G = potential.G
 
         k_mean[0] = 2. # R
-        k_disp[0] = 0.5
+        k_disp[0] = 0.4
 
         k_mean[2] = 0. # z
         k_disp[2] = 0.5
 
         k_mean[4] = 0.3 # vt
-        k_disp[4] = 0.5
+        k_disp[4] = 0.4
 
         k_mean[5] = 0. # vz
         k_disp[5] = 0.5
@@ -387,7 +387,7 @@ cdef class FardalStreamDF(BaseStreamDF):
                     kx = self.random_state.normal(k_mean[0], k_disp[0])
                     tmp_x[0] = kx * rj
                     tmp_x[2] = self.random_state.normal(k_mean[2], k_disp[2]) * rj
-                    tmp_v[1] = kx * self.random_state.normal(k_mean[4], k_disp[4]) * vj
+                    tmp_v[1] = self.random_state.normal(k_mean[4], k_disp[4]) * vj
                     tmp_v[2] = self.random_state.normal(k_mean[5], k_disp[5]) * vj
                     particle_t1[j+k] = prog_t[i]
 
@@ -405,7 +405,7 @@ cdef class FardalStreamDF(BaseStreamDF):
                     kx = self.random_state.normal(k_mean[0], k_disp[0])
                     tmp_x[0] = kx * -rj
                     tmp_x[2] = self.random_state.normal(k_mean[2], k_disp[2]) * -rj
-                    tmp_v[1] = kx * self.random_state.normal(k_mean[4], k_disp[4]) * -vj
+                    tmp_v[1] = self.random_state.normal(k_mean[4], k_disp[4]) * -vj
                     tmp_v[2] = self.random_state.normal(k_mean[5], k_disp[5]) * -vj
                     particle_t1[j+k] = prog_t[i]
 
