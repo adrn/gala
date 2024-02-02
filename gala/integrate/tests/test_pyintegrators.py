@@ -70,8 +70,8 @@ def test_sho_forward_backward(Integrator):
     dt = 1e-4
     n_steps = 10_000
 
-    forw = integrator.run([0.0, 1.0], dt=dt, n_steps=n_steps)
-    back = integrator.run([0.0, 1.0], dt=-dt, n_steps=n_steps)
+    forw = integrator([0.0, 1.0], dt=dt, n_steps=n_steps)
+    back = integrator([0.0, 1.0], dt=-dt, n_steps=n_steps)
 
     assert np.allclose(forw.w()[:, -1], back.w()[:, -1], atol=1e-6)
 
@@ -82,7 +82,7 @@ def test_point_mass(Integrator):
     p0 = np.array([0.0, 1.0])
 
     integrator = Integrator(ptmass_F)
-    orbit = integrator.run(np.append(q0, p0), t1=0.0, t2=2 * np.pi, n_steps=1e4)
+    orbit = integrator(np.append(q0, p0), t1=0.0, t2=2 * np.pi, n_steps=1e4)
 
     assert np.allclose(orbit.w()[:, 0], orbit.w()[:, -1], atol=1e-6)
 
@@ -94,7 +94,7 @@ def test_progress(Integrator):
     p0 = np.array([0.0, 1.0])
 
     integrator = Integrator(ptmass_F, progress=True)
-    _ = integrator.run(np.append(q0, p0), t1=0.0, t2=2 * np.pi, n_steps=1e2)
+    _ = integrator(np.append(q0, p0), t1=0.0, t2=2 * np.pi, n_steps=1e2)
 
 
 @pytest.mark.parametrize("Integrator", integrator_list)
@@ -104,13 +104,13 @@ def test_point_mass_multiple(Integrator):
     ).T
 
     integrator = Integrator(ptmass_F)
-    _ = integrator.run(w0, dt=1e-3, n_steps=1e4)
+    _ = integrator(w0, dt=1e-3, n_steps=1e4)
 
 
 @pytest.mark.parametrize("Integrator", integrator_list)
 def test_driven_pendulum(Integrator):
     integrator = Integrator(forced_sho_F, func_args=(0.07, 0.75))
-    _ = integrator.run([3.0, 0.0], dt=1e-2, n_steps=1e4)
+    _ = integrator([3.0, 0.0], dt=1e-2, n_steps=1e4)
 
 
 @pytest.mark.parametrize("Integrator", integrator_list)
@@ -118,7 +118,7 @@ def test_lorenz(Integrator):
     sigma, rho, beta = 10.0, 28.0, 8 / 3.0
     integrator = Integrator(lorenz_F, func_args=(sigma, rho, beta))
 
-    _ = integrator.run([0.5, 0.5, 0.5, 0, 0, 0], dt=1e-2, n_steps=1e4)
+    _ = integrator([0.5, 0.5, 0.5, 0, 0, 0], dt=1e-2, n_steps=1e4)
 
 
 @pytest.mark.parametrize("Integrator", integrator_list)
@@ -134,7 +134,7 @@ def test_memmap(tmpdir, Integrator):
 
     integrator = Integrator(sho_F, func_args=(1.0,))
 
-    _ = integrator.run(w0, dt=dt, n_steps=n_steps, mmap=mmap)
+    _ = integrator(w0, dt=dt, n_steps=n_steps, mmap=mmap)
 
 
 @pytest.mark.parametrize("Integrator", integrator_list)
@@ -145,7 +145,7 @@ def test_py_store_all(Integrator):
     dt = 1e-4
     n_steps = 10_000
 
-    out_all = integrator_all.run([0.0, 1.0], dt=dt, n_steps=n_steps)
-    out_final = integrator_final.run([0.0, 1.0], dt=dt, n_steps=n_steps)
+    out_all = integrator_all([0.0, 1.0], dt=dt, n_steps=n_steps)
+    out_final = integrator_final([0.0, 1.0], dt=dt, n_steps=n_steps)
 
     assert np.allclose(out_all.w()[:, -1], out_final.w()[:, 0])
