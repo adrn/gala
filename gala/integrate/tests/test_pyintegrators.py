@@ -77,6 +77,22 @@ def test_sho_forward_backward(Integrator):
 
 
 @pytest.mark.parametrize("Integrator", integrator_list)
+def test_deprecated_run_method(Integrator):
+    """Test the deprecated run method."""
+    integrator = Integrator(sho_F, func_args=(1.0,))
+
+    dt = 1e-4
+    n_steps = 10_000
+
+    with pytest.warns(DeprecationWarning):
+        run = integrator.run([0.0, 1.0], dt=dt, n_steps=n_steps)
+
+    call = integrator([0.0, 1.0], dt=dt, n_steps=n_steps)
+
+    assert np.allclose(run.w()[:, -1], call.w()[:, -1], atol=1e-6)
+
+
+@pytest.mark.parametrize("Integrator", integrator_list)
 def test_point_mass(Integrator):
     q0 = np.array([1.0, 0.0])
     p0 = np.array([0.0, 1.0])
