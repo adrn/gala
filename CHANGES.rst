@@ -29,6 +29,10 @@ Bug fixes
 API changes
 -----------
 
+- Deprecated ``gala.integrate.Integrator.run`` for
+  ``gala.integrate.Integrator.__call__``. The old method will raise a warning
+  and will be removed in a future release.
+
 
 1.8.1 (2023-12-31)
 ==================
