@@ -114,11 +114,11 @@ class Integrator(metaclass=ABCMeta):
         )
         return orbit
 
-    @deprecated("1.8", alternative="Integrator call method")
+    @deprecated("1.9", alternative="Integrator call method")
     def run(self, w0, mmap=None, **time_spec):
         """Run the integrator starting from the specified phase-space position.
 
-        .. deprecated:: 1.8
+        .. deprecated:: 1.9
             Use the ``__call__`` method instead.
         """
         return self(w0, mmap=mmap, **time_spec)
