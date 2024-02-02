@@ -6,6 +6,7 @@ import os
 # Third-party
 import pytest
 import numpy as np
+from astropy.utils.exceptions import AstropyDeprecationWarning
 
 # Project
 from .. import (
@@ -84,7 +85,7 @@ def test_deprecated_run_method(Integrator):
     dt = 1e-4
     n_steps = 10_000
 
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(AstropyDeprecationWarning):
         run = integrator.run([0.0, 1.0], dt=dt, n_steps=n_steps)
 
     call = integrator([0.0, 1.0], dt=dt, n_steps=n_steps)
