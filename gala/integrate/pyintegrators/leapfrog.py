@@ -69,7 +69,7 @@ class LeapfrogIntegrator(Integrator):
     of initial conditions::
 
         integrator = LeapfrogIntegrator(acceleration)
-        times, ws = integrator.run(w0=[1., 0.], dt=0.1, n_steps=1000)
+        times, ws = integrator(w0=[1., 0.], dt=0.1, n_steps=1000)
 
     .. note::
 
@@ -132,8 +132,7 @@ class LeapfrogIntegrator(Integrator):
 
         return v_1_2
 
-    def run(self, w0, mmap=None, **time_spec):
-
+    def __call__(self, w0, mmap=None, **time_spec):
         # generate the array of times
         times = parse_time_specification(self._func_units, **time_spec)
         n_steps = len(times) - 1

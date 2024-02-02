@@ -779,7 +779,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     def integrate_orbit(self, *args, **kwargs):
         """
         Integrate an orbit in the current potential using the integrator class
-        provided. Uses same time specification as `Integrator.run()` -- see
+        provided. Uses same time specification as `Integrator()` -- see
         the documentation for `gala.integrate` for more information.
 
         Parameters
