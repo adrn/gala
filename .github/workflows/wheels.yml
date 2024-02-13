@@ -59,7 +59,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.16.4
         env:
           CIBW_ARCHS_LINUX: "x86_64"
-          CIBW_ARCHS_MACOS: "x86_64 universal2"
+          CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_BUILD: ${{ matrix.python[1] }}
           CIBW_SKIP: "*-win32 *musllinux* pp* *i686"
 
