@@ -38,6 +38,7 @@ jobs:
           # only used on mac
           - "x86_64"
           - "arm64"
+          - "universal2"
 
     steps:
       - uses: actions/checkout@v4
