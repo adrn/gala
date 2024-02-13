@@ -113,7 +113,7 @@ include = ["gala", "gala.*"]
 ]
 
 [tool.setuptools_scm]
-local_scheme = "no-local-version"
+local_scheme = "no-local-version"  # So that uploads to test.pypi.org work
 
 [tool.pytest]
 testpaths = ["gala", "docs"]

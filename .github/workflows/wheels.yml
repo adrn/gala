@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build_nix_wheels:
-    name: Build wheels on ${{ matrix.os }} - ${{ matrix.python }}
+    name: Build wheels on ${{ matrix.os }} - ${{ matrix.python[1] }}
     runs-on: ${{ matrix.os }}
     if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only')
     strategy:
@@ -25,19 +25,11 @@ jobs:
       matrix:
         # Building wheels on linux takes too much time: split wheels into multiple runs
         python:
-          - "cp39-* cp310-*"
-          - "cp311-* cp312-*"
+          - ["1", "cp39-* cp310-*"]
+          - ["2", "cp311-* cp312-*"]
         os:
-          - "macos-latest"
+          - "macos-14"
           - "ubuntu-latest"
-        linux_archs:
-          # only used on linux
-          - "x86_64"
-          # - "aarch64"  # TODO: disabled beause they are too slow (done w/ emulation)
-        macos_archs:
-          # only used on mac
-          - "x86_64"
-          - "arm64"
 
     steps:
       - uses: actions/checkout@v4
@@ -51,10 +43,11 @@ jobs:
       #     platforms: all
 
       # Mac:
+      # NOTE: need to install pipx explicitly for macos-14
       - name: Setup Mac
         if: runner.os == 'macOS'
         run: |
-          brew install gsl
+          brew install gsl pipx
 
       # Ubuntu:
       - name: Setup Linux
@@ -65,13 +58,14 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.4
         env:
-          CIBW_ARCHS_LINUX: ${{ matrix.linux_archs }}
-          CIBW_ARCHS_MACOS: ${{ matrix.macos_archs }}
-          CIBW_BUILD: ${{ matrix.python }}
-          CIBW_SKIP: "*-win32 *musllinux* pp* *-manylinux_i686"
+          CIBW_ARCHS_LINUX: "x86_64"
+          CIBW_ARCHS_MACOS: "x86_64 arm64"
+          CIBW_BUILD: ${{ matrix.python[1] }}
+          CIBW_SKIP: "*-win32 *musllinux* pp* *i686"
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: wheels-${{ matrix.os }}-${{ matrix.python[0] }}
           path: ./wheelhouse/*.whl
 
   build_sdist:
@@ -94,22 +88,26 @@ jobs:
           pip install build
           python -m build -s .
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: wheels-sdist
           path: dist/*.tar.gz
 
   test_upload_pypi:
     needs: [build_nix_wheels, build_sdist]
+    # Only test upload to pypi on push to main:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: release
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: artifact
+          pattern: wheels*
           path: dist
+          merge-multiple: true
 
       - name: Publish package distributions to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
@@ -127,10 +125,11 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: artifact
+          pattern: wheels*
           path: dist
+          merge-multiple: true
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
