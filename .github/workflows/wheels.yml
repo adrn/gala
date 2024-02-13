@@ -101,6 +101,8 @@ jobs:
 
   test_upload_pypi:
     needs: [build_nix_wheels, build_sdist]
+    # Only test upload to pypi on push to main:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: release
