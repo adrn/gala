@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build_nix_wheels:
-    name: Build wheels on ${{ matrix.os }} - ${{ matrix.python }}
+    name: Build wheels on ${{ matrix.os }} - ${{ matrix.python[1] }}
     runs-on: ${{ matrix.os }}
     if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only')
     strategy:
@@ -43,10 +43,11 @@ jobs:
       #     platforms: all
 
       # Mac:
+      # NOTE: need to install pipx explicitly for macos-14
       - name: Setup Mac
         if: runner.os == 'macOS'
         run: |
-          brew install gsl
+          brew install gsl pipx
 
       # Ubuntu:
       - name: Setup Linux
