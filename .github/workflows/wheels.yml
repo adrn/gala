@@ -30,15 +30,6 @@ jobs:
         os:
           - "macos-latest"
           - "ubuntu-latest"
-        linux_archs:
-          # only used on linux
-          - "x86_64"
-          # - "aarch64"  # TODO: disabled beause they are too slow (done w/ emulation)
-        macos_archs:
-          # only used on mac
-          - "x86_64"
-          - "arm64"
-          - "universal2"
 
     steps:
       - uses: actions/checkout@v4
@@ -66,13 +57,14 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.4
         env:
-          CIBW_ARCHS_LINUX: ${{ matrix.linux_archs }}
-          CIBW_ARCHS_MACOS: ${{ matrix.macos_archs }}
+          CIBW_ARCHS_LINUX: "x86_64"
+          CIBW_ARCHS_MACOS: "x86_64 universal2"
           CIBW_BUILD: ${{ matrix.python }}
           CIBW_SKIP: "*-win32 *musllinux* pp* *-manylinux_i686"
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: wheels-${{ matrix.os }}-${{ matrix.python }}
           path: ./wheelhouse/*.whl
 
   build_sdist:
@@ -95,8 +87,9 @@ jobs:
           pip install build
           python -m build -s .
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: wheels-sdist
           path: dist/*.tar.gz
 
   test_upload_pypi:
@@ -109,10 +102,11 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: artifact
+          pattern: wheels*
           path: dist
+          merge-multiple: true
 
       - name: Publish package distributions to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
@@ -130,10 +124,11 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: artifact
+          pattern: wheels*
           path: dist
+          merge-multiple: true
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
