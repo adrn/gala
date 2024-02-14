@@ -326,6 +326,8 @@ cdef class FardalStreamDF(BaseStreamDF):
 
     Parameters
     ----------
+    gala_modified : bool (optional)
+        If True, use the modified version of the Fardal method parameters used in Gala. If you would like to use the exact parameters from Fardal+2015, set this to False. Default: True.
     lead : bool (optional)
         Generate a leading tail. Default: True.
     trail : bool (optional)
@@ -333,6 +335,13 @@ cdef class FardalStreamDF(BaseStreamDF):
     random_state : `~numpy.random.RandomState` (optional)
         To control random number generation.
     """
+    def __init__(
+        self, gala_modified=True, lead=True, trail=True, random_state=None
+    ):
+        super().__init__(lead=lead, trail=trail, random_state=random_state)
+        self._gala_modified = bool(gala_modified)
+
+
     cpdef _sample(self, potential,
                   double[:, ::1] prog_x, double[:, ::1] prog_v,
                   double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
@@ -360,14 +369,19 @@ cdef class FardalStreamDF(BaseStreamDF):
             CPotential cpotential = (<CPotentialWrapper>(potential.c_instance)).cpotential
             double G = potential.G
 
+        # TODO: support computing this, which requires knowing the peri/apo and values
+        # of Om**2 - d2Phi/dr2 at those points...
+        # kvt_fardal = min(0.15 * self.f_t**2 * Racc**(2/3), 0.4)
+        kvt_fardal = 0.4
+
         k_mean[0] = 2. # R
-        k_disp[0] = 0.4
+        k_disp[0] = 0.5 if self._gala_modified else 0.4
 
         k_mean[2] = 0. # z
         k_disp[2] = 0.5
 
         k_mean[4] = 0.3 # vt
-        k_disp[4] = 0.4
+        k_disp[4] = 0.5 if self._gala_modified else kvt_fardal
 
         k_mean[5] = 0. # vz
         k_disp[5] = 0.5
@@ -388,6 +402,8 @@ cdef class FardalStreamDF(BaseStreamDF):
                     tmp_x[0] = kx * rj
                     tmp_x[2] = self.random_state.normal(k_mean[2], k_disp[2]) * rj
                     tmp_v[1] = self.random_state.normal(k_mean[4], k_disp[4]) * vj
+                    if self._gala_modified:  # for backwards compatibility
+                        tmp_v[1] *= kx
                     tmp_v[2] = self.random_state.normal(k_mean[5], k_disp[5]) * vj
                     particle_t1[j+k] = prog_t[i]
 
@@ -406,6 +422,8 @@ cdef class FardalStreamDF(BaseStreamDF):
                     tmp_x[0] = kx * -rj
                     tmp_x[2] = self.random_state.normal(k_mean[2], k_disp[2]) * -rj
                     tmp_v[1] = self.random_state.normal(k_mean[4], k_disp[4]) * -vj
+                    if self._gala_modified:  # for backwards compatibility
+                        tmp_v[1] *= kx
                     tmp_v[2] = self.random_state.normal(k_mean[5], k_disp[5]) * -vj
                     particle_t1[j+k] = prog_t[i]
 
