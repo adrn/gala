@@ -336,9 +336,25 @@ cdef class FardalStreamDF(BaseStreamDF):
         To control random number generation.
     """
     def __init__(
-        self, gala_modified=True, lead=True, trail=True, random_state=None
+        self, gala_modified=None, lead=True, trail=True, random_state=None
     ):
         super().__init__(lead=lead, trail=trail, random_state=random_state)
+
+        if gala_modified is None:
+            from gala.util import GalaDeprecationWarning
+            import warnings
+            msg = (
+                "The parameter values of the FardalStreamDF have been updated (fixed) "
+                "to match the parameter values in the final published version of "
+                "Fardal+2015. For now, this class uses the Gala modified parameter "
+                "values that have been adopted over the last several years in Gala. "
+                "In the future, the default behavior of this class will use the "
+                "Fardal+2015 parameter values instead, breaking backwards "
+                "compatibility for mock stream simulations. To use the Fardal+2015 "
+                "parameters now, set gala_modified=False. To continue to use the Gala "
+                "modified parameter values, set gala_modified=True."
+            )
+            warnings.warn(msg, GalaDeprecationWarning)
         self._gala_modified = bool(gala_modified)
 
 
