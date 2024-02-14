@@ -8,6 +8,11 @@ New Features
 Bug fixes
 ---------
 
+- Fixed the parameter values in the ``FardalStreamDF`` class to be consistent with
+  the values used in Fardal et al. (2015). Added an option ``gala_modified`` to the
+  class to enable using the new (correct) parameter values, but the default will
+  continue to use the Gala modified values (for backwards compatibility).
+
 
 API changes
 -----------

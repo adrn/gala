@@ -8,6 +8,9 @@ cdef class BaseStreamDF:
     cdef double _trail
     cdef public object random_state
 
+    # TODO: used only in the FardalStreamDF class
+    cdef int _gala_modified
+
     cdef void get_rj_vj_R(self, CPotential *cpotential, double G,
                           double *prog_x, double *prog_v,
                           double prog_m, double t,

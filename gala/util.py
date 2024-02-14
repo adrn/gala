@@ -6,7 +6,7 @@ from collections.abc import Mapping
 # Third-party
 import numpy as np
 
-__all__ = ['rolling_window', 'atleast_2d', 'assert_angles_allclose']
+__all__ = ["rolling_window", "atleast_2d", "assert_angles_allclose"]
 
 
 class ImmutableDict(Mapping):
@@ -44,6 +44,7 @@ class ImmutableDict(Mapping):
 
     def copy(self):
         import copy
+
         return copy.deepcopy(self._dict)
 
 
@@ -152,7 +153,7 @@ def atleast_2d(*arys, **kwargs):
     [array([[1]]), array([[1, 2]]), array([[1, 2]])]
 
     """
-    insert_axis = kwargs.pop('insert_axis', 0)
+    insert_axis = kwargs.pop("insert_axis", 0)
     slc = [slice(None)] * 2
     slc[insert_axis] = None
     slc = tuple(slc)
@@ -177,13 +178,12 @@ def assert_angles_allclose(x, y, **kwargs):
     """
     Like numpy's assert_allclose, but for angles (in radians).
     """
-    c2 = (np.sin(x)-np.sin(y))**2 + (np.cos(x)-np.cos(y))**2
-    diff = np.arccos((2.0 - c2)/2.0)  # a = b = 1
+    c2 = (np.sin(x) - np.sin(y)) ** 2 + (np.cos(x) - np.cos(y)) ** 2
+    diff = np.arccos((2.0 - c2) / 2.0)  # a = b = 1
     assert np.allclose(diff, 0.0, **kwargs)
 
 
-class GalaDeprecationWarning(Warning):
+class GalaDeprecationWarning(DeprecationWarning):
     """
-    A warning class to indicate a deprecated feature. Use this over the built-in
-    DeprecationWarning because those are silenced by default.
+    A warning class to indicate a deprecated feature.
     """
