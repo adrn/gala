@@ -757,6 +757,8 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         if ax is None:
             fig, ax = plt.subplots()
+        else:
+            fig = ax.figure
 
         if labels is not False:
             ax.set_xlabel(labels[0])
