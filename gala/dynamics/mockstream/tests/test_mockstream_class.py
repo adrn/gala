@@ -66,7 +66,49 @@ def test_one_burst():
     gen = ms.MockStreamGenerator(df, H, progenitor_potential=prog_pot)
 
     stream, prog = gen.run(
-        prog_w0, prog_mass,
-        n_particles=n_array,
-        dt=dt,
-        n_steps=nsteps, progress=False)
+        prog_w0, prog_mass, n_particles=n_array, dt=dt, n_steps=nsteps, progress=False
+    )
+
+
+def test_Fardal_vs_GalaModified():
+    """
+    Regression test: Check that one can actually use the original Fardal parameter
+    values, and that makes a different stream than the Gala-modified values:
+    https://github.com/adrn/gala/pull/358
+    """
+    import gala.dynamics as gd
+    import gala.potential as gp
+    from gala.dynamics import mockstream as ms
+    from gala.units import galactic
+
+    # NFW MW with v_c = 232.8 km/s @ r = 8.2 kpc
+    pot = gp.NFWPotential.from_circular_velocity(
+        v_c=232.8 * u.km / u.s, r_s=15 * u.kpc, r_ref=8.2 * u.kpc, units=galactic
+    )
+
+    H = gp.Hamiltonian(pot)
+
+    prog_w0 = gd.PhaseSpacePosition(
+        pos=[10, 0, 0.0] * u.kpc, vel=[0, 300, 20.0] * u.km / u.s
+    )
+
+    with pytest.warns(DeprecationWarning, match="Fardal"):
+        ms.FardalStreamDF()
+
+    df_false = ms.FardalStreamDF(
+        gala_modified=False, random_state=np.random.default_rng(seed=42)
+    )
+    df_true = ms.FardalStreamDF(
+        gala_modified=True, random_state=np.random.default_rng(seed=42)
+    )
+
+    gen_false = ms.MockStreamGenerator(df_false, H)
+    gen_true = ms.MockStreamGenerator(df_true, H)
+
+    prog_mass = 2.5e4 * u.Msun
+    stream_false, _ = gen_false.run(
+        prog_w0, prog_mass, dt=1, n_steps=128, progress=False
+    )
+    stream_true, _ = gen_true.run(prog_w0, prog_mass, dt=1, n_steps=128, progress=False)
+
+    assert not u.allclose(stream_false.xyz, stream_true.xyz)
