@@ -355,7 +355,9 @@ cdef class FardalStreamDF(BaseStreamDF):
                 "modified parameter values, set gala_modified=True."
             )
             warnings.warn(msg, GalaDeprecationWarning)
-        self._gala_modified = bool(gala_modified)
+            gala_modified = True
+
+        self._gala_modified = int(gala_modified)
 
 
     cpdef _sample(self, potential,
