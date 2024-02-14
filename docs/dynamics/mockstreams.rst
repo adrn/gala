@@ -77,8 +77,19 @@ argument values. We will also need to specify the progenitor mass, which is
 passed in to any ``StreamDF`` and is used to scale the particle release
 distribution::
 
-    >>> df = ms.FardalStreamDF()
+    >>> df = ms.FardalStreamDF(gala_modified=True)
     >>> prog_mass = 2.5E4 * u.Msun
+
+.. warning::
+
+    The parameter values of the FardalStreamDF have been updated (fixed) in v1.9 to
+    match the parameter values in the final published version of [fardal15]_. For now,
+    this class uses the Gala modified parameter values that have been adopted over the
+    last several years in Gala. In the future, the default behavior of this class will
+    use the [fardal15]_ parameter values instead, breaking backwards compatibility for
+    mock stream simulations. To use the [fardal15]_ parameters now, set
+    ``gala_modified=False``. To continue to use the Gala modified parameter values, set
+    ``gala_modified=True``.
 
 The final step before actually generating the stream is to create a
 `~gala.dynamics.mockstream.MockStreamGenerator` instance, which we will use to
@@ -115,7 +126,7 @@ Let's plot the stream::
     prog_w0 = gd.PhaseSpacePosition(pos=[10, 0, 0.] * u.kpc,
                                     vel=[0, 170, 0.] * u.km/u.s)
 
-    df = ms.FardalStreamDF()
+    df = ms.FardalStreamDF(gala_modified=True)
     prog_mass = 2.5E4 * u.Msun
 
     gen = ms.MockStreamGenerator(df, H)

@@ -118,7 +118,7 @@ Here the negative timestep tells the stream generator to first integrate the orb
     pal5_mass = 2.5e4 * u.Msun
     pal5_pot = gp.PlummerPotential(m=pal5_mass, b=4*u.pc, units=galactic)
 
-    df = ms.FardalStreamDF()
+    df = ms.FardalStreamDF(gala_modified=True)
     gen_pal5 = ms.MockStreamGenerator(df, pot, progenitor_potential=pal5_pot)
     pal5_stream, _ = gen_pal5.run(pal5_w0, pal5_mass,
                                  dt=-1 * u.Myr, n_steps=4000)
