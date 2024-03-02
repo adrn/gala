@@ -7,9 +7,9 @@ import scipy.integrate as si
 # Project
 from ._computecoeff import (
     Snlm_integrand,
-    Tnlm_integrand,
     STnlm_discrete,
     STnlm_var_discrete,
+    Tnlm_integrand,
 )
 
 __all__ = ["compute_coeffs", "compute_coeffs_discrete"]
@@ -27,7 +27,7 @@ def compute_coeffs(
     skip_m=False,
     S_only=False,
     progress=False,
-    **nquad_opts
+    **nquad_opts,
 ):
     """
     Compute the expansion coefficients for representing the input density
@@ -161,6 +161,21 @@ def compute_coeffs(
     return (Snlm, Snlm_e), (Tnlm, Tnlm_e)
 
 
+def _discrete_worker(task):
+    (n, l, m), compute_var, *args = task
+    # args = s, phi, X, mass
+
+    S, T = STnlm_discrete(*args, n, l, m)
+
+    if compute_var:
+        (S_var, T_var, co_var) = STnlm_var_discrete(*args, n, l, m)
+        cov = np.array([[S_var, co_var], [co_var, T_var]])
+    else:
+        cov = None
+
+    return (n, l, m), (S, T), cov
+
+
 def compute_coeffs_discrete(
     xyz,
     mass,
@@ -171,6 +186,7 @@ def compute_coeffs_discrete(
     skip_even=False,
     skip_m=False,
     compute_var=False,
+    pool=None,
 ):
     """
     Compute the expansion coefficients for representing the density distribution
@@ -205,6 +221,10 @@ def compute_coeffs_discrete(
         Ignore terms with :math:`m > 0`.
     compute_var : bool (optional)
         Also compute the variances (and covariances) of the coefficients.
+    pool : `~multiprocessing.Pool`, `schwimmbad.BasePool` (optional)
+        A multi-processing or other parallel processing pool to use to distribute the
+        tasks of computing the coefficients for each n,l,m term. The pool instance must
+        have a `.map()` method.
 
     Returns
     -------
@@ -227,6 +247,11 @@ def compute_coeffs_discrete(
             "gala: http://gala.adrian.pw/en/latest/install.html"
         )
 
+    if pool is None:
+        _map = map
+    else:
+        _map = pool.map
+
     lmin = 0
     lstride = 1
 
@@ -239,40 +264,32 @@ def compute_coeffs_discrete(
     Snlm = np.zeros((nmax + 1, lmax + 1, lmax + 1))
     Tnlm = np.zeros((nmax + 1, lmax + 1, lmax + 1))
 
-    if compute_var:
-        Snlm_var = np.zeros((nmax + 1, lmax + 1, lmax + 1))
-        Tnlm_var = np.zeros((nmax + 1, lmax + 1, lmax + 1))
-        STnlm_var = np.zeros((nmax + 1, lmax + 1, lmax + 1))
-
     # positions and masses of point masses
     xyz = np.ascontiguousarray(np.atleast_2d(xyz))
     mass = np.ascontiguousarray(np.atleast_1d(mass))
 
-    r = np.sqrt(np.sum(xyz ** 2, axis=-1))
+    r = np.sqrt(np.sum(xyz**2, axis=-1))
     s = r / r_s
     phi = np.arctan2(xyz[:, 1], xyz[:, 0])
     X = xyz[:, 2] / r
 
+    nlms = []
     for n in range(nmax + 1):
         for l in range(lmin, lmax + 1, lstride):
             for m in range(l + 1):
                 if skip_m and m > 0:
                     continue
 
-                Snlm[n, l, m], Tnlm[n, l, m] = STnlm_discrete(
-                    s, phi, X, mass, n, l, m
-                )
-                if compute_var:
-                    (
-                        Snlm_var[n, l, m],
-                        Tnlm_var[n, l, m],
-                        STnlm_var[n, l, m],
-                    ) = STnlm_var_discrete(s, phi, X, mass, n, l, m)
+                nlms.append((n, l, m))
+
+    tasks = [(nlm, compute_var, s, phi, X, mass) for nlm in nlms]
+    ST_cov = np.zeros((2, 2) + Snlm.shape)
+    for (n, l, m), ST_nlm, ST_cov_nlm in _map(_discrete_worker, tasks):
+        Snlm[n, l, m], Tnlm[n, l, m] = ST_nlm
+        if compute_var:
+            ST_cov[:, :, n, l, m] = ST_cov_nlm
+
     if compute_var:
-        return (
-            Snlm,
-            Tnlm,
-            np.array([[Snlm_var, STnlm_var], [STnlm_var, Tnlm_var]]),
-        )
+        return Snlm, Tnlm, ST_cov
     else:
         return Snlm, Tnlm
