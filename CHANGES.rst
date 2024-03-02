@@ -4,6 +4,8 @@
 New Features
 ------------
 
+- Added an option to specify a multiprocessing or parallel processing pool when
+  computing basis function coefficients for the SCF potential from discrete particles.
 
 Bug fixes
 ---------
