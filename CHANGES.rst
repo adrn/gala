@@ -15,6 +15,8 @@ Bug fixes
   class to enable using the new (correct) parameter values, but the default will
   continue to use the Gala modified values (for backwards compatibility).
 
+- Improved internal efficiency of ``DirectNBody``.
+
 
 API changes
 -----------
