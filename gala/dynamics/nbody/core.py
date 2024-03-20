@@ -259,13 +259,7 @@ class DirectNBody:
                 frame=self.frame,
             )
 
-        # Reorder orbits:
-        remap_idx = np.zeros((orbits.shape[-1], orbits.shape[-1]), dtype=int)
-        remap_idx[idx, np.arange(orbits.shape[-1])] = 1
-        _, undo_idx = np.where(remap_idx == 1)
-
-        return orbits[..., undo_idx]
-        remap_idx[idx, np.arange(orbits.shape[-1])] = 1
-        _, undo_idx = np.where(remap_idx == 1)
+        # Reorder orbits to original order:
+        undo_idx = np.argsort(idx)
 
         return orbits[..., undo_idx]
