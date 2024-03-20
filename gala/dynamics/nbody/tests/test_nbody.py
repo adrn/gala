@@ -3,21 +3,22 @@ import astropy.units as u
 import numpy as np
 import pytest
 
-# Custom
-from gala.potential import (
-    NullPotential,
-    NFWPotential,
-    HernquistPotential,
-    ConstantRotatingFrame,
-    StaticFrame,
-)
 from gala.dynamics import PhaseSpacePosition, combine
-from gala.units import UnitSystem, galactic
 from gala.integrate import (
     DOPRI853Integrator,
     LeapfrogIntegrator,
     Ruth4Integrator,
 )
+
+# Custom
+from gala.potential import (
+    ConstantRotatingFrame,
+    HernquistPotential,
+    NFWPotential,
+    NullPotential,
+    StaticFrame,
+)
+from gala.units import UnitSystem, galactic
 
 # Project
 from ..core import DirectNBody
@@ -220,3 +221,28 @@ class TestDirectNBody:
 
         assert u.allclose(orbits_static.xyz, orbits_static.xyz)
         assert u.allclose(orbits2.v_xyz, orbits2.v_xyz)
+
+    @pytest.mark.parametrize("Integrator", [DOPRI853Integrator])
+    def test_nbody_reorder(self, Integrator):
+        N = 16
+        rng = np.random.default_rng(seed=42)
+        w0 = PhaseSpacePosition(
+            pos=rng.normal(0, 5, size=(3, N)) * u.kpc,
+            vel=rng.normal(0, 50, size=(3, N)) * u.km / u.s,
+        )
+        pots = [
+            (
+                HernquistPotential(1e9 * u.Msun, 1.0 * u.pc, units=galactic)
+                if rng.uniform() > 0.5
+                else None
+            )
+            for _ in range(N)
+        ]
+        sim = DirectNBody(
+            w0,
+            pots,
+            external_potential=HernquistPotential(1e12, 10, units=galactic),
+            units=galactic,
+        )
+        orbits = sim.integrate_orbit(dt=1.0 * u.Myr, t1=0, t2=100 * u.Myr)
+        assert np.allclose(orbits.pos[0].xyz, w0.pos.xyz)
