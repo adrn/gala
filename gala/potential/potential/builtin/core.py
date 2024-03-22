@@ -38,7 +38,8 @@ from gala.potential.potential.builtin.cybuiltin import (
     LongMuraliBarWrapper,
     NullWrapper,
     MultipoleWrapper,
-    CylSplineWrapper
+    CylSplineWrapper,
+    BurkertWrapper
 )
 
 __all__ = [
