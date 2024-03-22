@@ -2030,8 +2030,8 @@ double burkert_density(double t, double *pars, double *q, int n_dim) {
     double r, x, rho;
 
     r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    x = r / pars[2]
-    rho = pars[1] / ((1 + x) * (1 + x * x))
+    x = r / pars[2];
+    rho = pars[1] / ((1 + x) * (1 + x * x));
 
-    return rho
+    return rho;
 }
