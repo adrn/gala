@@ -2021,11 +2021,6 @@ void burkert_gradient(double t, double *pars, double *q, int n_dim, double *grad
 }
 
 
-grad[0] = grad[0] + (gx*cos(pars[5]) - gy*sin(pars[5]));
-    grad[1] = grad[1] + (gx*sin(pars[5]) + gy*cos(pars[5]));
-    grad[2] = grad[2] + gz;
-
-
 double burkert_density(double t, double *pars, double *q, int n_dim) {
     /*  pars:
             - G (Gravitational constant)
