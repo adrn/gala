@@ -63,7 +63,7 @@ __all__ = [
     "MultipolePotential",
     "CylSplinePotential",
     "BurkertPotential"
-]   
+]
 
 
 def __getattr__(name):
