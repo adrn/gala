@@ -121,6 +121,11 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     double longmuralibar_density(double t, double *pars, double *q, int n_dim) nogil
     void longmuralibar_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
+    double burkert_value(double t, double *pars, double *q, int n_dim) nogil
+    void burkert_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    double burkert_density(double t, double *pars, double *q, int n_dim) nogil
+
+
 cdef extern from "potential/potential/builtin/multipole.h":
     double mp_potential(double t, double *pars, double *q, int n_dim) nogil
     void mp_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
@@ -175,6 +180,7 @@ __all__ = [
     'NullWrapper',
     'MultipoleWrapper',
     'CylSplineWrapper'
+    'BurkertWrapper'
 ]
 
 # ============================================================================
