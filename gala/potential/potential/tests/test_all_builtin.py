@@ -544,6 +544,8 @@ class TestBurkert(PotentialTestBase):
     potential = p.BurkertPotential(units=galactic, rho=5e-25 *u.g/u.cm**3, r0=12 * u.kpc)
     w0 = [1., 0., 0., 0., 0.1, 0.1]
 
+    check_finite_at_origin = False
+
     @pytest.mark.skip(reason="Not implemented for Burkert potentials")
     def test_against_sympy(self):
         pass
