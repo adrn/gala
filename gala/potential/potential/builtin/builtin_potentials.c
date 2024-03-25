@@ -2007,17 +2007,15 @@ void burkert_gradient(double t, double *pars, double *q, int n_dim, double *grad
             - rho (mass scale)
             - r0
     */
-    double R, phi, theta;
+    double R, x, dphi_dr;
     R = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
     x = R / pars[2];
-    phi = atan2(q[1], q[0]);
-    theta = acos(q[2] / R);
 
-    d_dr = -M_PI * pars[0] * pars[1] * pars[2] / (x * x) * (2 * atan(x) - 2 * log(1 + x) + log(1 + x * x));
-    
-    grad[0] = grad[0] + d_dr * sin(theta) * cos(phi);
-    grad[1] = grad[1] + d_dr * sin(theta) * sin(phi);
-    grad[2] = grad[2] + d_dr * cos(theta);
+    dphi_dr = -M_PI * pars[0] * pars[1] * pars[2] / (x * x) * (2 * atan(x) - 2 * log(1 + x) - log(1 + x * x));
+
+    grad[0] = grad[0] + dphi_dr*q[0]/R;
+    grad[1] = grad[1] + dphi_dr*q[1]/R;
+    grad[2] = grad[2] + dphi_dr*q[2]/R;
 }
 
 
