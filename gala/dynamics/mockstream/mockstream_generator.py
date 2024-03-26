@@ -101,7 +101,6 @@ class MockStreamGenerator:
             kwargs["external_potential"] = self.hamiltonian.potential
             kwargs["frame"] = self.hamiltonian.frame
             kwargs["units"] = self.hamiltonian.units
-            kwargs["save_all"] = nbody.save_all
 
         else:
             kwargs["w0"] = prog_w0
@@ -216,10 +215,8 @@ class MockStreamGenerator:
         else:
             nbody0 = prog_nbody
 
-        if prog_nbody.save_all:
-            prog_orbit = nbody_orbits[:, 0]  # Note: Progenitor must be idx 0!
-        else:
-            prog_orbit = nbody_orbits[0]
+        # Note: assumes that this is an orbit not a psp, i.e. that save_all is True
+        prog_orbit = nbody_orbits[:, 0]  # Note: Progenitor must be idx 0!
         orbit_t = prog_orbit.t.decompose(units).value
 
         # Generate initial conditions from the DF
