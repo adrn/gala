@@ -538,3 +538,18 @@ class TestCylspline(PotentialTestBase):
         assert u.allclose(gala_ene, agama_tbl['pot'][:, 0], rtol=1e-3)
         for i in range(3):
             assert u.allclose(gala_acc[i], agama_tbl['acc'][:, i], rtol=1e-2)
+
+
+class TestBurkert(PotentialTestBase):
+    potential = p.BurkertPotential(units=galactic, rho=5e-25 * u.g / u.cm ** 3, r0=12 * u.kpc)
+    w0 = [1., 0., 0., 0., 0.1, 0.1]
+
+    check_finite_at_origin = False
+
+    @pytest.mark.skip(reason="Not implemented for Burkert potentials")
+    def test_against_sympy(self):
+        pass
+
+    @pytest.mark.skip(reason="Hessian not implemented for Burkert potential")
+    def test_hessian(self):
+        pass

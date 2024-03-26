@@ -1980,3 +1980,56 @@ void longmuralibar_hessian(double t, double *pars, double *q, int n_dim,
     hess[7] = hess[7] + tmp_88;
     hess[8] = hess[8] + tmp_38*tmp_76*tmp_94 - tmp_40*tmp_77*tmp_94 + tmp_52*(tmp_14*tmp_92*tmp_96 - tmp_22*tmp_45*tmp_97 - tmp_28*tmp_78*tmp_98 + tmp_35*tmp_48*tmp_97 + tmp_89*tmp_95 - tmp_90*tmp_96 + tmp_91 - tmp_92*tmp_95 - tmp_93 + tmp_50*tmp_98/tmp_17);
 }
+
+
+/* ---------------------------------------------------------------------------
+    Burkert potential
+    (from Mori and Burkert 2000: https://iopscience.iop.org/article/10.1086/309140/fulltext/50172.text.html)
+*/
+double burkert_value(double t, double *pars, double *q, int n_dim) {
+    /*  pars:
+            - G (Gravitational constant)
+            - rho (mass scale)
+            - r0
+    */
+    double R, x;
+    R = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    x = R / pars[2];
+    
+    // pi G rho r0^2 (pi - 2(1 - r0/r)arctan(r/r0) + 2(1 - r0/r)log(1 + r/r0) - (1 - r0/r)log(1 + (r/r0)^2))
+    return -M_PI * pars[0] * pars[1] * pars[2] * pars[2] * (M_PI - 2 * (1 + 1 / x) * atan(x) + 2 * (1 + 1/x) * log(1 + x) - (1 - 1/x) * log(1 + x * x) );
+}
+
+
+void burkert_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
+    /*  pars:
+            - G (Gravitational constant)
+            - rho (mass scale)
+            - r0
+    */
+    double R, x, dphi_dr;
+    R = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    x = R / pars[2];
+
+    dphi_dr = -M_PI * pars[0] * pars[1] * pars[2] / (x * x) * (2 * atan(x) - 2 * log(1 + x) - log(1 + x * x));
+
+    grad[0] = grad[0] + dphi_dr*q[0]/R;
+    grad[1] = grad[1] + dphi_dr*q[1]/R;
+    grad[2] = grad[2] + dphi_dr*q[2]/R;
+}
+
+
+double burkert_density(double t, double *pars, double *q, int n_dim) {
+    /*  pars:
+            - G (Gravitational constant)
+            - rho (mass scale)
+            - r0
+    */
+    double r, x, rho;
+
+    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    x = r / pars[2];
+    rho = pars[1] / ((1 + x) * (1 + x * x));
+
+    return rho;
+}

@@ -38,7 +38,8 @@ from gala.potential.potential.builtin.cybuiltin import (
     LongMuraliBarWrapper,
     NullWrapper,
     MultipoleWrapper,
-    CylSplineWrapper
+    CylSplineWrapper,
+    BurkertWrapper
 )
 
 __all__ = [
@@ -60,7 +61,8 @@ __all__ = [
     "LogarithmicPotential",
     "LongMuraliBarPotential",
     "MultipolePotential",
-    "CylSplinePotential"
+    "CylSplinePotential",
+    "BurkertPotential"
 ]
 
 
@@ -376,6 +378,26 @@ class PowerLawCutoffPotential(CPotentialBase, GSL_only=True):
         )
 
         return expr, v, p
+
+
+@format_doc(common_doc=_potential_docstring)
+class BurkertPotential(CPotentialBase):
+    r"""
+    The Burkert potential that well-matches the rotation curve of dwarf galaxies.
+    See https://iopscience.iop.org/article/10.1086/309140/fulltext/50172.text.html
+
+    Parameters
+    ----------
+    rho : :class:`~astropy.units.Quantity`, numeric [mass density]
+        Central mass density.
+    r0 : :class:`~astropy.units.Quantity`, numeric [length]
+        The core radius.
+    {common_doc}
+    """
+    rho = PotentialParameter("rho", physical_type="mass density")
+    r0 = PotentialParameter("r0", physical_type="length")
+
+    Wrapper = BurkertWrapper
 
 
 # ============================================================================

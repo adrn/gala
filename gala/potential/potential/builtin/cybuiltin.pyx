@@ -121,6 +121,11 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     double longmuralibar_density(double t, double *pars, double *q, int n_dim) nogil
     void longmuralibar_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
+    double burkert_value(double t, double *pars, double *q, int n_dim) nogil
+    void burkert_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    double burkert_density(double t, double *pars, double *q, int n_dim) nogil
+
+
 cdef extern from "potential/potential/builtin/multipole.h":
     double mp_potential(double t, double *pars, double *q, int n_dim) nogil
     void mp_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
@@ -175,6 +180,7 @@ __all__ = [
     'NullWrapper',
     'MultipoleWrapper',
     'CylSplineWrapper'
+    'BurkertWrapper'
 ]
 
 # ============================================================================
@@ -278,6 +284,16 @@ cdef class PowerLawCutoffWrapper(CPotentialWrapper):
             self.cpotential.density[0] = <densityfunc>(powerlawcutoff_density)
             self.cpotential.gradient[0] = <gradientfunc>(powerlawcutoff_gradient)
             self.cpotential.hessian[0] = <hessianfunc>(powerlawcutoff_hessian)
+
+cdef class BurkertWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters, q0, R):
+        self.init([G] + list(parameters),
+                  np.ascontiguousarray(q0),
+                  np.ascontiguousarray(R))
+        self.cpotential.value[0] = <energyfunc>(burkert_value)
+        self.cpotential.density[0] = <densityfunc>(burkert_density)
+        self.cpotential.gradient[0] = <gradientfunc>(burkert_gradient)
 
 
 # ============================================================================
