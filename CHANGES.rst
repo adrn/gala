@@ -19,6 +19,9 @@ Bug fixes
 
 - Improved internal efficiency of ``DirectNBody``.
 
+- Fixed a bug in which passing a ``DirectNBody`` instance to the ``MockStreamGenerator.
+  run()`` would fail if ``save_all=False`` in the nbody instance.
+
 
 API changes
 -----------
