@@ -9,8 +9,6 @@ import pytest
 from gala.tests.optional_deps import HAS_H5PY
 
 from ....dynamics import Orbit, PhaseSpacePosition
-
-# Custom
 from ....potential import (
     ConstantRotatingFrame,
     Hamiltonian,
@@ -102,7 +100,30 @@ def test_run():
     )
     assert stream3.shape[0] == 2 * n_particles.sum()
 
-    # TODO: add nbody test
+
+@pytest.mark.parametrize("dt", [1, -1])
+@pytest.mark.parametrize("save_all", [True, False])
+def test_mockstream_nbody_run(dt, save_all):
+    potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.0, units=galactic)
+    H = Hamiltonian(potential)
+    w0 = PhaseSpacePosition(
+        pos=[15.0, 0.0, 0] * u.kpc, vel=[0, 0, 0.13] * u.kpc / u.Myr
+    )
+    mass = 2.5e4 * u.Msun
+    df = FardalStreamDF(gala_modified=True)
+
+    # Test passing custom N-body:
+    nbody_w0 = PhaseSpacePosition([20, 0, 0] * u.kpc, [0, 100, 0] * u.km / u.s)
+    nbody = DirectNBody(
+        w0=nbody_w0,
+        external_potential=potential,
+        particle_potentials=[
+            NFWPotential(m=1e8 * u.Msun, r_s=0.2 * u.kpc, units=galactic)
+        ],
+        save_all=save_all,
+    )
+    gen = MockStreamGenerator(df=df, hamiltonian=H)
+    gen.run(w0, mass, dt=dt, n_steps=100, nbody=nbody)
 
 
 @pytest.mark.parametrize(
