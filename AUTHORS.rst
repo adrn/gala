@@ -13,5 +13,6 @@ All contributors (alphabetical last name):
 * Syrtis Major
 * Semyeong Oh
 * Brigitta Sipőcz
+* Harrison Souchereau
 * Nathaniel Starkman
 * Tom Wagg
