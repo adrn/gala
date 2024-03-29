@@ -414,7 +414,6 @@ class BurkertPotential(CPotentialBase):
         from_r0(r0, units=None)
 
         Initialize a Burkert potential from the core radius, ``r0``.
-
         See Equations 4 and 5 of Mori & Burkert.
 
         Parameters
