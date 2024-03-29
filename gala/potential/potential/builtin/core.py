@@ -415,6 +415,8 @@ class BurkertPotential(CPotentialBase):
 
         Initialize a Burkert potential from the core radius, ``r0``.
 
+        See Equations 4 and 5 of Mori & Burkert.
+
         Parameters
         ----------
         r0 : :class:`~astropy.units.Quantity`, numeric [length]
