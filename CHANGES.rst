@@ -8,6 +8,7 @@ New Features
   computing basis function coefficients for the SCF potential from discrete particles.
 
 - Added the Burkert potential as a built-in cpotential.
+- Added a method to generate the Burkert potential with just r0 as an input
 
 Bug fixes
 ---------
