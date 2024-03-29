@@ -1,11 +1,12 @@
 # Third-party
 import numpy as np
 
-# This package
-from .. import combine, PhaseSpacePosition
-from ..nbody import DirectNBody
-from ...potential import Hamiltonian, PotentialBase
 from ...integrate.timespec import parse_time_specification
+from ...potential import Hamiltonian, PotentialBase
+
+# This package
+from .. import PhaseSpacePosition, combine
+from ..nbody import DirectNBody
 from ._mockstream import mockstream_dop853, mockstream_dop853_animate
 from .core import MockStream
 
@@ -100,7 +101,6 @@ class MockStreamGenerator:
             kwargs["external_potential"] = self.hamiltonian.potential
             kwargs["frame"] = self.hamiltonian.frame
             kwargs["units"] = self.hamiltonian.units
-            kwargs["save_all"] = nbody.save_all
 
         else:
             kwargs["w0"] = prog_w0
@@ -123,7 +123,7 @@ class MockStreamGenerator:
         check_filesize=True,
         overwrite=False,
         progress=False,
-        **time_spec
+        **time_spec,
     ):
         """
         Run the mock stream generator with the specified progenitor initial conditions.
@@ -215,6 +215,7 @@ class MockStreamGenerator:
         else:
             nbody0 = prog_nbody
 
+        # Note: assumes that this is an orbit not a psp, i.e. that save_all is True
         prog_orbit = nbody_orbits[:, 0]  # Note: Progenitor must be idx 0!
         orbit_t = prog_orbit.t.decompose(units).value
 
