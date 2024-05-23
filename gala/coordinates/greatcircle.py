@@ -2,17 +2,18 @@
 from textwrap import dedent
 from warnings import warn
 
+import astropy.coordinates as coord
+
 # Third-party
 import astropy.units as u
-import astropy.coordinates as coord
+import numpy as np
+from astropy.coordinates.attributes import CoordinateAttribute
+from astropy.coordinates.baseframe import base_doc
 from astropy.coordinates.transformations import (
     DynamicMatrixTransform,
     FunctionTransform,
 )
-from astropy.coordinates.attributes import CoordinateAttribute
-from astropy.coordinates.baseframe import base_doc
 from astropy.utils.decorators import format_doc
-import numpy as np
 
 from .helpers import StringValidatedAttribute
 
@@ -34,10 +35,7 @@ def get_xhat(zhat, ra0, tol=1e-10):
         )
 
     denom = (
-        z2**2
-        + z3**2
-        + 2 * z1 * z2 * np.tan(ra0)
-        + (z1**2 + z3**2) * np.tan(ra0) ** 2
+        z2**2 + z3**2 + 2 * z1 * z2 * np.tan(ra0) + (z1**2 + z3**2) * np.tan(ra0) ** 2
     )
     x1 = -np.tan(ra0) * np.sqrt(z3**2 / denom)
     x2 = x1 / np.tan(ra0)
@@ -506,8 +504,10 @@ def make_greatcircle_cls(cls_name, docstring_header=None, **kwargs):
     @format_doc(base_doc, components=_components, footer=_footer)
     @greatcircle_transforms(self_transform=False)
     class GCFrame(GreatCircleICRSFrame):
-        pole = kwargs.get("pole", None)
-        origin = kwargs.get("origin", None)
+        pole = CoordinateAttribute(default=kwargs.get("pole", None), frame=coord.ICRS)
+        origin = CoordinateAttribute(
+            default=kwargs.get("origin", None), frame=coord.ICRS
+        )
 
     GCFrame.__name__ = cls_name
     if docstring_header:
