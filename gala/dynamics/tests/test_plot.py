@@ -104,9 +104,13 @@ def test_animate(tmpdir, i, obj):
     if not isinstance(obj, Orbit):
         pytest.skip()
 
-    proc = subprocess.run(
-        ["ffmpeg -version"], shell=True, check=True, capture_output=True
-    )
+    try:
+        proc = subprocess.run(
+            ["ffmpeg -version"], shell=True, check=True, capture_output=True
+        )
+    except subprocess.CalledProcessError:
+        pytest.skip(reason="ffmpeg not installed")
+
     if proc.returncode > 0:
         pytest.skip(reason="ffmpeg not installed")
 
