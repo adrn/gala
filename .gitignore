@@ -30,8 +30,7 @@ gala/cconfig.c
 gala/dynamics/nbody/nbody.c
 
 # Other generated files
-*/version.py
-*/cython_version.py
+*/_version.py
 htmlcov
 .coverage
 MANIFEST
