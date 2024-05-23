@@ -23,6 +23,9 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[tool.setuptools.dynamic]
+version = {attr = "gala.__version__"}
+
 [project.urls]
 Documentation = "https://gala.adrian.pw"
 Repository = "https://github.com/adrn/gala.git"
