@@ -60,12 +60,10 @@ docs = [
     "sphinx_automodapi",
     "sphinx_astropy",
     "rtds_action",
-    "cmastro",
     "requests"
 ]
 tutorials = [
     "gala[shared,extra]",
-    "cmastro",
     "IPython",
     "nbconvert",
     "ipython_genutils",

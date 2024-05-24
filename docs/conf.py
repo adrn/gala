@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import datetime
 import os
 import pathlib
 import re
 import sys
-import datetime
-from importlib import import_module
 import warnings
+from importlib import import_module
 
 # Load all of the global Astropy configuration
 try:
@@ -92,13 +92,11 @@ package_name = "gala"
 import_module(package_name)
 package = sys.modules[package_name]
 
-from cmastro import cmaps
-
 plot_formats = [("png", 200), ("pdf", 200)]
 plot_apply_rcparams = True
 # NOTE: if you update these, also update docs/tutorials/nb_setup
 plot_rcparams = {
-    "image.cmap": "cma:hesperia",
+    "image.cmap": "magma",
     # Fonts:
     "font.size": 16,
     "figure.titlesize": "x-large",
