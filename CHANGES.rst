@@ -22,7 +22,7 @@ Bug fixes
 - Fixed a bug in which passing a ``DirectNBody`` instance to the ``MockStreamGenerator.
   run()`` would fail if ``save_all=False`` in the nbody instance.
 
-- Fixed an incompatibility with Astropy v6.3 and above where ``_make_getter`` was
+- Fixed an incompatibility with Astropy v6.1 and above where ``_make_getter`` was
   removed.
 
 
