@@ -6,13 +6,28 @@ import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 
-__all__ = ['NDCartesianRepresentation', 'NDCartesianDifferential']
+__all__ = ["NDCartesianRepresentation", "NDCartesianDifferential"]
 
-# TODO: Remove when astropy min version >=v6.0
-try:
-    _make_getter = coord.representation._make_getter
-except AttributeError:
-    _make_getter = coord.representation.base._make_getter
+
+def _make_getter(component):
+    """Make an attribute getter for use in a property.
+
+    Removed from Astropy in v6.3 but still used here.
+
+    Parameters
+    ----------
+    component : str
+        The name of the component that should be accessed.  This assumes the
+        actual value is stored in an attribute of that name prefixed by '_'.
+    """
+    # This has to be done in a function to ensure the reference to component
+    # is not lost/redirected.
+    component = "_" + component
+
+    def get_component(self):
+        return getattr(self, component)
+
+    return get_component
 
 
 class NDMixin(object):
@@ -45,8 +60,10 @@ class NDMixin(object):
             apply_method = lambda array: method(array, *args, **kwargs)  # noqa
         else:
             apply_method = operator.methodcaller(method, *args, **kwargs)
-        return self.__class__([apply_method(getattr(self, component))
-                               for component in self.components], copy=False)
+        return self.__class__(
+            [apply_method(getattr(self, component)) for component in self.components],
+            copy=False,
+        )
 
 
 class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
@@ -73,7 +90,7 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
     def __init__(self, x, differentials=None, unit=None, copy=True):
 
         if unit is None:
-            if not hasattr(x[0], 'unit'):
+            if not hasattr(x[0], "unit"):
                 unit = u.one
             else:
                 unit = x[0].unit
@@ -81,29 +98,35 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
         x = u.Quantity(x, unit, copy=copy, subok=True)
         copy = False
 
-        self.attr_classes = dict([('x'+str(i), u.Quantity)
-                                  for i in range(1, len(x)+1)])
+        self.attr_classes = dict(
+            [("x" + str(i), u.Quantity) for i in range(1, len(x) + 1)]
+        )
 
         super(coord.CartesianRepresentation, self).__init__(
-            *x, differentials=differentials, copy=copy)
+            *x, differentials=differentials, copy=copy
+        )
 
         ptype = None
         for name, _ in self.attr_classes.items():
             if ptype is None:
-                ptype = getattr(self, '_'+name).unit.physical_type
+                ptype = getattr(self, "_" + name).unit.physical_type
 
             else:
-                if getattr(self, '_'+name).unit.physical_type != ptype:
-                    raise u.UnitsError("All components should have matching "
-                                       "physical types")
+                if getattr(self, "_" + name).unit.physical_type != ptype:
+                    raise u.UnitsError(
+                        "All components should have matching " "physical types"
+                    )
 
             cls = self.__class__
             if not hasattr(cls, name):
-                setattr(cls, name,
-                        property(
-                            _make_getter(name),
-                            doc=(f"The '{name}' component of the points(s)."))
-                        )
+                setattr(
+                    cls,
+                    name,
+                    property(
+                        _make_getter(name),
+                        doc=(f"The '{name}' component of the points(s)."),
+                    ),
+                )
 
     def get_xyz(self, xyz_axis=0):
         """Return a vector array of the x, y, and z coordinates.
@@ -123,8 +146,9 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
         # NOTE: just use np.stack once our minimum numpy version is 1.10.
         result_ndim = self.ndim + 1
         if not -result_ndim <= xyz_axis < result_ndim:
-            raise IndexError('xyz_axis {0} out of bounds [-{1}, {1})'
-                             .format(xyz_axis, result_ndim))
+            raise IndexError(
+                "xyz_axis {0} out of bounds [-{1}, {1})".format(xyz_axis, result_ndim)
+            )
         if xyz_axis < 0:
             xyz_axis += result_ndim
 
@@ -134,8 +158,10 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
 
         sh = self.shape
         sh = sh[:xyz_axis] + (1,) + sh[xyz_axis:]
-        components = [getattr(self, '_'+name).reshape(sh).to(unit).value
-                      for name in self.attr_classes]
+        components = [
+            getattr(self, "_" + name).reshape(sh).to(unit).value
+            for name in self.attr_classes
+        ]
         xs_value = np.concatenate(components, axis=xyz_axis)
         return u.Quantity(xs_value, unit=unit, copy=False)
 
@@ -156,13 +182,14 @@ class NDCartesianDifferential(NDMixin, coord.CartesianDifferential):
     copy : bool, optional
         If `True` (default), arrays will be copied rather than referenced.
     """
+
     base_representation = NDCartesianRepresentation
     attr_classes = dict()
 
     def __init__(self, d_x, unit=None, copy=True):
 
         if unit is None:
-            if not hasattr(d_x[0], 'unit'):
+            if not hasattr(d_x[0], "unit"):
                 unit = u.one
             else:
                 unit = d_x[0].unit
@@ -170,27 +197,33 @@ class NDCartesianDifferential(NDMixin, coord.CartesianDifferential):
         d_x = u.Quantity(d_x, unit, copy=copy, subok=True)
         copy = False
 
-        self.attr_classes = dict([('d_x'+str(i), u.Quantity)
-                                 for i in range(1, len(d_x)+1)])
+        self.attr_classes = dict(
+            [("d_x" + str(i), u.Quantity) for i in range(1, len(d_x) + 1)]
+        )
 
         super(coord.CartesianDifferential, self).__init__(*d_x, copy=copy)
 
         ptype = None
         for name, _ in self.attr_classes.items():
             if ptype is None:
-                ptype = getattr(self, '_'+name).unit.physical_type
+                ptype = getattr(self, "_" + name).unit.physical_type
 
             else:
-                if getattr(self, '_'+name).unit.physical_type != ptype:
-                    raise u.UnitsError("All components should have matching "
-                                       "physical types")
+                if getattr(self, "_" + name).unit.physical_type != ptype:
+                    raise u.UnitsError(
+                        "All components should have matching " "physical types"
+                    )
 
             cls = self.__class__
             if not hasattr(cls, name):
-                setattr(cls, name,
-                        property(_make_getter(name),
-                                 doc=("The '{0}' component of the points(s)."
-                                      .format(name))))
+                setattr(
+                    cls,
+                    name,
+                    property(
+                        _make_getter(name),
+                        doc=("The '{0}' component of the points(s).".format(name)),
+                    ),
+                )
 
     def get_d_xyz(self, xyz_axis=0):
         """Return a vector array of the x, y, and z coordinates.
@@ -210,8 +243,9 @@ class NDCartesianDifferential(NDMixin, coord.CartesianDifferential):
         # NOTE: just use np.stack once our minimum numpy version is 1.10.
         result_ndim = self.ndim + 1
         if not -result_ndim <= xyz_axis < result_ndim:
-            raise IndexError('xyz_axis {0} out of bounds [-{1}, {1})'
-                             .format(xyz_axis, result_ndim))
+            raise IndexError(
+                "xyz_axis {0} out of bounds [-{1}, {1})".format(xyz_axis, result_ndim)
+            )
         if xyz_axis < 0:
             xyz_axis += result_ndim
 
@@ -221,8 +255,10 @@ class NDCartesianDifferential(NDMixin, coord.CartesianDifferential):
 
         sh = self.shape
         sh = sh[:xyz_axis] + (1,) + sh[xyz_axis:]
-        components = [getattr(self, '_'+name).reshape(sh).to(unit).value
-                      for name in self.components]
+        components = [
+            getattr(self, "_" + name).reshape(sh).to(unit).value
+            for name in self.components
+        ]
         xs_value = np.concatenate(components, axis=xyz_axis)
         return u.Quantity(xs_value, unit=unit, copy=False)
 

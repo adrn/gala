@@ -23,6 +23,9 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[tool.setuptools.dynamic]
+version = {attr = "gala.__version__"}
+
 [project.urls]
 Documentation = "https://gala.adrian.pw"
 Repository = "https://github.com/adrn/gala.git"
@@ -57,12 +60,10 @@ docs = [
     "sphinx_automodapi",
     "sphinx_astropy",
     "rtds_action",
-    "cmastro",
     "requests"
 ]
 tutorials = [
     "gala[shared,extra]",
-    "cmastro",
     "IPython",
     "nbconvert",
     "ipython_genutils",
@@ -113,6 +114,7 @@ include = ["gala", "gala.*"]
 ]
 
 [tool.setuptools_scm]
+version_file = "gala/_version.py"
 local_scheme = "no-local-version"  # So that uploads to test.pypi.org work
 
 [tool.pytest]

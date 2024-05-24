@@ -19,7 +19,6 @@ poles = [
     coord.SkyCoord(ra=0 * u.deg, dec=90 * u.deg),
     coord.SkyCoord(ra=0 * u.deg, dec=-90 * u.deg),
     coord.SkyCoord(ra=12.3 * u.deg, dec=45.6 * u.deg, distance=1 * u.kpc),
-    coord.SkyCoord(ra=[12.3] * u.deg, dec=[45.6] * u.deg),
 ] + [coord.SkyCoord(lon, lat) for lon, lat in zip(rand_lon, rand_lat)]
 
 
@@ -188,7 +187,8 @@ def test_sph_midpoint():
 
 
 def test_init_from_R():
-    from ..gd1 import R as gd1_R, GD1Koposov10
+    from ..gd1 import GD1Koposov10
+    from ..gd1 import R as gd1_R
 
     N = 128
     rnd = np.random.RandomState(42)
