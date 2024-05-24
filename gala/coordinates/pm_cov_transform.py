@@ -59,6 +59,8 @@ def get_transform_matrix(from_frame, to_frame):
             p = to_frame
 
         if isinstance(trans, coord.DynamicMatrixTransform):
+            if not isinstance(p, coord.BaseCoordinateFrame):
+                p = p()
             M = trans.matrix_func(currsys, p)
         elif isinstance(trans, coord.StaticMatrixTransform):
             M = trans.matrix
