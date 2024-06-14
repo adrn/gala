@@ -553,3 +553,14 @@ class TestBurkert(PotentialTestBase):
     @pytest.mark.skip(reason="Hessian not implemented for Burkert potential")
     def test_hessian(self):
         pass
+
+    def test_from_r0(self):
+        # Test against values from Zhu+2023
+        pot = p.BurkertPotential.from_r0(r0=11.87 * u.kpc, units=galactic)
+
+        rho = pot.parameters['rho'].to(u.g / u.cm ** 3)
+        rho_check = 5.93e-25 * u.g / u.cm ** 3
+
+        # Check a 1% tolerance on inferred density against published values
+        assert abs(rho - rho_check) / rho_check < 0.01
+
