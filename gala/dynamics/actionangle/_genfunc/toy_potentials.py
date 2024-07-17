@@ -2,7 +2,7 @@
 # Toy Potentials #
 ##################
 import numpy as np
-from scipy.optimize import fmin_bfgs, leastsq, fmin_powell, fmin
+from scipy.optimize import leastsq
 
 # in units kpc, km/s and 10^11 M_solar
 # Grav = 430091.5694

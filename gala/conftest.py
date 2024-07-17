@@ -1,11 +1,8 @@
 import os
 
-from astropy.version import version as astropy_version
-
 from pytest_astropy_header.display import (
     PYTEST_HEADER_MODULES,
-    TESTED_VERSIONS,
-    pytest_report_header as astropy_header)
+    TESTED_VERSIONS,)
 
 
 def pytest_configure(config):

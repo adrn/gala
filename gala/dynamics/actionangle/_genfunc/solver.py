@@ -4,7 +4,6 @@
 import numpy as np
 from itertools import product
 from scipy.linalg import solve
-from scipy.sparse.linalg import spsolve
 
 
 def check_each_direction(n, angs, ifprint=True):
