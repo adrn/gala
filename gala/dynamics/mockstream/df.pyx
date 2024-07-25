@@ -557,7 +557,7 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
 @cython.embedsignature(True)
 cdef class ChenStreamDF(BaseStreamDF):
     """A class for representing the Chen+2024 distribution function for
-    generating stellar streams based on Chen et al. 2024 (Fix parameter)
+    generating stellar streams based on Chen et al. 2024
 
     Parameters
     ----------
