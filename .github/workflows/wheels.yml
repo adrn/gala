@@ -56,7 +56,7 @@ jobs:
           sudo apt-get install gsl-bin libgsl0-dev
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.17.0
+        uses: pypa/cibuildwheel@v2.20.0
         env:
           CIBW_ARCHS_LINUX: "x86_64"
           CIBW_ARCHS_MACOS: "x86_64 arm64"
