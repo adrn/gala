@@ -558,6 +558,7 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
 cdef class ChenStreamDF(BaseStreamDF):
     """A class for representing the Chen+2024 distribution function for
     generating stellar streams based on Chen et al. 2024
+    https://ui.adsabs.harvard.edu/abs/2024arXiv240801496C/abstract
 
     Parameters
     ----------
