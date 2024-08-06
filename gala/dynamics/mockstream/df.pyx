@@ -634,8 +634,8 @@ cdef class ChenStreamDF(BaseStreamDF):
                              &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
                              &rj, &vj, R)  # outputs
 
-            # Leading tail
-            if self._lead == 1:
+            # trailing tail
+            if self._trail == 1:
                 for k in range(nparticles[i]):
                     # calculate the ejection position and velocity
                     posvel = self.random_state.multivariate_normal(mean, cov)
