@@ -65,8 +65,9 @@ We now have to specify the method for generating stream particles, i.e., the
 stream distribution function (DF). For this example, we will use the method
 implemented in [fardal15]_, incuded in ``gala`` as
 `~gala.dynamics.mockstream.FardalStreamDF`. Other methods of note are
-`~gala.dynamics.mockstream.StreaklineStreamDF` from [kuepper12]_, and
-`~gala.dynamics.mockstream.LagrangeCloudStreamDF` based on [gibbons14]_. Each of
+`~gala.dynamics.mockstream.StreaklineStreamDF` from [kuepper12]_,
+`~gala.dynamics.mockstream.LagrangeCloudStreamDF` based on [gibbons14]_, and
+`~gala.dynamics.mockstream.ChenStreamDF` based on [chen24]_. Each of
 the ``StreamDF`` classes take a few common arguments, such as ``lead`` and
 ``trail``, which are boolean arguments that control whether to generate both
 leading and trailing tails, or just one or the other. By default, both are set
@@ -245,6 +246,7 @@ References
 .. [fardal15] `Fardal, Huang, Weinberg (2015) <http://arxiv.org/abs/1410.1861>`_
 .. [kuepper12] `Küpper, Lane, Heggie (2012) <http://arxiv.org/abs/1111.5013>`_
 .. [gibbons14] `Gibbons et al. (2014) <https://arxiv.org/abs/1406.2243>`_
+.. [chen24] `Chen et al. (2024) <https://arxiv.org/abs/2408.01496>`_
 
 API
 ---
