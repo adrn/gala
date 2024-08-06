@@ -15,9 +15,9 @@ from ....units import galactic
 from ...core import PhaseSpacePosition
 
 # Project
-from ..df import FardalStreamDF, LagrangeCloudStreamDF, StreaklineStreamDF
+from ..df import ChenStreamDF, FardalStreamDF, LagrangeCloudStreamDF, StreaklineStreamDF
 
-_DF_CLASSES = [StreaklineStreamDF, FardalStreamDF, LagrangeCloudStreamDF]
+_DF_CLASSES = [StreaklineStreamDF, FardalStreamDF, LagrangeCloudStreamDF, ChenStreamDF]
 _DF_KWARGS = [{}, {"gala_modified": True}, {"v_disp": 1 * u.km / u.s}]
 _TEST_POTENTIALS = [
     HernquistPotential(m=1e12, c=5, units=galactic),
