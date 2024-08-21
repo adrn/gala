@@ -5,7 +5,7 @@ authors = [
 ]
 description = "Galactic dynamics in Python"
 readme = "README.rst"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = ["astronomy", "dynamics"]
 license = {file = "LICENSE"}
 classifiers = [
@@ -15,7 +15,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Astronomy"
 ]
 dependencies = [
-    "numpy>=1.20",
+    "numpy>=1.24.4",
     "scipy>=1.8",
     "astropy>=5.0",
     "pyyaml",
@@ -80,7 +80,7 @@ requires = [
     "wheel",
     "setuptools_scm",
     "extension-helpers==1.*",
-    "oldest-supported-numpy",
+    "numpy>=2.0",
     "cython"
 ]
 build-backend = "setuptools.build_meta"
