@@ -57,6 +57,7 @@ jobs:
       # For animation tests
       - uses: FedericoCarboni/setup-ffmpeg@v3
         if: ${{ !startsWith(matrix.os, 'mac') }}
+        continue-on-error: true
         with:
           # Not strictly necessary, but it may prevent rate limit
           # errors especially on GitHub-hosted macos machines.
