@@ -42,7 +42,7 @@ jobs:
       #   with:
       #     platforms: all
 
-      # Mac:
+      # Mac: disable wheels on mac because of GSL issues
       # NOTE: need to install pipx explicitly for macos-14
       # - name: Setup Mac
       #   if: runner.os == 'macOS'
