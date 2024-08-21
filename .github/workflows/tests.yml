@@ -61,6 +61,7 @@ jobs:
           # Not strictly necessary, but it may prevent rate limit
           # errors especially on GitHub-hosted macos machines.
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          ffmpeg-version: "6.1.0"
         id: setup-ffmpeg
 
       # Mac:
