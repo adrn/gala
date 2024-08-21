@@ -10,7 +10,7 @@ on:
 
 jobs:
   tests:
-    name: Check Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with numpy ${{ matrix.numpy-version }}, no gsl ${{ matrix.gala-nogsl }}, deps ${{ matrix.pip-test-deps }}
     runs-on: ${{ matrix.os }}
     if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only')
     strategy:
@@ -20,7 +20,7 @@ jobs:
         os: ["ubuntu-latest", "macos-latest"]
         numpy-version: ["latest"]
         gala-nogsl: ["0"]
-        pip-additional: [""]
+        pip-test-deps: ["test"]
         include:
 
           - name: Oldest numpy version supported
@@ -28,21 +28,21 @@ jobs:
             python-version: "3.11"
             numpy-version: "1.24"
             gala-nogsl: "0"
-            pip-additional: ""
+            pip-test-deps: "test"
 
           - name: Install without GSL
             os: ubuntu-latest
             python-version: "3.11"
             numpy-version: "latest"
             gala-nogsl: "1"
-            pip-additional: ""
+            pip-test-deps: "test"
 
           - name: With optional dependencies
             os: ubuntu-latest  # note: galpy install failed on macos here
             python-version: "3.11"
             numpy-version: "latest"
             gala-nogsl: "1"
-            pip-additional: "extra"
+            pip-test-deps: "test,extra"
 
     steps:
       - uses: actions/checkout@v4
@@ -79,7 +79,7 @@ jobs:
           sudo apt-get install libhdf5-serial-dev  # TODO: remove when h5py has 3.11 wheels
 
       - name: Install package and dependencies
-        run: python -m pip install ".[test,${{matrix.pip-additional}}]"
+        run: python -m pip install ".[${{ matrix.pip-test-deps }}]"
         env:
           GALA_NOGSL: ${{ matrix.gala-nogsl }}
 
