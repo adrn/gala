@@ -10,108 +10,60 @@ on:
 
 jobs:
   tests:
-    name: ${{ matrix.name }}
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with numpy ${{ matrix.numpy-version }}, no gsl ${{ matrix.gala-nogsl }}, deps ${{ matrix.pip-test-deps }}
     runs-on: ${{ matrix.os }}
     if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only')
     strategy:
       fail-fast: true
       matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        os: ["ubuntu-latest", "macos-latest"]
+        numpy-version: ["latest"]
+        gala-nogsl: ["0"]
+        pip-test-deps: ["test"]
         include:
 
-          - name: Code style checks
+          - name: Oldest numpy version supported
             os: ubuntu-latest
-            python: 3.x
-            toxenv: codestyle
+            python-version: "3.11"
+            numpy-version: "1.24"
+            gala-nogsl: "0"
+            pip-test-deps: "test"
 
-          - name: Python 3.10 with minimal dependencies and coverage
+          - name: Install without GSL
             os: ubuntu-latest
-            python: '3.10'
-            toxenv: py310-test-cov
+            python-version: "3.11"
+            numpy-version: "latest"
+            gala-nogsl: "1"
+            pip-test-deps: "test"
 
-          - name: Python 3.9
-            os: ubuntu-latest
-            python: '3.9'
-            toxenv: py39-test
-
-          - name: Python 3.10
-            os: ubuntu-latest
-            python: '3.10'
-            toxenv: py310-test
-
-          - name: Python 3.11
-            os: ubuntu-latest
-            python: '3.11'
-            toxenv: py311-test
-
-          # Has to happen on ubuntu because galpy is finnicky on macOS
-          - name: Python 3.10 with all optional dependencies
-            os: ubuntu-latest
-            python: '3.10'
-            toxenv: py310-test-extradeps
-            toxposargs: --durations=50
-
-          - name: Python 3.10 without GSL
-            os: ubuntu-latest
-            python: '3.10'
-            toxenv: nogsl
-
-          - name: Python 3.9 with oldest supported version of all dependencies
-            os: ubuntu-latest
-            python: 3.9
-            toxenv: py39-test-oldestdeps
-
-          # Mac and Windows:
-          - name: Python 3.10 standard tests (macOS)
-            os: macos-latest
-            python: '3.10'
-            toxenv: py310-test
-
-          # - name: Python 3.9 standard tests (Windows)
-          #   os: windows-latest
-          #   python: 3.9
-          #   toxenv: py39-test
+          - name: With optional dependencies
+            os: ubuntu-latest  # note: galpy install failed on macos here
+            python-version: "3.11"
+            numpy-version: "latest"
+            gala-nogsl: "0"
+            pip-test-deps: "test,extra"
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
 
       # For animation tests
       - uses: FedericoCarboni/setup-ffmpeg@v3
         if: ${{ !startsWith(matrix.os, 'mac') }}
+        continue-on-error: true
         with:
           # Not strictly necessary, but it may prevent rate limit
           # errors especially on GitHub-hosted macos machines.
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          ffmpeg-version: "6.1.0"
         id: setup-ffmpeg
-
-      - name: Set up Python ${{ matrix.python }} on ${{ matrix.os }}
-        if: ${{ !startsWith(matrix.os, 'windows') }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python }}
-
-      # Windows:
-      # - uses: conda-incubator/setup-miniconda@v2
-      #   if: startsWith(matrix.os, 'windows')
-      #   with:
-      #     auto-update-conda: true
-      #     python-version: ${{ matrix.python-version }}
-
-      # - name: Install Python dependencies - Windows
-      #   if: startsWith(matrix.os, 'windows')
-      #   shell: bash -l {0}
-      #   run: |
-      #     conda install -c conda-forge -q gsl python=3.9 libpython
-      #     python -m pip install -e .[test]
-      #     python -m pip install tox
-
-      # - name: Run tests - Windows
-      #   if: startsWith(matrix.os, 'windows')
-      #   shell: bash -l {0}
-      #   run: |
-      #     tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} ${{ matrix.toxposargs }}
 
       # Mac:
       - name: Setup Mac - GSL
@@ -127,18 +79,20 @@ jobs:
           sudo apt-get install gsl-bin libgsl0-dev build-essential
           sudo apt-get install libhdf5-serial-dev  # TODO: remove when h5py has 3.11 wheels
 
-      # Any *nix:
-      - name: Install Python dependencies - nix
-        if: ${{ !startsWith(matrix.os, 'windows') }}
-        run: python -m pip install --upgrade tox codecov
+      - name: Install package and dependencies
+        run: python -m pip install -e ".[${{ matrix.pip-test-deps }}]"
+        env:
+          GALA_NOGSL: ${{ matrix.gala-nogsl }}
 
-      - name: Run tests - nix
-        if: ${{ !startsWith(matrix.os, 'windows') }}
-        run: tox -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}
+      - name: Update versions if testing min versions
+        if: matrix.numpy-version != 'latest'
+        run: |
+          python -m pip install numpy~=${{ matrix.numpy-version }}
 
-      # Coverage:
-      - name: Upload coverage report to codecov
-        uses: codecov/codecov-action@v4
-        if: steps.check_files.outputs.files_exists == 'true' && runner.os == 'Linux'
-        with:
-          file: ./coverage.xml # optional
+      - name: Run tests
+        run: >-
+          python -m pytest -ra --cov --cov-report=xml --cov-report=term
+          --durations=20 .
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v4.5.0

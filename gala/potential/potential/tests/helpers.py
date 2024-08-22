@@ -350,14 +350,15 @@ class PotentialTestBase:
             return gammainc(a, x) * gamma(a)
 
         modules = [
-            "numpy",
             {
                 "atan": np.arctan,
-                "lowergamma": lowergamma,
+                # "lowergamma": lowergamma,
                 "gamma": gamma,
                 "re": np.real,
                 "im": np.imag,
             },
+            "numpy",
+            "scipy",
             "sympy",
         ]
 

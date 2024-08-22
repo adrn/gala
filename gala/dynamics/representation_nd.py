@@ -6,6 +6,8 @@ import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 
+from gala._compat_utils import COPY_IF_NEEDED
+
 __all__ = ["NDCartesianRepresentation", "NDCartesianDifferential"]
 
 
@@ -62,7 +64,7 @@ class NDMixin(object):
             apply_method = operator.methodcaller(method, *args, **kwargs)
         return self.__class__(
             [apply_method(getattr(self, component)) for component in self.components],
-            copy=False,
+            copy=COPY_IF_NEEDED,
         )
 
 
@@ -163,7 +165,7 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
             for name in self.attr_classes
         ]
         xs_value = np.concatenate(components, axis=xyz_axis)
-        return u.Quantity(xs_value, unit=unit, copy=False)
+        return u.Quantity(xs_value, unit=unit, copy=COPY_IF_NEEDED)
 
     xyz = property(get_xyz)
 
@@ -260,6 +262,6 @@ class NDCartesianDifferential(NDMixin, coord.CartesianDifferential):
             for name in self.components
         ]
         xs_value = np.concatenate(components, axis=xyz_axis)
-        return u.Quantity(xs_value, unit=unit, copy=False)
+        return u.Quantity(xs_value, unit=unit, copy=COPY_IF_NEEDED)
 
     d_xyz = property(get_d_xyz)

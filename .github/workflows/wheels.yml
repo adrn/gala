@@ -28,7 +28,7 @@ jobs:
           - ["1", "cp39-* cp310-*"]
           - ["2", "cp311-* cp312-*"]
         os:
-          - "macos-14"
+          # - "macos-14"
           - "ubuntu-latest"
 
     steps:
@@ -42,12 +42,12 @@ jobs:
       #   with:
       #     platforms: all
 
-      # Mac:
+      # Mac: disable wheels on mac because of GSL issues
       # NOTE: need to install pipx explicitly for macos-14
-      - name: Setup Mac
-        if: runner.os == 'macOS'
-        run: |
-          brew install gsl pipx
+      # - name: Setup Mac
+      #   if: runner.os == 'macOS'
+      #   run: |
+      #     brew install gsl pipx
 
       # Ubuntu:
       - name: Setup Linux

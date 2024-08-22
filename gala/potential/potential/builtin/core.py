@@ -5,42 +5,43 @@
 try:
     myclassmethod = __builtins__.classmethod
 except AttributeError:
-    myclassmethod = __builtins__['classmethod']
+    myclassmethod = __builtins__["classmethod"]
 
 # Third-party
-from astropy.constants import G
 import astropy.units as u
 import numpy as np
+from astropy.constants import G
 
-# Project
-from ..core import _potential_docstring, PotentialBase
-from ..util import format_doc, sympy_wrap
-from ..cpotential import CPotentialBase
 from gala.potential.common import PotentialParameter
 from gala.potential.potential.builtin.cybuiltin import (
+    BurkertWrapper,
+    CylSplineWrapper,
+    FlattenedNFWWrapper,
     HenonHeilesWrapper,
-    KeplerWrapper,
     HernquistWrapper,
     IsochroneWrapper,
-    PlummerWrapper,
     JaffeWrapper,
-    StoneWrapper,
-    PowerLawCutoffWrapper,
-    SatohWrapper,
+    KeplerWrapper,
     KuzminWrapper,
-    MiyamotoNagaiWrapper,
-    MN3ExponentialDiskWrapper,
-    SphericalNFWWrapper,
-    FlattenedNFWWrapper,
-    TriaxialNFWWrapper,
     LeeSutoTriaxialNFWWrapper,
     LogarithmicWrapper,
     LongMuraliBarWrapper,
-    NullWrapper,
+    MiyamotoNagaiWrapper,
+    MN3ExponentialDiskWrapper,
     MultipoleWrapper,
-    CylSplineWrapper,
-    BurkertWrapper
+    NullWrapper,
+    PlummerWrapper,
+    PowerLawCutoffWrapper,
+    SatohWrapper,
+    SphericalNFWWrapper,
+    StoneWrapper,
+    TriaxialNFWWrapper,
 )
+
+# Project
+from ..core import PotentialBase, _potential_docstring
+from ..cpotential import CPotentialBase
+from ..util import format_doc, sympy_wrap
 
 __all__ = [
     "NullPotential",
@@ -62,7 +63,7 @@ __all__ = [
     "LongMuraliBarPotential",
     "MultipolePotential",
     "CylSplinePotential",
-    "BurkertPotential"
+    "BurkertPotential",
 ]
 
 
@@ -70,7 +71,7 @@ def __getattr__(name):
     if name in __all__ and name in globals():
         return globals()[name]
 
-    if not (name.startswith('MultipolePotentialLmax')):
+    if not (name.startswith("MultipolePotentialLmax")):
         raise AttributeError(f"Module {__name__!r} has no attribute {name!r}.")
 
     if name in mp_cache:
@@ -78,11 +79,11 @@ def __getattr__(name):
 
     else:
         try:
-            lmax = int(name.split('Lmax')[1])
+            lmax = int(name.split("Lmax")[1])
         except Exception:
             raise ImportError("Invalid")  # shouldn't ever get here!
 
-        return make_multipole_cls(lmax, timedep='TimeDependent' in name)
+        return make_multipole_cls(lmax, timedep="TimeDependent" in name)
 
 
 @format_doc(common_doc=_potential_docstring)
@@ -94,6 +95,7 @@ class HenonHeilesPotential(CPotentialBase):
     ----------
     {common_doc}
     """
+
     ndim = 2
     Wrapper = HenonHeilesWrapper
 
@@ -129,6 +131,7 @@ class KeplerPotential(CPotentialBase):
         Point mass value.
     {common_doc}
     """
+
     m = PotentialParameter("m", physical_type="mass")
     Wrapper = KeplerWrapper
 
@@ -155,6 +158,7 @@ class IsochronePotential(CPotentialBase):
         Core concentration.
     {common_doc}
     """
+
     m = PotentialParameter("m", physical_type="mass")
     b = PotentialParameter("b", physical_type="length")
 
@@ -166,7 +170,7 @@ class IsochronePotential(CPotentialBase):
         import sympy as sy
 
         r = sy.sqrt(v["x"] ** 2 + v["y"] ** 2 + v["z"] ** 2)
-        expr = -p["G"] * p["m"] / (sy.sqrt(r ** 2 + p["b"] ** 2) + p["b"])
+        expr = -p["G"] * p["m"] / (sy.sqrt(r**2 + p["b"] ** 2) + p["b"])
         return expr, v, p
 
     def action_angle(self, w):
@@ -208,6 +212,7 @@ class HernquistPotential(CPotentialBase):
         Core concentration.
     {common_doc}
     """
+
     m = PotentialParameter("m", physical_type="mass")
     c = PotentialParameter("c", physical_type="length")
 
@@ -236,6 +241,7 @@ class PlummerPotential(CPotentialBase):
         Core concentration.
     {common_doc}
     """
+
     m = PotentialParameter("m", physical_type="mass")
     b = PotentialParameter("b", physical_type="length")
 
@@ -247,7 +253,7 @@ class PlummerPotential(CPotentialBase):
         import sympy as sy
 
         r = sy.sqrt(v["x"] ** 2 + v["y"] ** 2 + v["z"] ** 2)
-        expr = -p["G"] * p["m"] / sy.sqrt(r ** 2 + p["b"] ** 2)
+        expr = -p["G"] * p["m"] / sy.sqrt(r**2 + p["b"] ** 2)
         return expr, v, p
 
 
@@ -264,6 +270,7 @@ class JaffePotential(CPotentialBase):
         Core concentration.
     {common_doc}
     """
+
     m = PotentialParameter("m", physical_type="mass")
     c = PotentialParameter("c", physical_type="length")
 
@@ -297,6 +304,7 @@ class StonePotential(CPotentialBase):
         Halo radius.
     {common_doc}
     """
+
     m = PotentialParameter("m", physical_type="mass")
     r_c = PotentialParameter("r_c", physical_type="length")
     r_h = PotentialParameter("r_h", physical_type="length")
@@ -313,9 +321,7 @@ class StonePotential(CPotentialBase):
         expr = A * (
             p["r_h"] / r * sy.atan(r / p["r_h"])
             - p["r_c"] / r * sy.atan(r / p["r_c"])
-            + 1.0
-            / 2
-            * sy.log((r ** 2 + p["r_h"] ** 2) / (r ** 2 + p["r_c"] ** 2))
+            + 1.0 / 2 * sy.log((r**2 + p["r_h"] ** 2) / (r**2 + p["r_c"] ** 2))
         )
         return expr, v, p
 
@@ -343,6 +349,7 @@ class PowerLawCutoffPotential(CPotentialBase, GSL_only=True):
         Cutoff radius.
     {common_doc}
     """
+
     m = PotentialParameter("m", physical_type="mass")
     alpha = PotentialParameter("alpha", physical_type="dimensionless")
     r_c = PotentialParameter("r_c", physical_type="length")
@@ -364,16 +371,16 @@ class PowerLawCutoffPotential(CPotentialBase, GSL_only=True):
             G
             * alpha
             * m
-            * sy.lowergamma(3.0 / 2 - alpha / 2, r ** 2 / r_c ** 2)
+            * sy.lowergamma(3.0 / 2 - alpha / 2, r**2 / r_c**2)
             / (2 * r * sy.gamma(5.0 / 2 - alpha / 2))
             + G
             * m
-            * sy.lowergamma(1 - alpha / 2, r ** 2 / r_c ** 2)
+            * sy.lowergamma(1 - alpha / 2, r**2 / r_c**2)
             / (r_c * sy.gamma(3.0 / 2 - alpha / 2))
             - 3
             * G
             * m
-            * sy.lowergamma(3.0 / 2 - alpha / 2, r ** 2 / r_c ** 2)
+            * sy.lowergamma(3.0 / 2 - alpha / 2, r**2 / r_c**2)
             / (2 * r * sy.gamma(5.0 / 2 - alpha / 2))
         )
 
@@ -394,6 +401,7 @@ class BurkertPotential(CPotentialBase):
         The core radius.
     {common_doc}
     """
+
     rho = PotentialParameter("rho", physical_type="mass density")
     r0 = PotentialParameter("r0", physical_type="length")
 
@@ -422,6 +430,7 @@ class SatohPotential(CPotentialBase):
         Scale height.
     {common_doc}
     """
+
     m = PotentialParameter("m", physical_type="mass")
     a = PotentialParameter("a", physical_type="length")
     b = PotentialParameter("b", physical_type="length")
@@ -435,11 +444,7 @@ class SatohPotential(CPotentialBase):
 
         R = sy.sqrt(v["x"] ** 2 + v["y"] ** 2)
         z = v["z"]
-        term = (
-            R ** 2
-            + z ** 2
-            + p["a"] * (p["a"] + 2 * sy.sqrt(z ** 2 + p["b"] ** 2))
-        )
+        term = R**2 + z**2 + p["a"] * (p["a"] + 2 * sy.sqrt(z**2 + p["b"] ** 2))
         expr = -p["G"] * p["m"] / sy.sqrt(term)
         return expr, v, p
 
@@ -459,6 +464,7 @@ class KuzminPotential(CPotentialBase):
         Flattening parameter.
     {common_doc}
     """
+
     m = PotentialParameter("m", physical_type="mass")
     a = PotentialParameter("a", physical_type="length")
 
@@ -469,9 +475,7 @@ class KuzminPotential(CPotentialBase):
     def to_sympy(cls, v, p):
         import sympy as sy
 
-        denom = sy.sqrt(
-            v["x"] ** 2 + v["y"] ** 2 + (p["a"] + sy.Abs(v["z"])) ** 2
-        )
+        denom = sy.sqrt(v["x"] ** 2 + v["y"] ** 2 + (p["a"] + sy.Abs(v["z"])) ** 2)
         expr = -p["G"] * p["m"] / denom
         return expr, v, p
 
@@ -495,6 +499,7 @@ class MiyamotoNagaiPotential(CPotentialBase):
         Scale height.
     {common_doc}
     """
+
     m = PotentialParameter("m", physical_type="mass")
     a = PotentialParameter("a", physical_type="length")
     b = PotentialParameter("b", physical_type="length")
@@ -508,7 +513,7 @@ class MiyamotoNagaiPotential(CPotentialBase):
 
         R = sy.sqrt(v["x"] ** 2 + v["y"] ** 2)
         z = v["z"]
-        term = R ** 2 + (p["a"] + sy.sqrt(z ** 2 + p["b"] ** 2)) ** 2
+        term = R**2 + (p["a"] + sy.sqrt(z**2 + p["b"] ** 2)) ** 2
         expr = -p["G"] * p["m"] / sy.sqrt(term)
         return expr, v, p
 
@@ -582,9 +587,7 @@ class MN3ExponentialDiskPotential(CPotentialBase):
         sech2_z=True,
         **kwargs,
     ):
-        PotentialBase.__init__(
-            self, *args, units=units, origin=origin, R=R, **kwargs
-        )
+        PotentialBase.__init__(self, *args, units=units, origin=origin, R=R, **kwargs)
         hzR = (self.parameters["h_z"] / self.parameters["h_R"]).decompose()
 
         if positive_density:
@@ -594,9 +597,9 @@ class MN3ExponentialDiskPotential(CPotentialBase):
 
         # get b / h_R
         if sech2_z:
-            b_hR = -0.033 * hzR ** 3 + 0.262 * hzR ** 2 + 0.659 * hzR
+            b_hR = -0.033 * hzR**3 + 0.262 * hzR**2 + 0.659 * hzR
         else:
-            b_hR = -0.269 * hzR ** 3 + 1.08 * hzR ** 2 + 1.092 * hzR
+            b_hR = -0.269 * hzR**3 + 1.08 * hzR**2 + 1.092 * hzR
 
         self.positive_density = positive_density
         self.sech2_z = sech2_z
@@ -626,10 +629,7 @@ class MN3ExponentialDiskPotential(CPotentialBase):
         for i in range(3):
             name = f"disk{i+1}"
             pots[name] = MiyamotoNagaiPotential(
-                m=self._ms[i],
-                a=self._as[i],
-                b=self._b,
-                units=self.units
+                m=self._ms[i], a=self._as[i], b=self._b, units=self.units
             )
         return pots
 
@@ -667,6 +667,7 @@ class NFWPotential(CPotentialBase):
         Minor axis scale.
     {common_doc}
     """
+
     m = PotentialParameter("m", physical_type="mass")
     r_s = PotentialParameter("r_s", physical_type="length")
     a = PotentialParameter("a", physical_type="dimensionless", default=1.0)
@@ -696,9 +697,7 @@ class NFWPotential(CPotentialBase):
 
         uu = (
             sy.sqrt(
-                (v["x"] / p["a"]) ** 2
-                + (v["y"] / p["b"]) ** 2
-                + (v["z"] / p["c"]) ** 2
+                (v["x"] / p["a"]) ** 2 + (v["y"] / p["b"]) ** 2 + (v["z"] / p["c"]) ** 2
             )
             / p["r_s"]
         )
@@ -729,9 +728,7 @@ class NFWPotential(CPotentialBase):
             from astropy.cosmology import default_cosmology
 
             cosmo = default_cosmology.get()
-            rho_c = (3 * cosmo.H(0.0) ** 2 / (8 * np.pi * G)).to(
-                u.Msun / u.kpc ** 3
-            )
+            rho_c = (3 * cosmo.H(0.0) ** 2 / (8 * np.pi * G)).to(u.Msun / u.kpc**3)
 
         Rvir = np.cbrt(M200 / (200 * rho_c) / (4.0 / 3 * np.pi)).to(u.kpc)
         r_s = Rvir / c
@@ -805,7 +802,7 @@ class NFWPotential(CPotentialBase):
     @staticmethod
     def _vc_rs_rref_to_m(v_c, r_s, r_ref):
         uu = r_ref / r_s
-        vs2 = v_c ** 2 / uu / (np.log(1 + uu) / uu ** 2 - 1 / (uu * (1 + uu)))
+        vs2 = v_c**2 / uu / (np.log(1 + uu) / uu**2 - 1 / (uu * (1 + uu)))
         return r_s * vs2 / G
 
 
@@ -848,11 +845,7 @@ class LogarithmicPotential(CPotentialBase):
     def to_sympy(cls, v, p):
         import sympy as sy
 
-        r2 = (
-            (v["x"] / p["q1"]) ** 2
-            + (v["y"] / p["q2"]) ** 2
-            + (v["z"] / p["q3"]) ** 2
-        )
+        r2 = (v["x"] / p["q1"]) ** 2 + (v["y"] / p["q2"]) ** 2 + (v["z"] / p["q3"]) ** 2
         expr = 1.0 / 2 * p["v_c"] ** 2 * sy.log(p["r_h"] ** 2 + r2)
         return expr, v, p
 
@@ -881,6 +874,7 @@ class LeeSutoTriaxialNFWPotential(CPotentialBase):
         Minor axis.
     {common_doc}
     """
+
     v_c = PotentialParameter("v_c", physical_type="speed")
     r_s = PotentialParameter("r_s", physical_type="length")
     a = PotentialParameter("a", physical_type="dimensionless", default=1.0)
@@ -914,6 +908,7 @@ class LongMuraliBarPotential(CPotentialBase):
         Like the Miyamoto-Nagai ``c`` parameter.
     {common_doc}
     """
+
     m = PotentialParameter("m", physical_type="mass")
     a = PotentialParameter("a", physical_type="length")
     b = PotentialParameter("b", physical_type="length")
@@ -932,14 +927,10 @@ class LongMuraliBarPotential(CPotentialBase):
         z = v["z"]
 
         Tm = sy.sqrt(
-            (p["a"] - x) ** 2
-            + y ** 2
-            + (p["b"] + sy.sqrt(p["c"] ** 2 + z ** 2)) ** 2
+            (p["a"] - x) ** 2 + y**2 + (p["b"] + sy.sqrt(p["c"] ** 2 + z**2)) ** 2
         )
         Tp = sy.sqrt(
-            (p["a"] + x) ** 2
-            + y ** 2
-            + (p["b"] + sy.sqrt(p["c"] ** 2 + z ** 2)) ** 2
+            (p["a"] + x) ** 2 + y**2 + (p["b"] + sy.sqrt(p["c"] ** 2 + z**2)) ** 2
         )
 
         expr = (
@@ -968,6 +959,7 @@ class NullPotential(CPotentialBase):
     ----------
     {common_doc}
     """
+
     Wrapper = NullWrapper
 
 
@@ -993,60 +985,50 @@ def make_multipole_cls(lmax, timedep=False):
         # param_default = [0.]
     else:
         cls = MultipolePotential
-        param_default = 0.
-    cls_name = f'{cls.__name__}Lmax{lmax}'
+        param_default = 0.0
+    cls_name = f"{cls.__name__}Lmax{lmax}"
 
     if cls_name in mp_cache:
         return mp_cache[cls_name]
 
     parameters = {
-        '_lmax': lmax,
-        'inner': PotentialParameter('inner', default=False),
-        'm': PotentialParameter('m', physical_type='mass', default=1.),
-        'r_s': PotentialParameter('r_s', physical_type='length', default=1.),
+        "_lmax": lmax,
+        "inner": PotentialParameter("inner", default=False),
+        "m": PotentialParameter("m", physical_type="mass", default=1.0),
+        "r_s": PotentialParameter("r_s", physical_type="length", default=1.0),
     }
     doc_lines = []
     ab_callsig = []
     for l in range(lmax + 1):
-        for m in range(0, l+1):
+        for m in range(0, l + 1):
             if timedep:
-                a = f'alpha{l}{m}'
-                b = f'beta{l}{m}'
-                dtype = 'array-like'
+                a = f"alpha{l}{m}"
+                b = f"beta{l}{m}"
+                dtype = "array-like"
             else:
-                a = f'S{l}{m}'
-                b = f'T{l}{m}'
-                dtype = 'float'
+                a = f"S{l}{m}"
+                b = f"T{l}{m}"
+                dtype = "float"
 
             parameters[a] = PotentialParameter(
-                a,
-                physical_type='dimensionless',
-                default=param_default
+                a, physical_type="dimensionless", default=param_default
             )
             parameters[b] = PotentialParameter(
-                b,
-                physical_type='dimensionless',
-                default=param_default
+                b, physical_type="dimensionless", default=param_default
             )
 
             doc_lines.append(f"{a} : {dtype}\n{b} : {dtype}")
             ab_callsig.append(f"{a}, {b}")
 
-    ab_callsig = ', '.join(ab_callsig)
+    ab_callsig = ", ".join(ab_callsig)
     call_signature = f"{cls.__name__}(m, r_s, {ab_callsig})"
-    parameters['__doc__'] = (
-        call_signature + cls.__doc__ + "\n".join(doc_lines)
-    )
+    parameters["__doc__"] = call_signature + cls.__doc__ + "\n".join(doc_lines)
 
     # https://stackoverflow.com/a/58716798/623453
-    parameters['__module__'] = __name__
+    parameters["__module__"] = __name__
 
     # Create a new SkyOffsetFrame subclass for this frame class.
-    potential_cls = type(
-        cls_name,
-        (cls, ),
-        parameters
-    )
+    potential_cls = type(cls_name, (cls,), parameters)
     mp_cache[cls_name] = potential_cls
     return mp_cache[cls_name]
 
@@ -1102,40 +1084,26 @@ class MultipolePotential(CPotentialBase, GSL_only=True):
 
     Wrapper = MultipoleWrapper
 
-    def __init__(
-        self,
-        *args,
-        units=None,
-        origin=None,
-        R=None,
-        **kwargs
-    ):
-        kwargs.pop('lmax', None)
+    def __init__(self, *args, units=None, origin=None, R=None, **kwargs):
+        kwargs.pop("lmax", None)
 
-        PotentialBase.__init__(
-            self,
-            *args,
-            units=units,
-            origin=origin,
-            R=R,
-            **kwargs)
+        PotentialBase.__init__(self, *args, units=units, origin=origin, R=R, **kwargs)
 
-        self._setup_wrapper({
-            'lmax': self._lmax,
-            'n_coeffs': sum(range(self._lmax + 2))
-        })
+        self._setup_wrapper(
+            {"lmax": self._lmax, "n_coeffs": sum(range(self._lmax + 2))}
+        )
 
     def __new__(cls, *args, **kwargs):
         # We don't want to call this method if we've already set up
         # an skyoffset frame for this class.
-        if not (issubclass(cls, MultipolePotential)
-                and cls is not MultipolePotential):
+        if not (issubclass(cls, MultipolePotential) and cls is not MultipolePotential):
             try:
-                lmax = kwargs['lmax']
+                lmax = kwargs["lmax"]
             except KeyError:
                 raise TypeError(
                     "Can't initialize a MultipolePotential without specifying "
-                    "the `lmax` keyword argument.")
+                    "the `lmax` keyword argument."
+                )
             newcls = make_multipole_cls(lmax)
             return newcls.__new__(newcls, *args, **kwargs)
 
@@ -1160,9 +1128,10 @@ class CylSplinePotential(CPotentialBase):
         A 2D grid of potential values, evaluated at all R,z locations.
     {common_doc}
     """
-    grid_R = PotentialParameter('grid_R', physical_type='length')
-    grid_z = PotentialParameter('grid_z', physical_type='length')
-    grid_Phi = PotentialParameter('grid_Phi', physical_type='specific energy')
+
+    grid_R = PotentialParameter("grid_R", physical_type="length")
+    grid_z = PotentialParameter("grid_z", physical_type="length")
+    grid_Phi = PotentialParameter("grid_Phi", physical_type="specific energy")
 
     Wrapper = CylSplineWrapper
 
@@ -1185,55 +1154,38 @@ class CylSplinePotential(CPotentialBase):
         for i, line in enumerate(raw_lines):
             if line.startswith(start):
                 Phi_lines.append(
-                    [np.nan] + [float(y) for y in line[len(start):].strip().split('\t')]
+                    [np.nan]
+                    + [float(y) for y in line[len(start) :].strip().split("\t")]
                 )
                 break
 
-        Phi_lines.extend([
-            [float(y) for y in x.strip().split('\t')] for x in raw_lines[i+1:]
-        ])
+        Phi_lines.extend(
+            [[float(y) for y in x.strip().split("\t")] for x in raw_lines[i + 1 :]]
+        )
         Phi_lines = np.array(Phi_lines)
 
         gridR = Phi_lines[1:, 0] * u.kpc
         gridz = Phi_lines[0, 1:] * u.kpc
-        gridPhi = Phi_lines[1:, 1:] * (u.km/u.s) ** 2
+        gridPhi = Phi_lines[1:, 1:] * (u.km / u.s) ** 2
 
         return cls(gridR, gridz, gridPhi, **kwargs)
 
-    def __init__(
-        self,
-        *args,
-        units=None,
-        origin=None,
-        R=None,
-        **kwargs
-    ):
-        PotentialBase.__init__(
-            self,
-            *args,
-            units=units,
-            origin=origin,
-            R=R,
-            **kwargs
-        )
+    def __init__(self, *args, units=None, origin=None, R=None, **kwargs):
+        PotentialBase.__init__(self, *args, units=units, origin=origin, R=R, **kwargs)
 
-        grid_R = self.parameters['grid_R']
-        grid_z = self.parameters['grid_z']
-        grid_Phi = self.parameters['grid_Phi']
+        grid_R = self.parameters["grid_R"]
+        grid_z = self.parameters["grid_z"]
+        grid_Phi = self.parameters["grid_Phi"]
         Phi0 = grid_Phi[0, 0]  # potential at R=0,z=0
 
-        self._multipole_pot = self._fit_asympt(
-            grid_R,
-            grid_z,
-            grid_Phi
-        )
-        Phi_Rmax = self._multipole_pot.energy([1., 0, 0] * grid_R.max())
+        self._multipole_pot = self._fit_asympt(grid_R, grid_z, grid_Phi)
+        Phi_Rmax = self._multipole_pot.energy([1.0, 0, 0] * grid_R.max())
         Mtot = -Phi_Rmax[0] * grid_R.max()
 
         if Phi0 < 0 and Mtot > 0:
             # assign Rscale so that it approximately equals -Mtotal/Phi(r=0),
             # i.e. would equal the scale radius of a Plummer potential
-            Rscale = (-Mtot / Phi0).to(self.units['length'])
+            Rscale = (-Mtot / Phi0).to(self.units["length"])
         else:
             Rscale = grid_R[len(grid_R) // 2]  # "rather arbitrary"
 
@@ -1260,33 +1212,38 @@ class CylSplinePotential(CPotentialBase):
             raise ValueError("CylSpline: incorrect coefs array size")
 
         grid_Phi_full = np.zeros((sizeR, sizez))
-        grid_Phi_full[:, :sizez_orig-1] = grid_Phi[:, :0:-1]
-        grid_Phi_full[:, sizez_orig-1:] = grid_Phi
+        grid_Phi_full[:, : sizez_orig - 1] = grid_Phi[:, :0:-1]
+        grid_Phi_full[:, sizez_orig - 1 :] = grid_Phi
         if logScaling:
             grid_Phi_full = np.log(-grid_Phi_full)
         else:
             grid_Phi_full = grid_Phi_full
 
-        from scipy.interpolate import interp2d
-        self.spl = interp2d(grid_R_asinh, grid_z_asinh, grid_Phi_full.T, kind='cubic')
+        from scipy.interpolate import RectBivariateSpline
+
+        self.spl = RectBivariateSpline(grid_R_asinh, grid_z_asinh, grid_Phi_full)
 
         # Note: if MultipolePotential parameter order changes, this needs to be updated!
-        multipole_pars = np.concatenate([
-            [self.G,
-             self._multipole_pot._lmax,
-             sum(range(self._multipole_pot._lmax + 2))],
-            [x.value for x in self._multipole_pot.parameters.values()]
-        ])
+        multipole_pars = np.concatenate(
+            [
+                [
+                    self.G,
+                    self._multipole_pot._lmax,
+                    sum(range(self._multipole_pot._lmax + 2)),
+                ],
+                [x.value for x in self._multipole_pot.parameters.values()],
+            ]
+        )
 
         self._c_only = {
-            'log_scaling': logScaling,
-            'Rscale': Rscale.value,
-            'sizeR': sizeR,
-            'sizez': sizez,
-            'grid_R_trans': grid_R_asinh,
-            'grid_z_trans': grid_z_asinh,
-            'grid_Phi_trans': grid_Phi_full.T,
-            'multipole_pars': multipole_pars
+            "log_scaling": logScaling,
+            "Rscale": Rscale.value,
+            "sizeR": sizeR,
+            "sizez": sizez,
+            "grid_R_trans": grid_R_asinh,
+            "grid_z_trans": grid_z_asinh,
+            "grid_Phi_trans": grid_Phi_full.T,
+            "multipole_pars": multipole_pars,
         }
         self._setup_wrapper(self._c_only)
 
@@ -1308,26 +1265,28 @@ class CylSplinePotential(CPotentialBase):
         maxz = np.max(grid_z.value)
 
         # first run along R at the max-z and min-z edges
-        points = np.concatenate((
-            [[R, maxz] for R in grid_R.value],
-            [[R, -maxz] for R in grid_R.value]
-        ))
-        Phis = np.concatenate((
-            grid_Phi[:, np.argmax(grid_z)].value,
-            grid_Phi[:, np.argmax(grid_z)].value
-        ))
+        points = np.concatenate(
+            ([[R, maxz] for R in grid_R.value], [[R, -maxz] for R in grid_R.value])
+        )
+        Phis = np.concatenate(
+            (grid_Phi[:, np.argmax(grid_z)].value, grid_Phi[:, np.argmax(grid_z)].value)
+        )
 
         maxR = np.max(grid_R.value)
-        points = np.concatenate((
-            points,
-            [[maxR, z] for z in grid_z.value],
-            [[maxR, -z] for z in grid_z.value],
-        ))
-        Phis = np.concatenate((
-            Phis,
-            grid_Phi[np.argmax(grid_R), :].value,
-            grid_Phi[np.argmax(grid_R), :].value
-        ))
+        points = np.concatenate(
+            (
+                points,
+                [[maxR, z] for z in grid_z.value],
+                [[maxR, -z] for z in grid_z.value],
+            )
+        )
+        Phis = np.concatenate(
+            (
+                Phis,
+                grid_Phi[np.argmax(grid_R), :].value,
+                grid_Phi[np.argmax(grid_R), :].value,
+            )
+        )
 
         npoints = len(points)
         # ncoefs = lmax_fit + 1
@@ -1335,38 +1294,31 @@ class CylSplinePotential(CPotentialBase):
         r0 = min(np.max(grid_R), np.max(grid_z))
 
         i, j = len(grid_R) // 2, len(grid_z) // 2
-        rr = np.sqrt(grid_R[i]**2 + grid_z[j]**2)
-        m = np.abs(grid_Phi[i, j] * rr / G).to(self.units['mass'])
+        rr = np.sqrt(grid_R[i] ** 2 + grid_z[j] ** 2)
+        m = np.abs(grid_Phi[i, j] * rr / G).to(self.units["mass"])
         scale = (G * m / r0).decompose(self.units).value
 
         # find values of spherical harmonic coefficients
         # that best match the potential at the array of boundary points
 
         # for m-th harmonic, we may have lmax-m+1 different l-terms
-        matr = np.zeros((npoints, lmax_fit+1))
+        matr = np.zeros((npoints, lmax_fit + 1))
 
         # The linear system to solve in the least-square sense is M_{p,l} * S_l = R_p,
         # where R_p = Phi at p-th boundary point (0<=p<npoints),
         # M_{l,p}   = value of l-th harmonic coefficient at p-th boundary point,
         # S_l       = the amplitude of l-th coefficient to be determined.
-        r = np.sqrt(points[:, 0]**2 + points[:, 1]**2)
+        r = np.sqrt(points[:, 0] ** 2 + points[:, 1] ** 2)
         theta = np.arctan2(points[:, 0], points[:, 1])
 
         ls = np.arange(lmax_fit + 1)
-        Pl0 = np.stack([
-            sph_harm(0, l, 0., theta).real for l in ls
-        ]).T
+        Pl0 = np.stack([sph_harm(0, l, 0.0, theta).real for l in ls]).T
 
         matr = (r[:, None] / r0.value) ** -(ls[None] + 1) * Pl0
         y = Phis / scale
         sol, resid, rank, s = np.linalg.lstsq(matr, y, rcond=None)
 
-        pars = {f'S{l}0': sol[l].real for l in ls}
+        pars = {f"S{l}0": sol[l].real for l in ls}
         return MultipolePotential(
-            lmax=lmax_fit,
-            m=m,
-            r_s=r0,
-            inner=False,
-            units=self.units,
-            **pars
+            lmax=lmax_fit, m=m, r_s=r0, inner=False, units=self.units, **pars
         )
