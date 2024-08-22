@@ -2,17 +2,20 @@
 
 All contributors (alphabetical last name):
 
-* Dan Foreman-Mackey
-* Nico Garavito-Camargo
-* Johnny Greco
-* Akeem Hart
-* Sergey Koposov
-* Daniel Lenz
-* Sophia Lilleengen
-* Pey Lian Lim
-* Syrtis Major
-* Semyeong Oh
-* Brigitta Sipőcz
-* Harrison Souchereau
-* Nathaniel Starkman
-* Tom Wagg
+* Bill Chen (@ybillchen)
+* Dan Foreman-Mackey (@dfm)
+* Nico Garavito-Camargo (@jngaravitoc)
+* Johnny Greco (@johnnygreco)
+* Akeem Hart (@akeemlh)
+* Sergey Koposov (@segasai)
+* Alex Kurek (@AlexKurek)
+* Daniel Lenz (@DanielLenz)
+* Zhaozhou Li (@syrte)
+* Sophia Lilleengen (@sophialilleengen)
+* Pey Lian Lim (@pllim)
+* Semyeong Oh (@smoh)
+* Clément Robert (@neutrinoceros)
+* Brigitta Sipőcz (@bsipocz)
+* Harrison Souchereau (@HSouch)
+* Nathaniel Starkman (@nstarman)
+* Tom Wagg (@tomwagg)
