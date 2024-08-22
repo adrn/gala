@@ -407,6 +407,24 @@ class BurkertPotential(CPotentialBase):
 
     Wrapper = BurkertWrapper
 
+    
+    @classmethod
+    def from_r0(cls, r0, units=None):
+        r"""
+        from_r0(r0, units=None)
+
+        Initialize a Burkert potential from the core radius, ``r0``.
+        See Equations 4 and 5 of Mori & Burkert.
+
+        Parameters
+        ----------
+        r0 : :class:`~astropy.units.Quantity`, numeric [length]
+            The core radius of the Burkert potential.
+        """
+        a = 0.021572405792749372 * u.Msun / u.pc**3  # converted: 1.46e-24 g/cm**3
+        rho_d0 = a * (r0 / (3.07 * u.kpc))**(-2/3)
+        return cls(rho=rho_d0, r0=r0, units=units)
+
 
 # ============================================================================
 # Flattened, axisymmetric models
