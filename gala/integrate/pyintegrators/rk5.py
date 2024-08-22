@@ -80,8 +80,7 @@ class RK5Integrator(Integrator):
 
         return w + dw
 
-    def run(self, w0, mmap=None, **time_spec):
-
+    def __call__(self, w0, mmap=None, **time_spec):
         # generate the array of times
         times = parse_time_specification(self._func_units, **time_spec)
         n_steps = len(times)-1

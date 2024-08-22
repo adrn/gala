@@ -1,7 +1,10 @@
 """ Base class for integrators. """
 
+from abc import ABCMeta, abstractmethod
+
 # Third-party
 import numpy as np
+from astropy.utils.decorators import deprecated
 
 # This project
 from gala.units import UnitSystem, DimensionlessUnitSystem
@@ -9,7 +12,7 @@ from gala.units import UnitSystem, DimensionlessUnitSystem
 __all__ = ["Integrator"]
 
 
-class Integrator(object):
+class Integrator(metaclass=ABCMeta):
     def __init__(
         self,
         func,
@@ -111,7 +114,17 @@ class Integrator(object):
         )
         return orbit
 
-    def run(self):
+    @deprecated("1.9", alternative="Integrator call method")
+    def run(self, w0, mmap=None, **time_spec):
+        """Run the integrator starting from the specified phase-space position.
+
+        .. deprecated:: 1.9
+            Use the ``__call__`` method instead.
+        """
+        return self(w0, mmap=mmap, **time_spec)
+
+    @abstractmethod
+    def __call__(self, w0, mmap=None, **time_spec):
         """
         Run the integrator starting from the specified phase-space position.
         The initial conditions ``w0`` should be a
