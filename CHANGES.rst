@@ -9,7 +9,7 @@ New Features
 
 - Added the Burkert potential as a built-in cpotential.
 
-- Added new particle spary method by Chen et al. (2024).
+- Added new particle spray method by Chen et al. (2024).
 
 Bug fixes
 ---------
