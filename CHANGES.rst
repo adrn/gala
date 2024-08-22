@@ -10,6 +10,8 @@ New Features
 - Added the Burkert potential as a built-in cpotential.
 - Added a method to generate the Burkert potential with just r0 as an input
 
+- Added new particle spray method by Chen et al. (2024).
+
 Bug fixes
 ---------
 

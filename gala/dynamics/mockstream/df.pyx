@@ -11,6 +11,7 @@ import cython
 import astropy.units as u
 import numpy as np
 cimport numpy as np
+from libc.math cimport sqrt, sin, cos, M_PI
 
 # This package
 from .. import combine, Orbit
@@ -23,7 +24,7 @@ from ._coord cimport cross, norm, apply_3matrix
 from .core import MockStream
 
 __all__ = ['BaseStreamDF', 'FardalStreamDF', 'StreaklineStreamDF',
-           'LagrangeCloudStreamDF']
+           'LagrangeCloudStreamDF', 'ChenStreamDF']
 
 cdef extern from "potential/src/cpotential.h":
     double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
@@ -548,6 +549,155 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
                                             &particle_x[j+k, 0],
                                             &particle_v[j+k, 0])
 
+                j += nparticles[i]
+
+        return particle_x, particle_v, particle_t1
+
+
+@cython.embedsignature(True)
+cdef class ChenStreamDF(BaseStreamDF):
+    """A class for representing the Chen+2024 distribution function for
+    generating stellar streams based on Chen et al. 2024
+    https://ui.adsabs.harvard.edu/abs/2024arXiv240801496C/abstract
+
+    Parameters
+    ----------
+    lead : bool (optional)
+        Generate a leading tail. Default: True.
+    trail : bool (optional)
+        Generate a trailing tail. Default: True.
+    random_state : `~numpy.random.RandomState` (optional)
+        To control random number generation.
+    """
+    def __init__(
+        self, lead=True, trail=True, random_state=None
+    ):
+        super().__init__(lead=lead, trail=trail, random_state=random_state)
+
+
+    cpdef _sample(self, potential,
+                  double[:, ::1] prog_x, double[:, ::1] prog_v,
+                  double[::1] prog_t, double[::1] prog_m, int[::1] nparticles):
+        cdef:
+            int i, j, k, n
+            int ntimes = len(prog_t)
+            int total_nparticles = (self._lead + self._trail) * np.sum(nparticles)
+
+            double[:, ::1] particle_x = np.zeros((total_nparticles, 3))
+            double[:, ::1] particle_v = np.zeros((total_nparticles, 3))
+            double[::1] particle_t1 = np.zeros((total_nparticles, ))
+
+            double[::1] tmp_x = np.zeros(3)
+            double[::1] tmp_v = np.zeros(3)
+
+            double rj # jacobi radius
+            double vj # relative velocity at jacobi radius
+            double[:, ::1] R = np.zeros((3, 3)) # rotation to satellite coordinates
+
+            # for Chen method:
+            double Dr
+            double Dv
+            double[::1] posvel = np.zeros(6)
+            double[::1] mean = np.zeros(6)
+            double[:, ::1] cov = np.zeros((6, 6))
+
+            CPotential cpotential = (<CPotentialWrapper>(potential.c_instance)).cpotential
+            double G = potential.G
+
+        mean[0] = 1.6    # r
+        cov[0, 0] = 0.1225
+
+        mean[1] = -30.   # phi
+        cov[1, 1] = 529.
+
+        mean[2] = 0.     # theta
+        cov[2, 2] = 144.
+
+        mean[3] = 1.     # v
+        cov[3, 3] = 0.
+
+        mean[4] = 20.    # alpha
+        cov[4, 4] = 400.
+
+        mean[5] = 0.     # beta
+        cov[5, 5] = 484.
+
+        cov[0, 4] = -4.9 # covariance between r and alpha
+        cov[4, 0] = -4.9
+
+        j = 0
+        for i in range(ntimes):
+            if prog_m[i] == 0:
+                continue
+
+            self.get_rj_vj_R(&cpotential, G,
+                             &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
+                             &rj, &vj, R)  # outputs
+
+            # trailing tail
+            if self._trail == 1:
+                for k in range(nparticles[i]):
+                    # calculate the ejection position and velocity
+                    posvel = self.random_state.multivariate_normal(mean, cov)
+
+                    Dr = posvel[0] * rj
+                    Dv = posvel[3] * sqrt(2*G*prog_m[i]/Dr) # escape velocity
+
+                    # convert degrees to radians
+                    posvel[1] = posvel[1] * (M_PI/180)
+                    posvel[2] = posvel[2] * (M_PI/180)
+                    posvel[4] = posvel[4] * (M_PI/180)
+                    posvel[5] = posvel[5] * (M_PI/180)
+
+                    tmp_x[0] = Dr*cos(posvel[2])*cos(posvel[1])
+                    tmp_x[1] = Dr*cos(posvel[2])*sin(posvel[1])
+                    tmp_x[2] = Dr*sin(posvel[2])
+
+                    tmp_v[0] = Dv*cos(posvel[5])*cos(posvel[4])
+                    tmp_v[1] = Dv*cos(posvel[5])*sin(posvel[4])
+                    tmp_v[2] = Dv*sin(posvel[5])
+
+                    particle_t1[j+k] = prog_t[i]
+
+                    self.transform_from_sat(R,
+                                            &tmp_x[0], &tmp_v[0],
+                                            &prog_x[i, 0], &prog_v[i, 0],
+                                            &particle_x[j+k, 0],
+                                            &particle_v[j+k, 0])
+
+                j += nparticles[i]
+
+            # Leading tail
+            if self._lead == 1:
+                for k in range(nparticles[i]):
+                    # calculate the ejection position and velocity
+                    posvel = self.random_state.multivariate_normal(mean, cov)
+
+                    Dr = posvel[0] * rj
+                    Dv = posvel[3] * sqrt(2*G*prog_m[i]/Dr) # escape velocity
+
+                    # convert degrees to radians
+                    posvel[1] = posvel[1] * (M_PI/180) + M_PI
+                    posvel[2] = posvel[2] * (M_PI/180)
+                    posvel[4] = posvel[4] * (M_PI/180) + M_PI
+                    posvel[5] = posvel[5] * (M_PI/180)
+
+                    tmp_x[0] = Dr*cos(posvel[2])*cos(posvel[1])
+                    tmp_x[1] = Dr*cos(posvel[2])*sin(posvel[1])
+                    tmp_x[2] = Dr*sin(posvel[2])
+
+                    tmp_v[0] = Dv*cos(posvel[5])*cos(posvel[4])
+                    tmp_v[1] = Dv*cos(posvel[5])*sin(posvel[4])
+                    tmp_v[2] = Dv*sin(posvel[5])
+
+                    particle_t1[j+k] = prog_t[i]
+
+                    self.transform_from_sat(R,
+                                            &tmp_x[0], &tmp_v[0],
+                                            &prog_x[i, 0], &prog_v[i, 0],
+                                            &particle_x[j+k, 0],
+                                            &particle_v[j+k, 0])
+                
                 j += nparticles[i]
 
         return particle_x, particle_v, particle_t1
