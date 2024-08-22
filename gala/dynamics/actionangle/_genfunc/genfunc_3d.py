@@ -5,7 +5,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from matplotlib.ticker import MaxNLocator
-import matplotlib.cm as cm
 import time
 
 # in units kpc, km/s and 10^11 M_solar
