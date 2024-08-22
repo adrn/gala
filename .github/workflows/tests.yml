@@ -41,7 +41,7 @@ jobs:
             os: ubuntu-latest  # note: galpy install failed on macos here
             python-version: "3.11"
             numpy-version: "latest"
-            gala-nogsl: "1"
+            gala-nogsl: "0"
             pip-test-deps: "test,extra"
 
     steps:
