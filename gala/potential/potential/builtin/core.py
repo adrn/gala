@@ -421,7 +421,8 @@ class BurkertPotential(CPotentialBase):
         r0 : :class:`~astropy.units.Quantity`, numeric [length]
             The core radius of the Burkert potential.
         """
-        rho_d0 = 1.46e-24 * (r0 / (3.07 * u.kpc))**(-2/3) * (u.g / u.cm**3)
+        a = 0.021572405792749372 * u.Msun / u.pc**3  # converted: 1.46e-24 g/cm**3
+        rho_d0 = a * (r0 / (3.07 * u.kpc))**(-2/3)
         return cls(rho=rho_d0, r0=r0, units=units)
 
 
