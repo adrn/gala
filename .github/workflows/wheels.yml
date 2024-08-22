@@ -96,12 +96,13 @@ jobs:
   test_upload_pypi:
     needs: [build_nix_wheels, build_sdist]
     # Only test upload to pypi on push to main:
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment:
-      name: release
+    environment: release
     permissions:
       id-token: write
+    runs-on: ubuntu-latest
+    if:
+      github.repository_owner == 'adrn' && github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -109,7 +110,7 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Publish package distributions to Test PyPI
+      - name: Upload package to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
@@ -118,7 +119,9 @@ jobs:
   upload_pypi:
     needs: [build_nix_wheels, build_sdist]
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' && (github.event.action == 'published' || github.event.action == 'edited')
+    if:
+      github.event_name == 'release' &&
+      (github.event.action == 'published' || github.event.action == 'edited')
     environment:
       name: release
       url: https://pypi.org/p/gala

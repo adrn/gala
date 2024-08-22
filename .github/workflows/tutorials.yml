@@ -14,6 +14,7 @@ jobs:
   notebooks:
     name: "Build the notebooks for the docs"
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false && !contains(github.event.push.head_commit.message, '[skip docs]')
     steps:
       - uses: actions/checkout@v4
         with:

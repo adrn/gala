@@ -12,7 +12,7 @@ jobs:
   tests:
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with numpy ${{ matrix.numpy-version }}, no gsl ${{ matrix.gala-nogsl }}, deps ${{ matrix.pip-test-deps }}
     runs-on: ${{ matrix.os }}
-    if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only')
+    if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only') && !contains(github.event.push.head_commit.message, '[skip tests]')
     strategy:
       fail-fast: true
       matrix:
