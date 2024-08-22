@@ -408,8 +408,8 @@ class BurkertPotential(CPotentialBase):
     Wrapper = BurkertWrapper
 
     
-    @staticmethod
-    def from_r0(r0, units=None):
+    @classmethod
+    def from_r0(cls, r0, units=None):
         r"""
         from_r0(r0, units=None)
 
@@ -422,7 +422,7 @@ class BurkertPotential(CPotentialBase):
             The core radius of the Burkert potential.
         """
         rho_d0 = 1.46e-24 * (r0 / (3.07 * u.kpc))**(-2/3) * (u.g / u.cm**3)
-        return BurkertPotential(rho=rho_d0, r0=r0, units=units)
+        return cls(rho=rho_d0, r0=r0, units=units)
 
 
 # ============================================================================
