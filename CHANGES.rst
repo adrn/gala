@@ -1,16 +1,8 @@
-1.9.1 (unreleased)
+1.9.1 (2024-08-26)
 ==================
 
-New Features
-------------
-
-
-Bug fixes
----------
-
-
-API changes
------------
+- This release fixes the wheel builds for linux and mac and no new features or bug fixes
+  are included.
 
 
 1.9.0 (2024-08-22)
