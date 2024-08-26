@@ -46,7 +46,7 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
           CIBW_SKIP: "*-win32 *musllinux* pp* *i686"
-          CIBW_BEFORE_ALL_LINUX: dnf install gsl gsl-devel || apt-get install gsl-bin libgsl0-dev
+          CIBW_BEFORE_ALL_LINUX: dnf install -y gsl gsl-devel || apt-get install gsl-bin libgsl0-dev
           CIBW_BEFORE_ALL_MACOS: brew install gsl pipx
           MACOSX_DEPLOYMENT_TARGET: 14.0
 
