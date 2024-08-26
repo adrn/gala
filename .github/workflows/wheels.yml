@@ -28,7 +28,7 @@ jobs:
           - ["1", "cp39-* cp310-*"]
           - ["2", "cp311-* cp312-*"]
         os:
-          # - "macos-14"
+          - "macos-14"
           - "ubuntu-latest"
 
     steps:
@@ -36,32 +36,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      # - name: Set up QEMU  # For emulation on Linux
-      #   if: runner.os == 'Linux'
-      #   uses: docker/setup-qemu-action@v3
-      #   with:
-      #     platforms: all
-
-      # Mac: disable wheels on mac because of GSL issues
-      # NOTE: need to install pipx explicitly for macos-14
-      # - name: Setup Mac
-      #   if: runner.os == 'macOS'
-      #   run: |
-      #     brew install gsl pipx
-
-      # Ubuntu:
-      - name: Setup Linux
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get install gsl-bin libgsl0-dev
-
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.20.0
         env:
-          CIBW_ARCHS_LINUX: "x86_64"
+          CIBW_ARCHS_LINUX: "x86_64 aarch64"
           CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_BUILD: ${{ matrix.python[1] }}
           CIBW_SKIP: "*-win32 *musllinux* pp* *i686"
+          CIBW_BEFORE_ALL_LINUX: yum install -y gsl gsl-devel || apt-get install gsl-bin libgsl0-dev
+          CIBW_BEFORE_ALL_MACOS: brew install gsl pipx
 
       - uses: actions/upload-artifact@v4
         with:
