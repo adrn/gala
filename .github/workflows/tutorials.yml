@@ -11,10 +11,25 @@ on:
       - published
 
 jobs:
+  check_skip_flags:
+    name: Check skip flags
+    runs-on: ubuntu-latest
+    outputs:
+      head-commit-message: ${{ steps.get_head_commit_message.outputs.HEAD_COMMIT_MESSAGE }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.GITHUB_SHA }}
+      - name: Get head commit message
+        id: get_head_commit_message
+        run: echo "HEAD_COMMIT_MESSAGE=$(git show -s --format=%s)" >> "$GITHUB_OUTPUT"
+
   notebooks:
     name: "Build the notebooks for the docs"
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false && !contains(github.event.head_commit.message, '[skip docs]')
+    needs: check_skip_flags
+    if: ${{ github.event.pull_request.draft == false && !contains(needs.check_skip_flags.outputs.head-commit-message, '[skip docs]') }}
     steps:
       - uses: actions/checkout@v4
         with:

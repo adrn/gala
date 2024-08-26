@@ -13,10 +13,10 @@ jobs:
     name: Check skip flags
     runs-on: ubuntu-latest
     outputs:
-      head-commit-message: ${{ steps.get_head_commit_message.outputs.headCommitMsg }}
+      head-commit-message: ${{ steps.get_head_commit_message.outputs.HEAD_COMMIT_MESSAGE }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ env.GITHUB_SHA }}
       - name: Get head commit message
@@ -27,8 +27,7 @@ jobs:
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with numpy ${{ matrix.numpy-version }}, no gsl ${{ matrix.gala-nogsl }}, deps ${{ matrix.pip-test-deps }}
     runs-on: ${{ matrix.os }}
     needs: check_skip_flags
-    # if: ${{ github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only') && !contains(github.event.head_commit.message, '[skip tests]')}}
-    if: ${{ ! contains(needs.check_skip_flags.outputs.HEAD_COMMIT_MESSAGE, '[skip tests]') }}
+    if: ${{ github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only') && !contains(needs.check_skip_flags.outputs.head-commit-message, '[skip tests]') }}
     strategy:
       fail-fast: true
       matrix:
@@ -71,7 +70,7 @@ jobs:
           allow-prereleases: true
 
       - name: WTF
-        run: echo ${{ github.event.head_commit.message }}
+        run: echo ${{ needs.check_skip_flags.outputs.HEAD_COMMIT_MESSAGE }}
 
       # # For animation tests
       # - uses: FedericoCarboni/setup-ffmpeg@v3
