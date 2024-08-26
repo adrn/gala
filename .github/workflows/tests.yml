@@ -9,11 +9,26 @@ on:
   pull_request:
 
 jobs:
+  check_skip_flags:
+    name: Check skip flags
+    runs-on: ubuntu-latest
+    outputs:
+      head-commit-message: ${{ steps.get_head_commit_message.outputs.headCommitMsg }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ env.GITHUB_SHA }}
+      - name: Get head commit message
+        id: get_head_commit_message
+        run: echo "HEAD_COMMIT_MESSAGE=$(git show -s --format=%s)" >> "$GITHUB_OUTPUT"
+
   tests:
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with numpy ${{ matrix.numpy-version }}, no gsl ${{ matrix.gala-nogsl }}, deps ${{ matrix.pip-test-deps }}
     runs-on: ${{ matrix.os }}
+    needs: check_skip_flags
     # if: ${{ github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only') && !contains(github.event.head_commit.message, '[skip tests]')}}
-    if: ${{ ! contains(github.event.head_commit.message, '[skip tests]') }}
+    if: ${{ ! contains(needs.check_skip_flags.outputs.HEAD_COMMIT_MESSAGE, '[skip tests]') }}
     strategy:
       fail-fast: true
       matrix:
