@@ -10,6 +10,7 @@ Bug fixes
 API changes
 -----------
 
+- Changed one final ``gala.integrate.Integrator.run`` to ``gala.integrate.Integrator.__call__``.
 
 
 1.9.1 (2024-08-26)
