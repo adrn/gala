@@ -351,7 +351,7 @@ class Hamiltonian(CommonBase):
                 w_T = np.ascontiguousarray(w.T)
                 return self._gradient(w_T, t=np.array([t])).T
             integrator = Integrator(F, func_units=self.units, **Integrator_kwargs)
-            orbit = integrator.run(arr_w0.T, **time_spec)
+            orbit = integrator(arr_w0.T, **time_spec)
             orbit.potential = self.potential
             orbit.frame = self.frame
             return orbit
