@@ -12,6 +12,33 @@ import astropy.units as u
 import numpy as np
 from astropy.units.physical import _physical_unit_mapping
 
+_greek_letters = [
+    "alpha",
+    "beta",
+    "gamma",
+    "delta",
+    "epsilon",
+    "zeta",
+    "eta",
+    "theta",
+    "iota",
+    "kappa",
+    "lambda",
+    "mu",
+    "nu",
+    "xi",
+    "pi",
+    "o",
+    "rho",
+    "sigma",
+    "tau",
+    "upsilon",
+    "phi",
+    "chi",
+    "psi",
+    "omega",
+]
+
 
 class UnitSystem:
     _required_physical_types = [
