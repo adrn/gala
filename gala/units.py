@@ -1,43 +1,16 @@
 __all__ = [
     "UnitSystem",
     "DimensionlessUnitSystem",
+    "SimulationUnitSystem",
     "galactic",
     "dimensionless",
     "solarsystem",
 ]
 
 import astropy.constants as const
-
-# Third-party
 import astropy.units as u
+import numpy as np
 from astropy.units.physical import _physical_unit_mapping
-
-_greek_letters = [
-    "alpha",
-    "beta",
-    "gamma",
-    "delta",
-    "epsilon",
-    "zeta",
-    "eta",
-    "theta",
-    "iota",
-    "kappa",
-    "lambda",
-    "mu",
-    "nu",
-    "xi",
-    "pi",
-    "o",
-    "rho",
-    "sigma",
-    "tau",
-    "upsilon",
-    "phi",
-    "chi",
-    "psi",
-    "omega",
-]
 
 
 class UnitSystem:
@@ -112,7 +85,7 @@ class UnitSystem:
                 new_unit = u.def_unit(f"{q!s}", q)
                 unit = new_unit
 
-            typ = unit.physical_type
+            typ = unit.decompose().physical_type
             if typ in self._registry:
                 raise ValueError(f"Multiple units passed in with type '{typ}'")
             self._registry[typ] = unit
@@ -260,6 +233,52 @@ class DimensionlessUnitSystem(UnitSystem):
 
     def get_constant(self, name):
         raise ValueError("Cannot get constant in dimensionless units!")
+
+
+l_pt = u.get_physical_type("length")
+m_pt = u.get_physical_type("mass")
+t_pt = u.get_physical_type("time")
+v_pt = u.get_physical_type("velocity")
+a_pt = u.get_physical_type("angle")
+
+
+class SimulationUnitSystem(UnitSystem):
+    def __init__(
+        self,
+        length: u.Unit | u.Quantity[l_pt] = None,
+        mass: u.Unit | u.Quantity[m_pt] = None,
+        time: u.Unit | u.Quantity[t_pt] = None,
+        velocity: u.Unit | u.Quantity[v_pt] = None,
+        G: float | u.Quantity = 1.0,
+        angle: u.Unit | u.Quantity[a_pt] = u.radian,
+    ):
+        """
+        Represents a system of units for a (dynamical) simulation.
+
+        A common assumption is that G=1. If this is the case, then you only have to
+        specify two of the three fundamental unit types (length, mass, time) and the
+        rest will be derived from these. You may also optionally specify a velocity with
+        one of the base unit types (length, mass, time).
+
+        """
+        G = G * const.G.unit
+
+        if length is not None and mass is not None:
+            time = 1 / np.sqrt(G * mass / length**3)
+        elif length is not None and time is not None:
+            mass = 1 / G * length**3 / time**2
+        elif length is not None and velocity is not None:
+            time = length / velocity
+            mass = 1 / G / velocity**2 / length
+        elif mass is not None and time is not None:
+            length = np.cbrt(G * mass * time**2)
+        elif mass is not None and velocity is not None:
+            length = G * mass / velocity**2
+        elif time is not None and velocity is not None:
+            mass = 1 / G * velocity**3 * time
+            length = G * mass / velocity**2
+
+        super().__init__(length, mass, time, angle)
 
 
 # define galactic unit system
