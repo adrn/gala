@@ -310,14 +310,21 @@ class SimulationUnitSystem(UnitSystem):
             mass = 1 / G * length**3 / time**2
         elif length is not None and velocity is not None:
             time = length / velocity
-            mass = 1 / G / velocity**2 / length
+            mass = velocity**2 / G * length
         elif mass is not None and time is not None:
             length = np.cbrt(G * mass * time**2)
         elif mass is not None and velocity is not None:
             length = G * mass / velocity**2
+            time = length / velocity
         elif time is not None and velocity is not None:
             mass = 1 / G * velocity**3 * time
             length = G * mass / velocity**2
+        else:
+            msg = (
+                "You must specify at least two of the three fundamental unit types "
+                "(length, mass, time) or a velocity unit."
+            )
+            raise ValueError(msg)
 
         super().__init__(length, mass, time, angle)
 
