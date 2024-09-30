@@ -287,6 +287,20 @@ class SimulationUnitSystem(UnitSystem):
         rest will be derived from these. You may also optionally specify a velocity with
         one of the base unit types (length, mass, time).
 
+        Examples
+        --------
+        To convert simulation positions and velocities to physical units, you can
+        use this unit system::
+
+            usys = SimulationUnitSystem(length=10 * u.kpc, time=50 * u.Myr)
+            (sim_pos * usys["length"]).to(u.kpc)
+            (sim_vel * usys["velocity"]).to(u.km/u.s)
+
+        Or, to convert positions and velocities from physical units to simulation
+        units::
+
+            (100 * u.kpc).to(usys["length"])
+
         """
         G = G * const.G.unit
 
