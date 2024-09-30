@@ -1,15 +1,15 @@
 __all__ = [
     "UnitSystem",
     "DimensionlessUnitSystem",
+    "SimulationUnitSystem",
     "galactic",
     "dimensionless",
     "solarsystem",
 ]
 
 import astropy.constants as const
-
-# Third-party
 import astropy.units as u
+import numpy as np
 from astropy.units.physical import _physical_unit_mapping
 
 _greek_letters = [
@@ -112,7 +112,7 @@ class UnitSystem:
                 new_unit = u.def_unit(f"{q!s}", q)
                 unit = new_unit
 
-            typ = unit.physical_type
+            typ = unit.decompose().physical_type
             if typ in self._registry:
                 raise ValueError(f"Multiple units passed in with type '{typ}'")
             self._registry[typ] = unit
@@ -260,6 +260,73 @@ class DimensionlessUnitSystem(UnitSystem):
 
     def get_constant(self, name):
         raise ValueError("Cannot get constant in dimensionless units!")
+
+
+l_pt = u.get_physical_type("length")
+m_pt = u.get_physical_type("mass")
+t_pt = u.get_physical_type("time")
+v_pt = u.get_physical_type("velocity")
+a_pt = u.get_physical_type("angle")
+
+
+class SimulationUnitSystem(UnitSystem):
+    def __init__(
+        self,
+        length: u.Unit | u.Quantity[l_pt] = None,
+        mass: u.Unit | u.Quantity[m_pt] = None,
+        time: u.Unit | u.Quantity[t_pt] = None,
+        velocity: u.Unit | u.Quantity[v_pt] = None,
+        G: float | u.Quantity = 1.0,
+        angle: u.Unit | u.Quantity[a_pt] = u.radian,
+    ):
+        """
+        Represents a system of units for a (dynamical) simulation.
+
+        A common assumption is that G=1. If this is the case, then you only have to
+        specify two of the three fundamental unit types (length, mass, time) and the
+        rest will be derived from these. You may also optionally specify a velocity with
+        one of the base unit types (length, mass, time).
+
+        Examples
+        --------
+        To convert simulation positions and velocities to physical units, you can
+        use this unit system::
+
+            usys = SimulationUnitSystem(length=10 * u.kpc, time=50 * u.Myr)
+            (sim_pos * usys["length"]).to(u.kpc)
+            (sim_vel * usys["velocity"]).to(u.km/u.s)
+
+        Or, to convert positions and velocities from physical units to simulation
+        units::
+
+            (100 * u.kpc).to(usys["length"])
+
+        """
+        G = G * const.G.unit
+
+        if length is not None and mass is not None:
+            time = 1 / np.sqrt(G * mass / length**3)
+        elif length is not None and time is not None:
+            mass = 1 / G * length**3 / time**2
+        elif length is not None and velocity is not None:
+            time = length / velocity
+            mass = velocity**2 / G * length
+        elif mass is not None and time is not None:
+            length = np.cbrt(G * mass * time**2)
+        elif mass is not None and velocity is not None:
+            length = G * mass / velocity**2
+            time = length / velocity
+        elif time is not None and velocity is not None:
+            mass = 1 / G * velocity**3 * time
+            length = G * mass / velocity**2
+        else:
+            msg = (
+                "You must specify at least two of the three fundamental unit types "
+                "(length, mass, time) or a velocity unit."
+            )
+            raise ValueError(msg)
+
+        super().__init__(length, mass, time, angle)
 
 
 # define galactic unit system

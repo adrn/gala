@@ -4,6 +4,9 @@
 New Features
 ------------
 
+- Added a new ``SimulationUnitSystem`` class for handling unit systems in
+  simulations, especially for N-body simulations.
+
 Bug fixes
 ---------
 
