@@ -18,6 +18,7 @@ cimport numpy as np
 np.import_array()
 
 from libc.math cimport sqrt
+from libc.stdlib cimport malloc, free
 from cpython.exc cimport PyErr_CheckSignals
 
 from ...potential import Hamiltonian, NullPotential
@@ -70,9 +71,12 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
 
         int i
         void *args
-        CPotential *c_particle_potentials[MAX_NBODY]
+        CPotential **c_particle_potentials = NULL
         CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
         CFrameType cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
+
+        double[:, :, ::1] all_w
+        double[:, ::1] final_w
 
     # Some input validation:
     if not isinstance(hamiltonian, Hamiltonian):
@@ -93,28 +97,38 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
         if not isinstance(pot, NullPotential):
             nbody += 1
 
-    # Extract the CPotential objects from the particle potentials.
-    for i in range(nparticles):
-        c_particle_potentials[i] = &(<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
+    # Dynamically allocate memory for particle potentials
+    c_particle_potentials = <CPotential**>malloc(nparticles * sizeof(CPotential*))
+    if c_particle_potentials == NULL:
+        raise MemoryError("Failed to allocate memory for particle potentials")
 
-    # We need a void pointer for any other arguments
-    args = <void *>(&c_particle_potentials[0])
+    try:
+        # Extract the CPotential objects from the particle potentials.
+        for i in range(nparticles):
+            c_particle_potentials[i] = &(<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
 
-    if save_all:
-        all_w = dop853_helper_save_all(&cp, &cf,
-                                       <FcnEqDiff> Fwrapper_direct_nbody,
-                                       w0, t,
-                                       ndim, nparticles, nbody, args,
-                                       ntimes, atol, rtol, nmax, 0)
-    else:
-        all_w = dop853_helper(&cp, &cf,
-                              <FcnEqDiff> Fwrapper_direct_nbody,
-                              w0, t,
-                              ndim, nparticles, nbody, args, ntimes,
-                              atol, rtol, nmax, 0)
-        all_w = np.array(all_w).reshape(nparticles, ndim)
+        # We need a void pointer for any other arguments
+        args = <void *>(c_particle_potentials)
 
-    return all_w
+        if save_all:
+            all_w = dop853_helper_save_all(&cp, &cf,
+                                          <FcnEqDiff> Fwrapper_direct_nbody,
+                                          w0, t,
+                                          ndim, nparticles, nbody, args,
+                                          ntimes, atol, rtol, nmax, 0)
+            return np.array(all_w)
+        else:
+            final_w = dop853_helper(&cp, &cf,
+                                  <FcnEqDiff> Fwrapper_direct_nbody,
+                                  w0, t,
+                                  ndim, nparticles, nbody, args, ntimes,
+                                  atol, rtol, nmax, 0)
+            return np.array(final_w).reshape(nparticles, ndim)
+
+    finally:
+        # Clean up allocated memory
+        if c_particle_potentials != NULL:
+            free(c_particle_potentials)
 
 
 cpdef nbody_acceleration(double [:, ::1] w0, double t,
@@ -129,8 +143,7 @@ cpdef nbody_acceleration(double [:, ::1] w0, double t,
         unsigned ndim = ps_ndim // 2
 
         int i
-        CPotential *c_particle_potentials[MAX_NBODY]
-
+        CPotential **c_particle_potentials = NULL
         double[:, ::1] acc = np.zeros((nparticles, ps_ndim))
 
     # Some input validation:
@@ -140,12 +153,23 @@ cpdef nbody_acceleration(double [:, ::1] w0, double t,
             f"of particle potentials passed in ({nparticles} vs. "
             f"{len(particle_potentials)}).")
 
-    # Extract the CPotential objects from the particle potentials.
-    for i in range(nparticles):
-        c_particle_potentials[i] = &(<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
+    # Dynamically allocate memory for particle potentials
+    c_particle_potentials = <CPotential**>malloc(nparticles * sizeof(CPotential*))
+    if c_particle_potentials == NULL:
+        raise MemoryError("Failed to allocate memory for particle potentials")
 
-    c_nbody_acceleration(&c_particle_potentials[0], t, &w0[0, 0],
-                         nparticles, nparticles, ndim, &acc[0, 0])
+    try:
+        # Extract the CPotential objects from the particle potentials.
+        for i in range(nparticles):
+            c_particle_potentials[i] = &(<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
 
-    # NOTES: Just the acceleration, does not handle frames
-    return np.asarray(acc)[:, ndim:]
+        c_nbody_acceleration(c_particle_potentials, t, &w0[0, 0],
+                            nparticles, nparticles, ndim, &acc[0, 0])
+
+        # NOTES: Just the acceleration, does not handle frames
+        return np.asarray(acc)[:, ndim:]
+
+    finally:
+        # Clean up allocated memory
+        if c_particle_potentials != NULL:
+            free(c_particle_potentials)

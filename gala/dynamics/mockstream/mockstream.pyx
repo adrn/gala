@@ -1,4 +1,4 @@
- # cython: boundscheck=False
+# cython: boundscheck=False
 # cython: debug=False
 # cython: nonecheck=False
 # cython: cdivision=True
@@ -7,7 +7,6 @@
 # cython: language_level=3
 
 """ Generate mock streams. """
-
 
 # Standard library
 import warnings
@@ -22,6 +21,7 @@ np.import_array()
 from yaml import dump
 
 from libc.math cimport sqrt
+from libc.stdlib cimport malloc, free
 from cpython.exc cimport PyErr_CheckSignals
 
 from ...integrate.cyintegrators.dop853 cimport (dop853_step,
@@ -35,7 +35,6 @@ from ...potential.frame import StaticFrame
 from ...io import quantity_to_hdf5
 from ...potential.potential.io import to_dict
 
-from ..nbody.nbody cimport MAX_NBODY
 from .df cimport BaseStreamDF
 
 __all__ = ['mockstream_dop853', 'mockstream_dop853_animate']
@@ -86,7 +85,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
 
         # For N-body support:
         void *args
-        CPotential *c_particle_potentials[MAX_NBODY]
+        CPotential **c_particle_potentials = NULL
 
         # Time-stepping parameters:
         int ntimes = time.shape[0]
@@ -106,75 +105,87 @@ cpdef mockstream_dop853(nbody, double[::1] time,
 
         int max_nstream = np.max(nstream)
         int total_nstream = np.sum(nstream)
-        double[:, ::1] w_tmp = np.empty((nbodies + max_nstream, ndim))
-        double[:, ::1] w_final = np.empty((nbodies + total_nstream, ndim))
+        int total_bodies = nbodies + total_nstream
+        double[:, ::1] w_tmp = np.empty((total_bodies, ndim))
+        double[:, ::1] w_final = np.empty((total_bodies, ndim))
         double[:, :, ::1] nbody_w = np.empty((ntimes, nbodies, ndim))
 
         int prog_out = max(len(time) // 100, 1)
 
-    # set the potential objects of the progenitor (index 0) and any other
-    # massive bodies included in the stream generation
-    for i in range(nbodies):
-        c_particle_potentials[i] = &(<CPotentialWrapper>(nbody.particle_potentials[i].c_instance)).cpotential
+    # Dynamically allocate memory for particle potentials
+    c_particle_potentials = <CPotential**>malloc(total_bodies * sizeof(CPotential*))
+    if c_particle_potentials == NULL:
+        raise MemoryError("Failed to allocate memory for particle potentials")
 
-    # set null potentials for all of the stream particles
-    for i in range(nbodies, nbodies + max_nstream):
-        c_particle_potentials[i] = &null_p
-    args = <void *>(&c_particle_potentials[0])
+    try:
+        # set the potential objects of the progenitor (index 0) and any other
+        # massive bodies included in the stream generation
+        for i in range(nbodies):
+            c_particle_potentials[i] = &(<CPotentialWrapper>(nbody.particle_potentials[i].c_instance)).cpotential
 
-    # First have to integrate the nbody orbits so we have their positions at
-    # each timestep
-    nbody_w = dop853_helper_save_all(&cp, &cf,
-                                     <FcnEqDiff> Fwrapper_direct_nbody,
-                                     nbody_w0, time,
-                                     ndim, nbodies, nbodies, args, ntimes,
-                                     atol, rtol, nmax, 0)
+        # set null potentials for all of the stream particles
+        for i in range(nbodies, total_bodies):
+            c_particle_potentials[i] = &null_p
+        args = <void *>(c_particle_potentials)
 
-    n = 0
-    for i in range(ntimes):
-        # set initial conditions for progenitor and N-bodies
-        for j in range(nbodies):
-            for k in range(ndim):
-                w_tmp[j, k] = nbody_w[i, j, k]
+        # First have to integrate the nbody orbits so we have their positions at
+        # each timestep
+        nbody_w = dop853_helper_save_all(&cp, &cf,
+                                         <FcnEqDiff> Fwrapper_direct_nbody,
+                                         nbody_w0, time,
+                                         ndim, nbodies, nbodies, args, ntimes,
+                                         atol, rtol, nmax, 0)
 
-        for j in range(nstream[i]):
-            for k in range(ndim):
-                w_tmp[nbodies+j, k] = stream_w0[n+j, k]
+        n = 0
+        for i in range(ntimes):
+            # set initial conditions for progenitor and N-bodies
+            for j in range(nbodies):
+                for k in range(ndim):
+                    w_tmp[j, k] = nbody_w[i, j, k]
 
-        dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
-                    &w_tmp[0, 0], stream_t1[i], tfinal, dt0,
-                    ndim, nbodies+nstream[i], nbodies, args,
-                    atol, rtol, nmax)
+            for j in range(nstream[i]):
+                for k in range(ndim):
+                    w_tmp[nbodies+j, k] = stream_w0[n+j, k]
 
-        for j in range(nstream[i]):
-            for k in range(ndim):
-                w_final[nbodies+n+j, k] = w_tmp[nbodies+j, k]
+            dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
+                        &w_tmp[0, 0], stream_t1[i], tfinal, dt0,
+                        ndim, nbodies+nstream[i], nbodies, args,
+                        atol, rtol, nmax)
 
-        PyErr_CheckSignals()
+            for j in range(nstream[i]):
+                for k in range(ndim):
+                    w_final[nbodies+n+j, k] = w_tmp[nbodies+j, k]
 
-        n += nstream[i]
+            PyErr_CheckSignals()
+
+            n += nstream[i]
+
+            if progress == 1:
+                if i % prog_out == 0:
+                    sys.stdout.write('\r')
+                    sys.stdout.write(
+                        f"Integrating orbits: {100 * i / ntimes: 3.0f}%")
+                    sys.stdout.flush()
 
         if progress == 1:
-            if i % prog_out == 0:
-                sys.stdout.write('\r')
-                sys.stdout.write(
-                    f"Integrating orbits: {100 * i / ntimes: 3.0f}%")
-                sys.stdout.flush()
-
-    if progress == 1:
-        sys.stdout.write('\r')
-        sys.stdout.write(f"Integrating orbits: {100: 3.0f}%")
-        sys.stdout.flush()
+            sys.stdout.write('\r')
+            sys.stdout.write(f"Integrating orbits: {100: 3.0f}%")
+            sys.stdout.flush()
 
 
-    for j in range(nbodies):
-        for k in range(ndim):
-            w_final[j, k] = w_tmp[j, k]
+        for j in range(nbodies):
+            for k in range(ndim):
+                w_final[j, k] = w_tmp[j, k]
 
-    return_nbody_w = np.array(w_final)[:nbodies]
-    return_stream_w = np.array(w_final)[nbodies:]
+        return_nbody_w = np.array(w_final)[:nbodies]
+        return_stream_w = np.array(w_final)[nbodies:]
 
-    return return_nbody_w, return_stream_w
+        return return_nbody_w, return_stream_w
+
+    finally:
+        # Clean up allocated memory
+        if c_particle_potentials != NULL:
+            free(c_particle_potentials)
 
 
 cpdef mockstream_dop853_animate(nbody, double[::1] t,
@@ -225,7 +236,7 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
 
         # For N-body support:
         void *args
-        CPotential *c_particle_potentials[MAX_NBODY]
+        CPotential **c_particle_potentials = NULL
 
         # Snapshotting:
         int noutput_times = (ntimes-1) // output_every + 1
@@ -250,99 +261,107 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
                       "overwrite=True to overwrite the file."
                       .format(output_filename))
 
-    # set the potential objects of the progenitor (index 0) and any other
-    # massive bodies included in the stream generation
-    for i in range(nbodies):
-        c_particle_potentials[i] = &(<CPotentialWrapper>(nbody.particle_potentials[i].c_instance)).cpotential
-    args = <void *>(&c_particle_potentials[0])
+    # Dynamically allocate memory for particle potentials
+    c_particle_potentials = <CPotential**>malloc(nbodies * sizeof(CPotential*))
+    if c_particle_potentials == NULL:
+        raise MemoryError("Failed to allocate memory for particle potentials")
 
-    # Initialize the output file:
-    import h5py
-    h5f = h5py.File(str(output_filename), 'w')
-    stream_g = h5f.create_group('stream')
-    nbody_g = h5f.create_group('nbody')
+    try:
+        # set the potential objects of the progenitor (index 0) and any other
+        # massive bodies included in the stream generation
+        for i in range(nbodies):
+            c_particle_potentials[i] = &(<CPotentialWrapper>(nbody.particle_potentials[i].c_instance)).cpotential
+        args = <void *>(c_particle_potentials)
 
-    d = stream_g.create_dataset('pos', dtype='f8',
-                                shape=(3, noutput_times, total_nstream),
-                                fillvalue=np.nan, compression='gzip',
-                                compression_opts=9)
-    d.attrs['unit'] = str(nbody.units['length'])
+        # Initialize the output file:
+        import h5py
+        h5f = h5py.File(str(output_filename), 'w')
+        stream_g = h5f.create_group('stream')
+        nbody_g = h5f.create_group('nbody')
 
-    d = stream_g.create_dataset('vel', dtype='f8',
-                                shape=(3, noutput_times, total_nstream),
-                                fillvalue=np.nan, compression='gzip',
-                                compression_opts=9)
-    d.attrs['unit'] = str(nbody.units['length'] / nbody.units['time'])
+        d = stream_g.create_dataset('pos', dtype='f8',
+                                    shape=(3, noutput_times, total_nstream),
+                                    fillvalue=np.nan, compression='gzip',
+                                    compression_opts=9)
+        d.attrs['unit'] = str(nbody.units['length'])
 
-    d = nbody_g.create_dataset('pos', dtype='f8',
-                               shape=(3, noutput_times, nbodies),
-                               fillvalue=np.nan, compression='gzip',
-                               compression_opts=9)
-    d.attrs['unit'] = str(nbody.units['length'])
+        d = stream_g.create_dataset('vel', dtype='f8',
+                                    shape=(3, noutput_times, total_nstream),
+                                    fillvalue=np.nan, compression='gzip',
+                                    compression_opts=9)
+        d.attrs['unit'] = str(nbody.units['length'] / nbody.units['time'])
 
-    d = nbody_g.create_dataset('vel', dtype='f8',
-                               shape=(3, noutput_times, nbodies),
-                               fillvalue=np.nan, compression='gzip',
-                               compression_opts=9)
-    d.attrs['unit'] = str(nbody.units['length'] / nbody.units['time'])
+        d = nbody_g.create_dataset('pos', dtype='f8',
+                                   shape=(3, noutput_times, nbodies),
+                                   fillvalue=np.nan, compression='gzip',
+                                   compression_opts=9)
+        d.attrs['unit'] = str(nbody.units['length'])
 
-    # set initial conditions for progenitor and N-bodies
-    for j in range(nbodies):
-        for k in range(ndim):
-            w[j, k] = nbody_w0[j, k]
+        d = nbody_g.create_dataset('vel', dtype='f8',
+                                   shape=(3, noutput_times, nbodies),
+                                   fillvalue=np.nan, compression='gzip',
+                                   compression_opts=9)
+        d.attrs['unit'] = str(nbody.units['length'] / nbody.units['time'])
 
-    for j in range(total_nstream):
-        for k in range(ndim):
-            w[nbodies+j, k] = stream_w0[j, k]
+        # set initial conditions for progenitor and N-bodies
+        for j in range(nbodies):
+            for k in range(ndim):
+                w[j, k] = nbody_w0[j, k]
 
-    n = nstream[0]
-    stream_g['pos'][:, 0, :n] = np.array(w[nbodies:nbodies+n, :]).T[:3]
-    stream_g['vel'][:, 0, :n] = np.array(w[nbodies:nbodies+n, :]).T[3:]
-    nbody_g['pos'][:, 0, :n] = np.array(w[:nbodies, :]).T[:3]
-    nbody_g['vel'][:, 0, :n] = np.array(w[:nbodies, :]).T[3:]
-    output_times[0] = t[0]
+        for j in range(total_nstream):
+            for k in range(ndim):
+                w[nbodies+j, k] = stream_w0[j, k]
 
-    j = 1 # output time index
-    for i in range(1, ntimes):
-        # print(i, j, n,
-        #       len(t), len(nstream), len(output_times))
+        n = nstream[0]
+        stream_g['pos'][:, 0, :n] = np.array(w[nbodies:nbodies+n, :]).T[:3]
+        stream_g['vel'][:, 0, :n] = np.array(w[nbodies:nbodies+n, :]).T[3:]
+        nbody_g['pos'][:, 0, :n] = np.array(w[:nbodies, :]).T[:3]
+        nbody_g['vel'][:, 0, :n] = np.array(w[:nbodies, :]).T[3:]
+        output_times[0] = t[0]
 
-        dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
-                    &w[0, 0], t[i-1], t[i], dt0,
-                    ndim, nbodies+n, nbodies, args,
-                    atol, rtol, nmax)
+        j = 1 # output time index
+        for i in range(1, ntimes):
+            dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
+                        &w[0, 0], t[i-1], t[i], dt0,
+                        ndim, nbodies+n, nbodies, args,
+                        atol, rtol, nmax)
 
-        PyErr_CheckSignals()
+            PyErr_CheckSignals()
 
-        n += nstream[i]
+            n += nstream[i]
 
-        if (i % output_every) == 0 or i == ntimes-1:
-            output_times[j] = t[i]
-            stream_g['pos'][:, j, :n] = np.array(w[nbodies:nbodies+n, :]).T[:3]
-            stream_g['vel'][:, j, :n] = np.array(w[nbodies:nbodies+n, :]).T[3:]
-            nbody_g['pos'][:, j, :n] = np.array(w[:nbodies, :]).T[:3]
-            nbody_g['vel'][:, j, :n] = np.array(w[:nbodies, :]).T[3:]
-            j += 1
+            if (i % output_every) == 0 or i == ntimes-1:
+                output_times[j] = t[i]
+                stream_g['pos'][:, j, :n] = np.array(w[nbodies:nbodies+n, :]).T[:3]
+                stream_g['vel'][:, j, :n] = np.array(w[nbodies:nbodies+n, :]).T[3:]
+                nbody_g['pos'][:, j, :n] = np.array(w[:nbodies, :]).T[:3]
+                nbody_g['vel'][:, j, :n] = np.array(w[:nbodies, :]).T[3:]
+                j += 1
+
+            if progress == 1:
+                if i % prog_out == 0:
+                    sys.stdout.write('\r')
+                    sys.stdout.write(
+                        f"Integrating orbits: {100 * i / ntimes: 3.0f}%")
+                    sys.stdout.flush()
 
         if progress == 1:
-            if i % prog_out == 0:
-                sys.stdout.write('\r')
-                sys.stdout.write(
-                    f"Integrating orbits: {100 * i / ntimes: 3.0f}%")
-                sys.stdout.flush()
+            sys.stdout.write('\r')
+            sys.stdout.write(f"Integrating orbits: {100: 3.0f}%")
+            sys.stdout.flush()
 
-    if progress == 1:
-        sys.stdout.write('\r')
-        sys.stdout.write(f"Integrating orbits: {100: 3.0f}%")
-        sys.stdout.flush()
+        for g in [stream_g, nbody_g]:
+            d = g.create_dataset('time', data=np.array(output_times))
+            d.attrs['unit'] = str(nbody.units['time'])
 
-    for g in [stream_g, nbody_g]:
-        d = g.create_dataset('time', data=np.array(output_times))
-        d.attrs['unit'] = str(nbody.units['time'])
+        h5f.close()
 
-    h5f.close()
+        return_nbody_w = np.array(w)[:nbodies]
+        return_stream_w = np.array(w)[nbodies:]
 
-    return_nbody_w = np.array(w)[:nbodies]
-    return_stream_w = np.array(w)[nbodies:]
+        return return_nbody_w, return_stream_w
 
-    return return_nbody_w, return_stream_w
+    finally:
+        # Clean up allocated memory
+        if c_particle_potentials != NULL:
+            free(c_particle_potentials)
