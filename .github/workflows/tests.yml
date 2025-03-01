@@ -31,17 +31,19 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
         os: ["ubuntu-latest", "macos-latest"]
         numpy-version: ["latest"]
+        scipy-version: ["latest"]
         gala-nogsl: ["0"]
         pip-test-deps: ["test"]
         include:
 
-          - name: Oldest numpy version supported
+          - name: Oldest numpy and scipy versions supported
             os: ubuntu-latest
             python-version: "3.11"
-            numpy-version: "1.24"
+            numpy-version: "1.26"
+            scipy-version: "1.12"
             gala-nogsl: "0"
             pip-test-deps: "test"
 
@@ -99,10 +101,15 @@ jobs:
         env:
           GALA_NOGSL: ${{ matrix.gala-nogsl }}
 
-      - name: Update versions if testing min versions
+      - name: Update numpy version if testing min version
         if: matrix.numpy-version != 'latest'
         run: |
           python -m pip install numpy~=${{ matrix.numpy-version }}
+
+      - name: Update scipy version if testing min version
+        if: matrix.scipy-version != 'latest'
+        run: |
+          python -m pip install scipy~=${{ matrix.scipy-version }}
 
       - name: Run tests
         run: >-
