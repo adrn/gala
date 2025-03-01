@@ -73,6 +73,9 @@ tutorials = [
     "pyia>=1.4",
     "astroquery"
 ]
+dev = [
+    "gala[test, extra, docs, tutorials]",
+]
 
 [build-system]
 requires = [
