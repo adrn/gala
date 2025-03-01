@@ -1,25 +1,25 @@
-# Standard library
 import copy
 import pickle
 import time
 
-# Third-party
 import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.misc import derivative
 import pytest
 
-# Project
-from ..io import load
-from ...frame import StaticFrame
-from ...hamiltonian import Hamiltonian
-from ....units import UnitSystem, DimensionlessUnitSystem
-from ....dynamics import PhaseSpacePosition
+from gala._compat_utils import SCIPY_LT_1_15
 from gala.tests.optional_deps import HAS_SYMPY
 
+from ....dynamics import PhaseSpacePosition
+from ....units import DimensionlessUnitSystem, UnitSystem
+from ...frame import StaticFrame
+from ...hamiltonian import Hamiltonian
+from ..io import load
 
-def partial_derivative(func, point, dim_ix=0, **kwargs):
+
+def partial_derivative_LT_1_15(func, point, dim_ix=0, **kwargs):
+    from scipy.misc import derivative
+
     xyz = np.array(point, copy=True)
 
     def wraps(a):
@@ -27,6 +27,29 @@ def partial_derivative(func, point, dim_ix=0, **kwargs):
         return func(xyz)
 
     return derivative(wraps, point[dim_ix], **kwargs)
+
+
+def partial_derivative_GTEQ_1_15(func, point, dim_ix=0, **kwargs):
+    from scipy.differentiate import derivative
+
+    kwargs["initial_step"] = kwargs.pop("dx")
+    kwargs["preserve_shape"] = True
+
+    def wraps(a):
+        xyz = np.copy(point)
+        if a.shape:
+            xyz = np.repeat(xyz[:, None], a.size, axis=1).T
+        xyz[..., dim_ix] = a
+        # print(xyz.shape, func(xyz).shape)
+        return func(xyz)
+
+    return derivative(wraps, point[dim_ix], **kwargs).df
+
+
+if SCIPY_LT_1_15:
+    partial_derivative = partial_derivative_LT_1_15
+else:
+    partial_derivative = partial_derivative_GTEQ_1_15
 
 
 class PotentialTestBase:
@@ -264,7 +287,7 @@ class PotentialTestBase:
         """
 
         dx = 1e-3 * np.sqrt(np.sum(self.w0[: self.w0.size // 2] ** 2))
-        max_x = np.sqrt(np.sum([x ** 2 for x in self.w0[: self.w0.size // 2]]))
+        max_x = np.sqrt(np.sum([x**2 for x in self.w0[: self.w0.size // 2]]))
 
         grid = np.linspace(-max_x, max_x, 8)
         grid = grid[grid != 0.0]
@@ -273,16 +296,19 @@ class PotentialTestBase:
             np.vstack(list(map(np.ravel, np.meshgrid(*grids)))).T
         )
 
-        def energy_wrap(xyz):
-            xyz = np.ascontiguousarray(xyz[None])
-            return self.potential._energy(xyz, t=np.array([0.0]))[0]
+        def compute_energy(xyz):
+            xyz = np.ascontiguousarray(np.atleast_2d(xyz))
+            return np.squeeze(self.potential._energy(xyz, t=np.array([0.0])))
 
         num_grad = np.zeros_like(xyz)
         for i in range(xyz.shape[0]):
             num_grad[i] = np.squeeze(
                 [
                     partial_derivative(
-                        energy_wrap, xyz[i], dim_ix=dim_ix, n=1, dx=dx, order=5
+                        compute_energy,
+                        xyz[i],
+                        dim_ix=dim_ix,
+                        dx=dx,
                     )
                     for dim_ix in range(self.w0.size // 2)
                 ]
