@@ -52,14 +52,18 @@ jobs:
           - name: Install without GSL
             os: ubuntu-latest
             python-version: "3.11"
+            astropy-version: "latest"
             numpy-version: "latest"
+            scipy-version: "latest"
             gala-nogsl: "1"
             pip-test-deps: "test"
 
           - name: With optional dependencies
             os: ubuntu-latest  # note: galpy install failed on macos here
             python-version: "3.11"
+            astropy-version: "latest"
             numpy-version: "latest"
+            scipy-version: "latest"
             gala-nogsl: "0"
             pip-test-deps: "test,extra"
 
