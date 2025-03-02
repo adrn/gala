@@ -20,6 +20,8 @@ from ..io import load
 def partial_derivative_LT_1_15(func, point, dim_ix=0, **kwargs):
     from scipy.misc import derivative
 
+    kwargs["order"] = kwargs.get("order", 5)
+
     xyz = np.array(point, copy=True)
 
     def wraps(a):
