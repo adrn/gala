@@ -17,6 +17,8 @@ from ...potential.potential.cpotential cimport CPotentialWrapper
 from ...potential.frame import StaticFrame
 from ...potential import NullPotential
 
+from libc.stdlib cimport malloc, free
+
 cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrameType:
         pass
@@ -207,7 +209,7 @@ cpdef leapfrog_integrate_nbody(hamiltonian, double [:, ::1] w0, double[::1] t,
 
         # whoa, so many dots
         CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
-        CPotential *c_particle_potentials[MAX_NBODY]
+        CPotential **c_particle_potentials = NULL
         unsigned nbody = 0
 
     if store_all:
@@ -220,37 +222,50 @@ cpdef leapfrog_integrate_nbody(hamiltonian, double [:, ::1] w0, double[::1] t,
         if not isinstance(pot, NullPotential):
             nbody += 1
 
-    # Extract the CPotential objects from the particle potentials.
-    for i in range(n):
-        c_particle_potentials[i] = &(<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
+    # Dynamically allocate memory for particle potentials
+    c_particle_potentials = <CPotential**>malloc(n * sizeof(CPotential*))
+    if c_particle_potentials == NULL:
+        raise MemoryError("Failed to allocate memory for particle potentials")
 
-    tmp_w = w0.copy()
-
-    with nogil:
-        # first initialize the velocities so they are evolved by a
-        #   half step relative to the positions
+    try:
+        # Extract the CPotential objects from the particle potentials.
         for i in range(n):
-            c_init_velocity_nbody(&cp, half_ndim, t[0], dt,
-                                  &c_particle_potentials[0], &tmp_w[0, 0], nbody, i,
-                                  &tmp_w[i, 0], &tmp_w[i, half_ndim],
-                                  &v_jm1_2[i, 0], &grad[0])
+            c_particle_potentials[i] = &(<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
 
-        for j in range(1, ntimes, 1):
+        tmp_w = w0.copy()
+
+        with nogil:
+            # first initialize the velocities so they are evolved by a
+            #   half step relative to the positions
             for i in range(n):
-                for k in range(half_ndim):
-                    grad[k] = 0.
+                c_init_velocity_nbody(&cp, half_ndim, t[0], dt,
+                                    c_particle_potentials, &tmp_w[0, 0], nbody, i,
+                                    &tmp_w[i, 0], &tmp_w[i, half_ndim],
+                                    &v_jm1_2[i, 0], &grad[0])
 
-                c_leapfrog_step_nbody(&cp, half_ndim, t[j], dt,
-                                      &c_particle_potentials[0], &tmp_w[0, 0], nbody, i,
-                                      &tmp_w[i, 0], &tmp_w[i, half_ndim],
-                                      &v_jm1_2[i, 0],
-                                      &grad[0])
+            for j in range(1, ntimes, 1):
+                for i in range(n):
+                    for k in range(half_ndim):
+                        grad[k] = 0.
 
-                if store_all:
-                    for k in range(ndim):
-                        all_w[j, i, k] = tmp_w[i, k]
+                    c_leapfrog_step_nbody(&cp, half_ndim, t[j], dt,
+                                        c_particle_potentials, &tmp_w[0, 0], nbody, i,
+                                        &tmp_w[i, 0], &tmp_w[i, half_ndim],
+                                        &v_jm1_2[i, 0],
+                                        &grad[0])
 
-    if store_all:
-        return np.asarray(t), np.asarray(all_w)
-    else:
-        return np.asarray(t[-1:]), np.asarray(tmp_w)
+                    if store_all:
+                        for k in range(ndim):
+                            all_w[j, i, k] = tmp_w[i, k]
+
+        if store_all:
+            return_val = (np.asarray(t), np.asarray(all_w))
+        else:
+            return_val = (np.asarray(t[-1:]), np.asarray(tmp_w))
+
+        return return_val
+
+    finally:
+        # Clean up allocated memory
+        if c_particle_potentials != NULL:
+            free(c_particle_potentials)
