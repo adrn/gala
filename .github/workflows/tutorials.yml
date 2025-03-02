@@ -35,6 +35,11 @@ jobs:
         with:
           submodules: true
 
+      - name: Setup Linux GSL
+        run: |
+          sudo apt-get update
+          sudo apt-get install gsl-bin libgsl0-dev build-essential
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
