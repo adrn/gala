@@ -1,8 +1,7 @@
-# Standard library
+import importlib
 import re
 from collections import namedtuple
 
-# Third-party
 import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
@@ -11,8 +10,6 @@ from astropy.coordinates import representation as r
 from ..io import quantity_from_hdf5, quantity_to_hdf5
 from ..units import DimensionlessUnitSystem, UnitSystem, _greek_letters
 from ..util import atleast_2d
-
-# Project
 from . import representation_nd as rep_nd
 from .plot import plot_projections
 
@@ -79,9 +76,9 @@ class PhaseSpacePosition:
             RegexRepresentationMapping("d_x([0-9])", "v_x{0}"),
         ],
     }
-    representation_mappings[
-        r.UnitSphericalCosLatDifferential
-    ] = representation_mappings[r.SphericalCosLatDifferential]
+    representation_mappings[r.UnitSphericalCosLatDifferential] = (
+        representation_mappings[r.SphericalCosLatDifferential]
+    )
     representation_mappings[r.UnitSphericalDifferential] = representation_mappings[
         r.SphericalDifferential
     ]
@@ -604,9 +601,7 @@ class PhaseSpacePosition:
             for k in g["parameters"]:
                 pars[k] = quantity_from_hdf5(g["parameters/" + k])
 
-            exec("from {0} import {1}".format(frame_mod, frame_cls))
-            frame_cls = eval(frame_cls)
-
+            frame_cls = getattr(importlib.import_module(frame_mod), frame_cls)
             frame = frame_cls(units=units, **pars)
 
         return cls(pos=pos, vel=vel, frame=frame)
