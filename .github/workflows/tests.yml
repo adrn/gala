@@ -33,15 +33,17 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
         os: ["ubuntu-latest", "macos-latest"]
+        astropy-version: ["latest"]
         numpy-version: ["latest"]
         scipy-version: ["latest"]
         gala-nogsl: ["0"]
         pip-test-deps: ["test"]
         include:
 
-          - name: Oldest numpy and scipy versions supported
+          - name: Oldest astropy, numpy, and scipy versions supported
             os: ubuntu-latest
             python-version: "3.11"
+            astropy-version: "6.0.1"
             numpy-version: "1.26"
             scipy-version: "1.12"
             gala-nogsl: "0"
@@ -110,6 +112,11 @@ jobs:
         if: matrix.scipy-version != 'latest'
         run: |
           python -m pip install scipy~=${{ matrix.scipy-version }}
+
+      - name: Update astropy version if testing min version
+        if: matrix.astropy-version != 'latest'
+        run: |
+          python -m pip install astropy~=${{ matrix.astropy-version }}
 
       - name: Run tests
         run: >-
