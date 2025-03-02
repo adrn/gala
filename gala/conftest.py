@@ -2,19 +2,18 @@ import os
 
 from pytest_astropy_header.display import (
     PYTEST_HEADER_MODULES,
-    TESTED_VERSIONS,)
+    TESTED_VERSIONS,
+)
 
 
 def pytest_configure(config):
 
     config.option.astropy_header = True
-
-    # Customize the following lines to add/remove entries from the list of
-    # packages for which version numbers are displayed when running the tests.
-    PYTEST_HEADER_MODULES.pop('Pandas', None)
-    PYTEST_HEADER_MODULES['scikit-image'] = 'skimage'
+    PYTEST_HEADER_MODULES.pop("Pandas", None)
+    PYTEST_HEADER_MODULES["astropy"] = "astropy"
 
     from . import __version__
+
     packagename = os.path.basename(os.path.dirname(__file__))
     TESTED_VERSIONS[packagename] = __version__
 
