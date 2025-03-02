@@ -25,11 +25,11 @@ jobs:
       matrix:
         # Building wheels on linux takes too much time: split wheels into multiple runs
         python:
-          - ["1", "cp310-*"]
-          - ["2", "cp311-*"]
-          - ["3", "cp312-*"]
+          - ["1", "cp311-*"]
+          - ["2", "cp312-*"]
+          - ["3", "cp313-*"]
         os:
-          - "macos-14"
+          - "macos-15"
           - "ubuntu-latest"
 
     steps:
@@ -66,7 +66,7 @@ jobs:
       - uses: actions/setup-python@v5
         name: Install Python
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Build sdist
         run: |
