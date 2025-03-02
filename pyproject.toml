@@ -46,6 +46,7 @@ extra = [
     "galpy",
     "sympy",
     "twobody",
+    "scipy<1.15" # TODO: temporary, until galpy fixes incompatibility
 ]
 docs = [
     "gala[shared,extra]",
