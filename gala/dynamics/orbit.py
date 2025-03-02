@@ -1,3 +1,4 @@
+import importlib
 import warnings
 
 # Third-party
@@ -301,9 +302,7 @@ class Orbit(PhaseSpacePosition):
             for k in g["parameters"]:
                 pars[k] = quantity_from_hdf5(g["parameters/" + k])
 
-            exec("from {0} import {1}".format(frame_mod, frame_cls))
-            frame_cls = eval(frame_cls)
-
+            frame_cls = getattr(importlib.import_module(frame_mod), frame_cls)
             frame = frame_cls(units=units, **pars)
 
         potential = None

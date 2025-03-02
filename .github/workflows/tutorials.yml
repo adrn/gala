@@ -35,10 +35,15 @@ jobs:
         with:
           submodules: true
 
+      - name: Setup Linux GSL
+        run: |
+          sudo apt-get update
+          sudo apt-get install gsl-bin libgsl0-dev build-essential
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
 
       - name: Install dependencies
         run: |
@@ -50,7 +55,7 @@ jobs:
           cd docs
           make exectutorials
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: notebooks-for-${{ github.sha }}
           path: docs/tutorials

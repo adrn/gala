@@ -25,11 +25,11 @@ jobs:
       matrix:
         # Building wheels on linux takes too much time: split wheels into multiple runs
         python:
-          - ["1", "cp310-*"]
-          - ["2", "cp311-*"]
-          - ["3", "cp312-*"]
+          - ["1", "cp311-*"]
+          - ["2", "cp312-*"]
+          - ["3", "cp313-*"]
         os:
-          - "macos-14"
+          - "macos-15"
           - "ubuntu-latest"
 
     steps:
@@ -48,7 +48,7 @@ jobs:
           CIBW_SKIP: "*-win32 *musllinux* pp* *i686"
           CIBW_BEFORE_ALL_LINUX: dnf install -y gsl gsl-devel || apt-get install gsl-bin libgsl0-dev
           CIBW_BEFORE_ALL_MACOS: brew install gsl pipx
-          MACOSX_DEPLOYMENT_TARGET: 14.0
+          MACOSX_DEPLOYMENT_TARGET: 15.0
 
       - uses: actions/upload-artifact@v4
         with:
@@ -66,7 +66,7 @@ jobs:
       - uses: actions/setup-python@v5
         name: Install Python
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Build sdist
         run: |

@@ -15,9 +15,9 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Astronomy"
 ]
 dependencies = [
-    "numpy>=1.24.4",
-    "scipy>=1.8",
-    "astropy>=5.0",
+    "numpy>=1.26.4",
+    "scipy>=1.12",
+    "astropy>=6.0",
     "pyyaml",
     "cython>=0.29"
 ]
@@ -46,6 +46,7 @@ extra = [
     "galpy",
     "sympy",
     "twobody",
+    "scipy<1.15" # TODO: temporary, until galpy fixes incompatibility
 ]
 docs = [
     "gala[shared,extra]",
@@ -72,6 +73,9 @@ tutorials = [
     "jupytext",
     "pyia>=1.4",
     "astroquery"
+]
+dev = [
+    "gala[test, extra, docs, tutorials]",
 ]
 
 [build-system]

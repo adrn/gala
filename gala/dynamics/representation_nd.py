@@ -32,7 +32,7 @@ def _make_getter(component):
     return get_component
 
 
-class NDMixin(object):
+class NDMixin:
 
     def _apply(self, method, *args, **kwargs):
         """Create a new representation with ``method`` applied to the arrays.
@@ -129,6 +129,11 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
                         doc=(f"The '{name}' component of the points(s)."),
                     ),
                 )
+
+    @property
+    def masked(self):
+        """NOTE: This overrides the support for masks"""
+        return False
 
     def get_xyz(self, xyz_axis=0):
         """Return a vector array of the x, y, and z coordinates.
