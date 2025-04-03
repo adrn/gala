@@ -22,8 +22,7 @@ from libc.stdlib cimport malloc, free
 from cpython.exc cimport PyErr_CheckSignals
 
 from ...potential import Hamiltonian, NullPotential
-from ...potential.potential.cpotential cimport (CPotentialWrapper,
-                                                MAX_N_COMPONENTS, CPotential)
+from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
 from ...potential.frame.cframe cimport CFrameWrapper
 from ...integrate.cyintegrators.dop853 cimport (dop853_helper,
                                                 dop853_helper_save_all)
@@ -72,7 +71,7 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
         int i
         void *args
         CPotential **c_particle_potentials = NULL
-        CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
+        CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
         CFrameType cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
         double[:, :, ::1] all_w
@@ -105,20 +104,20 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
     try:
         # Extract the CPotential objects from the particle potentials.
         for i in range(nparticles):
-            c_particle_potentials[i] = &(<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
+            c_particle_potentials[i] = (<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
 
         # We need a void pointer for any other arguments
         args = <void *>(c_particle_potentials)
 
         if save_all:
-            all_w = dop853_helper_save_all(&cp, &cf,
+            all_w = dop853_helper_save_all(cp, &cf,
                                           <FcnEqDiff> Fwrapper_direct_nbody,
                                           w0, t,
                                           ndim, nparticles, nbody, args,
                                           ntimes, atol, rtol, nmax, 0)
             return np.array(all_w)
         else:
-            final_w = dop853_helper(&cp, &cf,
+            final_w = dop853_helper(cp, &cf,
                                   <FcnEqDiff> Fwrapper_direct_nbody,
                                   w0, t,
                                   ndim, nparticles, nbody, args, ntimes,
@@ -161,7 +160,7 @@ cpdef nbody_acceleration(double [:, ::1] w0, double t,
     try:
         # Extract the CPotential objects from the particle potentials.
         for i in range(nparticles):
-            c_particle_potentials[i] = &(<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
+            c_particle_potentials[i] = (<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
 
         c_nbody_acceleration(c_particle_potentials, t, &w0[0, 0],
                             nparticles, nparticles, ndim, &acc[0, 0])

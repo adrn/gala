@@ -201,12 +201,12 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t
         int ntimes = len(t)
 
         # whoa, so many dots
-        CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
+        CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
         CFrameType cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
     # 0 below is for nbody - we ignore that in this test particle integration
     if store_all:
-        all_w = dop853_helper_save_all(&cp, &cf, <FcnEqDiff> Fwrapper,
+        all_w = dop853_helper_save_all(cp, &cf, <FcnEqDiff> Fwrapper,
                                     w0, t,
                                     ndim, norbits, 0, args, ntimes,
                                     atol, rtol, nmax, int(progress))
@@ -215,7 +215,7 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t
 
     else:
         w = dop853_helper(
-            &cp, &cf, <FcnEqDiff> Fwrapper,
+            cp, &cf, <FcnEqDiff> Fwrapper,
             w0, t,
             ndim, norbits, 0, args, ntimes,
             atol, rtol, nmax, int(progress))

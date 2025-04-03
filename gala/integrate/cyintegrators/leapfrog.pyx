@@ -97,7 +97,7 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
         double[:, ::1] tmp_w = np.zeros((n, ndim))
 
         # whoa, so many dots
-        CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
+        CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
 
     if store_all:
         all_w = np.zeros((ntimes, n, ndim))
@@ -111,7 +111,7 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
         # first initialize the velocities so they are evolved by a
         #   half step relative to the positions
         for i in range(n):
-            c_init_velocity(&cp, half_ndim, t[0], dt,
+            c_init_velocity(cp, half_ndim, t[0], dt,
                             &tmp_w[i, 0], &tmp_w[i, half_ndim],
                             &v_jm1_2[i, 0], &grad[0])
 
@@ -120,7 +120,7 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
                 for k in range(half_ndim):
                     grad[k] = 0.
 
-                c_leapfrog_step(&cp, half_ndim, t[j], dt,
+                c_leapfrog_step(cp, half_ndim, t[j], dt,
                                 &tmp_w[i, 0], &tmp_w[i, half_ndim],
                                 &v_jm1_2[i, 0],
                                 &grad[0])
@@ -208,7 +208,7 @@ cpdef leapfrog_integrate_nbody(hamiltonian, double [:, ::1] w0, double[::1] t,
         double[:, ::1] tmp_w = np.zeros((n, ndim))
 
         # whoa, so many dots
-        CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
+        CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
         CPotential **c_particle_potentials = NULL
         unsigned nbody = 0
 
@@ -230,7 +230,7 @@ cpdef leapfrog_integrate_nbody(hamiltonian, double [:, ::1] w0, double[::1] t,
     try:
         # Extract the CPotential objects from the particle potentials.
         for i in range(n):
-            c_particle_potentials[i] = &(<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
+            c_particle_potentials[i] = (<CPotentialWrapper>(particle_potentials[i].c_instance)).cpotential
 
         tmp_w = w0.copy()
 
@@ -238,7 +238,7 @@ cpdef leapfrog_integrate_nbody(hamiltonian, double [:, ::1] w0, double[::1] t,
             # first initialize the velocities so they are evolved by a
             #   half step relative to the positions
             for i in range(n):
-                c_init_velocity_nbody(&cp, half_ndim, t[0], dt,
+                c_init_velocity_nbody(cp, half_ndim, t[0], dt,
                                     c_particle_potentials, &tmp_w[0, 0], nbody, i,
                                     &tmp_w[i, 0], &tmp_w[i, half_ndim],
                                     &v_jm1_2[i, 0], &grad[0])
@@ -248,7 +248,7 @@ cpdef leapfrog_integrate_nbody(hamiltonian, double [:, ::1] w0, double[::1] t,
                     for k in range(half_ndim):
                         grad[k] = 0.
 
-                    c_leapfrog_step_nbody(&cp, half_ndim, t[j], dt,
+                    c_leapfrog_step_nbody(cp, half_ndim, t[j], dt,
                                         c_particle_potentials, &tmp_w[0, 0], nbody, i,
                                         &tmp_w[i, 0], &tmp_w[i, half_ndim],
                                         &v_jm1_2[i, 0],

@@ -92,13 +92,13 @@ cpdef mockstream_dop853(nbody, double[::1] time,
         double dt0 = 1.
 
         # whoa, so many dots
-        CPotential cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
+        CPotential* cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
         CFrameType cf = (<CFrameWrapper>(nbody.H.frame.c_instance)).cframe
 
         # for the test particles
         CPotentialWrapper null_wrapper = NullWrapper(1., [],
                                                      np.zeros(3), np.eye(3))
-        CPotential null_p = null_wrapper.cpotential
+        CPotential* null_p = null_wrapper.cpotential
 
         int nbodies = nbody._c_w0.shape[0]  # includes the progenitor
         double [:, ::1] nbody_w0 = nbody._c_w0
@@ -121,16 +121,16 @@ cpdef mockstream_dop853(nbody, double[::1] time,
         # set the potential objects of the progenitor (index 0) and any other
         # massive bodies included in the stream generation
         for i in range(nbodies):
-            c_particle_potentials[i] = &(<CPotentialWrapper>(nbody.particle_potentials[i].c_instance)).cpotential
+            c_particle_potentials[i] = (<CPotentialWrapper>(nbody.particle_potentials[i].c_instance)).cpotential
 
         # set null potentials for all of the stream particles
         for i in range(nbodies, total_bodies):
-            c_particle_potentials[i] = &null_p
+            c_particle_potentials[i] = null_p
         args = <void *>(c_particle_potentials)
 
         # First have to integrate the nbody orbits so we have their positions at
         # each timestep
-        nbody_w = dop853_helper_save_all(&cp, &cf,
+        nbody_w = dop853_helper_save_all(cp, &cf,
                                          <FcnEqDiff> Fwrapper_direct_nbody,
                                          nbody_w0, time,
                                          ndim, nbodies, nbodies, args, ntimes,
@@ -147,7 +147,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
                 for k in range(ndim):
                     w_tmp[nbodies+j, k] = stream_w0[n+j, k]
 
-            dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
+            dop853_step(cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
                         &w_tmp[0, 0], stream_t1[i], tfinal, dt0,
                         ndim, nbodies+nstream[i], nbodies, args,
                         atol, rtol, nmax)
@@ -225,7 +225,7 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
         int ntimes = t.shape[0]
 
         # whoa, so many dots
-        CPotential cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
+        CPotential* cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
         CFrameType cf = (<CFrameWrapper>(nbody.H.frame.c_instance)).cframe
 
         int nbodies = nbody._c_w0.shape[0] # includes the progenitor
@@ -270,7 +270,7 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
         # set the potential objects of the progenitor (index 0) and any other
         # massive bodies included in the stream generation
         for i in range(nbodies):
-            c_particle_potentials[i] = &(<CPotentialWrapper>(nbody.particle_potentials[i].c_instance)).cpotential
+            c_particle_potentials[i] = (<CPotentialWrapper>(nbody.particle_potentials[i].c_instance)).cpotential
         args = <void *>(c_particle_potentials)
 
         # Initialize the output file:
@@ -321,7 +321,7 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
 
         j = 1 # output time index
         for i in range(1, ntimes):
-            dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
+            dop853_step(cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
                         &w[0, 0], t[i-1], t[i], dt0,
                         ndim, nbodies+n, nbodies, args,
                         atol, rtol, nmax)
