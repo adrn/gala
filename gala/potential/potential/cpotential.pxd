@@ -11,20 +11,22 @@ cdef extern from "src/funcdefs.h":
     ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
 
 cdef extern from "potential/src/cpotential.h":
-    const int MAX_N_COMPONENTS
-
     ctypedef struct CPotential:
-        int n_components
-        int n_dim
-        int null
-        densityfunc density[MAX_N_COMPONENTS]
-        energyfunc value[MAX_N_COMPONENTS]
-        gradientfunc gradient[MAX_N_COMPONENTS]
-        hessianfunc hessian[MAX_N_COMPONENTS]
-        int n_params[MAX_N_COMPONENTS]
-        double *parameters[MAX_N_COMPONENTS]
-        double *q0[MAX_N_COMPONENTS]
-        double *R[MAX_N_COMPONENTS]
+        int n_components      # number of potential components
+        int n_dim             # coordinate system dimensionality
+        int null              # shortcut flag to skip evaluation
+        densityfunc* density
+        energyfunc* value
+        gradientfunc* gradient
+        hessianfunc* hessian
+        int* n_params         # parameter counts per component
+        double** parameters   # pointers to parameter arrays per component
+        double** q0           # pointers to origin per component
+        double** R            # pointers to rotation per component
+
+    CPotential* allocate_cpotential(int n_components)
+    void free_cpotential(CPotential* p) nogil
+    int resize_cpotential_arrays(CPotential* p, int n_components) nogil
 
     double c_potential(CPotential *p, double t, double *q) nogil
     double c_density(CPotential *p, double t, double *q) nogil
@@ -38,7 +40,7 @@ cdef extern from "potential/src/cpotential.h":
 cpdef _validate_pos_arr(double[:,::1] arr)
 
 cdef class CPotentialWrapper:
-    cdef CPotential cpotential
+    cdef CPotential* cpotential
     cdef double[::1] _params
     cdef int[::1] _n_params
     cdef list _potentials # HACK: for CCompositePotentialWrapper

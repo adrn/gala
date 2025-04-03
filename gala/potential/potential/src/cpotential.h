@@ -1,10 +1,5 @@
 #include "src/funcdefs.h"
 
-#ifndef MAX_N_COMPONENTS_H
-    #define MAX_N_COMPONENTS_H
-    #define MAX_N_COMPONENTS 16
-#endif
-
 #ifndef _CPotential_H
 #define _CPotential_H
     typedef struct _CPotential CPotential;
@@ -15,24 +10,28 @@
         int null; // a short circuit: if null, can skip evaluation
 
         // arrays of pointers to each of the function types above
-        densityfunc density[MAX_N_COMPONENTS];
-        energyfunc value[MAX_N_COMPONENTS];
-        gradientfunc gradient[MAX_N_COMPONENTS];
-        hessianfunc hessian[MAX_N_COMPONENTS];
+        densityfunc* density;
+        energyfunc* value;
+        gradientfunc* gradient;
+        hessianfunc* hessian;
 
         // array containing the number of parameters in each component
-        int n_params[MAX_N_COMPONENTS];
+        int* n_params;
 
         // pointer to array of pointers to the parameter arrays
-        double *parameters[MAX_N_COMPONENTS];
+        double** parameters;
 
         // pointer to array of pointers containing the origin coordinates
-        double *q0[MAX_N_COMPONENTS];
+        double** q0;
 
         // pointer to array of pointers containing rotation matrix elements
-        double *R[MAX_N_COMPONENTS];
+        double** R;
     };
 #endif
+
+extern CPotential* allocate_cpotential(int n_components);
+extern void free_cpotential(CPotential* p);
+extern int resize_cpotential_arrays(CPotential* pot, int new_n_components);
 
 extern double c_potential(CPotential *p, double t, double *q);
 extern double c_density(CPotential *p, double t, double *q);

@@ -17,47 +17,51 @@ from libc.stdio cimport printf
 # Project
 from .core import CompositePotential
 from .cpotential import CPotentialBase
-from .cpotential cimport CPotentialWrapper, CPotential
+from .cpotential cimport (
+    CPotentialWrapper, CPotential, allocate_cpotential, free_cpotential, resize_cpotential_arrays
+)
 
 __all__ = ['CCompositePotential']
 
 cdef class CCompositePotentialWrapper(CPotentialWrapper):
-
     def __init__(self, list potentials):
         cdef:
-            CPotential cp
-            CPotential tmp_cp
-            int i
+            int i, n_components
             CPotentialWrapper[::1] _cpotential_arr
 
         self._potentials = potentials
         _cpotential_arr = np.array(potentials)
-
         n_components = len(potentials)
+
+        # First, check if we need more components
+        if n_components > 1:
+            # Reallocate arrays without freeing the struct itself
+            # (This requires implementing a resize function in the C code)
+            resize_cpotential_arrays(self.cpotential, n_components)
+
+        # Store parameter counts
         self._n_params = np.zeros(n_components, dtype=np.int32)
         for i in range(n_components):
             self._n_params[i] = _cpotential_arr[i]._n_params[0]
+            self.cpotential.n_params[i] = self._n_params[i]
 
-        cp.n_components = n_components
-        cp.n_params = &(self._n_params[0])
-        cp.n_dim = 0
+        self.cpotential.n_dim = 0
 
         for i in range(n_components):
-            tmp_cp = _cpotential_arr[i].cpotential
-            cp.parameters[i] = &(_cpotential_arr[i]._params[0])
-            cp.q0[i] = &(_cpotential_arr[i]._q0[0])
-            cp.R[i] = &(_cpotential_arr[i]._R[0])
-            cp.value[i] = tmp_cp.value[0]
-            cp.density[i] = tmp_cp.density[0]
-            cp.gradient[i] = tmp_cp.gradient[0]
-            cp.hessian[i] = tmp_cp.hessian[0]
+            self.cpotential.parameters[i] = &(_cpotential_arr[i]._params[0])
+            self.cpotential.q0[i] = &(_cpotential_arr[i]._q0[0])
+            self.cpotential.R[i] = &(_cpotential_arr[i]._R[0])
+            self.cpotential.value[i] = _cpotential_arr[i].cpotential.value[0]
+            self.cpotential.density[i] = _cpotential_arr[i].cpotential.density[0]
+            self.cpotential.gradient[i] = _cpotential_arr[i].cpotential.gradient[0]
+            self.cpotential.hessian[i] = _cpotential_arr[i].cpotential.hessian[0]
 
-            if cp.n_dim == 0:
-                cp.n_dim = tmp_cp.n_dim
-            elif cp.n_dim != tmp_cp.n_dim:
-                raise ValueError("Input potentials must have same number of coordinate dimensions")
-
-        self.cpotential = cp
+            if self.cpotential.n_dim == 0:
+                self.cpotential.n_dim = _cpotential_arr[i].cpotential.n_dim
+            elif self.cpotential.n_dim != _cpotential_arr[i].cpotential.n_dim:
+                raise ValueError(
+                    "Input potentials must have same number of coordinate dimensions"
+                )
 
     def __reduce__(self):
         return (self.__class__, (list(self._potentials),))
@@ -69,11 +73,14 @@ class CCompositePotential(CompositePotential, CPotentialBase):
         CompositePotential.__init__(self, **potentials)
 
     def _reset_c_instance(self):
+        """Rebuilds the C instance after the composite potential is modified."""
         self._potential_list = []
         for p in self.values():
             self._potential_list.append(p.c_instance)
-        self.G = p.G
-        self.c_instance = CCompositePotentialWrapper(self._potential_list)
+
+        if len(self._potential_list) > 0:
+            self.G = p.G
+            self.c_instance = CCompositePotentialWrapper(self._potential_list)
 
     def __setitem__(self, *args, **kwargs):
         CompositePotential.__setitem__(self, *args, **kwargs)
