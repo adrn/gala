@@ -274,7 +274,7 @@ cdef class StreaklineStreamDF(BaseStreamDF):
             double vj # relative velocity at jacobi radius
             double[:, ::1] R = np.zeros((3, 3)) # rotation to satellite coordinates
 
-            CPotential cpotential = (<CPotentialWrapper>(potential.c_instance)).cpotential
+            CPotential* cpotential = (<CPotentialWrapper>(potential.c_instance)).cpotential
             double G = potential.G
 
         j = 0
@@ -282,7 +282,7 @@ cdef class StreaklineStreamDF(BaseStreamDF):
             if prog_m[i] == 0:
                 continue
 
-            self.get_rj_vj_R(&cpotential, G,
+            self.get_rj_vj_R(cpotential, G,
                              &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
                              &rj, &vj, R) # outputs
 
@@ -385,7 +385,7 @@ cdef class FardalStreamDF(BaseStreamDF):
             double[::1] k_mean = np.zeros(6)
             double[::1] k_disp = np.zeros(6)
 
-            CPotential cpotential = (<CPotentialWrapper>(potential.c_instance)).cpotential
+            CPotential* cpotential = (<CPotentialWrapper>(potential.c_instance)).cpotential
             double G = potential.G
 
         # TODO: support computing this, which requires knowing the peri/apo and values
@@ -410,7 +410,7 @@ cdef class FardalStreamDF(BaseStreamDF):
             if prog_m[i] == 0:
                 continue
 
-            self.get_rj_vj_R(&cpotential, G,
+            self.get_rj_vj_R(cpotential, G,
                              &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
                              &rj, &vj, R)  # outputs
 
@@ -504,7 +504,7 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
             double vj # relative velocity at jacobi radius
             double[:, ::1] R = np.zeros((3, 3)) # rotation to satellite coordinates
 
-            CPotential cpotential = (<CPotentialWrapper>(potential.c_instance)).cpotential
+            CPotential* cpotential = (<CPotentialWrapper>(potential.c_instance)).cpotential
             double G = potential.G
             double _v_disp = self.v_disp.decompose(potential.units).value
 
@@ -513,7 +513,7 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
             if prog_m[i] == 0:
                 continue
 
-            self.get_rj_vj_R(&cpotential, G,
+            self.get_rj_vj_R(cpotential, G,
                              &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
                              &rj, &vj, R) # outputs
 
@@ -601,7 +601,7 @@ cdef class ChenStreamDF(BaseStreamDF):
             double[::1] mean = np.zeros(6)
             double[:, ::1] cov = np.zeros((6, 6))
 
-            CPotential cpotential = (<CPotentialWrapper>(potential.c_instance)).cpotential
+            CPotential* cpotential = (<CPotentialWrapper>(potential.c_instance)).cpotential
             double G = potential.G
 
         mean[0] = 1.6    # r
@@ -630,7 +630,7 @@ cdef class ChenStreamDF(BaseStreamDF):
             if prog_m[i] == 0:
                 continue
 
-            self.get_rj_vj_R(&cpotential, G,
+            self.get_rj_vj_R(cpotential, G,
                              &prog_x[i, 0], &prog_v[i, 0], prog_m[i], prog_t[i],
                              &rj, &vj, R)  # outputs
 
@@ -697,7 +697,7 @@ cdef class ChenStreamDF(BaseStreamDF):
                                             &prog_x[i, 0], &prog_v[i, 0],
                                             &particle_x[j+k, 0],
                                             &particle_v[j+k, 0])
-                
+
                 j += nparticles[i]
 
         return particle_x, particle_v, particle_t1

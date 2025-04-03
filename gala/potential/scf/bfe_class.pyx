@@ -20,8 +20,7 @@ cimport cython
 from gala.units import galactic
 from gala.potential.common import PotentialParameter
 from gala.potential import PotentialBase
-from gala.potential.potential.cpotential cimport (CPotentialWrapper,
-                                                  MAX_N_COMPONENTS, CPotential)
+from gala.potential.potential.cpotential cimport CPotentialWrapper, CPotential
 from gala.potential.potential.cpotential import CPotentialBase
 
 cdef extern from "extra_compile_macros.h":

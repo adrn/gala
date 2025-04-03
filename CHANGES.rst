@@ -10,6 +10,14 @@ New Features
 Bug fixes
 ---------
 
+- Fixed a longstanding issue with orbit integration where there was a maximum number of
+  orbits that could be integrated simultaneously. Now, arrays are allocated dynamically
+  and there is no limit.
+
+- Similarly, fixed a longstanding issue that restricted the number of potential
+  components that could be added to a composite potential. Now, arrays are allocated
+  dynamically and there is no limit.
+
 API changes
 -----------
 

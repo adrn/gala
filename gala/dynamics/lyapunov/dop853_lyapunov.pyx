@@ -61,7 +61,7 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
         double[:, ::1] d0_vec = np.random.uniform(size=(noffset_orbits, ndim))
 
         # whoa, so many dots
-        CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
+        CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
         CFrameType cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
         void *args
@@ -84,7 +84,7 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
     # dummy counter for storing Lyapunov stuff, which only happens every few steps
     jiter = 0
     for j in range(1, n_steps, 1):
-        dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper,
+        dop853_step(cp, &cf, <FcnEqDiff> Fwrapper,
                     &w[0], t[j-1], t[j], dt0, ndim,
                     norbits, 0, args, # 0 is for nbody, ignored here
                     atol, rtol, nmax)
@@ -138,7 +138,7 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
         double[:, ::1] d0_vec = np.random.uniform(size=(noffset_orbits, ndim))
 
         # whoa, so many dots
-        CPotential cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
+        CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
         CFrameType cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
         void *args
@@ -158,7 +158,7 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
     # dummy counter for storing Lyapunov stuff, which only happens every few steps
     jiter = 0
     for j in range(1, n_steps, 1):
-        dop853_step(&cp, &cf, <FcnEqDiff> Fwrapper,
+        dop853_step(cp, &cf, <FcnEqDiff> Fwrapper,
                     &w[0], t[j-1], t[j], dt0, ndim,
                     norbits, 0, args, # 0 is for nbody, ignored here
                     atol, rtol, nmax)

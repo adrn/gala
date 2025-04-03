@@ -49,6 +49,14 @@ cdef class CPotentialWrapper:
     given potential. This provides a Cython wrapper around this C implementation.
     """
 
+    def __cinit__(self):
+        # Allocate a CPotential with one component by default
+        self.cpotential = allocate_cpotential(1)
+
+    def __dealloc__(self):
+        if self.cpotential != NULL:
+            free_cpotential(self.cpotential)
+
     cpdef init(self, list parameters, double[::1] q0, double[:, ::1] R,
                int n_dim=3):
 
@@ -59,15 +67,11 @@ cdef class CPotentialWrapper:
         self._n_params = np.array([len(self._params)], dtype=np.int32)
 
         # store pointers to the above arrays
-        self.cpotential.n_params = &(self._n_params[0])
+        self.cpotential.n_params[0] = len(self._params)
         self.cpotential.parameters[0] = &(self._params[0])
 
         # phase-space half-dimensionality of the potential
         self.cpotential.n_dim = n_dim
-
-        # number of components in the potential. for a simple potential, this is
-        #   always one - composite potentials override this.
-        self.cpotential.n_components = 1
 
         # by default, don't skip this potential!
         self.cpotential.null = 0
@@ -100,10 +104,10 @@ cdef class CPotentialWrapper:
 
         if len(t) == 1:
             for i in range(n):
-                pot[i] = c_potential(&(self.cpotential), t[0], &q[i, 0])
+                pot[i] = c_potential(self.cpotential, t[0], &q[i, 0])
         else:
             for i in range(n):
-                pot[i] = c_potential(&(self.cpotential), t[i], &q[i, 0])
+                pot[i] = c_potential(self.cpotential, t[i], &q[i, 0])
 
         return np.array(pot)
 
@@ -120,10 +124,10 @@ cdef class CPotentialWrapper:
 
         if len(t) == 1:
             for i in range(n):
-                dens[i] = c_density(&(self.cpotential), t[0], &q[i, 0])
+                dens[i] = c_density(self.cpotential, t[0], &q[i, 0])
         else:
             for i in range(n):
-                dens[i] = c_density(&(self.cpotential), t[i], &q[i, 0])
+                dens[i] = c_density(self.cpotential, t[i], &q[i, 0])
 
         return np.array(dens)
 
@@ -140,10 +144,10 @@ cdef class CPotentialWrapper:
 
         if len(t) == 1:
             for i in range(n):
-                c_gradient(&(self.cpotential), t[0], &q[i, 0], &grad[i, 0])
+                c_gradient(self.cpotential, t[0], &q[i, 0], &grad[i, 0])
         else:
             for i in range(n):
-                c_gradient(&(self.cpotential), t[i], &q[i, 0], &grad[i, 0])
+                c_gradient(self.cpotential, t[i], &q[i, 0], &grad[i, 0])
 
         return np.array(grad)
 
@@ -160,10 +164,10 @@ cdef class CPotentialWrapper:
 
         if len(t) == 1:
             for i in range(n):
-                c_hessian(&(self.cpotential), t[0], &q[i, 0], &hess[i, 0, 0])
+                c_hessian(self.cpotential, t[0], &q[i, 0], &hess[i, 0, 0])
         else:
             for i in range(n):
-                c_hessian(&(self.cpotential), t[i], &q[i, 0], &hess[i, 0, 0])
+                c_hessian(self.cpotential, t[i], &q[i, 0], &hess[i, 0, 0])
 
         return np.array(hess)
 
@@ -184,10 +188,10 @@ cdef class CPotentialWrapper:
 
         if len(t) == 1:
             for i in range(n):
-                dr[i] = c_d_dr(&(self.cpotential), t[0], &q[i, 0], &epsilon[0])
+                dr[i] = c_d_dr(self.cpotential, t[0], &q[i, 0], &epsilon[0])
         else:
             for i in range(n):
-                dr[i] = c_d_dr(&(self.cpotential), t[i], &q[i, 0], &epsilon[0])
+                dr[i] = c_d_dr(self.cpotential, t[i], &q[i, 0], &epsilon[0])
 
         return np.array(dr)
 
@@ -205,10 +209,10 @@ cdef class CPotentialWrapper:
 
         if len(t) == 1:
             for i in range(n):
-                dr2[i] = c_d2_dr2(&(self.cpotential), t[0], &q[i, 0], &epsilon[0])
+                dr2[i] = c_d2_dr2(self.cpotential, t[0], &q[i, 0], &epsilon[0])
         else:
             for i in range(n):
-                dr2[i] = c_d2_dr2(&(self.cpotential), t[i], &q[i, 0], &epsilon[0])
+                dr2[i] = c_d2_dr2(self.cpotential, t[i], &q[i, 0], &epsilon[0])
 
         return np.array(dr2)
 
@@ -226,10 +230,10 @@ cdef class CPotentialWrapper:
 
         if len(t) == 1:
             for i in range(n):
-                mass[i] = c_mass_enclosed(&(self.cpotential), t[0], &q[i, 0], G, &epsilon[0])
+                mass[i] = c_mass_enclosed(self.cpotential, t[0], &q[i, 0], G, &epsilon[0])
         else:
             for i in range(n):
-                mass[i] = c_mass_enclosed(&(self.cpotential), t[i], &q[i, 0], G, &epsilon[0])
+                mass[i] = c_mass_enclosed(self.cpotential, t[i], &q[i, 0], G, &epsilon[0])
 
         return np.array(mass)
 

@@ -1,6 +1,72 @@
 #include <math.h>
+#include <stdlib.h>
 #include "cpotential.h"
 
+CPotential* allocate_cpotential(int n_components) {
+    CPotential* p = (CPotential*)malloc(sizeof(CPotential));
+
+    p->n_components = n_components;
+    p->n_dim = 0;
+    p->null = 0;
+
+    // Allocate arrays
+    p->density = (densityfunc*)malloc(n_components * sizeof(densityfunc));
+    p->value = (energyfunc*)malloc(n_components * sizeof(energyfunc));
+    p->gradient = (gradientfunc*)malloc(n_components * sizeof(gradientfunc));
+    p->hessian = (hessianfunc*)malloc(n_components * sizeof(hessianfunc));
+    p->n_params = (int*)malloc(n_components * sizeof(int));
+    p->parameters = (double**)malloc(n_components * sizeof(double*));
+    p->q0 = (double**)malloc(n_components * sizeof(double*));
+    p->R = (double**)malloc(n_components * sizeof(double*));
+
+    // Initialize with NULL pointers
+    for (int i = 0; i < n_components; i++) {
+        p->parameters[i] = NULL;
+        p->q0[i] = NULL;
+        p->R[i] = NULL;
+    }
+
+    return p;
+}
+
+void free_cpotential(CPotential* p) {
+    if (p == NULL) return;
+
+    free(p->density);
+    free(p->value);
+    free(p->gradient);
+    free(p->hessian);
+    free(p->n_params);
+    free(p->parameters); // Note: doesn't free the actual parameter arrays
+    free(p->q0);         // Note: doesn't free the actual q0 arrays
+    free(p->R);          // Note: doesn't free the actual R arrays
+    free(p);
+}
+
+int resize_cpotential_arrays(CPotential* pot, int new_n_components) {
+    if (new_n_components <= pot->n_components)
+        return 1;  // Nothing to do
+
+    // Reallocate arrays to the new size
+    pot->n_components = new_n_components;
+    pot->density = realloc(pot->density, new_n_components * sizeof(densityfunc));
+    pot->value = realloc(pot->value, new_n_components * sizeof(energyfunc));
+    pot->gradient = realloc(pot->gradient, new_n_components * sizeof(gradientfunc));
+    pot->hessian = realloc(pot->hessian, new_n_components * sizeof(hessianfunc));
+    pot->n_params = realloc(pot->n_params, new_n_components * sizeof(int));
+    pot->parameters = realloc(pot->parameters, new_n_components * sizeof(double*));
+    pot->q0 = realloc(pot->q0, new_n_components * sizeof(double*));
+    pot->R = realloc(pot->R, new_n_components * sizeof(double*));
+
+    // Initialize new elements
+    for (int i = pot->n_components; i < new_n_components; i++) {
+        pot->parameters[i] = NULL;
+        pot->q0[i] = NULL;
+        pot->R[i] = NULL;
+    }
+
+    return 1;  // Success
+}
 
 void apply_rotate(double *q_in, double *R, int n_dim, int transpose,
                   double *q_out) {
