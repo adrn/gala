@@ -130,9 +130,9 @@ if HAS_GALPY:
         pars["amp"] * ro * vo**2 / G / 2
     )
 
-    _galpy_to_gala[galpy_gp.LogarithmicHaloPotential][1][
-        "v_c"
-    ] = lambda pars, ro, vo: np.sqrt(pars["amp"] * vo**2)
+    _galpy_to_gala[galpy_gp.LogarithmicHaloPotential][1]["v_c"] = (
+        lambda pars, ro, vo: np.sqrt(pars["amp"] * vo**2)
+    )
 
     _galpy_to_gala[galpy_gp.TriaxialNFWPotential][1]["m"] = lambda pars, ro, vo: (
         pars["amp"] * ro * vo**2 / G * 4 * np.pi * pars["a"] ** 3
@@ -385,7 +385,12 @@ def gala_to_agama_potential(potential):
 
     import agama
 
-    agama.setUnits(**{k: potential.units[k] for k in ["length", "mass", "time"]})
+    units = {
+        "length": (1 * potential.units["length"]).to(u.kpc).value,
+        "mass": (1 * potential.units["mass"]).to(u.Msun).value,
+        "time": (1 * potential.units["time"]).to(u.Myr).value,
+    }
+    agama.setUnits(**units)
 
     if isinstance(potential, CompositePotential):
         pot = []
