@@ -18,6 +18,10 @@ Bug fixes
   components that could be added to a composite potential. Now, arrays are allocated
   dynamically and there is no limit.
 
+- Some versions of Agama do not accept astropy.units objects as input to setUnits. Gala
+  now converts to floats to set the unit scales in agama when converting a potential to
+  Agama (using ``potential.as_interop("agama")``).
+
 API changes
 -----------
 
