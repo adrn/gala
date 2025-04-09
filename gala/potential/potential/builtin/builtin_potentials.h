@@ -96,3 +96,8 @@ extern void longmuralibar_hessian(double t, double *pars, double *q, int n_dim, 
 extern double burkert_value(double t, double *pars, double *q, int n_dim);
 extern void burkert_gradient(double t, double *pars, double *q, int n_dim, double *grad);
 extern double burkert_density(double t, double *pars, double *q, int n_dim);
+
+extern double exp_value(double t, double *pars, double *q, int n_dim);
+extern void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad);
+extern double exp_density(double t, double *pars, double *q, int n_dim);
+extern void exp_hessian(double t, double *pars, double *q, int n_dim, double *hess);

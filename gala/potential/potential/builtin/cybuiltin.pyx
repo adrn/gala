@@ -29,6 +29,7 @@ from ....units import dimensionless, DimensionlessUnitSystem
 
 cdef extern from "extra_compile_macros.h":
     int USE_GSL
+    int USE_EXP
 
 cdef extern from "potential/potential/builtin/builtin_potentials.h":
     double null_value(double t, double *pars, double *q, int n_dim) nogil
@@ -124,6 +125,11 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     double burkert_value(double t, double *pars, double *q, int n_dim) nogil
     void burkert_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double burkert_density(double t, double *pars, double *q, int n_dim) nogil
+
+    double exp_value(double t, double *pars, double *q, int n_dim) nogil
+    void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    double exp_density(double t, double *pars, double *q, int n_dim) nogil
+    void exp_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
 
 cdef extern from "potential/potential/builtin/multipole.h":
@@ -462,3 +468,24 @@ cdef class CylSplineWrapper(CPotentialWrapper):
             self.cpotential.gradient[0] = <gradientfunc>(axisym_cylspline_gradient)
             self.cpotential.density[0] = <densityfunc>(axisym_cylspline_density)
             #self.cpotential.hessian[0] = <hessianfunc>(axisym_cylspline_hessian)
+
+
+# ==============================================================================
+# EXP potential
+#
+
+cdef class EXPWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters, q0, R):
+        # TODO: can `parameters` hold the EXP state or do we need to store it separately?
+        # the parameters list is coerced to a numpy array of float64, so probably need
+        # separate storage
+        self.init([G] + list(parameters),
+                  np.ascontiguousarray(q0),
+                  np.ascontiguousarray(R))
+
+        if USE_EXP == 1:
+            self.cpotential.value[0] = <energyfunc>(exp_value)
+            self.cpotential.density[0] = <densityfunc>(exp_density)
+            self.cpotential.gradient[0] = <gradientfunc>(exp_gradient)
+            self.cpotential.hessian[0] = <hessianfunc>(exp_hessian)

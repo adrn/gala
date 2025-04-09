@@ -36,6 +36,7 @@ from gala.potential.potential.builtin.cybuiltin import (
     SphericalNFWWrapper,
     StoneWrapper,
     TriaxialNFWWrapper,
+    EXPWrapper,
 )
 
 # Project
@@ -64,6 +65,7 @@ __all__ = [
     "MultipolePotential",
     "CylSplinePotential",
     "BurkertPotential",
+    "EXPPotential",
 ]
 
 
@@ -336,7 +338,7 @@ class PowerLawCutoffPotential(CPotentialBase, GSL_only=True):
     .. note::
 
         This potential requires GSL to be installed, and Gala must have been
-        built and installed with GSL support enaled (the default behavior).
+        built and installed with GSL support enabled (the default behavior).
         See http://gala.adrian.pw/en/latest/install.html for more information.
 
     Parameters
@@ -1340,3 +1342,40 @@ class CylSplinePotential(CPotentialBase):
         return MultipolePotential(
             lmax=lmax_fit, m=m, r_s=r0, inner=False, units=self.units, **pars
         )
+
+# ==============================================================================
+# EXP Potential
+#
+
+@format_doc(common_doc=_potential_docstring)
+class EXPPotential(CPotentialBase, EXP_only=True):
+    r"""
+    EXPPotential(units=None, origin=None, R=None)
+
+    Calls the EXP code for the potential.
+
+    .. note::
+
+        This potential requires EXP to be installed, and Gala must have been
+        built and installed with EXP support enabled.
+        See http://gala.adrian.pw/en/latest/install.html for more information. (TODO)
+
+    Parameters
+    ----------
+    TODO
+    {common_doc}
+    """
+
+    # m = PotentialParameter("m", physical_type="mass")
+    # eps = PotentialParameter("eps", physical_type="length")
+
+    Wrapper = EXPWrapper
+
+    # @myclassmethod
+    # @sympy_wrap
+    # def to_sympy(cls, v, p):
+    #     import sympy as sy
+
+    #     r = sy.sqrt(v["x"] ** 2 + v["y"] ** 2 + v["z"] ** 2)
+    #     expr = p["G"] * p["m"] / p["c"] * sy.log(r / (r + p["c"]))
+    #     return expr, v, p

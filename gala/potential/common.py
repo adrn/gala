@@ -44,7 +44,7 @@ class PotentialParameter:
 
 class CommonBase:
 
-    def __init_subclass__(cls, GSL_only=False, **kwargs):
+    def __init_subclass__(cls, GSL_only=False, EXP_only=False, **kwargs):
 
         # Read the default call signature for the init
         sig = inspect.signature(cls.__init__)
@@ -84,6 +84,7 @@ class CommonBase:
         super().__init_subclass__(**kwargs)
 
         cls._GSL_only = GSL_only
+        cls._EXP_only = EXP_only
 
     def _validate_units(self, units):
 
