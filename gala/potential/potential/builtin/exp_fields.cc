@@ -14,55 +14,27 @@
 
 namespace gala_exp {
 
-// The current basis object
-//
-static std::shared_ptr<BasisClasses::Basis> basis;
-    
-// Storage for field point
-static std::vector<double> field;
-
-// The current coefficient object
-//
-CoefClasses::CoefsPtr coefs;
-
-// We can implement functions in C++ using a helper function to
-// instantiate the C++ class
-void fieldInitialize(const char *config, const char *coeffile,
-		     int stride, double tmin, double tmax)
+State exp_init(
+  const char *config, const char *coeffile,
+  int stride, double tmin, double tmax)
 {
-  // Read the YAML from a file (could use a YAML emitter to do this
-  // on the fly inside of the code)
-  //
   YAML::Node yaml = YAML::LoadFile(std::string(config));
 
-  // Make the basis, store in a shared_ptr
-  //
-  basis = BasisClasses::Basis::factory(yaml);
-    
-  // Read the coefficients from a file, store in a shared_ptr
-  //
-  coefs =  CoefClasses::Coefs::factory(std::string(coeffile),
+  auto basis = BasisClasses::Basis::factory(yaml);
+
+  auto coefs = CoefClasses::Coefs::factory(std::string(coeffile),
 				       stride, tmin, tmax);
-  // Print out times
-  //
-  std::cout << "Field times: ";
-  for (auto t : coefs->Times()) std::cout << std::setw(10) << t << " ";
-  std::cout << std::endl;
 
-  // Report field labels
-  //
-  auto [field, labels] = basis->evaluate(0, 0, 0);
+  bool is_static = tmax == tmin;
 
-  std::cout << "Field values: ";
-  for (auto t : labels) std::cout << std::setw(10) << "[" << t << "] ";
-  std::cout << std::endl;
+  return { basis, coefs, is_static };
 }
 
 // Linear interpolator on coefficients.  Higher order interpolation
 // could be implemented similarly.  This is the same implementation
 // used in BiorthBasis and probably belongs in CoefClasses . . .
 //
-CoefClasses::CoefStrPtr interpolator(double t)
+CoefClasses::CoefStrPtr interpolator(double t, CoefClasses::CoefsPtr coefs)
 {
   // Interpolate coefficients
   //
@@ -116,23 +88,6 @@ CoefClasses::CoefStrPtr interpolator(double t)
   return newcoef;
 }
 
-
-// Field evaluation
-//
-void getFieldPoint(double time, double x, double y, double z,
-		   double **ret, int *sz)
-{
-  // Install coefficients
-  basis->set_coefs(interpolator(time));
-
-  // Get the field quantities
-  field = basis->getFields(x, y, z);
-  
-  // Assign to C pointers
-  *sz  = field.size();
-  *ret = field.data();
-}
-
 }
 
 /* ---------------------------------------------------------------------------
@@ -145,26 +100,29 @@ void getFieldPoint(double time, double x, double y, double z,
 extern "C" {
 
 // TODO
-double exp_value(double t, double *pars, double *q, int n_dim) {
+double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
   /*  pars:
           - G (Gravitational constant)
           - m (mass scale)
           - c (length scale)
   */
 
-  gala_exp::fieldInitialize("basis.yml", "outcoef.dat", 1, t, t);
+  gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
   
-  // Install coefficients
-  gala_exp::basis->set_coefs(gala_exp::interpolator(t));
+  if (!exp_state->is_static) {
+    // TODO: how expensive is this, actually?
+    exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
+  }
 
   // Get the field quantities
-  auto field = gala_exp::basis->getFields(q[0], q[1], q[2]);
+  // TODO: this computes many quantities, not just the potential
+  auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
   
-  return field[5];
+  return field[5];  // potl
 }
 
 // TODO
-void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad){
+void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void* state){
   /*  pars:
           - G (Gravitational constant)
           - m (mass scale)
@@ -180,7 +138,7 @@ void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad){
 }
 
 // TODO
-double exp_density(double t, double *pars, double *q, int n_dim) {
+double exp_density(double t, double *pars, double *q, int n_dim, void* state) {
   /*  pars:
           - G (Gravitational constant)
           - m (mass scale)
@@ -193,7 +151,7 @@ double exp_density(double t, double *pars, double *q, int n_dim) {
 }
 
 // TODO
-void exp_hessian(double t, double *pars, double *q, int n_dim, double *hess) {
+void exp_hessian(double t, double *pars, double *q, int n_dim, double *hess, void* state) {
   /*  pars:
           - G (Gravitational constant)
           - m (mass scale)

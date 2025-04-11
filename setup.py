@@ -173,6 +173,7 @@ for ext in extensions:
             if 'gslcblas' not in ext.libraries:
                 ext.libraries.append('gslcblas')
     
+    if 'cyexp' in ext.name:
         if exp_prefix is not None:
             if 'exp' not in ext.libraries:
                 # TODO: we're compiling against installed EXP libraries,

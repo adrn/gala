@@ -471,24 +471,3 @@ cdef class CylSplineWrapper(CPotentialWrapper):
             self.cpotential.gradient[0] = <gradientfunc>(axisym_cylspline_gradient)
             self.cpotential.density[0] = <densityfunc>(axisym_cylspline_density)
             #self.cpotential.hessian[0] = <hessianfunc>(axisym_cylspline_hessian)
-
-
-# ==============================================================================
-# EXP potential
-#
-
-cdef class EXPWrapper(CPotentialWrapper):
-
-    def __init__(self, G, parameters, q0, R):
-        # TODO: can `parameters` hold the EXP state or do we need to store it separately?
-        # the parameters list is coerced to a numpy array of float64, so probably need
-        # separate storage
-        self.init([G] + list(parameters),
-                  np.ascontiguousarray(q0),
-                  np.ascontiguousarray(R))
-
-        if USE_EXP == 1:
-            self.cpotential.value[0] = <energyfunc>(exp_value)
-            self.cpotential.density[0] = <densityfunc>(exp_density)
-            self.cpotential.gradient[0] = <gradientfunc>(exp_gradient)
-            self.cpotential.hessian[0] = <hessianfunc>(exp_hessian)

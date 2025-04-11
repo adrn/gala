@@ -20,6 +20,7 @@ gala/potential/frame/builtin/frames.c
 gala/potential/frame/cframe.c
 gala/potential/hamiltonian/chamiltonian.c
 gala/potential/potential/builtin/cybuiltin.c
+gala/potential/potential/builtin/cyexp.cpp
 gala/potential/potential/ccompositepotential.c
 gala/potential/potential/cpotential.c
 gala/potential/scf/bfe_class.c

@@ -20,9 +20,6 @@ def get_extensions():
     cfg["sources"].append(
         "gala/potential/potential/builtin/builtin_potentials.c"
     )
-    cfg["sources"].append(
-        "gala/potential/potential/builtin/exp_fields.cc"
-    )
     cfg["sources"].append("gala/potential/potential/src/cpotential.c")
     exts.append(Extension("gala.potential.potential.cpotential", **cfg))
 
@@ -48,12 +45,22 @@ def get_extensions():
     cfg["sources"].append(
         "gala/potential/potential/builtin/builtin_potentials.c"
     )
-    cfg["sources"].append(
-        "gala/potential/potential/builtin/exp_fields.cc"
-    )
     cfg["sources"].append("gala/potential/potential/builtin/multipole.c")
     cfg["sources"].append("gala/potential/potential/src/cpotential.c")
     exts.append(Extension("gala.potential.potential.builtin.cybuiltin", **cfg))
+
+    cfg = defaultdict(list)
+    cfg["include_dirs"].append(np.get_include())
+    cfg["include_dirs"].append(mac_incl_path)
+    cfg["include_dirs"].append("gala/potential")
+    cfg["include_dirs"].append("gala")
+    cfg["extra_compile_args"].append("--std=gnu99")
+    cfg["sources"].append("gala/potential/potential/builtin/cyexp.pyx")
+    cfg["sources"].append(
+        "gala/potential/potential/builtin/exp_fields.cc"
+    )
+    cfg["sources"].append("gala/potential/potential/src/cpotential.c")
+    exts.append(Extension("gala.potential.potential.builtin.cyexp", **cfg))
 
     return exts
 

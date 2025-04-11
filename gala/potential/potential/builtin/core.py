@@ -36,6 +36,8 @@ from gala.potential.potential.builtin.cybuiltin import (
     SphericalNFWWrapper,
     StoneWrapper,
     TriaxialNFWWrapper,
+)
+from gala.potential.potential.builtin.cyexp import (
     EXPWrapper,
 )
 
