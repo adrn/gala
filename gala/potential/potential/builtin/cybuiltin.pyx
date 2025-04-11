@@ -126,11 +126,6 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     void burkert_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double burkert_density(double t, double *pars, double *q, int n_dim) nogil
 
-    double exp_value(double t, double *pars, double *q, int n_dim) nogil
-    void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double exp_density(double t, double *pars, double *q, int n_dim) nogil
-    void exp_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
-
 
 cdef extern from "potential/potential/builtin/multipole.h":
     double mp_potential(double t, double *pars, double *q, int n_dim) nogil
@@ -140,6 +135,14 @@ cdef extern from "potential/potential/builtin/multipole.h":
     double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) nogil
     void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
     double axisym_cylspline_density(double t, double *pars, double *q, int n_dim) nogil
+
+
+cdef extern from "potential/potential/builtin/exp_fields.h":
+    double exp_value(double t, double *pars, double *q, int n_dim) nogil
+    void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
+    double exp_density(double t, double *pars, double *q, int n_dim) nogil
+    void exp_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+
 
 # cdef extern from "gsl/gsl_interp.h":
 #     ctypedef struct gsl_interp_accel:
