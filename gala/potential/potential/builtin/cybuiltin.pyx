@@ -32,116 +32,109 @@ cdef extern from "extra_compile_macros.h":
     int USE_EXP
 
 cdef extern from "potential/potential/builtin/builtin_potentials.h":
-    double null_value(double t, double *pars, double *q, int n_dim) nogil
-    void null_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double null_density(double t, double *pars, double *q, int n_dim) nogil
-    void null_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+    double null_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void null_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double null_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void null_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
-    double henon_heiles_value(double t, double *pars, double *q, int n_dim) nogil
-    void henon_heiles_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    void henon_heiles_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+    double henon_heiles_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void henon_heiles_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    void henon_heiles_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
-    double kepler_value(double t, double *pars, double *q, int n_dim) nogil
-    void kepler_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double kepler_density(double t, double *pars, double *q, int n_dim) nogil
-    void kepler_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+    double kepler_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void kepler_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double kepler_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void kepler_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
-    double isochrone_value(double t, double *pars, double *q, int n_dim) nogil
-    void isochrone_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double isochrone_density(double t, double *pars, double *q, int n_dim) nogil
-    void isochrone_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+    double isochrone_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void isochrone_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double isochrone_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void isochrone_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
-    double hernquist_value(double t, double *pars, double *q, int n_dim) nogil
-    void hernquist_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double hernquist_density(double t, double *pars, double *q, int n_dim) nogil
-    void hernquist_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+    double hernquist_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void hernquist_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double hernquist_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void hernquist_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
-    double plummer_value(double t, double *pars, double *q, int n_dim) nogil
-    void plummer_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double plummer_density(double t, double *pars, double *q, int n_dim) nogil
-    void plummer_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+    double plummer_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void plummer_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double plummer_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void plummer_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
-    double jaffe_value(double t, double *pars, double *q, int n_dim) nogil
-    void jaffe_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double jaffe_density(double t, double *pars, double *q, int n_dim) nogil
-    void jaffe_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+    double jaffe_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void jaffe_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double jaffe_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void jaffe_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
-    double powerlawcutoff_value(double t, double *pars, double *q, int n_dim) nogil
-    void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double powerlawcutoff_density(double t, double *pars, double *q, int n_dim) nogil
-    void powerlawcutoff_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+    double powerlawcutoff_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double powerlawcutoff_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void powerlawcutoff_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
-    double stone_value(double t, double *pars, double *q, int n_dim) nogil
-    void stone_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double stone_density(double t, double *pars, double *q, int n_dim) nogil
-    void stone_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+    double stone_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void stone_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double stone_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void stone_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
-    double sphericalnfw_value(double t, double *pars, double *q, int n_dim) nogil
-    void sphericalnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double sphericalnfw_density(double t, double *pars, double *q, int n_dim) nogil
-    void sphericalnfw_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+    double sphericalnfw_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void sphericalnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double sphericalnfw_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void sphericalnfw_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
-    double flattenednfw_value(double t, double *pars, double *q, int n_dim) nogil
-    void flattenednfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    void flattenednfw_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+    double flattenednfw_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void flattenednfw_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    void flattenednfw_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
-    double triaxialnfw_value(double t, double *pars, double *q, int n_dim) nogil
-    void triaxialnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    void triaxialnfw_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+    double triaxialnfw_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void triaxialnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    void triaxialnfw_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
-    double satoh_value(double t, double *pars, double *q, int n_dim) nogil
-    void satoh_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double satoh_density(double t, double *pars, double *q, int n_dim) nogil
-    void satoh_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+    double satoh_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void satoh_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double satoh_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void satoh_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
-    double kuzmin_value(double t, double *pars, double *q, int n_dim) nogil
-    void kuzmin_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double kuzmin_density(double t, double *pars, double *q, int n_dim) nogil
+    double kuzmin_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void kuzmin_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double kuzmin_density(double t, double *pars, double *q, int n_dim, void *state) nogil
 
-    double miyamotonagai_value(double t, double *pars, double *q, int n_dim) nogil
-    void miyamotonagai_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    void miyamotonagai_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
-    double miyamotonagai_density(double t, double *pars, double *q, int n_dim) nogil
+    double miyamotonagai_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void miyamotonagai_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    void miyamotonagai_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
+    double miyamotonagai_density(double t, double *pars, double *q, int n_dim, void *state) nogil
 
-    double mn3_value(double t, double *pars, double *q, int n_dim) nogil
-    void mn3_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    void mn3_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
-    double mn3_density(double t, double *pars, double *q, int n_dim) nogil
+    double mn3_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void mn3_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    void mn3_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
+    double mn3_density(double t, double *pars, double *q, int n_dim, void *state) nogil
 
-    double leesuto_value(double t, double *pars, double *q, int n_dim) nogil
-    void leesuto_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double leesuto_density(double t, double *pars, double *q, int n_dim) nogil
+    double leesuto_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void leesuto_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double leesuto_density(double t, double *pars, double *q, int n_dim, void *state) nogil
 
-    double logarithmic_value(double t, double *pars, double *q, int n_dim) nogil
-    void logarithmic_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    void logarithmic_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
-    double logarithmic_density(double t, double *pars, double *q, int n_dim) nogil
+    double logarithmic_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void logarithmic_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    void logarithmic_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
+    double logarithmic_density(double t, double *pars, double *q, int n_dim, void *state) nogil
 
-    double longmuralibar_value(double t, double *pars, double *q, int n_dim) nogil
-    void longmuralibar_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double longmuralibar_density(double t, double *pars, double *q, int n_dim) nogil
-    void longmuralibar_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+    double longmuralibar_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void longmuralibar_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double longmuralibar_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void longmuralibar_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
-    double burkert_value(double t, double *pars, double *q, int n_dim) nogil
-    void burkert_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double burkert_density(double t, double *pars, double *q, int n_dim) nogil
+    double burkert_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void burkert_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double burkert_density(double t, double *pars, double *q, int n_dim, void *state) nogil
 
 
 cdef extern from "potential/potential/builtin/multipole.h":
-    double mp_potential(double t, double *pars, double *q, int n_dim) nogil
-    void mp_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double mp_density(double t, double *pars, double *q, int n_dim) nogil
+    double mp_potential(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void mp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double mp_density(double t, double *pars, double *q, int n_dim, void *state) nogil
 
-    double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) nogil
-    void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double axisym_cylspline_density(double t, double *pars, double *q, int n_dim) nogil
-
-
-cdef extern from "potential/potential/builtin/exp_fields.h":
-    double exp_value(double t, double *pars, double *q, int n_dim) nogil
-    void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    double exp_density(double t, double *pars, double *q, int n_dim) nogil
-    void exp_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
+    double axisym_cylspline_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double axisym_cylspline_density(double t, double *pars, double *q, int n_dim, void *state) nogil
 
 
 # cdef extern from "gsl/gsl_interp.h":
