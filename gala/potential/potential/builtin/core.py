@@ -1368,16 +1368,31 @@ class EXPPotential(CPotentialBase, EXP_only=True):
     {common_doc}
     """
 
+    def __init__(
+        self, *, config_file, coeff_file, units=None, origin=None, R=None, **kwargs
+    ):
+        self.config_file = config_file
+        self.coeff_file = coeff_file
+
+        # bypass the units validation for string parameters like filenames
+        class EXPWrapperShim(EXPWrapper):
+            def __init__(shimself, *args, **kwargs):
+                super().__init__(
+                    *args,
+                    **kwargs,
+                    config_file=self.config_file,
+                    coeff_file=self.coeff_file,
+                )
+
+        self.Wrapper = EXPWrapperShim
+
+        CPotentialBase.__init__(self, units=units, origin=origin, R=R, **kwargs)
+
     # m = PotentialParameter("m", physical_type="mass")
     # eps = PotentialParameter("eps", physical_type="length")
 
-    Wrapper = EXPWrapper
-
-    # @myclassmethod
-    # @sympy_wrap
-    # def to_sympy(cls, v, p):
-    #     import sympy as sy
-
-    #     r = sy.sqrt(v["x"] ** 2 + v["y"] ** 2 + v["z"] ** 2)
-    #     expr = p["G"] * p["m"] / p["c"] * sy.log(r / (r + p["c"]))
-    #     return expr, v, p
+    # config_file = PotentialParameter("config_file")
+    # coeff_file = PotentialParameter("coeff_file")
+    stride = PotentialParameter("stride")
+    tmin = PotentialParameter("tmin")
+    tmax = PotentialParameter("tmax")

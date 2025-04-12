@@ -14,7 +14,9 @@ public:
     bool is_static = false;
 };
 
-State exp_init(const char *config, const char *coeffile, int stride, double tmin, double tmax);
+State exp_init(const std::string &config, const std::string &coeffile, int stride, double tmin, double tmax);
+
+CoefClasses::CoefStrPtr interpolator(double t, CoefClasses::CoefsPtr coefs);
 
 }
 

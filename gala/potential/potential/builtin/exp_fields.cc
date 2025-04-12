@@ -15,17 +15,21 @@
 namespace gala_exp {
 
 State exp_init(
-  const char *config, const char *coeffile,
+  const std::string &config_fn, const std::string &coeffile,
   int stride, double tmin, double tmax)
 {
-  YAML::Node yaml = YAML::LoadFile(std::string(config));
+  YAML::Node yaml = YAML::LoadFile(std::string(config_fn));
 
   auto basis = BasisClasses::Basis::factory(yaml);
 
-  auto coefs = CoefClasses::Coefs::factory(std::string(coeffile),
+  auto coefs = CoefClasses::Coefs::factory(coeffile,
 				       stride, tmin, tmax);
 
   bool is_static = tmax == tmin;
+
+  if (is_static) {
+    basis->set_coefs(gala_exp::interpolator(tmin, coefs));
+  }
 
   return { basis, coefs, is_static };
 }
