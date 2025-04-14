@@ -207,7 +207,7 @@ earliest time, then a stream is generated forward from the past time. This is pa
     >>> gen_pal5 = ms.MockStreamGenerator(df, mw, progenitor_potential=pal5_pot)
     >>> pal5_stream, _ = gen_pal5.run(pal5_w0, pal5_mass,
     ...                               dt=-1 * u.Myr, n_steps=4000)
-    >>> pal5_stream_c = pal5_stream.to_coord_frame(coord.ICRS)
+    >>> pal5_stream_c = pal5_stream.to_coord_frame(coord.ICRS())
 
 .. plot::
     :align: center
@@ -228,7 +228,7 @@ earliest time, then a stream is generated forward from the past time. This is pa
     gen_pal5 = ms.MockStreamGenerator(df, mw, progenitor_potential=pal5_pot)
     pal5_stream, _ = gen_pal5.run(pal5_w0, pal5_mass,
                                   dt=-1 * u.Myr, n_steps=4000)
-    pal5_stream_c = pal5_stream.to_coord_frame(coord.ICRS)
+    pal5_stream_c = pal5_stream.to_coord_frame(coord.ICRS())
 
     fig, ax = plt.subplots(1, 1, figsize=(6, 4))
     ax.scatter(pal5_stream_c.ra.degree, pal5_stream_c.dec.degree,
