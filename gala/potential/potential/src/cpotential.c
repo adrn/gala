@@ -18,7 +18,7 @@ CPotential* allocate_cpotential(int n_components) {
     p->parameters = (double**)malloc(n_components * sizeof(double*));
     p->q0 = (double**)malloc(n_components * sizeof(double*));
     p->R = (double**)malloc(n_components * sizeof(double*));
-    p->state = (double**)malloc(n_components * sizeof(void*));
+    p->state = (void**)malloc(n_components * sizeof(void*));
 
     // Initialize with NULL pointers
     for (int i = 0; i < n_components; i++) {
