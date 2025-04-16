@@ -1388,11 +1388,17 @@ class EXPPotential(CPotentialBase, EXP_only=True):
 
         CPotentialBase.__init__(self, units=units, origin=origin, R=R, **kwargs)
 
-    # m = PotentialParameter("m", physical_type="mass")
-    # eps = PotentialParameter("eps", physical_type="length")
-
+    # These are handled specially by the constructor
     # config_file = PotentialParameter("config_file")
     # coeff_file = PotentialParameter("coeff_file")
+
+    # These are passed directly to exp_init
     stride = PotentialParameter("stride")
     tmin = PotentialParameter("tmin")
     tmax = PotentialParameter("tmax")
+
+    # These are passed to the evaluation routines
+    m = PotentialParameter("m", physical_type="mass")
+
+    # TODO: is it correct for EXP to take a scale radius?
+    r_vir = PotentialParameter("r_vir", physical_type="length")

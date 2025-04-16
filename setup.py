@@ -183,7 +183,6 @@ for ext in extensions:
 
                 ext.libraries.extend(
                     (
-                        # TODO: both necessary?
                         'exputil',
                         'expui',
                         'yaml-cpp',

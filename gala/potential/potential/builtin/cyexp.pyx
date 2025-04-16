@@ -44,10 +44,6 @@ cdef class EXPWrapper(CPotentialWrapper):
     cdef State exp_state
 
     def __init__(self, G, parameters, q0, R, config_file, coeff_file):
-        # TODO: can `parameters` hold the EXP state or do we need to store it separately?
-        # the parameters list is coerced to a numpy array of float64, so probably need
-        # separate storage
-
         stride, tmin, tmax = parameters[:3]
         parameters = parameters[3:]
 

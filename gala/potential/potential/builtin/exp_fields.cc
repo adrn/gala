@@ -4,6 +4,7 @@
 
 #include <cstdlib>
 #include <memory>
+#include <cmath>
 
 // EXP headers
 #include <Coefficients.H>
@@ -103,56 +104,56 @@ CoefClasses::CoefStrPtr interpolator(double t, CoefClasses::CoefsPtr coefs)
 
 extern "C" {
 
-// TODO: not using pars
 double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
   /*  pars:
           - G (Gravitational constant)
           - m (mass scale)
-          - c (length scale)
+          - r_vir (scale length)
   */
+
+  double GM = pars[0] * pars[1];
+  double r_vir = pars[2];
 
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
   
   if (!exp_state->is_static) {
+    // TODO: what time units does Gala use? What units does EXP expect?
     // TODO: how expensive is this, actually?
     exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
   }
 
   // Get the field quantities
   // TODO: this computes many quantities, not just the potential
-  auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
+  // TODO: check what lengths Gala is passing. Do they need to be rescaled to EXP units (using r_vir)?
+  auto field = exp_state->basis->getFields(q[0] / r_vir, q[1] / r_vir, q[2] / r_vir);
   
-  return field[5];  // potl
+  double pot = GM * field[5];
+
+  return pot;
 }
 
-// TODO
 void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void* state){
-  /*  pars:
-          - G (Gravitational constant)
-          - m (mass scale)
-          - c (length scale)
-  */
+  double GM = pars[0] * pars[1];
+  double r_vir = pars[2];
+
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
   if (!exp_state->is_static) {
     exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
   }
 
-  auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
+  auto field = exp_state->basis->getFields(q[0] / r_vir, q[1] / r_vir, q[2] / r_vir);
 
-  // TODO: what coordinate system does this expect?
-  grad[0] = field[6];  // rad force
-  grad[1] = field[7];  // mer force
-  grad[2] = field[8];  // azi force
+  // TODO: what coordinate system is this?
+  // the labels say rad force, mer force, azi force
+  // but reading the code suggests x, y, z
+  grad[0] += -GM * field[6];
+  grad[1] += -GM * field[7];
+  grad[2] += -GM * field[8];
 }
 
-// TODO
+// TODO: density units
 double exp_density(double t, double *pars, double *q, int n_dim, void* state) {
-  /*  pars:
-          - G (Gravitational constant)
-          - m (mass scale)
-          - c (length scale)
-  */
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
   if (!exp_state->is_static) {
@@ -161,16 +162,12 @@ double exp_density(double t, double *pars, double *q, int n_dim, void* state) {
 
   auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
 
-  return field[2];  // dens
+  // return field[2];  // dens
+  return NAN;
 }
 
 // TODO
 void exp_hessian(double t, double *pars, double *q, int n_dim, double *hess, void* state) {
-  /*  pars:
-          - G (Gravitational constant)
-          - m (mass scale)
-          - c (length scale)
-  */
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
   if (!exp_state->is_static) {
@@ -180,7 +177,7 @@ void exp_hessian(double t, double *pars, double *q, int n_dim, double *hess, voi
   auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
 
   for(int i=0; i<9; i++) {
-    hess[i] = 0.;  // TODO: get hessian from EXP
+    hess[i] += NAN;  // TODO: get hessian from EXP
   }
 }
 
