@@ -8,6 +8,7 @@ CPotential* allocate_cpotential(int n_components) {
     p->n_components = n_components;
     p->n_dim = 0;
     p->null = 0;
+    p->do_shift_rotate = 1;  // by default, do shift and rotate
 
     // Allocate arrays
     p->density = (densityfunc*)malloc(n_components * sizeof(densityfunc));

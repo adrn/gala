@@ -88,8 +88,13 @@ cdef class CPotentialWrapper:
         self.cpotential.q0[0] = &(self._q0[0])
 
         # set the rotation matrix of the potentials
-        self._R = np.ascontiguousarray(np.array(R).ravel())
+        R = np.array(R)
+        self._R = np.ascontiguousarray(R.ravel())
         self.cpotential.R[0] = &(self._R[0])
+
+        # set a short-circuit flag if no shift/rotate is necessary
+        if np.all(q0 == 0.0) and np.all(R == np.eye(ndim)):
+            self.cpotential.do_shift_rotate = 0
 
     cpdef energy(self, double[:, ::1] q, double[::1] t):
         """
