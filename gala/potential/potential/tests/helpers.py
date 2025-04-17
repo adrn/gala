@@ -64,6 +64,7 @@ class PotentialTestBase:
     sympy_hessian = True
     sympy_density = True
     check_finite_at_origin = True
+    rotation = False
 
     def setup_method(self):
         # set up hamiltonian
@@ -457,8 +458,7 @@ class PotentialTestBase:
 
     def test_regression_165(self):
         if self.potential.ndim == 1:
-            # Skip!
-            return
+            pytest.skip("ndim = 1")
 
         with pytest.raises(ValueError):
             self.potential.energy(8.0)
@@ -468,6 +468,36 @@ class PotentialTestBase:
 
         with pytest.raises(ValueError):
             self.potential.circular_velocity(8.0)
+
+    @pytest.mark.parametrize("meth", ["energy", "gradient", "density"])
+    def test_rotation_shift(self, meth):
+        if not self.rotation:
+            pytest.skip("Rotation has no impact for this potential")
+        if meth == "density" and not self.sympy_density:
+            pytest.skip("No analytic density")
+
+        x = np.array([10.0, 5.0, 3.0])
+        x0 = np.array([1.0, 1.0, 3.0])
+        R = np.array([[0.0, 1.0, 0.0], [-1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
+
+        R_pot = self.potential.replicate(R=R)
+        origin_pot = self.potential.replicate(origin=x0)
+        R_origin_pot = self.potential.replicate(R=R, origin=x0)
+
+        x_R = getattr(R_pot, meth)(x)
+        test_val = getattr(self.potential, meth)(R @ x)
+        if test_val.size > 1:
+            test_val = R.T @ test_val
+        assert u.allclose(x_R, test_val)
+
+        x_origin = getattr(origin_pot, meth)(x)
+        assert u.allclose(x_origin, getattr(self.potential, meth)(x - x0))
+
+        x_R_origin = getattr(R_origin_pot, meth)(x)
+        test_val = getattr(self.potential, meth)(R @ (x - x0))
+        if test_val.size > 1:
+            test_val = R.T @ test_val
+        assert u.allclose(x_R_origin, test_val)
 
 
 class CompositePotentialTestBase(PotentialTestBase):
@@ -482,3 +512,35 @@ class CompositePotentialTestBase(PotentialTestBase):
     @pytest.mark.skip(reason="to_sympy() not implemented yet")
     def test_against_sympy(self):
         pass
+
+    @pytest.mark.parametrize("meth", ["energy", "gradient", "density"])
+    def test_rotation_shift(self, meth):
+        if not self.rotation:
+            pytest.skip("Rotation has no impact for this potential")
+
+        x = np.array([10.0, 5.0, 3.0])
+        x0 = np.array([1.0, 1.0, 3.0])
+        R = np.array([[0.0, 1.0, 0.0], [-1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
+
+        R_pot = self.potential.__class__()
+        origin_pot = self.potential.__class__()
+        R_origin_pot = self.potential.__class__()
+        for k, p in self.potential.items():
+            R_pot[k] = p.replicate(R=R)
+            origin_pot[k] = p.replicate(origin=x0)
+            R_origin_pot[k] = p.replicate(R=R, origin=x0)
+
+        x_R = getattr(R_pot, meth)(x)
+        test_val = getattr(self.potential, meth)(R @ x)
+        if test_val.size > 1:
+            test_val = R.T @ test_val
+        assert u.allclose(x_R, test_val)
+
+        x_origin = getattr(origin_pot, meth)(x)
+        assert u.allclose(x_origin, getattr(self.potential, meth)(x - x0))
+
+        x_R_origin = getattr(R_origin_pot, meth)(x)
+        test_val = getattr(self.potential, meth)(R @ (x - x0))
+        if test_val.size > 1:
+            test_val = R.T @ test_val
+        assert u.allclose(x_R_origin, test_val)

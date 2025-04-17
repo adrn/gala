@@ -145,6 +145,7 @@ class TestJaffe(PotentialTestBase):
 class TestMiyamotoNagai(PotentialTestBase):
     potential = p.MiyamotoNagaiPotential(units=galactic, m=1.E11, a=6.5, b=0.26)
     w0 = [8., 0., 0., 0., 0.22, 0.1]
+    rotation = True
 
     @pytest.mark.skipif(not HAS_SYMPY,
                         reason="requires sympy to run this test")
@@ -191,6 +192,7 @@ class TestMN3(PotentialTestBase):
         units=galactic, m=1.E11, h_R=3.5, h_z=0.26
     )
     w0 = [8., 0., 0., 0., 0.22, 0.1]
+    rotation = True
 
     # TODO:
     @pytest.mark.skip(reason="to_sympy() not implemented yet")
@@ -205,6 +207,7 @@ class TestMN3(PotentialTestBase):
 class TestSatoh(PotentialTestBase):
     potential = p.SatohPotential(units=galactic, m=1.E11, a=6.5, b=0.26)
     w0 = [8., 0., 0., 0., 0.22, 0.1]
+    rotation = True
 
 
 class TestKuzmin(PotentialTestBase):
@@ -212,6 +215,7 @@ class TestKuzmin(PotentialTestBase):
     w0 = [8., 0., 0., 0., 0.22, 0.1]
     sympy_hessian = False
     sympy_density = False
+    rotation = True
 
 
 class TestStone(PotentialTestBase):
@@ -242,6 +246,7 @@ class TestFlattenedNFW(PotentialTestBase):
     potential = p.NFWPotential(units=galactic, m=1E11, r_s=12., c=0.7)
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
     sympy_density = False  # not defined
+    rotation = True
 
     def test_against_spherical(self):
         """
@@ -258,6 +263,7 @@ class TestTriaxialNFW(PotentialTestBase):
                                a=1., b=0.95, c=0.9)
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
     sympy_density = False  # not defined
+    rotation = True
 
 
 class TestSphericalNFWFromCircVel(PotentialTestBase):
@@ -367,6 +373,7 @@ class TestLeeSutoTriaxialNFW(PotentialTestBase):
     potential = p.LeeSutoTriaxialNFWPotential(units=galactic, v_c=0.35, r_s=12.,
                                               a=1.3, b=1., c=0.8)
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
+    rotation = True
 
     @pytest.mark.skip(reason="to_sympy() not implemented yet")
     def test_against_sympy(self):
@@ -384,6 +391,7 @@ class TestLongMuraliBar(PotentialTestBase):
                                          a=4.*u.kpc, b=1*u.kpc, c=1.*u.kpc)
     vc = potential.circular_velocity([19., 0, 0]*u.kpc).decompose(galactic).value[0]
     w0 = [19.0, 0.2, -0.9, 0., vc, 0.]
+    rotation = True
 
 
 class TestLongMuraliBarRotate(PotentialTestBase):
@@ -434,6 +442,7 @@ class TestComposite(CompositePotentialTestBase):
     potential['disk'] = p2
     potential['halo'] = p1
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
+    rotation = True
 
 
 class TestCComposite(CompositePotentialTestBase):
@@ -446,6 +455,7 @@ class TestCComposite(CompositePotentialTestBase):
     potential['disk'] = p2
     potential['halo'] = p1
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
+    rotation = True
 
 
 class TestKepler3Body(CompositePotentialTestBase):

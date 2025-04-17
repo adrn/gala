@@ -10,6 +10,7 @@ from gala.units import UnitSystem, galactic, solarsystem
 
 
 class CompositeHelper:
+    rotation = False
 
     def setup_method(self):
         self.units = solarsystem
