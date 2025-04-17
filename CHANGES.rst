@@ -25,6 +25,13 @@ Bug fixes
 API changes
 -----------
 
+Other
+-----
+
+- Added a flag to skip rotating and/or shifting input coordinates when computing
+  potential, density, gradient, and hessian values. This leads to some free performance
+  improvements in existing code!
+
 
 1.9.1 (2024-08-26)
 ==================
