@@ -300,8 +300,10 @@ void c_nbody_acceleration(CPotential **pots, double t, double *qp,
         if ((body_pot->null) == 1)
             continue;
 
-        for (i=0; i < body_pot->n_components; i++)
+        for (i=0; i < body_pot->n_components; i++) {
+            (body_pot->do_shift_rotate)[i] = 1;
             (body_pot->q0)[i] = &qp[j * ps_ndim];
+        }
 
         for (i=0; i < norbits; i++) {
             if (i != j) {
@@ -330,6 +332,7 @@ void c_nbody_gradient_symplectic(
             continue;
 
         for (i=0; i < body_pot->n_components; i++) {
+            (body_pot->do_shift_rotate)[i] = 1;
             (body_pot->q0)[i] = &nbody_w[j * 2 * ndim]; // p-s ndim
         }
 
