@@ -15,6 +15,7 @@ cdef extern from "potential/src/cpotential.h":
         int n_components      # number of potential components
         int n_dim             # coordinate system dimensionality
         int null              # shortcut flag to skip evaluation
+        int* do_shift_rotate   # shortcut flag to skip pos/vel transformation
         densityfunc* density
         energyfunc* value
         gradientfunc* gradient
