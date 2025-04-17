@@ -8,7 +8,7 @@
         int n_components; // number of potential components
         int n_dim; // coordinate system dimensionality
         int null; // short circuit: if null, can skip evaluation
-        int do_shift_rotate; // short circuit: if 0, skip transforming pos/vel
+        int* do_shift_rotate; // short circuit: if 0, skip transforming pos/vel
 
         // arrays of pointers to each of the function types above
         densityfunc* density;

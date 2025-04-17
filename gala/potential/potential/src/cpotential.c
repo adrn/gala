@@ -8,7 +8,6 @@ CPotential* allocate_cpotential(int n_components) {
     p->n_components = n_components;
     p->n_dim = 0;
     p->null = 0;
-    p->do_shift_rotate = 1;  // by default, do shift and rotate
 
     // Allocate arrays
     p->density = (densityfunc*)malloc(n_components * sizeof(densityfunc));
@@ -19,6 +18,7 @@ CPotential* allocate_cpotential(int n_components) {
     p->parameters = (double**)malloc(n_components * sizeof(double*));
     p->q0 = (double**)malloc(n_components * sizeof(double*));
     p->R = (double**)malloc(n_components * sizeof(double*));
+    p->do_shift_rotate = (int*)malloc(n_components * sizeof(int));
 
     // Initialize with NULL pointers
     for (int i = 0; i < n_components; i++) {
@@ -41,6 +41,7 @@ void free_cpotential(CPotential* p) {
     free(p->parameters); // Note: doesn't free the actual parameter arrays
     free(p->q0);         // Note: doesn't free the actual q0 arrays
     free(p->R);          // Note: doesn't free the actual R arrays
+    free(p->do_shift_rotate);
     free(p);
 }
 
@@ -58,6 +59,7 @@ int resize_cpotential_arrays(CPotential* pot, int new_n_components) {
     pot->parameters = realloc(pot->parameters, new_n_components * sizeof(double*));
     pot->q0 = realloc(pot->q0, new_n_components * sizeof(double*));
     pot->R = realloc(pot->R, new_n_components * sizeof(double*));
+    pot->do_shift_rotate = realloc(pot->do_shift_rotate, new_n_components * sizeof(int));
 
     // Initialize new elements
     for (int i = pot->n_components; i < new_n_components; i++) {
@@ -119,6 +121,7 @@ double c_potential(CPotential *p, double t, double *qp) {
     double qp_trans[p->n_dim];
 
     for (i=0; i < p->n_components; i++) {
+        // TODO
         for (j=0; j < p->n_dim; j++)
             qp_trans[j] = 0.;
         apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
@@ -136,6 +139,7 @@ double c_density(CPotential *p, double t, double *qp) {
     double qp_trans[p->n_dim];
 
     for (i=0; i < p->n_components; i++) {
+        // TODO
         for (j=0; j < p->n_dim; j++)
             qp_trans[j] = 0.;
         apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0,
@@ -157,6 +161,7 @@ void c_gradient(CPotential *p, double t, double *qp, double *grad) {
         tmp_grad[i] = 0.;
         qp_trans[i] = 0.;
     }
+    // TODO
 
     for (i=0; i < p->n_components; i++) {
         for (j=0; j < p->n_dim; j++) {
@@ -176,6 +181,8 @@ void c_gradient(CPotential *p, double t, double *qp, double *grad) {
 void c_hessian(CPotential *p, double t, double *qp, double *hess) {
     int i;
     double qp_trans[p->n_dim];
+
+    // TODO
 
     for (i=0; i < pow(p->n_dim,2); i++) {
         hess[i] = 0.;

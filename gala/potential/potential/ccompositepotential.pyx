@@ -44,6 +44,7 @@ cdef class CCompositePotentialWrapper(CPotentialWrapper):
         for i in range(n_components):
             self._n_params[i] = _cpotential_arr[i]._n_params[0]
             self.cpotential.n_params[i] = self._n_params[i]
+            self.cpotential.do_shift_rotate[i] = _cpotential_arr[i].do_shift_rotate[0]
 
         self.cpotential.n_dim = 0
 

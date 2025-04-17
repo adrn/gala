@@ -83,18 +83,21 @@ cdef class CPotentialWrapper:
         self.cpotential.hessian[0] = <hessianfunc>(nan_hessian)
 
         # set the origin of the potentials
-        self._q0 = np.array(q0)
+        _q0 = np.array(q0)
+        self._q0 = _q0
         assert len(self._q0) == n_dim
         self.cpotential.q0[0] = &(self._q0[0])
 
         # set the rotation matrix of the potentials
-        R = np.array(R)
-        self._R = np.ascontiguousarray(R.ravel())
+        _R = np.array(R)
+        self._R = np.ascontiguousarray(_R.ravel())
         self.cpotential.R[0] = &(self._R[0])
 
         # set a short-circuit flag if no shift/rotate is necessary
-        if np.all(q0 == 0.0) and np.all(R == np.eye(ndim)):
-            self.cpotential.do_shift_rotate = 0
+        if np.all(_q0 == 0.0) and np.all(_R == np.eye(n_dim)):
+            self.cpotential.do_shift_rotate[0] = 0
+        else:
+            self.cpotential.do_shift_rotate[0] = 1
 
     cpdef energy(self, double[:, ::1] q, double[::1] t):
         """
