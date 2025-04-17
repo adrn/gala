@@ -7,10 +7,10 @@ description = "Galactic dynamics in Python"
 readme = "README.rst"
 requires-python = ">=3.10"
 keywords = ["astronomy", "dynamics"]
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Topic :: Scientific/Engineering :: Astronomy"
 ]
@@ -80,7 +80,7 @@ dev = [
 
 [build-system]
 requires = [
-    "setuptools>=42",
+    "setuptools>=77.0.3",
     "wheel",
     "setuptools_scm",
     "extension-helpers==1.*",

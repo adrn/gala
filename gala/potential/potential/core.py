@@ -57,6 +57,18 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
                     "http://gala.adrian.pw/en/latest/install.html"
                 )
 
+        if self._EXP_only:
+            from gala._cconfig import EXP_ENABLED
+
+            if not EXP_ENABLED:
+                raise ValueError(
+                    "Gala was compiled without EXP and so this potential -- "
+                    f"{str(self.__class__)} -- will not work.  See the gala "
+                    "documentation for more information about installing and "
+                    "using EXP with gala: "
+                    "http://gala.adrian.pw/en/latest/install.html"
+                )
+
         parameter_values = self._parse_parameter_values(*args, **kwargs)
         self._setup_potential(
             parameters=parameter_values, origin=origin, R=R, units=units

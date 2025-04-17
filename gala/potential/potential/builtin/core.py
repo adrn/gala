@@ -37,6 +37,9 @@ from gala.potential.potential.builtin.cybuiltin import (
     StoneWrapper,
     TriaxialNFWWrapper,
 )
+from gala.potential.potential.builtin.cyexp import (
+    EXPWrapper,
+)
 
 # Project
 from ..core import PotentialBase, _potential_docstring
@@ -64,6 +67,7 @@ __all__ = [
     "MultipolePotential",
     "CylSplinePotential",
     "BurkertPotential",
+    "EXPPotential",
 ]
 
 
@@ -336,7 +340,7 @@ class PowerLawCutoffPotential(CPotentialBase, GSL_only=True):
     .. note::
 
         This potential requires GSL to be installed, and Gala must have been
-        built and installed with GSL support enaled (the default behavior).
+        built and installed with GSL support enabled (the default behavior).
         See http://gala.adrian.pw/en/latest/install.html for more information.
 
     Parameters
@@ -1340,3 +1344,61 @@ class CylSplinePotential(CPotentialBase):
         return MultipolePotential(
             lmax=lmax_fit, m=m, r_s=r0, inner=False, units=self.units, **pars
         )
+
+# ==============================================================================
+# EXP Potential
+#
+
+@format_doc(common_doc=_potential_docstring)
+class EXPPotential(CPotentialBase, EXP_only=True):
+    r"""
+    EXPPotential(units=None, origin=None, R=None)
+
+    Calls the EXP code for the potential.
+
+    .. note::
+
+        This potential requires EXP to be installed, and Gala must have been
+        built and installed with EXP support enabled.
+        See http://gala.adrian.pw/en/latest/install.html for more information. (TODO)
+
+    Parameters
+    ----------
+    TODO
+    {common_doc}
+    """
+
+    def __init__(
+        self, *, config_file, coeff_file, units=None, origin=None, R=None, **kwargs
+    ):
+        self.config_file = config_file
+        self.coeff_file = coeff_file
+
+        # bypass the units validation for string parameters like filenames
+        class EXPWrapperShim(EXPWrapper):
+            def __init__(shimself, *args, **kwargs):
+                super().__init__(
+                    *args,
+                    **kwargs,
+                    config_file=self.config_file,
+                    coeff_file=self.coeff_file,
+                )
+
+        self.Wrapper = EXPWrapperShim
+
+        CPotentialBase.__init__(self, units=units, origin=origin, R=R, **kwargs)
+
+    # These are handled specially by the constructor
+    # config_file = PotentialParameter("config_file")
+    # coeff_file = PotentialParameter("coeff_file")
+
+    # These are passed directly to exp_init
+    stride = PotentialParameter("stride")
+    tmin = PotentialParameter("tmin")
+    tmax = PotentialParameter("tmax")
+
+    # These are passed to the evaluation routines
+    m = PotentialParameter("m", physical_type="mass")
+
+    # TODO: is it correct for EXP to take a scale radius?
+    r_vir = PotentialParameter("r_vir", physical_type="length")

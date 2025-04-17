@@ -5,10 +5,10 @@
 #         pass
 
 cdef extern from "src/funcdefs.h":
-    ctypedef double (*densityfunc)(double t, double *pars, double *q) nogil
-    ctypedef double (*energyfunc)(double t, double *pars, double *q) nogil
-    ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad) nogil
-    ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess) nogil
+    ctypedef double (*densityfunc)(double t, double *pars, double *q, void *state) nogil
+    ctypedef double (*energyfunc)(double t, double *pars, double *q, void *state) nogil
+    ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad, void *state) nogil
+    ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess, void *state) nogil
 
 cdef extern from "potential/src/cpotential.h":
     ctypedef struct CPotential:
@@ -23,6 +23,7 @@ cdef extern from "potential/src/cpotential.h":
         double** parameters   # pointers to parameter arrays per component
         double** q0           # pointers to origin per component
         double** R            # pointers to rotation per component
+        void **state          # pointers to additional state/metadata information
 
     CPotential* allocate_cpotential(int n_components)
     void free_cpotential(CPotential* p) nogil
