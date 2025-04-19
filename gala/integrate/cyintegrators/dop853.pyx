@@ -46,16 +46,35 @@ cdef extern from "dopri/dop853.h":
                 double* rtoler, double* atoler, int itoler, SolTrait solout,
                 int iout, FILE* fileout, double uround, double safe, double fac1,
                 double fac2, double beta, double hmax, double h, long nmax, int meth,
-                long nstiff, unsigned nrdens, unsigned* icont, unsigned licont)
+                long nstiff, unsigned nrdens, unsigned* icont, unsigned licont,
+                Dop853DenseState* dense_state)
 
     void Fwrapper (unsigned ndim, double t, double *w, double *f,
                    CPotential *p, CFrameType *fr, unsigned norbits)
+
+    ctypedef struct Dop853DenseState:
+        double *rcont1
+        double *rcont2
+        double *rcont3
+        double *rcont4
+        double *rcont5
+        double *rcont6
+        double *rcont7
+        double *rcont8
+        double xold
+        double hout
+        unsigned nrds
+        unsigned *indir
+
+    Dop853DenseState* dop853_dense_state_alloc(unsigned nrdens, unsigned n)
+    void dop853_dense_state_free(Dop853DenseState* state, unsigned n)
+    double contd8_threadsafe(Dop853DenseState *state, unsigned ii, double x)
 
 cdef extern from "stdio.h":
     ctypedef struct FILE
     FILE *stdout
 
-
+# LEGACY FUNCTION: don't use this (used by lyapunov functionality)
 cdef void dop853_step(CPotential *cp, CFrameType *cf, FcnEqDiff F,
                       double *w, double t1, double t2, double dt0,
                       int ndim, int norbits, int nbody, void *args,
@@ -68,120 +87,131 @@ cdef void dop853_step(CPotential *cp, CFrameType *cf, FcnEqDiff F,
     res = dop853(ndim*norbits, F,
                  cp, cf, norbits, nbody, args, t1, w, t2,
                  &rtol, &atol, 0, solout, 0,
-                 NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0);
+                 NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0, NULL);
 
-    if res == -1:
-        raise RuntimeError("Input is not consistent.")
-    elif res == -2:
-        raise RuntimeError("Larger nmax is needed.")
-    elif res == -3:
-        raise RuntimeError("Step size becomes too small.")
-    elif res == -4:
-        raise RuntimeError("The problem is probably stiff (interrupted).")
 
-cdef dop853_helper(CPotential *cp, CFrameType *cf, FcnEqDiff F,
-                   double[:, ::1] w0, double[::1] t,
-                   int ndim, int norbits, int nbody, void *args, int ntimes,
-                   double atol, double rtol, int nmax, int progress):
+cdef class DenseOutputState:
+    cdef Dop853DenseState* state
+    cdef unsigned n
+    def __cinit__(self, unsigned nrdens, unsigned n):
+        self.state = dop853_dense_state_alloc(nrdens, n)
+        self.n = n
+        if self.state is NULL:
+            raise MemoryError("Could not allocate Dop853DenseState")
+    def __dealloc__(self):
+        if self.state is not NULL:
+            dop853_dense_state_free(self.state, self.n)
+    def interpolate(self, unsigned ii, double x):
+        return contd8_threadsafe(self.state, ii, x)
 
+
+cdef dop853_helper(
+    CPotential *cp,
+    CFrameType *cf,
+    FcnEqDiff F,
+    double[:, ::1] w0,
+    double[::1] t,
+    int ndim,
+    int norbits,
+    int nbody,
+    void *args,
+    int ntimes,
+    double atol,
+    double rtol,
+    int nmax,
+    unsigned err_if_fail
+):
     cdef:
-        int i, j
-        double dt0 = t[1] - t[0]
-
-        # store initial conditions
         double[:, ::1] w = w0.copy()
+        int res
 
-        int prog_out = ntimes // 100
-
-    if progress == 1:
-        for j in range(1, ntimes, 1):
-            dop853_step(cp, cf, F,
-                        &w[0, 0], t[j-1], t[j], dt0,
-                        ndim, norbits, nbody, args,
-                        atol, rtol, nmax)
-
-            PyErr_CheckSignals()
-
-            if j % prog_out == 0:
-                sys.stdout.write('\r')
-                sys.stdout.write(
-                    f"Integrating orbits: {100 * j / ntimes: 3.0f}%")
-                sys.stdout.flush()
-
-        sys.stdout.write('\r')
-        sys.stdout.write(f"Integrating orbits: {100: 3.0f}%")
-        sys.stdout.flush()
-
-    else:
-        for j in range(1, ntimes, 1):
-            dop853_step(cp, cf, F,
-                        &w[0, 0], t[j-1], t[j], dt0,
-                        ndim, norbits, nbody, args,
-                        atol, rtol, nmax)
-
-            PyErr_CheckSignals()
+    res = dop853(
+        ndim*norbits, F, cp, cf,
+        norbits, nbody, args,
+        t[0], &w[0, 0], t[len(t)-1],
+        &rtol, &atol, 0,  # itoler = 0 for scalar tolerances
+        NULL,  # solout: Callback function for output
+        0,  # iout: Controls solout call
+        NULL,  # fileout: file pointer for logging
+        0.0,  # uround: Machine precision (0.0 = use default)
+        0.0,  # safe: Safety factor
+        0.0,  # fac1: Step size control parameter
+        0.0,  # fac2: Step size control parameter
+        0.0,  # beta: Stabilizatin for step size control
+        0.0,  # hmax: maximum allowed step size
+        t[1] - t[0],  # h: Initial step size
+        nmax,  # nmax: maximum number of integration steps
+        0,  # meth
+        1,  # nstiff: frequency of stiffness detect
+        0,  # nrdens: number of components for dense output
+        NULL,  # icont: indices for components
+        0,  # licont: length of the icont array
+        NULL  # dense_state
+    )
+    if res < 0 and err_if_fail == 1:
+        raise RuntimeError(f"Integration failed with code {res}")
 
     return np.asarray(w)
 
-cdef dop853_helper_save_all(CPotential *cp, CFrameType *cf, FcnEqDiff F,
-                            double[:, ::1] w0, double[::1] t,
-                            int ndim, int norbits, int nbody, void *args,
-                            int ntimes, double atol, double rtol, int nmax,
-                            int progress):
 
+cdef dop853_helper_save_all(
+    CPotential *cp,
+    CFrameType *cf,
+    FcnEqDiff F,
+    double[:, ::1] w0,
+    double[::1] t,
+    int ndim,
+    int norbits,
+    int nbody,
+    void *args,
+    int ntimes,
+    double atol,
+    double rtol,
+    int nmax,
+    unsigned err_if_fail
+):
     cdef:
         int i, j, k
-        double dt0 = t[1] - t[0]
+        unsigned nrdens = ndim * norbits
+        DenseOutputState dense_state = DenseOutputState(nrdens, nrdens)
+        double[:, ::1] w = w0.copy()
+        int res
 
-        double[::1] w = np.empty(ndim*norbits)
-        double[:, :, ::1] all_w = np.empty((ntimes, norbits, ndim))
+    res = dop853(
+        nrdens, F, cp, cf,
+        norbits, nbody, args,
+        t[0], &w[0, 0], t[len(t)-1],
+        &rtol, &atol, 0,  # itoler = 0 for scalar tolerances, 1 for array
+        NULL,  # solout: Callback function for output at each accepted step
+        0,  # iout: Controls solout call (0: never, 1: at each step, 2: dense output)
+        NULL,  # fileout: file pointer for logging
+        np.finfo(float).eps,  # uround: Machine precision
+        0.0,  # safe: Safety factor for step size control (0.0 = use default)
+        0.0,  # fac1: Step size control parameter (0.0 = use default)
+        0.0,  # fac2: Step size control parameter (0.0 = use default)
+        0.0,  # beta: Stabilizatin for step size control (0.0 = use default)
+        0.0,  # hmax: maximum allowed step size (0.0 = no limit)
+        t[-1] - t[0],  # h: Initial step size
+        nmax,  # nmax:  maximum number of integration steps (0 = 100_000)
+        1,  # meth:  set to 1 and don't think about it
+        0,  # nstiff: frequency of stiffness detect (use default)
+        nrdens,  # nrdens: number of components where dense output is needed
+        NULL,  # icont: indices for which components get dense out (NULL = all)
+        0,  # licont: length of the icont array (ignored if icont=NULL)
+        dense_state.state
+    )
+    if res < 0 and err_if_fail == 1:
+        raise RuntimeError(f"Integration failed with code {res}")
 
-        int prog_out = ntimes // 100
+    all_w = np.empty((ntimes, nrdens))
+    for j in range(ntimes):
+        for i in range(nrdens):
+            all_w[j, i] = dense_state.interpolate(i, t[j])
+    return all_w.reshape((ntimes, norbits, ndim))
 
-    # store initial conditions
-    for i in range(norbits):
-        for k in range(ndim):
-            w[i*ndim + k] = w0[i, k]
-            all_w[0, i, k] = w0[i, k]
-
-    if progress == 1:
-        for j in range(1, ntimes, 1):
-            dop853_step(cp, cf, F,
-                        &w[0], t[j-1], t[j], dt0, ndim, norbits, nbody, args,
-                        atol, rtol, nmax)
-
-            for k in range(ndim):
-                for i in range(norbits):
-                    all_w[j, i, k] = w[i*ndim + k]
-
-            PyErr_CheckSignals()
-
-            if j % prog_out == 0:
-                sys.stdout.write('\r')
-                sys.stdout.write(
-                    f"Integrating orbits: {100 * j / ntimes: 3.0f}%")
-                sys.stdout.flush()
-
-        sys.stdout.write('\r')
-        sys.stdout.write(f"Integrating orbits: {100: 3.0f}%")
-        sys.stdout.flush()
-
-    else:
-        for j in range(1, ntimes, 1):
-            dop853_step(cp, cf, F,
-                        &w[0], t[j-1], t[j], dt0, ndim, norbits, nbody, args,
-                        atol, rtol, nmax)
-
-            for k in range(ndim):
-                for i in range(norbits):
-                    all_w[j, i, k] = w[i*ndim + k]
-
-            PyErr_CheckSignals()
-
-    return np.asarray(all_w)
 
 cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t,
-                                   double atol=1E-10, double rtol=1E-10, int nmax=0, progress=False, int store_all=1):
+                                   double atol=1E-10, double rtol=1E-10, int nmax=0, int store_all=1):
     """
     CAUTION: Interpretation of axes is different here! We need the
     arrays to be C ordered and easy to iterate over, so here the
@@ -209,15 +239,12 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t
         all_w = dop853_helper_save_all(cp, &cf, <FcnEqDiff> Fwrapper,
                                     w0, t,
                                     ndim, norbits, 0, args, ntimes,
-                                    atol, rtol, nmax, int(progress))
-
+                                    atol, rtol, nmax, err_if_fail=1)
         return np.asarray(t), np.asarray(all_w)
-
     else:
         w = dop853_helper(
             cp, &cf, <FcnEqDiff> Fwrapper,
             w0, t,
             ndim, norbits, 0, args, ntimes,
-            atol, rtol, nmax, int(progress))
-
+            atol, rtol, nmax, err_if_fail=1)
         return np.asarray(t[-1:]), np.asarray(w)

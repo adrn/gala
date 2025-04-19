@@ -110,18 +110,24 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
         args = <void *>(c_particle_potentials)
 
         if save_all:
-            all_w = dop853_helper_save_all(cp, &cf,
-                                          <FcnEqDiff> Fwrapper_direct_nbody,
-                                          w0, t,
-                                          ndim, nparticles, nbody, args,
-                                          ntimes, atol, rtol, nmax, 0)
+            all_w = dop853_helper_save_all(
+                cp, &cf,
+                <FcnEqDiff> Fwrapper_direct_nbody,
+                w0, t,
+                ndim, nparticles, nbody, args,
+                ntimes, atol, rtol, nmax,
+                err_if_fail=1
+            )
             return np.array(all_w)
         else:
-            final_w = dop853_helper(cp, &cf,
-                                  <FcnEqDiff> Fwrapper_direct_nbody,
-                                  w0, t,
-                                  ndim, nparticles, nbody, args, ntimes,
-                                  atol, rtol, nmax, 0)
+            final_w = dop853_helper(
+                cp, &cf,
+                <FcnEqDiff> Fwrapper_direct_nbody,
+                w0, t,
+                ndim, nparticles, nbody, args, ntimes,
+                atol, rtol, nmax,
+                err_if_fail=1
+            )
             return np.array(final_w).reshape(nparticles, ndim)
 
     finally:

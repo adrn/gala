@@ -130,11 +130,14 @@ cpdef mockstream_dop853(nbody, double[::1] time,
 
         # First have to integrate the nbody orbits so we have their positions at
         # each timestep
-        nbody_w = dop853_helper_save_all(cp, &cf,
-                                         <FcnEqDiff> Fwrapper_direct_nbody,
-                                         nbody_w0, time,
-                                         ndim, nbodies, nbodies, args, ntimes,
-                                         atol, rtol, nmax, 0)
+        nbody_w = dop853_helper_save_all(
+            cp, &cf,
+            <FcnEqDiff> Fwrapper_direct_nbody,
+            nbody_w0, time,
+            ndim, nbodies, nbodies, args, ntimes,
+            atol, rtol, nmax,
+            err_if_fail=1
+        )
 
         n = 0
         for i in range(ntimes):

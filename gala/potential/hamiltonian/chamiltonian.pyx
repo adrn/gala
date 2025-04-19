@@ -334,7 +334,6 @@ class Hamiltonian(CommonBase):
                     Integrator_kwargs.get('atol', 1E-10),
                     Integrator_kwargs.get('rtol', 1E-10),
                     Integrator_kwargs.get('nmax', 0),
-                    Integrator_kwargs.get('progress', False),
                     store_all=store_all
                 )
             else:

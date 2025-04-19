@@ -13,21 +13,42 @@ cdef extern from "dopri/dop853.h":
                               CPotential *p, CFrameType *fr, unsigned norbits,
                               unsigned nbody, void *args) nogil
 
+    ctypedef struct Dop853DenseState:
+        double *rcont1
+        double *rcont2
+        double *rcont3
+        double *rcont4
+        double *rcont5
+        double *rcont6
+        double *rcont7
+        double *rcont8
+        double xold
+        double hout
+        unsigned nrds
+        unsigned *indir
+
+    double contd8(unsigned ii, double x)
+    # Thread-safe dense output function
+    double contd8_threadsafe(Dop853DenseState *state, unsigned ii, double x)
+
 cdef void dop853_step(CPotential *cp, CFrameType *cf, FcnEqDiff F,
                       double *w, double t1, double t2, double dt0,
                       int ndim, int norbits, int nbody, void *args,
                       double atol, double rtol, int nmax)  except *
 
-cdef dop853_helper(CPotential *cp, CFrameType *cf, FcnEqDiff F,
-                   double[:,::1] w0, double[::1] t,
-                   int ndim, int norbits, int nbody, void *args, int ntimes,
-                   double atol, double rtol, int nmax, int progress)
+cdef dop853_helper(
+    CPotential *cp, CFrameType *cf, FcnEqDiff F,
+    double[:,::1] w0, double[::1] t,
+    int ndim, int norbits, int nbody, void *args, int ntimes,
+    double atol, double rtol, int nmax, unsigned err_if_fail
+)
 
-cdef dop853_helper_save_all(CPotential *cp, CFrameType *cf, FcnEqDiff F,
-                            double[:,::1] w0, double[::1] t,
-                            int ndim, int norbits, int nbody, void *args,
-                            int ntimes, double atol, double rtol, int nmax,
-                            int progress)
+cdef dop853_helper_save_all(
+    CPotential *cp, CFrameType *cf, FcnEqDiff F,
+    double[:,::1] w0, double[::1] t,
+    int ndim, int norbits, int nbody, void *args,
+    int ntimes, double atol, double rtol, int nmax, unsigned err_if_fail
+)
 
 # cpdef dop853_integrate_hamiltonian(hamiltonian, double[:,::1] w0, double[::1] t,
 #                                    double atol=?, double rtol=?, int nmax=?)

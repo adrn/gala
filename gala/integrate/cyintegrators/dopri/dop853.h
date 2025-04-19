@@ -187,6 +187,21 @@ nfcnRead    Number of function calls.
 #include "frame/src/cframe.h"
 #include "hamiltonian/src/chamiltonian.h"
 
+// Thread-safe struct for dense output state
+typedef struct {
+    double *rcont1, *rcont2, *rcont3, *rcont4;
+    double *rcont5, *rcont6, *rcont7, *rcont8;
+    double xold, hout;
+    unsigned nrds;
+    unsigned *indir;
+} Dop853DenseState;
+
+// Thread-safe dense output function
+double contd8_threadsafe(Dop853DenseState *state, unsigned ii, double x);
+
+Dop853DenseState* dop853_dense_state_alloc(unsigned nrdens, unsigned n);
+void dop853_dense_state_free(Dop853DenseState* state, unsigned n);
+
 typedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
                           CPotential *p, CFrameType *fr, unsigned norbits,
                           unsigned nbody, void *args);
@@ -222,20 +237,19 @@ extern int dop853
   long nstiff,     /* test for stiffness */
   unsigned nrdens, /* number of components for which dense outpout is required */
   unsigned* icont, /* indexes of components for which dense output is required, >= nrdens */
-  unsigned licont  /* declared length of icon */
+  unsigned licont, /* declared length of icon */
+  Dop853DenseState* dense_state
  );
 
-extern double contd8
- (unsigned ii,     /* index of desired component */
-  double x         /* approximation at x */
- );
+// extern double contd8
+//  (unsigned ii,     /* index of desired component */
+//   double x         /* approximation at x */
+//  );
 
 extern long nfcnRead (void);   /* encapsulation of statistical data */
 extern long nstepRead (void);
 extern long naccptRead (void);
 extern long nrejctRead (void);
-extern double hRead (void);
-extern double xRead (void);
 
 /* ADDED BY APW */
 extern void Fwrapper (unsigned ndim, double t, double *w, double *f,
