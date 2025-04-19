@@ -66,9 +66,9 @@ cdef extern from "dopri/dop853.h":
         unsigned nrds
         unsigned *indir
 
-    Dop853DenseState* dop853_dense_state_alloc(unsigned nrdens, unsigned n)
-    void dop853_dense_state_free(Dop853DenseState* state, unsigned n)
-    double contd8_threadsafe(Dop853DenseState *state, unsigned ii, double x)
+    Dop853DenseState* dop853_dense_state_alloc(unsigned nrdens, unsigned n) nogil
+    void dop853_dense_state_free(Dop853DenseState* state, unsigned n) nogil
+    double contd8_threadsafe(Dop853DenseState *state, unsigned ii, double x) nogil
 
 cdef extern from "stdio.h":
     ctypedef struct FILE
@@ -101,7 +101,7 @@ cdef class DenseOutputState:
     def __dealloc__(self):
         if self.state is not NULL:
             dop853_dense_state_free(self.state, self.n)
-    def interpolate(self, unsigned ii, double x):
+    cdef double interpolate(self, unsigned ii, double x) nogil:
         return contd8_threadsafe(self.state, ii, x)
 
 
@@ -176,6 +176,7 @@ cdef dop853_helper_save_all(
         DenseOutputState dense_state = DenseOutputState(nrdens, nrdens)
         double[:, ::1] w = w0.copy()
         int res
+        double[:, ::1] all_w = np.empty((ntimes, nrdens))
 
     res = dop853(
         nrdens, F, cp, cf,
@@ -203,11 +204,10 @@ cdef dop853_helper_save_all(
     if res < 0 and err_if_fail == 1:
         raise RuntimeError(f"Integration failed with code {res}")
 
-    all_w = np.empty((ntimes, nrdens))
     for j in range(ntimes):
         for i in range(nrdens):
             all_w[j, i] = dense_state.interpolate(i, t[j])
-    return all_w.reshape((ntimes, norbits, ndim))
+    return np.asarray(all_w).reshape((ntimes, norbits, ndim))
 
 
 cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t,
