@@ -156,7 +156,7 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
   double d51, d56, d57, d58, d59, d510, d511, d512, d513, d514, d515, d516;
   double d61, d66, d67, d68, d69, d610, d611, d612, d613, d614, d615, d616;
   double d71, d76, d77, d78, d79, d710, d711, d712, d713, d714, d715, d716;
-  int output_idx;
+  int output_idx = 0;
 
   /* initialisations */
   switch (meth)
@@ -628,25 +628,29 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
           }
       }
 
-      /* After each accepted step, fill output_y for all output_times in this interval */
-      output_idx = 0;
+      // After each accepted step, fill output_y for all output_times in this interval
       if (dense_state && output_times && output_y && n_output_times > 0)
       {
-        // double x0 = dense_state->xold;
-        // double h = dense_state->hout;
-        double x1 = x + h;
-        printf("Filling output_y for output_times in interval [%g, %g] h=%g\n", x, x1, h);
-        /* For each output time in [x, x1], fill output_y */
-        while (output_idx < n_output_times &&
-               ((x <= output_times[output_idx] && output_times[output_idx] <= x1) ||
-                (x1 <= output_times[output_idx] && output_times[output_idx] <= x)))
+        double x0 = dense_state->xold;
+        double h = dense_state->hout;
+        double x1 = x0 + h;
+
+        // For each output time in [x0, x1], fill output_y
+        while (output_idx < n_output_times)
         {
-          for (unsigned i = 0; i < dense_state->nrds; i++)
+          double t_out = output_times[output_idx];
+          if ((x0 <= t_out && t_out <= x1) || (x1 <= t_out && t_out <= x0))
           {
-            printf("Filling output_y[%d][%d] at t=%g with value =%g\n", output_idx, i, output_times[output_idx], contd8_threadsafe(dense_state, i, output_times[output_idx]));
-            output_y[output_idx * dense_state->nrds + i] = contd8_threadsafe(dense_state, i, output_times[output_idx]);
+            for (unsigned i = 0; i < dense_state->nrds; i++)
+            {
+              output_y[output_idx * dense_state->nrds + i] = contd8_threadsafe(dense_state, i, t_out);
+            }
+            output_idx++;
           }
-          output_idx++;
+          else
+          {
+            break;
+          }
         }
       }
 
@@ -668,6 +672,14 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
       /* normal exit */
       if (last)
       {
+        // After the integration loop, or in the 'last' block:
+        if (output_idx == n_output_times)
+        {
+          for (unsigned i = 0; i < dense_state->nrds; i++)
+          {
+            output_y[(n_output_times - 1) * dense_state->nrds + i] = y[i];
+          }
+        }
         return 1;
       }
 
