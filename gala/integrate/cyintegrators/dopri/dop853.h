@@ -238,7 +238,10 @@ extern int dop853
   unsigned nrdens, /* number of components for which dense outpout is required */
   unsigned* icont, /* indexes of components for which dense output is required, >= nrdens */
   unsigned licont, /* declared length of icon */
-  Dop853DenseState* dense_state
+  Dop853DenseState* dense_state,
+  double* output_times, /* array of times to sample */
+  int n_output_times,   /* number of output times */
+  double* output_y  /* output array to fill (size: n_output_times * n) */
  );
 
 // extern double contd8

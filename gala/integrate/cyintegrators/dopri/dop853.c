@@ -133,7 +133,8 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
                   int itoler, FILE *fileout, SolTrait solout, int iout,
                   long nmax, double uround, int meth, long nstiff, double safe,
                   double beta, double fac1, double fac2, unsigned *icont,
-                  Dop853DenseState *dense_state)
+                  Dop853DenseState *dense_state,
+                  double *output_times, int n_output_times, double *output_y)
 {
   double facold, expo1, fac, facc1, facc2, fac11, posneg, xph;
   double atoli, rtoli, hlamb, err, sk, hnew, yd0, ydiff, bspl;
@@ -155,6 +156,7 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
   double d51, d56, d57, d58, d59, d510, d511, d512, d513, d514, d515, d516;
   double d61, d66, d67, d68, d69, d610, d611, d612, d613, d614, d615, d616;
   double d71, d76, d77, d78, d79, d710, d711, d712, d713, d714, d715, d716;
+  int output_idx;
 
   /* initialisations */
   switch (meth)
@@ -358,7 +360,8 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
   if (iout)
   {
     irtrn = 1;
-    if (dense_state) {
+    if (dense_state)
+    {
       dense_state->hout = 1.0;
       dense_state->xold = x;
     }
@@ -374,14 +377,16 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
   /* basic integration step */
   while (1)
   {
+    if (dense_state)
+    {
+      dense_state->xold = x;
+      dense_state->hout = h;
+    }
+
     if (nstep > nmax)
     {
       if (fileout)
         fprintf(fileout, "Exit of dop853 at x = %.16e, more than nmax = %li are needed\r\n", x, nmax);
-      if (dense_state) {
-        dense_state->xold = x;
-        dense_state->hout = h;
-      }
       return -2;
     }
 
@@ -389,10 +394,6 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
     {
       if (fileout)
         fprintf(fileout, "Exit of dop853 at x = %.16e, step size too small h = %.16e\r\n", x, h);
-      if (dense_state) {
-        dense_state->xold = x;
-        dense_state->hout = h;
-      }
       return -3;
     }
 
@@ -456,7 +457,7 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
     /* error estimation */
     err = 0.0;
     err2 = 0.0;
-    if (!itoler)  // Scalar tolerances
+    if (!itoler) // Scalar tolerances
       for (i = 0; i < n; i++)
       {
         sk = atoli + rtoli * max_d(fabs(y[i]), fabs(k5[i]));
@@ -525,10 +526,6 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
               fprintf(fileout, "The problem seems to become stiff at x = %.16e\r\n", x);
             else
             {
-              if (dense_state)
-                dense_state->xold = x;
-              if (dense_state)
-                dense_state->hout = h;
               return -4;
             }
         }
@@ -631,12 +628,30 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
           }
       }
 
+      /* After each accepted step, fill output_y for all output_times in this interval */
+      output_idx = 0;
+      if (dense_state && output_times && output_y && n_output_times > 0)
+      {
+        // double x0 = dense_state->xold;
+        // double h = dense_state->hout;
+        double x1 = x + h;
+        printf("Filling output_y for output_times in interval [%g, %g] h=%g\n", x, x1, h);
+        /* For each output time in [x, x1], fill output_y */
+        while (output_idx < n_output_times &&
+               ((x <= output_times[output_idx] && output_times[output_idx] <= x1) ||
+                (x1 <= output_times[output_idx] && output_times[output_idx] <= x)))
+        {
+          for (unsigned i = 0; i < dense_state->nrds; i++)
+          {
+            printf("Filling output_y[%d][%d] at t=%g with value =%g\n", output_idx, i, output_times[output_idx], contd8_threadsafe(dense_state, i, output_times[output_idx]));
+            output_y[output_idx * dense_state->nrds + i] = contd8_threadsafe(dense_state, i, output_times[output_idx]);
+          }
+          output_idx++;
+        }
+      }
+
       memcpy(k1, k4, n * sizeof(double));
       memcpy(y, k5, n * sizeof(double));
-      if (dense_state) {
-        dense_state->hout = h;
-        dense_state->xold = x;
-      }
       x = xph;
 
       if (iout)
@@ -684,7 +699,8 @@ int dop853(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned no
            double *atoler, int itoler, SolTrait solout, int iout, FILE *fileout, double uround,
            double safe, double fac1, double fac2, double beta, double hmax, double h,
            long nmax, int meth, long nstiff, unsigned nrdens, unsigned *icont, unsigned licont,
-           Dop853DenseState *dense_state)
+           Dop853DenseState *dense_state,
+           double *output_times, int n_output_times, double *output_y)
 {
   int arret, idid;
   unsigned i;
@@ -871,7 +887,8 @@ int dop853(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned no
   else
   {
     idid = dopcor(n, fcn, p, fr, norbits, nbody, args, x, y, xend, hmax, h, rtoler, atoler, itoler, fileout,
-                  solout, iout, nmax, uround, meth, nstiff, safe, beta, fac1, fac2, icont, nrdens > 0 ? dense_state : NULL);
+                  solout, iout, nmax, uround, meth, nstiff, safe, beta, fac1, fac2, icont, nrdens > 0 ? dense_state : NULL,
+                  output_times, n_output_times, output_y);
     free(k10);
     free(k9);
     free(k8);

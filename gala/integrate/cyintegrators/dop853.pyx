@@ -47,7 +47,8 @@ cdef extern from "dopri/dop853.h":
                 int iout, FILE* fileout, double uround, double safe, double fac1,
                 double fac2, double beta, double hmax, double h, long nmax, int meth,
                 long nstiff, unsigned nrdens, unsigned* icont, unsigned licont,
-                Dop853DenseState* dense_state)
+                Dop853DenseState* dense_state,
+                double* tout, unsigned ntout, double* yout)
 
     void Fwrapper (unsigned ndim, double t, double *w, double *f,
                    CPotential *p, CFrameType *fr, unsigned norbits)
@@ -84,10 +85,18 @@ cdef void dop853_step(CPotential *cp, CFrameType *cf, FcnEqDiff F,
         int res
         SolTrait solout = NULL
 
-    res = dop853(ndim*norbits, F,
-                 cp, cf, norbits, nbody, args, t1, w, t2,
-                 &rtol, &atol, 0, solout, 0,
-                 NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0, NULL, 0, NULL);
+    res = dop853(
+        ndim*norbits, F,
+        cp, cf, norbits, nbody, args, t1, w, t2,
+        &rtol, &atol, 0, solout, 0,
+        NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0,
+        NULL,  # icont: indices for components
+        0,  # licont: length of the icont array
+        NULL,  # dense_state
+        NULL,  # array of output times
+        0,  # number of output times
+        NULL  # output array for dense output
+    );
 
 
 cdef class DenseOutputState:
@@ -101,8 +110,6 @@ cdef class DenseOutputState:
     def __dealloc__(self):
         if self.state is not NULL:
             dop853_dense_state_free(self.state, self.n)
-    cdef double interpolate(self, unsigned ii, double x) nogil:
-        return contd8_threadsafe(self.state, ii, x)
 
 
 cdef dop853_helper(
@@ -146,7 +153,10 @@ cdef dop853_helper(
         0,  # nrdens: number of components for dense output
         NULL,  # icont: indices for components
         0,  # licont: length of the icont array
-        NULL  # dense_state
+        NULL,  # dense_state
+        NULL,  # array of output times
+        0,  # number of output times
+        NULL  # output array for dense output
     )
     if res < 0 and err_if_fail == 1:
         raise RuntimeError(f"Integration failed with code {res}")
@@ -171,12 +181,11 @@ cdef dop853_helper_save_all(
     unsigned err_if_fail
 ):
     cdef:
-        int i, j, k
         unsigned nrdens = ndim * norbits
         DenseOutputState dense_state = DenseOutputState(nrdens, nrdens)
         double[:, ::1] w = w0.copy()
         int res
-        double[:, ::1] all_w = np.empty((ntimes, nrdens))
+        double[:, ::1] output_w = np.empty((ntimes, nrdens))
 
     res = dop853(
         nrdens, F, cp, cf,
@@ -199,15 +208,14 @@ cdef dop853_helper_save_all(
         nrdens,  # nrdens: number of components where dense output is needed
         NULL,  # icont: indices for which components get dense out (NULL = all)
         0,  # licont: length of the icont array (ignored if icont=NULL)
-        dense_state.state
+        dense_state.state,
+        &t[0],  # array of output times
+        ntimes,  # number of output times
+        &output_w[0, 0]  # output array for dense output
     )
     if res < 0 and err_if_fail == 1:
         raise RuntimeError(f"Integration failed with code {res}")
-
-    for j in range(ntimes):
-        for i in range(nrdens):
-            all_w[j, i] = dense_state.interpolate(i, t[j])
-    return np.asarray(all_w).reshape((ntimes, norbits, ndim))
+    return np.asarray(output_w).reshape((ntimes, norbits, ndim))
 
 
 cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t,
