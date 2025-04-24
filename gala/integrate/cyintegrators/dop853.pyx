@@ -240,7 +240,7 @@ cdef dop853_helper_save_all(
 
 cpdef dop853_integrate_hamiltonian(
     hamiltonian, double[:, ::1] w0, double[::1] t,
-    double atol=1E-10, double rtol=1E-10, int nmax=0, int store_all=1,
+    double atol=1E-10, double rtol=1E-10, int nmax=0, int save_all=1,
     int err_if_fail=1, int log_output=0
 ):
     """
@@ -266,7 +266,7 @@ cpdef dop853_integrate_hamiltonian(
         CFrameType cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
     # 0 below is for nbody - we ignore that in this test particle integration
-    if store_all:
+    if save_all:
         all_w = dop853_helper_save_all(
             cp, &cf, <FcnEqDiff> Fwrapper,
             w0, t,

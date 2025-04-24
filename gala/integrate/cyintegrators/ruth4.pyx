@@ -53,7 +53,7 @@ cdef void c_ruth4_step(CPotential *p, int half_ndim, double t, double dt,
 cpdef ruth4_integrate_hamiltonian(hamiltonian,
                                   double[:, ::1] w0,
                                   double[::1] t,
-                                  int store_all=1):
+                                  int save_all=1):
     """
     CAUTION: Interpretation of axes is different here! We need the
     arrays to be C ordered and easy to iterate over, so here the
@@ -104,7 +104,7 @@ cpdef ruth4_integrate_hamiltonian(hamiltonian,
         # whoa, so many dots
         CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
 
-    if store_all:
+    if save_all:
         all_w = np.zeros((ntimes, n, ndim))
 
         # save initial conditions
@@ -120,11 +120,11 @@ cpdef ruth4_integrate_hamiltonian(hamiltonian,
                              &cs[0], &ds[0],
                              &tmp_w[i, 0], &grad[0])
 
-                if store_all:
+                if save_all:
                     for k in range(ndim):
                         all_w[j, i, k] = tmp_w[i, k]
 
-    if store_all:
+    if save_all:
         return np.asarray(t), np.asarray(all_w)
     else:
         return np.asarray(t[-1:]), np.asarray(tmp_w)
@@ -154,7 +154,7 @@ cdef void c_ruth4_step_nbody(
             w[k] = w[k] + cs[j] * w[half_ndim + k] * dt
 
 cpdef ruth4_integrate_nbody(hamiltonian, double [:, ::1] w0, double[::1] t,
-                            list particle_potentials, int store_all=1):
+                            list particle_potentials, int save_all=1):
     """
     CAUTION: Interpretation of axes is different here! We need the
     arrays to be C ordered and easy to iterate over, so here the
@@ -209,7 +209,7 @@ cpdef ruth4_integrate_nbody(hamiltonian, double [:, ::1] w0, double[::1] t,
         CPotential **c_particle_potentials = NULL
         unsigned nbody = 0
 
-    if store_all:
+    if save_all:
         all_w = np.zeros((ntimes, n, ndim))
 
         # save initial conditions
@@ -241,11 +241,11 @@ cpdef ruth4_integrate_nbody(hamiltonian, double [:, ::1] w0, double[::1] t,
                         &tmp_w[i, 0], &grad[0]
                     )
 
-                    if store_all:
+                    if save_all:
                         for k in range(ndim):
                             all_w[j, i, k] = tmp_w[i, k]
 
-        if store_all:
+        if save_all:
             return_val = (np.asarray(t), np.asarray(all_w))
         else:
             return_val = (np.asarray(t[-1:]), np.asarray(tmp_w))

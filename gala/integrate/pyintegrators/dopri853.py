@@ -1,4 +1,4 @@
-""" Wrapper around SciPy DOPRI853 integrator. """
+"""Wrapper around SciPy DOPRI853 integrator."""
 
 # Third-party
 from scipy.integrate import ode
@@ -42,11 +42,11 @@ class DOPRI853Integrator(Integrator):
         func_args=(),
         func_units=None,
         progress=False,
-        store_all=True,
-        **kwargs
+        save_all=True,
+        **kwargs,
     ):
         super(DOPRI853Integrator, self).__init__(
-            func, func_args, func_units, progress=progress, store_all=store_all
+            func, func_args, func_units, progress=progress, save_all=save_all
         )
         self._ode_kwargs = kwargs
 
@@ -69,7 +69,7 @@ class DOPRI853Integrator(Integrator):
         self._ode = self._ode.set_integrator("dop853", **self._ode_kwargs)
 
         # create the return arrays
-        if self.store_all:
+        if self.save_all:
             ws[:, 0] = arr_w0
 
         # make 1D
@@ -84,13 +84,13 @@ class DOPRI853Integrator(Integrator):
             self._ode.integrate(times[k])
             outy = self._ode.y
 
-            if self.store_all:
+            if self.save_all:
                 ws[:, k] = outy.reshape(2 * self.ndim, self.norbits)
 
             if not self._ode.successful():
                 raise RuntimeError("ODE integration failed!")
 
-        if not self.store_all:
+        if not self.save_all:
             ws = outy.reshape(2 * self.ndim, 1, self.norbits)
             times = times[-1:]
 

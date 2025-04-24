@@ -69,7 +69,7 @@ def test_compare_to_py(Integrator, integrate_func, dt):
 
 
 @pytest.mark.parametrize(["integrate_func", "dt"], product(func_list, [-2.0, 2]))
-def test_store_all(integrate_func, dt):
+def test_save_all(integrate_func, dt):
     p = HernquistPotential(m=1e11, c=0.5, units=galactic)
     H = Hamiltonian(potential=p)
 
@@ -85,7 +85,7 @@ def test_store_all(integrate_func, dt):
     t = np.linspace(0, dt * 1024, 1024 + 1)
 
     t_all, w_all = integrate_func(H, w0, t)
-    t_f, w_f = integrate_func(H, w0, t, store_all=False)
+    t_f, w_f = integrate_func(H, w0, t, save_all=False)
 
     assert t_all[-1] == t_f[0]
     assert np.allclose(w_all[-1], w_f)

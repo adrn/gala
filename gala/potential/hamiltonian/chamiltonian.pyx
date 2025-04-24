@@ -5,6 +5,7 @@ import warnings
 
 # Third-party
 import numpy as np
+from astropy.utils.decorators import deprecated_renamed_argument
 import astropy.units as u
 
 # Project
@@ -241,12 +242,13 @@ class Hamiltonian(CommonBase):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    @deprecated_renamed_argument("store_all", "save_all", since="1.10")
     def integrate_orbit(self,
         w0,
         Integrator=None,
         Integrator_kwargs=dict(),
         cython_if_possible=True,
-        store_all=True,
+        save_all=True,
         **time_spec
     ):
         """
@@ -271,7 +273,7 @@ class Hamiltonian(CommonBase):
             If there is a Cython version of the integrator implemented,
             and the potential object has a C instance, using Cython
             will be *much* faster.
-        store_all : bool (optional)
+        save_all : bool (optional)
             Controls whether to store the phase-space position at all intermediate
             timesteps. Set to False to store only the final values (i.e. the
             phase-space position(s) at the final timestep). Default is True.
@@ -323,11 +325,11 @@ class Hamiltonian(CommonBase):
             # TODO: these replacements should be defined in gala.integrate...
             if Integrator == LeapfrogIntegrator:
                 from ...integrate.cyintegrators import leapfrog_integrate_hamiltonian
-                t, w = leapfrog_integrate_hamiltonian(self, arr_w0, t, store_all=store_all)
+                t, w = leapfrog_integrate_hamiltonian(self, arr_w0, t, save_all=save_all)
 
             elif Integrator == Ruth4Integrator:
                 from ...integrate.cyintegrators import ruth4_integrate_hamiltonian
-                t, w = ruth4_integrate_hamiltonian(self, arr_w0, t, store_all=store_all)
+                t, w = ruth4_integrate_hamiltonian(self, arr_w0, t, save_all=save_all)
 
             elif Integrator == DOPRI853Integrator:
                 from ...integrate.cyintegrators import dop853_integrate_hamiltonian
@@ -336,7 +338,7 @@ class Hamiltonian(CommonBase):
                     Integrator_kwargs.get('atol', 1E-10),
                     Integrator_kwargs.get('rtol', 1E-10),
                     Integrator_kwargs.get('nmax', 0),
-                    store_all=store_all,
+                    save_all=save_all,
                     err_if_fail=int(Integrator_kwargs.get('err_if_fail', 1)),
                     log_output=int(Integrator_kwargs.get('log_output', 0)),
                 )
@@ -359,7 +361,7 @@ class Hamiltonian(CommonBase):
             orbit.frame = self.frame
             return orbit
 
-        if not store_all:
+        if not save_all:
             w = w[:, None]
 
         try:

@@ -216,11 +216,11 @@ class DirectNBody:
 
         if Integrator == LeapfrogIntegrator:
             _, ws = leapfrog_integrate_nbody(
-                self.H, reorg_w0, t, pps, store_all=int(self.save_all)
+                self.H, reorg_w0, t, pps, save_all=int(self.save_all)
             )
         elif Integrator == Ruth4Integrator:
             _, ws = ruth4_integrate_nbody(
-                self.H, reorg_w0, t, pps, store_all=int(self.save_all)
+                self.H, reorg_w0, t, pps, save_all=int(self.save_all)
             )
         elif Integrator == DOPRI853Integrator:
             ws = direct_nbody_dop853(reorg_w0, t, self.H, pps, save_all=self.save_all)
