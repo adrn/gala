@@ -7,6 +7,11 @@ New Features
 - Added a new ``SimulationUnitSystem`` class for handling unit systems in
   simulations, especially for N-body simulations.
 
+- Added options ``error_if_fail`` and ``log_output`` to integrator kwargs for the
+  dop853 integrator. ``error_if_fail`` controls whether Python will raise an error if
+  the C integrator fails to integrate an orbit, and ``log_output`` will log the output
+  of the integrator (primarily for errors) to stdout.
+
 Bug fixes
 ---------
 
