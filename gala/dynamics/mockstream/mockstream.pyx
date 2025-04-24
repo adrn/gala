@@ -50,11 +50,14 @@ cdef extern from "dopri/dop853.h":
                                unsigned norbits, unsigned nbody, void *args) nogil
 
 
-cpdef mockstream_dop853(nbody, double[::1] time,
-                        double[:, ::1] stream_w0, double[::1] stream_t1,
-                        double tfinal, int[::1] nstream,
-                        double atol=1E-10, double rtol=1E-10, int nmax=0,
-                        int progress=0):
+cpdef mockstream_dop853(
+    nbody, double[::1] time,
+    double[:, ::1] stream_w0, double[::1] stream_t1,
+    double tfinal, int[::1] nstream,
+    double atol=1E-10, double rtol=1E-10, int nmax=0,
+    int progress=0,
+    int err_if_fail=1, int log_output=0
+):
     """
     Parameters
     ----------
@@ -72,10 +75,6 @@ cpdef mockstream_dop853(nbody, double[::1] time,
     instance passed in. ``nstreamparticles`` are the stream test particles.
     ``nstream`` is the array containing the number of stream particles released
     at each timestep.
-
-    TODO
-    ----
-    - `dt0` should be customizable in the Python interface.
 
     """
 
@@ -117,6 +116,8 @@ cpdef mockstream_dop853(nbody, double[::1] time,
     if c_particle_potentials == NULL:
         raise MemoryError("Failed to allocate memory for particle potentials")
 
+    # TODO: reconfigure this to use dense output?
+
     try:
         # set the potential objects of the progenitor (index 0) and any other
         # massive bodies included in the stream generation
@@ -136,7 +137,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
             nbody_w0, time,
             ndim, nbodies, nbodies, args, ntimes,
             atol, rtol, nmax,
-            err_if_fail=1
+            err_if_fail=err_if_fail, log_output=log_output
         )
 
         n = 0

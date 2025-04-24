@@ -43,10 +43,13 @@ cdef extern from "dopri/dop853.h":
                                CPotential *p, CFrameType *fr, unsigned norbits,
                                unsigned nbody, void *args)
 
-cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
-                          hamiltonian, list particle_potentials,
-                          save_all=True,
-                          double atol=1E-10, double rtol=1E-10, int nmax=0):
+cpdef direct_nbody_dop853(
+    double [:, ::1] w0, double[::1] t,
+    hamiltonian, list particle_potentials,
+    save_all=True,
+    double atol=1E-10, double rtol=1E-10, int nmax=0,
+    int err_if_fail=1, int log_output=0
+):
     """Integrate orbits from initial conditions ``w0`` over the time grid ``t``
     using direct N-body force calculation in the external potential provided via
     the ``hamiltonian`` argument.
@@ -116,7 +119,7 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
                 w0, t,
                 ndim, nparticles, nbody, args,
                 ntimes, atol, rtol, nmax,
-                err_if_fail=1
+                err_if_fail=err_if_fail, log_output=log_output
             )
             return np.array(all_w)
         else:
@@ -126,7 +129,7 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
                 w0, t,
                 ndim, nparticles, nbody, args, ntimes,
                 atol, rtol, nmax,
-                err_if_fail=1
+                err_if_fail=err_if_fail, log_output=log_output
             )
             return np.array(final_w).reshape(nparticles, ndim)
 

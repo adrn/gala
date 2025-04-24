@@ -263,8 +263,10 @@ class Hamiltonian(CommonBase):
             `~gala.integrate.LeapfrogIntegrator` if the frame is static and
             `~gala.integrate.DOPRI853Integrator` else.
         Integrator_kwargs : dict (optional)
-            Any extra keyword argumets to pass to the integrator class
-            when initializing. Only works in non-Cython mode.
+            Any extra keyword arguments to pass to the integrator class
+            when initializing. For example, you can pass in the
+            ``atol`` and ``rtol`` keyword arguments to set the absolute and
+            relative tolerances for the DOPRI853 integrator.
         cython_if_possible : bool (optional)
             If there is a Cython version of the integrator implemented,
             and the potential object has a C instance, using Cython
@@ -334,7 +336,9 @@ class Hamiltonian(CommonBase):
                     Integrator_kwargs.get('atol', 1E-10),
                     Integrator_kwargs.get('rtol', 1E-10),
                     Integrator_kwargs.get('nmax', 0),
-                    store_all=store_all
+                    store_all=store_all,
+                    err_if_fail=int(Integrator_kwargs.get('err_if_fail', 1)),
+                    log_output=int(Integrator_kwargs.get('log_output', 0)),
                 )
             else:
                 raise ValueError(f"Cython integration not supported for '{Integrator!r}'")

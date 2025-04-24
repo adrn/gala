@@ -238,8 +238,11 @@ cdef dop853_helper_save_all(
     return np.asarray(output_w).reshape((ntimes, norbits, ndim))
 
 
-cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t,
-                                   double atol=1E-10, double rtol=1E-10, int nmax=0, int store_all=1):
+cpdef dop853_integrate_hamiltonian(
+    hamiltonian, double[:, ::1] w0, double[::1] t,
+    double atol=1E-10, double rtol=1E-10, int nmax=0, int store_all=1,
+    int err_if_fail=1, int log_output=0
+):
     """
     CAUTION: Interpretation of axes is different here! We need the
     arrays to be C ordered and easy to iterate over, so here the
@@ -269,7 +272,7 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t
             w0, t,
             ndim, norbits, 0, args, ntimes,
             atol, rtol, nmax,
-            err_if_fail=1, log_output=1  # TODO: make customizable
+            err_if_fail=err_if_fail, log_output=log_output
         )
         return np.asarray(t), np.asarray(all_w)
     else:
@@ -278,6 +281,6 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t
             w0, t,
             ndim, norbits, 0, args, ntimes,
             atol, rtol, nmax,
-            err_if_fail=1, log_output=1  # TODO: make customizable
+            err_if_fail=err_if_fail, log_output=log_output
         )
         return np.asarray(t[-1:]), np.asarray(w)
