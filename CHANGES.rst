@@ -25,6 +25,10 @@ Bug fixes
 API changes
 -----------
 
+- Gala has ``save_all`` and ``store_all`` flags for saving all orbits at every
+  timestep. The ``store_all`` flag is now deprecated and will be removed in a future
+  release. The``save_all`` flag should be used instead.
+
 Other
 -----
 
@@ -32,6 +36,11 @@ Other
   potential, density, gradient, and hessian values. This leads to some free performance
   improvements in existing code!
 
+- Refactored the way integration is done with the DOP853 integrator. The integrator now
+  uses the dense output feature (which uses interpolation) to compute the output values
+  at the requested times. This is a significant performance improvement for large
+  numbers of orbits, and also allows for much faster results when integrating over long
+  timescales.
 
 1.9.1 (2024-08-26)
 ==================
