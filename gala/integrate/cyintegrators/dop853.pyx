@@ -12,7 +12,6 @@ from libc.stdio cimport *
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcpy
 
-# Third-party
 import numpy as np
 cimport numpy as np
 np.import_array()
@@ -126,20 +125,27 @@ cdef dop853_helper(
     double atol,
     double rtol,
     int nmax,
-    unsigned err_if_fail
+    unsigned err_if_fail,
+    unsigned log_output
 ):
     cdef:
         double[:, ::1] w = w0.copy()
         int res
+        FILE* cfile
+
+    if log_output:
+        cfile = stdout
+    else:
+        cfile = NULL
 
     res = dop853(
         ndim*norbits, F, cp, cf,
         norbits, nbody, args,
-        t[0], &w[0, 0], t[len(t)-1],
+        t[0], &w[0, 0], t[ntimes-1],
         &rtol, &atol, 0,  # itoler = 0 for scalar tolerances
         NULL,  # solout: Callback function for output
         0,  # iout: Controls solout call
-        NULL,  # fileout: file pointer for logging
+        cfile,  # fileout: file pointer for logging
         0.0,  # uround: Machine precision (0.0 = use default)
         0.0,  # safe: Safety factor
         0.0,  # fac1: Step size control parameter
@@ -158,6 +164,7 @@ cdef dop853_helper(
         0,  # number of output times
         NULL  # output array for dense output
     )
+
     if res < 0 and err_if_fail == 1:
         raise RuntimeError(f"Integration failed with code {res}")
 
@@ -178,30 +185,41 @@ cdef dop853_helper_save_all(
     double atol,
     double rtol,
     int nmax,
-    unsigned err_if_fail
+    unsigned err_if_fail,
+    unsigned log_output
 ):
     cdef:
         unsigned nrdens = ndim * norbits
         DenseOutputState dense_state = DenseOutputState(nrdens, nrdens)
         double[:, ::1] w = w0.copy()
         int res
+        int ntot = ntimes * norbits * ndim
         double[:, ::1] output_w = np.empty((ntimes, nrdens))
+        FILE* cfile
+
+    if log_output:
+        cfile = stdout
+    else:
+        cfile = NULL
+
+    if w.size != nrdens:
+        raise ValueError(f"w0 must be of size {nrdens}, but got {w.size}")
 
     res = dop853(
         nrdens, F, cp, cf,
         norbits, nbody, args,
-        t[0], &w[0, 0], t[len(t)-1],
+        t[0], &w[0, 0], t[ntimes-1],
         &rtol, &atol, 0,  # itoler = 0 for scalar tolerances, 1 for array
         NULL,  # solout: Callback function for output at each accepted step
         0,  # iout: Controls solout call (0: never, 1: at each step, 2: dense output)
-        NULL,  # fileout: file pointer for logging
+        cfile,  # fileout: file pointer for logging
         np.finfo(float).eps,  # uround: Machine precision
         0.0,  # safe: Safety factor for step size control (0.0 = use default)
         0.0,  # fac1: Step size control parameter (0.0 = use default)
         0.0,  # fac2: Step size control parameter (0.0 = use default)
         0.0,  # beta: Stabilizatin for step size control (0.0 = use default)
         0.0,  # hmax: maximum allowed step size (0.0 = no limit)
-        t[-1] - t[0],  # h: Initial step size
+        t[1] - t[0],  # h: Initial step size
         nmax,  # nmax:  maximum number of integration steps (0 = 100_000)
         1,  # meth:  set to 1 and don't think about it
         0,  # nstiff: frequency of stiffness detect (use default)
@@ -213,8 +231,10 @@ cdef dop853_helper_save_all(
         ntimes,  # number of output times
         &output_w[0, 0]  # output array for dense output
     )
+
     if res < 0 and err_if_fail == 1:
         raise RuntimeError(f"Integration failed with code {res}")
+
     return np.asarray(output_w).reshape((ntimes, norbits, ndim))
 
 
@@ -244,15 +264,20 @@ cpdef dop853_integrate_hamiltonian(hamiltonian, double[:, ::1] w0, double[::1] t
 
     # 0 below is for nbody - we ignore that in this test particle integration
     if store_all:
-        all_w = dop853_helper_save_all(cp, &cf, <FcnEqDiff> Fwrapper,
-                                    w0, t,
-                                    ndim, norbits, 0, args, ntimes,
-                                    atol, rtol, nmax, err_if_fail=1)
+        all_w = dop853_helper_save_all(
+            cp, &cf, <FcnEqDiff> Fwrapper,
+            w0, t,
+            ndim, norbits, 0, args, ntimes,
+            atol, rtol, nmax,
+            err_if_fail=1, log_output=1  # TODO: make customizable
+        )
         return np.asarray(t), np.asarray(all_w)
     else:
         w = dop853_helper(
             cp, &cf, <FcnEqDiff> Fwrapper,
             w0, t,
             ndim, norbits, 0, args, ntimes,
-            atol, rtol, nmax, err_if_fail=1)
+            atol, rtol, nmax,
+            err_if_fail=1, log_output=1  # TODO: make customizable
+        )
         return np.asarray(t[-1:]), np.asarray(w)

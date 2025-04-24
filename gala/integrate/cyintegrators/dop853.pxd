@@ -40,14 +40,16 @@ cdef dop853_helper(
     CPotential *cp, CFrameType *cf, FcnEqDiff F,
     double[:,::1] w0, double[::1] t,
     int ndim, int norbits, int nbody, void *args, int ntimes,
-    double atol, double rtol, int nmax, unsigned err_if_fail
+    double atol, double rtol, int nmax,
+    unsigned err_if_fail, unsigned log_output
 )
 
 cdef dop853_helper_save_all(
     CPotential *cp, CFrameType *cf, FcnEqDiff F,
     double[:,::1] w0, double[::1] t,
     int ndim, int norbits, int nbody, void *args,
-    int ntimes, double atol, double rtol, int nmax, unsigned err_if_fail
+    int ntimes, double atol, double rtol, int nmax,
+    unsigned err_if_fail, unsigned log_output
 )
 
 # cpdef dop853_integrate_hamiltonian(hamiltonian, double[:,::1] w0, double[::1] t,

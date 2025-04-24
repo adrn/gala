@@ -1,61 +1,24 @@
 #include <math.h>
 #include <stdio.h>
 // #include <malloc.h>
-#include <stdlib.h>
+#include "dop853.h"
 #include <limits.h>
 #include <memory.h>
-#include "dop853.h"
+#include <stdlib.h>
 
-static long nfcn, nstep, naccpt, nrejct;
-static double *yy1, *k1, *k2, *k3, *k4, *k5, *k6, *k7, *k8, *k9, *k10;
-
-long nfcnRead(void)
-{
-  return nfcn;
-
-} /* nfcnRead */
-
-long nstepRead(void)
-{
-  return nstep;
-
-} /* stepRead */
-
-long naccptRead(void)
-{
-  return naccpt;
-
-} /* naccptRead */
-
-long nrejctRead(void)
-{
-  return nrejct;
-
-} /* nrejct */
-
-static double sign(double a, double b)
-{
+static double sign(double a, double b) {
   return (b < 0.0) ? -fabs(a) : fabs(a);
 
 } /* sign */
 
-static double min_d(double a, double b)
-{
-  return (a < b) ? a : b;
+static double min_d(double a, double b) { return (a < b) ? a : b; } /* min_d */
 
-} /* min_d */
+static double max_d(double a, double b) { return (a > b) ? a : b; } /* max_d */
 
-static double max_d(double a, double b)
-{
-  return (a > b) ? a : b;
-
-} /* max_d */
-
-static double hinit(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned norbits, unsigned nbody, void *args,
-                    double x, double *y,
+static double hinit(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr,
+                    unsigned norbits, unsigned nbody, void *args, double x, double *y,
                     double posneg, double *f0, double *f1, double *yy1, int iord,
-                    double hmax, double *atoler, double *rtoler, int itoler)
-{
+                    double hmax, double *atoler, double *rtoler, int itoler) {
   double dnf, dny, atoli, rtoli, sk, h, h1, der2, der12, sqr;
   unsigned i;
 
@@ -65,8 +28,7 @@ static double hinit(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, un
   rtoli = rtoler[0];
 
   if (!itoler)
-    for (i = 0; i < n; i++)
-    {
+    for (i = 0; i < n; i++) {
       sk = atoli + rtoli * fabs(y[i]);
       sqr = f0[i] / sk;
       dnf += sqr * sqr;
@@ -74,8 +36,7 @@ static double hinit(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, un
       dny += sqr * sqr;
     }
   else
-    for (i = 0; i < n; i++)
-    {
+    for (i = 0; i < n; i++) {
       sk = atoler[i] + rtoler[i] * fabs(y[i]);
       sqr = f0[i] / sk;
       dnf += sqr * sqr;
@@ -99,15 +60,13 @@ static double hinit(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, un
   /* estimate the second derivative of the solution */
   der2 = 0.0;
   if (!itoler)
-    for (i = 0; i < n; i++)
-    {
+    for (i = 0; i < n; i++) {
       sk = atoli + rtoli * fabs(y[i]);
       sqr = (f1[i] - f0[i]) / sk;
       der2 += sqr * sqr;
     }
   else
-    for (i = 0; i < n; i++)
-    {
+    for (i = 0; i < n; i++) {
       sk = atoler[i] + rtoler[i] * fabs(y[i]);
       sqr = (f1[i] - f0[i]) / sk;
       der2 += sqr * sqr;
@@ -127,15 +86,16 @@ static double hinit(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, un
 } /* hinit */
 
 /* core integrator */
-static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned norbits, unsigned nbody, void *args,
-                  double x, double *y, double xend,
-                  double hmax, double h, double *rtoler, double *atoler,
-                  int itoler, FILE *fileout, SolTrait solout, int iout,
-                  long nmax, double uround, int meth, long nstiff, double safe,
-                  double beta, double fac1, double fac2, unsigned *icont,
-                  Dop853DenseState *dense_state,
-                  double *output_times, int n_output_times, double *output_y)
-{
+static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr,
+                  unsigned norbits, unsigned nbody, void *args, double x, double *y,
+                  double xend, double hmax, double h, double *rtoler, double *atoler,
+                  int itoler, FILE *fileout, SolTrait solout, int iout, long nmax,
+                  double uround, int meth, long nstiff, double safe, double beta,
+                  double fac1, double fac2, unsigned *icont,
+                  Dop853DenseState *dense_state, double *yy1, double *k1, double *k2,
+                  double *k3, double *k4, double *k5, double *k6, double *k7,
+                  double *k8, double *k9, double *k10, double *output_times,
+                  int n_output_times, double *output_y) {
   double facold, expo1, fac, facc1, facc2, fac11, posneg, xph;
   double atoli, rtoli, hlamb, err, sk, hnew, yd0, ydiff, bspl;
   double stnum, stden, sqr, err2, erri, deno;
@@ -157,10 +117,13 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
   double d61, d66, d67, d68, d69, d610, d611, d612, d613, d614, d615, d616;
   double d71, d76, d77, d78, d79, d710, d711, d712, d713, d714, d715, d716;
   int output_idx = 0;
+  long nfcn = 0;
+  long nstep = 0;
+  long naccpt = 0;
+  long nrejct = 0;
 
   /* initialisations */
-  switch (meth)
-  {
+  switch (meth) {
   case 1:
 
     c2 = 0.526001519587677318785587544488E-01;
@@ -350,24 +313,22 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
   iord = 8;
 
   if (h == 0.0)
-    h = hinit(n, fcn, p, fr, norbits, nbody, args, x, y, posneg, k1, k2, k3, iord, hmax, atoler, rtoler, itoler);
+    h = hinit(n, fcn, p, fr, norbits, nbody, args, x, y, posneg, k1, k2, k3, iord, hmax,
+              atoler, rtoler, itoler);
 
   nfcn += 2;
   reject = 0;
   if (dense_state)
     dense_state->xold = x;
 
-  if (iout)
-  {
+  if (iout) {
     irtrn = 1;
-    if (dense_state)
-    {
+    if (dense_state) {
       dense_state->hout = 1.0;
       dense_state->xold = x;
     }
     solout(naccpt + 1, x, x, y, n, &irtrn);
-    if (irtrn < 0)
-    {
+    if (irtrn < 0) {
       if (fileout)
         fprintf(fileout, "Exit of dop853 at x = %.16e\r\n", x);
       return 2;
@@ -375,30 +336,29 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
   }
 
   /* basic integration step */
-  while (1)
-  {
-    if (dense_state)
-    {
+  while (1) {
+    if (dense_state) {
       dense_state->xold = x;
       dense_state->hout = h;
     }
 
-    if (nstep > nmax)
-    {
+    if (nstep > nmax) {
       if (fileout)
-        fprintf(fileout, "Exit of dop853 at x = %.16e, more than nmax = %li are needed\r\n", x, nmax);
+        fprintf(fileout,
+                "Exit of dop853 at x = %.16e, more than nmax = %li are needed - nstep "
+                "= %li\n",
+                x, nmax, nstep);
       return -2;
     }
 
-    if (0.1 * fabs(h) <= fabs(x) * uround)
-    {
+    if (0.1 * fabs(h) <= fabs(x) * uround) {
       if (fileout)
-        fprintf(fileout, "Exit of dop853 at x = %.16e, step size too small h = %.16e\r\n", x, h);
+        fprintf(fileout,
+                "Exit of dop853 at x = %.16e, step size too small h = %.16e\r\n", x, h);
       return -3;
     }
 
-    if ((x + 1.01 * h - xend) * posneg > 0.0)
-    {
+    if ((x + 1.01 * h - xend) * posneg > 0.0) {
       h = xend - x;
       last = 1;
     }
@@ -443,12 +403,11 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
     xph = x + h;
     for (i = 0; i < n; i++)
       yy1[i] = y[i] + h * (a121 * k1[i] + a124 * k4[i] + a125 * k5[i] + a126 * k6[i] +
-                           a127 * k7[i] + a128 * k8[i] + a129 * k9[i] +
-                           a1210 * k10[i] + a1211 * k2[i]);
+                           a127 * k7[i] + a128 * k8[i] + a129 * k9[i] + a1210 * k10[i] +
+                           a1211 * k2[i]);
     fcn(n, xph, yy1, k3, p, fr, norbits, nbody, args);
     nfcn += 11;
-    for (i = 0; i < n; i++)
-    {
+    for (i = 0; i < n; i++) {
       k4[i] = b1 * k1[i] + b6 * k6[i] + b7 * k7[i] + b8 * k8[i] + b9 * k9[i] +
               b10 * k10[i] + b11 * k2[i] + b12 * k3[i];
       k5[i] = y[i] + h * k4[i];
@@ -458,8 +417,7 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
     err = 0.0;
     err2 = 0.0;
     if (!itoler) // Scalar tolerances
-      for (i = 0; i < n; i++)
-      {
+      for (i = 0; i < n; i++) {
         sk = atoli + rtoli * max_d(fabs(y[i]), fabs(k5[i]));
         erri = k4[i] - bhh1 * k1[i] - bhh2 * k9[i] - bhh3 * k3[i];
         sqr = erri / sk;
@@ -470,8 +428,7 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
         err += sqr * sqr;
       }
     else
-      for (i = 0; i < n; i++)
-      {
+      for (i = 0; i < n; i++) {
         sk = atoler[i] + rtoler[i] * max_d(fabs(y[i]), fabs(k5[i]));
         erri = k4[i] - bhh1 * k1[i] - bhh2 * k9[i] - bhh3 * k3[i];
         sqr = erri / sk;
@@ -494,8 +451,7 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
     fac = max_d(facc2, min_d(facc1, fac / safe));
     hnew = h / fac;
 
-    if (err <= 1.0)
-    {
+    if (err <= 1.0) {
       /* step accepted */
 
       facold = max_d(err, 1.0E-4);
@@ -504,12 +460,10 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
       nfcn++;
 
       /* stiffness detection */
-      if (!(naccpt % nstiff) || (iasti > 0))
-      {
+      if (!(naccpt % nstiff) || (iasti > 0)) {
         stnum = 0.0;
         stden = 0.0;
-        for (i = 0; i < n; i++)
-        {
+        for (i = 0; i < n; i++) {
           sqr = k4[i] - k3[i];
           stnum += sqr * sqr;
           sqr = k5[i] - yy1[i];
@@ -517,20 +471,16 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
         }
         if (stden > 0.0)
           hlamb = h * sqrt(stnum / stden);
-        if (hlamb > 6.1)
-        {
+        if (hlamb > 6.1) {
           nonsti = 0;
           iasti++;
           if (iasti == 15)
             if (fileout)
               fprintf(fileout, "The problem seems to become stiff at x = %.16e\r\n", x);
-            else
-            {
+            else {
               return -4;
             }
-        }
-        else
-        {
+        } else {
           nonsti++;
           if (nonsti == 6)
             iasti = 0;
@@ -541,30 +491,32 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
       // if (iout == 2)
       // APW: modified because I don't think this logic is correct. We should enter
       // below if we are doing dense output, which is not the same as iout == 2
-      if (dense_state)
-      {
+      if (dense_state) {
         /* save the first function evaluations */
         if (dense_state->nrds == n)
-          for (i = 0; i < n; i++)
-          {
+          for (i = 0; i < n; i++) {
             dense_state->rcont1[i] = y[i];
             ydiff = k5[i] - y[i];
             dense_state->rcont2[i] = ydiff;
             bspl = h * k1[i] - ydiff;
             dense_state->rcont3[i] = bspl;
             dense_state->rcont4[i] = ydiff - h * k4[i] - bspl;
-            dense_state->rcont5[i] = d41 * k1[i] + d46 * k6[i] + d47 * k7[i] + d48 * k8[i] +
-                                     d49 * k9[i] + d410 * k10[i] + d411 * k2[i] + d412 * k3[i];
-            dense_state->rcont6[i] = d51 * k1[i] + d56 * k6[i] + d57 * k7[i] + d58 * k8[i] +
-                                     d59 * k9[i] + d510 * k10[i] + d511 * k2[i] + d512 * k3[i];
-            dense_state->rcont7[i] = d61 * k1[i] + d66 * k6[i] + d67 * k7[i] + d68 * k8[i] +
-                                     d69 * k9[i] + d610 * k10[i] + d611 * k2[i] + d612 * k3[i];
-            dense_state->rcont8[i] = d71 * k1[i] + d76 * k6[i] + d77 * k7[i] + d78 * k8[i] +
-                                     d79 * k9[i] + d710 * k10[i] + d711 * k2[i] + d712 * k3[i];
+            dense_state->rcont5[i] = d41 * k1[i] + d46 * k6[i] + d47 * k7[i] +
+                                     d48 * k8[i] + d49 * k9[i] + d410 * k10[i] +
+                                     d411 * k2[i] + d412 * k3[i];
+            dense_state->rcont6[i] = d51 * k1[i] + d56 * k6[i] + d57 * k7[i] +
+                                     d58 * k8[i] + d59 * k9[i] + d510 * k10[i] +
+                                     d511 * k2[i] + d512 * k3[i];
+            dense_state->rcont7[i] = d61 * k1[i] + d66 * k6[i] + d67 * k7[i] +
+                                     d68 * k8[i] + d69 * k9[i] + d610 * k10[i] +
+                                     d611 * k2[i] + d612 * k3[i];
+            dense_state->rcont8[i] = d71 * k1[i] + d76 * k6[i] + d77 * k7[i] +
+                                     d78 * k8[i] + d79 * k9[i] + d710 * k10[i] +
+                                     d711 * k2[i] + d712 * k3[i];
           }
-        else
-          for (j = 0; j < dense_state->nrds; j++)
-          {
+        else {
+          fprintf(fileout, "Error: SHOULD NEVER GET HERE\n");
+          for (j = 0; j < dense_state->nrds; j++) {
             i = icont[j];
             dense_state->rcont1[j] = y[i];
             ydiff = k5[i] - y[i];
@@ -572,83 +524,98 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
             bspl = h * k1[i] - ydiff;
             dense_state->rcont3[j] = bspl;
             dense_state->rcont4[j] = ydiff - h * k4[i] - bspl;
-            dense_state->rcont5[j] = d41 * k1[i] + d46 * k6[i] + d47 * k7[i] + d48 * k8[i] +
-                                     d49 * k9[i] + d410 * k10[i] + d411 * k2[i] + d412 * k3[i];
-            dense_state->rcont6[j] = d51 * k1[i] + d56 * k6[i] + d57 * k7[i] + d58 * k8[i] +
-                                     d59 * k9[i] + d510 * k10[i] + d511 * k2[i] + d512 * k3[i];
-            dense_state->rcont7[j] = d61 * k1[i] + d66 * k6[i] + d67 * k7[i] + d68 * k8[i] +
-                                     d69 * k9[i] + d610 * k10[i] + d611 * k2[i] + d612 * k3[i];
-            dense_state->rcont8[j] = d71 * k1[i] + d76 * k6[i] + d77 * k7[i] + d78 * k8[i] +
-                                     d79 * k9[i] + d710 * k10[i] + d711 * k2[i] + d712 * k3[i];
+            dense_state->rcont5[j] = d41 * k1[i] + d46 * k6[i] + d47 * k7[i] +
+                                     d48 * k8[i] + d49 * k9[i] + d410 * k10[i] +
+                                     d411 * k2[i] + d412 * k3[i];
+            dense_state->rcont6[j] = d51 * k1[i] + d56 * k6[i] + d57 * k7[i] +
+                                     d58 * k8[i] + d59 * k9[i] + d510 * k10[i] +
+                                     d511 * k2[i] + d512 * k3[i];
+            dense_state->rcont7[j] = d61 * k1[i] + d66 * k6[i] + d67 * k7[i] +
+                                     d68 * k8[i] + d69 * k9[i] + d610 * k10[i] +
+                                     d611 * k2[i] + d612 * k3[i];
+            dense_state->rcont8[j] = d71 * k1[i] + d76 * k6[i] + d77 * k7[i] +
+                                     d78 * k8[i] + d79 * k9[i] + d710 * k10[i] +
+                                     d711 * k2[i] + d712 * k3[i];
           }
+        }
 
         /* the next three function evaluations */
         for (i = 0; i < n; i++)
-          yy1[i] = y[i] + h * (a141 * k1[i] + a147 * k7[i] + a148 * k8[i] +
-                               a149 * k9[i] + a1410 * k10[i] + a1411 * k2[i] +
-                               a1412 * k3[i] + a1413 * k4[i]);
+          yy1[i] = y[i] +
+                   h * (a141 * k1[i] + a147 * k7[i] + a148 * k8[i] + a149 * k9[i] +
+                        a1410 * k10[i] + a1411 * k2[i] + a1412 * k3[i] + a1413 * k4[i]);
         fcn(n, x + c14 * h, yy1, k10, p, fr, norbits, nbody, args);
         for (i = 0; i < n; i++)
-          yy1[i] = y[i] + h * (a151 * k1[i] + a156 * k6[i] + a157 * k7[i] + a158 * k8[i] +
-                               a1511 * k2[i] + a1512 * k3[i] + a1513 * k4[i] +
-                               a1514 * k10[i]);
+          yy1[i] = y[i] +
+                   h * (a151 * k1[i] + a156 * k6[i] + a157 * k7[i] + a158 * k8[i] +
+                        a1511 * k2[i] + a1512 * k3[i] + a1513 * k4[i] + a1514 * k10[i]);
         fcn(n, x + c15 * h, yy1, k2, p, fr, norbits, nbody, args);
         for (i = 0; i < n; i++)
-          yy1[i] = y[i] + h * (a161 * k1[i] + a166 * k6[i] + a167 * k7[i] + a168 * k8[i] +
-                               a169 * k9[i] + a1613 * k4[i] + a1614 * k10[i] +
-                               a1615 * k2[i]);
+          yy1[i] = y[i] +
+                   h * (a161 * k1[i] + a166 * k6[i] + a167 * k7[i] + a168 * k8[i] +
+                        a169 * k9[i] + a1613 * k4[i] + a1614 * k10[i] + a1615 * k2[i]);
         fcn(n, x + c16 * h, yy1, k3, p, fr, norbits, nbody, args);
         nfcn += 3;
 
         /* final preparation */
         if (dense_state->nrds == n)
-          for (i = 0; i < n; i++)
-          {
-            dense_state->rcont5[i] = h * (dense_state->rcont5[i] + d413 * k4[i] + d414 * k10[i] +
-                                          d415 * k2[i] + d416 * k3[i]);
-            dense_state->rcont6[i] = h * (dense_state->rcont6[i] + d513 * k4[i] + d514 * k10[i] +
-                                          d515 * k2[i] + d516 * k3[i]);
-            dense_state->rcont7[i] = h * (dense_state->rcont7[i] + d613 * k4[i] + d614 * k10[i] +
-                                          d615 * k2[i] + d616 * k3[i]);
-            dense_state->rcont8[i] = h * (dense_state->rcont8[i] + d713 * k4[i] + d714 * k10[i] +
-                                          d715 * k2[i] + d716 * k3[i]);
+          for (i = 0; i < n; i++) {
+            dense_state->rcont5[i] = h * (dense_state->rcont5[i] + d413 * k4[i] +
+                                          d414 * k10[i] + d415 * k2[i] + d416 * k3[i]);
+            dense_state->rcont6[i] = h * (dense_state->rcont6[i] + d513 * k4[i] +
+                                          d514 * k10[i] + d515 * k2[i] + d516 * k3[i]);
+            dense_state->rcont7[i] = h * (dense_state->rcont7[i] + d613 * k4[i] +
+                                          d614 * k10[i] + d615 * k2[i] + d616 * k3[i]);
+            dense_state->rcont8[i] = h * (dense_state->rcont8[i] + d713 * k4[i] +
+                                          d714 * k10[i] + d715 * k2[i] + d716 * k3[i]);
           }
         else
-          for (j = 0; j < dense_state->nrds; j++)
-          {
+          for (j = 0; j < dense_state->nrds; j++) {
             i = icont[j];
-            dense_state->rcont5[j] = h * (dense_state->rcont5[j] + d413 * k4[i] + d414 * k10[i] +
-                                          d415 * k2[i] + d416 * k3[i]);
-            dense_state->rcont6[j] = h * (dense_state->rcont6[j] + d513 * k4[i] + d514 * k10[i] +
-                                          d515 * k2[i] + d516 * k3[i]);
-            dense_state->rcont7[j] = h * (dense_state->rcont7[j] + d613 * k4[i] + d614 * k10[i] +
-                                          d615 * k2[i] + d616 * k3[i]);
-            dense_state->rcont8[j] = h * (dense_state->rcont8[j] + d713 * k4[i] + d714 * k10[i] +
-                                          d715 * k2[i] + d716 * k3[i]);
+            dense_state->rcont5[j] = h * (dense_state->rcont5[j] + d413 * k4[i] +
+                                          d414 * k10[i] + d415 * k2[i] + d416 * k3[i]);
+            dense_state->rcont6[j] = h * (dense_state->rcont6[j] + d513 * k4[i] +
+                                          d514 * k10[i] + d515 * k2[i] + d516 * k3[i]);
+            dense_state->rcont7[j] = h * (dense_state->rcont7[j] + d613 * k4[i] +
+                                          d614 * k10[i] + d615 * k2[i] + d616 * k3[i]);
+            dense_state->rcont8[j] = h * (dense_state->rcont8[j] + d713 * k4[i] +
+                                          d714 * k10[i] + d715 * k2[i] + d716 * k3[i]);
           }
       }
 
       // After each accepted step, fill output_y for all output_times in this interval
-      if (dense_state && output_times && output_y && n_output_times > 0)
-      {
+      unsigned idx;
+      if (dense_state && output_times && output_y && n_output_times > 0) {
         double x0 = dense_state->xold;
         double h = dense_state->hout;
         double x1 = x0 + h;
 
         // For each output time in [x0, x1], fill output_y
-        while (output_idx < n_output_times)
-        {
+
+        while (output_idx < n_output_times) {
           double t_out = output_times[output_idx];
-          if ((x0 <= t_out && t_out <= x1) || (x1 <= t_out && t_out <= x0))
-          {
-            for (unsigned i = 0; i < dense_state->nrds; i++)
-            {
-              output_y[output_idx * dense_state->nrds + i] = contd8_threadsafe(dense_state, i, t_out);
+          if ((x0 <= t_out && t_out <= x1) || (x1 <= t_out && t_out <= x0)) {
+            // printf("output_idx = %u, t_out = %.16e\r\n", output_idx, t_out);
+            for (unsigned i = 0; i < dense_state->nrds; i++) {
+              idx = output_idx * dense_state->nrds + i;
+              // ENABLE THIS TO CHECK FOR OUT OF BOUNDS
+              // if (idx >= (n_output_times * dense_state->nrds)) {
+              //   fprintf(fileout, "ERROR: output index out of bounds: %d >= %d\n", idx,
+              //           n_output_times * dense_state->nrds);
+              //   return -5;
+              // }
+
+              // double val = contd8_threadsafe(dense_state, i, t_out);
+              // if (isnan(val)) {
+              //     fprintf(fileout, "NAN returned from contd8_threadsafe at output_idx=%u, i=%u\n", output_idx, i);
+              //     exit(1);
+              // }
+              // output_y[idx] = val;
+              output_y[idx] = contd8_threadsafe(dense_state, i, t_out);
+
             }
             output_idx++;
-          }
-          else
-          {
+          } else {
             break;
           }
         }
@@ -658,11 +625,9 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
       memcpy(y, k5, n * sizeof(double));
       x = xph;
 
-      if (iout)
-      {
+      if (iout) {
         solout(naccpt + 1, x, x, y, n, &irtrn);
-        if (irtrn < 0)
-        {
+        if (irtrn < 0) {
           if (fileout)
             fprintf(fileout, "Exit of dop853 at x = %.16e\r\n", x);
           return 2;
@@ -670,14 +635,18 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
       }
 
       /* normal exit */
-      if (last)
-      {
+      if (last) {
         // After the integration loop, or in the 'last' block:
-        if (output_idx == n_output_times)
-        {
-          for (unsigned i = 0; i < dense_state->nrds; i++)
-          {
-            output_y[(n_output_times - 1) * dense_state->nrds + i] = y[i];
+        if (dense_state && output_idx == n_output_times) {
+          for (unsigned i = 0; i < dense_state->nrds; i++) {
+            idx = (n_output_times - 1) * dense_state->nrds + i;
+            // ENABLE THIS TO CHECK FOR OUT OF BOUNDS
+            // if (idx >= (n_output_times * dense_state->nrds)) {
+            //   fprintf(fileout, "ERROR: output index out of bounds: %d >= %d\n", idx,
+            //           n_output_times * dense_state->nrds);
+            //   return -5;
+            // }
+            output_y[idx] = y[i];
           }
         }
         return 1;
@@ -689,9 +658,7 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
         hnew = posneg * min_d(fabs(hnew), fabs(h));
 
       reject = 0;
-    }
-    else
-    {
+    } else {
       /* step rejected */
       hnew = h / min_d(facc1, fac11 / safe);
       reject = 1;
@@ -706,23 +673,20 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsi
 } /* dopcor */
 
 /* front-end */
-int dop853(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned norbits, unsigned nbody, void *args,
-           double x, double *y, double xend, double *rtoler,
-           double *atoler, int itoler, SolTrait solout, int iout, FILE *fileout, double uround,
-           double safe, double fac1, double fac2, double beta, double hmax, double h,
-           long nmax, int meth, long nstiff, unsigned nrdens, unsigned *icont, unsigned licont,
-           Dop853DenseState *dense_state,
-           double *output_times, int n_output_times, double *output_y)
-{
-  int arret, idid;
+int dop853(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned norbits,
+           unsigned nbody, void *args, double x, double *y, double xend, double *rtoler,
+           double *atoler, int itoler, SolTrait solout, int iout, FILE *fileout,
+           double uround, double safe, double fac1, double fac2, double beta,
+           double hmax, double h, long nmax, int meth, long nstiff, unsigned nrdens,
+           unsigned *icont, unsigned licont, Dop853DenseState *dense_state,
+           double *output_times, int n_output_times, double *output_y) {
+  int arret = 0;
+  int idid;
   unsigned i;
-
-  /* initialisations */
-  nfcn = nstep = naccpt = nrejct = arret = 0;
+  double *yy1, *k1, *k2, *k3, *k4, *k5, *k6, *k7, *k8, *k9, *k10;
 
   /* n, the dimension of the system */
-  if (n == UINT_MAX)
-  {
+  if (n == UINT_MAX) {
     if (fileout)
       fprintf(fileout, "System too big, max. n = %u\r\n", UINT_MAX - 1);
     arret = 1;
@@ -731,8 +695,7 @@ int dop853(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned no
   /* nmax, the maximal number of steps */
   if (!nmax)
     nmax = 100000;
-  else if (nmax <= 0)
-  {
+  else if (nmax <= 0) {
     if (fileout)
       fprintf(fileout, "Wrong input, nmax = %li\r\n", nmax);
     arret = 1;
@@ -741,8 +704,7 @@ int dop853(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned no
   /* meth, coefficients of the method */
   if (!meth)
     meth = 1;
-  else if ((meth <= 0) || (meth >= 2))
-  {
+  else if ((meth <= 0) || (meth >= 2)) {
     if (fileout)
       fprintf(fileout, "Curious input, meth = %i\r\n", meth);
     arret = 1;
@@ -755,43 +717,44 @@ int dop853(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned no
     nstiff = nmax + 10;
 
   /* iout, switch for calling solout */
-  if ((iout < 0) || (iout > 2))
-  {
+  if ((iout < 0) || (iout > 2)) {
     if (fileout)
       fprintf(fileout, "Wrong input, iout = %i\r\n", iout);
     arret = 1;
   }
 
   /* nrdens, number of dense output components */
-  if (nrdens > n)
-  {
+  if (nrdens > n) {
     if (fileout)
       fprintf(fileout, "Curious input, nrdens = %u\r\n", nrdens);
     arret = 1;
-  }
-  else if (nrdens)
-  {
-    if (!dense_state)
-    {
+  } else if (nrdens) {
+    // ADDED BY APW:
+    if (nrdens != n) {
+      if (fileout) {
+        fprintf(fileout, "Warning: nrdens = %u, but not all components are dense\n",
+                nrdens);
+        arret = 1;
+      }
+    }
+
+    if (!dense_state) {
       if (fileout)
         fprintf(fileout, "Dense state must be pre-allocated\r\n");
       arret = 1;
     }
     /* control of length of icont */
-    if (nrdens == n)
-    {
+    if (nrdens == n) {
       if (icont && fileout)
-        fprintf(fileout, "Warning : when nrdens = n there is no need allocating memory for icont\r\n");
+        fprintf(fileout, "Warning : when nrdens = n there is no need allocating memory "
+                         "for icont\r\n");
       dense_state->nrds = n;
-    }
-    else if (licont < nrdens)
-    {
+    } else if (licont < nrdens) {
       if (fileout)
-        fprintf(fileout, "Insufficient storage for icont, min. licont = %u\r\n", nrdens);
+        fprintf(fileout, "Insufficient storage for icont, min. licont = %u\r\n",
+                nrdens);
       arret = 1;
-    }
-    else
-    {
+    } else {
       if ((iout < 2) && fileout)
         fprintf(fileout, "Warning : put iout = 2 for dense output\r\n");
       dense_state->nrds = nrdens;
@@ -800,27 +763,24 @@ int dop853(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned no
       for (i = 0; i < nrdens; i++)
         dense_state->indir[icont[i]] = i;
     }
-  }
-  else
-  {
+  } else {
     dense_state = NULL; // Defensive: ensure not used
   }
 
   /* uround, smallest number satisfying 1.0+uround > 1.0 */
   if (uround == 0.0)
     uround = 2.3E-16;
-  else if ((uround <= 1.0E-35) || (uround >= 1.0))
-  {
+  else if ((uround <= 1.0E-35) || (uround >= 1.0)) {
     if (fileout)
-      fprintf(fileout, "Which machine do you have ? Your uround was : %.16e\r\n", uround);
+      fprintf(fileout, "Which machine do you have ? Your uround was : %.16e\r\n",
+              uround);
     arret = 1;
   }
 
   /* safety factor */
   if (safe == 0.0)
     safe = 0.9;
-  else if ((safe >= 1.0) || (safe <= 1.0E-4))
-  {
+  else if ((safe >= 1.0) || (safe <= 1.0E-4)) {
     if (fileout)
       fprintf(fileout, "Curious input for safety factor, safe = %.16e\r\n", safe);
     arret = 1;
@@ -837,8 +797,7 @@ int dop853(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned no
     beta = 0.0;
   else if (beta < 0.0)
     beta = 0.0;
-  else if (beta > 0.2)
-  {
+  else if (beta > 0.2) {
     if (fileout)
       fprintf(fileout, "Curious input for beta : beta = %.16e\r\n", beta);
     arret = 1;
@@ -861,16 +820,43 @@ int dop853(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned no
   k9 = (double *)malloc(n * sizeof(double));
   k10 = (double *)malloc(n * sizeof(double));
 
-  if (!yy1 || !k1 || !k2 || !k3 || !k4 || !k5 || !k6 || !k7 || !k8 || !k9 || !k10)
-  {
+  if (!yy1 || !k1 || !k2 || !k3 || !k4 || !k5 || !k6 || !k7 || !k8 || !k9 || !k10) {
     if (fileout)
       fprintf(fileout, "Not enough free memory for the method\r\n");
     arret = 1;
   }
 
   /* when a failure has occured, we return -1 */
-  if (arret)
-  {
+  if (arret) {
+    if (k10)
+      free(k10);
+    if (k9)
+      free(k9);
+    if (k8)
+      free(k8);
+    if (k7)
+      free(k7);
+    if (k6)
+      free(k6);
+    if (k5)
+      free(k5);
+    if (k4)
+      free(k4);
+    if (k3)
+      free(k3);
+    if (k2)
+      free(k2);
+    if (k1)
+      free(k1);
+    if (yy1)
+      free(yy1);
+    return -1;
+  } else {
+    idid =
+        dopcor(n, fcn, p, fr, norbits, nbody, args, x, y, xend, hmax, h, rtoler, atoler,
+               itoler, fileout, solout, iout, nmax, uround, meth, nstiff, safe, beta,
+               fac1, fac2, icont, nrdens > 0 ? dense_state : NULL, yy1, k1, k2, k3, k4,
+               k5, k6, k7, k8, k9, k10, output_times, n_output_times, output_y);
     if (k10)
       free(k10);
     if (k9)
@@ -894,72 +880,55 @@ int dop853(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned no
     if (yy1)
       free(yy1);
 
-    return -1;
-  }
-  else
-  {
-    idid = dopcor(n, fcn, p, fr, norbits, nbody, args, x, y, xend, hmax, h, rtoler, atoler, itoler, fileout,
-                  solout, iout, nmax, uround, meth, nstiff, safe, beta, fac1, fac2, icont, nrdens > 0 ? dense_state : NULL,
-                  output_times, n_output_times, output_y);
-    free(k10);
-    free(k9);
-    free(k8);
-    free(k7);
-    free(k6);
-    free(k5); /* reverse order freeing too increase chances */
-    free(k4); /* of efficient dynamic memory managing       */
-    free(k3);
-    free(k2);
-    free(k1);
-    free(yy1);
-
     return idid;
   }
 
 } /* dop853 */
 
 // Thread-safe dense output function
-double contd8_threadsafe(Dop853DenseState *state, unsigned ii, double x)
-{
-  if (!state)
-  {
+double contd8_threadsafe(Dop853DenseState *state, unsigned ii, double x) {
+  if (!state) {
     fprintf(stderr, "contd8_threadsafe: state is NULL\n");
     return 0.0;
   }
   if (!state->rcont1 || !state->rcont2 || !state->rcont3 || !state->rcont4 ||
-      !state->rcont5 || !state->rcont6 || !state->rcont7 || !state->rcont8)
-  {
+      !state->rcont5 || !state->rcont6 || !state->rcont7 || !state->rcont8) {
     fprintf(stderr, "contd8_threadsafe: one or more rcont arrays are NULL\n");
     return 0.0;
   }
-  if (ii >= state->nrds)
-  {
-    fprintf(stderr, "contd8_threadsafe: ii=%u out of bounds (nrds=%u)\n", ii, state->nrds);
+  if (ii >= state->nrds) {
+    fprintf(stderr, "contd8_threadsafe: ii=%u out of bounds (nrds=%u)\n", ii,
+            state->nrds);
     return 0.0;
   }
   unsigned i;
-  if (!state->indir)
-  {
+  if (!state->indir) {
     i = ii;
-  }
-  else
-  {
+  } else {
     i = state->indir[ii];
   }
-  if (i == UINT_MAX)
-  {
-    fprintf(stderr, "contd8_threadsafe: No dense output available for %uth component\n", ii);
+  if (i == UINT_MAX) {
+    fprintf(stderr, "contd8_threadsafe: No dense output available for %uth component\n",
+            ii);
     return 0.0;
   }
   double s = (x - state->xold) / state->hout;
   double s1 = 1.0 - s;
-  return state->rcont1[i] + s * (state->rcont2[i] + s1 * (state->rcont3[i] + s * (state->rcont4[i] + s1 * (state->rcont5[i] + s * (state->rcont6[i] + s1 * (state->rcont7[i] + s * state->rcont8[i]))))));
+  return state->rcont1[i] +
+         s * (state->rcont2[i] +
+              s1 * (state->rcont3[i] +
+                    s * (state->rcont4[i] +
+                         s1 * (state->rcont5[i] +
+                               s * (state->rcont6[i] +
+                                    s1 * (state->rcont7[i] + s * state->rcont8[i]))))));
 }
 
 // Allocate a Dop853DenseState and its arrays
-Dop853DenseState *dop853_dense_state_alloc(unsigned nrdens, unsigned n)
-{
+Dop853DenseState *dop853_dense_state_alloc(unsigned nrdens, unsigned n) {
   Dop853DenseState *state = (Dop853DenseState *)malloc(sizeof(Dop853DenseState));
+  if (nrdens != n) {
+    printf("alloc: nrdens != n\n");
+  }
   if (!state)
     return NULL;
   state->rcont1 = (double *)malloc(nrdens * sizeof(double));
@@ -973,18 +942,15 @@ Dop853DenseState *dop853_dense_state_alloc(unsigned nrdens, unsigned n)
   state->nrds = nrdens;
   state->xold = 0.0;
   state->hout = 0.0;
-  if (nrdens < n)
-  {
+  if (nrdens < n) {
     state->indir = (unsigned *)malloc(n * sizeof(unsigned));
-  }
-  else
-  {
+  } else {
     state->indir = NULL;
   }
   if (!state->rcont1 || !state->rcont2 || !state->rcont3 || !state->rcont4 ||
       !state->rcont5 || !state->rcont6 || !state->rcont7 || !state->rcont8 ||
-      (nrdens < n && !state->indir))
-  {
+      (nrdens < n && !state->indir)) {
+    printf("ERROR: freeing dense_state early\n");
     dop853_dense_state_free(state, n);
     return NULL;
   }
@@ -992,8 +958,7 @@ Dop853DenseState *dop853_dense_state_alloc(unsigned nrdens, unsigned n)
 }
 
 // Free a Dop853DenseState and its arrays
-void dop853_dense_state_free(Dop853DenseState *state, unsigned n)
-{
+void dop853_dense_state_free(Dop853DenseState *state, unsigned n) {
   if (!state)
     return;
   if (state->rcont1)
@@ -1018,27 +983,22 @@ void dop853_dense_state_free(Dop853DenseState *state, unsigned n)
 }
 
 /* ADDED BY APW */
-void Fwrapper(unsigned full_ndim, double t, double *w, double *f,
-              CPotential *p, CFrameType *fr, unsigned norbits, unsigned na,
-              void *args)
-{
+void Fwrapper(unsigned full_ndim, double t, double *w, double *f, CPotential *p,
+              CFrameType *fr, unsigned norbits, unsigned na, void *args) {
   /* na can be ignored here - used in nbody wrapper below */
 
   int i;
   unsigned ndim = full_ndim / norbits; // phase-space dimensionality
 
-  for (i = 0; i < norbits; i++)
-  {
+  for (i = 0; i < norbits; i++) {
     // call gradient function
     hamiltonian_gradient(p, fr, t, &w[i * ndim], &f[i * ndim]);
   }
 }
 
 void Fwrapper_direct_nbody(unsigned full_ndim, double t, double *w, double *f,
-                           CPotential *p, CFrameType *fr,
-                           unsigned norbits, unsigned nbody,
-                           void *args)
-{
+                           CPotential *p, CFrameType *fr, unsigned norbits,
+                           unsigned nbody, void *args) {
   /* Here, the extra args are actually the array of CPotential objects that
      represent the potentials of the individual particles.
   */
@@ -1055,11 +1015,9 @@ void Fwrapper_direct_nbody(unsigned full_ndim, double t, double *w, double *f,
 }
 
 /* Needed for Lyapunov */
-double six_norm(double *x)
-{
+double six_norm(double *x) {
   double norm = 0;
-  for (int i = 0; i < 6; i++)
-  {
+  for (int i = 0; i < 6; i++) {
     norm = norm + x[i] * x[i];
   }
   return sqrt(norm);
