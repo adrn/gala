@@ -11,9 +11,7 @@ def solve_low_rank(A, b, rank=None, tol=1e-10):
     Parameters
     ----------
     A : array_like
-        Square system matrix.
     b : array_like
-        Right-hand side.
     rank : int, optional
         Number of singular values to keep. If None, use all above `tol`.
     tol : float
