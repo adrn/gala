@@ -1,10 +1,8 @@
-# Third-party
 import astropy.units as u
 import numpy as np
 import pytest
 
-# Custom
-from ..core import MockStream
+from gala.dynamics.mockstream import MockStream
 
 
 def test_init():
