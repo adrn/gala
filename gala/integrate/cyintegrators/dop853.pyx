@@ -75,27 +75,54 @@ cdef extern from "stdio.h":
     FILE *stdout
 
 # LEGACY FUNCTION: don't use this (used by lyapunov functionality)
-cdef void dop853_step(CPotential *cp, CFrameType *cf, FcnEqDiff F,
-                      double *w, double t1, double t2, double dt0,
-                      int ndim, int norbits, int nbody, void *args,
-                      double atol, double rtol, int nmax) except *:
+cdef void dop853_step(
+    CPotential *cp, CFrameType *cf, FcnEqDiff F,
+    double *w, double t1, double t2, double dt0,
+    int ndim, int norbits, int nbody, void *args,
+    double atol, double rtol, int nmax,
+    unsigned err_if_fail,
+    unsigned log_output
+):
 
     cdef:
         int res
         SolTrait solout = NULL
+        FILE* cfile
+
+    if log_output:
+        cfile = stdout
+    else:
+        cfile = NULL
 
     res = dop853(
-        ndim*norbits, F,
-        cp, cf, norbits, nbody, args, t1, w, t2,
-        &rtol, &atol, 0, solout, 0,
-        NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, dt0, nmax, 0, 1, 0,
+        ndim*norbits, F, cp, cf,
+        norbits, nbody, args,
+        t1, w, t2,
+        &rtol, &atol, 0,  # itoler = 0 for scalar tolerances
+        NULL,  # solout: Callback function for output
+        0,  # iout: Controls solout call
+        cfile,  # fileout: file pointer for logging
+        0.0,  # uround: Machine precision (0.0 = use default)
+        0.0,  # safe: Safety factor
+        0.0,  # fac1: Step size control parameter
+        0.0,  # fac2: Step size control parameter
+        0.0,  # beta: Stabilizatin for step size control
+        0.0,  # hmax: maximum allowed step size
+        dt0,  # h: Initial step size
+        nmax,  # nmax: maximum number of integration steps
+        0,  # meth
+        1,  # nstiff: frequency of stiffness detect
+        0,  # nrdens: number of components for dense output
         NULL,  # icont: indices for components
         0,  # licont: length of the icont array
         NULL,  # dense_state
         NULL,  # array of output times
         0,  # number of output times
         NULL  # output array for dense output
-    );
+    )
+
+    if res < 0 and err_if_fail == 1:
+        raise RuntimeError(f"Integration failed with code {res}")
 
 
 cdef class DenseOutputState:
@@ -196,6 +223,9 @@ cdef dop853_helper_save_all(
         int ntot = ntimes * norbits * ndim
         double[:, ::1] output_w = np.empty((ntimes, nrdens))
         FILE* cfile
+
+    if ntimes < 1:
+        raise ValueError("ntimes must be greater than 1")
 
     if log_output:
         cfile = stdout

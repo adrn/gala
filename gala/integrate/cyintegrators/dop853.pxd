@@ -34,7 +34,8 @@ cdef extern from "dopri/dop853.h":
 cdef void dop853_step(CPotential *cp, CFrameType *cf, FcnEqDiff F,
                       double *w, double t1, double t2, double dt0,
                       int ndim, int norbits, int nbody, void *args,
-                      double atol, double rtol, int nmax)  except *
+                      double atol, double rtol, int nmax,
+                      unsigned err_if_fail, unsigned log_output,)
 
 cdef dop853_helper(
     CPotential *cp, CFrameType *cf, FcnEqDiff F,
