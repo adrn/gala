@@ -88,7 +88,7 @@ cpdef mockstream_dop853(
 
         # Time-stepping parameters:
         int ntimes = time.shape[0]
-        double dt0 = 1.
+        double dt0 = time[1] - time[0]
 
         # whoa, so many dots
         CPotential* cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
@@ -154,13 +154,14 @@ cpdef mockstream_dop853(
             dop853_step(cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
                         &w_tmp[0, 0], stream_t1[i], tfinal, dt0,
                         ndim, nbodies+nstream[i], nbodies, args,
-                        atol, rtol, nmax)
+                        atol, rtol, nmax,
+                        err_if_fail=err_if_fail, log_output=log_output)
+
+            PyErr_CheckSignals()
 
             for j in range(nstream[i]):
                 for k in range(ndim):
                     w_final[nbodies+n+j, k] = w_tmp[nbodies+j, k]
-
-            PyErr_CheckSignals()
 
             n += nstream[i]
 
@@ -197,7 +198,8 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
                                 output_every=1, output_filename='',
                                 overwrite=False, check_filesize=True,
                                 double atol=1E-10, double rtol=1E-10,
-                                int nmax=0, int progress=0, double dt0=1.):
+                                int nmax=0, int progress=0,
+                                int err_if_fail=1, int log_output=0):
     """
     Parameters
     ----------
@@ -215,10 +217,6 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
     ``nstream`` is the array containing the number of stream particles released
     at each timestep.
 
-    TODO
-    ----
-    - `dt0` should be customizable in the Python interface.
-
     """
 
     cdef:
@@ -227,6 +225,7 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
 
         # Time-stepping parameters:
         int ntimes = t.shape[0]
+        double dt0 = t[1] - t[0]
 
         # whoa, so many dots
         CPotential* cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
@@ -328,7 +327,8 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
             dop853_step(cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
                         &w[0, 0], t[i-1], t[i], dt0,
                         ndim, nbodies+n, nbodies, args,
-                        atol, rtol, nmax)
+                        atol, rtol, nmax,
+                        err_if_fail=err_if_fail, log_output=log_output)
 
             PyErr_CheckSignals()
 
