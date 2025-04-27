@@ -337,11 +337,6 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr,
 
   /* basic integration step */
   while (1) {
-    if (dense_state) {
-      dense_state->xold = x;
-      dense_state->hout = h;
-    }
-
     if (nstep > nmax) {
       if (fileout)
         fprintf(fileout,
@@ -361,6 +356,11 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr,
     if ((x + 1.01 * h - xend) * posneg > 0.0) {
       h = xend - x;
       last = 1;
+    }
+
+    if (dense_state) {
+      dense_state->xold = x;
+      dense_state->hout = h;
     }
 
     nstep++;
@@ -595,7 +595,6 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr,
         while (output_idx < n_output_times) {
           double t_out = output_times[output_idx];
           if ((x0 <= t_out && t_out <= x1) || (x1 <= t_out && t_out <= x0)) {
-            // printf("output_idx = %u, t_out = %.16e\r\n", output_idx, t_out);
             for (unsigned i = 0; i < dense_state->nrds; i++) {
               idx = output_idx * dense_state->nrds + i;
               // ENABLE THIS TO CHECK FOR OUT OF BOUNDS
@@ -604,13 +603,6 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr,
               //           n_output_times * dense_state->nrds);
               //   return -5;
               // }
-
-              // double val = contd8_threadsafe(dense_state, i, t_out);
-              // if (isnan(val)) {
-              //     fprintf(fileout, "NAN returned from contd8_threadsafe at output_idx=%u, i=%u\n", output_idx, i);
-              //     exit(1);
-              // }
-              // output_y[idx] = val;
               output_y[idx] = contd8_threadsafe(dense_state, i, t_out);
 
             }
@@ -636,19 +628,6 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr,
 
       /* normal exit */
       if (last) {
-        // After the integration loop, or in the 'last' block:
-        if (dense_state && output_idx == n_output_times) {
-          for (unsigned i = 0; i < dense_state->nrds; i++) {
-            idx = (n_output_times - 1) * dense_state->nrds + i;
-            // ENABLE THIS TO CHECK FOR OUT OF BOUNDS
-            // if (idx >= (n_output_times * dense_state->nrds)) {
-            //   fprintf(fileout, "ERROR: output index out of bounds: %d >= %d\n", idx,
-            //           n_output_times * dense_state->nrds);
-            //   return -5;
-            // }
-            output_y[idx] = y[i];
-          }
-        }
         return 1;
       }
 
@@ -694,7 +673,7 @@ int dop853(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned no
 
   /* nmax, the maximal number of steps */
   if (!nmax)
-    nmax = 100000;
+    nmax = 1000000;  // UPDATED from 100_000
   else if (nmax <= 0) {
     if (fileout)
       fprintf(fileout, "Wrong input, nmax = %li\r\n", nmax);
