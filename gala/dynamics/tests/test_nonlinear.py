@@ -3,10 +3,10 @@ import numpy as np
 
 # Project
 from ... import potential as gp
-from ...potential import Hamiltonian
-from ..nonlinear import lyapunov_max, fast_lyapunov_max, surface_of_section
 from ...integrate import DOPRI853Integrator
+from ...potential import Hamiltonian
 from ...units import galactic
+from ..nonlinear import fast_lyapunov_max, lyapunov_max, surface_of_section
 
 
 class TestForcedPendulum(object):
@@ -195,7 +195,9 @@ class TestLogarithmic(object):
         X0 = -0.2
         y0 = 0.0
         E0 = -0.4059
-        Y0 = np.squeeze(np.sqrt(E0 - self.hamiltonian.potential.energy([x0, y0, 0.0]).value))
+        Y0 = np.squeeze(
+            np.sqrt(E0 - self.hamiltonian.potential.energy([x0, y0, 0.0]).value)
+        )
         chaotic_w0 = [x0, y0, 0.0, X0, Y0, 0.0]
 
         # initial conditions from LP-VI documentation:
@@ -224,35 +226,11 @@ class TestLogarithmic(object):
             )
             lyap = np.mean(lyap, axis=1)
 
-            # also just integrate the orbit to compare dE scaling
-            orbit2 = self.hamiltonian.integrate_orbit(
-                w0, dt=self.dt, n_steps=self.n_steps, Integrator=DOPRI853Integrator
-            )
-
-            # lyapunov exp
-            # pl.figure()
-            # pl.loglog(lyap, marker='')
-            # pl.savefig(os.path.join(str(tmpdir),"log_lyap_max_{}.png".format(ii)))
-
             # energy conservation
             E = orbit[:, 0].energy().value  # returns 3 orbits
-            dE = np.abs(E[1:] - E[0])
+            dE = np.abs((E[1:] - E[0]) / E[0])
 
-            E = orbit2.energy().value
-            dE_ww = np.abs(E[1:] - E[0])
-
-            # import matplotlib.pyplot as plt
-            # plt.semilogy(dE, marker='')
-            # plt.semilogy(dE_ww, marker='')
-
-            # fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-            # axes[0].plot(orbit.pos[0, :, 0], orbit.pos[1, :, 0], marker='') # ignore offset orbits
-            # axes[1].plot(orbit2.pos[0], orbit2.pos[1], marker='')
-            # fig.savefig(os.path.join(str(tmpdir),"log_orbit_lyap_max_{}.png".format(ii)))
-
-            # plt.show()
-
-            assert np.allclose(dE_ww[-100:], dE[-100:], rtol=1e-1)
+            assert np.all(dE < 1e-10)
 
     def test_compare_fast(self, tmpdir):
         n_steps_per_pullback = 10
