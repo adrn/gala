@@ -152,6 +152,7 @@ cdef dop853_helper(
     double atol,
     double rtol,
     int nmax,
+    double dt_max,
     unsigned err_if_fail,
     unsigned log_output
 ):
@@ -178,7 +179,7 @@ cdef dop853_helper(
         0.0,  # fac1: Step size control parameter
         0.0,  # fac2: Step size control parameter
         0.0,  # beta: Stabilizatin for step size control
-        0.0,  # hmax: maximum allowed step size
+        dt_max,  # hmax: maximum allowed step size
         t[1] - t[0],  # h: Initial step size
         nmax,  # nmax: maximum number of integration steps
         0,  # meth
@@ -212,6 +213,7 @@ cdef dop853_helper_save_all(
     double atol,
     double rtol,
     int nmax,
+    double dt_max,
     unsigned err_if_fail,
     unsigned log_output
 ):
@@ -248,7 +250,7 @@ cdef dop853_helper_save_all(
         0.0,  # fac1: Step size control parameter (0.0 = use default)
         0.0,  # fac2: Step size control parameter (0.0 = use default)
         0.0,  # beta: Stabilizatin for step size control (0.0 = use default)
-        0.0,  # hmax: maximum allowed step size (0.0 = no limit)
+        dt_max,  # hmax: maximum allowed step size (0.0 = no limit)
         t[1] - t[0],  # h: Initial step size
         nmax,  # nmax:  maximum number of integration steps (0 = 100_000)
         1,  # meth:  set to 1 and don't think about it
@@ -270,8 +272,8 @@ cdef dop853_helper_save_all(
 
 cpdef dop853_integrate_hamiltonian(
     hamiltonian, double[:, ::1] w0, double[::1] t,
-    double atol=1E-10, double rtol=1E-10, int nmax=0, int save_all=1,
-    int err_if_fail=1, int log_output=0
+    double atol=1E-10, double rtol=1E-10, int nmax=0, double dt_max = 0.,
+    int save_all=1, int err_if_fail=1, int log_output=0
 ):
     """
     CAUTION: Interpretation of axes is different here! We need the
@@ -301,7 +303,7 @@ cpdef dop853_integrate_hamiltonian(
             cp, &cf, <FcnEqDiff> Fwrapper,
             w0, t,
             ndim, norbits, 0, args, ntimes,
-            atol, rtol, nmax,
+            atol, rtol, nmax, dt_max,
             err_if_fail=err_if_fail, log_output=log_output
         )
         return np.asarray(t), np.asarray(all_w)
@@ -310,7 +312,7 @@ cpdef dop853_integrate_hamiltonian(
             cp, &cf, <FcnEqDiff> Fwrapper,
             w0, t,
             ndim, norbits, 0, args, ntimes,
-            atol, rtol, nmax,
+            atol, rtol, nmax, dt_max,
             err_if_fail=err_if_fail, log_output=log_output
         )
         return np.asarray(t[-1:]), np.asarray(w)

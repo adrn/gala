@@ -47,7 +47,7 @@ cpdef direct_nbody_dop853(
     double [:, ::1] w0, double[::1] t,
     hamiltonian, list particle_potentials,
     save_all=True,
-    double atol=1E-10, double rtol=1E-10, int nmax=0,
+    double atol=1E-10, double rtol=1E-10, int nmax=0, double dt_max=0.0,
     int err_if_fail=1, int log_output=0
 ):
     """Integrate orbits from initial conditions ``w0`` over the time grid ``t``
@@ -118,7 +118,8 @@ cpdef direct_nbody_dop853(
                 <FcnEqDiff> Fwrapper_direct_nbody,
                 w0, t,
                 ndim, nparticles, nbody, args,
-                ntimes, atol, rtol, nmax,
+                ntimes,
+                atol, rtol, nmax, dt_max,
                 err_if_fail=err_if_fail, log_output=log_output
             )
             return np.array(all_w)
@@ -127,8 +128,9 @@ cpdef direct_nbody_dop853(
                 cp, &cf,
                 <FcnEqDiff> Fwrapper_direct_nbody,
                 w0, t,
-                ndim, nparticles, nbody, args, ntimes,
-                atol, rtol, nmax,
+                ndim, nparticles, nbody, args,
+                ntimes,
+                atol, rtol, nmax, dt_max,
                 err_if_fail=err_if_fail, log_output=log_output
             )
             return np.array(final_w).reshape(nparticles, ndim)

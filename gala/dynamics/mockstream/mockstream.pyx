@@ -54,7 +54,7 @@ cpdef mockstream_dop853(
     nbody, double[::1] time,
     double[:, ::1] stream_w0, double[::1] stream_t1,
     double tfinal, int[::1] nstream,
-    double atol=1E-10, double rtol=1E-10, int nmax=0,
+    double atol=1E-10, double rtol=1E-10, int nmax=0, double dt_max=0.0,
     int progress=0,
     int err_if_fail=1, int log_output=0
 ):
@@ -136,7 +136,7 @@ cpdef mockstream_dop853(
             <FcnEqDiff> Fwrapper_direct_nbody,
             nbody_w0, time,
             ndim, nbodies, nbodies, args, ntimes,
-            atol, rtol, nmax,
+            atol, rtol, nmax, dt_max,
             err_if_fail=err_if_fail, log_output=log_output
         )
 
