@@ -230,7 +230,7 @@ cdef dop853_helper(
 cpdef dop853_integrate_hamiltonian(
     hamiltonian, double[:, ::1] w0, double[::1] t,
     double atol=1E-10, double rtol=1E-10, int nmax=0, double dt_max = 0.,
-    int save_all=1, int err_if_fail=1, int log_output=0
+    int nstiff=0, int save_all=1, int err_if_fail=1, int log_output=0
 ):
     """
     CAUTION: Interpretation of axes is different here! We need the
@@ -260,7 +260,7 @@ cpdef dop853_integrate_hamiltonian(
         w0, t,
         ndim, norbits, 0, args, ntimes,
         atol, rtol, nmax, dt_max,
-        nstiff=0,
+        nstiff=nstiff,
         save_all=save_all, err_if_fail=err_if_fail, log_output=log_output
     )
     if save_all:
