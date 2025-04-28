@@ -174,6 +174,7 @@ class TestKepler2RotatingFrame(_TestBase):
                 n_steps=10000,
                 cython_if_possible=bl,
                 Integrator=DOPRI853Integrator,
+                Integrator_kwargs={"atol": 1e-12, "rtol": 1e-12},
             )
 
             L = orbit.angular_momentum()
