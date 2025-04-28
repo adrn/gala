@@ -7,6 +7,14 @@ New Features
 - Added a new ``SimulationUnitSystem`` class for handling unit systems in
   simulations, especially for N-body simulations.
 
+- Added options ``error_if_fail`` and ``log_output`` to integrator kwargs for the
+  dop853 integrator, along with some other arguments that are passed directly to the C
+  integrator (e.g., ``nstiff``). ``error_if_fail`` controls whether Python will raise
+  an error if the C integrator fails to integrate an orbit, and ``log_output`` will log
+  the output of the integrator (primarily for errors) to stdout. See the docstring for `
+  ``gala.integrate.DOP853Integrator`` for more information about all of the available
+  options for the integrator.
+
 Bug fixes
 ---------
 
@@ -25,6 +33,10 @@ Bug fixes
 API changes
 -----------
 
+- Gala has ``save_all`` and ``store_all`` flags for saving all orbits at every
+  timestep. The ``store_all`` flag is now deprecated and will be removed in a future
+  release. The``save_all`` flag should be used instead.
+
 Other
 -----
 
@@ -32,6 +44,11 @@ Other
   potential, density, gradient, and hessian values. This leads to some free performance
   improvements in existing code!
 
+- Refactored the way integration is done with the DOP853 integrator. The integrator now
+  uses the dense output feature (which uses interpolation) to compute the output values
+  at the requested times. This is a significant performance improvement for large
+  numbers of orbits, and also allows for much faster results when integrating over long
+  timescales.
 
 1.9.1 (2024-08-26)
 ==================

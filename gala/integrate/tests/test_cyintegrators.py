@@ -1,24 +1,25 @@
 """
-    Test the Cython integrators.
+Test the Cython integrators.
 """
 
 # Standard library
-from itertools import product
 import time
+from itertools import product
 
 # Third-party
 import numpy as np
 import pytest
 
-# Project
-from ..pyintegrators.leapfrog import LeapfrogIntegrator
-from ..cyintegrators.leapfrog import leapfrog_integrate_hamiltonian
-from ..pyintegrators.dopri853 import DOPRI853Integrator
-from ..cyintegrators.dop853 import dop853_integrate_hamiltonian
-from ..pyintegrators.ruth4 import Ruth4Integrator
-from ..cyintegrators.ruth4 import ruth4_integrate_hamiltonian
 from ...potential import Hamiltonian, HernquistPotential
 from ...units import galactic
+from ..cyintegrators.dop853 import dop853_integrate_hamiltonian
+from ..cyintegrators.leapfrog import leapfrog_integrate_hamiltonian
+from ..cyintegrators.ruth4 import ruth4_integrate_hamiltonian
+from ..pyintegrators.dopri853 import DOPRI853Integrator
+
+# Project
+from ..pyintegrators.leapfrog import LeapfrogIntegrator
+from ..pyintegrators.ruth4 import Ruth4Integrator
 
 integrator_list = [LeapfrogIntegrator, DOPRI853Integrator, Ruth4Integrator]
 func_list = [
@@ -32,10 +33,7 @@ for dt in [2, -2]:
     _list.extend([(x, y, dt) for x, y in zip(integrator_list, func_list)])
 
 
-@pytest.mark.parametrize(
-    ["Integrator", "integrate_func", "dt"],
-    _list
-)
+@pytest.mark.parametrize(["Integrator", "integrate_func", "dt"], _list)
 def test_compare_to_py(Integrator, integrate_func, dt):
     p = HernquistPotential(m=1e11, c=0.5, units=galactic)
     H = Hamiltonian(potential=p)
@@ -70,11 +68,8 @@ def test_compare_to_py(Integrator, integrate_func, dt):
     assert np.allclose(cy_t, py_t)
 
 
-@pytest.mark.parametrize(
-    ["integrate_func", "dt"],
-    product(func_list, [-2., 2])
-)
-def test_store_all(integrate_func, dt):
+@pytest.mark.parametrize(["integrate_func", "dt"], product(func_list, [-2.0, 2]))
+def test_save_all(integrate_func, dt):
     p = HernquistPotential(m=1e11, c=0.5, units=galactic)
     H = Hamiltonian(potential=p)
 
@@ -90,7 +85,7 @@ def test_store_all(integrate_func, dt):
     t = np.linspace(0, dt * 1024, 1024 + 1)
 
     t_all, w_all = integrate_func(H, w0, t)
-    t_f, w_f = integrate_func(H, w0, t, store_all=False)
+    t_f, w_f = integrate_func(H, w0, t, save_all=False)
 
     assert t_all[-1] == t_f[0]
     assert np.allclose(w_all[-1], w_f)
@@ -100,8 +95,7 @@ def test_store_all(integrate_func, dt):
 # --speed-scaling or something?
 @pytest.mark.skipif(True, reason="Slow test - mainly for plotting locally")
 @pytest.mark.parametrize(
-    ["Integrator", "integrate_func"],
-    zip(integrator_list, func_list)
+    ["Integrator", "integrate_func"], zip(integrator_list, func_list)
 )
 def test_scaling(tmpdir, Integrator, integrate_func):
     p = HernquistPotential(m=1e11, c=0.5, units=galactic)

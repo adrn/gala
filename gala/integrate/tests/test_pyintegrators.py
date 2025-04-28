@@ -1,21 +1,24 @@
 """
-    Test the integrators.
+Test the integrators.
 """
+
 import os
+
+import numpy as np
 
 # Third-party
 import pytest
-import numpy as np
 from astropy.utils.exceptions import AstropyDeprecationWarning
+
+from gala.tests.optional_deps import HAS_TQDM
 
 # Project
 from .. import (
+    DOPRI853Integrator,
     LeapfrogIntegrator,
     RK5Integrator,
-    DOPRI853Integrator,
     Ruth4Integrator,
 )
-from gala.tests.optional_deps import HAS_TQDM
 
 # Integrators to test
 integrator_list = [
@@ -24,6 +27,7 @@ integrator_list = [
     LeapfrogIntegrator,
     Ruth4Integrator,
 ]
+
 
 # Gradient functions:
 def sho_F(t, w, T):  # noqa
@@ -116,9 +120,7 @@ def test_progress(Integrator):
 
 @pytest.mark.parametrize("Integrator", integrator_list)
 def test_point_mass_multiple(Integrator):
-    w0 = np.array(
-        [[1.0, 0.0, 0.0, 1.0], [0.8, 0.0, 0.0, 1.1], [2.0, 1.0, -1.0, 1.1]]
-    ).T
+    w0 = np.array([[1.0, 0.0, 0.0, 1.0], [0.8, 0.0, 0.0, 1.1], [2.0, 1.0, -1.0, 1.1]]).T
 
     integrator = Integrator(ptmass_F)
     _ = integrator(w0, dt=1e-3, n_steps=1e4)
@@ -155,9 +157,9 @@ def test_memmap(tmpdir, Integrator):
 
 
 @pytest.mark.parametrize("Integrator", integrator_list)
-def test_py_store_all(Integrator):
-    integrator_all = Integrator(sho_F, func_args=(1.3,), store_all=True)
-    integrator_final = Integrator(sho_F, func_args=(1.3,), store_all=False)
+def test_py_save_all(Integrator):
+    integrator_all = Integrator(sho_F, func_args=(1.3,), save_all=True)
+    integrator_final = Integrator(sho_F, func_args=(1.3,), save_all=False)
 
     dt = 1e-4
     n_steps = 10_000

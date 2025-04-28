@@ -3,32 +3,29 @@ import astropy.units as u
 import numpy as np
 import pytest
 
-# Custom
-from ....integrate import DOPRI853Integrator
-from ....potential import (
-    ConstantRotatingFrame,
-    Hamiltonian,
-    HernquistPotential,
-    MilkyWayPotential,
-)
-from ....units import galactic
-from ...core import PhaseSpacePosition
+import gala.dynamics as gd
+import gala.dynamics.mockstream as ms
+import gala.integrate as gi
+import gala.potential as gp
+from gala.units import galactic
 
-# Project
-from ..df import ChenStreamDF, FardalStreamDF, LagrangeCloudStreamDF, StreaklineStreamDF
-
-_DF_CLASSES = [StreaklineStreamDF, FardalStreamDF, LagrangeCloudStreamDF, ChenStreamDF]
+_DF_CLASSES = [
+    ms.StreaklineStreamDF,
+    ms.FardalStreamDF,
+    ms.LagrangeCloudStreamDF,
+    ms.ChenStreamDF,
+]
 _DF_KWARGS = [{}, {"gala_modified": True}, {"v_disp": 1 * u.km / u.s}]
 _TEST_POTENTIALS = [
-    HernquistPotential(m=1e12, c=5, units=galactic),
-    MilkyWayPotential(),
+    gp.HernquistPotential(m=1e12, c=5, units=galactic),
+    gp.MilkyWayPotential(),
 ]
 
 
 @pytest.mark.parametrize("DF, DF_kwargs", zip(_DF_CLASSES, _DF_KWARGS))
 @pytest.mark.parametrize("pot", _TEST_POTENTIALS)
 def test_init_sample(DF, DF_kwargs, pot):
-    H = Hamiltonian(pot)
+    H = gp.Hamiltonian(pot)
 
     orbit = H.integrate_orbit([10.0, 0, 0, 0, 0.2, 0], dt=1.0, n_steps=100)
     n_times = len(orbit.t)
@@ -65,17 +62,17 @@ def test_expected_failure(DF, DF_kwargs):
 
 def test_rotating_frame():
     DF = _DF_CLASSES[0]
-    H_static = Hamiltonian(_TEST_POTENTIALS[0])
+    H_static = gp.Hamiltonian(_TEST_POTENTIALS[0])
 
-    w0 = PhaseSpacePosition(
+    w0 = gd.PhaseSpacePosition(
         pos=[10.0, 0, 0] * u.kpc, vel=[0, 220, 0.0] * u.km / u.s, frame=H_static.frame
     )
-    int_kwargs = dict(w0=w0, dt=1, n_steps=100, Integrator=DOPRI853Integrator)
+    int_kwargs = dict(w0=w0, dt=1, n_steps=100, Integrator=gi.DOPRI853Integrator)
 
     orbit_static = H_static.integrate_orbit(**int_kwargs)
 
-    rframe = ConstantRotatingFrame([0, 0, -40] * u.km / u.s / u.kpc, units=galactic)
-    H_rotating = Hamiltonian(_TEST_POTENTIALS[0], frame=rframe)
+    rframe = gp.ConstantRotatingFrame([0, 0, -40] * u.km / u.s / u.kpc, units=galactic)
+    H_rotating = gp.Hamiltonian(_TEST_POTENTIALS[0], frame=rframe)
     orbit_rotating = H_rotating.integrate_orbit(**int_kwargs)
 
     _o = orbit_rotating.to_frame(H_static.frame)

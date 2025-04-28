@@ -1,4 +1,4 @@
-""" Leapfrog integration. """
+"""Leapfrog integration."""
 
 # Third-party
 import numpy as np
@@ -104,7 +104,7 @@ class LeapfrogIntegrator(Integrator):
 
         x_i = x_im1 + v_im1_2 * dt
         F_i = self.F(t, np.vstack((x_i, v_im1_2)), *self._func_args)
-        a_i = F_i[self.ndim:]
+        a_i = F_i[self.ndim :]
 
         v_i = v_im1_2 + a_i * dt / 2
         v_ip1_2 = v_i + a_i * dt / 2
@@ -127,8 +127,8 @@ class LeapfrogIntegrator(Integrator):
 
         # here is where we scoot the velocity at t=t1 to v(t+1/2)
         F0 = self.F(t.copy(), w0.copy(), *self._func_args)
-        a0 = F0[self.ndim:]
-        v_1_2 = w0[self.ndim:] + a0*dt/2.
+        a0 = F0[self.ndim :]
+        v_1_2 = w0[self.ndim :] + a0 * dt / 2.0
 
         return v_1_2
 
@@ -139,29 +139,29 @@ class LeapfrogIntegrator(Integrator):
         dt = times[1] - times[0]
 
         w0_obj, w0, ws = self._prepare_ws(w0, mmap, n_steps)
-        x0 = w0[:self.ndim]
+        x0 = w0[: self.ndim]
 
         # prime the integrator so velocity is offset from coordinate by a
         #   half timestep
         v_im1_2 = self._init_v(times[0], w0, dt)
         x_im1 = x0
 
-        if self.store_all:
+        if self.save_all:
             ws[:, 0] = w0
 
         range_ = self._get_range_func()
-        for ii in range_(1, n_steps+1):
+        for ii in range_(1, n_steps + 1):
             x_i, v_i, v_ip1_2 = self.step(times[ii], x_im1, v_im1_2, dt)
 
-            if self.store_all:
+            if self.save_all:
                 slc = (ii, slice(None))
             else:
-                slc = (slice(None), )
-            ws[(slice(None, self.ndim), ) + slc] = x_i
-            ws[(slice(self.ndim, None), ) + slc] = v_i
+                slc = (slice(None),)
+            ws[(slice(None, self.ndim),) + slc] = x_i
+            ws[(slice(self.ndim, None),) + slc] = v_i
             x_im1, v_im1_2 = x_i, v_ip1_2
 
-        if not self.store_all:
+        if not self.save_all:
             times = times[-1:]
 
         return self._handle_output(w0_obj, times, ws)

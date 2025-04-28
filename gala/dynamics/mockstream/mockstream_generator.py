@@ -123,6 +123,7 @@ class MockStreamGenerator:
         check_filesize=True,
         overwrite=False,
         progress=False,
+        log_output=False,
         **time_spec,
     ):
         """
@@ -243,15 +244,20 @@ class MockStreamGenerator:
         for t1, n in zip(unq_t1s, nstream):
             all_nstream[np.isclose(orbit_t, t1)] = n
 
+        nstream_idx = np.where(all_nstream != 0)[0]
+        if 0 not in nstream_idx:
+            nstream_idx = np.insert(nstream_idx, 0, 0)
+
         if output_every is None:
             raw_nbody, raw_stream = mockstream_dop853(
                 nbody0,
-                orbit_t[all_nstream != 0],
+                orbit_t[nstream_idx],
                 w0,
                 unq_t1s,
                 orbit_t[-1],
-                all_nstream[all_nstream != 0].astype("i4"),
+                all_nstream[nstream_idx].astype("i4"),
                 progress=int(progress),
+                log_output=int(log_output),
             )
         else:  # store snapshots
             if output_filename is None:
@@ -270,6 +276,7 @@ class MockStreamGenerator:
                 check_filesize=check_filesize,
                 overwrite=overwrite,
                 progress=int(progress),
+                log_output=int(log_output),
             )
 
         x_unit = units["length"]

@@ -38,7 +38,8 @@ cdef extern from "dopri/dop853.h":
 cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
                           double dt, int n_steps, double t0,
                           double d0, int n_steps_per_pullback, int noffset_orbits,
-                          double atol=1E-10, double rtol=1E-10, int nmax=0):
+                          double atol=1E-10, double rtol=1E-10, int nmax=0,
+                          unsigned log_output=0):
     cdef:
         int i, j, k, jiter
         int res
@@ -87,7 +88,8 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
         dop853_step(cp, &cf, <FcnEqDiff> Fwrapper,
                     &w[0], t[j-1], t[j], dt0, ndim,
                     norbits, 0, args, # 0 is for nbody, ignored here
-                    atol, rtol, nmax)
+                    atol, rtol, nmax,
+                    err_if_fail=1, log_output=log_output)
 
         # store position of main orbit
         for i in range(norbits):
@@ -116,7 +118,8 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
 cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
                                     double dt, int n_steps, double t0,
                                     double d0, int n_steps_per_pullback, int noffset_orbits,
-                                    double atol=1E-10, double rtol=1E-10, int nmax=0):
+                                    double atol=1E-10, double rtol=1E-10, int nmax=0,
+                                    unsigned log_output=0):
     cdef:
         int i, j, k, jiter
         int res
@@ -161,7 +164,8 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
         dop853_step(cp, &cf, <FcnEqDiff> Fwrapper,
                     &w[0], t[j-1], t[j], dt0, ndim,
                     norbits, 0, args, # 0 is for nbody, ignored here
-                    atol, rtol, nmax)
+                    atol, rtol, nmax,
+                    err_if_fail=1, log_output=log_output)
 
         if (j % n_steps_per_pullback) == 0:
             # get magnitude of deviation vector
