@@ -24,8 +24,7 @@ from libc.math cimport sqrt
 from libc.stdlib cimport malloc, free
 from cpython.exc cimport PyErr_CheckSignals
 
-from ...integrate.cyintegrators.dop853 cimport (dop853_step,
-                                                dop853_helper_save_all)
+from ...integrate.cyintegrators.dop853 cimport dop853_step, dop853_helper
 from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
 from ...potential.frame.cframe cimport CFrameWrapper, CFrameType
 from ...potential.potential.builtin.cybuiltin import NullWrapper
@@ -131,13 +130,14 @@ cpdef mockstream_dop853(
 
         # First have to integrate the nbody orbits so we have their positions at
         # each timestep
-        nbody_w = dop853_helper_save_all(
+        nbody_w = dop853_helper(
             cp, &cf,
             <FcnEqDiff> Fwrapper_direct_nbody,
             nbody_w0, time,
             ndim, nbodies, nbodies, args, ntimes,
             atol, rtol, nmax, dt_max,
-            err_if_fail=err_if_fail, log_output=log_output
+            nstiff=-1,  # disable stiffness check
+            err_if_fail=err_if_fail, log_output=log_output, save_all=1,
         )
 
         n = 0

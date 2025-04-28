@@ -477,9 +477,7 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr,
           if (iasti == 15)
             if (fileout)
               fprintf(fileout, "The problem seems to become stiff at x = %.16e\r\n", x);
-            else {
-              return -4;
-            }
+            return -4;
         } else {
           nonsti++;
           if (nonsti == 6)
@@ -711,8 +709,11 @@ int dop853(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr, unsigned no
     // ADDED BY APW:
     if (nrdens != n) {
       if (fileout) {
-        fprintf(fileout, "Warning: nrdens = %u, but not all components are dense\n",
-                nrdens);
+        fprintf(
+          fileout,
+          "Warning: nrdens = %u, but not all components are dense (n = %u)\n",
+          nrdens, n
+        );
         arret = 1;
       }
     }

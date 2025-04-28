@@ -24,8 +24,7 @@ from cpython.exc cimport PyErr_CheckSignals
 from ...potential import Hamiltonian, NullPotential
 from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
 from ...potential.frame.cframe cimport CFrameWrapper
-from ...integrate.cyintegrators.dop853 cimport (dop853_helper,
-                                                dop853_helper_save_all)
+from ...integrate.cyintegrators.dop853 cimport dop853_helper
 
 cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrameType:
@@ -112,28 +111,21 @@ cpdef direct_nbody_dop853(
         # We need a void pointer for any other arguments
         args = <void *>(c_particle_potentials)
 
+        w = dop853_helper(
+            cp, &cf,
+            <FcnEqDiff> Fwrapper_direct_nbody,
+            w0, t,
+            ndim, nparticles, nbody, args,
+            ntimes,
+            atol, rtol, nmax, dt_max,
+            nstiff=-1,  # disable stiffness check - TODO: note somewhere
+            err_if_fail=err_if_fail, log_output=log_output,
+            save_all=save_all
+        )
         if save_all:
-            all_w = dop853_helper_save_all(
-                cp, &cf,
-                <FcnEqDiff> Fwrapper_direct_nbody,
-                w0, t,
-                ndim, nparticles, nbody, args,
-                ntimes,
-                atol, rtol, nmax, dt_max,
-                err_if_fail=err_if_fail, log_output=log_output
-            )
-            return np.array(all_w)
+            return np.array(w)
         else:
-            final_w = dop853_helper(
-                cp, &cf,
-                <FcnEqDiff> Fwrapper_direct_nbody,
-                w0, t,
-                ndim, nparticles, nbody, args,
-                ntimes,
-                atol, rtol, nmax, dt_max,
-                err_if_fail=err_if_fail, log_output=log_output
-            )
-            return np.array(final_w).reshape(nparticles, ndim)
+            return np.array(w).reshape(nparticles, ndim)
 
     finally:
         # Clean up allocated memory
