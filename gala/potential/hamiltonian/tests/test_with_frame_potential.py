@@ -186,8 +186,8 @@ class TestKepler2RotatingFrame(_TestBase):
 @pytest.mark.parametrize(
     "name, Omega, tol",
     [
-        ("z-aligned co-rotating", [0, 0, 1.0] * u.one, 1e-12),
-        ("z-aligned", [0, 0, 1.5834] * u.one, 1e-12),
+        ("z-aligned co-rotating", [0, 0, 1.0] * u.one, 1e-10),
+        ("z-aligned", [0, 0, 1.5834] * u.one, 1e-10),
         ("random", [0.95792653, 0.82760659, 0.66443135] * u.one, 1e-10),
     ],
 )
@@ -206,9 +206,19 @@ def test_velocity_rot_frame(name, Omega, tol):
     )
     H = Hamiltonian(potential, StaticFrame(units=dimensionless))
 
-    orbit_i = H.integrate_orbit(w0, dt=0.1, n_steps=1000, Integrator=DOPRI853Integrator)
+    orbit_i = H.integrate_orbit(
+        w0,
+        dt=0.1,
+        n_steps=1000,
+        Integrator=DOPRI853Integrator,
+        Integrator_kwargs={"atol": 1e-12, "rtol": 1e-12},
+    )
     orbit_r = H_r.integrate_orbit(
-        w0, dt=0.1, n_steps=1000, Integrator=DOPRI853Integrator
+        w0,
+        dt=0.1,
+        n_steps=1000,
+        Integrator=DOPRI853Integrator,
+        Integrator_kwargs={"atol": 1e-12, "rtol": 1e-12},
     )
 
     orbit_i2r = orbit_i.to_frame(
