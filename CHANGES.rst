@@ -8,9 +8,12 @@ New Features
   simulations, especially for N-body simulations.
 
 - Added options ``error_if_fail`` and ``log_output`` to integrator kwargs for the
-  dop853 integrator. ``error_if_fail`` controls whether Python will raise an error if
-  the C integrator fails to integrate an orbit, and ``log_output`` will log the output
-  of the integrator (primarily for errors) to stdout.
+  dop853 integrator, along with some other arguments that are passed directly to the C
+  integrator (e.g., ``nstiff``). ``error_if_fail`` controls whether Python will raise
+  an error if the C integrator fails to integrate an orbit, and ``log_output`` will log
+  the output of the integrator (primarily for errors) to stdout. See the docstring for `
+  ``gala.integrate.DOP853Integrator`` for more information about all of the available
+  options for the integrator.
 
 Bug fixes
 ---------
