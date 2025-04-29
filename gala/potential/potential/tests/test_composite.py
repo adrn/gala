@@ -10,6 +10,7 @@ from gala.units import UnitSystem, galactic, solarsystem
 
 
 class CompositeHelper:
+    rotation = False
 
     def setup_method(self):
         self.units = solarsystem
@@ -61,6 +62,10 @@ class CompositeHelper:
         potential["two"] = self.p2
 
         for Integrator in [DOPRI853Integrator, LeapfrogIntegrator]:
+            kw = {}
+            if Integrator == DOPRI853Integrator:
+                kw = {"atol": 1e-14, "rtol": 1e-14}
+
             H = gp.Hamiltonian(potential)
             w_cy = H.integrate_orbit(
                 [1.0, 0, 0, 0, 2 * np.pi, 0],
@@ -68,6 +73,7 @@ class CompositeHelper:
                 n_steps=1000,
                 Integrator=Integrator,
                 cython_if_possible=True,
+                Integrator_kwargs=kw,
             )
             w_py = H.integrate_orbit(
                 [1.0, 0, 0, 0, 2 * np.pi, 0],
@@ -77,6 +83,7 @@ class CompositeHelper:
                 cython_if_possible=False,
             )
 
+            dx = w_cy.xyz.value - w_py.xyz.value
             assert np.allclose(w_cy.xyz.value, w_py.xyz.value)
             assert np.allclose(w_cy.v_xyz.value, w_py.v_xyz.value)
 

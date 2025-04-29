@@ -1,4 +1,4 @@
-""" Base class for integrators. """
+"""Base class for integrators."""
 
 from abc import ABCMeta, abstractmethod
 
@@ -7,7 +7,7 @@ import numpy as np
 from astropy.utils.decorators import deprecated
 
 # This project
-from gala.units import UnitSystem, DimensionlessUnitSystem
+from gala.units import DimensionlessUnitSystem, UnitSystem
 
 __all__ = ["Integrator"]
 
@@ -19,12 +19,10 @@ class Integrator(metaclass=ABCMeta):
         func_args=(),
         func_units=None,
         progress=False,
-        store_all=True,
+        save_all=True,
     ):
         if not hasattr(func, "__call__"):
-            raise ValueError(
-                "func must be a callable object, e.g., a function."
-            )
+            raise ValueError("func must be a callable object, e.g., a function.")
 
         self.F = func
         self._func_args = func_args
@@ -38,12 +36,13 @@ class Integrator(metaclass=ABCMeta):
         self._func_units = func_units
 
         self.progress = bool(progress)
-        self.store_all = store_all
+        self.save_all = save_all
 
     def _get_range_func(self):
         if self.progress:
             try:
                 from tqdm import trange
+
                 return trange
             except ImportError:
                 raise ImportError(
@@ -71,7 +70,7 @@ class Integrator(metaclass=ABCMeta):
         self.ndim, self.norbits = arr_w0.shape
         self.ndim = self.ndim // 2
 
-        if self.store_all:
+        if self.save_all:
             return_shape = (2 * self.ndim, n_steps + 1, self.norbits)
         else:
             return_shape = (2 * self.ndim, self.norbits)
@@ -108,8 +107,8 @@ class Integrator(metaclass=ABCMeta):
         from ..dynamics import Orbit
 
         orbit = Orbit(
-            pos=w[:self.ndim] * pos_unit,
-            vel=w[self.ndim:] * vel_unit,
+            pos=w[: self.ndim] * pos_unit,
+            vel=w[self.ndim :] * vel_unit,
             t=t * t_unit,
         )
         return orbit

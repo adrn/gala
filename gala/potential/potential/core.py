@@ -807,7 +807,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             If there is a Cython version of the integrator implemented,
             and the potential object has a C instance, using Cython
             will be *much* faster.
-        store_all : bool (optional)
+        save_all : bool (optional)
             Controls whether to store the phase-space position at all intermediate
             timesteps. Set to False to store only the final values (i.e. the
             phase-space position(s) at the final timestep). Default is True.

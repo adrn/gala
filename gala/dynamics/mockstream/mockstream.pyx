@@ -24,8 +24,7 @@ from libc.math cimport sqrt
 from libc.stdlib cimport malloc, free
 from cpython.exc cimport PyErr_CheckSignals
 
-from ...integrate.cyintegrators.dop853 cimport (dop853_step,
-                                                dop853_helper_save_all)
+from ...integrate.cyintegrators.dop853 cimport dop853_step, dop853_helper
 from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
 from ...potential.frame.cframe cimport CFrameWrapper, CFrameType
 from ...potential.potential.builtin.cybuiltin import NullWrapper
@@ -50,11 +49,14 @@ cdef extern from "dopri/dop853.h":
                                unsigned norbits, unsigned nbody, void *args) nogil
 
 
-cpdef mockstream_dop853(nbody, double[::1] time,
-                        double[:, ::1] stream_w0, double[::1] stream_t1,
-                        double tfinal, int[::1] nstream,
-                        double atol=1E-10, double rtol=1E-10, int nmax=0,
-                        int progress=0):
+cpdef mockstream_dop853(
+    nbody, double[::1] time,
+    double[:, ::1] stream_w0, double[::1] stream_t1,
+    double tfinal, int[::1] nstream,
+    double atol=1E-10, double rtol=1E-10, int nmax=0, double dt_max=0.0,
+    int progress=0,
+    int err_if_fail=1, int log_output=0
+):
     """
     Parameters
     ----------
@@ -73,10 +75,6 @@ cpdef mockstream_dop853(nbody, double[::1] time,
     ``nstream`` is the array containing the number of stream particles released
     at each timestep.
 
-    TODO
-    ----
-    - `dt0` should be customizable in the Python interface.
-
     """
 
     cdef:
@@ -89,7 +87,7 @@ cpdef mockstream_dop853(nbody, double[::1] time,
 
         # Time-stepping parameters:
         int ntimes = time.shape[0]
-        double dt0 = 1.
+        double dt0 = time[1] - time[0]
 
         # whoa, so many dots
         CPotential* cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
@@ -117,6 +115,8 @@ cpdef mockstream_dop853(nbody, double[::1] time,
     if c_particle_potentials == NULL:
         raise MemoryError("Failed to allocate memory for particle potentials")
 
+    # TODO: reconfigure this to use dense output?
+
     try:
         # set the potential objects of the progenitor (index 0) and any other
         # massive bodies included in the stream generation
@@ -130,11 +130,15 @@ cpdef mockstream_dop853(nbody, double[::1] time,
 
         # First have to integrate the nbody orbits so we have their positions at
         # each timestep
-        nbody_w = dop853_helper_save_all(cp, &cf,
-                                         <FcnEqDiff> Fwrapper_direct_nbody,
-                                         nbody_w0, time,
-                                         ndim, nbodies, nbodies, args, ntimes,
-                                         atol, rtol, nmax, 0)
+        nbody_w = dop853_helper(
+            cp, &cf,
+            <FcnEqDiff> Fwrapper_direct_nbody,
+            nbody_w0, time,
+            ndim, nbodies, nbodies, args, ntimes,
+            atol, rtol, nmax, dt_max,
+            nstiff=-1,  # disable stiffness check
+            err_if_fail=err_if_fail, log_output=log_output, save_all=1,
+        )
 
         n = 0
         for i in range(ntimes):
@@ -150,13 +154,14 @@ cpdef mockstream_dop853(nbody, double[::1] time,
             dop853_step(cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
                         &w_tmp[0, 0], stream_t1[i], tfinal, dt0,
                         ndim, nbodies+nstream[i], nbodies, args,
-                        atol, rtol, nmax)
+                        atol, rtol, nmax,
+                        err_if_fail=err_if_fail, log_output=log_output)
+
+            PyErr_CheckSignals()
 
             for j in range(nstream[i]):
                 for k in range(ndim):
                     w_final[nbodies+n+j, k] = w_tmp[nbodies+j, k]
-
-            PyErr_CheckSignals()
 
             n += nstream[i]
 
@@ -193,7 +198,8 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
                                 output_every=1, output_filename='',
                                 overwrite=False, check_filesize=True,
                                 double atol=1E-10, double rtol=1E-10,
-                                int nmax=0, int progress=0, double dt0=1.):
+                                int nmax=0, int progress=0,
+                                int err_if_fail=1, int log_output=0):
     """
     Parameters
     ----------
@@ -211,10 +217,6 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
     ``nstream`` is the array containing the number of stream particles released
     at each timestep.
 
-    TODO
-    ----
-    - `dt0` should be customizable in the Python interface.
-
     """
 
     cdef:
@@ -223,6 +225,7 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
 
         # Time-stepping parameters:
         int ntimes = t.shape[0]
+        double dt0 = t[1] - t[0]
 
         # whoa, so many dots
         CPotential* cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
@@ -324,7 +327,8 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
             dop853_step(cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
                         &w[0, 0], t[i-1], t[i], dt0,
                         ndim, nbodies+n, nbodies, args,
-                        atol, rtol, nmax)
+                        atol, rtol, nmax,
+                        err_if_fail=err_if_fail, log_output=log_output)
 
             PyErr_CheckSignals()
 

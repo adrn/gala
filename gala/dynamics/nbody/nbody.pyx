@@ -24,8 +24,7 @@ from cpython.exc cimport PyErr_CheckSignals
 from ...potential import Hamiltonian, NullPotential
 from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
 from ...potential.frame.cframe cimport CFrameWrapper
-from ...integrate.cyintegrators.dop853 cimport (dop853_helper,
-                                                dop853_helper_save_all)
+from ...integrate.cyintegrators.dop853 cimport dop853_helper
 
 cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrameType:
@@ -43,10 +42,13 @@ cdef extern from "dopri/dop853.h":
                                CPotential *p, CFrameType *fr, unsigned norbits,
                                unsigned nbody, void *args)
 
-cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
-                          hamiltonian, list particle_potentials,
-                          save_all=True,
-                          double atol=1E-10, double rtol=1E-10, int nmax=0):
+cpdef direct_nbody_dop853(
+    double [:, ::1] w0, double[::1] t,
+    hamiltonian, list particle_potentials,
+    save_all=True,
+    double atol=1E-10, double rtol=1E-10, int nmax=0, double dt_max=0.0,
+    int err_if_fail=1, int log_output=0
+):
     """Integrate orbits from initial conditions ``w0`` over the time grid ``t``
     using direct N-body force calculation in the external potential provided via
     the ``hamiltonian`` argument.
@@ -109,20 +111,21 @@ cpdef direct_nbody_dop853(double [:, ::1] w0, double[::1] t,
         # We need a void pointer for any other arguments
         args = <void *>(c_particle_potentials)
 
+        w = dop853_helper(
+            cp, &cf,
+            <FcnEqDiff> Fwrapper_direct_nbody,
+            w0, t,
+            ndim, nparticles, nbody, args,
+            ntimes,
+            atol, rtol, nmax, dt_max,
+            nstiff=-1,  # disable stiffness check - TODO: note somewhere
+            err_if_fail=err_if_fail, log_output=log_output,
+            save_all=save_all
+        )
         if save_all:
-            all_w = dop853_helper_save_all(cp, &cf,
-                                          <FcnEqDiff> Fwrapper_direct_nbody,
-                                          w0, t,
-                                          ndim, nparticles, nbody, args,
-                                          ntimes, atol, rtol, nmax, 0)
-            return np.array(all_w)
+            return np.array(w)
         else:
-            final_w = dop853_helper(cp, &cf,
-                                  <FcnEqDiff> Fwrapper_direct_nbody,
-                                  w0, t,
-                                  ndim, nparticles, nbody, args, ntimes,
-                                  atol, rtol, nmax, 0)
-            return np.array(final_w).reshape(nparticles, ndim)
+            return np.array(w).reshape(nparticles, ndim)
 
     finally:
         # Clean up allocated memory

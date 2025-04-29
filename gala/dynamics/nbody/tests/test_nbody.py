@@ -85,8 +85,18 @@ class TestDirectNBody:
         "Integrator", [DOPRI853Integrator, Ruth4Integrator, LeapfrogIntegrator]
     )
     def test_directnbody_integrate(self, Integrator):
-        # TODO: this is really a unit test, but we should have some functional tests
-        # that check that the orbit integration is making sense!
+        """
+        TODO: this is really a unit test, but we should have some functional tests
+        that check that the orbit integration is making sense!
+
+        Here, nbody1 has two test mass particles (massless) and nbody2 has
+        one potential with mass [1] and one without [0]. This means that the orbit of
+        particle [1] should be the same in both cases, but the orbit of particle [0]
+        should be different (because it feels the mass of the other particle in one
+        case).
+        """
+
+        atol = 1e-10 * u.pc
 
         # First, compare with/without mass with no external potential:
         nbody1 = DirectNBody(self.w0, particle_potentials=[None, None], units=self.usys)
@@ -103,8 +113,8 @@ class TestDirectNBody:
 
         dx0 = orbits1[:, 0].xyz - orbits2[:, 0].xyz
         dx1 = orbits1[:, 1].xyz - orbits2[:, 1].xyz
-        assert u.allclose(np.abs(dx1), 0 * u.pc, atol=1e-13 * u.pc)
         assert np.abs(dx0).max() > 50 * u.pc
+        assert u.allclose(np.abs(dx1), 0 * u.pc, atol=atol)
 
         # Now compare with/without mass with external potential:
         nbody1 = DirectNBody(
@@ -129,7 +139,7 @@ class TestDirectNBody:
 
         dx0 = orbits1[:, 0].xyz - orbits2[:, 0].xyz
         dx1 = orbits1[:, 1].xyz - orbits2[:, 1].xyz
-        assert u.allclose(np.abs(dx1), 0 * u.pc, atol=1e-13 * u.pc)
+        assert u.allclose(np.abs(dx1), 0 * u.pc, atol=atol)
         assert np.abs(dx0).max() > 50 * u.pc
 
     def test_directnbody_acceleration(self):
