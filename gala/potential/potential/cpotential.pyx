@@ -266,6 +266,9 @@ class CPotentialBase(PotentialBase):
     def __init__(self, *args, units=None, origin=None, R=None,
                  Wrapper_kwargs=None, **kwargs
     ):
+        if Wrapper_kwargs is None:
+            Wrapper_kwargs = {}
+
         super().__init__(*args,
                          units=units,
                          origin=origin,
