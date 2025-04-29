@@ -188,14 +188,14 @@ cdef class BaseStreamDF:
             prog_orbit_static.v_xyz.decompose(_units).value.T)
         prog_t = prog_orbit_static.t.decompose(_units).value
         try:
-            prog_m = prog_mass.decompose(_units).value
+            prog_m = np.squeeze(prog_mass.decompose(_units).value)
         except:
             raise TypeError("Input progenitor mass must be a Quantity object "
                             "with a decompose() method, e.g, an astropy "
                             "quantity.")
 
-        if not isiterable(prog_m):
-            prog_m = np.ones_like(prog_t) * prog_m
+        if prog_m.shape == ():
+            prog_m = np.full_like(prog_t, prog_m)
 
         if isiterable(n_particles):
             n_particles = np.array(n_particles).astype('i4')

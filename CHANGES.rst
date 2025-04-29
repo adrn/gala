@@ -30,6 +30,10 @@ Bug fixes
   now converts to floats to set the unit scales in agama when converting a potential to
   Agama (using ``potential.as_interop("agama")``).
 
+- Fixed a bug in ``MockStreamGenerator.run()`` where passing an array of length 1 for
+  the progenitor mass would lead to a silent failure of the stream generation.
+
+
 API changes
 -----------
 
