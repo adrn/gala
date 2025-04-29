@@ -92,3 +92,27 @@ def test_rotating_frame():
     assert u.allclose(
         xvt_static.v_xyz, xvt_rotating_static.v_xyz, atol=1e-9 * u.kpc / u.Myr
     )
+
+
+def test_regression_415():
+    """
+    Regression test for #415: integration error when progenitor mass is an array with
+    length 1 when it should be a scalar.
+    """
+    pot = gp.NFWPotential(1e12 * u.Msun, r_s=10.0 * u.kpc, units=galactic)
+    w0 = gd.PhaseSpacePosition(
+        pos=[39.54522670882826, -21.408405557971204, 67.2661672] * u.kpc,
+        vel=[-1.87539782e02, -3.59878933e02, 1.08545075e02] * u.km / u.s,
+    )
+    progenitor_mass = np.array([10**8]) * u.Msun
+    dw_pot = gp.PlummerPotential(m=progenitor_mass[0], b=50 * u.pc, units=galactic)
+    df = ms.ChenStreamDF()
+    gen_pal5 = ms.MockStreamGenerator(df, pot, progenitor_potential=dw_pot)
+    xorbit = pot.integrate_orbit(w0, dt=-1 * u.Myr, n_steps=100)
+    w0 = gd.PhaseSpacePosition(pos=xorbit.pos[-1], vel=xorbit.vel[-1])
+    xnsteps = 1000
+    stream, _ = gen_pal5.run(
+        w0, progenitor_mass, dt=1 * u.Myr, n_steps=xnsteps, n_particles=1
+    )
+
+    assert stream.shape == (2002,)
