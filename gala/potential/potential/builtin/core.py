@@ -1376,8 +1376,19 @@ class EXPPotential(CPotentialBase, EXP_only=True):
 
         # bypass the units validation for string parameters like filenames
         class EXPWrapperShim(EXPWrapper):
-            def __init__(shimself, *args, **kwargs):
+            def __init__(shimself, G, *args, **kwargs):
+                m = args[0][3]
+                r_vir = args[0][4]
+
+                print(f'{G=}, {m=}, {r_vir=}')
+
+                t_vir = (r_vir**3 / (G * m))**0.5
+                G_scale = r_vir**3 / (m * t_vir**2)
+                G /= G_scale  # **-2 / m
+                print(f'{G=}, {m=}, {r_vir=}, {t_vir=}')
+
                 super().__init__(
+                    G,
                     *args,
                     **kwargs,
                     config_file=self.config_file,

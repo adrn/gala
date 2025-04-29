@@ -111,7 +111,8 @@ double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
           - r_vir (scale length)
   */
 
-  double GM = pars[0] * pars[1];
+  double G = pars[0];
+  double M = pars[1];
   double r_vir = pars[2];
 
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
@@ -127,29 +128,36 @@ double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
   // TODO: check what lengths Gala is passing. Do they need to be rescaled to EXP units (using r_vir)?
   auto field = exp_state->basis->getFields(q[0] / r_vir, q[1] / r_vir, q[2] / r_vir);
   
-  double pot = GM * field[5];
+  double pot = G * M * field[5];
 
   return pot;
 }
 
 void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void* state){
-  double GM = pars[0] * pars[1];
-  double r_vir = pars[2];
-
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
+
+  double G = pars[0];
+  // G = 1.;
+  double M = pars[1];
+  double r_vir = pars[2];
 
   if (!exp_state->is_static) {
     exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
   }
 
+  printf("exp_gradient: G_EXP = %g\n", G);
+  printf("exp_gradient: m = %g\n", M);
+  printf("exp_gradient: r_vir = %g\n", r_vir);
+  printf("exp_gradient: q = %g %g %g\n", q[0], q[1], q[2]);
   auto field = exp_state->basis->getFields(q[0] / r_vir, q[1] / r_vir, q[2] / r_vir);
 
-  // TODO: what coordinate system is this?
-  // the labels say rad force, mer force, azi force
-  // but reading the code suggests x, y, z
-  grad[0] += -GM * field[6];
-  grad[1] += -GM * field[7];
-  grad[2] += -GM * field[8];
+  printf("exp field[6] = %g\n", field[6]);
+  printf("exp field[7] = %g\n", field[7]);
+  printf("exp field[8] = %g\n", field[8]);
+
+  grad[0] += -G * field[6];
+  grad[1] += -G * field[7];
+  grad[2] += -G * field[8];
 }
 
 // TODO: density units
