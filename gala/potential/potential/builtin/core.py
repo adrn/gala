@@ -1368,37 +1368,6 @@ class EXPPotential(CPotentialBase, EXP_only=True):
     {common_doc}
     """
 
-    def __init__(
-        self, *, config_file, coeff_file, units=None, origin=None, R=None, **kwargs
-    ):
-        self.config_file = config_file
-        self.coeff_file = coeff_file
-
-        # bypass the units validation for string parameters like filenames
-        class EXPWrapperShim(EXPWrapper):
-            def __init__(shimself, G, *args, **kwargs):
-                m = args[0][3]
-                r_vir = args[0][4]
-
-                print(f'{G=}, {m=}, {r_vir=}')
-
-                t_vir = (r_vir**3 / (G * m))**0.5
-                G_scale = r_vir**3 / (m * t_vir**2)
-                G /= G_scale  # **-2 / m
-                print(f'{G=}, {m=}, {r_vir=}, {t_vir=}')
-
-                super().__init__(
-                    G,
-                    *args,
-                    **kwargs,
-                    config_file=self.config_file,
-                    coeff_file=self.coeff_file,
-                )
-
-        self.Wrapper = EXPWrapperShim
-
-        CPotentialBase.__init__(self, units=units, origin=origin, R=R, **kwargs)
-
     # These are handled specially by the constructor
     # config_file = PotentialParameter("config_file")
     # coeff_file = PotentialParameter("coeff_file")
@@ -1413,3 +1382,17 @@ class EXPPotential(CPotentialBase, EXP_only=True):
 
     # TODO: is it correct for EXP to take a scale radius?
     r_vir = PotentialParameter("r_vir", physical_type="length")
+
+    def __init__(
+        self, *, config_file, coeff_file, units=None, origin=None, R=None, **kwargs
+    ):
+        self.Wrapper = EXPWrapper
+
+        super().__init__(
+            units=units,
+            origin=origin,
+            R=R,
+            Wrapper_kwargs={"config_file": config_file, "coeff_file": coeff_file},
+            **kwargs,
+        )
+
