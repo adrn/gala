@@ -1399,6 +1399,11 @@ class EXPPotential(CPotentialBase, EXP_only=True):
         else:
             self._sim_units = DimensionlessUnitSystem()
 
+        # Replace units with the simulation units:
+        PotentialBase.__init__(
+            self, origin=self.origin, R=self.R, units=self._sim_units, **self.parameters
+        )
+
         self._setup_wrapper(
             Wrapper_kwargs={"config_file": config_file, "coeff_file": coeff_file}
         )

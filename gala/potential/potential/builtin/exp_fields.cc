@@ -126,7 +126,7 @@ double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
   // Get the field quantities
   // TODO: this computes many quantities, not just the potential
   // TODO: check what lengths Gala is passing. Do they need to be rescaled to EXP units (using r_vir)?
-  auto field = exp_state->basis->getFields(q[0] / r_vir, q[1] / r_vir, q[2] / r_vir);
+  auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
 
   double pot = G * M * field[5];
 
@@ -145,15 +145,15 @@ void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, vo
     exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
   }
 
-  // printf("exp_gradient: G_EXP = %g\n", G);
+  printf("exp_gradient: G_EXP = %g\n", G);
   // printf("exp_gradient: m = %g\n", M);
   // printf("exp_gradient: r_vir = %g\n", r_vir);
   // printf("exp_gradient: q = %g %g %g\n", q[0], q[1], q[2]);
-  auto field = exp_state->basis->getFields(q[0] / r_vir, q[1] / r_vir, q[2] / r_vir);
+  auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
 
-  // printf("exp field[6] = %g\n", field[6]);
-  // printf("exp field[7] = %g\n", field[7]);
-  // printf("exp field[8] = %g\n", field[8]);
+  printf("exp field[6] = %g\n", field[6]);
+  printf("exp field[7] = %g\n", field[7]);
+  printf("exp field[8] = %g\n", field[8]);
 
   grad[0] += -G * field[6];
   grad[1] += -G * field[7];
