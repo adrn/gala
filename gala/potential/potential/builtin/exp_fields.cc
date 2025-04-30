@@ -51,7 +51,7 @@ CoefClasses::CoefStrPtr interpolator(double t, CoefClasses::CoefsPtr coefs)
 	 << times.front() << ", " << times.back() << "]";
     throw std::runtime_error(sout.str());
   }
-    
+
   auto it1 = std::lower_bound(times.begin(), times.end(), t);
   auto it2 = it1 + 1;
 
@@ -74,14 +74,14 @@ CoefClasses::CoefStrPtr interpolator(double t, CoefClasses::CoefsPtr coefs)
   // Now interpolate the matrix
   //
   newcoef->time = t;
-  
+
   auto & cN = newcoef->store;
   auto & cA = coefsA->store;
   auto & cB = coefsB->store;
-  
+
   for (int i=0; i<newcoef->store.size(); i++)
     cN(i) = a * cA(i) + b * cB(i);
-  
+
   // Interpolate the center data
   //
   if (coefsA->ctr.size() and coefsB->ctr.size()) {
@@ -89,7 +89,7 @@ CoefClasses::CoefStrPtr interpolator(double t, CoefClasses::CoefsPtr coefs)
     for (int k=0; k<3; k++)
       newcoef->ctr[k] = a * coefsA->ctr[k] + b * coefsB->ctr[k];
   }
-  
+
   return newcoef;
 }
 
@@ -116,7 +116,7 @@ double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
   double r_vir = pars[2];
 
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
-  
+
   if (!exp_state->is_static) {
     // TODO: what time units does Gala use? What units does EXP expect?
     // TODO: how expensive is this, actually?
@@ -127,7 +127,7 @@ double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
   // TODO: this computes many quantities, not just the potential
   // TODO: check what lengths Gala is passing. Do they need to be rescaled to EXP units (using r_vir)?
   auto field = exp_state->basis->getFields(q[0] / r_vir, q[1] / r_vir, q[2] / r_vir);
-  
+
   double pot = G * M * field[5];
 
   return pot;
@@ -136,8 +136,8 @@ double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
 void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void* state){
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
-  double G = pars[0];
-  // G = 1.;
+  // double G = pars[0];
+  double G = 1.;
   double M = pars[1];
   double r_vir = pars[2];
 
@@ -145,15 +145,15 @@ void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, vo
     exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
   }
 
-  printf("exp_gradient: G_EXP = %g\n", G);
-  printf("exp_gradient: m = %g\n", M);
-  printf("exp_gradient: r_vir = %g\n", r_vir);
-  printf("exp_gradient: q = %g %g %g\n", q[0], q[1], q[2]);
+  // printf("exp_gradient: G_EXP = %g\n", G);
+  // printf("exp_gradient: m = %g\n", M);
+  // printf("exp_gradient: r_vir = %g\n", r_vir);
+  // printf("exp_gradient: q = %g %g %g\n", q[0], q[1], q[2]);
   auto field = exp_state->basis->getFields(q[0] / r_vir, q[1] / r_vir, q[2] / r_vir);
 
-  printf("exp field[6] = %g\n", field[6]);
-  printf("exp field[7] = %g\n", field[7]);
-  printf("exp field[8] = %g\n", field[8]);
+  // printf("exp field[6] = %g\n", field[6]);
+  // printf("exp field[7] = %g\n", field[7]);
+  // printf("exp field[8] = %g\n", field[8]);
 
   grad[0] += -G * field[6];
   grad[1] += -G * field[7];
