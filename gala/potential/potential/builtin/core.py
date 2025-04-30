@@ -41,6 +41,7 @@ from gala.potential.potential.builtin.cyexp import (
     EXPWrapper,
 )
 from gala.units import DimensionlessUnitSystem, SimulationUnitSystem
+from gala.util import atleast_2d
 
 from ..core import PotentialBase, _potential_docstring
 from ..cpotential import CPotentialBase
