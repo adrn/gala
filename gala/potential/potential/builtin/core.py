@@ -1451,10 +1451,10 @@ class EXPPotential(CPotentialBase, EXP_only=True):
         from gala.dynamics import PhaseSpacePosition
 
         if hasattr(x, "unit"):
-            x = x.decompose(self.units).value
+            x = x.decompose(self._sim_units).value
 
         elif isinstance(x, PhaseSpacePosition):
-            x = x.cartesian.xyz.decompose(self.units).value
+            x = x.cartesian.xyz.decompose(self._sim_units).value
 
         x = atleast_2d(x, insert_axis=1).astype(np.float64)
 
@@ -1466,14 +1466,12 @@ class EXPPotential(CPotentialBase, EXP_only=True):
 
         return x
 
-    def _reapply_units_and_shape(self, x, ptype, shape, conv_unit=None):
+    def _reapply_units_and_shape(self, x, ptype, shape, **kwargs):
         """
         This is the inverse of _remove_units_prepare_shape. It takes the output of one
         of the C functions below and reapplies units and the original shape.
         ptype is an Astropy PhysicalType object
         """
         x = np.moveaxis(x, 0, -1)
-        x = x.reshape(shape) * self.units[ptype]
-        if conv_unit is None:
-            return x
-        return x.to(conv_unit)
+        x = (x.reshape(shape) * self._sim_units[ptype]).to(self.units[ptype])
+        return x
