@@ -1,5 +1,5 @@
-from distutils.core import Extension
 from collections import defaultdict
+from distutils.core import Extension
 
 
 def get_extensions():
@@ -54,7 +54,7 @@ def get_extensions():
     cfg["include_dirs"].append(mac_incl_path)
     cfg["include_dirs"].append("gala/potential")
     cfg["include_dirs"].append("gala")
-    cfg["extra_compile_args"].append("--std=gnu99")
+    # cfg["extra_compile_args"].append("--std=gnu99")
     cfg["sources"].append("gala/potential/potential/builtin/cyexp.pyx")
     cfg["sources"].append(
         "gala/potential/potential/builtin/exp_fields.cc"
