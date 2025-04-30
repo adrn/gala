@@ -1,4 +1,4 @@
-""" Built-in potentials implemented in Cython """
+"""Built-in potentials implemented in Cython"""
 
 # HACK: This hack brought to you by a bug in cython, and a solution from here:
 # https://stackoverflow.com/questions/57138496/class-level-classmethod-can-only-be-called-on-a-method-descriptor-or-instance
@@ -40,8 +40,8 @@ from gala.potential.potential.builtin.cybuiltin import (
 from gala.potential.potential.builtin.cyexp import (
     EXPWrapper,
 )
+from gala.units import DimensionlessUnitSystem, SimulationUnitSystem
 
-# Project
 from ..core import PotentialBase, _potential_docstring
 from ..cpotential import CPotentialBase
 from ..util import format_doc, sympy_wrap
@@ -411,7 +411,6 @@ class BurkertPotential(CPotentialBase):
 
     Wrapper = BurkertWrapper
 
-    
     @classmethod
     def from_r0(cls, r0, units=None):
         r"""
@@ -426,7 +425,7 @@ class BurkertPotential(CPotentialBase):
             The core radius of the Burkert potential.
         """
         a = 0.021572405792749372 * u.Msun / u.pc**3  # converted: 1.46e-24 g/cm**3
-        rho_d0 = a * (r0 / (3.07 * u.kpc))**(-2/3)
+        rho_d0 = a * (r0 / (3.07 * u.kpc)) ** (-2 / 3)
         return cls(rho=rho_d0, r0=r0, units=units)
 
 
@@ -1345,9 +1344,11 @@ class CylSplinePotential(CPotentialBase):
             lmax=lmax_fit, m=m, r_s=r0, inner=False, units=self.units, **pars
         )
 
+
 # ==============================================================================
 # EXP Potential
 #
+
 
 @format_doc(common_doc=_potential_docstring)
 class EXPPotential(CPotentialBase, EXP_only=True):
@@ -1388,11 +1389,90 @@ class EXPPotential(CPotentialBase, EXP_only=True):
     ):
         self.Wrapper = EXPWrapper
 
-        super().__init__(
-            units=units,
-            origin=origin,
-            R=R,
-            Wrapper_kwargs={"config_file": config_file, "coeff_file": coeff_file},
-            **kwargs,
+        PotentialBase.__init__(self, units=units, origin=origin, R=R, **kwargs)
+
+        if not isinstance(self.units, DimensionlessUnitSystem):
+            self._sim_units = SimulationUnitSystem(
+                mass=self.parameters["m"], length=self.parameters["r_vir"]
+            )
+        else:
+            self._sim_units = DimensionlessUnitSystem()
+
+        self._setup_wrapper(
+            Wrapper_kwargs={"config_file": config_file, "coeff_file": coeff_file}
         )
 
+    def _setup_wrapper(self, **kwargs):
+        if self.Wrapper is None:
+            raise ValueError(
+                "C potential wrapper class not defined for "
+                f"potential class {self.__class__}"
+            )
+
+        arrs = [
+            np.atleast_1d(self._sim_units.decompose(v).value).ravel()
+            for v in self.parameters.values()
+        ]
+
+        if len(arrs) > 0:
+            self.c_parameters = np.concatenate(arrs)
+        else:
+            self.c_parameters = np.array([])
+
+        if self.R is None:
+            self._R = np.eye(self.ndim)
+        else:
+            self._R = self.R
+
+        print(kwargs)
+        self.c_instance = self.Wrapper(
+            self.G,
+            self.c_parameters,
+            q0=self.origin,
+            R=self._R,
+            **kwargs["Wrapper_kwargs"],
+        )
+
+    def hessian(self, *args, **kwargs):
+        """
+        Not implemented yet.
+        """
+        raise NotImplementedError(
+            "Computing Hessian matrices for EXP potentials is not supported."
+        )
+
+    def _remove_units_prepare_shape(self, x):
+        """
+        This is similar to that implemented by
+        `gala.potential.common.CommonBase`, but returns just the position if the
+        input is a `PhaseSpacePosition`.
+        """
+        from gala.dynamics import PhaseSpacePosition
+
+        if hasattr(x, "unit"):
+            x = x.decompose(self.units).value
+
+        elif isinstance(x, PhaseSpacePosition):
+            x = x.cartesian.xyz.decompose(self.units).value
+
+        x = atleast_2d(x, insert_axis=1).astype(np.float64)
+
+        if x.shape[0] != self.ndim:
+            raise ValueError(
+                f"Input position has ndim={x.shape[0]}, but this potential "
+                f"expects an {self.ndim}-dimensional position."
+            )
+
+        return x
+
+    def _reapply_units_and_shape(self, x, ptype, shape, conv_unit=None):
+        """
+        This is the inverse of _remove_units_prepare_shape. It takes the output of one
+        of the C functions below and reapplies units and the original shape.
+        ptype is an Astropy PhysicalType object
+        """
+        x = np.moveaxis(x, 0, -1)
+        x = x.reshape(shape) * self.units[ptype]
+        if conv_unit is None:
+            return x
+        return x.to(conv_unit)
