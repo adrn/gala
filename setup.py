@@ -101,6 +101,12 @@ gsl_prefix = os.environ.get("GALA_GSL_PREFIX", None)
 
 exp_prefix = os.environ.get("GALA_EXP_PREFIX", None)
 
+try:
+    import pybind11
+except ImportError:
+    pybind11 = None
+
+
 # Auto-detect whether GSL is installed
 if (not nogsl or nogsl is None) and gsl_version is None:  # GSL support enabled
     cmd = ["gsl-config", "--version"]
@@ -162,14 +168,30 @@ else:
     gsl_prefix = os.path.normpath(gsl_prefix.strip())
 
 
+eigen_incl = os.environ.get("EIGEN3_INCLUDE_DIR", None)
 if exp_prefix is None:
     print("Gala: installing without EXP support.")
 else:
+    if pybind11 is None:
+        raise RuntimeError("pybind11 is required to build Gala with EXP support.")
+
     print(f"Gala: installing with EXP support (GALA_EXP_PREFIX={exp_prefix})")
+
+    if eigen_incl is None:
+        cmd = ["pkg-config", "--cflags", "eigen3"]
+        try:
+            eigen_incl = check_output(cmd, encoding="utf-8")
+        except:
+            eigen_incl = str(check_output(cmd))
+        eigen_incl = eigen_incl[2:]
+
+    eigen_incl = os.path.normpath(eigen_incl.strip())
+
 print("-" * 79)
 
-extensions = get_extensions()
-for ext in extensions:
+all_extensions = get_extensions()
+extensions = []
+for ext in all_extensions:
     if "potential.potential" in ext.name or "scf" in ext.name:
         if gsl_version is not None:
             if "gsl" not in ext.libraries:
@@ -182,6 +204,10 @@ for ext in extensions:
 
     if "cyexp" in ext.name:
         if exp_prefix is not None:
+            ext.include_dirs.append(pybind11.get_include())
+            if eigen_incl is not None:
+                ext.include_dirs.append(eigen_incl)
+
             if "exp" not in ext.libraries:
                 # TODO: we're compiling against installed EXP libraries,
                 # but headers from the source, because EXP doesn't install
@@ -196,7 +222,11 @@ for ext in extensions:
                     )
                 )
                 # TODO: this requires user to install EXP to $GALA_EXP_PREFIX/install
-                exp_lib = os.path.join(exp_prefix, "install", "lib")
+                # exp_lib = os.path.join(exp_prefix, "install", "lib")
+
+                # NOTE: adrian had to do this:
+                exp_lib = "/opt/homebrew/Cellar/lib"
+
                 ext.library_dirs.append(exp_lib)
                 ext.runtime_library_dirs.append(exp_lib)
                 ext.include_dirs.extend(
@@ -209,6 +239,12 @@ for ext in extensions:
                         os.path.join(exp_prefix, "extern", "yaml-cpp", "include"),
                     )
                 )
+
+        else:
+            # Skip cyexp extension if EXP is not found
+            continue
+
+    extensions.append(ext)
 
 with open(extra_compile_macros_file, "w") as f:
     if gsl_version is not None:
