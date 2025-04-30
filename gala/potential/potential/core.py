@@ -228,6 +228,18 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         return x
 
+    def _reapply_units_and_shape(self, x, ptype, shape, conv_unit=None):
+        """
+        This is the inverse of _remove_units_prepare_shape. It takes the output of one
+        of the C functions below and reapplies units and the original shape.
+        ptype is an Astropy PhysicalType object
+        """
+        x = np.moveaxis(x, 0, -1)
+        x = x.reshape(shape) * self.units[ptype]
+        if conv_unit is None:
+            return x
+        return x.to(conv_unit)
+
     ###########################################################################
     # Core methods that use the above implemented functions
     #
@@ -250,9 +262,11 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         q = self._remove_units_prepare_shape(q)
         orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, q)
-        ret_unit = self.units["energy"] / self.units["mass"]
-
-        return self._energy(q, t=t).T.reshape(orig_shape[1:]) * ret_unit
+        return self._reapply_units_and_shape(
+            self._energy(q, t=t),
+            ptype=u.get_physical_type("energy") / u.get_physical_type("mass"),
+            shape=orig_shape[1:],
+        )
 
     def gradient(self, q, t=0.0):
         """
@@ -274,9 +288,9 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         q = self._remove_units_prepare_shape(q)
         orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, q)
-        ret_unit = self.units["length"] / self.units["time"] ** 2
-        uu = self.units["acceleration"]
-        return (self._gradient(q, t=t).T.reshape(orig_shape) * ret_unit).to(uu)
+        return self._reapply_units_and_shape(
+            self._gradient(q, t=t), u.get_physical_type("acceleration"), orig_shape
+        )
 
     def density(self, q, t=0.0):
         """
@@ -299,8 +313,9 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         q = self._remove_units_prepare_shape(q)
         orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, q)
-        ret_unit = self.units["mass"] / self.units["length"] ** 3
-        return (self._density(q, t=t).T * ret_unit).to(self.units["mass density"])
+        return self._reapply_units_and_shape(
+            self._density(q, t=t), u.get_physical_type("mass density"), orig_shape[1:]
+        )
 
     def hessian(self, q, t=0.0):
         """
@@ -331,9 +346,11 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         q = self._remove_units_prepare_shape(q)
         orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, q)
-        ret_unit = 1 / self.units["time"] ** 2
-        hess = np.moveaxis(self._hessian(q, t=t), 0, -1)
-        return hess.reshape((orig_shape[0], orig_shape[0]) + orig_shape[1:]) * ret_unit
+        return self._reapply_units_and_shape(
+            self._hessian(q, t=t),
+            u.get_physical_type("frequency drift"),
+            (orig_shape[0], orig_shape[0]) + orig_shape[1:],
+        )
 
     ###########################################################################
     # Convenience methods that make use the base methods
@@ -394,13 +411,14 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             Gee = G.decompose(self.units).value
 
         Menc = np.abs(r * r * diff / Gee / (2.0 * h))
-        Menc = Menc.reshape(orig_shape[1:])
 
         sgn = 1.0
         if "m" in self.parameters and self.parameters["m"] < 0:
             sgn = -1.0
 
-        return sgn * Menc * self.units["mass"]
+        return self._reapply_units_and_shape(
+            sgn * Menc, u.get_physical_type("mass"), orig_shape[1:]
+        )
 
     def circular_velocity(self, q, t=0.0):
         """
@@ -423,11 +441,16 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         q = self._remove_units_prepare_shape(q)
 
         # Radius
-        r = np.sqrt(np.sum(q**2, axis=0)) * self.units["length"]
+        r = np.sqrt(np.sum(q**2, axis=0))
         dPhi_dxyz = self.gradient(q, t=t)
-        dPhi_dr = np.sum(dPhi_dxyz * q / r.value, axis=0)
+        dPhi_dr = np.sum(dPhi_dxyz.value * q / r, axis=0)
 
-        return self.units.decompose(np.sqrt(r * np.abs(dPhi_dr)))
+        return self._reapply_units_and_shape(
+            np.sqrt(r * np.abs(dPhi_dr)),
+            u.get_physical_type("length") / u.get_physical_type("time"),
+            r.shape,
+            conv_unit=u.get_physical_type("velocity"),
+        )
 
     ###########################################################################
     # Python special methods
