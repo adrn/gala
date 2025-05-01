@@ -12,6 +12,8 @@ import astropy.units as u
 import numpy as np
 from astropy.constants import G
 
+from gala._cconfig import EXP_ENABLED
+
 from gala.potential.common import PotentialParameter
 from gala.potential.potential.builtin.cybuiltin import (
     BurkertWrapper,
@@ -37,9 +39,12 @@ from gala.potential.potential.builtin.cybuiltin import (
     StoneWrapper,
     TriaxialNFWWrapper,
 )
-from gala.potential.potential.builtin.cyexp import (
-    EXPWrapper,
-)
+
+if EXP_ENABLED:
+    from gala.potential.potential.builtin.cyexp import (
+        EXPWrapper,
+    )
+
 from gala.units import DimensionlessUnitSystem, SimulationUnitSystem
 
 from ..core import PotentialBase, _potential_docstring
@@ -67,8 +72,10 @@ __all__ = [
     "MultipolePotential",
     "CylSplinePotential",
     "BurkertPotential",
-    "EXPPotential",
 ]
+
+if EXP_ENABLED:
+    __all__.append("EXPPotential")
 
 
 def __getattr__(name):
@@ -1382,7 +1389,8 @@ class EXPPotential(CPotentialBase, EXP_only=True):
     m_s = PotentialParameter("m_s", physical_type="mass")
     r_s = PotentialParameter("r_s", physical_type="length")
 
-    Wrapper = EXPWrapper
+    if EXP_ENABLED:
+        Wrapper = EXPWrapper
 
     def __init__(self, config_file, coeff_file, *args, origin=None, R=None, **kwargs):
 
