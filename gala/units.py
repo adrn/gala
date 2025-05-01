@@ -302,7 +302,7 @@ class SimulationUnitSystem(UnitSystem):
             (100 * u.kpc).to(usys["length"])
 
         """
-        G = G * const.G
+        G = 1 / G * const.G
 
         if length is not None and mass is not None:
             time = 1 / np.sqrt(G * mass / length**3)
