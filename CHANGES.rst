@@ -15,6 +15,10 @@ New Features
   ``gala.integrate.DOP853Integrator`` for more information about all of the available
   options for the integrator.
 
+- You may now specify a ``gala.units.UnitSystem`` instance to control the units of
+  plotted components when using ``gala.dynamics.Orbit.plot()`` or
+  ``gala.dynamics.PhaseSpacePosition.plot()``.
+
 Bug fixes
 ---------
 
