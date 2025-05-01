@@ -24,10 +24,12 @@ jobs:
         run: echo "HEAD_COMMIT_MESSAGE=$(git show -s --format=%s)" >> "$GITHUB_OUTPUT"
 
   tests:
-    name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with numpy ${{ matrix.numpy-version }}, no gsl ${{ matrix.gala-nogsl }}, deps ${{ matrix.pip-test-deps }}
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with numpy ${{ matrix.numpy-version }}, no gsl ${{ matrix.gala-nogsl }}, deps ${{ matrix.pip-test-deps }}, EXP ${{ matrix.gala-exp }}
     runs-on: ${{ matrix.os }}
     needs: check_skip_flags
     if: ${{ github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only') && !contains(needs.check_skip_flags.outputs.head-commit-message, '[skip tests]') }}
+    env:
+      EXP_TAG: "v7.8.2"
     strategy:
       fail-fast: true
       matrix:
@@ -38,6 +40,7 @@ jobs:
         scipy-version: ["latest"]
         gala-nogsl: ["0"]
         pip-test-deps: ["test"]
+        gala-exp: ["0"]
         include:
 
           - name: Oldest astropy, numpy, and scipy versions supported
@@ -47,6 +50,7 @@ jobs:
             numpy-version: "1.26"
             scipy-version: "1.12"
             gala-nogsl: "0"
+            gala-exp: "0"
             pip-test-deps: "test"
 
           - name: Install without GSL
@@ -56,6 +60,7 @@ jobs:
             numpy-version: "latest"
             scipy-version: "latest"
             gala-nogsl: "1"
+            gala-exp: "0"
             pip-test-deps: "test"
 
           - name: With optional dependencies
@@ -65,7 +70,18 @@ jobs:
             numpy-version: "latest"
             scipy-version: "latest"
             gala-nogsl: "0"
+            gala-exp: "0"
             pip-test-deps: "test,extra"
+
+          - name: With EXP
+            os: ubuntu-latest
+            python-version: "3.11"
+            astropy-version: "latest"
+            numpy-version: "latest"
+            scipy-version: "latest"
+            gala-nogsl: "0"
+            gala-exp: "1"
+            pip-test-deps: "test"
 
     steps:
       - uses: actions/checkout@v4
@@ -101,6 +117,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install gsl-bin libgsl0-dev build-essential
           sudo apt-get install libhdf5-serial-dev  # TODO: remove when h5py has 3.11 wheels
+
+      - name: Setup Linux - EXP
+        # TODO: EXP on macos?
+        if: runner.os == 'Linux' && matrix.gala-exp == '1'
+        run: |
+          sudo apt-get install -y libeigen3-dev libfftw3-dev libopenmpi-dev libomp-dev
+          git clone --recursive --depth 1 --branch $EXP_TAG https://github.com/EXP-code/EXP.git
+          cd EXP
+          cmake -B build --install-prefix $(realpath install)
+          cmake --build build
+          cmake --install build
 
       - name: Install package and dependencies
         run: python -m pip install -e ".[${{ matrix.pip-test-deps }}]"
