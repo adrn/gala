@@ -41,7 +41,6 @@ from gala.potential.potential.builtin.cyexp import (
     EXPWrapper,
 )
 from gala.units import DimensionlessUnitSystem, SimulationUnitSystem
-from gala.util import atleast_2d
 
 from ..core import PotentialBase, _potential_docstring
 from ..cpotential import CPotentialBase
@@ -1376,67 +1375,47 @@ class EXPPotential(CPotentialBase, EXP_only=True):
 
     # These are passed directly to exp_init
     stride = PotentialParameter("stride")
-    tmin = PotentialParameter("tmin")
-    tmax = PotentialParameter("tmax")
+    tmin = PotentialParameter("tmin", physical_type="time")
+    tmax = PotentialParameter("tmax", physical_type="time")
 
-    # These are passed to the evaluation routines
-    m = PotentialParameter("m", physical_type="mass")
+    # TODO: resolve naming for these
+    m_s = PotentialParameter("m_s", physical_type="mass")
+    r_s = PotentialParameter("r_s", physical_type="length")
 
-    # TODO: is it correct for EXP to take a scale radius?
-    r_vir = PotentialParameter("r_vir", physical_type="length")
+    Wrapper = EXPWrapper
 
-    def __init__(
-        self, *, config_file, coeff_file, units=None, origin=None, R=None, **kwargs
-    ):
-        self.Wrapper = EXPWrapper
+    def __init__(self, config_file, coeff_file, *args, origin=None, R=None, **kwargs):
 
-        PotentialBase.__init__(self, units=units, origin=origin, R=R, **kwargs)
-
-        if not isinstance(self.units, DimensionlessUnitSystem):
-            self._sim_units = SimulationUnitSystem(
-                mass=self.parameters["m"], length=self.parameters["r_vir"]
-            )
-        else:
-            self._sim_units = DimensionlessUnitSystem()
-
-        # Replace units with the simulation units:
-        PotentialBase.__init__(
-            self, origin=self.origin, R=self.R, units=self._sim_units, **self.parameters
-        )
-
-        self._setup_wrapper(
-            Wrapper_kwargs={"config_file": config_file, "coeff_file": coeff_file}
-        )
-
-    def _setup_wrapper(self, **kwargs):
-        if self.Wrapper is None:
+        if "units" in kwargs:
             raise ValueError(
-                "C potential wrapper class not defined for "
-                f"potential class {self.__class__}"
+                "The EXP potential does not support setting a custom unit system. Set "
+                "the unit system by specifying the mass and length scale parameters."
             )
 
-        arrs = [
-            np.atleast_1d(self._sim_units.decompose(v).value).ravel()
-            for v in self.parameters.values()
-        ]
+        pars = self._parse_parameter_values(*args, **kwargs)
+        print(pars)
 
-        if len(arrs) > 0:
-            self.c_parameters = np.concatenate(arrs)
+        has_units = hasattr(pars["m_s"], "unit") and hasattr(pars["r_s"], "unit")
+        if has_units:
+            _sim_units = SimulationUnitSystem(mass=pars["m_s"], length=pars["r_s"])
+        elif not has_units:
+            _sim_units = DimensionlessUnitSystem()
         else:
-            self.c_parameters = np.array([])
+            raise ValueError(
+                "Either both or neither of the mass and length scale parameters must "
+                "have associated units (i.e. be specified as astropy Quantity objects)."
+            )
 
-        if self.R is None:
-            self._R = np.eye(self.ndim)
-        else:
-            self._R = self.R
-
-        print(kwargs)
-        self.c_instance = self.Wrapper(
-            self.G,
-            self.c_parameters,
-            q0=self.origin,
-            R=self._R,
-            **kwargs["Wrapper_kwargs"],
+        CPotentialBase.__init__(
+            self,
+            units=_sim_units,
+            origin=origin,
+            R=R,
+            Wrapper_kwargs={
+                "config_file": config_file,
+                "coeff_file": coeff_file,
+            },
+            **kwargs,
         )
 
     def hessian(self, *args, **kwargs):
@@ -1446,37 +1425,3 @@ class EXPPotential(CPotentialBase, EXP_only=True):
         raise NotImplementedError(
             "Computing Hessian matrices for EXP potentials is not supported."
         )
-
-    def _remove_units_prepare_shape(self, x):
-        """
-        This is similar to that implemented by
-        `gala.potential.common.CommonBase`, but returns just the position if the
-        input is a `PhaseSpacePosition`.
-        """
-        from gala.dynamics import PhaseSpacePosition
-
-        if hasattr(x, "unit"):
-            x = x.decompose(self._sim_units).value
-
-        elif isinstance(x, PhaseSpacePosition):
-            x = x.cartesian.xyz.decompose(self._sim_units).value
-
-        x = atleast_2d(x, insert_axis=1).astype(np.float64)
-
-        if x.shape[0] != self.ndim:
-            raise ValueError(
-                f"Input position has ndim={x.shape[0]}, but this potential "
-                f"expects an {self.ndim}-dimensional position."
-            )
-
-        return x
-
-    def _reapply_units_and_shape(self, x, ptype, shape, **kwargs):
-        """
-        This is the inverse of _remove_units_prepare_shape. It takes the output of one
-        of the C functions below and reapplies units and the original shape.
-        ptype is an Astropy PhysicalType object
-        """
-        x = np.moveaxis(x, 0, -1)
-        x = (x.reshape(shape) * self._sim_units[ptype]).to(self.units[ptype])
-        return x
