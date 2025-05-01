@@ -1,5 +1,5 @@
 """
-    Test the unit system.
+Test the unit system.
 """
 
 import itertools
@@ -78,7 +78,11 @@ def test_simulation(nu1, nu2):
     print(nu1, nu2)
     name1, unit1 = nu1
     name2, unit2 = nu2
-    SimulationUnitSystem(**{name1: unit1, name2: unit2})
+    usys = SimulationUnitSystem(**{name1: unit1, name2: unit2})
+    assert np.isclose(usys.get_constant("G"), 1.0)
+
+    usys = SimulationUnitSystem(**{name1: unit1, name2: unit2}, G=2.4)
+    assert np.isclose(usys.get_constant("G"), 2.4)
 
 
 def test_compare():
