@@ -897,7 +897,7 @@ class Orbit(PhaseSpacePosition):
             component names will be different. For example, for a Cylindrical
             representation, the components are ``['rho', 'phi', 'z']`` and
             ``['v_rho', 'pm_phi', 'v_z']``.
-        units : `~astropy.units.UnitBase`, iterable (optional)
+        units : `~astropy.units.UnitBase`, iterable, `gala.units.UnitSystem` (optional)
             A single unit or list of units to display the components in.
         auto_aspect : bool (optional)
             Automatically enforce an equal aspect ratio.
@@ -982,7 +982,7 @@ class Orbit(PhaseSpacePosition):
             component names will be different. For example, for a Cylindrical
             representation, the components are ``['rho', 'phi', 'z']`` and
             ``['v_rho', 'pm_phi', 'v_z']``.
-        units : `~astropy.units.UnitBase`, iterable (optional)
+        units : `~astropy.units.UnitBase`, iterable, `gala.units.UnitSystem` (optional)
             A single unit or list of units to display the components in.
         auto_aspect : bool (optional)
             Automatically enforce an equal aspect ratio.
@@ -1085,7 +1085,7 @@ class Orbit(PhaseSpacePosition):
             component names will be different. For example, for a Cylindrical
             representation, the components are ``['rho', 'phi', 'z']`` and
             ``['v_rho', 'pm_phi', 'v_z']``.
-        units : `~astropy.units.UnitBase`, iterable (optional)
+        units : `~astropy.units.UnitBase`, iterable, `gala.units.UnitSystem` (optional)
             A single unit or list of units to display the components in.
         stride : int (optional)
             How often to draw a new frame, in terms of orbit timesteps.
