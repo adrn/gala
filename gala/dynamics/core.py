@@ -742,6 +742,13 @@ class PhaseSpacePosition:
             if isinstance(units, u.UnitBase):
                 units = [units] * n_comps  # global unit
 
+            elif isinstance(units, UnitSystem):
+                list_units = []
+                for i, name in enumerate(components):
+                    val = getattr(self, name)
+                    list_units.append(units[val.unit.physical_type])
+                units = list_units
+
             elif len(units) != n_comps:
                 raise ValueError(
                     "You must specify a unit for each axis, or a "
