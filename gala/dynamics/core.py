@@ -742,6 +742,13 @@ class PhaseSpacePosition:
             if isinstance(units, u.UnitBase):
                 units = [units] * n_comps  # global unit
 
+            elif isinstance(units, UnitSystem):
+                list_units = []
+                for i, name in enumerate(components):
+                    val = getattr(self, name)
+                    list_units.append(units[val.unit.physical_type])
+                units = list_units
+
             elif len(units) != n_comps:
                 raise ValueError(
                     "You must specify a unit for each axis, or a "
@@ -797,7 +804,7 @@ class PhaseSpacePosition:
             Cartesian positions ``['x', 'y', 'z']``. To plot Cartesian
             velocities, pass in the velocity component names
             ``['d_x', 'd_y', 'd_z']``.
-        units : `~astropy.units.UnitBase`, iterable (optional)
+        units : `~astropy.units.UnitBase`, iterable, `gala.units.UnitSystem` (optional)
             A single unit or list of units to display the components in.
         auto_aspect : bool (optional)
             Automatically enforce an equal aspect ratio.
