@@ -235,7 +235,18 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         ptype is an Astropy PhysicalType object
         """
         x = np.moveaxis(x, 0, -1)
-        x = x.reshape(shape) * self.units[ptype]
+        if isinstance(ptype, u.PhysicalType):
+            uu = self.units[ptype]
+        elif isinstance(ptype, str):
+            uu = self.units[u.get_physical_type(ptype)]
+        elif isinstance(ptype, u.UnitBase):
+            uu = ptype
+        else:
+            raise ValueError(
+                f"ptype must be a PhysicalType, str, or UnitBase object. "
+                f"Got {ptype} instead."
+            )
+        x = x.reshape(shape) * uu
         if conv_unit is None:
             return x
         return x.to(conv_unit)
@@ -447,9 +458,10 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         return self._reapply_units_and_shape(
             np.sqrt(r * np.abs(dPhi_dr)),
-            u.get_physical_type("length") / u.get_physical_type("time"),
+            self.units[u.get_physical_type("length")]
+            / self.units[u.get_physical_type("time")],
             r.shape,
-            conv_unit=u.get_physical_type("velocity"),
+            conv_unit=self.units[u.get_physical_type("velocity")],
         )
 
     ###########################################################################
