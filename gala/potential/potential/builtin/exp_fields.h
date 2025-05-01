@@ -28,6 +28,5 @@ extern "C" {
 extern double exp_value(double t, double *pars, double *q, int n_dim, void* state);
 extern void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void* state);
 extern double exp_density(double t, double *pars, double *q, int n_dim, void* state);
-extern void exp_hessian(double t, double *pars, double *q, int n_dim, double *hess, void* state);
 
 }

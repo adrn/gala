@@ -105,16 +105,6 @@ CoefClasses::CoefStrPtr interpolator(double t, CoefClasses::CoefsPtr coefs)
 extern "C" {
 
 double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
-  /*  pars:
-          - G (Gravitational constant)
-          - m (mass scale)
-          - r_vir (scale length)
-  */
-
-  double G = pars[0];
-  double M = pars[1];
-  double r_vir = pars[2];
-
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
   if (!exp_state->is_static) {
@@ -124,43 +114,29 @@ double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
   }
 
   // Get the field quantities
-  // TODO: this computes many quantities, not just the potential
-  // TODO: check what lengths Gala is passing. Do they need to be rescaled to EXP units (using r_vir)?
+  // TODO: ask Martin/Mike for a way to compute only the potential - we're wasting
+  // computation time here by computing all fields
   auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
 
-  double pot = G * M * field[5];
-
-  return pot;
+  return field[5];
 }
 
 void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void* state){
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
-  // double G = pars[0];
-  double G = 1.;
-  double M = pars[1];
-  double r_vir = pars[2];
-
   if (!exp_state->is_static) {
     exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
   }
 
-  printf("exp_gradient: G_EXP = %g\n", G);
-  // printf("exp_gradient: m = %g\n", M);
-  // printf("exp_gradient: r_vir = %g\n", r_vir);
-  // printf("exp_gradient: q = %g %g %g\n", q[0], q[1], q[2]);
+  // TODO: ask Martin/Mike for a way to compute only the force/acceleration - we're wasting
+  // computation time here by computing all fields
   auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
 
-  printf("exp field[6] = %g\n", field[6]);
-  printf("exp field[7] = %g\n", field[7]);
-  printf("exp field[8] = %g\n", field[8]);
-
-  grad[0] += -G * field[6];
-  grad[1] += -G * field[7];
-  grad[2] += -G * field[8];
+  grad[0] += -field[6];
+  grad[1] += -field[7];
+  grad[2] += -field[8];
 }
 
-// TODO: density units
 double exp_density(double t, double *pars, double *q, int n_dim, void* state) {
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
@@ -168,26 +144,27 @@ double exp_density(double t, double *pars, double *q, int n_dim, void* state) {
     exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
   }
 
+  // TODO: ask Martin/Mike for a way to compute only the density - we're wasting
+  // computation time here by computing all fields
   auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
 
-  // return field[2];  // dens
-  return NAN;
+  return field[2];
 }
 
-// TODO
-void exp_hessian(double t, double *pars, double *q, int n_dim, double *hess, void* state) {
-  gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
+// TODO: No hessian available in EXP yet
+// void exp_hessian(double t, double *pars, double *q, int n_dim, double *hess, void* state) {
+//   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
-  if (!exp_state->is_static) {
-    exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
-  }
+//   if (!exp_state->is_static) {
+//     exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
+//   }
 
-  auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
+//   auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
 
-  for(int i=0; i<9; i++) {
-    hess[i] += NAN;  // TODO: get hessian from EXP
-  }
-}
+//   for(int i=0; i<9; i++) {
+//     hess[i] += NAN;  // TODO: get hessian from EXP
+//   }
+// }
 
 }
 

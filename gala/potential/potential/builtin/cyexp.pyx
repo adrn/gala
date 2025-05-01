@@ -30,7 +30,6 @@ cdef extern from "potential/potential/builtin/exp_fields.h":
     double exp_value(double t, double *pars, double *q, int n_dim, void *state) nogil
     void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
     double exp_density(double t, double *pars, double *q, int n_dim, void *state) nogil
-    void exp_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
 __all__ = [
     'EXPWrapper',
@@ -63,4 +62,3 @@ cdef class EXPWrapper(CPotentialWrapper):
             self.cpotential.value[0] = <energyfunc>(exp_value)
             self.cpotential.density[0] = <densityfunc>(exp_density)
             self.cpotential.gradient[0] = <gradientfunc>(exp_gradient)
-            self.cpotential.hessian[0] = <hessianfunc>(exp_hessian)
