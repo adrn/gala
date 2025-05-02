@@ -221,11 +221,8 @@ for ext in all_extensions:
                         "yaml-cpp",
                     )
                 )
-                # TODO: this requires user to install EXP to $GALA_EXP_PREFIX/install
-                # exp_lib = os.path.join(exp_prefix, "install", "lib")
-
-                # NOTE: adrian had to do this:
-                exp_lib = "/opt/homebrew/Cellar/lib"
+                #TODO: this requires user to install EXP to $GALA_EXP_PREFIX/install
+                exp_lib = os.path.join(exp_prefix, "install", "lib")
 
                 ext.library_dirs.append(exp_lib)
                 ext.runtime_library_dirs.append(exp_lib)
