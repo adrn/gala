@@ -42,10 +42,9 @@ __all__ = [
 cdef class EXPWrapper(CPotentialWrapper):
     cdef State exp_state
 
-    def __init__(self, G, parameters, q0, R, config_file, coeff_file):
-        stride, tmin, tmax = parameters[:3]
-        parameters = parameters[3:]
-
+    def __init__(
+        self, G, parameters, q0, R, config_file, coeff_file, stride, tmin, tmax
+    ):
         self.init([G] + list(parameters),
                   np.ascontiguousarray(q0),
                   np.ascontiguousarray(R))
