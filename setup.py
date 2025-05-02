@@ -168,7 +168,35 @@ else:
     gsl_prefix = os.path.normpath(gsl_prefix.strip())
 
 
-eigen_incl = os.environ.get("EIGEN3_INCLUDE_DIR", None)
+def pkg_config(pkg, *args):
+    """
+    pkg_config("eigen3", "--cflags")
+    pkg_config("eigen3", "--libs")
+    """
+    cmd = ["pkg-config", *args, pkg]
+    try:
+        output = check_output(cmd, encoding="utf-8")
+    except:
+        output = str(check_output(cmd))
+    return output.strip()
+
+
+def get_include_flags(pkg):
+    """
+    First look at EIGEN3_INCLUDE_DIR environment variable, then
+    fall back to "pkg-config --cflags eigen3".
+    """
+    eigen_incl_dir = os.environ.get(f"{pkg.upper()}_INCLUDE_DIR", None)
+    if eigen_incl_dir is None:
+        # The cflags from pkg-config might contain multiple flags.
+        # Just pass them as extra_compile_args rather than include_dirs.
+        eigen_incl_flags = pkg_config(pkg, "--cflags")
+    else:
+        eigen_incl_dir = os.path.normpath(eigen_incl_dir.strip())
+        eigen_incl_flags = "-I" + eigen_incl_dir
+    return eigen_incl_flags
+
+
 if exp_prefix is None:
     print("Gala: installing without EXP support.")
 else:
@@ -177,15 +205,14 @@ else:
 
     print(f"Gala: installing with EXP support (GALA_EXP_PREFIX={exp_prefix})")
 
-    if eigen_incl is None:
-        cmd = ["pkg-config", "--cflags", "eigen3"]
-        try:
-            eigen_incl = check_output(cmd, encoding="utf-8")
-        except:
-            eigen_incl = str(check_output(cmd))
-        eigen_incl = eigen_incl[2:]
-
-    eigen_incl = os.path.normpath(eigen_incl.strip())
+    extra_incl_flags = [
+        f
+        for f in [
+            get_include_flags("eigen3"),
+            get_include_flags("hdf5"),
+        ]
+        if f  # blank args not allowed!
+    ]
 
 print("-" * 79)
 
@@ -205,8 +232,8 @@ for ext in all_extensions:
     if "cyexp" in ext.name:
         if exp_prefix is not None:
             ext.include_dirs.append(pybind11.get_include())
-            if eigen_incl is not None:
-                ext.include_dirs.append(eigen_incl)
+            if extra_incl_flags is not None:
+                ext.extra_compile_args.extend(extra_incl_flags)
 
             if "exp" not in ext.libraries:
                 # TODO: we're compiling against installed EXP libraries,
@@ -221,7 +248,7 @@ for ext in all_extensions:
                         "yaml-cpp",
                     )
                 )
-                #TODO: this requires user to install EXP to $GALA_EXP_PREFIX/install
+                # TODO: this requires user to install EXP to $GALA_EXP_PREFIX/install
                 exp_lib = os.path.join(exp_prefix, "install", "lib")
 
                 ext.library_dirs.append(exp_lib)
