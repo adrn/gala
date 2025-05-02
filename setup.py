@@ -210,6 +210,7 @@ else:
         for f in [
             get_include_flags("eigen3"),
             get_include_flags("hdf5"),
+            get_include_flags("mpi"),
         ]
         if f  # blank args not allowed!
     ]
