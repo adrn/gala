@@ -116,7 +116,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install gsl-bin libgsl0-dev build-essential
-          sudo apt-get install libhdf5-serial-dev  # TODO: remove when h5py has 3.11 wheels
 
       - name: Clone EXP
         if: runner.os == 'Linux' && matrix.gala-exp == '1'
@@ -132,7 +131,7 @@ jobs:
         if: runner.os == 'Linux' && matrix.gala-exp == '1'
         working-directory: EXP
         run: |
-          sudo apt-get install -y libeigen3-dev libfftw3-dev libopenmpi-dev libomp-dev
+          sudo apt-get install -y libeigen3-dev libfftw3-dev libopenmpi-dev libomp-dev libhdf5-dev
           cmake -G Ninja -B build --install-prefix $PWD/install
           cmake --build build
           cmake --install build
