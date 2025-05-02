@@ -6,6 +6,7 @@
 
 import os
 import sys
+import warnings
 
 from extension_helpers import get_extensions
 from setuptools import setup
@@ -177,7 +178,13 @@ def pkg_config(pkg: str, *pc_args) -> str:
     try:
         output = check_output(cmd, encoding="utf-8")
     except:
-        output = str(check_output(cmd))
+        try:
+            output = str(check_output(cmd))
+        except:
+            # pkg-config is allowed to fail. For example, a module might
+            # set C_INCLUDE_PATH but not expose a pc file.
+            warnings.warn(f'"{" ".join(cmd)}" failed for {pkg}.')
+            output = ""
     return output.strip()
 
 

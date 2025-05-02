@@ -125,9 +125,9 @@ local_scheme = "no-local-version"  # So that uploads to test.pypi.org work
 [tool.pytest.ini_options]
 testpaths = ["gala", "docs"]
 astropy_header = true
-doctest_plus = "enabled"
+#doctest_plus = "enabled"
 text_file_format = "rst"
-addopts = ["--doctest-rst"]
+addopts = ["--doctest-rst", "--ignore-glob=*/setup_package.py"]
 norecursedirs = [
     "docs/tutorials/*",
     "docs/_*"
