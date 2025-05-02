@@ -126,12 +126,12 @@ jobs:
           ref: ${{ env.EXP_TAG }}
           submodules: recursive
           # Check out outside of the gala repo to avoid, e.g, incorrect test discovery
-          path: ${{ env.GITHUB_WORKSPACE }}/../EXP
+          path: ${{ github.workspace }}/../EXP
 
       - name: Build EXP
         # TODO: EXP on macos?
         if: runner.os == 'Linux' && matrix.gala-exp == '1'
-        working-directory: ${{ env.GITHUB_WORKSPACE }}/../EXP
+        working-directory: ${{ github.workspace }}/../EXP
         run: |
           sudo apt-get install -y libeigen3-dev libfftw3-dev libopenmpi-dev libomp-dev
           cmake -G Ninja -B build --install-prefix $(realpath install)
@@ -141,7 +141,7 @@ jobs:
       - name: Install package and dependencies
         run: |
           if [[ "${{ matrix.gala-exp }}" == "1" ]]; then
-            export GALA_EXP_PREFIX=${{ env.GITHUB_WORKSPACE }}/../EXP/install
+            export GALA_EXP_PREFIX=${{ github.workspace }}/../EXP/install
           fi
           python -m pip install -e ".[${{ matrix.pip-test-deps }}]"
         env:
