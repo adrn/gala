@@ -122,7 +122,7 @@ include = ["gala", "gala.*"]
 version_file = "gala/_version.py"
 local_scheme = "no-local-version"  # So that uploads to test.pypi.org work
 
-[tool.pytest]
+[tool.pytest.ini_options]
 testpaths = ["gala", "docs"]
 astropy_header = true
 doctest_plus = "enabled"
