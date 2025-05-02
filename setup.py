@@ -168,12 +168,12 @@ else:
     gsl_prefix = os.path.normpath(gsl_prefix.strip())
 
 
-def pkg_config(pkg, *args):
+def pkg_config(pkg: str, *pc_args) -> str:
     """
     pkg_config("eigen3", "--cflags")
     pkg_config("eigen3", "--libs")
     """
-    cmd = ["pkg-config", *args, pkg]
+    cmd = ["pkg-config", *pc_args, pkg]
     try:
         output = check_output(cmd, encoding="utf-8")
     except:
@@ -181,7 +181,7 @@ def pkg_config(pkg, *args):
     return output.strip()
 
 
-def get_include_flags(pkg):
+def get_include_flags(pkg: str) -> list[str]:
     """
     First look at EIGEN3_INCLUDE_DIR environment variable, then
     fall back to "pkg-config --cflags eigen3".
@@ -190,10 +190,10 @@ def get_include_flags(pkg):
     if eigen_incl_dir is None:
         # The cflags from pkg-config might contain multiple flags.
         # Just pass them as extra_compile_args rather than include_dirs.
-        eigen_incl_flags = pkg_config(pkg, "--cflags")
+        eigen_incl_flags = pkg_config(pkg, "--cflags").split()
     else:
         eigen_incl_dir = os.path.normpath(eigen_incl_dir.strip())
-        eigen_incl_flags = "-I" + eigen_incl_dir
+        eigen_incl_flags = ["-I" + eigen_incl_dir]
     return eigen_incl_flags
 
 
@@ -205,15 +205,11 @@ else:
 
     print(f"Gala: installing with EXP support (GALA_EXP_PREFIX={exp_prefix})")
 
-    extra_incl_flags = [
-        f
-        for f in [
-            get_include_flags("eigen3"),
-            get_include_flags("hdf5"),
-            get_include_flags("mpi"),
-        ]
-        if f  # blank args not allowed!
-    ]
+    extra_incl_flags = []
+    for lib in ["eigen3", "hdf5", "mpi"]:
+        flags = get_include_flags(lib)
+        if flags:
+            extra_incl_flags.extend(flags)
 
 print("-" * 79)
 
