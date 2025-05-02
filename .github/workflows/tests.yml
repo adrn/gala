@@ -125,6 +125,7 @@ jobs:
           repository: EXP-code/EXP
           ref: ${{ env.EXP_TAG }}
           submodules: recursive
+          path: EXP
 
       - name: Build EXP
         # TODO: EXP on macos?
