@@ -1,14 +1,10 @@
-# Standard library
 import inspect
 
-# Third-party
 import numpy as np
 from astropy.utils import isiterable
 
-from ..units import DimensionlessUnitSystem, UnitSystem
-
-# Project
-from ..util import atleast_2d
+from gala.units import DimensionlessUnitSystem, UnitSystem
+from gala.util import atleast_2d
 
 
 class PotentialParameter:
