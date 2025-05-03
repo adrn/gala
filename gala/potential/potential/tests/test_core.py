@@ -2,18 +2,14 @@
 Test the core Potential classes
 """
 
-# Third party
 import astropy.units as u
 import numpy as np
 import pytest
 from astropy.constants import G
 from matplotlib import cm
 
-from ....units import UnitSystem
-from ...common import PotentialParameter
-
-# This package
-from ..core import CompositePotential, PotentialBase
+from gala.potential import CompositePotential, PotentialBase, PotentialParameter
+from gala.units import UnitSystem
 
 units = [u.kpc, u.Myr, u.Msun, u.radian]
 usys = UnitSystem(u.au, u.yr, u.Msun, u.radian)
