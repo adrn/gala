@@ -17,7 +17,8 @@ class PotentialParameter:
     physical_type : str (optional)
         The physical type (as defined by `astropy.units`) of the expected
         physical units that this parameter is in. For example, "mass" for a mass
-        parameter.
+        parameter. Pass `None` if the parameter is not meant to be a Quantity (e.g.,
+        string or integer values).
     default : numeric, str, array (optional)
         The default value of the parameter.
     equivalencies : `astropy.units.equivalencies.Equivalency` (optional)
