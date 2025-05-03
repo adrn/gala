@@ -6,10 +6,16 @@ import astropy.units as u
 import numpy as np
 import pytest
 from astropy.constants import G
-from matplotlib import cm
 
 from gala.potential import CompositePotential, PotentialBase, PotentialParameter
+from gala.tests.optional_deps import HAS_MATPLOTLIB
 from gala.units import UnitSystem
+
+if HAS_MATPLOTLIB:
+    import matplotlib.pyplot as plt
+else:
+    plt = None
+
 
 units = [u.kpc, u.Myr, u.Msun, u.radian]
 usys = UnitSystem(u.au, u.yr, u.Msun, u.radian)
@@ -59,9 +65,12 @@ def test_init_potential():
     MyPotential(1.5, 1)
     MyPotential(1.5, x0=1)
     MyPotential(m=1.5, x0=1)
-    MyPotential(1.5 * u.Msun, 1 * u.au, units=usys)
+    MyPotential(1.5 * u.Msun, 1 * u.au, 10, units=usys)
     MyPotential(1.5 * u.Msun, x0=1 * u.au, units=usys)
     MyPotential(m=1.5 * u.Msun, x0=1 * u.au, units=usys)
+
+    pot = MyPotential(m=1.5 * u.Msun, x0=1 * u.au, n=10, units=usys)
+    assert pot.parameters["n"] == 10
 
 
 def test_repr():
@@ -71,12 +80,14 @@ def test_repr():
     assert "m=1" in _repr
     assert "x0=0" in _repr
     assert _repr.endswith("(AU,yr,solMass,rad)>")
-    # assert p.__repr__() == "<MyPotential: m=1.00e+10, x0=0.00e+00 (AU, yr, solMass, rad)>"
 
 
+@pytest.mark.skipif(not HAS_MATPLOTLIB, reason="matplotlib is required")
 def test_plot():
+    # TODO: test that the plots are correct??
     p = MyPotential(m=1, x0=[1.0, 3.0, 0.0], units=usys)
     f = p.plot_contours(grid=(np.linspace(-10.0, 10.0, 100), 0.0, 0.0), labels=["X"])
+    plt.close(f)
     # f.suptitle("slice off from 0., won't have cusp")
     # f.savefig(os.path.join(plot_path, "contour_x.png"))
 
@@ -86,8 +97,9 @@ def test_plot():
             np.linspace(-10.0, 10.0, 100),
             0.0,
         ),
-        cmap=cm.Blues,
+        cmap="Blues",
     )
+    plt.close(f)
     # f.savefig(os.path.join(plot_path, "contour_xy.png"))
 
     f = p.plot_contours(
@@ -96,9 +108,10 @@ def test_plot():
             1.0,
             np.linspace(-10.0, 10.0, 100),
         ),
-        cmap=cm.Blues,
+        cmap="Blues",
         labels=["X", "Z"],
     )
+    plt.close(f)
     # f.savefig(os.path.join(plot_path, "contour_xz.png"))
 
 
@@ -145,3 +158,4 @@ def test_replicate():
     assert p2.R is None
     assert np.isclose(p2.parameters["m"].value, 2e10)
     assert np.isclose(p2.parameters["x0"].value, p1.parameters["x0"].value)
+    assert p2.parameters["n"] == p1.parameters["n"]
