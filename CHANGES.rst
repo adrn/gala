@@ -19,6 +19,9 @@ New Features
   plotted components when using ``gala.dynamics.Orbit.plot()`` or
   ``gala.dynamics.PhaseSpacePosition.plot()``.
 
+- Added the ability to specify integer or string (i.e. non-Quantity) potential
+  parameters.
+
 Bug fixes
 ---------
 
