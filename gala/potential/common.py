@@ -3,12 +3,13 @@ import inspect
 
 # Third-party
 import astropy.units as u
-from astropy.utils import isiterable
 import numpy as np
+from astropy.utils import isiterable
+
+from ..units import DimensionlessUnitSystem, UnitSystem
 
 # Project
 from ..util import atleast_2d
-from ..units import UnitSystem, DimensionlessUnitSystem
 
 
 class PotentialParameter:
@@ -34,11 +35,13 @@ class PotentialParameter:
         # TODO: need better sanitization and validation here
 
         self.name = str(name)
-        self.physical_type = str(physical_type)
+        self.physical_type = str(physical_type) if physical_type is not None else None
         self.default = default
         self.equivalencies = equivalencies
 
     def __repr__(self):
+        if self.physical_type is None:
+            return f"<PotentialParameter: {self.name}>"
         return f"<PotentialParameter: {self.name} [{self.physical_type}]>"
 
 
@@ -135,7 +138,9 @@ class CommonBase:
         pars = dict()
         for k, v in parameters.items():
             expected_ptype = cls._parameters[k].physical_type
-            expected_unit = units[expected_ptype]
+            expected_unit = (
+                units[expected_ptype] if expected_ptype is not None else None
+            )
             equiv = cls._parameters[k].equivalencies
 
             if hasattr(v, 'unit'):
@@ -156,6 +161,8 @@ class CommonBase:
                 # .to() could cause small rounding issues in comparisons
                 if v.unit.physical_type != expected_ptype:
                     v = v.to(expected_unit, equiv)
+                
+                v = v.decompose(units)
 
             elif expected_ptype is not None:
                 # this is false for empty ptype: treat empty string as u.one
@@ -166,11 +173,10 @@ class CommonBase:
                     v = v * units['length'] / units['time']
                 else:
                     v = v * units[expected_ptype]
+                    
+                v = v.decompose(units)
 
-            else:
-                v = v * u.one
-
-            pars[k] = v.decompose(units)
+            pars[k] = v
 
         return pars
 
@@ -230,7 +236,7 @@ class CommonBase:
 
         keys = self.parameters.keys()
         for k in keys:
-            v = self.parameters[k].value
+            v = self.parameters[k]
             post = ""
 
             if hasattr(v, 'unit'):

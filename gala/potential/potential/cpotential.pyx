@@ -289,8 +289,12 @@ class CPotentialBase(PotentialBase):
             arrs.append(np.atleast_1d(v).ravel())
 
         # to support array parameters, but they get unraveled
-        arrs = arrs + [np.atleast_1d(v.value).ravel()
-                       for v in self.parameters.values()]
+        kwargs = {}
+        for k, v in self.parameters.items():
+            if hasattr(v, "unit"):
+                arrs.append(np.atleast_1d(v.value).ravel())
+            else:
+                kwargs[k] = v
 
         if len(arrs) > 0:
             self.c_parameters = np.concatenate(arrs)
