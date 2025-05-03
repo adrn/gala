@@ -42,12 +42,15 @@ __all__ = [
 cdef class EXPWrapper(CPotentialWrapper):
     cdef State exp_state
 
-    def __init__(
-        self, G, parameters, q0, R, config_file, coeff_file, stride, tmin, tmax
-    ):
-        self.init([G] + list(parameters),
-                  np.ascontiguousarray(q0),
-                  np.ascontiguousarray(R))
+    def __init__(self, G, parameters, q0, R, config_file, coeff_file, stride):
+        tmin = parameters[0]
+        tmax = parameters[1]
+
+        self.init(
+            [G],
+            np.ascontiguousarray(q0),
+            np.ascontiguousarray(R)
+        )
 
         if USE_EXP == 1:
             self.exp_state = exp_init(
@@ -55,7 +58,7 @@ cdef class EXPWrapper(CPotentialWrapper):
                 coeff_file,
                 stride,
                 tmin,
-                tmax,
+                tmax
             )
             self.cpotential.state[0] = &self.exp_state
             self.cpotential.value[0] = <energyfunc>(exp_value)
