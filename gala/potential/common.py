@@ -2,7 +2,6 @@
 import inspect
 
 # Third-party
-import astropy.units as u
 import numpy as np
 from astropy.utils import isiterable
 
@@ -29,8 +28,9 @@ class PotentialParameter:
         Any equivalencies required for the parameter.
     """
 
-    def __init__(self, name, physical_type="dimensionless", default=None,
-                 equivalencies=None):
+    def __init__(
+        self, name, physical_type="dimensionless", default=None, equivalencies=None
+    ):
         # TODO: could add a "shape" argument?
         # TODO: need better sanitization and validation here
 
@@ -57,7 +57,7 @@ class CommonBase:
         sig_parameters = []
 
         # Also allow passing parameters in to subclassing:
-        subcls_params = kwargs.pop('parameters', {})
+        subcls_params = kwargs.pop("parameters", {})
         subcls_params.update(cls.__dict__)
 
         for k, v in subcls_params.items():
@@ -71,11 +71,14 @@ class CommonBase:
             else:
                 default = v.default
 
-            sig_parameters.append(inspect.Parameter(
-                k, inspect.Parameter.POSITIONAL_OR_KEYWORD, default=default))
+            sig_parameters.append(
+                inspect.Parameter(
+                    k, inspect.Parameter.POSITIONAL_OR_KEYWORD, default=default
+                )
+            )
 
         for k, param in sig.parameters.items():
-            if k == 'self' or param.kind == param.VAR_POSITIONAL:
+            if k == "self" or param.kind == param.VAR_POSITIONAL:
                 continue
             sig_parameters.append(param)
         sig_parameters = sorted(sig_parameters, key=lambda x: int(x.kind))
@@ -108,7 +111,8 @@ class CommonBase:
                 f"{self.__class__.__name__}: Potential and Frame classes only "
                 "accept parameters as positional arguments, all other "
                 "arguments (e.g., units) must now be passed in as keyword "
-                "argument.")
+                "argument."
+            )
 
         parameter_values = dict()
 
@@ -126,8 +130,10 @@ class CommonBase:
             parameter_values[k] = val
 
         if len(kwargs):
-            raise ValueError(f"{self.__class__} received unexpected keyword "
-                             f"argument(s): {list(kwargs.keys())}")
+            raise ValueError(
+                f"{self.__class__} received unexpected keyword "
+                f"argument(s): {list(kwargs.keys())}"
+            )
 
         return parameter_values
 
@@ -142,16 +148,20 @@ class CommonBase:
             )
             equiv = cls._parameters[k].equivalencies
 
-            if hasattr(v, 'unit'):
-                if (not isinstance(units, DimensionlessUnitSystem) and
-                        not v.unit.is_equivalent(expected_unit, equiv)):
-                    msg = (f"Parameter {k} has physical type "
-                           f"'{v.unit.physical_type}', but we expected a "
-                           f"physical type '{expected_ptype}'")
+            if hasattr(v, "unit"):
+                if not isinstance(
+                    units, DimensionlessUnitSystem
+                ) and not v.unit.is_equivalent(expected_unit, equiv):
+                    msg = (
+                        f"Parameter {k} has physical type "
+                        f"'{v.unit.physical_type}', but we expected a "
+                        f"physical type '{expected_ptype}'"
+                    )
                     if equiv is not None:
-                        msg = (msg +
-                               f" or something equivalent via the {equiv} "
-                               "equivalency.")
+                        msg = (
+                            msg + f" or something equivalent via the {equiv} "
+                            "equivalency."
+                        )
 
                     raise ValueError(msg)
 
@@ -160,7 +170,7 @@ class CommonBase:
                 # .to() could cause small rounding issues in comparisons
                 if v.unit.physical_type != expected_ptype:
                     v = v.to(expected_unit, equiv)
-                
+
                 v = v.decompose(units)
 
             elif expected_ptype is not None:
@@ -168,11 +178,11 @@ class CommonBase:
                 # (i.e. this goes to the else clause)
 
                 # TODO: remove when fix potentials that ask for scale velocity!
-                if expected_ptype == 'speed':
-                    v = v * units['length'] / units['time']
+                if expected_ptype == "speed":
+                    v = v * units["length"] / units["time"]
                 else:
                     v = v * units[expected_ptype]
-                    
+
                 v = v.decompose(units)
 
             pars[k] = v
@@ -182,7 +192,7 @@ class CommonBase:
     def _remove_units_prepare_shape(self, x):
         from gala.dynamics import PhaseSpacePosition
 
-        if hasattr(x, 'unit'):
+        if hasattr(x, "unit"):
             x = x.decompose(self.units).value
 
         elif isinstance(x, PhaseSpacePosition):
@@ -203,7 +213,7 @@ class CommonBase:
         """
         Make sure that t is a 1D array and compatible with the C position array.
         """
-        if hasattr(t, 'unit'):
+        if hasattr(t, "unit"):
             t = t.decompose(self.units).value
 
         if not isiterable(t):
@@ -213,21 +223,28 @@ class CommonBase:
 
         if len(t) > 1:
             if len(t) != pos_c.shape[0]:
-                raise ValueError("If passing in an array of times, it must have a shape "
-                                 "compatible with the input position(s).")
+                raise ValueError(
+                    "If passing in an array of times, it must have a shape "
+                    "compatible with the input position(s)."
+                )
 
         return t
 
     # For comparison operations
     def __eq__(self, other):
-        if other is None or not hasattr(other, 'parameters'):
+        if other is None or not hasattr(other, "parameters"):
             return False
 
         # the funkiness in the below is in case there are array parameters:
         par_bool = [
             (k1 == k2) and np.all(self.parameters[k1] == other.parameters[k2])
-            for k1, k2 in zip(self.parameters.keys(), other.parameters.keys())]
-        return np.all(par_bool) and (str(self) == str(other)) and (self.units == other.units)
+            for k1, k2 in zip(self.parameters.keys(), other.parameters.keys())
+        ]
+        return (
+            np.all(par_bool)
+            and (str(self) == str(other))
+            and (self.units == other.units)
+        )
 
     # String representations:
     def __repr__(self):
@@ -238,7 +255,7 @@ class CommonBase:
             v = self.parameters[k]
             post = ""
 
-            if hasattr(v, 'unit'):
+            if hasattr(v, "unit"):
                 post = f" {v.unit}"
                 v = v.value
 
