@@ -46,6 +46,7 @@ def test_new_simple():
 class MyPotential(PotentialBase):
     m = PotentialParameter("m", "mass")
     x0 = PotentialParameter("x0", "length")
+    filename = PotentialParameter("filename", None)
     n = PotentialParameter("n", physical_type=None, default=2)
 
     def _energy(self, x, t):
@@ -62,15 +63,16 @@ class MyPotential(PotentialBase):
 
 
 def test_init_potential():
-    MyPotential(1.5, 1)
-    MyPotential(1.5, x0=1)
-    MyPotential(m=1.5, x0=1)
-    MyPotential(1.5 * u.Msun, 1 * u.au, 10, units=usys)
-    MyPotential(1.5 * u.Msun, x0=1 * u.au, units=usys)
-    MyPotential(m=1.5 * u.Msun, x0=1 * u.au, units=usys)
+    MyPotential(1.5, 1, "blah")
+    MyPotential(1.5, x0=1, filename="blah")
+    MyPotential(m=1.5, x0=1, filename="blah")
+    MyPotential(1.5 * u.Msun, 1 * u.au, "blah", 10, units=usys)
+    MyPotential(1.5 * u.Msun, x0=1 * u.au, filename="blah", units=usys)
+    MyPotential(m=1.5 * u.Msun, x0=1 * u.au, filename="blah", units=usys)
 
-    pot = MyPotential(m=1.5 * u.Msun, x0=1 * u.au, n=10, units=usys)
+    pot = MyPotential(m=1.5 * u.Msun, x0=1 * u.au, n=10, filename="blah", units=usys)
     assert pot.parameters["n"] == 10
+    assert pot.parameters["filename"] == "blah"
 
 
 def test_repr():
