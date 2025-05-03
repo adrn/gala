@@ -1,4 +1,4 @@
-""" Built-in potentials implemented in Cython """
+"""Built-in potentials implemented in Cython"""
 
 # HACK: This hack brought to you by a bug in cython, and a solution from here:
 # https://stackoverflow.com/questions/57138496/class-level-classmethod-can-only-be-called-on-a-method-descriptor-or-instance
@@ -12,6 +12,7 @@ import astropy.units as u
 import numpy as np
 from astropy.constants import G
 
+from gala._cconfig import EXP_ENABLED
 from gala.potential.common import PotentialParameter
 from gala.potential.potential.builtin.cybuiltin import (
     BurkertWrapper,
@@ -38,7 +39,13 @@ from gala.potential.potential.builtin.cybuiltin import (
     TriaxialNFWWrapper,
 )
 
-# Project
+if EXP_ENABLED:
+    from gala.potential.potential.builtin.cyexp import (
+        EXPWrapper,
+    )
+
+from gala.units import DimensionlessUnitSystem, SimulationUnitSystem
+
 from ..core import PotentialBase, _potential_docstring
 from ..cpotential import CPotentialBase
 from ..util import format_doc, sympy_wrap
@@ -65,6 +72,9 @@ __all__ = [
     "CylSplinePotential",
     "BurkertPotential",
 ]
+
+if EXP_ENABLED:
+    __all__.append("EXPPotential")
 
 
 def __getattr__(name):
@@ -336,7 +346,7 @@ class PowerLawCutoffPotential(CPotentialBase, GSL_only=True):
     .. note::
 
         This potential requires GSL to be installed, and Gala must have been
-        built and installed with GSL support enaled (the default behavior).
+        built and installed with GSL support enabled (the default behavior).
         See http://gala.adrian.pw/en/latest/install.html for more information.
 
     Parameters
@@ -407,7 +417,6 @@ class BurkertPotential(CPotentialBase):
 
     Wrapper = BurkertWrapper
 
-    
     @classmethod
     def from_r0(cls, r0, units=None):
         r"""
@@ -422,7 +431,7 @@ class BurkertPotential(CPotentialBase):
             The core radius of the Burkert potential.
         """
         a = 0.021572405792749372 * u.Msun / u.pc**3  # converted: 1.46e-24 g/cm**3
-        rho_d0 = a * (r0 / (3.07 * u.kpc))**(-2/3)
+        rho_d0 = a * (r0 / (3.07 * u.kpc)) ** (-2 / 3)
         return cls(rho=rho_d0, r0=r0, units=units)
 
 
@@ -1339,4 +1348,106 @@ class CylSplinePotential(CPotentialBase):
         pars = {f"S{l}0": sol[l].real for l in ls}
         return MultipolePotential(
             lmax=lmax_fit, m=m, r_s=r0, inner=False, units=self.units, **pars
+        )
+
+
+# ==============================================================================
+# EXP Potential
+#
+
+
+@format_doc(common_doc=_potential_docstring)
+class EXPPotential(CPotentialBase, EXP_only=True):
+    r"""
+    EXPPotential(units=None, origin=None, R=None)
+
+    Calls the EXP code for the potential.
+
+    .. note::
+
+        This potential requires EXP to be installed, and Gala must have been
+        built and installed with EXP support enabled.
+        See http://gala.adrian.pw/en/latest/install.html for more information. (TODO)
+
+    Parameters
+    ----------
+    TODO
+    {common_doc}
+    """
+
+    # These are handled specially by the constructor
+    # config_file = PotentialParameter("config_file")
+    # coeff_file = PotentialParameter("coeff_file")
+
+    # These are passed directly to exp_init
+    # stride = PotentialParameter("stride")
+    # tmin = PotentialParameter("tmin", physical_type="time")
+    # tmax = PotentialParameter("tmax", physical_type="time")
+
+    # TODO: resolve naming for these
+    m_s = PotentialParameter("m_s", physical_type="mass")
+    r_s = PotentialParameter("r_s", physical_type="length")
+
+    if EXP_ENABLED:
+        Wrapper = EXPWrapper
+
+    def __init__(
+        self,
+        config_file,
+        coeff_file,
+        *args,
+        stride=1,
+        tmin=None,
+        tmax=None,
+        origin=None,
+        R=None,
+        **kwargs,
+    ):
+
+        if "units" in kwargs:
+            raise ValueError(
+                "The EXP potential does not support setting a custom unit system. Set "
+                "the unit system by specifying the mass and length scale parameters."
+            )
+
+        pars = self._parse_parameter_values(*args, **kwargs)
+
+        has_units = hasattr(pars["m_s"], "unit") and hasattr(pars["r_s"], "unit")
+        if has_units:
+            _sim_units = SimulationUnitSystem(mass=pars["m_s"], length=pars["r_s"])
+        elif not has_units:
+            _sim_units = DimensionlessUnitSystem()
+        else:
+            raise ValueError(
+                "Either both or neither of the mass and length scale parameters must "
+                "have associated units (i.e. be specified as astropy Quantity objects)."
+            )
+
+        # TODO: DEAL WITH THIS
+        if tmin is None:
+            tmin = 0.0
+        if tmax is None:
+            tmax = 0.0
+
+        CPotentialBase.__init__(
+            self,
+            units=_sim_units,
+            origin=origin,
+            R=R,
+            Wrapper_kwargs={
+                "config_file": config_file,
+                "coeff_file": coeff_file,
+                "stride": stride,
+                "tmin": tmin,
+                "tmax": tmax,
+            },
+            **kwargs,
+        )
+
+    def hessian(self, *args, **kwargs):
+        """
+        Not implemented yet.
+        """
+        raise NotImplementedError(
+            "Computing Hessian matrices for EXP potentials is not supported."
         )
