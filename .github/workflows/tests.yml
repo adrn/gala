@@ -141,7 +141,7 @@ jobs:
           if [[ "${{ matrix.gala-exp }}" == "1" ]]; then
             export GALA_EXP_PREFIX=$PWD/EXP
           fi
-          python -m pip install -e ".[${{ matrix.pip-test-deps }}]"
+          python -m pip install -ve ".[${{ matrix.pip-test-deps }}]"
         env:
           GALA_NOGSL: ${{ matrix.gala-nogsl }}
 
