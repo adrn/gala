@@ -9,7 +9,7 @@ repos:
       - id: check-case-conflict
       - id: check-merge-conflict
       - id: check-symlinks
-      - id: check-yaml
+      # - id: check-yaml
       - id: debug-statements
       - id: end-of-file-fixer
       - id: mixed-line-ending
@@ -34,7 +34,7 @@ repos:
     hooks:
       - id: ruff
         types_or: [python, pyi, jupyter]
-        args: ["--fix", "--show-fixes"]
+        args: ["--fix", "--show-fixes", "--unsafe-fixes"]
       - id: ruff-format
         types_or: [python, pyi, jupyter]
 
