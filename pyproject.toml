@@ -7,8 +7,7 @@ description = "Galactic dynamics in Python"
 readme = "README.rst"
 requires-python = ">=3.10"
 keywords = ["astronomy", "dynamics"]
-license = "MIT"
-license-files = ["LICENSE"]
+license.file = "LICENSE"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python",
@@ -51,7 +50,8 @@ extra = [
 docs = [
     "gala[shared,extra]",
     "numpydoc",
-    "IPython",
+    "ipykernel",
+    "jupyter-client",
     "nbsphinx",
     "ipython_genutils",
     "pydata_sphinx_theme",
@@ -76,6 +76,7 @@ tutorials = [
 ]
 dev = [
     "gala[test, extra, docs, tutorials]",
+    "pre-commit"
 ]
 
 [build-system]
@@ -139,7 +140,6 @@ doctest_norecursedirs = [
 
 [tool.coverage.run]
 omit = [
-    "gala/_astropy_init*",
     "gala/conftest*",
     "gala/cython_version*",
     "gala/setup_package*",
@@ -152,7 +152,6 @@ omit = [
     "gala/dynamics/_genfunc/*",
     "gala/coordinates/poincarepolar.py",
     "gala/coordinates/velocity_frame_transforms.py",
-    "*/gala/_astropy_init*",
     "*/gala/conftest*",
     "*/gala/cython_version*",
     "*/gala/setup_package*",
@@ -183,10 +182,6 @@ exclude_lines = [
     # Don't complain about IPython completion helper
     "def _ipython_key_completions_"
 ]
-
-[tool.black]
-line-length = 88
-target-version = ["py310"]
 
 [tool.isort]
 profile = "black"
