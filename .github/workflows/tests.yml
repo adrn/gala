@@ -29,7 +29,7 @@ jobs:
     needs: check_skip_flags
     if: ${{ github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only') && !contains(needs.check_skip_flags.outputs.head-commit-message, '[skip tests]') }}
     env:
-      EXP_TAG: "v7.8.2"
+      EXP_TAG: "v7.8.5"
     strategy:
       fail-fast: true
       matrix:
@@ -132,7 +132,7 @@ jobs:
         working-directory: EXP
         run: |
           sudo apt-get install -y libeigen3-dev libfftw3-dev libopenmpi-dev libomp-dev libhdf5-dev
-          cmake -G Ninja -B build --install-prefix $PWD/install
+          cmake -G Ninja -B build -DCMAKE_INSTALL_RPATH=$PWD/install/lib --install-prefix $PWD/install
           cmake --build build
           cmake --install build
 
@@ -159,11 +159,6 @@ jobs:
         if: matrix.astropy-version != 'latest'
         run: |
           python -m pip install astropy~=${{ matrix.astropy-version }}
-
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        with:
-          limit-access-to-actor: true
 
       - name: Run tests
         run: >-
