@@ -27,7 +27,9 @@ directories to be present in the EXP root directory.
 
 To install EXP's dependencies, here is one recipe that we have found to work on Ubuntu 24.04:::
 
-    sudo apt-get install -y libeigen3-dev libfftw3-dev libopenmpi-dev libomp-dev libhdf5-dev
+    sudo apt-get install build-essential cmake gfortran git libeigen3-dev libfftw3-dev libhdf5-dev libomp-dev libopenmpi-dev ninja-build
+    # install uv python, only needed if you don't already have python:
+    # curl -LsSf https://astral.sh/uv/install.sh | sh
 
 Here is another recipe using modules that has been found to work on Flatiron Institute's rusty cluster:::
 
@@ -37,7 +39,7 @@ After installing the dependencies, one can download and build EXP with:::
 
     git clone --recursive https://github.com/EXP-code/EXP.git
     cd EXP
-    cmake -B build --install-prefix $PWD/install
+    cmake -G Ninja -B build -DCMAKE_INSTALL_RPATH=$PWD/install/lib --install-prefix $PWD/install
     cmake --build build
     cmake --install build
 
@@ -46,12 +48,14 @@ Building Gala with EXP support
 ------------------------------
 
 Building Gala with the ``GALA_EXP_PREFIX`` environment variable set to the EXP root dir
-will trigger compilation of the Gala's EXP Cython extensions. For example::
+will trigger compilation of the Gala's EXP Cython extensions. For example:::
 
-    git clone git://github.com/adrn/gala.git
+    git clone https://github.com/adrn/gala.git
     cd gala
     export GALA_EXP_PREFIX=/path/to/EXP
-    python -m pip install -v .
+    python -m venv .venv
+    . .venv/bin/activate
+    python -m pip install -ve .  # or uv pip install ...
 
 The pip output should show a message like ``Gala: installing with EXP support``.
 
@@ -65,19 +69,27 @@ and ``coeffs.h5``.
 
 .. FUTURE: since the tutorials run on GH Actions, we could probably actually run EXP here
 
-Then one can use the following to set up a `~gala.potential.EXPPotential` object:::
+Then one set up a `~gala.potential.EXPPotential` object with:
+
+.. code-block:: python
 
     import gala.potential as gp
 
+    # TODO: fix this to use Adrian's method of setting units
     pot = gp.EXPPotential(
-    # units=galactic,
-    # units=exp_units,
-    config_file="config.yml",
-    coeff_file="coeffs.h5",
-    stride=1,
-    # TODO: time evolution
-    tmin=0.02,
-    tmax=10.,
-    m_s=1 * u.Msun,
-    r_s=1 * u.kpc,
-)
+        # units=galactic,
+        # units=exp_units,
+        config_file="config.yml",
+        coeff_file="coeffs.h5",
+        stride=1,
+        # TODO: time evolution
+        tmin=0.02,
+        tmax=10.,
+        m_s=1 * u.Msun,
+        r_s=1 * u.kpc,
+    )
+
+-----
+Units
+-----
+.. TODO
