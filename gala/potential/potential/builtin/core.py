@@ -50,6 +50,7 @@ from ..cpotential import CPotentialBase
 from ..util import format_doc, sympy_wrap
 
 __all__ = [
+    "EXPPotential",
     "NullPotential",
     "HenonHeilesPotential",
     "KeplerPotential",
