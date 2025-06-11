@@ -1,4 +1,4 @@
-""" Test dynamics plotting functions """
+"""Test dynamics plotting functions"""
 
 import subprocess
 
@@ -6,9 +6,17 @@ import astropy.units as u
 import numpy as np
 import pytest
 
+from gala.tests.optional_deps import HAS_MATPLOTLIB
+from gala.units import galactic
+
 from ..core import PhaseSpacePosition
 from ..orbit import Orbit
 from ..plot import plot_projections
+
+if HAS_MATPLOTLIB:
+    import matplotlib.pyplot as plt
+else:
+    plt = None
 
 
 def pytest_generate_tests(metafunc):
@@ -77,12 +85,12 @@ def pytest_generate_tests(metafunc):
     metafunc.parametrize(["i", "obj"], list(enumerate(object_list)), ids=test_names)
 
 
+@pytest.mark.skipif(not HAS_MATPLOTLIB, reason="Matplotlib is required")
 def test_plot_projections(i, obj):
-    import matplotlib.pyplot as plt
-
-    # Try executing the method - unfortunately no test of the actual figure
-    # drawn!
-    obj.plot()
+    # Try executing the method
+    # TODO: no test of the actual figure drawn!
+    fig = obj.plot()
+    plt.close(fig)
 
     # Try with just 2D projection, and passing in a bunch of inputs...
     x = obj.xyz.value
@@ -98,8 +106,35 @@ def test_plot_projections(i, obj):
         linestyle="--",
         color="r",
     )
+    plt.close(fig)
 
 
+@pytest.mark.skipif(not HAS_MATPLOTLIB, reason="Matplotlib is required")
+def test_units(i, obj):
+    comp_names = list(obj.pos_components.keys())
+
+    if getattr(obj, comp_names[0]).unit == u.one:
+        with pytest.raises(u.UnitConversionError):
+            obj.plot(comp_names[:2], units=u.kpc)
+
+        with pytest.raises(u.UnitConversionError):
+            obj.plot(comp_names[:2], units=[u.kpc, u.pc])
+
+        fig = obj.plot(units=galactic)
+        plt.close(fig)
+
+    else:
+        fig = obj.plot(comp_names[:2], units=u.kpc)
+        plt.close(fig)
+
+        fig = obj.plot(comp_names[:2], units=[u.kpc, u.pc])
+        plt.close(fig)
+
+        fig = obj.plot(comp_names[:2], units=galactic)
+        plt.close(fig)
+
+
+@pytest.mark.skipif(not HAS_MATPLOTLIB, reason="Matplotlib is required")
 def test_animate(tmpdir, i, obj):
     if not isinstance(obj, Orbit):
         pytest.skip()
