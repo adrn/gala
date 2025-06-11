@@ -146,8 +146,10 @@ jobs:
         run: |
           brew install eigen fftw open-mpi hdf5 llvm libomp
 
-          echo CXX="$(brew --prefix llvm)/bin/clang++" >> $GITHUB_ENV
           echo CC="$(brew --prefix llvm)/bin/clang" >> $GITHUB_ENV
+          echo CXX="$(brew --prefix llvm)/bin/clang++" >> $GITHUB_ENV
+          echo OMPI_CC=$CC >> $GITHUB_ENV
+          echo OMPI_CXX=$CXX >> $GITHUB_ENV
       
       - name: Build EXP
         if: matrix.gala-exp == '1'
