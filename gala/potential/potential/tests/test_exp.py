@@ -29,19 +29,21 @@ class TestEXP(PotentialTestBase):
     tol = 1e-3  # increase tolerance for gradient test
 
     exp_units = SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1)
-    potential = EXPPotential(
-        config_file=EXP_CONFIG_FILE,
-        coeff_file=EXP_COEFF_FILE,
-        snapshot_index=0,
-        units=exp_units,
-        stride=1,
-    )
     w0 = [
         *[-8, 0.0, 0.0],  #  * u.kpc,
-        *[0.0, 180, 0.0]  #  * u.km / u.s,
+        *[0.0, 180, 0.0],  #  * u.km / u.s,
     ]
     show_plots = True
     check_finite_at_origin = True
+
+    def setup_method(self):
+        potential = EXPPotential(
+            config_file=EXP_CONFIG_FILE,
+            coeff_file=EXP_COEFF_FILE,
+            snapshot_index=0,
+            units=self.exp_units,
+        )
+        return super().setup_method()
 
     # TODO: deepcopy is not implemented for EXPPotential
     @pytest.mark.skip(reason="Not implemented for EXP")
