@@ -73,9 +73,6 @@ __all__ = [
     "BurkertPotential",
 ]
 
-if EXP_ENABLED:
-    __all__.append("EXPPotential")
-
 
 def __getattr__(name):
     if name in __all__ and name in globals():
@@ -1367,7 +1364,7 @@ class EXPPotential(CPotentialBase, EXP_only=True):
 
         This potential requires EXP to be installed, and Gala must have been
         built and installed with EXP support enabled.
-        See http://gala.adrian.pw/en/latest/install.html for more information. (TODO)
+        See https://gala.adrian.pw/en/latest/tutorials/exp.html for more information.
 
     Parameters
     ----------
