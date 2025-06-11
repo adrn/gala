@@ -100,7 +100,10 @@ nogsl = bool(int(os.environ.get("GALA_NOGSL", 0)))
 gsl_version = os.environ.get("GALA_GSL_VERSION", None)
 gsl_prefix = os.environ.get("GALA_GSL_PREFIX", None)
 
+# The root directory of EXP (i.e., the repository root)
 exp_prefix = os.environ.get("GALA_EXP_PREFIX", None)
+# The path to the built/installed EXP libraries
+exp_lib_path = os.environ.get("GALA_EXP_LIB_PATH", None)
 
 try:
     import pybind11
@@ -218,8 +221,6 @@ else:
         if flags:
             extra_incl_flags.extend(flags)
 
-print("-" * 79)
-
 all_extensions = get_extensions()
 extensions = []
 for ext in all_extensions:
@@ -235,6 +236,21 @@ for ext in all_extensions:
 
     if "cyexp" in ext.name:
         if exp_prefix is not None:
+            if exp_lib_path is None:
+                # NOTE: this assumes user installed EXP to $GALA_EXP_PREFIX/install
+                lib_path_tmp = os.path.join(exp_prefix, "install", "lib")
+                if os.path.exists(lib_path_tmp):
+                    exp_lib_path = lib_path_tmp
+                else:
+                    msg = (
+                        "GALA_EXP_LIB_PATH not set, and no EXP libraries found in "
+                        f"{lib_path_tmp}. Please set GALA_EXP_LIB_PATH to the path "
+                        "where EXP libraries are installed."
+                    )
+                    raise RuntimeError(msg)
+
+            print(f"Gala: installing with EXP libraries at {exp_lib_path}")
+
             ext.include_dirs.append(pybind11.get_include())
             if extra_incl_flags is not None:
                 ext.extra_compile_args.extend(extra_incl_flags)
@@ -252,11 +268,8 @@ for ext in all_extensions:
                         "yaml-cpp",
                     )
                 )
-                # TODO: this requires user to install EXP to $GALA_EXP_PREFIX/install
-                exp_lib = os.path.join(exp_prefix, "install", "lib")
-
-                ext.library_dirs.append(exp_lib)
-                ext.runtime_library_dirs.append(exp_lib)
+                ext.library_dirs.append(exp_lib_path)
+                ext.runtime_library_dirs.append(exp_lib_path)
                 ext.include_dirs.extend(
                     (
                         os.path.join(exp_prefix, "include"),
@@ -273,6 +286,8 @@ for ext in all_extensions:
             continue
 
     extensions.append(ext)
+
+print("-" * 79)
 
 with open(extra_compile_macros_file, "w") as f:
     if gsl_version is not None:
