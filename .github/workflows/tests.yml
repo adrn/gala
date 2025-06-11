@@ -83,6 +83,16 @@ jobs:
             gala-exp: "1"
             pip-test-deps: "test"
 
+          - name: With EXP
+            os: macos-latest
+            python-version: "3.11"
+            astropy-version: "latest"
+            numpy-version: "latest"
+            scipy-version: "latest"
+            gala-nogsl: "0"
+            gala-exp: "1"
+            pip-test-deps: "test"
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -118,7 +128,7 @@ jobs:
           sudo apt-get install gsl-bin libgsl0-dev build-essential
 
       - name: Clone EXP
-        if: runner.os == 'Linux' && matrix.gala-exp == '1'
+        if: matrix.gala-exp == '1'
         uses: actions/checkout@v4
         with:
           repository: EXP-code/EXP
@@ -126,12 +136,20 @@ jobs:
           submodules: recursive
           path: EXP
 
-      - name: Build EXP
-        # TODO: EXP on macos?
+      - name: Install EXP dependencies (Linux)
         if: runner.os == 'Linux' && matrix.gala-exp == '1'
-        working-directory: EXP
         run: |
           sudo apt-get install -y libeigen3-dev libfftw3-dev libopenmpi-dev libomp-dev libhdf5-dev
+
+      - name: Install EXP dependencies (Mac)
+        if: startsWith(matrix.os, 'mac') && matrix.gala-exp == '1'
+        run: |
+          brew install eigen fftw open-mpi hdf5 llvm libomp
+      
+      - name: Build EXP
+        if: matrix.gala-exp == '1'
+        working-directory: EXP
+        run: |
           cmake -G Ninja -B build -DCMAKE_INSTALL_RPATH=$PWD/install/lib --install-prefix $PWD/install
           cmake --build build
           cmake --install build
