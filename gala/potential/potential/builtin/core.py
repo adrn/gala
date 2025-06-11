@@ -1381,7 +1381,24 @@ class EXPPotential(CPotentialBase, EXP_only=True):
     tmax = PotentialParameter(
         "tmax", physical_type="time", default=np.finfo(np.float64).max
     )
+    snapshot_index = PotentialParameter(
+        "snapshot_index", physical_type=None, default=-1
+    )
     stride = PotentialParameter("stride", default=1, physical_type=None)
+
+    def __init__(self, *args, **kwargs):
+        have_t = 'tmin' in kwargs or 'tmax' in kwargs
+        if have_t and 'snapshot_index' in kwargs:
+            raise ValueError(
+                "Cannot specify both `tmin`/`tmax` and `snapshot_index`."
+            )
+
+        if kwargs.get("snapshot_index", 0) < 0:
+            raise ValueError(
+                "The `snapshot_index` must be a non-negative integer."
+            )
+
+        super().__init__(*args, **kwargs)
 
     if EXP_ENABLED:
         Wrapper = EXPWrapper

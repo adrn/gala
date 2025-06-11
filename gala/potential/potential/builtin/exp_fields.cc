@@ -17,7 +17,7 @@ namespace gala_exp {
 
 State exp_init(
   const std::string &config_fn, const std::string &coeffile,
-  int stride, double tmin, double tmax)
+  int stride, double tmin, double tmax, int snapshot_index)
 {
   YAML::Node yaml = YAML::LoadFile(std::string(config_fn));
 
@@ -25,6 +25,19 @@ State exp_init(
 
   auto coefs = CoefClasses::Coefs::factory(coeffile,
 				       stride, tmin, tmax);
+
+  if (snapshot_index >= 0) {
+    const auto& times = coefs->Times();
+    if (snapshot_index >= times.size()) {
+      std::ostringstream error_msg;
+      error_msg << "Invalid snapshot_index: " << snapshot_index
+                << ". Valid indices are in [0," << (times.size() - 1) << "]"
+                << " (times [" << times.front() << ", " << times.back() << "]";
+      throw std::runtime_error(error_msg.str());
+    }
+    tmin = times[snapshot_index];
+    tmax = tmin;
+  }
 
   bool is_static = tmax == tmin;
 

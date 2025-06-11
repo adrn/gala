@@ -23,7 +23,14 @@ cdef extern from "potential/potential/builtin/exp_fields.h" namespace "gala_exp"
     cdef cppclass State:
         pass
 
-    State exp_init(const string &config, const string &coeffile, int stride, double tmin, double tmax) nogil
+    State exp_init(
+        const string &config,
+        const string &coeffile,
+        int stride,
+        double tmin,
+        double tmax,
+        int snapshot_index
+    ) nogil
 
 cdef extern from "potential/potential/builtin/exp_fields.h":
     # TODO: technically these are C++ signatures, unlike the extern "C" declarations in exp_fields.h
@@ -42,7 +49,7 @@ __all__ = [
 cdef class EXPWrapper(CPotentialWrapper):
     cdef State exp_state
 
-    def __init__(self, G, parameters, q0, R, config_file, coeff_file, stride):
+    def __init__(self, G, parameters, q0, R, config_file, coeff_file, stride, snapshot_index):
         tmin = parameters[0]
         tmax = parameters[1]
 
@@ -58,7 +65,8 @@ cdef class EXPWrapper(CPotentialWrapper):
                 coeff_file,
                 stride,
                 tmin,
-                tmax
+                tmax,
+                snapshot_index
             )
             self.cpotential.state[0] = &self.exp_state
             self.cpotential.value[0] = <energyfunc>(exp_value)
