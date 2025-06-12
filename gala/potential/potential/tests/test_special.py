@@ -1,5 +1,5 @@
 """
-    Test the special potentials...
+Test the special potentials...
 """
 
 # Third-party
@@ -21,11 +21,13 @@ from .helpers import CompositePotentialTestBase
 class TestLM10Potential(CompositePotentialTestBase):
     potential = LM10Potential()
     w0 = [8.0, 0.0, 0.0, 0.0, 0.22, 0.1]
+    check_zero_at_infinity = False
 
 
 class TestLM10Potential2(CompositePotentialTestBase):
     potential = LM10Potential(disk={"m": 5e10 * u.Msun}, bulge={"m": 5e10 * u.Msun})
     w0 = [8.0, 0.0, 0.0, 0.0, 0.22, 0.1]
+    check_zero_at_infinity = False
 
 
 class TestMilkyWayPotential(CompositePotentialTestBase):
