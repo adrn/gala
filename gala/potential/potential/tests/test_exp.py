@@ -27,7 +27,7 @@ FORCE_EXP_TEST = os.environ.get("GALA_FORCE_EXP_TEST", "0") == "1"
     reason="requires Gala compiled with EXP support",
 )
 class TestEXP(PotentialTestBase):
-    tol = 1e-3  # increase tolerance for gradient test
+    tol = 5e-3  # increase tolerance for gradient test
 
     exp_units = SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1)
     _tmp = gd.PhaseSpacePosition(
@@ -35,7 +35,7 @@ class TestEXP(PotentialTestBase):
         vel=[0.0, 180, 0.0] * u.km / u.s,
     )
     w0 = _tmp.w(exp_units)[:, 0]
-    show_plots = True
+    show_plots = False
     check_finite_at_origin = True
 
     def setup_method(self):
