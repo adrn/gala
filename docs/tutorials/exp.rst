@@ -22,8 +22,9 @@ Building EXP
 
 The `EXP documentation <https://exp-docs.readthedocs.io/en/latest/intro/install.html>`_
 is the authoritative source on how to build EXP. Currently, the only Gala-specific
-addition to the instructions is that Gala expects the ``build`` and ``install``
-directories to be present in the EXP root directory.
+addition to the instructions is that Gala expects the ``build`` directory to be present
+in the EXP root directory.  The ``install`` directory will be looked for in the EXP root
+directory too, or one can set ``GALA_EXP_LIB_PATH`` (see below).
 
 To install EXP's dependencies, here is one recipe that we have found to work on Ubuntu 24.04:::
 
@@ -53,11 +54,16 @@ will trigger compilation of the Gala's EXP Cython extensions. For example:::
     git clone https://github.com/adrn/gala.git
     cd gala
     export GALA_EXP_PREFIX=/path/to/EXP
+    # only needed if install location is not $GALA_EXP_PREFIX/install
+    # export GALA_EXP_LIB_PATH=/path/to/EXP-install/lib
     python -m venv .venv
     . .venv/bin/activate
     python -m pip install -ve .  # or uv pip install ...
 
 The pip output should show a message like ``Gala: installing with EXP support``.
+
+``GALA_EXP_LIB_PATH`` can be set if the CMake ``--install-prefix`` was set to a location
+other than ``GALA_EXP_PREFIX/install``.
 
 ----------------------------------
 Running Gala with an EXP potential
