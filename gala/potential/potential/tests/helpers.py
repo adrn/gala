@@ -64,6 +64,7 @@ class PotentialTestBase:
     sympy_hessian = True
     sympy_density = True
     check_finite_at_origin = True
+    check_zero_at_infinity = True
     rotation = False
 
     def setup_method(self):
@@ -140,6 +141,10 @@ class PotentialTestBase:
         if self.check_finite_at_origin:
             val = self.potential.energy([0.0, 0, 0])
             assert np.isfinite(val)
+
+        if self.check_zero_at_infinity:
+            val = self.potential.energy([1e12, 1e12, 1e12])
+            assert np.isclose(val, 0.0, atol=1e-6)
 
     def test_gradient(self):
         for arr, shp in zip(self.w0s, self._grad_return_shapes):

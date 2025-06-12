@@ -522,14 +522,24 @@ double powerlawcutoff_value(double t, double *pars, double *q, int n_dim) {
     if (r == 0.) {
         return -INFINITY;
     } else {
-        double tmp_0 = (1.0/2.0)*alpha;
+        double tmp_0 = alpha / 2.0;
         double tmp_1 = -tmp_0;
         double tmp_2 = tmp_1 + 1.5;
         double tmp_3 = pow(x, 2) + pow(y, 2) + pow(z, 2);
         double tmp_4 = tmp_3/pow(r_c, 2);
         double tmp_5 = G*m;
         double tmp_6 = tmp_5*safe_gamma_inc(tmp_2, tmp_4)/(sqrt(tmp_3)*tgamma(tmp_1 + 2.5));
-        return tmp_0*tmp_6 - 3.0/2.0*tmp_6 + tmp_5*safe_gamma_inc(tmp_1 + 1, tmp_4)/(r_c*tgamma(tmp_2));
+
+        // Original potential
+        double phi_r = tmp_0*tmp_6 - 3.0/2.0*tmp_6 + tmp_5*safe_gamma_inc(tmp_1 + 1, tmp_4)/(r_c*tgamma(tmp_2));
+
+        // Subtract asymptotic value to enforce Φ(∞) = 0
+        double phi_infinity = 0.0;
+        if (tmp_2 > 0) {  // alpha < 3
+            phi_infinity = tmp_5 * tgamma(tmp_1 + 1) / (r_c * tgamma(tmp_2));
+        }
+
+        return phi_r - phi_infinity;
     }
 }
 
@@ -1995,7 +2005,7 @@ double burkert_value(double t, double *pars, double *q, int n_dim) {
     double R, x;
     R = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
     x = R / pars[2];
-    
+
     // pi G rho r0^2 (pi - 2(1 - r0/r)arctan(r/r0) + 2(1 - r0/r)log(1 + r/r0) - (1 - r0/r)log(1 + (r/r0)^2))
     return -M_PI * pars[0] * pars[1] * pars[2] * pars[2] * (M_PI - 2 * (1 + 1 / x) * atan(x) + 2 * (1 + 1/x) * log(1 + x) - (1 - 1/x) * log(1 + x * x) );
 }
