@@ -9,8 +9,11 @@ namespace gala_exp {
 
 class State {
 public:
+    // Keep using shared_ptr for now since Basis is abstract and factory() returns shared_ptr
+    // The real fix needs to address the caching issue in BasisClasses::Basis::factory()
     std::shared_ptr<BasisClasses::Basis> basis;
     CoefClasses::CoefsPtr coefs;
+    CoefClasses::CoefStrPtr current_coef; // ← CRITICAL: Keep interpolated coef alive!
     bool is_static = false;
 };
 

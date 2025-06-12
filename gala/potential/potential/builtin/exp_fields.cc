@@ -22,10 +22,17 @@ State exp_init(
   YAML::Node yaml = YAML::LoadFile(std::string(config_fn));
 
   auto basis = BasisClasses::Basis::factory(yaml);
+  auto coefs = CoefClasses::Coefs::factory(coeffile, stride, tmin, tmax);
 
-  auto coefs = CoefClasses::Coefs::factory(coeffile,
-				       stride, tmin, tmax);
+  if (!basis) {
+    throw std::runtime_error("Failed to create basis from YAML configuration");
+  }
+  if (!coefs) {
+    throw std::runtime_error("Failed to create coefficients from file");
+  }
 
+  // Handle snapshot indexing and load initial coefficients
+  CoefClasses::CoefStrPtr initial_coef;
   if (snapshot_index >= 0) {
     const auto& times = coefs->Times();
     if (snapshot_index >= times.size()) {
@@ -35,17 +42,33 @@ State exp_init(
                 << " (times [" << times.front() << ", " << times.back() << "]";
       throw std::runtime_error(error_msg.str());
     }
+    double test_time = times[snapshot_index];
+    initial_coef = gala_exp::interpolator(test_time, coefs);
+  } else {
+    const auto& times = coefs->Times();
+    double test_time = times.empty() ? 0.0 : times[0];
+    initial_coef = gala_exp::interpolator(test_time, coefs);
+  }
+
+  if (!initial_coef) {
+    throw std::runtime_error("Failed to interpolate initial coefficients");
+  }
+
+  // Set the initial coefficients in the basis
+  basis->set_coefs(initial_coef);
+
+  // Determine if this is a static potential (single time step)
+  bool is_static = false;
+  if (snapshot_index >= 0) {
+    const auto& times = coefs->Times();
     tmin = times[snapshot_index];
     tmax = tmin;
+    is_static = true;
+  } else {
+    is_static = (tmax == tmin);
   }
 
-  bool is_static = tmax == tmin;
-
-  if (is_static) {
-    basis->set_coefs(gala_exp::interpolator(tmin, coefs));
-  }
-
-  return { basis, coefs, is_static };
+  return { basis, coefs, initial_coef, is_static };
 }
 
 // Linear interpolator on coefficients.  Higher order interpolation
@@ -71,6 +94,11 @@ CoefClasses::CoefStrPtr interpolator(double t, CoefClasses::CoefsPtr coefs)
   if (it2 == times.end()) {
     it2--;
     it1 = it2 - 1;
+  }
+
+  // Handle degenerate case where it1 == it2 (single time entry)
+  if (it1 == it2 || *it1 == *it2) {
+    return coefs->getCoefStruct(*it1);
   }
 
   double a = (*it2 - t)/(*it2 - *it1);
@@ -120,25 +148,35 @@ extern "C" {
 double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
-  if (!exp_state->is_static) {
-    // TODO: what time units does Gala use? What units does EXP expect?
-    // TODO: how expensive is this, actually?
-    exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
+  // Add safety checks
+  if (!exp_state || !exp_state->basis) {
+    return std::numeric_limits<double>::quiet_NaN();
   }
 
-  // Get the field quantities
-  // TODO: ask Martin/Mike for a way to compute only the potential - we're wasting
-  // computation time here by computing all fields
-  auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
+  if (!exp_state->is_static) {
+    auto new_coef = gala_exp::interpolator(t, exp_state->coefs);
+    exp_state->basis->set_coefs(new_coef);
+    // Update the stored coefficient to keep it alive
+    exp_state->current_coef = new_coef;
+  }
 
+  auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
   return field[5];
 }
 
 void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void* state){
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
+  // Add safety checks
+  if (!exp_state || !exp_state->basis) {
+    grad[0] = grad[1] = grad[2] = std::numeric_limits<double>::quiet_NaN();
+    return;
+  }
+
   if (!exp_state->is_static) {
-    exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
+    auto new_coef = gala_exp::interpolator(t, exp_state->coefs);
+    exp_state->basis->set_coefs(new_coef);
+    exp_state->current_coef = new_coef;
   }
 
   // TODO: ask Martin/Mike for a way to compute only the force/acceleration - we're wasting
@@ -153,8 +191,15 @@ void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, vo
 double exp_density(double t, double *pars, double *q, int n_dim, void* state) {
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
+  // Add safety checks
+  if (!exp_state || !exp_state->basis) {
+    return std::numeric_limits<double>::quiet_NaN();
+  }
+
   if (!exp_state->is_static) {
-    exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
+    auto new_coef = gala_exp::interpolator(t, exp_state->coefs);
+    exp_state->basis->set_coefs(new_coef);
+    exp_state->current_coef = new_coef;
   }
 
   // TODO: ask Martin/Mike for a way to compute only the density - we're wasting
