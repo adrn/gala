@@ -73,6 +73,11 @@ CoefClasses::CoefStrPtr interpolator(double t, CoefClasses::CoefsPtr coefs)
     it1 = it2 - 1;
   }
 
+  // Handle degenerate case where it1 == it2 (single time entry)
+  if (it1 == it2 || *it1 == *it2) {
+    return coefs->getCoefStruct(*it1);
+  }
+
   double a = (*it2 - t)/(*it2 - *it1);
   double b = (t - *it1)/(*it2 - *it1);
 
