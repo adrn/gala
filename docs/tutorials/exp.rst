@@ -71,7 +71,7 @@ Running Gala with an EXP potential
 
 To use an EXP potential with Gala, first you'll need a config file and coefficients
 file from EXP (probably YAML and HDF5, respectively). Let's call them ``config.yml``
-and ``coeffs.h5``.
+and ``coefs.h5``.
 
 .. FUTURE: since the tutorials run on GH Actions, we could probably actually run EXP here
 
@@ -86,7 +86,7 @@ Then one set up a `~gala.potential.EXPPotential` object with:
         # units=galactic,
         # units=exp_units,
         config_file="config.yml",
-        coeff_file="coeffs.h5",
+        coef_file="coefs.h5",
         stride=1,
         # TODO: time evolution
         tmin=0.02,

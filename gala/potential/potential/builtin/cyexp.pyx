@@ -49,7 +49,7 @@ __all__ = [
 cdef class EXPWrapper(CPotentialWrapper):
     cdef State exp_state
 
-    def __init__(self, G, parameters, q0, R, config_file, coeff_file, stride, snapshot_index):
+    def __init__(self, G, parameters, q0, R, config_file, coef_file, stride, snapshot_index):
         tmin = parameters[0]
         tmax = parameters[1]
 
@@ -62,7 +62,7 @@ cdef class EXPWrapper(CPotentialWrapper):
         if USE_EXP == 1:
             self.exp_state = exp_init(
                 config_file,
-                coeff_file,
+                coef_file,
                 stride,
                 tmin,
                 tmax,

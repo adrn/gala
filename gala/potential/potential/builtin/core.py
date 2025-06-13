@@ -1373,7 +1373,7 @@ class EXPPotential(CPotentialBase, EXP_only=True):
     """
 
     config_file = PotentialParameter("config_file", physical_type=None)
-    coeff_file = PotentialParameter("coeff_file", physical_type=None)
+    coef_file = PotentialParameter("coef_file", physical_type=None)
 
     tmin = PotentialParameter(
         "tmin", physical_type="time", default=-np.finfo(np.float64).max
@@ -1399,7 +1399,7 @@ class EXPPotential(CPotentialBase, EXP_only=True):
         # TODO: read config file and raise an error if the model file is not in the CWD)
         # or build in better support for handling paths to EXP files
 
-        # TODO: add logic to check: if coeff file only has one snapshot, then we should
+        # TODO: add logic to check: if coef file only has one snapshot, then we should
         # set snapshot_index to 0
 
     if EXP_ENABLED:

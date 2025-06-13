@@ -17,8 +17,8 @@ from gala.units import SimulationUnitSystem
 from gala.util import chdir
 
 EXP_CONFIG_FILE = get_pkg_data_filename("EXP-hernquist-basis.yml")
-EXP_SINGLE_COEFF_FILE = get_pkg_data_filename("EXP-Hernquist-single-coefs.hdf5")
-EXP_MULTI_COEFF_FILE = get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5")
+EXP_SINGLE_COEF_FILE = get_pkg_data_filename("EXP-Hernquist-single-coefs.hdf5")
+EXP_MULTI_COEF_FILE = get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5")
 
 # Use in CI to ensure tests aren't silently skipped
 FORCE_EXP_TEST = os.environ.get("GALA_FORCE_EXP_TEST", "0") == "1"
@@ -42,12 +42,12 @@ class EXPTestBase(PotentialTestBase):
 
     def setup_method(self):
         assert os.path.exists(self.EXP_CONFIG_FILE), "EXP config file does not exist"
-        assert os.path.exists(self.EXP_COEFF_FILE), "EXP coeff file does not exist"
+        assert os.path.exists(self.EXP_COEF_FILE), "EXP coef file does not exist"
 
         with chdir(os.path.dirname(EXP_CONFIG_FILE)):
             self.potential = EXPPotential(
                 config_file=self.EXP_CONFIG_FILE,
-                coeff_file=self.EXP_COEFF_FILE,
+                coef_file=self.EXP_COEF_FILE,
                 snapshot_index=0,
                 units=self.exp_units,
             )
@@ -86,7 +86,7 @@ class EXPTestBase(PotentialTestBase):
 )
 class TestEXPSingle(EXPTestBase):
     EXP_CONFIG_FILE = EXP_CONFIG_FILE
-    EXP_COEFF_FILE = EXP_SINGLE_COEFF_FILE
+    EXP_COEF_FILE = EXP_SINGLE_COEF_FILE
 
 
 @pytest.mark.skipif(
@@ -95,7 +95,7 @@ class TestEXPSingle(EXPTestBase):
 )
 class TestEXPMulti(EXPTestBase):
     EXP_CONFIG_FILE = EXP_CONFIG_FILE
-    EXP_COEFF_FILE = EXP_MULTI_COEFF_FILE
+    EXP_COEF_FILE = EXP_MULTI_COEF_FILE
 
 
 @pytest.mark.skipif(
@@ -106,20 +106,20 @@ def test_exp_unit_tests():
     with chdir(os.path.dirname(EXP_CONFIG_FILE)):
         pot_single = EXPPotential(
             config_file=EXP_CONFIG_FILE,
-            coeff_file=get_pkg_data_filename("EXP-Hernquist-single-coefs.hdf5"),
+            coef_file=get_pkg_data_filename("EXP-Hernquist-single-coefs.hdf5"),
             snapshot_index=0,
             units=EXPTestBase.exp_units,
         )
 
         pot_multi = EXPPotential(
             config_file=EXP_CONFIG_FILE,
-            coeff_file=get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5"),
+            coef_file=get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5"),
             units=EXPTestBase.exp_units,
         )
 
         pot_multi_frozen = EXPPotential(
             config_file=EXP_CONFIG_FILE,
-            coeff_file=get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5"),
+            coef_file=get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5"),
             snapshot_index=0,
             units=EXPTestBase.exp_units,
         )
@@ -143,7 +143,7 @@ def test_exception():
         with pytest.raises(RuntimeError):
             EXPPotential(
                 config_file="nonexistent_config.yml",
-                coeff_file=EXP_SINGLE_COEFF_FILE,
+                coef_file=EXP_SINGLE_COEF_FILE,
                 snapshot_index=0,
                 units=SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1),
             )
@@ -151,7 +151,7 @@ def test_exception():
         with pytest.raises(RuntimeError):
             EXPPotential(
                 config_file=EXP_CONFIG_FILE,
-                coeff_file=EXP_SINGLE_COEFF_FILE,
+                coef_file=EXP_SINGLE_COEF_FILE,
                 snapshot_index=0xBAD,
                 units=SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1),
             )
@@ -159,7 +159,7 @@ def test_exception():
         with pytest.raises(RuntimeError):
             EXPPotential(
                 config_file=EXP_CONFIG_FILE,
-                coeff_file=EXP_SINGLE_COEFF_FILE,
+                coef_file=EXP_SINGLE_COEF_FILE,
                 tmin=0xBAD,
                 units=SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1),
             )
