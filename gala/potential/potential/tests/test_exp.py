@@ -16,7 +16,7 @@ from gala.potential.potential.tests.helpers import PotentialTestBase
 from gala.units import SimulationUnitSystem
 from gala.util import chdir
 
-EXP_CONFIG_FILE = get_pkg_data_filename("EXP-hernquist-basis.yml")
+EXP_CONFIG_FILE = get_pkg_data_filename("EXP-Hernquist-basis.yml")
 EXP_SINGLE_COEF_FILE = get_pkg_data_filename("EXP-Hernquist-single-coefs.hdf5")
 EXP_MULTI_COEF_FILE = get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5")
 
