@@ -23,8 +23,28 @@ State exp_init(
 
   auto basis = BasisClasses::Basis::factory(yaml);
 
+  if (!basis) {
+    std::ostringstream error_msg;
+    error_msg << "Failed to load basis from config file: " << config_fn;
+    throw std::runtime_error(error_msg.str());
+  }
+
   auto coefs = CoefClasses::Coefs::factory(coeffile,
-				       stride, tmin, tmax);
+                                       stride, tmin, tmax);
+
+  if(!coefs) {
+    std::ostringstream error_msg;
+    error_msg << "Failed to load coefficients from file: " << coeffile;
+    throw std::runtime_error(error_msg.str());
+  }
+
+  if(coefs->Times().empty()) {
+    std::ostringstream error_msg;
+    error_msg << "No times in coeffile=" << coeffile
+              << " within tmin=" << tmin
+              << " and tmax=" << tmax << ".";
+    throw std::runtime_error(error_msg.str());
+  }
 
   if (snapshot_index >= 0) {
     const auto& times = coefs->Times();
@@ -61,7 +81,7 @@ CoefClasses::CoefStrPtr interpolator(double t, CoefClasses::CoefsPtr coefs)
   if (t<times.front() or t>times.back()) {
     std::ostringstream sout;
     sout << "FieldWrapper::interpolator: time t=" << t << " is out of bounds: ["
-	 << times.front() << ", " << times.back() << "]";
+         << times.front() << ", " << times.back() << "]";
     throw std::runtime_error(sout.str());
   }
 
