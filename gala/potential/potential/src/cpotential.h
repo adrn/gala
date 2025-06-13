@@ -27,6 +27,9 @@
 
         // pointer to array of pointers containing rotation matrix elements
         double** R;
+
+        // pointer to array of pointers containing the state
+        void **state;
     };
 #endif
 

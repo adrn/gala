@@ -2,6 +2,7 @@
 
 # Standard library
 from collections.abc import Mapping
+from contextlib import contextmanager
 
 # Third-party
 import numpy as np
@@ -187,3 +188,22 @@ class GalaDeprecationWarning(DeprecationWarning):
     """
     A warning class to indicate a deprecated feature.
     """
+
+@contextmanager
+def chdir(new_path):
+    """
+    Context manager to change the current working directory.
+
+    Parameters
+    ----------
+    new_path : str
+        The path to change to.
+    """
+    import os
+
+    old_path = os.getcwd()
+    os.chdir(new_path)
+    try:
+        yield
+    finally:
+        os.chdir(old_path)

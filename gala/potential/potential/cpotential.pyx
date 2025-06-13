@@ -263,15 +263,20 @@ class CPotentialBase(PotentialBase):
     """
     Wrapper = None
 
-    def __init__(self, *args, units=None, origin=None, R=None, **kwargs):
+    def __init__(self, *args, units=None, origin=None, R=None,
+                 Wrapper_kwargs=None, **kwargs
+    ):
+        if Wrapper_kwargs is None:
+            Wrapper_kwargs = {}
+
         super().__init__(*args,
                          units=units,
                          origin=origin,
                          R=R,
                          **kwargs)
-        self._setup_wrapper()
+        self._setup_wrapper(**Wrapper_kwargs)
 
-    def _setup_wrapper(self, c_only_parameters=None):
+    def _setup_wrapper(self, c_only_parameters=None, **kwargs):
         if self.Wrapper is None:
             raise ValueError("C potential wrapper class not defined for "
                              f"potential class {self.__class__}")
@@ -284,7 +289,7 @@ class CPotentialBase(PotentialBase):
             arrs.append(np.atleast_1d(v).ravel())
 
         # to support array parameters, but they get unraveled
-        kwargs = {}
+        kwargs = dict(kwargs)
         for k, v in self.parameters.items():
             if hasattr(v, "unit"):
                 arrs.append(np.atleast_1d(v.value).ravel())
@@ -301,7 +306,8 @@ class CPotentialBase(PotentialBase):
         else:
             self._R = self.R
         self.c_instance = self.Wrapper(self.G, self.c_parameters,
-                                       q0=self.origin, R=self._R)
+                                       q0=self.origin, R=self._R,
+                                       **kwargs)
 
     def _energy(self, q, t):
         return self.c_instance.energy(q, t=t)
