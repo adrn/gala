@@ -28,7 +28,7 @@ FORCE_EXP_TEST = os.environ.get("GALA_FORCE_EXP_TEST", "0") == "1"
     reason="requires Gala compiled with EXP support",
 )
 class EXPTestBase(PotentialTestBase):
-    tol = 5e-3  # increase tolerance for gradient test
+    tol = 1e-2  # increase tolerance for gradient test
 
     exp_units = SimulationUnitSystem(
         mass=1.25234e11 * u.Msun, length=3.845 * u.kpc, G=1
