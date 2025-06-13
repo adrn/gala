@@ -91,3 +91,42 @@ class TestEXPSingle(EXPTestBase):
 class TestEXPMulti(EXPTestBase):
     EXP_CONFIG_FILE = EXP_CONFIG_FILE
     EXP_COEFF_FILE = get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5")
+
+
+def test_exp_unit_tests():
+    current_path = os.getcwd()
+    os.chdir(os.path.dirname(EXP_CONFIG_FILE))
+
+    pot_single = EXPPotential(
+        config_file=EXP_CONFIG_FILE,
+        coeff_file=get_pkg_data_filename("EXP-Hernquist-single-coefs.hdf5"),
+        snapshot_index=0,
+        units=EXPTestBase.exp_units,
+    )
+
+    pot_multi = EXPPotential(
+        config_file=EXP_CONFIG_FILE,
+        coeff_file=get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5"),
+        units=EXPTestBase.exp_units,
+    )
+
+    pot_multi_frozen = EXPPotential(
+        config_file=EXP_CONFIG_FILE,
+        coeff_file=get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5"),
+        snapshot_index=0,
+        units=EXPTestBase.exp_units,
+    )
+
+    test_x = [8.0, 0, 0] * u.kpc
+    assert u.allclose(
+        pot_single.energy(test_x, t=0 * u.Gyr), pot_single.energy(test_x, t=1.4 * u.Gyr)
+    )
+    assert not u.allclose(
+        pot_multi.energy(test_x, t=0 * u.Gyr), pot_multi.energy(test_x, t=1.4 * u.Gyr)
+    )
+    assert u.allclose(
+        pot_multi_frozen.energy(test_x, t=0 * u.Gyr),
+        pot_multi_frozen.energy(test_x, t=1.4 * u.Gyr),
+    )
+
+    os.chdir(current_path)
