@@ -156,10 +156,10 @@ def test_exception():
                 units=SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1),
             )
 
-        EXPPotential(
-            config_file=EXP_CONFIG_FILE,
-            coeff_file=EXP_SINGLE_COEFF_FILE,
-            tmin=1000.,
-            tmax=1000.,
-            units=SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1),
-        )
+        with pytest.raises(RuntimeError):
+            EXPPotential(
+                config_file=EXP_CONFIG_FILE,
+                coeff_file=EXP_SINGLE_COEFF_FILE,
+                tmin=0xBAD,
+                units=SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1),
+            )
