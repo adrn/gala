@@ -23,10 +23,6 @@ FORCE_EXP_TEST = os.environ.get("GALA_FORCE_EXP_TEST", "0") == "1"
 # See: generate_exp.py, which generates the basis and coefficients for these tests
 
 
-@pytest.mark.skipif(
-    not EXP_ENABLED and not FORCE_EXP_TEST,
-    reason="requires Gala compiled with EXP support",
-)
 class EXPTestBase(PotentialTestBase):
     tol = 1e-2  # increase tolerance for gradient test
 
@@ -83,16 +79,28 @@ class EXPTestBase(PotentialTestBase):
         pass
 
 
+@pytest.mark.skipif(
+    not EXP_ENABLED and not FORCE_EXP_TEST,
+    reason="requires Gala compiled with EXP support",
+)
 class TestEXPSingle(EXPTestBase):
     EXP_CONFIG_FILE = EXP_CONFIG_FILE
     EXP_COEFF_FILE = get_pkg_data_filename("EXP-Hernquist-single-coefs.hdf5")
 
 
+@pytest.mark.skipif(
+    not EXP_ENABLED and not FORCE_EXP_TEST,
+    reason="requires Gala compiled with EXP support",
+)
 class TestEXPMulti(EXPTestBase):
     EXP_CONFIG_FILE = EXP_CONFIG_FILE
     EXP_COEFF_FILE = get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5")
 
 
+@pytest.mark.skipif(
+    not EXP_ENABLED and not FORCE_EXP_TEST,
+    reason="requires Gala compiled with EXP support",
+)
 def test_exp_unit_tests():
     current_path = os.getcwd()
     os.chdir(os.path.dirname(EXP_CONFIG_FILE))
