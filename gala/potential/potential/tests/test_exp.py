@@ -15,21 +15,24 @@ from gala.potential.potential.builtin import EXPPotential
 from gala.potential.potential.tests.helpers import PotentialTestBase
 from gala.units import SimulationUnitSystem
 
-EXP_CONFIG_FILE = get_pkg_data_filename("exp_basis.yml")
-EXP_COEFF_FILE = get_pkg_data_filename("exp_hernquist_coefs.h5")
+EXP_CONFIG_FILE = get_pkg_data_filename("EXP-hernquist-basis.yml")
 
 # Use in CI to ensure tests aren't silently skipped
 FORCE_EXP_TEST = os.environ.get("GALA_FORCE_EXP_TEST", "0") == "1"
+
+# See: generate_exp.py, which generates the basis and coefficients for these tests
 
 
 @pytest.mark.skipif(
     not EXP_ENABLED and not FORCE_EXP_TEST,
     reason="requires Gala compiled with EXP support",
 )
-class TestEXP(PotentialTestBase):
+class EXPTestBase(PotentialTestBase):
     tol = 5e-3  # increase tolerance for gradient test
 
-    exp_units = SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1)
+    exp_units = SimulationUnitSystem(
+        mass=1.25234e11 * u.Msun, length=3.845 * u.kpc, G=1
+    )
     _tmp = gd.PhaseSpacePosition(
         pos=[-8, 0.0, 0.0] * u.kpc,
         vel=[0.0, 180, 0.0] * u.km / u.s,
@@ -39,14 +42,14 @@ class TestEXP(PotentialTestBase):
     check_finite_at_origin = True
 
     def setup_method(self):
-        assert os.path.exists(EXP_CONFIG_FILE), "EXP config file does not exist"
-        assert os.path.exists(EXP_COEFF_FILE), "EXP coeff file does not exist"
+        assert os.path.exists(self.EXP_CONFIG_FILE), "EXP config file does not exist"
+        assert os.path.exists(self.EXP_COEFF_FILE), "EXP coeff file does not exist"
 
         current_path = os.getcwd()
-        os.chdir(os.path.dirname(EXP_CONFIG_FILE))
+        os.chdir(os.path.dirname(self.EXP_CONFIG_FILE))
         self.potential = EXPPotential(
-            config_file=EXP_CONFIG_FILE,
-            coeff_file=EXP_COEFF_FILE,
+            config_file=self.EXP_CONFIG_FILE,
+            coeff_file=self.EXP_COEFF_FILE,
             snapshot_index=0,
             units=self.exp_units,
         )
@@ -78,3 +81,13 @@ class TestEXP(PotentialTestBase):
     @pytest.mark.skip(reason="Not implemented for EXP")
     def test_pickle(self, tmpdir):
         pass
+
+
+class TestEXPSingle(EXPTestBase):
+    EXP_CONFIG_FILE = EXP_CONFIG_FILE
+    EXP_COEFF_FILE = get_pkg_data_filename("EXP-Hernquist-single-coefs.hdf5")
+
+
+class TestEXPMulti(EXPTestBase):
+    EXP_CONFIG_FILE = EXP_CONFIG_FILE
+    EXP_COEFF_FILE = get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5")
