@@ -1400,6 +1400,9 @@ class EXPPotential(CPotentialBase, EXP_only=True):
 
         super().__init__(*args, **kwargs)
 
+        # TODO: read config file and raise an error if the model file is not in the CWD)
+        # or build in better support for handling paths to EXP files
+
     if EXP_ENABLED:
         Wrapper = EXPWrapper
 
