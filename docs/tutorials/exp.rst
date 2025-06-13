@@ -4,17 +4,16 @@
 Using EXP potentials with Gala
 ==============================
 
-Gala supports `EXP <https://exp-docs.readthedocs.io>`_ as backend for
-gravitational potentials. This requires building EXP, building Gala with EXP
-support, and then setting up a `~gala.potential.EXPPotential` object using the
-user's EXP config and coefficient files.
+Gala supports `EXP <https://exp-docs.readthedocs.io>`_ as a backend for representing
+flexible and time-dependent gravitational potentials, typically constructed from N-body
+simulation snapshots. This requires building EXP, building Gala with EXP support, and
+then setting up a `~gala.potential.EXPPotential` object using the user's EXP config and
+coefficient files.
 
 Note that EXP support currently requires building Gala (and EXP) from source.
-Additionally, this workflow has only been tested on Linux, although it should be
-possible to run on MacOS, too.
-
-If something goes wrong, Gala builds and tests the EXP integration as part of CI,
-so it may help to check that `recipe <https://github.com/adrn/gala/blob/main/.github/workflows/tests.yml>`_.
+Additionally, this workflow has only been tested on Linux and MacOS with the setups seen
+in the `GitHub actions test config file
+<https://github.com/adrn/gala/blob/main/.github/workflows/tests.yml>`_.
 
 ------------
 Building EXP
@@ -36,13 +35,20 @@ Here is another recipe using modules that has been found to work on Flatiron Ins
 
     module load modules/2.3 cmake gcc openmpi hdf5 libtirpc eigen fftw git python
 
-After installing the dependencies, one can download and build EXP with:::
+EXP also builds on Mac by installing the dependencies with Homebrew:::
+
+    brew install cmake eigen fftw hdf5 open-mpi git ninja
+
+After installing the dependencies, one can download and build EXP on Linux with:::
 
     git clone --recursive https://github.com/EXP-code/EXP.git
     cd EXP
     cmake -G Ninja -B build -DCMAKE_INSTALL_RPATH=$PWD/install/lib --install-prefix $PWD/install
     cmake --build build
     cmake --install build
+
+For a full example of how to build EXP on Mac, see `this build recipe
+<https://gist.github.com/adrn/afd9222416e359fcef826b7988b7d69f>`_.
 
 ------------------------------
 Building Gala with EXP support
@@ -54,16 +60,30 @@ will trigger compilation of the Gala's EXP Cython extensions. For example:::
     git clone https://github.com/adrn/gala.git
     cd gala
     export GALA_EXP_PREFIX=/path/to/EXP
-    # only needed if install location is not $GALA_EXP_PREFIX/install
+
+If you build and install EXP following the instructions above, the EXP libraries will be
+located in EXP/install/lib and the Gala build process knows to look there by default. If
+you installed EXP to a different location, you can set the ``GALA_EXP_LIB_PATH``
+environment variable to point to the EXP install directory::
+
+    # Only do this if the install location is not $GALA_EXP_PREFIX/install
     # export GALA_EXP_LIB_PATH=/path/to/EXP-install/lib
+
+That is, ``GALA_EXP_LIB_PATH`` can be set if the CMake ``--install-prefix`` was set to a
+location other than ``GALA_EXP_PREFIX/install``.
+
+Now you can run the Gala build. For example, using uv and pip:::
+
+    uv pip install -ve .
+
+Or with a Python virtual environment:::
+
     python -m venv .venv
     . .venv/bin/activate
     python -m pip install -ve .  # or uv pip install ...
 
-The pip output should show a message like ``Gala: installing with EXP support``.
-
-``GALA_EXP_LIB_PATH`` can be set if the CMake ``--install-prefix`` was set to a location
-other than ``GALA_EXP_PREFIX/install``.
+In either case, the pip output should show a message like ``Gala: installing with EXP
+support``.
 
 ----------------------------------
 Running Gala with an EXP potential
