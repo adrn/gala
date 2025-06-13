@@ -143,6 +143,10 @@ def test_exp_unit_tests():
         )
 
 
+@pytest.mark.skipif(
+    not EXP_ENABLED and not FORCE_EXP_TEST,
+    reason="requires Gala compiled with EXP support",
+)
 def test_exception():
     """Test that an exception is raised if the config file is not found."""
     with chdir(os.path.dirname(EXP_CONFIG_FILE)):
