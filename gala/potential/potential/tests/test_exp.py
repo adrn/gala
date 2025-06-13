@@ -26,6 +26,10 @@ FORCE_EXP_TEST = os.environ.get("GALA_FORCE_EXP_TEST", "0") == "1"
 # See: generate_exp.py, which generates the basis and coefficients for these tests
 
 
+@pytest.mark.skipif(
+    not EXP_ENABLED and not FORCE_EXP_TEST,
+    reason="requires Gala compiled with EXP support",
+)
 class EXPTestBase(PotentialTestBase):
     tol = 1e-2  # increase tolerance for gradient test
 
@@ -126,10 +130,12 @@ def test_exp_unit_tests():
 
         test_x = [8.0, 0, 0] * u.kpc
         assert u.allclose(
-            pot_single.energy(test_x, t=0 * u.Gyr), pot_single.energy(test_x, t=1.4 * u.Gyr)
+            pot_single.energy(test_x, t=0 * u.Gyr),
+            pot_single.energy(test_x, t=1.4 * u.Gyr),
         )
         assert not u.allclose(
-            pot_multi.energy(test_x, t=0 * u.Gyr), pot_multi.energy(test_x, t=1.4 * u.Gyr)
+            pot_multi.energy(test_x, t=0 * u.Gyr),
+            pot_multi.energy(test_x, t=1.4 * u.Gyr),
         )
         assert u.allclose(
             pot_multi_frozen.energy(test_x, t=0 * u.Gyr),
