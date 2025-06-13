@@ -1387,21 +1387,20 @@ class EXPPotential(CPotentialBase, EXP_only=True):
     stride = PotentialParameter("stride", default=1, physical_type=None)
 
     def __init__(self, *args, **kwargs):
-        have_t = 'tmin' in kwargs or 'tmax' in kwargs
-        if have_t and 'snapshot_index' in kwargs:
-            raise ValueError(
-                "Cannot specify both `tmin`/`tmax` and `snapshot_index`."
-            )
+        have_t = "tmin" in kwargs or "tmax" in kwargs
+        if have_t and "snapshot_index" in kwargs:
+            raise ValueError("Cannot specify both `tmin`/`tmax` and `snapshot_index`.")
 
         if kwargs.get("snapshot_index", 0) < 0:
-            raise ValueError(
-                "The `snapshot_index` must be a non-negative integer."
-            )
+            raise ValueError("The `snapshot_index` must be a non-negative integer.")
 
         super().__init__(*args, **kwargs)
 
         # TODO: read config file and raise an error if the model file is not in the CWD)
         # or build in better support for handling paths to EXP files
+
+        # TODO: add logic to check: if coeff file only has one snapshot, then we should
+        # set snapshot_index to 0
 
     if EXP_ENABLED:
         Wrapper = EXPWrapper
