@@ -30,7 +30,7 @@ cdef extern from "potential/potential/builtin/exp_fields.h" namespace "gala_exp"
         double tmin,
         double tmax,
         int snapshot_index
-    ) nogil
+    ) nogil except +
 
 cdef extern from "potential/potential/builtin/exp_fields.h":
     # TODO: technically these are C++ signatures, unlike the extern "C" declarations in exp_fields.h
