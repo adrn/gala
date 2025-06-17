@@ -28,21 +28,21 @@ addition to the instructions is that Gala expects the ``build`` directory to be 
 in the EXP root directory.  The ``install`` directory will be looked for in the EXP root
 directory too, or one can set ``GALA_EXP_LIB_PATH`` (see below).
 
-To install EXP's dependencies, here is one recipe that we have found to work on Ubuntu 24.04:::
+To install EXP's dependencies, here is one recipe that we have found to work on Ubuntu 24.04::
 
     sudo apt-get install build-essential cmake gfortran git libeigen3-dev libfftw3-dev libhdf5-dev libomp-dev libopenmpi-dev ninja-build
     # install uv python, only needed if you don't already have python:
     # curl -LsSf https://astral.sh/uv/install.sh | sh
 
-Here is another recipe using modules that has been found to work on Flatiron Institute's rusty cluster:::
+Here is another recipe using modules that has been found to work on Flatiron Institute's rusty cluster::
 
     module load modules/2.3 cmake gcc openmpi hdf5 libtirpc eigen fftw git python
 
-EXP also builds on Mac by installing the dependencies with Homebrew:::
+EXP also builds on Mac by installing the dependencies with Homebrew::
 
     brew install cmake eigen fftw hdf5 open-mpi git ninja
 
-After installing the dependencies, one can download and build EXP on Linux with:::
+After installing the dependencies, one can download and build EXP on Linux with::
 
     git clone --recursive https://github.com/EXP-code/EXP.git
     cd EXP
@@ -58,7 +58,7 @@ Building Gala with EXP support
 ------------------------------
 
 Building Gala with the ``GALA_EXP_PREFIX`` environment variable set to the EXP root dir
-will trigger compilation of the Gala's EXP Cython extensions. For example:::
+will trigger compilation of the Gala's EXP Cython extensions. For example::
 
     git clone https://github.com/adrn/gala.git
     cd gala
@@ -75,11 +75,11 @@ environment variable to point to the EXP install directory::
 That is, ``GALA_EXP_LIB_PATH`` can be set if the CMake ``--install-prefix`` was set to a
 location other than ``GALA_EXP_PREFIX/install``.
 
-Now you can run the Gala build. For example, using uv and pip:::
+Now you can run the Gala build. For example, using uv and pip::
 
     uv pip install -ve .
 
-Or with a Python virtual environment:::
+Or with a Python virtual environment::
 
     python -m venv .venv
     . .venv/bin/activate
@@ -182,5 +182,6 @@ The `~gala.potential.EXPPotential` currently has the following limitations:
 
 * Hessian evaluation is not supported.
 * Pickling, saving, and loading is not supported.
+* Performance may currently not be as high as native Gala potentials
 
 .. TODO (adrn): any other notable limitations?
