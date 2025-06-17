@@ -1394,6 +1394,22 @@ class EXPPotential(CPotentialBase, EXP_only=True):
         if kwargs.get("snapshot_index", 0) < 0:
             raise ValueError("The `snapshot_index` must be a non-negative integer.")
 
+        if "config_file" not in kwargs:
+            raise ValueError(
+                "Must specify a `config_file` keyword argument to initialize an EXPPotential."
+            )
+
+        if "coef_file" not in kwargs:
+            raise ValueError(
+                "Must specify a `coef_file` keyword argument to initialize an EXPPotential."
+            )
+
+        if "units" not in kwargs:
+            raise ValueError(
+                "Must specify a `units` keyword argument to initialize an EXPPotential "
+                "(most likely a SimulationUnitSystem with G=1)."
+            )
+
         super().__init__(*args, **kwargs)
 
         # TODO: read config file and raise an error if the model file is not in the CWD)
