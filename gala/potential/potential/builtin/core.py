@@ -1412,9 +1412,6 @@ class EXPPotential(CPotentialBase, EXP_only=True):
 
         super().__init__(*args, **kwargs)
 
-        # TODO: read config file and raise an error if the model file is not in the CWD)
-        # or build in better support for handling paths to EXP files
-
         # TODO: add logic to check: if coef file only has one snapshot, then we should
         # set snapshot_index to 0
 
@@ -1428,3 +1425,9 @@ class EXPPotential(CPotentialBase, EXP_only=True):
         raise NotImplementedError(
             "Computing Hessian matrices for EXP potentials is not supported."
         )
+
+    def is_static(self):
+        """
+        Return True if the potential is in static, i.e. fixed-time, mode.
+        """
+        return self.c_instance.is_static()

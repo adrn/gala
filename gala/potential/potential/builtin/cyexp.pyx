@@ -12,6 +12,7 @@ cimport numpy as np
 np.import_array()
 
 from libcpp.string cimport string
+from libcpp cimport bool as cbool
 
 from ..cpotential cimport CPotentialWrapper
 from ..cpotential cimport densityfunc, energyfunc, gradientfunc, hessianfunc
@@ -21,7 +22,7 @@ cdef extern from "extra_compile_macros.h":
 
 cdef extern from "potential/potential/builtin/exp_fields.h" namespace "gala_exp":
     cdef cppclass State:
-        pass
+        cbool is_static
 
     State exp_init(
         const string &config,
@@ -72,3 +73,7 @@ cdef class EXPWrapper(CPotentialWrapper):
             self.cpotential.value[0] = <energyfunc>(exp_value)
             self.cpotential.density[0] = <densityfunc>(exp_density)
             self.cpotential.gradient[0] = <gradientfunc>(exp_gradient)
+
+
+    def is_static(self):
+        return self.exp_state.is_static

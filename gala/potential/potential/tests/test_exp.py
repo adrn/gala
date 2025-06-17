@@ -108,6 +108,12 @@ def test_exp_unit_tests():
     pot_single = EXPPotential(
         config_file=EXP_CONFIG_FILE,
         coef_file=get_pkg_data_filename("EXP-Hernquist-single-coefs.hdf5"),
+        units=EXPTestBase.exp_units,
+    )
+
+    pot_single_frozen = EXPPotential(
+        config_file=EXP_CONFIG_FILE,
+        coef_file=get_pkg_data_filename("EXP-Hernquist-single-coefs.hdf5"),
         snapshot_index=0,
         units=EXPTestBase.exp_units,
     )
@@ -125,10 +131,30 @@ def test_exp_unit_tests():
         units=EXPTestBase.exp_units,
     )
 
+    # TODO: not yet implemented
+    # pot_multi_frozen_arbitrary = EXPPotential(
+    #     config_file=EXP_CONFIG_FILE,
+    #     coef_file=get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5"),
+    #     tmin=0.4 * u.Gyr,
+    #     tmax=0.4 * u.Gyr,
+    #     units=EXPTestBase.exp_units,
+    # )
+
+    assert pot_single.is_static() is True
+    assert pot_single_frozen.is_static() is True
+    assert pot_multi_frozen.is_static() is True
+    # assert pot_multi_frozen_arbitrary.is_static() is True
+
+    assert pot_multi.is_static() is False
+
     test_x = [8.0, 0, 0] * u.kpc
     assert u.allclose(
         pot_single.energy(test_x, t=0 * u.Gyr),
         pot_single.energy(test_x, t=1.4 * u.Gyr),
+    )
+    assert u.allclose(
+        pot_single_frozen.energy(test_x, t=0 * u.Gyr),
+        pot_single_frozen.energy(test_x, t=1.4 * u.Gyr),
     )
     assert not u.allclose(
         pot_multi.energy(test_x, t=0 * u.Gyr),
@@ -138,6 +164,10 @@ def test_exp_unit_tests():
         pot_multi_frozen.energy(test_x, t=0 * u.Gyr),
         pot_multi_frozen.energy(test_x, t=1.4 * u.Gyr),
     )
+    # assert u.allclose(
+    #     pot_multi_frozen_arbitrary.energy(test_x, t=0. * u.Gyr),
+    #     pot_multi_frozen_arbitrary.energy(test_x, t=1.4 * u.Gyr),
+    # )
 
 
 @pytest.mark.skipif(
@@ -166,7 +196,7 @@ def test_cython_exceptions():
     with pytest.raises(RuntimeError):
         EXPPotential(
             config_file=EXP_CONFIG_FILE,
-            coef_file=EXP_SINGLE_COEF_FILE,
+            coef_file=EXP_MULTI_COEF_FILE,
             tmin=0xBAD,
             units=units,
         )
