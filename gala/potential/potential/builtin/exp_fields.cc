@@ -5,6 +5,9 @@
 #include <cstdlib>
 #include <memory>
 #include <cmath>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 // EXP headers
 #include <Coefficients.H>
@@ -21,7 +24,13 @@ State exp_init(
 {
   YAML::Node yaml = YAML::LoadFile(std::string(config_fn));
 
-  auto basis = BasisClasses::Basis::factory(yaml);
+  // change the cwd to the directory of the config file
+  // so that relative paths in the config file work
+  BasisClasses::BasisPtr basis;
+  {
+    ScopedChdir cd(fs::path(config_fn).parent_path());
+    basis = BasisClasses::Basis::factory(yaml);
+  }
 
   if (!basis) {
     std::ostringstream error_msg;

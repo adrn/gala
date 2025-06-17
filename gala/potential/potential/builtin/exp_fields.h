@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <filesystem>
+#include <stdexcept>
 
 #include <Coefficients.H>
 #include <BiorthBasis.H>
@@ -9,7 +11,7 @@ namespace gala_exp {
 
 class State {
 public:
-    std::shared_ptr<BasisClasses::Basis> basis;
+    BasisClasses::BasisPtr basis;
     CoefClasses::CoefsPtr coefs;
     bool is_static = false;
 };
@@ -37,3 +39,25 @@ extern void exp_gradient(double t, double *pars, double *q, int n_dim, double *g
 extern double exp_density(double t, double *pars, double *q, int n_dim, void* state);
 
 }
+
+class ScopedChdir {
+private:
+    std::filesystem::path original_path;
+
+public:
+    inline explicit ScopedChdir(const std::filesystem::path& new_path) {
+        original_path = std::filesystem::current_path();
+        std::filesystem::current_path(new_path);
+    }
+
+    inline ~ScopedChdir() {
+        try {
+            std::filesystem::current_path(original_path);
+        } catch (...) {
+            // Can't throw in destructor
+        }
+    }
+
+    ScopedChdir(const ScopedChdir&) = delete;
+    ScopedChdir& operator=(const ScopedChdir&) = delete;
+};

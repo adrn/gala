@@ -175,6 +175,17 @@ smaller range, one can specify ``tmin`` and/or ``tmax`` for efficiency:
 
 Note that subsequently using a time outside this range will result in an exception.
 
+----------
+File Paths
+----------
+
+`~gala.potential.EXPPotential` takes ``config_file`` and ``coef_file`` as file path
+arguments. These can be absolute paths, or paths relative to the current working
+directory.
+
+The config file itself may reference file paths like the ``modelname`` and ``cachename``.
+These paths can be absolute paths, or paths **relative to the config file**.
+
 -----------
 Limitations
 -----------
