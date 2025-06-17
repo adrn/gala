@@ -6,9 +6,12 @@ Using EXP potentials with Gala
 
 Gala supports `EXP <https://exp-docs.readthedocs.io>`_ as a backend for representing
 flexible and time-dependent gravitational potentials, typically constructed from N-body
-simulation snapshots. This requires building EXP, building Gala with EXP support, and
-then setting up a `~gala.potential.EXPPotential` object using the user's EXP config and
-coefficient files.
+simulation snapshots. This requires:
+
+#. building EXP,
+#. building Gala with EXP support,
+#. and setting up a `~gala.potential.EXPPotential` object using the user's EXP config and
+    coefficient files.
 
 Note that EXP support currently requires building Gala (and EXP) from source.
 Additionally, this workflow has only been tested on Linux and MacOS with the setups seen
@@ -91,31 +94,93 @@ Running Gala with an EXP potential
 
 To use an EXP potential with Gala, first you'll need a config file and coefficients
 file from EXP (probably YAML and HDF5, respectively). Let's call them ``config.yml``
-and ``coefs.h5``.
+and ``coefs.h5``. The ``config.yml`` may reference "model" and "cache" files like
+``potential.model`` and ``potential.cache``; you'll need those, too.
 
 .. FUTURE: since the tutorials run on GH Actions, we could probably actually run EXP here
 
-Then one set up a `~gala.potential.EXPPotential` object with:
+Then, setting up an `~gala.potential.EXPPotential` object is as easy as specifying the
+unit system and the potential object:
 
 .. code-block:: python
 
-    import gala.potential as gp
+    import astropy.units as u
 
-    # TODO: fix this to use Adrian's method of setting units
-    pot = gp.EXPPotential(
-        # units=galactic,
-        # units=exp_units,
+    import gala.potential as gp
+    from gala.units import SimulationUnitSystem
+
+    exp_units = SimulationUnitSystem(mass=1.25234e11 * u.Msun, length=3.845 * u.kpc, G=1)
+
+    exp_pot = gp.EXPPotential(
+        units=exp_units,
         config_file="config.yml",
         coef_file="coefs.h5",
-        stride=1,
-        # TODO: time evolution
-        tmin=0.02,
-        tmax=10.,
-        m_s=1 * u.Msun,
-        r_s=1 * u.kpc,
+    )
+
+Then one can use the potential object like any other Gala potential. For example, to integrate
+and plot an orbit:
+
+.. code-block:: python
+
+    import gala.dynamics as gd
+
+    w0 = gd.PhaseSpacePosition(
+        pos=[-8, 0.0, 0.0] * u.kpc,
+        vel=[0.0, 180, 0.0] * u.km / u.s,
+    )
+    orbit = gp.Hamiltonian(exp_pot).integrate_orbit(w0, dt=1 * u.Myr, t1=0, t2=1 * u.Gyr)
+    fig = orbit.plot(
+        ["x", "y"], units=u.kpc, linestyle="-", alpha=0.5, label="exp orbit"
     )
 
 -----
 Units
 -----
-.. TODO
+.. TODO (adrn): discuss units. This could also be a paragraph in the previous section.
+
+--------------
+Time Evolution
+--------------
+
+EXP potentials are time-evolving by default. To select a single static snapshot from the
+coefficients file, one can use the ``snapshot_index`` parameter:
+
+.. code-block:: python
+
+    pot = gp.EXPPotential(
+        units=exp_units,
+        config_file="config.yml",
+        coef_file="coefs.h5",
+        snapshot_index=0,
+    )
+
+For time-evolving potentials, if one tries to evaluate the potential outside of the time range
+stored in the coefficients file (even indirectly, such as during an orbital integration), an
+exception will be raised.
+
+.. TODO(lgarrison): double check exception behavior here
+
+If the coefficients file stores a very large time range but the user is only interested in a
+smaller range, one can specify ``tmin`` and/or ``tmax`` for efficiency:
+
+.. code-block:: python
+
+    pot = gp.EXPPotential(
+        units=exp_units,
+        config_file="config.yml",
+        coef_file="coefs.h5",
+        tmin=1.,
+        tmax=2.,
+    )
+
+Note that subsequently using a time outside this range will result in an exception.
+
+-----------
+Limitations
+-----------
+The `~gala.potential.EXPPotential` currently has the following limitations:
+
+* Hessian evaluation is not supported.
+* Pickling, saving, and loading is not supported.
+
+.. TODO (adrn): any other notable limitations?
