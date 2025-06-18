@@ -11,7 +11,7 @@ simulation snapshots. This requires:
 #. building EXP,
 #. building Gala with EXP support,
 #. and setting up a `~gala.potential.EXPPotential` object using the user's EXP config and
-    coefficient files.
+   coefficient files.
 
 Note that EXP support currently requires building Gala (and EXP) from source.
 Additionally, this workflow has only been tested on Linux and MacOS with the setups seen
