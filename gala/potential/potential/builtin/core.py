@@ -1426,8 +1426,24 @@ class EXPPotential(CPotentialBase, EXP_only=True):
             "Computing Hessian matrices for EXP potentials is not supported."
         )
 
-    def is_static(self):
+    @property
+    def static(self) -> bool:
         """
-        Return True if the potential is in static, i.e. fixed-time, mode.
+        Whether the potential is in static, i.e. fixed-time, mode.
         """
-        return self.c_instance.is_static()
+        return self.c_instance.static
+
+    @property
+    def tmin_exp(self) -> u.Quantity:
+        """
+        The actual, loaded minimum time for which the potential is defined.
+        """
+        #TODO(adrn): is this the right way to handle this?
+        return self.c_instance.tmin * self.units["time"]
+
+    @property
+    def tmax_exp(self) -> u.Quantity:
+        """
+        The actual, loaded maximum time for which the potential is defined.
+        """
+        return self.c_instance.tmax * self.units["time"]

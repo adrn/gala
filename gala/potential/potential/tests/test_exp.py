@@ -140,12 +140,12 @@ def test_exp_unit_tests():
     #     units=EXPTestBase.exp_units,
     # )
 
-    assert pot_single.is_static() is True
-    assert pot_single_frozen.is_static() is True
-    assert pot_multi_frozen.is_static() is True
-    # assert pot_multi_frozen_arbitrary.is_static() is True
+    assert pot_single.static is True
+    assert pot_single_frozen.static is True
+    assert pot_multi_frozen.static is True
+    # assert pot_multi_frozen_arbitrary.static is True
 
-    assert pot_multi.is_static() is False
+    assert pot_multi.static is False
 
     test_x = [8.0, 0, 0] * u.kpc
     assert u.allclose(
@@ -168,6 +168,10 @@ def test_exp_unit_tests():
     #     pot_multi_frozen_arbitrary.energy(test_x, t=0. * u.Gyr),
     #     pot_multi_frozen_arbitrary.energy(test_x, t=1.4 * u.Gyr),
     # )
+
+    # check tmin/tmax
+    assert u.allclose(pot_multi.tmin_exp, 0.0 * u.Gyr)
+    assert u.allclose(pot_multi.tmax_exp, 2.0 * u.Gyr)
 
 
 @pytest.mark.skipif(

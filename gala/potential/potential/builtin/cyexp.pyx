@@ -22,6 +22,8 @@ cdef extern from "extra_compile_macros.h":
 
 cdef extern from "potential/potential/builtin/exp_fields.h" namespace "gala_exp":
     cdef cppclass State:
+        double tmin
+        double tmax
         cbool is_static
 
     State exp_init(
@@ -31,7 +33,7 @@ cdef extern from "potential/potential/builtin/exp_fields.h" namespace "gala_exp"
         double tmin,
         double tmax,
         int snapshot_index
-    ) nogil except +
+    ) except + nogil
 
 cdef extern from "potential/potential/builtin/exp_fields.h":
     # TODO: technically these are C++ signatures, unlike the extern "C" declarations in exp_fields.h
@@ -75,5 +77,14 @@ cdef class EXPWrapper(CPotentialWrapper):
             self.cpotential.gradient[0] = <gradientfunc>(exp_gradient)
 
 
-    def is_static(self):
+    @property
+    def static(self):
         return self.exp_state.is_static
+
+    @property
+    def tmin(self):
+        return self.exp_state.tmin
+
+    @property
+    def tmax(self):
+        return self.exp_state.tmax

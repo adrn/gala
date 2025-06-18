@@ -160,13 +160,17 @@ is static with:
 
 .. code-block:: python
 
-    exp_pot.is_static()
+    exp_pot.static
 
 ``tmin`` and ``tmax`` should not be passed for single-snapshot coefficient files.
 
+For multi-snapshot coefficient files, be aware that if only one snapshot falls within the given
+``tmin`` and ``tmax`` range, the potential will be loaded as static.
+
 For time-evolving potentials, if one tries to evaluate the potential outside of the time range
-stored in the coefficients file (even indirectly, such as during an orbital integration), an
-exception will be raised.
+stored in the coefficients file (even indirectly, such as during an orbital integration), 
+currently the interpreter will crash (after printing an error message to stderr). Proper
+exception propagation is a planned feature.
 
 .. TODO: an exception isn't raised, the interpreter just crashes. We can probably have
 .. it return NaN instead, but actually raising a Python exception is hard...
@@ -176,7 +180,7 @@ smaller range, one can specify ``tmin`` and/or ``tmax`` for efficiency:
 
 .. code-block:: python
 
-    pot = gp.EXPPotential(
+    exp_pot = gp.EXPPotential(
         units=exp_units,
         config_file="config.yml",
         coef_file="coefs.h5",
@@ -184,7 +188,15 @@ smaller range, one can specify ``tmin`` and/or ``tmax`` for efficiency:
         tmax=2.,
     )
 
-Note that subsequently using a time outside this range will result in an exception.
+Note that subsequently using a time outside this range will result in an interpreter crash
+(with an associated error printed to stderr). Or more precisely: using a time outside the
+range of snapshots that this ``tmin``/``tmax`` caused to be loaded will cause such an error.
+One can check the loaded range of snapshots with:
+
+.. code-block:: python
+
+    exp_pot.tmin_exp
+    exp_pot.tmax_exp
 
 ----------
 File Paths
@@ -205,5 +217,7 @@ The `~gala.potential.EXPPotential` currently has the following limitations:
 * Hessian evaluation is not supported.
 * Pickling, saving, and loading is not supported.
 * Performance may currently not be as high as native Gala potentials
+* Evaluating the potential at a time outside the loaded time range will result
+  in the interpreter crashing
 
 .. TODO (adrn): any other notable limitations?

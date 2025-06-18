@@ -13,7 +13,9 @@ class State {
 public:
     BasisClasses::BasisPtr basis;
     CoefClasses::CoefsPtr coefs;
-    bool is_static = false;
+    double tmin;
+    double tmax;
+    bool is_static;
 };
 
 State exp_init(

@@ -24,10 +24,10 @@ State exp_init(
 {
   YAML::Node yaml = YAML::LoadFile(std::string(config_fn));
 
-  // change the cwd to the directory of the config file
-  // so that relative paths in the config file work
   BasisClasses::BasisPtr basis;
   {
+    // change the cwd to the directory of the config file
+    // so that relative paths in the config file work
     ScopedChdir cd(fs::path(config_fn).parent_path());
     basis = BasisClasses::Basis::factory(yaml);
   }
@@ -56,6 +56,8 @@ State exp_init(
   }
 
   if (coefs->Times().size() == 1 && snapshot_index < 0) {
+    // If there is only one loaded snapshot in the coefs,
+    // we treat it as static
     snapshot_index = 0;
   }
 
@@ -70,6 +72,11 @@ State exp_init(
     }
     tmin = times[snapshot_index];
     tmax = tmin;
+  } else {
+    // Adjust tmin and tmax to the first and last times in the coefficients
+    auto times = coefs->Times();
+    tmin = times.front();
+    tmax = times.back();
   }
 
   bool is_static = tmax == tmin;
@@ -78,7 +85,7 @@ State exp_init(
     basis->set_coefs(gala_exp::interpolator(tmin, coefs));
   }
 
-  return { basis, coefs, is_static };
+  return { basis, coefs, tmin, tmax, is_static };
 }
 
 // Linear interpolator on coefficients.  Higher order interpolation
@@ -159,7 +166,6 @@ double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
   if (!exp_state->is_static) {
-    // TODO: what time units does Gala use? What units does EXP expect?
     // TODO: how expensive is this, actually?
     exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
   }
