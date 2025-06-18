@@ -147,18 +147,29 @@ coefficients file, one can use the ``snapshot_index`` parameter:
 
 .. code-block:: python
 
-    pot = gp.EXPPotential(
+    exp_pot = gp.EXPPotential(
         units=exp_units,
         config_file="config.yml",
         coef_file="coefs.h5",
         snapshot_index=0,
     )
 
+Or, if ``coef_file`` only has a single snapshot, the potential will be static by default,
+as if the user passed ``snapshot_index=0``. One can always check if an ``EXPPotential``
+is static with:
+
+.. code-block:: python
+
+    exp_pot.is_static()
+
+``tmin`` and ``tmax`` should not be passed for single-snapshot coefficient files.
+
 For time-evolving potentials, if one tries to evaluate the potential outside of the time range
 stored in the coefficients file (even indirectly, such as during an orbital integration), an
 exception will be raised.
 
-.. TODO(lgarrison): double check exception behavior here
+.. TODO: an exception isn't raised, the interpreter just crashes. We can probably have
+.. it return NaN instead, but actually raising a Python exception is hard...
 
 If the coefficients file stores a very large time range but the user is only interested in a
 smaller range, one can specify ``tmin`` and/or ``tmax`` for efficiency:
