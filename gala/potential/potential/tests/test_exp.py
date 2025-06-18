@@ -50,7 +50,11 @@ class EXPTestBase(PotentialTestBase):
         self.potential = EXPPotential(
             config_file=self.EXP_CONFIG_FILE,
             coef_file=self.EXP_COEF_FILE,
+            
+            # TODO: this is making the multi-coef test actually static!
+            # Need to fix the orbit integration then remove this
             snapshot_index=0,
+
             units=self.exp_units,
         )
         return super().setup_method()
@@ -80,6 +84,12 @@ class EXPTestBase(PotentialTestBase):
     @pytest.mark.skip(reason="Not implemented for EXP")
     def test_pickle(self, tmpdir):
         pass
+
+    def test_orbit_integration(self, *args, **kwargs):
+        """Test orbit integration with EXPPotential"""
+        return super().test_orbit_integration(
+            *args, **kwargs, t1=self.potential.tmin_exp, t2=self.potential.tmax_exp,
+        )
 
 
 @pytest.mark.skipif(
@@ -204,4 +214,3 @@ def test_cython_exceptions():
             tmin=0xBAD,
             units=units,
         )
-

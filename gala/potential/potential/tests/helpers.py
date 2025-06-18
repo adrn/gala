@@ -319,7 +319,7 @@ class PotentialTestBase:
         grad = self.potential._gradient(xyz, t=np.array([0.0]))
         assert np.allclose(num_grad, grad, rtol=self.tol)
 
-    def test_orbit_integration(self):
+    def test_orbit_integration(self, t1=0.0, t2=10.0, nsteps=10000):
         """
         Make sure we can integrate an orbit in this potential
         """
@@ -327,8 +327,8 @@ class PotentialTestBase:
         w0 = np.vstack((w0, w0, w0)).T
 
         t1 = time.time()
-        orbit = self.H.integrate_orbit(w0, dt=0.1, n_steps=10000)
-        print("Integration time (10000 steps): {}".format(time.time() - t1))
+        orbit = self.H.integrate_orbit(w0, t1=t1, t2=t2, n_steps=nsteps)
+        print("Integration time ({} steps): {}".format(nsteps, time.time() - t1))
 
         if self.show_plots:
             f = orbit.plot()
@@ -341,7 +341,7 @@ class PotentialTestBase:
             pos=w0[: self.ndim] * us["length"],
             vel=w0[self.ndim :] * us["length"] / us["time"],
         )
-        orbit = self.H.integrate_orbit(w0, dt=0.1, n_steps=10000)
+        orbit = self.H.integrate_orbit(w0, t1=t1, t2=t2, n_steps=nsteps)
 
         if self.show_plots:
             f = orbit.plot()
