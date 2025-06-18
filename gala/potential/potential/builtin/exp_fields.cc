@@ -18,10 +18,6 @@ namespace fs = std::filesystem;
 
 namespace gala_exp {
 
-  namespace detail {
-    int count_snapshots(const std::string &coeffile);
-  }
-
 State exp_init(
   const std::string &config_fn, const std::string &coeffile,
   int stride, double tmin, double tmax, int snapshot_index)
@@ -42,19 +38,6 @@ State exp_init(
     throw std::runtime_error(error_msg.str());
   }
 
-  if (snapshot_index < 0 && detail::count_snapshots(coeffile) == 1) {
-    snapshot_index = 0;  // only one snapshot available
-
-    // reset tmin and tmax
-    tmin = -std::numeric_limits<double>::max();
-    tmax = std::numeric_limits<double>::max();
-
-    // TODO(adrn): do we want to encourage setting snapshot_index=0 with a warning?
-    // How common is a single-snapshot coeffile?
-    std::cerr << "[GALA-EXP] Warning: only one snapshot available in coeffile=\"" << coeffile
-              << "\". Setting snapshot_index=0 and using a static potential." << std::endl;
-  }
-
   auto coefs = CoefClasses::Coefs::factory(coeffile,
                                        stride, tmin, tmax);
 
@@ -70,6 +53,10 @@ State exp_init(
               << " within tmin=" << tmin
               << " and tmax=" << tmax << ".";
     throw std::runtime_error(error_msg.str());
+  }
+
+  if (coefs->Times().size() == 1 && snapshot_index < 0) {
+    snapshot_index = 0;
   }
 
   if (snapshot_index >= 0) {
@@ -156,28 +143,6 @@ CoefClasses::CoefStrPtr interpolator(double t, CoefClasses::CoefsPtr coefs)
 
   return newcoef;
 }
-
-  namespace detail {
-    int count_snapshots(const std::string &coeffile) {
-      // Count the number of snapshots in the coefficient file.
-      // TODO: the logic for loading a coefficient file is somewhat complex,
-      // so it's not immediately clear how to count the snapshots without
-      // actually loading the coefficients.
-
-      CoefClasses::CoefsPtr coefs = CoefClasses::Coefs::factory(
-        coeffile,
-        1,
-        -std::numeric_limits<double>::max(),
-        std::numeric_limits<double>::max()
-      );
-      if (!coefs) {
-        std::ostringstream error_msg;
-        error_msg << "Failed to load coefficients from file: " << coeffile;
-        throw std::runtime_error(error_msg.str());
-      }
-      return coefs->Times().size();
-    }
-  }
 
 }
 
