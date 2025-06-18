@@ -53,6 +53,9 @@ After installing the dependencies, one can download and build EXP on Linux with:
 For a full example of how to build EXP on Mac, see `this build recipe
 <https://gist.github.com/adrn/afd9222416e359fcef826b7988b7d69f>`_.
 
+Note that building pyEXP is not required. However, some tests will use pyEXP if it is
+present.
+
 ------------------------------
 Building Gala with EXP support
 ------------------------------

@@ -14,6 +14,14 @@ from gala._cconfig import EXP_ENABLED
 from gala.potential.potential.builtin import EXPPotential
 from gala.potential.potential.tests.helpers import PotentialTestBase
 from gala.units import SimulationUnitSystem
+from gala.util import chdir
+
+try:
+    import pyEXP
+
+    HAVE_PYEXP = True
+except ImportError:
+    HAVE_PYEXP = False
 
 EXP_CONFIG_FILE = get_pkg_data_filename("EXP-Hernquist-basis.yml")
 EXP_SINGLE_COEF_FILE = get_pkg_data_filename("EXP-Hernquist-single-coefs.hdf5")
@@ -21,6 +29,7 @@ EXP_MULTI_COEF_FILE = get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5")
 
 # Use in CI to ensure tests aren't silently skipped
 FORCE_EXP_TEST = os.environ.get("GALA_FORCE_EXP_TEST", "0") == "1"
+FORCE_PYEXP_TEST = os.environ.get("GALA_FORCE_PYEXP_TEST", "0") == "1"
 
 # See: generate_exp.py, which generates the basis and coefficients for these tests
 
@@ -90,6 +99,38 @@ class EXPTestBase(PotentialTestBase):
         return super().test_orbit_integration(
             *args, **kwargs, t1=self.potential.tmin_exp, t2=self.potential.tmax_exp,
         )
+
+    @pytest.mark.skipif(
+        (not EXP_ENABLED or not HAVE_PYEXP) and not FORCE_PYEXP_TEST,
+        reason="requires Gala compiled with EXP support and pyEXP",
+    )
+    def test_pyexp(self):
+        """Test EXPPotential against pyEXP"""
+
+        gala_test_x = [1.0, 2.0, -3.0] * u.kpc
+        exp_test_x = gala_test_x.to_value(self.exp_units["length"])
+
+        with open(self.EXP_CONFIG_FILE) as fp:
+            config_str = fp.read()
+        with chdir(os.path.dirname(self.EXP_CONFIG_FILE)):
+            exp_basis = pyEXP.basis.Basis.factory(config_str)
+        exp_coefs = pyEXP.coefs.Coefs.factory(self.EXP_COEF_FILE)
+
+        # Use a snapshot time so that we don't have to rebuild the interpolation functionality
+        t = exp_coefs.Times()[-1] * self.exp_units["time"]
+
+        exp_coefs_at_time = exp_coefs.getCoefStruct(t.to_value(self.exp_units["time"]))
+        exp_basis.set_coefs(exp_coefs_at_time)
+
+        exp_fields = exp_basis.getFields(*exp_test_x)
+
+        gala_dens = self.potential.density(gala_test_x, t=t)
+        gala_pot = self.potential.energy(gala_test_x, t=t)
+        gala_grad = self.potential.gradient(gala_test_x, t=t)
+
+        assert u.allclose(exp_fields[2], gala_dens.value)
+        assert u.allclose(exp_fields[5], gala_pot.value)
+        assert u.allclose(exp_fields[6:9], -gala_grad.value.reshape(-1))
 
 
 @pytest.mark.skipif(

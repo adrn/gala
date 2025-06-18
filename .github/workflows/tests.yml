@@ -209,6 +209,7 @@ jobs:
       - name: Run tests
         env:
           GALA_FORCE_EXP_TEST: ${{ matrix.gala-exp }}
+          GALA_FORCE_PYEXP_TEST: ${{ matrix.gala-exp }}
         run: >-
           python -m pytest -ra --cov --cov-report=xml --cov-report=term
           --durations=20
