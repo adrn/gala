@@ -62,7 +62,7 @@ class EXPTestBase(PotentialTestBase):
             
             # TODO: this is making the multi-coef test actually static!
             # Need to fix the orbit integration then remove this
-            snapshot_index=0,
+            # snapshot_index=0,
 
             units=self.exp_units,
         )
@@ -96,8 +96,14 @@ class EXPTestBase(PotentialTestBase):
 
     def test_orbit_integration(self, *args, **kwargs):
         """Test orbit integration with EXPPotential"""
+        if self.potential.static:
+            # Use any time range with a static potential.
+            time_spec = {}
+        else:
+            # With a non-static potential, we need to stay within the time range
+            time_spec = {"t1": self.potential.tmin_exp, "t2": self.potential.tmax_exp}
         return super().test_orbit_integration(
-            *args, **kwargs, t1=self.potential.tmin_exp, t2=self.potential.tmax_exp,
+            *args, **kwargs, **time_spec,
         )
 
     @pytest.mark.skipif(
