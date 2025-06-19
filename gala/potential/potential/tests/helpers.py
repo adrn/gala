@@ -328,9 +328,9 @@ class PotentialTestBase:
 
         dt = (t2 - t1) / nsteps
 
-        t1 = time.time()
+        twall = time.time()
         orbit = self.H.integrate_orbit(w0, t1=t1, dt=dt, n_steps=nsteps)
-        print("Integration time ({} steps): {}".format(nsteps, time.time() - t1))
+        print("Integration time ({} steps): {}".format(nsteps, time.time() - twall))
 
         if self.show_plots:
             f = orbit.plot()
