@@ -68,7 +68,7 @@ will trigger compilation of the Gala's EXP Cython extensions. For example::
     export GALA_EXP_PREFIX=/path/to/EXP
 
 If you build and install EXP following the instructions above, the EXP libraries will be
-located in EXP/install/lib and the Gala build process knows to look there by default. If
+located in ``EXP/install/lib`` and the Gala build process knows to look there by default. If
 you installed EXP to a different location, you can set the ``GALA_EXP_LIB_PATH``
 environment variable to point to the EXP install directory::
 
@@ -78,15 +78,16 @@ environment variable to point to the EXP install directory::
 That is, ``GALA_EXP_LIB_PATH`` can be set if the CMake ``--install-prefix`` was set to a
 location other than ``GALA_EXP_PREFIX/install``.
 
-Now you can run the Gala build. For example, using uv and pip::
+Now you can run the Gala build. For example, using uv::
 
+    uv venv
     uv pip install -ve .
 
-Or with a Python virtual environment::
+Or using venv::
 
     python -m venv .venv
     . .venv/bin/activate
-    python -m pip install -ve .  # or uv pip install ...
+    python -m pip install -ve .
 
 In either case, the pip output should show a message like ``Gala: installing with EXP
 support``.
@@ -103,7 +104,7 @@ and ``coefs.h5``. The ``config.yml`` may reference "model" and "cache" files lik
 .. FUTURE: since the tutorials run on GH Actions, we could probably actually run EXP here
 
 Then, setting up an `~gala.potential.EXPPotential` object is as easy as specifying the
-unit system and the potential object:
+unit system and EXP files:
 
 .. code-block:: python
 
@@ -145,8 +146,19 @@ Units
 Time Evolution
 --------------
 
-EXP potentials are time-evolving by default. To select a single static snapshot from the
-coefficients file, one can use the ``snapshot_index`` parameter:
+`~gala.potential.EXPPotential` may be time-evolving or static. If the ``coef_file`` has
+only one snapshot, the potential will be static. Likewise, if ``tmin``/``tmax`` are passed
+such that only one snapshot from the coefs falls within that range, the potential will be
+static.
+
+One can always check if an ``EXPPotential`` is static with:
+
+.. code-block:: python
+
+    exp_pot.static
+
+One can also make a multi-snapshot potential static by selecting a single snapshot with
+the ``snapshot_index`` parameter:
 
 .. code-block:: python
 
@@ -157,21 +169,8 @@ coefficients file, one can use the ``snapshot_index`` parameter:
         snapshot_index=0,
     )
 
-Or, if ``coef_file`` only has a single snapshot, the potential will be static by default,
-as if the user passed ``snapshot_index=0``. One can always check if an ``EXPPotential``
-is static with:
-
-.. code-block:: python
-
-    exp_pot.static
-
-``tmin`` and ``tmax`` should not be passed for single-snapshot coefficient files.
-
-For multi-snapshot coefficient files, be aware that if only one snapshot falls within the given
-``tmin`` and ``tmax`` range, the potential will be loaded as static.
-
 For time-evolving potentials, if one tries to evaluate the potential outside of the time range
-stored in the coefficients file (even indirectly, such as during an orbital integration), 
+stored in the coefficients file (even indirectly, such as during an orbit integration),
 currently the interpreter will crash (after printing an error message to stderr). Proper
 exception propagation is a planned feature.
 
@@ -200,6 +199,8 @@ One can check the loaded range of snapshots with:
 
     exp_pot.tmin_exp
     exp_pot.tmax_exp
+
+``tmin`` and ``tmax`` should not be passed for single-snapshot coefficient files.
 
 ----------
 File Paths
