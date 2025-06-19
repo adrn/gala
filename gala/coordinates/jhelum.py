@@ -5,7 +5,13 @@ import astropy.units as u
 import astropy.coordinates as coord
 from astropy.coordinates import frame_transform_graph
 
-__all__ = ["JhelumBonaca19"]
+import numpy as np
+from astropy.coordinates import ICRS, StaticMatrixTransform, frame_transform_graph
+from astropy.utils.decorators import format_doc
+from ._builtin_frames.base import BaseStreamFrame, stream_doc
+
+
+__all__ = ["JhelumBonaca19", "JhelumShipp19"]
 
 
 class JhelumBonaca19(coord.BaseCoordinateFrame):
@@ -29,10 +35,10 @@ class JhelumBonaca19(coord.BaseCoordinateFrame):
 
     pm_phi1_cosphi2 : :class:`~astropy.units.Quantity`, optional, must be keyword
         The proper motion in the longitude-like direction corresponding to
-        the GD-1 stream's orbit.
+        the Jhelum stream's orbit.
     pm_phi2 : :class:`~astropy.units.Quantity`, optional, must be keyword
         The proper motion in the latitude-like direction perpendicular to the
-        GD-1 stream's orbit.
+        Jhelum stream's orbit.
     radial_velocity : :class:`~astropy.units.Quantity`, optional, must be keyword
         The Distance for this object along the line-of-sight.
 
@@ -100,3 +106,36 @@ def jhelum_to_icrs():
     Compute the transformation from heliocentric Jhelum coordinates to spherical ICRS.
     """
     return icrs_to_jhelum().T
+
+
+# =============================================================================
+
+
+
+@format_doc(
+    stream_doc,
+    name="Jhelum",
+    paper="Shipp et al. 2019",
+    url="https://ui.adsabs.harvard.edu/abs/2019ApJ...885....3S",
+)
+class JhelumShipp19(BaseStreamFrame):
+    """A coordinate system defined by the orbit of the Jhelum stream."""
+
+
+R = np.array(
+    [
+        [0.60334991, -0.20211605, -0.77143890],
+        [-0.13408072, -0.97928924, 0.15170675],
+        [0.78612419, -0.01190283, 0.61795395],
+    ]
+)
+
+
+@frame_transform_graph.transform(coord.StaticMatrixTransform, coord.ICRS, JhelumShipp19)
+def icrs_to_indus():
+    return R
+
+
+@frame_transform_graph.transform(coord.StaticMatrixTransform, JhelumShipp19, coord.ICRS)
+def indus_to_icrs():
+    return R.T
