@@ -96,60 +96,74 @@ support``.
 Running Gala with an EXP potential
 ----------------------------------
 
-To use an EXP potential with Gala, first you'll need a config file and coefficients
-file from EXP (probably YAML and HDF5, respectively). Let's call them ``config.yml``
-and ``coefs.h5``. The ``config.yml`` may reference "model" and "cache" files like
-``potential.model`` and ``potential.cache``; you'll need those, too.
+To use an EXP potential with Gala, first you'll need a config file, a basis file, and a
+coefficients file from EXP. We have included example files with this tutorial, produced
+by constructing a basis and computing coefficients with particle data from a single
+snapshot of the dark matter halo of the m12m simulation in the `Latte suite
+<https://fire.northwestern.edu/latte/>`_ of the `FIRE-2 simulations
+<https://arxiv.org/abs/1702.06148>`_. In particular, the relevant files are:
 
-.. FUTURE: since the tutorials run on GH Actions, we could probably actually run EXP here
+- ``m12m-basis.yml`` - the basis configuration file
+- ``m12m_basis_table.model`` - the basis table (density and potential evaluated on a
+  grid of spherical radii)
+- ``m12m-coef.hdf5`` - the coefficients file
 
-Then, setting up an `~gala.potential.EXPPotential` object is as easy as specifying the
-unit system and EXP files:
+The basis was generated with a unit system in which G=1 (standard for EXP), the mass
+unit is :math:`10^{12}~\mathrm{M}_\odot`, and the length unit is 10 kpc.
+Setting up an `~gala.potential.EXPPotential` object with these files is as easy as
+specifying the unit system and EXP files:
 
 .. code-block:: python
 
     import astropy.units as u
-
     import gala.potential as gp
     from gala.units import SimulationUnitSystem
 
-    exp_units = SimulationUnitSystem(mass=1.25234e11 * u.Msun, length=3.845 * u.kpc, G=1)
+    exp_units = SimulationUnitSystem(mass=1e12 * u.Msun, length=10 * u.kpc, G=1)
 
     exp_pot = gp.EXPPotential(
         units=exp_units,
-        config_file="config.yml",
-        coef_file="coefs.h5",
+        config_file="data/m12m-basis.yml",
+        coef_file="data/m12m-coef.hdf5",
     )
 
-Then one can use the potential object like any other Gala potential. For example, to integrate
-and plot an orbit:
+Then one can use the potential object like any other Gala potential. For example, to
+integrate and plot an orbit:
 
 .. code-block:: python
 
     import gala.dynamics as gd
 
     w0 = gd.PhaseSpacePosition(
-        pos=[-8, 0.0, 0.0] * u.kpc,
-        vel=[0.0, 180, 0.0] * u.km / u.s,
+        pos=[8, 0.0, 1.0] * u.kpc,
+        vel=[0.0, 220, 0.0] * u.km / u.s,
     )
-    orbit = gp.Hamiltonian(exp_pot).integrate_orbit(w0, dt=1 * u.Myr, t1=0, t2=1 * u.Gyr)
-    fig = orbit.plot(
-        ["x", "y"], units=u.kpc, linestyle="-", alpha=0.5, label="exp orbit"
+    orbit = gp.Hamiltonian(exp_pot).integrate_orbit(
+        w0, dt=1 * u.Myr, t1=0, t2=6 * u.Gyr
     )
+    fig = orbit.plot(units=u.kpc, linestyle="-", alpha=0.5, label="orbit in m12m")
 
 -----
 Units
 -----
-.. TODO (adrn): discuss units. This could also be a paragraph in the previous section.
+
+Gala generally works in physical units (e.g., kpc, solar mass, etc.), whereas EXP
+typically works in user-defined simulation units. To use EXP with Gala, one must define
+a `~gala.units.SimulationUnitSystem` and specify this when creating the potential (as
+demonstrated above). If the basis was computed from a scale-dependent potential, the
+simulation unit system must match the units used to generate the basis. If the potential
+was computed from a scale-independent model, the simulation unit system can be
+arbitrary, but it can be used to set physical scales to the simulations.
 
 --------------
 Time Evolution
 --------------
 
-`~gala.potential.EXPPotential` may be time-evolving or static. If the ``coef_file`` has
-only one snapshot, the potential will be static. Likewise, if ``tmin``/``tmax`` are passed
-such that only one snapshot from the coefs falls within that range, the potential will be
-static.
+An `~gala.potential.EXPPotential` may be time-evolving or static. If the coefficient
+file has only one snapshot, the potential will be static. Likewise, if ``tmin``/``tmax``
+are passed such that only one snapshot from the coefs falls within that range, the
+potential will be static. For the examples below, we use hypothetical files
+``config.yml`` and ``coefs.h5`` that contain coefficients for multiple snapshots.
 
 One can always check if an ``EXPPotential`` is static with:
 
@@ -157,8 +171,8 @@ One can always check if an ``EXPPotential`` is static with:
 
     exp_pot.static
 
-One can also make a multi-snapshot potential static by selecting a single snapshot with
-the ``snapshot_index`` parameter:
+One can also "freeze" make a multi-snapshot potential (i.e. make it static) by selecting
+a single snapshot with the ``snapshot_index`` parameter:
 
 .. code-block:: python
 
@@ -169,16 +183,19 @@ the ``snapshot_index`` parameter:
         snapshot_index=0,
     )
 
-For time-evolving potentials, if one tries to evaluate the potential outside of the time range
-stored in the coefficients file (even indirectly, such as during an orbit integration),
-currently the interpreter will crash (after printing an error message to stderr). Proper
-exception propagation is a planned feature.
+.. important::
+
+    For time-evolving potentials, if one tries to evaluate the potential outside of the
+    time range stored in the coefficients file (even indirectly, such as during an
+    orbit integration), currently the interpreter will crash (after printing an error
+    message to stderr). Proper exception propagation is a planned feature.
 
 .. TODO: an exception isn't raised, the interpreter just crashes. We can probably have
 .. it return NaN instead, but actually raising a Python exception is hard...
 
-If the coefficients file stores a very large time range but the user is only interested in a
-smaller range, one can specify ``tmin`` and/or ``tmax`` for efficiency:
+If the coefficients file stores a very large time range but the user is only interested
+in a smaller range, one can specify ``tmin`` and/or ``tmax`` to load a smaller subset of
+the coefficient data (for memory efficiency):
 
 .. code-block:: python
 
@@ -190,10 +207,10 @@ smaller range, one can specify ``tmin`` and/or ``tmax`` for efficiency:
         tmax=2.,
     )
 
-Note that subsequently using a time outside this range will result in an interpreter crash
-(with an associated error printed to stderr). Or more precisely: using a time outside the
-range of snapshots that this ``tmin``/``tmax`` caused to be loaded will cause such an error.
-One can check the loaded range of snapshots with:
+Note that, as mentioned above, subsequently using a time outside this range will result
+in an interpreter crash (with an associated error printed to stderr). Or more precisely:
+using a time outside the range of snapshots that this ``tmin``/``tmax`` caused to be
+loaded will cause such an error. One can check the loaded range of snapshots with:
 
 .. code-block:: python
 
