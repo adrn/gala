@@ -61,6 +61,8 @@ State exp_init(
     snapshot_index = 0;
   }
 
+  bool is_static = false;
+
   if (snapshot_index >= 0) {
     const auto& times = coefs->Times();
     if (snapshot_index >= times.size()) {
@@ -72,17 +74,21 @@ State exp_init(
     }
     tmin = times[snapshot_index];
     tmax = tmin;
+
+    basis->set_coefs(coefs->getCoefStruct(tmin));
+    is_static = true;
   } else {
     // Adjust tmin and tmax to the first and last times in the coefficients
+
     auto times = coefs->Times();
     tmin = times.front();
     tmax = times.back();
-  }
 
-  bool is_static = tmax == tmin;
+    is_static = (tmax == tmin);
 
-  if (is_static) {
-    basis->set_coefs(gala_exp::interpolator(tmin, coefs));
+    if (is_static) {
+      basis->set_coefs(gala_exp::interpolator(tmin, coefs));
+    }
   }
 
   return { basis, coefs, tmin, tmax, is_static };
@@ -94,6 +100,9 @@ State exp_init(
 //
 CoefClasses::CoefStrPtr interpolator(double t, CoefClasses::CoefsPtr coefs)
 {
+  // This routine requires at least two snapshots to interpolate
+  assert(coefs->Times().size() >= 2);
+
   // Interpolate coefficients
   //
   auto times = coefs->Times();
