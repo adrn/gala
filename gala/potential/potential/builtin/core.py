@@ -40,9 +40,7 @@ from gala.potential.potential.builtin.cybuiltin import (
 )
 
 if EXP_ENABLED:
-    from gala.potential.potential.builtin.cyexp import (
-        EXPWrapper,
-    )
+    from gala.potential.potential.builtin.cyexp import EXPWrapper
 
 
 from ..core import PotentialBase, _potential_docstring
