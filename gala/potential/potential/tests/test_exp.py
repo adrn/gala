@@ -4,8 +4,8 @@ Test the EXP potential
 
 import os
 
-# Third-party
 import astropy.units as u
+import numpy as np
 import pytest
 from astropy.utils.data import get_pkg_data_filename
 
@@ -59,11 +59,9 @@ class EXPTestBase(PotentialTestBase):
         self.potential = EXPPotential(
             config_file=self.EXP_CONFIG_FILE,
             coef_file=self.EXP_COEF_FILE,
-            
             # TODO: this is making the multi-coef test actually static!
             # Need to fix the orbit integration then remove this
             # snapshot_index=0,
-
             units=self.exp_units,
         )
         return super().setup_method()
@@ -103,7 +101,9 @@ class EXPTestBase(PotentialTestBase):
             # With a non-static potential, we need to stay within the time range
             time_spec = {"t1": self.potential.tmin_exp, "t2": self.potential.tmax_exp}
         return super().test_orbit_integration(
-            *args, **kwargs, **time_spec,
+            *args,
+            **kwargs,
+            **time_spec,
         )
 
     @pytest.mark.skipif(
@@ -122,21 +122,25 @@ class EXPTestBase(PotentialTestBase):
             exp_basis = pyEXP.basis.Basis.factory(config_str)
         exp_coefs = pyEXP.coefs.Coefs.factory(self.EXP_COEF_FILE)
 
-        # Use a snapshot time so that we don't have to rebuild the interpolation functionality
+        # Use a snapshot time so that we don't have to rebuild the interpolation
+        # functionality
         t = exp_coefs.Times()[-1] * self.exp_units["time"]
 
         exp_coefs_at_time = exp_coefs.getCoefStruct(t.to_value(self.exp_units["time"]))
         exp_basis.set_coefs(exp_coefs_at_time)
 
         exp_fields = exp_basis.getFields(*exp_test_x)
+        exp_dens = exp_fields[2] * self.exp_units["mass density"]
+        exp_pot = exp_fields[5] * self.exp_units["energy"] / self.exp_units["mass"]
+        exp_grad = -np.stack(exp_fields[6:9]) * self.exp_units["acceleration"]
 
         gala_dens = self.potential.density(gala_test_x, t=t)
         gala_pot = self.potential.energy(gala_test_x, t=t)
-        gala_grad = self.potential.gradient(gala_test_x, t=t)
+        gala_grad = self.potential.gradient(gala_test_x, t=t).reshape(-1)
 
-        assert u.allclose(exp_fields[2], gala_dens.value)
-        assert u.allclose(exp_fields[5], gala_pot.value)
-        assert u.allclose(exp_fields[6:9], -gala_grad.value.reshape(-1))
+        assert u.allclose(exp_dens, gala_dens)
+        assert u.allclose(exp_pot, gala_pot)
+        assert u.allclose(exp_grad, gala_grad)
 
 
 @pytest.mark.skipif(
