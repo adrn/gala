@@ -1412,9 +1412,6 @@ class EXPPotential(CPotentialBase, EXP_only=True):
 
         super().__init__(*args, **kwargs)
 
-        # TODO: add logic to check: if coef file only has one snapshot, then we should
-        # set snapshot_index to 0
-
     if EXP_ENABLED:
         Wrapper = EXPWrapper
 
@@ -1438,7 +1435,6 @@ class EXPPotential(CPotentialBase, EXP_only=True):
         """
         The actual, loaded minimum time for which the potential is defined.
         """
-        #TODO(adrn): is this the right way to handle this?
         return self.c_instance.tmin * self.units["time"]
 
     @property
