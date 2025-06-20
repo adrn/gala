@@ -1,4 +1,4 @@
-""" Built-in potentials implemented in Cython """
+"""Built-in potentials implemented in Cython"""
 
 # HACK: This hack brought to you by a bug in cython, and a solution from here:
 # https://stackoverflow.com/questions/57138496/class-level-classmethod-can-only-be-called-on-a-method-descriptor-or-instance
@@ -366,23 +366,29 @@ class PowerLawCutoffPotential(CPotentialBase, GSL_only=True):
         alpha = p["alpha"]
         r_c = p["r_c"]
         r = sy.sqrt(v["x"] ** 2 + v["y"] ** 2 + v["z"] ** 2)
+        x = r**2 / r_c**2
 
-        expr = (
+        a1 = 3.0 / 2 - alpha / 2
+        a2 = 1 - alpha / 2
+
+        term1 = (
             G
             * alpha
             * m
-            * sy.lowergamma(3.0 / 2 - alpha / 2, r**2 / r_c**2)
-            / (2 * r * sy.gamma(5.0 / 2 - alpha / 2))
-            + G
-            * m
-            * sy.lowergamma(1 - alpha / 2, r**2 / r_c**2)
-            / (r_c * sy.gamma(3.0 / 2 - alpha / 2))
-            - 3
-            * G
-            * m
-            * sy.lowergamma(3.0 / 2 - alpha / 2, r**2 / r_c**2)
+            * sy.lowergamma(a1, x)
             / (2 * r * sy.gamma(5.0 / 2 - alpha / 2))
         )
+        term2 = G * m * sy.lowergamma(a2, x) / (r_c * sy.gamma(3.0 / 2 - alpha / 2))
+        term3 = (
+            3 * G * m * sy.lowergamma(a1, x) / (2 * r * sy.gamma(5.0 / 2 - alpha / 2))
+        )
+
+        # Full unnormalized expression
+        expr = term1 + term2 - term3
+
+        # Subtract asymptotic value
+        phi_inf = G * m * sy.gamma(a2) / (r_c * sy.gamma(3.0 / 2 - alpha / 2))
+        expr -= phi_inf
 
         return expr, v, p
 
@@ -407,7 +413,6 @@ class BurkertPotential(CPotentialBase):
 
     Wrapper = BurkertWrapper
 
-    
     @classmethod
     def from_r0(cls, r0, units=None):
         r"""
@@ -422,7 +427,7 @@ class BurkertPotential(CPotentialBase):
             The core radius of the Burkert potential.
         """
         a = 0.021572405792749372 * u.Msun / u.pc**3  # converted: 1.46e-24 g/cm**3
-        rho_d0 = a * (r0 / (3.07 * u.kpc))**(-2/3)
+        rho_d0 = a * (r0 / (3.07 * u.kpc)) ** (-2 / 3)
         return cls(rho=rho_d0, r0=r0, units=units)
 
 
