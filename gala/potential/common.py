@@ -1,5 +1,6 @@
 import inspect
 
+
 import numpy as np
 from astropy.utils import isiterable
 
@@ -44,7 +45,7 @@ class PotentialParameter:
 
 class CommonBase:
 
-    def __init_subclass__(cls, GSL_only=False, **kwargs):
+    def __init_subclass__(cls, GSL_only=False, EXP_only=False, **kwargs):
 
         # Read the default call signature for the init
         sig = inspect.signature(cls.__init__)
@@ -87,6 +88,7 @@ class CommonBase:
         super().__init_subclass__(**kwargs)
 
         cls._GSL_only = GSL_only
+        cls._EXP_only = EXP_only
 
     def _validate_units(self, units):
 
@@ -167,6 +169,8 @@ class CommonBase:
                 # .to() could cause small rounding issues in comparisons
                 if v.unit.physical_type != expected_ptype:
                     v = v.to(expected_unit, equiv)
+                
+                v = v.decompose(units)
 
                 v = v.decompose(units)
 
@@ -179,7 +183,7 @@ class CommonBase:
                     v = v * units["length"] / units["time"]
                 else:
                     v = v * units[expected_ptype]
-
+                    
                 v = v.decompose(units)
 
             pars[k] = v

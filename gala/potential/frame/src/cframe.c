@@ -1,12 +1,14 @@
+#include <stddef.h>
+
 #include "frame/src/cframe.h"
 
 double frame_hamiltonian(CFrameType *fr, double t, double *qp, int n_dim) {
-    double v = (fr->energy)(t, (fr->parameters), qp, n_dim);
+    double v = (fr->energy)(t, (fr->parameters), qp, n_dim, NULL);
     return v;
 }
 
 void frame_gradient(CFrameType *fr, double t, double *qp, int n_dim, double *dH) {
-    (fr->gradient)(t, (fr->parameters), qp, n_dim, dH);
+    (fr->gradient)(t, (fr->parameters), qp, n_dim, dH, NULL);
 }
 
 void frame_hessian(CFrameType *fr, double t, double *qp, int n_dim, double *d2H) {

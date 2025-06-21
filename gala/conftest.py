@@ -19,11 +19,20 @@ def pytest_configure(config):
 
 
 def pytest_report_header(config):
-    from gala._cconfig import GSL_ENABLED
+    from gala._cconfig import GSL_ENABLED, EXP_ENABLED
 
+    hdr = []
     if GSL_ENABLED:
-        hdr = " +++ Gala compiled with GSL +++"
+        hdr.append(" +++ Gala compiled with GSL +++")
     else:
-        hdr = " --- Gala compiled without GSL ---"
+        hdr.append(" --- Gala compiled without GSL ---")
 
-    return hdr + "\n"
+    if EXP_ENABLED:
+        hdr.append(" +++ Gala compiled with EXP +++")
+    else:
+        hdr.append(" --- Gala compiled without EXP ---")
+    hdr.append("")
+
+    hdr = "\n".join(hdr)
+
+    return hdr

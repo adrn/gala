@@ -293,6 +293,7 @@ tutorial_files = [
     "tutorials/circ-restricted-3body.rst",
     "tutorials/define-milky-way-model.ipynb",
     "tutorials/Arbitrary-density-SCF.ipynb",
+    "tutorials/exp.rst",
 ]
 
 _not_executed = []

@@ -1,4 +1,4 @@
-""" Built-in potentials implemented in Cython """
+"""Built-in potentials implemented in Cython"""
 
 # HACK: This hack brought to you by a bug in cython, and a solution from here:
 # https://stackoverflow.com/questions/57138496/class-level-classmethod-can-only-be-called-on-a-method-descriptor-or-instance
@@ -12,6 +12,7 @@ import astropy.units as u
 import numpy as np
 from astropy.constants import G
 
+from gala._cconfig import EXP_ENABLED
 from gala.potential.common import PotentialParameter
 from gala.potential.potential.builtin.cybuiltin import (
     BurkertWrapper,
@@ -38,12 +39,16 @@ from gala.potential.potential.builtin.cybuiltin import (
     TriaxialNFWWrapper,
 )
 
-# Project
+if EXP_ENABLED:
+    from gala.potential.potential.builtin.cyexp import EXPWrapper
+
+
 from ..core import PotentialBase, _potential_docstring
 from ..cpotential import CPotentialBase
 from ..util import format_doc, sympy_wrap
 
 __all__ = [
+    "EXPPotential",
     "NullPotential",
     "HenonHeilesPotential",
     "KeplerPotential",
@@ -336,7 +341,7 @@ class PowerLawCutoffPotential(CPotentialBase, GSL_only=True):
     .. note::
 
         This potential requires GSL to be installed, and Gala must have been
-        built and installed with GSL support enaled (the default behavior).
+        built and installed with GSL support enabled (the default behavior).
         See http://gala.adrian.pw/en/latest/install.html for more information.
 
     Parameters
@@ -407,7 +412,6 @@ class BurkertPotential(CPotentialBase):
 
     Wrapper = BurkertWrapper
 
-    
     @classmethod
     def from_r0(cls, r0, units=None):
         r"""
@@ -422,7 +426,7 @@ class BurkertPotential(CPotentialBase):
             The core radius of the Burkert potential.
         """
         a = 0.021572405792749372 * u.Msun / u.pc**3  # converted: 1.46e-24 g/cm**3
-        rho_d0 = a * (r0 / (3.07 * u.kpc))**(-2/3)
+        rho_d0 = a * (r0 / (3.07 * u.kpc)) ** (-2 / 3)
         return cls(rho=rho_d0, r0=r0, units=units)
 
 
@@ -1340,3 +1344,100 @@ class CylSplinePotential(CPotentialBase):
         return MultipolePotential(
             lmax=lmax_fit, m=m, r_s=r0, inner=False, units=self.units, **pars
         )
+
+
+# ==============================================================================
+# EXP Potential
+#
+
+
+@format_doc(common_doc=_potential_docstring)
+class EXPPotential(CPotentialBase, EXP_only=True):
+    r"""
+    EXPPotential(units=None, origin=None, R=None)
+
+    Calls the EXP code for the potential.
+
+    .. note::
+
+        This potential requires EXP to be installed, and Gala must have been
+        built and installed with EXP support enabled.
+        See https://gala.adrian.pw/en/latest/tutorials/exp.html for more information.
+
+    Parameters
+    ----------
+    TODO
+    {common_doc}
+    """
+
+    config_file = PotentialParameter("config_file", physical_type=None)
+    coef_file = PotentialParameter("coef_file", physical_type=None)
+
+    tmin = PotentialParameter(
+        "tmin", physical_type="time", default=-np.finfo(np.float64).max
+    )
+    tmax = PotentialParameter(
+        "tmax", physical_type="time", default=np.finfo(np.float64).max
+    )
+    snapshot_index = PotentialParameter(
+        "snapshot_index", physical_type=None, default=-1
+    )
+    stride = PotentialParameter("stride", default=1, physical_type=None)
+
+    def __init__(self, *args, **kwargs):
+        have_t = "tmin" in kwargs or "tmax" in kwargs
+        if have_t and "snapshot_index" in kwargs:
+            raise ValueError("Cannot specify both `tmin`/`tmax` and `snapshot_index`.")
+
+        if kwargs.get("snapshot_index", 0) < 0:
+            raise ValueError("The `snapshot_index` must be a non-negative integer.")
+
+        if "config_file" not in kwargs:
+            raise ValueError(
+                "Must specify a `config_file` keyword argument to initialize an EXPPotential."
+            )
+
+        if "coef_file" not in kwargs:
+            raise ValueError(
+                "Must specify a `coef_file` keyword argument to initialize an EXPPotential."
+            )
+
+        if "units" not in kwargs:
+            raise ValueError(
+                "Must specify a `units` keyword argument to initialize an EXPPotential "
+                "(most likely a SimulationUnitSystem with G=1)."
+            )
+
+        super().__init__(*args, **kwargs)
+
+    if EXP_ENABLED:
+        Wrapper = EXPWrapper
+
+    def hessian(self, *args, **kwargs):
+        """
+        Not implemented yet.
+        """
+        raise NotImplementedError(
+            "Computing Hessian matrices for EXP potentials is not supported."
+        )
+
+    @property
+    def static(self) -> bool:
+        """
+        Whether the potential is in static, i.e. fixed-time, mode.
+        """
+        return self.c_instance.static
+
+    @property
+    def tmin_exp(self) -> u.Quantity:
+        """
+        The actual, loaded minimum time for which the potential is defined.
+        """
+        return self.c_instance.tmin * self.units["time"]
+
+    @property
+    def tmax_exp(self) -> u.Quantity:
+        """
+        The actual, loaded maximum time for which the potential is defined.
+        """
+        return self.c_instance.tmax * self.units["time"]
