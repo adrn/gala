@@ -2,13 +2,12 @@
 Test converting the builtin Potential classes to other packages
 """
 
-# Third-party
 import astropy.units as u
 import numpy as np
 import pytest
+from astropy.constants import G
 from astropy.coordinates import CylindricalRepresentation
 
-# This project
 import gala.potential as gp
 from gala.potential.potential.interop import galpy_to_gala_potential
 from gala.tests.optional_deps import HAS_GALPY
@@ -149,6 +148,18 @@ class TestGalpy:
             gala_val -= (
                 0.5 * gala_pot.parameters["v_c"] ** 2 * np.log(ro.value**2)
             ).to_value((u.km / u.s) ** 2)
+
+        elif isinstance(gala_pot, gp.PowerLawCutoffPotential):
+            # Gala normalizes the potential to zero at infinity, while Galpy does not.
+            from scipy.special import gamma
+
+            alpha = gala_pot.parameters["alpha"]
+            r_c = gala_pot.parameters["r_c"]
+            m = gala_pot.parameters["m"]
+
+            phi_inf = G * m * gamma(-alpha / 2 + 1) / (r_c * gamma(alpha / 2 + 0.5))
+            phi_inf = phi_inf.to(u.km**2 / u.s**2).value
+            gala_val += phi_inf
 
         assert np.allclose(gala_val, galpy_val)
 

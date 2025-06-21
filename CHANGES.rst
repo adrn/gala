@@ -40,6 +40,8 @@ Bug fixes
 - Fixed a bug in ``MockStreamGenerator.run()`` where passing an array of length 1 for
   the progenitor mass would lead to a silent failure of the stream generation.
 
+- Fixed the normalization of the ``PowerLawCutoffPotential`` potential energy so that it
+  goes to zero at infinity.
 
 API changes
 -----------

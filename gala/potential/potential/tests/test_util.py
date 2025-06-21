@@ -1,9 +1,10 @@
 import pytest
 
+from gala.tests.optional_deps import HAS_SYMPY
+
 # This project
 from ..util import from_equation
 from .helpers import PotentialTestBase
-from gala.tests.optional_deps import HAS_SYMPY
 
 
 class EquationBase(PotentialTestBase):
@@ -21,17 +22,20 @@ class EquationBase(PotentialTestBase):
 
 
 if HAS_SYMPY:
+
     class TestHarmonicOscillatorFromEquation(EquationBase):
         check_finite_at_origin = False
+        check_zero_at_infinity = False
 
-        Potential = from_equation("1/2*k*x**2", vars="x", pars="k",
-                                  name='HarmonicOscillator',
-                                  hessian=True)
-        potential = Potential(k=1.)
-        w0 = [1., 0.]
+        Potential = from_equation(
+            "1/2*k*x**2", vars="x", pars="k", name="HarmonicOscillator", hessian=True
+        )
+        potential = Potential(k=1.0)
+        w0 = [1.0, 0.0]
 
         def test_derp(self):
             import numpy as np
+
             self.potential.gradient(np.random.random(size=(1, 13)))
 
         @pytest.mark.skip(reason="to_sympy() not implemented")

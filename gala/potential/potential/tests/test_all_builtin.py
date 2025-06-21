@@ -32,6 +32,7 @@ class TestHarmonicOscillator1D(PotentialTestBase):
     w0 = [1.0, 0.1]
     sympy_density = False
     check_finite_at_origin = False
+    check_zero_at_infinity = False
 
     def test_plot(self):
         # Skip for now because contour plotting assumes 3D
@@ -43,6 +44,7 @@ class TestHarmonicOscillator2D(PotentialTestBase):
     w0 = [1.0, 0.5, 0.0, 0.1]
     sympy_density = False
     check_finite_at_origin = False
+    check_zero_at_infinity = False
 
     def test_plot(self):
         # Skip for now because contour plotting assumes 3D
@@ -106,6 +108,7 @@ class TestHenonHeiles(PotentialTestBase):
     w0 = [1.0, 0.0, 0.0, 2 * np.pi]
     sympy_density = False
     check_finite_at_origin = False
+    check_zero_at_infinity = False
 
     @pytest.mark.skip(reason="Not relevant")
     def test_plot(self):
@@ -405,6 +408,7 @@ class TestLogarithmic(PotentialTestBase):
         units=galactic, v_c=0.17, r_h=10.0, q1=1.2, q2=1.0, q3=0.8
     )
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
+    check_zero_at_infinity = False
 
 
 class TestLongMuraliBar(PotentialTestBase):
@@ -476,6 +480,7 @@ class TestComposite(CompositePotentialTestBase):
     potential["halo"] = p1
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
     rotation = True
+    check_zero_at_infinity = False
 
 
 class TestCComposite(CompositePotentialTestBase):
@@ -488,6 +493,7 @@ class TestCComposite(CompositePotentialTestBase):
     potential["halo"] = p1
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
     rotation = True
+    check_zero_at_infinity = False
 
 
 class TestKepler3Body(CompositePotentialTestBase):
@@ -515,6 +521,7 @@ class TestMultipoleInner(CompositePotentialTestBase):
     )
     vc = potential.circular_velocity([19.0, 0, 0] * u.kpc).decompose(galactic).value[0]
     w0 = [19.0, 0.2, -0.9, 0.0, vc, 0.0]
+    check_zero_at_infinity = False
 
     @pytest.mark.skip(reason="Not implemented for multipole potentials")
     def test_hessian(self):
