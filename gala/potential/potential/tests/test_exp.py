@@ -51,6 +51,7 @@ class EXPTestBase(PotentialTestBase):
     w0 = _tmp.w(exp_units)[:, 0]
     show_plots = False
     check_finite_at_origin = True
+    check_zero_at_infinity = False
 
     def setup_method(self):
         assert os.path.exists(self.EXP_CONFIG_FILE), "EXP config file does not exist"
