@@ -5,6 +5,7 @@ All contributors (alphabetical last name):
 * Bill Chen (@ybillchen)
 * Dan Foreman-Mackey (@dfm)
 * Nico Garavito-Camargo (@jngaravitoc)
+* Lehman Garrison (@lgarrison)
 * Johnny Greco (@johnnygreco)
 * Akeem Hart (@akeemlh)
 * Sergey Koposov (@segasai)
