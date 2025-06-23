@@ -1,6 +1,7 @@
 """Checks for optional dependencies using lazy import from
 `PEP 562 <https://www.python.org/dev/peps/pep-0562/>`_.
 """
+
 import importlib
 import io
 from collections.abc import Sequence

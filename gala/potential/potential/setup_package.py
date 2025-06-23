@@ -58,7 +58,6 @@ def get_extensions():
 
 
 def get_package_data():
-
     return {
         "gala.potential.potential": [
             "*.h",

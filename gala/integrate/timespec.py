@@ -1,8 +1,7 @@
-""" Helper function for turning different ways of specifying the integration
-    times into an array of times.
+"""Helper function for turning different ways of specifying the integration
+times into an array of times.
 """
 
-# Third-party
 import numpy as np
 
 __all__ = ["parse_time_specification"]
@@ -47,64 +46,60 @@ def parse_time_specification(units, dt=None, n_steps=None, t1=None, t2=None, t=N
         times = t
         return times.astype(np.float64)
 
+    if dt is None and (t1 is None or t2 is None or n_steps is None):
+        raise ValueError(
+            "Invalid specification of integration time. See docstring for more "
+            "information."
+        )
+
+    # dt, n_steps[, t1] : (numeric, int[, numeric])
+    if dt is not None and n_steps is not None:
+        if t1 is None:
+            t1 = 0.0
+
+        times = parse_time_specification(units, dt=np.ones(n_steps + 1) * dt, t1=t1)
+
+    # dt, t1, t2 : (numeric, numeric, numeric)
+    elif dt is not None and t1 is not None and t2 is not None:
+        if t2 < t1 and dt < 0:
+            t_i = t1
+            times = []
+            ii = 0
+            while (t_i > t2) and (ii < 1e6):
+                times.append(t_i)
+                t_i += dt
+
+            if times[-1] != t2:
+                times.append(t2)
+
+            return np.array(times, dtype=np.float64)
+
+        if t2 > t1 and dt > 0:
+            t_i = t1
+            times = []
+            ii = 0
+            while (t_i < t2) and (ii < 1e6):
+                times.append(t_i)
+                t_i += dt
+
+            return np.array(times, dtype=np.float64)
+
+        if dt == 0:
+            raise ValueError("dt must be non-zero.")
+        raise ValueError(
+            "If t2 < t1, dt must be negative. If t1 < t2, dt must be " "positive."
+        )
+
+    # dt, t1 : (array_like, numeric)
+    elif isinstance(dt, np.ndarray) and t1 is not None:
+        times = np.cumsum(np.append([0.0], dt)) + t1
+        times = times[:-1]
+
+    # n_steps, t1, t2 : (int, numeric, numeric)
+    elif dt is None and not (t1 is None or t2 is None or n_steps is None):
+        times = np.linspace(t1, t2, n_steps, endpoint=True)
+
     else:
-        if dt is None and (t1 is None or t2 is None or n_steps is None):
-            raise ValueError(
-                "Invalid specification of integration time. See docstring for more "
-                "information."
-            )
+        raise ValueError("Invalid options. See docstring.")
 
-        # dt, n_steps[, t1] : (numeric, int[, numeric])
-        elif dt is not None and n_steps is not None:
-            if t1 is None:
-                t1 = 0.0
-
-            times = parse_time_specification(units, dt=np.ones(n_steps + 1) * dt, t1=t1)
-
-        # dt, t1, t2 : (numeric, numeric, numeric)
-        elif dt is not None and t1 is not None and t2 is not None:
-            if t2 < t1 and dt < 0:
-                t_i = t1
-                times = []
-                ii = 0
-                while (t_i > t2) and (ii < 1e6):
-                    times.append(t_i)
-                    t_i += dt
-
-                if times[-1] != t2:
-                    times.append(t2)
-
-                return np.array(times, dtype=np.float64)
-
-            elif t2 > t1 and dt > 0:
-                t_i = t1
-                times = []
-                ii = 0
-                while (t_i < t2) and (ii < 1e6):
-                    times.append(t_i)
-                    t_i += dt
-
-                return np.array(times, dtype=np.float64)
-
-            else:
-                if dt == 0:
-                    raise ValueError("dt must be non-zero.")
-                else:
-                    raise ValueError(
-                        "If t2 < t1, dt must be negative. If t1 < t2, dt must be "
-                        "positive."
-                    )
-
-        # dt, t1 : (array_like, numeric)
-        elif isinstance(dt, np.ndarray) and t1 is not None:
-            times = np.cumsum(np.append([0.0], dt)) + t1
-            times = times[:-1]
-
-        # n_steps, t1, t2 : (int, numeric, numeric)
-        elif dt is None and not (t1 is None or t2 is None or n_steps is None):
-            times = np.linspace(t1, t2, n_steps, endpoint=True)
-
-        else:
-            raise ValueError("Invalid options. See docstring.")
-
-        return times.astype(np.float64)
+    return times.astype(np.float64)

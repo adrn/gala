@@ -1,9 +1,7 @@
 """5th order Runge-Kutta integration."""
 
-# Third-party
 import numpy as np
 
-# Project
 from ..core import Integrator
 from ..timespec import parse_time_specification
 
@@ -79,9 +77,9 @@ class RK5Integrator(Integrator):
         """
 
         # Runge-Kutta Fehlberg formulas (see: Numerical Recipes)
-        F = lambda t, w: self.F(t, w, *self._func_args)  # noqa
+        F = lambda t, w: self.F(t, w, *self._func_args)
 
-        K = np.zeros((6,) + w.shape)
+        K = np.zeros((6, *w.shape))
         K[0] = dt * F(t, w)
         K[1] = dt * F(t + A[1] * dt, w + B[1][0] * K[0])
         K[2] = dt * F(t + A[2] * dt, w + B[2][0] * K[0] + B[2][1] * K[1])
@@ -105,7 +103,7 @@ class RK5Integrator(Integrator):
         # shift
         dw = np.zeros_like(w)
         for i in range(6):
-            dw = dw + C[i] * K[i]
+            dw += C[i] * K[i]
 
         return w + dw
 

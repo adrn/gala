@@ -6,10 +6,10 @@
 # cython: profile=False
 # cython: language_level=3
 
-# Standard library
+
 import warnings
 
-# Third-party
+
 from astropy.constants import G
 import astropy.units as u
 

@@ -7,17 +7,17 @@
 
 """ Built-in potential wrappers """
 
-# Standard library
+
 import warnings
 
-# Third-party
+
 from astropy.constants import G
 import astropy.units as u
 import numpy as np
 cimport numpy as np
 np.import_array()
 
-# Project
+
 from ..core import CompositePotential, _potential_docstring, PotentialBase
 from ..util import format_doc, sympy_wrap
 from ..cpotential import CPotentialBase

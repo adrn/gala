@@ -1,4 +1,3 @@
-# Standard library
 import abc
 import copy as pycopy
 import uuid
@@ -6,8 +5,6 @@ import warnings
 from collections import OrderedDict
 
 import astropy.units as u
-
-# Third-party
 import numpy as np
 from astropy.constants import G
 from astropy.utils import isiterable
@@ -21,14 +18,14 @@ except ImportError as exc:
         "scipy and try importing gala again."
     ) from exc
 
-# Project
+
 from gala.util import GalaDeprecationWarning
 
 from ...units import DimensionlessUnitSystem
 from ...util import ImmutableDict, atleast_2d
 from ..common import CommonBase
 
-__all__ = ["PotentialBase", "CompositePotential"]
+__all__ = ["CompositePotential", "PotentialBase"]
 
 
 class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
@@ -51,7 +48,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             if not GSL_ENABLED:
                 raise ValueError(
                     "Gala was compiled without GSL and so this potential -- "
-                    f"{str(self.__class__)} -- will not work.  See the gala "
+                    f"{self.__class__!s} -- will not work.  See the gala "
                     "documentation for more information about installing and "
                     "using GSL with gala: "
                     "http://gala.adrian.pw/en/latest/install.html"
@@ -63,7 +60,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             if not EXP_ENABLED:
                 raise ValueError(
                     "Gala was compiled without EXP and so this potential -- "
-                    f"{str(self.__class__)} -- will not work.  See the gala "
+                    f"{self.__class__!s} -- will not work.  See the gala "
                     "documentation for more information about installing and "
                     "using EXP with gala: "
                     "http://gala.adrian.pw/en/latest/install.html"
@@ -88,7 +85,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             origin = np.zeros(self.ndim)
         self.origin = self._remove_units(origin)
 
-        if R is not None and self.ndim not in [2, 3]:
+        if R is not None and self.ndim not in {2, 3}:
             raise NotImplementedError(
                 "Gala potentials currently only support "
                 "rotations when ndim=2 or ndim=3."
@@ -100,12 +97,11 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             R = np.array(R)
 
             if R.shape != (self.ndim, self.ndim):
-                raise ValueError(
-                    "Rotation matrix passed to potential {0} has "
-                    "an invalid shape: expected {1}, got {2}".format(
-                        self.__class__.__name__, (self.ndim, self.ndim), R.shape
-                    )
+                msg = (
+                    f"Rotation matrix passed to potential {self.__class__.__name__} has "
+                    f"an invalid shape: expected {(self.ndim, self.ndim)}, got {R.shape}"
                 )
+                raise ValueError(msg)
         self.R = R
 
     def replicate(self, **kwargs):
@@ -158,11 +154,11 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         """
         try:
             expr, *_ = cls.to_sympy()
-        except NotImplementedError:
+        except NotImplementedError as e:
             raise NotImplementedError(
                 ".to_latex() requires having a .to_sympy() method implemented "
                 "on the requesting potential class"
-            )
+            ) from e
 
         # testing for this import happens in the sympy method
         import sympy as sy
@@ -196,13 +192,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         Always returns an array. If a Quantity is passed in, it converts to the
         units associated with this object and returns the value.
         """
-        if hasattr(x, "unit"):
-            x = x.decompose(self.units).value
-
-        else:
-            x = np.array(x)
-
-        return x
+        return x.decompose(self.units).value if hasattr(x, "unit") else np.array(x)
 
     def _remove_units_prepare_shape(self, x):
         """
@@ -360,7 +350,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         return self._reapply_units_and_shape(
             self._hessian(q, t=t),
             u.get_physical_type("frequency drift"),
-            (orig_shape[0], orig_shape[0]) + orig_shape[1:],
+            (orig_shape[0], orig_shape[0], *orig_shape[1:]),
         )
 
     ###########################################################################
@@ -513,7 +503,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         filled=True,
         ax=None,
         labels=None,
-        subplots_kw=dict(),
+        subplots_kw=None,
         **kwargs,
     ):
         """
@@ -552,16 +542,18 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         from matplotlib import cm
 
         # figure out which elements are iterable, which are numeric
-        _grids = []
-        _slices = []
+        if subplots_kw is None:
+            subplots_kw = {}
+        grids = []
+        slices = []
         for ii, g in enumerate(grid):
             if isiterable(g):
-                _grids.append((ii, g))
+                grids.append((ii, g))
             else:
-                _slices.append((ii, g))
+                slices.append((ii, g))
 
         # figure out the dimensionality
-        ndim = len(_grids)
+        ndim = len(grids)
 
         # if ndim > 2, don't know how to handle this!
         if ndim > 2:
@@ -578,11 +570,11 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         if ndim == 1:
             # 1D curve
-            x1 = _grids[0][1]
-            r = np.zeros((len(_grids) + len(_slices), len(x1)))
-            r[_grids[0][0]] = x1
+            x1 = grids[0][1]
+            r = np.zeros((len(grids) + len(slices), len(x1)))
+            r[grids[0][0]] = x1
 
-            for ii, slc in _slices:
+            for ii, slc in slices:
                 r[ii] = slc
 
             Z = self.energy(r * self.units["length"], t=t).value
@@ -593,15 +585,15 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
                 ax.set_ylabel("potential")
         else:
             # 2D contours
-            x1, x2 = np.meshgrid(_grids[0][1], _grids[1][1])
+            x1, x2 = np.meshgrid(grids[0][1], grids[1][1])
             shp = x1.shape
             x1, x2 = x1.ravel(), x2.ravel()
 
-            r = np.zeros((len(_grids) + len(_slices), len(x1)))
-            r[_grids[0][0]] = x1
-            r[_grids[1][0]] = x2
+            r = np.zeros((len(grids) + len(slices), len(x1)))
+            r[grids[0][0]] = x1
+            r[grids[1][0]] = x2
 
-            for ii, slc in _slices:
+            for ii, slc in slices:
                 r[ii] = slc
 
             Z = self.energy(r * self.units["length"], t=t).value
@@ -638,7 +630,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         filled=True,
         ax=None,
         labels=None,
-        subplots_kw=dict(),
+        subplots_kw=None,
         **kwargs,
     ):
         """
@@ -679,16 +671,18 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         from matplotlib import cm
 
         # figure out which elements are iterable, which are numeric
-        _grids = []
-        _slices = []
+        if subplots_kw is None:
+            subplots_kw = {}
+        grids = []
+        slices = []
         for ii, g in enumerate(grid):
             if isiterable(g):
-                _grids.append((ii, g))
+                grids.append((ii, g))
             else:
-                _slices.append((ii, g))
+                slices.append((ii, g))
 
         # figure out the dimensionality
-        ndim = len(_grids)
+        ndim = len(grids)
 
         # if ndim > 2, don't know how to handle this!
         if ndim > 2:
@@ -705,11 +699,11 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         if ndim == 1:
             # 1D curve
-            x1 = _grids[0][1]
-            r = np.zeros((len(_grids) + len(_slices), len(x1)))
-            r[_grids[0][0]] = x1
+            x1 = grids[0][1]
+            r = np.zeros((len(grids) + len(slices), len(x1)))
+            r[grids[0][0]] = x1
 
-            for ii, slc in _slices:
+            for ii, slc in slices:
                 r[ii] = slc
 
             Z = self.density(r * self.units["length"], t=t).value
@@ -720,15 +714,15 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
                 ax.set_ylabel("potential")
         else:
             # 2D contours
-            x1, x2 = np.meshgrid(_grids[0][1], _grids[1][1])
+            x1, x2 = np.meshgrid(grids[0][1], grids[1][1])
             shp = x1.shape
             x1, x2 = x1.ravel(), x2.ravel()
 
-            r = np.zeros((len(_grids) + len(_slices), len(x1)))
-            r[_grids[0][0]] = x1
-            r[_grids[1][0]] = x2
+            r = np.zeros((len(grids) + len(slices), len(x1)))
+            r[grids[0][0]] = x1
+            r[grids[1][0]] = x2
 
-            for ii, slc in _slices:
+            for ii, slc in slices:
                 r[ii] = slc
 
             Z = self.density(r * self.units["length"], t=t).value
@@ -787,9 +781,9 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         """
 
         if not hasattr(R_grid, "unit"):
-            R_grid = R_grid * self.units["length"]
+            R_grid *= self.units["length"]
 
-        xyz = np.zeros((3,) + R_grid.shape) * self.units["length"]
+        xyz = np.zeros((3, *R_grid.shape)) * self.units["length"]
         xyz[0] = R_grid
 
         vcirc = self.circular_velocity(xyz, t=t)
@@ -912,10 +906,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         copy : bool (optional)
             If True, returns a copy, if False, changes this object.
         """
-        if copy:
-            pot = pycopy.deepcopy(self)
-        else:
-            pot = self
+        pot = pycopy.deepcopy(self) if copy else self
 
         # TODO: this is repeated code - see equivalent in cpotential.pyx
         tmp = [
@@ -942,7 +933,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         return self._energy(q, t=t)
 
     def value(self, *args, **kwargs):
-        __doc__ = self.energy.__doc__  # noqa
+        __doc__ = self.energy.__doc__  # noqa: F841
         warnings.warn("Use `energy()` instead.", GalaDeprecationWarning)
         return self.energy(*args, **kwargs)
 
@@ -981,7 +972,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             kwargs.setdefault("ro", None)
             kwargs.setdefault("vo", None)
             return gala_to_galpy_potential(self, **kwargs)
-        elif package == "agama":
+        if package == "agama":
             import agama
 
             from .interop import gala_to_agama_potential
@@ -990,8 +981,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             if not isinstance(agama_pot, agama.Potential):
                 agama_pot = agama.Potential(*agama_pot)
             return agama_pot
-        else:
-            raise ValueError(f"Unsupported package: {package}")
+        raise ValueError(f"Unsupported package: {package}")
 
 
 class CompositePotential(PotentialBase, OrderedDict):
@@ -1044,14 +1034,14 @@ class CompositePotential(PotentialBase, OrderedDict):
 
     def __setitem__(self, key, value):
         self._check_component(value)
-        super(CompositePotential, self).__setitem__(key, value)
+        super().__setitem__(key, value)
 
     def _check_component(self, p):
         if not isinstance(p, PotentialBase):
-            raise TypeError(
-                "Potential components may only be Potential "
-                "objects, not {0}.".format(type(p))
+            msg = (
+                "Potential components may only be Potential " f"objects, not {type(p)}."
             )
+            raise TypeError(msg)
 
         if self.units is None:
             self._units = p.units
@@ -1068,11 +1058,12 @@ class CompositePotential(PotentialBase, OrderedDict):
                 )
 
             if p.ndim != self.ndim:
-                raise ValueError(
+                msg = (
                     "All potential components must have the same "
-                    "number of phase-space dimensions ({} in this "
-                    "case)".format(self.ndim)
+                    f"number of phase-space dimensions ({self.ndim} in this "
+                    "case)"
                 )
+                raise ValueError(msg)
 
         if self.lock:
             raise ValueError(
@@ -1082,7 +1073,7 @@ class CompositePotential(PotentialBase, OrderedDict):
 
     @property
     def parameters(self):
-        params = dict()
+        params = {}
         for k, v in self.items():
             params[k] = v.parameters
         return ImmutableDict(**params)
@@ -1096,7 +1087,7 @@ class CompositePotential(PotentialBase, OrderedDict):
             Set of non-reducable units that specify (at minimum) the
             length, mass, time, and angle units.
         """
-        _lock = self.lock
+        lock = self.lock
         pots = self.__class__()
 
         pots._units = None
@@ -1105,7 +1096,7 @@ class CompositePotential(PotentialBase, OrderedDict):
         for k, v in self.items():
             pots[k] = v.replace_units(units)
 
-        pots.lock = _lock
+        pots.lock = lock
         return pots
 
     def _energy(self, q, t=0.0):

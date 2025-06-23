@@ -98,8 +98,8 @@ def test_plot_projections(i, obj):
     fig = plot_projections(
         x[:2],
         autolim=True,
-        axes=axes,  # noqa
-        subplots_kwargs=dict(sharex=True),
+        axes=axes,
+        subplots_kwargs={"sharex": True},
         labels=["x", "y"],
         plot_function=plt.plot,
         marker="o",
@@ -160,5 +160,5 @@ def test_animate(tmpdir, i, obj):
 
     if obj.ndim == 3:
         # Also try cylindrical, and sub-selecting components:
-        fig, anim = obj.cylindrical.animate(components=["rho", "z"])
+        _fig, anim = obj.cylindrical.animate(components=["rho", "z"])
         anim.save(tmpdir / f"anim{i}_cyl.mp4")

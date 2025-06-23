@@ -1,17 +1,14 @@
-""" General utilities. """
+"""General utilities."""
 
-# Standard library
 from collections.abc import Mapping
 from contextlib import contextmanager
 
-# Third-party
 import numpy as np
 
-__all__ = ["rolling_window", "atleast_2d", "assert_angles_allclose"]
+__all__ = ["assert_angles_allclose", "atleast_2d", "rolling_window"]
 
 
 class ImmutableDict(Mapping):
-
     @classmethod
     def from_dict(cls, somedict):
         return cls(**somedict)
@@ -171,8 +168,7 @@ def atleast_2d(*arys, **kwargs):
         res.append(result)
     if len(res) == 1:
         return res[0]
-    else:
-        return res
+    return res
 
 
 def assert_angles_allclose(x, y, **kwargs):
@@ -188,6 +184,7 @@ class GalaDeprecationWarning(DeprecationWarning):
     """
     A warning class to indicate a deprecated feature.
     """
+
 
 @contextmanager
 def chdir(new_path):

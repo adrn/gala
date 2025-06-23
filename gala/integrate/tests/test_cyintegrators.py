@@ -2,11 +2,9 @@
 Test the Cython integrators.
 """
 
-# Standard library
 import time
 from itertools import product
 
-# Third-party
 import numpy as np
 import pytest
 
@@ -16,8 +14,6 @@ from ..cyintegrators.dop853 import dop853_integrate_hamiltonian
 from ..cyintegrators.leapfrog import leapfrog_integrate_hamiltonian
 from ..cyintegrators.ruth4 import ruth4_integrate_hamiltonian
 from ..pyintegrators.dopri853 import DOPRI853Integrator
-
-# Project
 from ..pyintegrators.leapfrog import LeapfrogIntegrator
 from ..pyintegrators.ruth4 import Ruth4Integrator
 
@@ -33,7 +29,7 @@ for dt in [2, -2]:
     _list.extend([(x, y, dt) for x, y in zip(integrator_list, func_list)])
 
 
-@pytest.mark.parametrize(["Integrator", "integrate_func", "dt"], _list)
+@pytest.mark.parametrize(("Integrator", "integrate_func", "dt"), _list)
 def test_compare_to_py(Integrator, integrate_func, dt):
     p = HernquistPotential(m=1e11, c=0.5, units=galactic)
     H = Hamiltonian(potential=p)
@@ -68,7 +64,7 @@ def test_compare_to_py(Integrator, integrate_func, dt):
     assert np.allclose(cy_t, py_t)
 
 
-@pytest.mark.parametrize(["integrate_func", "dt"], product(func_list, [-2.0, 2]))
+@pytest.mark.parametrize(("integrate_func", "dt"), product(func_list, [-2.0, 2]))
 def test_save_all(integrate_func, dt):
     p = HernquistPotential(m=1e11, c=0.5, units=galactic)
     H = Hamiltonian(potential=p)
@@ -95,7 +91,7 @@ def test_save_all(integrate_func, dt):
 # --speed-scaling or something?
 @pytest.mark.skipif(True, reason="Slow test - mainly for plotting locally")
 @pytest.mark.parametrize(
-    ["Integrator", "integrate_func"], zip(integrator_list, func_list)
+    ("Integrator", "integrate_func"), zip(integrator_list, func_list)
 )
 def test_scaling(tmpdir, Integrator, integrate_func):
     p = HernquistPotential(m=1e11, c=0.5, units=galactic)
@@ -109,7 +105,7 @@ def test_scaling(tmpdir, Integrator, integrate_func):
     colors = ["k", "b", "r"]
     dt = 1.0
 
-    for c, nparticles in zip(colors, [1, 100, 1000]):
+    for _c, nparticles in zip(colors, [1, 100, 1000]):
         cy_w0 = np.array([[0.0, 10.0, 0.0, 0.2, 0.0, 0.0]] * nparticles)
         py_w0 = np.ascontiguousarray(cy_w0.T)
 

@@ -1,16 +1,15 @@
-""" Astropy coordinate class for the Magellanic Stream coordinate system """
-
-from astropy.coordinates.matrix_utilities import rotation_matrix
-from astropy.coordinates.baseframe import (
-    frame_transform_graph,
-    BaseCoordinateFrame,
-    RepresentationMapping,
-)
-from astropy.coordinates.transformations import StaticMatrixTransform
-from astropy.coordinates import representation as r
-from astropy.coordinates import Galactic
+"""Astropy coordinate class for the Magellanic Stream coordinate system"""
 
 import astropy.units as u
+from astropy.coordinates import Galactic
+from astropy.coordinates import representation as r
+from astropy.coordinates.baseframe import (
+    BaseCoordinateFrame,
+    RepresentationMapping,
+    frame_transform_graph,
+)
+from astropy.coordinates.matrix_utilities import rotation_matrix
+from astropy.coordinates.transformations import StaticMatrixTransform
 
 __all__ = ["MagellanicStreamNidever08"]
 
@@ -58,7 +57,7 @@ class MagellanicStreamNidever08(BaseCoordinateFrame):
         wrap = kwargs.pop("wrap_longitude", True)
         super().__init__(*args, **kwargs)
         if wrap and isinstance(
-            self._data, (r.UnitSphericalRepresentation, r.SphericalRepresentation)
+            self._data, r.UnitSphericalRepresentation | r.SphericalRepresentation
         ):
             self._data.lon.wrap_angle = self._default_wrap_angle
 

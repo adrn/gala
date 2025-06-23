@@ -2,7 +2,7 @@ name: Cron tests
 
 on:
   schedule:
-    - cron: "0 10 * * 1"  # Mondays @ 6AM Eastern
+    - cron: "0 10 * * 1" # Mondays @ 6AM Eastern
   pull_request:
     # We also want this workflow triggered if the 'Extra CI' label is added
     # or present when PR is updated
@@ -14,19 +14,21 @@ jobs:
   tests:
     name: Python ${{ matrix.python }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    if: (github.event_name == 'schedule' || contains(github.event.pull_request.labels.*.name, 'Extra CI'))
+    if:
+      (github.event_name == 'schedule' ||
+      contains(github.event.pull_request.labels.*.name, 'Extra CI'))
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest, macos-latest]  # TODO: re-enable windows-latest
-        python: ['3.9', '3.10', '3.11']
+        os: [ubuntu-latest, macos-latest] # TODO: re-enable windows-latest
+        python: ["3.9", "3.10", "3.11"]
         include:
           # These set options for each python version. So, for example, when any
           # python 3.11 job in the matrix runs, it should use this toxenv
-          - python: '3.11'
+          - python: "3.11"
             toxenv: py311-test
 
-          - python: '3.10'
+          - python: "3.10"
             toxenv: py310-test
 
           - python: 3.9
@@ -96,4 +98,5 @@ jobs:
 
       - name: Run tests - nix
         if: "!startsWith(matrix.os, 'windows')"
-        run: tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}
+        run:
+          tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}

@@ -1,14 +1,12 @@
 import importlib
 import warnings
 
-# Third-party
 import astropy.coordinates as coord
 import astropy.table as at
 import astropy.units as u
 import numpy as np
 from scipy.signal import argrelmax
 
-# Project
 from gala.logging import logger
 
 from ..io import quantity_from_hdf5, quantity_to_hdf5
@@ -82,14 +80,15 @@ class Orbit(PhaseSpacePosition):
         if t is not None:
             t = np.atleast_1d(t)
             if self.pos.shape[0] != len(t):
-                raise ValueError(
+                msg = (
                     "Position and velocity must have the same "
                     "length along axis=1 as the length of the "
-                    "time array {} vs {}".format(len(t), self.pos.shape[0])
+                    f"time array {len(t)} vs {self.pos.shape[0]}"
                 )
+                raise ValueError(msg)
 
             if not hasattr(t, "unit"):
-                t = t * u.one
+                t *= u.one
 
         self.t = t
 
@@ -102,7 +101,7 @@ class Orbit(PhaseSpacePosition):
             self.frame = frame
 
     def __getitem__(self, slice_):
-        if isinstance(slice_, np.ndarray) or isinstance(slice_, list):
+        if isinstance(slice_, np.ndarray | list):
             slice_ = (slice_,)
 
         try:
@@ -110,7 +109,7 @@ class Orbit(PhaseSpacePosition):
         except TypeError:
             slice_ = (slice_,)
 
-        kw = dict()
+        kw = {}
         if self.t is not None:
             kw["t"] = self.t[slice_[0]]
 
@@ -126,10 +125,9 @@ class Orbit(PhaseSpacePosition):
         if int_tslice is not None:
             return PhaseSpacePosition(pos=pos, vel=vel, frame=self.frame)
 
-        else:
-            return self.__class__(
-                pos=pos, vel=vel, potential=self.potential, frame=self.frame, **kw
-            )
+        return self.__class__(
+            pos=pos, vel=vel, potential=self.potential, frame=self.frame, **kw
+        )
 
     @property
     def hamiltonian(self):
@@ -194,7 +192,7 @@ class Orbit(PhaseSpacePosition):
         -------
         new_orbit : `gala.dynamics.Orbit`
         """
-        kw = dict()
+        kw = {}
         if self.t is not None:
             kw["t"] = self.t
         o = super().represent_as(new_pos=new_pos, new_vel=new_vel)
@@ -211,14 +209,13 @@ class Orbit(PhaseSpacePosition):
     def norbits(self):
         if len(self.shape) < 2:
             return 1
-        else:
-            return self.shape[1]
+        return self.shape[1]
 
     def reshape(self, new_shape):
         """
         Reshape the underlying position and velocity arrays.
         """
-        kw = dict()
+        kw = {}
         if self.t is not None:
             kw["t"] = self.t
         return self.__class__(
@@ -298,7 +295,7 @@ class Orbit(PhaseSpacePosition):
             else:
                 units = UnitSystem(*frame_units)
 
-            pars = dict()
+            pars = {}
             for k in g["parameters"]:
                 pars[k] = quantity_from_hdf5(g["parameters/" + k])
 
@@ -311,8 +308,8 @@ class Orbit(PhaseSpacePosition):
 
             from ..potential.potential.io import from_dict
 
-            _dict = yaml.load(f["potential"][()].decode("utf-8"), Loader=yaml.Loader)
-            potential = from_dict(_dict)
+            dict_ = yaml.load(f["potential"][()].decode("utf-8"), Loader=yaml.Loader)
+            potential = from_dict(dict_)
 
         if close:
             f.close()
@@ -399,19 +396,19 @@ class Orbit(PhaseSpacePosition):
         assert self.norbits == 1
         assert self.t[-1] > self.t[0]  # time must increase
 
-        _ix = argrelmax(arr.value, mode="wrap")[0]
-        _ix = _ix[(_ix != 0) & (_ix != (len(arr) - 1))]  # remove edges
+        ix = argrelmax(arr.value, mode="wrap")[0]
+        ix = ix[(ix != 0) & (ix != (len(arr) - 1))]  # remove edges
         t = self.t.value
 
-        approx_arr = arr[_ix]
-        approx_t = t[_ix]
+        approx_arr = arr[ix]
+        approx_t = t[ix]
 
         if approximate:
             return approx_arr, approx_t * self.t.unit
 
-        better_times = np.zeros(_ix.shape, dtype=float)
-        better_arr = np.zeros(_ix.shape, dtype=float)
-        for i, j in enumerate(_ix):
+        better_times = np.zeros(ix.shape, dtype=float)
+        better_arr = np.zeros(ix.shape, dtype=float)
+        for i, j in enumerate(ix):
             tvals = t[j - 1 : j + 2]
             rvals = arr[j - 1 : j + 2].value
             coeffs = np.polynomial.polynomial.polyfit(tvals, rvals, 2)
@@ -428,14 +425,12 @@ class Orbit(PhaseSpacePosition):
         if return_times:
             if len(vals) == 1:
                 return vals[0], times[0]
-            else:
-                return vals, times
+            return vals, times
 
-        elif reduce:
+        if reduce:
             return u.Quantity(vals).reshape(self.shape[1:])
 
-        else:
-            return u.Quantity(vals)
+        return u.Quantity(vals)
 
     def pericenter(self, return_times=False, func=np.mean, approximate=False):
         """
@@ -476,7 +471,7 @@ class Orbit(PhaseSpacePosition):
 
         if func is None:
             reduce = False
-            func = lambda x: x  # noqa
+            func = lambda x: x
         else:
             reduce = True
 
@@ -488,7 +483,8 @@ class Orbit(PhaseSpacePosition):
         times = []
         for orbit in self.orbit_gen():
             v, t = orbit._max_helper(
-                -orbit.physicsspherical.r, approximate=approximate  # pericenter
+                -orbit.physicsspherical.r,
+                approximate=approximate,  # pericenter
             )
             vals.append(func(-v))  # negative for pericenter
             times.append(t)
@@ -534,7 +530,7 @@ class Orbit(PhaseSpacePosition):
 
         if func is None:
             reduce = False
-            func = lambda x: x  # noqa
+            func = lambda x: x
         else:
             reduce = True
 
@@ -546,7 +542,8 @@ class Orbit(PhaseSpacePosition):
         times = []
         for orbit in self.orbit_gen():
             v, t = orbit._max_helper(
-                orbit.physicsspherical.r, approximate=approximate  # apocenter
+                orbit.physicsspherical.r,
+                approximate=approximate,  # apocenter
             )
             vals.append(func(v))
             times.append(t)
@@ -638,7 +635,7 @@ class Orbit(PhaseSpacePosition):
 
         if func is None:
             reduce = False
-            func = lambda x: x  # noqa
+            func = lambda x: x
         else:
             reduce = True
 
@@ -730,21 +727,17 @@ class Orbit(PhaseSpacePosition):
                 )
             return T
 
-        else:
-            periods = {}
-            for k in self.pos_components.keys():
-                q = getattr(self, k).value
-                if self.norbits == 1:
-                    T = u.Quantity(peak_to_peak_period(self.t, q))
-                else:
-                    T = u.Quantity(
-                        [
-                            peak_to_peak_period(self.t, q[:, n])
-                            for n in range(q.shape[1])
-                        ]
-                    )
-                periods[k] = np.atleast_1d(T)
-            return at.QTable(periods)
+        periods = {}
+        for k in self.pos_components:
+            q = getattr(self, k).value
+            if self.norbits == 1:
+                T = u.Quantity(peak_to_peak_period(self.t, q))
+            else:
+                T = u.Quantity(
+                    [peak_to_peak_period(self.t, q[:, n]) for n in range(q.shape[1])]
+                )
+            periods[k] = np.atleast_1d(T)
+        return at.QTable(periods)
 
     # ------------------------------------------------------------------------
     # Misc. useful methods
@@ -783,7 +776,7 @@ class Orbit(PhaseSpacePosition):
         else:
             single_orbit = False
 
-        ndim, ntimes, norbits = L.shape
+        ndim, _ntimes, norbits = L.shape
 
         # initial angular momentum
         L0 = L[:, 0]
@@ -800,8 +793,7 @@ class Orbit(PhaseSpacePosition):
         circ = circ.astype(int)
         if single_orbit:
             return circ.reshape((ndim,))
-        else:
-            return circ
+        return circ
 
     def align_circulation_with_z(self, circulation=None):
         """
@@ -941,7 +933,7 @@ class Orbit(PhaseSpacePosition):
         x, labels = self._plot_prepare(components=components, units=units)
 
         kwargs.setdefault("plot_function", plt.plot)
-        if kwargs["plot_function"] in [plt.plot, plt.scatter]:
+        if kwargs["plot_function"] in {plt.plot, plt.scatter}:
             kwargs.setdefault("marker", "")
             kwargs.setdefault("labels", labels)
 
@@ -952,7 +944,7 @@ class Orbit(PhaseSpacePosition):
 
         if (
             self.pos.get_name() == "cartesian"
-            and all([not c.startswith("d_") for c in components])
+            and all(not c.startswith("d_") for c in components)
             and "t" not in components
             and auto_aspect
         ):
@@ -1011,13 +1003,13 @@ class Orbit(PhaseSpacePosition):
         if not HAS_MATPLOTLIB:
             raise ImportError("matplotlib is required for visualization.")
         import matplotlib.pyplot as plt
-        from mpl_toolkits import mplot3d  # noqa
+        from mpl_toolkits import mplot3d  # noqa: F401
 
         if components is None:
             components = self.pos.components
 
         if subplots_kwargs is None:
-            subplots_kwargs = dict()
+            subplots_kwargs = {}
 
         if len(components) != 3:
             raise ValueError(f"The number of components ({len(components)}) must be 3")
@@ -1032,7 +1024,7 @@ class Orbit(PhaseSpacePosition):
         subplots_kwargs.setdefault("constrained_layout", True)
         if ax is None:
             fig, ax = plt.subplots(
-                figsize=(6, 6), subplot_kw=dict(projection="3d"), **subplots_kwargs
+                figsize=(6, 6), subplot_kw={"projection": "3d"}, **subplots_kwargs
             )
         else:
             fig = ax.figure
@@ -1049,7 +1041,7 @@ class Orbit(PhaseSpacePosition):
 
         if (
             self.pos.get_name() == "cartesian"
-            and all([not c.startswith("d_") for c in components])
+            and all(not c.startswith("d_") for c in components)
             and "t" not in components
             and auto_aspect
         ):
@@ -1147,17 +1139,17 @@ class Orbit(PhaseSpacePosition):
                 data_paired.append((xs[i], xs[j]))
 
         if FuncAnimation_kwargs is None:
-            FuncAnimation_kwargs = dict()
+            FuncAnimation_kwargs = {}
 
         if orbit_plot_kwargs is None:
-            orbit_plot_kwargs = dict()
+            orbit_plot_kwargs = {}
         orbit_plot_kwargs.setdefault("zorder", 1)
         orbit_plot_kwargs.setdefault("color", "#aaaaaa")
         orbit_plot_kwargs.setdefault("linewidth", "1")
         orbit_plot_kwargs.setdefault("axes", axes)
 
         if marker_style is None:
-            marker_style = [dict() for _ in range(self.norbits)]
+            marker_style = [{} for _ in range(self.norbits)]
 
         # if a single dict is passed then copy it into a list
         if isinstance(marker_style, dict):
@@ -1176,7 +1168,7 @@ class Orbit(PhaseSpacePosition):
             marker_style[n].setdefault("zorder", 100)
 
         if segment_style is None:
-            segment_style = [dict() for _ in range(self.norbits)]
+            segment_style = [{} for _ in range(self.norbits)]
 
         # if a single dict is passed then copy it into a list
         if isinstance(segment_style, dict):
@@ -1206,13 +1198,13 @@ class Orbit(PhaseSpacePosition):
         markers = []
         segments = []
         for n in range(self.norbits):
-            _m = []
-            _s = []
+            m = []
+            s = []
             for i in range(len(data_paired)):
-                _m.append(fig.axes[i].plot([], [], **marker_style[n])[0])
-                _s.append(fig.axes[i].plot([], [], **segment_style[n])[0])
-            markers.append(_m)
-            segments.append(_s)
+                m.append(fig.axes[i].plot([], [], **marker_style[n])[0])
+                s.append(fig.axes[i].plot([], [], **segment_style[n])[0])
+            markers.append(m)
+            segments.append(s)
 
         # record the time unit and set up data-less annotates if user wants timestep label
         if show_time:
@@ -1293,9 +1285,8 @@ class Orbit(PhaseSpacePosition):
         from ..potential.frame.builtin import ConstantRotatingFrame
 
         for fr in [frame, current_frame, self.frame]:
-            if isinstance(fr, ConstantRotatingFrame):
-                if "t" not in kw:
-                    kw["t"] = self.t
+            if isinstance(fr, ConstantRotatingFrame) and "t" not in kw:
+                kw["t"] = self.t
 
         # TODO: this needs a re-write...
         psp = super().to_frame(frame, current_frame, **kw)
@@ -1335,7 +1326,7 @@ class Orbit(PhaseSpacePosition):
 
         if ro is None:
             ro = galpy_config.getfloat("normalization", "ro")
-            ro = ro * u.kpc
+            ro *= u.kpc
 
         if vo is None:
             vo = galpy_config.getfloat("normalization", "vo")

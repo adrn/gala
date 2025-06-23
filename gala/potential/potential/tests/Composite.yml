@@ -1,8 +1,7 @@
 type: composite
 class: CompositePotential
 components:
-  -
-    class: PlummerPotential
+  - class: PlummerPotential
     name: halo
     parameters:
       b: 0.26
@@ -14,8 +13,7 @@ components:
       mass: solMass
       speed: km / s
       time: Myr
-  -
-    class: MiyamotoNagaiPotential
+  - class: MiyamotoNagaiPotential
     name: disk
     parameters:
       a: 6.5

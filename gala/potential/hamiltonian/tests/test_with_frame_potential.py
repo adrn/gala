@@ -1,4 +1,3 @@
-# Third-party
 import astropy.units as u
 import numpy as np
 import pytest
@@ -9,8 +8,6 @@ from ....units import dimensionless, galactic
 from ...frame.builtin import ConstantRotatingFrame, StaticFrame
 from ...potential.builtin import HernquistPotential, KeplerPotential, NFWPotential
 from .. import Hamiltonian
-
-# Project
 from .helpers import _TestBase
 
 # ----------------------------------------------------------------------------
@@ -27,7 +24,7 @@ def to_rotating_frame(omega, w, t=None):
 
     try:
         omega = omega.to(u.rad / u.Myr, equivalencies=u.dimensionless_angles()).value
-    except:  # noqa
+    except u.UnitsError:
         omega = omega.value
 
     if isinstance(w, Orbit) and t is not None:
@@ -35,26 +32,23 @@ def to_rotating_frame(omega, w, t=None):
             "If passing in an Orbit object, do not also specify " "a time array, t."
         )
 
-    elif not isinstance(w, Orbit) and t is None:
+    if not isinstance(w, Orbit) and t is None:
         raise TypeError(
             "If not passing in an Orbit object, you must also specify "
             "a time array, t."
         )
 
-    elif t is not None and not hasattr(t, "unit"):
+    if t is not None and not hasattr(t, "unit"):
         raise TypeError("Input time must be a Quantity object.")
 
-    if t is not None:
-        t = np.atleast_1d(t)  # works with Quantity's
-    else:
-        t = w.t
+    t = np.atleast_1d(t) if t is not None else w.t
 
     try:
         t = t.to(u.Myr).value
-    except:  # noqa
+    except u.UnitsError:
         t = t.value
 
-    if isinstance(w, PhaseSpacePosition) or isinstance(w, Orbit):
+    if isinstance(w, PhaseSpacePosition | Orbit):
         Cls = w.__class__
         x_shape = w.xyz.shape
         x_unit = w.x.unit
@@ -66,7 +60,7 @@ def to_rotating_frame(omega, w, t=None):
     else:
         Cls = None
         ndim = w.shape[0]
-        x_shape = (ndim // 2,) + w.shape[1:]
+        x_shape = (ndim // 2, *w.shape[1:])
         x = w[: ndim // 2]
         v = w[ndim // 2 :]
 
@@ -98,11 +92,9 @@ def to_rotating_frame(omega, w, t=None):
     if Cls is None:
         return np.vstack((x_rot, v_rot))
 
-    else:
-        if issubclass(Cls, Orbit):
-            return Cls(pos=x_rot, vel=v_rot, t=t)
-        else:
-            return Cls(pos=x_rot, vel=v_rot)
+    if issubclass(Cls, Orbit):
+        return Cls(pos=x_rot, vel=v_rot, t=t)
+    return Cls(pos=x_rot, vel=v_rot)
 
 
 # ----------------------------------------------------------------------------
@@ -132,7 +124,6 @@ class TestKeplerRotatingFrame(_TestBase):
         pass
 
     def test_integrate(self):
-
         w0 = PhaseSpacePosition(pos=[1.0, 0, 0.0], vel=[0, 1.0, 0.0])
 
         for bl in [True, False]:
@@ -161,7 +152,6 @@ class TestKepler2RotatingFrame(_TestBase):
         pass
 
     def test_integrate(self):
-
         # --------------------------------------------------------------
         # when Omega is off from orbital frequency
         #
@@ -184,7 +174,7 @@ class TestKepler2RotatingFrame(_TestBase):
 
 
 @pytest.mark.parametrize(
-    "name, Omega, tol",
+    ("name", "Omega", "tol"),
     [
         ("z-aligned co-rotating", [0, 0, 1.0] * u.one, 1e-10),
         ("z-aligned", [0, 0, 1.5834] * u.one, 1e-10),
@@ -199,7 +189,7 @@ def test_velocity_rot_frame(name, Omega, tol):
     potential = HernquistPotential(m=1.0, c=0.2, units=dimensionless)
     vc = potential.circular_velocity([r0, 0, 0]).value[0]
     w0 = PhaseSpacePosition(pos=[r0, 0, 0.0], vel=[0, vc, 0.0])
-    Omega = Omega * [1.0, 1.0, vc / r0]
+    Omega *= [1.0, 1.0, vc / r0]
 
     H_r = Hamiltonian(
         potential, ConstantRotatingFrame(Omega=Omega, units=dimensionless)

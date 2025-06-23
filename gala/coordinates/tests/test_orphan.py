@@ -2,16 +2,14 @@
 Test the coordinates class that represents the plane of orbit of the Sgr dwarf galaxy.
 """
 
-# Third-party
 import astropy.coordinates as coord
 import astropy.units as u
+import numpy as np
 from astropy.io import ascii
 from astropy.table import Table
 from astropy.utils.data import get_pkg_data_filename
-import numpy as np
 
-# This project
-from ..orphan import OrphanNewberg10, OrphanKoposov19
+from ..orphan import OrphanKoposov19, OrphanNewberg10
 
 
 def test_table():

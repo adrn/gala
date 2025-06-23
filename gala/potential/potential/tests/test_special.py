@@ -2,7 +2,6 @@
 Test the special potentials...
 """
 
-# Third-party
 import astropy.units as u
 import pytest
 
@@ -13,8 +12,6 @@ from ..builtin.special import (
     MilkyWayPotential,
     MilkyWayPotential2022,
 )
-
-# This project
 from .helpers import CompositePotentialTestBase
 
 
@@ -48,5 +45,3 @@ class TestBovyMWPotential2014(CompositePotentialTestBase):
     def setup_method(self):
         self.potential = BovyMWPotential2014()
         super().setup_method()
-
-    check_finite_at_origin = False

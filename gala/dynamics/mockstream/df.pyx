@@ -5,7 +5,7 @@
 # cython: profile=False
 # cython: language_level=3
 
-# Third-party
+
 from astropy.utils.misc import isiterable
 import cython
 import astropy.units as u

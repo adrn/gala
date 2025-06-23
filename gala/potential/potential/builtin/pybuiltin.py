@@ -1,9 +1,8 @@
-# Third-party
 import numpy as np
 
+from gala.potential.common import PotentialParameter
 from gala.potential.potential.core import PotentialBase
 from gala.potential.potential.util import sympy_wrap
-from gala.potential.common import PotentialParameter
 
 __all__ = ["HarmonicOscillatorPotential"]
 
@@ -24,29 +23,30 @@ class HarmonicOscillatorPotential(PotentialBase):
         Unique list of non-reducable units that specify (at minimum) the
         length, mass, time, and angle units.
     """
-    omega = PotentialParameter('omega', physical_type='frequency')
+
+    omega = PotentialParameter("omega", physical_type="frequency")
 
     def _setup_potential(self, parameters, origin=None, R=None, units=None):
-        parameters['omega'] = np.atleast_1d(parameters['omega'])
+        parameters["omega"] = np.atleast_1d(parameters["omega"])
         super()._setup_potential(parameters, origin=origin, R=R, units=units)
-        self.ndim = len(self.parameters['omega'])
+        self.ndim = len(self.parameters["omega"])
 
-    def _energy(self, q, t=0.):
-        om = np.atleast_1d(self.parameters['omega'].value)
-        return np.sum(0.5 * om[None]**2 * q**2, axis=1)
+    def _energy(self, q, t=0.0):
+        om = np.atleast_1d(self.parameters["omega"].value)
+        return np.sum(0.5 * om[None] ** 2 * q**2, axis=1)
 
-    def _gradient(self, q, t=0.):
-        om = np.atleast_1d(self.parameters['omega'].value)
-        return om[None]**2 * q
+    def _gradient(self, q, t=0.0):
+        om = np.atleast_1d(self.parameters["omega"].value)
+        return om[None] ** 2 * q
 
-    def _hessian(self, q, t=0.):
-        om = np.atleast_1d(self.parameters['omega'].value)
+    def _hessian(self, q, t=0.0):
+        om = np.atleast_1d(self.parameters["omega"].value)
         return np.tile(np.diag(om)[:, :, None], reps=(1, 1, q.shape[0]))
 
     @classmethod
-    @sympy_wrap(var='x')
+    @sympy_wrap(var="x")
     def to_sympy(cls, v, p):
-        expr = 1/2 * p['omega']**2 * v['x']**2
+        expr = 1 / 2 * p["omega"] ** 2 * v["x"] ** 2
         return expr, v, p
 
     def action_angle(self, w):
@@ -66,6 +66,7 @@ class HarmonicOscillatorPotential(PotentialBase):
             The positions or orbit to compute the actions, angles, and frequencies at.
         """
         from gala.dynamics.actionangle import harmonic_oscillator_xv_to_aa
+
         return harmonic_oscillator_xv_to_aa(w, self)
 
     # def phase_space(self, actions, angles):

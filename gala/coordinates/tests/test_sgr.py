@@ -2,12 +2,11 @@
 Test the coordinates class that represents the plane of orbit of the Sgr dwarf galaxy.
 """
 
-# Third-party
 import astropy.coordinates as coord
 import astropy.table as at
 import astropy.units as u
-from astropy.utils.data import get_pkg_data_filename
 import numpy as np
+from astropy.utils.data import get_pkg_data_filename
 
 # This package
 from ..sgr import SagittariusLaw10, SagittariusVasiliev21

@@ -1,12 +1,12 @@
-""" Astropy coordinate class for the Orphan stream coordinate systems """
+"""Astropy coordinate class for the Orphan stream coordinate systems"""
 
 import astropy.coordinates as coord
 import astropy.units as u
+import numpy as np
 from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import rotation_matrix
-import numpy as np
 
-__all__ = ["OrphanNewberg10", "OrphanKoposov19"]
+__all__ = ["OrphanKoposov19", "OrphanNewberg10"]
 
 
 class OrphanNewberg10(coord.BaseCoordinateFrame):
@@ -62,7 +62,7 @@ class OrphanNewberg10(coord.BaseCoordinateFrame):
         super().__init__(*args, **kwargs)
         if wrap and isinstance(
             self._data,
-            (coord.UnitSphericalRepresentation, coord.SphericalRepresentation),
+            coord.UnitSphericalRepresentation | coord.SphericalRepresentation,
         ):
             self._data.lon.wrap_angle = self._default_wrap_angle
 
@@ -151,7 +151,7 @@ class OrphanKoposov19(coord.BaseCoordinateFrame):
         super().__init__(*args, **kwargs)
         if wrap and isinstance(
             self._data,
-            (coord.UnitSphericalRepresentation, coord.SphericalRepresentation),
+            coord.UnitSphericalRepresentation | coord.SphericalRepresentation,
         ):
             self._data.lon.wrap_angle = self._default_wrap_angle
 
@@ -173,14 +173,13 @@ def icrs_to_orp19():
     """Compute the transformation from ICRS to
     heliocentric Orphan coordinates.
     """
-    R = np.array(
+    return np.array(
         [
             [-0.44761231, -0.08785756, -0.88990128],
             [-0.84246097, 0.37511331, 0.38671632],
             [0.29983786, 0.92280606, -0.2419219],
         ]
     )
-    return R
 
 
 # Oph to Galactic coordinates

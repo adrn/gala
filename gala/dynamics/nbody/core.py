@@ -5,7 +5,7 @@
 # cython: wraparound=False
 # cython: profile=False
 
-# Third-party
+
 import numpy as np
 
 from ...integrate.cyintegrators.leapfrog import leapfrog_integrate_nbody
@@ -57,19 +57,19 @@ class DirectNBody:
 
         """
         if not isinstance(w0, PhaseSpacePosition):
-            raise TypeError(
+            msg = (
                 "Initial conditions `w0` must be a "
                 "gala.dynamics.PhaseSpacePosition object, "
-                "not '{}'".format(w0.__class__.__name__)
+                f"not '{w0.__class__.__name__}'"
             )
+            raise TypeError(msg)
 
-        if len(w0.shape) > 0:
-            if w0.shape[0] != len(particle_potentials):
-                raise ValueError(
-                    "The number of initial conditions in `w0` must"
-                    " match the number of particle potentials "
-                    "passed in with `particle_potentials`."
-                )
+        if len(w0.shape) > 0 and w0.shape[0] != len(particle_potentials):
+            raise ValueError(
+                "The number of initial conditions in `w0` must"
+                " match the number of particle potentials "
+                "passed in with `particle_potentials`."
+            )
 
         # First, figure out how to get units - first place to check is the arg
         if units is None:
@@ -97,13 +97,10 @@ class DirectNBody:
 
         # Now that we have the unit system, enforce that all potentials are in
         # that system:
-        _particle_potentials = []
+        particle_potentials_ = []
         for pp in particle_potentials:
-            if pp is None:
-                pp = NullPotential(units=units)
-            else:
-                pp = pp.replace_units(units)
-            _particle_potentials.append(pp)
+            pp = NullPotential(units=units) if pp is None else pp.replace_units(units)
+            particle_potentials_.append(pp)
 
         if external_potential is None:
             external_potential = NullPotential(units=units)
@@ -116,7 +113,7 @@ class DirectNBody:
         self.units = units
         self.external_potential = external_potential
         self.frame = frame
-        self.particle_potentials = _particle_potentials
+        self.particle_potentials = particle_potentials_
         self.save_all = save_all
 
         self.H = Hamiltonian(self.external_potential, frame=self.frame)
@@ -146,9 +143,8 @@ class DirectNBody:
 
     def __repr__(self):
         if self.w0.shape:
-            return "<{} bodies={}>".format(self.__class__.__name__, self.w0.shape[0])
-        else:
-            return "<{} bodies=1>".format(self.__class__.__name__)
+            return f"<{self.__class__.__name__} bodies={self.w0.shape[0]}>"
+        return f"<{self.__class__.__name__} bodies=1>"
 
     def _nbody_acceleration(self, t=0.0):
         """
@@ -166,7 +162,7 @@ class DirectNBody:
         ext_acc = self.external_potential.acceleration(self.w0, t=t)
         return nbody_acc + ext_acc
 
-    def integrate_orbit(self, Integrator=None, Integrator_kwargs=dict(), **time_spec):
+    def integrate_orbit(self, Integrator=None, Integrator_kwargs=None, **time_spec):
         """
         Integrate the initial conditions in the combined external potential
         plus N-body forces.
@@ -191,6 +187,8 @@ class DirectNBody:
             Ruth4Integrator,
         )
 
+        if Integrator_kwargs is None:
+            Integrator_kwargs = {}
         if Integrator is None:
             Integrator = DOPRI853Integrator
 
@@ -238,7 +236,7 @@ class DirectNBody:
             )
         else:
             raise NotImplementedError(
-                "N-body integration is currently not supported with the {Integrator} "
+                f"N-body integration is currently not supported with the {Integrator} "
                 "integrator class"
             )
 

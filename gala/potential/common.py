@@ -1,6 +1,5 @@
 import inspect
 
-
 import numpy as np
 from astropy.utils import isiterable
 
@@ -44,14 +43,12 @@ class PotentialParameter:
 
 
 class CommonBase:
-
     def __init_subclass__(cls, GSL_only=False, EXP_only=False, **kwargs):
-
         # Read the default call signature for the init
         sig = inspect.signature(cls.__init__)
 
         # Collect all potential parameters defined on the class:
-        cls._parameters = dict()
+        cls._parameters = {}
         sig_parameters = []
 
         # Also allow passing parameters in to subclassing:
@@ -64,10 +61,7 @@ class CommonBase:
 
             cls._parameters[k] = v
 
-            if v.default is None:
-                default = inspect.Parameter.empty
-            else:
-                default = v.default
+            default = inspect.Parameter.empty if v.default is None else v.default
 
             sig_parameters.append(
                 inspect.Parameter(
@@ -91,7 +85,6 @@ class CommonBase:
         cls._EXP_only = EXP_only
 
     def _validate_units(self, units):
-
         # make sure the units specified are a UnitSystem instance
         if units is not None and not isinstance(units, UnitSystem):
             units = UnitSystem(*units)
@@ -113,7 +106,7 @@ class CommonBase:
                 "argument."
             )
 
-        parameter_values = dict()
+        parameter_values = {}
 
         # Get any parameters passed as positional arguments
         i = 0
@@ -128,7 +121,7 @@ class CommonBase:
             val = kwargs.pop(k, self._parameters[k].default)
             parameter_values[k] = val
 
-        if len(kwargs):
+        if kwargs:
             raise ValueError(
                 f"{self.__class__} received unexpected keyword "
                 f"argument(s): {list(kwargs.keys())}"
@@ -138,8 +131,7 @@ class CommonBase:
 
     @classmethod
     def _prepare_parameters(cls, parameters, units):
-
-        pars = dict()
+        pars = {}
         for k, v in parameters.items():
             expected_ptype = cls._parameters[k].physical_type
             expected_unit = (
@@ -169,7 +161,7 @@ class CommonBase:
                 # .to() could cause small rounding issues in comparisons
                 if v.unit.physical_type != expected_ptype:
                     v = v.to(expected_unit, equiv)
-                
+
                 v = v.decompose(units)
 
                 v = v.decompose(units)
@@ -183,7 +175,7 @@ class CommonBase:
                     v = v * units["length"] / units["time"]
                 else:
                     v = v * units[expected_ptype]
-                    
+
                 v = v.decompose(units)
 
             pars[k] = v
@@ -199,8 +191,7 @@ class CommonBase:
         elif isinstance(x, PhaseSpacePosition):
             x = x.w(self.units)
 
-        x = atleast_2d(x, insert_axis=1).astype(np.float64)
-        return x
+        return atleast_2d(x, insert_axis=1).astype(np.float64)
 
     def _get_c_valid_arr(self, x):
         """
@@ -222,12 +213,11 @@ class CommonBase:
 
         t = np.ascontiguousarray(t.ravel())
 
-        if len(t) > 1:
-            if len(t) != pos_c.shape[0]:
-                raise ValueError(
-                    "If passing in an array of times, it must have a shape "
-                    "compatible with the input position(s)."
-                )
+        if len(t) > 1 and len(t) != pos_c.shape[0]:
+            raise ValueError(
+                "If passing in an array of times, it must have a shape "
+                "compatible with the input position(s)."
+            )
 
         return t
 
@@ -280,9 +270,8 @@ class CommonBase:
 
         if isinstance(self.units, DimensionlessUnitSystem):
             return f"<{self.__class__.__name__}: {par_str} (dimensionless)>"
-        else:
-            core_units_str = ",".join(map(str, self.units._core_units))
-            return f"<{self.__class__.__name__}: {par_str} ({core_units_str})>"
+        core_units_str = ",".join(map(str, self.units._core_units))
+        return f"<{self.__class__.__name__}: {par_str} ({core_units_str})>"
 
     def __str__(self):
         return self.__class__.__name__

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # ---
 # jupyter:
 #   jupytext:
@@ -38,7 +37,7 @@
 # Let's start by importing packages we will need:
 
 # +
-# Third-party
+
 import astropy.coordinates as coord
 import astropy.units as u
 import matplotlib.pyplot as plt
@@ -69,7 +68,7 @@ potential = gp.MilkyWayPotential()
 # +
 icrs = coord.SkyCoord(
     ra=coord.Angle("17h 20m 12.4s"),
-    dec=coord.Angle("+57° 54′ 55″"),
+    dec=coord.Angle("+57° 54′ 55″"),  # noqa: RUF001
     distance=76 * u.kpc,
     pm_ra_cosdec=0.0569 * u.mas / u.yr,
     pm_dec=-0.1673 * u.mas / u.yr,
@@ -136,8 +135,8 @@ for t in per_times:
 for t in apo_times:
     plt.axvline(t.value, color="#ef8a62")
 
-plt.xlabel("$t$ [{0}]".format(orbit.t.unit.to_string("latex")))
-plt.ylabel("$r$ [{0}]".format(orbit.x.unit.to_string("latex")))
+plt.xlabel("$t$ [{}]".format(orbit.t.unit.to_string("latex")))
+plt.ylabel("$r$ [{}]".format(orbit.x.unit.to_string("latex")))
 # -
 
 # Now we'll sample from the error distribution over the distance, proper
@@ -147,25 +146,23 @@ plt.ylabel("$r$ [{0}]".format(orbit.x.unit.to_string("latex")))
 # +
 n_samples = 128
 
+rng = np.random.default_rng(42)
 dist = (
-    np.random.normal(icrs.distance.value, icrs_err.distance.value, n_samples)
+    rng.normal(icrs.distance.value, icrs_err.distance.value, n_samples)
     * icrs.distance.unit
 )
 
 pm_ra_cosdec = (
-    np.random.normal(icrs.pm_ra_cosdec.value, icrs_err.pm_ra_cosdec.value, n_samples)
+    rng.normal(icrs.pm_ra_cosdec.value, icrs_err.pm_ra_cosdec.value, n_samples)
     * icrs.pm_ra_cosdec.unit
 )
 
 pm_dec = (
-    np.random.normal(icrs.pm_dec.value, icrs_err.pm_dec.value, n_samples)
-    * icrs.pm_dec.unit
+    rng.normal(icrs.pm_dec.value, icrs_err.pm_dec.value, n_samples) * icrs.pm_dec.unit
 )
 
 rv = (
-    np.random.normal(
-        icrs.radial_velocity.value, icrs_err.radial_velocity.value, n_samples
-    )
+    rng.normal(icrs.radial_velocity.value, icrs_err.radial_velocity.value, n_samples)
     * icrs.radial_velocity.unit
 )
 

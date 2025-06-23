@@ -1,6 +1,5 @@
 """Leapfrog integration."""
 
-# Project
 from ..core import Integrator
 from ..timespec import parse_time_specification
 

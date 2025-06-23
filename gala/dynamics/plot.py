@@ -1,7 +1,6 @@
-# Third-party
 import numpy as np
 
-__all__ = ['plot_projections']
+__all__ = ["plot_projections"]
 
 
 def _get_axes(dim, subplots_kwargs=None):
@@ -14,35 +13,34 @@ def _get_axes(dim, subplots_kwargs=None):
         Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
     """
     from gala.tests.optional_deps import HAS_MATPLOTLIB
+
     if not HAS_MATPLOTLIB:
-        raise ImportError('matplotlib is required for visualization.')
+        raise ImportError("matplotlib is required for visualization.")
     import matplotlib.pyplot as plt
 
     if subplots_kwargs is None:
-        subplots_kwargs = dict()
+        subplots_kwargs = {}
 
-    if dim > 1:
-        n_panels = int(dim * (dim - 1) / 2)
-    else:
-        n_panels = 1
+    n_panels = int(dim * (dim - 1) / 2) if dim > 1 else 1
 
-    subplots_kwargs.setdefault('figsize', (4*n_panels, 4))
-    subplots_kwargs.setdefault('constrained_layout', True)
+    subplots_kwargs.setdefault("figsize", (4 * n_panels, 4))
+    subplots_kwargs.setdefault("constrained_layout", True)
 
-    fig, axes = plt.subplots(1, n_panels, **subplots_kwargs)
+    _fig, axes = plt.subplots(1, n_panels, **subplots_kwargs)
 
-    if n_panels == 1:
-        axes = [axes]
-
-    else:
-        axes = axes.flat
-
-    return axes
+    return [axes] if n_panels == 1 else axes.flat
 
 
-def plot_projections(x, relative_to=None, autolim=True, axes=None,
-                     subplots_kwargs=None, labels=None, plot_function=None,
-                     **kwargs):
+def plot_projections(
+    x,
+    relative_to=None,
+    autolim=True,
+    axes=None,
+    subplots_kwargs=None,
+    labels=None,
+    plot_function=None,
+    **kwargs,
+):
     """
     Given N-dimensional quantity, ``x``, make a figure containing 2D projections
     of all combinations of the axes.
@@ -88,6 +86,7 @@ def plot_projections(x, relative_to=None, autolim=True, axes=None,
         axes = _get_axes(dim=ndim, subplots_kwargs=subplots_kwargs)
 
     import matplotlib.pyplot as plt  # mpl import already checked above
+
     if isinstance(axes, plt.Axes):
         axes = [axes]
 
@@ -105,10 +104,10 @@ def plot_projections(x, relative_to=None, autolim=True, axes=None,
             max_, min_ = np.max(x[i]), np.min(x[i])
             delta = max_ - min_
 
-            if delta == 0.:
-                delta = 1.
+            if delta == 0.0:
+                delta = 1.0
 
-            lims.append([min_ - delta*0.02, max_ + delta*0.02])
+            lims.append([min_ - delta * 0.02, max_ + delta * 0.02])
 
     k = 0
     for i in range(ndim):
@@ -127,10 +126,8 @@ def plot_projections(x, relative_to=None, autolim=True, axes=None,
                 # ensure new limits only ever expand current axis limits
                 xlims = axes[k].get_xlim()
                 ylims = axes[k].get_ylim()
-                lims[i] = (min(lims[i][0], xlims[0]),
-                           max(lims[i][1], xlims[1]))
-                lims[j] = (min(lims[j][0], ylims[0]),
-                           max(lims[j][1], ylims[1]))
+                lims[i] = (min(lims[i][0], xlims[0]), max(lims[i][1], xlims[1]))
+                lims[j] = (min(lims[j][0], ylims[0]), max(lims[j][1], ylims[1]))
 
                 axes[k].set_xlim(lims[i])
                 axes[k].set_ylim(lims[j])

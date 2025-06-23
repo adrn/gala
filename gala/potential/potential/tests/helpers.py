@@ -90,18 +90,18 @@ class PotentialTestBase:
         w0_slice = w0_2d[:, :4]
         self.w0s = [self.w0, w0_2d, w0_3d, w0_list, w0_slice]
         self._grad_return_shapes = [
-            self.w0[: self.ndim].shape + (1,),
+            (*self.w0[: self.ndim].shape, 1),
             w0_2d[: self.ndim].shape,
             w0_3d[: self.ndim].shape,
-            self.w0[: self.ndim].shape + (1,),
+            (*self.w0[: self.ndim].shape, 1),
             w0_slice[: self.ndim].shape,
         ]
         self._hess_return_shapes = [
-            (self.ndim,) + self.w0[: self.ndim].shape + (1,),
-            (self.ndim,) + w0_2d[: self.ndim].shape,
-            (self.ndim,) + w0_3d[: self.ndim].shape,
-            (self.ndim,) + self.w0[: self.ndim].shape + (1,),
-            (self.ndim,) + w0_slice[: self.ndim].shape,
+            (self.ndim, *self.w0[: self.ndim].shape, 1),
+            (self.ndim, *w0_2d[: self.ndim].shape),
+            (self.ndim, *w0_3d[: self.ndim].shape),
+            (self.ndim, *self.w0[: self.ndim].shape, 1),
+            (self.ndim, *w0_slice[: self.ndim].shape),
         ]
         self._valu_return_shapes = [x[1:] for x in self._grad_return_shapes]
 
@@ -127,16 +127,14 @@ class PotentialTestBase:
             v = self.potential.energy(arr[: self.ndim])
             assert v.shape == shp
 
-            g = self.potential.energy(arr[: self.ndim], t=0.1)
-            g = self.potential.energy(
+            self.potential.energy(arr[: self.ndim], t=0.1)
+            self.potential.energy(
                 arr[: self.ndim], t=0.1 * self.potential.units["time"]
             )
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
-            g = self.potential.energy(arr[: self.ndim], t=t)
-            g = self.potential.energy(
-                arr[: self.ndim], t=t * self.potential.units["time"]
-            )
+            self.potential.energy(arr[: self.ndim], t=t)
+            self.potential.energy(arr[: self.ndim], t=t * self.potential.units["time"])
 
         if self.check_finite_at_origin:
             val = self.potential.energy([0.0, 0, 0])
@@ -221,8 +219,8 @@ class PotentialTestBase:
             assert str(self.potential.units["time"]) in pot_repr
             assert str(self.potential.units["mass"]) in pot_repr
 
-        for k in self.potential.parameters.keys():
-            assert "{}=".format(k) in pot_repr
+        for k in self.potential.parameters:
+            assert f"{k}=" in pot_repr
 
     def test_compare(self):
         # skip if composite potentials
@@ -235,24 +233,22 @@ class PotentialTestBase:
         assert other == self.potential
 
         pars = self.potential.parameters.copy()
-        for k in pars.keys():
+        for k in pars:
             if k != 0:
-                pars[k] = 1.1 * pars[k]
+                pars[k] *= 1.1
         other = self.potential.__class__(units=self.potential.units, **pars)
         assert other != self.potential
 
         # check that comparing to non-potentials works
-        assert not self.potential == "sup"
+        assert self.potential != "sup"
         assert self.potential is not None
 
     def test_plot(self):
         p = self.potential
 
-        f = p.plot_contours(
-            grid=(np.linspace(-10.0, 10.0, 100), 0.0, 0.0), labels=["X"]
-        )
+        p.plot_contours(grid=(np.linspace(-10.0, 10.0, 100), 0.0, 0.0), labels=["X"])
 
-        f = p.plot_contours(
+        p.plot_contours(
             grid=(
                 np.linspace(-10.0, 10.0, 100),
                 np.linspace(-10.0, 10.0, 100),
@@ -261,7 +257,7 @@ class PotentialTestBase:
             cmap="Blues",
         )
 
-        f = p.plot_contours(
+        p.plot_contours(
             grid=(
                 np.linspace(-10.0, 10.0, 100),
                 1.0,
@@ -271,7 +267,7 @@ class PotentialTestBase:
             labels=["X", "Z"],
         )
 
-        f, a = p.plot_rotation_curve(R_grid=np.linspace(0.1, 10.0, 100))
+        _f, _a = p.plot_rotation_curve(R_grid=np.linspace(0.1, 10.0, 100))
 
         plt.close("all")
 
@@ -282,7 +278,7 @@ class PotentialTestBase:
         """
         Test writing to a YAML file, and reading back in
         """
-        fn = str(tmpdir.join("{}.yml".format(self.name)))
+        fn = str(tmpdir.join(f"{self.name}.yml"))
         self.potential.save(fn)
         p = load(fn)
         p.energy(self.w0[: self.w0.size // 2])
@@ -335,7 +331,7 @@ class PotentialTestBase:
 
         twall = time.time()
         orbit = self.H.integrate_orbit(w0, t1=t1, dt=dt, n_steps=nsteps)
-        print("Integration time ({} steps): {}".format(nsteps, time.time() - twall))
+        print(f"Integration time ({nsteps} steps): {time.time() - twall}")
 
         if self.show_plots:
             f = orbit.plot()
@@ -357,7 +353,7 @@ class PotentialTestBase:
             plt.close(f)
 
     def test_pickle(self, tmpdir):
-        fn = str(tmpdir.join("{}.pickle".format(self.name)))
+        fn = str(tmpdir.join(f"{self.name}.pickle"))
         with open(fn, "wb") as f:
             pickle.dump(self.potential, f)
 
@@ -381,7 +377,7 @@ class PotentialTestBase:
         # Derive sympy gradient and hessian functions to evaluate:
         from scipy.special import gamma, gammainc
 
-        def lowergamma(a, x):  # noqa
+        def lowergamma(a, x):
             # Differences between scipy and sympy lower gamma
             return gammainc(a, x) * gamma(a)
 
@@ -399,12 +395,12 @@ class PotentialTestBase:
         ]
 
         vars_ = list(p.values()) + list(v.values())
-        assums = np.bitwise_and.reduce([Q.real(x) for x in vars_])
+        np.bitwise_and.reduce([Q.real(x) for x in vars_])
         # Phi = sy.refine(Phi, assums)
         e_func = sy.lambdify(vars_, Phi, modules=modules)
 
         if self.sympy_density:
-            dens_tmp = sum([sy.diff(Phi, var, 2) for var in v.values()]) / (
+            dens_tmp = sum(sy.diff(Phi, var, 2) for var in v.values()) / (
                 4 * sy.pi * p["G"]
             )
             # dens_tmp = sy.refine(dens_tmp, assums)
@@ -426,7 +422,7 @@ class PotentialTestBase:
 
         N = 64  # MAGIC NUMBER:
         trial_x = self.rnd.uniform(-10.0, 10.0, size=(pot.ndim, N))
-        x_dict = {k: v for k, v in zip(["x", "y", "z"], trial_x)}
+        x_dict = dict(zip(["x", "y", "z"], trial_x))
 
         f_gala = pot.energy(trial_x).value
         f_sympy = e_func(G=pot.G, **par_vals, **x_dict)

@@ -23,7 +23,6 @@ G = G.decompose(units)
 
 
 def test_new_simple():
-
     class MyPotential(PotentialBase):
         ndim = 1
 
@@ -77,11 +76,11 @@ def test_init_potential():
 
 def test_repr():
     p = MyPotential(m=1.0e10 * u.Msun, x0=0.0, units=usys)
-    _repr = p.__repr__()
-    assert _repr.startswith("<MyPotential: m=")
-    assert "m=1" in _repr
-    assert "x0=0" in _repr
-    assert _repr.endswith("(AU,yr,solMass,rad)>")
+    repr_ = repr(p)
+    assert repr_.startswith("<MyPotential: m=")
+    assert "m=1" in repr_
+    assert "x0=0" in repr_
+    assert repr_.endswith("(AU,yr,solMass,rad)>")
 
 
 @pytest.mark.skipif(not HAS_MATPLOTLIB, reason="matplotlib is required")
@@ -95,7 +94,7 @@ def test_plot():
 
     f = p.plot_contours(
         grid=(
-            np.linspace(-10.0, 10.0, 100),  # noqa
+            np.linspace(-10.0, 10.0, 100),
             np.linspace(-10.0, 10.0, 100),
             0.0,
         ),
@@ -106,7 +105,7 @@ def test_plot():
 
     f = p.plot_contours(
         grid=(
-            np.linspace(-10.0, 10.0, 100),  # noqa
+            np.linspace(-10.0, 10.0, 100),
             1.0,
             np.linspace(-10.0, 10.0, 100),
         ),

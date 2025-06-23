@@ -1,9 +1,7 @@
 """Leapfrog integration."""
 
-# Third-party
 import numpy as np
 
-# Project
 from ..core import Integrator
 from ..timespec import parse_time_specification
 
@@ -128,9 +126,7 @@ class LeapfrogIntegrator(Integrator):
         # here is where we scoot the velocity at t=t1 to v(t+1/2)
         F0 = self.F(t.copy(), w0.copy(), *self._func_args)
         a0 = F0[self.ndim :]
-        v_1_2 = w0[self.ndim :] + a0 * dt / 2.0
-
-        return v_1_2
+        return w0[self.ndim :] + a0 * dt / 2.0
 
     def __call__(self, w0, mmap=None, **time_spec):
         # generate the array of times
@@ -153,12 +149,9 @@ class LeapfrogIntegrator(Integrator):
         for ii in range_(1, n_steps + 1):
             x_i, v_i, v_ip1_2 = self.step(times[ii], x_im1, v_im1_2, dt)
 
-            if self.save_all:
-                slc = (ii, slice(None))
-            else:
-                slc = (slice(None),)
-            ws[(slice(None, self.ndim),) + slc] = x_i
-            ws[(slice(self.ndim, None),) + slc] = v_i
+            slc = (ii, slice(None)) if self.save_all else (slice(None),)
+            ws[(slice(None, self.ndim), *slc)] = x_i
+            ws[(slice(self.ndim, None), *slc)] = v_i
             x_im1, v_im1_2 = x_i, v_ip1_2
 
         if not self.save_all:

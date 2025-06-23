@@ -108,4 +108,3 @@ the orbit points::
    orbits[-1].plot(['x', 'y'], color='#9ecae1', s=1., alpha=0.5,
                    axes=[ax], auto_aspect=False)
    fig.tight_layout()
-

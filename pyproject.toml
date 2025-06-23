@@ -227,17 +227,24 @@ ignore = [
   "ISC001",   # Conflicts with formatter
   "B905",     # zip() without explicit strict
   "E741",     # Ambiguous variable name
+  "PLW2901",  # `for` loop variable `p` overwritten by assignment target
+  "PD901",    # Avoid using the generic variable name `df` for DataFrames
+  "E731",     # Do not assign a lambda expression, use a def
   # TODO: fix these and remove from ignore
   "EM101", "EM102",
   "PT011", "PT012",
-  "ARG001",
+  "ARG001", "ARG002", "ARG005",
   "PTH",
+  "B028",
+  "RUF012"
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "F403"]
 "test*.py" = ["F841"]
 "docs/tutorials/*" = ["E703"]
-"**/tests/*.py"  = ["NPY002", "RUF012", "T201"]
-"setup.py" = ["T201"]
+"**/tests/*.py"  = ["NPY002", "RUF012", "T201", "B018", "B007"]
+"setup.py" = ["T201", "E402"]
 "docs/conf.py" = ["T201"]
+"docs/tutorials/*.py" = ["B018", "E402"]
+"gala/dynamics/actionangle/_genfunc/**/*" = ["ALL"]

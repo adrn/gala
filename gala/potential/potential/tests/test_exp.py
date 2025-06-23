@@ -117,7 +117,7 @@ class EXPTestBase(PotentialTestBase):
         gala_test_x = [1.0, 2.0, -3.0] * u.kpc
         exp_test_x = gala_test_x.to_value(self.exp_units["length"])
 
-        with open(self.EXP_CONFIG_FILE) as fp:
+        with open(self.EXP_CONFIG_FILE, encoding="utf-8") as fp:
             config_str = fp.read()
         with chdir(os.path.dirname(self.EXP_CONFIG_FILE)):
             exp_basis = pyEXP.basis.Basis.factory(config_str)

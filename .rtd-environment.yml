@@ -3,4 +3,4 @@ dependencies:
   - gsl
   - pip
   - pip:
-    - -e .[docs]
+      - -e .[docs]

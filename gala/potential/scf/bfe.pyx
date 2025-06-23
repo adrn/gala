@@ -5,7 +5,7 @@
 # cython: wraparound=False
 # cython: language_level=3
 
-# Standard library
+
 from libc.math cimport M_PI
 
 # Third party

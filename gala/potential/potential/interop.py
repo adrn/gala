@@ -14,9 +14,9 @@ from gala.tests.optional_deps import HAS_AGAMA, HAS_GALPY
 from gala.units import galactic
 
 __all__ = [
+    "gala_to_agama_potential",
     "gala_to_galpy_potential",
     "galpy_to_gala_potential",
-    "gala_to_agama_potential",
 ]
 
 ###############################################################################
@@ -36,8 +36,7 @@ if HAS_GALPY:
             * pars["r_c"].to_value(ro) ** (pars["alpha"] - 3)
             / (gamma(3 / 2 - pars["alpha"] / 2))
         )
-        amp = fac * (G * pars["m"]).to_value(vo**2 * ro)
-        return amp
+        return fac * (G * pars["m"]).to_value(vo**2 * ro)
 
     def _powerlaw_m_from_galpy(pars, ro, vo):
         # See note above!
@@ -48,8 +47,7 @@ if HAS_GALPY:
             / (gamma(3 / 2 - pars["alpha"] / 2))
         )
         amp = pars["amp"] * vo**2 * ro
-        m = amp / G / fac
-        return m
+        return amp / G / fac
 
     def _mn3_amp_to_galpy(pars, ro, vo):
         num = (G * pars["m"]).to_value(ro * vo**2)
@@ -121,7 +119,7 @@ if HAS_GALPY:
         galpy_pars = {
             v: k
             for k, v in pars.items()
-            if isinstance(v, (str, int, float, np.ndarray))
+            if isinstance(v, str | int | float | np.ndarray)
         }
         _galpy_to_gala[galpy_cls] = (gala_cls, galpy_pars)
 
@@ -141,9 +139,9 @@ if HAS_GALPY:
     _galpy_to_gala[galpy_gp.TriaxialNFWPotential][1]["b"] = "b"
     _galpy_to_gala[galpy_gp.TriaxialNFWPotential][1]["c"] = "c"
 
-    _galpy_to_gala[galpy_gp.PowerSphericalPotentialwCutoff][1][
-        "m"
-    ] = _powerlaw_m_from_galpy
+    _galpy_to_gala[galpy_gp.PowerSphericalPotentialwCutoff][1]["m"] = (
+        _powerlaw_m_from_galpy
+    )
 
     _galpy_to_gala[galpy_gp.NFWPotential] = (
         gp.NFWPotential,
@@ -218,7 +216,7 @@ def gala_to_galpy_potential(potential, ro=None, vo=None):
 
     if isinstance(potential, CompositePotential):
         pot = []
-        for k in potential.keys():
+        for k in potential:
             pot.append(gala_to_galpy_potential(potential[k], ro, vo))
 
     else:
@@ -249,13 +247,13 @@ def gala_to_galpy_potential(potential, ro=None, vo=None):
         for galpy_par_name, conv in converters.items():
             if isinstance(conv, str):
                 galpy_pars[galpy_par_name] = gala_pars[conv]
-            elif hasattr(conv, "__call__"):
+            elif callable(conv):
                 galpy_pars[galpy_par_name] = conv(gala_pars, ro, vo)
-            elif isinstance(conv, (int, float, u.Quantity, np.ndarray)):
+            elif isinstance(conv, int | float | u.Quantity | np.ndarray):
                 galpy_pars[galpy_par_name] = conv
             else:
                 # TODO: invalid parameter??
-                print(f"FAIL: {galpy_par_name}, {conv}")
+                pass
 
             par = galpy_pars[galpy_par_name]
             if hasattr(par, "unit"):
@@ -306,7 +304,7 @@ def galpy_to_gala_potential(potential, ro=None, vo=None, units=galactic):
                 f"Converting galpy potential {potential.__class__.__name__} "
                 "to gala is currently not supported"
             )
-        elif isinstance(potential, galpy_gp.MN3ExponentialDiskPotential):
+        if isinstance(potential, galpy_gp.MN3ExponentialDiskPotential):
             warnings.warn(
                 "For the MN3ExponentialDiskPotential, galpy does not store "
                 "information to fully reconstruct the potential, so the "
@@ -343,13 +341,13 @@ def galpy_to_gala_potential(potential, ro=None, vo=None, units=galactic):
         for gala_par_name, conv in converters.items():
             if isinstance(conv, str):
                 gala_pars[gala_par_name] = galpy_pars[conv]
-            elif hasattr(conv, "__call__"):
+            elif callable(conv):
                 gala_pars[gala_par_name] = conv(galpy_pars, ro, vo)
-            elif isinstance(conv, (int, float, u.Quantity, np.ndarray)):
+            elif isinstance(conv, int | float | u.Quantity | np.ndarray):
                 gala_pars[gala_par_name] = conv
             else:
                 # TODO: invalid parameter??
-                print(f"FAIL: {gala_par_name}, {conv}")
+                pass
 
             if hasattr(gala_pars[gala_par_name], "unit"):
                 continue
@@ -359,17 +357,15 @@ def galpy_to_gala_potential(potential, ro=None, vo=None, units=galactic):
 
             gala_par = gala_cls._parameters[gala_par_name]
             if gala_par.physical_type == "mass":
-                gala_pars[gala_par_name] = gala_pars[gala_par_name] * u.Msun
+                gala_pars[gala_par_name] *= u.Msun
             elif gala_par.physical_type == "length":
-                gala_pars[gala_par_name] = gala_pars[gala_par_name] * ro
+                gala_pars[gala_par_name] *= ro
             elif gala_par.physical_type == "speed":
-                gala_pars[gala_par_name] = gala_pars[gala_par_name] * vo
+                gala_pars[gala_par_name] *= vo
             elif gala_par.physical_type == "angle":
-                gala_pars[gala_par_name] = gala_pars[gala_par_name] * u.radian
+                gala_pars[gala_par_name] *= u.radian
             elif gala_par.physical_type == "dimensionless":
                 pass
-            else:
-                print("TODO")
 
         pot = gala_cls(**gala_pars, units=units)
 
@@ -394,7 +390,7 @@ def gala_to_agama_potential(potential):
 
     if isinstance(potential, CompositePotential):
         pot = []
-        for k in potential.keys():
+        for k in potential:
             agama_pot = gala_to_agama_potential(potential[k])
             if isinstance(agama_pot, list):
                 pot.extend(agama_pot)
@@ -420,15 +416,15 @@ def gala_to_agama_potential(potential):
         for agama_par_name, conv in agama_spec.items():
             if agama_par_name == "type":
                 continue
-            elif isinstance(conv, str):
+            if isinstance(conv, str):
                 agama_pars[agama_par_name] = gala_pars[conv]
             # elif hasattr(conv, "__call__"):
             #     agama_pars[agama_par_name] = conv(gala_pars)
-            elif isinstance(conv, (int, float, u.Quantity, np.ndarray)):
+            elif isinstance(conv, int | float | u.Quantity | np.ndarray):
                 agama_pars[agama_par_name] = conv
             else:
                 # TODO: invalid parameter??
-                print(f"FAIL: {agama_par_name}, {conv}")
+                pass
 
         for k, v in agama_pars.items():
             if hasattr(v, "unit"):

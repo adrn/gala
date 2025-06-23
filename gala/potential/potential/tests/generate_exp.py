@@ -19,7 +19,6 @@ this_path = pathlib.Path(__file__).parent
 
 
 class EXPTestDataGenerator:
-
     def __init__(
         self,
         potential: gp.PotentialBase,
@@ -28,7 +27,6 @@ class EXPTestDataGenerator:
         nmax: int = 10,
         overwrite: bool = False,
     ):
-
         if name is None:
             name = potential.__class__.__name__[:-9]
         self.name = str(name)
@@ -66,7 +64,7 @@ class EXPTestDataGenerator:
                 f"File {self._basis_table_file} already exists. Use overwrite=True to "
                 "regenerate."
             )
-            return
+            return None
 
         tbl = at.Table()
         tbl["r"] = r_grid.decompose(self.usys).value
@@ -103,7 +101,7 @@ parameters :
         """
         print(bconfig)
         self._basis_file = this_path / f"{self.name}-basis.yml"
-        with open(self._basis_file, "w") as f:
+        with open(self._basis_file, "w", encoding="utf-8") as f:
             f.write(bconfig)
 
         cwd = os.getcwd()

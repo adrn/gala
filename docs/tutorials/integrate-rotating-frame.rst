@@ -214,4 +214,3 @@ orbit looks like in an inertial frame::
     for ax in fig.axes:
         ax.set_xlim(-15,15)
         ax.set_ylim(-15,15)
-

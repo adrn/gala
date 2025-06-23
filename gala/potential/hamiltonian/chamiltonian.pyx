@@ -3,12 +3,12 @@
 # Standard-library
 import warnings
 
-# Third-party
+
 import numpy as np
 from astropy.utils.decorators import deprecated_renamed_argument
 import astropy.units as u
 
-# Project
+
 from ..common import CommonBase
 from ..potential import PotentialBase, CPotentialBase
 from ..frame import FrameBase, CFrameBase, StaticFrame

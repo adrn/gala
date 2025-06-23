@@ -1,9 +1,9 @@
 __all__ = [
-    "UnitSystem",
     "DimensionlessUnitSystem",
     "SimulationUnitSystem",
-    "galactic",
+    "UnitSystem",
     "dimensionless",
+    "galactic",
     "solarsystem",
 ]
 
@@ -103,9 +103,9 @@ class UnitSystem:
             return
 
         if len(args) > 0:
-            units = (units,) + tuple(args)
+            units = (units, *tuple(args))
 
-        self._registry = dict()
+        self._registry = {}
         for unit in units:
             if not isinstance(unit, u.UnitBase):  # hopefully a quantity
                 q = unit
@@ -130,28 +130,26 @@ class UnitSystem:
         if key in self._registry:
             return self._registry[key]
 
-        else:
-            unit = None
-            for k, v in _physical_unit_mapping.items():
-                if v == key:
-                    unit = u.Unit(" ".join([f"{x}**{y}" for x, y in k]))
-                    break
+        unit = None
+        for k, v in _physical_unit_mapping.items():
+            if v == key:
+                unit = u.Unit(" ".join([f"{x}**{y}" for x, y in k]))
+                break
 
-            if unit is None:
-                raise ValueError(
-                    f"Physical type '{key}' doesn't exist in unit " "registry."
-                )
+        if unit is None:
+            raise ValueError(
+                f"Physical type '{key}' doesn't exist in unit " "registry."
+            )
 
-            unit = unit.decompose(self._core_units)
-            unit._scale = 1.0
-            return unit
+        unit = unit.decompose(self._core_units)
+        unit._scale = 1.0
+        return unit
 
     def __len__(self):
         return len(self._core_units)
 
     def __iter__(self):
-        for uu in self._core_units:
-            yield uu
+        yield from self._core_units
 
     def __str__(self):
         core_units = ", ".join([str(uu) for uu in self._core_units])
@@ -165,11 +163,7 @@ class UnitSystem:
             if not self[k] == other[k]:
                 return False
 
-        for k in other._registry:
-            if not self[k] == other[k]:
-                return False
-
-        return True
+        return all(self[k] == other[k] for k in other._registry)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -199,16 +193,15 @@ class UnitSystem:
         """
         try:
             ptype = q.unit.physical_type
-        except AttributeError:
+        except AttributeError as e:
             raise TypeError(
                 "Object must be an astropy.units.Quantity, not "
                 f"a '{q.__class__.__name__}'."
-            )
+            ) from e
 
         if ptype in self._registry:
             return q.to(self._registry[ptype])
-        else:
-            return q.decompose(self)
+        return q.decompose(self)
 
     def get_constant(self, name):
         """
@@ -234,10 +227,10 @@ class UnitSystem:
         """
         try:
             c = getattr(const, name)
-        except AttributeError:
+        except AttributeError as e:
             raise ValueError(
                 f"Constant name '{name}' doesn't exist in " "astropy.constants"
-            )
+            ) from e
 
         return c.decompose(self._core_units).value
 

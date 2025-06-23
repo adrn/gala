@@ -2,12 +2,10 @@
 Test converting the builtin Potential classes to Agama
 """
 
-# Third-party
 import astropy.units as u
 import numpy as np
 import pytest
 
-# This project
 from gala.potential import JaffePotential, LogarithmicPotential, MiyamotoNagaiPotential
 from gala.tests.optional_deps import HAS_AGAMA
 from gala.units import galactic
@@ -25,7 +23,7 @@ def pytest_generate_tests(metafunc):
         return
 
     # Test the Gala -> Agama direction
-    for Potential in _gala_to_agama.keys():
+    for Potential in _gala_to_agama:
         init = {}
         len_scale = 1.0
         for k, par in Potential._parameters.items():
@@ -95,7 +93,7 @@ class TestAgamaInterop:
 
     def test_Menc(self, gala_pot, other_pot):
         if isinstance(
-            gala_pot, (LogarithmicPotential, JaffePotential, MiyamotoNagaiPotential)
+            gala_pot, LogarithmicPotential | JaffePotential | MiyamotoNagaiPotential
         ):
             # TODO: Agama has an inconsistency with Gala's log potential energy
             pytest.skip()

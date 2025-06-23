@@ -1,11 +1,9 @@
-""" Astropy coordinate class for the Sagittarius coordinate system """
+"""Astropy coordinate class for the Sagittarius coordinate system"""
 
-# Third-party
-import numpy as np
-
-from astropy.coordinates import frame_transform_graph
 import astropy.coordinates as coord
 import astropy.units as u
+import numpy as np
+from astropy.coordinates import frame_transform_graph
 from astropy.coordinates.matrix_utilities import rotation_matrix
 
 __all__ = ["SagittariusLaw10", "SagittariusVasiliev21"]
@@ -60,7 +58,7 @@ class SagittariusLaw10(coord.BaseCoordinateFrame):
         super().__init__(*args, **kwargs)
         if wrap and isinstance(
             self._data,
-            (coord.UnitSphericalRepresentation, coord.SphericalRepresentation),
+            coord.UnitSphericalRepresentation | coord.SphericalRepresentation,
         ):
             self._data.lon.wrap_angle = self._default_wrap_angle
 
@@ -161,7 +159,7 @@ class SagittariusVasiliev21(coord.BaseCoordinateFrame):
         super().__init__(*args, **kwargs)
         if wrap and isinstance(
             self._data,
-            (coord.UnitSphericalRepresentation, coord.SphericalRepresentation),
+            coord.UnitSphericalRepresentation | coord.SphericalRepresentation,
         ):
             self._data.lon.wrap_angle = self._default_wrap_angle
 

@@ -6,7 +6,6 @@ from gala.dynamics.mockstream import MockStream
 
 
 def test_init():
-
     xyz = np.random.random(size=(3, 100)) * u.kpc
     vxyz = np.random.random(size=(3, 100)) * u.km / u.s
     t1 = np.random.random(size=100) * u.Myr
@@ -17,7 +16,7 @@ def test_init():
 
     stream = MockStream(xyz, vxyz)
     stream = MockStream(xyz, vxyz, release_time=t1)
-    stream = MockStream(xyz, vxyz, lead_trail=lead_trail)  # noqa
+    stream = MockStream(xyz, vxyz, lead_trail=lead_trail)
 
     with pytest.raises(ValueError):
         MockStream(xyz, vxyz, release_time=t1[:-1])
@@ -63,7 +62,7 @@ def test_one_burst():
 
     gen = ms.MockStreamGenerator(df, H, progenitor_potential=prog_pot)
 
-    stream, prog = gen.run(
+    _stream, _prog = gen.run(
         prog_w0, prog_mass, n_particles=n_array, dt=dt, n_steps=nsteps, progress=False
     )
 

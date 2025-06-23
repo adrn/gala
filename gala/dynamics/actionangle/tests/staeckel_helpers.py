@@ -9,13 +9,10 @@ from gala.dynamics import Orbit
 
 from ..actionangle_staeckel import get_staeckel_fudge_delta
 
-
 __all__ = ["galpy_find_actions_staeckel"]
 
 
-def galpy_find_actions_staeckel(
-    potential, w, mean=True, delta=None, ro=None, vo=None
-):
+def galpy_find_actions_staeckel(potential, w, mean=True, delta=None, ro=None, vo=None):
     """
     Compute approximate actions, angles, and frequencies using the Staeckel
     Fudge as implemented in Galpy. If you use this function, please also cite
@@ -60,10 +57,7 @@ def galpy_find_actions_staeckel(
     if not isinstance(w, Orbit):
         w = Orbit(w.pos[None], w.vel[None], t=[0.0] * potential.units["time"])
 
-    if w.norbits == 1:
-        iter_ = [w]
-    else:
-        iter_ = w.orbit_gen()
+    iter_ = [w] if w.norbits == 1 else w.orbit_gen()
 
     if isinstance(delta, u.Quantity):
         delta = np.atleast_1d(delta)

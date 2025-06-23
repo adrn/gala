@@ -1,7 +1,5 @@
-# Third-party
 import numpy as np
 
-# Project
 from ... import potential as gp
 from ...integrate import DOPRI853Integrator
 from ...potential import Hamiltonian
@@ -9,7 +7,7 @@ from ...units import galactic
 from ..nonlinear import fast_lyapunov_max, lyapunov_max, surface_of_section
 
 
-class TestForcedPendulum(object):
+class TestForcedPendulum:
     def setup_method(self):
         def F(t, x, A, omega_d):
             q, p = x
@@ -31,7 +29,7 @@ class TestForcedPendulum(object):
         d0 = 1e-5
         noffset = 2
 
-        regular_LEs, regular_orbit = lyapunov_max(
+        regular_LEs, _regular_orbit = lyapunov_max(
             self.regular_w0,
             self.regular_integrator,
             dt=dt,
@@ -44,7 +42,7 @@ class TestForcedPendulum(object):
         regular_LEs = np.mean(regular_LEs, axis=1)
         assert regular_LEs[-1] < 1e-3
 
-        chaotic_LEs, chaotic_orbit = lyapunov_max(
+        chaotic_LEs, _chaotic_orbit = lyapunov_max(
             self.chaotic_w0,
             self.chaotic_integrator,
             dt=dt,
@@ -78,7 +76,7 @@ class TestForcedPendulum(object):
 # --------------------------------------------------------------------
 
 
-class HenonHeilesBase(object):
+class HenonHeilesBase:
     def potential(self, w, A, B, C, D):
         x, y = w[:2]
         term1 = 0.5 * (A * x**2 + B * y**2)
@@ -101,7 +99,7 @@ class HenonHeilesBase(object):
         return np.array([dax, day])
 
     def F_max(self, t, w, *args):
-        x, y, px, py = w
+        _x, _y, px, py = w
         term1 = np.array([px, py])
         term2 = self.acceleration(w, *args)
         return np.vstack((term1, term2))
@@ -122,7 +120,7 @@ class HenonHeilesBase(object):
         noffset = 2
 
         integrator = DOPRI853Integrator(self.F_max, func_args=self.par)
-        lyap, orbit = lyapunov_max(
+        lyap, _orbit = lyapunov_max(
             self.w0,
             integrator,
             dt=self.dt,
@@ -181,9 +179,8 @@ class TestHenonHeilesStableChaos2(HenonHeilesBase):
 # --------------------------------------------------------------------
 
 
-class TestLogarithmic(object):
+class TestLogarithmic:
     def setup_method(self):
-
         # set the potential
         potential = gp.LogarithmicPotential(
             v_c=np.sqrt(2), r_h=0.1, q1=1.0, q2=0.9, q3=1.0, units=galactic
@@ -242,7 +239,7 @@ class TestLogarithmic(object):
             return self.hamiltonian._gradient(w_T, np.array([t])).T
 
         integrator = DOPRI853Integrator(F)
-        for ii, w0 in enumerate(self.w0s):
+        for _ii, w0 in enumerate(self.w0s):
             lyap1, orbit1 = fast_lyapunov_max(
                 w0,
                 self.hamiltonian,

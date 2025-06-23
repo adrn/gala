@@ -1,35 +1,33 @@
-""" Test action-angle stuff """
+"""Test action-angle stuff"""
 
-# Standard library
 import logging
 import warnings
 
-# Third-party
 import astropy.units as u
 import numpy as np
-from gala.logging import logger
-from scipy.linalg import solve
 import pytest
+from scipy.linalg import solve
 
-# Project
-from gala.integrate import DOPRI853Integrator
-from gala.potential import (
-    IsochronePotential,
-    HarmonicOscillatorPotential,
-    LeeSutoTriaxialNFWPotential,
-    Hamiltonian,
-)
-from gala.units import galactic
 from gala.dynamics.actionangle import (
-    fit_isochrone,
-    fit_harmonic_oscillator,
-    fit_toy_potential,
     check_angle_sampling,
     find_actions_o2gf,
+    fit_harmonic_oscillator,
+    fit_isochrone,
+    fit_toy_potential,
     generate_n_vectors,
 )
 from gala.dynamics.actionangle._genfunc import genfunc_3d, solver
-from .helpers import sanders_nvecs, sanders_act_ang_freq, isotropic_w0
+from gala.integrate import DOPRI853Integrator
+from gala.logging import logger
+from gala.potential import (
+    Hamiltonian,
+    HarmonicOscillatorPotential,
+    IsochronePotential,
+    LeeSutoTriaxialNFWPotential,
+)
+from gala.units import galactic
+
+from .helpers import isotropic_w0, sanders_act_ang_freq, sanders_nvecs
 
 logger.setLevel(logging.DEBUG)
 
@@ -88,9 +86,7 @@ def test_fit_toy_potential():
 
     # -----------------------------------------------------------------
     true_omegas = np.array([0.011, 0.032, 0.045])
-    true_potential = HarmonicOscillatorPotential(
-        omega=true_omegas, units=galactic
-    )
+    true_potential = HarmonicOscillatorPotential(omega=true_omegas, units=galactic)
     H = Hamiltonian(true_potential)
     orbit = H.integrate_orbit([15.0, 1, 2, 0, 0, 0], dt=2.0, n_steps=10000)
 
@@ -104,7 +100,6 @@ def test_fit_toy_potential():
 
 
 def test_check_angle_sampling():
-
     # frequencies
     omegas = np.array([0.21, 0.3421, 0.4968])
 
@@ -114,9 +109,7 @@ def test_check_angle_sampling():
     # loop over times with known failures:
     #   - first one fails needing longer integration time
     #   - second one fails needing finer sampling
-    for i, t in enumerate(
-        [np.linspace(0, 50, 500), np.linspace(0, 8000, 8000)]
-    ):
+    for i, t in enumerate([np.linspace(0, 50, 500), np.linspace(0, 8000, 8000)]):
         # periods = 2*np.pi/omegas
         # print("Periods:", periods)
         # print("N periods:", t.max() / periods)
@@ -124,13 +117,12 @@ def test_check_angle_sampling():
         angles = t[np.newaxis] * omegas[:, np.newaxis]
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
-            checks, failures = check_angle_sampling(nvecs, angles)
+            _checks, failures = check_angle_sampling(nvecs, angles)
 
         assert np.all(failures == i)
 
 
 class ActionsBase:
-
     def test_classify(self):
         # my classify
         orb_type = self.orbit.circulation()
@@ -138,7 +130,7 @@ class ActionsBase:
         # compare to Sanders'
         for j in range(self.N):
             sdrs = genfunc_3d.assess_angmom(self.w[..., j].T)
-            logger.debug("APW: {}, Sanders: {}".format(orb_type[:, j], sdrs))
+            logger.debug(f"APW: {orb_type[:, j]}, Sanders: {sdrs}")
             assert np.all(orb_type[:, j] == sdrs)
 
     def test_actions(self):
@@ -148,11 +140,7 @@ class ActionsBase:
         N_max = 6
         for n in range(self.N):
             print("\n\n")
-            print(
-                "======================= Orbit {} =======================".format(
-                    n
-                )
-            )
+            print(f"======================= Orbit {n} =======================")
             # w = self.w[:, ::10, n]
             w = self.w[..., n]
             orb = self.orbit[:, n]
@@ -167,16 +155,14 @@ class ActionsBase:
             print("Computing actions with gala...")
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)
-                ret = find_actions_o2gf(
-                    orb, N_max=N_max, toy_potential=toy_potential
-                )
+                ret = find_actions_o2gf(orb, N_max=N_max, toy_potential=toy_potential)
             actions = ret["actions"]
             angles = ret["angles"]
             freqs = ret["freqs"]
 
-            print("Action ratio: {}".format(actions / s_actions))
-            print("Angle ratio: {}".format(angles / s_angles))
-            print("Freq ratio: {}".format(freqs / s_freqs))
+            print(f"Action ratio: {actions / s_actions}")
+            print(f"Angle ratio: {angles / s_angles}")
+            print(f"Freq ratio: {freqs / s_freqs}")
 
             assert np.allclose(actions.value, s_actions, rtol=1e-5)
             assert np.allclose(angles.value, s_angles, rtol=1e-5)
@@ -198,9 +184,8 @@ class ActionsBase:
 
 
 class TestActions(ActionsBase):
-
     @pytest.fixture(autouse=True)
-    def setup_method(self, tmpdir):
+    def _setup_method(self, tmpdir):
         self.plot_path = tmpdir.mkdir("normal")
 
         self.units = galactic
@@ -223,20 +208,21 @@ class TestActions(ActionsBase):
 
 
 def test_compare_action_prepare():
-
     from gala.dynamics.actionangle.actionangle_o2gf import (
-        _action_prepare, _angle_prepare)
+        _action_prepare,
+        _angle_prepare,
+    )
 
     logger.setLevel(logging.ERROR)
     AA = np.random.uniform(0.0, 100.0, size=(1000, 6))
     t = np.linspace(0.0, 100.0, 1000)
 
-    act_san, n_vectors = solver.solver(AA, N_max=6, symNx=2)
+    act_san, _n_vectors = solver.solver(AA, N_max=6, symNx=2)
     A2, b2, n = _action_prepare(AA.T, N_max=6, dx=2, dy=2, dz=2)
     act_apw = np.array(solve(A2, b2))
 
     ang_san = solver.angle_solver(AA, t, N_max=6, symNx=2, sign=1)
-    A2, b2, n = _angle_prepare(AA.T, t, N_max=6, dx=2, dy=2, dz=2)
+    A2, b2, _n = _angle_prepare(AA.T, t, N_max=6, dx=2, dy=2, dz=2)
     ang_apw = np.array(solve(A2, b2))
 
     assert np.allclose(act_apw, act_san)
@@ -249,8 +235,8 @@ def test_regression_113():
     """Test that fit_isochrone succeeds for a variety of orbits. See issue:
     https://github.com/adrn/gala/issues/113
     """
-    from gala.potential import MilkyWayPotential, Hamiltonian
     from gala.dynamics import PhaseSpacePosition
+    from gala.potential import Hamiltonian, MilkyWayPotential
 
     pot = MilkyWayPotential()
 
@@ -260,7 +246,7 @@ def test_regression_113():
     rvec = [0.3, 0, 0] * u.kpc
     vinit = pot.circular_velocity(rvec)[0].to(u.km / u.s).value
     vvec = [0, vinit * np.cos(0.01), vinit * np.sin(0.01)] * u.km / u.s
-    vvec = 0.999 * vvec
+    vvec *= 0.999
 
     ics = PhaseSpacePosition(pos=rvec, vel=vvec)
     H = Hamiltonian(pot)

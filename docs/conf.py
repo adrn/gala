@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import datetime
 import os
 import pathlib
@@ -10,7 +8,7 @@ from importlib import import_module
 
 # Load all of the global Astropy configuration
 try:
-    from sphinx_astropy.conf.v1 import *  # noqa
+    from sphinx_astropy.conf.v1 import *  # noqa: F403
 except ImportError:
     print(
         "ERROR: Building the documentation for Gala requires the "
@@ -86,7 +84,7 @@ todo_include_todos = True
 # This does not *have* to match the package name, but typically does
 project = "gala"
 author = "Adrian Price-Whelan"
-copyright = "{0}, {1}".format(datetime.datetime.now().year, author)
+copyright = f"{datetime.datetime.now().year}, {author}"
 
 package_name = "gala"
 import_module(package_name)
@@ -172,7 +170,7 @@ html_favicon = str(docs_root / "_static" / "m104.ico")
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = "{0} v{1}".format(project, release)
+html_title = f"{project} v{release}"
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = project + "doc"
@@ -194,7 +192,7 @@ latex_documents = [
 automodsumm_inherited_members = True
 
 # Add nbsphinx
-extensions += [
+extensions += [  # noqa: F405
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
     "sphinxcontrib.bibtex",
@@ -210,8 +208,8 @@ nbsphinx_timeout = 300
 nbsphinx_kernel_name = os.environ.get("NBSPHINX_KERNEL_NAME", "python3")
 
 # nbsphinx hacks (thanks exoplanet)
-import nbsphinx
-from nbsphinx import markdown2rst as original_markdown2rst
+import nbsphinx  # noqa: E402
+from nbsphinx import markdown2rst as original_markdown2rst  # noqa: E402
 
 nbsphinx.RST_TEMPLATE = nbsphinx.RST_TEMPLATE.replace(
     "{%- if width %}", "{%- if 0 %}"
@@ -274,12 +272,12 @@ if not zenodo_path.exists():
             response.text, " " * 4
         )
     except Exception as e:
-        warnings.warn(f"Failed to retrieve Zenodo record for Gala: {str(e)}")
+        warnings.warn(f"Failed to retrieve Zenodo record for Gala: {e!s}", stacklevel=1)
         zenodo_record = (
             "`Retrieve the Zenodo record here " "<https://zenodo.org/record/4159870>`_"
         )
 
-    with open(zenodo_path, "w") as f:
+    with open(zenodo_path, "w", encoding="utf-8") as f:
         f.write(zenodo_record)
 
 ## -- Check for executed tutorials and only add to toctree if they exist:
@@ -327,5 +325,5 @@ if _not_executed:
     )
     print(f"Missing tutorials: {', '.join(_not_executed)}\n")
 
-with open("_tutorials.rst", "w") as f:
+with open("_tutorials.rst", "w", encoding="utf-8") as f:
     f.write(_tutorial_toctree)

@@ -1,8 +1,6 @@
-# Third-party
 import astropy.units as u
 import numpy as np
 
-# Project
 from gala.potential.potential.builtin.core import (
     HernquistPotential,
     LogarithmicPotential,
@@ -15,10 +13,10 @@ from gala.potential.potential.ccompositepotential import CCompositePotential
 from gala.units import galactic
 
 __all__ = [
+    "BovyMWPotential2014",
     "LM10Potential",
     "MilkyWayPotential",
     "MilkyWayPotential2022",
-    "BovyMWPotential2014",
 ]
 
 
@@ -51,17 +49,23 @@ class LM10Potential(CCompositePotential):
     components added at bottom of init.
     """
 
-    def __init__(self, units=galactic, disk=dict(), bulge=dict(), halo=dict()):
-        default_disk = dict(m=1e11 * u.Msun, a=6.5 * u.kpc, b=0.26 * u.kpc)
-        default_bulge = dict(m=3.4e10 * u.Msun, c=0.7 * u.kpc)
-        default_halo = dict(
-            q1=1.38,
-            q2=1.0,
-            q3=1.36,
-            r_h=12.0 * u.kpc,
-            phi=97 * u.degree,
-            v_c=np.sqrt(2) * 121.858 * u.km / u.s,
-        )
+    def __init__(self, units=galactic, disk=None, bulge=None, halo=None):
+        if halo is None:
+            halo = {}
+        if bulge is None:
+            bulge = {}
+        if disk is None:
+            disk = {}
+        default_disk = {"m": 1e11 * u.Msun, "a": 6.5 * u.kpc, "b": 0.26 * u.kpc}
+        default_bulge = {"m": 3.4e10 * u.Msun, "c": 0.7 * u.kpc}
+        default_halo = {
+            "q1": 1.38,
+            "q2": 1.0,
+            "q3": 1.36,
+            "r_h": 12.0 * u.kpc,
+            "phi": 97 * u.degree,
+            "v_c": np.sqrt(2) * 121.858 * u.km / u.s,
+        }
 
         for k, v in default_disk.items():
             if k not in disk:
@@ -114,22 +118,22 @@ class MilkyWayPotential(CCompositePotential):
     """
 
     def __init__(self, units=galactic, disk=None, halo=None, bulge=None, nucleus=None):
-        default_disk = dict(m=6.8e10 * u.Msun, a=3.0 * u.kpc, b=0.28 * u.kpc)
-        default_bulge = dict(m=5e9 * u.Msun, c=1.0 * u.kpc)
-        default_nucl = dict(m=1.71e9 * u.Msun, c=0.07 * u.kpc)
-        default_halo = dict(m=5.4e11 * u.Msun, r_s=15.62 * u.kpc)
+        default_disk = {"m": 6.8e10 * u.Msun, "a": 3.0 * u.kpc, "b": 0.28 * u.kpc}
+        default_bulge = {"m": 5e9 * u.Msun, "c": 1.0 * u.kpc}
+        default_nucl = {"m": 1.71e9 * u.Msun, "c": 0.07 * u.kpc}
+        default_halo = {"m": 5.4e11 * u.Msun, "r_s": 15.62 * u.kpc}
 
         if disk is None:
-            disk = dict()
+            disk = {}
 
         if halo is None:
-            halo = dict()
+            halo = {}
 
         if bulge is None:
-            bulge = dict()
+            bulge = {}
 
         if nucleus is None:
-            nucleus = dict()
+            nucleus = {}
 
         for k, v in default_disk.items():
             if k not in disk:
@@ -189,22 +193,22 @@ class MilkyWayPotential2022(CCompositePotential):
     """
 
     def __init__(self, units=galactic, disk=None, halo=None, bulge=None, nucleus=None):
-        default_disk = dict(m=4.7717e10 * u.Msun, h_R=2.6 * u.kpc, h_z=0.3 * u.kpc)
-        default_bulge = dict(m=5e9 * u.Msun, c=1.0 * u.kpc)
-        default_nucl = dict(m=1.8142e9 * u.Msun, c=0.0688867 * u.kpc)
-        default_halo = dict(m=5.5427e11 * u.Msun, r_s=15.626 * u.kpc)
+        default_disk = {"m": 4.7717e10 * u.Msun, "h_R": 2.6 * u.kpc, "h_z": 0.3 * u.kpc}
+        default_bulge = {"m": 5e9 * u.Msun, "c": 1.0 * u.kpc}
+        default_nucl = {"m": 1.8142e9 * u.Msun, "c": 0.0688867 * u.kpc}
+        default_halo = {"m": 5.5427e11 * u.Msun, "r_s": 15.626 * u.kpc}
 
         if disk is None:
-            disk = dict()
+            disk = {}
 
         if halo is None:
-            halo = dict()
+            halo = {}
 
         if bulge is None:
-            bulge = dict()
+            bulge = {}
 
         if nucleus is None:
-            nucleus = dict()
+            nucleus = {}
 
         for k, v in default_disk.items():
             if k not in disk:
@@ -265,18 +269,26 @@ class BovyMWPotential2014(CCompositePotential):
     """
 
     def __init__(self, units=galactic, disk=None, halo=None, bulge=None):
-        default_disk = dict(m=68193902782.346756 * u.Msun, a=3.0 * u.kpc, b=280 * u.pc)
-        default_bulge = dict(m=4501365375.06545 * u.Msun, alpha=1.8, r_c=1.9 * u.kpc)
-        default_halo = dict(m=4.3683325e11 * u.Msun, r_s=16 * u.kpc)
+        default_disk = {
+            "m": 68193902782.346756 * u.Msun,
+            "a": 3.0 * u.kpc,
+            "b": 280 * u.pc,
+        }
+        default_bulge = {
+            "m": 4501365375.06545 * u.Msun,
+            "alpha": 1.8,
+            "r_c": 1.9 * u.kpc,
+        }
+        default_halo = {"m": 4.3683325e11 * u.Msun, "r_s": 16 * u.kpc}
 
         if disk is None:
-            disk = dict()
+            disk = {}
 
         if halo is None:
-            halo = dict()
+            halo = {}
 
         if bulge is None:
-            bulge = dict()
+            bulge = {}
 
         for k, v in default_disk.items():
             if k not in disk:

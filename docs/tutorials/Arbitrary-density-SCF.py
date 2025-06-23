@@ -49,7 +49,7 @@
 # +
 # Some imports we'll need later:
 
-# Third-party
+
 import matplotlib.pyplot as plt
 import numpy as np
 

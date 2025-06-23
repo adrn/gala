@@ -7,7 +7,7 @@ try:
 except AttributeError:
     myclassmethod = __builtins__["classmethod"]
 
-# Third-party
+
 import astropy.units as u
 import numpy as np
 from astropy.constants import G
@@ -48,27 +48,27 @@ from ..cpotential import CPotentialBase
 from ..util import format_doc, sympy_wrap
 
 __all__ = [
+    "BurkertPotential",
+    "CylSplinePotential",
     "EXPPotential",
-    "NullPotential",
     "HenonHeilesPotential",
-    "KeplerPotential",
     "HernquistPotential",
     "IsochronePotential",
-    "PlummerPotential",
     "JaffePotential",
-    "StonePotential",
-    "PowerLawCutoffPotential",
-    "SatohPotential",
+    "KeplerPotential",
     "KuzminPotential",
-    "MiyamotoNagaiPotential",
-    "MN3ExponentialDiskPotential",
-    "NFWPotential",
     "LeeSutoTriaxialNFWPotential",
     "LogarithmicPotential",
     "LongMuraliBarPotential",
+    "MN3ExponentialDiskPotential",
+    "MiyamotoNagaiPotential",
     "MultipolePotential",
-    "CylSplinePotential",
-    "BurkertPotential",
+    "NFWPotential",
+    "NullPotential",
+    "PlummerPotential",
+    "PowerLawCutoffPotential",
+    "SatohPotential",
+    "StonePotential",
 ]
 
 
@@ -82,13 +82,12 @@ def __getattr__(name):
     if name in mp_cache:
         return mp_cache[name]
 
-    else:
-        try:
-            lmax = int(name.split("Lmax")[1])
-        except Exception:
-            raise ImportError("Invalid")  # shouldn't ever get here!
+    try:
+        lmax = int(name.split("Lmax")[1])
+    except Exception as e:
+        raise ImportError("Invalid") from e  # shouldn't ever get here!
 
-        return make_multipole_cls(lmax, timedep="TimeDependent" in name)
+    return make_multipole_cls(lmax, timedep="TimeDependent" in name)
 
 
 @format_doc(common_doc=_potential_docstring)
@@ -618,10 +617,7 @@ class MN3ExponentialDiskPotential(CPotentialBase):
         PotentialBase.__init__(self, *args, units=units, origin=origin, R=R, **kwargs)
         hzR = (self.parameters["h_z"] / self.parameters["h_R"]).decompose()
 
-        if positive_density:
-            K = self._K_pos_dens
-        else:
-            K = self._K_neg_dens
+        K = self._K_pos_dens if positive_density else self._K_neg_dens
 
         # get b / h_R
         if sech2_z:
@@ -815,7 +811,7 @@ class NFWPotential(CPotentialBase):
             v_c = v_c * units["length"] / units["time"]
 
         if not hasattr(r_s, "unit"):
-            r_s = r_s * units["length"]
+            r_s *= units["length"]
 
         if r_ref is None:
             r_ref = r_s
@@ -1011,9 +1007,8 @@ def make_multipole_cls(lmax, timedep=False):
         raise NotImplementedError("Time dependent potential coming soon!")
         # cls = MultipoleTimeDependentPotential
         # param_default = [0.]
-    else:
-        cls = MultipolePotential
-        param_default = 0.0
+    cls = MultipolePotential
+    param_default = 0.0
     cls_name = f"{cls.__name__}Lmax{lmax}"
 
     if cls_name in mp_cache:
@@ -1028,7 +1023,7 @@ def make_multipole_cls(lmax, timedep=False):
     doc_lines = []
     ab_callsig = []
     for l in range(lmax + 1):
-        for m in range(0, l + 1):
+        for m in range(l + 1):
             if timedep:
                 a = f"alpha{l}{m}"
                 b = f"beta{l}{m}"
@@ -1127,11 +1122,12 @@ class MultipolePotential(CPotentialBase, GSL_only=True):
         if not (issubclass(cls, MultipolePotential) and cls is not MultipolePotential):
             try:
                 lmax = kwargs["lmax"]
-            except KeyError:
-                raise TypeError(
+            except KeyError as e:
+                msg = (
                     "Can't initialize a MultipolePotential without specifying "
                     "the `lmax` keyword argument."
                 )
+                raise TypeError(msg) from e
             newcls = make_multipole_cls(lmax)
             return newcls.__new__(newcls, *args, **kwargs)
 
@@ -1174,12 +1170,12 @@ class CylSplinePotential(CPotentialBase):
         **kwargs
             Other keyword arguments are passed to the initializer.
         """
-        with open(filename, "r") as f:
+        with open(filename, encoding="utf-8") as f:
             raw_lines = f.readlines()
 
         start = r"#R(row)\z(col)"
         Phi_lines = []
-        for i, line in enumerate(raw_lines):
+        for i, line in enumerate(raw_lines):  # noqa: B007
             if line.startswith(start):
                 Phi_lines.append(
                     [np.nan]
@@ -1242,10 +1238,7 @@ class CylSplinePotential(CPotentialBase):
         grid_Phi_full = np.zeros((sizeR, sizez))
         grid_Phi_full[:, : sizez_orig - 1] = grid_Phi[:, :0:-1]
         grid_Phi_full[:, sizez_orig - 1 :] = grid_Phi
-        if logScaling:
-            grid_Phi_full = np.log(-grid_Phi_full)
-        else:
-            grid_Phi_full = grid_Phi_full
+        grid_Phi_full = np.log(-grid_Phi_full) if logScaling else grid_Phi_full
 
         from scipy.interpolate import RectBivariateSpline
 
@@ -1344,7 +1337,7 @@ class CylSplinePotential(CPotentialBase):
 
         matr = (r[:, None] / r0.value) ** -(ls[None] + 1) * Pl0
         y = Phis / scale
-        sol, resid, rank, s = np.linalg.lstsq(matr, y, rcond=None)
+        sol, _resid, _rank, _s = np.linalg.lstsq(matr, y, rcond=None)
 
         pars = {f"S{l}0": sol[l].real for l in ls}
         return MultipolePotential(
