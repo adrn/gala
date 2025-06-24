@@ -7,7 +7,6 @@ import astropy.units as u
 import numpy as np
 from astropy.utils.data import get_pkg_data_filename
 
-# This package
 from ..velocity_frame_transforms import vgsr_to_vhel, vhel_to_vgsr
 
 

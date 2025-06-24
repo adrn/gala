@@ -7,8 +7,6 @@ from astropy.utils.misc import isiterable
 from scipy.signal import argrelmax, argrelmin
 
 from ..util import atleast_2d
-
-# This package
 from .core import PhaseSpacePosition
 
 __all__ = ["combine", "estimate_dt_n_steps", "peak_to_peak_period"]

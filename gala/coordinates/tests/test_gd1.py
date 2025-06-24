@@ -3,7 +3,6 @@ import astropy.units as u
 import numpy as np
 from astropy.utils.data import get_pkg_data_filename
 
-# This package
 from ..gd1 import GD1Koposov10
 
 

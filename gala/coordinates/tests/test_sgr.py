@@ -8,7 +8,6 @@ import astropy.units as u
 import numpy as np
 from astropy.utils.data import get_pkg_data_filename
 
-# This package
 from ..sgr import SagittariusLaw10, SagittariusVasiliev21
 
 

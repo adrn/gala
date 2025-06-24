@@ -2,7 +2,6 @@ import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 
-# This package
 from ..pal5 import Pal5PriceWhelan18
 
 

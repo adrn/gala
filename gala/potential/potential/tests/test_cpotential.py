@@ -2,8 +2,6 @@
 import astropy.units as u
 
 from ....units import UnitSystem
-
-# This package
 from ..builtin import HernquistPotential
 
 
