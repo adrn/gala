@@ -92,7 +92,7 @@ cdef void to_sat_coords(double *w, double *R, # in
     # Translate to be centered on progenitor
     cdef int i
 
-     into new basis
+    # Project into new basis
     w_prime[0] = w[0]*R[0] + w[1]*R[1] + w[2]*R[2]
     w_prime[1] = w[0]*R[3] + w[1]*R[4] + w[2]*R[5]
     w_prime[2] = w[0]*R[6] + w[1]*R[7] + w[2]*R[8]
@@ -105,7 +105,7 @@ cdef void from_sat_coords(double *w_prime, double *R, # in
                           double *w): # out
     cdef int i
 
-     back from sat plane
+    # Project back from sat plane
     w[0] = w_prime[0]*R[0] + w_prime[1]*R[3] + w_prime[2]*R[6]
     w[1] = w_prime[0]*R[1] + w_prime[1]*R[4] + w_prime[2]*R[7]
     w[2] = w_prime[0]*R[2] + w_prime[1]*R[5] + w_prime[2]*R[8]
