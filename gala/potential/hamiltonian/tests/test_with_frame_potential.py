@@ -189,7 +189,7 @@ def test_velocity_rot_frame(name, Omega, tol):
     potential = HernquistPotential(m=1.0, c=0.2, units=dimensionless)
     vc = potential.circular_velocity([r0, 0, 0]).value[0]
     w0 = PhaseSpacePosition(pos=[r0, 0, 0.0], vel=[0, vc, 0.0])
-    Omega *= [1.0, 1.0, vc / r0]
+    Omega = [1.0, 1.0, vc / r0] * Omega  # fmt: skip
 
     H_r = Hamiltonian(
         potential, ConstantRotatingFrame(Omega=Omega, units=dimensionless)
