@@ -14,7 +14,8 @@ from ...integrate.timespec import parse_time_specification
 from ...potential import Hamiltonian, NullPotential, StaticFrame
 from ...units import UnitSystem
 from ...util import atleast_2d
-from .. import Orbit, PhaseSpacePosition
+from ..core import PhaseSpacePosition
+from ..orbit import Orbit
 from .nbody import direct_nbody_dop853, nbody_acceleration
 
 __all__ = ["DirectNBody"]

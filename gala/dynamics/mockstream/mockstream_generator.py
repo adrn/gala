@@ -2,10 +2,9 @@ import numpy as np
 
 from ...integrate.timespec import parse_time_specification
 from ...potential import Hamiltonian, PotentialBase
-
-# This package
-from .. import PhaseSpacePosition, combine
+from ..core import PhaseSpacePosition
 from ..nbody import DirectNBody
+from ..util import combine
 from ._mockstream import mockstream_dop853, mockstream_dop853_animate
 from .core import MockStream
 

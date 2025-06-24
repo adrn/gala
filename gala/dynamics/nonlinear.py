@@ -2,7 +2,8 @@ import astropy.units as u
 import numpy as np
 from scipy.signal import argrelmin
 
-from . import Orbit, PhaseSpacePosition
+from .core import PhaseSpacePosition
+from .orbit import Orbit
 
 __all__ = ["fast_lyapunov_max", "lyapunov_max", "surface_of_section"]
 

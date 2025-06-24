@@ -1,7 +1,5 @@
 import numpy as np
 
-from gala.dynamics import Orbit
-
 __all__ = ["get_staeckel_fudge_delta"]
 
 
@@ -22,6 +20,8 @@ def get_staeckel_fudge_delta(potential, w, median=True):
         The focal length values.
 
     """
+    from gala.dynamics import Orbit
+
     grad = potential.gradient(w).decompose(potential.units).value
     hess = potential.hessian(w).decompose(potential.units).value
 
