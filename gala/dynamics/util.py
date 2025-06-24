@@ -1,20 +1,18 @@
-""" General dynamics utilities. """
+"""General dynamics utilities."""
 
-# Third-party
-import astropy.units as u
 import astropy.coordinates as coord
-from astropy.utils.misc import isiterable
+import astropy.units as u
 import numpy as np
+from astropy.utils.misc import isiterable
 from scipy.signal import argrelmax, argrelmin
 
-# This package
-from .core import PhaseSpacePosition
 from ..util import atleast_2d
+from .core import PhaseSpacePosition
 
-__all__ = ['peak_to_peak_period', 'estimate_dt_n_steps', 'combine']
+__all__ = ["combine", "estimate_dt_n_steps", "peak_to_peak_period"]
 
 
-def peak_to_peak_period(t, f, amplitude_threshold=1E-2):
+def peak_to_peak_period(t, f, amplitude_threshold=1e-2):
     """
     Estimate the period of the input time series by measuring the average
     peak-to-peak time.
@@ -34,56 +32,49 @@ def peak_to_peak_period(t, f, amplitude_threshold=1E-2):
     period : float
         The mean peak-to-peak period.
     """
-    if hasattr(t, 'unit'):
+    if hasattr(t, "unit"):
         t_unit = t.unit
         t = t.value
     else:
         t_unit = u.dimensionless_unscaled
 
     # find peaks
-    max_ix = argrelmax(f, mode='wrap')[0]
-    max_ix = max_ix[(max_ix != 0) & (max_ix != (len(f)-1))]
+    max_ix = argrelmax(f, mode="wrap")[0]
+    max_ix = max_ix[(max_ix != 0) & (max_ix != (len(f) - 1))]
 
     # find troughs
-    min_ix = argrelmin(f, mode='wrap')[0]
-    min_ix = min_ix[(min_ix != 0) & (min_ix != (len(f)-1))]
+    min_ix = argrelmin(f, mode="wrap")[0]
+    min_ix = min_ix[(min_ix != 0) & (min_ix != (len(f) - 1))]
 
     # neglect minor oscillations
     if abs(np.mean(f[max_ix]) - np.mean(f[min_ix])) < amplitude_threshold:
         return np.nan * t_unit
 
     # compute mean peak-to-peak
-    if len(max_ix) > 0:
-        T_max = np.mean(t[max_ix[1:]] - t[max_ix[:-1]])
-    else:
-        T_max = np.nan
+    T_max = np.mean(t[max_ix[1:]] - t[max_ix[:-1]]) if len(max_ix) > 0 else np.nan
 
     # now compute mean trough-to-trough
-    if len(min_ix) > 0:
-        T_min = np.mean(t[min_ix[1:]] - t[min_ix[:-1]])
-    else:
-        T_min = np.nan
+    T_min = np.mean(t[min_ix[1:]] - t[min_ix[:-1]]) if len(min_ix) > 0 else np.nan
 
     # then take the mean of these two
     return np.mean([T_max, T_min]) * t_unit
 
 
-def _autodetermine_initial_dt(w0, H, dE_threshold=1E-9,
-                              **integrate_kwargs):
+def _autodetermine_initial_dt(w0, H, dE_threshold=1e-9, **integrate_kwargs):
     if w0.shape and w0.shape[0] > 1:
-        raise ValueError("Only one set of initial conditions may be passed "
-                         "in at a time.")
+        raise ValueError(
+            "Only one set of initial conditions may be passed " "in at a time."
+        )
 
     if dE_threshold is None:
-        return 1.
+        return 1.0
 
     dts = np.logspace(-3, 1, 8)[::-1]
-    _base_n_steps = 1000
+    base_n_steps = 1000
 
     for dt in dts:
-        n_steps = int(round(_base_n_steps / dt))
-        orbit = H.integrate_orbit(w0, dt=dt, n_steps=n_steps,
-                                  **integrate_kwargs)
+        n_steps = round(base_n_steps / dt)
+        orbit = H.integrate_orbit(w0, dt=dt, n_steps=n_steps, **integrate_kwargs)
         E = orbit.energy()
         dE = np.abs((E[-1] - E[0]) / E[0]).value
 
@@ -93,9 +84,15 @@ def _autodetermine_initial_dt(w0, H, dE_threshold=1E-9,
     return dt
 
 
-def estimate_dt_n_steps(w0, hamiltonian, n_periods, n_steps_per_period,
-                        dE_threshold=1E-9, func=np.nanmax,
-                        **integrate_kwargs):
+def estimate_dt_n_steps(
+    w0,
+    hamiltonian,
+    n_periods,
+    n_steps_per_period,
+    dE_threshold=1e-9,
+    func=np.nanmax,
+    **integrate_kwargs,
+):
     """
     Estimate the timestep and number of steps to integrate an orbit for
     given its initial conditions and a potential object.
@@ -131,14 +128,15 @@ def estimate_dt_n_steps(w0, hamiltonian, n_periods, n_steps_per_period,
         w0 = PhaseSpacePosition.from_w(w0, units=hamiltonian.units)
 
     from ..potential import Hamiltonian
+
     hamiltonian = Hamiltonian(hamiltonian)
 
     # integrate orbit
-    dt = _autodetermine_initial_dt(w0, hamiltonian, dE_threshold=dE_threshold,
-                                   **integrate_kwargs)
-    n_steps = int(round(10000 / dt))
-    orbit = hamiltonian.integrate_orbit(w0, dt=dt, n_steps=n_steps,
-                                        **integrate_kwargs)
+    dt = _autodetermine_initial_dt(
+        w0, hamiltonian, dE_threshold=dE_threshold, **integrate_kwargs
+    )
+    n_steps = round(10000 / dt)
+    orbit = hamiltonian.integrate_orbit(w0, dt=dt, n_steps=n_steps, **integrate_kwargs)
 
     # if loop, align circulation with Z and take R period
     circ = orbit.circulation()
@@ -151,12 +149,16 @@ def estimate_dt_n_steps(w0, hamiltonian, n_periods, n_steps_per_period,
         phi = cyl.phi.value
         z = cyl.z.value
 
-        T = np.array([peak_to_peak_period(orbit.t, f).value
-                      for f in [R, phi, z]])*orbit.t.unit
+        T = (
+            np.array([peak_to_peak_period(orbit.t, f).value for f in [R, phi, z]])
+            * orbit.t.unit
+        )
 
     else:
-        T = np.array([peak_to_peak_period(orbit.t, f).value
-                      for f in orbit.pos])*orbit.t.unit
+        T = (
+            np.array([peak_to_peak_period(orbit.t, f).value for f in orbit.pos])
+            * orbit.t.unit
+        )
 
     # timestep from number of steps per period
     T = func(T)
@@ -166,9 +168,9 @@ def estimate_dt_n_steps(w0, hamiltonian, n_periods, n_steps_per_period,
 
     T = T.decompose(hamiltonian.units).value
     dt = T / float(n_steps_per_period)
-    n_steps = int(round(n_periods * T / dt))
+    n_steps = round(n_periods * T / dt)
 
-    if dt == 0. or dt < 1E-13:
+    if dt == 0.0 or dt < 1e-13:
         raise ValueError("Timestep is zero or very small!")
 
     return dt, n_steps
@@ -187,19 +189,19 @@ def combine(objs):
     from .orbit import Orbit
 
     # have to special-case this because they are iterable
-    if isinstance(objs, PhaseSpacePosition) or isinstance(objs, Orbit):
+    if isinstance(objs, PhaseSpacePosition | Orbit) or (
+        not isiterable(objs) or len(objs) < 1
+    ):
         raise ValueError("You must pass a non-empty iterable to combine.")
 
-    elif not isiterable(objs) or len(objs) < 1:
-        raise ValueError("You must pass a non-empty iterable to combine.")
-
-    elif len(objs) == 1:  # short circuit
+    if len(objs) == 1:  # short circuit
         return objs[0]
 
     # We only support these two types to combine:
-    if objs[0].__class__ not in [PhaseSpacePosition, Orbit]:
-        raise TypeError("Objects must be either PhaseSpacePosition or Orbit "
-                        "instances.")
+    if objs[0].__class__ not in {PhaseSpacePosition, Orbit}:
+        raise TypeError(
+            "Objects must be either PhaseSpacePosition or Orbit " "instances."
+        )
 
     # Validate objects:
     # - check type
@@ -220,18 +222,22 @@ def combine(objs):
             raise ValueError("All objects must have the same frame.")
 
         # Check that (for orbits) they all have the same potential
-        if hasattr(obj, 'potential') and obj.potential != objs[0].potential:
+        if hasattr(obj, "potential") and obj.potential != objs[0].potential:
             raise ValueError("All objects must have the same potential.")
 
         # For orbits, time arrays must be the same
-        if (hasattr(obj, 't') and obj.t is not None and objs[0].t is not None
-                and not u.allclose(obj.t, objs[0].t,
-                                   atol=1E-13*objs[0].t.unit)):
+        if (
+            hasattr(obj, "t")
+            and obj.t is not None
+            and objs[0].t is not None
+            and not u.allclose(obj.t, objs[0].t, atol=1e-13 * objs[0].t.unit)
+        ):
             raise ValueError("All orbits must have the same time array.")
 
-        if 'cartesian' not in obj.pos.get_name():
-            raise NotImplementedError("Currently, combine only works for "
-                                      "Cartesian-represented objects.")
+        if "cartesian" not in obj.pos.get_name():
+            raise NotImplementedError(
+                "Currently, combine only works for " "Cartesian-represented objects."
+            )
 
     # Now we prepare the positions, velocities:
     if objs[0].__class__ == PhaseSpacePosition:
@@ -243,17 +249,15 @@ def combine(objs):
                 pos_unit = obj.pos.xyz.unit
                 vel_unit = obj.vel.d_xyz.unit
 
-            pos.append(atleast_2d(obj.pos.xyz.to(pos_unit).value,
-                                  insert_axis=1))
-            vel.append(atleast_2d(obj.vel.d_xyz.to(vel_unit).value,
-                                  insert_axis=1))
+            pos.append(atleast_2d(obj.pos.xyz.to(pos_unit).value, insert_axis=1))
+            vel.append(atleast_2d(obj.vel.d_xyz.to(vel_unit).value, insert_axis=1))
 
         pos = np.concatenate(pos, axis=1) * pos_unit
         vel = np.concatenate(vel, axis=1) * vel_unit
 
         return PhaseSpacePosition(pos=pos, vel=vel, frame=objs[0].frame)
 
-    elif objs[0].__class__ == Orbit:
+    if objs[0].__class__ == Orbit:
         pos = []
         vel = []
 
@@ -266,8 +270,8 @@ def combine(objs):
             v = obj.vel.d_xyz.to(vel_unit).value
 
             if p.ndim < 3:
-                p = p.reshape(p.shape + (1,))
-                v = v.reshape(v.shape + (1,))
+                p = p.reshape((*p.shape, 1))
+                v = v.reshape((*v.shape, 1))
 
             pos.append(p)
             vel.append(v)
@@ -275,9 +279,12 @@ def combine(objs):
         pos = np.concatenate(pos, axis=2) * pos_unit
         vel = np.concatenate(vel, axis=2) * vel_unit
 
-        return Orbit(pos=pos, vel=vel,
-                     t=objs[0].t, frame=objs[0].frame,
-                     potential=objs[0].potential)
+        return Orbit(
+            pos=pos,
+            vel=vel,
+            t=objs[0].t,
+            frame=objs[0].frame,
+            potential=objs[0].potential,
+        )
 
-    else:
-        raise RuntimeError("should never get here...")
+    raise RuntimeError("should never get here...")

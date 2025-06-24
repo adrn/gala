@@ -8,7 +8,7 @@
 __all__ = ['CFrameBase']
 
 
-# Third-party
+
 import numpy as np
 cimport numpy as np
 np.import_array()

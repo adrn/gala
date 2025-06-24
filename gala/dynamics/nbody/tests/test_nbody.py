@@ -1,4 +1,3 @@
-# Third-party
 import astropy.units as u
 import numpy as np
 import pytest
@@ -20,7 +19,6 @@ from gala.potential import (
 )
 from gala.units import UnitSystem, galactic
 
-# Project
 from ..core import DirectNBody
 
 
@@ -48,7 +46,7 @@ class TestDirectNBody:
         # another unit system for testing
         usys2 = UnitSystem(u.pc, u.Unit(1e-3 * u.Myr), u.Unit(1e6 * u.Msun), u.radian)
 
-        particle_potentials_None = [None] + self.particle_potentials[1:]
+        particle_potentials_None = [None, *self.particle_potentials[1:]]
 
         # Different VALID ways to initialize
         nbody = DirectNBody(self.w0, particle_potentials=self.particle_potentials)
@@ -67,7 +65,7 @@ class TestDirectNBody:
         nbody = DirectNBody(self.w0, particle_potentials=[None, None], units=usys2)
         nbody = DirectNBody(
             self.w0,
-            particle_potentials=[None, None],  # noqa
+            particle_potentials=[None, None],
             external_potential=self.ext_pot,
         )
 
@@ -151,15 +149,15 @@ class TestDirectNBody:
         )
 
         # Compute the acceleration we expect:
-        _pot1 = HernquistPotential(
+        pot1_ = HernquistPotential(
             m=1e6 * u.Msun, c=0.1 * u.pc, units=self.usys, origin=self.w0[0].xyz
         )
-        _pot2 = HernquistPotential(
+        pot2_ = HernquistPotential(
             m=1.6e6 * u.Msun, c=0.33 * u.pc, units=self.usys, origin=self.w0[1].xyz
         )
         exp_acc = np.zeros((3, 2)) * self.usys["acceleration"]
-        exp_acc[:, 0] = _pot2.acceleration(self.w0[0])[:, 0]
-        exp_acc[:, 1] = _pot1.acceleration(self.w0[1])[:, 0]
+        exp_acc[:, 0] = pot2_.acceleration(self.w0[0])[:, 0]
+        exp_acc[:, 1] = pot1_.acceleration(self.w0[1])[:, 0]
         exp_acc += self.ext_pot.acceleration(self.w0)
 
         acc = nbody.acceleration()

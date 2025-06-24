@@ -2,11 +2,9 @@
 
 from abc import ABCMeta, abstractmethod
 
-# Third-party
 import numpy as np
 from astropy.utils.decorators import deprecated
 
-# This project
 from gala.units import DimensionlessUnitSystem, UnitSystem
 
 __all__ = ["Integrator"]
@@ -21,7 +19,7 @@ class Integrator(metaclass=ABCMeta):
         progress=False,
         save_all=True,
     ):
-        if not hasattr(func, "__call__"):
+        if not callable(func):
             raise ValueError("func must be a callable object, e.g., a function.")
 
         self.F = func
@@ -44,11 +42,12 @@ class Integrator(metaclass=ABCMeta):
                 from tqdm import trange
 
                 return trange
-            except ImportError:
-                raise ImportError(
+            except ImportError as e:
+                msg = (
                     "tqdm must be installed to use progress=True when running "
                     f"{self.__class__.__name__}"
                 )
+                raise ImportError(msg) from e
 
         return range
 
@@ -68,7 +67,7 @@ class Integrator(metaclass=ABCMeta):
         arr_w0 = w0.w(self._func_units)
 
         self.ndim, self.norbits = arr_w0.shape
-        self.ndim = self.ndim // 2
+        self.ndim //= 2
 
         if self.save_all:
             return_shape = (2 * self.ndim, n_steps + 1, self.norbits)
@@ -106,12 +105,11 @@ class Integrator(metaclass=ABCMeta):
 
         from ..dynamics import Orbit
 
-        orbit = Orbit(
+        return Orbit(
             pos=w[: self.ndim] * pos_unit,
             vel=w[self.ndim :] * vel_unit,
             t=t * t_unit,
         )
-        return orbit
 
     @deprecated("1.9", alternative="Integrator call method")
     def run(self, w0, mmap=None, **time_spec):
@@ -154,4 +152,3 @@ class Integrator(metaclass=ABCMeta):
         orbit : `~gala.dynamics.Orbit`
 
         """
-        pass

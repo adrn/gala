@@ -22,14 +22,12 @@
 # # Defining a Milky Way potential model
 
 # +
-# Third-party dependencies
 import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy.io import ascii
 from scipy.optimize import leastsq
 
-# Gala
 import gala.potential as gp
 from gala.units import galactic
 

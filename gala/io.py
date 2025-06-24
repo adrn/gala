@@ -1,4 +1,3 @@
-# Third-party
 import astropy.units as u
 
 
@@ -18,10 +17,10 @@ def quantity_from_hdf5(dset):
         If a unit attribute exists, this returns a Quantity. Otherwise, it
         returns a numpy array.
     """
-    if 'unit' in dset.attrs and dset.attrs['unit'] is not None:
-        unit = u.Unit(dset.attrs['unit'])
+    if "unit" in dset.attrs and dset.attrs["unit"] is not None:
+        unit = u.Unit(dset.attrs["unit"])
     else:
-        unit = 1.
+        unit = 1.0
 
     return dset[:] * unit
 
@@ -41,10 +40,10 @@ def quantity_to_hdf5(f, key, q):
 
     """
 
-    if hasattr(q, 'unit'):
+    if hasattr(q, "unit"):
         f[key] = q.value
-        f[key].attrs['unit'] = str(q.unit)
+        f[key].attrs["unit"] = str(q.unit)
 
     else:
         f[key] = q
-        f[key].attrs['unit'] = ""
+        f[key].attrs["unit"] = ""

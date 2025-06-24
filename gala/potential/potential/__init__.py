@@ -1,7 +1,7 @@
+from .builtin import *
+from .ccompositepotential import *
 from .core import *
 from .cpotential import *
-from .ccompositepotential import *
-from .builtin import *
 from .io import *
 from .util import *
 
@@ -13,12 +13,12 @@ def __getattr__(name):
     if name in globals():
         return globals()[name]
 
-    elif name.startswith('MultipolePotentialLmax'):
+    if name.startswith("MultipolePotentialLmax"):
         return getattr(builtin.core, name)
 
-    elif name.startswith('SCF'):
+    if name.startswith("SCF"):
         from .. import scf
+
         return getattr(scf, name)
 
-    else:
-        raise AttributeError("huh")
+    raise AttributeError("huh")

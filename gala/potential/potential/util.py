@@ -1,17 +1,14 @@
-""" Utilities for Potential classes """
+"""Utilities for Potential classes"""
 
-# Standard library
 from functools import wraps
 
-# Third-party
 import numpy as np
 
-# Project
 from ..common import PotentialParameter
 from .core import PotentialBase
 
-__all__ = ['from_equation']
-__doctest_requires__ = {('from_equation', ): ['sympy']}
+__all__ = ["from_equation"]
+__doctest_requires__ = {("from_equation",): ["sympy"]}
 
 
 def from_equation(expr, vars, pars, name=None, hessian=False):
@@ -70,9 +67,10 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
     try:
         import sympy
         from sympy.utilities.lambdify import lambdify
-    except ImportError:
-        raise ImportError("sympy is required to use 'from_equation()' "
-                          "potential class creation.")
+    except ImportError as e:
+        raise ImportError(
+            "sympy is required to use 'from_equation()' " "potential class creation."
+        ) from e
 
     # convert all input to Sympy objects
     expr = sympy.sympify(expr)
@@ -83,25 +81,28 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
     ndim = len(vars)
 
     # Energy / value
-    energyfunc = lambdify(vars + pars, expr, dummify=False,
-                          modules=['numpy', 'sympy'])
+    energyfunc = lambdify(vars + pars, expr, dummify=False, modules=["numpy", "sympy"])
 
     # Gradient
     gradfuncs = []
     for var in vars:
-        gradfuncs.append(lambdify(vars + pars, sympy.diff(expr, var),
-                                  dummify=False,
-                                  modules=['numpy', 'sympy']))
+        gradfuncs.append(
+            lambdify(
+                vars + pars,
+                sympy.diff(expr, var),
+                dummify=False,
+                modules=["numpy", "sympy"],
+            )
+        )
 
     parameters = {}
     for _name in par_names:
-        parameters[_name] = PotentialParameter(_name,
-                                               physical_type='dimensionless')
+        parameters[_name] = PotentialParameter(_name, physical_type="dimensionless")
 
     class CustomPotential(PotentialBase, parameters=parameters):
         ndim = len(vars)
 
-        def _energy(self, w, t=0.):
+        def _energy(self, w, t=0.0):
             kw = self.parameters.copy()
             for k, v in kw.items():
                 kw[k] = v.value
@@ -111,7 +112,7 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
 
             return np.array(energyfunc(**kw))
 
-        def _gradient(self, w, t=0.):
+        def _gradient(self, w, t=0.0):
             kw = self.parameters.copy()
             for k, v in kw.items():
                 kw[k] = v.value
@@ -125,7 +126,7 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
     if name is not None:
         # name = _classnamify(name)
         if "potential" not in name.lower():
-            name = name + "Potential"
+            name += "Potential"
         CustomPotential.__name__ = str(name)
 
     # Hessian
@@ -133,10 +134,14 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
         hessfuncs = []
         for var1 in vars:
             for var2 in vars:
-                hessfuncs.append(lambdify(vars + pars,
-                                          sympy.diff(expr, var1, var2),
-                                          dummify=False,
-                                          modules=['numpy', 'sympy']))
+                hessfuncs.append(
+                    lambdify(
+                        vars + pars,
+                        sympy.diff(expr, var1, var2),
+                        dummify=False,
+                        modules=["numpy", "sympy"],
+                    )
+                )
 
         def _hessian(self, w, t):
             kw = self.parameters.copy()
@@ -171,8 +176,8 @@ def format_doc(*args, **kwargs):
 
     Modeled after astropy.utils.decorators.format_doc
     """
-    def set_docstring(obj):
 
+    def set_docstring(obj):
         # None means: use the objects __doc__
         doc = obj.__doc__
         # Delete documentation in this case so we don't end up with
@@ -181,54 +186,50 @@ def format_doc(*args, **kwargs):
 
         # If the original has a not-empty docstring append it to the format
         # kwargs.
-        kwargs['__doc__'] = obj.__doc__ or ''
+        kwargs["__doc__"] = obj.__doc__ or ""
         obj.__doc__ = doc.format(*args, **kwargs)
         return obj
+
     return set_docstring
 
 
 class SympyWrapper:
-
     @classmethod
     def as_decorator(cls, func=None, **kwargs):
         self = cls(**kwargs)
         if func is not None and not kwargs:
             return self(func)
-        else:
-            return self
+        return self
 
     def __init__(self, func=None, var=None, include_G=True):
-        if var is None:
-            _var = 'x, y, z'
-        else:
-            _var = var
-        self.var = _var
+        var_ = "x, y, z" if var is None else var
+        self.var = var_
         self.include_G = include_G
 
     def __call__(self, wrapped_function):
-
         @wraps(wrapped_function)
         def wrapper(cls, *func_args, **func_kwargs):
             try:
-                import sympy as sy  # noqa
-            except ImportError:
-                raise ImportError("Converting to a latex expression requires "
-                                  "the sympy package to be installed")
+                import sympy as sy
+            except ImportError as e:
+                raise ImportError(
+                    "Converting to a latex expression requires "
+                    "the sympy package to be installed"
+                ) from e
 
-            _var = sy.symbols(self.var, seq=True, real=True)
-            _var = {v.name: v for v in _var}
+            var = sy.symbols(self.var, seq=True, real=True)
+            var = {v.name: v for v in var}
 
             if cls._parameters:
-                par = sy.symbols(' '.join(cls._parameters.keys()),
-                                 seq=True, real=True)
+                par = sy.symbols(" ".join(cls._parameters.keys()), seq=True, real=True)
                 par = {v.name: v for v in par}
             else:
                 par = {}
 
             if self.include_G:
-                par['G'] = sy.symbols('G')
+                par["G"] = sy.symbols("G")
 
-            return wrapped_function(cls, _var, par)
+            return wrapped_function(cls, var, par)
 
         return wrapper
 

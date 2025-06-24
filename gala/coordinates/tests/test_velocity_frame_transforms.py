@@ -1,14 +1,12 @@
 """
-    Test conversions in core.py
+Test conversions in core.py
 """
 
-# Third-party
 import astropy.coordinates as coord
 import astropy.units as u
-from astropy.utils.data import get_pkg_data_filename
 import numpy as np
+from astropy.utils.data import get_pkg_data_filename
 
-# This package
 from ..velocity_frame_transforms import vgsr_to_vhel, vhel_to_vgsr
 
 

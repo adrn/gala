@@ -1,17 +1,13 @@
-# Third-party
 import astropy.units as u
 import numpy as np
 import pytest
 
-# Project
-from ..representation_nd import (NDCartesianRepresentation,
-                                 NDCartesianDifferential)
+from ..representation_nd import NDCartesianDifferential, NDCartesianRepresentation
 
 
 def test_init_repr():
-
     # Passing in x1, x2
-    rep = NDCartesianRepresentation([1., 1.])
+    rep = NDCartesianRepresentation([1.0, 1.0])
     assert rep.xyz.shape == (2,)
 
     # Passing in x1, x2
@@ -19,13 +15,13 @@ def test_init_repr():
     assert rep.xyz.shape == (2, 8)
     rep[:1]
 
-    for n in range(1, 6+1):
-        print('N: '+str(n))
+    for n in range(1, 6 + 1):
+        print("N: " + str(n))
 
         xs = np.random.uniform(size=(n, 16)) * u.one
         rep = NDCartesianRepresentation(xs)
-        for i in range(1, n+1):
-            assert hasattr(rep, 'x'+str(i))
+        for i in range(1, n + 1):
+            assert hasattr(rep, "x" + str(i))
 
         xs2 = rep.xyz
         assert u.allclose(xs, xs2)
@@ -37,9 +33,8 @@ def test_init_repr():
 
 
 def test_init_diff():
-
     # Passing in x1, x2
-    rep = NDCartesianDifferential([1., 1.])
+    rep = NDCartesianDifferential([1.0, 1.0])
     assert rep.d_xyz.shape == (2,)
     with pytest.raises(TypeError):
         rep[:1]
@@ -49,13 +44,13 @@ def test_init_diff():
     assert rep.d_xyz.shape == (2, 8)
     rep[:1]
 
-    for n in range(1, 6+1):
-        print('N: '+str(n))
+    for n in range(1, 6 + 1):
+        print("N: " + str(n))
 
         xs = np.random.uniform(size=(n, 16)) * u.one
         rep = NDCartesianDifferential(xs)
-        for i in range(1, n+1):
-            assert hasattr(rep, 'd_x'+str(i))
+        for i in range(1, n + 1):
+            assert hasattr(rep, "d_x" + str(i))
 
         xs2 = rep.d_xyz
         assert u.allclose(xs, xs2)

@@ -8,12 +8,12 @@
 
 """ Generate mock streams. """
 
-# Standard library
+
 import warnings
 from os import path
 import sys
 
-# Third-party
+
 import astropy.units as u
 import numpy as np
 cimport numpy as np

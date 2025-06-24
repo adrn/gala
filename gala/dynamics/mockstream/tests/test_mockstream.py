@@ -1,7 +1,6 @@
 import itertools
 import os
 
-# Third-party
 import astropy.units as u
 import numpy as np
 import pytest
@@ -61,7 +60,7 @@ def test_init():
     nbody = DirectNBody(
         w0=nbody_w0, external_potential=potential, particle_potentials=[None]
     )
-    new_nbody = gen._get_nbody(w0, nbody)  # noqa
+    new_nbody = gen._get_nbody(w0, nbody)
 
 
 def test_run():
@@ -127,7 +126,7 @@ def test_mockstream_nbody_run(dt, save_all):
 
 
 @pytest.mark.parametrize(
-    "dt, nsteps, output_every, release_every, n_particles, trail",
+    ("dt", "nsteps", "output_every", "release_every", "n_particles", "trail"),
     list(itertools.product([1, -1], [16, 17], [1, 2], [1, 4], [1, 4], [True, False])),
 )
 @pytest.mark.skipif(not HAS_H5PY, reason="h5py required for this test")
@@ -146,7 +145,7 @@ def test_animate(tmpdir, dt, nsteps, output_every, release_every, n_particles, t
     gen = MockStreamGenerator(df=df, hamiltonian=H)
 
     filename = os.path.join(str(tmpdir), "test.hdf5")
-    stream, _ = gen.run(
+    _stream, _ = gen.run(
         w0,
         mass,
         dt=dt,

@@ -1,7 +1,6 @@
 import numpy as np
-from gala.dynamics import Orbit
 
-__all__ = ['get_staeckel_fudge_delta']
+__all__ = ["get_staeckel_fudge_delta"]
 
 
 def get_staeckel_fudge_delta(potential, w, median=True):
@@ -21,6 +20,8 @@ def get_staeckel_fudge_delta(potential, w, median=True):
         The focal length values.
 
     """
+    from gala.dynamics import Orbit
+
     grad = potential.gradient(w).decompose(potential.units).value
     hess = potential.hessian(w).decompose(potential.units).value
 
@@ -38,21 +39,19 @@ def get_staeckel_fudge_delta(potential, w, median=True):
     dPhi_dR = cosphi * grad[0] + sinphi * grad[1]
     dPhi_dz = grad[2]
 
-    d2Phi_dR2 = (cosphi**2 * hess[0, 0] +
-                 sinphi**2 * hess[1, 1] +
-                 sin2phi * hess[0, 1])
+    d2Phi_dR2 = cosphi**2 * hess[0, 0] + sinphi**2 * hess[1, 1] + sin2phi * hess[0, 1]
     d2Phi_dz2 = hess[2, 2]
     d2Phi_dRdz = cosphi * hess[0, 2] + sinphi * hess[1, 2]
 
     # numerator of term in eq. 9 (Sanders 2012), but from Galpy,
     #   which claims there is a sign error in the manuscript??
-    num = 3*z * dPhi_dR - 3*R * dPhi_dz + R*z * (d2Phi_dR2 - d2Phi_dz2)
+    num = 3 * z * dPhi_dR - 3 * R * dPhi_dz + R * z * (d2Phi_dR2 - d2Phi_dz2)
     a2_c2 = z**2 - R**2 + num / d2Phi_dRdz
-    a2_c2[np.abs(a2_c2) < 1e-12] = 0.  # MAGIC NUMBER / HACK
+    a2_c2[np.abs(a2_c2) < 1e-12] = 0.0  # MAGIC NUMBER / HACK
     delta = np.sqrt(a2_c2)
 
     # Median over time if the inputs were orbits
     if (len(delta.shape) > 1 and median) or isinstance(w, Orbit):
         delta = np.nanmedian(delta, axis=0)
 
-    return delta * potential.units['length']
+    return delta * potential.units["length"]

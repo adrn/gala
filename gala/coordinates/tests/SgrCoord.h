@@ -22,7 +22,7 @@ using namespace std;
 // the heliocentric Sgr system (lambda=0 at Sgr)
 // Input must be in kpc of the form X Y Z
 // Output is in kpc and degrees, of the form X_Sgr Y_Sgr Z_Sgr r lambda beta
-void XYZtoSgr(double X,double Y,double Z,double &Xs,double &Ys,double &Zs,double &r,double &lambda,double &beta,double Xsun=7.0)  
+void XYZtoSgr(double X,double Y,double Z,double &Xs,double &Ys,double &Zs,double &r,double &lambda,double &beta,double Xsun=7.0)
   {
   double radpdeg=3.141592653589793/180.;
   // Define the Euler angles
@@ -43,7 +43,7 @@ void XYZtoSgr(double X,double Y,double Z,double &Xs,double &Ys,double &Zs,double
 
   X=-X; // Make the input system right-handed
   X=X+Xsun; // Transform the input system to heliocentic right handed coordinates
-  
+
   // Calculate X,Y,Z,distance in the Sgr system
   Xs=rot11*X+rot12*Y+rot13*Z;
   Ys=rot21*X+rot22*Y+rot23*Z;
@@ -62,14 +62,14 @@ void XYZtoSgr(double X,double Y,double Z,double &Xs,double &Ys,double &Zs,double
 // the heliocentric Sgr system (lambda=0 at Sgr)
 // Input must be in degrees and kpc of the form l b r
 // Output is in kpc and degrees, of the form X_Sgr Y_Sgr Z_Sgr r lambda beta
-void LBRtoSgr(double l,double b,double r,double &Xs,double &Ys,double &Zs,double &lambda,double &beta,double Xsun=7.0)  
+void LBRtoSgr(double l,double b,double r,double &Xs,double &Ys,double &Zs,double &lambda,double &beta,double Xsun=7.0)
   {
   double radpdeg=3.141592653589793/180.;
   double X,Y,Z;
 
   // Transform l,b to radians
   l=l*radpdeg; b=b*radpdeg;
-  
+
   // Transform to heliocentric Cartesian coordinates
   X=r*cos(b)*cos(l);
   Y=r*cos(b)*sin(l);
@@ -89,7 +89,7 @@ void LBRtoSgr(double l,double b,double r,double &Xs,double &Ys,double &Zs,double
 // Input must be in kpc of the form X Y Z
 // Output is in kpc and degrees, of the form X_Sgr,GC Y_Sgr,GC Z_Sgr,GC d_GC lambda_GC beta_GC
 // Note that d is distance from Galactic Center
-void XYZtoSgrGC(double X,double Y,double Z,double &Xs,double &Ys,double &Zs,double &d,double &lambda,double &beta,double Xsun=7.0)  
+void XYZtoSgrGC(double X,double Y,double Z,double &Xs,double &Ys,double &Zs,double &d,double &lambda,double &beta,double Xsun=7.0)
   {
   double radpdeg=3.141592653589793/180.;
   // Define the Euler angles
@@ -144,14 +144,14 @@ void XYZtoSgrGC(double X,double Y,double Z,double &Xs,double &Ys,double &Zs,doub
 // Input must be in degrees and kpc of the form l b r
 // Output is in kpc and degrees, of the form X_Sgr,GC Y_Sgr,GC Z_Sgr,GC d_GC lambda_GC beta_GC
 // Note that d is distance from Galactic Center
-void LBRtoSgrGC(double l,double b,double r,double &Xs,double &Ys,double &Zs,double &d,double &lambda,double &beta,double Xsun=7.0)  
+void LBRtoSgrGC(double l,double b,double r,double &Xs,double &Ys,double &Zs,double &d,double &lambda,double &beta,double Xsun=7.0)
   {
   double radpdeg=3.141592653589793/180.;
   double X,Y,Z;
 
   // Transform l,b to radians
   l=l*radpdeg; b=b*radpdeg;
-  
+
   // Transform to heliocentric Cartesian coordinates
   X=r*cos(b)*cos(l);
   Y=r*cos(b)*sin(l);

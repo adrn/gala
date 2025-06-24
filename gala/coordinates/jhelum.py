@@ -1,8 +1,6 @@
-# Third-party
-import numpy as np
-
-import astropy.units as u
 import astropy.coordinates as coord
+import astropy.units as u
+import numpy as np
 from astropy.coordinates import frame_transform_graph
 
 __all__ = ["JhelumBonaca19"]
@@ -56,7 +54,7 @@ class JhelumBonaca19(coord.BaseCoordinateFrame):
         super().__init__(*args, **kwargs)
         if wrap and isinstance(
             self._data,
-            (coord.UnitSphericalRepresentation, coord.SphericalRepresentation),
+            coord.UnitSphericalRepresentation | coord.SphericalRepresentation,
         ):
             self._data.lon.wrap_angle = self._default_wrap_angle
 

@@ -1,4 +1,3 @@
-# Third-party
 import numpy as np
 
 __all__ = ["cartesian_to_poincare_polar"]
@@ -38,5 +37,4 @@ def cartesian_to_poincare_polar(w):
     z = w[..., 2]
     zdot = w[..., 2 + 3]
 
-    new_w = np.vstack((R.T, pp_phi.T, z.T, vR.T, pp_phidot.T, zdot.T)).T
-    return new_w
+    return np.vstack((R.T, pp_phi.T, z.T, vR.T, pp_phidot.T, zdot.T)).T

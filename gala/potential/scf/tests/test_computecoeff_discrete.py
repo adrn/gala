@@ -1,15 +1,11 @@
-# coding: utf-8
-
 import multiprocessing
 import os
 
-# Third-party
 import numpy as np
 import pytest
 from astropy.constants import G
 from astropy.utils.data import get_pkg_data_filename
 
-# Project
 import gala.potential as gp
 from gala._cconfig import GSL_ENABLED
 from gala.units import galactic
@@ -26,7 +22,7 @@ if not GSL_ENABLED:
 def test_plummer():
     pos_path = os.path.abspath(get_pkg_data_filename("data/plummer-pos.dat.gz"))
 
-    scfbi = scfbi = np.loadtxt(pos_path)
+    scfbi = np.loadtxt(pos_path)
     m_k = scfbi[:, 0] * 10  # masses sum to 0.1
     xyz = scfbi[:, 1:4]
 

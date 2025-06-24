@@ -138,9 +138,7 @@ integrate and plot an orbit:
         pos=[8, 0.0, 1.0] * u.kpc,
         vel=[0.0, 220, 0.0] * u.km / u.s,
     )
-    orbit = gp.Hamiltonian(exp_pot).integrate_orbit(
-        w0, dt=1 * u.Myr, t1=0, t2=6 * u.Gyr
-    )
+    orbit = gp.Hamiltonian(exp_pot).integrate_orbit(w0, dt=1 * u.Myr, t1=0, t2=6 * u.Gyr)
     fig = orbit.plot(units=u.kpc, linestyle="-", alpha=0.5, label="orbit in m12m")
 
 -----
@@ -203,8 +201,8 @@ the coefficient data (for memory efficiency):
         units=exp_units,
         config_file="config.yml",
         coef_file="coefs.h5",
-        tmin=1.,
-        tmax=2.,
+        tmin=1.0,
+        tmax=2.0,
     )
 
 Note that, as mentioned above, subsequently using a time outside this range will result

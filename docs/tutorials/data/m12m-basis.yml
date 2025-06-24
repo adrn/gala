@@ -1,7 +1,6 @@
-
 ---
 id: sphereSL
-parameters :
+parameters:
   numr: 1024
   rmin: 0.0010
   rmax: 30.0
@@ -9,4 +8,3 @@ parameters :
   nmax: 10
   modelname: m12m_basis_table.model
   cachename: m12m.cache
-...

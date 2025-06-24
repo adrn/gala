@@ -7,7 +7,7 @@ from scipy.integrate import ode, quad
 Grav = 430091.7270069976
 
 
-class LMPot(object):
+class LMPot:
     """Potential used in Law-Majewski 2010"""
 
     def __init__(self):
@@ -109,7 +109,7 @@ class LMPot(object):
         return np.dot(self.invrotmatrix, np.array([x, y]))
 
 
-class log_triax(object):
+class log_triax:
     r"""test triaxial logarithmic potential
     Phi(x, y, z) = 0.5 v_c^2 log(Rc^2+x^2+(y/qy)^2+(z/qz)^2)"""
 
@@ -134,7 +134,7 @@ class log_triax(object):
         return -self.vc2 / p * np.array([x, y / self.qy2, z / self.qz2])
 
 
-class quartic(object):
+class quartic:
     r"""Quartic potential
     Phi(x, y, z) = 0.25(lam[0] x^4+lam[1] y^4+lam[2] z^4.
     """
@@ -188,7 +188,7 @@ class quartic(object):
 # import triax_py
 
 
-class stackel_triax(object):
+class stackel_triax:
     """For interface with C code to find actions in triaxial Stackel potential"""
 
     def __init__(self):
@@ -212,7 +212,7 @@ class stackel_triax(object):
         return triax_py.Stack_Triax_Freqs(x)
 
 
-class harmonic_oscillator(object):
+class harmonic_oscillator:
     """
     Triaxial harmonic oscillator
     Phi(x, y, z) = 0.5*(omega[0]^2 x^2+omega[1]^2 y^2 + omega[2]^2 z^2
@@ -232,7 +232,7 @@ class harmonic_oscillator(object):
         )
 
 
-class isochrone(object):
+class isochrone:
     """
     Isochrone potential
     Phi(r) = -GM/(b+sqrt(b^2+r^2))

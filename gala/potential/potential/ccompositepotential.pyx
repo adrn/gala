@@ -5,7 +5,7 @@
 # cython: profile=False
 # cython: language_level=3
 
-# Third-party
+
 import numpy as np
 cimport numpy as np
 np.import_array()
@@ -14,7 +14,7 @@ cimport cython
 
 from libc.stdio cimport printf
 
-# Project
+
 from .core import CompositePotential
 from .cpotential import CPotentialBase
 from .cpotential cimport (

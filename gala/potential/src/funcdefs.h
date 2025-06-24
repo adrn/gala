@@ -5,5 +5,3 @@
     typedef void (*gradientfunc)(double t, double *pars, double *q, int n_dim, double *grad, void *state);
     typedef void (*hessianfunc)(double t, double *pars, double *q, int n_dim, double *hess, void *state);
 #endif
-
-

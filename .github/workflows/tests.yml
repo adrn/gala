@@ -3,9 +3,9 @@ name: Tests
 on:
   push:
     branches:
-    - main
+      - main
     tags:
-    - '*'
+      - "*"
   pull_request:
 
 jobs:
@@ -13,7 +13,8 @@ jobs:
     name: Check skip flags
     runs-on: ubuntu-latest
     outputs:
-      head-commit-message: ${{ steps.get_head_commit_message.outputs.HEAD_COMMIT_MESSAGE }}
+      head-commit-message:
+        ${{ steps.get_head_commit_message.outputs.HEAD_COMMIT_MESSAGE }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -24,10 +25,16 @@ jobs:
         run: echo "HEAD_COMMIT_MESSAGE=$(git show -s --format=%s)" >> "$GITHUB_OUTPUT"
 
   tests:
-    name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with numpy ${{ matrix.numpy-version }}, no gsl ${{ matrix.gala-nogsl }}, deps ${{ matrix.pip-test-deps }}, EXP ${{ matrix.gala-exp }}
+    name:
+      Python ${{ matrix.python-version }} on ${{ matrix.os }} with numpy ${{
+      matrix.numpy-version }}, no gsl ${{ matrix.gala-nogsl }}, deps ${{
+      matrix.pip-test-deps }}, EXP ${{ matrix.gala-exp }}
     runs-on: ${{ matrix.os }}
     needs: check_skip_flags
-    if: ${{ github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only') && !contains(needs.check_skip_flags.outputs.head-commit-message, '[skip tests]') }}
+    if:
+      ${{ github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'docs only') &&
+      !contains(needs.check_skip_flags.outputs.head-commit-message, '[skip tests]') }}
     env:
       EXP_TAG: "v7.8.5"
     strategy:
@@ -42,7 +49,6 @@ jobs:
         pip-test-deps: ["test"]
         gala-exp: ["0"]
         include:
-
           - name: Oldest astropy, numpy, and scipy versions supported
             os: ubuntu-latest
             python-version: "3.11"
@@ -64,7 +70,7 @@ jobs:
             pip-test-deps: "test"
 
           - name: With optional dependencies
-            os: ubuntu-latest  # note: galpy install failed on macos here
+            os: ubuntu-latest # note: galpy install failed on macos here
             python-version: "3.11"
             astropy-version: "latest"
             numpy-version: "latest"
@@ -211,8 +217,7 @@ jobs:
           GALA_FORCE_EXP_TEST: ${{ matrix.gala-exp }}
           GALA_FORCE_PYEXP_TEST: ${{ matrix.gala-exp }}
         run: >-
-          python -m pytest -ra --cov --cov-report=xml --cov-report=term
-          --durations=20
+          python -m pytest -ra --cov --cov-report=xml --cov-report=term --durations=20
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v5.4.3

@@ -5,14 +5,11 @@ Test the integrators.
 import os
 
 import numpy as np
-
-# Third-party
 import pytest
 from astropy.utils.exceptions import AstropyDeprecationWarning
 
 from gala.tests.optional_deps import HAS_TQDM
 
-# Project
 from .. import (
     DOPRI853Integrator,
     LeapfrogIntegrator,
@@ -30,7 +27,7 @@ integrator_list = [
 
 
 # Gradient functions:
-def sho_F(t, w, T):  # noqa
+def sho_F(t, w, T):
     """Simple harmonic oscillator"""
     q, p = w
     wdot = np.zeros_like(w)

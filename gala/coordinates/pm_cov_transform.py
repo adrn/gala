@@ -1,4 +1,3 @@
-# Third-party
 import astropy.coordinates as coord
 import numpy as np
 
@@ -40,7 +39,7 @@ def get_transform_matrix(from_frame, to_frame):
     else:
         to_frame_cls = to_frame
 
-    path, distance = coord.frame_transform_graph.find_shortest_path(
+    path, _distance = coord.frame_transform_graph.find_shortest_path(
         from_frame_cls, to_frame_cls
     )
 
@@ -65,21 +64,19 @@ def get_transform_matrix(from_frame, to_frame):
         elif isinstance(trans, coord.StaticMatrixTransform):
             M = trans.matrix
         else:
-            raise ValueError(
-                "Transform path contains a '{0}': cannot "
+            msg = (
+                f"Transform path contains a '{trans.__class__.__name__}': cannot "
                 "be composed into a single transformation "
-                "matrix.".format(trans.__class__.__name__)
+                "matrix."
             )
+            raise ValueError(msg)
 
         matrices.append(M)
         currsys = p
 
     M = None
     for Mi in reversed(matrices):
-        if M is None:
-            M = Mi
-        else:
-            M = M @ Mi
+        M = Mi if M is None else M @ Mi
 
     return M
 
@@ -105,23 +102,22 @@ def transform_pm_cov(c, cov, to_frame):
 
     """
     if c.isscalar and cov.shape != (2, 2):
-        raise ValueError(
+        msg = (
             "If input coordinate object is a scalar coordinate, "
             "the proper motion covariance matrix must have shape "
-            "(2, 2), not {}".format(cov.shape)
+            f"(2, 2), not {cov.shape}"
         )
+        raise ValueError(msg)
 
-    elif not c.isscalar and len(c) != cov.shape[0]:
-        raise ValueError(
+    if not c.isscalar and len(c) != cov.shape[0]:
+        msg = (
             "Input coordinates and covariance matrix must have "
-            "the same number of entries ({} vs {}).".format(len(c), cov.shape[0])
+            f"the same number of entries ({len(c)} vs {cov.shape[0]})."
         )
+        raise ValueError(msg)
 
     # 3D rotation matrix, to be projected onto the tangent plane
-    if hasattr(c, "frame"):
-        frame = c.frame
-    else:
-        frame = c
+    frame = c.frame if hasattr(c, "frame") else c
     R = get_transform_matrix(frame.__class__, to_frame)
 
     # Get input coordinates in the desired frame:

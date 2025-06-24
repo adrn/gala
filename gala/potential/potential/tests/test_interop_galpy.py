@@ -32,7 +32,7 @@ def pytest_generate_tests(metafunc):
         return
 
     # Test the Gala -> Galpy direction
-    for Potential in _gala_to_galpy.keys():
+    for Potential in _gala_to_galpy:
         init = {}
         len_scale = 1.0
         for k, par in Potential._parameters.items():
@@ -68,7 +68,7 @@ def pytest_generate_tests(metafunc):
     galpy_pots.append([galpy_pots[0], galpy_pots[1]])
 
     # Test the Galpy -> Gala direction
-    for Potential in _galpy_to_gala.keys():
+    for Potential in _galpy_to_gala:
         galpy_pot = Potential(ro=ro, vo=vo)  # use defaults
 
         if isinstance(galpy_pot, galpy_gp.MN3ExponentialDiskPotential):

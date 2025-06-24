@@ -2,7 +2,6 @@ import pytest
 
 from gala.tests.optional_deps import HAS_SYMPY
 
-# This project
 from ..util import from_equation
 from .helpers import PotentialTestBase
 

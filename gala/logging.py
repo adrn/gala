@@ -1,16 +1,12 @@
-# Standard library
 import logging
 import sys
 
 
 class CustomStreamHandler(logging.StreamHandler):
     def emit(self, record):
-        record.origin = 'gala'
+        record.origin = "gala"
 
-        if record.levelno <= logging.INFO:
-            stream = sys.stdout
-        else:
-            stream = sys.stderr
+        stream = sys.stdout if record.levelno <= logging.INFO else sys.stderr
 
         self.setStream(stream)
         super().emit(record)
@@ -31,7 +27,7 @@ class Logger(logging.getLoggerClass()):
         sh = CustomStreamHandler()
 
         # create formatter
-        formatter = logging.Formatter('[%(origin)s] %(levelname)s: %(message)s')
+        formatter = logging.Formatter("[%(origin)s] %(levelname)s: %(message)s")
 
         # add formatter to ch
         sh.setFormatter(formatter)
@@ -40,5 +36,5 @@ class Logger(logging.getLoggerClass()):
 
 
 logging.setLoggerClass(Logger)
-logger = logging.getLogger('gala')
+logger = logging.getLogger("gala")
 logger._set_defaults()

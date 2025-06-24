@@ -1,6 +1,6 @@
-__all__ = ['FrameBase']
+__all__ = ["FrameBase"]
 
-# This package
+
 from ..common import CommonBase
 
 
@@ -9,8 +9,7 @@ class FrameBase(CommonBase):
 
     def __init__(self, *args, units=None, **kwargs):
         parameter_values = self._parse_parameter_values(*args, **kwargs)
-        self._setup_frame(parameters=parameter_values,
-                          units=units)
+        self._setup_frame(parameters=parameter_values, units=units)
 
     def _setup_frame(self, parameters, units=None):
         self.units = self._validate_units(units)

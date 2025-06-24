@@ -1,11 +1,9 @@
-# Third-party
 import astropy.coordinates as coord
 import astropy.units as u
-from astropy.utils.data import get_pkg_data_filename
 import numpy as np
 import pytest
+from astropy.utils.data import get_pkg_data_filename
 
-# This project
 from ..orphan import OrphanKoposov19
 from ..pm_cov_transform import transform_pm_cov
 

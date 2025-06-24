@@ -3,8 +3,6 @@ from textwrap import dedent
 from warnings import warn
 
 import astropy.coordinates as coord
-
-# Third-party
 import astropy.units as u
 import numpy as np
 from astropy.coordinates.attributes import CoordinateAttribute
@@ -75,8 +73,7 @@ def get_origin_from_pole_ra0(pole, ra0, origin_disambiguate=None):
     # Convention:
     if sep1 <= sep2:
         return origin1
-    else:
-        return origin2
+    return origin2
 
 
 def pole_from_endpoints(coord1, coord2):
@@ -115,7 +112,7 @@ def pole_from_endpoints(coord1, coord2):
     c2 = cart2 / cart2.norm()
 
     pole = c1.cross(c2)
-    pole = pole / pole.norm()
+    pole /= pole.norm()
     return frame1.realize_frame(pole)
 
 
@@ -182,14 +179,14 @@ def ensure_orthogonal(pole, origin, priority="origin", tol=1e-10):
     if np.abs(np.dot(x, z)) > tol:
         if priority == "origin":
             msg = "Keeping the origin fixed and adjusting the pole to be orthogonal."
-            z = z - (z @ x) * x
+            z -= (z @ x) * x
             pole = pole.realize_frame(
                 coord.CartesianRepresentation(z), representation_type="unitspherical"
             )
 
         else:  # validated by class attribute, so assume "pole"
             msg = "Keeping the pole fixed and adjusting the origin to be orthogonal."
-            x = x - (x @ z) * z
+            x -= (x @ z) * z
             origin = origin.realize_frame(
                 coord.CartesianRepresentation(x), representation_type="unitspherical"
             )
@@ -216,8 +213,7 @@ def pole_origin_to_R(pole, origin):
     zaxis = np.squeeze((pole.cartesian / pole.cartesian.norm()).xyz)
     yaxis = np.cross(zaxis, xaxis)
 
-    R = np.stack((xaxis, yaxis, zaxis))
-    return R
+    return np.stack((xaxis, yaxis, zaxis))
 
 
 def greatcircle_to_greatcircle(from_greatcircle_coord, to_greatcircle_frame):
@@ -355,7 +351,7 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
 
         if wrap and isinstance(
             self._data,
-            (coord.UnitSphericalRepresentation, coord.SphericalRepresentation),
+            coord.UnitSphericalRepresentation | coord.SphericalRepresentation,
         ):
             self._data.lon.wrap_angle = self._default_wrap_angle
 
@@ -371,10 +367,10 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
 
     @classmethod
     def from_pole_ra0(cls, pole, ra0, origin_disambiguate=None):
-        f"""
+        """
         Compute the great circle frame from a pole and RA of longitude=0.
 
-        {get_origin_from_pole_ra0.__doc__}
+        {txt}
 
         Parameters
         ----------
@@ -391,6 +387,10 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
             pole, ra0, origin_disambiguate=origin_disambiguate
         )
         return cls(pole=pole, origin=origin)
+
+    from_pole_ra0.__doc__ = from_pole_ra0.__doc__.format(
+        txt=get_origin_from_pole_ra0.__doc__
+    )
 
     @classmethod
     def from_endpoints(cls, coord1, coord2, origin=None, ra0=None, priority=None):
@@ -504,13 +504,11 @@ def make_greatcircle_cls(cls_name, docstring_header=None, **kwargs):
     @format_doc(base_doc, components=_components, footer=_footer)
     @greatcircle_transforms(self_transform=False)
     class GCFrame(GreatCircleICRSFrame):
-        pole = CoordinateAttribute(default=kwargs.get("pole", None), frame=coord.ICRS)
-        origin = CoordinateAttribute(
-            default=kwargs.get("origin", None), frame=coord.ICRS
-        )
+        pole = CoordinateAttribute(default=kwargs.get("pole"), frame=coord.ICRS)
+        origin = CoordinateAttribute(default=kwargs.get("origin"), frame=coord.ICRS)
 
     GCFrame.__name__ = cls_name
     if docstring_header:
-        GCFrame.__doc__ = "{0}\n{1}".format(docstring_header, GCFrame.__doc__)
+        GCFrame.__doc__ = f"{docstring_header}\n{GCFrame.__doc__}"
 
     return GCFrame

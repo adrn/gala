@@ -7,7 +7,6 @@ from pytest_astropy_header.display import (
 
 
 def pytest_configure(config):
-
     config.option.astropy_header = True
     PYTEST_HEADER_MODULES.pop("Pandas", None)
     PYTEST_HEADER_MODULES["astropy"] = "astropy"
@@ -19,7 +18,7 @@ def pytest_configure(config):
 
 
 def pytest_report_header(config):
-    from gala._cconfig import GSL_ENABLED, EXP_ENABLED
+    from gala._cconfig import EXP_ENABLED, GSL_ENABLED
 
     hdr = []
     if GSL_ENABLED:
@@ -33,6 +32,4 @@ def pytest_report_header(config):
         hdr.append(" --- Gala compiled without EXP ---")
     hdr.append("")
 
-    hdr = "\n".join(hdr)
-
-    return hdr
+    return "\n".join(hdr)

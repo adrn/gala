@@ -1,26 +1,24 @@
-# Third-party
-import numpy as np
 import astropy.units as u
+import numpy as np
 
-# Project
 from gala.dynamics.actionangle import (
-    isochrone_xv_to_aa,
-    isochrone_aa_to_xv,
     harmonic_oscillator_xv_to_aa,
+    isochrone_aa_to_xv,
+    isochrone_xv_to_aa,
 )
+from gala.dynamics.actionangle._genfunc import toy_potentials
 from gala.logging import logger
 from gala.potential import (
-    IsochronePotential,
-    HarmonicOscillatorPotential,
     Hamiltonian,
+    HarmonicOscillatorPotential,
+    IsochronePotential,
 )
+from gala.tests.optional_deps import HAS_TWOBODY
 from gala.units import galactic
 from gala.util import assert_angles_allclose
-from gala.dynamics.actionangle._genfunc import toy_potentials
-from gala.tests.optional_deps import HAS_TWOBODY
 
 
-class TestIsochrone(object):
+class TestIsochrone:
     def setup_method(self):
         logger.info("======== Isochrone ========")
         N = 100
@@ -38,14 +36,12 @@ class TestIsochrone(object):
         n = 13  # MAGIC NUMBER to pick one orbit
 
         # First, check that value of the actions are stable
-        actions, angles, freqs = isochrone_xv_to_aa(
-            self.w[:, n], self.potential
-        )
+        actions, angles, freqs = isochrone_xv_to_aa(self.w[:, n], self.potential)
         for i in range(3):
             assert u.allclose(actions[i, 1:], actions[i, 0], rtol=1e-5)
 
         for slice_ in [slice(None), 0]:
-            actions, angles, freqs = isochrone_xv_to_aa(
+            actions, angles, _freqs = isochrone_xv_to_aa(
                 self.w[slice_, n], self.potential
             )
 
@@ -56,10 +52,7 @@ class TestIsochrone(object):
             b = self.potential.parameters["b"].value
 
             if x.ndim > 1:
-                s_w = np.vstack((
-                    x.to_value(u.kpc),
-                    v.to_value(u.km / u.s)
-                ))
+                s_w = np.vstack((x.to_value(u.kpc), v.to_value(u.km / u.s)))
 
                 aa = np.array(
                     [
@@ -71,10 +64,7 @@ class TestIsochrone(object):
                 s_angles = aa[:, 3:] * u.rad
 
             else:
-                s_w = np.concatenate((
-                    x.to_value(u.kpc),
-                    v.to_value(u.km / u.s)
-                ))
+                s_w = np.concatenate((x.to_value(u.kpc), v.to_value(u.km / u.s)))
 
                 aa = toy_potentials.angact_iso(s_w.T, params=(m, b))
                 s_actions = aa[:3] * u.km / u.s * u.kpc
@@ -87,13 +77,11 @@ class TestIsochrone(object):
             if HAS_TWOBODY:
                 w_rt = isochrone_aa_to_xv(actions, angles, self.potential)
 
-                assert u.allclose(x, w_rt.xyz, atol=1E-10 * u.kpc)
-                assert u.allclose(v, w_rt.v_xyz, atol=1E-10 * u.km/u.s)
+                assert u.allclose(x, w_rt.xyz, atol=1e-10 * u.kpc)
+                assert u.allclose(v, w_rt.v_xyz, atol=1e-10 * u.km / u.s)
 
     def test_many(self):
-        actions, angles, freqs = isochrone_xv_to_aa(
-            self.w, self.potential
-        )
+        actions, angles, _freqs = isochrone_xv_to_aa(self.w, self.potential)
 
         # Compare first element of orbit to genfunc, for speed
         x = self.w.xyz
@@ -101,10 +89,7 @@ class TestIsochrone(object):
         m = self.potential.parameters["m"].value / 1e11
         b = self.potential.parameters["b"].value
 
-        s_w = np.vstack((
-            x[:, 0].to_value(u.kpc),
-            v[:, 0].to_value(u.km / u.s)
-        ))
+        s_w = np.vstack((x[:, 0].to_value(u.kpc), v[:, 0].to_value(u.km / u.s)))
 
         aa = np.array(
             [
@@ -123,11 +108,11 @@ class TestIsochrone(object):
             # Check round-tripping for full orbits:
             w_rt = isochrone_aa_to_xv(actions, angles, self.potential)
 
-            assert u.allclose(x, w_rt.xyz, atol=1E-10 * u.kpc)
-            assert u.allclose(v, w_rt.v_xyz, atol=1E-10 * u.km/u.s)
+            assert u.allclose(x, w_rt.xyz, atol=1e-10 * u.kpc)
+            assert u.allclose(v, w_rt.v_xyz, atol=1e-10 * u.km / u.s)
 
 
-class TestHarmonicOscillator(object):
+class TestHarmonicOscillator:
     def setup_method(self):
         logger.info("======== Harmonic Oscillator ========")
         self.N = 100
@@ -149,9 +134,9 @@ class TestHarmonicOscillator(object):
         For Harmonic Oscillator, Sanders' code works for the units I use...
         """
         for n in range(self.N):
-            logger.debug("Orbit {}".format(n))
+            logger.debug(f"Orbit {n}")
 
-            actions, angles, freq = harmonic_oscillator_xv_to_aa(
+            actions, angles, _freq = harmonic_oscillator_xv_to_aa(
                 self.w[:, n], self.potential
             )
             actions = actions.value

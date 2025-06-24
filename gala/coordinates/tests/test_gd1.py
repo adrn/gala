@@ -1,10 +1,8 @@
-# Third-party
 import astropy.coordinates as coord
 import astropy.units as u
-from astropy.utils.data import get_pkg_data_filename
 import numpy as np
+from astropy.utils.data import get_pkg_data_filename
 
-# This package
 from ..gd1 import GD1Koposov10
 
 
@@ -37,7 +35,7 @@ def test_koposov():
     # Compare against Table 1 in Koposov et al. 2010
 
     filename = get_pkg_data_filename("gd1_coord.txt")
-    k10_data = np.genfromtxt(filename, names=True, dtype=None, encoding='utf-8')
+    k10_data = np.genfromtxt(filename, names=True, dtype=None, encoding="utf-8")
 
     k10_icrs = coord.SkyCoord(
         ra=k10_data["ra"].astype(str),

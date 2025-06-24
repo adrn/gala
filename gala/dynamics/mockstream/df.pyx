@@ -5,7 +5,7 @@
 # cython: profile=False
 # cython: language_level=3
 
-# Third-party
+
 from astropy.utils.misc import isiterable
 import cython
 import astropy.units as u
@@ -13,8 +13,8 @@ import numpy as np
 cimport numpy as np
 from libc.math cimport sqrt, sin, cos, M_PI
 
-# This package
-from .. import combine, Orbit
+from ..util import combine
+from ..orbit import Orbit
 from ..nbody import DirectNBody
 from ...potential import Hamiltonian, PotentialBase, StaticFrame
 from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential

@@ -7,12 +7,12 @@
 
 """ Leapfrog integration in Cython. """
 
-# Third-party
+
 import numpy as np
 cimport numpy as np
 np.import_array()
 
-# Project
+
 from ...potential.potential.cpotential cimport CPotentialWrapper
 from ...potential.frame import StaticFrame
 from ...potential import NullPotential

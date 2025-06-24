@@ -1,4 +1,3 @@
-# Third-party
 import astropy.units as u
 import numpy as np
 import pytest
@@ -21,8 +20,6 @@ from ...potential import (
 )
 from ...potential.frame import ConstantRotatingFrame, StaticFrame
 from ...units import galactic, solarsystem
-
-# Project
 from ..core import PhaseSpacePosition
 from ..orbit import Orbit
 from ..util import combine
@@ -341,7 +338,7 @@ def test_angular_momentum():
     o = Orbit(pos=x, vel=v)
     L = o.angular_momentum()
     assert L.unit == (o.v_x.unit * o.x.unit)
-    assert L.shape == ((3,) + o.shape)
+    assert L.shape == ((3, *o.shape))
 
 
 def test_eccentricity():
@@ -405,8 +402,7 @@ def test_apocenter_pericenter_period():
     )
 
     def func(r):
-        val = 2 * (E - pot.energy([r, 0, 0]).value[0]) - L**2 / r**2
-        return val
+        return 2 * (E - pot.energy([r, 0, 0]).value[0]) - L**2 / r**2
 
     pred_apo = so.brentq(func, 0.9, 1.0)
     pred_per = so.brentq(func, 0.3, 0.5)
@@ -418,13 +414,15 @@ def test_apocenter_pericenter_period():
     apos = w.apocenter(func=None)
     pers = w.pericenter(func=None)
     zmax = w.zmax(func=None)
-    T = w.estimate_period()  # noqa
+    T = w.estimate_period()
 
     dapo = np.std(apos) / np.mean(apos)
-    assert (dapo > 0) and np.allclose(dapo, 0.0, atol=1e-4)
+    assert dapo > 0
+    assert np.allclose(dapo, 0.0, atol=1e-4)
 
     dper = np.std(pers) / np.mean(pers)
-    assert (dper > 0) and np.allclose(dper, 0.0, atol=1e-4)
+    assert dper > 0
+    assert np.allclose(dper, 0.0, atol=1e-4)
 
     # Now try for expected behavior when multiple orbits are integrated:
     w0 = PhaseSpacePosition(
@@ -437,7 +435,7 @@ def test_apocenter_pericenter_period():
     per = w.pericenter(approximate=True)
     apo = w.apocenter(approximate=True)
     zmax = w.zmax(approximate=True)
-    ecc = w.eccentricity(approximate=True)  # noqa
+    ecc = w.eccentricity(approximate=True)
 
 
 def test_estimate_period():
@@ -454,7 +452,9 @@ def test_estimate_period():
 
         orb = Orbit(pos * u.kpc, vel * u.kpc / u.Myr, t=t * u.Gyr)
         T = orb.estimate_period()
-        assert "x" in T.colnames and "y" in T.colnames and "z" in T.colnames
+        assert "x" in T.colnames
+        assert "y" in T.colnames
+        assert "z" in T.colnames
 
         T = orb.cylindrical.estimate_period()
         assert np.allclose(T["rho"].value, true_T_R, rtol=1e-3)
@@ -486,16 +486,14 @@ def make_known_orbits(tmpdir, xs, vxs, potential, names):
     y = 0.0
 
     ws = []
-    for x, vx, name in zip(xs, vxs, names):
+    for x, vx, _name in zip(xs, vxs, names):
         vy = np.sqrt(2 * (E - potential.energy([x, y, 0.0]).value))[0]
         w = [x, y, 0.0, vx, vy, 0.0]
         ws.append(w)
     ws = np.array(ws).T
 
     ham = Hamiltonian(potential)
-    orbit = ham.integrate_orbit(ws, dt=0.05, n_steps=10000)
-
-    return orbit
+    return ham.integrate_orbit(ws, dt=0.05, n_steps=10000)
 
 
 def test_circulation(tmpdir):
@@ -610,7 +608,7 @@ _v = ([[1, 2, 3.0], [1, 2, 3.0]] * u.km / u.s).T
 
 @pytest.mark.parametrize(
     "obj",
-    [  # noqa
+    [
         Orbit(_x, _v),
         Orbit(_x, _v, t=[5, 99] * u.Myr),
         Orbit(_x, _v, t=[5, 99] * u.Myr, frame=StaticFrame(galactic)),
@@ -658,10 +656,10 @@ def test_io(tmpdir, obj):
 )
 @pytest.mark.skipif(not HAS_GALPY, reason="requires galpy to run this test")
 def test_orbit_to_galpy(obj):
-    o1 = obj.to_galpy_orbit()  # noqa
-    o2 = obj.to_galpy_orbit(ro=8 * u.kpc)  # noqa
-    o3 = obj.to_galpy_orbit(vo=220 * u.km / u.s)  # noqa
-    o4 = obj.to_galpy_orbit(ro=8 * u.kpc, vo=220 * u.km / u.s)  # noqa
+    o1 = obj.to_galpy_orbit()
+    o2 = obj.to_galpy_orbit(ro=8 * u.kpc)
+    o3 = obj.to_galpy_orbit(vo=220 * u.km / u.s)
+    o4 = obj.to_galpy_orbit(ro=8 * u.kpc, vo=220 * u.km / u.s)
 
 
 @pytest.mark.skipif(not HAS_GALPY, reason="requires galpy to run this test")

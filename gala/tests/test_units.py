@@ -63,7 +63,7 @@ def test_dimensionless():
 
 
 @pytest.mark.parametrize(
-    "nu1, nu2",
+    ("nu1", "nu2"),
     itertools.combinations(
         {
             "length": 15 * u.kpc,

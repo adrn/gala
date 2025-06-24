@@ -1,4 +1,4 @@
-""" Miscellaneous astronomical velocity transformations. """
+"""Miscellaneous astronomical velocity transformations."""
 
 import astropy.coordinates as coord
 

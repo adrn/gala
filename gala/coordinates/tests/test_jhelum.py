@@ -1,9 +1,7 @@
-# Third-party
 import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 
-# This package
 from ..jhelum import JhelumBonaca19
 
 

@@ -1,4 +1,3 @@
-# Third-party
 import astropy.units as u
 import numpy as np
 import pytest
@@ -22,7 +21,7 @@ _TEST_POTENTIALS = [
 ]
 
 
-@pytest.mark.parametrize("DF, DF_kwargs", zip(_DF_CLASSES, _DF_KWARGS))
+@pytest.mark.parametrize(("DF", "DF_kwargs"), zip(_DF_CLASSES, _DF_KWARGS))
 @pytest.mark.parametrize("pot", _TEST_POTENTIALS)
 def test_init_sample(DF, DF_kwargs, pot):
     H = gp.Hamiltonian(pot)
@@ -52,9 +51,8 @@ def test_init_sample(DF, DF_kwargs, pot):
     assert len(o1.x) == 2 * n_times
 
 
-@pytest.mark.parametrize("DF, DF_kwargs", zip(_DF_CLASSES, _DF_KWARGS))
+@pytest.mark.parametrize(("DF", "DF_kwargs"), zip(_DF_CLASSES, _DF_KWARGS))
 def test_expected_failure(DF, DF_kwargs):
-
     # Expected failure:
     with pytest.raises(ValueError):
         DF(lead=False, trail=False, **DF_kwargs)
@@ -67,7 +65,12 @@ def test_rotating_frame():
     w0 = gd.PhaseSpacePosition(
         pos=[10.0, 0, 0] * u.kpc, vel=[0, 220, 0.0] * u.km / u.s, frame=H_static.frame
     )
-    int_kwargs = dict(w0=w0, dt=1, n_steps=100, Integrator=gi.DOPRI853Integrator)
+    int_kwargs = {
+        "w0": w0,
+        "dt": 1,
+        "n_steps": 100,
+        "Integrator": gi.DOPRI853Integrator,
+    }
 
     orbit_static = H_static.integrate_orbit(**int_kwargs)
 
@@ -75,9 +78,9 @@ def test_rotating_frame():
     H_rotating = gp.Hamiltonian(_TEST_POTENTIALS[0], frame=rframe)
     orbit_rotating = H_rotating.integrate_orbit(**int_kwargs)
 
-    _o = orbit_rotating.to_frame(H_static.frame)
-    assert u.allclose(_o.xyz, orbit_static.xyz, atol=1e-13 * u.kpc)
-    assert u.allclose(_o.v_xyz, orbit_static.v_xyz, atol=1e-13 * u.km / u.s)
+    o = orbit_rotating.to_frame(H_static.frame)
+    assert u.allclose(o.xyz, orbit_static.xyz, atol=1e-13 * u.kpc)
+    assert u.allclose(o.v_xyz, orbit_static.v_xyz, atol=1e-13 * u.km / u.s)
 
     df_static = DF(trail=False)
     xvt_static = df_static.sample(orbit_static, 1e6 * u.Msun)

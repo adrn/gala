@@ -5,13 +5,13 @@
 # cython: profile=False
 # cython: language_level=3
 
-# Standard library
+
 import copy as pycopy
 import sys
 import warnings
 import uuid
 
-# Third-party
+
 import numpy as np
 cimport numpy as np
 np.import_array()
@@ -20,7 +20,7 @@ cimport cython
 
 from libc.stdio cimport printf
 
-# Project
+
 from .core import PotentialBase, CompositePotential
 from ...util import atleast_2d
 from ...units import DimensionlessUnitSystem

@@ -1,4 +1,3 @@
-# Third-party
 import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
@@ -16,8 +15,6 @@ from gala.tests.optional_deps import HAS_H5PY
 from ...potential import Hamiltonian, HernquistPotential
 from ...potential.frame import ConstantRotatingFrame, StaticFrame
 from ...units import galactic, solarsystem
-
-# Project
 from ..core import PhaseSpacePosition
 
 
@@ -242,9 +239,11 @@ def test_to_coord_frame():
     v = np.random.random(size=(3, 10))
     o = PhaseSpacePosition(pos=x, vel=v)
 
-    with coord.galactocentric_frame_defaults.set("v4.0"):
-        with pytest.raises(u.UnitConversionError):
-            o.to_coord_frame(Galactic())
+    with (
+        coord.galactocentric_frame_defaults.set("v4.0"),
+        pytest.raises(u.UnitConversionError),
+    ):
+        o.to_coord_frame(Galactic())
 
     # simple / with units
     x = np.random.random(size=(3, 10)) * u.kpc
@@ -258,9 +257,8 @@ def test_to_coord_frame():
     x = np.random.random(size=(2, 10)) * u.kpc
     v = np.random.normal(0.0, 100.0, size=(2, 10)) * u.km / u.s
     o = PhaseSpacePosition(pos=x, vel=v)
-    with coord.galactocentric_frame_defaults.set("v4.0"):
-        with pytest.raises(ValueError):
-            o.to_coord_frame(Galactic())
+    with coord.galactocentric_frame_defaults.set("v4.0"), pytest.raises(ValueError):
+        o.to_coord_frame(Galactic())
 
 
 def test_w():
@@ -317,7 +315,7 @@ def test_w():
 # ------------------------------------------------------------------------
 # Computed dynamical quantities
 # ------------------------------------------------------------------------
-def test_energy():  # noqa
+def test_energy():
     # with units
     x = np.random.random(size=(3, 10)) * u.kpc
     v = np.random.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
@@ -332,8 +330,8 @@ def test_energy():  # noqa
     x = np.random.random(size=(3, 10)) * u.kpc
     v = np.random.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
     o = PhaseSpacePosition(pos=x, vel=v)
-    PE = o.potential_energy(p)  # noqa
-    E = o.energy(H)  # noqa
+    PE = o.potential_energy(p)
+    E = o.energy(H)
 
 
 def test_angular_momentum():
@@ -347,9 +345,7 @@ def test_angular_momentum():
     assert u.allclose(np.squeeze(w.angular_momentum()), [1.0, 0, 0] * u.one)
 
     w = PhaseSpacePosition([1.0, 0, 0] * u.kpc, [0.0, 200.0, 0] * u.pc / u.Myr)
-    assert u.allclose(
-        np.squeeze(w.angular_momentum()), [0, 0, 0.2] * u.kpc**2 / u.Myr
-    )
+    assert u.allclose(np.squeeze(w.angular_momentum()), [0, 0, 0.2] * u.kpc**2 / u.Myr)
 
     # multiple - known
     q = np.array([[1.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0, 1.0, 0.0]]).T
@@ -366,7 +362,7 @@ def test_angular_momentum():
     assert L.shape == (3, 128)
 
 
-def test_guiding_radius():  # noqa
+def test_guiding_radius():
     rng = np.random.default_rng(42)
 
     p = HernquistPotential(units=galactic, m=1e11, c=10.0)
@@ -380,7 +376,8 @@ def test_guiding_radius():  # noqa
 
     w0 = PhaseSpacePosition(xyz, vxyz)
     Rgs = w0.guiding_radius(potential=p)
-    assert np.all(Rgs > 0) and np.all(Rgs < 25 * u.kpc)
+    assert np.all(Rgs > 0)
+    assert np.all(Rgs < 25 * u.kpc)
 
 
 def test_frame_transform():

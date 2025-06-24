@@ -106,7 +106,7 @@ Python Dependencies
 
 This packages has the following dependencies:
 
-* `Python`_ >= 3.7
+* `Python`_ >= 3.11
 * `Numpy`_
 * `Cython <http://www.cython.org/>`_
 * `Astropy`_
@@ -124,6 +124,5 @@ Optional
   subclass instances from a mathematical expression using
   :func:`~gala.potential.potential.from_equation()`.
 - ``galpy``
-- `h5py`
-- `matplotlib`
--
+- ``h5py``
+- ``matplotlib``

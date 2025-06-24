@@ -1,9 +1,7 @@
 """Wrapper around SciPy DOPRI853 integrator."""
 
-# Third-party
 from scipy.integrate import ode
 
-# Project
 from ..core import Integrator
 from ..timespec import parse_time_specification
 
@@ -78,7 +76,7 @@ class DOPRI853Integrator(Integrator):
         save_all=True,
         **kwargs,
     ):
-        super(DOPRI853Integrator, self).__init__(
+        super().__init__(
             func, func_args, func_units, progress=progress, save_all=save_all
         )
         self._ode_kwargs = kwargs
@@ -89,14 +87,14 @@ class DOPRI853Integrator(Integrator):
         n_steps = len(times) - 1
 
         w0, arr_w0, ws = self._prepare_ws(w0, mmap, n_steps)
-        _size_1d = 2 * self.ndim * self.norbits
+        size_1d = 2 * self.ndim * self.norbits
 
         # need this to do resizing, and to handle func_args because there is some
         #   issue with the args stuff in scipy...
         def func_wrapper(t, x):
-            _x = x.reshape((2 * self.ndim, self.norbits))
-            val = self.F(t, _x, *self._func_args)
-            return val.reshape((_size_1d,))
+            x_ = x.reshape((2 * self.ndim, self.norbits))
+            val = self.F(t, x_, *self._func_args)
+            return val.reshape((size_1d,))
 
         self._ode = ode(func_wrapper, jac=None)
         self._ode = self._ode.set_integrator("dop853", **self._ode_kwargs)
@@ -106,7 +104,7 @@ class DOPRI853Integrator(Integrator):
             ws[:, 0] = arr_w0
 
         # make 1D
-        arr_w0 = arr_w0.reshape((_size_1d,))
+        arr_w0 = arr_w0.reshape((size_1d,))
 
         # set the initial conditions
         self._ode.set_initial_value(arr_w0, times[0])

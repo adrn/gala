@@ -148,7 +148,7 @@ if gsl_version is None:
 
 elif gsl_version < ["1", "14"]:
     print(
-        "Gala: Warning: GSL version ({0}) is below the minimum required version "
+        "Gala: Warning: GSL version ({}) is below the minimum required version "
         "(1.16). Installing without GSL support. ".format(".".join(gsl_version))
         + _see_msg
     )
@@ -156,7 +156,7 @@ elif gsl_version < ["1", "14"]:
 
 else:
     print(
-        "Gala: GSL version {0} found, installing with GSL support".format(
+        "Gala: GSL version {} found, installing with GSL support".format(
             ".".join(gsl_version)
         )
     )
@@ -166,7 +166,7 @@ else:
         cmd = ["gsl-config", "--prefix"]
         try:
             gsl_prefix = check_output(cmd, encoding="utf-8")
-        except:
+        except Exception:
             gsl_prefix = str(check_output(cmd))
 
     gsl_prefix = os.path.normpath(gsl_prefix.strip())
@@ -180,10 +180,10 @@ def pkg_config(pkg: str, *pc_args) -> str:
     cmd = ["pkg-config", *pc_args, pkg]
     try:
         output = check_output(cmd, encoding="utf-8")
-    except:
+    except Exception:
         try:
             output = str(check_output(cmd))
-        except:
+        except Exception:
             # pkg-config is allowed to fail. For example, a module might
             # set C_INCLUDE_PATH but not expose a pc file.
             warnings.warn(f'"{" ".join(cmd)}" failed for {pkg}.')
@@ -224,15 +224,16 @@ else:
 all_extensions = get_extensions()
 extensions = []
 for ext in all_extensions:
-    if "potential.potential" in ext.name or "scf" in ext.name:
-        if gsl_version is not None:
-            if "gsl" not in ext.libraries:
-                ext.libraries.append("gsl")
-                ext.library_dirs.append(os.path.join(gsl_prefix, "lib"))
-                ext.include_dirs.append(os.path.join(gsl_prefix, "include"))
+    if ("potential.potential" in ext.name or "scf" in ext.name) and (
+        gsl_version is not None
+    ):
+        if "gsl" not in ext.libraries:
+            ext.libraries.append("gsl")
+            ext.library_dirs.append(os.path.join(gsl_prefix, "lib"))
+            ext.include_dirs.append(os.path.join(gsl_prefix, "include"))
 
-            if "gslcblas" not in ext.libraries:
-                ext.libraries.append("gslcblas")
+        if "gslcblas" not in ext.libraries:
+            ext.libraries.append("gslcblas")
 
     if "cyexp" in ext.name:
         if exp_prefix is not None:
@@ -289,7 +290,7 @@ for ext in all_extensions:
 
 print("-" * 79)
 
-with open(extra_compile_macros_file, "w") as f:
+with open(extra_compile_macros_file, "w", encoding="utf-8") as f:
     if gsl_version is not None:
         f.write("#define USE_GSL 1\n")
     else:

@@ -5,14 +5,14 @@
 # cython: profile=False
 # cython: language_level=3
 
-# Third-party
+
 from astropy.utils.misc import isiterable
 import astropy.units as u
 import numpy as np
 cimport numpy as np
 np.import_array()
 
-# Project
+
 from ..cframe import CFrameBase
 from ..cframe cimport CFrameWrapper
 from ...common import PotentialParameter

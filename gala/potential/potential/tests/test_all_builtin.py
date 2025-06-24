@@ -2,7 +2,6 @@
 Test the builtin CPotential classes
 """
 
-# Third-party
 import astropy.table as at
 import astropy.units as u
 import numpy as np
@@ -17,8 +16,6 @@ from ....units import DimensionlessUnitSystem, galactic, solarsystem
 from ...frame import ConstantRotatingFrame
 from .. import builtin as p
 from ..ccompositepotential import CCompositePotential
-
-# This project
 from ..core import CompositePotential
 from .helpers import CompositePotentialTestBase, PotentialTestBase
 
@@ -320,7 +317,6 @@ class TestSphericalNFWFromCircVel(PotentialTestBase):
         assert u.allclose(d1, d2)
 
     def test_mass_enclosed(self):
-
         # true mass profile
         m = self.potential.parameters["m"].value
         rs = self.potential.parameters["r_s"].value
@@ -344,7 +340,6 @@ class TestNFW(PotentialTestBase):
     sympy_density = False  # like triaxial case
 
     def test_compare(self):
-
         sph = p.NFWPotential(m=6e11 * u.Msun, r_s=20 * u.kpc, units=galactic)
         fla = p.NFWPotential(m=6e11 * u.Msun, r_s=20 * u.kpc, c=0.8, units=galactic)
         tri = p.NFWPotential(

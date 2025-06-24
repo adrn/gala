@@ -1,10 +1,6 @@
-# coding: utf-8
-
-# Third-party
 import numpy as np
 import scipy.integrate as si
 
-# Project
 from ._computecoeff import (
     Snlm_integrand,
     STnlm_discrete,
@@ -137,10 +133,10 @@ def compute_coeffs(
             raise ImportError(
                 "tqdm is not installed - you can install it "
                 "with `pip install tqdm`.\n" + str(e)
-            )
+            ) from e
         iterfunc = tqdm
     else:
-        iterfunc = lambda x: x  # noqa
+        iterfunc = lambda x: x
 
     for n, l, m in iterfunc(nlms):
         Snlm[n, l, m], Snlm_e[n, l, m] = si.nquad(
@@ -247,10 +243,7 @@ def compute_coeffs_discrete(
             "gala: http://gala.adrian.pw/en/latest/install.html"
         )
 
-    if pool is None:
-        _map = map
-    else:
-        _map = pool.map
+    map_ = map if pool is None else pool.map
 
     lmin = 0
     lstride = 1
@@ -283,13 +276,12 @@ def compute_coeffs_discrete(
                 nlms.append((n, l, m))
 
     tasks = [(nlm, compute_var, s, phi, X, mass) for nlm in nlms]
-    ST_cov = np.zeros((2, 2) + Snlm.shape)
-    for (n, l, m), ST_nlm, ST_cov_nlm in _map(_discrete_worker, tasks):
+    ST_cov = np.zeros((2, 2, *Snlm.shape))
+    for (n, l, m), ST_nlm, ST_cov_nlm in map_(_discrete_worker, tasks):
         Snlm[n, l, m], Tnlm[n, l, m] = ST_nlm
         if compute_var:
             ST_cov[:, :, n, l, m] = ST_cov_nlm
 
     if compute_var:
         return Snlm, Tnlm, ST_cov
-    else:
-        return Snlm, Tnlm
+    return Snlm, Tnlm

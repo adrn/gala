@@ -1,12 +1,10 @@
-# Third-party
 import numpy as np
 
 from ...integrate.timespec import parse_time_specification
 from ...potential import Hamiltonian, PotentialBase
-
-# This package
-from .. import PhaseSpacePosition, combine
+from ..core import PhaseSpacePosition
 from ..nbody import DirectNBody
+from ..util import combine
 from ._mockstream import mockstream_dop853, mockstream_dop853_animate
 from .core import MockStream
 
@@ -47,11 +45,12 @@ class MockStreamGenerator:
         from .df import BaseStreamDF
 
         if not isinstance(df, BaseStreamDF):
-            raise TypeError(
+            msg = (
                 "The input distribution function (DF) instance "
                 "must be an instance of a subclass of "
-                "BaseStreamDF, not {}.".format(type(df))
+                f"BaseStreamDF, not {type(df)}."
             )
+            raise TypeError(msg)
         self.df = df
 
         # Validate the inpute hamiltonian
@@ -78,7 +77,7 @@ class MockStreamGenerator:
         integrate along with the test particles in the stream.
         """
 
-        kwargs = dict()
+        kwargs = {}
         if nbody is not None:
             if nbody.external_potential != self.hamiltonian.potential:
                 raise ValueError(
@@ -96,8 +95,9 @@ class MockStreamGenerator:
 
             kwargs["w0"] = combine((prog_w0, nbody.w0))
             kwargs["particle_potentials"] = [
-                self.progenitor_potential
-            ] + nbody.particle_potentials
+                self.progenitor_potential,
+                *nbody.particle_potentials,
+            ]
             kwargs["external_potential"] = self.hamiltonian.potential
             kwargs["frame"] = self.hamiltonian.frame
             kwargs["units"] = self.hamiltonian.units

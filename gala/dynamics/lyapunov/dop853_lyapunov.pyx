@@ -7,7 +7,7 @@
 
 """ DOP853 integration in Cython. """
 
-# Third-party
+
 import numpy as np
 cimport numpy as np
 np.import_array()

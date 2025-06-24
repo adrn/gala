@@ -19,7 +19,9 @@ jobs:
   build_nix_wheels:
     name: Build wheels on ${{ matrix.os }} - ${{ matrix.python[1] }}
     runs-on: ${{ matrix.os }}
-    if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'docs only')
+    if:
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'docs only')
     strategy:
       fail-fast: false
       matrix:
@@ -46,7 +48,8 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
           CIBW_SKIP: "*-win32 *musllinux* pp* *i686"
-          CIBW_BEFORE_ALL_LINUX: dnf install -y gsl gsl-devel || apt-get install gsl-bin libgsl0-dev
+          CIBW_BEFORE_ALL_LINUX:
+            dnf install -y gsl gsl-devel || apt-get install gsl-bin libgsl0-dev
           CIBW_BEFORE_ALL_MACOS: brew install gsl pipx
           MACOSX_DEPLOYMENT_TARGET: 15.0
 
@@ -88,8 +91,8 @@ jobs:
       id-token: write
     runs-on: ubuntu-latest
     if:
-      github.repository_owner == 'adrn' && github.event_name == 'push' &&
-      github.ref == 'refs/heads/main'
+      github.repository_owner == 'adrn' && github.event_name == 'push' && github.ref ==
+      'refs/heads/main'
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -102,13 +105,12 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
 
-
   upload_pypi:
     needs: [build_nix_wheels, build_sdist]
     runs-on: ubuntu-latest
     if:
-      github.event_name == 'release' &&
-      (github.event.action == 'published' || github.event.action == 'edited')
+      github.event_name == 'release' && (github.event.action == 'published' ||
+      github.event.action == 'edited')
     environment:
       name: release
       url: https://pypi.org/p/gala
