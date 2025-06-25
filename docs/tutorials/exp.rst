@@ -185,11 +185,8 @@ a single snapshot with the ``snapshot_index`` parameter:
 
     For time-evolving potentials, if one tries to evaluate the potential outside of the
     time range stored in the coefficients file (even indirectly, such as during an
-    orbit integration), currently the interpreter will crash (after printing an error
+    orbit integration), currently a NAN will be returned (after printing an error
     message to stderr). Proper exception propagation is a planned feature.
-
-.. TODO: an exception isn't raised, the interpreter just crashes. We can probably have
-.. it return NaN instead, but actually raising a Python exception is hard...
 
 If the coefficients file stores a very large time range but the user is only interested
 in a smaller range, one can specify ``tmin`` and/or ``tmax`` to load a smaller subset of
@@ -206,7 +203,7 @@ the coefficient data (for memory efficiency):
     )
 
 Note that, as mentioned above, subsequently using a time outside this range will result
-in an interpreter crash (with an associated error printed to stderr). Or more precisely:
+in a NAN being returned (with an associated error printed to stderr). Or more precisely:
 using a time outside the range of snapshots that this ``tmin``/``tmax`` caused to be
 loaded will cause such an error. One can check the loaded range of snapshots with:
 
@@ -237,6 +234,12 @@ The `~gala.potential.EXPPotential` currently has the following limitations:
 * Pickling, saving, and loading is not supported.
 * Performance may currently not be as high as native Gala potentials
 * Evaluating the potential at a time outside the loaded time range will result
-  in the interpreter crashing
+  in NANs
 
 .. TODO (adrn): any other notable limitations?
+
+---
+API
+---
+
+See :class:`~gala.potential.EXPPotential` for the complete API documentation.
