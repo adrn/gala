@@ -14,19 +14,19 @@ def get_extensions():
     cfg["include_dirs"].append(np.get_include())
     cfg["include_dirs"].append(mac_incl_path)
     cfg["include_dirs"].append("gala/potential")
-    cfg["extra_compile_args"].append("--std=gnu99")
+    cfg["extra_compile_args"].append("-std=c++17")
     cfg["sources"].append("gala/potential/frame/cframe.pyx")
-    cfg["sources"].append("gala/potential/frame/src/cframe.c")
+    cfg["sources"].append("gala/potential/frame/src/cframe.cpp")
     exts.append(Extension("gala.potential.frame.cframe", **cfg))
 
     cfg = defaultdict(list)
     cfg["include_dirs"].append(np.get_include())
     cfg["include_dirs"].append(mac_incl_path)
     cfg["include_dirs"].append("gala/potential")
-    cfg["extra_compile_args"].append("--std=gnu99")
+    cfg["extra_compile_args"].append("-std=c++17")
     cfg["sources"].append("gala/potential/frame/builtin/frames.pyx")
-    cfg["sources"].append("gala/potential/frame/builtin/builtin_frames.c")
-    cfg["sources"].append("gala/potential/frame/src/cframe.c")
+    cfg["sources"].append("gala/potential/frame/builtin/builtin_frames.cpp")
+    cfg["sources"].append("gala/potential/frame/src/cframe.cpp")
     exts.append(Extension("gala.potential.frame.builtin.frames", **cfg))
 
     return exts
@@ -42,8 +42,8 @@ def get_package_data():
             "*/*.pxd",
             "builtin/*.h",
             "src/*.h",
-            "builtin/builtin_frames.c",
-            "src/*.c",
+            "builtin/builtin_frames.cpp",
+            "src/*.cpp",
             "tests/*.yml",
         ]
     }

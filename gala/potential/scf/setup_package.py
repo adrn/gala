@@ -26,30 +26,30 @@ def get_extensions():
     cfg = defaultdict(list)
     cfg["include_dirs"].extend(include_dirs)
     cfg["library_dirs"].extend(library_dirs)
-    cfg["extra_compile_args"].append("--std=gnu99")
+    cfg["extra_compile_args"].append("-std=c++17")
     cfg["sources"].append("gala/potential/scf/computecoeff.pyx")
-    cfg["sources"].append("gala/potential/scf/src/bfe_helper.c")
-    cfg["sources"].append("gala/potential/scf/src/coeff_helper.c")
+    cfg["sources"].append("gala/potential/scf/src/bfe_helper.cpp")
+    cfg["sources"].append("gala/potential/scf/src/coeff_helper.cpp")
     exts.append(Extension("gala.potential.scf._computecoeff", **cfg))
 
     cfg = defaultdict(list)
     cfg["include_dirs"].extend(include_dirs)
     cfg["library_dirs"].extend(library_dirs)
-    cfg["extra_compile_args"].append("--std=gnu99")
-    cfg["sources"].append("gala/potential/potential/src/cpotential.c")
-    cfg["sources"].append("gala/potential/potential/builtin/builtin_potentials.c")
+    cfg["extra_compile_args"].append("-std=c++17")
+    cfg["sources"].append("gala/potential/potential/src/cpotential.cpp")
+    cfg["sources"].append("gala/potential/potential/builtin/builtin_potentials.cpp")
     cfg["sources"].append("gala/potential/scf/bfe.pyx")
-    cfg["sources"].append("gala/potential/scf/src/bfe.c")
-    cfg["sources"].append("gala/potential/scf/src/bfe_helper.c")
+    cfg["sources"].append("gala/potential/scf/src/bfe.cpp")
+    cfg["sources"].append("gala/potential/scf/src/bfe_helper.cpp")
     exts.append(Extension("gala.potential.scf._bfe", **cfg))
 
     cfg = defaultdict(list)
     cfg["include_dirs"].extend(include_dirs)
     cfg["library_dirs"].extend(library_dirs)
-    cfg["extra_compile_args"].append("--std=gnu99")
+    cfg["extra_compile_args"].append("-std=c++17")
     cfg["sources"].append("gala/potential/scf/bfe_class.pyx")
-    cfg["sources"].append("gala/potential/scf/src/bfe.c")
-    cfg["sources"].append("gala/potential/scf/src/bfe_helper.c")
+    cfg["sources"].append("gala/potential/scf/src/bfe.cpp")
+    cfg["sources"].append("gala/potential/scf/src/bfe_helper.cpp")
     exts.append(Extension("gala.potential.scf._bfe_class", **cfg))
 
     return exts
@@ -66,7 +66,7 @@ def get_package_data():
             "*.h",
             "*.pyx",
             "*.pxd",
-            "src/*.c",
+            "src/*.cpp",
             "src/*.h",
         ]
     }

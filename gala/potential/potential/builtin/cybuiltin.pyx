@@ -4,6 +4,7 @@
 # cython: wraparound=False
 # cython: profile=False
 # cython: language_level=3
+# cython: language=c++
 
 """ Built-in potential wrappers """
 

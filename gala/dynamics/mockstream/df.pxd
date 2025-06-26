@@ -1,4 +1,5 @@
 # cython: language_level=3
+# cython: language=c++
 
 from ...potential.potential.cpotential cimport CPotential
 

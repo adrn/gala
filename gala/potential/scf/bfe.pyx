@@ -4,6 +4,7 @@
 # cython: cdivision=True
 # cython: wraparound=False
 # cython: language_level=3
+# cython: language=c++
 
 
 from libc.math cimport M_PI
