@@ -1,4 +1,5 @@
 # cython: language_level=3
+# cython: language=c++
 
 # cdef extern from "potential/src/cpotential.h":
 #     ctypedef struct CPotential:

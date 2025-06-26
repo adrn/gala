@@ -9,26 +9,26 @@ __pycache__
 # add a non-generated .c extension, use `git add -f filename.c`.
 # *.c
 gala/_compiler.c
-gala/dynamics/lyapunov/dop853_lyapunov.c
-gala/dynamics/mockstream/_coord.c
-gala/dynamics/mockstream/mockstream.c
-gala/dynamics/mockstream/df.c
-gala/integrate/cyintegrators/dop853.c
-gala/integrate/cyintegrators/leapfrog.c
-gala/integrate/cyintegrators/ruth4.c
-gala/potential/frame/builtin/frames.c
-gala/potential/frame/cframe.c
-gala/potential/hamiltonian/chamiltonian.c
-gala/potential/potential/builtin/cybuiltin.c
+gala/dynamics/lyapunov/dop853_lyapunov.cpp
+gala/dynamics/mockstream/_coord.cpp
+gala/dynamics/mockstream/mockstream.cpp
+gala/dynamics/mockstream/df.cpp
+gala/integrate/cyintegrators/dop853.cpp
+gala/integrate/cyintegrators/leapfrog.cpp
+gala/integrate/cyintegrators/ruth4.cpp
+gala/potential/frame/builtin/frames.cpp
+gala/potential/frame/cframe.cpp
+gala/potential/hamiltonian/chamiltonian.cpp
+gala/potential/potential/builtin/cybuiltin.cpp
 gala/potential/potential/builtin/cyexp.cpp
-gala/potential/potential/ccompositepotential.c
-gala/potential/potential/cpotential.c
-gala/potential/scf/bfe_class.c
-gala/potential/scf/computecoeff.c
-gala/potential/scf/bfe.c
+gala/potential/potential/ccompositepotential.cpp
+gala/potential/potential/cpotential.cpp
+gala/potential/scf/bfe_class.cpp
+gala/potential/scf/computecoeff.cpp
+gala/potential/scf/bfe.cpp
 gala/extra_compile_macros.h
-gala/cconfig.c
-gala/dynamics/nbody/nbody.c
+gala/cconfig.cpp
+gala/dynamics/nbody/nbody.cpp
 
 # Other generated files
 */_version.py

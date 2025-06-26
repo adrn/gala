@@ -5,6 +5,7 @@
 # cython: wraparound=False
 # cython: profile=False
 # cython: language_level=3
+# cython: language=c++
 
 """ THIS IS A THIN WRAPPER AROUND THE FUNCTIONS IN coeff_helper.c """
 

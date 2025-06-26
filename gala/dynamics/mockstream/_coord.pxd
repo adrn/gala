@@ -1,4 +1,5 @@
 # cython: language_level=3
+# cython: language=c++
 
 # cdef void cross(double[::1] x, double[::1] y, double[::1] z)
 cdef void cross(double *x, double *y, double *z)
