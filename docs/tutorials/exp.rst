@@ -226,6 +226,21 @@ directory.
 The config file itself may reference file paths like the ``modelname`` and ``cachename``.
 These paths can be absolute paths, or paths **relative to the config file**.
 
+-------
+Testing
+-------
+The tests for EXP are all in the dedicated `test_exp.py <https://github.com/adrn/gala/blob/main/gala/potential/potential/tests/test_exp.py>`_
+file. The EXP tests will be run by default if Gala was built with EXP (use ``GALA_FORCE_EXP_TEST=1`` to always test EXP).
+Similarly, some of the tests will compare against pyEXP if it is available (use ``GALA_FORCE_PYEXP_TEST=1`` to always test this).
+
+With the test dependencies installed (see :doc:`/testing`), to run just the EXP tests, one can run the following from the
+repo root:
+
+.. code-block::
+
+    pytest gala/potential/potential/tests/test_exp.py
+
+
 -----------
 Limitations
 -----------
