@@ -70,13 +70,14 @@ will trigger compilation of the Gala's EXP Cython extensions. For example::
 If you build and install EXP following the instructions above, the EXP libraries will be
 located in ``EXP/install/lib`` and the Gala build process knows to look there by default. If
 you installed EXP to a different location, you can set the ``GALA_EXP_LIB_PATH``
-environment variable to point to the EXP install directory::
+environment variable to point to the lib directory of the EXP install::
 
     # Only do this if the install location is not $GALA_EXP_PREFIX/install
     # export GALA_EXP_LIB_PATH=/path/to/EXP-install/lib
 
 That is, ``GALA_EXP_LIB_PATH`` can be set if the CMake ``--install-prefix`` was set to a
-location other than ``GALA_EXP_PREFIX/install``.
+location other than ``GALA_EXP_PREFIX/install``. ``GALA_EXP_LIB_PATH`` should be the
+directory that contains the ``.so`` or ``.dylib`` files.
 
 Now you can run the Gala build. For example, using uv::
 
