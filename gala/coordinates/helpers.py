@@ -22,10 +22,10 @@ class StringValidatedAttribute(Attribute):
         self.valid_values = list(valid_values)
         try:
             default = self.convert_input(default)[0]
-        except ValueError:
+        except ValueError as e:
             raise ValueError(
                 "The specified default value is not in the list of valid values."
-            )
+            ) from e
         super().__init__(default, secondary_attribute)
 
     def convert_input(self, value):

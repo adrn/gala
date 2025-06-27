@@ -1353,9 +1353,11 @@ class CylSplinePotential(CPotentialBase):
 @format_doc(common_doc=_potential_docstring)
 class EXPPotential(CPotentialBase, EXP_only=True):
     r"""
-    EXPPotential(units=None, origin=None, R=None)
-
     Calls the EXP code for the potential.
+
+    This potential will usually be constructed with
+    :class:`~gala.units.SimulationUnitSystem` units. See the tutorial for more
+    information.
 
     .. note::
 
@@ -1365,8 +1367,30 @@ class EXPPotential(CPotentialBase, EXP_only=True):
 
     Parameters
     ----------
-    TODO
+    config_file : path-like
+        The path to the EXP configuration file (usually a YAML file).
+    coef_file : path-like
+        The path to the EXP coefficients file (usually a HDF5 file).
+    tmin, tmax : :class:`~astropy.units.Quantity`, numeric [time], optional
+        The minimum and maximum snapshot times from the EXP potential to load.
+        The default is to load all snapshots (but see ``snapshot_index``).
+    snapshot_index : int, optional
+        The index of the snapshot to load from the EXP potential.
+        This is mutually exclusive with ``tmin`` and ``tmax``.
+        Using this option will make the potential static, i.e. fixed-time.
+        The default is -1, which means to ignore this parameter.
+    stride : int, optional
+        The stride to use when loading snapshots from the EXP potential.
+        This is useful for loading every N-th snapshot, where N is the stride.
+        The default is 1, which means to load every snapshot.
     {common_doc}
+
+    Attributes
+    ----------
+    static : bool
+        Whether the potential is in static, i.e. fixed-time, mode.
+    tmin_exp, tmax_exp : `~astropy.units.Quantity`
+        The actual, loaded minimum and maximum time for which the potential is defined.
     """
 
     config_file = PotentialParameter("config_file", physical_type=None)

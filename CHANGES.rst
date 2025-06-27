@@ -22,6 +22,8 @@ New Features
 - Added the ability to specify integer or string (i.e. non-Quantity) potential
   parameters.
 
+- Added ``gala.potential.EXPPotential`` for using basis function expansion potentials from EXP.
+
 Bug fixes
 ---------
 
@@ -48,7 +50,7 @@ API changes
 
 - Gala has ``save_all`` and ``store_all`` flags for saving all orbits at every
   timestep. The ``store_all`` flag is now deprecated and will be removed in a future
-  release. The``save_all`` flag should be used instead.
+  release. The ``save_all`` flag should be used instead.
 
 Other
 -----
