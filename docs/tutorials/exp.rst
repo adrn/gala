@@ -10,7 +10,7 @@ simulation snapshots. This requires:
 
 #. building EXP,
 #. building Gala with EXP support,
-#. and setting up a `~gala.potential.EXPPotential` object using the user's EXP config and
+#. and setting up a `~gala.potential.potential.EXPPotential` object using the user's EXP config and
    coefficient files.
 
 Note that EXP support currently requires building Gala (and EXP) from source.
@@ -110,7 +110,7 @@ snapshot of the dark matter halo of the m12m simulation in the `Latte suite
 
 The basis was generated with a unit system in which G=1 (standard for EXP), the mass
 unit is :math:`10^{12}~\mathrm{M}_\odot`, and the length unit is 10 kpc.
-Setting up an `~gala.potential.EXPPotential` object with these files is as easy as
+Setting up an `~gala.potential.potential.EXPPotential` object with these files is as easy as
 specifying the unit system and EXP files:
 
 .. code-block:: python
@@ -157,7 +157,7 @@ arbitrary, but it can be used to set physical scales to the simulations.
 Time Evolution
 --------------
 
-An `~gala.potential.EXPPotential` may be time-evolving or static. If the coefficient
+An `~gala.potential.potential.EXPPotential` may be time-evolving or static. If the coefficient
 file has only one snapshot, the potential will be static. Likewise, if ``tmin``/``tmax``
 are passed such that only one snapshot from the coefs falls within that range, the
 potential will be static. For the examples below, we use hypothetical files
@@ -218,7 +218,7 @@ loaded will cause such an error. One can check the loaded range of snapshots wit
 File Paths
 ----------
 
-`~gala.potential.EXPPotential` takes ``config_file`` and ``coef_file`` as file path
+`~gala.potential.potential.EXPPotential` takes ``config_file`` and ``coef_file`` as file path
 arguments. These can be absolute paths, or paths relative to the current working
 directory.
 
@@ -228,7 +228,7 @@ These paths can be absolute paths, or paths **relative to the config file**.
 -----------
 Limitations
 -----------
-The `~gala.potential.EXPPotential` currently has the following limitations:
+The `~gala.potential.potential.EXPPotential` currently has the following limitations:
 
 * Hessian evaluation is not supported.
 * Pickling, saving, and loading is not supported.
@@ -242,4 +242,4 @@ The `~gala.potential.EXPPotential` currently has the following limitations:
 API
 ---
 
-See :class:`~gala.potential.EXPPotential` for the complete API documentation.
+See :class:`~gala.potential.potential.EXPPotential` for the complete API documentation.
