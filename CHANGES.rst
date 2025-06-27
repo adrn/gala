@@ -22,7 +22,7 @@ New Features
 - Added the ability to specify integer or string (i.e. non-Quantity) potential
   parameters.
 
-- Added ``gala.potential.EXPPotential`` for using EXP as a source of potentials
+- Added ``gala.potential.EXPPotential`` for using basis function expansion potentials from EXP. 
 
 Bug fixes
 ---------
