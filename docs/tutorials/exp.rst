@@ -10,7 +10,7 @@ simulation snapshots. This requires:
 
 #. building EXP,
 #. building Gala with EXP support,
-#. and setting up a `~gala.potential.EXPPotential` object using the user's EXP config and
+#. and setting up a `~gala.potential.potential.EXPPotential` object using the user's EXP config and
    coefficient files.
 
 Note that EXP support currently requires building Gala (and EXP) from source.
@@ -70,13 +70,14 @@ will trigger compilation of the Gala's EXP Cython extensions. For example::
 If you build and install EXP following the instructions above, the EXP libraries will be
 located in ``EXP/install/lib`` and the Gala build process knows to look there by default. If
 you installed EXP to a different location, you can set the ``GALA_EXP_LIB_PATH``
-environment variable to point to the EXP install directory::
+environment variable to point to the lib directory of the EXP install::
 
     # Only do this if the install location is not $GALA_EXP_PREFIX/install
     # export GALA_EXP_LIB_PATH=/path/to/EXP-install/lib
 
 That is, ``GALA_EXP_LIB_PATH`` can be set if the CMake ``--install-prefix`` was set to a
-location other than ``GALA_EXP_PREFIX/install``.
+location other than ``GALA_EXP_PREFIX/install``. ``GALA_EXP_LIB_PATH`` should be the
+directory that contains the ``.so`` or ``.dylib`` files.
 
 Now you can run the Gala build. For example, using uv::
 
@@ -110,7 +111,7 @@ snapshot of the dark matter halo of the m12m simulation in the `Latte suite
 
 The basis was generated with a unit system in which G=1 (standard for EXP), the mass
 unit is :math:`10^{12}~\mathrm{M}_\odot`, and the length unit is 10 kpc.
-Setting up an `~gala.potential.EXPPotential` object with these files is as easy as
+Setting up an `~gala.potential.potential.EXPPotential` object with these files is as easy as
 specifying the unit system and EXP files:
 
 .. code-block:: python
@@ -157,7 +158,7 @@ arbitrary, but it can be used to set physical scales to the simulations.
 Time Evolution
 --------------
 
-An `~gala.potential.EXPPotential` may be time-evolving or static. If the coefficient
+An `~gala.potential.potential.EXPPotential` may be time-evolving or static. If the coefficient
 file has only one snapshot, the potential will be static. Likewise, if ``tmin``/``tmax``
 are passed such that only one snapshot from the coefs falls within that range, the
 potential will be static. For the examples below, we use hypothetical files
@@ -218,17 +219,32 @@ loaded will cause such an error. One can check the loaded range of snapshots wit
 File Paths
 ----------
 
-`~gala.potential.EXPPotential` takes ``config_file`` and ``coef_file`` as file path
+`~gala.potential.potential.EXPPotential` takes ``config_file`` and ``coef_file`` as file path
 arguments. These can be absolute paths, or paths relative to the current working
 directory.
 
 The config file itself may reference file paths like the ``modelname`` and ``cachename``.
 These paths can be absolute paths, or paths **relative to the config file**.
 
+-------
+Testing
+-------
+The tests for EXP are all in the dedicated `test_exp.py <https://github.com/adrn/gala/blob/main/gala/potential/potential/tests/test_exp.py>`_
+file. The EXP tests will be run by default if Gala was built with EXP (use ``GALA_FORCE_EXP_TEST=1`` to always test EXP).
+Similarly, some of the tests will compare against pyEXP if it is available (use ``GALA_FORCE_PYEXP_TEST=1`` to always test this).
+
+With the test dependencies installed (see :doc:`/testing`), to run just the EXP tests, one can run the following from the
+repo root:
+
+.. code-block::
+
+    pytest gala/potential/potential/tests/test_exp.py
+
+
 -----------
 Limitations
 -----------
-The `~gala.potential.EXPPotential` currently has the following limitations:
+The `~gala.potential.potential.EXPPotential` currently has the following limitations:
 
 * Hessian evaluation is not supported.
 * Pickling, saving, and loading is not supported.
@@ -242,4 +258,4 @@ The `~gala.potential.EXPPotential` currently has the following limitations:
 API
 ---
 
-See :class:`~gala.potential.EXPPotential` for the complete API documentation.
+See :class:`~gala.potential.potential.EXPPotential` for the complete API documentation.
