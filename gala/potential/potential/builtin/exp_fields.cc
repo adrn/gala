@@ -175,14 +175,8 @@ double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
   if (!exp_state->is_static) {
-    try {
-      // TODO: how expensive is this, actually?
-      exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
-    } catch (const std::exception &e) {
-      // TODO: propagate this exception to Python
-      std::cerr << "[GALA EXP] Error setting coefficients: " << e.what() << std::endl;
-      return std::numeric_limits<double>::quiet_NaN();
-    }
+    // TODO: how expensive is this, actually?
+    exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
   }
 
   // Get the field quantities
@@ -197,14 +191,7 @@ void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, vo
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
   if (!exp_state->is_static) {
-    try {
-      exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
-    } catch (const std::exception &e) {
-      // TODO
-      std::cerr << "[GALA EXP] Error setting coefficients: " << e.what() << std::endl;
-      grad[0] = grad[1] = grad[2] = std::numeric_limits<double>::quiet_NaN();
-      return;
-    }
+    exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
   }
 
   // TODO: ask Martin/Mike for a way to compute only the force/acceleration - we're wasting
@@ -220,13 +207,7 @@ double exp_density(double t, double *pars, double *q, int n_dim, void* state) {
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
   if (!exp_state->is_static) {
-    try {
-      exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
-    } catch (const std::exception &e) {
-      // TODO
-      std::cerr << "[GALA EXP] Error setting coefficients: " << e.what() << std::endl;
-      return std::numeric_limits<double>::quiet_NaN();
-    }
+    exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
   }
 
   // TODO: ask Martin/Mike for a way to compute only the density - we're wasting

@@ -266,11 +266,3 @@ def test_cython_exceptions():
             tmin=0xBAD,
             units=units,
         )
-
-    pot = EXPPotential(
-        config_file=EXP_CONFIG_FILE,
-        coef_file=EXP_MULTI_COEF_FILE,
-        units=units,
-    )
-    # TODO: this will eventually be an exception
-    assert np.isnan(pot.energy([0, 0, 0], t=float(0xBAD)))
