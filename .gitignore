@@ -79,3 +79,5 @@ scripts
 .hypothesis
 
 gala_env
+
+uv.lock
