@@ -1,9 +1,16 @@
 # cython: language_level=3
 # cython: language=c++
 
+from ..potential.cpotential cimport energyfunc, gradientfunc, hessianfunc
+
 cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrameType:
-        pass
+        energyfunc energy
+        gradientfunc gradient
+        hessianfunc hessian
+
+        int n_params
+        double *parameters
 
     double frame_hamiltonian(CFrameType *fr, double t, double *qp, int n_dim) nogil
     void frame_gradient(CFrameType *fr, double t, double *qp, int n_dim, double *dH) nogil

@@ -1,9 +1,7 @@
 # cython: language_level=3
 # cython: language=c++
 
-cdef extern from "potential/src/cpotential.h":
-    ctypedef struct CPotential:
-        pass
+from ...potential.potential.cpotential cimport CPotential
 
 cdef void c_init_velocity(CPotential *p, int ndim, double t, double dt,
                           double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil

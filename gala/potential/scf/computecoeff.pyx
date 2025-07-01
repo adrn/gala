@@ -13,8 +13,8 @@ import numpy as np
 cimport numpy as np
 from libc.math cimport M_PI
 
-cdef extern from "extra_compile_macros.h":
-    int USE_GSL
+from ..._cconfig cimport USE_GSL
+
 
 cdef extern from "math.h":
     double sqrt(double x) nogil

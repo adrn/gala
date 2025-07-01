@@ -18,7 +18,7 @@ from ..util import combine
 from ..orbit import Orbit
 from ..nbody import DirectNBody
 from ...potential import Hamiltonian, PotentialBase, StaticFrame
-from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
+from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential, c_d2_dr2
 from ...potential.hamiltonian.chamiltonian import Hamiltonian
 
 from ._coord cimport cross, norm, apply_3matrix
@@ -26,9 +26,6 @@ from .core import MockStream
 
 __all__ = ['BaseStreamDF', 'FardalStreamDF', 'StreaklineStreamDF',
            'LagrangeCloudStreamDF', 'ChenStreamDF']
-
-cdef extern from "potential/src/cpotential.h":
-    double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
 
 
 @cython.embedsignature(True)

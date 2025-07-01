@@ -18,62 +18,10 @@ cimport numpy as np
 np.import_array()
 
 from cpython.exc cimport PyErr_CheckSignals
-from ...potential.potential.cpotential cimport CPotentialWrapper
-from ...potential.frame.cframe cimport CFrameWrapper
+from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential, c_gradient
+from ...potential.frame.cframe cimport CFrameWrapper, CFrameType
+from .dop853 cimport dop853, Fwrapper, FcnEqDiff, six_norm, SolTrait, dop853_dense_state_alloc, dop853_dense_state_free, Dop853DenseState
 
-cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrameType:
-        pass
-
-cdef extern from "potential/src/cpotential.h":
-    ctypedef struct CPotential:
-        pass
-
-    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
-
-cdef extern from "dopri/dop853.h":
-    ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, CFrameType *fr, unsigned norbits,
-                              unsigned nbody, void *args) nogil
-    ctypedef void (*SolTrait)(long nr, double xold, double x, double* y,
-                              unsigned n, int* irtrn)
-
-    # See dop853.h for full description of all input parameters
-    int dop853 (unsigned n, FcnEqDiff fn,
-                CPotential *p, CFrameType *fr, unsigned n_orbits, unsigned nbody,
-                void *args,
-                double x, double* y, double xend,
-                double* rtoler, double* atoler, int itoler, SolTrait solout,
-                int iout, FILE* fileout, double uround, double safe, double fac1,
-                double fac2, double beta, double hmax, double h, long nmax, int meth,
-                long nstiff, unsigned nrdens, unsigned* icont, unsigned licont,
-                Dop853DenseState* dense_state,
-                double* tout, unsigned ntout, double* yout)
-
-    void Fwrapper (unsigned ndim, double t, double *w, double *f,
-                   CPotential *p, CFrameType *fr, unsigned norbits)
-
-    ctypedef struct Dop853DenseState:
-        double *rcont1
-        double *rcont2
-        double *rcont3
-        double *rcont4
-        double *rcont5
-        double *rcont6
-        double *rcont7
-        double *rcont8
-        double xold
-        double hout
-        unsigned nrds
-        unsigned *indir
-
-    Dop853DenseState* dop853_dense_state_alloc(unsigned nrdens, unsigned n) nogil
-    void dop853_dense_state_free(Dop853DenseState* state, unsigned n) nogil
-    double contd8_threadsafe(Dop853DenseState *state, unsigned ii, double x) nogil
-
-cdef extern from "stdio.h":
-    ctypedef struct FILE
-    FILE *stdout
 
 # LEGACY FUNCTION: don't use this (used by lyapunov functionality)
 cdef void dop853_step(

@@ -22,6 +22,7 @@ cimport cython
 from libc.stdio cimport printf
 
 
+from .builtin.cybuiltin cimport nan_density, nan_value, nan_gradient, nan_hessian
 from .core import PotentialBase, CompositePotential
 from ...util import atleast_2d
 from ...units import DimensionlessUnitSystem
@@ -32,11 +33,6 @@ cdef extern from "math.h":
 
 __all__ = ['CPotentialBase']
 
-cdef extern from "potential/builtin/builtin_potentials.h":
-    double nan_density(double t, double *pars, double *q, int n_dim) nogil
-    double nan_value(double t, double *pars, double *q, int n_dim) nogil
-    void nan_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    void nan_hessian(double t, double *pars, double *q, int n_dim, double *hess) nogil
 
 cpdef _validate_pos_arr(double[:, ::1] arr):
     if arr.ndim != 2:
