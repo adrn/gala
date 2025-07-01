@@ -5,6 +5,7 @@
 # cython: wraparound=False
 # cython: profile=False
 # cython: language_level=3
+# cython: language=c++
 
 """ Generate mock streams. """
 
@@ -24,7 +25,7 @@ from libc.math cimport sqrt
 from libc.stdlib cimport malloc, free
 from cpython.exc cimport PyErr_CheckSignals
 
-from ...integrate.cyintegrators.dop853 cimport dop853_step, dop853_helper
+from ...integrate.cyintegrators.dop853 cimport dop853_step, dop853_helper, Fwrapper_direct_nbody, FcnEqDiff
 from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
 from ...potential.frame.cframe cimport CFrameWrapper, CFrameType
 from ...potential.potential.builtin.cybuiltin import NullWrapper
@@ -37,16 +38,6 @@ from ...potential.potential.io import to_dict
 from .df cimport BaseStreamDF
 
 __all__ = ['mockstream_dop853', 'mockstream_dop853_animate']
-
-
-cdef extern from "dopri/dop853.h":
-    ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, CFrameType *fr,
-                              unsigned norbits, unsigned nbody,
-                              void *args) nogil
-    void Fwrapper_direct_nbody(unsigned ndim, double t, double *w, double *f,
-                               CPotential *p, CFrameType *fr,
-                               unsigned norbits, unsigned nbody, void *args) nogil
 
 
 cpdef mockstream_dop853(

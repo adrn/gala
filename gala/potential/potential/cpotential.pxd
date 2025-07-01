@@ -1,14 +1,11 @@
 # cython: language_level=3
-
-# cdef extern from "potential/src/cpotential.h":
-#     ctypedef struct CPotential:
-#         pass
+# cython: language=c++
 
 cdef extern from "src/funcdefs.h":
-    ctypedef double (*densityfunc)(double t, double *pars, double *q, void *state) nogil
-    ctypedef double (*energyfunc)(double t, double *pars, double *q, void *state) nogil
-    ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad, void *state) nogil
-    ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess, void *state) nogil
+    ctypedef double (*densityfunc)(double t, double *pars, double *q, void *state) except + nogil
+    ctypedef double (*energyfunc)(double t, double *pars, double *q, void *state) except + nogil
+    ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad, void *state) except + nogil
+    ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess, void *state) except + nogil
 
 cdef extern from "potential/src/cpotential.h":
     ctypedef struct CPotential:
@@ -30,14 +27,23 @@ cdef extern from "potential/src/cpotential.h":
     void free_cpotential(CPotential* p) nogil
     int resize_cpotential_arrays(CPotential* p, int n_components) nogil
 
-    double c_potential(CPotential *p, double t, double *q) nogil
-    double c_density(CPotential *p, double t, double *q) nogil
-    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
-    void c_hessian(CPotential *p, double t, double *q, double *hess) nogil
+    double c_potential(CPotential *p, double t, double *q) except + nogil
+    double c_density(CPotential *p, double t, double *q) except + nogil
+    void c_gradient(CPotential *p, double t, double *q, double *grad) except + nogil
+    void c_hessian(CPotential *p, double t, double *q, double *hess) except + nogil
 
-    double c_d_dr(CPotential *p, double t, double *q, double *epsilon) nogil
-    double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
-    double c_mass_enclosed(CPotential *p, double t, double *q, double G, double *epsilon) nogil
+    double c_d_dr(CPotential *p, double t, double *q, double *epsilon) except + nogil
+    double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) except + nogil
+    double c_mass_enclosed(CPotential *p, double t, double *q, double G, double *epsilon) except + nogil
+
+    void c_nbody_gradient_symplectic(
+        CPotential **pots, double t, double *q,
+        double *nbody_q, int nbody, int nbody_i,
+        int ndim, double *grad
+    ) except + nogil
+
+    void c_nbody_acceleration(CPotential **pots, double t, double *qp,
+        int norbits, int nbody, int ndim, double *acc) except + nogil
 
 cpdef _validate_pos_arr(double[:,::1] arr)
 
