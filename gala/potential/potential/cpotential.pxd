@@ -1,10 +1,6 @@
 # cython: language_level=3
 # cython: language=c++
 
-# cdef extern from "potential/src/cpotential.h":
-#     ctypedef struct CPotential:
-#         pass
-
 cdef extern from "src/funcdefs.h":
     ctypedef double (*densityfunc)(double t, double *pars, double *q, void *state) nogil
     ctypedef double (*energyfunc)(double t, double *pars, double *q, void *state) nogil
@@ -39,6 +35,15 @@ cdef extern from "potential/src/cpotential.h":
     double c_d_dr(CPotential *p, double t, double *q, double *epsilon) nogil
     double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) nogil
     double c_mass_enclosed(CPotential *p, double t, double *q, double G, double *epsilon) nogil
+
+    void c_nbody_gradient_symplectic(
+        CPotential **pots, double t, double *q,
+        double *nbody_q, int nbody, int nbody_i,
+        int ndim, double *grad
+    ) nogil
+
+    void c_nbody_acceleration(CPotential **pots, double t, double *qp,
+        int norbits, int nbody, int ndim, double *acc) nogil
 
 cpdef _validate_pos_arr(double[:,::1] arr)
 

@@ -17,28 +17,15 @@ import cython
 cimport cython
 
 # Gala
+from gala._cconfig cimport USE_GSL
 from gala.units import galactic
 from gala.potential.common import PotentialParameter
 from gala.potential import PotentialBase
-from gala.potential.potential.cpotential cimport CPotentialWrapper, CPotential
+from gala.potential.potential.cpotential cimport CPotentialWrapper, CPotential, densityfunc, energyfunc, gradientfunc
 from gala.potential.potential.cpotential import CPotentialBase
+from gala.potential.scf.bfe cimport scf_value, scf_density, scf_gradient, \
+    scf_interp_value, scf_interp_density, scf_interp_gradient
 
-cdef extern from "extra_compile_macros.h":
-    int USE_GSL
-
-cdef extern from "src/funcdefs.h":
-    ctypedef double (*densityfunc)(double t, double *pars, double *q, int n_dim) nogil
-    ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim) nogil
-    ctypedef void (*gradientfunc)(double t, double *pars, double *q, int n_dim, double *grad) nogil
-
-cdef extern from "scf/src/bfe.h":
-    double scf_value(double t, double *pars, double *q, int n_dim) nogil
-    double scf_density(double t, double *pars, double *q, int n_dim) nogil
-    void scf_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
-
-    double scf_interp_value(double t, double *pars, double *q, int n_dim) nogil
-    double scf_interp_density(double t, double *pars, double *q, int n_dim) nogil
-    void scf_interp_gradient(double t, double *pars, double *q, int n_dim, double *grad) nogil
 
 __all__ = ['SCFPotential', 'InterpolatedSCFPotential']
 

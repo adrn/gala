@@ -16,9 +16,8 @@ from libcpp cimport bool as cbool
 
 from ..cpotential cimport CPotentialWrapper
 from ..cpotential cimport densityfunc, energyfunc, gradientfunc, hessianfunc
+from ...._cconfig cimport USE_EXP
 
-cdef extern from "extra_compile_macros.h":
-    int USE_EXP
 
 cdef extern from "potential/potential/builtin/exp_fields.h" namespace "gala_exp":
     cdef cppclass State:
@@ -36,7 +35,6 @@ cdef extern from "potential/potential/builtin/exp_fields.h" namespace "gala_exp"
     ) except + nogil
 
 cdef extern from "potential/potential/builtin/exp_fields.h":
-    # TODO: technically these are C++ signatures, unlike the extern "C" declarations in exp_fields.h
     double exp_value(double t, double *pars, double *q, int n_dim, void *state) nogil
     void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
     double exp_density(double t, double *pars, double *q, int n_dim, void *state) nogil
