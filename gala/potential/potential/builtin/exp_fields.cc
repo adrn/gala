@@ -69,7 +69,7 @@ State exp_init(
       std::ostringstream error_msg;
       error_msg << "Invalid snapshot_index: " << snapshot_index
                 << ". Valid indices are in [0," << (times.size() - 1) << "]"
-                << " (times [" << times.front() << ", " << times.back() << "]";
+                << " (times [" << times.front() << ", " << times.back() << "])";
       throw std::runtime_error(error_msg.str());
     }
     tmin = times[snapshot_index];
