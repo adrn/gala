@@ -27,10 +27,10 @@ cdef extern from "dopri/dop853.h":
         unsigned *indir
 
     void Fwrapper (unsigned ndim, double t, double *w, double *f,
-                   CPotential *p, CFrameType *fr, unsigned norbits, unsigned nbody)
+                   CPotential *p, CFrameType *fr, unsigned norbits, unsigned nbody) except +
     void Fwrapper_direct_nbody(unsigned ndim, double t, double *w, double *f,
                                CPotential *p, CFrameType *fr,
-                               unsigned norbits, unsigned nbody, void *args) nogil
+                               unsigned norbits, unsigned nbody, void *args) except + nogil
 
     # See dop853.h for full description of all input parameters
     int dop853 (unsigned n, FcnEqDiff fn,
@@ -42,7 +42,7 @@ cdef extern from "dopri/dop853.h":
                 double fac2, double beta, double hmax, double h, long nmax, int meth,
                 long nstiff, unsigned nrdens, unsigned* icont, unsigned licont,
                 Dop853DenseState* dense_state,
-                double* tout, unsigned ntout, double* yout)
+                double* tout, unsigned ntout, double* yout) except +
 
     Dop853DenseState* dop853_dense_state_alloc(unsigned nrdens, unsigned n) nogil
     void dop853_dense_state_free(Dop853DenseState* state, unsigned n) nogil

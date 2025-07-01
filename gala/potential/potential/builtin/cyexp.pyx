@@ -35,9 +35,13 @@ cdef extern from "potential/potential/builtin/exp_fields.h" namespace "gala_exp"
     ) except + nogil
 
 cdef extern from "potential/potential/builtin/exp_fields.h":
-    double exp_value(double t, double *pars, double *q, int n_dim, void *state) nogil
-    void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
-    double exp_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+    # Note: the 'except +' annotations here don't actually do anything, since these functions
+    # are not (currently) called directly from Cython/Python. But they serve as a reminder that
+    # any cdef extern function that may throw a C++ exception must carry this annotation.
+
+    double exp_value(double t, double *pars, double *q, int n_dim, void *state) except + nogil
+    void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) except + nogil
+    double exp_density(double t, double *pars, double *q, int n_dim, void *state) except + nogil
 
 __all__ = [
     'EXPWrapper',
