@@ -120,7 +120,7 @@ class UnitSystem:
         for phys_type in self._required_physical_types:
             if phys_type not in self._registry:
                 raise ValueError(
-                    "You must specify a unit for the physical type" f"'{phys_type}'"
+                    f"You must specify a unit for the physical type'{phys_type}'"
                 )
             self._core_units.append(self._registry[phys_type])
 
@@ -137,9 +137,7 @@ class UnitSystem:
                 break
 
         if unit is None:
-            raise ValueError(
-                f"Physical type '{key}' doesn't exist in unit " "registry."
-            )
+            raise ValueError(f"Physical type '{key}' doesn't exist in unit registry.")
 
         unit = unit.decompose(self._core_units)
         unit._scale = 1.0
@@ -229,7 +227,7 @@ class UnitSystem:
             c = getattr(const, name)
         except AttributeError as e:
             raise ValueError(
-                f"Constant name '{name}' doesn't exist in " "astropy.constants"
+                f"Constant name '{name}' doesn't exist in astropy.constants"
             ) from e
 
         return c.decompose(self._core_units).value

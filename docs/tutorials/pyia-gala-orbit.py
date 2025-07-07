@@ -78,7 +78,7 @@ star_gaia = GaiaData.from_query(
     SELECT TOP 1 * FROM gaiadr3.gaia_source
     WHERE 1=CONTAINS(
         POINT('ICRS', {star_sky_c.ra.degree}, {star_sky_c.dec.degree}),
-        CIRCLE('ICRS', ra, dec, {(15*u.arcsec).to_value(u.degree)})
+        CIRCLE('ICRS', ra, dec, {(15 * u.arcsec).to_value(u.degree)})
     )
     ORDER BY phot_g_mean_mag
     """
