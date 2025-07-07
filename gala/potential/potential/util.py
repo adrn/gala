@@ -69,7 +69,7 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
         from sympy.utilities.lambdify import lambdify
     except ImportError as e:
         raise ImportError(
-            "sympy is required to use 'from_equation()' " "potential class creation."
+            "sympy is required to use 'from_equation()' potential class creation."
         ) from e
 
     # convert all input to Sympy objects
