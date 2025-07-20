@@ -7,6 +7,8 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     void nan_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
     void nan_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
+    void nan_gradientv(size_t N, double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+
     double null_value(double t, double *pars, double *q, int n_dim, void *state) nogil
     void null_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
     double null_density(double t, double *pars, double *q, int n_dim, void *state) nogil
@@ -55,6 +57,8 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     void sphericalnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
     double sphericalnfw_density(double t, double *pars, double *q, int n_dim, void *state) nogil
     void sphericalnfw_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
+
+    void sphericalnfw_gradientv(size_t N, double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
 
     double flattenednfw_value(double t, double *pars, double *q, int n_dim, void *state) nogil
     void flattenednfw_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil

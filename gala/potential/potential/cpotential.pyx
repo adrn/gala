@@ -22,7 +22,7 @@ cimport cython
 from libc.stdio cimport printf
 
 
-from .builtin.cybuiltin cimport nan_density, nan_value, nan_gradient, nan_hessian
+from .builtin.cybuiltin cimport nan_density, nan_value, nan_gradient, nan_gradientv, nan_hessian
 from .core import PotentialBase, CompositePotential
 from ...util import atleast_2d
 from ...units import DimensionlessUnitSystem
@@ -78,6 +78,8 @@ cdef class CPotentialWrapper:
         self.cpotential.density[0] = <densityfunc>(nan_density)
         self.cpotential.gradient[0] = <gradientfunc>(nan_gradient)
         self.cpotential.hessian[0] = <hessianfunc>(nan_hessian)
+
+        self.cpotential.gradientv[0] = <gradientfuncv>(nan_gradientv)
 
         # set the origin of the potentials
         _q0 = np.array(q0)

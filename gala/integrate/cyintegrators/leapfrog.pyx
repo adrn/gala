@@ -14,7 +14,7 @@ cimport numpy as np
 np.import_array()
 
 
-from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential, c_gradient, c_nbody_gradient_symplectic
+from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential, c_gradient, c_gradientv, c_nbody_gradient_symplectic
 from ...potential.frame import StaticFrame
 from ...potential import NullPotential
 
@@ -28,6 +28,18 @@ cdef void c_init_velocity(CPotential *p, int half_ndim, double t, double dt,
 
     for k in range(half_ndim):
         v_jm1_2[k] = v_jm1[k] - grad[k] * dt/2.  # acceleration is minus gradient
+
+
+cdef void c_init_velocity_v(CPotential *p, size_t n, int half_ndim, double t, double dt,
+                      double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil:
+    cdef int i, k
+
+    c_gradientv(p, n, t, &x_jm1[0], &grad[0])
+
+    for k in range(half_ndim):
+        for i in range(n):
+            v_jm1_2[i + k * n] = v_jm1[i + k * n] - grad[i + k * n] * dt/2.  # acceleration is minus gradient
+
 
 cdef void c_leapfrog_step(CPotential *p, int half_ndim, double t, double dt,
                           double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil:
@@ -44,6 +56,26 @@ cdef void c_leapfrog_step(CPotential *p, int half_ndim, double t, double dt,
     for k in range(half_ndim):
         v_jm1[k] = v_jm1_2[k] - grad[k] * dt/2.
         v_jm1_2[k] = v_jm1_2[k] - grad[k] * dt
+
+
+cdef void c_leapfrog_step_v(CPotential *p, size_t n, int half_ndim, double t, double dt,
+                            double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil:
+    cdef int i, k
+
+    # full step the positions
+    for k in range(half_ndim):
+        for i in range(n):
+            x_jm1[i + k * n] = x_jm1[i + k * n] + v_jm1_2[i + k * n] * dt
+
+    c_gradientv(p, n, t, &x_jm1[0], &grad[0])  # compute gradient at new position
+
+    # step velocity forward by half step, aligned w/ position, then
+    #   finish the full step to leapfrog over position
+    for k in range(half_ndim):
+        for i in range(n):
+            v_jm1[i + k * n] = v_jm1_2[i + k * n] - grad[i + k * n] * dt/2.
+            v_jm1_2[i + k * n] = v_jm1_2[i + k * n] - grad[i + k * n] * dt
+
 
 cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1] t,
                                      int save_all=1):
@@ -117,6 +149,76 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
         return np.asarray(t), np.asarray(all_w)
     else:
         return np.asarray(t[-1:]), np.asarray(tmp_w)
+
+cpdef leapfrog_integrate_hamiltonian_v(hamiltonian, double [:, ::1] w0, double[::1] t,
+                                     int save_all=1):
+    """
+    CAUTION: Interpretation of axes is different here! We need the
+    arrays to be C ordered and easy to iterate over, so here the
+    axes are (norbits, ndim).
+    """
+
+    if not hamiltonian.c_enabled:
+        raise TypeError("Input Hamiltonian object does not support C-level access.")
+
+    if not isinstance(hamiltonian.frame, StaticFrame):
+        raise TypeError(
+            "Leapfrog integration is currently only supported for StaticFrame, "
+            f"not {hamiltonian.frame.__class__.__name__}"
+        )
+
+    cdef:
+        # temporary scalars
+        int i, j, k
+        int n = w0.shape[0]
+        int ndim = w0.shape[1]
+        int half_ndim = ndim // 2
+
+        int ntimes = len(t)
+        double dt = t[1]-t[0]
+
+        # temporary array containers
+        # transposed arrays
+        double[:, ::1] grad_v = np.zeros((half_ndim, n))
+        double[:, ::1] v_jm1_2 = np.zeros((half_ndim, n))
+
+        # return arrays
+        double[:, :, ::1] all_w
+        double[:, ::1] tmp_w = np.zeros((ndim, n))
+
+        # whoa, so many dots
+        CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
+
+    if save_all:
+        all_w = np.zeros((ntimes, ndim, n))
+
+        # save initial conditions
+        all_w[0, :, :] = w0.T.copy()
+
+    tmp_w = w0.T.copy()
+
+    with nogil:
+        # first initialize the velocities so they are evolved by a
+        #   half step relative to the positions
+        c_init_velocity_v(cp, n, half_ndim, t[0], dt,
+                        &tmp_w[0, 0], &tmp_w[half_ndim, 0],
+                        &v_jm1_2[0, 0], &grad_v[0, 0])
+
+        for j in range(1, ntimes, 1):
+            c_leapfrog_step_v(cp, n, half_ndim, t[j], dt,
+                            &tmp_w[0, 0], &tmp_w[half_ndim, 0],
+                            &v_jm1_2[0, 0],
+                            &grad_v[0, 0])
+
+            if save_all:
+                for k in range(ndim):
+                    for i in range(n):
+                        all_w[j, k, i] = tmp_w[k, i]
+
+    if save_all:
+        return np.asarray(t), np.asarray(all_w).transpose(0,2,1)
+    else:
+        return np.asarray(t[-1:]), np.asarray(tmp_w.T)
 
 # -------------------------------------------------------------------------------------
 # N-body stuff - TODO: to be moved, because this is a HACK!

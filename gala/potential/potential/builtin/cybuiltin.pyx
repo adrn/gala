@@ -23,7 +23,7 @@ from ..core import CompositePotential, _potential_docstring, PotentialBase
 from ..util import format_doc, sympy_wrap
 from ..cpotential import CPotentialBase
 from ..cpotential cimport CPotential, CPotentialWrapper
-from ..cpotential cimport densityfunc, energyfunc, gradientfunc, hessianfunc
+from ..cpotential cimport densityfunc, energyfunc, gradientfunc, gradientfuncv, hessianfunc
 from ...common import PotentialParameter
 from ...frame.cframe cimport CFrameWrapper
 from ....units import dimensionless, DimensionlessUnitSystem
@@ -266,6 +266,8 @@ cdef class SphericalNFWWrapper(CPotentialWrapper):
         self.cpotential.density[0] = <densityfunc>(sphericalnfw_density)
         self.cpotential.gradient[0] = <gradientfunc>(sphericalnfw_gradient)
         self.cpotential.hessian[0] = <hessianfunc>(sphericalnfw_hessian)
+
+        self.cpotential.gradientv[0] = <gradientfuncv>(sphericalnfw_gradientv)
 
 cdef class FlattenedNFWWrapper(CPotentialWrapper):
 
