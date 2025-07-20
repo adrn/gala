@@ -173,14 +173,17 @@ cpdef gradient(double[:, ::1] xyz,
     """
     cdef:
         int ncoords = xyz.shape[0]
-        double[:, ::1] grad = np.zeros((ncoords, 3))
+        double[:, ::1] xyz_T = np.ascontiguousarray(xyz.T)
+        double[:, ::1] grad = np.zeros((3, ncoords))
 
         int nmax = Snlm.shape[0]-1
         int lmax = Snlm.shape[1]-1
 
     if USE_GSL == 1:
-        scf_gradient_helper(&xyz[0, 0], ncoords, G, M, r_s,
+        scf_gradient_helper(&xyz_T[0, 0], &xyz_T[1, 0], &xyz_T[2, 0],
+                            ncoords, G, M, r_s,
                             &Snlm[0, 0, 0], &Tnlm[0, 0, 0],
-                            nmax, lmax, &grad[0, 0])
+                            nmax, lmax,
+                            &grad[0, 0], &grad[1, 0], &grad[2, 0])
 
-    return np.array(grad)
+    return np.asarray(grad.T, copy=False)

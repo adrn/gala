@@ -8,7 +8,7 @@ double frame_hamiltonian(CFrameType *fr, double t, double *qp, int n_dim) {
 }
 
 void frame_gradient(CFrameType *fr, double t, double *qp, int n_dim, double *dH) {
-    (fr->gradient)(t, (fr->parameters), qp, n_dim, dH, NULL);
+    (fr->gradient)(1, t, (fr->parameters), qp, n_dim, dH, NULL);
 }
 
 void frame_hessian(CFrameType *fr, double t, double *qp, int n_dim, double *d2H) {

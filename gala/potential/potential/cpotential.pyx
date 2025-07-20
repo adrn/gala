@@ -150,16 +150,18 @@ cdef class CPotentialWrapper:
         cdef int n, ndim, i
         n, ndim = _validate_pos_arr(q)
 
-        cdef double[:, ::1] grad = np.zeros((n, ndim))
+        cdef double[:, ::1] grad = np.zeros((ndim, n))
+
+        cdef double[:, ::1] q_T = np.ascontiguousarray(q.T)
 
         if len(t) == 1:
-            for i in range(n):
-                c_gradient(self.cpotential, t[0], &q[i, 0], &grad[i, 0])
+            c_gradient(self.cpotential, n, t[0], &q_T[0, 0], &grad[0, 0])
         else:
+            # TODO: optimize the multi-time case (probably not relevant for orbit integrations)
             for i in range(n):
-                c_gradient(self.cpotential, t[i], &q[i, 0], &grad[i, 0])
+                c_gradient(self.cpotential, 1, t[i], &q_T[0, i], &grad[0, i])
 
-        return np.array(grad)
+        return np.asarray(grad.T, copy=False)
 
     cpdef hessian(self, double[:, ::1] q, double[::1] t):
         """
