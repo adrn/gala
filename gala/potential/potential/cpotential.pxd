@@ -2,10 +2,12 @@
 # cython: language=c++
 
 cdef extern from "src/funcdefs.h":
-    ctypedef double (*densityfunc)(double t, double *pars, double *q, void *state) except + nogil
-    ctypedef double (*energyfunc)(double t, double *pars, double *q, void *state) except + nogil
-    ctypedef void (*gradientfunc)(double t, double *pars, double *q, double *grad, void *state) except + nogil
-    ctypedef void (*hessianfunc)(double t, double *pars, double *q, double *hess, void *state) except + nogil
+    ctypedef double (*densityfunc)(double t, double *pars, double *q, int n_dim, void *state) except + nogil
+    ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim, void *state) except + nogil
+    ctypedef void (*gradientfunc)(double t, double *pars, double *q, int n_dim, double *grad, void *state) except + nogil
+    ctypedef void (*hessianfunc)(double t, double *pars, double *q, int n_dim, double *hess, void *state) except + nogil
+
+    ctypedef void (*gradientfuncv)(size_t N, double t, double *pars, double *q, double *grad, int n_dim, void *state) except + nogil
 
 cdef extern from "potential/src/cpotential.h":
     ctypedef struct CPotential:
@@ -17,6 +19,9 @@ cdef extern from "potential/src/cpotential.h":
         energyfunc* value
         gradientfunc* gradient
         hessianfunc* hessian
+
+        gradientfuncv* gradientv
+
         int* n_params         # parameter counts per component
         double** parameters   # pointers to parameter arrays per component
         double** q0           # pointers to origin per component
@@ -31,6 +36,8 @@ cdef extern from "potential/src/cpotential.h":
     double c_density(CPotential *p, double t, double *q) except + nogil
     void c_gradient(CPotential *p, double t, double *q, double *grad) except + nogil
     void c_hessian(CPotential *p, double t, double *q, double *hess) except + nogil
+
+    void c_gradientv(CPotential *p, size_t N, double t, double *q, double *grad) except + nogil
 
     double c_d_dr(CPotential *p, double t, double *q, double *epsilon) except + nogil
     double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon) except + nogil

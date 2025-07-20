@@ -3,6 +3,8 @@ extern double nan_value(double t, double *pars, double *q, int n_dim, void *stat
 extern void nan_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state);
 extern void nan_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state);
 
+extern void nan_gradientv(size_t N, double t, double *pars, double *q, int n_dim, double *grad, void *state);
+
 extern double null_density(double t, double *pars, double *q, int n_dim, void *state);
 extern double null_value(double t, double *pars, double *q, int n_dim, void *state);
 extern void null_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state);
@@ -51,6 +53,8 @@ extern double sphericalnfw_value(double t, double *pars, double *q, int n_dim, v
 extern void sphericalnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state);
 extern double sphericalnfw_density(double t, double *pars, double *q, int n_dim, void *state);
 extern void sphericalnfw_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state);
+
+extern void sphericalnfw_gradientv(size_t N, double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, double *__restrict__ grad, void * __restrict__ state);
 
 extern double flattenednfw_value(double t, double *pars, double *q, int n_dim, void *state);
 extern void flattenednfw_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state);

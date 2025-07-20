@@ -16,6 +16,8 @@
         gradientfunc* gradient;
         hessianfunc* hessian;
 
+        gradientfuncv* gradientv;
+
         // array containing the number of parameters in each component
         int* n_params;
 
@@ -41,6 +43,8 @@ extern double c_potential(CPotential *p, double t, double *q);
 extern double c_density(CPotential *p, double t, double *q);
 extern void c_gradient(CPotential *p, double t, double *q, double *grad);
 extern void c_hessian(CPotential *p, double t, double *q, double *hess);
+
+extern void c_gradientv(CPotential *p, size_t N, double t, double *q, double *grad);
 
 // TODO: err, what about reference frames...
 extern double c_d_dr(CPotential *p, double t, double *q, double *epsilon);

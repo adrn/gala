@@ -14,6 +14,7 @@ CPotential* allocate_cpotential(int n_components) {
     p->value = (energyfunc*)malloc(n_components * sizeof(energyfunc));
     p->gradient = (gradientfunc*)malloc(n_components * sizeof(gradientfunc));
     p->hessian = (hessianfunc*)malloc(n_components * sizeof(hessianfunc));
+    p->gradientv = (gradientfuncv*)malloc(n_components * sizeof(gradientfuncv));
     p->n_params = (int*)malloc(n_components * sizeof(int));
     p->parameters = (double**)malloc(n_components * sizeof(double*));
     p->q0 = (double**)malloc(n_components * sizeof(double*));
@@ -57,6 +58,7 @@ CPotential* allocate_cpotential(int n_components) {
         pot->value = (energyfunc*)realloc(pot->value, new_n_components * sizeof(energyfunc));
         pot->gradient = (gradientfunc*)realloc(pot->gradient, new_n_components * sizeof(gradientfunc));
         pot->hessian = (hessianfunc*)realloc(pot->hessian, new_n_components * sizeof(hessianfunc));
+        pot->gradientv = (gradientfuncv*)realloc(pot->gradientv, new_n_components * sizeof(gradientfuncv));
         pot->n_params = (int*)realloc(pot->n_params, new_n_components * sizeof(int));
         pot->parameters = (double**)realloc(pot->parameters, new_n_components * sizeof(double*));
         pot->q0 = (double**)realloc(pot->q0, new_n_components * sizeof(double*));
@@ -186,6 +188,68 @@ void c_gradient(CPotential *p, double t, double *qp, double *grad) {
                             &tmp_grad[0], (p->state)[i]);
             apply_rotate(&tmp_grad[0], (p->R)[i], p->n_dim, 1, &grad[0]);
         }
+    }
+}
+
+
+void c_gradientv(CPotential *p, size_t N, double t, double *qp, double *grad) {
+    // qp: shape [p->n_dim, N]
+    // grad: shape [p->n_dim, N]
+
+    size_t i, j;
+    double *qp_trans = NULL;
+    double *tmp_grad = NULL;
+    bool need_transform = false;
+
+    // Check if any components need transformation
+    for (i = 0; i < p->n_components; i++) {
+        if (p->do_shift_rotate[i] != 0) {
+            need_transform = true;
+            break;
+        }
+    }
+
+    // Allocate temporary arrays if transformation is needed
+    if (need_transform) {
+        qp_trans = (double*)malloc(p->n_dim * N * sizeof(double));
+        tmp_grad = (double*)malloc(p->n_dim * N * sizeof(double));
+    }
+
+    // Initialize gradient array
+    for (i = 0; i < p->n_dim * N; i++) {
+        grad[i] = 0.;
+    }
+
+    for (i = 0; i < p->n_components; i++) {
+        if (p->do_shift_rotate[i] == 0) {
+            // ctypedef void (*gradientfuncv)(int n_dim, size_t N, double t, double *pars, double *q, double *grad, void *state) except + nogil
+            (p->gradientv)[i](N, t, (p->parameters)[i], qp, p->n_dim, grad, (p->state)[i]);
+        } else {
+            // Initialize temporary arrays
+            for (j = 0; j < p->n_dim * N; j++) {
+                qp_trans[j] = 0.;
+                tmp_grad[j] = 0.;
+            }
+
+            // Apply shift and rotation to all particles
+            for (j = 0; j < N; j++) {
+                apply_shift_rotate(&qp[j * p->n_dim], (p->q0)[i], (p->R)[i], p->n_dim, 0, &qp_trans[j * p->n_dim]);
+            }
+
+            // Compute gradient for transformed coordinates
+            (p->gradientv)[i](N, t, (p->parameters)[i], &qp_trans[0], p->n_dim, &tmp_grad[0], (p->state)[i]);
+
+            // Apply inverse rotation to gradient and accumulate
+            for (j = 0; j < N; j++) {
+                apply_rotate(&tmp_grad[j * p->n_dim], (p->R)[i], p->n_dim, 1, &grad[j * p->n_dim]);
+            }
+        }
+    }
+
+    // Free temporary arrays
+    if (need_transform) {
+        free(qp_trans);
+        free(tmp_grad);
     }
 }
 
