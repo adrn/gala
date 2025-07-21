@@ -1,4 +1,5 @@
 # cython: language_level=3
+# cython: language=c++
 
 # Standard-library
 import warnings
@@ -249,6 +250,7 @@ class Hamiltonian(CommonBase):
         Integrator_kwargs=dict(),
         cython_if_possible=True,
         save_all=True,
+        vectorized=False,
         **time_spec
     ):
         """
@@ -324,8 +326,13 @@ class Hamiltonian(CommonBase):
 
             # TODO: these replacements should be defined in gala.integrate...
             if Integrator == LeapfrogIntegrator:
-                from ...integrate.cyintegrators import leapfrog_integrate_hamiltonian
-                t, w = leapfrog_integrate_hamiltonian(self, arr_w0, t, save_all=save_all)
+                from ...integrate.cyintegrators import leapfrog_integrate_hamiltonian, leapfrog_integrate_hamiltonian_v
+                # temporary toggle during development
+                if vectorized:
+                    t, w = leapfrog_integrate_hamiltonian_v(self, arr_w0, t, save_all=save_all)
+                else:
+                    t, w = leapfrog_integrate_hamiltonian(self, arr_w0, t, save_all=save_all)
+
 
             elif Integrator == Ruth4Integrator:
                 from ...integrate.cyintegrators import ruth4_integrate_hamiltonian

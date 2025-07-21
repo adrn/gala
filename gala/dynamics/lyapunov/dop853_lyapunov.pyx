@@ -4,6 +4,7 @@
 # cython: wraparound=False
 # cython: profile=False
 # cython: language_level=3
+# cython: language=c++
 
 """ DOP853 integration in Cython. """
 
@@ -15,25 +16,9 @@ np.import_array()
 from libc.stdio cimport printf
 from libc.math cimport log
 
-from ...integrate.cyintegrators.dop853 cimport dop853_step
-from ...potential.potential.cpotential cimport CPotentialWrapper
-from ...potential.frame.cframe cimport CFrameWrapper
-
-cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrameType:
-        pass
-
-cdef extern from "potential/src/cpotential.h":
-    ctypedef struct CPotential:
-        pass
-
-cdef extern from "dopri/dop853.h":
-    ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, CFrameType *fr, unsigned norbits,
-                              unsigned nbody, void *args) nogil
-    void Fwrapper (unsigned ndim, double t, double *w, double *f,
-                   CPotential *p, CFrameType *fr, unsigned norbits, unsigned nbody)
-    double six_norm (double *x)
+from ...integrate.cyintegrators.dop853 cimport dop853_step, Fwrapper, FcnEqDiff, six_norm
+from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
+from ...potential.frame.cframe cimport CFrameWrapper, CFrameType
 
 cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
                           double dt, int n_steps, double t0,

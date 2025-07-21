@@ -14,6 +14,7 @@ CPotential* allocate_cpotential(int n_components) {
     p->value = (energyfunc*)malloc(n_components * sizeof(energyfunc));
     p->gradient = (gradientfunc*)malloc(n_components * sizeof(gradientfunc));
     p->hessian = (hessianfunc*)malloc(n_components * sizeof(hessianfunc));
+    p->gradientv = (gradientfuncv*)malloc(n_components * sizeof(gradientfuncv));
     p->n_params = (int*)malloc(n_components * sizeof(int));
     p->parameters = (double**)malloc(n_components * sizeof(double*));
     p->q0 = (double**)malloc(n_components * sizeof(double*));
@@ -21,62 +22,63 @@ CPotential* allocate_cpotential(int n_components) {
     p->state = (void**)malloc(n_components * sizeof(void*));
     p->do_shift_rotate = (int*)malloc(n_components * sizeof(int));
 
-    // Initialize with NULL pointers
-    for (int i = 0; i < n_components; i++) {
-        p->parameters[i] = NULL;
-        p->q0[i] = NULL;
-        p->R[i] = NULL;
+        // Initialize with NULL pointers
+        for (int i = 0; i < n_components; i++) {
+            p->parameters[i] = NULL;
+            p->q0[i] = NULL;
+            p->R[i] = NULL;
+        }
+
+        return p;
     }
 
-    return p;
-}
+    void free_cpotential(CPotential* p) {
+        if (p == NULL) return;
 
-void free_cpotential(CPotential* p) {
-    if (p == NULL) return;
-
-    free(p->density);
-    free(p->value);
-    free(p->gradient);
-    free(p->hessian);
-    free(p->n_params);
-    free(p->parameters); // Note: doesn't free the actual parameter arrays
-    free(p->q0);         // Note: doesn't free the actual q0 arrays
-    free(p->R);          // Note: doesn't free the actual R arrays
-    free(p->state);          // Note: doesn't free the actual state arrays
-    free(p->do_shift_rotate);
-    free(p);
-}
-
-int resize_cpotential_arrays(CPotential* pot, int new_n_components) {
-    if (new_n_components <= pot->n_components)
-        return 1;  // Nothing to do
-
-    // Reallocate arrays to the new size
-    pot->n_components = new_n_components;
-    pot->density = realloc(pot->density, new_n_components * sizeof(densityfunc));
-    pot->value = realloc(pot->value, new_n_components * sizeof(energyfunc));
-    pot->gradient = realloc(pot->gradient, new_n_components * sizeof(gradientfunc));
-    pot->hessian = realloc(pot->hessian, new_n_components * sizeof(hessianfunc));
-    pot->n_params = realloc(pot->n_params, new_n_components * sizeof(int));
-    pot->parameters = realloc(pot->parameters, new_n_components * sizeof(double*));
-    pot->q0 = realloc(pot->q0, new_n_components * sizeof(double*));
-    pot->R = realloc(pot->R, new_n_components * sizeof(double*));
-    pot->state = realloc(pot->state, new_n_components * sizeof(void*));
-    pot->do_shift_rotate = realloc(pot->do_shift_rotate, new_n_components * sizeof(int));
-
-    // Initialize new elements
-    for (int i = pot->n_components; i < new_n_components; i++) {
-        pot->parameters[i] = NULL;
-        pot->q0[i] = NULL;
-        pot->R[i] = NULL;
+        free(p->density);
+        free(p->value);
+        free(p->gradient);
+        free(p->hessian);
+        free(p->n_params);
+        free(p->parameters); // Note: doesn't free the actual parameter arrays
+        free(p->q0);         // Note: doesn't free the actual q0 arrays
+        free(p->R);          // Note: doesn't free the actual R arrays
+        free(p->state);          // Note: doesn't free the actual state arrays
+        free(p->do_shift_rotate);
+        free(p);
     }
 
-    return 1;  // Success
-}
+    int resize_cpotential_arrays(CPotential* pot, int new_n_components) {
+        if (new_n_components <= pot->n_components)
+            return 1;  // Nothing to do
 
-void apply_rotate(double *q_in, double *R, int n_dim, int transpose,
-                  double *q_out) {
-    // NOTE: elsewhere, we enforce that rotation matrix only works for
+        // Reallocate arrays to the new size
+        pot->n_components = new_n_components;
+        pot->density = (densityfunc*)realloc(pot->density, new_n_components * sizeof(densityfunc));
+        pot->value = (energyfunc*)realloc(pot->value, new_n_components * sizeof(energyfunc));
+        pot->gradient = (gradientfunc*)realloc(pot->gradient, new_n_components * sizeof(gradientfunc));
+        pot->hessian = (hessianfunc*)realloc(pot->hessian, new_n_components * sizeof(hessianfunc));
+        pot->gradientv = (gradientfuncv*)realloc(pot->gradientv, new_n_components * sizeof(gradientfuncv));
+        pot->n_params = (int*)realloc(pot->n_params, new_n_components * sizeof(int));
+        pot->parameters = (double**)realloc(pot->parameters, new_n_components * sizeof(double*));
+        pot->q0 = (double**)realloc(pot->q0, new_n_components * sizeof(double*));
+        pot->R = (double**)realloc(pot->R, new_n_components * sizeof(double*));
+        pot->state = (void**)realloc(pot->state, new_n_components * sizeof(void*));
+        pot->do_shift_rotate = (int*)realloc(pot->do_shift_rotate, new_n_components * sizeof(int));
+
+        // Initialize new elements
+        for (int i = pot->n_components; i < new_n_components; i++) {
+            pot->parameters[i] = NULL;
+            pot->q0[i] = NULL;
+            pot->R[i] = NULL;
+        }
+
+        return 1;  // Success
+    }
+
+    void apply_rotate(double *q_in, double *R, int n_dim, int transpose,
+                      double *q_out) {
+        // NOTE: elsewhere, we enforce that rotation matrix only works for
     // ndim=2 or ndim=3, so here we can assume that!
     if (n_dim == 3) {
         if (transpose == 0) {
@@ -186,6 +188,68 @@ void c_gradient(CPotential *p, double t, double *qp, double *grad) {
                             &tmp_grad[0], (p->state)[i]);
             apply_rotate(&tmp_grad[0], (p->R)[i], p->n_dim, 1, &grad[0]);
         }
+    }
+}
+
+
+void c_gradientv(CPotential *p, size_t N, double t, double *qp, double *grad) {
+    // qp: shape [p->n_dim, N]
+    // grad: shape [p->n_dim, N]
+
+    size_t i, j;
+    double *qp_trans = NULL;
+    double *tmp_grad = NULL;
+    bool need_transform = false;
+
+    // Check if any components need transformation
+    for (i = 0; i < p->n_components; i++) {
+        if (p->do_shift_rotate[i] != 0) {
+            need_transform = true;
+            break;
+        }
+    }
+
+    // Allocate temporary arrays if transformation is needed
+    if (need_transform) {
+        qp_trans = (double*)malloc(p->n_dim * N * sizeof(double));
+        tmp_grad = (double*)malloc(p->n_dim * N * sizeof(double));
+    }
+
+    // Initialize gradient array
+    for (i = 0; i < p->n_dim * N; i++) {
+        grad[i] = 0.;
+    }
+
+    for (i = 0; i < p->n_components; i++) {
+        if (p->do_shift_rotate[i] == 0) {
+            // ctypedef void (*gradientfuncv)(int n_dim, size_t N, double t, double *pars, double *q, double *grad, void *state) except + nogil
+            (p->gradientv)[i](N, t, (p->parameters)[i], qp, p->n_dim, grad, (p->state)[i]);
+        } else {
+            // Initialize temporary arrays
+            for (j = 0; j < p->n_dim * N; j++) {
+                qp_trans[j] = 0.;
+                tmp_grad[j] = 0.;
+            }
+
+            // Apply shift and rotation to all particles
+            for (j = 0; j < N; j++) {
+                apply_shift_rotate(&qp[j * p->n_dim], (p->q0)[i], (p->R)[i], p->n_dim, 0, &qp_trans[j * p->n_dim]);
+            }
+
+            // Compute gradient for transformed coordinates
+            (p->gradientv)[i](N, t, (p->parameters)[i], &qp_trans[0], p->n_dim, &tmp_grad[0], (p->state)[i]);
+
+            // Apply inverse rotation to gradient and accumulate
+            for (j = 0; j < N; j++) {
+                apply_rotate(&tmp_grad[j * p->n_dim], (p->R)[i], p->n_dim, 1, &grad[j * p->n_dim]);
+            }
+        }
+    }
+
+    // Free temporary arrays
+    if (need_transform) {
+        free(qp_trans);
+        free(tmp_grad);
     }
 }
 

@@ -1,12 +1,20 @@
 # cython: language_level=3
+# cython: language=c++
+
+from ..potential.cpotential cimport energyfunc, gradientfunc, hessianfunc
 
 cdef extern from "frame/src/cframe.h":
     ctypedef struct CFrameType:
-        pass
+        energyfunc energy
+        gradientfunc gradient
+        hessianfunc hessian
 
-    double frame_hamiltonian(CFrameType *fr, double t, double *qp, int n_dim) nogil
-    void frame_gradient(CFrameType *fr, double t, double *qp, int n_dim, double *dH) nogil
-    void frame_hessian(CFrameType *fr, double t, double *qp, int n_dim, double *d2H) nogil
+        int n_params
+        double *parameters
+
+    double frame_hamiltonian(CFrameType *fr, double t, double *qp, int n_dim) except + nogil
+    void frame_gradient(CFrameType *fr, double t, double *qp, int n_dim, double *dH) except + nogil
+    void frame_hessian(CFrameType *fr, double t, double *qp, int n_dim, double *d2H) except + nogil
 
 cdef class CFrameWrapper:
     cdef CFrameType cframe

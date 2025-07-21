@@ -1,3 +1,15 @@
+2.0.0 (unreleased)
+==================
+
+Changes
+-------
+- A C++ compiler is now required to build Gala from source.
+
+Enhancements
+------------
+
+- ``gala.potential.EXPPotential`` now propagates C++ exceptions to Python.
+
 1.9.2 (unreleased)
 ==================
 
