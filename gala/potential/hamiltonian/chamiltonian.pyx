@@ -250,7 +250,7 @@ class Hamiltonian(CommonBase):
         Integrator_kwargs=dict(),
         cython_if_possible=True,
         save_all=True,
-        vectorized=True,
+        vectorized=False,
         **time_spec
     ):
         """
