@@ -60,7 +60,7 @@ def _constantrotating_static_helper(frame_r, frame_i, w, t=None, sign=1.0):
 
     if not isinstance(w, Orbit) and t is None:
         raise ValueError(
-            "Time array must be provided if not passing an " "Orbit subclass."
+            "Time array must be provided if not passing an Orbit subclass."
         )
 
     if t is None:

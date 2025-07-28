@@ -139,9 +139,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         vars : dict
             A dictionary of sympy symbols used in the expression.
         """
-        raise NotImplementedError(
-            "to_sympy() is not implemented for this " f"class {cls}"
-        )
+        raise NotImplementedError(f"to_sympy() is not implemented for this class {cls}")
 
     @classmethod
     def to_latex(cls):
@@ -177,9 +175,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         pass
 
     def _density(self, q, t=0.0):
-        raise NotImplementedError(
-            "This Potential has no implemented density " "function."
-        )
+        raise NotImplementedError("This Potential has no implemented density function.")
 
     def _hessian(self, q, t=0.0):
         raise NotImplementedError("This Potential has no implemented Hessian.")
@@ -1038,9 +1034,7 @@ class CompositePotential(PotentialBase, OrderedDict):
 
     def _check_component(self, p):
         if not isinstance(p, PotentialBase):
-            msg = (
-                "Potential components may only be Potential " f"objects, not {type(p)}."
-            )
+            msg = f"Potential components may only be Potential objects, not {type(p)}."
             raise TypeError(msg)
 
         if self.units is None:

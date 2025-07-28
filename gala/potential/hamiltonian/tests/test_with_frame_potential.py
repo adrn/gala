@@ -29,13 +29,12 @@ def to_rotating_frame(omega, w, t=None):
 
     if isinstance(w, Orbit) and t is not None:
         raise TypeError(
-            "If passing in an Orbit object, do not also specify " "a time array, t."
+            "If passing in an Orbit object, do not also specify a time array, t."
         )
 
     if not isinstance(w, Orbit) and t is None:
         raise TypeError(
-            "If not passing in an Orbit object, you must also specify "
-            "a time array, t."
+            "If not passing in an Orbit object, you must also specify a time array, t."
         )
 
     if t is not None and not hasattr(t, "unit"):
@@ -66,7 +65,7 @@ def to_rotating_frame(omega, w, t=None):
 
         if hasattr(x, "unit"):
             raise TypeError(
-                "If w is not an Orbit or PhaseSpacePosition, w " "cannot have units!"
+                "If w is not an Orbit or PhaseSpacePosition, w cannot have units!"
             )
 
         x_unit = u.one

@@ -63,7 +63,7 @@ def peak_to_peak_period(t, f, amplitude_threshold=1e-2):
 def _autodetermine_initial_dt(w0, H, dE_threshold=1e-9, **integrate_kwargs):
     if w0.shape and w0.shape[0] > 1:
         raise ValueError(
-            "Only one set of initial conditions may be passed " "in at a time."
+            "Only one set of initial conditions may be passed in at a time."
         )
 
     if dE_threshold is None:
@@ -199,9 +199,7 @@ def combine(objs):
 
     # We only support these two types to combine:
     if objs[0].__class__ not in {PhaseSpacePosition, Orbit}:
-        raise TypeError(
-            "Objects must be either PhaseSpacePosition or Orbit " "instances."
-        )
+        raise TypeError("Objects must be either PhaseSpacePosition or Orbit instances.")
 
     # Validate objects:
     # - check type
@@ -236,7 +234,7 @@ def combine(objs):
 
         if "cartesian" not in obj.pos.get_name():
             raise NotImplementedError(
-                "Currently, combine only works for " "Cartesian-represented objects."
+                "Currently, combine only works for Cartesian-represented objects."
             )
 
     # Now we prepare the positions, velocities:

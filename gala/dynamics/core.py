@@ -178,7 +178,7 @@ class PhaseSpacePosition:
 
         if frame is not None and not isinstance(frame, FrameBase):
             raise TypeError(
-                "Input reference frame must be a FrameBase " "subclass instance."
+                "Input reference frame must be a FrameBase subclass instance."
             )
 
         self.pos = pos
@@ -314,7 +314,7 @@ class PhaseSpacePosition:
         """
 
         if self.ndim != 3:
-            raise ValueError("Can only change representation for " "ndim=3 instances.")
+            raise ValueError("Can only change representation for ndim=3 instances.")
 
         # get the name of the desired representation
         pos_name = new_pos if isinstance(new_pos, str) else new_pos.get_name()
@@ -407,7 +407,7 @@ class PhaseSpacePosition:
         """
 
         if self.ndim != 3:
-            raise ValueError("Can only change representation for " "ndim=3 instances.")
+            raise ValueError("Can only change representation for ndim=3 instances.")
 
         if galactocentric_frame is None:
             galactocentric_frame = coord.Galactocentric()

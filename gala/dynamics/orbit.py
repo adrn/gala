@@ -346,8 +346,7 @@ class Orbit(PhaseSpacePosition):
         """
         if self.hamiltonian is None and potential is None:
             raise ValueError(
-                "To compute the potential energy, a potential"
-                " object must be provided!"
+                "To compute the potential energy, a potential object must be provided!"
             )
         if potential is None:
             potential = self.hamiltonian.potential
@@ -372,7 +371,7 @@ class Orbit(PhaseSpacePosition):
 
         if self.hamiltonian is None and hamiltonian is None:
             raise ValueError(
-                "To compute the total energy, a hamiltonian" " object must be provided!"
+                "To compute the total energy, a hamiltonian object must be provided!"
             )
 
         if hamiltonian is None:
