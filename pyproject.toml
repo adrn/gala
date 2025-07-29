@@ -236,14 +236,18 @@ ignore = [
   "ARG001", "ARG002", "ARG005",
   "PTH",
   "B028",
-  "RUF012"
+  "RUF012",
+  "PLC0415",
+  "PLW1641",
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "F403"]
-"test*.py" = ["F841"]
-"docs/tutorials/*" = ["E703"]
-"**/tests/*.py"  = ["NPY002", "RUF012", "T201", "B018", "B007"]
+"test*.py" = ["F841", "PLC0415"]
+"conftest.py" = ["PLC0415"]
+"docs/*" = ["PLC0415"]
+"docs/tutorials/*" = ["E703", "RUF001"]
+"**/tests/*.py"  = ["NPY002", "RUF012", "T201", "B018", "B007", "PLC0415"]
 "setup.py" = ["T201", "E402"]
 "docs/conf.py" = ["T201"]
 "docs/tutorials/*.py" = ["B018", "E402"]

@@ -68,7 +68,7 @@ potential = gp.MilkyWayPotential()
 # +
 icrs = coord.SkyCoord(
     ra=coord.Angle("17h 20m 12.4s"),
-    dec=coord.Angle("+57° 54′ 55″"),  # noqa: RUF001
+    dec=coord.Angle("+57° 54′ 55″"),
     distance=76 * u.kpc,
     pm_ra_cosdec=0.0569 * u.mas / u.yr,
     pm_dec=-0.1673 * u.mas / u.yr,

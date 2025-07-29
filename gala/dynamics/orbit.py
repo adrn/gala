@@ -475,12 +475,11 @@ class Orbit(PhaseSpacePosition):
             reduce = True
 
         # time must increase
-        if self.t[-1] < self.t[0]:
-            self = self[::-1]
+        obj = self[::-1] if self.t[-1] < self.t[0] else self
 
         vals = []
         times = []
-        for orbit in self.orbit_gen():
+        for orbit in obj.orbit_gen():
             v, t = orbit._max_helper(
                 -orbit.physicsspherical.r,
                 approximate=approximate,  # pericenter
@@ -488,7 +487,7 @@ class Orbit(PhaseSpacePosition):
             vals.append(func(-v))  # negative for pericenter
             times.append(t)
 
-        return self._max_return_helper(vals, times, return_times, reduce)
+        return obj._max_return_helper(vals, times, return_times, reduce)
 
     def apocenter(self, return_times=False, func=np.mean, approximate=False):
         """
@@ -534,12 +533,11 @@ class Orbit(PhaseSpacePosition):
             reduce = True
 
         # time must increase
-        if self.t[-1] < self.t[0]:
-            self = self[::-1]
+        obj = self[::-1] if self.t[-1] < self.t[0] else self
 
         vals = []
         times = []
-        for orbit in self.orbit_gen():
+        for orbit in obj.orbit_gen():
             v, t = orbit._max_helper(
                 orbit.physicsspherical.r,
                 approximate=approximate,  # apocenter
@@ -547,7 +545,7 @@ class Orbit(PhaseSpacePosition):
             vals.append(func(v))
             times.append(t)
 
-        return self._max_return_helper(vals, times, return_times, reduce)
+        return obj._max_return_helper(vals, times, return_times, reduce)
 
     def guiding_radius(self, potential=None, t=0.0, **root_kwargs):
         """
@@ -639,19 +637,18 @@ class Orbit(PhaseSpacePosition):
             reduce = True
 
         # time must increase
-        if self.t[-1] < self.t[0]:
-            self = self[::-1]
+        obj = self[::-1] if self.t[-1] < self.t[0] else self
 
         vals = []
         times = []
-        for orbit in self.orbit_gen():
+        for orbit in obj.orbit_gen():
             v, t = orbit._max_helper(
                 np.abs(orbit.cylindrical.z), approximate=approximate
             )
             vals.append(func(v))
             times.append(t)
 
-        return self._max_return_helper(vals, times, return_times, reduce)
+        return obj._max_return_helper(vals, times, return_times, reduce)
 
     def eccentricity(self, **kw):
         r"""
