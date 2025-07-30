@@ -11,6 +11,7 @@ except AttributeError:
 import astropy.units as u
 import numpy as np
 from astropy.constants import G
+from astropy.cosmology import default_cosmology
 
 from gala._cconfig import EXP_ENABLED
 from gala.potential.common import PotentialParameter
@@ -729,8 +730,18 @@ class NFWPotential(CPotentialBase):
         expr = -v_h2 * sy.log(1 + uu) / uu
         return expr, v, p
 
-    @staticmethod
-    def from_M200_c(M200, c, rho_c=None, units=None, origin=None, R=None):
+    @classmethod
+    def _get_rho_c(cls, cosmo=None):
+        """
+        Return the critical density at z=0, rho_c. If cosmo is None, uses the default
+        astropy cosmology.
+        """
+        if cosmo is None:
+            cosmo = default_cosmology.get()
+        return 3 * cosmo.H(0.0) ** 2 / (8 * np.pi * G)
+
+    @classmethod
+    def from_M200_c(cls, M200, c, rho_c=None, units=None, origin=None, R=None):
         r"""
         from_M200_c(M200, c, rho_c=None, units=None, origin=None, R=None)
 
@@ -748,14 +759,11 @@ class NFWPotential(CPotentialBase):
             cosmology to obtain this, `~astropy.cosmology.default_cosmology`.
         """
         if rho_c is None:
-            from astropy.constants import G
-            from astropy.cosmology import default_cosmology
-
             cosmo = default_cosmology.get()
-            rho_c = (3 * cosmo.H(0.0) ** 2 / (8 * np.pi * G)).to(u.Msun / u.kpc**3)
+            rho_c = cls._get_rho_c(cosmo)
 
-        Rvir = np.cbrt(M200 / (200 * rho_c) / (4.0 / 3 * np.pi)).to(u.kpc)
-        r_s = Rvir / c
+        R200 = np.cbrt(M200 / (200 * rho_c) / (4.0 / 3 * np.pi)).to(u.kpc)
+        r_s = R200 / c
 
         A_NFW = np.log(1 + c) - c / (1 + c)
         m = M200 / A_NFW
@@ -764,8 +772,9 @@ class NFWPotential(CPotentialBase):
             m=m, r_s=r_s, a=1.0, b=1.0, c=1.0, units=units, origin=origin, R=R
         )
 
-    @staticmethod
+    @classmethod
     def from_circular_velocity(
+        cls,
         v_c,
         r_s,
         a=1.0,
