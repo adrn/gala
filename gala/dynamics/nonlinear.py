@@ -23,35 +23,66 @@ def fast_lyapunov_max(
     return_orbit=True,
 ):
     """
-    Compute the maximum Lyapunov exponent using a C-implemented estimator
-    that uses the DOPRI853 integrator.
+    Compute the maximum Lyapunov exponent using a fast C-implemented method.
+
+    This function estimates the maximum Lyapunov exponent by integrating
+    the orbit along with several nearby offset orbits and tracking their
+    separation over time. It uses the DOPRI853 integrator for high accuracy.
 
     Parameters
     ----------
-    w0 : `~gala.dynamics.PhaseSpacePosition`, array_like
-        Initial conditions.
-    hamiltonian : `~gala.potential.Hamiltonian`
-    dt : numeric
-        Timestep.
+    w0 : :class:`~gala.dynamics.PhaseSpacePosition` or array_like
+        Initial conditions for the primary orbit.
+    hamiltonian : :class:`~gala.potential.Hamiltonian`
+        The Hamiltonian system to integrate in. Must contain a C-implemented
+        potential and frame.
+    dt : float
+        Integration timestep.
     n_steps : int
-        Number of steps to run for.
-    d0 : numeric (optional)
-        The initial separation.
-    n_steps_per_pullback : int (optional)
-        Number of steps to run before re-normalizing the offset vectors.
-    noffset_orbits : int (optional)
-        Number of offset orbits to run.
-    t1 : numeric (optional)
-        Time of initial conditions. Assumed to be t=0.
-    return_orbit : bool (optional)
-        Store the full orbit for the parent and all offset orbits.
+        Number of integration steps to run.
+    d0 : float, optional
+        Initial separation between the primary orbit and offset orbits.
+        Default is 1e-5.
+    n_steps_per_pullback : int, optional
+        Number of integration steps between each renormalization of the
+        offset vectors. Default is 10.
+    noffset_orbits : int, optional
+        Number of offset orbits to use. Default is 2.
+    t1 : float, optional
+        Initial time. Default is 0.0.
+    atol : float, optional
+        Absolute tolerance for the integrator. Default is 1e-10.
+    rtol : float, optional
+        Relative tolerance for the integrator. Default is 1e-10.
+    nmax : int, optional
+        Maximum number of function evaluations. Default is 0 (no limit).
+    return_orbit : bool, optional
+        Whether to return the integrated orbit along with the Lyapunov
+        exponent. Default is True.
 
     Returns
     -------
     LEs : :class:`~astropy.units.Quantity`
-        Lyapunov exponents calculated from each offset / deviation orbit.
-    orbit : `~gala.dynamics.Orbit` (optional)
+        The Lyapunov exponents calculated from each offset orbit.
+    orbit : :class:`~gala.dynamics.Orbit`, optional
+        The integrated primary orbit (returned only if ``return_orbit=True``).
 
+    Raises
+    ------
+    TypeError
+        If the Hamiltonian does not contain C-implemented components.
+    ValueError
+        If trying to compute Lyapunov exponents for multiple orbits
+        simultaneously.
+
+    Notes
+    -----
+    The Lyapunov exponent quantifies the rate of exponential divergence
+    of nearby trajectories in phase space. Positive values indicate
+    chaotic motion, while zero or negative values suggest regular motion.
+
+    This implementation is optimized for speed and uses C code with the
+    DOPRI853 adaptive Runge-Kutta integrator.
     """
     from gala.potential import PotentialBase
 

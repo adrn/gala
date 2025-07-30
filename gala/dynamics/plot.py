@@ -42,39 +42,50 @@ def plot_projections(
     **kwargs,
 ):
     """
-    Given N-dimensional quantity, ``x``, make a figure containing 2D projections
-    of all combinations of the axes.
+    Create 2D projections of multi-dimensional data.
+
+    Given an N-dimensional array, this function creates a figure containing
+    2D projections of all combinations of coordinate pairs. This is commonly
+    used for visualizing orbits or phase-space positions.
 
     Parameters
     ----------
     x : array_like
-        Array of values. ``axis=0`` is assumed to be the dimensionality,
-        ``axis=1`` is the time axis. See :ref:`shape-conventions` for more
-        information.
-    relative_to : bool (optional)
-        Plot the values relative to this value or values.
-    autolim : bool (optional)
-        Automatically set the plot limits to be something sensible.
-    axes : array_like (optional)
-        Array of matplotlib Axes objects.
-    subplots_kwargs : dict (optional)
-        Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
-    labels : iterable (optional)
-        List or iterable of axis labels as strings. They should correspond to
-        the dimensions of the input orbit.
-    plot_function : callable (optional)
-        The ``matplotlib`` plot function to use. By default, this is
-        :func:`~matplotlib.pyplot.scatter`, but can also be, e.g.,
-        :func:`~matplotlib.pyplot.plot`.
+        Array of values with shape ``(ndim, npoints)`` where ``ndim`` is the
+        number of dimensions and ``npoints`` is the number of data points.
+        See :ref:`shape-conventions` for more information.
+    relative_to : array_like, optional
+        Values to subtract from ``x`` before plotting. Useful for plotting
+        relative to a reference position.
+    autolim : bool, optional
+        Automatically set sensible plot limits. Default is True.
+    axes : array_like, optional
+        Array of matplotlib Axes objects to plot on. If not provided,
+        new axes will be created.
+    subplots_kwargs : dict, optional
+        Dictionary of keyword arguments passed to
+        :func:`~matplotlib.pyplot.subplots` when creating new axes.
+    labels : list, optional
+        List of axis labels as strings corresponding to each dimension
+        of the input data.
+    plot_function : callable, optional
+        The matplotlib plotting function to use. Default is
+        :func:`~matplotlib.pyplot.plot`. Other options include
+        :func:`~matplotlib.pyplot.scatter`.
     **kwargs
-        All other keyword arguments are passed to the ``plot_function``.
-        You can pass in any of the usual style kwargs like ``color=...``,
-        ``marker=...``, etc.
+        Additional keyword arguments passed to the plotting function.
+        Examples include ``color``, ``marker``, ``linewidth``, etc.
 
     Returns
     -------
-    fig : `~matplotlib.Figure`
+    fig : :class:`~matplotlib.figure.Figure`
+        The matplotlib figure containing the projection plots.
 
+    Notes
+    -----
+    This function creates an ``(ndim*(ndim-1)/2)`` subplot grid showing
+    all unique pairs of coordinate projections. For example, 3D data
+    creates 3 subplots: (x,y), (x,z), and (y,z).
     """
 
     # don't propagate changes back...
