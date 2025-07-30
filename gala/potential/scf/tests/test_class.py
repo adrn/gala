@@ -91,7 +91,7 @@ class TestSCFPotential(PotentialTestBase):
         pars = self.potential.parameters.copy()
         for k in pars:
             if k != 0:
-                pars[k] = 1.1 * pars[k]  # fmt: skip
+                pars[k] = pars[k] * 1.1  # fmt: skip, ruff: noqa
 
         other = self.potential.__class__(units=self.potential.units, **pars)
         assert other != self.potential

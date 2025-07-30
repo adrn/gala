@@ -65,7 +65,7 @@ def fast_lyapunov_max(
 
     if not hamiltonian.c_enabled:
         raise TypeError(
-            "Input Hamiltonian must contain a C-implemented " "potential and frame."
+            "Input Hamiltonian must contain a C-implemented potential and frame."
         )
 
     if not isinstance(w0, PhaseSpacePosition):

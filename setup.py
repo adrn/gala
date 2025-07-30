@@ -96,7 +96,7 @@ else:
     env = None
 
 # First, see if the user wants to install without GSL:
-nogsl = bool(int(os.environ.get("GALA_NOGSL", 0)))
+nogsl = bool(int(os.environ.get("GALA_NOGSL", "0")))
 gsl_version = os.environ.get("GALA_GSL_VERSION", None)
 gsl_prefix = os.environ.get("GALA_GSL_PREFIX", None)
 

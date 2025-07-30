@@ -13,7 +13,10 @@
     }
   ],
   "citation": "https://ui.adsabs.harvard.edu/abs/2017JOSS....2..388P/abstract",
-  "relatedLink": ["https://gala.adrian.pw/", "https://zenodo.org/record/4159870"],
+  "relatedLink": [
+    "https://gala.adrian.pw/",
+    "https://zenodo.org/record/4159870"
+  ],
   "codeRepository": ["https://github.com/adrn/gala"],
   "version": "v1.3",
   "license": "https://github.com/adrn/gala/blob/main/LICENSE"

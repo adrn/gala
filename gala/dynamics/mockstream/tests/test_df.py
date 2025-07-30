@@ -109,7 +109,7 @@ def test_regression_415():
     )
     progenitor_mass = np.array([10**8]) * u.Msun
     dw_pot = gp.PlummerPotential(m=progenitor_mass[0], b=50 * u.pc, units=galactic)
-    df = ms.ChenStreamDF()
+    df = ms.ChenStreamDF(random_state=np.random.default_rng(42))
     gen_pal5 = ms.MockStreamGenerator(df, pot, progenitor_potential=dw_pot)
     xorbit = pot.integrate_orbit(w0, dt=-1 * u.Myr, n_steps=100)
     w0 = gd.PhaseSpacePosition(pos=xorbit.pos[-1], vel=xorbit.vel[-1])

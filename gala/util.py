@@ -1,5 +1,7 @@
 """General utilities."""
 
+import copy
+import os
 from collections.abc import Mapping
 from contextlib import contextmanager
 
@@ -41,8 +43,6 @@ class ImmutableDict(Mapping):
         return self._dict.__str__()
 
     def copy(self):
-        import copy
-
         return copy.deepcopy(self._dict)
 
 
@@ -196,8 +196,6 @@ def chdir(new_path):
     new_path : str
         The path to change to.
     """
-    import os
-
     old_path = os.getcwd()
     os.chdir(new_path)
     try:

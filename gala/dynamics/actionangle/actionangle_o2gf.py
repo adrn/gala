@@ -316,8 +316,7 @@ def fit_toy_potential(orbit, force_harmonic_oscillator=False, **kwargs):
 
         toy_potential = fit_isochrone(orbit, **kwargs)
         logger.debug(
-            f"Best m={toy_potential.parameters['m']}, "
-            f"b={toy_potential.parameters['b']}"
+            f"Best m={toy_potential.parameters['m']}, b={toy_potential.parameters['b']}"
         )
 
     else:  # box orbit
@@ -635,7 +634,7 @@ def _single_orbit_find_actions(
     actions = np.array(solve(A, b))
     logger.debug(
         f"Action solution found for N_max={N_max}, size {len(actions)} symmetric"
-        f" matrix in {time.time()-t1} seconds"
+        f" matrix in {time.time() - t1} seconds"
     )
 
     t1 = time.time()
@@ -645,7 +644,7 @@ def _single_orbit_find_actions(
     angles = np.array(solve(A, b))
     logger.debug(
         f"Angle solution found for N_max={N_max}, size {len(angles)} symmetric"
-        f" matrix in {time.time()-t1} seconds"
+        f" matrix in {time.time() - t1} seconds"
     )
 
     # Just some checks

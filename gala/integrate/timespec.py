@@ -87,7 +87,7 @@ def parse_time_specification(units, dt=None, n_steps=None, t1=None, t2=None, t=N
         if dt == 0:
             raise ValueError("dt must be non-zero.")
         raise ValueError(
-            "If t2 < t1, dt must be negative. If t1 < t2, dt must be " "positive."
+            "If t2 < t1, dt must be negative. If t1 < t2, dt must be positive."
         )
 
     # dt, t1 : (array_like, numeric)

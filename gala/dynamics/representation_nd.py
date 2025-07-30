@@ -105,9 +105,7 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
                 ptype = getattr(self, "_" + name).unit.physical_type
 
             elif getattr(self, "_" + name).unit.physical_type != ptype:
-                raise u.UnitsError(
-                    "All components should have matching " "physical types"
-                )
+                raise u.UnitsError("All components should have matching physical types")
 
             cls = self.__class__
             if not hasattr(cls, name):
@@ -199,9 +197,7 @@ class NDCartesianDifferential(NDMixin, coord.CartesianDifferential):
                 ptype = getattr(self, "_" + name).unit.physical_type
 
             elif getattr(self, "_" + name).unit.physical_type != ptype:
-                raise u.UnitsError(
-                    "All components should have matching " "physical types"
-                )
+                raise u.UnitsError("All components should have matching physical types")
 
             cls = self.__class__
             if not hasattr(cls, name):
