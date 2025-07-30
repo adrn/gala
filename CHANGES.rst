@@ -22,7 +22,12 @@ New Features
 - Added the ability to specify integer or string (i.e. non-Quantity) potential
   parameters.
 
-- Added ``gala.potential.EXPPotential`` for using basis function expansion potentials from EXP.
+- Added ``gala.potential.EXPPotential`` for using basis function expansion potentials
+  from EXP.
+
+- Added methods ``NFWPotential.M200()``, ``NFWPotential.R200()``,
+  ``NFWPotential.c200()`` to compute the characteristic mass, radius, and concentration
+  of an NFW instance.
 
 Bug fixes
 ---------
