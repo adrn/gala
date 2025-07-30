@@ -11,6 +11,8 @@ except AttributeError:
 import astropy.units as u
 import numpy as np
 from astropy.constants import G
+from astropy.cosmology import default_cosmology
+from scipy.optimize import root_scalar
 
 from gala._cconfig import EXP_ENABLED
 from gala.potential.common import PotentialParameter
@@ -729,8 +731,18 @@ class NFWPotential(CPotentialBase):
         expr = -v_h2 * sy.log(1 + uu) / uu
         return expr, v, p
 
-    @staticmethod
-    def from_M200_c(M200, c, rho_c=None, units=None, origin=None, R=None):
+    @classmethod
+    def _get_rho_c(cls, cosmo=None):
+        """
+        Return the critical density at z=0, rho_c. If cosmo is None, uses the default
+        astropy cosmology.
+        """
+        if cosmo is None:
+            cosmo = default_cosmology.get()
+        return 3 * cosmo.H(0.0) ** 2 / (8 * np.pi * G)
+
+    @classmethod
+    def from_M200_c(cls, M200, c, rho_c=None, units=None, origin=None, R=None):
         r"""
         from_M200_c(M200, c, rho_c=None, units=None, origin=None, R=None)
 
@@ -748,14 +760,11 @@ class NFWPotential(CPotentialBase):
             cosmology to obtain this, `~astropy.cosmology.default_cosmology`.
         """
         if rho_c is None:
-            from astropy.constants import G
-            from astropy.cosmology import default_cosmology
-
             cosmo = default_cosmology.get()
-            rho_c = (3 * cosmo.H(0.0) ** 2 / (8 * np.pi * G)).to(u.Msun / u.kpc**3)
+            rho_c = cls._get_rho_c(cosmo)
 
-        Rvir = np.cbrt(M200 / (200 * rho_c) / (4.0 / 3 * np.pi)).to(u.kpc)
-        r_s = Rvir / c
+        R200 = np.cbrt(M200 / (200 * rho_c) / (4.0 / 3 * np.pi)).to(u.kpc)
+        r_s = R200 / c
 
         A_NFW = np.log(1 + c) - c / (1 + c)
         m = M200 / A_NFW
@@ -764,8 +773,9 @@ class NFWPotential(CPotentialBase):
             m=m, r_s=r_s, a=1.0, b=1.0, c=1.0, units=units, origin=origin, R=R
         )
 
-    @staticmethod
+    @classmethod
     def from_circular_velocity(
+        cls,
         v_c,
         r_s,
         a=1.0,
@@ -828,6 +838,73 @@ class NFWPotential(CPotentialBase):
         uu = r_ref / r_s
         vs2 = v_c**2 / uu / (np.log(1 + uu) / uu**2 - 1 / (uu * (1 + uu)))
         return r_s * vs2 / G
+
+    def c200(self, rho_c=None, root_solver=None):
+        """The concentration parameter c200."""
+
+        if rho_c is None:
+            cosmo = default_cosmology.get()
+            rho_c = (3 * cosmo.H(0.0) ** 2 / (8 * np.pi * G)).to(u.Msun / u.kpc**3)
+
+        A = (
+            (4 * np.pi / 3)
+            * 200
+            * rho_c
+            * self.parameters["r_s"] ** 3
+            / self.parameters["m"]
+        )
+        A = A.decompose().value  # dimensionless - strip units for numerical solver
+
+        def func(c):
+            return (np.log(1 + c) - c / (1 + c)) / c**3 - A
+
+        if root_solver is None:
+            sol = root_scalar(func, bracket=[1e-6, 100], method="brentq")
+
+        if not sol.converged:
+            msg = "Root finding for concentration did not converge"
+            raise RuntimeError(msg)
+
+        return sol.root
+
+    def M200(self, **kwargs):
+        r"""
+        The virial mass M200.
+
+        This is the mass within the virial radius R200, where the density is 200 times
+        the critical density.
+
+        Returns
+        -------
+        M200 : :class:`~astropy.units.Quantity` [mass]
+            The virial mass.
+        kwargs : dict
+            Additional keyword arguments passed to the `c200` method, such as
+            `rho_c` or `root_solver`.
+        """
+        c = self.c200(**kwargs)
+        A_NFW = np.log(1 + c) - c / (1 + c)
+        M200 = self.parameters["m"] * A_NFW
+
+        return M200.decompose(self.units)
+
+    def R200(self, **kwargs):
+        r"""
+        The virial radius R200.
+
+        This is the radius within which the mean density is 200 times the critical
+        density.
+
+        Returns
+        -------
+        R200 : :class:`~astropy.units.Quantity` [length]
+            The virial radius.
+        kwargs : dict
+            Additional keyword arguments passed to the `c200` method, such as
+            `rho_c` or `root_solver`.
+        """
+        c = self.c200(**kwargs)
+        return self.parameters["r_s"] * c
 
 
 @format_doc(common_doc=_potential_docstring)
