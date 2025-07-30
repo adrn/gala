@@ -13,29 +13,28 @@ class SagittariusLaw10(coord.BaseCoordinateFrame):
     """
     A Heliocentric spherical coordinate system defined by the orbit
     of the Sagittarius dwarf galaxy, as described in
-    http://adsabs.harvard.edu/abs/2003ApJ...599.1082M
-    and further explained in http://www.stsci.edu/~dlaw/Sgr/.
+    Law & Majewski (2010): http://adsabs.harvard.edu/abs/2010ApJ...714..229L
 
     Parameters
     ----------
-    representation : `BaseRepresentation` or None
+    representation : `~astropy.coordinates.BaseRepresentation` or None
         A representation object or None to have no data (or use the other
         keywords).
 
-    Lambda : `Angle`, optional, must be keyword
+    Lambda : `~astropy.coordinates.Angle`, optional, must be keyword
         The longitude-like angle corresponding to Sagittarius' orbit.
-    Beta : `Angle`, optional, must be keyword
+    Beta : `~astropy.coordinates.Angle`, optional, must be keyword
         The latitude-like angle corresponding to Sagittarius' orbit.
-    distance : `Quantity`, optional, must be keyword
+    distance : `~astropy.units.Quantity`, optional, must be keyword
         The Distance for this object along the line-of-sight.
 
-    pm_Lambda_cosBeta : :class:`~astropy.units.Quantity`, optional, must be keyword
+    pm_Lambda_cosBeta : `~astropy.units.Quantity`, optional, must be keyword
         The proper motion along the stream in ``Lambda`` (including the
         ``cos(Beta)`` factor) for this object (``pm_Beta`` must also be given).
-    pm_Beta : :class:`~astropy.units.Quantity`, optional, must be keyword
-        The proper motion in Declination for this object (``pm_ra_cosdec`` must
+    pm_Beta : `~astropy.units.Quantity`, optional, must be keyword
+        The proper motion in ``Beta`` for this object (``pm_Lambda_cosBeta`` must
         also be given).
-    radial_velocity : :class:`~astropy.units.Quantity`, optional, must be keyword
+    radial_velocity : `~astropy.units.Quantity`, optional, must be keyword
         The radial velocity of this object.
 
     """
@@ -114,29 +113,29 @@ def sgr_to_galactic():
 class SagittariusVasiliev21(coord.BaseCoordinateFrame):
     """
     A Heliocentric, right-handed spherical coordinate system defined by the orbit of the
-    Sagittarius dwarf galaxy, as described in Vasiliev et al. 2021,
+    Sagittarius dwarf galaxy, as described in Vasiliev et al. (2021):
     https://ui.adsabs.harvard.edu/abs/2021MNRAS.501.2279V/abstract
 
     Parameters
     ----------
-    representation : `BaseRepresentation` or None
+    representation : `~astropy.coordinates.BaseRepresentation` or None
         A representation object or None to have no data (or use the other
         keywords).
 
-    Lambda : `Angle`, optional, must be keyword
+    Lambda : `~astropy.coordinates.Angle`, optional, must be keyword
         The longitude-like angle corresponding to Sagittarius' orbit.
-    Beta : `Angle`, optional, must be keyword
+    Beta : `~astropy.coordinates.Angle`, optional, must be keyword
         The latitude-like angle corresponding to Sagittarius' orbit.
-    distance : `Quantity`, optional, must be keyword
+    distance : `~astropy.units.Quantity`, optional, must be keyword
         The Distance for this object along the line-of-sight.
 
-    pm_Lambda_cosBeta : :class:`~astropy.units.Quantity`, optional, must be keyword
+    pm_Lambda_cosBeta : `~astropy.units.Quantity`, optional, must be keyword
         The proper motion along the stream in ``Lambda`` (including the
         ``cos(Beta)`` factor) for this object (``pm_Beta`` must also be given).
-    pm_Beta : :class:`~astropy.units.Quantity`, optional, must be keyword
-        The proper motion in Declination for this object (``pm_ra_cosdec`` must
+    pm_Beta : `~astropy.units.Quantity`, optional, must be keyword
+        The proper motion in ``Beta`` for this object (``pm_Lambda_cosBeta`` must
         also be given).
-    radial_velocity : :class:`~astropy.units.Quantity`, optional, must be keyword
+    radial_velocity : `~astropy.units.Quantity`, optional, must be keyword
         The radial velocity of this object.
 
     """
@@ -179,7 +178,7 @@ class SagittariusVasiliev21(coord.BaseCoordinateFrame):
     coord.StaticMatrixTransform, coord.Galactic, SagittariusVasiliev21
 )
 def galactic_to_sgr_v21():
-    """Compute the transformation from ICRS to Sagittarius coordinates"""
+    """Compute the transformation from Galactic to Sagittarius coordinates"""
     if not hasattr(SagittariusVasiliev21, "_R"):
         R = np.diag([1.0, -1.0, -1.0]) @ B @ C @ D
         SagittariusVasiliev21._R = R
@@ -192,5 +191,5 @@ def galactic_to_sgr_v21():
     coord.StaticMatrixTransform, SagittariusVasiliev21, coord.Galactic
 )
 def sgr_to_galactic_v21():
-    """Compute the inverse transformation from Sagittarius coordinates to ICRS"""
+    """Compute the transformation from Sagittarius coordinates to Galactic coordinates"""
     return galactic_to_sgr_v21().T

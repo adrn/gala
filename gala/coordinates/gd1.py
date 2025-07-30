@@ -1,4 +1,4 @@
-"""Astropy coordinate class for the Sagittarius coordinate system"""
+"""Astropy coordinate class for the GD-1 coordinate system"""
 
 import astropy.coordinates as coord
 import astropy.units as u
@@ -33,7 +33,7 @@ class GD1Koposov10(coord.BaseCoordinateFrame):
         The proper motion in the latitude-like direction perpendicular to the
         GD-1 stream's orbit.
     radial_velocity : :class:`~astropy.units.Quantity`, optional, must be keyword
-        The Distance for this object along the line-of-sight.
+        The radial velocity for this object along the line-of-sight.
 
     """
 
@@ -83,7 +83,7 @@ R = np.array(
 @frame_transform_graph.transform(coord.StaticMatrixTransform, coord.ICRS, GD1Koposov10)
 def icrs_to_gd1():
     """
-    Compute the transformation from Galactic spherical to heliocentric GD1 coordinates.
+    Compute the transformation from ICRS spherical to heliocentric GD-1 coordinates.
     """
     return R
 
@@ -91,6 +91,6 @@ def icrs_to_gd1():
 @frame_transform_graph.transform(coord.StaticMatrixTransform, GD1Koposov10, coord.ICRS)
 def gd1_to_icrs():
     """
-    Compute the transformation from heliocentric GD1 coordinates to spherical Galactic.
+    Compute the transformation from heliocentric GD-1 coordinates to ICRS spherical.
     """
     return icrs_to_gd1().T

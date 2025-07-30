@@ -36,7 +36,7 @@ class OphiuchusPriceWhelan16(coord.BaseCoordinateFrame):
         The proper motion in the latitude-like direction perpendicular to the
         Ophiuchus stream's orbit.
     radial_velocity : :class:`~astropy.units.Quantity`, optional, must be keyword
-        The Distance for this object along the line-of-sight.
+        The radial velocity for this object along the line-of-sight.
 
     """
 

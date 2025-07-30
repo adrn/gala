@@ -27,12 +27,12 @@ class JhelumBonaca19(coord.BaseCoordinateFrame):
 
     pm_phi1_cosphi2 : :class:`~astropy.units.Quantity`, optional, must be keyword
         The proper motion in the longitude-like direction corresponding to
-        the GD-1 stream's orbit.
+        the Jhelum stream's orbit.
     pm_phi2 : :class:`~astropy.units.Quantity`, optional, must be keyword
         The proper motion in the latitude-like direction perpendicular to the
-        GD-1 stream's orbit.
+        Jhelum stream's orbit.
     radial_velocity : :class:`~astropy.units.Quantity`, optional, must be keyword
-        The Distance for this object along the line-of-sight.
+        The radial velocity for this object along the line-of-sight.
 
     """
 
@@ -84,7 +84,7 @@ R = np.array(
 )
 def icrs_to_jhelum():
     """
-    Compute the transformation from Galactic spherical to heliocentric Jhelum
+    Compute the transformation from ICRS spherical to heliocentric Jhelum
     coordinates.
     """
     return R
