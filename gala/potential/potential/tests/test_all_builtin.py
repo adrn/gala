@@ -385,6 +385,26 @@ class TestNFW(PotentialTestBase):
         assert u.allclose(sph.energy(xyz), fla.energy(xyz))
         assert u.allclose(sph.gradient(xyz), fla.gradient(xyz))
 
+    def test_nfw_properties(self):
+        """Test that M200, c200, and R200 properties work correctly."""
+
+        M200_input = 1e12 * u.Msun
+        c_input = 15.0
+        pot_input = p.NFWPotential.from_M200_c(M200_input, c_input, units=galactic)
+
+        # Test the inverse properties
+        c200_computed = pot_input.c200()
+        M200_computed = pot_input.M200()
+
+        assert u.allclose(c200_computed, c_input)
+        assert u.allclose(M200_computed, M200_input)
+
+        # Test that R200 evaluates and is equivalent to r_s * c200
+        R200_computed = pot_input.R200()
+        r_s = pot_input.parameters["r_s"]
+        R200_expected = r_s * c200_computed
+        assert u.allclose(R200_computed, R200_expected)
+
 
 class TestLeeSutoTriaxialNFW(PotentialTestBase):
     potential = p.LeeSutoTriaxialNFWPotential(
