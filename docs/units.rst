@@ -38,18 +38,18 @@ unit system using :meth:`~astropy.units.Quantity.decompose`::
     <Quantity 1500. cm / ms>
 
 `~gala.units.UnitSystem` objects can also act as a dictionary to look up a unit
-for a given physical type. For example, if we want to know what a 'velocity'
-unit is in a given unit system, pass the key ``'speed'`` or ``'velocity'``::
+for a given physical type. For example, if we want to know what a "velocity"
+unit is in a given unit system, pass the key ``"speed"`` or ``"velocity"``::
 
-    >>> usys['speed']
+    >>> usys["speed"]
     Unit("cm / ms")
 
 This works for the base unit physical types and for more complex physical
 types::
 
-    >>> usys['length']
+    >>> usys["length"]
     Unit("cm")
-    >>> usys['pressure']
+    >>> usys["pressure"]
     Unit("g / (cm ms2)")
 
 In Astropy version 4.3 and later, units from `~gala.units.UnitSystem` objects
@@ -58,7 +58,7 @@ for example:
 
 .. doctest-requires:: astropy>=4.3
 
-    >>> ptype = u.get_physical_type('length')**2 / u.get_physical_type('time')
+    >>> ptype = u.get_physical_type("length")**2 / u.get_physical_type("time")
     >>> usys[ptype]
     Unit("cm2 / ms")
 
@@ -86,7 +86,7 @@ Or, to create a unit system in which G=1, given length and mass units::
     >>> M_unit = 1e6 * u.Msun
     >>> T_unit = np.sqrt((L_unit**3) / (G * M_unit))
     >>> usys = UnitSystem(L_unit, M_unit, T_unit.to(u.Myr), u.radian)
-    >>> np.round(usys.get_constant('G'), 5)  # doctest: +FLOAT_CMP
+    >>> np.round(usys.get_constant("G"), 5)  # doctest: +FLOAT_CMP
     1.0
 
 
@@ -101,7 +101,7 @@ display unit of a composite unit, specify the preferred unit on creation::
 
     >>> usys = UnitSystem(u.kpc, u.Myr, u.radian, u.Msun)
     >>> usys2 = UnitSystem(u.kpc, u.Myr, u.radian, u.Msun, u.km/u.s)
-    >>> usys['velocity'], usys2['velocity']
+    >>> usys["velocity"], usys2["velocity"]
     (Unit("kpc / Myr"), Unit("km / s"))
 
 For unit systems with specified composite units (e.g., ``usys2`` above),
@@ -112,7 +112,7 @@ it only uses the base units::
     >>> q.decompose(usys2)
     <Quantity 0.15 kpc / Myr>
 
-Because we specified a unit for quantities with a physical type = 'velocity', we
+Because we specified a unit for quantities with a physical type = "velocity", we
 can instead use the `~gala.units.UnitSystem.decompose` method of the
 `~gala.units.UnitSystem` object to retrieve the object in the desired display
 unit::

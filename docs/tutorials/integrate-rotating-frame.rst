@@ -33,28 +33,32 @@ for the dark matter distribution. We'll tilt the bar with respect to the x-axis
 by 25 degrees (the angle ``alpha`` below). First, we'll define the disk and
 halo potential components::
 
-    >>> disk = gp.MiyamotoNagaiPotential(m=6E10*u.Msun,
-    ...                                  a=3.5*u.kpc, b=280*u.pc,
-    ...                                  units=galactic)
-    >>> halo = gp.NFWPotential(m=6E11*u.Msun, r_s=20.*u.kpc, units=galactic)
+    >>> disk = gp.MiyamotoNagaiPotential(
+    ...     m=6e10 * u.Msun, a=3.5 * u.kpc, b=280 * u.pc, units=galactic
+    ... )
+    >>> halo = gp.NFWPotential(m=6e11 * u.Msun, r_s=20.0 * u.kpc, units=galactic)
 
 We'll set the mass of the bar to be 1/6 the mass of the disk component, and
 we'll set the long-axis scale length of the bar to :math:`4~{\rm kpc}`. We can
 now define the bar component::
 
-    >>> bar = gp.LongMuraliBarPotential(m=1E10*u.Msun, a=4*u.kpc,
-    ...                                 b=0.8*u.kpc, c=0.25*u.kpc,
-    ...                                 alpha=25*u.degree,
-    ...                                 units=galactic)
+    >>> bar = gp.LongMuraliBarPotential(
+    ...     m=1e10 * u.Msun,
+    ...     a=4 * u.kpc,
+    ...     b=0.8 * u.kpc,
+    ...     c=0.25 * u.kpc,
+    ...     alpha=25 * u.degree,
+    ...     units=galactic,
+    ... )
 
 The full potential is the composition of the three potential objects. We can
 combine potential classes by defining a `~gala.potential.CCompositePotential`
 class and adding named components::
 
     >>> pot = gp.CCompositePotential()
-    >>> pot['disk'] = disk
-    >>> pot['halo'] = halo
-    >>> pot['bar'] = bar
+    >>> pot["disk"] = disk
+    >>> pot["halo"] = halo
+    >>> pot["bar"] = bar
 
 Let's visualize the isopotential contours of the potential in the x-y plane to
 see the bar perturbation::
@@ -77,18 +81,22 @@ see the bar perturbation::
     from gala.units import galactic
 
     pot = gp.CCompositePotential()
-    pot['bar'] = gp.LongMuraliBarPotential(m=2E10*u.Msun, a=4*u.kpc,
-                                           b=0.5*u.kpc, c=0.5*u.kpc,
-                                           alpha=25*u.degree,
-                                           units=galactic)
-    pot['disk'] = gp.MiyamotoNagaiPotential(m=5E10*u.Msun, a=3.*u.kpc,
-                                            b=280.*u.pc, units=galactic)
-    pot['halo'] = gp.NFWPotential(m=6E11*u.Msun, r_s=20.*u.kpc,
-                                  units=galactic)
+    pot["bar"] = gp.LongMuraliBarPotential(
+        m=2e10 * u.Msun,
+        a=4 * u.kpc,
+        b=0.5 * u.kpc,
+        c=0.5 * u.kpc,
+        alpha=25 * u.degree,
+        units=galactic,
+    )
+    pot["disk"] = gp.MiyamotoNagaiPotential(
+        m=5e10 * u.Msun, a=3.0 * u.kpc, b=280.0 * u.pc, units=galactic
+    )
+    pot["halo"] = gp.NFWPotential(m=6e11 * u.Msun, r_s=20.0 * u.kpc, units=galactic)
 
-    grid = np.linspace(-15,15,128)
-    fig, ax = plt.subplots(1, 1, figsize=(5,5))
-    fig = pot.plot_contours(grid=(grid,grid,0.), ax=ax)
+    grid = np.linspace(-15, 15, 128)
+    fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+    fig = pot.plot_contours(grid=(grid, grid, 0.0), ax=ax)
     ax.set_xlabel("$x$ [kpc]")
     ax.set_ylabel("$y$ [kpc]")
 
@@ -110,18 +118,21 @@ radius::
 
     >>> import scipy.optimize as so
     >>> def func(r):
-    ...     Om = pot.circular_velocity([r[0], 0, 0]*u.kpc)[0] / (r[0]*u.kpc)
+    ...     Om = pot.circular_velocity([r[0], 0, 0] * u.kpc)[0] / (r[0] * u.kpc)
     ...     return (Om - Om_bar).to(Om_bar.unit).value**2
-    >>> res = so.minimize(func, x0=10., method='powell')
+    >>> res = so.minimize(func, x0=10.0, method="powell")
     >>>
     >>> r_corot = res.x[0] * u.kpc
     >>> v_circ = Om_bar * r_corot * u.kpc
     >>>
-    >>> w0 = gd.PhaseSpacePosition(pos=[r_corot.value, 0, 0] * r_corot.unit,
-    ...                            vel=[0, v_circ.value, 0.] * v_circ.unit)
-    >>> orbit = H.integrate_orbit(w0, dt=0.1, n_steps=40000,
-    ...                           Integrator=gi.DOPRI853Integrator)
-    >>> fig = orbit.plot(marker=',', linestyle='none', alpha=0.5) # doctest: +SKIP
+    >>> w0 = gd.PhaseSpacePosition(
+    ...     pos=[r_corot.value, 0, 0] * r_corot.unit,
+    ...     vel=[0, v_circ.value, 0.0] * v_circ.unit,
+    ... )
+    >>> orbit = H.integrate_orbit(
+    ...     w0, dt=0.1, n_steps=40000, Integrator=gi.DOPRI853Integrator
+    ... )
+    >>> fig = orbit.plot(marker=",", linestyle="none", alpha=0.5)  # doctest: +SKIP
     >>> for ax in fig.axes: # doctest: +SKIP
     ...     ax.set_xlim(-15,15) # doctest: +SKIP
     ...     ax.set_ylim(-15,15) # doctest: +SKIP

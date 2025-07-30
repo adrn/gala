@@ -55,7 +55,7 @@ All potential classes in :mod:`gala.potential` have standard methods for computi
 dynamical quantities. For example, we can compute the potential energy and acceleration
 at a Cartesian position near the Sun::
 
-    >>> xyz = [-8., 0, 0] * u.kpc
+    >>> xyz = [-8.0, 0.0, 0.0] * u.kpc
     >>> mw.energy(xyz)  # doctest: +FLOAT_CMP
     <Quantity [-0.16440296] kpc2 / Myr2>
     >>> mw.acceleration(xyz)  # doctest: +FLOAT_CMP
@@ -67,10 +67,10 @@ The returned values are Astropy `~astropy.units.Quantity` objects with
 associated physical units. These can be converted to any equivalent units::
 
     >>> E = mw.energy(xyz)
-    >>> E.to((u.km/u.s)**2)  # doctest: +FLOAT_CMP
+    >>> E.to((u.km / u.s) ** 2)  # doctest: +FLOAT_CMP
     <Quantity [-157181.98979398] km2 / s2>
     >>> acc = mw.acceleration(xyz)
-    >>> acc.to(u.km/u.s / u.Myr)  # doctest: +FLOAT_CMP
+    >>> acc.to(u.km / u.s / u.Myr)  # doctest: +FLOAT_CMP
     <Quantity [[ 6.86666358],
                [-0.        ],
                [-0.        ]] km / (Myr s)>
@@ -81,8 +81,10 @@ As an example, we'll use initial conditions close to the Sun's Galactocentric
 position and velocity::
 
     >>> import gala.dynamics as gd
-    >>> w0 = gd.PhaseSpacePosition(pos=[-8.1, 0, 0.02] * u.kpc,
-    ...                            vel=[13, 245, 8.] * u.km/u.s)
+    >>> w0 = gd.PhaseSpacePosition(
+    ...     pos=[-8.1, 0, 0.02] * u.kpc,
+    ...     vel=[13, 245, 8.0] * u.km / u.s,
+    ... )
 
 I use the variable ``w`` to represent phase-space positions, so ``w0``
 represents initial conditions. When passing Cartesian position and velocity
@@ -99,7 +101,7 @@ With a potential model and initial conditions defined, we can now compute an
 orbit using the `~gala.potential.potential.PotentialBase.integrate_orbit()`
 method::
 
-    >>> orbit = mw.integrate_orbit(w0, dt=1*u.Myr, t1=0, t2=2*u.Gyr)
+    >>> orbit = mw.integrate_orbit(w0, dt=1 * u.Myr, t1=0, t2=2 * u.Gyr)
 
 This uses Leapfrog integration by default, which is a fast, symplectic
 integration scheme. The returned `~gala.dynamics.Orbit` object represents
@@ -111,7 +113,7 @@ a collection of phase-space positions at different times::
 `~gala.dynamics.Orbit` objects have many of their own useful methods for
 performing common tasks, like plotting an orbit::
 
-    >>> orbit.plot(['x', 'y'])  # doctest: +SKIP
+    >>> orbit.plot(["x", "y"])  # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -125,25 +127,27 @@ performing common tasks, like plotting an orbit::
     import gala.potential as gp
 
     mw = gp.MilkyWayPotential()
-    w0 = gd.PhaseSpacePosition(pos=[-8.1, 0, 0.02] * u.kpc,
-                               vel=[13, 245, 8.] * u.km/u.s)
-    orbit = mw.integrate_orbit(w0, dt=1*u.Myr, t1=0, t2=2*u.Gyr)
+    w0 = gd.PhaseSpacePosition(
+        pos=[-8.1, 0, 0.02] * u.kpc,
+        vel=[13, 245, 8.0] * u.km / u.s,
+    )
+    orbit = mw.integrate_orbit(w0, dt=1 * u.Myr, t1=0, t2=2 * u.Gyr)
 
-    orbit.plot(['x', 'y'])
+    orbit.plot(["x", "y"])
 
 `~gala.dynamics.Orbit` objects by default assume and use Cartesian coordinate
 representations, but these can also be transformed into other representations,
 like Cylindrical coordinates. For example, we could re-represent the orbit in
 cylindrical coordinates and then plot the orbit in the "meridional plane"::
 
-    >>> fig = orbit.cylindrical.plot(['rho', 'z'])  # doctest: +SKIP
+    >>> fig = orbit.cylindrical.plot(["rho", "z"])  # doctest: +SKIP
 
 .. plot::
     :align: center
     :context: close-figs
     :width: 60%
 
-    fig = orbit.cylindrical.plot(['rho', 'z'])
+    fig = orbit.cylindrical.plot(["rho", "z"])
 
 Or estimate the pericenter, apocenter, and eccentricity of the orbit::
 
