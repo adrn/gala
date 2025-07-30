@@ -30,39 +30,30 @@ because these packages will be generally required::
 Computing your first stellar orbit
 ==================================
 
-One of the most common use cases for `gala` is to compute an orbit for a star
-within a mass model for the Milky Way. To do this, we need to specify two
-things: (1) the model of the Milky Way that we would like to use to represent
-the mass distribution, and (2) the initial conditions of the star's orbit.
+One of the most common use cases for `gala` is computing stellar orbits within
+a Milky Way mass model. This requires two things: (1) a gravitational potential
+model representing the Milky Way's mass distribution, and (2) initial conditions
+for the star's orbit.
 
 Mass models in `gala` are specified using Python classes that represent
-standard gravitational potential models. For example, most of the standard,
-parametrized gravitational potential models introduced in :cite:`Binney2008`
-are available as classes in the :mod:`gala.potential` module. The standard Milky
-Way model recommended for use in `gala` is the
-`~gala.potential.potential.MilkyWayPotential`, which is a pre-defined,
-multi-component mass model with parameters set to fiducial values that match the
-rotation curve of the Galactic disk and the mass profile of the dark matter
-halo. We can create an instance of this model with the fiducial parameters by
-instantiating the `~gala.potential.potential.MilkyWayPotential` class without
-any input::
+gravitational potential models. The standard Milky Way model recommended for
+use in `gala` is the `~gala.potential.potential.MilkyWayPotential2022`, which is a
+pre-defined, multi-component model with parameters set to match the rotation
+curve of the Galactic disk and the mass profile of the dark matter halo::
 
     >>> import gala.potential as gp
-    >>> mw = gp.MilkyWayPotential()
+    >>> mw = gp.MilkyWayPotential2022()
     >>> mw
     <CompositePotential disk,bulge,nucleus,halo>
 
-This model, by default, contains four distinct potential components as listed in
-the output above: disk, bulge, nucleus, and halo components. You can configure
-any of the parameters of these components, or create your own "composite"
-potential model using other potential models defined in :mod:`gala.potential`,
-but for now we will use the fiducial model as we defined it, the variable
-``mw``.
+This model contains four distinct potential components: disk, bulge, nucleus,
+and halo. You can configure any of these component parameters or create custom
+composite potential models (see :mod:`gala.potential`), but for now we'll use the
+default model.
 
-All of the :mod:`gala.potential` class instances have a set of standard methods
-that enable fast calculations of computed or derived quantities. For example,
-we could compute the potential energy or the acceleration at a Cartesian
-position near the Sun::
+All potential classes in :mod:`gala.potential` have standard methods for computing
+dynamical quantities. For example, we can compute the potential energy and acceleration
+at a Cartesian position near the Sun::
 
     >>> xyz = [-8., 0, 0] * u.kpc
     >>> mw.energy(xyz)  # doctest: +FLOAT_CMP
@@ -72,11 +63,8 @@ position near the Sun::
                [-0.        ],
                [-0.        ]] kpc / Myr2>
 
-The values that are returned by most methods in `gala` are provided as Astropy
-`~astropy.units.Quantity` objects, which represent numerical data with
-associated physical units. `~astropy.units.Quantity` objects can be
-re-represented in any equivalent units, so, for example, we could display the
-energy or acceleration in other units::
+The returned values are Astropy `~astropy.units.Quantity` objects with
+associated physical units. These can be converted to any equivalent units::
 
     >>> E = mw.energy(xyz)
     >>> E.to((u.km/u.s)**2)  # doctest: +FLOAT_CMP
@@ -87,47 +75,35 @@ energy or acceleration in other units::
                [-0.        ],
                [-0.        ]] km / (Myr s)>
 
-Now that we have a potential model, if we want to compute an orbit, we need to
-specify a set of initial conditions to initialize the numerical orbit
-integration. In `gala`, initial conditions and other positions in phase-space
-(locations in position and velocity space) are defined using the
-`~gala.dynamics.PhaseSpacePosition` class. This class allows a number of
-possible inputs, but one of the most common inputs are Cartesian position and
-velocity vectors. As an example orbit, we will use a position and velocity that
-is close to the Sun's Galactocentric position and velocity::
+Now to compute an orbit, we need initial conditions. In `gala`, phase-space
+positions are defined using the `~gala.dynamics.PhaseSpacePosition` class.
+As an example, we'll use initial conditions close to the Sun's Galactocentric
+position and velocity::
 
     >>> import gala.dynamics as gd
     >>> w0 = gd.PhaseSpacePosition(pos=[-8.1, 0, 0.02] * u.kpc,
     ...                            vel=[13, 245, 8.] * u.km/u.s)
 
-By convention, I typically use the variable ``w`` to represent phase-space
-positions, so here ``w0`` is meant to imply "initial conditions." Note that,
-when passing in Cartesian position and velocity values, we typically have to
-pass them in as `~astropy.units.Quantity` objects (i.e., with units). This is
-required whenever the potential class you are using has a unit system, which you
-can check by calling the `~gala.potential.potential.PotentialBase.units`
-attribute of your potential object::
+I use the variable ``w`` to represent phase-space positions, so ``w0``
+represents initial conditions. When passing Cartesian position and velocity
+values, they must be `~astropy.units.Quantity` objects with units whenever
+the potential has a dimensional unit system::
 
     >>> mw.units
     <UnitSystem (kpc, Myr, solMass, rad)>
 
-Here, our Milky Way potential model has a unit system with dimensional units.
-Note that we could have used any length unit for the position and any velocity
-unit for the velocity, because `gala` handles the unit conversions internally.
+Our Milky Way potential uses dimensional units. You can use any compatible
+length and velocity units, as `gala` handles unit conversions internally.
 
-Now with a potential model defined and a set of initial conditions, we are set
-to compute an orbit! To do this, we use the numerical integration system defined
-in `gala.integrate`, but do so using the convenience interface available on any
-Potential object through the
-`~gala.potential.potential.PotentialBase.integrate_orbit()` method::
+With a potential model and initial conditions defined, we can now compute an
+orbit using the `~gala.potential.potential.PotentialBase.integrate_orbit()`
+method::
 
     >>> orbit = mw.integrate_orbit(w0, dt=1*u.Myr, t1=0, t2=2*u.Gyr)
 
-By default, this method uses Leapfrog integration , which is a fast, symplectic
-integration scheme. The returned object is an instance of the
-`~gala.dynamics.Orbit` class, which is similar to the
-`~gala.dynamics.PhaseSpacePosition` but represents a collection of phase-space
-positions at times::
+This uses Leapfrog integration by default, which is a fast, symplectic
+integration scheme. The returned `~gala.dynamics.Orbit` object represents
+a collection of phase-space positions at different times::
 
     >>> orbit
     <Orbit cartesian, dim=3, shape=(2000,)>

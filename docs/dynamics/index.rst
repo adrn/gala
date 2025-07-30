@@ -29,8 +29,7 @@ other subpackages are the |psp| and |orb| classes.
 Getting started: Working with orbits
 ====================================
 
-As a demonstration of how to use these objects, we'll start by integrating an
-orbit using the :mod:`gala.potential` and :mod:`gala.integrate` subpackages::
+We'll demonstrate the |psp| and |orb| objects by first integrating an orbit::
 
     >>> pot = gp.MiyamotoNagaiPotential(m=2.5E11*u.Msun, a=6.5*u.kpc,
     ...                                 b=0.26*u.kpc, units=galactic)
@@ -64,9 +63,8 @@ projections using the :meth:`~gala.dynamics.Orbit.plot` method::
     orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=1000)
     fig = orbit.plot()
 
-Or, we can visualize the orbit in just one projection of some transformed
-coordinate representation, for example, cylindrical radius :math:`\rho` and
-:math:`z`::
+We can also visualize the orbit in transformed coordinates, for example,
+cylindrical radius :math:`\rho` and :math:`z`::
 
     >>> fig = orbit.represent_as('cylindrical').plot(['rho', 'z'])
 
@@ -84,15 +82,14 @@ coordinate representation, for example, cylindrical radius :math:`\rho` and
     orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=1000)
     _ = orbit.represent_as('cylindrical').plot(['rho', 'z'])
 
-From the |orb| object, we can also easily compute dynamical quantities such as
-the energy or angular momentum (we take the 0th element because these functions
-return the quantities computed at every timestep)::
+The |orb| object also enables computing dynamical quantities such as
+energy or angular momentum::
 
     >>> E = orbit.energy()
     >>> E[0] # doctest: +SKIP
     <Quantity −0.060740198 kpc2 / Myr2>
 
-Let's see how well the integrator conserves energy and the ``z`` component of
+Let's check how well the integrator conserves energy and the ``z`` component of
 angular momentum::
 
     >>> Lz = orbit.angular_momentum()[2]
