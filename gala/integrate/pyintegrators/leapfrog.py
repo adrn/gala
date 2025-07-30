@@ -10,94 +10,122 @@ __all__ = ["LeapfrogIntegrator"]
 
 class LeapfrogIntegrator(Integrator):
     r"""
-    A symplectic, Leapfrog integrator.
+    Symplectic leapfrog integrator for Hamiltonian systems.
 
-    Given a function for computing time derivatives of the phase-space
-    coordinates, this object computes the orbit at specified times.
+    The leapfrog integrator is a second-order symplectic method that is
+    particularly well-suited for integrating Hamiltonian systems over long
+    time periods. It conserves energy exactly for linear systems and
+    approximately for nonlinear systems, with bounded energy errors.
 
-    .. seealso::
-
-        - http://en.wikipedia.org/wiki/Leapfrog_integration
-        - http://ursa.as.arizona.edu/~rad/phys305/ODE_III/node11.html
-
-    Naming convention for variables::
-
-        im1 = i-1
-        im1_2 = i-1/2
-        ip1 = i+1
-        ip1_2 = i+1/2
-
-    Examples
-    --------
-
-    Using ``q`` as our coordinate variable and ``p`` as the conjugate
-    momentum, we want to numerically solve for an orbit in the
-    potential (Hamiltonian)
-
-    .. math::
-
-        \Phi &= \frac{1}{2}q^2\\
-        H(q, p) &= \frac{1}{2}(p^2 + q^2)
-
-
-    In this system,
-
-    .. math::
-
-        \dot{q} &= \frac{\partial \Phi}{\partial p} = p \\
-        \dot{p} &= -\frac{\partial \Phi}{\partial q} = -q
-
-
-    We will use the variable ``w`` to represent the full phase-space vector,
-    :math:`w = (q, p)`. We define a function that computes the time derivates
-    at any given time, ``t``, and phase-space position, ``w``::
-
-        def F(t, w):
-            dw = [w[1], -w[0]]
-            return dw
-
-    .. note::
-
-        The force here is not time dependent, but this function always has
-        to accept the independent variable (e.g., time) as the
-        first argument.
-
-    To create an integrator object, just pass this acceleration function in
-    to the constructor, and then we can integrate orbits from a given vector
-    of initial conditions::
-
-        integrator = LeapfrogIntegrator(acceleration)
-        times, ws = integrator(w0=[1., 0.], dt=0.1, n_steps=1000)
-
-    .. note::
-
-        When integrating a single vector of initial conditions, the return
-        array will have 2 axes. In the above example, the returned array will
-        have shape ``(2, 1001)``. If an array of initial conditions are passed
-        in, the return array will have 3 axes, where the last axis is for the
-        individual orbits.
+    The method alternately updates positions and momenta (velocities) in a
+    "leapfrog" pattern, where velocities are evaluated at half-integer
+    timesteps relative to positions. This staggered evaluation is what
+    gives the method its symplectic properties.
 
     Parameters
     ----------
-    func : func
-        A callable object that computes the phase-space time derivatives
-        at a time and point in phase space.
-    func_args : tuple (optional)
-        Any extra arguments for the derivative function.
-    func_units : `~gala.units.UnitSystem` (optional)
-        If using units, this is the unit system assumed by the
-        integrand function.
+    func : callable
+        A function that computes the phase-space coordinate derivatives.
+        Must have signature ``func(t, w, *func_args)`` where ``t`` is time,
+        ``w`` is the phase-space position array with shape ``(2*ndim, ...)``,
+        and ``*func_args`` are additional arguments.
+    func_args : tuple, optional
+        Additional arguments to pass to the derivative function.
+    func_units : :class:`~gala.units.UnitSystem`, optional
+        Unit system assumed by the integrand function.
+    progress : bool, optional
+        Display a progress bar during integration. Default is False.
+    save_all : bool, optional
+        Save the orbit at all timesteps. If False, only save the final state.
+        Default is True.
 
+    Notes
+    -----
+    The leapfrog method uses the following update scheme:
+
+    .. math::
+
+        v_{i+1/2} &= v_{i-1/2} + a_i \Delta t \\
+        x_{i+1} &= x_i + v_{i+1/2} \Delta t
+
+    where :math:`a_i = F(t_i, x_i, v_{i-1/2})` is the acceleration at
+    position :math:`x_i`.
+
+    The integrator automatically handles the initial half-step offset for
+    velocities by computing :math:`v_{1/2} = v_0 + a_0 \Delta t / 2` from
+    the initial conditions.
+
+    Advantages:
+        * Symplectic (preserves phase-space structure)
+        * Time-reversible
+        * Excellent long-term energy conservation
+        * Computationally efficient (one force evaluation per step)
+
+    Disadvantages:
+        * Only second-order accurate
+        * Requires fixed timesteps
+        * Less accurate than higher-order methods for smooth problems
+
+    References
+    ----------
+    * Verlet, L. (1967). Computer "experiments" on classical fluids. Physical
+      Review, 159(1), 98-103.
+    * Leimkuhler, B. & Reich, S. (2004). Simulating Hamiltonian Dynamics.
+      Cambridge University Press.
+
+    Examples
+    --------
+    Simple harmonic oscillator with Hamiltonian :math:`H = \\frac{1}{2}(p^2 + q^2)`:
+
+    .. code-block:: python
+
+        def derivs(t, w):
+            q, p = w[0], w[1]  # position, momentum
+            return np.array([p, -q])  # [dq/dt, dp/dt]
+
+
+        integrator = LeapfrogIntegrator(derivs)
+        orbit = integrator(w0=[1.0, 0.0], dt=0.1, n_steps=1000)
+
+    The derivative function must return an array where the first half
+    contains position derivatives (velocities) and the second half contains
+    momentum derivatives (accelerations).
     """
 
     def step(self, t, x_im1, v_im1_2, dt):
         """
-        Step forward the positions and velocities by the given timestep.
+        Advance the integration by one timestep using the leapfrog scheme.
+
+        This method performs a single leapfrog step, updating positions
+        and velocities according to the symplectic leapfrog algorithm.
 
         Parameters
         ----------
-        dt : numeric
-            The timestep to move forward.
+        t : float
+            Current time.
+        x_im1 : :class:`~numpy.ndarray`
+            Position at the previous timestep, shape ``(ndim, norbits)``.
+        v_im1_2 : :class:`~numpy.ndarray`
+            Velocity at the previous half-timestep, shape ``(ndim, norbits)``.
+        dt : float
+            Integration timestep.
+
+        Returns
+        -------
+        x_i : :class:`~numpy.ndarray`
+            Updated position at the current timestep.
+        v_i : :class:`~numpy.ndarray`
+            Velocity at the current timestep (synchronized with position).
+        v_ip1_2 : :class:`~numpy.ndarray`
+            Velocity at the next half-timestep, ready for the next integration step.
+
+        Notes
+        -----
+        The leapfrog step consists of:
+        1. Update position: :math:`x_i = x_{i-1} + v_{i-1/2} \\Delta t`
+        2. Compute force: :math:`F_i = F(t, x_i, v_{i-1/2})`
+        3. Update velocity: :math:`v_{i+1/2} = v_{i-1/2} + a_i \\Delta t`
+        4. Compute synchronized velocity: :math:`v_i = (v_{i-1/2} + v_{i+1/2})/2`
         """
 
         x_i = x_im1 + v_im1_2 * dt

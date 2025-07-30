@@ -40,40 +40,104 @@ D = np.array(
 
 class RK5Integrator(Integrator):
     r"""
-    Initialize a 5th order Runge-Kutta integrator given a function for
-    computing derivatives with respect to the independent variables. The
-    function should, at minimum, take the independent variable as the
-    first argument, and the coordinates as a single vector as the second
-    argument. For notation and variable names, we assume this independent
-    variable is time, t, and the coordinate vector is named x, though it
-    could contain a mixture of coordinates and momenta for solving
-    Hamilton's equations, for example.
+    Fifth-order Runge-Kutta integrator with fixed timesteps.
 
-    .. seealso::
+    This integrator implements the classical fifth-order Runge-Kutta method
+    (RK5) using the Dormand-Prince coefficients. It provides fifth-order
+    accuracy for smooth problems with a fixed timestep, making it suitable
+    for problems where high accuracy is needed and the solution varies
+    smoothly in time.
 
-        - http://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
+    Unlike adaptive methods, this integrator uses a fixed timestep throughout
+    the integration, which can be more predictable but may be less efficient
+    for problems with varying time scales.
 
     Parameters
     ----------
-    func : func
-        A callable object that computes the phase-space coordinate
-        derivatives with respect to the independent variable at a point
-        in phase space.
-    func_args : tuple (optional)
-        Any extra arguments for the function.
-    func_units : `~gala.units.UnitSystem` (optional)
-        If using units, this is the unit system assumed by the
-        integrand function.
+    func : callable
+        A function that computes the phase-space coordinate derivatives.
+        Must have signature ``func(t, w, *func_args)`` where ``t`` is time,
+        ``w`` is the phase-space position array, and ``*func_args`` are
+        additional arguments.
+    func_args : tuple, optional
+        Additional arguments to pass to the derivative function.
+    func_units : :class:`~gala.units.UnitSystem`, optional
+        Unit system assumed by the integrand function.
+    progress : bool, optional
+        Display a progress bar during integration. Default is False.
+    save_all : bool, optional
+        Save the orbit at all timesteps. If False, only save the final state.
+        Default is True.
 
+    Notes
+    -----
+    The RK5 method uses six function evaluations per timestep to achieve
+    fifth-order accuracy. The update formula is:
+
+    .. math::
+
+        w_{n+1} = w_n + \\sum_{i=1}^{6} c_i k_i
+
+    where the :math:`k_i` are intermediate slope estimates computed using
+    the Dormand-Prince coefficients.
+
+    Advantages:
+        * Fifth-order accuracy for smooth problems
+        * Stable and robust for most ODE systems
+        * Predictable computational cost (6 function evaluations per step)
+
+    Disadvantages:
+        * Not symplectic (may not conserve energy for Hamiltonian systems)
+        * Fixed timestep can be inefficient
+        * More expensive per step than lower-order methods
+
+    References
+    ----------
+    * Dormand, J. R. & Prince, P. J. (1980). A family of embedded Runge-Kutta
+      formulae. Journal of Computational and Applied Mathematics, 6(1), 19-26.
+    * Hairer, E., Nørsett, S. P. & Wanner, G. (1993). Solving Ordinary
+      Differential Equations I. Springer-Verlag.
+
+    Examples
+    --------
+    Integrate a simple harmonic oscillator:
+
+    .. code-block:: python
+
+        def derivs(t, w):
+            return np.array([w[1], -w[0]])  # [dx/dt, dv/dt]
+
+
+        integrator = RK5Integrator(derivs)
+        orbit = integrator(w0=[1.0, 0.0], dt=0.01, n_steps=1000)
     """
 
     def step(self, t, w, dt):
-        """Step forward the vector w by the given timestep.
+        """
+        Advance the integration by one timestep using the RK5 method.
+
+        This method performs a single Runge-Kutta step using the classical
+        fifth-order formula with Dormand-Prince coefficients.
 
         Parameters
         ----------
-        dt : numeric
-            The timestep to move forward.
+        t : float
+            Current time.
+        w : :class:`~numpy.ndarray`
+            Current state vector with shape ``(2*ndim, norbits)``.
+        dt : float
+            Integration timestep.
+
+        Returns
+        -------
+        w_new : :class:`~numpy.ndarray`
+            Updated state vector at time ``t + dt``.
+
+        Notes
+        -----
+        The method computes six intermediate slopes :math:`k_1, ..., k_6`
+        and combines them with the Dormand-Prince weights to achieve
+        fifth-order accuracy.
         """
 
         # Runge-Kutta Fehlberg formulas (see: Numerical Recipes)
