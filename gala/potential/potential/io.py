@@ -70,15 +70,47 @@ def _parse_component(component, module):
 
 def from_dict(d, module=None):
     """
-    Convert a dictionary potential specification into a
-    :class:`~gala.potential.PotentialBase` subclass object.
+    Convert a dictionary potential specification into a potential object.
+
+    This function parses a dictionary representation of a potential and
+    creates the corresponding :class:`~gala.potential.PotentialBase`
+    subclass instance. Supports both simple potentials and composite
+    potentials with multiple components.
 
     Parameters
     ----------
     d : dict
-        Dictionary specification of a potential.
-    module : namespace (optional)
+        Dictionary specification of a potential. Must contain at minimum
+        a 'class' key specifying the potential class name. For composite
+        potentials, should include 'type': 'composite' and a 'components'
+        list of component dictionaries.
+    module : module, optional
+        Python module namespace to search for potential classes. If not
+        provided, uses `gala.potential`.
 
+    Returns
+    -------
+    potential : `~gala.potential.PotentialBase`
+        The instantiated potential object.
+
+    Examples
+    --------
+    Create a simple Hernquist potential::
+
+        >>> pot_dict = {'class': 'HernquistPotential', 'm': 1e11, 'c': 2.0}
+        >>> pot = from_dict(pot_dict)
+
+    Create a composite potential::
+
+        >>> comp_dict = {
+        ...     'type': 'composite',
+        ...     'class': 'CompositePotential',
+        ...     'components': [
+        ...         {'class': 'HernquistPotential', 'm': 1e10, 'c': 1.0},
+        ...         {'class': 'NFWPotential', 'm': 1e12, 'r_s': 20.0}
+        ...     ]
+        ... }
+        >>> comp_pot = from_dict(comp_dict)
     """
 
     # need this here for circular import issues
@@ -151,14 +183,42 @@ def _to_dict_help(potential):
 
 def to_dict(potential):
     """
-    Turn a potential object into a dictionary that fully specifies the
-    state of the object.
+    Convert a potential object into a dictionary representation.
+
+    This function serializes a :class:`~gala.potential.PotentialBase`
+    object into a dictionary that fully specifies the potential's state,
+    including all parameters, units, and structure. The resulting
+    dictionary can be used to recreate the potential using
+    :func:`~gala.potential.io.from_dict`.
 
     Parameters
     ----------
     potential : :class:`~gala.potential.PotentialBase`
-        The instantiated :class:`~gala.potential.PotentialBase` object.
+        The instantiated potential object to convert to dictionary form.
 
+    Returns
+    -------
+    pot_dict : dict
+        Dictionary representation of the potential containing the class
+        name, parameters, units, and (for composite potentials) component
+        structure.
+
+    Examples
+    --------
+    Convert a simple potential to dictionary::
+
+        >>> pot = HernquistPotential(m=1e11*u.Msun, c=2*u.kpc)
+        >>> pot_dict = to_dict(pot)
+
+    Convert a composite potential::
+
+        >>> comp_pot = CompositePotential(bulge=hernquist, halo=nfw)
+        >>> comp_dict = to_dict(comp_pot)
+
+    See Also
+    --------
+    from_dict : Create potential object from dictionary representation.
+    save : Save potential to file.
     """
     from .. import potential as gp
 
@@ -190,17 +250,47 @@ def to_dict(potential):
 
 def load(f, module=None):
     """
-    Read a potential specification file and return a
-    :class:`~gala.potential.PotentialBase` object instantiated with parameters
-    specified in the spec file.
+    Load a potential from a YAML specification file.
+
+    This function reads a YAML file containing a potential specification
+    and creates the corresponding :class:`~gala.potential.PotentialBase`
+    object. The file format should match the dictionary structure expected
+    by :func:`~gala.potential.io.from_dict`.
 
     Parameters
     ----------
-    f : str, file_like
-        A block of text, filename, or file-like object to parse and read
-        a potential from.
-    module : namespace (optional)
+    f : str, file-like
+        Path to a YAML file, a block of YAML text, or a file-like object
+        containing the potential specification to parse and load.
+    module : module, optional
+        Python module namespace to search for potential classes. If not
+        provided, uses `gala.potential`.
 
+    Returns
+    -------
+    potential : :class:`~gala.potential.PotentialBase`
+        The loaded potential object.
+
+    Examples
+    --------
+    Load a potential from a YAML file::
+
+        >>> pot = load('my_potential.yml')
+
+    Load from a YAML string::
+
+        >>> yaml_spec = '''
+        ... class: HernquistPotential
+        ... parameters:
+        ...   m: 1.0e11
+        ...   c: 2.0
+        ... '''
+        >>> pot = load(yaml_spec)
+
+    See Also
+    --------
+    save : Save potential to YAML file.
+    from_dict : Create potential from dictionary specification.
     """
     if hasattr(f, "read"):
         p_dict = yaml.load(f.read(), Loader=yaml.Loader)
@@ -213,16 +303,38 @@ def load(f, module=None):
 
 def save(potential, f):
     """
-    Write a :class:`~gala.potential.PotentialBase` object out to a text (YAML)
-    file.
+    Save a potential object to a YAML file.
+
+    This function serializes a :class:`~gala.potential.PotentialBase`
+    object to YAML format and writes it to a file. The resulting file
+    can be loaded using :func:`~gala.potential.io.load`.
 
     Parameters
     ----------
     potential : :class:`~gala.potential.PotentialBase`
-        The instantiated :class:`~gala.potential.PotentialBase` object.
-    f : str, file_like
-        A filename or file-like object to write the input potential object to.
+        The potential object to save.
+    f : str, file-like
+        Output filename or file-like object to write the potential
+        specification to.
 
+    Examples
+    --------
+    Save a potential to file::
+
+        >>> pot = HernquistPotential(m=1e11*u.Msun, c=2*u.kpc)
+        >>> save(pot, 'hernquist_potential.yml')
+
+    Save to a string buffer::
+
+        >>> from io import StringIO
+        >>> buffer = StringIO()
+        >>> save(pot, buffer)
+        >>> yaml_content = buffer.getvalue()
+
+    See Also
+    --------
+    load : Load potential from YAML file.
+    to_dict : Convert potential to dictionary representation.
     """
     d = to_dict(potential)
 

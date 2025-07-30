@@ -30,13 +30,54 @@ __all__ = ["CompositePotential", "PotentialBase"]
 
 class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     """
-    A baseclass for defining pure-Python gravitational potentials.
+    A base class for defining gravitational potentials in Gala.
 
-    Subclasses must define (at minimum) a method that evaluates the potential
-    energy at a given position ``q`` and time ``t``: ``_energy(q, t)``. For
-    integration, the subclasses must also define a method to evaluate the
-    gradient, ``_gradient(q, t)``. Optionally, they may also define methods to
-    compute the density and hessian: ``_density()``, ``_hessian()``.
+    This abstract base class provides the foundation for all gravitational
+    potential models in Gala. It handles unit conversions, coordinate
+    transformations, and provides a consistent interface for computing
+    gravitational forces, energies, and related quantities.
+
+    Subclasses must implement the abstract methods ``_energy(q, t)`` and
+    ``_gradient(q, t)`` that compute the potential energy and its gradient
+    (negative acceleration) at position ``q`` and time ``t``. Optionally,
+    subclasses may implement ``_density(q, t)`` and ``_hessian(q, t)`` to
+    provide mass density and second derivative information.
+
+    Parameters
+    ----------
+    units : `~gala.units.UnitSystem`, optional
+        Set of non-reducible units that specify (at minimum) the
+        length, mass, time, and angle units. If not specified, the default
+        unit system will be used.
+    origin : array_like, optional
+        The origin of the potential in Cartesian coordinates. Default is
+        the origin ``[0, 0, 0]``.
+    R : array_like, `~scipy.spatial.transform.Rotation`, optional
+        Rotation matrix or `~scipy.spatial.transform.Rotation` object to
+        rotate the reference frame of the potential. If specified, the
+        potential will be evaluated in the rotated coordinate system.
+
+    Attributes
+    ----------
+    ndim : int
+        Number of spatial dimensions (default: 3).
+    parameters : `~gala.util.ImmutableDict`
+        Dictionary of potential parameters with associated units.
+    units : `~gala.units.UnitSystem`
+        The unit system used by the potential.
+    G : float
+        Gravitational constant in the potential's unit system.
+    origin : array_like
+        The origin of the potential coordinate system.
+    R : array_like, optional
+        Rotation matrix for the potential coordinate system.
+
+    Notes
+    -----
+    The potential is evaluated in a coordinate system that may be shifted
+    (via ``origin``) and/or rotated (via ``R``) relative to the input
+    coordinates. The transformation is applied as:
+    ``q_transformed = R @ (q - origin)``.
     """
 
     ndim = 3
@@ -242,19 +283,34 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     #
     def energy(self, q, t=0.0):
         """
-        Compute the potential energy at the given position(s).
+        Compute the gravitational potential energy at the given position(s).
+
+        The potential energy per unit mass is evaluated at the specified
+        position(s) and time.
 
         Parameters
         ----------
         q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
-            The position to compute the value of the potential. If the
-            input position object has no units (i.e. is an `~numpy.ndarray`),
-            it is assumed to be in the same unit system as the potential.
+            Position(s) at which to evaluate the potential. If the input
+            has no units (i.e., is an `~numpy.ndarray`), it is assumed to
+            be in the same unit system as the potential. Shape should be
+            ``(n_dim,)`` for a single position or ``(n_dim, n_positions)``
+            for multiple positions.
+        t : numeric, `~astropy.units.Quantity`, optional
+            Time at which to evaluate the potential. Default is 0.
 
         Returns
         -------
         E : `~astropy.units.Quantity`
-            The potential energy per unit mass or value of the potential.
+            The gravitational potential energy per unit mass. For input
+            shape ``(n_dim, n_positions)``, returns shape ``(n_positions,)``.
+            Units are specific energy (e.g., m²/s² in SI units).
+
+        Notes
+        -----
+        The potential energy is related to the gravitational acceleration
+        by :math:`\\vec{a} = -\\nabla \\phi`, where φ is the potential
+        energy per unit mass.
         """
         q = self._remove_units_prepare_shape(q)
         orig_shape, q = self._get_c_valid_arr(q)
@@ -267,20 +323,37 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
     def gradient(self, q, t=0.0):
         """
-        Compute the gradient of the potential at the given position(s).
+        Compute the gradient of the gravitational potential.
 
         Parameters
         ----------
         q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
-            The position to compute the value of the potential. If the
-            input position object has no units (i.e. is an `~numpy.ndarray`),
-            it is assumed to be in the same unit system as the potential.
+            Position(s) at which to evaluate the potential gradient. If the
+            input has no units (i.e., is an `~numpy.ndarray`), it is assumed
+            to be in the same unit system as the potential. Shape should be
+            ``(n_dim,)`` for a single position or ``(n_dim, n_positions)``
+            for multiple positions.
+        t : numeric, `~astropy.units.Quantity`, optional
+            Time at which to evaluate the potential gradient. Default is 0.
 
         Returns
         -------
         grad : `~astropy.units.Quantity`
-            The gradient of the potential. Will have the same shape as
-            the input position.
+            The gradient of the gravitational potential. Has the same shape
+            as the input position array ``q``. Units are acceleration
+            (e.g., m/s² in SI units). To get gravitational acceleration,
+            use ``acceleration()`` or compute ``-gradient()``.
+
+        See Also
+        --------
+        acceleration : Compute gravitational acceleration (negative gradient).
+
+        Notes
+        -----
+        The relationship between potential φ, gradient, and acceleration is:
+
+        .. math::
+            \\vec{a} = -\\nabla \\phi = -\\frac{\\partial \\phi}{\\partial \\vec{q}}
         """
         q = self._remove_units_prepare_shape(q)
         orig_shape, q = self._get_c_valid_arr(q)
@@ -291,21 +364,44 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
     def density(self, q, t=0.0):
         """
-        Compute the density value at the given position(s).
+        Compute the mass density at the given position(s).
+
+        For potentials that have an associated mass distribution, this method
+        computes the mass density rho(q, t) at the specified positions and time.
+        The density is related to the potential via Poisson's equation:
+        :math:`\\nabla^2 \\phi = 4\\pi G \\rho`.
 
         Parameters
         ----------
         q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
-            The position to compute the value of the potential. If the
-            input position object has no units (i.e. is an `~numpy.ndarray`),
-            it is assumed to be in the same unit system as the potential.
+            Position(s) at which to evaluate the mass density. If the input
+            has no units (i.e., is an `~numpy.ndarray`), it is assumed to
+            be in the same unit system as the potential. Shape should be
+            ``(n_dim,)`` for a single position or ``(n_dim, n_positions)``
+            for multiple positions.
+        t : numeric, `~astropy.units.Quantity`, optional
+            Time at which to evaluate the mass density. Default is 0.
 
         Returns
         -------
         dens : `~astropy.units.Quantity`
-            The potential energy or value of the potential. If the input
-            position has shape ``q.shape``, the output energy will have
-            shape ``q.shape[1:]``.
+            The mass density at the specified position(s). For input
+            shape ``(n_dim, n_positions)``, returns shape ``(n_positions,)``.
+            Units are mass density (e.g., kg/m³ in SI units).
+
+        Notes
+        -----
+        Not all potential models have an implemented density function.
+        For potentials without a density implementation, this method
+        will raise a ``NotImplementedError``.
+
+        The density is computed using the relationship with the potential's
+        Laplacian (when available) or from the underlying mass model.
+
+        Raises
+        ------
+        NotImplementedError
+            If the potential does not have an implemented density function.
         """
         q = self._remove_units_prepare_shape(q)
         orig_shape, q = self._get_c_valid_arr(q)
@@ -316,22 +412,50 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
     def hessian(self, q, t=0.0):
         """
-        Compute the Hessian of the potential at the given position(s).
+        Compute the Hessian matrix of the gravitational potential.
+
+        The Hessian matrix contains the second partial derivatives of the
+        potential: :math:`H_{ij} = \\frac{\\partial^2 \\phi}{\\partial q_i \\partial q_j}`.
+        This is useful for stability analysis, computing tidal tensors, and
+        orbital frequency analysis.
 
         Parameters
         ----------
         q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
-            The position to compute the value of the potential. If the
-            input position object has no units (i.e. is an `~numpy.ndarray`),
-            it is assumed to be in the same unit system as the potential.
+            Position(s) at which to evaluate the Hessian matrix. If the input
+            has no units (i.e., is an `~numpy.ndarray`), it is assumed to
+            be in the same unit system as the potential. Shape should be
+            ``(n_dim,)`` for a single position or ``(n_dim, n_positions)``
+            for multiple positions.
+        t : numeric, `~astropy.units.Quantity`, optional
+            Time at which to evaluate the Hessian matrix. Default is 0.
 
         Returns
         -------
         hess : `~astropy.units.Quantity`
-            The Hessian matrix of second derivatives of the potential. If the
-            input position has shape ``q.shape``, the output energy will have
-            shape ``(q.shape[0],q.shape[0]) + q.shape[1:]``. That is, an
-            ``n_dim`` by ``n_dim`` array (matrix) for each position.
+            The Hessian matrix of second derivatives. For input shape
+            ``(n_dim, n_positions)``, returns shape
+            ``(n_dim, n_dim, n_positions)``. Each ``n_dim x n_dim`` slice
+            corresponds to the Hessian matrix at one position. Units are
+            acceleration per length (e.g., s⁻² in SI units).
+
+        Notes
+        -----
+        Computing Hessian matrices for rotated potentials (when ``R`` is
+        not the identity matrix) is currently not supported and will raise
+        a ``NotImplementedError``.
+
+        Not all potential models have an implemented Hessian function.
+        For potentials without a Hessian implementation, this method
+        will raise a ``NotImplementedError``.
+
+        The Hessian matrix is symmetric for time-independent potentials.
+
+        Raises
+        ------
+        NotImplementedError
+            If the potential does not have an implemented Hessian function,
+            or if the potential is rotated (``R`` is not the identity).
         """
         if self.R is not None and not np.allclose(
             np.diag(self.R), 1.0, atol=1e-15, rtol=0
@@ -354,37 +478,77 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     #
     def acceleration(self, q, t=0.0):
         """
-        Compute the acceleration due to the potential at the given position(s).
+        Compute the gravitational acceleration at the given position(s).
+
+        The gravitational acceleration is the negative gradient of the
+        potential: :math:`\\vec{a} = -\\nabla \\phi`. This is the
+        acceleration experienced by a test particle in the gravitational field.
 
         Parameters
         ----------
         q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
-            Position to compute the acceleration at.
+            Position(s) at which to compute the gravitational acceleration.
+            If the input has no units (i.e., is an `~numpy.ndarray`), it is
+            assumed to be in the same unit system as the potential.
+        t : numeric, `~astropy.units.Quantity`, optional
+            Time at which to evaluate the acceleration. Default is 0.
 
         Returns
         -------
         acc : `~astropy.units.Quantity`
-            The acceleration. Will have the same shape as the input
-            position array, ``q``.
+            The gravitational acceleration vector(s). Has the same shape as
+            the input position array ``q``. Units are acceleration
+            (e.g., m/s² in SI units).
+
+        See Also
+        --------
+        gradient : Compute the potential gradient (negative acceleration).
+
+        Notes
+        -----
+        This method is equivalent to ``-self.gradient(q, t)`` and is provided
+        for convenience in orbital integration and dynamics calculations.
         """
         return -self.gradient(q, t=t)
 
     def mass_enclosed(self, q, t=0.0):
         """
-        Estimate the mass enclosed within the given position by assuming the potential
-        is spherical.
+        Estimate the mass enclosed within spherical radius at given position(s).
+
+        This method estimates the enclosed mass by assuming spherical symmetry
+        and using the relation :math:`M_{\\rm enc}(r) = r^2 |dΦ/dr| / G`, where
+        the radial derivative is computed numerically using finite differences.
 
         Parameters
         ----------
         q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
-            Position(s) to estimate the enclossed mass.
+            Position(s) at which to estimate the enclosed mass. The enclosed
+            mass is computed at the spherical radius corresponding to each
+            position. If the input has no units, it is assumed to be in the
+            same unit system as the potential.
+        t : numeric, `~astropy.units.Quantity`, optional
+            Time at which to evaluate the enclosed mass. Default is 0.
 
         Returns
         -------
         menc : `~astropy.units.Quantity`
-            Mass enclosed at the given position(s). If the input position
-            has shape ``q.shape``, the output energy will have shape
-            ``q.shape[1:]``.
+            Mass enclosed within the spherical radius at each position.
+            For input shape ``(n_dim, n_positions)``, returns shape
+            ``(n_positions,)``. Units are mass (e.g., kg in SI units).
+
+        Notes
+        -----
+        This method assumes the potential is approximately spherically
+        symmetric. The enclosed mass is estimated using a finite difference
+        approximation to the radial derivative of the potential.
+
+        For potentials with negative mass parameters (e.g., some composite
+        models), the sign is handled appropriately.
+
+        The calculation uses the relation derived from Gauss's law:
+
+        .. math::
+            M_{\\rm enc}(r) = \\frac{r^2}{G} \\left| \\frac{d\\Phi}{dr} \\right|
         """
         q = self._remove_units_prepare_shape(q)
         orig_shape, q = self._get_c_valid_arr(q)
@@ -419,21 +583,44 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
     def circular_velocity(self, q, t=0.0):
         """
-        Estimate the circular velocity at the given position assuming the
-        potential is spherical.
+        Estimate the circular velocity at given position(s) assuming spherical symmetry.
+
+        The circular velocity is the speed required for a circular orbit at
+        the given radius in a spherically symmetric potential. It is computed
+        using :math:`v_{\\rm circ}(r) = \\sqrt{r |dΦ/dr|}`, where the radial
+        derivative is evaluated from the potential gradient.
 
         Parameters
         ----------
-        q : array_like, numeric
-            Position(s) to estimate the circular velocity.
+        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
+            Position(s) at which to estimate the circular velocity. The
+            calculation uses the spherical radius from the origin. If the
+            input has no units, it is assumed to be in the same unit system
+            as the potential.
+        t : numeric, `~astropy.units.Quantity`, optional
+            Time at which to evaluate the circular velocity. Default is 0.
 
         Returns
         -------
         vcirc : `~astropy.units.Quantity`
-            Circular velocity at the given position(s). If the input position
-            has shape ``q.shape``, the output energy will have shape
-            ``q.shape[1:]``.
+            Circular velocity at the spherical radius corresponding to each
+            position. For input shape ``(n_dim, n_positions)``, returns shape
+            ``(n_positions,)``. Units are velocity (e.g., m/s in SI units).
 
+        Notes
+        -----
+        This method assumes the potential is approximately spherically
+        symmetric. The circular velocity is computed using the relation:
+
+        .. math::
+            v_{\\rm circ}(r) = \\sqrt{r \\left| \\frac{d\\Phi}{dr} \\right|}
+
+        where the radial derivative is computed from the Cartesian gradient
+        via :math:`dΦ/dr = \\vec{\\nabla}Φ \\cdot \\hat{r}`.
+
+        For exactly spherical potentials, this gives the speed of circular
+        orbits. For non-spherical potentials, this provides an approximation
+        useful for initial orbit estimates.
         """
         q = self._remove_units_prepare_shape(q)
 
@@ -982,31 +1169,59 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
 class CompositePotential(PotentialBase, OrderedDict):
     """
-    A potential composed of several distinct components. For example,
-    two point masses or a galactic disk and halo, each with their own
-    potential model.
+    A gravitational potential composed of multiple distinct components.
 
-    A `CompositePotential` is created like a Python dictionary, e.g.::
+    This class allows combining multiple gravitational potential models
+    into a single potential. This is useful for modeling complex systems
+    like galaxies, where you might combine a disk, bulge, and dark matter
+    halo, each represented by different potential models.
 
-        >>> p1 = SomePotential(func1) # doctest: +SKIP
-        >>> p2 = SomePotential(func2) # doctest: +SKIP
-        >>> cp = CompositePotential(component1=p1, component2=p2) # doctest: +SKIP
+    The `CompositePotential` behaves like a Python dictionary where each
+    key-value pair represents a named component and its potential model.
+    All components must have compatible unit systems and the same number
+    of spatial dimensions.
 
-    This object actually acts like a dictionary, so if you want to
-    preserve the order of the potential components, use::
+    Parameters
+    ----------
+    **kwargs : dict
+        Keyword arguments where each key is a component name (string) and
+        each value is a `~gala.potential.PotentialBase` instance.
 
-        >>> cp = CompositePotential() # doctest: +SKIP
-        >>> cp['component1'] = p1 # doctest: +SKIP
-        >>> cp['component2'] = p2 # doctest: +SKIP
+    Attributes
+    ----------
+    lock : bool
+        If ``True``, prevents adding new components or modifying existing ones.
 
-    You can also use any of the built-in `Potential` classes as
-    components::
+    Examples
+    --------
+    Create a composite potential with named components::
 
-        >>> from gala.potential import HernquistPotential
-        >>> cp = CompositePotential()
-        >>> cp['spheroid'] = HernquistPotential(m=1E11, c=10.,
-        ...                                     units=(u.kpc, u.Myr, u.Msun, u.radian))
+        >>> import astropy.units as u
+        >>> from gala.potential import HernquistPotential, NFWPotential
+        >>> from gala.units import galactic
+        >>> bulge = HernquistPotential(m=1E10*u.Msun, c=1*u.kpc, units=galactic)
+        >>> halo = NFWPotential(m=1E12*u.Msun, r_s=20*u.kpc, units=galactic)
+        >>> mw = CompositePotential(bulge=bulge, halo=halo)
 
+    Or build it step by step to preserve component order::
+
+        >>> mw = CompositePotential()
+        >>> mw['bulge'] = bulge
+        >>> mw['halo'] = halo
+
+    Access individual components::
+
+        >>> bulge_potential = mw['bulge']
+        >>> total_energy = mw.energy(pos)  # Sum of all components
+
+    Notes
+    -----
+    The potential energy, gradients, and other quantities are computed as
+    the sum over all components. Each component maintains its own parameters
+    and can be accessed or modified independently (unless ``lock=True``).
+
+    All components must have the same unit system and spatial dimensionality.
+    The composite potential inherits these properties from its components.
     """
 
     def __init__(self, *args, **kwargs):
