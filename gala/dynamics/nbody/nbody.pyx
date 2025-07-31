@@ -5,6 +5,7 @@
 # cython: wraparound=False
 # cython: profile=False
 # cython: language_level=3
+# cython: language=c++
 
 
 import warnings
@@ -22,25 +23,9 @@ from libc.stdlib cimport malloc, free
 from cpython.exc cimport PyErr_CheckSignals
 
 from ...potential import Hamiltonian, NullPotential
-from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
-from ...potential.frame.cframe cimport CFrameWrapper
-from ...integrate.cyintegrators.dop853 cimport dop853_helper
-
-cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrameType:
-        pass
-
-cdef extern from "potential/src/cpotential.h":
-    void c_nbody_acceleration(CPotential **pots, double t, double *qp,
-                              int norbits, int nbody, int ndim, double *acc)
-
-cdef extern from "dopri/dop853.h":
-    ctypedef void (*FcnEqDiff)(unsigned n, double x, double *y, double *f,
-                              CPotential *p, CFrameType *fr, unsigned norbits,
-                              unsigned nbody, void *args) nogil
-    void Fwrapper_direct_nbody(unsigned ndim, double t, double *w, double *f,
-                               CPotential *p, CFrameType *fr, unsigned norbits,
-                               unsigned nbody, void *args)
+from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential, c_nbody_acceleration
+from ...potential.frame.cframe cimport CFrameWrapper, CFrameType
+from ...integrate.cyintegrators.dop853 cimport dop853_helper, FcnEqDiff, Fwrapper_direct_nbody
 
 cpdef direct_nbody_dop853(
     double [:, ::1] w0, double[::1] t,

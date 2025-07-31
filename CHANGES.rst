@@ -4,8 +4,12 @@
 New Features
 ------------
 
+- A C++ compiler is now required to build Gala from source.
+
 Bug fixes
 ---------
+
+- ``gala.potential.EXPPotential`` now propagates C++ exceptions to Python.
 
 API changes
 -----------

@@ -4,7 +4,7 @@
 # cython: wraparound=False
 # cython: profile=False
 # cython: language_level=3
-
+# cython: language=c++
 
 from astropy.utils.misc import isiterable
 import astropy.units as u
@@ -14,23 +14,11 @@ np.import_array()
 
 
 from ..cframe import CFrameBase
-from ..cframe cimport CFrameWrapper
+from ..cframe cimport CFrameWrapper, CFrameType
 from ...common import PotentialParameter
 from ....units import dimensionless, DimensionlessUnitSystem
+from ...potential.cpotential cimport energyfunc, gradientfunc, hessianfunc
 
-cdef extern from "src/funcdefs.h":
-    ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim) nogil
-    ctypedef void (*gradientfunc)(double t, double *pars, double *q, int n_dim, double *grad) nogil
-    ctypedef void (*hessianfunc)(double t, double *pars, double *q, int n_dim, double *hess) nogil
-
-cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrameType:
-        energyfunc energy
-        gradientfunc gradient
-        hessianfunc hessian
-
-        int n_params
-        double *parameters;
 
 cdef extern from "frame/builtin/builtin_frames.h":
     double static_frame_hamiltonian(double t, double *pars, double *qp, int n_dim) nogil
