@@ -11,6 +11,40 @@ __all__ = ["Integrator"]
 
 
 class Integrator(metaclass=ABCMeta):
+    """
+    Abstract base class for numerical integrators.
+
+    This class provides a common interface for different numerical integration
+    schemes used to integrate orbits in gravitational potentials. All concrete
+    integrator classes should inherit from this base class.
+
+    Parameters
+    ----------
+    func : callable
+        A function that computes the time derivatives of the phase-space
+        coordinates. Should have the signature ``func(t, w, *func_args)``
+        where ``t`` is the time, ``w`` is the current phase-space position,
+        and ``*func_args`` are additional arguments.
+    func_args : tuple, optional
+        Additional arguments to pass to the derivative function. Default is ().
+    func_units : :class:`~gala.units.UnitSystem`, optional
+        The unit system assumed by the integrand function. If not provided,
+        uses a dimensionless unit system.
+    progress : bool, optional
+        Whether to display a progress bar during integration. Requires the
+        ``tqdm`` package. Default is False.
+    save_all : bool, optional
+        Whether to save the orbit at all integration timesteps. If False,
+        only saves the final state. Default is True.
+
+    Raises
+    ------
+    ValueError
+        If ``func`` is not callable.
+    ImportError
+        If ``progress=True`` but the ``tqdm`` package is not installed.
+    """
+
     def __init__(
         self,
         func,
@@ -123,32 +157,34 @@ class Integrator(metaclass=ABCMeta):
     @abstractmethod
     def __call__(self, w0, mmap=None, **time_spec):
         """
-        Run the integrator starting from the specified phase-space position.
-        The initial conditions ``w0`` should be a
-        `~gala.dynamics.PhaseSpacePosition` instance.
+        Run the integrator starting from the specified initial conditions.
 
-        There are a few combinations of keyword arguments accepted for
-        specifying the timestepping. For example, you can specify a fixed
-        timestep (``dt``) and a number of steps (``n_steps``), or an array of
-        times::
-
-            dt, n_steps[, t1] : (numeric, int[, numeric])
-                A fixed timestep dt and a number of steps to run for.
-            dt, t1, t2 : (numeric, numeric, numeric)
-                A fixed timestep dt, an initial time, and a final time.
-            t : array-like
-                An array of times to solve on.
+        This method integrates the orbit forward in time from the given
+        initial phase-space position according to the time specification.
 
         Parameters
         ----------
-        w0 : `~gala.dynamics.PhaseSpacePosition`
-            Initial conditions.
+        w0 : :class:`~gala.dynamics.PhaseSpacePosition`
+            Initial conditions for the integration.
+        mmap : :class:`~numpy.ndarray`, optional
+            A pre-allocated memory-mapped array to store the results.
+            Must have the correct shape for the expected output.
         **time_spec
-            Timestep information passed to
-            `~gala.integrate.time_spec.parse_time_specification`.
+            Keyword arguments specifying the integration time. Accepted
+            combinations include:
+
+            * ``dt, n_steps[, t1]`` : Fixed timestep and number of steps
+            * ``dt, t1, t2`` : Fixed timestep with start and end times
+            * ``t`` : Array of specific times to integrate to
 
         Returns
         -------
-        orbit : `~gala.dynamics.Orbit`
+        orbit : :class:`~gala.dynamics.Orbit`
+            The integrated orbit containing positions, velocities, and times.
 
+        Notes
+        -----
+        The time specification is parsed by
+        :func:`~gala.integrate.timespec.parse_time_specification`. See that
+        function's documentation for more details on the accepted formats.
         """

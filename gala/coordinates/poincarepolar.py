@@ -13,12 +13,15 @@ def cartesian_to_poincare_polar(w):
     ----------
     w : array_like
         Input array of 6D Cartesian phase-space positions. Should have
-        shape ``(norbits, 6)``.
+        shape ``(..., 6)`` where the last axis contains the phase-space
+        coordinates in the order ``(x, y, z, vx, vy, vz)``.
 
     Returns
     -------
-    new_w : :class:`~numpy.ndarray`
-        Points represented in 6D Poincaré polar coordinates.
+    new_w : `~numpy.ndarray`
+        Points represented in 6D Poincaré polar coordinates with the same
+        shape as the input array. The coordinates are ordered as
+        ``(R, p_phi, z, v_R, p_phi_dot, v_z)``.
 
     """
 

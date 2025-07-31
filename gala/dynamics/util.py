@@ -14,23 +14,33 @@ __all__ = ["combine", "estimate_dt_n_steps", "peak_to_peak_period"]
 
 def peak_to_peak_period(t, f, amplitude_threshold=1e-2):
     """
-    Estimate the period of the input time series by measuring the average
-    peak-to-peak time.
+    Estimate the period of a time series using peak-to-peak analysis.
+
+    This function estimates the period of an oscillating time series by
+    identifying peaks and troughs and computing the mean time between them.
 
     Parameters
     ----------
     t : array_like
         Time grid aligned with the input time series.
     f : array_like
-        A periodic time series.
-    amplitude_threshold : numeric (optional)
-        A tolerance parameter. Fails if the mean amplitude of oscillations
-        isn't larger than this tolerance.
+        A periodic time series to analyze.
+    amplitude_threshold : float, optional
+        A tolerance parameter for the minimum relative amplitude. The analysis
+        fails if the mean amplitude of oscillations isn't larger than this
+        threshold. Default is 1e-2.
 
     Returns
     -------
-    period : float
-        The mean peak-to-peak period.
+    period : float or :class:`~astropy.units.Quantity`
+        The estimated period. Returns the same type as the input ``t``.
+        Returns NaN if the amplitude threshold is not met.
+
+    Notes
+    -----
+    This method works best for approximately sinusoidal time series with
+    well-defined peaks. For irregular or noisy data, consider smoothing
+    the input first.
     """
     if hasattr(t, "unit"):
         t_unit = t.unit
@@ -94,34 +104,55 @@ def estimate_dt_n_steps(
     **integrate_kwargs,
 ):
     """
-    Estimate the timestep and number of steps to integrate an orbit for
-    given its initial conditions and a potential object.
+    Estimate the timestep and number of steps for orbit integration.
+
+    This function estimates appropriate integration parameters based on the
+    orbital period and desired sampling. It first integrates a short orbit
+    to determine the period, then calculates the timestep and number of
+    steps needed for the requested integration time.
 
     Parameters
     ----------
-    w0 : `~gala.dynamics.PhaseSpacePosition`, array_like
-        Initial conditions.
-    potential : :class:`~gala.potential.PotentialBase`
-        The potential to integrate the orbit in.
+    w0 : :class:`~gala.dynamics.PhaseSpacePosition` or array_like
+        Initial conditions for the orbit.
+    hamiltonian : :class:`~gala.potential.Hamiltonian` or :class:`~gala.potential.PotentialBase`
+        The Hamiltonian or potential to integrate the orbit in.
     n_periods : int
-        Number of (max) orbital periods to integrate for.
+        Number of (maximum) orbital periods to integrate for.
     n_steps_per_period : int
-        Number of steps to take per (max) orbital period.
-    dE_threshold : numeric (optional)
-        Maximum fractional energy difference -- used to determine initial
-        timestep. Set to ``None`` to ignore this.
-    func : callable (optional)
-        Determines which period to use. By default, this takes the maximum
-        period using :func:`~numpy.nanmax`. Other options could be
+        Number of integration steps to take per (maximum) orbital period.
+    dE_threshold : float, optional
+        Maximum fractional energy difference used to determine initial
+        timestep for the test integration. Set to ``None`` to ignore this
+        constraint. Default is 1e-9.
+    func : callable, optional
+        Function that determines which period to use when multiple periods
+        are found (e.g., for 3D orbits). Default is :func:`~numpy.nanmax`,
+        which uses the maximum period. Other options include
         :func:`~numpy.nanmin`, :func:`~numpy.nanmean`, :func:`~numpy.nanmedian`.
+    **integrate_kwargs
+        Additional keyword arguments passed to the orbit integration method.
 
     Returns
     -------
     dt : float
-        The timestep.
+        The recommended timestep for integration.
     n_steps : int
-        The number of timesteps to integrate for.
+        The recommended number of integration steps.
 
+    Raises
+    ------
+    RuntimeError
+        If no period can be determined from the test orbit.
+    ValueError
+        If the computed timestep is zero or very small.
+
+    Notes
+    -----
+    This function works by:
+    1. Integrating a test orbit to determine the characteristic periods
+    2. Using the specified function to select the period to use
+    3. Computing dt and n_steps based on the desired sampling
     """
     if not isinstance(w0, PhaseSpacePosition):
         w0 = np.asarray(w0)
@@ -177,14 +208,54 @@ def estimate_dt_n_steps(
 
 
 def combine(objs):
-    """Combine the specified `~gala.dynamics.PhaseSpacePosition` or
-    `~gala.dynamics.Orbit` objects.
+    """
+    Combine multiple PhaseSpacePosition or Orbit objects into a single object.
+
+    This function concatenates multiple objects of the same type into a single
+    object. All input objects must have the same type, dimensionality, reference
+    frame, and (for Orbit objects) the same time array and potential.
 
     Parameters
     ----------
     objs : iterable
-        An iterable of either `~gala.dynamics.PhaseSpacePosition` or
-        `~gala.dynamics.Orbit` objects.
+        A sequence of :class:`~gala.dynamics.PhaseSpacePosition` or
+        :class:`~gala.dynamics.Orbit` objects to combine. All objects must
+        be of the same type.
+
+    Returns
+    -------
+    combined : :class:`~gala.dynamics.PhaseSpacePosition` or :class:`~gala.dynamics.Orbit`
+        A single object containing the combined data from all input objects.
+        The output will have the same type as the input objects.
+
+    Raises
+    ------
+    ValueError
+        If the input is empty or contains only one object, or if the objects
+        have different reference frames, potentials, or time arrays.
+    TypeError
+        If the objects are not all of the same type, or if they are not
+        PhaseSpacePosition or Orbit instances.
+    NotImplementedError
+        If the objects do not have Cartesian representations.
+
+    Examples
+    --------
+    Combine multiple phase-space positions::
+
+        >>> import gala.dynamics as gd
+        >>> import astropy.units as u
+        >>> w1 = gd.PhaseSpacePosition(pos=[1,0,0]*u.kpc, vel=[0,1,0]*u.km/u.s)
+        >>> w2 = gd.PhaseSpacePosition(pos=[0,1,0]*u.kpc, vel=[1,0,0]*u.km/u.s)
+        >>> combined = gd.combine([w1, w2])
+        >>> combined.shape
+        (2,)
+
+    Notes
+    -----
+    Currently, this function only works for objects with Cartesian coordinate
+    representations. The objects are combined by concatenating their position
+    and velocity arrays along the appropriate axis.
     """
     from .orbit import Orbit
 

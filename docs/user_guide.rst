@@ -6,11 +6,10 @@
 User Guide
 **********
 
-The user guide contains exhaustive descriptions of all of the functions and
-classes available in ``gala``, with some inline narrative descriptions and
-demonstrations of functionality. This portion of the documentation should be
-treated like reference material, whereas the :ref:`gala-tutorials` show how
-pieces of ``gala`` work together to meet more realistic research needs.
+The user guide contains comprehensive descriptions of all functions and
+classes available in ``gala``, with inline examples and demonstrations.
+This documentation serves as reference material, while the :ref:`gala-tutorials`
+show how ``gala`` components work together for realistic research applications.
 
 .. toctree::
     :maxdepth: 1

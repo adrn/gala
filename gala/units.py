@@ -65,9 +65,12 @@ class UnitSystem:
 
         Parameters
         ----------
-        *units
-            The units that define the unit system. At minimum, this must
-            contain length, time, mass, and angle units.
+        units : :class:`~astropy.units.Unit` or :class:`astropy.units.Quantity`
+            The first unit that defines the unit system (e.g., length).
+        *args : :class:`~astropy.units.Unit` or :class:`~astropy.units.Quantity`
+            Additional units that define the unit system (e.g., time, mass, angle, and
+            any preferred composite units). At minimum, you must specify length, time,
+            mass, and angle units, in any order.
 
         Examples
         --------
@@ -187,7 +190,7 @@ class UnitSystem:
         Returns
         -------
         q : :class:`~astropy.units.Quantity`
-            A new quantity, decomposed to represented in this unit system.
+            A new quantity, decomposed to be represented in this unit system.
         """
         try:
             ptype = q.unit.physical_type
@@ -217,8 +220,9 @@ class UnitSystem:
 
         Examples
         --------
+        We will get the value of the speed of light in a custom unit system:
 
-            >>> usys = UnitSystem(u.kpc, u.Myr, u.radian, u.Msun)
+            >>> usys = UnitSystem(u.kpc, u.Myr, u.Msun, u.radian)
             >>> usys.get_constant('c')  # doctest: +SKIP
             306.6013937855506
 
@@ -237,6 +241,10 @@ class DimensionlessUnitSystem(UnitSystem):
     _required_physical_types = []
 
     def __init__(self):
+        """
+        Initialize a dimensionless unit system. All quantities are treated as
+        dimensionless.
+        """
         self._core_units = [u.one]
         self._registry = {"dimensionless": u.one}
 
@@ -274,9 +282,24 @@ class SimulationUnitSystem(UnitSystem):
         Represents a system of units for a (dynamical) simulation.
 
         A common assumption is that G=1. If this is the case, then you only have to
-        specify two of the three fundamental unit types (length, mass, time) and the
-        rest will be derived from these. You may also optionally specify a velocity with
-        one of the base unit types (length, mass, time).
+        specify two of the three fundamental unit types (length, mass, time), and the
+        rest will be derived from these. Alternatively, you may specify a velocity
+        instead of one of the three, and the remaining units will be derived.
+
+        Parameters
+        ----------
+        length : :class:`~astropy.units.Unit`, :class:`~astropy.units.Quantity`, optional
+            The length unit or quantity.
+        mass : :class:`~astropy.units.Unit`, :class:`~astropy.units.Quantity`, optional
+            The mass unit or quantity.
+        time : :class:`~astropy.units.Unit`, :class:`~astropy.units.Quantity`, optional
+            The time unit or quantity.
+        velocity : :class:`~astropy.units.Unit`, :class:`~astropy.units.Quantity`, optional
+            The velocity unit or quantity.
+        G : float, :class:`~astropy.units.Quantity`, optional
+            The value of the gravitational constant to use. Default is 1.0.
+        angle : :class:`~astropy.units.Unit`, :class:`~astropy.units.Quantity`, optional
+            The angle unit. Default is astropy.units.radian.
 
         Examples
         --------

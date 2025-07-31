@@ -8,83 +8,85 @@ __all__ = ["Ruth4Integrator"]
 
 class Ruth4Integrator(Integrator):
     r"""
-    A 4th order symplectic integrator.
+    Fourth-order symplectic integrator using Ruth's method.
 
-    Given a function for computing time derivatives of the phase-space
-    coordinates, this object computes the orbit at specified times.
+    This integrator implements a fourth-order symplectic integration scheme
+    developed by Ruth (1983). It provides higher accuracy than the standard
+    leapfrog method while preserving the symplectic structure of Hamiltonian
+    systems, making it excellent for long-term orbital integrations.
 
-    .. seealso::
-
-        - https://en.wikipedia.org/wiki/Symplectic_integrator#A_fourth-order_example
-
-    Naming convention for variables::
-
-        im1 = i-1
-        im1_2 = i-1/2
-        ip1 = i+1
-        ip1_2 = i+1/2
-
-    Examples
-    --------
-
-    Using ``q`` as our coordinate variable and ``p`` as the conjugate
-    momentum, we want to numerically solve for an orbit in the
-    potential (Hamiltonian)
-
-    .. math::
-
-        \Phi &= \frac{1}{2}q^2\\
-        H(q, p) &= \frac{1}{2}(p^2 + q^2)
-
-
-    In this system,
-
-    .. math::
-
-        \dot{q} &= \frac{\partial \Phi}{\partial p} = p \\
-        \dot{p} &= -\frac{\partial \Phi}{\partial q} = -q
-
-
-    We will use the variable ``w`` to represent the full phase-space vector,
-    :math:`w = (q, p)`. We define a function that computes the time derivates
-    at any given time, ``t``, and phase-space position, ``w``::
-
-        def F(t, w):
-            dw = [w[1], -w[0]]
-            return dw
-
-    .. note::
-
-        The force here is not time dependent, but this function always has
-        to accept the independent variable (e.g., time) as the
-        first argument.
-
-    To create an integrator object, just pass this acceleration function in
-    to the constructor, and then we can integrate orbits from a given vector
-    of initial conditions::
-
-        integrator = Ruth4Integrator(acceleration)
-        times, ws = integrator(w0=[1., 0.], dt=0.1, n_steps=1000)
-
-    .. note::
-
-        When integrating a single vector of initial conditions, the return
-        array will have 2 axes. In the above example, the returned array will
-        have shape ``(2, 1001)``. If an array of initial conditions are passed
-        in, the return array will have 3 axes, where the last axis is for the
-        individual orbits.
+    The method uses a composition of multiple leapfrog-like steps with
+    carefully chosen coefficients to achieve fourth-order accuracy while
+    maintaining symplecticity and time-reversibility.
 
     Parameters
     ----------
-    func : func
-        A callable object that computes the phase-space time derivatives
-        at a time and point in phase space.
-    func_args : tuple (optional)
-        Any extra arguments for the derivative function.
-    func_units : `~gala.units.UnitSystem` (optional)
-        If using units, this is the unit system assumed by the
-        integrand function.
+    func : callable
+        A function that computes the phase-space coordinate derivatives.
+        Must have signature ``func(t, w, *func_args)`` where ``t`` is time,
+        ``w`` is the phase-space position array with shape ``(2*ndim, ...)``,
+        and ``*func_args`` are additional arguments.
+    func_args : tuple, optional
+        Additional arguments to pass to the derivative function.
+    func_units : :class:`~gala.units.UnitSystem`, optional
+        Unit system assumed by the integrand function.
+    progress : bool, optional
+        Display a progress bar during integration. Default is False.
+    save_all : bool, optional
+        Save the orbit at all timesteps. If False, only save the final state.
+        Default is True.
 
+    Notes
+    -----
+    The Ruth4 method uses the following composition coefficients:
+
+    .. math::
+
+        c_1 = c_4 &= \\frac{1}{2(2-2^{1/3})} \\\\
+        c_2 = c_3 &= \\frac{1-2^{1/3}}{2(2-2^{1/3})} \\\\
+        d_1 &= 0 \\\\
+        d_2 &= \\frac{1}{2-2^{1/3}} \\\\
+        d_3 &= \\frac{-2^{1/3}}{2-2^{1/3}} \\\\
+        d_4 &= \\frac{1}{2-2^{1/3}}
+
+    Each timestep consists of four substeps that collectively achieve
+    fourth-order accuracy.
+
+    Advantages:
+        * Fourth-order accuracy (vs second-order for leapfrog)
+        * Symplectic (preserves phase-space structure)
+        * Time-reversible
+        * Excellent long-term stability for Hamiltonian systems
+
+    Disadvantages:
+        * More expensive than leapfrog (4 force evaluations per step)
+        * Requires fixed timesteps
+        * Can be less stable than leapfrog for some stiff problems
+
+    References
+    ----------
+    * Ruth, R. D. (1983). A canonical integration technique. IEEE Transactions
+      on Nuclear Science, 30(4), 2669-2671.
+    * Forest, E. & Ruth, R. D. (1990). Fourth-order symplectic integration.
+      Physica D, 43(1), 105-117.
+
+    Examples
+    --------
+    Simple harmonic oscillator with Hamiltonian :math:`H = \\frac{1}{2}(p^2 + q^2)`:
+
+    .. code-block:: python
+
+        def derivs(t, w):
+            q, p = w[0], w[1]  # position, momentum
+            return np.array([p, -q])  # [dq/dt, dp/dt]
+
+
+        integrator = Ruth4Integrator(derivs)
+        orbit = integrator(w0=[1.0, 0.0], dt=0.1, n_steps=1000)
+
+    The derivative function must return an array where the first half
+    contains position derivatives (velocities) and the second half contains
+    momentum derivatives (accelerations).
     """
 
     # From: https://en.wikipedia.org/wiki/Symplectic_integrator

@@ -10,15 +10,38 @@ __all__ = ["constantrotating_to_static", "static_to_constantrotating"]
 
 def rodrigues_axis_angle_rotate(x, vec, theta):
     """
-    Rotated the input vector or set of vectors `x` around the axis
-    `vec` by the angle `theta`.
+    Rotate vector(s) around an axis using Rodrigues' rotation formula.
+
+    This function rotates the input vector or array of vectors ``x`` around
+    the axis defined by ``vec`` by the angle ``theta``. The rotation is
+    performed using Rodrigues' axis-angle rotation formula.
 
     Parameters
     ----------
     x : array_like
-        The vector or array of vectors to transform. Must have shape
+        The vector or array of vectors to rotate. Should have shape
+        ``(n_dim,)`` for a single vector or ``(n_dim, n_vectors)`` for
+        multiple vectors, where ``n_dim`` is the spatial dimension.
+    vec : array_like
+        The unit vector defining the rotation axis. Should have the same
+        spatial dimension as ``x``.
+    theta : array_like
+        The rotation angle(s) in radians. Can be a scalar for uniform
+        rotation or an array matching the number of vectors in ``x``.
 
+    Returns
+    -------
+    rotated : `~numpy.ndarray`
+        The rotated vector(s) with the same shape as the input ``x``.
 
+    Notes
+    -----
+    This implements Rodrigues' rotation formula:
+
+    .. math::
+        \\vec{x}_{\\rm rot} = \\vec{x} \\cos\\theta + (\\vec{k} \\times \\vec{x}) \\sin\\theta + \\vec{k} (\\vec{k} \\cdot \\vec{x}) (1 - \\cos\\theta)
+
+    where :math:`\\vec{k}` is the unit rotation axis vector.
     """
     x = np.array(x).T
     vec = np.array(vec).T
@@ -35,14 +58,34 @@ def rodrigues_axis_angle_rotate(x, vec, theta):
 
 def z_angle_rotate(xy, theta):
     """
-    Rotated the input vector or set of vectors `xy` by the angle `theta`.
+    Rotate 2D vector(s) around the z-axis by the specified angle.
+
+    This function performs a 2D rotation of the input vector(s) in the
+    xy-plane by the angle ``theta`` around the z-axis (origin).
 
     Parameters
     ----------
     xy : array_like
-        The vector or array of vectors to transform. Must have shape
+        The 2D vector or array of vectors to rotate. Should have shape
+        ``(2,)`` for a single vector or ``(2, n_vectors)`` for multiple
+        vectors in the xy-plane.
+    theta : array_like
+        The rotation angle(s) in radians. Can be a scalar for uniform
+        rotation or an array matching the number of vectors in ``xy``.
 
+    Returns
+    -------
+    rotated : `~numpy.ndarray`
+        The rotated vector(s) with the same shape as the input ``xy``.
 
+    Notes
+    -----
+    This performs a standard 2D rotation using the rotation matrix:
+
+    .. math::
+        \\begin{pmatrix} x' \\\\ y' \\end{pmatrix} =
+        \\begin{pmatrix} \\cos\\theta & -\\sin\\theta \\\\ \\sin\\theta & \\cos\\theta \\end{pmatrix}
+        \\begin{pmatrix} x \\\\ y \\end{pmatrix}
     """
     xy = np.array(xy).T
     theta = np.array(theta).T

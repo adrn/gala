@@ -29,14 +29,15 @@ other subpackages are the |psp| and |orb| classes.
 Getting started: Working with orbits
 ====================================
 
-As a demonstration of how to use these objects, we'll start by integrating an
-orbit using the :mod:`gala.potential` and :mod:`gala.integrate` subpackages::
+We'll demonstrate the |psp| and |orb| objects by first integrating an orbit::
 
-    >>> pot = gp.MiyamotoNagaiPotential(m=2.5E11*u.Msun, a=6.5*u.kpc,
-    ...                                 b=0.26*u.kpc, units=galactic)
-    >>> w0 = gd.PhaseSpacePosition(pos=[11., 0., 0.2]*u.kpc,
-    ...                            vel=[0., 200, 100]*u.km/u.s)
-    >>> orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=1000)
+    >>> pot = gp.MiyamotoNagaiPotential(
+    ...     m=2.5e11 * u.Msun, a=6.5 * u.kpc, b=0.26 * u.kpc, units=galactic
+    ... )
+    >>> w0 = gd.PhaseSpacePosition(
+    ...     pos=[11.0, 0.0, 0.2] * u.kpc, vel=[0.0, 200, 100] * u.km / u.s
+    ... )
+    >>> orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1.0, n_steps=1000)
 
 This numerically integrates an orbit from the specified initial conditions,
 ``w0``, and returns an |orb| object. By default, the position and velocity are
@@ -58,17 +59,17 @@ projections using the :meth:`~gala.dynamics.Orbit.plot` method::
     import gala.potential as gp
     import gala.dynamics as gd
     from gala.units import galactic
-    pot = gp.MiyamotoNagaiPotential(m=2.5E11, a=6.5, b=0.26, units=galactic)
-    w0 = gd.PhaseSpacePosition(pos=[11., 0., 0.2]*u.kpc,
-                               vel=[0., 200, 100]*u.km/u.s)
-    orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=1000)
+    pot = gp.MiyamotoNagaiPotential(m=2.5e11, a=6.5, b=0.26, units=galactic)
+    w0 = gd.PhaseSpacePosition(
+        pos=[11.0, 0.0, 0.2] * u.kpc, vel=[0.0, 200, 100] * u.km / u.s
+    )
+    orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1.0, n_steps=1000)
     fig = orbit.plot()
 
-Or, we can visualize the orbit in just one projection of some transformed
-coordinate representation, for example, cylindrical radius :math:`\rho` and
-:math:`z`::
+We can also visualize the orbit in transformed coordinates, for example,
+cylindrical radius :math:`\rho` and :math:`z`::
 
-    >>> fig = orbit.represent_as('cylindrical').plot(['rho', 'z'])
+    >>> fig = orbit.represent_as("cylindrical").plot(["rho", "z"])
 
 .. plot::
     :align: center
@@ -78,21 +79,21 @@ coordinate representation, for example, cylindrical radius :math:`\rho` and
     import gala.potential as gp
     import gala.dynamics as gd
     from gala.units import galactic
-    pot = gp.MiyamotoNagaiPotential(m=2.5E11, a=6.5, b=0.26, units=galactic)
-    w0 = gd.PhaseSpacePosition(pos=[11., 0., 0.2]*u.kpc,
-                               vel=[0., 200, 100]*u.km/u.s)
-    orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1., n_steps=1000)
-    _ = orbit.represent_as('cylindrical').plot(['rho', 'z'])
+    pot = gp.MiyamotoNagaiPotential(m=2.5e11, a=6.5, b=0.26, units=galactic)
+    w0 = gd.PhaseSpacePosition(
+        pos=[11.0, 0.0, 0.2] * u.kpc, vel=[0.0, 200, 100] * u.km / u.s
+    )
+    orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1.0, n_steps=1000)
+    _ = orbit.represent_as("cylindrical").plot(["rho", "z"])
 
-From the |orb| object, we can also easily compute dynamical quantities such as
-the energy or angular momentum (we take the 0th element because these functions
-return the quantities computed at every timestep)::
+The |orb| object also enables computing dynamical quantities such as
+energy or angular momentum::
 
     >>> E = orbit.energy()
     >>> E[0] # doctest: +SKIP
     <Quantity −0.060740198 kpc2 / Myr2>
 
-Let's see how well the integrator conserves energy and the ``z`` component of
+Let's check how well the integrator conserves energy and the ``z`` component of
 angular momentum::
 
     >>> Lz = orbit.angular_momentum()[2]
@@ -104,32 +105,32 @@ We can access the position and velocity components of the orbit separately using
 attributes that map to the underlying `~astropy.coordinates.BaseRepresentation`
 and `~astropy.coordinates.BaseDifferential` subclass instances that store the
 position and velocity data. The attribute names depend on the representation.
-For example, for a Cartesian representation, the position components are ``['x',
-'y', 'z']`` and the velocity components are ``['v_x', 'v_y', 'v_z']``. With a
+For example, for a Cartesian representation, the position components are ``["x",
+"y", "z"]`` and the velocity components are ``["v_x", "v_y", "v_z"]``. With a
 |orb| or |psp| instance, you can check the valid compnent names using the
 attributes ``.pos_components`` and ``.vel_components``::
 
-    >>> orbit.pos_components.keys() # doctest: +SKIP
-    odict_keys(['x', 'y', 'z'])
-    >>> orbit.vel_components.keys() # doctest: +SKIP
-    odict_keys(['v_x', 'v_y', 'v_z'])
+    >>> orbit.pos_components.keys()  # doctest: +SKIP
+    odict_keys(["x", "y", "z"])
+    >>> orbit.vel_components.keys()  # doctest: +SKIP
+    odict_keys(["v_x", "v_y", "v_z"])
 
 Meaning, we can access these components by doing, e.g.::
 
-    >>> orbit.v_x # doctest: +FLOAT_CMP
-    <Quantity [ 0.        ,-0.00567589,-0.01129934,...,  0.18751756,
-                0.18286687, 0.17812762] kpc / Myr>
+    >>> orbit.v_x  # doctest: +FLOAT_CMP
+    <Quantity [ 0.        , -0.00567589, -0.01129934, ...,  0.18751756,
+                0.18286687,  0.17812762] kpc / Myr>
 
 For a Cylindrical representation, these are instead::
 
-    >>> cyl_orbit = orbit.represent_as('cylindrical')
-    >>> cyl_orbit.pos_components.keys() # doctest: +SKIP
-    odict_keys(['rho', 'phi', 'z'])
-    >>> cyl_orbit.vel_components.keys() # doctest: +SKIP
-    odict_keys(['v_rho', 'pm_phi', 'v_z'])
-    >>> cyl_orbit.v_rho # doctest: +FLOAT_CMP
-    <Quantity [ 0.        ,-0.00187214,-0.00369183,...,  0.01699321,
-                0.01930216, 0.02159477] kpc / Myr>
+    >>> cyl_orbit = orbit.represent_as("cylindrical")
+    >>> cyl_orbit.pos_components.keys()  # doctest: +SKIP
+    odict_keys(["rho", "phi", "z"])
+    >>> cyl_orbit.vel_components.keys()  # doctest: +SKIP
+    odict_keys(["v_rho", "pm_phi", "v_z"])
+    >>> cyl_orbit.v_rho  # doctest: +FLOAT_CMP
+    <Quantity [ 0.        , -0.00187214, -0.00369183, ...,  0.01699321,
+                0.01930216,  0.02159477] kpc / Myr>
 
 Continue to the :ref:`orbits-in-detail` page for more information.
 

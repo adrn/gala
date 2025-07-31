@@ -9,62 +9,84 @@ __all__ = ["DOPRI853Integrator"]
 
 
 class DOPRI853Integrator(Integrator):
-    r"""The Dormand-Prince 85(3) integration scheme.
+    r"""
+    Dormand-Prince 85(3) adaptive step-size integrator.
 
-    For Python integration, this class serves as a wrapper around Scipy's
-    implementation of the integrator. See the Scipy documentation (`scipy.integrate.
-    DOP853`) for more details and parameters. Note that the default tolerances for the
-    Scipy integrator are quite poor for most applications, so you may want to set them
-    to something like ``atol=1e-10`` and ``rtol=1e-10`` for better accuracy. Pass these
-    to the class constructor as additional keyword arguments, e.g.::
+    This integrator implements the Dormand-Prince method, which is an explicit
+    Runge-Kutta method with adaptive step-size control. It uses a 5th-order
+    accurate formula for advancing the solution and an embedded 3rd-order
+    formula for error estimation.
+
+    For Python integration, this class wraps SciPy's implementation of the
+    integrator. The default tolerances (``atol=1.49e-8``, ``rtol=1.49e-8``)
+    may be too loose for many astronomical applications. Consider using
+    tighter tolerances like ``atol=1e-10`` and ``rtol=1e-10`` for better
+    accuracy::
 
         >>> integrator = DOPRI853Integrator(func, atol=1e-10, rtol=1e-10)
 
-    For Cython integration, this class serves as a wrapper around a modified version of
-    a C implementation of the integrator. The C implementation is based on the original
-    Hairer and Wanner implementation, which is a C translation of the original Fortran
-    code by Dormand and Prince. The available arguments for the Cython integrator are:
-
-        - ``atol`` (float) - the minimum absolute error allowed in each integration
-          variable (i.e. position and velocity components) per step
-        - ``rtol`` (float) - the minimum relative error allowed in each integration
-          variable (i.e. position and velocity components) per step
-        - ``nmax`` (int) - the maximum number of integration steps
-        - ``dt_max`` (float) - the maximum internal timestep used for integration
-        - ``nstiff`` (int) - the number of steps to take before checking for stiffness
-        - ``err_if_fail`` (bool) - raise an error if the integration fails
-        - ``log_output`` (bool) - log any debug or additional error messages from the C
-          integrator (useful for debugging failed integrations)
-
-    New in version 1.10: The Cython implementation of the DOPRI853 integrator now uses
-    the dense output functionality of the integrator, which allows for more efficient
-    evaluation of the orbit on a dense grid of times. This is done by using internal
-    interpolation to compute the orbit at the requested times, rather than using the
-    original integration steps.
-
-    .. seealso::
-
-        - Numerical recipes (Dopr853)
-        - http://en.wikipedia.org/wiki/Dormand%E2%80%93Prince_method
+    For Cython integration, this class wraps a C implementation based on the
+    original Hairer and Wanner code. The C version includes dense output
+    functionality (new in v1.10) that allows efficient evaluation at arbitrary
+    times through internal interpolation.
 
     Parameters
     ----------
     func : callable
-        A callable object that computes the phase-space coordinate
-        derivatives with respect to the independent variable at a point
-        in phase space.
-    func_args : tuple (optional)
-        Any extra arguments for the function.
-    func_units : `~gala.units.UnitSystem` (optional)
-        If using units, this is the unit system assumed by the
-        integrand function.
-    progress : bool (optional)
-        Display a progress bar during integration.
+        A function that computes the phase-space coordinate derivatives.
+        Must have signature ``func(t, w, *func_args)`` where ``t`` is time,
+        ``w`` is the phase-space position array, and ``*func_args`` are
+        additional arguments.
+    func_args : tuple, optional
+        Additional arguments to pass to the derivative function.
+    func_units : :class:`~gala.units.UnitSystem`, optional
+        Unit system assumed by the integrand function.
+    progress : bool, optional
+        Display a progress bar during integration. Default is False.
+    save_all : bool, optional
+        Save the orbit at all timesteps. If False, only save the final state.
+        Default is True.
     **kwargs
-        Additional keyword arguments to pass to the integrator.
-        See the Scipy documentation for more details about Python integration options.
-        For Cython integration, see the class docstring above for details.
+        Additional keyword arguments for the integrator:
 
+        For Python (SciPy) integration:
+            * ``atol`` (float) : Absolute tolerance (default: 1.49e-8)
+            * ``rtol`` (float) : Relative tolerance (default: 1.49e-8)
+            * ``nsteps`` (int) : Maximum number of steps (default: 500)
+            * ``max_step`` (float) : Maximum step size (default: 0.0, no limit)
+            * ``first_step`` (float) : Initial step size (default: 0.0, automatic)
+
+        For Cython integration:
+            * ``atol`` (float) : Absolute error tolerance per step
+            * ``rtol`` (float) : Relative error tolerance per step
+            * ``nmax`` (int) : Maximum number of integration steps
+            * ``dt_max`` (float) : Maximum internal timestep
+            * ``nstiff`` (int) : Steps before checking for stiffness
+            * ``err_if_fail`` (bool) : Raise error if integration fails
+            * ``log_output`` (bool) : Log debug messages from C integrator
+
+    Notes
+    -----
+    The DOPRI853 method is well-suited for smooth problems where high accuracy
+    is required. It automatically adjusts the step size to maintain the
+    specified error tolerances, making it efficient for problems with varying
+    time scales.
+
+    References
+    ----------
+    * Dormand, J. R. & Prince, P. J. (1980). A family of embedded Runge-Kutta
+      formulae. Journal of Computational and Applied Mathematics, 6(1), 19-26.
+    * Hairer, E., Nørsett, S. P. & Wanner, G. (1993). Solving Ordinary
+      Differential Equations I. Springer-Verlag.
+
+    Examples
+    --------
+    Create an integrator with tight tolerances::
+
+        >>> def derivs(t, w):
+        ...     # Simple harmonic oscillator
+        ...     return np.array([w[1], -w[0]])
+        >>> integrator = DOPRI853Integrator(derivs, atol=1e-12, rtol=1e-12)
     """
 
     def __init__(

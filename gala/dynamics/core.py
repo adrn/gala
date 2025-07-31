@@ -294,23 +294,24 @@ class PhaseSpacePosition:
     #
     def represent_as(self, new_pos, new_vel=None):
         """
-        Represent the position and velocity of the orbit in an alternate
-        coordinate system. Supports any of the Astropy coordinates
+        Represent the position and velocity of the phase-space position in an
+        alternate coordinate system. Supports any of the Astropy coordinates
         representation classes.
 
         Parameters
         ----------
-        new_pos : :class:`~astropy.coordinates.BaseRepresentation`
+        new_pos : :class:`~astropy.coordinates.BaseRepresentation` or str
             The type of representation to generate. Must be a class (not an
             instance), or the string name of the representation class.
-        new_vel : :class:`~astropy.coordinates.BaseDifferential` (optional)
+        new_vel : :class:`~astropy.coordinates.BaseDifferential` or str, optional
             Class in which any velocities should be represented. Must be a class
             (not an instance), or the string name of the differential class. If
             None, uses the default differential for the new position class.
 
         Returns
         -------
-        new_psp : `gala.dynamics.PhaseSpacePosition`
+        new_psp : :class:`~gala.dynamics.PhaseSpacePosition`
+            A new PhaseSpacePosition object with the specified representation.
         """
 
         if self.ndim != 3:
@@ -428,20 +429,29 @@ class PhaseSpacePosition:
     # Pseudo-backwards compatibility
     def w(self, units=None):
         """
-        This returns a single array containing the phase-space positions.
+        Return the full phase-space position as a single array.
+
+        This returns a single array containing the phase-space positions,
+        with positions in the first half and velocities in the second half.
 
         Parameters
         ----------
-        units : `~gala.units.UnitSystem` (optional)
+        units : :class:`~gala.units.UnitSystem`, optional
             The unit system to represent the position and velocity in
-            before combining into the full array.
+            before combining into the full array. If not provided, the
+            positions and velocities must be dimensionless.
 
         Returns
         -------
-        w : `~numpy.ndarray`
+        w : :class:`~numpy.ndarray`
             A numpy array of all positions and velocities, without units.
-            Will have shape ``(2*ndim, ...)``.
+            Will have shape ``(2*ndim, ...)`` where the first ``ndim`` rows
+            contain positions and the last ``ndim`` rows contain velocities.
 
+        Raises
+        ------
+        ValueError
+            If no units are specified and the position/velocity have units.
         """
         cart = self.cartesian if self.ndim == 3 else self
 
@@ -470,21 +480,25 @@ class PhaseSpacePosition:
 
     @classmethod
     def from_w(cls, w, units=None, **kwargs):
-        """Create an instance from a single array specifying positions and velocities.
+        """Create a PhaseSpacePosition from a single array of positions and velocities.
 
         Parameters
         ----------
         w : array_like
-            The array of phase-space positions.
-        units : `~gala.units.UnitSystem` (optional)
+            The array of phase-space positions. Should have shape ``(2*ndim, ...)``
+            where the first ``ndim`` rows contain positions and the last ``ndim``
+            rows contain velocities.
+        units : :class:`~gala.units.UnitSystem`, optional
             The unit system that the input position+velocity array, ``w``,
-            is represented in.
+            is represented in. If not provided, the array is assumed to be
+            dimensionless.
         **kwargs
-            Any aditional keyword arguments passed to the class initializer.
+            Additional keyword arguments passed to the class initializer.
 
         Returns
         -------
-        obj : `~gala.dynamics.{cls.__name__}`
+        obj : :class:`~gala.dynamics.PhaseSpacePosition`
+            A new PhaseSpacePosition instance created from the input array.
 
         """
 

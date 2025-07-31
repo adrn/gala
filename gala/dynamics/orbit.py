@@ -740,28 +740,33 @@ class Orbit(PhaseSpacePosition):
     # ------------------------------------------------------------------------
     def circulation(self):
         """
-        Determine which axes the Orbit circulates around by checking
-        whether there is a change of sign of the angular momentum
-        about an axis. Returns a 2D array with ``ndim`` integers per orbit
-        point. If a box orbit, all integers will be 0. A 1 indicates
-        circulation about the corresponding axis.
+        Determine which axes the orbit circulates around.
 
-        TODO: clockwise / counterclockwise?
-
-        For example, for a single 3D orbit:
-
-        - Box and boxlet = [0, 0, 0]
-        - z-axis (short-axis) tube = [0, 0, 1]
-        - x-axis (long-axis) tube = [1, 0, 0]
+        This method checks whether there is a change of sign of the angular
+        momentum about each axis to determine circulation patterns. For example,
+        a tube orbit will circulate around one axis, while a box orbit will
+        not circulate around any axis.
 
         Returns
         -------
-        circulation : :class:`numpy.ndarray`
-            An array that specifies whether there is circulation about any of
-            the axes of the input orbit. For a single orbit, will return a
-            1D array, but for multiple orbits, the shape will be
-            ``(3, norbits)``.
+        circulation : :class:`~numpy.ndarray`
+            An integer array indicating circulation about each axis. For each
+            axis: 1 indicates circulation, 0 indicates no circulation.
+            For a single orbit, returns a 1D array of shape ``(ndim,)``.
+            For multiple orbits, returns a 2D array of shape ``(ndim, norbits)``.
 
+        Examples
+        --------
+        For a single 3D orbit:
+
+        - Box and boxlet orbits: ``[0, 0, 0]``
+        - z-axis (short-axis) tube orbit: ``[0, 0, 1]``
+        - x-axis (long-axis) tube orbit: ``[1, 0, 0]``
+
+        Notes
+        -----
+        This method works by checking whether the angular momentum about each
+        axis changes sign or becomes very small during the orbit integration.
         """
         L = self.angular_momentum()
 
@@ -793,16 +798,18 @@ class Orbit(PhaseSpacePosition):
 
     def align_circulation_with_z(self, circulation=None):
         """
-        If the input orbit is a tube orbit, this function aligns the circulation
-        axis with the z axis and returns a copy.
+        Align the circulation axis with the z-axis for tube orbits.
+
+        If the input orbit is a tube orbit (circulates around one axis), this
+        method rotates the coordinate system so that circulation occurs around
+        the z-axis. This is useful for standardizing orbit orientations when
+        computing actions or comparing orbits.
 
         Parameters
         ----------
-        circulation : array_like (optional)
-            Array of bits that specify the axis about which the orbit
-            circulates. If not provided, will compute this using
-            :meth:`~gala.dynamics.Orbit.circulation`. See that method for more
-            information.
+        circulation : :class:`~numpy.ndarray`, optional
+            The circulation pattern of the orbit. If not specified, this is
+            computed using the :meth:`~gala.dynamics.Orbit.circulation` method.
 
         Returns
         -------

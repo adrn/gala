@@ -35,7 +35,7 @@ class Pal5PriceWhelan18(coord.BaseCoordinateFrame):
         The proper motion in the latitude-like direction perpendicular to the
         Pal 5 stream's orbit.
     radial_velocity : :class:`~astropy.units.Quantity`, optional, must be keyword
-        The Distance for this object along the line-of-sight.
+        The radial velocity for this object along the line-of-sight.
 
     """
 
@@ -96,7 +96,7 @@ R = R2 @ R
     coord.StaticMatrixTransform, coord.ICRS, Pal5PriceWhelan18
 )
 def icrs_to_pal5():
-    """Compute the transformation from Galactic spherical to
+    """Compute the transformation from ICRS spherical to
     heliocentric Pal 5 coordinates.
     """
     return R
@@ -107,6 +107,6 @@ def icrs_to_pal5():
 )
 def pal5_to_icrs():
     """Compute the transformation from heliocentric Pal 5 coordinates to
-    spherical Galactic.
+    ICRS spherical.
     """
     return icrs_to_pal5().T

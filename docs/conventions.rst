@@ -10,36 +10,40 @@ Conventions
 Common variable names
 =====================
 
-Unless otherwise stated (in function or class docstrings), this package tries to
-adhere to using standard variable names for function and class arguments, and in
-example code. For shorthand, the variable ``w`` is used to represent arrays of
-phase-space coordinates (e.g., positions _and_ velocities). When representing
-only positions, the variable ``q`` is used. For just velocities or momenta, the
-variables ``p`` or ``v`` are used.
+This package uses standard variable names throughout for consistency:
+
+- ``w`` represents phase-space coordinates (positions and velocities)
+- ``q`` represents positions only
+- ``p`` or ``v`` represent velocities or momenta
+- ``t`` represents time arrays
 
 .. _shape-conventions:
 
 Array shapes
 ============
 
-The arrays and :class:`~astropy.units.Quantity` objects expected as input and
-returned as output throughout ``Gala`` have shapes that follow a particular
-convention, unless otherwise specified in function or class docstrings.
+Arrays and :class:`~astropy.units.Quantity` objects in ``Gala`` follow
+consistent shape conventions:
 
-For arrays containing coordinate or kinematic information, ``axis=0`` is assumed
-to be the coordinate dimension. For example, for representing 128 different 3D
-Cartesian positions, the object should have shape ``(3, 128)``.
+**Coordinate arrays**: ``axis=0`` is the coordinate dimension. For example,
+128 different 3D Cartesian positions have shape ``(3, 128)``.
 
-For collections of orbits, arrays or array-valued objects have three axes: As
-above, ``axis=0`` is assumed to be the coordinate dimension, ``axis=1`` is
-interpreted as the time axis, and ``axis=2`` are the different orbits.
+**Orbit collections**: Arrays have three axes:
+- ``axis=0``: coordinate dimension
+- ``axis=1``: time axis
+- ``axis=2``: different orbits
 
 .. _energy-momentum:
 
 Energy and momentum
 ===================
 
-The `gala` documentation and functions often refer to energy and angular
-momentum and the respective quantities *per unit mass* interchangeably. Unless
-otherwise specified, all such quantities -- e.g., energy, angular momentum,
-momenta, conjugate momenta -- are in fact used and returned *per unit mass*.
+In `gala`, energy and angular momentum quantities are *per unit mass* unless
+otherwise specified. This applies to:
+
+- Potential energy
+- Kinetic energy
+- Total energy
+- Angular momentum
+- Linear momentum
+- Conjugate momenta

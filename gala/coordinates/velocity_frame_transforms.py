@@ -24,7 +24,7 @@ def vgsr_to_vhel(coordinate, vgsr, vsun=None):
         to the SkyCoord initializer.
     vgsr : :class:`~astropy.units.Quantity`
         GSR line-of-sight velocity.
-    vsun : :class:`~astropy.units.Quantity`
+    vsun : :class:`~astropy.units.Quantity`, optional
         Full-space velocity of the sun in a Galactocentric frame. By default,
         uses the value assumed by Astropy in
         `~astropy.coordinates.Galactocentric`.
@@ -43,7 +43,7 @@ def vgsr_to_vhel(coordinate, vgsr, vsun=None):
     return vgsr - _get_vproj(coordinate, vsun)
 
 
-def vhel_to_vgsr(coordinate, vhel, vsun):
+def vhel_to_vgsr(coordinate, vhel, vsun=None):
     """
     Convert a velocity from a heliocentric radial velocity to
     the Galactic standard of rest (GSR).
@@ -55,7 +55,7 @@ def vhel_to_vgsr(coordinate, vhel, vsun):
         to the SkyCoord initializer.
     vhel : :class:`~astropy.units.Quantity`
         Barycentric line-of-sight velocity.
-    vsun : :class:`~astropy.units.Quantity`
+    vsun : :class:`~astropy.units.Quantity`, optional
         Full-space velocity of the sun in a Galactocentric frame. By default,
         uses the value assumed by Astropy in
         `~astropy.coordinates.Galactocentric`.

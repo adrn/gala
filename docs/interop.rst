@@ -55,7 +55,7 @@ Similarly, a Galpy ``Orbit`` can be converted to a Gala
     ...                                     normalize=1.)
     >>> galpy_orbit = galpy_o.Orbit([1., 0.1, 1.1, 0., 0.1, 1.])
     >>> ts = np.linspace(0, 100, 10000)
-    >>> galpy_orbit.integrate(ts, mp, method='odeint')
+    >>> galpy_orbit.integrate(ts, mp, method="odeint")
     >>> orbit = gd.Orbit.from_galpy_orbit(galpy_orbit)
     >>> orbit
     <Orbit cylindrical, dim=3, shape=(10000,)>
@@ -68,7 +68,7 @@ any Gala potential object. For example:
 
 .. doctest-requires:: galpy
 
-    >>> pot = gp.HernquistPotential(m=1e10*u.Msun, c=1.5*u.kpc, units=galactic)
+    >>> pot = gp.HernquistPotential(m=1e10 * u.Msun, c=1.5 * u.kpc, units=galactic)
     >>> galpy_pot = pot.to_galpy_potential()
     >>> galpy_pot  # doctest: +SKIP
     <galpy.potential.TwoPowerSphericalPotential.HernquistPotential at 0x7faa00263b20>
