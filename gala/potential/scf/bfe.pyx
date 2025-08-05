@@ -4,6 +4,7 @@
 # cython: cdivision=True
 # cython: wraparound=False
 # cython: language_level=3
+# cython: language=c++
 
 
 from libc.math cimport M_PI
@@ -16,24 +17,15 @@ np.import_array()
 import cython
 cimport cython
 
-cdef extern from "extra_compile_macros.h":
-    int USE_GSL
+from gala._cconfig cimport USE_GSL
+from gala.potential.scf.bfe cimport scf_density_helper, \
+    scf_potential_helper, scf_gradient_helper
+
 
 cdef extern from "scf/src/bfe_helper.h":
     double rho_nlm(double s, double phi, double X, int n, int l, int m) nogil
     double phi_nlm(double s, double phi, double X, int n, int l, int m) nogil
     double sph_grad_phi_nlm(double s, double phi, double X, int n, int l, int m, double *grad) nogil
-
-cdef extern from "scf/src/bfe.h":
-    void scf_density_helper(double *xyz, int K, double M, double r_s,
-                            double *Snlm, double *Tnlm,
-                            int nmax, int lmax, double *dens) nogil
-    void scf_potential_helper(double *xyz, int K, double G, double M, double r_s,
-                              double *Snlm, double *Tnlm,
-                              int nmax, int lmax, double *potv) nogil
-    void scf_gradient_helper(double *xyz, int K, double G, double M, double r_s,
-                             double *Snlm, double *Tnlm,
-                             int nmax, int lmax, double *grad) nogil
 
 __all__ = ['density', 'potential', 'gradient']
 

@@ -10,6 +10,7 @@ import pytest
 from astropy.utils.data import get_pkg_data_filename
 
 import gala.dynamics as gd
+import gala.potential as gp
 from gala._cconfig import EXP_ENABLED
 from gala.potential.potential.builtin import EXPPotential
 from gala.potential.potential.tests.helpers import PotentialTestBase
@@ -243,7 +244,7 @@ def test_exp_unit_tests():
 def test_cython_exceptions():
     """Test various exceptions propagated from C++"""
     units = SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match="file"):
         EXPPotential(
             config_file="nonexistent_config.yml",
             coef_file=EXP_SINGLE_COEF_FILE,
@@ -251,7 +252,7 @@ def test_cython_exceptions():
             units=units,
         )
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match="index"):
         EXPPotential(
             config_file=EXP_CONFIG_FILE,
             coef_file=EXP_SINGLE_COEF_FILE,
@@ -259,7 +260,7 @@ def test_cython_exceptions():
             units=units,
         )
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match="time"):
         EXPPotential(
             config_file=EXP_CONFIG_FILE,
             coef_file=EXP_MULTI_COEF_FILE,
@@ -272,5 +273,14 @@ def test_cython_exceptions():
         coef_file=EXP_MULTI_COEF_FILE,
         units=units,
     )
-    # TODO: this will eventually be an exception
-    assert np.isnan(pot.energy([0, 0, 0], t=float(0xBAD)))
+    with pytest.raises(RuntimeError, match="time"):
+        pot.energy([0, 0, 0], t=float(0xBAD))
+
+    w0 = gd.PhaseSpacePosition(
+        pos=[-8, 0.0, 0.0] * u.kpc,
+        vel=[0.0, 220, 0.0] * u.km / u.s,
+    )
+    with pytest.raises(RuntimeError, match="time"):
+        gp.Hamiltonian(pot).integrate_orbit(
+            w0, dt=1.0, t1=float(0xBAD), t2=float(0xBADBAD)
+        )

@@ -4,6 +4,7 @@
 # cython: wraparound=False
 # cython: profile=False
 # cython: language_level=3
+# cython: language=c++
 
 """ Leapfrog integration in Cython. """
 
@@ -13,27 +14,11 @@ cimport numpy as np
 np.import_array()
 
 
-from ...potential.potential.cpotential cimport CPotentialWrapper
+from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential, c_gradient, c_nbody_gradient_symplectic
 from ...potential.frame import StaticFrame
 from ...potential import NullPotential
 
 from libc.stdlib cimport malloc, free
-
-cdef extern from "frame/src/cframe.h":
-    ctypedef struct CFrameType:
-        pass
-
-cdef extern from "potential/src/cpotential.h":
-    ctypedef struct CPotential:
-        pass
-
-cdef extern from "potential/src/cpotential.h":
-    void c_gradient(CPotential *p, double t, double *q, double *grad) nogil
-    void c_nbody_gradient_symplectic(
-        CPotential **pots, double t, double *q,
-        double *nbody_q, int nbody, int nbody_i,
-        int ndim, double *grad
-    ) nogil
 
 
 cdef void c_ruth4_step(CPotential *p, int half_ndim, double t, double dt,
