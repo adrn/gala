@@ -180,8 +180,6 @@ class CommonBase:
 
                 v = v.decompose(units)
 
-                v = v.decompose(units)
-
             elif expected_ptype is not None:
                 # this is false for empty ptype: treat empty string as u.one
                 # (i.e. this goes to the else clause)
