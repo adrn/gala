@@ -19,8 +19,8 @@ double time_interp_value(double t, double *pars, double *q, int n_dim, void *sta
         return NAN;
     }
 
-    // Get the wrapped potential from the first parameter
-    CPotential *wrapped_pot = (CPotential*)((void**)pars)[0];
+    // Get the wrapped potential from the state
+    CPotential *wrapped_pot = (CPotential*)interp_state->wrapped_potential;
 
     // Interpolate parameters at time t
     double *interp_params = (double*)malloc(interp_state->n_params * sizeof(double));
@@ -83,8 +83,8 @@ void time_interp_gradient(double t, double *pars, double *q, int n_dim, double *
         return;
     }
 
-    // Get the wrapped potential from the first parameter
-    CPotential *wrapped_pot = (CPotential*)((void**)pars)[0];
+    // Get the wrapped potential from the state
+    CPotential *wrapped_pot = (CPotential*)interp_state->wrapped_potential;
 
     // Interpolate parameters at time t
     double *interp_params = (double*)malloc(interp_state->n_params * sizeof(double));
@@ -154,8 +154,8 @@ double time_interp_density(double t, double *pars, double *q, int n_dim, void *s
         return NAN;
     }
 
-    // Get the wrapped potential from the first parameter
-    CPotential *wrapped_pot = (CPotential*)((void**)pars)[0];
+    // Get the wrapped potential from the state
+    CPotential *wrapped_pot = (CPotential*)interp_state->wrapped_potential;
 
     // Interpolate parameters at time t
     double *interp_params = (double*)malloc(interp_state->n_params * sizeof(double));
@@ -218,8 +218,8 @@ void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *h
         return;
     }
 
-    // Get the wrapped potential from the first parameter
-    CPotential *wrapped_pot = (CPotential*)((void**)pars)[0];
+    // Get the wrapped potential from the state
+    CPotential *wrapped_pot = (CPotential*)interp_state->wrapped_potential;
 
     // Interpolate parameters at time t
     double *interp_params = (double*)malloc(interp_state->n_params * sizeof(double));
