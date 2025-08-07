@@ -29,10 +29,10 @@ typedef struct {
     TimeInterpParam axis_z;  // z-component of rotation axis
     TimeInterpParam angle;   // rotation angle
     int is_constant;
-    double constant_matrix[9]; // flattened 3x3 rotation matrix for constant case
+    double constant_matrix[9];  // flattened 3x3 rotation matrix for constant case
 } TimeInterpRotation;
 
-// Main state structure for time interpolation
+// Global state structure for time interpolation of potential parameters
 typedef struct {
     TimeInterpParam *params;      // Array of parameter interpolators
     TimeInterpParam *origin;      // Array for origin components (ndim)

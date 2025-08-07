@@ -4,8 +4,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-// Allocate and initialize a TimeInterpState structure
 TimeInterpState* time_interp_alloc(int n_params, int n_dim, const gsl_interp_type *interp_type) {
+    /*
+    Allocate and initialize a TimeInterpState structure
+    */
     TimeInterpState *state = (TimeInterpState*)calloc(1, sizeof(TimeInterpState));
     if (!state) return NULL;
 
@@ -44,8 +46,10 @@ TimeInterpState* time_interp_alloc(int n_params, int n_dim, const gsl_interp_typ
     return state;
 }
 
-// Free all allocated memory in TimeInterpState
 void time_interp_free(TimeInterpState *state) {
+    /**
+    Free all allocated memory in TimeInterpState
+    */
     if (!state) return;
 
     // Free parameter interpolators
@@ -96,9 +100,13 @@ void time_interp_free(TimeInterpState *state) {
     free(state);
 }
 
-// Initialize a time-varying parameter interpolator
-int time_interp_init_param(TimeInterpParam *param, double *time_knots, double *values,
-                          int n_knots, const gsl_interp_type *interp_type) {
+int time_interp_init_param(
+    TimeInterpParam *param, double *time_knots, double *values,
+    int n_knots, const gsl_interp_type *interp_type
+) {
+    /*
+    Initialize a time-varying parameter interpolator
+    */
     if (!param || !time_knots || !values || n_knots < 2) return -1;
 
     // Check if all values are the same (effectively constant)
@@ -153,8 +161,10 @@ int time_interp_init_param(TimeInterpParam *param, double *time_knots, double *v
     return 0;
 }
 
-// Initialize a constant parameter
 int time_interp_init_constant_param(TimeInterpParam *param, double constant_value) {
+    /*
+    Initialize a constant parameter
+    */
     if (!param) return -1;
 
     memset(param, 0, sizeof(TimeInterpParam));
@@ -164,9 +174,13 @@ int time_interp_init_constant_param(TimeInterpParam *param, double constant_valu
     return 0;
 }
 
-// Initialize rotation interpolation using axis-angle representation
-int time_interp_init_rotation(TimeInterpRotation *rot, double *time_knots, double *matrices,
-                             int n_knots, const gsl_interp_type *interp_type) {
+int time_interp_init_rotation(
+    TimeInterpRotation *rot, double *time_knots, double *matrices,
+    int n_knots, const gsl_interp_type *interp_type
+) {
+    /*
+    Initialize rotation interpolation using axis-angle representation
+    */
     if (!rot || !time_knots || !matrices || n_knots < 1) return -1;
 
     if (n_knots == 1) {
@@ -229,7 +243,6 @@ int time_interp_init_rotation(TimeInterpRotation *rot, double *time_knots, doubl
     return status;
 }
 
-// Initialize constant rotation
 int time_interp_init_constant_rotation(TimeInterpRotation *rot, double *matrix) {
     if (!rot || !matrix) return -1;
 
@@ -240,8 +253,10 @@ int time_interp_init_constant_rotation(TimeInterpRotation *rot, double *matrix) 
     return 0;
 }
 
-// Evaluate a parameter at time t
 double time_interp_eval_param(const TimeInterpParam *param, double t) {
+    /*
+    Evaluate a parameter at time t
+    */
     if (!param) {
         return 0.0;
     }
@@ -256,8 +271,12 @@ double time_interp_eval_param(const TimeInterpParam *param, double t) {
     }
 
     return gsl_spline_eval(param->spline, t, param->accel);
-}// Evaluate rotation matrix at time t
+}
+
 void time_interp_eval_rotation(const TimeInterpRotation *rot, double t, double *matrix) {
+    /*
+    Evaluate rotation matrix at time t
+    */
     if (!rot || !matrix) return;
 
     if (rot->is_constant) {
@@ -274,8 +293,14 @@ void time_interp_eval_rotation(const TimeInterpRotation *rot, double t, double *
     axis_angle_to_rotation_matrix(axis, angle, matrix);
 }
 
-// Convert rotation matrix to axis-angle representation
+/*
+Utility functions for rotation matrix <-> axis-angle conversion
+*/
+
 void rotation_matrix_to_axis_angle(const double *matrix, double *axis, double *angle) {
+    /*
+    Convert rotation matrix to axis-angle representation
+    */
     double trace = matrix[0] + matrix[4] + matrix[8];
     *angle = acos((trace - 1.0) / 2.0);
 
@@ -324,8 +349,10 @@ void rotation_matrix_to_axis_angle(const double *matrix, double *axis, double *a
     }
 }
 
-// Convert axis-angle to rotation matrix
 void axis_angle_to_rotation_matrix(const double *axis, double angle, double *matrix) {
+    /*
+    Convert axis-angle representation to rotation matrix
+    */
     double c = cos(angle);
     double s = sin(angle);
     double C = 1.0 - c;
@@ -342,8 +369,10 @@ void axis_angle_to_rotation_matrix(const double *axis, double angle, double *mat
     matrix[8] = z*z*C + c;
 }
 
-// Check if time t is within bounds
 int time_interp_check_bounds(const TimeInterpState *state, double t) {
+    /*
+    Check if time t is within bounds defined by the interpolation state
+    */
     if (!state) return -1;
 
     if (t < state->t_min || t > state->t_max) {
