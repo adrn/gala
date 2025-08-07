@@ -49,6 +49,10 @@ extern double c_d_dr(CPotential *p, double t, double *q, double *epsilon);
 extern double c_d2_dr2(CPotential *p, double t, double *q, double *epsilon);
 extern double c_mass_enclosed(CPotential *p, double t, double *q, double G, double *epsilon);
 
+// Coordinate transformation functions
+extern void apply_rotate(double *q_in, double *R, int n_dim, int transpose, double *q_out);
+extern void apply_shift_rotate(double *q_in, double *q0, double *R, int n_dim, int transpose, double *q_out);
+
 // TODO: move this elsewhere?
 void c_nbody_acceleration(CPotential **pots, double t, double *qp,
                           int norbits, int nbody, int ndim, double *acc);
