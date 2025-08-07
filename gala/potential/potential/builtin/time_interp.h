@@ -37,6 +37,7 @@ typedef struct {
     TimeInterpParam *params;      // Array of parameter interpolators
     TimeInterpParam *origin;      // Array for origin components (ndim)
     TimeInterpRotation rotation;  // Rotation interpolator
+    void *wrapped_potential;      // Pointer to the wrapped CPotential
     int n_params;
     int n_dim;
     const gsl_interp_type *interp_type; // interpolation type (linear, cubic, etc.)

@@ -47,6 +47,7 @@ cdef extern from "time_interp.h":
         const gsl_interp_type *interp_type
         double t_min
         double t_max
+        void *wrapped_potential
 
     TimeInterpState* time_interp_alloc(int n_params, int n_dim, const gsl_interp_type *interp_type)
     void time_interp_free(TimeInterpState *state)
@@ -152,21 +153,56 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
         time_knots_view = time_knots
         time_knots_ptr = &time_knots_view[0]
 
-        param_idx = 0
+        # First, initialize all parameters as constants using values from wrapped potential
+        # This ensures all parameters have valid values
+        for i in range(n_params):
+            param_value = wrapped_potential.cpotential.parameters[0][i]
+            result = time_interp_init_constant_param(&self.interp_state.params[i], param_value)
+            if result != 0:
+                raise RuntimeError(f"Failed to initialize constant parameter {i} (value: {param_value})")
+
+        # Create parameter name to index mapping
+        # For HernquistPotential: parameter 0=G, 1=m, 2=c (based on Gala convention)
+        param_name_to_index = {'G': 0}
+
+        # For now, hardcode the HernquistPotential parameter order
+        # TODO: Make this more general by reading from potential class
+        if 'm' in param_arrays and 'c' in param_arrays:
+            # HernquistPotential: G, m, c
+            param_name_to_index['m'] = 1
+            param_name_to_index['c'] = 2
+        else:
+            # Fallback: alphabetical order
+            user_param_names = sorted(param_arrays.keys())
+            for i, param_name in enumerate(user_param_names):
+                param_name_to_index[param_name] = i + 1        # Now override with user-provided parameters using correct indices
         for param_name, param_values in param_arrays.items():
-            param_values = np.asarray(param_values, dtype=np.float64)
-            if len(param_values) == 1:
+            param_idx = param_name_to_index[param_name]
+            param_values_array = np.asarray(param_values, dtype=np.float64)
+
+            if len(param_values_array) == 1:
                 # Constant parameter
-                time_interp_init_constant_param(&self.interp_state.params[param_idx], param_values[0])
-            elif len(param_values) == n_knots:
-                # Time-varying parameter
-                param_values_view = param_values
-                param_values_ptr = &param_values_view[0]
-                time_interp_init_param(&self.interp_state.params[param_idx],
-                                     time_knots_ptr, param_values_ptr, n_knots, gsl_interp_type_ptr)
+                result = time_interp_init_constant_param(&self.interp_state.params[param_idx], param_values_array[0])
+                if result != 0:
+                    raise RuntimeError(f"Failed to initialize constant parameter {param_name}")
+            elif len(param_values_array) == n_knots:
+                # Check if all values are the same (effectively constant)
+                if np.allclose(param_values_array, param_values_array[0]):
+                    # Treat as constant parameter
+                    result = time_interp_init_constant_param(&self.interp_state.params[param_idx], param_values_array[0])
+                    if result != 0:
+                        raise RuntimeError(f"Failed to initialize constant parameter {param_name}")
+                else:
+                    # Time-varying parameter - copy data to avoid memory issues
+                    param_values_copy = np.array(param_values_array, dtype=np.float64, copy=True)
+                    param_values_view = param_values_copy
+                    param_values_ptr = &param_values_view[0]
+                    result = time_interp_init_param(&self.interp_state.params[param_idx],
+                                         time_knots_ptr, param_values_ptr, n_knots, gsl_interp_type_ptr)
+                    if result != 0:
+                        raise RuntimeError(f"Failed to initialize parameter interpolation for {param_name}")
             else:
-                raise ValueError(f"Parameter {param_name} has wrong length: expected 1 or {n_knots}, got {len(param_values)}")
-            param_idx += 1
+                raise ValueError(f"Parameter {param_name} has wrong length: expected 1 or {n_knots}, got {len(param_values_array)}")
 
         # Initialize origin interpolators
         if origin_arrays is not None:
@@ -187,7 +223,9 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
         else:
             # Default to zero origin
             for i in range(n_dim):
-                time_interp_init_constant_param(&self.interp_state.origin[i], 0.0)
+                result = time_interp_init_constant_param(&self.interp_state.origin[i], 0.0)
+                if result != 0:
+                    raise RuntimeError(f"Failed to initialize constant origin component {i}")
 
         # Initialize rotation interpolators
         if rotation_matrices is not None:
@@ -225,6 +263,10 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
 
         # Initialize the CPotentialWrapper with a pointer to the wrapped potential as parameter
         wrapped_pot_ptr = <void*>wrapped_potential.cpotential
+
+        # Store the wrapped potential in the interpolation state
+        self.interp_state.wrapped_potential = wrapped_pot_ptr
+
         dummy_params = np.array([<double><long>wrapped_pot_ptr], dtype=np.float64)
 
         self.init([0.0],  # G doesn't matter for wrapper

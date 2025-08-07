@@ -242,16 +242,21 @@ int time_interp_init_constant_rotation(TimeInterpRotation *rot, double *matrix) 
 
 // Evaluate a parameter at time t
 double time_interp_eval_param(const TimeInterpParam *param, double t) {
-    if (!param) return 0.0;
+    if (!param) {
+        return 0.0;
+    }
 
     if (param->is_constant) {
         return param->constant_value;
     }
 
-    return gsl_spline_eval(param->spline, t, param->accel);
-}
+    // Add safety check for NULL spline before calling GSL
+    if (!param->spline || !param->accel) {
+        return NAN;
+    }
 
-// Evaluate rotation matrix at time t
+    return gsl_spline_eval(param->spline, t, param->accel);
+}// Evaluate rotation matrix at time t
 void time_interp_eval_rotation(const TimeInterpRotation *rot, double t, double *matrix) {
     if (!rot || !matrix) return;
 
