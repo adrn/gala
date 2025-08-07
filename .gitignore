@@ -21,6 +21,7 @@ gala/potential/frame/cframe.cpp
 gala/potential/hamiltonian/chamiltonian.cpp
 gala/potential/potential/builtin/cybuiltin.cpp
 gala/potential/potential/builtin/cyexp.cpp
+gala/potential/potential/builtin/cytimeinterp.cpp
 gala/potential/potential/ccompositepotential.cpp
 gala/potential/potential/cpotential.cpp
 gala/potential/scf/bfe_class.cpp
