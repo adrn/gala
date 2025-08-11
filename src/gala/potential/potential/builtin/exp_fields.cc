@@ -10,6 +10,7 @@
 namespace fs = std::filesystem;
 
 // EXP headers
+#include <Eigen/Eigen>
 #include <EXP/Coefficients.H>
 #include <EXP/BiorthBasis.H>
 #include <EXP/FieldGenerator.H>
@@ -25,18 +26,34 @@ State exp_init(
 {
   YAML::Node yaml = YAML::LoadFile(std::string(config_fn));
 
-  BasisClasses::BasisPtr basis;
+  auto load_basis = [](auto yaml, auto config_fn) -> auto
   {
-    // change the cwd to the directory of the config file
-    // so that relative paths in the config file work
-    // TODO: this is not thread-safe, threads share a cwd
-    ScopedChdir cd(fs::path(config_fn).parent_path());
-    basis = BasisClasses::Basis::factory(yaml);
-  }
+    BasisClasses::BasisPtr base_basis;
+    {
+      // change the cwd to the directory of the config file
+      // so that relative paths in the config file work
+      // TODO: this is not thread-safe, threads share a cwd
+      ScopedChdir cd(fs::path(config_fn).parent_path());
 
+      base_basis = BasisClasses::Basis::factory(yaml);
+    }
+
+    if (!base_basis) {
+      std::ostringstream error_msg;
+      error_msg << "Failed to load basis from config file: " << config_fn;
+      throw std::runtime_error(error_msg.str());
+    }
+    return base_basis;
+  };
+
+  auto basis(
+    std::dynamic_pointer_cast<BasisClasses::BiorthBasis>(
+      load_basis(yaml, config_fn)
+    )
+  );
   if (!basis) {
     std::ostringstream error_msg;
-    error_msg << "Failed to load basis from config file: " << config_fn;
+    error_msg << "Basis in config file " << config_fn << " must be a BiorthBasis.";
     throw std::runtime_error(error_msg.str());
   }
 
@@ -200,18 +217,21 @@ void exp_gradient(double t, double *__restrict__ pars, double *__restrict__ q_in
     );
   }
 
-  // TODO: ask Martin/Mike for a way to compute only the force/acceleration - we're wasting
-  // computation time here by computing all fields
   double6ptr q = double6ptr{q_in, N};
   double6ptr grad = double6ptr{grad_in, N};
 
-  for(size_t i = 0; i < N; i++) {
-    auto field = exp_state->basis->getFields(q.x[i], q.y[i], q.z[i]);
+  Eigen::Map<Eigen::VectorXd> eigen_x(q.x, N);
+  Eigen::Map<Eigen::VectorXd> eigen_y(q.y, N);
+  Eigen::Map<Eigen::VectorXd> eigen_z(q.z, N);
 
-    grad.x[i] += -field[6];
-    grad.y[i] += -field[7];
-    grad.z[i] += -field[8];
+  auto& allaccel = exp_state->basis->getAccel(eigen_x, eigen_y, eigen_z);
+
+  for(size_t i = 0; i < N; i++) {
+    grad.x[i] -= allaccel(i, 0);
+    grad.y[i] -= allaccel(i, 1);
+    grad.z[i] -= allaccel(i, 2);
   }
+
 }
 
 double exp_density(double t, double *pars, double *q, int n_dim, void* state) {
