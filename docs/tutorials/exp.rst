@@ -45,9 +45,12 @@ After installing the dependencies, one can download and build EXP on Linux with:
 
     git clone --recursive https://github.com/EXP-code/EXP.git
     cd EXP
-    cmake -G Ninja -B build -DCMAKE_INSTALL_RPATH="$PWD/install/lib" --install-prefix $PWD/install
+    cmake -G Ninja -B build -DENABLE_MINIMAL=on -DCMAKE_INSTALL_RPATH="$PWD/install/lib" -DCMAKE_BUILD_TYPE=Release --install-prefix $PWD/install
     cmake --build build
     cmake --install build
+
+``-DENABLE_MINIMAL=on`` is optional but will make the build go faster. One can replace
+this with ``-DENABLE_PYEXP_ONLY=on`` if one wants a minimal build with PyEXP.
 
 In this case, we installed EXP to the ``EXP/install/`` directory, but this can be any
 directory. This will become the ``GALA_EXP_PREFIX`` directory in the next step.

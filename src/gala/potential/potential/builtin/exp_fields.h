@@ -11,7 +11,7 @@ namespace gala_exp {
 
 class State {
 public:
-    BasisClasses::BasisPtr basis;
+    shared_ptr<BasisClasses::BiorthBasis> basis;
     CoefClasses::CoefsPtr coefs;
     double tmin;
     double tmax;
