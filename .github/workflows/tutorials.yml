@@ -19,7 +19,7 @@ jobs:
         ${{ steps.get_head_commit_message.outputs.HEAD_COMMIT_MESSAGE }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ env.GITHUB_SHA }}
       - name: Get head commit message
@@ -34,7 +34,7 @@ jobs:
       ${{ github.event.pull_request.draft == false &&
       !contains(needs.check_skip_flags.outputs.head-commit-message, '[skip docs]') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: true
 
