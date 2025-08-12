@@ -17,7 +17,7 @@ jobs:
         ${{ steps.get_head_commit_message.outputs.HEAD_COMMIT_MESSAGE }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ env.GITHUB_SHA }}
       - name: Get head commit message
@@ -100,7 +100,7 @@ jobs:
             pip-test-deps: "test"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -135,7 +135,7 @@ jobs:
 
       - name: Clone EXP
         if: matrix.gala-exp == '1'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: EXP-code/EXP
           ref: ${{ env.EXP_TAG }}
