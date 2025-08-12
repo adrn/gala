@@ -94,7 +94,7 @@ jobs:
       github.repository_owner == 'adrn' && github.event_name == 'push' && github.ref ==
       'refs/heads/main'
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           pattern: wheels*
           path: dist
@@ -117,7 +117,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           pattern: wheels*
           path: dist
