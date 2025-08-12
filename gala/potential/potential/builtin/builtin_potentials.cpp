@@ -13,6 +13,12 @@ double nan_value(double t, double *pars, double *q, int n_dim, void *state) { re
 void nan_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {}
 void nan_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) {}
 
+void nan_gradientv(size_t N, double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+    for (size_t i = 0; i < N * n_dim; i++) {
+        grad[i] = NAN;
+    }
+}
+
 double null_density(double t, double *pars, double *q, int n_dim, void *state) { return 0; }
 double null_value(double t, double *pars, double *q, int n_dim, void *state) { return 0; }
 void null_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state){}
@@ -874,6 +880,31 @@ void sphericalnfw_gradient(double t, double *pars, double *q, int n_dim, double 
     grad[0] = grad[0] + fac*q[0];
     grad[1] = grad[1] + fac*q[1];
     grad[2] = grad[2] + fac*q[2];
+}
+
+void sphericalnfw_gradientv(size_t N, double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, double *__restrict__ grad, void * __restrict__ state) {
+    /*  pars:
+            - G (Gravitational constant)
+            - m (mass scale)
+            - r_s (scale radius)
+    */
+    // q: shape [n_dim, N]
+    // grad: shape [n_dim, N]
+
+    double fac, u, v_h2;
+    v_h2 = pars[0] * pars[1] / pars[2];
+
+    for (size_t i = 0; i < N; i++) {
+        // Extract coordinates for particle i
+        double qi[3] = {q[0*N + i], q[1*N + i], q[2*N + i]};
+
+        u = sqrt(qi[0]*qi[0] + qi[1]*qi[1] + qi[2]*qi[2]) / pars[2];
+        fac = v_h2 / (u*u*u) / (pars[2]*pars[2]) * (log(1+u) - u/(1+u));
+
+        grad[0*N + i] += fac*qi[0];
+        grad[1*N + i] += fac*qi[1];
+        grad[2*N + i] += fac*qi[2];
+    }
 }
 
 double sphericalnfw_density(double t, double *pars, double *q, int n_dim, void *state) {

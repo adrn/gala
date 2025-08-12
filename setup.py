@@ -224,6 +224,7 @@ else:
 all_extensions = get_extensions()
 extensions = []
 for ext in all_extensions:
+    ext.extra_compile_args.extend(["-Ofast"])
     if ("potential.potential" in ext.name or "scf" in ext.name) and (
         gsl_version is not None
     ):
