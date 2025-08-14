@@ -84,14 +84,18 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
         self,
         potential_cls,
         time_knots,
-        interp_kind="cubic",
+        interp_kind="linear",
         units=None,
         origin=None,
         R=None,
         **kwargs,
     ):
-        # Validate inputs
+        units = self._validate_units(units)
+        if hasattr(time_knots, "unit"):
+            # TODO: need a property to access time_knots with units
+            time_knots = time_knots.to_value(units["time"])
         time_knots = np.asarray(time_knots)
+
         if time_knots.ndim != 1:
             raise ValueError("time_knots must be 1-dimensional")
         if len(time_knots) < 2:
@@ -149,6 +153,14 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
                     )
             else:
                 raise ValueError(f"Parameter {param_name} must be scalar or 1D array")
+
+        # Initialize the base class
+        # TODO: This abuses the base class a little bit.
+        # TODO: .parameters dictionary should be callables that compute potential
+        # parameters at a given time
+        # super().__init__(
+        #     units=units, origin=np.zeros(ndim), R=np.eye(ndim), **processed_params
+        # )
 
         # Process origin
         origin_arrays = None
@@ -210,7 +222,6 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
         self._origin_arrays = origin_arrays
         self._rotation_matrices = rotation_matrices
 
-        # Initialize the base class
         super().__init__(
             units=units, origin=np.zeros(ndim), R=np.eye(ndim), **processed_params
         )
