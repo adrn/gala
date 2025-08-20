@@ -272,5 +272,54 @@ def test_cython_exceptions():
         coef_file=EXP_MULTI_COEF_FILE,
         units=units,
     )
+
     # TODO: this will eventually be an exception
     assert np.isnan(pot.energy([0, 0, 0], t=float(0xBAD)))
+
+
+@pytest.mark.skipif(
+    not EXP_ENABLED and not FORCE_EXP_TEST,
+    reason="requires Gala compiled with EXP support",
+)
+def test_composite():
+    """Test that EXPPotential can be used in a CompositePotential"""
+    units = SimulationUnitSystem(mass=1.25234e11 * u.Msun, length=3.845 * u.kpc, G=1)
+    pot_single = EXPPotential(
+        config_file=EXP_CONFIG_FILE,
+        coef_file=EXP_SINGLE_COEF_FILE,
+        units=units,
+    )
+    pot_multi = EXPPotential(
+        config_file=EXP_CONFIG_FILE,
+        coef_file=EXP_MULTI_COEF_FILE,
+        units=units,
+    )
+    composite_pot = pot_single + pot_multi
+    # breakpoint()
+    assert isinstance(
+        composite_pot, gp.potential.ccompositepotential.CCompositePotential
+    )
+
+    test_x = [8.0, 0, 0] * u.kpc
+    assert u.allclose(
+        composite_pot.energy(test_x, t=0 * u.Gyr),
+        pot_single.energy(test_x, t=0 * u.Gyr) + pot_multi.energy(test_x, t=0 * u.Gyr),
+    )
+    assert u.allclose(
+        composite_pot.energy(test_x, t=1.4 * u.Gyr),
+        pot_single.energy(test_x, t=1.4 * u.Gyr)
+        + pot_multi.energy(test_x, t=1.4 * u.Gyr),
+    )
+
+    # Test orbit integration
+    w0 = gd.PhaseSpacePosition(
+        pos=[-8, 0.0, 0.0] * u.kpc,
+        vel=[0.0, 220, 0.0] * u.km / u.s,
+    )
+    orbit = gp.Hamiltonian(composite_pot).integrate_orbit(
+        w0, dt=1 * u.Myr, t1=0 * u.Gyr, t2=1 * u.Gyr
+    )
+    assert orbit is not None
+    assert np.all(np.isfinite(orbit.pos.xyz.value))
+    assert np.all(np.isfinite(orbit.vel.d_xyz.value))
+    assert np.all(np.isfinite(orbit.t.value))
