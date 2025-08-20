@@ -169,26 +169,26 @@ class TestEXPMulti(EXPTestBase):
 def test_exp_unit_tests():
     pot_single = EXPPotential(
         config_file=EXP_CONFIG_FILE,
-        coef_file=get_pkg_data_filename("EXP-Hernquist-single-coefs.hdf5"),
+        coef_file=EXP_SINGLE_COEF_FILE,
         units=EXPTestBase.exp_units,
     )
 
     pot_single_frozen = EXPPotential(
         config_file=EXP_CONFIG_FILE,
-        coef_file=get_pkg_data_filename("EXP-Hernquist-single-coefs.hdf5"),
+        coef_file=EXP_SINGLE_COEF_FILE,
         snapshot_index=0,
         units=EXPTestBase.exp_units,
     )
 
     pot_multi = EXPPotential(
         config_file=EXP_CONFIG_FILE,
-        coef_file=get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5"),
+        coef_file=EXP_MULTI_COEF_FILE,
         units=EXPTestBase.exp_units,
     )
 
     pot_multi_frozen = EXPPotential(
         config_file=EXP_CONFIG_FILE,
-        coef_file=get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5"),
+        coef_file=EXP_MULTI_COEF_FILE,
         snapshot_index=0,
         units=EXPTestBase.exp_units,
     )
@@ -196,7 +196,7 @@ def test_exp_unit_tests():
     # TODO: not yet implemented
     # pot_multi_frozen_arbitrary = EXPPotential(
     #     config_file=EXP_CONFIG_FILE,
-    #     coef_file=get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5"),
+    #     coef_file=EXP_MULTI_COEF_FILE,
     #     tmin=0.4 * u.Gyr,
     #     tmax=0.4 * u.Gyr,
     #     units=EXPTestBase.exp_units,
@@ -295,7 +295,6 @@ def test_composite():
         units=units,
     )
     composite_pot = pot_single + pot_multi
-    # breakpoint()
     assert isinstance(
         composite_pot, gp.potential.ccompositepotential.CCompositePotential
     )
