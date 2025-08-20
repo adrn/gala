@@ -150,12 +150,14 @@ jobs:
       - name: Install EXP dependencies (Mac)
         if: startsWith(matrix.os, 'mac') && matrix.gala-exp == '1'
         run: |
-          brew install eigen fftw open-mpi hdf5 llvm libomp
+          brew install eigen fftw open-mpi hdf5 llvm libomp flang
 
           echo CC=mpicc >> $GITHUB_ENV
           echo CXX=mpicxx >> $GITHUB_ENV
+          echo FC=mpifort >> $GITHUB_ENV
           echo OMPI_CC="$(brew --prefix llvm)/bin/clang" >> $GITHUB_ENV
           echo OMPI_CXX="$(brew --prefix llvm)/bin/clang++" >> $GITHUB_ENV
+          echo OMPI_FC="$(brew --prefix flang)/bin/flang" >> $GITHUB_ENV
 
       - name: Build EXP
         if: matrix.gala-exp == '1'
