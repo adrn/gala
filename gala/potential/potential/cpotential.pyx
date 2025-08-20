@@ -93,6 +93,11 @@ cdef class CPotentialWrapper:
         self._R = np.ascontiguousarray(_R.ravel())
         self.cpotential.R[0] = &(self._R[0])
 
+        # No state by default
+        # We do not store a self._state under the assumption that the subclass
+        # will hold a typed state object (e.g. exp_state)
+        self.cpotential.state[0] = NULL
+
         # set a short-circuit flag if no shift/rotate is necessary
         if np.all(_q0 == 0.0) and np.all(_R == np.eye(n_dim)):
             self.cpotential.do_shift_rotate[0] = 0

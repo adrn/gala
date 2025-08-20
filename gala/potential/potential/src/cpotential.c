@@ -21,11 +21,13 @@ CPotential* allocate_cpotential(int n_components) {
     p->state = (void**)malloc(n_components * sizeof(void*));
     p->do_shift_rotate = (int*)malloc(n_components * sizeof(int));
 
+
     // Initialize with NULL pointers
     for (int i = 0; i < n_components; i++) {
         p->parameters[i] = NULL;
         p->q0[i] = NULL;
         p->R[i] = NULL;
+        p->state[i] = NULL;
     }
 
     return p;
@@ -53,29 +55,31 @@ int resize_cpotential_arrays(CPotential* pot, int new_n_components) {
 
     // Reallocate arrays to the new size
     pot->n_components = new_n_components;
-    pot->density = realloc(pot->density, new_n_components * sizeof(densityfunc));
-    pot->value = realloc(pot->value, new_n_components * sizeof(energyfunc));
-    pot->gradient = realloc(pot->gradient, new_n_components * sizeof(gradientfunc));
-    pot->hessian = realloc(pot->hessian, new_n_components * sizeof(hessianfunc));
-    pot->n_params = realloc(pot->n_params, new_n_components * sizeof(int));
-    pot->parameters = realloc(pot->parameters, new_n_components * sizeof(double*));
-    pot->q0 = realloc(pot->q0, new_n_components * sizeof(double*));
-    pot->R = realloc(pot->R, new_n_components * sizeof(double*));
-    pot->state = realloc(pot->state, new_n_components * sizeof(void*));
-    pot->do_shift_rotate = realloc(pot->do_shift_rotate, new_n_components * sizeof(int));
+    pot->density = (densityfunc*)realloc(pot->density, new_n_components * sizeof(densityfunc));
+    pot->value = (energyfunc*)realloc(pot->value, new_n_components * sizeof(energyfunc));
+    pot->gradient = (gradientfunc*)realloc(pot->gradient, new_n_components * sizeof(gradientfunc));
+    pot->hessian = (hessianfunc*)realloc(pot->hessian, new_n_components * sizeof(hessianfunc));
+    pot->n_params = (int*)realloc(pot->n_params, new_n_components * sizeof(int));
+    pot->parameters = (double**)realloc(pot->parameters, new_n_components * sizeof(double*));
+    pot->q0 = (double**)realloc(pot->q0, new_n_components * sizeof(double*));
+    pot->R = (double**)realloc(pot->R, new_n_components * sizeof(double*));
+    pot->state = (void**)realloc(pot->state, new_n_components * sizeof(void*));
+    pot->do_shift_rotate = (int*)realloc(pot->do_shift_rotate, new_n_components * sizeof(int));
 
     // Initialize new elements
     for (int i = pot->n_components; i < new_n_components; i++) {
         pot->parameters[i] = NULL;
         pot->q0[i] = NULL;
         pot->R[i] = NULL;
+        pot->state[i] = NULL;
     }
 
     return 1;  // Success
 }
 
+
 void apply_rotate(double *q_in, double *R, int n_dim, int transpose,
-                  double *q_out) {
+                      double *q_out) {
     // NOTE: elsewhere, we enforce that rotation matrix only works for
     // ndim=2 or ndim=3, so here we can assume that!
     if (n_dim == 3) {

@@ -52,6 +52,7 @@ cdef class CCompositePotentialWrapper(CPotentialWrapper):
             self.cpotential.parameters[i] = &(_cpotential_arr[i]._params[0])
             self.cpotential.q0[i] = &(_cpotential_arr[i]._q0[0])
             self.cpotential.R[i] = &(_cpotential_arr[i]._R[0])
+            self.cpotential.state[i] = _cpotential_arr[i].cpotential.state[0]
             self.cpotential.value[i] = _cpotential_arr[i].cpotential.value[0]
             self.cpotential.density[i] = _cpotential_arr[i].cpotential.density[0]
             self.cpotential.gradient[i] = _cpotential_arr[i].cpotential.gradient[0]
