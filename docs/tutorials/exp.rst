@@ -240,6 +240,14 @@ repo root:
 
     pytest gala/potential/potential/tests/test_exp.py
 
+--------------------
+Composite Potentials
+--------------------
+
+`~gala.potential.potential.EXPPotential` fully supports composite potentials, including
+mixing static and time-evolving potentials.  The potentials will be combined at the C level
+as a :class:`~gala.potential.potential.CCompositePotential` when possible.
+See :ref:`_compositepotential` for more info.
 
 -----------
 Limitations

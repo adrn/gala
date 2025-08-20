@@ -1,17 +1,9 @@
-1.11.0 (unreleased)
+1.10.1 (unreleased)
 ===================
-
-New Features
-------------
 
 Bug fixes
 ---------
-
-API changes
------------
-
-Other
------
+- Support for ``gala.potential.EXPPotential`` in composite potentials is fixed.
 
 
 1.10.0 (2025-07-31)
