@@ -45,14 +45,20 @@ extern double exp_density(double t, double *pars, double *q, int n_dim, void* st
 class ScopedChdir {
 private:
     std::filesystem::path original_path;
+    bool empty;
 
 public:
     inline explicit ScopedChdir(const std::filesystem::path& new_path) {
-        original_path = std::filesystem::current_path();
-        std::filesystem::current_path(new_path);
+        empty = new_path.empty();
+
+        if(!empty){
+            original_path = std::filesystem::current_path();
+            std::filesystem::current_path(new_path);
+        }
     }
 
     inline ~ScopedChdir() {
+        if (empty) return;
         try {
             std::filesystem::current_path(original_path);
         } catch (...) {
