@@ -10,6 +10,7 @@ import pytest
 from astropy.utils.data import get_pkg_data_filename
 
 import gala.dynamics as gd
+import gala.potential as gp
 from gala._cconfig import EXP_ENABLED
 from gala.potential.potential.builtin import EXPPotential
 from gala.potential.potential.tests.helpers import PotentialTestBase
