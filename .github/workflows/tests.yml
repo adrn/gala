@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - "*.x"  # for bugfix branches, like v1.10.x
     tags:
       - "*"
   pull_request:
