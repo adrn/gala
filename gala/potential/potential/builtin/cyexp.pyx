@@ -64,8 +64,8 @@ cdef class EXPWrapper(CPotentialWrapper):
 
         if USE_EXP == 1:
             self.exp_state = exp_init(
-                config_file,
-                coef_file,
+                str(config_file),
+                str(coef_file),
                 stride,
                 tmin,
                 tmax,
