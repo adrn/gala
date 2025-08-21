@@ -26,6 +26,7 @@ CPotential* allocate_cpotential(int n_components) {
             p->parameters[i] = NULL;
             p->q0[i] = NULL;
             p->R[i] = NULL;
+            p->state[i] = NULL;
         }
 
         return p;
@@ -69,6 +70,7 @@ CPotential* allocate_cpotential(int n_components) {
             pot->parameters[i] = NULL;
             pot->q0[i] = NULL;
             pot->R[i] = NULL;
+            pot->state[i] = NULL;
         }
 
         return 1;  // Success
