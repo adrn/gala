@@ -28,6 +28,7 @@ State exp_init(
   {
     // change the cwd to the directory of the config file
     // so that relative paths in the config file work
+    // TODO: this is not thread-safe, threads share a cwd
     ScopedChdir cd(fs::path(config_fn).parent_path());
     basis = BasisClasses::Basis::factory(yaml);
   }

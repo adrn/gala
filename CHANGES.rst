@@ -24,6 +24,7 @@ Bug fixes
 ---------
 
 - Support for ``gala.potential.EXPPotential`` in composite potentials is fixed.
+- File path handling in ``gala.potential.EXPPotential`` is improved.
 
 
 1.10.0 (2025-07-31)
