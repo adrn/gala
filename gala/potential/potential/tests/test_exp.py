@@ -33,13 +33,15 @@ EXP_MULTI_COEF_FILE = get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5")
 FORCE_EXP_TEST = os.environ.get("GALA_FORCE_EXP_TEST", "0") == "1"
 FORCE_PYEXP_TEST = os.environ.get("GALA_FORCE_PYEXP_TEST", "0") == "1"
 
-# See: generate_exp.py, which generates the basis and coefficients for these tests
-
-
-@pytest.mark.skipif(
+# global pytest marker to skip tests if EXP is not enabled
+pytestmark = pytest.mark.skipif(
     not EXP_ENABLED and not FORCE_EXP_TEST,
     reason="requires Gala compiled with EXP support",
 )
+
+# See: generate_exp.py, which generates the basis and coefficients for these tests
+
+
 class EXPTestBase(PotentialTestBase):
     tol = 1e-2  # increase tolerance for gradient test
 
@@ -110,8 +112,8 @@ class EXPTestBase(PotentialTestBase):
         )
 
     @pytest.mark.skipif(
-        (not EXP_ENABLED or not HAVE_PYEXP) and not FORCE_PYEXP_TEST,
-        reason="requires Gala compiled with EXP support and pyEXP",
+        not FORCE_PYEXP_TEST,
+        reason="requires pyEXP",
     )
     def test_pyexp(self):
         """Test EXPPotential against pyEXP"""
@@ -146,28 +148,16 @@ class EXPTestBase(PotentialTestBase):
         assert u.allclose(exp_grad, gala_grad)
 
 
-@pytest.mark.skipif(
-    not EXP_ENABLED and not FORCE_EXP_TEST,
-    reason="requires Gala compiled with EXP support",
-)
 class TestEXPSingle(EXPTestBase):
     EXP_CONFIG_FILE = EXP_CONFIG_FILE
     EXP_COEF_FILE = EXP_SINGLE_COEF_FILE
 
 
-@pytest.mark.skipif(
-    not EXP_ENABLED and not FORCE_EXP_TEST,
-    reason="requires Gala compiled with EXP support",
-)
 class TestEXPMulti(EXPTestBase):
     EXP_CONFIG_FILE = EXP_CONFIG_FILE
     EXP_COEF_FILE = EXP_MULTI_COEF_FILE
 
 
-@pytest.mark.skipif(
-    not EXP_ENABLED and not FORCE_EXP_TEST,
-    reason="requires Gala compiled with EXP support",
-)
 def test_exp_unit_tests():
     pot_single = EXPPotential(
         config_file=EXP_CONFIG_FILE,
@@ -238,10 +228,6 @@ def test_exp_unit_tests():
     assert u.allclose(pot_multi.tmax_exp, 2.0 * u.Gyr)
 
 
-@pytest.mark.skipif(
-    not EXP_ENABLED and not FORCE_EXP_TEST,
-    reason="requires Gala compiled with EXP support",
-)
 def test_cython_exceptions():
     """Test various exceptions propagated from C++"""
     units = SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1)
@@ -279,10 +265,6 @@ def test_cython_exceptions():
     assert np.isnan(pot.energy([0, 0, 0], t=float(0xBAD)))
 
 
-@pytest.mark.skipif(
-    not EXP_ENABLED and not FORCE_EXP_TEST,
-    reason="requires Gala compiled with EXP support",
-)
 def test_composite():
     """Test that EXPPotential can be used in a CompositePotential"""
     units = SimulationUnitSystem(mass=1.25234e11 * u.Msun, length=3.845 * u.kpc, G=1)
