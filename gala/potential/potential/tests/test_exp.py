@@ -3,6 +3,7 @@ Test the EXP potential
 """
 
 import os
+from pathlib import Path
 
 import astropy.units as u
 import numpy as np
@@ -331,3 +332,22 @@ def test_composite():
     assert np.all(np.isfinite(orbit.pos.xyz.value))
     assert np.all(np.isfinite(orbit.vel.d_xyz.value))
     assert np.all(np.isfinite(orbit.t.value))
+
+
+def test_paths():
+    """
+    Test relative and absolute file paths
+    """
+
+    gp.EXPPotential(
+        config_file=Path(EXP_CONFIG_FILE).absolute(),
+        coef_file=Path(EXP_SINGLE_COEF_FILE).absolute(),
+        units=SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1),
+    )
+
+    with chdir(Path(EXP_CONFIG_FILE).parent):
+        gp.EXPPotential(
+            config_file=Path(EXP_CONFIG_FILE).name,
+            coef_file=Path(EXP_SINGLE_COEF_FILE).name,
+            units=SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1),
+        )
