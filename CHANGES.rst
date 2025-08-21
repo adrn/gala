@@ -10,13 +10,20 @@ Bug fixes
 ---------
 
 - ``gala.potential.EXPPotential`` now propagates C++ exceptions to Python.
-- Support for ``gala.potential.EXPPotential`` in composite potentials is fixed.
 
 API changes
 -----------
 
 Other
 -----
+
+1.10.1 (2025-08-21)
+===================
+
+Bug fixes
+---------
+
+- Support for ``gala.potential.EXPPotential`` in composite potentials is fixed.
 
 
 1.10.0 (2025-07-31)
