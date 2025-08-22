@@ -191,7 +191,7 @@ double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
   return field[5];
 }
 
-void exp_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state){
+void exp_gradient(size_t N, double t, double *__restrict__ pars, double *__restrict__ q_in, int n_dim, double *__restrict__ grad_in, void *__restrict__ state){
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
   if (!exp_state->is_static) {
@@ -202,11 +202,16 @@ void exp_gradient_single(double t, double *__restrict__ pars, double6ptr q, int 
 
   // TODO: ask Martin/Mike for a way to compute only the force/acceleration - we're wasting
   // computation time here by computing all fields
-  auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
+  double6ptr q = double6ptr{q_in, N};
+  double6ptr grad = double6ptr{grad_in, N};
 
-  grad[0] += -field[6];
-  grad[1] += -field[7];
-  grad[2] += -field[8];
+  for(size_t i = 0; i < N; i++) {
+    auto field = exp_state->basis->getFields(q.x[i], q.y[i], q.z[i]);
+
+    grad.x[i] += -field[6];
+    grad.y[i] += -field[7];
+    grad.z[i] += -field[8];
+  }
 }
 
 double exp_density(double t, double *pars, double *q, int n_dim, void* state) {
@@ -241,7 +246,5 @@ double exp_density(double t, double *pars, double *q, int n_dim, void* state) {
 //     hess[i] += NAN;  // TODO: get hessian from EXP
 //   }
 // }
-
-DEFINE_VECTORIZED_GRADIENT(exp)
 
 #endif  // USE_EXP
