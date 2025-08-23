@@ -224,7 +224,10 @@ else:
 all_extensions = get_extensions()
 extensions = []
 for ext in all_extensions:
-    ext.extra_compile_args.extend(["-Ofast"])
+    # TODO: -Ofast deprecated with clang
+    # -march=native may be useful, depending on the architecture
+    ext.extra_compile_args.extend(["-Ofast", "-flto=auto"])
+    ext.extra_link_args.extend(["-Ofast", "-flto=auto"])
     if ("potential.potential" in ext.name or "scf" in ext.name) and (
         gsl_version is not None
     ):
