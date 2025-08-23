@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <math.h>
+#include "chamiltonian.h"
 #include "potential/src/cpotential.h"
 #include "frame/src/cframe.h"
 
@@ -31,6 +32,27 @@ void hamiltonian_gradient(CPotential *p, CFrameType *fr, double t, double *qp, d
 
     for (i=p->n_dim; i < 2*(p->n_dim); i++) {
         dH[i] = -dH[i]; // pdot = -dH/dq
+    }
+}
+
+void hamiltonian_gradient_T(CPotential *p, CFrameType *fr, size_t n, double t, double *qp_T, double *dH_T) {
+    // qp_T: shape (n_dim, n)
+    // dH_T: shape (n_dim, n)
+
+    int ndim = p->n_dim;
+
+    // Initialize dH_T to zeros
+    for (int i = 0; i < 2 * ndim * n; i++) {
+        dH_T[i] = 0.0;
+    }
+
+    // Call gradient functions directly with transposed data
+    c_gradient(p, n, t, qp_T, dH_T + ndim * n);  // Write to momentum part
+    (fr->gradient)(n, t, (fr->parameters), qp_T, ndim, dH_T, NULL);  // Write to position part
+
+    // Negate the momentum derivatives
+    for (int i = 0; i < n * ndim; i++) {
+        dH_T[ndim * n + i] *= -1;  // pdot = -dH/dq
     }
 }
 

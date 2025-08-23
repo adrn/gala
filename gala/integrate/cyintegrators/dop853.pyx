@@ -20,7 +20,7 @@ np.import_array()
 from cpython.exc cimport PyErr_CheckSignals
 from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
 from ...potential.frame.cframe cimport CFrameWrapper, CFrameType
-from .dop853 cimport dop853, Fwrapper, FcnEqDiff, six_norm, SolTrait, dop853_dense_state_alloc, dop853_dense_state_free, Dop853DenseState
+from .dop853 cimport dop853, Fwrapper_T, FcnEqDiff, six_norm, SolTrait, dop853_dense_state_alloc, dop853_dense_state_free, Dop853DenseState
 
 
 # LEGACY FUNCTION: don't use this (used by lyapunov functionality)
@@ -104,10 +104,12 @@ cdef dop853_helper(
     int nstiff,
     unsigned err_if_fail,
     unsigned log_output,
-    unsigned save_all=1
+    int transposed,  # does F expect transposed input?
+    unsigned save_all=1,
 ):
     cdef:
-        double[:, ::1] w = w0.copy()
+        double[:, ::1] w
+
         int res
         FILE* cfile
 
@@ -119,6 +121,11 @@ cdef dop853_helper(
         double[:, ::1] output_w = np.empty((ntimes, size))
         Dop853DenseState* state
         double* output_ptr
+
+    if transposed:
+        w = w0.T.copy()
+    else:
+        w = w0.copy()
 
     if save_all:
         output_ptr = &output_w[0, 0]
@@ -170,10 +177,16 @@ cdef dop853_helper(
     if res < 0 and err_if_fail == 1:
         raise RuntimeError(f"Integration failed with code {res}")
 
-    if save_all:
-        return np.asarray(output_w).reshape((ntimes, norbits, ndim))
+    if transposed:
+        if save_all:
+            return np.asarray(output_w).reshape((ntimes, ndim, norbits)).transpose((0,2,1))
+        else:
+            return np.asarray(w.T, copy=False).reshape((norbits, ndim))
     else:
-        return np.asarray(w).reshape((norbits, ndim))
+        if save_all:
+            return np.asarray(output_w).reshape((ntimes, norbits, ndim))
+        else:
+            return np.asarray(w, copy=False).reshape((norbits, ndim))
 
 
 cpdef dop853_integrate_hamiltonian(
@@ -205,12 +218,13 @@ cpdef dop853_integrate_hamiltonian(
 
     # 0 below is for nbody - we ignore that in this test particle integration
     w = dop853_helper(
-        cp, &cf, <FcnEqDiff> Fwrapper,
+        cp, &cf, <FcnEqDiff> Fwrapper_T,
         w0, t,
         ndim, norbits, 0, args, ntimes,
         atol, rtol, nmax, dt_max,
         nstiff=nstiff,
-        save_all=save_all, err_if_fail=err_if_fail, log_output=log_output
+        save_all=save_all, err_if_fail=err_if_fail, log_output=log_output,
+        transposed=1
     )
     if save_all:
         return np.asarray(t), np.asarray(w)
