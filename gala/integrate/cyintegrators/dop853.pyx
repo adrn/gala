@@ -192,7 +192,8 @@ cdef dop853_helper(
 cpdef dop853_integrate_hamiltonian(
     hamiltonian, double[:, ::1] w0, double[::1] t,
     double atol=1E-10, double rtol=1E-10, int nmax=0, double dt_max = 0.,
-    int nstiff=0, int save_all=1, int err_if_fail=1, int log_output=0
+    int nstiff=0, int save_all=1, int err_if_fail=1, int log_output=0,
+    int nbatch=100,
 ):
     """
     CAUTION: Interpretation of axes is different here! We need the
@@ -216,17 +217,32 @@ cpdef dop853_integrate_hamiltonian(
         CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
         CFrameType cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
-    # 0 below is for nbody - we ignore that in this test particle integration
-    w = dop853_helper(
-        cp, &cf, <FcnEqDiff> Fwrapper_T,
-        w0, t,
-        ndim, norbits, 0, args, ntimes,
-        atol, rtol, nmax, dt_max,
-        nstiff=nstiff,
-        save_all=save_all, err_if_fail=err_if_fail, log_output=log_output,
-        transposed=1
-    )
     if save_all:
-        return np.asarray(t), np.asarray(w)
+        wres = np.empty((ntimes, norbits, ndim))
     else:
-        return np.asarray(t[-1:]), np.asarray(w)
+        wres = np.empty((norbits, ndim))
+
+    for i in range(0, norbits, nbatch):
+        # do the integration in batches for performance
+        # FUTURE: this batching could probably be done in C directly
+        j = min(i + nbatch, norbits)
+        wbatch = w0[i:j, :]
+        # 0 below is for nbody - we ignore that in this test particle integration
+        wout = dop853_helper(
+            cp, &cf, <FcnEqDiff> Fwrapper_T,
+            wbatch, t,
+            ndim, j - i, 0, NULL, ntimes,
+            atol, rtol, nmax, dt_max,
+            nstiff=nstiff,
+            save_all=save_all, err_if_fail=err_if_fail, log_output=log_output,
+            transposed=1
+        )
+        if save_all:
+            wres[:, i:j, :] = wout
+        else:
+            wres[i:j, :] = wout
+
+    if save_all:
+        return np.asarray(t), np.asarray(wres)
+    else:
+        return np.asarray(t[-1:]), np.asarray(wres)
