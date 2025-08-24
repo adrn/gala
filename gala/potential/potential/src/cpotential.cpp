@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "cpotential.h"
+#include "src/vectorization.h"
 
 CPotential* allocate_cpotential(int n_components) {
     CPotential* p = (CPotential*)malloc(sizeof(CPotential));
@@ -104,6 +105,34 @@ CPotential* allocate_cpotential(int n_components) {
     }
 }
 
+void apply_rotate_T(double6ptr q, const double *R, int n_dim, int transpose) {
+    // in-place rotation
+
+    double x = q[0];
+    if (n_dim == 3) {
+        double y = q[1];
+        double z = q[2];
+        if (transpose == 0) {
+            q[0] = R[0] * x + R[1] * y + R[2] * z;
+            q[1] = R[3] * x + R[4] * y + R[5] * z;
+            q[2] = R[6] * x + R[7] * y + R[8] * z;
+        } else {
+            q[0] = R[0] * x + R[3] * y + R[6] * z;
+            q[1] = R[1] * x + R[4] * y + R[7] * z;
+            q[2] = R[2] * x + R[5] * y + R[8] * z;
+        }
+    } else if (n_dim == 2) {
+        double y = q[1];
+        if (transpose == 0) {
+            q[0] = R[0] * x + R[1] * y;
+            q[1] = R[2] * x + R[3] * y;
+        } else {
+            q[0] = R[0] * x + R[2] * y;
+            q[1] = R[1] * x + R[3] * y;
+        }
+    }
+}
+
 
 void apply_shift_rotate(double *q_in, double *q0, double *R, int n_dim,
                         int transpose, double *q_out) {
@@ -117,6 +146,24 @@ void apply_shift_rotate(double *q_in, double *q0, double *R, int n_dim,
 
     // Apply rotation matrix
     apply_rotate(&tmp[0], R, n_dim, transpose, q_out);
+}
+
+void apply_shift_rotate_N(size_t N, const double *q_in, const double *q0, const double *R, int n_dim,
+                        int transpose, double *q_out) {
+    // q_in: shape [n_dim, N]
+    // q_out: shape [n_dim, N]
+
+    for(size_t i = 0; i < N; i++) {
+        // Shift to the specified origin
+        for (int j=0; j < n_dim; j++) {
+            q_out[j * N + i] = q_in[j * N + i] - q0[j];
+        }
+
+        // Apply rotation matrix in place
+        apply_rotate_T(
+            double6ptr{q_out + i, N}, R, n_dim, transpose
+        );
+    }
 }
 
 
@@ -164,30 +211,78 @@ double c_density(CPotential *p, double t, double *qp) {
 }
 
 
-void c_gradient(CPotential *p, double t, double *qp, double *grad) {
-    int i, j;
-    double qp_trans[p->n_dim];
-    double tmp_grad[p->n_dim];
+void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
+    // qp: shape [p->n_dim, N]
+    // grad: shape [p->n_dim, N]
 
-    for (i=0; i < p->n_dim; i++) {
+    double *qp_trans = NULL;
+    double *tmp_grad = NULL;
+    bool need_transform = false;
+
+    // Check if any components need transformation
+    for (size_t i = 0; i < p->n_components; i++) {
+        if (p->do_shift_rotate[i] != 0) {
+            need_transform = true;
+            break;
+        }
+    }
+
+    // Allocate temporary arrays if transformation is needed
+    if (need_transform) {
+        qp_trans = (double*)malloc(p->n_dim * N * sizeof(double));
+        tmp_grad = (double*)malloc(p->n_dim * N * sizeof(double));
+    }
+
+    // Initialize gradient array
+    // TODO: may need to remove this for n-body-style accumulations
+    for (size_t i = 0; i < p->n_dim * N; i++) {
         grad[i] = 0.;
     }
 
-    for (i=0; i < p->n_components; i++) {
+    for (size_t i = 0; i < p->n_components; i++) {
         if (p->do_shift_rotate[i] == 0) {
-            (p->gradient)[i](t, (p->parameters)[i], &qp[0], p->n_dim, &grad[0], (p->state)[i]);
-            continue;
+            (p->gradient)[i](N, t, (p->parameters)[i], qp, p->n_dim, grad, (p->state)[i]);
         } else {
-            for (j=0; j < p->n_dim; j++) {
-                tmp_grad[j] = 0.;
+            // Initialize temporary arrays
+            for (size_t j = 0; j < p->n_dim * N; j++) {
                 qp_trans[j] = 0.;
+                tmp_grad[j] = 0.;
             }
 
-            apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0, &qp_trans[0]);
-            (p->gradient)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim,
-                            &tmp_grad[0], (p->state)[i]);
-            apply_rotate(&tmp_grad[0], (p->R)[i], p->n_dim, 1, &grad[0]);
+            // Apply shift and rotation to all particles
+            apply_shift_rotate_N(
+                N,
+                qp,
+                (p->q0)[i],
+                (p->R)[i],
+                p->n_dim,
+                0,
+                qp_trans
+            );
+
+            // Compute gradient for transformed coordinates
+            (p->gradient)[i](N, t, (p->parameters)[i], qp_trans, p->n_dim, tmp_grad, (p->state)[i]);
+
+            // Apply inverse rotation to gradient and accumulate
+            for (size_t j = 0; j < N; j++) {
+                apply_rotate_T(
+                    double6ptr{tmp_grad + j, N},
+                    (p->R)[i],
+                    p->n_dim,
+                    1
+                );
+            }
+
+            for (size_t j = 0; j < p->n_dim * N; j++) {
+                grad[j] += tmp_grad[j];
+            }
         }
+    }
+
+    // Free temporary arrays
+    if (need_transform) {
+        free(qp_trans);
+        free(tmp_grad);
     }
 }
 
@@ -311,7 +406,7 @@ void c_nbody_acceleration(CPotential **pots, double t, double *qp,
 
         for (i=0; i < norbits; i++) {
             if (i != j) {
-                c_gradient(body_pot, t, &qp[i * ps_ndim], &f2[0]);
+                c_gradient(body_pot, 1, t, &qp[i * ps_ndim], &f2[0]);
                 for (k=0; k < ndim; k++)
                    acc[i*ps_ndim + ndim + k] += -f2[k];
             }
@@ -340,7 +435,7 @@ void c_nbody_gradient_symplectic(
             (body_pot->q0)[i] = &nbody_w[j * 2 * ndim]; // p-s ndim
         }
 
-        c_gradient(body_pot, t, w, &f2[0]);
+        c_gradient(body_pot, 1, t, w, &f2[0]);
         for (k=0; k < ndim; k++)
             grad[k] += f2[k];
     }

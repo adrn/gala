@@ -20,30 +20,36 @@ from ...potential import NullPotential
 
 from libc.stdlib cimport malloc, free
 
-cdef void c_init_velocity(CPotential *p, int half_ndim, double t, double dt,
-                          double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil:
-    cdef int k
 
-    c_gradient(p, t, x_jm1, grad)
+cdef void c_init_velocity(CPotential *p, size_t n, int half_ndim, double t, double dt,
+                      double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil:
+    cdef int i, k
+
+    c_gradient(p, n, t, x_jm1, grad)
 
     for k in range(half_ndim):
-        v_jm1_2[k] = v_jm1[k] - grad[k] * dt/2.  # acceleration is minus gradient
+        for i in range(n):
+            v_jm1_2[i + k * n] = v_jm1[i + k * n] - grad[i + k * n] * dt/2.  # acceleration is minus gradient
 
-cdef void c_leapfrog_step(CPotential *p, int half_ndim, double t, double dt,
-                          double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil:
-    cdef int k
+
+cdef void c_leapfrog_step(CPotential *p, size_t n, int half_ndim, double t, double dt,
+                            double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil:
+    cdef int i, k
 
     # full step the positions
     for k in range(half_ndim):
-        x_jm1[k] = x_jm1[k] + v_jm1_2[k] * dt
+        for i in range(n):
+            x_jm1[i + k * n] = x_jm1[i + k * n] + v_jm1_2[i + k * n] * dt
 
-    c_gradient(p, t, x_jm1, grad)  # compute gradient at new position
+    c_gradient(p, n, t, x_jm1, grad)  # compute gradient at new position
 
     # step velocity forward by half step, aligned w/ position, then
     #   finish the full step to leapfrog over position
     for k in range(half_ndim):
-        v_jm1[k] = v_jm1_2[k] - grad[k] * dt/2.
-        v_jm1_2[k] = v_jm1_2[k] - grad[k] * dt
+        for i in range(n):
+            v_jm1[i + k * n] = v_jm1_2[i + k * n] - grad[i + k * n] * dt/2.
+            v_jm1_2[i + k * n] = v_jm1_2[i + k * n] - grad[i + k * n] * dt
+
 
 cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1] t,
                                      int save_all=1):
@@ -73,50 +79,48 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
         double dt = t[1]-t[0]
 
         # temporary array containers
-        double[::1] grad = np.zeros(half_ndim)
-        double[:, ::1] v_jm1_2 = np.zeros((n, half_ndim))
+        # Input is (n, ndim), which we will transpose for vectorization
+        double[:, ::1] grad_v = np.zeros((half_ndim, n))
+        double[:, ::1] v_jm1_2 = np.zeros((half_ndim, n))
 
         # return arrays
         double[:, :, ::1] all_w
-        double[:, ::1] tmp_w = np.zeros((n, ndim))
+        double[:, ::1] tmp_w
 
         # whoa, so many dots
         CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
 
     if save_all:
-        all_w = np.zeros((ntimes, n, ndim))
+        all_w = np.zeros((ntimes, ndim, n))
 
         # save initial conditions
-        all_w[0, :, :] = w0.copy()
+        all_w[0, :, :] = w0.T.copy()
 
-    tmp_w = w0.copy()
+    tmp_w = w0.T.copy()
 
     with nogil:
         # first initialize the velocities so they are evolved by a
         #   half step relative to the positions
-        for i in range(n):
-            c_init_velocity(cp, half_ndim, t[0], dt,
-                            &tmp_w[i, 0], &tmp_w[i, half_ndim],
-                            &v_jm1_2[i, 0], &grad[0])
+        c_init_velocity(cp, n, half_ndim, t[0], dt,
+                        &tmp_w[0, 0], &tmp_w[half_ndim, 0],
+                        &v_jm1_2[0, 0], &grad_v[0, 0])
 
         for j in range(1, ntimes, 1):
-            for i in range(n):
-                for k in range(half_ndim):
-                    grad[k] = 0.
+            grad_v[:] = 0.
+            c_leapfrog_step(cp, n, half_ndim, t[j], dt,
+                            &tmp_w[0, 0], &tmp_w[half_ndim, 0],
+                            &v_jm1_2[0, 0],
+                            &grad_v[0, 0])
 
-                c_leapfrog_step(cp, half_ndim, t[j], dt,
-                                &tmp_w[i, 0], &tmp_w[i, half_ndim],
-                                &v_jm1_2[i, 0],
-                                &grad[0])
-
-                if save_all:
-                    for k in range(ndim):
-                        all_w[j, i, k] = tmp_w[i, k]
+            if save_all:
+                for k in range(ndim):
+                    for i in range(n):
+                        all_w[j, k, i] = tmp_w[k, i]
 
     if save_all:
-        return np.asarray(t), np.asarray(all_w)
+        return np.asarray(t), np.asarray(all_w).transpose(0,2,1)
     else:
-        return np.asarray(t[-1:]), np.asarray(tmp_w)
+        return np.asarray(t[-1:]), np.array(tmp_w.T, copy=False)
 
 # -------------------------------------------------------------------------------------
 # N-body stuff - TODO: to be moved, because this is a HACK!
@@ -128,7 +132,7 @@ cdef void c_init_velocity_nbody(
 ) nogil:
     cdef int k
 
-    c_gradient(p, t, x_jm1, grad)
+    c_gradient(p, 1, t, x_jm1, grad)
     c_nbody_gradient_symplectic(pots, t, x_jm1, x_nbody_jm1, nbody, nbody_i, half_ndim, grad)
 
     for k in range(half_ndim):
@@ -146,7 +150,7 @@ cdef void c_leapfrog_step_nbody(
     for k in range(half_ndim):
         x_jm1[k] = x_jm1[k] + v_jm1_2[k] * dt
 
-    c_gradient(p, t, x_jm1, grad)  # compute gradient at new position
+    c_gradient(p, 1, t, x_jm1, grad)  # compute gradient at new position
     c_nbody_gradient_symplectic(pots, t, x_jm1, x_nbody_jm1, nbody, nbody_i, half_ndim, grad)
 
     # step velocity forward by half step, aligned w/ position, then

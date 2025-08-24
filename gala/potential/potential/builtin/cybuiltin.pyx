@@ -32,11 +32,11 @@ from ...._cconfig cimport USE_GSL
 
 cdef extern from "potential/potential/builtin/multipole.h":
     double mp_potential(double t, double *pars, double *q, int n_dim, void *state) nogil
-    void mp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    void mp_gradient(size_t N, double t, double *pars, double *q, double *grad, void *state) nogil
     double mp_density(double t, double *pars, double *q, int n_dim, void *state) nogil
 
     double axisym_cylspline_value(double t, double *pars, double *q, int n_dim, void *state) nogil
-    void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    void axisym_cylspline_gradient(size_t N, double t, double *pars, double *q, double *grad, void *state) nogil
     double axisym_cylspline_density(double t, double *pars, double *q, int n_dim, void *state) nogil
 
 

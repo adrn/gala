@@ -142,7 +142,7 @@ class PotentialTestBase:
 
         if self.check_zero_at_infinity:
             val = self.potential.energy([1e12, 1e12, 1e12])
-            assert np.isclose(val, 0.0, atol=1e-6)
+            np.testing.assert_allclose(val, 0.0, rtol=1e-05, atol=1e-6)
 
     def test_gradient(self):
         for arr, shp in zip(self.w0s, self._grad_return_shapes):
@@ -197,7 +197,7 @@ class PotentialTestBase:
         for arr, shp in zip(self.w0s, self._valu_return_shapes):
             g = self.potential.circular_velocity(arr[: self.ndim])
             assert g.shape == shp
-            assert np.all(g > 0.0)
+            np.testing.assert_array_less(0.0, g)
 
             g = self.potential.circular_velocity(arr[: self.ndim], t=0.1)
             g = self.potential.circular_velocity(
@@ -318,7 +318,7 @@ class PotentialTestBase:
                 ]
             )
         grad = self.potential._gradient(xyz, t=np.array([0.0]))
-        assert np.allclose(num_grad, grad, rtol=self.tol)
+        np.testing.assert_allclose(grad, num_grad, rtol=self.tol, atol=1e-8)
 
     def test_orbit_integration(self, t1=0.0, t2=1000.0, nsteps=10000):
         """

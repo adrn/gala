@@ -5,6 +5,7 @@ New Features
 ------------
 
 - A C++ compiler is now required to build Gala from source.
+- Orbit integration performance is improved.
 
 Bug fixes
 ---------

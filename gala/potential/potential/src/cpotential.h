@@ -1,3 +1,5 @@
+#include <stddef.h>
+
 #include "src/funcdefs.h"
 
 #ifndef _CPotential_H
@@ -39,7 +41,7 @@ extern int resize_cpotential_arrays(CPotential* pot, int new_n_components);
 
 extern double c_potential(CPotential *p, double t, double *q);
 extern double c_density(CPotential *p, double t, double *q);
-extern void c_gradient(CPotential *p, double t, double *q, double *grad);
+extern void c_gradient(CPotential *p, size_t N, double t, double *q, double *grad);
 extern void c_hessian(CPotential *p, double t, double *q, double *hess);
 
 // TODO: err, what about reference frames...

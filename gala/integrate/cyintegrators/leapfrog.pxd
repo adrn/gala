@@ -3,8 +3,8 @@
 
 from ...potential.potential.cpotential cimport CPotential
 
-cdef void c_init_velocity(CPotential *p, int ndim, double t, double dt,
-                          double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil
+cdef void c_init_velocity(CPotential *p, size_t n, int half_ndim, double t, double dt,
+                      double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil
 
-cdef void c_leapfrog_step(CPotential *p, int ndim, double t, double dt,
-                          double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil
+cdef void c_leapfrog_step(CPotential *p, size_t n, int half_ndim, double t, double dt,
+                            double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) nogil

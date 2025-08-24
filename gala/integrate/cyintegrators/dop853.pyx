@@ -18,7 +18,7 @@ cimport numpy as np
 np.import_array()
 
 from cpython.exc cimport PyErr_CheckSignals
-from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential, c_gradient
+from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential
 from ...potential.frame.cframe cimport CFrameWrapper, CFrameType
 from .dop853 cimport dop853, Fwrapper, FcnEqDiff, six_norm, SolTrait, dop853_dense_state_alloc, dop853_dense_state_free, Dop853DenseState
 

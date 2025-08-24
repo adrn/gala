@@ -4,6 +4,7 @@
 #include <string.h>
 #include "bfe_helper.h"
 #include "extra_compile_macros.h"
+#include "src/vectorization.h"
 
 #if USE_GSL == 1
 #include "gsl/gsl_math.h"
@@ -110,25 +111,25 @@ void scf_potential_helper(double *xyz, int K,
     }
 }
 
-void scf_gradient_helper(double *xyz, int K,
+void scf_gradient_helper(double *__restrict__ x, double *__restrict__ y, double *__restrict__ z, int K,
                          double G, double M, double r_s,
-                         double *Snlm, double *Tnlm,
-                         int nmax, int lmax, double *grad) {
+                         double *__restrict__ Snlm, double *__restrict__ Tnlm,
+                         int nmax, int lmax,
+                         double *__restrict__ gradx, double *__restrict__ grady, double *__restrict__ gradz) {
 
-    int i,j,k, n,l,m;
+    int i,k, n,l,m;
     double r, s, X, phi;
     double sintheta, cosphi, sinphi, tmp;
-    double tmp_grad[3], tmp_grad2[3*K]; // TODO: this might be really inefficient
+    double tmp_grad[3], tmp_grad2[3];
     double cosmphi[lmax+1], sinmphi[lmax+1];
     memset(cosmphi, 0, (lmax+1)*sizeof(double));
     memset(sinmphi, 0, (lmax+1)*sizeof(double));
 
     for (k=0; k<K; k++) {
-        j = 3*k;
-        r = sqrt(xyz[j]*xyz[j] + xyz[j+1]*xyz[j+1] + xyz[j+2]*xyz[j+2]);
+        r = sqrt(x[k] * x[k] + y[k] * y[k] + z[k] * z[k]);
         s = r/r_s;
-        X = xyz[j+2]/r; // cos(theta)
-        phi = atan2(xyz[j+1], xyz[j+0]);
+        X = z[k]/r; // cos(theta)
+        phi = atan2(y[k], x[k]);
 
         sintheta = sqrt(1 - X*X);
         cosphi = cos(phi);
@@ -141,9 +142,9 @@ void scf_gradient_helper(double *xyz, int K,
         }
 
         // zero out
-        tmp_grad2[j+0] = 0.;
-        tmp_grad2[j+1] = 0.;
-        tmp_grad2[j+2] = 0.;
+        tmp_grad2[0] = 0.;
+        tmp_grad2[1] = 0.;
+        tmp_grad2[2] = 0.;
 
         // i = 0;
         for (n=0; n<(nmax+1); n++) {
@@ -164,26 +165,26 @@ void scf_gradient_helper(double *xyz, int K,
                     }
 
                     sph_grad_phi_nlm(s, phi, X, n, l, m, lmax, &tmp_grad[0]);
-                    tmp_grad2[j+0] += tmp_grad[0] * tmp; // r
-                    tmp_grad2[j+1] += tmp_grad[1] * tmp; // theta
-                    tmp_grad2[j+2] += tmp_grad[2] * (Tnlm[i]*cosmphi[m] - Snlm[i]*sinmphi[m]) / (s*sintheta); // phi
+                    tmp_grad2[0] += tmp_grad[0] * tmp; // r
+                    tmp_grad2[1] += tmp_grad[1] * tmp; // theta
+                    tmp_grad2[2] += tmp_grad[2] * (Tnlm[i]*cosmphi[m] - Snlm[i]*sinmphi[m]) / (s*sintheta); // phi
 
                     // i++;
                 }
             }
         }
-        tmp_grad[0] = tmp_grad2[j+0];
-        tmp_grad[1] = tmp_grad2[j+1];
-        tmp_grad[2] = tmp_grad2[j+2];
+        tmp_grad[0] = tmp_grad2[0];
+        tmp_grad[1] = tmp_grad2[1];
+        tmp_grad[2] = tmp_grad2[2];
 
         // transform to cartesian
-        tmp_grad2[j+0] = sintheta*cosphi*tmp_grad[0] + X*cosphi*tmp_grad[1] - sinphi*tmp_grad[2];
-        tmp_grad2[j+1] = sintheta*sinphi*tmp_grad[0] + X*sinphi*tmp_grad[1] + cosphi*tmp_grad[2];
-        tmp_grad2[j+2] = X*tmp_grad[0] - sintheta*tmp_grad[1];
+        tmp_grad2[0] = sintheta*cosphi*tmp_grad[0] + X*cosphi*tmp_grad[1] - sinphi*tmp_grad[2];
+        tmp_grad2[1] = sintheta*sinphi*tmp_grad[0] + X*sinphi*tmp_grad[1] + cosphi*tmp_grad[2];
+        tmp_grad2[2] = X*tmp_grad[0] - sintheta*tmp_grad[1];
 
-        grad[j+0] = grad[j+0] + tmp_grad2[j+0]*G*M/(r_s*r_s);
-        grad[j+1] = grad[j+1] + tmp_grad2[j+1]*G*M/(r_s*r_s);
-        grad[j+2] = grad[j+2] + tmp_grad2[j+2]*G*M/(r_s*r_s);
+        gradx[k] += tmp_grad2[0]*G*M/(r_s*r_s);
+        grady[k] += tmp_grad2[1]*G*M/(r_s*r_s);
+        gradz[k] += tmp_grad2[2]*G*M/(r_s*r_s);
     }
 }
 
@@ -225,7 +226,7 @@ double scf_value(double t, double *pars, double *q, int n_dim) {
     return _val;
 }
 
-void scf_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
+void scf_gradient(size_t N, double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, double *__restrict__ grad, void *__restrict__ state) {
     /*  pars:
         - G (Gravitational constant)
         - nmax
@@ -251,10 +252,10 @@ void scf_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
         }
     }
 
-    scf_gradient_helper(&q[0], 1,
+    scf_gradient_helper(q, q + N, q + 2 * N, N,
                         G, M, r_s,
                         &pars[5], &pars[5+num_coeff],
-                        nmax, lmax, &grad[0]);
+                        nmax, lmax, grad, grad + N, grad + 2 * N);
 }
 
 double scf_density(double t, double *pars, double *q, int n_dim) {
@@ -319,8 +320,8 @@ void get_bound_idx(double val, double *arr, int narr, int *idx) {
     }
 }
 
-void interp_helper(double t, double *q, double *pars, int ntimes, int ncoeff,
-                   double *interp_pars, double *newq) {
+void interp_helper(double t, double *__restrict__ q, double *__restrict__ pars, int ntimes, int ncoeff,
+                   double *__restrict__ interp_pars, double *__restrict__ newq) {
     int i, n;
     for (i=0; i<5; i++) {
         interp_pars[i] = pars[i];
@@ -465,8 +466,7 @@ double scf_interp_density(double t, double *pars, double *q, int n_dim) {
 
 }
 
-void scf_interp_gradient(double t, double *pars, double *q, int n_dim,
-                         double *grad) {
+void scf_interp_gradient(size_t N, double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, double *__restrict__ grad, void *__restrict__ state) {
     int nmax = (int)pars[1];   // TODO: abuse!
     int lmax = (int)pars[2];   // TODO: abuse!
     int ntimes = (int)pars[3]; // TODO: abuse!
@@ -483,11 +483,34 @@ void scf_interp_gradient(double t, double *pars, double *q, int n_dim,
         }
     }
 
-    double interp_pars[5 + 2*ncoeff];
-    double newq[3];  // recentered position
-    interp_helper(t, q, &pars[0], ntimes, ncoeff, &interp_pars[0], &newq[0]);
+    // Allocate memory for all recentered positions
+    double *newq = new double[3 * N];
 
-    scf_gradient(t, interp_pars, newq, n_dim, grad);
+    // We'll reuse these for all positions
+    double interp_pars[5 + 2*ncoeff];
+    double temp_q[3], temp_newq[3];
+
+    // Process each position
+    for (size_t i = 0; i < N; i++) {
+        // Extract the position for this point
+        temp_q[0] = q[i];
+        temp_q[1] = q[i + N];
+        temp_q[2] = q[i + 2 * N];
+
+        // Interpolate coefficients and recenter this position
+        interp_helper(t, temp_q, &pars[0], ntimes, ncoeff, &interp_pars[0], &temp_newq[0]);
+
+        // Store recentered position
+        newq[i] = temp_newq[0];
+        newq[i + N] = temp_newq[1];
+        newq[i + 2 * N] = temp_newq[2];
+    }
+
+    // Call scf_gradient with all recentered positions
+    scf_gradient(N, t, interp_pars, newq, n_dim, grad, state);
+
+    // Free allocated memory
+    delete[] newq;
 }
 
 #endif

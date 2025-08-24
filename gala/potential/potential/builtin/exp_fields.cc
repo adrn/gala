@@ -15,6 +15,7 @@ namespace fs = std::filesystem;
 #include <FieldGenerator.H>
 
 #include "exp_fields.h"
+#include "src/vectorization.h"
 
 namespace gala_exp {
 
@@ -170,8 +171,6 @@ CoefClasses::CoefStrPtr interpolator(double t, CoefClasses::CoefsPtr coefs)
     Only available if EXP available at build time.
 */
 
-extern "C" {
-
 double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
@@ -188,7 +187,7 @@ double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
   return field[5];
 }
 
-void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void* state){
+void exp_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state){
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
   if (!exp_state->is_static) {
@@ -233,6 +232,6 @@ double exp_density(double t, double *pars, double *q, int n_dim, void* state) {
 //   }
 // }
 
-}
+DEFINE_VECTORIZED_GRADIENT(exp)
 
 #endif  // USE_EXP

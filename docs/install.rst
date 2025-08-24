@@ -42,6 +42,13 @@ the cloned ``gala`` directory)::
 
     python -m pip install .
 
+For the best performance, you may wish to compile with architecture-specific optimizations::
+
+    export CXXFLAGS=-march=native
+
+This will likely have the biggest effect on orbit integration. Be aware that compiling with this
+flag means that Gala will only run on the same type of CPU that it was compiled on!
+
 
 Installing on Windows
 =====================

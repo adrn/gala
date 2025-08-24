@@ -30,7 +30,7 @@ cdef void c_ruth4_step(CPotential *p, int half_ndim, double t, double dt,
     for j in range(4):
         for k in range(half_ndim):
              grad[k] = 0.
-        c_gradient(p, t, w, grad)
+        c_gradient(p, 1, t, w, grad)
         for k in range(half_ndim):
             w[half_ndim + k] = w[half_ndim + k] - ds[j] * grad[k] * dt
             w[k] = w[k] + cs[j] * w[half_ndim + k] * dt
@@ -131,7 +131,7 @@ cdef void c_ruth4_step_nbody(
         for k in range(half_ndim):
              grad[k] = 0.
 
-        c_gradient(p, t, w, grad)
+        c_gradient(p, 1, t, w, grad)
         c_nbody_gradient_symplectic(pots, t, w, w_nbody, nbody, nbody_i, half_ndim, grad)
 
         for k in range(half_ndim):

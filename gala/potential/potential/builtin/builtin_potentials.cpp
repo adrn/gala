@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "extra_compile_macros.h"
+#include "src/vectorization.h"
 
 #if USE_GSL == 1
 #include <gsl/gsl_sf_gamma.h>
@@ -10,12 +11,12 @@
 
 double nan_density(double t, double *pars, double *q, int n_dim, void *state) { return NAN; }
 double nan_value(double t, double *pars, double *q, int n_dim, void *state) { return NAN; }
-void nan_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {}
+void nan_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {}
 void nan_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) {}
 
 double null_density(double t, double *pars, double *q, int n_dim, void *state) { return 0; }
 double null_value(double t, double *pars, double *q, int n_dim, void *state) { return 0; }
-void null_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state){}
+void null_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state){}
 void null_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) {}
 
 /* Note: many Hessians generated with sympy in
@@ -30,7 +31,7 @@ double henon_heiles_value(double t, double *pars, double *q, int n_dim, void *st
     return 0.5 * (q[0]*q[0] + q[1]*q[1] + 2*q[0]*q[0]*q[1] - 2/3.*q[1]*q[1]*q[1]);
 }
 
-void henon_heiles_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void henon_heiles_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  no parameters... */
     grad[0] = grad[0] + q[0] + 2*q[0]*q[1];
     grad[1] = grad[1] + q[1] + q[0]*q[0] - q[1]*q[1];
@@ -63,7 +64,7 @@ double kepler_value(double t, double *pars, double *q, int n_dim, void *state) {
     return -pars[0] * pars[1] / R;
 }
 
-void kepler_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void kepler_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -140,7 +141,7 @@ double isochrone_value(double t, double *pars, double *q, int n_dim, void *state
     return -pars[0] * pars[1] / (sqrt(R2 + pars[2]*pars[2]) + pars[2]);
 }
 
-void isochrone_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void isochrone_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -227,7 +228,7 @@ double hernquist_value(double t, double *pars, double *q, int n_dim, void *state
     return -pars[0] * pars[1] / (R + pars[2]);
 }
 
-void hernquist_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void hernquist_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -310,7 +311,7 @@ double plummer_value(double t, double *pars, double *q, int n_dim, void *state) 
     return -pars[0]*pars[1] / sqrt(R2 + pars[2]*pars[2]);
 }
 
-void plummer_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void plummer_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -385,7 +386,7 @@ double jaffe_value(double t, double *pars, double *q, int n_dim, void *state) {
     return -pars[0] * pars[1] / pars[2] * log(1 + pars[2]/R);
 }
 
-void jaffe_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state){
+void jaffe_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state){
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -556,7 +557,7 @@ double powerlawcutoff_density(double t, double *pars, double *q, int n_dim, void
     return A * pow(r, -pars[2]) * exp(-r*r / (pars[3]*pars[3]));
 }
 
-void powerlawcutoff_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void powerlawcutoff_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars:
             0 - G (Gravitational constant)
             1 - m (total mass)
@@ -705,7 +706,7 @@ double stone_value(double t, double *pars, double *q, int n_dim, void *state) {
 
 }
 
-void stone_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void stone_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars:
             - G (Gravitational constant)
             - M (total mass)
@@ -858,7 +859,7 @@ double sphericalnfw_value(double t, double *pars, double *q, int n_dim, void *st
     }
 }
 
-void sphericalnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void sphericalnfw_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -970,7 +971,7 @@ double flattenednfw_value(double t, double *pars, double *q, int n_dim, void *st
     }
 }
 
-void flattenednfw_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void flattenednfw_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars:
             - G (Gravitational constant)
             - m (scale mass)
@@ -1078,7 +1079,7 @@ double triaxialnfw_value(double t, double *pars, double *q, int n_dim, void *sta
     }
 }
 
-void triaxialnfw_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void triaxialnfw_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars:
             - G (Gravitational constant)
             - v_c (circular velocity at the scale radius)
@@ -1186,7 +1187,7 @@ double satoh_value(double t, double *pars, double *q, int n_dim, void *state) {
     return -pars[0] * pars[1] / sqrt(S2);
 }
 
-void satoh_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void satoh_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -1273,8 +1274,7 @@ double kuzmin_value(double t, double *pars, double *q, int n_dim, void *state) {
     return -pars[0] * pars[1] / sqrt(S2);
 }
 
-void kuzmin_gradient(double t, double *pars, double *q, int n_dim,
-                     double *grad, void *state) {
+void kuzmin_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -1328,7 +1328,7 @@ double miyamotonagai_value(double t, double *pars, double *q, int n_dim, void *s
     return -pars[0] * pars[1] / sqrt(q[0]*q[0] + q[1]*q[1] + zd*zd);
 }
 
-void miyamotonagai_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void miyamotonagai_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars:
             - G (Gravitational constant)
             - m (mass scale)
@@ -1437,7 +1437,7 @@ double mn3_value(double t, double *pars, double *q, int n_dim, void *state) {
     return val;
 }
 
-void mn3_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void mn3_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     double tmp_pars[4] = {0., 0., 0., 0.};
     tmp_pars[0] = pars[0];
 
@@ -1445,7 +1445,7 @@ void mn3_gradient(double t, double *pars, double *q, int n_dim, double *grad, vo
         tmp_pars[1] = pars[1+3*i];
         tmp_pars[2] = pars[1+3*i+1];
         tmp_pars[3] = pars[1+3*i+2];
-        miyamotonagai_gradient(t, &tmp_pars[0], q, n_dim, grad, state);
+        miyamotonagai_gradient_single(t, &tmp_pars[0], q, n_dim, grad, state);
     }
 }
 
@@ -1516,7 +1516,7 @@ double leesuto_value(double t, double *pars, double *q, int n_dim, void *state) 
     }
 }
 
-void leesuto_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void leesuto_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars: (alpha = 1)
             0 - G
             1 - v_c
@@ -1638,7 +1638,7 @@ double logarithmic_density(double t, double *pars, double *q, int n_dim, void *s
     return pow(pars[1], 2)*(tmp_2*(tmp_10 - tmp_3) + tmp_5*(tmp_11 - tmp_6 + tmp_8) + tmp_7*(tmp_11 + tmp_6 - tmp_8))/pow(tmp_10 + tmp_3, 2) / (4*M_PI*pars[0]);
 }
 
-void logarithmic_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void logarithmic_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars:
             - G (Gravitational constant)
             - v_c (velocity scale)
@@ -1746,7 +1746,7 @@ double longmuralibar_value(double t, double *pars, double *q, int n_dim, void *s
     return pars[0]*pars[1]/(2*a) * log((x - a + Tm) / (x + a + Tp));
 }
 
-void longmuralibar_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void longmuralibar_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  http://adsabs.harvard.edu/abs/1992ApJ...397...44L
 
         pars:
@@ -2011,7 +2011,7 @@ double burkert_value(double t, double *pars, double *q, int n_dim, void *state) 
 }
 
 
-void burkert_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void burkert_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars:
             - G (Gravitational constant)
             - rho (mass scale)
@@ -2043,3 +2043,28 @@ double burkert_density(double t, double *pars, double *q, int n_dim, void *state
 
     return rho;
 }
+
+DEFINE_VECTORIZED_GRADIENT(burkert)
+DEFINE_VECTORIZED_GRADIENT(flattenednfw)
+DEFINE_VECTORIZED_GRADIENT(henon_heiles)
+DEFINE_VECTORIZED_GRADIENT(hernquist)
+DEFINE_VECTORIZED_GRADIENT(isochrone)
+DEFINE_VECTORIZED_GRADIENT(jaffe)
+DEFINE_VECTORIZED_GRADIENT(kepler)
+DEFINE_VECTORIZED_GRADIENT(kuzmin)
+DEFINE_VECTORIZED_GRADIENT(leesuto)
+DEFINE_VECTORIZED_GRADIENT(logarithmic)
+DEFINE_VECTORIZED_GRADIENT(longmuralibar)
+DEFINE_VECTORIZED_GRADIENT(miyamotonagai)
+DEFINE_VECTORIZED_GRADIENT(mn3)
+DEFINE_VECTORIZED_GRADIENT(nan)
+DEFINE_VECTORIZED_GRADIENT(null)
+DEFINE_VECTORIZED_GRADIENT(plummer)
+DEFINE_VECTORIZED_GRADIENT(satoh)
+DEFINE_VECTORIZED_GRADIENT(sphericalnfw)
+DEFINE_VECTORIZED_GRADIENT(stone)
+DEFINE_VECTORIZED_GRADIENT(triaxialnfw)
+
+#if USE_GSL == 1
+DEFINE_VECTORIZED_GRADIENT(powerlawcutoff)
+#endif
