@@ -161,7 +161,7 @@ cdef class CPotentialWrapper:
             for i in range(n):
                 c_gradient(self.cpotential, 1, t[i], &q_T[0, i], &grad[0, i])
 
-        return np.asarray(grad.T, copy=False)
+        return np.array(grad.T, copy=False)
 
     cpdef hessian(self, double[:, ::1] q, double[::1] t):
         """

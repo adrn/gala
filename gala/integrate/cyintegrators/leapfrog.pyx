@@ -120,7 +120,7 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
     if save_all:
         return np.asarray(t), np.asarray(all_w).transpose(0,2,1)
     else:
-        return np.asarray(t[-1:]), np.asarray(tmp_w.T, copy=False)
+        return np.asarray(t[-1:]), np.array(tmp_w.T, copy=False)
 
 # -------------------------------------------------------------------------------------
 # N-body stuff - TODO: to be moved, because this is a HACK!

@@ -186,4 +186,4 @@ cpdef gradient(double[:, ::1] xyz,
                             nmax, lmax,
                             &grad[0, 0], &grad[1, 0], &grad[2, 0])
 
-    return np.asarray(grad.T, copy=False)
+    return np.array(grad.T, copy=False)
