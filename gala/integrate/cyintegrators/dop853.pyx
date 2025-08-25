@@ -218,9 +218,9 @@ cpdef dop853_integrate_hamiltonian(
         CFrameType cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
     if save_all:
-        wres = np.empty((ntimes, norbits, ndim))
+        wres = np.empty((ndim, ntimes, norbits))
     else:
-        wres = np.empty((norbits, ndim))
+        wres = np.empty((ndim, norbits))
 
     for i in range(0, norbits, nbatch):
         # do the integration in batches for performance
@@ -238,9 +238,9 @@ cpdef dop853_integrate_hamiltonian(
             transposed=1
         )
         if save_all:
-            wres[:, i:j, :] = wout
+            wres[:, :, i:j] = wout.transpose((2,0,1))
         else:
-            wres[i:j, :] = wout
+            wres[:, i:j] = wout.T
 
     if save_all:
         return np.asarray(t), np.asarray(wres)

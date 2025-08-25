@@ -91,10 +91,10 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
         CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
 
     if save_all:
-        all_w = np.zeros((ntimes, ndim, n))
+        all_w = np.empty((ndim, ntimes, n))
 
         # save initial conditions
-        all_w[0, :, :] = w0.T.copy()
+        all_w[:, 0, :] = w0.T
 
     tmp_w = w0.T.copy()
 
@@ -115,12 +115,12 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
             if save_all:
                 for k in range(ndim):
                     for i in range(n):
-                        all_w[j, k, i] = tmp_w[k, i]
+                        all_w[k, j, i] = tmp_w[k, i]
 
     if save_all:
-        return np.asarray(t), np.asarray(all_w).transpose(0,2,1)
+        return np.asarray(t), np.asarray(all_w)
     else:
-        return np.asarray(t[-1:]), np.array(tmp_w.T, copy=False)
+        return np.asarray(t[-1:]), np.asarray(tmp_w)
 
 # -------------------------------------------------------------------------------------
 # N-body stuff - TODO: to be moved, because this is a HACK!
