@@ -28,6 +28,8 @@ cdef extern from "dopri/dop853.h":
 
     void Fwrapper (unsigned ndim, double t, double *w, double *f,
                    CPotential *p, CFrameType *fr, unsigned norbits, unsigned nbody) except +
+    void Fwrapper_T (unsigned ndim, double t, double *w, double *f,
+                   CPotential *p, CFrameType *fr, unsigned norbits, unsigned nbody) except +
     void Fwrapper_direct_nbody(unsigned ndim, double t, double *w, double *f,
                                CPotential *p, CFrameType *fr,
                                unsigned norbits, unsigned nbody, void *args) except + nogil
@@ -67,6 +69,7 @@ cdef dop853_helper(
     int nstiff,
     unsigned err_if_fail,
     unsigned log_output,
+    int transposed,
     unsigned save_all=?
 )
 
