@@ -51,7 +51,6 @@ def test_compare_to_py(Integrator, integrate_func, dt):
     t = np.linspace(0, dt * n_steps, n_steps + 1)
 
     cy_t, cy_w = integrate_func(H, cy_w0, t)
-    cy_w = np.rollaxis(cy_w, -1)
 
     integrator = Integrator(F)
     orbit = integrator(py_w0, dt=dt, n_steps=n_steps)
@@ -84,7 +83,7 @@ def test_save_all(integrate_func, dt):
     t_f, w_f = integrate_func(H, w0, t, save_all=False)
 
     assert t_all[-1] == t_f[0]
-    assert np.allclose(w_all[-1], w_f)
+    assert np.allclose(w_all[:, -1], w_f)
 
 
 # TODO: move this to only run if a flag like --remote-data is passed, like
