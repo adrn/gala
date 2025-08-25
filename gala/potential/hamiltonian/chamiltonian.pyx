@@ -347,8 +347,6 @@ class Hamiltonian(CommonBase):
             else:
                 raise ValueError(f"Cython integration not supported for '{Integrator!r}'")
 
-            # because shape is different from normal integrator return
-            w = np.rollaxis(w, -1)
             if w.shape[-1] == 1:
                 w = w[..., 0]
 
@@ -371,8 +369,10 @@ class Hamiltonian(CommonBase):
         except (TypeError, AttributeError):
             tunit = u.dimensionless_unscaled
 
-        return Orbit.from_w(w=w, units=self.units, t=t*tunit,
-                            hamiltonian=self)
+        t = u.Quantity(t, tunit, copy=False)
+
+        return Orbit.from_w(w=w, units=self.units, t=t,
+                            hamiltonian=self, copy=False)
 
     # def save(self, f):
     #     """

@@ -65,11 +65,16 @@ class Orbit(PhaseSpacePosition):
         stored as a dimensionless :class:`~astropy.units.Quantity`.
     hamiltonian : `~gala.potential.Hamiltonian` (optional)
         The Hamiltonian that the orbit was integrated in.
+    copy : bool, optional
+        If `True`, the input arrays are copied. If `False`, the input data
+        is referenced directly (if possible). Default is `True`.
 
     """
 
-    def __init__(self, pos, vel, t=None, hamiltonian=None, potential=None, frame=None):
-        super().__init__(pos=pos, vel=vel)
+    def __init__(
+        self, pos, vel, t=None, hamiltonian=None, potential=None, frame=None, copy=True
+    ):
+        super().__init__(pos=pos, vel=vel, copy=copy)
 
         if self.pos.ndim < 1:
             self.pos = self.pos.reshape(1)
