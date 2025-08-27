@@ -291,7 +291,8 @@ def test_composite():
         composite_pot, gp.potential.ccompositepotential.CCompositePotential
     )
 
-    test_x = [8.0, 0, 0] * u.kpc
+    # Test potential energy addition
+    test_x = [1.0, 2.0, 3.0] * u.kpc
     assert u.allclose(
         composite_pot.energy(test_x, t=0 * u.Gyr),
         pot_single.energy(test_x, t=0 * u.Gyr) + pot_multi.energy(test_x, t=0 * u.Gyr),
@@ -300,6 +301,18 @@ def test_composite():
         composite_pot.energy(test_x, t=1.4 * u.Gyr),
         pot_single.energy(test_x, t=1.4 * u.Gyr)
         + pot_multi.energy(test_x, t=1.4 * u.Gyr),
+    )
+
+    # Test gradient addition
+    assert u.allclose(
+        composite_pot.gradient(test_x, t=0 * u.Gyr),
+        pot_single.gradient(test_x, t=0 * u.Gyr)
+        + pot_multi.gradient(test_x, t=0 * u.Gyr),
+    )
+    assert u.allclose(
+        composite_pot.gradient(test_x, t=1.4 * u.Gyr),
+        pot_single.gradient(test_x, t=1.4 * u.Gyr)
+        + pot_multi.gradient(test_x, t=1.4 * u.Gyr),
     )
 
     # Test orbit integration
