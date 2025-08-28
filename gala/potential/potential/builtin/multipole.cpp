@@ -7,6 +7,7 @@ and https://github.com/adrn/gala/blob/main/gala/potential/scf/src/bfe_helper.c
 #include "extra_compile_macros.h"
 #include <math.h>
 #include <string.h>
+#include "src/vectorization.h"
 
 #define SQRT_FOURPI 3.544907701811031
 
@@ -67,7 +68,8 @@ double mp_phi_lm(double r, double phi, double X, int l, int m, int inner) {
     Gradient
 */
 void mp_sph_grad_phi_lm(double r, double phi, double X, int l, int m,
-                        int lmax, int inner, double *sphgrad) {
+                        int lmax, int inner,
+                        double *__restrict__ sphgradx, double *__restrict__ sphgrady, double *__restrict__ sphgradz) {
     double A, dYlm_dtheta;
     double dPhil_dr, dPhi_dphi, dPhi_dtheta;
 
@@ -126,13 +128,13 @@ void mp_sph_grad_phi_lm(double r, double phi, double X, int l, int m,
     dPhi_dphi *= Ylm * Phi_l;
 
     if (r > 0) {
-        sphgrad[0] = dPhil_dr;
-        sphgrad[1] = dPhi_dtheta;
-        sphgrad[2] = dPhi_dphi;
+        *sphgradx = dPhil_dr;
+        *sphgrady = dPhi_dtheta;
+        *sphgradz = dPhi_dphi;
     } else {
-        sphgrad[0] = 0;
-        sphgrad[1] = 0;
-        sphgrad[2] = 0;
+        *sphgradx = 0;
+        *sphgrady = 0;
+        *sphgradz = 0;
     }
 }
 
@@ -223,23 +225,23 @@ void mp_potential_helper(double *xyz, int K,
     }
 }
 
-void mp_gradient_helper(double *xyz, int K,
+void mp_gradient_helper(double6ptr q, int K,
                         double G, double M, double r_s,
-                        double *Slm, double *Tlm,
-                        int lmax, int inner, double *grad) {
+                        double *__restrict__ Slm, double *__restrict__ Tlm,
+                        int lmax, int inner,
+                        double6ptr grad) {
 
-    int i,j,k, l,m;
+    int i,k,l,m;
     double s, r, X, phi;
     double sintheta, cosphi, sinphi, tmp;
-    double tmp_grad[3], tmp_grad2[3*K]; // TODO: this might be really inefficient
+    double tmp_grad[3];
     double cosmphi[lmax+1], sinmphi[lmax+1];
 
     for (k=0; k<K; k++) {
-        j = 3*k;
-        r = sqrt(xyz[j]*xyz[j] + xyz[j+1]*xyz[j+1] + xyz[j+2]*xyz[j+2]);
+        r = sqrt(q.x[k]*q.x[k] + q.y[k]*q.y[k] + q.z[k]*q.z[k]);
         s = r / r_s;
-        X = xyz[j+2]/r; // cos(theta)
-        phi = atan2(xyz[j+1], xyz[j+0]);
+        X = q.z[k] / r; // cos(theta)
+        phi = atan2(q.y[k], q.x[k]);
 
         sintheta = sqrt(1 - X*X);
         cosphi = cos(phi);
@@ -252,9 +254,7 @@ void mp_gradient_helper(double *xyz, int K,
         }
 
         // zero out
-        tmp_grad2[j+0] = 0.;
-        tmp_grad2[j+1] = 0.;
-        tmp_grad2[j+2] = 0.;
+        double tmp_grad2[3] = {0., 0., 0.};
 
         i = 0;
         // gsl_sf_legendre_deriv_array(GSL_SF_LEGENDRE_SPHARM, lmax, X,
@@ -267,36 +267,36 @@ void mp_gradient_helper(double *xyz, int K,
                     continue;
                 }
 
-                mp_sph_grad_phi_lm(s, phi, X, l, m, lmax, inner, &tmp_grad[0]);
-                tmp_grad2[j+0] += tmp_grad[0] * tmp; // r
-                tmp_grad2[j+1] += tmp_grad[1] * tmp; // phi??
+                mp_sph_grad_phi_lm(s, phi, X, l, m, lmax, inner, &tmp_grad[0], &tmp_grad[1], &tmp_grad[2]);
+                tmp_grad2[0] += tmp_grad[0] * tmp; // r
+                tmp_grad2[1] += tmp_grad[1] * tmp; // phi??
 
                 if (sintheta != 0) {
-                    tmp_grad2[j+2] += tmp_grad[2] * (
+                    tmp_grad2[2] += tmp_grad[2] * (
                         Tlm[i]*cosmphi[m] - Slm[i]*sinmphi[m]
                     ) / (s * sintheta); // theta??
                 } else {
-                    tmp_grad2[j+2] = 0.;
+                    tmp_grad2[2] = 0.;
                 }
 
 
                 i++;
             }
         }
-        tmp_grad[0] = tmp_grad2[j+0];
-        tmp_grad[1] = tmp_grad2[j+1];
-        tmp_grad[2] = tmp_grad2[j+2];
+        tmp_grad[0] = tmp_grad2[0];
+        tmp_grad[1] = tmp_grad2[1];
+        tmp_grad[2] = tmp_grad2[2];
 
         // transform to cartesian
-        tmp_grad2[j+0] = sintheta*cosphi*tmp_grad[0] + X*cosphi*tmp_grad[1]
+        tmp_grad2[0] = sintheta*cosphi*tmp_grad[0] + X*cosphi*tmp_grad[1]
             - sinphi*tmp_grad[2];
-        tmp_grad2[j+1] = sintheta*sinphi*tmp_grad[0] + X*sinphi*tmp_grad[1]
+        tmp_grad2[1] = sintheta*sinphi*tmp_grad[0] + X*sinphi*tmp_grad[1]
             + cosphi*tmp_grad[2];
-        tmp_grad2[j+2] = X*tmp_grad[0] - sintheta*tmp_grad[1];
+        tmp_grad2[2] = X*tmp_grad[0] - sintheta*tmp_grad[1];
 
-        grad[j+0] = grad[j+0] + tmp_grad2[j+0] * G*M/(r_s*r_s);
-        grad[j+1] = grad[j+1] + tmp_grad2[j+1] * G*M/(r_s*r_s);
-        grad[j+2] = grad[j+2] + tmp_grad2[j+2] * G*M/(r_s*r_s);
+        grad.x[k] += tmp_grad2[0] * G*M/(r_s*r_s);
+        grad.y[k] += tmp_grad2[1] * G*M/(r_s*r_s);
+        grad.z[k] += tmp_grad2[2] * G*M/(r_s*r_s);
   }
 }
 
@@ -334,7 +334,8 @@ double mp_potential(double t, double *pars, double *q, int n_dim) {
     return val[0];
 }
 
-void mp_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
+// TODO: de-scalarize
+void mp_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars:
         - G (Gravitational constant)
         - lmax
@@ -357,10 +358,10 @@ void mp_gradient(double t, double *pars, double *q, int n_dim, double *grad) {
         Tlm[i] = pars[7 + 2*i];
     }
 
-    mp_gradient_helper(&q[0], 1,
+    mp_gradient_helper(q, 1,
                        G, M, r_s,
                        &Slm[0], &Tlm[0],
-                       lmax, inner, &grad[0]);
+                       lmax, inner, grad);
 }
 
 double mp_density(double t, double *pars, double *q, int n_dim) {
@@ -466,8 +467,7 @@ double mpetd_potential(double t, double *pars, double *q, int n_dim) {
     return val[0];
 }
 
-void mpetd_gradient(double t, double *pars, double *q,
-                    int n_dim, double *grad) {
+void mpetd_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
     /*  pars:
         - G (Gravitational constant)
         - lmax
@@ -510,10 +510,10 @@ void mpetd_gradient(double t, double *pars, double *q,
 
 
 
-    mp_gradient_helper(&q[0], 1,
+    mp_gradient_helper(q, 1,
                         G, M, r_s,
                         &alm[0], &blm[0],
-                        lmax, 1, &grad[0]);
+                        lmax, 1, grad);
 }
 
 double mpetd_density(double t, double *pars, double *q, int n_dim) {
@@ -658,8 +658,7 @@ double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) {
     return Phi;
 }
 
-void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim,
-                               double *grad) {
+void axisym_cylspline_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
 
     int logScaling = (int)pars[1];
     double Rscale = pars[2];
@@ -722,7 +721,7 @@ void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim,
         }
 
     } else {  // Use external Multipole
-        mp_gradient(t, &pars[5 + nR + nz + nR * nz], q, n_dim, grad);
+        mp_gradient_single(t, &pars[5 + nR + nz + nR * nz], q, n_dim, grad, state);
     }
     gsl_spline2d_free(spline);
     gsl_interp_accel_free(xacc);
@@ -809,6 +808,8 @@ double axisym_cylspline_density(double t, double *pars, double *q, int n_dim) {
     return dens;
 }
 
+DEFINE_VECTORIZED_GRADIENT(mp)
+DEFINE_VECTORIZED_GRADIENT(mpetd)
+DEFINE_VECTORIZED_GRADIENT(axisym_cylspline)
 
-
-#endif
+#endif  // USE_GSL

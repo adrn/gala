@@ -22,16 +22,16 @@ from ...potential.cpotential cimport energyfunc, gradientfunc, hessianfunc
 
 cdef extern from "frame/builtin/builtin_frames.h":
     double static_frame_hamiltonian(double t, double *pars, double *qp, int n_dim) nogil
-    void static_frame_gradient(double t, double *pars, double *qp, int n_dim, double *grad) nogil
+    void static_frame_gradient(size_t N, double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
     void static_frame_hessian(double t, double *pars, double *qp, int n_dim, double *hess) nogil
 
-    double constant_rotating_frame_hamiltonian_2d(double t, double *pars, double *qp, int n_dim) nogil
-    void constant_rotating_frame_gradient_2d(double t, double *pars, double *qp, int n_dim, double *grad) nogil
-    void constant_rotating_frame_hessian_2d(double t, double *pars, double *qp, int n_dim, double *hess) nogil
+    double constant_rotating_frame_2d_hamiltonian(double t, double *pars, double *qp, int n_dim) nogil
+    void constant_rotating_frame_2d_gradient(size_t N, double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    void constant_rotating_frame_2d_hessian(double t, double *pars, double *qp, int n_dim, double *hess) nogil
 
-    double constant_rotating_frame_hamiltonian_3d(double t, double *pars, double *qp, int n_dim) nogil
-    void constant_rotating_frame_gradient_3d(double t, double *pars, double *qp, int n_dim, double *grad) nogil
-    void constant_rotating_frame_hessian_3d(double t, double *pars, double *qp, int n_dim, double *hess) nogil
+    double constant_rotating_frame_3d_hamiltonian(double t, double *pars, double *qp, int n_dim) nogil
+    void constant_rotating_frame_3d_gradient(size_t N, double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    void constant_rotating_frame_3d_hessian(double t, double *pars, double *qp, int n_dim, double *hess) nogil
 
 __all__ = ['StaticFrame', 'ConstantRotatingFrame']
 
@@ -80,9 +80,9 @@ cdef class ConstantRotatingFrameWrapper2D(CFrameWrapper):
         assert len(params) == 1
         self._params = np.array([params[0]], dtype=np.float64)
 
-        cf.energy = <energyfunc>(constant_rotating_frame_hamiltonian_2d)
-        cf.gradient = <gradientfunc>(constant_rotating_frame_gradient_2d)
-        cf.hessian = <hessianfunc>(constant_rotating_frame_hessian_2d)
+        cf.energy = <energyfunc>(constant_rotating_frame_2d_hamiltonian)
+        cf.gradient = <gradientfunc>(constant_rotating_frame_2d_gradient)
+        cf.hessian = <hessianfunc>(constant_rotating_frame_2d_hessian)
         cf.n_params = 1
         cf.parameters = &(self._params[0])
 
@@ -98,9 +98,9 @@ cdef class ConstantRotatingFrameWrapper3D(CFrameWrapper):
         self._params = np.array([params[0], params[1], params[2]],
                                 dtype=np.float64)
 
-        cf.energy = <energyfunc>(constant_rotating_frame_hamiltonian_3d)
-        cf.gradient = <gradientfunc>(constant_rotating_frame_gradient_3d)
-        cf.hessian = <hessianfunc>(constant_rotating_frame_hessian_3d)
+        cf.energy = <energyfunc>(constant_rotating_frame_3d_hamiltonian)
+        cf.gradient = <gradientfunc>(constant_rotating_frame_3d_gradient)
+        cf.hessian = <hessianfunc>(constant_rotating_frame_3d_hessian)
         cf.n_params = 3
         cf.parameters = &(self._params[0])
 
