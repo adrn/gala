@@ -252,3 +252,11 @@ ignore = [
 "docs/conf.py" = ["T201"]
 "docs/tutorials/*.py" = ["B018", "E402"]
 "gala/dynamics/actionangle/_genfunc/**/*" = ["ALL"]
+
+[[tool.cibuildwheel.overrides]]
+select = "*_x86_64"
+environment = {CXXFLAGS="-march=x86-64-v3"}
+
+[[tool.cibuildwheel.overrides]]
+select = "*-macosx_arm64"
+environment = {CXXFLAGS="-mcpu=apple-m1"}

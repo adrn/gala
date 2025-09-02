@@ -42,12 +42,26 @@ the cloned ``gala`` directory)::
 
     python -m pip install .
 
-For the best performance, you may wish to compile with architecture-specific optimizations::
+
+Architecture-Specific Optimizations
+===================================
+
+For performance reasons, the pre-compiled wheels installed via ``pip`` are built assuming
+a minimum CPU architecture. For x86-64 CPUs (e.g. Intel), the wheels are built against
+``x86-64-v3``, which is supported by most Intel CPUs since 2013. For MacOS on ARM, the wheels
+are built against ``apple-m1``, which should work on Apple M1 (2020) or newer.
+
+For the best performance, you may wish to build from source (see above) with the following
+environment variable set::
 
     export CXXFLAGS=-march=native
 
 This will likely have the biggest effect on orbit integration. Be aware that compiling with this
 flag means that Gala will only run on the same type of CPU that it was compiled on!
+
+If your CPU does not support the instruction set that Gala was compiled for, you will likely
+receive an "illegal instruction error" (``SIGILL``). If that happens, try recompiling from
+source, without any ``-march`` flags.
 
 
 Installing on Windows
