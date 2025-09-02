@@ -61,12 +61,12 @@ struct POTENTIAL_NAME##_gradient_functor { \
         POTENTIAL_NAME##_gradient_single(std::forward<Params>(params)...); \
     } \
 }; \
-void POTENTIAL_NAME##_gradient(size_t N, double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, double *__restrict__ grad, void *__restrict__ state) { \
-    gradientv<POTENTIAL_NAME##_gradient_functor>(N, t, pars, q, n_dim, grad, state); \
+void POTENTIAL_NAME##_gradient(double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, size_t N, double *__restrict__ grad, void *__restrict__ state) { \
+    gradientv<POTENTIAL_NAME##_gradient_functor>(t, pars, q, n_dim, N, grad, state); \
 }
 
 template <typename F>
-void gradientv(size_t N, double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, double *__restrict__ grad, void *__restrict__ state) {
+void gradientv(double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, size_t N, double *__restrict__ grad, void *__restrict__ state) {
     F f;
     for (size_t i = 0; i < N; i++) {
         f(t, pars,

@@ -40,7 +40,7 @@ cdef extern from "potential/potential/builtin/exp_fields.h":
     # any cdef extern function that may throw a C++ exception must carry this annotation.
 
     double exp_value(double t, double *pars, double *q, int n_dim, void *state) except + nogil
-    void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) except + nogil
+    void exp_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) except + nogil
     double exp_density(double t, double *pars, double *q, int n_dim, void *state) except + nogil
 
 __all__ = [

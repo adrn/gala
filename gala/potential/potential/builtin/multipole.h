@@ -2,11 +2,11 @@
 
 extern double mp_potential(double t, double *pars, double *q, int n_dim);
 extern double mp_density(double t, double *pars, double *q, int n_dim);
-extern void mp_gradient(size_t N, double t, double *pars, double *q, int n_dim, double *grad, void *state);
+extern void mp_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state);
 
 extern double mpetd_potential(double t, double *pars, double *q, int n_dim);
 extern double mpetd_density(double t, double *pars, double *q, int n_dim);
-extern void mpetd_gradient(size_t N, double t, double *pars, double *q, int n_dim, double *grad, void *state);
+extern void mpetd_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state);
 
 extern void mp_density_helper(double *xyz, int K,
                                double M, double r_s,
@@ -24,5 +24,5 @@ extern void mp_sph_grad_phi_lm(double r, double phi, double X, int l, int m, int
 
 
 extern double axisym_cylspline_value(double t, double *pars, double *q, int n_dim);
-extern void axisym_cylspline_gradient(size_t N, double t, double *pars, double *q, int n_dim, double *grad, void *state);
+extern void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state);
 extern double axisym_cylspline_density(double t, double *pars, double *q, int n_dim);

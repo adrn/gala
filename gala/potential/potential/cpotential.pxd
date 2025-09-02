@@ -4,7 +4,7 @@
 cdef extern from "src/funcdefs.h":
     ctypedef double (*densityfunc)(double t, double *pars, double *q, int n_dim, void *state) except + nogil
     ctypedef double (*energyfunc)(double t, double *pars, double *q, int n_dim, void *state) except + nogil
-    ctypedef void (*gradientfunc)(size_t N, double t, double *pars, double *q, int n_dim, double *grad, void *state) except + nogil
+    ctypedef void (*gradientfunc)(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) except + nogil
     ctypedef void (*hessianfunc)(double t, double *pars, double *q, int n_dim, double *hess, void *state) except + nogil
 
 cdef extern from "potential/src/cpotential.h":

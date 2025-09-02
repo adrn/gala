@@ -16,8 +16,8 @@ cdef extern from "scf/src/bfe.h":
 
     double scf_value(double t, double *pars, double *q, int n_dim) nogil
     double scf_density(double t, double *pars, double *q, int n_dim) nogil
-    void scf_gradient(size_t N, double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    void scf_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) nogil
 
     double scf_interp_value(double t, double *pars, double *q, int n_dim) nogil
     double scf_interp_density(double t, double *pars, double *q, int n_dim) nogil
-    void scf_interp_gradient(size_t N, double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    void scf_interp_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) nogil

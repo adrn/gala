@@ -148,7 +148,7 @@ void apply_shift_rotate(double *q_in, double *q0, double *R, int n_dim,
     apply_rotate(&tmp[0], R, n_dim, transpose, q_out);
 }
 
-void apply_shift_rotate_N(size_t N, const double *q_in, const double *q0, const double *R, int n_dim,
+void apply_shift_rotate_N(const double *q_in, const double *q0, const double *R, int n_dim, size_t N,
                         int transpose, double *q_out) {
     // q_in: shape [n_dim, N]
     // q_out: shape [n_dim, N]
@@ -241,7 +241,7 @@ void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
 
     for (size_t i = 0; i < p->n_components; i++) {
         if (p->do_shift_rotate[i] == 0) {
-            (p->gradient)[i](N, t, (p->parameters)[i], qp, p->n_dim, grad, (p->state)[i]);
+            (p->gradient)[i](t, (p->parameters)[i], qp, p->n_dim, N, grad, (p->state)[i]);
         } else {
             // Initialize temporary arrays
             for (size_t j = 0; j < p->n_dim * N; j++) {
@@ -251,17 +251,17 @@ void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
 
             // Apply shift and rotation to all particles
             apply_shift_rotate_N(
-                N,
                 qp,
                 (p->q0)[i],
                 (p->R)[i],
                 p->n_dim,
+                N,
                 0,
                 qp_trans
             );
 
             // Compute gradient for transformed coordinates
-            (p->gradient)[i](N, t, (p->parameters)[i], qp_trans, p->n_dim, tmp_grad, (p->state)[i]);
+            (p->gradient)[i](t, (p->parameters)[i], qp_trans, p->n_dim, N, tmp_grad, (p->state)[i]);
 
             // Apply inverse rotation to gradient and accumulate
             for (size_t j = 0; j < N; j++) {

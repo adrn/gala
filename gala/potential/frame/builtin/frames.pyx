@@ -22,15 +22,15 @@ from ...potential.cpotential cimport energyfunc, gradientfunc, hessianfunc
 
 cdef extern from "frame/builtin/builtin_frames.h":
     double static_frame_hamiltonian(double t, double *pars, double *qp, int n_dim) nogil
-    void static_frame_gradient(size_t N, double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    void static_frame_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) nogil
     void static_frame_hessian(double t, double *pars, double *qp, int n_dim, double *hess) nogil
 
     double constant_rotating_frame_2d_hamiltonian(double t, double *pars, double *qp, int n_dim) nogil
-    void constant_rotating_frame_2d_gradient(size_t N, double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    void constant_rotating_frame_2d_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) nogil
     void constant_rotating_frame_2d_hessian(double t, double *pars, double *qp, int n_dim, double *hess) nogil
 
     double constant_rotating_frame_3d_hamiltonian(double t, double *pars, double *qp, int n_dim) nogil
-    void constant_rotating_frame_3d_gradient(size_t N, double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    void constant_rotating_frame_3d_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) nogil
     void constant_rotating_frame_3d_hessian(double t, double *pars, double *qp, int n_dim, double *hess) nogil
 
 __all__ = ['StaticFrame', 'ConstantRotatingFrame']

@@ -226,7 +226,7 @@ double scf_value(double t, double *pars, double *q, int n_dim) {
     return _val;
 }
 
-void scf_gradient(size_t N, double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, double *__restrict__ grad, void *__restrict__ state) {
+void scf_gradient(double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, size_t N, double *__restrict__ grad, void *__restrict__ state) {
     /*  pars:
         - G (Gravitational constant)
         - nmax
@@ -466,7 +466,7 @@ double scf_interp_density(double t, double *pars, double *q, int n_dim) {
 
 }
 
-void scf_interp_gradient(size_t N, double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, double *__restrict__ grad, void *__restrict__ state) {
+void scf_interp_gradient(double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, size_t N, double *__restrict__ grad, void *__restrict__ state) {
     int nmax = (int)pars[1];   // TODO: abuse!
     int lmax = (int)pars[2];   // TODO: abuse!
     int ntimes = (int)pars[3]; // TODO: abuse!
@@ -507,7 +507,7 @@ void scf_interp_gradient(size_t N, double t, double *__restrict__ pars, double *
     }
 
     // Call scf_gradient with all recentered positions
-    scf_gradient(N, t, interp_pars, newq, n_dim, grad, state);
+    scf_gradient(t, interp_pars, newq, n_dim, N, grad, state);
 
     // Free allocated memory
     delete[] newq;
