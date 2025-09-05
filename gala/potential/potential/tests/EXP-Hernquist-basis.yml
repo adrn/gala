@@ -1,6 +1,7 @@
+
 ---
 id: sphereSL
-parameters:
+parameters :
   numr: 1024
   rmin: 0.0003
   rmax: 52.0
@@ -8,4 +9,4 @@ parameters:
   nmax: 10
   modelname: EXP-Hernquist.model
   cachename: EXP-Hernquist.cache
----
+...

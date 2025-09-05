@@ -193,6 +193,22 @@ def main():
     coefs = gen.make_coef(basis, coef_arr, time=2000.0 * u.Myr, coefs=coefs)
     gen.save_coefs(coefs, this_path / f"{gen.name}-multi-coefs.hdf5")
 
+    # A few snapshots with slightly different coefficients and a snapshot time unit
+    # different from the internal unit system time
+    coef_arr = np.zeros(gen.coef_shape, dtype=np.complex128)
+    coef_arr[0, 0] = 1.0  # close to matching the input Hernquist potential
+    coefs = gen.make_coef(basis, coef_arr, time=0.0)
+
+    coef_arr = np.zeros(gen.coef_shape, dtype=np.complex128)
+    coef_arr[0, 0] = 2.0
+    coefs = gen.make_coef(basis, coef_arr, time=0.5, coefs=coefs)
+
+    coef_arr = np.zeros(gen.coef_shape, dtype=np.complex128)
+    coef_arr[0, 0] = 3.0
+    coefs = gen.make_coef(basis, coef_arr, time=1.0, coefs=coefs)
+
+    gen.save_coefs(coefs, this_path / f"{gen.name}-multi-coefs-snap-time-Gyr.hdf5")
+
 
 if __name__ == "__main__":
     main()
