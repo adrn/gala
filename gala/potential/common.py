@@ -145,15 +145,14 @@ class CommonBase:
 
         return parameter_values, parameter_is_default
 
-    @classmethod
-    def _prepare_parameters(cls, parameters, units):
+    def _prepare_parameters(self, parameters, units):
         pars = {}
         for k, v in parameters.items():
-            expected_ptype = cls._parameters[k].physical_type
+            expected_ptype = self._parameters[k].physical_type
             expected_unit = (
                 units[expected_ptype] if expected_ptype is not None else None
             )
-            equiv = cls._parameters[k].equivalencies
+            equiv = self._parameters[k].equivalencies
 
             if hasattr(v, "unit"):
                 if not isinstance(
