@@ -5,6 +5,8 @@ This module provides the TimeInterpolatedPotential class that allows interpolati
 potential parameters, origin, and rotation over time using GSL splines.
 """
 
+import copy
+
 import numpy as np
 
 from ...common import PotentialParameter
@@ -109,6 +111,10 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
         self._potential_cls = potential_cls
         self._time_knots = time_knots
         self._interp_kind = interp_kind
+
+        # HACK: ._parameters exists on the class, not the instance, but this makes it
+        # exist only on this instance...
+        self._parameters = copy.deepcopy(self._parameters)
 
         # Copy parameter definitions from the wrapped potential class
         # This is crucial so the base class knows what parameters to expect
