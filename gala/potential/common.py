@@ -23,10 +23,20 @@ class PotentialParameter:
         The default value of the parameter.
     equivalencies : `astropy.units.equivalencies.Equivalency` (optional)
         Any equivalencies required for the parameter.
+    python_only : bool (optional)
+        Controls whether to pass this parameter value to the C/Cython layer. True means
+        a parameter is a Python-only value and will not be passed to the C/Cython layer.
+        Default is False, meaning by default parameters will be passed to the C/Cython
+        layer.
     """
 
     def __init__(
-        self, name, physical_type="dimensionless", default=None, equivalencies=None
+        self,
+        name,
+        physical_type="dimensionless",
+        default=None,
+        equivalencies=None,
+        python_only=False,
     ):
         # TODO: could add a "shape" argument?
         # TODO: need better sanitization and validation here
@@ -35,6 +45,7 @@ class PotentialParameter:
         self.physical_type = str(physical_type) if physical_type is not None else None
         self.default = default
         self.equivalencies = equivalencies
+        self.python_only = bool(python_only)
 
     def __repr__(self):
         if self.physical_type is None:
