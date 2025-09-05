@@ -20,7 +20,7 @@ namespace gala_exp {
 
 State exp_init(
   const std::string &config_fn, const std::string &coeffile,
-  int stride, double tmin, double tmax, int snapshot_index)
+  int stride, double tmin, double tmax, int snapshot_index, double snapshot_time_factor)
 {
   YAML::Node yaml = YAML::LoadFile(std::string(config_fn));
 
@@ -92,7 +92,7 @@ State exp_init(
     }
   }
 
-  return { basis, coefs, tmin, tmax, is_static };
+  return { basis, coefs, tmin, tmax, is_static, snapshot_time_factor };
 }
 
 // Linear interpolator on coefficients.  Higher order interpolation
@@ -177,7 +177,9 @@ double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
 
   if (!exp_state->is_static) {
     // TODO: how expensive is this, actually?
-    exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
+    exp_state->basis->set_coefs(
+      gala_exp::interpolator(t * exp_state->snapshot_time_factor, exp_state->coefs)
+    );
   }
 
   // Get the field quantities
@@ -192,7 +194,9 @@ void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, vo
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
   if (!exp_state->is_static) {
-    exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
+    exp_state->basis->set_coefs(
+      gala_exp::interpolator(t * exp_state->snapshot_time_factor, exp_state->coefs)
+    );
   }
 
   // TODO: ask Martin/Mike for a way to compute only the force/acceleration - we're wasting
@@ -208,7 +212,9 @@ double exp_density(double t, double *pars, double *q, int n_dim, void* state) {
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
   if (!exp_state->is_static) {
-    exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
+    exp_state->basis->set_coefs(
+      gala_exp::interpolator(t * exp_state->snapshot_time_factor, exp_state->coefs)
+    );
   }
 
   // TODO: ask Martin/Mike for a way to compute only the density - we're wasting
@@ -223,7 +229,9 @@ double exp_density(double t, double *pars, double *q, int n_dim, void* state) {
 //   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
 //   if (!exp_state->is_static) {
-//     exp_state->basis->set_coefs(gala_exp::interpolator(t, exp_state->coefs));
+//     exp_state->basis->set_coefs(
+//       gala_exp::interpolator(t * exp_state->snapshot_time_factor, exp_state->coefs)
+//     );
 //   }
 
 //   auto field = exp_state->basis->getFields(q[0], q[1], q[2]);

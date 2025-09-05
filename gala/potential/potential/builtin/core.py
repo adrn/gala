@@ -1472,6 +1472,9 @@ class EXPPotential(CPotentialBase, EXP_only=True):
 
     config_file = PotentialParameter("config_file", physical_type=None)
     coef_file = PotentialParameter("coef_file", physical_type=None)
+    snapshot_time_unit = PotentialParameter(
+        "snapshot_time_unit", physical_type=None, default=None, python_only=True
+    )
 
     tmin = PotentialParameter(
         "tmin", physical_type="time", default=-np.finfo(np.float64).max
@@ -1508,7 +1511,16 @@ class EXPPotential(CPotentialBase, EXP_only=True):
                 "(most likely a SimulationUnitSystem with G=1)."
             )
 
-        super().__init__(*args, **kwargs)
+        PotentialBase.__init__(self, *args, **kwargs)
+
+        # This hackery handles the situation where the snapshot time unit is different
+        # from the EXP (G=1) unit system that the coefficients/basis are in:
+        factor = 1 / (
+            u.Quantity(1.0, self.parameters["snapshot_time_unit"])
+            .decompose(self.units)
+            .value
+        )
+        self._setup_wrapper(snapshot_time_factor=factor)
 
     if EXP_ENABLED:
         Wrapper = EXPWrapper
