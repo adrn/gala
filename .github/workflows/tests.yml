@@ -160,6 +160,9 @@ jobs:
           echo OMPI_CXX="$(brew --prefix llvm)/bin/clang++" >> $GITHUB_ENV
           echo OMPI_FC="$(brew --prefix flang)/bin/flang" >> $GITHUB_ENV
 
+          # c++ library path is workaround for clang bug https://github.com/llvm/llvm-project/issues/155531
+          echo "LDFLAGS=-L$(brew --prefix libomp)/lib -L"$(brew --prefix llvm)"/lib/c++" >> $GITHUB_ENV
+
       - name: Build EXP
         if: matrix.gala-exp == '1'
         working-directory: EXP
