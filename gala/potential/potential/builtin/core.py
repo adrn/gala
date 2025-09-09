@@ -1545,11 +1545,11 @@ class EXPPotential(CPotentialBase, EXP_only=True):
         """
         The actual, loaded minimum time for which the potential is defined.
         """
-        return self.c_instance.tmin * self.units["time"]
+        return self.c_instance.tmin * self.parameters["snapshot_time_unit"]
 
     @property
     def tmax_exp(self) -> u.Quantity:
         """
         The actual, loaded maximum time for which the potential is defined.
         """
-        return self.c_instance.tmax * self.units["time"]
+        return self.c_instance.tmax * self.parameters["snapshot_time_unit"]

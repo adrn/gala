@@ -243,6 +243,9 @@ def test_multi_different_snapshot_time_unit():
     val1 = pot_multi.value(x, t=1.0 * u.Gyr)
     assert np.isclose(val1 / val0, 3.0)  # see: generate_exp.py
 
+    assert u.allclose(pot_multi.tmin_exp, 0.0 * u.Gyr)
+    assert u.allclose(pot_multi.tmax_exp, 1.0 * u.Gyr)
+
 
 def test_cython_exceptions():
     """Test various exceptions propagated from C++"""
