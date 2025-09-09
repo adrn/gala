@@ -1513,6 +1513,9 @@ class EXPPotential(CPotentialBase, EXP_only=True):
 
         PotentialBase.__init__(self, *args, **kwargs)
 
+        if self.parameters["snapshot_time_unit"] is None:
+            self.parameters["snapshot_time_unit"] = self.units["time"]
+
         # This hackery handles the situation where the snapshot time unit is different
         # from the EXP (G=1) unit system that the coefficients/basis are in:
         factor = 1 / (
