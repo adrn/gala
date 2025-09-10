@@ -16,6 +16,7 @@ public:
     double tmin;
     double tmax;
     bool is_static;
+    double snapshot_time_factor;
 };
 
 State exp_init(
@@ -24,7 +25,8 @@ State exp_init(
     int stride,
     double tmin,
     double tmax,
-    int snapshot_index
+    int snapshot_index,
+    double snapshot_time_factor
 );
 
 CoefClasses::CoefStrPtr interpolator(double t, CoefClasses::CoefsPtr coefs);

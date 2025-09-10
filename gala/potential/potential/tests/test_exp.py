@@ -28,6 +28,9 @@ except ImportError:
 EXP_CONFIG_FILE = get_pkg_data_filename("EXP-Hernquist-basis.yml")
 EXP_SINGLE_COEF_FILE = get_pkg_data_filename("EXP-Hernquist-single-coefs.hdf5")
 EXP_MULTI_COEF_FILE = get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5")
+EXP_MULTI_COEF_SNAPSHOT_TIME_FILE = get_pkg_data_filename(
+    "EXP-Hernquist-multi-coefs-snap-time-Gyr.hdf5"
+)
 
 # Use in CI to ensure tests aren't silently skipped
 FORCE_EXP_TEST = os.environ.get("GALA_FORCE_EXP_TEST", "0") == "1"
@@ -226,6 +229,22 @@ def test_exp_unit_tests():
     # check tmin/tmax
     assert u.allclose(pot_multi.tmin_exp, 0.0 * u.Gyr)
     assert u.allclose(pot_multi.tmax_exp, 2.0 * u.Gyr)
+
+
+def test_multi_different_snapshot_time_unit():
+    pot_multi = EXPPotential(
+        config_file=EXP_CONFIG_FILE,
+        coef_file=EXP_MULTI_COEF_SNAPSHOT_TIME_FILE,
+        units=EXPTestBase.exp_units,
+        snapshot_time_unit=u.Gyr,
+    )
+    x = [8.0, 0, 0] * u.kpc
+    val0 = pot_multi.value(x, t=0.0 * u.Gyr)
+    val1 = pot_multi.value(x, t=1.0 * u.Gyr)
+    assert np.isclose(val1 / val0, 3.0)  # see: generate_exp.py
+
+    assert u.allclose(pot_multi.tmin_exp, 0.0 * u.Gyr)
+    assert u.allclose(pot_multi.tmax_exp, 1.0 * u.Gyr)
 
 
 def test_cython_exceptions():

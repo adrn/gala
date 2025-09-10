@@ -293,6 +293,9 @@ class CPotentialBase(PotentialBase):
         # to support array parameters, but they get unraveled
         kwargs = dict(kwargs)
         for k, v in self.parameters.items():
+            if self._parameters[k].python_only:
+                continue
+
             if hasattr(v, "unit"):
                 arrs.append(np.atleast_1d(v.value).ravel())
             else:

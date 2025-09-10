@@ -31,7 +31,8 @@ cdef extern from "potential/potential/builtin/exp_fields.h" namespace "gala_exp"
         int stride,
         double tmin,
         double tmax,
-        int snapshot_index
+        int snapshot_index,
+        double snapshot_time_factor
     ) except + nogil
 
 cdef extern from "potential/potential/builtin/exp_fields.h":
@@ -54,7 +55,10 @@ __all__ = [
 cdef class EXPWrapper(CPotentialWrapper):
     cdef State exp_state
 
-    def __init__(self, G, parameters, q0, R, config_file, coef_file, stride, snapshot_index):
+    def __init__(
+        self, G, parameters, q0, R,
+        config_file, coef_file, stride, snapshot_index, snapshot_time_factor
+    ):
         tmin = parameters[0]
         tmax = parameters[1]
 
@@ -71,7 +75,8 @@ cdef class EXPWrapper(CPotentialWrapper):
                 stride,
                 tmin,
                 tmax,
-                snapshot_index
+                snapshot_index,
+                snapshot_time_factor
             )
             self.cpotential.state[0] = &self.exp_state
             self.cpotential.value[0] = <energyfunc>(exp_value)

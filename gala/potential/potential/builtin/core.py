@@ -1472,6 +1472,9 @@ class EXPPotential(CPotentialBase, EXP_only=True):
 
     config_file = PotentialParameter("config_file", physical_type=None)
     coef_file = PotentialParameter("coef_file", physical_type=None)
+    snapshot_time_unit = PotentialParameter(
+        "snapshot_time_unit", physical_type=None, default=None, python_only=True
+    )
 
     tmin = PotentialParameter(
         "tmin", physical_type="time", default=-np.finfo(np.float64).max
@@ -1508,7 +1511,19 @@ class EXPPotential(CPotentialBase, EXP_only=True):
                 "(most likely a SimulationUnitSystem with G=1)."
             )
 
-        super().__init__(*args, **kwargs)
+        PotentialBase.__init__(self, *args, **kwargs)
+
+        if self.parameters["snapshot_time_unit"] is None:
+            self.parameters["snapshot_time_unit"] = self.units["time"]
+
+        # This hackery handles the situation where the snapshot time unit is different
+        # from the EXP (G=1) unit system that the coefficients/basis are in:
+        factor = 1 / (
+            u.Quantity(1.0, self.parameters["snapshot_time_unit"])
+            .decompose(self.units)
+            .value
+        )
+        self._setup_wrapper(snapshot_time_factor=factor)
 
     if EXP_ENABLED:
         Wrapper = EXPWrapper
@@ -1533,11 +1548,11 @@ class EXPPotential(CPotentialBase, EXP_only=True):
         """
         The actual, loaded minimum time for which the potential is defined.
         """
-        return self.c_instance.tmin * self.units["time"]
+        return self.c_instance.tmin * self.parameters["snapshot_time_unit"]
 
     @property
     def tmax_exp(self) -> u.Quantity:
         """
         The actual, loaded maximum time for which the potential is defined.
         """
-        return self.c_instance.tmax * self.units["time"]
+        return self.c_instance.tmax * self.parameters["snapshot_time_unit"]
