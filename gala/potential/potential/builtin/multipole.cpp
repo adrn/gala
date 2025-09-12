@@ -334,7 +334,7 @@ double mp_potential(double t, double *pars, double *q, int n_dim) {
     return val[0];
 }
 
-void mp_gradient(size_t N, double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, double *__restrict__ grad, void *__restrict__ state) {
+void mp_gradient(double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, size_t N, double *__restrict__ grad, void *__restrict__ state) {
     /*  pars:
         - G (Gravitational constant)
         - lmax
@@ -488,7 +488,7 @@ double mpetd_potential(double t, double *pars, double *q, int n_dim) {
     return val[0];
 }
 
-void mpetd_gradient(size_t N, double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, double *__restrict__ grad, void *__restrict__ state) {
+void mpetd_gradient(double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, size_t N, double *__restrict__ grad, void *__restrict__ state) {
     /*  pars:
         - G (Gravitational constant)
         - lmax
@@ -679,7 +679,7 @@ double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) {
     return Phi;
 }
 
-void axisym_cylspline_gradient(size_t N, double t, double *__restrict__ pars, double *__restrict__ q_in, int n_dim, double *__restrict__ grad_in, void *__restrict__ state) {
+void axisym_cylspline_gradient(double t, double *__restrict__ pars, double *__restrict__ q_in, int n_dim, size_t N, double *__restrict__ grad_in, void *__restrict__ state) {
 
     int logScaling = (int)pars[1];
     double Rscale = pars[2];

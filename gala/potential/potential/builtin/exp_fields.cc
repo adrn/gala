@@ -191,7 +191,7 @@ double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
   return field[5];
 }
 
-void exp_gradient(size_t N, double t, double *__restrict__ pars, double *__restrict__ q_in, int n_dim, double *__restrict__ grad_in, void *__restrict__ state){
+void exp_gradient(double t, double *__restrict__ pars, double *__restrict__ q_in, int n_dim, size_t N, double *__restrict__ grad_in, void *__restrict__ state){
   gala_exp::State *exp_state = static_cast<gala_exp::State *>(state);
 
   if (!exp_state->is_static) {
