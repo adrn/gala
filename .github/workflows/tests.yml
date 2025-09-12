@@ -156,15 +156,14 @@ jobs:
           echo CC=mpicc >> $GITHUB_ENV
           echo CXX=mpicxx >> $GITHUB_ENV
           echo FC=mpifort >> $GITHUB_ENV
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
           echo OMPI_CC="$(brew --prefix llvm)/bin/clang" >> $GITHUB_ENV
           echo OMPI_CXX="$(brew --prefix llvm)/bin/clang++" >> $GITHUB_ENV
           echo OMPI_FC="$(brew --prefix flang)/bin/flang" >> $GITHUB_ENV
 
-          # Fix header search paths for LLVM 21.1.1
-          LLVM_PREFIX=$(brew --prefix llvm)
-          XCODE_SDK_PATH=$(xcrun --show-sdk-path)
-          echo "CXXFLAGS=-isystem ${LLVM_PREFIX}/include/c++/v1 -isystem ${XCODE_SDK_PATH}/usr/include" >> $GITHUB_ENV
-          echo "LDFLAGS=-L$(brew --prefix libomp)/lib -L${LLVM_PREFIX}/lib/c++ -L${LLVM_PREFIX}/lib" >> $GITHUB_ENV
+          # c++ library path is workaround for clang bug https://github.com/llvm/llvm-project/issues/155531
+          sdkroot=$(xcrun --show-sdk-path)
+          echo "CXXFLAGS=-nostdinc++ -isystem $sdkroot/usr/include/c++/v1 -isystem $sdkroot/usr/include" >> $GITHUB_ENV
 
       - name: Build EXP
         if: matrix.gala-exp == '1'
