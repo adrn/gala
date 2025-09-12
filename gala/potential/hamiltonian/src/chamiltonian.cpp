@@ -48,7 +48,7 @@ void hamiltonian_gradient_T(CPotential *p, CFrameType *fr, size_t n, double t, d
 
     // Call gradient functions directly with transposed data
     c_gradient(p, n, t, qp_T, dH_T + ndim * n);  // Write to momentum part
-    (fr->gradient)(n, t, (fr->parameters), qp_T, ndim, dH_T, NULL);  // Write to position part
+    (fr->gradient)(t, (fr->parameters), qp_T, ndim, n, dH_T, NULL);  // Write to position part
 
     // Negate the momentum derivatives
     for (int i = 0; i < n * ndim; i++) {
