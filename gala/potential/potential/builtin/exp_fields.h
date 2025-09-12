@@ -33,16 +33,9 @@ CoefClasses::CoefStrPtr interpolator(double t, CoefClasses::CoefsPtr coefs);
 
 }
 
-extern "C" {
-
-// These must be C function prototypes. Gala will use the C function pointers
-// in the evaulation loop.
-
 extern double exp_value(double t, double *pars, double *q, int n_dim, void* state);
-extern void exp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void* state);
+extern void exp_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state);
 extern double exp_density(double t, double *pars, double *q, int n_dim, void* state);
-
-}
 
 class ScopedChdir {
 private:

@@ -1,5 +1,6 @@
 #include <math.h>
 #include <string.h>
+#include "src/vectorization.h"
 
 /*
     Static, inertial frame
@@ -14,7 +15,7 @@ double static_frame_hamiltonian(double t, double *pars, double *qp, int n_dim) {
     return 0.5*E; // kinetic term
 }
 
-void static_frame_gradient(double t, double *pars, double *qp, int n_dim, double *dH) {
+void static_frame_gradient_single(double t, double *__restrict__ pars, double6ptr qp, int n_dim, double6ptr dH, void *__restrict__ state) {
     int i;
 
     for (i=0; i < n_dim; i++) {
@@ -29,7 +30,7 @@ void static_frame_hessian(double t, double *pars, double *qp, int n_dim, double 
 /*
     Constantly rotating frame
 */
-double constant_rotating_frame_hamiltonian_2d(double t, double *pars, double *qp, int n_dim) {
+double constant_rotating_frame_2d_hamiltonian(double t, double *pars, double *qp, int n_dim) {
     /*
         Omega = pars
         TODO: this is klugy, n_dim has to equal 2!
@@ -46,7 +47,7 @@ double constant_rotating_frame_hamiltonian_2d(double t, double *pars, double *qp
     return E - 0.5 * pars[0]*pars[0] * R2;
 }
 
-void constant_rotating_frame_gradient_2d(double t, double *pars, double *qp, int n_dim, double *dH) {
+void constant_rotating_frame_2d_gradient_single(double t, double *__restrict__ pars, double6ptr qp, int n_dim, double6ptr dH, void *__restrict__ state) {
     /*
         TODO: this is klugy, n_dim has to equal 2!
     */
@@ -65,11 +66,11 @@ void constant_rotating_frame_gradient_2d(double t, double *pars, double *qp, int
     dH[3] = dH[4] + Cy;
 }
 
-void constant_rotating_frame_hessian_2d(double t, double *pars, double *qp, int n_dim, double *d2H) {
+void constant_rotating_frame_2d_hessian(double t, double *pars, double *qp, int n_dim, double *d2H) {
     /* TODO: */
 }
 
-double constant_rotating_frame_hamiltonian_3d(double t, double *pars, double *qp, int n_dim) {
+double constant_rotating_frame_3d_hamiltonian(double t, double *pars, double *qp, int n_dim) {
     /*
         Omega = pars
     */
@@ -90,7 +91,7 @@ double constant_rotating_frame_hamiltonian_3d(double t, double *pars, double *qp
     return E - (pars[0]*Lx + pars[1]*Ly + pars[2]*Lz);
 }
 
-void constant_rotating_frame_gradient_3d(double t, double *pars, double *qp, int n_dim, double *dH) {
+void constant_rotating_frame_3d_gradient_single(double t, double *__restrict__ pars, double6ptr qp, int n_dim, double6ptr dH, void *__restrict__ state) {
     double Cx, Cy, Cz; // used in cross-products below
 
     // Omega x q
@@ -110,6 +111,10 @@ void constant_rotating_frame_gradient_3d(double t, double *pars, double *qp, int
     dH[5] = dH[5] + Cz;
 }
 
-void constant_rotating_frame_hessian_3d(double t, double *pars, double *qp, int n_dim, double *d2H) {
+void constant_rotating_frame_3d_hessian(double t, double *pars, double *qp, int n_dim, double *d2H) {
     /* TODO: */
 }
+
+DEFINE_VECTORIZED_GRADIENT(static_frame)
+DEFINE_VECTORIZED_GRADIENT(constant_rotating_frame_2d)
+DEFINE_VECTORIZED_GRADIENT(constant_rotating_frame_3d)
