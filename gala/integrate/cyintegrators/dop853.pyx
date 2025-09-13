@@ -181,12 +181,12 @@ cdef dop853_helper(
         if save_all:
             return np.asarray(output_w).reshape((ntimes, ndim, norbits)).transpose((0,2,1))
         else:
-            return np.asarray(w.T, copy=False).reshape((norbits, ndim))
+            return np.array(w.T, copy=False).reshape((norbits, ndim))
     else:
         if save_all:
             return np.asarray(output_w).reshape((ntimes, norbits, ndim))
         else:
-            return np.asarray(w, copy=False).reshape((norbits, ndim))
+            return np.array(w, copy=False).reshape((norbits, ndim))
 
 
 cpdef dop853_integrate_hamiltonian(
