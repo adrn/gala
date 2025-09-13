@@ -38,6 +38,7 @@ jobs:
       !contains(needs.check_skip_flags.outputs.head-commit-message, '[skip tests]') }}
     env:
       EXP_TAG: "v7.8.5"
+      MACOSX_DEPLOYMENT_TARGET: "15.0"
     strategy:
       fail-fast: true
       matrix:
