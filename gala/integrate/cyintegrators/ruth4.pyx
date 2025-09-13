@@ -111,7 +111,7 @@ cpdef ruth4_integrate_hamiltonian(hamiltonian,
     if save_all:
         return np.asarray(t), np.asarray(all_w).transpose(0,2,1)
     else:
-        return np.asarray(t[-1:]), np.asarray(tmp_w.T, copy=False)
+        return np.asarray(t[-1:]), np.array(tmp_w.T, copy=False)
 
 
 # -------------------------------------------------------------------------------------
