@@ -976,6 +976,17 @@ void Fwrapper(unsigned full_ndim, double t, double *w, double *f, CPotential *p,
   }
 }
 
+void Fwrapper_T(unsigned full_ndim, double t, double *w, double *f, CPotential *p,
+              CFrameType *fr, unsigned norbits, unsigned na, void *args) {
+  /* na can be ignored here - used in nbody wrapper below */
+
+  int i;
+  unsigned ndim = full_ndim / norbits; // phase-space dimensionality
+
+  // call gradient function
+  hamiltonian_gradient_T(p, fr, norbits, t, w, f);
+}
+
 void Fwrapper_direct_nbody(unsigned full_ndim, double t, double *w, double *f,
                            CPotential *p, CFrameType *fr, unsigned norbits,
                            unsigned nbody, void *args) {

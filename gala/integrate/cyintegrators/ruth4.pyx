@@ -21,19 +21,18 @@ from ...potential import NullPotential
 from libc.stdlib cimport malloc, free
 
 
-cdef void c_ruth4_step(CPotential *p, int half_ndim, double t, double dt,
+cdef void c_ruth4_step(CPotential *p, size_t n, int half_ndim, double t, double dt,
                        double *cs, double *ds,
                        double *w, double *grad) nogil:
     cdef:
-        int j, k
+        int j, k, i
 
     for j in range(4):
+        c_gradient(p, n, t, w, grad)
         for k in range(half_ndim):
-             grad[k] = 0.
-        c_gradient(p, 1, t, w, grad)
-        for k in range(half_ndim):
-            w[half_ndim + k] = w[half_ndim + k] - ds[j] * grad[k] * dt
-            w[k] = w[k] + cs[j] * w[half_ndim + k] * dt
+            for i in range(n):
+                w[(half_ndim + k) * n + i] = w[(half_ndim + k) * n + i] - ds[j] * grad[k * n + i] * dt
+                w[k * n + i] = w[k * n + i] + cs[j] * w[(half_ndim + k) * n + i] * dt
 
 cpdef ruth4_integrate_hamiltonian(hamiltonian,
                                   double[:, ::1] w0,
@@ -80,7 +79,7 @@ cpdef ruth4_integrate_hamiltonian(hamiltonian,
         ], dtype='f8')
 
         # temporary array containers
-        double[::1] grad = np.zeros(half_ndim)
+        double[:, ::1] grad = np.zeros((half_ndim, n))
 
         # return arrays
         double[:, :, ::1] all_w
@@ -90,29 +89,29 @@ cpdef ruth4_integrate_hamiltonian(hamiltonian,
         CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
 
     if save_all:
-        all_w = np.zeros((ntimes, n, ndim))
+        all_w = np.zeros((ntimes, ndim, n))
 
         # save initial conditions
-        all_w[0, :, :] = w0.copy()
+        all_w[0, :, :] = w0.T.copy()
 
-    tmp_w = w0.copy()
+    tmp_w = w0.T.copy()
 
     with nogil:
-
         for j in range(1, ntimes, 1):
-            for i in range(n):
-                c_ruth4_step(cp, half_ndim, t[j], dt,
-                             &cs[0], &ds[0],
-                             &tmp_w[i, 0], &grad[0])
+            grad[:] = 0.
+            c_ruth4_step(cp, n, half_ndim, t[j], dt,
+                        &cs[0], &ds[0],
+                        &tmp_w[0, 0], &grad[0, 0])
 
-                if save_all:
-                    for k in range(ndim):
-                        all_w[j, i, k] = tmp_w[i, k]
+            if save_all:
+                for k in range(ndim):
+                    for i in range(n):
+                        all_w[j, k, i] = tmp_w[k, i]
 
     if save_all:
-        return np.asarray(t), np.asarray(all_w)
+        return np.asarray(t), np.asarray(all_w).transpose(0,2,1)
     else:
-        return np.asarray(t[-1:]), np.asarray(tmp_w)
+        return np.asarray(t[-1:]), np.array(tmp_w.T, copy=False)
 
 
 # -------------------------------------------------------------------------------------
