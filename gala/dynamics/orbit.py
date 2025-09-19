@@ -12,7 +12,7 @@ from gala.logging import logger
 from ..io import quantity_from_hdf5, quantity_to_hdf5
 from ..units import DimensionlessUnitSystem, UnitSystem, dimensionless
 from ..util import atleast_2d
-from .core import PhaseSpacePosition
+from .core import PhaseSpacePosition, _get_rep_name
 from .plot import plot_projections
 from .util import peak_to_peak_period
 
@@ -946,7 +946,7 @@ class Orbit(PhaseSpacePosition):
         fig = plot_projections(x, **kwargs)
 
         if (
-            self.pos.get_name() == "cartesian"
+            _get_rep_name(self.pos) == "cartesian"
             and all(not c.startswith("d_") for c in components)
             and "t" not in components
             and auto_aspect
@@ -1043,7 +1043,7 @@ class Orbit(PhaseSpacePosition):
         ax.set_zlabel(labels[2])
 
         if (
-            self.pos.get_name() == "cartesian"
+            _get_rep_name(self.pos) == "cartesian"
             and all(not c.startswith("d_") for c in components)
             and "t" not in components
             and auto_aspect
