@@ -951,8 +951,9 @@ class Orbit(PhaseSpacePosition):
             and "t" not in components
             and auto_aspect
         ):
+            # Use adjustable="box" to avoid conflicts with automatic limits
             for ax in fig.axes:
-                ax.set(aspect="equal", adjustable="datalim")
+                ax.set_aspect("equal", adjustable="box")
 
         return fig
 
