@@ -137,6 +137,9 @@ doctest_norecursedirs = [
     "docs/tutorials/*",
     "docs/_*"
 ]
+filterwarnings = [
+    "error::astropy.utils.exceptions.AstropyDeprecationWarning",
+]
 
 [tool.coverage.run]
 omit = [
