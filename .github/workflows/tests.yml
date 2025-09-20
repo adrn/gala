@@ -160,8 +160,11 @@ jobs:
           echo OMPI_CXX="$(brew --prefix llvm)/bin/clang++" >> $GITHUB_ENV
           echo OMPI_FC="$(brew --prefix flang)/bin/flang" >> $GITHUB_ENV
 
-          # c++ library path is workaround for clang bug https://github.com/llvm/llvm-project/issues/155531
-          echo "LDFLAGS=-L$(brew --prefix libomp)/lib -L"$(brew --prefix llvm)"/lib/c++" >> $GITHUB_ENV
+          # Fix header search paths for LLVM 21.1.1
+          LLVM_PREFIX=$(brew --prefix llvm)
+          XCODE_SDK_PATH=$(xcrun --show-sdk-path)
+          echo "CXXFLAGS=-isystem ${LLVM_PREFIX}/include/c++/v1 -isystem ${XCODE_SDK_PATH}/usr/include" >> $GITHUB_ENV
+          echo "LDFLAGS=-L$(brew --prefix libomp)/lib -L${LLVM_PREFIX}/lib/c++ -L${LLVM_PREFIX}/lib" >> $GITHUB_ENV
 
       - name: Build EXP
         if: matrix.gala-exp == '1'
@@ -184,7 +187,10 @@ jobs:
             --install-prefix $PWD/install \
             -DENABLE_PYEXP=on \
             -DPYTHON_EXECUTABLE=${PYTHON_EXEC} \
-            -DPYTHON_LIBRARY=${PYTHON_LIBRARY}
+            -DPYTHON_LIBRARY=${PYTHON_LIBRARY} \
+            -DCMAKE_CXX_FLAGS="${CXXFLAGS}" \
+            -DCMAKE_EXE_LINKER_FLAGS="${LDFLAGS}" \
+            -DCMAKE_SHARED_LINKER_FLAGS="${LDFLAGS}"
 
           # Build and install EXP
           cmake --build build
