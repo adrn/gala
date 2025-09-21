@@ -427,3 +427,11 @@ def test_io(tmpdir, obj):
     assert u.allclose(obj.xyz, obj2.xyz)
     assert u.allclose(obj.v_xyz, obj2.v_xyz)
     assert obj.frame == obj2.frame
+
+
+def test_astropy_deprecation_rep_name():
+    from gala.dynamics.core import _get_rep_name
+
+    rep = coord.CartesianRepresentation(1, 2, 3, unit=u.kpc)
+
+    assert _get_rep_name(rep) == "cartesian"

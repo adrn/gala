@@ -59,7 +59,7 @@ def pytest_generate_tests(metafunc):
         # Custom settings in the MN3 potential:
         if isinstance(pot, gp.MN3ExponentialDiskPotential):
             pot = Potential(**init, units=galactic, sech2_z=False)
-            galpy_pot = pot.to_galpy_potential(ro=ro, vo=vo)
+            galpy_pot = pot.as_interop("galpy", ro=ro, vo=vo)
             gala_pots.append(pot)
             galpy_pots.append(galpy_pot)
 

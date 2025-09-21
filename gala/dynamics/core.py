@@ -2,10 +2,12 @@ import importlib
 import re
 from collections import namedtuple
 
+import astropy
 import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 from astropy.coordinates import representation as r
+from packaging.version import Version
 
 from ..io import quantity_from_hdf5, quantity_to_hdf5
 from ..units import DimensionlessUnitSystem, UnitSystem, _greek_letters
@@ -14,6 +16,16 @@ from . import representation_nd as rep_nd
 from .plot import plot_projections
 
 __all__ = ["PhaseSpacePosition"]
+
+
+ASTROPY_GTEQ_7_1 = Version(astropy.__version__) >= Version("7.1")
+
+
+def _get_rep_name(rep):
+    if ASTROPY_GTEQ_7_1:
+        return rep.name
+    return rep.get_name()
+
 
 _RepresentationMappingBase = namedtuple(
     "RepresentationMapping", ("repr_name", "new_name", "default_unit")
@@ -160,7 +172,7 @@ class PhaseSpacePosition:
                 vel *= u.one
 
             if ndim == 3:
-                name = pos.__class__.get_name()
+                name = _get_rep_name(pos)
                 Diff = coord.representation.DIFFERENTIAL_CLASSES[name]
                 vel = Diff(*vel)
             else:
@@ -318,14 +330,14 @@ class PhaseSpacePosition:
             raise ValueError("Can only change representation for ndim=3 instances.")
 
         # get the name of the desired representation
-        pos_name = new_pos if isinstance(new_pos, str) else new_pos.get_name()
+        pos_name = new_pos if isinstance(new_pos, str) else _get_rep_name(new_pos)
 
         if isinstance(new_vel, str):
             vel_name = new_vel
         elif new_vel is None:
             vel_name = pos_name
         else:
-            vel_name = new_vel.get_name()
+            vel_name = _get_rep_name(new_vel)
 
         Representation = coord.representation.REPRESENTATION_CLASSES[pos_name]
         Differential = coord.representation.DIFFERENTIAL_CLASSES[vel_name]
@@ -846,7 +858,7 @@ class PhaseSpacePosition:
         fig = plot_projections(x, **kwargs)
 
         if (
-            self.pos.get_name() == "cartesian"
+            _get_rep_name(self.pos) == "cartesian"
             and all(not c.startswith("d_") for c in components)
             and auto_aspect
         ):
@@ -859,7 +871,11 @@ class PhaseSpacePosition:
     # Display
     #
     def __repr__(self):
-        return f"<{self.__class__.__name__} {self.pos.get_name()}, dim={self.ndim}, shape={self.pos.shape}>"
+        rep_name = _get_rep_name(self.pos)
+        return (
+            f"<{self.__class__.__name__} {rep_name}, dim={self.ndim}, "
+            f"shape={self.pos.shape}>"
+        )
 
     def __str__(self):
         return f"pos={self.pos}\nvel={self.vel}"

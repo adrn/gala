@@ -46,7 +46,7 @@ def galpy_find_actions_staeckel(potential, w, mean=True, delta=None, ro=None, vo
     if delta is None:
         delta = get_staeckel_fudge_delta(potential, w)
 
-    galpy_potential = potential.to_galpy_potential(ro, vo)
+    galpy_potential = potential.as_interop("galpy", ro=ro, vo=vo)
     if isinstance(galpy_potential, list):
         ro = galpy_potential[0]._ro * u.kpc
         vo = galpy_potential[0]._vo * u.km / u.s

@@ -12,6 +12,9 @@ Bug fixes
 ---------
 
 - ``gala.potential.EXPPotential`` now propagates C++ exceptions to Python.
+- Fixed a deprecation warning with astropy>=v7.1.
+- Fixed a matplotlib warning when plotting an orbit with ``plot()`` and
+  ``autolim=True`` related to using ``aspect="equal"``.
 
 API changes
 -----------

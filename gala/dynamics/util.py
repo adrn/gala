@@ -7,7 +7,7 @@ from astropy.utils.misc import isiterable
 from scipy.signal import argrelmax, argrelmin
 
 from ..util import atleast_2d
-from .core import PhaseSpacePosition
+from .core import PhaseSpacePosition, _get_rep_name
 
 __all__ = ["combine", "estimate_dt_n_steps", "peak_to_peak_period"]
 
@@ -303,7 +303,7 @@ def combine(objs):
         ):
             raise ValueError("All orbits must have the same time array.")
 
-        if "cartesian" not in obj.pos.get_name():
+        if "cartesian" not in _get_rep_name(obj.pos):
             raise NotImplementedError(
                 "Currently, combine only works for Cartesian-represented objects."
             )
