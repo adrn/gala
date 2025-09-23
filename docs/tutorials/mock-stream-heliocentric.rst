@@ -49,7 +49,7 @@ example. For the position and velocity of the cluster, we'll use
 
 We'll first convert this position and velocity to Galactocentric coordinates::
 
-   >>> c_gc = c.transform_to(coord.Galactocentric).cartesian
+   >>> c_gc = c.transform_to(coord.Galactocentric()).cartesian
    >>> c_gc
    <CartesianRepresentation (x, y, z) in kpc
       (7.86390455, 0.22748727, 16.41622487)
@@ -112,7 +112,7 @@ Here the negative timestep tells the stream generator to first integrate the orb
                    pm_dec=-2.257 * u.mas/u.yr,
                    radial_velocity=-58.7 * u.km/u.s)
 
-    c_gc = c.transform_to(coord.Galactocentric).cartesian
+    c_gc = c.transform_to(coord.Galactocentric()).cartesian
     pal5_w0 = gd.PhaseSpacePosition(c_gc)
 
     pal5_mass = 2.5e4 * u.Msun
@@ -130,13 +130,13 @@ Galactocentric coordinate frame. To convert these to observable, Heliocentric
 coordinates, we have to specify a desired coordinate frame. We'll convert to the
 ICRS coordinate system and plot some of the Heliocentric kinematic quantities::
 
-   >>> stream_c = pal5_stream.to_coord_frame(coord.ICRS)
+   >>> stream_c = pal5_stream.to_coord_frame(coord.ICRS())
 
 .. plot::
    :align: center
    :context: close-figs
 
-   stream_c = pal5_stream.to_coord_frame(coord.ICRS)
+   stream_c = pal5_stream.to_coord_frame(coord.ICRS())
 
    style = dict(marker='.', s=1, alpha=0.5)
 

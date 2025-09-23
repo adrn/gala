@@ -129,7 +129,7 @@ coordinate frames. For example, to transform to
 :class:`~astropy.coordinates.Galactic` coordinates::
 
     >>> from astropy.coordinates import Galactic
-    >>> gal_c = w.to_coord_frame(Galactic)
+    >>> gal_c = w.to_coord_frame(Galactic())
     >>> gal_c # doctest: +FLOAT_CMP
     <Galactic Coordinate: (l, b, distance) in (deg, deg, kpc)
         [(4.40971301e-05, -6.23850462, 9.17891228),

@@ -199,7 +199,7 @@ earliest time, then a stream is generated forward from the past time. This is pa
     ...                         pm_ra_cosdec=-2.296*u.mas/u.yr,
     ...                         pm_dec=-2.257*u.mas/u.yr,
     ...                         radial_velocity=-58.7*u.km/u.s)
-    >>> rep = pal5_c.transform_to(coord.Galactocentric).data
+    >>> rep = pal5_c.transform_to(coord.Galactocentric()).data
     >>> pal5_w0 = gd.PhaseSpacePosition(rep)
     >>> pal5_mass = 2.5e4 * u.Msun
     >>> pal5_pot = gp.PlummerPotential(m=pal5_mass, b=4*u.pc, units=galactic)
@@ -220,7 +220,7 @@ earliest time, then a stream is generated forward from the past time. This is pa
                             pm_ra_cosdec=-2.296*u.mas/u.yr,
                             pm_dec=-2.257*u.mas/u.yr,
                             radial_velocity=-58.7*u.km/u.s)
-    rep = pal5_c.transform_to(coord.Galactocentric).data
+    rep = pal5_c.transform_to(coord.Galactocentric()).data
     pal5_w0 = gd.PhaseSpacePosition(rep)
     pal5_mass = 2.5e4 * u.Msun
     pal5_pot = gp.PlummerPotential(m=pal5_mass, b=4*u.pc, units=galactic)
