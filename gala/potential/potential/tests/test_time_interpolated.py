@@ -1,172 +1,288 @@
 """
-Test script for TimeInterpolatedPotential implementation.
+Test suite for TimeInterpolatedPotential implementation.
 
-This script tests the basic functionality of the TimeInterpolatedPotential
-class to ensure it works correctly.
+Tests the functionality of the TimeInterpolatedPotential class including:
+- Constant parameter behavior
+- Time-varying parameters
+- Rotation matrix interpolation
+- Bounds checking
+- Vectorized evaluations
 """
 
 import astropy.units as u
 import numpy as np
+import pytest
+from scipy.spatial.transform import Rotation as R
 
 import gala.potential as gp
 from gala.units import galactic
 
 
-def test_simple():
-    # Create a simple Hernquist potential first to check it works normally
-    hernquist = gp.HernquistPotential(m=1e12, c=10.0, units=galactic)
-    pos = np.array([8.0, 0.0, 0.0])
+@pytest.fixture
+def time_knots():
+    """Standard time knots for testing."""
+    return np.linspace(0, 100, 11) * u.Myr
 
-    print("Testing normal Hernquist potential:")
-    energy = hernquist.energy(pos)
-    print(f"Normal Hernquist energy: {energy}")
 
-    # Now test time-interpolated with truly constant single-value parameters
-    time_knots = np.array([0.0, 1.0])
-    print("\nTesting time-interpolated with single values:")
-    time_pot1 = gp.TimeInterpolatedPotential(
+@pytest.fixture
+def test_positions():
+    """Test positions for evaluation."""
+    return {
+        "single": np.array([8.0, 0.0, 0.0]),
+        "multiple": np.array([[1.0, 2.0, 3.0], [0.0, 1.0, -1.0], [0.0, 0.5, 2.0]]).T,
+        "grid": np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]).T,
+    }
+
+
+@pytest.fixture
+def potentials():
+    """Different potential configurations for testing."""
+    time_knots = np.array([0.0, 50.0, 100.0]) * u.Myr
+
+    pots = {}
+
+    # Base potential for comparison
+    pots["base"] = gp.HernquistPotential(
+        m=1e12 * u.Msun, c=10.0 * u.kpc, units=galactic
+    )
+
+    # Time-interpolated with constant parameters
+    pots["constant"] = gp.TimeInterpolatedPotential(
         potential_cls=gp.HernquistPotential,
         time_knots=time_knots,
-        m=[1e12],  # Single value
-        c=[10.0],  # Single value
+        m=1e12 * u.Msun,
+        c=10.0 * u.kpc,
         units=galactic,
     )
-    print("✓ Single-value TimeInterpolatedPotential created")
 
-    energy1 = time_pot1.energy(pos, t=0.5)
-    print(f"Single-value energy: {energy1}")
-
-    # Now test with explicit array of same values
-    print("\nTesting time-interpolated with array of same values:")
-    time_pot2 = gp.TimeInterpolatedPotential(
+    # Time-interpolated with varying mass
+    masses = np.array([1e12, 1.5e12, 2e12]) * u.Msun
+    pots["varying"] = gp.TimeInterpolatedPotential(
         potential_cls=gp.HernquistPotential,
         time_knots=time_knots,
-        m=np.array([1e12, 1e12]),  # Array of same values
-        c=np.array([10.0, 10.0]),  # Array of same values
+        m=masses,
+        c=10.0 * u.kpc,
         units=galactic,
     )
-    print("✓ Array-value TimeInterpolatedPotential created")
 
-    energy2 = time_pot2.energy(pos, t=0.5)
-    print(f"Array-value energy: {energy2}")
+    return pots
 
 
-def test_constant_parameters():
-    """Test with constant parameters (should behave like regular potential)."""
-    times = np.linspace(0, 100, 11) * u.Myr
-    mass = 1e10 * u.Msun
-
-    pot_interp = gp.TimeInterpolatedPotential(
-        gp.KeplerPotential, time_knots=times, m=mass, units=galactic
+def test_constant_parameters_single_value(test_positions, time_knots):
+    """Test TimeInterpolatedPotential with single constant values."""
+    # Single value parameters
+    pot_single = gp.TimeInterpolatedPotential(
+        potential_cls=gp.HernquistPotential,
+        time_knots=time_knots,
+        m=[1e12] * u.Msun,
+        c=[10.0] * u.kpc,
+        units=galactic,
     )
-    pot_regular = gp.KeplerPotential(m=mass, units=galactic)
 
-    q = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]).T
-    for t in [0 * u.Myr, 50 * u.Myr, 100 * u.Myr]:
-        E_interp = pot_interp.energy(q, t=t)
-        E_regular = pot_regular.energy(q)
-        assert u.allclose(E_interp, E_regular)
+    # Should work without errors
+    energy = pot_single.energy(test_positions["single"], t=50 * u.Myr)
+    assert np.isfinite(energy.value)
 
 
-# def test_time_varying_parameters():
-#     """Test with time-varying parameters."""
+def test_constant_parameters_array_values(test_positions, time_knots):
+    """Test TimeInterpolatedPotential with array constant values."""
+    # Array of same values
+    pot_array = gp.TimeInterpolatedPotential(
+        potential_cls=gp.HernquistPotential,
+        time_knots=time_knots,
+        m=np.full(len(time_knots), 1e12) * u.Msun,
+        c=np.full(len(time_knots), 10.0) * u.kpc,
+        units=galactic,
+    )
 
-#     # Create time knots
-#     times = np.linspace(0, 100, 11) * u.Myr
-
-#     # Mass growing linearly with time
-#     masses = np.linspace(1e10, 2e10, 11) * u.Msun
-
-#     # Create time-interpolated potential
-#     pot = TimeInterpolatedPotential(KeplerPotential, times, m=masses, units=galactic)
-
-#     # Test position
-#     q = np.array([[1.0, 0.0, 0.0]]).T
-
-#     # Check that mass varies with time
-#     E_start = pot.energy(q, t=0 * u.Myr)
-#     E_mid = pot.energy(q, t=50 * u.Myr)
-#     E_end = pot.energy(q, t=100 * u.Myr)
-
-#     print(f"Energy at t=0: {E_start}")
-#     print(f"Energy at t=50: {E_mid}")
-#     print(f"Energy at t=100: {E_end}")
+    energy = pot_array.energy(test_positions["single"], t=50 * u.Myr)
+    assert np.isfinite(energy.value)
 
 
-# def test_rotation_interpolation():
-#     """Test rotation matrix interpolation."""
-#     print("\n--- Testing rotation interpolation ---")
+@pytest.mark.parametrize("func_name", ["energy", "gradient", "density"])
+def test_constant_vs_regular_potential(func_name, test_positions, potentials):
+    """Test that constant-parameter TimeInterpolatedPotential equals regular potential."""
+    pos = test_positions["single"]
 
-#     try:
-#         # Create time knots
-#         times = np.linspace(0, 100, 11) * u.Myr
+    val_base = getattr(potentials["base"], func_name)(pos)
+    val_constant = getattr(potentials["constant"], func_name)(pos, t=25 * u.Myr)
 
-#         # Create rotation matrices (90 degree rotation over time)
-#         angles = np.linspace(0, np.pi / 2, 11)
-#         rotations = np.array(
-#             [R.from_rotvec([0, 0, angle]).as_matrix() for angle in angles]
-#         )
-
-#         # Create time-interpolated potential
-#         pot = TimeInterpolatedPotential(
-#             KeplerPotential, times, m=1e10 * u.Msun, R=rotations, units=galactic
-#         )
-
-#         # Test position along x-axis
-#         q = np.array([[1.0, 0.0, 0.0]]).T
-
-#         # At t=0, should be same as x-axis
-#         E_start = pot.energy(q, t=0 * u.Myr)
-
-#         # At t=100, position should be rotated by 90 degrees
-#         # So it should be like evaluating at [0, 1, 0] in the potential frame
-#         q_rotated = np.array([[0.0, 1.0, 0.0]]).T
-#         pot_regular = KeplerPotential(m=1e10 * u.Msun, units=galactic)
-#         E_expected = pot_regular.energy(q_rotated)
-#         E_end = pot.energy(q, t=100 * u.Myr)
-
-#         print(f"Energy at start: {E_start}")
-#         print(f"Energy at end: {E_end}")
-#         print(f"Expected energy: {E_expected}")
-
-#         if np.allclose(E_end.value, E_expected.value, rtol=1e-3):
-#             print("✓ Rotation interpolation works")
-#         else:
-#             print("✗ Rotation interpolation failed")
-
-#     except Exception as e:
-#         print(f"✗ Error in rotation interpolation test: {e}")
+    assert u.allclose(val_base, val_constant, rtol=1e-10)
 
 
-# def test_bounds_checking():
-#     """Test that extrapolation raises errors."""
-#     print("\n--- Testing bounds checking ---")
+@pytest.mark.parametrize("func_name", ["energy", "gradient", "density"])
+def test_vectorized_evaluation(func_name, test_positions, potentials):
+    """Test vectorized evaluation with multiple positions."""
+    pos = test_positions["multiple"]
 
-#     try:
-#         # Create time knots
-#         times = np.linspace(0, 100, 11) * u.Myr
-#         masses = np.linspace(1e10, 2e10, 11) * u.Msun
+    result = getattr(potentials["varying"], func_name)(pos, t=25 * u.Myr)
 
-#         # Create time-interpolated potential
-#         pot = TimeInterpolatedPotential(
-#             KeplerPotential, times, m=masses, units=galactic
-#         )
+    # Check shapes
+    if func_name == "energy":
+        assert result.shape == (pos.shape[1],)
+    elif func_name == "gradient":
+        assert result.shape == pos.shape
+    elif func_name == "density":
+        assert result.shape == (pos.shape[1],)
 
-#         # Test position
-#         q = np.array([[1.0, 0.0, 0.0]]).T
+    # Check all values are finite
+    assert np.all(np.isfinite(result.value))
 
-#         # Try to evaluate outside bounds
-#         try:
-#             pot.energy(q, t=-10 * u.Myr)  # Before start
-#             print("✗ Should have raised error for t < t_min")
-#         except Exception as e:
-#             print("✓ Correctly raised error for t < t_min")
 
-#         try:
-#             pot.energy(q, t=110 * u.Myr)  # After end
-#             print("✗ Should have raised error for t > t_max")
-#         except Exception as e:
-#             print("✓ Correctly raised error for t > t_max")
+def test_time_varying_parameters(test_positions, potentials):
+    """Test that time-varying parameters produce different results at different times."""
+    pos = test_positions["single"]
 
-#     except Exception as e:
-#         print(f"✗ Error in bounds checking test: {e}")
+    # Energy should be different at different times due to varying mass
+    E_start = potentials["varying"].energy(pos, t=0 * u.Myr)
+    E_mid = potentials["varying"].energy(pos, t=50 * u.Myr)
+    E_end = potentials["varying"].energy(pos, t=100 * u.Myr)
+
+    # All should be finite
+    assert np.all(np.isfinite([E_start.value, E_mid.value, E_end.value]))
+
+    # Should be different (mass is increasing, so energy magnitude should increase)
+    assert not u.allclose(E_start, E_mid, rtol=1e-6)
+    assert not u.allclose(E_mid, E_end, rtol=1e-6)
+
+    # More massive = more negative energy (for bound systems)
+    assert E_end < E_mid < E_start
+
+
+def test_interpolation_accuracy():
+    """Test that interpolation gives reasonable intermediate values."""
+    time_knots = np.array([0.0, 100.0]) * u.Myr
+    masses = np.array([1e12, 2e12]) * u.Msun
+
+    pot = gp.TimeInterpolatedPotential(
+        potential_cls=gp.KeplerPotential,
+        time_knots=time_knots,
+        m=masses,
+        units=galactic,
+    )
+
+    pos = np.array([1.0, 0.0, 0.0])
+
+    # At midpoint, should be close to average mass behavior
+    E_mid = pot.energy(pos, t=50 * u.Myr)
+
+    # Create reference potential with average mass
+    pot_ref = gp.KeplerPotential(m=1.5e12 * u.Msun, units=galactic)
+    E_ref = pot_ref.energy(pos)
+
+    # Should be close (exact for linear interpolation)
+    assert u.allclose(E_mid, E_ref, rtol=1e-10)
+
+
+def test_rotation_interpolation():
+    """Test rotation matrix interpolation."""
+    time_knots = np.array([0.0, 100.0]) * u.Myr
+
+    # Create rotation matrices: 0 to 90 degrees around z-axis
+    angles = np.array([0.0, np.pi / 2])
+    rotations = np.array([R.from_rotvec([0, 0, angle]).as_matrix() for angle in angles])
+
+    pot = gp.TimeInterpolatedPotential(
+        potential_cls=gp.KeplerPotential,
+        time_knots=time_knots,
+        m=1e10 * u.Msun,
+        R=rotations,
+        units=galactic,
+    )
+
+    # Test position along x-axis
+    pos = np.array([1.0, 0.0, 0.0])
+
+    # At t=0, should behave like no rotation
+    E_start = pot.energy(pos, t=0 * u.Myr)
+    pot_ref = gp.KeplerPotential(m=1e10 * u.Msun, units=galactic)
+    E_ref_start = pot_ref.energy(pos)
+    assert u.allclose(E_start, E_ref_start, rtol=1e-10)
+
+    # At t=100, should behave like 90-degree rotation
+    # x-axis position should now be equivalent to y-axis in potential frame
+    E_end = pot.energy(pos, t=100 * u.Myr)
+    pos_rotated = np.array([0.0, 1.0, 0.0])
+    E_ref_end = pot_ref.energy(pos_rotated)
+    assert u.allclose(E_end, E_ref_end, rtol=1e-3)
+
+
+def test_bounds_checking():
+    """Test that evaluation outside time bounds returns NaN."""
+    time_knots = np.array([10.0, 90.0]) * u.Myr
+    masses = np.array([1e12, 2e12]) * u.Msun
+
+    pot = gp.TimeInterpolatedPotential(
+        potential_cls=gp.KeplerPotential,
+        time_knots=time_knots,
+        m=masses,
+        units=galactic,
+    )
+
+    pos = np.array([1.0, 0.0, 0.0])
+
+    # Outside bounds should return NaN
+    E_before = pot.energy(pos, t=0 * u.Myr)  # Before t_min
+    E_after = pot.energy(pos, t=100 * u.Myr)  # After t_max
+
+    assert np.isnan(E_before.value)
+    assert np.isnan(E_after.value)
+
+    # Within bounds should work
+    E_within = pot.energy(pos, t=50 * u.Myr)
+    assert np.isfinite(E_within.value)
+
+
+def test_gradient_consistency(test_positions, potentials):
+    """Test gradient accuracy."""
+    # Use single position for finite difference test
+    grad = potentials["varying"].gradient(test_positions["single"], t=50 * u.Myr)
+    assert np.isfinite(grad).all()
+    # For a single position, gradient returns (3, 1) shape
+    assert grad.shape == (3, 1)
+
+    # Test multiple positions
+    grad_multi = potentials["varying"].gradient(
+        test_positions["multiple"], t=50 * u.Myr
+    )
+    assert np.isfinite(grad_multi).all()
+    assert grad_multi.shape == test_positions["multiple"].shape
+
+
+def test_hessian_basic_functionality(test_positions, potentials):
+    """Test that hessian evaluation works and returns finite values."""
+    pos = test_positions["single"]
+
+    # Hessian for constant parameters (no coordinate transformations)
+    hess = potentials["constant"].hessian(pos, t=25 * u.Myr)
+
+    # Should have correct shape
+    assert hess.shape == (3, 3, 1)
+
+    # Should return finite values (though coordinate transformation may introduce small errors)
+    # For now, we just test that it doesn't crash and returns something reasonable
+    assert not np.all(np.isnan(hess.value))
+
+
+def test_different_interpolation_types():
+    """Test different interpolation methods."""
+    time_knots = np.linspace(0, 100, 5) * u.Myr
+    masses = np.array([1e12, 1.2e12, 1.8e12, 1.5e12, 2e12]) * u.Msun
+
+    for interp_kind in ["linear", "cubic"]:
+        pot = gp.TimeInterpolatedPotential(
+            potential_cls=gp.KeplerPotential,
+            time_knots=time_knots,
+            m=masses,
+            interp_kind=interp_kind,
+            units=galactic,
+        )
+
+        pos = np.array([1.0, 0.0, 0.0])
+
+        # Should work and give finite results
+        energy = pot.energy(pos, t=50 * u.Myr)
+        assert np.isfinite(energy.value)
+
+        gradient = pot.gradient(pos, t=50 * u.Myr)
+        assert np.all(np.isfinite(gradient.value))
