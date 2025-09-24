@@ -60,7 +60,7 @@ cdef extern from "time_interp.h":
 
 cdef extern from "time_interp_wrapper.h":
     double time_interp_value(double t, double *pars, double *q, int n_dim, void *state) nogil
-    void time_interp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    void time_interp_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) nogil
     double time_interp_density(double t, double *pars, double *q, int n_dim, void *state) nogil
     void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 

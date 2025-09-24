@@ -1,9 +1,15 @@
 #include "time_interp.h"
 #include "time_interp_wrapper.h"
 #include "../src/cpotential.h"
+#include "../../src/vectorization.h"
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+
+// Forward declarations from cpotential.cpp
+void apply_shift_rotate_N(const double *q_in, const double *q0, const double *R, int n_dim, size_t N,
+                        int transpose, double *q_out);
+void apply_rotate_T(double6ptr q, const double *R, int n_dim, int transpose);
 
 extern "C" {
 
@@ -72,7 +78,7 @@ double time_interp_value(double t, double *pars, double *q, int n_dim, void *sta
 }
 
 // Time-interpolated potential gradient function
-void time_interp_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) {
+void time_interp_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) {
     if (!state || !grad) return;
 
     TimeInterpState *interp_state = (TimeInterpState*)state;
@@ -80,7 +86,7 @@ void time_interp_gradient(double t, double *pars, double *q, int n_dim, double *
     // Check time bounds
     if (time_interp_check_bounds(interp_state, t) != 0) {
         // Extrapolation not allowed - set gradient to NAN
-        for (int i = 0; i < n_dim; i++) {
+        for (size_t i = 0; i < N * n_dim; i++) {
             grad[i] = NAN;
         }
         return;
@@ -92,7 +98,7 @@ void time_interp_gradient(double t, double *pars, double *q, int n_dim, double *
     // Interpolate parameters at time t
     double *interp_params = (double*)malloc(interp_state->n_params * sizeof(double));
     if (!interp_params) {
-        for (int i = 0; i < n_dim; i++) grad[i] = NAN;
+        for (size_t i = 0; i < N * n_dim; i++) grad[i] = NAN;
         return;
     }
     memset(interp_params, 0, interp_state->n_params * sizeof(double));
@@ -107,7 +113,7 @@ void time_interp_gradient(double t, double *pars, double *q, int n_dim, double *
     double *interp_origin = (double*)malloc(n_dim * sizeof(double));
     if (!interp_origin) {
         free(interp_params);
-        for (int i = 0; i < n_dim; i++) grad[i] = NAN;
+        for (size_t i = 0; i < N * n_dim; i++) grad[i] = NAN;
         return;
     }
     memset(interp_origin, 0, n_dim * sizeof(double));
@@ -121,26 +127,51 @@ void time_interp_gradient(double t, double *pars, double *q, int n_dim, double *
     if (!interp_rotation) {
         free(interp_params);
         free(interp_origin);
-        for (int i = 0; i < n_dim; i++) grad[i] = NAN;
+        for (size_t i = 0; i < N * n_dim; i++) grad[i] = NAN;
         return;
     }
     memset(interp_rotation, 0, n_dim * n_dim * sizeof(double));
     time_interp_eval_rotation(&interp_state->rotation, t, interp_rotation);
 
-    // Transform position using existing apply_shift_rotate function
-    double q_transformed[3] = {0, 0, 0};
-    apply_shift_rotate(q, interp_origin, interp_rotation, n_dim, 0, q_transformed);
+    // Allocate temporary arrays for transformed coordinates
+    double *q_transformed = (double*)malloc(N * n_dim * sizeof(double));
+    double *grad_transformed = (double*)malloc(N * n_dim * sizeof(double));
+    if (!q_transformed || !grad_transformed) {
+        free(interp_params);
+        free(interp_origin);
+        free(interp_rotation);
+        free(q_transformed);
+        free(grad_transformed);
+        for (size_t i = 0; i < N * n_dim; i++) grad[i] = NAN;
+        return;
+    }
+
+    // Transform positions for all orbits using existing apply_shift_rotate_N function
+    apply_shift_rotate_N(q, interp_origin, interp_rotation, n_dim, N, 0, q_transformed);
 
     // Evaluate wrapped potential gradient in transformed coordinates
-    double grad_transformed[3] = {0, 0, 0};
-    wrapped_pot->gradient[0](t, interp_params, q_transformed, n_dim, grad_transformed, wrapped_pot->state[0]);
+    wrapped_pot->gradient[0](t, interp_params, q_transformed, n_dim, N, grad_transformed, wrapped_pot->state[0]);
 
-    // Transform gradient back using existing apply_rotate function: grad = R^T @ grad_transformed
-    apply_rotate(grad_transformed, interp_rotation, n_dim, 1, grad);
+    // Transform gradient back for all orbits using apply_rotate_T: grad = R^T @ grad_transformed
+    for (size_t i = 0; i < N; i++) {
+        apply_rotate_T(
+            double6ptr{grad_transformed + i, N},
+            interp_rotation,
+            n_dim,
+            1
+        );
+    }
+
+    // Copy the transformed gradients to output
+    for (size_t i = 0; i < N * n_dim; i++) {
+        grad[i] = grad_transformed[i];
+    }
 
     free(interp_params);
     free(interp_origin);
     free(interp_rotation);
+    free(q_transformed);
+    free(grad_transformed);
 }
 
 // Time-interpolated potential density function
