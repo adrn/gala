@@ -213,13 +213,12 @@ double time_interp_density(double t, double *pars, double *q, int n_dim, void *s
 
     // Interpolate rotation matrix
         double *interp_rotation = (double*)malloc(n_dim * n_dim * sizeof(double));
-    time_interp_eval_rotation(&interp_state->rotation, t, interp_rotation);
     if (!interp_rotation) {
         free(interp_params);
         free(interp_origin);
         return NAN;
     }
-        memset(interp_rotation, 0, n_dim * n_dim * sizeof(double));
+    time_interp_eval_rotation(&interp_state->rotation, t, interp_rotation);
 
     // Transform position using existing apply_shift_rotate function
         double q_transformed[n_dim];
@@ -282,14 +281,13 @@ void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *h
 
     // Interpolate rotation matrix
         double *interp_rotation = (double*)malloc(n_dim * n_dim * sizeof(double));
-    time_interp_eval_rotation(&interp_state->rotation, t, interp_rotation);
     if (!interp_rotation) {
         free(interp_params);
         free(interp_origin);
         for (int i = 0; i < n_dim * n_dim; i++) hess[i] = NAN;
         return;
     }
-        memset(interp_rotation, 0, n_dim * n_dim * sizeof(double));
+    time_interp_eval_rotation(&interp_state->rotation, t, interp_rotation);
 
     // Transform position using existing apply_shift_rotate function
         double q_transformed[n_dim];
