@@ -1,3 +1,7 @@
+#include "extra_compile_macros.h"
+
+#if USE_GSL == 1
+
 #include "time_interp.h"
 #include "time_interp_wrapper.h"
 #include "../src/cpotential.h"
@@ -315,3 +319,5 @@ void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *h
 }
 
 } // extern "C"
+
+#endif // USE_GSL == 1

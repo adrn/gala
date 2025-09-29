@@ -1,6 +1,10 @@
 #ifndef TIME_INTERP_WRAPPER_H
 #define TIME_INTERP_WRAPPER_H
 
+#include "extra_compile_macros.h"
+
+#if USE_GSL == 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -14,5 +18,7 @@ void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *h
 #ifdef __cplusplus
 }
 #endif
+
+#endif // USE_GSL == 1
 
 #endif // TIME_INTERP_WRAPPER_H

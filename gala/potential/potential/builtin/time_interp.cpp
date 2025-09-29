@@ -1,8 +1,12 @@
-#include "time_interp.h"
+#include "extra_compile_macros.h"
+
+#if USE_GSL == 1
+
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "time_interp.h"
 
 TimeInterpState* time_interp_alloc(int n_params, int n_dim, const gsl_interp_type *interp_type) {
     /*
@@ -381,3 +385,5 @@ int time_interp_check_bounds(const TimeInterpState *state, double t) {
 
     return 0; // Within bounds
 }
+
+#endif  // USE_GSL

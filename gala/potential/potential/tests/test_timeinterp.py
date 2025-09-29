@@ -3,7 +3,14 @@ import numpy as np
 import pytest
 
 import gala.potential as gp
+from gala._cconfig import GSL_ENABLED
 from gala.units import galactic
+
+# global pytest marker to skip tests if EXP is not enabled
+pytestmark = pytest.mark.skipif(
+    not GSL_ENABLED,
+    reason="requires Gala compiled with GSL support",
+)
 
 
 @pytest.fixture
