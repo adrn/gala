@@ -1993,6 +1993,283 @@ void longmuralibar_hessian(double t, double *pars, double *q, int n_dim,
 
 
 /* ---------------------------------------------------------------------------
+    Spherical spline interpolated potentials (Density model)
+*/
+#if USE_GSL == 1
+
+#include <gsl/gsl_interp.h>
+#include <gsl/gsl_spline.h>
+
+// Structure to hold cached GSL interpolation objects
+typedef struct {
+    gsl_spline *spline;        // Main spline for density, mass, or potential
+    gsl_interp_accel *acc;     // Accelerator for main spline
+    gsl_spline *rho_r_spline;  // Spline for ρ(r) * r (used in density potential calc)
+    gsl_spline *rho_r2_spline; // Spline for ρ(r) * r² (used in density gradient calc)
+    gsl_interp_accel *rho_r_acc;   // Accelerator for ρ(r) * r spline
+    gsl_interp_accel *rho_r2_acc;  // Accelerator for ρ(r) * r² spline
+    int n_knots;
+    int method;
+    double *r_knots;
+    double *values;
+} spherical_spline_state;
+
+double spherical_spline_density_value(double t, double *pars, double *q, int n_dim, void *state) {
+    /*  Spline model where the input is density as a function of radius
+
+        pars:
+            0 - G (Gravitational constant)
+            1 to 1+n_knots-1 - r_knots (radial knot locations)
+            n_knots to 2*n_knots-1 - density_values (density at each knot)
+    */
+    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    spherical_spline_state *spl_state = (spherical_spline_state *)state;
+
+    // Check bounds
+    if (r < spl_state->r_knots[0] || r > spl_state->r_knots[spl_state->n_knots-1]) {
+        return 0.0;  // Outside interpolation range
+    }
+
+    // Calculate potential from density using integral from r to infinity
+    // For spherical symmetry: Φ(r) = -4πG ∫[r to ∞] ρ(r') r' dr'
+    // Use the pre-computed ρ(r) * r spline
+    double r_max = spl_state->r_knots[spl_state->n_knots-1];
+    double integral = gsl_spline_eval_integ(spl_state->rho_r_spline, r, r_max, spl_state->rho_r_acc);
+    double potential = -4.0 * M_PI * pars[0] * integral;
+
+    return potential;
+}
+
+void spherical_spline_density_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
+    /*  pars:
+            0 - G (Gravitational constant)
+            1 to 1+n_knots-1 - r_knots (radial knot locations)
+            n_knots to 2*n_knots-1 - density_values (density at each knot)
+    */
+    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    if (r == 0.0) return;
+
+    spherical_spline_state *spl_state = (spherical_spline_state *)state;
+
+    // Check bounds
+    if (r < spl_state->r_knots[0] || r > spl_state->r_knots[spl_state->n_knots-1]) {
+        return;  // Outside interpolation range
+    }
+
+    // Calculate enclosed mass M(r) = 4π ∫[0 to r] ρ(r') r'² dr'
+    // Use the pre-computed ρ(r) * r² spline
+    double r_min = spl_state->r_knots[0];
+    double integral = gsl_spline_eval_integ(spl_state->rho_r2_spline, r_min, r, spl_state->rho_r2_acc);
+    double M_r = 4.0 * M_PI * integral;
+
+    // Gradient: dΦ/dr = GM(r)/r²
+    double dPhi_dr = pars[0] * M_r / (r * r);
+
+    // Convert to Cartesian gradients
+    grad[0] += dPhi_dr * q[0] / r;
+    grad[1] += dPhi_dr * q[1] / r;
+    grad[2] += dPhi_dr * q[2] / r;
+}
+
+double spherical_spline_density_density(double t, double *pars, double *q, int n_dim, void *state) {
+    /*  pars:
+            0 - G (Gravitational constant)
+            1 to 1+n_knots-1 - r_knots (radial knot locations)
+            n_knots to 2*n_knots-1 - density_values (density at each knot)
+    */
+    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    spherical_spline_state *spl_state = (spherical_spline_state *)state;
+
+    // Check bounds
+    if (r < spl_state->r_knots[0] || r > spl_state->r_knots[spl_state->n_knots-1]) {
+        return 0.0;  // Outside interpolation range
+    }
+
+    // Evaluate density at position
+    return gsl_spline_eval(spl_state->spline, r, spl_state->acc);
+}
+
+/* ---------------------------------------------------------------------------
+    Spherical spline interpolated potentials - mass
+*/
+double spherical_spline_mass_value(double t, double *pars, double *q, int n_dim, void *state) {
+    /*  pars:
+            0 - G (Gravitational constant)
+            1 to 1+n_knots-1 - r_knots (radial knot locations)
+            n_knots to 2*n_knots-1 - mass_values (mass enclosed at each knot)
+    */
+    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    spherical_spline_state *spl_state = (spherical_spline_state *)state;
+
+    double M_r;
+
+    // Check bounds
+    if (r < spl_state->r_knots[0]) {
+        // For r < r_min, use Keplerian potential with M(r_min)
+        M_r = spl_state->values[0];
+        return -pars[0] * M_r / r;
+    }
+    if (r > spl_state->r_knots[spl_state->n_knots-1]) {
+        // For r > r_max, use Keplerian potential with M(r_max)
+        M_r = spl_state->values[spl_state->n_knots-1];
+        return -pars[0] * M_r / r;
+    }
+
+    // Calculate potential: Φ(r) = -G ∫[r to ∞] M(r')/r'² dr'
+    // For finite extent, we use: Φ(r) = -GM(r)/r - G ∫[r to r_max] [M(r')-M(r)]/r'² dr'
+    M_r = gsl_spline_eval(spl_state->spline, r, spl_state->acc);
+    double potential = -pars[0] * M_r / r;
+
+    // Add correction integral from r to r_max
+    int n_integration_points = 1000;
+    double r_max = spl_state->r_knots[spl_state->n_knots-1];
+    double dr = (r_max - r) / n_integration_points;
+
+    for (int i = 0; i < n_integration_points; i++) {
+        double r_i = r + i * dr;
+        double M_i = gsl_spline_eval(spl_state->spline, r_i, spl_state->acc);
+        double dM = M_i - M_r;
+        potential -= pars[0] * dM * dr / (r_i * r_i);
+    }
+
+    return potential;
+}
+
+void spherical_spline_mass_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
+    /*  pars:
+            0 - G (Gravitational constant)
+            1 to 1+n_knots-1 - r_knots (radial knot locations)
+            n_knots to 2*n_knots-1 - mass_values (mass enclosed at each knot)
+    */
+    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    if (r == 0.0) return;
+
+    spherical_spline_state *spl_state = (spherical_spline_state *)state;
+    double M_r;
+
+    // Check bounds
+    if (r < spl_state->r_knots[0]) {
+        M_r = spl_state->values[0];
+    } else if (r > spl_state->r_knots[spl_state->n_knots-1]) {
+        M_r = spl_state->values[spl_state->n_knots-1];
+    } else {
+        M_r = gsl_spline_eval(spl_state->spline, r, spl_state->acc);
+    }
+
+    // Gradient: dΦ/dr = GM(r)/r²
+    double dPhi_dr = pars[0] * M_r / (r * r);
+
+    // Convert to Cartesian gradients
+    grad[0] += dPhi_dr * q[0] / r;
+    grad[1] += dPhi_dr * q[1] / r;
+    grad[2] += dPhi_dr * q[2] / r;
+}
+
+double spherical_spline_mass_density(double t, double *pars, double *q, int n_dim, void *state) {
+    /*  pars:
+            0 - G (Gravitational constant)
+            1 to 1+n_knots-1 - r_knots (radial knot locations)
+            n_knots to 2*n_knots-1 - mass_values (mass enclosed at each knot)
+    */
+    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    if (r == 0.0) return 0.0;
+
+    spherical_spline_state *spl_state = (spherical_spline_state *)state;
+
+    // Check bounds
+    if (r < spl_state->r_knots[0] || r > spl_state->r_knots[spl_state->n_knots-1]) {
+        return 0.0;  // Outside interpolation range
+    }
+
+    // Calculate density using: ρ(r) = (1/4πr²) dM/dr
+    double dM_dr = gsl_spline_eval_deriv(spl_state->spline, r, spl_state->acc);
+    return dM_dr / (4.0 * M_PI * r * r);
+}
+
+/* ---------------------------------------------------------------------------
+    Spherical spline interpolated potentials (Potential model)
+*/
+double spherical_spline_potential_value(double t, double *pars, double *q, int n_dim, void *state) {
+    /*  pars:
+            0 - G (Gravitational constant)
+            1 to 1+n_knots-1 - r_knots (radial knot locations)
+            n_knots to 2*n_knots-1 - potential_values (potential at each knot)
+    */
+    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    spherical_spline_state *spl_state = (spherical_spline_state *)state;
+
+    // Check bounds - extrapolate beyond grid
+    if (r < spl_state->r_knots[0]) {
+        // Linear extrapolation to smaller radii
+        double slope = (spl_state->values[1] - spl_state->values[0]) / (spl_state->r_knots[1] - spl_state->r_knots[0]);
+        return spl_state->values[0] + slope * (r - spl_state->r_knots[0]);
+    }
+    if (r > spl_state->r_knots[spl_state->n_knots-1]) {
+        // Assume potential goes to zero at infinity - extrapolate with 1/r behavior
+        return spl_state->values[spl_state->n_knots-1] * spl_state->r_knots[spl_state->n_knots-1] / r;
+    }
+
+    // Evaluate potential at position
+    return gsl_spline_eval(spl_state->spline, r, spl_state->acc);
+}
+
+void spherical_spline_potential_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
+    /*  pars:
+            0 - G (Gravitational constant)
+            1 to 1+n_knots-1 - r_knots (radial knot locations)
+            n_knots to 2*n_knots-1 - potential_values (potential at each knot)
+    */
+    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    if (r == 0.0) return;
+
+    spherical_spline_state *spl_state = (spherical_spline_state *)state;
+    double dPhi_dr;
+
+    // Check bounds - extrapolate beyond grid
+    if (r < spl_state->r_knots[0]) {
+        // Linear extrapolation to smaller radii
+        dPhi_dr = (spl_state->values[1] - spl_state->values[0]) / (spl_state->r_knots[1] - spl_state->r_knots[0]);
+    } else if (r > spl_state->r_knots[spl_state->n_knots-1]) {
+        // Assume potential goes to zero at infinity - extrapolate with 1/r behavior
+        dPhi_dr = -spl_state->values[spl_state->n_knots-1] * spl_state->r_knots[spl_state->n_knots-1] / (r * r);
+    } else {
+        // Calculate gradient: dΦ/dr
+        dPhi_dr = gsl_spline_eval_deriv(spl_state->spline, r, spl_state->acc);
+    }
+
+    // Convert to Cartesian gradients
+    grad[0] += dPhi_dr * q[0] / r;
+    grad[1] += dPhi_dr * q[1] / r;
+    grad[2] += dPhi_dr * q[2] / r;
+}
+
+double spherical_spline_potential_density(double t, double *pars, double *q, int n_dim, void *state) {
+    /*  pars:
+            0 - G (Gravitational constant)
+            1 to 1+n_knots-1 - r_knots (radial knot locations)
+            n_knots to 2*n_knots-1 - potential_values (potential at each knot)
+    */
+    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    if (r == 0.0) return 0.0;
+
+    spherical_spline_state *spl_state = (spherical_spline_state *)state;
+
+    // Check bounds
+    if (r < spl_state->r_knots[0] || r > spl_state->r_knots[spl_state->n_knots-1]) {
+        return 0.0;  // Outside interpolation range
+    }
+
+    // Calculate density using Poisson equation: ρ = -(1/4πG) ∇²Φ
+    // For spherical symmetry: ρ = -(1/4πG) [d²Φ/dr² + (2/r) dΦ/dr]
+    double dPhi_dr = gsl_spline_eval_deriv(spl_state->spline, r, spl_state->acc);
+    double d2Phi_dr2 = gsl_spline_eval_deriv2(spl_state->spline, r, spl_state->acc);
+
+    return -(d2Phi_dr2 + 2.0 * dPhi_dr / r) / (4.0 * M_PI * pars[0]);
+}
+
+#endif
+
+/* ---------------------------------------------------------------------------
     Burkert potential
     (from Mori and Burkert 2000: https://iopscience.iop.org/article/10.1086/309140/fulltext/50172.text.html)
 */
@@ -2067,4 +2344,7 @@ DEFINE_VECTORIZED_GRADIENT(triaxialnfw)
 
 #if USE_GSL == 1
 DEFINE_VECTORIZED_GRADIENT(powerlawcutoff)
+DEFINE_VECTORIZED_GRADIENT(spherical_spline_density)
+DEFINE_VECTORIZED_GRADIENT(spherical_spline_mass)
+DEFINE_VECTORIZED_GRADIENT(spherical_spline_potential)
 #endif

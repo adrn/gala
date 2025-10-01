@@ -1,4 +1,20 @@
 #include <stddef.h>
+#include <gsl/gsl_spline.h>
+#include <gsl/gsl_interp.h>
+
+// Spherical spline interpolation state structure
+typedef struct {
+    gsl_spline *spline;        // Main spline for density, mass, or potential
+    gsl_interp_accel *acc;     // Accelerator for main spline
+    gsl_spline *rho_r_spline;  // Spline for ρ(r) * r (used in density potential calc)
+    gsl_spline *rho_r2_spline; // Spline for ρ(r) * r² (used in density gradient calc)
+    gsl_interp_accel *rho_r_acc;   // Accelerator for ρ(r) * r spline
+    gsl_interp_accel *rho_r2_acc;  // Accelerator for ρ(r) * r² spline
+    int n_knots;
+    int method;
+    double *r_knots;
+    double *values;
+} spherical_spline_state;
 
 extern double nan_density(double t, double *pars, double *q, int n_dim, void *state);
 extern double nan_value(double t, double *pars, double *q, int n_dim, void *state);
@@ -98,3 +114,16 @@ extern void longmuralibar_hessian(double t, double *pars, double *q, int n_dim, 
 extern double burkert_value(double t, double *pars, double *q, int n_dim, void *state);
 extern void burkert_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state);
 extern double burkert_density(double t, double *pars, double *q, int n_dim, void *state);
+
+// Spherical spline interpolated potentials
+extern double spherical_spline_density_value(double t, double *pars, double *q, int n_dim, void *state);
+extern void spherical_spline_density_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state);
+extern double spherical_spline_density_density(double t, double *pars, double *q, int n_dim, void *state);
+
+extern double spherical_spline_mass_value(double t, double *pars, double *q, int n_dim, void *state);
+extern void spherical_spline_mass_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state);
+extern double spherical_spline_mass_density(double t, double *pars, double *q, int n_dim, void *state);
+
+extern double spherical_spline_potential_value(double t, double *pars, double *q, int n_dim, void *state);
+extern void spherical_spline_potential_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state);
+extern double spherical_spline_potential_density(double t, double *pars, double *q, int n_dim, void *state);

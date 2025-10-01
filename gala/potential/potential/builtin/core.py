@@ -37,6 +37,7 @@ from gala.potential.potential.builtin.cybuiltin import (
     PowerLawCutoffWrapper,
     SatohWrapper,
     SphericalNFWWrapper,
+    SphericalSplineWrapper,
     StoneWrapper,
     TriaxialNFWWrapper,
 )
@@ -70,6 +71,7 @@ __all__ = [
     "PlummerPotential",
     "PowerLawCutoffPotential",
     "SatohPotential",
+    "SphericalSplinePotential",
     "StonePotential",
 ]
 
@@ -1423,6 +1425,125 @@ class CylSplinePotential(CPotentialBase):
         return MultipolePotential(
             lmax=lmax_fit, m=m, r_s=r0, inner=False, units=self.units, **pars
         )
+
+
+# ==============================================================================
+# Spherical spline interpolated potentials
+#
+
+
+@format_doc(common_doc=_potential_docstring)
+class SphericalSplinePotential(CPotentialBase, GSL_only=True):
+    r"""
+    A spherical potential model using spline interpolation over radial knot locations.
+
+    This class supports three different input types:
+    - "density": density values that are integrated to compute the potential
+    - "mass": enclosed mass values at each radius
+    - "potential": gravitational potential values at each radius
+
+    All GSL interpolation types are supported by name via the `interpolation_method`
+    parameter. See the GSL documentation for details:
+    https://www.gnu.org/software/gsl/doc/html/interp.html
+
+    Parameters
+    ----------
+    r_knots : `~astropy.units.Quantity`, array [length]
+        Radial knot locations where values are specified.
+    values : `~astropy.units.Quantity`, array
+        Values at each radial knot. Units depend on value_type:
+        - "density": mass density [mass/length^3]
+        - "mass": enclosed mass [mass]
+        - "potential": gravitational potential [specific energy]
+    spline_value_type : str
+        Type of values provided: "density", "mass", or "potential"
+    interpolation_method : str, optional
+        GSL interpolation method. Options:
+            "linear", "polynomial", "cspline", "cspline_periodic", "akima",
+            "akima_periodic", "steffen"
+        Default: "cspline"
+    {common_doc}
+    """
+
+    r_knots = PotentialParameter("r_knots", physical_type="length")
+    spline_values = PotentialParameter(
+        "spline_values",
+        physical_type=None,  # physical type depends on value_type
+    )
+    spline_value_type = PotentialParameter(
+        "spline_value_type", physical_type=None, default="potential"
+    )
+    interpolation_method = PotentialParameter(
+        "interpolation_method", physical_type=None, default="cspline"
+    )
+
+    Wrapper = SphericalSplineWrapper
+
+    def __init__(
+        self,
+        *args,
+        units=None,
+        origin=None,
+        R=None,
+        **kwargs,
+    ):
+        # Set units of spline values based on value_type
+        tmp = self._parse_parameter_values(*args, **kwargs)
+        spline_value_ptype_map = {
+            "potential": "specific energy",
+            "mass": "mass",
+            "density": "mass density",
+        }
+        self._parameters["spline_values"].physical_type = spline_value_ptype_map.get(
+            tmp["spline_value_type"]
+        )
+
+        # Now re-parse the parameters with the dynamic physical type
+        PotentialBase.__init__(self, *args, units=units, origin=origin, R=R, **kwargs)
+
+        # Interpolation method parameters:
+        # -- map string interpolation methods to integers for C layer
+        min_points = {
+            "linear": 2,
+            "polynomial": 2,
+            "cspline": 3,
+            "cspline_periodic": 3,
+            "akima": 5,
+            "akima_periodic": 5,
+            "steffen": 3,
+        }
+
+        # Validate inputs:
+        if self.parameters["spline_value_type"] not in ["density", "mass", "potential"]:
+            raise ValueError(
+                "spline_value_type must be 'density', 'mass', or 'potential'"
+            )
+
+        if self.parameters["interpolation_method"] not in min_points:
+            raise ValueError(
+                "Invalid interpolation_method. Must be one of: "
+                f"{list(min_points.keys())}"
+            )
+
+        # Ensure arrays are sorted by radius
+        if len(self.parameters["r_knots"]) != len(self.parameters["spline_values"]):
+            raise ValueError("r_knots and spline_values must have the same length")
+
+        # Ensure knots/values are sorted by location:
+        sort_idx = np.argsort(self.parameters["r_knots"])
+        self.parameters["r_knots"] = self.parameters["r_knots"][sort_idx]
+        self.parameters["spline_values"] = self.parameters["spline_values"][sort_idx]
+
+        if len(self.parameters["r_knots"]) < min_points.get(
+            self.parameters["interpolation_method"], 3
+        ):
+            raise ValueError(
+                f"Interpolation method '{self.parameters['interpolation_method']}' "
+                "requires at least "
+                f"{min_points[self.parameters['interpolation_method']]} points"
+            )
+
+        self._setup_wrapper(n_knots=len(self.parameters["r_knots"]))
 
 
 # ==============================================================================
