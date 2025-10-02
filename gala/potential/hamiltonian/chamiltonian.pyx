@@ -342,6 +342,7 @@ class Hamiltonian(CommonBase):
                     save_all=save_all,
                     err_if_fail=int(Integrator_kwargs.get('err_if_fail', 1)),
                     log_output=int(Integrator_kwargs.get('log_output', 0)),
+                    nbatch=Integrator_kwargs.get('nbatch', 100),
                 )
             else:
                 raise ValueError(f"Cython integration not supported for '{Integrator!r}'")
