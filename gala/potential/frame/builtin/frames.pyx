@@ -127,8 +127,8 @@ class ConstantRotatingFrame(CFrameBase):
     Omega = PotentialParameter('Omega', physical_type='frequency',
                                equivalencies=u.dimensionless_angles())
 
-    def _setup_frame(self, parameters, units=None):
-        super()._setup_frame(parameters, units=units)
+    def _setup_frame(self, parameters, parameter_is_default, units=None):
+        super()._setup_frame(parameters, parameter_is_default, units=units)
 
         Omega = np.atleast_1d(self.parameters['Omega'])
 
