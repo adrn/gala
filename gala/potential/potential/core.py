@@ -107,14 +107,23 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
                     "http://gala.adrian.pw/en/latest/install.html"
                 )
 
-        parameter_values = self._parse_parameter_values(*args, **kwargs)
+        parameter_values, parameter_is_default = self._parse_parameter_values(
+            *args, **kwargs
+        )
         self._setup_potential(
-            parameters=parameter_values, origin=origin, R=R, units=units
+            parameters=parameter_values,
+            parameter_is_default=parameter_is_default,
+            origin=origin,
+            R=R,
+            units=units,
         )
 
-    def _setup_potential(self, parameters, origin=None, R=None, units=None):
+    def _setup_potential(
+        self, parameters, parameter_is_default, origin=None, R=None, units=None
+    ):
         self._units = self._validate_units(units)
         self.parameters = self._prepare_parameters(parameters, self.units)
+        self.parameter_is_default = set(parameter_is_default)
 
         try:
             self.G = G.decompose(self.units).value
@@ -162,6 +171,8 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             The replicated potential.
         """
         for k, v in self.parameters.items():
+            if k in self.parameter_is_default:
+                continue
             kwargs.setdefault(k, pycopy.copy(v))
 
         for k in ["units", "origin", "R"]:
@@ -1102,8 +1113,13 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
                 "a unit system with physical units, or vice versa"
             )
 
+        parameters = {
+            k: v
+            for k, v in self.parameters.items()
+            if k not in self.parameter_is_default
+        }
         PotentialBase.__init__(
-            pot, origin=self.origin, R=self.R, units=units, **self.parameters
+            pot, origin=self.origin, R=self.R, units=units, **parameters
         )
 
         return pot

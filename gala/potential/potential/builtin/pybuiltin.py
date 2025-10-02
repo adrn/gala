@@ -26,9 +26,13 @@ class HarmonicOscillatorPotential(PotentialBase):
 
     omega = PotentialParameter("omega", physical_type="frequency")
 
-    def _setup_potential(self, parameters, origin=None, R=None, units=None):
+    def _setup_potential(
+        self, parameters, parameter_is_default, origin=None, R=None, units=None
+    ):
         parameters["omega"] = np.atleast_1d(parameters["omega"])
-        super()._setup_potential(parameters, origin=origin, R=R, units=units)
+        super()._setup_potential(
+            parameters, parameter_is_default, origin=origin, R=R, units=units
+        )
         self.ndim = len(self.parameters["omega"])
 
     def _energy(self, q, t=0.0):

@@ -425,5 +425,10 @@ class CPotentialBase(PotentialBase):
             raise ValueError("Cannot replace a dimensionless unit system with "
                              "a unit system with physical units, or vice versa")
 
-        return self.__class__(**self.parameters, units=units,
-                              R=self.R, origin=self.origin)
+        parameters = {
+            k: v for k, v in self.parameters.items() if k not in self.parameter_is_default
+        }
+
+        return self.__class__(**parameters, units=units,
+                              R=self.R, origin=self.origin,
+                              )
