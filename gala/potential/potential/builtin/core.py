@@ -44,10 +44,10 @@ from gala.potential.potential.builtin.cybuiltin import (
 if EXP_ENABLED:
     from gala.potential.potential.builtin.cyexp import EXPWrapper
 
-
 from ..core import PotentialBase, _potential_docstring
 from ..cpotential import CPotentialBase
 from ..util import format_doc, sympy_wrap
+from .time_interpolated import TimeInterpolatedPotential
 
 __all__ = [
     "BurkertPotential",
@@ -71,6 +71,7 @@ __all__ = [
     "PowerLawCutoffPotential",
     "SatohPotential",
     "StonePotential",
+    "TimeInterpolatedPotential",
 ]
 
 
