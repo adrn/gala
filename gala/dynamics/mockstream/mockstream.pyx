@@ -57,7 +57,6 @@ cpdef mockstream_dop853(
     stream_t1 : numpy.ndarray (ntimes, )
     nstream : numpy.ndarray (ntimes, )
         The number of stream particles to be integrated from this timestep.
-        There should be no zero values.
 
     Notes
     -----
@@ -101,6 +100,12 @@ cpdef mockstream_dop853(
 
         int prog_out = max(len(time) // 100, 1)
 
+    if stream_t1.shape[0] != ntimes:
+        raise ValueError("stream_t1 must have the same length as time")
+
+    if nstream.shape[0] != ntimes:
+        raise ValueError("nstream must have the same length as time")
+
     # Dynamically allocate memory for particle potentials
     c_particle_potentials = <CPotential**>malloc(total_bodies * sizeof(CPotential*))
     if c_particle_potentials == NULL:
@@ -134,6 +139,9 @@ cpdef mockstream_dop853(
 
         n = 0
         for i in range(ntimes):
+            if nstream[i] == 0:
+                continue
+
             # set initial conditions for progenitor and N-bodies
             for j in range(nbodies):
                 for k in range(ndim):
