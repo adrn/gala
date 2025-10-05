@@ -247,6 +247,7 @@ class MockStreamGenerator:
         nstream_idx = np.where(all_nstream != 0)[0]
         if 0 not in nstream_idx:
             nstream_idx = np.insert(nstream_idx, 0, 0)
+            unq_t1s = np.insert(unq_t1s, 0, orbit_t[0])
 
         if output_every is None:
             raw_nbody, raw_stream = mockstream_dop853(
