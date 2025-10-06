@@ -2,6 +2,7 @@ import astropy.units as u
 import numpy as np
 import pytest
 
+from gala.dynamics.core import PhaseSpacePosition
 from gala.dynamics.mockstream import MockStream
 
 
@@ -54,7 +55,9 @@ def test_one_burst():
     argmin = r[0:150].argmin()
     n_array[argmin] = 1000
 
-    df = ms.FardalStreamDF(gala_modified=True)
+    df = ms.FardalStreamDF(
+        gala_modified=True, random_state=np.random.default_rng(seed=42)
+    )
 
     dt = 1 * u.Myr
     prog_mass = 2.5e4 * u.Msun
@@ -62,9 +65,24 @@ def test_one_burst():
 
     gen = ms.MockStreamGenerator(df, H, progenitor_potential=prog_pot)
 
-    _stream, _prog = gen.run(
+    stream, prog = gen.run(
         prog_w0, prog_mass, n_particles=n_array, dt=dt, n_steps=nsteps, progress=False
     )
+
+    # Sanity check the first stream particle and the progenitor
+    stream0_true = PhaseSpacePosition(
+        pos=[-10.07444187, -1.37424641, 0.06310397] * u.kpc,
+        vel=[-0.05672946, -0.01837671, 0.00038504] * u.kpc / u.Myr,
+    )
+    prog_true = PhaseSpacePosition(
+        pos=[-9.72388107, -1.28632464, 0.0] * u.kpc,
+        vel=[-0.04714419, -0.016754, 0.0] * u.kpc / u.Myr,
+    )
+
+    assert u.allclose(stream[0].xyz, stream0_true.xyz)
+    assert u.allclose(stream[0].v_xyz, stream0_true.v_xyz)
+    assert u.allclose(prog[0].xyz, prog_true.xyz)
+    assert u.allclose(prog[0].v_xyz, prog_true.v_xyz)
 
 
 def test_Fardal_vs_GalaModified():
