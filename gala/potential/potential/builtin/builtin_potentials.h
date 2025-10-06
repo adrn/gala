@@ -1,8 +1,33 @@
 #include <stddef.h>
+
+#if USE_GSL == 1
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_interp.h>
+#else
+// When GSL is not available, provide dummy types
+typedef struct { int dummy; } gsl_spline;
+typedef struct { int dummy; } gsl_interp_accel;
+typedef struct { int dummy; } gsl_interp_type;
+
+// Provide dummy GSL interpolation type constants
+static const gsl_interp_type *gsl_interp_linear = NULL;
+static const gsl_interp_type *gsl_interp_polynomial = NULL;
+static const gsl_interp_type *gsl_interp_cspline = NULL;
+static const gsl_interp_type *gsl_interp_cspline_periodic = NULL;
+static const gsl_interp_type *gsl_interp_akima = NULL;
+static const gsl_interp_type *gsl_interp_akima_periodic = NULL;
+static const gsl_interp_type *gsl_interp_steffen = NULL;
+
+// Provide dummy function declarations for GSL functions
+static inline gsl_interp_accel* gsl_interp_accel_alloc(void) { return NULL; }
+static inline void gsl_interp_accel_free(gsl_interp_accel *acc) {}
+static inline gsl_spline* gsl_spline_alloc(const gsl_interp_type *T, size_t size) { return NULL; }
+static inline int gsl_spline_init(gsl_spline *spline, const double *xa, const double *ya, size_t size) { return 0; }
+static inline void gsl_spline_free(gsl_spline *spline) {}
+#endif
 
 // Spherical spline interpolation state structure
+// Note: We always define the full struct to keep Cython happy, even when GSL is not available
 typedef struct {
     gsl_spline *spline;        // Main spline for density, mass, or potential
     gsl_interp_accel *acc;     // Accelerator for main spline

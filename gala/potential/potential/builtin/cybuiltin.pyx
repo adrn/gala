@@ -30,7 +30,9 @@ from ....units import dimensionless, DimensionlessUnitSystem
 from ...._cconfig cimport USE_GSL
 
 # GSL includes for spline functionality
-cdef extern from "gsl/gsl_spline.h":
+# The builtin_potentials.h header provides dummy definitions when GSL is not available
+cdef extern from "potential/potential/builtin/builtin_potentials.h":
+    # GSL types - either real (if GSL available) or dummy structs (if not)
     ctypedef struct gsl_spline:
         pass
     ctypedef struct gsl_interp_accel:
@@ -38,43 +40,21 @@ cdef extern from "gsl/gsl_spline.h":
     ctypedef struct gsl_interp_type:
         pass
 
-    # GSL interpolation declarations
-    cdef extern from "gsl/gsl_interp.h":
-        ctypedef struct gsl_interp_type:
-            pass
-        ctypedef struct gsl_interp:
-            pass
-        ctypedef struct gsl_interp_accel:
-            pass
+    # GSL constants - NULL when GSL not available
+    const gsl_interp_type *gsl_interp_linear
+    const gsl_interp_type *gsl_interp_polynomial
+    const gsl_interp_type *gsl_interp_cspline
+    const gsl_interp_type *gsl_interp_cspline_periodic
+    const gsl_interp_type *gsl_interp_akima
+    const gsl_interp_type *gsl_interp_akima_periodic
+    const gsl_interp_type *gsl_interp_steffen
 
-        const gsl_interp_type *gsl_interp_linear
-        const gsl_interp_type *gsl_interp_polynomial
-        const gsl_interp_type *gsl_interp_cspline
-        const gsl_interp_type *gsl_interp_cspline_periodic
-        const gsl_interp_type *gsl_interp_akima
-        const gsl_interp_type *gsl_interp_akima_periodic
-        const gsl_interp_type *gsl_interp_steffen
-
-        gsl_interp* gsl_interp_alloc(const gsl_interp_type *T, size_t size)
-        gsl_interp_accel* gsl_interp_accel_alloc()
-        int gsl_interp_init(gsl_interp *interp, const double *xa, const double *ya, size_t size)
-        void gsl_interp_free(gsl_interp *interp)
-        void gsl_interp_accel_free(gsl_interp_accel *acc)
-
-    cdef extern from "gsl/gsl_spline.h":
-        ctypedef struct gsl_spline:
-            pass
-
-        gsl_spline* gsl_spline_alloc(const gsl_interp_type *T, size_t size)
-        int gsl_spline_init(gsl_spline *spline, const double *xa, const double *ya, size_t size)
-        void gsl_spline_free(gsl_spline *spline)
-
-    # GSL spline functions
-    gsl_spline *gsl_spline_alloc(const gsl_interp_type *interp_type, size_t size)
-    gsl_interp_accel *gsl_interp_accel_alloc()
+    # GSL functions - dummy implementations when GSL not available
+    gsl_interp_accel* gsl_interp_accel_alloc()
+    void gsl_interp_accel_free(gsl_interp_accel *acc)
+    gsl_spline* gsl_spline_alloc(const gsl_interp_type *T, size_t size)
     int gsl_spline_init(gsl_spline *spline, const double *xa, const double *ya, size_t size)
     void gsl_spline_free(gsl_spline *spline)
-    void gsl_interp_accel_free(gsl_interp_accel *accel)
 
 cdef extern from "potential/potential/builtin/builtin_potentials.h":
     ctypedef struct spherical_spline_state:
@@ -101,7 +81,6 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     double spherical_spline_potential_value(double t, double *pars, double *q, int n_dim, void *state) nogil
     void spherical_spline_potential_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
     double spherical_spline_potential_density(double t, double *pars, double *q, int n_dim, void *state) nogil
-
 
 cdef extern from "potential/potential/builtin/multipole.h":
     double mp_potential(double t, double *pars, double *q, int n_dim, void *state) nogil
