@@ -39,9 +39,8 @@ cpdef ruth4_integrate_hamiltonian(hamiltonian,
                                   double[::1] t,
                                   int save_all=1):
     """
-    CAUTION: Interpretation of axes is different here! We need the
-    arrays to be C ordered and easy to iterate over, so here the
-    axes are (norbits, ndim).
+    w0: shape (ndim, n)
+    returns: shape (ndim, [ntimes,] n)
     """
 
     if not hamiltonian.c_enabled:
@@ -55,8 +54,8 @@ cpdef ruth4_integrate_hamiltonian(hamiltonian,
     cdef:
         # temporary scalars
         int i, j, k
-        int n = w0.shape[0]
-        int ndim = w0.shape[1]
+        int ndim = w0.shape[0]
+        int n = w0.shape[1]
         int half_ndim = ndim // 2
 
         int ntimes = len(t)
@@ -92,9 +91,9 @@ cpdef ruth4_integrate_hamiltonian(hamiltonian,
         all_w = np.empty((ndim, ntimes, n))
 
         # save initial conditions
-        all_w[:, 0, :] = w0.T
+        all_w[:, 0, :] = w0
 
-    tmp_w = w0.T.copy()
+    tmp_w = w0.copy()
 
     with nogil:
         for j in range(1, ntimes, 1):
