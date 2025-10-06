@@ -57,11 +57,10 @@ cdef class CFrameWrapper:
 
         cdef double[:, ::1] dH = np.zeros((ndim, n))
         if len(t) == 1:
-            for i in range(n):
-                frame_gradient(&cf, t[0], &w[i, 0], ndim//2, &dH[i, 0])
+            frame_gradient(&cf, t[0], &w[0, 0], ndim//2, n, &dH[0, 0])
         else:
             for i in range(n):
-                frame_gradient(&cf, t[i], &w[i, 0], ndim//2, &dH[i, 0])
+                frame_gradient(&cf, t[i], &w[0, i], ndim//2, 1, &dH[0, i])
 
 
         return np.array(dH)

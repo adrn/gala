@@ -13,7 +13,7 @@ cdef extern from "frame/src/cframe.h":
         double *parameters
 
     double frame_hamiltonian(CFrameType *fr, double t, double *qp, int n_dim) except + nogil
-    void frame_gradient(CFrameType *fr, double t, double *qp, int n_dim, double *dH) except + nogil
+    void frame_gradient(CFrameType *fr, double t, double *qp, int n_dim, size_t N, double *dH) except + nogil
     void frame_hessian(CFrameType *fr, double t, double *qp, int n_dim, double *d2H) except + nogil
 
 cdef class CFrameWrapper:
