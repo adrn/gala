@@ -700,9 +700,12 @@ class NFWPotential(CPotentialBase):
     b = PotentialParameter("b", physical_type="dimensionless", default=1.0)
     c = PotentialParameter("c", physical_type="dimensionless", default=1.0)
 
-    def _setup_potential(self, parameters, origin=None, R=None, units=None):
-        super()._setup_potential(parameters, origin=origin, R=R, units=units)
-
+    def _setup_potential(
+        self, parameters, parameter_is_default, origin=None, R=None, units=None
+    ):
+        super()._setup_potential(
+            parameters, parameter_is_default, origin=origin, R=R, units=units
+        )
         a = self.parameters["a"]
         b = self.parameters["b"]
         c = self.parameters["c"]

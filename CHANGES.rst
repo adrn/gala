@@ -15,6 +15,7 @@ Bug fixes
 - Fixed a deprecation warning with astropy>=v7.1.
 - Fixed a matplotlib warning when plotting an orbit with ``plot()`` and
   ``autolim=True`` related to using ``aspect="equal"``.
+- ``replicate()`` and ``replace_units`` now work with ``EXPPotential``.
 
 API changes
 -----------

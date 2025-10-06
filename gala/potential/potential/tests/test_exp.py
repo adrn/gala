@@ -365,3 +365,51 @@ def test_paths():
             coef_file=Path(EXP_SINGLE_COEF_FILE).name,
             units=SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1),
         )
+
+
+def test_replace_units():
+    """Test that replace_units works for EXPPotential"""
+
+    units = SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1)
+    pot = EXPPotential(
+        config_file=EXP_CONFIG_FILE,
+        coef_file=EXP_SINGLE_COEF_FILE,
+        units=units,
+    )
+
+    new_units = SimulationUnitSystem(mass=2e11 * u.Msun, length=2.5 * u.kpc, G=1)
+    pot_replaced = pot.replace_units(new_units)
+
+    assert pot_replaced.units == new_units
+    assert pot_replaced is not pot  # should be a new instance
+
+    # Check that the energy at a point is the same in both unit systems
+    x = [1.0, 2.0, 3.0] * u.kpc
+    e1 = pot.energy(x)
+    e2 = pot_replaced.energy(x.to_value(new_units["length"]) * new_units["length"])
+    assert u.isclose(e1, e2 / 2.0)
+
+
+def test_replicate():
+    """Test that replicate works for EXPPotential"""
+
+    units = SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1)
+    pot = EXPPotential(
+        config_file=EXP_CONFIG_FILE,
+        coef_file=EXP_MULTI_COEF_FILE,
+        units=units,
+        snapshot_index=0,
+    )
+
+    pot_replicated = pot.replicate(snapshot_index=1)
+
+    assert pot_replicated.units == pot.units
+    assert pot_replicated.parameters["snapshot_index"] == 1
+    assert pot.parameters["snapshot_index"] == 0
+    assert pot_replicated is not pot  # should be a new instance
+
+    # Check that the energy at a point is the not same in both instances
+    x = [1.0, 2.0, 3.0] * u.kpc
+    e1 = pot.energy(x)
+    e2 = pot_replicated.energy(x)
+    assert not u.isclose(e1, e2)

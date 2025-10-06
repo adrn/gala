@@ -118,6 +118,7 @@ class CommonBase:
             )
 
         parameter_values = {}
+        parameter_is_default = set()
 
         # Get any parameters passed as positional arguments
         i = 0
@@ -129,7 +130,11 @@ class CommonBase:
 
         # Get parameters passed in as keyword arguments:
         for k in expected_parameter_keys[i:]:
-            val = kwargs.pop(k, self._parameters[k].default)
+            if k in kwargs:
+                val = kwargs.pop(k)
+            else:
+                val = self._parameters[k].default
+                parameter_is_default.add(k)
             parameter_values[k] = val
 
         if kwargs:
@@ -138,7 +143,7 @@ class CommonBase:
                 f"argument(s): {list(kwargs.keys())}"
             )
 
-        return parameter_values
+        return parameter_values, parameter_is_default
 
     @classmethod
     def _prepare_parameters(cls, parameters, units):
