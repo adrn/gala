@@ -16,6 +16,8 @@ Bug fixes
 - Fixed a matplotlib warning when plotting an orbit with ``plot()`` and
   ``autolim=True`` related to using ``aspect="equal"``.
 - ``replicate()`` and ``replace_units`` now work with ``EXPPotential``.
+- Fixed incorrect results from ``MockStreamGenerator.run()`` with an
+  ``n_particles`` array.
 
 API changes
 -----------
