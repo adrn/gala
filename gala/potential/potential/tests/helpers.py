@@ -317,7 +317,9 @@ class PotentialTestBase:
                     for dim_ix in range(self.w0.size // 2)
                 ]
             )
-        grad = self.potential._gradient(xyz, t=np.array([0.0]))
+        grad = self.potential._gradient(
+            np.ascontiguousarray(xyz.T), t=np.array([0.0])
+        ).T
         np.testing.assert_allclose(grad, num_grad, rtol=self.tol, atol=1e-8)
 
     def test_orbit_integration(self, t1=0.0, t2=1000.0, nsteps=10000):
