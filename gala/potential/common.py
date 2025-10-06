@@ -204,15 +204,32 @@ class CommonBase:
 
         return atleast_2d(x, insert_axis=1).astype(np.float64)
 
-    def _get_c_valid_arr(self, x):
+    def _get_c_valid_arr(self, x, transpose=True):
         """
-        Warning! Interpretation of axes is different for C code.
+        Prepare an array for passing to C: make sure it's 2D and contiguous.
+
+        Parameters
+        ----------
+        x : array-like
+            The input array.
+        transpose : bool (optional)
+            If True, transpose the array so that shape is (N, ndim). Default is True.
+
+        Returns
+        -------
+        orig_shape : tuple
+            The original shape of the input array.
+        x : ndarray
+            The reshaped, contiguous array.
         """
         orig_shape = x.shape
-        x = np.ascontiguousarray(x.reshape(orig_shape[0], -1).T)
+        x = x.reshape(orig_shape[0], -1)  # 2D
+        if transpose:
+            x = x.T
+        x = np.ascontiguousarray(x)
         return orig_shape, x
 
-    def _validate_prepare_time(self, t, pos_c):
+    def _validate_prepare_time(self, t, N_pos):
         """
         Make sure that t is a 1D array and compatible with the C position array.
         """
@@ -224,7 +241,7 @@ class CommonBase:
 
         t = np.ascontiguousarray(t.ravel())
 
-        if len(t) > 1 and len(t) != pos_c.shape[0]:
+        if len(t) > 1 and len(t) != N_pos:
             raise ValueError(
                 "If passing in an array of times, it must have a shape "
                 "compatible with the input position(s)."
