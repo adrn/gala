@@ -106,12 +106,8 @@ cpdef direct_nbody_dop853(
             nstiff=-1,  # disable stiffness check - TODO: note somewhere
             err_if_fail=err_if_fail, log_output=log_output,
             save_all=save_all,
-            transposed=0
         )
-        if save_all:
-            return np.array(w)
-        else:
-            return np.array(w).reshape(nparticles, ndim)
+        return w
 
     finally:
         # Clean up allocated memory

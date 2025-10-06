@@ -69,7 +69,6 @@ cdef dop853_helper(
     int nstiff,
     unsigned err_if_fail,
     unsigned log_output,
-    int transposed,
     unsigned save_all=?
 )
 

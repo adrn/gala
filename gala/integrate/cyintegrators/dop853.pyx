@@ -104,9 +104,12 @@ cdef dop853_helper(
     int nstiff,
     unsigned err_if_fail,
     unsigned log_output,
-    int transposed,  # does F expect transposed input?
     unsigned save_all=1,
 ):
+    """
+    w0: any shape (typically (ndim, n) or (n, ndim))
+    returns: shape (ntimes, *w0.shape) if save_all else w0.shape
+    """
     cdef:
         double[:, ::1] w
 
@@ -122,10 +125,10 @@ cdef dop853_helper(
         Dop853DenseState* state
         double* output_ptr
 
-    if transposed:
-        w = w0.T.copy()
-    else:
-        w = w0.copy()
+    # w0 may be (ndim, n) or (n, ndim); this routine is agnostic,
+    # returning shape (ntimes, n * ndim) if save_all else (n * ndim,)
+    input_shape = tuple(w0.shape)[:w0.ndim]
+    w = w0.copy()
 
     if save_all:
         output_ptr = &output_w[0, 0]
@@ -147,6 +150,9 @@ cdef dop853_helper(
     if w.size != size:
         raise ValueError(f"w0 must be of shape ({norbits}, {ndim}), got size {w.size}")
 
+    # FUTURE: based on the function signature, it looks like dop853()
+    # cares about which dimension is norbits vs. ndim, but in reality
+    # it just uses norbits * ndim. So we could probably simplify this.
     res = dop853(
         norbits * ndim, F, cp, cf,
         norbits, nbody, args,
@@ -177,16 +183,13 @@ cdef dop853_helper(
     if res < 0 and err_if_fail == 1:
         raise RuntimeError(f"Integration failed with code {res}")
 
-    if transposed:
-        if save_all:
-            return np.asarray(output_w).reshape((ntimes, ndim, norbits)).transpose((0,2,1))
-        else:
-            return np.array(w.T, copy=False).reshape((norbits, ndim))
+    if save_all:
+        out = np.array(output_w, copy=False)
+        out = out.reshape((ntimes,) + input_shape)
     else:
-        if save_all:
-            return np.asarray(output_w).reshape((ntimes, norbits, ndim))
-        else:
-            return np.array(w, copy=False).reshape((norbits, ndim))
+        out = np.array(w, copy=False)
+        out = out.reshape(input_shape)
+    return out
 
 
 cpdef dop853_integrate_hamiltonian(
@@ -196,9 +199,8 @@ cpdef dop853_integrate_hamiltonian(
     int nbatch=100,
 ):
     """
-    CAUTION: Interpretation of axes is different here! We need the
-    arrays to be C ordered and easy to iterate over, so here the
-    axes are (norbits, ndim).
+    w0: shape (ndim, n)
+    returns: shape (ndim, [ntimes,] n)
     """
 
     if not hamiltonian.c_enabled:
@@ -206,8 +208,8 @@ cpdef dop853_integrate_hamiltonian(
 
     cdef:
         int i, j, k
-        unsigned norbits = w0.shape[0]
-        unsigned ndim = w0.shape[1]
+        unsigned ndim = w0.shape[0]
+        unsigned norbits = w0.shape[1]
         void *args
 
         # define full array of times
@@ -226,23 +228,22 @@ cpdef dop853_integrate_hamiltonian(
         # do the integration in batches for performance
         # FUTURE: this batching could probably be done in C directly
         j = min(i + nbatch, norbits)
-        wbatch = w0[i:j, :]
+        wbatch = w0[:, i:j]
         # 0 below is for nbody - we ignore that in this test particle integration
-        wout = dop853_helper(
+        wbatchout = dop853_helper(
             cp, &cf, <FcnEqDiff> Fwrapper_T,
             wbatch, t,
             ndim, j - i, 0, NULL, ntimes,
             atol, rtol, nmax, dt_max,
             nstiff=nstiff,
             save_all=save_all, err_if_fail=err_if_fail, log_output=log_output,
-            transposed=1
         )
         if save_all:
-            wres[:, :, i:j] = wout.transpose((2,0,1))
+            wres[:, :, i:j] = wbatchout.transpose(1, 0, 2)
         else:
-            wres[:, i:j] = wout.T
+            wres[:, i:j] = wbatchout
 
     if save_all:
-        return np.asarray(t), np.asarray(wres)
+        return np.asarray(t), wres
     else:
-        return np.asarray(t[-1:]), np.asarray(wres)
+        return np.asarray(t[-1:]), wres
