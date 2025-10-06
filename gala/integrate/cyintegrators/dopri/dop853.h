@@ -258,6 +258,9 @@ extern long nrejctRead (void);
 extern void Fwrapper (unsigned ndim, double t, double *w, double *f,
                       CPotential *p, CFrameType *fr,
                       unsigned norbits, unsigned nbody, void *args);
+extern void Fwrapper_T (unsigned ndim, double t, double *w, double *f,
+                      CPotential *p, CFrameType *fr,
+                      unsigned norbits, unsigned nbody, void *args);
 extern void Fwrapper_direct_nbody(unsigned ndim, double t, double *w, double *f,
                                   CPotential *p, CFrameType *fr,
                                   unsigned norbits, unsigned nbody,

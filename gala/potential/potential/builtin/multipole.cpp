@@ -334,8 +334,7 @@ double mp_potential(double t, double *pars, double *q, int n_dim) {
     return val[0];
 }
 
-// TODO: de-scalarize
-void mp_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
+void mp_gradient(double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, size_t N, double *__restrict__ grad, void *__restrict__ state) {
     /*  pars:
         - G (Gravitational constant)
         - lmax
@@ -345,6 +344,28 @@ void mp_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n
         - r_s (length scale)
         [- sin_coeff, cos_coeff]
     */
+    double G = pars[0];
+    int lmax = (int)pars[1];
+    int num_coeff = (int)pars[2];
+    int inner = (int)pars[3];
+    double M = pars[4];
+    double r_s = pars[5];
+
+    double Slm[num_coeff], Tlm[num_coeff];
+    for(int i=0; i<num_coeff; i++){
+        Slm[i] = pars[6 + 2*i];
+        Tlm[i] = pars[7 + 2*i];
+    }
+
+    mp_gradient_helper(double6ptr{q, N}, N,
+                       G, M, r_s,
+                       &Slm[0], &Tlm[0],
+                       lmax, inner, double6ptr{grad, N});
+}
+
+void _mp_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
+    // This is a helper used by axisym_cylspline_gradient, but not by mp_gradient.
+
     double G = pars[0];
     int lmax = (int)pars[1];
     int num_coeff = (int)pars[2];
@@ -467,7 +488,7 @@ double mpetd_potential(double t, double *pars, double *q, int n_dim) {
     return val[0];
 }
 
-void mpetd_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
+void mpetd_gradient(double t, double *__restrict__ pars, double *__restrict__ q, int n_dim, size_t N, double *__restrict__ grad, void *__restrict__ state) {
     /*  pars:
         - G (Gravitational constant)
         - lmax
@@ -510,10 +531,10 @@ void mpetd_gradient_single(double t, double *__restrict__ pars, double6ptr q, in
 
 
 
-    mp_gradient_helper(q, 1,
+    mp_gradient_helper(double6ptr{q, N}, N,
                         G, M, r_s,
                         &alm[0], &blm[0],
-                        lmax, 1, grad);
+                        lmax, 1, double6ptr{grad, N});
 }
 
 double mpetd_density(double t, double *pars, double *q, int n_dim) {
@@ -658,17 +679,12 @@ double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) {
     return Phi;
 }
 
-void axisym_cylspline_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
+void axisym_cylspline_gradient(double t, double *__restrict__ pars, double *__restrict__ q_in, int n_dim, size_t N, double *__restrict__ grad_in, void *__restrict__ state) {
 
     int logScaling = (int)pars[1];
     double Rscale = pars[2];
     int nR = (int)pars[3];
     int nz = (int)pars[4];
-
-    double Phi, dPhi_dR, dPhi_dz;
-    double R = sqrt(q[0]*q[0] + q[1]*q[1]);
-    double Rasinh = asinh(R / Rscale);
-    double zasinh = asinh(q[2] / Rscale);
 
     double gridR[nR];
     double gridz[nz];
@@ -686,43 +702,46 @@ void axisym_cylspline_gradient_single(double t, double *__restrict__ pars, doubl
     gsl_interp_accel *xacc = gsl_interp_accel_alloc();
     gsl_interp_accel *yacc = gsl_interp_accel_alloc();
 
-    // TODO: interpolation is very slow I think because this setup is done every
-    // time the function is called...
+    /* initialize interpolation */
+    gsl_spline2d_init(spline, gridR, gridz, gridPhi, nR, nz);
 
-    if ((Rasinh >= gridR[0]) && (Rasinh <= gridR[nR-1]) &&
-        (zasinh >= gridz[0]) && (zasinh <= gridz[nz-1])) { // Use CylSpline
+    double6ptr q = double6ptr{q_in, N};
+    double6ptr grad = double6ptr{grad_in, N};
 
-        /* initialize interpolation */
-        // TODO: define this in wrapper, make all CPotential's have a void
-        // pointer array to store things like this, all these functions then
-        // need to accept one more parameter (or is there a way to do optional
-        // args in C?), ??, profit.
-        gsl_spline2d_init(spline, gridR, gridz, gridPhi, nR, nz);
+    for(size_t i = 0; i < N; i++) {
+        double R = sqrt(q.x[i]*q.x[i] + q.y[i]*q.y[i]);
+        double Rasinh = asinh(R / Rscale);
+        double zasinh = asinh(q.z[i] / Rscale);
 
-        dPhi_dR = gsl_spline2d_eval_deriv_x(spline, Rasinh, zasinh, xacc, yacc);
-        dPhi_dR = dPhi_dR / (Rscale * cosh(Rasinh));
+        if ((Rasinh >= gridR[0]) && (Rasinh <= gridR[nR-1]) &&
+            (zasinh >= gridz[0]) && (zasinh <= gridz[nz-1])) { // Use CylSpline
 
-        dPhi_dz = gsl_spline2d_eval_deriv_y(spline, Rasinh, zasinh, xacc, yacc);
-        dPhi_dz = dPhi_dz / (Rscale * cosh(zasinh));
+            double dPhi_dR = gsl_spline2d_eval_deriv_x(spline, Rasinh, zasinh, xacc, yacc);
+            dPhi_dR = dPhi_dR / (Rscale * cosh(Rasinh));
 
-        if (logScaling) {
-            Phi = gsl_spline2d_eval(spline, Rasinh, zasinh, xacc, yacc);
-            Phi = -exp(Phi);
-            dPhi_dR = dPhi_dR * Phi;
-            dPhi_dz = dPhi_dz * Phi;
+            double dPhi_dz = gsl_spline2d_eval_deriv_y(spline, Rasinh, zasinh, xacc, yacc);
+            dPhi_dz = dPhi_dz / (Rscale * cosh(zasinh));
+
+            if (logScaling) {
+                double Phi = gsl_spline2d_eval(spline, Rasinh, zasinh, xacc, yacc);
+                Phi = -exp(Phi);
+                dPhi_dR = dPhi_dR * Phi;
+                dPhi_dz = dPhi_dz * Phi;
+            }
+
+            if (R > 0) {
+                grad.x[i] += dPhi_dR * q.x[i] / R;
+                grad.y[i] += dPhi_dR * q.y[i] / R;
+                grad.z[i] += dPhi_dz;
+            } else {
+                grad.z[i] += dPhi_dz;
+            }
+
+        } else {  // Use external Multipole
+            _mp_gradient_single(t, &pars[5 + nR + nz + nR * nz], double6ptr{q_in + i, N}, n_dim, double6ptr{grad_in + i, N}, state);
         }
-
-        if (R > 0) {
-            grad[0] = grad[0] + dPhi_dR * q[0] / R;
-            grad[1] = grad[1] + dPhi_dR * q[1] / R;
-            grad[2] = grad[2] + dPhi_dz;
-        } else {
-            grad[2] = grad[2] + dPhi_dz;
-        }
-
-    } else {  // Use external Multipole
-        mp_gradient_single(t, &pars[5 + nR + nz + nR * nz], q, n_dim, grad, state);
     }
+
     gsl_spline2d_free(spline);
     gsl_interp_accel_free(xacc);
     gsl_interp_accel_free(yacc);
@@ -807,9 +826,5 @@ double axisym_cylspline_density(double t, double *pars, double *q, int n_dim) {
 
     return dens;
 }
-
-DEFINE_VECTORIZED_GRADIENT(mp)
-DEFINE_VECTORIZED_GRADIENT(mpetd)
-DEFINE_VECTORIZED_GRADIENT(axisym_cylspline)
 
 #endif  // USE_GSL
