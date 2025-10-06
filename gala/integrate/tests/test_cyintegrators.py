@@ -35,8 +35,8 @@ def test_compare_to_py(Integrator, integrate_func, dt):
     H = Hamiltonian(potential=p)
 
     def F(t, w):
-        w_T = np.ascontiguousarray(w.T)
-        return H._gradient(w_T, np.array([0.0])).T
+        w = np.ascontiguousarray(w)
+        return H._gradient(w, np.array([0.0]))
 
     cy_w0 = np.array(
         [
@@ -45,7 +45,8 @@ def test_compare_to_py(Integrator, integrate_func, dt):
             [0.0, 10.0, 0.0, 0.0, 0.0, 0.2],
         ]
     )
-    py_w0 = np.ascontiguousarray(cy_w0.T)
+    cy_w0 = np.ascontiguousarray(cy_w0.T)
+    py_w0 = cy_w0.copy()
 
     n_steps = 1024
     t = np.linspace(0, dt * n_steps, n_steps + 1)
@@ -56,7 +57,7 @@ def test_compare_to_py(Integrator, integrate_func, dt):
     orbit = integrator(py_w0, dt=dt, n_steps=n_steps)
 
     py_t = orbit.t.value
-    py_w = orbit.w()
+    py_w = orbit.w()  # (ndim, ntimes, n)
 
     assert py_w.shape == cy_w.shape
     assert np.allclose(cy_w[:, -1], py_w[:, -1])
@@ -75,6 +76,7 @@ def test_save_all(integrate_func, dt):
             [0.0, 10.0, 0.0, 0.0, 0.0, 0.2],
         ]
     )
+    w0 = np.ascontiguousarray(w0.T)
 
     # 1024 steps
     t = np.linspace(0, dt * 1024, 1024 + 1)
