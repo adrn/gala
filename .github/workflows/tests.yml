@@ -8,6 +8,8 @@ on:
     tags:
       - "*"
   pull_request:
+  schedule:
+    - cron: "0 10 * * 1"  # Mondays @ 6AM Eastern
 
 jobs:
   check_skip_flags:
