@@ -43,34 +43,28 @@ def _make_potential(kind):
     )
 
 
-class TestSphericalSpline_potential(PotentialTestBase):
+class SphericalSplineTestBase(PotentialTestBase):
     w0 = [8.0, 0.0, 0.0, 0.0, 0.1, 0.1]
     # atol = 1e-3
     sympy_density = False
     check_finite_at_origin = False
 
     def setup_method(self):
-        self.potential = _make_potential("potential")
+        self.potential = _make_potential(self._spline_type)
         super().setup_method()
 
-
-class TestSphericalSpline_density(PotentialTestBase):
-    w0 = [8.0, 0.0, 0.0, 0.0, 0.1, 0.1]
-    # atol = 1e-3
-    sympy_density = False
-    check_finite_at_origin = False
-
-    def setup_method(self):
-        self.potential = _make_potential("density")
-        super().setup_method()
+    @pytest.mark.skip(reason="Not implemented for rotated potentials")
+    def test_against_sympy(self):
+        pass
 
 
-class TestSphericalSpline_mass(PotentialTestBase):
-    w0 = [8.0, 0.0, 0.0, 0.0, 0.1, 0.1]
-    # atol = 1e-3
-    sympy_density = False
-    check_finite_at_origin = False
+class TestSphericalSpline_potential(SphericalSplineTestBase):
+    _spline_type = "potential"
 
-    def setup_method(self):
-        self.potential = _make_potential("mass")
-        super().setup_method()
+
+class TestSphericalSpline_density(SphericalSplineTestBase):
+    _spline_type = "density"
+
+
+class TestSphericalSpline_mass(SphericalSplineTestBase):
+    _spline_type = "mass"
