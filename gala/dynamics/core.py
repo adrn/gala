@@ -93,7 +93,7 @@ class PhaseSpacePosition:
         r.SphericalDifferential
     ]
 
-    def __init__(self, pos, vel=None, frame=None):
+    def __init__(self, pos, vel=None, frame=None, copy=True):
         """
         Represents phase-space positions, i.e. positions and conjugate momenta
         (velocities).
@@ -129,7 +129,10 @@ class PhaseSpacePosition:
             the note above about the assumed meaning of the axes of this object.
         frame : :class:`~gala.potential.FrameBase` (optional)
             The reference frame of the input phase-space positions.
-
+        copy : bool (optional)
+            If `True`, the input position and velocity data is copied. If
+            `False`, the input data is referenced directly (if possible).
+            Default is `True`.
         """
 
         if isinstance(pos, coord.Galactocentric):
@@ -138,7 +141,7 @@ class PhaseSpacePosition:
         if not isinstance(pos, coord.BaseRepresentation):
             # assume Cartesian if not specified
             if not hasattr(pos, "unit"):
-                pos *= u.one
+                pos = u.Quantity(pos, u.one, copy=copy)
 
             # 3D coordinates get special treatment
             ndim = pos.shape[0]
@@ -146,13 +149,13 @@ class PhaseSpacePosition:
                 # TODO: HACK: until this stuff is in astropy core
                 if isinstance(pos, coord.BaseRepresentation):
                     kw = [(k, getattr(pos, k)) for k in pos.components]
-                    pos = getattr(coord, pos.__class__.__name__)(**kw)
+                    pos = getattr(coord, pos.__class__.__name__)(**kw, copy=copy)
 
                 else:
-                    pos = coord.CartesianRepresentation(pos)
+                    pos = coord.CartesianRepresentation(pos, copy=copy)
 
             else:
-                pos = rep_nd.NDCartesianRepresentation(pos)
+                pos = rep_nd.NDCartesianRepresentation(pos, copy=copy)
 
         else:
             ndim = 3
@@ -169,15 +172,15 @@ class PhaseSpacePosition:
         if not isinstance(vel, coord.BaseDifferential):
             # assume representation is same as pos if not specified
             if not hasattr(vel, "unit"):
-                vel *= u.one
+                vel = u.Quantity(vel, u.one, copy=copy)
 
             if ndim == 3:
                 name = _get_rep_name(pos)
                 Diff = coord.representation.DIFFERENTIAL_CLASSES[name]
-                vel = Diff(*vel)
+                vel = Diff(*vel, copy=copy)
             else:
                 Diff = rep_nd.NDCartesianDifferential
-                vel = Diff(vel)
+                vel = Diff(vel, copy=copy)
 
         # make sure shape is the same
         if pos.shape != vel.shape:
@@ -491,7 +494,7 @@ class PhaseSpacePosition:
         return np.vstack((x, v))
 
     @classmethod
-    def from_w(cls, w, units=None, **kwargs):
+    def from_w(cls, w, units=None, copy=True, **kwargs):
         """Create a PhaseSpacePosition from a single array of positions and velocities.
 
         Parameters
@@ -504,6 +507,9 @@ class PhaseSpacePosition:
             The unit system that the input position+velocity array, ``w``,
             is represented in. If not provided, the array is assumed to be
             dimensionless.
+        copy : bool, optional
+            If `True`, the input array is copied. If `False`, the input data
+            is referenced directly (if possible). Default is `True`.
         **kwargs
             Additional keyword arguments passed to the class initializer.
 
@@ -514,7 +520,7 @@ class PhaseSpacePosition:
 
         """
 
-        w = np.array(w)
+        w = np.asarray(w)
 
         ndim = w.shape[0] // 2
         pos = w[:ndim]
@@ -524,10 +530,10 @@ class PhaseSpacePosition:
         # Dimensionless
         if units is not None and not isinstance(units, DimensionlessUnitSystem):
             units = UnitSystem(units)
-            pos *= units["length"]
-            vel = vel * units["length"] / units["time"]  # from _core_units
+            pos = u.Quantity(pos, units["length"], copy=copy)
+            vel = u.Quantity(vel, units["length"] / units["time"], copy=copy)
 
-        return cls(pos=pos, vel=vel, **kwargs)
+        return cls(pos=pos, vel=vel, copy=copy, **kwargs)
 
     # ------------------------------------------------------------------------
     # Input / output

@@ -80,6 +80,16 @@ def test_initialize():
     assert isinstance(o.frame, StaticFrame)
 
 
+def test_no_copy():
+    x = np.random.random(size=(3, 10))
+    v = np.random.random(size=(3, 10))
+    o1 = Orbit(pos=x, vel=v, copy=True)
+    o2 = Orbit(pos=x, vel=v, copy=False)
+    x[0, 0] = 9999.0
+    assert o1.x[0].value != 9999.0
+    assert o2.x[0].value == 9999.0
+
+
 def test_from_w():
     w = np.random.random(size=(6, 10))
     o = Orbit.from_w(w, galactic)

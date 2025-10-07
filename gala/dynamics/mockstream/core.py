@@ -9,8 +9,10 @@ __all__ = ["MockStream"]
 
 class MockStream(PhaseSpacePosition):
     @u.quantity_input(release_time=u.Myr)
-    def __init__(self, pos, vel=None, frame=None, release_time=None, lead_trail=None):
-        super().__init__(pos=pos, vel=vel, frame=frame)
+    def __init__(
+        self, pos, vel=None, frame=None, release_time=None, lead_trail=None, copy=True
+    ):
+        super().__init__(pos=pos, vel=vel, frame=frame, copy=copy)
 
         if release_time is not None:
             release_time = u.Quantity(release_time)
