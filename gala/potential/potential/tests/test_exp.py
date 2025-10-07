@@ -18,12 +18,19 @@ from gala.potential.potential.tests.helpers import PotentialTestBase
 from gala.units import SimulationUnitSystem
 from gala.util import chdir
 
+# Use in CI to ensure tests aren't silently skipped
+FORCE_EXP_TEST = os.environ.get("GALA_FORCE_EXP_TEST", "0") == "1"
+FORCE_PYEXP_TEST = os.environ.get("GALA_FORCE_PYEXP_TEST", "0") == "1"
+
 try:
     import pyEXP
 
     HAVE_PYEXP = True
-except ImportError:
+except ImportError as e:
     HAVE_PYEXP = False
+    if FORCE_PYEXP_TEST:
+        raise ImportError("pyEXP is required to run pyEXP tests") from e
+
 
 EXP_CONFIG_FILE = get_pkg_data_filename("EXP-Hernquist-basis.yml")
 EXP_SINGLE_COEF_FILE = get_pkg_data_filename("EXP-Hernquist-single-coefs.hdf5")
@@ -31,10 +38,6 @@ EXP_MULTI_COEF_FILE = get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5")
 EXP_MULTI_COEF_SNAPSHOT_TIME_FILE = get_pkg_data_filename(
     "EXP-Hernquist-multi-coefs-snap-time-Gyr.hdf5"
 )
-
-# Use in CI to ensure tests aren't silently skipped
-FORCE_EXP_TEST = os.environ.get("GALA_FORCE_EXP_TEST", "0") == "1"
-FORCE_PYEXP_TEST = os.environ.get("GALA_FORCE_PYEXP_TEST", "0") == "1"
 
 # global pytest marker to skip tests if EXP is not enabled
 pytestmark = pytest.mark.skipif(
