@@ -20,8 +20,13 @@ def _unpack_params(p):
 
         if isiterable(item) and not isinstance(item, str):
             params[key] = np.array(item).astype(float)
+        elif isinstance(item, str):
+            params[key] = item
         else:
-            params[key] = float(item)
+            try:
+                params[key] = float(item)
+            except Exception:
+                params[key] = item
 
         if key + "_unit" in params:
             params[key] *= u.Unit(params[key + "_unit"])
