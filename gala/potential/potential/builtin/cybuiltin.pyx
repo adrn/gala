@@ -55,6 +55,10 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     gsl_spline* gsl_spline_alloc(const gsl_interp_type *T, size_t size)
     int gsl_spline_init(gsl_spline *spline, const double *xa, const double *ya, size_t size)
     void gsl_spline_free(gsl_spline *spline)
+    double gsl_spline_eval(const gsl_spline *spline, double x, gsl_interp_accel *acc)
+    double gsl_spline_eval_deriv(const gsl_spline *spline, double x, gsl_interp_accel *acc)
+    double gsl_spline_eval_deriv2(const gsl_spline *spline, double x, gsl_interp_accel *acc)
+    double gsl_spline_eval_integ(const gsl_spline *spline, double a, double b, gsl_interp_accel *acc)
 
 cdef extern from "potential/potential/builtin/builtin_potentials.h":
     ctypedef struct spherical_spline_state:
@@ -433,20 +437,22 @@ cdef class SphericalSplineWrapper(CPotentialWrapper):
             "steffen": 6,
         }
 
+        self.init([G] + list(parameters),
+                  np.ascontiguousarray(q0),
+                  np.ascontiguousarray(R))
+
+        # Set the state pointer to our spline state
+        # This must be done BEFORE _setup_spline_state since that function initializes
+        # the GSL objects that are stored in spl_state
+        self.cpotential.state[0] = <void*>&self.spl_state
+
         self._setup_spline_state(
             parameters,
             method=method_to_enum[interpolation_method],
             n_knots=n_knots
         )
 
-        self.init([G] + list(parameters),
-                  np.ascontiguousarray(q0),
-                  np.ascontiguousarray(R))
-
         if USE_GSL == 1:
-            # Set the state pointer to our spline state
-            self.cpotential.state[0] = <void*>&self.spl_state
-
             if self.spline_value_type == "density":
                 self.cpotential.value[0] = <energyfunc>(spherical_spline_density_value)
                 self.cpotential.gradient[0] = <gradientfunc>(spherical_spline_density_gradient)
@@ -508,10 +514,18 @@ cdef class SphericalSplineWrapper(CPotentialWrapper):
 
         # Create GSL objects
         self.spl_state.acc = gsl_interp_accel_alloc()
+        if self.spl_state.acc == NULL:
+            raise RuntimeError("Failed to allocate GSL interpolation accelerator")
+
         self.spl_state.spline = gsl_spline_alloc(interp_type, n_knots)
-        gsl_spline_init(
+        if self.spl_state.spline == NULL:
+            raise RuntimeError(f"Failed to allocate GSL spline with method {method} and {n_knots} knots")
+
+        cdef int init_status = gsl_spline_init(
             self.spl_state.spline, self.r_knots_copy, self.values_copy, n_knots
         )
+        if init_status != 0:
+            raise RuntimeError(f"Failed to initialize GSL spline, error code: {init_status}")
 
         # For density interpolation, need additional splines for efficient integration
         if self.spline_value_type == "density":

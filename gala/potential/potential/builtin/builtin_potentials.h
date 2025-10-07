@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include "extra_compile_macros.h"
 
 #if USE_GSL == 1
 #include <gsl/gsl_spline.h>
@@ -24,6 +25,10 @@ static inline void gsl_interp_accel_free(gsl_interp_accel *acc) {}
 static inline gsl_spline* gsl_spline_alloc(const gsl_interp_type *T, size_t size) { return NULL; }
 static inline int gsl_spline_init(gsl_spline *spline, const double *xa, const double *ya, size_t size) { return 0; }
 static inline void gsl_spline_free(gsl_spline *spline) {}
+static inline double gsl_spline_eval(const gsl_spline *spline, double x, gsl_interp_accel *acc) { return 0.0; }
+static inline double gsl_spline_eval_deriv(const gsl_spline *spline, double x, gsl_interp_accel *acc) { return 0.0; }
+static inline double gsl_spline_eval_deriv2(const gsl_spline *spline, double x, gsl_interp_accel *acc) { return 0.0; }
+static inline double gsl_spline_eval_integ(const gsl_spline *spline, double a, double b, gsl_interp_accel *acc) { return 0.0; }
 #endif
 
 // Spherical spline interpolation state structure
