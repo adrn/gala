@@ -560,6 +560,23 @@ cdef class SphericalSplineWrapper(CPotentialWrapper):
         free(rho_r_values)
         free(rho_r2_values)
 
+    def __reduce__(self):
+        """Support for pickling/deepcopy"""
+        return (
+            self.__class__,
+            (
+                self._params[0],  # G
+                list(self._params[1:]),  # parameters
+                np.array(self._q0),  # q0
+                np.array(self._R).reshape(self.cpotential.n_dim, self.cpotential.n_dim),  # R
+                self.spline_value_type,  # spline_value_type
+                # Reconstruct interpolation_method from the stored enum
+                ["linear", "polynomial", "cspline", "cspline_periodic",
+                 "akima", "akima_periodic", "steffen"][self.spl_state.method],
+                self.spl_state.n_knots  # n_knots
+            )
+        )
+
     def __dealloc__(self):
         """Clean up GSL objects and allocated memory"""
         if USE_GSL == 1:

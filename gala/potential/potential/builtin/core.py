@@ -1545,6 +1545,26 @@ class SphericalSplinePotential(CPotentialBase, GSL_only=True):
 
         self._setup_wrapper(n_knots=len(self.parameters["r_knots"]))
 
+    def __getstate__(self):
+        """Return state for pickling/deepcopy."""
+        state = self.__dict__.copy()
+        # Store the extra wrapper kwargs that aren't in c_parameters
+        state["_wrapper_kwargs"] = {
+            "spline_value_type": self.parameters["spline_value_type"],
+            "interpolation_method": self.parameters["interpolation_method"],
+            "n_knots": len(self.parameters["r_knots"]),
+        }
+        return state
+
+    def __setstate__(self, state):
+        """Restore state from pickling/deepcopy."""
+        # Extract wrapper kwargs before setting state
+        wrapper_kwargs = state.pop("_wrapper_kwargs", None)
+        self.__dict__.update(state)
+        # Recreate the C wrapper with the saved kwargs
+        if wrapper_kwargs is not None:
+            self._setup_wrapper(**wrapper_kwargs)
+
 
 # ==============================================================================
 # EXP Potential
