@@ -102,7 +102,7 @@ def fast_lyapunov_max(
     if not isinstance(w0, PhaseSpacePosition):
         w0 = np.asarray(w0)
         ndim = w0.shape[0] // 2
-        w0 = PhaseSpacePosition(pos=w0[:ndim], vel=w0[ndim:])
+        w0 = PhaseSpacePosition(pos=w0[:ndim], vel=w0[ndim:], copy=False)
 
     w0_ = np.squeeze(w0.w(hamiltonian.units))
     if w0_.ndim > 1:
@@ -130,7 +130,11 @@ def fast_lyapunov_max(
             tunit = u.dimensionless_unscaled
 
         orbit = Orbit.from_w(
-            w=w, units=hamiltonian.units, t=t * tunit, hamiltonian=hamiltonian
+            w=w,
+            units=hamiltonian.units,
+            t=t * tunit,
+            hamiltonian=hamiltonian,
+            copy=False,
         )
         return l / tunit, orbit
 
@@ -218,7 +222,9 @@ def lyapunov_max(
     if not isinstance(w0, PhaseSpacePosition):
         w0 = np.asarray(w0)
         ndim = w0.shape[0] // 2
-        w0 = PhaseSpacePosition(pos=w0[:ndim] * pos_unit, vel=w0[ndim:] * vel_unit)
+        w0 = PhaseSpacePosition(
+            pos=w0[:ndim] * pos_unit, vel=w0[ndim:] * vel_unit, copy=False
+        )
 
     w0_ = w0.w(units)
     ndim = 2 * w0.ndim
@@ -331,4 +337,4 @@ def surface_of_section(orbit, constant_idx, constant_val=0.0):
     sos_vel = [w[i][cross_idx] for i in range(ndim, 2 * ndim)]
     sos_vel = orbit.vel.__class__(*sos_vel)
 
-    return Orbit(sos_pos, sos_vel)
+    return Orbit(sos_pos, sos_vel, copy=False)

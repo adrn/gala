@@ -250,6 +250,7 @@ class DirectNBody:
                 vel=vel * self.units["length"] / self.units["time"],
                 t=t * self.units["time"],
                 hamiltonian=self.H,
+                copy=False,
             )
 
         else:
@@ -260,6 +261,7 @@ class DirectNBody:
                 pos=pos * self.units["length"],
                 vel=vel * self.units["length"] / self.units["time"],
                 frame=self.frame,
+                copy=False,
             )
 
         # Reorder orbits to original order:
