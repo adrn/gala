@@ -40,6 +40,7 @@ test = [
     "gala[shared]",
     "pytest",
     "pytest-astropy",
+    "pytest-xdist",
 ]
 extra = [
     "galpy",
