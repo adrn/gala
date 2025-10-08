@@ -39,7 +39,7 @@ jobs:
       !contains(github.event.pull_request.labels.*.name, 'docs only') &&
       !contains(needs.check_skip_flags.outputs.head-commit-message, '[skip tests]') }}
     env:
-      EXP_TAG: "v7.8.5"
+      EXP_REF: ${{ github.event_name == 'schedule' && 'devel' || 'v7.8.5' }}
       MACOSX_DEPLOYMENT_TARGET: "15.0"
     strategy:
       fail-fast: true
@@ -142,7 +142,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: EXP-code/EXP
-          ref: ${{ env.EXP_TAG }}
+          ref: ${{ env.EXP_REF }}
           submodules: recursive
           path: EXP
 
