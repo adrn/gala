@@ -48,20 +48,19 @@ cdef class CFrameWrapper:
 
     cpdef gradient(self, double[:, ::1] w, double[::1] t):
         """
-        w should have shape (n, ndim).
+        w should have shape (ndim, n).
         """
         cdef:
             int n, ndim, i
             CFrameType cf = self.cframe
-        n, ndim = _validate_pos_arr(w)
+        ndim, n = _validate_pos_arr(w)
 
-        cdef double[:, ::1] dH = np.zeros((n, ndim))
+        cdef double[:, ::1] dH = np.zeros((ndim, n))
         if len(t) == 1:
-            for i in range(n):
-                frame_gradient(&cf, t[0], &w[i, 0], ndim//2, &dH[i, 0])
+            frame_gradient(&cf, t[0], &w[0, 0], ndim//2, n, &dH[0, 0])
         else:
             for i in range(n):
-                frame_gradient(&cf, t[i], &w[i, 0], ndim//2, &dH[i, 0])
+                frame_gradient(&cf, t[i], &w[0, i], ndim//2, 1, &dH[0, i])
 
 
         return np.array(dH)

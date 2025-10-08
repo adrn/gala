@@ -57,8 +57,9 @@ class MyPotential(PotentialBase):
     def _gradient(self, x, t):
         m = self.parameters["m"].value
         x0 = self.parameters["x0"].value
-        r = np.sqrt(np.sum((x - x0[None]) ** 2, axis=1))
-        return m * (x - x0[None]) / r**3
+        x0 = np.atleast_2d(x0).T
+        r = np.sqrt(np.sum((x - x0) ** 2, axis=0))
+        return m * (x - x0) / r**3
 
 
 def test_init_potential():

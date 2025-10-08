@@ -118,10 +118,9 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
                 kw[k] = v.value
 
             for i, name in enumerate(var_names):
-                kw[name] = w[:, i]
+                kw[name] = w[i, :]
 
-            grad = np.vstack([f(**kw)[np.newaxis] for f in gradfuncs])
-            return grad.T
+            return np.vstack([f(**kw)[np.newaxis] for f in gradfuncs])
 
     if name is not None:
         # name = _classnamify(name)

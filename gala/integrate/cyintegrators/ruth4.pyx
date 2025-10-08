@@ -39,9 +39,8 @@ cpdef ruth4_integrate_hamiltonian(hamiltonian,
                                   double[::1] t,
                                   int save_all=1):
     """
-    CAUTION: Interpretation of axes is different here! We need the
-    arrays to be C ordered and easy to iterate over, so here the
-    axes are (norbits, ndim).
+    w0: shape (ndim, n)
+    returns: shape (ndim, [ntimes,] n)
     """
 
     if not hamiltonian.c_enabled:
@@ -55,8 +54,8 @@ cpdef ruth4_integrate_hamiltonian(hamiltonian,
     cdef:
         # temporary scalars
         int i, j, k
-        int n = w0.shape[0]
-        int ndim = w0.shape[1]
+        int ndim = w0.shape[0]
+        int n = w0.shape[1]
         int half_ndim = ndim // 2
 
         int ntimes = len(t)
@@ -89,12 +88,12 @@ cpdef ruth4_integrate_hamiltonian(hamiltonian,
         CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
 
     if save_all:
-        all_w = np.zeros((ntimes, ndim, n))
+        all_w = np.empty((ndim, ntimes, n))
 
         # save initial conditions
-        all_w[0, :, :] = w0.T.copy()
+        all_w[:, 0, :] = w0
 
-    tmp_w = w0.T.copy()
+    tmp_w = w0.copy()
 
     with nogil:
         for j in range(1, ntimes, 1):
@@ -106,12 +105,12 @@ cpdef ruth4_integrate_hamiltonian(hamiltonian,
             if save_all:
                 for k in range(ndim):
                     for i in range(n):
-                        all_w[j, k, i] = tmp_w[k, i]
+                        all_w[k, j, i] = tmp_w[k, i]
 
     if save_all:
-        return np.asarray(t), np.asarray(all_w).transpose(0,2,1)
+        return np.asarray(t), np.asarray(all_w)
     else:
-        return np.asarray(t[-1:]), np.array(tmp_w.T, copy=False)
+        return np.asarray(t[-1:]), np.asarray(tmp_w)
 
 
 # -------------------------------------------------------------------------------------
