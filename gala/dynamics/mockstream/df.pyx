@@ -226,13 +226,15 @@ cdef class BaseStreamDF:
         out = Orbit(pos=np.array(x).T * _units['length'],
                     vel=np.array(v).T * _units['length']/_units['time'],
                     t=np.array(t1) * _units['time'],
-                    frame=static_frame)
+                    frame=static_frame,
+                    copy=False,
+                    )
 
         # Transform back to the input frame
         out = out.to_frame(frame)
 
         w0 = MockStream(pos=out.pos, vel=out.vel, frame=out.frame,
-                        release_time=out.t, lead_trail=lt)
+                        release_time=out.t, lead_trail=lt, copy=False)
 
         return w0
 

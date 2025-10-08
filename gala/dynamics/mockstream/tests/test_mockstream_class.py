@@ -26,6 +26,18 @@ def test_init():
         MockStream(xyz, vxyz, lead_trail=lead_trail[:-1])
 
 
+def test_no_copy():
+    xyz = np.random.random(size=(3, 100)) * u.kpc
+    vxyz = np.random.random(size=(3, 100)) * u.km / u.s
+
+    s1 = MockStream(xyz, vxyz, copy=True)
+    s2 = MockStream(xyz, vxyz, copy=False)
+
+    xyz[0, 0] = 999.0 * u.kpc
+    assert s1.pos[0].x.value != 999.0
+    assert s2.pos[0].x.value == 999.0
+
+
 def test_one_burst():
     # Regression test: Tests a bug found by Helmer when putting all particles at
     # one timestep

@@ -65,11 +65,16 @@ class Orbit(PhaseSpacePosition):
         stored as a dimensionless :class:`~astropy.units.Quantity`.
     hamiltonian : `~gala.potential.Hamiltonian` (optional)
         The Hamiltonian that the orbit was integrated in.
+    copy : bool, optional
+        If `True`, the input arrays are copied. If `False`, the input data
+        is referenced directly (if possible). Default is `True`.
 
     """
 
-    def __init__(self, pos, vel, t=None, hamiltonian=None, potential=None, frame=None):
-        super().__init__(pos=pos, vel=vel)
+    def __init__(
+        self, pos, vel, t=None, hamiltonian=None, potential=None, frame=None, copy=True
+    ):
+        super().__init__(pos=pos, vel=vel, copy=copy)
 
         if self.pos.ndim < 1:
             self.pos = self.pos.reshape(1)
@@ -1375,13 +1380,15 @@ class Orbit(PhaseSpacePosition):
             rho=galpy_orbit.R(ts) * ro,
             phi=galpy_orbit.phi(ts) * u.rad,
             z=galpy_orbit.z(ts) * ro,
+            copy=False,
         )
         with u.set_enabled_equivalencies(u.dimensionless_angles()):
             dif = coord.CylindricalDifferential(
                 d_rho=galpy_orbit.vR(ts) * vo,
                 d_phi=galpy_orbit.vT(ts) * vo / rep.rho,
                 d_z=galpy_orbit.vz(ts) * vo,
+                copy=False,
             )
 
         t = galpy_orbit.t * ro / vo
-        return Orbit(rep, dif, t=t)
+        return Orbit(rep, dif, t=t, copy=False)

@@ -311,7 +311,7 @@ class Hamiltonian(CommonBase):
         if not isinstance(w0, PhaseSpacePosition):
             w0 = np.asarray(w0)
             ndim = w0.shape[0]//2
-            w0 = PhaseSpacePosition(pos=w0[:ndim], vel=w0[ndim:])
+            w0 = PhaseSpacePosition(pos=w0[:ndim], vel=w0[ndim:], copy=False)
 
         ndim = w0.ndim
         arr_w0 = w0.w(self.units)
@@ -371,8 +371,10 @@ class Hamiltonian(CommonBase):
         except (TypeError, AttributeError):
             tunit = u.dimensionless_unscaled
 
-        return Orbit.from_w(w=w, units=self.units, t=t*tunit,
-                            hamiltonian=self)
+        t = u.Quantity(t, tunit, copy=False)
+
+        return Orbit.from_w(w=w, units=self.units, t=t,
+                            hamiltonian=self, copy=False)
 
     # def save(self, f):
     #     """

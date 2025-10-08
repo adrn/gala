@@ -96,7 +96,7 @@ class Integrator(metaclass=ABCMeta):
         from ..dynamics import PhaseSpacePosition
 
         if not isinstance(w0, PhaseSpacePosition):
-            w0 = PhaseSpacePosition.from_w(w0)
+            w0 = PhaseSpacePosition.from_w(w0, copy=False)
 
         arr_w0 = w0.w(self._func_units)
 
@@ -143,6 +143,7 @@ class Integrator(metaclass=ABCMeta):
             pos=w[: self.ndim] * pos_unit,
             vel=w[self.ndim :] * vel_unit,
             t=t * t_unit,
+            copy=False,
         )
 
     @deprecated("1.9", alternative="Integrator call method")

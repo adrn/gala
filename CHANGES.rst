@@ -21,6 +21,8 @@ Bug fixes
 
 API changes
 -----------
+- Added ``copy`` kwarg to ``gala.dynamics.PhaseSpacePosition``,
+  ``gala.dynamics.Orbit``, and ``gala.dynamics.MockStream``.
 
 Other
 -----

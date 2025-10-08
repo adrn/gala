@@ -264,7 +264,7 @@ def isochrone_aa_to_xv(actions, angles, potential):
     xyz = np.einsum("...ij,j...->i...", M, xyz_prime)
     vxyz = np.einsum("...ij,j...->i...", M, vxyz_prime)
 
-    w = gd.PhaseSpacePosition(pos=xyz, vel=vxyz)
+    w = gd.PhaseSpacePosition(pos=xyz, vel=vxyz, copy=False)
 
     return w.reshape(actions.shape[1:])
 

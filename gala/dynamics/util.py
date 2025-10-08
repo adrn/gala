@@ -156,7 +156,7 @@ def estimate_dt_n_steps(
     """
     if not isinstance(w0, PhaseSpacePosition):
         w0 = np.asarray(w0)
-        w0 = PhaseSpacePosition.from_w(w0, units=hamiltonian.units)
+        w0 = PhaseSpacePosition.from_w(w0, units=hamiltonian.units, copy=False)
 
     from ..potential import Hamiltonian
 
@@ -324,7 +324,7 @@ def combine(objs):
         pos = np.concatenate(pos, axis=1) * pos_unit
         vel = np.concatenate(vel, axis=1) * vel_unit
 
-        return PhaseSpacePosition(pos=pos, vel=vel, frame=objs[0].frame)
+        return PhaseSpacePosition(pos=pos, vel=vel, frame=objs[0].frame, copy=False)
 
     if objs[0].__class__ == Orbit:
         pos = []
@@ -354,6 +354,7 @@ def combine(objs):
             t=objs[0].t,
             frame=objs[0].frame,
             potential=objs[0].potential,
+            copy=False,
         )
 
     raise RuntimeError("should never get here...")
