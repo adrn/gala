@@ -191,7 +191,7 @@ jobs:
             -DENABLE_PYEXP=on \
             -DPYTHON_EXECUTABLE=${PYTHON_EXEC} \
             -DPYTHON_LIBRARY=${PYTHON_LIBRARY} \
-            -DCMAKE_CXX_FLAGS="${CXXFLAGS}" \
+            -DCMAKE_CXX_FLAGS="${CXXFLAGS} -flto=auto" \
             -DCMAKE_EXE_LINKER_FLAGS="${LDFLAGS}" \
             -DCMAKE_SHARED_LINKER_FLAGS="${LDFLAGS}"
 
