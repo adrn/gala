@@ -197,7 +197,7 @@ jobs:
 
           # Build EXP
           # We are avoiding doing a CMake install as a hack to speed up the build
-          cmake --build build -t libexpui.${so_ext} libexputil.${so_ext} libyaml-cpp.${so_ext} pyEXP
+          cmake --build build -v -t libexpui.${so_ext} libexputil.${so_ext} libyaml-cpp.${so_ext} pyEXP
 
           # The EXP CMake install doesn't offer a way to install just the shared libraries, so
           # we are manually copying them to the install dir here.
@@ -245,7 +245,7 @@ jobs:
           if [[ "${{ matrix.gala-exp }}" == "1" ]]; then
             pytest_target=gala/potential/potential/tests/test_exp.py
           fi
-          python -m pytest $pytest_target -ra --cov --cov-report=xml --cov-report=term --durations=20
+          python -m pytest $pytest_target -n auto -ra --cov --cov-report=xml --cov-report=term --durations=20
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v5.5.1
