@@ -200,6 +200,7 @@ line-length = 88
 # src = ["src"]
 
 [tool.ruff.lint]
+explicit-preview-rules = true
 extend-select = [
   "B",        # flake8-bugbear
   "I",        # isort
