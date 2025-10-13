@@ -290,6 +290,7 @@ tutorial_files = [
     "tutorials/mock-stream-heliocentric.rst",
     "tutorials/circ-restricted-3body.rst",
     "tutorials/define-milky-way-model.ipynb",
+    "tutorials/spherical-spline-tutorial.py",
     "tutorials/Arbitrary-density-SCF.ipynb",
     "tutorials/exp.rst",
 ]
