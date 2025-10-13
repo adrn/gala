@@ -1488,7 +1488,7 @@ class SphericalSplinePotential(CPotentialBase, GSL_only=True):
         **kwargs,
     ):
         # Set units of spline values based on value_type
-        tmp = self._parse_parameter_values(*args, **kwargs)
+        tmp, _ = self._parse_parameter_values(*args, **kwargs)
         spline_value_ptype_map = {
             "potential": "specific energy",
             "mass": "mass",
