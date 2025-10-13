@@ -285,6 +285,7 @@ More details are provided in the linked pages below:
    compositepotential
    origin-rotation
    hamiltonian-reference-frames
+   spherical-spline
    scf
 
 API
