@@ -2030,12 +2030,16 @@ double spherical_spline_density_value(double t, double *pars, double *q, int n_d
         return 0.0;  // Outside interpolation range
     }
 
-    // Calculate potential from density using integral from r to infinity
-    // For spherical symmetry: Φ(r) = -4πG ∫[r to ∞] ρ(r') r' dr'
-    // Use the pre-computed ρ(r) * r spline
+    // Calculate enclosed mass M(r) = 4π ∫[0 to r] ρ(r') r'² dr'
+    double r_min = spl_state->r_knots[0];
+    double integral_mass = gsl_spline_eval_integ(spl_state->rho_r2_spline, r_min, r, spl_state->rho_r2_acc);
+    double M_r = 4.0 * M_PI * integral_mass;
+
+    // Calculate potential from density
+    // For spherical symmetry: Φ(r) = -G M(r) / r - 4πG ∫[r to ∞] ρ(r') r' dr'
     double r_max = spl_state->r_knots[spl_state->n_knots-1];
-    double integral = gsl_spline_eval_integ(spl_state->rho_r_spline, r, r_max, spl_state->rho_r_acc);
-    double potential = -4.0 * M_PI * pars[0] * integral;
+    double integral_outer = gsl_spline_eval_integ(spl_state->rho_r_spline, r, r_max, spl_state->rho_r_acc);
+    double potential = -pars[0] * M_r / r - 4.0 * M_PI * pars[0] * integral_outer;
 
     return potential;
 }
@@ -2103,6 +2107,8 @@ double spherical_spline_mass_value(double t, double *pars, double *q, int n_dim,
 
     double M_r;
 
+    // TODO: something wrong here with normalization of energy
+
     // Check bounds
     if (r < spl_state->r_knots[0]) {
         // For r < r_min, use Keplerian potential with M(r_min)
@@ -2116,21 +2122,24 @@ double spherical_spline_mass_value(double t, double *pars, double *q, int n_dim,
     }
 
     // Calculate potential: Φ(r) = -G ∫[r to ∞] M(r')/r'² dr'
-    // For finite extent, we use: Φ(r) = -GM(r)/r - G ∫[r to r_max] [M(r')-M(r)]/r'² dr'
-    M_r = gsl_spline_eval(spl_state->spline, r, spl_state->acc);
-    double potential = -pars[0] * M_r / r;
-
-    // Add correction integral from r to r_max
-    int n_integration_points = 1000;
+    // For finite extent with maximum radius r_max, we assume M(r') = M(r_max) for r' > r_max
+    // So: Φ(r) = -G ∫[r to r_max] M(r')/r'² dr' - G M(r_max) / r_max
     double r_max = spl_state->r_knots[spl_state->n_knots-1];
+    double M_max = spl_state->values[spl_state->n_knots-1];
+
+    // Use numerical integration from r to r_max
+    int n_integration_points = 1000;
     double dr = (r_max - r) / n_integration_points;
+    double potential = 0.0;
 
     for (int i = 0; i < n_integration_points; i++) {
-        double r_i = r + i * dr;
+        double r_i = r + (i + 0.5) * dr;  // Use midpoint for better accuracy
         double M_i = gsl_spline_eval(spl_state->spline, r_i, spl_state->acc);
-        double dM = M_i - M_r;
-        potential -= pars[0] * dM * dr / (r_i * r_i);
+        potential -= pars[0] * M_i * dr / (r_i * r_i);
     }
+
+    // Add contribution from r_max to infinity (assuming constant M = M_max)
+    potential -= pars[0] * M_max / r_max;
 
     return potential;
 }
@@ -2228,9 +2237,13 @@ void spherical_spline_potential_gradient_single(double t, double *__restrict__ p
     // Check bounds - extrapolate beyond grid
     if (r < spl_state->r_knots[0]) {
         // Linear extrapolation to smaller radii
+        // TODO: should this instead be:
+        // dPhi_dr = gsl_spline_eval_deriv(spl_state->spline, spl_state->r_knots[0], spl_state->acc);
         dPhi_dr = (spl_state->values[1] - spl_state->values[0]) / (spl_state->r_knots[1] - spl_state->r_knots[0]);
     } else if (r > spl_state->r_knots[spl_state->n_knots-1]) {
         // Assume potential goes to zero at infinity - extrapolate with 1/r behavior
+        // TODO: should this be:
+        // // dPhi_dr = gsl_spline_eval_deriv(spl_state->spline, spl_state->r_knots[1], spl_state->acc);
         dPhi_dr = -spl_state->values[spl_state->n_knots-1] * spl_state->r_knots[spl_state->n_knots-1] / (r * r);
     } else {
         // Calculate gradient: dΦ/dr
@@ -2259,12 +2272,12 @@ double spherical_spline_potential_density(double t, double *pars, double *q, int
         return 0.0;  // Outside interpolation range
     }
 
-    // Calculate density using Poisson equation: ρ = -(1/4πG) ∇²Φ
-    // For spherical symmetry: ρ = -(1/4πG) [d²Φ/dr² + (2/r) dΦ/dr]
+    // Calculate density using Poisson equation: ∇²Φ = 4πGρ
+    // For spherical symmetry: ρ = (1/4πG) [d²Φ/dr² + (2/r) dΦ/dr]
     double dPhi_dr = gsl_spline_eval_deriv(spl_state->spline, r, spl_state->acc);
     double d2Phi_dr2 = gsl_spline_eval_deriv2(spl_state->spline, r, spl_state->acc);
 
-    return -(d2Phi_dr2 + 2.0 * dPhi_dr / r) / (4.0 * M_PI * pars[0]);
+    return (d2Phi_dr2 + 2.0 * dPhi_dr / r) / (4.0 * M_PI * pars[0]);
 }
 
 #endif
