@@ -1543,6 +1543,9 @@ class SphericalSplinePotential(CPotentialBase, GSL_only=True):
                 f"{min_points[self.parameters['interpolation_method']]} points"
             )
 
+        if np.any(np.diff(self.parameters["r_knots"]) <= 0):
+            raise ValueError("r_knots must be strictly increasing (no duplicate knots)")
+
         self._setup_wrapper(n_knots=len(self.parameters["r_knots"]))
 
     def __getstate__(self):
