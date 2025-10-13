@@ -3,10 +3,10 @@ Spherical spline–interpolated potentials
 
 .. _spherical-spline:
 
-The :class:`~gala.potential.SphericalSplinePotential` class provides a flexible,
-spherically-symmetric potential model constructed from a 1D radial spline. Instead of
-hard-coding an analytic profile, the user supplies values of either potential energy,
-density, or enclosed mass on a set of radial knots.
+The :class:`~gala.potential.potential.SphericalSplinePotential` class provides a
+flexible, spherically-symmetric potential model constructed from a 1D radial spline.
+Instead of hard-coding an analytic profile, the user supplies values of either potential
+energy, density, or enclosed mass on a set of radial knots.
 
 This implementation requires GSL (the GNU Scientific Library) to be available at
 build/runtime. If Gala was built without GSL support, this class will not be usable.
@@ -76,6 +76,7 @@ Create a mass-based spherical spline potential and evaluate it:
     import numpy as np
     import astropy.units as u
     import matplotlib.pyplot as plt
+    from gala.units import galactic
     from gala.potential import SphericalSplinePotential
 
     # radial knots and enclosed mass profile (example)
@@ -85,30 +86,30 @@ Create a mass-based spherical spline potential and evaluate it:
     M_r = (1e12 * u.Msun) * (r_knots / (r_knots + 10*u.kpc))**2
 
     pot = SphericalSplinePotential(
-    r_knots=r_knots,
-    spline_values=M_r,
-    spline_value_type="mass",
-    interpolation_method="cspline",
-    units="galactic"
+        r_knots=r_knots,
+        spline_values=M_r,
+        spline_value_type="mass",
+        interpolation_method="cspline",
+        units=galactic
     )
 
     # Evaluate at a set of radii along the x-axis
     r_eval = np.logspace(-1, 2, 200) * u.kpc
-    pos = np.column_stack([r_eval.value, np.zeros_like(r_eval.value), np.zeros_like(r_eval.value)]) * r_eval.unit
+    pos = np.stack([r_eval.value, np.zeros_like(r_eval.value), np.zeros_like(r_eval.value)], axis=0) * r_eval.unit
 
     phi = pot.energy(pos)
     dens = pot.density(pos)
 
     fig, axes = plt.subplots(2, 1, sharex=True, figsize=(6, 6), layout="tight")
     ax1 = axes[0]
-    ax1.loglog(r_eval, -phi, label="-Phi(r)")
-    ax1.set_ylabel("-Phi [units]")
+    ax1.semilogx(r_eval, phi, label="-Phi(r)")
+    ax1.set_ylabel(rf"$\Phi$ [{phi.unit:latex_inline}]")
     ax1.legend()
 
     ax2 = axes[1]
     ax2.loglog(r_eval, dens.to(u.Msun / u.kpc**3))
     ax2.set_ylabel(r"$\rho(r)$ [$M_\odot\,\mathrm{kpc}^{-3}$]")
-    ax2.set_xlabel("r [kpc]")
+    ax2.set_xlabel("$r$ [kpc]")
 
 
 Example 2: Make a SphericalSplinePotential from a density function
@@ -125,50 +126,47 @@ matplotlib plot directive).
     :align: center
     :context:
 
-    import numpy as np
-    import astropy.units as u
-    import matplotlib.pyplot as plt
-    from gala.potential import SphericalSplinePotential
-
-    # Define a toy but fairly 'rich' density profile (sum of Gaussians + powerlaw)
     def rho_analytic(r):
-    # r in kpc (float array)
-    r = np.array(r)
-    rho0 = 1e9  # Msun / kpc^3
-    # central cusp + two gaussian features
-    return (rho0 * (r / 0.5)**-1.0 * np.exp(-r/200.0)
-        + 5e8 * np.exp(-0.5 * ((r-5.0)/0.5)**2)
-        + 2e8 * np.exp(-0.5 * ((r-30.0)/3.0)**2))
+        r = np.array(r)
+        rho0 = 1e9  # Msun / kpc^3
+        return (
+            rho0 / r ** 1.35 / (1 + r)**3.44
+        )
+
 
     # radial knots where we build the spline (note we extend beyond the region of interest)
-    r_knots = np.concatenate([
-    np.logspace(-2, -0.5, 10),
-    np.logspace(-0.5, 2.5, 100)
-    ]) * u.kpc
-
+    r_knots = (
+        np.concatenate([np.logspace(-2, -0.5, 10), np.logspace(-0.5, 2.5, 100)[1:]]) * u.kpc
+    )
     rho_vals = rho_analytic(r_knots.value) * u.Msun / u.kpc**3
 
     pot = SphericalSplinePotential(
-    r_knots=r_knots,
-    spline_values=rho_vals,
-    spline_value_type="density",
-    interpolation_method="cspline",
-    units="galactic",
+        r_knots=r_knots,
+        spline_values=rho_vals,
+        spline_value_type="density",
+        interpolation_method="cspline",
+        units=galactic,
     )
 
     r_eval = np.logspace(-2, 2.3, 300) * u.kpc
-    pos = np.column_stack([r_eval.value, np.zeros_like(r_eval.value), np.zeros_like(r_eval.value)]) * r_eval.unit
+    pos = (
+        np.stack(
+            [r_eval.value, np.zeros_like(r_eval.value), np.zeros_like(r_eval.value)], axis=0
+        )
+        * r_eval.unit
+    )
 
     phi = pot.energy(pos)
     dens_recovered = pot.density(pos)
 
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(6, 6), layout="tight")
-    ax1.loglog(r_eval, -phi, label='-Phi (from density spline)')
+    ax1.semilogx(r_eval, phi, label="Phi (from density spline)")
+    ax1.set_ylabel(rf"$\Phi$ [{phi.unit:latex_inline}]")
     ax1.legend()
-    ax2.loglog(r_eval, dens_recovered.to(u.Msun / u.kpc**3), label='Recovered density')
-    ax2.loglog(r_knots, rho_vals.to(u.Msun / u.kpc**3), 'o', ms=3, label='Input knots')
-    ax2.set_xlabel('r [kpc]')
-    ax2.set_ylabel(r'$\rho$ [$M_\odot\,\mathrm{kpc}^{-3}$]')
+    ax2.loglog(r_eval, dens_recovered.to(u.Msun / u.kpc**3), label="Recovered density")
+    ax2.loglog(r_knots, rho_vals.to(u.Msun / u.kpc**3), "o", ms=3, label="Input knots")
+    ax2.set_xlabel("$r$ [kpc]")
+    ax2.set_ylabel(r"$\rho$ [$M_\odot\,\mathrm{kpc}^{-3}$]")
     ax2.legend()
 
 
@@ -188,38 +186,49 @@ produce continuous second derivatives.
 
     # Make an example smooth potential (toy)
     r_knots = np.logspace(-1, 2, 40) * u.kpc
-    phi_smooth = -1e5 * (1.0 / (1.0 + (r_knots.to(u.kpc).value / 10.0)**2)) * u.km**2 / u.s**2
+    phi_smooth = (
+        -1e5 * (1.0 / (1.0 + (r_knots.to(u.kpc).value / 10.0) ** 2)) * u.km**2 / u.s**2
+    )
 
     # cspline (smooth second derivative)
     pot_cspline = SphericalSplinePotential(
-    r_knots=r_knots,
-    spline_values=phi_smooth,
-    spline_value_type='potential',
-    interpolation_method='cspline',
-    units='galactic'
+        r_knots=r_knots,
+        spline_values=phi_smooth,
+        spline_value_type="potential",
+        interpolation_method="cspline",
+        units=galactic,
     )
 
     # akima (can have less-smooth second derivative)
     pot_akima = SphericalSplinePotential(
-    r_knots=r_knots,
-    spline_values=phi_smooth,
-    spline_value_type='potential',
-    interpolation_method='akima',
-    units='galactic'
+        r_knots=r_knots,
+        spline_values=phi_smooth,
+        spline_value_type="potential",
+        interpolation_method="akima",
+        units=galactic,
     )
 
     r_eval = np.logspace(-1, 2, 400) * u.kpc
-    pos = np.column_stack([r_eval.value, np.zeros_like(r_eval.value), np.zeros_like(r_eval.value)]) * r_eval.unit
+    pos = (
+        np.stack(
+            [r_eval.value, np.zeros_like(r_eval.value), np.zeros_like(r_eval.value)], axis=0
+        )
+        * r_eval.unit
+    )
 
     rho_cs = pot_cspline.density(pos)
     rho_ak = pot_akima.density(pos)
 
     plt.figure(figsize=(6, 4))
-    plt.loglog(r_eval, rho_cs.to(u.Msun / u.kpc**3), label='cspline (smooth)')
-    plt.loglog(r_eval, rho_ak.to(u.Msun / u.kpc**3), label='akima (can appear jagged)', alpha=0.8)
-    plt.scatter(r_knots, np.zeros_like(r_knots.value), marker='|', color='k', s=40, label='knots')
-    plt.xlabel('r [kpc]')
-    plt.ylabel(r'$\rho$ [$M_\odot\,\mathrm{kpc}^{-3}$]')
+    plt.loglog(r_eval, rho_cs.to(u.Msun / u.kpc**3), label="cspline (smooth)")
+    plt.loglog(
+        r_eval, rho_ak.to(u.Msun / u.kpc**3), label="akima (can appear jagged)", alpha=0.8
+    )
+    plt.scatter(
+        r_knots, np.zeros_like(r_knots.value), marker="|", color="k", s=40, label="knots"
+    )
+    plt.xlabel("$r$ [kpc]")
+    plt.ylabel(r"$\rho$ [$M_\odot\,\mathrm{kpc}^{-3}$]")
     plt.legend()
     plt.tight_layout()
 
@@ -227,4 +236,4 @@ produce continuous second derivatives.
 API
 ---
 
-.. automodapi:: gala.potential.SphericalSplinePotential
+See: `~gala.potential.potential.SphericalSplinePotential`
