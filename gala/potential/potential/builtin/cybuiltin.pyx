@@ -481,7 +481,6 @@ cdef class SphericalSplineWrapper(CPotentialWrapper):
         cdef double *rho_r_values = <double*>malloc(n_knots * sizeof(double))
         cdef double *rho_r2_values = <double*>malloc(n_knots * sizeof(double))
 
-        # TODO: double check that the indices are correct here
         cdef int i
         for i in range(n_knots):
             self.r_knots_copy[i] = parameters[i]

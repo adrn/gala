@@ -2107,8 +2107,6 @@ double spherical_spline_mass_value(double t, double *pars, double *q, int n_dim,
 
     double M_r;
 
-    // TODO: something wrong here with normalization of energy
-
     // Check bounds
     if (r < spl_state->r_knots[0]) {
         // For r < r_min, use Keplerian potential with M(r_min)
@@ -2237,13 +2235,13 @@ void spherical_spline_potential_gradient_single(double t, double *__restrict__ p
     // Check bounds - extrapolate beyond grid
     if (r < spl_state->r_knots[0]) {
         // Linear extrapolation to smaller radii
-        // TODO: should this instead be:
+        // TODO: add an option to instead use the spline derivative at the first knot
         // dPhi_dr = gsl_spline_eval_deriv(spl_state->spline, spl_state->r_knots[0], spl_state->acc);
         dPhi_dr = (spl_state->values[1] - spl_state->values[0]) / (spl_state->r_knots[1] - spl_state->r_knots[0]);
     } else if (r > spl_state->r_knots[spl_state->n_knots-1]) {
         // Assume potential goes to zero at infinity - extrapolate with 1/r behavior
-        // TODO: should this be:
-        // // dPhi_dr = gsl_spline_eval_deriv(spl_state->spline, spl_state->r_knots[1], spl_state->acc);
+        // TODO: add an option to instead use the spline derivative at the final knot
+        // dPhi_dr = gsl_spline_eval_deriv(spl_state->spline, spl_state->r_knots[n_knots-1], spl_state->acc);
         dPhi_dr = -spl_state->values[spl_state->n_knots-1] * spl_state->r_knots[spl_state->n_knots-1] / (r * r);
     } else {
         // Calculate gradient: dΦ/dr

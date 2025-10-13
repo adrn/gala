@@ -69,7 +69,6 @@ class SphericalSplineTestBase(PotentialTestBase):
     def test_numerical_gradient_vs_gradient(self):
         pass
 
-    # TODO: add tests comparing to analytic hernquist potential evaluated!
     @pytest.mark.parametrize("compare", ["energy", "density", "mass_enclosed"])
     def test_against_hernquist_potential(self, compare):
         r_knots, hern = _analytic_hernquist_potential()
@@ -82,11 +81,10 @@ class SphericalSplineTestBase(PotentialTestBase):
         spline_vals = getattr(self.potential, compare)(xyz)
         analytic_vals = getattr(hern, compare)(xyz)
 
-        # Different spline types can accurately reproduce different quantities:
+        # Different spline types can accurately reproduce different quantities.
         # - Potential spline: should accurately reproduce energy, mass, and density
         #   (because they are computed from derivatives of the spline)
         # - Density spline: should accurately reproduce density (by construction).
-        #   Should also TODO
         # - Mass spline: should accurately reproduce mass_enclosed (by construction) and
         #   density (derivative), but will only match analytic energy up to a
         #   multiplicative factor. And actually won't match mass_enclosed well because
