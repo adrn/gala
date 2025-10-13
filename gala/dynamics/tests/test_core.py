@@ -87,6 +87,17 @@ def test_initialize():
         o = PhaseSpacePosition(pos=x, vel=v, frame="blah blah blah")
 
 
+def test_no_copy():
+    x = np.random.random(size=(3, 10))
+    v = np.random.random(size=(3, 10))
+    o1 = PhaseSpacePosition(pos=x, vel=v, copy=True)
+    o2 = PhaseSpacePosition(pos=x, vel=v, copy=False)
+    assert np.all(o1.w() == o2.w())
+    x[0, 0] = 9999.0
+    assert o1.x[0].value != 9999.0
+    assert o2.x[0].value == 9999.0
+
+
 def test_from_w():
     w = np.random.random(size=(6, 10))
     o = PhaseSpacePosition.from_w(w, galactic)

@@ -288,11 +288,13 @@ class MockStreamGenerator:
             release_time=stream_w0.release_time,
             lead_trail=stream_w0.lead_trail,
             frame=self.hamiltonian.frame,
+            copy=False,
         )
         nbody_w = PhaseSpacePosition(
             pos=raw_nbody[:, :3].T * x_unit,
             vel=raw_nbody[:, 3:].T * v_unit,
             frame=self.hamiltonian.frame,
+            copy=False,
         )
 
         return stream_w, nbody_w
