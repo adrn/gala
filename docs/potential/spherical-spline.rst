@@ -14,9 +14,10 @@ build/runtime. If Gala was built without GSL support, this class will not be usa
 Notes
 ~~~~~
 
-- This potential uses a single class front-end that supports three input "value types":
-  - density: The potential energy, mass enclosed,
-    and gradients are computed by integrating the density.
+- This potential uses a single class front-end that supports three input "value types"
+
+  - density: The potential energy, mass enclosed, and gradients are computed by
+    integrating the density.
   - mass (i.e. enclosed mass): The potential energy is computed by
     numerical integration and the density is obtained directly with derivatives of the
     splines.
@@ -71,7 +72,7 @@ Create a mass-based spherical spline potential and evaluate it:
 
 .. plot::
     :align: center
-    :context:
+    :context: close-figs
 
     import numpy as np
     import astropy.units as u
@@ -102,9 +103,8 @@ Create a mass-based spherical spline potential and evaluate it:
 
     fig, axes = plt.subplots(2, 1, sharex=True, figsize=(6, 6), layout="tight")
     ax1 = axes[0]
-    ax1.semilogx(r_eval, phi, label="-Phi(r)")
+    ax1.semilogx(r_eval, phi)
     ax1.set_ylabel(rf"$\Phi$ [{phi.unit:latex_inline}]")
-    ax1.legend()
 
     ax2 = axes[1]
     ax2.loglog(r_eval, dens.to(u.Msun / u.kpc**3))
@@ -124,7 +124,13 @@ matplotlib plot directive).
 
 .. plot::
     :align: center
-    :context:
+    :context: close-figs
+
+    import numpy as np
+    import astropy.units as u
+    import matplotlib.pyplot as plt
+    from gala.units import galactic
+    from gala.potential import SphericalSplinePotential
 
     def rho_analytic(r):
         r = np.array(r)
@@ -160,9 +166,8 @@ matplotlib plot directive).
     dens_recovered = pot.density(pos)
 
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(6, 6), layout="tight")
-    ax1.semilogx(r_eval, phi, label="Phi (from density spline)")
+    ax1.semilogx(r_eval, phi)
     ax1.set_ylabel(rf"$\Phi$ [{phi.unit:latex_inline}]")
-    ax1.legend()
     ax2.loglog(r_eval, dens_recovered.to(u.Msun / u.kpc**3), label="Recovered density")
     ax2.loglog(r_knots, rho_vals.to(u.Msun / u.kpc**3), "o", ms=3, label="Input knots")
     ax2.set_xlabel("$r$ [kpc]")
@@ -182,7 +187,13 @@ produce continuous second derivatives.
 
 .. plot::
     :align: center
-    :context:
+    :context: close-figs
+
+    import numpy as np
+    import astropy.units as u
+    import matplotlib.pyplot as plt
+    from gala.units import galactic
+    from gala.potential import SphericalSplinePotential
 
     # Make an example smooth potential (toy)
     r_knots = np.logspace(-1, 2, 40) * u.kpc
