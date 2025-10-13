@@ -10,7 +10,7 @@
 
 
 import warnings
-
+from libc.stdlib cimport malloc, free
 
 from astropy.constants import G
 import astropy.units as u
@@ -29,6 +29,62 @@ from ...frame.cframe cimport CFrameWrapper
 from ....units import dimensionless, DimensionlessUnitSystem
 from ...._cconfig cimport USE_GSL
 
+# GSL includes for spline functionality
+# The builtin_potentials.h header provides dummy definitions when GSL is not available
+cdef extern from "potential/potential/builtin/builtin_potentials.h":
+    # GSL types - either real (if GSL available) or dummy structs (if not)
+    ctypedef struct gsl_spline:
+        pass
+    ctypedef struct gsl_interp_accel:
+        pass
+    ctypedef struct gsl_interp_type:
+        pass
+
+    # GSL constants - NULL when GSL not available
+    const gsl_interp_type *gsl_interp_linear
+    const gsl_interp_type *gsl_interp_polynomial
+    const gsl_interp_type *gsl_interp_cspline
+    const gsl_interp_type *gsl_interp_cspline_periodic
+    const gsl_interp_type *gsl_interp_akima
+    const gsl_interp_type *gsl_interp_akima_periodic
+    const gsl_interp_type *gsl_interp_steffen
+
+    # GSL functions - dummy implementations when GSL not available
+    gsl_interp_accel* gsl_interp_accel_alloc()
+    void gsl_interp_accel_free(gsl_interp_accel *acc)
+    gsl_spline* gsl_spline_alloc(const gsl_interp_type *T, size_t size)
+    int gsl_spline_init(gsl_spline *spline, const double *xa, const double *ya, size_t size)
+    void gsl_spline_free(gsl_spline *spline)
+    double gsl_spline_eval(const gsl_spline *spline, double x, gsl_interp_accel *acc)
+    double gsl_spline_eval_deriv(const gsl_spline *spline, double x, gsl_interp_accel *acc)
+    double gsl_spline_eval_deriv2(const gsl_spline *spline, double x, gsl_interp_accel *acc)
+    double gsl_spline_eval_integ(const gsl_spline *spline, double a, double b, gsl_interp_accel *acc)
+
+cdef extern from "potential/potential/builtin/builtin_potentials.h":
+    ctypedef struct spherical_spline_state:
+        gsl_spline *spline
+        gsl_interp_accel *acc
+        gsl_spline *rho_r_spline
+        gsl_spline *rho_r2_spline
+        gsl_interp_accel *rho_r_acc
+        gsl_interp_accel *rho_r2_acc
+        int n_knots
+        int method
+        double *r_knots
+        double *values
+
+    # Spherical spline functions
+    double spherical_spline_density_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void spherical_spline_density_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double spherical_spline_density_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+
+    double spherical_spline_mass_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void spherical_spline_mass_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double spherical_spline_mass_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+
+    double spherical_spline_potential_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void spherical_spline_potential_gradient(double t, double *pars, double *q, int n_dim, double *grad, void *state) nogil
+    double spherical_spline_potential_density(double t, double *pars, double *q, int n_dim, void *state) nogil
 
 cdef extern from "potential/potential/builtin/multipole.h":
     double mp_potential(double t, double *pars, double *q, int n_dim, void *state) nogil
@@ -38,29 +94,6 @@ cdef extern from "potential/potential/builtin/multipole.h":
     double axisym_cylspline_value(double t, double *pars, double *q, int n_dim, void *state) nogil
     void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) nogil
     double axisym_cylspline_density(double t, double *pars, double *q, int n_dim, void *state) nogil
-
-
-# cdef extern from "gsl/gsl_interp.h":
-#     ctypedef struct gsl_interp_accel:
-#         pass
-
-# cdef extern from "gsl/gsl_interp2d.h":
-#     ctypedef struct gsl_interp2d_type:
-#         pass
-
-#     ctypedef struct gsl_interp2d:
-#         pass
-
-#     gsl_interp2d_type * gsl_interp2d_bicubic
-#     gsl_interp_accel gsl_interp_accel_alloc()
-#     double gsl_interp2d_eval(const gsl_interp2d *, const double xa[], const double ya[], const double za[], const double, const double, gsl_interp_accel *, gsl_interp_accel *)
-
-# cdef extern from "gsl/gsl_spline2d.h":
-#     ctypedef struct gsl_spline2d:
-#         pass
-
-#     int gsl_spline2d_init(gsl_spline2d *spline, const double xa[], const double ya[], const double za[], size_t xsize, size_t ysize)
-#     double gsl_spline2d_eval(const gsl_spline2d *spline, const double x, const double y, gsl_interp_accel *xacc, gsl_interp_accel *yacc)
 
 
 __all__ = [
@@ -367,3 +400,199 @@ cdef class CylSplineWrapper(CPotentialWrapper):
             self.cpotential.gradient[0] = <gradientfunc>(axisym_cylspline_gradient)
             self.cpotential.density[0] = <densityfunc>(axisym_cylspline_density)
             #self.cpotential.hessian[0] = <hessianfunc>(axisym_cylspline_hessian)
+
+
+# ============================================================================
+# Spherical spline interpolated potentials
+#
+
+cdef class SphericalSplineWrapper(CPotentialWrapper):
+    """Wrapper for spherical spline interpolated potentials"""
+
+    cdef spherical_spline_state spl_state
+    cdef double *r_knots_copy
+    cdef double *values_copy
+    cdef str spline_value_type
+
+    def __init__(
+        self, G, parameters, q0, R, spline_value_type, interpolation_method, n_knots
+    ):
+        """
+        Parameters
+        ----------
+        spline_value_type : str
+            Type of values provided: "density", "mass", or "potential"
+        interpolation_method : str
+            Interpolation method to use. Names from GSL (e.g., cspline, linear, akima, etc.).
+        """
+        self.spline_value_type = spline_value_type
+
+        method_to_enum = {
+            "linear": 0,
+            "polynomial": 1,
+            "cspline": 2,
+            "cspline_periodic": 3,
+            "akima": 4,
+            "akima_periodic": 5,
+            "steffen": 6,
+        }
+
+        self.init([G] + list(parameters),
+                  np.ascontiguousarray(q0),
+                  np.ascontiguousarray(R))
+
+        # Set the state pointer to our spline state
+        # This must be done BEFORE _setup_spline_state since that function initializes
+        # the GSL objects that are stored in spl_state
+        self.cpotential.state[0] = <void*>&self.spl_state
+
+        self._setup_spline_state(
+            parameters,
+            method=method_to_enum[interpolation_method],
+            n_knots=n_knots
+        )
+
+        if USE_GSL == 1:
+            if self.spline_value_type == "density":
+                self.cpotential.value[0] = <energyfunc>(spherical_spline_density_value)
+                self.cpotential.gradient[0] = <gradientfunc>(spherical_spline_density_gradient)
+                self.cpotential.density[0] = <densityfunc>(spherical_spline_density_density)
+            elif self.spline_value_type == "mass":
+                self.cpotential.value[0] = <energyfunc>(spherical_spline_mass_value)
+                self.cpotential.gradient[0] = <gradientfunc>(spherical_spline_mass_gradient)
+                self.cpotential.density[0] = <densityfunc>(spherical_spline_mass_density)
+            elif self.spline_value_type == "potential":
+                self.cpotential.value[0] = <energyfunc>(spherical_spline_potential_value)
+                self.cpotential.gradient[0] = <gradientfunc>(spherical_spline_potential_gradient)
+                self.cpotential.density[0] = <densityfunc>(spherical_spline_potential_density)
+            else:
+                raise ValueError(
+                    f"Unknown value_type: {self.spline_value_type}. Must be 'density', "
+                    "'mass', or 'potential'"
+                )
+
+    cdef void _setup_spline_state(self, parameters, method, n_knots):
+        """Setup the cached GSL spline state"""
+        # Copy parameter arrays to ensure they stay alive
+        self.r_knots_copy = <double*>malloc(n_knots * sizeof(double))
+        self.values_copy = <double*>malloc(n_knots * sizeof(double))
+
+        # Temporary arrays for density spline setup
+        cdef double *rho_r_values = <double*>malloc(n_knots * sizeof(double))
+        cdef double *rho_r2_values = <double*>malloc(n_knots * sizeof(double))
+
+        cdef int i
+        for i in range(n_knots):
+            self.r_knots_copy[i] = parameters[i]
+            self.values_copy[i] = parameters[i + n_knots]
+
+        # Set up state struct
+        self.spl_state.n_knots = n_knots
+        self.spl_state.method = method
+        self.spl_state.r_knots = self.r_knots_copy
+        self.spl_state.values = self.values_copy
+
+        # Select GSL interpolation type
+        cdef const gsl_interp_type *interp_type
+        if method == 0:
+            interp_type = gsl_interp_linear
+        elif method == 1:
+            interp_type = gsl_interp_polynomial
+        elif method == 2:
+            interp_type = gsl_interp_cspline
+        elif method == 3:
+            interp_type = gsl_interp_cspline_periodic
+        elif method == 4:
+            interp_type = gsl_interp_akima
+        elif method == 5:
+            interp_type = gsl_interp_akima_periodic
+        elif method == 6:
+            interp_type = gsl_interp_steffen
+        else:
+            raise ValueError(f"Unknown interpolation method, index = {method}")
+
+        # Create GSL objects
+        self.spl_state.acc = gsl_interp_accel_alloc()
+        if self.spl_state.acc == NULL:
+            raise RuntimeError("Failed to allocate GSL interpolation accelerator")
+
+        self.spl_state.spline = gsl_spline_alloc(interp_type, n_knots)
+        if self.spl_state.spline == NULL:
+            raise RuntimeError(f"Failed to allocate GSL spline with method {method} and {n_knots} knots")
+
+        cdef int init_status = gsl_spline_init(
+            self.spl_state.spline, self.r_knots_copy, self.values_copy, n_knots
+        )
+        if init_status != 0:
+            raise RuntimeError(f"Failed to initialize GSL spline, error code: {init_status}")
+
+        # For density interpolation, need additional splines for efficient integration
+        if self.spline_value_type == "density":
+            # Create rho(r) * r spline for potential calculations
+            for i in range(n_knots):
+                rho_r_values[i] = self.values_copy[i] * self.r_knots_copy[i]
+
+            self.spl_state.rho_r_acc = gsl_interp_accel_alloc()
+            self.spl_state.rho_r_spline = gsl_spline_alloc(interp_type, n_knots)
+            gsl_spline_init(
+                self.spl_state.rho_r_spline, self.r_knots_copy, rho_r_values, n_knots
+            )
+
+            # Create rho(r) * r**2 spline for gradient calculations
+            for i in range(n_knots):
+                rho_r2_values[i] = self.values_copy[i] * self.r_knots_copy[i] * self.r_knots_copy[i]
+
+            self.spl_state.rho_r2_acc = gsl_interp_accel_alloc()
+            self.spl_state.rho_r2_spline = gsl_spline_alloc(interp_type, n_knots)
+            gsl_spline_init(
+                self.spl_state.rho_r2_spline, self.r_knots_copy, rho_r2_values, n_knots
+            )
+
+        else:
+            # For non-density types, set auxiliary splines to NULL
+            self.spl_state.rho_r_spline = NULL
+            self.spl_state.rho_r2_spline = NULL
+            self.spl_state.rho_r_acc = NULL
+            self.spl_state.rho_r2_acc = NULL
+
+        # Clean up temporary arrays
+        free(rho_r_values)
+        free(rho_r2_values)
+
+    def __reduce__(self):
+        """Support for pickling/deepcopy"""
+        return (
+            self.__class__,
+            (
+                self._params[0],  # G
+                list(self._params[1:]),  # parameters
+                np.array(self._q0),  # q0
+                np.array(self._R).reshape(self.cpotential.n_dim, self.cpotential.n_dim),  # R
+                self.spline_value_type,  # spline_value_type
+                # Reconstruct interpolation_method from the stored enum
+                ["linear", "polynomial", "cspline", "cspline_periodic",
+                 "akima", "akima_periodic", "steffen"][self.spl_state.method],
+                self.spl_state.n_knots  # n_knots
+            )
+        )
+
+    def __dealloc__(self):
+        """Clean up GSL objects and allocated memory"""
+        if USE_GSL == 1:
+            if self.spl_state.spline != NULL:
+                gsl_spline_free(self.spl_state.spline)
+            if self.spl_state.acc != NULL:
+                gsl_interp_accel_free(self.spl_state.acc)
+            if self.spl_state.rho_r_spline != NULL:
+                gsl_spline_free(self.spl_state.rho_r_spline)
+            if self.spl_state.rho_r_acc != NULL:
+                gsl_interp_accel_free(self.spl_state.rho_r_acc)
+            if self.spl_state.rho_r2_spline != NULL:
+                gsl_spline_free(self.spl_state.rho_r2_spline)
+            if self.spl_state.rho_r2_acc != NULL:
+                gsl_interp_accel_free(self.spl_state.rho_r2_acc)
+
+        if self.r_knots_copy != NULL:
+            free(self.r_knots_copy)
+        if self.values_copy != NULL:
+            free(self.values_copy)

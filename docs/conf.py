@@ -69,8 +69,8 @@ rst_epilog = """
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
-    "matplotlib": ("https://matplotlib.org/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
     "astropy": ("https://docs.astropy.org/en/stable/", None),
     "h5py": ("https://docs.h5py.org/en/stable/", None),
     "sympy": ("https://docs.sympy.org/latest/", None),
@@ -290,6 +290,7 @@ tutorial_files = [
     "tutorials/mock-stream-heliocentric.rst",
     "tutorials/circ-restricted-3body.rst",
     "tutorials/define-milky-way-model.ipynb",
+    "tutorials/spherical-spline-tutorial.py",
     "tutorials/Arbitrary-density-SCF.ipynb",
     "tutorials/exp.rst",
 ]

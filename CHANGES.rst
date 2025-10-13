@@ -7,6 +7,9 @@ New Features
 - A C++ compiler is now required to build Gala from source.
 - Orbit integration performance is improved by changing the way vectorization over
   multiple orbits is handled internally.
+- Added a new ``gala.potential.SphericalSplinePotential`` class for representing
+  generic spherical potentials with spline interpolation in either potential, density,
+  or mass enclosed.
 
 Bug fixes
 ---------

@@ -7,7 +7,7 @@ description = "Galactic dynamics in Python"
 readme = "README.rst"
 requires-python = ">=3.10"
 keywords = ["astronomy", "dynamics"]
-license-files = ["LICENSE"]
+license = {file = "LICENSE"}
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python",
@@ -200,6 +200,7 @@ line-length = 88
 # src = ["src"]
 
 [tool.ruff.lint]
+explicit-preview-rules = true
 extend-select = [
   "B",        # flake8-bugbear
   "I",        # isort
@@ -231,7 +232,6 @@ ignore = [
   "B905",     # zip() without explicit strict
   "E741",     # Ambiguous variable name
   "PLW2901",  # `for` loop variable `p` overwritten by assignment target
-  "PD901",    # Avoid using the generic variable name `df` for DataFrames
   "E731",     # Do not assign a lambda expression, use a def
   # TODO: fix these and remove from ignore
   "EM101", "EM102",
