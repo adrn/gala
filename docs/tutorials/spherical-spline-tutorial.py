@@ -113,13 +113,11 @@ halo_pot = gp.SphericalSplinePotential(
 
 # %%
 r_eval = np.geomspace(0.1, 250, 256) * u.kpc
-xyz_eval = np.zeros((3, len(r_eval)))
-xyz_eval[0] = r_eval.value
-xyz_eval = xyz_eval * r_eval.unit
 
-# Evaluate potential and density
-phi_eval = halo_pot.energy(xyz_eval)
-rho_recovered = halo_pot.density(xyz_eval)
+# Evaluate potential and density using the r= symmetry coordinate
+# (spherical potentials only depend on radius)
+phi_eval = halo_pot.energy(r=r_eval)
+rho_recovered = halo_pot.density(r=r_eval)
 
 fig, axes = plt.subplots(2, 1, figsize=(8, 8), sharex=True)
 
@@ -150,13 +148,10 @@ fig.tight_layout()
 # We can integrate orbits in this custom potential just as we would with any built-in potential. Let's launch test particles from different radii and compare their circular velocities:
 
 # %%
-# Compute circular velocity curve
+# Compute circular velocity curve using symmetry coordinates
 r_circ = np.linspace(1, 100, 200) * u.kpc
-xyz_circ = np.zeros((3, len(r_circ)))
-xyz_circ[0] = r_circ.value
-xyz_circ = xyz_circ * r_circ.unit
 
-v_circ = halo_pot.circular_velocity(xyz_circ)
+v_circ = halo_pot.circular_velocity(r=r_circ)
 
 fig, ax = plt.subplots(figsize=(8, 5))
 ax.plot(r_circ, v_circ)
@@ -171,9 +166,7 @@ ax.grid(True, alpha=0.3)
 # %%
 # Define initial conditions: particles at different radii with near-circular velocities
 r_init = np.array([10.0, 30.0, 50.0, 75]) * u.kpc
-v_init = 0.9 * halo_pot.circular_velocity(
-    [r_init.value, np.zeros(r_init.size), np.zeros(r_init.size)] * r_init.unit
-)
+v_init = 0.9 * halo_pot.circular_velocity(r=r_init)
 
 # Create initial phase-space positions
 w0_list = []
@@ -278,14 +271,11 @@ sim_pot = gp.SphericalSplinePotential(
 # For comparison, create an NFW potential with the same parameters
 nfw_pot = gp.NFWPotential(m=mnfw, r_s=rs, units=galactic)
 
-# Compute circular velocities
+# Compute circular velocities using symmetry coordinates
 r_test = np.linspace(1, 100, 200) * u.kpc
-xyz_test = np.zeros((3, len(r_test)))
-xyz_test[0] = r_test.value
-xyz_test = xyz_test * r_test.unit
 
-v_circ_sim = sim_pot.circular_velocity(xyz_test)
-v_circ_nfw = nfw_pot.circular_velocity(xyz_test)
+v_circ_sim = sim_pot.circular_velocity(r=r_test)
+v_circ_nfw = nfw_pot.circular_velocity(r=r_test)
 
 fig, axes = plt.subplots(2, 1, figsize=(8, 8), sharex=True, layout="tight")
 
@@ -297,7 +287,7 @@ axes[0].legend()
 axes[0].grid(True, alpha=0.3)
 
 # Density comparison
-rho_sim = sim_pot.density(xyz_test)
+rho_sim = sim_pot.density(r=r_test)
 rho_nfw_true = nfw_density(r_test, rho_s=rho0, r_s=rs)
 
 axes[1].loglog(r_test, rho_sim, label="Spline (smoothed sim data)", lw=2)
@@ -350,7 +340,7 @@ sim_pot_akima = gp.SphericalSplinePotential(
 )
 
 # Compare circular velocities
-v_circ_akima = sim_pot_akima.circular_velocity(xyz_test)
+v_circ_akima = sim_pot_akima.circular_velocity(r=r_test)
 
 fig, ax = plt.subplots(figsize=(8, 5))
 ax.plot(r_test, v_circ_sim, label="cspline (default)", lw=2)

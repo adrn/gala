@@ -97,6 +97,61 @@ We can also compute the gradient or acceleration::
                [ 13.95720118],
                [ -0.        ]] AU / yr2>
 
+Using Symmetry Coordinates
+--------------------------
+
+Many potentials have coordinate symmetries that make certain coordinate systems more
+natural. For example, spherically-symmetric potentials only depend on the radius
+:math:`r`, and axisymmetric potentials only depend on the cylindrical radius :math:`R`
+and height :math:`z`.
+
+For potentials with these symmetries, you can use **symmetry coordinates** as a
+shorthand instead of full 3D Cartesian coordinates. Internally, gala operates in
+Cartesian coordinates, so the symmetry coordinates are simply a convenience.
+
+Spherical Potentials
+~~~~~~~~~~~~~~~~~~~
+
+For spherically-symmetric potentials (like :class:`~gala.potential.HernquistPotential`,
+:class:`~gala.potential.PlummerPotential`, :class:`~gala.potential.KeplerPotential`,
+etc.), you can pass just the radius using ``r=``::
+
+    >>> pot = gp.HernquistPotential(m=1e10 * u.Msun, c=5 * u.kpc, units=galactic)
+    >>> r = np.array([1.0, 5.0, 10.0]) * u.kpc
+    >>> pot.energy(r=r)  # doctest: +FLOAT_CMP
+    <Quantity [-0.06674208, -0.03367003, -0.01792115] kpc2 / Myr2>
+
+This is equivalent to passing Cartesian coordinates ``[r, 0, 0]``, but much cleaner. All
+potential methods support symmetry coordinates::
+
+    >>> pot.gradient(r=r)  # Note: Still returns gradient in Cartesian  # doctest: +SKIP
+    >>> pot.density(r=r)  # doctest: +SKIP
+    >>> pot.mass_enclosed(r=r)  # doctest: +SKIP
+    >>> pot.circular_velocity(r=r)  # doctest: +SKIP
+
+Note that gradients and accelerations are always returned in Cartesian coordinates, even
+when using symmetry inputs. This ensures consistency and compatibility with orbit
+integration.
+
+Cylindrical (Axisymmetric) Potentials
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For axisymmetric potentials (like :class:`~gala.potential.MiyamotoNagaiPotential`),
+you can use cylindrical coordinates with ``R=`` and ``z=``::
+
+    >>> pot = gp.MiyamotoNagaiPotential(m=1e11 * u.Msun, a=3 * u.kpc, b=0.3 * u.kpc, units=galactic)
+    >>> R = np.linspace(4, 12, 100) * u.kpc
+    >>> z = np.linspace(-1, 1, 100) * u.kpc
+    >>> pot.energy(R=R, z=z)  # doctest: +SKIP
+
+The ``z`` coordinate defaults to zero, making midplane calculations particularly
+convenient::
+
+    >>> pot.energy(R=R)  # Evaluate in the midplane (z=0)  # doctest: +SKIP
+
+This is especially useful for plotting rotation curves or computing circular
+velocities in the disk plane.
+
 Most of the potential objects also have methods implemented for computing the
 corresponding mass density and the Hessian of the potential (the matrix of 2nd
 derivatives) at given locations. For example, with the
@@ -125,17 +180,14 @@ estimates the mass enclosed within a spherical shell defined by the specified
 position. This numerically estimates :math:`\frac{d \Phi}{d r}` along the vector
 pointing at the specified position and estimates the enclosed mass simply as
 :math:`M(<r)\approx\frac{r^2}{G} \frac{d \Phi}{d r}`. This function can be used
-to compute, for example, a mass profile::
+to compute, for example, a mass profile. For spherical potentials, you can use
+the ``r=`` symmetry coordinate::
 
     >>> pot = gp.NFWPotential(m=1e11 * u.Msun, r_s=20.0 * u.kpc, units=galactic)
-    >>> pos = np.zeros((3, 100)) * u.kpc
-    >>> pos[0] = (
-    ...     np.logspace(np.log10(20.0 / 100.0), np.log10(20 * 100.0), pos.shape[1])
-    ...     * u.kpc
-    ... )
-    >>> m_profile = pot.mass_enclosed(pos)
-    >>> plt.loglog(pos[0], m_profile, marker="")  # doctest: +SKIP
-    >>> plt.xlabel("$r$ [{}]".format(pos.unit.to_string(format="latex")))  # doctest: +SKIP
+    >>> r = np.logspace(np.log10(20.0 / 100.0), np.log10(20 * 100.0), 100) * u.kpc
+    >>> m_profile = pot.mass_enclosed(r=r)
+    >>> plt.loglog(r, m_profile, marker="")  # doctest: +SKIP
+    >>> plt.xlabel("$r$ [{}]".format(r.unit.to_string(format="latex")))  # doctest: +SKIP
     >>> plt.ylabel("$M(<r)$ [{}]".format(m_profile.unit.to_string(format="latex")))  # doctest: +SKIP
 
 .. plot::
@@ -150,16 +202,12 @@ to compute, for example, a mass profile::
     import matplotlib.pyplot as plt
 
     pot = gp.NFWPotential(m=1e11 * u.Msun, r_s=20.0 * u.kpc, units=galactic)
-    pos = np.zeros((3, 100)) * u.kpc
-    pos[0] = (
-        np.logspace(np.log10(20.0 / 100.0), np.log10(20 * 100.0), pos.shape[1])
-        * u.kpc
-    )
-    m_profile = pot.mass_enclosed(pos)
+    r = np.logspace(np.log10(20.0 / 100.0), np.log10(20 * 100.0), 100) * u.kpc
+    m_profile = pot.mass_enclosed(r=r)
 
     plt.figure()
-    plt.loglog(pos[0], m_profile, marker="")  # doctest: +SKIP
-    plt.xlabel("$r$ [{}]".format(pos.unit.to_string(format="latex")))
+    plt.loglog(r, m_profile, marker="")  # doctest: +SKIP
+    plt.xlabel("$r$ [{}]".format(r.unit.to_string(format="latex")))
     plt.ylabel("$M(<r)$ [{}]".format(m_profile.unit.to_string(format="latex")))
     plt.tight_layout()
 
@@ -281,6 +329,7 @@ More details are provided in the linked pages below:
 .. toctree::
    :maxdepth: 1
 
+   symmetry-coordinates
    define-new-potential
    compositepotential
    origin-rotation

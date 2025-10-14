@@ -89,13 +89,11 @@ def density_func(x, y, z):
 hern = gp.HernquistPotential(m=1, c=1)
 
 # +
-x = np.logspace(-1, 1, 128)
-plt.plot(x, density_func(x, 0, 0), marker="", label="custom density")
+r = np.logspace(-1, 1, 128)
+plt.plot(r, density_func(r, 0, 0), marker="", label="custom density")
 
-# need a 3D grid for the potentials in Gala
-xyz = np.zeros((3, len(x)))
-xyz[0] = x
-plt.plot(x, hern.density(xyz), marker="", label="Hernquist")
+# Use symmetry coordinates for spherical potentials (simpler than building xyz arrays)
+plt.plot(r, hern.density(r=r), marker="", label="Hernquist")
 
 plt.xscale("log")
 plt.yscale("log")
@@ -130,13 +128,11 @@ pot = gp.SCFPotential(m=1.0, r_s=1, Snlm=S, Tnlm=np.zeros_like(S))
 # Now let's visualize the SCF estimated density with the true density:
 
 # +
-x = np.logspace(-1, 1, 128)
-plt.plot(x, density_func(x, 0, 0), marker="", label="custom density")
+r = np.logspace(-1, 1, 128)
+plt.plot(r, density_func(r, 0, 0), marker="", label="custom density")
 
-# need a 3D grid for the potentials in Gala
-xyz = np.zeros((3, len(x)))
-xyz[0] = x
-plt.plot(x, pot.density(xyz), marker="", label="SCF density")
+# Use symmetry coordinates for spherical potentials
+plt.plot(r, pot.density(r=r), marker="", label="SCF density")
 
 plt.xscale("log")
 plt.yscale("log")
