@@ -10,6 +10,9 @@ New Features
 - Added a new ``gala.potential.SphericalSplinePotential`` class for representing
   generic spherical potentials with spline interpolation in either potential, density,
   or mass enclosed.
+- Added coordinate symmetry support for potential classes: spherical potential methods
+  can now be evaluated using ``r=`` and cylindrical potentials using ``R=`` and ``z=``
+  instead of requiring full 3D Cartesian coordinates.
 
 Bug fixes
 ---------
