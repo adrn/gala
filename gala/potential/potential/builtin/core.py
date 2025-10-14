@@ -48,6 +48,7 @@ if EXP_ENABLED:
 
 from ..core import PotentialBase, _potential_docstring
 from ..cpotential import CPotentialBase
+from ..symmetry import CylindricalSymmetry, SphericalSymmetry
 from ..util import format_doc, sympy_wrap
 
 __all__ = [
@@ -142,6 +143,7 @@ class KeplerPotential(CPotentialBase):
 
     m = PotentialParameter("m", physical_type="mass")
     Wrapper = KeplerWrapper
+    _symmetry = SphericalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -171,6 +173,7 @@ class IsochronePotential(CPotentialBase):
     b = PotentialParameter("b", physical_type="length")
 
     Wrapper = IsochroneWrapper
+    _symmetry = SphericalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -225,6 +228,7 @@ class HernquistPotential(CPotentialBase):
     c = PotentialParameter("c", physical_type="length")
 
     Wrapper = HernquistWrapper
+    _symmetry = SphericalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -254,6 +258,7 @@ class PlummerPotential(CPotentialBase):
     b = PotentialParameter("b", physical_type="length")
 
     Wrapper = PlummerWrapper
+    _symmetry = SphericalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -283,6 +288,7 @@ class JaffePotential(CPotentialBase):
     c = PotentialParameter("c", physical_type="length")
 
     Wrapper = JaffeWrapper
+    _symmetry = SphericalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -318,6 +324,7 @@ class StonePotential(CPotentialBase):
     r_h = PotentialParameter("r_h", physical_type="length")
 
     Wrapper = StoneWrapper
+    _symmetry = SphericalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -363,6 +370,7 @@ class PowerLawCutoffPotential(CPotentialBase, GSL_only=True):
     r_c = PotentialParameter("r_c", physical_type="length")
 
     Wrapper = PowerLawCutoffWrapper
+    _symmetry = SphericalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -420,6 +428,7 @@ class BurkertPotential(CPotentialBase):
     r0 = PotentialParameter("r0", physical_type="length")
 
     Wrapper = BurkertWrapper
+    _symmetry = SphericalSymmetry()
 
     @classmethod
     def from_r0(cls, r0, units=None):
@@ -467,6 +476,7 @@ class SatohPotential(CPotentialBase):
     b = PotentialParameter("b", physical_type="length")
 
     Wrapper = SatohWrapper
+    _symmetry = CylindricalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -500,6 +510,7 @@ class KuzminPotential(CPotentialBase):
     a = PotentialParameter("a", physical_type="length")
 
     Wrapper = KuzminWrapper
+    _symmetry = CylindricalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -536,6 +547,7 @@ class MiyamotoNagaiPotential(CPotentialBase):
     b = PotentialParameter("b", physical_type="length")
 
     Wrapper = MiyamotoNagaiWrapper
+    _symmetry = CylindricalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -586,6 +598,7 @@ class MN3ExponentialDiskPotential(CPotentialBase):
     h_R = PotentialParameter("h_R", physical_type="length")
     h_z = PotentialParameter("h_z", physical_type="length")
     Wrapper = MN3ExponentialDiskWrapper
+    _symmetry = CylindricalSymmetry()
 
     _K_pos_dens = np.array(
         [
@@ -714,9 +727,11 @@ class NFWPotential(CPotentialBase):
 
         if np.allclose([a, b, c], 1.0):
             self.Wrapper = SphericalNFWWrapper
+            self._symmetry = SphericalSymmetry()
 
         elif np.allclose([a, b], 1.0):
             self.Wrapper = FlattenedNFWWrapper
+            self._symmetry = CylindricalSymmetry()
 
         else:
             self.Wrapper = TriaxialNFWWrapper
@@ -945,6 +960,8 @@ class LogarithmicPotential(CPotentialBase):
     phi = PotentialParameter("phi", physical_type="angle", default=0.0)
 
     Wrapper = LogarithmicWrapper
+
+    # TODO: could add a post_init to apply symmetry if spherical or axisymmetric
 
     @myclassmethod
     @sympy_wrap
@@ -1240,6 +1257,7 @@ class CylSplinePotential(CPotentialBase):
     grid_Phi = PotentialParameter("grid_Phi", physical_type="specific energy")
 
     Wrapper = CylSplineWrapper
+    _symmetry = CylindricalSymmetry()
 
     @classmethod
     def from_file(cls, filename, **kwargs):
@@ -1478,6 +1496,7 @@ class SphericalSplinePotential(CPotentialBase, GSL_only=True):
     )
 
     Wrapper = SphericalSplineWrapper
+    _symmetry = SphericalSymmetry()
 
     def __init__(
         self,

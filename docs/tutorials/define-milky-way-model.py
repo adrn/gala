@@ -120,8 +120,7 @@ x0 = [np.log(6e11), np.log(20.0), np.log(2e9), np.log(100.0)]
 init_potential = get_potential(*x0)
 
 # +
-xyz = np.zeros((3, 256))
-xyz[0] = np.logspace(-3, 3, 256)
+r = np.logspace(-3, 3, 256) * u.kpc
 
 fig, ax = plt.subplots(1, 1, figsize=(4, 4))
 
@@ -139,8 +138,9 @@ ax.errorbar(
     elinewidth=1.0,
 )
 
-fit_menc = init_potential.mass_enclosed(xyz * u.kpc)
-ax.loglog(xyz[0], fit_menc.value, marker="", color="#3182bd", linewidth=2, alpha=0.7)
+# Use symmetry coordinates for spherical mass_enclosed calculation
+fit_menc = init_potential.mass_enclosed(R=r)
+ax.loglog(r.value, fit_menc.value, marker="", color="#3182bd", linewidth=2, alpha=0.7)
 
 ax.set_xlim(1e-3, 10**2.6)
 ax.set_ylim(7e6, 10**12.25)
@@ -163,9 +163,7 @@ fig.tight_layout()
 
 def err_func(p, r, Menc, Menc_err):
     pot = get_potential(*p)
-    xyz = np.zeros((3, len(r)))
-    xyz[0] = r
-    model_menc = pot.mass_enclosed(xyz).to(u.Msun).value
+    model_menc = pot.mass_enclosed(R=r * u.kpc).to(u.Msun).value
     return (model_menc - Menc) / Menc_err
 
 
@@ -182,8 +180,7 @@ fit_potential = get_potential(*p_opt)
 # Now we have a best-fit potential! Let's plot the enclosed mass of the fit potential over the data:
 
 # +
-xyz = np.zeros((3, 256))
-xyz[0] = np.logspace(-3, 3, 256)
+r = np.logspace(-3, 3, 256) * u.kpc
 
 fig, ax = plt.subplots(1, 1, figsize=(4, 4))
 
@@ -201,8 +198,8 @@ ax.errorbar(
     elinewidth=1.0,
 )
 
-fit_menc = fit_potential.mass_enclosed(xyz * u.kpc)
-ax.loglog(xyz[0], fit_menc.value, marker="", color="#3182bd", linewidth=2, alpha=0.7)
+fit_menc = fit_potential.mass_enclosed(R=r)
+ax.loglog(r.value, fit_menc.value, marker="", color="#3182bd", linewidth=2, alpha=0.7)
 
 ax.set_xlim(1e-3, 10**2.6)
 ax.set_ylim(7e6, 10**12.25)

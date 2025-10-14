@@ -94,12 +94,11 @@ Create a mass-based spherical spline potential and evaluate it:
         units=galactic
     )
 
-    # Evaluate at a set of radii along the x-axis
+    # Evaluate at a set of radii using the r= symmetry coordinate
     r_eval = np.logspace(-1, 2, 200) * u.kpc
-    pos = np.stack([r_eval.value, np.zeros_like(r_eval.value), np.zeros_like(r_eval.value)], axis=0) * r_eval.unit
 
-    phi = pot.energy(pos)
-    dens = pot.density(pos)
+    phi = pot.energy(r=r_eval)
+    dens = pot.density(r=r_eval)
 
     fig, axes = plt.subplots(2, 1, sharex=True, figsize=(6, 6), layout="tight")
     ax1 = axes[0]
