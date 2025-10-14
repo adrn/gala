@@ -285,8 +285,8 @@ _components = """
 """
 
 _footer = """
-    Frame attributes
-    ----------------
+    Attributes
+    ----------
     pole : `~astropy.coordinates.SkyCoord`, `~astropy.coordinates.ICRS`
         The pole of the new coordinate frame, defined in the old frame (ICRS).
     origin : `~astropy.coordinates.SkyCoord`, `~astropy.coordinates.ICRS`
