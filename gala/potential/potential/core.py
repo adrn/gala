@@ -1397,10 +1397,12 @@ class CompositePotential(PotentialBase, OrderedDict):
         OrderedDict.__init__(self, **kwargs)
 
         self.R = None  # TODO: this is a little messy
+        self._update_symmetry()
 
     def __setitem__(self, key, value):
         self._check_component(value)
         super().__setitem__(key, value)
+        self._update_symmetry()
 
     def _check_component(self, p):
         if not isinstance(p, PotentialBase):
@@ -1434,6 +1436,53 @@ class CompositePotential(PotentialBase, OrderedDict):
                 "Potential object is locked - new components can "
                 "only be added to unlocked potentials."
             )
+
+    def _update_symmetry(self):
+        """
+        Update the composite potential's symmetry based on its components.
+
+        Logic:
+        - If all components are spherical -> composite is spherical
+        - If mix of spherical and cylindrical -> composite is cylindrical
+        - If any component has no symmetry -> composite has no symmetry
+        - If empty -> no symmetry
+        """
+        from .symmetry import CylindricalSymmetry, SphericalSymmetry
+
+        if len(self) == 0:
+            self._symmetry = None
+            return
+
+        # Get all component symmetries
+        symmetries = [p._symmetry for p in self.values()]
+
+        # If any component has no symmetry, composite has no symmetry
+        if any(s is None for s in symmetries):
+            self._symmetry = None
+            return
+
+        # Categorize symmetries
+        has_spherical = any(isinstance(s, SphericalSymmetry) for s in symmetries)
+        has_cylindrical = any(isinstance(s, CylindricalSymmetry) for s in symmetries)
+
+        # Check for unknown symmetry types
+        known_types = (SphericalSymmetry, CylindricalSymmetry)
+        if not all(isinstance(s, known_types) for s in symmetries):
+            # Unknown symmetry type - can't determine composite symmetry
+            self._symmetry = None
+            return
+
+        # Apply rules:
+        # - All spherical -> spherical
+        # - Mix of spherical and cylindrical -> cylindrical
+        # - All cylindrical -> cylindrical
+        if has_cylindrical:
+            self._symmetry = CylindricalSymmetry()
+        elif has_spherical:
+            self._symmetry = SphericalSymmetry()
+        else:
+            # Shouldn't reach here, but default to no symmetry
+            self._symmetry = None
 
     @property
     def parameters(self):

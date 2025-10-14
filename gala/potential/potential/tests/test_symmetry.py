@@ -415,3 +415,332 @@ class TestErrorHandling:
         # so it shouldn't accept r= coordinate
         with pytest.raises(ValueError, match="does not have a defined symmetry"):
             pot.energy(r=r)
+
+
+class TestCompositePotentialSymmetry:
+    """Tests for CompositePotential symmetry inheritance."""
+
+    def test_all_spherical_components(self):
+        """Test that composite of spherical potentials is spherical."""
+        from gala.potential import CompositePotential
+
+        pot1 = HernquistPotential(
+            m=1e10 * u.Msun, c=5 * u.kpc, units=[u.kpc, u.Myr, u.Msun, u.radian]
+        )
+        pot2 = PlummerPotential(
+            m=5e9 * u.Msun, b=2 * u.kpc, units=[u.kpc, u.Myr, u.Msun, u.radian]
+        )
+
+        comp_pot = CompositePotential(bulge=pot1, halo=pot2)
+
+        # Should inherit spherical symmetry
+        assert isinstance(comp_pot._symmetry, SphericalSymmetry)
+
+        # Should be able to use r= coordinate
+        r = np.array([1.0, 5.0, 10.0]) * u.kpc
+        E = comp_pot.energy(r=r)
+
+        assert E.shape == (3,)
+        assert E.unit == u.kpc**2 / u.Myr**2
+
+        # Should equal the sum of components
+        E_comp = pot1.energy(r=r) + pot2.energy(r=r)
+        np.testing.assert_allclose(E.value, E_comp.value)
+
+    def test_all_cylindrical_components(self):
+        """Test that composite of cylindrical potentials is cylindrical."""
+        from gala.potential import CompositePotential
+
+        pot1 = MiyamotoNagaiPotential(
+            m=1e11 * u.Msun,
+            a=3 * u.kpc,
+            b=0.3 * u.kpc,
+            units=[u.kpc, u.Myr, u.Msun, u.radian],
+        )
+        pot2 = MiyamotoNagaiPotential(
+            m=5e10 * u.Msun,
+            a=5 * u.kpc,
+            b=0.5 * u.kpc,
+            units=[u.kpc, u.Myr, u.Msun, u.radian],
+        )
+
+        comp_pot = CompositePotential(disk1=pot1, disk2=pot2)
+
+        # Should inherit cylindrical symmetry
+        assert isinstance(comp_pot._symmetry, CylindricalSymmetry)
+
+        # Should be able to use R=, z= coordinates
+        R = np.array([4.0, 8.0, 12.0]) * u.kpc
+        z = np.array([0.1, 0.2, 0.3]) * u.kpc
+        E = comp_pot.energy(R=R, z=z)
+
+        assert E.shape == (3,)
+
+        # Should equal the sum of components
+        E_comp = pot1.energy(R=R, z=z) + pot2.energy(R=R, z=z)
+        np.testing.assert_allclose(E.value, E_comp.value)
+
+    def test_mixed_symmetry_components(self):
+        """Test that composite with mixed spherical/cylindrical has cylindrical symmetry."""
+        from gala.potential import CompositePotential
+
+        pot_sph = HernquistPotential(
+            m=1e10 * u.Msun, c=5 * u.kpc, units=[u.kpc, u.Myr, u.Msun, u.radian]
+        )
+        pot_cyl = MiyamotoNagaiPotential(
+            m=1e11 * u.Msun,
+            a=3 * u.kpc,
+            b=0.3 * u.kpc,
+            units=[u.kpc, u.Myr, u.Msun, u.radian],
+        )
+
+        comp_pot = CompositePotential(bulge=pot_sph, disk=pot_cyl)
+
+        # Mix of spherical and cylindrical -> cylindrical
+        assert isinstance(comp_pot._symmetry, CylindricalSymmetry)
+
+        # Should accept cylindrical coordinates (R, z) but not spherical (r)
+        R = 5.0 * u.kpc
+        E = comp_pot.energy(R=R)  # This should work
+        assert E.shape == (1,)
+
+        # Should reject spherical coordinates
+        with pytest.raises(ValueError, match="Invalid coordinate"):
+            comp_pot.energy(r=5.0 * u.kpc)
+
+    def test_symmetry_with_no_symmetry_component(self):
+        """Test that adding a non-symmetric component removes symmetry."""
+        from gala.potential import CompositePotential, LogarithmicPotential
+
+        pot_sph = HernquistPotential(
+            m=1e10 * u.Msun, c=5 * u.kpc, units=[u.kpc, u.Myr, u.Msun, u.radian]
+        )
+        pot_log = LogarithmicPotential(
+            v_c=150 * u.km / u.s,
+            r_h=0,
+            q1=1,
+            q2=0.9,
+            q3=0.8,
+            phi=0,
+            units=[u.kpc, u.Myr, u.Msun, u.radian],
+        )
+
+        comp_pot = CompositePotential(bulge=pot_sph, halo=pot_log)
+
+        # Should have no symmetry (one component has no symmetry)
+        assert comp_pot._symmetry is None
+
+    def test_empty_composite(self):
+        """Test that empty composite has no symmetry."""
+        from gala.potential import CompositePotential
+
+        comp_pot = CompositePotential()
+
+        assert comp_pot._symmetry is None
+
+    def test_adding_component_updates_symmetry(self):
+        """Test that symmetry updates when adding components."""
+        from gala.potential import CompositePotential
+
+        comp_pot = CompositePotential()
+        assert comp_pot._symmetry is None
+
+        # Add first spherical component
+        pot1 = HernquistPotential(
+            m=1e10 * u.Msun, c=5 * u.kpc, units=[u.kpc, u.Myr, u.Msun, u.radian]
+        )
+        comp_pot["bulge"] = pot1
+
+        # Should now have spherical symmetry
+        assert isinstance(comp_pot._symmetry, SphericalSymmetry)
+
+        # Add second spherical component
+        pot2 = PlummerPotential(
+            m=5e9 * u.Msun, b=2 * u.kpc, units=[u.kpc, u.Myr, u.Msun, u.radian]
+        )
+        comp_pot["halo"] = pot2
+
+        # Should still have spherical symmetry
+        assert isinstance(comp_pot._symmetry, SphericalSymmetry)
+
+        # Add cylindrical component
+        pot3 = MiyamotoNagaiPotential(
+            m=1e11 * u.Msun,
+            a=3 * u.kpc,
+            b=0.3 * u.kpc,
+            units=[u.kpc, u.Myr, u.Msun, u.radian],
+        )
+        comp_pot["disk"] = pot3
+
+        # Should now have cylindrical symmetry (mix of spherical and cylindrical)
+        assert isinstance(comp_pot._symmetry, CylindricalSymmetry)
+
+    def test_composite_gradient_with_symmetry(self):
+        """Test that gradients work correctly with composite symmetry."""
+        from gala.potential import CompositePotential
+
+        pot1 = HernquistPotential(
+            m=1e10 * u.Msun, c=5 * u.kpc, units=[u.kpc, u.Myr, u.Msun, u.radian]
+        )
+        pot2 = PlummerPotential(
+            m=5e9 * u.Msun, b=2 * u.kpc, units=[u.kpc, u.Myr, u.Msun, u.radian]
+        )
+
+        comp_pot = CompositePotential(bulge=pot1, halo=pot2)
+
+        r = np.array([1.0, 5.0, 10.0]) * u.kpc
+        grad = comp_pot.gradient(r=r)
+
+        # Should return Cartesian gradient
+        assert grad.shape == (3, 3)
+
+        # Should equal sum of component gradients
+        grad_comp = pot1.gradient(r=r) + pot2.gradient(r=r)
+        np.testing.assert_allclose(grad.value, grad_comp.value)
+
+    def test_composite_all_spherical(self):
+        """Test that all spherical components -> spherical composite."""
+        from gala.potential import CompositePotential
+
+        pot1 = HernquistPotential(
+            m=1e10 * u.Msun, c=5 * u.kpc, units=[u.kpc, u.Myr, u.Msun, u.radian]
+        )
+        pot2 = PlummerPotential(
+            m=5e9 * u.Msun, b=2 * u.kpc, units=[u.kpc, u.Myr, u.Msun, u.radian]
+        )
+
+        comp_pot = CompositePotential(bulge=pot1, halo=pot2)
+
+        # Both components are spherical -> composite is spherical
+        assert isinstance(comp_pot._symmetry, SphericalSymmetry)
+
+        # Should work with r= coordinate
+        r = 10 * u.kpc
+        E = comp_pot.energy(r=r)
+        assert E.shape == (1,)
+
+    def test_composite_all_cylindrical(self):
+        """Test that all cylindrical components -> cylindrical composite."""
+        from gala.potential import CompositePotential
+
+        pot1 = MiyamotoNagaiPotential(
+            m=1e11 * u.Msun,
+            a=3 * u.kpc,
+            b=0.3 * u.kpc,
+            units=[u.kpc, u.Myr, u.Msun, u.radian],
+        )
+        pot2 = MiyamotoNagaiPotential(
+            m=5e10 * u.Msun,
+            a=5 * u.kpc,
+            b=0.5 * u.kpc,
+            units=[u.kpc, u.Myr, u.Msun, u.radian],
+        )
+
+        comp_pot = CompositePotential(disk1=pot1, disk2=pot2)
+
+        # Both components are cylindrical -> composite is cylindrical
+        assert isinstance(comp_pot._symmetry, CylindricalSymmetry)
+
+        # Should work with R=, z= coordinates
+        R = 8 * u.kpc
+        z = 0.5 * u.kpc
+        E = comp_pot.energy(R=R, z=z)
+        assert E.shape == (1,)
+
+    def test_composite_mixed_spherical_cylindrical(self):
+        """Test that mix of spherical and cylindrical -> cylindrical composite."""
+        from gala.potential import CompositePotential
+
+        # Spherical component
+        pot1 = HernquistPotential(
+            m=1e10 * u.Msun, c=5 * u.kpc, units=[u.kpc, u.Myr, u.Msun, u.radian]
+        )
+        # Cylindrical component
+        pot2 = MiyamotoNagaiPotential(
+            m=1e11 * u.Msun,
+            a=3 * u.kpc,
+            b=0.3 * u.kpc,
+            units=[u.kpc, u.Myr, u.Msun, u.radian],
+        )
+
+        comp_pot = CompositePotential(bulge=pot1, disk=pot2)
+
+        # Mix of spherical and cylindrical -> composite is cylindrical
+        assert isinstance(comp_pot._symmetry, CylindricalSymmetry)
+
+        # Should work with R=, z= coordinates
+        R = 8 * u.kpc
+        E = comp_pot.energy(R=R)  # z defaults to 0
+        assert E.shape == (1,)
+
+        # Should NOT work with r= coordinate (not spherical anymore)
+        with pytest.raises(ValueError, match="Invalid coordinate"):
+            comp_pot.energy(r=10 * u.kpc)
+
+    def test_composite_with_no_symmetry_component(self):
+        """Test that any component without symmetry -> no symmetry composite."""
+        from gala.potential import CompositePotential, NFWPotential
+
+        # Spherical component
+        pot1 = HernquistPotential(
+            m=1e10 * u.Msun, c=5 * u.kpc, units=[u.kpc, u.Myr, u.Msun, u.radian]
+        )
+        # NFW with flattening (no symmetry)
+        pot2 = NFWPotential(
+            m=1e12 * u.Msun,
+            r_s=20 * u.kpc,
+            a=1,
+            b=0.8,
+            c=0.6,
+            units=[u.kpc, u.Myr, u.Msun, u.radian],
+        )
+
+        comp_pot = CompositePotential(bulge=pot1, halo=pot2)
+
+        # One component has no symmetry -> composite has no symmetry
+        assert comp_pot._symmetry is None
+
+        # Should NOT work with symmetry coordinates
+        with pytest.raises(ValueError, match="does not have a defined symmetry"):
+            comp_pot.energy(r=10 * u.kpc)
+
+    def test_composite_empty(self):
+        """Test that empty composite has no symmetry."""
+        from gala.potential import CompositePotential
+
+        comp_pot = CompositePotential()
+
+        # Empty composite has no symmetry
+        assert comp_pot._symmetry is None
+
+    def test_composite_symmetry_updates_on_add(self):
+        """Test that symmetry is updated when components are added."""
+        from gala.potential import CompositePotential
+
+        comp_pot = CompositePotential()
+        assert comp_pot._symmetry is None
+
+        # Add first spherical component
+        pot1 = HernquistPotential(
+            m=1e10 * u.Msun, c=5 * u.kpc, units=[u.kpc, u.Myr, u.Msun, u.radian]
+        )
+        comp_pot["bulge"] = pot1
+        assert isinstance(comp_pot._symmetry, SphericalSymmetry)
+
+        # Add second spherical component
+        pot2 = PlummerPotential(
+            m=5e9 * u.Msun, b=2 * u.kpc, units=[u.kpc, u.Myr, u.Msun, u.radian]
+        )
+        comp_pot["halo"] = pot2
+        assert isinstance(comp_pot._symmetry, SphericalSymmetry)
+
+        # Add cylindrical component
+        pot3 = MiyamotoNagaiPotential(
+            m=1e11 * u.Msun,
+            a=3 * u.kpc,
+            b=0.3 * u.kpc,
+            units=[u.kpc, u.Myr, u.Msun, u.radian],
+        )
+        comp_pot["disk"] = pot3
+        # Now should be cylindrical (mix of spherical and cylindrical)
+        assert isinstance(comp_pot._symmetry, CylindricalSymmetry)
