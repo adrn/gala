@@ -163,8 +163,7 @@ fig.tight_layout()
 
 def err_func(p, r, Menc, Menc_err):
     pot = get_potential(*p)
-    # Use symmetry coordinates for spherical mass_enclosed calculation
-    model_menc = pot.mass_enclosed(r=r * u.kpc).to(u.Msun).value
+    model_menc = pot.mass_enclosed(R=r * u.kpc).to(u.Msun).value
     return (model_menc - Menc) / Menc_err
 
 
