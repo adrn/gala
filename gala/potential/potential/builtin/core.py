@@ -324,6 +324,7 @@ class StonePotential(CPotentialBase):
     r_h = PotentialParameter("r_h", physical_type="length")
 
     Wrapper = StoneWrapper
+    _symmetry = SphericalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -369,6 +370,7 @@ class PowerLawCutoffPotential(CPotentialBase, GSL_only=True):
     r_c = PotentialParameter("r_c", physical_type="length")
 
     Wrapper = PowerLawCutoffWrapper
+    _symmetry = SphericalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -474,6 +476,7 @@ class SatohPotential(CPotentialBase):
     b = PotentialParameter("b", physical_type="length")
 
     Wrapper = SatohWrapper
+    _symmetry = CylindricalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -507,6 +510,7 @@ class KuzminPotential(CPotentialBase):
     a = PotentialParameter("a", physical_type="length")
 
     Wrapper = KuzminWrapper
+    _symmetry = CylindricalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -594,6 +598,7 @@ class MN3ExponentialDiskPotential(CPotentialBase):
     h_R = PotentialParameter("h_R", physical_type="length")
     h_z = PotentialParameter("h_z", physical_type="length")
     Wrapper = MN3ExponentialDiskWrapper
+    _symmetry = CylindricalSymmetry()
 
     _K_pos_dens = np.array(
         [
@@ -722,9 +727,11 @@ class NFWPotential(CPotentialBase):
 
         if np.allclose([a, b, c], 1.0):
             self.Wrapper = SphericalNFWWrapper
+            self._symmetry = SphericalSymmetry()
 
         elif np.allclose([a, b], 1.0):
             self.Wrapper = FlattenedNFWWrapper
+            self._symmetry = CylindricalSymmetry()
 
         else:
             self.Wrapper = TriaxialNFWWrapper
@@ -953,6 +960,8 @@ class LogarithmicPotential(CPotentialBase):
     phi = PotentialParameter("phi", physical_type="angle", default=0.0)
 
     Wrapper = LogarithmicWrapper
+
+    # TODO: could add a post_init to apply symmetry if spherical or axisymmetric
 
     @myclassmethod
     @sympy_wrap
@@ -1248,6 +1257,7 @@ class CylSplinePotential(CPotentialBase):
     grid_Phi = PotentialParameter("grid_Phi", physical_type="specific energy")
 
     Wrapper = CylSplineWrapper
+    _symmetry = CylindricalSymmetry()
 
     @classmethod
     def from_file(cls, filename, **kwargs):
@@ -1486,6 +1496,7 @@ class SphericalSplinePotential(CPotentialBase, GSL_only=True):
     )
 
     Wrapper = SphericalSplineWrapper
+    _symmetry = SphericalSymmetry()
 
     def __init__(
         self,
