@@ -139,7 +139,7 @@ ax.errorbar(
 )
 
 # Use symmetry coordinates for spherical mass_enclosed calculation
-fit_menc = init_potential.mass_enclosed(r=r)
+fit_menc = init_potential.mass_enclosed(R=r)
 ax.loglog(r.value, fit_menc.value, marker="", color="#3182bd", linewidth=2, alpha=0.7)
 
 ax.set_xlim(1e-3, 10**2.6)
@@ -199,7 +199,7 @@ ax.errorbar(
     elinewidth=1.0,
 )
 
-fit_menc = fit_potential.mass_enclosed(r=r)
+fit_menc = fit_potential.mass_enclosed(R=r)
 ax.loglog(r.value, fit_menc.value, marker="", color="#3182bd", linewidth=2, alpha=0.7)
 
 ax.set_xlim(1e-3, 10**2.6)
