@@ -48,6 +48,7 @@ if EXP_ENABLED:
 
 from ..core import PotentialBase, _potential_docstring
 from ..cpotential import CPotentialBase
+from ..symmetry import CylindricalSymmetry, SphericalSymmetry
 from ..util import format_doc, sympy_wrap
 
 __all__ = [
@@ -142,6 +143,7 @@ class KeplerPotential(CPotentialBase):
 
     m = PotentialParameter("m", physical_type="mass")
     Wrapper = KeplerWrapper
+    _symmetry = SphericalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -171,6 +173,7 @@ class IsochronePotential(CPotentialBase):
     b = PotentialParameter("b", physical_type="length")
 
     Wrapper = IsochroneWrapper
+    _symmetry = SphericalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -225,6 +228,7 @@ class HernquistPotential(CPotentialBase):
     c = PotentialParameter("c", physical_type="length")
 
     Wrapper = HernquistWrapper
+    _symmetry = SphericalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -254,6 +258,7 @@ class PlummerPotential(CPotentialBase):
     b = PotentialParameter("b", physical_type="length")
 
     Wrapper = PlummerWrapper
+    _symmetry = SphericalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -283,6 +288,7 @@ class JaffePotential(CPotentialBase):
     c = PotentialParameter("c", physical_type="length")
 
     Wrapper = JaffeWrapper
+    _symmetry = SphericalSymmetry()
 
     @myclassmethod
     @sympy_wrap
@@ -420,6 +426,7 @@ class BurkertPotential(CPotentialBase):
     r0 = PotentialParameter("r0", physical_type="length")
 
     Wrapper = BurkertWrapper
+    _symmetry = SphericalSymmetry()
 
     @classmethod
     def from_r0(cls, r0, units=None):
@@ -536,6 +543,7 @@ class MiyamotoNagaiPotential(CPotentialBase):
     b = PotentialParameter("b", physical_type="length")
 
     Wrapper = MiyamotoNagaiWrapper
+    _symmetry = CylindricalSymmetry()
 
     @myclassmethod
     @sympy_wrap

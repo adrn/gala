@@ -81,6 +81,9 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     """
 
     ndim = 3
+    _symmetry = (
+        None  # Subclasses can set to SphericalSymmetry(), CylindricalSymmetry(), etc.
+    )
 
     def __init__(self, *args, units=None, origin=None, R=None, **kwargs):
         if self._GSL_only:
@@ -290,10 +293,70 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             return x
         return x.to(conv_unit)
 
+    def _process_position_argument(self, q, coord_kwargs):
+        """
+        Process position input, handling both Cartesian and symmetry coordinates.
+
+        Parameters
+        ----------
+        q : array-like, PhaseSpacePosition, Quantity, or None
+            Cartesian position input, or None if using symmetry coordinates.
+        coord_kwargs : dict
+            Dictionary of symmetry coordinate keyword arguments.
+
+        Returns
+        -------
+        q : array
+            Processed Cartesian position array ready for internal use.
+
+        Raises
+        ------
+        ValueError
+            If both q and coord_kwargs are provided, or if neither is provided,
+            or if symmetry coordinates are used but the potential has no symmetry.
+        """
+        # Check for conflicting inputs
+        if q is not None and coord_kwargs:
+            raise ValueError(
+                "Cannot provide both Cartesian position (q) and symmetry "
+                f"coordinates ({', '.join(coord_kwargs.keys())}). "
+                "Please provide only one."
+            )
+
+        # If using symmetry coordinates
+        if coord_kwargs:
+            if self._symmetry is None:
+                raise ValueError(
+                    f"Potential {self.__class__.__name__} does not have a defined "
+                    f"symmetry. Symmetry coordinates {coord_kwargs.keys()} cannot "
+                    "be used. Please provide Cartesian coordinates instead."
+                )
+
+            # Validate the coordinate keywords
+            self._symmetry.validate_coords(**coord_kwargs)
+
+            # Convert to Cartesian
+            q_cartesian = self._symmetry.to_cartesian(**coord_kwargs)
+
+            # Now proceed with normal unit handling
+            q = self._remove_units_prepare_shape(q_cartesian)
+
+        elif q is not None:
+            # Normal Cartesian input
+            q = self._remove_units_prepare_shape(q)
+
+        else:
+            raise ValueError(
+                "Must provide either Cartesian position (q) or symmetry coordinates "
+                f"(e.g., {self._symmetry.coord_names if self._symmetry else 'r, R, z, etc.'})"
+            )
+
+        return q
+
     ###########################################################################
     # Core methods that use the above implemented functions
     #
-    def energy(self, q, t=0.0):
+    def energy(self, q=None, t=0.0, **coord_kwargs):
         """
         Compute the gravitational potential energy at the given position(s).
 
@@ -302,14 +365,20 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
+        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like, optional
             Position(s) at which to evaluate the potential. If the input
             has no units (i.e., is an `~numpy.ndarray`), it is assumed to
             be in the same unit system as the potential. Shape should be
             ``(n_dim,)`` for a single position or ``(n_dim, n_positions)``
-            for multiple positions.
+            for multiple positions. If using symmetry coordinates, pass
+            those as keyword arguments instead and leave q as None.
         t : numeric, `~astropy.units.Quantity`, optional
             Time at which to evaluate the potential. Default is 0.
+        **coord_kwargs
+            For potentials with spherical or cylindrical symmetry, you can
+            optionally provide coordinates in the natural coordinate system.
+            For spherical potentials, use ``r=...``. For cylindrical potentials,
+            use ``R=...`` and optionally ``z=...`` (defaults to 0).
 
         Returns
         -------
@@ -323,8 +392,31 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         The potential energy is related to the gravitational acceleration
         by :math:`\\vec{a} = -\\nabla \\phi`, where φ is the potential
         energy per unit mass.
+
+        Examples
+        --------
+        Using Cartesian coordinates (works for all potentials):
+
+            >>> import astropy.units as u
+            >>> import numpy as np
+            >>> pot = SomePotential(...)  # doctest: +SKIP
+            >>> xyz = np.array([[1., 0., 0.]]).T * u.kpc  # doctest: +SKIP
+            >>> pot.energy(xyz)  # doctest: +SKIP
+
+        For spherical potentials, you can use spherical radius:
+
+            >>> pot = HernquistPotential(m=1e10*u.Msun, c=5*u.kpc)  # doctest: +SKIP
+            >>> r = np.linspace(0.1, 10, 100) * u.kpc  # doctest: +SKIP
+            >>> pot.energy(r=r)  # doctest: +SKIP
+
+        For cylindrical potentials, you can use R and z:
+
+            >>> pot = MiyamotoNagaiPotential(m=1e11*u.Msun, a=3*u.kpc, b=0.3*u.kpc)  # doctest: +SKIP
+            >>> R = np.linspace(1, 15, 100) * u.kpc  # doctest: +SKIP
+            >>> pot.energy(R=R, z=0*u.kpc)  # doctest: +SKIP
+            >>> pot.energy(R=R)  # z defaults to 0  # doctest: +SKIP
         """
-        q = self._remove_units_prepare_shape(q)
+        q = self._process_position_argument(q, coord_kwargs)
         orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, len(q))
         return self._reapply_units_and_shape(
@@ -333,20 +425,26 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             shape=orig_shape[1:],
         )
 
-    def gradient(self, q, t=0.0):
+    def gradient(self, q=None, t=0.0, **coord_kwargs):
         """
         Compute the gradient of the gravitational potential.
 
         Parameters
         ----------
-        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
+        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like, optional
             Position(s) at which to evaluate the potential gradient. If the
             input has no units (i.e., is an `~numpy.ndarray`), it is assumed
             to be in the same unit system as the potential. Shape should be
             ``(n_dim,)`` for a single position or ``(n_dim, n_positions)``
-            for multiple positions.
+            for multiple positions. If using symmetry coordinates, pass
+            those as keyword arguments instead and leave q as None.
         t : numeric, `~astropy.units.Quantity`, optional
             Time at which to evaluate the potential gradient. Default is 0.
+        **coord_kwargs
+            For potentials with spherical or cylindrical symmetry, you can
+            optionally provide coordinates in the natural coordinate system.
+            For spherical potentials, use ``r=...``. For cylindrical potentials,
+            use ``R=...`` and optionally ``z=...`` (defaults to 0).
 
         Returns
         -------
@@ -366,8 +464,11 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         .. math::
             \\vec{a} = -\\nabla \\phi = -\\frac{\\partial \\phi}{\\partial \\vec{q}}
+
+        The gradient is always returned in Cartesian coordinates, even when
+        using symmetry coordinates as input.
         """
-        q = self._remove_units_prepare_shape(q)
+        q = self._process_position_argument(q, coord_kwargs)
 
         # transpose=False because the gradient functions expect (ndim, N) arrays
         orig_shape, q = self._get_c_valid_arr(q, transpose=False)
@@ -380,7 +481,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             transpose=False,
         )
 
-    def density(self, q, t=0.0):
+    def density(self, q=None, t=0.0, **coord_kwargs):
         """
         Compute the mass density at the given position(s).
 
@@ -391,14 +492,20 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
+        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like, optional
             Position(s) at which to evaluate the mass density. If the input
             has no units (i.e., is an `~numpy.ndarray`), it is assumed to
             be in the same unit system as the potential. Shape should be
             ``(n_dim,)`` for a single position or ``(n_dim, n_positions)``
-            for multiple positions.
+            for multiple positions. If using symmetry coordinates, pass
+            those as keyword arguments instead and leave q as None.
         t : numeric, `~astropy.units.Quantity`, optional
             Time at which to evaluate the mass density. Default is 0.
+        **coord_kwargs
+            For potentials with spherical or cylindrical symmetry, you can
+            optionally provide coordinates in the natural coordinate system.
+            For spherical potentials, use ``r=...``. For cylindrical potentials,
+            use ``R=...`` and optionally ``z=...`` (defaults to 0).
 
         Returns
         -------
@@ -421,14 +528,14 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         NotImplementedError
             If the potential does not have an implemented density function.
         """
-        q = self._remove_units_prepare_shape(q)
+        q = self._process_position_argument(q, coord_kwargs)
         orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, len(q))
         return self._reapply_units_and_shape(
             self._density(q, t=t), u.get_physical_type("mass density"), orig_shape[1:]
         )
 
-    def hessian(self, q, t=0.0):
+    def hessian(self, q=None, t=0.0, **coord_kwargs):
         """
         Compute the Hessian matrix of the gravitational potential.
 
@@ -439,14 +546,20 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
+        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like, optional
             Position(s) at which to evaluate the Hessian matrix. If the input
             has no units (i.e., is an `~numpy.ndarray`), it is assumed to
             be in the same unit system as the potential. Shape should be
             ``(n_dim,)`` for a single position or ``(n_dim, n_positions)``
-            for multiple positions.
+            for multiple positions. If using symmetry coordinates, pass
+            those as keyword arguments instead and leave q as None.
         t : numeric, `~astropy.units.Quantity`, optional
             Time at which to evaluate the Hessian matrix. Default is 0.
+        **coord_kwargs
+            For potentials with spherical or cylindrical symmetry, you can
+            optionally provide coordinates in the natural coordinate system.
+            For spherical potentials, use ``r=...``. For cylindrical potentials,
+            use ``R=...`` and optionally ``z=...`` (defaults to 0).
 
         Returns
         -------
@@ -482,7 +595,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
                 "Computing Hessian matrices for rotated "
                 "potentials is currently not supported."
             )
-        q = self._remove_units_prepare_shape(q)
+        q = self._process_position_argument(q, coord_kwargs)
         orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, len(q))
         return self._reapply_units_and_shape(
@@ -494,7 +607,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     ###########################################################################
     # Convenience methods that make use the base methods
     #
-    def acceleration(self, q, t=0.0):
+    def acceleration(self, q=None, t=0.0, **coord_kwargs):
         """
         Compute the gravitational acceleration at the given position(s).
 
@@ -504,12 +617,19 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
+        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like, optional
             Position(s) at which to compute the gravitational acceleration.
             If the input has no units (i.e., is an `~numpy.ndarray`), it is
-            assumed to be in the same unit system as the potential.
+            assumed to be in the same unit system as the potential. If using
+            symmetry coordinates, pass those as keyword arguments instead and
+            leave q as None.
         t : numeric, `~astropy.units.Quantity`, optional
             Time at which to evaluate the acceleration. Default is 0.
+        **coord_kwargs
+            For potentials with spherical or cylindrical symmetry, you can
+            optionally provide coordinates in the natural coordinate system.
+            For spherical potentials, use ``r=...``. For cylindrical potentials,
+            use ``R=...`` and optionally ``z=...`` (defaults to 0).
 
         Returns
         -------
@@ -527,9 +647,9 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         This method is equivalent to ``-self.gradient(q, t)`` and is provided
         for convenience in orbital integration and dynamics calculations.
         """
-        return -self.gradient(q, t=t)
+        return -self.gradient(q, t=t, **coord_kwargs)
 
-    def mass_enclosed(self, q, t=0.0):
+    def mass_enclosed(self, q=None, t=0.0, **coord_kwargs):
         """
         Estimate the mass enclosed within spherical radius at given position(s).
 
@@ -539,13 +659,19 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
+        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like, optional
             Position(s) at which to estimate the enclosed mass. The enclosed
             mass is computed at the spherical radius corresponding to each
             position. If the input has no units, it is assumed to be in the
-            same unit system as the potential.
+            same unit system as the potential. If using symmetry coordinates,
+            pass those as keyword arguments instead and leave q as None.
         t : numeric, `~astropy.units.Quantity`, optional
             Time at which to evaluate the enclosed mass. Default is 0.
+        **coord_kwargs
+            For potentials with spherical or cylindrical symmetry, you can
+            optionally provide coordinates in the natural coordinate system.
+            For spherical potentials, use ``r=...``. For cylindrical potentials,
+            use ``R=...`` and optionally ``z=...`` (defaults to 0).
 
         Returns
         -------
@@ -568,7 +694,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         .. math::
             M_{\\rm enc}(r) = \\frac{r^2}{G} \\left| \\frac{d\\Phi}{dr} \\right|
         """
-        q = self._remove_units_prepare_shape(q)
+        q = self._process_position_argument(q, coord_kwargs)
         orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, len(q))
 
@@ -599,7 +725,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             sgn * Menc, u.get_physical_type("mass"), orig_shape[1:]
         )
 
-    def circular_velocity(self, q, t=0.0):
+    def circular_velocity(self, q=None, t=0.0, **coord_kwargs):
         """
         Estimate the circular velocity at given position(s) assuming spherical symmetry.
 
@@ -610,13 +736,19 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like
+        q : `~gala.dynamics.PhaseSpacePosition`, `~astropy.units.Quantity`, array_like, optional
             Position(s) at which to estimate the circular velocity. The
             calculation uses the spherical radius from the origin. If the
             input has no units, it is assumed to be in the same unit system
-            as the potential.
+            as the potential. If using symmetry coordinates, pass those as
+            keyword arguments instead and leave q as None.
         t : numeric, `~astropy.units.Quantity`, optional
             Time at which to evaluate the circular velocity. Default is 0.
+        **coord_kwargs
+            For potentials with spherical or cylindrical symmetry, you can
+            optionally provide coordinates in the natural coordinate system.
+            For spherical potentials, use ``r=...``. For cylindrical potentials,
+            use ``R=...`` and optionally ``z=...`` (defaults to 0).
 
         Returns
         -------
@@ -640,7 +772,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         orbits. For non-spherical potentials, this provides an approximation
         useful for initial orbit estimates.
         """
-        q = self._remove_units_prepare_shape(q)
+        q = self._process_position_argument(q, coord_kwargs)
 
         # Radius
         r = np.sqrt(np.sum(q**2, axis=0))

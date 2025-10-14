@@ -328,7 +328,7 @@ class CPotentialBase(PotentialBase):
 
     # ----------------------------------------------------------
     # Overwrite the Python potential method to use Cython method
-    def mass_enclosed(self, q, t=0.):
+    def mass_enclosed(self, q=None, t=0., **coord_kwargs):
         """
         mass_enclosed(q, t)
 
@@ -340,7 +340,7 @@ class CPotentialBase(PotentialBase):
         q : array_like, numeric
             Position to compute the mass enclosed.
         """
-        q = self._remove_units_prepare_shape(q)
+        q = self._process_position_argument(q, coord_kwargs)
         orig_shape, q = self._get_c_valid_arr(q)
         t = self._validate_prepare_time(t, len(q))
 

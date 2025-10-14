@@ -3,6 +3,7 @@ from .ccompositepotential import *
 from .core import *
 from .cpotential import *
 from .io import *
+from .symmetry import *
 from .util import *
 
 
