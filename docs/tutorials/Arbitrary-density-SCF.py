@@ -131,8 +131,9 @@ pot = gp.SCFPotential(m=1.0, r_s=1, Snlm=S, Tnlm=np.zeros_like(S))
 r = np.logspace(-1, 1, 128)
 plt.plot(r, density_func(r, 0, 0), marker="", label="custom density")
 
-# Use symmetry coordinates for spherical potentials
-plt.plot(r, pot.density(r=r), marker="", label="SCF density")
+xyz = np.zeros((3, len(r)))
+xyz[0] = r
+plt.plot(r, pot.density(xyz), marker="", label="SCF density")
 
 plt.xscale("log")
 plt.yscale("log")
