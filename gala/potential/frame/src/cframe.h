@@ -18,5 +18,5 @@
 #endif
 
 extern double frame_hamiltonian(CFrameType *fr, double t, double *qp, int n_dim);
-extern void frame_gradient(CFrameType *fr, double t, double *qp, int n_dim, double *dH);
+extern void frame_gradient(CFrameType *fr, double t, double *qp, int n_dim, size_t N, double *dH);
 extern void frame_hessian(CFrameType *fr, double t, double *qp, int n_dim, double *d2H);

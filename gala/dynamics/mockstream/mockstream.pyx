@@ -134,7 +134,6 @@ cpdef mockstream_dop853(
             atol, rtol, nmax, dt_max,
             nstiff=-1,  # disable stiffness check
             err_if_fail=err_if_fail, log_output=log_output, save_all=1,
-            transposed=0
         )
 
         n = 0

@@ -143,25 +143,23 @@ cdef class CPotentialWrapper:
 
     cpdef gradient(self, double[:, ::1] q, double[::1] t):
         """
-        CAUTION: Interpretation of axes is different here! We need the
-        arrays to be C ordered and easy to iterate over, so here the
-        axes are (norbits, ndim).
+        q: shape (ndim, n)
+        t: shape (n,) or (1,)
+        returns: shape (ndim, n)
         """
         cdef int n, ndim, i
-        n, ndim = _validate_pos_arr(q)
+        ndim, n = _validate_pos_arr(q)
 
         cdef double[:, ::1] grad = np.zeros((ndim, n))
 
-        cdef double[:, ::1] q_T = np.ascontiguousarray(q.T)
-
         if len(t) == 1:
-            c_gradient(self.cpotential, n, t[0], &q_T[0, 0], &grad[0, 0])
+            c_gradient(self.cpotential, n, t[0], &q[0, 0], &grad[0, 0])
         else:
             # TODO: optimize the multi-time case (probably not relevant for orbit integrations)
             for i in range(n):
-                c_gradient(self.cpotential, 1, t[i], &q_T[0, i], &grad[0, i])
+                c_gradient(self.cpotential, 1, t[i], &q[0, i], &grad[0, i])
 
-        return np.array(grad.T, copy=False)
+        return np.array(grad, copy=False)
 
     cpdef hessian(self, double[:, ::1] q, double[::1] t):
         """
@@ -344,7 +342,7 @@ class CPotentialBase(PotentialBase):
         """
         q = self._remove_units_prepare_shape(q)
         orig_shape, q = self._get_c_valid_arr(q)
-        t = self._validate_prepare_time(t, q)
+        t = self._validate_prepare_time(t, len(q))
 
         sgn = 1.
         if 'm' in self.parameters and self.parameters['m'] < 0:

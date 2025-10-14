@@ -266,13 +266,14 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         return x
 
-    def _reapply_units_and_shape(self, x, ptype, shape, conv_unit=None):
+    def _reapply_units_and_shape(self, x, ptype, shape, conv_unit=None, transpose=True):
         """
         This is the inverse of _remove_units_prepare_shape. It takes the output of one
         of the C functions below and reapplies units and the original shape.
         ptype is an Astropy PhysicalType object
         """
-        x = np.moveaxis(x, 0, -1)
+        if transpose:
+            x = np.moveaxis(x, 0, -1)
         if isinstance(ptype, u.PhysicalType):
             uu = self.units[ptype]
         elif isinstance(ptype, str):
@@ -325,7 +326,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         """
         q = self._remove_units_prepare_shape(q)
         orig_shape, q = self._get_c_valid_arr(q)
-        t = self._validate_prepare_time(t, q)
+        t = self._validate_prepare_time(t, len(q))
         return self._reapply_units_and_shape(
             self._energy(q, t=t),
             ptype=u.get_physical_type("energy") / u.get_physical_type("mass"),
@@ -367,10 +368,16 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             \\vec{a} = -\\nabla \\phi = -\\frac{\\partial \\phi}{\\partial \\vec{q}}
         """
         q = self._remove_units_prepare_shape(q)
-        orig_shape, q = self._get_c_valid_arr(q)
-        t = self._validate_prepare_time(t, q)
+
+        # transpose=False because the gradient functions expect (ndim, N) arrays
+        orig_shape, q = self._get_c_valid_arr(q, transpose=False)
+
+        t = self._validate_prepare_time(t, q.shape[1])
         return self._reapply_units_and_shape(
-            self._gradient(q, t=t), u.get_physical_type("acceleration"), orig_shape
+            self._gradient(q, t=t),
+            u.get_physical_type("acceleration"),
+            orig_shape,
+            transpose=False,
         )
 
     def density(self, q, t=0.0):
@@ -416,7 +423,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         """
         q = self._remove_units_prepare_shape(q)
         orig_shape, q = self._get_c_valid_arr(q)
-        t = self._validate_prepare_time(t, q)
+        t = self._validate_prepare_time(t, len(q))
         return self._reapply_units_and_shape(
             self._density(q, t=t), u.get_physical_type("mass density"), orig_shape[1:]
         )
@@ -477,7 +484,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             )
         q = self._remove_units_prepare_shape(q)
         orig_shape, q = self._get_c_valid_arr(q)
-        t = self._validate_prepare_time(t, q)
+        t = self._validate_prepare_time(t, len(q))
         return self._reapply_units_and_shape(
             self._hessian(q, t=t),
             u.get_physical_type("frequency drift"),
@@ -563,7 +570,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         """
         q = self._remove_units_prepare_shape(q)
         orig_shape, q = self._get_c_valid_arr(q)
-        t = self._validate_prepare_time(t, q)
+        t = self._validate_prepare_time(t, len(q))
 
         # small step-size in direction of q
         h = 1e-3  # MAGIC NUMBER

@@ -86,15 +86,15 @@ class Hamiltonian(CommonBase):
         return pot_E + other_E
 
     def _gradient(self, w, t):
-        q = np.ascontiguousarray(w[:, :self._pot_ndim])
+        q = np.ascontiguousarray(w[:self._pot_ndim])
 
         dH = np.zeros_like(w)
 
         # extra terms from the frame
         dH += self.frame._gradient(w, t=t)
-        dH[:, self._pot_ndim:] += self.potential._gradient(q, t=t)
+        dH[self._pot_ndim:] += self.potential._gradient(q, t=t)
         for i in range(self._pot_ndim):
-            dH[:, self._pot_ndim+i] = -dH[:, self._pot_ndim+i]
+            dH[self._pot_ndim+i] = -dH[self._pot_ndim+i]
 
         return dH
 
@@ -124,7 +124,7 @@ class Hamiltonian(CommonBase):
         """
         w = self._remove_units_prepare_shape(w)
         orig_shape, w = self._get_c_valid_arr(w)
-        t = self._validate_prepare_time(t, w)
+        t = self._validate_prepare_time(t, len(w))
         return self._energy(w, t=t).T.reshape(orig_shape[1:]) * self.units['energy'] / self.units['mass']
 
     def gradient(self, w, t=0.):
@@ -146,12 +146,15 @@ class Hamiltonian(CommonBase):
             the input phase-space position, ``w``.
         """
         w = self._remove_units_prepare_shape(w)
-        orig_shape, w = self._get_c_valid_arr(w)
-        t = self._validate_prepare_time(t, w)
+
+        # transpose=False because the gradient functions expect (ndim, N) arrays
+        orig_shape, w = self._get_c_valid_arr(w, transpose=False)
+
+        t = self._validate_prepare_time(t, w.shape[1])
 
         # TODO: wat do about units here?
         # ret_unit = self.units['length'] / self.units['time']**2
-        return self._gradient(w, t=t).T.reshape(orig_shape)
+        return self._gradient(w, t=t).reshape(orig_shape)
 
     def hessian(self, w, t=0.):
         """
@@ -188,7 +191,7 @@ class Hamiltonian(CommonBase):
 
     #     w = self._remove_units_prepare_shape(w)
     #     orig_shape, w = self._get_c_valid_arr(w)
-    #     t = self._validate_prepare_time(t, w)
+    #     t = self._validate_prepare_time(t, len(w))
 
     #     E = self._energy(w, t=t).T.reshape(orig_shape[1:])
     #     L = np.cross(w[:, :3], w[:, 3:])
@@ -316,7 +319,9 @@ class Hamiltonian(CommonBase):
         ndim = w0.ndim
         arr_w0 = w0.w(self.units)
         arr_w0 = self._remove_units_prepare_shape(arr_w0)
-        orig_shape, arr_w0 = self._get_c_valid_arr(arr_w0)
+
+        # transpose=False because the gradient functions expect (ndim, N) arrays
+        orig_shape, arr_w0 = self._get_c_valid_arr(arr_w0, transpose=False)
 
         if self.c_enabled and cython_if_possible:
             # array of times
@@ -347,18 +352,15 @@ class Hamiltonian(CommonBase):
             else:
                 raise ValueError(f"Cython integration not supported for '{Integrator!r}'")
 
-            # because shape is different from normal integrator return
-            w = np.rollaxis(w, -1)
             if w.shape[-1] == 1:
                 w = w[..., 0]
 
         else:
             def F(t, w):
-                # TODO: these Transposes are shitty and probably make it much slower?
-                w_T = np.ascontiguousarray(w.T)
-                return self._gradient(w_T, t=np.array([t])).T
+                w = np.ascontiguousarray(w)
+                return self._gradient(w, t=np.array([t]))
             integrator = Integrator(F, func_units=self.units, **Integrator_kwargs)
-            orbit = integrator(arr_w0.T, **time_spec)
+            orbit = integrator(arr_w0, **time_spec)
             orbit.potential = self.potential
             orbit.frame = self.frame
             return orbit

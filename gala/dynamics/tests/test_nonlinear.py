@@ -235,8 +235,8 @@ class TestLogarithmic:
         noffset = 2
 
         def F(t, w):
-            w_T = np.ascontiguousarray(w.T)
-            return self.hamiltonian._gradient(w_T, np.array([t])).T
+            w = np.ascontiguousarray(w)
+            return self.hamiltonian._gradient(w, np.array([t]))
 
         integrator = DOPRI853Integrator(F)
         for _ii, w0 in enumerate(self.w0s):

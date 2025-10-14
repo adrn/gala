@@ -40,8 +40,9 @@ class HarmonicOscillatorPotential(PotentialBase):
         return np.sum(0.5 * om[None] ** 2 * q**2, axis=1)
 
     def _gradient(self, q, t=0.0):
-        om = np.atleast_1d(self.parameters["omega"].value)
-        return om[None] ** 2 * q
+        om = self.parameters["omega"].value
+        om = np.atleast_2d(om).T
+        return om**2 * q
 
     def _hessian(self, q, t=0.0):
         om = np.atleast_1d(self.parameters["omega"].value)
