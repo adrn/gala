@@ -110,7 +110,7 @@ shorthand instead of full 3D Cartesian coordinates. Internally, gala operates in
 Cartesian coordinates, so the symmetry coordinates are simply a front-end convenience.
 
 Spherical Potentials
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 For spherically-symmetric potentials (like :class:`~gala.potential.HernquistPotential`,
 :class:`~gala.potential.PlummerPotential`, :class:`~gala.potential.KeplerPotential`,
@@ -134,7 +134,7 @@ when using symmetry inputs. This ensures consistency and compatibility with orbi
 integration.
 
 Cylindrical (Axisymmetric) Potentials
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For axisymmetric potentials (like :class:`~gala.potential.MiyamotoNagaiPotential`),
 you can use cylindrical coordinates with ``R=`` and ``z=``::

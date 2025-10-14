@@ -1470,15 +1470,19 @@ class SphericalSplinePotential(CPotentialBase, GSL_only=True):
         Radial knot locations where values are specified.
     values : `~astropy.units.Quantity`, array
         Values at each radial knot. Units depend on value_type:
+
         - "density": mass density [mass/length^3]
         - "mass": enclosed mass [mass]
         - "potential": gravitational potential [specific energy]
+
     spline_value_type : str
         Type of values provided: "density", "mass", or "potential"
     interpolation_method : str, optional
         GSL interpolation method. Options:
+
             "linear", "polynomial", "cspline", "cspline_periodic", "akima",
             "akima_periodic", "steffen"
+
         Default: "cspline"
     {common_doc}
     """
