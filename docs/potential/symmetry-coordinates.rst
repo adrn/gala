@@ -6,54 +6,53 @@ Using Symmetry Coordinates
 
 .. currentmodule:: gala.potential
 
-Many gravitational potentials have special symmetries that make certain
-coordinate systems more natural than Cartesian coordinates. For example,
-spherically-symmetric potentials only depend on the radius :math:`r`, and
-axisymmetric potentials only depend on the cylindrical radius :math:`R` and
-height :math:`z`.
+Many gravitational potentials have symmetries that make certain coordinate systems more
+natural than Cartesian coordinates. For example, spherically-symmetric potentials only
+depend on the radius :math:`r`, and axisymmetric potentials only depend on the
+cylindrical radius :math:`R` and height :math:`z`.
 
-Gala provides support for **symmetry coordinates** that allow you to evaluate
-potential methods using these natural coordinate systems, making your code
-cleaner and more expressive.
+For potentials with these symmetries, you can use **symmetry coordinates** as a
+shorthand instead of full 3D Cartesian coordinates. Internally, gala operates in
+Cartesian coordinates, so the symmetry coordinates are simply a front-end convenience.
 
 Spherical Potentials
 =====================
 
-For spherically-symmetric potentials, you can use the ``r=`` keyword argument
-to pass just the spherical radius instead of full 3D Cartesian coordinates.
+For spherically-symmetric potentials, you can use the ``r=`` keyword argument to pass
+just the spherical radius instead of full 3D Cartesian coordinates in many methods of
+the potential classes.
 
 Supported Spherical Potentials
 -------------------------------
 
-The following built-in potentials support spherical symmetry coordinates:
+Any of the spherical potential models support using the ``r=...`` shorthand, including:
 
+- :class:`~gala.potential.KeplerPotential`
 - :class:`~gala.potential.HernquistPotential`
 - :class:`~gala.potential.PlummerPotential`
-- :class:`~gala.potential.KeplerPotential`
-- :class:`~gala.potential.IsochronePotential`
-- :class:`~gala.potential.JaffePotential`
-- :class:`~gala.potential.BurkertPotential`
 - :class:`~gala.potential.SphericalSplinePotential`
 - :class:`~gala.potential.NFWPotential` (when spherical: ``a=b=c=1``)
+
+and more.
 
 Examples
 --------
 
-Basic usage with scalar radius::
+Basic usage with a scalar radius value::
 
     >>> import astropy.units as u
+    >>> import numpy as np
     >>> import gala.potential as gp
     >>> from gala.units import galactic
     >>> pot = gp.HernquistPotential(m=1e10 * u.Msun, c=5 * u.kpc, units=galactic)
-    >>> pot.energy(r=10 * u.kpc)  # doctest: +SKIP
-    <Quantity -0.01792115 kpc2 / Myr2>
+    >>> pot.energy(r=10 * u.kpc)
+    <Quantity [-0.002999] kpc2 / Myr2>
 
 Arrays of radii::
 
-    >>> import numpy as np
-    >>> r = np.array([1.0, 5.0, 10.0, 50.0]) * u.kpc
-    >>> pot.energy(r=r)  # doctest: +SKIP
-    <Quantity [-0.06674208, -0.03367003, -0.01792115, -0.00396825] kpc2 / Myr2>
+    >>> r = [1.0, 5.0, 10.0, 50.0] * u.kpc
+    >>> pot.energy(r=r)
+    <Quantity [-0.0074975 , -0.0044985 , -0.002999  , -0.00081791] kpc2 / Myr2>
 
 All potential methods support symmetry coordinates::
 
@@ -66,20 +65,24 @@ All potential methods support symmetry coordinates::
 Computing a mass profile::
 
     >>> r_profile = np.logspace(-1, 2, 100) * u.kpc
-    >>> m_profile = pot.mass_enclosed(r=r_profile)  # doctest: +SKIP
+    >>> pot.mass_enclosed(r=r_profile)
+    <Quantity [3.84467513e+06, 5.94521099e+06, 9.17160412e+06, 1.41075771e+07,
+           ...] solMass>
+
 
 This is much cleaner than the traditional approach::
 
-    >>> # Old way (still works!)
+    >>> # Explicit / old way with Cartesian arrays (still works!)
     >>> pos = np.zeros((3, 100)) * u.kpc
     >>> pos[0] = r_profile
-    >>> m_profile = pot.mass_enclosed(pos)  # doctest: +SKIP
+    >>> m_profile = pot.mass_enclosed(pos)
+
 
 Cylindrical (Axisymmetric) Potentials
 ======================================
 
 For axisymmetric potentials, you can use ``R=`` and ``z=`` keyword arguments
-to specify cylindrical coordinates.
+to specify cylindrical coordinates in many methods on potential instances.
 
 Supported Cylindrical Potentials
 ---------------------------------
@@ -87,7 +90,11 @@ Supported Cylindrical Potentials
 The following built-in potentials support cylindrical symmetry coordinates:
 
 - :class:`~gala.potential.MiyamotoNagaiPotential`
+- :class:`~gala.potential.MN3ExponentialDiskPotential`
 - :class:`~gala.potential.CylSplinePotential`
+
+and others.
+
 
 Examples
 --------
@@ -95,40 +102,78 @@ Examples
 Basic usage with both R and z::
 
     >>> pot = gp.MiyamotoNagaiPotential(m=1e11 * u.Msun, a=3 * u.kpc, b=0.3 * u.kpc, units=galactic)
-    >>> pot.energy(R=8 * u.kpc, z=0.5 * u.kpc)  # doctest: +SKIP
+    >>> pot.energy(R=8 * u.kpc, z=0.5 * u.kpc)
+    <Quantity [-0.05131901] kpc2 / Myr2>
 
 Arrays of coordinates::
 
-    >>> R = np.linspace(4, 12, 100) * u.kpc
-    >>> z = np.linspace(-1, 1, 100) * u.kpc
-    >>> pot.energy(R=R, z=z)  # doctest: +SKIP
+    >>> R = np.linspace(4, 12, 32) * u.kpc
+    >>> z = np.linspace(-1, 1, 32) * u.kpc
+    >>> pot.energy(R=R, z=z)
+    <Quantity [-0.07908656, -0.07715922, -0.07521451, -0.07326905, -0.07133667,
+           ...] kpc2 / Myr2>
 
 The ``z`` coordinate defaults to zero, making midplane calculations particularly
 convenient::
 
     >>> # Evaluate in the midplane (z=0)
-    >>> pot.energy(R=R)  # doctest: +SKIP
-    >>> pot.circular_velocity(R=R)  # doctest: +SKIP
+    >>> E = pot.energy(R=R)
+    >>> pot.circular_velocity(R=R)  # assumes z=0
+    <Quantity [222.1505711 , 223.33522621, 223.8929296 , 223.93564426,
+           ...] km / s>
 
-This is especially useful for plotting rotation curves::
 
-    >>> R_curve = np.linspace(0.1, 20, 200) * u.kpc
-    >>> v_circ = pot.circular_velocity(R=R_curve)  # Automatically uses z=0  # doctest: +SKIP
 
-Broadcasting
-------------
+Composite Potentials
+====================
 
-Symmetry coordinates support NumPy broadcasting. For example, to compute the
-potential on a grid of (R, z) values::
+:class:`~gala.potential.CompositePotential` objects automatically inherit symmetry from
+their components based on some simple rules:
 
-    >>> R_grid = np.linspace(1, 15, 50) * u.kpc
-    >>> z_grid = np.linspace(-3, 3, 30) * u.kpc
-    >>> R_mesh, z_mesh = np.meshgrid(R_grid, z_grid)
-    >>> phi = pot.energy(R=R_mesh, z=z_mesh)  # doctest: +SKIP
-    >>> # phi has shape (30, 50)
+Symmetry Inheritance Rules:
 
-Important Notes
-===============
+- **All components spherical**: composite is spherical (can use ``r=``)
+- **All components cylindrical**: composite is cylindrical (can use ``R=``, ``z=``)
+- **Mix of spherical and cylindrical**: composite is cylindrical
+- **Any component without a simple symmetry**: composite has no symmetry (must use Cartesian)
+
+Examples
+--------
+
+A fully spherical system (bulge + halo)::
+
+    >>> bulge = gp.HernquistPotential(m=1e10 * u.Msun, c=0.6 * u.kpc, units=galactic)
+    >>> halo = gp.NFWPotential(m=1e12 * u.Msun, r_s=20 * u.kpc, units=galactic)
+    >>> pot = gp.CompositePotential(bulge=bulge, halo=halo)
+    >>> # Both spherical, composite is spherical
+    >>> E = pot.energy(r=10 * u.kpc)
+    >>> vc = pot.circular_velocity(r=np.linspace(1, 50, 100) * u.kpc)
+
+A simple galaxy model (bulge + disk + halo)::
+
+    >>> bulge = gp.HernquistPotential(m=2e10 * u.Msun, c=0.6 * u.kpc, units=galactic)
+    >>> disk = gp.MiyamotoNagaiPotential(m=1e11 * u.Msun, a=3 * u.kpc, b=0.3 * u.kpc, units=galactic)
+    >>> halo = gp.NFWPotential(m=1e12 * u.Msun, r_s=20 * u.kpc, units=galactic)
+    >>> galaxy = gp.CompositePotential(bulge=bulge, disk=disk, halo=halo)
+    >>> # Mix of spherical and cylindrical (disk), so composite is cylindrical
+    >>> E = galaxy.energy(R=8 * u.kpc)  # Midplane energy
+    >>> E = galaxy.energy(R=8 * u.kpc, z=0.5 * u.kpc)  # Off midplane
+
+Computing a rotation curve for the galaxy model::
+
+    >>> R = np.linspace(0.1, 20, 200) * u.kpc
+    >>> v_circ = galaxy.circular_velocity(R=R)
+
+Note that once you add a cylindrical component to spherical components, you can no
+longer use ``r=`` (spherical) coordinates - you must use ``R=, z=`` (cylindrical)::
+
+    >>> # This would raise an error:
+    >>> galaxy.energy(r=10 * u.kpc)  # doctest: +SKIP
+    ValueError: Invalid coordinate(s) for CylindricalSymmetry: {'r'}
+
+
+Notes
+=====
 
 Return Coordinates
 ------------------
@@ -136,21 +181,17 @@ Return Coordinates
 **Gradients and accelerations are always returned in Cartesian coordinates**,
 even when using symmetry coordinate inputs. This design choice ensures:
 
-1. **Physical consistency**: Forces and accelerations are vectors in 3D space
-2. **Integration compatibility**: Orbit integration requires Cartesian coordinates
-3. **Composability**: Results can be easily combined with other potentials
-
 For example::
 
-    >>> grad = pot.gradient(r=10 * u.kpc)  # doctest: +SKIP
+    >>> grad = pot.gradient(r=10 * u.kpc)
+    >>> assert grad.shape == (3, 1)
     >>> # Returns shape (3, 1) array: [dx, dy, dz] in Cartesian coords
-    >>> # with values [grad_x, 0, 0] since the input corresponds to x=10, y=0, z=0
 
 Coordinate Validation
 ---------------------
 
-Symmetry coordinates are validated to ensure they match the potential's
-symmetry. Trying to use the wrong coordinates will raise a helpful error::
+Symmetry coordinates are validated to ensure they match the potential's symmetry. Trying
+to use the wrong coordinates will raise an error::
 
     >>> pot = gp.HernquistPotential(m=1e10 * u.Msun, c=5 * u.kpc, units=galactic)
     >>> pot.energy(R=10 * u.kpc)  # doctest: +SKIP

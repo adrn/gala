@@ -100,14 +100,14 @@ We can also compute the gradient or acceleration::
 Using Symmetry Coordinates
 --------------------------
 
-Many potentials have coordinate symmetries that make certain coordinate systems more
-natural. For example, spherically-symmetric potentials only depend on the radius
-:math:`r`, and axisymmetric potentials only depend on the cylindrical radius :math:`R`
-and height :math:`z`.
+Many potentials have symmetries that make certain coordinate systems more natural or
+concise to work with. For example, spherically-symmetric potentials only depend on the
+radius :math:`r`, and axisymmetric potentials only depend on the cylindrical radius
+:math:`R` and height :math:`z`.
 
 For potentials with these symmetries, you can use **symmetry coordinates** as a
 shorthand instead of full 3D Cartesian coordinates. Internally, gala operates in
-Cartesian coordinates, so the symmetry coordinates are simply a convenience.
+Cartesian coordinates, so the symmetry coordinates are simply a front-end convenience.
 
 Spherical Potentials
 ~~~~~~~~~~~~~~~~~~~
