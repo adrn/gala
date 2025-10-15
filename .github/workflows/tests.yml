@@ -8,6 +8,8 @@ on:
     tags:
       - "*"
   pull_request:
+  schedule:
+    - cron: "0 10 * * 1"  # Mondays @ 6AM Eastern
 
 jobs:
   check_skip_flags:
@@ -29,7 +31,7 @@ jobs:
     name:
       Python ${{ matrix.python-version }} on ${{ matrix.os }} with numpy ${{
       matrix.numpy-version }}, no gsl ${{ matrix.gala-nogsl }}, deps ${{
-      matrix.pip-test-deps }}, EXP ${{ matrix.gala-exp }}
+      matrix.python-extras }}, EXP ${{ matrix.gala-exp }}
     runs-on: ${{ matrix.os }}
     needs: check_skip_flags
     if:
@@ -37,7 +39,7 @@ jobs:
       !contains(github.event.pull_request.labels.*.name, 'docs only') &&
       !contains(needs.check_skip_flags.outputs.head-commit-message, '[skip tests]') }}
     env:
-      EXP_TAG: "v7.8.5"
+      EXP_REF: ${{ github.event_name == 'schedule' && 'devel' || 'v7.8.5' }}
       MACOSX_DEPLOYMENT_TARGET: "15.0"
     strategy:
       fail-fast: true
@@ -48,7 +50,7 @@ jobs:
         numpy-version: ["latest"]
         scipy-version: ["latest"]
         gala-nogsl: ["0"]
-        pip-test-deps: ["test"]
+        python-extras: ["test"]
         gala-exp: ["0"]
         include:
           - name: Oldest astropy, numpy, and scipy versions supported
@@ -59,7 +61,7 @@ jobs:
             scipy-version: "1.12"
             gala-nogsl: "0"
             gala-exp: "0"
-            pip-test-deps: "test"
+            python-extras: "test"
 
           - name: Install without GSL
             os: ubuntu-latest
@@ -69,7 +71,7 @@ jobs:
             scipy-version: "latest"
             gala-nogsl: "1"
             gala-exp: "0"
-            pip-test-deps: "test"
+            python-extras: "test"
 
           - name: With optional dependencies
             os: ubuntu-latest # note: galpy install failed on macos here
@@ -79,7 +81,7 @@ jobs:
             scipy-version: "latest"
             gala-nogsl: "0"
             gala-exp: "0"
-            pip-test-deps: "test,extra"
+            python-extras: "test,extra"
 
           - name: With EXP
             os: ubuntu-latest
@@ -89,7 +91,7 @@ jobs:
             scipy-version: "latest"
             gala-nogsl: "0"
             gala-exp: "1"
-            pip-test-deps: "test"
+            python-extras: "test"
 
           - name: With EXP
             os: macos-latest
@@ -99,17 +101,19 @@ jobs:
             scipy-version: "latest"
             gala-nogsl: "0"
             gala-exp: "1"
-            pip-test-deps: "test"
+            python-extras: "test"
 
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.0"
 
       # For animation tests
       - uses: FedericoCarboni/setup-ffmpeg@v3
@@ -140,7 +144,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: EXP-code/EXP
-          ref: ${{ env.EXP_TAG }}
+          ref: ${{ env.EXP_REF }}
           submodules: recursive
           path: EXP
 
@@ -177,10 +181,11 @@ jobs:
 
           # Set Python library path based on OS
           if [[ "$RUNNER_OS" == "macOS" ]]; then
-            PYTHON_LIBRARY=${PYTHON_LIBRARY_PATH}/libpython${PYTHON_VERSION}.dylib
+            so_ext="dylib"
           else
-            PYTHON_LIBRARY=${PYTHON_LIBRARY_PATH}/libpython${PYTHON_VERSION}.so
+            so_ext="so"
           fi
+          PYTHON_LIBRARY=${PYTHON_LIBRARY_PATH}/libpython${PYTHON_VERSION}.${so_ext}
 
           cmake -G Ninja -B build \
             -DCMAKE_INSTALL_RPATH=$PWD/install/lib \
@@ -188,48 +193,61 @@ jobs:
             -DENABLE_PYEXP=on \
             -DPYTHON_EXECUTABLE=${PYTHON_EXEC} \
             -DPYTHON_LIBRARY=${PYTHON_LIBRARY} \
-            -DCMAKE_CXX_FLAGS="${CXXFLAGS}" \
+            -DCMAKE_CXX_FLAGS="${CXXFLAGS} -flto=auto" \
             -DCMAKE_EXE_LINKER_FLAGS="${LDFLAGS}" \
             -DCMAKE_SHARED_LINKER_FLAGS="${LDFLAGS}"
 
-          # Build and install EXP
-          cmake --build build
-          cmake --install build
+          # Build EXP
+          # We are avoiding doing a CMake install as a hack to speed up the build
+          cmake --build build -v -t libexpui.${so_ext} libexputil.${so_ext} libyaml-cpp.${so_ext} pyEXP
+
+          # The EXP CMake install doesn't offer a way to install just the shared libraries, so
+          # we are manually copying them to the install dir here.
+          # Users should do a proper "cmake --install" instead!
+          mkdir -p install/lib
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            cp -P $(find build -name "*.so*" -o -name "*.dylib*") install/lib/
+          else
+            cp -P $(find build -name "*.so*") install/lib/
+          fi
 
           # Add the pyEXP dir as a pyEXP.pth file in Python site-packages:
           SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])")
-          echo "$PWD/install/lib/python${PYTHON_VERSION}/site-packages" > "${SITE_PACKAGES}/pyEXP.pth"
+          echo "$PWD/install/lib/" > "${SITE_PACKAGES}/pyEXP.pth"
 
       - name: Install package and dependencies
         run: |
           if [[ "${{ matrix.gala-exp }}" == "1" ]]; then
             export GALA_EXP_PREFIX=$PWD/EXP
           fi
-          python -m pip install -ve ".[${{ matrix.pip-test-deps }}]"
+          uv pip install --system -ve .[${{ matrix.python-extras }}]
         env:
           GALA_NOGSL: ${{ matrix.gala-nogsl }}
 
       - name: Update numpy version if testing min version
         if: matrix.numpy-version != 'latest'
         run: |
-          python -m pip install numpy~=${{ matrix.numpy-version }}
+          uv pip install --system numpy~=${{ matrix.numpy-version }}
 
       - name: Update scipy version if testing min version
         if: matrix.scipy-version != 'latest'
         run: |
-          python -m pip install scipy~=${{ matrix.scipy-version }}
+          uv pip install --system scipy~=${{ matrix.scipy-version }}
 
       - name: Update astropy version if testing min version
         if: matrix.astropy-version != 'latest'
         run: |
-          python -m pip install astropy~=${{ matrix.astropy-version }}
+          uv pip install --system astropy~=${{ matrix.astropy-version }}
 
       - name: Run tests
         env:
           GALA_FORCE_EXP_TEST: ${{ matrix.gala-exp }}
           GALA_FORCE_PYEXP_TEST: ${{ matrix.gala-exp }}
-        run: >-
-          python -m pytest -ra --cov --cov-report=xml --cov-report=term --durations=20
+        run: |
+          if [[ "${{ matrix.gala-exp }}" == "1" ]]; then
+            pytest_target=gala/potential/potential/tests/test_exp.py
+          fi
+          pytest $pytest_target -n auto -ra --cov --cov-report=xml --cov-report=term --durations=20
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v5.5.1
