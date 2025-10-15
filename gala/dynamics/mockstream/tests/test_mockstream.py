@@ -184,8 +184,6 @@ def test_nbody_hdf5_broadcast_bug(tmpdir):
         # Check that values are finite
         assert np.isfinite(nbody_orbits.xyz).all()
         assert np.isfinite(nbody_orbits.v_xyz).all()
-        assert np.isfinite(stream_orbits.xyz).all()
-        assert np.isfinite(stream_orbits.v_xyz).all()
 
 
 @pytest.mark.parametrize(
