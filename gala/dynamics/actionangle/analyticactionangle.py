@@ -188,7 +188,8 @@ def isochrone_aa_to_xv(actions, angles, potential):
 
     usys = potential.units
     GM = potential.G * potential.parameters["m"].decompose(usys).value
-    b = potential.parameters["b"].decompose(usys).value
+    GM = GM * usys["length"] ** 3 / usys["time"] ** 2
+    b = potential.parameters["b"].decompose(usys)
 
     Lz = Jphi
     L = Jth + np.abs(Lz)
