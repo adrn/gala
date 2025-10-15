@@ -125,6 +125,69 @@ def test_mockstream_nbody_run(dt, save_all):
     gen.run(w0, mass, dt=dt, n_steps=100, nbody=nbody)
 
 
+@pytest.mark.skipif(not HAS_H5PY, reason="h5py required for this test")
+def test_nbody_hdf5_broadcast_bug(tmpdir):
+    """
+    Regression test for HDF5 broadcast bug when using nbody with output_filename,
+    reported in #158
+    """
+    import h5py
+
+    potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.0, units=galactic)
+    H = Hamiltonian(potential)
+    w0 = PhaseSpacePosition(
+        pos=[15.0, 0.0, 0] * u.kpc, vel=[0, 0, 0.13] * u.kpc / u.Myr
+    )
+    mass = 2.5e4 * u.Msun
+    prog_pot = HernquistPotential(mass, 4 * u.pc, units=galactic)
+
+    nbody_w0 = PhaseSpacePosition([20, 0, 0] * u.kpc, [0, 100, 0] * u.km / u.s)
+    nbody = DirectNBody(
+        w0=nbody_w0,
+        external_potential=potential,
+        particle_potentials=[
+            NFWPotential(m=1e8 * u.Msun, r_s=0.2 * u.kpc, units=galactic)
+        ],
+    )
+
+    # Use trail=False and n_particles=1 to ensure we have fewer stream particles
+    # than nbodies at early timesteps
+    df = FardalStreamDF(gala_modified=True, trail=False)
+    gen = MockStreamGenerator(df=df, hamiltonian=H, progenitor_potential=prog_pot)
+
+    filename = os.path.join(str(tmpdir), "test_nbody.hdf5")
+
+    # This should trigger the bug if not fixed: at first output, n=1 but nbodies=2
+    stream, prog = gen.run(
+        w0,
+        mass,
+        dt=-1.0,
+        n_steps=8,
+        nbody=nbody,
+        release_every=1,
+        n_particles=1,
+        output_every=1,
+        output_filename=filename,
+        check_filesize=False,
+        overwrite=True,
+    )
+
+    # If we get here without error, verify the file was created correctly
+    with h5py.File(filename, mode="r") as f:
+        stream_orbits = Orbit.from_hdf5(f["stream"])
+        nbody_orbits = Orbit.from_hdf5(f["nbody"])
+
+        # Check that nbody has the correct shape
+        assert nbody_orbits.shape[0] == 9  # noutput_times
+        assert nbody_orbits.shape[1] == 2  # progenitor + 1 perturber
+
+        # Check that values are finite
+        assert np.isfinite(nbody_orbits.xyz).all()
+        assert np.isfinite(nbody_orbits.v_xyz).all()
+        assert np.isfinite(stream_orbits.xyz).all()
+        assert np.isfinite(stream_orbits.v_xyz).all()
+
+
 @pytest.mark.parametrize(
     ("dt", "nsteps", "output_every", "release_every", "n_particles", "trail"),
     list(itertools.product([1, -1], [16, 17], [1, 2], [1, 4], [1, 4], [True, False])),
