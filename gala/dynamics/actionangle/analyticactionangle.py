@@ -5,14 +5,11 @@ Analytic transformations to action-angle coordinates.
 import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
-from astropy.constants import G
 from astropy.coordinates.matrix_utilities import rotation_matrix
-from astropy.utils.decorators import deprecated
 
 # Gala
 import gala.dynamics as gd
 from gala.tests.optional_deps import HAS_TWOBODY
-from gala.util import GalaDeprecationWarning
 
 __all__ = ["harmonic_oscillator_xv_to_aa", "isochrone_aa_to_xv", "isochrone_xv_to_aa"]
 
@@ -65,7 +62,7 @@ def isochrone_xv_to_aa(w, potential):
         potential = IsochronePotential(**potential)
 
     usys = potential.units
-    GM = (G * potential.parameters["m"]).decompose(usys).value
+    GM = potential.G * potential.parameters["m"].decompose(usys).value
     b = potential.parameters["b"].decompose(usys).value
     E = w.energy(Hamiltonian(potential)).decompose(usys).value
     E = np.atleast_1d(E)
@@ -156,19 +153,6 @@ def isochrone_xv_to_aa(w, potential):
     return actions * a_unit, angles * u.radian, freqs * f_unit
 
 
-@deprecated(
-    since="v1.5",
-    name="isochrone_to_aa",
-    alternative="isochrone_xv_to_aa",
-    warning_type=GalaDeprecationWarning,
-)
-def isochrone_to_aa(*args, **kwargs):
-    """
-    Deprecated! Use `gala.dynamics.actionangle.isochrone_xv_to_aa` instead.
-    """
-    return isochrone_xv_to_aa(*args, **kwargs)
-
-
 def isochrone_aa_to_xv(actions, angles, potential):
     """
     Transform the input actions and angles to cartesian position and velocity
@@ -202,8 +186,10 @@ def isochrone_aa_to_xv(actions, angles, potential):
     Jr, Jphi, Jth = (np.atleast_1d(x) for x in actions)
     thr, thphi, thth = (np.atleast_1d(x) for x in angles)
 
-    GM = G * potential.parameters["m"]
-    b = potential.parameters["b"]
+    usys = potential.units
+    GM = potential.G * potential.parameters["m"].decompose(usys).value
+    GM = GM * usys["length"] ** 3 / usys["time"] ** 2
+    b = potential.parameters["b"].decompose(usys)
 
     Lz = Jphi
     L = Jth + np.abs(Lz)
@@ -326,20 +312,6 @@ def harmonic_oscillator_xv_to_aa(w, potential):
         f_unit = (1 * usys["angular speed"]).decompose(usys).unit
         return action * a_unit, (angle % (2.0 * np.pi)) * u.radian, freq * f_unit
     return action * u.one, (angle % (2.0 * np.pi)) * u.one, freq * u.one
-
-
-@deprecated(
-    since="v1.5",
-    name="harmonic_oscillator_to_aa",
-    alternative="harmonic_oscillator_xv_to_aa",
-    warning_type=GalaDeprecationWarning,
-)
-def harmonic_oscillator_to_aa(*args, **kwargs):
-    """
-    Deprecated! Use `gala.dynamics.actionangle.harmonic_oscillator_xv_to_aa`
-    instead.
-    """
-    return harmonic_oscillator_xv_to_aa(*args, **kwargs)
 
 
 def harmonic_oscillator_to_xv(actions, angles, potential):

@@ -1,6 +1,7 @@
 import astropy.units as u
 import numpy as np
 
+import gala.dynamics as gd
 from gala.dynamics.actionangle import (
     harmonic_oscillator_xv_to_aa,
     isochrone_aa_to_xv,
@@ -110,6 +111,15 @@ class TestIsochrone:
 
             assert u.allclose(x, w_rt.xyz, atol=1e-10 * u.kpc)
             assert u.allclose(v, w_rt.v_xyz, atol=1e-10 * u.km / u.s)
+
+    def test_regression_dimensionless(self):
+        pot = IsochronePotential(m=1.0, b=1.0)
+        act, ang, freq = pot.action_angle(
+            gd.PhaseSpacePosition([5.0, 0, 0], [0, 0.35, 0.1])
+        )
+        assert act.unit == u.one
+        assert freq.unit == u.one
+        assert ang.unit == u.rad
 
 
 class TestHarmonicOscillator:

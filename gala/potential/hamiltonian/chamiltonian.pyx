@@ -311,54 +311,80 @@ class Hamiltonian(CommonBase):
                 "lead to wildly incorrect orbits. It is recommended that you "
                 "use DOPRI853Integrator instead.", RuntimeWarning)
 
-        if not isinstance(w0, PhaseSpacePosition):
-            w0 = np.asarray(w0)
-            ndim = w0.shape[0]//2
-            w0 = PhaseSpacePosition(pos=w0[:ndim], vel=w0[ndim:], copy=False)
+        if isinstance(w0, PhaseSpacePosition):
+            ndim = w0.ndim
+            arr_w0 = w0.w(self.units)
+            arr_w0 = self._remove_units_prepare_shape(arr_w0)
 
-        ndim = w0.ndim
-        arr_w0 = w0.w(self.units)
-        arr_w0 = self._remove_units_prepare_shape(arr_w0)
+            msg = (
+                f"Invalid initial conditions shape {w0.shape}. Expected shape "
+                f"(ndim={self.ndim}, ...) for both pos and vel, but got ndim={ndim}."
+            )
 
-        # transpose=False because the gradient functions expect (ndim, N) arrays
+        else:
+            arr_w0 = np.asarray(w0)
+            ndim = arr_w0.shape[0] // 2
+
+            msg = (
+                f"Invalid initial conditions shape {arr_w0.shape}. Expected shape "
+                f"({self.ndim}, ...) but got shape {arr_w0.shape}."
+            )
+
+        if 2 * ndim != self.ndim:
+            raise ValueError(msg)
+
+            # transpose=False because the gradient functions expect (ndim, N) arrays
         orig_shape, arr_w0 = self._get_c_valid_arr(arr_w0, transpose=False)
 
         if self.c_enabled and cython_if_possible:
             # array of times
             from ...integrate.timespec import parse_time_specification
+
             t = np.ascontiguousarray(parse_time_specification(self.units, **time_spec))
 
             # TODO: these replacements should be defined in gala.integrate...
+            # TODO: default kwargs should also be defined in gala.integrate, not here
             if Integrator == LeapfrogIntegrator:
                 from ...integrate.cyintegrators import leapfrog_integrate_hamiltonian
-                t, w = leapfrog_integrate_hamiltonian(self, arr_w0, t, save_all=save_all)
+
+                t, w = leapfrog_integrate_hamiltonian(
+                    self, arr_w0, t, save_all=save_all
+                )
 
             elif Integrator == Ruth4Integrator:
                 from ...integrate.cyintegrators import ruth4_integrate_hamiltonian
+
                 t, w = ruth4_integrate_hamiltonian(self, arr_w0, t, save_all=save_all)
 
             elif Integrator == DOPRI853Integrator:
                 from ...integrate.cyintegrators import dop853_integrate_hamiltonian
+
                 t, w = dop853_integrate_hamiltonian(
-                    self, arr_w0, t,
-                    Integrator_kwargs.get('atol', 1e-10),
-                    Integrator_kwargs.get('rtol', 1E-10),
-                    Integrator_kwargs.get('nmax', 0),
+                    self,
+                    arr_w0,
+                    t,
+                    Integrator_kwargs.get("atol", 1e-10),
+                    Integrator_kwargs.get("rtol", 1e-10),
+                    Integrator_kwargs.get("nmax", 0),
                     save_all=save_all,
-                    err_if_fail=int(Integrator_kwargs.get('err_if_fail', 1)),
-                    log_output=int(Integrator_kwargs.get('log_output', 0)),
-                    nbatch=Integrator_kwargs.get('nbatch', 100),
+                    err_if_fail=int(Integrator_kwargs.get("err_if_fail", 1)),
+                    log_output=int(Integrator_kwargs.get("log_output", 0)),
+                    nbatch=Integrator_kwargs.get("nbatch", 100),
                 )
             else:
-                raise ValueError(f"Cython integration not supported for '{Integrator!r}'")
+                raise ValueError(
+                    f"Cython integration not supported for '{Integrator!r}'"
+                )
 
             if w.shape[-1] == 1:
                 w = w[..., 0]
 
         else:
+
             def F(t, w):
                 w = np.ascontiguousarray(w)
                 return self._gradient(w, t=np.array([t]))
+
             integrator = Integrator(F, func_units=self.units, **Integrator_kwargs)
             orbit = integrator(arr_w0, **time_spec)
             orbit.potential = self.potential
@@ -369,25 +395,10 @@ class Hamiltonian(CommonBase):
             w = w[:, None]
 
         try:
-            tunit = self.units['time']
+            tunit = self.units["time"]
         except (TypeError, AttributeError):
             tunit = u.dimensionless_unscaled
 
         t = u.Quantity(t, tunit, copy=False)
 
-        return Orbit.from_w(w=w, units=self.units, t=t,
-                            hamiltonian=self, copy=False)
-
-    # def save(self, f):
-    #     """
-    #     Save the potential to a text file. See :func:`~gala.potential.save`
-    #     for more information.
-
-    #     Parameters
-    #     ----------
-    #     f : str, file_like
-    #         A filename or file-like object to write the input potential object to.
-
-    #     """
-    #     from .io import save
-    #     save(self, f)
+        return Orbit.from_w(w=w, units=self.units, t=t, hamiltonian=self, copy=False)
