@@ -1,49 +1,11 @@
 """General utilities."""
 
-import copy
 import os
-from collections.abc import Mapping
 from contextlib import contextmanager
 
 import numpy as np
 
 __all__ = ["assert_angles_allclose", "atleast_2d", "rolling_window"]
-
-
-class ImmutableDict(Mapping):
-    @classmethod
-    def from_dict(cls, somedict):
-        return cls(**somedict)
-
-    def __init__(self, **kwargs):
-        self._dict = kwargs
-        self._hash = None
-
-    def __getitem__(self, key):
-        return self._dict[key]
-
-    def __len__(self):
-        return len(self._dict)
-
-    def __iter__(self):
-        return iter(self._dict)
-
-    def __hash__(self):
-        if self._hash is None:
-            self._hash = hash(frozenset(self._dict.items()))
-        return self._hash
-
-    def __eq__(self, other):
-        return self._dict == other._dict
-
-    def __repr__(self):
-        return f"<ImmutableDict {self._dict.__repr__()}>"
-
-    def __str__(self):
-        return self._dict.__str__()
-
-    def copy(self):
-        return copy.deepcopy(self._dict)
 
 
 def rolling_window(arr, window_size, stride=1, return_idx=False):

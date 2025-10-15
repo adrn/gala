@@ -34,6 +34,8 @@ API changes
   ``gala.dynamics.Orbit``, and ``gala.dynamics.MockStream``.
 - The `integrate_orbit()` method now validates that the input initial conditions have
   the correct shape given the dimensionality of the potential.
+- Removed custom ``ImmutableDict`` implementation in favor of
+  ``types.MappingProxyType``.
 
 Other
 -----

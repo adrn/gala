@@ -3,6 +3,7 @@ import copy as pycopy
 import uuid
 import warnings
 from collections import OrderedDict
+from types import MappingProxyType
 
 import astropy.units as u
 import numpy as np
@@ -22,7 +23,7 @@ except ImportError as exc:
 from gala.util import GalaDeprecationWarning
 
 from ...units import DimensionlessUnitSystem
-from ...util import ImmutableDict, atleast_2d
+from ...util import atleast_2d
 from ..common import CommonBase
 
 __all__ = ["CompositePotential", "PotentialBase"]
@@ -61,7 +62,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     ----------
     ndim : int
         Number of spatial dimensions (default: 3).
-    parameters : `~gala.util.ImmutableDict`
+    parameters : `MappingProxyType`
         Dictionary of potential parameters with associated units.
     units : `~gala.units.UnitSystem`
         The unit system used by the potential.
@@ -1489,7 +1490,7 @@ class CompositePotential(PotentialBase, OrderedDict):
         params = {}
         for k, v in self.items():
             params[k] = v.parameters
-        return ImmutableDict(**params)
+        return MappingProxyType(params)
 
     def replace_units(self, units):
         """Change the unit system of this potential.
