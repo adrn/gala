@@ -1,12 +1,16 @@
 import pickle
 
 import astropy.units as u
+import numpy as np
 import pytest
 
-from ....units import galactic, solarsystem
-from ...frame.builtin import ConstantRotatingFrame, StaticFrame
-from ...potential.builtin import KeplerPotential
-from .. import Hamiltonian
+from gala.potential import (
+    ConstantRotatingFrame,
+    Hamiltonian,
+    KeplerPotential,
+    StaticFrame,
+)
+from gala.units import galactic, solarsystem
 
 
 def test_init():
@@ -53,3 +57,15 @@ def test_pickle(tmpdir):
 
         with open(filename, "rb") as f:
             H2 = pickle.load(f)
+
+
+def test_regression_integrate_orbit_shape():
+    """
+    Test that integrate_orbit validates input shape correctly.
+    """
+    p = KeplerPotential(m=1.0)
+    f = StaticFrame()
+    H = Hamiltonian(potential=p, frame=f)
+
+    with pytest.raises(ValueError):
+        H.integrate_orbit(np.zeros((5, 6)), t=np.linspace(0, 1, 128))
