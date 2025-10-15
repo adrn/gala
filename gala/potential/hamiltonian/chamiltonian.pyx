@@ -327,10 +327,10 @@ class Hamiltonian(CommonBase):
 
             msg = (
                 f"Invalid initial conditions shape {arr_w0.shape}. Expected shape "
-                f"(2*ndim, ...) but got shape {arr_w0.shape}."
+                f"({self.ndim}, ...) but got shape {arr_w0.shape}."
             )
 
-        if ndim != self.ndim:
+        if 2 * ndim != self.ndim:
             raise ValueError(msg)
 
             # transpose=False because the gradient functions expect (ndim, N) arrays
