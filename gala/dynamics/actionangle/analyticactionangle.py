@@ -6,12 +6,10 @@ import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 from astropy.coordinates.matrix_utilities import rotation_matrix
-from astropy.utils.decorators import deprecated
 
 # Gala
 import gala.dynamics as gd
 from gala.tests.optional_deps import HAS_TWOBODY
-from gala.util import GalaDeprecationWarning
 
 __all__ = ["harmonic_oscillator_xv_to_aa", "isochrone_aa_to_xv", "isochrone_xv_to_aa"]
 
@@ -153,19 +151,6 @@ def isochrone_xv_to_aa(w, potential):
     a_unit = (1 * usys["angular momentum"] / usys["mass"]).decompose(usys).unit
     f_unit = (1 * usys["angular speed"]).decompose(usys).unit
     return actions * a_unit, angles * u.radian, freqs * f_unit
-
-
-@deprecated(
-    since="v1.5",
-    name="isochrone_to_aa",
-    alternative="isochrone_xv_to_aa",
-    warning_type=GalaDeprecationWarning,
-)
-def isochrone_to_aa(*args, **kwargs):
-    """
-    Deprecated! Use `gala.dynamics.actionangle.isochrone_xv_to_aa` instead.
-    """
-    return isochrone_xv_to_aa(*args, **kwargs)
 
 
 def isochrone_aa_to_xv(actions, angles, potential):
@@ -326,20 +311,6 @@ def harmonic_oscillator_xv_to_aa(w, potential):
         f_unit = (1 * usys["angular speed"]).decompose(usys).unit
         return action * a_unit, (angle % (2.0 * np.pi)) * u.radian, freq * f_unit
     return action * u.one, (angle % (2.0 * np.pi)) * u.one, freq * u.one
-
-
-@deprecated(
-    since="v1.5",
-    name="harmonic_oscillator_to_aa",
-    alternative="harmonic_oscillator_xv_to_aa",
-    warning_type=GalaDeprecationWarning,
-)
-def harmonic_oscillator_to_aa(*args, **kwargs):
-    """
-    Deprecated! Use `gala.dynamics.actionangle.harmonic_oscillator_xv_to_aa`
-    instead.
-    """
-    return harmonic_oscillator_xv_to_aa(*args, **kwargs)
 
 
 def harmonic_oscillator_to_xv(actions, angles, potential):
