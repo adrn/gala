@@ -5,7 +5,6 @@ Analytic transformations to action-angle coordinates.
 import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
-from astropy.constants import G
 from astropy.coordinates.matrix_utilities import rotation_matrix
 from astropy.utils.decorators import deprecated
 
@@ -65,7 +64,7 @@ def isochrone_xv_to_aa(w, potential):
         potential = IsochronePotential(**potential)
 
     usys = potential.units
-    GM = (G * potential.parameters["m"]).decompose(usys).value
+    GM = potential.G * potential.parameters["m"].decompose(usys).value
     b = potential.parameters["b"].decompose(usys).value
     E = w.energy(Hamiltonian(potential)).decompose(usys).value
     E = np.atleast_1d(E)
@@ -202,8 +201,9 @@ def isochrone_aa_to_xv(actions, angles, potential):
     Jr, Jphi, Jth = (np.atleast_1d(x) for x in actions)
     thr, thphi, thth = (np.atleast_1d(x) for x in angles)
 
-    GM = G * potential.parameters["m"]
-    b = potential.parameters["b"]
+    usys = potential.units
+    GM = potential.G * potential.parameters["m"].decompose(usys).value
+    b = potential.parameters["b"].decompose(usys).value
 
     Lz = Jphi
     L = Jth + np.abs(Lz)
