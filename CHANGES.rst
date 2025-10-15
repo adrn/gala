@@ -32,6 +32,8 @@ API changes
 -----------
 - Added ``copy`` kwarg to ``gala.dynamics.PhaseSpacePosition``,
   ``gala.dynamics.Orbit``, and ``gala.dynamics.MockStream``.
+- The `integrate_orbit()` method now validates that the input initial conditions have
+  the correct shape given the dimensionality of the potential.
 
 Other
 -----
