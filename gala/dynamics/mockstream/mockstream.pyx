@@ -317,8 +317,8 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
         n = nstream[0]
         stream_g['pos'][:, 0, :n] = np.array(w[nbodies:nbodies+n, :]).T[:3]
         stream_g['vel'][:, 0, :n] = np.array(w[nbodies:nbodies+n, :]).T[3:]
-        nbody_g['pos'][:, 0, :n] = np.array(w[:nbodies, :]).T[:3]
-        nbody_g['vel'][:, 0, :n] = np.array(w[:nbodies, :]).T[3:]
+        nbody_g['pos'][:, 0, :nbodies] = np.array(w[:nbodies, :]).T[:3]
+        nbody_g['vel'][:, 0, :nbodies] = np.array(w[:nbodies, :]).T[3:]
         output_times[0] = t[0]
 
         j = 1 # output time index
@@ -337,8 +337,8 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
                 output_times[j] = t[i]
                 stream_g['pos'][:, j, :n] = np.array(w[nbodies:nbodies+n, :]).T[:3]
                 stream_g['vel'][:, j, :n] = np.array(w[nbodies:nbodies+n, :]).T[3:]
-                nbody_g['pos'][:, j, :n] = np.array(w[:nbodies, :]).T[:3]
-                nbody_g['vel'][:, j, :n] = np.array(w[:nbodies, :]).T[3:]
+                nbody_g['pos'][:, j, :nbodies] = np.array(w[:nbodies, :]).T[:3]
+                nbody_g['vel'][:, j, :nbodies] = np.array(w[:nbodies, :]).T[3:]
                 j += 1
 
             if progress == 1:

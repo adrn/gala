@@ -24,6 +24,9 @@ Bug fixes
 - ``replicate()`` and ``replace_units`` now work with ``EXPPotential``.
 - Fixed incorrect results from ``MockStreamGenerator.run()`` with an
   ``n_particles`` array.
+- Fixed a bug in ``MockStreamGenerator.run()`` when using ``DirectNBody`` with
+  ``output_filename`` and more bodies than stream particles, which caused a "TypeError:
+  Can't broadcast" error.
 
 API changes
 -----------
