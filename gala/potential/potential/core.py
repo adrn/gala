@@ -1490,7 +1490,7 @@ class CompositePotential(PotentialBase, OrderedDict):
         params = {}
         for k, v in self.items():
             params[k] = v.parameters
-        return MappingProxyType(**params)
+        return MappingProxyType(params)
 
     def replace_units(self, units):
         """Change the unit system of this potential.
