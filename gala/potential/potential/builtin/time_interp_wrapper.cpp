@@ -149,6 +149,8 @@ void time_interp_gradient(double t, double *pars, double *q, int n_dim, size_t N
         for (size_t i = 0; i < N * n_dim; i++) grad[i] = NAN;
         return;
     }
+    memset(q_transformed, 0, N * n_dim * sizeof(double));
+    memset(grad_transformed, 0, N * n_dim * sizeof(double));
 
     // Transform positions for all orbits using existing apply_shift_rotate_N function
     apply_shift_rotate_N(q, interp_origin, interp_rotation, n_dim, N, 0, q_transformed);
@@ -226,6 +228,7 @@ double time_interp_density(double t, double *pars, double *q, int n_dim, void *s
 
     // Transform position using existing apply_shift_rotate function
         double q_transformed[n_dim];
+    memset(q_transformed, 0, n_dim * sizeof(double));
     apply_shift_rotate(q, interp_origin, interp_rotation, n_dim, 0, q_transformed);
 
     // Evaluate wrapped potential density
