@@ -295,10 +295,12 @@ void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *h
 
     // Transform position using existing apply_shift_rotate function
         double q_transformed[n_dim];
+    memset(q_transformed, 0, n_dim * sizeof(double));
     apply_shift_rotate(q, interp_origin, interp_rotation, n_dim, 0, q_transformed);
 
     // Evaluate wrapped potential Hessian in transformed coordinates
     double hess_transformed[n_dim * n_dim];
+    memset(hess_transformed, 0, n_dim * n_dim * sizeof(double));
     wrapped_pot->hessian[0](t, interp_params, q_transformed, n_dim, hess_transformed, wrapped_pot->state[0]);
 
     // Transform Hessian back: hess = R^T @ hess_transformed @ R
