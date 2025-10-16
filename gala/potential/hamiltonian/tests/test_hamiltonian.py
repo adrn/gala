@@ -20,6 +20,10 @@ def test_init():
     H2 = Hamiltonian(H)
     assert H2.potential is H.potential
 
+    str_ = repr(H)
+    assert "KeplerPotential" in str_
+    assert "StaticFrame" in str_
+
     p = KeplerPotential(m=1.0, units=solarsystem)
     f = StaticFrame(units=solarsystem)
     H = Hamiltonian(potential=p, frame=f)
