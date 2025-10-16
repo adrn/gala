@@ -17,55 +17,53 @@ from ..cpotential cimport CPotentialWrapper
 from ..cpotential cimport densityfunc, energyfunc, gradientfunc, hessianfunc
 from ...._cconfig cimport USE_GSL
 
-# GSL interpolation types
-cdef extern from "gsl/gsl_interp.h":
-    IF USE_GSL:
-        ctypedef struct gsl_interp_type:
-            pass
-
-        gsl_interp_type * gsl_interp_linear
-        gsl_interp_type * gsl_interp_cspline
-        gsl_interp_type * gsl_interp_akima
-        gsl_interp_type * gsl_interp_steffen
-
-# Time interpolation state structure
+# Time interpolation state structure and GSL types (declared in time_interp.h)
 cdef extern from "time_interp.h":
-    IF USE_GSL:
-        ctypedef struct TimeInterpParam:
-            int is_constant
-            double constant_value
-            int n_knots
+    # Forward declaration of GSL type (defined in time_interp.h)
+    ctypedef struct gsl_interp_type:
+        pass
 
-        ctypedef struct TimeInterpRotation:
-            int is_constant
-            double constant_matrix[9]
+    # GSL interpolation type pointers - these will only link if USE_GSL==1
+    gsl_interp_type * gsl_interp_linear
+    gsl_interp_type * gsl_interp_cspline
+    gsl_interp_type * gsl_interp_akima
+    gsl_interp_type * gsl_interp_steffen
 
-        ctypedef struct TimeInterpState:
-            TimeInterpParam *params
-            TimeInterpParam *origin
-            TimeInterpRotation rotation
-            int n_params
-            int n_dim
-            const gsl_interp_type *interp_type
-            double t_min
-            double t_max
-            void *wrapped_potential
+cdef extern from "time_interp.h":
+    ctypedef struct TimeInterpParam:
+        int is_constant
+        double constant_value
+        int n_knots
 
-        TimeInterpState* time_interp_alloc(int n_params, int n_dim, const gsl_interp_type *interp_type)
-        void time_interp_free(TimeInterpState *state)
-        int time_interp_init_param(TimeInterpParam *param, double *time_knots, double *values,
-                                  int n_knots, const gsl_interp_type *interp_type)
-        int time_interp_init_constant_param(TimeInterpParam *param, double constant_value)
-        int time_interp_init_rotation(TimeInterpRotation *rot, double *time_knots, double *matrices,
-                                     int n_knots, const gsl_interp_type *interp_type)
-        int time_interp_init_constant_rotation(TimeInterpRotation *rot, double *matrix)
+    ctypedef struct TimeInterpRotation:
+        int is_constant
+        double constant_matrix[9]
+
+    ctypedef struct TimeInterpState:
+        TimeInterpParam *params
+        TimeInterpParam *origin
+        TimeInterpRotation rotation
+        int n_params
+        int n_dim
+        const gsl_interp_type *interp_type
+        double t_min
+        double t_max
+        void *wrapped_potential
+
+    TimeInterpState* time_interp_alloc(int n_params, int n_dim, const gsl_interp_type *interp_type)
+    void time_interp_free(TimeInterpState *state)
+    int time_interp_init_param(TimeInterpParam *param, double *time_knots, double *values,
+                              int n_knots, const gsl_interp_type *interp_type)
+    int time_interp_init_constant_param(TimeInterpParam *param, double constant_value)
+    int time_interp_init_rotation(TimeInterpRotation *rot, double *time_knots, double *matrices,
+                                 int n_knots, const gsl_interp_type *interp_type)
+    int time_interp_init_constant_rotation(TimeInterpRotation *rot, double *matrix)
 
 cdef extern from "time_interp_wrapper.h":
-    IF USE_GSL:
-        double time_interp_value(double t, double *pars, double *q, int n_dim, void *state) nogil
-        void time_interp_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) nogil
-        double time_interp_density(double t, double *pars, double *q, int n_dim, void *state) nogil
-        void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
+    double time_interp_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void time_interp_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) nogil
+    double time_interp_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
 
 __all__ = ['TimeInterpolatedWrapper']
 
@@ -73,17 +71,16 @@ cpdef check_const_array(arr, atol, rtol):
     return np.allclose(arr, arr[0], atol=atol, rtol=rtol)
 
 
-IF USE_GSL:
-    cdef class TimeInterpolatedWrapper(CPotentialWrapper):
-        """
-        Cython wrapper for time-interpolated potentials.
-        """
-        cdef TimeInterpState *interp_state
-        cdef CPotentialWrapper wrapped_potential
-        cdef object _time_knots
-        cdef object _param_arrays
-        cdef object _origin_arrays
-        cdef object _rotation_matrices
+cdef class TimeInterpolatedWrapper(CPotentialWrapper):
+    """
+    Cython wrapper for time-interpolated potentials.
+    """
+    cdef TimeInterpState *interp_state
+    cdef CPotentialWrapper wrapped_potential
+    cdef object _time_knots
+    cdef object _param_arrays
+    cdef object _origin_arrays
+    cdef object _rotation_matrices
 
     def __init__(self, CPotentialWrapper wrapped_potential,
                 double[::1] time_knots,
@@ -116,6 +113,12 @@ IF USE_GSL:
         const_rtol : float, optional
             Relative tolerance for constant parameter detection. Default is 0.
         """
+        if USE_GSL != 1:
+            raise RuntimeError(
+                "TimeInterpolatedPotential requires GSL support. "
+                "Please install GSL and rebuild gala with GSL support."
+            )
+
         self.wrapped_potential = wrapped_potential
         self._time_knots = np.array(time_knots)
         self._param_arrays = param_arrays
@@ -323,11 +326,12 @@ IF USE_GSL:
                 n_dim=n_dim
             )
 
-            # Set up function pointers
-            self.cpotential.value[0] = <energyfunc>time_interp_value
-            self.cpotential.gradient[0] = <gradientfunc>time_interp_gradient
-            self.cpotential.density[0] = <densityfunc>time_interp_density
-            self.cpotential.hessian[0] = <hessianfunc>time_interp_hessian
+            # Set up function pointers (only if GSL is available)
+            if USE_GSL == 1:
+                self.cpotential.value[0] = <energyfunc>time_interp_value
+                self.cpotential.gradient[0] = <gradientfunc>time_interp_gradient
+                self.cpotential.density[0] = <densityfunc>time_interp_density
+                self.cpotential.hessian[0] = <hessianfunc>time_interp_hessian
 
             # Store interpolation state in the state pointer
             self.cpotential.state[0] = <void*>self.interp_state
