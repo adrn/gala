@@ -206,36 +206,11 @@ class Hamiltonian(CommonBase):
     def __call__(self, w):
         return self.energy(w)
 
-    # def __repr__(self):
-    #     pars = ""
-    #     keys = self.parameters.keys()
-
-    #     for k in keys:
-    #         v = self.parameters[k].value
-    #         par_fmt = "{}"
-    #         post = ""
-
-    #         if hasattr(v,'unit'):
-    #             post = " {}".format(v.unit)
-    #             v = v.value
-
-    #         if isinstance(v, float):
-    #             if v == 0:
-    #                 par_fmt = "{:.0f}"
-    #             elif np.log10(v) < -2 or np.log10(v) > 5:
-    #                 par_fmt = "{:.2e}"
-    #             else:
-    #                 par_fmt = "{:.2f}"
-
-    #         elif isinstance(v, int) and np.log10(v) > 5:
-    #             par_fmt = "{:.2e}"
-
-    #         pars += ("{}=" + par_fmt + post).format(k, v) + ", "
-
-    #     if isinstance(self.units, DimensionlessUnitSystem):
-    #         return "<{}: {} (dimensionless)>".format(self.__class__.__name__, pars.rstrip(", "))
-    #     else:
-    #         return "<{}: {} ({})>".format(self.__class__.__name__, pars.rstrip(", "), ",".join(map(str, self.units._core_units)))
+    def __repr__(self):
+        return (
+            f"<{self.__class__.__name__}: "
+            f"potential={self.potential!r}, frame={self.frame!r}>"
+        )
 
     def __str__(self):
         return self.__class__.__name__
