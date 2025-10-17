@@ -38,7 +38,7 @@ class PotentialParameter:
         equivalencies=None,
         python_only=False,
         ndim=0,
-        type=None,
+        convert=np.asanyarray,
     ):
         # TODO: could add a "shape" argument?
         # TODO: need better sanitization and validation here
@@ -49,7 +49,7 @@ class PotentialParameter:
         self.equivalencies = equivalencies
         self.python_only = bool(python_only)
         self.ndim = int(ndim)
-        self.type = type
+        self.convert = convert
 
     def __repr__(self):
         if self.physical_type is None:
@@ -140,10 +140,10 @@ class CommonBase:
                 val = self._parameters[k].default
                 parameter_is_default.add(k)
 
-            if self._parameters[k].type is None:
-                parameter_values[k] = np.asanyarray(val)
+            if self._parameters[k].convert is not None:
+                parameter_values[k] = self._parameters[k].convert(val)
             else:
-                parameter_values[k] = self._parameters[k].type(val)
+                parameter_values[k] = val
 
         if kwargs and strict:
             raise ValueError(

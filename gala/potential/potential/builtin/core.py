@@ -1493,10 +1493,10 @@ class SphericalSplinePotential(CPotentialBase, GSL_only=True):
         ndim=1,
     )
     spline_value_type = PotentialParameter(
-        "spline_value_type", physical_type=None, default="potential", type=str
+        "spline_value_type", physical_type=None, default="potential", convert=str
     )
     interpolation_method = PotentialParameter(
-        "interpolation_method", physical_type=None, default="cspline", type=str
+        "interpolation_method", physical_type=None, default="cspline", convert=str
     )
 
     Wrapper = SphericalSplineWrapper
