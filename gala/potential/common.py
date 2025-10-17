@@ -139,7 +139,9 @@ class CommonBase:
             else:
                 val = self._parameters[k].default
                 parameter_is_default.add(k)
+            parameter_values[k] = val
 
+        for k, val in parameter_values.items():
             if self._parameters[k].convert is not None:
                 parameter_values[k] = self._parameters[k].convert(val)
             else:
