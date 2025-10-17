@@ -37,6 +37,8 @@ class PotentialParameter:
         default=None,
         equivalencies=None,
         python_only=False,
+        ndim=0,
+        type=None,
     ):
         # TODO: could add a "shape" argument?
         # TODO: need better sanitization and validation here
@@ -46,6 +48,8 @@ class PotentialParameter:
         self.default = default
         self.equivalencies = equivalencies
         self.python_only = bool(python_only)
+        self.ndim = int(ndim)
+        self.type = type
 
     def __repr__(self):
         if self.physical_type is None:
@@ -105,7 +109,7 @@ class CommonBase:
 
         return units
 
-    def _parse_parameter_values(self, *args, **kwargs):
+    def _parse_parameter_values(self, *args, strict=True, **kwargs):
         expected_parameter_keys = list(self._parameters.keys())
 
         if len(args) > len(expected_parameter_keys):
@@ -135,13 +139,25 @@ class CommonBase:
             else:
                 val = self._parameters[k].default
                 parameter_is_default.add(k)
-            parameter_values[k] = val
 
-        if kwargs:
+            if self._parameters[k].type is None:
+                parameter_values[k] = np.asanyarray(val)
+            else:
+                parameter_values[k] = self._parameters[k].type(val)
+
+        if kwargs and strict:
             raise ValueError(
                 f"{self.__class__} received unexpected keyword "
                 f"argument(s): {list(kwargs.keys())}"
             )
+
+        for k, pval in parameter_values.items():
+            pp = self._parameters[k]
+            if pp.physical_type is not None and pval.ndim != pp.ndim:
+                raise ValueError(
+                    f"Parameter {k} should have ndim={pp.ndim} "
+                    f"dimensions, but has ndim={pval.ndim}"
+                )
 
         return parameter_values, parameter_is_default
 

@@ -1217,8 +1217,6 @@ class MultipolePotential(CPotentialBase, GSL_only=True):
         )
 
     def __new__(cls, *args, **kwargs):
-        # We don't want to call this method if we've already set up
-        # an skyoffset frame for this class.
         if not (issubclass(cls, MultipolePotential) and cls is not MultipolePotential):
             try:
                 lmax = kwargs["lmax"]
@@ -1253,9 +1251,9 @@ class CylSplinePotential(CPotentialBase):
     {common_doc}
     """
 
-    grid_R = PotentialParameter("grid_R", physical_type="length")
-    grid_z = PotentialParameter("grid_z", physical_type="length")
-    grid_Phi = PotentialParameter("grid_Phi", physical_type="specific energy")
+    grid_R = PotentialParameter("grid_R", physical_type="length", ndim=1)
+    grid_z = PotentialParameter("grid_z", physical_type="length", ndim=1)
+    grid_Phi = PotentialParameter("grid_Phi", physical_type="specific energy", ndim=2)
 
     Wrapper = CylSplineWrapper
     _symmetry = CylindricalSymmetry()
@@ -1488,16 +1486,17 @@ class SphericalSplinePotential(CPotentialBase, GSL_only=True):
     {common_doc}
     """
 
-    r_knots = PotentialParameter("r_knots", physical_type="length")
+    r_knots = PotentialParameter("r_knots", physical_type="length", ndim=1)
     spline_values = PotentialParameter(
         "spline_values",
         physical_type=None,  # physical type depends on value_type
+        ndim=1,
     )
     spline_value_type = PotentialParameter(
-        "spline_value_type", physical_type=None, default="potential"
+        "spline_value_type", physical_type=None, default="potential", type=str
     )
     interpolation_method = PotentialParameter(
-        "interpolation_method", physical_type=None, default="cspline"
+        "interpolation_method", physical_type=None, default="cspline", type=str
     )
 
     Wrapper = SphericalSplineWrapper

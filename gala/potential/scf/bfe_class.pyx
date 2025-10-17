@@ -79,8 +79,8 @@ class SCFPotential(CPotentialBase, GSL_only=True):
     """
     m = PotentialParameter('m', physical_type='mass')
     r_s = PotentialParameter('r_s', physical_type='length')
-    Snlm = PotentialParameter('Snlm', physical_type='dimensionless')
-    Tnlm = PotentialParameter('Tnlm', physical_type='dimensionless')
+    Snlm = PotentialParameter('Snlm', physical_type='dimensionless', ndim=2)
+    Tnlm = PotentialParameter('Tnlm', physical_type='dimensionless', ndim=2)
 
     Wrapper = SCFWrapper
 
@@ -159,11 +159,11 @@ class SCFInterpolatedPotential(CPotentialBase, GSL_only=True):
     """
     m = PotentialParameter('m', physical_type='mass')
     r_s = PotentialParameter('r_s', physical_type='length')
-    Sjnlm = PotentialParameter('Sjnlm', physical_type='dimensionless')
-    Tjnlm = PotentialParameter('Tjnlm', physical_type='dimensionless')
-    tj = PotentialParameter('tj', physical_type='time')
-    com_xj = PotentialParameter('com_xj', physical_type='length')
-    com_vj = PotentialParameter('com_vj', physical_type='speed')
+    Sjnlm = PotentialParameter('Sjnlm', physical_type='dimensionless', ndim=3)
+    Tjnlm = PotentialParameter('Tjnlm', physical_type='dimensionless', ndim=3)
+    tj = PotentialParameter('tj', physical_type='time', ndim=1)
+    com_xj = PotentialParameter('com_xj', physical_type='length', ndim=2)
+    com_vj = PotentialParameter('com_vj', physical_type='speed', ndim=2)
 
     Wrapper = InterpolatedSCFWrapper
 
