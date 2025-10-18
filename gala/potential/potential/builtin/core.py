@@ -1640,10 +1640,14 @@ class EXPPotential(CPotentialBase, EXP_only=True):
         The actual, loaded minimum and maximum time for which the potential is defined.
     """
 
-    config_file = PotentialParameter("config_file", physical_type=None)
-    coef_file = PotentialParameter("coef_file", physical_type=None)
+    config_file = PotentialParameter("config_file", physical_type=None, convert=str)
+    coef_file = PotentialParameter("coef_file", physical_type=None, convert=str)
     snapshot_time_unit = PotentialParameter(
-        "snapshot_time_unit", physical_type=None, default=None, python_only=True
+        "snapshot_time_unit",
+        physical_type=None,
+        default=None,
+        python_only=True,
+        convert=None,
     )
 
     tmin = PotentialParameter(
@@ -1653,9 +1657,9 @@ class EXPPotential(CPotentialBase, EXP_only=True):
         "tmax", physical_type="time", default=np.finfo(np.float64).max
     )
     snapshot_index = PotentialParameter(
-        "snapshot_index", physical_type=None, default=-1
+        "snapshot_index", physical_type=None, default=-1, convert=int
     )
-    stride = PotentialParameter("stride", default=1, physical_type=None)
+    stride = PotentialParameter("stride", default=1, physical_type=None, convert=int)
 
     def __init__(self, *args, **kwargs):
         have_t = "tmin" in kwargs or "tmax" in kwargs

@@ -122,7 +122,7 @@ def test_lock():
 
 class MyPotential(gp.PotentialBase):
     m = PotentialParameter("m", physical_type="mass")
-    x0 = PotentialParameter("x0", physical_type="length")
+    x0 = PotentialParameter("x0", physical_type="length", ndim=1)
 
     def _energy(self, x, t):
         m = self.parameters["m"]

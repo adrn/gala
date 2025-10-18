@@ -44,7 +44,7 @@ def test_new_simple():
 
 class MyPotential(PotentialBase):
     m = PotentialParameter("m", "mass")
-    x0 = PotentialParameter("x0", "length")
+    x0 = PotentialParameter("x0", "length", ndim=1, convert=np.atleast_1d)
     filename = PotentialParameter("filename", None)
     n = PotentialParameter("n", physical_type=None, default=2)
 
@@ -80,7 +80,7 @@ def test_repr():
     repr_ = repr(p)
     assert repr_.startswith("<MyPotential: m=")
     assert "m=1" in repr_
-    assert "x0=0" in repr_
+    assert "x0=[0." in repr_
     assert repr_.endswith("(AU,yr,solMass,rad)>")
 
 
