@@ -135,6 +135,28 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
                 self._parameters[attr_name] = copy.copy(attr)
                 self._potential_param_names.append(attr_name)
 
+        # Validate interpolation method vs number of knots
+        n_knots = len(tmp["time_knots"])
+        interp_method = tmp["interpolation_method"]
+        min_knots_required = {
+            "linear": 2,
+            "cspline": 3,
+            "akima": 5,
+            "steffen": 3,
+        }
+        if interp_method not in min_knots_required:
+            raise ValueError(
+                f"Interpolation method '{interp_method}' is not recognized. "
+                f"Supported methods are: {list(min_knots_required.keys())}"
+            )
+        min_required = min_knots_required.get(interp_method)
+        if n_knots < min_required:
+            raise ValueError(
+                f"Interpolation method '{interp_method}' requires at least "
+                f"{min_required} time knots, but only {n_knots} were provided. "
+                f"Either provide more time knots or use 'linear' interpolation."
+            )
+
         # Determine dimensionality from potential class
         self.ndim = (
             tmp["potential_cls"].ndim if hasattr(tmp["potential_cls"], "ndim") else 3
@@ -172,8 +194,6 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
         )
 
         # Additional validation of input:
-        if len(self.parameters["time_knots"]) < 2:
-            raise ValueError("At least 2 time knots are required")
         if not np.all(np.diff(self.parameters["time_knots"]) > 0):
             raise ValueError(
                 "time_knots must be monotonically increasing (and no duplicate times)"

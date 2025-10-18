@@ -29,6 +29,7 @@ def potentials():
         m=m_knots,
         c=np.full(len(time_knots), 10.0),
         units=galactic,
+        interpolation_method="linear",
     )
 
     pots["timedep-const"] = gp.TimeInterpolatedPotential(
@@ -37,6 +38,7 @@ def potentials():
         m=m_knots[0],
         c=np.full(len(time_knots), 10.0),
         units=galactic,
+        interpolation_method="linear",
     )
 
     return pots

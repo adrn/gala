@@ -166,6 +166,7 @@ def test_interpolation_accuracy():
         time_knots=time_knots,
         m=masses,
         units=galactic,
+        interpolation_method="linear",  # Only 2 knots, so must use linear
     )
 
     pos = np.array([1.0, 0.0, 0.0])
@@ -195,6 +196,7 @@ def test_rotation_interpolation():
         m=1e10 * u.Msun,
         R=rotations,
         units=galactic,
+        interpolation_method="linear",  # Only 2 knots, so must use linear
     )
 
     # Test position along x-axis
@@ -224,6 +226,7 @@ def test_bounds_checking():
         time_knots=time_knots,
         m=masses,
         units=galactic,
+        interpolation_method="linear",
     )
 
     pos = np.array([1.0, 0.0, 0.0])
@@ -276,12 +279,12 @@ def test_different_interpolation_types():
     time_knots = np.linspace(0, 100, 5) * u.Myr
     masses = np.array([1e12, 1.2e12, 1.8e12, 1.5e12, 2e12]) * u.Msun
 
-    for interp_kind in ["linear", "cubic"]:
+    for interp_kind in ["linear", "cspline"]:
         pot = gp.TimeInterpolatedPotential(
             potential_cls=gp.KeplerPotential,
             time_knots=time_knots,
             m=masses,
-            interp_kind=interp_kind,
+            interpolation_method=interp_kind,
             units=galactic,
         )
 
