@@ -296,3 +296,27 @@ def test_different_interpolation_types():
 
         gradient = pot.gradient(pos, t=50 * u.Myr)
         assert np.all(np.isfinite(gradient.value))
+
+
+@pytest.mark.parametrize("func_name", ["energy", "gradient", "density", "hessian"])
+def test_timeinterp_same(func_name, potentials):
+    pos = np.array([8.0, 7.0, 6.0])
+
+    vals = {}
+    for name, pot in potentials.items():
+        vals[name] = getattr(pot, func_name)(pos, t=0 * u.Myr)
+    assert u.allclose(vals["base"], vals["varying"])
+    assert u.allclose(vals["base"], vals["constant"])
+    print(f"{func_name} evaluation: {vals['base']}, {vals['varying']}")
+
+
+@pytest.mark.parametrize("func_name", ["energy", "gradient", "density", "hessian"])
+def test_timeinterp_diff(func_name, potentials):
+    pos = np.array([8.0, 7.0, 6.0])
+
+    vals = {}
+    for name, pot in potentials.items():
+        vals[name] = getattr(pot, func_name)(pos, t=75 * u.Myr)
+    assert u.allclose(vals["base"], vals["constant"])
+    assert not u.allclose(vals["base"], vals["varying"])
+    print(f"{func_name} evaluation: {vals['base']}, {vals['varying']}")
