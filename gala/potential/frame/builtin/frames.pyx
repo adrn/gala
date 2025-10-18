@@ -128,7 +128,8 @@ class ConstantRotatingFrame(CFrameBase):
         'Omega',
         physical_type='frequency',
         equivalencies=u.dimensionless_angles(),
-        ndim=1
+        ndim=1,
+        convert=np.atleast_1d
     )
 
     def _setup_frame(self, parameters, parameter_is_default, units=None):
