@@ -1,6 +1,7 @@
 #include <stddef.h>
 
 #include "src/funcdefs.h"
+#include "../../src/vectorization.h"
 
 #ifndef _CPotential_H
 #define _CPotential_H
@@ -52,6 +53,9 @@ extern double c_mass_enclosed(CPotential *p, double t, double *q, double G, doub
 // Coordinate transformation functions
 extern void apply_rotate(double *q_in, double *R, int n_dim, int transpose, double *q_out);
 extern void apply_shift_rotate(double *q_in, double *q0, double *R, int n_dim, int transpose, double *q_out);
+extern void apply_shift_rotate_N(const double *q_in, const double *q0, const double *R, int n_dim, size_t N,
+                        int transpose, double *q_out);
+extern void apply_rotate_T(double6ptr q, const double *R, int n_dim, int transpose);
 
 // TODO: move this elsewhere?
 void c_nbody_acceleration(CPotential **pots, double t, double *qp,

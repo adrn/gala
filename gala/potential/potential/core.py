@@ -150,10 +150,11 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
                 R = R.as_matrix()
             R = np.array(R)
 
-            if R.shape != (self.ndim, self.ndim):
+            if R.shape[-2:] != (self.ndim, self.ndim):
                 msg = (
-                    f"Rotation matrix passed to potential {self.__class__.__name__} has "
-                    f"an invalid shape: expected {(self.ndim, self.ndim)}, got {R.shape}"
+                    f"Rotation matrix passed to potential {self.__class__.__name__} "
+                    f"has an invalid shape: expected {(self.ndim, self.ndim)}, got "
+                    f"{R.shape}"
                 )
                 raise ValueError(msg)
         self.R = R

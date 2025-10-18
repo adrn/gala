@@ -10,11 +10,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-// Forward declarations from cpotential.cpp
-void apply_shift_rotate_N(const double *q_in, const double *q0, const double *R, int n_dim, size_t N,
-                        int transpose, double *q_out);
-void apply_rotate_T(double6ptr q, const double *R, int n_dim, int transpose);
-
 extern "C" {
 
 // Time-interpolated potential evaluation function

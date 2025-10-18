@@ -67,9 +67,6 @@ cdef extern from "time_interp_wrapper.h":
 
 __all__ = ['TimeInterpolatedWrapper']
 
-cpdef check_const_array(arr, atol, rtol):
-    return np.allclose(arr, arr[0], atol=atol, rtol=rtol)
-
 
 cdef class TimeInterpolatedWrapper(CPotentialWrapper):
     """
@@ -77,19 +74,22 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
     """
     cdef TimeInterpState *interp_state
     cdef CPotentialWrapper wrapped_potential
-    cdef object _time_knots
+    cdef double[::1] _time_knots
     cdef object _param_arrays
-    cdef object _origin_arrays
-    cdef object _rotation_matrices
+    cdef double[:, ::1] _origin_arrays
+    cdef double[:, :, ::1] _rotation_matrices
 
-    def __init__(self, CPotentialWrapper wrapped_potential,
-                double[::1] time_knots,
-                dict param_arrays,
-                double[:, ::1] origin_arrays=None,
-                double[:, :, ::1] rotation_matrices=None,
-                str interp_kind='linear',
-                float const_atol=1e-15,
-                float const_rtol=0.0):
+    def __init__(
+        self,
+        double G,
+        CPotentialWrapper wrapped_potential,
+        double[::1] time_knots,
+        list interp_params,
+        dict param_arrays,
+        double[:, ::1] origin_arrays,
+        double[:, :, ::1] rotation_matrices,
+        str interpolation_method='cspline'
+    ):
         """
         Initialize time-interpolated potential wrapper.
 
@@ -101,58 +101,56 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
             Time values for interpolation knots
         param_arrays : dict
             Dictionary mapping parameter names to arrays of values at each time knot
-        origin_arrays : array_like, optional
+        origin_arrays : array_like
             Array of origin vectors at each time knot, shape (n_knots, n_dim)
-        rotation_matrices : array_like, optional
+        rotation_matrices : array_like
             Array of rotation matrices at each time knot, shape (n_knots, n_dim, n_dim)
-        interp_kind : str, optional
+        interpolation_method : str, optional
             Interpolation type: 'linear', 'cubic', 'akima', or 'steffen'. Default is
-            linear interpolation.
-        const_atol : float, optional
-            Absolute tolerance for constant parameter detection. Default is 1e-15.
-        const_rtol : float, optional
-            Relative tolerance for constant parameter detection. Default is 0.
+            linear interpolation
         """
         if USE_GSL != 1:
             raise RuntimeError(
-                "TimeInterpolatedPotential requires GSL support. "
-                "Please install GSL and rebuild gala with GSL support."
+                "TimeInterpolatedPotential requires GSL support. Please install GSL "
+                "and rebuild gala with GSL support to use this potential."
             )
 
+        # we need to keep these references because they are not stored on the parent
+        # potential class
         self.wrapped_potential = wrapped_potential
-        self._time_knots = np.array(time_knots)
-        self._param_arrays = param_arrays
-        self._origin_arrays = origin_arrays
-        self._rotation_matrices = rotation_matrices
+        self._time_knots = np.ascontiguousarray(time_knots, dtype=np.float64)
+        self._param_arrays = {
+            k: np.ascontiguousarray(v, dtype=np.float64)
+            for k, v in param_arrays.items()
+        }
+        self._origin_arrays = np.ascontiguousarray(origin_arrays, dtype=np.float64)
+        self._rotation_matrices = np.ascontiguousarray(
+            rotation_matrices, dtype=np.float64
+        )
 
         cdef:
             int n_knots = len(time_knots)
-            int n_dim = wrapped_potential.cpotential.n_dim
-            int n_params = wrapped_potential.cpotential.n_params[0]
+            int n_dim = 3  # required
+            int n_params = self.wrapped_potential.cpotential.n_params[0]
 
             const gsl_interp_type *gsl_interp_type_ptr
-            double[::1] time_knots_view
-            double *time_knots_ptr
-            double[::1] param_values_view
-            double *param_values_ptr
-            double[::1] origin_component
-            double *origin_component_ptr
-            double rotation_matrix[9]
-            double *rotation_matrices_ptr
-            double identity_matrix[9]
-            int param_idx, i, j, k
-            void *wrapped_pot_ptr
+            double[::1] time_knots_c = self._time_knots
+            double[::1] param_values
+            double[::1] origin_component  # x, y, or z component
+            double rotation_matrix[9]  # one instance of rotation matrix
+            int param_idx, i, j, result
 
-        if interp_kind == 'linear':
+        # Map interpolation
+        if interpolation_method == 'linear':
             gsl_interp_type_ptr = gsl_interp_linear
-        elif interp_kind == 'cubic':
+        elif interpolation_method == 'cspline':
             gsl_interp_type_ptr = gsl_interp_cspline
-        elif interp_kind == 'akima':
+        elif interpolation_method == 'akima':
             gsl_interp_type_ptr = gsl_interp_akima
-        elif interp_kind == 'steffen':
+        elif interpolation_method == 'steffen':
             gsl_interp_type_ptr = gsl_interp_steffen
         else:
-            msg = f"Unknown interpolation kind: {interp_kind}"
+            msg = f"Unknown interpolation method: {interpolation_method}"
             raise ValueError(msg)
 
         if USE_GSL == 1:
@@ -163,161 +161,95 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
                 msg = "Failed to allocate interpolation state"
                 raise MemoryError(msg)
 
-            # Set time bounds
+            # Set time bounds - class enforces monotonic increasing knots
             self.interp_state.t_min = time_knots[0]
             self.interp_state.t_max = time_knots[n_knots - 1]
 
-            # Initialize parameter interpolators
-            time_knots_view = time_knots
-            time_knots_ptr = &time_knots_view[0]
+            # By convention in Gala, G is always at index 0, and the potential
+            # parameters follow in order as defined on each class. The order of keys in
+            # param_arrays should track this order. Index starts at 1 because G is at
+            # index 0
 
-            # First initialize all parameters as constants using values from wrapped
-            # potential. This ensures all parameters have valid values
-            for i in range(n_params):
-                param_value = wrapped_potential.cpotential.parameters[0][i]
-                result = time_interp_init_constant_param(
-                    &self.interp_state.params[i], param_value
-                )
-                if result != 0:
-                    msg = (
-                        f"Failed to initialize constant parameter {i} (value: "
-                        f"{param_value})"
-                    )
-                    raise RuntimeError(msg)
+            # Initialize G (index 0) - always constant
+            # G is passed as a parameter to __init__
+            result = time_interp_init_constant_param(
+                &self.interp_state.params[0], G
+            )
+            if result != 0:
+                raise RuntimeError("Failed to initialize G parameter")
 
-            # By convention in Gala, G is always at index 0, and the potential parameters
-            # follow in order as defined on each class. The order of keys in param_arrays
-            # should track this order. Index starts at 1 because G is at index 0
-            # TODO: what to do about integer or string or other parameter types?
             for param_idx, (param_name, param_values) in enumerate(
-                param_arrays.items(), start=1
+                self._param_arrays.items(), start=1
             ):
-                param_values_array = np.asarray(param_values, dtype=np.float64)
-
-                if (
-                    len(param_values_array) == 1 or
-                    check_const_array(param_values_array, const_atol, const_rtol)
-                ):
-                    # Constant parameter, or assumed constant due to tolerance
+                if param_name not in interp_params:  # constant parameter
                     result = time_interp_init_constant_param(
-                        &self.interp_state.params[param_idx], param_values_array[0]
+                        &self.interp_state.params[param_idx], param_values[0]
                     )
-                    if result != 0:
-                        msg = f"Failed to initialize constant parameter {param_name}"
-                        raise RuntimeError(msg)
 
-                elif len(param_values_array) == n_knots:
-                    # Time-varying parameter to be interpolated - copy data to avoid memory
-                    # access issues
-                    param_values_copy = np.array(
-                        param_values_array, dtype=np.float64, copy=True
-                    )
-                    param_values_view = param_values_copy
-                    param_values_ptr = &param_values_view[0]
+                else:  # time-interpolated parameter
                     result = time_interp_init_param(
                         &self.interp_state.params[param_idx],
-                        time_knots_ptr, param_values_ptr, n_knots, gsl_interp_type_ptr
+                        &time_knots_c[0], &param_values[0], n_knots, gsl_interp_type_ptr
                     )
-                    if result != 0:
-                        msg = (
-                            f"Failed to initialize parameter interpolation for {param_name}"
-                        )
-                        raise RuntimeError(msg)
 
-                else:
-                    msg = (
-                        f"Parameter {param_name} has wrong length: expected 1 or {n_knots},"
-                        f" got {len(param_values_array)}"
-                    )
-                    raise ValueError(msg)
+                if result != 0:
+                    raise RuntimeError(f"Failed to initialize parameter {param_name}")
 
-            # Initialize origin interpolators
-            if origin_arrays is not None:
-                origin_arrays = np.asarray(origin_arrays, dtype=np.float64)
-                if origin_arrays.shape[0] == 1:
-                    # Constant origin
-                    for i in range(n_dim):
-                        time_interp_init_constant_param(
-                            &self.interp_state.origin[i], origin_arrays[0, i]
-                        )
-
-                elif origin_arrays.shape[0] == n_knots:
-                    # Time-varying origin
-                    for i in range(n_dim):
-                        origin_component = np.ascontiguousarray(origin_arrays[:, i])
-                        origin_component_ptr = &origin_component[0]
-                        time_interp_init_param(
-                            &self.interp_state.origin[i],
-                            time_knots_ptr, origin_component_ptr, n_knots,
-                            gsl_interp_type_ptr
-                        )
-                else:
-                    msg = (
-                        f"Origin array has wrong shape: expected "
-                        f"({1 if origin_arrays.shape[0] == 1 else n_knots}, {n_dim})"
-                    )
-                    raise ValueError(msg)
-
-            else:
-                # Default to zero vector origin
+            # Initialize origin interpolators:
+            # This always comes in as a 2D array. If it's constant, axis=0 has length 1.
+            result = 0
+            if self._origin_arrays.shape[0] == 1:  # constant
                 for i in range(n_dim):
-                    result = time_interp_init_constant_param(
-                        &self.interp_state.origin[i], 0.0
+                    result += time_interp_init_constant_param(
+                        &self.interp_state.origin[i], self._origin_arrays[0, i]
                     )
-                    if result != 0:
-                        msg = f"Failed to initialize constant origin component {i}"
-                        raise RuntimeError(msg)
+
+            elif self._origin_arrays.shape[0] == n_knots:  # time-interpolated
+                for i in range(n_dim):
+                    origin_component = np.ascontiguousarray(origin_arrays[:, i])
+                    result += time_interp_init_param(
+                        &self.interp_state.origin[i],
+                        &time_knots_c[0], &origin_component[0], n_knots,
+                        gsl_interp_type_ptr
+                    )
+            else:
+                msg = (
+                    f"Origin array has wrong shape: expected "
+                    f"({1 if origin_arrays.shape[0] == 1 else n_knots}, {n_dim})"
+                )
+                raise ValueError(msg)
+
+            if result != 0:
+                raise RuntimeError(f"Failed to initialize origin")
+
+            # --- TODO HERE ---
 
             # Initialize rotation matrix interpolators
-            if rotation_matrices is not None:
-                rotation_matrices = np.asarray(rotation_matrices, dtype=np.float64)
+            # This always comes in as a 3D array. If it's constant, axis=0 has length 1.
+            result = 0
 
-                if rotation_matrices.shape[0] == 1:
-                    # Constant rotation
-                    for i in range(n_dim):
-                        for j in range(n_dim):
-                            rotation_matrix[i*n_dim + j] = rotation_matrices[0, i, j]
-                    time_interp_init_constant_rotation(
-                        &self.interp_state.rotation, rotation_matrix
-                    )
-
-                elif rotation_matrices.shape[0] == n_knots:
-                    # Time-varying rotation
-                    rotation_matrices_ptr = <double*>malloc(n_knots * n_dim * n_dim * sizeof(double))
-                    if rotation_matrices_ptr == NULL:
-                        raise MemoryError("Failed to allocate rotation matrices array")
-
-                    for k in range(n_knots):
-                        for i in range(n_dim):
-                            for j in range(n_dim):
-                                rotation_matrices_ptr[k*n_dim*n_dim + i*n_dim + j] = rotation_matrices[k, i, j]
-
-                    time_interp_init_rotation(
-                        &self.interp_state.rotation,
-                        time_knots_ptr, rotation_matrices_ptr, n_knots, gsl_interp_type_ptr
-                    )
-                    free(rotation_matrices_ptr)
-                else:
-                    msg = (
-                        f"Rotation matrices array has wrong shape: expected "
-                        f"({1 if rotation_matrices.shape[0] == 1 else n_knots}, {n_dim}, "
-                        f"{n_dim})"
-                    )
-                    raise ValueError(msg)
-            else:
-                # Default to identity rotation matrix
-                for i in range(9):  # TODO: assumes n_dim=3
-                    identity_matrix[i] = 0.0
-                identity_matrix[0] = 1.0  # Identity matrix
-                identity_matrix[4] = 1.0
-                identity_matrix[8] = 1.0
+            if self._rotation_matrices.shape[0] == 1:  # constant
+                for i in range(n_dim):
+                    for j in range(n_dim):
+                        rotation_matrix[i*n_dim + j] = self._rotation_matrices[0, i, j]
                 time_interp_init_constant_rotation(
-                    &self.interp_state.rotation, identity_matrix
+                    &self.interp_state.rotation, rotation_matrix
+                )
+
+            elif self._rotation_matrices.shape[0] == n_knots:  # time-varying
+                time_interp_init_rotation(
+                    &self.interp_state.rotation,
+                    &time_knots_c[0], &self._rotation_matrices[0,0,0],
+                    n_knots, gsl_interp_type_ptr
+                )
+            else:
+                raise ValueError(
+                    "Rotation matrices array has wrong shape "
+                    f"{self._rotation_matrices.shape}"
                 )
 
             # Pointer to the temporary wrapped potential
-            wrapped_pot_ptr = <void*>wrapped_potential.cpotential
-            self.interp_state.wrapped_potential = wrapped_pot_ptr
+            self.interp_state.wrapped_potential = <void*>self.wrapped_potential.cpotential
 
             self.init(
                 [0.0],  # value of G doesn't matter for this wrapper
@@ -335,10 +267,6 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
 
             # Store interpolation state in the state pointer
             self.cpotential.state[0] = <void*>self.interp_state
-
-            # TODO: is this needed? I do'nt think so...
-            # Store wrapped potential pointer in parameters
-            # self.cpotential.parameters[0][0] = <double><long>wrapped_pot_ptr
 
     def __dealloc__(self):
         if self.interp_state != NULL:

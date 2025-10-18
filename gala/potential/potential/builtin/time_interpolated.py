@@ -27,29 +27,32 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
     Parameters
     ----------
     potential_cls : PotentialBase subclass
-        The potential class to wrap with time interpolation
+        The potential class to wrap.
     time_knots : array_like
         Array of time values for interpolation knots. Must be monotonically increasing.
-    interp_kind : str, optional
-        Interpolation type. Options are:
+    interpolation_method : str, optional
+        Interpolation type. Any GSL interpolation type is supported:
+        https://www.gnu.org/software/gsl/doc/html/interp.html
+        Common options are:
         - 'linear': Linear interpolation
-        - 'cubic': Cubic spline interpolation (default)
-        - 'akima': Akima spline interpolation
-        - 'steffen': Steffen spline interpolation
+        - 'cspline': Cubic spline interpolation (default)
+        - 'akima': Akima spline interpolation. This avoids unphysical wiggles in
+           regions where the second derivative in the underlying curve is rapidly
+           changing, however it does not have a continuous second derivative.
+        - 'steffen': Steffen spline interpolation. This guarantees monotonicity of the
+          interpolating function between the given data points. Therefore, minima and
+          maxima can only occur exactly at the data points, and there can never be
+          spurious oscillations between data points.
     units : UnitSystem, optional
         Unit system for the potential
-    origin : array_like or callable, optional
+    origin : array_like, optional
         Either a constant origin vector, or an array of origin vectors with shape
-        (n_knots, n_dim), or a callable that takes time and returns origin
-    R : array_like or callable, optional
+        (n_knots, n_dim).
+    R : array_like, optional
         Either a constant rotation matrix, or an array of rotation matrices with
-        shape (n_knots, n_dim, n_dim), or a callable that takes time and returns
-        rotation matrix
+        shape (n_knots, n_dim, n_dim).
     **kwargs
-        Potential parameters. Each parameter can be either:
-        - A scalar value (constant over time)
-        - An array with length n_knots (time-varying, interpolated)
-        - A callable that takes time and returns parameter value
+        Potential parameters. Each parameter can be either a constant value, or an array with shape (n_knots, *parameter_shape) for a time-varying parameter.
 
     Examples
     --------
@@ -67,201 +70,160 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
     >>> pot = TimeInterpolatedPotential(
     ...     KeplerPotential, times, m=masses, units=galactic
     ... )
+    >>> pot.energy([1., 0, 0] * u.pc, t=0*u.Myr)
+    <Quantity [-44.98502151] kpc2 / Myr2>
+    >>> pot.energy([1., 0, 0] * u.pc, t=50*u.Myr)
+    <Quantity [-67.47753227] kpc2 / Myr2>
 
-    Create a potential with time-varying rotation:
+    Create a potential with a time-varying rotation:
 
-    >>> from scipy.spatial.transform import Rotation as R
-    >>>
-    >>> # Rotation matrices for 90 degree rotation over time
-    >>> angles = np.linspace(0, np.pi/2, 11)
-    >>> rotations = np.array([R.from_rotvec([0, 0, angle]).as_matrix()
-    ...                      for angle in angles])
-    >>>
-    >>> pot = TimeInterpolatedPotential(
-    ...     KeplerPotential, times, m=1e10*u.Msun, R=rotations, units=galactic
+    >>> # Rotation matrices for 90 degree rotation over 1 Gyr
+    >>> R_times = np.linspace(0, 1, 11) * u.Gyr
+    >>> angles = np.linspace(0, np.pi / 2, 11)
+    >>> Rs = np.array([R.from_rotvec([0, 0, angle]).as_matrix() for angle in angles])
+    >>> pot = gp.TimeInterpolatedPotential(
+    ...     gp.LongMuraliBarPotential,
+    ...     R_times,
+    ...     m=1e10 * u.Msun,
+    ...     a=3 * u.kpc,
+    ...     b=1 * u.kpc,
+    ...     c=0.5 * u.kpc,
+    ...     R=Rs,
+    ...     units=galactic,
     ... )
+    >>> pot.gradient([5., 0, 0] * u.kpc, t=0.*u.Gyr)[0, 0]
+    <Quantity 0.00207787 kpc / Myr2>
+    >>> pot.gradient([5., 0, 0] * u.kpc, t=0.5*u.Gyr)[0, 0]
+    <Quantity 0.0015879 kpc / Myr2>
     """
+
+    potential_cls = PotentialParameter(
+        "potential_cls", physical_type=None, python_only=True, convert=None
+    )
+    time_knots = PotentialParameter(
+        "time_knots", ndim=1, physical_type="time", python_only=True
+    )
+    interpolation_method = PotentialParameter(
+        "interpolation_method",
+        physical_type=None,
+        default="cspline",
+        python_only=True,
+        convert=str,
+    )
 
     def __init__(
         self,
-        potential_cls,
-        time_knots,
-        interp_kind="linear",
+        *args,
         units=None,
         origin=None,
         R=None,
         **kwargs,
     ):
-        units = self._validate_units(units)
-        if hasattr(time_knots, "unit"):
-            # TODO: need a property to access time_knots with units
-            time_knots = time_knots.to_value(units["time"])
-        time_knots = np.asarray(time_knots)
+        tmp, _ = self._parse_parameter_values(*args, strict=False, **kwargs)
 
-        if time_knots.ndim != 1:
-            raise ValueError("time_knots must be 1-dimensional")
-        if len(time_knots) < 2:
-            raise ValueError("At least 2 time knots are required")
-        if not np.all(np.diff(time_knots) > 0):
-            raise ValueError("time_knots must be monotonically increasing")
-
-        n_knots = len(time_knots)
-
-        # Store the wrapped potential class and time information
-        self._potential_cls = potential_cls
-        self._time_knots = time_knots
-        self._interp_kind = interp_kind
-
-        # HACK: ._parameters exists on the class, not the instance, but this makes it
-        # exist only on this instance...
+        # HACK: ._parameters exists on the class, not the instance, but this makes a
+        # *copy* exist on this instance...
         self._parameters = copy.deepcopy(self._parameters)
 
-        # Copy parameter definitions from the wrapped potential class
-        # This is crucial so the base class knows what parameters to expect
-        for attr_name in dir(potential_cls):
-            attr = getattr(potential_cls, attr_name)
+        # Copy parameter definitions from the wrapped potential class so the base class
+        # knows what parameters to expect in kwargs
+        self._potential_param_names = []
+        for attr_name in tmp["potential_cls"]._parameters:
+            attr = getattr(tmp["potential_cls"], attr_name)
             if isinstance(attr, PotentialParameter):
                 setattr(self, attr_name, attr)
-                self._parameters[attr_name] = attr
+                self._parameters[attr_name] = copy.copy(attr)
+                self._potential_param_names.append(attr_name)
 
         # Determine dimensionality from potential class
-        ndim = potential_cls.ndim if hasattr(potential_cls, "ndim") else 3
-
-        # Process parameters
-        processed_params = {}
-        param_arrays = {}
-
-        for param_name, param_value in kwargs.items():
-            if param_name in ["units", "origin", "R"]:
-                continue  # These are handled separately
-
-            param_value = np.asarray(param_value)
-
-            if param_value.ndim == 0:
-                # Scalar - constant parameter
-                processed_params[param_name] = param_value.item()
-                param_arrays[param_name] = np.full(n_knots, param_value.item())
-            elif param_value.ndim == 1:
-                if len(param_value) == 1:
-                    # Single value - constant parameter
-                    processed_params[param_name] = param_value[0]
-                    param_arrays[param_name] = np.full(n_knots, param_value[0])
-                elif len(param_value) == n_knots:
-                    # Time-varying parameter
-                    processed_params[param_name] = param_value[
-                        0
-                    ]  # Use first value for init
-                    param_arrays[param_name] = param_value
-                else:
-                    raise ValueError(
-                        f"Parameter {param_name} has length {len(param_value)}, "
-                        f"expected 1 or {n_knots}"
-                    )
-            else:
-                raise ValueError(f"Parameter {param_name} must be scalar or 1D array")
-
-        # Initialize the base class
-        # TODO: This abuses the base class a little bit.
-        # TODO: .parameters dictionary should be callables that compute potential
-        # parameters at a given time
-        # super().__init__(
-        #     units=units, origin=np.zeros(ndim), R=np.eye(ndim), **processed_params
-        # )
-
-        # Process origin
-        origin_arrays = None
-        if origin is not None:
-            origin = np.asarray(origin)
-            if origin.ndim == 1:
-                if len(origin) == ndim:
-                    # Constant origin
-                    origin_arrays = origin.reshape(1, -1)
-                else:
-                    raise ValueError(f"Origin must have length {ndim}")
-            elif origin.ndim == 2:
-                if origin.shape == (n_knots, ndim):
-                    # Time-varying origin
-                    origin_arrays = origin
-                elif origin.shape == (1, ndim):
-                    # Single origin specified as 2D
-                    origin_arrays = origin
-                else:
-                    raise ValueError(
-                        f"Origin array must have shape ({n_knots}, {ndim}) or ({1}, {ndim})"
-                    )
-            else:
-                raise ValueError("Origin must be 1D or 2D array")
-
-        # Process rotation matrices
-        rotation_matrices = None
-        if R is not None:
-            R = np.asarray(R)
-            if R.ndim == 2:
-                if R.shape == (ndim, ndim):
-                    # Constant rotation
-                    rotation_matrices = R.reshape(1, ndim, ndim)
-                else:
-                    raise ValueError(
-                        f"Rotation matrix must have shape ({ndim}, {ndim})"
-                    )
-            elif R.ndim == 3:
-                if R.shape == (n_knots, ndim, ndim):
-                    # Time-varying rotation
-                    rotation_matrices = R
-                elif R.shape == (1, ndim, ndim):
-                    # Single rotation specified as 3D
-                    rotation_matrices = R
-                else:
-                    raise ValueError(
-                        f"Rotation array must have shape ({n_knots}, {ndim}, {ndim}) or (1, {ndim}, {ndim})"
-                    )
-            else:
-                raise ValueError("Rotation must be 2D or 3D array")
-
-            # Validate rotation matrices are orthogonal
-            for i, rot_matrix in enumerate(rotation_matrices):
-                if not self._is_orthogonal(rot_matrix):
-                    raise ValueError(f"Rotation matrix at index {i} is not orthogonal")
-
-        # Store arrays for the wrapper
-        self._param_arrays = param_arrays
-        self._origin_arrays = origin_arrays
-        self._rotation_matrices = rotation_matrices
-
-        super().__init__(
-            units=units, origin=np.zeros(ndim), R=np.eye(ndim), **processed_params
+        self.ndim = (
+            tmp["potential_cls"].ndim if hasattr(tmp["potential_cls"], "ndim") else 3
         )
 
-        # Create the time interpolation wrapper
-        # self._setup_wrapper()
+        # Determine which parameters have an extra ndim over expectation
+        self._interp_params = []
+        for param_name in self._potential_param_names:
+            pp = self._parameters[param_name]
+            if param_name not in kwargs:
+                if pp.default is None:
+                    raise ValueError(
+                        f"You must specify a value for potential parameter {param_name}"
+                    )
+                continue
+
+            tmp = np.asanyarray(kwargs[param_name])
+            if tmp.ndim == (pp.ndim + 1):
+                self._interp_params.append(param_name)
+
+                # increase ndim for validation
+                self._parameters[param_name].ndim += 1
+
+        # # Validate rotation matrices are orthogonal
+        # for i, rot_matrix in enumerate(rotation_matrices):
+        #     if not self._is_orthogonal(rot_matrix):
+        #         raise ValueError(f"Rotation matrix at index {i} is not orthogonal")
+
+        super().__init__(
+            *args,
+            units=units,
+            origin=origin,
+            R=R,
+            **kwargs,
+        )
+
+        # Additional validation of input:
+        if len(self.parameters["time_knots"]) < 2:
+            raise ValueError("At least 2 time knots are required")
+        if not np.all(np.diff(self.parameters["time_knots"]) > 0):
+            raise ValueError(
+                "time_knots must be monotonically increasing (and no duplicate times)"
+            )
 
     def _setup_wrapper(self, **_):
         """Set up the time interpolation wrapper."""
-        # Create a wrapped potential instance for the C layer
-        temp_potential = self._potential_cls(
+
+        # This is needed because we need to pass a dummy c_instance just to get the C
+        # functions for that potential.
+        # TODO: there may be a better way to pass the C functions...
+        potential_cls = self.parameters["potential_cls"]
+        wrapped_potential = potential_cls(
             units=self.units,
-            origin=np.zeros(self.ndim),
-            R=np.eye(self.ndim),
             **{
-                k: v[0] if hasattr(v, "__len__") and len(v) > 1 else v
-                for k, v in self._param_arrays.items()
+                k: (
+                    self.parameters[k][0]
+                    if k in self._interp_params
+                    else self.parameters[k]
+                )
+                for k in self._potential_param_names
             },
         )
 
-        # Extract time knots in the potential's units
-        if hasattr(self._time_knots, "unit"):
-            time_knots_value = self._time_knots.decompose(self.units).value
-        else:
-            time_knots_value = self._time_knots
+        origin_arrays = (
+            np.atleast_2d(self.origin)
+            if self.origin is not None
+            else np.zeros(self.ndim)[np.newaxis]
+        )
+        assert origin_arrays.ndim == 2
 
-        # Create the Cython wrapper
+        if self.R is not None:
+            R_arrays = self.R if self.R.ndim == 3 else self.R[np.newaxis]
+        else:
+            R_arrays = np.eye(3)[np.newaxis]
+        assert R_arrays.ndim == 3
+
+        param_arrays = {
+            k: np.atleast_1d(self.parameters[k].value)
+            for k in self._potential_param_names
+        }
         self.c_instance = TimeInterpolatedWrapper(
-            temp_potential.c_instance,
-            time_knots_value,
-            self._param_arrays,
-            self._origin_arrays,
-            self._rotation_matrices,
-            self._interp_kind,
+            self.G,
+            wrapped_potential.c_instance,
+            self.parameters["time_knots"].value,
+            self._interp_params,
+            param_arrays,
+            origin_arrays=origin_arrays,
+            rotation_matrices=R_arrays,
+            interpolation_method=self.parameters["interpolation_method"],
         )
 
     @staticmethod
@@ -271,39 +233,10 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
             matrix @ matrix.T, np.eye(matrix.shape[0]), rtol=rtol, atol=atol
         )
 
-    def _energy(self, q, t):
-        return self.c_instance.energy(q, t=t)
-
-    def _gradient(self, q, t):
-        return self.c_instance.gradient(q, t=t)
-
-    def _density(self, q, t):
-        return self.c_instance.density(q, t=t)
-
-    def _hessian(self, q, t):
-        return self.c_instance.hessian(q, t=t)
-
-    @property
-    def time_bounds(self):
-        """Time bounds for interpolation (t_min, t_max)."""
-        if hasattr(self.c_instance, "time_bounds"):
-            bounds = self.c_instance.time_bounds
-            if bounds is not None and hasattr(self._time_knots, "unit"):
-                # Apply units if the original time knots had units
-                return (
-                    bounds[0] * self._time_knots.unit,
-                    bounds[1] * self._time_knots.unit,
-                )
-            return bounds
-        return None
-
-    @property
-    def wrapped_potential_class(self):
-        """The wrapped potential class."""
-        return self._potential_cls
-
     def replicate(self, **kwargs):
         """Create a copy of this potential with possibly different parameters."""
+        # TODO: update this
+
         # Extract current parameters
         new_kwargs = {}
 
@@ -317,7 +250,7 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
         return self.__class__(
             self._potential_cls,
             self._time_knots,
-            interp_kind=self._interp_kind,
+            interpolation_method=self._interpolation_method,
             units=self.units,
             origin=self._origin_arrays,
             R=self._rotation_matrices,
@@ -328,6 +261,5 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
         return (
             f"<{self.__class__.__name__}: "
             f"{self._potential_cls.__name__} "
-            f"(t_bounds={self.time_bounds}, "
-            f"interp_kind='{self._interp_kind}')>"
+            f"interpolation_method='{self._interpolation_method}')>"
         )
