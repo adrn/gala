@@ -13,8 +13,8 @@ New Features
 - Added coordinate symmetry support for potential classes: spherical potential methods
   can now be evaluated using ``r=`` and cylindrical potentials using ``R=`` and ``z=``
   instead of requiring full 3D Cartesian coordinates.
-- Added a ``gala.potential.TimeInterpolatedPotential`` class for wrapping potential
-  classes that support time-dependent parameters through interpolation.
+- Added a new ``gala.potential.TimeInterpolatedPotential`` class that enables wrapping
+  any potential class to support time-dependent parameters through interpolation.
 
 Bug fixes
 ---------
