@@ -171,9 +171,19 @@ int time_interp_init_constant_param(TimeInterpParam *param, double constant_valu
     */
     if (!param) return -1;
 
+    // Clear all fields first
     memset(param, 0, sizeof(TimeInterpParam));
+
+    // Set the constant flag and value
     param->is_constant = 1;
     param->constant_value = constant_value;
+
+    // Explicitly set pointers to NULL for safety
+    param->spline = NULL;
+    param->accel = NULL;
+    param->time_knots = NULL;
+    param->param_values = NULL;
+    param->n_knots = 0;
 
     return 0;
 }
@@ -262,7 +272,7 @@ double time_interp_eval_param(const TimeInterpParam *param, double t) {
     Evaluate a parameter at time t
     */
     if (!param) {
-        return 0.0;
+        return NAN;
     }
 
     if (param->is_constant) {

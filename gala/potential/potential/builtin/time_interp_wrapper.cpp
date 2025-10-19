@@ -36,6 +36,10 @@ double time_interp_value(double t, double *pars, double *q, int n_dim, void *sta
     // G should maybe be a separate (special) parameter...
     for (int i=0; i < interp_state->n_params; i++) {
         interp_params[i] = time_interp_eval_param(&interp_state->params[i], t);
+        if (isnan(interp_params[i])) {
+            free(interp_params);
+            return NAN;
+        }
     }
 
     // Interpolate origin
@@ -48,6 +52,11 @@ double time_interp_value(double t, double *pars, double *q, int n_dim, void *sta
 
     for (int i=0; i < n_dim; i++) {
         interp_origin[i] = time_interp_eval_param(&interp_state->origin[i], t);
+        if (isnan(interp_origin[i])) {
+            free(interp_params);
+            free(interp_origin);
+            return NAN;
+        }
     }
 
     // Interpolate rotation matrix
@@ -60,8 +69,26 @@ double time_interp_value(double t, double *pars, double *q, int n_dim, void *sta
     memset(interp_rotation, 0, n_dim * n_dim * sizeof(double));
     time_interp_eval_rotation(&interp_state->rotation, t, interp_rotation);
 
+    // Check for NaN in rotation matrix (could come from failed interpolation)
+    for (int i = 0; i < n_dim * n_dim; i++) {
+        if (isnan(interp_rotation[i])) {
+            free(interp_params);
+            free(interp_origin);
+            free(interp_rotation);
+            return NAN;
+        }
+    }
+
     // Transform position using existing apply_shift_rotate function
-    double q_transformed[3] = {0, 0, 0};
+    // Use dynamic allocation to avoid potential buffer overflow if n_dim != 3
+    double *q_transformed = (double*)malloc(n_dim * sizeof(double));
+    if (!q_transformed) {
+        free(interp_params);
+        free(interp_origin);
+        free(interp_rotation);
+        return NAN;
+    }
+    memset(q_transformed, 0, n_dim * sizeof(double));
     apply_shift_rotate(q, interp_origin, interp_rotation, n_dim, 0, q_transformed);
 
     // Evaluate wrapped potential
@@ -72,6 +99,7 @@ double time_interp_value(double t, double *pars, double *q, int n_dim, void *sta
     free(interp_params);
     free(interp_origin);
     free(interp_rotation);
+    free(q_transformed);
 
     return result;
 }
@@ -106,6 +134,11 @@ void time_interp_gradient(double t, double *pars, double *q, int n_dim, size_t N
     // G should maybe be a separate (special) parameter...
     for (int i = 0; i < interp_state->n_params; i++) {
         interp_params[i] = time_interp_eval_param(&interp_state->params[i], t);
+        if (isnan(interp_params[i])) {
+            free(interp_params);
+            for (size_t j = 0; j < N * n_dim; j++) grad[j] = NAN;
+            return;
+        }
     }
 
     // Interpolate origin
@@ -119,6 +152,12 @@ void time_interp_gradient(double t, double *pars, double *q, int n_dim, size_t N
 
     for (int i = 0; i < n_dim; i++) {
         interp_origin[i] = time_interp_eval_param(&interp_state->origin[i], t);
+        if (isnan(interp_origin[i])) {
+            free(interp_params);
+            free(interp_origin);
+            for (size_t j = 0; j < N * n_dim; j++) grad[j] = NAN;
+            return;
+        }
     }
 
     // Interpolate rotation matrix
@@ -131,6 +170,17 @@ void time_interp_gradient(double t, double *pars, double *q, int n_dim, size_t N
     }
     memset(interp_rotation, 0, n_dim * n_dim * sizeof(double));
     time_interp_eval_rotation(&interp_state->rotation, t, interp_rotation);
+
+    // Check for NaN in rotation matrix (could come from failed interpolation)
+    for (int i = 0; i < n_dim * n_dim; i++) {
+        if (isnan(interp_rotation[i])) {
+            free(interp_params);
+            free(interp_origin);
+            free(interp_rotation);
+            for (size_t j = 0; j < N * n_dim; j++) grad[j] = NAN;
+            return;
+        }
+    }
 
     // Allocate temporary arrays for transformed coordinates
     double *q_transformed = (double*)malloc(N * n_dim * sizeof(double));
@@ -198,6 +248,10 @@ double time_interp_density(double t, double *pars, double *q, int n_dim, void *s
     // G should maybe be a separate (special) parameter...
     for (int i = 0; i < interp_state->n_params; i++) {
         interp_params[i] = time_interp_eval_param(&interp_state->params[i], t);
+        if (isnan(interp_params[i])) {
+            free(interp_params);
+            return NAN;
+        }
     }
 
     // Interpolate origin
@@ -210,10 +264,15 @@ double time_interp_density(double t, double *pars, double *q, int n_dim, void *s
 
     for (int i = 0; i < n_dim; i++) {
         interp_origin[i] = time_interp_eval_param(&interp_state->origin[i], t);
+        if (isnan(interp_origin[i])) {
+            free(interp_params);
+            free(interp_origin);
+            return NAN;
+        }
     }
 
     // Interpolate rotation matrix
-        double *interp_rotation = (double*)malloc(n_dim * n_dim * sizeof(double));
+    double *interp_rotation = (double*)malloc(n_dim * n_dim * sizeof(double));
     if (!interp_rotation) {
         free(interp_params);
         free(interp_origin);
@@ -221,8 +280,24 @@ double time_interp_density(double t, double *pars, double *q, int n_dim, void *s
     }
     time_interp_eval_rotation(&interp_state->rotation, t, interp_rotation);
 
+    // Check for NaN in rotation matrix (could come from failed interpolation)
+    for (int i = 0; i < n_dim * n_dim; i++) {
+        if (isnan(interp_rotation[i])) {
+            free(interp_params);
+            free(interp_origin);
+            free(interp_rotation);
+            return NAN;
+        }
+    }
+
     // Transform position using existing apply_shift_rotate function
-        double q_transformed[n_dim];
+    double *q_transformed = (double*)malloc(n_dim * sizeof(double));
+    if (!q_transformed) {
+        free(interp_params);
+        free(interp_origin);
+        free(interp_rotation);
+        return NAN;
+    }
     memset(q_transformed, 0, n_dim * sizeof(double));
     apply_shift_rotate(q, interp_origin, interp_rotation, n_dim, 0, q_transformed);
 
@@ -232,6 +307,7 @@ double time_interp_density(double t, double *pars, double *q, int n_dim, void *s
     free(interp_params);
     free(interp_origin);
     free(interp_rotation);
+    free(q_transformed);
 
     return result;
 }
@@ -266,6 +342,11 @@ void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *h
     // G should maybe be a separate (special) parameter...
     for (int i = 0; i < interp_state->n_params; i++) {
         interp_params[i] = time_interp_eval_param(&interp_state->params[i], t);
+        if (isnan(interp_params[i])) {
+            free(interp_params);
+            for (int j = 0; j < n_dim * n_dim; j++) hess[j] = NAN;
+            return;
+        }
     }
 
     // Interpolate origin
@@ -279,10 +360,16 @@ void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *h
 
     for (int i = 0; i < n_dim; i++) {
         interp_origin[i] = time_interp_eval_param(&interp_state->origin[i], t);
+        if (isnan(interp_origin[i])) {
+            free(interp_params);
+            free(interp_origin);
+            for (int j = 0; j < n_dim * n_dim; j++) hess[j] = NAN;
+            return;
+        }
     }
 
     // Interpolate rotation matrix
-        double *interp_rotation = (double*)malloc(n_dim * n_dim * sizeof(double));
+    double *interp_rotation = (double*)malloc(n_dim * n_dim * sizeof(double));
     if (!interp_rotation) {
         free(interp_params);
         free(interp_origin);
@@ -291,13 +378,39 @@ void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *h
     }
     time_interp_eval_rotation(&interp_state->rotation, t, interp_rotation);
 
+    // Check for NaN in rotation matrix (could come from failed interpolation)
+    for (int i = 0; i < n_dim * n_dim; i++) {
+        if (isnan(interp_rotation[i])) {
+            free(interp_params);
+            free(interp_origin);
+            free(interp_rotation);
+            for (int j = 0; j < n_dim * n_dim; j++) hess[j] = NAN;
+            return;
+        }
+    }
+
     // Transform position using existing apply_shift_rotate function
-        double q_transformed[n_dim];
+    double *q_transformed = (double*)malloc(n_dim * sizeof(double));
+    if (!q_transformed) {
+        free(interp_params);
+        free(interp_origin);
+        free(interp_rotation);
+        for (int i = 0; i < n_dim * n_dim; i++) hess[i] = NAN;
+        return;
+    }
     memset(q_transformed, 0, n_dim * sizeof(double));
     apply_shift_rotate(q, interp_origin, interp_rotation, n_dim, 0, q_transformed);
 
     // Evaluate wrapped potential Hessian in transformed coordinates
-    double hess_transformed[n_dim * n_dim];
+    double *hess_transformed = (double*)malloc(n_dim * n_dim * sizeof(double));
+    if (!hess_transformed) {
+        free(interp_params);
+        free(interp_origin);
+        free(interp_rotation);
+        free(q_transformed);
+        for (int i = 0; i < n_dim * n_dim; i++) hess[i] = NAN;
+        return;
+    }
     memset(hess_transformed, 0, n_dim * n_dim * sizeof(double));
     wrapped_pot->hessian[0](t, interp_params, q_transformed, n_dim, hess_transformed, wrapped_pot->state[0]);
 
@@ -316,6 +429,8 @@ void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *h
     free(interp_params);
     free(interp_origin);
     free(interp_rotation);
+    free(q_transformed);
+    free(hess_transformed);
 }
 
 } // extern "C"
