@@ -77,12 +77,12 @@ def potentials():
 
 def test_constant_parameters_single_value(test_positions, time_knots):
     """Test TimeInterpolatedPotential with single constant values."""
-    # Single value parameters
+    # Single value parameters - pass as scalars, not single-element lists
     pot_single = gp.TimeInterpolatedPotential(
         potential_cls=gp.HernquistPotential,
         time_knots=time_knots,
-        m=[1e12] * u.Msun,
-        c=[10.0] * u.kpc,
+        m=1e12 * u.Msun,  # Scalar for constant parameter
+        c=10.0 * u.kpc,  # Scalar for constant parameter
         units=galactic,
     )
 
@@ -320,3 +320,28 @@ def test_timeinterp_diff(func_name, potentials):
     assert u.allclose(vals["base"], vals["constant"])
     assert not u.allclose(vals["base"], vals["varying"])
     print(f"{func_name} evaluation: {vals['base']}, {vals['varying']}")
+
+
+def test_mismatched_parameter_length():
+    """Test that mismatched parameter array lengths raise appropriate errors."""
+    time_knots = np.linspace(0, 100, 11) * u.Myr
+
+    # Single-element array should raise ValueError (ambiguous: constant or interpolated?)
+    with pytest.raises(ValueError, match="Parameter 'm' has shape"):
+        gp.TimeInterpolatedPotential(
+            potential_cls=gp.HernquistPotential,
+            time_knots=time_knots,
+            m=[1e12] * u.Msun,  # Length 1, but 11 time knots
+            c=10.0 * u.kpc,
+            units=galactic,
+        )
+
+    # Wrong-length array should also raise ValueError
+    with pytest.raises(ValueError, match="Parameter 'm' has shape"):
+        gp.TimeInterpolatedPotential(
+            potential_cls=gp.HernquistPotential,
+            time_knots=time_knots,
+            m=np.linspace(1e12, 2e12, 5) * u.Msun,  # Length 5, but 11 time knots
+            c=10.0 * u.kpc,
+            units=galactic,
+        )

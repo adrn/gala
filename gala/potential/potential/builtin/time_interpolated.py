@@ -175,6 +175,16 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
 
             tmp = np.asanyarray(kwargs[param_name])
             if tmp.ndim == (pp.ndim + 1):
+                # Validate that the first dimension matches the number of time knots
+                if tmp.shape[0] != n_knots:
+                    raise ValueError(
+                        f"Parameter '{param_name}' has shape {tmp.shape} but there are "
+                        f"{n_knots} time knots. For time-interpolated parameters, the first "
+                        f"dimension must match the number of time knots. If you intended this "
+                        f"to be a constant parameter, pass a scalar value instead of a "
+                        f"length-{tmp.shape[0]} array."
+                    )
+
                 self._interp_params.append(param_name)
 
                 # increase ndim for validation
