@@ -15,6 +15,9 @@ New Features
   instead of requiring full 3D Cartesian coordinates.
 - Added a new ``gala.potential.TimeInterpolatedPotential`` class that enables wrapping
   any potential class to support time-dependent parameters through interpolation.
+- Unit systems in potential classes can now be specified using string names
+  (e.g., ``'galactic'``, ``'dimensionless'``, etc.) when initializing potential
+  instances or when replacing units with ``.replace_units()``.
 
 Bug fixes
 ---------
