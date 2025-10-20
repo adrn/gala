@@ -96,7 +96,6 @@ include = ["gala", "gala.*"]
 "*" = ["*.cpp"]
 "gala" = ["extra_compile_macros.h", "cconfig.pyx", "*.cpp"]
 "gala.coordinates" = ["*.pyx", "*.pxd", "*.h", "src/*.h", "src/*.cpp"]
-"gala.coordinates.tests" = ["*.txt", "*.npy", "SgrCoord_data", "*.csv"]
 "gala.dynamics" = ["*/*.pyx", "*/*.pxd", "*/*.h", "nbody/nbody_helper.h"]
 "gala.integrate" = [
     "*.pyx",
@@ -118,10 +117,6 @@ include = ["gala", "gala.*"]
     "*/*.pyx",
     "*/*.pxd",
     "*/*.h",
-    "scf/tests/data/*",
-    "potential/tests/*.yml",
-    "potential/tests/*.pot",
-    "potential/tests/*.fits"
 ]
 
 [tool.setuptools_scm]
@@ -133,7 +128,7 @@ testpaths = ["src/gala", "docs"]
 astropy_header = true
 #doctest_plus = "enabled"
 text_file_format = "rst"
-addopts = ["--doctest-rst", "--ignore-glob=*/setup_package.py"]
+addopts = ["--doctest-rst"]
 doctest_optionflags = ["ELLIPSIS"]
 norecursedirs = [
     "docs/tutorials/*",
@@ -154,9 +149,6 @@ omit = [
     "src/gala/setup_package*",
     "src/gala/*/setup_package*",
     "src/gala/*/*/setup_package*",
-    "src/gala/tests/*",
-    "src/gala/*/tests/*",
-    "src/gala/*/*/tests/*",
     "src/gala/version*",
     "src/gala/dynamics/_genfunc/*",
     "src/gala/coordinates/poincarepolar.py",
@@ -166,13 +158,8 @@ omit = [
     "*/gala/setup_package*",
     "*/gala/*/setup_package*",
     "*/gala/*/*/setup_package*",
-    "*/gala/tests/*",
-    "*/gala/*/tests/*",
-    "*/gala/*/*/tests/*",
     "*/gala/version*",
     "*/gala/dynamics/_genfunc/*",
-    "*/gala/coordinates/poincarepolar.py",
-    "*/gala/coordinates/velocity_frame_transforms.py",
 ]
 
 [tool.coverage.report]
