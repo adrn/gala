@@ -8,7 +8,7 @@ from astropy.coordinates import (
     SphericalRepresentation,
 )
 
-from gala.tests.optional_deps import HAS_GALPY, HAS_H5PY
+from gala._optional_deps import HAS_GALPY, HAS_H5PY
 
 from ...integrate import DOPRI853Integrator
 from ...potential import (

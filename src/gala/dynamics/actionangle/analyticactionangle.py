@@ -9,7 +9,7 @@ from astropy.coordinates.matrix_utilities import rotation_matrix
 
 # Gala
 import gala.dynamics as gd
-from gala.tests.optional_deps import HAS_TWOBODY
+from gala._optional_deps import HAS_TWOBODY
 
 __all__ = ["harmonic_oscillator_xv_to_aa", "isochrone_aa_to_xv", "isochrone_xv_to_aa"]
 

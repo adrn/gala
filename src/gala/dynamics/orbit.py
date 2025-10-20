@@ -926,7 +926,7 @@ class Orbit(PhaseSpacePosition):
         fig : `~matplotlib.Figure`
 
         """
-        from gala.tests.optional_deps import HAS_MATPLOTLIB
+        from gala._optional_deps import HAS_MATPLOTLIB
 
         if not HAS_MATPLOTLIB:
             raise ImportError("matplotlib is required for visualization.")
@@ -1007,7 +1007,7 @@ class Orbit(PhaseSpacePosition):
         fig : `~matplotlib.Figure`
 
         """
-        from gala.tests.optional_deps import HAS_MATPLOTLIB
+        from gala._optional_deps import HAS_MATPLOTLIB
 
         if not HAS_MATPLOTLIB:
             raise ImportError("matplotlib is required for visualization.")
@@ -1123,7 +1123,7 @@ class Orbit(PhaseSpacePosition):
         anim : `matplotlib.animation.FuncAnimation`
 
         """
-        from gala.tests.optional_deps import HAS_MATPLOTLIB
+        from gala._optional_deps import HAS_MATPLOTLIB
 
         if not HAS_MATPLOTLIB:
             raise ImportError("matplotlib is required for visualization.")

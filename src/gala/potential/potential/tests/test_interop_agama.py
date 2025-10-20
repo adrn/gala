@@ -6,8 +6,8 @@ import astropy.units as u
 import numpy as np
 import pytest
 
+from gala._optional_deps import HAS_AGAMA
 from gala.potential import JaffePotential, LogarithmicPotential, MiyamotoNagaiPotential
-from gala.tests.optional_deps import HAS_AGAMA
 from gala.units import galactic
 
 if HAS_AGAMA:

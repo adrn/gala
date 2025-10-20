@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from gala._compat_utils import SCIPY_LT_1_15
-from gala.tests.optional_deps import HAS_SYMPY
+from gala._optional_deps import HAS_SYMPY
 
 from ....dynamics import PhaseSpacePosition
 from ....units import DimensionlessUnitSystem, UnitSystem

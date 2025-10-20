@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from astropy.utils.exceptions import AstropyDeprecationWarning
 
-from gala.tests.optional_deps import HAS_TQDM
+from gala._optional_deps import HAS_TQDM
 
 from .. import (
     DOPRI853Integrator,

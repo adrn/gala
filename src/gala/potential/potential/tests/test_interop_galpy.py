@@ -9,8 +9,8 @@ from astropy.constants import G
 from astropy.coordinates import CylindricalRepresentation
 
 import gala.potential as gp
+from gala._optional_deps import HAS_GALPY
 from gala.potential.potential.interop import galpy_to_gala_potential
-from gala.tests.optional_deps import HAS_GALPY
 from gala.units import galactic
 
 # Set these globally!

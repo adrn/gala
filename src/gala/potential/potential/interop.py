@@ -8,9 +8,9 @@ import numpy as np
 from astropy.constants import G
 
 import gala.potential.potential.builtin as gp
+from gala._optional_deps import HAS_AGAMA, HAS_GALPY
 from gala.potential.potential.ccompositepotential import CCompositePotential
 from gala.potential.potential.core import CompositePotential
-from gala.tests.optional_deps import HAS_AGAMA, HAS_GALPY
 from gala.units import galactic
 
 __all__ = [

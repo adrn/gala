@@ -12,7 +12,7 @@ def _get_axes(dim, subplots_kwargs=None):
     subplots_kwargs : dict (optional)
         Dictionary of kwargs passed to :func:`~matplotlib.pyplot.subplots`.
     """
-    from gala.tests.optional_deps import HAS_MATPLOTLIB
+    from gala._optional_deps import HAS_MATPLOTLIB
 
     if not HAS_MATPLOTLIB:
         raise ImportError("matplotlib is required for visualization.")

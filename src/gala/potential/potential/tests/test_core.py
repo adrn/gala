@@ -7,8 +7,8 @@ import numpy as np
 import pytest
 from astropy.constants import G
 
+from gala._optional_deps import HAS_MATPLOTLIB
 from gala.potential import CompositePotential, PotentialBase, PotentialParameter
-from gala.tests.optional_deps import HAS_MATPLOTLIB
 from gala.units import UnitSystem
 
 if HAS_MATPLOTLIB:

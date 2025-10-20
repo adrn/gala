@@ -5,7 +5,7 @@ import astropy.units as u
 import numpy as np
 import pytest
 
-from gala.tests.optional_deps import HAS_H5PY
+from gala._optional_deps import HAS_H5PY
 
 from ....dynamics import Orbit, PhaseSpacePosition
 from ....potential import (

@@ -1,6 +1,6 @@
 import pytest
 
-from gala.tests.optional_deps import HAS_SYMPY
+from gala._optional_deps import HAS_SYMPY
 
 from ..util import from_equation
 from .helpers import PotentialTestBase

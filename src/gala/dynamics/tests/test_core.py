@@ -10,7 +10,7 @@ from astropy.coordinates import (
     SphericalRepresentation,
 )
 
-from gala.tests.optional_deps import HAS_H5PY
+from gala._optional_deps import HAS_H5PY
 
 from ...potential import Hamiltonian, HernquistPotential
 from ...potential.frame import ConstantRotatingFrame, StaticFrame

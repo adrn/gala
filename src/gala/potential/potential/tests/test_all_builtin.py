@@ -10,7 +10,7 @@ from astropy.utils.data import get_pkg_data_filename
 from scipy.spatial.transform import Rotation
 
 from gala._cconfig import GSL_ENABLED
-from gala.tests.optional_deps import HAS_SYMPY
+from gala._optional_deps import HAS_SYMPY
 
 from ....units import DimensionlessUnitSystem, galactic, solarsystem
 from ...frame import ConstantRotatingFrame

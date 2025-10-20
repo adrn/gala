@@ -2,6 +2,7 @@ import astropy.units as u
 import numpy as np
 
 import gala.dynamics as gd
+from gala._optional_deps import HAS_TWOBODY
 from gala.dynamics.actionangle import (
     harmonic_oscillator_xv_to_aa,
     isochrone_aa_to_xv,
@@ -14,7 +15,6 @@ from gala.potential import (
     HarmonicOscillatorPotential,
     IsochronePotential,
 )
-from gala.tests.optional_deps import HAS_TWOBODY
 from gala.units import galactic
 from gala.util import assert_angles_allclose
 

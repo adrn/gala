@@ -6,7 +6,7 @@ import astropy.units as u
 import numpy as np
 import pytest
 
-from gala.tests.optional_deps import HAS_MATPLOTLIB
+from gala._optional_deps import HAS_MATPLOTLIB
 from gala.units import galactic
 
 from ..core import PhaseSpacePosition
