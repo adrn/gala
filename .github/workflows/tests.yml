@@ -245,9 +245,9 @@ jobs:
           GALA_FORCE_PYEXP_TEST: ${{ matrix.gala-exp }}
         run: |
           if [[ "${{ matrix.gala-exp }}" == "1" ]]; then
-            pytest_target=gala/potential/potential/tests/test_exp.py
+            pytest_target=tests/potential/potential/test_exp.py
           fi
-          pytest $pytest_target -n auto -ra --cov --cov-report=xml --cov-report=term --durations=20
+          uv run pytest $pytest_target -n auto -ra --cov --cov-report=xml --cov-report=term --durations=20
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v5.5.1
