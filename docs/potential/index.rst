@@ -62,10 +62,15 @@ Parameters without units are assumed to be in the specified unit system::
     <KeplerPotential: m=1.00 (AU,yr,solMass,rad)>
 
 To work without units, use `~gala.units.DimensionlessUnitSystem` or pass
-``None``::
+``None`` (this is the default, so you can also omit the units argument)::
 
     >>> gp.KeplerPotential(m=1.0, units=None)
     <KeplerPotential: m=1.00 (dimensionless)>
+
+Unit systems can also be specified by passing a string name::
+
+    >>> gp.KeplerPotential(m=1.0 * u.Msun, units='solarsystem')
+    <KeplerPotential: m=1.00 (AU,yr,solMass,rad)>
 
 All built-in potential objects have methods to evaluate the potential energy
 and gradient/acceleration at given positions. For example, to evaluate the
