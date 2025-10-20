@@ -148,6 +148,12 @@ class GalaDeprecationWarning(DeprecationWarning):
     """
 
 
+class GalaFutureWarning(FutureWarning):
+    """
+    A warning class to indicate a future change that will impact users.
+    """
+
+
 @contextmanager
 def chdir(new_path):
     """
