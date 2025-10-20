@@ -1,8 +1,8 @@
 import astropy.units as u
 import numpy as np
 import pytest
-
 from gala._cconfig import GSL_ENABLED
+
 from gala.potential.scf import SCFInterpolatedPotential, SCFPotential
 from gala.units import galactic
 

@@ -12,10 +12,10 @@ Tests the functionality of the TimeInterpolatedPotential class including:
 import astropy.units as u
 import numpy as np
 import pytest
+from gala._cconfig import GSL_ENABLED
 from scipy.spatial.transform import Rotation as R
 
 import gala.potential as gp
-from gala._cconfig import GSL_ENABLED
 from gala.units import galactic
 
 # global pytest marker to skip tests if EXP is not enabled

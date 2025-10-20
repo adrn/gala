@@ -2,7 +2,10 @@ import astropy.units as u
 import numpy as np
 import pytest
 
-from ..representation_nd import NDCartesianDifferential, NDCartesianRepresentation
+from gala.dynamics.representation_nd import (
+    NDCartesianDifferential,
+    NDCartesianRepresentation,
+)
 
 
 def test_init_repr():

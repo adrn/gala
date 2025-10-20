@@ -8,15 +8,16 @@ from pathlib import Path
 import astropy.units as u
 import numpy as np
 import pytest
-from astropy.utils.data import get_pkg_data_filename
+from gala._cconfig import EXP_ENABLED
+from potential_helpers import PotentialTestBase
 
 import gala.dynamics as gd
 import gala.potential as gp
-from gala._cconfig import EXP_ENABLED
 from gala.potential.potential.builtin import EXPPotential
-from gala.potential.potential.tests.helpers import PotentialTestBase
 from gala.units import SimulationUnitSystem
 from gala.util import chdir
+
+this_path = Path(__file__).parent
 
 # Use in CI to ensure tests aren't silently skipped
 FORCE_EXP_TEST = os.environ.get("GALA_FORCE_EXP_TEST", "0") == "1"
@@ -32,10 +33,10 @@ except ImportError as e:
         raise ImportError("pyEXP is required to run pyEXP tests") from e
 
 
-EXP_CONFIG_FILE = get_pkg_data_filename("EXP-Hernquist-basis.yml")
-EXP_SINGLE_COEF_FILE = get_pkg_data_filename("EXP-Hernquist-single-coefs.hdf5")
-EXP_MULTI_COEF_FILE = get_pkg_data_filename("EXP-Hernquist-multi-coefs.hdf5")
-EXP_MULTI_COEF_SNAPSHOT_TIME_FILE = get_pkg_data_filename(
+EXP_CONFIG_FILE = this_path / "EXP-Hernquist-basis.yml"
+EXP_SINGLE_COEF_FILE = this_path / "EXP-Hernquist-single-coefs.hdf5"
+EXP_MULTI_COEF_FILE = this_path / "EXP-Hernquist-multi-coefs.hdf5"
+EXP_MULTI_COEF_SNAPSHOT_TIME_FILE = this_path / (
     "EXP-Hernquist-multi-coefs-snap-time-Gyr.hdf5"
 )
 
@@ -242,8 +243,8 @@ def test_multi_different_snapshot_time_unit():
         snapshot_time_unit=u.Gyr,
     )
     x = [8.0, 0, 0] * u.kpc
-    val0 = pot_multi.value(x, t=0.0 * u.Gyr)
-    val1 = pot_multi.value(x, t=1.0 * u.Gyr)
+    val0 = pot_multi.energy(x, t=0.0 * u.Gyr)
+    val1 = pot_multi.energy(x, t=1.0 * u.Gyr)
     assert np.isclose(val1 / val0, 3.0)  # see: generate_exp.py
 
     assert u.allclose(pot_multi.tmin_exp, 0.0 * u.Gyr)

@@ -4,13 +4,10 @@ import astropy.coordinates as coord
 import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
+from _genfunc import genfunc_3d
 
 from gala.potential import HarmonicOscillatorPotential, IsochronePotential
-
-# from ..actionangle import classify_orbit
 from gala.units import galactic
-
-from .._genfunc import genfunc_3d
 
 
 def sanders_nvecs(N_max, dx, dy, dz):

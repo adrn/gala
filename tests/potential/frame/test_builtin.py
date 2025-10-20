@@ -3,8 +3,8 @@ import pickle
 import astropy.units as u
 import pytest
 
-from ....units import DimensionlessUnitSystem, galactic
-from ..builtin import ConstantRotatingFrame, StaticFrame
+from gala.potential import ConstantRotatingFrame, StaticFrame
+from gala.units import DimensionlessUnitSystem, galactic
 
 
 class TestStaticFrame:

@@ -7,11 +7,9 @@ import numpy as np
 import pytest
 
 from gala._optional_deps import HAS_MATPLOTLIB
+from gala.dynamics import Orbit, PhaseSpacePosition
+from gala.dynamics.plot import plot_projections
 from gala.units import galactic
-
-from ..core import PhaseSpacePosition
-from ..orbit import Orbit
-from ..plot import plot_projections
 
 if HAS_MATPLOTLIB:
     import matplotlib.pyplot as plt

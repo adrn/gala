@@ -2,7 +2,7 @@ import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 
-from ..pal5 import Pal5PriceWhelan18
+from gala.coordinates import Pal5PriceWhelan18
 
 
 def test_simple():

@@ -7,15 +7,15 @@ from itertools import product
 
 import numpy as np
 import pytest
+from gala.integrate.cyintegrators.dop853 import dop853_integrate_hamiltonian
+from gala.integrate.cyintegrators.leapfrog import leapfrog_integrate_hamiltonian
+from gala.integrate.cyintegrators.ruth4 import ruth4_integrate_hamiltonian
 
-from ...potential import Hamiltonian, HernquistPotential
-from ...units import galactic
-from ..cyintegrators.dop853 import dop853_integrate_hamiltonian
-from ..cyintegrators.leapfrog import leapfrog_integrate_hamiltonian
-from ..cyintegrators.ruth4 import ruth4_integrate_hamiltonian
-from ..pyintegrators.dopri853 import DOPRI853Integrator
-from ..pyintegrators.leapfrog import LeapfrogIntegrator
-from ..pyintegrators.ruth4 import Ruth4Integrator
+from gala.integrate.pyintegrators.dopri853 import DOPRI853Integrator
+from gala.integrate.pyintegrators.leapfrog import LeapfrogIntegrator
+from gala.integrate.pyintegrators.ruth4 import Ruth4Integrator
+from gala.potential import Hamiltonian, HernquistPotential
+from gala.units import galactic
 
 integrator_list = [LeapfrogIntegrator, DOPRI853Integrator, Ruth4Integrator]
 func_list = [

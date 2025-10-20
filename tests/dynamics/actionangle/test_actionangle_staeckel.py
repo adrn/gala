@@ -2,14 +2,12 @@ import astropy.units as u
 import numpy as np
 import pytest
 from astropy.constants import G
+from staeckel_helpers import galpy_find_actions_staeckel
 
 import gala.potential as gp
 from gala._optional_deps import HAS_GALPY
-
-# gala
 from gala.dynamics import PhaseSpacePosition
 from gala.dynamics.actionangle import find_actions_o2gf, get_staeckel_fudge_delta
-from gala.dynamics.actionangle.tests.staeckel_helpers import galpy_find_actions_staeckel
 from gala.units import galactic
 
 

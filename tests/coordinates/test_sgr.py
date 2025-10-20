@@ -2,13 +2,16 @@
 Test the coordinates class that represents the plane of orbit of the Sgr dwarf galaxy.
 """
 
+from pathlib import Path
+
 import astropy.coordinates as coord
 import astropy.table as at
 import astropy.units as u
 import numpy as np
-from astropy.utils.data import get_pkg_data_filename
 
-from ..sgr import SagittariusLaw10, SagittariusVasiliev21
+from gala.coordinates import SagittariusLaw10, SagittariusVasiliev21
+
+this_path = Path(__file__).parent
 
 
 def test_simple():
@@ -46,7 +49,7 @@ def test_against_David_Law():
     to generate the data file, SgrCoord_data.
 
     """
-    filename = get_pkg_data_filename("SgrCoord_data")
+    filename = this_path / "SgrCoord_data"
     law_data = np.genfromtxt(filename, names=True, delimiter=",")
 
     c = coord.Galactic(law_data["l"] * u.deg, law_data["b"] * u.deg)
@@ -61,7 +64,7 @@ def test_against_David_Law():
 
 
 def test_v21():
-    filename = get_pkg_data_filename("Vasiliev2020-Sagittarius-subset.csv")
+    filename = this_path / "Vasiliev2020-Sagittarius-subset.csv"
     test_data = at.Table.read(filename, format="ascii.csv")
 
     c = coord.SkyCoord(test_data["ra"] * u.deg, test_data["dec"] * u.deg)

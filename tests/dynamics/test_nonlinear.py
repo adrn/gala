@@ -1,10 +1,9 @@
 import numpy as np
 
-from ... import potential as gp
-from ...integrate import DOPRI853Integrator
-from ...potential import Hamiltonian
-from ...units import galactic
-from ..nonlinear import fast_lyapunov_max, lyapunov_max, surface_of_section
+import gala.potential as gp
+from gala.dynamics.nonlinear import fast_lyapunov_max, lyapunov_max, surface_of_section
+from gala.integrate import DOPRI853Integrator
+from gala.units import galactic
 
 
 class TestForcedPendulum:
@@ -185,7 +184,7 @@ class TestLogarithmic:
         potential = gp.LogarithmicPotential(
             v_c=np.sqrt(2), r_h=0.1, q1=1.0, q2=0.9, q3=1.0, units=galactic
         )
-        self.hamiltonian = Hamiltonian(potential)
+        self.hamiltonian = gp.Hamiltonian(potential)
 
         # see figure 1 from Papaphillipou & Laskar
         x0 = -0.01
@@ -311,12 +310,11 @@ class TestLogarithmic:
 
 
 def test_surface_of_section():
-    from ...potential import LogarithmicPotential
-    from ...units import galactic
-
-    pot = LogarithmicPotential(v_c=1.0, r_h=1.0, q1=1.0, q2=0.9, q3=0.8, units=galactic)
+    pot = gp.LogarithmicPotential(
+        v_c=1.0, r_h=1.0, q1=1.0, q2=0.9, q3=0.8, units=galactic
+    )
 
     w0 = np.array([0.0, 0.8, 0.0, 1.0, 0.0, 0.0])
-    orbit = Hamiltonian(pot).integrate_orbit(w0, dt=0.02, n_steps=100_000)
+    orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.02, n_steps=100_000)
     sos = surface_of_section(orbit, constant_idx=1)
     sos_cyl = surface_of_section(orbit.cylindrical, constant_idx=1)

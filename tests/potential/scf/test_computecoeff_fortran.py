@@ -1,13 +1,13 @@
-import os
 from math import factorial as _factorial
+from pathlib import Path
 
 import numpy as np
 import pytest
-from astropy.utils.data import get_pkg_data_filename
-
 from gala._cconfig import GSL_ENABLED
 
-from ..core import compute_coeffs_discrete
+from gala.potential.scf.core import compute_coeffs_discrete
+
+this_path = Path(__file__).parent
 
 if not GSL_ENABLED:
     pytest.skip("skipping SCF tests: they depend on GSL", allow_module_level=True)
@@ -24,10 +24,9 @@ def test_coeff(basename):
     nmax = 6
     lmax = 10  # HACK: these are hard-set in Fortran
 
-    pos_path = os.path.abspath(get_pkg_data_filename(f"data/{basename}-samples.dat.gz"))
-    coeff_path = os.path.abspath(
-        get_pkg_data_filename(f"data/computed-{basename}.coeff")
-    )
+    pos_path = this_path / f"data/{basename}-samples.dat.gz"
+    coeff_path = this_path / f"data/computed-{basename}.coeff"
+
     coeff = np.atleast_2d(np.loadtxt(coeff_path))
 
     xyz = np.ascontiguousarray(np.loadtxt(pos_path, skiprows=1))

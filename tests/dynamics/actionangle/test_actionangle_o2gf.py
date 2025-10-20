@@ -6,6 +6,8 @@ import warnings
 import astropy.units as u
 import numpy as np
 import pytest
+from _genfunc import genfunc_3d, solver
+from actionangle_helpers import isotropic_w0, sanders_act_ang_freq, sanders_nvecs
 from scipy.linalg import solve
 
 from gala.dynamics.actionangle import (
@@ -16,7 +18,6 @@ from gala.dynamics.actionangle import (
     fit_toy_potential,
     generate_n_vectors,
 )
-from gala.dynamics.actionangle._genfunc import genfunc_3d, solver
 from gala.integrate import DOPRI853Integrator
 from gala.logging import logger
 from gala.potential import (
@@ -26,8 +27,6 @@ from gala.potential import (
     LeeSutoTriaxialNFWPotential,
 )
 from gala.units import galactic
-
-from .helpers import isotropic_w0, sanders_act_ang_freq, sanders_nvecs
 
 logger.setLevel(logging.DEBUG)
 

@@ -6,8 +6,8 @@ import astropy.units as u
 import numpy as np
 import pytest
 
-from ...units import DimensionlessUnitSystem, galactic
-from ..timespec import parse_time_specification
+from gala.integrate.timespec import parse_time_specification
+from gala.units import DimensionlessUnitSystem, galactic
 
 
 def test_dt_n_steps():

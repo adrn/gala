@@ -6,8 +6,7 @@ import astropy.units as u
 import numpy as np
 
 from gala.dynamics import Orbit
-
-from ..actionangle_staeckel import get_staeckel_fudge_delta
+from gala.dynamics.actionangle.actionangle_staeckel import get_staeckel_fudge_delta
 
 __all__ = ["galpy_find_actions_staeckel"]
 

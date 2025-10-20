@@ -2,7 +2,7 @@ import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 
-from ..jhelum import JhelumBonaca19
+from gala.coordinates import JhelumBonaca19
 
 
 def test_simple():

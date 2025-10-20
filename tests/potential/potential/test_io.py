@@ -1,35 +1,40 @@
 """test reading/writing potentials to files"""
 
+from pathlib import Path
+
 import astropy.units as u
 import numpy as np
 import pytest
-from astropy.utils.data import get_pkg_data_filename
-
 from gala._cconfig import GSL_ENABLED
 
-from ....units import DimensionlessUnitSystem, galactic
-from ...scf import SCFPotential
-from ..builtin import IsochronePotential, KeplerPotential
-from ..builtin.special import LM10Potential
-from ..ccompositepotential import CCompositePotential
-from ..core import CompositePotential
-from ..io import load, save
+from gala.potential import (
+    CCompositePotential,
+    CompositePotential,
+    IsochronePotential,
+    KeplerPotential,
+    LM10Potential,
+    SCFPotential,
+)
+from gala.potential.potential.io import load, save
+from gala.units import DimensionlessUnitSystem, galactic
+
+this_path = Path(__file__).parent
 
 
 def test_read_plummer():
-    potential = load(get_pkg_data_filename("Plummer.yml"))
+    potential = load(this_path / "Plummer.yml")
     assert np.allclose(potential.parameters["m"].value, 100000000000.0)
     assert np.allclose(potential.parameters["b"].value, 0.26)
     assert potential.parameters["b"].unit == u.kpc
 
 
 def test_read_harmonic_oscillator():
-    potential = load(get_pkg_data_filename("HarmonicOscillator1D.yml"))
+    potential = load(this_path / "HarmonicOscillator1D.yml")
     assert isinstance(potential.units, DimensionlessUnitSystem)
 
 
 def test_read_composite():
-    potential = load(get_pkg_data_filename("Composite.yml"))
+    potential = load(this_path / "Composite.yml")
     assert "halo" in potential
     assert "disk" in potential
     assert str(potential) == "CompositePotential"
@@ -38,7 +43,7 @@ def test_read_composite():
 
 
 def test_read_lm10():
-    potential = load(get_pkg_data_filename("lm10.yml"))
+    potential = load(this_path / "lm10.yml")
     assert "halo" in potential
     assert "disk" in potential
     assert str(potential) == "LM10Potential"

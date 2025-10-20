@@ -1,8 +1,8 @@
 import astropy.units as u
 import numpy as np
 
-from ....dynamics import Orbit, PhaseSpacePosition
-from ....units import galactic
+from gala.dynamics import Orbit, PhaseSpacePosition
+from gala.units import galactic
 
 PSP = PhaseSpacePosition
 ORB = Orbit

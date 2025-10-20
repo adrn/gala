@@ -2,14 +2,14 @@ import astropy.units as u
 import numpy as np
 import pytest
 
-from ....dynamics import Orbit, PhaseSpacePosition
-from ....units import galactic
-from ..builtin import ConstantRotatingFrame, StaticFrame
-from ..builtin.transformations import (
+from gala.dynamics import Orbit, PhaseSpacePosition
+from gala.potential import ConstantRotatingFrame, StaticFrame
+from gala.potential.frame.builtin.transformations import (
     constantrotating_to_static,
     rodrigues_axis_angle_rotate,
     static_to_constantrotating,
 )
+from gala.units import galactic
 
 
 def test_axis_angle_rotate():

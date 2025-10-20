@@ -2,12 +2,15 @@ import astropy.units as u
 import numpy as np
 import pytest
 
-from ...potential import Hamiltonian, NFWPotential
-from ...potential.frame import StaticFrame
-from ...units import galactic
-from ..core import PhaseSpacePosition
-from ..orbit import Orbit
-from ..util import combine, estimate_dt_n_steps, peak_to_peak_period
+from gala.dynamics import (
+    Orbit,
+    PhaseSpacePosition,
+    combine,
+    estimate_dt_n_steps,
+    peak_to_peak_period,
+)
+from gala.potential import Hamiltonian, NFWPotential, StaticFrame
+from gala.units import galactic
 
 
 def test_peak_to_peak_period():

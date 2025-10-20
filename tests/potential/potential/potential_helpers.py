@@ -9,12 +9,10 @@ import pytest
 
 from gala._compat_utils import SCIPY_LT_1_15
 from gala._optional_deps import HAS_SYMPY
-
-from ....dynamics import PhaseSpacePosition
-from ....units import DimensionlessUnitSystem, UnitSystem
-from ...frame import StaticFrame
-from ...hamiltonian import Hamiltonian
-from ..io import load
+from gala.dynamics import PhaseSpacePosition
+from gala.potential import Hamiltonian, StaticFrame
+from gala.potential.potential.io import load
+from gala.units import DimensionlessUnitSystem, UnitSystem
 
 
 def partial_derivative_LT_1_15(func, point, dim_ix=0, **kwargs):

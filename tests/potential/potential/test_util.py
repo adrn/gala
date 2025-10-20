@@ -1,9 +1,8 @@
 import pytest
+from potential_helpers import PotentialTestBase
 
 from gala._optional_deps import HAS_SYMPY
-
-from ..util import from_equation
-from .helpers import PotentialTestBase
+from gala.potential.potential.util import from_equation
 
 
 class EquationBase(PotentialTestBase):

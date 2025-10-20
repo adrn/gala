@@ -1,14 +1,19 @@
 import astropy.units as u
 import numpy as np
 import pytest
+from hamiltonian_helpers import _TestBase
 
-from ....dynamics import Orbit, PhaseSpacePosition
-from ....integrate import DOPRI853Integrator
-from ....units import dimensionless, galactic
-from ...frame.builtin import ConstantRotatingFrame, StaticFrame
-from ...potential.builtin import HernquistPotential, KeplerPotential, NFWPotential
-from .. import Hamiltonian
-from .helpers import _TestBase
+from gala.dynamics import Orbit, PhaseSpacePosition
+from gala.integrate import DOPRI853Integrator
+from gala.potential import (
+    ConstantRotatingFrame,
+    Hamiltonian,
+    HernquistPotential,
+    KeplerPotential,
+    NFWPotential,
+    StaticFrame,
+)
+from gala.units import dimensionless, galactic
 
 # ----------------------------------------------------------------------------
 

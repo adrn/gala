@@ -11,11 +11,14 @@ from astropy.coordinates import (
 )
 
 from gala._optional_deps import HAS_H5PY
-
-from ...potential import Hamiltonian, HernquistPotential
-from ...potential.frame import ConstantRotatingFrame, StaticFrame
-from ...units import galactic, solarsystem
-from ..core import PhaseSpacePosition
+from gala.dynamics import PhaseSpacePosition
+from gala.potential import (
+    ConstantRotatingFrame,
+    Hamiltonian,
+    HernquistPotential,
+    StaticFrame,
+)
+from gala.units import galactic, solarsystem
 
 
 def test_initialize():

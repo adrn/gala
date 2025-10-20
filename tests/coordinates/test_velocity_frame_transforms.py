@@ -2,16 +2,19 @@
 Test conversions in core.py
 """
 
+from pathlib import Path
+
 import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
-from astropy.utils.data import get_pkg_data_filename
 
-from ..velocity_frame_transforms import vgsr_to_vhel, vhel_to_vgsr
+from gala.coordinates.velocity_frame_transforms import vgsr_to_vhel, vhel_to_vgsr
+
+this_path = Path(__file__).parent
 
 
 def test_vgsr_to_vhel():
-    filename = get_pkg_data_filename("idl_vgsr_vhel.txt")
+    filename = this_path / "idl_vgsr_vhel.txt"
     data = np.genfromtxt(filename, names=True, skip_header=2)
 
     # one row
@@ -61,7 +64,7 @@ def test_vgsr_to_vhel_misc():
 
 
 def test_vhel_to_vgsr():
-    filename = get_pkg_data_filename("idl_vgsr_vhel.txt")
+    filename = this_path / "idl_vgsr_vhel.txt"
     data = np.genfromtxt(filename, names=True, skip_header=2)
 
     # one row

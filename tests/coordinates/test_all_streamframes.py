@@ -2,7 +2,7 @@ import astropy.units as u
 import numpy as np
 import pytest
 
-from .. import (
+from gala.coordinates import (
     GD1Koposov10,
     MagellanicStreamNidever08,
     OphiuchusPriceWhelan16,

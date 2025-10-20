@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 from astropy.constants import G, c
 
-from ..units import DimensionlessUnitSystem, SimulationUnitSystem, UnitSystem
+from gala.units import DimensionlessUnitSystem, SimulationUnitSystem, UnitSystem
 
 
 def test_create():

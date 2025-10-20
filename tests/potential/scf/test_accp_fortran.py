@@ -1,15 +1,15 @@
-import os
 from math import factorial as _factorial
+from pathlib import Path
 
 import numpy as np
 import pytest
 from astropy.constants import G as _G
-from astropy.utils.data import get_pkg_data_filename
-
 from gala._cconfig import GSL_ENABLED
+from gala.potential.scf._bfe import density, gradient, potential
+
 from gala.units import galactic
 
-from .._bfe import density, gradient, potential
+this_path = Path(__file__).parent
 
 G = _G.decompose(galactic).value
 
@@ -32,9 +32,9 @@ def factorial(x):
     ],
 )
 def test_density(basename):
-    pos_path = os.path.abspath(get_pkg_data_filename("data/positions.dat.gz"))
-    coeff_path = os.path.abspath(get_pkg_data_filename(f"data/{basename}.coeff"))
-    accp_path = os.path.abspath(get_pkg_data_filename(f"data/{basename}-accp.dat.gz"))
+    pos_path = this_path / "data/positions.dat.gz"
+    coeff_path = this_path / f"data/{basename}.coeff"
+    accp_path = this_path / f"data/{basename}-accp.dat.gz"
 
     xyz = np.ascontiguousarray(np.loadtxt(pos_path, skiprows=1).T)
     coeff = np.atleast_2d(np.loadtxt(coeff_path, skiprows=1))
@@ -75,13 +75,13 @@ def test_density(basename):
     ],
 )
 def test_potential(basename):
-    coeff_path = os.path.abspath(get_pkg_data_filename(f"data/{basename}.coeff"))
-    accp_path = os.path.abspath(get_pkg_data_filename(f"data/{basename}-accp.dat.gz"))
+    coeff_path = this_path / f"data/{basename}.coeff"
+    accp_path = this_path / f"data/{basename}-accp.dat.gz"
 
     coeff = np.atleast_2d(np.loadtxt(coeff_path, skiprows=1))
     accp = np.loadtxt(accp_path)
 
-    pos_path = os.path.abspath(get_pkg_data_filename("data/positions.dat.gz"))
+    pos_path = this_path / "data/positions.dat.gz"
     xyz = np.loadtxt(pos_path, skiprows=1)
 
     nmax = coeff[:, 0].astype(int).max()
@@ -121,9 +121,9 @@ def test_potential(basename):
     ],
 )
 def test_gradient(basename):
-    pos_path = os.path.abspath(get_pkg_data_filename("data/positions.dat.gz"))
-    coeff_path = os.path.abspath(get_pkg_data_filename(f"data/{basename}.coeff"))
-    accp_path = os.path.abspath(get_pkg_data_filename(f"data/{basename}-accp.dat.gz"))
+    pos_path = this_path / "data/positions.dat.gz"
+    coeff_path = this_path / f"data/{basename}.coeff"
+    accp_path = this_path / f"data/{basename}-accp.dat.gz"
 
     xyz = np.loadtxt(pos_path, skiprows=1)
     coeff = np.atleast_2d(np.loadtxt(coeff_path, skiprows=1))

@@ -9,12 +9,11 @@ import astropy.units as u
 import numpy as np
 import pytest
 from astropy.constants import G
+from gala._cconfig import GSL_ENABLED
+from potential_helpers import PotentialTestBase
 
 import gala.potential as gp
-from gala._cconfig import GSL_ENABLED
-
-from ....units import galactic
-from .helpers import PotentialTestBase
+from gala.units import galactic
 
 # global pytest marker to skip tests if GSL is not enabled
 pytestmark = pytest.mark.skipif(

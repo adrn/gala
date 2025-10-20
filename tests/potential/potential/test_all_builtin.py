@@ -2,22 +2,26 @@
 Test the builtin CPotential classes
 """
 
+from pathlib import Path
+
 import astropy.table as at
 import astropy.units as u
 import numpy as np
 import pytest
-from astropy.utils.data import get_pkg_data_filename
+from gala._cconfig import GSL_ENABLED
+from potential_helpers import CompositePotentialTestBase, PotentialTestBase
 from scipy.spatial.transform import Rotation
 
-from gala._cconfig import GSL_ENABLED
+import gala.potential as p
 from gala._optional_deps import HAS_SYMPY
+from gala.potential import (
+    CCompositePotential,
+    CompositePotential,
+    ConstantRotatingFrame,
+)
+from gala.units import DimensionlessUnitSystem, galactic, solarsystem
 
-from ....units import DimensionlessUnitSystem, galactic, solarsystem
-from ...frame import ConstantRotatingFrame
-from .. import builtin as p
-from ..ccompositepotential import CCompositePotential
-from ..core import CompositePotential
-from .helpers import CompositePotentialTestBase, PotentialTestBase
+this_path = Path(__file__).parent
 
 ##############################################################################
 # Python
@@ -572,7 +576,7 @@ class TestCylspline(PotentialTestBase):
 
     def setup_method(self):
         self.potential = p.CylSplinePotential.from_file(
-            get_pkg_data_filename("pot_disk_506151.pot"), units=galactic
+            this_path / "pot_disk_506151.pot", units=galactic
         )
         vc = self.potential.circular_velocity([19.0, 0, 0] * u.kpc).decompose(galactic)
         self.w0 = [19.0, 0.2, -0.9, 0.0, vc.value[0], 0.0]
@@ -591,7 +595,7 @@ class TestCylspline(PotentialTestBase):
         pass
 
     def test_against_agama(self):
-        agama_tbl = at.QTable.read(get_pkg_data_filename("agama_cylspline_test.fits"))
+        agama_tbl = at.QTable.read(this_path / "agama_cylspline_test.fits")
 
         gala_ene = self.potential.energy(agama_tbl["xyz"].T)
         gala_acc = self.potential.acceleration(agama_tbl["xyz"].T)

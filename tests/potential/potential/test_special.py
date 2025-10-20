@@ -4,15 +4,15 @@ Test the special potentials...
 
 import astropy.units as u
 import pytest
+from gala._cconfig import GSL_ENABLED
+from potential_helpers import CompositePotentialTestBase
 
-from ...._cconfig import GSL_ENABLED
-from ..builtin.special import (
+from gala.potential import (
     BovyMWPotential2014,
     LM10Potential,
     MilkyWayPotential,
     MilkyWayPotential2022,
 )
-from .helpers import CompositePotentialTestBase
 
 
 class TestLM10Potential(CompositePotentialTestBase):

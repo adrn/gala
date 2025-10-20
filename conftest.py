@@ -1,9 +1,15 @@
 import os
+import sys
+from pathlib import Path
 
 from pytest_astropy_header.display import (
     PYTEST_HEADER_MODULES,
     TESTED_VERSIONS,
 )
+
+# Add test helpers to path so they can be imported
+tests_dir = Path(__file__).parent
+sys.path.insert(0, str(tests_dir))
 
 
 def pytest_configure(config):
@@ -11,7 +17,7 @@ def pytest_configure(config):
     PYTEST_HEADER_MODULES.pop("Pandas", None)
     PYTEST_HEADER_MODULES["astropy"] = "astropy"
 
-    from . import __version__
+    from gala import __version__
 
     packagename = os.path.basename(os.path.dirname(__file__))
     TESTED_VERSIONS[packagename] = __version__

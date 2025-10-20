@@ -2,14 +2,17 @@
 Test the coordinates class that represents the plane of orbit of the Sgr dwarf galaxy.
 """
 
+from pathlib import Path
+
 import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 from astropy.io import ascii
 from astropy.table import Table
-from astropy.utils.data import get_pkg_data_filename
 
-from ..orphan import OrphanKoposov19, OrphanNewberg10
+from gala.coordinates import OrphanKoposov19, OrphanNewberg10
+
+this_path = Path(__file__).parent
 
 
 def test_table():
@@ -44,7 +47,7 @@ def test_table():
 
 
 def test_kopsov():
-    tbl = Table.read(get_pkg_data_filename("sergey_orphan.txt"), format="ascii")
+    tbl = Table.read(this_path / "sergey_orphan.txt", format="ascii")
     c = coord.SkyCoord(ra=tbl["ra"] * u.deg, dec=tbl["dec"] * u.deg)
     orp_gc = c.transform_to(OrphanKoposov19())
     assert np.percentile(orp_gc.phi2.degree, 95) < 5

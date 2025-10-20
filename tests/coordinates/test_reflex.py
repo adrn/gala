@@ -1,7 +1,7 @@
 import astropy.coordinates as coord
 import astropy.units as u
 
-from ..reflex import reflex_correct
+from gala.coordinates import reflex_correct
 
 
 def test_reflex():

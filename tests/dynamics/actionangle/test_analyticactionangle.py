@@ -1,5 +1,6 @@
 import astropy.units as u
 import numpy as np
+from _genfunc import toy_potentials
 
 import gala.dynamics as gd
 from gala._optional_deps import HAS_TWOBODY
@@ -8,7 +9,6 @@ from gala.dynamics.actionangle import (
     isochrone_aa_to_xv,
     isochrone_xv_to_aa,
 )
-from gala.dynamics.actionangle._genfunc import toy_potentials
 from gala.logging import logger
 from gala.potential import (
     Hamiltonian,

@@ -2,11 +2,10 @@ import astropy.units as u
 import numpy as np
 import pytest
 from astropy.constants import G as _G
-
 from gala._cconfig import GSL_ENABLED
-from gala.units import galactic
+from gala.potential.scf._bfe import density, gradient, potential
 
-from .._bfe import density, gradient, potential
+from gala.units import galactic
 
 G = _G.decompose(galactic).value
 

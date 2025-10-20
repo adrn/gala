@@ -3,13 +3,12 @@ import numpy as np
 import pytest
 
 from gala.dynamics import PhaseSpacePosition, combine
+from gala.dynamics.nbody import DirectNBody
 from gala.integrate import (
     DOPRI853Integrator,
     LeapfrogIntegrator,
     Ruth4Integrator,
 )
-
-# Custom
 from gala.potential import (
     ConstantRotatingFrame,
     HernquistPotential,
@@ -18,8 +17,6 @@ from gala.potential import (
     StaticFrame,
 )
 from gala.units import UnitSystem, galactic
-
-from ..core import DirectNBody
 
 
 class TestDirectNBody:

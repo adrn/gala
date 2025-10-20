@@ -1,8 +1,7 @@
-# Third party
 import astropy.units as u
 
-from ....units import UnitSystem
-from ..builtin import HernquistPotential
+from gala.potential import HernquistPotential
+from gala.units import UnitSystem
 
 
 def test_replace_units():

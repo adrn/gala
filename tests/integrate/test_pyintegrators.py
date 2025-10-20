@@ -9,8 +9,7 @@ import pytest
 from astropy.utils.exceptions import AstropyDeprecationWarning
 
 from gala._optional_deps import HAS_TQDM
-
-from .. import (
+from gala.integrate import (
     DOPRI853Integrator,
     LeapfrogIntegrator,
     RK5Integrator,

@@ -1,19 +1,19 @@
-import os
+from pathlib import Path
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from astropy.constants import G as _G
-from astropy.utils.data import get_pkg_data_filename
+from gala._cconfig import GSL_ENABLED
+from gala.potential.scf._bfe import density, gradient, potential
 from scipy.integrate import quad
 
 import gala.potential as gp
-from gala._cconfig import GSL_ENABLED
+from gala.potential.scf.core import compute_coeffs
 from gala.units import galactic
 
-from .._bfe import density, gradient, potential
-from ..core import compute_coeffs
+this_path = Path(__file__).parent
 
 G = _G.decompose(galactic).value
 
@@ -161,7 +161,7 @@ def test_flattened_hernquist():
     in that notebook.
     """
 
-    coeff_path = os.path.abspath(get_pkg_data_filename("data/Snlm-mathematica.csv"))
+    coeff_path = this_path / "data/Snlm-mathematica.csv"
 
     G = 1.0
     M = 1

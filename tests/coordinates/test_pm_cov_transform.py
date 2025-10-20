@@ -1,11 +1,13 @@
+from pathlib import Path
+
 import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
 import pytest
-from astropy.utils.data import get_pkg_data_filename
 
-from ..orphan import OrphanKoposov19
-from ..pm_cov_transform import transform_pm_cov
+from gala.coordinates import OrphanKoposov19, transform_pm_cov
+
+this_path = Path(__file__).parent
 
 sky_offset_frame = coord.SkyOffsetFrame(
     origin=coord.ICRS(ra="20d", dec="30d"), rotation=135.7 * u.deg
@@ -13,14 +15,14 @@ sky_offset_frame = coord.SkyOffsetFrame(
 
 
 def setup_function(fn):
-    ra, dec, pmra, pmdec = np.load(get_pkg_data_filename("c_pm.npy"))
+    ra, dec, pmra, pmdec = np.load(this_path / "c_pm.npy")
     c = coord.SkyCoord(
         ra=ra * u.deg,
         dec=dec * u.deg,
         pm_ra_cosdec=pmra * u.mas / u.yr,
         pm_dec=pmdec * u.mas / u.yr,
     )
-    cov = np.load(get_pkg_data_filename("pm_cov.npy"))
+    cov = np.load(this_path / "pm_cov.npy")
 
     fn.c = c
     fn.cov = cov

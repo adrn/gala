@@ -9,20 +9,18 @@ from astropy.coordinates import (
 )
 
 from gala._optional_deps import HAS_GALPY, HAS_H5PY
-
-from ...integrate import DOPRI853Integrator
-from ...potential import (
+from gala.dynamics import Orbit, PhaseSpacePosition, combine
+from gala.integrate import DOPRI853Integrator
+from gala.potential import (
+    ConstantRotatingFrame,
     Hamiltonian,
     HernquistPotential,
     KeplerPotential,
     LogarithmicPotential,
     NFWPotential,
+    StaticFrame,
 )
-from ...potential.frame import ConstantRotatingFrame, StaticFrame
-from ...units import galactic, solarsystem
-from ..core import PhaseSpacePosition
-from ..orbit import Orbit
-from ..util import combine
+from gala.units import galactic, solarsystem
 
 
 # Tests below should be cleaned up a bit...

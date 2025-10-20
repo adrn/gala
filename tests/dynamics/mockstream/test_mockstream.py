@@ -6,18 +6,16 @@ import numpy as np
 import pytest
 
 from gala._optional_deps import HAS_H5PY
-
-from ....dynamics import Orbit, PhaseSpacePosition
-from ....potential import (
+from gala.dynamics import FardalStreamDF, Orbit, PhaseSpacePosition
+from gala.dynamics.mockstream.mockstream_generator import MockStreamGenerator
+from gala.dynamics.nbody import DirectNBody
+from gala.potential import (
     ConstantRotatingFrame,
     Hamiltonian,
     HernquistPotential,
     NFWPotential,
 )
-from ....units import galactic
-from ...nbody import DirectNBody
-from ..df import FardalStreamDF
-from ..mockstream_generator import MockStreamGenerator
+from gala.units import galactic
 
 
 def test_init():

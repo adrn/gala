@@ -1,15 +1,22 @@
+import sys
+from pathlib import Path
+
 import astropy.units as u
 import numpy as np
 import pytest
 from astropy.constants import G as _G
+from gala._cconfig import GSL_ENABLED
 
 import gala.potential as gp
-from gala._cconfig import GSL_ENABLED
 from gala.potential.potential.io import load
-from gala.potential.potential.tests.helpers import PotentialTestBase
+from gala.potential.scf import _bfe_class
 from gala.units import galactic
 
-from .. import _bfe_class
+# HACK:
+this_path = Path(__file__).parent
+sys.path.insert(0, str(this_path / "../potential"))
+
+from potential_helpers import PotentialTestBase  # noqa: E402
 
 G = _G.decompose(galactic).value
 

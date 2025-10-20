@@ -3,7 +3,7 @@ import astropy.units as u
 import numpy as np
 import pytest
 
-from ..greatcircle import (
+from gala.coordinates.greatcircle import (
     GreatCircleICRSFrame,
     make_greatcircle_cls,
     pole_from_endpoints,
@@ -185,8 +185,8 @@ def test_sph_midpoint():
 
 
 def test_init_from_R():
-    from ..gd1 import GD1Koposov10
-    from ..gd1 import R as gd1_R
+    from gala.coordinates.gd1 import GD1Koposov10
+    from gala.coordinates.gd1 import R as gd1_R
 
     N = 128
     rnd = np.random.RandomState(42)
