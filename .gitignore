@@ -8,33 +8,34 @@ __pycache__
 # Ignore .c files by default to avoid including generated code. If you want to
 # add a non-generated .c extension, use `git add -f filename.c`.
 # *.c
-gala/_compiler.c
-gala/dynamics/lyapunov/dop853_lyapunov.cpp
-gala/dynamics/mockstream/_coord.cpp
-gala/dynamics/mockstream/mockstream.cpp
-gala/dynamics/mockstream/df.cpp
-gala/integrate/cyintegrators/dop853.cpp
-gala/integrate/cyintegrators/leapfrog.cpp
-gala/integrate/cyintegrators/ruth4.cpp
-gala/potential/frame/builtin/frames.cpp
-gala/potential/frame/cframe.cpp
-gala/potential/hamiltonian/chamiltonian.cpp
-gala/potential/potential/builtin/cybuiltin.cpp
-gala/potential/potential/builtin/cyexp.cpp
-gala/potential/potential/builtin/cytimeinterp.cpp
-gala/potential/potential/ccompositepotential.cpp
-gala/potential/potential/cpotential.cpp
-gala/potential/scf/bfe_class.cpp
-gala/potential/scf/computecoeff.cpp
-gala/potential/scf/bfe.cpp
-gala/extra_compile_macros.h
-gala/cconfig.cpp
-gala/dynamics/nbody/nbody.cpp
+src/gala/_compiler.c
+src/gala/dynamics/lyapunov/dop853_lyapunov.cpp
+src/gala/dynamics/mockstream/_coord.cpp
+src/gala/dynamics/mockstream/mockstream.cpp
+src/gala/dynamics/mockstream/df.cpp
+src/gala/integrate/cyintegrators/dop853.cpp
+src/gala/integrate/cyintegrators/leapfrog.cpp
+src/gala/integrate/cyintegrators/ruth4.cpp
+src/gala/potential/frame/builtin/frames.cpp
+src/gala/potential/frame/cframe.cpp
+src/gala/potential/hamiltonian/chamiltonian.cpp
+src/gala/potential/potential/builtin/cybuiltin.cpp
+src/gala/potential/potential/builtin/cyexp.cpp
+src/gala/potential/potential/builtin/cytimeinterp.cpp
+src/gala/potential/potential/ccompositepotential.cpp
+src/gala/potential/potential/cpotential.cpp
+src/gala/potential/scf/bfe_class.cpp
+src/gala/potential/scf/computecoeff.cpp
+src/gala/potential/scf/bfe.cpp
+src/gala/extra_compile_macros.h
+src/gala/cconfig.cpp
+src/gala/dynamics/nbody/nbody.cpp
+src/gala/_version.py
 
 # Other generated files
-*/_version.py
 htmlcov
-.coverage
+.coverage*
+coverage.xml
 MANIFEST
 
 # Sphinx
@@ -69,16 +70,8 @@ pip-wheel-metadata/
 # Other
 .*.swp
 *~
+.hypothesis
+node_modules
 
 # Mac OSX
 .DS_Store
-
-# Custom
-notebooks
-plots
-scripts
-.hypothesis
-
-gala_env
-
-uv.lock

@@ -32,6 +32,7 @@ Bug fixes
 
 API changes
 -----------
+
 - Added ``copy`` kwarg to ``gala.dynamics.PhaseSpacePosition``,
   ``gala.dynamics.Orbit``, and ``gala.dynamics.MockStream``.
 - The `integrate_orbit()` method now validates that the input initial conditions have
@@ -44,6 +45,9 @@ API changes
 
 Other
 -----
+
+- Refactored package layout to move all source code into a ``src/`` directory, and move
+  all tests into a top-level ``tests/`` directory.
 
 1.10.1 (2025-08-21)
 ===================
