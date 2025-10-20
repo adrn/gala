@@ -6,28 +6,22 @@
 Installation
 ************
 
-With ``pip`` (recommended)
-==========================
+With ``uv`` and ``pip`` (recommended)
+=====================================
 
-To install the latest stable version using ``pip``, use::
+To install the latest stable version using ``uv pip``, use::
 
-    python -m pip install gala
+    uv pip install gala
 
 This is the recommended way to install ``gala``.
 
 To install the development version::
 
-    python -m pip install git+https://github.com/adrn/gala
+    uv pip install git+https://github.com/adrn/gala
 
+Or, to add ``gala`` to an existing ``uv`` environment::
 
-With ``conda``
-==============
-
-To install the latest stable version with ``conda``, use the ``conda-forge``
-channel with::
-
-    conda install -c conda-forge gala
-
+    uv add gala
 
 From Source: Cloning, Building, Installing
 ==========================================
@@ -40,40 +34,39 @@ The latest development version of gala can be cloned from
 To build and install the project (from the root of the source tree, e.g., inside
 the cloned ``gala`` directory)::
 
-    python -m pip install .
+    uv pip install .
 
 
 Architecture-Specific Optimizations
 ===================================
 
-For performance reasons, the pre-compiled wheels installed via ``pip`` are built assuming
-a minimum CPU architecture. For x86-64 CPUs (e.g. Intel), the wheels are built against
-``x86-64-v3``, which is supported by most Intel CPUs since 2013. For MacOS on ARM, the wheels
-are built against ``apple-m1``, which should work on Apple M1 (2020) or newer.
+For performance reasons, the pre-compiled wheels installed via ``pip`` are built
+assuming a minimum CPU architecture. For x86-64 CPUs (e.g. Intel), the wheels are built
+against ``x86-64-v3``, which is supported by most Intel CPUs since 2013. For MacOS on
+ARM, the wheels are built against ``apple-m1``, which should work on Apple M1 (2020) or
+newer.
 
-For the best performance, you may wish to build from source (see above) with the following
-environment variable set::
+For the best performance, you may wish to build from source (see above) with the
+following environment variable set::
 
     export CXXFLAGS=-march=native
 
-This will likely have the biggest effect on orbit integration. Be aware that compiling with this
-flag means that Gala will only run on the same type of CPU that it was compiled on!
+This will likely have the biggest effect on orbit integration. Be aware that compiling
+with this flag means that Gala will only run on the same type of CPU that it was
+compiled on!
 
-If your CPU does not support the instruction set that Gala was compiled for, you will likely
-receive an "illegal instruction error" (``SIGILL``). If that happens, try recompiling from
-source, without any ``-march`` flags.
+If your CPU does not support the instruction set that Gala was compiled for, you will
+likely receive an "illegal instruction error" (``SIGILL``). If that happens, try
+recompiling from source, without any ``-march`` flags.
 
 
 Installing on Windows
 =====================
 
-We have successfully installed Gala on Windows within an Anaconda installation,
-which installs and uses GCC to compile C code. Unfortunately, Gala will not work
-with Microsoft Visual Studio's C compiler because it is not C99 compliant. With
-Anaconda, you can install ``gsl`` (see below) and then install Gala with
-``pip``::
-
-    pip install gala
+We have successfully installed Gala on Windows within an Anaconda installation, or with
+the Windows Subsystem for Linux (WSL), which acts as a Linux environment within Windows.
+Either way, we recommend using GCC to compile any C code. Unfortunately, Gala will not
+work with Microsoft Visual Studio's C compiler because it is not C99 compliant.
 
 
 GSL support
@@ -92,22 +85,12 @@ installed. If it errors, you will need to install it. Additionally, if your
 version of GSL is <1.14, we recommend updating to a newer version, as Gala has
 only been tested with GSL >= 1.14.
 
-Installing with ``conda``
--------------------------
+On Linux and Mac, you can install GSL using a package manager, such as ``apt`` or
+``homebrew``. For example, on a Mac with ``homebrew``, you can install GSL with::
 
-If you use a Mac computer, we recommend installing GSL using the `anaconda
-<https://www.anaconda.com/download/>`_ Python package manager. Using ``conda``,
-you can install GSL with::
+    brew install gsl
 
-    conda install -c conda-forge gsl
-
-
-Installing with ``apt``
------------------------
-
-If you use Linux, you can install GSL with anaconda (see directions above), or
-with ``apt``. To install with apt, make sure to install both ``gsl-bin`` and
-``libgsl0-dev``::
+Or on Linux with ``apt``::
 
     apt-get install gsl-bin libgsl0-dev
 
@@ -115,28 +98,32 @@ with ``apt``. To install with apt, make sure to install both ``gsl-bin`` and
 Forcing gala to install without GSL support
 -------------------------------------------
 
-You can force Gala to build without GSL support using the ``--nogsl`` flag
-passed to setup.py. To use this flag, you must install Gala from source by
-cloning the repository (see above) and running::
+You can force Gala to build without GSL support using the ``--nogsl`` flag passed to
+setup.py. To use this flag, you must install Gala from source by cloning the repository
+(see above) and running::
 
-    python -m pip install gala --install-option="--nogsl"
+    uv pip install gala --install-option="--nogsl"
 
 
 Python Dependencies
 ===================
 
-This packages has the following dependencies:
+Gala has the following build dependencies:
 
 * `Python`_ >= 3.11
 * `Numpy`_
 * `Cython <http://www.cython.org/>`_
+* ``setuptools``
+* ``setuptools_scm``
+* ``pybind11``
+
+Gala has the following runtime dependencies:
+
+* `Numpy`_
 * `Astropy`_
 * `PyYAML`_
 * `scipy`_
 
-Explicit version requirements are specified in the project `setup.cfg
-<https://github.com/adrn/gala/blob/main/setup.cfg>`_. ``pip`` and ``conda``
-should install and enforce these versions automatically.
 
 Optional
 --------

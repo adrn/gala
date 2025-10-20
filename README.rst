@@ -15,18 +15,17 @@ The documentation for ``Gala`` is hosted on `Read the docs
 Installation and Dependencies
 -----------------------------
 
-|conda| |PyPI|
+|PyPI|
 
-The easiest way to get Gala is to install with pip or conda.
+The easiest way to get Gala is to install with pip or uv.
 
-The recommended install method is to use ``pip``::
+Gala can be installed with ``pip`` (with ``uv`` or standalone)::
 
    pip install gala
 
-If you are on Linux or Mac, you can also install ``gala`` with conda using the
-conda-forge channel::
+You can also add ``gala`` as a dependency to your environment with::
 
-    conda install gala --channel conda-forge
+   uv add gala
 
 See the `installation
 instructions <http://gala.adrian.pw/en/latest/install.html>`_ in the
@@ -63,7 +62,7 @@ License
 
 |License|
 
-Copyright 2013-2024 Adrian Price-Whelan and contributors.
+Copyright 2013-2025 Adrian Price-Whelan and contributors.
 
 ``Gala`` is free software made available under the MIT License. For details see
 the `LICENSE <https://github.com/adrn/gala/blob/main/LICENSE>`_ file.
