@@ -22,9 +22,6 @@ dependencies = [
 ]
 dynamic = ["version"]
 
-[tool.setuptools.dynamic]
-version = {attr = "gala.__version__"}
-
 [project.urls]
 Documentation = "https://gala.adrian.pw"
 Repository = "https://github.com/adrn/gala.git"
@@ -85,7 +82,6 @@ requires = [
     "setuptools>=77.0.3",
     "wheel",
     "setuptools_scm",
-    "extension-helpers==1.*",
     "numpy>=2.0",
     "cython",
     "pybind11"
@@ -93,27 +89,35 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["."]
+where = ["src"]
 include = ["gala", "gala.*"]
 
 [tool.setuptools.package-data]
-"*" = ["*.c"]
-"gala" = ["extra_compile_macros.h", "cconfig.pyx", "*.c"]
+"*" = ["*.cpp"]
+"gala" = ["extra_compile_macros.h", "cconfig.pyx", "*.cpp"]
+"gala.coordinates" = ["*.pyx", "*.pxd", "*.h", "src/*.h", "src/*.cpp"]
 "gala.coordinates.tests" = ["*.txt", "*.npy", "SgrCoord_data", "*.csv"]
 "gala.dynamics" = ["*/*.pyx", "*/*.pxd", "*/*.h", "nbody/nbody_helper.h"]
 "gala.integrate" = [
+    "*.pyx",
+    "*.pxd",
+    "*.h",
     "*/*.pyx",
     "*/*.pxd",
-    "cyintegrators/*.c",
-    "cyintegrators/dopri/*.c",
+    "cyintegrators/*.cpp",
+    "cyintegrators/dopri/*.cpp",
     "cyintegrators/dopri/*.h"
 ]
 "gala.potential" = [
+    "*.pyx",
+    "*.pxd",
+    "*.h",
     "src/funcdefs.h",
     "potential/src/cpotential.h",
     "frame/src/cframe.h",
     "*/*.pyx",
     "*/*.pxd",
+    "*/*.h",
     "scf/tests/data/*",
     "potential/tests/*.yml",
     "potential/tests/*.pot",
@@ -121,11 +125,11 @@ include = ["gala", "gala.*"]
 ]
 
 [tool.setuptools_scm]
-version_file = "gala/_version.py"
+version_file = "src/gala/_version.py"
 local_scheme = "no-local-version"  # So that uploads to test.pypi.org work
 
 [tool.pytest.ini_options]
-testpaths = ["gala", "docs"]
+testpaths = ["src/gala", "docs"]
 astropy_header = true
 #doctest_plus = "enabled"
 text_file_format = "rst"
@@ -145,18 +149,18 @@ filterwarnings = [
 
 [tool.coverage.run]
 omit = [
-    "gala/conftest*",
-    "gala/cython_version*",
-    "gala/setup_package*",
-    "gala/*/setup_package*",
-    "gala/*/*/setup_package*",
-    "gala/tests/*",
-    "gala/*/tests/*",
-    "gala/*/*/tests/*",
-    "gala/version*",
-    "gala/dynamics/_genfunc/*",
-    "gala/coordinates/poincarepolar.py",
-    "gala/coordinates/velocity_frame_transforms.py",
+    "src/gala/conftest*",
+    "src/gala/cython_version*",
+    "src/gala/setup_package*",
+    "src/gala/*/setup_package*",
+    "src/gala/*/*/setup_package*",
+    "src/gala/tests/*",
+    "src/gala/*/tests/*",
+    "src/gala/*/*/tests/*",
+    "src/gala/version*",
+    "src/gala/dynamics/_genfunc/*",
+    "src/gala/coordinates/poincarepolar.py",
+    "src/gala/coordinates/velocity_frame_transforms.py",
     "*/gala/conftest*",
     "*/gala/cython_version*",
     "*/gala/setup_package*",
@@ -256,7 +260,7 @@ ignore = [
 "setup.py" = ["T201", "E402"]
 "docs/conf.py" = ["T201"]
 "docs/tutorials/*.py" = ["B018", "E402"]
-"gala/dynamics/actionangle/_genfunc/**/*" = ["ALL"]
+"src/gala/dynamics/actionangle/_genfunc/**/*" = ["ALL"]
 
 [[tool.cibuildwheel.overrides]]
 select = "*_x86_64"

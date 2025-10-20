@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 # Licensed under an MIT license - see LICENSE
 
-# NOTE: The configuration for the package, including the name, version, and
-# other information are set in the setup.cfg file.
-
 import os
 import sys
 import warnings
+from collections import defaultdict
 
-from extension_helpers import get_extensions
-from setuptools import setup
+from setuptools import Extension, setup
 
 # First provide helpful messages if contributors try and run legacy commands
 # for tests or docs.
@@ -80,7 +77,7 @@ except Exception:
 #
 from subprocess import CalledProcessError, check_output
 
-extra_compile_macros_file = "gala/extra_compile_macros.h"
+extra_compile_macros_file = "src/gala/extra_compile_macros.h"
 
 # Note: on RTD, they now support conda environments, but don't activate the
 # conda environment that gets created, and so the C stuff installed with GSL
@@ -221,13 +218,296 @@ else:
         if flags:
             extra_incl_flags.extend(flags)
 
-all_extensions = get_extensions()
-extensions = []
-for ext in all_extensions:
+# =============================================================================
+# Cython extensions
+#
+
+
+def get_all_extensions():
+    """All Cython extensions"""
+    import numpy as np
+
+    extensions = []
+    mac_incl_path = "/usr/include/malloc"
+
+    # Base config shared by many extensions:
+    def base_cfg():
+        cfg = defaultdict(list)
+        cfg["include_dirs"].extend(["src/gala", np.get_include(), mac_incl_path])
+        cfg["extra_compile_args"].append("-std=c++17")
+
+        # Some READTHEDOCS hacks - see
+        # https://github.com/pyFFTW/pyFFTW/pull/161/files
+        # https://github.com/pyFFTW/pyFFTW/pull/162/files
+        include_dirs = [os.path.join(sys.prefix, "include")]
+        library_dirs = [os.path.join(sys.prefix, "lib")]
+        cfg["include_dirs"].extend(include_dirs)
+        cfg["library_dirs"].extend(library_dirs)
+        return cfg
+
+    # ---- gala._cconfig ----
+    cfg = base_cfg()
+    cfg["sources"].append("src/gala/cconfig.pyx")
+    extensions.append(Extension("gala._cconfig", **cfg))
+
+    # ---- gala.dynamics ----
+
+    #     lyapunov
+    cfg = base_cfg()
+    cfg["include_dirs"].extend(
+        ["src/gala/integrate/cyintegrators", "src/gala/potential"]
+    )
+    cfg["sources"].extend(
+        [
+            "src/gala/potential/potential/src/cpotential.cpp",
+            "src/gala/potential/hamiltonian/src/chamiltonian.cpp",
+            "src/gala/integrate/cyintegrators/dopri/dop853.cpp",
+            "src/gala/dynamics/lyapunov/dop853_lyapunov.pyx",
+        ]
+    )
+    extensions.append(Extension("gala.dynamics.lyapunov.dop853_lyapunov", **cfg))
+
+    #     mockstream._coord
+    cfg = base_cfg()
+    cfg["include_dirs"].append("src/gala/potential")
+    cfg["sources"].append("src/gala/dynamics/mockstream/_coord.pyx")
+    extensions.append(Extension("gala.dynamics.mockstream._coord", **cfg))
+
+    #     mockstream.df
+    cfg = base_cfg()
+    cfg["include_dirs"].append("src/gala/potential")
+    cfg["sources"].extend(
+        [
+            "src/gala/dynamics/mockstream/df.pyx",
+            "src/gala/potential/potential/src/cpotential.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.dynamics.mockstream.df", **cfg))
+
+    #     mockstream._mockstream
+    cfg = base_cfg()
+    cfg["include_dirs"].extend(
+        [
+            "src/gala/integrate/cyintegrators",
+            "src/gala/potential",
+            "src/gala/dynamics/nbody",
+        ]
+    )
+    cfg["sources"].extend(
+        [
+            "src/gala/potential/potential/src/cpotential.cpp",
+            "src/gala/potential/hamiltonian/src/chamiltonian.cpp",
+            "src/gala/dynamics/mockstream/mockstream.pyx",
+            "src/gala/integrate/cyintegrators/dopri/dop853.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.dynamics.mockstream._mockstream", **cfg))
+
+    #     nbody
+    cfg = base_cfg()
+    cfg["include_dirs"].extend(
+        [
+            "src/gala/integrate/cyintegrators",
+            "src/gala/potential",
+        ]
+    )
+    cfg["sources"].extend(
+        [
+            "src/gala/potential/potential/src/cpotential.cpp",
+            "src/gala/potential/hamiltonian/src/chamiltonian.cpp",
+            "src/gala/integrate/cyintegrators/dopri/dop853.cpp",
+            "src/gala/dynamics/nbody/nbody.pyx",
+        ]
+    )
+    extensions.append(Extension("gala.dynamics.nbody.nbody", **cfg))
+
+    # ===== gala.integrate extensions =====
+
+    #     leapfrog
+    cfg = base_cfg()
+    cfg["include_dirs"].extend(["src/gala/potential", "src/gala/dynamics/nbody"])
+    cfg["sources"].extend(
+        [
+            "src/gala/integrate/cyintegrators/leapfrog.pyx",
+            "src/gala/potential/potential/src/cpotential.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.integrate.cyintegrators.leapfrog", **cfg))
+
+    #     dop853
+    cfg = base_cfg()
+    cfg["include_dirs"].append("src/gala/potential")
+    cfg["sources"].extend(
+        [
+            "src/gala/potential/hamiltonian/src/chamiltonian.cpp",
+            "src/gala/potential/potential/src/cpotential.cpp",
+            "src/gala/integrate/cyintegrators/dop853.pyx",
+            "src/gala/integrate/cyintegrators/dopri/dop853.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.integrate.cyintegrators.dop853", **cfg))
+
+    #     ruth4
+    cfg = base_cfg()
+    cfg["include_dirs"].extend(["src/gala/potential", "src/gala/dynamics/nbody"])
+    cfg["sources"].extend(
+        [
+            "src/gala/integrate/cyintegrators/ruth4.pyx",
+            "src/gala/potential/potential/src/cpotential.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.integrate.cyintegrators.ruth4", **cfg))
+
+    # ===== gala.potential extensions =====
+
+    #     cpotential
+    cfg = base_cfg()
+    cfg["include_dirs"].extend(["src/gala/potential", "src/gala"])
+    cfg["sources"].extend(
+        [
+            "src/gala/potential/potential/cpotential.pyx",
+            "src/gala/potential/potential/builtin/builtin_potentials.cpp",
+            "src/gala/potential/potential/src/cpotential.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.potential.potential.cpotential", **cfg))
+
+    #     ccompositepotential
+    cfg = base_cfg()
+    cfg["include_dirs"].extend(["src/gala/potential", "src/gala"])
+    cfg["sources"].extend(
+        [
+            "src/gala/potential/potential/ccompositepotential.pyx",
+            "src/gala/potential/potential/src/cpotential.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.potential.potential.ccompositepotential", **cfg))
+
+    #     cybuiltin
+    cfg = base_cfg()
+    cfg["include_dirs"].extend(["src/gala/potential", "src/gala"])
+    cfg["sources"].extend(
+        [
+            "src/gala/potential/potential/builtin/cybuiltin.pyx",
+            "src/gala/potential/potential/builtin/builtin_potentials.cpp",
+            "src/gala/potential/potential/builtin/multipole.cpp",
+            "src/gala/potential/potential/src/cpotential.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.potential.potential.builtin.cybuiltin", **cfg))
+
+    #     cyexp
+    cfg = base_cfg()
+    cfg["include_dirs"].extend(["src/gala/potential", "src/gala"])
+    cfg["sources"].extend(
+        [
+            "src/gala/potential/potential/builtin/cyexp.pyx",
+            "src/gala/potential/potential/builtin/exp_fields.cc",
+        ]
+    )
+    extensions.append(Extension("gala.potential.potential.builtin.cyexp", **cfg))
+
+    #     cytimeinterp
+    cfg = base_cfg()
+    cfg["include_dirs"].extend(["src/gala/potential", "src/gala"])
+    cfg["sources"].extend(
+        [
+            "src/gala/potential/potential/builtin/cytimeinterp.pyx",
+            "src/gala/potential/potential/builtin/time_interp.cpp",
+            "src/gala/potential/potential/builtin/time_interp_wrapper.cpp",
+            "src/gala/potential/potential/src/cpotential.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.potential.potential.builtin.cytimeinterp", **cfg))
+
+    #     cframe
+    cfg = base_cfg()
+    cfg["include_dirs"].append("src/gala/potential")
+    cfg["sources"].extend(
+        [
+            "src/gala/potential/frame/cframe.pyx",
+            "src/gala/potential/frame/src/cframe.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.potential.frame.cframe", **cfg))
+
+    #     frames
+    cfg = base_cfg()
+    cfg["include_dirs"].append("src/gala/potential")
+    cfg["sources"].extend(
+        [
+            "src/gala/potential/frame/builtin/frames.pyx",
+            "src/gala/potential/frame/builtin/builtin_frames.cpp",
+            "src/gala/potential/frame/src/cframe.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.potential.frame.builtin.frames", **cfg))
+
+    #     scf._computecoeff
+    cfg = base_cfg()
+    cfg["include_dirs"].append("src/gala/potential")
+    cfg["sources"].extend(
+        [
+            "src/gala/potential/scf/computecoeff.pyx",
+            "src/gala/potential/scf/src/bfe_helper.cpp",
+            "src/gala/potential/scf/src/coeff_helper.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.potential.scf._computecoeff", **cfg))
+
+    #    scf._bfe
+    cfg = base_cfg()
+    cfg["include_dirs"].extend(["src/gala", "src/gala/potential"])
+    cfg["library_dirs"].append(os.path.join(sys.prefix, "lib"))
+    cfg["sources"].extend(
+        [
+            "src/gala/potential/potential/src/cpotential.cpp",
+            "src/gala/potential/potential/builtin/builtin_potentials.cpp",
+            "src/gala/potential/scf/bfe.pyx",
+            "src/gala/potential/scf/src/bfe.cpp",
+            "src/gala/potential/scf/src/bfe_helper.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.potential.scf._bfe", **cfg))
+
+    #    scf._bfe_class
+    cfg = base_cfg()
+    cfg["include_dirs"].extend(["src/gala", "src/gala/potential"])
+    cfg["library_dirs"].append(os.path.join(sys.prefix, "lib"))
+    cfg["sources"].extend(
+        [
+            "src/gala/potential/potential/src/cpotential.cpp",
+            "src/gala/potential/potential/builtin/builtin_potentials.cpp",
+            "src/gala/potential/scf/bfe_class.pyx",
+            "src/gala/potential/scf/src/bfe.cpp",
+            "src/gala/potential/scf/src/bfe_helper.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.potential.scf._bfe_class", **cfg))
+
+    #     chamiltonian
+    cfg = base_cfg()
+    cfg["include_dirs"].append("src/gala/potential")
+    cfg["sources"].extend(
+        [
+            "src/gala/potential/hamiltonian/chamiltonian.pyx",
+            "src/gala/potential/hamiltonian/src/chamiltonian.cpp",
+            "src/gala/potential/potential/src/cpotential.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.potential.hamiltonian.chamiltonian", **cfg))
+
+    return extensions
+
+
+extensions = get_all_extensions()
+extensions_with_flags = []
+for ext in extensions:
     # TODO: -Ofast deprecated with clang
     # -march=native may be useful, depending on the architecture
     ext.extra_compile_args.extend(["-Ofast"])
     ext.extra_link_args.extend(["-Ofast"])
+
     if ("potential.potential" in ext.name or "scf" in ext.name) and (
         gsl_version is not None
     ):
@@ -290,7 +570,7 @@ for ext in all_extensions:
             # Skip cyexp extension if EXP is not found
             continue
 
-    extensions.append(ext)
+    extensions_with_flags.append(ext)
 
 print("-" * 79)
 
@@ -308,8 +588,8 @@ with open(extra_compile_macros_file, "w", encoding="utf-8") as f:
 
 setup(
     use_scm_version={
-        "write_to": os.path.join("gala", "_version.py"),
+        "write_to": os.path.join("src", "gala", "_version.py"),
         "write_to_template": VERSION_TEMPLATE,
     },
-    ext_modules=extensions,
+    ext_modules=extensions_with_flags,
 )
