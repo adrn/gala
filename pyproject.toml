@@ -146,20 +146,9 @@ filterwarnings = [
 omit = [
     "src/gala/conftest*",
     "src/gala/cython_version*",
-    "src/gala/setup_package*",
-    "src/gala/*/setup_package*",
-    "src/gala/*/*/setup_package*",
     "src/gala/version*",
-    "src/gala/dynamics/_genfunc/*",
     "src/gala/coordinates/poincarepolar.py",
     "src/gala/coordinates/velocity_frame_transforms.py",
-    "*/gala/conftest*",
-    "*/gala/cython_version*",
-    "*/gala/setup_package*",
-    "*/gala/*/setup_package*",
-    "*/gala/*/*/setup_package*",
-    "*/gala/version*",
-    "*/gala/dynamics/_genfunc/*",
 ]
 
 [tool.coverage.report]
@@ -247,7 +236,7 @@ ignore = [
 "setup.py" = ["T201", "E402"]
 "docs/conf.py" = ["T201"]
 "docs/tutorials/*.py" = ["B018", "E402"]
-"src/gala/dynamics/actionangle/_genfunc/**/*" = ["ALL"]
+"tests/dynamics/actionangle/_genfunc/**/*" = ["ALL"]
 
 [[tool.cibuildwheel.overrides]]
 select = "*_x86_64"
