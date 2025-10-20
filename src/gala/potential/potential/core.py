@@ -1235,13 +1235,15 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-        units : `~gala.units.UnitSystem`
+        units : `~gala.units.UnitSystem`, str
             Set of non-reducable units that specify (at minimum) the
             length, mass, time, and angle units.
         copy : bool (optional)
             If True, returns a copy, if False, changes this object.
         """
         pot = pycopy.deepcopy(self) if copy else self
+
+        units = self._validate_units(units)
 
         # TODO: this is repeated code - see equivalent in cpotential.pyx
         tmp = [
