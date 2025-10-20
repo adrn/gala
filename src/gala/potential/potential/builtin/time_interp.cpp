@@ -30,15 +30,8 @@ TimeInterpState* time_interp_alloc(int n_params, int n_dim, const gsl_interp_typ
         }
     }
 
-    // Allocate origin interpolators
-    if (n_dim > 0) {
-        state->origin = (TimeInterpParam*)calloc(n_dim, sizeof(TimeInterpParam));
-        if (!state->origin) {
-            free(state->params);
-            free(state);
-            return NULL;
-        }
-    }
+    // Initialize origin as a single multi-element parameter (will be set up later)
+    memset(&state->origin, 0, sizeof(TimeInterpParam));
 
     // Initialize rotation to identity/constant
     state->rotation.is_constant = 1;
@@ -84,26 +77,29 @@ void time_interp_free(TimeInterpState *state) {
         free(state->params);
     }
 
-    // Free origin interpolators (these are treated as scalar, n_elements=1)
-    if (state->origin) {
-        for (int i = 0; i < state->n_dim; i++) {
-            if (state->origin[i].splines && state->origin[i].splines[0]) {
-                gsl_spline_free(state->origin[i].splines[0]);
+    // Free origin interpolator (now a single multi-element parameter)
+    if (state->origin.splines) {
+        for (int i = 0; i < state->origin.n_elements; i++) {
+            if (state->origin.splines[i]) {
+                gsl_spline_free(state->origin.splines[i]);
             }
-            if (state->origin[i].splines) free(state->origin[i].splines);
-            if (state->origin[i].accels && state->origin[i].accels[0]) {
-                gsl_interp_accel_free(state->origin[i].accels[0]);
+            if (state->origin.accels[i]) {
+                gsl_interp_accel_free(state->origin.accels[i]);
             }
-            if (state->origin[i].accels) free(state->origin[i].accels);
-            if (state->origin[i].time_knots) free(state->origin[i].time_knots);
-            if (state->origin[i].param_values && state->origin[i].param_values[0]) {
-                free(state->origin[i].param_values[0]);
-            }
-            if (state->origin[i].param_values) free(state->origin[i].param_values);
-            if (state->origin[i].constant_values) free(state->origin[i].constant_values);
         }
-        free(state->origin);
+        free(state->origin.splines);
     }
+    if (state->origin.accels) free(state->origin.accels);
+    if (state->origin.time_knots) free(state->origin.time_knots);
+    if (state->origin.param_values) {
+        for (int i = 0; i < state->origin.n_elements; i++) {
+            if (state->origin.param_values[i]) {
+                free(state->origin.param_values[i]);
+            }
+        }
+        free(state->origin.param_values);
+    }
+    if (state->origin.constant_values) free(state->origin.constant_values);
 
     // Free rotation interpolators
     if (!state->rotation.is_constant) {

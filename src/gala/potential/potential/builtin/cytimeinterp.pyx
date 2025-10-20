@@ -41,7 +41,7 @@ cdef extern from "time_interp.h":
 
     ctypedef struct TimeInterpState:
         TimeInterpParam *params
-        TimeInterpParam *origin
+        TimeInterpParam origin
         TimeInterpRotation rotation
         int n_params
         int n_dim
@@ -148,6 +148,7 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
             double[::1] time_knots_c = self._time_knots
             double[::1] c_only_params_c = self._c_only_params
             double[::1] param_values_view
+            double[::1] origin_flat
             double[::1] origin_component  # x, y, or z component
             double rotation_matrix[9]  # one instance of rotation matrix
             double origin_val  # temporary for passing address of scalar origin
@@ -224,25 +225,25 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
 
                 param_idx += 1
 
-            # Initialize origin interpolators:
+            # Initialize origin as a single multi-element parameter (n_elements = n_dim)
             # This always comes in as a 2D array. If it's constant, axis=0 has length 1.
-            result = 0
+
             if self._origin_arrays.shape[0] == 1:  # constant
-                for i in range(n_dim):
-                    # Create a temporary variable to pass address of array element
-                    origin_val = self._origin_arrays[0, i]
-                    result += time_interp_init_constant_param(
-                        &self.interp_state.origin[i], &origin_val, 1
-                    )
+                # Flatten the constant origin
+                origin_flat = np.ascontiguousarray(self._origin_arrays[0, :])
+                result = time_interp_init_constant_param(
+                    &self.interp_state.origin, &origin_flat[0], n_dim
+                )
 
             elif self._origin_arrays.shape[0] == n_knots:  # time-interpolated
-                for i in range(n_dim):
-                    origin_component = np.ascontiguousarray(origin_arrays[:, i])
-                    result += time_interp_init_param(
-                        &self.interp_state.origin[i],
-                        &time_knots_c[0], &origin_component[0], n_knots, 1,
-                        gsl_interp_type_ptr
-                    )
+                # Flatten origin arrays from (n_knots, n_dim) to 1D row-major
+                # Convert memoryview to numpy array first
+                origin_flat = np.ascontiguousarray(np.asarray(self._origin_arrays).ravel())
+                result = time_interp_init_param(
+                    &self.interp_state.origin,
+                    &time_knots_c[0], &origin_flat[0], n_knots, n_dim,
+                    gsl_interp_type_ptr
+                )
             else:
                 msg = (
                     f"Origin array has wrong shape: expected "
@@ -252,8 +253,6 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
 
             if result != 0:
                 raise RuntimeError(f"Failed to initialize origin")
-
-            # --- TODO HERE ---
 
             # Initialize rotation matrix interpolators
             # This always comes in as a 3D array. If it's constant, axis=0 has length 1.

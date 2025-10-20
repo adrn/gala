@@ -54,7 +54,7 @@ typedef struct {
 // Global state structure for time interpolation of potential parameters
 typedef struct {
     TimeInterpParam *params;      // Array of parameter interpolators
-    TimeInterpParam *origin;      // Array for origin components (ndim)
+    TimeInterpParam origin;       // Origin interpolator (n_elements = n_dim)
     TimeInterpRotation rotation;  // Rotation interpolator
     void *wrapped_potential;      // Pointer to the wrapped CPotential
     int n_params;

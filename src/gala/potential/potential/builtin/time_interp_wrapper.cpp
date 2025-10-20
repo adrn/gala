@@ -56,10 +56,11 @@ static int time_interp_eval_all(
         return -1;
     }
 
+    // Origin is now a single multi-element parameter
+    time_interp_eval_param(&interp_state->origin, t, interp_origin);
+
+    // Check for NaN in origin
     for (int i = 0; i < n_dim; i++) {
-        double origin_val;
-        time_interp_eval_param(&interp_state->origin[i], t, &origin_val);
-        interp_origin[i] = origin_val;
         if (isnan(interp_origin[i])) {
             free(interp_params);
             free(interp_origin);
