@@ -34,7 +34,8 @@ src/gala/_version.py
 
 # Other generated files
 htmlcov
-.coverage
+.coverage*
+coverage.xml
 MANIFEST
 
 # Sphinx
@@ -69,16 +70,8 @@ pip-wheel-metadata/
 # Other
 .*.swp
 *~
+.hypothesis
+node_modules
 
 # Mac OSX
 .DS_Store
-
-# Custom
-notebooks
-plots
-scripts
-.hypothesis
-
-gala_env
-
-uv.lock
