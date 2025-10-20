@@ -24,7 +24,9 @@ class HarmonicOscillatorPotential(PotentialBase):
         length, mass, time, and angle units.
     """
 
-    omega = PotentialParameter("omega", physical_type="frequency")
+    omega = PotentialParameter(
+        "omega", physical_type="frequency", ndim=1, convert=np.atleast_1d
+    )
 
     def _setup_potential(
         self, parameters, parameter_is_default, origin=None, R=None, units=None

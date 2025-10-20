@@ -1,4 +1,4 @@
-get_ipython().magic('config InlineBackend.figure_format = "retina"')  # noqa
+get_ipython().run_line_magic("config", 'InlineBackend.figure_format = "retina"')  # noqa
 
 import matplotlib.pyplot as plt
 

@@ -13,6 +13,8 @@ New Features
 - Added coordinate symmetry support for potential classes: spherical potential methods
   can now be evaluated using ``r=`` and cylindrical potentials using ``R=`` and ``z=``
   instead of requiring full 3D Cartesian coordinates.
+- Added a new ``gala.potential.TimeInterpolatedPotential`` class that enables wrapping
+  any potential class to support time-dependent parameters through interpolation.
 
 Bug fixes
 ---------
@@ -36,6 +38,9 @@ API changes
   the correct shape given the dimensionality of the potential.
 - Removed custom ``ImmutableDict`` implementation in favor of
   ``types.MappingProxyType``.
+- Added new keyword arguments ``ndim`` and ``convert`` to ``PotentialParameter`` to
+  control the expected number of dimensions for array parameters and to specify a
+  conversion function for parameter values, respectively.
 
 Other
 -----

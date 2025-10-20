@@ -37,6 +37,8 @@ class PotentialParameter:
         default=None,
         equivalencies=None,
         python_only=False,
+        ndim=0,
+        convert=np.asanyarray,
     ):
         # TODO: could add a "shape" argument?
         # TODO: need better sanitization and validation here
@@ -46,6 +48,8 @@ class PotentialParameter:
         self.default = default
         self.equivalencies = equivalencies
         self.python_only = bool(python_only)
+        self.ndim = int(ndim)
+        self.convert = convert
 
     def __repr__(self):
         if self.physical_type is None:
@@ -105,7 +109,7 @@ class CommonBase:
 
         return units
 
-    def _parse_parameter_values(self, *args, **kwargs):
+    def _parse_parameter_values(self, *args, strict=True, **kwargs):
         expected_parameter_keys = list(self._parameters.keys())
 
         if len(args) > len(expected_parameter_keys):
@@ -137,23 +141,36 @@ class CommonBase:
                 parameter_is_default.add(k)
             parameter_values[k] = val
 
-        if kwargs:
+        for k, val in parameter_values.items():
+            if self._parameters[k].convert is not None:
+                parameter_values[k] = self._parameters[k].convert(val)
+            else:
+                parameter_values[k] = val
+
+        if kwargs and strict:
             raise ValueError(
                 f"{self.__class__} received unexpected keyword "
                 f"argument(s): {list(kwargs.keys())}"
             )
 
+        for k, pval in parameter_values.items():
+            pp = self._parameters[k]
+            if pp.physical_type is not None and pval.ndim != pp.ndim:
+                raise ValueError(
+                    f"Parameter {k} should have ndim={pp.ndim} "
+                    f"dimensions, but has ndim={pval.ndim}"
+                )
+
         return parameter_values, parameter_is_default
 
-    @classmethod
-    def _prepare_parameters(cls, parameters, units):
+    def _prepare_parameters(self, parameters, units):
         pars = {}
         for k, v in parameters.items():
-            expected_ptype = cls._parameters[k].physical_type
+            expected_ptype = self._parameters[k].physical_type
             expected_unit = (
                 units[expected_ptype] if expected_ptype is not None else None
             )
-            equiv = cls._parameters[k].equivalencies
+            equiv = self._parameters[k].equivalencies
 
             if hasattr(v, "unit"):
                 if not isinstance(
@@ -177,8 +194,6 @@ class CommonBase:
                 # .to() could cause small rounding issues in comparisons
                 if v.unit.physical_type != expected_ptype:
                     v = v.to(expected_unit, equiv)
-
-                v = v.decompose(units)
 
                 v = v.decompose(units)
 

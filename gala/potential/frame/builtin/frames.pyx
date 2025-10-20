@@ -124,8 +124,13 @@ class ConstantRotatingFrame(CFrameBase):
         length, mass, time, and angle units.
 
     """
-    Omega = PotentialParameter('Omega', physical_type='frequency',
-                               equivalencies=u.dimensionless_angles())
+    Omega = PotentialParameter(
+        'Omega',
+        physical_type='frequency',
+        equivalencies=u.dimensionless_angles(),
+        ndim=1,
+        convert=np.atleast_1d
+    )
 
     def _setup_frame(self, parameters, parameter_is_default, units=None):
         super()._setup_frame(parameters, parameter_is_default, units=units)

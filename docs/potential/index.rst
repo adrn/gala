@@ -321,6 +321,37 @@ gradient of the potential:
     >>> grad[0]  # dPhi/dx
     1.0 * v_c**2 * x / (q1**2 * (r_h**2 + z**2 / q3**2 + y**2 / q2**2 + x**2 / q1**2))
 
+Time-varying Potentials
+=======================
+
+For modeling time-dependent gravitational potentials, Gala provides
+:class:`~gala.potential.potential.TimeInterpolatedPotential`.
+This class can wrap any potential class and interpolate its parameters, origin, and/or
+rotation over time.
+This is useful for modeling, for example, time-evolving masses, such as from mass-loss
+in a mock stream simulation, or for rotating components like galactic bars.
+
+The class uses GSL spline interpolation to smoothly interpolate parameter values between
+specified time knots. For example, to model a black hole that grows in mass over time::
+
+    >>> import astropy.units as u
+    >>> import numpy as np
+    >>> times = np.linspace(0, 1, 11) * u.Gyr
+    >>> masses = np.linspace(1e6, 1e8, 11) * u.Msun  # Grows linearly by a factor of 100
+    >>> pot = gp.TimeInterpolatedPotential(
+    ...     gp.KeplerPotential,
+    ...     time_knots=times,
+    ...     m=masses,
+    ...     units=galactic
+    ... )
+    >>> pot.energy([10., 0, 0] * u.pc, t=0 * u.Gyr)  # doctest: +SKIP
+    <Quantity [-0.0044985] kpc2 / Myr2>
+    >>> pot.energy([10., 0, 0] * u.pc, t=1 * u.Gyr)  # doctest: +SKIP
+    <Quantity [-0.44985021] kpc2 / Myr2>
+
+Parameters can be constant (passed as scalars) or time-varying (passed as arrays
+matching the number of time knots). You can also specify time-varying origin offsets and
+rotation matrices. See :doc:`time-interpolated` for more details and examples.
 
 Using gala.potential
 ====================
@@ -333,6 +364,7 @@ More details are provided in the linked pages below:
    define-new-potential
    compositepotential
    origin-rotation
+   time-interpolated
    hamiltonian-reference-frames
    spherical-spline
    scf

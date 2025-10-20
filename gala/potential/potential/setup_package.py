@@ -54,6 +54,19 @@ def get_extensions():
     # cfg["sources"].append("gala/potential/potential/src/cpotential.cpp")
     exts.append(Extension("gala.potential.potential.builtin.cyexp", **cfg))
 
+    # Time interpolation extension (requires GSL)
+    cfg = defaultdict(list)
+    cfg["include_dirs"].append(np.get_include())
+    cfg["include_dirs"].append(mac_incl_path)
+    cfg["include_dirs"].append("gala/potential")
+    cfg["include_dirs"].append("gala")
+    cfg["extra_compile_args"].append("-std=c++17")
+    cfg["sources"].append("gala/potential/potential/builtin/cytimeinterp.pyx")
+    cfg["sources"].append("gala/potential/potential/builtin/time_interp.cpp")
+    cfg["sources"].append("gala/potential/potential/builtin/time_interp_wrapper.cpp")
+    cfg["sources"].append("gala/potential/potential/src/cpotential.cpp")
+    exts.append(Extension("gala.potential.potential.builtin.cytimeinterp", **cfg))
+
     return exts
 
 
@@ -69,6 +82,9 @@ def get_package_data():
             "builtin/builtin_potentials.cpp",
             "builtin/exp_fields.h",
             "builtin/exp_fields.cc",
+            "builtin/time_interp.h",
+            "builtin/time_interp.cpp",
+            "builtin/time_interp_wrapper.cpp",
             "src/cpotential.h",
             "src/cpotential.cpp",
             "tests/*.yml",

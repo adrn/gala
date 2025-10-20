@@ -45,11 +45,11 @@ from gala.potential.potential.builtin.cybuiltin import (
 if EXP_ENABLED:
     from gala.potential.potential.builtin.cyexp import EXPWrapper
 
-
 from ..core import PotentialBase, _potential_docstring
 from ..cpotential import CPotentialBase
 from ..symmetry import CylindricalSymmetry, SphericalSymmetry
 from ..util import format_doc, sympy_wrap
+from .time_interpolated import TimeInterpolatedPotential
 
 __all__ = [
     "BurkertPotential",
@@ -74,6 +74,7 @@ __all__ = [
     "SatohPotential",
     "SphericalSplinePotential",
     "StonePotential",
+    "TimeInterpolatedPotential",
 ]
 
 
@@ -1216,8 +1217,6 @@ class MultipolePotential(CPotentialBase, GSL_only=True):
         )
 
     def __new__(cls, *args, **kwargs):
-        # We don't want to call this method if we've already set up
-        # an skyoffset frame for this class.
         if not (issubclass(cls, MultipolePotential) and cls is not MultipolePotential):
             try:
                 lmax = kwargs["lmax"]
@@ -1252,9 +1251,9 @@ class CylSplinePotential(CPotentialBase):
     {common_doc}
     """
 
-    grid_R = PotentialParameter("grid_R", physical_type="length")
-    grid_z = PotentialParameter("grid_z", physical_type="length")
-    grid_Phi = PotentialParameter("grid_Phi", physical_type="specific energy")
+    grid_R = PotentialParameter("grid_R", physical_type="length", ndim=1)
+    grid_z = PotentialParameter("grid_z", physical_type="length", ndim=1)
+    grid_Phi = PotentialParameter("grid_Phi", physical_type="specific energy", ndim=2)
 
     Wrapper = CylSplineWrapper
     _symmetry = CylindricalSymmetry()
@@ -1487,16 +1486,17 @@ class SphericalSplinePotential(CPotentialBase, GSL_only=True):
     {common_doc}
     """
 
-    r_knots = PotentialParameter("r_knots", physical_type="length")
+    r_knots = PotentialParameter("r_knots", physical_type="length", ndim=1)
     spline_values = PotentialParameter(
         "spline_values",
         physical_type=None,  # physical type depends on value_type
+        ndim=1,
     )
     spline_value_type = PotentialParameter(
-        "spline_value_type", physical_type=None, default="potential"
+        "spline_value_type", physical_type=None, default="potential", convert=str
     )
     interpolation_method = PotentialParameter(
-        "interpolation_method", physical_type=None, default="cspline"
+        "interpolation_method", physical_type=None, default="cspline", convert=str
     )
 
     Wrapper = SphericalSplineWrapper
@@ -1640,10 +1640,14 @@ class EXPPotential(CPotentialBase, EXP_only=True):
         The actual, loaded minimum and maximum time for which the potential is defined.
     """
 
-    config_file = PotentialParameter("config_file", physical_type=None)
-    coef_file = PotentialParameter("coef_file", physical_type=None)
+    config_file = PotentialParameter("config_file", physical_type=None, convert=str)
+    coef_file = PotentialParameter("coef_file", physical_type=None, convert=str)
     snapshot_time_unit = PotentialParameter(
-        "snapshot_time_unit", physical_type=None, default=None, python_only=True
+        "snapshot_time_unit",
+        physical_type=None,
+        default=None,
+        python_only=True,
+        convert=None,
     )
 
     tmin = PotentialParameter(
@@ -1653,9 +1657,9 @@ class EXPPotential(CPotentialBase, EXP_only=True):
         "tmax", physical_type="time", default=np.finfo(np.float64).max
     )
     snapshot_index = PotentialParameter(
-        "snapshot_index", physical_type=None, default=-1
+        "snapshot_index", physical_type=None, default=-1, convert=int
     )
-    stride = PotentialParameter("stride", default=1, physical_type=None)
+    stride = PotentialParameter("stride", default=1, physical_type=None, convert=int)
 
     def __init__(self, *args, **kwargs):
         have_t = "tmin" in kwargs or "tmax" in kwargs

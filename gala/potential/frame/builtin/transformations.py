@@ -1,5 +1,4 @@
 import numpy as np
-from astropy.utils.misc import isiterable
 
 # Gala
 from gala.dynamics import Orbit
@@ -133,19 +132,22 @@ def _constantrotating_static_helper(frame_r, frame_i, w, t=None, sign=1.0):
     vel = vel.d_xyz.decompose(frame_i.units).value
 
     # get rotation angle, axis vs. time
-    if isiterable(Omega):  # 3D
+    if Omega.shape == (3,):  # 3D
         vec = Omega / np.linalg.norm(Omega)
         theta = np.linalg.norm(Omega) * t
 
         x_i2r = rodrigues_axis_angle_rotate(pos, vec, sign * theta)
         v_i2r = rodrigues_axis_angle_rotate(vel, vec, sign * theta)
 
-    else:  # 2D
-        vec = Omega * np.array([0, 0, 1.0])
-        theta = sign * Omega * t
+    elif Omega.shape == (1,):  # 2D
+        vec = Omega[0] * np.array([0, 0, 1.0])
+        theta = sign * Omega[0] * t
 
         x_i2r = z_angle_rotate(pos, theta)
         v_i2r = z_angle_rotate(vel, theta)
+
+    else:
+        raise ValueError("Omega must be either 2D or 3D.")
 
     return (
         x_i2r * frame_i.units["length"],
