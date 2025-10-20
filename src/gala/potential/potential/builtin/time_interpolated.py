@@ -241,16 +241,55 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
             R_arrays = np.eye(3)[np.newaxis]
         assert R_arrays.ndim == 3
 
-        param_arrays = {
-            k: np.atleast_1d(self.parameters[k].value)
-            for k in self._potential_param_names
-        }
+        # Prepare parameter arrays for the C wrapper
+        # For multi-dimensional parameters that are time-interpolated,
+        # reshape them from (n_knots, d1, d2, ...) to (n_knots, d1*d2*...)
+        param_arrays = {}
+        param_element_counts = {}  # Track how many elements each parameter has
+
+        # Calculate how many c_only parameters exist (e.g., nmax, lmax for SCF)
+        # These are prepended to c_parameters but not in the regular parameters dict
+        total_regular_param_size = 0
+        for k in self._potential_param_names:
+            param_val = np.atleast_1d(wrapped_potential.parameters[k].value)
+            total_regular_param_size += param_val.size
+
+        n_c_only_params = len(wrapped_potential.c_parameters) - total_regular_param_size
+
+        # Extract c_only parameters (they're constant, so just take from wrapped_potential)
+        if n_c_only_params > 0:
+            c_only_params = wrapped_potential.c_parameters[:n_c_only_params]
+        else:
+            c_only_params = np.array([])
+
+        for k in self._potential_param_names:
+            param_val = np.atleast_1d(self.parameters[k].value)
+
+            # If this is a time-interpolated multi-dimensional parameter,
+            # flatten the extra dimensions
+            if k in self._interp_params and param_val.ndim > 1:
+                n_knots = len(self.parameters["time_knots"])
+                # Reshape from (n_knots, d1, d2, ...) to (n_knots, d1*d2*...)
+                param_reshaped = param_val.reshape(n_knots, -1)
+                n_elements = param_reshaped.shape[1]
+                param_element_counts[k] = n_elements
+                param_arrays[k] = param_reshaped.ravel()  # Flatten to 1D row-major
+            # For constant parameters, flatten if multi-dimensional
+            elif param_val.ndim > 1:
+                param_arrays[k] = param_val.ravel()
+                param_element_counts[k] = param_val.size
+            else:
+                param_arrays[k] = param_val
+                param_element_counts[k] = 1
+
         self.c_instance = TimeInterpolatedWrapper(
             self.G,
             wrapped_potential.c_instance,
             self.parameters["time_knots"].value,
             self._interp_params,
             param_arrays,
+            param_element_counts,
+            c_only_params,
             origin_arrays=origin_arrays,
             rotation_matrices=R_arrays,
             interpolation_method=self.parameters["interpolation_method"],
