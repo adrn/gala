@@ -33,11 +33,11 @@ except ImportError as e:
         raise ImportError("pyEXP is required to run pyEXP tests") from e
 
 
-EXP_CONFIG_FILE = this_path / "EXP-Hernquist-basis.yml"
-EXP_SINGLE_COEF_FILE = this_path / "EXP-Hernquist-single-coefs.hdf5"
-EXP_MULTI_COEF_FILE = this_path / "EXP-Hernquist-multi-coefs.hdf5"
-EXP_MULTI_COEF_SNAPSHOT_TIME_FILE = this_path / (
-    "EXP-Hernquist-multi-coefs-snap-time-Gyr.hdf5"
+EXP_CONFIG_FILE = str(this_path / "EXP-Hernquist-basis.yml")
+EXP_SINGLE_COEF_FILE = str(this_path / "EXP-Hernquist-single-coefs.hdf5")
+EXP_MULTI_COEF_FILE = str(this_path / "EXP-Hernquist-multi-coefs.hdf5")
+EXP_MULTI_COEF_SNAPSHOT_TIME_FILE = str(
+    this_path / ("EXP-Hernquist-multi-coefs-snap-time-Gyr.hdf5")
 )
 
 # global pytest marker to skip tests if EXP is not enabled
