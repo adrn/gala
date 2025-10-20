@@ -127,6 +127,7 @@ class UnitSystem:
                 )
             self._core_units.append(self._registry[phys_type])
 
+    @classmethod
     def from_string(cls, name: str) -> "UnitSystem":
         """
         Create a UnitSystem instance from a name.
