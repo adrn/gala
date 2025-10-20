@@ -15,6 +15,8 @@ import pytest
 from gala._cconfig import GSL_ENABLED
 from scipy.spatial.transform import Rotation as R
 
+import gala.dynamics as gd
+import gala.integrate as gi
 import gala.potential as gp
 from gala.units import galactic
 
@@ -345,3 +347,46 @@ def test_mismatched_parameter_length():
             c=10.0 * u.kpc,
             units=galactic,
         )
+
+
+def test_scf_interpolated():
+    """
+    This is a specialized test for SCFPotential to make sure that everything works ok
+    with the array parameters.
+    """
+
+    t_knots = np.linspace(0, 4, 32) * u.Gyr
+
+    Sjnlm = np.zeros((len(t_knots), 3, 3, 3))
+    Sjnlm[:, 0, 0, 0] = np.linspace(1.0, 4.0, len(t_knots))
+    Tjnlm = np.zeros_like(Sjnlm)
+
+    comx = np.zeros((len(t_knots), 3))
+    comx[:, 0] = np.linspace(0, 2, len(t_knots)) * u.kpc
+
+    # Moving potential and growing mass
+    pot_interp = gp.TimeInterpolatedPotential(
+        gp.SCFPotential,
+        t_knots,
+        m=1e10,
+        r_s=1.0,
+        Snlm=Sjnlm,
+        Tnlm=Tjnlm,
+        origin=comx,
+        units=galactic,
+    )
+
+    x0 = [1.0, 0, 0.0] * u.kpc
+    w0 = gd.PhaseSpacePosition(
+        pos=x0, vel=[0, 0, 1] * pot_interp.circular_velocity(x0)[0]
+    )
+
+    orbit = pot_interp.integrate_orbit(
+        w0, dt=0.1 * u.Myr, t1=0 * u.Gyr, t2=4 * u.Gyr, Integrator=gi.DOPRI853Integrator
+    )
+
+    assert u.isclose(np.mean(orbit.x[:1000]), 0 * u.kpc, atol=0.1 * u.kpc)
+    assert u.isclose(np.mean(orbit.x[-1000:]), 2 * u.kpc, atol=0.1 * u.kpc)
+
+    assert u.isclose(np.ptp(orbit.z[:1000]), 2 * u.kpc, atol=0.1 * u.kpc)
+    assert u.isclose(np.ptp(orbit.z[-1000:]), 1 * u.kpc, atol=0.1 * u.kpc)
