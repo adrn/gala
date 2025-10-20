@@ -15,6 +15,16 @@ from .cytimeinterp import TimeInterpolatedWrapper
 
 __all__ = ["TimeInterpolatedPotential"]
 
+_unsupported_cls = [
+    "EXPPotential",
+    "HenonHeilesPotential",
+    "NullPotential",
+    "MultipolePotential",  # TODO?
+    "MN3ExponentialDiskPotential",  # TODO: need to move parameter transforms to C
+    "SphericalSplinePotential",  # TODO
+    "CylSplinePotential",  # TODO
+]
+
 
 class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
     """
@@ -120,6 +130,14 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
         **kwargs,
     ):
         tmp, _ = self._parse_parameter_values(*args, strict=False, **kwargs)
+
+        if tmp["potential_cls"].__name__ in _unsupported_cls:
+            raise NotImplementedError(
+                f"TimeInterpolatedPotential does not currently support "
+                f"{tmp['potential_cls'].__name__}. Raise an issue on GitHub if "
+                f"you would like this to be implemented:"
+                "https://github.com/adrn/gala/issues"
+            )
 
         # HACK: ._parameters exists on the class, not the instance, but this makes a
         # *copy* exist on this instance...
@@ -249,6 +267,8 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
 
         # Calculate how many c_only parameters exist (e.g., nmax, lmax for SCF)
         # These are prepended to c_parameters but not in the regular parameters dict
+        # TODO: need to detect potential parameters that aren't array type, like
+        # SphericalSplinePotential's spline_value_type
         total_regular_param_size = 0
         for k in self._potential_param_names:
             param_val = np.atleast_1d(wrapped_potential.parameters[k].value)
