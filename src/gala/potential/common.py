@@ -101,11 +101,14 @@ class CommonBase:
 
     def _validate_units(self, units):
         # make sure the units specified are a UnitSystem instance
-        if units is not None and not isinstance(units, UnitSystem):
-            units = UnitSystem(*units)
-
-        elif units is None:
+        if units is None:
             units = DimensionlessUnitSystem()
+
+        elif isinstance(units, str):
+            units = UnitSystem.from_string(units)
+
+        elif not isinstance(units, UnitSystem):
+            units = UnitSystem(*units)
 
         return units
 

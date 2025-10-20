@@ -127,6 +127,39 @@ class UnitSystem:
                 )
             self._core_units.append(self._registry[phys_type])
 
+    @classmethod
+    def from_string(cls, name: str) -> "UnitSystem":
+        """
+        Create a UnitSystem instance from a name.
+
+        Parameters
+        ----------
+        name : str
+            The name of the unit system. Examples of valid names are 'galactic',
+            'solarsystem', and 'dimensionless'.
+
+        Returns
+        -------
+        usys : :class:`~gala.units.UnitSystem`
+            The corresponding unit system instance.
+
+        Examples
+        --------
+        Create the galactic unit system from its name::
+
+            >>> usys = UnitSystem.from_string('galactic')
+            >>> usys['length']
+            Unit("kpc")
+
+        """
+        try:
+            return _usys_name_mapping[name.lower()]
+        except KeyError as e:
+            raise ValueError(
+                f"Unit system name '{name}' is not recognized. Valid names are: "
+                f"{list(_usys_name_mapping.keys())}"
+            ) from e
+
     def __getitem__(self, key):
         key = u.get_physical_type(key)
 
@@ -343,11 +376,12 @@ class SimulationUnitSystem(UnitSystem):
         super().__init__(length, mass, time, angle)
 
 
-# define galactic unit system
 galactic = UnitSystem(u.kpc, u.Myr, u.Msun, u.radian, u.km / u.s)
-
-# solar system units
 solarsystem = UnitSystem(u.au, u.M_sun, u.yr, u.radian)
-
-# dimensionless
 dimensionless = DimensionlessUnitSystem()
+
+_usys_name_mapping = {
+    "galactic": galactic,
+    "solarsystem": solarsystem,
+    "dimensionless": dimensionless,
+}

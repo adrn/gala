@@ -45,7 +45,7 @@ def test_new_simple():
 class MyPotential(PotentialBase):
     m = PotentialParameter("m", "mass")
     x0 = PotentialParameter("x0", "length", ndim=1, convert=np.atleast_1d)
-    filename = PotentialParameter("filename", None)
+    filename = PotentialParameter("filename", None, convert=str)
     n = PotentialParameter("n", physical_type=None, default=2)
 
     def _energy(self, x, t):
@@ -69,6 +69,7 @@ def test_init_potential():
     MyPotential(1.5 * u.Msun, 1 * u.au, "blah", 10, units=usys)
     MyPotential(1.5 * u.Msun, x0=1 * u.au, filename="blah", units=usys)
     MyPotential(m=1.5 * u.Msun, x0=1 * u.au, filename="blah", units=usys)
+    MyPotential(m=1.5, x0=1, filename="blah", units="galactic")
 
     pot = MyPotential(m=1.5 * u.Msun, x0=1 * u.au, n=10, filename="blah", units=usys)
     assert pot.parameters["n"] == 10
@@ -149,6 +150,9 @@ def test_replace_units():
     assert p2.parameters["m"].unit == usys2["mass"]
     assert p.units == usys1
     assert p2.units == usys2
+
+    p3 = p.replace_units("galactic")
+    assert p3.units["length"] == u.kpc
 
 
 def test_replicate():
