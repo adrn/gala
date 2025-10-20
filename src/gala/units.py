@@ -343,11 +343,12 @@ class SimulationUnitSystem(UnitSystem):
         super().__init__(length, mass, time, angle)
 
 
-# define galactic unit system
 galactic = UnitSystem(u.kpc, u.Myr, u.Msun, u.radian, u.km / u.s)
-
-# solar system units
 solarsystem = UnitSystem(u.au, u.M_sun, u.yr, u.radian)
-
-# dimensionless
 dimensionless = DimensionlessUnitSystem()
+
+_usys_name_mapping = {
+    "galactic": galactic,
+    "solarsystem": solarsystem,
+    "dimensionless": dimensionless,
+}
