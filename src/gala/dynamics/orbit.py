@@ -680,24 +680,36 @@ class Orbit(PhaseSpacePosition):
         rp = self.pericenter(**kw)
         return (ra - rp) / (ra + rp)
 
-    def estimate_period(self, radial=False):
-        """
-        Estimate the period of the orbit. By default, computes the radial
-        period. If ``radial==False``, this returns period estimates for
-        each dimension of the orbit.
-
-        Parameters
-        ----------
-        radial : bool (optional)
-            What period to estimate. If ``True``, estimates the radial
-            period. If ``False``, estimates period in each dimension, e.g.,
-            if the orbit is 3D, along x, y, and z.
+    def estimate_period(self):
+        """Estimate the period of the orbit in each dimension.
 
         Returns
         -------
         periods : `~astropy.table.QTable`
             The estimated orbital periods for each phase-space component, for
             each orbit.
+
+        Examples
+        --------
+        >>> from gala.potential import MilkyWayPotential2022
+        >>> pot = MilkyWayPotential2022()
+
+        Compute an orbit and estimate the orbital period in each Cartesian component:
+
+        >>> orbit = pot.integrate_orbit([8., 0, 0, 0, 0.18, 0], dt=1., n_steps=4000)
+        >>> P_xyz = orbit.estimate_period()
+        >>> P_xyz
+        <QTable length=1>
+                x                  y                  z
+               Myr                Myr                Myr
+             float64            float64            float64
+        ------------------ ------------------ -----------------
+        176.02380952380952 176.07034632034632 56.43902691511387
+
+        Or, to estimate the period in cylindrical radius:
+
+        >>> orbit.cylindrical.estimate_period()["rho"]
+        <Quantity [121.09375] Myr>
         """
 
         if self.t is None:
@@ -705,28 +717,6 @@ class Orbit(PhaseSpacePosition):
                 "To compute the period, a time array is needed. "
                 "Specify a time array when creating this object."
             )
-
-        if radial:
-            # TODO: Remove this after deprecation cycle
-            import warnings
-
-            from gala.util import GalaDeprecationWarning
-
-            warnings.warn(
-                "Passing radial=True in estimate_period() is now deprecated. "
-                "This method now returns period estimates for all orbital "
-                "components. If you want to get just the radial period, use "
-                "orbits.physicsspherical.estimate_period() instead.",
-                GalaDeprecationWarning,
-            )
-            r = self.physicsspherical.r.value
-            if self.norbits == 1:
-                T = u.Quantity(peak_to_peak_period(self.t, r))
-            else:
-                T = u.Quantity(
-                    [peak_to_peak_period(self.t, r[:, n]) for n in range(r.shape[1])]
-                )
-            return T
 
         periods = {}
         for k in self.pos_components:

@@ -10,16 +10,13 @@ import astropy.table as at
 import astropy.units as u
 import numpy as np
 from astropy.constants import G
-from astropy.utils.decorators import deprecated
 from scipy.linalg import solve
 from scipy.optimize import minimize
 
 from gala.logging import logger
-from gala.util import GalaDeprecationWarning
 
 __all__ = [
     "check_angle_sampling",
-    "find_actions",
     "find_actions_o2gf",
     "fit_harmonic_oscillator",
     "fit_isochrone",
@@ -720,19 +717,6 @@ def find_actions_o2gf(
             rows.append(aaf)
 
     return at.QTable(rows=rows)
-
-
-@deprecated(
-    since="v1.5",
-    name="find_actions",
-    alternative="find_actions_o2gf",
-    warning_type=GalaDeprecationWarning,
-)
-def find_actions(*args, **kwargs):
-    """
-    Deprecated! Use `gala.dynamics.actionangle.find_actions_o2gf` instead.
-    """
-    return find_actions_o2gf(*args, **kwargs)
 
 
 # def solve_hessian(relative_actions, relative_freqs):
