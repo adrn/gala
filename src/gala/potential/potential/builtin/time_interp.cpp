@@ -417,6 +417,13 @@ void time_interp_eval_param(const TimeInterpParam *param, double t, double *outp
 
     if (param->is_constant) {
         // Copy constant values to output
+        if (!param->constant_values) {
+            // Safety check: if constant_values is NULL, fill with NAN
+            for (int i = 0; i < param->n_elements; i++) {
+                output_values[i] = NAN;
+            }
+            return;
+        }
         memcpy(output_values, param->constant_values, param->n_elements * sizeof(double));
         return;
     }

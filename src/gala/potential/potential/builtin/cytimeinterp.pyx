@@ -79,6 +79,9 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
     cdef object _param_arrays
     cdef double[:, ::1] _origin_arrays
     cdef double[:, :, ::1] _rotation_matrices
+    # Keep references to prevent garbage collection of temporary arrays
+    cdef object _origin_flat_arr
+    cdef list _param_value_arrays
 
     def __init__(
         self,
@@ -149,12 +152,10 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
             double[::1] c_only_params_c = self._c_only_params
             double[::1] param_values_view
             double[::1] origin_flat
-            double[::1] origin_component  # x, y, or z component
             double rotation_matrix[9]  # one instance of rotation matrix
             double origin_val  # temporary for passing address of scalar origin
             int param_idx, i, j, result
             int n_elements
-            object param_values_arr
 
         # Map interpolation
         if interpolation_method == 'linear':
@@ -204,8 +205,11 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
                 param_idx += 1
 
             # Initialize regular parameters
+            self._param_value_arrays = []  # Store to prevent GC
             for param_name, param_values_arr in self._param_arrays.items():
-                param_values_view = np.ascontiguousarray(param_values_arr, dtype=np.float64)
+                param_values_view_arr = np.ascontiguousarray(param_values_arr, dtype=np.float64)
+                self._param_value_arrays.append(param_values_view_arr)  # Keep reference
+                param_values_view = param_values_view_arr
                 n_elements = param_element_counts.get(param_name, 1)
 
                 if param_name not in interp_params:  # constant parameter
@@ -229,16 +233,17 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
             # This always comes in as a 2D array. If it's constant, axis=0 has length 1.
 
             if self._origin_arrays.shape[0] == 1:  # constant
-                # Flatten the constant origin
-                origin_flat = np.ascontiguousarray(self._origin_arrays[0, :])
+                # Flatten the constant origin - store to prevent GC
+                self._origin_flat_arr = np.ascontiguousarray(self._origin_arrays[0, :], dtype=np.float64)
+                origin_flat = self._origin_flat_arr  # Get memoryview
                 result = time_interp_init_constant_param(
                     &self.interp_state.origin, &origin_flat[0], n_dim
                 )
 
             elif self._origin_arrays.shape[0] == n_knots:  # time-interpolated
-                # Flatten origin arrays from (n_knots, n_dim) to 1D row-major
-                # Convert memoryview to numpy array first
-                origin_flat = np.ascontiguousarray(np.asarray(self._origin_arrays).ravel())
+                # Flatten origin arrays from (n_knots, n_dim) to 1D row-major - store to prevent GC
+                self._origin_flat_arr = np.ascontiguousarray(np.asarray(self._origin_arrays).ravel(), dtype=np.float64)
+                origin_flat = self._origin_flat_arr  # Get memoryview
                 result = time_interp_init_param(
                     &self.interp_state.origin,
                     &time_knots_c[0], &origin_flat[0], n_knots, n_dim,
