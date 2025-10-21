@@ -310,7 +310,7 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
             param_arrays,
             param_element_counts,
             c_only_params,
-            origin_arrays=origin_arrays,
+            origins=origin_arrays,
             rotation_matrices=R_arrays,
             interpolation_method=self.parameters["interpolation_method"],
         )
