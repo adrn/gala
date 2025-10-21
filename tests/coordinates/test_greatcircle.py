@@ -3,6 +3,7 @@ import astropy.units as u
 import numpy as np
 import pytest
 
+import gala.coordinates as gc
 from gala.coordinates.greatcircle import (
     GreatCircleICRSFrame,
     make_greatcircle_cls,
@@ -10,9 +11,15 @@ from gala.coordinates.greatcircle import (
     sph_midpoint,
 )
 
-rng = np.random.default_rng(seed=42)
-rand_lon = rng.uniform(0, 2 * np.pi, 15) * u.rad
-rand_lat = np.arcsin(rng.uniform(-1, 1, size=15)) * u.rad
+
+@pytest.fixture(scope="module")
+def rng():
+    return np.random.default_rng(seed=42)
+
+
+tmp = np.random.default_rng(123)
+rand_lon = tmp.uniform(0, 2 * np.pi, 15) * u.rad
+rand_lat = np.arcsin(tmp.uniform(-1, 1, 15)) * u.rad
 poles = [
     coord.SkyCoord(ra=0 * u.deg, dec=90 * u.deg),
     coord.SkyCoord(ra=0 * u.deg, dec=-90 * u.deg),
@@ -32,7 +39,7 @@ def get_random_orthogonal(skycoord, rng):
 
 
 @pytest.mark.parametrize("pole", poles)
-def test_init_cls(pole):
+def test_init_cls(pole, rng):
     origin = get_random_orthogonal(pole, rng)
 
     GreatCircleICRSFrame(pole=pole, origin=origin)
@@ -85,7 +92,7 @@ def test_init_from_pole_ra0_fail(pole):
 
 
 @pytest.mark.parametrize("c1", poles)
-def test_init_from_endpoints(c1):
+def test_init_from_endpoints(c1, rng):
     # Random vector for other endpoint:
     x = rng.uniform(size=3)
     x /= np.linalg.norm(x)
@@ -113,7 +120,7 @@ def test_init_from_endpoints(c1):
 
 
 @pytest.mark.parametrize("pole", poles)
-def test_make_function(pole):
+def test_make_function(pole, rng):
     origin = get_random_orthogonal(pole, rng)
 
     cls = make_greatcircle_cls(
@@ -184,19 +191,57 @@ def test_sph_midpoint():
     assert u.allclose(midpt.dec, 45 * u.deg)
 
 
-def test_init_from_R():
+def test_init_from_R(rng):
     from gala.coordinates.gd1 import GD1Koposov10
     from gala.coordinates.gd1 import R as gd1_R
 
     N = 128
-    rnd = np.random.RandomState(42)
 
     gd1_gc_frame = GreatCircleICRSFrame.from_R(gd1_R)
     tmp_in = GD1Koposov10(
-        phi1=rnd.uniform(0, 360, N) * u.deg, phi2=rnd.uniform(-90, 90, N) * u.deg
+        phi1=rng.uniform(0, 360, N) * u.deg, phi2=rng.uniform(-90, 90, N) * u.deg
     )
 
     tmp_out = tmp_in.transform_to(gd1_gc_frame)
 
     assert u.allclose(tmp_in.phi1, tmp_out.phi1)
     assert u.allclose(tmp_in.phi2, tmp_out.phi2)
+
+
+def test_regression_missing_R(rng):
+    """
+    As reported in #396, GreatCircle frames in reflex_correct were somehow missing the _R property...
+    """
+    v_sun = coord.CartesianDifferential([11.1, 220.0 + 12.24, 7.25] * u.km / u.s)
+    r_sun = 8.122 * u.kpc
+    gc_frame = coord.Galactocentric(
+        galcen_distance=r_sun, galcen_v_sun=v_sun, z_sun=0 * u.pc
+    )
+
+    df = {
+        "ra": rng.uniform(60, 180, 100),
+        "dec": rng.uniform(-30, 30, 100),
+        "pmra": rng.normal(0, 5, 100),
+        "pmdec": rng.normal(0, 5, 100),
+    }
+
+    stream_icrs = coord.SkyCoord(
+        ra=df["ra"] * u.deg,
+        dec=df["dec"] * u.deg,
+        pm_ra_cosdec=df["pmra"] * u.mas / u.yr,
+        pm_dec=df["pmdec"] * u.mas / u.yr,
+        distance=np.ones(len(df["ra"])) * u.kpc,
+        radial_velocity=np.zeros(len(df["ra"])) * u.km / u.s,
+        frame="icrs",
+    )
+
+    test1 = gc.reflex_correct(stream_icrs, gc_frame)
+    assert np.isfinite(test1.pm_ra_cosdec).all()
+
+    frame = gc.GD1Koposov10()
+    stream_sc = stream_icrs.transform_to(frame)
+
+    stream_sc.transform_to(gc_frame)
+
+    test2 = gc.reflex_correct(stream_sc, gc_frame)
+    assert np.isfinite(test2.pm_phi1_cosphi2).all()
