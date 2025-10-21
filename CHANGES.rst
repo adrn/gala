@@ -32,6 +32,8 @@ Bug fixes
 - Fixed a bug in ``MockStreamGenerator.run()`` when using ``DirectNBody`` with
   ``output_filename`` and more bodies than stream particles, which caused a "TypeError:
   Can't broadcast" error.
+- Fixed a bug that caused ``GreatCircleICRSFrame`` to throw an error about a missing
+  attribute ``_R`` when transforming to/from the frame.
 
 API changes
 -----------
