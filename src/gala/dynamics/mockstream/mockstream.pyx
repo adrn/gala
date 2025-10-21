@@ -153,7 +153,7 @@ cpdef mockstream_dop853(
             dop853_step(cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
                         &w_tmp[0, 0], stream_t1[i], tfinal, dt0,
                         ndim, nbodies+nstream[i], nbodies, args,
-                        atol, rtol, nmax,
+                        atol, rtol, nmax, -1, # disable stiffness check
                         err_if_fail=err_if_fail, log_output=log_output)
 
             PyErr_CheckSignals()
@@ -326,7 +326,7 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
             dop853_step(cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
                         &w[0, 0], t[i-1], t[i], dt0,
                         ndim, nbodies+n, nbodies, args,
-                        atol, rtol, nmax,
+                        atol, rtol, nmax, -1, # disable stiffness check
                         err_if_fail=err_if_fail, log_output=log_output)
 
             PyErr_CheckSignals()

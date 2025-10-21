@@ -73,7 +73,7 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
         dop853_step(cp, &cf, <FcnEqDiff> Fwrapper,
                     &w[0], t[j-1], t[j], dt0, ndim,
                     norbits, 0, args, # 0 is for nbody, ignored here
-                    atol, rtol, nmax,
+                    atol, rtol, nmax, -1, # disable stiffness check
                     err_if_fail=1, log_output=log_output)
 
         # store position of main orbit
@@ -149,7 +149,7 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
         dop853_step(cp, &cf, <FcnEqDiff> Fwrapper,
                     &w[0], t[j-1], t[j], dt0, ndim,
                     norbits, 0, args, # 0 is for nbody, ignored here
-                    atol, rtol, nmax,
+                    atol, rtol, nmax, -1, # disable stiffness check
                     err_if_fail=1, log_output=log_output)
 
         if (j % n_steps_per_pullback) == 0:
