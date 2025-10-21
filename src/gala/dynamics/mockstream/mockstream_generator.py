@@ -123,6 +123,7 @@ class MockStreamGenerator:
         check_filesize=True,
         overwrite=False,
         progress=False,
+        error_for_failed_orbits=False,
         log_output=False,
         **time_spec,
     ):
@@ -179,6 +180,8 @@ class MockStreamGenerator:
             Overwrite the output file if it exists.
         progress : bool (optional)
             Print a very basic progress bar while computing the stream.
+        error_for_failed_orbits : bool (optional)
+            If True, raise an error if any orbits fail to integrate. Default: False.
         **time_spec
             Specification of how long to integrate. Most commonly, this is a timestep
             ``dt`` and number of steps ``n_steps``, or a timestep ``dt``, initial time
@@ -259,6 +262,7 @@ class MockStreamGenerator:
                 all_nstream[nstream_idx].astype("i4"),
                 progress=int(progress),
                 log_output=int(log_output),
+                err_if_fail=int(error_for_failed_orbits),
             )
         else:  # store snapshots
             if output_filename is None:
@@ -278,6 +282,7 @@ class MockStreamGenerator:
                 overwrite=overwrite,
                 progress=int(progress),
                 log_output=int(log_output),
+                err_if_fail=int(error_for_failed_orbits),
             )
 
         x_unit = units["length"]
