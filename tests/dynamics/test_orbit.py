@@ -468,12 +468,6 @@ def test_estimate_period():
         assert np.allclose(T["rho"].value, true_T_R, rtol=1e-3)
         assert np.allclose(T["phi"].value, 1.0, rtol=1e-3)
 
-    # TODO: remove this in next version
-    from gala.util import GalaDeprecationWarning
-
-    with pytest.warns(GalaDeprecationWarning):
-        orb.estimate_period(radial=True)
-
 
 def test_estimate_period_regression():
     pot = KeplerPotential(m=1.0, units=solarsystem)
