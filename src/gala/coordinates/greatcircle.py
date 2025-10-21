@@ -1,4 +1,5 @@
 # Built-in
+import functools
 from textwrap import dedent
 from warnings import warn
 
@@ -347,13 +348,16 @@ class GreatCircleICRSFrame(coord.BaseCoordinateFrame):
         pole, origin = ensure_orthogonal(self.pole, self.origin, priority=self.priority)
         self._pole = pole
         self._origin = origin
-        self._R = pole_origin_to_R(self.pole, self.origin)
 
         if wrap and isinstance(
             self._data,
             coord.UnitSphericalRepresentation | coord.SphericalRepresentation,
         ):
             self._data.lon.wrap_angle = self._default_wrap_angle
+
+    @functools.cached_property
+    def _R(self):
+        return pole_origin_to_R(self.pole, self.origin)
 
     # TODO: remove this. This is a hack required as of astropy v3.1 in order
     # to have the longitude components wrap at the desired angle
