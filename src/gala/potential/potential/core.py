@@ -1,7 +1,6 @@
 import abc
 import copy as pycopy
 import uuid
-import warnings
 from collections import OrderedDict
 from types import MappingProxyType
 
@@ -9,7 +8,6 @@ import astropy.units as u
 import numpy as np
 from astropy.constants import G
 from astropy.utils import isiterable
-from astropy.utils.decorators import deprecated
 
 try:
     from scipy.spatial.transform import Rotation
@@ -19,8 +17,6 @@ except ImportError as exc:
         "scipy and try importing gala again."
     ) from exc
 
-
-from gala.util import GalaDeprecationWarning
 
 from ...units import DimensionlessUnitSystem
 from ...util import atleast_2d
@@ -1188,29 +1184,6 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
 
         return Hamiltonian(self).integrate_orbit(*args, **kwargs)
 
-    def total_energy(self, x, v):
-        """
-        Compute the total energy (per unit mass) of a point in phase-space
-        in this potential. Assumes the last axis of the input position /
-        velocity is the dimension axis, e.g., for 100 points in 3-space,
-        the arrays should have shape (100, 3).
-
-        Parameters
-        ----------
-        x : array_like, numeric
-            Position.
-        v : array_like, numeric
-            Velocity.
-        """
-        warnings.warn(
-            "Use the energy methods on Orbit objects instead. In a future "
-            "release this will be removed.",
-            GalaDeprecationWarning,
-        )
-
-        v = atleast_2d(v, insert_axis=1)
-        return self.energy(x) + 0.5 * np.sum(v**2, axis=0)
-
     def save(self, f):
         """
         Save the potential to a text file. See :func:`~gala.potential.save`
@@ -1268,35 +1241,8 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         return pot
 
     ###########################################################################
-    # Deprecated methods
-    #
-    def _value(self, q, t=0.0):
-        warnings.warn("Use `_energy()` instead.", GalaDeprecationWarning)
-        return self._energy(q, t=t)
-
-    def value(self, *args, **kwargs):
-        __doc__ = self.energy.__doc__  # noqa: F841
-        warnings.warn("Use `energy()` instead.", GalaDeprecationWarning)
-        return self.energy(*args, **kwargs)
-
-    ###########################################################################
     # Interoperability with other packages
     #
-    @deprecated(
-        since="v1.8",
-        message="This has been replaced by a more general interoperability framework.",
-        alternative="interop",
-    )
-    def to_galpy_potential(self, ro=None, vo=None):
-        """Convert a Gala potential to a Galpy potential instance
-
-        Parameters
-        ----------
-        ro : quantity-like (optional)
-        vo : quantity-like (optional)
-        """
-        return self.as_interop("galpy", ro=ro, vo=vo)
-
     def as_interop(self, package, **kwargs):
         """Interoperability with other Galactic dynamics packages
 
