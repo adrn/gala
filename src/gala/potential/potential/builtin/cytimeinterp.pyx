@@ -81,6 +81,7 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
     cdef double[:, :, ::1] _rotation_matrices
     # Keep references to prevent garbage collection of temporary arrays
     cdef object _origin_flat_arr
+    cdef object _rotation_flat_arr
     cdef list _param_value_arrays
 
     def __init__(
@@ -128,15 +129,16 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
         # we need to keep these references because they are not stored on the parent
         # potential class
         self.wrapped_potential = wrapped_potential
-        self._time_knots = np.ascontiguousarray(time_knots, dtype=np.float64)
+        # Force copy=True to ensure independent data - np.ascontiguousarray may return views
+        self._time_knots = np.array(time_knots, dtype=np.float64, order='C', copy=True)
         self._param_arrays = {
-            k: np.ascontiguousarray(v, dtype=np.float64)
+            k: np.array(v, dtype=np.float64, order='C', copy=True)
             for k, v in param_arrays.items()
         }
-        self._c_only_params = np.ascontiguousarray(c_only_params, dtype=np.float64)
-        self._origin_arrays = np.ascontiguousarray(origin_arrays, dtype=np.float64)
-        self._rotation_matrices = np.ascontiguousarray(
-            rotation_matrices, dtype=np.float64
+        self._c_only_params = np.array(c_only_params, dtype=np.float64, order='C', copy=True)
+        self._origin_arrays = np.array(origin_arrays, dtype=np.float64, order='C', copy=True)
+        self._rotation_matrices = np.array(
+            rotation_matrices, dtype=np.float64, order='C', copy=True
         )
 
         cdef:
@@ -207,8 +209,7 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
             # Initialize regular parameters
             self._param_value_arrays = []  # Store to prevent GC
             for param_name, param_values_arr in self._param_arrays.items():
-                # Force copy to ensure data stability
-                param_values_view_arr = np.array(param_values_arr, dtype=np.float64, order='C', copy=True)
+                param_values_view_arr = np.ascontiguousarray(param_values_arr, dtype=np.float64)
                 self._param_value_arrays.append(param_values_view_arr)  # Keep reference
                 param_values_view = param_values_view_arr
                 n_elements = param_element_counts.get(param_name, 1)
@@ -234,16 +235,16 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
             # This always comes in as a 2D array. If it's constant, axis=0 has length 1.
 
             if self._origin_arrays.shape[0] == 1:  # constant
-                # Flatten the constant origin - force copy and store to prevent GC
-                self._origin_flat_arr = np.array(self._origin_arrays[0, :], dtype=np.float64, order='C', copy=True)
+                # Flatten the constant origin - store to prevent GC
+                self._origin_flat_arr = np.ascontiguousarray(self._origin_arrays[0, :], dtype=np.float64)
                 origin_flat = self._origin_flat_arr  # Get memoryview
                 result = time_interp_init_constant_param(
                     &self.interp_state.origin, &origin_flat[0], n_dim
                 )
 
             elif self._origin_arrays.shape[0] == n_knots:  # time-interpolated
-                # Flatten origin arrays from (n_knots, n_dim) to 1D row-major - force copy and store to prevent GC
-                self._origin_flat_arr = np.array(np.asarray(self._origin_arrays).ravel(), dtype=np.float64, order='C', copy=True)
+                # Flatten origin arrays from (n_knots, n_dim) to 1D row-major - store to prevent GC
+                self._origin_flat_arr = np.ascontiguousarray(np.asarray(self._origin_arrays).ravel(), dtype=np.float64)
                 origin_flat = self._origin_flat_arr  # Get memoryview
                 result = time_interp_init_param(
                     &self.interp_state.origin,
