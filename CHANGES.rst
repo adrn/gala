@@ -47,6 +47,12 @@ API changes
 - Added new keyword arguments ``ndim`` and ``convert`` to ``PotentialParameter`` to
   control the expected number of dimensions for array parameters and to specify a
   conversion function for parameter values, respectively.
+- Removed deprecated ``gala.dynamics.find_actions`` in favor of ``find_actions_o2gf``.
+- Removed deprecated ``radial=True`` kwarg from ``Orbit.estimate_period()``.
+- Removed deprecated ``value()`` method from potential clases in favor of using the
+  ``__call__()`` method or ``energy()``.
+- Removed deprecated ``to_galpy_potential()`` method from potential classes in favor of
+  using ``as_interop("galpy")``.
 
 Other
 -----
