@@ -207,7 +207,8 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
             # Initialize regular parameters
             self._param_value_arrays = []  # Store to prevent GC
             for param_name, param_values_arr in self._param_arrays.items():
-                param_values_view_arr = np.ascontiguousarray(param_values_arr, dtype=np.float64)
+                # Force copy to ensure data stability
+                param_values_view_arr = np.array(param_values_arr, dtype=np.float64, order='C', copy=True)
                 self._param_value_arrays.append(param_values_view_arr)  # Keep reference
                 param_values_view = param_values_view_arr
                 n_elements = param_element_counts.get(param_name, 1)
@@ -233,16 +234,16 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
             # This always comes in as a 2D array. If it's constant, axis=0 has length 1.
 
             if self._origin_arrays.shape[0] == 1:  # constant
-                # Flatten the constant origin - store to prevent GC
-                self._origin_flat_arr = np.ascontiguousarray(self._origin_arrays[0, :], dtype=np.float64)
+                # Flatten the constant origin - force copy and store to prevent GC
+                self._origin_flat_arr = np.array(self._origin_arrays[0, :], dtype=np.float64, order='C', copy=True)
                 origin_flat = self._origin_flat_arr  # Get memoryview
                 result = time_interp_init_constant_param(
                     &self.interp_state.origin, &origin_flat[0], n_dim
                 )
 
             elif self._origin_arrays.shape[0] == n_knots:  # time-interpolated
-                # Flatten origin arrays from (n_knots, n_dim) to 1D row-major - store to prevent GC
-                self._origin_flat_arr = np.ascontiguousarray(np.asarray(self._origin_arrays).ravel(), dtype=np.float64)
+                # Flatten origin arrays from (n_knots, n_dim) to 1D row-major - force copy and store to prevent GC
+                self._origin_flat_arr = np.array(np.asarray(self._origin_arrays).ravel(), dtype=np.float64, order='C', copy=True)
                 origin_flat = self._origin_flat_arr  # Get memoryview
                 result = time_interp_init_param(
                     &self.interp_state.origin,
