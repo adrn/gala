@@ -6,11 +6,12 @@ import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from astropy.constants import G
 
 from gala._compat_utils import SCIPY_LT_1_15
 from gala._optional_deps import HAS_SYMPY
 from gala.dynamics import PhaseSpacePosition
-from gala.potential import Hamiltonian, StaticFrame
+from gala.potential import Hamiltonian, SphericalSymmetry, StaticFrame
 from gala.potential.potential.io import load
 from gala.units import DimensionlessUnitSystem, UnitSystem
 
@@ -64,6 +65,9 @@ class PotentialTestBase:
     check_finite_at_origin = True
     check_zero_at_infinity = True
     rotation = False
+
+    skip_hessian = False
+    skip_hessian_density = False
 
     def setup_method(self):
         # set up hamiltonian
@@ -159,6 +163,9 @@ class PotentialTestBase:
             )
 
     def test_hessian(self):
+        if self.skip_hessian:
+            pytest.skip("Hessian not implemented for this potential")
+
         for arr, shp in zip(self.w0s, self._hess_return_shapes):
             g = self.potential.hessian(arr[: self.ndim])
             assert g.shape == shp
@@ -321,6 +328,80 @@ class PotentialTestBase:
             np.ascontiguousarray(xyz.T), t=np.array([0.0])
         ).T
         np.testing.assert_allclose(grad, num_grad, rtol=self.tol, atol=1e-8)
+
+    def test_numerical_density_vs_density(self):
+        """
+        Compare a numerically estimated Laplacian (trace of Hessian) times 4*pi*G
+        to the implemented density function via Poisson's equation:
+            Laplacian(Phi) = 4*pi*G * rho
+        """
+        if not isinstance(self.potential._symmetry, SphericalSymmetry):
+            pytest.skip("only for spherical potentials")
+
+        dx = 1e-3 * np.sqrt(np.sum(self.w0[: self.w0.size // 2] ** 2))
+        max_x = np.sqrt(np.sum([x**2 for x in self.w0[: self.w0.size // 2]]))
+
+        # use a slightly smaller grid to limit cost of nested derivatives
+        grid = np.linspace(-max_x, max_x, 6)
+        grid = grid[grid != 0.0]
+        grids = [grid for i in range(self.w0.size // 2)]
+        xyz = np.ascontiguousarray(
+            np.vstack(list(map(np.ravel, np.meshgrid(*grids)))).T
+        )
+
+        def compute_energy(xyz):
+            xyz = np.ascontiguousarray(np.atleast_2d(xyz))
+            return np.squeeze(self.potential._energy(xyz, t=np.array([0.0])))
+
+        def numeric_laplacian_at(pt):
+            # sum of second partial derivatives via nested numerical differentiation
+            s = 0.0
+            ndim = self.w0.size // 2
+            for dim in range(ndim):
+
+                def first_deriv(x):
+                    return partial_derivative(
+                        compute_energy,
+                        x,
+                        dim_ix=dim,  # noqa: B023
+                        dx=dx,
+                    )
+
+                s += partial_derivative(first_deriv, pt, dim_ix=dim, dx=dx)
+            return s
+
+        num_lap = np.zeros(xyz.shape[0])
+        for i in range(xyz.shape[0]):
+            num_lap[i] = numeric_laplacian_at(xyz[i])
+
+        num_rho = num_lap / (4.0 * np.pi * self.potential.G)
+
+        try:
+            dens = np.squeeze(
+                self.potential._density(np.ascontiguousarray(xyz), t=np.array([0.0]))
+            )
+        except Exception:
+            pytest.skip("density not implemented for this potential")
+
+        np.testing.assert_allclose(dens, num_rho, rtol=self.tol, atol=1e-6)
+
+    def test_hessian_density_consistency(self):
+        """
+        Check that the trace of the Hessian matches the density via Poisson's equation
+        """
+        if self.skip_hessian or self.skip_hessian_density:
+            pytest.skip("Hessian not implemented for this potential")
+
+        _G = G if not isinstance(self.potential.units, DimensionlessUnitSystem) else 1.0
+
+        for arr in self.w0s:
+            hess = self.potential.hessian(arr[: self.ndim])
+            lap = np.sum(np.diagonal(hess, axis1=0, axis2=1), axis=-1)
+
+            dens = self.potential.density(arr[: self.ndim])
+            rho_from_hess = lap / (4.0 * np.pi * _G)
+            print("YO", dens, rho_from_hess, np.diagonal(hess, axis1=0, axis2=1))
+            assert u.allclose(dens, rho_from_hess, rtol=self.tol)
 
     def test_orbit_integration(self, t1=0.0, t2=1000.0, nsteps=10000):
         """

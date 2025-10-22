@@ -34,6 +34,7 @@ class TestHarmonicOscillator1D(PotentialTestBase):
     sympy_density = False
     check_finite_at_origin = False
     check_zero_at_infinity = False
+    skip_hessian_density = True
 
     def test_plot(self):
         # Skip for now because contour plotting assumes 3D
@@ -46,6 +47,7 @@ class TestHarmonicOscillator2D(PotentialTestBase):
     sympy_density = False
     check_finite_at_origin = False
     check_zero_at_infinity = False
+    skip_hessian_density = True
 
     def test_plot(self):
         # Skip for now because contour plotting assumes 3D
@@ -64,6 +66,7 @@ class TestHarmonicOscillator2D(PotentialTestBase):
 class TestNull(PotentialTestBase):
     potential = p.NullPotential()
     w0 = [1.0, 0.0, 0.0, 0.0, 2 * np.pi, 0.0]
+    skip_hessian_density = True
 
     def test_mass_enclosed(self):
         for arr, shp in zip(self.w0s, self._valu_return_shapes):
@@ -110,6 +113,7 @@ class TestHenonHeiles(PotentialTestBase):
     sympy_density = False
     check_finite_at_origin = False
     check_zero_at_infinity = False
+    skip_hessian_density = True
 
     @pytest.mark.skip(reason="Not relevant")
     def test_plot(self):
@@ -119,14 +123,15 @@ class TestHenonHeiles(PotentialTestBase):
 class TestKepler(PotentialTestBase):
     potential = p.KeplerPotential(units=solarsystem, m=1.0)
     w0 = [1.0, 0.0, 0.0, 0.0, 2 * np.pi, 0.0]
-    # show_plots = True
     check_finite_at_origin = False
+    skip_hessian_density = True
 
 
 class TestKeplerUnitInput(PotentialTestBase):
     potential = p.KeplerPotential(units=solarsystem, m=(1 * u.Msun).to(u.Mjup))
     w0 = [1.0, 0.0, 0.0, 0.0, 2 * np.pi, 0.0]
     check_finite_at_origin = False
+    skip_hessian_density = True
 
 
 class TestIsochrone(PotentialTestBase):
@@ -228,6 +233,7 @@ class TestKuzmin(PotentialTestBase):
     sympy_hessian = False
     sympy_density = False
     rotation = True
+    skip_hessian = True  # TODO: implement
 
 
 class TestStone(PotentialTestBase):
@@ -244,7 +250,7 @@ class TestPowerLawCutoff(PotentialTestBase):
 
     def setup_method(self):
         self.potential = p.PowerLawCutoffPotential(
-            units=galactic, m=1e10, r_c=1.0, alpha=1.8
+            units=galactic, m=1e10, r_c=10.0, alpha=1.8
         )
         super().setup_method()
 
@@ -259,6 +265,7 @@ class TestFlattenedNFW(PotentialTestBase):
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
     sympy_density = False  # not defined
     rotation = True
+    skip_hessian_density = True  # no density defined
 
     def test_against_spherical(self):
         """
@@ -276,6 +283,7 @@ class TestTriaxialNFW(PotentialTestBase):
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
     sympy_density = False  # not defined
     rotation = True
+    skip_hessian_density = True  # no density defined
 
 
 class TestSphericalNFWFromCircVel(PotentialTestBase):
@@ -342,6 +350,7 @@ class TestNFW(PotentialTestBase):
     )
     w0 = [19.0, 2.7, -0.9, 0.00352238, -0.15134, 0.0075]
     sympy_density = False  # like triaxial case
+    skip_hessian_density = True  # no density defined
 
     def test_compare(self):
         sph = p.NFWPotential(m=6e11 * u.Msun, r_s=20 * u.kpc, units=galactic)
@@ -416,6 +425,7 @@ class TestLeeSutoTriaxialNFW(PotentialTestBase):
     )
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
     rotation = True
+    skip_hessian = True  # TODO: implement
 
     @pytest.mark.skip(reason="to_sympy() not implemented yet")
     def test_against_sympy(self):
@@ -457,10 +467,7 @@ class TestLongMuraliBarRotate(PotentialTestBase):
     vc = potential.circular_velocity([19.0, 0, 0] * u.kpc).decompose(galactic).value[0]
     w0 = [19.0, 0.2, -0.9, 0.0, vc, 0.0]
 
-    def test_hessian(self):
-        # TODO: when hessian for rotated potentials implemented, remove this
-        with pytest.raises(NotImplementedError):
-            self.potential.hessian([1.0, 2.0, 3.0])
+    skip_hessian = True  # TODO: implement
 
     @pytest.mark.skip(reason="Not implemented for rotated potentials")
     def test_against_sympy(self):
@@ -479,10 +486,7 @@ class TestLongMuraliBarRotationScipy(PotentialTestBase):
     vc = potential.circular_velocity([19.0, 0, 0] * u.kpc).decompose(galactic).value[0]
     w0 = [19.0, 0.2, -0.9, 0.0, vc, 0.0]
 
-    def test_hessian(self):
-        # TODO: when hessian for rotated potentials implemented, remove this
-        with pytest.raises(NotImplementedError):
-            self.potential.hessian([1.0, 2.0, 3.0])
+    skip_hessian = True  # TODO: implement
 
     @pytest.mark.skip(reason="Not implemented for rotated potentials")
     def test_against_sympy(self):
@@ -531,6 +535,8 @@ class TestKepler3Body(CompositePotentialTestBase):
     frame = ConstantRotatingFrame(Omega=Omega)
     w0 = [0.5, 0, 0, 0.0, 1.05800316, 0.0]
 
+    skip_hessian_density = True
+
 
 @pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL to run this test")
 class TestMultipoleInner(CompositePotentialTestBase):
@@ -541,10 +547,7 @@ class TestMultipoleInner(CompositePotentialTestBase):
     vc = potential.circular_velocity([19.0, 0, 0] * u.kpc).decompose(galactic).value[0]
     w0 = [19.0, 0.2, -0.9, 0.0, vc, 0.0]
     check_zero_at_infinity = False
-
-    @pytest.mark.skip(reason="Not implemented for multipole potentials")
-    def test_hessian(self):
-        pass
+    skip_hessian = True  # TODO: implement
 
     @pytest.mark.skip(reason="Not implemented for multipole potentials")
     def test_against_sympy(self):
@@ -560,10 +563,7 @@ class TestMultipoleOuter(CompositePotentialTestBase):
     vc = potential.circular_velocity([19.0, 0, 0] * u.kpc).decompose(galactic).value[0]
     w0 = [19.0, 0.2, -0.9, 0.0, vc, 0.0]
     check_finite_at_origin = False
-
-    @pytest.mark.skip(reason="Not implemented for multipole potentials")
-    def test_hessian(self):
-        pass
+    skip_hessian = True  # TODO: implement
 
     @pytest.mark.skip(reason="Not implemented for multipole potentials")
     def test_against_sympy(self):
@@ -573,6 +573,7 @@ class TestMultipoleOuter(CompositePotentialTestBase):
 @pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL to run this test")
 class TestCylspline(PotentialTestBase):
     check_finite_at_origin = True
+    skip_hessian = True  # TODO: implement
 
     def setup_method(self):
         self.potential = p.CylSplinePotential.from_file(
@@ -584,10 +585,6 @@ class TestCylspline(PotentialTestBase):
 
     @pytest.mark.skip(reason="Not implemented for cylspline potentials")
     def test_density(self):
-        pass
-
-    @pytest.mark.skip(reason="Not implemented for cylspline potentials")
-    def test_hessian(self):
         pass
 
     @pytest.mark.skip(reason="Not implemented for cylspline potentials")
@@ -612,13 +609,10 @@ class TestBurkert(PotentialTestBase):
     w0 = [1.0, 0.0, 0.0, 0.0, 0.1, 0.1]
 
     check_finite_at_origin = False
+    skip_hessian = True  # TODO: implement
 
     @pytest.mark.skip(reason="Not implemented for Burkert potentials")
     def test_against_sympy(self):
-        pass
-
-    @pytest.mark.skip(reason="Hessian not implemented for Burkert potential")
-    def test_hessian(self):
         pass
 
     def test_from_r0(self):
