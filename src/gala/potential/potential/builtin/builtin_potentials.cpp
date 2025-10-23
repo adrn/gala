@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "extra_compile_macros.h"
 #include "src/vectorization.h"
+#include "potential_helpers.h"
 
 #if USE_GSL == 1
 #include <gsl/gsl_sf_gamma.h>
@@ -59,9 +60,7 @@ double kepler_value(double t, double *pars, double *q, int n_dim, void *state) {
             - G (Gravitational constant)
             - m (mass scale)
     */
-    double R;
-    R = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    return -pars[0] * pars[1] / R;
+    return -pars[0] * pars[1] / norm3(q);
 }
 
 void kepler_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
@@ -69,9 +68,7 @@ void kepler_gradient_single(double t, double *__restrict__ pars, double6ptr q, i
             - G (Gravitational constant)
             - m (mass scale)
     */
-    double R, fac;
-    R = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    fac = pars[0] * pars[1] / (R*R*R);
+    const double fac = pars[0] * pars[1] / pow(norm3(q), 3);
 
     grad[0] = grad[0] + fac*q[0];
     grad[1] = grad[1] + fac*q[1];
@@ -83,10 +80,7 @@ double kepler_density(double t, double *pars, double *q, int n_dim, void *state)
             - G (Gravitational constant)
             - m (mass scale)
     */
-    double r2;
-    r2 = q[0]*q[0] + q[1]*q[1] + q[2]*q[2];
-
-    if (r2 == 0.) {
+    if (norm3_sq(q) == 0.) {
         return INFINITY;
     } else {
         return 0.;
@@ -136,9 +130,8 @@ double isochrone_value(double t, double *pars, double *q, int n_dim, void *state
             - m (mass scale)
             - b (core scale)
     */
-    double R2;
-    R2 = q[0]*q[0] + q[1]*q[1] + q[2]*q[2];
-    return -pars[0] * pars[1] / (sqrt(R2 + pars[2]*pars[2]) + pars[2]);
+    const double r2 = norm3_sq(q);
+    return -pars[0] * pars[1] / (sqrt(r2 + pars[2]*pars[2]) + pars[2]);
 }
 
 void isochrone_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
@@ -147,10 +140,9 @@ void isochrone_gradient_single(double t, double *__restrict__ pars, double6ptr q
             - m (mass scale)
             - b (core scale)
     */
-    double sqrt_r2_b2, fac, denom;
-    sqrt_r2_b2 = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + pars[2]*pars[2]);
-    denom = sqrt_r2_b2 * (sqrt_r2_b2 + pars[2])*(sqrt_r2_b2 + pars[2]);
-    fac = pars[0] * pars[1] / denom;
+    const double sqrt_r2_b2 = sqrt(norm3_sq(q) + pars[2]*pars[2]);
+    const double denom = sqrt_r2_b2 * (sqrt_r2_b2 + pars[2])*(sqrt_r2_b2 + pars[2]);
+    const double fac = pars[0] * pars[1] / denom;
 
     grad[0] = grad[0] + fac*q[0];
     grad[1] = grad[1] + fac*q[1];
@@ -163,10 +155,9 @@ double isochrone_density(double t, double *pars, double *q, int n_dim, void *sta
             - m (mass scale)
             - b (core scale)
     */
-    double r2, a, b;
-    b = pars[2];
-    r2 = q[0]*q[0] + q[1]*q[1] + q[2]*q[2];
-    a = sqrt(b*b + r2);
+    const double b = pars[2];
+    const double r2 = norm3_sq(q);
+    const double a = sqrt(b*b + r2);
 
     return pars[1] * (3*(b+a)*a*a - r2*(b+3*a)) / (4*M_PI*pow(b+a,3)*a*a*a);
 }
@@ -223,9 +214,8 @@ double hernquist_value(double t, double *pars, double *q, int n_dim, void *state
             - m (mass scale)
             - c (length scale)
     */
-    double R;
-    R = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    return -pars[0] * pars[1] / (R + pars[2]);
+    const double r = norm3(q);
+    return -pars[0] * pars[1] / (r + pars[2]);
 }
 
 void hernquist_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
@@ -234,9 +224,8 @@ void hernquist_gradient_single(double t, double *__restrict__ pars, double6ptr q
             - m (mass scale)
             - c (length scale)
     */
-    double R, fac;
-    R = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    fac = pars[0] * pars[1] / ((R + pars[2]) * (R + pars[2]) * R);
+    const double r = norm3(q);
+    const double fac = pars[0] * pars[1] / ((r + pars[2]) * (r + pars[2]) * r);
 
     grad[0] = grad[0] + fac*q[0];
     grad[1] = grad[1] + fac*q[1];
@@ -249,9 +238,8 @@ double hernquist_density(double t, double *pars, double *q, int n_dim, void *sta
             - m (mass scale)
             - c (length scale)
     */
-    double r, rho0;
-    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    rho0 = pars[1]/(2*M_PI*pars[2]*pars[2]*pars[2]);
+    const double r = norm3(q);
+    const double rho0 = pars[1]/(2*M_PI*pars[2]*pars[2]*pars[2]);
     return rho0 / ((r/pars[2]) * pow(1+r/pars[2],3));
 }
 
@@ -307,8 +295,8 @@ double plummer_value(double t, double *pars, double *q, int n_dim, void *state) 
             - m (mass scale)
             - b (length scale)
     */
-    double R2 = q[0]*q[0] + q[1]*q[1] + q[2]*q[2];
-    return -pars[0]*pars[1] / sqrt(R2 + pars[2]*pars[2]);
+    const double r2 = norm3_sq(q);
+    return -pars[0]*pars[1] / sqrt(r2 + pars[2]*pars[2]);
 }
 
 void plummer_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
@@ -317,9 +305,8 @@ void plummer_gradient_single(double t, double *__restrict__ pars, double6ptr q, 
             - m (mass scale)
             - b (length scale)
     */
-    double R2b, fac;
-    R2b = q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + pars[2]*pars[2];
-    fac = pars[0] * pars[1] / sqrt(R2b) / R2b;
+    const double R2b = norm3_sq(q) + pars[2]*pars[2];
+    const double fac = pars[0] * pars[1] / sqrt(R2b) / R2b;
 
     grad[0] = grad[0] + fac*q[0];
     grad[1] = grad[1] + fac*q[1];
@@ -332,7 +319,7 @@ double plummer_density(double t, double *pars, double *q, int n_dim, void *state
             - m (mass scale)
             - b (length scale)
     */
-    double r2 = q[0]*q[0] + q[1]*q[1] + q[2]*q[2];
+    const double r2 = norm3_sq(q);
     return 3*pars[1] / (4*M_PI*pars[2]*pars[2]*pars[2]) * pow(1 + r2/(pars[2]*pars[2]), -2.5);
 }
 
@@ -381,9 +368,8 @@ double jaffe_value(double t, double *pars, double *q, int n_dim, void *state) {
             - m (mass scale)
             - c (length scale)
     */
-    double R;
-    R = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    return -pars[0] * pars[1] / pars[2] * log(1 + pars[2]/R);
+    const double r = norm3(q);
+    return -pars[0] * pars[1] / pars[2] * log(1 + pars[2] / r);
 }
 
 void jaffe_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state){
@@ -392,13 +378,12 @@ void jaffe_gradient_single(double t, double *__restrict__ pars, double6ptr q, in
             - m (mass scale)
             - c (length scale)
     */
-    double R, fac;
-    R = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    fac = pars[0] * pars[1] / pars[2] * (pars[2] / (R * (pars[2] + R)));
+    const double r = norm3(q);
+    const double fac = pars[0] * pars[1] / pars[2] * (pars[2] / (r * (pars[2] + r))) / r;
 
-    grad[0] = grad[0] + fac*q[0]/R;
-    grad[1] = grad[1] + fac*q[1]/R;
-    grad[2] = grad[2] + fac*q[2]/R;
+    grad[0] = grad[0] + fac * q[0];
+    grad[1] = grad[1] + fac * q[1];
+    grad[2] = grad[2] + fac * q[2];
 }
 
 double jaffe_density(double t, double *pars, double *q, int n_dim, void *state) {
@@ -407,9 +392,8 @@ double jaffe_density(double t, double *pars, double *q, int n_dim, void *state) 
             - m (mass scale)
             - c (length scale)
     */
-    double r, rho0;
-    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    rho0 = pars[1] / (4*M_PI*pars[2]*pars[2]*pars[2]);
+    const double r = norm3(q);
+    const double rho0 = pars[1] / (4*M_PI*pars[2]*pars[2]*pars[2]);
     return rho0 / (pow(r/pars[2],2) * pow(1+r/pars[2],2));
 }
 
@@ -511,25 +495,22 @@ double powerlawcutoff_value(double t, double *pars, double *q, int n_dim, void *
             2 - a (power-law index)
             3 - c (cutoff radius)
     */
-    double G = pars[0];
-    double m = pars[1];
-    double alpha = pars[2];
-    double r_c = pars[3];
-    double x = q[0];
-    double y = q[1];
-    double z = q[2];
-    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    const double G = pars[0];
+    const double m = pars[1];
+    const double alpha = pars[2];
+    const double r_c = pars[3];
+    const double r = norm3(q);
 
     if (r == 0.) {
         return -INFINITY;
     } else {
-        double tmp_0 = alpha / 2.0;
-        double tmp_1 = -tmp_0;
-        double tmp_2 = tmp_1 + 1.5;
-        double tmp_3 = pow(x, 2) + pow(y, 2) + pow(z, 2);
-        double tmp_4 = tmp_3/pow(r_c, 2);
-        double tmp_5 = G*m;
-        double tmp_6 = tmp_5*safe_gamma_inc(tmp_2, tmp_4)/(sqrt(tmp_3)*tgamma(tmp_1 + 2.5));
+        const double tmp_0 = alpha / 2.0;
+        const double tmp_1 = -tmp_0;
+        const double tmp_2 = tmp_1 + 1.5;
+        const double tmp_3 = r * r;
+        const double tmp_4 = tmp_3 / pow(r_c, 2);
+        const double tmp_5 = G*m;
+        const double tmp_6 = tmp_5*safe_gamma_inc(tmp_2, tmp_4)/(sqrt(tmp_3)*tgamma(tmp_1 + 2.5));
 
         // Original potential
         double phi_r = tmp_0*tmp_6 - 3.0/2.0*tmp_6 + tmp_5*safe_gamma_inc(tmp_1 + 1, tmp_4)/(r_c*tgamma(tmp_2));
@@ -551,9 +532,8 @@ double powerlawcutoff_density(double t, double *pars, double *q, int n_dim, void
             2 - a (power-law index)
             3 - c (cutoff radius)
     */
-    double r, A;
-    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    A = pars[1] / (2*M_PI) * pow(pars[3], pars[2] - 3) / gsl_sf_gamma(0.5 * (3 - pars[2]));
+    const double r = norm3(q);
+    const double A = pars[1] / (2*M_PI) * pow(pars[3], pars[2] - 3) / gsl_sf_gamma(0.5 * (3 - pars[2]));
     return A * pow(r, -pars[2]) * exp(-r*r / (pars[3]*pars[3]));
 }
 
@@ -564,14 +544,13 @@ void powerlawcutoff_gradient_single(double t, double *__restrict__ pars, double6
             2 - a (power-law index)
             3 - c (cutoff radius)
     */
-    double r, dPhi_dr;
-    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    dPhi_dr = (pars[0] * pars[1] / (r*r) *
+    const double r = norm3(q);
+    const double dPhi_dr = (pars[0] * pars[1] / (r*r * r) *
         gsl_sf_gamma_inc_P(0.5 * (3-pars[2]), r*r/(pars[3]*pars[3]))); // / gsl_sf_gamma(0.5 * (3-pars[2])));
 
-    grad[0] = grad[0] + dPhi_dr * q[0]/r;
-    grad[1] = grad[1] + dPhi_dr * q[1]/r;
-    grad[2] = grad[2] + dPhi_dr * q[2]/r;
+    grad[0] = grad[0] + dPhi_dr * q[0];
+    grad[1] = grad[1] + dPhi_dr * q[1];
+    grad[2] = grad[2] + dPhi_dr * q[2];
 }
 
 void powerlawcutoff_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) {
@@ -687,13 +666,11 @@ double stone_value(double t, double *pars, double *q, int n_dim, void *state) {
             - r_c (core radius)
             - r_h (halo radius)
     */
-    double r, u_c, u_h, fac;
+    const double r = norm3(q);
+    const double u_c = r / pars[2];
+    const double u_h = r / pars[3];
 
-    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    u_c = r / pars[2];
-    u_h = r / pars[3];
-
-    fac = 2*pars[0]*pars[1] / M_PI / (pars[3] - pars[2]);
+    const double fac = 2*pars[0]*pars[1] / M_PI / (pars[3] - pars[2]);
 
     if (r == 0) {
         return -fac * 0.5 * log(pars[3]*pars[3] / (pars[2] * pars[2]));
@@ -713,18 +690,17 @@ void stone_gradient_single(double t, double *__restrict__ pars, double6ptr q, in
             - r_c (core radius)
             - r_h (halo radius)
     */
-    double r, u_c, u_h, fac, dphi_dr;
 
-    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    u_c = r / pars[2];
-    u_h = r / pars[3];
+    const double r = norm3(q);
+    const double u_c = r / pars[2];
+    const double u_h = r / pars[3];
 
-    fac = 2*pars[0]*pars[1] / (M_PI*r*r) / (pars[2] - pars[3]);  // order flipped from value
-    dphi_dr = fac * (pars[2]*atan(u_c) - pars[3]*atan(u_h));
+    const double fac = 2*pars[0]*pars[1] / (M_PI*r*r * r) / (pars[2] - pars[3]);  // order flipped from value
+    const double dphi_dr = fac * (pars[2]*atan(u_c) - pars[3]*atan(u_h));
 
-    grad[0] = grad[0] + dphi_dr*q[0]/r;
-    grad[1] = grad[1] + dphi_dr*q[1]/r;
-    grad[2] = grad[2] + dphi_dr*q[2]/r;
+    grad[0] = grad[0] + dphi_dr*q[0];
+    grad[1] = grad[1] + dphi_dr*q[1];
+    grad[2] = grad[2] + dphi_dr*q[2];
 }
 
 double stone_density(double t, double *pars, double *q, int n_dim, void *state) {
@@ -734,12 +710,10 @@ double stone_density(double t, double *pars, double *q, int n_dim, void *state) 
             - r_c (core radius)
             - r_h (halo radius)
     */
-    double r, u_c, u_t, rho;
-    rho = pars[1] * (pars[2] + pars[3]) / (2*M_PI*M_PI*pars[2]*pars[2]*pars[3]*pars[3]);
-
-    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    u_c = r / pars[2];
-    u_t = r / pars[3];
+    const double r = norm3(q);
+    const double rho = pars[1] * (pars[2] + pars[3]) / (2*M_PI*M_PI*pars[2]*pars[2]*pars[3]*pars[3]);
+    const double u_c = r / pars[2];
+    const double u_t = r / pars[3];
 
     return rho / ((1 + u_c*u_c)*(1 + u_t*u_t));
 }
@@ -848,10 +822,9 @@ double sphericalnfw_value(double t, double *pars, double *q, int n_dim, void *st
             - m (mass scale)
             - r_s (scale radius)
     */
-    double u, v_h2;
     // v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
-    v_h2 = -pars[0] * pars[1] / pars[2];
-    u = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]) / pars[2];
+    const double v_h2 = -pars[0] * pars[1] / pars[2];
+    const double u = norm3(q) / pars[2];
     if (u == 0) {
         return v_h2;
     } else {
@@ -865,12 +838,11 @@ void sphericalnfw_gradient_single(double t, double *__restrict__ pars, double6pt
             - m (mass scale)
             - r_s (scale radius)
     */
-    double fac, u, v_h2;
     // v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
-    v_h2 = pars[0] * pars[1] / pars[2];
+    const double v_h2 = pars[0] * pars[1] / pars[2];
 
-    u = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]) / pars[2];
-    fac = v_h2 / (u*u*u) / (pars[2]*pars[2]) * (log(1+u) - u/(1+u));
+    const double u = norm3(q) / pars[2];
+    const double fac = v_h2 / (u*u*u) / (pars[2]*pars[2]) * (log(1+u) - u/(1+u));
 
     grad[0] = grad[0] + fac*q[0];
     grad[1] = grad[1] + fac*q[1];
@@ -884,11 +856,10 @@ double sphericalnfw_density(double t, double *pars, double *q, int n_dim, void *
             - r_s (scale radius)
     */
     // double v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
-    double v_h2 = pars[0] * pars[1] / pars[2];
-    double r, rho0;
-    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    const double v_h2 = pars[0] * pars[1] / pars[2];
+    const double r = norm3(q);
 
-    rho0 = v_h2 / (4*M_PI*pars[0]*pars[2]*pars[2]);
+    const double rho0 = v_h2 / (4*M_PI*pars[0]*pars[2]*pars[2]);
     return rho0 / ((r/pars[2]) * pow(1+r/pars[2],2));
 }
 
@@ -960,10 +931,9 @@ double flattenednfw_value(double t, double *pars, double *q, int n_dim, void *st
             - b (ignore)
             - c (z flattening)
     */
-    double u, v_h2;
     // v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
-    v_h2 = -pars[0] * pars[1] / pars[2];
-    u = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]/(pars[5]*pars[5])) / pars[2];
+    const double v_h2 = -pars[0] * pars[1] / pars[2];
+    const double u = norm3_flat_z(q, pars[5]) / pars[2];
     if (u == 0) {
         return v_h2;
     } else {
@@ -980,12 +950,11 @@ void flattenednfw_gradient_single(double t, double *__restrict__ pars, double6pt
             - b (ignore)
             - c (z flattening)
     */
-    double fac, u, v_h2;
     // v_h2 = pars[1]*pars[1] / (log(2.) - 0.5);
-    v_h2 = pars[0] * pars[1] / pars[2];
-    u = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]/(pars[5]*pars[5])) / pars[2];
+    const double v_h2 = pars[0] * pars[1] / pars[2];
+    const double u = norm3_flat_z(q, pars[5]) / pars[2];
 
-    fac = v_h2 / (u*u*u) / (pars[2]*pars[2]) * (log(1+u) - u/(1+u));
+    const double fac = v_h2 / (u*u*u) / (pars[2]*pars[2]) * (log(1+u) - u/(1+u));
 
     grad[0] = grad[0] + fac*q[0];
     grad[1] = grad[1] + fac*q[1];
@@ -1182,8 +1151,7 @@ double satoh_value(double t, double *pars, double *q, int n_dim, void *state) {
             - a (length scale 1) TODO
             - b (length scale 2) TODO
     */
-    double S2;
-    S2 = q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + pars[2]*(pars[2] + 2*sqrt(q[2]*q[2] + pars[3]*pars[3]));
+    const double S2 = norm3_sq(q) + pars[2]*(pars[2] + 2*sqrt(q[2]*q[2] + pars[3]*pars[3]));
     return -pars[0] * pars[1] / sqrt(S2);
 }
 
@@ -1195,8 +1163,8 @@ void satoh_gradient_single(double t, double *__restrict__ pars, double6ptr q, in
             - b (length scale 2) TODO
     */
 
-    double S2 = q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + pars[2]*(pars[2] + 2*sqrt(q[2]*q[2] + pars[3]*pars[3]));
-    double dPhi_dS = pars[0] * pars[1] / S2;
+    const double S2 = norm3_sq(q) + pars[2]*(pars[2] + 2*sqrt(q[2]*q[2] + pars[3]*pars[3]));
+    const double dPhi_dS = pars[0] * pars[1] / S2;
 
     grad[0] = grad[0] + dPhi_dS*q[0]/sqrt(S2);
     grad[1] = grad[1] + dPhi_dS*q[1]/sqrt(S2);
@@ -1323,8 +1291,7 @@ double miyamotonagai_value(double t, double *pars, double *q, int n_dim, void *s
             - a (length scale 1) TODO
             - b (length scale 2) TODO
     */
-    double zd;
-    zd = (pars[2] + sqrt(q[2]*q[2] + pars[3]*pars[3]));
+    const double zd = (pars[2] + sqrt(q[2]*q[2] + pars[3]*pars[3]));
     return -pars[0] * pars[1] / sqrt(q[0]*q[0] + q[1]*q[1] + zd*zd);
 }
 
@@ -1335,11 +1302,9 @@ void miyamotonagai_gradient_single(double t, double *__restrict__ pars, double6p
             - a (length scale 1) TODO
             - b (length scale 2) TODO
     */
-    double sqrtz, zd, fac;
-
-    sqrtz = sqrt(q[2]*q[2] + pars[3]*pars[3]);
-    zd = pars[2] + sqrtz;
-    fac = pars[0]*pars[1] * pow(q[0]*q[0] + q[1]*q[1] + zd*zd, -1.5);
+    const double sqrtz = sqrt(q[2]*q[2] + pars[3]*pars[3]);
+    const double zd = pars[2] + sqrtz;
+    const double fac = pars[0]*pars[1] * pow(q[0]*q[0] + q[1]*q[1] + zd*zd, -1.5);
 
     grad[0] = grad[0] + fac*q[0];
     grad[1] = grad[1] + fac*q[1];
@@ -1354,17 +1319,16 @@ double miyamotonagai_density(double t, double *pars, double *q, int n_dim, void 
             - b (length scale 2) TODO
     */
 
-    double M, a, b;
-    M = pars[1];
-    a = pars[2];
-    b = pars[3];
+    const double M = pars[1];
+    const double a = pars[2];
+    const double b = pars[3];
 
-    double R2 = q[0]*q[0] + q[1]*q[1];
-    double sqrt_zb = sqrt(q[2]*q[2] + b*b);
-    double numer = (b*b*M / (4*M_PI)) * (a*R2 + (a + 3*sqrt_zb)*(a + sqrt_zb)*(a + sqrt_zb));
-    double denom = pow(R2 + (a + sqrt_zb)*(a + sqrt_zb), 2.5) * sqrt_zb*sqrt_zb*sqrt_zb;
+    const double R2 = q[0]*q[0] + q[1]*q[1];
+    const double sqrt_zb = sqrt(q[2]*q[2] + b*b);
+    const double numer = (b*b*M / (4*M_PI)) * (a*R2 + (a + 3*sqrt_zb)*(a + sqrt_zb)*(a + sqrt_zb));
+    const double denom = pow(R2 + (a + sqrt_zb)*(a + sqrt_zb), 2.5) * sqrt_zb*sqrt_zb*sqrt_zb;
 
-    return numer/denom;
+    return numer / denom;
 }
 
 void miyamotonagai_hessian(double t, double *pars, double *q, int n_dim,
@@ -1602,11 +1566,9 @@ double logarithmic_value(double t, double *pars, double *q, int n_dim, void *sta
             - q2
             - q3
     */
-    double x, y, z;
-
-    x = q[0]*cos(pars[6]) + q[1]*sin(pars[6]);
-    y = -q[0]*sin(pars[6]) + q[1]*cos(pars[6]);
-    z = q[2];
+    const double x = q[0]*cos(pars[6]) + q[1]*sin(pars[6]);
+    const double y = -q[0]*sin(pars[6]) + q[1]*cos(pars[6]);
+    const double z = q[2];
 
     return 0.5*pars[1]*pars[1] * log(pars[2]*pars[2] + // scale radius
                                      x*x/(pars[3]*pars[3]) +
@@ -1647,16 +1609,15 @@ void logarithmic_gradient_single(double t, double *__restrict__ pars, double6ptr
             - q2
             - q3
     */
-    double x, y, z, ax, ay, az, fac;
 
-    x = q[0]*cos(pars[6]) + q[1]*sin(pars[6]);
-    y = -q[0]*sin(pars[6]) + q[1]*cos(pars[6]);
-    z = q[2];
+    const double x = q[0]*cos(pars[6]) + q[1]*sin(pars[6]);
+    const double y = -q[0]*sin(pars[6]) + q[1]*cos(pars[6]);
+    const double z = q[2];
 
-    fac = pars[1]*pars[1] / (pars[2]*pars[2] + x*x/(pars[3]*pars[3]) + y*y/(pars[4]*pars[4]) + z*z/(pars[5]*pars[5]));
-    ax = fac*x/(pars[3]*pars[3]);
-    ay = fac*y/(pars[4]*pars[4]);
-    az = fac*z/(pars[5]*pars[5]);
+    const double fac = pars[1]*pars[1] / (pars[2]*pars[2] + x*x/(pars[3]*pars[3]) + y*y/(pars[4]*pars[4]) + z*z/(pars[5]*pars[5]));
+    const double ax = fac*x/(pars[3]*pars[3]);
+    const double ay = fac*y/(pars[4]*pars[4]);
+    const double az = fac*z/(pars[5]*pars[5]);
 
     grad[0] = grad[0] + (ax*cos(pars[6]) - ay*sin(pars[6]));
     grad[1] = grad[1] + (ax*sin(pars[6]) + ay*cos(pars[6]));
@@ -1728,20 +1689,16 @@ double longmuralibar_value(double t, double *pars, double *q, int n_dim, void *s
         - c
         - alpha
     */
-    double x, y, z;
-    double a, b, c;
-    double Tm, Tp;
+    const double x = q[0]*cos(pars[5]) + q[1]*sin(pars[5]);
+    const double y = -q[0]*sin(pars[5]) + q[1]*cos(pars[5]);
+    const double z = q[2];
 
-    x = q[0]*cos(pars[5]) + q[1]*sin(pars[5]);
-    y = -q[0]*sin(pars[5]) + q[1]*cos(pars[5]);
-    z = q[2];
+    const double a = pars[2];
+    const double b = pars[3];
+    const double c = pars[4];
 
-    a = pars[2];
-    b = pars[3];
-    c = pars[4];
-
-    Tm = sqrt((a-x)*(a-x) + y*y + pow(b + sqrt(c*c + z*z),2));
-    Tp = sqrt((a+x)*(a+x) + y*y + pow(b + sqrt(c*c + z*z),2));
+    const double Tm = sqrt((a-x)*(a-x) + y*y + pow(b + sqrt(c*c + z*z),2));
+    const double Tp = sqrt((a+x)*(a+x) + y*y + pow(b + sqrt(c*c + z*z),2));
 
     return pars[0]*pars[1]/(2*a) * log((x - a + Tm) / (x + a + Tp));
 }
@@ -1757,30 +1714,25 @@ void longmuralibar_gradient_single(double t, double *__restrict__ pars, double6p
         - c
         - alpha
     */
-    double x, y, z;
-    double a, b, c;
-    double Tm, Tp, fac1, fac2, fac3, bcz;
-    double gx, gy, gz;
+    const double x = q[0]*cos(pars[5]) + q[1]*sin(pars[5]);
+    const double y = -q[0]*sin(pars[5]) + q[1]*cos(pars[5]);
+    const double z = q[2];
 
-    x = q[0]*cos(pars[5]) + q[1]*sin(pars[5]);
-    y = -q[0]*sin(pars[5]) + q[1]*cos(pars[5]);
-    z = q[2];
+    const double a = pars[2];
+    const double b = pars[3];
+    const double c = pars[4];
 
-    a = pars[2];
-    b = pars[3];
-    c = pars[4];
+    const double bcz = b + sqrt(c*c + z*z);
+    const double Tm = sqrt((a-x)*(a-x) + y*y + bcz*bcz);
+    const double Tp = sqrt((a+x)*(a+x) + y*y + bcz*bcz);
 
-    bcz = b + sqrt(c*c + z*z);
-    Tm = sqrt((a-x)*(a-x) + y*y + bcz*bcz);
-    Tp = sqrt((a+x)*(a+x) + y*y + bcz*bcz);
+    const double fac1 = pars[0]*pars[1] / (2*Tm*Tp);
+    const double fac2 = 1 / (y*y + bcz*bcz);
+    const double fac3 = Tp + Tm - (4*x*x)/(Tp+Tm);
 
-    fac1 = pars[0]*pars[1] / (2*Tm*Tp);
-    fac2 = 1 / (y*y + bcz*bcz);
-    fac3 = Tp + Tm - (4*x*x)/(Tp+Tm);
-
-    gx = 4 * fac1 * x / (Tp + Tm);
-    gy = fac1 * y * fac2 * fac3;
-    gz = fac1 * z * fac2 * fac3 * bcz / sqrt(z*z + c*c);
+    const double gx = 4 * fac1 * x / (Tp + Tm);
+    const double gy = fac1 * y * fac2 * fac3;
+    const double gz = fac1 * z * fac2 * fac3 * bcz / sqrt(z*z + c*c);
 
     grad[0] = grad[0] + (gx*cos(pars[5]) - gy*sin(pars[5]));
     grad[1] = grad[1] + (gx*sin(pars[5]) + gy*cos(pars[5]));
@@ -2022,7 +1974,7 @@ double spherical_spline_density_value(double t, double *pars, double *q, int n_d
             1 to 1+n_knots-1 - r_knots (radial knot locations)
             n_knots to 2*n_knots-1 - density_values (density at each knot)
     */
-    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    const double r = norm3(q);
     spherical_spline_state *spl_state = (spherical_spline_state *)state;
 
     // Check bounds
@@ -2031,17 +1983,15 @@ double spherical_spline_density_value(double t, double *pars, double *q, int n_d
     }
 
     // Calculate enclosed mass M(r) = 4π ∫[0 to r] ρ(r') r'² dr'
-    double r_min = spl_state->r_knots[0];
-    double integral_mass = gsl_spline_eval_integ(spl_state->rho_r2_spline, r_min, r, spl_state->rho_r2_acc);
-    double M_r = 4.0 * M_PI * integral_mass;
+    const double r_min = spl_state->r_knots[0];
+    const double integral_mass = gsl_spline_eval_integ(spl_state->rho_r2_spline, r_min, r, spl_state->rho_r2_acc);
+    const double M_r = 4.0 * M_PI * integral_mass;
 
     // Calculate potential from density
     // For spherical symmetry: Φ(r) = -G M(r) / r - 4πG ∫[r to ∞] ρ(r') r' dr'
-    double r_max = spl_state->r_knots[spl_state->n_knots-1];
-    double integral_outer = gsl_spline_eval_integ(spl_state->rho_r_spline, r, r_max, spl_state->rho_r_acc);
-    double potential = -pars[0] * M_r / r - 4.0 * M_PI * pars[0] * integral_outer;
-
-    return potential;
+    const double r_max = spl_state->r_knots[spl_state->n_knots-1];
+    const double integral_outer = gsl_spline_eval_integ(spl_state->rho_r_spline, r, r_max, spl_state->rho_r_acc);
+    return -pars[0] * M_r / r - 4.0 * M_PI * pars[0] * integral_outer;
 }
 
 void spherical_spline_density_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
@@ -2050,7 +2000,7 @@ void spherical_spline_density_gradient_single(double t, double *__restrict__ par
             1 to 1+n_knots-1 - r_knots (radial knot locations)
             n_knots to 2*n_knots-1 - density_values (density at each knot)
     */
-    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    const double r = norm3(q);
     if (r == 0.0) return;
 
     spherical_spline_state *spl_state = (spherical_spline_state *)state;
@@ -2062,9 +2012,9 @@ void spherical_spline_density_gradient_single(double t, double *__restrict__ par
 
     // Calculate enclosed mass M(r) = 4π ∫[0 to r] ρ(r') r'² dr'
     // Use the pre-computed ρ(r) * r² spline
-    double r_min = spl_state->r_knots[0];
-    double integral = gsl_spline_eval_integ(spl_state->rho_r2_spline, r_min, r, spl_state->rho_r2_acc);
-    double M_r = 4.0 * M_PI * integral;
+    const double r_min = spl_state->r_knots[0];
+    const double integral = gsl_spline_eval_integ(spl_state->rho_r2_spline, r_min, r, spl_state->rho_r2_acc);
+    const double M_r = 4.0 * M_PI * integral;
 
     // Gradient: dΦ/dr = GM(r)/r²
     double dPhi_dr = pars[0] * M_r / (r * r);
@@ -2081,7 +2031,7 @@ double spherical_spline_density_density(double t, double *pars, double *q, int n
             1 to 1+n_knots-1 - r_knots (radial knot locations)
             n_knots to 2*n_knots-1 - density_values (density at each knot)
     */
-    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    const double r = norm3(q);
     spherical_spline_state *spl_state = (spherical_spline_state *)state;
 
     // Check bounds
@@ -2102,7 +2052,7 @@ double spherical_spline_mass_value(double t, double *pars, double *q, int n_dim,
             1 to 1+n_knots-1 - r_knots (radial knot locations)
             n_knots to 2*n_knots-1 - mass_values (mass enclosed at each knot)
     */
-    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    const double r = norm3(q);
     spherical_spline_state *spl_state = (spherical_spline_state *)state;
 
     double M_r;
@@ -2122,12 +2072,13 @@ double spherical_spline_mass_value(double t, double *pars, double *q, int n_dim,
     // Calculate potential: Φ(r) = -G ∫[r to ∞] M(r')/r'² dr'
     // For finite extent with maximum radius r_max, we assume M(r') = M(r_max) for r' > r_max
     // So: Φ(r) = -G ∫[r to r_max] M(r')/r'² dr' - G M(r_max) / r_max
-    double r_max = spl_state->r_knots[spl_state->n_knots-1];
-    double M_max = spl_state->values[spl_state->n_knots-1];
+    const double r_max = spl_state->r_knots[spl_state->n_knots-1];
+    const double M_max = spl_state->values[spl_state->n_knots-1];
 
     // Use numerical integration from r to r_max
+    // TODO: allow number of integration points to be a parameter
     int n_integration_points = 1000;
-    double dr = (r_max - r) / n_integration_points;
+    const double dr = (r_max - r) / n_integration_points;
     double potential = 0.0;
 
     for (int i = 0; i < n_integration_points; i++) {
@@ -2148,7 +2099,7 @@ void spherical_spline_mass_gradient_single(double t, double *__restrict__ pars, 
             1 to 1+n_knots-1 - r_knots (radial knot locations)
             n_knots to 2*n_knots-1 - mass_values (mass enclosed at each knot)
     */
-    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    const double r = norm3(q);
     if (r == 0.0) return;
 
     spherical_spline_state *spl_state = (spherical_spline_state *)state;
@@ -2164,12 +2115,12 @@ void spherical_spline_mass_gradient_single(double t, double *__restrict__ pars, 
     }
 
     // Gradient: dΦ/dr = GM(r)/r²
-    double dPhi_dr = pars[0] * M_r / (r * r);
+    const double dPhi_dr = pars[0] * M_r / (r * r * r);
 
     // Convert to Cartesian gradients
-    grad[0] += dPhi_dr * q[0] / r;
-    grad[1] += dPhi_dr * q[1] / r;
-    grad[2] += dPhi_dr * q[2] / r;
+    grad[0] += dPhi_dr * q[0];
+    grad[1] += dPhi_dr * q[1];
+    grad[2] += dPhi_dr * q[2];
 }
 
 double spherical_spline_mass_density(double t, double *pars, double *q, int n_dim, void *state) {
@@ -2178,7 +2129,7 @@ double spherical_spline_mass_density(double t, double *pars, double *q, int n_di
             1 to 1+n_knots-1 - r_knots (radial knot locations)
             n_knots to 2*n_knots-1 - mass_values (mass enclosed at each knot)
     */
-    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    const double r = norm3(q);
     if (r == 0.0) return 0.0;
 
     spherical_spline_state *spl_state = (spherical_spline_state *)state;
@@ -2189,7 +2140,7 @@ double spherical_spline_mass_density(double t, double *pars, double *q, int n_di
     }
 
     // Calculate density using: ρ(r) = (1/4πr²) dM/dr
-    double dM_dr = gsl_spline_eval_deriv(spl_state->spline, r, spl_state->acc);
+    const double dM_dr = gsl_spline_eval_deriv(spl_state->spline, r, spl_state->acc);
     return dM_dr / (4.0 * M_PI * r * r);
 }
 
@@ -2202,13 +2153,13 @@ double spherical_spline_potential_value(double t, double *pars, double *q, int n
             1 to 1+n_knots-1 - r_knots (radial knot locations)
             n_knots to 2*n_knots-1 - potential_values (potential at each knot)
     */
-    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    const double r = norm3(q);
     spherical_spline_state *spl_state = (spherical_spline_state *)state;
 
     // Check bounds - extrapolate beyond grid
     if (r < spl_state->r_knots[0]) {
         // Linear extrapolation to smaller radii
-        double slope = (spl_state->values[1] - spl_state->values[0]) / (spl_state->r_knots[1] - spl_state->r_knots[0]);
+        const double slope = (spl_state->values[1] - spl_state->values[0]) / (spl_state->r_knots[1] - spl_state->r_knots[0]);
         return spl_state->values[0] + slope * (r - spl_state->r_knots[0]);
     }
     if (r > spl_state->r_knots[spl_state->n_knots-1]) {
@@ -2226,7 +2177,7 @@ void spherical_spline_potential_gradient_single(double t, double *__restrict__ p
             1 to 1+n_knots-1 - r_knots (radial knot locations)
             n_knots to 2*n_knots-1 - potential_values (potential at each knot)
     */
-    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    const double r = norm3(q);
     if (r == 0.0) return;
 
     spherical_spline_state *spl_state = (spherical_spline_state *)state;
@@ -2260,7 +2211,7 @@ double spherical_spline_potential_density(double t, double *pars, double *q, int
             1 to 1+n_knots-1 - r_knots (radial knot locations)
             n_knots to 2*n_knots-1 - potential_values (potential at each knot)
     */
-    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+    const double r = norm3(q);
     if (r == 0.0) return 0.0;
 
     spherical_spline_state *spl_state = (spherical_spline_state *)state;
@@ -2272,8 +2223,8 @@ double spherical_spline_potential_density(double t, double *pars, double *q, int
 
     // Calculate density using Poisson equation: ∇²Φ = 4πGρ
     // For spherical symmetry: ρ = (1/4πG) [d²Φ/dr² + (2/r) dΦ/dr]
-    double dPhi_dr = gsl_spline_eval_deriv(spl_state->spline, r, spl_state->acc);
-    double d2Phi_dr2 = gsl_spline_eval_deriv2(spl_state->spline, r, spl_state->acc);
+    const double dPhi_dr = gsl_spline_eval_deriv(spl_state->spline, r, spl_state->acc);
+    const double d2Phi_dr2 = gsl_spline_eval_deriv2(spl_state->spline, r, spl_state->acc);
 
     return (d2Phi_dr2 + 2.0 * dPhi_dr / r) / (4.0 * M_PI * pars[0]);
 }
@@ -2290,9 +2241,8 @@ double burkert_value(double t, double *pars, double *q, int n_dim, void *state) 
             - rho (mass scale)
             - r0
     */
-    double R, x;
-    R = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    x = R / pars[2];
+    const double r = norm3(q);
+    const double x = r / pars[2];
 
     // pi G rho r0^2 (pi - 2(1 - r0/r)arctan(r/r0) + 2(1 - r0/r)log(1 + r/r0) - (1 - r0/r)log(1 + (r/r0)^2))
     return -M_PI * pars[0] * pars[1] * pars[2] * pars[2] * (M_PI - 2 * (1 + 1 / x) * atan(x) + 2 * (1 + 1/x) * log(1 + x) - (1 - 1/x) * log(1 + x * x) );
@@ -2305,15 +2255,14 @@ void burkert_gradient_single(double t, double *__restrict__ pars, double6ptr q, 
             - rho (mass scale)
             - r0
     */
-    double R, x, dphi_dr;
-    R = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    x = R / pars[2];
+    const double r = norm3(q);
+    const double x = r / pars[2];
 
-    dphi_dr = -M_PI * pars[0] * pars[1] * pars[2] / (x * x) * (2 * atan(x) - 2 * log(1 + x) - log(1 + x * x));
+    const double dphi_dr = -M_PI * pars[0] * pars[1] * pars[2] / (x * x) * (2 * atan(x) - 2 * log(1 + x) - log(1 + x * x));
 
-    grad[0] = grad[0] + dphi_dr*q[0]/R;
-    grad[1] = grad[1] + dphi_dr*q[1]/R;
-    grad[2] = grad[2] + dphi_dr*q[2]/R;
+    grad[0] = grad[0] + dphi_dr*q[0]/r;
+    grad[1] = grad[1] + dphi_dr*q[1]/r;
+    grad[2] = grad[2] + dphi_dr*q[2]/r;
 }
 
 
@@ -2323,13 +2272,9 @@ double burkert_density(double t, double *pars, double *q, int n_dim, void *state
             - rho (mass scale)
             - r0
     */
-    double r, x, rho;
-
-    r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
-    x = r / pars[2];
-    rho = pars[1] / ((1 + x) * (1 + x * x));
-
-    return rho;
+    const double r = norm3(q);
+    const double x = r / pars[2];
+    return pars[1] / ((1 + x) * (1 + x * x));
 }
 
 DEFINE_VECTORIZED_GRADIENT(burkert)
