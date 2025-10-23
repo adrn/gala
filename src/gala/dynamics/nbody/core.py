@@ -172,6 +172,13 @@ class DirectNBody:
 
         Parameters
         ----------
+        Integrator : `~gala.integrate.Integrator` (optional)
+            Integrator class to use.
+        Integrator_kwargs : dict (optional)
+            Any extra keyword arguments to pass to the integrator class
+            when initializing. For example, you can pass in the
+            ``atol`` and ``rtol`` keyword arguments to set the absolute and
+            relative tolerances for the DOPRI853 integrator.
         **time_spec
             Specification of how long to integrate. See documentation
             for `~gala.integrate.parse_time_specification`.
