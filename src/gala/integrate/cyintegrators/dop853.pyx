@@ -23,12 +23,13 @@ from ...potential.frame.cframe cimport CFrameWrapper, CFrameType
 from .dop853 cimport dop853, Fwrapper_T, FcnEqDiff, six_norm, SolTrait, dop853_dense_state_alloc, dop853_dense_state_free, Dop853DenseState
 
 
-# LEGACY FUNCTION: don't use this (used by lyapunov functionality)
+# LEGACY FUNCTION: don't use this (used by lyapunov functionality and mockstream)
 cdef void dop853_step(
     CPotential *cp, CFrameType *cf, FcnEqDiff F,
     double *w, double t1, double t2, double dt0,
     int ndim, int norbits, int nbody, void *args,
     double atol, double rtol, int nmax,
+    int nstiff,
     unsigned err_if_fail,
     unsigned log_output
 ):

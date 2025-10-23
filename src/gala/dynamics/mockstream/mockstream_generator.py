@@ -123,7 +123,8 @@ class MockStreamGenerator:
         check_filesize=True,
         overwrite=False,
         progress=False,
-        log_output=False,
+        Integrator=None,
+        Integrator_kwargs=None,
         **time_spec,
     ):
         """
@@ -179,6 +180,14 @@ class MockStreamGenerator:
             Overwrite the output file if it exists.
         progress : bool (optional)
             Print a very basic progress bar while computing the stream.
+        Integrator : `~gala.integrate.Integrator` (optional)
+            Integrator class to use. Currently, only the
+            `~gala.integrate.DOPRI853Integrator` is supported.
+        Integrator_kwargs : dict (optional)
+            Any extra keyword arguments to pass to the integrator class
+            when initializing. For example, you can pass in the
+            ``atol`` and ``rtol`` keyword arguments to set the absolute and
+            relative tolerances for the DOPRI853 integrator.
         **time_spec
             Specification of how long to integrate. Most commonly, this is a timestep
             ``dt`` and number of steps ``n_steps``, or a timestep ``dt``, initial time
@@ -192,11 +201,32 @@ class MockStreamGenerator:
         nbody_w : `~gala.dynamics.PhaseSpacePosition`
 
         """
+        from gala.integrate import (
+            DOPRI853Integrator,
+            # LeapfrogIntegrator,
+            # Ruth4Integrator,
+        )
+
+        if Integrator_kwargs is None:
+            Integrator_kwargs = {}
+
+        if Integrator is None:
+            Integrator = DOPRI853Integrator
+
+        # TODO: implement other mock stream generation
+        if Integrator is not DOPRI853Integrator:
+            raise NotImplementedError(
+                "Currently, only the DOPRI853Integrator is supported for stream "
+                "generation."
+            )
+
         units = self.hamiltonian.units
         t = parse_time_specification(units, **time_spec)
 
         prog_nbody = self._get_nbody(prog_w0, nbody)
-        nbody_orbits = prog_nbody.integrate_orbit(t=t)
+        nbody_orbits = prog_nbody.integrate_orbit(
+            t=t, Integrator=Integrator, Integrator_kwargs=Integrator_kwargs
+        )
 
         # If the time stepping passed in is negative, assume this means that all
         # of the initial conditions are at *end time*, and we first need to
@@ -249,6 +279,7 @@ class MockStreamGenerator:
             nstream_idx = np.insert(nstream_idx, 0, 0)
             unq_t1s = np.insert(unq_t1s, 0, orbit_t[0])
 
+        # if Integrator == DOPRI853Integrator
         if output_every is None:
             raw_nbody, raw_stream = mockstream_dop853(
                 nbody0,
@@ -258,7 +289,7 @@ class MockStreamGenerator:
                 orbit_t[-1],
                 all_nstream[nstream_idx].astype("i4"),
                 progress=int(progress),
-                log_output=int(log_output),
+                **Integrator_kwargs,
             )
         else:  # store snapshots
             if output_filename is None:
@@ -277,7 +308,7 @@ class MockStreamGenerator:
                 check_filesize=check_filesize,
                 overwrite=overwrite,
                 progress=int(progress),
-                log_output=int(log_output),
+                **Integrator_kwargs,
             )
 
         x_unit = units["length"]

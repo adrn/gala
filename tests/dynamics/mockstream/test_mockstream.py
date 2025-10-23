@@ -1,12 +1,13 @@
 import itertools
 import os
+import time
 
 import astropy.units as u
 import numpy as np
 import pytest
 
 from gala._optional_deps import HAS_H5PY
-from gala.dynamics import FardalStreamDF, Orbit, PhaseSpacePosition
+from gala.dynamics import ChenStreamDF, FardalStreamDF, Orbit, PhaseSpacePosition
 from gala.dynamics.mockstream.mockstream_generator import MockStreamGenerator
 from gala.dynamics.nbody import DirectNBody
 from gala.potential import (
@@ -236,3 +237,36 @@ def test_animate(tmpdir, dt, nsteps, output_every, release_every, n_particles, t
     assert np.isfinite(nbody_orbits.xyz).all()
     assert np.isfinite(nbody_orbits.v_xyz).all()
     assert np.isfinite(nbody_orbits.t).all()
+
+
+def test_integrator_kwargs():
+    potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.0, units=galactic)
+    H = Hamiltonian(potential)
+    w0 = PhaseSpacePosition(
+        pos=[15.0, 0.0, 0] * u.kpc, vel=[0, 0, 0.13] * u.kpc / u.Myr
+    )
+    mass = 2.5e4 * u.Msun
+
+    df = ChenStreamDF()
+    gen = MockStreamGenerator(df=df, hamiltonian=H)
+
+    ti = time.time()
+    stream1, _ = gen.run(
+        w0, mass, dt=-1.0, n_steps=1000, Integrator_kwargs={"atol": 1e-12, "nmax": 0}
+    )
+    runtime1 = time.time() - ti
+
+    ti = time.time()
+    stream2, _ = gen.run(
+        w0,
+        mass,
+        dt=-1.0,
+        n_steps=1000,
+        Integrator_kwargs={"atol": 1e-5, "nmax": 100, "err_if_fail": 0},
+    )
+    runtime2 = time.time() - ti
+
+    print(f"stream 1, atol=1e-12, runtime = {runtime1}")
+    print(f"stream 2, atol=1e-5, runtime = {runtime2}")
+
+    assert runtime2 < runtime1

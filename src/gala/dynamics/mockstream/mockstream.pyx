@@ -45,6 +45,7 @@ cpdef mockstream_dop853(
     double[:, ::1] stream_w0, double[::1] stream_t1,
     double tfinal, int[::1] nstream,
     double atol=1E-10, double rtol=1E-10, int nmax=0, double dt_max=0.0,
+    int nstiff = -1,
     int progress=0,
     int err_if_fail=1, int log_output=0
 ):
@@ -132,7 +133,7 @@ cpdef mockstream_dop853(
             nbody_w0, time,
             ndim, nbodies, nbodies, args, ntimes,
             atol, rtol, nmax, dt_max,
-            nstiff=-1,  # disable stiffness check
+            nstiff=nstiff,
             err_if_fail=err_if_fail, log_output=log_output, save_all=1,
         )
 
@@ -153,7 +154,7 @@ cpdef mockstream_dop853(
             dop853_step(cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
                         &w_tmp[0, 0], stream_t1[i], tfinal, dt0,
                         ndim, nbodies+nstream[i], nbodies, args,
-                        atol, rtol, nmax,
+                        atol, rtol, nmax, nstiff=nstiff,
                         err_if_fail=err_if_fail, log_output=log_output)
 
             PyErr_CheckSignals()
@@ -196,9 +197,12 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
                                 double[:, ::1] stream_w0, int[::1] nstream,
                                 output_every=1, output_filename='',
                                 overwrite=False, check_filesize=True,
-                                double atol=1E-10, double rtol=1E-10,
-                                int nmax=0, int progress=0,
-                                int err_if_fail=1, int log_output=0):
+                                double atol=1E-10, double rtol=1E-10, int nmax=0,
+                                double dt_max=0.0,
+                                int nstiff = -1,
+                                int progress=0,
+                                int err_if_fail=1,
+                                int log_output=0):
     """
     Parameters
     ----------
@@ -326,7 +330,7 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
             dop853_step(cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
                         &w[0, 0], t[i-1], t[i], dt0,
                         ndim, nbodies+n, nbodies, args,
-                        atol, rtol, nmax,
+                        atol, rtol, nmax, nstiff=nstiff,
                         err_if_fail=err_if_fail, log_output=log_output)
 
             PyErr_CheckSignals()
