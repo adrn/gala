@@ -2491,7 +2491,7 @@ void cEinasto_gradient_single(
     const double alpha = pars[3];
     const double r_c = pars[4];
 
-    const double r = norm3(&q[0]);
+    const double r = norm3(q);
     if (r == 0.0) {
         return;
     }
@@ -2512,7 +2512,7 @@ double cEinasto_density(double t, double *pars, double *q, int n_dim, void *stat
 
     const double r = norm3(q);
 
-    return rho_s * exp( - 2.0 / alpha * (pow((r + r_c) / r_s, alpha) - 1) );
+    return rho_s * exp( - _s_of_r(r + r_c, r_s, alpha) + (2.0 / alpha) );
 }
 
 #endif
