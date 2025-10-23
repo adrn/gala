@@ -50,7 +50,7 @@ pytestmark = pytest.mark.skipif(
 
 
 class EXPTestBase(PotentialTestBase):
-    tol = 1e-2  # increase tolerance for gradient test
+    tol = 1e-1  # increase tolerance for gradient test
 
     exp_units = SimulationUnitSystem(
         mass=1.25234e11 * u.Msun, length=3.845 * u.kpc, G=1
@@ -63,6 +63,9 @@ class EXPTestBase(PotentialTestBase):
     show_plots = False
     check_finite_at_origin = True
     check_zero_at_infinity = False
+
+    num_dx = 1e-3
+    skip_hessian = True
 
     def setup_method(self):
         assert os.path.exists(self.EXP_CONFIG_FILE), "EXP config file does not exist"

@@ -38,12 +38,12 @@ test = [
     "pytest",
     "pytest-astropy",
     "pytest-xdist",
+    "findiff",
 ]
 extra = [
     "galpy",
     "sympy",
-    "twobody",
-    "scipy<1.15" # TODO: temporary, until galpy fixes incompatibility
+    "twobody"
 ]
 docs = [
     "gala[shared,extra]",
