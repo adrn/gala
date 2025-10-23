@@ -296,6 +296,7 @@ class CPotentialBase(PotentialBase):
             if self._parameters[k].python_only:
                 continue
 
+            # TODO: this is sloppy - need a better way to identify array parameters
             if hasattr(v, "unit"):
                 arrs.append(np.atleast_1d(v.value).ravel())
             else:

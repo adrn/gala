@@ -8,7 +8,6 @@
 
 from libc.math cimport M_PI
 
-# Third party
 from astropy.constants import G
 import numpy as np
 cimport numpy as np
@@ -16,8 +15,8 @@ np.import_array()
 import cython
 cimport cython
 
-# Gala
 from gala._cconfig cimport USE_GSL
+from gala.util import GalaFutureWarning
 from gala.units import galactic
 from gala.potential.common import PotentialParameter
 from gala.potential import PotentialBase
@@ -168,6 +167,15 @@ class SCFInterpolatedPotential(CPotentialBase, GSL_only=True):
     Wrapper = InterpolatedSCFWrapper
 
     def __init__(self, *args, units=None, origin=None, R=None, **kwargs):
+
+        import warnings
+        msg = (
+            "This class is now deprecated and should not be used. Instead, use the "
+            "more general TimeDependentPotential class with SCFPotential as the base "
+            "potential. See the gala documentation for more details."
+        )
+        warnings.warn(msg, GalaFutureWarning)
+
         PotentialBase.__init__(
             self,
             *args,

@@ -342,7 +342,7 @@ cdef class FardalStreamDF(BaseStreamDF):
         super().__init__(lead=lead, trail=trail, random_state=random_state)
 
         if gala_modified is None:
-            from gala.util import GalaDeprecationWarning
+            from gala.util import GalaFutureWarning
             import warnings
             msg = (
                 "The parameter values of the FardalStreamDF have been updated (fixed) "
@@ -355,7 +355,7 @@ cdef class FardalStreamDF(BaseStreamDF):
                 "parameters now, set gala_modified=False. To continue to use the Gala "
                 "modified parameter values, set gala_modified=True."
             )
-            warnings.warn(msg, GalaDeprecationWarning)
+            warnings.warn(msg, GalaFutureWarning)
             gala_modified = True
 
         self._gala_modified = int(gala_modified)

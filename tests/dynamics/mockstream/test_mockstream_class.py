@@ -119,7 +119,7 @@ def test_Fardal_vs_GalaModified():
         pos=[10, 0, 0.0] * u.kpc, vel=[0, 300, 20.0] * u.km / u.s
     )
 
-    with pytest.warns(DeprecationWarning, match="Fardal"):
+    with pytest.warns(FutureWarning, match="Fardal"):
         ms.FardalStreamDF()
 
     df_false = ms.FardalStreamDF(
