@@ -125,7 +125,6 @@ class MockStreamGenerator:
         progress=False,
         Integrator=None,
         Integrator_kwargs=None,
-        log_output=False,
         **time_spec,
     ):
         """
@@ -210,6 +209,7 @@ class MockStreamGenerator:
 
         if Integrator_kwargs is None:
             Integrator_kwargs = {}
+
         if Integrator is None:
             Integrator = DOPRI853Integrator
 
@@ -279,6 +279,7 @@ class MockStreamGenerator:
             nstream_idx = np.insert(nstream_idx, 0, 0)
             unq_t1s = np.insert(unq_t1s, 0, orbit_t[0])
 
+        # if Integrator == DOPRI853Integrator
         if output_every is None:
             raw_nbody, raw_stream = mockstream_dop853(
                 nbody0,
@@ -288,7 +289,6 @@ class MockStreamGenerator:
                 orbit_t[-1],
                 all_nstream[nstream_idx].astype("i4"),
                 progress=int(progress),
-                log_output=int(log_output),
                 **Integrator_kwargs,
             )
         else:  # store snapshots
@@ -308,7 +308,6 @@ class MockStreamGenerator:
                 check_filesize=check_filesize,
                 overwrite=overwrite,
                 progress=int(progress),
-                log_output=int(log_output),
                 **Integrator_kwargs,
             )
 
