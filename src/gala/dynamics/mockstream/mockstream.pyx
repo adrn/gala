@@ -154,7 +154,7 @@ cpdef mockstream_dop853(
             dop853_step(cp, &cf, <FcnEqDiff> Fwrapper_direct_nbody,
                         &w_tmp[0, 0], stream_t1[i], tfinal, dt0,
                         ndim, nbodies+nstream[i], nbodies, args,
-                        atol, rtol, nmax, -1, # disable stiffness check
+                        atol, rtol, nmax, nstiff=nstiff,
                         err_if_fail=err_if_fail, log_output=log_output)
 
             PyErr_CheckSignals()
