@@ -18,6 +18,8 @@ New Features
 - Unit systems in potential classes can now be specified using string names
   (e.g., ``'galactic'``, ``'dimensionless'``, etc.) when initializing potential
   instances or when replacing units with ``.replace_units()``.
+- C-level integrator arguments can now be specified when running a mock stream
+  simulation through the ``Integrator_kwargs`` in ``MockStreamGenerator.run()``.
 
 Bug fixes
 ---------
