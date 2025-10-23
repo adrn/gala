@@ -491,3 +491,8 @@ def test_all_builtin_potentials_time_interpolated(pot_cls_name):
     assert not u.allclose(
         pot_const.energy(x, t=0 * u.Myr), pot_time.energy(x, t=50 * u.Myr)
     )
+
+
+# TODO: functional tests
+# - Orbit integration with a rotating bar
+# - ...
