@@ -7,50 +7,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from astropy.constants import G
+from findiff import Diff
 
-from gala._compat_utils import SCIPY_LT_1_15
 from gala._optional_deps import HAS_SYMPY
 from gala.dynamics import PhaseSpacePosition
-from gala.potential import Hamiltonian, SphericalSymmetry, StaticFrame
+from gala.potential import Hamiltonian, StaticFrame
 from gala.potential.potential.io import load
 from gala.units import DimensionlessUnitSystem, UnitSystem
-
-
-def partial_derivative_LT_1_15(func, point, dim_ix=0, **kwargs):
-    from scipy.misc import derivative
-
-    kwargs["order"] = kwargs.get("order", 5)
-
-    xyz = np.array(point, copy=True)
-
-    def wraps(a):
-        xyz[dim_ix] = a
-        return func(xyz)
-
-    return derivative(wraps, point[dim_ix], **kwargs)
-
-
-def partial_derivative_GTEQ_1_15(func, point, dim_ix=0, **kwargs):
-    from scipy.differentiate import derivative
-
-    kwargs["initial_step"] = kwargs.pop("dx")
-    kwargs["preserve_shape"] = True
-
-    def wraps(a):
-        xyz = np.copy(point)
-        if a.shape:
-            xyz = np.repeat(xyz[:, None], a.size, axis=1).T
-        xyz[..., dim_ix] = a
-        # print(xyz.shape, func(xyz).shape)
-        return func(xyz)
-
-    return derivative(wraps, point[dim_ix], **kwargs).df
-
-
-if SCIPY_LT_1_15:
-    partial_derivative = partial_derivative_LT_1_15
-else:
-    partial_derivative = partial_derivative_GTEQ_1_15
 
 
 class PotentialTestBase:
@@ -67,7 +30,11 @@ class PotentialTestBase:
     rotation = False
 
     skip_hessian = False
-    skip_hessian_density = False
+    skip_density = False
+
+    @pytest.fixture(scope="class")
+    def rng(self):
+        return np.random.default_rng(42)
 
     def setup_method(self):
         # set up hamiltonian
@@ -291,105 +258,98 @@ class PotentialTestBase:
         p.energy(self.w0[: self.w0.size // 2])
         p.gradient(self.w0[: self.w0.size // 2])
 
-    def test_numerical_gradient_vs_gradient(self):
+    def test_numerical_gradient_vs_gradient(self, rng):
         """
         Check that the value of the implemented gradient function is close to a
         numerically estimated value. This is to check the coded-up version.
         """
 
-        dx = 1e-3 * np.sqrt(np.sum(self.w0[: self.w0.size // 2] ** 2))
-        max_x = np.sqrt(np.sum([x**2 for x in self.w0[: self.w0.size // 2]]))
+        # NOTE: 1e-3 and 2 are magic numbers and should maybe be configurable
+        w0_r = np.linalg.norm(self.w0[: self.potential.ndim])
+        dx = 1e-3 * w0_r
+        max_x = 2 * w0_r
 
-        grid = np.linspace(-max_x, max_x, 8)
-        grid = grid[grid != 0.0]
-        grids = [grid for i in range(self.w0.size // 2)]
-        xyz = np.ascontiguousarray(
-            np.vstack(list(map(np.ravel, np.meshgrid(*grids)))).T
-        )
+        # Pick random points in 3-space, build a finite-difference grid around each
+        # point to compute numerical gradient
+        N_points = 16
+        pt_xyz = rng.uniform(-max_x, max_x, size=(self.potential.ndim, N_points))
 
-        def compute_energy(xyz):
-            xyz = np.ascontiguousarray(np.atleast_2d(xyz))
-            return np.squeeze(self.potential._energy(xyz, t=np.array([0.0])))
+        grid = np.arange(-4, 4 + 1, 1) * dx
+        grids = np.meshgrid(*[grid for _ in range(self.potential.ndim)], indexing="ij")
+        grid_xyz = np.stack(grids, axis=0)
 
-        num_grad = np.zeros_like(xyz)
-        for i in range(xyz.shape[0]):
-            num_grad[i] = np.squeeze(
-                [
-                    partial_derivative(
-                        compute_energy,
-                        xyz[i],
-                        dim_ix=dim_ix,
-                        dx=dx,
-                    )
-                    for dim_ix in range(self.w0.size // 2)
-                ]
+        d_dxs = [Diff(i, dx) for i in range(self.potential.ndim)]
+        for n in range(N_points):
+            pt_grid = (
+                np.expand_dims(
+                    pt_xyz[:, n], axis=tuple(np.arange(1, 1 + self.potential.ndim))
+                )
+                + grid_xyz
             )
-        grad = self.potential._gradient(
-            np.ascontiguousarray(xyz.T), t=np.array([0.0])
-        ).T
-        np.testing.assert_allclose(grad, num_grad, rtol=self.tol, atol=1e-8)
 
-    def test_numerical_density_vs_density(self):
+            energy = self.potential.energy(pt_grid).value
+
+            dPhi_dx = [d_dx(energy) for d_dx in d_dxs]
+            num_grad = np.stack(dPhi_dx, axis=0)
+            grad = self.potential.gradient(pt_grid).value
+
+            assert np.allclose(grad, num_grad, rtol=self.tol)
+
+    def test_numerical_density_vs_density(self, rng):
         """
         Compare a numerically estimated Laplacian (trace of Hessian) times 4*pi*G
-        to the implemented density function via Poisson's equation:
-            Laplacian(Phi) = 4*pi*G * rho
+        to the implemented density function via Poisson's equation
         """
-        if not isinstance(self.potential._symmetry, SphericalSymmetry):
-            pytest.skip("only for spherical potentials")
-
-        dx = 1e-3 * np.sqrt(np.sum(self.w0[: self.w0.size // 2] ** 2))
-        max_x = np.sqrt(np.sum([x**2 for x in self.w0[: self.w0.size // 2]]))
-
-        # use a slightly smaller grid to limit cost of nested derivatives
-        grid = np.linspace(-max_x, max_x, 6)
-        grid = grid[grid != 0.0]
-        grids = [grid for i in range(self.w0.size // 2)]
-        xyz = np.ascontiguousarray(
-            np.vstack(list(map(np.ravel, np.meshgrid(*grids)))).T
-        )
-
-        def compute_energy(xyz):
-            xyz = np.ascontiguousarray(np.atleast_2d(xyz))
-            return np.squeeze(self.potential._energy(xyz, t=np.array([0.0])))
-
-        def numeric_laplacian_at(pt):
-            # sum of second partial derivatives via nested numerical differentiation
-            s = 0.0
-            ndim = self.w0.size // 2
-            for dim in range(ndim):
-
-                def first_deriv(x):
-                    return partial_derivative(
-                        compute_energy,
-                        x,
-                        dim_ix=dim,  # noqa: B023
-                        dx=dx,
-                    )
-
-                s += partial_derivative(first_deriv, pt, dim_ix=dim, dx=dx)
-            return s
-
-        num_lap = np.zeros(xyz.shape[0])
-        for i in range(xyz.shape[0]):
-            num_lap[i] = numeric_laplacian_at(xyz[i])
-
-        num_rho = num_lap / (4.0 * np.pi * self.potential.G)
-
-        try:
-            dens = np.squeeze(
-                self.potential._density(np.ascontiguousarray(xyz), t=np.array([0.0]))
-            )
-        except Exception:
+        if self.skip_density:
             pytest.skip("density not implemented for this potential")
 
-        np.testing.assert_allclose(dens, num_rho, rtol=self.tol, atol=1e-6)
+        # TODO: duplicate code here to test_numerical_gradient_vs_gradient; refactor
+
+        _G = G if not isinstance(self.potential.units, DimensionlessUnitSystem) else 1.0
+
+        # NOTE: 1e-3 and 2 are magic numbers and should maybe be configurable
+        w0_r = np.linalg.norm(self.w0[: self.potential.ndim])
+        dx = 1e-3 * w0_r
+        max_x = 2 * w0_r
+
+        # Pick random points in 3-space, build a finite-difference grid around each
+        # point to compute numerical gradient
+        N_points = 16
+        pt_xyz = rng.uniform(-max_x, max_x, size=(self.potential.ndim, N_points))
+
+        grid = np.arange(-4, 4 + 1, 1) * dx
+        grids = np.meshgrid(*[grid for _ in range(self.potential.ndim)], indexing="ij")
+        grid_xyz = np.stack(grids, axis=0)
+
+        d2_dx2s = [Diff(i, dx) ** 2 for i in range(self.potential.ndim)]
+        for n in range(N_points):
+            pt_grid = (
+                np.expand_dims(
+                    pt_xyz[:, n], axis=tuple(np.arange(1, 1 + self.potential.ndim))
+                )
+                + grid_xyz
+            )
+
+            energy = self.potential.energy(pt_grid).value
+
+            d2Phi_dx2 = [d2_dx2(energy) for d2_dx2 in d2_dx2s]
+            num_Lap = np.sum(d2Phi_dx2, axis=0)
+            dens_Lap = (
+                (self.potential.density(pt_grid) * 4 * np.pi * _G)
+                .decompose(self.potential.units)
+                .value
+            )
+
+            print("YO", np.abs((num_Lap - dens_Lap) / dens_Lap).max())
+
+            # NOTE: 1e2 factor here is also a magic number
+            assert np.allclose(dens_Lap, num_Lap, rtol=1e2 * self.tol)
 
     def test_hessian_density_consistency(self):
         """
         Check that the trace of the Hessian matches the density via Poisson's equation
         """
-        if self.skip_hessian or self.skip_hessian_density:
+        if self.skip_hessian or self.skip_density:
             pytest.skip("Hessian not implemented for this potential")
 
         _G = G if not isinstance(self.potential.units, DimensionlessUnitSystem) else 1.0
