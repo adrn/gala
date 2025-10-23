@@ -511,6 +511,8 @@ class TestComposite(CompositePotentialTestBase):
     rotation = True
     check_zero_at_infinity = False
 
+    num_dx = 1e-3  # to resolve scale height
+
 
 class TestCComposite(CompositePotentialTestBase):
     p1 = p.LogarithmicPotential(
@@ -523,6 +525,8 @@ class TestCComposite(CompositePotentialTestBase):
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
     rotation = True
     check_zero_at_infinity = False
+
+    num_dx = 1e-3  # to resolve scale height
 
 
 class TestKepler3Body(CompositePotentialTestBase):

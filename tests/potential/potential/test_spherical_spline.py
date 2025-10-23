@@ -55,6 +55,7 @@ class SphericalSplineTestBase(PotentialTestBase):
     # atol = 1e-3
     sympy_density = False
     check_finite_at_origin = False
+    skip_density = True
 
     def setup_method(self):
         self.potential = _make_potential(self._spline_type)

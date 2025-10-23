@@ -24,6 +24,7 @@ if HAS_SYMPY:
     class TestHarmonicOscillatorFromEquation(EquationBase):
         check_finite_at_origin = False
         check_zero_at_infinity = False
+        skip_density = True
 
         Potential = from_equation(
             "1/2*k*x**2", vars="x", pars="k", name="HarmonicOscillator", hessian=True

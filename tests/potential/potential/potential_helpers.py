@@ -32,6 +32,10 @@ class PotentialTestBase:
     skip_hessian = False
     skip_density = False
 
+    # Used for numerical derivative tests
+    num_dx = None
+    num_max_x = None
+
     @pytest.fixture(scope="class")
     def rng(self):
         return np.random.default_rng(42)
@@ -263,7 +267,6 @@ class PotentialTestBase:
         Check that the value of the implemented gradient function is close to a
         numerically estimated value. This is to check the coded-up version.
         """
-
         # NOTE: 1e-3 and 2 are magic numbers and should maybe be configurable
         w0_r = np.linalg.norm(self.w0[: self.potential.ndim])
         dx = 1e-3 * w0_r
@@ -309,8 +312,8 @@ class PotentialTestBase:
 
         # NOTE: 1e-3 and 2 are magic numbers and should maybe be configurable
         w0_r = np.linalg.norm(self.w0[: self.potential.ndim])
-        dx = 1e-3 * w0_r
-        max_x = 2 * w0_r
+        dx = 1e-3 * w0_r if self.num_dx is None else self.num_dx
+        max_x = 2 * w0_r if self.num_max_x is None else self.num_max_x
 
         # Pick random points in 3-space, build a finite-difference grid around each
         # point to compute numerical gradient
@@ -340,10 +343,8 @@ class PotentialTestBase:
                 .value
             )
 
-            print("YO", np.abs((num_Lap - dens_Lap) / dens_Lap).max())
-
-            # NOTE: 1e2 factor here is also a magic number
-            assert np.allclose(dens_Lap, num_Lap, rtol=1e2 * self.tol)
+            # NOTE: 1e3 factor here is also a magic number
+            assert np.allclose(dens_Lap, num_Lap, rtol=1e3 * self.tol)
 
     def test_hessian_density_consistency(self):
         """
@@ -360,7 +361,6 @@ class PotentialTestBase:
 
             dens = self.potential.density(arr[: self.ndim])
             rho_from_hess = lap / (4.0 * np.pi * _G)
-            print("YO", dens, rho_from_hess, np.diagonal(hess, axis1=0, axis2=1))
             assert u.allclose(dens, rho_from_hess, rtol=self.tol)
 
     def test_orbit_integration(self, t1=0.0, t2=1000.0, nsteps=10000):

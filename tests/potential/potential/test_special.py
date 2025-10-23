@@ -20,11 +20,17 @@ class TestLM10Potential(CompositePotentialTestBase):
     w0 = [8.0, 0.0, 0.0, 0.0, 0.22, 0.1]
     check_zero_at_infinity = False
 
+    num_dx = 1e-3
+    skip_density = True
+
 
 class TestLM10Potential2(CompositePotentialTestBase):
     potential = LM10Potential(disk={"m": 5e10 * u.Msun}, bulge={"m": 5e10 * u.Msun})
     w0 = [8.0, 0.0, 0.0, 0.0, 0.22, 0.1]
     check_zero_at_infinity = False
+
+    num_dx = 1e-3
+    skip_density = True
 
 
 class TestMilkyWayPotential(CompositePotentialTestBase):

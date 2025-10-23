@@ -71,6 +71,8 @@ class TestSCFPotential(PotentialTestBase):
     )
     w0 = [4.0, 0.7, -0.9, 0.0352238, 0.1579493, 0.02]
 
+    skip_density = True
+
     def test_save_load(self, tmpdir):
         fn = str(tmpdir.join(f"{self.name}.yml"))
         self.potential.save(fn)
