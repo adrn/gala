@@ -2282,13 +2282,13 @@ double burkert_density(double t, double *pars, double *q, int n_dim, void *state
 // --- Helper functions for Einasto profiles ---
 
 static inline double _s_of_r(double r, double r_m2, double alpha) {
-    // s(r) = (2/α) (r/r_-2 )^α - 1
+    // s(r) = (2/α) (r/r_-2 )^α
     if (r <= 0.0) return 0.0;
     return (2.0 / alpha) * pow(r / r_m2, alpha);
 }
 
 static inline double gamma_beta(double beta, double x1, double x2) {
-    return gsl_sf_gamma_inc(beta, x1) - gsl_sf_gamma_inc(beta, x2);
+    return gsl_sf_gamma_inc(beta, x2) - gsl_sf_gamma_inc(beta, x1);
 }
 
 static inline double gamma_tilde_beta(
@@ -2315,13 +2315,12 @@ static inline double Gamma_tilde_beta(
 static inline double _einasto_mass_enclosed(double rho_m2, double r_m2, double alpha, double r) {
     if (r <= 0.0) return 0.0;
 
-    const double sr  = _s_of_r(r, r_m2, alpha);
+    const double s = _s_of_r(r, r_m2, alpha);
     const double a3 = 3.0 / alpha;
-    const double h = r_m2 / pow(2.0 / alpha, 1.0 / alpha);
-    const double M = 4.0*M_PI * rho_m2 * pow(h, 3) / alpha * gsl_sf_gamma(a3);
 
-    return M * (1 - gsl_sf_gamma_inc(a3, sr) / gsl_sf_gamma(a3));
-
+    const double Mtot = (4.0 * M_PI * rho_m2 * exp(2.0/alpha) / alpha)
+                        * pow(r_m2, 3.0) * pow(alpha/2.0, a3) * gsl_sf_gamma(a3);
+    return Mtot * gsl_sf_gamma_inc_P(a3, s);
 }
 
 /* ---------------------------------------------------------------------------
@@ -2346,19 +2345,17 @@ double einasto_value(double t, double *pars, double *q, int n_dim, void *state) 
     const double a2 = 2.0 / alpha;
     const double a3 = 3.0 / alpha;
 
-    const double h = r_m2 / pow(a2, 1.0 / alpha);
-    const double M = 4.0*M_PI * rho_m2 * pow(h, 3) / alpha * gsl_sf_gamma(a3);
+    const double pref  = (4.0 * M_PI * G * rho_m2 * exp(2.0/alpha)) / alpha;
+    const double scale = alpha * pow(r_m2, alpha) / 2.0;
 
     if (r == 0.0) {
-        // Analytic limit at r = 0
-        return - G * M / h * gsl_sf_gamma(a2) / gsl_sf_gamma(a3);
+        const double term1 = (pow(r_m2, 3.0) / 3.0) * pow(2.0/alpha, a3);
+        const double term2 = pow(scale, a2) * gsl_sf_gamma(a2);
+        return - pref * (term1 + term2);
     }
-
-    const double factor = G * M / h / sr;
-    const double term1 = gsl_sf_gamma_inc(a3, pow(sr, alpha)) / gsl_sf_gamma(a3);
-    const double term2 = sr * gsl_sf_gamma_inc(a2, pow(sr, alpha)) / gsl_sf_gamma(a3);
-
-    return - factor * (1 - term1 + term2);
+    const double term1 = pow(scale, a3) * gsl_sf_gamma(a3) * gsl_sf_gamma_inc_P(a3, sr);
+    const double term2 = pow(scale, a2) * gsl_sf_gamma(a2) * gsl_sf_gamma_inc_Q(a2, sr);
+    return - pref * ( (term1 / r) + term2 );
 
 }
 
@@ -2374,13 +2371,13 @@ void einasto_gradient_single(double t, double *__restrict__ pars, double6ptr q, 
     const double r_m2 = pars[2];
     const double alpha = pars[3];
 
-    const double r = norm3(&q[0]);
+    const double r = norm3(q);
     if (r == 0.0) {
         return;
     }
 
     const double Menc = _einasto_mass_enclosed(rho_m2, r_m2, alpha, r);
-    const double dphi_dr = -(G * Menc) / (r * r * r);
+    const double dphi_dr = (G * Menc) / (r * r * r);
 
     grad[0] = grad[0] + dphi_dr * q[0];
     grad[1] = grad[1] + dphi_dr * q[1];
@@ -2409,27 +2406,34 @@ double einasto_density(double t, double *pars, double *q, int n_dim, void *state
 static inline double _cEinasto_mass_enclosed(
     double rho_s, double r_s, double alpha, double r_c, double r
 ) {
-    // if (r <= 0.0) return 0.0;
+    if (r <= 0.0) return 0.0;
 
-    // const double s0 = (2.0 / alpha) * pow(r_c / r_s, alpha);
-    // const double sr = (2.0 / alpha) * pow((r + r_c) / r_s, alpha);
+    const double s0 = _s_of_r(r_c, r_s, alpha);
+    const double sr = _s_of_r(r + r_c, r_s, alpha);
 
-    // const double a1 = 1.0 / alpha;
-    // const double a2 = 2.0 / alpha;
-    // const double a3 = 3.0 / alpha;
+    const double a1 = 1.0 / alpha;
+    const double a2 = 2.0 / alpha;
+    const double a3 = 3.0 / alpha;
 
-    // const double term1 =
-    // const double term2 = r_c * r_c * gamma_tilde_beta(a1, s0, sr, alpha, r_s);
-    // const double term3 = -2 * r_c * gamma_tilde_beta(a2, s0, sr, alpha, r_s);
+    const double scale = alpha * pow(r_s, alpha) / 2.0;
 
-    // const double factor = (4.0 * M_PI * rho_s * exp(a2)) / alpha;
-    // return factor * ( term1 + term2 + term3 );
-    return 0.0;
+    const double seg1 = pow(scale, a1) * (gsl_sf_gamma_inc(a1, sr) - gsl_sf_gamma_inc(a1, s0));
+    const double seg2 = pow(scale, a2) * (gsl_sf_gamma_inc(a2, sr) - gsl_sf_gamma_inc(a2, s0));
+    const double seg3 = pow(scale, a3) * (gsl_sf_gamma_inc(a3, sr) - gsl_sf_gamma_inc(a3, s0));
+
+    const double pref = (4.0 * M_PI * rho_s * exp(2.0/alpha)) / alpha;
+
+    return pref * ( seg3 + (r_c*r_c)*seg1 - 2.0*r_c*seg2 );
 }
 
 double cEinasto_value(double t, double *pars, double *q, int n_dim, void *state) {
-    (void)t; (void)n_dim; (void)state;
-
+    /*  pars:
+            - G (Gravitational constant)
+            - rho_s - scale density
+            - r_s - scale radius
+            - alpha - shape parameter
+            - r_c - core radius
+    */
     const double G = pars[0];
     const double rho_s = pars[1];
     const double r_s = pars[2];
@@ -2442,26 +2446,39 @@ double cEinasto_value(double t, double *pars, double *q, int n_dim, void *state)
     const double a2 = 2.0 / alpha;
     const double a3 = 3.0 / alpha;
 
-    const double factor = (4.0 * M_PI * G * rho_s * exp(2.0/alpha)) / alpha;
+    const double pref  = (4.0 * M_PI * G * rho_s * exp(2.0/alpha)) / alpha;
+    const double scale = alpha * pow(r_s, alpha) / 2.0;
 
     const double s0 = _s_of_r(r_c, r_s, alpha);
 
     if (r == 0.0) {
-        // Analytic limit at r = 0
-        const double term4 = Gamma_tilde_beta(a2, s0, alpha, r_s);
-        const double term5 = -r_c * Gamma_tilde_beta(a1, s0, alpha, r_s);
-        return factor * (term4 + term5);
+        const double dsdr0 = 2.0 * pow(r_c, alpha - 1.0) / pow(r_s, alpha);
+        const double e_m_s0 = exp(-s0);
+
+        // (1/r)*[γ̃_{3/α} + r_c^2 γ̃_{1/α} - 2 r_c γ̃_{2/α}]  -->  ds/dr|0 * e^{-s0} * sum
+        const double lim_over_r =
+            dsdr0 * e_m_s0 *
+            ( pow(scale, a3) * pow(s0, a3 - 1.0)
+            + (r_c*r_c) * pow(scale, a1) * pow(s0, a1 - 1.0)
+            - 2.0 * r_c * pow(scale, a2) * pow(s0, a2 - 1.0) );
+
+        // Upper tilded terms at r=0: Γ̃_b(s0) = scale^b * Γ(b) * Q(b, s0)
+        const double up2 = pow(scale, a2) * gsl_sf_gamma(a2) * gsl_sf_gamma_inc_Q(a2, s0);
+        const double up1 = pow(scale, a1) * gsl_sf_gamma(a1) * gsl_sf_gamma_inc_Q(a1, s0);
+
+        return -pref * ( lim_over_r + (up2 - r_c * up1) );
     }
 
     const double sr = _s_of_r(r + r_c, r_s, alpha);
 
-    const double term1 = gamma_tilde_beta(a3, s0, sr, alpha, r_s);
-    const double term2 = r_c * r_c * gamma_tilde_beta(a1, s0, sr, alpha, r_s);
-    const double term3 = -2 * r_c * gamma_tilde_beta(a2, s0, sr, alpha, r_s);
-    const double term4 = Gamma_tilde_beta(a2, sr, alpha, r_s);
-    const double term5 = -r_c * Gamma_tilde_beta(a1, sr, alpha, r_s);
+    const double seg1 = pow(scale, a1) * (gsl_sf_gamma_inc(a1, sr) - gsl_sf_gamma_inc(a1, s0));
+    const double seg2 = pow(scale, a2) * (gsl_sf_gamma_inc(a2, sr) - gsl_sf_gamma_inc(a2, s0));
+    const double seg3 = pow(scale, a3) * (gsl_sf_gamma_inc(a3, sr) - gsl_sf_gamma_inc(a3, s0));
 
-    return factor * (1/r * (term1 + term2 + term3) + term4 + term5);
+    const double up2 = pow(scale, a2) * gsl_sf_gamma(a2) * gsl_sf_gamma_inc_Q(a2, sr);
+    const double up1 = pow(scale, a1) * gsl_sf_gamma(a1) * gsl_sf_gamma_inc_Q(a1, sr);
+
+    return -pref * ( ((seg3 + (r_c*r_c)*seg1 - 2.0*r_c*seg2) / r) + (up2 - r_c * up1) );
 }
 
 void cEinasto_gradient_single(
