@@ -1,3 +1,5 @@
+import warnings
+
 import astropy.units as u
 import numpy as np
 
@@ -11,6 +13,7 @@ from gala.potential.potential.builtin.core import (
 )
 from gala.potential.potential.ccompositepotential import CCompositePotential
 from gala.units import galactic
+from gala.util import GalaFutureWarning
 
 __all__ = [
     "BovyMWPotential2014",
@@ -87,6 +90,69 @@ class LM10Potential(CCompositePotential):
         self.lock = True
 
 
+# ============================================================================
+# Gala MilkyWayPotential
+#
+
+
+def _setup_mwp_v1(obj, units, **kwargs):
+    default_disk = {"m": 6.8e10 * u.Msun, "a": 3.0 * u.kpc, "b": 0.28 * u.kpc}
+    default_bulge = {"m": 5e9 * u.Msun, "c": 1.0 * u.kpc}
+    default_nucl = {"m": 1.71e9 * u.Msun, "c": 0.07 * u.kpc}
+    default_halo = {"m": 5.4e11 * u.Msun, "r_s": 15.62 * u.kpc}
+
+    disk = kwargs.get("disk", {})
+    bulge = kwargs.get("bulge", {})
+    halo = kwargs.get("halo", {})
+    nucleus = kwargs.get("nucleus", {})
+
+    for k, v in default_disk.items():
+        disk.setdefault(k, v)
+
+    for k, v in default_bulge.items():
+        bulge.setdefault(k, v)
+
+    for k, v in default_halo.items():
+        halo.setdefault(k, v)
+
+    for k, v in default_nucl.items():
+        nucleus.setdefault(k, v)
+
+    obj["disk"] = MiyamotoNagaiPotential(units=units, **disk)
+    obj["bulge"] = HernquistPotential(units=units, **bulge)
+    obj["nucleus"] = HernquistPotential(units=units, **nucleus)
+    obj["halo"] = NFWPotential(units=units, **halo)
+
+
+def _setup_mwp_2022(obj, units, **kwargs):
+    default_disk = {"m": 4.7717e10 * u.Msun, "h_R": 2.6 * u.kpc, "h_z": 0.3 * u.kpc}
+    default_bulge = {"m": 5e9 * u.Msun, "c": 1.0 * u.kpc}
+    default_nucl = {"m": 1.8142e9 * u.Msun, "c": 0.0688867 * u.kpc}
+    default_halo = {"m": 5.5427e11 * u.Msun, "r_s": 15.626 * u.kpc}
+
+    disk = kwargs.get("disk", {})
+    halo = kwargs.get("halo", {})
+    bulge = kwargs.get("bulge", {})
+    nucleus = kwargs.get("nucleus", {})
+
+    for k, v in default_disk.items():
+        disk.setdefault(k, v)
+
+    for k, v in default_bulge.items():
+        bulge.setdefault(k, v)
+
+    for k, v in default_halo.items():
+        halo.setdefault(k, v)
+
+    for k, v in default_nucl.items():
+        nucleus.setdefault(k, v)
+
+    obj["disk"] = MN3ExponentialDiskPotential(units=units, **disk)
+    obj["bulge"] = HernquistPotential(units=units, **bulge)
+    obj["nucleus"] = HernquistPotential(units=units, **nucleus)
+    obj["halo"] = NFWPotential(units=units, **halo)
+
+
 class MilkyWayPotential(CCompositePotential):
     """
     A simple mass-model for the Milky Way consisting of a spherical nucleus and
@@ -117,46 +183,34 @@ class MilkyWayPotential(CCompositePotential):
     components added at bottom of init.
     """
 
-    def __init__(self, units=galactic, disk=None, halo=None, bulge=None, nucleus=None):
-        default_disk = {"m": 6.8e10 * u.Msun, "a": 3.0 * u.kpc, "b": 0.28 * u.kpc}
-        default_bulge = {"m": 5e9 * u.Msun, "c": 1.0 * u.kpc}
-        default_nucl = {"m": 1.71e9 * u.Msun, "c": 0.07 * u.kpc}
-        default_halo = {"m": 5.4e11 * u.Msun, "r_s": 15.62 * u.kpc}
-
-        if disk is None:
-            disk = {}
-
-        if halo is None:
-            halo = {}
-
-        if bulge is None:
-            bulge = {}
-
-        if nucleus is None:
-            nucleus = {}
-
-        for k, v in default_disk.items():
-            if k not in disk:
-                disk[k] = v
-
-        for k, v in default_bulge.items():
-            if k not in bulge:
-                bulge[k] = v
-
-        for k, v in default_halo.items():
-            if k not in halo:
-                halo[k] = v
-
-        for k, v in default_nucl.items():
-            if k not in nucleus:
-                nucleus[k] = v
-
+    def __init__(self, version=None, units=galactic, **kwargs):
         super().__init__()
 
-        self["disk"] = MiyamotoNagaiPotential(units=units, **disk)
-        self["bulge"] = HernquistPotential(units=units, **bulge)
-        self["nucleus"] = HernquistPotential(units=units, **nucleus)
-        self["halo"] = NFWPotential(units=units, **halo)
+        # TODO: remove when MilkyWayPotential API changes
+        if version is None:
+            warnings.warn(
+                "In a future version of Gala, the current MilkyWayPotential and "
+                "MilkyWayPotential2022 classes will be combined into a single class, "
+                "MilkyWayPotential, with an optional 'version' argument to select "
+                "between the models. To use the old (version 1) MilkyWayPotential, "
+                'specify version="v1" when creating an instance. To use the newer '
+                '(version 2 = current MilkyWayPotential2022), specify version="v2".',
+                GalaFutureWarning,
+            )
+            version = "v1"
+
+        if version.lower() in ("latest", "v2"):
+            _setup_mwp_2022(self, units, **kwargs)
+
+        elif version.lower() == "v1":
+            _setup_mwp_v1(self, units, **kwargs)
+
+        else:
+            raise ValueError(
+                f"Invalid MilkyWayPotential version: {version}. Supported values are: "
+                "(v1, v2, latest)"
+            )
+
         self.lock = True
 
 
@@ -193,45 +247,17 @@ class MilkyWayPotential2022(CCompositePotential):
     """
 
     def __init__(self, units=galactic, disk=None, halo=None, bulge=None, nucleus=None):
-        default_disk = {"m": 4.7717e10 * u.Msun, "h_R": 2.6 * u.kpc, "h_z": 0.3 * u.kpc}
-        default_bulge = {"m": 5e9 * u.Msun, "c": 1.0 * u.kpc}
-        default_nucl = {"m": 1.8142e9 * u.Msun, "c": 0.0688867 * u.kpc}
-        default_halo = {"m": 5.5427e11 * u.Msun, "r_s": 15.626 * u.kpc}
+        # TODO: remove when MilkyWayPotential API changes
+        warnings.warn(
+            "The MilkyWayPotential2022 class is deprecated. Instead, use: "
+            'MilkyWayPotential(version="v2") to get what is currently the '
+            "MilkyWayPotential2022 class. Or, to always use the latest Milky Way model "
+            "in Gala, you can call the class with no arguments MilkyWayPotential() or "
+            'specify MilkyWayPotential(version="latest")',
+            GalaFutureWarning,
+        )
+        _setup_mwp_2022(self, units, disk=disk, halo=halo, bulge=bulge, nucleus=nucleus)
 
-        if disk is None:
-            disk = {}
-
-        if halo is None:
-            halo = {}
-
-        if bulge is None:
-            bulge = {}
-
-        if nucleus is None:
-            nucleus = {}
-
-        for k, v in default_disk.items():
-            if k not in disk:
-                disk[k] = v
-
-        for k, v in default_bulge.items():
-            if k not in bulge:
-                bulge[k] = v
-
-        for k, v in default_halo.items():
-            if k not in halo:
-                halo[k] = v
-
-        for k, v in default_nucl.items():
-            if k not in nucleus:
-                nucleus[k] = v
-
-        super().__init__()
-
-        self["disk"] = MN3ExponentialDiskPotential(units=units, **disk)
-        self["bulge"] = HernquistPotential(units=units, **bulge)
-        self["nucleus"] = HernquistPotential(units=units, **nucleus)
-        self["halo"] = NFWPotential(units=units, **halo)
         self.lock = True
 
 
