@@ -6,6 +6,7 @@ import astropy.units as u
 import numpy as np
 import pytest
 
+import gala.integrate as gi
 from gala._optional_deps import HAS_H5PY
 from gala.dynamics import ChenStreamDF, FardalStreamDF, Orbit, PhaseSpacePosition
 from gala.dynamics.mockstream.mockstream_generator import MockStreamGenerator
@@ -19,131 +20,197 @@ from gala.potential import (
 from gala.units import galactic
 
 
-def test_init():
-    w0 = PhaseSpacePosition(
+@pytest.fixture
+def rng():
+    """Random number generator with fixed seed for reproducibility."""
+    return np.random.default_rng(1234)
+
+
+@pytest.fixture
+def basic_potential():
+    """Standard NFW potential for most tests."""
+    return NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.0, units=galactic)
+
+
+@pytest.fixture
+def basic_hamiltonian(basic_potential):
+    """Standard Hamiltonian with NFW potential."""
+    return Hamiltonian(basic_potential)
+
+
+@pytest.fixture
+def progenitor_w0():
+    """Standard progenitor initial conditions."""
+    return PhaseSpacePosition(
         pos=[15.0, 0.0, 0] * u.kpc, vel=[0, 0, 0.13] * u.kpc / u.Myr
     )
-    potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.0, units=galactic)
-    H = Hamiltonian(potential)
-    df = FardalStreamDF(gala_modified=True)
+
+
+@pytest.fixture
+def progenitor_mass():
+    """Standard progenitor mass."""
+    return 2.5e4 * u.Msun
+
+
+@pytest.fixture
+def basic_stream_generator(basic_hamiltonian, rng):
+    """Basic MockStreamGenerator with Fardal DF."""
+    df = FardalStreamDF(gala_modified=True, random_state=rng)
+    return MockStreamGenerator(df=df, hamiltonian=basic_hamiltonian)
+
+
+# Tests
+
+
+def test_init(rng, basic_hamiltonian, basic_potential, progenitor_w0):
+    """Test MockStreamGenerator initialization and validation."""
+    df = FardalStreamDF(gala_modified=True, random_state=rng)
+
+    # Test that invalid arguments are caught
+    with pytest.raises(TypeError):
+        MockStreamGenerator(df="some df", hamiltonian=basic_hamiltonian)
 
     with pytest.raises(TypeError):
-        MockStreamGenerator(df="some df", hamiltonian=H)
-
-    with pytest.raises(TypeError):
-        MockStreamGenerator(df=df, hamiltonian=H, progenitor_potential="stuff")
+        MockStreamGenerator(
+            df=df, hamiltonian=basic_hamiltonian, progenitor_potential="stuff"
+        )
 
     # Test validating the input nbody
     nbody_w0 = PhaseSpacePosition(
         pos=[25.0, 0.0, 0] * u.kpc, vel=[0, 0, 0.13] * u.kpc / u.Myr
     )
+
+    # Different external potential should fail
     potential2 = NFWPotential.from_circular_velocity(v_c=0.2, r_s=25.0, units=galactic)
     nbody = DirectNBody(
         w0=nbody_w0, external_potential=potential2, particle_potentials=[None]
     )
-    gen = MockStreamGenerator(df=df, hamiltonian=H)
+    gen = MockStreamGenerator(df=df, hamiltonian=basic_hamiltonian)
     with pytest.raises(ValueError):
-        gen._get_nbody(w0, nbody)
+        gen._get_nbody(progenitor_w0, nbody)
 
+    # Different frame should fail
     frame2 = ConstantRotatingFrame([0, 0, 25.0] * u.km / u.s / u.kpc, units=galactic)
     nbody = DirectNBody(
         w0=nbody_w0,
-        external_potential=potential,
+        external_potential=basic_potential,
         frame=frame2,
         particle_potentials=[None],
     )
     with pytest.raises(ValueError):
-        gen._get_nbody(w0, nbody)
+        gen._get_nbody(progenitor_w0, nbody)
 
-    # we expect success!
+    # Should succeed with matching potential and frame
     nbody = DirectNBody(
-        w0=nbody_w0, external_potential=potential, particle_potentials=[None]
+        w0=nbody_w0, external_potential=basic_potential, particle_potentials=[None]
     )
-    new_nbody = gen._get_nbody(w0, nbody)
+    new_nbody = gen._get_nbody(progenitor_w0, nbody)
 
 
-def test_run():
-    potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.0, units=galactic)
-    H = Hamiltonian(potential)
-    w0 = PhaseSpacePosition(
-        pos=[15.0, 0.0, 0] * u.kpc, vel=[0, 0, 0.13] * u.kpc / u.Myr
-    )
-    mass = 2.5e4 * u.Msun
-    prog_pot = HernquistPotential(mass, 4 * u.pc, units=galactic)
+def test_run(rng, basic_hamiltonian, progenitor_w0, progenitor_mass):
+    """Test basic stream generation functionality."""
+    df = FardalStreamDF(gala_modified=True, random_state=rng)
+    prog_pot = HernquistPotential(progenitor_mass, 4 * u.pc, units=galactic)
 
-    # The basic run:
-    df = FardalStreamDF(gala_modified=True)
-    gen = MockStreamGenerator(df=df, hamiltonian=H)
-    stream1, _ = gen.run(w0, mass, dt=-1.0, n_steps=100)
+    # Basic run without self-gravity
+    gen = MockStreamGenerator(df=df, hamiltonian=basic_hamiltonian)
+    stream1, _ = gen.run(progenitor_w0, progenitor_mass, dt=-1.0, n_steps=100)
 
-    # Expected errors:
+    # Test that mass must have units
     with pytest.raises(TypeError):
-        gen.run(w0, mass.value, dt=-1.0, n_steps=100)
+        gen.run(progenitor_w0, progenitor_mass.value, dt=-1.0, n_steps=100)
 
-    # With self-gravity
-    gen = MockStreamGenerator(df=df, hamiltonian=H, progenitor_potential=prog_pot)
-    stream2, _ = gen.run(w0, mass, dt=-1.0, n_steps=100)
+    # With self-gravity - should produce different results
+    gen = MockStreamGenerator(
+        df=df, hamiltonian=basic_hamiltonian, progenitor_potential=prog_pot
+    )
+    stream2, _ = gen.run(progenitor_w0, progenitor_mass, dt=-1.0, n_steps=100)
     assert not u.allclose(stream1.xyz, stream2.xyz)
 
-    # Skipping release steps:
-    gen = MockStreamGenerator(df=df, hamiltonian=H)
-    stream3, _ = gen.run(w0, mass, dt=-1.0, n_steps=100, release_every=4, n_particles=4)
+    # Test skipping release steps
+    gen = MockStreamGenerator(df=df, hamiltonian=basic_hamiltonian)
+    stream3, _ = gen.run(
+        progenitor_w0,
+        progenitor_mass,
+        dt=-1.0,
+        n_steps=100,
+        release_every=4,
+        n_particles=4,
+    )
     assert stream3.shape == ((100 // 4 + 1) * 4 * 2,)
 
-    # Custom n_particles:
-    gen = MockStreamGenerator(df=df, hamiltonian=H)
+    # Test custom n_particles array
+    gen = MockStreamGenerator(df=df, hamiltonian=basic_hamiltonian)
     n_particles = np.random.randint(0, 4, size=101)
     stream3, _ = gen.run(
-        w0, mass, dt=-1.0, n_steps=100, release_every=1, n_particles=n_particles
+        progenitor_w0,
+        progenitor_mass,
+        dt=-1.0,
+        n_steps=100,
+        release_every=1,
+        n_particles=n_particles,
     )
     assert stream3.shape[0] == 2 * n_particles.sum()
 
 
 @pytest.mark.parametrize("dt", [1, -1])
 @pytest.mark.parametrize("save_all", [True, False])
-def test_mockstream_nbody_run(dt, save_all):
-    potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.0, units=galactic)
-    H = Hamiltonian(potential)
-    w0 = PhaseSpacePosition(
-        pos=[15.0, 0.0, 0] * u.kpc, vel=[0, 0, 0.13] * u.kpc / u.Myr
-    )
-    mass = 2.5e4 * u.Msun
-    df = FardalStreamDF(gala_modified=True)
+@pytest.mark.parametrize("Integrator", [gi.LeapfrogIntegrator, gi.DOPRI853Integrator])
+def test_mockstream_nbody_run(
+    rng,
+    basic_potential,
+    basic_hamiltonian,
+    progenitor_w0,
+    progenitor_mass,
+    dt,
+    save_all,
+    Integrator,
+):
+    """Test stream generation with N-body perturbers using different integrators."""
+    df = FardalStreamDF(gala_modified=True, random_state=rng)
 
-    # Test passing custom N-body:
+    # Test passing custom N-body with perturber
     nbody_w0 = PhaseSpacePosition([20, 0, 0] * u.kpc, [0, 100, 0] * u.km / u.s)
     nbody = DirectNBody(
         w0=nbody_w0,
-        external_potential=potential,
+        external_potential=basic_potential,
         particle_potentials=[
             NFWPotential(m=1e8 * u.Msun, r_s=0.2 * u.kpc, units=galactic)
         ],
         save_all=save_all,
     )
-    gen = MockStreamGenerator(df=df, hamiltonian=H)
-    gen.run(w0, mass, dt=dt, n_steps=100, nbody=nbody)
+    gen = MockStreamGenerator(df=df, hamiltonian=basic_hamiltonian)
+    stream, prog = gen.run(
+        progenitor_w0,
+        progenitor_mass,
+        dt=dt,
+        n_steps=100,
+        nbody=nbody,
+        Integrator=Integrator,
+    )
+
+    # Basic sanity checks
+    assert stream.shape[0] > 0
+    assert np.isfinite(stream.xyz).all()
+    assert np.isfinite(stream.v_xyz).all()
 
 
 @pytest.mark.skipif(not HAS_H5PY, reason="h5py required for this test")
-def test_nbody_hdf5_broadcast_bug(tmpdir):
+def test_nbody_hdf5_broadcast_bug(
+    tmpdir, rng, basic_potential, basic_hamiltonian, progenitor_w0, progenitor_mass
+):
     """
     Regression test for HDF5 broadcast bug when using nbody with output_filename,
-    reported in #158
+    reported in #158.
     """
     import h5py
 
-    potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.0, units=galactic)
-    H = Hamiltonian(potential)
-    w0 = PhaseSpacePosition(
-        pos=[15.0, 0.0, 0] * u.kpc, vel=[0, 0, 0.13] * u.kpc / u.Myr
-    )
-    mass = 2.5e4 * u.Msun
-    prog_pot = HernquistPotential(mass, 4 * u.pc, units=galactic)
+    prog_pot = HernquistPotential(progenitor_mass, 4 * u.pc, units=galactic)
 
     nbody_w0 = PhaseSpacePosition([20, 0, 0] * u.kpc, [0, 100, 0] * u.km / u.s)
     nbody = DirectNBody(
         w0=nbody_w0,
-        external_potential=potential,
+        external_potential=basic_potential,
         particle_potentials=[
             NFWPotential(m=1e8 * u.Msun, r_s=0.2 * u.kpc, units=galactic)
         ],
@@ -151,15 +218,17 @@ def test_nbody_hdf5_broadcast_bug(tmpdir):
 
     # Use trail=False and n_particles=1 to ensure we have fewer stream particles
     # than nbodies at early timesteps
-    df = FardalStreamDF(gala_modified=True, trail=False)
-    gen = MockStreamGenerator(df=df, hamiltonian=H, progenitor_potential=prog_pot)
+    df = FardalStreamDF(gala_modified=True, trail=False, random_state=rng)
+    gen = MockStreamGenerator(
+        df=df, hamiltonian=basic_hamiltonian, progenitor_potential=prog_pot
+    )
 
     filename = os.path.join(str(tmpdir), "test_nbody.hdf5")
 
     # This should trigger the bug if not fixed: at first output, n=1 but nbodies=2
     stream, prog = gen.run(
-        w0,
-        mass,
+        progenitor_w0,
+        progenitor_mass,
         dt=-1.0,
         n_steps=8,
         nbody=nbody,
@@ -189,25 +258,33 @@ def test_nbody_hdf5_broadcast_bug(tmpdir):
     ("dt", "nsteps", "output_every", "release_every", "n_particles", "trail"),
     list(itertools.product([1, -1], [16, 17], [1, 2], [1, 4], [1, 4], [True, False])),
 )
+@pytest.mark.parametrize("Integrator", [gi.LeapfrogIntegrator, gi.DOPRI853Integrator])
 @pytest.mark.skipif(not HAS_H5PY, reason="h5py required for this test")
-def test_animate(tmpdir, dt, nsteps, output_every, release_every, n_particles, trail):
+def test_animate(
+    tmpdir,
+    rng,
+    basic_hamiltonian,
+    progenitor_w0,
+    progenitor_mass,
+    dt,
+    nsteps,
+    output_every,
+    release_every,
+    n_particles,
+    trail,
+    Integrator,
+):
+    """Test animation output to HDF5 with various parameter combinations."""
     import h5py
 
-    potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.0, units=galactic)
-    H = Hamiltonian(potential)
-    w0 = PhaseSpacePosition(
-        pos=[15.0, 0.0, 0] * u.kpc, vel=[0, 0, 0.13] * u.kpc / u.Myr
-    )
-    mass = 2.5e4 * u.Msun
+    # The basic run with animation output
+    df = FardalStreamDF(gala_modified=True, trail=trail, random_state=rng)
+    gen = MockStreamGenerator(df=df, hamiltonian=basic_hamiltonian)
 
-    # The basic run:
-    df = FardalStreamDF(gala_modified=True, trail=trail)
-    gen = MockStreamGenerator(df=df, hamiltonian=H)
-
-    filename = os.path.join(str(tmpdir), "test.hdf5")
+    filename = os.path.join(str(tmpdir), f"test_{Integrator.__name__}.hdf5")
     _stream, _ = gen.run(
-        w0,
-        mass,
+        progenitor_w0,
+        progenitor_mass,
         dt=dt,
         n_steps=nsteps,
         release_every=release_every,
@@ -215,6 +292,7 @@ def test_animate(tmpdir, dt, nsteps, output_every, release_every, n_particles, t
         output_every=output_every,
         output_filename=filename,
         overwrite=True,
+        Integrator=Integrator,
     )
 
     with h5py.File(filename, mode="r") as f:
@@ -239,27 +317,27 @@ def test_animate(tmpdir, dt, nsteps, output_every, release_every, n_particles, t
     assert np.isfinite(nbody_orbits.t).all()
 
 
-def test_integrator_kwargs():
-    potential = NFWPotential.from_circular_velocity(v_c=0.2, r_s=20.0, units=galactic)
-    H = Hamiltonian(potential)
-    w0 = PhaseSpacePosition(
-        pos=[15.0, 0.0, 0] * u.kpc, vel=[0, 0, 0.13] * u.kpc / u.Myr
-    )
-    mass = 2.5e4 * u.Msun
-
-    df = ChenStreamDF()
-    gen = MockStreamGenerator(df=df, hamiltonian=H)
+def test_integrator_kwargs_dop853(
+    rng, basic_hamiltonian, progenitor_w0, progenitor_mass
+):
+    """Test that integrator kwargs are properly passed through."""
+    df = ChenStreamDF(random_state=rng)
+    gen = MockStreamGenerator(df=df, hamiltonian=basic_hamiltonian)
 
     ti = time.time()
     stream1, _ = gen.run(
-        w0, mass, dt=-1.0, n_steps=1000, Integrator_kwargs={"atol": 1e-12, "nmax": 0}
+        progenitor_w0,
+        progenitor_mass,
+        dt=-1.0,
+        n_steps=1000,
+        Integrator_kwargs={"atol": 1e-12, "nmax": 0},
     )
     runtime1 = time.time() - ti
 
     ti = time.time()
     stream2, _ = gen.run(
-        w0,
-        mass,
+        progenitor_w0,
+        progenitor_mass,
         dt=-1.0,
         n_steps=1000,
         Integrator_kwargs={"atol": 1e-5, "nmax": 100, "err_if_fail": 0},
@@ -270,3 +348,180 @@ def test_integrator_kwargs():
     print(f"stream 2, atol=1e-5, runtime = {runtime2}")
 
     assert runtime2 < runtime1
+
+
+# ==============================================================================
+# Integrator comparison tests
+# ==============================================================================
+
+
+def test_integrator_consistency_basic(
+    rng, basic_hamiltonian, progenitor_w0, progenitor_mass
+):
+    """
+    Test that Leapfrog and DOPRI853 produce qualitatively similar streams.
+
+    Note: We don't expect exact agreement since they use different integration
+    schemes (symplectic vs adaptive Runge-Kutta), but they should produce
+    streams with similar overall structure.
+    """
+    df = FardalStreamDF(gala_modified=True, random_state=np.random.default_rng(123))
+    gen = MockStreamGenerator(df=df, hamiltonian=basic_hamiltonian)
+
+    # Use same parameters for both integrators
+    stream_dop, prog_dop = gen.run(
+        progenitor_w0,
+        progenitor_mass,
+        dt=-1.0,
+        n_steps=50,
+        release_every=5,
+        n_particles=2,
+        Integrator=gi.DOPRI853Integrator,
+    )
+
+    # Run with Leapfrog - reinitialize generator to reset random state
+    df = FardalStreamDF(gala_modified=True, random_state=np.random.default_rng(123))
+    gen = MockStreamGenerator(df=df, hamiltonian=basic_hamiltonian)
+
+    stream_lf, prog_lf = gen.run(
+        progenitor_w0,
+        progenitor_mass,
+        dt=-1.0,
+        n_steps=50,
+        release_every=5,
+        n_particles=2,
+        Integrator=gi.LeapfrogIntegrator,
+    )
+
+    # Check that both produced the same number of particles
+    assert stream_dop.shape == stream_lf.shape
+
+    # Check that progenitor final positions are reasonably close
+    # (within ~1 kpc after 50 Myr integration)
+    assert np.allclose(prog_dop.xyz.value, prog_lf.xyz.value, atol=1.0)
+
+    # Check that stream positions are reasonably similar
+    # We use a loose tolerance since integrators have different error profiles
+    mean_sep = np.mean(
+        np.linalg.norm(stream_dop.xyz.value - stream_lf.xyz.value, axis=0)
+    )
+    print(f"Mean particle separation between integrators: {mean_sep:.3f} kpc")
+    assert mean_sep < 2.0  # Less than 2 kpc mean separation
+
+
+@pytest.mark.parametrize("dt", [1.0, -1.0])
+def test_integrator_energy_conservation(
+    rng, basic_hamiltonian, progenitor_w0, progenitor_mass, dt
+):
+    """
+    Test energy conservation for Leapfrog vs DOPRI853.
+
+    Leapfrog is symplectic and should conserve energy better for long integrations.
+    """
+    df = FardalStreamDF(gala_modified=True, random_state=rng, trail=False)
+    gen = MockStreamGenerator(df=df, hamiltonian=basic_hamiltonian)
+
+    # DOPRI853 with default tolerance
+    _, prog_dop = gen.run(
+        progenitor_w0,
+        progenitor_mass,
+        dt=dt,
+        n_steps=200,
+        release_every=200,  # Only release at beginning
+        n_particles=1,
+        Integrator=gi.DOPRI853Integrator,
+    )
+    E_dop_initial = basic_hamiltonian(prog_dop[0])
+    E_dop_final = basic_hamiltonian(prog_dop[-1])
+    dE_dop = float(np.abs((E_dop_final - E_dop_initial) / E_dop_initial))
+
+    # Leapfrog
+    _, prog_lf = gen.run(
+        progenitor_w0,
+        progenitor_mass,
+        dt=dt,
+        n_steps=200,
+        release_every=200,  # Only release at beginning
+        n_particles=1,
+        Integrator=gi.LeapfrogIntegrator,
+    )
+    E_lf_initial = basic_hamiltonian(prog_lf[0])
+    E_lf_final = basic_hamiltonian(prog_lf[-1])
+    dE_lf = float(np.abs((E_lf_final - E_lf_initial) / E_lf_initial))
+
+    print(f"DOPRI853 relative energy error: {dE_dop:.6e}")
+    print(f"Leapfrog relative energy error: {dE_lf:.6e}")
+
+    # Both should conserve energy reasonably well
+    assert dE_dop < 1e-5
+    assert dE_lf < 1e-5
+
+
+def test_chen_vs_fardal_df(rng, basic_hamiltonian, progenitor_w0, progenitor_mass):
+    """Test that both distribution functions work with both integrators."""
+    for DFClass in [ChenStreamDF, FardalStreamDF]:
+        df = DFClass(random_state=rng)
+        gen = MockStreamGenerator(df=df, hamiltonian=basic_hamiltonian)
+
+        for Integrator in [gi.DOPRI853Integrator, gi.LeapfrogIntegrator]:
+            stream, prog = gen.run(
+                progenitor_w0,
+                progenitor_mass,
+                dt=-1.0,
+                n_steps=20,
+                Integrator=Integrator,
+            )
+            assert stream.shape[0] > 0
+            assert np.isfinite(stream.xyz).all()
+
+
+@pytest.mark.skipif(not HAS_H5PY, reason="h5py required for this test")
+def test_integrator_comparison_with_nbody(
+    tmpdir, rng, basic_potential, basic_hamiltonian, progenitor_w0, progenitor_mass
+):
+    """Test that both integrators work correctly with N-body interactions."""
+    import h5py
+
+    df = FardalStreamDF(gala_modified=True, random_state=rng)
+    gen = MockStreamGenerator(df=df, hamiltonian=basic_hamiltonian)
+
+    # Create a perturbing N-body
+    nbody_w0 = PhaseSpacePosition([20, 0, 0] * u.kpc, [0, 100, 0] * u.km / u.s)
+    nbody = DirectNBody(
+        w0=nbody_w0,
+        external_potential=basic_potential,
+        particle_potentials=[
+            NFWPotential(m=1e8 * u.Msun, r_s=0.2 * u.kpc, units=galactic)
+        ],
+    )
+
+    for Integrator in [gi.DOPRI853Integrator, gi.LeapfrogIntegrator]:
+        filename = os.path.join(str(tmpdir), f"nbody_{Integrator.__name__}.hdf5")
+
+        stream, prog = gen.run(
+            progenitor_w0,
+            progenitor_mass,
+            dt=-1.0,
+            n_steps=30,
+            nbody=nbody,
+            Integrator=Integrator,
+            output_every=5,
+            output_filename=filename,
+            overwrite=True,
+            check_filesize=False,
+        )
+
+        # Verify output file
+        with h5py.File(filename, mode="r") as f:
+            stream_orbits = Orbit.from_hdf5(f["stream"])
+            nbody_orbits = Orbit.from_hdf5(f["nbody"])
+
+            # Check that nbody orbits are all finite (no NaNs)
+            assert np.isfinite(nbody_orbits.xyz).all()
+            assert nbody_orbits.shape[1] == 2  # progenitor + perturber
+
+            # For stream orbits, NaNs are expected for particles not yet released
+            # Just check that we have some finite values
+            assert np.isfinite(
+                stream_orbits[:, 0].xyz
+            ).all()  # First particle should always be finite
