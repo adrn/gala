@@ -5,7 +5,12 @@ from ...potential import Hamiltonian, PotentialBase
 from ..core import PhaseSpacePosition
 from ..nbody import DirectNBody
 from ..util import combine
-from ._mockstream import mockstream_dop853, mockstream_dop853_animate
+from ._mockstream import (
+    mockstream_dop853,
+    mockstream_dop853_animate,
+    mockstream_leapfrog,
+    mockstream_leapfrog_animate,
+)
 from .core import MockStream
 
 __all__ = ["MockStreamGenerator"]
@@ -203,7 +208,7 @@ class MockStreamGenerator:
         """
         from gala.integrate import (
             DOPRI853Integrator,
-            # LeapfrogIntegrator,
+            LeapfrogIntegrator,
             # Ruth4Integrator,
         )
 
@@ -212,13 +217,6 @@ class MockStreamGenerator:
 
         if Integrator is None:
             Integrator = DOPRI853Integrator
-
-        # TODO: implement other mock stream generation
-        if Integrator is not DOPRI853Integrator:
-            raise NotImplementedError(
-                "Currently, only the DOPRI853Integrator is supported for stream "
-                "generation."
-            )
 
         units = self.hamiltonian.units
         t = parse_time_specification(units, **time_spec)
@@ -279,36 +277,71 @@ class MockStreamGenerator:
             nstream_idx = np.insert(nstream_idx, 0, 0)
             unq_t1s = np.insert(unq_t1s, 0, orbit_t[0])
 
-        # if Integrator == DOPRI853Integrator
-        if output_every is None:
-            raw_nbody, raw_stream = mockstream_dop853(
-                nbody0,
-                orbit_t[nstream_idx],
-                w0,
-                unq_t1s,
-                orbit_t[-1],
-                all_nstream[nstream_idx].astype("i4"),
-                progress=int(progress),
-                **Integrator_kwargs,
-            )
-        else:  # store snapshots
-            if output_filename is None:
-                raise ValueError(
-                    "If output_every is specified, you must also pass in a filename to "
-                    "store the snapshots in"
+        if Integrator == DOPRI853Integrator:
+            if output_every is None:
+                raw_nbody, raw_stream = mockstream_dop853(
+                    nbody0,
+                    orbit_t[nstream_idx],
+                    w0,
+                    unq_t1s,
+                    orbit_t[-1],
+                    all_nstream[nstream_idx].astype("i4"),
+                    progress=int(progress),
+                    **Integrator_kwargs,
+                )
+            else:  # store snapshots
+                if output_filename is None:
+                    raise ValueError(
+                        "If output_every is specified, you must also pass in a "
+                        "filename to store the snapshots in"
+                    )
+
+                raw_nbody, raw_stream = mockstream_dop853_animate(
+                    nbody0,
+                    orbit_t,
+                    w0,
+                    all_nstream.astype("i4"),
+                    output_every=output_every,
+                    output_filename=output_filename,
+                    check_filesize=check_filesize,
+                    overwrite=overwrite,
+                    progress=int(progress),
+                    **Integrator_kwargs,
                 )
 
-            raw_nbody, raw_stream = mockstream_dop853_animate(
-                nbody0,
-                orbit_t,
-                w0,
-                all_nstream.astype("i4"),
-                output_every=output_every,
-                output_filename=output_filename,
-                check_filesize=check_filesize,
-                overwrite=overwrite,
-                progress=int(progress),
-                **Integrator_kwargs,
+        elif Integrator == LeapfrogIntegrator:
+            if output_every is None:
+                raw_nbody, raw_stream = mockstream_leapfrog(
+                    nbody0,
+                    orbit_t[nstream_idx],
+                    w0,
+                    unq_t1s,
+                    orbit_t[-1],
+                    all_nstream[nstream_idx].astype("i4"),
+                    progress=int(progress),
+                )
+            else:  # store snapshots
+                if output_filename is None:
+                    raise ValueError(
+                        "If output_every is specified, you must also pass in a filename to "
+                        "store the snapshots in"
+                    )
+
+                raw_nbody, raw_stream = mockstream_leapfrog_animate(
+                    nbody0,
+                    orbit_t,
+                    w0,
+                    all_nstream.astype("i4"),
+                    output_every=output_every,
+                    output_filename=output_filename,
+                    check_filesize=check_filesize,
+                    overwrite=overwrite,
+                    progress=int(progress),
+                )
+        else:
+            raise ValueError(
+                "Currently, only the DOPRI853Integrator and LeapfrogIntegrator "
+                "are supported for mock stream generation."
             )
 
         x_unit = units["length"]
