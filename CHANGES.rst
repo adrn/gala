@@ -20,6 +20,8 @@ New Features
   instances or when replacing units with ``.replace_units()``.
 - C-level integrator arguments can now be specified when running a mock stream
   simulation through the ``Integrator_kwargs`` in ``MockStreamGenerator.run()``.
+- Added support for using the Leapfrog integrator with ``MockStreamGenerator`` (pass
+  ``Integrator=gi.LeapfrogIntegrator`` in ``MockStreamGenerator.run()``).
 
 Bug fixes
 ---------
