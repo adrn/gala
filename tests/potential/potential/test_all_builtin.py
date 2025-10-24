@@ -635,3 +635,61 @@ class TestBurkert(PotentialTestBase):
 
         # Check a 1% tolerance on inferred density against published values
         assert abs(rho - rho_check) / rho_check < 0.01
+
+
+@pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL to run this test")
+class TestEinasto(PotentialTestBase):
+    potential = p.EinastoPotential(
+        units=galactic, rho_m2=5e-25 * u.g / u.cm**3, r_m2=12 * u.kpc, alpha=0.16
+    )
+    w0 = [1.0, 0.0, 0.0, 0.0, 0.1, 0.1]
+
+    check_finite_at_origin = True
+    skip_hessian = True  # TODO: implement
+
+    @pytest.mark.skip(reason="Not implemented for Burkert potentials")
+    def test_against_sympy(self):
+        pass
+
+    # def test_from_r0(self):
+    #     # TODO: test alternate constructor
+
+    #     # Test against values from Zhu+2023
+    #     pot = p.BurkertPotential.from_r0(r0=11.87 * u.kpc, units=galactic)
+
+    #     rho = pot.parameters["rho"].to(u.g / u.cm**3)
+    #     rho_check = 5.93e-25 * u.g / u.cm**3
+
+    #     # Check a 1% tolerance on inferred density against published values
+    #     assert abs(rho - rho_check) / rho_check < 0.01
+
+
+@pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL to run this test")
+class TestCoreEinasto(PotentialTestBase):
+    potential = p.CoreEinastoPotential(
+        units=galactic,
+        rho_s=5e-25 * u.g / u.cm**3,
+        r_s=12 * u.kpc,
+        alpha=0.16,
+        r_c=1 * u.kpc,
+    )
+    w0 = [1.0, 0.0, 0.0, 0.0, 0.1, 0.1]
+    skip_hessian = True  # TODO: implement
+
+    check_finite_at_origin = True
+
+    @pytest.mark.skip(reason="Not implemented for Burkert potentials")
+    def test_against_sympy(self):
+        pass
+
+    # def test_from_r0(self):
+    #     # TODO: test alternate constructor
+
+    #     # Test against values from Zhu+2023
+    #     pot = p.BurkertPotential.from_r0(r0=11.87 * u.kpc, units=galactic)
+
+    #     rho = pot.parameters["rho"].to(u.g / u.cm**3)
+    #     rho_check = 5.93e-25 * u.g / u.cm**3
+
+    #     # Check a 1% tolerance on inferred density against published values
+    #     assert abs(rho - rho_check) / rho_check < 0.01
