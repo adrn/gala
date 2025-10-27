@@ -357,11 +357,12 @@ velocity but varying vertical velocities::
     >>> vxyz[2] = vz_grid
     >>> w0 = gd.PhaseSpacePosition(xyz, vxyz)
 
-We can now integrate these orbits in the total potential::
+We can now integrate these orbits in the total potential. Note that we can
+specify the integrator using a string name::
 
     >>> orbits = pot.integrate_orbit(
     ...     w0, dt=1, t1=0, t2=4*u.Gyr,
-    ...     Integrator=gi.DOPRI853Integrator
+    ...     Integrator='dopri853'
     ... )
     >>> orbits.cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',')  # doctest: +SKIP
 
@@ -398,7 +399,7 @@ We can now integrate these orbits in the total potential::
 
     orbits = pot.integrate_orbit(
         w0, dt=1, t1=0, t2=4*u.Gyr,
-        Integrator=gi.DOPRI853Integrator
+        Integrator='dopri853'
     )
     orbits.cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',')
 

@@ -40,7 +40,20 @@ We'll demonstrate the |psp| and |orb| objects by first integrating an orbit::
     >>> orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=1.0, n_steps=1000)
 
 This numerically integrates an orbit from the specified initial conditions,
-``w0``, and returns an |orb| object. By default, the position and velocity are
+``w0``, and returns an |orb| object. By default, this uses the Leapfrog
+integrator, but you can specify a different integrator using the ``Integrator``
+keyword argument. For example, to use a higher-order adaptive Runge-Kutta
+method::
+
+    >>> orbit = gp.Hamiltonian(pot).integrate_orbit(
+    ...     w0, dt=1.0, n_steps=1000, Integrator='dopri853'
+    ... )
+
+Valid integrator names include ``'leapfrog'``, ``'dopri853'``, ``'ruth4'``, and
+``'rk5'``. You can also pass an integrator class directly (see
+:ref:`gala-integrate` for more information).
+
+By default, the position and velocity are
 assumed to be Cartesian coordinates but other coordinate systems are supported
 (see the :ref:`orbits-in-detail` and :ref:`nd-representations` pages for more
 information).

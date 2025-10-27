@@ -185,9 +185,10 @@ class MockStreamGenerator:
             Overwrite the output file if it exists.
         progress : bool (optional)
             Print a very basic progress bar while computing the stream.
-        Integrator : `~gala.integrate.Integrator` (optional)
-            Integrator class to use. Currently, only the
-            `~gala.integrate.DOPRI853Integrator` is supported.
+        Integrator : `~gala.integrate.Integrator`, str (optional)
+            Integrator class to use, or a string name like 'leapfrog', 'dopri853'.
+            Currently, only the `~gala.integrate.DOPRI853Integrator` and
+            `~gala.integrate.LeapfrogIntegrator` are supported.
         Integrator_kwargs : dict (optional)
             Any extra keyword arguments to pass to the integrator class
             when initializing. For example, you can pass in the
@@ -209,6 +210,7 @@ class MockStreamGenerator:
         from gala.integrate import (
             DOPRI853Integrator,
             LeapfrogIntegrator,
+            get_integrator,
             # Ruth4Integrator,
         )
 
@@ -217,6 +219,9 @@ class MockStreamGenerator:
 
         if Integrator is None:
             Integrator = DOPRI853Integrator
+
+        # Validates and retrieves the integrator class from string name if needed
+        Integrator = get_integrator(Integrator)
 
         units = self.hamiltonian.units
         t = parse_time_specification(units, **time_spec)

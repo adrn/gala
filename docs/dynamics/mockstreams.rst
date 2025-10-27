@@ -193,12 +193,19 @@ symplectic integrator that uses a fixed timestep and conserves energy better
 over long integrations.
 
 To use the Leapfrog integrator instead of DOPRI853, pass the ``Integrator``
-argument to the `~gala.dynamics.mockstream.MockStreamGenerator.run()` method::
+argument to the `~gala.dynamics.mockstream.MockStreamGenerator.run()` method.
+You can pass the integrator class directly::
 
     >>> import gala.integrate as gi
     >>> stream_lf, prog = gen.run(prog_w0, prog_mass,
     ...                           dt=1 * u.Myr, n_steps=1000,
     ...                           Integrator=gi.LeapfrogIntegrator)
+
+or more conveniently, use a string name::
+
+    >>> stream_lf, prog = gen.run(prog_w0, prog_mass,
+    ...                           dt=1 * u.Myr, n_steps=1000,
+    ...                           Integrator='leapfrog')
 
 The Leapfrog integrator is particularly useful for long-term integrations where energy conservation is critical, situations where a fixed timestep is faster or acceptable, or
 when symplectic integration properties are important (e.g., preserving phase space volume).

@@ -239,10 +239,10 @@ class Hamiltonian(CommonBase):
         ----------
         w0 : `~gala.dynamics.PhaseSpacePosition`, array_like
             Initial conditions.
-        Integrator : `~gala.integrate.Integrator` (optional)
-            Integrator class to use. By default, uses
-            `~gala.integrate.LeapfrogIntegrator` if the frame is static and
-            `~gala.integrate.DOPRI853Integrator` else.
+        Integrator : `~gala.integrate.Integrator`, str (optional)
+            Integrator class to use, or a string name like 'leapfrog', 'dopri853',
+            'ruth4'. By default, uses `~gala.integrate.LeapfrogIntegrator` if the
+            frame is static and `~gala.integrate.DOPRI853Integrator` else.
         Integrator_kwargs : dict (optional)
             Any extra keyword arguments to pass to the integrator class
             when initializing. For example, you can pass in the
@@ -269,14 +269,15 @@ class Hamiltonian(CommonBase):
 
         """
         from gala.dynamics import PhaseSpacePosition, Orbit
+        from gala.integrate import get_integrator
 
         if Integrator is None and isinstance(self.frame, StaticFrame):
             Integrator = LeapfrogIntegrator
         elif Integrator is None:
             Integrator = DOPRI853Integrator
-        else:
-            # use the Integrator provided
-            pass
+
+        # Validates and retrieves the integrator class from string name if needed
+        Integrator = get_integrator(Integrator)
 
         symplectic_integrators = [LeapfrogIntegrator, Ruth4Integrator]
         if (Integrator in symplectic_integrators and
