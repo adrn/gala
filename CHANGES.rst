@@ -22,6 +22,9 @@ New Features
   simulation through the ``Integrator_kwargs`` in ``MockStreamGenerator.run()``.
 - Added support for using the Leapfrog integrator with ``MockStreamGenerator`` (pass
   ``Integrator=gi.LeapfrogIntegrator`` in ``MockStreamGenerator.run()``).
+- Integrators can now be specified using lowercase string names (e.g., 'leapfrog',
+  'dopri853', 'ruth4') in ``Hamiltonian.integrate_orbit()``,
+  ``DirectNBody.integrate_orbit()``, and ``MockStreamGenerator.run()``.
 
 Bug fixes
 ---------
