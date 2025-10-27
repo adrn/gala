@@ -1,5 +1,7 @@
 ZENODO.rst
 _tutorials.rst
+_supporting.rst
 api/
 _build
 *.csv
+html
