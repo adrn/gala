@@ -172,8 +172,9 @@ class DirectNBody:
 
         Parameters
         ----------
-        Integrator : `~gala.integrate.Integrator` (optional)
-            Integrator class to use.
+        Integrator : `~gala.integrate.Integrator`, str (optional)
+            Integrator class to use, or a string name like 'leapfrog', 'dopri853',
+            'ruth4'.
         Integrator_kwargs : dict (optional)
             Any extra keyword arguments to pass to the integrator class
             when initializing. For example, you can pass in the
@@ -193,12 +194,16 @@ class DirectNBody:
             DOPRI853Integrator,
             LeapfrogIntegrator,
             Ruth4Integrator,
+            get_integrator,
         )
 
         if Integrator_kwargs is None:
             Integrator_kwargs = {}
         if Integrator is None:
             Integrator = DOPRI853Integrator
+
+        # Validates and retrieves the integrator class from string name if needed
+        Integrator = get_integrator(Integrator)
 
         # Prepare the time-stepping array
         t = parse_time_specification(self.units, **time_spec)
