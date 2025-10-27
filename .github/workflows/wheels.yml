@@ -54,7 +54,7 @@ jobs:
           CIBW_BEFORE_ALL_MACOS: brew install gsl pipx
           MACOSX_DEPLOYMENT_TARGET: 15.0
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: wheels-${{ matrix.os }}-${{ matrix.python[0] }}
           path: ./wheelhouse/*.whl
@@ -79,7 +79,7 @@ jobs:
           pip install build
           python -m build -s .
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: wheels-sdist
           path: dist/*.tar.gz
