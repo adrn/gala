@@ -247,6 +247,8 @@ class MilkyWayPotential2022(CCompositePotential):
     """
 
     def __init__(self, units=galactic, disk=None, halo=None, bulge=None, nucleus=None):
+        super().__init__()
+
         # TODO: remove when MilkyWayPotential API changes
         warnings.warn(
             "The MilkyWayPotential2022 class is deprecated. Instead, use: "
@@ -256,6 +258,10 @@ class MilkyWayPotential2022(CCompositePotential):
             'specify MilkyWayPotential(version="latest")',
             GalaFutureWarning,
         )
+        disk = {} if disk is None else disk
+        halo = {} if halo is None else halo
+        bulge = {} if bulge is None else bulge
+        nucleus = {} if nucleus is None else nucleus
         _setup_mwp_2022(self, units, disk=disk, halo=halo, bulge=bulge, nucleus=nucleus)
 
         self.lock = True
