@@ -77,7 +77,14 @@ class TestDirectNBody:
             DirectNBody(self.w0, particle_potentials=[None, None])
 
     @pytest.mark.parametrize(
-        "Integrator", [DOPRI853Integrator, Ruth4Integrator, LeapfrogIntegrator]
+        "Integrator",
+        [
+            DOPRI853Integrator,
+            Ruth4Integrator,
+            LeapfrogIntegrator,
+            "dop853",
+            "leapfrog",
+        ],
     )
     def test_directnbody_integrate(self, Integrator):
         """

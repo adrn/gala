@@ -429,7 +429,7 @@ def test_integrator_energy_conservation(
         n_steps=200,
         release_every=200,  # Only release at beginning
         n_particles=1,
-        Integrator=gi.DOPRI853Integrator,
+        Integrator="dop853",
     )
     E_dop_initial = basic_hamiltonian(prog_dop[0])
     E_dop_final = basic_hamiltonian(prog_dop[-1])
@@ -443,7 +443,7 @@ def test_integrator_energy_conservation(
         n_steps=200,
         release_every=200,  # Only release at beginning
         n_particles=1,
-        Integrator=gi.LeapfrogIntegrator,
+        Integrator="leapfrog",
     )
     E_lf_initial = basic_hamiltonian(prog_lf[0])
     E_lf_final = basic_hamiltonian(prog_lf[-1])
