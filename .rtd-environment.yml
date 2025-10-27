@@ -1,6 +1,0 @@
-dependencies:
-  - python=3.11
-  - gsl
-  - pip
-  - pip:
-      - -e .[docs]
