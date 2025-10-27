@@ -60,6 +60,11 @@ API changes
   ``__call__()`` method or ``energy()``.
 - Removed deprecated ``to_galpy_potential()`` method from potential classes in favor of
   using ``as_interop("galpy")``.
+- The Gala Milky Way potential classes (``MilkyWayPotential`` and
+  ``MilkyWayPotential2022``) have been combined into a single ``MilkyWayPotential``
+  class with a ``version=`` kwarg to specify the desired version (e.g., ``'v1'``,
+  ``'v2'``, etc.). The old classes are deprecated and will be removed in a future
+  release.
 
 Other
 -----

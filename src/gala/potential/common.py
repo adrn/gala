@@ -99,6 +99,9 @@ class CommonBase:
         cls._GSL_only = GSL_only
         cls._EXP_only = EXP_only
 
+        if not hasattr(cls, "_extra_serialize_args"):
+            cls._extra_serialize_args = []
+
     def _validate_units(self, units):
         # make sure the units specified are a UnitSystem instance
         if units is None:

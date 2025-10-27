@@ -237,7 +237,7 @@ def test_regression_113():
     from gala.dynamics import PhaseSpacePosition
     from gala.potential import Hamiltonian, MilkyWayPotential
 
-    pot = MilkyWayPotential()
+    pot = MilkyWayPotential(version="v1")
 
     dt = 0.01
     n_steps = 50000

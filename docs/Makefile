@@ -139,6 +139,11 @@ exectutorials:
 	@echo "Finished executing tutorial notebooks. Look at the executed " \
 	      "notebooks in tutorials/"
 
+execsupporting:
+	jupytext --to ipynb --execute supporting/*.py
+	@echo "Finished executing tutorial notebooks. Look at the executed " \
+	      "notebooks in supporting/"
+
 animations:
 	python _static_animations.py
 	@echo "Finished generating animation files"

@@ -58,7 +58,7 @@ sun_w0 = gd.PhaseSpacePosition(pos=sun_xyz, vel=galcen_frame.galcen_v_sun)
 
 # To compute the sun's orbit, we need to specify a mass model for the Galaxy. Here, we will use the same default, four-component Milky Way mass model introduced in [Defining a Milky Way model](define-milky-way-model.html):
 
-mw_potential = gp.MilkyWayPotential()
+mw_potential = gp.MilkyWayPotential(version="latest")
 
 # We can now compute the Sun's orbit using the default integrator (Leapfrog integration): We will compute the orbit for 4 Gyr, which is about 16 orbital periods:
 

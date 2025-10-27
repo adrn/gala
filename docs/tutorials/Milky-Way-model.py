@@ -57,7 +57,7 @@ coord.galactocentric_frame_defaults.set("v4.0")
 # For the Milky Way model, we'll use the built-in potential class in `gala` (see
 # above for definition):
 
-potential = gp.MilkyWayPotential()
+potential = gp.MilkyWayPotential(version="latest")
 
 # For the sky position and distance of Draco, we'll use measurements from
 # [Bonanos et al. 2004](https://arxiv.org/abs/astro-ph/0310477). For proper

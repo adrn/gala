@@ -231,11 +231,11 @@ ignore = [
 "test*.py" = ["F841", "PLC0415"]
 "conftest.py" = ["PLC0415"]
 "docs/*" = ["PLC0415"]
-"docs/tutorials/*" = ["E703", "RUF001"]
+"docs/tutorials/*" = ["E703", "RUF001", "B018", "E402"]
+"docs/supporting/*" = ["E703", "RUF001", "B018", "E402"]
 "tests/**/*.py"  = ["NPY002", "RUF012", "T201", "B018", "B007", "PLC0415"]
 "setup.py" = ["T201", "E402"]
 "docs/conf.py" = ["T201"]
-"docs/tutorials/*.py" = ["B018", "E402"]
 "tests/dynamics/actionangle/_genfunc/**/*" = ["ALL"]
 
 [[tool.cibuildwheel.overrides]]

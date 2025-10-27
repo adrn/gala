@@ -30,12 +30,6 @@ This package is actively developed in `a public repository on GitHub
 Whether you find a bug, have a feature request, or want to contribute code,
 please `open an issue on GitHub <https://github.com/adrn/gala/issues>`_.
 
-.. note::
-
-   Welcome to the new Gala documentation! The documentation has a new theme and
-   some new content. Use the links in the nav bar above, the page listing below,
-   or the search bar on the left to dive in!
-
 .. ---------------------
 .. Nav bar (top of docs)
 
@@ -48,6 +42,7 @@ please `open an issue on GitHub <https://github.com/adrn/gala/issues>`_.
    tutorials
    user_guide
    contributing
+   supporting
 
 
 Contributors

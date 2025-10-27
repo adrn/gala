@@ -17,7 +17,7 @@ _DF_CLASSES = [
 _DF_KWARGS = [{}, {"gala_modified": True}, {"v_disp": 1 * u.km / u.s}]
 _TEST_POTENTIALS = [
     gp.HernquistPotential(m=1e12, c=5, units=galactic),
-    gp.MilkyWayPotential(),
+    gp.MilkyWayPotential(version="v1"),
 ]
 
 
