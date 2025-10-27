@@ -70,6 +70,9 @@ def _parse_component(component, module):
     except AttributeError:  # HACK: this might be bad to assume
         Potential = getattr(gala_potential, class_name)
 
+    # Add any extra potential arguments to the params kwargs
+    params = {**params, **component.get("extra_args", {})}
+
     return Potential(units=unitsys, **params)
 
 
@@ -147,6 +150,10 @@ def from_dict(d, module=None):
             params = component.get("parameters", {})
             params = _unpack_params(params)  # unpack quantities
             param_groups[name] = params
+
+        # Append any extra arguments
+        param_groups = {**param_groups, **d.get("extra_args", {})}
+
         p = getattr(potential, d["class"])(**param_groups)
 
     else:
@@ -182,6 +189,11 @@ def _to_dict_help(potential):
     if len(potential.parameters) > 0:
         params = _pack_params(potential.parameters)
         d["parameters"] = params
+
+    if potential._extra_serialize_args:
+        d["extra_args"] = {}
+        for arg in potential._extra_serialize_args:
+            d["extra_args"][arg] = getattr(potential, arg)
 
     return d
 
@@ -230,6 +242,11 @@ def to_dict(potential):
     if isinstance(potential, gp.CompositePotential):
         d = {}
         d["class"] = potential.__class__.__name__
+        if potential._extra_serialize_args:
+            d["extra_args"] = {}
+            for arg in potential._extra_serialize_args:
+                d["extra_args"][arg] = getattr(potential, arg)
+
         d["components"] = []
         for k, p in potential.items():
             comp_dict = _to_dict_help(p)

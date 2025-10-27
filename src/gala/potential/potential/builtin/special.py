@@ -183,6 +183,8 @@ class MilkyWayPotential(CCompositePotential):
     components added at bottom of init.
     """
 
+    _extra_serialize_args = ["version"]
+
     def __init__(self, version=None, units=galactic, **kwargs):
         super().__init__()
 
@@ -199,10 +201,12 @@ class MilkyWayPotential(CCompositePotential):
             )
             version = "v1"
 
-        if version.lower() in ("latest", "v2"):
+        self.version = str(version).lower()
+
+        if self.version in ("latest", "v2"):
             _setup_mwp_2022(self, units, **kwargs)
 
-        elif version.lower() == "v1":
+        elif self.version == "v1":
             _setup_mwp_v1(self, units, **kwargs)
 
         else:
