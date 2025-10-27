@@ -255,7 +255,7 @@ class MilkyWayPotential2022(CCompositePotential):
 
         # TODO: remove when MilkyWayPotential API changes
         warnings.warn(
-            "The MilkyWayPotential2022 class is deprecated. Instead, use: "
+            "The MilkyWayPotential2022 class will be deprecated soon. Instead, use: "
             'MilkyWayPotential(version="v2") to get what is currently the '
             "MilkyWayPotential2022 class. Or, to always use the latest Milky Way model "
             "in Gala, you can call the class with no arguments MilkyWayPotential() or "
