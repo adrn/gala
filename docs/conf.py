@@ -321,6 +321,7 @@ if _tutorial_toctree_items:
 
 else:
     _tutorial_toctree_items = "No tutorials found!"
+    _tutorial_toctree = ""
 
 if _supporting_toctree_items:
     _supporting_toctree_items = "\n    ".join(_supporting_toctree_items)
@@ -334,6 +335,7 @@ if _supporting_toctree_items:
 
 else:
     _supporting_toctree_items = "No supporting documents found!"
+    _supporting_toctree = ""
 
 if _not_executed:
     print(
