@@ -254,7 +254,7 @@ earliest time, then a stream is generated forward from the past time. This is pa
     >>> pal5_w0 = gd.PhaseSpacePosition(rep)
     >>> pal5_mass = 2.5e4 * u.Msun
     >>> pal5_pot = gp.PlummerPotential(m=pal5_mass, b=4*u.pc, units=galactic)
-    >>> mw = gp.MilkyWayPotential()
+    >>> mw = gp.MilkyWayPotential(version="latest")
     >>> gen_pal5 = ms.MockStreamGenerator(df, mw, progenitor_potential=pal5_pot)
     >>> pal5_stream, _ = gen_pal5.run(pal5_w0, pal5_mass,
     ...                               dt=-1 * u.Myr, n_steps=4000)
@@ -275,7 +275,7 @@ earliest time, then a stream is generated forward from the past time. This is pa
     pal5_w0 = gd.PhaseSpacePosition(rep)
     pal5_mass = 2.5e4 * u.Msun
     pal5_pot = gp.PlummerPotential(m=pal5_mass, b=4*u.pc, units=galactic)
-    mw = gp.MilkyWayPotential()
+    mw = gp.MilkyWayPotential(version="latest")
     gen_pal5 = ms.MockStreamGenerator(df, mw, progenitor_potential=pal5_pot)
     pal5_stream, _ = gen_pal5.run(pal5_w0, pal5_mass,
                                   dt=-1 * u.Myr, n_steps=4000)

@@ -11,7 +11,6 @@ from gala.potential import (
     BovyMWPotential2014,
     LM10Potential,
     MilkyWayPotential,
-    MilkyWayPotential2022,
 )
 
 
@@ -33,13 +32,13 @@ class TestLM10Potential2(CompositePotentialTestBase):
     skip_density = True
 
 
-class TestMilkyWayPotential(CompositePotentialTestBase):
-    potential = MilkyWayPotential()
+class TestMilkyWayPotentialv1(CompositePotentialTestBase):
+    potential = MilkyWayPotential(version="v1")
     w0 = [8.0, 0.0, 0.0, 0.0, 0.22, 0.1]
 
 
-class TestMilkyWayPotential2022(CompositePotentialTestBase):
-    potential = MilkyWayPotential2022()
+class TestMilkyWayPotentialv2(CompositePotentialTestBase):
+    potential = MilkyWayPotential(version="v2")
     w0 = [8.0, 0.0, 0.0, 0.0, 0.22, 0.1]
 
 

@@ -121,7 +121,7 @@ integration as above, but (1) add a positional offset of the initial conditions
 from the origin, and (2) specify an external potential using the
 `~gala.potential.potential.MilkyWayPotential` class as an external potential::
 
-    >>> external_pot = gp.MilkyWayPotential()
+    >>> external_pot = gp.MilkyWayPotential(version="latest")
     >>> w0_1 = gd.PhaseSpacePosition(pos=[10, 0, 0] * u.kpc,
     ...                              vel=[0, 200, 0] * u.km/u.s)
     >>> w0_2 = gd.PhaseSpacePosition(pos=w0_1.xyz + [10., 0, 0] * u.pc,
@@ -140,7 +140,7 @@ from the origin, and (2) specify an external potential using the
     :context: close-figs
     :width: 60%
 
-    external_pot = gp.MilkyWayPotential()
+    external_pot = gp.MilkyWayPotential(version="latest")
     w0_1 = gd.PhaseSpacePosition(pos=[10, 0, 0] * u.kpc,
                                  vel=[0, 200, 0] * u.km/u.s)
     w0_2 = gd.PhaseSpacePosition(pos=w0_1.xyz + [10., 0, 0] * u.pc,

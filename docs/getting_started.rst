@@ -37,12 +37,13 @@ for the star's orbit.
 
 Mass models in `gala` are specified using Python classes that represent
 gravitational potential models. The standard Milky Way model recommended for
-use in `gala` is the `~gala.potential.potential.MilkyWayPotential2022`, which is a
-pre-defined, multi-component model with parameters set to match the rotation
-curve of the Galactic disk and the mass profile of the dark matter halo::
+use in `gala` is the `~gala.potential.potential.MilkyWayPotential` version="latest",
+which is a pre-defined, multi-component model of the Milky Way with parameters set to
+match the rotation curve of the Galactic disk and the mass profile of the dark matter
+halo::
 
     >>> import gala.potential as gp
-    >>> mw = gp.MilkyWayPotential2022()
+    >>> mw = gp.MilkyWayPotential(version="latest")
     >>> mw
     <CompositePotential disk,bulge,nucleus,halo>
 
@@ -126,7 +127,7 @@ performing common tasks, like plotting an orbit::
     import gala.dynamics as gd
     import gala.potential as gp
 
-    mw = gp.MilkyWayPotential()
+    mw = gp.MilkyWayPotential(version="latest")
     w0 = gd.PhaseSpacePosition(
         pos=[-8.1, 0, 0.02] * u.kpc,
         vel=[13, 245, 8.0] * u.km / u.s,

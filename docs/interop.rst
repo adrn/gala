@@ -35,7 +35,7 @@ object to a Galpy ``Orbit``, use the
 
     >>> w0 = gd.PhaseSpacePosition(pos=[10., 0, 0] * u.kpc,
     ...                            vel=[0, 0, 200.] * u.km/u.s)
-    >>> mw = gp.Hamiltonian(gp.MilkyWayPotential())
+    >>> mw = gp.Hamiltonian(gp.MilkyWayPotential(version="v2"))
     >>> orbit = mw.integrate_orbit(w0, dt=1, n_steps=1000)
     >>> orbit
     <Orbit cartesian, dim=3, shape=(1001,)>
