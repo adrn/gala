@@ -127,7 +127,7 @@ Let's plot the stream::
     prog_w0 = gd.PhaseSpacePosition(pos=[10, 0, 0.] * u.kpc,
                                     vel=[0, 170, 0.] * u.km/u.s)
 
-    df = ms.ChenStreamDF(gala_modified=True)
+    df = ms.ChenStreamDF()
     prog_mass = 2.5E4 * u.Msun
 
     gen = ms.MockStreamGenerator(df, H)
