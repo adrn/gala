@@ -100,4 +100,6 @@ class CCompositePotential(CompositePotential, CPotentialBase):
 
     def __reduce__(self):
         """ Properly package the object for pickling """
-        return self.__class__, (), list(self.items())
+        extra_args = tuple(getattr(self, k) for k in self._extra_serialize_args)
+        state = list(self.items())
+        return self.__class__, extra_args, state

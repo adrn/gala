@@ -1451,7 +1451,8 @@ class CompositePotential(PotentialBase, OrderedDict):
             length, mass, time, and angle units.
         """
         lock = self.lock
-        pots = self.__class__()
+        extra_args = {k: getattr(self, k) for k in self._extra_serialize_args}
+        pots = self.__class__(**extra_args)
 
         pots._units = None
         pots.lock = False
