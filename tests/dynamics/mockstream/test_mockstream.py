@@ -317,6 +317,7 @@ def test_animate(
     assert np.isfinite(nbody_orbits.t).all()
 
 
+@pytest.mark.xfail(reason="Timing comparison depends on system load...")
 def test_integrator_kwargs_dop853(
     rng, basic_hamiltonian, progenitor_w0, progenitor_mass
 ):

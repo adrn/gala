@@ -387,9 +387,7 @@ class PotentialTestBase:
             pos=w0[: self.ndim] * us["length"],
             vel=w0[self.ndim :] * us["length"] / us["time"],
         )
-        orbit = self.H.integrate_orbit(
-            w0, t1=t1, dt=dt, n_steps=nsteps, Integrator="leapfrog"
-        )
+        orbit = self.H.integrate_orbit(w0, t1=t1, dt=dt, n_steps=nsteps)
 
         if self.show_plots:
             f = orbit.plot()
