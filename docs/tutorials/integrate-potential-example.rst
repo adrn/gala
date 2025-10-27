@@ -36,10 +36,15 @@ initial conditions as a `~gala.dynamics.PhaseSpacePosition` object::
 This returns a `~gala.dynamics.Orbit` object containing times and 6D
 positions at each time step. By default, this uses Leapfrog integration
 (:class:`~gala.integrate.LeapfrogIntegrator`), but you can specify a
-different integrator::
+different integrator by passing the integrator class::
 
    >>> orbit = gp.Hamiltonian(pot).integrate_orbit(ics, dt=2., n_steps=2000,
    ...                             Integrator=gi.DOPRI853Integrator)
+
+or more conveniently, by passing a string name::
+
+   >>> orbit = gp.Hamiltonian(pot).integrate_orbit(ics, dt=2., n_steps=2000,
+   ...                             Integrator='dopri853')
 
 We can integrate many orbits in parallel by passing a 2D array of initial
 conditions. Here, we'll generate random initial conditions by sampling from

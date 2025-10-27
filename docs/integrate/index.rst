@@ -193,6 +193,39 @@ nonlinear system::
     orbit = integrator.run([0.5, 0.5, 0.5, 0, 0, 0], dt=1E-2, n_steps=1E4)
     fig = orbit.plot()
 
+Specifying Integrators Throughout Gala
+======================================
+
+When working with potential integration (e.g.,
+:meth:`gala.potential.Hamiltonian.integrate_orbit`), N-body simulations, or mock stream
+generation, you can specify which integrator to use. Integrators can be specified in two
+ways:
+
+1. By class: Import and pass the integrator class directly::
+
+    >>> from gala.integrate import LeapfrogIntegrator, DOPRI853Integrator
+    >>> orbit = pot.integrate_orbit(w0, dt=1., n_steps=1000,
+    ...                             Integrator=LeapfrogIntegrator)  # doctest: +SKIP
+
+2. By string name (more convenient): Pass a lowercase string name::
+
+    >>> orbit = pot.integrate_orbit(w0, dt=1., n_steps=1000,
+    ...                             Integrator='leapfrog')  # doctest: +SKIP
+
+Valid integrator names are:
+
+- ``'leapfrog'`` - :class:`~gala.integrate.LeapfrogIntegrator`
+- ``'dopri853'`` or ``'dop853'`` - :class:`~gala.integrate.DOPRI853Integrator`
+- ``'ruth4'`` - :class:`~gala.integrate.Ruth4Integrator`
+- ``'rk5'`` - :class:`~gala.integrate.RK5Integrator`
+
+You can also use the :func:`~gala.integrate.get_integrator` function to convert
+a string name to an integrator class::
+
+    >>> integrator_cls = gi.get_integrator('dopri853')
+    >>> integrator_cls
+    <class 'gala.integrate.pyintegrators.dopri853.DOPRI853Integrator'>
+
 API
 ===
 
