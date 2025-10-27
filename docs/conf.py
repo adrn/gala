@@ -265,7 +265,7 @@ if not zenodo_path.exists():
 
         headers = {"accept": "application/x-bibtex"}
         response = requests.get(
-            "https://zenodo.org/api/records/4159870", headers=headers
+            "https://zenodo.org/api/records/16923466", headers=headers
         )
         response.encoding = "utf-8"
         zenodo_record = ".. code-block:: bibtex\n\n" + textwrap.indent(
@@ -274,7 +274,7 @@ if not zenodo_path.exists():
     except Exception as e:
         warnings.warn(f"Failed to retrieve Zenodo record for Gala: {e!s}", stacklevel=1)
         zenodo_record = (
-            "`Retrieve the Zenodo record here <https://zenodo.org/record/4159870>`_"
+            "`Retrieve the Zenodo record here <https://zenodo.org/record/16923466>`_"
         )
 
     with open(zenodo_path, "w", encoding="utf-8") as f:
@@ -289,18 +289,24 @@ tutorial_files = [
     "tutorials/integrate-rotating-frame.rst",
     "tutorials/mock-stream-heliocentric.rst",
     "tutorials/circ-restricted-3body.rst",
-    "tutorials/define-milky-way-model.ipynb",
     "tutorials/spherical-spline-tutorial.py",
     "tutorials/Arbitrary-density-SCF.ipynb",
     "tutorials/exp.rst",
+    # Supporting documents:
+    "supporting/define-milky-way-model.ipynb",
 ]
 
 _not_executed = []
 _tutorial_toctree_items = []
+_supporting_toctree_items = []
 for fn in tutorial_files:
     if not pathlib.Path(fn).exists() and "GITHUB_TOKEN" not in os.environ:
         _not_executed.append(fn)
-    else:
+        continue
+
+    if fn.startswith("supporting/"):
+        _supporting_toctree_items.append(fn)
+    elif fn.startswith("tutorials/"):
         _tutorial_toctree_items.append(fn)
 
 if _tutorial_toctree_items:
@@ -316,6 +322,19 @@ if _tutorial_toctree_items:
 else:
     _tutorial_toctree_items = "No tutorials found!"
 
+if _supporting_toctree_items:
+    _supporting_toctree_items = "\n    ".join(_supporting_toctree_items)
+    _supporting_toctree = f"""
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    {_supporting_toctree_items}
+    """
+
+else:
+    _supporting_toctree_items = "No supporting documents found!"
+
 if _not_executed:
     print(
         "\n-------- Gala warning --------\n"
@@ -328,3 +347,6 @@ if _not_executed:
 
 with open("_tutorials.rst", "w", encoding="utf-8") as f:
     f.write(_tutorial_toctree)
+
+with open("_supporting.rst", "w", encoding="utf-8") as f:
+    f.write(_supporting_toctree)
