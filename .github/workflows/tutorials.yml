@@ -59,7 +59,7 @@ jobs:
           make exectutorials
           make execsupporting
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: notebooks-for-${{ github.sha }}
           path: |
