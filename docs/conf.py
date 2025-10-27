@@ -238,7 +238,7 @@ if "GITHUB_TOKEN" in os.environ:
 
     # The path where the artifact should be extracted
     # Note: this is relative to the conf.py file!
-    rtds_action_path = "tutorials"
+    rtds_action_path = "."
 
     # The "prefix" used in the `upload-artifact` step of the action
     rtds_action_artifact_prefix = "notebooks-for-"
@@ -320,8 +320,7 @@ if _tutorial_toctree_items:
     """
 
 else:
-    _tutorial_toctree_items = "No tutorials found!"
-    _tutorial_toctree = ""
+    _tutorial_toctree = "No tutorials found!"
 
 if _supporting_toctree_items:
     _supporting_toctree_items = "\n    ".join(_supporting_toctree_items)
@@ -334,8 +333,7 @@ if _supporting_toctree_items:
     """
 
 else:
-    _supporting_toctree_items = "No supporting documents found!"
-    _supporting_toctree = ""
+    _supporting_toctree = "No supporting documents found!"
 
 if _not_executed:
     print(

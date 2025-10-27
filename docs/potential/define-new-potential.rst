@@ -127,10 +127,10 @@ specify four coordinate values)::
             return 0.5*(x**2 + y**2) + A*(x**2*y - y**3/3)
         def _gradient(self, xy, t):
             A = self.parameters['A'].value
-            x,y = xy.T
+            x, y = xy
             grad = np.zeros_like(xy)
-            grad[:,0] = x + 2*A*x*y
-            grad[:,1] = y + A*(x**2 - y**2)
+            grad[0] = x + 2*A*x*y
+            grad[1] = y + A*(x**2 - y**2)
             return grad
 
     pot = CustomHenonHeilesPotential(A=1., units=None)

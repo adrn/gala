@@ -412,7 +412,7 @@ frequencies with the Staeckel Fudge using Galpy (for more information, see the
 
     >>> from gala.dynamics.actionangle import get_staeckel_fudge_delta
     >>> from galpy.actionAngle import actionAngleStaeckel
-    >>> galpy_potential = pot.to_galpy_potential()
+    >>> galpy_potential = pot.as_interop("galpy")
     >>> J = np.zeros((3, orbits.norbits))
     >>> Omega = np.zeros((3, orbits.norbits))
     >>> for n, orbit in enumerate(orbits.orbit_gen()): # doctest: +SKIP
@@ -439,7 +439,7 @@ vertical velocity we used as initial conditions:
     from gala.dynamics.actionangle import get_staeckel_fudge_delta
     from galpy.actionAngle import actionAngleStaeckel
 
-    galpy_potential = pot.to_galpy_potential()
+    galpy_potential = pot.as_interop("galpy")
     J = np.zeros((3, orbits.norbits))
     Omega = np.zeros((3, orbits.norbits))
     for n, orbit in enumerate(orbits.orbit_gen()):
