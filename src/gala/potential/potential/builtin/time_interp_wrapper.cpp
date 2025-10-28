@@ -5,12 +5,94 @@
 #include "time_interp.h"
 #include "time_interp_wrapper.h"
 #include "../src/cpotential.h"
-#include "../../src/vectorization.h"
+#include "src/vectorization.h"
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
 
 extern "C" {
+
+// Helper function to interpolate all parameters, origin, and rotation at time t
+static int time_interp_eval_all(
+    TimeInterpState *interp_state, double t, int n_dim,
+    double **interp_params_out, double **interp_origin_out, double **interp_rotation_out
+) {
+    /*
+    Interpolate all state (parameters, origin, rotation) at time t.
+    Returns 0 on success, -1 on failure.
+    Caller is responsible for freeing the output arrays.
+    */
+    if (!interp_state) return -1;
+
+    // Calculate total number of parameter elements
+    int total_param_elements = 0;
+    for (int i = 0; i < interp_state->n_params; i++) {
+        total_param_elements += interp_state->params[i].n_elements;
+    }
+
+    // Allocate and interpolate parameters
+    double *interp_params = (double*)malloc(total_param_elements * sizeof(double));
+    if (!interp_params) return -1;
+
+    int param_offset = 0;
+    for (int i = 0; i < interp_state->n_params; i++) {
+        int n_elem = interp_state->params[i].n_elements;
+        time_interp_eval_param(&interp_state->params[i], t, &interp_params[param_offset]);
+
+        // Check for NaN
+        for (int j = 0; j < n_elem; j++) {
+            if (isnan(interp_params[param_offset + j])) {
+                free(interp_params);
+                return -1;
+            }
+        }
+        param_offset += n_elem;
+    }
+
+    // Allocate and interpolate origin
+    double *interp_origin = (double*)malloc(n_dim * sizeof(double));
+    if (!interp_origin) {
+        free(interp_params);
+        return -1;
+    }
+
+    // Origin is now a single multi-element parameter
+    time_interp_eval_param(&interp_state->origin, t, interp_origin);
+
+    // Check for NaN in origin
+    for (int i = 0; i < n_dim; i++) {
+        if (isnan(interp_origin[i])) {
+            free(interp_params);
+            free(interp_origin);
+            return -1;
+        }
+    }
+
+    // Allocate and interpolate rotation
+    double *interp_rotation = (double*)malloc(n_dim * n_dim * sizeof(double));
+    if (!interp_rotation) {
+        free(interp_params);
+        free(interp_origin);
+        return -1;
+    }
+
+    time_interp_eval_rotation(&interp_state->rotation, t, interp_rotation);
+
+    // Check for NaN in rotation matrix
+    for (int i = 0; i < n_dim * n_dim; i++) {
+        if (isnan(interp_rotation[i])) {
+            free(interp_params);
+            free(interp_origin);
+            free(interp_rotation);
+            return -1;
+        }
+    }
+
+    *interp_params_out = interp_params;
+    *interp_origin_out = interp_origin;
+    *interp_rotation_out = interp_rotation;
+    return 0;
+}
 
 // Time-interpolated potential evaluation function
 double time_interp_value(double t, double *pars, double *q, int n_dim, void *state) {
@@ -27,68 +109,21 @@ double time_interp_value(double t, double *pars, double *q, int n_dim, void *sta
     // Get the wrapped potential from the state
     CPotential *wrapped_pot = (CPotential*)interp_state->wrapped_potential;
 
-    // Interpolate parameters at time t
-    double *interp_params = (double*)malloc(interp_state->n_params * sizeof(double));
-    if (!interp_params) return NAN;
-    memset(interp_params, 0, interp_state->n_params * sizeof(double));
-
-    // TODO: note - G is wrapped up in this, but is treated as constant so should be fine.
-    // G should maybe be a separate (special) parameter...
-    for (int i=0; i < interp_state->n_params; i++) {
-        interp_params[i] = time_interp_eval_param(&interp_state->params[i], t);
-        if (isnan(interp_params[i])) {
-            free(interp_params);
-            return NAN;
-        }
-    }
-
-    // Interpolate origin
-    double *interp_origin = (double*)malloc(n_dim * sizeof(double));
-    if (!interp_origin) {
-        free(interp_params);
+    // Interpolate all state at time t
+    double *interp_params, *interp_origin, *interp_rotation;
+    if (time_interp_eval_all(interp_state, t, n_dim,
+                             &interp_params, &interp_origin, &interp_rotation) != 0) {
         return NAN;
-    }
-    memset(interp_origin, 0, n_dim * sizeof(double));
-
-    for (int i=0; i < n_dim; i++) {
-        interp_origin[i] = time_interp_eval_param(&interp_state->origin[i], t);
-        if (isnan(interp_origin[i])) {
-            free(interp_params);
-            free(interp_origin);
-            return NAN;
-        }
-    }
-
-    // Interpolate rotation matrix
-    double *interp_rotation = (double*)malloc(n_dim * n_dim * sizeof(double));
-    if (!interp_rotation) {
-        free(interp_params);
-        free(interp_origin);
-        return NAN;
-    }
-    memset(interp_rotation, 0, n_dim * n_dim * sizeof(double));
-    time_interp_eval_rotation(&interp_state->rotation, t, interp_rotation);
-
-    // Check for NaN in rotation matrix (could come from failed interpolation)
-    for (int i = 0; i < n_dim * n_dim; i++) {
-        if (isnan(interp_rotation[i])) {
-            free(interp_params);
-            free(interp_origin);
-            free(interp_rotation);
-            return NAN;
-        }
     }
 
     // Transform position using existing apply_shift_rotate function
-    // Use dynamic allocation to avoid potential buffer overflow if n_dim != 3
-    double *q_transformed = (double*)malloc(n_dim * sizeof(double));
+    double *q_transformed = (double*)calloc(n_dim, sizeof(double));
     if (!q_transformed) {
         free(interp_params);
         free(interp_origin);
         free(interp_rotation);
         return NAN;
     }
-    memset(q_transformed, 0, n_dim * sizeof(double));
     apply_shift_rotate(q, interp_origin, interp_rotation, n_dim, 0, q_transformed);
 
     // Evaluate wrapped potential
@@ -122,69 +157,17 @@ void time_interp_gradient(double t, double *pars, double *q, int n_dim, size_t N
     // Get the wrapped potential from the state
     CPotential *wrapped_pot = (CPotential*)interp_state->wrapped_potential;
 
-    // Interpolate parameters at time t
-    double *interp_params = (double*)malloc(interp_state->n_params * sizeof(double));
-    if (!interp_params) {
+    // Interpolate all state at time t
+    double *interp_params, *interp_origin, *interp_rotation;
+    if (time_interp_eval_all(interp_state, t, n_dim,
+                             &interp_params, &interp_origin, &interp_rotation) != 0) {
         for (size_t i = 0; i < N * n_dim; i++) grad[i] = NAN;
         return;
-    }
-    memset(interp_params, 0, interp_state->n_params * sizeof(double));
-
-    // TODO: note - G is wrapped up in this, but is treated as constant so should be fine.
-    // G should maybe be a separate (special) parameter...
-    for (int i = 0; i < interp_state->n_params; i++) {
-        interp_params[i] = time_interp_eval_param(&interp_state->params[i], t);
-        if (isnan(interp_params[i])) {
-            free(interp_params);
-            for (size_t j = 0; j < N * n_dim; j++) grad[j] = NAN;
-            return;
-        }
-    }
-
-    // Interpolate origin
-    double *interp_origin = (double*)malloc(n_dim * sizeof(double));
-    if (!interp_origin) {
-        free(interp_params);
-        for (size_t i = 0; i < N * n_dim; i++) grad[i] = NAN;
-        return;
-    }
-    memset(interp_origin, 0, n_dim * sizeof(double));
-
-    for (int i = 0; i < n_dim; i++) {
-        interp_origin[i] = time_interp_eval_param(&interp_state->origin[i], t);
-        if (isnan(interp_origin[i])) {
-            free(interp_params);
-            free(interp_origin);
-            for (size_t j = 0; j < N * n_dim; j++) grad[j] = NAN;
-            return;
-        }
-    }
-
-    // Interpolate rotation matrix
-    double *interp_rotation = (double*)malloc(n_dim * n_dim * sizeof(double));
-    if (!interp_rotation) {
-        free(interp_params);
-        free(interp_origin);
-        for (size_t i = 0; i < N * n_dim; i++) grad[i] = NAN;
-        return;
-    }
-    memset(interp_rotation, 0, n_dim * n_dim * sizeof(double));
-    time_interp_eval_rotation(&interp_state->rotation, t, interp_rotation);
-
-    // Check for NaN in rotation matrix (could come from failed interpolation)
-    for (int i = 0; i < n_dim * n_dim; i++) {
-        if (isnan(interp_rotation[i])) {
-            free(interp_params);
-            free(interp_origin);
-            free(interp_rotation);
-            for (size_t j = 0; j < N * n_dim; j++) grad[j] = NAN;
-            return;
-        }
     }
 
     // Allocate temporary arrays for transformed coordinates
-    double *q_transformed = (double*)malloc(N * n_dim * sizeof(double));
-    double *grad_transformed = (double*)malloc(N * n_dim * sizeof(double));
+    double *q_transformed = (double*)calloc(N * n_dim, sizeof(double));
+    double *grad_transformed = (double*)calloc(N * n_dim, sizeof(double));
     if (!q_transformed || !grad_transformed) {
         free(interp_params);
         free(interp_origin);
@@ -194,8 +177,6 @@ void time_interp_gradient(double t, double *pars, double *q, int n_dim, size_t N
         for (size_t i = 0; i < N * n_dim; i++) grad[i] = NAN;
         return;
     }
-    memset(q_transformed, 0, N * n_dim * sizeof(double));
-    memset(grad_transformed, 0, N * n_dim * sizeof(double));
 
     // Transform positions for all orbits using existing apply_shift_rotate_N function
     apply_shift_rotate_N(q, interp_origin, interp_rotation, n_dim, N, 0, q_transformed);
@@ -203,19 +184,21 @@ void time_interp_gradient(double t, double *pars, double *q, int n_dim, size_t N
     // Evaluate wrapped potential gradient in transformed coordinates
     wrapped_pot->gradient[0](t, interp_params, q_transformed, n_dim, N, grad_transformed, wrapped_pot->state[0]);
 
-    // Transform gradient back for all orbits using apply_rotate_T: grad = R^T @ grad_transformed
-    for (size_t i = 0; i < N; i++) {
-        apply_rotate_T(
-            double6ptr{grad_transformed + i, N},
-            interp_rotation,
-            n_dim,
-            1
-        );
-    }
-
-    // Copy the transformed gradients to output
-    for (size_t i = 0; i < N * n_dim; i++) {
-        grad[i] = grad_transformed[i];
+    // Transform gradient back: For each orbit, apply R^T to the gradient
+    // grad_out = R^T @ grad_transformed
+    for (size_t orbit_idx = 0; orbit_idx < N; orbit_idx++) {
+        double temp_grad[3];  // Temporary for one orbit's gradient
+        for (int i = 0; i < n_dim; i++) {
+            temp_grad[i] = 0.0;
+            for (int j = 0; j < n_dim; j++) {
+                // R^T[i,j] = R[j,i], so we use interp_rotation[j*n_dim + i]
+                temp_grad[i] += interp_rotation[j*n_dim + i] * grad_transformed[orbit_idx*n_dim + j];
+            }
+        }
+        // Copy back
+        for (int i = 0; i < n_dim; i++) {
+            grad[orbit_idx*n_dim + i] = temp_grad[i];
+        }
     }
 
     free(interp_params);
@@ -239,66 +222,21 @@ double time_interp_density(double t, double *pars, double *q, int n_dim, void *s
     // Get the wrapped potential from the state
     CPotential *wrapped_pot = (CPotential*)interp_state->wrapped_potential;
 
-    // Interpolate parameters at time t
-        double *interp_params = (double*)malloc(interp_state->n_params * sizeof(double));
-    if (!interp_params) return NAN;
-        memset(interp_params, 0, interp_state->n_params * sizeof(double));
-
-    // TODO: note - G is wrapped up in this, but is treated as constant so should be fine.
-    // G should maybe be a separate (special) parameter...
-    for (int i = 0; i < interp_state->n_params; i++) {
-        interp_params[i] = time_interp_eval_param(&interp_state->params[i], t);
-        if (isnan(interp_params[i])) {
-            free(interp_params);
-            return NAN;
-        }
-    }
-
-    // Interpolate origin
-        double *interp_origin = (double*)malloc(n_dim * sizeof(double));
-    if (!interp_origin) {
-        free(interp_params);
+    // Interpolate all state at time t
+    double *interp_params, *interp_origin, *interp_rotation;
+    if (time_interp_eval_all(interp_state, t, n_dim,
+                             &interp_params, &interp_origin, &interp_rotation) != 0) {
         return NAN;
-    }
-        memset(interp_origin, 0, n_dim * sizeof(double));
-
-    for (int i = 0; i < n_dim; i++) {
-        interp_origin[i] = time_interp_eval_param(&interp_state->origin[i], t);
-        if (isnan(interp_origin[i])) {
-            free(interp_params);
-            free(interp_origin);
-            return NAN;
-        }
-    }
-
-    // Interpolate rotation matrix
-    double *interp_rotation = (double*)malloc(n_dim * n_dim * sizeof(double));
-    if (!interp_rotation) {
-        free(interp_params);
-        free(interp_origin);
-        return NAN;
-    }
-    time_interp_eval_rotation(&interp_state->rotation, t, interp_rotation);
-
-    // Check for NaN in rotation matrix (could come from failed interpolation)
-    for (int i = 0; i < n_dim * n_dim; i++) {
-        if (isnan(interp_rotation[i])) {
-            free(interp_params);
-            free(interp_origin);
-            free(interp_rotation);
-            return NAN;
-        }
     }
 
     // Transform position using existing apply_shift_rotate function
-    double *q_transformed = (double*)malloc(n_dim * sizeof(double));
+    double *q_transformed = (double*)calloc(n_dim, sizeof(double));
     if (!q_transformed) {
         free(interp_params);
         free(interp_origin);
         free(interp_rotation);
         return NAN;
     }
-    memset(q_transformed, 0, n_dim * sizeof(double));
     apply_shift_rotate(q, interp_origin, interp_rotation, n_dim, 0, q_transformed);
 
     // Evaluate wrapped potential density
@@ -330,67 +268,16 @@ void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *h
     // Get the wrapped potential from the state
     CPotential *wrapped_pot = (CPotential*)interp_state->wrapped_potential;
 
-    // Interpolate parameters at time t
-        double *interp_params = (double*)malloc(interp_state->n_params * sizeof(double));
-    if (!interp_params) {
+    // Interpolate all state at time t
+    double *interp_params, *interp_origin, *interp_rotation;
+    if (time_interp_eval_all(interp_state, t, n_dim,
+                             &interp_params, &interp_origin, &interp_rotation) != 0) {
         for (int i = 0; i < n_dim * n_dim; i++) hess[i] = NAN;
         return;
-    }
-        memset(interp_params, 0, interp_state->n_params * sizeof(double));
-
-    // TODO: note - G is wrapped up in this, but is treated as constant so should be fine.
-    // G should maybe be a separate (special) parameter...
-    for (int i = 0; i < interp_state->n_params; i++) {
-        interp_params[i] = time_interp_eval_param(&interp_state->params[i], t);
-        if (isnan(interp_params[i])) {
-            free(interp_params);
-            for (int j = 0; j < n_dim * n_dim; j++) hess[j] = NAN;
-            return;
-        }
-    }
-
-    // Interpolate origin
-        double *interp_origin = (double*)malloc(n_dim * sizeof(double));
-    if (!interp_origin) {
-        free(interp_params);
-        for (int i = 0; i < n_dim * n_dim; i++) hess[i] = NAN;
-        return;
-    }
-        memset(interp_origin, 0, n_dim * sizeof(double));
-
-    for (int i = 0; i < n_dim; i++) {
-        interp_origin[i] = time_interp_eval_param(&interp_state->origin[i], t);
-        if (isnan(interp_origin[i])) {
-            free(interp_params);
-            free(interp_origin);
-            for (int j = 0; j < n_dim * n_dim; j++) hess[j] = NAN;
-            return;
-        }
-    }
-
-    // Interpolate rotation matrix
-    double *interp_rotation = (double*)malloc(n_dim * n_dim * sizeof(double));
-    if (!interp_rotation) {
-        free(interp_params);
-        free(interp_origin);
-        for (int i = 0; i < n_dim * n_dim; i++) hess[i] = NAN;
-        return;
-    }
-    time_interp_eval_rotation(&interp_state->rotation, t, interp_rotation);
-
-    // Check for NaN in rotation matrix (could come from failed interpolation)
-    for (int i = 0; i < n_dim * n_dim; i++) {
-        if (isnan(interp_rotation[i])) {
-            free(interp_params);
-            free(interp_origin);
-            free(interp_rotation);
-            for (int j = 0; j < n_dim * n_dim; j++) hess[j] = NAN;
-            return;
-        }
     }
 
     // Transform position using existing apply_shift_rotate function
-    double *q_transformed = (double*)malloc(n_dim * sizeof(double));
+    double *q_transformed = (double*)calloc(n_dim, sizeof(double));
     if (!q_transformed) {
         free(interp_params);
         free(interp_origin);
@@ -398,11 +285,10 @@ void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *h
         for (int i = 0; i < n_dim * n_dim; i++) hess[i] = NAN;
         return;
     }
-    memset(q_transformed, 0, n_dim * sizeof(double));
     apply_shift_rotate(q, interp_origin, interp_rotation, n_dim, 0, q_transformed);
 
     // Evaluate wrapped potential Hessian in transformed coordinates
-    double *hess_transformed = (double*)malloc(n_dim * n_dim * sizeof(double));
+    double *hess_transformed = (double*)calloc(n_dim * n_dim, sizeof(double));
     if (!hess_transformed) {
         free(interp_params);
         free(interp_origin);
@@ -411,7 +297,6 @@ void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *h
         for (int i = 0; i < n_dim * n_dim; i++) hess[i] = NAN;
         return;
     }
-    memset(hess_transformed, 0, n_dim * n_dim * sizeof(double));
     wrapped_pot->hessian[0](t, interp_params, q_transformed, n_dim, hess_transformed, wrapped_pot->state[0]);
 
     // Transform Hessian back: hess = R^T @ hess_transformed @ R

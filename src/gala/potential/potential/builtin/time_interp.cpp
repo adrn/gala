@@ -30,15 +30,8 @@ TimeInterpState* time_interp_alloc(int n_params, int n_dim, const gsl_interp_typ
         }
     }
 
-    // Allocate origin interpolators
-    if (n_dim > 0) {
-        state->origin = (TimeInterpParam*)calloc(n_dim, sizeof(TimeInterpParam));
-        if (!state->origin) {
-            free(state->params);
-            free(state);
-            return NULL;
-        }
-    }
+    // Initialize origin as a single multi-element parameter (will be set up later)
+    memset(&state->origin, 0, sizeof(TimeInterpParam));
 
     // Initialize rotation to identity/constant
     state->rotation.is_constant = 1;
@@ -59,45 +52,111 @@ void time_interp_free(TimeInterpState *state) {
     // Free parameter interpolators
     if (state->params) {
         for (int i = 0; i < state->n_params; i++) {
-            if (state->params[i].spline) gsl_spline_free(state->params[i].spline);
-            if (state->params[i].accel) gsl_interp_accel_free(state->params[i].accel);
+            // Free arrays of splines and accelerators
+            if (state->params[i].splines) {
+                for (int j = 0; j < state->params[i].n_elements; j++) {
+                    if (state->params[i].splines[j]) gsl_spline_free(state->params[i].splines[j]);
+                }
+                free(state->params[i].splines);
+            }
+            if (state->params[i].accels) {
+                for (int j = 0; j < state->params[i].n_elements; j++) {
+                    if (state->params[i].accels[j]) gsl_interp_accel_free(state->params[i].accels[j]);
+                }
+                free(state->params[i].accels);
+            }
             if (state->params[i].time_knots) free(state->params[i].time_knots);
-            if (state->params[i].param_values) free(state->params[i].param_values);
+            if (state->params[i].param_values) {
+                for (int j = 0; j < state->params[i].n_elements; j++) {
+                    if (state->params[i].param_values[j]) free(state->params[i].param_values[j]);
+                }
+                free(state->params[i].param_values);
+            }
+            if (state->params[i].constant_values) free(state->params[i].constant_values);
         }
         free(state->params);
     }
 
-    // Free origin interpolators
-    if (state->origin) {
-        for (int i = 0; i < state->n_dim; i++) {
-            if (state->origin[i].spline) gsl_spline_free(state->origin[i].spline);
-            if (state->origin[i].accel) gsl_interp_accel_free(state->origin[i].accel);
-            if (state->origin[i].time_knots) free(state->origin[i].time_knots);
-            if (state->origin[i].param_values) free(state->origin[i].param_values);
+    // Free origin interpolator (now a single multi-element parameter)
+    if (state->origin.splines) {
+        for (int i = 0; i < state->origin.n_elements; i++) {
+            if (state->origin.splines[i]) {
+                gsl_spline_free(state->origin.splines[i]);
+            }
+            if (state->origin.accels[i]) {
+                gsl_interp_accel_free(state->origin.accels[i]);
+            }
         }
-        free(state->origin);
+        free(state->origin.splines);
     }
+    if (state->origin.accels) free(state->origin.accels);
+    if (state->origin.time_knots) free(state->origin.time_knots);
+    if (state->origin.param_values) {
+        for (int i = 0; i < state->origin.n_elements; i++) {
+            if (state->origin.param_values[i]) {
+                free(state->origin.param_values[i]);
+            }
+        }
+        free(state->origin.param_values);
+    }
+    if (state->origin.constant_values) free(state->origin.constant_values);
 
     // Free rotation interpolators
     if (!state->rotation.is_constant) {
-        if (state->rotation.axis_x.spline) gsl_spline_free(state->rotation.axis_x.spline);
-        if (state->rotation.axis_x.accel) gsl_interp_accel_free(state->rotation.axis_x.accel);
+        if (state->rotation.axis_x.splines && state->rotation.axis_x.splines[0]) {
+            gsl_spline_free(state->rotation.axis_x.splines[0]);
+        }
+        if (state->rotation.axis_x.splines) free(state->rotation.axis_x.splines);
+        if (state->rotation.axis_x.accels && state->rotation.axis_x.accels[0]) {
+            gsl_interp_accel_free(state->rotation.axis_x.accels[0]);
+        }
+        if (state->rotation.axis_x.accels) free(state->rotation.axis_x.accels);
         if (state->rotation.axis_x.time_knots) free(state->rotation.axis_x.time_knots);
+        if (state->rotation.axis_x.param_values && state->rotation.axis_x.param_values[0]) {
+            free(state->rotation.axis_x.param_values[0]);
+        }
         if (state->rotation.axis_x.param_values) free(state->rotation.axis_x.param_values);
 
-        if (state->rotation.axis_y.spline) gsl_spline_free(state->rotation.axis_y.spline);
-        if (state->rotation.axis_y.accel) gsl_interp_accel_free(state->rotation.axis_y.accel);
+        if (state->rotation.axis_y.splines && state->rotation.axis_y.splines[0]) {
+            gsl_spline_free(state->rotation.axis_y.splines[0]);
+        }
+        if (state->rotation.axis_y.splines) free(state->rotation.axis_y.splines);
+        if (state->rotation.axis_y.accels && state->rotation.axis_y.accels[0]) {
+            gsl_interp_accel_free(state->rotation.axis_y.accels[0]);
+        }
+        if (state->rotation.axis_y.accels) free(state->rotation.axis_y.accels);
         if (state->rotation.axis_y.time_knots) free(state->rotation.axis_y.time_knots);
+        if (state->rotation.axis_y.param_values && state->rotation.axis_y.param_values[0]) {
+            free(state->rotation.axis_y.param_values[0]);
+        }
         if (state->rotation.axis_y.param_values) free(state->rotation.axis_y.param_values);
 
-        if (state->rotation.axis_z.spline) gsl_spline_free(state->rotation.axis_z.spline);
-        if (state->rotation.axis_z.accel) gsl_interp_accel_free(state->rotation.axis_z.accel);
+        if (state->rotation.axis_z.splines && state->rotation.axis_z.splines[0]) {
+            gsl_spline_free(state->rotation.axis_z.splines[0]);
+        }
+        if (state->rotation.axis_z.splines) free(state->rotation.axis_z.splines);
+        if (state->rotation.axis_z.accels && state->rotation.axis_z.accels[0]) {
+            gsl_interp_accel_free(state->rotation.axis_z.accels[0]);
+        }
+        if (state->rotation.axis_z.accels) free(state->rotation.axis_z.accels);
         if (state->rotation.axis_z.time_knots) free(state->rotation.axis_z.time_knots);
+        if (state->rotation.axis_z.param_values && state->rotation.axis_z.param_values[0]) {
+            free(state->rotation.axis_z.param_values[0]);
+        }
         if (state->rotation.axis_z.param_values) free(state->rotation.axis_z.param_values);
 
-        if (state->rotation.angle.spline) gsl_spline_free(state->rotation.angle.spline);
-        if (state->rotation.angle.accel) gsl_interp_accel_free(state->rotation.angle.accel);
+        if (state->rotation.angle.splines && state->rotation.angle.splines[0]) {
+            gsl_spline_free(state->rotation.angle.splines[0]);
+        }
+        if (state->rotation.angle.splines) free(state->rotation.angle.splines);
+        if (state->rotation.angle.accels && state->rotation.angle.accels[0]) {
+            gsl_interp_accel_free(state->rotation.angle.accels[0]);
+        }
+        if (state->rotation.angle.accels) free(state->rotation.angle.accels);
         if (state->rotation.angle.time_knots) free(state->rotation.angle.time_knots);
+        if (state->rotation.angle.param_values && state->rotation.angle.param_values[0]) {
+            free(state->rotation.angle.param_values[0]);
+        }
         if (state->rotation.angle.param_values) free(state->rotation.angle.param_values);
     }
 
@@ -106,81 +165,157 @@ void time_interp_free(TimeInterpState *state) {
 
 int time_interp_init_param(
     TimeInterpParam *param, double *time_knots, double *values,
-    int n_knots, const gsl_interp_type *interp_type
+    int n_knots, int n_elements, const gsl_interp_type *interp_type
 ) {
     /*
-    Initialize a time-varying parameter interpolator
-    */
-    if (!param || !time_knots || !values || n_knots < 2) return -1;
+    Initialize a time-varying parameter interpolator with support for multi-element parameters.
 
-    // Check if all values are the same (effectively constant)
+    Input values should be in row-major order: shape (n_knots, n_elements) flattened to 1D.
+    values[0] = element 0 at time 0
+    values[1] = element 1 at time 0
+    ...
+    values[n_elements] = element 0 at time 1
+    etc.
+    */
+    if (!param || !time_knots || !values || n_knots < 2 || n_elements < 1) return -1;
+
+    // Check if all values are constant (all elements, all times)
     int is_constant = 1;
-    for (int i = 1; i < n_knots; i++) {
-        if (fabs(values[i] - values[0]) > 1e-15) {
-            is_constant = 0;
-            break;
+    for (int elem = 0; elem < n_elements; elem++) {
+        for (int t = 1; t < n_knots; t++) {
+            if (fabs(values[t * n_elements + elem] - values[elem]) > 1e-15) {
+                is_constant = 0;
+                break;
+            }
         }
+        if (!is_constant) break;
     }
 
     if (is_constant || n_knots == 1) {
-        return time_interp_init_constant_param(param, values[0]);
+        // Extract first time step values for constant case
+        double *const_vals = (double*)malloc(n_elements * sizeof(double));
+        if (!const_vals) return -1;
+        for (int i = 0; i < n_elements; i++) {
+            const_vals[i] = values[i];  // First row
+        }
+        int result = time_interp_init_constant_param(param, const_vals, n_elements);
+        free(const_vals);
+        return result;
     }
 
     param->is_constant = 0;
     param->n_knots = n_knots;
+    param->n_elements = n_elements;
 
-    // Allocate and copy time knots and values
-    param->time_knots = (double*)malloc(n_knots * sizeof(double));
-    param->param_values = (double*)malloc(n_knots * sizeof(double));
-    if (!param->time_knots || !param->param_values) {
-        if (param->time_knots) free(param->time_knots);
+    // Allocate arrays for multi-element support
+    param->splines = (gsl_spline**)calloc(n_elements, sizeof(gsl_spline*));
+    param->accels = (gsl_interp_accel**)calloc(n_elements, sizeof(gsl_interp_accel*));
+    param->param_values = (double**)calloc(n_elements, sizeof(double*));
+
+    if (!param->splines || !param->accels || !param->param_values) {
+        if (param->splines) free(param->splines);
+        if (param->accels) free(param->accels);
         if (param->param_values) free(param->param_values);
         return -1;
     }
 
+    // Allocate shared time knots (same for all elements)
+    param->time_knots = (double*)malloc(n_knots * sizeof(double));
+    if (!param->time_knots) {
+        free(param->splines);
+        free(param->accels);
+        free(param->param_values);
+        return -1;
+    }
     memcpy(param->time_knots, time_knots, n_knots * sizeof(double));
-    memcpy(param->param_values, values, n_knots * sizeof(double));
 
-    // Initialize GSL interpolation objects
-    param->spline = gsl_spline_alloc(interp_type, n_knots);
-    param->accel = gsl_interp_accel_alloc();
+    // Initialize interpolator for each element
+    for (int elem = 0; elem < n_elements; elem++) {
+        // Allocate values array for this element
+        param->param_values[elem] = (double*)malloc(n_knots * sizeof(double));
+        if (!param->param_values[elem]) {
+            // Cleanup on failure
+            for (int j = 0; j < elem; j++) {
+                if (param->param_values[j]) free(param->param_values[j]);
+                if (param->splines[j]) gsl_spline_free(param->splines[j]);
+                if (param->accels[j]) gsl_interp_accel_free(param->accels[j]);
+            }
+            free(param->time_knots);
+            free(param->splines);
+            free(param->accels);
+            free(param->param_values);
+            return -1;
+        }
 
-    if (!param->spline || !param->accel) {
-        if (param->spline) gsl_spline_free(param->spline);
-        if (param->accel) gsl_interp_accel_free(param->accel);
-        free(param->time_knots);
-        free(param->param_values);
-        return -1;
+        // Extract values for this element from row-major layout
+        for (int t = 0; t < n_knots; t++) {
+            param->param_values[elem][t] = values[t * n_elements + elem];
+        }
+
+        // Initialize GSL spline for this element
+        param->splines[elem] = gsl_spline_alloc(interp_type, n_knots);
+        param->accels[elem] = gsl_interp_accel_alloc();
+
+        if (!param->splines[elem] || !param->accels[elem]) {
+            // Cleanup on failure
+            if (param->splines[elem]) gsl_spline_free(param->splines[elem]);
+            if (param->accels[elem]) gsl_interp_accel_free(param->accels[elem]);
+            for (int j = 0; j <= elem; j++) {
+                if (param->param_values[j]) free(param->param_values[j]);
+                if (j < elem && param->splines[j]) gsl_spline_free(param->splines[j]);
+                if (j < elem && param->accels[j]) gsl_interp_accel_free(param->accels[j]);
+            }
+            free(param->time_knots);
+            free(param->splines);
+            free(param->accels);
+            free(param->param_values);
+            return -1;
+        }
+
+        int status = gsl_spline_init(param->splines[elem], param->time_knots,
+                                     param->param_values[elem], n_knots);
+        if (status != GSL_SUCCESS) {
+            // Cleanup on failure
+            gsl_spline_free(param->splines[elem]);
+            gsl_interp_accel_free(param->accels[elem]);
+            for (int j = 0; j <= elem; j++) {
+                if (param->param_values[j]) free(param->param_values[j]);
+                if (j < elem && param->splines[j]) gsl_spline_free(param->splines[j]);
+                if (j < elem && param->accels[j]) gsl_interp_accel_free(param->accels[j]);
+            }
+            free(param->time_knots);
+            free(param->splines);
+            free(param->accels);
+            free(param->param_values);
+            return -1;
+        }
     }
 
-    int status = gsl_spline_init(param->spline, param->time_knots, param->param_values, n_knots);
-    if (status != GSL_SUCCESS) {
-        gsl_spline_free(param->spline);
-        gsl_interp_accel_free(param->accel);
-        free(param->time_knots);
-        free(param->param_values);
-        return -1;
-    }
-
+    param->constant_values = NULL;  // Not used for time-varying
     return 0;
 }
 
-int time_interp_init_constant_param(TimeInterpParam *param, double constant_value) {
+int time_interp_init_constant_param(TimeInterpParam *param, double *constant_values, int n_elements) {
     /*
-    Initialize a constant parameter
+    Initialize a constant parameter with support for multi-element parameters
     */
-    if (!param) return -1;
+    if (!param || !constant_values || n_elements < 1) return -1;
 
     // Clear all fields first
     memset(param, 0, sizeof(TimeInterpParam));
 
-    // Set the constant flag and value
+    // Set the constant flag and store values
     param->is_constant = 1;
-    param->constant_value = constant_value;
+    param->n_elements = n_elements;
 
-    // Explicitly set pointers to NULL for safety
-    param->spline = NULL;
-    param->accel = NULL;
+    param->constant_values = (double*)malloc(n_elements * sizeof(double));
+    if (!param->constant_values) return -1;
+
+    memcpy(param->constant_values, constant_values, n_elements * sizeof(double));
+
+    // Explicitly set interpolation pointers to NULL for safety
+    param->splines = NULL;
+    param->accels = NULL;
     param->time_knots = NULL;
     param->param_values = NULL;
     param->n_knots = 0;
@@ -242,12 +377,12 @@ int time_interp_init_rotation(
         angle_vals[i] = angle;
     }
 
-    // Initialize interpolators for each component
+    // Initialize interpolators for each component (each is scalar, n_elements=1)
     int status = 0;
-    status |= time_interp_init_param(&rot->axis_x, time_knots, axis_x_vals, n_knots, interp_type);
-    status |= time_interp_init_param(&rot->axis_y, time_knots, axis_y_vals, n_knots, interp_type);
-    status |= time_interp_init_param(&rot->axis_z, time_knots, axis_z_vals, n_knots, interp_type);
-    status |= time_interp_init_param(&rot->angle, time_knots, angle_vals, n_knots, interp_type);
+    status |= time_interp_init_param(&rot->axis_x, time_knots, axis_x_vals, n_knots, 1, interp_type);
+    status |= time_interp_init_param(&rot->axis_y, time_knots, axis_y_vals, n_knots, 1, interp_type);
+    status |= time_interp_init_param(&rot->axis_z, time_knots, axis_z_vals, n_knots, 1, interp_type);
+    status |= time_interp_init_param(&rot->angle, time_knots, angle_vals, n_knots, 1, interp_type);
 
     free(axis_x_vals);
     free(axis_y_vals);
@@ -267,24 +402,41 @@ int time_interp_init_constant_rotation(TimeInterpRotation *rot, double *matrix) 
     return 0;
 }
 
-double time_interp_eval_param(const TimeInterpParam *param, double t) {
+void time_interp_eval_param(const TimeInterpParam *param, double t, double *output_values) {
     /*
-    Evaluate a parameter at time t
+    Evaluate a parameter at time t for all elements.
+
+    For constant parameters: copies constant_values to output_values
+    For interpolated parameters: evaluates each element's spline and writes to output_values
+
+    output_values must be pre-allocated with size n_elements
     */
-    if (!param) {
-        return NAN;
+    if (!param || !output_values) {
+        return;
     }
 
     if (param->is_constant) {
-        return param->constant_value;
+        // Copy constant values to output
+        if (!param->constant_values) {
+            // Safety check: if constant_values is NULL, fill with NAN
+            for (int i = 0; i < param->n_elements; i++) {
+                output_values[i] = NAN;
+            }
+            return;
+        }
+        memcpy(output_values, param->constant_values, param->n_elements * sizeof(double));
+        return;
     }
 
-    // Add safety check for NULL spline before calling GSL
-    if (!param->spline || !param->accel) {
-        return NAN;
+    // Interpolate each element
+    for (int elem = 0; elem < param->n_elements; elem++) {
+        // Add safety check for NULL spline before calling GSL
+        if (!param->splines[elem] || !param->accels[elem]) {
+            output_values[elem] = NAN;
+        } else {
+            output_values[elem] = gsl_spline_eval(param->splines[elem], t, param->accels[elem]);
+        }
     }
-
-    return gsl_spline_eval(param->spline, t, param->accel);
 }
 
 void time_interp_eval_rotation(const TimeInterpRotation *rot, double t, double *matrix) {
@@ -299,12 +451,15 @@ void time_interp_eval_rotation(const TimeInterpRotation *rot, double t, double *
     }
 
     double axis[3];
-    axis[0] = time_interp_eval_param(&rot->axis_x, t);
-    axis[1] = time_interp_eval_param(&rot->axis_y, t);
-    axis[2] = time_interp_eval_param(&rot->axis_z, t);
-    double angle = time_interp_eval_param(&rot->angle, t);
+    double angle_val;
 
-    axis_angle_to_rotation_matrix(axis, angle, matrix);
+    // Each rotation component is scalar (n_elements=1)
+    time_interp_eval_param(&rot->axis_x, t, &axis[0]);
+    time_interp_eval_param(&rot->axis_y, t, &axis[1]);
+    time_interp_eval_param(&rot->axis_z, t, &axis[2]);
+    time_interp_eval_param(&rot->angle, t, &angle_val);
+
+    axis_angle_to_rotation_matrix(axis, angle_val, matrix);
 }
 
 /*

@@ -15,7 +15,10 @@ import pytest
 from gala._cconfig import GSL_ENABLED
 from scipy.spatial.transform import Rotation as R
 
+import gala.dynamics as gd
+import gala.integrate as gi
 import gala.potential as gp
+from gala.potential.potential.builtin.time_interpolated import _unsupported_cls
 from gala.units import galactic
 
 # global pytest marker to skip tests if EXP is not enabled
@@ -345,3 +348,151 @@ def test_mismatched_parameter_length():
             c=10.0 * u.kpc,
             units=galactic,
         )
+
+
+def test_scf_interpolated():
+    """
+    This is a specialized test for SCFPotential to make sure that everything works ok
+    with the array parameters.
+    """
+
+    t_knots = np.linspace(0, 4, 32) * u.Gyr
+
+    Sjnlm = np.zeros((len(t_knots), 3, 3, 3))
+    Sjnlm[:, 0, 0, 0] = np.linspace(1.0, 4.0, len(t_knots))
+    Tjnlm = np.zeros_like(Sjnlm)
+
+    comx = np.zeros((len(t_knots), 3))
+    comx[:, 0] = np.linspace(0, 2, len(t_knots)) * u.kpc
+
+    # Moving potential and growing mass
+    pot_interp = gp.TimeInterpolatedPotential(
+        gp.SCFPotential,
+        t_knots,
+        m=1e10,
+        r_s=1.0,
+        Snlm=Sjnlm,
+        Tnlm=Tjnlm,
+        origin=comx,
+        units=galactic,
+    )
+
+    x0 = [1.0, 0, 0.0] * u.kpc
+    w0 = gd.PhaseSpacePosition(
+        pos=x0, vel=[0, 0, 1] * pot_interp.circular_velocity(x0)[0]
+    )
+
+    orbit = pot_interp.integrate_orbit(
+        w0, dt=0.1 * u.Myr, t1=0 * u.Gyr, t2=4 * u.Gyr, Integrator=gi.DOPRI853Integrator
+    )
+
+    assert u.isclose(np.mean(orbit.x[:1000]), 0 * u.kpc, atol=0.1 * u.kpc)
+    assert u.isclose(np.mean(orbit.x[-1000:]), 2 * u.kpc, atol=0.1 * u.kpc)
+
+    assert u.isclose(np.ptp(orbit.z[:1000]), 2 * u.kpc, atol=0.1 * u.kpc)
+    assert u.isclose(np.ptp(orbit.z[-1000:]), 1 * u.kpc, atol=0.1 * u.kpc)
+
+
+@pytest.mark.xfail(
+    reason="SphericalSplinePotential does not work with time interpolated wrapper"
+)
+def test_spherical_spline_time_interpolated():
+    """
+    This is a specialized test for SphericalSplinePotential to make sure that everything
+    works ok with the array parameters.
+    """
+
+    t_knots = np.linspace(0, 4, 32) * u.Gyr
+
+    r_knots = np.geomspace(1e-1, 1e2, 128) * u.kpc
+    values = np.zeros((len(t_knots), len(r_knots)))
+    for i, t in enumerate(t_knots):
+        tmp = gp.HernquistPotential(
+            m=1e10 * (1 + t.to_value(u.Gyr)) * u.Msun, c=10 * u.kpc, units=galactic
+        )
+        values[i, :] = tmp.energy(r=r_knots).value
+
+    pot_interp = gp.TimeInterpolatedPotential(
+        gp.SphericalSplinePotential,
+        t_knots,
+        r_knots=r_knots,
+        spline_values=values,
+        spline_value_type="potential",
+        units=galactic,
+    )
+
+    x0 = [1.0, 0, 0.0] * u.kpc
+    w0 = gd.PhaseSpacePosition(
+        pos=x0, vel=[0, 0, 1] * pot_interp.circular_velocity(x0)[0]
+    )
+    E1 = pot_interp.energy(x0, t=0 * u.Gyr)
+    E2 = pot_interp.energy(x0, t=2.5 * u.Gyr)
+    assert E2 < E1  # potential is getting deeper
+
+    orbit = pot_interp.integrate_orbit(
+        w0, dt=0.1 * u.Myr, t1=0 * u.Gyr, t2=4 * u.Gyr, Integrator=gi.DOPRI853Integrator
+    )
+
+
+# Check that all potential classes work with TimeInterpolatedPotential
+@pytest.mark.parametrize(
+    "pot_cls_name",
+    [
+        p
+        for p in [*gp.potential.builtin.core.__all__, "SCFPotential"]
+        if p not in _unsupported_cls and p != "TimeInterpolatedPotential"
+    ],
+)
+def test_all_builtin_potentials_time_interpolated(pot_cls_name):
+    pot_cls = getattr(gp, pot_cls_name)
+    param_names = list(pot_cls._parameters.keys())
+
+    knots = np.linspace(0, 100, 32) * u.Myr
+    if param_names[0] == "m":
+        params_const = {param_names[0]: 1e10}
+    else:
+        params_const = {param_names[0]: 1.0}
+
+    params_time = {
+        param_names[0]: params_const[param_names[0]] * np.linspace(1.0, 4, len(knots))
+    }
+
+    for param_name in param_names[1:]:
+        params_time[param_name] = params_const[param_name] = 1.0
+
+    # Special case a few potentials:
+    if pot_cls_name == "SCFPotential":
+        Sjnlm = np.zeros((len(knots), 4, 4, 4))
+        Sjnlm[:, 0, 0, 0] = np.linspace(1.0, 2.0, len(knots))
+        Tjnlm = np.zeros_like(Sjnlm)
+        params_time["Snlm"] = Sjnlm
+        params_time["Tnlm"] = Tjnlm
+        params_const["Snlm"] = Sjnlm[0]
+        params_const["Tnlm"] = Tjnlm[0]
+
+    elif pot_cls_name == "MN3ExponentialDiskPotential":
+        params_const["h_R"] = params_time["h_R"] = 5.0
+        params_const["h_z"] = params_time["h_z"] = 0.5
+
+    elif pot_cls_name == "StonePotential":
+        params_const["r_c"] = params_time["r_c"] = 1.0
+        params_const["r_h"] = params_time["r_h"] = 10.0
+
+    pot_const = pot_cls(**params_const, units=galactic)
+    pot_time = gp.TimeInterpolatedPotential(
+        potential_cls=pot_cls,
+        time_knots=knots,
+        **params_time,
+        units=galactic,
+    )
+
+    x = np.array([1.0, 0.0, 0.0]) * u.kpc
+    assert u.allclose(pot_const.energy(x, t=0 * u.Myr), pot_time.energy(x, t=0 * u.Myr))
+    assert not u.allclose(
+        pot_const.energy(x, t=0 * u.Myr), pot_time.energy(x, t=50 * u.Myr)
+    )
+
+
+# TODO: functional tests
+# - Orbit integration with a rotating bar
+# - ...
