@@ -64,24 +64,32 @@ class MockStream(PhaseSpacePosition):
             aligned along the positive x-axis. The release times and lead/trail flags
             are preserved from the original stream.
         """
-        R1 = Rotation.from_euler("z", -prog_w.spherical.lon.to_value(u.rad)[0])
-        R2 = Rotation.from_euler("y", prog_w.spherical.lat.to_value(u.rad)[0])
+        lon = np.squeeze(prog_w.spherical.lon.to_value(u.rad))
+        lat = np.squeeze(prog_w.spherical.lat.to_value(u.rad))
+        if lon.ndim != 0 or lat.ndim != 0:
+            raise ValueError(
+                "prog_w must be a single phase-space position, not an array of "
+                "positions"
+            )
+
+        R1 = Rotation.from_euler("z", -lon)
+        R2 = Rotation.from_euler("y", lat)
         Rtmp = R2.as_matrix() @ R1.as_matrix()
 
-        vtmp = Rtmp @ prog_w.v_xyz[:, 0]
+        vtmp = Rtmp @ np.squeeze(prog_w.v_xyz)
         R3 = Rotation.from_euler("x", -np.arctan2(vtmp[2], vtmp[1]).value)
         R4 = Rotation.from_euler("z", -np.pi / 2)
         R = R4.as_matrix() @ R3.as_matrix() @ Rtmp
 
         prog_rot = PhaseSpacePosition(prog_w.data.transform(R))
         R_final = Rotation.from_euler(
-            "z", -np.arctan2(prog_rot.v_y[0], prog_rot.v_x[0])
+            "z", -np.arctan2(prog_rot.v_y, prog_rot.v_x)
         ).as_matrix()
 
         tmp = PhaseSpacePosition(self.data.transform(R))
 
         return MockStream(
-            pos=R_final @ (tmp.xyz - prog_rot.xyz),
+            pos=R_final @ (tmp.xyz - prog_rot.xyz[:, None]),
             vel=R_final @ tmp.v_xyz,
             release_time=self.release_time,
             lead_trail=self.lead_trail,
