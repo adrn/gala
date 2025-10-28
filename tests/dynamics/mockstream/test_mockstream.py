@@ -9,6 +9,7 @@ import pytest
 import gala.integrate as gi
 from gala._optional_deps import HAS_H5PY
 from gala.dynamics import ChenStreamDF, FardalStreamDF, Orbit, PhaseSpacePosition
+from gala.dynamics.mockstream import MockStream
 from gala.dynamics.mockstream.mockstream_generator import MockStreamGenerator
 from gala.dynamics.nbody import DirectNBody
 from gala.potential import (
@@ -526,3 +527,126 @@ def test_integrator_comparison_with_nbody(
             assert np.isfinite(
                 stream_orbits[:, 0].xyz
             ).all()  # First particle should always be finite
+
+
+def test_rotate_to_xy_plane_unit():
+    """Unit test for rotate_to_xy_plane with manually constructed data.
+
+    This test verifies that the rotation correctly places the progenitor at
+    the origin with velocity along the x-axis, and the stream is in the xy-plane.
+    """
+    prog_pos = [10.0, 5.0, 3.0] * u.kpc
+    prog_vel = [50.0, 100.0, 25.0] * u.km / u.s
+    prog_w = PhaseSpacePosition(pos=prog_pos, vel=prog_vel)
+
+    # a fake "stream" with particles around the progenitor
+    stream_pos = (
+        prog_pos[:, None]
+        + np.array(
+            [
+                [1.0, 0.0, 0.0],  # Leading particle along x
+                [-1.0, 0.0, 0.0],  # Trailing particle along x
+                [0.0, 1.0, 0.0],  # Particle along y
+                [0.0, 0.0, 1.0],  # Particle along z
+            ]
+        ).T
+        * u.kpc
+    )
+
+    stream_vel = (
+        prog_vel[:, None]
+        + np.array(
+            [
+                [10.0, 0.0, 0.0],
+                [-10.0, 0.0, 0.0],
+                [0.0, 10.0, 0.0],
+                [0.0, 0.0, 10.0],
+            ]
+        ).T
+        * u.km
+        / u.s
+    )
+
+    stream = MockStream(
+        pos=stream_pos,
+        vel=stream_vel,
+        release_time=[0.0, 1.0, 2.0, 3.0] * u.Myr,
+        lead_trail=np.array([1, -1, 1, -1]),
+    )
+
+    # Rotate to xy-plane
+    rotated_stream = stream.rotate_to_xy_plane(prog_w)
+
+    # the transformation should preserve distances from progenitor
+    # (rotation is a rigid transformation)
+    original_distances = np.sqrt(np.sum((stream.xyz - prog_pos[:, None]) ** 2, axis=0))
+    rotated_distances = np.sqrt(np.sum(rotated_stream.xyz**2, axis=0))
+    assert u.allclose(original_distances, rotated_distances, rtol=1e-10)
+
+    # release times and lead_trail should be preserved
+    assert u.allclose(rotated_stream.release_time, stream.release_time)
+    assert np.array_equal(rotated_stream.lead_trail, stream.lead_trail)
+
+    # the stream should be centered near the origin (progenitor was translated)
+    mean_pos = np.mean(rotated_stream.xyz, axis=1)
+    assert np.allclose(mean_pos.value, 0.0, atol=1.0)  # Within 1 kpc of origin
+
+    # shape should be preserved
+    assert rotated_stream.shape == stream.shape
+
+
+def test_rotate_to_xy_plane_functional(
+    rng, basic_hamiltonian, progenitor_w0, progenitor_mass
+):
+    """Functional test for rotate_to_xy_plane with a real generated stream.
+
+    This test generates a full mock stream and verifies that the rotation works
+    correctly with realistic data.
+    """
+    # Generate a mock stream
+    df = FardalStreamDF(gala_modified=True, random_state=rng)
+    prog_pot = HernquistPotential(progenitor_mass, 4 * u.pc, units=galactic)
+
+    gen = MockStreamGenerator(
+        df=df, hamiltonian=basic_hamiltonian, progenitor_potential=prog_pot
+    )
+
+    # Generate stream with both leading and trailing tails
+    stream, prog = gen.run(
+        progenitor_w0,
+        progenitor_mass,
+        dt=-1.0,
+        n_steps=100,
+        n_particles=2,
+    )
+
+    # Get the progenitor position at the final time (same as stream)
+    # Need to extract as a PhaseSpacePosition, not an Orbit slice
+    prog_final = PhaseSpacePosition(pos=prog.xyz[:, -1], vel=prog.v_xyz[:, -1])
+
+    # Rotate to xy-plane
+    rotated_stream = stream.rotate_to_xy_plane(prog_final)
+
+    # Verify key properties:
+    # 1. Original attributes should be preserved
+    assert u.allclose(rotated_stream.release_time, stream.release_time)
+    assert np.array_equal(rotated_stream.lead_trail, stream.lead_trail)
+    assert rotated_stream.shape == stream.shape
+
+    # 2. Verify the transformation preserves distances from progenitor
+    # (rotation + translation)
+    original_distances = np.sqrt(
+        np.sum((stream.xyz - prog_final.xyz[:, None]) ** 2, axis=0)
+    )
+    rotated_distances = np.sqrt(np.sum(rotated_stream.xyz**2, axis=0))
+    assert u.allclose(original_distances, rotated_distances, rtol=1e-10)
+
+    # 3. The stream should have particles in both +x and -x directions (lead/trail)
+
+    # More than half of leading particles should have positive x
+    n_pos_x = np.sum(rotated_stream.x[stream.lead_trail == "l"] > 0)
+    assert n_pos_x > 0.5 * np.sum(stream.lead_trail == "l")
+
+    # More than half of trailing particles should have negative x
+    n_neg_x = np.sum(rotated_stream.x[stream.lead_trail == "t"] < 0)
+    assert n_neg_x > 0.5 * np.sum(stream.lead_trail == "t")
