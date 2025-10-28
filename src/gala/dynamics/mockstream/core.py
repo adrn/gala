@@ -41,8 +41,8 @@ class MockStream(PhaseSpacePosition):
 
         self.lead_trail = lead_trail
 
-    def rotate_to_xy_plane(self, prog_w):
-        """Rotate the mock stream coordinate system to align with the x-y plane
+    def rotate_to_progenitor_plane(self, prog_w):
+        """Rotate the mock stream to align with the progenitor's orbital plane
 
         This method transforms the mock stream into a new coordinate system where the
         progenitor's orbital plane is aligned with the xy-plane, the stream and

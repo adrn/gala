@@ -529,8 +529,8 @@ def test_integrator_comparison_with_nbody(
             ).all()  # First particle should always be finite
 
 
-def test_rotate_to_xy_plane_unit():
-    """Unit test for rotate_to_xy_plane with manually constructed data.
+def test_rotate_to_progenitor_plane_unit():
+    """Unit test for rotate_to_progenitor_plane with manually constructed data.
 
     This test verifies that the rotation correctly places the progenitor at
     the origin with velocity along the x-axis, and the stream is in the xy-plane.
@@ -575,7 +575,7 @@ def test_rotate_to_xy_plane_unit():
     )
 
     # Rotate to xy-plane
-    rotated_stream = stream.rotate_to_xy_plane(prog_w)
+    rotated_stream = stream.rotate_to_progenitor_plane(prog_w)
 
     # the transformation should preserve distances from progenitor
     # (rotation is a rigid transformation)
@@ -595,10 +595,10 @@ def test_rotate_to_xy_plane_unit():
     assert rotated_stream.shape == stream.shape
 
 
-def test_rotate_to_xy_plane_functional(
+def test_rotate_to_progenitor_plane_functional(
     rng, basic_hamiltonian, progenitor_w0, progenitor_mass
 ):
-    """Functional test for rotate_to_xy_plane with a real generated stream.
+    """Functional test for rotate_to_progenitor_plane with a real generated stream.
 
     This test generates a full mock stream and verifies that the rotation works
     correctly with realistic data.
@@ -625,7 +625,7 @@ def test_rotate_to_xy_plane_functional(
     prog_final = PhaseSpacePosition(pos=prog.xyz[:, -1], vel=prog.v_xyz[:, -1])
 
     # Rotate to xy-plane
-    rotated_stream = stream.rotate_to_xy_plane(prog_final)
+    rotated_stream = stream.rotate_to_progenitor_plane(prog_final)
 
     # Verify key properties:
     # 1. Original attributes should be preserved
