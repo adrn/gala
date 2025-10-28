@@ -117,7 +117,7 @@ double time_interp_value(double t, double *pars, double *q, int n_dim, void *sta
     }
 
     // Transform position using existing apply_shift_rotate function
-    double *q_transformed = (double*)malloc(n_dim * sizeof(double));
+    double *q_transformed = (double*)calloc(n_dim, sizeof(double));
     if (!q_transformed) {
         free(interp_params);
         free(interp_origin);
@@ -166,8 +166,8 @@ void time_interp_gradient(double t, double *pars, double *q, int n_dim, size_t N
     }
 
     // Allocate temporary arrays for transformed coordinates
-    double *q_transformed = (double*)malloc(N * n_dim * sizeof(double));
-    double *grad_transformed = (double*)malloc(N * n_dim * sizeof(double));
+    double *q_transformed = (double*)calloc(N * n_dim, sizeof(double));
+    double *grad_transformed = (double*)calloc(N * n_dim, sizeof(double));
     if (!q_transformed || !grad_transformed) {
         free(interp_params);
         free(interp_origin);
@@ -177,8 +177,6 @@ void time_interp_gradient(double t, double *pars, double *q, int n_dim, size_t N
         for (size_t i = 0; i < N * n_dim; i++) grad[i] = NAN;
         return;
     }
-    memset(q_transformed, 0, N * n_dim * sizeof(double));
-    memset(grad_transformed, 0, N * n_dim * sizeof(double));
 
     // Transform positions for all orbits using existing apply_shift_rotate_N function
     apply_shift_rotate_N(q, interp_origin, interp_rotation, n_dim, N, 0, q_transformed);
@@ -232,7 +230,7 @@ double time_interp_density(double t, double *pars, double *q, int n_dim, void *s
     }
 
     // Transform position using existing apply_shift_rotate function
-    double *q_transformed = (double*)malloc(n_dim * sizeof(double));
+    double *q_transformed = (double*)calloc(n_dim, sizeof(double));
     if (!q_transformed) {
         free(interp_params);
         free(interp_origin);
@@ -279,7 +277,7 @@ void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *h
     }
 
     // Transform position using existing apply_shift_rotate function
-    double *q_transformed = (double*)malloc(n_dim * sizeof(double));
+    double *q_transformed = (double*)calloc(n_dim, sizeof(double));
     if (!q_transformed) {
         free(interp_params);
         free(interp_origin);
@@ -290,7 +288,7 @@ void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *h
     apply_shift_rotate(q, interp_origin, interp_rotation, n_dim, 0, q_transformed);
 
     // Evaluate wrapped potential Hessian in transformed coordinates
-    double *hess_transformed = (double*)malloc(n_dim * n_dim * sizeof(double));
+    double *hess_transformed = (double*)calloc(n_dim * n_dim, sizeof(double));
     if (!hess_transformed) {
         free(interp_params);
         free(interp_origin);
