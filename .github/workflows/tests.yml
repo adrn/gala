@@ -208,7 +208,7 @@ jobs:
 
           # Add the pyEXP dir as a pyEXP.pth file in Python site-packages:
           SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])")
-          echo "$GALA_EXP_PREFIX/lib/" > "${SITE_PACKAGES}/pyEXP.pth"
+          echo "$GALA_EXP_PREFIX/lib/python${PYTHON_VERSION}/site-packages/" > "${SITE_PACKAGES}/pyEXP.pth"
 
       - name: Install package and dependencies
         run: |
