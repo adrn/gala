@@ -187,9 +187,11 @@ jobs:
             so_ext="so"
           fi
           PYTHON_LIBRARY=${PYTHON_LIBRARY_PATH}/libpython${PYTHON_VERSION}.${so_ext}
+          GALA_EXP_PREFIX=/opt/EXP/
+          echo "GALA_EXP_PREFIX=${GALA_EXP_PREFIX}" >> $GITHUB_ENV
 
           cmake -G Ninja -B build \
-            --install-prefix $PWD/install \
+            --install-prefix $GALA_EXP_PREFIX \
             -DENABLE_PYEXP_ONLY=on \
             -DPYTHON_EXECUTABLE=${PYTHON_EXEC} \
             -DPYTHON_LIBRARY=${PYTHON_LIBRARY} \
@@ -206,9 +208,6 @@ jobs:
 
       - name: Install package and dependencies
         run: |
-          if [[ "${{ matrix.gala-exp }}" == "1" ]]; then
-            export GALA_EXP_PREFIX=$PWD/EXP
-          fi
           uv pip install --system -ve .[${{ matrix.python-extras }}]
         env:
           GALA_NOGSL: ${{ matrix.gala-nogsl }}
