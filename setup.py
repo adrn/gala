@@ -542,7 +542,7 @@ for ext in extensions:
                 )
                 ext.library_dirs.append(exp_lib_path)
                 ext.runtime_library_dirs.append(exp_lib_path)
-                ext.include_dirs.extend(os.path.join(exp_prefix, "include"))
+                ext.include_dirs.append(os.path.join(exp_prefix, "include"))
         else:
             # Skip cyexp extension if EXP is not found
             continue
