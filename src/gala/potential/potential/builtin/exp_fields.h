@@ -4,8 +4,8 @@
 #include <filesystem>
 #include <stdexcept>
 
-#include <Coefficients.H>
-#include <BiorthBasis.H>
+#include <EXP/Coefficients.H>
+#include <EXP/BiorthBasis.H>
 
 namespace gala_exp {
 

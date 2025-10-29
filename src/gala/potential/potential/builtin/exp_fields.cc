@@ -10,9 +10,9 @@
 namespace fs = std::filesystem;
 
 // EXP headers
-#include <Coefficients.H>
-#include <BiorthBasis.H>
-#include <FieldGenerator.H>
+#include <EXP/Coefficients.H>
+#include <EXP/BiorthBasis.H>
+#include <EXP/FieldGenerator.H>
 
 #include "exp_fields.h"
 #include "src/vectorization.h"
