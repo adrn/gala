@@ -39,7 +39,8 @@ jobs:
       !contains(github.event.pull_request.labels.*.name, 'docs only') &&
       !contains(needs.check_skip_flags.outputs.head-commit-message, '[skip tests]') }}
     env:
-      EXP_REF: ${{ github.event_name == 'schedule' && 'devel' || 'v7.8.5' }}
+      # Run tests against a tagged EXP version, unless this is the devel branch or a PR into devel, in which case test against EXP devel
+      EXP_REF: ${{ (github.ref == 'refs/heads/devel' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'devel')) && 'devel' || 'v7.8.5' }}
       MACOSX_DEPLOYMENT_TARGET: "15.0"
     strategy:
       fail-fast: true
