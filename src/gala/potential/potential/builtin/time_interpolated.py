@@ -399,6 +399,6 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
     def __repr__(self):
         return (
             f"<{self.__class__.__name__}: "
-            f"{self._potential_cls.__name__} "
-            f"interpolation_method='{self._interpolation_method}')>"
+            f"{self.parameters['potential_cls'].__name__} "
+            f"interpolation_method='{self.parameters['interpolation_method']}')>"
         )
