@@ -1,3 +1,11 @@
+devel
+=====
+
+Build changes
+-------------
+- EXP: the instructions to build Gala against EXP have changed. Only the EXP install
+  dir is now used.
+
 1.11.0 (unreleased)
 ===================
 
