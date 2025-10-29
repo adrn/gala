@@ -13,7 +13,7 @@ simulation snapshots. This requires:
 #. and setting up a `~gala.potential.potential.EXPPotential` object using the user's EXP config and
    coefficient files.
 
-Note that EXP support currently requires building Gala (and EXP) from source.
+Note that EXP support currently requires building Gala from source.
 Additionally, this workflow has only been tested on Linux and MacOS with the setups seen
 in the `GitHub actions test config file
 <https://github.com/adrn/gala/blob/main/.github/workflows/tests.yml>`_.
@@ -23,10 +23,9 @@ Building EXP
 ------------
 
 The `EXP documentation <https://exp-docs.readthedocs.io/en/latest/intro/install.html>`_
-is the authoritative source on how to build EXP. Currently, the only Gala-specific
-addition to the instructions is that Gala expects the ``build`` directory to be present
-in the EXP root directory.  The ``install`` directory will be looked for in the EXP root
-directory too, or one can set ``GALA_EXP_LIB_PATH`` (see below).
+is the best place to read about how to build EXP. Gala doesn't have any special
+requirements for the EXP build, except that the user must actually "install" EXP,
+rather than just build it. This is demonstrated below.
 
 To install EXP's dependencies, here is one recipe that we have found to work on Ubuntu 24.04::
 
@@ -36,7 +35,7 @@ To install EXP's dependencies, here is one recipe that we have found to work on 
 
 Here is another recipe using modules that has been found to work on Flatiron Institute's rusty cluster::
 
-    module load modules/2.3 cmake gcc openmpi hdf5 libtirpc eigen fftw git python
+    module load modules/2.4 cmake gcc openmpi hdf5 libtirpc eigen fftw git python uv
 
 EXP also builds on Mac by installing the dependencies with Homebrew::
 
@@ -46,9 +45,12 @@ After installing the dependencies, one can download and build EXP on Linux with:
 
     git clone --recursive https://github.com/EXP-code/EXP.git
     cd EXP
-    cmake -G Ninja -B build -DCMAKE_INSTALL_RPATH=$PWD/install/lib --install-prefix $PWD/install
+    cmake -G Ninja -B build -DCMAKE_INSTALL_RPATH="$PWD/install/lib" --install-prefix $PWD/install
     cmake --build build
     cmake --install build
+
+In this case, we installed EXP to the ``EXP/install/`` directory, but this can be any
+directory. This will become the ``GALA_EXP_PREFIX`` directory in the next step.
 
 For a full example of how to build EXP on Mac, see `this build recipe
 <https://gist.github.com/adrn/afd9222416e359fcef826b7988b7d69f>`_.
@@ -60,24 +62,17 @@ present.
 Building Gala with EXP support
 ------------------------------
 
-Building Gala with the ``GALA_EXP_PREFIX`` environment variable set to the EXP root dir
+Building Gala with the ``GALA_EXP_PREFIX`` environment variable set to the EXP install dir
 will trigger compilation of the Gala's EXP Cython extensions. For example::
 
     git clone https://github.com/adrn/gala.git
     cd gala
-    export GALA_EXP_PREFIX=/path/to/EXP
+    export GALA_EXP_PREFIX=/path/to/EXP/install/
 
-If you build and install EXP following the instructions above, the EXP libraries will be
-located in ``EXP/install/lib`` and the Gala build process knows to look there by default. If
-you installed EXP to a different location, you can set the ``GALA_EXP_LIB_PATH``
-environment variable to point to the lib directory of the EXP install::
-
-    # Only do this if the install location is not $GALA_EXP_PREFIX/install
-    # export GALA_EXP_LIB_PATH=/path/to/EXP-install/lib
-
-That is, ``GALA_EXP_LIB_PATH`` can be set if the CMake ``--install-prefix`` was set to a
-location other than ``GALA_EXP_PREFIX/install``. ``GALA_EXP_LIB_PATH`` should be the
-directory that contains the ``.so`` or ``.dylib`` files.
+If you build and install EXP following the instructions above, the EXP installation will be
+located in ``EXP/install/``. If you installed EXP to a different location, you can set the
+``GALA_EXP_PREFIX`` to that location. In either case, ``GALA_EXP_PREFIX`` must be the directory
+that contains the subdirectories ``lib`` and ``include``.
 
 Now you can run the Gala build. For example, using uv::
 
@@ -90,8 +85,14 @@ Or using venv::
     . .venv/bin/activate
     python -m pip install -ve .
 
-In either case, the pip output should show a message like ``Gala: installing with EXP
-support``.
+In either case, the output should show a message like ``Gala: installing with EXP support``.
+
+Note that in previous versions of Gala, the ``GALA_EXP_PREFIX`` was supposed to point to the
+EXP repo root, rather than the EXP installation directory. This is no longer the case. The
+EXP repo and build directories are not needed to build Gala with EXP support.
+
+Likewise, ``GALA_EXP_LIB_PATH`` was used in past Gala versions but not anymore.
+
 
 ----------------------------------
 Running Gala with an EXP potential
