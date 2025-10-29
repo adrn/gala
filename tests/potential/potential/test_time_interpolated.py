@@ -505,18 +505,15 @@ def test_integration_outside_interpolation_range():
         units=galactic,
     )
 
-    w0 = gd.PhaseSpacePosition(
-        pos = [8, 0, 0] * u.kpc,
-        vel = [0, 100, 0] * u.km/u.s
-    )
+    w0 = gd.PhaseSpacePosition(pos=[8, 0, 0] * u.kpc, vel=[0, 100, 0] * u.km / u.s)
 
     # Single-element array should raise ValueError (ambiguous: constant or interpolated?)
     with pytest.raises(ValueError, match="Integration times must be within the range"):
         pot.integrate_orbit(
             w0,
             t1=0 * u.Myr,
-            t2=200 * u.Myr,         # max time is beyond max time knots time (100 Myr)
-            dt=1 * u.Myr
+            t2=200 * u.Myr,  # max time is beyond max time knots time (100 Myr)
+            dt=1 * u.Myr,
         )
 
 

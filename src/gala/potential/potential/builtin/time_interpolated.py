@@ -9,10 +9,10 @@ import copy
 
 import numpy as np
 
+from ....integrate.timespec import parse_time_specification
 from ...common import PotentialParameter
 from ..cpotential import CPotentialBase
 from .cytimeinterp import TimeInterpolatedWrapper
-from ....integrate.timespec import parse_time_specification
 
 __all__ = ["TimeInterpolatedPotential"]
 
@@ -347,8 +347,15 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
             **new_kwargs,
         )
 
-    def integrate_orbit(self, w0, Integrator=None, Integrator_kwargs={},
-                        cython_if_possible=True, save_all=True, **time_spec):
+    def integrate_orbit(
+        self,
+        w0,
+        Integrator=None,
+        Integrator_kwargs=None,
+        cython_if_possible=True,
+        save_all=True,
+        **time_spec,
+    ):
         """
         Integrate an orbit in the current potential using the integrator class
         provided. Uses same time specification as `Integrator()` -- see
@@ -379,6 +386,8 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
         -------
         orbit : `~gala.dynamics.Orbit`
         """
+        if Integrator_kwargs is None:
+            Integrator_kwargs = {}
         t = parse_time_specification(self.units, **time_spec)
 
         # ensure timesteps are within the range of time_knots
@@ -391,10 +400,14 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
                 f"your orbit integration range is [{min(t)}, {max(t)}] {self.units['time']}"
             )
 
-        return super().integrate_orbit(w0, Integrator=Integrator,
-                                       Integrator_kwargs=Integrator_kwargs,
-                                       cython_if_possible=cython_if_possible,
-                                       save_all=save_all, t=t)
+        return super().integrate_orbit(
+            w0,
+            Integrator=Integrator,
+            Integrator_kwargs=Integrator_kwargs,
+            cython_if_possible=cython_if_possible,
+            save_all=save_all,
+            t=t,
+        )
 
     def __repr__(self):
         return (
