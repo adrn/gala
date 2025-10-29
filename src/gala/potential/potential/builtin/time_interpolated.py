@@ -12,6 +12,7 @@ import numpy as np
 from ...common import PotentialParameter
 from ..cpotential import CPotentialBase
 from .cytimeinterp import TimeInterpolatedWrapper
+from ....integrate.timespec import parse_time_specification
 
 __all__ = ["TimeInterpolatedPotential"]
 
@@ -345,6 +346,55 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
             R=self._rotation_matrices,
             **new_kwargs,
         )
+
+    def integrate_orbit(self, w0, Integrator=None, Integrator_kwargs={},
+                        cython_if_possible=True, save_all=True, **time_spec):
+        """
+        Integrate an orbit in the current potential using the integrator class
+        provided. Uses same time specification as `Integrator()` -- see
+        the documentation for `gala.integrate` for more information.
+
+        Parameters
+        ----------
+        w0 : `~gala.dynamics.PhaseSpacePosition`, array_like
+            Initial conditions.
+        Integrator : `~gala.integrate.Integrator` (optional)
+            Integrator class to use.
+        Integrator_kwargs : dict (optional)
+            Any extra keyword arguments to pass to the integrator class
+            when initializing. Only works in non-Cython mode.
+        cython_if_possible : bool (optional)
+            If there is a Cython version of the integrator implemented,
+            and the potential object has a C instance, using Cython
+            will be *much* faster.
+        save_all : bool (optional)
+            Controls whether to store the phase-space position at all intermediate
+            timesteps. Set to False to store only the final values (i.e. the
+            phase-space position(s) at the final timestep). Default is True.
+        **time_spec
+            Specification of how long to integrate. See documentation
+            for `~gala.integrate.parse_time_specification`.
+
+        Returns
+        -------
+        orbit : `~gala.dynamics.Orbit`
+        """
+        t = parse_time_specification(self.units, **time_spec)
+
+        # ensure timesteps are within the range of time_knots
+        knot_times = self.parameters["time_knots"].decompose(self.units).value
+        t_min, t_max = knot_times.min(), knot_times.max()
+        if np.any(t < t_min) or np.any(t > t_max):
+            raise ValueError(
+                "Integration times must be within the range of the Potential's interpolation range "
+                f"that you defined: [{t_min}, {t_max}] {self.units['time']}, "
+                f"your orbit integration range is [{min(t)}, {max(t)}] {self.units['time']}"
+            )
+
+        return super().integrate_orbit(w0, Integrator=Integrator,
+                                       Integrator_kwargs=Integrator_kwargs,
+                                       cython_if_possible=cython_if_possible,
+                                       save_all=save_all, t=t)
 
     def __repr__(self):
         return (
