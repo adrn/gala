@@ -493,6 +493,30 @@ def test_all_builtin_potentials_time_interpolated(pot_cls_name):
     )
 
 
+def test_integration_outside_interpolation_range():
+    """Test that attempting to integrate an orbit outside of the interpolation fails"""
+    time_knots = np.linspace(0, 100, 11) * u.Myr
+
+    pot = gp.TimeInterpolatedPotential(
+        potential_cls=gp.HernquistPotential,
+        time_knots=time_knots,
+        m=np.linspace(1e11, 1e12, len(time_knots)),
+        c=10.0 * u.kpc,
+        units=galactic,
+    )
+
+    w0 = gd.PhaseSpacePosition(pos=[8, 0, 0] * u.kpc, vel=[0, 100, 0] * u.km / u.s)
+
+    # Single-element array should raise ValueError (ambiguous: constant or interpolated?)
+    with pytest.raises(ValueError, match="Integration times must be within the range"):
+        pot.integrate_orbit(
+            w0,
+            t1=0 * u.Myr,
+            t2=200 * u.Myr,  # max time is beyond max time knots time (100 Myr)
+            dt=1 * u.Myr,
+        )
+
+
 # TODO: functional tests
 # - Orbit integration with a rotating bar
 # - ...
