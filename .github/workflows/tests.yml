@@ -197,6 +197,7 @@ jobs:
           cmake -G Ninja -B build \
             --install-prefix $GALA_EXP_PREFIX \
             -DENABLE_PYEXP_ONLY=on \
+            -DCMAKE_INSTALL_RPATH=${GALA_EXP_PREFIX}/lib \
             -DPYTHON_EXECUTABLE=${PYTHON_EXEC} \
             -DPYTHON_LIBRARY=${PYTHON_LIBRARY} \
             -DCMAKE_CXX_FLAGS="${CXXFLAGS} -flto=auto" \
