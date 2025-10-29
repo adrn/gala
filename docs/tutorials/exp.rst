@@ -45,7 +45,7 @@ After installing the dependencies, one can download and build EXP on Linux with:
 
     git clone --recursive https://github.com/EXP-code/EXP.git
     cd EXP
-    cmake -G Ninja -B build --install-prefix $PWD/install
+    cmake -G Ninja -B build -DCMAKE_INSTALL_RPATH="$PWD/install/lib" --install-prefix $PWD/install
     cmake --build build
     cmake --install build
 
