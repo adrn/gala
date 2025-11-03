@@ -1,5 +1,6 @@
 import astropy.units as u
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 from ...io import quantity_from_hdf5, quantity_to_hdf5
 from .. import PhaseSpacePosition
@@ -40,12 +41,70 @@ class MockStream(PhaseSpacePosition):
 
         self.lead_trail = lead_trail
 
+    def rotate_to_progenitor_plane(self, prog_w):
+        """Rotate the mock stream to align with the progenitor's orbital plane
+
+        This method transforms the mock stream into a new coordinate system where the
+        progenitor's orbital plane is aligned with the xy-plane, the stream and
+        progenitor are centered at (0, 0), and the stream primarily extends in the x
+        direction (leading tail at positive x and trailing tail at negative x). This is
+        useful for visualizing streams in their natural orbital plane.
+
+        Parameters
+        ----------
+        prog_w : `~gala.dynamics.PhaseSpacePosition`
+            The phase-space position of the progenitor at the same time as the stream.
+            This defines the center and orientation of the rotated coordinate system.
+
+        Returns
+        -------
+        rotated_stream : `~gala.dynamics.MockStream`
+            A new MockStream instance with positions and velocities transformed to the
+            rotated coordinate system. The progenitor is at the origin with velocity
+            aligned along the positive x-axis. The release times and lead/trail flags
+            are preserved from the original stream.
+        """
+        if prog_w.shape == ():
+            pass  # scalar, good
+        elif prog_w.shape == (1,):
+            prog_w = prog_w[0]
+        else:
+            raise ValueError(
+                "prog_w must be a single phase-space position, not an array of "
+                "positions"
+            )
+
+        lon = prog_w.spherical.lon.to_value(u.rad)
+        lat = prog_w.spherical.lat.to_value(u.rad)
+
+        R1 = Rotation.from_euler("z", -lon)
+        R2 = Rotation.from_euler("y", lat)
+        Rtmp = R2.as_matrix() @ R1.as_matrix()
+
+        vtmp = Rtmp @ prog_w.v_xyz
+        R3 = Rotation.from_euler("x", -np.arctan2(vtmp[2], vtmp[1]).value)
+        R4 = Rotation.from_euler("z", -np.pi / 2)
+        R = R4.as_matrix() @ R3.as_matrix() @ Rtmp
+
+        prog_rot = PhaseSpacePosition(prog_w.data.transform(R))
+        R_final = Rotation.from_euler(
+            "z", -np.arctan2(prog_rot.v_y, prog_rot.v_x)
+        ).as_matrix()
+
+        tmp = PhaseSpacePosition(self.data.transform(R))
+
+        return MockStream(
+            pos=R_final @ (tmp.xyz - prog_rot.xyz[:, None]),
+            vel=R_final @ tmp.v_xyz,
+            release_time=self.release_time,
+            lead_trail=self.lead_trail,
+        )
+
     # ------------------------------------------------------------------------
     # Input / output
     #
     def to_hdf5(self, f):
-        """
-        Serialize this object to an HDF5 file.
+        """Serialize this object to an HDF5 file.
 
         Requires ``h5py``.
 
@@ -71,8 +130,7 @@ class MockStream(PhaseSpacePosition):
 
     @classmethod
     def from_hdf5(cls, f):
-        """
-        Load an object from an HDF5 file.
+        """Load an object from an HDF5 file.
 
         Requires ``h5py``.
 

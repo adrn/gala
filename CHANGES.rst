@@ -25,6 +25,11 @@ New Features
 - Integrators can now be specified using lowercase string names (e.g., 'leapfrog',
   'dopri853', 'ruth4') in ``Hamiltonian.integrate_orbit()``,
   ``DirectNBody.integrate_orbit()``, and ``MockStreamGenerator.run()``.
+- Added a new method ``MockStream.rotate_to_progenitor_plane()`` that transforms a mock
+  stream into a new coordinate system where the progenitor's orbital plane is aligned
+  with the xy-plane, the stream and progenitor are centered at (0, 0), and the stream
+  primarily extends in the x direction (leading tail at positive x and trailing tail at
+  negative x).
 
 Bug fixes
 ---------
