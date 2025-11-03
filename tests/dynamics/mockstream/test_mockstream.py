@@ -255,11 +255,12 @@ def test_nbody_hdf5_broadcast_bug(
         assert np.isfinite(nbody_orbits.v_xyz).all()
 
 
+# TODO: add LeapfrogIntegrator if animation support added
 @pytest.mark.parametrize(
     ("dt", "nsteps", "output_every", "release_every", "n_particles", "trail"),
     list(itertools.product([1, -1], [16, 17], [1, 2], [1, 4], [1, 4], [True, False])),
 )
-@pytest.mark.parametrize("Integrator", [gi.LeapfrogIntegrator, gi.DOPRI853Integrator])
+@pytest.mark.parametrize("Integrator", [gi.DOPRI853Integrator])
 @pytest.mark.skipif(not HAS_H5PY, reason="h5py required for this test")
 def test_animate(
     tmpdir,
@@ -497,7 +498,9 @@ def test_integrator_comparison_with_nbody(
         ],
     )
 
-    for Integrator in [gi.DOPRI853Integrator, gi.LeapfrogIntegrator]:
+    for Integrator in [
+        gi.DOPRI853Integrator
+    ]:  # TODO: add LeapfrogIntegrator if animation support added
         filename = os.path.join(str(tmpdir), f"nbody_{Integrator.__name__}.hdf5")
 
         stream, prog = gen.run(
