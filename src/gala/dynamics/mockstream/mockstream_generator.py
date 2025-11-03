@@ -318,7 +318,8 @@ class MockStreamGenerator:
             if output_every is None:
                 raw_nbody, raw_stream = mockstream_leapfrog(
                     nbody0,
-                    orbit_t[nstream_idx],
+                    orbit_t,  # Pass full time array for N-body integration
+                    orbit_t[nstream_idx],  # Spawn times only
                     w0,
                     unq_t1s,
                     orbit_t[-1],
