@@ -253,6 +253,21 @@ mixing static and time-evolving potentials.  The potentials will be combined at 
 as a :class:`~gala.potential.potential.CCompositePotential` when possible.
 See :ref:`_compositepotential` for more info.
 
+--------------------------
+Performance Considerations
+--------------------------
+
+Within a timestep, the EXP force evaluation is parallelized with OpenMP threads across
+orbits. With enough orbits (perhaps 1000 or more), you can expect to see a performance
+benefit from using multiple threads. The number of OpenMP threads can be controlled
+with standard OpenMP mechanisms, such as setting the ``OMP_NUM_THREADS`` environment
+variable.
+
+Note that :class:`~gala.integrate.DOPRI853Integrator` batches the orbits into small
+sets for performance, so EXP only sees the batch size at any given time and may not be
+able to parallelize this well. One can use the ``nbatch`` integrator kwarg to tune the
+batch size.
+
 -----------
 Limitations
 -----------
@@ -260,7 +275,6 @@ The `~gala.potential.potential.EXPPotential` currently has the following limitat
 
 * Hessian evaluation is not supported.
 * Pickling, saving, and loading is not supported.
-* Performance may currently not be as high as native Gala potentials
 
 .. TODO (adrn): any other notable limitations?
 
