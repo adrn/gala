@@ -532,6 +532,9 @@ for ext in extensions:
             if extra_incl_flags is not None:
                 ext.extra_compile_args.extend(extra_incl_flags)
 
+            ext.extra_compile_args.extend(["-fopenmp"])
+            ext.extra_link_args.extend(["-fopenmp"])
+
             if "exp" not in ext.libraries:
                 ext.libraries.extend(
                     (
