@@ -9,7 +9,7 @@ from ._mockstream import (
     mockstream_dop853,
     mockstream_dop853_animate,
     mockstream_leapfrog,
-    mockstream_leapfrog_animate,
+    # mockstream_leapfrog_animate,
 )
 from .core import MockStream
 
@@ -331,18 +331,20 @@ class MockStreamGenerator:
                         "If output_every is specified, you must also pass in a filename to "
                         "store the snapshots in"
                     )
-
-                raw_nbody, raw_stream = mockstream_leapfrog_animate(
-                    nbody0,
-                    orbit_t,
-                    w0,
-                    all_nstream.astype("i4"),
-                    output_every=output_every,
-                    output_filename=output_filename,
-                    check_filesize=check_filesize,
-                    overwrite=overwrite,
-                    progress=int(progress),
+                raise NotImplementedError(
+                    "Animation output for LeapfrogIntegrator is not implemented"
                 )
+                # raw_nbody, raw_stream = mockstream_leapfrog_animate(
+                #     nbody0,
+                #     orbit_t,
+                #     w0,
+                #     all_nstream.astype("i4"),
+                #     output_every=output_every,
+                #     output_filename=output_filename,
+                #     check_filesize=check_filesize,
+                #     overwrite=overwrite,
+                #     progress=int(progress),
+                # )
         else:
             raise ValueError(
                 "Currently, only the DOPRI853Integrator and LeapfrogIntegrator "
