@@ -1,6 +1,10 @@
 devel
 =====
 
+Enhancements
+------------
+- EXP: force evaluation with ``gala.potential.EXPPotential`` should now be much faster.
+
 Build changes
 -------------
 - EXP: the instructions to build Gala against EXP have changed. Only the EXP install
