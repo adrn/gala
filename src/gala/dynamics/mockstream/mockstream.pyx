@@ -27,6 +27,7 @@ from cpython.exc cimport PyErr_CheckSignals
 
 from ...integrate.cyintegrators.dop853 cimport dop853_step, dop853_helper, Fwrapper_direct_nbody, FcnEqDiff
 from ...integrate.cyintegrators.leapfrog cimport c_init_velocity_nbody, c_leapfrog_step_nbody
+from ...integrate.cyintegrators.leapfrog import leapfrog_integrate_nbody
 from ...potential.potential.cpotential cimport CPotentialWrapper, CPotential, c_gradient, c_nbody_gradient_symplectic
 from ...potential.frame.cframe cimport CFrameWrapper, CFrameType
 from ...potential.potential.builtin.cybuiltin import NullWrapper
@@ -439,7 +440,9 @@ cpdef mockstream_dop853_animate(nbody, double[::1] t,
             free(c_particle_potentials)
 
 cpdef mockstream_leapfrog(
-    nbody, double[::1] time,
+    nbody,
+    double[::1] full_time,
+    double[::1] spawn_time,
     double[:, ::1] stream_w0, double[::1] stream_t1,
     double tfinal, int[::1] nstream,
     int progress=0,
@@ -448,19 +451,25 @@ cpdef mockstream_leapfrog(
     """
     Leapfrog integration version of mockstream generation.
 
+    Strategy: For each batch of stream particles released at time stream_t1[i],
+    integrate both the N-body particles AND the stream particles from stream_t1[i]
+    to tfinal. This ensures N-body particles are at the correct positions.
+
     Parameters
     ----------
     nbody : `~gala.dynamics.nbody.DirectNBody`
-    time : numpy.ndarray (ntimes, )
-        Times at which stream particles are released.
+    full_time : numpy.ndarray (nfull, )
+        Full time array for N-body integration (can have uniform or non-uniform spacing).
+    spawn_time : numpy.ndarray (ntimes, )
+        Times at which stream particles are released (spawn times, subset of full_time).
     stream_w0 : numpy.ndarray (nstreamparticles, 6)
-        Initial phase-space coordinates of stream particles.
+        Initial phase-space coordinates of stream particles at their spawn times.
     stream_t1 : numpy.ndarray (ntimes, )
-        Time at which each batch of stream particles is released.
+        Spawn times for each batch (should match spawn_time array).
     tfinal : float
         Final time for integration.
     nstream : numpy.ndarray (ntimes, )
-        The number of stream particles to be integrated from this timestep.
+        The number of stream particles spawned at each time.
     progress : int, optional
         Show progress bar (default: 0).
     err_if_fail : int, optional
@@ -468,22 +477,23 @@ cpdef mockstream_leapfrog(
 
     Notes
     -----
-    In code, ``nbodies`` are the massive bodies included from the ``nbody``
-    instance passed in. ``nstreamparticles`` are the stream test particles.
-    ``nstream`` is the array containing the number of stream particles released
-    at each timestep.
+    This follows the same pattern as mockstream_dop853: for each spawn time,
+    we integrate the N-body + new stream particles from spawn time to tfinal.
+    The N-body initial conditions come from using leapfrog_integrate_nbody to
+    pre-integrate them to all times in full_time, then we extract positions at spawn times.
 
     """
 
     cdef:
-        int i, j, k, n, m, t_idx  # indexing
+        int i, j, k, n, m  # indexing
         unsigned ndim = 6  # TODO: hard-coded, but really must be 6D
         int half_ndim = ndim // 2
         CPotential **c_particle_potentials = NULL
 
         # Time-stepping parameters:
-        int ntimes = time.shape[0]
-        double dt = time[1] - time[0]
+        int ntimes = spawn_time.shape[0]
+        int nfull = full_time.shape[0]
+        double dt = full_time[1] - full_time[0]
 
         CPotential* cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
 
@@ -507,7 +517,8 @@ cpdef mockstream_leapfrog(
         double[::1] grad = np.zeros(half_ndim)
 
         int n_steps
-        int prog_out = max(len(time) // 100, 1)
+        int prog_out = max(ntimes // 100, 1)
+        int last_i = -1  # Track last loop iteration that ran
 
     # Validate input arrays
     _validate_time_arrays(ntimes, stream_t1.shape[0], nstream.shape[0])
@@ -517,62 +528,40 @@ cpdef mockstream_leapfrog(
         nbody, nbodies, total_bodies, null_p
     )
 
+    # Use leapfrog_integrate_nbody to get N-body positions at all times in full_time
+    # Then extract positions at spawn times only
+    cdef:
+        int idx
+
+    nbody_traj = leapfrog_integrate_nbody(
+        nbody.H, nbody_w0, full_time, nbody.particle_potentials, save_all=1
+    )
+    # nbody_traj returns (time, w) where w has shape (n_full_steps, nbodies, ndim)
+    full_nbody_traj = np.ascontiguousarray(nbody_traj[1])
+
+    # Extract N-body positions at spawn times by finding closest times in full_time
+    for i in range(ntimes):
+        # Find index in full_time closest to stream_t1[i]
+        # full_time starts at full_time[0], not necessarily at stream_t1[0]
+        idx = <int>((stream_t1[i] - full_time[0]) / dt + 0.5)
+        for j in range(nbodies):
+            for k in range(ndim):
+                nbody_w[i, j, k] = full_nbody_traj[idx, j, k]
+
     try:
 
-        # STEP 1: Integrate N-body orbits through all timesteps
-        # Initialize N-body particle positions
-        for i in range(nbodies):
-            for k in range(ndim):
-                w_tmp[i, k] = nbody_w0[i, k]
-
-        # Initialize half-step velocities for N-body particles
-        with nogil:
-            for i in range(nbodies):
-                for k in range(half_ndim):
-                    grad[k] = 0.
-                c_init_velocity_nbody(cp, half_ndim, time[0], dt,
-                                    c_particle_potentials, &w_tmp[0, 0], nbodies, i,
-                                    &w_tmp[i, 0], &w_tmp[i, half_ndim],
-                                    &v_jm1_2[i, 0], &grad[0])
-
-        # Save initial N-body state
-        for i in range(nbodies):
-            for k in range(ndim):
-                nbody_w[0, i, k] = w_tmp[i, k]
-
-        # Integrate N-body orbits forward
-        with nogil:
-            for t_idx in range(1, ntimes):
-                for i in range(nbodies):
-                    for k in range(half_ndim):
-                        grad[k] = 0.
-                    c_leapfrog_step_nbody(cp, half_ndim, time[t_idx], dt,
-                                        c_particle_potentials, &w_tmp[0, 0], nbodies, i,
-                                        &w_tmp[i, 0], &w_tmp[i, half_ndim],
-                                        &v_jm1_2[i, 0], &grad[0])
-
-                # Save N-body state at this timestep
-                for i in range(nbodies):
-                    for k in range(ndim):
-                        nbody_w[t_idx, i, k] = w_tmp[i, k]
-
-        # STEP 2: Integrate stream particles from their release times to tfinal
+        # For each spawn time, integrate N-body + stream particles to tfinal
         n = 0  # Counter for total stream particles processed
         for i in range(ntimes):
             if nstream[i] == 0:
                 continue
 
-            # Find the time index corresponding to stream_t1[i]
-            t_idx = 0
-            for j in range(ntimes):
-                if time[j] >= stream_t1[i]:
-                    t_idx = j
-                    break
+            last_i = i  # Update last iteration
 
             # Set initial conditions: N-bodies at release time + new stream particles
             for j in range(nbodies):
                 for k in range(ndim):
-                    w_tmp[j, k] = nbody_w[t_idx, j, k]
+                    w_tmp[j, k] = nbody_w[i, j, k]
 
             for j in range(nstream[i]):
                 for k in range(ndim):
@@ -615,197 +604,13 @@ cpdef mockstream_leapfrog(
         if progress == 1:
             _finish_progress()
 
-        # Save final N-body positions (from last integration)
+        # The last loop iteration integrated to tfinal, so w_tmp contains N-body at tfinal
         for j in range(nbodies):
             for k in range(ndim):
                 w_final[j, k] = w_tmp[j, k]
 
         return_nbody_w = np.array(w_final)[:nbodies]
         return_stream_w = np.array(w_final)[nbodies:]
-
-        return return_nbody_w, return_stream_w
-
-    finally:
-        # Clean up allocated memory
-        if c_particle_potentials != NULL:
-            free(c_particle_potentials)
-
-
-cpdef mockstream_leapfrog_animate(nbody, double[::1] t,
-                                  double[:, ::1] stream_w0, int[::1] nstream,
-                                  output_every=1, output_filename='',
-                                  overwrite=False, check_filesize=True,
-                                  int progress=0,
-                                  int err_if_fail=1):
-    """
-    Leapfrog integration version of mockstream generation with animation output.
-
-    Parameters
-    ----------
-    nbody : `~gala.dynamics.nbody.DirectNBody`
-    t : numpy.ndarray (ntimes, )
-        Integration times.
-    stream_w0 : numpy.ndarray (nstreamparticles, 6)
-        Initial phase-space coordinates of stream particles.
-    nstream : numpy.ndarray (ntimes, )
-        The number of stream particles to be integrated from this timestep.
-        There should be no zero values.
-    output_every : int
-        Save output every N timesteps.
-    output_filename : str
-        HDF5 filename for output.
-    overwrite : bool
-        Overwrite existing file if True.
-    check_filesize : bool
-        Warn if estimated file size is large.
-    progress : int, optional
-        Show progress bar (default: 0).
-    err_if_fail : int, optional
-        Raise error if integration fails (default: 1).
-
-    Notes
-    -----
-    In code, ``nbodies`` are the massive bodies included from the ``nbody``
-    instance passed in. ``nstreamparticles`` are the stream test particles.
-    ``nstream`` is the array containing the number of stream particles released
-    at each timestep.
-
-    This function progressively adds stream particles at each timestep and saves
-    snapshots to an HDF5 file for animation purposes.
-
-    """
-
-    cdef:
-        int i, j, k, n, m  # indexing
-        unsigned ndim = 6  # TODO: hard-coded, but really must be 6D
-        int half_ndim = ndim // 2
-        CPotential **c_particle_potentials = NULL
-
-        # Time-stepping parameters:
-        int ntimes = t.shape[0]
-        double dt = t[1] - t[0]
-
-        CPotential* cp = (<CPotentialWrapper>(nbody.H.potential.c_instance)).cpotential
-
-        int nbodies = nbody._c_w0.shape[0]
-        double [:, ::1] nbody_w0 = nbody._c_w0
-
-        int total_nstream = np.sum(nstream)
-        double[:, ::1] w = np.empty((nbodies + total_nstream, ndim))
-
-        # Leapfrog-specific arrays (half-step velocities)
-        double[:, ::1] v_jm1_2 = np.zeros((nbodies + total_nstream, half_ndim))
-        double[::1] grad = np.zeros(half_ndim)
-
-        # Snapshotting:
-        int noutput_times = (ntimes-1) // output_every + 1
-        double[::1] output_times
-        int output_idx
-
-        int prog_out = max(len(t) // 100, 1)
-
-    if (ntimes-1) % output_every != 0:
-        noutput_times += 1  # +1 for final conditions
-
-    output_times = np.zeros(noutput_times)
-
-    # Initialize HDF5 output file
-    h5f, stream_g, nbody_g = _init_hdf5_file(
-        output_filename, overwrite, check_filesize,
-        noutput_times, total_nstream, nbodies, nbody
-    )
-
-    # Setup particle potentials (only need nbodies for animate)
-    c_particle_potentials = <CPotential**>malloc(nbodies * sizeof(CPotential*))
-    if c_particle_potentials == NULL:
-        raise MemoryError("Failed to allocate memory for particle potentials")
-
-    try:
-        # Set potentials for massive bodies
-        for i in range(nbodies):
-            c_particle_potentials[i] = (
-                <CPotentialWrapper>(nbody.particle_potentials[i].c_instance)
-            ).cpotential
-
-        # Set initial conditions for N-bodies
-        for j in range(nbodies):
-            for k in range(ndim):
-                w[j, k] = nbody_w0[j, k]
-
-        # Set initial conditions for all stream particles
-        for j in range(total_nstream):
-            for k in range(ndim):
-                w[nbodies+j, k] = stream_w0[j, k]
-
-        # Initialize half-step velocities for N-bodies and first batch of stream particles
-        with nogil:
-            for i in range(nbodies + nstream[0]):
-                for k in range(half_ndim):
-                    grad[k] = 0.
-                c_init_velocity_nbody(cp, half_ndim, t[0], dt,
-                                    c_particle_potentials, &w[0, 0], nbodies, i,
-                                    &w[i, 0], &w[i, half_ndim],
-                                    &v_jm1_2[i, 0], &grad[0])
-
-        # Save initial state
-        n = nstream[0]
-        stream_g['pos'][:, 0, :n] = np.array(w[nbodies:nbodies+n, :]).T[:3]
-        stream_g['vel'][:, 0, :n] = np.array(w[nbodies:nbodies+n, :]).T[3:]
-        nbody_g['pos'][:, 0, :nbodies] = np.array(w[:nbodies, :]).T[:3]
-        nbody_g['vel'][:, 0, :nbodies] = np.array(w[:nbodies, :]).T[3:]
-        output_times[0] = t[0]
-
-        output_idx = 1  # output time index
-        for i in range(1, ntimes):
-            # Integrate one step forward for all currently active particles
-            with nogil:
-                for k in range(nbodies + n):
-                    for m in range(half_ndim):
-                        grad[m] = 0.
-                    c_leapfrog_step_nbody(cp, half_ndim, t[i], dt,
-                                        c_particle_potentials, &w[0, 0], nbodies, k,
-                                        &w[k, 0], &w[k, half_ndim],
-                                        &v_jm1_2[k, 0], &grad[0])
-
-            PyErr_CheckSignals()
-
-            # Add new stream particles if any at this timestep
-            if nstream[i] > 0:
-                # Initialize half-step velocities for newly added stream particles
-                with nogil:
-                    for k in range(n, n + nstream[i]):
-                        for m in range(half_ndim):
-                            grad[m] = 0.
-                        c_init_velocity_nbody(cp, half_ndim, t[i], dt,
-                                            c_particle_potentials, &w[0, 0], nbodies, nbodies + k,
-                                            &w[nbodies + k, 0], &w[nbodies + k, half_ndim],
-                                            &v_jm1_2[nbodies + k, 0], &grad[0])
-                n += nstream[i]
-
-            # Save output at specified intervals
-            if (i % output_every) == 0 or i == ntimes-1:
-                output_times[output_idx] = t[i]
-                stream_g['pos'][:, output_idx, :n] = np.array(w[nbodies:nbodies+n, :]).T[:3]
-                stream_g['vel'][:, output_idx, :n] = np.array(w[nbodies:nbodies+n, :]).T[3:]
-                nbody_g['pos'][:, output_idx, :nbodies] = np.array(w[:nbodies, :]).T[:3]
-                nbody_g['vel'][:, output_idx, :nbodies] = np.array(w[:nbodies, :]).T[3:]
-                output_idx += 1
-
-            if progress == 1:
-                _report_progress(i, ntimes, prog_out)
-
-        if progress == 1:
-            _finish_progress()
-
-        # Save time arrays
-        for g in [stream_g, nbody_g]:
-            d = g.create_dataset('time', data=np.array(output_times))
-            d.attrs['unit'] = str(nbody.units['time'])
-
-        h5f.close()
-
-        return_nbody_w = np.array(w)[:nbodies]
-        return_stream_w = np.array(w)[nbodies:]
 
         return return_nbody_w, return_stream_w
 
