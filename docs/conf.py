@@ -292,6 +292,7 @@ tutorial_files = [
     "tutorials/spherical-spline-tutorial.py",
     "tutorials/Arbitrary-density-SCF.ipynb",
     "tutorials/exp.rst",
+    "tutorials/stream-mass-loss.py",
     # Supporting documents:
     "supporting/define-milky-way-model.ipynb",
 ]
