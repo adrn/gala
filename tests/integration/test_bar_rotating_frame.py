@@ -9,10 +9,16 @@ the rotating frame.
 import astropy.units as u
 import numpy as np
 import pytest
+from gala._cconfig import GSL_ENABLED
 from scipy.spatial.transform import Rotation
 
 import gala.dynamics as gd
 import gala.potential as gp
+
+pytestmark = pytest.mark.skipif(
+    not GSL_ENABLED,
+    reason="requires Gala compiled with GSL support",
+)
 
 
 class TestBarRotatingFrameIntegration:
