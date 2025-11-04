@@ -282,6 +282,7 @@ if not zenodo_path.exists():
 
 ## -- Check for executed tutorials and only add to toctree if they exist:
 
+# Note: for jupytext tutorials (the .py files), put the expected (generated) .ipynb name
 tutorial_files = [
     "tutorials/Milky-Way-model.ipynb",
     "tutorials/integrate-potential-example.rst",
@@ -289,11 +290,11 @@ tutorial_files = [
     "tutorials/integrate-barred-potential.ipynb",
     "tutorials/mock-stream-heliocentric.rst",
     "tutorials/circ-restricted-3body.rst",
-    "tutorials/spherical-spline-tutorial.py",
+    "tutorials/spherical-spline-tutorial.ipynb",
     "tutorials/Arbitrary-density-SCF.ipynb",
     "tutorials/exp.rst",
-    "tutorials/stream-mass-loss.py",
-    "tutorials/time-evolving-potential.py",
+    "tutorials/stream-mass-loss.ipynb",
+    "tutorials/time-evolving-potential.ipynb",
     # Supporting documents:
     "supporting/define-milky-way-model.ipynb",
 ]
