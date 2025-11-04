@@ -293,6 +293,7 @@ tutorial_files = [
     "tutorials/Arbitrary-density-SCF.ipynb",
     "tutorials/exp.rst",
     "tutorials/stream-mass-loss.py",
+    "tutorials/time-evolving-potential.py",
     # Supporting documents:
     "supporting/define-milky-way-model.ipynb",
 ]
