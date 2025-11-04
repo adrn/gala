@@ -286,12 +286,14 @@ tutorial_files = [
     "tutorials/Milky-Way-model.ipynb",
     "tutorials/integrate-potential-example.rst",
     "tutorials/pyia-gala-orbit.ipynb",
-    "tutorials/integrate-rotating-frame.rst",
+    "tutorials/integrate-barred-potential.ipynb",
     "tutorials/mock-stream-heliocentric.rst",
     "tutorials/circ-restricted-3body.rst",
     "tutorials/spherical-spline-tutorial.py",
     "tutorials/Arbitrary-density-SCF.ipynb",
     "tutorials/exp.rst",
+    "tutorials/stream-mass-loss.py",
+    "tutorials/time-evolving-potential.py",
     # Supporting documents:
     "supporting/define-milky-way-model.ipynb",
 ]
