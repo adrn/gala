@@ -79,6 +79,7 @@ jobs:
         run: |
           sudo apt-get install -y libeigen3-dev libfftw3-dev libopenmpi-dev libomp-dev libhdf5-dev
 
+      # TODO: this is copied from tests.yml - can we include the job from there?
       - name: Build EXP
         working-directory: EXP
         run: |
