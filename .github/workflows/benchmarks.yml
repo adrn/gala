@@ -133,5 +133,5 @@ jobs:
         uses: CodSpeedHQ/action@v4
         with:
           mode: instrumentation
-          run: uv run pytest tests/benchmarks -n auto --codspeed
+          run: uv run pytest tests/benchmarks -n auto --codspeed --durations=0 -v
           token: ${{ secrets.CODSPEED_TOKEN }}
