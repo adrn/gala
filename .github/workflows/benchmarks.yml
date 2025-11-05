@@ -127,6 +127,9 @@ jobs:
       - name: Install package and dependencies
         run: uv pip install --system -ve .[test]
 
-      - name: Run benchmark tests
-        run: |
-            uv run pytest tests/benchmarks -n auto --codspeed
+      - name: Run the benchmarks
+        uses: CodSpeedHQ/action@v4
+        with:
+          mode: instrumentation
+          run: uv run pytest tests/benchmarks -n auto --codspeed
+          token: ${{ secrets.CODSPEED_TOKEN }}
