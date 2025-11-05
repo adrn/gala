@@ -125,7 +125,9 @@ jobs:
           echo "$PWD/install/lib/" > "${SITE_PACKAGES}/pyEXP.pth"
 
       - name: Install package and dependencies
-        run: uv pip install --system -ve .[test]
+        run: |
+          export GALA_EXP_PREFIX=$PWD/EXP
+          uv pip install --system -ve .[test]
 
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@v4
