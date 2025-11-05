@@ -17,7 +17,7 @@ potentials_test_path = (this_path / "../potential/potential").resolve()
 sys.path.append(str(potentials_test_path))
 
 
-@pytest.mark.parametrize("n_points", [1, 100, 10_000, 1_000_000])
+@pytest.mark.parametrize("n_points", [1, 10, 1_000, 100_000])
 class BenchmarkPotentialBase:
     @pytest.fixture(scope="class")
     def rng(self):
