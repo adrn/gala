@@ -97,6 +97,7 @@ jobs:
           PYTHON_LIBRARY=${PYTHON_LIBRARY_PATH}/libpython${PYTHON_VERSION}.${so_ext}
 
           cmake -G Ninja -B build \
+            -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_RPATH=$PWD/install/lib \
             --install-prefix $PWD/install \
             -DENABLE_PYEXP=on \
@@ -125,6 +126,8 @@ jobs:
           echo "$PWD/install/lib/" > "${SITE_PACKAGES}/pyEXP.pth"
 
       - name: Install package and dependencies
+        env:
+          OMP_NUM_THREADS: 1
         run: |
           export GALA_EXP_PREFIX=$PWD/EXP
           uv pip install --system -ve .[test]
