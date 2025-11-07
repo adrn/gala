@@ -34,13 +34,16 @@ jobs:
             echo "should-run=false" >> "$GITHUB_OUTPUT"
           fi
 
-  notebooks:
+  benchmarks:
     name: "Run the benchmarks"
     runs-on: ubuntu-latest
     needs: check_should_run
     if:
       ${{ needs.check_should_run.outputs.should-run == 'true' &&
       github.event.pull_request.draft == false }}
+    env:
+      # Run tests against a tagged EXP version, unless this is the devel branch or a PR into devel, in which case test against EXP devel
+      EXP_REF: ${{ (github.ref == 'refs/heads/devel' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'devel')) && 'devel' || 'v7.8.5' }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -71,6 +74,7 @@ jobs:
         with:
           repository: EXP-code/EXP
           submodules: recursive
+          ref: ${{ env.EXP_REF }}
           path: EXP
           # TODO: this always clones main, which is the latest release. Do we want to
           # also add a benchmark against devel?
