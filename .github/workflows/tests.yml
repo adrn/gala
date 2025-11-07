@@ -130,7 +130,6 @@ jobs:
       - name: Setup Mac - GSL
         if: startsWith(matrix.os, 'mac')
         run: |
-          brew doctor
           brew update
           brew install gsl
 
