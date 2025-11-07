@@ -36,7 +36,7 @@ jobs:
     needs: check_skip_flags
     if:
       ${{ github.event.pull_request.draft == false &&
-      !contains(github.event.pull_request.labels.*.name, 'docs only') &&
+      !contains(github.event.pull_request.labels.*.name, 'skip tests') &&
       !contains(needs.check_skip_flags.outputs.head-commit-message, '[skip tests]') }}
     env:
       EXP_REF: ${{ github.event_name == 'schedule' && 'devel' || 'v7.8.5' }}

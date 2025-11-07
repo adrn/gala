@@ -102,7 +102,8 @@ class CommonBase:
         if not hasattr(cls, "_extra_serialize_args"):
             cls._extra_serialize_args = []
 
-    def _validate_units(self, units):
+    @classmethod
+    def _validate_units(cls, units):
         # make sure the units specified are a UnitSystem instance
         if units is None:
             units = DimensionlessUnitSystem()

@@ -1,0 +1,144 @@
+name: Benchmarks
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+      - devel
+
+jobs:
+  check_should_run:
+    name: Check if benchmarks should run
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.check.outputs.should-run }}
+    steps:
+      - name: Check conditions
+        id: check
+        run: |
+          # Always run on push to main
+          if [ "${{ github.event_name }}" == "push" ]; then
+            echo "should-run=true" >> "$GITHUB_OUTPUT"
+
+          # For pull requests, only run if the PR has the "benchmark" label
+          elif [ "${{ github.event_name }}" == "pull_request" ]; then
+            if [ "${{ contains(github.event.pull_request.labels.*.name, 'benchmark') }}" == "true" ]; then
+              echo "should-run=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "should-run=false" >> "$GITHUB_OUTPUT"
+              echo "Skipping because PR does not have 'benchmark' label"
+            fi
+          else
+            echo "should-run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  benchmarks:
+    name: "Run the benchmarks"
+    runs-on: ubuntu-latest
+    needs: check_should_run
+    if:
+      ${{ needs.check_should_run.outputs.should-run == 'true' &&
+      github.event.pull_request.draft == false }}
+    env:
+      # Run tests against a tagged EXP version, unless this is the devel branch or a PR into devel, in which case test against EXP devel
+      EXP_REF: ${{ (github.ref == 'refs/heads/devel' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'devel')) && 'devel' || 'v7.8.5' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+
+      - name: Setup Linux GSL
+        run: |
+          sudo apt-get update
+          sudo apt-get install gsl-bin libgsl0-dev build-essential
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.0"
+
+      - name: Install GSL
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install gsl-bin libgsl0-dev build-essential
+
+      - name: Clone EXP
+        uses: actions/checkout@v5
+        with:
+          repository: EXP-code/EXP
+          submodules: recursive
+          ref: ${{ env.EXP_REF }}
+          path: EXP
+          # TODO: this always clones main, which is the latest release. Do we want to
+          # also add a benchmark against devel?
+
+      - name: Install EXP dependencies
+        run: |
+          sudo apt-get install -y libeigen3-dev libfftw3-dev libopenmpi-dev libomp-dev libhdf5-dev
+
+      # TODO: this is copied from tests.yml - can we include the job from there?
+      - name: Build EXP
+        working-directory: EXP
+        run: |
+          # Get Python version info
+          PYTHON_VERSION=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+          PYTHON_EXEC=$(which python)
+          PYTHON_LIBRARY_PATH=$(python -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
+
+          # Set Python library path based on OS
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            so_ext="dylib"
+          else
+            so_ext="so"
+          fi
+          PYTHON_LIBRARY=${PYTHON_LIBRARY_PATH}/libpython${PYTHON_VERSION}.${so_ext}
+
+          cmake -G Ninja -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_RPATH=$PWD/install/lib \
+            --install-prefix $PWD/install \
+            -DENABLE_PYEXP=on \
+            -DPYTHON_EXECUTABLE=${PYTHON_EXEC} \
+            -DPYTHON_LIBRARY=${PYTHON_LIBRARY} \
+            -DCMAKE_CXX_FLAGS="${CXXFLAGS} -flto=auto" \
+            -DCMAKE_EXE_LINKER_FLAGS="${LDFLAGS}" \
+            -DCMAKE_SHARED_LINKER_FLAGS="${LDFLAGS}"
+
+          # Build EXP
+          # We are avoiding doing a CMake install as a hack to speed up the build
+          cmake --build build -v -t libexpui.${so_ext} libexputil.${so_ext} libyaml-cpp.${so_ext} pyEXP
+
+          # The EXP CMake install doesn't offer a way to install just the shared libraries, so
+          # we are manually copying them to the install dir here.
+          # Users should do a proper "cmake --install" instead!
+          mkdir -p install/lib
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            cp -P $(find build -name "*.so*" -o -name "*.dylib*") install/lib/
+          else
+            cp -P $(find build -name "*.so*") install/lib/
+          fi
+
+          # Add the pyEXP dir as a pyEXP.pth file in Python site-packages:
+          SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])")
+          echo "$PWD/install/lib/" > "${SITE_PACKAGES}/pyEXP.pth"
+
+      - name: Install package and dependencies
+        env:
+          OMP_NUM_THREADS: 1
+        run: |
+          export GALA_EXP_PREFIX=$PWD/EXP
+          uv pip install --system -ve .[test]
+
+      - name: Run the benchmarks
+        uses: CodSpeedHQ/action@v4
+        with:
+          mode: instrumentation
+          run: uv run pytest tests/benchmarks -n auto --codspeed --durations=0 -v
+          token: ${{ secrets.CODSPEED_TOKEN }}

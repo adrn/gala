@@ -37,6 +37,7 @@ test = [
     "gala[shared]",
     "pytest",
     "pytest-astropy",
+    "pytest-codspeed",
     "pytest-xdist",
     "findiff",
 ]
