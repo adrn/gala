@@ -130,6 +130,7 @@ jobs:
       - name: Setup Mac - GSL
         if: startsWith(matrix.os, 'mac')
         run: |
+          brew update
           brew install gsl
 
       # Ubuntu:
@@ -156,7 +157,7 @@ jobs:
       - name: Install EXP dependencies (Mac)
         if: startsWith(matrix.os, 'mac') && matrix.gala-exp == '1'
         run: |
-          brew install eigen fftw open-mpi hdf5 llvm libomp flang
+          brew install eigen@3 fftw open-mpi hdf5 llvm libomp flang
 
           echo CC=mpicc >> $GITHUB_ENV
           echo CXX=mpicxx >> $GITHUB_ENV
@@ -165,6 +166,9 @@ jobs:
           echo OMPI_CC="$(brew --prefix llvm)/bin/clang" >> $GITHUB_ENV
           echo OMPI_CXX="$(brew --prefix llvm)/bin/clang++" >> $GITHUB_ENV
           echo OMPI_FC="$(brew --prefix flang)/bin/flang" >> $GITHUB_ENV
+          echo PKG_CONFIG_PATH="$(brew --prefix eigen@3)/share/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          echo CPPFLAGS="-I$(brew --prefix eigen@3)/include $CPPFLAGS" >> $GITHUB_ENV
+          echo CMAKE_PREFIX_PATH="$(brew --prefix eigen@3)" >> $GITHUB_ENV
 
           # c++ library path is workaround for clang bug https://github.com/llvm/llvm-project/issues/155531
           sdkroot=$(xcrun --show-sdk-path)
