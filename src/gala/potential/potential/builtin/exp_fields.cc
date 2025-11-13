@@ -20,6 +20,39 @@ namespace fs = std::filesystem;
 
 namespace gala_exp {
 
+State pyexp_init(
+    BasisClasses::BasisPtr *basis_ptr,
+    CoefClasses::CoefsPtr *coefs_ptr,
+    double snapshot_time_factor
+) {
+    if (!basis_ptr) {
+        throw std::runtime_error("pyexp_init: basis pointer is null");
+    }
+
+    if (!coefs_ptr) {
+        throw std::runtime_error("pyexp_init: coefs pointer is null");
+    }
+
+    if (!*basis_ptr) {
+        throw std::runtime_error("pyexp_init: basis is null");
+    }
+
+    if (!*coefs_ptr) {
+        throw std::runtime_error("pyexp_init: coefs is null");
+    }
+
+    auto biorth_basis(
+      std::dynamic_pointer_cast<BasisClasses::BiorthBasis>(
+        *basis_ptr
+      )
+    );
+    if (!biorth_basis) {
+      throw std::runtime_error("pyEXP Basis must be a BiorthBasis.");
+    }
+
+    return { biorth_basis, *coefs_ptr, snapshot_time_factor, -1 };
+}
+
 State exp_init(
   const std::string &config_fn, const std::string &coeffile,
   int stride, double tmin, double tmax, int snapshot_index, double snapshot_time_factor)
@@ -46,12 +79,12 @@ State exp_init(
     return base_basis;
   };
 
-  auto basis(
+  auto biorth_basis(
     std::dynamic_pointer_cast<BasisClasses::BiorthBasis>(
       load_basis(yaml, config_fn)
     )
   );
-  if (!basis) {
+  if (!biorth_basis) {
     std::ostringstream error_msg;
     error_msg << "Basis in config file " << config_fn << " must be a BiorthBasis.";
     throw std::runtime_error(error_msg.str());
@@ -66,6 +99,17 @@ State exp_init(
     throw std::runtime_error(error_msg.str());
   }
 
+  try {
+    // Turn the "pure virtual" error in a more informative message
+    // TODO: is there a better way to "validate" the Coefs object?
+    coefs->Times();
+  } catch (const std::runtime_error& e) {
+    std::ostringstream error_msg;
+    error_msg << "Failed to load coefficients from file: " << coeffile
+              << ". Error: " << e.what();
+    throw std::runtime_error(error_msg.str());
+  }
+
   if(coefs->Times().empty()) {
     std::ostringstream error_msg;
     error_msg << "No times in coeffile=" << coeffile
@@ -75,6 +119,34 @@ State exp_init(
     throw std::runtime_error(error_msg.str());
   }
 
+  return { biorth_basis, coefs, snapshot_time_factor, snapshot_index };
+}
+
+State::State(
+  BiorthBasisPtr basis_,
+  CoefClasses::CoefsPtr coefs_,
+  double snapshot_time_factor_,
+  int snapshot_index)
+    : basis(basis_),
+      coefs(coefs_),
+      snapshot_time_factor(snapshot_time_factor_) {
+
+  try {
+    // Turn the "pure virtual" error in a more informative message
+    // TODO: is there a better way to "validate" the Coefs object?
+    coefs->Times();
+  } catch (const std::runtime_error& e) {
+    std::ostringstream error_msg;
+    error_msg << "Failed to fetch Times from Coefs object. "
+              << "Is this a valid, non-empty Coefs instance? "
+              << "Error: " << e.what();
+    throw std::runtime_error(error_msg.str());
+  }
+
+  if(coefs->Times().empty()) {
+    throw std::runtime_error("No times in coefficients.");
+  }
+
   if (coefs->Times().size() == 1 && snapshot_index < 0) {
     // If there is only one loaded snapshot in the coefs,
     // we treat it as static
@@ -82,6 +154,7 @@ State exp_init(
   }
 
   bool is_static = false;
+  double tmin, tmax;
 
   if (snapshot_index >= 0) {
     const auto& times = coefs->Times();
@@ -112,7 +185,9 @@ State exp_init(
     }
   }
 
-  return { basis, coefs, tmin, tmax, is_static, snapshot_time_factor };
+  this->is_static = is_static;
+  this->tmin = tmin;
+  this->tmax = tmax;
 }
 
 // Linear interpolator on coefficients.  Higher order interpolation
