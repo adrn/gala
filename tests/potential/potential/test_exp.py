@@ -13,7 +13,7 @@ from potential_helpers import PotentialTestBase
 
 import gala.dynamics as gd
 import gala.potential as gp
-from gala.potential.potential.builtin import EXPPotential
+from gala.potential.potential.builtin import EXPPotential, PyEXPPotential
 from gala.units import SimulationUnitSystem
 from gala.util import chdir
 
@@ -33,12 +33,14 @@ except ImportError as e:
         raise ImportError("pyEXP is required to run pyEXP tests") from e
 
 
-EXP_CONFIG_FILE = str(this_path / "EXP-Hernquist-basis.yml")
-EXP_SINGLE_COEF_FILE = str(this_path / "EXP-Hernquist-single-coefs.hdf5")
-EXP_MULTI_COEF_FILE = str(this_path / "EXP-Hernquist-multi-coefs.hdf5")
-EXP_MULTI_COEF_SNAPSHOT_TIME_FILE = str(
-    this_path / ("EXP-Hernquist-multi-coefs-snap-time-Gyr.hdf5")
+EXP_CONFIG_FILE = this_path / "EXP-Hernquist-basis.yml"
+EXP_FIELD_CONFIG_FILE = this_path / "EXP-field-basis.yml"  # dummy
+EXP_SINGLE_COEF_FILE = this_path / "EXP-Hernquist-single-coefs.hdf5"
+EXP_MULTI_COEF_FILE = this_path / "EXP-Hernquist-multi-coefs.hdf5"
+EXP_MULTI_COEF_SNAPSHOT_TIME_FILE = (
+    this_path / "EXP-Hernquist-multi-coefs-snap-time-Gyr.hdf5"
 )
+EXP_UNITS = SimulationUnitSystem(mass=1.25234e11 * u.Msun, length=3.845 * u.kpc, G=1)
 
 # global pytest marker to skip tests if EXP is not enabled
 pytestmark = pytest.mark.skipif(
@@ -49,12 +51,12 @@ pytestmark = pytest.mark.skipif(
 # See: generate_exp.py, which generates the basis and coefficients for these tests
 
 
-class EXPTestBase(PotentialTestBase):
+# base for EXP and PyEXP tests
+class CommonEXPTestBase(PotentialTestBase):
     tol = 1e-1  # increase tolerance for gradient test
 
-    exp_units = SimulationUnitSystem(
-        mass=1.25234e11 * u.Msun, length=3.845 * u.kpc, G=1
-    )
+    exp_units = EXP_UNITS
+
     _tmp = gd.PhaseSpacePosition(
         pos=[-8, 0.0, 0.0] * u.kpc,
         vel=[0.0, 180, 0.0] * u.km / u.s,
@@ -66,20 +68,6 @@ class EXPTestBase(PotentialTestBase):
 
     num_dx = 1e-3
     skip_hessian = True
-
-    def setup_method(self):
-        assert os.path.exists(self.EXP_CONFIG_FILE), "EXP config file does not exist"
-        assert os.path.exists(self.EXP_COEF_FILE), "EXP coef file does not exist"
-
-        self.potential = EXPPotential(
-            config_file=self.EXP_CONFIG_FILE,
-            coef_file=self.EXP_COEF_FILE,
-            # TODO: this is making the multi-coef test actually static!
-            # Need to fix the orbit integration then remove this
-            # snapshot_index=0,
-            units=self.exp_units,
-        )
-        return super().setup_method()
 
     # TODO: deepcopy is not implemented for EXPPotential
     @pytest.mark.skip(reason="Not implemented for EXP")
@@ -122,11 +110,11 @@ class EXPTestBase(PotentialTestBase):
         )
 
     @pytest.mark.skipif(
-        not FORCE_PYEXP_TEST,
+        not HAVE_PYEXP,
         reason="requires pyEXP",
     )
     def test_pyexp(self):
-        """Test EXPPotential against pyEXP"""
+        """Test against pyEXP"""
 
         gala_test_x = [1.0, 2.0, -3.0] * u.kpc
         exp_test_x = gala_test_x.to_value(self.exp_units["length"])
@@ -135,7 +123,7 @@ class EXPTestBase(PotentialTestBase):
             config_str = fp.read()
         with chdir(os.path.dirname(self.EXP_CONFIG_FILE)):
             exp_basis = pyEXP.basis.Basis.factory(config_str)
-        exp_coefs = pyEXP.coefs.Coefs.factory(self.EXP_COEF_FILE)
+        exp_coefs = pyEXP.coefs.Coefs.factory(str(self.EXP_COEF_FILE))
 
         # Use a snapshot time so that we don't have to rebuild the interpolation
         # functionality
@@ -158,12 +146,57 @@ class EXPTestBase(PotentialTestBase):
         assert u.allclose(exp_grad, gala_grad)
 
 
+class EXPTestBase(CommonEXPTestBase):
+    def setup_method(self):
+        assert os.path.exists(self.EXP_CONFIG_FILE), "EXP config file does not exist"
+        assert os.path.exists(self.EXP_COEF_FILE), "EXP coef file does not exist"
+
+        self.potential = EXPPotential(
+            config_file=self.EXP_CONFIG_FILE,
+            coef_file=self.EXP_COEF_FILE,
+            units=self.exp_units,
+        )
+        return super().setup_method()
+
+
+@pytest.mark.skipif(
+    not HAVE_PYEXP,
+    reason="requires pyEXP",
+)
+class PyEXPTestBase(CommonEXPTestBase):
+    def setup_method(self):
+        assert os.path.exists(self.EXP_CONFIG_FILE), "EXP config file does not exist"
+        assert os.path.exists(self.EXP_COEF_FILE), "EXP coef file does not exist"
+
+        with open(self.EXP_CONFIG_FILE) as fp, chdir(self.EXP_CONFIG_FILE.parent):
+            basis = pyEXP.basis.Basis.factory(fp.read())
+
+        coefs = pyEXP.coefs.Coefs.factory(str(self.EXP_COEF_FILE))
+
+        self.potential = PyEXPPotential(
+            basis=basis,
+            coefs=coefs,
+            units=self.exp_units,
+        )
+        return super().setup_method()
+
+
 class TestEXPSingle(EXPTestBase):
     EXP_CONFIG_FILE = EXP_CONFIG_FILE
     EXP_COEF_FILE = EXP_SINGLE_COEF_FILE
 
 
 class TestEXPMulti(EXPTestBase):
+    EXP_CONFIG_FILE = EXP_CONFIG_FILE
+    EXP_COEF_FILE = EXP_MULTI_COEF_FILE
+
+
+class TestPyEXPSingle(PyEXPTestBase):
+    EXP_CONFIG_FILE = EXP_CONFIG_FILE
+    EXP_COEF_FILE = EXP_SINGLE_COEF_FILE
+
+
+class TestPyEXPMulti(PyEXPTestBase):
     EXP_CONFIG_FILE = EXP_CONFIG_FILE
     EXP_COEF_FILE = EXP_MULTI_COEF_FILE
 
@@ -238,12 +271,66 @@ def test_exp_unit_tests():
     assert u.allclose(pot_multi.tmax_exp, 2.0 * u.Gyr)
 
 
+@pytest.mark.skipif(not HAVE_PYEXP, reason="requires pyEXP")
+def test_pyexp_unit_tests():
+    """Test PyEXPPotential static/dynamic behavior"""
+    units = EXPTestBase.exp_units
+
+    with open(EXP_CONFIG_FILE) as fp, chdir(EXP_CONFIG_FILE.parent):
+        basis = pyEXP.basis.Basis.factory(fp.read())
+
+    coefs_single = pyEXP.coefs.Coefs.factory(str(EXP_SINGLE_COEF_FILE))
+    coefs_multi = pyEXP.coefs.Coefs.factory(str(EXP_MULTI_COEF_FILE))
+
+    pot_single = PyEXPPotential(basis=basis, coefs=coefs_single, units=units)
+    pot_multi = PyEXPPotential(basis=basis, coefs=coefs_multi, units=units)
+
+    assert pot_single.static is True
+    assert pot_multi.static is False
+
+    test_x = [8.0, 0, 0] * u.kpc
+    assert u.allclose(
+        pot_single.energy(test_x, t=0 * u.Gyr),
+        pot_single.energy(test_x, t=1.4 * u.Gyr),
+    )
+    assert not u.allclose(
+        pot_multi.energy(test_x, t=0 * u.Gyr),
+        pot_multi.energy(test_x, t=1.4 * u.Gyr),
+    )
+
+    # check tmin/tmax
+    assert u.allclose(pot_multi.tmin_exp, 0.0 * u.Gyr)
+    assert u.allclose(pot_multi.tmax_exp, 2.0 * u.Gyr)
+
+
 def test_multi_different_snapshot_time_unit():
     pot_multi = EXPPotential(
         config_file=EXP_CONFIG_FILE,
         coef_file=EXP_MULTI_COEF_SNAPSHOT_TIME_FILE,
         units=EXPTestBase.exp_units,
         snapshot_time_unit=u.Gyr,
+    )
+    x = [8.0, 0, 0] * u.kpc
+    val0 = pot_multi.energy(x, t=0.0 * u.Gyr)
+    val1 = pot_multi.energy(x, t=1.0 * u.Gyr)
+    assert np.isclose(val1 / val0, 3.0)  # see: generate_exp.py
+
+    assert u.allclose(pot_multi.tmin_exp, 0.0 * u.Gyr)
+    assert u.allclose(pot_multi.tmax_exp, 1.0 * u.Gyr)
+
+
+@pytest.mark.skipif(not HAVE_PYEXP, reason="requires pyEXP")
+def test_pyexp_multi_different_snapshot_time_unit():
+    """Test PyEXPPotential with different snapshot time units"""
+    units = EXPTestBase.exp_units
+
+    with open(EXP_CONFIG_FILE) as fp, chdir(EXP_CONFIG_FILE.parent):
+        basis = pyEXP.basis.Basis.factory(fp.read())
+
+    coefs = pyEXP.coefs.Coefs.factory(str(EXP_MULTI_COEF_SNAPSHOT_TIME_FILE))
+
+    pot_multi = PyEXPPotential(
+        basis=basis, coefs=coefs, units=units, snapshot_time_unit=u.Gyr
     )
     x = [8.0, 0, 0] * u.kpc
     val0 = pot_multi.energy(x, t=0.0 * u.Gyr)
@@ -299,19 +386,82 @@ def test_cython_exceptions():
         )
 
 
-def test_composite():
-    """Test that EXPPotential can be used in a CompositePotential"""
-    units = SimulationUnitSystem(mass=1.25234e11 * u.Msun, length=3.845 * u.kpc, G=1)
-    pot_single = EXPPotential(
-        config_file=EXP_CONFIG_FILE,
-        coef_file=EXP_SINGLE_COEF_FILE,
-        units=units,
+@pytest.mark.skipif(not HAVE_PYEXP, reason="requires pyEXP")
+def test_pyexp_exceptions():
+    """Test various exceptions for PyEXPPotential"""
+    units = SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1)
+
+    with open(EXP_CONFIG_FILE) as fp, chdir(EXP_CONFIG_FILE.parent):
+        basis = pyEXP.basis.Basis.factory(fp.read())
+    coefs = pyEXP.coefs.Coefs.factory(str(EXP_MULTI_COEF_FILE))
+
+    # Test with None
+    with pytest.raises(ValueError, match="BiorthBasis"):
+        PyEXPPotential(basis=None, coefs=None, units=units)
+
+    # Test with a real Coefs object that is empty
+    empty_coefs = pyEXP.coefs.Coefs(type="empty", verbose=False)
+    with pytest.raises(RuntimeError, match="Coefs"):
+        PyEXPPotential(basis=basis, coefs=empty_coefs, units=units)
+
+    # Test with a non-BiorthBasis
+    with open(EXP_FIELD_CONFIG_FILE) as fp, chdir(EXP_FIELD_CONFIG_FILE.parent):
+        field_basis = pyEXP.basis.FieldBasis(fp.read())
+    with pytest.raises(RuntimeError, match="BiorthBasis"):
+        PyEXPPotential(basis=field_basis, coefs=coefs, units=units)
+
+    # Test with valid objects but runtime errors
+    with open(EXP_CONFIG_FILE) as fp, chdir(EXP_CONFIG_FILE.parent):
+        basis = pyEXP.basis.Basis.factory(fp.read())
+
+    pot = PyEXPPotential(basis=basis, coefs=coefs, units=units)
+    with pytest.raises(RuntimeError, match="time"):
+        pot.energy([0, 0, 0], t=float(0xBAD))
+
+
+def _make_exp_pot(config_fn, coef_fn):
+    return EXPPotential(
+        config_file=config_fn,
+        coef_file=coef_fn,
+        units=EXP_UNITS,
     )
-    pot_multi = EXPPotential(
-        config_file=EXP_CONFIG_FILE,
-        coef_file=EXP_MULTI_COEF_FILE,
-        units=units,
+
+
+def _make_pyexp_pot(config_fn, coef_fn):
+    return PyEXPPotential(
+        basis=_load_pyexp_basis(config_fn),
+        coefs=pyEXP.coefs.Coefs.factory(str(coef_fn)),
+        units=EXP_UNITS,
     )
+
+
+def _load_pyexp_basis(config_file):
+    """Helper to load pyEXP basis for parametrized tests"""
+    if not HAVE_PYEXP:
+        return None
+    with open(config_file) as fp, chdir(config_file.parent):
+        return pyEXP.basis.Basis.factory(fp.read())
+
+
+potentials_parametrize = pytest.mark.parametrize(
+    "make_pot",
+    [
+        pytest.param(_make_exp_pot, id="exp"),
+        pytest.param(
+            _make_pyexp_pot,
+            id="pyexp",
+            marks=pytest.mark.skipif(not HAVE_PYEXP, reason="requires pyEXP"),
+        ),
+    ],
+)
+
+
+@potentials_parametrize
+def test_composite_parametrized(make_pot):
+    """Test that both EXPPotential and PyEXPPotential can be used in a CompositePotential"""
+    pot_single = make_pot(EXP_CONFIG_FILE, EXP_SINGLE_COEF_FILE)
+
+    pot_multi = make_pot(EXP_CONFIG_FILE, EXP_MULTI_COEF_FILE)
     composite_pot = pot_single + pot_multi
     assert isinstance(
         composite_pot, gp.potential.ccompositepotential.CCompositePotential
@@ -355,6 +505,30 @@ def test_composite():
     assert np.all(np.isfinite(orbit.t.value))
 
 
+@potentials_parametrize
+def test_replace_units(make_pot):
+    """Test that replace_units works for both EXPPotential and PyEXPPotential"""
+    pot = make_pot(EXP_CONFIG_FILE, EXP_SINGLE_COEF_FILE)
+
+    new_units = SimulationUnitSystem(
+        mass=EXP_UNITS["mass"] * 2.0,
+        length=EXP_UNITS["length"],
+        G=1.0,
+    )
+    pot_replaced = pot.replace_units(new_units)
+
+    assert pot_replaced.units == new_units
+    assert pot_replaced is not pot
+
+    x = [1.0, 2.0, 3.0] * u.kpc
+    e1 = pot.energy(x)
+
+    x_new = x.to_value(new_units["length"]) * new_units["length"]
+    e2 = pot_replaced.energy(x_new)
+
+    assert u.isclose(e1, e2 / 2.0)
+
+
 def test_paths():
     """
     Test relative and absolute file paths
@@ -372,29 +546,6 @@ def test_paths():
             coef_file=Path(EXP_SINGLE_COEF_FILE).name,
             units=SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1),
         )
-
-
-def test_replace_units():
-    """Test that replace_units works for EXPPotential"""
-
-    units = SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1)
-    pot = EXPPotential(
-        config_file=EXP_CONFIG_FILE,
-        coef_file=EXP_SINGLE_COEF_FILE,
-        units=units,
-    )
-
-    new_units = SimulationUnitSystem(mass=2e11 * u.Msun, length=2.5 * u.kpc, G=1)
-    pot_replaced = pot.replace_units(new_units)
-
-    assert pot_replaced.units == new_units
-    assert pot_replaced is not pot  # should be a new instance
-
-    # Check that the energy at a point is the same in both unit systems
-    x = [1.0, 2.0, 3.0] * u.kpc
-    e1 = pot.energy(x)
-    e2 = pot_replaced.energy(x.to_value(new_units["length"]) * new_units["length"])
-    assert u.isclose(e1, e2 / 2.0)
 
 
 def test_replicate():
@@ -415,8 +566,110 @@ def test_replicate():
     assert pot.parameters["snapshot_index"] == 0
     assert pot_replicated is not pot  # should be a new instance
 
-    # Check that the energy at a point is the not same in both instances
+    # Check that the energy at a point is not the same in both instances
     x = [1.0, 2.0, 3.0] * u.kpc
     e1 = pot.energy(x)
     e2 = pot_replicated.energy(x)
     assert not u.isclose(e1, e2)
+
+
+@pytest.mark.xfail(reason="replicate not supported by PyEXP")
+@pytest.mark.skipif(not HAVE_PYEXP, reason="requires pyEXP")
+def test_pyexp_replicate():
+    """Test that replicate works for PyEXPPotential using coef_file"""
+
+    units = SimulationUnitSystem(mass=1e11 * u.Msun, length=2.5 * u.kpc, G=1)
+    with open(EXP_CONFIG_FILE) as fp, chdir(EXP_CONFIG_FILE.parent):
+        basis = pyEXP.basis.Basis.factory(fp.read())
+    coefs = pyEXP.coefs.Coefs.factory(str(EXP_SINGLE_COEF_FILE))
+
+    pot = PyEXPPotential(
+        basis=basis,
+        coefs=coefs,
+        units=units,
+    )
+
+    pot_replicated = pot.replicate(coef_file=str(EXP_MULTI_COEF_FILE))
+
+    assert pot_replicated.units == pot.units
+    assert Path(pot_replicated.parameters["coef_file"]) == Path(EXP_MULTI_COEF_FILE)
+    assert Path(pot.parameters["coef_file"]) == Path(EXP_SINGLE_COEF_FILE)
+    assert pot_replicated is not pot  # should be a new instance
+
+    x = [1.0, 2.0, 3.0] * u.kpc
+    e1 = pot.energy(x, t=0 * u.Gyr)
+    e2 = pot_replicated.energy(x, t=0 * u.Gyr)
+    assert not u.isclose(e1, e2)
+
+
+@pytest.mark.skipif(not HAVE_PYEXP, reason="requires pyEXP")
+def test_exp_pyexp_consistency_single():
+    """Test that EXPPotential and PyEXPPotential give the same results"""
+
+    # Create EXPPotential
+    exp_pot = EXPPotential(
+        config_file=EXP_CONFIG_FILE,
+        coef_file=EXP_SINGLE_COEF_FILE,
+        units=EXP_UNITS,
+    )
+
+    # Create PyEXPPotential with same data
+    with open(EXP_CONFIG_FILE) as fp, chdir(EXP_CONFIG_FILE.parent):
+        basis = pyEXP.basis.Basis.factory(fp.read())
+    coefs = pyEXP.coefs.Coefs.factory(str(EXP_SINGLE_COEF_FILE))
+    pyexp_pot = PyEXPPotential(basis=basis, coefs=coefs, units=EXP_UNITS)
+
+    x = [1.0, 2.0, 3.0] * u.kpc
+
+    # Compare energy
+    exp_energy = exp_pot.energy(x)
+    pyexp_energy = pyexp_pot.energy(x)
+    assert u.allclose(exp_energy, pyexp_energy)
+
+    # Compare density
+    exp_density = exp_pot.density(x)
+    pyexp_density = pyexp_pot.density(x)
+    assert u.allclose(exp_density, pyexp_density)
+
+    # Compare gradient
+    exp_gradient = exp_pot.gradient(x)
+    pyexp_gradient = pyexp_pot.gradient(x)
+    assert u.allclose(exp_gradient, pyexp_gradient)
+
+
+@pytest.mark.skipif(not HAVE_PYEXP, reason="requires pyEXP")
+def test_exp_pyexp_consistency_multi():
+    """Test time-dependent consistency between EXPPotential and PyEXPPotential."""
+    exp_dynamic = EXPPotential(
+        config_file=EXP_CONFIG_FILE,
+        coef_file=EXP_MULTI_COEF_FILE,
+        units=EXP_UNITS,
+    )
+
+    with open(EXP_CONFIG_FILE) as fp, chdir(EXP_CONFIG_FILE.parent):
+        basis = pyEXP.basis.Basis.factory(fp.read())
+    coefs = pyEXP.coefs.Coefs.factory(str(EXP_MULTI_COEF_FILE))
+
+    pyexp_dynamic = PyEXPPotential(
+        basis=basis,
+        coefs=coefs,
+        units=EXP_UNITS,
+    )
+
+    assert exp_dynamic.static is False
+    assert pyexp_dynamic.static is False
+
+    x = [2.5, -1.5, 0.4] * u.kpc
+    times = [0.0, 1.4] * u.Gyr
+
+    for t in times:
+        exp_energy = exp_dynamic.energy(x, t=t)
+        pyexp_energy = pyexp_dynamic.energy(x, t=t)
+        exp_density = exp_dynamic.density(x, t=t)
+        pyexp_density = pyexp_dynamic.density(x, t=t)
+        exp_gradient = exp_dynamic.gradient(x, t=t)
+        pyexp_gradient = pyexp_dynamic.gradient(x, t=t)
+
+        assert u.allclose(exp_energy, pyexp_energy)
+        assert u.allclose(exp_density, pyexp_density)
+        assert u.allclose(exp_gradient, pyexp_gradient)
