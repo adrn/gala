@@ -1,0 +1,7 @@
+
+---
+# dummy field basis
+id: field
+parameters :
+  modelname: EXP-Hernquist.model
+...

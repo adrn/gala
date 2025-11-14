@@ -1,6 +1,11 @@
 devel
 =====
 
+New Features
+------------
+- EXP: constructing potentials from pyEXP objects is now supported via
+  ``gala.potential.PyEXPPotential``.
+
 Enhancements
 ------------
 - EXP: force evaluation with ``gala.potential.EXPPotential`` should now be much faster.

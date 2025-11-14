@@ -43,7 +43,7 @@ from gala.potential.potential.builtin.cybuiltin import (
 )
 
 if EXP_ENABLED:
-    from gala.potential.potential.builtin.cyexp import EXPWrapper
+    from gala.potential.potential.builtin.cyexp import EXPWrapper, PyEXPWrapper
 
 from ..core import PotentialBase, _potential_docstring
 from ..cpotential import CPotentialBase
@@ -71,6 +71,7 @@ __all__ = [
     "NullPotential",
     "PlummerPotential",
     "PowerLawCutoffPotential",
+    "PyEXPPotential",
     "SatohPotential",
     "SphericalSplinePotential",
     "StonePotential",
@@ -1703,6 +1704,127 @@ class EXPPotential(CPotentialBase, EXP_only=True):
 
     if EXP_ENABLED:
         Wrapper = EXPWrapper
+
+    def hessian(self, *args, **kwargs):
+        """
+        Not implemented yet.
+        """
+        raise NotImplementedError(
+            "Computing Hessian matrices for EXP potentials is not supported."
+        )
+
+    @property
+    def static(self) -> bool:
+        """
+        Whether the potential is in static, i.e. fixed-time, mode.
+        """
+        return self.c_instance.static
+
+    @property
+    def tmin_exp(self) -> u.Quantity:
+        """
+        The actual, loaded minimum time for which the potential is defined.
+        """
+        return self.c_instance.tmin * self.parameters["snapshot_time_unit"]
+
+    @property
+    def tmax_exp(self) -> u.Quantity:
+        """
+        The actual, loaded maximum time for which the potential is defined.
+        """
+        return self.c_instance.tmax * self.parameters["snapshot_time_unit"]
+
+
+@format_doc(common_doc=_potential_docstring)
+class PyEXPPotential(CPotentialBase, EXP_only=True):
+    r"""
+    Calls the EXP code for the potential, using the pyEXP objects that the
+    user provides.
+
+    This potential will usually be constructed with
+    :class:`~gala.units.SimulationUnitSystem` units. See the tutorial for more
+    information.
+
+    .. note::
+
+        This potential requires EXP and pyEXP to be installed, and Gala must have been
+        built and installed with EXP support enabled.
+        See https://gala.adrian.pw/en/latest/tutorials/exp.html for more information.
+
+    Parameters
+    ----------
+    basis : `pyEXP.basis.BiorthBasis`
+        A pyEXP BiorthBasis object
+    coefs : `pyEXP.coefs.Coefs`
+        A pyEXP Coefs object
+    {common_doc}
+
+    Attributes
+    ----------
+    static : bool
+        Whether the potential is in static, i.e. fixed-time, mode.
+    tmin_exp, tmax_exp : `~astropy.units.Quantity`
+        The actual, loaded minimum and maximum time for which the potential is defined.
+    """
+
+    basis = PotentialParameter(
+        "basis", physical_type=None, python_only=True, convert=None
+    )
+    coefs = PotentialParameter(
+        "coefs", physical_type=None, python_only=True, convert=None
+    )
+    snapshot_time_unit = PotentialParameter(
+        "snapshot_time_unit",
+        physical_type=None,
+        default=None,
+        python_only=True,
+        convert=None,
+    )
+
+    def __init__(self, *args, **kwargs):
+        if "units" not in kwargs:
+            raise ValueError(
+                "Must specify a `units` keyword argument to initialize a PyEXPPotential "
+                "(most likely a SimulationUnitSystem with G=1)."
+            )
+
+        PotentialBase.__init__(self, *args, **kwargs)
+
+        if self.parameters["snapshot_time_unit"] is None:
+            self.parameters["snapshot_time_unit"] = self.units["time"]
+
+        # This hackery handles the situation where the snapshot time unit is different
+        # from the EXP (G=1) unit system that the coefficients/basis are in:
+        factor = 1 / (
+            u.Quantity(1.0, self.parameters["snapshot_time_unit"])
+            .decompose(self.units)
+            .value
+        )
+
+        try:
+            basis_capsule = self.parameters["basis"].get_shared_ptr_capsule()
+        except AttributeError as e:
+            raise ValueError(
+                "The `basis` parameter must be a pyEXP BiorthBasis object from a recent version of pyEXP."
+                # TODO: add actual version when released
+            ) from e
+
+        try:
+            coefs_capsule = self.parameters["coefs"].get_shared_ptr_capsule()
+        except AttributeError as e:
+            raise ValueError(
+                "The `coefs` parameter must be a pyEXP Coefs object from a recent version of pyEXP."
+                # TODO: add actual version when released
+            ) from e
+
+        self._setup_wrapper(
+            basis_capsule=basis_capsule,
+            coefs_capsule=coefs_capsule,
+            snapshot_time_factor=factor,
+        )
+
+    if EXP_ENABLED:
+        Wrapper = PyEXPWrapper
 
     def hessian(self, *args, **kwargs):
         """

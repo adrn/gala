@@ -10,8 +10,8 @@ simulation snapshots. This requires:
 
 #. building EXP,
 #. building Gala with EXP support,
-#. and setting up a `~gala.potential.potential.EXPPotential` object using the user's EXP config and
-   coefficient files.
+#. and setting up a `~gala.potential.potential.EXPPotential` or `~gala.potential.potential.PyEXPPotential`
+   object using a user-provided basis and coefficients.
 
 Note that EXP support currently requires building Gala from source.
 Additionally, this workflow has only been tested on Linux and MacOS with the setups seen
@@ -39,7 +39,7 @@ Here is another recipe using modules that has been found to work on Flatiron Ins
 
 EXP also builds on Mac by installing the dependencies with Homebrew::
 
-    brew install cmake eigen fftw hdf5 open-mpi git ninja
+    brew install cmake eigen@3 fftw hdf5 open-mpi git ninja
 
 After installing the dependencies, one can download and build EXP on Linux with::
 
@@ -58,8 +58,8 @@ directory. This will become the ``GALA_EXP_PREFIX`` directory in the next step.
 For a full example of how to build EXP on Mac, see `this build recipe
 <https://gist.github.com/adrn/afd9222416e359fcef826b7988b7d69f>`_.
 
-Note that building pyEXP is not required. However, some tests will use pyEXP if it is
-present.
+Note that building pyEXP is only necessary if one wants to use ``PyEXPPotential``.
+Additionally, some tests will use pyEXP if it is present.
 
 ------------------------------
 Building Gala with EXP support
@@ -146,6 +146,55 @@ integrate and plot an orbit:
     orbit = gp.Hamiltonian(exp_pot).integrate_orbit(w0, dt=1 * u.Myr, t1=0, t2=6 * u.Gyr)
     fig = orbit.plot(units=u.kpc, linestyle="-", alpha=0.5, label="orbit in m12m")
 
+
+-----------------------------------
+Running Gala with a pyEXP potential
+-----------------------------------
+
+If you are using
+`pyEXP <https://exp-docs.readthedocs.io/en/latest/intro/pyEXP-tutorial.html>`_
+and have ``pyEXP.basis.BiorthBasis`` and ``pyEXP.coefs.Coefs`` objects (or any object
+that subclasses them), you can use those to construct a Gala
+`~gala.potential.potential.PyEXPPotential` object.
+
+Using ``PyEXPPotential``, the previous example would look like:
+
+.. code-block:: python
+
+    import os
+
+    import astropy.units as u
+    import pyEXP
+
+    import gala.potential as gp
+    from gala.units import SimulationUnitSystem
+
+    exp_units = SimulationUnitSystem(mass=1e12 * u.Msun, length=10 * u.kpc, G=1)
+
+    # Construct the pyEXP basis
+    oldcwd = os.getcwd()
+    os.chdir("data")
+    with open("m12m-basis.yml") as fp:
+        basis = pyEXP.basis.Basis.factory(fp.read())
+    os.chdir(oldcwd)
+
+    # Construct the pyEXP coefs
+    coefs = pyEXP.coefs.Coefs.factory("data/m12m-coef.hdf5")
+
+    pyexp_pot = gp.PyEXPPotential(
+        units=exp_units,
+        basis=basis,
+        coefs=coefs,
+    )
+
+
+Note that ``PyEXPPotential`` is missing some parameters, like ``snapshot_index``, that
+``EXPPotential`` supports. This is because the intended workflow is for the user to construct
+and modify the pyEXP basis and coefs objects using standard pyEXP methods and then pass those
+objects to Gala.  Otherwise, there should be no behavior or performance difference in using an
+``EXPPotential`` or ``PyEXPPotential``.
+
+
 -----
 Units
 -----
@@ -162,19 +211,20 @@ arbitrary, but it can be used to set physical scales to the simulations.
 Time Evolution
 --------------
 
-An `~gala.potential.potential.EXPPotential` may be time-evolving or static. If the coefficient
-file has only one snapshot, the potential will be static. Likewise, if ``tmin``/``tmax``
-are passed such that only one snapshot from the coefs falls within that range, the
+An `~gala.potential.potential.EXPPotential` or `~gala.potential.potential.PyEXPPotential`
+may be time-evolving or static. If the coefficients only have snapshot, the potential
+will be static. Likewise, for ``EXPPotential``, if ``tmin``/``tmax`` are passed such that
+only one snapshot from the coefs falls within that range, the
 potential will be static. For the examples below, we use hypothetical files
 ``config.yml`` and ``coefs.h5`` that contain coefficients for multiple snapshots.
 
-One can always check if an ``EXPPotential`` is static with:
+One can always check if an ``EXPPotential`` or ``PyEXPPotential`` is static with:
 
 .. code-block:: python
 
     exp_pot.static
 
-One can also "freeze" make a multi-snapshot potential (i.e. make it static) by selecting
+One can also "freeze" a multi-snapshot ``EXPPotential`` (i.e. make it static) by selecting
 a single snapshot with the ``snapshot_index`` parameter:
 
 .. code-block:: python
@@ -186,14 +236,17 @@ a single snapshot with the ``snapshot_index`` parameter:
         snapshot_index=0,
     )
 
+The equivalent for the pyEXP interface is to pass ``PyEXPPotential`` a coefs object that
+only contains one snapshot.
+
 For time-evolving potentials, if one tries to evaluate the potential outside of the
-time range stored in the coefficients file (even indirectly, such as during an
+time range stored in the coefficients (even indirectly, such as during an
 orbit integration), a C++ exception will be triggered, which will be raised to the user
 as a Python exception. The Python exception will contain the error message from C++.
 For example:
 ``RuntimeError: FieldWrapper::interpolator: time t=11.73 is out of bounds: [0.0195404, 11.724]``.
 
-If the coefficients file stores a very large time range but the user is only interested
+In ``EXPPotential``, if the coefficients store a very large time range but the user is only interested
 in a smaller range, one can specify ``tmin`` and/or ``tmax`` to load a smaller subset of
 the coefficient data (for memory efficiency):
 
@@ -210,7 +263,7 @@ the coefficient data (for memory efficiency):
 Note that, as mentioned above, subsequently using a time outside this range will result
 in a Python exception. Or more precisely: using a time outside the range of snapshots that
 this ``tmin``/``tmax`` caused to be loaded will cause such an error. One can check the loaded
-range of snapshots with:
+range of snapshots (both ``EXPPotential`` and ``PyEXPPotential``) with:
 
 .. code-block:: python
 
@@ -248,7 +301,8 @@ repo root:
 Composite Potentials
 --------------------
 
-`~gala.potential.potential.EXPPotential` fully supports composite potentials, including
+`~gala.potential.potential.EXPPotential` and `~gala.potential.potential.PyEXPPotential`
+fully support composite potentials, including
 mixing static and time-evolving potentials.  The potentials will be combined at the C level
 as a :class:`~gala.potential.potential.CCompositePotential` when possible.
 See :ref:`_compositepotential` for more info.
@@ -271,7 +325,8 @@ batch size.
 -----------
 Limitations
 -----------
-The `~gala.potential.potential.EXPPotential` currently has the following limitations:
+`~gala.potential.potential.EXPPotential` and `~gala.potential.potential.PyEXPPotential`
+currently has the following limitations:
 
 * Hessian evaluation is not supported.
 * Pickling, saving, and loading is not supported.
@@ -282,4 +337,5 @@ The `~gala.potential.potential.EXPPotential` currently has the following limitat
 API
 ---
 
-See :class:`~gala.potential.potential.EXPPotential` for the complete API documentation.
+See :class:`~gala.potential.potential.EXPPotential` and :class:`~gala.potential.potential.PyEXPPotential`
+for the complete API documentation.

@@ -6,17 +6,33 @@
 # cython: language_level=3
 # cython: language=c++
 # cython: c_string_type=unicode, c_string_encoding=utf8
+# cython: cpp_locals=True
+# cython: initializedcheck=True
 
 import numpy as np
 cimport numpy as np
 np.import_array()
 
 from libcpp.string cimport string
+from libcpp.memory cimport shared_ptr
 from libcpp cimport bool as cbool
+
+from cpython.pycapsule cimport PyCapsule_GetPointer
 
 from ..cpotential cimport CPotentialWrapper
 from ..cpotential cimport densityfunc, energyfunc, gradientfunc, hessianfunc
 from ...._cconfig cimport USE_EXP
+
+
+cdef extern from "EXP/Coefficients.H" namespace "CoefClasses":
+    cdef cppclass Coefs:
+        pass
+    ctypedef shared_ptr[Coefs] CoefsPtr
+
+cdef extern from "EXP/BiorthBasis.H" namespace "BasisClasses":
+    cdef cppclass Basis:
+        pass
+    ctypedef shared_ptr[Basis] BasisPtr
 
 
 cdef extern from "potential/potential/builtin/exp_fields.h" namespace "gala_exp":
@@ -32,6 +48,12 @@ cdef extern from "potential/potential/builtin/exp_fields.h" namespace "gala_exp"
         double tmin,
         double tmax,
         int snapshot_index,
+        double snapshot_time_factor
+    ) except + nogil
+
+    State pyexp_init(
+        BasisPtr *basis_ptr,
+        CoefsPtr *coefs_ptr,
         double snapshot_time_factor
     ) except + nogil
 
@@ -76,6 +98,50 @@ cdef class EXPWrapper(CPotentialWrapper):
                 tmin,
                 tmax,
                 snapshot_index,
+                snapshot_time_factor
+            )
+            self.cpotential.state[0] = &self.exp_state
+            self.cpotential.value[0] = <energyfunc>(exp_value)
+            self.cpotential.density[0] = <densityfunc>(exp_density)
+            self.cpotential.gradient[0] = <gradientfunc>(exp_gradient)
+
+
+    @property
+    def static(self):
+        return self.exp_state.is_static
+
+    @property
+    def tmin(self):
+        return self.exp_state.tmin
+
+    @property
+    def tmax(self):
+        return self.exp_state.tmax
+
+
+cdef class PyEXPWrapper(CPotentialWrapper):
+    cdef State exp_state
+
+    def __init__(
+        self, G, parameters, q0, R,
+        basis_capsule, coefs_capsule, snapshot_time_factor
+    ):
+        cdef BasisPtr *basis_ptr
+        cdef CoefsPtr *coefs_ptr
+
+        self.init(
+            [G],
+            np.ascontiguousarray(q0),
+            np.ascontiguousarray(R)
+        )
+
+        if USE_EXP == 1:
+            basis_ptr = <BasisPtr*> PyCapsule_GetPointer(basis_capsule, "BiorthBasis_shared_ptr")
+            coefs_ptr = <CoefsPtr*> PyCapsule_GetPointer(coefs_capsule, "Coefs_shared_ptr")
+
+            self.exp_state = pyexp_init(
+                basis_ptr,
+                coefs_ptr,
                 snapshot_time_factor
             )
             self.cpotential.state[0] = &self.exp_state
