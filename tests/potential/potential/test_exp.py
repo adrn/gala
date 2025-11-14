@@ -407,7 +407,7 @@ def test_pyexp_exceptions():
     # Test with a non-BiorthBasis
     with open(EXP_FIELD_CONFIG_FILE) as fp, chdir(EXP_FIELD_CONFIG_FILE.parent):
         field_basis = pyEXP.basis.FieldBasis(fp.read())
-    with pytest.raises(RuntimeError, match="BiorthBasis"):
+    with pytest.raises(ValueError, match="BiorthBasis"):
         PyEXPPotential(basis=field_basis, coefs=coefs, units=units)
 
     # Test with valid objects but runtime errors
