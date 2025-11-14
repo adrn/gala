@@ -236,6 +236,7 @@ jobs:
         env:
           GALA_FORCE_EXP_TEST: ${{ matrix.gala-exp }}
           GALA_FORCE_PYEXP_TEST: ${{ matrix.gala-exp }}
+          OMP_NUM_THREADS: 1
         run: |
           if [[ "${{ matrix.gala-exp }}" == "1" ]]; then
             uv run pytest tests/potential/potential/test_exp.py -n auto -ra --cov --cov-report=xml --cov-report=term-missing
