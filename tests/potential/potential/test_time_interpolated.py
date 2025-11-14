@@ -478,6 +478,9 @@ def test_all_builtin_potentials_time_interpolated(pot_cls_name):
         params_const["r_c"] = params_time["r_c"] = 1.0
         params_const["r_h"] = params_time["r_h"] = 10.0
 
+    elif pot_cls_name in ("EXPPotential", "PyEXPPotential"):
+        pytest.skip(f"{pot_cls_name} uses its own interpolation")
+
     pot_const = pot_cls(**params_const, units=galactic)
     pot_time = gp.TimeInterpolatedPotential(
         potential_cls=pot_cls,
