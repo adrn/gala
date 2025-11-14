@@ -32,6 +32,7 @@ jobs:
     needs: check_skip_flags
     if:
       ${{ github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'skip docs') &&
       !contains(needs.check_skip_flags.outputs.head-commit-message, '[skip docs]') }}
     steps:
       - uses: actions/checkout@v5

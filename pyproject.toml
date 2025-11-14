@@ -37,6 +37,7 @@ test = [
     "gala[shared]",
     "pytest",
     "pytest-astropy",
+    "pytest-codspeed",
     "pytest-xdist",
     "findiff",
 ]
@@ -128,7 +129,10 @@ testpaths = ["tests", "src/gala", "docs"]
 astropy_header = true
 #doctest_plus = "enabled"
 text_file_format = "rst"
-addopts = ["--doctest-rst"]
+addopts = [
+    "--doctest-rst",
+    "--ignore=tests/benchmarks"  # ignore by default, but can be run explicitly
+]
 doctest_optionflags = ["ELLIPSIS"]
 norecursedirs = [
     "docs/tutorials/*",

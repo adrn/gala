@@ -37,6 +37,7 @@ htmlcov
 .coverage*
 coverage.xml
 MANIFEST
+.codspeed
 
 # Sphinx
 docs/api

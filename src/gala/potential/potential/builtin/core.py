@@ -838,6 +838,8 @@ class NFWPotential(CPotentialBase):
 
         """
 
+        units = cls._validate_units(units)
+
         if not hasattr(v_c, "unit"):
             v_c = v_c * units["length"] / units["time"]
 

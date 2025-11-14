@@ -22,7 +22,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     if:
       github.event.pull_request.draft == false &&
-      !contains(github.event.pull_request.labels.*.name, 'docs only')
+      !contains(github.event.pull_request.labels.*.name, 'skip wheels')
     strategy:
       fail-fast: false
       matrix:
