@@ -44,7 +44,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.12", "3.13", "3.14"]
         os: ["ubuntu-latest", "macos-latest"]
         astropy-version: ["latest"]
         numpy-version: ["latest"]
@@ -65,7 +65,7 @@ jobs:
 
           - name: Install without GSL
             os: ubuntu-latest
-            python-version: "3.11"
+            python-version: "3.13"
             astropy-version: "latest"
             numpy-version: "latest"
             scipy-version: "latest"
@@ -75,7 +75,7 @@ jobs:
 
           - name: With optional dependencies
             os: ubuntu-latest # note: galpy install failed on macos here
-            python-version: "3.11"
+            python-version: "3.13"
             astropy-version: "latest"
             numpy-version: "latest"
             scipy-version: "latest"
@@ -85,7 +85,7 @@ jobs:
 
           - name: With EXP
             os: ubuntu-latest
-            python-version: "3.11"
+            python-version: "3.13"
             astropy-version: "latest"
             numpy-version: "latest"
             scipy-version: "latest"
@@ -95,7 +95,7 @@ jobs:
 
           - name: With EXP
             os: macos-latest
-            python-version: "3.11"
+            python-version: "3.13"
             astropy-version: "latest"
             numpy-version: "latest"
             scipy-version: "latest"
