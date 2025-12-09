@@ -3,7 +3,6 @@
 import astropy.coordinates as coord
 import astropy.units as u
 import numpy as np
-from astropy.utils.misc import isiterable
 from scipy.signal import argrelmax, argrelmin
 
 from ..util import atleast_2d
@@ -261,7 +260,7 @@ def combine(objs):
 
     # have to special-case this because they are iterable
     if isinstance(objs, PhaseSpacePosition | Orbit) or (
-        not isiterable(objs) or len(objs) < 1
+        not np.iterable(objs) or len(objs) < 1
     ):
         raise ValueError("You must pass a non-empty iterable to combine.")
 

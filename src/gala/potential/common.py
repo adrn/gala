@@ -1,7 +1,6 @@
 import inspect
 
 import numpy as np
-from astropy.utils import isiterable
 
 from gala.units import DimensionlessUnitSystem, UnitSystem
 from gala.util import atleast_2d
@@ -263,7 +262,7 @@ class CommonBase:
         if hasattr(t, "unit"):
             t = t.decompose(self.units).value
 
-        if not isiterable(t):
+        if not np.iterable(t):
             t = np.atleast_1d(t)
 
         t = np.ascontiguousarray(t.ravel())

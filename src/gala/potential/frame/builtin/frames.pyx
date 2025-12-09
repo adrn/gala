@@ -6,7 +6,6 @@
 # cython: language_level=3
 # cython: language=c++
 
-from astropy.utils.misc import isiterable
 import astropy.units as u
 import numpy as np
 cimport numpy as np

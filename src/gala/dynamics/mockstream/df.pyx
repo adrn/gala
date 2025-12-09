@@ -7,7 +7,6 @@
 # cython: language=c++
 
 
-from astropy.utils.misc import isiterable
 import cython
 import astropy.units as u
 import numpy as np
@@ -195,7 +194,7 @@ cdef class BaseStreamDF:
         if prog_m.shape == ():
             prog_m = np.full_like(prog_t, prog_m)
 
-        if isiterable(n_particles):
+        if np.iterable(n_particles):
             n_particles = np.array(n_particles).astype('i4')
             if not len(n_particles) == len(prog_t):
                 raise ValueError('If passing in an array n_particles, its '

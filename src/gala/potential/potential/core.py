@@ -7,7 +7,6 @@ from types import MappingProxyType
 import astropy.units as u
 import numpy as np
 from astropy.constants import G
-from astropy.utils import isiterable
 
 try:
     from scipy.spatial.transform import Rotation
@@ -878,7 +877,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         grids = []
         slices = []
         for ii, g in enumerate(grid):
-            if isiterable(g):
+            if np.iterable(g):
                 grids.append((ii, g))
             else:
                 slices.append((ii, g))
@@ -1007,7 +1006,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         grids = []
         slices = []
         for ii, g in enumerate(grid):
-            if isiterable(g):
+            if np.iterable(g):
                 grids.append((ii, g))
             else:
                 slices.append((ii, g))
