@@ -5,7 +5,6 @@ import os
 import astropy.units as u
 import numpy as np
 import yaml
-from astropy.utils import isiterable
 
 from gala.units import DimensionlessUnitSystem
 
@@ -18,7 +17,7 @@ def _unpack_params(p):
         if "_unit" in key:
             continue
 
-        if isiterable(item) and not isinstance(item, str):
+        if np.iterable(item) and not isinstance(item, str):
             params[key] = np.array(item).astype(float)
         elif isinstance(item, str):
             params[key] = item
