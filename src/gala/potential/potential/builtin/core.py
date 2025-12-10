@@ -1805,16 +1805,14 @@ class PyEXPPotential(CPotentialBase, EXP_only=True):
             basis_capsule = self.parameters["basis"].get_shared_ptr_capsule()
         except AttributeError as e:
             raise ValueError(
-                "The `basis` parameter must be a pyEXP BiorthBasis object from a recent version of pyEXP."
-                # TODO: add actual version when released
+                "The `basis` parameter must be a pyEXP BiorthBasis object from pyEXP >= 7.9.1"
             ) from e
 
         try:
             coefs_capsule = self.parameters["coefs"].get_shared_ptr_capsule()
         except AttributeError as e:
             raise ValueError(
-                "The `coefs` parameter must be a pyEXP Coefs object from a recent version of pyEXP."
-                # TODO: add actual version when released
+                "The `coefs` parameter must be a pyEXP Coefs object from pyEXP >= 7.9.1"
             ) from e
 
         self._setup_wrapper(
