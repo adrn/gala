@@ -1,20 +1,3 @@
-devel
-=====
-
-New Features
-------------
-- EXP: constructing potentials from pyEXP objects is now supported via
-  ``gala.potential.PyEXPPotential``.
-
-Enhancements
-------------
-- EXP: force evaluation with ``gala.potential.EXPPotential`` should now be much faster.
-
-Build changes
--------------
-- EXP: the instructions to build Gala against EXP have changed. Only the EXP install
-  dir is now used.
-
 1.11.0 (unreleased)
 ===================
 
@@ -47,6 +30,9 @@ New Features
   with the xy-plane, the stream and progenitor are centered at (0, 0), and the stream
   primarily extends in the x direction (leading tail at positive x and trailing tail at
   negative x).
+- EXP: constructing potentials from pyEXP objects is now supported via
+  ``gala.potential.PyEXPPotential``.
+- EXP: force evaluation with ``gala.potential.EXPPotential`` should now be much faster.
 
 Bug fixes
 ---------
@@ -87,6 +73,11 @@ API changes
   class with a ``version=`` kwarg to specify the desired version (e.g., ``'v1'``,
   ``'v2'``, etc.). The old classes are deprecated and will be removed in a future
   release.
+
+Build changes
+-------------
+- EXP: the instructions to build Gala against EXP have changed. Only the EXP install
+  dir is now used.
 
 Other
 -----
