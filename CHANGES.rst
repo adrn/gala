@@ -1,4 +1,4 @@
-1.11.0 (unreleased)
+1.11.0 (2025-12-10)
 ===================
 
 New Features
@@ -84,6 +84,7 @@ Other
 
 - Refactored package layout to move all source code into a ``src/`` directory, and move
   all tests into a top-level ``tests/`` directory.
+
 
 1.10.1 (2025-08-21)
 ===================
