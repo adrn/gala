@@ -1,6 +1,12 @@
 name: "Build EXP"
 description: "Build and install EXP (pyEXP) for use with Gala"
 
+inputs:
+  build-type:
+    description: "CMake build type (e.g., Release, Debug, RelWithDebInfo)"
+    required: false
+    default: ""
+
 outputs:
   exp-prefix:
     description: "The EXP installation prefix (GALA_EXP_PREFIX)"
@@ -30,6 +36,12 @@ runs:
         echo "GALA_EXP_PREFIX=${GALA_EXP_PREFIX}" >> $GITHUB_ENV
         echo "exp-prefix=${GALA_EXP_PREFIX}" >> $GITHUB_OUTPUT
 
+        # Build type flag (optional)
+        BUILD_TYPE_FLAG=""
+        if [[ -n "${{ inputs.build-type }}" ]]; then
+          BUILD_TYPE_FLAG="-DCMAKE_BUILD_TYPE=${{ inputs.build-type }}"
+        fi
+
         cmake -G Ninja -B build \
           --install-prefix $GALA_EXP_PREFIX \
           -DENABLE_PYEXP_ONLY=on \
@@ -38,7 +50,8 @@ runs:
           -DPYTHON_LIBRARY=${PYTHON_LIBRARY} \
           -DCMAKE_CXX_FLAGS="${CXXFLAGS} -flto=auto" \
           -DCMAKE_EXE_LINKER_FLAGS="${LDFLAGS}" \
-          -DCMAKE_SHARED_LINKER_FLAGS="${LDFLAGS}"
+          -DCMAKE_SHARED_LINKER_FLAGS="${LDFLAGS}" \
+          $BUILD_TYPE_FLAG
 
         cmake --build build -v
         cmake --install build
