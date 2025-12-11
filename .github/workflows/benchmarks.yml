@@ -85,6 +85,8 @@ jobs:
 
       - name: Build EXP
         uses: ./.github/actions/build-exp
+        with:
+          build-type: Release
 
       - name: Install package and dependencies
         run: |
