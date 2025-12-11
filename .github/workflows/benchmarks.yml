@@ -43,7 +43,7 @@ jobs:
       github.event.pull_request.draft == false }}
     env:
       # Run tests against a tagged EXP version, unless this is the devel branch or a PR into devel, in which case test against EXP devel
-      EXP_REF: ${{ (github.ref == 'refs/heads/devel' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'devel')) && 'devel' || 'v7.8.5' }}
+      EXP_REF: ${{ (github.ref == 'refs/heads/devel' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'devel')) && 'devel' || 'v7.9.1' }}
     steps:
       - uses: actions/checkout@v6
         with:
