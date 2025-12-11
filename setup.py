@@ -8,59 +8,6 @@ from collections import defaultdict
 
 from setuptools import Extension, setup
 
-# First provide helpful messages if contributors try and run legacy commands
-# for tests or docs.
-
-TEST_HELP = """
-Note: running tests is no longer done using 'python setup.py test'. Instead
-you will need to run:
-
-    tox -e test
-
-If you don't already have tox installed, you can install it with:
-
-    pip install tox
-
-If you only want to run part of the test suite, you can also use pytest
-directly with::
-
-    pip install -e .[test]
-    pytest
-
-For more information, see:
-
-  http://docs.astropy.org/en/latest/development/testguide.html#running-tests
-"""
-
-if "test" in sys.argv:
-    print(TEST_HELP)
-    sys.exit(1)
-
-DOCS_HELP = """
-Note: building the documentation is no longer done using
-'python setup.py build_docs'. Instead you will need to run:
-
-    tox -e build_docs
-
-If you don't already have tox installed, you can install it with:
-
-    pip install tox
-
-You can also build the documentation with Sphinx directly using::
-
-    pip install -e .[docs]
-    cd docs
-    make html
-
-For more information, see:
-
-  http://docs.astropy.org/en/latest/install.html#builddocs
-"""
-
-if "build_docs" in sys.argv or "build_sphinx" in sys.argv:
-    print(DOCS_HELP)
-    sys.exit(1)
-
 VERSION_TEMPLATE = """
 # Note that we need to fall back to the hard-coded version if either
 # setuptools_scm can't be imported or setuptools_scm can't determine the
@@ -97,6 +44,9 @@ nogsl = bool(int(os.environ.get("GALA_NOGSL", "0")))
 gsl_version = os.environ.get("GALA_GSL_VERSION", None)
 gsl_prefix = os.environ.get("GALA_GSL_PREFIX", None)
 
+# If GALA_FORCE_GSL=1, the build will fail if GSL is not found
+force_gsl = bool(int(os.environ.get("GALA_FORCE_GSL", "0")))
+
 # The EXP installation prefix. This directory should contain 'include' and 'lib' subdirs.
 exp_prefix = os.environ.get("GALA_EXP_PREFIX", None)
 
@@ -117,18 +67,6 @@ if (not nogsl or nogsl is None) and gsl_version is None:  # GSL support enabled
 if gsl_version is not None:
     gsl_version = gsl_version.strip().split(".")
 
-# If the hacky macros file already exists, read from that what to do.
-# This means people experimenting might need to run "git clean" to remove all
-# temp. build products if they want to switch between installing with GSL and
-# no GSL support.
-# if os.path.exists(extra_compile_macros_file):
-#     with open(extra_compile_macros_file, "r") as f:
-#         line = f.read().strip()
-
-#     if line.endswith('0'):
-#         gsl_version = None
-#         nogsl = True
-
 print("-" * 79)
 _see_msg = (
     "See the gala documentation 'installation' page for more "
@@ -138,13 +76,28 @@ _see_msg = (
 if gsl_version is None:
     if nogsl:
         print("Gala: Installing without GSL support.")
+    elif force_gsl:
+        raise RuntimeError(
+            "Gala: GALA_FORCE_GSL is set but GSL was not found. "
+            "Please install GSL (e.g., 'brew install gsl' on macOS, "
+            "'apt-get install libgsl-dev' on Ubuntu/Debian "
+            "or set GALA_GSL_PREFIX to the GSL installation directory. " + _see_msg
+        )
     else:
         print("Gala: GSL not found, installing without GSL support. " + _see_msg)
 
-elif gsl_version < ["1", "14"]:
+elif gsl_version < ["1", "16"]:
+    if force_gsl:
+        raise RuntimeError(
+            "Gala: GALA_FORCE_GSL is set but GSL version ({}) is below the minimum "
+            "required version (1.16). Please upgrade GSL. ".format(
+                ".".join(gsl_version)
+            )
+            + _see_msg
+        )
     print(
         "Gala: Warning: GSL version ({}) is below the minimum required version "
-        "(1.16). Installing without GSL support. ".format(".".join(gsl_version))
+        "(1.14). Installing without GSL support. ".format(".".join(gsl_version))
         + _see_msg
     )
     gsl_version = None

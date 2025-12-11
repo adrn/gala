@@ -53,6 +53,7 @@ jobs:
           CIBW_BEFORE_ALL_LINUX:
             dnf install -y gsl gsl-devel || apt-get install gsl-bin libgsl0-dev
           CIBW_BEFORE_ALL_MACOS: brew install gsl pipx
+          CIBW_ENVIRONMENT: "GALA_FORCE_GSL=1"
           MACOSX_DEPLOYMENT_TARGET: 15.0
 
       - uses: actions/upload-artifact@v5
