@@ -130,14 +130,14 @@ jobs:
           echo "$PWD/install/lib/" > "${SITE_PACKAGES}/pyEXP.pth"
 
       - name: Install package and dependencies
-        env:
-          OMP_NUM_THREADS: 1
         run: |
           export GALA_EXP_PREFIX=$PWD/EXP
           uv pip install --system -ve .[test]
 
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@v4
+        env:
+          OMP_NUM_THREADS: 1
         with:
           mode: instrumentation
           run: uv run pytest tests/benchmarks -n auto --codspeed --durations=0 -v

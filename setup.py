@@ -97,10 +97,8 @@ nogsl = bool(int(os.environ.get("GALA_NOGSL", "0")))
 gsl_version = os.environ.get("GALA_GSL_VERSION", None)
 gsl_prefix = os.environ.get("GALA_GSL_PREFIX", None)
 
-# The root directory of EXP (i.e., the repository root)
+# The EXP installation prefix. This directory should contain 'include' and 'lib' subdirs.
 exp_prefix = os.environ.get("GALA_EXP_PREFIX", None)
-# The path to the built/installed EXP libraries
-exp_lib_path = os.environ.get("GALA_EXP_LIB_PATH", None)
 
 try:
     import pybind11
@@ -521,31 +519,23 @@ for ext in extensions:
 
     if "cyexp" in ext.name:
         if exp_prefix is not None:
-            if exp_lib_path is None:
-                # NOTE: this assumes user installed EXP to $GALA_EXP_PREFIX/install
-                lib_path_tmp = os.path.join(exp_prefix, "install", "lib")
-                if os.path.exists(lib_path_tmp):
-                    exp_lib_path = lib_path_tmp
-                else:
-                    msg = (
-                        "GALA_EXP_LIB_PATH not set, and no EXP libraries found in "
-                        f"{lib_path_tmp}. Please set GALA_EXP_LIB_PATH to the path "
-                        "where EXP libraries are installed."
-                    )
-                    raise RuntimeError(msg)
-
-            print(f"Gala: installing with EXP libraries at {exp_lib_path}")
+            exp_lib_path = os.path.join(exp_prefix, "lib")
+            if not os.path.exists(exp_lib_path):
+                msg = (
+                    f"No EXP libraries found in {exp_lib_path}. "
+                    "Please set GALA_EXP_PREFIX to the directory that contains the 'lib' and 'include' "
+                    "subdirectories of your EXP installation."
+                )
+                raise RuntimeError(msg)
 
             ext.include_dirs.append(pybind11.get_include())
             if extra_incl_flags is not None:
                 ext.extra_compile_args.extend(extra_incl_flags)
 
-            if "exp" not in ext.libraries:
-                # TODO: we're compiling against installed EXP libraries,
-                # but headers from the source, because EXP doesn't install
-                # its headers. It would also need to install its vendored
-                # headers.
+            ext.extra_compile_args.extend(["-fopenmp"])
+            ext.extra_link_args.extend(["-fopenmp"])
 
+            if "exp" not in ext.libraries:
                 ext.libraries.extend(
                     (
                         "exputil",
@@ -555,17 +545,7 @@ for ext in extensions:
                 )
                 ext.library_dirs.append(exp_lib_path)
                 ext.runtime_library_dirs.append(exp_lib_path)
-                ext.include_dirs.extend(
-                    (
-                        os.path.join(exp_prefix, "include"),
-                        # TODO: requires build in $GALA_EXP_PREFIX/build
-                        os.path.join(exp_prefix, "build"),
-                        os.path.join(exp_prefix, "expui"),
-                        os.path.join(exp_prefix, "extern", "HighFive", "include"),
-                        os.path.join(exp_prefix, "extern", "yaml-cpp", "include"),
-                    )
-                )
-
+                ext.include_dirs.append(os.path.join(exp_prefix, "include"))
         else:
             # Skip cyexp extension if EXP is not found
             continue

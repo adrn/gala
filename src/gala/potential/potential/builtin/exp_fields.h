@@ -4,19 +4,27 @@
 #include <filesystem>
 #include <stdexcept>
 
-#include <Coefficients.H>
-#include <BiorthBasis.H>
+#include <EXP/Coefficients.H>
+#include <EXP/BiorthBasis.H>
 
 namespace gala_exp {
 
+using BiorthBasisPtr = shared_ptr<BasisClasses::BiorthBasis>;
+
 class State {
 public:
-    BasisClasses::BasisPtr basis;
+    BiorthBasisPtr basis;
     CoefClasses::CoefsPtr coefs;
+    double snapshot_time_factor;
     double tmin;
     double tmax;
     bool is_static;
-    double snapshot_time_factor;
+
+    State(
+        BiorthBasisPtr basis_,
+        CoefClasses::CoefsPtr coefs_,
+        double snapshot_time_factor_,
+        int snapshot_index);
 };
 
 State exp_init(
@@ -26,6 +34,12 @@ State exp_init(
     double tmin,
     double tmax,
     int snapshot_index,
+    double snapshot_time_factor
+);
+
+State pyexp_init(
+    BasisClasses::BasisPtr *basis_ptr,
+    CoefClasses::CoefsPtr *coefs_ptr,
     double snapshot_time_factor
 );
 

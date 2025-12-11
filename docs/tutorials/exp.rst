@@ -10,10 +10,10 @@ simulation snapshots. This requires:
 
 #. building EXP,
 #. building Gala with EXP support,
-#. and setting up a `~gala.potential.potential.EXPPotential` object using the user's EXP config and
-   coefficient files.
+#. and setting up a `~gala.potential.potential.EXPPotential` or `~gala.potential.potential.PyEXPPotential`
+   object using a user-provided basis and coefficients.
 
-Note that EXP support currently requires building Gala (and EXP) from source.
+Note that EXP support currently requires building Gala from source.
 Additionally, this workflow has only been tested on Linux and MacOS with the setups seen
 in the `GitHub actions test config file
 <https://github.com/adrn/gala/blob/main/.github/workflows/tests.yml>`_.
@@ -23,10 +23,12 @@ Building EXP
 ------------
 
 The `EXP documentation <https://exp-docs.readthedocs.io/en/latest/intro/install.html>`_
-is the authoritative source on how to build EXP. Currently, the only Gala-specific
-addition to the instructions is that Gala expects the ``build`` directory to be present
-in the EXP root directory.  The ``install`` directory will be looked for in the EXP root
-directory too, or one can set ``GALA_EXP_LIB_PATH`` (see below).
+is the best place to read about how to build EXP. Gala doesn't have any special
+instructions for the EXP build, except that the user must actually "install" EXP,
+rather than just build it. This is demonstrated below.
+
+Gala is compatible with EXP version >= 7.9.1. If you encounter build issues, double
+check the EXP version.
 
 To install EXP's dependencies, here is one recipe that we have found to work on Ubuntu 24.04::
 
@@ -36,48 +38,47 @@ To install EXP's dependencies, here is one recipe that we have found to work on 
 
 Here is another recipe using modules that has been found to work on Flatiron Institute's rusty cluster::
 
-    module load modules/2.3 cmake gcc openmpi hdf5 libtirpc eigen fftw git python
+    module load modules/2.4 cmake gcc openmpi hdf5 libtirpc eigen fftw git python uv
 
 EXP also builds on Mac by installing the dependencies with Homebrew::
 
-    brew install cmake eigen fftw hdf5 open-mpi git ninja
+    brew install cmake eigen@3 fftw hdf5 open-mpi git ninja
 
 After installing the dependencies, one can download and build EXP on Linux with::
 
     git clone --recursive https://github.com/EXP-code/EXP.git
     cd EXP
-    cmake -G Ninja -B build -DCMAKE_INSTALL_RPATH=$PWD/install/lib --install-prefix $PWD/install
+    cmake -G Ninja -B build -DENABLE_MINIMAL=on -DCMAKE_INSTALL_RPATH="$PWD/install/lib" -DCMAKE_BUILD_TYPE=Release --install-prefix $PWD/install
     cmake --build build
     cmake --install build
+
+``-DENABLE_MINIMAL=on`` is optional but will make the build go faster. One can replace
+this with ``-DENABLE_PYEXP_ONLY=on`` if one wants a minimal build with PyEXP.
+
+In this case, we installed EXP to the ``EXP/install/`` directory, but this can be any
+directory. This will become the ``GALA_EXP_PREFIX`` directory in the next step.
 
 For a full example of how to build EXP on Mac, see `this build recipe
 <https://gist.github.com/adrn/afd9222416e359fcef826b7988b7d69f>`_.
 
-Note that building pyEXP is not required. However, some tests will use pyEXP if it is
-present.
+Note that building pyEXP is only necessary if one wants to use ``PyEXPPotential``.
+Additionally, some tests will use pyEXP if it is present.
 
 ------------------------------
 Building Gala with EXP support
 ------------------------------
 
-Building Gala with the ``GALA_EXP_PREFIX`` environment variable set to the EXP root dir
+Building Gala with the ``GALA_EXP_PREFIX`` environment variable set to the EXP install dir
 will trigger compilation of the Gala's EXP Cython extensions. For example::
 
     git clone https://github.com/adrn/gala.git
     cd gala
-    export GALA_EXP_PREFIX=/path/to/EXP
+    export GALA_EXP_PREFIX=/path/to/EXP/install/
 
-If you build and install EXP following the instructions above, the EXP libraries will be
-located in ``EXP/install/lib`` and the Gala build process knows to look there by default. If
-you installed EXP to a different location, you can set the ``GALA_EXP_LIB_PATH``
-environment variable to point to the lib directory of the EXP install::
-
-    # Only do this if the install location is not $GALA_EXP_PREFIX/install
-    # export GALA_EXP_LIB_PATH=/path/to/EXP-install/lib
-
-That is, ``GALA_EXP_LIB_PATH`` can be set if the CMake ``--install-prefix`` was set to a
-location other than ``GALA_EXP_PREFIX/install``. ``GALA_EXP_LIB_PATH`` should be the
-directory that contains the ``.so`` or ``.dylib`` files.
+If you build and install EXP following the instructions above, the EXP installation will be
+located in ``EXP/install/``. If you installed EXP to a different location, you can set the
+``GALA_EXP_PREFIX`` to that location. In either case, ``GALA_EXP_PREFIX`` must be the directory
+that contains the subdirectories ``lib`` and ``include``.
 
 Now you can run the Gala build. For example, using uv::
 
@@ -90,8 +91,14 @@ Or using venv::
     . .venv/bin/activate
     python -m pip install -ve .
 
-In either case, the pip output should show a message like ``Gala: installing with EXP
-support``.
+In either case, the output should show a message like ``Gala: installing with EXP support``.
+
+Note that in previous versions of Gala, the ``GALA_EXP_PREFIX`` was supposed to point to the
+EXP repo root, rather than the EXP installation directory. This is no longer the case. The
+EXP repo and build directories are not needed to build Gala with EXP support.
+
+Likewise, ``GALA_EXP_LIB_PATH`` was used in past Gala versions but not anymore.
+
 
 ----------------------------------
 Running Gala with an EXP potential
@@ -142,6 +149,55 @@ integrate and plot an orbit:
     orbit = gp.Hamiltonian(exp_pot).integrate_orbit(w0, dt=1 * u.Myr, t1=0, t2=6 * u.Gyr)
     fig = orbit.plot(units=u.kpc, linestyle="-", alpha=0.5, label="orbit in m12m")
 
+
+-----------------------------------
+Running Gala with a pyEXP potential
+-----------------------------------
+
+If you are using
+`pyEXP <https://exp-docs.readthedocs.io/en/latest/intro/pyEXP-tutorial.html>`_
+and have ``pyEXP.basis.BiorthBasis`` and ``pyEXP.coefs.Coefs`` objects (or any object
+that subclasses them), you can use those to construct a Gala
+`~gala.potential.potential.PyEXPPotential` object.
+
+Using ``PyEXPPotential``, the previous example would look like:
+
+.. code-block:: python
+
+    import os
+
+    import astropy.units as u
+    import pyEXP
+
+    import gala.potential as gp
+    from gala.units import SimulationUnitSystem
+
+    exp_units = SimulationUnitSystem(mass=1e12 * u.Msun, length=10 * u.kpc, G=1)
+
+    # Construct the pyEXP basis
+    oldcwd = os.getcwd()
+    os.chdir("data")
+    with open("m12m-basis.yml") as fp:
+        basis = pyEXP.basis.Basis.factory(fp.read())
+    os.chdir(oldcwd)
+
+    # Construct the pyEXP coefs
+    coefs = pyEXP.coefs.Coefs.factory("data/m12m-coef.hdf5")
+
+    pyexp_pot = gp.PyEXPPotential(
+        units=exp_units,
+        basis=basis,
+        coefs=coefs,
+    )
+
+
+Note that ``PyEXPPotential`` is missing some parameters, like ``snapshot_index``, that
+``EXPPotential`` supports. This is because the intended workflow is for the user to construct
+and modify the pyEXP basis and coefs objects using standard pyEXP methods and then pass those
+objects to Gala.  Otherwise, there should be no behavior or performance difference in using an
+``EXPPotential`` or ``PyEXPPotential``.
+
+
 -----
 Units
 -----
@@ -158,19 +214,20 @@ arbitrary, but it can be used to set physical scales to the simulations.
 Time Evolution
 --------------
 
-An `~gala.potential.potential.EXPPotential` may be time-evolving or static. If the coefficient
-file has only one snapshot, the potential will be static. Likewise, if ``tmin``/``tmax``
-are passed such that only one snapshot from the coefs falls within that range, the
+An `~gala.potential.potential.EXPPotential` or `~gala.potential.potential.PyEXPPotential`
+may be time-evolving or static. If the coefficients only have snapshot, the potential
+will be static. Likewise, for ``EXPPotential``, if ``tmin``/``tmax`` are passed such that
+only one snapshot from the coefs falls within that range, the
 potential will be static. For the examples below, we use hypothetical files
 ``config.yml`` and ``coefs.h5`` that contain coefficients for multiple snapshots.
 
-One can always check if an ``EXPPotential`` is static with:
+One can always check if an ``EXPPotential`` or ``PyEXPPotential`` is static with:
 
 .. code-block:: python
 
     exp_pot.static
 
-One can also "freeze" make a multi-snapshot potential (i.e. make it static) by selecting
+One can also "freeze" a multi-snapshot ``EXPPotential`` (i.e. make it static) by selecting
 a single snapshot with the ``snapshot_index`` parameter:
 
 .. code-block:: python
@@ -182,14 +239,17 @@ a single snapshot with the ``snapshot_index`` parameter:
         snapshot_index=0,
     )
 
+The equivalent for the pyEXP interface is to pass ``PyEXPPotential`` a coefs object that
+only contains one snapshot.
+
 For time-evolving potentials, if one tries to evaluate the potential outside of the
-time range stored in the coefficients file (even indirectly, such as during an
+time range stored in the coefficients (even indirectly, such as during an
 orbit integration), a C++ exception will be triggered, which will be raised to the user
 as a Python exception. The Python exception will contain the error message from C++.
 For example:
 ``RuntimeError: FieldWrapper::interpolator: time t=11.73 is out of bounds: [0.0195404, 11.724]``.
 
-If the coefficients file stores a very large time range but the user is only interested
+In ``EXPPotential``, if the coefficients store a very large time range but the user is only interested
 in a smaller range, one can specify ``tmin`` and/or ``tmax`` to load a smaller subset of
 the coefficient data (for memory efficiency):
 
@@ -206,7 +266,7 @@ the coefficient data (for memory efficiency):
 Note that, as mentioned above, subsequently using a time outside this range will result
 in a Python exception. Or more precisely: using a time outside the range of snapshots that
 this ``tmin``/``tmax`` caused to be loaded will cause such an error. One can check the loaded
-range of snapshots with:
+range of snapshots (both ``EXPPotential`` and ``PyEXPPotential``) with:
 
 .. code-block:: python
 
@@ -244,19 +304,35 @@ repo root:
 Composite Potentials
 --------------------
 
-`~gala.potential.potential.EXPPotential` fully supports composite potentials, including
+`~gala.potential.potential.EXPPotential` and `~gala.potential.potential.PyEXPPotential`
+fully support composite potentials, including
 mixing static and time-evolving potentials.  The potentials will be combined at the C level
 as a :class:`~gala.potential.potential.CCompositePotential` when possible.
 See :ref:`_compositepotential` for more info.
 
+--------------------------
+Performance Considerations
+--------------------------
+
+Within a timestep, the EXP force evaluation is parallelized with OpenMP threads across
+orbits. With enough orbits (perhaps 1000 or more), you can expect to see a performance
+benefit from using multiple threads. The number of OpenMP threads can be controlled
+with standard OpenMP mechanisms, such as setting the ``OMP_NUM_THREADS`` environment
+variable.
+
+Note that :class:`~gala.integrate.DOPRI853Integrator` batches the orbits into small
+sets for performance, so EXP only sees the batch size at any given time and may not be
+able to parallelize this well. One can use the ``nbatch`` integrator kwarg to tune the
+batch size.
+
 -----------
 Limitations
 -----------
-The `~gala.potential.potential.EXPPotential` currently has the following limitations:
+`~gala.potential.potential.EXPPotential` and `~gala.potential.potential.PyEXPPotential`
+currently has the following limitations:
 
 * Hessian evaluation is not supported.
 * Pickling, saving, and loading is not supported.
-* Performance may currently not be as high as native Gala potentials
 
 .. TODO (adrn): any other notable limitations?
 
@@ -264,4 +340,5 @@ The `~gala.potential.potential.EXPPotential` currently has the following limitat
 API
 ---
 
-See :class:`~gala.potential.potential.EXPPotential` for the complete API documentation.
+See :class:`~gala.potential.potential.EXPPotential` and :class:`~gala.potential.potential.PyEXPPotential`
+for the complete API documentation.
