@@ -1,0 +1,48 @@
+name: "Build EXP"
+description: "Build and install EXP (pyEXP) for use with Gala"
+
+outputs:
+  exp-prefix:
+    description: "The EXP installation prefix (GALA_EXP_PREFIX)"
+    value: ${{ steps.build.outputs.exp-prefix }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Build EXP
+      id: build
+      shell: bash
+      working-directory: EXP
+      run: |
+        # Get Python version info
+        PYTHON_VERSION=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+        PYTHON_EXEC=$(which python)
+        PYTHON_LIBRARY_PATH=$(python -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
+
+        # Set Python library path based on OS
+        if [[ "$RUNNER_OS" == "macOS" ]]; then
+          so_ext="dylib"
+        else
+          so_ext="so"
+        fi
+        PYTHON_LIBRARY=${PYTHON_LIBRARY_PATH}/libpython${PYTHON_VERSION}.${so_ext}
+        GALA_EXP_PREFIX=$HOME/EXP-install/
+        echo "GALA_EXP_PREFIX=${GALA_EXP_PREFIX}" >> $GITHUB_ENV
+        echo "exp-prefix=${GALA_EXP_PREFIX}" >> $GITHUB_OUTPUT
+
+        cmake -G Ninja -B build \
+          --install-prefix $GALA_EXP_PREFIX \
+          -DENABLE_PYEXP_ONLY=on \
+          -DCMAKE_INSTALL_RPATH=${GALA_EXP_PREFIX}/lib \
+          -DPYTHON_EXECUTABLE=${PYTHON_EXEC} \
+          -DPYTHON_LIBRARY=${PYTHON_LIBRARY} \
+          -DCMAKE_CXX_FLAGS="${CXXFLAGS} -flto=auto" \
+          -DCMAKE_EXE_LINKER_FLAGS="${LDFLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${LDFLAGS}"
+
+        cmake --build build -v
+        cmake --install build
+
+        # Add the pyEXP dir as a pyEXP.pth file in Python site-packages:
+        SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])")
+        echo "$GALA_EXP_PREFIX/lib/python${PYTHON_VERSION}/site-packages/" > "${SITE_PACKAGES}/pyEXP.pth"
