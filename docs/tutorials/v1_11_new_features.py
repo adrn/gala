@@ -13,7 +13,6 @@
 #     name: python3
 # ---
 
-# %%
 # %% nbsphinx="hidden"
 # %run nb_setup
 
@@ -241,8 +240,6 @@ axes[1].set_xlabel("Time [Gyr]")
 axes[1].set_ylabel("Distance [kpc]")
 axes[1].legend()
 axes[1].set_title("Radial distance vs time")
-
-fig.tight_layout()
 
 # %% [markdown]
 # ---
