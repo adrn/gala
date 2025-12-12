@@ -7,7 +7,8 @@ description = "Galactic dynamics in Python"
 readme = "README.rst"
 requires-python = ">=3.11"
 keywords = ["astronomy", "dynamics"]
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE", "AUTHORS.rst"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python",

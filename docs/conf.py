@@ -295,6 +295,7 @@ tutorial_files = [
     "tutorials/exp.rst",
     "tutorials/stream-mass-loss.ipynb",
     "tutorials/time-evolving-potential.ipynb",
+    "tutorials/v1_11_new_features.ipynb",
     # Supporting documents:
     "supporting/define-milky-way-model.ipynb",
 ]
