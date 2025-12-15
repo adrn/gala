@@ -56,7 +56,7 @@ jobs:
           CIBW_ENVIRONMENT: "GALA_FORCE_GSL=1"
           MACOSX_DEPLOYMENT_TARGET: 15.0
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: wheels-${{ matrix.os }}-${{ matrix.python[0] }}
           path: ./wheelhouse/*.whl
@@ -81,7 +81,7 @@ jobs:
           pip install build
           python -m build -s .
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: wheels-sdist
           path: dist/*.tar.gz
