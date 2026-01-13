@@ -1,3 +1,22 @@
+1.12.0 (unreleased)
+===================
+
+New Features
+------------
+
+Bug fixes
+---------
+
+- Fixed a bug in ``TimeInterpolatedPotential`` that caused errors when trying to pickle
+  the object (or use it within a multiprocessing or MPI pool).
+
+API changes
+-----------
+
+Other
+-----
+
+
 1.11.0 (2025-12-10)
 ===================
 
