@@ -43,7 +43,7 @@ def test_estimate_dt_n_steps():
 
     orbit = H.integrate_orbit(w0, dt=dt, n_steps=n_steps)
     T = orbit.physicsspherical.estimate_period()["r"]
-    assert int(np.round((orbit.t.max() / T).decompose().value)) == nperiods
+    assert int(np.squeeze(np.round((orbit.t.max() / T).decompose().value))) == nperiods
 
 
 class TestCombine:

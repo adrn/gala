@@ -144,9 +144,11 @@ def isochrone_xv_to_aa(w, potential):
     # ----------------------------
     freqs = np.zeros_like(actions)
     omega_r = GM**2 / (Jr + 0.5 * (L + np.sqrt(L * L + 4 * GM * b))) ** 3
-    freqs[0] = omega_r
-    freqs[1] = np.sign(actions[1]) * omega_ratio * omega_r
-    freqs[2] = omega_ratio * omega_r
+    freqs[0] = omega_r.reshape(actions.shape[1:])
+    freqs[1] = np.reshape(
+        np.sign(actions[1]) * omega_ratio * omega_r, actions.shape[1:]
+    )
+    freqs[2] = np.reshape(omega_ratio * omega_r, actions.shape[1:])
 
     a_unit = (1 * usys["angular momentum"] / usys["mass"]).decompose(usys).unit
     f_unit = (1 * usys["angular speed"]).decompose(usys).unit

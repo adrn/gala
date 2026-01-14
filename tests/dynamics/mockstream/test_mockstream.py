@@ -436,7 +436,7 @@ def test_integrator_energy_conservation(
     )
     E_dop_initial = basic_hamiltonian(prog_dop[0])
     E_dop_final = basic_hamiltonian(prog_dop[-1])
-    dE_dop = float(np.abs((E_dop_final - E_dop_initial) / E_dop_initial))
+    dE_dop = float(np.squeeze(np.abs((E_dop_final - E_dop_initial) / E_dop_initial)))
 
     # Leapfrog
     _, prog_lf = gen.run(
@@ -450,7 +450,7 @@ def test_integrator_energy_conservation(
     )
     E_lf_initial = basic_hamiltonian(prog_lf[0])
     E_lf_final = basic_hamiltonian(prog_lf[-1])
-    dE_lf = float(np.abs((E_lf_final - E_lf_initial) / E_lf_initial))
+    dE_lf = float(np.squeeze(np.abs((E_lf_final - E_lf_initial) / E_lf_initial)))
 
     print(f"DOPRI853 relative energy error: {dE_dop:.6e}")
     print(f"Leapfrog relative energy error: {dE_lf:.6e}")

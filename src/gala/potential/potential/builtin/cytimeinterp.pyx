@@ -79,6 +79,9 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
     cdef object params  # dict of arrays (n_knots, ...)
     cdef np.ndarray origins  # array (n_knots, 3)
     cdef np.ndarray rotation_matrices  # array (n_knots, 3, 3)
+    cdef list interp_params
+    cdef dict param_element_counts
+    cdef str interpolation_method
 
     def __init__(
         self,
@@ -123,6 +126,8 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
             )
 
         self.wrapped_potential = wrapped_potential
+        self.interp_params = interp_params
+        self.interpolation_method = interpolation_method
 
         # We need to keep these references because they may not be stored on the parent
         # potential instance
@@ -131,6 +136,7 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
             k: np.array(v, dtype=np.float64, order='C', copy=True)
             for k, v in params.items()
         }
+        self.param_element_counts = param_element_counts
         self.c_only_params = np.array(
             c_only_params, dtype=np.float64, order='C', copy=True
         )
@@ -297,6 +303,24 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
         if self.interp_state != NULL:
             time_interp_free(self.interp_state)
             self.interp_state = NULL
+
+    def __reduce__(self):
+        """Support for pickling/deepcopy"""
+        return (
+            self.__class__,
+            (
+                self._params[0],  # G
+                self.wrapped_potential,
+                self.time_knots,
+                self.interp_params,
+                self.params,
+                self.param_element_counts,
+                self.c_only_params,
+                self.origins,
+                self.rotation_matrices,
+                self.interpolation_method
+            )
+        )
 
     @property
     def time_bounds(self):
