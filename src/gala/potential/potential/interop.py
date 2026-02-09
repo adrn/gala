@@ -128,8 +128,8 @@ if HAS_GALPY:
         pars["amp"] * ro * vo**2 / G / 2
     )
 
-    _galpy_to_gala[galpy_gp.LogarithmicHaloPotential][1]["v_c"] = (
-        lambda pars, ro, vo: np.sqrt(pars["amp"] * vo**2)
+    _galpy_to_gala[galpy_gp.LogarithmicHaloPotential][1]["v_c"] = lambda pars, ro, vo: (
+        np.sqrt(pars["amp"] * vo**2)
     )
 
     _galpy_to_gala[galpy_gp.TriaxialNFWPotential][1]["m"] = lambda pars, ro, vo: (
