@@ -215,9 +215,11 @@ def gala_to_galpy_potential(potential, ro=None, vo=None):
     ro, vo = _get_ro_vo(ro, vo)
 
     if isinstance(potential, CompositePotential):
-        pot = []
-        for k in potential:
-            pot.append(gala_to_galpy_potential(potential[k], ro, vo))
+        import functools
+        import operator
+
+        pots = [gala_to_galpy_potential(potential[k], ro, vo) for k in potential]
+        pot = functools.reduce(operator.add, pots)
 
     else:
         if potential.__class__ not in _gala_to_galpy:
@@ -293,9 +295,12 @@ def galpy_to_gala_potential(potential, ro=None, vo=None, units=galactic):
     if potential._voSet:
         vo = potential._vo * u.km / u.s
 
-    if isinstance(potential, list):
+    _galpy_composite_cls = getattr(galpy_gp, "CompositePotential", None)
+    if isinstance(potential, list) or (
+        _galpy_composite_cls is not None and isinstance(potential, _galpy_composite_cls)
+    ):
         pot = CCompositePotential()
-        for i, sub_pot in enumerate(potential):
+        for i, sub_pot in enumerate(list(potential)):
             pot[str(i)] = galpy_to_gala_potential(sub_pot, ro, vo)
 
     else:
