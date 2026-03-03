@@ -4,18 +4,17 @@ Test the special potentials...
 
 import astropy.units as u
 import pytest
+from canonical_potentials import CANONICAL
 from gala._cconfig import GSL_ENABLED
 from potential_helpers import CompositePotentialTestBase
 
 from gala.potential import (
-    BovyMWPotential2014,
     LM10Potential,
-    MilkyWayPotential,
 )
 
 
 class TestLM10Potential(CompositePotentialTestBase):
-    potential = LM10Potential()
+    potential = CANONICAL["LM10Potential"]
     w0 = [8.0, 0.0, 0.0, 0.0, 0.22, 0.1]
     check_zero_at_infinity = False
 
@@ -33,12 +32,12 @@ class TestLM10Potential2(CompositePotentialTestBase):
 
 
 class TestMilkyWayPotentialv1(CompositePotentialTestBase):
-    potential = MilkyWayPotential(version="v1")
+    potential = CANONICAL["MilkyWayPotential_v1"]
     w0 = [8.0, 0.0, 0.0, 0.0, 0.22, 0.1]
 
 
 class TestMilkyWayPotentialv2(CompositePotentialTestBase):
-    potential = MilkyWayPotential(version="v2")
+    potential = CANONICAL["MilkyWayPotential_v2"]
     w0 = [8.0, 0.0, 0.0, 0.0, 0.22, 0.1]
 
 
@@ -48,5 +47,5 @@ class TestBovyMWPotential2014(CompositePotentialTestBase):
     check_finite_at_origin = False
 
     def setup_method(self):
-        self.potential = BovyMWPotential2014()
+        self.potential = CANONICAL["BovyMWPotential2014"]
         super().setup_method()
