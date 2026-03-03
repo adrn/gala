@@ -65,7 +65,7 @@ def pytest_generate_tests(metafunc):
 
     # Make a composite potential too:
     gala_pots.append(gala_pots[0] + gala_pots[1])
-    galpy_pots.append([galpy_pots[0], galpy_pots[1]])
+    galpy_pots.append(galpy_pots[0] + galpy_pots[1])
 
     # Test the Galpy -> Gala direction
     for Potential in _galpy_to_gala:
