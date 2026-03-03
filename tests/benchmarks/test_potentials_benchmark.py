@@ -7,7 +7,7 @@ import pytest
 from gala._cconfig import EXP_ENABLED, GSL_ENABLED
 
 import gala.potential as gp
-from gala.units import SimulationUnitSystem
+from gala.units import SimulationUnitSystem, galactic
 
 this_path = pathlib.Path(__file__).parent
 potentials_test_path = (this_path / "../potential/potential").resolve()
@@ -63,7 +63,15 @@ class TestCanonicalPotentialsBenchmark(BenchmarkPotentialBase):
 
 
 # ============================================================================
-# Special
+# Special (file-based potentials with expensive setup)
+
+
+class TestCylSplineBenchmark(BenchmarkPotentialBase):
+    @pytest.fixture(scope="class")
+    def potential(self):
+        return gp.CylSplinePotential.from_file(
+            potentials_test_path / "pot_disk_506151.pot", units=galactic
+        )
 
 
 @pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL")
@@ -91,6 +99,34 @@ class TestSphericalSplineBenchmark_mass(BenchmarkPotentialBase):
         from test_spherical_spline import _make_potential
 
         return _make_potential("mass")
+
+
+@pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL")
+class TestTimeInterpolatedBenchmark(BenchmarkPotentialBase):
+    @pytest.fixture(scope="class")
+    def potential(self):
+        time_knots = np.linspace(0, 5, 5) * u.Gyr
+        m_vals = np.linspace(1e11, 2e11, 5) * u.Msun
+        c_vals = np.linspace(0.26, 0.52, 5) * u.kpc
+        return gp.TimeInterpolatedPotential(
+            potential_cls=gp.HernquistPotential,
+            time_knots=time_knots,
+            m=m_vals,
+            c=c_vals,
+            units=galactic,
+        )
+
+    @pytest.mark.benchmark(max_rounds=16)
+    def test_energy(self, potential, n_points, rng):
+        potential.energy(rng.normal(0, 10, size=(potential.ndim, n_points)), t=2.5)
+
+    @pytest.mark.benchmark(max_rounds=16)
+    def test_gradient(self, potential, n_points, rng):
+        potential.gradient(rng.normal(0, 10, size=(potential.ndim, n_points)), t=2.5)
+
+    @pytest.mark.benchmark(max_rounds=16)
+    def test_density(self, potential, n_points, rng):
+        potential.density(rng.normal(0, 10, size=(potential.ndim, n_points)), t=2.5)
 
 
 @pytest.mark.skipif(not EXP_ENABLED, reason="requires EXP")
