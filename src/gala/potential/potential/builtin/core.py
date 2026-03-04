@@ -601,6 +601,8 @@ class MN3ExponentialDiskPotential(CPotentialBase):
     h_z = PotentialParameter("h_z", physical_type="length")
     Wrapper = MN3ExponentialDiskWrapper
     _symmetry = CylindricalSymmetry()
+    _extra_parameter_defaults = {"positive_density": True, "sech2_z": True}
+    _requires_c_param_precompute = True
 
     _K_pos_dens = np.array(
         [
