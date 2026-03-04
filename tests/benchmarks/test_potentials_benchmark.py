@@ -86,6 +86,10 @@ class TestCylSplineBenchmark(BenchmarkPotentialBase):
 
 @pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL")
 class TestSphericalSplineBenchmark_density(BenchmarkPotentialBase):
+    @pytest.fixture(params=[1, 10, 1_000])
+    def n_points(self, request):
+        return request.param
+
     @pytest.fixture(scope="class")
     def potential(self):
         from test_spherical_spline import _make_potential
@@ -95,6 +99,10 @@ class TestSphericalSplineBenchmark_density(BenchmarkPotentialBase):
 
 @pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL")
 class TestSphericalSplineBenchmark_potential(BenchmarkPotentialBase):
+    @pytest.fixture(params=[1, 10, 1_000])
+    def n_points(self, request):
+        return request.param
+
     @pytest.fixture(scope="class")
     def potential(self):
         from test_spherical_spline import _make_potential
@@ -104,6 +112,10 @@ class TestSphericalSplineBenchmark_potential(BenchmarkPotentialBase):
 
 @pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL")
 class TestSphericalSplineBenchmark_mass(BenchmarkPotentialBase):
+    @pytest.fixture(params=[1, 10, 1_000])
+    def n_points(self, request):
+        return request.param
+
     @pytest.fixture(scope="class")
     def potential(self):
         from test_spherical_spline import _make_potential
