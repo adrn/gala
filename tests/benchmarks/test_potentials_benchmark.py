@@ -66,6 +66,7 @@ class TestCanonicalPotentialsBenchmark(BenchmarkPotentialBase):
 # Special (file-based potentials with expensive setup)
 
 
+@pytest.mark.parametrize("n_points", [1, 10, 1_000])
 class TestCylSplineBenchmark(BenchmarkPotentialBase):
     @pytest.fixture(scope="class")
     def potential(self):
