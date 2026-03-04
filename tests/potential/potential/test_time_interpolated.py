@@ -659,3 +659,61 @@ class TestMN3TimeInterpolated:
         )
         assert orbit.shape[0] > 1
         assert np.all(np.isfinite(orbit.xyz.value))
+
+    def test_in_composite_energy_varies_with_time(self, time_knots):
+        """TIP-MN3 inside a CCompositePotential should vary with time."""
+        masses = np.linspace(3e10, 7e10, len(time_knots)) * u.Msun
+        h_R = 3.0 * u.kpc
+        h_z = 0.28 * u.kpc
+
+        tip = gp.TimeInterpolatedPotential(
+            potential_cls=gp.MN3ExponentialDiskPotential,
+            time_knots=time_knots,
+            m=masses,
+            h_R=h_R,
+            h_z=h_z,
+            units=galactic,
+        )
+        nfw = gp.NFWPotential(m=1e12 * u.Msun, r_s=15 * u.kpc, units=galactic)
+
+        # Both orderings should give the same energy
+        comp_disk_first = gp.CCompositePotential(disk=tip, halo=nfw)
+        comp_halo_first = gp.CCompositePotential(halo=nfw, disk=tip)
+
+        xyz = np.array([8.0, 0.0, 0.0]) * u.kpc
+
+        for comp in [comp_disk_first, comp_halo_first]:
+            e0 = comp.energy(xyz, t=time_knots[0]).value[0]
+            e_end = comp.energy(xyz, t=time_knots[-1]).value[0]
+            # Energy should change as mass varies (becomes more negative as mass grows)
+            assert e0 > e_end, (
+                f"Energy should change with time in composite; got e0={e0}, e_end={e_end}"
+            )
+
+    def test_in_composite_gradient_order_independent(self, time_knots):
+        """TIP-MN3 gradient in a composite should not depend on component order."""
+        masses = np.linspace(3e10, 7e10, len(time_knots)) * u.Msun
+        tip = gp.TimeInterpolatedPotential(
+            potential_cls=gp.MN3ExponentialDiskPotential,
+            time_knots=time_knots,
+            m=masses,
+            h_R=3.0 * u.kpc,
+            h_z=0.28 * u.kpc,
+            units=galactic,
+        )
+        nfw = gp.NFWPotential(m=1e12 * u.Msun, r_s=15 * u.kpc, units=galactic)
+
+        comp_disk_first = gp.CCompositePotential(disk=tip, halo=nfw)
+        comp_halo_first = gp.CCompositePotential(halo=nfw, disk=tip)
+
+        xyz = np.array([[8.0, 0.0, 0.0]]).T * u.kpc
+        t_mid = time_knots[len(time_knots) // 2]
+
+        grad1 = comp_disk_first.gradient(xyz, t=t_mid).value
+        grad2 = comp_halo_first.gradient(xyz, t=t_mid).value
+        np.testing.assert_allclose(
+            grad1,
+            grad2,
+            rtol=1e-10,
+            err_msg="Gradient should be order-independent in composite",
+        )
