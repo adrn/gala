@@ -1378,7 +1378,14 @@ class CylSplinePotential(CPotentialBase):
             Number of meridional harmonics to fit - don't set too large
 
         """
-        from scipy.special import sph_harm
+        try:
+            from scipy.special import sph_harm_y as _sph_harm_y
+
+        except ImportError:
+            from scipy.special import sph_harm as _sph_harm
+
+            def _sph_harm_y(l, m, theta, phi):
+                return _sph_harm(m, l, phi, theta)
 
         sizeR = len(grid_R)
         sizez = len(grid_z)
@@ -1435,7 +1442,7 @@ class CylSplinePotential(CPotentialBase):
         theta = np.arctan2(points[:, 0], points[:, 1])
 
         ls = np.arange(lmax_fit + 1)
-        Pl0 = np.stack([sph_harm(0, l, 0.0, theta).real for l in ls]).T
+        Pl0 = np.stack([_sph_harm_y(l, 0, theta, 0.0).real for l in ls]).T
 
         matr = (r[:, None] / r0.value) ** -(ls[None] + 1) * Pl0
         y = Phis / scale

@@ -8,6 +8,7 @@ import astropy.table as at
 import astropy.units as u
 import numpy as np
 import pytest
+from canonical_potentials import CANONICAL
 from gala._cconfig import GSL_ENABLED
 from potential_helpers import CompositePotentialTestBase, PotentialTestBase
 from scipy.spatial.transform import Rotation
@@ -64,7 +65,7 @@ class TestHarmonicOscillator2D(PotentialTestBase):
 
 
 class TestNull(PotentialTestBase):
-    potential = p.NullPotential()
+    potential = CANONICAL["NullPotential"]
     w0 = [1.0, 0.0, 0.0, 0.0, 2 * np.pi, 0.0]
     skip_density = True
 
@@ -108,7 +109,7 @@ class TestNull(PotentialTestBase):
 
 
 class TestHenonHeiles(PotentialTestBase):
-    potential = p.HenonHeilesPotential()
+    potential = CANONICAL["HenonHeilesPotential"]
     w0 = [1.0, 0.0, 0.0, 2 * np.pi]
     sympy_density = False
     check_finite_at_origin = False
@@ -121,7 +122,7 @@ class TestHenonHeiles(PotentialTestBase):
 
 
 class TestKepler(PotentialTestBase):
-    potential = p.KeplerPotential(units=solarsystem, m=1.0)
+    potential = CANONICAL["KeplerPotential"]
     w0 = [1.0, 0.0, 0.0, 0.0, 2 * np.pi, 0.0]
     check_finite_at_origin = False
     skip_density = True
@@ -135,7 +136,7 @@ class TestKeplerUnitInput(PotentialTestBase):
 
 
 class TestIsochrone(PotentialTestBase):
-    potential = p.IsochronePotential(units=solarsystem, m=1.0, b=0.1)
+    potential = CANONICAL["IsochronePotential"]
     w0 = [1.0, 0.0, 0.0, 0.0, 2 * np.pi, 0.0]
 
 
@@ -145,23 +146,23 @@ class TestIsochroneDimensionless(PotentialTestBase):
 
 
 class TestHernquist(PotentialTestBase):
-    potential = p.HernquistPotential(units=galactic, m=1.0e11, c=0.26)
+    potential = CANONICAL["HernquistPotential"]
     w0 = [1.0, 0.0, 0.0, 0.0, 0.1, 0.1]
 
 
 class TestPlummer(PotentialTestBase):
-    potential = p.PlummerPotential(units=galactic, m=1.0e11, b=0.26)
+    potential = CANONICAL["PlummerPotential"]
     w0 = [1.0, 0.0, 0.0, 0.0, 0.1, 0.1]
 
 
 class TestJaffe(PotentialTestBase):
+    potential = CANONICAL["JaffePotential"]
     check_finite_at_origin = False
-    potential = p.JaffePotential(units=galactic, m=1.0e11, c=0.26)
     w0 = [1.0, 0.0, 0.0, 0.0, 0.1, 0.1]
 
 
 class TestMiyamotoNagai(PotentialTestBase):
-    potential = p.MiyamotoNagaiPotential(units=galactic, m=1.0e11, a=6.5, b=0.26)
+    potential = CANONICAL["MiyamotoNagaiPotential"]
     w0 = [8.0, 0.0, 0.0, 0.0, 0.22, 0.1]
     rotation = True
 
@@ -205,9 +206,7 @@ class TestMiyamotoNagai(PotentialTestBase):
 
 
 class TestMN3(PotentialTestBase):
-    potential = p.MN3ExponentialDiskPotential(
-        units=galactic, m=1.0e11, h_R=3.5, h_z=0.26
-    )
+    potential = CANONICAL["MN3ExponentialDiskPotential"]
     w0 = [8.0, 0.0, 0.0, 0.0, 0.22, 0.1]
     rotation = True
 
@@ -222,13 +221,13 @@ class TestMN3(PotentialTestBase):
 
 
 class TestSatoh(PotentialTestBase):
-    potential = p.SatohPotential(units=galactic, m=1.0e11, a=6.5, b=0.26)
+    potential = CANONICAL["SatohPotential"]
     w0 = [8.0, 0.0, 0.0, 0.0, 0.22, 0.1]
     rotation = True
 
 
 class TestKuzmin(PotentialTestBase):
-    potential = p.KuzminPotential(units=galactic, m=1.0e11, a=3.5)
+    potential = CANONICAL["KuzminPotential"]
     w0 = [8.0, 0.0, 0.0, 0.0, 0.22, 0.1]
     sympy_hessian = False
     sympy_density = False
@@ -237,7 +236,7 @@ class TestKuzmin(PotentialTestBase):
 
 
 class TestStone(PotentialTestBase):
-    potential = p.StonePotential(units=galactic, m=1e11, r_c=0.1, r_h=10.0)
+    potential = CANONICAL["StonePotential"]
     w0 = [8.0, 0.0, 0.0, 0.0, 0.18, 0.1]
 
 
@@ -249,14 +248,12 @@ class TestPowerLawCutoff(PotentialTestBase):
     check_finite_at_origin = False
 
     def setup_method(self):
-        self.potential = p.PowerLawCutoffPotential(
-            units=galactic, m=1e10, r_c=10.0, alpha=1.8
-        )
+        self.potential = CANONICAL["PowerLawCutoffPotential"]
         super().setup_method()
 
 
 class TestSphericalNFW(PotentialTestBase):
-    potential = p.NFWPotential(units=galactic, m=1e11, r_s=12.0)
+    potential = CANONICAL["NFWPotential"]
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
 
 
@@ -420,9 +417,7 @@ class TestNFW(PotentialTestBase):
 
 
 class TestLeeSutoTriaxialNFW(PotentialTestBase):
-    potential = p.LeeSutoTriaxialNFWPotential(
-        units=galactic, v_c=0.35, r_s=12.0, a=1.3, b=1.0, c=0.8
-    )
+    potential = CANONICAL["LeeSutoTriaxialNFWPotential"]
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
     rotation = True
     skip_hessian = True  # TODO: implement
@@ -439,17 +434,13 @@ class TestLeeSutoTriaxialNFW(PotentialTestBase):
 
 
 class TestLogarithmic(PotentialTestBase):
-    potential = p.LogarithmicPotential(
-        units=galactic, v_c=0.17, r_h=10.0, q1=1.2, q2=1.0, q3=0.8
-    )
+    potential = CANONICAL["LogarithmicPotential"]
     w0 = [19.0, 2.7, -6.9, 0.0352238, -0.03579493, 0.075]
     check_zero_at_infinity = False
 
 
 class TestLongMuraliBar(PotentialTestBase):
-    potential = p.LongMuraliBarPotential(
-        units=galactic, m=1e11, a=4.0 * u.kpc, b=1 * u.kpc, c=1.0 * u.kpc
-    )
+    potential = CANONICAL["LongMuraliBarPotential"]
     vc = potential.circular_velocity([19.0, 0, 0] * u.kpc).decompose(galactic).value[0]
     w0 = [19.0, 0.2, -0.9, 0.0, vc, 0.0]
     rotation = True
@@ -614,9 +605,7 @@ class TestCylspline(PotentialTestBase):
 
 
 class TestBurkert(PotentialTestBase):
-    potential = p.BurkertPotential(
-        units=galactic, rho=5e-25 * u.g / u.cm**3, r0=12 * u.kpc
-    )
+    potential = CANONICAL["BurkertPotential"]
     w0 = [1.0, 0.0, 0.0, 0.0, 0.1, 0.1]
 
     check_finite_at_origin = False
