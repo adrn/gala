@@ -18,13 +18,19 @@ sys.path.append(str(potentials_test_path))
 from canonical_potentials import CANONICAL, NO_DENSITY  # noqa: E402
 
 
-@pytest.mark.parametrize("n_points", [1, 10, 1_000, 100_000])
 class BenchmarkPotentialBase:
     """Base class for potential benchmarks.
 
     Subclasses supply 'potential' either via a @pytest.fixture(scope="class")
     method or via class-level @pytest.mark.parametrize.
+
+    Override the 'n_points' fixture in a subclass to restrict the point counts
+    tested (e.g., for expensive potentials that are too slow at large n_points).
     """
+
+    @pytest.fixture(params=[1, 10, 1_000, 100_000])
+    def n_points(self, request):
+        return request.param
 
     @pytest.fixture(scope="class")
     def rng(self):
@@ -66,8 +72,11 @@ class TestCanonicalPotentialsBenchmark(BenchmarkPotentialBase):
 # Special (file-based potentials with expensive setup)
 
 
-@pytest.mark.parametrize("n_points", [1, 10, 1_000])
 class TestCylSplineBenchmark(BenchmarkPotentialBase):
+    @pytest.fixture(params=[1, 10, 1_000])
+    def n_points(self, request):
+        return request.param
+
     @pytest.fixture(scope="class")
     def potential(self):
         return gp.CylSplinePotential.from_file(
