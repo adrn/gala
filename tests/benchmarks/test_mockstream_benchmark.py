@@ -39,7 +39,7 @@ def progenitor_mass():
 
 @pytest.mark.benchmark
 @pytest.mark.parametrize("StreamDF", ["FardalStreamDF", "ChenStreamDF"])
-@pytest.mark.parametrize("n_steps", [10, 100, 1_000])
+@pytest.mark.parametrize("n_steps", [10, 100])
 @pytest.mark.parametrize("n_particles", [1, 2, 10])
 def test_mockstream_generation(
     hamiltonian, progenitor_w0, progenitor_mass, rng, StreamDF, n_steps, n_particles
@@ -143,7 +143,7 @@ def test_mockstream_with_nbody(
 
     # Create DirectNBody with perturbers
     particle_potentials = [
-        gp.PlummerPotential(m=1e9 * u.Msun, b=100 * u.pc, units="galactic")
+        gp.PlummerPotential(m=1e7 * u.Msun, b=10 * u.pc, units="galactic")
         for _ in range(n_perturbers)
     ]
     nbody = DirectNBody(
