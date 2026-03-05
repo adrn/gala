@@ -195,9 +195,9 @@ void time_interp_gradient(double t, double *pars, double *q, int n_dim, size_t N
                 temp_grad[i] += interp_rotation[j*n_dim + i] * grad_transformed[orbit_idx*n_dim + j];
             }
         }
-        // Copy back
+        // Accumulate back (not overwrite, so other components in a composite are preserved)
         for (int i = 0; i < n_dim; i++) {
-            grad[orbit_idx*n_dim + i] = temp_grad[i];
+            grad[orbit_idx*n_dim + i] += temp_grad[i];
         }
     }
 

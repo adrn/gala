@@ -523,3 +523,197 @@ def test_integration_outside_interpolation_range():
 # TODO: functional tests
 # - Orbit integration with a rotating bar
 # - ...
+
+
+# ---------------------------------------------------------------------------
+# MN3ExponentialDiskPotential tests
+# ---------------------------------------------------------------------------
+
+
+class TestMN3TimeInterpolated:
+    """Tests for MN3ExponentialDiskPotential with TimeInterpolatedPotential."""
+
+    @pytest.fixture
+    def time_knots(self):
+        return np.linspace(0, 5, 6) * u.Gyr
+
+    def test_constant_mass_matches_static(self, time_knots):
+        """With constant params, TIP should match a static MN3 exactly."""
+        m = 5e10 * u.Msun
+        h_R = 3.0 * u.kpc
+        h_z = 0.28 * u.kpc
+
+        static = gp.MN3ExponentialDiskPotential(m=m, h_R=h_R, h_z=h_z, units=galactic)
+        tip = gp.TimeInterpolatedPotential(
+            potential_cls=gp.MN3ExponentialDiskPotential,
+            time_knots=time_knots,
+            m=m,
+            h_R=h_R,
+            h_z=h_z,
+            units=galactic,
+        )
+
+        xyz = np.array([[8.0, 0.0, 0.0], [4.0, 0.0, 0.5]]).T * u.kpc
+        for func in ["energy", "gradient", "density"]:
+            static_val = getattr(static, func)(xyz)
+            tip_val = getattr(tip, func)(xyz, t=2.5 * u.Gyr)
+            np.testing.assert_allclose(
+                tip_val.value,
+                static_val.value,
+                rtol=1e-10,
+                err_msg=f"{func} mismatch for constant MN3 TIP vs static",
+            )
+
+    def test_varying_mass_endpoints_match_static(self, time_knots):
+        """At the endpoint knots, TIP should exactly match the static MN3."""
+        masses = np.linspace(3e10, 7e10, len(time_knots)) * u.Msun
+        h_R = 3.0 * u.kpc
+        h_z = 0.28 * u.kpc
+
+        tip = gp.TimeInterpolatedPotential(
+            potential_cls=gp.MN3ExponentialDiskPotential,
+            time_knots=time_knots,
+            m=masses,
+            h_R=h_R,
+            h_z=h_z,
+            units=galactic,
+        )
+
+        xyz = np.array([8.0, 0.0, 0.0]) * u.kpc
+        for t, m in zip(time_knots[[0, -1]], masses[[0, -1]]):
+            static = gp.MN3ExponentialDiskPotential(
+                m=m, h_R=h_R, h_z=h_z, units=galactic
+            )
+            np.testing.assert_allclose(
+                tip.energy(xyz, t=t).value,
+                static.energy(xyz).value,
+                rtol=1e-10,
+            )
+
+    def test_positive_density_false(self, time_knots):
+        """Extra kwarg positive_density=False should be respected."""
+        m = 5e10 * u.Msun
+        h_R = 3.0 * u.kpc
+        h_z = 0.28 * u.kpc
+
+        static = gp.MN3ExponentialDiskPotential(
+            m=m, h_R=h_R, h_z=h_z, positive_density=False, units=galactic
+        )
+        tip = gp.TimeInterpolatedPotential(
+            potential_cls=gp.MN3ExponentialDiskPotential,
+            time_knots=time_knots,
+            m=m,
+            h_R=h_R,
+            h_z=h_z,
+            positive_density=False,
+            units=galactic,
+        )
+
+        xyz = np.array([8.0, 0.0, 0.0]) * u.kpc
+        np.testing.assert_allclose(
+            tip.energy(xyz, t=2.5 * u.Gyr).value,
+            static.energy(xyz).value,
+            rtol=1e-10,
+        )
+
+    def test_varying_mass_interpolates(self, time_knots):
+        """Energy at an intermediate time should lie between endpoint values."""
+        masses = np.linspace(3e10, 7e10, len(time_knots)) * u.Msun
+        h_R = 3.0 * u.kpc
+        h_z = 0.28 * u.kpc
+
+        tip = gp.TimeInterpolatedPotential(
+            potential_cls=gp.MN3ExponentialDiskPotential,
+            time_knots=time_knots,
+            m=masses,
+            h_R=h_R,
+            h_z=h_z,
+            units=galactic,
+        )
+
+        xyz = np.array([8.0, 0.0, 0.0]) * u.kpc
+        e_start = tip.energy(xyz, t=time_knots[0]).value[0]
+        e_end = tip.energy(xyz, t=time_knots[-1]).value[0]
+        e_mid = tip.energy(xyz, t=time_knots[len(time_knots) // 2]).value[0]
+
+        # Energy (negative) becomes more negative as mass grows
+        assert e_start > e_mid > e_end
+
+    def test_orbit_integration(self, time_knots):
+        """Orbit integration with time-varying MN3 should run without error."""
+        masses = np.linspace(3e10, 7e10, len(time_knots)) * u.Msun
+        tip = gp.TimeInterpolatedPotential(
+            potential_cls=gp.MN3ExponentialDiskPotential,
+            time_knots=time_knots,
+            m=masses,
+            h_R=3.0 * u.kpc,
+            h_z=0.28 * u.kpc,
+            units=galactic,
+        )
+
+        w0 = gd.PhaseSpacePosition(
+            pos=[8.0, 0.0, 0.0] * u.kpc, vel=[0.0, 220.0, 0.0] * u.km / u.s
+        )
+        orbit = tip.integrate_orbit(
+            w0, t1=time_knots[0], t2=time_knots[-1], dt=10 * u.Myr
+        )
+        assert orbit.shape[0] > 1
+        assert np.all(np.isfinite(orbit.xyz.value))
+
+    def test_in_composite_energy_varies_with_time(self, time_knots):
+        """TIP-MN3 inside a CCompositePotential should vary with time."""
+        masses = np.linspace(3e10, 7e10, len(time_knots)) * u.Msun
+        h_R = 3.0 * u.kpc
+        h_z = 0.28 * u.kpc
+
+        tip = gp.TimeInterpolatedPotential(
+            potential_cls=gp.MN3ExponentialDiskPotential,
+            time_knots=time_knots,
+            m=masses,
+            h_R=h_R,
+            h_z=h_z,
+            units=galactic,
+        )
+        nfw = gp.NFWPotential(m=1e12 * u.Msun, r_s=15 * u.kpc, units=galactic)
+
+        # Both orderings should give the same energy
+        comp_disk_first = gp.CCompositePotential(disk=tip, halo=nfw)
+        comp_halo_first = gp.CCompositePotential(halo=nfw, disk=tip)
+
+        xyz = np.array([8.0, 0.0, 0.0]) * u.kpc
+
+        for comp in [comp_disk_first, comp_halo_first]:
+            e0 = comp.energy(xyz, t=time_knots[0]).value[0]
+            e_end = comp.energy(xyz, t=time_knots[-1]).value[0]
+            # Energy should change as mass varies (becomes more negative as mass grows)
+            assert e0 > e_end, (
+                f"Energy should change with time in composite; got e0={e0}, e_end={e_end}"
+            )
+
+    def test_in_composite_gradient_order_independent(self, time_knots):
+        """TIP-MN3 gradient in a composite should not depend on component order."""
+        masses = np.linspace(3e10, 7e10, len(time_knots)) * u.Msun
+        tip = gp.TimeInterpolatedPotential(
+            potential_cls=gp.MN3ExponentialDiskPotential,
+            time_knots=time_knots,
+            m=masses,
+            h_R=3.0 * u.kpc,
+            h_z=0.28 * u.kpc,
+            units=galactic,
+        )
+        nfw = gp.NFWPotential(m=1e12 * u.Msun, r_s=15 * u.kpc, units=galactic)
+
+        comp_disk_first = gp.CCompositePotential(disk=tip, halo=nfw)
+        comp_halo_first = gp.CCompositePotential(halo=nfw, disk=tip)
+
+        xyz = np.array([[8.0, 0.0, 0.0]]).T * u.kpc
+        t_mid = time_knots[len(time_knots) // 2]
+
+        grad1 = comp_disk_first.gradient(xyz, t=t_mid).value
+        grad2 = comp_halo_first.gradient(xyz, t=t_mid).value
+        np.testing.assert_allclose(
+            grad1,
+            grad2,
+            rtol=1e-10,
+            err_msg="Gradient should be order-independent in composite",
+        )

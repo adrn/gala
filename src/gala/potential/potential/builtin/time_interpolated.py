@@ -21,7 +21,6 @@ _unsupported_cls = [
     "HenonHeilesPotential",
     "NullPotential",
     "MultipolePotential",  # TODO?
-    "MN3ExponentialDiskPotential",  # TODO: need to move parameter transforms to C
     "SphericalSplinePotential",  # TODO
     "CylSplinePotential",  # TODO
 ]
@@ -154,6 +153,16 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
                 self._parameters[attr_name] = copy.copy(attr)
                 self._potential_param_names.append(attr_name)
 
+        # Extract extra init kwargs for wrapped potentials that need C parameter
+        # precomputation (e.g., MN3ExponentialDiskPotential's positive_density,
+        # sech2_z). These are popped from kwargs so they don't get passed to
+        # super().__init__().
+        _potential_cls = tmp["potential_cls"]
+        extra_defaults = getattr(_potential_cls, "_extra_parameter_defaults", {})
+        self._extra_wrapped_kwargs = {}
+        for k, default in extra_defaults.items():
+            self._extra_wrapped_kwargs[k] = kwargs.pop(k, default)
+
         # Validate interpolation method vs number of knots
         n_knots = len(tmp["time_knots"])
         interp_method = tmp["interpolation_method"]
@@ -235,6 +244,7 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
         # functions for that potential.
         # TODO: there may be a better way to pass the C functions...
         potential_cls = self.parameters["potential_cls"]
+        extra_kwargs = getattr(self, "_extra_wrapped_kwargs", {})
         wrapped_potential = potential_cls(
             units=self.units,
             **{
@@ -245,6 +255,7 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
                 )
                 for k in self._potential_param_names
             },
+            **extra_kwargs,
         )
 
         origin_arrays = (
@@ -259,6 +270,67 @@ class TimeInterpolatedPotential(CPotentialBase, GSL_only=True):
         else:
             R_arrays = np.eye(3)[np.newaxis]
         assert R_arrays.ndim == 3
+
+        # For potentials with non-trivial parameter transforms (e.g.,
+        # MN3ExponentialDiskPotential), the user-facing parameters are transformed into
+        # a different set of C parameters at the Python lyer. We handle these by
+        # instantiating the potential at each time knot to get the preprocessed C
+        # parameters, then interpolating those directly.
+        if getattr(potential_cls, "_requires_c_param_precompute", False):
+            n_knots = len(self.parameters["time_knots"])
+            # Determine how many elements come from user-facing parameters so we can
+            # strip them — _setup_wrapper appends them to c_parameters but the C
+            # function only uses the c_only (derived) portion.
+            n_user_param_elements = sum(
+                np.atleast_1d(wrapped_potential.parameters[k].value).size
+                for k in self._potential_param_names
+            )
+            n_c_only = len(wrapped_potential.c_parameters) - n_user_param_elements
+
+            c_params_list = []
+            for i in range(n_knots):
+                knot_kwargs = {
+                    k: (
+                        self.parameters[k][i]
+                        if k in self._interp_params
+                        else self.parameters[k]
+                    )
+                    for k in self._potential_param_names
+                }
+                knot_pot = potential_cls(
+                    units=self.units, **knot_kwargs, **extra_kwargs
+                )
+                c_params_list.append(knot_pot.c_parameters[:n_c_only])
+
+            c_params_array = np.array(c_params_list)  # shape: (n_knots, n_c_params)
+            n_c_params = c_params_array.shape[1]
+
+            # Build a synthetic named entry per C parameter element so the Cython layer
+            # sets up one spline per element in the correct positional order.
+            param_arrays = {}
+            param_element_counts = {}
+            synth_interp_params = []
+            any_interp = len(self._interp_params) > 0
+            for j in range(n_c_params):
+                name = f"_c{j}"
+                param_arrays[name] = c_params_array[:, j]
+                param_element_counts[name] = 1
+                if any_interp:
+                    synth_interp_params.append(name)
+
+            self.c_instance = TimeInterpolatedWrapper(
+                self.G,
+                wrapped_potential.c_instance,
+                self.parameters["time_knots"].value,
+                synth_interp_params,
+                param_arrays,
+                param_element_counts,
+                np.array([]),
+                origins=origin_arrays,
+                rotation_matrices=R_arrays,
+                interpolation_method=self.parameters["interpolation_method"],
+            )
+            return
 
         # Prepare parameter arrays for the C wrapper
         # For multi-dimensional parameters that are time-interpolated,

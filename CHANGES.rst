@@ -4,11 +4,17 @@
 New Features
 ------------
 
+- Added support for using the ``TimeInterpolatedPotential`` with the
+  ``MN3ExponentialDiskPotential`` class.
+
 Bug fixes
 ---------
 
 - Fixed a bug in ``TimeInterpolatedPotential`` that caused errors when trying to pickle
   the object (or use it within a multiprocessing or MPI pool).
+
+- Fixed a bug with ``TimeInterpolatedPotential`` where having two instances in the same
+  ``CompositePotential`` would cause incorrect results.
 
 API changes
 -----------
