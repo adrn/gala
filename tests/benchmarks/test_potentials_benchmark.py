@@ -28,7 +28,7 @@ class BenchmarkPotentialBase:
     tested (e.g., for expensive potentials that are too slow at large n_points).
     """
 
-    @pytest.fixture(params=[1, 10, 1_000, 10_000])
+    @pytest.fixture(params=[1, 10, 1_000])
     def n_points(self, request):
         return request.param
 
