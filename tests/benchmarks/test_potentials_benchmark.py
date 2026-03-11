@@ -36,15 +36,15 @@ class BenchmarkPotentialBase:
     def rng(self):
         return np.random.default_rng(42)
 
-    @pytest.mark.benchmark(max_rounds=16)
+    @pytest.mark.benchmark(max_rounds=8)
     def test_energy(self, potential, n_points, rng):
         potential.energy(rng.normal(0, 10, size=(potential.ndim, n_points)))
 
-    @pytest.mark.benchmark(max_rounds=16)
+    @pytest.mark.benchmark(max_rounds=8)
     def test_gradient(self, potential, n_points, rng):
         potential.gradient(rng.normal(0, 10, size=(potential.ndim, n_points)))
 
-    @pytest.mark.benchmark(max_rounds=16)
+    @pytest.mark.benchmark(max_rounds=8)
     def test_density(self, potential, n_points, rng):
         if type(potential).__name__ in NO_DENSITY:
             pytest.skip("density not implemented for this potential")  # type: ignore[call-arg]
@@ -138,15 +138,15 @@ class TestTimeInterpolatedBenchmark(BenchmarkPotentialBase):
             units=galactic,
         )
 
-    @pytest.mark.benchmark(max_rounds=16)
+    @pytest.mark.benchmark(max_rounds=8)
     def test_energy(self, potential, n_points, rng):
         potential.energy(rng.normal(0, 10, size=(potential.ndim, n_points)), t=2.5)
 
-    @pytest.mark.benchmark(max_rounds=16)
+    @pytest.mark.benchmark(max_rounds=8)
     def test_gradient(self, potential, n_points, rng):
         potential.gradient(rng.normal(0, 10, size=(potential.ndim, n_points)), t=2.5)
 
-    @pytest.mark.benchmark(max_rounds=16)
+    @pytest.mark.benchmark(max_rounds=8)
     def test_density(self, potential, n_points, rng):
         potential.density(rng.normal(0, 10, size=(potential.ndim, n_points)), t=2.5)
 

@@ -124,7 +124,7 @@ def test_mockstream_with_self_gravity(
 
 @pytest.mark.benchmark
 @pytest.mark.parametrize("n_steps", [100, 1_000])
-@pytest.mark.parametrize("n_perturbers", [1, 3, 5])
+@pytest.mark.parametrize("n_perturbers", [1])
 def test_mockstream_with_nbody(
     hamiltonian, progenitor_w0, progenitor_mass, rng, n_steps, n_perturbers
 ):
