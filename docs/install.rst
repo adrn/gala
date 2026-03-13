@@ -41,10 +41,15 @@ Architecture-Specific Optimizations
 ===================================
 
 For performance reasons, the pre-compiled wheels installed via ``pip`` are built
-assuming a minimum CPU architecture. For x86-64 CPUs (e.g. Intel), the wheels are built
-against ``x86-64-v3``, which is supported by most Intel CPUs since 2013. For MacOS on
-ARM, the wheels are built against ``apple-m1``, which should work on Apple M1 (2020) or
-newer.
+assuming a minimum CPU architecture. For Linux x86-64 CPUs (e.g. Intel), the wheels are
+built against ``x86-64-v3``, which is supported by most Intel CPUs since 2013. For macOS
+on ARM (Apple Silicon), the wheels are built against ``apple-m1`` and require an M1
+(2020) or newer Mac.
+
+.. note::
+
+    Pre-built macOS wheels are only available for **Apple Silicon (arm64)** Macs.
+    Intel Mac users must :ref:`build from source <gala-install-source>` (see below).
 
 For the best performance, you may wish to build from source (see above) with the
 following environment variable set::

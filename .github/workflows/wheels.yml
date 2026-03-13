@@ -34,7 +34,6 @@ jobs:
           - ["4", "cp314-*"]
         os:
           - "macos-15"
-          - "macos-13"
           - "ubuntu-latest"
 
     steps:
@@ -46,10 +45,10 @@ jobs:
         uses: pypa/cibuildwheel@v3.4.0
         env:
           CIBW_ARCHS_LINUX: "x86_64"
-          # Build only the native arch on each runner to avoid cross-compilation
-          # issues where delocate can't bundle the correct-arch GSL library.
-          # macos-15 is arm64, macos-13 is x86_64.
-          CIBW_ARCHS_MACOS: "native"
+          # Build arm64 only on macos-15 (arm64 runner). Cross-compiling x86_64
+          # on an arm64 runner causes delocate to bundle the wrong-arch GSL dylib,
+          # producing broken wheels. Intel Mac users should build from source.
+          CIBW_ARCHS_MACOS: "arm64"
           CIBW_BUILD: ${{ matrix.python[1] }}
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
@@ -58,7 +57,7 @@ jobs:
             dnf install -y gsl gsl-devel || apt-get install gsl-bin libgsl0-dev
           CIBW_BEFORE_ALL_MACOS: brew install gsl pipx
           CIBW_ENVIRONMENT: "GALA_FORCE_GSL=1"
-          MACOSX_DEPLOYMENT_TARGET: ${{ startsWith(matrix.os, 'macos-13') && '13.0' || '15.0' }}
+          MACOSX_DEPLOYMENT_TARGET: 15.0
 
       - uses: actions/upload-artifact@v7
         with:
