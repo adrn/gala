@@ -23,6 +23,8 @@ Or, to add ``gala`` to an existing ``uv`` environment::
 
     uv add gala
 
+.. _gala-install-source:
+
 From Source: Cloning, Building, Installing
 ==========================================
 
@@ -98,6 +100,13 @@ On Linux and Mac, you can install GSL using a package manager, such as ``apt`` o
 Or on Linux with ``apt``::
 
     apt-get install gsl-bin libgsl0-dev
+
+.. note::
+
+    **Intel Mac users:** pre-built wheels are not available for Intel (x86_64) Macs.
+    After installing GSL via Homebrew (above), install Gala from source::
+
+        uv pip install gala --no-binary gala
 
 
 Forcing gala to install without GSL support
