@@ -23,6 +23,8 @@ Or, to add ``gala`` to an existing ``uv`` environment::
 
     uv add gala
 
+.. _gala-install-source:
+
 From Source: Cloning, Building, Installing
 ==========================================
 
@@ -41,10 +43,15 @@ Architecture-Specific Optimizations
 ===================================
 
 For performance reasons, the pre-compiled wheels installed via ``pip`` are built
-assuming a minimum CPU architecture. For x86-64 CPUs (e.g. Intel), the wheels are built
-against ``x86-64-v3``, which is supported by most Intel CPUs since 2013. For MacOS on
-ARM, the wheels are built against ``apple-m1``, which should work on Apple M1 (2020) or
-newer.
+assuming a minimum CPU architecture. For Linux x86-64 CPUs (e.g. Intel), the wheels are
+built against ``x86-64-v3``, which is supported by most Intel CPUs since 2013. For macOS
+on ARM (Apple Silicon), the wheels are built against ``apple-m1`` and require an M1
+(2020) or newer Mac.
+
+.. note::
+
+    Pre-built macOS wheels are only available for **Apple Silicon (arm64)** Macs.
+    Intel Mac users must :ref:`build from source <gala-install-source>` (see below).
 
 For the best performance, you may wish to build from source (see above) with the
 following environment variable set::
@@ -93,6 +100,13 @@ On Linux and Mac, you can install GSL using a package manager, such as ``apt`` o
 Or on Linux with ``apt``::
 
     apt-get install gsl-bin libgsl0-dev
+
+.. note::
+
+    **Intel Mac users:** pre-built wheels are not available for Intel (x86_64) Macs.
+    After installing GSL via Homebrew (above), install Gala from source::
+
+        uv pip install gala --no-binary gala
 
 
 Forcing gala to install without GSL support

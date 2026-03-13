@@ -45,7 +45,10 @@ jobs:
         uses: pypa/cibuildwheel@v3.4.0
         env:
           CIBW_ARCHS_LINUX: "x86_64"
-          CIBW_ARCHS_MACOS: "x86_64 arm64"
+          # Build arm64 only on macos-15 (arm64 runner). Cross-compiling x86_64
+          # on an arm64 runner causes delocate to bundle the wrong-arch GSL dylib,
+          # producing broken wheels. Intel Mac users should build from source.
+          CIBW_ARCHS_MACOS: "arm64"
           CIBW_BUILD: ${{ matrix.python[1] }}
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
