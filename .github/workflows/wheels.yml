@@ -110,6 +110,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+          verbose: true
 
   upload_pypi:
     needs: [build_nix_wheels, build_sdist]
