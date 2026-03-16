@@ -96,9 +96,11 @@ jobs:
     permissions:
       id-token: write
     runs-on: ubuntu-latest
+    # if:
+    #   github.repository_owner == 'adrn' && github.event_name == 'push' && github.ref ==
+    #   'refs/heads/main'
     if:
-      github.repository_owner == 'adrn' && github.event_name == 'push' && github.ref ==
-      'refs/heads/main'
+      false  # disable test upload to Test PyPI for now
     steps:
       - uses: actions/download-artifact@v8
         with:
