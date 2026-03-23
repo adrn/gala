@@ -363,7 +363,7 @@ def test_eccentricity():
 def test_guiding_radius():
     q = [10.0, 0, 0] * u.kpc
     pot = HernquistPotential(m=1e10, c=10.0, units=galactic)
-    vc = pot.circular_velocity(q).to_value(u.km / u.s)
+    vc = pot.circular_velocity(q).to(u.km / u.s)
     w0 = PhaseSpacePosition(pos=q, vel=[0.0, 1.3, 0.0] * vc)
     ham = Hamiltonian(pot)
     w = ham.integrate_orbit(w0, dt=0.5, n_steps=1000, Integrator=DOPRI853Integrator)
@@ -371,7 +371,7 @@ def test_guiding_radius():
 
     # Check that orbit in non-axisymmetric potential raises a warning
     pot = NFWPotential(m=1e10, r_s=10.0, b=0.95, units=galactic)
-    vc = pot.circular_velocity(q).to_value(u.km / u.s)
+    vc = pot.circular_velocity(q).to(u.km / u.s)
     w0 = PhaseSpacePosition(pos=q, vel=[0.0, 1.3, 0.0] * vc)
     ham = Hamiltonian(pot)
     orbit = ham.integrate_orbit(w0, dt=0.5, n_steps=1000, Integrator=DOPRI853Integrator)
