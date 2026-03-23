@@ -16,6 +16,10 @@ Bug fixes
 - Fixed a bug with ``TimeInterpolatedPotential`` where having two instances in the same
   ``CompositePotential`` would cause incorrect results.
 
+- Fixes a bug that would allow ``PhaseSpacePosition`` and ``Orbit`` objects to accept
+  invalid position or velocity units and silently pass these through to orbit
+  integration later.
+
 API changes
 -----------
 
