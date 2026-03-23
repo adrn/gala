@@ -203,10 +203,12 @@ class PhaseSpacePosition:
             )
 
         if (
-            pos.xyz.unit.physical_type == DIMLESS_PTYPE
+            isinstance(pos, coord.CartesianRepresentation)
+            and pos.xyz.unit.physical_type == DIMLESS_PTYPE
             and vel.d_xyz.unit.physical_type != DIMLESS_PTYPE
         ) | (
-            pos.xyz.unit.physical_type != DIMLESS_PTYPE
+            isinstance(pos, coord.CartesianRepresentation)
+            and pos.xyz.unit.physical_type != DIMLESS_PTYPE
             and vel.d_xyz.unit.physical_type == DIMLESS_PTYPE
         ):
             raise u.UnitTypeError(
