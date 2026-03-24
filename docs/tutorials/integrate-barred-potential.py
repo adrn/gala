@@ -131,11 +131,9 @@ def find_corotation(potential, Omega_bar):
 
 
 r_corot = find_corotation(bar_mw_static, Omega)
-v_circ = Omega * r_corot
-
 
 with u.set_enabled_equivalencies(u.dimensionless_angles()):
-    pass
+    v_circ = (Omega * r_corot).to(u.km / u.s)
 
 # initial conditions at corotation radius
 w0 = gd.PhaseSpacePosition(

@@ -19,6 +19,9 @@ __all__ = ["PhaseSpacePosition"]
 
 
 ASTROPY_GTEQ_7_1 = Version(astropy.__version__) >= Version("7.1")
+SPEED_PTYPE = u.get_physical_type("speed")
+LENGTH_PTYPE = u.get_physical_type("length")
+DIMLESS_PTYPE = u.get_physical_type("dimensionless")
 
 
 def _get_rep_name(rep):
@@ -143,6 +146,11 @@ class PhaseSpacePosition:
             if not hasattr(pos, "unit"):
                 pos = u.Quantity(pos, u.one, copy=copy)
 
+            if pos.unit.physical_type not in {LENGTH_PTYPE, DIMLESS_PTYPE}:
+                raise u.UnitTypeError(
+                    "Position must have length or dimensionless units."
+                )
+
             # 3D coordinates get special treatment
             ndim = pos.shape[0]
             if ndim == 3:
@@ -174,6 +182,11 @@ class PhaseSpacePosition:
             if not hasattr(vel, "unit"):
                 vel = u.Quantity(vel, u.one, copy=copy)
 
+            if vel.unit.physical_type not in {SPEED_PTYPE, DIMLESS_PTYPE}:
+                raise u.UnitTypeError(
+                    "Velocity must have speed or dimensionless units."
+                )
+
             if ndim == 3:
                 name = _get_rep_name(pos)
                 Diff = coord.representation.DIFFERENTIAL_CLASSES[name]
@@ -187,6 +200,20 @@ class PhaseSpacePosition:
             raise ValueError(
                 "Position and velocity must have the same shape "
                 f"{pos.shape} vs. {vel.shape}"
+            )
+
+        if (
+            isinstance(pos, coord.CartesianRepresentation)
+            and pos.xyz.unit.physical_type == DIMLESS_PTYPE
+            and vel.d_xyz.unit.physical_type != DIMLESS_PTYPE
+        ) | (
+            isinstance(pos, coord.CartesianRepresentation)
+            and pos.xyz.unit.physical_type != DIMLESS_PTYPE
+            and vel.d_xyz.unit.physical_type == DIMLESS_PTYPE
+        ):
+            raise u.UnitTypeError(
+                "Position and velocity must both be dimensionless or both have "
+                "units with physical types."
             )
 
         from ..potential.frame import FrameBase
