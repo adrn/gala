@@ -106,7 +106,7 @@ class TestBarRotatingFrameIntegration:
 
         r_corot = res.x[0] * u.kpc
         with u.set_enabled_equivalencies(u.dimensionless_angles()):
-            v_circ = (Omega * r_corot * u.kpc).to(u.km / u.s)
+            v_circ = (Omega * r_corot).to(u.km / u.s)
 
         return gd.PhaseSpacePosition(
             pos=[r_corot.value, 0, 0] * r_corot.unit,
