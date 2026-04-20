@@ -42,11 +42,20 @@ Here is another recipe using modules that has been found to work on Flatiron Ins
 
 EXP also builds on Mac by installing the dependencies with Homebrew::
 
-    brew install cmake eigen@3 fftw hdf5 open-mpi git ninja llvm libomp
+    brew install cmake eigen@3 fftw hdf5 open-mpi git ninja libomp
 
-Note that building Gala-EXP requires OpenMP support, and the Apple Clang compiler shipped with MacOS does
-not support OpenMP. Therefore, the above command installs ``llvm`` and ``libomp``, which are the LLVM Clang
-compiler and OpenMP runtime.
+Note that building Gala-EXP requires OpenMP support. The Apple Clang compiler shipped
+with macOS does not support ``-fopenmp`` directly, but Gala's build system will
+automatically use the correct flags (``-Xpreprocessor -fopenmp`` with ``libomp`` from
+Homebrew). This works with both Apple Clang and LLVM Clang from Homebrew.
+
+By default, the build expects ``libomp`` at ``/opt/homebrew/opt/libomp``. If it is
+installed elsewhere, set the ``LIBOMP_PREFIX`` environment variable::
+
+    export LIBOMP_PREFIX=/path/to/libomp
+
+Installing ``llvm`` from Homebrew is not required for building Gala, but may be needed
+for building EXP itself.
 
 After installing the dependencies, one can download and build EXP on Linux with::
 

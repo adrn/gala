@@ -485,8 +485,21 @@ for ext in extensions:
             if extra_incl_flags is not None:
                 ext.extra_compile_args.extend(extra_incl_flags)
 
-            ext.extra_compile_args.extend(["-fopenmp"])
-            ext.extra_link_args.extend(["-fopenmp"])
+            # OpenMP support: macOS with Apple Clang requires different flags
+            if sys.platform == "darwin":
+                # Apple Clang doesn't support -fopenmp directly; use
+                # -Xpreprocessor -fopenmp with libomp from Homebrew. This also
+                # works with LLVM Clang from Homebrew.
+                libomp_prefix = os.environ.get(
+                    "LIBOMP_PREFIX", "/opt/homebrew/opt/libomp"
+                )
+                ext.include_dirs.append(os.path.join(libomp_prefix, "include"))
+                ext.library_dirs.append(os.path.join(libomp_prefix, "lib"))
+                ext.extra_compile_args.extend(["-Xpreprocessor", "-fopenmp"])
+                ext.extra_link_args.extend(["-lomp"])
+            else:
+                ext.extra_compile_args.extend(["-fopenmp"])
+                ext.extra_link_args.extend(["-fopenmp"])
 
             if "exp" not in ext.libraries:
                 ext.libraries.extend(
