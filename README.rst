@@ -1,5 +1,4 @@
-Gala
-====
+|logo|
 
 Gala is a Python package for Galactic and gravitational dynamics.
 
@@ -11,25 +10,26 @@ Documentation
 |Documentation Status|
 
 The documentation for ``Gala`` is hosted on `Read the docs
-<http://gala.adrian.pw>`_.
+<http://gala.adrian.pw>`__.
 
 Installation and Dependencies
 -----------------------------
 
-|conda| |PyPI|
+|PyPI|
 
-The easiest way to get Gala is to install with conda or pip. To install
-with conda, use the conda-forge channel::
+The easiest way to get Gala is to install with pip or uv.
 
-    conda install astro-gala --channel conda-forge
+Gala can be installed with ``pip`` (with ``uv`` or standalone)::
 
-To install with pip::
+   pip install gala
 
-    pip install astro-gala
+You can also add ``gala`` as a dependency to your environment with::
+
+   uv add gala
 
 See the `installation
 instructions <http://gala.adrian.pw/en/latest/install.html>`_ in the
-`documentation <http://gala.adrian.pw>`_ for more information.
+`documentation <http://gala.adrian.pw>`__ for more information.
 
 Attribution
 -----------
@@ -52,43 +52,31 @@ paper::
       journal = {The Journal of Open Source Software}
     }
 
-Please also consider citing the Zenodo DOI |DOI| as a software citation::
-
-    @misc{gala:zenodo,
-      author       = {Adrian Price-Whelan and
-                      Brigitta Sipocz and
-                      Daniel Lenz and
-                      Johnny Greco and
-                      Syrtis Major and
-                      Semyeong Oh and
-                      P. L. Lim},
-      title        = {adrn/gala: v1.0},
-      month        = apr,
-      year         = 2019,
-      doi          = {10.5281/zenodo.2638307},
-      url          = {https://doi.org/10.5281/zenodo.2638307}
-    }
+Please also cite the Zenodo DOI |DOI| as a software citation - see the
+`documentation
+<http://gala.adrian.pw/en/latest/index.html#citation-and-attribution>`_ for up
+to date citation information.
 
 License
 -------
 
 |License|
 
-Copyright 2013-2019 Adrian Price-Whelan and contributors.
+Copyright 2013-2026 Adrian Price-Whelan and contributors.
 
 ``Gala`` is free software made available under the MIT License. For details see
-the `LICENSE <https://github.com/adrn/gala/blob/master/LICENSE>`_ file.
+the `LICENSE <https://github.com/adrn/gala/blob/main/LICENSE>`_ file.
 
-.. |Coverage Status| image:: https://coveralls.io/repos/adrn/gala/badge.svg?branch=master&service=github
-   :target: https://coveralls.io/github/adrn/gala?branch=master
-.. |Build status| image:: http://img.shields.io/travis/adrn/gala/master.svg?style=flat
-   :target: http://travis-ci.org/adrn/gala
+.. |Coverage Status| image:: https://codecov.io/gh/adrn/gala/branch/main/graph/badge.svg
+   :target: https://codecov.io/gh/adrn/gala
+.. |Build status| image:: https://github.com/adrn/gala/actions/workflows/tests.yml/badge.svg
+   :target: https://github.com/adrn/gala/actions/workflows/tests.yml
 .. |License| image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
-   :target: https://github.com/adrn/gala/blob/master/LICENSE
-.. |PyPI| image:: https://badge.fury.io/py/astro-gala.svg
-   :target: https://badge.fury.io/py/astro-gala
-.. |conda| image:: https://anaconda.org/conda-forge/astro-gala/badges/version.svg
-   :target: https://anaconda.org/conda-forge/astro-gala
+   :target: https://github.com/adrn/gala/blob/main/LICENSE
+.. |PyPI| image:: https://badge.fury.io/py/gala.svg
+   :target: https://badge.fury.io/py/gala
+.. |conda| image:: https://anaconda.org/conda-forge/gala/badges/version.svg
+   :target: https://anaconda.org/conda-forge/gala
 .. |Documentation Status| image:: https://readthedocs.org/projects/gala-astro/badge/?version=latest
    :target: http://gala-astro.readthedocs.io/en/latest/?badge=latest
 .. |Affiliated package| image:: https://img.shields.io/badge/astropy-affiliated%20package-orange.svg
@@ -99,9 +87,12 @@ the `LICENSE <https://github.com/adrn/gala/blob/master/LICENSE>`_ file.
    :target: https://zenodo.org/badge/latestdoi/17577779
 .. |ASCL| image:: https://img.shields.io/badge/ascl-1707.006-blue.svg?colorB=262255
    :target: http://ascl.net/1707.006
+.. |logo| image:: https://gala.adrian.pw/en/latest/_static/Gala_Logo_RGB.png
+   :target: https://github.com/adrn/gala
+   :width: 400
 
 Contributors
 ------------
 
-See the `AUTHORS.rst <https://github.com/adrn/gala/blob/master/AUTHORS.rst>`_
+See the `AUTHORS.rst <https://github.com/adrn/gala/blob/main/AUTHORS.rst>`_
 file for a complete list of contributors to the project.

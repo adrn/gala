@@ -1,0 +1,218 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+      - "*.x"  # for bugfix branches, like v1.10.x
+    tags:
+      - "*"
+  pull_request:
+  schedule:
+    - cron: "0 10 * * 1"  # Mondays @ 6AM Eastern
+
+jobs:
+  check_skip_flags:
+    name: Check skip flags
+    runs-on: ubuntu-latest
+    outputs:
+      head-commit-message:
+        ${{ steps.get_head_commit_message.outputs.HEAD_COMMIT_MESSAGE }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.GITHUB_SHA }}
+      - name: Get head commit message
+        id: get_head_commit_message
+        run: echo "HEAD_COMMIT_MESSAGE=$(git show -s --format=%s)" >> "$GITHUB_OUTPUT"
+
+  tests:
+    name:
+      Python ${{ matrix.python-version }} on ${{ matrix.os }} with numpy ${{
+      matrix.numpy-version }}, no gsl ${{ matrix.gala-nogsl }}, deps ${{
+      matrix.python-extras }}, EXP ${{ matrix.gala-exp }}
+    runs-on: ${{ matrix.os }}
+    needs: check_skip_flags
+    if:
+      ${{ github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'skip tests') &&
+      !contains(needs.check_skip_flags.outputs.head-commit-message, '[skip tests]') }}
+    env:
+      # Run tests against a tagged EXP version, unless this is the devel branch or a PR into devel, in which case test against EXP devel
+      EXP_REF: ${{ (github.ref == 'refs/heads/devel' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'devel')) && 'devel' || 'v7.9.1' }}
+      MACOSX_DEPLOYMENT_TARGET: "15.0"
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.12", "3.13", "3.14"]
+        os: ["ubuntu-latest", "macos-latest"]
+        astropy-version: ["latest"]
+        numpy-version: ["latest"]
+        scipy-version: ["latest"]
+        gala-nogsl: ["0"]
+        python-extras: ["test"]
+        gala-exp: ["0"]
+        include:
+          - name: Oldest astropy, numpy, and scipy versions supported
+            os: ubuntu-latest
+            python-version: "3.11"
+            astropy-version: "6.0.1"
+            numpy-version: "1.26"
+            scipy-version: "1.12"
+            gala-nogsl: "0"
+            gala-exp: "0"
+            python-extras: "test"
+
+          - name: Install without GSL
+            os: ubuntu-latest
+            python-version: "3.13"
+            astropy-version: "latest"
+            numpy-version: "latest"
+            scipy-version: "latest"
+            gala-nogsl: "1"
+            gala-exp: "0"
+            python-extras: "test"
+
+          - name: With optional dependencies
+            os: ubuntu-latest # note: galpy install failed on macos here
+            python-version: "3.13"
+            astropy-version: "latest"
+            numpy-version: "latest"
+            scipy-version: "latest"
+            gala-nogsl: "0"
+            gala-exp: "0"
+            python-extras: "test,extra"
+
+          - name: With EXP
+            os: ubuntu-latest
+            python-version: "3.13"
+            astropy-version: "latest"
+            numpy-version: "latest"
+            scipy-version: "latest"
+            gala-nogsl: "0"
+            gala-exp: "1"
+            python-extras: "test"
+
+          - name: With EXP
+            os: macos-latest
+            python-version: "3.13"
+            astropy-version: "latest"
+            numpy-version: "latest"
+            scipy-version: "latest"
+            gala-nogsl: "0"
+            gala-exp: "1"
+            python-extras: "test"
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.0"
+
+      # For animation tests
+      - uses: FedericoCarboni/setup-ffmpeg@v3
+        if: ${{ !startsWith(matrix.os, 'mac') }}
+        continue-on-error: true
+        with:
+          # Not strictly necessary, but it may prevent rate limit
+          # errors especially on GitHub-hosted macos machines.
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          ffmpeg-version: "6.1.0"
+        id: setup-ffmpeg
+
+      # Mac:
+      - name: Setup Mac - GSL
+        if: startsWith(matrix.os, 'mac')
+        run: |
+          brew update
+          brew install gsl
+
+      # Ubuntu:
+      - name: Setup Linux - GSL
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install gsl-bin libgsl0-dev build-essential
+
+      - name: Clone EXP
+        if: matrix.gala-exp == '1'
+        uses: actions/checkout@v6
+        with:
+          repository: EXP-code/EXP
+          ref: ${{ env.EXP_REF }}
+          submodules: recursive
+          path: EXP
+
+      - name: Install EXP dependencies (Linux)
+        if: runner.os == 'Linux' && matrix.gala-exp == '1'
+        run: |
+          sudo apt-get install -y libeigen3-dev libfftw3-dev libopenmpi-dev libomp-dev libhdf5-dev
+
+      - name: Install EXP dependencies (Mac)
+        if: startsWith(matrix.os, 'mac') && matrix.gala-exp == '1'
+        run: |
+          brew install eigen@3 fftw open-mpi hdf5 llvm libomp flang
+
+          echo CC=mpicc >> $GITHUB_ENV
+          echo CXX=mpicxx >> $GITHUB_ENV
+          echo FC=mpifort >> $GITHUB_ENV
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+          echo OMPI_CC="$(brew --prefix llvm)/bin/clang" >> $GITHUB_ENV
+          echo OMPI_CXX="$(brew --prefix llvm)/bin/clang++" >> $GITHUB_ENV
+          echo OMPI_FC="$(brew --prefix flang)/bin/flang" >> $GITHUB_ENV
+          echo PKG_CONFIG_PATH="$(brew --prefix eigen@3)/share/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          echo CPPFLAGS="-I$(brew --prefix eigen@3)/include $CPPFLAGS" >> $GITHUB_ENV
+          echo CMAKE_PREFIX_PATH="$(brew --prefix eigen@3)" >> $GITHUB_ENV
+
+          # c++ library path is workaround for clang bug https://github.com/llvm/llvm-project/issues/155531
+          sdkroot=$(xcrun --show-sdk-path)
+          echo "CXXFLAGS=-nostdinc++ -isystem $sdkroot/usr/include/c++/v1 -isystem $sdkroot/usr/include" >> $GITHUB_ENV
+
+      - name: Build EXP
+        if: matrix.gala-exp == '1'
+        uses: ./.github/actions/build-exp
+
+      - name: Install package and dependencies
+        run: |
+          uv pip install --system -ve .[${{ matrix.python-extras }}]
+        env:
+          GALA_NOGSL: ${{ matrix.gala-nogsl }}
+
+      - name: Update numpy version if testing min version
+        if: matrix.numpy-version != 'latest'
+        run: |
+          uv pip install --system numpy~=${{ matrix.numpy-version }}
+
+      - name: Update scipy version if testing min version
+        if: matrix.scipy-version != 'latest'
+        run: |
+          uv pip install --system scipy~=${{ matrix.scipy-version }}
+
+      - name: Update astropy version if testing min version
+        if: matrix.astropy-version != 'latest'
+        run: |
+          uv pip install --system astropy~=${{ matrix.astropy-version }}
+
+      - name: Run tests
+        env:
+          GALA_FORCE_EXP_TEST: ${{ matrix.gala-exp }}
+          GALA_FORCE_PYEXP_TEST: ${{ matrix.gala-exp }}
+          OMP_NUM_THREADS: 1
+        run: |
+          if [[ "${{ matrix.gala-exp }}" == "1" ]]; then
+            uv run pytest tests/potential/potential/test_exp.py -n auto -ra --cov --cov-report=xml --cov-report=term-missing
+          else
+            uv run pytest -n auto -ra --cov --cov-report=xml --cov-report=term-missing --durations=20
+          fi
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v6.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

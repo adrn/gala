@@ -1,14 +1,573 @@
-1.2 (unreleased)
+1.12.0 (unreleased)
+===================
+
+New Features
+------------
+
+- Added support for using the ``TimeInterpolatedPotential`` with the
+  ``MN3ExponentialDiskPotential`` class.
+
+Bug fixes
+---------
+
+- Fixed a bug in ``TimeInterpolatedPotential`` that caused errors when trying to pickle
+  the object (or use it within a multiprocessing or MPI pool).
+
+- Fixed a bug with ``TimeInterpolatedPotential`` where having two instances in the same
+  ``CompositePotential`` would cause incorrect results.
+
+- Fixes a bug that would allow ``PhaseSpacePosition`` and ``Orbit`` objects to accept
+  invalid position or velocity units and silently pass these through to orbit
+  integration later.
+
+API changes
+-----------
+
+Other
+-----
+
+
+1.11.0 (2025-12-10)
+===================
+
+New Features
+------------
+
+- A C++ compiler is now required to build Gala from source.
+- Orbit integration performance is improved by changing the way vectorization over
+  multiple orbits is handled internally.
+- Added a new ``gala.potential.SphericalSplinePotential`` class for representing
+  generic spherical potentials with spline interpolation in either potential, density,
+  or mass enclosed.
+- Added coordinate symmetry support for potential classes: spherical potential methods
+  can now be evaluated using ``r=`` and cylindrical potentials using ``R=`` and ``z=``
+  instead of requiring full 3D Cartesian coordinates.
+- Added a new ``gala.potential.TimeInterpolatedPotential`` class that enables wrapping
+  any potential class to support time-dependent parameters through interpolation.
+- Unit systems in potential classes can now be specified using string names
+  (e.g., ``'galactic'``, ``'dimensionless'``, etc.) when initializing potential
+  instances or when replacing units with ``.replace_units()``.
+- C-level integrator arguments can now be specified when running a mock stream
+  simulation through the ``Integrator_kwargs`` in ``MockStreamGenerator.run()``.
+- Added support for using the Leapfrog integrator with ``MockStreamGenerator`` (pass
+  ``Integrator=gi.LeapfrogIntegrator`` in ``MockStreamGenerator.run()``).
+- Integrators can now be specified using lowercase string names (e.g., 'leapfrog',
+  'dopri853', 'ruth4') in ``Hamiltonian.integrate_orbit()``,
+  ``DirectNBody.integrate_orbit()``, and ``MockStreamGenerator.run()``.
+- Added a new method ``MockStream.rotate_to_progenitor_plane()`` that transforms a mock
+  stream into a new coordinate system where the progenitor's orbital plane is aligned
+  with the xy-plane, the stream and progenitor are centered at (0, 0), and the stream
+  primarily extends in the x direction (leading tail at positive x and trailing tail at
+  negative x).
+- EXP: constructing potentials from pyEXP objects is now supported via
+  ``gala.potential.PyEXPPotential``.
+- EXP: force evaluation with ``gala.potential.EXPPotential`` should now be much faster.
+
+Bug fixes
+---------
+
+- ``gala.potential.EXPPotential`` now propagates C++ exceptions to Python.
+- Fixed a deprecation warning with astropy>=v7.1.
+- Fixed a matplotlib warning when plotting an orbit with ``plot()`` and
+  ``autolim=True`` related to using ``aspect="equal"``.
+- ``replicate()`` and ``replace_units`` now work with ``EXPPotential``.
+- Fixed incorrect results from ``MockStreamGenerator.run()`` with an
+  ``n_particles`` array.
+- Fixed a bug in ``MockStreamGenerator.run()`` when using ``DirectNBody`` with
+  ``output_filename`` and more bodies than stream particles, which caused a "TypeError:
+  Can't broadcast" error.
+- Fixed a bug that caused ``GreatCircleICRSFrame`` to throw an error about a missing
+  attribute ``_R`` when transforming to/from the frame.
+
+API changes
+-----------
+
+- Added ``copy`` kwarg to ``gala.dynamics.PhaseSpacePosition``,
+  ``gala.dynamics.Orbit``, and ``gala.dynamics.MockStream``.
+- The `integrate_orbit()` method now validates that the input initial conditions have
+  the correct shape given the dimensionality of the potential.
+- Removed custom ``ImmutableDict`` implementation in favor of
+  ``types.MappingProxyType``.
+- Added new keyword arguments ``ndim`` and ``convert`` to ``PotentialParameter`` to
+  control the expected number of dimensions for array parameters and to specify a
+  conversion function for parameter values, respectively.
+- Removed deprecated ``gala.dynamics.find_actions`` in favor of ``find_actions_o2gf``.
+- Removed deprecated ``radial=True`` kwarg from ``Orbit.estimate_period()``.
+- Removed deprecated ``value()`` method from potential clases in favor of using the
+  ``__call__()`` method or ``energy()``.
+- Removed deprecated ``to_galpy_potential()`` method from potential classes in favor of
+  using ``as_interop("galpy")``.
+- The Gala Milky Way potential classes (``MilkyWayPotential`` and
+  ``MilkyWayPotential2022``) have been combined into a single ``MilkyWayPotential``
+  class with a ``version=`` kwarg to specify the desired version (e.g., ``'v1'``,
+  ``'v2'``, etc.). The old classes are deprecated and will be removed in a future
+  release.
+
+Build changes
+-------------
+- EXP: the instructions to build Gala against EXP have changed. Only the EXP install
+  dir is now used.
+
+Other
+-----
+
+- Refactored package layout to move all source code into a ``src/`` directory, and move
+  all tests into a top-level ``tests/`` directory.
+
+
+1.10.1 (2025-08-21)
+===================
+
+Bug fixes
+---------
+
+- Support for ``gala.potential.EXPPotential`` in composite potentials is fixed.
+- File path handling in ``gala.potential.EXPPotential`` is improved.
+
+
+1.10.0 (2025-07-31)
+===================
+
+New Features
+------------
+
+- Added a new ``SimulationUnitSystem`` class for handling unit systems in
+  simulations, especially for N-body simulations.
+
+- Added options ``error_if_fail`` and ``log_output`` to integrator kwargs for the
+  dop853 integrator, along with some other arguments that are passed directly to the C
+  integrator (e.g., ``nstiff``). ``error_if_fail`` controls whether Python will raise
+  an error if the C integrator fails to integrate an orbit, and ``log_output`` will log
+  the output of the integrator (primarily for errors) to stdout. See the docstring for `
+  ``gala.integrate.DOP853Integrator`` for more information about all of the available
+  options for the integrator.
+
+- You may now specify a ``gala.units.UnitSystem`` instance to control the units of
+  plotted components when using ``gala.dynamics.Orbit.plot()`` or
+  ``gala.dynamics.PhaseSpacePosition.plot()``.
+
+- Added the ability to specify integer or string (i.e. non-Quantity) potential
+  parameters.
+
+- Added ``gala.potential.EXPPotential`` for using basis function expansion potentials
+  from EXP.
+
+- Added methods ``NFWPotential.M200()``, ``NFWPotential.R200()``,
+  ``NFWPotential.c200()`` to compute the characteristic mass, radius, and concentration
+  of an NFW instance.
+
+Bug fixes
+---------
+
+- Fixed a longstanding issue with orbit integration where there was a maximum number of
+  orbits that could be integrated simultaneously. Now, arrays are allocated dynamically
+  and there is no limit.
+
+- Similarly, fixed a longstanding issue that restricted the number of potential
+  components that could be added to a composite potential. Now, arrays are allocated
+  dynamically and there is no limit.
+
+- Some versions of Agama do not accept astropy.units objects as input to setUnits. Gala
+  now converts to floats to set the unit scales in agama when converting a potential to
+  Agama (using ``potential.as_interop("agama")``).
+
+- Fixed a bug in ``MockStreamGenerator.run()`` where passing an array of length 1 for
+  the progenitor mass would lead to a silent failure of the stream generation.
+
+- Fixed the normalization of the ``PowerLawCutoffPotential`` potential energy so that it
+  goes to zero at infinity.
+
+API changes
+-----------
+
+- Gala has ``save_all`` and ``store_all`` flags for saving all orbits at every
+  timestep. The ``store_all`` flag is now deprecated and will be removed in a future
+  release. The ``save_all`` flag should be used instead.
+
+Other
+-----
+
+- Added a flag to skip rotating and/or shifting input coordinates when computing
+  potential, density, gradient, and hessian values. This leads to some free performance
+  improvements in existing code!
+
+- Refactored the way integration is done with the DOP853 integrator. The integrator now
+  uses the dense output feature (which uses interpolation) to compute the output values
+  at the requested times. This is a significant performance improvement for large
+  numbers of orbits, and also allows for much faster results when integrating over long
+  timescales.
+
+1.9.1 (2024-08-26)
+==================
+
+- This release fixes the wheel builds for linux and mac and no new features or bug fixes
+  are included.
+
+
+1.9.0 (2024-08-22)
+==================
+
+New Features
+------------
+
+- Added an option to specify a multiprocessing or parallel processing pool when
+  computing basis function coefficients for the SCF potential from discrete particles.
+
+- Added the Burkert potential as a built-in cpotential.
+
+- Added a method to generate the Burkert potential with just r0 as an input
+
+- Added new particle spray method by Chen et al. (2024).
+
+Bug fixes
+---------
+
+- Fixed the parameter values in the ``FardalStreamDF`` class to be consistent with
+  the values used in Fardal et al. (2015). Added an option ``gala_modified`` to the
+  class to enable using the new (correct) parameter values, but the default will
+  continue to use the Gala modified values (for backwards compatibility).
+
+- Improved internal efficiency of ``DirectNBody``.
+
+- Fixed a bug in which passing a ``DirectNBody`` instance to the ``MockStreamGenerator.
+  run()`` would fail if ``save_all=False`` in the nbody instance.
+
+- Fixed an incompatibility with Astropy v6.1 and above where ``_make_getter`` was
+  removed.
+
+
+API changes
+-----------
+
+- Deprecated ``gala.integrate.Integrator.run`` for
+  ``gala.integrate.Integrator.__call__``. The old method will raise a warning
+  and will be removed in a future release.
+
+
+1.8.1 (2023-12-31)
+==================
+
+- New release to fix upload to PyPI from GitHub Actions and invalid pin in pyia
+  dependency.
+
+
+1.8 (2023-12-23)
 ================
 
 New Features
 ------------
 
+- Added a ``.guiding_center()`` method to ``PhaseSpacePosition`` and ``Orbit`` to
+  compute the guiding center radius.
+
+- Added a way to convert Gala potential instances to Agama potential instances.
+
 Bug fixes
 ---------
 
+- Fixed a bug with the ``plot_contours()`` and ``plot_density_contours()`` methods so
+  that times specified are now passed through correctly to the potential methods.
+
+- Fixed the YAML output to use ``default_flow_style=None`` for serializing potential
+  objects, which leads to a more efficient array output.
+
+- ``scf.compute_coeffs_discrete`` now raises an error if GSL is not enabled rather than
+  silently returning zeros
+
+- ``SCFPotential`` will now work with IO functions (``save`` & ``load``)
+
+- Fixes compatibility with Astropy v6.0
+
 API changes
 -----------
+
+- Changed the way potential interoperability is done with other Galactic dynamics
+  packages (Agama, galpy, etc.). It is now handled by the ``Potential.as_interop()``
+  method on all potential class instances.
+
+
+1.7.1 (2023-08-05)
+==================
+
+- Switched build system to use pyproject.toml instead of setup.cfg
+
+1.7 (2023-08-05)
+================
+
+New Features
+------------
+
+- Added a method to export the internal components of an
+  ``MN3ExponentialDiskPotential()`` to three ``MiyamotoNagaiPotential`` instances.
+
+- Added a new Milky Way potential model: ``MilkyWayPotential2022``, which is based on
+  updated measurements of the disk structure and circular velocity curve of the disk.
+
+- Added the ability to use leapfrog integration within the ``DirectNBody`` integrator.
+
+- Added a new coordinate frame for the Vasiliev+2021 Sagittarius stream coordinate
+  system, ``SagittariusVasiliev21``.
+
+Bug fixes
+---------
+
+- Fixed a bug with the ``OrphanKoposov19()`` coordinate frame that caused the wrong
+  rotation matrix to be returned.
+
+- Fixed an ``AstropyDeprecationWarning`` resulting from the use of ``override__dir__``.
+
+- Fixed a bug in ``Orbit.estimate_period()`` that would cause the method to fail with a
+  ``UnitsError`` if one orbit returned a nan value for the period.
+
+- Fixed a bug when compiling the ``dop853`` integrator.
+
+API changes
+-----------
+
+- Refactored the way ``GreatCircleICRSFrame()`` works to be more consistent and
+  unambiguous with coordinate frame definitions. The frame now requires an input pole
+  and origin, but can be initialized in old ways using the ``from_*()`` class methods
+  (e.g., with ``pole`` and ``ra0`` values).
+
+
+1.6.1 (2022-11-07)
+==================
+
+Bug fixes
+---------
+
+- Properly incorporate commits related to ``SCFInterpolatedPotential``.
+
+
+1.6 (2022-11-07)
+================
+
+New Features
+------------
+
+- Added a ``.replicate()`` method to Potential classes to enable copying
+  potential objects but modifying some parameter values.
+
+- Added a new potential class ``MN3ExponentialDiskPotential`` based on Smith et
+  al. (2015): an approximation of the potential generated by a double
+  exponential disk using a sum of three Miyamoto-Nagai disks.
+
+- The ``Orbit.estimate_period()`` method now returns period estimates in all
+  phase-space components instead of just the radial period.
+
+- Added a ``store_all`` flag to the integrators to control whether to save
+  phase-space information for all timesteps or only the final timestep.
+
+- Added a ``plot_rotation_curve()`` method to all potential objects to make a 1D plot
+  of the circular velocity curve.
+
+- Added a new potential for representing multipole expansions ``MultipolePotential``.
+
+- Added a new potential ``CylSplinePotential`` for flexible representation of
+  axisymmetric potentials by allowing passing in grids of potential values
+  evaluated grids of R, z values (like the ``CylSpline`` potential in Agama).
+
+- Added a ``show_time`` flag to ``Orbit.animate()`` to control whether to show the
+  current timestep.
+
+- Changed ``Orbit.animate()`` to allow for different ``marker_style`` and
+  ``segment_style`` options for individual orbits by passing a list of dicts instead
+  of just a dict.
+
+- Added an experimental new class ``SCFInterpolatedPotential`` that accepts a time
+  series of coefficients and interpolates the coefficient values to any evaluation time.
+
+Bug fixes
+---------
+
+- Fixed a bug where the ``NFWPotential`` energy was nan when evaluating at the
+  origin, and added tests for all potentials to check for a finite value of the
+  potential at the origin (when expected).
+
+- Fixed a bug in ``NFWPotential.from_M200_c()`` where the incorrect scale radius
+  was computed (Cython does not always use Python 3 division rules for dividing
+  integers!).
+
+- Fixed a bug in the (C-level/internal) estimation of the 2nd derivative of the
+  potential, used to generate mock streams, that affects non-conservative force
+  fields.
+
+API changes
+-----------
+
+- The ``Orbit.estimate_period()`` method now returns period estimates in all
+  phase-space components instead of just the radial period.
+
+
+1.5 (2022-03-03)
+================
+
+New Features
+------------
+
+- Implemented a basic progress bar for integrating orbits and mock streams. Pass
+  ``progress=True`` with ``Integrator_kwargs`` when calling
+  ``.integrate_orbit()``, or pass ``progress=True`` to
+  ``MockStreamGenerator.run()``.
+
+- Added a new symplectic integrator: The Ruth 4th-order integrator, implemented
+  with the class ``Ruth4Integrator``.
+
+- Added a ``Orbit.animate()`` method to make ``matplotlib`` animations of
+  orbits.
+
+- Modified ``Orbit._max_helper()`` to use a parabola instead of interpolation
+
+- Added functionality to transform from action-angle coordinates to Cartesian
+  position velocity coordinates in the Isochrone potential:
+  ``gala.dynamics.actionangle.isochrone_aa_to_xv()``.
+
+- Added a new method on ``DirectNBody`` to enable computing the instantaneous,
+  mutual, N-body acceleration vectors ``DirectNBody.acceleration()``.
+
+Bug fixes
+---------
+
+- Fixed ``find_actions()`` to accept an ``Orbit`` instance with multiple orbits.
+
+- Fixed a bug that appeared when trying to release all mock stream particles at
+  the same timestep (e.g., pericenter).
+
+- Fixed a bug where time arrays returned from ``parse_time_specification``
+  could come back with a non-float64 dtype.
+
+- Fixed a bug with ``DirectNBody`` with composite potentials where only the
+  first potential component would move as a body / particle.
+
+- Fixed a bug with the Python implementation of Leapfrog integration
+  ``LeapfrogIntegrator`` that led to incorrect orbits for non-conservative
+  systems that were integrated backwards (i.e. with ``dt<<0``).
+
+- Fixed a bug with the ``FlattenedNFW`` potential class in which the energy and
+  gradient functions were not using the inputted flattening (``c`` value) and
+  were instead defaulting to the spherical NFW model.
+
+- Enabled pickling ``Frame`` instances and therefore now ``Hamiltonian``
+  instances.
+
+- Fixed a bug with ``autolim=True`` during Orbit plotting where the axes limits
+  were only dependent on the most recent Orbit rather than all that were present
+  on the axis
+
+API changes
+-----------
+
+- Renamed ``gala.dynamics.actionangle.isochrone_to_aa()`` to
+  ``gala.dynamics.actionangle.isochrone_xv_to_aa()``
+
+- Renamed ``gala.dynamics.actionangle.find_actions()`` to
+  ``gala.dynamics.actionangle.find_actions_o2gf()``
+
+
+1.4.1 (2021-07-01)
+==================
+
+- Fixed a RST bug that caused the README to fail to render.
+
+
+1.4 (2021-07-01)
+================
+
+New Features
+------------
+
+- ``UnitSystem`` objects can now be created with custom units passed in as
+  Astropy ``Quantity`` objects.
+
+- Added functionality to convert Gala potential objects to Galpy potential
+  objects, or to create Gala potential objects from a pre-existing Galpy
+  potential.
+
+- Added a ``plot_3d()`` method for ``Orbit`` objects to make 3D plots of the
+  orbital trajectories.
+
+Bug fixes
+---------
+
+- Fixed a bug when calling ``orbit.norbits`` when the representation is not
+  cartesian.
+
+- Fixed a bug with ``GreatCircleICRSFrame.from_endpoints()`` that caused an
+  error when the input coordinates had associated velocity data.
+
+- Fixed a bug with the ``JaffePotential`` density evaluation, which was too low
+  by a factor of two.
+
+- Implemented a density function for ``LogarithmicPotential``, which was
+  missing previously.
+
+- The analytic action-angle and ``find_actions()`` utilities now correctly
+  return frequencies with angular frequency units rather than frequency.
+
+API changes
+-----------
+
+- Removed the deprecated ``gala.coordinates.get_galactocentric2019()`` function.
+
+
+1.3 (2020-10-27)
+================
+
+New Features
+------------
+
+- Added a new ``.to_sympy()`` classmethod for the ``Potential`` classes to
+  return a sympy expression and variables.
+
+- Added a method, ``.to_galpy_orbit()``, to convert Gala ``Orbit`` instances to
+  Galpy ``Orbit`` objects.
+
+- The ``NFWPotential`` can now be instantiated via a new classmethod:
+  ``NFWPotential.from_M200_c()``, which accepts a virial mass and a
+  concentration.
+
+- Added a fast way of computing the Staeckel focal length, ``Delta``, using
+  Gala potential classes, ``gala.dynamics.get_staeckel_fudge_delta``
+
+Bug fixes
+---------
+
+- Fixed a bug with ``Potential`` classes ``.replace_units()`` so that classes
+  with dimensionless unit systems cannot be replaced with physical unit systems,
+  and vice versa.
+
+- Implemented Hessian functions for most potentials.
+
+- Fixed ``.to_latex()`` to properly return a latex representation of the
+  potential. This uses the new ``.to_sympy()`` method under the hood.
+
+- Potential classes now validate that input positions have dimensionality that
+  matches what is expected for each potential.
+
+API changes
+-----------
+
+- Changed the way new ``Potential`` classes are defined: they now rely on
+  defining class-level ``PotentialParameter`` objects, which reduces a
+  significant amount of boilerplate code in the built-in potentials.
+
+
+1.2 (2020-07-13)
+================
+
+- Gala now builds on Windows!
+
+New Features
+------------
+
+- Added a coordinate frame for the Pal 13 stream, ``Pal13Shipp20``.
+
+Bug fixes
+---------
+
+- Fixed a bug with the mock stream machinery in which the stream would not
+  integrate for the specified number of timesteps if an array of
+  ``n_particles`` was passed in with 0's near the end of the array.
 
 
 1.1 (2020-03-08)
@@ -32,7 +591,7 @@ Bug fixes
 ---------
 - Fixed an issue that led to incorrect ``GreatCircleICRSFrame`` transformations
   when no ``ra0`` was provided.
-- Fixed a bug in the ``OrphanKoposov19`` tranasformation.
+- Fixed a bug in the ``OrphanKoposov19`` transformation.
 
 API changes
 -----------

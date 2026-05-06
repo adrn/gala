@@ -1,0 +1,136 @@
+name: Wheels
+on:
+  release:
+    types:
+      - published
+      - edited
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+      - "*.x"  # for bugfix branches, like v1.10.x
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_nix_wheels:
+    name: Build wheels on ${{ matrix.os }} - ${{ matrix.python[1] }}
+    runs-on: ${{ matrix.os }}
+    if:
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'skip wheels')
+    strategy:
+      fail-fast: false
+      matrix:
+        # Building wheels on linux takes too much time: split wheels into multiple runs
+        python:
+          - ["1", "cp311-*"]
+          - ["2", "cp312-*"]
+          - ["3", "cp313-*"]
+          - ["4", "cp314-*"]
+        os:
+          - "macos-15"
+          - "ubuntu-latest"
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v3.4.1
+        env:
+          CIBW_ARCHS_LINUX: "x86_64"
+          # Build arm64 only on macos-15 (arm64 runner). Cross-compiling x86_64
+          # on an arm64 runner causes delocate to bundle the wrong-arch GSL dylib,
+          # producing broken wheels. Intel Mac users should build from source.
+          CIBW_ARCHS_MACOS: "arm64"
+          CIBW_BUILD: ${{ matrix.python[1] }}
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
+          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
+          CIBW_SKIP: "*-win32 *musllinux* pp* *i686"
+          CIBW_BEFORE_ALL_LINUX:
+            dnf install -y gsl gsl-devel || apt-get install gsl-bin libgsl0-dev
+          CIBW_BEFORE_ALL_MACOS: brew install gsl pipx
+          CIBW_ENVIRONMENT: "GALA_FORCE_GSL=1"
+          MACOSX_DEPLOYMENT_TARGET: 15.0
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels-${{ matrix.os }}-${{ matrix.python[0] }}
+          path: ./wheelhouse/*.whl
+
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        name: Install Python
+        with:
+          python-version: "3.12"
+
+      - name: Build sdist
+        run: |
+          sudo apt-get update
+          sudo apt-get install gsl-bin libgsl0-dev
+          pip install build
+          python -m build -s .
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels-sdist
+          path: dist/*.tar.gz
+
+  test_upload_pypi:
+    needs: [build_nix_wheels, build_sdist]
+    # Only test upload to pypi on push to main:
+    environment: release
+    permissions:
+      id-token: write
+    runs-on: ubuntu-latest
+    # if:
+    #   github.repository_owner == 'adrn' && github.event_name == 'push' && github.ref ==
+    #   'refs/heads/main'
+    if:
+      false  # disable test upload to Test PyPI for now
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: wheels*
+          path: dist
+          merge-multiple: true
+
+      - name: Upload package to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          verbose: true
+
+  upload_pypi:
+    needs: [build_nix_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    if:
+      github.event_name == 'release' && (github.event.action == 'published' ||
+      github.event.action == 'edited')
+    environment:
+      name: release
+      url: https://pypi.org/p/gala
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: wheels*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

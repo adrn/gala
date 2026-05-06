@@ -1,6 +1,0 @@
-numpy>=1.17
-scipy>=1
-astropy>=4
-cython>=0.29
-pyyaml
-h5py

@@ -1,0 +1,23 @@
+{
+  "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+  "@type": "SoftwareSourceCode",
+  "name": "Gala: Galactic astronomy and gravitational dynamics",
+  "description": "Gala is an Astropy-affiliated Python package for galactic dynamics. Python enables wrapping low-level languages (e.g., C) for speed without losing flexibility or ease-of-use in the user-interface. The API for Gala was designed to provide a class-based and user-friendly interface to fast (C or Cython-optimized) implementations of common operations such as gravitational potential and force evaluation, orbit integration, dynamical transformations, and chaos indicators for nonlinear dynamics. Gala also relies heavily on and interfaces well with the implementations of physical units and astronomical coordinate systems in the Astropy package (astropy.units and astropy.coordinates).",
+  "identifier": "https://dx.doi.org/10.21105/joss.00388",
+  "author": [
+    {
+      "@type": "Person",
+      "givenName": "Adrian",
+      "familyName": "Price-Whelan",
+      "@id": "http://orcid.org/0000-0003-0872-7098"
+    }
+  ],
+  "citation": "https://ui.adsabs.harvard.edu/abs/2017JOSS....2..388P/abstract",
+  "relatedLink": [
+    "https://gala.adrian.pw/",
+    "https://zenodo.org/record/4159870"
+  ],
+  "codeRepository": ["https://github.com/adrn/gala"],
+  "version": "v1.3",
+  "license": "https://github.com/adrn/gala/blob/main/LICENSE"
+}

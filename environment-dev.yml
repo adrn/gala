@@ -1,8 +1,0 @@
-name: gala-dev
-
-dependencies:
-  - python>=3.7
-  - gsl
-  - pip
-  - pip:
-    - -r requirements.txt

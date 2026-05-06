@@ -8,32 +8,36 @@ __pycache__
 # Ignore .c files by default to avoid including generated code. If you want to
 # add a non-generated .c extension, use `git add -f filename.c`.
 # *.c
-gala/_compiler.c
-gala/dynamics/lyapunov/dop853_lyapunov.c
-gala/dynamics/mockstream/_coord.c
-gala/dynamics/mockstream/mockstream.c
-gala/dynamics/mockstream/df.c
-gala/integrate/cyintegrators/dop853.c
-gala/integrate/cyintegrators/leapfrog.c
-gala/potential/frame/builtin/frames.c
-gala/potential/frame/cframe.c
-gala/potential/hamiltonian/chamiltonian.c
-gala/potential/potential/builtin/cybuiltin.c
-gala/potential/potential/ccompositepotential.c
-gala/potential/potential/cpotential.c
-gala/potential/scf/bfe_class.c
-gala/potential/scf/computecoeff.c
-gala/potential/scf/bfe.c
-gala/extra_compile_macros.h
-gala/cconfig.c
-gala/dynamics/nbody/nbody.c
+src/gala/_compiler.c
+src/gala/dynamics/lyapunov/dop853_lyapunov.cpp
+src/gala/dynamics/mockstream/_coord.cpp
+src/gala/dynamics/mockstream/mockstream.cpp
+src/gala/dynamics/mockstream/df.cpp
+src/gala/integrate/cyintegrators/dop853.cpp
+src/gala/integrate/cyintegrators/leapfrog.cpp
+src/gala/integrate/cyintegrators/ruth4.cpp
+src/gala/potential/frame/builtin/frames.cpp
+src/gala/potential/frame/cframe.cpp
+src/gala/potential/hamiltonian/chamiltonian.cpp
+src/gala/potential/potential/builtin/cybuiltin.cpp
+src/gala/potential/potential/builtin/cyexp.cpp
+src/gala/potential/potential/builtin/cytimeinterp.cpp
+src/gala/potential/potential/ccompositepotential.cpp
+src/gala/potential/potential/cpotential.cpp
+src/gala/potential/scf/bfe_class.cpp
+src/gala/potential/scf/computecoeff.cpp
+src/gala/potential/scf/bfe.cpp
+src/gala/extra_compile_macros.h
+src/gala/cconfig.cpp
+src/gala/dynamics/nbody/nbody.cpp
+src/gala/_version.py
 
 # Other generated files
-*/version.py
-*/cython_version.py
 htmlcov
-.coverage
+.coverage*
+coverage.xml
 MANIFEST
+.codspeed
 
 # Sphinx
 docs/api
@@ -67,11 +71,8 @@ pip-wheel-metadata/
 # Other
 .*.swp
 *~
+.hypothesis
+node_modules
 
 # Mac OSX
 .DS_Store
-
-# Custom
-notebooks
-plots
-scripts

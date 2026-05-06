@@ -18,4 +18,3 @@ API
 
 .. automodapi:: gala.util
     :no-inheritance-diagram:
-

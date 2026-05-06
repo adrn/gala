@@ -39,6 +39,7 @@ help:
 clean:
 	-rm -rf $(BUILDDIR)
 	-rm -rf api
+	-rm -rf tutorials/*.ipynb
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
@@ -132,3 +133,17 @@ doctest:
 	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR)/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in $(BUILDDIR)/doctest/output.txt."
+
+exectutorials:
+	jupytext --to ipynb --execute tutorials/*.py
+	@echo "Finished executing tutorial notebooks. Look at the executed " \
+	      "notebooks in tutorials/"
+
+execsupporting:
+	jupytext --to ipynb --execute supporting/*.py
+	@echo "Finished executing tutorial notebooks. Look at the executed " \
+	      "notebooks in supporting/"
+
+animations:
+	python _static_animations.py
+	@echo "Finished generating animation files"
