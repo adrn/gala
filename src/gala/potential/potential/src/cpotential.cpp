@@ -215,8 +215,8 @@ void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
     // qp: shape [p->n_dim, N]
     // grad: shape [p->n_dim, N]
 
-    double *qp_trans = NULL;
-    double *tmp_grad = NULL;
+    double qp_trans[(p->n_dim) * N];
+    double tmp_grad[(p->n_dim) * N];
     bool need_transform = false;
 
     // Check if any components need transformation
@@ -227,11 +227,6 @@ void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
         }
     }
 
-    // Allocate temporary arrays if transformation is needed
-    if (need_transform) {
-        qp_trans = (double*)malloc(p->n_dim * N * sizeof(double));
-        tmp_grad = (double*)malloc(p->n_dim * N * sizeof(double));
-    }
 
     // Initialize gradient array
     // TODO: may need to remove this for n-body-style accumulations
@@ -279,11 +274,6 @@ void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
         }
     }
 
-    // Free temporary arrays
-    if (need_transform) {
-        free(qp_trans);
-        free(tmp_grad);
-    }
 }
 
 
