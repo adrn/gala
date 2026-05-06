@@ -233,7 +233,7 @@ void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
             // Initialize temporary arrays
     	    memset(qp_trans, 0, sizeof(qp_trans));
 	    memset(tmp_grad, 0, sizeof(tmp_grad));
-            
+
 
             // Apply shift and rotation to all particles
             apply_shift_rotate_N(
