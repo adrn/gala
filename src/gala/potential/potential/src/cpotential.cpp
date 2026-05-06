@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 #include "cpotential.h"
 #include "src/vectorization.h"
 
@@ -217,15 +218,6 @@ void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
 
     double qp_trans[(p->n_dim) * N];
     double tmp_grad[(p->n_dim) * N];
-    bool need_transform = false;
-
-    // Check if any components need transformation
-    for (size_t i = 0; i < p->n_components; i++) {
-        if (p->do_shift_rotate[i] != 0) {
-            need_transform = true;
-            break;
-        }
-    }
 
 
     // Initialize gradient array
@@ -239,10 +231,9 @@ void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
             (p->gradient)[i](t, (p->parameters)[i], qp, p->n_dim, N, grad, (p->state)[i]);
         } else {
             // Initialize temporary arrays
-            for (size_t j = 0; j < p->n_dim * N; j++) {
-                qp_trans[j] = 0.;
-                tmp_grad[j] = 0.;
-            }
+    	    memset(qp_trans, 0, sizeof(qp_trans));
+	    memset(tmp_grad, 0, sizeof(tmp_grad));
+            
 
             // Apply shift and rotation to all particles
             apply_shift_rotate_N(
