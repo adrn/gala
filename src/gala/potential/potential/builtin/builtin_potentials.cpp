@@ -2277,6 +2277,246 @@ double burkert_density(double t, double *pars, double *q, int n_dim, void *state
     return pars[1] / ((1 + x) * (1 + x * x));
 }
 
+#if USE_GSL == 1
+
+// --- Helper functions for Einasto profiles ---
+
+static inline double _s_of_r(double r, double r_m2, double alpha) {
+    // s(r) = (2/α) (r/r_-2 )^α
+    if (r <= 0.0) return 0.0;
+    return (2.0 / alpha) * pow(r / r_m2, alpha);
+}
+
+static inline double gamma_beta(double beta, double x1, double x2) {
+    return gsl_sf_gamma_inc(beta, x2) - gsl_sf_gamma_inc(beta, x1);
+}
+
+static inline double gamma_tilde_beta(
+    double beta, double x1, double x2, double alpha, double r_s
+) {
+    const double scale = alpha * pow(r_s, alpha) / 2.0;
+    return pow(scale, beta) * gamma_beta(beta, x1, x2);
+}
+
+static inline double Gamma_beta(
+    double beta, double x
+) {
+    // Upper incomplete gamma:
+    return gsl_sf_gamma(beta) - gsl_sf_gamma_inc(beta, x);
+}
+
+static inline double Gamma_tilde_beta(
+    double beta, double x, double alpha, double r_s
+) {
+    const double scale = pow(alpha * pow(r_s, alpha) / 2.0, beta);
+    return scale * Gamma_beta(beta, x);
+}
+
+static inline double _einasto_mass_enclosed(double rho_m2, double r_m2, double alpha, double r) {
+    if (r <= 0.0) return 0.0;
+
+    const double s = _s_of_r(r, r_m2, alpha);
+    const double a3 = 3.0 / alpha;
+
+    const double Mtot = (4.0 * M_PI * rho_m2 * exp(2.0/alpha) / alpha)
+                        * pow(r_m2, 3.0) * pow(alpha/2.0, a3) * gsl_sf_gamma(a3);
+    return Mtot * gsl_sf_gamma_inc_P(a3, s);
+}
+
+/* ---------------------------------------------------------------------------
+    Einasto profile
+    See: https://arxiv.org/abs/2004.10817
+*/
+double einasto_value(double t, double *pars, double *q, int n_dim, void *state) {
+    /*  pars:
+            - G (Gravitational constant)
+            - rho_-2 - scale density (density when log slope is -2)
+            - r_-2 - radius at which logarithmic slope of the density profile is equal to -2
+            - alpha - shape parameter
+    */
+    const double G = pars[0];
+    const double rho_m2 = pars[1];
+    const double r_m2 = pars[2];
+    const double alpha = pars[3];
+
+    const double r = norm3(q);
+
+    const double sr  = _s_of_r(r, r_m2, alpha);
+    const double a2 = 2.0 / alpha;
+    const double a3 = 3.0 / alpha;
+
+    const double pref  = (4.0 * M_PI * G * rho_m2 * exp(2.0/alpha)) / alpha;
+    const double scale = alpha * pow(r_m2, alpha) / 2.0;
+
+    if (r == 0.0) {
+        const double term1 = (pow(r_m2, 3.0) / 3.0) * pow(2.0/alpha, a3);
+        const double term2 = pow(scale, a2) * gsl_sf_gamma(a2);
+        return - pref * (term1 + term2);
+    }
+    const double term1 = pow(scale, a3) * gsl_sf_gamma(a3) * gsl_sf_gamma_inc_P(a3, sr);
+    const double term2 = pow(scale, a2) * gsl_sf_gamma(a2) * gsl_sf_gamma_inc_Q(a2, sr);
+    return - pref * ( (term1 / r) + term2 );
+
+}
+
+void einasto_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
+    /*  pars:
+            - G (Gravitational constant)
+            - rho_-2 - scale density (density when log slope is -2)
+            - r_-2 - radius at which logarithmic slope of the density profile is equal to -2
+            - alpha - shape parameter
+    */
+    const double G = pars[0];
+    const double rho_m2 = pars[1];
+    const double r_m2 = pars[2];
+    const double alpha = pars[3];
+
+    const double r = norm3(q);
+    if (r == 0.0) {
+        return;
+    }
+
+    const double Menc = _einasto_mass_enclosed(rho_m2, r_m2, alpha, r);
+    const double dphi_dr = (G * Menc) / (r * r * r);
+
+    grad[0] = grad[0] + dphi_dr * q[0];
+    grad[1] = grad[1] + dphi_dr * q[1];
+    grad[2] = grad[2] + dphi_dr * q[2];
+}
+
+
+double einasto_density(double t, double *pars, double *q, int n_dim, void *state) {
+    /*  pars:
+            - G (Gravitational constant)
+            - rho_-2 - scale density (density when log slope is -2)
+            - r_-2 - radius at which logarithmic slope of the density profile is equal to -2
+            - alpha - shape parameter
+    */
+    const double r = norm3(q);
+    const double alpha = pars[3];
+    return pars[1] * exp( - _s_of_r(r, pars[2], alpha) + (2.0 / alpha));
+}
+
+
+/* ---------------------------------------------------------------------------
+    Core Einasto potential
+    See: https://arxiv.org/abs/2004.10817
+*/
+
+static inline double _cEinasto_mass_enclosed(
+    double rho_s, double r_s, double alpha, double r_c, double r
+) {
+    if (r <= 0.0) return 0.0;
+
+    const double s0 = _s_of_r(r_c, r_s, alpha);
+    const double sr = _s_of_r(r + r_c, r_s, alpha);
+
+    const double a1 = 1.0 / alpha;
+    const double a2 = 2.0 / alpha;
+    const double a3 = 3.0 / alpha;
+
+    const double scale = alpha * pow(r_s, alpha) / 2.0;
+
+    const double seg1 = pow(scale, a1) * (gsl_sf_gamma_inc(a1, sr) - gsl_sf_gamma_inc(a1, s0));
+    const double seg2 = pow(scale, a2) * (gsl_sf_gamma_inc(a2, sr) - gsl_sf_gamma_inc(a2, s0));
+    const double seg3 = pow(scale, a3) * (gsl_sf_gamma_inc(a3, sr) - gsl_sf_gamma_inc(a3, s0));
+
+    const double pref = (4.0 * M_PI * rho_s * exp(2.0/alpha)) / alpha;
+
+    return pref * ( seg3 + (r_c*r_c)*seg1 - 2.0*r_c*seg2 );
+}
+
+double cEinasto_value(double t, double *pars, double *q, int n_dim, void *state) {
+    /*  pars:
+            - G (Gravitational constant)
+            - rho_s - scale density
+            - r_s - scale radius
+            - alpha - shape parameter
+            - r_c - core radius
+    */
+    const double G = pars[0];
+    const double rho_s = pars[1];
+    const double r_s = pars[2];
+    const double alpha = pars[3];
+    const double r_c = pars[4];
+
+    const double r = norm3(q);
+
+    const double a1 = 1.0 / alpha;
+    const double a2 = 2.0 / alpha;
+    const double a3 = 3.0 / alpha;
+
+    const double pref  = (4.0 * M_PI * G * rho_s * exp(2.0/alpha)) / alpha;
+    const double scale = alpha * pow(r_s, alpha) / 2.0;
+
+    const double s0 = _s_of_r(r_c, r_s, alpha);
+
+    if (r == 0.0) {
+        const double dsdr0 = 2.0 * pow(r_c, alpha - 1.0) / pow(r_s, alpha);
+        const double e_m_s0 = exp(-s0);
+
+        // (1/r)*[γ̃_{3/α} + r_c^2 γ̃_{1/α} - 2 r_c γ̃_{2/α}]  -->  ds/dr|0 * e^{-s0} * sum
+        const double lim_over_r =
+            dsdr0 * e_m_s0 *
+            ( pow(scale, a3) * pow(s0, a3 - 1.0)
+            + (r_c*r_c) * pow(scale, a1) * pow(s0, a1 - 1.0)
+            - 2.0 * r_c * pow(scale, a2) * pow(s0, a2 - 1.0) );
+
+        // Upper tilded terms at r=0: Γ̃_b(s0) = scale^b * Γ(b) * Q(b, s0)
+        const double up2 = pow(scale, a2) * gsl_sf_gamma(a2) * gsl_sf_gamma_inc_Q(a2, s0);
+        const double up1 = pow(scale, a1) * gsl_sf_gamma(a1) * gsl_sf_gamma_inc_Q(a1, s0);
+
+        return -pref * ( lim_over_r + (up2 - r_c * up1) );
+    }
+
+    const double sr = _s_of_r(r + r_c, r_s, alpha);
+
+    const double seg1 = pow(scale, a1) * (gsl_sf_gamma_inc(a1, sr) - gsl_sf_gamma_inc(a1, s0));
+    const double seg2 = pow(scale, a2) * (gsl_sf_gamma_inc(a2, sr) - gsl_sf_gamma_inc(a2, s0));
+    const double seg3 = pow(scale, a3) * (gsl_sf_gamma_inc(a3, sr) - gsl_sf_gamma_inc(a3, s0));
+
+    const double up2 = pow(scale, a2) * gsl_sf_gamma(a2) * gsl_sf_gamma_inc_Q(a2, sr);
+    const double up1 = pow(scale, a1) * gsl_sf_gamma(a1) * gsl_sf_gamma_inc_Q(a1, sr);
+
+    return -pref * ( ((seg3 + (r_c*r_c)*seg1 - 2.0*r_c*seg2) / r) + (up2 - r_c * up1) );
+}
+
+void cEinasto_gradient_single(
+    double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad,
+    void *__restrict__ state
+) {
+    const double G = pars[0];
+    const double rho_s = pars[1];
+    const double r_s = pars[2];
+    const double alpha = pars[3];
+    const double r_c = pars[4];
+
+    const double r = norm3(q);
+    if (r == 0.0) {
+        return;
+    }
+
+    const double Menc = _cEinasto_mass_enclosed(rho_s, r_s, alpha, r_c, r);
+    const double dphi_dr = (G * Menc) / (r * r * r);
+
+    grad[0] = grad[0] + dphi_dr * q[0];
+    grad[1] = grad[1] + dphi_dr * q[1];
+    grad[2] = grad[2] + dphi_dr * q[2];
+}
+
+double cEinasto_density(double t, double *pars, double *q, int n_dim, void *state) {
+    const double rho_s = pars[1];
+    const double r_s = pars[2];
+    const double alpha = pars[3];
+    const double r_c = pars[4];
+
+    const double r = norm3(q);
+
+    return rho_s * exp( - _s_of_r(r + r_c, r_s, alpha) + (2.0 / alpha) );
+}
+
+#endif
+
 DEFINE_VECTORIZED_GRADIENT(burkert)
 DEFINE_VECTORIZED_GRADIENT(flattenednfw)
 DEFINE_VECTORIZED_GRADIENT(henon_heiles)
@@ -2299,6 +2539,8 @@ DEFINE_VECTORIZED_GRADIENT(stone)
 DEFINE_VECTORIZED_GRADIENT(triaxialnfw)
 
 #if USE_GSL == 1
+DEFINE_VECTORIZED_GRADIENT(cEinasto)
+DEFINE_VECTORIZED_GRADIENT(einasto)
 DEFINE_VECTORIZED_GRADIENT(powerlawcutoff)
 DEFINE_VECTORIZED_GRADIENT(spherical_spline_density)
 DEFINE_VECTORIZED_GRADIENT(spherical_spline_mass)
