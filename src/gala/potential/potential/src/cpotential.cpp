@@ -1,5 +1,7 @@
 #include <math.h>
 #include <stdlib.h>
+#include <cstring>
+#include <vector>
 #include "cpotential.h"
 #include "src/vectorization.h"
 
@@ -215,8 +217,23 @@ void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
     // qp: shape [p->n_dim, N]
     // grad: shape [p->n_dim, N]
 
-    double *qp_trans = NULL;
-    double *tmp_grad = NULL;
+    // Per-thread scratch for the do_shift_rotate path.
+    // This is to avoid repeated allocations of temporary arrays when repeating gradient calls.
+    // Note that the scratch memory is never deallocated!
+    struct GradScratch {
+        std::vector<double> qp_trans;
+        std::vector<double> tmp_grad;
+        void ensure(size_t n) {
+            if (qp_trans.size() < n) {
+                qp_trans.resize(n);
+                tmp_grad.resize(n);
+            }
+        }
+    };
+    static thread_local GradScratch scratch;
+
+    double *qp_trans = nullptr;
+    double *tmp_grad = nullptr;
     bool need_transform = false;
 
     // Check if any components need transformation
@@ -227,10 +244,10 @@ void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
         }
     }
 
-    // Allocate temporary arrays if transformation is needed
     if (need_transform) {
-        qp_trans = (double*)malloc(p->n_dim * N * sizeof(double));
-        tmp_grad = (double*)malloc(p->n_dim * N * sizeof(double));
+        scratch.ensure(p->n_dim * N);
+        qp_trans = scratch.qp_trans.data();
+        tmp_grad = scratch.tmp_grad.data();
     }
 
     // Initialize gradient array
@@ -243,11 +260,8 @@ void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
         if (p->do_shift_rotate[i] == 0) {
             (p->gradient)[i](t, (p->parameters)[i], qp, p->n_dim, N, grad, (p->state)[i]);
         } else {
-            // Initialize temporary arrays
-            for (size_t j = 0; j < p->n_dim * N; j++) {
-                qp_trans[j] = 0.;
-                tmp_grad[j] = 0.;
-            }
+            std::memset(qp_trans, 0, p->n_dim * N * sizeof(double));
+            std::memset(tmp_grad, 0, p->n_dim * N * sizeof(double));
 
             // Apply shift and rotation to all particles
             apply_shift_rotate_N(
@@ -277,12 +291,6 @@ void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
                 grad[j] += tmp_grad[j];
             }
         }
-    }
-
-    // Free temporary arrays
-    if (need_transform) {
-        free(qp_trans);
-        free(tmp_grad);
     }
 }
 
