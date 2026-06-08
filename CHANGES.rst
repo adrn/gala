@@ -20,6 +20,12 @@ Bug fixes
   invalid position or velocity units and silently pass these through to orbit
   integration later.
 
+- Fixed a bug in the time interpolation of ``EXPPotential`` where evaluating a
+  time-evolving potential at (or very near) a stored snapshot time could silently return
+  a neighboring snapshot, or raise an out-of-bounds error at the first or last snapshot.
+  This was caused by floating-point differences between the requested time and the
+  limited-precision snapshot times stored in the coefficient file.
+
 API changes
 -----------
 
