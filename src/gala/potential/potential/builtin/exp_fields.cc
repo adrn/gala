@@ -6,6 +6,7 @@
 #include <memory>
 #include <cmath>
 #include <filesystem>
+#include <algorithm>
 
 namespace fs = std::filesystem;
 
@@ -203,23 +204,38 @@ CoefClasses::CoefStrPtr interpolator(double t, CoefClasses::CoefsPtr coefs)
   //
   auto times = coefs->Times();
 
-  if (t<times.front() or t>times.back()) {
+  // Allow for a small tolerance in comparing the requested time to the stored snapshot
+  // times. This is because floating point errors can come from: (1) the unit conversion
+  // applied to the requested time, and (2) the limited precision with which snapshot
+  // times are written to / read from the coefficient file. It seems that writing the times
+  // to HDF5 only stores the times with reduced precision?
+  const double scale =
+    std::max({std::abs(times.front()), std::abs(times.back()), 1.0});
+  const double tol = 1.0e-8 * scale;  // 1e-8 is somewhat arbitrary, but seems to work
+
+  if (t < (times.front() - tol) or t > (times.back() + tol)) {
     std::ostringstream sout;
     sout << "FieldWrapper::interpolator: time t=" << t << " is out of bounds: ["
          << times.front() << ", " << times.back() << "] (raw EXP snapshot time units)";
     throw std::runtime_error(sout.str());
   }
 
-  auto it1 = std::lower_bound(times.begin(), times.end(), t);
-  auto it2 = it1 + 1;
+  // Clamp into range so that endpoint roundoff interpolates cleanly to the
+  // boundary snapshot instead of extrapolating just outside it.
+  t = std::min(std::max(t, times.front()), times.back());
 
-  if (it2 == times.end()) {
-    it2--;
-    it1 = it2 - 1;
-  }
+  // Bracket the interval [it1, it2] with *it1 <= t <= *it2. Use upper_bound (first
+  // element strictly greater than t) so that a time sitting epsilon above a stored knot
+  // keeps that knot as the lower bracket instead of jumping a full interval (the
+  // previous lower_bound behavior picked the wrong interval in that case and silently
+  // returned the next snapshot's coefficients).
+  auto it2 = std::upper_bound(times.begin(), times.end(), t);
+  if (it2 == times.begin()) ++it2;   // t at/below the first knot
+  if (it2 == times.end())   --it2;   // t at/above the last knot
+  auto it1 = it2 - 1;
 
-  // Handle degenerate case where it1 == it2 (single time entry)
-  if (it1 == it2 || *it1 == *it2) {
+  // Handle degenerate case where the bracketing times coincide (duplicate knot)
+  if (*it1 == *it2) {
     return coefs->getCoefStruct(*it1);
   }
 
