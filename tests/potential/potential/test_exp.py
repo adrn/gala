@@ -271,6 +271,46 @@ def test_exp_unit_tests():
     assert u.allclose(pot_multi.tmax_exp, 2.0 * u.Gyr)
 
 
+def test_multi_eval_at_snapshot_times():
+    """Regression test for the time-interpolation evaluation bug.
+
+    Evaluating a time-evolving EXPPotential exactly AT a stored snapshot time
+    must equal the static snapshot at that index, and must not raise at the
+    first/last snapshot. Previously, floating-point differences between the
+    requested time and the (limited-precision) stored snapshot times pushed the
+    interval search onto the wrong bracket -- silently returning a neighbouring
+    snapshot's field -- or tripped the out-of-bounds check at the endpoints. See
+    ``gala_exp::interpolator`` in ``exp_fields.cc``.
+    """
+    pot_multi = EXPPotential(
+        config_file=EXP_CONFIG_FILE,
+        coef_file=EXP_MULTI_COEF_FILE,
+        units=EXPTestBase.exp_units,
+    )
+
+    # snapshots were generated at 0, 500, 1000, 1500, 2000 Myr; see generate_exp.py
+    snapshot_times = [0, 500, 1000, 1500, 2000] * u.Myr
+    test_x = [8.0, 1.0, -2.0] * u.kpc
+
+    for k, t_k in enumerate(snapshot_times):
+        frozen = EXPPotential(
+            config_file=EXP_CONFIG_FILE,
+            coef_file=EXP_MULTI_COEF_FILE,
+            snapshot_index=k,
+            units=EXPTestBase.exp_units,
+        )
+        # Must not raise (including at the first and last snapshot) and must
+        # match the corresponding frozen snapshot to interpolation precision.
+        assert u.allclose(
+            pot_multi.energy(test_x, t=t_k), frozen.energy(test_x), rtol=1e-6
+        )
+        assert u.allclose(
+            pot_multi.acceleration(test_x, t=t_k),
+            frozen.acceleration(test_x),
+            rtol=1e-6,
+        )
+
+
 @pytest.mark.skipif(not HAVE_PYEXP, reason="requires pyEXP")
 def test_pyexp_unit_tests():
     """Test PyEXPPotential static/dynamic behavior"""
