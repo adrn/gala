@@ -27,7 +27,7 @@ is the best place to read about how to build EXP. Gala doesn't have any special
 instructions for the EXP build, except that the user must actually "install" EXP,
 rather than just build it. This is demonstrated below.
 
-Gala is compatible with EXP version >= 7.9.1. If you encounter build issues, double
+Gala is compatible with EXP version >= 7.10.0. If you encounter build issues, double
 check the EXP version.
 
 To install EXP's dependencies, here is one recipe that we have found to work on Ubuntu 24.04::
