@@ -1,0 +1,18 @@
+name: Weekly Tests
+
+on:
+  schedule:
+    - cron: "0 10 * * 1"  # Mondays @ 6AM Eastern
+  workflow_dispatch:  # allow manual triggering for testing
+
+jobs:
+  weekly:
+    name: Weekly tests on ${{ matrix.branch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: [main, devel]
+    uses: ./.github/workflows/tests.yml
+    with:
+      ref: ${{ matrix.branch }}
+    secrets: inherit
