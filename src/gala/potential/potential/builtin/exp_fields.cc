@@ -294,7 +294,7 @@ double exp_value(double t, double *pars, double *q, int n_dim, void* state) {
   // Get the field quantities
   // TODO: ask Martin/Mike for a way to compute only the potential - we're wasting
   // computation time here by computing all fields
-  auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
+  auto field = exp_state->basis->getFieldsOrigin(q[0], q[1], q[2]);
 
   return field[5];
 }
@@ -315,6 +315,7 @@ void exp_gradient(double t, double *__restrict__ pars, double *__restrict__ q_in
   Eigen::Map<Eigen::VectorXd> eigen_y(q.y, N);
   Eigen::Map<Eigen::VectorXd> eigen_z(q.z, N);
 
+  // getAccel works with respect to the user's origin, same as getFieldsOrigin
   auto& allaccel = exp_state->basis->getAccel(eigen_x, eigen_y, eigen_z);
 
   for(size_t i = 0; i < N; i++) {
@@ -336,7 +337,7 @@ double exp_density(double t, double *pars, double *q, int n_dim, void* state) {
 
   // TODO: ask Martin/Mike for a way to compute only the density - we're wasting
   // computation time here by computing all fields
-  auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
+  auto field = exp_state->basis->getFieldsOrigin(q[0], q[1], q[2]);
 
   return field[2];
 }
@@ -351,7 +352,7 @@ double exp_density(double t, double *pars, double *q, int n_dim, void* state) {
 //     );
 //   }
 
-//   auto field = exp_state->basis->getFields(q[0], q[1], q[2]);
+//   auto field = exp_state->basis->getFieldsOrigin(q[0], q[1], q[2]);
 
 //   for(int i=0; i<9; i++) {
 //     hess[i] += NAN;  // TODO: get hessian from EXP

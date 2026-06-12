@@ -343,6 +343,52 @@ def test_pyexp_unit_tests():
     assert u.allclose(pot_multi.tmax_exp, 2.0 * u.Gyr)
 
 
+@pytest.mark.skipif(not HAVE_PYEXP, reason="requires pyEXP")
+def test_pyexp_moving_centers():
+    """Test that setting per-snapshot centers shifts the EXP potential.
+
+    See scripts/moving_EXPPotential.py for the underlying pyEXP recipe.
+    """
+    units = EXP_UNITS
+
+    with open(EXP_CONFIG_FILE) as fp, chdir(EXP_CONFIG_FILE.parent):
+        basis = pyEXP.basis.Basis.factory(fp.read())
+
+    # Two independent Coefs objects -- setCoefCenter mutates in place
+    coefs_ref = pyEXP.coefs.Coefs.factory(str(EXP_MULTI_COEF_FILE))
+    coefs_moved = pyEXP.coefs.Coefs.factory(str(EXP_MULTI_COEF_FILE))
+
+    times = np.array(coefs_moved.Times())
+    t1, t2 = times[0], times[-1]
+
+    c1 = np.array([10.0, 0.0, 0.0])
+    c2 = np.array([0.0, 15.0, 0.0])
+    coefs_moved.getCoefStruct(t1).setCoefCenter(c1)
+    coefs_moved.getCoefStruct(t2).setCoefCenter(c2)
+
+    pot_ref = PyEXPPotential(basis=basis, coefs=coefs_ref, units=units)
+    pot_moved = PyEXPPotential(basis=basis, coefs=coefs_moved, units=units)
+
+    t1_q = t1 * units["time"]
+    t2_q = t2 * units["time"]
+    c1_q = c1 * units["length"]
+    c2_q = c2 * units["length"]
+    origin = [0.0, 0.0, 0.0] * units["length"]
+    fixed_pt = [8.0, 0.0, 0.0] * u.kpc
+
+    # At the moved center, the moved potential matches the ref at origin
+    assert u.allclose(pot_moved.energy(c1_q, t=t1_q), pot_ref.energy(origin, t=t1_q))
+    assert u.allclose(pot_moved.energy(c2_q, t=t2_q), pot_ref.energy(origin, t=t2_q))
+
+    # At a fixed point, the moved potential differs from the unmoved one
+    assert not u.allclose(
+        pot_moved.energy(fixed_pt, t=t1_q), pot_ref.energy(fixed_pt, t=t1_q)
+    )
+    assert not u.allclose(
+        pot_moved.energy(fixed_pt, t=t2_q), pot_ref.energy(fixed_pt, t=t2_q)
+    )
+
+
 def test_multi_different_snapshot_time_unit():
     pot_multi = EXPPotential(
         config_file=EXP_CONFIG_FILE,

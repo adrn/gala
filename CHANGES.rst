@@ -26,6 +26,10 @@ Bug fixes
   This was caused by floating-point differences between the requested time and the
   limited-precision snapshot times stored in the coefficient file.
 
+- EXP: fixes a bug where the center set by calling ``setCoefCenter()`` on a pyEXP
+  ``Coefs`` object was ignored. Gala now requires EXP >= v7.10.0 when building with EXP
+  support.
+
 API changes
 -----------
 
