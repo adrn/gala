@@ -212,7 +212,7 @@ def test_regression_missing_R(rng):
     """
     As reported in #396, GreatCircle frames in reflex_correct were somehow missing the _R property...
     """
-    v_sun = coord.CartesianDifferential([11.1, 220.0 + 12.24, 7.25] * u.km / u.s)
+    v_sun = [11.1, 220.0 + 12.24, 7.25] * u.km / u.s
     r_sun = 8.122 * u.kpc
     gc_frame = coord.Galactocentric(
         galcen_distance=r_sun, galcen_v_sun=v_sun, z_sun=0 * u.pc
