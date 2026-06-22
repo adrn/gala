@@ -449,3 +449,9 @@ def test_astropy_deprecation_rep_name():
     rep = coord.CartesianRepresentation(1, 2, 3, unit=u.kpc)
 
     assert _get_rep_name(rep) == "cartesian"
+
+
+def test_regresssion_astropy_v80():
+    sun_xyz = [8.0, 0, 0] * u.kpc
+    galcen_frame = coord.Galactocentric()
+    PhaseSpacePosition(pos=sun_xyz, vel=galcen_frame.galcen_v_sun)

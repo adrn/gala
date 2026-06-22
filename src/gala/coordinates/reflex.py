@@ -38,6 +38,13 @@ def reflex_correct(coords, galactocentric_frame=None):
 
     observed = c.transform_to(galactocentric_frame)
     rep = observed.cartesian.without_differentials()
-    rep = rep.with_differentials(observed.cartesian.differentials["s"] + v_sun)
+
+    # TODO: backwards compatibility - can simplify when we depend on astropy >= v8.0
+    _vsun = (
+        coord.CartesianDifferential(v_sun.xyz)
+        if isinstance(v_sun, coord.CartesianRepresentation)
+        else v_sun
+    )
+    rep = rep.with_differentials(observed.cartesian.differentials["s"] + _vsun)
     fr = galactocentric_frame.realize_frame(rep).transform_to(c.frame)
     return coord.SkyCoord(fr)

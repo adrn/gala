@@ -177,7 +177,11 @@ class PhaseSpacePosition:
                 raise TypeError(msg)
             vel = pos.differentials.get("s", None)
 
-        if not isinstance(vel, coord.BaseDifferential):
+        if isinstance(vel, coord.CartesianRepresentation):
+            # galcen_v_sun now stored as a representation...
+            vel = coord.CartesianDifferential(vel.xyz)
+
+        elif not isinstance(vel, coord.BaseDifferential):
             # assume representation is same as pos if not specified
             if not hasattr(vel, "unit"):
                 vel = u.Quantity(vel, u.one, copy=copy)
