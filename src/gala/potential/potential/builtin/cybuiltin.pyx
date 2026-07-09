@@ -223,6 +223,7 @@ cdef class PowerLawCutoffWrapper(CPotentialWrapper):
             self.cpotential.gradient[0] = <gradientfunc>(powerlawcutoff_gradient)
             self.cpotential.hessian[0] = <hessianfunc>(powerlawcutoff_hessian)
 
+
 cdef class BurkertWrapper(CPotentialWrapper):
 
     def __init__(self, G, parameters, q0, R):
@@ -232,6 +233,28 @@ cdef class BurkertWrapper(CPotentialWrapper):
         self.cpotential.value[0] = <energyfunc>(burkert_value)
         self.cpotential.density[0] = <densityfunc>(burkert_density)
         self.cpotential.gradient[0] = <gradientfunc>(burkert_gradient)
+
+
+cdef class EinastoWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters, q0, R):
+        self.init([G] + list(parameters),
+                  np.ascontiguousarray(q0),
+                  np.ascontiguousarray(R))
+        self.cpotential.value[0] = <energyfunc>(einasto_value)
+        self.cpotential.density[0] = <densityfunc>(einasto_density)
+        self.cpotential.gradient[0] = <gradientfunc>(einasto_gradient)
+
+
+cdef class CoreEinastoWrapper(CPotentialWrapper):
+
+    def __init__(self, G, parameters, q0, R):
+        self.init([G] + list(parameters),
+                  np.ascontiguousarray(q0),
+                  np.ascontiguousarray(R))
+        self.cpotential.value[0] = <energyfunc>(cEinasto_value)
+        self.cpotential.density[0] = <densityfunc>(cEinasto_density)
+        self.cpotential.gradient[0] = <gradientfunc>(cEinasto_gradient)
 
 
 # ============================================================================

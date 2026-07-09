@@ -100,3 +100,11 @@ cdef extern from "potential/potential/builtin/builtin_potentials.h":
     double burkert_value(double t, double *pars, double *q, int n_dim, void *state) nogil
     void burkert_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) nogil
     double burkert_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+
+    double einasto_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void einasto_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) nogil
+    double einasto_density(double t, double *pars, double *q, int n_dim, void *state) nogil
+
+    double cEinasto_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void cEinasto_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) nogil
+    double cEinasto_density(double t, double *pars, double *q, int n_dim, void *state) nogil
