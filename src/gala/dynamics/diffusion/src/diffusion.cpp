@@ -109,6 +109,9 @@ void constant_tensor_diffusion(double t, double *pars, double *q, double *v,
 
 void example_radial_diffusion(double t, double *pars, double *q, double *v,
                               int n_dim, double *drift, double *M, void *state) {
+    /*
+    NOTE: this is just a toy example to demonstrate how to implement a custom position- or velocity-dependent diffusion model.
+    */
     (void)t;
     (void)v;
     (void)state;

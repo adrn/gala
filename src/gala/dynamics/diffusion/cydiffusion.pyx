@@ -44,7 +44,7 @@ cdef void c_em_step_orbit(CDiffusion *diff, void *rng, double t, int half_ndim,
                           size_t n, size_t i, double *x_ptr, double *v_ptr,
                           double *grad, double dt, double sqrt_dt, double *q_i,
                           double *v_i, double *drift, double *M, double *L,
-                          double *xi) noexcept nogil:
+                          double *zi) noexcept nogil:
     cdef int k, l
     cdef double dv
 
@@ -65,17 +65,17 @@ cdef void c_em_step_orbit(CDiffusion *diff, void *rng, double t, int half_ndim,
 
     # draw standard-normal noise
     for k in range(half_ndim):
-        xi[k] = gala_diffusion_rng_gaussian(rng)
+        zi[k] = gala_diffusion_rng_gaussian(rng)
 
     # Euler-Maruyama update (all terms use the start-of-step state):
     #   x_{n+1} = x_n + v_n dt
-    #   v_{n+1} = v_n + (a + mu) dt + L @ (sqrt(dt) xi),   a = -grad(Phi)
+    #   v_{n+1} = v_n + (a + mu) dt + L @ (sqrt(dt) zi),   a = -grad(Phi)
     for k in range(half_ndim):
         x_ptr[i + k * n] = q_i[k] + v_i[k] * dt
 
         dv = (-grad[i + k * n] + drift[k]) * dt
         for l in range(half_ndim):
-            dv = dv + L[k * half_ndim + l] * sqrt_dt * xi[l]
+            dv = dv + L[k * half_ndim + l] * sqrt_dt * zi[l]
         v_ptr[i + k * n] = v_i[k] + dv
 
 
@@ -117,6 +117,8 @@ cdef class ConstantTensorDiffusionWrapper(CDiffusionWrapper):
 
 
 cdef class ExampleRadialDiffusionWrapper(CDiffusionWrapper):
+    # NOTE: this is just a toy example to demonstrate how to implement a custom
+    # position- or velocity-dependent diffusion model.
     def __init__(self, parameters, n_dim):
         self.init(np.ascontiguousarray(parameters, dtype=np.float64), n_dim, 1)
         self.diffusion.func = <diffusionfunc>example_radial_diffusion
@@ -166,7 +168,7 @@ cpdef euler_maruyama_integrate(hamiltonian, double[:, ::1] w0, double[::1] t,
         double[::1] drift = np.zeros(half_ndim)
         double[::1] M = np.zeros(half_ndim * half_ndim)
         double[::1] L = np.zeros(half_ndim * half_ndim)
-        double[::1] xi = np.zeros(half_ndim)
+        double[::1] zi = np.zeros(half_ndim)
 
         double[:, :, ::1] all_w
         double[:, ::1] tmp_w
@@ -202,7 +204,7 @@ cpdef euler_maruyama_integrate(hamiltonian, double[:, ::1] w0, double[::1] t,
                                     &tmp_w[0, 0], &tmp_w[half_ndim, 0],
                                     &grad_v[0, 0], dt, sqrt_dt,
                                     &q_i[0], &v_i[0], &drift[0], &M[0], &L[0],
-                                    &xi[0])
+                                    &zi[0])
 
                 if save_all:
                     for k in range(ndim):
