@@ -42,7 +42,38 @@ def _check_plain(name, arr):
 
 
 class DiffusionBase:
-    """Base class for diffusion models used by the in-integrator kick."""
+    """Base class for diffusion models used by the in-integrator kick.
+
+    Notes
+    -----
+    **Units subtlety.** Coefficients must be passed as plain numeric arrays already
+    expressed in the base units of ``units`` -- astropy ``Quantity`` inputs are
+    rejected with a ``TypeError``. The reason is that the diffusion tensor spans the
+    full phase space and its blocks have *different* physical dimensions, so a single
+    ``Quantity`` (one unit) cannot represent it. With the convention
+    ``Cov(dw) = D * dt`` (and ``dw = mu * dt`` for the drift), for phase-space
+    ordering ``(x, y, z, vx, vy, vz)`` the required units are:
+
+    - position-position block ``D[0:3, 0:3]``: ``length**2 / time``
+    - velocity-velocity block ``D[3:6, 3:6]``: ``velocity**2 / time``
+    - position-velocity block ``D[0:3, 3:6]``: ``length * velocity / time``
+    - drift ``mu[0:3]`` (positions): ``length / time``;
+      ``mu[3:6]`` (velocities): ``velocity / time``
+
+    For example, in ``galactic`` units (kpc, Myr) a velocity-diffusion rate is in
+    ``(kpc/Myr)**2 / Myr``. Convert from your preferred units with astropy and pass
+    the plain value, e.g.::
+
+        D[3, 3] = (1500 * (u.km / u.s) ** 2 / u.Gyr).to_value(
+            (u.kpc / u.Myr) ** 2 / u.Myr
+        )
+
+    ``units`` is only used to check consistency against the integration Hamiltonian
+    (a mismatch raises); it does **not** convert the coefficients, so they must
+    already be in that system. For ``basis='cylindrical'`` the components are
+    physical values along the (R-hat, phi-hat, z-hat) unit vectors -- the ``phi``
+    entries are lengths / velocities, not radians.
+    """
 
     ndim = 3
 
@@ -72,13 +103,22 @@ class ConstantDiffusion(DiffusionBase):
     Parameters
     ----------
     D : (6, 6) array_like
-        Symmetric phase-space diffusion tensor; ``Cov(dw) = D*dt``.
+        Symmetric phase-space diffusion tensor; ``Cov(dw) = D*dt``. Plain numeric
+        array in the base units of ``units`` (see Notes) -- not a `~astropy.units.Quantity`.
     drift : (6,) array_like, optional
-        Deterministic phase-space drift ``mu`` (e.g. dynamical friction). Default 0.
+        Deterministic phase-space drift ``mu`` (e.g. dynamical friction), ``dw = mu*dt``.
+        Plain numeric array in the base units of ``units`` (see Notes). Default 0.
     basis : str
         'cylindrical' (default) or 'cartesian'.
     units : `~gala.units.UnitSystem`, optional
         Unit system the coefficients are expressed in.
+
+    Notes
+    -----
+    ``D`` and ``drift`` must be plain numeric arrays already in the base units of
+    ``units``; astropy ``Quantity`` inputs are rejected because the full 6x6 tensor
+    mixes position and velocity units. See `DiffusionBase` for the per-block unit
+    table and a conversion example.
     """
 
     def __init__(self, D, drift=None, basis="cylindrical", units=None):
@@ -115,17 +155,25 @@ class GriddedDiffusion(DiffusionBase):
     Parameters
     ----------
     R_grid : (nR,) array_like
-        Monotonic cylindrical radius grid (nR >= 4), in system length units.
+        Monotonic cylindrical radius grid (nR >= 4), in the length unit of ``units``.
     z_grid : (nz,) array_like
-        Monotonic ``|z|`` grid (nz >= 4), in system length units.
+        Monotonic ``|z|`` grid (nz >= 4), in the length unit of ``units``.
     D_grid : (nR, nz, 6, 6) array_like
-        Symmetric diffusion tensor at each grid node.
+        Symmetric diffusion tensor at each grid node; ``Cov(dw) = D*dt``.
     drift_grid : (nR, nz, 6) array_like, optional
-        Drift vector at each grid node. Default 0.
+        Drift vector ``mu`` at each grid node, ``dw = mu*dt``. Default 0.
     basis : str
         'cylindrical' (default) or 'cartesian'.
     units : `~gala.units.UnitSystem`, optional
         Unit system the coefficients/grid are expressed in.
+
+    Notes
+    -----
+    All inputs (``R_grid``, ``z_grid``, ``D_grid``, ``drift_grid``) must be plain
+    numeric arrays already in the base units of ``units``; astropy ``Quantity``
+    inputs are rejected because the full 6x6 tensor mixes position and velocity
+    units. See `DiffusionBase` for the per-block unit table (each ``D_grid`` node
+    follows the same block-unit convention) and a conversion example.
     """
 
     def __init__(
