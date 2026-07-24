@@ -309,6 +309,20 @@ def get_all_extensions():
     )
     extensions.append(Extension("gala.integrate.cyintegrators.ruth4", **cfg))
 
+    # ===== gala.dynamics extensions =====
+
+    #     diffusion (trial SDE / diffusion integrator)
+    cfg = base_cfg()
+    cfg["include_dirs"].extend(["src/gala", "src/gala/potential"])
+    cfg["sources"].extend(
+        [
+            "src/gala/dynamics/diffusion/cydiffusion.pyx",
+            "src/gala/dynamics/diffusion/src/diffusion.cpp",
+            "src/gala/potential/potential/src/cpotential.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.dynamics.diffusion.cydiffusion", **cfg))
+
     # ===== gala.potential extensions =====
 
     #     cpotential
@@ -459,9 +473,11 @@ for ext in extensions:
     ext.extra_compile_args.extend(["-Ofast"])
     ext.extra_link_args.extend(["-Ofast"])
 
-    if ("potential.potential" in ext.name or "scf" in ext.name) and (
-        gsl_version is not None
-    ):
+    if (
+        "potential.potential" in ext.name
+        or "scf" in ext.name
+        or "diffusion" in ext.name
+    ) and (gsl_version is not None):
         if "gsl" not in ext.libraries:
             ext.libraries.append("gsl")
             ext.library_dirs.append(os.path.join(gsl_prefix, "lib"))
