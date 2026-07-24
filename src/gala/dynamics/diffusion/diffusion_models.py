@@ -174,6 +174,9 @@ class GriddedDiffusion(DiffusionBase):
     inputs are rejected because the full 6x6 tensor mixes position and velocity
     units. See `DiffusionBase` for the per-block unit table (each ``D_grid`` node
     follows the same block-unit convention) and a conversion example.
+
+    Outside the ``(R, |z|)`` grid bounds the coefficients are taken to be zero (no
+    drift, no diffusion) -- values are not extrapolated beyond the grid.
     """
 
     def __init__(
