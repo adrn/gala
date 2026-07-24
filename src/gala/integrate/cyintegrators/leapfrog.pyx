@@ -19,6 +19,19 @@ from ...potential.frame import StaticFrame
 from ...potential import NullPotential
 
 from libc.stdlib cimport malloc, free
+from cpython.pycapsule cimport PyCapsule_GetPointer, PyCapsule_IsValid
+
+
+# Optional per-step "kick" (e.g. stochastic diffusion) applied at the synchronized
+# state. Delivered via a PyCapsule so no diffusion/GSL code is linked into this
+# extension; we only need the struct layout to call the function pointer.
+cdef extern from "dynamics/diffusion/src/diffusion_kick.h":
+    ctypedef void (*kickfunc)(double t, double dt, double *x, double *v,
+                              double *dx, double *dv, void *state, void *rng) noexcept nogil
+    ctypedef struct DiffusionKick:
+        kickfunc kick
+        void *state
+        void *rng
 
 
 cdef void c_init_velocity(CPotential *p, size_t n, int half_ndim, double t, double dt,
@@ -52,10 +65,14 @@ cdef void c_leapfrog_step(CPotential *p, size_t n, int half_ndim, double t, doub
 
 
 cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1] t,
-                                     int save_all=1):
+                                     int save_all=1, kick_capsule=None):
     """
     w0: shape (ndim, n)
     returns: shape (ndim, [ntimes,] n)
+
+    If ``kick_capsule`` is given (a PyCapsule wrapping a ``DiffusionKick``), a
+    stochastic kick is applied to each orbit at the synchronized state after every
+    step (see gala.dynamics.diffusion).
     """
 
     if not hamiltonian.c_enabled:
@@ -85,8 +102,25 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
         double[:, :, ::1] all_w
         double[:, ::1] tmp_w
 
+        # optional stochastic kick
+        DiffusionKick* dk = NULL
+        double x_i[3]
+        double v_i[3]
+        double dx[3]
+        double dv[3]
+
         # whoa, so many dots
         CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
+
+    if kick_capsule is not None:
+        if not PyCapsule_IsValid(kick_capsule, "gala.DiffusionKick"):
+            raise TypeError("kick_capsule is not a valid gala.DiffusionKick capsule.")
+        if half_ndim != 3:
+            raise ValueError(
+                "Diffusion kicks are only supported for 3D phase space "
+                "(half_ndim == 3)."
+            )
+        dk = <DiffusionKick*>PyCapsule_GetPointer(kick_capsule, "gala.DiffusionKick")
 
     if save_all:
         all_w = np.empty((ndim, ntimes, n))
@@ -109,6 +143,20 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
                             &tmp_w[0, 0], &tmp_w[half_ndim, 0],
                             &v_jm1_2[0, 0],
                             &grad_v[0, 0])
+
+            if dk != NULL:
+                # apply the stochastic kick at the synchronized state (t[j]).
+                # dv is added to both the synchronized velocity (tmp_w) and the
+                # half-step-ahead velocity (v_jm1_2) so it propagates.
+                for i in range(n):
+                    for k in range(half_ndim):
+                        x_i[k] = tmp_w[k, i]
+                        v_i[k] = tmp_w[half_ndim + k, i]
+                    dk.kick(t[j], dt, x_i, v_i, dx, dv, dk.state, dk.rng)
+                    for k in range(half_ndim):
+                        tmp_w[k, i] = tmp_w[k, i] + dx[k]
+                        tmp_w[half_ndim + k, i] = tmp_w[half_ndim + k, i] + dv[k]
+                        v_jm1_2[k, i] = v_jm1_2[k, i] + dv[k]
 
             if save_all:
                 for k in range(ndim):
