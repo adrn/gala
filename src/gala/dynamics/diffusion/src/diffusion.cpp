@@ -177,10 +177,12 @@ void gridded_cyl_diffusion(double t, double *pars, double *x, double *v,
     grid2d_state *g = (grid2d_state *)state;
     double R = sqrt(x[0] * x[0] + x[1] * x[1]);
     double az = fabs(x[2]);
-    if (R < g->R_min) R = g->R_min;
-    if (R > g->R_max) R = g->R_max;
-    if (az < g->z_min) az = g->z_min;
-    if (az > g->z_max) az = g->z_max;
+    // Outside the grid there is no modeled diffusion: return zero coefficients
+    // (mu and M are already zeroed above). This also avoids a GSL out-of-range
+    // error from gsl_spline2d_eval.
+    if (R < g->R_min || R > g->R_max || az < g->z_min || az > g->z_max) {
+        return;
+    }
 
     for (int f = 0; f < 6; f++) {
         if (g->active[f])

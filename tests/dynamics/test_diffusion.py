@@ -214,6 +214,41 @@ def test_gridded_interpolates_radial_profile():
         assert np.isclose(var_x, a * R * dt, rtol=0.1)
 
 
+def test_gridded_out_of_bounds_is_zero():
+    """Outside the (R, |z|) grid the gridded model applies no kick."""
+    N = 2000
+    nR, nz = 6, 5
+    Rg = np.linspace(4.0, 10.0, nR)
+    zg = np.linspace(0.0, 2.0, nz)
+    Dgrid = np.zeros((nR, nz, 6, 6))
+    Dgrid[:, :, 3, 3] = 1e-3
+    gdiff = GriddedDiffusion(Rg, zg, Dgrid, basis="cylindrical", units=galactic)
+    Hn = gp.Hamiltonian(gp.NullPotential(units=galactic))
+
+    def _run(pos, n_steps):
+        w0 = gd.PhaseSpacePosition(
+            pos=np.tile(np.array(pos)[:, None], (1, N)) * u.kpc,
+            vel=np.zeros((3, N)) * u.kpc / u.Myr,
+        )
+        return Hn.integrate_orbit(
+            w0,
+            dt=1.0,
+            n_steps=n_steps,
+            Integrator="leapfrog",
+            diffusion=gdiff,
+            kick_seed=1,
+        )
+
+    # inside the grid: nonzero diffusion
+    var_in = _run([7.0, 0.0, 0.0], 1)[-1].v_xyz.to_value(u.kpc / u.Myr).var(axis=1)
+    assert var_in[0] > 5e-4
+
+    # outside in R, and outside in |z|: exactly zero kicks (velocity stays 0)
+    for pos in ([20.0, 0.0, 0.0], [7.0, 0.0, 10.0]):
+        orb = _run(pos, 5)
+        assert np.all(orb.v_xyz.to_value(u.kpc / u.Myr) == 0.0)
+
+
 def test_reproducibility():
     """Same kick_seed -> identical; different -> different."""
     D = np.zeros((6, 6))
