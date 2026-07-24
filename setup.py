@@ -321,6 +321,19 @@ def get_all_extensions():
     )
     extensions.append(Extension("gala.integrate.cyintegrators.ruth4", **cfg))
 
+    # ===== gala.dynamics extensions =====
+
+    #     diffusion (in-integrator SDE / diffusion kick)
+    cfg = base_cfg()
+    cfg["include_dirs"].extend(["src/gala", "src/gala/potential"])
+    cfg["sources"].extend(
+        [
+            "src/gala/dynamics/diffusion/cydiffusion.pyx",
+            "src/gala/dynamics/diffusion/src/diffusion.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.dynamics.diffusion.cydiffusion", **cfg))
+
     # ===== gala.potential extensions =====
 
     #     cpotential
@@ -475,7 +488,8 @@ for ext in extensions:
         # the Staeckel fudge relies on NaN/inf checks, which -Ofast would remove
         ext.extra_compile_args.append("-fno-finite-math-only")
 
-    gsl_exts = ["potential.potential", "scf", "actionangle"]
+    gsl_exts = ["potential.potential", "scf", "actionangle", "diffusion"]
+
     if any(name in ext.name for name in gsl_exts) and gsl_version is not None:
         if "gsl" not in ext.libraries:
             ext.libraries.append("gsl")
