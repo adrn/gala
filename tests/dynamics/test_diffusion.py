@@ -23,26 +23,34 @@ from gala.dynamics.diffusion import (
 )
 
 
-def test_diffusion_off_matches_leapfrog():
-    """With zero diffusion the integrator must reproduce plain leapfrog exactly."""
+def test_diffusion_off_matches_forward_euler():
+    """With zero diffusion the integrator must reduce to forward-Euler exactly."""
     pot = gp.HernquistPotential(m=1e11, c=10, units=galactic)
     diff = ConstantDiffusion(D=[0.0, 0.0, 0.0], units=galactic)
     soi = StochasticOrbitIntegrator(pot, diff, seed=42)
 
     w0 = gd.PhaseSpacePosition(pos=[10.0, 0, 0] * u.kpc, vel=[0, 150.0, 0] * u.km / u.s)
 
-    orbit = soi.integrate_orbit(w0, dt=1.0, n_steps=500)
+    dt, n_steps = 1.0, 500
+    orbit = soi.integrate_orbit(w0, dt=dt, n_steps=n_steps)
 
-    ref = gp.Hamiltonian(pot).integrate_orbit(
-        w0, dt=1.0, n_steps=500, Integrator="leapfrog"
-    )
+    # Independent forward-Euler reference using the same (C) gradient:
+    #   x_{n+1} = x_n + v_n dt ;  v_{n+1} = v_n - grad(x_n) dt
+    x = w0.xyz.decompose(galactic).value.reshape(3, 1).copy()
+    v = w0.v_xyz.decompose(galactic).value.reshape(3, 1).copy()
+    xs = [x.ravel().copy()]
+    vs = [v.ravel().copy()]
+    for _ in range(n_steps):
+        grad = pot._gradient(np.ascontiguousarray(x), t=np.array([0.0]))
+        x = x + v * dt
+        v = v - grad * dt
+        xs.append(x.ravel().copy())
+        vs.append(v.ravel().copy())
+    xs = np.array(xs).T  # (3, n_steps+1)
+    vs = np.array(vs).T
 
-    assert np.allclose(orbit.xyz.to_value(u.kpc), ref.xyz.to_value(u.kpc), atol=1e-12)
-    assert np.allclose(
-        orbit.v_xyz.to_value(u.kpc / u.Myr),
-        ref.v_xyz.to_value(u.kpc / u.Myr),
-        atol=1e-12,
-    )
+    assert np.allclose(orbit.xyz.to_value(u.kpc), xs, rtol=0, atol=1e-9)
+    assert np.allclose(orbit.v_xyz.to_value(u.kpc / u.Myr), vs, rtol=0, atol=1e-9)
 
 
 def test_reproducibility():

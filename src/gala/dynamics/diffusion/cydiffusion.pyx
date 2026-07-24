@@ -13,11 +13,17 @@ Provides:
   - ``CDiffusionWrapper`` and per-model subclasses that hold a ``CDiffusion``
     struct pointing at a compiled C diffusion model (mirrors the
     ``CPotentialWrapper`` pattern).
-  - ``stochastic_leapfrog_integrate``: a fixed-step leapfrog integrator with an
-    added Euler-Maruyama stochastic velocity kick each step. The deterministic
-    part is a verbatim copy of the leapfrog step used by
-    ``gala.integrate.cyintegrators.leapfrog`` (cdef functions there are module
-    -static and cannot be shared across extensions, so they are copied here).
+  - ``euler_maruyama_integrate``: a fixed-step Euler-Maruyama integrator for the
+    SDE
+
+        dx = v dt
+        dv = a(x) dt + mu(x, v) dt + B(x, v) dW,   dW ~ N(0, dt I),  B B^T = D
+
+    where a = -grad(Phi) is the deterministic acceleration, mu is an optional
+    deterministic velocity drift, and D is the velocity-space diffusion tensor.
+    All coefficients are evaluated at the start of each step (Ito convention).
+    This is deliberately a simple first-order scheme; a higher-order scheme can
+    be added later.
 """
 
 import numpy as np
@@ -32,49 +38,20 @@ from ..._cconfig cimport USE_GSL
 
 
 # ----------------------------------------------------------------------------
-# Deterministic leapfrog step (copied from integrate/cyintegrators/leapfrog.pyx)
+# Single-orbit Euler-Maruyama update
 
-cdef void c_init_velocity(CPotential *p, size_t n, int half_ndim, double t, double dt,
-                          double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) noexcept nogil:
-    cdef int i, k
-    c_gradient(p, n, t, x_jm1, grad)
-    for k in range(half_ndim):
-        for i in range(n):
-            v_jm1_2[i + k * n] = v_jm1[i + k * n] - grad[i + k * n] * dt / 2.
-
-
-cdef void c_leapfrog_step(CPotential *p, size_t n, int half_ndim, double t, double dt,
-                          double *x_jm1, double *v_jm1, double *v_jm1_2, double *grad) noexcept nogil:
-    cdef int i, k
-
-    # full step the positions
-    for k in range(half_ndim):
-        for i in range(n):
-            x_jm1[i + k * n] = x_jm1[i + k * n] + v_jm1_2[i + k * n] * dt
-
-    c_gradient(p, n, t, x_jm1, grad)  # gradient at new position
-
-    # synchronized velocity (v_jm1) and half-step-ahead velocity (v_jm1_2)
-    for k in range(half_ndim):
-        for i in range(n):
-            v_jm1[i + k * n] = v_jm1_2[i + k * n] - grad[i + k * n] * dt / 2.
-            v_jm1_2[i + k * n] = v_jm1_2[i + k * n] - grad[i + k * n] * dt
-
-
-# ----------------------------------------------------------------------------
-# Stochastic velocity kick (Euler-Maruyama) for a single orbit
-
-cdef void c_apply_kick(CDiffusion *diff, void *rng, double t, int half_ndim, size_t n,
-                       size_t i, double *x_ptr, double *v_sync, double *v_stag,
-                       double dt, double sqrt_dt, double *q_i, double *v_i,
-                       double *drift, double *M, double *L, double *xi) noexcept nogil:
+cdef void c_em_step_orbit(CDiffusion *diff, void *rng, double t, int half_ndim,
+                          size_t n, size_t i, double *x_ptr, double *v_ptr,
+                          double *grad, double dt, double sqrt_dt, double *q_i,
+                          double *v_i, double *drift, double *M, double *L,
+                          double *xi) noexcept nogil:
     cdef int k, l
     cdef double dv
 
-    # gather this orbit's position / synchronized velocity
+    # gather this orbit's state at the start of the step
     for k in range(half_ndim):
         q_i[k] = x_ptr[i + k * n]
-        v_i[k] = v_sync[i + k * n]
+        v_i[k] = v_ptr[i + k * n]
 
     # evaluate the diffusion model at (t, q, v)
     diff.func(t, diff.parameters, q_i, v_i, half_ndim, drift, M, diff.state)
@@ -90,13 +67,16 @@ cdef void c_apply_kick(CDiffusion *diff, void *rng, double t, int half_ndim, siz
     for k in range(half_ndim):
         xi[k] = gala_diffusion_rng_gaussian(rng)
 
-    # dv = drift * dt + L @ (sqrt(dt) * xi), applied to both velocity copies
+    # Euler-Maruyama update (all terms use the start-of-step state):
+    #   x_{n+1} = x_n + v_n dt
+    #   v_{n+1} = v_n + (a + mu) dt + L @ (sqrt(dt) xi),   a = -grad(Phi)
     for k in range(half_ndim):
-        dv = drift[k] * dt
+        x_ptr[i + k * n] = q_i[k] + v_i[k] * dt
+
+        dv = (-grad[i + k * n] + drift[k]) * dt
         for l in range(half_ndim):
             dv = dv + L[k * half_ndim + l] * sqrt_dt * xi[l]
-        v_sync[i + k * n] = v_sync[i + k * n] + dv
-        v_stag[i + k * n] = v_stag[i + k * n] + dv
+        v_ptr[i + k * n] = v_i[k] + dv
 
 
 # ----------------------------------------------------------------------------
@@ -145,9 +125,9 @@ cdef class ExampleRadialDiffusionWrapper(CDiffusionWrapper):
 # ----------------------------------------------------------------------------
 # The integrator
 
-cpdef stochastic_leapfrog_integrate(hamiltonian, double[:, ::1] w0, double[::1] t,
-                                    diffusion, unsigned long long seed,
-                                    int save_all=1):
+cpdef euler_maruyama_integrate(hamiltonian, double[:, ::1] w0, double[::1] t,
+                               diffusion, unsigned long long seed,
+                               int save_all=1):
     """
     w0: shape (ndim, n)  [ndim = full phase-space dimension = 2 * half_ndim]
     returns: (t, w) with w shape (ndim, [ntimes,] n)
@@ -179,7 +159,6 @@ cpdef stochastic_leapfrog_integrate(hamiltonian, double[:, ::1] w0, double[::1] 
         double sqrt_dt = sqrt(dt)
 
         double[:, ::1] grad_v = np.zeros((half_ndim, n))
-        double[:, ::1] v_jm1_2 = np.zeros((half_ndim, n))
 
         # per-orbit scratch buffers
         double[::1] q_i = np.zeros(half_ndim)
@@ -211,25 +190,19 @@ cpdef stochastic_leapfrog_integrate(hamiltonian, double[:, ::1] w0, double[::1] 
     rng = gala_diffusion_rng_alloc(seed)
     try:
         with nogil:
-            # prime velocities a half-step behind the positions
-            c_init_velocity(cp, n, half_ndim, t[0], dt,
-                            &tmp_w[0, 0], &tmp_w[half_ndim, 0],
-                            &v_jm1_2[0, 0], &grad_v[0, 0])
-
             for j in range(1, ntimes, 1):
                 grad_v[:] = 0.
 
-                # deterministic leapfrog drift
-                c_leapfrog_step(cp, n, half_ndim, t[j], dt,
-                                &tmp_w[0, 0], &tmp_w[half_ndim, 0],
-                                &v_jm1_2[0, 0], &grad_v[0, 0])
+                # deterministic acceleration at the current positions
+                c_gradient(cp, n, t[j - 1], &tmp_w[0, 0], &grad_v[0, 0])
 
-                # stochastic velocity kick per orbit
+                # Euler-Maruyama update (drift + stochastic kick) per orbit
                 for i in range(n):
-                    c_apply_kick(diff, rng, t[j], half_ndim, n, i,
-                                 &tmp_w[0, 0], &tmp_w[half_ndim, 0], &v_jm1_2[0, 0],
-                                 dt, sqrt_dt,
-                                 &q_i[0], &v_i[0], &drift[0], &M[0], &L[0], &xi[0])
+                    c_em_step_orbit(diff, rng, t[j - 1], half_ndim, n, i,
+                                    &tmp_w[0, 0], &tmp_w[half_ndim, 0],
+                                    &grad_v[0, 0], dt, sqrt_dt,
+                                    &q_i[0], &v_i[0], &drift[0], &M[0], &L[0],
+                                    &xi[0])
 
                 if save_all:
                     for k in range(ndim):

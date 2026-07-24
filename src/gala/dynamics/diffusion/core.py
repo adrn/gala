@@ -1,6 +1,6 @@
 """
 A standalone orchestrator (modeled on ``DirectNBody``) that integrates orbits
-with an added stochastic velocity-diffusion term, using a fixed-step leapfrog +
+with an added stochastic velocity-diffusion term, using a fixed-step
 Euler-Maruyama scheme implemented in Cython.
 """
 
@@ -13,7 +13,7 @@ from ...units import UnitSystem
 from ...util import atleast_2d
 from ..core import PhaseSpacePosition
 from ..orbit import Orbit
-from .cydiffusion import stochastic_leapfrog_integrate
+from .cydiffusion import euler_maruyama_integrate
 from .diffusion_models import DiffusionBase
 
 __all__ = ["StochasticOrbitIntegrator"]
@@ -22,11 +22,12 @@ __all__ = ["StochasticOrbitIntegrator"]
 class StochasticOrbitIntegrator:
     """Integrate tracer orbits with stochastic (diffusive) velocity kicks.
 
-    This is a trial implementation of an SDE integrator: the deterministic
-    dynamics come from a (static-frame) potential and are advanced with a
-    symplectic leapfrog step, and a stochastic velocity kick set by a diffusion
-    model is added each step (Euler-Maruyama). With a zero diffusion model this
-    reduces to ordinary leapfrog integration.
+    This is a trial implementation of an SDE integrator using a fixed-step
+    Euler-Maruyama scheme: each step, positions and velocities are advanced by
+    the deterministic (static-frame) dynamics and a stochastic velocity kick set
+    by a diffusion model is added. With a zero diffusion model this reduces to
+    deterministic forward-Euler integration. This is a low-order scheme; a
+    higher-order scheme may be added in the future.
 
     Parameters
     ----------
@@ -125,7 +126,7 @@ class StochasticOrbitIntegrator:
 
         t = np.ascontiguousarray(parse_time_specification(self.units, **time_spec))
 
-        t, w = stochastic_leapfrog_integrate(
+        t, w = euler_maruyama_integrate(
             self.H, arr_w0, t, self.diffusion, self.seed, int(save_all)
         )
 
