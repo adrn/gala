@@ -1,9 +1,9 @@
-import datetime
 import os
 import pathlib
 import re
 import sys
 import warnings
+from datetime import UTC, datetime
 from importlib import import_module
 
 # Load all of the global Astropy configuration
@@ -84,7 +84,9 @@ todo_include_todos = True
 # This does not *have* to match the package name, but typically does
 project = "gala"
 author = "Adrian Price-Whelan"
-copyright = f"{datetime.datetime.now().year}, {author}"
+
+now = datetime.now(UTC)
+copyright = f"{now.year}, {author}"
 
 package_name = "gala"
 import_module(package_name)

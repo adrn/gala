@@ -69,7 +69,7 @@ def get_transform_matrix(from_frame, to_frame):
                 "be composed into a single transformation "
                 "matrix."
             )
-            raise ValueError(msg)
+            raise TypeError(msg)
 
         matrices.append(M)
         currsys = p

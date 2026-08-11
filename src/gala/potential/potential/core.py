@@ -281,7 +281,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         elif isinstance(ptype, u.UnitBase):
             uu = ptype
         else:
-            raise ValueError(
+            raise TypeError(
                 f"ptype must be a PhysicalType, str, or UnitBase object. "
                 f"Got {ptype} instead."
             )
