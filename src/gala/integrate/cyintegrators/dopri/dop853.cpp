@@ -122,6 +122,33 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr,
   long naccpt = 0;
   long nrejct = 0;
 
+  if (x == xend) {
+    if (dense_state && output_times && output_y && n_output_times > 0) {
+      for (output_idx = 0; output_idx < n_output_times; output_idx++) {
+        for (i = 0; i < dense_state->nrds; i++) {
+          unsigned component = dense_state->nrds == n ? i : icont[i];
+          output_y[output_idx * dense_state->nrds + i] = y[component];
+        }
+      }
+    }
+
+    if (iout) {
+      irtrn = 1;
+      if (dense_state) {
+        dense_state->hout = 1.0;
+        dense_state->xold = x;
+      }
+      solout(naccpt + 1, x, x, y, n, &irtrn);
+      if (irtrn < 0) {
+        if (fileout)
+          fprintf(fileout, "Exit of dop853 at x = %.16e\r\n", x);
+        return 2;
+      }
+    }
+
+    return 1;
+  }
+
   /* initialisations */
   switch (meth) {
   case 1:
@@ -346,16 +373,25 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr,
       return -2;
     }
 
-    if (0.1 * fabs(h) <= fabs(x) * uround) {
+    /* A rejected endpoint step must not be restored when its reduced
+       replacement still rounds to xend, or the failed trial repeats. */
+    if (reject && x + h == xend) {
       if (fileout)
         fprintf(fileout,
                 "Exit of dop853 at x = %.16e, step size too small h = %.16e\r\n", x, h);
       return -3;
     }
 
-    if ((x + 1.01 * h - xend) * posneg > 0.0) {
+    if (x + h == xend || (x + 1.01 * h - xend) * posneg > 0.0) {
       h = xend - x;
       last = 1;
+    }
+
+    if (!last && 0.1 * fabs(h) <= fabs(x) * uround) {
+      if (fileout)
+        fprintf(fileout,
+                "Exit of dop853 at x = %.16e, step size too small h = %.16e\r\n", x, h);
+      return -3;
     }
 
     if (dense_state) {
@@ -586,7 +622,7 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr,
       if (dense_state && output_times && output_y && n_output_times > 0) {
         double x0 = dense_state->xold;
         double h = dense_state->hout;
-        double x1 = x0 + h;
+        double x1 = last ? xend : x0 + h;
 
         // For each output time in [x0, x1], fill output_y
 

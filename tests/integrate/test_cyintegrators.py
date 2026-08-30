@@ -88,6 +88,66 @@ def test_save_all(integrate_func, dt):
     assert np.allclose(w_all[:, -1], w_f)
 
 
+@pytest.mark.parametrize("direction", [-1.0, 1.0])
+@pytest.mark.parametrize(
+    "times",
+    [
+        pytest.param(np.array([1.0, 1.0]), id="zero-duration"),
+        pytest.param(np.array([1e-3, 1e-3 + 1e-18]), id="tiny-final-step"),
+        pytest.param(
+            np.array(
+                [
+                    0.0,
+                    0.0022884973945761,
+                    0.0973861319484548,
+                    1.653381907704304,
+                    1.729685002780781,
+                ]
+            ),
+            id="irregular-dense-output",
+        ),
+    ],
+)
+def test_dop853_time_array_roundoff(direction, times):
+    p = HernquistPotential(m=1e11, c=0.5, units=galactic)
+    H = Hamiltonian(potential=p)
+    w0 = np.ascontiguousarray(np.array([[0.0, 10.0, 0.0, 0.2, 0.0, 0.0]]).T)
+    t = direction * times
+
+    t_all, w_all = dop853_integrate_hamiltonian(H, w0, t)
+    t_f, w_f = dop853_integrate_hamiltonian(H, w0, t, save_all=False)
+
+    np.testing.assert_array_equal(t_all, t)
+    np.testing.assert_array_equal(t_f, t[-1:])
+    np.testing.assert_allclose(w_all[:, 0], w0)
+    assert np.isfinite(w_all).all()
+    np.testing.assert_allclose(w_all[:, -1], w_f)
+
+    if np.all(times == times[0]):
+        expected = np.repeat(w0[:, None], len(t), axis=1)
+        np.testing.assert_array_equal(w_all, expected)
+        np.testing.assert_array_equal(w_f, w0)
+
+
+@pytest.mark.parametrize("direction", [-1.0, 1.0])
+def test_dop853_rejected_rounded_endpoint(direction):
+    p = HernquistPotential(m=1e11, c=0.5, units=galactic)
+    H = Hamiltonian(potential=p)
+    w0 = np.ascontiguousarray(np.array([[0.0, 10.0, 0.0, 0.2, 0.0, 0.0]]).T)
+    start = direction * 1e17
+    end = np.nextafter(start, direction * np.inf)
+
+    with pytest.raises(RuntimeError, match=r"Integration failed with code -3"):
+        dop853_integrate_hamiltonian(
+            H,
+            w0,
+            np.array([start, end]),
+            atol=1e-10,
+            rtol=1e-10,
+            nmax=1,
+        )
+
+
 # TODO: move this to only run if a flag like --remote-data is passed, like
 # --speed-scaling or something?
 @pytest.mark.skipif(True, reason="Slow test - mainly for plotting locally")
