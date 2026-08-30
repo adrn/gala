@@ -10,6 +10,9 @@ New Features
 Bug fixes
 ---------
 
+- Fixed Cython DOP853 orbit integration failures and uninitialized dense output
+  caused by floating-point roundoff in explicit time arrays.
+
 - Fixed a bug in ``TimeInterpolatedPotential`` that caused errors when trying to pickle
   the object (or use it within a multiprocessing or MPI pool).
 
