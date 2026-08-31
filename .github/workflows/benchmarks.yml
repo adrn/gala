@@ -93,7 +93,7 @@ jobs:
           uv pip install --system -ve .[test]
 
       - name: Run the benchmarks
-        uses: CodSpeedHQ/action@v5.0.3
+        uses: CodSpeedHQ/action@v5.2.1
         env:
           OMP_NUM_THREADS: 1
         with:
