@@ -1,5 +1,6 @@
 from .actionangle import *
 from .core import PhaseSpacePosition
+from .diffusion import *
 from .mockstream import *
 from .nbody import *
 from .nonlinear import *

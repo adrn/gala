@@ -9,6 +9,7 @@ __pycache__
 # add a non-generated .c extension, use `git add -f filename.c`.
 # *.c
 src/gala/_compiler.c
+src/gala/dynamics/diffusion/cydiffusion.cpp
 src/gala/dynamics/lyapunov/dop853_lyapunov.cpp
 src/gala/dynamics/mockstream/_coord.cpp
 src/gala/dynamics/mockstream/mockstream.cpp
