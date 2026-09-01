@@ -61,7 +61,7 @@ cdef void dop853_step(
         dt0,  # h: Initial step size
         nmax,  # nmax: maximum number of integration steps
         0,  # meth
-        1,  # nstiff: frequency of stiffness detect
+        nstiff,  # nstiff: frequency of stiffness detect
         0,  # nrdens: number of components for dense output
         NULL,  # icont: indices for components
         0,  # licont: length of the icont array
