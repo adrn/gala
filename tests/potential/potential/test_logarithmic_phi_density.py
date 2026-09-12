@@ -11,14 +11,14 @@ from gala.units import galactic
 
 
 def test_logarithmic_density_respects_phi():
-    kwargs = dict(
-        v_c=220 * u.km / u.s,
-        r_h=12 * u.kpc,
-        q1=1.3,
-        q2=1.0,
-        q3=0.8,
-        units=galactic,
-    )
+    kwargs = {
+        "v_c": 220 * u.km / u.s,
+        "r_h": 12 * u.kpc,
+        "q1": 1.3,
+        "q2": 1.0,
+        "q3": 0.8,
+        "units": galactic,
+    }
     x = [3.5, 2.0, 1.0] * u.kpc
     pot0 = LogarithmicPotential(phi=0 * u.deg, **kwargs)
     pot20 = LogarithmicPotential(phi=20 * u.deg, **kwargs)
