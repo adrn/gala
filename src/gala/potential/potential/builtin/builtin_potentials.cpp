@@ -1584,16 +1584,22 @@ double logarithmic_density(double t, double *pars, double *q, int n_dim, void *s
             - q1
             - q2
             - q3
+            - phi
     */
+    /* Rotate into the bar frame, matching logarithmic_value / gradient.
+       Without this, density ignores phi (adrn/gala#633). */
+    const double x = q[0]*cos(pars[6]) + q[1]*sin(pars[6]);
+    const double y = -q[0]*sin(pars[6]) + q[1]*cos(pars[6]);
+    const double z = q[2];
     double tmp_0 = pow(pars[3], 2);
     double tmp_1 = pow(pars[4], 2);
     double tmp_2 = tmp_0*tmp_1;
-    double tmp_3 = tmp_2*pow(q[2], 2);
+    double tmp_3 = tmp_2*pow(z, 2);
     double tmp_4 = pow(pars[5], 2);
     double tmp_5 = tmp_0*tmp_4;
-    double tmp_6 = tmp_5*pow(q[1], 2);
+    double tmp_6 = tmp_5*pow(y, 2);
     double tmp_7 = tmp_1*tmp_4;
-    double tmp_8 = tmp_7*pow(q[0], 2);
+    double tmp_8 = tmp_7*pow(x, 2);
     double tmp_9 = pow(pars[2], 2)*tmp_2*tmp_4;
     double tmp_10 = tmp_6 + tmp_8 + tmp_9;
     double tmp_11 = tmp_3 + tmp_9;
