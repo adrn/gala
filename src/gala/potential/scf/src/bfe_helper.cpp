@@ -73,7 +73,11 @@ void sph_grad_phi_nlm(double s, double phi, double X, int n, int l, int m,
         } else {
             A = sqrt(2*l+1) / SQRT_FOURPI * sqrt(gsl_sf_gamma(l-m+1.) / gsl_sf_gamma(l+m+1.));
         }
-        dYlm_dtheta = A / sintheta * (l*X*Plm - (l+m)*Pl1m);
+        if (sintheta != 0) {
+            dYlm_dtheta = A / sintheta * (l*X*Plm - (l+m)*Pl1m);
+        } else {
+            dYlm_dtheta = 0;
+        }
     }
     dPhi_dtheta = dYlm_dtheta * Phi_nl / s;
 
@@ -89,3 +93,4 @@ void sph_grad_phi_nlm(double s, double phi, double X, int n, int l, int m,
     sphgrad[2] = dPhi_dphi;
 }
 #endif
+
