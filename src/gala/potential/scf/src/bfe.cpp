@@ -167,7 +167,11 @@ void scf_gradient_helper(double *__restrict__ x, double *__restrict__ y, double 
                     sph_grad_phi_nlm(s, phi, X, n, l, m, lmax, &tmp_grad[0]);
                     tmp_grad2[0] += tmp_grad[0] * tmp; // r
                     tmp_grad2[1] += tmp_grad[1] * tmp; // theta
-                    tmp_grad2[2] += tmp_grad[2] * (Tnlm[i]*cosmphi[m] - Snlm[i]*sinmphi[m]) / (s*sintheta); // phi
+                    if (sintheta != 0) {
+                        tmp_grad2[2] += tmp_grad[2] * (Tnlm[i]*cosmphi[m] - Snlm[i]*sinmphi[m]) / (s*sintheta); // phi
+                    } else {
+                        tmp_grad2[2] = 0.;
+                    }
 
                     // i++;
                 }
