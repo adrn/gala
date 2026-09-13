@@ -518,4 +518,3 @@ void scf_interp_gradient(double t, double *__restrict__ pars, double *__restrict
 }
 
 #endif
-

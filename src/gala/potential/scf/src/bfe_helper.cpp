@@ -93,4 +93,3 @@ void sph_grad_phi_nlm(double s, double phi, double X, int n, int l, int m,
     sphgrad[2] = dPhi_dphi;
 }
 #endif
-
