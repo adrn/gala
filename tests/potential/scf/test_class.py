@@ -16,7 +16,7 @@ from gala.units import galactic
 this_path = Path(__file__).parent
 sys.path.insert(0, str(this_path / "../potential"))
 
-from potential_helpers import PotentialTestBase  # noqa: E402
+from potential_helpers import PotentialTestBase
 
 G = _G.decompose(galactic).value
 
