@@ -676,3 +676,49 @@ def test_orbit_from_galpy():
     gala_orbit = Orbit.from_galpy_orbit(galpy_orbit)
 
     assert len(gala_orbit.t) == len(ts)
+
+
+@pytest.mark.skipif(not HAS_GALPY, reason="requires galpy to run this test")
+def test_to_galpy_orbit_matches_skycoord_handedness():
+    """Regression for #592: match galpy's SkyCoord cylindrical map.
+
+    Site-packages measurement (gala 1.10.1 / galpy 1.12.0): a Sun-like
+    Galactocentric state at x=-8 kpc with v=+220 km/s ŷ produced
+    to_galpy_orbit φ=π, vT=-220 km/s, while galpy.Orbit(SkyCoord)
+    produced φ=0, vT=+220 km/s. Data label
+    gala_1.10.1_to_galpy_orbit_vt_vs_astropy_galpy. Not a Galactic
+    dynamics discovery.
+    """
+    import astropy.coordinates as coord
+    from galpy.orbit import Orbit as GalpyOrbit
+
+    ro = 8.0 * u.kpc
+    vo = 220.0 * u.km / u.s
+    pos = (np.array([-8.0, 0.0, 0.0]) * u.kpc)[:, None]
+    vel = (np.array([0.0, 220.0, 0.0]) * u.km / u.s)[:, None]
+    go = Orbit(pos, vel).to_galpy_orbit(ro=ro, vo=vo)
+
+    gc = coord.SkyCoord(
+        x=-8.0 * u.kpc,
+        y=0.0 * u.kpc,
+        z=0.0 * u.kpc,
+        v_x=0.0 * u.km / u.s,
+        v_y=220.0 * u.km / u.s,
+        v_z=0.0 * u.km / u.s,
+        frame="galactocentric",
+        representation_type="cartesian",
+        differential_type="cartesian",
+        galcen_distance=8.0 * u.kpc,
+        z_sun=0 * u.pc,
+        galcen_v_sun=coord.CartesianDifferential([0, 0, 0] * u.km / u.s),
+    )
+    # galcen_v_sun = [-U, V+vo, W]; zero peculiar motion is [0, -vo, 0].
+    o_ref = GalpyOrbit(gc, ro=8.0, vo=220.0, zo=0.0, solarmotion=[0.0, -220.0, 0.0])
+
+    def _f(x):
+        return float(np.asarray(x).reshape(-1)[0])
+
+    assert _f(go.phi()) == pytest.approx(_f(o_ref.phi()), abs=1e-8)
+    assert _f(go.vT()) == pytest.approx(_f(o_ref.vT()), abs=1e-6)
+    assert _f(go.phi()) == pytest.approx(0.0, abs=1e-8)
+    assert _f(go.vT()) > 0.0

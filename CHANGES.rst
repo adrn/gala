@@ -10,6 +10,12 @@ New Features
 Bug fixes
 ---------
 
+- ``Orbit.to_galpy_orbit`` / ``Orbit.from_galpy_orbit`` now apply galpy's
+  published SkyCoord cylindrical map (``phi = π - φ``, ``vT = -(ρ dφ)``)
+  so a right-handed gala/astropy Galactocentric state (Sun at ``x = -R0``,
+  Galactic rotation ``+y``) lands at galpy ``φ = 0``, ``vT > 0``. A
+  ``vT``-only flip left the Sun at the wrong azimuth. See issue #592.
+
 - Fixed a bug in ``TimeInterpolatedPotential`` that caused errors when trying to pickle
   the object (or use it within a multiprocessing or MPI pool).
 
