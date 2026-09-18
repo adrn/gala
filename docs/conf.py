@@ -1,14 +1,14 @@
-import datetime
 import os
 import pathlib
 import re
 import sys
 import warnings
+from datetime import UTC, datetime
 from importlib import import_module
 
 # Load all of the global Astropy configuration
 try:
-    from sphinx_astropy.conf.v1 import *  # noqa: F403
+    from sphinx_astropy.conf.v1 import *
 except ImportError:
     print(
         "ERROR: Building the documentation for Gala requires the "
@@ -84,7 +84,9 @@ todo_include_todos = True
 # This does not *have* to match the package name, but typically does
 project = "gala"
 author = "Adrian Price-Whelan"
-copyright = f"{datetime.datetime.now().year}, {author}"
+
+now = datetime.now(UTC)
+copyright = f"{now.year}, {author}"
 
 package_name = "gala"
 import_module(package_name)
@@ -192,7 +194,7 @@ latex_documents = [
 automodsumm_inherited_members = True
 
 # Add nbsphinx
-extensions += [  # noqa: F405
+extensions += [
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
     "sphinxcontrib.bibtex",
@@ -208,8 +210,8 @@ nbsphinx_timeout = 300
 nbsphinx_kernel_name = os.environ.get("NBSPHINX_KERNEL_NAME", "python3")
 
 # nbsphinx hacks (thanks exoplanet)
-import nbsphinx  # noqa: E402
-from nbsphinx import markdown2rst as original_markdown2rst  # noqa: E402
+import nbsphinx
+from nbsphinx import markdown2rst as original_markdown2rst
 
 nbsphinx.RST_TEMPLATE = nbsphinx.RST_TEMPLATE.replace(
     "{%- if width %}", "{%- if 0 %}"

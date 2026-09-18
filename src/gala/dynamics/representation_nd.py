@@ -100,7 +100,7 @@ class NDCartesianRepresentation(NDMixin, coord.CartesianRepresentation):
         )
 
         ptype = None
-        for name, _ in self.attr_classes.items():
+        for name in self.attr_classes:
             if ptype is None:
                 ptype = getattr(self, "_" + name).unit.physical_type
 
@@ -192,7 +192,7 @@ class NDCartesianDifferential(NDMixin, coord.CartesianDifferential):
         super(coord.CartesianDifferential, self).__init__(*d_x, copy=copy)
 
         ptype = None
-        for name, _ in self.attr_classes.items():
+        for name in self.attr_classes:
             if ptype is None:
                 ptype = getattr(self, "_" + name).unit.physical_type
 

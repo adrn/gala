@@ -15,7 +15,7 @@ potentials_test_path = (this_path / "../potential/potential").resolve()
 # NOTE: this is a hack to allow importing from tests/potential/potential
 sys.path.append(str(potentials_test_path))
 
-from canonical_potentials import CANONICAL, NO_DENSITY  # noqa: E402
+from canonical_potentials import CANONICAL, NO_DENSITY
 
 
 class BenchmarkPotentialBase:

@@ -606,7 +606,7 @@ def _single_orbit_find_actions(
         sign = 1.0
         w = orbit.w()
     else:
-        raise ValueError("Invalid toy potential.")
+        raise TypeError("Invalid toy potential.")
 
     t = orbit.t.value
 

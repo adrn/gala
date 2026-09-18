@@ -54,7 +54,7 @@ class Integrator(metaclass=ABCMeta):
         save_all=True,
     ):
         if not callable(func):
-            raise ValueError("func must be a callable object, e.g., a function.")
+            raise TypeError("func must be a callable object, e.g., a function.")
 
         self.F = func
         self._func_args = func_args
@@ -129,7 +129,6 @@ class Integrator(metaclass=ABCMeta):
         return w0, arr_w0, ws
 
     def _handle_output(self, w0, t, w):
-        """ """
         if w.shape[-1] == 1:
             w = w[..., 0]
 
