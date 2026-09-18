@@ -1584,16 +1584,22 @@ double logarithmic_density(double t, double *pars, double *q, int n_dim, void *s
             - q1
             - q2
             - q3
+            - phi
     */
+    /* Rotate into the bar frame, matching logarithmic_value / gradient.
+       Without this, density ignores phi (adrn/gala#633). */
+    const double x = q[0]*cos(pars[6]) + q[1]*sin(pars[6]);
+    const double y = -q[0]*sin(pars[6]) + q[1]*cos(pars[6]);
+    const double z = q[2];
     double tmp_0 = pow(pars[3], 2);
     double tmp_1 = pow(pars[4], 2);
     double tmp_2 = tmp_0*tmp_1;
-    double tmp_3 = tmp_2*pow(q[2], 2);
+    double tmp_3 = tmp_2*pow(z, 2);
     double tmp_4 = pow(pars[5], 2);
     double tmp_5 = tmp_0*tmp_4;
-    double tmp_6 = tmp_5*pow(q[1], 2);
+    double tmp_6 = tmp_5*pow(y, 2);
     double tmp_7 = tmp_1*tmp_4;
-    double tmp_8 = tmp_7*pow(q[0], 2);
+    double tmp_8 = tmp_7*pow(x, 2);
     double tmp_9 = pow(pars[2], 2)*tmp_2*tmp_4;
     double tmp_10 = tmp_6 + tmp_8 + tmp_9;
     double tmp_11 = tmp_3 + tmp_9;
@@ -1639,9 +1645,12 @@ void logarithmic_hessian(double t, double *pars, double *q, int n_dim,
     double q1 = pars[3];
     double q2 = pars[4];
     double q3 = pars[5];
-    double x = q[0];
-    double y = q[1];
-    double z = q[2];
+    const double c = cos(pars[6]);
+    const double s = sin(pars[6]);
+    const double x = q[0]*c + q[1]*s;
+    const double y = -q[0]*s + q[1]*c;
+    const double z = q[2];
+    double frame_hess[9] = {0};
 
     double tmp_0 = pow(q1, -2);
     double tmp_1 = pow(v_c, 2);
@@ -1664,15 +1673,29 @@ void logarithmic_hessian(double t, double *pars, double *q, int n_dim,
     double tmp_18 = tmp_11*tmp_12*tmp_15;
 
     // minus signs because I initially borked the sympy definition
-    hess[0] = hess[0] - (-tmp_2*tmp_9 + tmp_11*tmp_3/pow(q1, 4));
-    hess[1] = hess[1] - (tmp_14);
-    hess[2] = hess[2] - (tmp_16);
-    hess[3] = hess[3] - (tmp_14);
-    hess[4] = hess[4] - (-tmp_17*tmp_4 + tmp_11*tmp_5/pow(q2, 4));
-    hess[5] = hess[5] - (tmp_18);
-    hess[6] = hess[6] - (tmp_16);
-    hess[7] = hess[7] - (tmp_18);
-    hess[8] = hess[8] - (-tmp_17*tmp_6 + tmp_11*tmp_7/pow(q3, 4));
+    frame_hess[0] = frame_hess[0] - (-tmp_2*tmp_9 + tmp_11*tmp_3/pow(q1, 4));
+    frame_hess[1] = frame_hess[1] - (tmp_14);
+    frame_hess[2] = frame_hess[2] - (tmp_16);
+    frame_hess[3] = frame_hess[3] - (tmp_14);
+    frame_hess[4] = frame_hess[4] - (-tmp_17*tmp_4 + tmp_11*tmp_5/pow(q2, 4));
+    frame_hess[5] = frame_hess[5] - (tmp_18);
+    frame_hess[6] = frame_hess[6] - (tmp_16);
+    frame_hess[7] = frame_hess[7] - (tmp_18);
+    frame_hess[8] = frame_hess[8] - (-tmp_17*tmp_6 + tmp_11*tmp_7/pow(q3, 4));
+
+    hess[0] += c*c*frame_hess[0] - c*s*(frame_hess[1] + frame_hess[3]) +
+               s*s*frame_hess[4];
+    hess[1] += c*s*frame_hess[0] + c*c*frame_hess[1] -
+               s*s*frame_hess[3] - s*c*frame_hess[4];
+    hess[2] += c*frame_hess[2] - s*frame_hess[5];
+    hess[3] += c*s*frame_hess[0] - s*s*frame_hess[1] +
+               c*c*frame_hess[3] - s*c*frame_hess[4];
+    hess[4] += s*s*frame_hess[0] + s*c*(frame_hess[1] + frame_hess[3]) +
+               c*c*frame_hess[4];
+    hess[5] += s*frame_hess[2] + c*frame_hess[5];
+    hess[6] += c*frame_hess[6] - s*frame_hess[7];
+    hess[7] += s*frame_hess[6] + c*frame_hess[7];
+    hess[8] += frame_hess[8];
 }
 
 /* ---------------------------------------------------------------------------
