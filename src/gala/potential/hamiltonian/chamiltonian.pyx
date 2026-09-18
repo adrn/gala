@@ -228,6 +228,8 @@ class Hamiltonian(CommonBase):
         Integrator_kwargs=dict(),
         cython_if_possible=True,
         save_all=True,
+        diffusion=None,
+        kick_seed=0,
         **time_spec
     ):
         """
@@ -287,6 +289,38 @@ class Hamiltonian(CommonBase):
                 "lead to wildly incorrect orbits. It is recommended that you "
                 "use DOPRI853Integrator instead.", RuntimeWarning)
 
+        # Optional stochastic diffusion kick (see gala.dynamics.diffusion). This is
+        # currently only supported by the Cython LeapfrogIntegrator in a static frame.
+        kick_capsule = None
+        if diffusion is not None:
+            from gala._cconfig import GSL_ENABLED
+            if not GSL_ENABLED:
+                raise ValueError(
+                    "The `diffusion` option requires gala to be built with GSL "
+                    "support."
+                )
+            if not (self.c_enabled and cython_if_possible):
+                raise NotImplementedError(
+                    "The `diffusion` option requires the C integration path "
+                    "(c_enabled and cython_if_possible=True)."
+                )
+            if Integrator is not LeapfrogIntegrator:
+                raise NotImplementedError(
+                    "The `diffusion` option is currently only supported with the "
+                    "LeapfrogIntegrator."
+                )
+            if not isinstance(self.frame, StaticFrame):
+                raise NotImplementedError(
+                    "The `diffusion` option is currently only supported for a "
+                    "StaticFrame."
+                )
+            if diffusion.units is not None and diffusion.units != self.units:
+                raise ValueError(
+                    "diffusion.units must match the Hamiltonian's unit system."
+                )
+            diffusion.set_seed(kick_seed)
+            kick_capsule = diffusion.kick_capsule()
+
         if isinstance(w0, PhaseSpacePosition):
             ndim = w0.ndim
             arr_w0 = w0.w(self.units)
@@ -324,7 +358,7 @@ class Hamiltonian(CommonBase):
                 from ...integrate.cyintegrators import leapfrog_integrate_hamiltonian
 
                 t, w = leapfrog_integrate_hamiltonian(
-                    self, arr_w0, t, save_all=save_all
+                    self, arr_w0, t, save_all=save_all, kick_capsule=kick_capsule
                 )
 
             elif Integrator == Ruth4Integrator:
