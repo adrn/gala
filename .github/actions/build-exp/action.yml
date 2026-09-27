@@ -56,6 +56,7 @@ runs:
         cmake --build build -v
         cmake --install build
 
-        # Add the pyEXP dir as a pyEXP.pth file in Python site-packages:
-        SITE_PACKAGES=$(python -c "import site; print(site.getsitepackages()[0])")
-        echo "$GALA_EXP_PREFIX/lib/python${PYTHON_VERSION}/site-packages/" > "${SITE_PACKAGES}/pyEXP.pth"
+        # Put pyEXP on PYTHONPATH for later steps, so it is importable from any
+        # environment using this Python version (e.g., a uv-managed .venv)
+        PYEXP_PATH="$GALA_EXP_PREFIX/lib/python${PYTHON_VERSION}/site-packages/"
+        echo "PYTHONPATH=${PYEXP_PATH}${PYTHONPATH:+:$PYTHONPATH}" >> $GITHUB_ENV

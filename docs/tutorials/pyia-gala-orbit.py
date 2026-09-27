@@ -14,6 +14,44 @@
 
 # + nbsphinx="hidden"
 # %run nb_setup
+
+# + nbsphinx="hidden"
+# Cache the remote Simbad / Gaia archive responses in data/ so the docs build never
+# makes network requests. Delete the data/remote-*.ecsv files to refresh them.
+import hashlib
+import pathlib
+
+import astropy.coordinates as coord
+from astropy.table import QTable
+from pyia import GaiaData
+
+_from_query = GaiaData.from_query
+_from_name = coord.SkyCoord.from_name
+
+
+def _cache_path(key):
+    return (
+        pathlib.Path("data")
+        / f"remote-{hashlib.sha1(key.encode()).hexdigest()[:10]}.ecsv"
+    )
+
+
+def _cached_from_query(query_str, **kwargs):
+    path = _cache_path(query_str)
+    if not path.exists():
+        _from_query(query_str, **kwargs).data.write(path)
+    return GaiaData(path)
+
+
+def _cached_from_name(name, *args, **kwargs):
+    path = _cache_path(name)
+    if not path.exists():
+        QTable({"coord": _from_name(name, *args, **kwargs).reshape(1)}).write(path)
+    return QTable.read(path)["coord"][0]
+
+
+GaiaData.from_query = _cached_from_query
+coord.SkyCoord.from_name = _cached_from_name
 # -
 
 # %matplotlib inline

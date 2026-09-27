@@ -39,6 +39,35 @@ the cloned ``gala`` directory)::
     uv pip install .
 
 
+.. _gala-install-dev:
+
+Installing development dependencies
+-----------------------------------
+
+The dependencies needed for development (running the tests, building the
+documentation, and executing the tutorials) are defined as `dependency groups
+<https://packaging.python.org/en/latest/specifications/dependency-groups/>`_ in
+``pyproject.toml``: ``test``, ``docs``, ``tutorials``, and ``dev`` (which includes
+all of the others). From the root of the cloned ``gala`` repository, ``uv sync``
+creates a virtual environment (``.venv``) with an editable install of gala and the
+``dev`` group::
+
+    uv sync
+
+To install only a specific group (for example, just the testing dependencies),
+disable the default ``dev`` group::
+
+    uv sync --no-default-groups --group test
+
+Then run commands in that environment with ``uv run``, e.g., ``uv run pytest``.
+
+If you are not using ``uv``, ``pip`` >= 25.1 also supports dependency groups. The
+groups include gala itself (with its optional dependencies), so install the local
+package in the same command as the group::
+
+    pip install -e . --group test
+
+
 Architecture-Specific Optimizations
 ===================================
 
@@ -124,12 +153,18 @@ Python Dependencies
 
 Gala has the following build dependencies:
 
-* `Python`_ >= 3.11
+* `Python`_ >= 3.12
 * `Numpy`_
 * `Cython <http://www.cython.org/>`_
 * ``setuptools``
 * ``setuptools_scm``
 * ``pybind11``
+
+Gala follows `SPEC 0 <https://scientific-python.org/specs/spec-0000/>`_ for its
+minimum supported versions of Python and core dependencies: support for a Python
+version is dropped 3 years after its initial release, and support for a core
+dependency version (e.g., numpy, scipy, matplotlib) is dropped 2 years after its
+initial release. See ``pyproject.toml`` for the current minimum versions.
 
 Gala has the following runtime dependencies:
 

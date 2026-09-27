@@ -27,10 +27,10 @@ which will also explain what each of them does.
 
 You can also run the tests directly with pytest. To do this, make sure to
 install the testing requirements (from the cloned ``gala`` repository
-directory)::
+directory; see :ref:`gala-install-dev`)::
 
-    pip install -e ".[test]"
+    uv sync
 
-Then you can run the tests with:
+Then you can run the tests with::
 
-    pytest gala
+    uv run pytest

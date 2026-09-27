@@ -15,7 +15,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Astronomy"
 ]
 dependencies = [
-    "numpy>=1.26.4",
+    "numpy>=2.2",
     "scipy>=1.15",
     "astropy>=7.0",
     "pyyaml",
@@ -29,11 +29,18 @@ Repository = "https://github.com/adrn/gala.git"
 
 [project.optional-dependencies]
 shared = [
-    "matplotlib",
+    "matplotlib>=3.10",
     "numexpr",
     "h5py",
     "tqdm",
 ]
+extra = [
+    "galpy",
+    "sympy",
+    "twobody"
+]
+
+[dependency-groups]
 test = [
     "gala[shared]",
     "pytest",
@@ -41,11 +48,6 @@ test = [
     "pytest-codspeed",
     "pytest-xdist",
     "findiff",
-]
-extra = [
-    "galpy",
-    "sympy",
-    "twobody"
 ]
 docs = [
     "gala[shared,extra]",
@@ -75,7 +77,9 @@ tutorials = [
     "astroquery"
 ]
 dev = [
-    "gala[test, extra, docs, tutorials]",
+    {include-group = "test"},
+    {include-group = "docs"},
+    {include-group = "tutorials"},
     "pre-commit"
 ]
 

@@ -55,18 +55,18 @@ jobs:
         numpy-version: ["latest"]
         scipy-version: ["latest"]
         gala-nogsl: ["0"]
-        python-extras: ["test"]
+        python-extras: ["shared"]
         gala-exp: ["0"]
         include:
           - name: Oldest astropy, numpy, and scipy versions supported
             os: ubuntu-latest
             python-version: "3.12"
             astropy-version: "7.0.1"
-            numpy-version: "1.26"
+            numpy-version: "2.2"
             scipy-version: "1.15"
             gala-nogsl: "0"
             gala-exp: "0"
-            python-extras: "test"
+            python-extras: "shared"
 
           - name: Install without GSL
             os: ubuntu-latest
@@ -76,7 +76,7 @@ jobs:
             scipy-version: "latest"
             gala-nogsl: "1"
             gala-exp: "0"
-            python-extras: "test"
+            python-extras: "shared"
 
           - name: With optional dependencies
             os: ubuntu-latest # note: galpy install failed on macos here
@@ -86,7 +86,7 @@ jobs:
             scipy-version: "latest"
             gala-nogsl: "0"
             gala-exp: "0"
-            python-extras: "test,extra"
+            python-extras: "shared,extra"
 
           - name: With EXP
             os: ubuntu-latest
@@ -96,7 +96,7 @@ jobs:
             scipy-version: "latest"
             gala-nogsl: "0"
             gala-exp: "1"
-            python-extras: "test"
+            python-extras: "shared"
 
           - name: With EXP
             os: macos-latest
@@ -106,7 +106,7 @@ jobs:
             scipy-version: "latest"
             gala-nogsl: "0"
             gala-exp: "1"
-            python-extras: "test"
+            python-extras: "shared"
 
     steps:
       - uses: actions/checkout@v7
@@ -187,14 +187,18 @@ jobs:
 
       - name: Install package and dependencies
         run: |
-          uv pip install --system -ve .[${{ matrix.python-extras }}]
+          extras="${{ matrix.python-extras }}"
+          # --upgrade: test against the latest dependency versions, not the lockfile
+          uv sync --upgrade --python ${{ matrix.python-version }} --no-default-groups \
+            --group test --extra ${extras//,/ --extra }
         env:
           GALA_NOGSL: ${{ matrix.gala-nogsl }}
 
+      # Note: the test step uses `uv run --no-sync` so these pins are not undone
       - name: Pin minimum dependency versions
         if: matrix.numpy-version != 'latest'
         run: |
-          uv pip install --system "numpy==${{ matrix.numpy-version }}.*" \
+          uv pip install "numpy==${{ matrix.numpy-version }}.*" \
             "scipy==${{ matrix.scipy-version }}.*" "astropy==${{ matrix.astropy-version }}"
 
       - name: Run tests
@@ -204,9 +208,9 @@ jobs:
           OMP_NUM_THREADS: 1
         run: |
           if [[ "${{ matrix.gala-exp }}" == "1" ]]; then
-            uv run pytest tests/potential/potential/test_exp.py -n auto -ra --cov --cov-report=xml --cov-report=term-missing
+            uv run --no-sync pytest tests/potential/potential/test_exp.py -n auto -ra --cov --cov-report=xml --cov-report=term-missing
           else
-            uv run pytest -n auto -ra --cov --cov-report=xml --cov-report=term-missing --durations=20
+            uv run --no-sync pytest -n auto -ra --cov --cov-report=xml --cov-report=term-missing --durations=20
           fi
 
       - name: Upload coverage report
