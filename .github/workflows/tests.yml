@@ -191,20 +191,11 @@ jobs:
         env:
           GALA_NOGSL: ${{ matrix.gala-nogsl }}
 
-      - name: Update numpy version if testing min version
+      - name: Pin minimum dependency versions
         if: matrix.numpy-version != 'latest'
         run: |
-          uv pip install --system numpy~=${{ matrix.numpy-version }}
-
-      - name: Update scipy version if testing min version
-        if: matrix.scipy-version != 'latest'
-        run: |
-          uv pip install --system scipy~=${{ matrix.scipy-version }}
-
-      - name: Update astropy version if testing min version
-        if: matrix.astropy-version != 'latest'
-        run: |
-          uv pip install --system astropy~=${{ matrix.astropy-version }}
+          uv pip install --system "numpy==${{ matrix.numpy-version }}.*" \
+            "scipy==${{ matrix.scipy-version }}.*" "astropy==${{ matrix.astropy-version }}"
 
       - name: Run tests
         env:
