@@ -60,10 +60,10 @@ jobs:
         include:
           - name: Oldest astropy, numpy, and scipy versions supported
             os: ubuntu-latest
-            python-version: "3.11"
-            astropy-version: "6.0.1"
+            python-version: "3.12"
+            astropy-version: "7.0.1"
             numpy-version: "1.26"
-            scipy-version: "1.12"
+            scipy-version: "1.15"
             gala-nogsl: "0"
             gala-exp: "0"
             python-extras: "test"

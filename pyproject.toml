@@ -5,7 +5,7 @@ authors = [
 ]
 description = "Galactic dynamics in Python"
 readme = "README.rst"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 keywords = ["astronomy", "dynamics"]
 license = "MIT"
 license-files = ["LICENSE", "AUTHORS.rst"]
@@ -16,7 +16,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy>=1.26.4",
-    "scipy>=1.12,<1.17",
+    "scipy>=1.15",
     "astropy>=7.0",
     "pyyaml",
     "cython>=0.29"
