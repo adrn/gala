@@ -8,7 +8,7 @@ readme = "README.rst"
 requires-python = ">=3.12"
 keywords = ["astronomy", "dynamics"]
 license = "MIT"
-license-files = ["LICENSE", "AUTHORS.rst"]
+license-files = ["LICENSE", "AUTHORS.rst", "licenses/GSL_LICENSE.txt"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python",

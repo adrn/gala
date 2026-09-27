@@ -23,6 +23,19 @@ Or, to add ``gala`` to an existing ``uv`` environment::
 
     uv add gala
 
+.. note::
+
+    The pre-built wheels on PyPI (for Linux x86-64 and Apple Silicon macOS) come with
+    :ref:`GSL support <gala-gsl>` built in: a copy of GSL is bundled in the wheel, so
+    you do not need to install GSL yourself. The bundled GSL is distributed under the
+    GNU General Public License v3 (see ``GSL_LICENSE.txt``, included with the
+    wheel's license files); gala itself is MIT licensed.
+
+    The pre-built wheels do **not** include support for `EXP
+    <https://github.com/EXP-code/EXP>`_ potentials. To use
+    :class:`~gala.potential.potential.EXPPotential`, you must build gala from source
+    against your EXP installation; see :ref:`exp_tutorial`.
+
 .. _gala-install-source:
 
 From Source: Cloning, Building, Installing
@@ -104,6 +117,8 @@ the Windows Subsystem for Linux (WSL), which acts as a Linux environment within 
 Either way, we recommend using GCC to compile any C code. Unfortunately, Gala will not
 work with Microsoft Visual Studio's C compiler because it is not C99 compliant.
 
+
+.. _gala-gsl:
 
 GSL support
 ===========
