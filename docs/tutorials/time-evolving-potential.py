@@ -217,7 +217,7 @@ rot_times = np.linspace(0, 3, 128) * u.Gyr
 # Create rotation matrices for bar rotation
 Omega = np.pi * u.rad / (100 * u.Myr)
 angles = (Omega * rot_times).to_value(u.rad)
-rotation_matrices = Rotation.from_euler("z", angles).as_matrix()
+rotation_matrices = Rotation.from_euler("z", angles[:, None]).as_matrix()
 
 # Create a bar potential with time-varying rotation
 pot_rotating_bar = gp.TimeInterpolatedPotential(

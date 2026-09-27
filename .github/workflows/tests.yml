@@ -60,10 +60,10 @@ jobs:
         include:
           - name: Oldest astropy, numpy, and scipy versions supported
             os: ubuntu-latest
-            python-version: "3.11"
-            astropy-version: "6.0.1"
+            python-version: "3.12"
+            astropy-version: "7.0.1"
             numpy-version: "1.26"
-            scipy-version: "1.12"
+            scipy-version: "1.15"
             gala-nogsl: "0"
             gala-exp: "0"
             python-extras: "test"
@@ -191,20 +191,11 @@ jobs:
         env:
           GALA_NOGSL: ${{ matrix.gala-nogsl }}
 
-      - name: Update numpy version if testing min version
+      - name: Pin minimum dependency versions
         if: matrix.numpy-version != 'latest'
         run: |
-          uv pip install --system numpy~=${{ matrix.numpy-version }}
-
-      - name: Update scipy version if testing min version
-        if: matrix.scipy-version != 'latest'
-        run: |
-          uv pip install --system scipy~=${{ matrix.scipy-version }}
-
-      - name: Update astropy version if testing min version
-        if: matrix.astropy-version != 'latest'
-        run: |
-          uv pip install --system astropy~=${{ matrix.astropy-version }}
+          uv pip install --system "numpy==${{ matrix.numpy-version }}.*" \
+            "scipy==${{ matrix.scipy-version }}.*" "astropy==${{ matrix.astropy-version }}"
 
       - name: Run tests
         env:
