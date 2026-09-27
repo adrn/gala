@@ -28,10 +28,9 @@ jobs:
       matrix:
         # Building wheels on linux takes too much time: split wheels into multiple runs
         python:
-          - ["1", "cp311-*"]
-          - ["2", "cp312-*"]
-          - ["3", "cp313-*"]
-          - ["4", "cp314-*"]
+          - ["1", "cp312-*"]
+          - ["2", "cp313-*"]
+          - ["3", "cp314-*"]
         os:
           - "macos-15"
           - "ubuntu-latest"
