@@ -204,7 +204,7 @@ _ = ax.set(
 # Pre-compute rotation matrices for each time step
 # Negative angle to be comparable to having a frame rotating at +Omega
 bar_angle = (-Omega * time_knots).to_value(u.rad)
-Rs = Rotation.from_euler("z", bar_angle).as_matrix()
+Rs = Rotation.from_euler("z", bar_angle[:, None]).as_matrix()
 
 
 # %% [markdown]
