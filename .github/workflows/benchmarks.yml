@@ -90,7 +90,7 @@ jobs:
 
       - name: Install package and dependencies
         run: |
-          uv pip install --system -ve .[test]
+          uv sync --locked --python 3.12 --no-default-groups --group test
 
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@v5.2.1
@@ -98,5 +98,5 @@ jobs:
           OMP_NUM_THREADS: 1
         with:
           mode: instrumentation
-          run: uv run pytest tests/benchmarks -n auto --codspeed --durations=0 -v
+          run: uv run --no-sync pytest tests/benchmarks -n auto --codspeed --durations=0 -v
           token: ${{ secrets.CODSPEED_TOKEN }}

@@ -10,17 +10,18 @@ build:
       # in that case exit the command with 183 to cancel the build
       - (git --no-pager log --pretty="tformat:%s -- %b" -1 | grep -viq "skip docs") ||
         exit 183
+    pre_create_environment:
+      - asdf plugin add uv
+      - asdf install uv latest
+      - asdf global uv latest
+    create_environment:
+      - uv venv "${READTHEDOCS_VIRTUALENV_PATH}"
+    install:
+      - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --locked --no-default-groups --group docs
   apt_packages:
     - gsl-bin
     - libgsl-dev
     - graphviz
-
-python:
-  install:
-    - method: pip
-      path: .
-      extra_requirements:
-        - docs
 
 sphinx:
   configuration: docs/conf.py
