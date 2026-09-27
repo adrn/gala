@@ -1,0 +1,969 @@
+# %ECSV 1.0
+# ---
+# datatype:
+# - name: solution_id
+#   datatype: int64
+#   description: Solution Identifier
+#   meta: !!omap
+#   - {ucd: meta.version}
+# - name: designation
+#   datatype: string
+#   description: Unique source designation (unique across all Data Releases)
+#   meta: !!omap
+#   - {ucd: meta.id;meta.main}
+#   - {_votable_string_dtype: char}
+#   - {_votable_arraysize: '*'}
+#   subtype: json
+# - name: source_id
+#   datatype: int64
+#   description: Unique source identifier (unique within a particular Data Release)
+#   meta: !!omap
+#   - {ucd: meta.id}
+# - name: random_index
+#   datatype: int64
+#   description: Random index for use when selecting subsets
+#   meta: !!omap
+#   - {ucd: meta.code}
+# - name: ref_epoch
+#   unit: yr
+#   datatype: float64
+#   description: Reference epoch
+#   meta: !!omap
+#   - {ucd: meta.ref;time.epoch}
+#   - {utype: 'stc:AstroCoords.Time.TimeInstant'}
+# - name: ra
+#   unit: deg
+#   datatype: float64
+#   description: Right ascension
+#   meta: !!omap
+#   - {ucd: pos.eq.ra;meta.main}
+#   - {utype: 'stc:AstroCoords.Position3D.Value3.C1'}
+# - name: ra_error
+#   unit: mas
+#   datatype: float32
+#   description: Standard error of right ascension
+#   meta: !!omap
+#   - {ucd: stat.error;pos.eq.ra}
+#   - {utype: 'stc:AstroCoords.Position3D.Error3.C1'}
+# - name: dec
+#   unit: deg
+#   datatype: float64
+#   description: Declination
+#   meta: !!omap
+#   - {ucd: pos.eq.dec;meta.main}
+#   - {utype: 'stc:AstroCoords.Position3D.Value3.C2'}
+# - name: dec_error
+#   unit: mas
+#   datatype: float32
+#   description: Standard error of declination
+#   meta: !!omap
+#   - {ucd: stat.error;pos.eq.dec}
+#   - {utype: 'stc:AstroCoords.Position3D.Error3.C2'}
+# - name: parallax
+#   unit: mas
+#   datatype: float64
+#   description: Parallax
+#   meta: !!omap
+#   - {ucd: pos.parallax.trig}
+# - name: parallax_error
+#   unit: mas
+#   datatype: float32
+#   description: Standard error of parallax
+#   meta: !!omap
+#   - {ucd: stat.error;pos.parallax.trig}
+# - name: parallax_over_error
+#   datatype: float32
+#   description: Parallax divided by its standard error
+#   meta: !!omap
+#   - {ucd: stat.snr;pos.parallax.trig}
+# - name: pm
+#   unit: mas / yr
+#   datatype: float32
+#   description: Total proper motion
+#   meta: !!omap
+#   - {ucd: pos.pm;pos.eq}
+# - name: pmra
+#   unit: mas / yr
+#   datatype: float64
+#   description: Proper motion in right ascension direction
+#   meta: !!omap
+#   - {ucd: pos.pm;pos.eq.ra}
+#   - {utype: 'stc:AstroCoords.Velocity3D.Value3.C1'}
+# - name: pmra_error
+#   unit: mas / yr
+#   datatype: float32
+#   description: Standard error of proper motion in right ascension direction
+#   meta: !!omap
+#   - {ucd: stat.error;pos.pm;pos.eq.ra}
+#   - {utype: 'stc:AstroCoords.Velocity3D.Error3.C1'}
+# - name: pmdec
+#   unit: mas / yr
+#   datatype: float64
+#   description: Proper motion in declination direction
+#   meta: !!omap
+#   - {ucd: pos.pm;pos.eq.dec}
+#   - {utype: 'stc:AstroCoords.Velocity3D.Value3.C2'}
+# - name: pmdec_error
+#   unit: mas / yr
+#   datatype: float32
+#   description: Standard error of proper motion in declination direction
+#   meta: !!omap
+#   - {ucd: stat.error;pos.pm;pos.eq.dec}
+#   - {utype: 'stc:AstroCoords.Velocity3D.Error3.C2'}
+# - name: ra_dec_corr
+#   datatype: float32
+#   description: Correlation between right ascension and declination
+#   meta: !!omap
+#   - {ucd: stat.correlation}
+# - name: ra_parallax_corr
+#   datatype: float32
+#   description: Correlation between right ascension and parallax
+#   meta: !!omap
+#   - {ucd: stat.correlation}
+# - name: ra_pmra_corr
+#   datatype: float32
+#   description: Correlation between right ascension and proper motion in right ascension
+#   meta: !!omap
+#   - {ucd: stat.correlation}
+# - name: ra_pmdec_corr
+#   datatype: float32
+#   description: Correlation between right ascension and proper motion in declination
+#   meta: !!omap
+#   - {ucd: stat.correlation}
+# - name: dec_parallax_corr
+#   datatype: float32
+#   description: Correlation between declination and parallax
+#   meta: !!omap
+#   - {ucd: stat.correlation}
+# - name: dec_pmra_corr
+#   datatype: float32
+#   description: Correlation between declination and proper motion in right ascension
+#   meta: !!omap
+#   - {ucd: stat.correlation}
+# - name: dec_pmdec_corr
+#   datatype: float32
+#   description: Correlation between declination and proper motion in declination
+#   meta: !!omap
+#   - {ucd: stat.correlation}
+# - name: parallax_pmra_corr
+#   datatype: float32
+#   description: Correlation between parallax and proper motion in right ascension
+#   meta: !!omap
+#   - {ucd: stat.correlation}
+# - name: parallax_pmdec_corr
+#   datatype: float32
+#   description: Correlation between parallax and proper motion in declination
+#   meta: !!omap
+#   - {ucd: stat.correlation}
+# - name: pmra_pmdec_corr
+#   datatype: float32
+#   description: Correlation between proper motion in right ascension and proper motion in declination
+#   meta: !!omap
+#   - {ucd: stat.correlation}
+# - name: astrometric_n_obs_al
+#   datatype: int16
+#   description: Total number of observations in the along-scan (AL) direction
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: astrometric_n_obs_ac
+#   datatype: int16
+#   description: Total number of observations in the across-scan (AC) direction
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: astrometric_n_good_obs_al
+#   datatype: int16
+#   description: Number of good observations in the along-scan (AL) direction
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: astrometric_n_bad_obs_al
+#   datatype: int16
+#   description: Number of bad observations in the along-scan (AL) direction
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: astrometric_gof_al
+#   datatype: float32
+#   description: Goodness of fit statistic of model wrt along-scan observations
+#   meta: !!omap
+#   - {ucd: stat.fit.goodness}
+# - name: astrometric_chi2_al
+#   datatype: float32
+#   description: AL chi-square value
+#   meta: !!omap
+#   - {ucd: stat.fit.chi2}
+# - name: astrometric_excess_noise
+#   unit: mas
+#   datatype: float32
+#   description: Excess noise of the source
+#   meta: !!omap
+#   - {ucd: stat.value}
+# - name: astrometric_excess_noise_sig
+#   datatype: float32
+#   description: Significance of excess noise
+#   meta: !!omap
+#   - {ucd: stat.value}
+# - name: astrometric_params_solved
+#   datatype: int16
+#   description: Which parameters have been solved for?
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: astrometric_primary_flag
+#   datatype: bool
+#   description: Primary or seconday
+#   meta: !!omap
+#   - {ucd: meta.code}
+# - name: nu_eff_used_in_astrometry
+#   unit: 1 / um
+#   datatype: float32
+#   description: Effective wavenumber of the source used in the astrometric solution
+#   meta: !!omap
+#   - {ucd: em.wavenumber}
+# - name: pseudocolour
+#   unit: 1 / um
+#   datatype: float32
+#   description: Astrometrically estimated pseudocolour of the source
+#   meta: !!omap
+#   - {ucd: em.wavenumber}
+# - name: pseudocolour_error
+#   unit: 1 / um
+#   datatype: float32
+#   description: Standard error of the pseudocolour of the source
+#   meta: !!omap
+#   - {ucd: stat.error;em.wavenumber}
+# - name: ra_pseudocolour_corr
+#   datatype: float32
+#   description: Correlation between right ascension and pseudocolour
+#   meta: !!omap
+#   - {ucd: stat.correlation;em.wavenumber;pos.eq.ra}
+# - name: dec_pseudocolour_corr
+#   datatype: float32
+#   description: Correlation between declination and pseudocolour
+#   meta: !!omap
+#   - {ucd: stat.correlation;em.wavenumber;pos.eq.dec}
+# - name: parallax_pseudocolour_corr
+#   datatype: float32
+#   description: Correlation between parallax and pseudocolour
+#   meta: !!omap
+#   - {ucd: stat.correlation;em.wavenumber;pos.parallax}
+# - name: pmra_pseudocolour_corr
+#   datatype: float32
+#   description: Correlation between proper motion in right asension and pseudocolour
+#   meta: !!omap
+#   - {ucd: stat.correlation;em.wavenumber;pos.pm;pos.eq.ra}
+# - name: pmdec_pseudocolour_corr
+#   datatype: float32
+#   description: Correlation between proper motion in declination and pseudocolour
+#   meta: !!omap
+#   - {ucd: stat.correlation;em.wavenumber;pos.pm;pos.eq.dec}
+# - name: astrometric_matched_transits
+#   datatype: int16
+#   description: Matched FOV transits used in the AGIS solution
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: visibility_periods_used
+#   datatype: int16
+#   description: Number of visibility periods used in Astrometric solution
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: astrometric_sigma5d_max
+#   unit: mas
+#   datatype: float32
+#   description: The longest semi-major axis of the 5-d error ellipsoid
+#   meta: !!omap
+#   - {ucd: stat;pos.errorEllipse}
+# - name: matched_transits
+#   datatype: int16
+#   description: The number of transits matched to this source
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: new_matched_transits
+#   datatype: int16
+#   description: The number of transits newly incorporated into an existing source in the current cycle
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: matched_transits_removed
+#   datatype: int16
+#   description: The number of transits removed from an existing source in the current cycle
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: ipd_gof_harmonic_amplitude
+#   datatype: float32
+#   description: Amplitude of the IPD GoF versus position angle of scan
+#   meta: !!omap
+#   - {ucd: stat.value}
+# - name: ipd_gof_harmonic_phase
+#   unit: deg
+#   datatype: float32
+#   description: Phase of the IPD GoF versus position angle of scan
+#   meta: !!omap
+#   - {ucd: pos.posAng;stat.value}
+# - name: ipd_frac_multi_peak
+#   datatype: int16
+#   description: Percent of successful-IPD windows with more than one peak
+#   meta: !!omap
+#   - {ucd: stat.value}
+# - name: ipd_frac_odd_win
+#   datatype: int16
+#   description: Percent of transits with truncated windows or multiple gate
+#   meta: !!omap
+#   - {ucd: stat.value}
+# - name: ruwe
+#   datatype: float32
+#   description: Renormalised unit weight error
+#   meta: !!omap
+#   - {ucd: stat.error}
+# - name: scan_direction_strength_k1
+#   datatype: float32
+#   description: Degree of concentration of scan directions across the source
+#   meta: !!omap
+#   - {ucd: stat.value}
+# - name: scan_direction_strength_k2
+#   datatype: float32
+#   description: Degree of concentration of scan directions across the source
+#   meta: !!omap
+#   - {ucd: stat.value}
+# - name: scan_direction_strength_k3
+#   datatype: float32
+#   description: Degree of concentration of scan directions across the source
+#   meta: !!omap
+#   - {ucd: stat.value}
+# - name: scan_direction_strength_k4
+#   datatype: float32
+#   description: Degree of concentration of scan directions across the source
+#   meta: !!omap
+#   - {ucd: stat.value}
+# - name: scan_direction_mean_k1
+#   unit: deg
+#   datatype: float32
+#   description: Mean position angle of scan directions across the source
+#   meta: !!omap
+#   - {ucd: pos.posAng;stat.mean}
+# - name: scan_direction_mean_k2
+#   unit: deg
+#   datatype: float32
+#   description: Mean position angle of scan directions across the source
+#   meta: !!omap
+#   - {ucd: pos.posAng;stat.mean}
+# - name: scan_direction_mean_k3
+#   unit: deg
+#   datatype: float32
+#   description: Mean position angle of scan directions across the source
+#   meta: !!omap
+#   - {ucd: pos.posAng;stat.mean}
+# - name: scan_direction_mean_k4
+#   unit: deg
+#   datatype: float32
+#   description: Mean position angle of scan directions across the source
+#   meta: !!omap
+#   - {ucd: pos.posAng;stat.mean}
+# - name: duplicated_source
+#   datatype: bool
+#   description: Source with multiple source identifiers
+#   meta: !!omap
+#   - {ucd: meta.code.status}
+# - name: phot_g_n_obs
+#   datatype: int16
+#   description: Number of observations contributing to G photometry
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: phot_g_mean_flux
+#   unit: electron / s
+#   datatype: float64
+#   description: G-band mean flux
+#   meta: !!omap
+#   - {ucd: phot.flux;em.opt}
+# - name: phot_g_mean_flux_error
+#   unit: electron / s
+#   datatype: float32
+#   description: Error on G-band mean flux
+#   meta: !!omap
+#   - {ucd: stat.error;phot.flux;em.opt}
+# - name: phot_g_mean_flux_over_error
+#   datatype: float32
+#   description: G-band mean flux divided by its error
+#   meta: !!omap
+#   - {ucd: stat.snr;phot.flux;em.opt}
+# - name: phot_g_mean_mag
+#   unit: mag
+#   datatype: float32
+#   description: G-band mean magnitude
+#   meta: !!omap
+#   - {ucd: phot.mag;em.opt}
+# - name: phot_bp_n_obs
+#   datatype: int16
+#   description: Number of observations contributing to BP photometry
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: phot_bp_mean_flux
+#   unit: electron / s
+#   datatype: float64
+#   description: Integrated BP mean flux
+#   meta: !!omap
+#   - {ucd: phot.flux;em.opt.B}
+# - name: phot_bp_mean_flux_error
+#   unit: electron / s
+#   datatype: float32
+#   description: Error on the integrated BP mean flux
+#   meta: !!omap
+#   - {ucd: stat.error;phot.flux;em.opt.B}
+# - name: phot_bp_mean_flux_over_error
+#   datatype: float32
+#   description: Integrated BP mean flux divided by its error
+#   meta: !!omap
+#   - {ucd: stat.snr;phot.flux;em.opt.B}
+# - name: phot_bp_mean_mag
+#   unit: mag
+#   datatype: float32
+#   description: Integrated BP mean magnitude
+#   meta: !!omap
+#   - {ucd: phot.mag;em.opt.B}
+# - name: phot_rp_n_obs
+#   datatype: int16
+#   description: Number of observations contributing to RP photometry
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: phot_rp_mean_flux
+#   unit: electron / s
+#   datatype: float64
+#   description: Integrated RP mean flux
+#   meta: !!omap
+#   - {ucd: phot.flux;em.opt.R}
+# - name: phot_rp_mean_flux_error
+#   unit: electron / s
+#   datatype: float32
+#   description: Error on the integrated RP mean flux
+#   meta: !!omap
+#   - {ucd: stat.error;phot.flux;em.opt.R}
+# - name: phot_rp_mean_flux_over_error
+#   datatype: float32
+#   description: Integrated RP mean flux divided by its error
+#   meta: !!omap
+#   - {ucd: stat.snr;phot.flux;em.opt.R}
+# - name: phot_rp_mean_mag
+#   unit: mag
+#   datatype: float32
+#   description: Integrated RP mean magnitude
+#   meta: !!omap
+#   - {ucd: phot.mag;em.opt.R}
+# - name: phot_bp_rp_excess_factor
+#   datatype: float32
+#   description: BP/RP excess factor
+#   meta: !!omap
+#   - {ucd: arith.factor;phot.flux;em.opt}
+# - name: phot_bp_n_contaminated_transits
+#   datatype: int16
+#   description: Number of BP contaminated transits
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: phot_bp_n_blended_transits
+#   datatype: int16
+#   description: Number of BP blended transits
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: phot_rp_n_contaminated_transits
+#   datatype: int16
+#   description: Number of RP contaminated transits
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: phot_rp_n_blended_transits
+#   datatype: int16
+#   description: Number of RP blended transits
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: phot_proc_mode
+#   datatype: int16
+#   description: Photometry processing mode
+#   meta: !!omap
+#   - {ucd: meta.code}
+# - name: bp_rp
+#   unit: mag
+#   datatype: float32
+#   description: BP - RP colour
+#   meta: !!omap
+#   - {ucd: phot.color;em.opt.B;em.opt.R}
+# - name: bp_g
+#   unit: mag
+#   datatype: float32
+#   description: BP - G colour
+#   meta: !!omap
+#   - {ucd: phot.color;em.opt.B;em.opt}
+# - name: g_rp
+#   unit: mag
+#   datatype: float32
+#   description: G - RP colour
+#   meta: !!omap
+#   - {ucd: phot.color;em.opt;em.opt.R}
+# - name: radial_velocity
+#   unit: km / s
+#   datatype: float32
+#   description: Radial velocity
+#   meta: !!omap
+#   - {ucd: spect.dopplerVeloc.opt;em.opt.I}
+#   - {utype: 'stc:AstroCoords.Velocity3D.Value3.C3'}
+# - name: radial_velocity_error
+#   unit: km / s
+#   datatype: float32
+#   description: Radial velocity error
+#   meta: !!omap
+#   - {ucd: stat.error;spect.dopplerVeloc.opt;em.opt.I}
+#   - {utype: 'stc:AstroCoords.Velocity3D.Error3.C3'}
+# - name: rv_method_used
+#   datatype: int16
+#   description: Method used to obtain the radial velocity
+#   meta: !!omap
+#   - {ucd: meta.code.class}
+# - name: rv_nb_transits
+#   datatype: int16
+#   description: Number of transits used to compute the radial velocity
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: rv_nb_deblended_transits
+#   datatype: int16
+#   description: Number of valid transits that have undergone deblending
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: rv_visibility_periods_used
+#   datatype: int16
+#   description: Number of visibility periods used to estimate the radial velocity
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: rv_expected_sig_to_noise
+#   datatype: float32
+#   description: Expected signal to noise ratio in the combination of the spectra used to obtain the radial velocity
+#   meta: !!omap
+#   - {ucd: stat.snr}
+# - name: rv_renormalised_gof
+#   datatype: float32
+#   description: Radial velocity renormalised goodness of fit
+#   meta: !!omap
+#   - {ucd: stat.fit.goodness}
+# - name: rv_chisq_pvalue
+#   datatype: float32
+#   description: P-value for constancy based on a chi-squared criterion
+#   meta: !!omap
+#   - {ucd: stat.fit.param}
+# - name: rv_time_duration
+#   unit: d
+#   datatype: float32
+#   description: Time coverage of the radial velocity time series
+#   meta: !!omap
+#   - {ucd: time.duration}
+# - name: rv_amplitude_robust
+#   unit: km / s
+#   datatype: float32
+#   description: Total amplitude in the radial velocity time series after outlier removal
+#   meta: !!omap
+#   - {ucd: stat.error;spect.dopplerVeloc.opt;em.opt.I}
+# - name: rv_template_teff
+#   unit: K
+#   datatype: float32
+#   description: Teff of the template used to compute the radial velocity
+#   meta: !!omap
+#   - {ucd: stat.fit.param}
+# - name: rv_template_logg
+#   unit: log(cm.s**-2)
+#   datatype: float32
+#   description: Logg of the template used to compute the radial velocity
+#   meta: !!omap
+#   - {ucd: stat.fit.param}
+# - name: rv_template_fe_h
+#   unit: dex
+#   datatype: float32
+#   description: '[Fe/H] of the template used to compute the radial velocityy'
+#   meta: !!omap
+#   - {ucd: stat.fit.param}
+# - name: rv_atm_param_origin
+#   datatype: int16
+#   description: Origin of the atmospheric parameters associated to the template
+#   meta: !!omap
+#   - {ucd: meta.code.class}
+# - name: vbroad
+#   unit: km / s
+#   datatype: float32
+#   description: Spectral line broadening parameter
+#   meta: !!omap
+#   - {ucd: spect.dopplerVeloc.opt;em.opt.I}
+#   - {utype: 'stc:AstroCoords.Velocity3D.Value3.C3'}
+# - name: vbroad_error
+#   unit: km / s
+#   datatype: float32
+#   description: Uncertainty on the spectral line broadening
+#   meta: !!omap
+#   - {ucd: stat.error;spect.dopplerVeloc.opt;em.opt.I}
+#   - {utype: 'stc:AstroCoords.Velocity3D.Error3.C3'}
+# - name: vbroad_nb_transits
+#   datatype: int16
+#   description: Number of transits used to compute vbroad
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: grvs_mag
+#   unit: mag
+#   datatype: float32
+#   description: Integrated Grvs magnitude
+#   meta: !!omap
+#   - {ucd: phot.mag;em.opt}
+#   - {utype: 'stc:AstroCoords.Velocity3D.Value3.C3'}
+# - name: grvs_mag_error
+#   unit: mag
+#   datatype: float32
+#   description: Grvs magnitude uncertainty
+#   meta: !!omap
+#   - {ucd: stat.error;phot.mag;em.opt}
+#   - {utype: 'stc:AstroCoords.Velocity3D.Error3.C3'}
+# - name: grvs_mag_nb_transits
+#   datatype: int16
+#   description: Number of transits used to compute Grvs
+#   meta: !!omap
+#   - {ucd: meta.number}
+# - name: rvs_spec_sig_to_noise
+#   datatype: float32
+#   description: Signal to noise ratio in the mean RVS spectrum
+#   meta: !!omap
+#   - {ucd: stat.snr}
+# - name: phot_variable_flag
+#   datatype: string
+#   description: Photometric variability flag
+#   meta: !!omap
+#   - {ucd: meta.code;src.var}
+#   - {_votable_string_dtype: char}
+#   - {_votable_arraysize: '*'}
+#   subtype: json
+# - name: l
+#   unit: deg
+#   datatype: float64
+#   description: Galactic longitude
+#   meta: !!omap
+#   - {ucd: pos.galactic.lon}
+#   - {utype: 'stc:AstroCoords.Position2D.Value2.C1'}
+# - name: b
+#   unit: deg
+#   datatype: float64
+#   description: Galactic latitude
+#   meta: !!omap
+#   - {ucd: pos.galactic.lat}
+#   - {utype: 'stc:AstroCoords.Position2D.Value2.C2'}
+# - name: ecl_lon
+#   unit: deg
+#   datatype: float64
+#   description: Ecliptic longitude
+#   meta: !!omap
+#   - {ucd: pos.ecliptic.lon}
+#   - {utype: 'stc:AstroCoords.Position2D.Value2.C1'}
+# - name: ecl_lat
+#   unit: deg
+#   datatype: float64
+#   description: Ecliptic latitude
+#   meta: !!omap
+#   - {ucd: pos.ecliptic.lat}
+#   - {utype: 'stc:AstroCoords.Position2D.Value2.C2'}
+# - name: in_qso_candidates
+#   datatype: bool
+#   description: Flag indicating the availability of additional information in the QSO candidates table
+#   meta: !!omap
+#   - {ucd: meta.code.status}
+# - name: in_galaxy_candidates
+#   datatype: bool
+#   description: Flag indicating the availability of additional information in the galaxy candidates table
+#   meta: !!omap
+#   - {ucd: meta.code.status}
+# - name: non_single_star
+#   datatype: int16
+#   description: Flag indicating the availability of additional information in the various Non-Single Star tables
+#   meta: !!omap
+#   - {ucd: meta.code.status}
+# - name: has_xp_continuous
+#   datatype: bool
+#   description: Flag indicating the availability of mean BP/RP spectrum in continuous representation for this source
+#   meta: !!omap
+#   - {ucd: meta.code.status}
+# - name: has_xp_sampled
+#   datatype: bool
+#   description: Flag indicating the availability of mean BP/RP spectrum in sampled form for this source
+#   meta: !!omap
+#   - {ucd: meta.code.status}
+# - name: has_rvs
+#   datatype: bool
+#   description: Flag indicating the availability of mean RVS spectrum for this source
+#   meta: !!omap
+#   - {ucd: meta.code.status}
+# - name: has_epoch_photometry
+#   datatype: bool
+#   description: Flag indicating the availability of epoch photometry for this source
+#   meta: !!omap
+#   - {ucd: meta.code.status}
+# - name: has_epoch_rv
+#   datatype: bool
+#   description: Flag indicating the availability of epoch radial velocity for this source
+#   meta: !!omap
+#   - {ucd: meta.code.status}
+# - name: has_mcmc_gspphot
+#   datatype: bool
+#   description: Flag indicating the availability of GSP-Phot MCMC samples for this source
+#   meta: !!omap
+#   - {ucd: meta.code.status}
+# - name: has_mcmc_msc
+#   datatype: bool
+#   description: Flag indicating the availability of MSC MCMC samples for this source
+#   meta: !!omap
+#   - {ucd: meta.code.status}
+# - name: in_andromeda_survey
+#   datatype: bool
+#   description: Flag indicating that the source is present in the Gaia Andromeda Photometric Survey (GAPS)
+#   meta: !!omap
+#   - {ucd: meta.code.status}
+# - name: classprob_dsc_combmod_quasar
+#   datatype: float32
+#   description: 'Probability from DSC-Combmod of being a quasar (data used: BP/RP spectrum, photometry, astrometry)'
+#   meta: !!omap
+#   - {ucd: stat.probability}
+# - name: classprob_dsc_combmod_galaxy
+#   datatype: float32
+#   description: 'Probability from DSC-Combmod of being a galaxy (data used: BP/RP spectrum, photometry, astrometry)'
+#   meta: !!omap
+#   - {ucd: stat.probability}
+# - name: classprob_dsc_combmod_star
+#   datatype: float32
+#   description: 'Probability from DSC-Combmod of being a single star (but not a white dwarf) (data used: BP/RP spectrum, photometry,
+#     astrometry)'
+#   meta: !!omap
+#   - {ucd: stat.probability}
+# - name: teff_gspphot
+#   unit: K
+#   datatype: float32
+#   description: Effective temperature from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: phys.temperature.effective}
+# - name: teff_gspphot_lower
+#   unit: K
+#   datatype: float32
+#   description: Lower confidence level (16%) of effective temperature from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: phys.temperature.effective;stat.min}
+# - name: teff_gspphot_upper
+#   unit: K
+#   datatype: float32
+#   description: Upper confidence level (84%) of effective temperature from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: phys.temperature.effective;stat.max}
+# - name: logg_gspphot
+#   unit: log(cm.s**-2)
+#   datatype: float32
+#   description: Surface gravity from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: phys.gravity}
+# - name: logg_gspphot_lower
+#   unit: log(cm.s**-2)
+#   datatype: float32
+#   description: Lower confidence level (16%) of surface gravity from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: phys.gravity;stat.min}
+# - name: logg_gspphot_upper
+#   unit: log(cm.s**-2)
+#   datatype: float32
+#   description: Upper confidence level (84%) of surface gravity from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: phys.gravity;stat.max}
+# - name: mh_gspphot
+#   unit: dex
+#   datatype: float32
+#   description: Iron abundance from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: phys.abund.Z}
+# - name: mh_gspphot_lower
+#   unit: dex
+#   datatype: float32
+#   description: Lower confidence level (16%) of iron abundance from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: phys.abund.Z;stat.min}
+# - name: mh_gspphot_upper
+#   unit: dex
+#   datatype: float32
+#   description: Upper confidence level (84%) of iron abundance from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: phys.abund.Z;stat.max}
+# - name: distance_gspphot
+#   unit: pc
+#   datatype: float32
+#   description: Distance from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: pos.distance;pos.eq}
+# - name: distance_gspphot_lower
+#   unit: pc
+#   datatype: float32
+#   description: Lower confidence level (16%) of distance from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: pos.distance;pos.eq}
+# - name: distance_gspphot_upper
+#   unit: pc
+#   datatype: float32
+#   description: Upper confidence level (84%) of distance from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: pos.distance;pos.eq}
+# - name: azero_gspphot
+#   unit: mag
+#   datatype: float32
+#   description: Monochromatic extinction $A_0$ at 547.7nm from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: phys.absorption;em.opt}
+# - name: azero_gspphot_lower
+#   unit: mag
+#   datatype: float32
+#   description: Lower confidence level (16%) of monochromatic extinction $A_0$ at 547.7nm from GSP-Phot Aeneas best library using BP/RP
+#     spectra
+#   meta: !!omap
+#   - {ucd: phys.absorption;em.opt}
+# - name: azero_gspphot_upper
+#   unit: mag
+#   datatype: float32
+#   description: Upper confidence level (84%) of monochromatic extinction $A_0$ at 547.7nm from GSP-Phot Aeneas best library using BP/RP
+#     spectra
+#   meta: !!omap
+#   - {ucd: phys.absorption;em.opt}
+# - name: ag_gspphot
+#   unit: mag
+#   datatype: float32
+#   description: Extinction in G band from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: phys.absorption;em.opt}
+# - name: ag_gspphot_lower
+#   unit: mag
+#   datatype: float32
+#   description: Lower confidence level (16%) of extinction in G band from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: phys.absorption;em.opt}
+# - name: ag_gspphot_upper
+#   unit: mag
+#   datatype: float32
+#   description: Upper confidence level (84%) of extinction in G band from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: phys.absorption;em.opt}
+# - name: ebpminrp_gspphot
+#   unit: mag
+#   datatype: float32
+#   description: Reddening $E(G_{\rm BP} - G_{\rm RP})$ from GSP-Phot Aeneas best library using BP/RP spectra
+#   meta: !!omap
+#   - {ucd: phot.color.excess}
+# - name: ebpminrp_gspphot_lower
+#   unit: mag
+#   datatype: float32
+#   description: Lower confidence level (16%) of reddening  $E(G_{\rm BP} - G_{\rm RP})$ from GSP-Phot Aeneas best library using BP/RP
+#     spectra
+#   meta: !!omap
+#   - {ucd: phot.color.excess;stat.min}
+# - name: ebpminrp_gspphot_upper
+#   unit: mag
+#   datatype: float32
+#   description: Upper confidence level (84%) of reddening  $E(G_{\rm BP} - G_{\rm RP})$ from GSP-Phot Aeneas best library using BP/RP
+#     spectra
+#   meta: !!omap
+#   - {ucd: phot.color.excess;stat.max}
+# - name: libname_gspphot
+#   datatype: string
+#   description: Name of library that achieves the highest mean log-posterior in MCMC samples and was used to derive GSP-Phot parameters
+#     in this table
+#   meta: !!omap
+#   - {ucd: meta.note}
+#   - {_votable_string_dtype: char}
+#   - {_votable_arraysize: '*'}
+#   subtype: json
+# schema: astropy-2.0
+solution_id designation source_id random_index ref_epoch ra ra_error dec dec_error parallax parallax_error parallax_over_error pm pmra pmra_error pmdec pmdec_error ra_dec_corr ra_parallax_corr ra_pmra_corr ra_pmdec_corr dec_parallax_corr dec_pmra_corr dec_pmdec_corr parallax_pmra_corr parallax_pmdec_corr pmra_pmdec_corr astrometric_n_obs_al astrometric_n_obs_ac astrometric_n_good_obs_al astrometric_n_bad_obs_al astrometric_gof_al astrometric_chi2_al astrometric_excess_noise astrometric_excess_noise_sig astrometric_params_solved astrometric_primary_flag nu_eff_used_in_astrometry pseudocolour pseudocolour_error ra_pseudocolour_corr dec_pseudocolour_corr parallax_pseudocolour_corr pmra_pseudocolour_corr pmdec_pseudocolour_corr astrometric_matched_transits visibility_periods_used astrometric_sigma5d_max matched_transits new_matched_transits matched_transits_removed ipd_gof_harmonic_amplitude ipd_gof_harmonic_phase ipd_frac_multi_peak ipd_frac_odd_win ruwe scan_direction_strength_k1 scan_direction_strength_k2 scan_direction_strength_k3 scan_direction_strength_k4 scan_direction_mean_k1 scan_direction_mean_k2 scan_direction_mean_k3 scan_direction_mean_k4 duplicated_source phot_g_n_obs phot_g_mean_flux phot_g_mean_flux_error phot_g_mean_flux_over_error phot_g_mean_mag phot_bp_n_obs phot_bp_mean_flux phot_bp_mean_flux_error phot_bp_mean_flux_over_error phot_bp_mean_mag phot_rp_n_obs phot_rp_mean_flux phot_rp_mean_flux_error phot_rp_mean_flux_over_error phot_rp_mean_mag phot_bp_rp_excess_factor phot_bp_n_contaminated_transits phot_bp_n_blended_transits phot_rp_n_contaminated_transits phot_rp_n_blended_transits phot_proc_mode bp_rp bp_g g_rp radial_velocity radial_velocity_error rv_method_used rv_nb_transits rv_nb_deblended_transits rv_visibility_periods_used rv_expected_sig_to_noise rv_renormalised_gof rv_chisq_pvalue rv_time_duration rv_amplitude_robust rv_template_teff rv_template_logg rv_template_fe_h rv_atm_param_origin vbroad vbroad_error vbroad_nb_transits grvs_mag grvs_mag_error grvs_mag_nb_transits rvs_spec_sig_to_noise phot_variable_flag l b ecl_lon ecl_lat in_qso_candidates in_galaxy_candidates non_single_star has_xp_continuous has_xp_sampled has_rvs has_epoch_photometry has_epoch_rv has_mcmc_gspphot has_mcmc_msc in_andromeda_survey classprob_dsc_combmod_quasar classprob_dsc_combmod_galaxy classprob_dsc_combmod_star teff_gspphot teff_gspphot_lower teff_gspphot_upper logg_gspphot logg_gspphot_lower logg_gspphot_upper mh_gspphot mh_gspphot_lower mh_gspphot_upper distance_gspphot distance_gspphot_lower distance_gspphot_upper azero_gspphot azero_gspphot_lower azero_gspphot_upper ag_gspphot ag_gspphot_lower ag_gspphot_upper ebpminrp_gspphot ebpminrp_gspphot_lower ebpminrp_gspphot_upper libname_gspphot
+1636148068921376768 """Gaia DR3 2538816539454218112""" 2538816539454218112 1617 2016.0 18.466531809347487 0.021227328 2.87878976386266 0.0155245 5.08382985708441 0.025329472 200.70808 77.62904 76.83054055120988 0.02909976 -11.105692960463237 0.020347942 0.57747 0.2322497 0.09594068 0.25377914 0.12245691 0.22692923 0.20731361 -0.14157793 0.086941764 0.508431 378 378 374 4 0.9622339 1431.3844 0.15537848 31.90121 95 False "" 1.5764368 0.0042344513 0.04128841 0.008066551 0.0813188 0.00971129 -0.022397932 43 17 0.044135123 54 54 0 0.052157834 74.637405 0 0 1.034761 "" "" "" "" "" "" "" "" False 370 1686426.9638606254 441.93793 3815.9814 10.119948 49 955841.7704899294 227.06082 4209.629 10.387577 48 1061870.5531823596 190.09053 5586.131 9.682716 1.1964421 0 0 0 0 0 0.7048607 0.26762867 0.43723202 24.974974 0.2124766 1 24 4 14 113.94689 -0.402976 0.56318027 870.5294 2.8793793 6250.0 4.0 0.0 222 5.0247316 3.6304314 14 9.519091 0.00684678 16 "" """NOT_AVAILABLE""" 134.02001978202296 -59.509249662575314 18.1325069386594 -4.574673583276305 False False 0 True True False False False True True False 1.1961469e-13 5.974694e-13 0.9982583 6027.974 6026.4653 6029.844 4.1171 4.1129 4.1209 -0.1951 -0.2006 -0.1898 194.0765 193.1774 195.1361 0.0007 0.0002 0.0018 0.0006 1e-04 0.0016 0.0003 0.0 0.0009 """MARCS"""
+1636148068921376768 """Gaia DR3 1099432432875401728""" 1099432432875401728 2675 2016.0 104.92701163632249 0.014069807 63.24594185254482 0.01614017 5.881378619821566 0.02483292 236.83798 17.617062 -12.021013647907584 0.021584809 12.878513185859322 0.018920397 0.20008427 -0.088790126 -0.19673926 -0.104733564 -0.24618587 -0.20442922 -0.21934226 0.45872897 0.009516442 0.06893159 391 0 391 0 0.6186958 397.3139 0.0 0.0 31 True 1.3400295 "" "" "" "" "" "" "" 45 22 0.03193765 49 14 0 0.014495172 141.92639 0 0 1.02148 0.25153837 0.18458587 0.13236047 0.42436838 101.75516 -59.67551 13.91554 44.47293 False 422 23700.89555189627 7.5523834 3138.2007 14.750455 45 6680.585875277075 11.789767 566.6427 15.776505 47 25150.244164768832 18.987902 1324.5405 13.74654 1.3430222 0 0 0 0 0 2.0299654 1.0260506 1.0039148 -19.423811 6.1150446 2 21 3 13 8.122939 "" "" 988.6094 "" 3600.0 4.5 -0.75 111 "" "" "" 13.260925 0.06940928 19 "" """NOT_AVAILABLE""" 152.6756519694689 24.9371202029674 98.73983355415952 40.25882912654178 False False 0 True True False False False False True False 1.2558463e-13 5.4819482e-11 0.9976672 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 703532655452238592""" 703532655452238592 3715 2016.0 129.9709255450639 0.013158314 27.631570971904303 0.007555395 7.513264990316233 0.016803548 447.12375 8.87636 -4.753118771321455 0.01645346 -7.496507650347014 0.0130776465 -0.30997556 -0.27254647 -0.30449635 0.3952384 0.15094382 0.28163818 -0.14788617 0.49599463 -0.42178416 -0.5041265 415 415 410 5 -2.0308208 769.9605 0.06784551 7.002405 31 True 1.5486251 "" "" "" "" "" "" "" 47 19 0.027101563 54 11 3 0.038078617 129.84344 0 0 0.9286966 "" "" "" "" "" "" "" "" False 441 1840204.4203217379 218.68358 8414.918 10.025202 50 976148.4570623132 206.10455 4736.181 10.364753 51 1238377.9555992165 197.86581 6258.676 9.515762 1.2034132 0 0 0 0 0 0.84899044 0.33955097 0.50943947 -56.61028 0.18054785 1 21 8 13 116.09615 -0.44626105 0.6080616 942.08093 2.2036858 5750.0 4.0 0.0 444 "" "" "" 9.338792 0.00790982 8 128.86787 """NOT_AVAILABLE""" 196.76203819179636 34.806580364525466 125.1791350587496 8.942163251545251 False False 0 True True True False False True True False 1.0964923e-13 5.4769237e-13 0.9992449 5651.3994 5649.3057 5654.0684 4.3122 4.3108 4.3137 -0.3006 -0.3046 -0.2961 132.5547 132.2237 132.845 0.0009 0.0002 0.0023 0.0008 1e-04 0.0019 0.0004 1e-04 0.0011 """PHOENIX"""
+1636148068921376768 """Gaia DR3 3075955904089799552""" 3075955904089799552 6397 2016.0 132.10459270933268 0.014160273 2.271051596123523 0.0097848335 12.599344304105063 0.017785182 708.4181 66.22377 4.013977357436915 0.01871014 66.10200703095197 0.015240515 -0.28822863 0.02385133 -0.11615244 0.046207428 0.0017988993 0.037165042 -0.23867598 0.25141996 -0.14620927 -0.1688473 437 437 426 11 -0.777055 1129.8812 0.113440886 18.495962 31 True 1.4550099 "" "" "" "" "" "" "" 50 21 0.026847985 54 16 0 0.028316636 10.028468 0 0 0.97255623 "" "" "" "" "" "" "" "" False 434 669427.3915786062 152.97481 4376.063 11.123108 50 286744.29641028703 152.37167 1881.874 11.694805 50 544133.478112739 206.26305 2638.0562 10.408632 1.2411768 0 0 0 0 0 1.2861729 0.57169724 0.71447563 35.98448 0.30269697 1 20 10 13 71.23068 0.7009052 0.17763087 898.2486 3.9377098 4500.0 4.5 -0.25 222 "" "" "" 10.132356 0.0067196093 9 "" """NOT_AVAILABLE""" 225.05817938209842 26.90603085683125 133.91081459664719 -14.982893786905901 False False 0 True True False False False True True False 1.0525818e-13 5.2575934e-13 0.9996796 4602.726 4591.014 4609.1714 4.5949 4.5915 4.5974 0.0955 0.072 0.1068 79.1002 78.7244 79.2527 0.0565 0.044 0.0642 0.0435 0.0338 0.0495 0.0228 0.0177 0.026 """MARCS"""
+1636148068921376768 """Gaia DR3 5927744094804268288""" 5927744094804268288 14768 2016.0 251.09760693925082 0.010350828 -56.960100359866715 0.008664149 11.304311485078195 0.012926726 874.49146 105.48187 -35.37191646771424 0.013576157 -99.37431063079273 0.011355461 0.18719482 -0.23849483 -0.1793471 -0.31695867 -0.15755987 -0.33375716 -0.1637072 0.035942767 -0.007836719 0.15333945 374 365 374 0 -1.706758 427.1931 0.0 0.0 31 False 1.3671217 "" "" "" "" "" "" "" 42 20 0.019761465 45 18 0 0.005872051 8.886577 0 0 0.9369518 "" "" "" "" "" "" "" "" False 360 158627.38534587136 40.773453 3890.4575 12.686421 39 50286.75193316794 52.067303 965.8029 13.5849085 40 157616.12100833992 69.59343 2264.8132 11.753894 1.3106368 0 0 0 0 0 1.8310146 0.8984871 0.93252754 6.3970594 1.1404586 1 15 10 11 27.717087 2.6405969 0.02089015 799.3667 12.83487 4250.0 4.5 0.75 101 "" "" "" 11.373572 0.028755344 5 "" """NOT_AVAILABLE""" 330.7940495583069 -7.285904259005878 257.64999394002314 -34.32841881617681 False False 0 True True False False False True True False 1.0819808e-13 5.4044394e-13 0.9993886 4135.3413 4127.183 4149.696 4.6646 4.6427 4.6734 0.151 0.1355 0.1856 87.9569 86.517 88.6909 0.5597 0.5446 0.58 0.4031 0.3921 0.4181 0.2192 0.2133 0.2273 """MARCS"""
+1636148068921376768 """Gaia DR3 142992109964443776""" 142992109964443776 18639 2016.0 43.713871563099616 0.016217967 37.330280998718095 0.012526294 7.1302912455406435 0.017837966 399.7256 46.227406 40.560642638356576 0.017720437 -22.1767273095045 0.016465714 0.027978556 0.38290703 -0.13146995 0.24854049 -0.01561406 0.15453659 0.18623708 0.066231176 0.32942834 0.11555304 236 0 234 2 0.035799388 214.70488 0.0 0.0 31 False 1.3442212 "" "" "" "" "" "" "" 27 14 0.025578039 31 12 0 0.031570565 89.89843 0 0 1.0002172 0.17943747 0.18458667 0.202343 0.78253585 -55.820538 -12.2502775 -51.879406 30.233604 False 248 54257.23963698512 21.029345 2580.0728 13.851223 29 15653.138373260364 31.749285 493.02335 14.852038 28 57067.668564901796 59.747093 955.1539 12.85692 1.3402969 0 0 0 0 0 1.9951181 1.0008154 0.99430275 23.462164 2.4443645 2 12 4 9 9.368267 "" "" 775.63824 "" 3900.0 4.5 0.0 111 "" "" "" 12.347597 0.029766174 8 "" """VARIABLE""" 148.53681237491386 -19.33003968956904 52.36502456947293 19.742411602156327 False False 0 True True False True False True True False 1.1961469e-13 5.974694e-13 0.9982583 4144.432 4142.8535 4145.6973 4.6617 4.6603 4.6623 0.5002 0.4976 0.5031 140.0016 139.8554 140.1858 0.8359 0.8322 0.8393 0.5925 0.5899 0.595 0.3304 0.329 0.3317 """MARCS"""
+1636148068921376768 """Gaia DR3 2295656313156693120""" 2295656313156693120 19980 2016.0 288.80635322472193 0.020885238 82.02811681297106 0.022492908 8.571521114358683 0.021514589 398.40506 60.89012 -43.16471331705408 0.027869603 -42.94664586126856 0.028562574 0.1716274 0.11032722 -0.20840491 -0.06751344 0.06902302 -0.09785663 -0.4281162 -0.26482555 -0.04655591 0.24571405 299 0 298 1 4.1718383 402.27917 0.10687631 2.8075302 31 False 1.2826912 "" "" "" "" "" "" "" 34 25 0.044751618 39 18 0 0.020010537 21.995966 0 0 1.1759951 0.059059486 0.13039967 0.07240645 0.014472283 -44.480717 -49.0865 33.96193 14.786336 False 337 21417.877796635246 9.917914 2159.5144 14.860426 36 4345.169380388067 12.117939 358.5733 16.243525 39 26150.055463926165 30.170572 866.7405 13.704214 1.423821 0 12 0 9 0 2.5393105 1.3830986 1.1562119 -33.72362 3.2696629 2 18 3 16 7.692107 "" "" 979.3917 "" 3500.0 4.0 -0.75 111 "" "" "" 13.132582 0.10684113 16 "" """NOT_AVAILABLE""" 114.10164412765285 26.02664973544084 80.71548145702351 73.91199883879217 False False 0 True True False False False True True False 1.0202512e-11 5.096464e-11 1.0000273e-06 3563.3965 3544.9424 3571.3987 4.7388 4.7335 4.7491 0.0944 0.067 0.11 115.8991 112.3835 116.5652 0.7553 0.7214 0.7661 0.4969 0.4744 0.5041 0.3136 0.2992 0.3181 """MARCS"""
+1636148068921376768 """Gaia DR3 6177123876091495808""" 6177123876091495808 20655 2016.0 208.15924734946788 0.015962118 -28.266515194327283 0.017218776 5.692569543793453 0.021375697 266.31036 39.396812 -38.379772554293616 0.022689993 -8.893918362168927 0.026128994 -0.14305243 -0.22380307 -0.1366259 0.02736468 -0.4192123 0.23208946 -0.4497005 -0.18691236 0.41585332 -0.4976208 199 199 196 3 1.2679734 612.1651 0.11238031 16.525404 31 True 1.5278383 "" "" "" "" "" "" "" 23 13 0.042785857 26 10 1 0.011922041 158.38261 0 0 1.0637896 "" "" "" "" "" "" "" "" False 223 426046.39024161093 385.06644 1106.4231 11.613725 23 216715.77452762335 431.45172 502.29437 11.998816 23 298308.68910340784 437.28253 682.1875 11.061231 1.208846 0 0 0 0 0 0.9375849 0.38509083 0.55249405 -3.3087363 0.53939617 1 12 1 11 39.71223 0.5912146 0.31353483 799.46136 5.6732817 5250.0 5.0 0.0 444 8.002854 6.0547442 10 10.839257 0.02311395 10 "" """NOT_AVAILABLE""" 318.9626540087826 32.69301572372903 216.2676766408078 -15.614265838839128 False False 0 True True False False False True True False 1.03982646e-13 5.193881e-13 0.9998059 5489.4204 5467.676 5519.521 4.5198 4.5094 4.5311 -0.1122 -0.1336 -0.0732 174.228 173.3937 177.2902 0.145 0.13 0.1649 0.1195 0.1071 0.136 0.0638 0.0572 0.0726 """MARCS"""
+1636148068921376768 """Gaia DR3 1575553540733945088""" 1575553540733945088 20980 2016.0 180.09382634969643 0.009240184 58.00683058846344 0.009393926 5.700318018602941 0.012690668 449.17398 24.008114 -6.762025711046858 0.011508815 23.036157857775287 0.011934706 0.18689139 -0.15244599 -0.05920762 -0.1537928 0.040813677 -0.16426037 -0.09156867 0.17523144 -0.120550655 0.19543462 480 453 480 0 4.6459494 906.4628 0.08000547 8.558097 31 True 1.45739 "" "" "" "" "" "" "" 56 30 0.017901983 60 22 0 0.017647468 77.82378 0 0 1.1537241 "" "" "" "" "" "" "" "" False 489 158846.17301252927 35.87501 4427.7666 12.684925 56 68234.22863811109 47.243996 1444.2942 13.253536 54 128368.20267910183 58.968674 2176.8882 11.976752 1.2376907 0 0 0 0 0 1.276784 0.56861115 0.7081728 -9.6597395 0.7988544 1 28 3 21 31.40827 1.597643 0.09430799 962.32465 10.791421 4500.0 4.0 0.25 111 8.508832 14.824883 14 11.715718 0.0125332745 25 "" """NOT_AVAILABLE""" 135.63882075284613 57.84393125973534 147.57451886554466 51.120895162527404 False False 0 True True False False False True True False 1.0360651e-13 5.175093e-13 0.9998432 4646.064 4640.838 4653.814 4.5797 4.5775 4.5819 0.225 0.2173 0.2346 174.927 174.5038 175.3398 0.0604 0.0544 0.069 0.0467 0.042 0.0533 0.0244 0.0219 0.0279 """MARCS"""
+1636148068921376768 """Gaia DR3 5910768975275094784""" 5910768975275094784 31002 2016.0 261.153898420287 0.014469364 -62.16252591686126 0.0132295685 9.406786680661769 0.019701768 477.459 58.22793 52.694229878162986 0.015640229 -24.775180902413073 0.016463643 0.31979355 -0.2939971 -0.3871804 -0.372339 -0.2635562 -0.3006329 -0.41808036 0.028344063 0.25464532 0.04105285 408 0 408 0 -0.048560735 378.4919 0.0 0.0 31 False 1.3264141 "" "" "" "" "" "" "" 47 22 0.025941752 50 24 0 0.0022202947 131.7941 0 0 0.99746346 0.35189632 0.062923476 0.11331612 0.27678823 -120.68889 -23.347416 6.269956 -27.036 False 423 40949.22427737792 12.149557 3370.4294 14.156753 43 10784.366671787722 17.05484 632.33466 15.256556 42 44963.62903465874 28.390135 1583.7765 13.115742 1.3613932 0 0 0 0 0 2.1408138 1.099803 1.0410109 -8.642521 2.5149794 2 19 11 16 11.475732 "" "" 971.6004 "" 3700.0 4.5 0.0 101 "" "" "" 12.498222 0.09662483 8 "" """VARIABLE""" 329.5490329960449 -14.44872409529822 264.70673082028645 -38.88569236974268 False False 0 True True False True False True True False 1.7308995e-13 8.6457566e-13 0.99296397 3763.212 3761.9539 3764.3523 4.7511 4.7495 4.7524 -0.0971 -0.1027 -0.0919 106.3195 106.0991 106.5497 0.5592 0.5559 0.5628 0.3855 0.3832 0.388 0.2227 0.2214 0.2242 """MARCS"""
+1636148068921376768 """Gaia DR3 2916442949023646464""" 2916442949023646464 33091 2016.0 89.08891529461751 0.006864259 -23.375564356338113 0.009805821 6.174716638660832 0.012463671 495.41714 31.538557 -8.946122922229451 0.008908044 -30.243138720876235 0.012348883 0.15856348 -0.07454545 0.06078496 -0.07918634 -0.016357893 -0.05658048 -0.22320117 0.13254473 0.03427737 0.08238097 549 549 537 12 -1.2780882 1029.8751 0.08101822 11.97835 31 True 1.581963 "" "" "" "" "" "" "" 62 29 0.017350066 73 31 3 0.017066693 137.55797 0 0 0.96045643 "" "" "" "" "" "" "" "" False 606 2908965.2705032746 371.8172 7823.6436 9.528021 66 1637481.9216313297 445.90552 3672.262 9.803101 65 1840647.7400512272 316.8654 5808.9263 9.085469 1.1956587 0 0 0 0 0 0.71763134 0.27507973 0.4425516 20.539616 0.199312 1 29 11 19 174.8999 1.6530182 0.009930566 918.43146 3.464594 6250.0 4.0 -0.25 444 5.0704713 2.679803 15 8.907322 0.007306083 15 "" """NOT_AVAILABLE""" 228.80310905421263 -22.0474759778727 88.77803704959992 -46.81098073411591 False False 0 True True False False False True True False 1.0202512e-11 5.0961034e-11 1.0000273e-06 5975.8423 5970.2417 5986.872 4.013 4.0088 4.0192 -0.3608 -0.3863 -0.3465 160.0383 158.154 161.0265 0.005 0.0012 0.0114 0.0043 0.001 0.0097 0.0023 0.0005 0.0053 """MARCS"""
+1636148068921376768 """Gaia DR3 486087738386602624""" 486087738386602624 34783 2016.0 89.75122195274709 0.010244637 71.33384612083127 0.011733394 6.786864259555966 0.015174365 447.25854 35.43914 4.111420622304124 0.011435348 -35.19984315557679 0.01573819 -0.2558692 0.22973382 -0.3176545 0.33178005 0.024614556 0.30784136 -0.22839202 0.19173318 0.064115636 -0.13661486 459 459 450 9 -1.8901867 970.78876 0.09456399 12.451335 31 True 1.6293352 "" "" "" "" "" "" "" 52 28 0.022700192 58 24 3 0.017857568 154.23471 0 0 0.9365817 "" "" "" "" "" "" "" "" False 473 5078474.704409022 914.3562 5554.1533 8.923034 55 3105380.393200803 1032.5005 3007.6309 9.108255 54 2896957.1778754503 751.33563 3855.7432 8.59304 1.1819174 0 0 0 0 0 0.5152149 0.18522167 0.32999325 -1.0215006 0.32026586 1 23 4 17 196.31927 -0.8675567 0.6968439 994.11755 4.295594 6500.0 4.0 -0.25 555 68.18878 3.1675234 14 8.455617 0.0065007214 15 "" """NOT_AVAILABLE""" 142.51377885747894 21.55527267229569 89.88125629776933 47.894667825000795 False False 0 True True False False False True True False 1.7308995e-13 8.6457566e-13 0.99296397 6755.427 6753.5576 6773.6455 4.1692 4.1665 4.1724 -0.2843 -0.2998 -0.2508 146.8668 146.4538 148.0139 0.001 1e-04 0.0107 0.0009 1e-04 0.0094 0.0005 0.0 0.0051 """MARCS"""
+1636148068921376768 """Gaia DR3 4073860116178606080""" 4073860116178606080 36341 2016.0 283.11044937721783 0.028082866 -26.150079226853457 0.02691428 12.38950294033803 0.032380413 382.62338 63.980995 -25.433928851662223 0.033560846 -58.70845697387051 0.028054953 0.32394704 0.042104263 -0.10114045 -0.1982187 -0.3772745 -0.11086124 -0.27311304 -0.18778598 0.15137592 0.2386792 220 0 220 0 0.92787445 237.23723 0.0 0.0 31 False 1.269173 "" "" "" "" "" "" "" 25 16 0.049448647 25 9 0 0.07409256 171.97849 0 0 1.0435052 0.31302533 0.3494181 0.5105905 0.8628494 -79.98904 -33.026512 -38.9793 40.2243 False 215 16045.210908570954 10.436892 1537.3553 15.174004 23 2953.424822904082 9.608006 307.3921 16.662727 23 20250.470658003705 52.902134 382.7912 13.981808 1.4461571 0 0 0 0 0 2.6809196 1.4887238 1.1921959 -16.854797 4.6467323 2 9 1 8 5.2665424 "" "" 918.5763 "" 3400.0 4.5 -0.25 101 "" "" "" 13.423021 0.06340542 10 "" """NOT_AVAILABLE""" 9.424203651214018 -11.798023455317534 281.76736799052924 -3.244771426323845 False False 0 True False False False False False True False 1.7308995e-13 8.6457566e-13 0.99296397 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 2845253659931962368""" 2845253659931962368 39807 2016.0 346.9667582183557 0.019436024 26.85576486361678 0.016012516 11.48592747665444 0.022474853 511.05685 40.11926 -36.02476515446429 0.025341516 17.65704049958199 0.018479474 0.06477601 0.051401883 0.41345355 -0.33960333 0.060235236 -0.33113244 0.13282074 -0.24867865 -0.17073134 -0.03410817 292 0 289 3 1.139436 299.9622 0.0 0.0 31 False 1.3134097 "" "" "" "" "" "" "" 34 18 0.036905237 46 9 0 0.024273872 45.164345 0 0 1.0469966 0.18784161 0.31998795 0.09479412 0.45224264 -61.31285 -36.324615 55.029675 30.47082 False 370 31371.130326749266 10.979311 2857.295 14.446041 40 7687.641311187216 12.848972 598.30786 15.62406 41 35563.6114108408 21.731432 1636.5056 13.37038 1.3786961 0 11 0 0 0 2.2536793 1.1780186 1.0756607 11.243388 2.568337 2 26 1 16 11.020724 "" "" 1015.57526 "" 3600.0 4.5 -0.25 101 "" "" "" 12.823601 0.040263966 25 "" """VARIABLE""" 96.03471386671899 -30.55091828753836 359.677181151054 29.63672188468642 False False 0 True True False True False True True False 1.3750302e-13 6.868207e-13 0.99648726 3619.0928 3604.7942 3640.7678 4.7501 4.6921 4.7804 -0.6336 -0.709 -0.5524 88.0674 87.3445 100.7784 0.6305 0.6047 0.6965 0.4284 0.4109 0.4732 0.2515 0.241 0.2776 """MARCS"""
+1636148068921376768 """Gaia DR3 391298806597341952""" 391298806597341952 41300 2016.0 9.56709858570833 0.013469521 48.87733417797937 0.009906955 5.337845925594854 0.01956519 272.8236 37.3464 -34.16582501593369 0.013978742 -15.081446673531394 0.012089417 -0.34992057 0.49382317 -0.31530747 0.28582022 -0.069707654 0.0779056 0.22826347 -0.33471578 0.39109233 -0.5421719 399 399 389 10 3.0685923 839.90295 0.08945706 13.577847 31 False 1.4975178 "" "" "" "" "" "" "" 46 18 0.024342943 51 16 0 0.01459615 37.79295 0 0 1.1118479 "" "" "" "" "" "" "" "" False 402 273738.90653505817 110.64825 2473.956 12.094026 49 130563.51805038589 193.64955 674.22577 12.548987 48 203659.00700576502 161.35275 1262.1973 11.4756365 1.2209537 0 0 0 0 0 1.0733509 0.45496178 0.6183891 -8.319987 0.30167213 1 25 5 17 40.115 -3.6337593 0.9998422 933.8786 4.4955926 5250.0 5.0 0.25 444 7.090531 5.1443696 19 11.2383375 0.008677241 20 "" """VARIABLE""" 120.70159161695909 -13.937376535869031 31.66136688032185 40.36559061476714 False False 0 True True False True False True True False 1.0423116e-13 5.206294e-13 0.9997813 5141.983 5128.5044 5154.4663 4.5396 4.5287 4.5497 0.1807 0.168 0.1924 184.4798 183.4155 185.3978 0.1436 0.133 0.1534 0.1153 0.1067 0.1232 0.0607 0.0562 0.0649 """MARCS"""
+1636148068921376768 """Gaia DR3 1992480481611925888""" 1992480481611925888 41673 2016.0 352.18635090800814 0.020080045 52.883029990361244 0.018775083 5.051418484897767 0.027066475 186.63008 24.001944 14.509140902138167 0.025052043 -19.12009816136469 0.022951238 -0.1891037 0.15120183 -0.31567058 -0.06614583 0.03156554 -0.08080828 -0.025499597 -0.16835956 0.022590725 -0.20987493 502 0 499 3 -2.2321646 438.6231 0.0 0.0 31 False 1.3160583 "" "" "" "" "" "" "" 58 28 0.037310738 65 28 0 0.009904688 87.050995 1 0 0.9291741 0.07799022 0.21994199 0.042815566 0.31987026 -0.40782854 47.3801 -39.58204 -28.525084 False 510 11747.013407584913 4.813624 2440.368 15.512548 62 2936.944425186618 9.511506 308.77808 16.668802 61 13169.954543103659 13.998592 940.8056 14.448935 1.3711485 0 2 0 1 0 2.2198677 1.1562538 1.0636139 94.32214 11.375854 2 17 4 13 4.8205485 "" "" 994.13306 "" 3800.0 4.5 0.0 101 "" "" "" 13.933023 0.12622024 20 "" """NOT_AVAILABLE""" 110.50923103202773 -7.982634487237096 22.03100861399626 49.839274953000285 False False 0 True False False False False True True False 1.0202512e-11 9.755012e-11 1.0000273e-06 3781.573 3774.204 3793.733 4.6793 4.643 4.6918 -0.1463 -0.1944 -0.0882 201.2073 197.352 215.7042 0.8333 0.8215 0.8532 0.5721 0.5638 0.5858 0.3294 0.3248 0.337 """MARCS"""
+1636148068921376768 """Gaia DR3 3036724126625168384""" 3036724126625168384 43571 2016.0 117.37629290682426 0.01778889 -12.200919074659865 0.013825141 14.340502994035823 0.025568143 560.87384 129.73628 -71.42747433991039 0.024608092 108.30337301319516 0.018117258 -0.0062543307 0.1275083 -0.17451666 -0.07210793 -0.21023308 -0.09428643 0.19929175 0.35456043 -0.4584327 -0.15617253 341 0 340 1 3.0971708 406.65326 0.0600448 1.4029776 31 False 1.2764939 "" "" "" "" "" "" "" 39 19 0.035695508 41 13 0 0.0053959293 8.287507 0 0 1.1209757 0.2497193 0.22922419 0.3001371 0.37430316 -35.048298 0.0629793 -42.73254 -38.638172 False 356 30410.29960690347 13.058722 2328.7349 14.4798155 36 5923.618944359564 17.293514 342.53415 15.907074 38 37644.558508613925 37.127724 1013.9205 13.30864 1.4326783 1 2 0 0 0 2.5984344 1.4272585 1.171176 58.806015 1.9881657 2 20 4 16 11.648718 "" "" 896.71936 "" 3600.0 4.0 0.0 111 "" "" "" 12.744111 0.047442835 17 "" """NOT_AVAILABLE""" 230.51281385061066 6.989140687565707 122.2524998466455 -32.62584649179488 False False 0 True True False False False False True False 1.3750302e-13 6.868207e-13 0.99648726 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 3666796481778157696""" 3666796481778157696 43971 2016.0 214.36227435011307 0.023080919 2.153427172348346 0.021035958 9.299130571621331 0.026583182 349.81253 56.38919 -53.70699525308945 0.029828517 -17.184278509290998 0.027216893 -0.16527832 -0.2776508 0.021142885 -0.06297751 -0.17271385 0.011658249 -0.14686802 -0.10687049 0.1990461 -0.26460847 245 0 245 0 1.5436981 275.38162 0.032911986 0.22758414 31 False 1.2886051 "" "" "" "" "" "" "" 28 15 0.044843942 30 12 0 0.016988944 105.232025 1 0 1.0698601 0.2541934 0.22952186 0.29206574 0.7704152 -113.99195 33.954792 -6.0441236 -28.070202 False 261 18774.108469706982 11.531462 1628.077 15.0034685 29 3951.564174457562 16.061804 246.02245 16.34662 29 22592.905838019356 35.137997 642.9765 13.862966 1.4138871 0 1 0 0 0 2.483655 1.343152 1.1405029 -19.975376 4.2483673 2 13 1 11 5.9670367 "" "" 911.5477 "" 3400.0 3.5 -0.75 111 "" "" "" 13.344173 0.08389135 15 "" """NOT_AVAILABLE""" 346.0990327025301 57.62843123582445 211.35007451646155 15.000717784942378 False False 0 True False False False False True True False 1.160294e-13 5.8565023e-13 0.99861324 3543.345 3541.0972 3545.5964 4.8119 4.8089 4.8147 -0.1393 -0.1534 -0.123 107.4518 107.1886 107.7744 0.7328 0.7261 0.7396 0.4854 0.4809 0.49 0.2991 0.2965 0.3018 """MARCS"""
+1636148068921376768 """Gaia DR3 4051412619905507072""" 4051412619905507072 50700 2016.0 275.68380682522087 0.020066889 -28.501733437192474 0.017476907 6.239553955902588 0.020717513 301.1729 18.582987 1.3338814717005467 0.025511956 -18.535051918664102 0.019152697 0.14023493 0.0302314 -0.19001977 -0.17128192 -0.11226951 -0.17705603 -0.41906002 -0.061925925 0.05632767 0.12274156 227 0 227 0 -1.044347 189.03351 0.0 0.0 31 False 1.3648628 "" "" "" "" "" "" "" 26 17 0.03628597 26 11 0 0.05112959 177.37704 0 0 0.94937307 0.12761787 0.2325445 0.24555802 0.78859884 -130.59279 -11.768783 -37.76607 42.326187 False 226 54576.86108338489 19.72756 2766.5288 13.844846 25 17145.38578682206 23.62339 725.7801 14.753174 23 54545.653813682155 43.731216 1247.2933 12.905995 1.3135794 0 1 0 1 0 1.8471785 0.90832806 0.9388504 -33.2865 2.622785 2 7 6 5 8.328152 "" "" 775.8929 "" 4500.0 4.5 0.75 101 "" "" "" "" "" "" "" """VARIABLE""" 4.364455250119497 -6.885876837649399 275.0134667266763 -5.16131566346536 False False 0 True True False True False True True False 1.0442868e-13 5.21616e-13 0.99976176 4391.2666 4386.1133 4395.8325 4.6655 4.6558 4.6692 0.3128 0.2158 0.3529 158.3496 156.9108 159.3808 1.0414 1.0296 1.0503 0.7568 0.748 0.7635 0.4032 0.3988 0.4065 """PHOENIX"""
+1636148068921376768 """Gaia DR3 86268270726618624""" 86268270726618624 57567 2016.0 37.93089459029714 0.020806363 19.29079672106284 0.01926565 5.567776813866466 0.027777048 200.44524 29.74431 13.405462665936495 0.027738182 -26.55216668900193 0.022954084 0.09934506 0.11916426 -0.07974311 0.050891917 -0.38592872 -0.13592507 -0.15482093 0.36903885 0.41999882 0.31715003 222 222 221 1 0.44116262 460.9164 0.1307253 9.333709 31 True 1.4695683 "" "" "" "" "" "" "" 25 14 0.042503547 26 12 2 0.079256795 74.07325 0 0 1.0197467 "" "" "" "" "" "" "" "" True 220 10798948.436916307 2212.5488 4880.773 8.103913 25 4798570.425887617 2537.367 1891.1614 8.635762 22 8620980.489386516 2835.9558 3039.8853 7.4090037 1.242672 0 0 0 0 0 1.2267585 0.5318489 0.6949096 -0.74409294 0.14047733 1 8 0 8 216.81169 -0.44790375 0.5341386 898.89886 0.537859 5000.0 3.0 -0.25 444 7.783668 0.7053586 7 7.136901 0.0070467503 8 "" """NOT_AVAILABLE""" 153.2535144306378 -37.606313741199344 41.71866557236799 4.146839433789833 False False 0 True True False False False True True False 1.0246188e-13 5.1179194e-13 0.9999564 5234.2954 5230.731 5238.257 3.2087 3.2046 3.2124 -0.0155 -0.0158 -0.015 172.7892 172.0518 173.6239 0.6073 0.6039 0.6109 0.4839 0.4812 0.4869 0.2573 0.2558 0.2589 """MARCS"""
+1636148068921376768 """Gaia DR3 3684951411617737088""" 3684951411617737088 59261 2016.0 198.17700147184934 0.023008743 -2.0539659051226864 0.017703619 8.468104435012771 0.026862929 315.23386 21.119001 8.861564474431773 0.03203247 19.16989455876909 0.024996597 -0.37780535 -0.16998388 0.016172912 -0.13567895 -0.070801064 -0.16790065 0.21709013 0.11549351 -0.12200552 -0.4118754 298 0 298 0 3.6965396 379.48618 0.090010084 2.4998057 31 True 1.3002886 "" "" "" "" "" "" "" 34 16 0.048381783 47 27 0 0.033588413 88.04878 2 0 1.1553315 0.106352195 0.4834084 0.23941009 0.27103844 -46.828667 26.303387 5.186466 -26.814472 False 294 28952.85861090775 14.590679 1984.3394 14.533138 44 6559.171597744548 18.08821 362.6214 15.79642 46 33933.88232104741 31.002956 1094.537 13.421311 1.3985857 0 2 0 0 0 2.3751087 1.2632818 1.1118269 0.5772341 3.637908 2 15 5 10 7.6841393 "" "" 870.853 "" 3600.0 4.5 0.0 111 "" "" "" 12.911848 0.053862832 11 "" """NOT_AVAILABLE""" 313.72931590833707 60.37111154103791 197.55008573018347 5.228333476239877 False False 0 True True False False False True True False 1.7308998e-13 9.00982e-12 0.99296397 3620.8892 3616.0461 3628.2256 4.6712 4.666 4.6753 -0.0247 -0.0665 0.0084 118.0877 117.6801 118.5207 0.6619 0.6568 0.6676 0.4439 0.4404 0.4477 0.2692 0.2671 0.2715 """MARCS"""
+1636148068921376768 """Gaia DR3 4599710073355218048""" 4599710073355218048 74527 2016.0 259.3530395685651 0.009529021 30.4113148729394 0.010957419 7.205622033945202 0.012864453 560.11884 13.064223 -11.765113137642519 0.012637131 -5.679440606761443 0.014005513 0.118278265 -0.1768948 0.1613492 0.0031485355 -0.18880126 -0.032091066 -0.08385458 0.016497461 -0.015901597 0.20054388 478 478 460 18 3.044743 1174.2522 0.10977781 19.517134 31 True 1.548597 "" "" "" "" "" "" "" 54 30 0.020437678 61 20 1 0.008467756 60.201458 0 0 1.1018548 "" "" "" "" "" "" "" "" False 463 2000070.9968592369 331.12665 6040.199 9.934753 55 1059550.5829552254 273.19662 3878.3442 10.275738 56 1338154.6038849382 229.15497 5839.518 9.43163 1.19881 0 32 0 35 0 0.8441076 0.34098434 0.5031233 -7.6920457 0.18909149 1 22 2 18 125.452774 0.40888393 0.19920813 953.55023 2.1632962 5750.0 4.0 0.25 222 "" "" "" 9.250216 0.0060117207 17 "" """NOT_AVAILABLE""" 53.303601226634825 32.476592544338985 254.54408528026883 53.280837197524214 False False 0 True True False False False True True False 1.0819808e-13 5.4044394e-13 0.9993886 5739.883 5721.6484 5762.024 4.3115 4.3079 4.3169 0.3357 0.3195 0.3564 137.6488 137.2036 138.1013 0.0689 0.0579 0.0822 0.0575 0.0483 0.0686 0.0304 0.0255 0.0364 """MARCS"""
+1636148068921376768 """Gaia DR3 2508862097501751040""" 2508862097501751040 77844 2016.0 24.205608029991524 0.01206981 -1.3367490667605864 0.009471445 5.244262662112437 0.015822768 331.43774 54.707573 -38.32252829622887 0.016879361 -39.04231352665244 0.011545608 0.37337822 0.058839772 -0.17510991 0.008376082 -0.19475946 0.062030178 -0.4179297 -0.007447375 0.34209314 0.2712536 459 0 458 1 -1.4579972 404.34344 0.0 0.0 31 False 1.428564 "" "" "" "" "" "" "" 52 19 0.02411608 56 37 0 0.013586499 113.816666 0 0 0.9512307 0.0154582085 0.54185605 0.07538942 0.23842335 -138.86015 -25.590834 0.5802945 32.3198 False 490 84144.64720550223 14.707143 5721.3457 13.374801 52 33322.65261727648 31.084566 1071.9999 14.031693 52 72559.32831737047 41.038628 1768.074 12.596163 1.258333 0 0 0 0 0 1.4355307 0.6568928 0.7786379 -39.802464 1.1688325 2 28 5 17 18.39641 "" "" 911.6244 "" 4250.0 3.5 0.0 111 "" "" "" 12.291799 0.024594322 23 "" """NOT_AVAILABLE""" 147.70480387778073 -62.00574370050226 21.913158665636132 -10.629225756138867 False False 0 True True False False False True True False 1.03842065e-13 5.186859e-13 0.9998199 4521.753 4516.0024 4531.32 4.6672 4.6648 4.6688 0.3672 0.3524 0.3935 186.5709 186.0644 187.3023 0.2453 0.2373 0.2558 0.1857 0.1796 0.1937 0.0972 0.094 0.1014 """MARCS"""
+1636148068921376768 """Gaia DR3 6830390089735775616""" 6830390089735775616 80574 2016.0 325.10337713435524 0.017372988 -19.76104483039565 0.0136043625 8.453338117831812 0.019705169 428.9909 39.61761 17.65950057183823 0.022244878 -35.464026948841955 0.0151040265 0.35343394 0.43339074 -0.4441292 -0.21591298 0.34290907 -0.1819674 -0.81242424 -0.46514556 -0.27948934 0.2542936 336 0 335 1 -0.76547956 297.70096 0.0 0.0 31 True 1.3746504 "" "" "" "" "" "" "" 38 16 0.03412283 42 31 0 0.026742365 78.19493 0 0 0.96935236 0.28738615 0.62579834 0.19995582 0.20567442 -7.79045 -12.494407 -4.647005 4.330131 False 361 98225.84625491263 69.86112 1406.0159 13.206802 41 32086.581129946386 105.1343 305.19614 14.072734 39 95982.99182218537 192.10901 499.62775 12.29241 1.3038276 0 1 0 0 0 1.780324 0.8659315 0.9143925 -11.76765 2.7768078 1 18 3 11 20.244753 5.437803 8.6469595e-07 874.4673 44.225266 4250.0 4.0 0.5 111 "" "" "" 11.913935 0.024804972 15 "" """NOT_AVAILABLE""" 31.911968989984437 -45.8287632349058 320.8476482300836 -5.5107834309570904 False False 0 True True False False False True True False 1.160294e-13 5.7956103e-13 0.99861324 4130.0186 4123.616 4147.723 4.6129 4.6095 4.6169 0.0165 0.0027 0.0554 117.797 117.4392 118.2885 0.5004 0.4926 0.5222 0.3621 0.3563 0.3781 0.1955 0.1924 0.2041 """MARCS"""
+1636148068921376768 """Gaia DR3 6839283420817505280""" 6839283420817505280 81697 2016.0 330.3870919481059 0.021468718 -15.61204705231511 0.020159913 7.0114632292318735 0.02406111 291.4023 38.522274 38.099298923359655 0.026960047 -5.692886861074424 0.023723383 0.31107238 0.3660124 -0.30777648 -0.070611455 0.24930131 -0.08386562 -0.56624794 -0.21705464 -0.19230685 0.43065313 222 222 220 2 -0.03537704 579.8142 0.12790027 15.291542 31 True 1.5038528 "" "" "" "" "" "" "" 25 14 0.043642197 28 16 4 0.019241758 179.16539 0 0 0.99674535 "" "" "" "" "" "" "" "" False 248 34972470.46308657 9740.398 3590.4558 6.828051 25 16829352.0626622 16509.086 1019.3994 7.2733736 24 25937869.383909263 20488.705 1265.9595 6.21306 1.2228825 0 0 0 0 0 1.0603137 0.4453225 0.6149912 6.413607 0.12148944 1 13 0 10 483.12048 -1.0105175 0.7565645 889.45105 0.37723923 5000.0 3.0 0.0 444 11.645876 0.55110323 13 5.9838 0.00462055 13 "" """NOT_AVAILABLE""" 40.32744433816747 -49.0213330100201 327.0032721989441 -3.302647317446858 False False 0 True True False False False True True False 1.0491534e-13 5.2404684e-13 0.9997136 5320.4233 5316.19 5324.7217 3.0661 3.0631 3.069 -0.0639 -0.0642 -0.0636 139.8928 139.4107 140.4083 0.273 0.2695 0.2765 0.2212 0.2184 0.2242 0.1175 0.116 0.1191 """MARCS"""
+1636148068921376768 """Gaia DR3 6140009865392980224""" 6140009865392980224 83844 2016.0 192.90687913704932 0.012491171 -41.0327107343903 0.0090156095 8.776928834986256 0.01521906 576.7064 15.253274 -0.41059135259143575 0.013916661 -15.247747175990607 0.011381377 0.12542464 -0.32112387 -0.3293273 -0.02252615 -0.12434522 -0.0023761266 -0.29967463 0.073996976 0.10886438 0.03305106 363 363 358 5 -0.032380372 730.1343 0.07615427 7.639257 31 True 1.5849872 "" "" "" "" "" "" "" 41 20 0.020003814 44 19 0 0.0137205925 120.07399 0 0 0.99783784 "" "" "" "" "" "" "" "" False 365 3362398.578824957 539.54987 6231.859 9.370744 42 1904742.3764380196 723.3811 2633.1106 9.638951 42 2108792.4766242816 530.4414 3975.5427 8.937811 1.1936523 0 0 0 0 0 0.7011404 0.26820755 0.43293285 7.944992 0.14796546 1 18 5 11 146.10573 -2.7212214 0.99186456 1002.4524 1.1905823 6250.0 4.0 -0.25 444 "" "" "" 8.766968 0.005270746 9 "" """NOT_AVAILABLE""" 302.9704392457767 21.839025085493518 209.4839062174829 -32.36389848120057 False False 0 True True False False False True True False 1.0202512e-11 5.0961034e-11 1.0000273e-06 6047.5737 6045.665 6051.097 4.2472 4.2449 4.2496 -0.3354 -0.341 -0.3294 113.4675 113.2547 113.6603 0.0015 0.0004 0.0037 0.0013 0.0003 0.0031 0.0007 0.0002 0.0017 """MARCS"""
+1636148068921376768 """Gaia DR3 5512765351065780096""" 5512765351065780096 86763 2016.0 119.27301618103873 0.010681836 -52.89239166029636 0.011292614 5.2656706001158415 0.012296589 428.22205 35.645634 -35.14503332078884 0.01464438 -5.9529683717628075 0.013140741 0.10499066 0.14791349 0.0011127578 0.002885953 0.3054119 0.0906609 -0.088725984 0.2591426 -0.051341377 0.04380796 381 0 380 1 0.22092605 365.275 0.0 2.0756282e-15 31 False 1.3926387 "" "" "" "" "" "" "" 43 25 0.020488027 44 15 0 0.016709657 0.7385787 0 0 1.0071868 0.2387376 0.06387345 0.07999054 0.0512664 -77.784744 -48.123806 -56.727142 4.7302427 False 388 51833.56162410072 11.09218 4672.9824 13.900839 43 18172.925243340458 25.961788 699.9874 14.6899805 42 48414.492189239805 38.887577 1244.9861 13.035457 1.284639 0 2 0 0 0 1.6545238 0.78914165 0.8653822 6.951188 3.5448263 2 18 5 16 12.009255 "" "" 913.0877 "" 4500.0 4.5 1.0 101 "" "" "" 12.736431 0.050466333 13 "" """NOT_AVAILABLE""" 266.6201942371612 -12.235249339494292 150.69013960175164 -70.22589600739575 False False 0 True True False False False False True False 1.0819808e-13 5.4044394e-13 0.9993886 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 4625025194713170304""" 4625025194713170304 88313 2016.0 72.32966779297902 0.015054511 -76.56292586743082 0.014195575 5.176467901723753 0.014644675 353.471 11.5721245 -8.05543318862687 0.019806854 -8.30807200688595 0.019010516 0.10091312 0.07458796 -0.073143005 -0.2103305 0.093768544 -0.19437908 -0.17770915 0.14928667 -0.03016376 0.17783454 330 9 328 2 1.9024558 362.09402 0.0 0.0 31 False 1.3664335 "" "" "" "" "" "" "" 38 26 0.029601349 42 15 0 0.03435728 25.311455 0 0 1.07472 "" "" "" "" "" "" "" "" False 350 31934.27158952078 8.818397 3621.324 14.426724 39 10098.647646329084 18.128069 557.07245 15.327884 38 31763.920177396914 23.301182 1363.1892 13.49306 1.3108978 0 0 0 0 0 1.8348236 0.9011593 0.9336643 42.397114 3.7318351 2 20 4 19 8.568323 "" "" 978.4746 "" 4250.0 4.5 0.5 111 "" "" "" 13.16322 0.06371942 16 "" """NOT_AVAILABLE""" 289.08102815114836 -33.26826531156045 291.0006803770886 -78.6490151364001 False False 0 True True False False False True True False 1.0885115e-13 5.43706e-13 0.99932396 4201.3213 4199.002 4204.215 4.6759 4.674 4.6771 0.1268 0.118 0.1347 191.982 191.3124 192.5422 0.7385 0.7338 0.7439 0.5339 0.5304 0.5378 0.2875 0.2857 0.2896 """MARCS"""
+1636148068921376768 """Gaia DR3 3886440422100617344""" 3886440422100617344 97356 2016.0 159.82872414636526 0.020988444 15.979266838396848 0.01816971 20.903049825015874 0.023766035 879.53455 256.44342 221.51477060796813 0.02631203 -129.20693391178128 0.02159009 -0.04473108 -0.0976497 -0.06889446 0.034517575 -0.26505673 -0.0218651 -0.056929674 0.086116776 -0.2854234 -0.029176474 218 0 215 3 2.5806782 257.8878 0.06815055 1.4473428 31 True 1.2755814 "" "" "" "" "" "" "" 25 16 0.036499254 27 14 0 0.006204175 3.5532565 0 0 1.126879 0.19319716 0.19065009 0.34660557 0.85114074 -60.547474 13.905201 -11.89258 -23.339432 False 224 30093.07831716414 14.910473 2018.2511 14.4912 24 5807.056477429437 16.77068 346.26245 15.928652 23 37420.38866282309 25.40161 1473.1503 13.3151245 1.4364581 0 2 0 1 0 2.6135273 1.4374514 1.1760759 -20.692314 6.0028753 2 6 2 6 5.2852845 "" "" 887.4475 "" 3400.0 4.5 0.0 101 "" "" "" 12.790408 0.04098179 5 "" """NOT_AVAILABLE""" 226.0906477229609 57.441666825935386 155.37361158050726 6.933001224984529 False False 0 True True False False False True True False 1.2558453e-13 6.272884e-13 0.9976672 3202.4136 3199.5652 3212.909 4.5488 4.5134 4.5602 -1.0659 -1.0758 -1.0631 47.6591 47.2713 49.4098 0.038 0.0064 0.1226 0.0244 0.0041 0.0792 0.0157 0.0026 0.0508 """MARCS"""
+1636148068921376768 """Gaia DR3 6024847395467088896""" 6024847395467088896 100606 2016.0 247.00745055266052 0.018630335 -33.0594298957876 0.013006404 12.446468178396216 0.020965226 593.672 93.49314 -5.535817219660187 0.027269315 -93.32911032994052 0.020997941 -0.03240845 -0.037910547 -0.07614275 -0.0712019 -0.12333745 -0.03925272 -0.021502435 -0.16141813 0.066434555 -0.03835356 239 0 239 0 3.8884761 307.48068 0.057002958 1.4959576 31 False 1.2798911 "" "" "" "" "" "" "" 27 16 0.037849404 29 8 0 0.00917404 21.696526 0 0 1.1835195 0.08568143 0.36299458 0.11145719 0.5219561 -99.36404 -0.3380405 -23.05403 -36.668823 False 253 52405.941668754174 39.359207 1331.4786 13.888916 29 10484.07477396233 28.783646 364.2372 15.287217 26 64272.866733443676 74.37458 864.17786 12.727826 1.4264975 0 0 0 0 0 2.559391 1.3983011 1.1610899 15.206487 10.01326 2 13 2 10 11.904051 "" "" 921.51215 "" 3400.0 4.5 -0.5 101 "" "" "" 12.167242 0.057648055 11 "" """NOT_AVAILABLE""" 346.6936785100851 10.843565387223109 250.50731821731463 -11.16298130036275 False False 0 True True False False False True True False 1.7308995e-13 8.6457566e-13 0.99296397 3464.2517 3462.472 3477.9355 4.4048 4.4011 4.4636 -0.5837 -0.5904 -0.4963 80.7249 80.4741 80.9203 0.8028 0.7983 0.8119 0.5275 0.5245 0.5336 0.3291 0.3273 0.3329 """MARCS"""
+1636148068921376768 """Gaia DR3 6689931499379627008""" 6689931499379627008 108853 2016.0 294.7206109881807 0.020946115 -39.93930981816808 0.015354654 5.430923351743146 0.02458206 220.93036 12.086459 -7.37927120037807 0.02432929 -9.572296470471743 0.015794592 -0.18649378 0.19581424 -0.18629065 0.07973788 -0.31777474 0.15719508 0.31842977 -0.24346355 -0.21527825 -0.19177131 314 314 301 13 3.2746174 1344.9927 0.16735797 38.855297 31 True 1.5274734 "" "" "" "" "" "" "" 36 18 0.034806084 38 10 0 0.033001725 0.40118185 0 0 1.1363858 "" "" "" "" "" "" "" "" False 276 484207.100413042 106.12632 4562.554 11.474789 34 246509.19400326262 106.05184 2324.4216 11.858959 33 340339.72679252917 104.33957 3261.8472 10.918114 1.2119792 0 0 0 0 0 0.9408455 0.38417053 0.55667496 -29.057993 0.5446428 1 15 5 9 39.73452 0.896176 0.32583708 976.33325 6.158554 5250.0 4.0 0.0 440 6.957614 4.4410906 9 10.718914 0.012686173 10 "" """NOT_AVAILABLE""" 359.2812613231944 -25.6572310352232 289.72356273270196 -18.17771508381203 False False 0 True True False False False True True False 1.0290279e-13 5.139943e-13 0.99991286 5484.595 5472.4985 5490.617 4.4319 4.4278 4.4512 -0.0579 -0.0694 -0.0519 178.9468 174.5969 180.1388 0.1531 0.145 0.1573 0.126 0.1193 0.1295 0.0672 0.0635 0.0691 """MARCS"""
+1636148068921376768 """Gaia DR3 2615790084339321984""" 2615790084339321984 110204 2016.0 332.91370330741876 0.021505658 -9.659950962913193 0.01704968 5.056994724232974 0.027772123 182.08888 22.23575 22.170352876744246 0.02352838 1.7041311511072603 0.0227636 0.24899992 0.523218 -0.38133547 -0.31180814 -0.035408236 -0.076643154 -0.32861215 -0.45752698 -0.4628368 0.48803976 151 151 151 0 1.5421114 401.3279 0.096725844 9.089319 31 True 1.5902929 "" "" "" "" "" "" "" 17 11 0.04229941 21 10 0 0.055688962 171.77641 0 0 1.0892394 "" "" "" "" "" "" "" "" False 162 1137726.7101887628 250.04927 4550.0103 10.547272 19 648145.158465293 529.1447 1224.8921 10.809361 19 706459.4761296316 263.99484 2676.0352 10.125177 1.1906239 0 0 0 0 0 0.6841841 0.26208973 0.42209435 -2.6210492 0.22414322 1 10 1 9 52.069878 -2.2482328 0.99169385 798.4028 1.6597666 6000.0 4.0 -0.5 222 6.2582874 4.1905913 8 9.949204 0.011562628 8 58.85931 """NOT_AVAILABLE""" 50.078264389489256 -48.51691073419849 331.39768617993604 1.409536215103048 False False 0 False False True False False True True False 1.0819808e-13 5.4044394e-13 0.9993886 6087.1475 6083.997 6093.8276 4.2509 4.2456 4.2568 -0.3831 -0.3918 -0.3748 196.4776 195.4709 197.5186 0.0021 0.0005 0.0059 0.0018 0.0004 0.0051 0.001 0.0002 0.0028 """MARCS"""
+1636148068921376768 """Gaia DR3 6667464246278014336""" 6667464246278014336 117493 2016.0 301.5894662435064 0.013407016 -49.1936378567753 0.01097103 5.552578835369319 0.015316889 362.5135 10.604429 -6.698324241746736 0.014632432 8.221093060153306 0.011872293 0.052299384 0.20362347 -0.12388405 -0.13861318 -0.18094529 -0.043341532 -0.04952105 -0.37348425 -0.06252969 0.07532233 269 269 265 4 -0.9747947 571.3222 0.08821199 9.790278 31 True 1.5873723 "" "" "" "" "" "" "" 30 17 0.021033872 32 11 1 0.01580709 16.211159 0 0 0.9562951 "" "" "" "" "" "" "" "" False 270 1783905.338581536 367.5576 4853.404 10.058937 31 1013893.0228154483 357.1114 2839.1506 10.323562 30 1112059.832354616 281.31177 3953.1223 9.632575 1.1917409 0 0 0 0 0 0.69098663 0.2646246 0.42636204 -4.001272 8.609063 1 12 3 12 82.00131 65.88962 0.0 946.4608 57.820667 5750.0 3.5 0.0 222 8.111065 2.937521 8 9.46666 0.018225497 8 91.16554 """NOT_AVAILABLE""" 349.890589744603 -32.13424722095062 292.86395000959413 -28.231303909486538 False False 2 True True True False False True True False 1.2558453e-13 6.272884e-13 0.9976672 6068.736 6067.1167 6071.295 4.1565 4.1538 4.1591 -0.2948 -0.3018 -0.288 179.0791 178.6105 179.5658 0.0006 1e-04 0.0021 0.0005 1e-04 0.0018 0.0003 0.0 0.001 """MARCS"""
+1636148068921376768 """Gaia DR3 6283305092671286272""" 6283305092671286272 117907 2016.0 218.5527004866776 0.029592827 -19.54583273746551 0.031619884 9.600593342653868 0.04407418 217.82806 75.52109 -69.0380345524701 0.037678197 -30.613477326952648 0.03784952 -0.17802338 -0.25185853 -0.06902652 -0.08884862 -0.47863778 0.2106905 -0.29690802 -0.3663301 0.5058467 -0.4745776 178 0 177 1 1.9775009 210.91046 0.09010732 1.4593832 31 False 1.2988076 "" "" "" "" "" "" "" 20 13 0.06681084 20 10 0 0.030208802 99.43362 0 0 1.1064874 0.4346431 0.35294232 0.57918036 0.86540717 -105.85983 44.216244 -9.231261 -29.018929 False 168 19046.576605632945 10.525718 1809.5276 14.987824 17 4277.046374187548 19.058718 224.41417 16.260683 18 22563.575230076443 77.983246 289.33875 13.864376 1.4092097 0 0 2 0 0 2.396307 1.2728586 1.1234484 -37.586536 6.68628 2 7 1 7 4.2481513 "" "" 799.13727 "" 3800.0 4.5 0.25 101 "" "" "" 13.217069 0.14478673 7 "" """NOT_AVAILABLE""" 333.74676944582717 37.10112418460987 222.3571702662051 -4.205341150982652 False False 0 False False False False False True True False 1.7308995e-13 8.6457566e-13 0.99296397 3580.771 3574.749 3588.032 4.8003 4.7874 4.809 -0.4308 -0.4675 -0.3918 104.8659 104.3748 105.3384 0.7501 0.739 0.7609 0.5029 0.4954 0.5103 0.3017 0.2974 0.3061 """MARCS"""
+1636148068921376768 """Gaia DR3 4266179130999716352""" 4266179130999716352 126077 2016.0 283.37286606016244 0.018953744 -0.44278144723238577 0.01998479 5.19194274863847 0.023326186 222.58 55.407417 -1.5287529733720693 0.024425149 -55.38632209636268 0.023445461 0.12519218 -0.023065703 -0.19557886 -0.07673158 -0.4211246 0.013325359 -0.25262836 -0.18680991 0.028225651 0.08718893 227 0 227 0 -0.0035540638 215.79121 0.0 0.0 31 False 1.3642923 "" "" "" "" "" "" "" 26 16 0.035115268 26 9 0 0.034600712 85.52741 0 0 0.9983303 0.35891002 0.10833898 0.37087747 0.84345526 -108.046394 -25.127253 -33.17612 39.268017 False 225 29098.577739303288 10.187951 2856.1755 14.527687 24 9153.515277152674 26.028643 351.67087 15.434572 23 29001.105472599884 29.554434 981.27765 13.591859 1.3112195 0 0 0 1 0 1.8427134 0.90688515 0.9358282 9.026199 6.4408636 2 6 4 5 5.6358438 "" "" 602.8416 "" 4250.0 4.5 0.5 101 "" "" "" "" "" "" "" """NOT_AVAILABLE""" 32.771928516729766 -0.6588013837443208 284.4789577602576 22.32684862893383 False False 0 True True False False False False True False 1.0589242e-13 5.2900826e-13 0.99961686 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 4922129419974840448""" 4922129419974840448 126290 2016.0 14.210614591288659 0.009601912 -52.434722292233644 0.0106561985 5.292314709427953 0.014453228 366.16837 23.205946 -13.714592283778927 0.011763826 -18.719666735968044 0.013951309 -0.1957182 0.015468494 -0.06753338 -0.036429565 -0.11429503 -0.041515935 0.27331182 0.0477812 -0.31713054 -0.20899932 500 0 499 1 -0.03512913 474.20975 0.0 0.0 31 False 1.3966049 "" "" "" "" "" "" "" 57 28 0.020601725 61 20 0 0.0037387393 17.715963 0 0 0.99820817 0.12526028 0.19841103 0.050257888 0.23353772 -104.60687 58.511627 33.263176 -1.1527799 False 507 51124.740425004566 12.008142 4257.5063 13.915789 59 18208.26236360338 18.884691 964.1811 14.687871 57 47341.82878310411 34.001358 1392.3511 13.059783 1.2821599 0 4 0 0 0 1.628088 0.7720823 0.85600567 -8.98937 1.5683272 2 35 7 27 14.312685 "" "" 964.4866 "" 4250.0 4.0 0.5 111 "" "" "" 12.71584 0.03411853 28 "" """NOT_AVAILABLE""" 301.0061164718153 -64.6733141660097 343.2399418187235 -51.88597718547206 False False 0 True True False False False False True False 1.0565753e-13 5.2775406e-13 0.9996401 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 4613015641519828864""" 4613015641519828864 129084 2016.0 38.65602088417816 0.0234948 -86.97926291435061 0.020569688 6.800622442636546 0.022115901 307.4992 94.51216 94.33531332007237 0.030493554 -5.778986587484905 0.026274245 0.059209183 -0.030960498 -0.39452663 -0.19872479 -0.05537742 -0.21719159 -0.10218552 0.036698643 -0.14104548 0.031400923 290 0 289 1 0.8836364 308.6205 0.0 0.0 31 False 1.2966391 "" "" "" "" "" "" "" 34 26 0.043947097 40 17 0 0.011042801 46.50148 0 0 1.0361168 0.071398735 0.0799087 0.025092682 0.1851924 49.373608 18.619745 31.63955 34.105076 False 330 16042.195977848356 8.691986 1845.6306 15.174208 36 3600.416342664716 13.050137 275.89108 16.44766 35 18899.12268534634 16.83045 1122.9125 14.056791 1.4025224 0 1 0 0 0 2.3908691 1.2734528 1.1174164 7.1698756 4.6730943 2 16 1 14 4.6074915 "" "" 900.1183 "" 3600.0 4.5 0.0 101 "" "" "" 13.419032 0.0869363 19 "" """NOT_AVAILABLE""" 301.416969313003 -29.839786622394694 276.39747729760575 -68.32611101709432 False False 0 True False False False False True True False 1.160294e-13 5.7956103e-13 0.99861324 3551.9768 3549.1797 3554.94 4.6444 4.6377 4.6508 -0.34 -0.3584 -0.3206 146.6727 146.1628 147.2108 0.6166 0.6103 0.622 0.4117 0.4075 0.4154 0.2516 0.2491 0.2538 """MARCS"""
+1636148068921376768 """Gaia DR3 3383951204344435968""" 3383951204344435968 129273 2016.0 98.53517361915867 0.013561182 25.329991425580587 0.0121301 10.121082012487696 0.015283156 662.2377 33.078392 -18.04587755917579 0.018645618 27.722308240088417 0.015225933 -0.10741629 -0.099526726 -0.0996997 0.014241205 -0.30749327 0.048190948 -0.32177094 0.02040635 0.23107946 -0.2461726 253 0 251 2 2.9808276 297.17932 0.03504065 0.8325361 31 False 1.3526692 "" "" "" "" "" "" "" 29 16 0.027085826 29 10 0 0.047856946 179.09706 0 0 1.1359384 0.20843084 0.23801938 0.38377824 0.84430885 -92.48066 18.955507 -22.754517 -41.74919 False 248 71688.9269728783 15.823187 4530.625 13.548737 26 21303.790767539434 19.109077 1114.8519 14.5174 28 74001.7721005434 40.68507 1818.8926 12.57479 1.3294321 0 1 0 0 0 1.9426098 0.9686632 0.9739466 73.01188 1.6639533 2 16 2 13 16.754507 "" "" 951.55524 "" 3900.0 4.5 0.0 101 "" "" "" 12.129161 0.024231598 14 "" """NOT_AVAILABLE""" 188.37396787585197 7.725607341650351 97.71465283210009 2.118995295127075 False False 0 True True False False False True True False 1.1961469e-13 5.974694e-13 0.9982583 3752.445 3707.8696 3900.6497 4.6272 4.5911 4.6586 -0.4857 -0.6008 -0.2828 99.0654 98.4627 102.5307 0.3515 0.2881 0.4718 0.2471 0.2023 0.3328 0.1366 0.1117 0.1849 """PHOENIX"""
+1636148068921376768 """Gaia DR3 5848306716154798080""" 5848306716154798080 130970 2016.0 217.01721605603925 0.017345676 -67.67123656933838 0.021307249 10.254056398466837 0.027546972 372.23898 73.291374 -73.20056179679999 0.020656949 3.6473031953269026 0.028222952 0.09479004 -0.19943072 -0.3196453 -0.04046242 0.1239794 0.02745036 -0.17648159 0.15759109 0.2415413 0.2375201 470 0 468 2 -1.4527094 429.27454 0.0 0.0 31 False 1.2699397 "" "" "" "" "" "" "" 54 26 0.040744685 67 23 0 0.005117035 127.93083 0 0 0.9519346 0.13890517 0.28071633 0.15740263 0.23901802 -148.89642 -74.02937 -2.6404202 -44.619034 False 533 13270.205757428155 4.7347393 2802.7322 15.380173 60 2462.9868815359296 5.967476 412.7351 16.859886 61 16632.002646865752 13.296493 1250.8564 14.195534 1.438937 0 1 0 0 0 2.6643524 1.4797134 1.184639 45.275726 3.0920753 2 14 5 11 3.3663275 "" "" 913.3058 "" 3300.0 3.5 -1.0 111 "" "" "" 13.661969 0.08181168 10 "" """NOT_AVAILABLE""" 311.9351338189813 -6.504492811223904 242.30059768941356 -49.26217887163114 False False 0 True False False False False True True False 1.0202512e-11 5.0961034e-11 1.0000273e-06 3438.2815 3436.8303 3439.873 4.8741 4.8676 4.8763 -0.1414 -0.1556 -0.1354 98.3204 98.0299 98.6922 0.8142 0.8074 0.8208 0.5282 0.5237 0.5325 0.3356 0.3329 0.3383 """MARCS"""
+1636148068921376768 """Gaia DR3 3475214620817292160""" 3475214620817292160 132380 2016.0 186.80363274049304 0.012179399 -27.700810509072145 0.010086627 5.165755275652093 0.015494694 333.38864 23.928705 -22.745001789178335 0.016761702 -7.432888283677311 0.015199078 -0.34869117 -0.107385054 -0.20220248 0.18019927 -0.10122669 0.15129901 -0.49965397 -0.020924108 0.12845448 -0.2250784 431 0 426 5 0.53150564 420.7128 0.0 0.0 31 False 1.4089442 "" "" "" "" "" "" "" 50 19 0.025246218 53 24 0 0.028428132 119.727516 0 0 1.0175762 0.23619607 0.44411722 0.30652657 0.23793696 -17.10463 21.116852 7.115013 -8.67734 False 439 70893.3819746973 10.159214 6978.235 13.560853 46 26403.099650764365 14.00654 1885.055 14.284405 47 63649.94721633198 31.022951 2051.705 12.7384 1.2702603 0 1 0 0 0 1.5460043 0.72355175 0.82245255 10.57559 1.1997623 2 27 1 18 19.99362 "" "" 1004.80786 "" 4500.0 4.5 1.0 111 "" "" "" 12.415552 0.025750794 26 "" """NOT_AVAILABLE""" 296.39529635524747 34.86330351719805 197.73366598964768 -22.629661327422582 False False 0 True True False False False True True False 1.0297042e-13 5.1433207e-13 0.9999062 4549.2036 4535.6655 4551.307 4.6622 4.6607 4.6641 0.7364 0.6847 0.7474 193.9209 192.2149 194.3167 0.4775 0.47 0.4816 0.3575 0.3519 0.3607 0.1872 0.1843 0.1888 """MARCS"""
+1636148068921376768 """Gaia DR3 2756934254559241088""" 2756934254559241088 132712 2016.0 356.43933839673076 0.018595435 6.945713390597521 0.0134573765 9.16093045447628 0.022298828 410.82565 24.842012 -21.126674411053738 0.0244696 -13.068635759591686 0.014761591 0.28743815 0.14072795 -0.11454679 -0.2378575 -0.24615428 -0.31124374 0.41998264 0.028577108 -0.3833479 0.22705102 392 0 389 3 3.5214598 458.34628 0.03640838 0.7517587 31 False 1.3316467 "" "" "" "" "" "" "" 45 16 0.03464142 53 9 0 0.037086796 69.4297 1 0 1.1288201 0.42529976 0.6290656 0.43564665 0.1304855 -37.12575 -20.87571 -28.75728 -10.137702 False 434 46054.22009667093 11.010806 4182.638 14.029193 53 12450.609055730687 16.066135 774.9598 15.100566 51 49962.97722876483 24.194948 2065.0168 13.001275 1.3552197 0 1 0 0 0 2.0992908 1.071373 1.0279179 3.0425503 2.2225962 2 22 2 9 12.108077 "" "" 1020.64764 "" 3800.0 4.5 0.0 101 "" "" "" 12.514551 0.030987298 20 "" """NOT_AVAILABLE""" 95.55185936884139 -52.399370535639505 359.51079951685426 7.785956081407459 False False 0 False False False False False True True False 1.2558453e-13 6.272884e-13 0.9976672 3826.5051 3824.9802 3828.415 4.7274 4.7263 4.7284 -0.0416 -0.0483 -0.0344 109.4173 109.1147 109.6904 0.6188 0.6141 0.6233 0.4294 0.4261 0.4325 0.2447 0.2429 0.2464 """MARCS"""
+1636148068921376768 """Gaia DR3 417872314714045056""" 417872314714045056 133244 2016.0 10.43483693089985 0.008634613 53.94639938746721 0.00883626 6.130252219957122 0.01446018 423.94025 92.35049 73.09860549559178 0.011100546 -56.43763770985723 0.011423847 -0.4568293 0.35610926 -0.47157323 0.13586585 -0.25975767 0.13768207 -0.2335513 -0.30631375 0.1977112 -0.46567464 664 0 663 1 0.89582366 663.75037 0.0 0.0 31 False 1.395635 "" "" "" "" "" "" "" 76 25 0.019678216 81 35 0 0.013972653 78.59952 0 0 1.0242848 0.09555005 0.43201548 0.2478018 0.059077673 -165.19803 51.814766 -29.081657 -21.378447 False 692 91875.48143192545 12.758908 7200.889 13.279367 74 32753.43937551609 25.78306 1270.3473 14.0504 76 85473.73639790861 31.133232 2745.418 12.418314 1.2868197 1 1 0 0 0 1.6320858 0.77103233 0.86105347 -40.433117 0.97231597 2 30 10 20 23.088146 "" "" 995.3759 "" 4500.0 4.5 1.0 101 "" "" "" 12.064078 0.024768721 19 "" """NOT_AVAILABLE""" 121.48781087023525 -8.898154026921823 35.92606125423693 44.3750944152347 False False 0 True True False False False False True False 1.1192878e-13 5.590786e-13 0.9990192 4422.3076 4419.594 4426.082 4.6206 4.6162 4.6252 0.4768 0.4176 0.4983 159.2056 157.8367 160.0318 0.532 0.5255 0.5394 0.3939 0.3891 0.3995 0.2079 0.2054 0.2108 """PHOENIX"""
+1636148068921376768 """Gaia DR3 855030857949204480""" 855030857949204480 133840 2016.0 158.82768706552721 0.01662557 58.18218839013623 0.01934681 9.932715795565032 0.028464895 348.94617 30.769169 27.670464279931675 0.020506408 13.456862048372564 0.025168587 0.428603 -0.23118208 -0.34468374 -0.20562142 -0.1503831 -0.21384445 -0.15862402 0.2043482 0.023608044 0.47753653 674 0 669 5 0.104166746 685.21643 0.0 0.0 31 False 1.2775499 "" "" "" "" "" "" "" 78 28 0.03975625 80 33 0 0.016174693 90.70375 0 0 1.0023574 0.21228954 0.4133774 0.22489765 0.4345284 134.66183 -59.390537 3.7915936 29.175367 False 666 12049.768919051297 5.1881943 2322.5361 15.4849205 75 2379.4893004426217 8.861921 268.50717 16.897333 73 14839.857565443848 14.902474 995.7982 14.319322 1.4290189 0 4 0 1 0 2.5780115 1.4124126 1.1655989 -29.776419 3.0485628 2 30 6 14 7.140316 "" "" 991.6883 "" 3500.0 4.5 0.0 101 "" "" "" 13.705778 0.05616471 34 "" """NOT_AVAILABLE""" 150.84264877039683 50.924635157713375 133.7978368047695 44.73809292137152 False False 0 True False False False False True True False 1.7308998e-13 1.1681265e-11 0.99296397 3469.8665 3467.4119 3471.749 4.898 4.8909 4.9023 -0.273 -0.2893 -0.2624 101.3569 101.0342 101.6876 0.7963 0.7913 0.8017 0.5213 0.518 0.525 0.3255 0.3235 0.3277 """MARCS"""
+1636148068921376768 """Gaia DR3 6253775371450382336""" 6253775371450382336 138794 2016.0 233.0751027854858 0.024049323 -19.841591371948763 0.019975346 5.00595014763625 0.027419668 182.56787 23.459541 6.680863722368233 0.033307962 -22.488132767914063 0.026831534 -0.18696745 -0.08347666 -0.07011396 -0.15826486 -0.21202032 -0.12944455 0.29018185 -0.20148318 -0.03338031 -0.24879526 200 0 198 2 1.976615 229.66635 0.042933065 0.4850679 31 False 1.349432 "" "" "" "" "" "" "" 23 15 0.0483947 32 8 0 0.016973652 35.627453 0 0 1.100492 0.21353737 0.29456314 0.34116837 0.69593453 -108.64617 16.92925 -17.119316 -32.0687 False 232 25202.491796382932 9.606069 2623.601 14.683758 29 7409.625959707574 14.845324 499.1219 15.664051 29 26087.197255326355 21.88636 1191.9386 13.706827 1.3291076 0 1 0 0 0 1.9572239 0.9802933 0.9769306 11.102521 4.6310782 2 12 0 10 5.941487 "" "" 917.749 "" 4000.0 4.5 0.0 101 "" "" "" 13.252562 0.17997292 14 "" """NOT_AVAILABLE""" 346.90037472094286 28.97951318431 235.58761108296798 -0.7046337008006737 False False 0 True True False False False False True False 1.2558455e-13 3.0916808e-12 0.9976672 4198.004 4195.26 4200.0806 4.6619 4.6564 4.6654 0.1312 0.1177 0.1414 198.4563 197.677 199.2977 0.9082 0.9019 0.9132 0.6483 0.6437 0.6519 0.353 0.3506 0.355 """PHOENIX"""
+1636148068921376768 """Gaia DR3 5870546812756319744""" 5870546812756319744 143895 2016.0 207.0176936493877 0.014166882 -59.38852804021154 0.016921494 6.043970356369556 0.026899235 224.6893 16.357597 -1.100215427145712 0.018388908 -16.320555393503042 0.019243969 0.34608874 -0.15896462 0.01635584 0.21166398 -0.0011867746 0.1529137 -0.2509094 -0.21077779 -0.1982726 0.66972095 888 0 881 7 -0.7018803 853.7263 0.0 0.0 31 False 1.3307475 "" "" "" "" "" "" "" 103 26 0.034086928 106 62 0 0.016023275 160.99155 0 0 0.9829 0.3702415 0.561773 0.30265406 0.5206948 -54.92802 -49.583256 -42.71603 -40.56712 False 877 16842.14231759452 4.11352 4094.3381 15.121373 98 4528.275149807966 6.2785373 721.2309 16.19871 93 18321.218337710812 9.898636 1850.8832 14.090509 1.3566856 0 2 0 0 0 2.1082 1.0773363 1.0308638 -8.248729 4.10081 2 28 17 14 6.4481215 "" "" 851.1309 "" 3800.0 4.5 0.0 101 "" "" "" 13.469311 0.10228321 11 "" """NOT_AVAILABLE""" 310.0948648124994 2.693321827000785 230.71681543710216 -44.23546762693663 False False 0 True False False False False False True False 1.3750318e-13 7.7088017e-11 0.99648726 3801.0398 3799.8713 3815.9868 4.762 4.7564 4.7663 -0.2801 -0.2829 -0.2609 159.8003 158.8938 161.3874 0.6609 0.6571 0.6787 0.4576 0.455 0.4703 0.2592 0.2577 0.2663 """PHOENIX"""
+1636148068921376768 """Gaia DR3 1066604073686266496""" 1066604073686266496 144172 2016.0 146.67910920881778 0.013909206 66.522424082107 0.017142512 14.747887686400363 0.022118755 666.7594 195.20653 -24.34776461238563 0.018674059 -193.68215412761097 0.021803752 0.25005835 -0.074084714 -0.13811582 -0.099197775 -0.17901413 -0.1481492 -0.31460184 0.29573452 0.03422864 0.26003456 529 0 526 3 1.6235864 576.4274 0.0 0.0 31 False 1.2823483 "" "" "" "" "" "" "" 61 29 0.03280469 65 30 0 0.0099330535 20.398808 0 0 1.0500659 0.023977138 0.26473916 0.1201572 0.31290784 -26.224407 -63.190968 -49.916504 14.57545 False 556 18327.28268585469 6.56964 2789.6936 15.029622 58 3727.3569274664355 11.054587 337.1774 16.41004 56 22268.637449066857 20.74865 1073.2572 13.878661 1.4184315 0 1 0 2 0 2.5313787 1.3804178 1.1509609 13.831677 2.6571982 2 27 3 19 7.942856 "" "" 963.8772 "" 3800.0 4.5 0.5 101 "" "" "" 13.355197 0.05739485 24 "" """NOT_AVAILABLE""" 145.53240674496476 41.58506713090809 120.47841615487778 48.979711356454885 False False 0 True False False False False False True False 1.3750302e-13 6.868207e-13 0.99648726 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 66506331628024832""" 66506331628024832 147643 2016.0 57.3008750959372 0.030011289 23.886587601561303 0.017554495 7.417763214315631 0.032488454 228.31998 49.250324 19.620728847184104 0.04096634 -45.17323902020466 0.024343917 0.113543294 0.26993033 -0.14262232 -0.0077386843 -0.009412544 -0.008884138 0.5726318 0.123052575 -0.18759868 0.020545866 309 309 307 2 2.2740746 1102.5006 0.1692568 22.55602 31 False 1.6798116 "" "" "" "" "" "" "" 35 16 0.056902774 38 7 0 0.0929082 87.60947 0 0 1.0928063 "" "" "" "" "" "" "" "" True 327 10821296.48979366 3852.067 2809.2183 8.101668 37 7177995.840941615 5706.914 1257.7719 8.198534 35 5473675.633429196 3489.503 1568.6118 7.902198 1.1691456 0 9 0 10 0 0.29633617 0.096865654 0.19947052 3.574924 0.8972431 1 16 1 13 216.1741 1.7149776 0.021813033 796.4559 8.772833 7750.0 4.5 0.25 555 166.34883 5.4252863 15 7.820677 0.0057264497 15 254.92743 """NOT_AVAILABLE""" 167.1443973788513 -23.3506361748743 60.32910074996654 3.7525457293892406 False False 0 True True True False False True True False 1.0202512e-11 5.0961034e-11 1.0000273e-06 7732.959 7712.6387 7775.8145 4.1525 4.1442 4.1689 -0.6076 -0.6568 -0.5386 135.3323 134.4543 136.0727 0.0342 0.0253 0.0543 0.0314 0.0231 0.0498 0.0168 0.0124 0.0266 """A"""
+1636148068921376768 """Gaia DR3 5265139733168854144""" 5265139733168854144 148740 2016.0 95.42524503356393 0.014286039 -73.58991691892084 0.015357916 7.873535929290829 0.015247929 516.36755 32.20228 -10.175254634151234 0.018699676 -30.552429690568033 0.021934591 0.015857453 -0.058210067 -0.014898416 -0.100207895 0.3310086 -0.029482163 -0.24669059 0.15298326 -0.0909005 -0.0068461304 327 0 327 0 2.6803524 378.27368 0.0 0.0 31 False 1.3175565 "" "" "" "" "" "" "" 38 25 0.030691398 43 14 0 0.020530306 5.586707 1 0 1.1063879 0.10337633 0.005452469 0.016981632 0.09690618 -64.39862 -69.952934 44.999226 -22.759201 False 354 33230.547357326446 29.702982 1118.7614 14.383523 42 8377.481164391102 35.804115 233.98096 15.530759 42 37253.54052418443 89.44121 416.51428 13.319977 1.3731649 0 0 0 0 0 2.210782 1.1472359 1.0635462 11.373457 3.1439002 2 24 3 20 13.3970995 "" "" 814.6114 "" 3700.0 4.5 -0.25 101 "" "" "" 12.856899 0.025812173 25 "" """NOT_AVAILABLE""" 284.42840264828897 -28.030473187217236 257.7995201260931 -82.73891529759337 False False 0 True True False False False True True False 1.0202512e-11 5.0961034e-11 1.0000273e-06 3737.3018 3734.859 3739.0154 4.6651 4.6615 4.6673 -0.012 -0.0288 -0.0037 126.5574 126.2095 127.1756 0.6241 0.6196 0.6284 0.427 0.4239 0.4299 0.2497 0.248 0.2514 """MARCS"""
+1636148068921376768 """Gaia DR3 4911590910260264960""" 4911590910260264960 153474 2016.0 24.783541498908786 0.008635731 -55.317468647500505 0.0086141545 6.2453699013330555 0.010416435 599.56885 42.047146 40.64757827861938 0.010822369 10.758104689073546 0.009832427 -0.14025247 -0.024915667 -0.13209449 -0.0360543 0.058098268 -0.040155042 0.20600848 -0.049901634 -0.22324945 -0.100761585 456 447 451 5 -5.2088113 819.5426 0.07754112 10.279025 31 True 1.5023723 "" "" "" "" "" "" "" 52 30 0.015325638 72 21 0 0.027216354 35.65573 0 0 0.83006585 "" "" "" "" "" "" "" "" False 561 415360.67844759533 151.13542 2748.2683 11.641303 61 199709.02121500418 219.64882 909.21967 12.087548 61 304974.71057000244 233.16524 1307.9768 11.037236 1.2150494 0 1 0 0 0 1.050312 0.4462452 0.60406685 0.8541202 0.38267103 1 36 9 24 62.64475 -0.1907603 0.41843092 1002.3682 8.590973 5000.0 5.0 0.25 444 "" "" "" 10.826002 0.0122869825 25 65.10972 """VARIABLE""" 289.11316617043497 -60.51269577038018 348.1657289637817 -58.14041773616772 False False 0 True True True True False True True False 1.03842065e-13 5.186859e-13 0.9998199 5142.0083 5100.161 5160.5083 4.542 4.5283 4.548 0.339 0.2983 0.3549 159.5211 159.1412 159.8258 0.0588 0.0253 0.0733 0.0472 0.0203 0.0589 0.0247 0.0106 0.0309 """MARCS"""
+1636148068921376768 """Gaia DR3 2617088985528860032""" 2617088985528860032 155733 2016.0 328.6569186239591 0.01162921 -10.364153885566537 0.011873572 7.877764846001655 0.013994537 562.9171 31.39321 -9.707878360742146 0.014912152 -29.85449294110258 0.012586695 0.43086946 0.15786183 -0.11065262 -0.1682719 0.06825584 -0.18163449 -0.6136429 -0.37048087 -0.17517316 0.5128387 288 288 285 3 -1.0141058 352.92645 0.046869744 2.7915723 31 True 1.432518 "" "" "" "" "" "" "" 33 16 0.024588834 35 20 0 0.051692422 159.5096 0 0 0.95628065 "" "" "" "" "" "" "" "" False 301 188512.49517885968 54.34316 3468.9277 12.499017 34 75574.9819791768 64.88598 1164.7352 13.142597 34 160685.54970563535 84.01749 1912.525 11.732953 1.2532884 0 1 0 0 0 1.4096441 0.64358044 0.7660637 13.9231 0.93870264 1 16 0 11 27.194838 1.4049449 0.08924879 895.5217 12.352155 4500.0 4.0 0.5 111 8.939635 7.0193086 14 11.448975 0.011414533 16 "" """NOT_AVAILABLE""" 46.17797792301643 -45.205441620132724 327.22001589117275 2.204931267118297 False False 0 True True False False False False True False 1.032973e-13 5.159649e-13 0.99987376 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 5718437006862811392""" 5718437006862811392 158450 2016.0 119.55634559335004 0.00825421 -15.987982695513018 0.007979059 18.004570698723903 0.012641769 1424.2129 60.897617 -39.09734086721763 0.012143729 -46.689586800088016 0.011124977 -0.0730276 -0.05093751 -0.030287987 0.016572338 -0.0028468247 0.07386695 0.26030082 0.066988245 -0.24011685 0.13920479 446 446 444 2 1.0455503 675.23926 0.061177187 5.4285817 31 False 1.3479713 "" "" "" "" "" "" "" 51 23 0.017442998 56 13 0 0.0027205106 111.5067 0 0 1.0347242 "" "" "" "" "" "" "" "" False 447 212729.04734630865 37.309677 5701.7124 12.3678 54 62290.746266691225 55.637966 1119.5726 13.352484 54 221429.7032654579 68.09073 3251.9802 11.384806 1.3337175 0 1 0 0 0 1.9676781 0.984684 0.9829941 11.300282 0.44329846 1 31 8 21 56.431812 0.5322837 0.38225397 924.2053 7.248446 3900.0 4.5 0.0 440 "" "" "" 10.956445 0.007655765 23 "" """NOT_AVAILABLE""" 234.88120119221807 6.904565319418218 125.79317695056746 -35.826869263319814 False False 0 True True False False False False True False 1.0202512e-11 5.0961034e-11 1.0000273e-06 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 3341858184084468864""" 3341858184084468864 159482 2016.0 91.2904048576659 0.017212372 10.771569378630929 0.015591213 5.627121821050692 0.021974742 256.07224 9.109085 -1.8128463320144432 0.02253754 -8.926870985766001 0.016175764 -0.11122715 0.08656672 0.03526017 0.19982943 -0.41032988 0.08238953 -0.3808022 0.3065315 0.120616674 -0.12586115 239 239 234 5 1.9899027 948.5078 0.12986511 26.511108 31 False 1.554389 "" "" "" "" "" "" "" 27 15 0.0318352 28 11 0 0.04342537 174.40704 0 0 1.0929087 "" "" "" "" "" "" "" "" False 227 657370.045731093 195.37186 3364.7122 11.142842 23 352656.4931905007 210.40369 1676.0946 11.470162 21 439124.65910347307 813.5251 539.7801 10.641426 1.2044679 0 1 0 4 0 0.8287363 0.3273201 0.5014162 -15.922596 0.6404379 1 11 1 9 45.708416 1.4234465 0.059935026 962.5369 5.9369307 5250.0 4.5 0.0 444 9.548998 4.5863056 9 10.46707 0.01506585 10 "" """NOT_AVAILABLE""" 198.02699521546813 -5.170562001791876 91.29928250020468 -12.661891657089667 False False 0 True True False False False True True False 1.1192878e-13 5.590786e-13 0.9990192 5699.2275 5687.369 5709.4204 4.4405 4.4317 4.4481 -0.1701 -0.1818 -0.159 174.9904 174.2723 175.6414 0.0442 0.0371 0.0506 0.037 0.031 0.0424 0.0198 0.0166 0.0227 """MARCS"""
+1636148068921376768 """Gaia DR3 5244051340668601600""" 5244051340668601600 163394 2016.0 148.51866819400448 0.015642043 -68.09399620160362 0.016427707 7.213697888140134 0.017367193 415.3635 50.405735 -3.1131819615968084 0.020818502 -50.30950266389335 0.020706221 0.014898021 -0.09167768 0.0023543588 0.10961754 0.08720825 0.13802102 -0.085814156 0.13733418 0.09051922 0.008615984 383 0 383 0 0.41858447 385.95932 0.0 0.0 31 False 1.3248664 "" "" "" "" "" "" "" 44 29 0.028991198 50 17 0 0.01321293 165.10901 0 0 1.0143762 0.06826596 0.03689561 0.14443968 0.13343726 -64.356094 -65.85254 46.19954 35.11168 False 382 21788.873980684944 6.061249 3594.783 14.84178 49 5694.79021532575 10.559651 539.2972 15.949848 47 23977.495050852387 14.008934 1711.5859 13.798386 1.361809 0 0 0 1 0 2.1514626 1.1080685 1.0433941 -4.34224 8.993431 2 18 4 17 6.129824 "" "" 869.9118 "" 3700.0 4.5 -0.25 101 "" "" "" 13.368303 0.094863795 16 "" """NOT_AVAILABLE""" 287.5430767386235 -10.695312105087407 210.8840337396197 -68.23882517314573 False False 0 True True False False False True True False 1.7308995e-13 8.658766e-13 0.99296397 3764.0735 3762.0881 3766.709 4.7663 4.7524 4.7692 -0.1874 -0.1955 -0.181 138.3557 137.8975 139.8025 0.6369 0.6312 0.6446 0.4389 0.435 0.4443 0.2528 0.2506 0.2559 """MARCS"""
+1636148068921376768 """Gaia DR3 4941555557054750592""" 4941555557054750592 166343 2016.0 31.185248411650456 0.008871076 -46.87665509138886 0.010185545 6.433281980042704 0.012677551 507.45462 41.41282 25.630259834763113 0.010713231 -32.528623594762735 0.012601021 -0.19585645 0.09250038 -0.033007424 -0.06815003 -0.07093829 -0.04177654 0.14454037 0.021318108 -0.3061494 -0.17480929 509 0 506 3 -0.41366145 464.3876 0.0 0.0 31 False 1.3854564 "" "" "" "" "" "" "" 58 30 0.018291915 74 20 0 0.007522081 16.970701 0 0 0.9862981 0.16010706 0.23296532 0.13348994 0.28192577 -93.56104 61.186672 -2.5677483 -26.877277 False 623 56076.60620499038 12.542047 4471.089 13.8154125 68 19128.698700232086 23.172375 825.49585 14.634329 69 53504.01823044081 36.74172 1456.2198 12.926929 1.295241 0 2 0 2 0 1.7073994 0.8189163 0.88848305 16.47422 1.8359561 2 37 8 26 18.040836 "" "" 971.61145 "" 4250.0 4.5 0.5 111 "" "" "" 12.502544 0.025477141 30 "" """VARIABLE""" 271.64658749052205 -65.55119112282637 3.3683645939428843 -54.140086820438185 False False 0 True True False True False False True False 1.1064666e-13 5.526745e-13 0.99914616 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 6413901407328204032""" 6413901407328204032 166943 2016.0 283.8522776015545 0.007598285 -75.60385754971034 0.008745904 5.1549606977750235 0.010716727 481.02008 31.737381 -5.113214753806147 0.009668205 31.322777162809935 0.011104383 -0.009183041 -0.037294123 -0.017745702 -0.03303515 -0.1817005 0.023170384 -0.25775066 -0.16109133 0.14013675 -0.1344227 460 460 453 7 -1.1086859 917.12164 0.06838545 7.8974977 31 True 1.5680141 "" "" "" "" "" "" "" 52 27 0.015986983 60 24 0 0.021244822 174.5716 1 0 0.9624563 "" "" "" "" "" "" "" "" False 490 1140088.5608216296 155.6452 7324.9194 10.54502 55 626956.2317635379 225.71666 2777.625 10.845449 57 733623.920398192 200.69597 3655.3994 10.084211 1.1933986 0 31 0 30 0 0.7612381 0.30042934 0.46080875 18.634346 0.23071413 1 24 8 18 89.44447 -0.91866374 0.76342523 997.195 3.3678112 6000.0 4.5 0.25 222 "" "" "" 9.911019 0.0049014203 14 "" """NOT_AVAILABLE""" 319.0527380552064 -26.45531874767314 275.6030107886504 -52.43406270294018 False False 0 True True False False False True True False 1.1064666e-13 5.526745e-13 0.99914616 5881.784 5879.6855 5885.266 4.2834 4.2811 4.2857 0.1397 0.1353 0.1446 192.7448 192.3645 193.1479 0.0016 0.0003 0.0039 0.0013 0.0003 0.0033 0.0007 1e-04 0.0018 """MARCS"""
+1636148068921376768 """Gaia DR3 959964880451517568""" 959964880451517568 169972 2016.0 94.34956822181682 0.025330061 41.658178057822 0.023768421 11.114773285190006 0.030083086 369.46918 146.22827 -15.57825947770063 0.029852817 -145.39610058898288 0.023711924 -0.0773985 0.044556804 -0.37810528 0.036468085 -0.40525925 -0.050334252 -0.6526398 0.17230578 0.33456364 -0.024963329 339 0 338 1 0.52344954 352.9979 0.0 0.0 31 False 1.2621028 "" "" "" "" "" "" "" 39 19 0.042993676 41 23 0 0.019757777 2.511521 0 0 1.0193441 0.37492093 0.2902969 0.1422898 0.64830834 -22.25301 7.0526466 -26.224464 43.22698 False 332 15083.364328790554 9.615843 1568.5951 15.241121 38 2630.102847060164 15.655858 167.99481 16.78861 37 19405.018625921108 30.755297 630.94885 14.0281105 1.460889 0 1 0 1 0 2.7605 1.5474892 1.2130108 4.850756 5.057882 2 18 9 14 6.247997 "" "" 973.9046 "" 3400.0 3.5 -0.75 111 "" "" "" 13.548815 0.08629507 12 "" """NOT_AVAILABLE""" 171.94688897238382 11.811283906634296 93.42094646072177 18.27053493976199 False False 0 True False False False False True True False 1.0202512e-11 5.0961034e-11 1.0000273e-06 3408.1907 3406.8193 3409.3528 4.8464 4.8437 4.849 -0.005 -0.01 0.004 91.6493 91.3143 92.2926 0.9139 0.9061 0.9214 0.586 0.5809 0.5909 0.3792 0.3762 0.3822 """MARCS"""
+1636148068921376768 """Gaia DR3 6196457933368101888""" 6196457933368101888 183117 2016.0 202.80436078238418 0.013269819 -21.178991138861807 0.008485052 10.167137280246173 0.014886285 682.9869 87.02564 80.54562044679744 0.015519334 -32.95247075512294 0.009594853 -0.11287775 -0.32797575 -0.20593819 -0.096992776 0.026442012 -0.011659603 -0.56603724 0.022891935 0.23043966 -0.1670945 429 429 425 4 -2.7875464 825.5702 0.06764663 7.2191486 31 True 1.4869443 "" "" "" "" "" "" "" 48 16 0.021869002 54 37 0 0.0044458034 0.8817315 0 0 0.90461147 "" "" "" "" "" "" "" "" False 446 779376.9195600674 309.99252 2514.1797 10.957998 48 362481.8335365039 503.29538 720.2169 11.440327 48 594410.5168469745 577.6775 1028.9661 10.312679 1.2277658 0 48 0 48 0 1.1276474 0.48232841 0.645319 3.0735579 0.25442278 1 26 3 10 85.18152 -0.4960813 0.4694106 919.3354 4.1646514 4750.0 4.5 0.0 222 7.9181347 3.8578463 18 10.070655 0.007891018 19 89.49217 """VARIABLE""" 315.2036240340199 40.74295323906075 208.9401674571339 -10.81923164742565 False False 0 True True True True False True True False 1.0765377e-13 5.377252e-13 0.99944246 4937.94 4889.616 4952.845 4.5393 4.5271 4.5431 0.0315 -0.03 0.0458 98.0717 97.8633 98.4415 0.0867 0.0452 0.0993 0.0688 0.0358 0.0789 0.0363 0.0188 0.0416 """MARCS"""
+1636148068921376768 """Gaia DR3 2069124344809508352""" 2069124344809508352 188264 2016.0 305.710290383768 0.008971488 42.740458797329694 0.011533867 9.436345048106615 0.011923378 791.41534 34.745884 34.17734674016886 0.012359011 -6.259834649563881 0.015047128 -0.1132037 -0.012213899 -0.058017887 -0.038494337 0.276051 -0.034033954 -0.1681943 0.006326676 -0.1078174 -0.16173874 383 383 380 3 0.8024567 935.6214 0.08866319 11.634356 31 False 1.517151 "" "" "" "" "" "" "" 43 26 0.02140083 47 17 1 0.0077777756 137.81717 0 0 1.0285468 "" "" "" "" "" "" "" "" False 392 1436694.4007185972 407.50677 3525.5718 10.293956 44 712157.5299100175 482.09036 1477.2283 10.707102 44 1023397.9960930657 391.46558 2614.2732 9.722784 1.20802 0 0 0 0 0 0.9843178 0.41314602 0.57117176 -32.08173 0.17694972 1 18 3 15 96.700676 -1.0306877 0.7526464 825.2113 1.661911 5250.0 4.5 0.0 440 "" "" "" 9.51658 0.008753796 13 "" """NOT_AVAILABLE""" 80.25634333166138 3.1894035599332207 327.11431716382623 59.304013706924515 False False 0 True True False False False True True False 1.0565753e-13 5.2775406e-13 0.9996401 5379.197 5370.5244 5396.1353 4.4573 4.4511 4.4711 0.3519 0.3438 0.3655 105.4517 104.9485 105.6575 0.1088 0.1024 0.1205 0.0887 0.0834 0.0983 0.0467 0.0439 0.0517 """MARCS"""
+1636148068921376768 """Gaia DR3 6110540548591778688""" 6110540548591778688 193345 2016.0 208.56648573815843 0.018763885 -42.56667477330248 0.02393101 6.265149009937638 0.027453255 228.21152 89.534546 -88.77409670456441 0.025109237 -11.644499460043894 0.030808005 -0.15782176 -0.11317165 -0.32463232 0.09736937 -0.5069875 0.2862423 -0.44652504 -0.31468305 0.4757238 -0.4754975 165 0 165 0 2.55277 199.57239 0.05954947 1.3864108 31 False 1.3637004 "" "" "" "" "" "" "" 19 12 0.050426725 26 11 0 0.03505735 26.517244 0 0 1.1438668 0.477671 0.2369642 0.27728206 0.7308107 -94.75353 61.474384 -7.609992 -23.10444 False 210 44045.0511089957 16.722439 2633.8892 14.077624 23 13862.087010635956 13.728772 1009.71063 14.983971 24 44038.61013739125 28.42766 1549.1465 13.138311 1.314579 0 0 0 0 0 1.8456593 0.9063463 0.93931293 -5.6290445 3.092738 2 12 0 10 7.4602737 "" "" 780.38464 "" 3700.0 4.5 -0.75 101 "" "" "" 12.746293 0.03862898 12 "" """NOT_AVAILABLE""" 315.09172248486936 18.81676483623222 222.474763165711 -28.720806515254722 False False 0 True True False False False False True False 1.160294e-13 5.7956103e-13 0.99861324 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 187247281185703296""" 187247281185703296 195197 2016.0 78.32188893184393 0.02222631 37.336703453881604 0.010167031 37.89526907288171 0.026304075 1440.6615 199.2713 -144.92237498352853 0.030879153 -136.77190703403556 0.022290193 -0.40707392 0.43048334 -0.16574708 0.45724338 -0.089145884 0.10576997 -0.616551 0.23661222 0.35841775 0.1755234 565 565 563 2 -1.9822128 1855.2018 0.12549391 27.35099 31 False 1.5909729 "" "" "" "" "" "" "" 64 15 0.04375392 64 25 9 0.09211356 76.06474 0 0 0.94066936 "" "" "" "" "" "" "" "" True 561 54288342.55723019 8573.254 6332.2915 6.3506002 62 30919570.4139019 16946.99 1824.4874 6.6129584 58 34047510.623984955 11860.025 2870.7788 5.917682 1.196704 0 62 0 56 0 0.69527626 0.2623582 0.43291807 -1.7538819 0.12368704 1 28 0 12 795.1404 0.7204522 0.044525824 888.70734 0.8570634 6000.0 4.5 -0.25 222 "" "" "" 5.7519326 0.0050746496 28 "" """NOT_AVAILABLE""" 169.26688392156836 -0.9920060114210892 80.44061810667102 14.28415413559732 False False 0 True True False False False True True False 1.2558453e-13 6.272884e-13 0.9976672 6045.8574 6045.001 6046.594 4.3286 4.3277 4.3294 -0.6365 -0.6439 -0.6288 26.3671 26.3452 26.3989 0.0 0.0 1e-04 0.0 0.0 1e-04 0.0 0.0 1e-04 """MARCS"""
+1636148068921376768 """Gaia DR3 5946812680118560512""" 5946812680118560512 198860 2016.0 263.74683354107236 0.034147657 -49.71810279074244 0.026228404 5.400176556698408 0.03355585 160.93098 31.421982 -17.473797589569084 0.03919956 -26.11527097944706 0.02597913 0.52457845 -0.0716203 -0.4224823 -0.5313877 -0.1792908 -0.42782554 -0.71503836 -0.07017853 0.26365063 0.12461883 453 0 450 3 -1.031564 426.20157 0.0 0.0 31 False 1.3128874 "" "" "" "" "" "" "" 53 20 0.060128115 55 27 0 0.033406682 7.662094 0 0 0.96488166 0.46391404 0.44225943 0.25081623 0.2194807 -164.42441 -3.42943 -43.141678 -44.504242 False 457 11626.619724068087 5.511165 2109.6482 15.523733 49 2837.2859552217687 8.703835 325.98114 16.706284 51 13256.247179439131 13.404696 988.9256 14.441844 1.3841971 0 4 0 1 0 2.2644396 1.1825504 1.0818892 -34.64928 9.019748 2 12 6 7 2.9640465 "" "" 746.2238 "" 3900.0 4.5 0.25 101 "" "" "" 13.817918 0.34403712 8 "" """NOT_AVAILABLE""" 341.1623784810786 -9.174949461988376 265.4915230302656 -26.376639180033294 False False 0 True False False False False False True False 1.7308995e-13 1.093285e-12 0.99296397 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 5030770583365941504""" 5030770583365941504 198937 2016.0 14.820357764171657 0.011877278 -31.220242973831137 0.012155329 7.294397202198416 0.018373733 397.00134 11.268471 -11.266847287775203 0.01487814 0.191259893337652 0.022854261 0.046609335 0.3741046 0.16604947 -0.12570575 -0.23102915 0.093069375 0.47320864 0.09669864 -0.3380831 0.35130394 285 285 284 1 -0.8017973 534.2711 0.07217611 5.9538856 31 True 1.5468713 "" "" "" "" "" "" "" 32 17 0.033600837 40 9 13 0.0061741034 170.25562 0 0 0.96506906 "" "" "" "" "" "" "" "" True 343 937616.4879940206 103.694305 9042.121 10.757304 37 496126.7414368896 187.30441 2648.7722 11.099561 37 632873.214671284 187.9743 3366.8071 10.244604 1.2041171 0 37 0 37 0 0.8549566 0.34225655 0.5127001 45.13701 0.29715934 1 20 4 13 77.22453 0.027879065 0.3667754 881.68414 4.6727943 5250.0 4.0 0.0 440 7.1481066 3.8761673 14 10.05098 0.0073771407 14 "" """NOT_AVAILABLE""" 280.699031271004 -85.56454139792527 359.6199757852887 -34.23372044104306 False False 0 True True False False False True True False 1.13637784e-13 5.67615e-13 0.99885 5663.285 5623.006 5747.7944 4.4721 4.4507 4.4883 -0.1342 -0.1835 -0.0429 136.4179 135.361 146.6213 0.0917 0.0672 0.1455 0.0765 0.056 0.1216 0.041 0.03 0.0651 """MARCS"""
+1636148068921376768 """Gaia DR3 6186833942449978496""" 6186833942449978496 199257 2016.0 195.60963699583334 0.030991416 -28.29669334275397 0.01933549 5.3003258887715115 0.033603325 157.7322 57.71105 -56.76262448740504 0.033521805 10.419667096342813 0.02406612 -0.16120921 -0.47477326 -0.24794303 -0.36282647 -0.009742926 -0.2991242 -0.060660522 0.047528364 0.3574802 -0.3626065 292 0 291 1 1.8402045 330.7163 0.018626282 0.08403394 31 False 1.3283415 "" "" "" "" "" "" "" 34 15 0.049366996 37 23 0 0.0065404843 91.06198 0 0 1.0767264 0.53210676 0.48041448 0.28299057 0.20367567 -136.05238 27.487862 -12.279304 -17.376863 False 305 20261.631824112003 6.654314 3044.8867 14.920681 35 5328.16369321171 10.607419 502.3054 16.022099 34 22221.90396525379 22.340576 994.68805 13.880942 1.3597162 0 1 0 0 0 2.1411562 1.1014175 1.0397387 -36.557644 2.8476524 2 17 1 12 7.9346113 "" "" 797.06165 "" 3800.0 4.5 0.0 101 "" "" "" 13.258395 0.10771328 16 "" """NOT_AVAILABLE""" 305.8708084258166 34.512275573110074 205.57971241335392 -19.918084364871017 False False 0 True True False False False True True False 1.1961469e-13 5.974751e-13 0.9982583 3833.128 3821.408 3849.3506 4.6182 4.6132 4.6249 0.0238 0.0055 0.0513 187.3502 186.0885 188.4493 0.6966 0.6824 0.7144 0.4817 0.4717 0.4943 0.2761 0.2703 0.2833 """MARCS"""
+1636148068921376768 """Gaia DR3 391563067344237312""" 391563067344237312 202576 2016.0 7.664166733984044 0.010467903 49.48338349966155 0.010495695 7.36820513428664 0.020876631 352.94034 49.139442 -16.206371058699204 0.017827636 -46.390067593607895 0.015979696 -0.323092 0.14258529 -0.010268478 0.029693995 -0.0625419 0.001111046 -0.3298499 -0.17592259 0.21110873 -0.35694566 740 0 736 4 1.6218352 766.38385 0.0 0.0 31 False 1.3268417 "" "" "" "" "" "" "" 85 22 0.027742745 91 18 0 0.0076575726 76.74803 0 0 1.0422524 0.20963413 0.33738366 0.44771776 0.35290402 165.59827 39.431583 -36.708763 7.823209 False 748 31129.314596428845 7.611132 4089.9717 14.454443 87 8228.891117271409 9.449882 870.793 15.550189 84 34105.019015790764 14.630595 2331.0752 13.41585 1.3599371 0 3 0 1 0 2.1343393 1.095746 1.0385933 -52.917957 1.8971412 2 44 4 16 15.139608 "" "" 997.37756 "" 3800.0 4.5 0.0 111 "" "" "" 12.915104 0.02388493 42 "" """VARIABLE""" 119.46703937014215 -13.248507700403781 30.67318163521628 41.530681511903715 False False 0 True True False True False False True False 1.3750302e-13 6.868207e-13 0.99648726 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 3988157892053491712""" 3988157892053491712 202899 2016.0 163.65092190302332 0.013572866 20.659930742138723 0.011838064 5.343962869839681 0.016252652 328.8056 68.52166 -68.38601662453924 0.016674118 4.309419454826167 0.013180986 -0.03490205 -0.12313453 0.09526267 0.15775275 -0.33293414 0.06706654 -0.018504413 0.067639805 -0.36611423 0.039945394 199 0 199 0 1.0486755 213.72049 0.0 0.0 31 True 1.4324082 "" "" "" "" "" "" "" 23 14 0.023159266 23 9 0 0.015460389 88.19003 0 0 1.0519601 0.27625418 0.21335934 0.45275623 0.830129 -62.738678 12.029813 -11.37054 -22.49587 False 198 90419.47016483566 36.088524 2505.491 13.296712 23 36329.23959878883 51.49589 705.4784 13.9379015 20 77795.26566115877 40.46026 1922.7574 12.520513 1.2621673 0 0 0 0 0 1.4173889 0.6411896 0.77619934 -36.0272 1.811767 2 9 1 9 10.8468895 "" "" 939.69135 "" 4250.0 3.5 0.25 111 "" "" "" 12.252321 0.024627846 8 "" """NOT_AVAILABLE""" 220.2209133385983 62.591733318012174 156.95249685213906 12.646639242277914 False False 0 False False False False False False True False 1.0615666e-13 5.3024723e-13 0.9995907 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 2195199055332052352""" 2195199055332052352 206220 2016.0 311.71706418525696 0.02710419 62.304111471943536 0.02587174 7.556266594289314 0.025745519 293.49832 19.808598 12.864215956539406 0.038167994 -15.062950404288255 0.033330593 -0.119204976 -0.0805075 -0.28921187 0.013169773 0.10167665 0.003531686 -0.4467438 -0.15001525 0.075780205 -0.15976287 299 0 299 0 0.09866687 304.7255 0.0 0.0 31 False 1.3062526 "" "" "" "" "" "" "" 34 23 0.055290394 56 18 0 0.010278152 131.83109 0 0 1.0029366 0.13074243 0.18281075 0.064671546 0.09299632 -118.199486 26.27792 13.777756 -33.017643 False 439 11308.183204331619 4.0350604 2802.4817 15.5538845 53 2688.1321958897925 11.48291 234.09851 16.764915 50 13044.146975781852 12.41269 1050.8718 14.459356 1.3912296 0 1 0 1 0 2.3055592 1.211031 1.0945282 -47.981163 5.638197 2 23 5 17 4.6943507 "" "" 996.40485 "" 3400.0 4.0 -0.75 111 "" "" "" 14.004066 0.10620601 22 "" """NOT_AVAILABLE""" 98.36119399324951 11.776819429705562 6.255229885686974 71.8720174786008 False False 0 True False False False False True True False 1.730902e-13 1.1890261e-10 0.99296397 3617.2178 3613.6628 3623.4783 4.8828 4.8779 4.8864 -0.4252 -0.4455 -0.397 131.7239 131.1459 133.2004 0.7057 0.6985 0.7158 0.4767 0.4718 0.4836 0.2825 0.2796 0.2865 """MARCS"""
+1636148068921376768 """Gaia DR3 3921056793355190016""" 3921056793355190016 214953 2016.0 184.1353123569076 0.0144412285 13.988098932037165 0.012016008 7.351163896128486 0.018171635 404.54062 91.73556 78.79421950231695 0.019734118 -46.977484774715414 0.013364003 -0.24042046 -0.06280676 -0.006769066 0.17610069 -0.23078088 0.2109061 0.34624487 0.033918936 -0.37997067 -0.30593836 337 337 330 7 3.8922448 720.96594 0.09885083 13.034301 31 True 1.4731905 "" "" "" "" "" "" "" 38 18 0.028309654 44 11 0 0.017474385 31.654501 0 0 1.155411 "" "" "" "" "" "" "" "" False 373 262053.90676405554 69.23321 3785.0898 12.14139 40 117473.26405141373 77.64038 1513.0433 12.663694 39 205959.09865857832 77.38207 2661.5867 11.463443 1.2342207 0 0 0 0 0 1.2002516 0.52230453 0.67794704 0.9465699 0.68736005 1 22 6 12 30.790903 0.14019509 0.4523332 1025.9724 8.8047695 4750.0 4.0 0.0 111 9.03017 8.234318 14 11.188541 0.029486066 16 "" """NOT_AVAILABLE""" 269.41411395989707 74.54178395473785 178.1091660443527 14.454325885366986 False False 0 True True False False False True True False 1.07193165e-13 5.3542446e-13 0.99948806 4709.467 4702.4785 4716.064 4.5797 4.5771 4.5818 -0.1746 -0.1832 -0.1651 135.6779 135.3688 135.9715 0.0204 0.0119 0.0279 0.0159 0.0093 0.0218 0.0084 0.0049 0.0116 """MARCS"""
+1636148068921376768 """Gaia DR3 2652627430426468864""" 2652627430426468864 216880 2016.0 340.3574723600409 0.01192577 -2.1700658892360694 0.010344865 6.004271821794978 0.013792707 435.32224 48.91642 48.43986348523968 0.018024353 -6.811432205702783 0.013045734 0.059956785 0.11122908 0.08561341 -0.05242394 -0.021239286 -0.011170459 0.090752944 -0.32066777 -0.27127013 -0.013308091 165 165 165 0 0.07560038 244.11902 0.0336642 1.32394 31 True 1.4738038 "" "" "" "" "" "" "" 19 15 0.02515635 21 8 0 0.028272463 158.67244 0 0 1.0021436 "" "" "" "" "" "" "" "" False 165 221938.90298614994 59.722572 3716.1646 12.321783 21 99706.78862643815 102.47293 973.0061 12.84173 21 173440.49784190275 76.81143 2258.0037 11.65002 1.2307318 0 0 0 0 0 1.1917105 0.51994705 0.6717634 -37.16894 0.8010998 1 11 1 8 22.86371 0.7123296 0.20696871 912.84235 7.5542336 4750.0 4.5 0.0 222 "" "" "" 11.406892 0.012164775 10 "" """NOT_AVAILABLE""" 66.07376883505137 -50.11378419932829 341.04382773538924 5.67444267703132 False False 0 False False False False False True True False 1.0478935e-13 5.2341757e-13 0.99972606 4786.249 4777.6387 4796.526 4.5541 4.5517 4.5569 0.0613 0.0493 0.0733 165.993 165.5989 166.3597 0.0629 0.0544 0.0729 0.0493 0.0426 0.0572 0.0259 0.0224 0.0301 """MARCS"""
+1636148068921376768 """Gaia DR3 2120688828806730496""" 2120688828806730496 217749 2016.0 279.239486646565 0.009050152 48.906183533927354 0.009538976 7.4237366491652095 0.009476748 783.3633 23.236242 -3.261117759320762 0.011743009 23.006261336735037 0.012689823 0.041217256 0.061901845 -0.07462644 0.08298902 0.14968072 0.04745835 -0.30496666 -0.042896066 -0.07716336 0.165431 339 339 339 0 1.3290639 510.4241 0.055985067 3.9854987 31 True 1.4321089 "" "" "" "" "" "" "" 38 25 0.018555248 41 17 0 0.012272747 41.143345 0 0 1.0508465 "" "" "" "" "" "" "" "" False 354 199057.5308086649 40.254017 4945.035 12.43992 38 79763.05632497354 65.75052 1213.1167 13.084038 36 169927.1799312481 80.44489 2112.3428 11.672238 1.2543622 0 1 0 1 0 1.4117994 0.64411736 0.7676821 -20.476984 0.52960646 1 18 2 14 28.481222 -0.36945552 0.6181098 815.12396 6.190523 4500.0 4.5 0.75 111 8.283773 7.586851 14 11.375285 0.009527016 16 "" """NOT_AVAILABLE""" 77.74876576338632 22.369625476519797 289.65681008871826 71.71547430651542 False False 0 True True False False False True True False 1.0264799e-13 5.127216e-13 0.999938 4589.875 4586.6006 4593.1343 4.6339 4.6302 4.6378 0.396 0.3854 0.405 133.8964 133.5932 134.1103 0.2334 0.2288 0.2379 0.1772 0.1737 0.1807 0.0925 0.0906 0.0943 """PHOENIX"""
+1636148068921376768 """Gaia DR3 1067761412754348288""" 1067761412754348288 231420 2016.0 138.7524498693243 0.01671745 65.33310052123485 0.021314409 6.382327808628229 0.027332224 233.50926 49.59825 19.870238965575012 0.022169651 -45.44403176013448 0.02775629 0.35988835 -0.12714094 0.104430385 0.015047779 -0.15542835 -0.0004688785 -0.14472699 0.18849525 0.087911196 0.3455824 555 0 554 1 0.24447829 572.2463 0.0 0.0 31 False 1.31466 "" "" "" "" "" "" "" 65 29 0.041346457 68 24 0 0.0073620044 177.2719 0 0 1.0067785 0.0043569626 0.40607032 0.11985972 0.16328943 104.52041 -63.203407 -45.418686 10.086423 False 574 11732.724305479811 3.733096 3142.8938 15.513869 58 2914.021826779562 9.752049 298.81122 16.67731 57 13261.936432196102 11.205821 1183.4863 14.441379 1.3787043 0 1 0 0 0 2.2359324 1.1634417 1.0724907 21.413958 5.510316 2 28 2 19 5.231689 "" "" 895.2528 "" 3700.0 4.5 0.0 101 "" "" "" 13.868653 0.102198474 27 "" """NOT_AVAILABLE""" 148.80189948280795 39.20774820671367 117.07194113745442 46.41142263280892 False False 0 True False False False False True True False 1.2558453e-13 7.615048e-13 0.9976672 3696.2954 3683.7278 3750.5134 4.802 4.7638 4.8094 -0.247 -0.2568 -0.1631 159.6486 156.9316 175.488 0.6525 0.6366 0.7043 0.444 0.4329 0.4796 0.2591 0.2528 0.2802 """PHOENIX"""
+1636148068921376768 """Gaia DR3 4669477522111051904""" 4669477522111051904 232927 2016.0 56.542687220998694 0.013685123 -66.56371665710132 0.013527729 12.222276581994803 0.014076951 868.24744 111.69364 103.19915754945013 0.016439639 -42.724734129994665 0.018160675 0.024392415 0.0967205 -0.09845789 -0.0646008 -0.15465875 -0.05280251 -0.110593066 0.020729285 -0.13479152 0.09305741 329 193 329 0 4.843188 789.49506 0.12863073 16.690903 31 True 1.3342224 "" "" "" "" "" "" "" 39 27 0.025650632 44 16 0 0.01570648 91.81871 1 0 1.1950777 "" "" "" "" "" "" "" "" False 335 126520.0079161575 36.713943 3446.1023 12.931969 42 34692.784600903346 36.365788 953.9951 13.987945 42 136365.7427433007 60.328403 2260.3904 11.911132 1.3520275 0 0 0 0 0 2.0768127 1.0559759 1.0208368 46.50912 0.9583261 1 18 3 16 30.640676 1.2140886 0.15055743 878.05664 15.05645 3800.0 3.0 0.0 111 11.284357 8.32345 12 11.454599 0.06541385 15 "" """NOT_AVAILABLE""" 281.0920371919448 -42.40367418603613 344.5706791733034 -76.85169683569772 False False 0 True True False False False True True False 1.1064666e-13 5.526745e-13 0.99914616 3827.6816 3826.8264 3828.556 4.5946 4.5939 4.5953 -1e-04 -0.0007 0.0004 82.1224 82.0273 82.2094 0.515 0.512 0.5179 0.358 0.3559 0.36 0.2045 0.2033 0.2056 """MARCS"""
+1636148068921376768 """Gaia DR3 3272344073974631168""" 3272344073974631168 233994 2016.0 59.32099302140032 0.01725237 4.205100259973484 0.0152565595 10.270694693727597 0.020923892 490.85968 95.66471 -8.130812450909744 0.02402882 -95.31855335054168 0.019919371 0.16393723 0.05427289 0.0432266 0.085682616 -0.280241 0.11159126 0.4478485 -0.017532902 -0.24254654 0.20544386 332 0 332 0 4.057168 424.60312 0.05845007 1.3228364 31 False 1.3125646 "" "" "" "" "" "" "" 38 18 0.034763336 48 10 0 0.017442755 123.71213 0 2 1.1616998 0.32727462 0.28410405 0.22030821 0.59558016 -41.2755 -13.171093 -33.15507 31.431427 False 390 31915.129694959905 12.653575 2522.2224 14.427376 43 7824.751734032179 12.614649 620.2909 15.604866 42 36229.22323098219 21.64025 1674.1592 13.350248 1.3803477 0 1 0 0 0 2.2546177 1.1774902 1.0771275 -26.166262 3.1521227 2 21 2 14 11.162925 "" "" 861.18414 "" 3900.0 4.5 0.25 101 "" "" "" 12.823947 0.033103064 19 "" """VARIABLE""" 185.2970350713141 -35.30821137250896 58.05611975817313 -15.896873715230162 False False 0 True True False True False True True False 1.7308995e-13 8.6457566e-13 0.99296397 3608.4214 3598.6606 3619.967 4.6862 4.6408 4.7177 -0.6028 -0.6561 -0.5361 97.4696 97.0315 103.622 0.5836 0.5647 0.5992 0.3963 0.3833 0.407 0.2337 0.2265 0.24 """MARCS"""
+1636148068921376768 """Gaia DR3 4213921988987079808""" 4213921988987079808 234505 2016.0 294.3670178558296 0.013793125 -2.1974048690446044 0.011728341 6.854174266937752 0.01583983 432.71768 51.768497 -47.346832230510344 0.017227286 -20.93453241053773 0.014541967 0.24710035 -0.19701178 -0.05513238 -0.23864575 -0.27152076 -0.27074188 0.036726613 0.038765136 -0.11333442 0.12392742 275 275 270 5 -0.9952772 497.24942 0.08595959 8.307898 31 False 1.5443057 "" "" "" "" "" "" "" 31 18 0.024521468 36 9 0 0.029084006 28.242638 0 0 0.9558416 "" "" "" "" "" "" "" "" False 268 1086396.4261449226 220.86314 4918.867 10.597396 32 572873.1733084732 309.16205 1852.9867 10.943396 32 748155.9248567198 195.7067 3822.8428 10.062915 1.2159734 0 0 0 0 0 0.88048077 0.34599972 0.53448105 28.769323 0.3595038 1 9 2 6 59.97906 -0.5480073 0.71637046 910.4721 2.3784351 5750.0 4.5 -0.5 444 "" "" "" 9.846562 0.010187303 6 "" """NOT_AVAILABLE""" 36.25040607872096 -11.239047916924116 295.86450895576854 19.08063135654722 False False 0 True True False False False True True False 1.0251649e-13 5.1206473e-13 0.9999511 5621.1973 5611.1396 5629.727 4.3296 4.3276 4.3315 -1.0143 -1.0307 -1.0028 145.3873 145.0524 145.7268 0.1623 0.1558 0.1678 0.1357 0.1302 0.1403 0.0739 0.0709 0.0764 """MARCS"""
+1636148068921376768 """Gaia DR3 1405676245464138752""" 1405676245464138752 237880 2016.0 248.6056571991221 0.015345651 44.68247446469368 0.015819006 9.08852401343687 0.016711816 543.8382 75.79905 -12.584199864104466 0.020373765 -74.74713154980657 0.021199694 0.004332479 0.018803917 -0.077039845 0.06498741 -0.06618236 0.051483274 -0.33386952 -0.116110235 -0.062981665 0.08942439 376 0 373 3 0.6043384 378.37164 0.0 0.0 31 False 1.3058951 "" "" "" "" "" "" "" 43 26 0.030495951 46 19 0 0.004592451 52.395054 0 0 1.0214463 0.23946744 0.053782776 0.0884534 0.21934865 -102.73263 -32.272465 47.459545 -10.643197 False 390 24040.170576834735 9.2576475 2596.7905 14.735023 42 5697.208235081349 12.706022 448.38644 15.949387 42 27675.287746282494 22.52505 1228.6449 13.642665 1.3881972 0 1 0 0 0 2.3067217 1.214364 1.0923576 -17.928488 4.307912 2 25 2 20 8.500422 "" "" 950.4526 "" 3600.0 4.5 -0.25 101 "" "" "" 13.195205 0.03788304 23 "" """NOT_AVAILABLE""" 69.96158173485378 42.5950357563581 231.63779521877996 65.29735291301706 False False 0 True True False False False True True False 1.7308995e-13 8.6457566e-13 0.99296397 3640.4282 3639.1812 3641.8154 4.8021 4.8011 4.8031 -0.1886 -0.1939 -0.1813 109.7221 109.508 109.9292 0.6546 0.6502 0.6586 0.4423 0.4393 0.445 0.2638 0.262 0.2654 """MARCS"""
+1636148068921376768 """Gaia DR3 5434768775029783424""" 5434768775029783424 240595 2016.0 148.0650653217884 0.0060140467 -36.39216280100091 0.0089410795 5.124166324544925 0.011732816 436.738 79.12742 -73.01945387265137 0.009145692 30.484552818589165 0.010405333 0.30639306 0.009264098 -0.050990127 0.108370975 0.0063191014 0.18170881 -0.26176196 0.03132294 0.019445933 0.30979457 793 793 773 20 2.0840082 1398.3104 0.074485585 11.320435 31 True 1.5135764 "" "" "" "" "" "" "" 92 28 0.015690573 99 35 0 0.021825518 142.30295 1 0 1.0532014 "" "" "" "" "" "" "" "" False 795 246571.41867845162 32.36731 7617.915 12.20751 95 121504.20895043608 36.856804 3296.6562 12.627064 95 177583.00533214942 33.47611 5304.7686 11.624392 1.2129841 0 0 0 0 0 1.0026722 0.41955376 0.58311844 18.380283 0.4573144 1 42 2 21 51.981613 1.2529218 0.06643374 1022.66486 9.149743 5250.0 4.5 0.0 440 "" "" "" 11.391741 0.011160087 39 "" """VARIABLE""" 267.2054849587562 13.760232736268678 167.24389407542827 -45.538566729355985 False False 0 True True False True False True True False 1.0525818e-13 5.2575934e-13 0.9996796 5320.1196 5314.8154 5326.008 4.6102 4.6078 4.6165 -0.0978 -0.1035 -0.0919 192.6254 191.5413 193.1531 0.1568 0.1528 0.161 0.1278 0.1244 0.1312 0.068 0.0662 0.0698 """MARCS"""
+1636148068921376768 """Gaia DR3 1215987571729748352""" 1215987571729748352 240726 2016.0 236.40853377525403 0.010310051 19.81977427791091 0.013160932 9.145774767647255 0.018856898 485.00952 133.90395 -124.49529340419399 0.015572203 -49.30709933352857 0.017232088 0.055629376 -0.1279774 -0.21757035 -0.32570386 -0.11006551 -0.28488252 0.25583127 0.12476143 -0.006833806 0.25269455 523 0 521 2 5.1032805 653.4179 0.060847923 2.3868372 31 False 1.3213822 "" "" "" "" "" "" "" 60 20 0.025917368 67 25 0 0.01189906 56.869137 0 0 1.1623135 0.13105859 0.22662461 0.31207824 0.57880926 89.4492 -76.74104 -50.511467 -25.621649 False 576 44379.10887018775 11.341906 3912.8442 14.069421 62 11367.864091418245 15.167437 749.49146 15.199345 62 49539.65540324626 29.92325 1655.5573 13.010513 1.3724368 0 0 0 0 0 2.1888313 1.1299238 1.0589075 -40.445766 1.480484 2 37 1 16 19.909912 "" "" 903.7717 "" 3700.0 4.0 -0.5 111 "" "" "" 12.505811 0.024558024 36 "" """VARIABLE""" 32.12301363083564 49.5918908643747 228.29674230956152 38.52131574632771 False False 0 True True False True False False True False 1.7308995e-13 8.6457566e-13 0.99296397 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 2188684380217042816""" 2188684380217042816 241043 2016.0 305.61933175508307 0.008956429 59.49397868265188 0.008699319 5.205752953144763 0.009354044 556.5243 29.976818 -19.765827080005934 0.011569565 -22.53711884106237 0.010380622 -0.06562839 -0.2018181 0.08830469 -0.067601696 0.2034178 -0.11158592 -0.18417151 -0.1554067 -0.086511515 -0.05823721 333 333 330 3 -1.9149107 414.35245 0.04186723 2.1890182 31 False 1.4913797 "" "" "" "" "" "" "" 39 27 0.016180737 59 16 0 0.01704289 178.87686 0 0 0.9248398 "" "" "" "" "" "" "" "" False 475 188467.97314068186 55.823936 3376.114 12.499273 55 88443.81539005831 85.06254 1039.7505 12.971873 54 141996.5195765284 105.34815 1347.8785 11.867201 1.2227029 0 1 0 1 0 1.1046724 0.47259998 0.63207245 -4.8047843 0.677442 1 27 4 16 27.6426 0.18851651 0.2694249 974.93176 10.249718 5000.0 4.0 0.0 111 "" "" "" 11.634333 0.013526923 23 "" """VARIABLE""" 94.26956132479047 12.59647831177854 353.07885254198163 72.67376694265316 False False 0 True True False True False True True False 1.0565753e-13 5.2775406e-13 0.9996401 5075.994 5065.0293 5080.028 4.6273 4.622 4.629 0.0343 0.0232 0.04 191.2648 190.776 191.6823 0.155 0.1463 0.1586 0.124 0.117 0.1269 0.0655 0.0618 0.0671 """MARCS"""
+1636148068921376768 """Gaia DR3 1451433796243096960""" 1451433796243096960 241632 2016.0 207.36164189383598 0.011418442 26.874737998155585 0.010461134 6.647826555718139 0.0176845 375.91257 151.03137 -150.4392897357485 0.018129144 -13.360270251940058 0.013039219 -0.21831311 -0.06586384 -0.11583191 0.03545626 -0.053448215 0.085857324 0.012480381 -0.38566858 0.12762652 -0.14803886 418 0 416 2 2.5227633 463.14072 0.0076242695 0.036696758 31 True 1.3790543 "" "" "" "" "" "" "" 48 21 0.02596964 67 25 0 0.028016234 65.74137 0 0 1.0884352 0.21494004 0.21476789 0.11239124 0.16368802 -82.800125 28.683008 -2.5616999 -24.571411 False 573 53645.08426920345 9.2273035 5813.7334 13.863542 66 17830.78032313735 16.822784 1059.9185 14.710616 65 52111.50404086199 19.464428 2677.2688 12.955562 1.3037968 0 1 0 2 0 1.7550545 0.8470745 0.90797997 -46.056522 2.3178637 2 28 4 17 12.709652 "" "" 917.94434 "" 3800.0 4.5 -1.0 222 "" "" "" 12.5735445 0.025657894 24 "" """NOT_AVAILABLE""" 35.12006218566566 77.08332645623116 193.91874056420005 35.297029070241315 False False 0 True True False False False True True False 1.0202512e-11 5.0961034e-11 1.0000273e-06 4084.1248 4082.3247 4086.1768 4.6589 4.6554 4.6629 -0.1051 -0.1164 -0.0876 150.2698 149.8538 150.8325 0.3623 0.3587 0.3656 0.2621 0.2594 0.2645 0.142 0.1406 0.1433 """MARCS"""
+1636148068921376768 """Gaia DR3 1709005561965530880""" 1709005561965530880 243607 2016.0 239.01784824723975 0.021205952 80.3199969220863 0.023761528 7.345482007902128 0.023893882 307.42105 58.193993 0.17138921155101272 0.027997104 -58.19374066511042 0.033705384 0.04207013 -0.17194945 0.0015998464 0.20934178 -0.068314955 0.1669069 0.011438741 -0.057468496 -0.32653835 0.11152103 362 0 360 2 2.142774 426.12424 0.060339943 0.59736896 31 True 1.2981461 "" "" "" "" "" "" "" 41 25 0.047789197 48 16 0 0.0125808185 118.00581 0 0 1.0805216 0.11738325 0.12770778 0.03809613 0.08705799 -137.47658 -76.71375 57.594517 -7.429396 False 413 11871.384425766426 4.5076594 2633.6028 15.501114 45 2678.252532577366 8.789109 304.724 16.768913 42 13956.514972639736 12.165877 1147.1853 14.385953 1.4012492 0 3 0 1 0 2.3829603 1.2677994 1.115161 -61.430313 5.326549 2 12 1 11 4.537472 "" "" 901.29785 "" 3600.0 4.5 -0.25 101 "" "" "" 13.71726 0.06573695 14 "" """NOT_AVAILABLE""" 114.5613483528908 33.58320865035029 108.42275590206624 74.10412575915645 False False 0 True False False False False True True False 1.2558453e-13 6.3839087e-13 0.9976672 3568.9211 3563.784 3578.4873 4.8162 4.8071 4.8422 -0.3054 -0.3349 -0.2335 135.6332 135.1898 136.047 0.6471 0.6393 0.6564 0.4331 0.4277 0.4393 0.2625 0.2592 0.2661 """MARCS"""
+1636148068921376768 """Gaia DR3 5858078557042599040""" 5858078557042599040 243920 2016.0 192.31445541224372 0.016041812 -67.53808597212867 0.016378943 8.1218894924591 0.02235577 363.3017 22.92221 -22.92136475535372 0.020192903 0.19695361741435286 0.022556312 0.11614178 -0.017203746 -0.28291908 0.01728177 -0.012774708 0.020482939 -0.1300049 0.27135766 0.16590232 0.24233982 412 0 410 2 -0.4204778 390.83383 0.0 0.0 31 False 1.3115196 "" "" "" "" "" "" "" 47 23 0.033692103 55 21 0 0.004860149 22.75155 0 0 0.9844435 0.08362519 0.14746885 0.07674697 0.22418891 -157.1881 -54.730934 -12.762427 -15.685179 False 457 20809.566414861332 5.578552 3730.2812 14.891709 50 5062.57773198532 11.697015 432.8094 16.077614 49 23680.4247188271 12.957099 1827.6024 13.811922 1.3812399 0 1 0 0 0 2.2656918 1.1859045 1.0797873 31.756592 4.36607 2 16 4 13 6.1002803 "" "" 808.4523 "" 3600.0 4.5 -0.25 101 "" "" "" 13.233469 0.06904631 14 "" """NOT_AVAILABLE""" 302.7229927776392 -4.667220363974939 229.84128987904703 -54.63313419829908 False False 0 True True False False False True True False 1.3750303e-13 2.9676843e-12 0.99648726 3678.3604 3676.5354 3680.0327 4.7959 4.7939 4.7977 -0.1989 -0.2104 -0.1906 122.5637 122.1777 122.9937 0.6751 0.6708 0.6793 0.4588 0.4558 0.4617 0.2705 0.2688 0.2722 """MARCS"""
+1636148068921376768 """Gaia DR3 4410813529028844928""" 4410813529028844928 255081 2016.0 238.81055490370633 0.016167343 0.756935085005506 0.012135237 13.753599600956088 0.017861946 769.9945 17.420174 -16.451981755558446 0.02157034 5.726670955864879 0.015658474 0.00038288746 -0.10577664 -0.16748779 -0.018087633 -0.14337559 -0.0075303963 0.29915217 -0.089552924 -0.09269165 0.011491125 312 0 311 1 3.3548994 373.0959 0.049983792 1.2539748 31 False 1.2830874 "" "" "" "" "" "" "" 36 18 0.03000392 49 11 0 0.013564224 28.539738 0 0 1.137497 0.2781248 0.31342518 0.11650989 0.57365036 -139.20404 -0.4230544 -30.446291 -26.788029 False 408 42976.96322278012 21.188768 2028.2898 14.104278 43 8860.871967517087 21.684624 408.62466 15.4698515 41 52276.71099413611 50.68361 1031.4323 12.952125 1.4225664 0 1 0 0 0 2.517727 1.3655739 1.152153 -30.204948 3.9259508 2 16 2 12 13.619243 "" "" 859.3264 "" 3500.0 4.5 -0.25 101 "" "" "" 12.383556 0.05445289 15 "" """NOT_AVAILABLE""" 9.919434537443035 38.66413067292225 236.4053509379483 20.63253028745616 False False 0 True True False False False False True False 1.0202512e-11 5.0961034e-11 1.0000273e-06 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 6623286010808176512""" 6623286010808176512 269468 2016.0 342.86446928194215 0.019164134 -24.76612654549422 0.016809648 6.411437599097823 0.023930652 267.9174 68.68959 33.39023876848748 0.022244643 -60.02792614954183 0.018850826 0.10934459 0.32359195 -0.35310236 0.1265849 -0.19612023 0.26063806 -0.08038277 -0.44512996 -0.12617868 0.39809513 269 0 266 3 0.46677175 261.5909 0.0 0.0 31 False 1.3407886 "" "" "" "" "" "" "" 31 17 0.035420373 31 18 0 0.014636394 123.21393 0 0 1.0192139 0.17147823 0.34994468 0.14721088 0.69429517 -176.64088 -41.143913 36.53181 27.636732 False 262 31908.481294662346 11.532343 2766.869 14.427602 28 8960.252906329893 14.078437 636.4523 15.457742 29 33803.228168442794 24.074766 1404.0938 13.4255 1.3401917 0 0 0 0 0 2.0322418 1.0301399 1.0021019 -10.103774 4.194473 2 15 0 11 8.711363 "" "" 698.16516 "" 3900.0 4.5 -0.25 101 "" "" "" 12.927338 0.066629395 15 "" """NOT_AVAILABLE""" 31.135383123239738 -62.988622977916634 334.5962583241482 -16.136608238185914 False False 0 True True False False False False True False 1.7308995e-13 8.6457566e-13 0.99296397 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 441969868684281344""" 441969868684281344 271369 2016.0 53.59309337298176 0.015560153 50.36500776593338 0.014911501 7.12934176324106 0.023226036 306.95474 109.24369 40.91859889452993 0.02306508 -101.29092695030717 0.02435586 0.3263399 -0.020405885 -0.17940608 0.14047647 0.0067211827 0.16178507 0.2916157 0.07276795 0.15015477 0.38776362 394 0 392 2 1.698165 424.7628 0.0 2.0431945e-15 31 False 1.317669 "" "" "" "" "" "" "" 46 20 0.03899586 50 18 0 0.0043192287 15.943615 0 0 1.0607775 0.18886976 0.33996916 0.10920676 0.47387797 152.92451 -41.429077 3.8774211 34.562965 False 419 27248.91363412126 7.6959243 3540.694 14.598994 47 6842.81163395775 10.5645895 647.71204 15.750456 46 30527.923559298633 21.886663 1394.8185 13.536152 1.3714578 0 4 0 0 0 2.214304 1.1514616 1.0628424 10.537834 3.607917 2 15 1 12 7.7913237 "" "" 928.4331 "" 4000.0 4.5 0.5 101 "" "" "" 13.07403 0.050708313 14 "" """NOT_AVAILABLE""" 147.61252267958952 -4.532561331870403 64.03251981559583 30.156220192232933 False False 0 True True False False False True True False 1.3750302e-13 6.868207e-13 0.99648726 3792.3752 3790.065 3794.239 4.6567 4.6526 4.6619 -0.0069 -0.023 -1e-04 141.0408 140.2224 141.8971 0.803 0.7992 0.8073 0.5512 0.5485 0.5541 0.3179 0.3165 0.3196 """MARCS"""
+1636148068921376768 """Gaia DR3 646069390349347840""" 646069390349347840 276145 2016.0 142.52756850138297 0.013981453 25.950417226314446 0.011193246 5.1072614446217255 0.017595066 290.2667 10.912344 -8.152464816537204 0.019466687 -7.253727865102329 0.016499005 -0.4853465 -0.043745138 -0.20335704 0.12717706 0.19107018 0.17283684 -0.5865399 0.4448792 -0.28846136 -0.4477361 384 0 383 1 -1.9737486 346.49646 0.0 0.0 31 False 1.456312 "" "" "" "" "" "" "" 44 16 0.03135019 46 28 0 0.031487223 110.91078 0 0 0.9282209 0.35541022 0.6633995 0.30588993 0.20091674 22.391985 27.089993 19.594774 34.053772 False 396 109951.38070224746 57.598656 1908.9227 13.084365 39 47242.40378521755 98.7792 478.26266 13.652712 40 89244.145802272 127.83944 698.0956 12.371447 1.2413355 0 1 0 0 0 1.2812653 0.568347 0.7129183 9.066387 1.324264 2 22 6 11 16.579866 "" "" 906.4591 "" 4500.0 3.5 0.0 111 "" "" "" 12.119921 0.027512245 16 "" """VARIABLE""" 202.47616900563693 45.264901330718466 136.55254689186157 10.596111618977977 False False 0 True True False True False True True False 1.05447355e-13 5.267042e-13 0.9996609 4636.206 4631.1133 4642.385 4.583 4.5807 4.5855 -0.0932 -0.1003 -0.0854 194.1843 193.5875 194.8132 0.1074 0.1008 0.1148 0.0832 0.0781 0.0889 0.0438 0.0411 0.0469 """MARCS"""
+1636148068921376768 """Gaia DR3 2260301688564981376""" 2260301688564981376 278308 2016.0 275.2614612150058 0.009971649 70.14140097206555 0.009848585 5.0564134037612165 0.009690483 521.7917 5.538197 -2.922791439847474 0.0133736 4.70413805351724 0.013302632 -0.07202275 0.07409981 0.18877506 0.07086931 0.07337108 0.06148717 -0.2108324 -0.08897997 0.014332022 -0.076683566 310 310 309 1 0.3644022 627.666 0.07162513 7.905829 31 True 1.5130918 "" "" "" "" "" "" "" 35 24 0.019268328 41 14 0 0.004295543 33.822227 0 0 1.0137131 "" "" "" "" "" "" "" "" False 342 312856.2851408057 46.545654 6721.4927 11.949005 40 154410.59937017952 109.84481 1405.716 12.36685 39 225360.57156808814 56.82752 3965.6943 11.365701 1.2138838 0 0 0 0 0 1.0011492 0.41784477 0.5833044 -8.683526 0.6353844 1 22 1 19 41.31401 0.66371584 0.20637006 982.4052 10.207185 5250.0 4.0 0.0 440 "" "" "" 11.156819 0.012255602 21 41.326168 """NOT_AVAILABLE""" 100.52314786831299 27.95920285976072 63.96407074578377 85.9303410957764 False False 0 True True True False False True True False 1.0478935e-13 5.2341757e-13 0.99972606 5216.636 5200.8975 5226.942 4.4963 4.4873 4.4999 0.0538 0.039 0.065 197.1529 196.4919 199.6512 0.0546 0.0416 0.0626 0.0442 0.0337 0.0507 0.0234 0.0178 0.0268 """MARCS"""
+1636148068921376768 """Gaia DR3 6691243319830543744""" 6691243319830543744 280634 2016.0 296.6103912269746 0.012312756 -39.86516787885999 0.010290005 7.256602137976758 0.014135724 513.352 103.55764 43.84846128371989 0.016084637 -93.81629181021901 0.011513932 0.15006661 0.096364714 -0.13843007 0.21559075 -0.11428565 0.18621202 0.3192068 -0.096758224 -0.18810946 -0.041446872 260 9 259 1 1.1632704 265.36188 0.0 1.2610094e-15 31 False 1.3714905 "" "" "" "" "" "" "" 30 18 0.022456279 30 8 0 0.048178095 166.80898 1 0 1.0507188 "" "" "" "" "" "" "" "" False 255 85232.97646493175 23.107576 3688.5295 13.360847 28 27443.019559231165 29.24342 938.434 14.242462 27 84080.33481451598 43.394646 1937.574 12.436159 1.3084531 0 0 0 0 0 1.806303 0.8816147 0.92468834 -10.529773 1.3231692 2 17 4 13 17.226765 "" "" 902.6574 "" 4250.0 4.5 0.75 101 "" "" "" 12.001126 0.022598919 13 "" """NOT_AVAILABLE""" 359.7644449441528 -27.042751721677444 291.2390794600488 -18.36782087510615 False False 0 True True False False False False True False 1.0964923e-13 5.4769237e-13 0.9992449 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 3641433458649383808""" 3641433458649383808 281374 2016.0 217.25902613903438 0.01383747 -5.618303547397534 0.010797416 5.4169599583946875 0.014643786 369.91528 42.168537 -41.701135050902124 0.016148062 -6.261054358946225 0.013271866 0.033083487 -0.32205334 0.04059723 -0.059812024 -0.20213106 -0.050316494 0.012946071 0.025660194 0.039864704 -0.12650001 181 164 180 1 0.6749235 279.57257 0.054466613 3.1288702 31 True 1.4521034 "" "" "" "" "" "" "" 21 15 0.02267901 23 10 0 0.014676322 30.359732 0 0 1.0343653 "" "" "" "" "" "" "" "" False 196 141951.60827025506 35.743095 3971.4414 12.807016 22 60164.60593727484 46.78775 1285.905 13.390189 22 116157.63692286026 62.66052 1853.7612 12.085276 1.2421292 0 0 0 0 0 1.3049135 0.5831728 0.7217407 10.855228 2.1902514 1 15 5 12 16.703636 2.5166652 0.6150546 913.9844 10.727898 4500.0 3.5 0.0 111 "" "" "" 11.799101 0.023504201 10 "" """NOT_AVAILABLE""" 342.3376854359711 49.6378090271949 216.76205053535216 8.617820056556699 False False 0 True True False False False True True False 1.0453929e-13 5.221685e-13 0.9997508 4589.6963 4582.7925 4596.9204 4.5399 4.5379 4.542 -0.0229 -0.0306 -0.015 183.8841 183.3598 184.358 0.1003 0.0923 0.1098 0.0774 0.0711 0.0847 0.0407 0.0374 0.0446 """MARCS"""
+1636148068921376768 """Gaia DR3 904415727656065920""" 904415727656065920 288377 2016.0 124.71914542225073 0.018312411 35.41157366577708 0.016449496 17.942129301664064 0.023100369 776.7032 267.61453 -188.15986033095055 0.022049524 -190.29821095387354 0.017681278 -0.25522235 -0.03968249 -0.08424857 0.3560019 -0.3660822 0.21743418 -0.08478633 0.27256668 -0.16657437 -0.25995797 283 0 278 5 4.0851817 356.22668 0.07495114 2.5923889 31 False 1.279291 "" "" "" "" "" "" "" 33 18 0.032824527 33 10 0 0.011382851 121.32929 0 0 1.178539 0.3043038 0.3120006 0.39593405 0.6004765 -96.47254 26.800816 -18.646011 -30.180462 False 278 45590.13796103898 27.166313 1678.1864 14.04019 29 9127.428110702534 23.207718 393.2928 15.437671 28 55791.83179937199 55.5427 1004.48535 12.881469 1.423976 0 0 0 0 0 2.556202 1.397481 1.158721 53.48288 2.4740589 2 14 2 12 13.5316925 "" "" 947.7617 "" 3200.0 3.5 -1.5 111 "" "" "" 12.365804 0.066649206 13 "" """NOT_AVAILABLE""" 186.42001365773126 32.29582036846344 118.77857161162699 15.376457861872879 False False 0 True True False False False False True False 1.0202512e-11 5.0961034e-11 1.0000273e-06 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 3239890888770255104""" 3239890888770255104 297913 2016.0 75.93531100240577 0.017181342 5.627894696251258 0.011065353 6.0835089786968375 0.021974158 276.84833 66.53945 42.19801807009966 0.024237651 -51.4473159545238 0.017593542 0.12591608 0.00065769407 0.26488754 -0.07801965 -0.0029073248 -0.05118468 0.13956755 0.051522724 0.14001907 -0.0026881434 357 0 357 0 2.79545 414.16168 0.0 0.0 31 False 1.3757429 "" "" "" "" "" "" "" 42 16 0.0339138 42 15 0 0.07453145 175.706 0 0 1.1062069 0.3883639 0.4351536 0.26436523 0.54166245 157.47067 -15.8720255 30.560886 -42.933083 False 350 42246.445266209645 9.691948 4358.922 14.122891 38 13909.16483818785 19.387226 717.43964 14.980289 37 41170.54903291735 28.97351 1420.972 13.211429 1.3037716 0 2 0 0 0 1.7688608 0.85739803 0.9114628 15.945826 3.4999945 2 23 10 11 9.8299055 "" "" 718.18994 "" 4250.0 4.5 0.5 111 "" "" "" 12.823231 0.04581211 14 "" """NOT_AVAILABLE""" 194.6721709500715 -20.875382612197072 75.34314659280673 -17.098628463870636 False False 0 True True False False False True True False 1.160294e-13 5.7956103e-13 0.99861324 4179.1597 4176.811 4181.783 4.6735 4.668 4.6768 -0.1064 -0.1194 -0.094 168.7702 168.0587 169.4585 0.5871 0.5819 0.5919 0.4267 0.4229 0.4303 0.2291 0.2271 0.231 """MARCS"""
+1636148068921376768 """Gaia DR3 5813308024073364992""" 5813308024073364992 298041 2016.0 260.8537258190673 0.0083253365 -66.98726054011 0.011510951 5.0110907712308395 0.018964685 264.23273 80.98935 -70.92543095916636 0.01356257 -39.100607895379014 0.01646646 0.12666154 -0.12703942 0.28119278 -0.26666743 0.072158 -0.26583284 0.047967136 -0.20649984 0.0061921007 -0.053632848 866 0 863 3 0.7170387 865.7145 0.0 0.0 31 False 1.3710858 "" "" "" "" "" "" "" 99 24 0.023008233 105 20 0 0.0079475315 67.213104 0 0 1.0169686 0.2194258 0.40952465 0.4448599 0.09071388 -32.133026 -73.16724 -53.070072 -5.5284576 False 893 30048.055134505845 4.9125056 6116.6455 14.4928255 98 9755.90209820884 8.335893 1170.3488 15.365374 94 29638.405738071873 11.622932 2549.994 13.568258 1.3110435 0 0 0 0 0 1.7971153 0.8725481 0.9245672 -6.287583 2.453435 2 44 5 15 12.1879225 "" "" 991.29 "" 4000.0 3.5 0.0 111 "" "" "" 13.196189 0.029894175 41 "" """NOT_AVAILABLE""" 325.1819660316077 -16.81767243494342 265.0687954311493 -43.70447630050272 False False 0 True True False False False True True False 1.7308995e-13 8.6457566e-13 0.99296397 4131.892 4128.26 4137.862 4.6737 4.6716 4.6751 0.157 0.147 0.1699 203.3553 202.6967 204.1371 0.4943 0.4898 0.5033 0.3566 0.3532 0.3632 0.194 0.1922 0.1976 """MARCS"""
+1636148068921376768 """Gaia DR3 2221854962398247808""" 2221854962398247808 298042 2016.0 317.539793541584 0.0131061375 67.01094872639277 0.013422677 9.721294081523567 0.01409194 689.84784 122.45424 103.72023428175143 0.018949496 65.09342781684131 0.015760984 -0.16887377 -0.09517204 0.1291399 -0.036931805 0.28408533 -0.11052394 -0.19675805 -0.2137695 -0.07781969 -0.12949783 327 0 326 1 3.1018038 377.77078 0.041218832 0.88888484 31 False 1.3169762 "" "" "" "" "" "" "" 37 27 0.026796076 41 13 0 0.0071410257 35.234257 0 0 1.1238034 0.13164613 0.14038935 0.059355985 0.15427929 -114.834366 44.700607 -27.535162 -37.44728 False 338 47659.05400296094 21.233904 2244.479 13.992003 40 11933.42728695272 26.39357 452.13388 15.146629 39 53758.5649785011 77.14806 696.82324 12.921777 1.3783739 0 3 0 2 0 2.2248526 1.1546259 1.0702267 -50.053455 2.1201606 2 17 4 15 13.096533 "" "" 820.5261 "" 3700.0 4.5 0.0 101 "" "" "" 12.435585 0.05714568 13 "" """NOT_AVAILABLE""" 103.70030202820283 12.826055967075657 23.33316056505231 71.71199637166544 False False 0 True True False False False True True False 1.0202512e-11 5.0961034e-11 1.0000273e-06 3716.7654 3715.5088 3717.8594 4.6747 4.6734 4.6764 -0.0068 -0.0159 -0.001 102.7048 102.5626 102.8476 0.6023 0.5994 0.6059 0.411 0.409 0.4134 0.2418 0.2407 0.2432 """MARCS"""
+1636148068921376768 """Gaia DR3 4844923603257974528""" 4844923603257974528 300452 2016.0 61.50504595285519 0.009639377 -38.997680715549464 0.01191766 11.501181941491243 0.012485163 921.188 149.61461 -24.427556861169055 0.012415255 -147.60699547078133 0.01563698 0.03178521 0.12625639 -0.02074017 -0.080129206 0.07207027 -0.02453377 -0.34554368 0.033872142 -0.10660707 -0.10638328 400 400 398 2 1.085645 895.11255 0.088552505 10.558949 31 True 1.5400405 "" "" "" "" "" "" "" 45 27 0.022323987 48 20 3 0.018720252 35.770157 0 0 1.0381136 "" "" "" "" "" "" "" "" False 418 6109461.531166489 1012.07306 6036.5815 8.72236 47 3188834.8051172546 1354.5516 2354.1626 9.079462 48 4176190.3101373874 1331.2426 3137.062 8.195945 1.2055113 0 0 0 0 0 0.88351727 0.3571024 0.5264149 -2.0063844 0.13606213 1 19 4 17 216.4177 -0.3921417 0.30168024 893.6402 0.8789083 5500.0 4.0 0.25 222 "" "" "" 8.0101795 0.005373725 13 "" """NOT_AVAILABLE""" 242.122986585702 -48.0685243440067 45.427311856912205 -58.10878571613508 False False 0 True True False False False True True False 1.1064666e-13 5.526745e-13 0.99914616 5569.641 5557.3994 5615.6763 4.108 4.1023 4.1259 0.2025 0.1878 0.2539 86.7397 86.6133 86.8597 0.0487 0.0403 0.0771 0.0403 0.0333 0.064 0.0214 0.0176 0.0339 """MARCS"""
+1636148068921376768 """Gaia DR3 6836651671017028864""" 6836651671017028864 317371 2016.0 327.56699835779966 0.036386553 -18.2113209853482 0.03016856 6.998147483398282 0.046590388 150.20583 163.77345 149.57588064059476 0.04789126 -66.69932192859915 0.0326128 0.20121333 0.13985541 -0.2662038 -0.021018233 0.23580036 -0.028959991 -0.6168695 -0.4683692 -0.34738278 0.22616208 232 0 230 2 1.3213031 259.9409 0.065000616 0.5972236 31 True 1.3027233 "" "" "" "" "" "" "" 27 14 0.07099311 31 17 0 0.036330845 174.23886 0 0 1.0614175 0.10410066 0.46732548 0.045743313 0.2922421 24.560074 -17.009315 1.4136735 24.667215 False 260 12564.30025938845 6.189528 2029.9287 15.439521 28 2902.6636899293494 20.117744 144.28375 16.681551 28 14669.956087515744 23.81523 615.99054 14.331823 1.3986151 0 1 0 2 0 2.3497276 1.2420301 1.1076975 -103.41594 7.0548477 2 8 1 6 2.742836 "" "" 937.6825 "" 3600.0 4.5 0.0 101 "" "" "" 13.730249 0.13979167 10 "" """NOT_AVAILABLE""" 35.18572504998852 -47.49685137216722 323.5708862744977 -4.823514381714224 False False 0 True False False False False True True False 1.3750302e-13 6.868207e-13 0.99648726 3569.4424 3566.7627 3571.579 4.8112 4.8054 4.8176 -0.2254 -0.2384 -0.2152 141.2532 139.1971 142.5885 0.5509 0.5434 0.5577 0.369 0.364 0.3737 0.2245 0.2214 0.2272 """MARCS"""
+1636148068921376768 """Gaia DR3 2720167719596718336""" 2720167719596718336 326467 2016.0 343.2317345547681 0.016872037 14.273091105810972 0.01556215 5.292905928343258 0.018444944 286.95703 43.829155 43.68593830994907 0.02145525 -3.540263290811554 0.018782208 0.27350757 0.12356219 -0.2926423 -0.29105124 -0.10131306 -0.29594827 -0.15608612 0.13830298 -0.1394301 0.2754439 165 165 165 0 1.486204 412.1096 0.089279234 9.268463 31 True 1.6050984 "" "" "" "" "" "" "" 19 14 0.033025753 27 8 2 0.018964019 43.224236 0 0 1.0820818 "" "" "" "" "" "" "" "" False 212 3096171.0716717346 730.0211 4241.2075 9.460304 24 1820959.2581568272 784.962 2319.8057 9.687792 24 1855528.8378533053 596.9519 3108.3389 9.076726 1.1874305 0 0 0 0 0 0.61106586 0.22748756 0.3835783 -3.842172 0.42551342 1 9 2 8 90.13888 1.3504039 0.12123674 898.1635 2.8737192 6500.0 4.0 0.0 222 "" "" "" 8.93101 0.009494979 3 "" """NOT_AVAILABLE""" 84.48921153923143 -39.592753719521404 350.3094988996171 19.71954199938208 False False 0 False False False False False True True False 1.1961469e-13 5.974694e-13 0.9982583 6357.768 6354.6274 6364.134 4.0907 4.0884 4.093 -0.2871 -0.2982 -0.2757 187.661 187.0281 188.285 0.0021 0.0004 0.0058 0.0018 0.0004 0.005 0.001 0.0002 0.0027 """MARCS"""
+1636148068921376768 """Gaia DR3 1628789522929746688""" 1628789522929746688 326628 2016.0 248.5805457018708 0.008747944 63.377766164740464 0.00938986 7.059059336379869 0.009341882 755.63574 84.56769 -83.65333966829984 0.01171654 -12.40212840308785 0.0120151695 -0.037271533 -0.10432075 0.06444006 0.009157202 0.07802294 -0.008244126 -0.05501465 -0.023959454 -0.19719964 -0.079715766 347 0 347 0 1.1863482 366.4478 0.016484056 0.25363362 31 True 1.4146069 "" "" "" "" "" "" "" 40 25 0.017108861 79 16 0 0.0056173275 118.11713 0 0 1.0447133 0.33149883 0.06875301 0.060745742 0.06790355 -109.01233 69.978264 -14.347395 -42.279697 False 666 93935.61725362207 11.620656 8083.504 13.255291 72 35418.14981197234 20.096819 1762.376 13.965478 69 84134.2555360811 28.18702 2984.8582 12.435463 1.2727058 0 66 0 55 0 1.530015 0.71018696 0.81982803 -34.07738 1.3428439 2 39 4 18 27.046473 "" "" 988.4219 "" 4000.0 4.0 0.0 440 "" "" "" 12.088297 0.014071023 35 24.441807 """NOT_AVAILABLE""" 94.38224283945681 39.21696253427573 189.41270794948818 80.45173197697373 False False 0 True True True False False True True False 1.160294e-13 5.7956103e-13 0.99861324 4384.091 4380.3237 4387.3823 4.69 4.6874 4.6915 -0.1312 -0.1374 -0.125 141.2811 141.0366 141.5902 0.2623 0.2575 0.2669 0.1957 0.1921 0.1992 0.1039 0.102 0.1057 """PHOENIX"""
+1636148068921376768 """Gaia DR3 4500501895098383616""" 4500501895098383616 327403 2016.0 266.5466307343765 0.008824587 15.011055766750948 0.010254093 7.1544407542080695 0.013932411 513.5106 85.5679 -67.05690099111187 0.010211777 53.15296041417327 0.011305941 -0.2105023 0.34940457 -0.26755783 0.073068865 -0.41200855 0.06985738 -0.43706182 -0.23162326 0.22599502 -0.022232328 346 346 345 1 0.573435 498.99295 0.05138353 3.7605026 31 False 1.4406219 "" "" "" "" "" "" "" 40 20 0.017135901 41 21 0 0.006330898 52.164703 0 0 1.0210832 "" "" "" "" "" "" "" "" False 337 202939.58466436557 37.47825 5414.8633 12.41895 40 83256.8903092006 49.670525 1676.183 13.037492 37 170124.66573689858 52.879063 3217.2405 11.670978 1.2485566 0 0 0 0 0 1.3665142 0.6185417 0.7479725 15.960455 0.7894618 1 22 5 14 31.994293 1.8207523 0.055632472 956.8241 10.327804 4500.0 4.5 0.0 222 "" "" "" 11.384302 0.01161788 17 "" """NOT_AVAILABLE""" 39.50435263666071 21.072774756974013 265.7425573609218 38.399314064398766 False False 0 True True False False False True True False 1.03982646e-13 5.193881e-13 0.9998059 4566.18 4556.925 4576.723 4.5825 4.578 4.5894 0.1269 0.1105 0.1484 137.382 136.3063 139.0924 0.1974 0.1871 0.2094 0.151 0.143 0.1603 0.0792 0.075 0.0841 """MARCS"""
+1636148068921376768 """Gaia DR3 5456920880609641088""" 5456920880609641088 332272 2016.0 165.2911148945326 0.012461961 -27.206280646310358 0.012294142 5.339826478559239 0.016026897 333.17905 35.089317 -34.02076833597267 0.015283134 8.593452565905515 0.014946937 -0.17787772 -0.16953129 0.24501674 0.3690131 -0.023658754 0.33093846 0.0052104364 -0.03384479 -0.28610238 -0.044277478 358 291 357 1 3.9961126 698.8226 0.09659494 11.303747 31 True 1.406711 "" "" "" "" "" "" "" 41 19 0.021893678 52 11 0 0.01291978 126.60422 0 0 1.1533355 "" "" "" "" "" "" "" "" False 433 135773.3785612677 34.22851 3966.6748 12.85533 49 50123.520956108674 39.615974 1265.2351 13.588438 46 123688.0633902414 67.49095 1832.6614 12.0170765 1.2801595 0 0 0 0 0 1.5713615 0.73310757 0.838254 -7.020306 1.1688887 1 26 4 16 31.00143 2.7834015 0.0066083847 1016.72485 21.812906 4250.0 4.5 0.0 440 7.0464654 7.0774145 13 11.660693 0.012112614 22 29.933683 """VARIABLE""" 274.69303867986 29.549894235451724 178.31394638934177 -30.616775349654326 False False 0 True True True True False True True False 1.3750302e-13 6.868207e-13 0.99648726 4225.344 4213.781 4251.4277 4.3114 4.2858 4.3452 -0.1019 -0.1298 -0.0401 184.8389 182.7587 187.1993 0.0954 0.0867 0.1069 0.0703 0.0639 0.0789 0.0377 0.0342 0.0423 """PHOENIX"""
+1636148068921376768 """Gaia DR3 2197618285850138112""" 2197618285850138112 333110 2016.0 315.19470666340726 0.0103684785 65.09244644340059 0.00974174 6.782441363061904 0.010672891 635.4831 111.9875 3.145255234945388 0.014087022 -111.94332416783924 0.012221639 -0.08586869 -0.18744041 -0.06661774 -0.039494187 0.16626032 -0.07778636 -0.19801375 -0.177595 -0.019126888 -0.03623035 359 0 358 1 2.45008 404.2251 0.036741212 1.1565578 31 False 1.3946476 "" "" "" "" "" "" "" 41 27 0.019580862 44 17 0 0.028934248 25.11917 0 0 1.0926402 0.011047254 0.08575281 0.0522611 0.08922275 -38.39017 22.587553 40.185257 40.08986 False 345 89112.2041890347 14.1125765 6314.3823 13.312524 43 31558.319207726163 26.440605 1193.555 14.090757 43 83265.86656585017 24.331652 3422.1213 12.446728 1.2885349 0 1 0 0 0 1.6440296 0.7782335 0.8657961 -38.519974 1.33033 2 22 3 18 19.831465 "" "" 950.41223 "" 4250.0 4.0 0.5 111 "" "" "" 12.11374 0.018345334 19 "" """NOT_AVAILABLE""" 101.57275322614711 12.303471766639108 16.494577915948927 71.84208093160876 False False 0 True True False False False False True False 1.7308995e-13 8.6457566e-13 0.99296397 "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"""
+1636148068921376768 """Gaia DR3 6852263121225743744""" 6852263121225743744 334381 2016.0 304.0516843981671 0.012564917 -24.246926935668633 0.009376605 6.659567639717152 0.015160932 439.25845 59.845554 -42.867098439347906 0.015171858 -41.76005826999603 0.011992933 0.21378364 0.0864872 -0.058493216 -0.07658239 -0.16994576 -0.037482083 0.2596248 -0.15570778 -0.30821973 0.21162808 292 0 290 2 -1.0241028 252.51878 0.0 0.0 31 True 1.398439 "" "" "" "" "" "" "" 34 18 0.021841073 34 8 0 0.030931076 79.63883 1 0 0.9562607 0.10414406 0.39443028 0.19529565 0.5240873 -72.33353 -18.948086 -42.50406 33.94588 False 290 96304.39323652547 18.121643 5314.33 13.228251 32 34470.593718356904 23.122826 1490.7605 13.994921 31 88891.98789790778 36.806133 2415.1406 12.375739 1.2809652 0 0 0 0 0 1.6191816 0.7666693 0.85251236 3.9974306 1.1299175 2 22 6 16 19.242048 "" "" 942.6466 "" 4500.0 4.5 0.75 111 "" "" "" 12.020509 0.026886752 16 "" """NOT_AVAILABLE""" 18.726765623005303 -28.7249819348375 300.7996141643464 -4.375032818515765 False False 0 True True False False False True True False 1.0478935e-13 5.2341757e-13 0.99972606 4409.52 4398.0967 4421.1743 4.6409 4.6336 4.6462 0.3259 0.2777 0.3527 148.3833 146.6471 148.9235 0.5477 0.5373 0.5614 0.4064 0.3986 0.4168 0.2146 0.2105 0.22 """MARCS"""
+1636148068921376768 """Gaia DR3 1935914972047259008""" 1935914972047259008 335923 2016.0 343.4279317540061 0.015864622 45.46305113850046 0.01762179 6.0746684028783555 0.023575831 257.66507 42.115555 41.8563272338301 0.01991664 4.665592144126175 0.02250264 -0.19496077 0.12042906 -0.32919416 -0.033397548 0.094498664 -0.027296511 -0.20734376 -0.03565946 -0.08427385 -0.22126919 538 0 537 1 2.1665592 613.092 0.0 0.0 31 False 1.2811629 "" "" "" "" "" "" "" 62 27 0.033097416 75 28 0 0.012162146 74.7729 0 0 1.0665098 0.15329777 0.27892098 0.13101698 0.30761474 -27.351715 58.098892 38.701294 -39.14253 False 605 15726.801985031487 6.493574 2421.9023 15.1957655 71 3165.729049014071 9.010125 351.3524 16.587358 69 19295.144725660244 23.75306 812.3225 14.034275 1.4281908 0 4 0 2 0 2.5530834 1.391593 1.1614904 -37.764248 5.790499 2 29 5 21 8.179397 "" "" 1002.0687 "" 3800.0 4.5 0.5 101 "" "" "" 13.426775 0.065468326 26 "" """NOT_AVAILABLE""" 102.2496589901036 -12.628415493864933 8.460868899157841 47.185091548193014 False False 0 True False False False False True True False 1.7308995e-13 8.657092e-13 0.99296397 3521.6428 3517.2336 3523.8784 4.5187 4.5055 4.5279 -0.2435 -0.2769 -0.222 163.1472 162.2871 163.9142 0.8455 0.8407 0.8503 0.5562 0.5531 0.5594 0.3474 0.3455 0.3494 """MARCS"""
