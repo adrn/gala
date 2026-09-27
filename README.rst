@@ -2,7 +2,7 @@
 
 Gala is a Python package for Galactic and gravitational dynamics.
 
-|Affiliated package| |Coverage Status| |Build status|
+|Affiliated package| |Coverage Status| |Build status| |SPEC 0|
 
 Documentation
 -------------
@@ -30,6 +30,11 @@ You can also add ``gala`` as a dependency to your environment with::
 See the `installation
 instructions <http://gala.adrian.pw/en/latest/install.html>`_ in the
 `documentation <http://gala.adrian.pw>`__ for more information.
+
+Gala follows `SPEC 0 <https://scientific-python.org/specs/spec-0000/>`_ for its
+minimum supported versions of Python and core dependencies (e.g., numpy, scipy):
+support for a Python version is dropped 3 years after its initial release, and
+support for a core dependency version is dropped 2 years after its initial release.
 
 Attribution
 -----------
@@ -85,6 +90,8 @@ the `LICENSE <https://github.com/adrn/gala/blob/main/LICENSE>`_ file.
    :target: http://joss.theoj.org/papers/10.21105/joss.00388
 .. |DOI| image:: https://zenodo.org/badge/17577779.svg
    :target: https://zenodo.org/badge/latestdoi/17577779
+.. |SPEC 0| image:: https://img.shields.io/badge/SPEC-0-green?labelColor=%23004811&color=%235CA038
+   :target: https://scientific-python.org/specs/spec-0000/
 .. |ASCL| image:: https://img.shields.io/badge/ascl-1707.006-blue.svg?colorB=262255
    :target: http://ascl.net/1707.006
 .. |logo| image:: https://gala.adrian.pw/en/latest/_static/Gala_Logo_RGB.png

@@ -36,6 +36,15 @@ API changes
 Other
 -----
 
+- Gala now follows the `SPEC 0 <https://scientific-python.org/specs/spec-0000/>`_
+  policy for minimum supported versions of Python and core dependencies. As a result,
+  the minimum supported versions are now: Python 3.12, numpy 2.2, scipy 1.15, and
+  matplotlib 3.10 (optional). The minimum supported astropy version is now 7.0.
+
+- The development dependencies (``test``, ``docs``, ``tutorials``, ``dev``) are now
+  defined as dependency groups instead of optional dependencies ("extras"). Install
+  them with, e.g., ``uv sync`` or ``pip install -e . --group test``.
+
 
 1.11.0 (2025-12-10)
 ===================

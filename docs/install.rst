@@ -160,6 +160,12 @@ Gala has the following build dependencies:
 * ``setuptools_scm``
 * ``pybind11``
 
+Gala follows `SPEC 0 <https://scientific-python.org/specs/spec-0000/>`_ for its
+minimum supported versions of Python and core dependencies: support for a Python
+version is dropped 3 years after its initial release, and support for a core
+dependency version (e.g., numpy, scipy, matplotlib) is dropped 2 years after its
+initial release. See ``pyproject.toml`` for the current minimum versions.
+
 Gala has the following runtime dependencies:
 
 * `Numpy`_

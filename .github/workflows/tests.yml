@@ -62,7 +62,7 @@ jobs:
             os: ubuntu-latest
             python-version: "3.12"
             astropy-version: "7.0.1"
-            numpy-version: "1.26"
+            numpy-version: "2.2"
             scipy-version: "1.15"
             gala-nogsl: "0"
             gala-exp: "0"
