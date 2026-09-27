@@ -37,7 +37,7 @@ class TestBarRotatingFrameIntegration:
         # Create time-dependent rotation matrices
         time_knots = np.arange(0, 5, dt.to(u.Gyr).value) * u.Gyr
         bar_angle = (-Omega * time_knots).to_value(u.rad)
-        Rs = Rotation.from_euler("z", bar_angle).as_matrix()
+        Rs = Rotation.from_euler("z", bar_angle[:, None]).as_matrix()
 
         # Base Milky Way potential
         mw = gp.MilkyWayPotential(version="latest")
