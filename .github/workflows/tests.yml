@@ -188,7 +188,8 @@ jobs:
       - name: Install package and dependencies
         run: |
           extras="${{ matrix.python-extras }}"
-          uv sync --locked --python ${{ matrix.python-version }} --no-default-groups \
+          # --upgrade: test against the latest dependency versions, not the lockfile
+          uv sync --upgrade --python ${{ matrix.python-version }} --no-default-groups \
             --group test --extra ${extras//,/ --extra }
         env:
           GALA_NOGSL: ${{ matrix.gala-nogsl }}
