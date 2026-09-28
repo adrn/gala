@@ -1312,6 +1312,11 @@ class Orbit(PhaseSpacePosition):
         -------
         galpy_orbit : `galpy.orbit.Orbit`
 
+        Notes
+        -----
+        galpy uses a left-handed Galactocentric cylindrical frame. This
+        method applies the same map as ``galpy.orbit.Orbit(SkyCoord)``:
+        ``phi = π - φ`` and ``vT = -(ρ dφ)``.
         """
         from galpy.orbit import Orbit
         from galpy.util.config import __config__ as galpy_config
@@ -1335,12 +1340,19 @@ class Orbit(PhaseSpacePosition):
         cyl = w.cylindrical
 
         R = cyl.rho.to_value(ro).T
-        phi = cyl.phi.to_value(u.rad).T
         z = cyl.z.to_value(ro).T
 
         vR = cyl.v_rho.to_value(vo).T
-        vT = (cyl.rho * cyl.pm_phi).to_value(vo, u.dimensionless_angles()).T
         vz = cyl.v_z.to_value(vo).T
+
+        # galpy's cylindrical frame is left-handed relative to astropy/gala.
+        # The published SkyCoord constructor (galpy/orbit/Orbits.py) maps
+        #     phi = π - φ_astropy
+        #     vT  = -(ρ dφ)
+        # A vT-only flip leaves the Sun (astropy φ=π at x=-R0) at galpy φ=π
+        # instead of φ=0. See adrn/gala#592.
+        phi = (np.pi - cyl.phi.to_value(u.rad)).T
+        vT = -(cyl.rho * cyl.pm_phi).to_value(vo, u.dimensionless_angles()).T
 
         o = Orbit(np.array([R, vR, vT, z, vz, phi]).T, ro=ro, vo=vo)
         if w.t is not None:
@@ -1366,16 +1378,19 @@ class Orbit(PhaseSpacePosition):
         vo = galpy_orbit._vo * u.km / u.s
         ts = galpy_orbit.t
 
+        # Inverse of to_galpy_orbit / galpy SkyCoord: φ_gala = π - φ_galpy,
+        # dφ = -(vT / ρ). Must stay paired with the vT sign or the Sun
+        # lands at the wrong azimuth.
         rep = coord.CylindricalRepresentation(
             rho=galpy_orbit.R(ts) * ro,
-            phi=galpy_orbit.phi(ts) * u.rad,
+            phi=(np.pi - galpy_orbit.phi(ts)) * u.rad,
             z=galpy_orbit.z(ts) * ro,
             copy=False,
         )
         with u.set_enabled_equivalencies(u.dimensionless_angles()):
             dif = coord.CylindricalDifferential(
                 d_rho=galpy_orbit.vR(ts) * vo,
-                d_phi=galpy_orbit.vT(ts) * vo / rep.rho,
+                d_phi=-(galpy_orbit.vT(ts) * vo / rep.rho),
                 d_z=galpy_orbit.vz(ts) * vo,
                 copy=False,
             )
