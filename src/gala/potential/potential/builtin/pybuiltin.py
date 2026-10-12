@@ -48,7 +48,8 @@ class HarmonicOscillatorPotential(PotentialBase):
 
     def _hessian(self, q, t=0.0):
         om = np.atleast_1d(self.parameters["omega"].value)
-        return np.tile(np.diag(om**2)[:, :, None], reps=(1, 1, q.shape[0]))
+        # q has shape (n, ndim); return (n, ndim, ndim) like the C potentials
+        return np.tile(np.diag(om**2), reps=(q.shape[0], 1, 1))
 
     @classmethod
     @sympy_wrap(var="x")

@@ -161,7 +161,8 @@ def from_equation(expr, vars, pars, name=None, hessian=False):
                 arrs.append(hess_arr)
             hess = np.vstack(arrs)
 
-            return hess.reshape((ndim, ndim, len(w[:, i])))
+            # w has shape (n, ndim); return (n, ndim, ndim) like the C potentials
+            return np.moveaxis(hess.reshape((ndim, ndim, len(w[:, i]))), -1, 0)
 
         CustomPotential._hessian = _hessian
 

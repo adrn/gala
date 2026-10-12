@@ -26,6 +26,10 @@ Bug fixes
 - Fixed ``HarmonicOscillatorPotential.hessian()``, which returned ``omega`` instead of
   ``omega**2`` on the diagonal.
 
+- Fixed ``hessian()`` of ``HarmonicOscillatorPotential`` and of potentials created with
+  ``from_equation()`` when evaluated at more than one position, including inside a
+  ``CompositePotential`` with C components.
+
 API changes
 -----------
 

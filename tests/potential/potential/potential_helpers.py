@@ -139,9 +139,12 @@ class PotentialTestBase:
         if self.skip_hessian:
             pytest.skip("Hessian not implemented for this potential")
 
+        hess_w0 = self.potential.hessian(self.w0[: self.ndim])
         for arr, shp in zip(self.w0s, self._hess_return_shapes):
             g = self.potential.hessian(arr[: self.ndim])
             assert g.shape == shp
+            # Every position in arr is a copy of w0
+            assert u.allclose(g.reshape(*hess_w0.shape[:2], -1), hess_w0)
 
             expected = self.potential.hessian(arr[: self.ndim], t=0.1)
             g = self.potential.hessian(
