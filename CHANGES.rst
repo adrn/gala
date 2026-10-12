@@ -17,6 +17,9 @@ Bug fixes
 - Fixed the gradient of ``ConstantRotatingFrame`` with a scalar ``Omega`` (2D), which
   read past the end of its array.
 
+- Fixed the energy of ``ConstantRotatingFrame`` with a scalar ``Omega`` (2D), which was
+  not the Hamiltonian being integrated, so it was not conserved along orbits.
+
 API changes
 -----------
 

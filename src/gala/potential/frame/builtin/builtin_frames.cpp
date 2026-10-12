@@ -37,14 +37,16 @@ double constant_rotating_frame_2d_hamiltonian(double t, double *pars, double *qp
     */
     int i;
     double E = 0.;
-    double R2;
+    double Lz;
 
     for (i=0; i<n_dim; i++) {
         E += 0.5*qp[i+n_dim]*qp[i+n_dim]; // p^2
     }
 
-    R2 = qp[0]*qp[0] + qp[1]*qp[1];
-    return E - 0.5 * pars[0]*pars[0] * R2;
+    Lz = qp[0]*qp[1+n_dim] - qp[1]*qp[0+n_dim];
+
+    // kinetic term and effective potential for rotation: - Omega Lz
+    return E - pars[0]*Lz;
 }
 
 void constant_rotating_frame_2d_gradient_single(double t, double *__restrict__ pars, double6ptr qp, int n_dim, double6ptr dH, void *__restrict__ state) {

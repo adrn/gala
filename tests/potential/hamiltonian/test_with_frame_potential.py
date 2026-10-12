@@ -246,3 +246,4 @@ def test_rotating_frame_2d():
     w3 = np.array([x, y, z, px, py, z])
 
     assert np.allclose(H2.gradient(w2), H3.gradient(w3)[[0, 1, 3, 4]])
+    assert u.allclose(H2.energy(w2), H3.energy(w3))
