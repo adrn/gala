@@ -14,6 +14,9 @@ Bug fixes
 - Fixed the gradient of a rotated ``TimeInterpolatedPotential`` evaluated at more than
   one position.
 
+- Fixed the gradient of ``ConstantRotatingFrame`` with a scalar ``Omega`` (2D), which
+  read past the end of its array.
+
 API changes
 -----------
 

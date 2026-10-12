@@ -62,8 +62,8 @@ void constant_rotating_frame_2d_gradient_single(double t, double *__restrict__ p
     // Omega x p
     Cx = -pars[0]*qp[1+n_dim];
     Cy = pars[0]*qp[0+n_dim];
-    dH[2] = dH[3] + Cx;
-    dH[3] = dH[4] + Cy;
+    dH[2] = dH[2] + Cx;
+    dH[3] = dH[3] + Cy;
 }
 
 void constant_rotating_frame_2d_hessian(double t, double *pars, double *qp, int n_dim, double *d2H) {
