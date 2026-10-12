@@ -1354,6 +1354,40 @@ class CompositePotential(PotentialBase, OrderedDict):
         super().__setitem__(key, value)
         self._update_symmetry()
 
+    # OrderedDict's pop, popitem, and clear bypass __delitem__, so each removal
+    # path is overridden separately
+    def __delitem__(self, key):
+        self._check_removal()
+        super().__delitem__(key)
+        self._components_removed()
+
+    def pop(self, *args, **kwargs):
+        self._check_removal()
+        value = super().pop(*args, **kwargs)
+        self._components_removed()
+        return value
+
+    def popitem(self, last=True):
+        self._check_removal()
+        item = super().popitem(last=last)
+        self._components_removed()
+        return item
+
+    def clear(self):
+        self._check_removal()
+        super().clear()
+        self._components_removed()
+
+    def _check_removal(self):
+        if self.lock:
+            raise ValueError(
+                "Potential object is locked - components can only be removed "
+                "from unlocked potentials."
+            )
+
+    def _components_removed(self):
+        self._update_symmetry()
+
     def _check_component(self, p):
         if not isinstance(p, PotentialBase):
             msg = f"Potential components may only be Potential objects, not {type(p)}."

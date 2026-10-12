@@ -30,8 +30,17 @@ Bug fixes
   ``from_equation()`` when evaluated at more than one position, including inside a
   ``CompositePotential`` with C components.
 
+- Removing components from a ``CompositePotential`` (``del``, ``pop()``,
+  ``popitem()``, ``clear()``) now updates the composite. Previously, a
+  ``CCompositePotential`` kept using the removed components for orbit integration.
+
 API changes
 -----------
+
+- Removing a component from a locked ``CompositePotential`` now raises a
+  ``ValueError``, consistent with the documented meaning of ``lock``. Adding a non-C
+  potential to a ``CCompositePotential`` now raises a ``TypeError`` before the
+  component is inserted.
 
 Other
 -----
