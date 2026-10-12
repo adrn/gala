@@ -292,6 +292,15 @@ def test_hessian_basic_functionality(test_positions, potentials):
     )
     assert u.allclose(pot.hessian(pos, t=25 * u.Myr), potentials["base"].hessian(pos))
 
+    # Inside a C composite, the hessian adds to the other components' hessians
+    comp = gp.CCompositePotential(
+        base=potentials["base"], constant=potentials["constant"]
+    )
+    hess = comp.c_instance.hessian(np.ascontiguousarray(pos[None]), t=np.array([25.0]))
+    assert np.allclose(
+        np.moveaxis(hess, 0, -1), 2 * potentials["base"].hessian(pos).value
+    )
+
 
 def test_different_interpolation_types():
     """Test different interpolation methods."""

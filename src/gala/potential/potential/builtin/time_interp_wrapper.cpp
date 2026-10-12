@@ -300,15 +300,17 @@ void time_interp_hessian(double t, double *pars, double *q, int n_dim, double *h
     }
     wrapped_pot->hessian[0](t, interp_params, q_transformed, n_dim, hess_transformed, wrapped_pot->state[0]);
 
-    // Transform Hessian back: hess = R^T @ hess_transformed @ R
+    // Transform Hessian back and accumulate, so other components in a composite are
+    // preserved: hess += R^T @ hess_transformed @ R
     for (int i = 0; i < n_dim; i++) {
         for (int j = 0; j < n_dim; j++) {
-            hess[i*n_dim + j] = 0.0;
+            double h_ij = 0.0;
             for (int k = 0; k < n_dim; k++) {
                 for (int l = 0; l < n_dim; l++) {
-                    hess[i*n_dim + j] += interp_rotation[k*n_dim + i] * hess_transformed[k*n_dim + l] * interp_rotation[l*n_dim + j];
+                    h_ij += interp_rotation[k*n_dim + i] * hess_transformed[k*n_dim + l] * interp_rotation[l*n_dim + j];
                 }
             }
+            hess[i*n_dim + j] += h_ij;
         }
     }
 
