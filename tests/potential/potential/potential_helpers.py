@@ -100,13 +100,14 @@ class PotentialTestBase:
             v = self.potential.energy(arr[: self.ndim])
             assert v.shape == shp
 
-            self.potential.energy(arr[: self.ndim], t=0.1)
+            expected = self.potential.energy(arr[: self.ndim], t=0.1)
             self.potential.energy(
                 arr[: self.ndim], t=0.1 * self.potential.units["time"]
             )
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
-            self.potential.energy(arr[: self.ndim], t=t)
+            v = self.potential.energy(arr[: self.ndim], t=t)
+            assert u.allclose(v, expected)
             self.potential.energy(arr[: self.ndim], t=t * self.potential.units["time"])
 
         if self.check_finite_at_origin:
@@ -122,13 +123,14 @@ class PotentialTestBase:
             g = self.potential.gradient(arr[: self.ndim])
             assert g.shape == shp
 
-            g = self.potential.gradient(arr[: self.ndim], t=0.1)
+            expected = self.potential.gradient(arr[: self.ndim], t=0.1)
             g = self.potential.gradient(
                 arr[: self.ndim], t=0.1 * self.potential.units["time"]
             )
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
             g = self.potential.gradient(arr[: self.ndim], t=t)
+            assert u.allclose(g, expected)
             g = self.potential.gradient(
                 arr[: self.ndim], t=t * self.potential.units["time"]
             )
@@ -141,13 +143,14 @@ class PotentialTestBase:
             g = self.potential.hessian(arr[: self.ndim])
             assert g.shape == shp
 
-            g = self.potential.hessian(arr[: self.ndim], t=0.1)
+            expected = self.potential.hessian(arr[: self.ndim], t=0.1)
             g = self.potential.hessian(
                 arr[: self.ndim], t=0.1 * self.potential.units["time"]
             )
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
             g = self.potential.hessian(arr[: self.ndim], t=t)
+            assert u.allclose(g, expected)
             g = self.potential.hessian(
                 arr[: self.ndim], t=t * self.potential.units["time"]
             )
@@ -158,13 +161,14 @@ class PotentialTestBase:
             assert g.shape == shp
             assert np.all(g > 0.0)
 
-            g = self.potential.mass_enclosed(arr[: self.ndim], t=0.1)
+            expected = self.potential.mass_enclosed(arr[: self.ndim], t=0.1)
             g = self.potential.mass_enclosed(
                 arr[: self.ndim], t=0.1 * self.potential.units["time"]
             )
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
             g = self.potential.mass_enclosed(arr[: self.ndim], t=t)
+            assert u.allclose(g, expected)
             g = self.potential.mass_enclosed(
                 arr[: self.ndim], t=t * self.potential.units["time"]
             )
@@ -175,13 +179,14 @@ class PotentialTestBase:
             assert g.shape == shp
             np.testing.assert_array_less(0.0, g)
 
-            g = self.potential.circular_velocity(arr[: self.ndim], t=0.1)
+            expected = self.potential.circular_velocity(arr[: self.ndim], t=0.1)
             g = self.potential.circular_velocity(
                 arr[: self.ndim], t=0.1 * self.potential.units["time"]
             )
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
             g = self.potential.circular_velocity(arr[: self.ndim], t=t)
+            assert u.allclose(g, expected)
             g = self.potential.circular_velocity(
                 arr[: self.ndim], t=t * self.potential.units["time"]
             )

@@ -151,8 +151,8 @@ class _TestBase:
             assert v.unit.is_equivalent(self.E_unit)
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
-            self.obj.energy(arr, t=0.1)
-            self.obj.energy(arr, t=t)
+            expected = self.obj.energy(arr, t=0.1)
+            assert u.allclose(self.obj.energy(arr, t=t), expected)
             self.obj.energy(arr, t=0.1 * self.obj.units["time"])
 
     def test_gradient(self):
@@ -169,8 +169,8 @@ class _TestBase:
             # TODO: check return units
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
-            self.obj.gradient(arr, t=0.1)
-            self.obj.gradient(arr, t=t)
+            expected = self.obj.gradient(arr, t=0.1)
+            assert u.allclose(self.obj.gradient(arr, t=t), expected)
             self.obj.gradient(arr, t=0.1 * self.obj.units["time"])
 
     def test_hessian(self):

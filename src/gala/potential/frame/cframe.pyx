@@ -51,16 +51,28 @@ cdef class CFrameWrapper:
         w should have shape (ndim, n).
         """
         cdef:
-            int n, ndim, i
+            int n, ndim, i, j
             CFrameType cf = self.cframe
         ndim, n = _validate_pos_arr(w)
 
         cdef double[:, ::1] dH = np.zeros((ndim, n))
+        # 6 is the most components the kernels' double6ptr can address
+        cdef double w_i[6]
+        cdef double dH_i[6]
         if len(t) == 1:
             frame_gradient(&cf, t[0], &w[0, 0], ndim//2, n, &dH[0, 0])
         else:
+            # The kernels stride components by N, so each particle is copied to a
+            # contiguous buffer and evaluated with N=1.
+            if ndim > 6:
+                raise ValueError(f"Expected at most 6 dimensions, got {ndim}")
             for i in range(n):
-                frame_gradient(&cf, t[i], &w[0, i], ndim//2, 1, &dH[0, i])
+                for j in range(ndim):
+                    w_i[j] = w[j, i]
+                    dH_i[j] = 0.
+                frame_gradient(&cf, t[i], &w_i[0], ndim//2, 1, &dH_i[0])
+                for j in range(ndim):
+                    dH[j, i] = dH_i[j]
 
 
         return np.array(dH)

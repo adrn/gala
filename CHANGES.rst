@@ -7,6 +7,10 @@ New Features
 Bug fixes
 ---------
 
+- Fixed potential and Hamiltonian gradients evaluated with one time per position
+  (``t`` an array), which used the wrong coordinates whenever more than one position
+  was passed.
+
 API changes
 -----------
 
