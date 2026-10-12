@@ -20,6 +20,9 @@ Bug fixes
 - Fixed the energy of ``ConstantRotatingFrame`` with a scalar ``Omega`` (2D), which was
   not the Hamiltonian being integrated, so it was not conserved along orbits.
 
+- Fixed ``circular_velocity()`` for position arrays with more than one batch dimension
+  (e.g., shape ``(3, N, M)``), which returned scrambled values.
+
 API changes
 -----------
 

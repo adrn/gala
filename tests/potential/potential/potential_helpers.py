@@ -173,7 +173,7 @@ class PotentialTestBase:
                 arr[: self.ndim], t=t * self.potential.units["time"]
             )
 
-    def test_circular_velocity(self):
+    def test_circular_velocity(self, rng):
         for arr, shp in zip(self.w0s, self._valu_return_shapes):
             g = self.potential.circular_velocity(arr[: self.ndim])
             assert g.shape == shp
@@ -190,6 +190,16 @@ class PotentialTestBase:
             g = self.potential.circular_velocity(
                 arr[: self.ndim], t=t * self.potential.units["time"]
             )
+
+        # The arrays above repeat one position, so also check distinct positions
+        # with a 2-D batch shape against the same positions flattened
+        scale = np.linalg.norm(self.w0[: self.ndim])
+        q = self.w0[: self.ndim, None, None] + 0.1 * scale * rng.normal(
+            size=(self.ndim, 3, 4)
+        )
+        vc = self.potential.circular_velocity(q)
+        vc_flat = self.potential.circular_velocity(q.reshape(self.ndim, -1))
+        assert u.allclose(vc, vc_flat.reshape(vc.shape))
 
     def test_repr(self):
         pot_repr = repr(self.potential)

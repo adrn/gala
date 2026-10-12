@@ -782,6 +782,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             / self.units[u.get_physical_type("time")],
             r.shape,
             conv_unit=self.units[u.get_physical_type("velocity")],
+            transpose=False,
         )
 
     ###########################################################################
