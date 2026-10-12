@@ -362,7 +362,7 @@ class CPotentialBase(PotentialBase):
 
         try:
             menc = self.c_instance.mass_enclosed(q, self.G, t=t)
-        except AttributeError, TypeError:
+        except (AttributeError, TypeError):
             raise ValueError("Potential C instance has no defined "
                              "mass_enclosed function")
 
