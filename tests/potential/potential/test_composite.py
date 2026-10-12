@@ -167,6 +167,24 @@ def test_clear(Cls):
     assert not hasattr(pot, "c_instance")
 
 
+@pytest.mark.parametrize("Cls", [gp.CompositePotential, gp.CCompositePotential])
+def test_hessian_transformed_component(Cls):
+    disk = gp.MiyamotoNagaiPotential(m=1e10, a=3.0, b=0.3, units=galactic)
+    x0 = np.array([1.0, 2.0, 3.0])
+    q = np.array([8.0, 1.0, 0.5])
+
+    # A shifted component's hessian needs no correction
+    pot = Cls(disk=disk.replicate(origin=x0))
+    assert u.allclose(pot.hessian(q), disk.hessian(q - x0))
+
+    # A rotated component's hessian is not supported
+    c, s = np.cos(0.5), np.sin(0.5)
+    R = np.array([[1.0, 0.0, 0.0], [0.0, c, -s], [0.0, s, c]])
+    pot["tilted"] = disk.replicate(R=R)
+    with pytest.raises(NotImplementedError):
+        pot.hessian(q)
+
+
 class MyPotential(gp.PotentialBase):
     m = PotentialParameter("m", physical_type="mass")
     x0 = PotentialParameter("x0", physical_type="length", ndim=1)

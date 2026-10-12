@@ -34,6 +34,10 @@ Bug fixes
   ``popitem()``, ``clear()``) now updates the composite. Previously, a
   ``CCompositePotential`` kept using the removed components for orbit integration.
 
+- ``hessian()`` now raises ``NotImplementedError`` for a composite potential with a
+  rotated component, instead of returning an incorrect result. It also works for a
+  ``TimeInterpolatedPotential`` whose time-varying ``R`` is always the identity.
+
 API changes
 -----------
 

@@ -220,6 +220,9 @@ def test_rotation_interpolation():
     atol = 1e-10 * np.abs(grad_ref).max()
     assert u.allclose(pot.gradient(pos, t=t), grad_ref, rtol=1e-3, atol=atol)
 
+    with pytest.raises(NotImplementedError):
+        pot.hessian(pos, t=t)
+
 
 def test_bounds_checking():
     """Test that evaluation outside time bounds returns NaN."""
@@ -277,6 +280,17 @@ def test_hessian_basic_functionality(test_positions, potentials):
     # Should return finite values (though coordinate transformation may introduce small errors)
     # For now, we just test that it doesn't crash and returns something reasonable
     assert not np.all(np.isnan(hess.value))
+
+    # A time-varying R that is always the identity is not a rotation
+    pot = gp.TimeInterpolatedPotential(
+        potential_cls=gp.HernquistPotential,
+        time_knots=np.array([0.0, 50.0, 100.0]) * u.Myr,
+        m=1e12 * u.Msun,
+        c=10.0 * u.kpc,
+        R=np.stack([np.eye(3)] * 3),
+        units=galactic,
+    )
+    assert u.allclose(pot.hessian(pos, t=25 * u.Myr), potentials["base"].hessian(pos))
 
 
 def test_different_interpolation_types():
