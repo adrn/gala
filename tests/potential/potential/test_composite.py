@@ -170,12 +170,18 @@ def test_clear(Cls):
 @pytest.mark.parametrize("Cls", [gp.CompositePotential, gp.CCompositePotential])
 def test_hessian_transformed_component(Cls):
     disk = gp.MiyamotoNagaiPotential(m=1e10, a=3.0, b=0.3, units=galactic)
+    halo = gp.HernquistPotential(m=1e11, c=2.0, units=galactic)
     x0 = np.array([1.0, 2.0, 3.0])
+    x1 = np.array([-1.0, 0.5, 0.0])
     q = np.array([8.0, 1.0, 0.5])
 
     # A shifted component's hessian needs no correction
-    pot = Cls(disk=disk.replicate(origin=x0))
-    assert u.allclose(pot.hessian(q), disk.hessian(q - x0))
+    pot = Cls(disk=disk.replicate(origin=x0), halo=halo.replicate(origin=x1))
+    expected = disk.hessian(q - x0) + halo.hessian(q - x1)
+    assert u.allclose(pot.hessian(q), expected)
+    if Cls is gp.CCompositePotential:
+        hess = pot.c_instance.hessian(np.ascontiguousarray(q[None]), t=np.array([0.0]))
+        assert np.allclose(np.moveaxis(hess, 0, -1), expected.value)
 
     # A rotated component's hessian is not supported
     c, s = np.cos(0.5), np.sin(0.5)
