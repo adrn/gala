@@ -36,7 +36,7 @@ class PotentialTestBase:
     num_dx = None
     num_max_x = None
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def rng(self):
         return np.random.default_rng(42)
 
