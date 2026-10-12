@@ -11,6 +11,9 @@ Bug fixes
   (``t`` an array), which used the wrong coordinates whenever more than one position
   was passed.
 
+- Fixed the gradient of a rotated ``TimeInterpolatedPotential`` evaluated at more than
+  one position.
+
 API changes
 -----------
 

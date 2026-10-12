@@ -202,21 +202,23 @@ def test_rotation_interpolation():
         interpolation_method="linear",  # Only 2 knots, so must use linear
     )
 
-    # Test position along x-axis
-    pos = np.array([1.0, 0.0, 0.0])
+    pos = np.array([[1.0, 0.0, 0.0], [0.5, 2.0, -1.0], [-3.0, 1.0, 0.5]]).T
+    pot_ref = gp.KeplerPotential(m=1e10 * u.Msun, units=galactic)
 
     # At t=0, should behave like no rotation
-    E_start = pot.energy(pos, t=0 * u.Myr)
-    pot_ref = gp.KeplerPotential(m=1e10 * u.Msun, units=galactic)
-    E_ref_start = pot_ref.energy(pos)
-    assert u.allclose(E_start, E_ref_start, rtol=1e-10)
+    t = 0 * u.Myr
+    assert u.allclose(pot.energy(pos, t=t), pot_ref.energy(pos), rtol=1e-10)
+    assert u.allclose(pot.gradient(pos, t=t), pot_ref.gradient(pos), rtol=1e-10)
 
-    # At t=100, should behave like 90-degree rotation
-    # x-axis position should now be equivalent to y-axis in potential frame
-    E_end = pot.energy(pos, t=100 * u.Myr)
-    pos_rotated = np.array([0.0, 1.0, 0.0])
-    E_ref_end = pot_ref.energy(pos_rotated)
-    assert u.allclose(E_end, E_ref_end, rtol=1e-3)
+    # At t=100, should behave like the 90-degree rotation R_end
+    t = 100 * u.Myr
+    R_end = rotations[-1]
+    E_ref = pot_ref.energy(R_end @ pos)
+    grad_ref = R_end.T @ pot_ref.gradient(R_end @ pos)
+    assert u.allclose(pot.energy(pos, t=t), E_ref, rtol=1e-3)
+    # Entries of grad_ref that are exactly zero come out as roundoff after the rotation
+    atol = 1e-10 * np.abs(grad_ref).max()
+    assert u.allclose(pot.gradient(pos, t=t), grad_ref, rtol=1e-3, atol=atol)
 
 
 def test_bounds_checking():

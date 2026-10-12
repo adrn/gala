@@ -186,18 +186,19 @@ void time_interp_gradient(double t, double *pars, double *q, int n_dim, size_t N
 
     // Transform gradient back: For each orbit, apply R^T to the gradient
     // grad_out = R^T @ grad_transformed
+    // grad and grad_transformed have shape [n_dim, N]
     for (size_t orbit_idx = 0; orbit_idx < N; orbit_idx++) {
         double temp_grad[3];  // Temporary for one orbit's gradient
         for (int i = 0; i < n_dim; i++) {
             temp_grad[i] = 0.0;
             for (int j = 0; j < n_dim; j++) {
                 // R^T[i,j] = R[j,i], so we use interp_rotation[j*n_dim + i]
-                temp_grad[i] += interp_rotation[j*n_dim + i] * grad_transformed[orbit_idx*n_dim + j];
+                temp_grad[i] += interp_rotation[j*n_dim + i] * grad_transformed[j*N + orbit_idx];
             }
         }
         // Accumulate back (not overwrite, so other components in a composite are preserved)
         for (int i = 0; i < n_dim; i++) {
-            grad[orbit_idx*n_dim + i] += temp_grad[i];
+            grad[i*N + orbit_idx] += temp_grad[i];
         }
     }
 
