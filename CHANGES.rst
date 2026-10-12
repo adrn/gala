@@ -23,6 +23,9 @@ Bug fixes
 - Fixed ``circular_velocity()`` for position arrays with more than one batch dimension
   (e.g., shape ``(3, N, M)``), which returned scrambled values.
 
+- Fixed ``HarmonicOscillatorPotential.hessian()``, which returned ``omega`` instead of
+  ``omega**2`` on the diagonal.
+
 API changes
 -----------
 
