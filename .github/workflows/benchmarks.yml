@@ -93,7 +93,7 @@ jobs:
           uv sync --locked --python 3.12 --no-default-groups --group test
 
       - name: Run the benchmarks
-        uses: CodSpeedHQ/action@v5.2.1
+        uses: CodSpeedHQ/action@v5.4.2
         env:
           OMP_NUM_THREADS: 1
         with:
