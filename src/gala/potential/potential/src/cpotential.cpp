@@ -288,15 +288,11 @@ void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
 
 
 void c_hessian(CPotential *p, double t, double *qp, double *hess) {
-    int i;
+    int i, j;
     double qp_trans[p->n_dim];
 
     for (i=0; i < pow(p->n_dim,2); i++) {
         hess[i] = 0.;
-
-        if (i < p->n_dim) {
-            qp_trans[i] = 0.;
-        }
     }
 
     for (i=0; i < p->n_components; i++) {
@@ -304,6 +300,8 @@ void c_hessian(CPotential *p, double t, double *qp, double *hess) {
             (p->hessian)[i](t, (p->parameters)[i], &qp[0], p->n_dim, hess, (p->state)[i]);
             continue;
         } else {
+            for (j=0; j < p->n_dim; j++)
+                qp_trans[j] = 0.;
             apply_shift_rotate(qp, (p->q0)[i], (p->R)[i], p->n_dim, 0, &qp_trans[0]);
             (p->hessian)[i](t, (p->parameters)[i], &qp_trans[0], p->n_dim, hess, (p->state)[i]);
             // TODO: here - need to apply inverse rotation to the Hessian!

@@ -36,7 +36,7 @@ class PotentialTestBase:
     num_dx = None
     num_max_x = None
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def rng(self):
         return np.random.default_rng(42)
 
@@ -100,13 +100,14 @@ class PotentialTestBase:
             v = self.potential.energy(arr[: self.ndim])
             assert v.shape == shp
 
-            self.potential.energy(arr[: self.ndim], t=0.1)
+            expected = self.potential.energy(arr[: self.ndim], t=0.1)
             self.potential.energy(
                 arr[: self.ndim], t=0.1 * self.potential.units["time"]
             )
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
-            self.potential.energy(arr[: self.ndim], t=t)
+            v = self.potential.energy(arr[: self.ndim], t=t)
+            assert u.allclose(v, expected)
             self.potential.energy(arr[: self.ndim], t=t * self.potential.units["time"])
 
         if self.check_finite_at_origin:
@@ -122,13 +123,14 @@ class PotentialTestBase:
             g = self.potential.gradient(arr[: self.ndim])
             assert g.shape == shp
 
-            g = self.potential.gradient(arr[: self.ndim], t=0.1)
+            expected = self.potential.gradient(arr[: self.ndim], t=0.1)
             g = self.potential.gradient(
                 arr[: self.ndim], t=0.1 * self.potential.units["time"]
             )
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
             g = self.potential.gradient(arr[: self.ndim], t=t)
+            assert u.allclose(g, expected)
             g = self.potential.gradient(
                 arr[: self.ndim], t=t * self.potential.units["time"]
             )
@@ -137,17 +139,21 @@ class PotentialTestBase:
         if self.skip_hessian:
             pytest.skip("Hessian not implemented for this potential")
 
+        hess_w0 = self.potential.hessian(self.w0[: self.ndim])
         for arr, shp in zip(self.w0s, self._hess_return_shapes):
             g = self.potential.hessian(arr[: self.ndim])
             assert g.shape == shp
+            # Every position in arr is a copy of w0
+            assert u.allclose(g.reshape(*hess_w0.shape[:2], -1), hess_w0)
 
-            g = self.potential.hessian(arr[: self.ndim], t=0.1)
+            expected = self.potential.hessian(arr[: self.ndim], t=0.1)
             g = self.potential.hessian(
                 arr[: self.ndim], t=0.1 * self.potential.units["time"]
             )
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
             g = self.potential.hessian(arr[: self.ndim], t=t)
+            assert u.allclose(g, expected)
             g = self.potential.hessian(
                 arr[: self.ndim], t=t * self.potential.units["time"]
             )
@@ -158,33 +164,45 @@ class PotentialTestBase:
             assert g.shape == shp
             assert np.all(g > 0.0)
 
-            g = self.potential.mass_enclosed(arr[: self.ndim], t=0.1)
+            expected = self.potential.mass_enclosed(arr[: self.ndim], t=0.1)
             g = self.potential.mass_enclosed(
                 arr[: self.ndim], t=0.1 * self.potential.units["time"]
             )
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
             g = self.potential.mass_enclosed(arr[: self.ndim], t=t)
+            assert u.allclose(g, expected)
             g = self.potential.mass_enclosed(
                 arr[: self.ndim], t=t * self.potential.units["time"]
             )
 
-    def test_circular_velocity(self):
+    def test_circular_velocity(self, rng):
         for arr, shp in zip(self.w0s, self._valu_return_shapes):
             g = self.potential.circular_velocity(arr[: self.ndim])
             assert g.shape == shp
             np.testing.assert_array_less(0.0, g)
 
-            g = self.potential.circular_velocity(arr[: self.ndim], t=0.1)
+            expected = self.potential.circular_velocity(arr[: self.ndim], t=0.1)
             g = self.potential.circular_velocity(
                 arr[: self.ndim], t=0.1 * self.potential.units["time"]
             )
 
             t = np.zeros(np.array(arr).shape[1:]) + 0.1
             g = self.potential.circular_velocity(arr[: self.ndim], t=t)
+            assert u.allclose(g, expected)
             g = self.potential.circular_velocity(
                 arr[: self.ndim], t=t * self.potential.units["time"]
             )
+
+        # The arrays above repeat one position, so also check distinct positions
+        # with a 2-D batch shape against the same positions flattened
+        scale = np.linalg.norm(self.w0[: self.ndim])
+        q = self.w0[: self.ndim, None, None] + 0.1 * scale * rng.normal(
+            size=(self.ndim, 3, 4)
+        )
+        vc = self.potential.circular_velocity(q)
+        vc_flat = self.potential.circular_velocity(q.reshape(self.ndim, -1))
+        assert u.allclose(vc, vc_flat.reshape(vc.shape))
 
     def test_repr(self):
         pot_repr = repr(self.potential)

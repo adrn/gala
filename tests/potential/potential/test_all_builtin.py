@@ -30,7 +30,7 @@ this_path = Path(__file__).parent
 
 
 class TestHarmonicOscillator1D(PotentialTestBase):
-    potential = p.HarmonicOscillatorPotential(omega=[1.0])
+    potential = p.HarmonicOscillatorPotential(omega=[2.0])
     w0 = [1.0, 0.1]
     sympy_density = False
     check_finite_at_origin = False

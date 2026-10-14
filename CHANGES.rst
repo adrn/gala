@@ -7,8 +7,44 @@ New Features
 Bug fixes
 ---------
 
+- Fixed potential and Hamiltonian gradients evaluated with one time per position
+  (``t`` an array), which used the wrong coordinates whenever more than one position
+  was passed.
+
+- Fixed the gradient of a rotated ``TimeInterpolatedPotential`` evaluated at more than
+  one position.
+
+- Fixed the gradient of ``ConstantRotatingFrame`` with a scalar ``Omega`` (2D), which
+  read past the end of its array.
+
+- Fixed the energy of ``ConstantRotatingFrame`` with a scalar ``Omega`` (2D), which was
+  not the Hamiltonian being integrated, so it was not conserved along orbits.
+
+- Fixed ``circular_velocity()`` for position arrays with more than one batch dimension
+  (e.g., shape ``(3, N, M)``), which returned scrambled values.
+
+- Fixed ``HarmonicOscillatorPotential.hessian()``, which returned ``omega`` instead of
+  ``omega**2`` on the diagonal.
+
+- Fixed ``hessian()`` of ``HarmonicOscillatorPotential`` and of potentials created with
+  ``from_equation()`` when evaluated at more than one position, including inside a
+  ``CompositePotential`` with C components.
+
+- Removing components from a ``CompositePotential`` (``del``, ``pop()``,
+  ``popitem()``, ``clear()``) now updates the composite. Previously, a
+  ``CCompositePotential`` kept using the removed components for orbit integration.
+
+- ``hessian()`` now raises ``NotImplementedError`` for a composite potential with a
+  rotated component, instead of returning an incorrect result. It also works for a
+  ``TimeInterpolatedPotential`` whose time-varying ``R`` is always the identity.
+
 API changes
 -----------
+
+- Removing a component from a locked ``CompositePotential`` now raises a
+  ``ValueError``, consistent with the documented meaning of ``lock``. Adding a non-C
+  potential to a ``CCompositePotential`` now raises a ``TypeError`` before the
+  component is inserted.
 
 Other
 -----

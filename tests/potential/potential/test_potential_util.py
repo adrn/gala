@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 from potential_helpers import PotentialTestBase
 
@@ -40,6 +41,16 @@ if HAS_SYMPY:
         @pytest.mark.skip(reason="to_sympy() not implemented")
         def test_against_sympy(self):
             pass
+
+    def test_hessian_many_points():
+        Potential = from_equation(
+            "a*x**2*y + y**3", vars=["x", "y"], pars="a", hessian=True
+        )
+        pot = Potential(a=1.0)
+
+        x, y = np.random.default_rng(42).normal(size=(2, 5))
+        hess = pot.hessian(np.array([x, y]))
+        assert np.allclose(hess.value, [[2 * y, 2 * x], [2 * x, 6 * y]])
 
 
 # class TestHarmonicOscillatorFromEquationUnits(EquationBase):

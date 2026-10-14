@@ -165,3 +165,17 @@ def test_replicate():
     assert np.isclose(p2.parameters["m"].value, 2e10)
     assert np.isclose(p2.parameters["x0"].value, p1.parameters["x0"].value)
     assert p2.parameters["n"] == p1.parameters["n"]
+
+
+@pytest.mark.parametrize("Error", [AttributeError, TypeError])
+def test_c_mass_enclosed_error(monkeypatch, Error):
+    from gala.potential import HernquistPotential
+
+    class BrokenCInstance:
+        def mass_enclosed(self, *args, **kwargs):
+            raise Error
+
+    pot = HernquistPotential(m=1e11 * u.Msun, c=5 * u.kpc, units=usys)
+    monkeypatch.setattr(pot, "c_instance", BrokenCInstance())
+    with pytest.raises(ValueError, match="mass_enclosed"):
+        pot.mass_enclosed([8.0, 0.0, 0.0] * u.kpc)

@@ -235,6 +235,12 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
     ###########################################################################
     # Utility methods
     #
+    def _is_rotated(self):
+        # R is a stack of matrices for a time-dependent rotation
+        return self.R is not None and not np.allclose(
+            self.R, np.eye(self.ndim), atol=1e-15, rtol=0
+        )
+
     def _remove_units(self, x):
         """
         Always returns an array. If a Quantity is passed in, it converts to the
@@ -583,14 +589,13 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
         ------
         NotImplementedError
             If the potential does not have an implemented Hessian function,
-            or if the potential is rotated (``R`` is not the identity).
+            or if the potential (or any component of a composite potential) is
+            rotated (``R`` is not the identity).
         """
-        if self.R is not None and not np.allclose(
-            np.diag(self.R), 1.0, atol=1e-15, rtol=0
-        ):
+        if self._is_rotated():
             raise NotImplementedError(
-                "Computing Hessian matrices for rotated "
-                "potentials is currently not supported."
+                "Computing Hessian matrices for rotated potentials, or composite "
+                "potentials with rotated components, is currently not supported."
             )
         q = self._process_position_argument(q, coord_kwargs)
         orig_shape, q = self._get_c_valid_arr(q)
@@ -782,6 +787,7 @@ class PotentialBase(CommonBase, metaclass=abc.ABCMeta):
             / self.units[u.get_physical_type("time")],
             r.shape,
             conv_unit=self.units[u.get_physical_type("velocity")],
+            transpose=False,
         )
 
     ###########################################################################
@@ -1352,6 +1358,43 @@ class CompositePotential(PotentialBase, OrderedDict):
         self._check_component(value)
         super().__setitem__(key, value)
         self._update_symmetry()
+
+    # OrderedDict's pop, popitem, and clear bypass __delitem__, so each removal
+    # path is overridden separately
+    def __delitem__(self, key):
+        self._check_removal()
+        super().__delitem__(key)
+        self._components_removed()
+
+    def pop(self, *args, **kwargs):
+        self._check_removal()
+        value = super().pop(*args, **kwargs)
+        self._components_removed()
+        return value
+
+    def popitem(self, last=True):
+        self._check_removal()
+        item = super().popitem(last=last)
+        self._components_removed()
+        return item
+
+    def clear(self):
+        self._check_removal()
+        super().clear()
+        self._components_removed()
+
+    def _check_removal(self):
+        if self.lock:
+            raise ValueError(
+                "Potential object is locked - components can only be removed "
+                "from unlocked potentials."
+            )
+
+    def _components_removed(self):
+        self._update_symmetry()
+
+    def _is_rotated(self):
+        return any(p._is_rotated() for p in self.values())
 
     def _check_component(self, p):
         if not isinstance(p, PotentialBase):

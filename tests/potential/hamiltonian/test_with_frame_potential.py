@@ -8,6 +8,7 @@ from gala.integrate import DOPRI853Integrator
 from gala.potential import (
     ConstantRotatingFrame,
     Hamiltonian,
+    HarmonicOscillatorPotential,
     HernquistPotential,
     KeplerPotential,
     NFWPotential,
@@ -225,3 +226,24 @@ def test_velocity_rot_frame(name, Omega, tol):
 
     assert u.allclose(orbit_r.xyz, orbit_i2r.xyz, atol=tol)
     assert u.allclose(orbit_r.v_xyz, orbit_i2r.v_xyz, atol=tol)
+
+
+def test_rotating_frame_2d():
+    """A 2-D rotating frame matches a 3-D frame rotating about z, in the plane"""
+    Omega = 0.7
+    H2 = Hamiltonian(
+        HarmonicOscillatorPotential(omega=[1.0, 1.3]),
+        ConstantRotatingFrame(Omega=Omega, units=dimensionless),
+    )
+    H3 = Hamiltonian(
+        HarmonicOscillatorPotential(omega=[1.0, 1.3, 1.7]),
+        ConstantRotatingFrame(Omega=[0, 0, Omega], units=dimensionless),
+    )
+
+    x, y, px, py = np.random.default_rng(42).normal(size=(4, 5))
+    z = np.zeros_like(x)
+    w2 = np.array([x, y, px, py])
+    w3 = np.array([x, y, z, px, py, z])
+
+    assert np.allclose(H2.gradient(w2), H3.gradient(w3)[[0, 1, 3, 4]])
+    assert u.allclose(H2.energy(w2), H3.energy(w3))

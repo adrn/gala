@@ -105,19 +105,90 @@ def test_failures():
     with pytest.raises(ValueError):
         p["jnsdfn"] = gp.HenonHeilesPotential(units=solarsystem)
 
+    # C composites only accept C potentials
+    ho = gp.HarmonicOscillatorPotential(omega=[1.0, 1.0, 1.0] / u.yr, units=solarsystem)
+    with pytest.raises(TypeError):
+        p["ho"] = ho
+    assert list(p.keys()) == ["derp"]
 
-def test_lock():
-    p = gp.CompositePotential()
+
+@pytest.mark.parametrize("Cls", [gp.CompositePotential, gp.CCompositePotential])
+def test_lock(Cls):
+    p = Cls()
     p["derp"] = gp.KeplerPotential(m=1.0 * u.Msun, units=solarsystem)
     p.lock = True
     with pytest.raises(ValueError):  # try adding potential after lock
         p["herp"] = gp.KeplerPotential(m=2.0 * u.Msun, units=solarsystem)
 
-    p = gp.CCompositePotential()
-    p["derp"] = gp.KeplerPotential(m=1.0 * u.Msun, units=solarsystem)
-    p.lock = True
-    with pytest.raises(ValueError):  # try adding potential after lock
-        p["herp"] = gp.KeplerPotential(m=2.0 * u.Msun, units=solarsystem)
+    # try removing potentials after lock
+    with pytest.raises(ValueError):
+        del p["derp"]
+    with pytest.raises(ValueError):
+        p.pop("derp")
+    with pytest.raises(ValueError):
+        p.popitem()
+    with pytest.raises(ValueError):
+        p.clear()
+    assert list(p.keys()) == ["derp"]
+
+
+def _halo_disk(Cls):
+    pot = Cls()
+    pot["halo"] = gp.HernquistPotential(m=1e11, c=5.0, units=galactic)
+    pot["disk"] = gp.MiyamotoNagaiPotential(m=1e10, a=3.0, b=0.3, units=galactic)
+    return pot
+
+
+@pytest.mark.parametrize("Cls", [gp.CompositePotential, gp.CCompositePotential])
+@pytest.mark.parametrize("how", ["del", "pop", "popitem"])
+def test_remove_component(Cls, how):
+    pot = _halo_disk(Cls)
+    if how == "del":
+        del pot["disk"]
+    elif how == "pop":
+        pot.pop("disk", default=None)
+    elif how == "popitem":
+        pot.popitem()
+
+    expected = Cls(halo=pot["halo"])
+    assert type(pot._symmetry) is type(expected._symmetry)
+
+    # The C potential's mass_enclosed uses the C instance
+    q = [8.0, 1.0, 0.5] * u.kpc
+    assert u.allclose(pot.mass_enclosed(q), expected.mass_enclosed(q))
+
+
+@pytest.mark.parametrize("Cls", [gp.CompositePotential, gp.CCompositePotential])
+def test_clear(Cls):
+    pot = _halo_disk(Cls)
+    pot.clear()
+    assert len(pot) == 0
+    assert pot._symmetry is None
+    assert not hasattr(pot, "c_instance")
+
+
+@pytest.mark.parametrize("Cls", [gp.CompositePotential, gp.CCompositePotential])
+def test_hessian_transformed_component(Cls):
+    disk = gp.MiyamotoNagaiPotential(m=1e10, a=3.0, b=0.3, units=galactic)
+    halo = gp.HernquistPotential(m=1e11, c=2.0, units=galactic)
+    x0 = np.array([1.0, 2.0, 3.0])
+    x1 = np.array([-1.0, 0.5, 0.0])
+    q = np.array([8.0, 1.0, 0.5])
+
+    # A shifted component's hessian needs no correction
+    pot = Cls(disk=disk.replicate(origin=x0), halo=halo.replicate(origin=x1))
+    expected = disk.hessian(q - x0) + halo.hessian(q - x1)
+    assert u.allclose(pot.hessian(q), expected)
+    if Cls is gp.CCompositePotential:
+        hess = pot.c_instance.hessian(np.ascontiguousarray(q[None]), t=np.array([0.0]))
+        assert np.allclose(np.moveaxis(hess, 0, -1), expected.value)
+
+    # A rotated component's hessian is not supported
+    c, s = np.cos(0.5), np.sin(0.5)
+    R = np.array([[1.0, 0.0, 0.0], [0.0, c, -s], [0.0, s, c]])
+    pot["tilted"] = disk.replicate(R=R)
+    with pytest.raises(NotImplementedError):
+        pot.hessian(q)
 
 
 class MyPotential(gp.PotentialBase):

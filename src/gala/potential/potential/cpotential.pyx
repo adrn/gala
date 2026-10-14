@@ -147,17 +147,28 @@ cdef class CPotentialWrapper:
         t: shape (n,) or (1,)
         returns: shape (ndim, n)
         """
-        cdef int n, ndim, i
+        cdef int n, ndim, i, j
         ndim, n = _validate_pos_arr(q)
 
         cdef double[:, ::1] grad = np.zeros((ndim, n))
+        # 6 is the most components the kernels' double6ptr can address
+        cdef double q_i[6]
+        cdef double grad_i[6]
 
         if len(t) == 1:
             c_gradient(self.cpotential, n, t[0], &q[0, 0], &grad[0, 0])
         else:
             # TODO: optimize the multi-time case (probably not relevant for orbit integrations)
+            # The kernels stride components by N, so each particle is copied to a
+            # contiguous buffer and evaluated with N=1.
+            if ndim > 6:
+                raise ValueError(f"Expected at most 6 dimensions, got {ndim}")
             for i in range(n):
-                c_gradient(self.cpotential, 1, t[i], &q[0, i], &grad[0, i])
+                for j in range(ndim):
+                    q_i[j] = q[j, i]
+                c_gradient(self.cpotential, 1, t[i], &q_i[0], &grad_i[0])
+                for j in range(ndim):
+                    grad[j, i] = grad_i[j]
 
         return np.array(grad, copy=False)
 
@@ -351,7 +362,7 @@ class CPotentialBase(PotentialBase):
 
         try:
             menc = self.c_instance.mass_enclosed(q, self.G, t=t)
-        except AttributeError, TypeError:
+        except (AttributeError, TypeError):
             raise ValueError("Potential C instance has no defined "
                              "mass_enclosed function")
 

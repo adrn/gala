@@ -84,9 +84,25 @@ class CCompositePotential(CompositePotential, CPotentialBase):
         if len(self._potential_list) > 0:
             self.G = p.G
             self.c_instance = CCompositePotentialWrapper(self._potential_list)
+        else:
+            # Match a newly created empty composite, which has no C instance
+            self.__dict__.pop("c_instance", None)
 
     def __setitem__(self, *args, **kwargs):
         CompositePotential.__setitem__(self, *args, **kwargs)
+        self._reset_c_instance()
+
+    def _check_component(self, p):
+        CompositePotential._check_component(self, p)
+        if not isinstance(p, CPotentialBase):
+            raise TypeError(
+                "CCompositePotential components must be C potentials, not "
+                f"{type(p).__name__}. Use CompositePotential to combine Python "
+                "potentials."
+            )
+
+    def _components_removed(self):
+        CompositePotential._components_removed(self)
         self._reset_c_instance()
 
     def __setstate__(self, state):

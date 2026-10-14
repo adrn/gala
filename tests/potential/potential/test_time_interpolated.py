@@ -202,21 +202,26 @@ def test_rotation_interpolation():
         interpolation_method="linear",  # Only 2 knots, so must use linear
     )
 
-    # Test position along x-axis
-    pos = np.array([1.0, 0.0, 0.0])
+    pos = np.array([[1.0, 0.0, 0.0], [0.5, 2.0, -1.0], [-3.0, 1.0, 0.5]]).T
+    pot_ref = gp.KeplerPotential(m=1e10 * u.Msun, units=galactic)
 
     # At t=0, should behave like no rotation
-    E_start = pot.energy(pos, t=0 * u.Myr)
-    pot_ref = gp.KeplerPotential(m=1e10 * u.Msun, units=galactic)
-    E_ref_start = pot_ref.energy(pos)
-    assert u.allclose(E_start, E_ref_start, rtol=1e-10)
+    t = 0 * u.Myr
+    assert u.allclose(pot.energy(pos, t=t), pot_ref.energy(pos), rtol=1e-10)
+    assert u.allclose(pot.gradient(pos, t=t), pot_ref.gradient(pos), rtol=1e-10)
 
-    # At t=100, should behave like 90-degree rotation
-    # x-axis position should now be equivalent to y-axis in potential frame
-    E_end = pot.energy(pos, t=100 * u.Myr)
-    pos_rotated = np.array([0.0, 1.0, 0.0])
-    E_ref_end = pot_ref.energy(pos_rotated)
-    assert u.allclose(E_end, E_ref_end, rtol=1e-3)
+    # At t=100, should behave like the 90-degree rotation R_end
+    t = 100 * u.Myr
+    R_end = rotations[-1]
+    E_ref = pot_ref.energy(R_end @ pos)
+    grad_ref = R_end.T @ pot_ref.gradient(R_end @ pos)
+    assert u.allclose(pot.energy(pos, t=t), E_ref, rtol=1e-3)
+    # Entries of grad_ref that are exactly zero come out as roundoff after the rotation
+    atol = 1e-10 * np.abs(grad_ref).max()
+    assert u.allclose(pot.gradient(pos, t=t), grad_ref, rtol=1e-3, atol=atol)
+
+    with pytest.raises(NotImplementedError):
+        pot.hessian(pos, t=t)
 
 
 def test_bounds_checking():
@@ -275,6 +280,26 @@ def test_hessian_basic_functionality(test_positions, potentials):
     # Should return finite values (though coordinate transformation may introduce small errors)
     # For now, we just test that it doesn't crash and returns something reasonable
     assert not np.all(np.isnan(hess.value))
+
+    # A time-varying R that is always the identity is not a rotation
+    pot = gp.TimeInterpolatedPotential(
+        potential_cls=gp.HernquistPotential,
+        time_knots=np.array([0.0, 50.0, 100.0]) * u.Myr,
+        m=1e12 * u.Msun,
+        c=10.0 * u.kpc,
+        R=np.stack([np.eye(3)] * 3),
+        units=galactic,
+    )
+    assert u.allclose(pot.hessian(pos, t=25 * u.Myr), potentials["base"].hessian(pos))
+
+    # Inside a C composite, the hessian adds to the other components' hessians
+    comp = gp.CCompositePotential(
+        base=potentials["base"], constant=potentials["constant"]
+    )
+    hess = comp.c_instance.hessian(np.ascontiguousarray(pos[None]), t=np.array([25.0]))
+    assert np.allclose(
+        np.moveaxis(hess, 0, -1), 2 * potentials["base"].hessian(pos).value
+    )
 
 
 def test_different_interpolation_types():
