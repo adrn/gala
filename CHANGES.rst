@@ -4,8 +4,8 @@
 New Features
 ------------
 
-- Added ``find_actions_staeckel_fudge()``, a native (C++) implementation of the Staeckel Fudge
-  for computing actions, angles, and frequencies in axisymmetric potentials.
+- Added ``find_actions_staeckel_fudge()``, a native (C++) implementation of the Staeckel
+  Fudge for computing actions, angles, and frequencies in axisymmetric potentials.
 
 Bug fixes
 ---------
