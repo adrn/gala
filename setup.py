@@ -235,6 +235,18 @@ def get_all_extensions():
     )
     extensions.append(Extension("gala.dynamics.mockstream.df", **cfg))
 
+    #     actionangle._staeckel
+    cfg = base_cfg()
+    cfg["include_dirs"].append("src/gala/potential")
+    cfg["sources"].extend(
+        [
+            "src/gala/dynamics/actionangle/_staeckel.pyx",
+            "src/gala/dynamics/actionangle/staeckel_fudge.cpp",
+            "src/gala/potential/potential/src/cpotential.cpp",
+        ]
+    )
+    extensions.append(Extension("gala.dynamics.actionangle._staeckel", **cfg))
+
     #     mockstream._mockstream
     cfg = base_cfg()
     cfg["include_dirs"].extend(
@@ -459,9 +471,12 @@ for ext in extensions:
     ext.extra_compile_args.extend(["-Ofast"])
     ext.extra_link_args.extend(["-Ofast"])
 
-    if ("potential.potential" in ext.name or "scf" in ext.name) and (
-        gsl_version is not None
-    ):
+    if "actionangle" in ext.name:
+        # the Staeckel fudge relies on NaN/inf checks, which -Ofast would remove
+        ext.extra_compile_args.append("-fno-finite-math-only")
+
+    gsl_exts = ["potential.potential", "scf", "actionangle"]
+    if any(name in ext.name for name in gsl_exts) and gsl_version is not None:
         if "gsl" not in ext.libraries:
             ext.libraries.append("gsl")
             ext.library_dirs.append(os.path.join(gsl_prefix, "lib"))
