@@ -1344,10 +1344,6 @@ class CylSplinePotential(CPotentialBase):
         grid_Phi_full[:, sizez_orig - 1 :] = grid_Phi
         grid_Phi_full = np.log(-grid_Phi_full) if logScaling else grid_Phi_full
 
-        from scipy.interpolate import RectBivariateSpline
-
-        self.spl = RectBivariateSpline(grid_R_asinh, grid_z_asinh, grid_Phi_full)
-
         # Note: if MultipolePotential parameter order changes, this needs to be updated!
         multipole_pars = np.concatenate(
             [
