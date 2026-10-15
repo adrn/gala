@@ -30,7 +30,8 @@ In Gala, we have implemented the method described in [sanders14]_ -- later in
 [sanders16]_ named the "O2GF" method -- for computing actions and angles from
 numerically integrated orbits. Gala also implements the "Staeckel Fudge" method
 [binney12]_, which is much faster but only useful for axisymmetric or spherical
-potentials.
+potentials. In general, the O2GF method is more accurate, but slower, but we typically
+recommend using the Staeckel Fudge method (see below) for most use cases.
 
 The O2GF action solver
 ======================
