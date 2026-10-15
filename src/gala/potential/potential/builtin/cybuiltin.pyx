@@ -91,7 +91,10 @@ cdef extern from "potential/potential/builtin/multipole.h":
     void mp_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) nogil
     double mp_density(double t, double *pars, double *q, int n_dim, void *state) nogil
 
+    void *axisym_cylspline_state_alloc(double *pars) nogil
+    void axisym_cylspline_state_free(void *state) nogil
     double axisym_cylspline_value(double t, double *pars, double *q, int n_dim, void *state) nogil
+    void axisym_cylspline_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) nogil
     void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state) nogil
     double axisym_cylspline_density(double t, double *pars, double *q, int n_dim, void *state) nogil
 
@@ -389,6 +392,8 @@ cdef class MultipoleWrapper(CPotentialWrapper):
 
 
 cdef class CylSplineWrapper(CPotentialWrapper):
+    # Cached gsl_spline2d, built once from the grids in the parameter array
+    cdef void *spl_state
 
     def __init__(self, G, parameters, q0, R):
         self.init([G] + list(parameters),
@@ -396,10 +401,19 @@ cdef class CylSplineWrapper(CPotentialWrapper):
                   np.ascontiguousarray(R))
 
         if USE_GSL == 1:
+            self.spl_state = axisym_cylspline_state_alloc(&self._params[0])
+            if self.spl_state == NULL:
+                raise RuntimeError("Failed to allocate CylSpline GSL spline")
+            self.cpotential.state[0] = self.spl_state
+
             self.cpotential.value[0] = <energyfunc>(axisym_cylspline_value)
             self.cpotential.gradient[0] = <gradientfunc>(axisym_cylspline_gradient)
             self.cpotential.density[0] = <densityfunc>(axisym_cylspline_density)
-            #self.cpotential.hessian[0] = <hessianfunc>(axisym_cylspline_hessian)
+            self.cpotential.hessian[0] = <hessianfunc>(axisym_cylspline_hessian)
+
+    def __dealloc__(self):
+        if USE_GSL == 1:
+            axisym_cylspline_state_free(self.spl_state)
 
 
 # ============================================================================

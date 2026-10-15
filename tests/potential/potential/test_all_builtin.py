@@ -574,8 +574,6 @@ class TestMultipoleOuter(CompositePotentialTestBase):
 @pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL to run this test")
 class TestCylspline(PotentialTestBase):
     check_finite_at_origin = True
-    skip_hessian = True  # TODO: implement
-    skip_density = True  # TODO: implement
 
     def setup_method(self):
         self.potential = p.CylSplinePotential.from_file(
@@ -584,10 +582,6 @@ class TestCylspline(PotentialTestBase):
         vc = self.potential.circular_velocity([19.0, 0, 0] * u.kpc).decompose(galactic)
         self.w0 = [19.0, 0.2, -0.9, 0.0, vc.value[0], 0.0]
         super().setup_method()
-
-    @pytest.mark.skip(reason="Not implemented for cylspline potentials")
-    def test_density(self):
-        pass
 
     @pytest.mark.skip(reason="Not implemented for cylspline potentials")
     def test_against_sympy(self):

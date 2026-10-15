@@ -36,6 +36,10 @@ Bug fixes
 - Fixed ``circular_velocity()`` for position arrays with more than one batch dimension
   (e.g., shape ``(3, N, M)``), which returned scrambled values.
 
+- ``CylSplinePotential`` is much faster: the 2D spline is now built once instead of on
+  every call. It also now implements ``hessian()`` and ``density()``, which previously
+  returned zeros.
+
 - Fixed ``HarmonicOscillatorPotential.hessian()``, which returned ``omega`` instead of
   ``omega**2`` on the diagonal.
 
