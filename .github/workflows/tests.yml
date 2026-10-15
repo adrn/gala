@@ -79,7 +79,7 @@ jobs:
             python-extras: "shared"
 
           - name: With optional dependencies
-            os: ubuntu-latest # note: galpy install failed on macos here
+            os: ubuntu-latest
             python-version: "3.13"
             astropy-version: "latest"
             numpy-version: "latest"

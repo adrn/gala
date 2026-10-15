@@ -35,9 +35,7 @@ shared = [
     "tqdm",
 ]
 extra = [
-    "galpy",
     "sympy",
-    "twobody"
 ]
 
 [dependency-groups]
@@ -48,6 +46,7 @@ test = [
     "pytest-codspeed",
     "pytest-xdist",
     "findiff",
+    "galpy",
 ]
 docs = [
     "gala[shared,extra]",

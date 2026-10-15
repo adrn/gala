@@ -195,6 +195,5 @@ Optional
 - `Sympy`_ for creating :class:`~gala.potential.potential.PotentialBase`
   subclass instances from a mathematical expression using
   :func:`~gala.potential.potential.from_equation()`.
-- ``galpy``
 - ``h5py``
 - ``matplotlib``

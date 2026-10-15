@@ -823,9 +823,7 @@ dependencies = [
 
 [package.optional-dependencies]
 extra = [
-    { name = "galpy" },
     { name = "sympy" },
-    { name = "twobody" },
 ]
 shared = [
     { name = "h5py" },
@@ -839,6 +837,7 @@ dev = [
     { name = "astroquery" },
     { name = "findiff" },
     { name = "gala", extra = ["extra", "shared"] },
+    { name = "galpy" },
     { name = "ipykernel" },
     { name = "ipython" },
     { name = "ipython-genutils" },
@@ -880,6 +879,7 @@ docs = [
 test = [
     { name = "findiff" },
     { name = "gala", extra = ["shared"] },
+    { name = "galpy" },
     { name = "pytest" },
     { name = "pytest-astropy" },
     { name = "pytest-codspeed" },
@@ -901,7 +901,6 @@ tutorials = [
 requires-dist = [
     { name = "astropy", specifier = ">=7.0" },
     { name = "cython", specifier = ">=0.29" },
-    { name = "galpy", marker = "extra == 'extra'" },
     { name = "h5py", marker = "extra == 'shared'" },
     { name = "matplotlib", marker = "extra == 'shared'", specifier = ">=3.10" },
     { name = "numexpr", marker = "extra == 'shared'" },
@@ -910,7 +909,6 @@ requires-dist = [
     { name = "scipy", specifier = ">=1.15" },
     { name = "sympy", marker = "extra == 'extra'" },
     { name = "tqdm", marker = "extra == 'shared'" },
-    { name = "twobody", marker = "extra == 'extra'" },
 ]
 provides-extras = ["shared", "extra"]
 
@@ -920,6 +918,7 @@ dev = [
     { name = "findiff" },
     { name = "gala", extras = ["shared"] },
     { name = "gala", extras = ["shared", "extra"] },
+    { name = "galpy" },
     { name = "ipykernel" },
     { name = "ipython" },
     { name = "ipython-genutils" },
@@ -961,6 +960,7 @@ docs = [
 test = [
     { name = "findiff" },
     { name = "gala", extras = ["shared"] },
+    { name = "galpy" },
     { name = "pytest" },
     { name = "pytest-astropy" },
     { name = "pytest-codspeed" },
@@ -3161,16 +3161,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/2c/2e/a7fbfe268c8a3b325
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ad/66/0d785f0bc5e4315a96c989bb476d0fc07ea4f85132550c7b156ca2035d52/traitlets-5.16.1-py3-none-any.whl", hash = "sha256:f775618166caa0396c8e337099240f2bd3e5e917d203b2e6fbe21a58d3cb1f6b", size = 86211, upload-time = "2026-08-03T08:32:34.48Z" },
 ]
-
-[[package]]
-name = "twobody"
-version = "0.9.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "astropy" },
-    { name = "numpy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ae/89/3dd2c155a05863f927fe07e3f80639404c828fd7bf0d4fa998a155ff6cad/twobody-0.9.1.tar.gz", hash = "sha256:59ab0a2042c3c21b280306b38296a0de40fe6646acd3f67448c44211342f79ef", size = 114705, upload-time = "2024-08-19T03:18:36.418Z" }
 
 [[package]]
 name = "typing-extensions"
