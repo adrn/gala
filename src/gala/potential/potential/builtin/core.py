@@ -1344,6 +1344,13 @@ class CylSplinePotential(CPotentialBase):
         grid_Phi_full[:, sizez_orig - 1 :] = grid_Phi
         grid_Phi_full = np.log(-grid_Phi_full) if logScaling else grid_Phi_full
 
+        # mirror the grid to R<0 so the spline is even in R and dPhi/dR = 0 on the
+        # z axis (otherwise the force has a kink at R=0)
+        if grid_R_asinh[0] == 0:
+            grid_R_asinh = np.concatenate((-grid_R_asinh[:0:-1], grid_R_asinh))
+            grid_Phi_full = np.concatenate((grid_Phi_full[:0:-1], grid_Phi_full))
+            sizeR = len(grid_R_asinh)
+
         # Note: if MultipolePotential parameter order changes, this needs to be updated!
         multipole_pars = np.concatenate(
             [
