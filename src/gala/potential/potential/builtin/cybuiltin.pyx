@@ -117,7 +117,7 @@ __all__ = [
     'LongMuraliBarWrapper',
     'NullWrapper',
     'MultipoleWrapper',
-    'CylSplineWrapper'
+    'CylSplineWrapper',
     'BurkertWrapper'
 ]
 
