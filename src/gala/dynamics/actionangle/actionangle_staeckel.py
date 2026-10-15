@@ -1,6 +1,121 @@
+import astropy.table as at
+import astropy.units as u
 import numpy as np
 
-__all__ = ["get_staeckel_fudge_delta"]
+__all__ = ["find_actions_staeckel_fudge", "get_staeckel_fudge_delta"]
+
+
+def find_actions_staeckel_fudge(potential, w, mean=True, delta=None):
+    """
+    Compute approximate actions, angles, and frequencies using the Staeckel fudge.
+
+    If you use this functionality, please cite: Binney 2012, Sanders 2012, Vasiliev 2019
+
+    The potential must be axisymmetric about the z axis and implemented in C.
+
+    Parameters
+    ----------
+    potential : :class:`~gala.potential.PotentialBase`
+        An axisymmetric, C-implemented potential.
+    w : :class:`~gala.dynamics.PhaseSpacePosition` or :class:`~gala.dynamics.Orbit`
+        Either a set of phase-space positions, or a set of orbits computed in the
+        input potential.
+    mean : bool (optional)
+        If an :class:`~gala.dynamics.Orbit` is passed in, take the mean over the
+        actions and frequencies, and return the angles at the first time step.
+    delta : quantity-like, array-like (optional)
+        The focal length parameter, Δ, of the prolate spheroidal coordinate system.
+        It may be a scalar, or have one value per orbit or per phase-space
+        position. If not provided, this is estimated with
+        :func:`get_staeckel_fudge_delta` (the median along each orbit, if ``w``
+        is an Orbit). Non-positive or non-finite values use a near-spherical
+        coordinate system.
+
+    Returns
+    -------
+    aaf : :class:`~astropy.table.QTable`
+        A table with columns ``actions`` (J_R, J_φ, J_z), ``angles`` (θ_R, θ_φ,
+        θ_z), and ``freqs`` (Ω_R, Ω_φ, Ω_z), with one row per phase-space position
+        or orbit. Unbound points have NaN for all values except J_φ.
+
+    References
+    ----------
+    * Binney, J. 2012, MNRAS, 426, 1324
+    * Sanders, J. L. 2012, MNRAS, 426, 128
+    * Vasiliev, E. 2019, MNRAS, 482, 1525
+    """
+    from gala._cconfig import GSL_ENABLED
+    from gala.dynamics import Orbit
+
+    if not GSL_ENABLED:
+        msg = "find_actions_staeckel_fudge requires gala to be built with GSL support."
+        raise RuntimeError(msg)
+
+    if not hasattr(potential, "c_instance"):
+        msg = "find_actions_staeckel_fudge requires a potential implemented in C."
+        raise TypeError(msg)
+
+    from ._staeckel import staeckel_fudge_c
+
+    usys = potential.units
+    if delta is None:
+        delta = get_staeckel_fudge_delta(potential, w)
+    delta = u.Quantity(delta, usys["length"]).value
+
+    xyz = w.xyz.decompose(usys).value
+    vxyz = w.v_xyz.decompose(usys).value
+    is_orbit = isinstance(w, Orbit)
+    if is_orbit and xyz.ndim == 2:  # single orbit: add an orbit axis
+        xyz = xyz[..., None]
+        vxyz = vxyz[..., None]
+    elif xyz.ndim == 1:  # single phase-space position
+        xyz = xyz[:, None]
+        vxyz = vxyz[:, None]
+    shape = xyz.shape[1:]
+    delta = np.broadcast_to(delta, shape)
+
+    # The C code evaluates the potential at (R, 0, z), so check axisymmetry there
+    # TODO: check symmetry instead
+    R = np.sqrt(xyz[0] ** 2 + xyz[1] ** 2)
+    Phi = potential.energy(xyz * usys["length"]).decompose(usys).value
+    Phi_axi = (
+        potential.energy(np.stack((R, np.zeros_like(R), xyz[2])) * usys["length"])
+        .decompose(usys)
+        .value
+    )
+    if not np.allclose(Phi, Phi_axi, rtol=1e-8, atol=0):
+        msg = (
+            "find_actions_staeckel_fudge requires a potential that is axisymmetric "
+            "about z."
+        )
+        raise ValueError(msg)
+
+    ww = np.ascontiguousarray(np.concatenate((xyz, vxyz)).reshape(6, -1).T)
+    out = staeckel_fudge_c(
+        potential, ww, np.ascontiguousarray(delta.reshape(-1), dtype=float)
+    ).reshape(*shape, 9)
+
+    # ORder is R, phi, z for each:
+    actions = out[..., 0:3]
+    angles = out[..., 3:6]
+    freqs = out[..., 6:9]
+    if is_orbit:  # (ntimes, norbits, 3)
+        if mean:
+            actions = np.nanmean(actions, axis=0)
+            freqs = np.nanmean(freqs, axis=0)
+            angles = angles[0]
+        else:
+            actions, angles, freqs = (
+                np.swapaxes(x, 0, 1) for x in (actions, angles, freqs)
+            )
+
+    return at.QTable(
+        {
+            "actions": actions * usys["length"] ** 2 / usys["time"],
+            "angles": angles * u.rad,
+            "freqs": freqs * u.rad / usys["time"],
+        }
+    )
 
 
 def get_staeckel_fudge_delta(potential, w, median=True):

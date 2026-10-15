@@ -28,10 +28,10 @@ approximate transformations between ordinary position and velocity to
 action-angle coordinates -- see [sanders16]_ for a summary of these methods.
 In Gala, we have implemented the method described in [sanders14]_ -- later in
 [sanders16]_ named the "O2GF" method -- for computing actions and angles from
-numerically integrated orbits. Gala also provides an interface to the `galpy
-<https://github.com/jobovy/galpy>`_ implementation of the "Staeckel Fudge"
-method, which is much faster but only useful for axisymmetric or spherical
-potentials.
+numerically integrated orbits. Gala also implements the "Staeckel Fudge" method
+[binney12]_, which is much faster but only useful for axisymmetric or spherical
+potentials. In general, the O2GF method is more accurate, but slower, but we typically
+recommend using the Staeckel Fudge method (see below) for most use cases.
 
 The O2GF action solver
 ======================
@@ -325,17 +325,32 @@ and the same initial conditions as above:
     fig.tight_layout()
 
 
-Using the Staeckel Fudge in Galpy
-=================================
+The Staeckel Fudge
+==================
 
-Gala can transform its ``Orbit`` and ``Potential`` objects into `Galpy <https://github.com/jobovy/galpy>`_ ``Orbit`` and ``Potential`` objects, making it possible to easily use the "Staeckel Fudge" [binney12]_ implementation in Galpy. This method, as
-implemented, is only applicable for axisymmetric systems, but is *much* faster
-than the O2GF method for estimating actions, angles, and frequencies from
-phase-space positions. As an example of this functionality, below we will
-compute the vertical frequency as a function of action for a grid of orbits in a
-two-component model for a galactic potential (a disk + halo model).
+:func:`~gala.dynamics.actionangle.find_actions_staeckel_fudge` computes approximate actions,
+angles, and frequencies in axisymmetric potentials with the "Staeckel Fudge"
+[binney12]_, using the expressions for angles and frequencies from [sanders12]_. See
+also the Staeckel Fudge implementation in `Agama
+<https://github.com/GalacticDynamics-Oxford/Agama>`_ [vasiliev19]_. This method is only
+applicable for axisymmetric systems, but is *much* faster than the O2GF method, and
+works directly on phase-space positions (i.e. no orbit integration is needed). The focal
+length parameter, Δ, of the prolate spheroidal coordinate system can be passed in with
+the ``delta`` argument; otherwise it is estimated with
+:func:`~gala.dynamics.actionangle.get_staeckel_fudge_delta`::
 
-We will start by defining the potential model::
+    >>> from gala.dynamics.actionangle import find_actions_staeckel_fudge
+    >>> mw = gp.MilkyWayPotential()
+    >>> w = gd.PhaseSpacePosition(pos=[8.0, 0, 0.5] * u.kpc,
+    ...                           vel=[30, 220, 40] * u.km / u.s)
+    >>> aaf = find_actions_staeckel_fudge(mw, w)  # doctest: +SKIP
+    >>> aaf["actions"]  # doctest: +SKIP
+
+As a more complete example, below we will compute vertical actions for a set of
+phase-space positions that have a range of initial vertical velocities and are orbiting
+in a two-component model for a galactic potential (a disk + halo model).
+
+We will start by defining the potential model (this is just a simple example)::
 
     >>> halo = gp.NFWPotential.from_M200_c(
     ...     M200=1e12*u.Msun, c=15,
@@ -347,8 +362,8 @@ We will start by defining the potential model::
     ... )
     >>> pot = halo + disk
 
-We next define a grid of orbital initial conditions with close to the circular
-velocity but varying vertical velocities::
+We next define a grid of orbital initial conditions with close to the circular velocity
+but varying vertical velocities::
 
     >>> vcirc = pot.circular_velocity([8, 0, 0])
     >>> vz_grid = np.linspace(0.5, 200, 64) * u.km/u.s
@@ -357,14 +372,20 @@ velocity but varying vertical velocities::
     >>> vxyz[2] = vz_grid
     >>> w0 = gd.PhaseSpacePosition(xyz, vxyz)
 
-We can now integrate these orbits in the total potential. Note that we can
-specify the integrator using a string name::
+To compute the actions, angles, and frequencies for these phase-space positions, we can
+use the Staeckel Fudge::
 
-    >>> orbits = pot.integrate_orbit(
-    ...     w0, dt=1, t1=0, t2=4*u.Gyr,
-    ...     Integrator='dopri853'
-    ... )
-    >>> orbits.cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',')  # doctest: +SKIP
+    >>> aaf = find_actions_staeckel_fudge(pot, w0)  # doctest: +SKIP
+    >>> J = aaf["actions"]  # doctest: +SKIP
+
+Since we only varied the vertical velocity, we expect there to be a smooth and simple
+relationship between the vertical action and the initial vertical velocity. We can
+visualize this below::
+
+    >>> fig, ax = plt.subplots(figsize=(6, 6), constrained_layout=True)  # doctest: +SKIP
+    >>> ax.plot(w0.v_z, J[:, 2].to(u.kpc * u.km / u.s))  # doctest: +SKIP
+    >>> ax.set_xlabel(f"$v_z$ [{w0.v_z.unit:latex_inline}]")  # doctest: +SKIP
+    >>> ax.set_ylabel(r"$J_z$ [kpc km/s]")  # doctest: +SKIP
 
 .. plot::
     :align: center
@@ -397,97 +418,82 @@ specify the integrator using a string name::
     vxyz[2] = vz_grid
     w0 = gd.PhaseSpacePosition(xyz, vxyz)
 
-    orbits = pot.integrate_orbit(
-        w0, dt=1, t1=0, t2=4*u.Gyr,
-        Integrator='dopri853'
-    )
-    orbits.cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',')
+    aaf = find_actions_staeckel_fudge(pot, w0)
+    J = aaf["actions"]
 
+    fig, ax = plt.subplots(figsize=(6, 6), constrained_layout=True)
+    ax.plot(w0.v_z, J[:, 2].to(u.kpc * u.km / u.s))
+    ax.set_xlabel(f"$v_z$ [{w0.v_z.unit:latex_inline}]")
+    ax.set_ylabel(r"$J_z$ [kpc km/s]")
 
-With the orbits in hand, we can compute the approximate actions, angles, and
-frequencies with the Staeckel Fudge using Galpy (for more information, see the
-`Galpy documentation <https://docs.galpy.org/en/v1.7.2/actionAngle.html>`_):
+One limitation (or feature, if you're Binney) of the Staeckel Fudge is that it
+effectively interpolates over resonances in the true potential. This means that the
+Staeckel Fudge will return global actions, angles, and frequencies even for orbits that
+are trapped in resonances.
+In these cases, the returned values may be misleading.
+To illustrate this, we'll compute orbits for the initial conditions above and compute
+the approximate actions, angles, and frequencies along each orbit::
 
-.. doctest-requires:: galpy
-
-    >>> from gala.dynamics.actionangle import get_staeckel_fudge_delta
-    >>> from galpy.actionAngle import actionAngleStaeckel
-    >>> galpy_potential = pot.as_interop("galpy")
-    >>> J = np.zeros((3, orbits.norbits))
-    >>> Omega = np.zeros((3, orbits.norbits))
-    >>> for n, orbit in enumerate(orbits.orbit_gen()): # doctest: +SKIP
-    ...     o = orbit.to_galpy_orbit()
-    ...     delta = get_staeckel_fudge_delta(pot, orbit)
-    ...     staeckel = actionAngleStaeckel(pot=galpy_potential, delta=delta)
-    ...     af = staeckel.actionsFreqs(o)
-    ...     af = np.mean(np.stack(af), axis=1)
-    ...     J[:3, n] = af[:3]
-    ...     Omega[:3, n] = af[3:]
-
-Let's visualize the dependence of the vertical action on the value of the
-vertical velocity we used as initial conditions:
-
-.. doctest-requires:: galpy
-
-    >>> plt.plot(w0.v_z, J[2])  # doctest: +SKIP
+    >>> orbits = pot.integrate_orbit(  # doctest: +SKIP
+    ...     w0, dt=1, t1=0, t2=6*u.Gyr,
+    ...     Integrator='dopri853'
+    ... )
+    >>> orbits.cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',')  # doctest: +SKIP
 
 .. plot::
     :align: center
     :width: 60%
     :context: close-figs
 
-    from gala.dynamics.actionangle import get_staeckel_fudge_delta
-    from galpy.actionAngle import actionAngleStaeckel
+    orbits = pot.integrate_orbit(
+        w0, dt=1, t1=0, t2=6*u.Gyr,
+        Integrator='dopri853'
+    )
+    orbits.cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',')
 
-    galpy_potential = pot.as_interop("galpy")
-    J = np.zeros((3, orbits.norbits))
-    Omega = np.zeros((3, orbits.norbits))
-    for n, orbit in enumerate(orbits.orbit_gen()):
-        o = orbit.to_galpy_orbit()
-        delta = get_staeckel_fudge_delta(pot, orbit)
-        staeckel = actionAngleStaeckel(pot=galpy_potential, delta=delta)
-        af = staeckel.actionsFreqs(o)
-        af = np.mean(np.stack(af), axis=1)
+Now the actions - here, we'll compute the mean actions over the orbit and make the same plot of vertical velocity vs. vertical action but now with the mean values::
 
-        J[:3, n] = af[:3]
-        Omega[:3, n] = af[3:]
+    >>> aaf_orbits = find_actions_staeckel_fudge(pot, orbits, mean=False)  # doctest: +SKIP
+    >>> mean_J = np.mean(aaf_orbits["actions"], axis=0)  # doctest: +SKIP
+    >>> plt.plot(w0.v_z, mean_J[:, 2].to(u.kpc * u.km / u.s))  # doctest: +SKIP
+
+.. plot::
+    :align: center
+    :width: 60%
+    :context: close-figs
+
+    aaf_orbits = find_actions_staeckel_fudge(pot, orbits, mean=False)
+    mean_J = np.mean(aaf_orbits["actions"], axis=0)
 
     fig, ax = plt.subplots(figsize=(6, 6), constrained_layout=True)
-    ax.plot(w0.v_z, J[2])
+    ax.plot(w0.v_z, mean_J.to(u.kpc * u.km / u.s))
     ax.set_xlabel(f"$v_z$ [{w0.v_z.unit:latex_inline}]")
-    ax.set_ylabel(rf"$J_z$")
-
+    ax.set_ylabel(r"$J_z$ [kpc km/s]")
 
 The overall trend looks right, but what is that weird break that occurs around
-:math:`v_z` ~ 120 km/s? Let's visualize orbits with initial conditions just next to and
-within this region:
-
-.. doctest-requires:: galpy
-
-    >>> i1 = np.abs(w0.v_z.value - 120).argmin()
-    >>> i2 = np.abs(w0.v_z.value - 100).argmin()
-    >>> orbits[:, i1].cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',')  # doctest: +SKIP
-    >>> orbits[:, i2].cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',')  # doctest: +SKIP
+:math:`v_z` ~ 120 km/s?! Let's visualize orbits with initial conditions on either side
+of this value:
 
 .. plot::
     :align: center
     :width: 90%
     :context: close-figs
 
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5),
-                             sharex=True, sharey=True,
-                             constrained_layout=True)
+    i1 = np.abs(w0.v_z.value - 100).argmin()  # left of res
+    i2 = np.abs(w0.v_z.value - 118).argmin()  # in res
+    i3 = np.abs(w0.v_z.value - 155).argmin()  # right of res
 
-    i1 = np.abs(w0.v_z.value - 120).argmin()
-    i2 = np.abs(w0.v_z.value - 100).argmin()
-    orbits[:, i1].cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',', axes=[axes[0]]);
-    orbits[:, i2].cylindrical.plot(['rho', 'z'], alpha=0.5, marker=',', axes=[axes[1]]);
+    for j, i in enumerate([i1, i2, i3]):
+        orbits[:, i].cylindrical.plot(
+            ['rho', 'z'], alpha=0.5, marker=',', axes=[axes[j]]
+        )
 
-Aha! This region is special: it is a resonance in the potential. Orbits in this region
+Aha -- this region is special. It is a resonance in the potential! Orbits in this region
 of phase-space have qualitatively different behavior than those outside of this region
-because they are trapped by the resonance. For these orbits, where strong potential
-resonances occur, the Staeckel Fudge approximation will return incorrect and potentially
-misleading action, angle, and frequency values.
+because they are trapped by the resonance. However, Staeckel potentials do not have
+resonances (are globally integrable) and so, when we use the Staeckel Fudge on
+phase-space positions only, we gloss over the resonance structure. This is something to
+be aware of when using the Staeckel Fudge!
 
 
 References
@@ -495,6 +501,8 @@ References
 
 .. [binney12] Binney (2012) `Actions for axisymmetric potentials
  <https://ui.adsabs.harvard.edu/abs/2012MNRAS.426.1324B/abstract>`_
+.. [sanders12] Sanders (2012) `Angle-action estimation in a general axisymmetric potential <https://ui.adsabs.harvard.edu/abs/2012MNRAS.426..128S/abstract>`_
+.. [vasiliev19] Vasiliev (2019) `AGAMA: action-based galaxy modelling architecture <https://ui.adsabs.harvard.edu/abs/2019MNRAS.482.1525V/abstract>`_
 .. [sanders14] Sanders & Binney (2014) `Actions, angles and frequencies for numerically integrated orbits <http://arxiv.org/abs/1401.3600>`_
 .. [sanders16] Sanders & Binney (2016) `A review of action estimation methods for galactic dynamics <https://ui.adsabs.harvard.edu/abs/2016MNRAS.457.2107S/abstract>`_
 .. [binneytremaine] Binney & Tremaine (2008) `Galactic Dynamics <http://press.princeton.edu/titles/8697.html>`_

@@ -80,7 +80,6 @@ dev = [
     {include-group = "test"},
     {include-group = "docs"},
     {include-group = "tutorials"},
-    "pre-commit"
 ]
 
 [build-system]

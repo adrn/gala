@@ -8,10 +8,12 @@ import numpy as np
 from gala.dynamics import Orbit
 from gala.dynamics.actionangle.actionangle_staeckel import get_staeckel_fudge_delta
 
-__all__ = ["galpy_find_actions_staeckel"]
+__all__ = ["galpy_find_actions_staeckel_fudge"]
 
 
-def galpy_find_actions_staeckel(potential, w, mean=True, delta=None, ro=None, vo=None):
+def galpy_find_actions_staeckel_fudge(
+    potential, w, mean=True, delta=None, ro=None, vo=None
+):
     """
     Compute approximate actions, angles, and frequencies using the Staeckel
     Fudge as implemented in Galpy. If you use this function, please also cite
