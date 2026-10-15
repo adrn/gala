@@ -3,14 +3,14 @@ import numpy as np
 import pytest
 from astropy.constants import G
 from gala._cconfig import GSL_ENABLED
-from staeckel_helpers import galpy_find_actions_staeckel
+from staeckel_helpers import galpy_find_actions_staeckel_fudge
 
 import gala.potential as gp
 from gala._optional_deps import HAS_GALPY
 from gala.dynamics import PhaseSpacePosition
 from gala.dynamics.actionangle import (
     find_actions_o2gf,
-    find_actions_staeckel,
+    find_actions_staeckel_fudge,
     get_staeckel_fudge_delta,
     isochrone_xv_to_aa,
 )
@@ -19,8 +19,8 @@ from gala.units import galactic
 requires_gsl = pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL")
 requires_galpy = pytest.mark.skipif(not HAS_GALPY, reason="requires galpy")
 staeckel_finders = [
-    pytest.param(find_actions_staeckel, marks=requires_gsl, id="gala"),
-    pytest.param(galpy_find_actions_staeckel, marks=requires_galpy, id="galpy"),
+    pytest.param(find_actions_staeckel_fudge, marks=requires_gsl, id="gala"),
+    pytest.param(galpy_find_actions_staeckel_fudge, marks=requires_galpy, id="galpy"),
 ]
 
 
@@ -77,7 +77,7 @@ def test_staeckel_fudge_delta():
 
 
 @pytest.mark.parametrize("find_actions", staeckel_finders)
-def test_find_actions_staeckel(find_actions):
+def test_find_actions_staeckel_fudge(find_actions):
     """
     This test function performs some unit test checks of the API
     """
@@ -155,7 +155,7 @@ def test_staeckel_isochrone():
         pos=rng.uniform(-8, 8, size=(3, N)) * u.kpc,
         vel=rng.uniform(-150, 150, size=(3, N)) * u.km / u.s,
     )
-    aaf = find_actions_staeckel(pot, w, delta=0.0)
+    aaf = find_actions_staeckel_fudge(pot, w, delta=0.0)
     actions, angles, freqs = isochrone_xv_to_aa(w, pot)
 
     # nearly radial orbits are less accurate at fixed quadrature order
@@ -178,7 +178,7 @@ def test_staeckel_conservation():
         vel=[[30, 60, -20], [220, 180, 200], [40, -30, 50]] * u.km / u.s,
     )
     orbits = pot.integrate_orbit(w0, dt=1.0, n_steps=4000)
-    aaf = find_actions_staeckel(pot, orbits, mean=False)
+    aaf = find_actions_staeckel_fudge(pot, orbits, mean=False)
     J = aaf["actions"].value
     frac_scatter = np.std(J, axis=1) / np.abs(np.mean(J, axis=1))
     # the fudge typically conserves J_R to a few percent
@@ -197,7 +197,7 @@ def test_staeckel_edge_cases():
         pos=[[8.0, 8.0, 8.0], [0, 0, 0], [0, 1.0, 1.0]] * u.kpc,
         vel=[[30, 30, 1000.0], [200, 0, 200], [0, 30, 0]] * u.km / u.s,
     )
-    aaf = find_actions_staeckel(pot, w)
+    aaf = find_actions_staeckel_fudge(pot, w)
     J = aaf["actions"].value
     Omega = aaf["freqs"].value
 
@@ -220,7 +220,7 @@ def test_staeckel_edge_cases():
         pos=[4.0, 3.0, 0.5] * u.kpc, vel=[0, 150, 10] * u.km / u.s
     )
     with pytest.raises(ValueError, match="axisymmetric"):
-        find_actions_staeckel(bar, w_bar)
+        find_actions_staeckel_fudge(bar, w_bar)
 
 
 @requires_gsl
@@ -257,7 +257,7 @@ def test_compare_staeckel_agama():
             vz,
         ]
     )
-    aaf = find_actions_staeckel(
+    aaf = find_actions_staeckel_fudge(
         pot,
         PhaseSpacePosition(pos=w[:3] * u.kpc, vel=w[3:] * u.kpc / u.Myr),
         delta=3.0 * u.kpc,

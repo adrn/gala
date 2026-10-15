@@ -2,10 +2,10 @@ import astropy.table as at
 import astropy.units as u
 import numpy as np
 
-__all__ = ["find_actions_staeckel", "get_staeckel_fudge_delta"]
+__all__ = ["find_actions_staeckel_fudge", "get_staeckel_fudge_delta"]
 
 
-def find_actions_staeckel(potential, w, mean=True, delta=None):
+def find_actions_staeckel_fudge(potential, w, mean=True, delta=None):
     """
     Compute approximate actions, angles, and frequencies using the Staeckel fudge.
 
@@ -48,11 +48,11 @@ def find_actions_staeckel(potential, w, mean=True, delta=None):
     from gala.dynamics import Orbit
 
     if not GSL_ENABLED:
-        msg = "find_actions_staeckel requires gala to be built with GSL support."
+        msg = "find_actions_staeckel_fudge requires gala to be built with GSL support."
         raise RuntimeError(msg)
 
     if not hasattr(potential, "c_instance"):
-        msg = "find_actions_staeckel requires a potential implemented in C."
+        msg = "find_actions_staeckel_fudge requires a potential implemented in C."
         raise TypeError(msg)
 
     from ._staeckel import staeckel_fudge_c
@@ -84,7 +84,10 @@ def find_actions_staeckel(potential, w, mean=True, delta=None):
         .value
     )
     if not np.allclose(Phi, Phi_axi, rtol=1e-8, atol=0):
-        msg = "find_actions_staeckel requires a potential that is axisymmetric about z."
+        msg = (
+            "find_actions_staeckel_fudge requires a potential that is axisymmetric "
+            "about z."
+        )
         raise ValueError(msg)
 
     ww = np.ascontiguousarray(np.concatenate((xyz, vxyz)).reshape(6, -1).T)

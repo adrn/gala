@@ -328,7 +328,7 @@ and the same initial conditions as above:
 The Staeckel Fudge
 ==================
 
-:func:`~gala.dynamics.actionangle.find_actions_staeckel` computes approximate actions,
+:func:`~gala.dynamics.actionangle.find_actions_staeckel_fudge` computes approximate actions,
 angles, and frequencies in axisymmetric potentials with the "Staeckel Fudge"
 [binney12]_, using the expressions for angles and frequencies from [sanders12]_. See
 also the Staeckel Fudge implementation in `Agama
@@ -339,11 +339,11 @@ length parameter, Δ, of the prolate spheroidal coordinate system can be passed 
 the ``delta`` argument; otherwise it is estimated with
 :func:`~gala.dynamics.actionangle.get_staeckel_fudge_delta`::
 
-    >>> from gala.dynamics.actionangle import find_actions_staeckel
+    >>> from gala.dynamics.actionangle import find_actions_staeckel_fudge
     >>> mw = gp.MilkyWayPotential()
     >>> w = gd.PhaseSpacePosition(pos=[8.0, 0, 0.5] * u.kpc,
     ...                           vel=[30, 220, 40] * u.km / u.s)
-    >>> aaf = find_actions_staeckel(mw, w)  # doctest: +SKIP
+    >>> aaf = find_actions_staeckel_fudge(mw, w)  # doctest: +SKIP
     >>> aaf["actions"]  # doctest: +SKIP
 
 As a more complete example, below we will compute vertical actions for a set of
@@ -375,7 +375,7 @@ but varying vertical velocities::
 To compute the actions, angles, and frequencies for these phase-space positions, we can
 use the Staeckel Fudge::
 
-    >>> aaf = find_actions_staeckel(pot, w0)  # doctest: +SKIP
+    >>> aaf = find_actions_staeckel_fudge(pot, w0)  # doctest: +SKIP
     >>> J = aaf["actions"]  # doctest: +SKIP
 
 Since we only varied the vertical velocity, we expect there to be a smooth and simple
@@ -418,7 +418,7 @@ visualize this below::
     vxyz[2] = vz_grid
     w0 = gd.PhaseSpacePosition(xyz, vxyz)
 
-    aaf = find_actions_staeckel(pot, w0)
+    aaf = find_actions_staeckel_fudge(pot, w0)
     J = aaf["actions"]
 
     fig, ax = plt.subplots(figsize=(6, 6), constrained_layout=True)
@@ -453,7 +453,7 @@ the approximate actions, angles, and frequencies along each orbit::
 
 Now the actions - here, we'll compute the mean actions over the orbit and make the same plot of vertical velocity vs. vertical action but now with the mean values::
 
-    >>> aaf_orbits = find_actions_staeckel(pot, orbits, mean=False)  # doctest: +SKIP
+    >>> aaf_orbits = find_actions_staeckel_fudge(pot, orbits, mean=False)  # doctest: +SKIP
     >>> mean_J = np.mean(aaf_orbits["actions"], axis=0)  # doctest: +SKIP
     >>> plt.plot(w0.v_z, mean_J[:, 2].to(u.kpc * u.km / u.s))  # doctest: +SKIP
 
@@ -462,7 +462,7 @@ Now the actions - here, we'll compute the mean actions over the orbit and make t
     :width: 60%
     :context: close-figs
 
-    aaf_orbits = find_actions_staeckel(pot, orbits, mean=False)
+    aaf_orbits = find_actions_staeckel_fudge(pot, orbits, mean=False)
     mean_J = np.mean(aaf_orbits["actions"], axis=0)
 
     fig, ax = plt.subplots(figsize=(6, 6), constrained_layout=True)
