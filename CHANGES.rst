@@ -10,9 +10,12 @@ New Features
 API changes
 -----------
 
-- ``galpy`` and ``twobody`` are no longer part of the ``extra`` optional dependencies.
-  ``galpy`` is still supported for interoperability, but must be installed separately.
+- ``galpy`` and ``twobody`` are no longer optional dependencies. ``galpy`` is still
+  supported for interoperability, but must be installed separately.
   ``isochrone_aa_to_xv()`` no longer requires ``twobody``.
+
+- The ``shared`` and ``extra`` optional dependencies are merged into ``extra``
+  (``pip install gala[extra]``).
 
 Bug fixes
 ---------
