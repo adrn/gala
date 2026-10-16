@@ -823,14 +823,10 @@ dependencies = [
 
 [package.optional-dependencies]
 extra = [
-    { name = "galpy" },
-    { name = "sympy" },
-    { name = "twobody" },
-]
-shared = [
     { name = "h5py" },
     { name = "matplotlib" },
     { name = "numexpr" },
+    { name = "sympy" },
     { name = "tqdm" },
 ]
 
@@ -838,7 +834,7 @@ shared = [
 dev = [
     { name = "astroquery" },
     { name = "findiff" },
-    { name = "gala", extra = ["extra", "shared"] },
+    { name = "gala", extra = ["extra"] },
     { name = "ipykernel" },
     { name = "ipython" },
     { name = "ipython-genutils" },
@@ -862,7 +858,7 @@ dev = [
     { name = "sphinxcontrib-bibtex" },
 ]
 docs = [
-    { name = "gala", extra = ["extra", "shared"] },
+    { name = "gala", extra = ["extra"] },
     { name = "ipykernel" },
     { name = "ipython-genutils" },
     { name = "jupyter-client" },
@@ -879,7 +875,7 @@ docs = [
 ]
 test = [
     { name = "findiff" },
-    { name = "gala", extra = ["shared"] },
+    { name = "gala", extra = ["extra"] },
     { name = "pytest" },
     { name = "pytest-astropy" },
     { name = "pytest-codspeed" },
@@ -887,7 +883,7 @@ test = [
 ]
 tutorials = [
     { name = "astroquery" },
-    { name = "gala", extra = ["extra", "shared"] },
+    { name = "gala", extra = ["extra"] },
     { name = "ipykernel" },
     { name = "ipython" },
     { name = "ipython-genutils" },
@@ -901,25 +897,22 @@ tutorials = [
 requires-dist = [
     { name = "astropy", specifier = ">=7.0" },
     { name = "cython", specifier = ">=0.29" },
-    { name = "galpy", marker = "extra == 'extra'" },
-    { name = "h5py", marker = "extra == 'shared'" },
-    { name = "matplotlib", marker = "extra == 'shared'", specifier = ">=3.10" },
-    { name = "numexpr", marker = "extra == 'shared'" },
+    { name = "h5py", marker = "extra == 'extra'" },
+    { name = "matplotlib", marker = "extra == 'extra'", specifier = ">=3.10" },
+    { name = "numexpr", marker = "extra == 'extra'" },
     { name = "numpy", specifier = ">=2.2" },
     { name = "pyyaml" },
     { name = "scipy", specifier = ">=1.15" },
     { name = "sympy", marker = "extra == 'extra'" },
-    { name = "tqdm", marker = "extra == 'shared'" },
-    { name = "twobody", marker = "extra == 'extra'" },
+    { name = "tqdm", marker = "extra == 'extra'" },
 ]
-provides-extras = ["shared", "extra"]
+provides-extras = ["extra"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "astroquery" },
     { name = "findiff" },
-    { name = "gala", extras = ["shared"] },
-    { name = "gala", extras = ["shared", "extra"] },
+    { name = "gala", extras = ["extra"] },
     { name = "ipykernel" },
     { name = "ipython" },
     { name = "ipython-genutils" },
@@ -943,7 +936,7 @@ dev = [
     { name = "sphinxcontrib-bibtex" },
 ]
 docs = [
-    { name = "gala", extras = ["shared", "extra"] },
+    { name = "gala", extras = ["extra"] },
     { name = "ipykernel" },
     { name = "ipython-genutils" },
     { name = "jupyter-client" },
@@ -960,7 +953,7 @@ docs = [
 ]
 test = [
     { name = "findiff" },
-    { name = "gala", extras = ["shared"] },
+    { name = "gala", extras = ["extra"] },
     { name = "pytest" },
     { name = "pytest-astropy" },
     { name = "pytest-codspeed" },
@@ -968,7 +961,7 @@ test = [
 ]
 tutorials = [
     { name = "astroquery" },
-    { name = "gala", extras = ["shared", "extra"] },
+    { name = "gala", extras = ["extra"] },
     { name = "ipykernel" },
     { name = "ipython" },
     { name = "ipython-genutils" },
@@ -976,32 +969,6 @@ tutorials = [
     { name = "jupytext" },
     { name = "nbconvert" },
     { name = "pyia", specifier = ">=1.4" },
-]
-
-[[package]]
-name = "galpy"
-version = "1.12.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "matplotlib" },
-    { name = "numpy" },
-    { name = "packaging" },
-    { name = "scipy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/1e/dc/424e5ee8999af057d804471f6f598df8cd757370ce087a07ad3215a14c34/galpy-1.12.0.tar.gz", hash = "sha256:368c3b6a8ca7d93e44df40887ac6b9d9a00fa3a0f2ce532d9b6dac1a43ac7612", size = 1249059, upload-time = "2026-07-01T18:09:57.486Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/dd/28/4f5c5cdafb270d89e8d8e0e1a2b0303054672d0667551a39e1d963d73573/galpy-1.12.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:a5bf72d0dfb62c40ca0770cc01fdbcfb0ead9b5df0dc507acc6f7062e5ed891a", size = 10003751, upload-time = "2026-07-01T18:09:34.203Z" },
-    { url = "https://files.pythonhosted.org/packages/90/90/f962a078e43cd80d4382a6eab61db3e0e9646153dcb835a4d52dcafda48d/galpy-1.12.0-cp312-cp312-macosx_11_0_x86_64.whl", hash = "sha256:9be4fef7d9395655dc037c43ff4427995dd458912631e73e8e35eaeea3650f45", size = 16972092, upload-time = "2026-07-01T18:09:36.35Z" },
-    { url = "https://files.pythonhosted.org/packages/9e/14/cbd04fd251b84a290033f0bd32d66b1dcad4a44079c9c5b1a6d3307d0b4e/galpy-1.12.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:55c5c5ea0a53fa954dab1ccc3ba2cc3fdcb5d68c80474ba4b8630c480ecc86a0", size = 3168866, upload-time = "2026-07-01T18:09:38.522Z" },
-    { url = "https://files.pythonhosted.org/packages/9d/a4/680af83bbfe563207a78f8c3579393055b350c0d0c19803b8eaa73bdf9da/galpy-1.12.0-cp312-cp312-win_amd64.whl", hash = "sha256:968fbfde1479ea0be4fee9dfa70ceefea0a50d3a8d5c7b046850210fffc6e149", size = 2548177, upload-time = "2026-07-01T18:09:40.1Z" },
-    { url = "https://files.pythonhosted.org/packages/27/75/30b0ac56497a7d1c49c60fd2230cd6c0131220ca2d4263e374da4b124ba0/galpy-1.12.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:7a2066ce40b0826864be92d2affb32969b1a36d7998f83eb8b4433f343e92e5a", size = 10003751, upload-time = "2026-07-01T18:09:41.753Z" },
-    { url = "https://files.pythonhosted.org/packages/d0/bf/8f279994a35c3522c67a6ce7c43b849d39c4f55782c7cdfd27727a15e56c/galpy-1.12.0-cp313-cp313-macosx_11_0_x86_64.whl", hash = "sha256:e88e48fd8b1a7bb30bcd5298cc09280557ea338e3b8cb94fa4b0c08c56cf0438", size = 16972091, upload-time = "2026-07-01T18:09:44.3Z" },
-    { url = "https://files.pythonhosted.org/packages/6d/9c/827e463e29664892506ed5274a67a959eb06fbc2e6489248281c95a31f00/galpy-1.12.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:5642f03373f73f31ee83435b0176d9f95a5321a0deb10f7af2c8c601a83d440b", size = 3168868, upload-time = "2026-07-01T18:09:46.684Z" },
-    { url = "https://files.pythonhosted.org/packages/2f/b0/75107c431c1ff98055d4db2faf0a2cb7ce830d9028af40ae3dbfc6f34a80/galpy-1.12.0-cp313-cp313-win_amd64.whl", hash = "sha256:849d505feb9e46514f006c351c5043a83a3804b2d6e3c8b98705ec73dd45331e", size = 2548180, upload-time = "2026-07-01T18:09:48.38Z" },
-    { url = "https://files.pythonhosted.org/packages/b8/ce/cb6e2cb8d261ab047d2fb2b1b663477053889a28f71824c04c8c5edcb64c/galpy-1.12.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:808017ce353c21144f7b7f699222eba5be6f573465e2598969b376eca1ab8765", size = 10003755, upload-time = "2026-07-01T18:09:49.871Z" },
-    { url = "https://files.pythonhosted.org/packages/af/dc/be03c589ea8a6ca03c5d29d709b8166cbb31c77e7df55bc5baeaa516028c/galpy-1.12.0-cp314-cp314-macosx_11_0_x86_64.whl", hash = "sha256:d014da8a8315772c5745baa4edd4a061f6a17d8c705f2d5537a4c02508c2e47a", size = 16972091, upload-time = "2026-07-01T18:09:51.966Z" },
-    { url = "https://files.pythonhosted.org/packages/b4/3b/16b113f8e449e8266b0487eaaf6f62c0c4ad80f07f7e8b312615dfa5b09b/galpy-1.12.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ac0f091fa9c5d07a760d34958a1ff4a4fa584558aef48ab0ac85ddc7ff51c11c", size = 3168868, upload-time = "2026-07-01T18:09:54.487Z" },
-    { url = "https://files.pythonhosted.org/packages/65/95/d9312b34e5a5d9f4d4cb2d027d2ac1434e9305976bcd8e0f0dd06e4c50dd/galpy-1.12.0-cp314-cp314-win_amd64.whl", hash = "sha256:6330dc399cb5a03b5a33d3ea430704d777443049fe5e937b22d14a4a2d0062bb", size = 2600857, upload-time = "2026-07-01T18:09:56.015Z" },
 ]
 
 [[package]]
@@ -3161,16 +3128,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/2c/2e/a7fbfe268c8a3b325
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ad/66/0d785f0bc5e4315a96c989bb476d0fc07ea4f85132550c7b156ca2035d52/traitlets-5.16.1-py3-none-any.whl", hash = "sha256:f775618166caa0396c8e337099240f2bd3e5e917d203b2e6fbe21a58d3cb1f6b", size = 86211, upload-time = "2026-08-03T08:32:34.48Z" },
 ]
-
-[[package]]
-name = "twobody"
-version = "0.9.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "astropy" },
-    { name = "numpy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ae/89/3dd2c155a05863f927fe07e3f80639404c828fd7bf0d4fa998a155ff6cad/twobody-0.9.1.tar.gz", hash = "sha256:59ab0a2042c3c21b280306b38296a0de40fe6646acd3f67448c44211342f79ef", size = 114705, upload-time = "2024-08-19T03:18:36.418Z" }
 
 [[package]]
 name = "typing-extensions"

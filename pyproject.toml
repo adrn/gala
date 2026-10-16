@@ -28,21 +28,17 @@ Documentation = "https://gala.adrian.pw"
 Repository = "https://github.com/adrn/gala.git"
 
 [project.optional-dependencies]
-shared = [
+extra = [
     "matplotlib>=3.10",
     "numexpr",
     "h5py",
     "tqdm",
-]
-extra = [
-    "galpy",
     "sympy",
-    "twobody"
 ]
 
 [dependency-groups]
 test = [
-    "gala[shared]",
+    "gala[extra]",
     "pytest",
     "pytest-astropy",
     "pytest-codspeed",
@@ -50,7 +46,7 @@ test = [
     "findiff",
 ]
 docs = [
-    "gala[shared,extra]",
+    "gala[extra]",
     "numpydoc",
     "ipykernel",
     "jupyter-client",
@@ -66,7 +62,7 @@ docs = [
     "requests"
 ]
 tutorials = [
-    "gala[shared,extra]",
+    "gala[extra]",
     "IPython",
     "nbconvert",
     "ipython_genutils",

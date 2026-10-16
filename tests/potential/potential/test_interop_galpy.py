@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from astropy.constants import G
 from astropy.coordinates import CylindricalRepresentation
+from gala._cconfig import GSL_ENABLED
 
 import gala.potential as gp
 from gala._optional_deps import HAS_GALPY
@@ -33,6 +34,9 @@ def pytest_generate_tests(metafunc):
 
     # Test the Gala -> Galpy direction
     for Potential in _gala_to_galpy:
+        if Potential._GSL_only and not GSL_ENABLED:
+            continue
+
         init = {}
         len_scale = 1.0
         for k, par in Potential._parameters.items():
@@ -68,7 +72,10 @@ def pytest_generate_tests(metafunc):
     galpy_pots.append(galpy_pots[0] + galpy_pots[1])
 
     # Test the Galpy -> Gala direction
-    for Potential in _galpy_to_gala:
+    for Potential, (gala_cls, _) in _galpy_to_gala.items():
+        if gala_cls._GSL_only and not GSL_ENABLED:
+            continue
+
         galpy_pot = Potential(ro=ro, vo=vo)  # use defaults
 
         if isinstance(galpy_pot, galpy_gp.MN3ExponentialDiskPotential):

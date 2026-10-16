@@ -34,8 +34,8 @@ jobs:
   tests:
     name:
       Python ${{ matrix.python-version }} on ${{ matrix.os }} with numpy ${{
-      matrix.numpy-version }}, no gsl ${{ matrix.gala-nogsl }}, deps ${{
-      matrix.python-extras }}, EXP ${{ matrix.gala-exp }}
+      matrix.numpy-version }}, no gsl ${{ matrix.gala-nogsl }}, EXP ${{
+      matrix.gala-exp }}
     runs-on: ${{ matrix.os }}
     needs: check_skip_flags
     if:
@@ -55,7 +55,6 @@ jobs:
         numpy-version: ["latest"]
         scipy-version: ["latest"]
         gala-nogsl: ["0"]
-        python-extras: ["shared"]
         gala-exp: ["0"]
         include:
           - name: Oldest astropy, numpy, and scipy versions supported
@@ -66,7 +65,6 @@ jobs:
             scipy-version: "1.15"
             gala-nogsl: "0"
             gala-exp: "0"
-            python-extras: "shared"
 
           - name: Install without GSL
             os: ubuntu-latest
@@ -76,17 +74,6 @@ jobs:
             scipy-version: "latest"
             gala-nogsl: "1"
             gala-exp: "0"
-            python-extras: "shared"
-
-          - name: With optional dependencies
-            os: ubuntu-latest # note: galpy install failed on macos here
-            python-version: "3.13"
-            astropy-version: "latest"
-            numpy-version: "latest"
-            scipy-version: "latest"
-            gala-nogsl: "0"
-            gala-exp: "0"
-            python-extras: "shared,extra"
 
           - name: With EXP
             os: ubuntu-latest
@@ -96,7 +83,6 @@ jobs:
             scipy-version: "latest"
             gala-nogsl: "0"
             gala-exp: "1"
-            python-extras: "shared"
 
           - name: With EXP
             os: macos-latest
@@ -106,7 +92,6 @@ jobs:
             scipy-version: "latest"
             gala-nogsl: "0"
             gala-exp: "1"
-            python-extras: "shared"
 
     steps:
       - uses: actions/checkout@v7
@@ -187,10 +172,9 @@ jobs:
 
       - name: Install package and dependencies
         run: |
-          extras="${{ matrix.python-extras }}"
           # --upgrade: test against the latest dependency versions, not the lockfile
           uv sync --upgrade --python ${{ matrix.python-version }} --no-default-groups \
-            --group test --extra ${extras//,/ --extra }
+            --group test --extra extra
         env:
           GALA_NOGSL: ${{ matrix.gala-nogsl }}
 
@@ -217,3 +201,40 @@ jobs:
         uses: codecov/codecov-action@v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  # galpy is not a gala dependency: test the interop code and comparisons once
+  galpy:
+    name: Python 3.13 on ubuntu-latest with galpy
+    runs-on: ubuntu-latest
+    needs: check_skip_flags
+    if:
+      ${{ github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'skip tests') &&
+      !contains(needs.check_skip_flags.outputs.head-commit-message, '[skip tests]') }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.0"
+
+      - name: Setup Linux - GSL
+        run: |
+          sudo apt-get update
+          sudo apt-get install gsl-bin libgsl0-dev build-essential
+
+      - name: Install package and dependencies
+        run: |
+          uv sync --upgrade --python 3.13 --no-default-groups --group test --extra extra
+          uv pip install galpy
+
+      - name: Run tests
+        env:
+          OMP_NUM_THREADS: 1
+        run: uv run --no-sync pytest -n auto -ra

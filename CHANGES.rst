@@ -7,6 +7,16 @@ New Features
 - Added ``find_actions_staeckel_fudge()``, a native (C++) implementation of the Staeckel
   Fudge for computing actions, angles, and frequencies in axisymmetric potentials.
 
+API changes
+-----------
+
+- ``galpy`` and ``twobody`` are no longer optional dependencies. ``galpy`` is still
+  supported for interoperability, but must be installed separately.
+  ``isochrone_aa_to_xv()`` no longer requires ``twobody``.
+
+- The ``shared`` and ``extra`` optional dependencies are merged into ``extra``
+  (``pip install gala[extra]``).
+
 Bug fixes
 ---------
 

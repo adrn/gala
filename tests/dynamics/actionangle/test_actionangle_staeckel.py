@@ -1,3 +1,5 @@
+import sys
+
 import astropy.units as u
 import numpy as np
 import pytest
@@ -17,7 +19,11 @@ from gala.dynamics.actionangle import (
 from gala.units import galactic
 
 requires_gsl = pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL")
-requires_galpy = pytest.mark.skipif(not HAS_GALPY, reason="requires galpy")
+# Last I tried, galpy's actionAngleStaeckel C implementation segfaults on macOS?
+requires_galpy = pytest.mark.skipif(
+    not HAS_GALPY or sys.platform == "darwin",
+    reason="requires galpy",
+)
 staeckel_finders = [
     pytest.param(find_actions_staeckel_fudge, marks=requires_gsl, id="gala"),
     pytest.param(galpy_find_actions_staeckel_fudge, marks=requires_galpy, id="galpy"),

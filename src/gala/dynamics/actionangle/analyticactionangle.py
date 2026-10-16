@@ -9,9 +9,21 @@ from astropy.coordinates.matrix_utilities import rotation_matrix
 
 # Gala
 import gala.dynamics as gd
-from gala._optional_deps import HAS_TWOBODY
 
 __all__ = ["harmonic_oscillator_xv_to_aa", "isochrone_aa_to_xv", "isochrone_xv_to_aa"]
+
+
+def _eccentric_anomaly(M, e, tol=1e-14, maxiter=64):
+    """Solve Kepler's equation, M = E - e sin(E), for E with Newton's method."""
+    M = np.asarray(M, dtype=float)
+    e = np.asarray(e, dtype=float)
+    E = M + 0.85 * e * np.sign(np.sin(M))
+    for _ in range(maxiter):
+        dE = (E - e * np.sin(E) - M) / (1 - e * np.cos(E))
+        E = E - dE
+        if np.all(np.abs(dE) < tol):
+            break
+    return E
 
 
 def F(x, y):
@@ -176,15 +188,6 @@ def isochrone_aa_to_xv(actions, angles, potential):
     w : :class:`gala.dynamics.PhaseSpacePosition`
         The computed positions and velocities.
     """
-    if not HAS_TWOBODY:
-        raise ImportError(
-            "Failed to import twobody: Converting from action-angle "
-            "coordinates to position and velocity in the isochrone potential "
-            "requires a Kepler solver, and thus `twobody` must be installed."
-        )
-
-    import twobody as tb
-
     Jr, Jphi, Jth = (np.atleast_1d(x) for x in actions)
     thr, thphi, thth = (np.atleast_1d(x) for x in angles)
 
@@ -210,7 +213,8 @@ def isochrone_aa_to_xv(actions, angles, potential):
     e = np.sqrt(1 - L**2 / (GM * c) * (1 + b / c))
 
     e_eff = e * c / (c + b)
-    eta = tb.eccentric_anomaly_from_mean_anomaly(thr, e_eff)
+    M = u.Quantity(thr, u.rad).value
+    eta = _eccentric_anomaly(M, u.Quantity(e_eff, u.one).value) * u.rad
 
     s = 2 + c / b * (1 - e * np.cos(eta))
     r = b * np.sqrt((s - 1) ** 2 - 1)
