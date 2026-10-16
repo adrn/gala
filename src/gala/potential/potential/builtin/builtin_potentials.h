@@ -147,10 +147,12 @@ extern double burkert_density(double t, double *pars, double *q, int n_dim, void
 
 extern double einasto_value(double t, double *pars, double *q, int n_dim, void *state);
 extern void einasto_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state);
+extern void einasto_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state);
 extern double einasto_density(double t, double *pars, double *q, int n_dim, void *state);
 
 extern double cEinasto_value(double t, double *pars, double *q, int n_dim, void *state);
 extern void cEinasto_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state);
+extern void cEinasto_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state);
 extern double cEinasto_density(double t, double *pars, double *q, int n_dim, void *state);
 
 // Spherical spline interpolated potentials

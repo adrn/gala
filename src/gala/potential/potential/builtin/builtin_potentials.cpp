@@ -8,6 +8,7 @@
 #if USE_GSL == 1
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_math.h>
+#include <gsl/gsl_integration.h>
 #endif
 
 double nan_density(double t, double *pars, double *q, int n_dim, void *state) { return NAN; }
@@ -2279,240 +2280,163 @@ double burkert_density(double t, double *pars, double *q, int n_dim, void *state
 
 #if USE_GSL == 1
 
-// --- Helper functions for Einasto profiles ---
-
-static inline double _s_of_r(double r, double r_m2, double alpha) {
-    // s(r) = (2/α) (r/r_-2 )^α
-    if (r <= 0.0) return 0.0;
-    return (2.0 / alpha) * pow(r / r_m2, alpha);
-}
-
-static inline double gamma_beta(double beta, double x1, double x2) {
-    return gsl_sf_gamma_inc(beta, x2) - gsl_sf_gamma_inc(beta, x1);
-}
-
-static inline double gamma_tilde_beta(
-    double beta, double x1, double x2, double alpha, double r_s
-) {
-    const double scale = alpha * pow(r_s, alpha) / 2.0;
-    return pow(scale, beta) * gamma_beta(beta, x1, x2);
-}
-
-static inline double Gamma_beta(
-    double beta, double x
-) {
-    // Upper incomplete gamma:
-    return gsl_sf_gamma(beta) - gsl_sf_gamma_inc(beta, x);
-}
-
-static inline double Gamma_tilde_beta(
-    double beta, double x, double alpha, double r_s
-) {
-    const double scale = pow(alpha * pow(r_s, alpha) / 2.0, beta);
-    return scale * Gamma_beta(beta, x);
-}
-
-static inline double _einasto_mass_enclosed(double rho_m2, double r_m2, double alpha, double r) {
-    if (r <= 0.0) return 0.0;
-
-    const double s = _s_of_r(r, r_m2, alpha);
-    const double a3 = 3.0 / alpha;
-
-    const double Mtot = (4.0 * M_PI * rho_m2 * exp(2.0/alpha) / alpha)
-                        * pow(r_m2, 3.0) * pow(alpha/2.0, a3) * gsl_sf_gamma(a3);
-    return Mtot * gsl_sf_gamma_inc_P(a3, s);
-}
-
 /* ---------------------------------------------------------------------------
-    Einasto profile
+    Einasto and core-Einasto profiles
     See: https://arxiv.org/abs/2004.10817
-*/
-double einasto_value(double t, double *pars, double *q, int n_dim, void *state) {
-    /*  pars:
-            - G (Gravitational constant)
-            - rho_-2 - scale density (density when log slope is -2)
-            - r_-2 - radius at which logarithmic slope of the density profile is equal to -2
-            - alpha - shape parameter
-    */
-    const double G = pars[0];
-    const double rho_m2 = pars[1];
-    const double r_m2 = pars[2];
-    const double alpha = pars[3];
 
-    const double r = norm3(q);
-
-    const double sr  = _s_of_r(r, r_m2, alpha);
-    const double a2 = 2.0 / alpha;
-    const double a3 = 3.0 / alpha;
-
-    const double pref  = (4.0 * M_PI * G * rho_m2 * exp(2.0/alpha)) / alpha;
-    const double scale = alpha * pow(r_m2, alpha) / 2.0;
-
-    if (r == 0.0) {
-        const double term1 = (pow(r_m2, 3.0) / 3.0) * pow(2.0/alpha, a3);
-        const double term2 = pow(scale, a2) * gsl_sf_gamma(a2);
-        return - pref * (term1 + term2);
-    }
-    const double term1 = pow(scale, a3) * gsl_sf_gamma(a3) * gsl_sf_gamma_inc_P(a3, sr);
-    const double term2 = pow(scale, a2) * gsl_sf_gamma(a2) * gsl_sf_gamma_inc_Q(a2, sr);
-    return - pref * ( (term1 / r) + term2 );
-
-}
-
-void einasto_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
-    /*  pars:
-            - G (Gravitational constant)
-            - rho_-2 - scale density (density when log slope is -2)
-            - r_-2 - radius at which logarithmic slope of the density profile is equal to -2
-            - alpha - shape parameter
-    */
-    const double G = pars[0];
-    const double rho_m2 = pars[1];
-    const double r_m2 = pars[2];
-    const double alpha = pars[3];
-
-    const double r = norm3(q);
-    if (r == 0.0) {
-        return;
-    }
-
-    const double Menc = _einasto_mass_enclosed(rho_m2, r_m2, alpha, r);
-    const double dphi_dr = (G * Menc) / (r * r * r);
-
-    grad[0] = grad[0] + dphi_dr * q[0];
-    grad[1] = grad[1] + dphi_dr * q[1];
-    grad[2] = grad[2] + dphi_dr * q[2];
-}
-
-
-double einasto_density(double t, double *pars, double *q, int n_dim, void *state) {
-    /*  pars:
-            - G (Gravitational constant)
-            - rho_-2 - scale density (density when log slope is -2)
-            - r_-2 - radius at which logarithmic slope of the density profile is equal to -2
-            - alpha - shape parameter
-    */
-    const double r = norm3(q);
-    const double alpha = pars[3];
-    return pars[1] * exp( - _s_of_r(r, pars[2], alpha) + (2.0 / alpha));
-}
-
-
-/* ---------------------------------------------------------------------------
-    Core Einasto potential
-    See: https://arxiv.org/abs/2004.10817
+    rho(r) = rho_s exp(-s(r + r_c) + 2/alpha), with s(x) = (2/alpha) (x/r_s)^alpha.
+    The Einasto profile is the core-Einasto profile with r_c = 0 (and rho_s, r_s are
+    rho_-2, r_-2). With scale = alpha r_s^alpha / 2, so that x^alpha = scale * s,
+        int x^n e^{-s(x)} dx = (1/alpha) scale^{(n+1)/alpha} * gamma((n+1)/alpha, s),
+    so the enclosed mass and potential reduce to incomplete gamma functions.
 */
 
-static inline double _cEinasto_mass_enclosed(
+static inline double _s_of_r(double r, double r_s, double alpha) {
+    return (2.0 / alpha) * pow(r / r_s, alpha);
+}
+
+// scale^a Gamma(a), in log space to avoid overflow for small alpha
+static inline double _scaled_gamma(double a, double scale) {
+    return exp(a * log(scale) + gsl_sf_lngamma(a));
+}
+
+static double _cEinasto_rho(double r, double rho_s, double r_s, double alpha, double r_c) {
+    return rho_s * exp(-_s_of_r(r + r_c, r_s, alpha) + 2.0 / alpha);
+}
+
+typedef struct { double rho_s, r_s, alpha, r_c; } _cEinasto_pars;
+
+static double _cEinasto_dMdr(double r, void *p) {
+    _cEinasto_pars *cp = (_cEinasto_pars *)p;
+    return 4.0 * M_PI * r * r * _cEinasto_rho(r, cp->rho_s, cp->r_s, cp->alpha, cp->r_c);
+}
+
+static double _cEinasto_mass_enclosed(
     double rho_s, double r_s, double alpha, double r_c, double r
 ) {
     if (r <= 0.0) return 0.0;
 
-    const double s0 = _s_of_r(r_c, r_s, alpha);
-    const double sr = _s_of_r(r + r_c, r_s, alpha);
-
-    const double a1 = 1.0 / alpha;
-    const double a2 = 2.0 / alpha;
-    const double a3 = 3.0 / alpha;
-
-    const double scale = alpha * pow(r_s, alpha) / 2.0;
-
-    const double seg1 = pow(scale, a1) * (gsl_sf_gamma_inc(a1, sr) - gsl_sf_gamma_inc(a1, s0));
-    const double seg2 = pow(scale, a2) * (gsl_sf_gamma_inc(a2, sr) - gsl_sf_gamma_inc(a2, s0));
-    const double seg3 = pow(scale, a3) * (gsl_sf_gamma_inc(a3, sr) - gsl_sf_gamma_inc(a3, s0));
-
-    const double pref = (4.0 * M_PI * rho_s * exp(2.0/alpha)) / alpha;
-
-    return pref * ( seg3 + (r_c*r_c)*seg1 - 2.0*r_c*seg2 );
-}
-
-double cEinasto_value(double t, double *pars, double *q, int n_dim, void *state) {
-    /*  pars:
-            - G (Gravitational constant)
-            - rho_s - scale density
-            - r_s - scale radius
-            - alpha - shape parameter
-            - r_c - core radius
-    */
-    const double G = pars[0];
-    const double rho_s = pars[1];
-    const double r_s = pars[2];
-    const double alpha = pars[3];
-    const double r_c = pars[4];
-
-    const double r = norm3(q);
-
-    const double a1 = 1.0 / alpha;
-    const double a2 = 2.0 / alpha;
-    const double a3 = 3.0 / alpha;
-
-    const double pref  = (4.0 * M_PI * G * rho_s * exp(2.0/alpha)) / alpha;
-    const double scale = alpha * pow(r_s, alpha) / 2.0;
-
-    const double s0 = _s_of_r(r_c, r_s, alpha);
-
-    if (r == 0.0) {
-        const double dsdr0 = 2.0 * pow(r_c, alpha - 1.0) / pow(r_s, alpha);
-        const double e_m_s0 = exp(-s0);
-
-        // (1/r)*[γ̃_{3/α} + r_c^2 γ̃_{1/α} - 2 r_c γ̃_{2/α}]  -->  ds/dr|0 * e^{-s0} * sum
-        const double lim_over_r =
-            dsdr0 * e_m_s0 *
-            ( pow(scale, a3) * pow(s0, a3 - 1.0)
-            + (r_c*r_c) * pow(scale, a1) * pow(s0, a1 - 1.0)
-            - 2.0 * r_c * pow(scale, a2) * pow(s0, a2 - 1.0) );
-
-        // Upper tilded terms at r=0: Γ̃_b(s0) = scale^b * Γ(b) * Q(b, s0)
-        const double up2 = pow(scale, a2) * gsl_sf_gamma(a2) * gsl_sf_gamma_inc_Q(a2, s0);
-        const double up1 = pow(scale, a1) * gsl_sf_gamma(a1) * gsl_sf_gamma_inc_Q(a1, s0);
-
-        return -pref * ( lim_over_r + (up2 - r_c * up1) );
+    if (r < r_c) {
+        // Inside the core, the analytic form below is a difference of nearly equal
+        // terms (it loses ~all precision as r -> 0); the integrand is smooth, so a
+        // single Gauss-Kronrod rule is accurate to ~machine precision.
+        _cEinasto_pars cp = {rho_s, r_s, alpha, r_c};
+        gsl_function F = {&_cEinasto_dMdr, &cp};
+        double M, err;
+        size_t neval;
+        gsl_integration_qng(&F, 0.0, r, 0.0, 1e-12, &M, &err, &neval);
+        return M;
     }
 
+    const double scale = alpha * pow(r_s, alpha) / 2.0;
+    const double s0 = _s_of_r(r_c, r_s, alpha);
     const double sr = _s_of_r(r + r_c, r_s, alpha);
 
-    const double seg1 = pow(scale, a1) * (gsl_sf_gamma_inc(a1, sr) - gsl_sf_gamma_inc(a1, s0));
-    const double seg2 = pow(scale, a2) * (gsl_sf_gamma_inc(a2, sr) - gsl_sf_gamma_inc(a2, s0));
-    const double seg3 = pow(scale, a3) * (gsl_sf_gamma_inc(a3, sr) - gsl_sf_gamma_inc(a3, s0));
+    // int_{r_c}^{r + r_c} x^{n} e^{-s} dx (times alpha), for n = 0, 1, 2
+    double seg[3];
+    for (int n = 0; n < 3; n++) {
+        const double a = (n + 1.0) / alpha;
+        seg[n] = _scaled_gamma(a, scale) * (gsl_sf_gamma_inc_P(a, sr) - gsl_sf_gamma_inc_P(a, s0));
+    }
 
-    const double up2 = pow(scale, a2) * gsl_sf_gamma(a2) * gsl_sf_gamma_inc_Q(a2, sr);
-    const double up1 = pow(scale, a1) * gsl_sf_gamma(a1) * gsl_sf_gamma_inc_Q(a1, sr);
-
-    return -pref * ( ((seg3 + (r_c*r_c)*seg1 - 2.0*r_c*seg2) / r) + (up2 - r_c * up1) );
+    // r'^2 = (x - r_c)^2 = x^2 - 2 r_c x + r_c^2
+    const double pref = 4.0 * M_PI * rho_s * exp(2.0 / alpha) / alpha;
+    return pref * (seg[2] - 2.0 * r_c * seg[1] + r_c * r_c * seg[0]);
 }
 
-void cEinasto_gradient_single(
-    double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad,
-    void *__restrict__ state
+static double _cEinasto_value(
+    double G, double rho_s, double r_s, double alpha, double r_c, double r
 ) {
-    const double G = pars[0];
-    const double rho_s = pars[1];
-    const double r_s = pars[2];
-    const double alpha = pars[3];
-    const double r_c = pars[4];
+    const double scale = alpha * pow(r_s, alpha) / 2.0;
+    const double sr = _s_of_r(r + r_c, r_s, alpha);
 
+    // 4 pi int_r^inf rho(r') r' dr', with r' = x - r_c
+    const double pref = 4.0 * M_PI * rho_s * exp(2.0 / alpha) / alpha;
+    const double up2 = _scaled_gamma(2.0 / alpha, scale) * gsl_sf_gamma_inc_Q(2.0 / alpha, sr);
+    const double up1 = _scaled_gamma(1.0 / alpha, scale) * gsl_sf_gamma_inc_Q(1.0 / alpha, sr);
+    const double outer = pref * (up2 - r_c * up1);
+
+    if (r == 0.0) return -G * outer;  // M(r)/r -> 0
+    return -G * (_cEinasto_mass_enclosed(rho_s, r_s, alpha, r_c, r) / r + outer);
+}
+
+static void _cEinasto_gradient(
+    double G, double rho_s, double r_s, double alpha, double r_c, double6ptr q, double6ptr grad
+) {
     const double r = norm3(q);
+    if (r == 0.0) return;
+
+    const double dphi_dr_over_r = G * _cEinasto_mass_enclosed(rho_s, r_s, alpha, r_c, r) / (r * r * r);
+    grad[0] = grad[0] + dphi_dr_over_r * q[0];
+    grad[1] = grad[1] + dphi_dr_over_r * q[1];
+    grad[2] = grad[2] + dphi_dr_over_r * q[2];
+}
+
+static void _cEinasto_hessian(
+    double G, double rho_s, double r_s, double alpha, double r_c, double *q, double *hess
+) {
+    // H_ij = (G M / r^3) delta_ij + (4 pi G rho - 3 G M / r^3) x_i x_j / r^2
+    const double r = norm3(q);
+    const double rho = _cEinasto_rho(r, rho_s, r_s, alpha, r_c);
+
     if (r == 0.0) {
+        const double h = 4.0 * M_PI * G * rho / 3.0;
+        hess[0] += h; hess[4] += h; hess[8] += h;
         return;
     }
 
-    const double Menc = _cEinasto_mass_enclosed(rho_s, r_s, alpha, r_c, r);
-    const double dphi_dr = (G * Menc) / (r * r * r);
+    const double GM_r3 = G * _cEinasto_mass_enclosed(rho_s, r_s, alpha, r_c, r) / (r * r * r);
+    const double c = (4.0 * M_PI * G * rho - 3.0 * GM_r3) / (r * r);
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            hess[3*i + j] += c * q[i] * q[j] + (i == j ? GM_r3 : 0.0);
+        }
+    }
+}
 
-    grad[0] = grad[0] + dphi_dr * q[0];
-    grad[1] = grad[1] + dphi_dr * q[1];
-    grad[2] = grad[2] + dphi_dr * q[2];
+/*  Einasto pars:
+        - G (Gravitational constant)
+        - rho_-2 - density where the logarithmic slope of the density profile is -2
+        - r_-2 - radius where the logarithmic slope of the density profile is -2
+        - alpha - shape parameter
+*/
+double einasto_value(double t, double *pars, double *q, int n_dim, void *state) {
+    return _cEinasto_value(pars[0], pars[1], pars[2], pars[3], 0.0, norm3(q));
+}
+
+void einasto_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
+    _cEinasto_gradient(pars[0], pars[1], pars[2], pars[3], 0.0, q, grad);
+}
+
+void einasto_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) {
+    _cEinasto_hessian(pars[0], pars[1], pars[2], pars[3], 0.0, q, hess);
+}
+
+double einasto_density(double t, double *pars, double *q, int n_dim, void *state) {
+    return _cEinasto_rho(norm3(q), pars[1], pars[2], pars[3], 0.0);
+}
+
+/*  Core Einasto pars:
+        - G (Gravitational constant)
+        - rho_s - scale density
+        - r_s - scale radius
+        - alpha - shape parameter
+        - r_c - core radius
+*/
+double cEinasto_value(double t, double *pars, double *q, int n_dim, void *state) {
+    return _cEinasto_value(pars[0], pars[1], pars[2], pars[3], pars[4], norm3(q));
+}
+
+void cEinasto_gradient_single(double t, double *__restrict__ pars, double6ptr q, int n_dim, double6ptr grad, void *__restrict__ state) {
+    _cEinasto_gradient(pars[0], pars[1], pars[2], pars[3], pars[4], q, grad);
+}
+
+void cEinasto_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) {
+    _cEinasto_hessian(pars[0], pars[1], pars[2], pars[3], pars[4], q, hess);
 }
 
 double cEinasto_density(double t, double *pars, double *q, int n_dim, void *state) {
-    const double rho_s = pars[1];
-    const double r_s = pars[2];
-    const double alpha = pars[3];
-    const double r_c = pars[4];
-
-    const double r = norm3(q);
-
-    return rho_s * exp( - _s_of_r(r + r_c, r_s, alpha) + (2.0 / alpha) );
+    return _cEinasto_rho(norm3(q), pars[1], pars[2], pars[3], pars[4]);
 }
 
 #endif

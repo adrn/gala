@@ -247,6 +247,7 @@ cdef class EinastoWrapper(CPotentialWrapper):
         self.cpotential.value[0] = <energyfunc>(einasto_value)
         self.cpotential.density[0] = <densityfunc>(einasto_density)
         self.cpotential.gradient[0] = <gradientfunc>(einasto_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(einasto_hessian)
 
 
 cdef class CoreEinastoWrapper(CPotentialWrapper):
@@ -258,6 +259,7 @@ cdef class CoreEinastoWrapper(CPotentialWrapper):
         self.cpotential.value[0] = <energyfunc>(cEinasto_value)
         self.cpotential.density[0] = <densityfunc>(cEinasto_density)
         self.cpotential.gradient[0] = <gradientfunc>(cEinasto_gradient)
+        self.cpotential.hessian[0] = <hessianfunc>(cEinasto_hessian)
 
 
 # ============================================================================
