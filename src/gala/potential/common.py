@@ -47,7 +47,10 @@ class PotentialParameter:
         self.default = default
         self.equivalencies = equivalencies
         self.python_only = bool(python_only)
-        self.ndim = int(ndim)
+        # a tuple of allowed values, e.g. (2, 3), accepts any of them
+        self.ndim = (
+            tuple(int(n) for n in ndim) if isinstance(ndim, tuple) else int(ndim)
+        )
         self.convert = convert
 
     def __repr__(self):
@@ -161,7 +164,7 @@ class CommonBase:
 
         for k, pval in parameter_values.items():
             pp = self._parameters[k]
-            if pp.physical_type is not None and pval.ndim != pp.ndim:
+            if pp.physical_type is not None and pval.ndim not in np.atleast_1d(pp.ndim):
                 raise ValueError(
                     f"Parameter {k} should have ndim={pp.ndim} "
                     f"dimensions, but has ndim={pval.ndim}"
