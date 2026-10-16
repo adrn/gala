@@ -3,7 +3,10 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "v*"
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     branches:
       - main
       - devel
@@ -38,6 +41,12 @@ jobs:
     name: "Run the benchmarks"
     runs-on: ubuntu-latest
     needs: check_should_run
+    permissions:
+      contents: write # push scaling results to the benchmark-results branch
+    concurrency:
+      # serialize pushes so commits to benchmark-results don't race
+      group: benchmarks-${{ github.event_name == 'push' && 'push' || github.ref }}
+      cancel-in-progress: false
     if:
       ${{ needs.check_should_run.outputs.should-run == 'true' &&
       github.event.pull_request.draft == false }}
@@ -93,10 +102,57 @@ jobs:
           uv sync --locked --python 3.12 --no-default-groups --group test
 
       - name: Run the benchmarks
+        if: github.ref_type != 'tag'
         uses: CodSpeedHQ/action@v5.4.2
         env:
           OMP_NUM_THREADS: 1
         with:
-          mode: instrumentation
+          mode: simulation
           run: uv run --no-sync pytest tests/benchmarks -n auto --codspeed --durations=0 -v
           token: ${{ secrets.CODSPEED_TOKEN }}
+
+      # Scaling benchmarks: same test files, timed by pytest-benchmark (wall-clock) so
+      # we can plot time vs. parameter values. Rendered in docs/benchmarks.rst.
+      # Only fixture-based benchmark files are listed: pytest-benchmark does not time
+      # tests that use the @pytest.mark.benchmark marker.
+      - name: Run the scaling benchmarks
+        env:
+          OMP_NUM_THREADS: 1
+        run: >
+          uv run --no-sync pytest tests/benchmarks/test_actionangle_benchmark.py
+          -p no:xdist --benchmark-min-rounds=1 --benchmark-json=results.json
+
+      - name: Plot the scaling benchmarks
+        if: github.event_name == 'pull_request'
+        env:
+          GALA_BENCH_JSON: results.json
+          GALA_BENCH_OUT: scaling-plots
+        run: uv run --no-sync python docs/benchmarks/plot_scaling.py
+
+      - name: Upload the scaling benchmarks
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: scaling-benchmarks
+          path: |
+            results.json
+            scaling-plots/
+
+      - name: Check out the benchmark-results branch
+        if: github.event_name == 'push'
+        uses: actions/checkout@v7
+        with:
+          ref: benchmark-results
+          path: bench-data
+
+      - name: Commit the scaling benchmarks
+        if: github.event_name == 'push'
+        working-directory: bench-data
+        run: |
+          cp ../results.json "results-${{ github.ref_type == 'tag' && github.ref_name || 'main' }}.json"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Scaling benchmarks for ${{ github.ref_name }} (${{ github.sha }})" || exit 0
+          git pull --rebase
+          git push

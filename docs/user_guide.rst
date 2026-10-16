@@ -22,6 +22,7 @@ show how ``gala`` components work together for realistic research applications.
     units
     util
     interop
+    benchmarks
 
 .. toctree::
     :hidden:
