@@ -50,13 +50,14 @@ def test_fit_isochrone():
     H = Hamiltonian(potential)
     orbit = H.integrate_orbit([15.0, 0, 0, 0, 0.2, 0], dt=2.0, n_steps=10000)
 
-    fit_potential = fit_isochrone(orbit)
-    m, b = (
-        fit_potential.parameters["m"].value,
-        fit_potential.parameters["b"].value,
-    )
-    assert np.allclose(m, true_m, rtol=1e-2)
-    assert np.allclose(b, true_b, rtol=1e-2)
+    for method in ("variance", "force"):
+        fit_potential = fit_isochrone(orbit, method=method)
+        m, b = (
+            fit_potential.parameters["m"].value,
+            fit_potential.parameters["b"].value,
+        )
+        assert np.allclose(m, true_m, rtol=1e-2)
+        assert np.allclose(b, true_b, rtol=1e-2)
 
 
 def test_fit_harmonic_oscillator():
@@ -251,5 +252,35 @@ def test_regression_113():
     H = Hamiltonian(pot)
     orbit = H.integrate_orbit(ics, dt=dt, n_steps=n_steps)
     toy_potential = fit_isochrone(orbit)
-
     assert u.allclose(toy_potential.energy(rvec), pot.energy(rvec), rtol=1e-2)
+
+    # force matching: radial force agrees at r_min and r_max
+    toy_potential = fit_isochrone(orbit, method="force")
+    xyz = orbit.xyz
+    r = np.linalg.norm(xyz, axis=0)
+    for i in (np.argmin(r), np.argmax(r)):
+        rhat = xyz[:, i] / r[i]
+        Fr_toy = (toy_potential.gradient(xyz[:, i])[:, 0] * rhat).sum()
+        Fr_true = (pot.gradient(xyz[:, i])[:, 0] * rhat).sum()
+        assert u.allclose(Fr_toy, Fr_true, rtol=1e-6)
+
+
+def test_o2gf_drops_nan_samples(monkeypatch):
+    """A few NaN toy actions/angles should be dropped, not raise."""
+    pot = IsochronePotential(m=2.81e11, b=11.0, units=galactic)
+    orbit = Hamiltonian(pot).integrate_orbit(
+        [15.0, 0, 1.0, 0, 0.2, 0.02], dt=2.0, n_steps=10000
+    )
+    toy = fit_isochrone(orbit)
+
+    real_action_angle = IsochronePotential.action_angle
+
+    def nan_action_angle(self, w):
+        act, ang, freq = real_action_angle(self, w)
+        act[0, 5] = np.nan
+        return act, ang, freq
+
+    monkeypatch.setattr(IsochronePotential, "action_angle", nan_action_angle)
+    with pytest.warns(RuntimeWarning, match="Dropping 1 samples"):
+        res = find_actions_o2gf(orbit, N_max=4, toy_potential=toy)
+    assert np.all(np.isfinite(res["actions"]))

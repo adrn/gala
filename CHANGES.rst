@@ -12,9 +12,25 @@ New Features
   (as in Agama's ``CylSpline`` with ``mmax > 0``), and ``grid_z`` can cover negative z
   for potentials that are not symmetric under z-reflection.
 
+- ``fit_isochrone()`` has a new ``method="force"`` option. This picks the toy isochrone
+  parameters by matching the radial force of the true potential at the orbit's
+  apo/pericenter (Sanders & Binney 2016). This is much faster than the default
+  energy-variance fit (``method="variance"``).
+
 
 Bug fixes
 ---------
+
+- Fixed ``find_actions_o2gf()`` raising an error whenever any toy action or angle
+  was NaN. NaN samples are now dropped with a warning, and it raises only if more
+  than half of the samples are NaN.
+
+- ``find_actions_o2gf()`` no longer warns "More unknowns than equations!" on every
+  call, and no longer emits each angle-sampling warning twice.
+
+- ``fit_isochrone()`` and ``fit_harmonic_oscillator()`` no longer modify the
+  ``minimize_kwargs`` dictionary passed in, and ``fit_harmonic_oscillator()`` no
+  longer overrides a user-supplied ``x0``.
 
 - Fixed potential and Hamiltonian gradients evaluated with one time per position
   (``t`` an array), which used the wrong coordinates whenever more than one position
