@@ -598,6 +598,30 @@ class TestCylspline(PotentialTestBase):
             assert u.allclose(gala_acc[i], agama_tbl["acc"][:, i], rtol=1e-2)
 
 
+@pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL to run this test")
+@pytest.mark.parametrize("name", ["mn"])
+def test_cylspline_against_agama_export(name):
+    """
+    Load modern Agama CylSpline exports (see generate_agama.py) and compare to the
+    values Agama computes. The first 256 positions are inside the grid, the rest
+    outside of it (where the potential is a multipole expansion).
+    """
+    pot = p.CylSplinePotential.from_file(
+        this_path / f"agama_cylspline_{name}.pot", units=galactic
+    )
+    tbl = at.QTable.read(this_path / f"agama_cylspline_{name}.fits")
+    inside = np.arange(len(tbl)) < 256
+
+    assert u.allclose(pot.energy(tbl["xyz"].T), tbl["pot"], rtol=1e-3)
+
+    acc = pot.acceleration(tbl["xyz"].T).T
+    acc_err = np.linalg.norm(acc - tbl["acc"], axis=1) / np.linalg.norm(
+        tbl["acc"], axis=1
+    )
+    assert np.all(acc_err[inside] < 1e-2)
+    assert np.all(acc_err[~inside] < 5e-2)
+
+
 class TestBurkert(PotentialTestBase):
     potential = CANONICAL["BurkertPotential"]
     w0 = [1.0, 0.0, 0.0, 0.0, 0.1, 0.1]

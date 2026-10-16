@@ -1270,31 +1270,48 @@ class CylSplinePotential(CPotentialBase):
         Parameters
         ----------
         filename : path-like
-            The path to the Agama expoirt file, either as a string or ``pathlib.Path`` object.
+            The path to the Agama export file, either as a string or ``pathlib.Path`` object.
         **kwargs
             Other keyword arguments are passed to the initializer.
         """
         with open(filename, encoding="utf-8") as f:
-            raw_lines = f.readlines()
+            lines = [line.strip() for line in f]
 
+        header = dict(line.split("=", 1) for line in lines if "=" in line)
+        mmax = int(header.get("mmax", 0))
+
+        # The #Phi section has one block per stored azimuthal harmonic: an "m #m"
+        # label line, a "#R(row)\z(col)" line with the z grid, then one row per R
+        # (R value first). Harmonics that are identically zero are not stored.
+        # Later sections (#dPhi/dR, #dPhi/dz) hold derivatives, which are not used.
         start = r"#R(row)\z(col)"
-        Phi_lines = []
-        for i, line in enumerate(raw_lines):  # noqa: B007
-            if line.startswith(start):
-                Phi_lines.append(
-                    [np.nan]
-                    + [float(y) for y in line[len(start) :].strip().split("\t")]
-                )
+        blocks = {}
+        m = 0
+        for i in range(lines.index("#Phi") + 1, len(lines)):
+            line = lines[i]
+            if line.endswith("#m"):
+                m = int(line.split()[0])
+            elif line.startswith(start):
+                gridz = np.array(line[len(start) :].split(), dtype=float)
+                rows = []
+                for row in lines[i + 1 :]:
+                    if not row or row.startswith("#") or row.endswith("#m"):
+                        break
+                    rows.append(row.split())
+                blocks[m] = np.array(rows, dtype=float)
+            elif line.startswith("#"):  # next section
                 break
 
-        Phi_lines.extend(
-            [[float(y) for y in x.strip().split("\t")] for x in raw_lines[i + 1 :]]
-        )
-        Phi_lines = np.array(Phi_lines)
+        gridR = blocks[0][:, 0]
+        Phi = np.zeros((2 * mmax + 1, len(gridR), len(gridz)))
+        for m, block in blocks.items():
+            Phi[m + mmax] = block[:, 1:]
+        if mmax == 0:
+            Phi = Phi[0]
 
-        gridR = Phi_lines[1:, 0] * u.kpc
-        gridz = Phi_lines[0, 1:] * u.kpc
-        gridPhi = Phi_lines[1:, 1:] * (u.km / u.s) ** 2
+        gridR = gridR * u.kpc
+        gridz = gridz * u.kpc
+        gridPhi = Phi * (u.km / u.s) ** 2
 
         return cls(gridR, gridz, gridPhi, **kwargs)
 
