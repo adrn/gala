@@ -702,59 +702,75 @@ class TestBurkert(PotentialTestBase):
         assert abs(rho - rho_check) / rho_check < 0.01
 
 
+def _check_spherical_against_quadrature(pot, radii):
+    """Compare Phi(r) and dPhi/dr to direct quadrature of the density."""
+    from scipy.integrate import quad
+
+    G = pot.G
+
+    def dens(r):
+        return pot.density([r, 0, 0]).value[0]
+
+    for r in radii:
+        M = quad(lambda x: 4 * np.pi * x**2 * dens(x), 0, r, epsrel=1e-12)[0]
+        outer = quad(lambda x: 4 * np.pi * x * dens(x), r, np.inf, epsrel=1e-12)[0]
+        phi_true = -G * (M / r if r > 0 else 0) - G * outer
+        assert np.isclose(pot.energy([r, 0, 0]).value[0], phi_true, rtol=1e-10)
+        if r > 0:
+            dphi_dr = pot.gradient([r, 0, 0]).value[0, 0]
+            assert np.isclose(dphi_dr, G * M / r**2, rtol=1e-10)
+
+
 @pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL to run this test")
 class TestEinasto(PotentialTestBase):
-    potential = p.EinastoPotential(
-        units=galactic, rho_m2=5e-25 * u.g / u.cm**3, r_m2=12 * u.kpc, alpha=0.16
-    )
     w0 = [1.0, 0.0, 0.0, 0.0, 0.1, 0.1]
-
     check_finite_at_origin = True
-    skip_hessian = True  # TODO: implement
 
-    @pytest.mark.skip(reason="Not implemented for Burkert potentials")
+    def setup_method(self):
+        self.potential = CANONICAL["EinastoPotential"]
+        super().setup_method()
+
+    @pytest.mark.skip(reason="Not implemented for Einasto potentials")
     def test_against_sympy(self):
         pass
 
-    # def test_from_r0(self):
-    #     # TODO: test alternate constructor
-
-    #     # Test against values from Zhu+2023
-    #     pot = p.BurkertPotential.from_r0(r0=11.87 * u.kpc, units=galactic)
-
-    #     rho = pot.parameters["rho"].to(u.g / u.cm**3)
-    #     rho_check = 5.93e-25 * u.g / u.cm**3
-
-    #     # Check a 1% tolerance on inferred density against published values
-    #     assert abs(rho - rho_check) / rho_check < 0.01
+    def test_against_quadrature(self):
+        _check_spherical_against_quadrature(
+            self.potential, [0.0, 1e-6, 1e-3, 0.5, 12.0, 100.0]
+        )
 
 
 @pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL to run this test")
 class TestCoreEinasto(PotentialTestBase):
-    potential = p.CoreEinastoPotential(
-        units=galactic,
-        rho_s=5e-25 * u.g / u.cm**3,
-        r_s=12 * u.kpc,
-        alpha=0.16,
-        r_c=1 * u.kpc,
-    )
     w0 = [1.0, 0.0, 0.0, 0.0, 0.1, 0.1]
-    skip_hessian = True  # TODO: implement
-
     check_finite_at_origin = True
 
-    @pytest.mark.skip(reason="Not implemented for Burkert potentials")
+    def setup_method(self):
+        self.potential = CANONICAL["CoreEinastoPotential"]
+        super().setup_method()
+
+    @pytest.mark.skip(reason="Not implemented for Einasto potentials")
     def test_against_sympy(self):
         pass
 
-    # def test_from_r0(self):
-    #     # TODO: test alternate constructor
+    def test_against_quadrature(self):
+        # r_c = 1: check well inside, at, and outside the core
+        _check_spherical_against_quadrature(
+            self.potential, [0.0, 1e-6, 1e-3, 0.5, 0.999, 1.001, 12.0, 100.0]
+        )
 
-    #     # Test against values from Zhu+2023
-    #     pot = p.BurkertPotential.from_r0(r0=11.87 * u.kpc, units=galactic)
-
-    #     rho = pot.parameters["rho"].to(u.g / u.cm**3)
-    #     rho_check = 5.93e-25 * u.g / u.cm**3
-
-    #     # Check a 1% tolerance on inferred density against published values
-    #     assert abs(rho - rho_check) / rho_check < 0.01
+    def test_zero_core_is_einasto(self):
+        pars = self.potential.parameters
+        cein = p.CoreEinastoPotential(
+            units=galactic,
+            rho_s=pars["rho_s"],
+            r_s=pars["r_s"],
+            alpha=pars["alpha"],
+            r_c=0.0,
+        )
+        ein = p.EinastoPotential(
+            units=galactic, rho_m2=pars["rho_s"], r_m2=pars["r_s"], alpha=pars["alpha"]
+        )
+        xyz = np.array([[0.0, 0.0, 0.0], [0.3, 1.0, -2.0], [20.0, 5.0, 1.0]]).T
+        assert u.allclose(cein.energy(xyz), ein.energy(xyz), rtol=1e-12)
+        assert u.allclose(cein.gradient(xyz), ein.gradient(xyz), rtol=1e-12)
