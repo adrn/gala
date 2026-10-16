@@ -139,7 +139,15 @@ by minimizing the dispersion in energy for the orbit::
 
     >>> toy_potential = gd.fit_isochrone(w)
     >>> toy_potential
-    <IsochronePotential: m=1.24e+11, b=4.02 (kpc,Myr,solMass,rad)>
+    <IsochronePotential: m=1.24e+11 solMass, b=4.02 kpc (kpc,Myr,solMass,rad)>
+
+Alternatively, ``method="force"`` chooses the parameters so that the radial force
+of the toy potential matches that of the true potential at the minimum and
+maximum radius of the orbit, as recommended by `Sanders & Binney (2016)
+<https://arxiv.org/abs/1511.08213>`_. This is much faster than the default
+energy-variance fit, but we have not found it to give more accurate actions::
+
+    >>> toy_potential_force = gd.fit_isochrone(w, method="force")
 
 The actions and angles in this potential are not the true actions, but will only
 serve as an approximation. This can be seen in the angles: the orbit in the true
