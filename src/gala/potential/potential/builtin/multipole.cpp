@@ -607,7 +607,14 @@ double mpetd_density(double t, double *pars, double *q, int n_dim) {
 }
 
 /* ---------------------------------------------------------------------------
-    Axisymmetric CylSpline (from Agama)
+    CylSpline (from Agama)
+
+    The potential is a sum of azimuthal harmonics,
+        Phi = sum_m Phi_m(R, z) trig_m(phi),
+    with trig_m = cos(m phi) for m >= 0 and sin(|m| phi) for m < 0, and each
+    Phi_m(R, z) is a 2D bicubic spline in scaled coordinates
+    u = asinh(R/Rscale), v = asinh(z/Rscale). If logScaling, the m=0 spline is
+    log(-Phi_0) and the m!=0 splines are Phi_m / Phi_0 (as in Agama).
 
     Parameters
     ----------
@@ -616,215 +623,304 @@ double mpetd_density(double t, double *pars, double *q, int n_dim) {
     Rscale (length scale)
     ngridR (number of grid points in R)
     ngridz (number of grid points in z)
+    mmax (maximum azimuthal order)
     gridR (length `ngridR`) - not actually R values, arcsinh(R/Rscale)
     gridz (length `ngridz`) - not actually z values, arcsinh(z/Rscale)
-    gridPhi (length `ngridR` * `ngridz`) - transformed Phi values
+    gridPhi (length (2*mmax+1) * `ngridR` * `ngridz`) - transformed Phi values,
+        one block per m = -mmax..mmax
     multipole_pars
     -- grid_R, grid_z, grid_Phi to ignore --
+
+    The state (cylspline_state) holds one gsl_spline2d per harmonic, built once by
+    cylspline_state_alloc(). Evaluation passes NULL accelerators (binary search) so
+    the shared state is never mutated.
 */
 
-double axisym_cylspline_value(double t, double *pars, double *q, int n_dim) {
-    int logScaling = (int)pars[1];
-    double Rscale = pars[2];
+typedef struct {
+    int mmax;
+    gsl_spline2d **spl;  // 2*mmax+1 splines, index m+mmax; NULL if Phi_m == 0
+} cylspline_state;
+
+static inline double *cylspline_mp_pars(double *pars) {
     int nR = (int)pars[3];
     int nz = (int)pars[4];
-
-    double Phi;
-    double Rasinh = sqrt(q[0]*q[0] + q[1]*q[1]);
-    double zasinh = q[2];
-    Rasinh = asinh(Rasinh / Rscale);
-    zasinh = asinh(zasinh / Rscale);
-
-    double gridR[nR];
-    double gridz[nz];
-    double gridPhi[nz * nR];
-    for (int i=0; i < nR; i++)
-        gridR[i] = pars[5 + i];
-    for (int i=0; i < nz; i++)
-        gridz[i] = pars[5 + nR + i];
-    for (int i=0; i < nR; i++)
-        for (int j=0; j < nz; j++)
-            gridPhi[i * nz + j] = pars[5 + nR + nz + i * nz + j];
-
-    const gsl_interp2d_type *T = gsl_interp2d_bicubic;
-    gsl_spline2d *spline = gsl_spline2d_alloc(T, nR, nz);
-    gsl_interp_accel *xacc = gsl_interp_accel_alloc();
-    gsl_interp_accel *yacc = gsl_interp_accel_alloc();
-
-    // TODO: interpolation is very slow I think because this setup is done every
-    // time the function is called...
-
-    if ((Rasinh >= gridR[0]) && (Rasinh <= gridR[nR-1]) &&
-        (zasinh >= gridz[0]) && (zasinh <= gridz[nz-1])) { // Use CylSpline
-
-        /* initialize interpolation */
-        // TODO: define this in wrapper, make all CPotential's have a void
-        // pointer array to store things like this, all these functions then
-        // need to accept one more parameter (or is there a way to do optional
-        // args in C?), ??, profit.
-        gsl_spline2d_init(spline, gridR, gridz, gridPhi, nR, nz);
-        Phi = gsl_spline2d_eval(spline, Rasinh, zasinh, xacc, yacc);
-
-        if (logScaling)
-            Phi = -exp(Phi);
-
-    } else {  // Use external Multipole
-        Phi = mp_potential(t, &pars[5 + nR + nz + nR * nz], q, n_dim);
-    }
-
-    gsl_spline2d_free(spline);
-    gsl_interp_accel_free(xacc);
-    gsl_interp_accel_free(yacc);
-
-    return Phi;
+    int mmax = (int)pars[5];
+    return &pars[6 + nR + nz + (2*mmax + 1) * nR * nz];
 }
 
-void axisym_cylspline_gradient(double t, double *__restrict__ pars, double *__restrict__ q_in, int n_dim, size_t N, double *__restrict__ grad_in, void *__restrict__ state) {
+void cylspline_state_free(void *state) {
+    cylspline_state *s = (cylspline_state*)state;
+    if (s == NULL)
+        return;
+    for (int k = 0; k < 2*s->mmax + 1; k++)
+        if (s->spl[k] != NULL)
+            gsl_spline2d_free(s->spl[k]);
+    free(s->spl);
+    free(s);
+}
 
-    int logScaling = (int)pars[1];
-    double Rscale = pars[2];
+void *cylspline_state_alloc(double *pars) {
     int nR = (int)pars[3];
     int nz = (int)pars[4];
+    int mmax = (int)pars[5];
+    double *gridR = &pars[6];
+    double *gridz = &pars[6 + nR];
 
-    double gridR[nR];
-    double gridz[nz];
-    double gridPhi[nz * nR];
-    for (int i=0; i < nR; i++)
-        gridR[i] = pars[5 + i];
-    for (int i=0; i < nz; i++)
-        gridz[i] = pars[5 + nR + i];
-    for (int i=0; i < nR; i++)
-        for (int j=0; j < nz; j++)
-            gridPhi[i * nz + j] = pars[5 + nR + nz + i * nz + j];
+    cylspline_state *s = (cylspline_state*)malloc(sizeof(cylspline_state));
+    if (s == NULL)
+        return NULL;
+    s->mmax = mmax;
+    s->spl = (gsl_spline2d**)calloc(2*mmax + 1, sizeof(gsl_spline2d*));
+    if (s->spl == NULL) {
+        free(s);
+        return NULL;
+    }
 
-    const gsl_interp2d_type *T = gsl_interp2d_bicubic;
-    gsl_spline2d *spline = gsl_spline2d_alloc(T, nR, nz);
-    gsl_interp_accel *xacc = gsl_interp_accel_alloc();
-    gsl_interp_accel *yacc = gsl_interp_accel_alloc();
+    for (int k = 0; k < 2*mmax + 1; k++) {
+        double *block = &pars[6 + nR + nz + k * nR * nz];
+        int nonzero = (k == mmax);  // always build the m=0 spline
+        for (int i = 0; (i < nR * nz) && !nonzero; i++)
+            nonzero = (block[i] != 0);
+        if (!nonzero)
+            continue;
 
-    /* initialize interpolation */
-    gsl_spline2d_init(spline, gridR, gridz, gridPhi, nR, nz);
+        s->spl[k] = gsl_spline2d_alloc(gsl_interp2d_bicubic, nR, nz);
+        if (s->spl[k] == NULL) {
+            cylspline_state_free(s);
+            return NULL;
+        }
+        // gsl_spline2d_init copies the grids, so pars need not outlive the spline
+        gsl_spline2d_init(s->spl[k], gridR, gridz, block, nR, nz);
+    }
+    return (void*)s;
+}
 
+/* Spline value and derivatives {f, f_u, f_v, f_uu, f_vv, f_uv} up to `order` */
+static inline void cylspline_eval(const gsl_spline2d *spl, double u, double v,
+                                  int order, double *f) {
+    f[0] = gsl_spline2d_eval(spl, u, v, NULL, NULL);
+    if (order >= 1) {
+        f[1] = gsl_spline2d_eval_deriv_x(spl, u, v, NULL, NULL);
+        f[2] = gsl_spline2d_eval_deriv_y(spl, u, v, NULL, NULL);
+    }
+    if (order >= 2) {
+        f[3] = gsl_spline2d_eval_deriv_xx(spl, u, v, NULL, NULL);
+        f[4] = gsl_spline2d_eval_deriv_yy(spl, u, v, NULL, NULL);
+        f[5] = gsl_spline2d_eval_deriv_xy(spl, u, v, NULL, NULL);
+    }
+}
+
+// Indices into the array of cylindrical potential derivatives
+enum { CP, CR, CZ, CPHI, CRR, CZZ, CRZ, CRPHI, CZPHI, CPHIPHI, NCYL };
+
+/*
+    Evaluate the potential at cylindrical (R, phi, z). Fills d[NCYL] with Phi and
+    its derivatives with respect to R, z, phi, up to the requested order (0, 1, or
+    2). Returns 0 if (R, z) is outside the grid, in which case the caller should
+    use the multipole expansion.
+*/
+static int cylspline_derivs(void *state, double *pars, double R, double phi, double z,
+                            int order, double *d) {
+    const cylspline_state *s = (const cylspline_state*)state;
+    int logScaling = (int)pars[1];
+    double Rs = pars[2];
+    int nR = (int)pars[3];
+    int nz = (int)pars[4];
+    int mmax = s->mmax;
+    double *gridR = &pars[6];
+    double *gridz = &pars[6 + nR];
+
+    double u = asinh(R / Rs);
+    double v = asinh(z / Rs);
+    // written so that NaN coordinates also fall through to the multipole
+    if (!((u >= gridR[0]) && (u <= gridR[nR-1]) && (v >= gridz[0]) && (v <= gridz[nz-1])))
+        return 0;
+
+    // m=0 term (amplitude unscaled) and its derivatives in (u, v)
+    double f[6] = {0., 0., 0., 0., 0., 0.};
+    double A[6];
+    cylspline_eval(s->spl[mmax], u, v, order, f);
+    if (logScaling) {
+        // A = -exp(f): A' = A f', A'' = A (f'' + f'^2)
+        A[0] = -exp(f[0]);
+        A[1] = A[0] * f[1];
+        A[2] = A[0] * f[2];
+        A[3] = A[0] * (f[3] + f[1]*f[1]);
+        A[4] = A[0] * (f[4] + f[2]*f[2]);
+        A[5] = A[0] * (f[5] + f[1]*f[2]);
+    } else {
+        for (int i = 0; i < 6; i++)
+            A[i] = f[i];
+    }
+
+    // Sum of the m!=0 terms T = sum_m g_m(u, v) trig_m(phi), and derivatives in
+    // (u, v, phi), indexed like d[]
+    double T[NCYL] = {0.};
+    for (int k = 0; k < 2*mmax + 1; k++) {
+        int m = k - mmax;
+        if (m == 0 || s->spl[k] == NULL)
+            continue;
+        double g[6] = {0., 0., 0., 0., 0., 0.};
+        cylspline_eval(s->spl[k], u, v, order, g);
+        int am = abs(m);
+        double c = cos(am * phi), sn = sin(am * phi);
+        double trig = (m > 0) ? c : sn;
+        double dtrig = (m > 0) ? -am * sn : am * c;
+        T[CP] += g[0] * trig;
+        T[CR] += g[1] * trig;
+        T[CZ] += g[2] * trig;
+        T[CPHI] += g[0] * dtrig;
+        T[CRR] += g[3] * trig;
+        T[CZZ] += g[4] * trig;
+        T[CRZ] += g[5] * trig;
+        T[CRPHI] += g[1] * dtrig;
+        T[CZPHI] += g[2] * dtrig;
+        T[CPHIPHI] += -am * am * g[0] * trig;
+    }
+
+    // Phi in scaled coords: Phi = A (1 + T) if logScaling, else A + T
+    double P[NCYL];
+    if (logScaling) {
+        double B = 1. + T[CP];
+        P[CP] = A[0] * B;
+        P[CR] = A[1] * B + A[0] * T[CR];
+        P[CZ] = A[2] * B + A[0] * T[CZ];
+        P[CPHI] = A[0] * T[CPHI];
+        P[CRR] = A[3] * B + 2 * A[1] * T[CR] + A[0] * T[CRR];
+        P[CZZ] = A[4] * B + 2 * A[2] * T[CZ] + A[0] * T[CZZ];
+        P[CRZ] = A[5] * B + A[1] * T[CZ] + A[2] * T[CR] + A[0] * T[CRZ];
+        P[CRPHI] = A[1] * T[CPHI] + A[0] * T[CRPHI];
+        P[CZPHI] = A[2] * T[CPHI] + A[0] * T[CZPHI];
+        P[CPHIPHI] = A[0] * T[CPHIPHI];
+    } else {
+        P[CP] = A[0] + T[CP];
+        P[CR] = A[1] + T[CR];
+        P[CZ] = A[2] + T[CZ];
+        P[CPHI] = T[CPHI];
+        P[CRR] = A[3] + T[CRR];
+        P[CZZ] = A[4] + T[CZZ];
+        P[CRZ] = A[5] + T[CRZ];
+        P[CRPHI] = T[CRPHI];
+        P[CZPHI] = T[CZPHI];
+        P[CPHIPHI] = T[CPHIPHI];
+    }
+
+    // chain rule from (u, v) to (R, z):
+    // du/dR = 1/sqrt(Rs^2+R^2), d2u/dR2 = -R (du/dR)^3
+    double uR = 1. / sqrt(Rs*Rs + R*R);
+    double vz = 1. / sqrt(Rs*Rs + z*z);
+    d[CP] = P[CP];
+    d[CR] = P[CR] * uR;
+    d[CZ] = P[CZ] * vz;
+    d[CPHI] = P[CPHI];
+    d[CRR] = P[CRR] * uR*uR - P[CR] * R*uR*uR*uR;
+    d[CZZ] = P[CZZ] * vz*vz - P[CZ] * z*vz*vz*vz;
+    d[CRZ] = P[CRZ] * uR*vz;
+    d[CRPHI] = P[CRPHI] * uR;
+    d[CZPHI] = P[CZPHI] * vz;
+    d[CPHIPHI] = P[CPHIPHI];
+    return 1;
+}
+
+/*
+    Cylindrical coordinates of a Cartesian position. With m!=0 harmonics, phi is
+    undefined on the z axis, so the position is nudged off of it.
+*/
+static inline void cylspline_cyl(void *state, double *pars, double x, double y,
+                                 double *R, double *phi) {
+    *R = sqrt(x*x + y*y);
+    *phi = atan2(y, x);
+    if ((*R == 0) && (((cylspline_state*)state)->mmax > 0)) {
+        // ponytail: offset from the axis instead of taking analytic R->0 limits
+        // of the m!=0 terms; derive the limits if on-axis accuracy matters
+        *R = 1e-10 * pars[2];
+        *phi = 0.;
+    }
+}
+
+double cylspline_value(double t, double *pars, double *q, int n_dim, void *state) {
+    double d[NCYL], R, phi;
+    cylspline_cyl(state, pars, q[0], q[1], &R, &phi);
+    if (cylspline_derivs(state, pars, R, phi, q[2], 0, d))
+        return d[CP];
+    return mp_potential(t, cylspline_mp_pars(pars), q, n_dim);
+}
+
+void cylspline_gradient(double t, double *__restrict__ pars, double *__restrict__ q_in, int n_dim, size_t N, double *__restrict__ grad_in, void *__restrict__ state) {
     double6ptr q = double6ptr{q_in, N};
     double6ptr grad = double6ptr{grad_in, N};
+    double d[NCYL], R, phi;
 
     for(size_t i = 0; i < N; i++) {
-        double R = sqrt(q.x[i]*q.x[i] + q.y[i]*q.y[i]);
-        double Rasinh = asinh(R / Rscale);
-        double zasinh = asinh(q.z[i] / Rscale);
+        cylspline_cyl(state, pars, q.x[i], q.y[i], &R, &phi);
 
-        if ((Rasinh >= gridR[0]) && (Rasinh <= gridR[nR-1]) &&
-            (zasinh >= gridz[0]) && (zasinh <= gridz[nz-1])) { // Use CylSpline
-
-            double dPhi_dR = gsl_spline2d_eval_deriv_x(spline, Rasinh, zasinh, xacc, yacc);
-            dPhi_dR = dPhi_dR / (Rscale * cosh(Rasinh));
-
-            double dPhi_dz = gsl_spline2d_eval_deriv_y(spline, Rasinh, zasinh, xacc, yacc);
-            dPhi_dz = dPhi_dz / (Rscale * cosh(zasinh));
-
-            if (logScaling) {
-                double Phi = gsl_spline2d_eval(spline, Rasinh, zasinh, xacc, yacc);
-                Phi = -exp(Phi);
-                dPhi_dR = dPhi_dR * Phi;
-                dPhi_dz = dPhi_dz * Phi;
-            }
-
+        if (cylspline_derivs(state, pars, R, phi, q.z[i], 1, d)) {
             if (R > 0) {
-                grad.x[i] += dPhi_dR * q.x[i] / R;
-                grad.y[i] += dPhi_dR * q.y[i] / R;
-                grad.z[i] += dPhi_dz;
-            } else {
-                grad.z[i] += dPhi_dz;
+                double c = cos(phi), s = sin(phi);
+                grad.x[i] += c * d[CR] - s * d[CPHI] / R;
+                grad.y[i] += s * d[CR] + c * d[CPHI] / R;
             }
-
+            grad.z[i] += d[CZ];
         } else {  // Use external Multipole
-            _mp_gradient_single(t, &pars[5 + nR + nz + nR * nz], double6ptr{q_in + i, N}, n_dim, double6ptr{grad_in + i, N}, state);
+            _mp_gradient_single(t, cylspline_mp_pars(pars), double6ptr{q_in + i, N}, n_dim, double6ptr{grad_in + i, N}, NULL);
         }
     }
-
-    gsl_spline2d_free(spline);
-    gsl_interp_accel_free(xacc);
-    gsl_interp_accel_free(yacc);
 }
 
-double axisym_cylspline_density(double t, double *pars, double *q, int n_dim) {
-    double G = pars[0];
-    int logScaling = (int)pars[1];
-    double Rscale = pars[2];
-    int nR = (int)pars[3];
-    int nz = (int)pars[4];
+void cylspline_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state) {
+    double d[NCYL], R, phi;
+    cylspline_cyl(state, pars, q[0], q[1], &R, &phi);
 
-    return 0.0/0.0;
-
-    /* TODO: bug in the below... */
-
-    double dens;
-    double Phi, dPhi_dR, dPhi_dz, d2Phi_dR2, d2Phi_dz2;
-    double R = sqrt(q[0]*q[0] + q[1]*q[1]);
-    double Rasinh = asinh(R / Rscale);
-    double zasinh = asinh(q[2] / Rscale);
-
-    double gridR[nR];
-    double gridz[nz];
-    double gridPhi[nz * nR];
-    for (int i=0; i < nR; i++)
-        gridR[i] = pars[5 + i];
-    for (int i=0; i < nz; i++)
-        gridz[i] = pars[5 + nR + i];
-    for (int i=0; i < nR; i++)
-        for (int j=0; j < nz; j++)
-            gridPhi[i * nz + j] = pars[5 + nR + nz + i * nz + j];
-
-    const gsl_interp2d_type *T = gsl_interp2d_bicubic;
-    gsl_spline2d *spline = gsl_spline2d_alloc(T, nR, nz);
-    gsl_interp_accel *xacc = gsl_interp_accel_alloc();
-    gsl_interp_accel *yacc = gsl_interp_accel_alloc();
-
-    // TODO: interpolation is very slow I think because this setup is done every
-    // time the function is called...
-
-    if ((Rasinh >= gridR[0]) && (Rasinh <= gridR[nR-1]) &&
-        (zasinh >= gridz[0]) && (zasinh <= gridz[nz-1])) { // Use CylSpline
-
-        /* initialize interpolation */
-        // TODO: define this in wrapper, make all CPotential's have a void
-        // pointer array to store things like this, all these functions then
-        // need to accept one more parameter (or is there a way to do optional
-        // args in C?), ??, profit.
-        gsl_spline2d_init(spline, gridR, gridz, gridPhi, nR, nz);
-
-        dPhi_dR = gsl_spline2d_eval_deriv_x(spline, Rasinh, zasinh, xacc, yacc);
-        dPhi_dR = dPhi_dR / (Rscale * cosh(Rasinh));
-
-        dPhi_dz = gsl_spline2d_eval_deriv_y(spline, Rasinh, zasinh, xacc, yacc);
-        dPhi_dz = dPhi_dz / (Rscale * cosh(zasinh));
-
-        d2Phi_dR2 = gsl_spline2d_eval_deriv_xx(spline, Rasinh, zasinh, xacc, yacc);
-        d2Phi_dR2 = d2Phi_dR2 / pow(Rscale * cosh(Rasinh), 2);
-
-        d2Phi_dz2 = gsl_spline2d_eval_deriv_yy(spline, Rasinh, zasinh, xacc, yacc);
-        d2Phi_dz2 = d2Phi_dz2 / pow(Rscale * cosh(zasinh), 2);
-
-        if (logScaling) {
-            Phi = gsl_spline2d_eval(spline, Rasinh, zasinh, xacc, yacc);
-            Phi = -exp(Phi);
-            dPhi_dR = dPhi_dR * Phi;
-            d2Phi_dR2 = (d2Phi_dR2 + pow(dPhi_dR / Phi, 2)) * Phi;
-
-            dPhi_dz = dPhi_dz * Phi;
-            d2Phi_dz2 = (d2Phi_dz2 + pow(dPhi_dz / Phi, 2)) * Phi;
+    if (cylspline_derivs(state, pars, R, phi, q[2], 2, d)) {
+        double Hxx, Hyy, Hxy, Hxz, Hyz;
+        if (R > 0) {
+            double c = cos(phi), s = sin(phi);
+            // terms of the cylindrical -> Cartesian Hessian transformation
+            double tang = d[CR] / R + d[CPHIPHI] / (R*R);   // tangential curvature
+            double mixed = d[CRPHI] / R - d[CPHI] / (R*R);  // d/dR (Phi_phi / R)
+            Hxx = c*c * d[CRR] + s*s * tang - 2*c*s * mixed;
+            Hyy = s*s * d[CRR] + c*c * tang + 2*c*s * mixed;
+            Hxy = c*s * (d[CRR] - tang) + (c*c - s*s) * mixed;
+            Hxz = c * d[CRZ] - s * d[CZPHI] / R;
+            Hyz = s * d[CRZ] + c * d[CZPHI] / R;
+        } else {
+            Hxx = Hyy = d[CRR];
+            Hxy = Hxz = Hyz = 0.;
         }
+        hess[0] += Hxx; hess[1] += Hxy; hess[2] += Hxz;
+        hess[3] += Hxy; hess[4] += Hyy; hess[5] += Hyz;
+        hess[6] += Hxz; hess[7] += Hyz; hess[8] += d[CZZ];
 
-        dens = (dPhi_dR / R + d2Phi_dR2 + d2Phi_dz2) / (4 * M_PI * G);
-
-    } else {  // Use external Multipole
-        dens = mp_density(t, &pars[5 + nR + nz + nR * nz], q, n_dim);
+    } else {
+        // ponytail: central finite difference of the multipole gradient outside
+        // the grid; add an analytic mp hessian if accuracy there matters
+        double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);
+        double h = 1e-5 * r;
+        for (int j = 0; j < 3; j++) {
+            double qp[6] = {q[0], q[1], q[2], 0, 0, 0};
+            double qm[6] = {q[0], q[1], q[2], 0, 0, 0};
+            double gp[6] = {0.}, gm[6] = {0.};
+            qp[j] += h;
+            qm[j] -= h;
+            _mp_gradient_single(t, cylspline_mp_pars(pars), double6ptr{qp, 1}, n_dim, double6ptr{gp, 1}, NULL);
+            _mp_gradient_single(t, cylspline_mp_pars(pars), double6ptr{qm, 1}, n_dim, double6ptr{gm, 1}, NULL);
+            for (int i = 0; i < 3; i++)
+                hess[3*i + j] += (gp[i] - gm[i]) / (2*h);
+        }
     }
-    gsl_spline2d_free(spline);
-    gsl_interp_accel_free(xacc);
-    gsl_interp_accel_free(yacc);
+}
 
-    return dens;
+double cylspline_density(double t, double *pars, double *q, int n_dim, void *state) {
+    double G = pars[0];
+    double d[NCYL], R, phi;
+    cylspline_cyl(state, pars, q[0], q[1], &R, &phi);
+
+    if (cylspline_derivs(state, pars, R, phi, q[2], 2, d)) {
+        // Laplacian in cylindrical coords; dPhi/dR / R -> d2Phi/dR2 as R -> 0
+        double lap_R = (R > 0) ? d[CR] / R + d[CPHIPHI] / (R*R) : d[CRR];
+        return (d[CRR] + lap_R + d[CZZ]) / (4 * M_PI * G);
+    }
+    return mp_density(t, cylspline_mp_pars(pars), q, n_dim);
 }
 
 #endif  // USE_GSL

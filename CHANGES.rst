@@ -7,15 +7,11 @@ New Features
 - Added ``find_actions_staeckel_fudge()``, a native (C++) implementation of the Staeckel
   Fudge for computing actions, angles, and frequencies in axisymmetric potentials.
 
-API changes
------------
+- ``CylSplinePotential`` now supports non-axisymmetric potentials: ``grid_Phi`` can be a
+  3D array of azimuthal harmonics with shape ``(2*mmax+1, len(grid_R), len(grid_z))``
+  (as in Agama's ``CylSpline`` with ``mmax > 0``), and ``grid_z`` can cover negative z
+  for potentials that are not symmetric under z-reflection.
 
-- ``galpy`` and ``twobody`` are no longer optional dependencies. ``galpy`` is still
-  supported for interoperability, but must be installed separately.
-  ``isochrone_aa_to_xv()`` no longer requires ``twobody``.
-
-- The ``shared`` and ``extra`` optional dependencies are merged into ``extra``
-  (``pip install gala[extra]``).
 
 Bug fixes
 ---------
@@ -35,6 +31,13 @@ Bug fixes
 
 - Fixed ``circular_velocity()`` for position arrays with more than one batch dimension
   (e.g., shape ``(3, N, M)``), which returned scrambled values.
+
+- ``CylSplinePotential`` is much faster: the 2D spline is now built once instead of on
+  every call. It also now implements ``hessian()`` and ``density()``, which previously
+  returned zeros.
+
+- Fixed ``CylSplinePotential.from_file()``, which failed to read current Agama export
+  files.
 
 - Fixed ``HarmonicOscillatorPotential.hessian()``, which returned ``omega`` instead of
   ``omega**2`` on the diagonal.
@@ -58,6 +61,13 @@ API changes
   ``ValueError``, consistent with the documented meaning of ``lock``. Adding a non-C
   potential to a ``CCompositePotential`` now raises a ``TypeError`` before the
   component is inserted.
+
+- ``galpy`` and ``twobody`` are no longer optional dependencies. ``galpy`` is still
+  supported for interoperability, but must be installed separately.
+  ``isochrone_aa_to_xv()`` no longer requires ``twobody``.
+
+- The ``shared`` and ``extra`` optional dependencies are merged into ``extra``
+  (``pip install gala[extra]``).
 
 Other
 -----

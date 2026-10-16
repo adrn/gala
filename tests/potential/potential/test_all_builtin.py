@@ -574,8 +574,6 @@ class TestMultipoleOuter(CompositePotentialTestBase):
 @pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL to run this test")
 class TestCylspline(PotentialTestBase):
     check_finite_at_origin = True
-    skip_hessian = True  # TODO: implement
-    skip_density = True  # TODO: implement
 
     def setup_method(self):
         self.potential = p.CylSplinePotential.from_file(
@@ -584,10 +582,6 @@ class TestCylspline(PotentialTestBase):
         vc = self.potential.circular_velocity([19.0, 0, 0] * u.kpc).decompose(galactic)
         self.w0 = [19.0, 0.2, -0.9, 0.0, vc.value[0], 0.0]
         super().setup_method()
-
-    @pytest.mark.skip(reason="Not implemented for cylspline potentials")
-    def test_density(self):
-        pass
 
     @pytest.mark.skip(reason="Not implemented for cylspline potentials")
     def test_against_sympy(self):
@@ -602,6 +596,88 @@ class TestCylspline(PotentialTestBase):
         assert u.allclose(gala_ene, agama_tbl["pot"][:, 0], rtol=1e-3)
         for i in range(3):
             assert u.allclose(gala_acc[i], agama_tbl["acc"][:, i], rtol=1e-2)
+
+
+@pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL to run this test")
+@pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL to run this test")
+class TestCylsplineNonAxisym(PotentialTestBase):
+    """A tilted triaxial potential: all azimuthal harmonics, no z-symmetry."""
+
+    check_finite_at_origin = True
+    rotation = True
+
+    def setup_method(self):
+        self.potential = p.CylSplinePotential.from_file(
+            this_path / "agama_cylspline_tilted.pot", units=galactic
+        )
+        self.w0 = [8.0, 1.0, 0.5, 0.0, 0.15, 0.02]
+        super().setup_method()
+
+    @pytest.mark.skip(reason="Not implemented for cylspline potentials")
+    def test_against_sympy(self):
+        pass
+
+    def test_not_axisymmetric(self):
+        assert self.potential._symmetry is None
+
+
+@pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL to run this test")
+@pytest.mark.parametrize("name", ["mn", "triaxial", "tilted"])
+def test_cylspline_against_agama_export(name):
+    """
+    Load modern Agama CylSpline exports (see generate_agama.py) and compare to the
+    values Agama computes. The first 256 positions are inside the grid, the rest
+    outside of it (where the potential is a multipole expansion).
+    """
+    pot = p.CylSplinePotential.from_file(
+        this_path / f"agama_cylspline_{name}.pot", units=galactic
+    )
+    tbl = at.QTable.read(this_path / f"agama_cylspline_{name}.fits")
+    inside = np.arange(len(tbl)) < 256
+
+    ene = pot.energy(tbl["xyz"].T)
+    assert u.allclose(ene[inside], tbl["pot"][inside], rtol=1e-3)
+    assert u.allclose(ene[~inside], tbl["pot"][~inside], rtol=1e-2)
+
+    acc = pot.acceleration(tbl["xyz"].T).T
+    acc_err = np.linalg.norm(acc - tbl["acc"], axis=1) / np.linalg.norm(
+        tbl["acc"], axis=1
+    )
+    assert np.all(acc_err[inside] < 1e-2)
+    assert np.all(acc_err[~inside] < 5e-2)
+
+
+@pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL to run this test")
+@pytest.mark.parametrize("name", ["mn", "triaxial", "tilted"])
+def test_cylspline_hessian_vs_gradient(name):
+    """
+    The Hessian should match finite differences of the gradient, including near and
+    on the z axis and outside of the grid.
+    """
+    pot = p.CylSplinePotential.from_file(
+        this_path / f"agama_cylspline_{name}.pot", units=galactic
+    )
+    rng = np.random.default_rng(42)
+    xyz = np.hstack(
+        (
+            rng.uniform(-20, 20, size=(3, 16)) * [[1], [1], [0.3]],
+            [[1e-3, 0.5, 0.0, 200.0], [2e-3, -0.3, 0.0, -50.0], [0.5, 0.1, 1.0, 80.0]],
+        )
+    )
+
+    hess = pot.hessian(xyz).decompose(galactic).value
+    h = 1e-4
+    num = np.zeros_like(hess)
+    for j in range(3):
+        dx = np.zeros((3, 1))
+        dx[j] = h
+        num[:, j] = (
+            pot.gradient(xyz + dx).decompose(galactic).value
+            - pot.gradient(xyz - dx).decompose(galactic).value
+        ) / (2 * h)
+
+    scale = np.abs(num).max(axis=(0, 1))
+    assert np.all(np.abs(hess - num).max(axis=(0, 1)) < 1e-3 * scale)
 
 
 class TestBurkert(PotentialTestBase):

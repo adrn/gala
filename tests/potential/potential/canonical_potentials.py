@@ -75,7 +75,6 @@ NO_DENSITY = frozenset(
         "NullPotential",
         "KeplerPotential",
         "LM10Potential",
-        "CylSplinePotential",
     }
 )
 

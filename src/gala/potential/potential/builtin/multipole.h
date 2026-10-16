@@ -23,6 +23,9 @@ extern double mp_phi_lm(double r, double phi, double X, int l, int m, int inner)
 extern void mp_sph_grad_phi_lm(double r, double phi, double X, int l, int m, int lmax, int inner, double *sphgrad);
 
 
-extern double axisym_cylspline_value(double t, double *pars, double *q, int n_dim);
-extern void axisym_cylspline_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state);
-extern double axisym_cylspline_density(double t, double *pars, double *q, int n_dim);
+extern void *cylspline_state_alloc(double *pars);
+extern void cylspline_state_free(void *state);
+extern double cylspline_value(double t, double *pars, double *q, int n_dim, void *state);
+extern void cylspline_gradient(double t, double *pars, double *q, int n_dim, size_t N, double *grad, void *state);
+extern void cylspline_hessian(double t, double *pars, double *q, int n_dim, double *hess, void *state);
+extern double cylspline_density(double t, double *pars, double *q, int n_dim, void *state);
