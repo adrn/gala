@@ -107,7 +107,7 @@ jobs:
         env:
           OMP_NUM_THREADS: 1
         with:
-          mode: instrumentation
+          mode: simulation
           run: uv run --no-sync pytest tests/benchmarks -n auto --codspeed --durations=0 -v
           token: ${{ secrets.CODSPEED_TOKEN }}
 
