@@ -11,7 +11,7 @@ import astropy.units as u
 import numpy as np
 from astropy.constants import G
 from scipy.linalg import solve
-from scipy.optimize import minimize
+from scipy.optimize import brentq, minimize
 
 from gala.logging import logger
 
@@ -81,11 +81,60 @@ def generate_n_vectors(N_max, dx=1, dy=1, dz=1, half_lattice=True):
     return np.array(sorted(vecs, key=lambda x: (x[0], x[1], x[2])))
 
 
+def _fit_isochrone_force(xyz, pot):
+    """
+    Choose isochrone (m, b) so the toy radial force matches the true radial force
+    at the orbit's minimum and maximum radius (Sanders & Binney 2016, §3.2).
+    Returns None if no isochrone can match both radii.
+    """
+    r = np.linalg.norm(xyz, axis=0)
+    i1, i2 = np.argmin(r), np.argmax(r)
+    r1, r2 = r[i1], r[i2]
+    if not r2 > r1 > 0:
+        return None
+
+    # dPhi/dr = gradient . rhat at the actual orbit points
+    grad = pot.gradient(xyz[:, [i1, i2]]).decompose(pot.units).value
+    F1 = grad[:, 0] @ xyz[:, i1] / r1
+    F2 = grad[:, 1] @ xyz[:, i2] / r2
+    if not (F1 > 0 and F2 > 0):
+        return None
+
+    def dPhidr_over_GM(r, b):
+        a = np.sqrt(r**2 + b**2)
+        return r / (a * (b + a) ** 2)
+
+    # M cancels in the ratio; the ratio spans (r1/r2)^2 (b->0) to r2/r1 (b->inf)
+    def resid(logb):
+        b = np.exp(logb)
+        return np.log(dPhidr_over_GM(r2, b) / dPhidr_over_GM(r1, b)) - np.log(F2 / F1)
+
+    lo, hi = np.log(1e-6 * r1), np.log(1e6 * r2)
+    if np.sign(resid(lo)) == np.sign(resid(hi)):
+        return None
+
+    b = np.exp(brentq(resid, lo, hi))
+    G_ = G.decompose(pot.units).value
+    m = F1 / (G_ * dPhidr_over_GM(r1, b))
+
+    from gala.potential import IsochronePotential
+
+    return IsochronePotential(m=m, b=b, units=pot.units)
+
+
 @u.quantity_input(m0=u.Msun, b0=u.kpc)
-def fit_isochrone(orbit, m0=None, b0=None, minimize_kwargs=None):
+def fit_isochrone(orbit, m0=None, b0=None, minimize_kwargs=None, method="variance"):
     r"""
-    Fit the toy Isochrone potential to the sum of the energy residuals relative
-    to the mean energy by minimizing the function
+    Fit the toy Isochrone potential to an orbit.
+
+    With ``method="force"``, the mass and scale radius are chosen so
+    that the radial force of the toy potential matches that of the true potential
+    at the minimum and maximum radius of the orbit, as recommended by Sanders &
+    Binney (2016). If no isochrone can match both, this falls back to
+    ``method="variance"`` with a warning.
+
+    With ``method="variance"`` (the default), the parameters instead minimize the sum of the
+    energy residuals relative to the mean energy:
 
     .. math::
 
@@ -98,11 +147,17 @@ def fit_isochrone(orbit, m0=None, b0=None, minimize_kwargs=None):
     ----------
     orbit : `~gala.dynamics.Orbit`
     m0 : numeric (optional)
-        Initial guess for mass parameter of fitted Isochrone model.
+        Initial guess for mass parameter of fitted Isochrone model. Only used
+        with ``method="variance"``.
     b0 : numeric (optional)
-        Initial guess for scale length parameter of fitted Isochrone model.
+        Initial guess for scale length parameter of fitted Isochrone model. Only
+        used with ``method="variance"``.
     minimize_kwargs : dict (optional)
-        Keyword arguments to pass through to `scipy.optimize.minimize`.
+        Keyword arguments to pass through to `scipy.optimize.minimize`. Only
+        used with ``method="variance"``.
+    method : str (optional)
+        Either ``"variance"`` (default) or ``"force"``. The force matching is
+        much faster, but in tests it is not more accurate.
 
     Returns
     -------
@@ -124,6 +179,19 @@ def fit_isochrone(orbit, m0=None, b0=None, minimize_kwargs=None):
     w = np.squeeze(orbit.w(pot.units))
     if w.ndim > 2:
         raise ValueError("Input orbit object must be a single orbit.")
+
+    if method not in ("force", "variance"):
+        raise ValueError(f"method must be 'force' or 'variance', not {method!r}")
+
+    if method == "force":
+        toy = _fit_isochrone_force(w[:3], pot)
+        if toy is not None:
+            return toy
+        warnings.warn(
+            "Could not match isochrone radial force at the orbit's min/max radius; "
+            "falling back to method='variance'.",
+            RuntimeWarning,
+        )
 
     if (m0 is not None and b0 is None) or (m0 is None and b0 is not None):
         raise ValueError(
@@ -201,8 +269,7 @@ def fit_isochrone(orbit, m0=None, b0=None, minimize_kwargs=None):
     logm0 = np.log(m0)
     logb0 = np.log(b0)
 
-    if minimize_kwargs is None:
-        minimize_kwargs = {}
+    minimize_kwargs = dict(minimize_kwargs or {})
     minimize_kwargs.setdefault("x0", np.array([logm0, logb0]))
     minimize_kwargs.setdefault("method", "powell")
     res = minimize(f, args=(w,), **minimize_kwargs)
@@ -270,10 +337,9 @@ def fit_harmonic_oscillator(orbit, omega0=None, minimize_kwargs=None):
         )
         return np.sum(np.squeeze(H - np.mean(H)) ** 2)
 
-    if minimize_kwargs is None:
-        minimize_kwargs = {}
-    minimize_kwargs["x0"] = omega0
-    minimize_kwargs["method"] = minimize_kwargs.get("method", "powell")
+    minimize_kwargs = dict(minimize_kwargs or {})
+    minimize_kwargs.setdefault("x0", omega0)
+    minimize_kwargs.setdefault("method", "powell")
     res = minimize(f, args=(w,), **minimize_kwargs)
 
     if not res.success:
@@ -417,14 +483,8 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1.0, throw_out_modes=False):
         Vector that defines direction of circulation about the axes.
     """
 
-    # unroll the angles so they increase continuously instead of wrap
-    angles = np.unwrap(aa[3:])
-
     # generate integer vectors for fourier modes
     nvecs = generate_n_vectors(N_max, dx, dy, dz)
-
-    # make sure we have enough angle coverage
-    _modes, _P = check_angle_sampling(nvecs, angles)
 
     # throw out modes?
     # if throw_out_modes:
@@ -495,9 +555,6 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.0):
 
     # generate integer vectors for fourier modes
     nvecs = generate_n_vectors(N_max, dx, dy, dz)
-
-    # make sure we have enough angle coverage
-    _modes, _P = check_angle_sampling(nvecs, angles)
 
     # TODO: throw out modes?
     # if(throw_out_modes):
@@ -620,11 +677,17 @@ def _single_orbit_find_actions(
 
     if np.any(np.isnan(aa)):
         ix = ~np.any(np.isnan(aa), axis=0)
+        if ix.sum() < 0.5 * len(ix):
+            raise ValueError("Too many NaN values in toy actions or angles!")
+        warnings.warn(
+            f"Dropping {(~ix).sum()} samples with NaN toy actions or angles.",
+            RuntimeWarning,
+        )
         aa = aa[:, ix]
         t = t[ix]
-        warnings.warn("NaN value in toy actions or angles!")
-        if sum(ix) > 1:
-            raise ValueError("Too many NaN value in toy actions or angles!")
+
+    # make sure we have enough angle coverage
+    check_angle_sampling(generate_n_vectors(N_max, *dxyz), np.unwrap(aa[3:]))
 
     t1 = time.time()
     A, b, nvecs = _action_prepare(aa, N_max, dx=dxyz[0], dy=dxyz[1], dz=dxyz[2])
@@ -644,9 +707,8 @@ def _single_orbit_find_actions(
         f" matrix in {time.time() - t1} seconds"
     )
 
-    # Just some checks
-    if len(angles) > len(aa):
-        warnings.warn("More unknowns than equations!")
+    if len(angles) > 3 * aa.shape[1]:
+        warnings.warn("More unknowns than equations!", RuntimeWarning)
 
     J = actions[:3]  # * sign
     theta = angles[:3]
