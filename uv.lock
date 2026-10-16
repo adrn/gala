@@ -829,13 +829,6 @@ extra = [
     { name = "sympy" },
     { name = "tqdm" },
 ]
-shared = [
-    { name = "h5py" },
-    { name = "matplotlib" },
-    { name = "numexpr" },
-    { name = "sympy" },
-    { name = "tqdm" },
-]
 
 [package.dev-dependencies]
 dev = [
@@ -904,7 +897,6 @@ tutorials = [
 requires-dist = [
     { name = "astropy", specifier = ">=7.0" },
     { name = "cython", specifier = ">=0.29" },
-    { name = "gala", extras = ["extra"], marker = "extra == 'shared'" },
     { name = "h5py", marker = "extra == 'extra'" },
     { name = "matplotlib", marker = "extra == 'extra'", specifier = ">=3.10" },
     { name = "numexpr", marker = "extra == 'extra'" },
@@ -914,7 +906,7 @@ requires-dist = [
     { name = "sympy", marker = "extra == 'extra'" },
     { name = "tqdm", marker = "extra == 'extra'" },
 ]
-provides-extras = ["extra", "shared"]
+provides-extras = ["extra"]
 
 [package.metadata.requires-dev]
 dev = [
