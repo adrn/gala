@@ -189,7 +189,8 @@ def isochrone_aa_to_xv(actions, angles, potential):
         The computed positions and velocities.
     """
     Jr, Jphi, Jth = (np.atleast_1d(x) for x in actions)
-    thr, thphi, thth = (np.atleast_1d(x) for x in angles)
+    # the eccentric-anomaly and F() branches below assume angles in [0, 2pi)
+    thr, thphi, thth = (np.atleast_1d(x) % (2 * np.pi * u.rad) for x in angles)
 
     usys = potential.units
     GM = potential.G * potential.parameters["m"].decompose(usys).value

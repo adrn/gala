@@ -481,6 +481,9 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1.0, throw_out_modes=False):
         to 2 for just even terms.
     sign : numeric (optional)
         Vector that defines direction of circulation about the axes.
+    nvecs : array_like (optional)
+        Shape ``(N, 3)`` integer vectors to use instead of generating them from
+        ``N_max, dx, dy, dz``.
     """
 
     # generate integer vectors for fourier modes
@@ -518,7 +521,7 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1.0, throw_out_modes=False):
     return A, b, nvecs
 
 
-def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.0):
+def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.0, nvecs=None):
     """
     Given toy actions and angles, `aa`, compute the matrix `A` and
     vector `b` to solve for the vector of "true" angles, frequencies, and
@@ -548,13 +551,17 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.0):
         to 2 for just even terms.
     sign : numeric (optional)
         Vector that defines direction of circulation about the axes.
+    nvecs : array_like (optional)
+        Shape ``(N, 3)`` integer vectors to use instead of generating them from
+        ``N_max, dx, dy, dz``.
     """
 
     # unroll the angles so they increase continuously instead of wrap
     angles = np.unwrap(aa[3:])
 
     # generate integer vectors for fourier modes
-    nvecs = generate_n_vectors(N_max, dx, dy, dz)
+    if nvecs is None:
+        nvecs = generate_n_vectors(N_max, dx, dy, dz)
 
     # TODO: throw out modes?
     # if(throw_out_modes):
