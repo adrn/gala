@@ -171,3 +171,15 @@ class TestHarmonicOscillator:
             # test roundtrip
             # x2, v2 = harmonic_oscillator_aa_to_xv(actions, angles, self.potential)
             # TODO: transform back??
+
+
+def test_isochrone_aa_to_xv_wraps_angles():
+    """Angles outside [0, 2pi) map to the same point as their wrapped value."""
+    pot = IsochronePotential(m=1e11, b=3.0, units=galactic)
+    J = np.array([[0.05], [1.5], [0.03]]) * u.kpc**2 / u.Myr
+    ang = np.array([[2 * np.pi - 1e-3], [0.5], [0.5]]) * u.rad
+    w = isochrone_aa_to_xv(J, ang, pot)
+    for shift in (2 * np.pi, 4 * np.pi, -2 * np.pi):
+        w2 = isochrone_aa_to_xv(J, ang + [[shift], [shift], [shift]] * u.rad, pot)
+        assert u.allclose(w.xyz, w2.xyz, atol=1e-10 * u.kpc)
+        assert u.allclose(w.v_xyz, w2.v_xyz, atol=1e-10 * u.kpc / u.Myr)
