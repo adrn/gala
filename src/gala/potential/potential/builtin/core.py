@@ -458,6 +458,13 @@ class BurkertPotential(CPotentialBase):
 class EinastoPotential(CPotentialBase):
     r"""The Einasto model.
 
+    .. math::
+
+        \rho(r) = \rho_{{-2}} \exp\left\{{-\frac{{2}}{{\alpha}}
+            \left[\left(\frac{{r}}{{r_{{-2}}}}\right)^\alpha - 1\right]\right\}}
+
+    See, e.g., `Lazar et al. 2020 <https://arxiv.org/abs/2004.10817>`_.
+
     Parameters
     ----------
     rho_m2 : :class:`~astropy.units.Quantity`, numeric [mass density]
@@ -479,7 +486,15 @@ class EinastoPotential(CPotentialBase):
 
 @format_doc(common_doc=_potential_docstring)
 class CoreEinastoPotential(CPotentialBase):
-    r"""The core Einasto model.
+    r"""The core Einasto model from Lazar et al. 2020.
+
+    .. math::
+
+        \rho(r) = \rho_s \exp\left\{{-\frac{{2}}{{\alpha}}
+            \left[\left(\frac{{r + r_c}}{{r_s}}\right)^\alpha - 1\right]\right\}}
+
+    See `Lazar et al. 2020 <https://arxiv.org/abs/2004.10817>`_. With ``r_c=0``,
+    this reduces to :class:`EinastoPotential`.
 
     Parameters
     ----------
