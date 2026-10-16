@@ -1354,7 +1354,7 @@ class CylSplinePotential(CPotentialBase, GSL_only=True):
             )
         Phi0 = Phi_m[mmax, 0, np.argmin(np.abs(grid_z))]  # potential at R=0,z=0
 
-        self._multipole_pot = self._fit_asympt(grid_R, grid_z, Phi_m[mmax])
+        self._multipole_pot = self._fit_asympt(grid_R, grid_z, Phi_m)
         Phi_Rmax = self._multipole_pot.energy([1.0, 0, 0] * grid_R.max())
         Mtot = -Phi_Rmax[0] * grid_R.max()
 
@@ -1423,87 +1423,92 @@ class CylSplinePotential(CPotentialBase, GSL_only=True):
         }
         self._setup_wrapper(self._c_only)
 
-    def _fit_asympt(self, grid_R, grid_z, grid_Phi, lmax_fit=8):
+    def _fit_asympt(self, grid_R, grid_z, Phi_m, lmax_fit=8):
         """
-        Assumes z reflection symmetry
+        Fit an (outer) multipole expansion to the potential on the boundary of the
+        grid: the edges at the min and max z, and at the max R.
 
+        Parameters
+        ----------
+        grid_R, grid_z : `~astropy.units.Quantity`
+            The grid, as passed in by the user.
+        Phi_m : `~astropy.units.Quantity`
+            The azimuthal harmonics, shape ``(2*mmax+1, len(grid_R), len(grid_z))``.
         lmax_fit : int
             Number of meridional harmonics to fit - don't set too large
-
         """
-        try:
-            from scipy.special import sph_harm_y as _sph_harm_y
+        mmax = Phi_m.shape[0] // 2
+        R = grid_R.to_value(self.units["length"])
+        z = grid_z.to_value(self.units["length"])
+        Phi_m = Phi_m.decompose(self.units).value
+        nR, nz = len(R), len(z)
 
-        except ImportError:
-            from scipy.special import sph_harm as _sph_harm
+        # boundary points as indices into the grid, plus the sign of z: if the grid
+        # only covers z >= 0 (z-reflection symmetry), also use the mirrored points
+        if z[0] == 0:
+            iR = np.concatenate([np.arange(nR)] * 2 + [np.full(nz, nR - 1)] * 2)
+            iz = np.concatenate([np.full(nR, nz - 1)] * 2 + [np.arange(nz)] * 2)
+            zsign = np.repeat([1.0, -1.0, 1.0, -1.0], [nR, nR, nz, nz])
+        else:
+            iR = np.concatenate([np.arange(nR)] * 2 + [np.full(nz, nR - 1)])
+            iz = np.concatenate([np.zeros(nR, int), np.full(nR, nz - 1), np.arange(nz)])
+            zsign = np.ones(len(iR))
 
-            def _sph_harm_y(l, m, theta, phi):
-                return _sph_harm(m, l, phi, theta)
-
-        sizeR = len(grid_R)
-        sizez = len(grid_z)
-
-        # assemble the boundary points and their indices
-        assert grid_Phi.shape == (sizeR, sizez)
-        maxz = np.max(grid_z.value)
-
-        # first run along R at the max-z and min-z edges
-        points = np.concatenate(
-            ([[R, maxz] for R in grid_R.value], [[R, -maxz] for R in grid_R.value])
-        )
-        Phis = np.concatenate(
-            (grid_Phi[:, np.argmax(grid_z)].value, grid_Phi[:, np.argmax(grid_z)].value)
-        )
-
-        maxR = np.max(grid_R.value)
-        points = np.concatenate(
+        # sample enough azimuths to resolve all harmonics up to mmax
+        phi = np.linspace(0, 2 * np.pi, 2 * mmax + 1, endpoint=False)
+        ms = np.arange(-mmax, mmax + 1)[:, None]
+        trig = np.where(ms >= 0, np.cos(ms * phi), np.sin(-ms * phi))
+        Phis = np.einsum("mp,mb->bp", trig, Phi_m[:, iR, iz]).ravel()
+        xyz = np.stack(
             (
-                points,
-                [[maxR, z] for z in grid_z.value],
-                [[maxR, -z] for z in grid_z.value],
+                R[iR, None] * np.cos(phi),
+                R[iR, None] * np.sin(phi),
+                (zsign * z[iz])[:, None] * np.ones_like(phi),
             )
-        )
-        Phis = np.concatenate(
-            (
-                Phis,
-                grid_Phi[np.argmax(grid_R), :].value,
-                grid_Phi[np.argmax(grid_R), :].value,
-            )
-        )
+        ).reshape(3, -1)
 
-        npoints = len(points)
-        # ncoefs = lmax_fit + 1
+        r0 = min(np.max(grid_R), np.max(np.abs(grid_z)))
 
-        r0 = min(np.max(grid_R), np.max(grid_z))
-
-        i, j = len(grid_R) // 2, len(grid_z) // 2
+        i, j = nR // 2, nz // 2
         rr = np.sqrt(grid_R[i] ** 2 + grid_z[j] ** 2)
-        m = np.abs(grid_Phi[i, j] * rr / G).to(self.units["mass"])
-        scale = (G * m / r0).decompose(self.units).value
+        m = np.abs(Phi_m[mmax, i, j] * self.units["energy"] / self.units["mass"])
+        m = (m * rr / G).to(self.units["mass"])
 
-        # find values of spherical harmonic coefficients
-        # that best match the potential at the array of boundary points
+        # Solve for the coefficients in the least-squares sense. The basis functions
+        # are the multipole potential with one unit coefficient S_lm (cos) or T_lm
+        # (sin), so the fit uses the same normalization as MultipolePotential
+        names = [
+            f"{st}{l}{mm}"
+            for l in range(lmax_fit + 1)
+            for mm in range(min(l, mmax) + 1)
+            for st in ("ST" if mm > 0 else "S")
+        ]
+        matr = np.stack(
+            [
+                MultipolePotential(
+                    lmax=lmax_fit,
+                    m=m,
+                    r_s=r0,
+                    inner=False,
+                    units=self.units,
+                    **{name: 1.0},
+                )
+                .energy(xyz)
+                .decompose(self.units)
+                .value
+                for name in names
+            ],
+            axis=1,
+        )
+        sol, _resid, _rank, _s = np.linalg.lstsq(matr, Phis, rcond=None)
 
-        # for m-th harmonic, we may have lmax-m+1 different l-terms
-        matr = np.zeros((npoints, lmax_fit + 1))
-
-        # The linear system to solve in the least-square sense is M_{p,l} * S_l = R_p,
-        # where R_p = Phi at p-th boundary point (0<=p<npoints),
-        # M_{l,p}   = value of l-th harmonic coefficient at p-th boundary point,
-        # S_l       = the amplitude of l-th coefficient to be determined.
-        r = np.sqrt(points[:, 0] ** 2 + points[:, 1] ** 2)
-        theta = np.arctan2(points[:, 0], points[:, 1])
-
-        ls = np.arange(lmax_fit + 1)
-        Pl0 = np.stack([_sph_harm_y(l, 0, theta, 0.0).real for l in ls]).T
-
-        matr = (r[:, None] / r0.value) ** -(ls[None] + 1) * Pl0
-        y = Phis / scale
-        sol, _resid, _rank, _s = np.linalg.lstsq(matr, y, rcond=None)
-
-        pars = {f"S{l}0": sol[l].real for l in ls}
         return MultipolePotential(
-            lmax=lmax_fit, m=m, r_s=r0, inner=False, units=self.units, **pars
+            lmax=lmax_fit,
+            m=m,
+            r_s=r0,
+            inner=False,
+            units=self.units,
+            **dict(zip(names, sol, strict=True)),
         )
 
 
