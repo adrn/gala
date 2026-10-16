@@ -1240,25 +1240,37 @@ class MultipolePotential(CPotentialBase, GSL_only=True):
 
 
 @format_doc(common_doc=_potential_docstring)
-class CylSplinePotential(CPotentialBase):
+class CylSplinePotential(CPotentialBase, GSL_only=True):
     r"""
-    A flexible potential model that uses spline interpolation over a 2D grid in
-    cylindrical R-z coordinates.
+    A flexible potential model that uses spline interpolation over 2D grids in
+    cylindrical R-z coordinates, one per azimuthal harmonic (Agama's CylSpline).
+
+    The potential is :math:`\Phi = \sum_m \Phi_m(R, z) \, T_m(\phi)` with
+    :math:`T_m = \cos(m\phi)` for :math:`m \geq 0` and :math:`\sin(|m|\phi)`
+    for :math:`m < 0`. Outside of the grid, the potential is a multipole expansion
+    fit to the values on the grid boundary.
 
     Parameters
     ----------
     grid_R : `~astropy.units.Quantity`, numeric [length]
         A 1D grid of cylindrical radius R values. This should start at 0.
     grid_z : `~astropy.units.Quantity`, numeric [length]
-        A 1D grid of cylindrical z values. This should start at 0.
+        A 1D grid of cylindrical z values. If this starts at 0, the potential is
+        assumed to be symmetric under z-reflection; otherwise it must cover both
+        negative and positive z.
     grid_Phi : `~astropy.units.Quantity`, numeric [specific energy]
-        A 2D grid of potential values, evaluated at all R,z locations.
+        The potential values at all R, z grid locations. Either a 2D array with
+        shape ``(len(grid_R), len(grid_z))`` for an axisymmetric potential, or a 3D
+        array with shape ``(2*mmax+1, len(grid_R), len(grid_z))`` containing the
+        azimuthal harmonics :math:`\Phi_m` ordered :math:`m = -m_{{max}}, ..., m_{{max}}`.
     {common_doc}
     """
 
     grid_R = PotentialParameter("grid_R", physical_type="length", ndim=1)
     grid_z = PotentialParameter("grid_z", physical_type="length", ndim=1)
-    grid_Phi = PotentialParameter("grid_Phi", physical_type="specific energy", ndim=2)
+    grid_Phi = PotentialParameter(
+        "grid_Phi", physical_type="specific energy", ndim=(2, 3)
+    )
 
     Wrapper = CylSplineWrapper
     _symmetry = CylindricalSymmetry()
@@ -1321,9 +1333,28 @@ class CylSplinePotential(CPotentialBase):
         grid_R = self.parameters["grid_R"]
         grid_z = self.parameters["grid_z"]
         grid_Phi = self.parameters["grid_Phi"]
-        Phi0 = grid_Phi[0, 0]  # potential at R=0,z=0
 
-        self._multipole_pot = self._fit_asympt(grid_R, grid_z, grid_Phi)
+        # One (R, z) grid per azimuthal harmonic, m = -mmax..mmax; a 2D grid_Phi is
+        # the axisymmetric case (mmax = 0)
+        Phi_m = grid_Phi.reshape((-1, *grid_Phi.shape[-2:]))
+        if Phi_m.shape[0] % 2 != 1 or Phi_m.shape[1:] != (len(grid_R), len(grid_z)):
+            raise ValueError(
+                "CylSpline: grid_Phi must have shape (len(grid_R), len(grid_z)) or "
+                "(2*mmax+1, len(grid_R), len(grid_z))"
+            )
+        mmax = Phi_m.shape[0] // 2
+
+        # grid in z may only cover the half-space z>=0 if the density is
+        # z-reflection symmetric, otherwise it must cover both z<0 and z>0
+        zsym = grid_z[0] == 0
+        if not zsym and not grid_z[0] < 0:
+            raise ValueError(
+                "CylSpline: grid_z must start at 0 (for a z-reflection symmetric "
+                "potential) or cover both negative and positive z"
+            )
+        Phi0 = Phi_m[mmax, 0, np.argmin(np.abs(grid_z))]  # potential at R=0,z=0
+
+        self._multipole_pot = self._fit_asympt(grid_R, grid_z, Phi_m[mmax])
         Phi_Rmax = self._multipole_pot.energy([1.0, 0, 0] * grid_R.max())
         Mtot = -Phi_Rmax[0] * grid_R.max()
 
@@ -1334,39 +1365,37 @@ class CylSplinePotential(CPotentialBase):
         else:
             Rscale = grid_R[len(grid_R) // 2]  # "rather arbitrary"
 
-        # APW: assumed / enforced mmax=0 - different from Agama
+        # Values to interpolate: if the potential is negative everywhere, the m=0
+        # term is log-scaled and the other terms are normalized by the m=0 term
+        Phi_m = Phi_m.value
+        logScaling = np.all(Phi_m[mmax] < 0)
+        vals = Phi_m.copy()
+        if logScaling:
+            vals = Phi_m / Phi_m[mmax]
+            vals[mmax] = np.log(-Phi_m[mmax])
 
-        sizeR = len(grid_R)
-
-        # grid in z assumed to only cover half-space z>=0; the density is assumed
-        # to be z-reflection symmetric:
-        sizez_orig = len(grid_z)
-        grid_z = np.concatenate((-grid_z[::-1], grid_z[1:]))
-        sizez = len(grid_z)
+        if zsym:
+            grid_z = np.concatenate((-grid_z[::-1], grid_z[1:]))
+            vals = np.concatenate((vals[:, :, :0:-1], vals), axis=2)
 
         # transform the grid to log-scaled coordinates
         grid_R_asinh = np.arcsinh((grid_R / Rscale).decompose().value)
         grid_z_asinh = np.arcsinh((grid_z / Rscale).decompose().value)
 
-        logScaling = np.all(grid_Phi < 0)
-
-        # temporary containers of scaled potential and derivatives used to
-        # construct 2d splines
-
-        if grid_Phi.shape[0] != sizeR or grid_Phi.shape[1] != sizez_orig:
-            raise ValueError("CylSpline: incorrect coefs array size")
-
-        grid_Phi_full = np.zeros((sizeR, sizez))
-        grid_Phi_full[:, : sizez_orig - 1] = grid_Phi[:, :0:-1]
-        grid_Phi_full[:, sizez_orig - 1 :] = grid_Phi
-        grid_Phi_full = np.log(-grid_Phi_full) if logScaling else grid_Phi_full
-
-        # mirror the grid to R<0 so the spline is even in R and dPhi/dR = 0 on the
-        # z axis (otherwise the force has a kink at R=0)
+        # mirror the grid to R<0 to set the behavior of the splines on the z axis,
+        # where Phi_m goes as R^|m|: the |m|=1 terms are odd in R, and all others
+        # are even so that dPhi_m/dR = 0 at R=0 (as Agama imposes). Otherwise the
+        # force has a kink at R=0, and for |m|>=2 a spurious linear term makes the
+        # second derivatives diverge there
         if grid_R_asinh[0] == 0:
             grid_R_asinh = np.concatenate((-grid_R_asinh[:0:-1], grid_R_asinh))
-            grid_Phi_full = np.concatenate((grid_Phi_full[:0:-1], grid_Phi_full))
-            sizeR = len(grid_R_asinh)
+            parity = np.where(np.abs(np.arange(-mmax, mmax + 1)) == 1, -1.0, 1.0)
+            vals = np.concatenate(
+                (parity[:, None, None] * vals[:, :0:-1], vals), axis=1
+            )
+
+        if np.any(np.delete(Phi_m, mmax, axis=0) != 0):
+            self._symmetry = None  # not axisymmetric
 
         # Note: if MultipolePotential parameter order changes, this needs to be updated!
         multipole_pars = np.concatenate(
@@ -1383,11 +1412,13 @@ class CylSplinePotential(CPotentialBase):
         self._c_only = {
             "log_scaling": logScaling,
             "Rscale": Rscale.value,
-            "sizeR": sizeR,
-            "sizez": sizez,
+            "sizeR": len(grid_R_asinh),
+            "sizez": len(grid_z_asinh),
+            "mmax": mmax,
             "grid_R_trans": grid_R_asinh,
             "grid_z_trans": grid_z_asinh,
-            "grid_Phi_trans": grid_Phi_full.T,
+            # GSL layout: for each m, z-major with R varying fastest
+            "grid_Phi_trans": vals.transpose(0, 2, 1),
             "multipole_pars": multipole_pars,
         }
         self._setup_wrapper(self._c_only)
