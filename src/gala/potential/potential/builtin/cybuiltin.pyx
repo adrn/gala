@@ -244,10 +244,12 @@ cdef class EinastoWrapper(CPotentialWrapper):
         self.init([G] + list(parameters),
                   np.ascontiguousarray(q0),
                   np.ascontiguousarray(R))
-        self.cpotential.value[0] = <energyfunc>(einasto_value)
-        self.cpotential.density[0] = <densityfunc>(einasto_density)
-        self.cpotential.gradient[0] = <gradientfunc>(einasto_gradient)
-        self.cpotential.hessian[0] = <hessianfunc>(einasto_hessian)
+
+        if USE_GSL == 1:
+            self.cpotential.value[0] = <energyfunc>(einasto_value)
+            self.cpotential.density[0] = <densityfunc>(einasto_density)
+            self.cpotential.gradient[0] = <gradientfunc>(einasto_gradient)
+            self.cpotential.hessian[0] = <hessianfunc>(einasto_hessian)
 
 
 cdef class CoreEinastoWrapper(CPotentialWrapper):
@@ -256,10 +258,12 @@ cdef class CoreEinastoWrapper(CPotentialWrapper):
         self.init([G] + list(parameters),
                   np.ascontiguousarray(q0),
                   np.ascontiguousarray(R))
-        self.cpotential.value[0] = <energyfunc>(cEinasto_value)
-        self.cpotential.density[0] = <densityfunc>(cEinasto_density)
-        self.cpotential.gradient[0] = <gradientfunc>(cEinasto_gradient)
-        self.cpotential.hessian[0] = <hessianfunc>(cEinasto_hessian)
+
+        if USE_GSL == 1:
+            self.cpotential.value[0] = <energyfunc>(cEinasto_value)
+            self.cpotential.density[0] = <densityfunc>(cEinasto_density)
+            self.cpotential.gradient[0] = <gradientfunc>(cEinasto_gradient)
+            self.cpotential.hessian[0] = <hessianfunc>(cEinasto_hessian)
 
 
 # ============================================================================

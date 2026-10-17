@@ -455,7 +455,7 @@ class BurkertPotential(CPotentialBase):
 
 
 @format_doc(common_doc=_potential_docstring)
-class EinastoPotential(CPotentialBase):
+class EinastoPotential(CPotentialBase, GSL_only=True):
     r"""The Einasto model.
 
     .. math::
@@ -485,7 +485,7 @@ class EinastoPotential(CPotentialBase):
 
 
 @format_doc(common_doc=_potential_docstring)
-class CoreEinastoPotential(CPotentialBase):
+class CoreEinastoPotential(CPotentialBase, GSL_only=True):
     r"""The core Einasto model from Lazar et al. 2020.
 
     .. math::
