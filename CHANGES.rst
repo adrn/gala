@@ -96,6 +96,8 @@ New Features
 
 - Added support for using the ``TimeInterpolatedPotential`` with the
   ``MN3ExponentialDiskPotential`` class.
+- Improve performance of repeated gradient computations with transformed components by
+  allocating persistent scratch space.
 
 Bug fixes
 ---------
