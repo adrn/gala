@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 #include "cpotential.h"
 #include "src/vectorization.h"
 
@@ -215,23 +216,9 @@ void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
     // qp: shape [p->n_dim, N]
     // grad: shape [p->n_dim, N]
 
-    double *qp_trans = NULL;
-    double *tmp_grad = NULL;
-    bool need_transform = false;
+    double qp_trans[(p->n_dim) * N];
+    double tmp_grad[(p->n_dim) * N];
 
-    // Check if any components need transformation
-    for (size_t i = 0; i < p->n_components; i++) {
-        if (p->do_shift_rotate[i] != 0) {
-            need_transform = true;
-            break;
-        }
-    }
-
-    // Allocate temporary arrays if transformation is needed
-    if (need_transform) {
-        qp_trans = (double*)malloc(p->n_dim * N * sizeof(double));
-        tmp_grad = (double*)malloc(p->n_dim * N * sizeof(double));
-    }
 
     // Initialize gradient array
     // TODO: may need to remove this for n-body-style accumulations
@@ -244,10 +231,9 @@ void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
             (p->gradient)[i](t, (p->parameters)[i], qp, p->n_dim, N, grad, (p->state)[i]);
         } else {
             // Initialize temporary arrays
-            for (size_t j = 0; j < p->n_dim * N; j++) {
-                qp_trans[j] = 0.;
-                tmp_grad[j] = 0.;
-            }
+    	    memset(qp_trans, 0, sizeof(qp_trans));
+	    memset(tmp_grad, 0, sizeof(tmp_grad));
+
 
             // Apply shift and rotation to all particles
             apply_shift_rotate_N(
@@ -279,11 +265,6 @@ void c_gradient(CPotential *p, size_t N, double t, double *qp, double *grad) {
         }
     }
 
-    // Free temporary arrays
-    if (need_transform) {
-        free(qp_trans);
-        free(tmp_grad);
-    }
 }
 
 
