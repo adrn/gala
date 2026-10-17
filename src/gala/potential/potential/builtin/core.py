@@ -18,7 +18,9 @@ from gala._cconfig import EXP_ENABLED
 from gala.potential.common import PotentialParameter
 from gala.potential.potential.builtin.cybuiltin import (
     BurkertWrapper,
+    CoreEinastoWrapper,
     CylSplineWrapper,
+    EinastoWrapper,
     FlattenedNFWWrapper,
     HenonHeilesWrapper,
     HernquistWrapper,
@@ -53,8 +55,10 @@ from .time_interpolated import TimeInterpolatedPotential
 
 __all__ = [
     "BurkertPotential",
+    "CoreEinastoPotential",
     "CylSplinePotential",
     "EXPPotential",
+    "EinastoPotential",
     "HenonHeilesPotential",
     "HernquistPotential",
     "IsochronePotential",
@@ -448,6 +452,70 @@ class BurkertPotential(CPotentialBase):
         a = 0.021572405792749372 * u.Msun / u.pc**3  # converted: 1.46e-24 g/cm**3
         rho_d0 = a * (r0 / (3.07 * u.kpc)) ** (-2 / 3)
         return cls(rho=rho_d0, r0=r0, units=units)
+
+
+@format_doc(common_doc=_potential_docstring)
+class EinastoPotential(CPotentialBase, GSL_only=True):
+    r"""The Einasto model.
+
+    .. math::
+
+        \rho(r) = \rho_{{-2}} \exp\left\{{-\frac{{2}}{{\alpha}}
+            \left[\left(\frac{{r}}{{r_{{-2}}}}\right)^\alpha - 1\right]\right\}}
+
+    See, e.g., `Lazar et al. 2020 <https://arxiv.org/abs/2004.10817>`_.
+
+    Parameters
+    ----------
+    rho_m2 : :class:`~astropy.units.Quantity`, numeric [mass density]
+        Density at the radius where the logarithmic slope of the density profile is -2.
+    r_m2 : :class:`~astropy.units.Quantity`, numeric [length]
+        Radius where the logarithmic slope of the density profile is -2.
+    alpha :
+        Shape parameter.
+    {common_doc}
+    """
+
+    rho_m2 = PotentialParameter("rho_m2", physical_type="mass density")
+    r_m2 = PotentialParameter("r_m2", physical_type="length")
+    alpha = PotentialParameter("alpha", physical_type="dimensionless")
+
+    Wrapper = EinastoWrapper
+    _symmetry = SphericalSymmetry()
+
+
+@format_doc(common_doc=_potential_docstring)
+class CoreEinastoPotential(CPotentialBase, GSL_only=True):
+    r"""The core Einasto model from Lazar et al. 2020.
+
+    .. math::
+
+        \rho(r) = \rho_s \exp\left\{{-\frac{{2}}{{\alpha}}
+            \left[\left(\frac{{r + r_c}}{{r_s}}\right)^\alpha - 1\right]\right\}}
+
+    See `Lazar et al. 2020 <https://arxiv.org/abs/2004.10817>`_. With ``r_c=0``,
+    this reduces to :class:`EinastoPotential`.
+
+    Parameters
+    ----------
+    rho_s : :class:`~astropy.units.Quantity`, numeric [mass density]
+        Scale density (analogous to rho_-2 in the standard Einasto profile).
+    r_s : :class:`~astropy.units.Quantity`, numeric [length]
+        Scale radius (analogous to r_-2 in the standard Einasto profile).
+    alpha :
+        Shape parameter.
+    r_c : :class:`~astropy.units.Quantity`, numeric [length]
+        The core radius.
+    {common_doc}
+    """
+
+    rho_s = PotentialParameter("rho_s", physical_type="mass density")
+    r_s = PotentialParameter("r_s", physical_type="length")
+    alpha = PotentialParameter("alpha", physical_type="dimensionless")
+    r_c = PotentialParameter("r_c", physical_type="length")
+
+    Wrapper = CoreEinastoWrapper
+    _symmetry = SphericalSymmetry()
 
 
 # ============================================================================

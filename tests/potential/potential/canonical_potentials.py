@@ -53,6 +53,24 @@ CANONICAL = {
     "BurkertPotential": gp.BurkertPotential(
         units=galactic, rho=5e-25 * u.g / u.cm**3, r0=12
     ),
+    "EinastoPotential": (
+        gp.EinastoPotential(
+            units=galactic, rho_m2=5e-25 * u.g / u.cm**3, r_m2=12.0, alpha=0.16
+        )
+        if GSL_ENABLED
+        else None
+    ),
+    "CoreEinastoPotential": (
+        gp.CoreEinastoPotential(
+            units=galactic,
+            rho_s=5e-25 * u.g / u.cm**3,
+            r_s=12.0,
+            alpha=0.16,
+            r_c=1.0,
+        )
+        if GSL_ENABLED
+        else None
+    ),
     "MultipolePotential": (
         gp.MultipolePotential(
             units=galactic, m=1e10, r_s=15.0, inner=True, lmax=2, S10=1.0, S21=0.5

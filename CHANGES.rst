@@ -4,6 +4,9 @@
 New Features
 ------------
 
+- Added ``EinastoPotential`` and ``CoreEinastoPotential`` (Lazar et al. 2020) as
+  built-in C potentials (requires GSL).
+
 - Added ``find_actions_staeckel_fudge()``, a native (C++) implementation of the Staeckel
   Fudge for computing actions, angles, and frequencies in axisymmetric potentials.
 
