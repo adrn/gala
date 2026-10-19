@@ -103,7 +103,7 @@ jobs:
 
       - name: Run the benchmarks
         if: github.ref_type != 'tag'
-        uses: CodSpeedHQ/action@v5.4.2
+        uses: CodSpeedHQ/action@v5.5.0
         env:
           OMP_NUM_THREADS: 1
         with:
