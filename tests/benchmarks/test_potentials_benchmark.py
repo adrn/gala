@@ -69,6 +69,18 @@ class TestCanonicalPotentialsBenchmark(BenchmarkPotentialBase):
     pass
 
 
+@pytest.fixture
+def positions(n_points):
+    return np.random.default_rng(42).normal(0, 10, size=(3, n_points))
+
+
+@pytest.mark.benchmark
+@pytest.mark.parametrize("n_points", [1, 1_000, 10_000])
+def test_hessian(positions):
+    # Just one representative potential
+    CANONICAL["HernquistPotential"].hessian(positions)
+
+
 # ============================================================================
 # Special (file-based potentials with expensive setup)
 
