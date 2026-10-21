@@ -28,27 +28,28 @@ class BenchmarkPotentialBase:
     tested (e.g., for expensive potentials that are too slow at large n_points).
     """
 
-    @pytest.fixture(params=[1, 10, 1_000])
+    @pytest.fixture(params=[1, 1_000, 10_000])
     def n_points(self, request):
         return request.param
 
-    @pytest.fixture(scope="class")
-    def rng(self):
-        return np.random.default_rng(42)
+    @pytest.fixture
+    def q(self, potential, n_points):
+        # A fixture, so that generating the positions is not timed
+        return np.random.default_rng(42).normal(0, 10, size=(potential.ndim, n_points))
 
     @pytest.mark.benchmark
-    def test_energy(self, potential, n_points, rng):
-        potential.energy(rng.normal(0, 10, size=(potential.ndim, n_points)))
+    def test_energy(self, potential, q):
+        potential.energy(q)
 
     @pytest.mark.benchmark
-    def test_gradient(self, potential, n_points, rng):
-        potential.gradient(rng.normal(0, 10, size=(potential.ndim, n_points)))
+    def test_gradient(self, potential, q):
+        potential.gradient(q)
 
     @pytest.mark.benchmark
-    def test_density(self, potential, n_points, rng):
+    def test_density(self, potential, q):
         if type(potential).__name__ in NO_DENSITY:
             pytest.skip("density not implemented for this potential")  # type: ignore[call-arg]
-        potential.density(rng.normal(0, 10, size=(potential.ndim, n_points)))
+        potential.density(q)
 
 
 # ============================================================================
@@ -139,16 +140,16 @@ class TestTimeInterpolatedBenchmark(BenchmarkPotentialBase):
         )
 
     @pytest.mark.benchmark
-    def test_energy(self, potential, n_points, rng):
-        potential.energy(rng.normal(0, 10, size=(potential.ndim, n_points)), t=2.5)
+    def test_energy(self, potential, q):
+        potential.energy(q, t=2.5)
 
     @pytest.mark.benchmark
-    def test_gradient(self, potential, n_points, rng):
-        potential.gradient(rng.normal(0, 10, size=(potential.ndim, n_points)), t=2.5)
+    def test_gradient(self, potential, q):
+        potential.gradient(q, t=2.5)
 
     @pytest.mark.benchmark
-    def test_density(self, potential, n_points, rng):
-        potential.density(rng.normal(0, 10, size=(potential.ndim, n_points)), t=2.5)
+    def test_density(self, potential, q):
+        potential.density(q, t=2.5)
 
 
 @pytest.mark.skipif(not EXP_ENABLED, reason="requires EXP")
