@@ -1,3 +1,5 @@
+import os
+
 import astropy.units as u
 import numpy as np
 import pytest
@@ -35,7 +37,14 @@ def test_staeckel_fudge(potential, benchmark, n_points):
 
 @pytest.mark.parametrize("n_steps", [1_000, 10_000])
 @pytest.mark.parametrize("n_orbits", [1, 10])
-def test_o2gf(potential, benchmark, n_orbits, n_steps):
+def test_o2gf(request, potential, benchmark, n_orbits, n_steps):
+    # Codspeed takes an hour for 10 orbits; stick to 1.
+    codspeed = (
+        request.config.getoption("--codspeed", False) or "CODSPEED_ENV" in os.environ
+    )
+    if codspeed and n_orbits > 1:
+        pytest.skip("multiple orbits are only timed for the scaling benchmarks")
+
     # integrate outside the timed region: integration has its own benchmarks
     orbits = potential.integrate_orbit(
         make_w0(potential, n_orbits), dt=1 * u.Myr, n_steps=n_steps
