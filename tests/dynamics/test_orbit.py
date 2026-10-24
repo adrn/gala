@@ -25,14 +25,15 @@ from gala.units import galactic, solarsystem
 
 # Tests below should be cleaned up a bit...
 def test_initialize():
+    rng = np.random.default_rng(42)
     with pytest.raises(ValueError):
-        x = np.random.random(size=(3, 10))
-        v = np.random.random(size=(3, 8))
+        x = rng.random(size=(3, 10))
+        v = rng.random(size=(3, 8))
         Orbit(pos=x, vel=v)
 
     with pytest.raises(ValueError):
-        x = np.random.random(size=(3, 10))
-        v = np.random.random(size=(3, 10))
+        x = rng.random(size=(3, 10))
+        v = rng.random(size=(3, 10))
         t = np.arange(8)
         Orbit(pos=x, vel=v, t=t)
 
@@ -42,8 +43,8 @@ def test_initialize():
     # o = Orbit(pos=x, vel=v)
     # assert o.ndim == 3
 
-    x = np.random.random(size=(3, 10)) * u.kpc
-    v = np.random.random(size=(3, 10)) * u.km / u.s
+    x = rng.random(size=(3, 10)) * u.kpc
+    v = rng.random(size=(3, 10)) * u.km / u.s
     o = Orbit(pos=x, vel=v)
     assert o.xyz.unit == u.kpc
     assert o.v_x.unit == u.km / u.s
@@ -56,8 +57,8 @@ def test_initialize():
     # assert o.hamiltonian is None
 
     # Check that passing in frame and potential or Hamiltonian works
-    x = np.random.random(size=(3, 10)) * u.kpc
-    v = np.random.random(size=(3, 10)) * u.km / u.s
+    x = rng.random(size=(3, 10)) * u.kpc
+    v = rng.random(size=(3, 10)) * u.km / u.s
     frame = StaticFrame(galactic)
     potential = LogarithmicPotential(
         v_c=1.0, r_h=0.14, q1=1.0, q2=0.9, q3=1.0, units=galactic
@@ -79,8 +80,9 @@ def test_initialize():
 
 
 def test_no_copy():
-    x = np.random.random(size=(3, 10))
-    v = np.random.random(size=(3, 10))
+    rng = np.random.default_rng(42)
+    x = rng.random(size=(3, 10))
+    v = rng.random(size=(3, 10))
     o1 = Orbit(pos=x, vel=v, copy=True)
     o2 = Orbit(pos=x, vel=v, copy=False)
     x[0, 0] = 9999.0
@@ -89,7 +91,8 @@ def test_no_copy():
 
 
 def test_from_w():
-    w = np.random.random(size=(6, 10))
+    rng = np.random.default_rng(42)
+    w = rng.random(size=(6, 10))
     o = Orbit.from_w(w, galactic)
     assert o.xyz.unit == u.kpc
     assert o.v_x.unit == u.kpc / u.Myr
@@ -97,22 +100,23 @@ def test_from_w():
 
 def test_slice():
     # simple
-    x = np.random.random(size=(3, 10))
-    v = np.random.random(size=(3, 10))
+    rng = np.random.default_rng(42)
+    x = rng.random(size=(3, 10))
+    v = rng.random(size=(3, 10))
     o = Orbit(pos=x, vel=v)
     new_o = o[:5]
     assert new_o.shape == (5,)
 
-    x = np.random.random(size=(3, 10))
-    v = np.random.random(size=(3, 10))
+    x = rng.random(size=(3, 10))
+    v = rng.random(size=(3, 10))
     t = np.linspace(0, 10, 10)
     o = Orbit(pos=x, vel=v, t=t)
     new_o = o[:5]
     assert new_o.shape == (5,)
 
     # 1d slice on 3d
-    x = np.random.random(size=(3, 10, 8))
-    v = np.random.random(size=(3, 10, 8))
+    x = rng.random(size=(3, 10, 8))
+    v = rng.random(size=(3, 10, 8))
     t = np.arange(x.shape[1])
     o = Orbit(pos=x, vel=v, t=t)
     new_o = o[:5]
@@ -142,8 +146,8 @@ def test_slice():
     assert new_o.t.shape == (5,)
 
     # boolean array
-    x = np.random.random(size=(3, 10))
-    v = np.random.random(size=(3, 10))
+    x = rng.random(size=(3, 10))
+    v = rng.random(size=(3, 10))
     t = np.arange(x.shape[1])
     o = Orbit(pos=x, vel=v, t=t)
     ix = np.array([0, 0, 0, 0, 0, 1, 1, 1, 1, 1]).astype(bool)
@@ -152,8 +156,8 @@ def test_slice():
     assert new_o.t.shape == (5,)
 
     # boolean array - 3D
-    x = np.random.random(size=(3, 10, 4))
-    v = np.random.random(size=(3, 10, 4))
+    x = rng.random(size=(3, 10, 4))
+    v = rng.random(size=(3, 10, 4))
     t = np.arange(x.shape[1])
     o = Orbit(pos=x, vel=v, t=t)
     ix = np.array([0, 0, 0, 0, 0, 1, 1, 1, 1, 1]).astype(bool)
@@ -162,8 +166,8 @@ def test_slice():
     assert new_o.t.shape == (5,)
 
     # integer array
-    x = np.random.random(size=(3, 10))
-    v = np.random.random(size=(3, 10))
+    x = rng.random(size=(3, 10))
+    v = rng.random(size=(3, 10))
     t = np.arange(x.shape[1])
     o = Orbit(pos=x, vel=v, t=t)
     ix = np.array([0, 3, 5])
@@ -174,8 +178,9 @@ def test_slice():
 
 def test_reshape():
     # 1d slice on 3d
-    x = np.random.random(size=(3, 10, 8))
-    v = np.random.random(size=(3, 10, 8))
+    rng = np.random.default_rng(42)
+    x = rng.random(size=(3, 10, 8))
+    v = rng.random(size=(3, 10, 8))
     t = np.arange(x.shape[1])
     o = Orbit(pos=x, vel=v, t=t)
     new_o = o.reshape((10, 4, 2))
@@ -185,8 +190,9 @@ def test_reshape():
 
 def test_represent_as():
     # simple / unitless
-    x = np.random.random(size=(3, 10))
-    v = np.random.random(size=(3, 10))
+    rng = np.random.default_rng(42)
+    x = rng.random(size=(3, 10))
+    v = rng.random(size=(3, 10))
     o = Orbit(pos=x, vel=v)
     sph = o.represent_as(SphericalRepresentation)
 
@@ -194,8 +200,8 @@ def test_represent_as():
     assert sph.vel.d_distance.unit == u.one
 
     # simple / with units
-    x = np.random.random(size=(3, 10)) * u.kpc
-    v = np.random.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
+    x = rng.random(size=(3, 10)) * u.kpc
+    v = rng.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
     o = Orbit(pos=x, vel=v)
     sph = o.represent_as(SphericalRepresentation)
     assert sph.pos.distance.unit == u.kpc
@@ -203,8 +209,9 @@ def test_represent_as():
 
 
 def test_represent_as_expected_attributes():
-    x = np.random.random(size=(3, 10)) * u.kpc
-    v = np.random.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
+    rng = np.random.default_rng(42)
+    x = rng.random(size=(3, 10)) * u.kpc
+    v = rng.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
     o = Orbit(pos=x, vel=v)
 
     new_o = o.spherical
@@ -253,8 +260,8 @@ def test_represent_as_expected_attributes():
     assert hasattr(new_o, "v_xyz")
 
     # Check that this works with the NDCartesian classes too
-    x = np.random.random(size=(2, 10)) * u.kpc
-    v = np.random.normal(0.0, 100.0, size=(2, 10)) * u.km / u.s
+    x = rng.random(size=(2, 10)) * u.kpc
+    v = rng.normal(0.0, 100.0, size=(2, 10)) * u.km / u.s
     new_o = Orbit(pos=x, vel=v)
 
     assert hasattr(new_o, "x1")
@@ -267,23 +274,24 @@ def test_represent_as_expected_attributes():
 
 def test_to_coord_frame():
     # simple / unitless
-    x = np.random.random(size=(3, 10))
-    v = np.random.random(size=(3, 10))
+    rng = np.random.default_rng(42)
+    x = rng.random(size=(3, 10))
+    v = rng.random(size=(3, 10))
     o = Orbit(pos=x, vel=v)
 
     with pytest.raises(u.UnitConversionError):
         o.to_coord_frame(Galactic())
 
     # simple / with units
-    x = np.random.random(size=(3, 10)) * u.kpc
-    v = np.random.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
+    x = rng.random(size=(3, 10)) * u.kpc
+    v = rng.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
     o = Orbit(pos=x, vel=v)
     coo = o.to_coord_frame(Galactic())
     assert coo.name == "galactic"
 
     # simple / with units and time
-    x = np.random.random(size=(3, 128, 10)) * u.kpc
-    v = np.random.normal(0.0, 100.0, size=(3, 128, 10)) * u.km / u.s
+    x = rng.random(size=(3, 128, 10)) * u.kpc
+    v = rng.normal(0.0, 100.0, size=(3, 128, 10)) * u.km / u.s
     o = Orbit(pos=x, vel=v)
     coo = o.to_coord_frame(Galactic())
     assert coo.name == "galactic"
@@ -291,15 +299,16 @@ def test_to_coord_frame():
 
 def test_w():
     # simple / unitless
-    x = np.random.random(size=(3, 10))
-    v = np.random.random(size=(3, 10))
+    rng = np.random.default_rng(42)
+    x = rng.random(size=(3, 10))
+    v = rng.random(size=(3, 10))
     o = Orbit(pos=x, vel=v)
     w = o.w()
     assert w.shape == (6, 10)
 
     # simple / with units
-    x = np.random.random(size=(3, 10)) * u.kpc
-    v = np.random.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
+    x = rng.random(size=(3, 10)) * u.kpc
+    v = rng.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
     o = Orbit(pos=x, vel=v)
     with pytest.raises(ValueError):
         o.w()
@@ -309,8 +318,8 @@ def test_w():
 
     # simple / with units and potential
     p = HernquistPotential(units=galactic, m=1e11, c=0.25)
-    x = np.random.random(size=(3, 10)) * u.kpc
-    v = np.random.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
+    x = rng.random(size=(3, 10)) * u.kpc
+    v = rng.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
     o = Orbit(pos=x, vel=v, potential=p, frame=StaticFrame(galactic))
     w = o.w()
     assert np.allclose(x.value, w[:3, :])
@@ -323,8 +332,9 @@ def test_w():
 
 def test_energy():
     # with units
-    x = np.random.random(size=(3, 10)) * u.kpc
-    v = np.random.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
+    rng = np.random.default_rng(42)
+    x = rng.random(size=(3, 10)) * u.kpc
+    v = rng.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
     o = Orbit(pos=x, vel=v)
     KE = o.kinetic_energy()
     assert KE.unit == (o.v_x.unit) ** 2
@@ -332,8 +342,8 @@ def test_energy():
 
     # with units and potential
     p = HernquistPotential(units=galactic, m=1e11, c=0.25)
-    x = np.random.random(size=(3, 10)) * u.kpc
-    v = np.random.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
+    x = rng.random(size=(3, 10)) * u.kpc
+    v = rng.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
     o = Orbit(pos=x, vel=v, potential=p, frame=StaticFrame(galactic))
     o.potential_energy()
     o.energy()
@@ -341,8 +351,9 @@ def test_energy():
 
 def test_angular_momentum():
     # with units
-    x = np.random.random(size=(3, 10)) * u.kpc
-    v = np.random.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
+    rng = np.random.default_rng(42)
+    x = rng.random(size=(3, 10)) * u.kpc
+    v = rng.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
     o = Orbit(pos=x, vel=v)
     L = o.angular_momentum()
     assert L.unit == (o.v_x.unit * o.x.unit)
@@ -575,13 +586,14 @@ def test_align_circulation():
 
 
 def test_frame_transform():
+    rng = np.random.default_rng(42)
     static = StaticFrame(galactic)
     rotating = ConstantRotatingFrame(
         Omega=[0.53, 1.241, 0.9394] * u.rad / u.Myr, units=galactic
     )
 
-    x = np.random.random(size=(3, 10)) * u.kpc
-    v = np.random.random(size=(3, 10)) * u.km / u.s
+    x = rng.random(size=(3, 10)) * u.kpc
+    v = rng.random(size=(3, 10)) * u.km / u.s
     t = np.linspace(0, 1, 10) * u.Myr
 
     # no frame specified at init

@@ -193,8 +193,8 @@ class TestActions(ActionsBase):
             v_c=0.2, r_s=20.0, a=1.0, b=0.77, c=0.55, units=galactic
         )
         self.N = 8
-        np.random.seed(42)
-        w0 = isotropic_w0(N=self.N)
+        # RandomState reproduces the sample the Sanders reference code is validated on
+        w0 = isotropic_w0(np.random.RandomState(42), N=self.N)
         n_steps = 20000
 
         # integrate orbits
@@ -213,8 +213,10 @@ def test_compare_action_prepare():
         _angle_prepare,
     )
 
+    rng = np.random.default_rng(42)
+
     logger.setLevel(logging.ERROR)
-    AA = np.random.uniform(0.0, 100.0, size=(1000, 6))
+    AA = rng.uniform(0.0, 100.0, size=(1000, 6))
     t = np.linspace(0.0, 100.0, 1000)
 
     act_san, _n_vectors = solver.solver(AA, N_max=6, symNx=2)

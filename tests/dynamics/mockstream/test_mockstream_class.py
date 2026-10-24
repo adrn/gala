@@ -7,9 +7,10 @@ from gala.dynamics.mockstream import MockStream
 
 
 def test_init():
-    xyz = np.random.random(size=(3, 100)) * u.kpc
-    vxyz = np.random.random(size=(3, 100)) * u.km / u.s
-    t1 = np.random.random(size=100) * u.Myr
+    rng = np.random.default_rng(42)
+    xyz = rng.random(size=(3, 100)) * u.kpc
+    vxyz = rng.random(size=(3, 100)) * u.km / u.s
+    t1 = rng.random(size=100) * u.Myr
 
     lead_trail = np.empty(100, dtype="U1")
     lead_trail[::2] = "t"
@@ -27,8 +28,9 @@ def test_init():
 
 
 def test_no_copy():
-    xyz = np.random.random(size=(3, 100)) * u.kpc
-    vxyz = np.random.random(size=(3, 100)) * u.km / u.s
+    rng = np.random.default_rng(42)
+    xyz = rng.random(size=(3, 100)) * u.kpc
+    vxyz = rng.random(size=(3, 100)) * u.km / u.s
 
     s1 = MockStream(xyz, vxyz, copy=True)
     s2 = MockStream(xyz, vxyz, copy=False)

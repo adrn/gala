@@ -185,13 +185,14 @@ def pure_py(xyz, Snlm, Tnlm, nmax, lmax):
 
 
 def test_pure_py():
+    rng = np.random.default_rng(42)
     nmax = 6
     lmax = 4
 
     # xyz = np.array([[1., 0., 1.],
     #                 [1., 1., 0.],
     #                 [0., 1., 1.]])
-    xyz = np.random.uniform(-2.0, 2.0, size=(128, 3))
+    xyz = rng.uniform(-2.0, 2.0, size=(128, 3))
 
     # first try spherical:
     Snlm = np.zeros((nmax + 1, lmax + 1, lmax + 1))
@@ -209,7 +210,7 @@ def test_pure_py():
     assert np.allclose(py_grd, cy_grd)
 
     # non-spherical:
-    Snlm = np.random.uniform(-1, 1, size=(nmax + 1, lmax + 1, lmax + 1))
+    Snlm = rng.uniform(-1, 1, size=(nmax + 1, lmax + 1, lmax + 1))
     Tnlm = np.zeros_like(Snlm)
 
     py_den, py_pot, py_grd = pure_py(xyz.T, Snlm, Tnlm, nmax, lmax)

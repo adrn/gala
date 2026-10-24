@@ -36,7 +36,9 @@ if HAS_SYMPY:
         def test_derp(self):
             import numpy as np
 
-            self.potential.gradient(np.random.random(size=(1, 13)))
+            rng = np.random.default_rng(42)
+
+            self.potential.gradient(rng.random(size=(1, 13)))
 
         @pytest.mark.skip(reason="to_sympy() not implemented")
         def test_against_sympy(self):
