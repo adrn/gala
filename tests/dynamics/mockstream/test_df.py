@@ -58,6 +58,23 @@ def test_expected_failure(DF, DF_kwargs):
         DF(lead=False, trail=False, **DF_kwargs)
 
 
+def test_random_state():
+    orbit = gp.Hamiltonian(_TEST_POTENTIALS[0]).integrate_orbit(
+        [10.0, 0, 0, 0, 0.2, 0], dt=1.0, n_steps=100
+    )
+
+    # an integer seed is passed through np.random.default_rng
+    df1 = ms.FardalStreamDF(gala_modified=True, random_state=42)
+    df2 = ms.FardalStreamDF(gala_modified=True, random_state=42)
+    assert isinstance(df1.random_state, np.random.Generator)
+    o1 = df1.sample(orbit, 1e4 * u.Msun)
+    o2 = df2.sample(orbit, 1e4 * u.Msun)
+    assert u.allclose(o1.xyz, o2.xyz)
+
+    with pytest.warns(DeprecationWarning, match="RandomState"):
+        ms.FardalStreamDF(gala_modified=True, random_state=np.random.RandomState(42))
+
+
 def test_rotating_frame():
     DF = _DF_CLASSES[0]
     H_static = gp.Hamiltonian(_TEST_POTENTIALS[0])

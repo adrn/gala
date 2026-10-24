@@ -91,6 +91,13 @@ API changes
 - The ``shared`` and ``extra`` optional dependencies are merged into ``extra``
   (``pip install gala[extra]``).
 
+- Mock stream distribution functions (``FardalStreamDF``, etc.) now use a
+  ``numpy.random.Generator`` for ``random_state``. It defaults to
+  ``np.random.default_rng()`` and also accepts an integer seed. Passing a legacy
+  ``numpy.random.RandomState`` still works but is deprecated. The default generator
+  draws different random numbers than ``RandomState``, so unseeded streams will not
+  match those made with earlier versions.
+
 Other
 -----
 
