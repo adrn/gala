@@ -14,7 +14,7 @@ class _TestBase:
 
     @classmethod
     def setup_class(cls):
-        np.random.seed(42)
+        rng = np.random.default_rng(42)
 
         ndim = 6
         r_ndim = ndim  # return ndim
@@ -32,14 +32,14 @@ class _TestBase:
         # 1D - phase-space position
         cls.w0s.append(
             PSP(
-                pos=np.random.random(size=ndim // 2),
-                vel=np.random.random(size=ndim // 2),
+                pos=rng.random(size=ndim // 2),
+                vel=rng.random(size=ndim // 2),
             )
         )
         cls.w0s.append(
             PSP(
-                pos=np.random.random(size=ndim // 2) * u.kpc,
-                vel=np.random.random(size=ndim // 2) * u.km / u.s,
+                pos=rng.random(size=ndim // 2) * u.kpc,
+                vel=rng.random(size=ndim // 2) * u.km / u.s,
             )
         )
         cls.energy_return_shapes += [(1,)] * 2
@@ -49,14 +49,14 @@ class _TestBase:
         # 2D - phase-space position
         cls.w0s.append(
             PSP(
-                pos=np.random.random(size=(ndim // 2, norbits)),
-                vel=np.random.random(size=(ndim // 2, norbits)),
+                pos=rng.random(size=(ndim // 2, norbits)),
+                vel=rng.random(size=(ndim // 2, norbits)),
             )
         )
         cls.w0s.append(
             PSP(
-                pos=np.random.random(size=(ndim // 2, norbits)) * u.kpc,
-                vel=np.random.random(size=(ndim // 2, norbits)) * u.km / u.s,
+                pos=rng.random(size=(ndim // 2, norbits)) * u.kpc,
+                vel=rng.random(size=(ndim // 2, norbits)) * u.km / u.s,
             )
         )
         cls.energy_return_shapes += [(norbits,)] * 2
@@ -66,14 +66,14 @@ class _TestBase:
         # 3D - phase-space position
         cls.w0s.append(
             PSP(
-                pos=np.random.random(size=(ndim // 2, norbits, ntimes)),
-                vel=np.random.random(size=(ndim // 2, norbits, ntimes)),
+                pos=rng.random(size=(ndim // 2, norbits, ntimes)),
+                vel=rng.random(size=(ndim // 2, norbits, ntimes)),
             )
         )
         cls.w0s.append(
             PSP(
-                pos=np.random.random(size=(ndim // 2, norbits, ntimes)) * u.kpc,
-                vel=np.random.random(size=(ndim // 2, norbits, ntimes)) * u.km / u.s,
+                pos=rng.random(size=(ndim // 2, norbits, ntimes)) * u.kpc,
+                vel=rng.random(size=(ndim // 2, norbits, ntimes)) * u.km / u.s,
             )
         )
         cls.energy_return_shapes += [(norbits, ntimes)] * 2
@@ -83,14 +83,14 @@ class _TestBase:
         # 2D - orbit
         cls.w0s.append(
             ORB(
-                pos=np.random.random(size=(ndim // 2, ntimes)),
-                vel=np.random.random(size=(ndim // 2, ntimes)),
+                pos=rng.random(size=(ndim // 2, ntimes)),
+                vel=rng.random(size=(ndim // 2, ntimes)),
             )
         )
         cls.w0s.append(
             ORB(
-                pos=np.random.random(size=(ndim // 2, ntimes)) * u.kpc,
-                vel=np.random.random(size=(ndim // 2, ntimes)) * u.km / u.s,
+                pos=rng.random(size=(ndim // 2, ntimes)) * u.kpc,
+                vel=rng.random(size=(ndim // 2, ntimes)) * u.km / u.s,
             )
         )
         cls.energy_return_shapes += [(ntimes,)] * 2
@@ -111,14 +111,14 @@ class _TestBase:
         # 3D - orbit
         cls.w0s.append(
             ORB(
-                pos=np.random.random(size=(ndim // 2, ntimes, norbits)),
-                vel=np.random.random(size=(ndim // 2, ntimes, norbits)),
+                pos=rng.random(size=(ndim // 2, ntimes, norbits)),
+                vel=rng.random(size=(ndim // 2, ntimes, norbits)),
             )
         )
         cls.w0s.append(
             ORB(
-                pos=np.random.random(size=(ndim // 2, ntimes, norbits)) * u.kpc,
-                vel=np.random.random(size=(ndim // 2, ntimes, norbits)) * u.km / u.s,
+                pos=rng.random(size=(ndim // 2, ntimes, norbits)) * u.kpc,
+                vel=rng.random(size=(ndim // 2, ntimes, norbits)) * u.km / u.s,
             )
         )
         cls.energy_return_shapes += [(ntimes, norbits)] * 2

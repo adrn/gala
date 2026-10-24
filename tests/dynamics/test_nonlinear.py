@@ -36,6 +36,7 @@ class TestForcedPendulum:
             d0=d0,
             n_steps_per_pullback=n_steps_per_pullback,
             noffset_orbits=noffset,
+            rng=np.random.default_rng(42),
         )
 
         regular_LEs = np.mean(regular_LEs, axis=1)
@@ -49,6 +50,7 @@ class TestForcedPendulum:
             d0=d0,
             n_steps_per_pullback=n_steps_per_pullback,
             noffset_orbits=noffset,
+            rng=np.random.default_rng(42),
         )
         chaotic_LEs = np.mean(chaotic_LEs, axis=1)
         assert chaotic_LEs[-1] > 1e-2
@@ -126,6 +128,7 @@ class HenonHeilesBase:
             n_steps=self.n_steps,
             d0=d0,
             noffset_orbits=noffset,
+            rng=np.random.default_rng(42),
             n_steps_per_pullback=n_steps_per_pullback,
         )
         lyap = np.mean(lyap, axis=1)
@@ -218,6 +221,7 @@ class TestLogarithmic:
                 n_steps=self.n_steps,
                 d0=d0,
                 noffset_orbits=noffset,
+                rng=np.random.default_rng(42),
                 n_steps_per_pullback=n_steps_per_pullback,
             )
             lyap = np.mean(lyap, axis=1)
@@ -246,6 +250,7 @@ class TestLogarithmic:
                 n_steps=self.n_steps // 8,
                 d0=d0,
                 noffset_orbits=noffset,
+                rng=np.random.default_rng(42),
                 n_steps_per_pullback=n_steps_per_pullback,
             )
             lyap1 = np.mean(lyap1, axis=1)
@@ -262,6 +267,7 @@ class TestLogarithmic:
                 n_steps=self.n_steps // 8,
                 d0=d0,
                 noffset_orbits=noffset,
+                rng=np.random.default_rng(42),
                 n_steps_per_pullback=n_steps_per_pullback,
                 units=self.hamiltonian.units,
             )

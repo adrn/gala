@@ -137,7 +137,7 @@ def test_lorenz(Integrator):
 
 
 @pytest.mark.parametrize("Integrator", integrator_list)
-def test_memmap(tmpdir, Integrator):
+def test_memmap(tmpdir, Integrator, rng):
     dt = 0.1
     n_steps = 1000
     nw0 = 10000
@@ -145,7 +145,7 @@ def test_memmap(tmpdir, Integrator):
     filename = os.path.join(str(tmpdir), "test_memmap.npy")
     mmap = np.memmap(filename, mode="w+", shape=(2, n_steps + 1, nw0))
 
-    w0 = np.random.uniform(-1, 1, size=(2, nw0))
+    w0 = rng.uniform(-1, 1, size=(2, nw0))
 
     integrator = Integrator(sho_F, func_args=(1.0,))
 

@@ -142,7 +142,7 @@ def test_run(rng, basic_hamiltonian, progenitor_w0, progenitor_mass):
 
     # Test custom n_particles array
     gen = MockStreamGenerator(df=df, hamiltonian=basic_hamiltonian)
-    n_particles = np.random.randint(0, 4, size=101)
+    n_particles = rng.integers(0, 4, size=101)
     stream3, _ = gen.run(
         progenitor_w0,
         progenitor_mass,
@@ -677,7 +677,7 @@ def test_leapfrog_progenitor_final_position_uniform_release(
         pos=[13.0, 0.0, 20.0] * u.kpc, vel=[0, 130.0, 50] * u.km / u.s
     )
 
-    df = ChenStreamDF()
+    df = ChenStreamDF(random_state=np.random.default_rng(42))
     mw = MilkyWayPotential(version="latest")
     gen = MockStreamGenerator(df, mw)
 
@@ -723,7 +723,7 @@ def test_leapfrog_progenitor_final_position_sparse_release(
         pos=[13.0, 0.0, 20.0] * u.kpc, vel=[0, 130.0, 50] * u.km / u.s
     )
 
-    df = ChenStreamDF()
+    df = ChenStreamDF(random_state=np.random.default_rng(42))
     mw = MilkyWayPotential(version="latest")
     gen = MockStreamGenerator(df, mw)
 
@@ -765,7 +765,7 @@ def test_leapfrog_vs_dop853_consistency(basic_hamiltonian, progenitor_mass):
         pos=[13.0, 0.0, 20.0] * u.kpc, vel=[0, 130.0, 50] * u.km / u.s
     )
 
-    df = ChenStreamDF()
+    df = ChenStreamDF(random_state=np.random.default_rng(42))
     mw = MilkyWayPotential(version="latest")
     gen = MockStreamGenerator(df, mw)
 

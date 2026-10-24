@@ -77,7 +77,7 @@ def test_transform_correctness(to_frame):
 
     # generate proper motion samples and transform the samples:
     pm = np.vstack((c.pm_ra_cosdec.value, c.pm_dec.value)).T
-    rnd = np.random.RandomState(42)
+    rnd = np.random.default_rng(42)
 
     for i in range(len(c)):
         pm_samples = rnd.multivariate_normal(pm[i], cov[i], size=2**16)

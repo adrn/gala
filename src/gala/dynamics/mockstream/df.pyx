@@ -41,8 +41,9 @@ cdef class BaseStreamDF:
         Generate a leading tail. Default: True.
     trail : bool (optional)
         Generate a trailing tail. Default: True.
-    random_state : `~numpy.random.RandomState` (optional)
-        To control random number generation.
+    random_state : `~numpy.random.Generator`, int, or None (optional)
+        To control random number generation. Passed to
+        :func:`numpy.random.default_rng`, so an integer seed also works.
 
     """
     def __init__(self, lead=True, trail=True, random_state=None):
@@ -50,8 +51,17 @@ cdef class BaseStreamDF:
         self._lead = int(lead)
         self._trail = int(trail)
 
-        if random_state is None:
-            random_state = np.random.RandomState()
+        if isinstance(random_state, np.random.RandomState):
+            import warnings
+            from gala.util import GalaDeprecationWarning
+            warnings.warn(
+                "Passing a numpy.random.RandomState as random_state is deprecated; "
+                "pass a numpy.random.Generator instead, e.g. "
+                "np.random.default_rng(seed).",
+                GalaDeprecationWarning,
+            )
+        else:
+            random_state = np.random.default_rng(random_state)
         self.random_state = random_state
 
         if not self.lead and not self.trail:
@@ -250,8 +260,9 @@ cdef class StreaklineStreamDF(BaseStreamDF):
         Generate a leading tail. Default: True.
     trail : bool (optional)
         Generate a trailing tail. Default: True.
-    random_state : `~numpy.random.RandomState` (optional)
-        To control random number generation.
+    random_state : `~numpy.random.Generator`, int, or None (optional)
+        To control random number generation. Passed to
+        :func:`numpy.random.default_rng`, so an integer seed also works.
     """
 
     cpdef _sample(self, potential,
@@ -332,8 +343,9 @@ cdef class FardalStreamDF(BaseStreamDF):
         Generate a leading tail. Default: True.
     trail : bool (optional)
         Generate a trailing tail. Default: True.
-    random_state : `~numpy.random.RandomState` (optional)
-        To control random number generation.
+    random_state : `~numpy.random.Generator`, int, or None (optional)
+        To control random number generation. Passed to
+        :func:`numpy.random.default_rng`, so an integer seed also works.
     """
     def __init__(
         self, gala_modified=None, lead=True, trail=True, random_state=None
@@ -472,8 +484,9 @@ cdef class LagrangeCloudStreamDF(BaseStreamDF):
         Generate a leading tail. Default: True.
     trail : bool (optional)
         Generate a trailing tail. Default: True.
-    random_state : `~numpy.random.RandomState` (optional)
-        To control random number generation.
+    random_state : `~numpy.random.Generator`, int, or None (optional)
+        To control random number generation. Passed to
+        :func:`numpy.random.default_rng`, so an integer seed also works.
     """
 
     cdef public object v_disp
@@ -565,8 +578,9 @@ cdef class ChenStreamDF(BaseStreamDF):
         Generate a leading tail. Default: True.
     trail : bool (optional)
         Generate a trailing tail. Default: True.
-    random_state : `~numpy.random.RandomState` (optional)
-        To control random number generation.
+    random_state : `~numpy.random.Generator`, int, or None (optional)
+        To control random number generation. Passed to
+        :func:`numpy.random.default_rng`, so an integer seed also works.
     """
     def __init__(
         self, lead=True, trail=True, random_state=None

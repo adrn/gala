@@ -36,10 +36,6 @@ class PotentialTestBase:
     num_dx = None
     num_max_x = None
 
-    @pytest.fixture
-    def rng(self):
-        return np.random.default_rng(42)
-
     def setup_method(self):
         # set up hamiltonian
         if self.frame is None:

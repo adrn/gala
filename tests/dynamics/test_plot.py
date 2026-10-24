@@ -18,6 +18,7 @@ else:
 
 
 def pytest_generate_tests(metafunc):
+    rng = np.random.default_rng(42)
     if "obj" not in metafunc.fixturenames:
         return
 
@@ -25,40 +26,40 @@ def pytest_generate_tests(metafunc):
 
     norbits = 16
     object_list.append(
-        PhaseSpacePosition(pos=np.random.random(size=3), vel=np.random.random(size=3))
+        PhaseSpacePosition(pos=rng.random(size=3), vel=rng.random(size=3))
     )
     object_list.append(
         PhaseSpacePosition(
-            pos=np.random.random(size=(3, norbits)),
-            vel=np.random.random(size=(3, norbits)),
+            pos=rng.random(size=(3, norbits)),
+            vel=rng.random(size=(3, norbits)),
         )
     )
     object_list.append(
         PhaseSpacePosition(
-            pos=np.random.random(size=(3, norbits)) * u.kpc,
-            vel=np.random.random(size=(3, norbits)) * u.km / u.s,
+            pos=rng.random(size=(3, norbits)) * u.kpc,
+            vel=rng.random(size=(3, norbits)) * u.km / u.s,
         )
     )
 
     nsteps = 16
     object_list.append(
         Orbit(
-            pos=np.random.random(size=(3, nsteps)),
-            vel=np.random.random(size=(3, nsteps)),
+            pos=rng.random(size=(3, nsteps)),
+            vel=rng.random(size=(3, nsteps)),
             t=np.linspace(0, 1, nsteps),
         )
     )
     object_list.append(
         Orbit(
-            pos=np.random.random(size=(3, nsteps, 2)),
-            vel=np.random.random(size=(3, nsteps, 2)),
+            pos=rng.random(size=(3, nsteps, 2)),
+            vel=rng.random(size=(3, nsteps, 2)),
             t=np.linspace(0, 1, nsteps),
         )
     )
     object_list.append(
         Orbit(
-            pos=np.random.random(size=(3, nsteps)) * u.kpc,
-            vel=np.random.random(size=(3, nsteps)) * u.km / u.s,
+            pos=rng.random(size=(3, nsteps)) * u.kpc,
+            vel=rng.random(size=(3, nsteps)) * u.km / u.s,
             t=np.linspace(0, 1, nsteps) * u.Myr,
         )
     )
@@ -66,14 +67,14 @@ def pytest_generate_tests(metafunc):
     # 2D
     object_list.append(
         PhaseSpacePosition(
-            pos=np.random.random(size=(2, norbits)),
-            vel=np.random.random(size=(2, norbits)),
+            pos=rng.random(size=(2, norbits)),
+            vel=rng.random(size=(2, norbits)),
         )
     )
     object_list.append(
         Orbit(
-            pos=np.random.random(size=(2, nsteps)),
-            vel=np.random.random(size=(2, nsteps)),
+            pos=rng.random(size=(2, nsteps)),
+            vel=rng.random(size=(2, nsteps)),
             t=np.linspace(0, 1, nsteps),
         )
     )

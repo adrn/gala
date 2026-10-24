@@ -24,7 +24,7 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
                           double dt, int n_steps, double t0,
                           double d0, int n_steps_per_pullback, int noffset_orbits,
                           double atol=1E-10, double rtol=1E-10, int nmax=0,
-                          unsigned log_output=0):
+                          unsigned log_output=0, rng=None):
     cdef:
         int i, j, k, jiter
         int res
@@ -44,13 +44,16 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
         double[:, :, ::1] all_w = np.zeros((n_steps, norbits, ndim))
 
         # temp stuff
-        double[:, ::1] d0_vec = np.random.uniform(size=(noffset_orbits, ndim))
+        double[:, ::1] d0_vec
 
         # whoa, so many dots
         CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
         CFrameType cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
         void *args
+
+    rng = rng or np.random.default_rng()
+    d0_vec = rng.uniform(size=(noffset_orbits, ndim))
 
     # store initial conditions
     for i in range(norbits):
@@ -104,7 +107,7 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
                                     double dt, int n_steps, double t0,
                                     double d0, int n_steps_per_pullback, int noffset_orbits,
                                     double atol=1E-10, double rtol=1E-10, int nmax=0,
-                                    unsigned log_output=0):
+                                    unsigned log_output=0, rng=None):
     cdef:
         int i, j, k, jiter
         int res
@@ -123,13 +126,16 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
         double[:, ::1] LEs = np.zeros((niter, noffset_orbits))
 
         # temp stuff
-        double[:, ::1] d0_vec = np.random.uniform(size=(noffset_orbits, ndim))
+        double[:, ::1] d0_vec
 
         # whoa, so many dots
         CPotential* cp = (<CPotentialWrapper>(hamiltonian.potential.c_instance)).cpotential
         CFrameType cf = (<CFrameWrapper>(hamiltonian.frame.c_instance)).cframe
 
         void *args
+
+    rng = rng or np.random.default_rng()
+    d0_vec = rng.uniform(size=(noffset_orbits, ndim))
 
     # store initial conditions
     for i in range(norbits):

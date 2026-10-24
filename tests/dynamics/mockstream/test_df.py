@@ -30,21 +30,21 @@ def test_init_sample(DF, DF_kwargs, pot):
     n_times = len(orbit.t)
 
     # Different ways to initialize successfully:
-    df = DF(**DF_kwargs)
+    df = DF(random_state=np.random.default_rng(42), **DF_kwargs)
     o = df.sample(orbit, 1e4 * u.Msun)
     assert len(o.x) == 2 * n_times
 
-    df = DF(lead=False, **DF_kwargs)
+    df = DF(lead=False, random_state=np.random.default_rng(42), **DF_kwargs)
     o = df.sample(orbit, 1e4 * u.Msun)
     assert len(o.x) == n_times
 
-    df = DF(trail=False, **DF_kwargs)
+    df = DF(trail=False, random_state=np.random.default_rng(42), **DF_kwargs)
     o = df.sample(orbit, 1e4 * u.Msun)
     assert len(o.x) == n_times
 
-    df1 = DF(random_state=np.random.RandomState(42), **DF_kwargs)
+    df1 = DF(random_state=np.random.default_rng(42), **DF_kwargs)
     o1 = df1.sample(orbit, 1e4 * u.Msun)
-    df2 = DF(random_state=np.random.RandomState(42), **DF_kwargs)
+    df2 = DF(random_state=np.random.default_rng(42), **DF_kwargs)
     o2 = df2.sample(orbit, 1e4 * u.Msun)
     assert u.allclose(o1.xyz, o2.xyz)
     assert u.allclose(o1.v_xyz, o2.v_xyz)
@@ -56,6 +56,23 @@ def test_expected_failure(DF, DF_kwargs):
     # Expected failure:
     with pytest.raises(ValueError):
         DF(lead=False, trail=False, **DF_kwargs)
+
+
+def test_random_state():
+    orbit = gp.Hamiltonian(_TEST_POTENTIALS[0]).integrate_orbit(
+        [10.0, 0, 0, 0, 0.2, 0], dt=1.0, n_steps=100
+    )
+
+    # an integer seed is passed through np.random.default_rng
+    df1 = ms.FardalStreamDF(gala_modified=True, random_state=42)
+    df2 = ms.FardalStreamDF(gala_modified=True, random_state=42)
+    assert isinstance(df1.random_state, np.random.Generator)
+    o1 = df1.sample(orbit, 1e4 * u.Msun)
+    o2 = df2.sample(orbit, 1e4 * u.Msun)
+    assert u.allclose(o1.xyz, o2.xyz)
+
+    with pytest.warns(DeprecationWarning, match="RandomState"):
+        ms.FardalStreamDF(gala_modified=True, random_state=np.random.RandomState(42))
 
 
 def test_rotating_frame():
@@ -82,10 +99,10 @@ def test_rotating_frame():
     assert u.allclose(o.xyz, orbit_static.xyz, atol=1e-13 * u.kpc)
     assert u.allclose(o.v_xyz, orbit_static.v_xyz, atol=1e-13 * u.km / u.s)
 
-    df_static = DF(trail=False)
+    df_static = DF(trail=False, random_state=np.random.default_rng(42))
     xvt_static = df_static.sample(orbit_static, 1e6 * u.Msun)
 
-    df_rotating = DF(trail=False)
+    df_rotating = DF(trail=False, random_state=np.random.default_rng(42))
     xvt_rotating = df_rotating.sample(orbit_rotating, 1e6 * u.Msun)
     xvt_rotating_static = xvt_rotating.to_frame(
         H_static.frame, t=xvt_rotating.release_time

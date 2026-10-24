@@ -116,18 +116,18 @@ def plot_angles(t, angles, freqs, subsample_factor=1000):
     # axes[1].scatter(theta[0, ix], theta[2], alpha=0.5, marker='o', c=t)
 
 
-def isotropic_w0(N=100):
+def isotropic_w0(rng, N=100):
     # positions
-    d = np.random.lognormal(mean=np.log(25), sigma=0.5, size=N)
-    phi = np.random.uniform(0, 2 * np.pi, size=N)
-    theta = np.arccos(np.random.uniform(size=N) - 0.5)
+    d = rng.lognormal(mean=np.log(25), sigma=0.5, size=N)
+    phi = rng.uniform(0, 2 * np.pi, size=N)
+    theta = np.arccos(rng.uniform(size=N) - 0.5)
 
-    vr = np.random.normal(150.0, 40.0, size=N) * u.km / u.s
-    vt = np.random.normal(100.0, 40.0, size=N)
+    vr = rng.normal(150.0, 40.0, size=N) * u.km / u.s
+    vt = rng.normal(100.0, 40.0, size=N)
     vt = np.vstack((vt, np.zeros_like(vt))).T
 
     # rotate to be random position angle
-    pa = np.random.uniform(0, 2 * np.pi, size=N)
+    pa = rng.uniform(0, 2 * np.pi, size=N)
     M = np.array([[np.cos(pa), -np.sin(pa)], [np.sin(pa), np.cos(pa)]]).T
     vt = np.array([vv.dot(MM) for (vv, MM) in zip(vt, M)]) * u.km / u.s
     vphi, vtheta = vt.T

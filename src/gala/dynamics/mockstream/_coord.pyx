@@ -151,7 +151,7 @@ cdef void cyl_to_car(double *cyl, # in
 
 cpdef _test_sat_rotation_matrix():
     import numpy as np
-    np.random.seed(42)
+    rng = np.random.default_rng(42)
     n = 1024
 
     cdef:
@@ -162,7 +162,7 @@ cpdef _test_sat_rotation_matrix():
         unsigned int i, j
 
     for i in range(n):
-        w = np.random.uniform(size=6)
+        w = rng.uniform(size=6)
         sat_rotation_matrix(&w[0], &R[0, 0])
 
         x = np.array(R).dot(np.array(w)[:3])
@@ -187,12 +187,12 @@ cpdef _test_sat_rotation_matrix():
 
 cpdef _test_to_sat_coords_roundtrip():
     import numpy as np
-    np.random.seed(42)
+    rng = np.random.default_rng(42)
     n = 1024
 
     cdef:
-        double[:, ::1] w = np.random.uniform(size=(n, 6))
-        double[:, ::1] w_sat = np.random.uniform(size=(n, 6))
+        double[:, ::1] w = rng.uniform(size=(n, 6))
+        double[:, ::1] w_sat = rng.uniform(size=(n, 6))
         double[:, ::1] R = np.zeros((3, 3))
 
         double[::1] w_prime = np.zeros(6)
@@ -210,11 +210,11 @@ cpdef _test_to_sat_coords_roundtrip():
 
 cpdef _test_car_to_cyl_roundtrip():
     import numpy as np
-    np.random.seed(42)
+    rng = np.random.default_rng(42)
     n = 1024
 
     cdef:
-        double[:, ::1] w = np.random.uniform(-10, 10, size=(n, 6))
+        double[:, ::1] w = rng.uniform(-10, 10, size=(n, 6))
         double[::1] cyl = np.zeros(6)
         double[::1] w2 = np.zeros(6)
 
@@ -228,11 +228,11 @@ cpdef _test_car_to_cyl_roundtrip():
 
 cpdef _test_cyl_to_car_roundtrip():
     import numpy as np
-    # np.random.seed(42)
+    rng = np.random.default_rng(42)
     n = 1024
 
     cdef:
-        double[:, ::1] cyl = np.random.uniform(0, 2*np.pi, size=(n, 6))
+        double[:, ::1] cyl = rng.uniform(0, 2*np.pi, size=(n, 6))
         double[::1] w = np.zeros(6)
         double[::1] cyl2 = np.zeros(6)
 

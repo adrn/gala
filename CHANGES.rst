@@ -20,6 +20,9 @@ New Features
   apo/pericenter (Sanders & Binney 2016). This is much faster than the default
   energy-variance fit (``method="variance"``).
 
+- ``fast_lyapunov_max()`` now accepts an ``rng`` argument (a ``numpy.random.Generator``)
+  for the initial offset vectors, matching ``lyapunov_max()``.
+
 
 Bug fixes
 ---------
@@ -87,6 +90,13 @@ API changes
 
 - The ``shared`` and ``extra`` optional dependencies are merged into ``extra``
   (``pip install gala[extra]``).
+
+- Mock stream distribution functions (``FardalStreamDF``, etc.) now use a
+  ``numpy.random.Generator`` for ``random_state``. It defaults to
+  ``np.random.default_rng()`` and also accepts an integer seed. Passing a legacy
+  ``numpy.random.RandomState`` still works but is deprecated. The default generator
+  draws different random numbers than ``RandomState``, so unseeded streams will not
+  match those made with earlier versions.
 
 Other
 -----

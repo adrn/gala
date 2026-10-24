@@ -48,21 +48,22 @@ def test_estimate_dt_n_steps():
 
 class TestCombine:
     def setup_method(self):
-        x = np.random.random(size=(3,))
-        v = np.random.random(size=(3,))
+        rng = np.random.default_rng(42)
+        x = rng.random(size=(3,))
+        v = rng.random(size=(3,))
         p1 = PhaseSpacePosition(pos=x, vel=v)
         p2 = PhaseSpacePosition(pos=x, vel=v, frame=StaticFrame(galactic))
-        x = np.random.random(size=(3, 5))
-        v = np.random.random(size=(3, 5))
+        x = rng.random(size=(3, 5))
+        v = rng.random(size=(3, 5))
         p3 = PhaseSpacePosition(pos=x, vel=v)
         p4 = PhaseSpacePosition(pos=x * u.kpc, vel=v * u.km / u.s)
-        x = np.random.random(size=(2, 5))
-        v = np.random.random(size=(2, 5))
+        x = rng.random(size=(2, 5))
+        v = rng.random(size=(2, 5))
         p5 = PhaseSpacePosition(pos=x, vel=v)
         self.psps = [p1, p2, p3, p4, p5]
 
-        x = np.random.random(size=(3, 8))
-        v = np.random.random(size=(3, 8))
+        x = rng.random(size=(3, 8))
+        v = rng.random(size=(3, 8))
         o1 = Orbit(pos=x, vel=v)
         o2 = Orbit(pos=x, vel=v, t=np.arange(8))
 
@@ -75,8 +76,8 @@ class TestCombine:
             frame=StaticFrame(galactic),
         )
 
-        x = np.random.random(size=(2, 8))
-        v = np.random.random(size=(2, 8))
+        x = rng.random(size=(2, 8))
+        v = rng.random(size=(2, 8))
         o4 = Orbit(pos=x, vel=v, t=np.arange(8))
         self.orbs = [o1, o2, o3, o4]
 
