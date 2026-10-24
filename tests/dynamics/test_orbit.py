@@ -24,8 +24,7 @@ from gala.units import galactic, solarsystem
 
 
 # Tests below should be cleaned up a bit...
-def test_initialize():
-    rng = np.random.default_rng(42)
+def test_initialize(rng):
     with pytest.raises(ValueError):
         x = rng.random(size=(3, 10))
         v = rng.random(size=(3, 8))
@@ -79,8 +78,7 @@ def test_initialize():
     assert isinstance(o.frame, StaticFrame)
 
 
-def test_no_copy():
-    rng = np.random.default_rng(42)
+def test_no_copy(rng):
     x = rng.random(size=(3, 10))
     v = rng.random(size=(3, 10))
     o1 = Orbit(pos=x, vel=v, copy=True)
@@ -90,17 +88,15 @@ def test_no_copy():
     assert o2.x[0].value == 9999.0
 
 
-def test_from_w():
-    rng = np.random.default_rng(42)
+def test_from_w(rng):
     w = rng.random(size=(6, 10))
     o = Orbit.from_w(w, galactic)
     assert o.xyz.unit == u.kpc
     assert o.v_x.unit == u.kpc / u.Myr
 
 
-def test_slice():
+def test_slice(rng):
     # simple
-    rng = np.random.default_rng(42)
     x = rng.random(size=(3, 10))
     v = rng.random(size=(3, 10))
     o = Orbit(pos=x, vel=v)
@@ -176,9 +172,8 @@ def test_slice():
     assert new_o.t.shape == (len(ix),)
 
 
-def test_reshape():
+def test_reshape(rng):
     # 1d slice on 3d
-    rng = np.random.default_rng(42)
     x = rng.random(size=(3, 10, 8))
     v = rng.random(size=(3, 10, 8))
     t = np.arange(x.shape[1])
@@ -188,9 +183,8 @@ def test_reshape():
     assert new_o.x.shape == (10, 4, 2)
 
 
-def test_represent_as():
+def test_represent_as(rng):
     # simple / unitless
-    rng = np.random.default_rng(42)
     x = rng.random(size=(3, 10))
     v = rng.random(size=(3, 10))
     o = Orbit(pos=x, vel=v)
@@ -208,8 +202,7 @@ def test_represent_as():
     assert sph.vel.d_distance.unit == u.km / u.s
 
 
-def test_represent_as_expected_attributes():
-    rng = np.random.default_rng(42)
+def test_represent_as_expected_attributes(rng):
     x = rng.random(size=(3, 10)) * u.kpc
     v = rng.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
     o = Orbit(pos=x, vel=v)
@@ -272,9 +265,8 @@ def test_represent_as_expected_attributes():
     assert hasattr(new_o, "v_xyz")
 
 
-def test_to_coord_frame():
+def test_to_coord_frame(rng):
     # simple / unitless
-    rng = np.random.default_rng(42)
     x = rng.random(size=(3, 10))
     v = rng.random(size=(3, 10))
     o = Orbit(pos=x, vel=v)
@@ -297,9 +289,8 @@ def test_to_coord_frame():
     assert coo.name == "galactic"
 
 
-def test_w():
+def test_w(rng):
     # simple / unitless
-    rng = np.random.default_rng(42)
     x = rng.random(size=(3, 10))
     v = rng.random(size=(3, 10))
     o = Orbit(pos=x, vel=v)
@@ -330,9 +321,8 @@ def test_w():
     assert np.allclose(v.value, (w[3:, :] * u.au / u.yr).to(u.km / u.s).value)
 
 
-def test_energy():
+def test_energy(rng):
     # with units
-    rng = np.random.default_rng(42)
     x = rng.random(size=(3, 10)) * u.kpc
     v = rng.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
     o = Orbit(pos=x, vel=v)
@@ -349,9 +339,8 @@ def test_energy():
     o.energy()
 
 
-def test_angular_momentum():
+def test_angular_momentum(rng):
     # with units
-    rng = np.random.default_rng(42)
     x = rng.random(size=(3, 10)) * u.kpc
     v = rng.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
     o = Orbit(pos=x, vel=v)
@@ -585,8 +574,7 @@ def test_align_circulation():
     assert np.all(new_circ[:, 3] == 0.0)
 
 
-def test_frame_transform():
-    rng = np.random.default_rng(42)
+def test_frame_transform(rng):
     static = StaticFrame(galactic)
     rotating = ConstantRotatingFrame(
         Omega=[0.53, 1.241, 0.9394] * u.rad / u.Myr, units=galactic

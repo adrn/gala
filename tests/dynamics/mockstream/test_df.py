@@ -42,9 +42,9 @@ def test_init_sample(DF, DF_kwargs, pot):
     o = df.sample(orbit, 1e4 * u.Msun)
     assert len(o.x) == n_times
 
-    df1 = DF(random_state=np.random.RandomState(42), **DF_kwargs)
+    df1 = DF(random_state=np.random.default_rng(42), **DF_kwargs)
     o1 = df1.sample(orbit, 1e4 * u.Msun)
-    df2 = DF(random_state=np.random.RandomState(42), **DF_kwargs)
+    df2 = DF(random_state=np.random.default_rng(42), **DF_kwargs)
     o2 = df2.sample(orbit, 1e4 * u.Msun)
     assert u.allclose(o1.xyz, o2.xyz)
     assert u.allclose(o1.v_xyz, o2.v_xyz)

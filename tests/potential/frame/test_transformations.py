@@ -12,8 +12,7 @@ from gala.potential.frame.builtin.transformations import (
 from gala.units import galactic
 
 
-def test_axis_angle_rotate():
-    rng = np.random.default_rng(42)
+def test_axis_angle_rotate(rng):
     for x in [rng.random(size=(3, 32)), rng.random(size=(3, 32, 8))]:
         vec = rng.random(size=(3, 32))
         theta = rng.random(size=(32,))
@@ -53,8 +52,7 @@ def _helper(fi, fr, w, t=None):
     assert u.allclose(vel_r, w.v_xyz)
 
 
-def test_frame_transforms_3d():
-    rng = np.random.default_rng(42)
+def test_frame_transforms_3d(rng):
     frame_i = StaticFrame(units=galactic)
     frame_r = ConstantRotatingFrame(
         Omega=[0.112, 1.235, 0.8656] * u.rad / u.Myr, units=galactic
@@ -84,8 +82,7 @@ def test_frame_transforms_3d():
     _helper(frame_i, frame_r, w, t=0.0)
 
 
-def test_frame_transforms_2d():
-    rng = np.random.default_rng(42)
+def test_frame_transforms_2d(rng):
     frame_i = StaticFrame(units=galactic)
     frame_r = ConstantRotatingFrame(Omega=0.529 * u.rad / u.Myr, units=galactic)
 

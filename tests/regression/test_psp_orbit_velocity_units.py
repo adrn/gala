@@ -27,8 +27,7 @@ unit_cases = [
 
 
 @pytest.mark.parametrize(("pos_unit", "vel_unit", "should_raise"), unit_cases)
-def test_psp_velocity_units(pos_unit, vel_unit, should_raise):
-    rng = np.random.default_rng(42)
+def test_psp_velocity_units(pos_unit, vel_unit, should_raise, rng):
     pos = rng.random(size=(3, 10)) * pos_unit
     vel = rng.random(size=(3, 10)) * vel_unit
 
@@ -40,8 +39,7 @@ def test_psp_velocity_units(pos_unit, vel_unit, should_raise):
 
 
 @pytest.mark.parametrize(("pos_unit", "vel_unit", "should_raise"), unit_cases)
-def test_orbit_velocity_units(pos_unit, vel_unit, should_raise):
-    rng = np.random.default_rng(42)
+def test_orbit_velocity_units(pos_unit, vel_unit, should_raise, rng):
     pos = rng.random(size=(3, 10)) * pos_unit
     vel = rng.random(size=(3, 10)) * vel_unit
     t = np.linspace(0, 1, 10) * u.Myr

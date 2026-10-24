@@ -154,7 +154,7 @@ def flattened_hernquist_gradient(x, y, z, G, M, a, q):
     return np.array([gx, gy, gz])
 
 
-def test_flattened_hernquist():
+def test_flattened_hernquist(rng):
     """
     This test compares the coefficients against some computed in the mathematica
     notebook 'flattened-hernquist.nb'. nmax and lmax here must match nmax and lmax
@@ -193,11 +193,10 @@ def test_flattened_hernquist():
     assert np.allclose(Snlm[0, ::2, 0], m_Snl0[0])
 
     # check that random points match in gradient and density
-    np.random.seed(42)
     n_test = 1024
-    r = 10.0 * np.cbrt(np.random.uniform(0.1**3, 1, size=n_test))  # 1 to 10
-    t = np.arccos(2 * np.random.uniform(size=n_test) - 1)
-    ph = np.random.uniform(0, 2 * np.pi, size=n_test)
+    r = 10.0 * np.cbrt(rng.uniform(0.1**3, 1, size=n_test))  # 1 to 10
+    t = np.arccos(2 * rng.uniform(size=n_test) - 1)
+    ph = rng.uniform(0, 2 * np.pi, size=n_test)
     x = r * np.cos(ph) * np.sin(t)
     y = r * np.sin(ph) * np.sin(t)
     z = r * np.cos(t)

@@ -137,8 +137,7 @@ def test_lorenz(Integrator):
 
 
 @pytest.mark.parametrize("Integrator", integrator_list)
-def test_memmap(tmpdir, Integrator):
-    rng = np.random.default_rng(42)
+def test_memmap(tmpdir, Integrator, rng):
     dt = 0.1
     n_steps = 1000
     nw0 = 10000

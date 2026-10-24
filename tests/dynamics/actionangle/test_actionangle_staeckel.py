@@ -152,10 +152,9 @@ def test_compare_staeckel_o2gf(find_actions):
 
 
 @requires_gsl
-def test_staeckel_isochrone():
+def test_staeckel_isochrone(rng):
     """In a spherical potential with Delta -> 0, the fudge is exact up to quadrature."""
     pot = gp.IsochronePotential(m=1e11, b=3.0, units=galactic)
-    rng = np.random.default_rng(42)
     N = 256
     w = PhaseSpacePosition(
         pos=rng.uniform(-8, 8, size=(3, N)) * u.kpc,

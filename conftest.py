@@ -2,6 +2,8 @@ import os
 import sys
 from pathlib import Path
 
+import numpy as np
+import pytest
 from pytest_astropy_header.display import (
     PYTEST_HEADER_MODULES,
     TESTED_VERSIONS,
@@ -10,6 +12,12 @@ from pytest_astropy_header.display import (
 # Add test helpers to path so they can be imported
 tests_dir = Path(__file__).parent
 sys.path.insert(0, str(tests_dir))
+
+
+@pytest.fixture
+def rng():
+    """Seeded random number generator; tests should draw from this, not np.random."""
+    return np.random.default_rng(42)
 
 
 def pytest_configure(config):

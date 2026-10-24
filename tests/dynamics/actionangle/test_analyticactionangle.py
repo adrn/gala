@@ -122,9 +122,9 @@ class TestHarmonicOscillator:
     def setup_method(self):
         logger.info("======== Harmonic Oscillator ========")
         self.N = 100
-        np.random.seed(42)
-        x = np.random.uniform(-10.0, 10.0, size=(3, self.N))
-        v = np.random.uniform(-1.0, 1.0, size=(3, self.N)) / 33.0
+        rng = np.random.default_rng(42)
+        x = rng.uniform(-10.0, 10.0, size=(3, self.N))
+        v = rng.uniform(-1.0, 1.0, size=(3, self.N)) / 33.0
         w0 = np.vstack((x, v))
 
         self.potential = HarmonicOscillatorPotential(

@@ -11,11 +11,10 @@ if not GSL_ENABLED:
 
 
 @pytest.mark.parametrize("func_name", ["energy", "density", "gradient"])
-def test_simple_compare_noninterp(func_name):
+def test_simple_compare_noninterp(func_name, rng):
     """
     Compare the interpolated to time-invariant versions for a trivial case
     """
-    rng = np.random.default_rng(42)
     nmax = 5
     lmax = 3
 

@@ -33,11 +33,7 @@ if HAS_SYMPY:
         potential = Potential(k=1.0)
         w0 = [1.0, 0.0]
 
-        def test_derp(self):
-            import numpy as np
-
-            rng = np.random.default_rng(42)
-
+        def test_derp(self, rng):
             self.potential.gradient(rng.random(size=(1, 13)))
 
         @pytest.mark.skip(reason="to_sympy() not implemented")

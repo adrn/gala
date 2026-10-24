@@ -1,5 +1,4 @@
 import astropy.units as u
-import numpy as np
 import pytest
 
 from gala.dynamics.representation_nd import (
@@ -8,9 +7,8 @@ from gala.dynamics.representation_nd import (
 )
 
 
-def test_init_repr():
+def test_init_repr(rng):
     # Passing in x1, x2
-    rng = np.random.default_rng(42)
     rep = NDCartesianRepresentation([1.0, 1.0])
     assert rep.xyz.shape == (2,)
 
@@ -36,9 +34,8 @@ def test_init_repr():
         assert rep2.shape == (8,)
 
 
-def test_init_diff():
+def test_init_diff(rng):
     # Passing in x1, x2
-    rng = np.random.default_rng(42)
     rep = NDCartesianDifferential([1.0, 1.0])
     assert rep.d_xyz.shape == (2,)
     with pytest.raises(TypeError):

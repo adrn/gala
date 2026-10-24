@@ -21,8 +21,7 @@ from gala.potential import (
 from gala.units import galactic, solarsystem
 
 
-def test_initialize():
-    rng = np.random.default_rng(42)
+def test_initialize(rng):
     with pytest.raises(ValueError):
         x = rng.random(size=(3, 10))
         v = rng.random(size=(3, 8))
@@ -91,8 +90,7 @@ def test_initialize():
         o = PhaseSpacePosition(pos=x, vel=v, frame="blah blah blah")
 
 
-def test_no_copy():
-    rng = np.random.default_rng(42)
+def test_no_copy(rng):
     x = rng.random(size=(3, 10))
     v = rng.random(size=(3, 10))
     o1 = PhaseSpacePosition(pos=x, vel=v, copy=True)
@@ -103,8 +101,7 @@ def test_no_copy():
     assert o2.x[0].value == 9999.0
 
 
-def test_from_w():
-    rng = np.random.default_rng(42)
+def test_from_w(rng):
     w = rng.random(size=(6, 10))
     o = PhaseSpacePosition.from_w(w, galactic)
     assert o.x.unit == u.kpc
@@ -112,9 +109,8 @@ def test_from_w():
     assert o.shape == (10,)
 
 
-def test_slice():
+def test_slice(rng):
     # simple
-    rng = np.random.default_rng(42)
     x = rng.random(size=(3, 10))
     v = rng.random(size=(3, 10))
     o = PhaseSpacePosition(pos=x, vel=v)
@@ -150,8 +146,7 @@ def test_slice():
     assert new_o.shape == (len(ix),)
 
 
-def test_reshape():
-    rng = np.random.default_rng(42)
+def test_reshape(rng):
     x = rng.random(size=(3, 10))
     v = rng.random(size=(3, 10))
     o = PhaseSpacePosition(pos=x, vel=v)
@@ -160,9 +155,8 @@ def test_reshape():
     assert new_o.x.shape == (10, 1)
 
 
-def test_represent_as():
+def test_represent_as(rng):
     # simple / unitless
-    rng = np.random.default_rng(42)
     x = rng.random(size=(3, 10))
     v = rng.random(size=(3, 10))
     o = PhaseSpacePosition(pos=x, vel=v)
@@ -193,8 +187,7 @@ def test_represent_as():
         o.represent_as(SphericalRepresentation)
 
 
-def test_represent_as_expected_attributes():
-    rng = np.random.default_rng(42)
+def test_represent_as_expected_attributes(rng):
     x = rng.random(size=(3, 10))
     v = rng.random(size=(3, 10))
     o = PhaseSpacePosition(pos=x, vel=v)
@@ -254,9 +247,8 @@ def test_represent_as_expected_attributes():
     assert hasattr(new_o, "v_xyz")
 
 
-def test_to_coord_frame():
+def test_to_coord_frame(rng):
     # simple / unitless
-    rng = np.random.default_rng(42)
     x = rng.random(size=(3, 10))
     v = rng.random(size=(3, 10))
     o = PhaseSpacePosition(pos=x, vel=v)
@@ -283,9 +275,8 @@ def test_to_coord_frame():
         o.to_coord_frame(Galactic())
 
 
-def test_w():
+def test_w(rng):
     # simple / unitless
-    rng = np.random.default_rng(42)
     x = rng.random(size=(3, 10))
     v = rng.random(size=(3, 10))
     o = PhaseSpacePosition(pos=x, vel=v)
@@ -338,9 +329,8 @@ def test_w():
 # ------------------------------------------------------------------------
 # Computed dynamical quantities
 # ------------------------------------------------------------------------
-def test_energy():
+def test_energy(rng):
     # with units
-    rng = np.random.default_rng(42)
     x = rng.random(size=(3, 10)) * u.kpc
     v = rng.normal(0.0, 100.0, size=(3, 10)) * u.km / u.s
     o = PhaseSpacePosition(pos=x, vel=v)
@@ -358,8 +348,7 @@ def test_energy():
     E = o.energy(H)
 
 
-def test_angular_momentum():
-    rng = np.random.default_rng(42)
+def test_angular_momentum(rng):
     w = PhaseSpacePosition([1.0, 0.0, 0.0], [0.0, 0.0, 1.0])
     assert u.allclose(np.squeeze(w.angular_momentum()), [0.0, -1, 0] * u.one)
 
@@ -387,8 +376,7 @@ def test_angular_momentum():
     assert L.shape == (3, 128)
 
 
-def test_guiding_radius():
-    rng = np.random.default_rng(42)
+def test_guiding_radius(rng):
 
     p = HernquistPotential(units=galactic, m=1e11, c=10.0)
 

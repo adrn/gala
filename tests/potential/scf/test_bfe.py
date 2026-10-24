@@ -184,8 +184,7 @@ def pure_py(xyz, Snlm, Tnlm, nmax, lmax):
     return density, potenti, gradien
 
 
-def test_pure_py():
-    rng = np.random.default_rng(42)
+def test_pure_py(rng):
     nmax = 6
     lmax = 4
 

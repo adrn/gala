@@ -6,8 +6,7 @@ from gala.dynamics.core import PhaseSpacePosition
 from gala.dynamics.mockstream import MockStream
 
 
-def test_init():
-    rng = np.random.default_rng(42)
+def test_init(rng):
     xyz = rng.random(size=(3, 100)) * u.kpc
     vxyz = rng.random(size=(3, 100)) * u.km / u.s
     t1 = rng.random(size=100) * u.Myr
@@ -27,8 +26,7 @@ def test_init():
         MockStream(xyz, vxyz, lead_trail=lead_trail[:-1])
 
 
-def test_no_copy():
-    rng = np.random.default_rng(42)
+def test_no_copy(rng):
     xyz = rng.random(size=(3, 100)) * u.kpc
     vxyz = rng.random(size=(3, 100)) * u.km / u.s
 

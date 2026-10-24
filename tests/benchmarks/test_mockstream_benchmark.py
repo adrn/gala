@@ -1,16 +1,9 @@
 import astropy.units as u
-import numpy as np
 import pytest
 
 import gala.dynamics as gd
 import gala.potential as gp
 from gala.dynamics import mockstream as ms
-
-
-@pytest.fixture
-def rng():
-    """Random number generator with fixed seed for reproducibility."""
-    return np.random.default_rng(42)
 
 
 @pytest.fixture

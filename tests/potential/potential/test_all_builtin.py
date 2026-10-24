@@ -649,7 +649,7 @@ def test_cylspline_against_agama_export(name):
 
 @pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL to run this test")
 @pytest.mark.parametrize("name", ["mn", "triaxial", "tilted"])
-def test_cylspline_hessian_vs_gradient(name):
+def test_cylspline_hessian_vs_gradient(name, rng):
     """
     The Hessian should match finite differences of the gradient, including near and
     on the z axis and outside of the grid.
@@ -657,7 +657,6 @@ def test_cylspline_hessian_vs_gradient(name):
     pot = p.CylSplinePotential.from_file(
         this_path / f"agama_cylspline_{name}.pot", units=galactic
     )
-    rng = np.random.default_rng(42)
     xyz = np.hstack(
         (
             rng.uniform(-20, 20, size=(3, 16)) * [[1], [1], [0.3]],
