@@ -21,6 +21,7 @@ def fast_lyapunov_max(
     rtol=1e-10,
     nmax=0,
     return_orbit=True,
+    rng=None,
 ):
     """
     Compute the maximum Lyapunov exponent using a fast C-implemented method.
@@ -59,6 +60,10 @@ def fast_lyapunov_max(
     return_orbit : bool, optional
         Whether to return the integrated orbit along with the Lyapunov
         exponent. Default is True.
+    rng : `numpy.random.Generator` (optional)
+        If provided, will use this random number generator to generate the
+        initial offset vectors. If not provided, will use
+        ``numpy.random.default_rng()``.
 
     Returns
     -------
@@ -121,6 +126,7 @@ def fast_lyapunov_max(
             atol,
             rtol,
             nmax,
+            rng=rng,
         )
         w = np.rollaxis(w, -1)
 
@@ -150,6 +156,7 @@ def fast_lyapunov_max(
         atol,
         rtol,
         nmax,
+        rng=rng,
     )
 
     try:
