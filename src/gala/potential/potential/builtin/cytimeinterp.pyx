@@ -283,7 +283,7 @@ cdef class TimeInterpolatedWrapper(CPotentialWrapper):
             self.interp_state.wrapped_potential = <void*>self.wrapped_potential.cpotential
 
             self.init(
-                [0.0],  # value of G doesn't matter for this wrapper
+                [G],
                 np.zeros(n_dim, dtype=np.float64),  # placeholder origin
                 np.eye(n_dim, dtype=np.float64),    # placeholder rotation
                 n_dim=n_dim
