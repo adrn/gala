@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from gala._cconfig import EXP_ENABLED, GSL_ENABLED
 
+import gala.dynamics as gd
 import gala.potential as gp
 from gala.units import SimulationUnitSystem, galactic
 
@@ -28,27 +29,28 @@ class BenchmarkPotentialBase:
     tested (e.g., for expensive potentials that are too slow at large n_points).
     """
 
-    @pytest.fixture(params=[1, 10, 1_000])
+    @pytest.fixture(params=[1, 1_000, 10_000])
     def n_points(self, request):
         return request.param
 
-    @pytest.fixture(scope="class")
-    def rng(self):
-        return np.random.default_rng(42)
+    @pytest.fixture
+    def q(self, potential, n_points):
+        # A fixture, so that generating the positions is not timed
+        return np.random.default_rng(42).normal(0, 10, size=(potential.ndim, n_points))
 
     @pytest.mark.benchmark
-    def test_energy(self, potential, n_points, rng):
-        potential.energy(rng.normal(0, 10, size=(potential.ndim, n_points)))
+    def test_energy(self, potential, q):
+        potential.energy(q)
 
     @pytest.mark.benchmark
-    def test_gradient(self, potential, n_points, rng):
-        potential.gradient(rng.normal(0, 10, size=(potential.ndim, n_points)))
+    def test_gradient(self, potential, q):
+        potential.gradient(q)
 
     @pytest.mark.benchmark
-    def test_density(self, potential, n_points, rng):
+    def test_density(self, potential, q):
         if type(potential).__name__ in NO_DENSITY:
             pytest.skip("density not implemented for this potential")  # type: ignore[call-arg]
-        potential.density(rng.normal(0, 10, size=(potential.ndim, n_points)))
+        potential.density(q)
 
 
 # ============================================================================
@@ -66,6 +68,18 @@ _canonical_potentials = {
 )
 class TestCanonicalPotentialsBenchmark(BenchmarkPotentialBase):
     pass
+
+
+@pytest.fixture
+def positions(n_points):
+    return np.random.default_rng(42).normal(0, 10, size=(3, n_points))
+
+
+@pytest.mark.benchmark
+@pytest.mark.parametrize("n_points", [1, 1_000, 10_000])
+def test_hessian(positions):
+    # Just one representative potential
+    CANONICAL["HernquistPotential"].hessian(positions)
 
 
 # ============================================================================
@@ -139,16 +153,16 @@ class TestTimeInterpolatedBenchmark(BenchmarkPotentialBase):
         )
 
     @pytest.mark.benchmark
-    def test_energy(self, potential, n_points, rng):
-        potential.energy(rng.normal(0, 10, size=(potential.ndim, n_points)), t=2.5)
+    def test_energy(self, potential, q):
+        potential.energy(q, t=2.5)
 
     @pytest.mark.benchmark
-    def test_gradient(self, potential, n_points, rng):
-        potential.gradient(rng.normal(0, 10, size=(potential.ndim, n_points)), t=2.5)
+    def test_gradient(self, potential, q):
+        potential.gradient(q, t=2.5)
 
     @pytest.mark.benchmark
-    def test_density(self, potential, n_points, rng):
-        potential.density(rng.normal(0, 10, size=(potential.ndim, n_points)), t=2.5)
+    def test_density(self, potential, q):
+        potential.density(q, t=2.5)
 
 
 @pytest.mark.skipif(not EXP_ENABLED, reason="requires EXP")
@@ -187,3 +201,40 @@ class TestEXPTimeInterpBenchmark(BenchmarkPotentialBase):
             coef_file=EXP_SINGLE_COEF_FILE,
             units=exp_units,
         )
+
+
+# ============================================================================
+# Input types other than plain arrays, which are converted before evaluation
+
+
+@pytest.fixture
+def positions_kpc(positions):
+    return positions * u.kpc
+
+
+@pytest.mark.benchmark
+@pytest.mark.parametrize("n_points", [1, 10_000])
+def test_energy_quantity(positions_kpc):
+    CANONICAL["HernquistPotential"].energy(positions_kpc)
+
+
+@pytest.fixture(scope="module")
+def orbit():
+    # 1,000 orbits x 1,000 times: large enough that copies of the orbit cost more
+    # than the fixed overhead of a call
+    rng = np.random.default_rng(42)
+    w0 = gd.PhaseSpacePosition(
+        pos=rng.normal(0, 10, size=(3, 1000)) * u.kpc,
+        vel=rng.normal(0, 100, size=(3, 1000)) * u.km / u.s,
+    )
+    return CANONICAL["HernquistPotential"].integrate_orbit(w0, dt=1.0, n_steps=999)
+
+
+@pytest.mark.benchmark
+def test_energy_orbit(orbit):
+    CANONICAL["HernquistPotential"].energy(orbit)
+
+
+@pytest.mark.benchmark
+def test_orbit_energy_method(orbit):
+    orbit.energy()
