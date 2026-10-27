@@ -228,6 +228,8 @@ class Hamiltonian(CommonBase):
         Integrator_kwargs=dict(),
         cython_if_possible=True,
         save_all=True,
+        diffusion=None,
+        kick_seed=None,
         **time_spec
     ):
         """
@@ -256,6 +258,15 @@ class Hamiltonian(CommonBase):
             Controls whether to store the phase-space position at all intermediate
             timesteps. Set to False to store only the final values (i.e. the
             phase-space position(s) at the final timestep). Default is True.
+        diffusion : `~gala.dynamics.diffusion.DiffusionBase` (optional)
+            A diffusion model (e.g. `~gala.dynamics.diffusion.ConstantDiffusion`). If
+            given, a stochastic Euler-Maruyama kick ``dw = mu*dt + L*sqrt(dt)*xi`` is
+            applied to every orbit after each step. Only supported with the C
+            `~gala.integrate.LeapfrogIntegrator` in a static frame, for forward
+            integration (``dt > 0``), and requires gala built with GSL.
+        kick_seed : int (optional)
+            Seed for the kick's random numbers. The same seed reproduces the same
+            noise; by default (``None``) every call draws fresh noise.
         **time_spec
             Specification of how long to integrate. Most commonly, this is a
             timestep ``dt`` and number of steps ``n_steps``, or a timestep
@@ -287,6 +298,33 @@ class Hamiltonian(CommonBase):
                 "lead to wildly incorrect orbits. It is recommended that you "
                 "use DOPRI853Integrator instead.", RuntimeWarning)
 
+        # Optional stochastic diffusion kick (see gala.dynamics.diffusion). This is
+        # currently only supported by the Cython LeapfrogIntegrator (which itself
+        # requires a StaticFrame; GSL support is checked when the kick is built).
+        kick_capsule = None
+        if diffusion is not None:
+            if not (self.c_enabled and cython_if_possible):
+                raise NotImplementedError(
+                    "The `diffusion` option requires the C integration path "
+                    "(c_enabled and cython_if_possible=True)."
+                )
+            if Integrator is not LeapfrogIntegrator:
+                raise NotImplementedError(
+                    "The `diffusion` option is currently only supported with the "
+                    "LeapfrogIntegrator."
+                )
+            if diffusion.units is not None and any(
+                diffusion.units[k] != self.units[k] for k in ("length", "time")
+            ):
+                raise ValueError(
+                    "diffusion.units must have the same length and time units as "
+                    "the Hamiltonian's unit system."
+                )
+            # SeedSequence(None) draws fresh entropy; hashing also keeps distinct
+            # user seeds distinct for GSL (which aliases e.g. 0 and 4357)
+            seed = np.random.SeedSequence(kick_seed).generate_state(1, np.uint64)[0]
+            kick_capsule = diffusion.kick_capsule(int(seed))
+
         if isinstance(w0, PhaseSpacePosition):
             ndim = w0.ndim
             arr_w0 = w0.w(self.units)
@@ -317,6 +355,10 @@ class Hamiltonian(CommonBase):
             from ...integrate.timespec import parse_time_specification
 
             t = np.ascontiguousarray(parse_time_specification(self.units, **time_spec))
+            if kick_capsule is not None and t[1] < t[0]:
+                raise ValueError(
+                    "The `diffusion` option only supports forward integration (dt > 0)."
+                )
 
             # TODO: these replacements should be defined in gala.integrate...
             # TODO: default kwargs should also be defined in gala.integrate, not here
@@ -324,7 +366,7 @@ class Hamiltonian(CommonBase):
                 from ...integrate.cyintegrators import leapfrog_integrate_hamiltonian
 
                 t, w = leapfrog_integrate_hamiltonian(
-                    self, arr_w0, t, save_all=save_all
+                    self, arr_w0, t, save_all=save_all, kick_capsule=kick_capsule
                 )
 
             elif Integrator == Ruth4Integrator:
