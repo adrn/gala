@@ -25,13 +25,7 @@ from cpython.pycapsule cimport PyCapsule_GetPointer, PyCapsule_IsValid
 # Optional per-step "kick" (e.g. stochastic diffusion) applied at the synchronized
 # state. Delivered via a PyCapsule so no diffusion/GSL code is linked into this
 # extension; we only need the struct layout to call the function pointer.
-cdef extern from "dynamics/diffusion/src/diffusion_kick.h":
-    ctypedef void (*kickfunc)(double t, double dt, double *x, double *v,
-                              double *dx, double *dv, void *state, void *rng) noexcept nogil
-    ctypedef struct DiffusionKick:
-        kickfunc kick
-        void *state
-        void *rng
+from ...dynamics.diffusion.diffusion_kick cimport DiffusionKick
 
 
 cdef void c_init_velocity(CPotential *p, size_t n, int half_ndim, double t, double dt,

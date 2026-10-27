@@ -305,3 +305,106 @@ def test_model_input_validation():
             np.zeros((3, 3, 6, 6)),
             units=galactic,
         )
+
+
+# ---- regression tests for review findings ----
+
+
+def _vel_diffusion(scale=1e-4):
+    D = np.zeros((6, 6))
+    D[3, 3] = D[4, 4] = D[5, 5] = scale
+    return ConstantDiffusion(D=D, basis="cartesian", units=galactic)
+
+
+def test_unseeded_calls_differ():
+    """kick_seed=None (default) draws fresh noise on every call."""
+    Hn, w0 = _free_ensemble(20)
+    kw = {"dt": 1.0, "n_steps": 20, "diffusion": _vel_diffusion()}
+    a = Hn.integrate_orbit(w0, **kw)
+    b = Hn.integrate_orbit(w0, **kw)
+    assert not np.array_equal(a.v_xyz.value, b.v_xyz.value)
+
+
+def test_gsl_aliased_seeds_differ():
+    """GSL's mt19937 maps seed 0 to 4357; user seeds must stay distinct."""
+    Hn, w0 = _free_ensemble(5)
+    kw = {"dt": 1.0, "n_steps": 5, "diffusion": _vel_diffusion()}
+    a = Hn.integrate_orbit(w0, kick_seed=0, **kw)
+    b = Hn.integrate_orbit(w0, kick_seed=4357, **kw)
+    assert not np.array_equal(a.v_xyz.value, b.v_xyz.value)
+
+
+def test_backward_integration_raises():
+    Hn, w0 = _free_ensemble(5)
+    with pytest.raises(ValueError, match="forward"):
+        Hn.integrate_orbit(w0, dt=-1.0, n_steps=5, diffusion=_vel_diffusion())
+
+
+def test_time_interpolated_potential_accepts_diffusion():
+    knots = np.array([0.0, 50.0, 100.0]) * u.Myr
+    tip = gp.TimeInterpolatedPotential(
+        gp.HernquistPotential,
+        knots,
+        m=np.array([1e11, 1.1e11, 1.2e11]) * u.Msun,
+        c=10 * u.kpc,
+        units=galactic,
+    )
+    w0 = gd.PhaseSpacePosition(pos=[10.0, 0, 0] * u.kpc, vel=[0, 175.0, 0] * u.km / u.s)
+    orbit = tip.integrate_orbit(
+        w0, dt=1.0, n_steps=5, diffusion=_vel_diffusion(), kick_seed=1
+    )
+    assert np.all(np.isfinite(orbit.xyz.value))
+
+
+def test_equivalent_unit_system_accepted():
+    """Only the length and time units need to match the Hamiltonian's."""
+    units = UnitSystem(u.kpc, u.Myr, u.Msun, u.radian)
+    diff = ConstantDiffusion(D=np.zeros((6, 6)), basis="cartesian", units=units)
+    Hn, w0 = _free_ensemble(2)
+    Hn.integrate_orbit(w0, dt=1.0, n_steps=2, diffusion=diff)
+
+
+def test_small_or_indefinite_D_rejected():
+    D = np.zeros((6, 6))
+    D[3, 3] = D[4, 4] = 1e-6
+    D[3, 4] = 9e-10  # upper triangle only: asymmetric at a tiny absolute scale
+    with pytest.raises(ValueError, match="symmetric"):
+        ConstantDiffusion(D=D, units=galactic)
+
+    D[4, 3] = 9e-10
+    ConstantDiffusion(D=D, units=galactic)  # now symmetric and PSD
+
+    D = np.zeros((6, 6))
+    D[3, 3] = D[4, 4] = 1e-4
+    D[3, 4] = D[4, 3] = 5e-4  # indefinite
+    with pytest.raises(ValueError, match="semi-definite"):
+        ConstantDiffusion(D=D, units=galactic)
+
+    D_grid = np.zeros((4, 4, 6, 6))
+    D_grid[..., 3, 3] = D_grid[..., 4, 4] = 1e-4
+    D_grid[1, 2, 3, 4] = D_grid[1, 2, 4, 3] = 5e-4
+    with pytest.raises(ValueError, match="semi-definite"):
+        GriddedDiffusion(np.linspace(4, 12, 4), np.linspace(0, 3, 4), D_grid)
+
+
+def test_gridded_input_validation():
+    R, D_grid = np.linspace(4, 12, 4), np.zeros((4, 4, 6, 6))
+    with pytest.raises(ValueError, match=">= 0"):
+        GriddedDiffusion(R, np.linspace(-3, 3, 4), D_grid)
+    with pytest.raises(ValueError, match="finite"):
+        GriddedDiffusion(np.array([4.0, 6, np.nan, 12]), np.linspace(0, 3, 4), D_grid)
+
+
+def test_kick_capsule_keeps_model_alive():
+    import gc
+
+    from gala.integrate.cyintegrators import leapfrog_integrate_hamiltonian
+
+    Hn, _ = _free_ensemble(1)
+    cap = _vel_diffusion().kick_capsule(1)
+    gc.collect()
+    t, w = leapfrog_integrate_hamiltonian(
+        Hn, np.zeros((6, 3)), np.arange(10.0), kick_capsule=cap
+    )
+    assert np.all(np.isfinite(w))
+    assert np.any(w[3:] != 0)

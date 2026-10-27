@@ -38,7 +38,27 @@ def _check_plain(name, arr):
             "not an astropy Quantity (the full phase-space tensor mixes position "
             "and velocity units). See the gala.dynamics.diffusion unit convention."
         )
-    return np.ascontiguousarray(np.asarray(arr, dtype=np.float64))
+    arr = np.ascontiguousarray(np.asarray(arr, dtype=np.float64))
+    if not np.all(np.isfinite(arr)):
+        raise ValueError(f"`{name}` must be finite (no NaN or inf).")
+    return arr
+
+
+def _check_psd(name, D, tol=1e-10):
+    """Check that the trailing (6, 6) tensor(s) in D are symmetric and PSD.
+
+    The checks are done on D normalized by sqrt(D_ii D_jj): blocks have mixed units and
+    realistic coefficients can be ~1e-9 in natural units, so absolute (or max-relative)
+    tolerances would accept almost anything.
+    """
+    d = np.diagonal(D, axis1=-2, axis2=-1)
+    s = np.sqrt(np.abs(d))
+    s[s == 0] = 1.0
+    C = D / (s[..., :, None] * s[..., None, :])
+    if np.abs(C - np.swapaxes(C, -1, -2)).max() > tol:
+        raise ValueError(f"`{name}` must be symmetric.")
+    if np.any(d < 0) or np.linalg.eigvalsh(C).min() < -tol:
+        raise ValueError(f"`{name}` must be positive semi-definite.")
 
 
 class DiffusionBase:
@@ -75,8 +95,6 @@ class DiffusionBase:
     entries are lengths / velocities, not radians.
     """
 
-    ndim = 3
-
     def __init__(self, basis="cylindrical", units=None):
         if basis not in _BASIS:
             raise ValueError(f"Unknown basis '{basis}'. Options: {sorted(_BASIS)}")
@@ -90,11 +108,9 @@ class DiffusionBase:
     def units(self):
         return self._units
 
-    def set_seed(self, seed):
-        self.c_instance.set_seed(int(seed))
-
-    def kick_capsule(self):
-        return self.c_instance.kick_capsule()
+    def kick_capsule(self, seed):
+        """A fresh kick (own RNG) for one integration; it keeps this model alive."""
+        return self.c_instance.kick_capsule(seed)
 
 
 class ConstantDiffusion(DiffusionBase):
@@ -127,8 +143,7 @@ class ConstantDiffusion(DiffusionBase):
         D = _check_plain("D", D)
         if D.shape != (6, 6):
             raise ValueError(f"`D` must have shape (6, 6), got {D.shape}")
-        if not np.allclose(D, D.T):
-            raise ValueError("`D` must be symmetric.")
+        _check_psd("D", D)
 
         if drift is None:
             mu = np.zeros(6)
@@ -177,6 +192,11 @@ class GriddedDiffusion(DiffusionBase):
 
     Outside the ``(R, |z|)`` grid bounds the coefficients are taken to be zero (no
     drift, no diffusion) -- values are not extrapolated beyond the grid.
+
+    Each tensor component is interpolated independently, so between nodes the
+    interpolated ``D`` can be slightly non-positive-definite even when every node is
+    PSD (e.g. where a coefficient varies sharply). Any negative directions are then
+    clamped to zero by the kick's Cholesky factorization.
     """
 
     def __init__(
@@ -193,12 +213,15 @@ class GriddedDiffusion(DiffusionBase):
             )
         if np.any(np.diff(R) <= 0) or np.any(np.diff(z) <= 0):
             raise ValueError("R_grid and z_grid must be strictly increasing.")
+        if z[0] < 0:
+            raise ValueError("z_grid is a grid in |z| and must be >= 0.")
 
         D_grid = _check_plain("D_grid", D_grid)
         if D_grid.shape != (nR, nz, 6, 6):
             raise ValueError(
                 f"`D_grid` must have shape ({nR}, {nz}, 6, 6), got {D_grid.shape}"
             )
+        _check_psd("D_grid", D_grid)
 
         # pack fields: [0:6] = drift, [6:27] = upper-triangular tensor
         fields = np.zeros((27, nR, nz), dtype=np.float64)
