@@ -14,13 +14,21 @@
 #include "gsl/gsl_randist.h"
 #include "gsl/gsl_interp2d.h"
 #include "gsl/gsl_spline2d.h"
+#include "gsl/gsl_errno.h"
+
+/* restores the GSL error handler on scope exit (same pattern as staeckel_fudge.cpp) */
+struct GSLErrorHandlerOff {
+    gsl_error_handler_t *old;
+    GSLErrorHandlerOff() : old(gsl_set_error_handler_off()) {}
+    ~GSLErrorHandlerOff() { gsl_set_error_handler(old); }
+};
 #endif
 
+/* Read-only after construction (splines are evaluated with NULL accelerators), so one
+   model can be shared by concurrent integrations. */
 typedef struct {
 #if USE_GSL == 1
     gsl_spline2d *splines[GALA_DIFF_NFIELDS];
-    gsl_interp_accel *accR;
-    gsl_interp_accel *accz;
 #endif
     double R_min, R_max, z_min, z_max;
     int active[GALA_DIFF_NFIELDS];
@@ -94,8 +102,9 @@ void gala_diffusion_build_rotation(int basis, const double *x, const double *v,
     for (int i = 0; i < 3; i++) { Qpos[i * 3 + i] = 1.0; Qvel[i * 3 + i] = 1.0; }
 
     if (basis == GALA_DIFF_BASIS_CYLINDRICAL) {
-        double phi = atan2(x[1], x[0]);
-        double c = cos(phi), s = sin(phi);
+        double R = sqrt(x[0] * x[0] + x[1] * x[1]);
+        if (R == 0.0) return; // R_hat undefined on the axis: leave identity
+        double c = x[0] / R, s = x[1] / R;
         // columns are (R_hat, phi_hat, z_hat): maps cylindrical components to Cartesian
         double Q[9] = {c, -s, 0.0,
                        s,  c, 0.0,
@@ -180,20 +189,21 @@ void gridded_cyl_diffusion(double t, double *pars, double *x, double *v,
     // Outside the grid there is no modeled diffusion: return zero coefficients
     // (mu and M are already zeroed above). This also avoids a GSL out-of-range
     // error from gsl_spline2d_eval.
-    if (R < g->R_min || R > g->R_max || az < g->z_min || az > g->z_max) {
+    // (written as !(in range) so NaN positions also land here)
+    if (!(R >= g->R_min && R <= g->R_max && az >= g->z_min && az <= g->z_max)) {
         return;
     }
 
     for (int f = 0; f < 6; f++) {
         if (g->active[f])
-            mu[f] = gsl_spline2d_eval(g->splines[f], R, az, g->accR, g->accz);
+            mu[f] = gsl_spline2d_eval(g->splines[f], R, az, NULL, NULL);
     }
     int f = 6;
     for (int i = 0; i < GALA_DIFF_PS; i++) {
         for (int j = i; j < GALA_DIFF_PS; j++) {
             double val = 0.0;
             if (g->active[f])
-                val = gsl_spline2d_eval(g->splines[f], R, az, g->accR, g->accz);
+                val = gsl_spline2d_eval(g->splines[f], R, az, NULL, NULL);
             M[i * GALA_DIFF_PS + j] = val;
             M[j * GALA_DIFF_PS + i] = val;
             f++;
@@ -209,17 +219,18 @@ void gridded_cyl_diffusion(double t, double *pars, double *x, double *v,
 void *gala_diffusion_grid_alloc(const double *R, int nR, const double *z, int nz,
                                 const double *fields) {
 #if USE_GSL == 1
+    GSLErrorHandlerOff guard;
     grid2d_state *g = (grid2d_state *)malloc(sizeof(grid2d_state));
     if (g == NULL) return NULL;
+    for (int f = 0; f < GALA_DIFF_NFIELDS; f++) g->splines[f] = NULL;
     g->R_min = R[0];
     g->R_max = R[nR - 1];
     g->z_min = z[0];
     g->z_max = z[nz - 1];
-    g->accR = gsl_interp_accel_alloc();
-    g->accz = gsl_interp_accel_alloc();
 
     const gsl_interp2d_type *T = gsl_interp2d_bicubic;
     double *za = (double *)malloc((size_t)nR * nz * sizeof(double));
+    if (za == NULL) { free(g); return NULL; }
 
     for (int fidx = 0; fidx < GALA_DIFF_NFIELDS; fidx++) {
         const double *slice = fields + (size_t)fidx * nR * nz; // slice[i*nz + j]
@@ -228,15 +239,17 @@ void *gala_diffusion_grid_alloc(const double *R, int nR, const double *z, int nz
             if (slice[k] != 0.0) { active = 1; break; }
         }
         g->active[fidx] = active;
-        g->splines[fidx] = NULL;
         if (!active) continue;
 
         gsl_spline2d *sp = gsl_spline2d_alloc(T, nR, nz);
+        if (sp == NULL) { free(za); gala_diffusion_grid_free(g); return NULL; }
+        g->splines[fidx] = sp;
         for (int i = 0; i < nR; i++)
             for (int j = 0; j < nz; j++)
                 gsl_spline2d_set(sp, za, i, j, slice[(size_t)i * nz + j]);
-        gsl_spline2d_init(sp, R, z, za, nR, nz);
-        g->splines[fidx] = sp;
+        if (gsl_spline2d_init(sp, R, z, za, nR, nz) != GSL_SUCCESS) {
+            free(za); gala_diffusion_grid_free(g); return NULL;
+        }
     }
 
     free(za);
@@ -254,8 +267,6 @@ void gala_diffusion_grid_free(void *grid) {
     for (int f = 0; f < GALA_DIFF_NFIELDS; f++) {
         if (g->splines[f] != NULL) gsl_spline2d_free(g->splines[f]);
     }
-    if (g->accR != NULL) gsl_interp_accel_free(g->accR);
-    if (g->accz != NULL) gsl_interp_accel_free(g->accz);
     free(g);
 #else
     (void)grid;

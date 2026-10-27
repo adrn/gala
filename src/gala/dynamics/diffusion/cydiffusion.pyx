@@ -7,25 +7,23 @@
 # cython: language=c++
 
 """
-Cython wrapper holding the C diffusion model (``CDiffusion``) and a ``DiffusionKick``
-hand-off struct. A PyCapsule of the kick struct is passed to the leapfrog integrator,
-which calls the kick through the function pointer (so no GSL is linked into leapfrog).
+Cython wrapper holding the C diffusion model (``CDiffusion``). Each integration gets
+its own ``DiffusionKick`` (with its own RNG) wrapped in a PyCapsule that keeps the
+model alive; the leapfrog integrator calls the kick through the function pointer (so no
+GSL is linked into leapfrog).
 """
 
 import numpy as np
 cimport numpy as np
 np.import_array()
 
-from cpython.pycapsule cimport PyCapsule_New
+from libc.stdlib cimport malloc, free
+from cpython.ref cimport PyObject, Py_INCREF, Py_XDECREF
+from cpython.pycapsule cimport (
+    PyCapsule_New, PyCapsule_GetPointer, PyCapsule_SetContext, PyCapsule_GetContext
+)
 
-
-cdef extern from "dynamics/diffusion/src/diffusion_kick.h":
-    ctypedef void (*kickfunc)(double t, double dt, double *x, double *v,
-                              double *dx, double *dv, void *state, void *rng) noexcept nogil
-    ctypedef struct DiffusionKick:
-        kickfunc kick
-        void *state
-        void *rng
+from .diffusion_kick cimport DiffusionKick, kickfunc
 
 
 cdef extern from "dynamics/diffusion/src/diffusion.h":
@@ -35,14 +33,13 @@ cdef extern from "dynamics/diffusion/src/diffusion.h":
     ctypedef struct CDiffusion:
         int basis
         int returns_factor
-        int n_params
         diffusionfunc func
         double *parameters
         void *state
 
     void* gala_diffusion_rng_alloc(unsigned long long seed) nogil
-    void gala_diffusion_rng_set(void* rng, unsigned long long seed) nogil
     void gala_diffusion_rng_free(void* rng) nogil
+    int gala_diffusion_cholesky(const double *M, int n, double *L) nogil
     void diffusion_kick_increments(double t, double dt, double *x, double *v,
                                    double *dx, double *dv, void *state, void *rng) noexcept nogil
     void constant_diffusion(double t, double *pars, double *x, double *v,
@@ -61,52 +58,42 @@ BASIS_CYLINDRICAL = 1
 # Coefficient field count: 6 drift + 21 upper-triangular tensor (must match header)
 NFIELDS = 27
 
+cdef const char* _CAPSULE_NAME = "gala.DiffusionKick"
+
+
+cdef void _free_kick_capsule(object capsule) noexcept:
+    cdef DiffusionKick* dk = <DiffusionKick*>PyCapsule_GetPointer(capsule, _CAPSULE_NAME)
+    gala_diffusion_rng_free(dk.rng)
+    free(dk)
+    Py_XDECREF(<PyObject*>PyCapsule_GetContext(capsule))
+
 
 cdef class CDiffusionWrapper:
     cdef CDiffusion cdiffusion
-    cdef DiffusionKick kick_struct
     cdef double[::1] _params
-    cdef void* _rng
     cdef void* _grid
-    cdef object _keepalive
 
     def __cinit__(self):
-        self._rng = NULL
         self._grid = NULL
-        self._keepalive = None
-        self._rng = gala_diffusion_rng_alloc(0)
-        if self._rng == NULL:
-            raise RuntimeError(
-                "Could not allocate a random number generator. The diffusion "
-                "integrator requires gala to be built with GSL support."
-            )
 
     def __dealloc__(self):
         if self._grid != NULL:
             gala_diffusion_grid_free(self._grid)
             self._grid = NULL
-        if self._rng != NULL:
-            gala_diffusion_rng_free(self._rng)
-            self._rng = NULL
-
-    cdef void _finish(self) noexcept:
-        self.kick_struct.kick = <kickfunc>diffusion_kick_increments
-        self.kick_struct.state = <void*>&self.cdiffusion
-        self.kick_struct.rng = self._rng
 
     def init_constant(self, double[::1] params, int basis):
-        self._params = params
+        """params = [mu(6), D(36)]; D is replaced by its Cholesky factor once here."""
+        cdef double[::1] p = np.array(params, copy=True)
+        gala_diffusion_cholesky(&params[6], 6, &p[6])
+        self._params = p
         self.cdiffusion.basis = basis
-        self.cdiffusion.returns_factor = 0
-        self.cdiffusion.n_params = params.shape[0]
-        self.cdiffusion.parameters = &params[0]
+        self.cdiffusion.returns_factor = 1
+        self.cdiffusion.parameters = &p[0]
         self.cdiffusion.func = <diffusionfunc>constant_diffusion
         self.cdiffusion.state = NULL
-        self._finish()
 
     def init_gridded(self, double[::1] R, double[::1] z, double[::1] fields_flat,
                      int nR, int nz, int basis):
-        self._keepalive = (np.asarray(R), np.asarray(z), np.asarray(fields_flat))
         self._grid = gala_diffusion_grid_alloc(&R[0], nR, &z[0], nz, &fields_flat[0])
         if self._grid == NULL:
             raise RuntimeError(
@@ -115,14 +102,26 @@ cdef class CDiffusionWrapper:
             )
         self.cdiffusion.basis = basis
         self.cdiffusion.returns_factor = 0
-        self.cdiffusion.n_params = 0
         self.cdiffusion.parameters = NULL
         self.cdiffusion.func = <diffusionfunc>gridded_cyl_diffusion
         self.cdiffusion.state = self._grid
-        self._finish()
 
-    def set_seed(self, seed):
-        gala_diffusion_rng_set(self._rng, <unsigned long long>seed)
-
-    def kick_capsule(self):
-        return PyCapsule_New(<void*>&self.kick_struct, "gala.DiffusionKick", NULL)
+    def kick_capsule(self, unsigned long long seed):
+        """A new kick (own RNG, seeded with ``seed``) that keeps this model alive."""
+        cdef void* rng = gala_diffusion_rng_alloc(seed)
+        if rng == NULL:
+            raise RuntimeError(
+                "Could not allocate a random number generator. The diffusion "
+                "integrator requires gala to be built with GSL support."
+            )
+        cdef DiffusionKick* dk = <DiffusionKick*>malloc(sizeof(DiffusionKick))
+        if dk == NULL:
+            gala_diffusion_rng_free(rng)
+            raise MemoryError()
+        dk.kick = <kickfunc>diffusion_kick_increments
+        dk.state = <void*>&self.cdiffusion
+        dk.rng = rng
+        capsule = PyCapsule_New(<void*>dk, _CAPSULE_NAME, _free_kick_capsule)
+        Py_INCREF(self)
+        PyCapsule_SetContext(capsule, <void*>self)
+        return capsule

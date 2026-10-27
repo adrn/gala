@@ -325,7 +325,6 @@ def get_all_extensions():
 
     #     diffusion (in-integrator SDE / diffusion kick)
     cfg = base_cfg()
-    cfg["include_dirs"].extend(["src/gala", "src/gala/potential"])
     cfg["sources"].extend(
         [
             "src/gala/dynamics/diffusion/cydiffusion.pyx",

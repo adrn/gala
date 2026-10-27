@@ -32,7 +32,6 @@ typedef struct _CDiffusion CDiffusion;
 struct _CDiffusion {
     int basis;          // one of GALA_DIFF_BASIS_*
     int returns_factor; // 0 => M is tensor D (Cholesky in the kick); 1 => M is factor B
-    int n_params;
     diffusionfunc func;
     double *parameters; // owned by the Cython wrapper
     void *state;        // model state (e.g. grid2d_state*); may be NULL
