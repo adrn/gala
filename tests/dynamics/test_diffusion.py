@@ -408,3 +408,284 @@ def test_kick_capsule_keeps_model_alive():
     )
     assert np.all(np.isfinite(w))
     assert np.any(w[3:] != 0)
+
+
+# ---- ISMDiffusionWinter27 ----
+
+
+def _winter27_epicyclic(pot, Lz, units):
+    """Epicyclic quantities at the guiding radius for L_z, straight from the potential."""
+    from scipy.optimize import brentq
+
+    def grad_hess(R):
+        q = np.array([[R], [0.0], [0.0]]) * units["length"]
+        g = pot.gradient(q).decompose(units).value[:, 0]
+        h = pot.hessian(q).decompose(units).value[..., 0]
+        return g[0], h[0, 0], h[2, 2]
+
+    def freqs(R):
+        PR, PRR, Pzz = grad_hess(R)
+        return np.sqrt(PR / R), np.sqrt(PRR + 3 * PR / R), np.sqrt(Pzz)
+
+    Rg = brentq(lambda R: R**2 * freqs(R)[0] - Lz, 0.5, 50.0, xtol=1e-14)
+    Om, ka, nu = freqs(Rg)
+    h = 1e-3  # finite differences in ln R
+    lk = [np.log(freqs(Rg * np.exp(s * h))[1]) for s in (-1, 0, 1)]
+    ln = [np.log(freqs(Rg * np.exp(s * h))[2]) for s in (-1, 1)]
+    qR = -(lk[2] - lk[0]) / (2 * h)
+    qz = -(ln[1] - ln[0]) / (2 * h)
+    dqR = -(lk[2] - 2 * lk[1] + lk[0]) / h**2
+    return Rg, Om, ka, nu, qR, qz, dqR
+
+
+def _winter27_reference(pot, xv, units, J_floor_val):
+    """Independent numpy transcription of Winter-Granic et al. App. B (general q_R)."""
+    x, y, z, vx, vy, vz = xv
+    R = np.hypot(x, y)
+    vR = (x * vx + y * vy) / R
+    Jp = x * vy - y * vx
+    Rg, Om, ka, nu, qR, qz, dqR = _winter27_epicyclic(pot, Jp, units)
+    JR = max((vR**2 + ka**2 * (R - Rg) ** 2) / (2 * ka), J_floor_val)
+    Jz = max((vz**2 + nu**2 * z**2) / (2 * nu), J_floor_val)
+
+    Ju = (1 * u.kpc * u.km / u.s).decompose(units).value
+    Du = (1 * (u.kpc * u.km / u.s) ** 2 / u.Gyr).decompose(units).value
+    jR, jz = JR / Ju, Jz / Ju
+    a, b = 9.3 * jR, 6.9 * jR**-0.5
+    D_JRJR = min(a, b) * Du
+    A_JR = (4.65 if a <= b else -1.725 * jR**-1.5) * Du / Ju
+    D_JpJp = min(6900.0, 4600.0 * jR**-0.5) * Du
+    z1, z2, z3 = 0.29 * jz, 0.04 * jz * jR**-0.5, 0.14 * (jz * jR) ** -0.5
+    D_JzJz = min(z1, z2, z3) * Du
+    if z1 <= min(z2, z3):
+        A_Jz = 0.145
+    elif z2 <= z3:
+        A_Jz = 0.02 * jR**-0.5
+    else:
+        A_Jz = -0.25 * z3 / jz
+    A_Jz *= Du / Ju
+    A_Jp = D_JpJR = D_JzJp = 0.0
+
+    g = 2 * Om / ka
+    eps = (2 / g) * JR / Jp
+    RO = Rg * Om
+    Bf = (1 - g**2 / 2) * (1 - 2 * eps) + eps * (4 + g**2 * (qR - 2))
+    A_R = (
+        g**2 * Rg / (2 * Jp) * A_Jp
+        + Rg / (2 * Jp**2) * (g**2 / 2 + g**4 / 4 * (2 * qR - 3)) * D_JpJp
+    )
+    A_vp = RO * (
+        -2 * eps * A_JR / JR
+        + Bf * A_Jp / Jp
+        + 2 * eps * (1 + g**2 / 2 * (qR - 1)) * D_JpJR / (Jp * JR)
+        + 0.5
+        * (
+            -(g**2) / 2 * Bf
+            - g**4 / 2 * (qR - 2 + 2 / g**2) * (1 - 2 * eps)
+            + 2 * eps * (2 + g**2 / 2 * (qR - 2)) * (1 + g**2 / 2 * (qR - 1))
+            + eps * g**4 * (qR - 2 + 2 / g**2) * (qR - 2)
+            + eps * g**4 / 2 * dqR
+        )
+        * D_JpJp
+        / Jp**2
+    )
+    A_vz = vz * (
+        A_Jz / Jz
+        - qz * g**2 / 2 * A_Jp / Jp
+        - D_JzJz / Jz**2
+        + qz * D_JzJp / (Jz * Jp)
+        + qz * (1 - qz) / 2 * D_JpJp / Jp**2
+    )
+    D_RR = (
+        D_JRJR / eps
+        + g**3 * qR / 4 * D_JpJR
+        + g**4 / 4 * (1 + qR**2 * g**2 * eps / 16) * D_JpJp
+    ) / RO**2
+    D_Rvp = (
+        -D_JRJR / (2 * np.sqrt(2) * JR)
+        + (-15 / 4 + 9 / 8 * eps) * D_JpJR / (np.sqrt(2) * Jp)
+        + eps / (8 * Jp) * D_JpJp
+    )
+    D_vpvp = RO**2 * (
+        g**2 * eps / 16 * D_JRJR / JR**2
+        + ((1 - g**2 / 2) ** 2 + g**2 * eps / 4 * (1 + g**2 / 4 * (qR - 4)) ** 2)
+        * D_JpJp
+        / Jp**2
+        + g**2 * eps / 4 * (1 + g**2 / 4 * (qR - 4)) * D_JpJR / (Jp * JR)
+    )
+    D_vRvR = (
+        RO**2
+        * eps
+        / 4
+        * (
+            g**4 * qR**2 / 4 * D_JpJp / Jp**2
+            - 2 * g**2 * qR * D_JpJR / (JR * Jp)
+            + 4 * D_JRJR / JR**2
+        )
+    )
+    D_pvR = (
+        eps
+        * RO
+        * g**2
+        / 8
+        * (
+            qR * g**2 / 2 * D_JpJp / Jp**2
+            - (1 + qR * g**2 / 2) * D_JpJR / (JR * Jp)
+            + qR * g**2 / 2 * D_JRJR / JR**2
+        )
+    )
+    c4 = 1 + 3 * g**2 / 4 * (qR - 2)
+    D_pp = (
+        g**4
+        * eps
+        / 16
+        * (4 * c4 * D_JpJp / Jp**2 - 4 * c4**2 * D_JpJR / (JR * Jp) + D_JRJR / JR**2)
+    )
+    vert = qz**2 / 4 * Jz**2 / Jp**2 * D_JpJp
+    D_zz = (D_JzJz + vert + qz * Jz / Jp * D_JzJp) / (nu * Jz)
+    D_vzvz = nu / Jz * (D_JzJz + vert - qz * Jz / Jp * D_JzJp)
+
+    mu = np.array([A_R, 0, 0, 0, A_vp, A_vz])
+    M = np.zeros((6, 6))
+    for (i, j), val in {
+        (0, 0): D_RR,
+        (0, 4): D_Rvp,
+        (4, 4): D_vpvp,
+        (3, 3): D_vRvR,
+        (1, 3): R * D_pvR,
+        (1, 1): R**2 * D_pp,
+        (2, 2): D_zz,
+        (5, 5): D_vzvz,
+    }.items():
+        M[i, j] = M[j, i] = val
+    return mu, M
+
+
+def test_winter27_matches_paper_formulas():
+    """C coefficients match an independent transcription of App. B (non-flat q_R)."""
+    from gala.dynamics.diffusion import ISMDiffusionWinter27
+
+    pot = gp.MilkyWayPotential(version="v2", units=galactic)
+    model = ISMDiffusionWinter27(pot, R_min=2 * u.kpc, R_max=30 * u.kpc)
+    J_floor = (1e-3 * u.kpc * u.km / u.s).decompose(galactic).value
+    rng = np.random.default_rng(42)
+    for R, kick in zip(rng.uniform(5, 12, 6), rng.uniform(0.01, 0.03, 6)):
+        vc = pot.circular_velocity([R, 0, 0] * u.kpc).decompose(galactic).value[0]
+        ph = rng.uniform(0, 2 * np.pi)
+        xv = np.array(
+            [
+                R * np.cos(ph),
+                R * np.sin(ph),
+                0.1,
+                kick * np.cos(ph) - vc * np.sin(ph),
+                kick * np.sin(ph) + vc * np.cos(ph),
+                0.5 * kick,
+            ]
+        )
+        mu, D = model.coefficients(xv.reshape(6, 1))
+        mu_ref, D_ref = _winter27_reference(pot, xv, galactic, J_floor)
+        np.testing.assert_allclose(mu[0], mu_ref, rtol=1e-3, atol=0)
+        np.testing.assert_allclose(D[0], D_ref, rtol=1e-3, atol=0)
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="Winter-Granic et al. App. B (as written) does not reproduce the input "
+    "action-space coefficients: D_JRJR x1.25, D_JphiJphi x1.45, D_JzJz x2, and a "
+    "spurious A_Jphi = -2 sqrt(2) A_JR.",
+)
+def test_winter27_round_trip_to_actions():
+    """Projecting the x-v (mu, D) onto epicyclic actions, averaged over the epicycle
+    phases, recovers the action-space (A_J, D_J) the model was built from."""
+    from gala.dynamics.diffusion import ISMDiffusionWinter27
+
+    vc = (235 * u.km / u.s).decompose(galactic).value
+    pot = gp.LogarithmicPotential(
+        v_c=235 * u.km / u.s, r_h=1e-3 * u.kpc, q1=1, q2=1, q3=0.9, units=galactic
+    )
+    model = ISMDiffusionWinter27(pot)
+    Ju = (1 * u.kpc * u.km / u.s).decompose(galactic).value
+    Du = Ju**2 / (1 * u.Gyr).decompose(galactic).value
+    Rg = 8.0
+    nu_Rg = np.sqrt(pot.hessian([Rg, 0, 0] * u.kpc).decompose(galactic).value[2, 2, 0])
+
+    def actions(c):  # flat curve: R_g = L_z/v_c, kappa = sqrt(2) v_c/R_g, nu ~ 1/R_g
+        R, _, z, vR, vp, vz = c
+        Lz = R * vp
+        rg = Lz / vc
+        ka, nu = np.sqrt(2) * vc / rg, nu_Rg * Rg / rg
+        return np.array(
+            [
+                (vR**2 + ka**2 * (R - rg) ** 2) / (2 * ka),
+                Lz,
+                (vz**2 + nu**2 * z**2) / (2 * nu),
+            ]
+        )
+
+    jR = jz = 0.3  # in kpc km/s; long-wavelength in-plane, low-Jz vertical regime
+    ka = np.sqrt(2) * vc / Rg
+    aR, az = np.sqrt(2 * jR * Ju / ka), np.sqrt(2 * jz * Ju / nu_Rg)
+    h = 1e-4 * np.array([1, 0, 0.1, vc, vc, vc])
+    D_J, A_J, n = np.zeros(3), np.zeros(3), 0
+    for th in np.linspace(0, 2 * np.pi, 16, endpoint=False):
+        for thz in np.linspace(0, 2 * np.pi, 16, endpoint=False):
+            R = Rg - aR * np.cos(th)
+            c = np.array(
+                [
+                    R,
+                    0.0,
+                    az * np.cos(thz),
+                    ka * aR * np.sin(th),
+                    Rg * vc / R,
+                    az * nu_Rg * np.sin(thz),
+                ]
+            )
+            mu, D = (a[0] for a in model.coefficients(c.reshape(6, 1)))
+            G, Hs = np.zeros((3, 6)), np.zeros((3, 6, 6))
+            for i in np.flatnonzero(h):
+                e = np.eye(6)[i] * h[i]
+                G[:, i] = (actions(c + e) - actions(c - e)) / (2 * h[i])
+                for j in np.flatnonzero(h):
+                    f = np.eye(6)[j] * h[j]
+                    Hs[:, i, j] = (
+                        actions(c + e + f)
+                        - actions(c + e - f)
+                        - actions(c - e + f)
+                        + actions(c - e - f)
+                    ) / (4 * h[i] * h[j])
+            D_J += np.diag(G @ D @ G.T)
+            A_J += G @ mu + 0.5 * np.einsum("kij,ij->k", Hs, D)
+            n += 1
+
+    np.testing.assert_allclose(D_J / n / Du, [9.3 * jR, 6900.0, 0.29 * jz], rtol=0.05)
+    np.testing.assert_allclose(A_J / n / (Du / Ju), [4.65, 0.0, 0.145], atol=0.2)
+
+
+def test_winter27_integrates():
+    """Smoke test: finite orbits, and the J_phi spread follows sqrt(D_JphiJphi t)."""
+    from gala.dynamics.diffusion import ISMDiffusionWinter27
+
+    pot = gp.LogarithmicPotential(
+        v_c=235 * u.km / u.s, r_h=1e-3 * u.kpc, q1=1, q2=1, q3=0.9, units=galactic
+    )
+    vc = (235 * u.km / u.s).decompose(galactic).value
+    N = 2000
+    rng = np.random.default_rng(1)
+    R, ph = rng.uniform(7.5, 8.5, N), rng.uniform(0, 2 * np.pi, N)
+    w0 = gd.PhaseSpacePosition(
+        pos=np.array([R * np.cos(ph), R * np.sin(ph), np.zeros(N)]) * u.kpc,
+        vel=np.array([-vc * np.sin(ph), vc * np.cos(ph), np.zeros(N)]) * u.kpc / u.Myr,
+    )
+    orbit = pot.integrate_orbit(
+        w0,
+        dt=0.5,
+        n_steps=200,
+        diffusion=ISMDiffusionWinter27(pot),
+        kick_seed=3,
+        save_all=False,
+    )
+    assert np.all(np.isfinite(orbit.w(galactic)))
+    dLz = orbit.angular_momentum()[2, -1] - w0.angular_momentum()[2]
+    expected = np.sqrt(6900 * 0.1)  # kpc km/s, D_JphiJphi * 100 Myr
+    rms = np.std(dLz.to_value(u.kpc * u.km / u.s))
+    assert 0.8 * expected < rms < 1.4 * expected

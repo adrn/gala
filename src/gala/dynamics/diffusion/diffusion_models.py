@@ -17,6 +17,7 @@ carry the mixed position/velocity units of the full tensor, so Quantities are re
 kpc/Myr, Myr). Build the model in the same unit system you integrate in.
 """
 
+import astropy.units as u
 import numpy as np
 
 from ...units import UnitSystem
@@ -26,7 +27,12 @@ from .cydiffusion import (
     CDiffusionWrapper,
 )
 
-__all__ = ["ConstantDiffusion", "DiffusionBase", "GriddedDiffusion"]
+__all__ = [
+    "ConstantDiffusion",
+    "DiffusionBase",
+    "GriddedDiffusion",
+    "ISMDiffusionWinter27",
+]
 
 _BASIS = {"cartesian": BASIS_CARTESIAN, "cylindrical": BASIS_CYLINDRICAL}
 
@@ -111,6 +117,29 @@ class DiffusionBase:
     def kick_capsule(self, seed):
         """A fresh kick (own RNG) for one integration; it keeps this model alive."""
         return self.c_instance.kick_capsule(seed)
+
+    def coefficients(self, w, t=0.0):
+        """Evaluate the model's drift and diffusion tensor at phase-space points.
+
+        Parameters
+        ----------
+        w : `~gala.dynamics.PhaseSpacePosition` or array_like
+            Positions, or a ``(6, n)`` array of Cartesian ``(x, y, z, vx, vy, vz)`` in
+            the model's units.
+        t : float, optional
+            Time, in the model's time unit.
+
+        Returns
+        -------
+        mu : ndarray, shape ``(n, 6)``
+            Drift, in the model's ``basis``.
+        D : ndarray, shape ``(n, 6, 6)``
+            Diffusion tensor, in the model's ``basis``.
+        """
+        if hasattr(w, "w"):
+            w = w.w(self.units)
+        xv = np.ascontiguousarray(np.asarray(w, dtype=np.float64).reshape(6, -1).T)
+        return self.c_instance.coefficients(xv, float(t))
 
 
 class ConstantDiffusion(DiffusionBase):
@@ -245,4 +274,117 @@ class GriddedDiffusion(DiffusionBase):
 
         wrapper = CDiffusionWrapper()
         wrapper.init_gridded(R, z, fields_flat, nR, nz, _BASIS[basis])
+        self.c_instance = wrapper
+
+
+class ISMDiffusionWinter27(DiffusionBase):
+    """ISM-driven orbital diffusion and drift of Winter-Granic et al. (2027).
+
+    The model is specified in action space and mapped to position-velocity drift and
+    diffusion along each orbit, so it is evaluated per orbit at every kick:
+
+    1. Epicyclic actions ``(J_R, J_phi, J_z)``, the guiding radius, and the frequencies
+       ``Omega, kappa, nu`` (with ``q_R = -dln kappa/dln R``, ``q_z = -dln nu/dln R``) are
+       computed from rotation-curve tables built from ``potential``.
+    2. Action-space diffusion coefficients are the Modak et al. (2026) solar-
+       neighborhood fits for ``D_JRJR``, ``D_JphiJphi``, and ``D_JzJz``, with the
+       asymptotic short/long-wavelength regimes joined where they cross (the minimum
+       of the branches) so they are continuous. Cross terms are zero.
+    3. Drifts are the quasilinear ones, ``A_i = 1/2 sum_j dD_ij/dJ_j``.
+    4. ``(A_J, D_J)`` are mapped to cylindrical ``(R, phi, z, v_R, v_phi, v_z)`` drift
+       and diffusion using the paper's general-``q_R`` epicyclic formulas (App. B).
+
+    Parameters
+    ----------
+    potential : `~gala.potential.PotentialBase`
+        Axisymmetric potential used to tabulate the rotation curve (along the x axis
+        in the z=0 plane). The model uses ``potential.units``, which must match the
+        integration Hamiltonian's length and time units.
+    scale : float, optional
+        Multiplies every diffusion and drift coefficient (e.g. the square of the ISM
+        fluctuation amplitude). Default 1.
+    R_min, R_max : `~astropy.units.Quantity`, optional
+        Range of the rotation-curve tables. Orbits whose guiding radius falls outside
+        get no kick. Defaults 0.5 and 50 kpc.
+    n_R : int, optional
+        Number of (log-spaced) table points. Default 512.
+    J_floor : `~astropy.units.Quantity`, optional
+        Floor on ``J_R`` and ``J_z`` used in the mapping, which is singular as either
+        action goes to zero (e.g. the ``v_z`` drift scales as ``J_z^{-1/2}``). Default
+        ``1e-3 kpc km/s``.
+
+    Notes
+    -----
+    Known caveats of the paper formulas (as of the draft this implements):
+
+    - The paper defines ``q_R = dln kappa/dln R`` but states ``q_R = q_z = 1`` for a
+      flat rotation curve, and the ``A_R`` formula is only consistent with
+      ``q_R = -dln kappa/dln R``; that (minus-sign) convention is used here.
+    - The mapping does not round-trip: projecting the resulting ``(mu, D)`` back onto
+      the epicyclic actions and averaging over the epicycle phases gives roughly
+      ``1.25 D_JRJR``, ``1.45 D_JphiJphi``, ``2 D_JzJz`` and a spurious
+      ``A_Jphi = -2 sqrt(2) A_JR`` (flat curve, long-wavelength regime). Integrated
+      orbits accordingly heat radially about twice as fast as the action-space model.
+      See ``test_winter27_round_trip_to_actions``.
+    - At a flat rotation curve (``gamma^2 = 2``, ``q_R = 1``) the general ``D_phiphi``,
+      ``D_phivR``, ``D_vphivphi``, and ``A_vphi`` do not reduce to the paper's flat-
+      curve expressions. Where the tensor is not positive semi-definite, the kick's
+      Cholesky factorization clamps the negative directions to zero.
+    - The script behind the paper's figures (``calc_ISM_diffusion.py``) uses the flat-
+      curve formulas with ``D_JphiJR = -gamma^2 J_R/J_phi D_JphiJphi``, ``A_Jphi = 0``,
+      kappa/nu/R_g rescalings of the fits, and no vertical diffusion; none of those are
+      applied here.
+    """
+
+    def __init__(
+        self,
+        potential,
+        scale=1.0,
+        R_min=0.5 * u.kpc,
+        R_max=50.0 * u.kpc,
+        n_R=512,
+        J_floor=1e-3 * u.kpc * u.km / u.s,
+    ):
+        units = potential.units
+        super().__init__(basis="cylindrical", units=units)
+        self.potential = potential
+
+        R = np.geomspace(
+            R_min.decompose(units).value, R_max.decompose(units).value, int(n_R)
+        )
+        q = np.zeros((3, R.size))
+        q[0] = R
+        q = q * units["length"]
+        Phi_R = potential.gradient(q).decompose(units).value[0]
+        hess = potential.hessian(q).decompose(units).value
+        Omega2 = Phi_R / R
+        kappa2 = hess[0, 0] + 3 * Phi_R / R
+        nu2 = hess[2, 2]
+        if np.any(Omega2 <= 0) or np.any(kappa2 <= 0) or np.any(nu2 <= 0):
+            raise ValueError(
+                "The potential must have positive Omega^2, kappa^2, and nu^2 over "
+                "[R_min, R_max] in the z=0 plane."
+            )
+        lnLz = np.log(R**2 * np.sqrt(Omega2))
+        if np.any(np.diff(lnLz) <= 0):
+            raise ValueError(
+                "L_z = R v_c(R) must increase with R over [R_min, R_max] to define "
+                "guiding radii."
+            )
+
+        J_unit = (1 * u.kpc * u.km / u.s).decompose(units).value
+        D_unit = (1 * (u.kpc * u.km / u.s) ** 2 / u.Gyr).decompose(units).value
+        params = np.array(
+            [float(scale), J_unit, D_unit, J_floor.decompose(units).value]
+        )
+
+        wrapper = CDiffusionWrapper()
+        wrapper.init_winter27(
+            np.log(R),
+            0.5 * np.log(Omega2),
+            0.5 * np.log(kappa2),
+            0.5 * np.log(nu2),
+            lnLz,
+            params,
+        )
         self.c_instance = wrapper

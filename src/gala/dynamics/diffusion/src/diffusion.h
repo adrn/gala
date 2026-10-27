@@ -69,6 +69,29 @@ void constant_diffusion(double t, double *pars, double *x, double *v,
 void gridded_cyl_diffusion(double t, double *pars, double *x, double *v,
                            double *mu, double *M, void *state);
 
+/* ---- epicyclic action-space models ---- */
+/*
+    Map action-space drift A_J = (A_JR, A_Jphi, A_Jz) and diffusion
+    D_J = (D_JRJR, D_JphiJphi, D_JzJz, D_JphiJR, D_JzJphi) to cylindrical-basis (x, v)
+    drift mu and tensor M using the general-q_R epicyclic formulas of Winter-Granic et
+    al. (App. B). epi = (R_g, Omega, kappa, nu, q_R, q_z, dq_R/dlnR) with
+    q_R = -dln kappa/dln R, q_z = -dln nu/dln R; J = (J_R, J_phi, J_z),
+    R and vz are the orbit's current cylindrical radius and vertical velocity.
+*/
+void gala_diffusion_epicyclic_map(const double *epi, const double *J, const double *A_J,
+                                  const double *D_J, double R, double vz,
+                                  double *mu, double *M);
+
+/* ISM diffusion of Winter-Granic et al. (2027); state is an epicyclic table. */
+void ism_diffusion_winter27(double t, double *pars, double *x, double *v,
+                            double *mu, double *M, void *state);
+
+/* Rotation-curve tables on an increasing ln R grid (ln L_z must also increase). */
+void *gala_diffusion_epicyclic_alloc(const double *lnR, const double *lnOmega,
+                                     const double *lnkappa, const double *lnnu,
+                                     const double *lnLz, int n);
+void gala_diffusion_epicyclic_free(void *state);
+
 /* ---- gridded state management ---- */
 /*
     Build a grid2d_state from a regular (R, |z|) grid. `fields` is a contiguous array of

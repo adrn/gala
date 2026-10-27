@@ -49,6 +49,12 @@ cdef extern from "dynamics/diffusion/src/diffusion.h":
     void* gala_diffusion_grid_alloc(const double *R, int nR, const double *z, int nz,
                                     const double *fields) nogil
     void gala_diffusion_grid_free(void* grid) nogil
+    void ism_diffusion_winter27(double t, double *pars, double *x, double *v,
+                                double *mu, double *M, void *state) noexcept nogil
+    void* gala_diffusion_epicyclic_alloc(const double *lnR, const double *lnOmega,
+                                         const double *lnkappa, const double *lnnu,
+                                         const double *lnLz, int n) nogil
+    void gala_diffusion_epicyclic_free(void* state) nogil
 
 
 # Basis identifiers (must match diffusion.h)
@@ -72,14 +78,19 @@ cdef class CDiffusionWrapper:
     cdef CDiffusion cdiffusion
     cdef double[::1] _params
     cdef void* _grid
+    cdef void* _epi
 
     def __cinit__(self):
         self._grid = NULL
+        self._epi = NULL
 
     def __dealloc__(self):
         if self._grid != NULL:
             gala_diffusion_grid_free(self._grid)
             self._grid = NULL
+        if self._epi != NULL:
+            gala_diffusion_epicyclic_free(self._epi)
+            self._epi = NULL
 
     def init_constant(self, double[::1] params, int basis):
         """params = [mu(6), D(36)]; D is replaced by its Cholesky factor once here."""
@@ -105,6 +116,36 @@ cdef class CDiffusionWrapper:
         self.cdiffusion.parameters = NULL
         self.cdiffusion.func = <diffusionfunc>gridded_cyl_diffusion
         self.cdiffusion.state = self._grid
+
+    def init_winter27(self, double[::1] lnR, double[::1] lnOmega, double[::1] lnkappa,
+                      double[::1] lnnu, double[::1] lnLz, double[::1] params):
+        self._epi = gala_diffusion_epicyclic_alloc(
+            &lnR[0], &lnOmega[0], &lnkappa[0], &lnnu[0], &lnLz[0], lnR.shape[0]
+        )
+        if self._epi == NULL:
+            raise RuntimeError(
+                "Failed to build the rotation-curve tables. This diffusion model "
+                "requires gala to be built with GSL support."
+            )
+        self._params = np.array(params, copy=True)
+        self.cdiffusion.basis = 1  # cylindrical
+        self.cdiffusion.returns_factor = 0
+        self.cdiffusion.parameters = &self._params[0]
+        self.cdiffusion.func = <diffusionfunc>ism_diffusion_winter27
+        self.cdiffusion.state = self._epi
+
+    def coefficients(self, double[:, ::1] xv, double t=0.0):
+        """Model-basis drift (n, 6) and tensor (n, 6, 6) at Cartesian xv (n, 6)."""
+        cdef int n = xv.shape[0], i
+        cdef double[:, ::1] mu = np.zeros((n, 6))
+        cdef double[:, :, ::1] M = np.zeros((n, 6, 6))
+        for i in range(n):
+            self.cdiffusion.func(t, self.cdiffusion.parameters, &xv[i, 0], &xv[i, 3],
+                                 &mu[i, 0], &M[i, 0, 0], self.cdiffusion.state)
+        D = np.asarray(M)
+        if self.cdiffusion.returns_factor:  # M is L with L L^T = D
+            D = D @ np.swapaxes(D, -1, -2)
+        return np.asarray(mu), D
 
     def kick_capsule(self, unsigned long long seed):
         """A new kick (own RNG, seeded with ``seed``) that keeps this model alive."""
