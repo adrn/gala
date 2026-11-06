@@ -7,6 +7,7 @@ from itertools import product
 
 import numpy as np
 import pytest
+from gala._cconfig import GSL_ENABLED
 from gala.integrate.cyintegrators.dop853 import dop853_integrate_hamiltonian
 from gala.integrate.cyintegrators.leapfrog import leapfrog_integrate_hamiltonian
 from gala.integrate.cyintegrators.ruth4 import ruth4_integrate_hamiltonian
@@ -16,6 +17,62 @@ from gala.integrate.pyintegrators.leapfrog import LeapfrogIntegrator
 from gala.integrate.pyintegrators.ruth4 import Ruth4Integrator
 from gala.potential import Hamiltonian, HernquistPotential
 from gala.units import galactic
+
+
+@pytest.mark.skipif(not GSL_ENABLED, reason="requires GSL for time interpolation")
+@pytest.mark.parametrize("nbody", [False, True])
+@pytest.mark.parametrize("direction", [-1, 1])
+@pytest.mark.parametrize("save_all", [False, True])
+def test_ruth4_time_dependent_order(nbody, direction, save_all):
+    from scipy.integrate import solve_ivp
+
+    from gala.dynamics import PhaseSpacePosition
+    from gala.dynamics.nbody import DirectNBody
+    from gala.potential import KeplerPotential, TimeInterpolatedPotential
+
+    potential = TimeInterpolatedPotential(
+        potential_cls=KeplerPotential,
+        time_knots=[0.0, 10.0],
+        m=[1.0, 2.0],
+        interpolation_method="linear",
+    )
+    w0 = np.array([[1, 0, 0, 0, 1, 0], [0, 1.5, 0, -0.8, 0, 0]]).T
+    t0 = 1.3 if direction == 1 else 4.3
+    t1 = t0 + direction * 3
+
+    def force(t, w):
+        q, v = w.reshape(2, 3, 2)
+        return np.array([v, -(1 + t / 10) * q / np.linalg.norm(q, axis=0) ** 3]).ravel()
+
+    reference = (
+        solve_ivp(force, (t0, t1), w0.ravel(), method="DOP853", rtol=1e-12, atol=1e-13)
+        .y[:, -1]
+        .reshape(6, 2)
+    )
+    errors = []
+    for n_steps in [60, 120]:
+        times = np.linspace(t0, t1, n_steps + 1)
+        if nbody:
+            system = DirectNBody(
+                PhaseSpacePosition.from_w(w0),
+                particle_potentials=[None, None],
+                external_potential=potential,
+                save_all=save_all,
+            )
+            result = system.integrate_orbit(Integrator=Ruth4Integrator, t=times).w()
+        else:
+            _, result = ruth4_integrate_hamiltonian(
+                Hamiltonian(potential),
+                np.ascontiguousarray(w0),
+                times,
+                save_all=save_all,
+            )
+        if save_all:
+            result = result[:, -1]
+        errors.append(np.max(np.abs(result - reference)))
+
+    assert errors[0] / errors[1] > 2**3.5
+
 
 integrator_list = [LeapfrogIntegrator, DOPRI853Integrator, Ruth4Integrator]
 func_list = [
