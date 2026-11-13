@@ -164,3 +164,34 @@ def test_py_save_all(Integrator):
     out_final = integrator_final([0.0, 1.0], dt=dt, n_steps=n_steps)
 
     assert np.allclose(out_all.w()[:, -1], out_final.w()[:, 0])
+
+
+@pytest.mark.parametrize(
+    ("Integrator", "order"), [(Ruth4Integrator, 4), (RK5Integrator, 5)]
+)
+@pytest.mark.parametrize("direction", [-1, 1])
+@pytest.mark.parametrize("save_all", [False, True])
+def test_time_dependent_order(Integrator, order, direction, save_all):
+    # q'' = -q + cos(2t), with a closed-form solution at any initial time.
+    def solution(t):
+        return np.array(
+            [
+                4 * np.cos(t) / 3 - np.cos(2 * t) / 3,
+                -4 * np.sin(t) / 3 + 2 * np.sin(2 * t) / 3,
+            ]
+        )
+
+    def force(t, w):
+        return np.array([w[1], -w[0] + np.cos(2 * t)])
+
+    t0 = 1.3
+    errors = []
+    for n_steps in [60, 120]:
+        orbit = Integrator(force, save_all=save_all)(
+            solution(t0), t1=t0, dt=direction * 3 / n_steps, n_steps=n_steps
+        )
+        errors.append(
+            np.max(np.abs(orbit.w()[:, -1].squeeze() - solution(orbit.t.value[-1])))
+        )
+
+    assert errors[0] / errors[1] > 2 ** (order - 0.5)

@@ -109,6 +109,9 @@ class Ruth4Integrator(Integrator):
 
         Parameters
         ----------
+        t : numeric
+            Time at the start of the step. Force evaluations use the time
+            reached after each preceding drift.
         dt : numeric
             The timestep to move forward.
         """
@@ -120,6 +123,8 @@ class Ruth4Integrator(Integrator):
 
             w_i[self.ndim :] += dj * a_i * dt
             w_i[: self.ndim] += cj * w_i[self.ndim :] * dt
+            # Time advances with the drift, including negative substeps.
+            t += cj * dt
 
         return w_i
 
@@ -137,7 +142,7 @@ class Ruth4Integrator(Integrator):
         w = w0.copy()
         range_ = self._get_range_func()
         for ii in range_(1, n_steps + 1):
-            w = self.step(times[ii], w, dt)
+            w = self.step(times[ii - 1], w, dt)
 
             if self.save_all:
                 ws[:, ii] = w

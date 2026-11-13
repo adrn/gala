@@ -27,6 +27,10 @@ New Features
 Bug fixes
 ---------
 
+- Fixed the force evaluation times in ``Ruth4Integrator`` (Python and Cython,
+  including N-body integration) and ``RK5Integrator``, improving accuracy for
+  time-dependent potentials. [#669]
+
 - Fixed ``find_actions_o2gf()`` raising an error whenever any toy action or angle
   was NaN. NaN samples are now dropped with a warning, and it raises only if more
   than half of the samples are NaN.
