@@ -27,6 +27,9 @@ New Features
 Bug fixes
 ---------
 
+- Fixed the final sample of DOP853 dense orbit output when rounding places
+  the last interpolation interval just short of the requested final time.
+
 - Fixed ``find_actions_o2gf()`` raising an error whenever any toy action or angle
   was NaN. NaN samples are now dropped with a warning, and it raises only if more
   than half of the samples are NaN.
