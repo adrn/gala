@@ -23,4 +23,10 @@ def test_timeinterpolated_pickle(tmpdir):
         pickle.dump(pot, f)
 
     with open(tmpdir.join("time_interp_pot.pkl"), "rb") as f:
-        pot = pickle.load(f)
+        new_pot = pickle.load(f)
+
+    q = [8.0, 1.0, 0.5] * u.kpc
+    for t in [0.0, 3.3, 10.0] * u.Gyr:
+        assert u.allclose(new_pot.energy(q, t=t), pot.energy(q, t=t))
+        assert u.allclose(new_pot.gradient(q, t=t), pot.gradient(q, t=t))
+        assert u.allclose(new_pot.density(q, t=t), pot.density(q, t=t))
