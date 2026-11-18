@@ -27,6 +27,9 @@ New Features
 Bug fixes
 ---------
 
+- Fixed ``find_actions_o2gf()`` frequencies when the orbit's times are expressed
+  in a different unit from the toy potential's time unit.
+
 - Fixed ``find_actions_o2gf()`` raising an error whenever any toy action or angle
   was NaN. NaN samples are now dropped with a warning, and it raises only if more
   than half of the samples are NaN.
