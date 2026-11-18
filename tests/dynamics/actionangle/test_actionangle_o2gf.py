@@ -289,3 +289,24 @@ def test_o2gf_drops_nan_samples(monkeypatch):
     with pytest.warns(RuntimeWarning, match="Dropping 1 samples"):
         res = find_actions_o2gf(orbit, N_max=4, toy_potential=toy)
     assert np.all(np.isfinite(res["actions"]))
+
+
+def test_o2gf_mode_sums_for_short_arcs():
+    from gala.dynamics.actionangle.actionangle_o2gf import (
+        _action_prepare,
+        _angle_prepare,
+    )
+
+    t = np.linspace(0, 1, 257)
+    aa = np.vstack((np.ones((3, t.size)), np.array([0.013, 0.021, 0.034])[:, None] * t))
+    a_actions, _, nvecs = _action_prepare(aa, N_max=6, dx=2, dy=2, dz=2)
+    a_angles, _, _ = _angle_prepare(aa, t, N_max=6, dx=2, dy=2, dz=2)
+
+    phase = np.dot(nvecs, aa[3:])
+    cosv = np.cos(phase)
+    sinv = np.sin(phase)
+    expected_actions = 4.0 * (nvecs @ nvecs.T) * np.einsum("it,jt->ij", cosv, cosv)
+    expected_angles = 4.0 * np.einsum("it,jt->ij", sinv, sinv)
+    np.testing.assert_array_equal(a_actions[3:, 3:], expected_actions)
+    stop = 6 + len(nvecs)
+    np.testing.assert_array_equal(a_angles[6:stop, 6:stop], expected_angles)
