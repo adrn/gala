@@ -33,9 +33,7 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
         unsigned niter = n_steps // n_steps_per_pullback
         double[::1] w = np.empty(norbits*ndim)
 
-        # define full array of times
-        double t_end = (<double>n_steps) * dt
-        double[::1] t = np.linspace(t0, t_end, n_steps) # TODO: should be n_steps+1
+        double[::1] t = t0 + np.arange(n_steps) * dt
         double dt0 = t[1] - t[0]
 
         double d1_mag, norm
@@ -99,8 +97,10 @@ cpdef dop853_lyapunov_max(hamiltonian, double[::1] w0,
 
             jiter += 1
 
-    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j*n_steps_per_pullback]
-                    for j in range(1, niter)])
+    LEs = np.array([
+        np.sum(LEs[:j], axis=0) / (t[j * n_steps_per_pullback] - t0)
+        for j in range(1, niter)
+    ])
     return np.asarray(t), np.asarray(all_w), np.asarray(LEs)
 
 cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
@@ -116,10 +116,8 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
         unsigned niter = n_steps // n_steps_per_pullback
         double[::1] w = np.empty(norbits*ndim)
 
-        # define full array of times
-        double t_end = (<double>n_steps) * dt
-        double[::1] t = np.linspace(t0, t_end, n_steps) # TODO: should be n_steps+1
-        double dt0 = t[1]-t[0]
+        double[::1] t = t0 + np.arange(n_steps) * dt
+        double dt0 = t[1] - t[0]
 
         double d1_mag, norm
         double[:, ::1] d1 = np.empty((norbits, ndim))
@@ -173,5 +171,8 @@ cpdef dop853_lyapunov_max_dont_save(hamiltonian, double[::1] w0,
 
             jiter += 1
 
-    LEs = np.array([np.sum(LEs[:j],axis=0)/t[j*n_steps_per_pullback] for j in range(1, niter)])
+    LEs = np.array([
+        np.sum(LEs[:j], axis=0) / (t[j * n_steps_per_pullback] - t0)
+        for j in range(1, niter)
+    ])
     return np.asarray(LEs)
