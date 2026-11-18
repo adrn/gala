@@ -324,3 +324,30 @@ def test_surface_of_section():
     orbit = gp.Hamiltonian(pot).integrate_orbit(w0, dt=0.02, n_steps=100_000)
     sos = surface_of_section(orbit, constant_idx=1)
     sos_cyl = surface_of_section(orbit.cylindrical, constant_idx=1)
+
+
+def test_fast_lyapunov_time_grid_and_origin():
+    potential = gp.NFWPotential(m=1e12, r_s=15, units=galactic)
+    w0 = [10, 0, 0.5, 0, 0.17, 0.01]
+    dt = 0.5
+    n_steps = 40
+
+    def run(t1, return_orbit):
+        return fast_lyapunov_max(
+            w0,
+            potential,
+            dt=dt,
+            n_steps=n_steps,
+            t1=t1,
+            rng=np.random.default_rng(42),
+            return_orbit=return_orbit,
+        )
+
+    base, base_orbit = run(0, True)
+    shifted, shifted_orbit = run(100, True)
+    np.testing.assert_allclose(base_orbit.t.value, np.arange(n_steps + 1) * dt)
+    np.testing.assert_allclose(shifted_orbit.t.value - 100, base_orbit.t.value)
+    assert np.any(np.abs(base.value) > 1e-4)
+    np.testing.assert_allclose(shifted.value, base.value, rtol=1e-7, atol=1e-10)
+    np.testing.assert_allclose(run(100, False).value, shifted.value)
+    np.testing.assert_allclose(run(0, False).value, base.value)
