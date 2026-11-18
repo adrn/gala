@@ -106,6 +106,8 @@ class MockStream(PhaseSpacePosition):
     def to_hdf5(self, f):
         """Serialize this object to an HDF5 file.
 
+        Release times and leading/trailing labels are stored when present.
+
         Requires ``h5py``.
 
         Parameters
@@ -121,7 +123,7 @@ class MockStream(PhaseSpacePosition):
         #     from ..potential.potential.io import to_dict
         #     f['potential'] = yaml.dump(to_dict(self.potential)).encode('utf-8')
 
-        if self.release_time:
+        if self.release_time is not None:
             quantity_to_hdf5(f, "release_time", self.release_time)
 
         if self.lead_trail is not None:
@@ -149,7 +151,7 @@ class MockStream(PhaseSpacePosition):
 
         t = quantity_from_hdf5(f["release_time"]) if "release_time" in f else None
 
-        lt = f["lead_trail"][:] if "lead_trail" in f else None
+        lt = f["lead_trail"][:].astype("U1") if "lead_trail" in f else None
 
         return cls(
             pos=obj.pos, vel=obj.vel, release_time=t, lead_trail=lt, frame=obj.frame
