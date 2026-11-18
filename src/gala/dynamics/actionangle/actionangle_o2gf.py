@@ -10,7 +10,7 @@ import astropy.table as at
 import astropy.units as u
 import numpy as np
 from astropy.constants import G
-from scipy.linalg import solve
+from scipy.linalg import eigvalsh, solve
 from scipy.optimize import brentq, minimize
 
 from gala.logging import logger
@@ -454,6 +454,20 @@ def check_angle_sampling(nvecs, angles):
     return np.array(failed_nvecs), np.array(failures)
 
 
+def _normal_matrix_well_conditioned(matrix):
+    # Remove column scale (especially the value of the time unit) from
+    # the conditioning check. The eigenvalues are squared singular values
+    # of the scaled design matrix.
+    diagonal = matrix.diagonal()
+    if np.any(diagonal <= 0) or not np.all(np.isfinite(matrix)):
+        return False
+    scale = np.sqrt(diagonal)
+    scaled = matrix / scale[:, None] / scale
+    smallest = eigvalsh(scaled, subset_by_index=[0, 0], check_finite=False)[0]
+    threshold = np.sqrt(np.finfo(matrix.dtype).eps) * np.linalg.norm(scaled, np.inf)
+    return smallest > threshold
+
+
 def _action_prepare(aa, N_max, dx, dy, dz, sign=1.0, throw_out_modes=False):
     """
     Given toy actions and angles, `aa`, compute the matrix `A` and
@@ -504,19 +518,23 @@ def _action_prepare(aa, N_max, dx, dy, dz, sign=1.0, throw_out_modes=False):
     angles = aa[3:]
 
     # top right block matrix: transpose of C_nk matrix (Eq. 12)
-    C_T = 2.0 * nvecs.T * np.sum(np.cos(np.dot(nvecs, angles)), axis=-1)
+    cosv = np.cos(np.dot(nvecs, angles))
+    C_T = 2.0 * nvecs.T * np.sum(cosv, axis=-1)
     A[:3, 3:] = C_T
     A[3:, :3] = C_T.T
 
     # lower right block matrix: C_nk dotted with C_nk^T
-    cosv = np.cos(np.dot(nvecs, angles))
-    A[3:, 3:] = 4.0 * np.dot(nvecs, nvecs.T) * np.einsum("it, jt->ij", cosv, cosv)
+    modes_dot = 4.0 * np.dot(nvecs, nvecs.T)
+    A[3:, 3:] = modes_dot * (cosv @ cosv.T)
+    # Preserve the original summation for fits sensitive to round-off.
+    if not _normal_matrix_well_conditioned(A):
+        A[3:, 3:] = modes_dot * np.einsum("it, jt->ij", cosv, cosv)
 
     # b vector first three is just sum of toy actions
     b[:3] = np.sum(actions, axis=1)
 
     # rest of the vector is C dotted with actions
-    b[3:] = 2 * np.sum(np.dot(nvecs, actions) * np.cos(np.dot(nvecs, angles)), axis=1)
+    b[3:] = 2 * np.sum(np.dot(nvecs, actions) * cosv, axis=1)
 
     return A, b, nvecs
 
@@ -580,19 +598,20 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.0, nvecs=None):
     A[:3, 3:6] = A[3:6, :3] = np.sum(t) * np.identity(3)
     A[3:6, 3:6] = np.sum(t * t) * np.identity(3)
 
+    sinv = np.sin(np.dot(nvecs, angles))
+
     # S1, 2, 3
-    A[6 : 6 + nv, 0] = -2.0 * np.sum(np.sin(np.dot(nvecs, angles)), axis=1)
+    A[6 : 6 + nv, 0] = -2.0 * np.sum(sinv, axis=1)
     A[6 + nv : 6 + 2 * nv, 1] = A[6 : 6 + nv, 0]
     A[6 + 2 * nv : 6 + 3 * nv, 2] = A[6 : 6 + nv, 0]
 
     # t*S1, 2, 3
-    A[6 : 6 + nv, 3] = -2.0 * np.sum(t[None, :] * np.sin(np.dot(nvecs, angles)), axis=1)
+    A[6 : 6 + nv, 3] = -2.0 * np.sum(t[None, :] * sinv, axis=1)
     A[6 + nv : 6 + 2 * nv, 4] = A[6 : 6 + nv, 3]
     A[6 + 2 * nv : 6 + 3 * nv, 5] = A[6 : 6 + nv, 3]
 
     # lower right block structure: S dot S^T
-    sinv = np.sin(np.dot(nvecs, angles))
-    SdotST = np.einsum("it, jt->ij", sinv, sinv)
+    SdotST = sinv @ sinv.T
     A[6 : 6 + nv, 6 : 6 + nv] = A[6 + nv : 6 + 2 * nv, 6 + nv : 6 + 2 * nv] = A[
         6 + 2 * nv : 6 + 3 * nv, 6 + 2 * nv : 6 + 3 * nv
     ] = 4 * SdotST
@@ -600,15 +619,19 @@ def _angle_prepare(aa, t, N_max, dx, dy, dz, sign=1.0, nvecs=None):
     # top rectangle
     A[:6, :] = A[:, :6].T
 
+    # The same block occurs once per angle, so check only the first.
+    block = np.r_[0, 3, 6 : 6 + nv]
+    if not _normal_matrix_well_conditioned(A[np.ix_(block, block)]):
+        SdotST = np.einsum("it, jt->ij", sinv, sinv)
+        for j in range(3):
+            modes = slice(6 + j * nv, 6 + (j + 1) * nv)
+            A[modes, modes] = 4 * SdotST
+
     b[:3] = np.sum(angles.T, axis=0)
     b[3:6] = np.sum(t[:, None] * angles.T, axis=0)
-    b[6 : 6 + nv] = -2.0 * np.sum(angles[0] * np.sin(np.dot(nvecs, angles)), axis=1)
-    b[6 + nv : 6 + 2 * nv] = -2.0 * np.sum(
-        angles[1] * np.sin(np.dot(nvecs, angles)), axis=1
-    )
-    b[6 + 2 * nv : 6 + 3 * nv] = -2.0 * np.sum(
-        angles[2] * np.sin(np.dot(nvecs, angles)), axis=1
-    )
+    b[6 : 6 + nv] = -2.0 * np.sum(angles[0] * sinv, axis=1)
+    b[6 + nv : 6 + 2 * nv] = -2.0 * np.sum(angles[1] * sinv, axis=1)
+    b[6 + 2 * nv : 6 + 3 * nv] = -2.0 * np.sum(angles[2] * sinv, axis=1)
 
     return A, b, nvecs
 
