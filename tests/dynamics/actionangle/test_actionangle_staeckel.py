@@ -278,3 +278,28 @@ def test_compare_staeckel_agama():
     dtheta = aaf["angles"].value - ang[:, idx]
     dtheta = (dtheta + np.pi) % (2 * np.pi) - np.pi
     assert np.all(np.abs(dtheta) < 1e-3)
+
+
+@pytest.mark.parametrize("n_orbits", [1, 2])
+def test_staeckel_fudge_delta_median_over_orbit_only(n_orbits):
+    pot = gp.MiyamotoNagaiPotential(m=6e10, a=3, b=0.3, units=galactic)
+    w0 = PhaseSpacePosition(
+        [[8, 10], [0, 0], [0.4, 0.8]] * u.kpc,
+        [[5, 10], [190, 200], [10, 15]] * u.km / u.s,
+    )[:n_orbits]
+    if n_orbits == 1:
+        w0 = w0[0]
+    orbit = pot.integrate_orbit(w0, dt=1, n_steps=12)
+
+    # Individually evaluated phase-space samples are the reference for each time.
+    samples = PhaseSpacePosition(orbit.xyz.reshape(3, -1), orbit.v_xyz.reshape(3, -1))
+    expected = get_staeckel_fudge_delta(pot, samples).reshape(orbit.shape)
+    assert np.all(np.isfinite(expected))
+    full = get_staeckel_fudge_delta(pot, orbit, median=False)
+    assert full.shape == orbit.shape
+    assert u.allclose(full, expected)
+    assert u.allclose(get_staeckel_fudge_delta(pot, orbit), np.median(expected, axis=0))
+    assert u.allclose(
+        get_staeckel_fudge_delta(pot, PhaseSpacePosition(orbit.pos, orbit.vel)),
+        expected,
+    )
