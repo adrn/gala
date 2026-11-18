@@ -37,6 +37,9 @@ Bug fixes
 - Fixed ``TimeInterpolatedPotential`` returning zero energy, gradient, and density
   after being pickled or deep-copied.
 
+- Fixed ``get_staeckel_fudge_delta()`` to honor ``median=False`` for orbits and
+  retain all batch dimensions for phase-space positions.
+
 - Fixed ``find_actions_o2gf()`` raising an error whenever any toy action or angle
   was NaN. NaN samples are now dropped with a warning, and it raises only if more
   than half of the samples are NaN.
