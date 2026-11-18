@@ -673,6 +673,8 @@ def _single_orbit_find_actions(
         raise TypeError("Invalid toy potential.")
 
     t = orbit.t.value
+    if orbit.t.unit != u.one:
+        t = orbit.t.to_value(toy_potential.units["time"])
 
     # Now find toy actions and angles
     aaf = toy_potential.action_angle(orbit)
