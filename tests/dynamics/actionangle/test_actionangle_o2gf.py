@@ -289,3 +289,29 @@ def test_o2gf_drops_nan_samples(monkeypatch):
     with pytest.warns(RuntimeWarning, match="Dropping 1 samples"):
         res = find_actions_o2gf(orbit, N_max=4, toy_potential=toy)
     assert np.all(np.isfinite(res["actions"]))
+
+
+def test_o2gf_frequency_respects_orbit_time_units():
+    from gala.dynamics import Orbit
+
+    omega = [0.011, 0.032, 0.045] / u.Myr
+    potential = HarmonicOscillatorPotential(omega=omega, units=galactic)
+    orbit_myr = potential.integrate_orbit([15.0, 1, 2, 0, 0, 0], dt=2, n_steps=400)
+    orbit_kyr = Orbit(
+        orbit_myr.pos,
+        orbit_myr.vel,
+        t=orbit_myr.t.to(u.kyr),
+        hamiltonian=orbit_myr.hamiltonian,
+    )
+    orbit_unitless = Orbit(
+        orbit_myr.pos,
+        orbit_myr.vel,
+        t=orbit_myr.t.value,
+        hamiltonian=orbit_myr.hamiltonian,
+    )
+    reference = find_actions_o2gf(orbit_myr, N_max=2, toy_potential=potential)
+    assert u.allclose(reference["freqs"][0], omega * u.rad, rtol=5e-4)
+    for orbit in (orbit_kyr, orbit_unitless):
+        result = find_actions_o2gf(orbit, N_max=2, toy_potential=potential)
+        assert u.allclose(result["freqs"], reference["freqs"], rtol=1e-12)
+        assert u.allclose(result["actions"], reference["actions"])
