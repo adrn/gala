@@ -417,159 +417,187 @@ def _winter27_epicyclic(pot, Lz, units):
     """Epicyclic quantities at the guiding radius for L_z, straight from the potential."""
     from scipy.optimize import brentq
 
-    def grad_hess(R):
-        q = np.array([[R], [0.0], [0.0]]) * units["length"]
-        g = pot.gradient(q).decompose(units).value[:, 0]
-        h = pot.hessian(q).decompose(units).value[..., 0]
-        return g[0], h[0, 0], h[2, 2]
-
     def freqs(R):
-        PR, PRR, Pzz = grad_hess(R)
-        return np.sqrt(PR / R), np.sqrt(PRR + 3 * PR / R), np.sqrt(Pzz)
+        q = np.array([[R], [0.0], [0.0]]) * units["length"]
+        PR = pot.gradient(q).decompose(units).value[0, 0]
+        h = pot.hessian(q).decompose(units).value[..., 0]
+        return np.sqrt(PR / R), np.sqrt(h[0, 0] + 3 * PR / R), np.sqrt(h[2, 2])
 
     Rg = brentq(lambda R: R**2 * freqs(R)[0] - Lz, 0.5, 50.0, xtol=1e-14)
     Om, ka, nu = freqs(Rg)
     h = 1e-3  # finite differences in ln R
-    lk = [np.log(freqs(Rg * np.exp(s * h))[1]) for s in (-1, 0, 1)]
-    ln = [np.log(freqs(Rg * np.exp(s * h))[2]) for s in (-1, 1)]
-    qR = -(lk[2] - lk[0]) / (2 * h)
-    qz = -(ln[1] - ln[0]) / (2 * h)
-    dqR = -(lk[2] - 2 * lk[1] + lk[0]) / h**2
-    return Rg, Om, ka, nu, qR, qz, dqR
+    qR = -(np.log(freqs(Rg * np.exp(h))[1]) - np.log(freqs(Rg * np.exp(-h))[1])) / (
+        2 * h
+    )
+    return Rg, Om, ka, nu, qR
 
 
-def _winter27_reference(pot, xv, units, J_floor_val):
-    """Independent numpy transcription of Winter-Granic et al. App. B (general q_R)."""
+def _winter27_reference(
+    pot,
+    xv,
+    units,
+    J_floor_val,
+    planar_suppression=True,
+    environmental_scaling=False,
+    long_wavelength_only=False,
+    vertical=True,
+):
+    """Independent numpy transcription of the reference script (eom_model.py) and
+    Winter-Granic et al. App. B, in physical units (kpc, km/s, Gyr)."""
+    kms, kpc, Gyr = u.km / u.s, u.kpc, u.Gyr
+    act = (1 * kpc * kms).decompose(units).value
+    vel = (1 * kms).decompose(units).value
+    freq = (1 * kms / kpc).decompose(units).value
+
     x, y, z, vx, vy, vz = xv
     R = np.hypot(x, y)
-    vR = (x * vx + y * vy) / R
-    Jp = x * vy - y * vx
-    Rg, Om, ka, nu, qR, qz, dqR = _winter27_epicyclic(pot, Jp, units)
-    JR = max((vR**2 + ka**2 * (R - Rg) ** 2) / (2 * ka), J_floor_val)
-    Jz = max((vz**2 + nu**2 * z**2) / (2 * nu), J_floor_val)
+    vR = (x * vx + y * vy) / R / vel
+    vT = (x * vy - y * vx) / R / vel
+    z = z / (1 * kpc).decompose(units).value
+    vz = vz / vel
+    R = R / (1 * kpc).decompose(units).value
+    L = R * vT
+    Rg, Om, ka, nu, qR = _winter27_epicyclic(pot, L * act, units)
+    Om, ka, nu = Om / freq, ka / freq, nu / freq
+    Rg = Rg / (1 * kpc).decompose(units).value
+    vc = Rg * Om
+    floor = J_floor_val / act
+    J = max((vR**2 + ka**2 * (R - Rg) ** 2) / (2 * ka), floor)
+    Jz = max((vz**2 + nu**2 * z**2) / (2 * nu), floor)
 
-    Ju = (1 * u.kpc * u.km / u.s).decompose(units).value
-    Du = (1 * (u.kpc * u.km / u.s) ** 2 / u.Gyr).decompose(units).value
-    jR, jz = JR / Ju, Jz / Ju
-    a, b = 9.3 * jR, 6.9 * jR**-0.5
-    D_JRJR = min(a, b) * Du
-    A_JR = (4.65 if a <= b else -1.725 * jR**-1.5) * Du / Ju
-    D_JpJp = min(6900.0, 4600.0 * jR**-0.5) * Du
-    z1, z2, z3 = 0.29 * jz, 0.04 * jz * jR**-0.5, 0.14 * (jz * jR) ** -0.5
-    D_JzJz = min(z1, z2, z3) * Du
-    if z1 <= min(z2, z3):
-        A_Jz = 0.145
-    elif z2 <= z3:
-        A_Jz = 0.02 * jR**-0.5
-    else:
-        A_Jz = -0.25 * z3 / jz
-    A_Jz *= Du / Ju
-    A_Jp = D_JpJR = D_JzJp = 0.0
+    # environment: the script uses the potential's kappa, nu at 8 kpc when off
+    R8 = 8.0
+    q8 = np.array([[R8], [0.0], [0.0]]) * u.kpc
+    PR = pot.gradient(q8).decompose(units).value[0, 0]
+    h8 = pot.hessian(q8).decompose(units).value[..., 0]
+    kappa8 = np.sqrt(h8[0, 0] + 3 * PR / (R8 * (1 * kpc).decompose(units).value)) / freq
+    nu8 = np.sqrt(h8[2, 2]) / freq
+    R_env, ka_env, nu_env = (Rg, ka, nu) if environmental_scaling else (R8, kappa8, nu8)
+
+    big = np.inf if long_wavelength_only else None
+    JR_break = big or 2.4
+    Jp_break = big or 0.72
+    JRz_break = big or 1.5
+    Jz_break = 2.3
+
+    kr = ka_env / (np.sqrt(2) * 28)
+    rr = R_env / 8.0
+    j = J
+    use_high_R, use_high_phi = j > JR_break, j > Jp_break
+    D_R_high = 35.0 * j**-0.5 * kr**0.5
+    D_JRJR = D_R_high if use_high_R else 9.3 * j / kr
+    dD = -0.5 * D_R_high / j if use_high_R else 9.3 / kr
+    D_JpJp = 5900.0 * j**-0.5 * rr**2 * kr**0.5 if use_high_phi else 6900.0 * rr**2
+    A_JR = 0.5 * dD
+    A_Jp = 0.0
+    if planar_suppression:
+        Hgas, kstar = 0.25, 10.0  # kpc, 1/kpc
+        KH = kstar * Hgas
+        Jvert = max(2 * Jz / (nu_env * Hgas**2), 0.0)  # (kpc km/s)/(km/s/kpc kpc^2)
+        pre = (1 + 0.71 * KH) ** 2
+        xi = pre / (1 + (pre - 1) * (1 + KH ** (1 / 3) * Jvert**0.75))
+        sR = xi / (0.75 if use_high_R else 0.94)
+        A_JR *= sR
+        D_JRJR *= sR
+        D_JpJp *= xi / (0.84 if use_high_phi else 0.98)
 
     g = 2 * Om / ka
-    eps = (2 / g) * JR / Jp
-    RO = Rg * Om
-    Bf = (1 - g**2 / 2) * (1 - 2 * eps) + eps * (4 + g**2 * (qR - 2))
-    A_R = (
-        g**2 * Rg / (2 * Jp) * A_Jp
-        + Rg / (2 * Jp**2) * (g**2 / 2 + g**4 / 4 * (2 * qR - 3)) * D_JpJp
+    q = 2 - 2 / g**2
+    C = A_JR / (2 * J) - D_JRJR / (4 * J**2)  # 1/Gyr
+    AR = (
+        g**2 * Rg / (2 * L) * A_Jp
+        + (R - Rg) * C
+        + g**4 * Rg / (8 * L**2) * (2 * qR - q - 1) * D_JpJp
     )
-    A_vp = RO * (
-        -2 * eps * A_JR / JR
-        + Bf * A_Jp / Jp
-        + 2 * eps * (1 + g**2 / 2 * (qR - 1)) * D_JpJR / (Jp * JR)
-        + 0.5
-        * (
-            -(g**2) / 2 * Bf
-            - g**4 / 2 * (qR - 2 + 2 / g**2) * (1 - 2 * eps)
-            + 2 * eps * (2 + g**2 / 2 * (qR - 2)) * (1 + g**2 / 2 * (qR - 1))
-            + eps * g**4 * (qR - 2 + 2 / g**2) * (qR - 2)
-            + eps * g**4 / 2 * dqR
-        )
-        * D_JpJp
-        / Jp**2
-    )
-    A_vz = vz * (
-        A_Jz / Jz
-        - qz * g**2 / 2 * A_Jp / Jp
-        - D_JzJz / Jz**2
-        + qz * D_JzJp / (Jz * Jp)
-        + qz * (1 - qz) / 2 * D_JpJp / Jp**2
-    )
-    D_RR = (
-        D_JRJR / eps
-        + g**3 * qR / 4 * D_JpJR
-        + g**4 / 4 * (1 + qR**2 * g**2 * eps / 16) * D_JpJp
-    ) / RO**2
-    D_Rvp = (
-        -D_JRJR / (2 * np.sqrt(2) * JR)
-        + (-15 / 4 + 9 / 8 * eps) * D_JpJR / (np.sqrt(2) * Jp)
-        + eps / (8 * Jp) * D_JpJp
-    )
-    D_vpvp = RO**2 * (
-        g**2 * eps / 16 * D_JRJR / JR**2
-        + ((1 - g**2 / 2) ** 2 + g**2 * eps / 4 * (1 + g**2 / 4 * (qR - 4)) ** 2)
-        * D_JpJp
-        / Jp**2
-        + g**2 * eps / 4 * (1 + g**2 / 4 * (qR - 4)) * D_JpJR / (Jp * JR)
-    )
-    D_vRvR = (
-        RO**2
-        * eps
-        / 4
-        * (
-            g**4 * qR**2 / 4 * D_JpJp / Jp**2
-            - 2 * g**2 * qR * D_JpJR / (JR * Jp)
-            + 4 * D_JRJR / JR**2
-        )
-    )
-    D_pvR = (
-        eps
-        * RO
-        * g**2
-        / 8
-        * (
-            qR * g**2 / 2 * D_JpJp / Jp**2
-            - (1 + qR * g**2 / 2) * D_JpJR / (JR * Jp)
-            + qR * g**2 / 2 * D_JRJR / JR**2
-        )
-    )
-    c4 = 1 + 3 * g**2 / 4 * (qR - 2)
-    D_pp = (
-        g**4
-        * eps
-        / 16
-        * (4 * c4 * D_JpJp / Jp**2 - 4 * c4**2 * D_JpJR / (JR * Jp) + D_JRJR / JR**2)
-    )
-    vert = qz**2 / 4 * Jz**2 / Jp**2 * D_JpJp
-    D_zz = (D_JzJz + vert + qz * Jz / Jp * D_JzJp) / (nu * Jz)
-    D_vzvz = nu / Jz * (D_JzJz + vert - qz * Jz / Jp * D_JzJp)
+    AvR = vR * C
+    Aphi = g * vR / (Rg * ka) * C
+    Drr = (g * L / (4 * J) * D_JRJR + g**4 / 4 * D_JpJp) / vc**2
+    DrvT = -g / (4 * J) * D_JRJR + g**2 / (2 * L) * (1 - g**2 / 2) * D_JpJp
+    DvTvT = vc**2 * (g / (4 * J * L) * D_JRJR + (1 - g**2 / 2) ** 2 * D_JpJp / L**2)
+    DvRvR = vc**2 / g * D_JRJR / (J * L)
+    DphivR = g / 2 * vc * D_JRJR / (J * L)
+    Dphph = g**3 / 4 * D_JRJR / (J * L)
+    AvT = (A_Jp - vT * AR - DrvT) / R
 
-    mu = np.array([A_R, 0, 0, 0, A_vp, A_vz])
+    Dzz = Dvzvz = Az = Avz = 0.0
+    if vertical:
+        nu_ratio = (nu_env * kms / kpc).to_value(1 / u.Myr) / (2 * np.pi / 75.55)
+        D_low = 0.29 * Jz / nu_ratio
+        D_mid = 0.35 * Jz * J**-0.5 / nu_ratio * kr**0.5
+        D_high = 1.2 * Jz**-0.5 * J**-0.5 * nu_ratio**0.5 * kr**0.5
+        if JRz_break < J:
+            D_JzJz, dDz = (
+                (D_high, -0.5 * D_high / Jz)
+                if Jz > Jz_break
+                else (
+                    D_mid,
+                    D_mid / Jz,
+                )
+            )
+        else:
+            D_JzJz, dDz = D_low, D_low / Jz
+        A_Jz = 0.5 * dDz
+        Dzz = D_JzJz / (2 * nu * Jz)
+        Dvzvz = nu * D_JzJz / (2 * Jz)
+        Cz = A_Jz / (2 * Jz) - D_JzJz / (4 * Jz**2)
+        Az, Avz = z * Cz, vz * Cz
+
+    # everything above is in (kpc, km/s, Gyr); convert to the target unit system
+    X, V, T = kpc, kms, Gyr
+    conv = {
+        "AR": X / T,
+        "Aphi": 1 / T,
+        "Az": X / T,
+        "AvR": V / T,
+        "AvT": V / T,
+        "Avz": V / T,
+        "Drr": X**2 / T,
+        "DrvT": X * V / T,
+        "DvTvT": V**2 / T,
+        "DvRvR": V**2 / T,
+        "DphivR": V / T,
+        "Dphph": 1 / T,
+        "Dzz": X**2 / T,
+        "Dvzvz": V**2 / T,
+    }
+    loc = locals()
+    c = {k: loc[k] * (1 * conv[k]).decompose(units).value for k in conv}
+    Rn = R * (1 * kpc).decompose(units).value
+    mu = np.array([c["AR"], Rn * c["Aphi"], c["Az"], c["AvR"], c["AvT"], c["Avz"]])
     M = np.zeros((6, 6))
-    for (i, j), val in {
-        (0, 0): D_RR,
-        (0, 4): D_Rvp,
-        (4, 4): D_vpvp,
-        (3, 3): D_vRvR,
-        (1, 3): R * D_pvR,
-        (1, 1): R**2 * D_pp,
-        (2, 2): D_zz,
-        (5, 5): D_vzvz,
+    for (i, k), val in {
+        (0, 0): c["Drr"],
+        (0, 4): c["DrvT"],
+        (4, 4): c["DvTvT"],
+        (3, 3): c["DvRvR"],
+        (1, 3): Rn * c["DphivR"],
+        (1, 1): Rn**2 * c["Dphph"],
+        (2, 2): c["Dzz"],
+        (5, 5): c["Dvzvz"],
     }.items():
-        M[i, j] = M[j, i] = val
+        M[i, k] = M[k, i] = val
     return mu, M
 
 
-def test_winter27_matches_paper_formulas():
-    """C coefficients match an independent transcription of App. B (non-flat q_R)."""
+@pytest.mark.parametrize(
+    "opts",
+    [
+        {},
+        {"planar_suppression": False, "vertical": False},
+        {"environmental_scaling": True},
+        {"long_wavelength_only": True},
+    ],
+)
+def test_winter27_matches_paper_formulas(opts):
+    """C coefficients match an independent transcription of App. B / the script."""
     from gala.dynamics.diffusion import ISMDiffusionWinter27
 
     pot = gp.MilkyWayPotential(version="v2", units=galactic)
-    model = ISMDiffusionWinter27(pot, R_min=2 * u.kpc, R_max=30 * u.kpc)
+    model = ISMDiffusionWinter27(pot, R_min=2 * u.kpc, R_max=30 * u.kpc, **opts)
     J_floor = (1e-3 * u.kpc * u.km / u.s).decompose(galactic).value
     rng = np.random.default_rng(42)
-    for R, kick in zip(rng.uniform(5, 12, 6), rng.uniform(0.01, 0.03, 6)):
+    # kicks spanning both regimes of each fit
+    for R, kick in zip(rng.uniform(5, 12, 8), np.geomspace(0.002, 0.06, 8)):
         vc = pot.circular_velocity([R, 0, 0] * u.kpc).decompose(galactic).value[0]
         ph = rng.uniform(0, 2 * np.pi)
         xv = np.array(
@@ -583,17 +611,13 @@ def test_winter27_matches_paper_formulas():
             ]
         )
         mu, D = model.coefficients(xv.reshape(6, 1))
-        mu_ref, D_ref = _winter27_reference(pot, xv, galactic, J_floor)
-        np.testing.assert_allclose(mu[0], mu_ref, rtol=1e-3, atol=0)
+        mu_ref, D_ref = _winter27_reference(pot, xv, galactic, J_floor, **opts)
+        np.testing.assert_allclose(
+            mu[0], mu_ref, rtol=1e-3, atol=1e-12 * np.abs(mu_ref).max()
+        )
         np.testing.assert_allclose(D[0], D_ref, rtol=1e-3, atol=0)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Winter-Granic et al. App. B (as written) does not reproduce the input "
-    "action-space coefficients: D_JRJR x1.25, D_JphiJphi x1.45, D_JzJz x2, and a "
-    "spurious A_Jphi = -2 sqrt(2) A_JR.",
-)
 def test_winter27_round_trip_to_actions():
     """Projecting the x-v (mu, D) onto epicyclic actions, averaged over the epicycle
     phases, recovers the action-space (A_J, D_J) the model was built from."""
@@ -603,7 +627,7 @@ def test_winter27_round_trip_to_actions():
     pot = gp.LogarithmicPotential(
         v_c=235 * u.km / u.s, r_h=1e-3 * u.kpc, q1=1, q2=1, q3=0.9, units=galactic
     )
-    model = ISMDiffusionWinter27(pot)
+    model = ISMDiffusionWinter27(pot, planar_suppression=False)
     Ju = (1 * u.kpc * u.km / u.s).decompose(galactic).value
     Du = Ju**2 / (1 * u.Gyr).decompose(galactic).value
     Rg = 8.0
@@ -657,8 +681,15 @@ def test_winter27_round_trip_to_actions():
             A_J += G @ mu + 0.5 * np.einsum("kij,ij->k", Hs, D)
             n += 1
 
-    np.testing.assert_allclose(D_J / n / Du, [9.3 * jR, 6900.0, 0.29 * jz], rtol=0.05)
-    np.testing.assert_allclose(A_J / n / (Du / Ju), [4.65, 0.0, 0.145], atol=0.2)
+    # the fits' kappa/nu rescaling evaluated at 8 kpc
+    kr = (ka / (np.sqrt(2) * 28 * u.km / u.s / u.kpc).decompose(galactic)).value
+    nr = (nu_Rg / (2 * np.pi / 75.55 / u.Myr).decompose(galactic)).value
+    np.testing.assert_allclose(
+        D_J / n / Du, [9.3 * jR / kr, 6900.0, 0.29 * jz / nr], rtol=0.01
+    )
+    np.testing.assert_allclose(
+        A_J / n / (Du / Ju), [4.65 / kr, 0.0, 0.145 / nr], rtol=0.01, atol=1e-3
+    )
 
 
 def test_winter27_integrates():

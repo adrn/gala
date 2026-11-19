@@ -284,15 +284,19 @@ class ISMDiffusionWinter27(DiffusionBase):
     diffusion along each orbit, so it is evaluated per orbit at every kick:
 
     1. Epicyclic actions ``(J_R, J_phi, J_z)``, the guiding radius, and the frequencies
-       ``Omega, kappa, nu`` (with ``q_R = -dln kappa/dln R``, ``q_z = -dln nu/dln R``) are
-       computed from rotation-curve tables built from ``potential``.
-    2. Action-space diffusion coefficients are the Modak et al. (2026) solar-
-       neighborhood fits for ``D_JRJR``, ``D_JphiJphi``, and ``D_JzJz``, with the
-       asymptotic short/long-wavelength regimes joined where they cross (the minimum
-       of the branches) so they are continuous. Cross terms are zero.
-    3. Drifts are the quasilinear ones, ``A_i = 1/2 sum_j dD_ij/dJ_j``.
+       ``Omega, kappa, nu`` (with ``q_R = -dln kappa/dln R``) are computed from
+       rotation-curve tables built from ``potential``.
+    2. Action-space diffusion coefficients are the Modak et al. (2026) fits for
+       ``D_JRJR``, ``D_JphiJphi``, and ``D_JzJz``. The short- and long-wavelength
+       regimes switch at fixed actions (2.4, 0.72, and 1.5 kpc km/s in ``J_R`` for the
+       radial, azimuthal and vertical coefficients; 2.3 kpc km/s in ``J_z``). Cross
+       terms are zero.
+    3. Drifts are the quasilinear ones, ``A_i = 1/2 dD_ii/dJ_i``. ``A_Jphi = 0``.
     4. ``(A_J, D_J)`` are mapped to cylindrical ``(R, phi, z, v_R, v_phi, v_z)`` drift
-       and diffusion using the paper's general-``q_R`` epicyclic formulas (App. B).
+       and diffusion with the paper's epicyclic formulas (App. B).
+
+    This follows the authors' reference script (``eom_model.py``), including the
+    optional corrections below.
 
     Parameters
     ----------
@@ -301,8 +305,25 @@ class ISMDiffusionWinter27(DiffusionBase):
         in the z=0 plane). The model uses ``potential.units``, which must match the
         integration Hamiltonian's length and time units.
     scale : float, optional
-        Multiplies every diffusion and drift coefficient (e.g. the square of the ISM
+        Multiplies every diffusion and drift coefficient (the square of the ISM
         fluctuation amplitude). Default 1.
+    planar_suppression : bool, optional
+        Multiply ``D_JRJR``, ``A_JR`` and ``D_JphiJphi`` by a factor ``xi(J_z)`` that
+        accounts for the finite thickness of the gas disc (scale height 250 pc,
+        ``k_* = 0.01/pc``): vertically hot orbits spend less time in the gas and feel
+        weaker in-plane forcing. Default True.
+    environmental_scaling : bool, optional
+        The fits are measured in the solar neighbourhood. If True, rescale them to each
+        orbit's guiding radius using ``kappa(R_g)``, ``nu(R_g)`` and ``R_g`` (relative
+        to ``sqrt(2) 28 km/s/kpc``, ``2 pi / 75.55 Myr`` and 8 kpc), to extrapolate the
+        diffusion to other radii. If False, the same rescaling is applied once with the
+        potential's values at 8 kpc. Default False.
+    long_wavelength_only : bool, optional
+        Always use the long-wavelength (low-action) branches of the fits, as in the
+        paper's Gaia-snail and bar-resonance examples. Default False.
+    vertical : bool, optional
+        Include vertical (``J_z``) diffusion and drift. Set False for in-plane-only
+        experiments. Default True.
     R_min, R_max : `~astropy.units.Quantity`, optional
         Range of the rotation-curve tables. Orbits whose guiding radius falls outside
         get no kick. Defaults 0.5 and 50 kpc.
@@ -310,36 +331,27 @@ class ISMDiffusionWinter27(DiffusionBase):
         Number of (log-spaced) table points. Default 512.
     J_floor : `~astropy.units.Quantity`, optional
         Floor on ``J_R`` and ``J_z`` used in the mapping, which is singular as either
-        action goes to zero (e.g. the ``v_z`` drift scales as ``J_z^{-1/2}``). Default
-        ``1e-3 kpc km/s``.
+        action goes to zero. Default ``1e-3 kpc km/s``.
 
     Notes
     -----
-    Known caveats of the paper formulas (as of the draft this implements):
-
-    - The paper defines ``q_R = dln kappa/dln R`` but states ``q_R = q_z = 1`` for a
-      flat rotation curve, and the ``A_R`` formula is only consistent with
-      ``q_R = -dln kappa/dln R``; that (minus-sign) convention is used here.
-    - The mapping does not round-trip: projecting the resulting ``(mu, D)`` back onto
-      the epicyclic actions and averaging over the epicycle phases gives roughly
-      ``1.25 D_JRJR``, ``1.45 D_JphiJphi``, ``2 D_JzJz`` and a spurious
-      ``A_Jphi = -2 sqrt(2) A_JR`` (flat curve, long-wavelength regime). Integrated
-      orbits accordingly heat radially about twice as fast as the action-space model.
-      See ``test_winter27_round_trip_to_actions``.
-    - At a flat rotation curve (``gamma^2 = 2``, ``q_R = 1``) the general ``D_phiphi``,
-      ``D_phivR``, ``D_vphivphi``, and ``A_vphi`` do not reduce to the paper's flat-
-      curve expressions. Where the tensor is not positive semi-definite, the kick's
-      Cholesky factorization clamps the negative directions to zero.
-    - The script behind the paper's figures (``calc_ISM_diffusion.py``) uses the flat-
-      curve formulas with ``D_JphiJR = -gamma^2 J_R/J_phi D_JphiJphi``, ``A_Jphi = 0``,
-      kappa/nu/R_g rescalings of the fits, and no vertical diffusion; none of those are
-      applied here.
+    - The paper defines ``q_R = dln kappa/dln R`` but states ``q_R = 1`` for a flat
+      rotation curve; the minus-sign convention is used here.
+    - The short-wavelength ``D_JphiJphi`` normalization is 5900 (kpc km/s)^2/Gyr, as in
+      the reference script (the 0.72 kpc km/s break is where it meets the 6900
+      plateau); the paper text says 4600.
+    - With ``environmental_scaling``, ``D_JphiJphi`` depends on ``J_phi`` through
+      ``R_g``, but the drift ``A_Jphi`` is still set to zero, as in the script.
     """
 
     def __init__(
         self,
         potential,
         scale=1.0,
+        planar_suppression=True,
+        environmental_scaling=False,
+        long_wavelength_only=False,
+        vertical=True,
         R_min=0.5 * u.kpc,
         R_max=50.0 * u.kpc,
         n_R=512,
@@ -372,15 +384,36 @@ class ISMDiffusionWinter27(DiffusionBase):
                 "guiding radii."
             )
 
-        J_unit = (1 * u.kpc * u.km / u.s).decompose(units).value
-        D_unit = (1 * (u.kpc * u.km / u.s) ** 2 / u.Gyr).decompose(units).value
+        def val(x):
+            return x.decompose(units).value
+
+        R_ref = val(8.0 * u.kpc)
+        lnR = np.log(R)
+        kappa_8 = np.exp(np.interp(np.log(R_ref), lnR, 0.5 * np.log(kappa2)))
+        nu_8 = np.exp(np.interp(np.log(R_ref), lnR, 0.5 * np.log(nu2)))
         params = np.array(
-            [float(scale), J_unit, D_unit, J_floor.decompose(units).value]
+            [
+                float(scale),
+                val(1 * u.kpc * u.km / u.s),
+                val(1 * (u.kpc * u.km / u.s) ** 2 / u.Gyr),
+                val(J_floor),
+                float(planar_suppression),
+                float(environmental_scaling),
+                float(long_wavelength_only),
+                float(vertical),
+                val(np.sqrt(2) * 28 * u.km / u.s / u.kpc),
+                val(2 * np.pi / (75.55 * u.Myr)),
+                R_ref,
+                kappa_8,
+                nu_8,
+                val(250 * u.pc),
+                val(0.01 / u.pc),
+            ]
         )
 
         wrapper = CDiffusionWrapper()
         wrapper.init_winter27(
-            np.log(R),
+            lnR,
             0.5 * np.log(Omega2),
             0.5 * np.log(kappa2),
             0.5 * np.log(nu2),

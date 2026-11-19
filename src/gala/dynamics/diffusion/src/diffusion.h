@@ -71,16 +71,15 @@ void gridded_cyl_diffusion(double t, double *pars, double *x, double *v,
 
 /* ---- epicyclic action-space models ---- */
 /*
-    Map action-space drift A_J = (A_JR, A_Jphi, A_Jz) and diffusion
-    D_J = (D_JRJR, D_JphiJphi, D_JzJz, D_JphiJR, D_JzJphi) to cylindrical-basis (x, v)
-    drift mu and tensor M using the general-q_R epicyclic formulas of Winter-Granic et
-    al. (App. B). epi = (R_g, Omega, kappa, nu, q_R, q_z, dq_R/dlnR) with
-    q_R = -dln kappa/dln R, q_z = -dln nu/dln R; J = (J_R, J_phi, J_z),
-    R and vz are the orbit's current cylindrical radius and vertical velocity.
+    Map diagonal action-space drift A_J = (A_JR, A_Jphi, A_Jz) and diffusion
+    D_J = (D_JRJR, D_JphiJphi, D_JzJz) to cylindrical-basis (x, v) drift mu and tensor M
+    with the epicyclic formulas of Winter-Granic et al. (App. B).
+    epi = (R_g, Omega, kappa, nu, q_R) with q_R = -dln kappa/dln R; J = (J_R, J_phi, J_z);
+    cyl = (R, v_R, v_phi, z, v_z) of the current orbit.
 */
-void gala_diffusion_epicyclic_map(const double *epi, const double *J, const double *A_J,
-                                  const double *D_J, double R, double vz,
-                                  double *mu, double *M);
+void gala_diffusion_epicyclic_map(const double *epi, const double *A_J, const double *D_J,
+                                  const double *J, const double *cyl, double *mu,
+                                  double *M);
 
 /* ISM diffusion of Winter-Granic et al. (2027); state is an epicyclic table. */
 void ism_diffusion_winter27(double t, double *pars, double *x, double *v,
