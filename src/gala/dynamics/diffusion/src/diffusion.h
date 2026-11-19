@@ -51,11 +51,6 @@ void gala_diffusion_rng_free(void *rng);
    clamped to zero so PSD/zero M is safe. */
 int gala_diffusion_cholesky(const double *M, int n, double *L);
 
-/* Build the 3x3 position and velocity rotation blocks (row-major) that map the model's
-   basis to Cartesian, given the basis id and the orbit's (x, v). */
-void gala_diffusion_build_rotation(int basis, const double *x, const double *v,
-                                   double *Qpos, double *Qvel);
-
 /* The kick: DiffusionKick.kick points here. state is a CDiffusion*, rng a gsl_rng*. */
 void diffusion_kick_increments(double t, double dt, double *x, double *v,
                                double *dx, double *dv, void *state, void *rng);
