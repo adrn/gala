@@ -93,38 +93,14 @@ int gala_diffusion_cholesky(const double *M, int n, double *L) {
     return 0;
 }
 
-// ---- Basis rotation (model basis -> Cartesian) ----
-
-void gala_diffusion_build_rotation(int basis, const double *x, const double *v,
-                                   double *Qpos, double *Qvel) {
-    (void)v;
-    for (int i = 0; i < 9; i++) { Qpos[i] = 0.0; Qvel[i] = 0.0; }
-    for (int i = 0; i < 3; i++) { Qpos[i * 3 + i] = 1.0; Qvel[i * 3 + i] = 1.0; }
-
-    if (basis == GALA_DIFF_BASIS_CYLINDRICAL) {
-        double R = sqrt(x[0] * x[0] + x[1] * x[1]);
-        if (R == 0.0) return; // R_hat undefined on the axis: leave identity
-        double c = x[0] / R, s = x[1] / R;
-        // columns are (R_hat, phi_hat, z_hat): maps cylindrical components to Cartesian
-        double Q[9] = {c, -s, 0.0,
-                       s,  c, 0.0,
-                       0.0, 0.0, 1.0};
-        for (int i = 0; i < 9; i++) { Qpos[i] = Q[i]; Qvel[i] = Q[i]; }
-    }
-    // GALA_DIFF_BASIS_CARTESIAN => identity (already set)
-    // future: GALA_DIFF_BASIS_VELOCITY_ALIGNED => build Qvel from normalized v
-}
-
 // ---- The kick ----
 
 void diffusion_kick_increments(double t, double dt, double *x, double *v,
                                double *dx, double *dv, void *state, void *rng) {
     CDiffusion *diff = (CDiffusion *)state;
     double mu[GALA_DIFF_PS], M[GALA_DIFF_PS * GALA_DIFF_PS];
-    double L[GALA_DIFF_PS * GALA_DIFF_PS], RL[GALA_DIFF_PS * GALA_DIFF_PS];
-    double rmu[GALA_DIFF_PS], xi[GALA_DIFF_PS];
-    double Qpos[9], Qvel[9];
-    int a, b, c;
+    double L[GALA_DIFF_PS * GALA_DIFF_PS], xi[GALA_DIFF_PS], inc[GALA_DIFF_PS];
+    int a, b;
 
     // 1. local coefficients (model basis)
     diff->func(t, diff->parameters, x, v, mu, M, diff->state);
@@ -136,35 +112,38 @@ void diffusion_kick_increments(double t, double dt, double *x, double *v,
         memcpy(L, M, GALA_DIFF_PS * GALA_DIFF_PS * sizeof(double));
     }
 
-    // 3. rotate to Cartesian: RL = blockdiag(Qpos, Qvel) @ L ; rmu = blockdiag @ mu
-    gala_diffusion_build_rotation(diff->basis, x, v, Qpos, Qvel);
-    for (a = 0; a < 3; a++) {
-        for (b = 0; b < GALA_DIFF_PS; b++) {
-            double s0 = 0.0, s1 = 0.0;
-            for (c = 0; c < 3; c++) {
-                s0 += Qpos[a * 3 + c] * L[c * GALA_DIFF_PS + b];
-                s1 += Qvel[a * 3 + c] * L[(3 + c) * GALA_DIFF_PS + b];
-            }
-            RL[a * GALA_DIFF_PS + b] = s0;
-            RL[(3 + a) * GALA_DIFF_PS + b] = s1;
-        }
-        double m0 = 0.0, m1 = 0.0;
-        for (c = 0; c < 3; c++) {
-            m0 += Qpos[a * 3 + c] * mu[c];
-            m1 += Qvel[a * 3 + c] * mu[3 + c];
-        }
-        rmu[a] = m0;
-        rmu[3 + a] = m1;
-    }
-
-    // 4. draw noise & form increment: dw = rmu*dt + RL @ (sqrt(dt) xi)
+    // 3. Euler-Maruyama increment in the model's coordinates: mu*dt + L sqrt(dt) xi
     double sdt = sqrt(dt);
     for (b = 0; b < GALA_DIFF_PS; b++) xi[b] = gala_diffusion_rng_gaussian(rng);
     for (a = 0; a < GALA_DIFF_PS; a++) {
-        double inc = rmu[a] * dt;
-        for (b = 0; b < GALA_DIFF_PS; b++) inc += RL[a * GALA_DIFF_PS + b] * sdt * xi[b];
-        if (a < 3) dx[a] = inc;
-        else dv[a - 3] = inc;
+        inc[a] = mu[a] * dt;
+        for (b = 0; b < GALA_DIFF_PS; b++) inc[a] += L[a * GALA_DIFF_PS + b] * sdt * xi[b];
+    }
+
+    // 4. apply in those coordinates and return the Cartesian change
+    double R = sqrt(x[0] * x[0] + x[1] * x[1]);
+    if (diff->basis == GALA_DIFF_BASIS_CYLINDRICAL && R > 0.0) {
+        // (R, phi_hat = R dphi, z, v_R, v_phi, v_z): update the curvilinear coordinates
+        // (velocities stay attached to the local frame at the new azimuth), as in the
+        // Winter-Granic et al. update rules. Rotating increments into a fixed Cartesian
+        // frame instead would add v_phi * dphi to v_R.
+        double c = x[0] / R, s = x[1] / R;
+        double vR = c * v[0] + s * v[1], vp = -s * v[0] + c * v[1];
+        double R1 = R + inc[0], dphi = inc[1] / R;
+        double c1 = c * cos(dphi) - s * sin(dphi), s1 = s * cos(dphi) + c * sin(dphi);
+        double vR1 = vR + inc[3], vp1 = vp + inc[4];
+        dx[0] = R1 * c1 - x[0];
+        dx[1] = R1 * s1 - x[1];
+        dx[2] = inc[2];
+        dv[0] = vR1 * c1 - vp1 * s1 - v[0];
+        dv[1] = vR1 * s1 + vp1 * c1 - v[1];
+        dv[2] = inc[5];
+    } else {
+        // Cartesian (and the cylindrical axis, where the basis is undefined)
+        for (a = 0; a < 3; a++) {
+            dx[a] = inc[a];
+            dv[a] = inc[3 + a];
+        }
     }
 }
 

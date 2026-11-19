@@ -87,6 +87,31 @@ def test_position_diffusion_variance():
     assert np.allclose(var, Dpos * T, rtol=0.1)
 
 
+def test_cylindrical_kick_is_curvilinear():
+    """An azimuthal (phi_hat) kick moves the star along its circle and keeps its
+    velocity in the local frame, so it must not create radial velocity (rotating the
+    increment into a fixed Cartesian frame would add v_phi * dphi to v_R)."""
+    D = np.zeros((6, 6))
+    D[1, 1] = 1.0  # kpc^2/Myr: large azimuthal position diffusion
+    diff = ConstantDiffusion(D=D, basis="cylindrical", units=galactic)
+    N = 500
+    w0 = gd.PhaseSpacePosition(
+        pos=np.tile([[8.0], [0.0], [0.0]], N) * u.kpc,
+        vel=np.tile([[0.0], [0.2], [0.0]], N) * u.kpc / u.Myr,
+    )
+    H = gp.Hamiltonian(gp.NullPotential(units=galactic))
+    orbit = H.integrate_orbit(w0, dt=0.1, n_steps=1, diffusion=diff, kick_seed=1)
+    x, v = orbit.xyz[:, -1].to_value(u.kpc), orbit.v_xyz[:, -1].to_value(u.kpc / u.Myr)
+    R = np.hypot(x[0], x[1])
+    vR = (x[0] * v[0] + x[1] * v[1]) / R
+    vphi = (x[0] * v[1] - x[1] * v[0]) / R
+    assert np.std(x[1]) > 0.1  # kicked along the circle
+    # identical across particles (only the deterministic free-flight part remains);
+    # a Cartesian-frame kick would give std(v_R) ~ v_phi sqrt(D dt) / R ~ 8e-3
+    assert np.std(vR) < 1e-12
+    assert np.std(vphi) < 1e-12
+
+
 def test_drift_is_deterministic():
     """A pure velocity drift (D=0) advances velocity as mu*T, seed-independent."""
     N = 50
