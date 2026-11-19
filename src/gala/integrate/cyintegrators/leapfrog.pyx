@@ -65,8 +65,8 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
     returns: shape (ndim, [ntimes,] n)
 
     If ``kick_capsule`` is given (a PyCapsule wrapping a ``DiffusionKick``), a
-    stochastic kick is applied to each orbit at the synchronized state after every
-    step (see gala.dynamics.diffusion).
+    stochastic kick is applied to each orbit at the synchronized state every
+    ``DiffusionKick.every`` steps (see gala.dynamics.diffusion).
     """
 
     if not hamiltonian.c_enabled:
@@ -101,6 +101,8 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
 
         # optional stochastic kick
         DiffusionKick* dk = NULL
+        int j_last = 0
+        double kick_dt
         double x_i[3]
         double v_i[3]
         double dx[3]
@@ -141,15 +143,19 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
                             &v_jm1_2[0, 0],
                             &grad_v[0, 0])
 
-            if dk != NULL:
-                # apply the stochastic kick at the synchronized state (t[j]).
-                # dv is added to both the synchronized velocity (tmp_w) and the
-                # half-step-ahead velocity (v_jm1_2) so it propagates.
+            if dk != NULL and (j - j_last == dk.every or j == ntimes - 1):
+                # apply the stochastic kick at the synchronized state (t[j]), every
+                # dk.every steps, covering the interval since the last kick (the final
+                # partial interval is kicked too). dv is added to both the
+                # synchronized velocity (tmp_w) and the half-step-ahead velocity
+                # (v_jm1_2) so it propagates.
+                kick_dt = (j - j_last) * dt
+                j_last = j
                 for i in range(n):
                     for k in range(half_ndim):
                         x_i[k] = tmp_w[k, i]
                         v_i[k] = tmp_w[half_ndim + k, i]
-                    dk.kick(t[j], dt, x_i, v_i, dx, dv, dk.state, dk.rng)
+                    dk.kick(t[j], kick_dt, x_i, v_i, dx, dv, dk.state, dk.rng)
                     for k in range(half_ndim):
                         tmp_w[k, i] = tmp_w[k, i] + dx[k]
                         tmp_w[half_ndim + k, i] = tmp_w[half_ndim + k, i] + dv[k]

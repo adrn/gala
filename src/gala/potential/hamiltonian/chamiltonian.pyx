@@ -261,7 +261,8 @@ class Hamiltonian(CommonBase):
         diffusion : `~gala.dynamics.diffusion.DiffusionBase` (optional)
             A diffusion model (e.g. `~gala.dynamics.diffusion.ConstantDiffusion`). If
             given, a stochastic Euler-Maruyama kick ``dw = mu*dt + L*sqrt(dt)*xi`` is
-            applied to every orbit after each step. Only supported with the C
+            applied to every orbit every ``diffusion.kick_every`` steps (``dt`` being
+            the interval since the last kick). Only supported with the C
             `~gala.integrate.LeapfrogIntegrator` in a static frame, for forward
             integration (``dt > 0``), and requires gala built with GSL.
         kick_seed : int (optional)

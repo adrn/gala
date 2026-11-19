@@ -147,8 +147,11 @@ cdef class CDiffusionWrapper:
             D = D @ np.swapaxes(D, -1, -2)
         return np.asarray(mu), D
 
-    def kick_capsule(self, unsigned long long seed):
-        """A new kick (own RNG, seeded with ``seed``) that keeps this model alive."""
+    def kick_capsule(self, unsigned long long seed, int every=1):
+        """A new kick (own RNG, seeded with ``seed``, applied every ``every`` steps)
+        that keeps this model alive."""
+        if every < 1:
+            raise ValueError("every must be >= 1")
         cdef void* rng = gala_diffusion_rng_alloc(seed)
         if rng == NULL:
             raise RuntimeError(
@@ -162,6 +165,7 @@ cdef class CDiffusionWrapper:
         dk.kick = <kickfunc>diffusion_kick_increments
         dk.state = <void*>&self.cdiffusion
         dk.rng = rng
+        dk.every = every
         capsule = PyCapsule_New(<void*>dk, _CAPSULE_NAME, _free_kick_capsule)
         Py_INCREF(self)
         PyCapsule_SetContext(capsule, <void*>self)
