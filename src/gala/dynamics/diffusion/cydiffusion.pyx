@@ -106,6 +106,19 @@ cdef class CDiffusionWrapper:
         self.cdiffusion.func = <diffusionfunc>gridded_cyl_diffusion
         self.cdiffusion.state = self._grid
 
+    def coefficients(self, double[:, ::1] xv, double t=0.0):
+        """Model-basis drift (n, 6) and tensor (n, 6, 6) at Cartesian xv (n, 6)."""
+        cdef int n = xv.shape[0], i
+        cdef double[:, ::1] mu = np.zeros((n, 6))
+        cdef double[:, :, ::1] M = np.zeros((n, 6, 6))
+        for i in range(n):
+            self.cdiffusion.func(t, self.cdiffusion.parameters, &xv[i, 0], &xv[i, 3],
+                                 &mu[i, 0], &M[i, 0, 0], self.cdiffusion.state)
+        D = np.asarray(M)
+        if self.cdiffusion.returns_factor:  # M is L with L L^T = D
+            D = D @ np.swapaxes(D, -1, -2)
+        return np.asarray(mu), D
+
     def kick_capsule(self, unsigned long long seed):
         """A new kick (own RNG, seeded with ``seed``) that keeps this model alive."""
         cdef void* rng = gala_diffusion_rng_alloc(seed)

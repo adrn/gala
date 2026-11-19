@@ -395,6 +395,17 @@ def test_gridded_input_validation():
         GriddedDiffusion(np.array([4.0, 6, np.nan, 12]), np.linspace(0, 3, 4), D_grid)
 
 
+def test_coefficients_accessor():
+    """coefficients() evaluates the model's drift and tensor at given points."""
+    D = np.diag([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]) * 1e-4
+    drift = np.arange(6.0) * 1e-3
+    diff = ConstantDiffusion(D=D, drift=drift, basis="cartesian", units=galactic)
+    xv = np.ones((6, 3))
+    mu, D_out = diff.coefficients(xv)
+    np.testing.assert_allclose(mu, np.tile(drift, (3, 1)))
+    np.testing.assert_allclose(D_out, np.tile(D, (3, 1, 1)), rtol=1e-12)
+
+
 def test_kick_capsule_keeps_model_alive():
     import gc
 

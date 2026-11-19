@@ -112,6 +112,29 @@ class DiffusionBase:
         """A fresh kick (own RNG) for one integration; it keeps this model alive."""
         return self.c_instance.kick_capsule(seed)
 
+    def coefficients(self, w, t=0.0):
+        """Evaluate the model's drift and diffusion tensor at phase-space points.
+
+        Parameters
+        ----------
+        w : `~gala.dynamics.PhaseSpacePosition` or array_like
+            Positions, or a ``(6, n)`` array of Cartesian ``(x, y, z, vx, vy, vz)`` in
+            the model's units.
+        t : float, optional
+            Time, in the model's time unit.
+
+        Returns
+        -------
+        mu : ndarray, shape ``(n, 6)``
+            Drift, in the model's ``basis``.
+        D : ndarray, shape ``(n, 6, 6)``
+            Diffusion tensor, in the model's ``basis``.
+        """
+        if hasattr(w, "w"):
+            w = w.w(self.units)
+        xv = np.ascontiguousarray(np.asarray(w, dtype=np.float64).reshape(6, -1).T)
+        return self.c_instance.coefficients(xv, float(t))
+
 
 class ConstantDiffusion(DiffusionBase):
     """Constant drift + diffusion tensor (independent of position/velocity).
