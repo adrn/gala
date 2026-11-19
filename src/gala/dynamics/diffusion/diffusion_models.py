@@ -17,6 +17,8 @@ carry the mixed position/velocity units of the full tensor, so Quantities are re
 kpc/Myr, Myr). Build the model in the same unit system you integrate in.
 """
 
+import operator
+
 import numpy as np
 
 from ...units import UnitSystem
@@ -95,13 +97,16 @@ class DiffusionBase:
     entries are lengths / velocities, not radians.
     """
 
-    def __init__(self, basis="cylindrical", units=None):
+    def __init__(self, basis="cylindrical", units=None, kick_every=1):
         if basis not in _BASIS:
             raise ValueError(f"Unknown basis '{basis}'. Options: {sorted(_BASIS)}")
         self.basis = basis
         if units is not None and not isinstance(units, UnitSystem):
             units = UnitSystem(units)
         self._units = units
+        self.kick_every = operator.index(kick_every)
+        if self.kick_every < 1:
+            raise ValueError(f"kick_every must be >= 1, got {kick_every}")
         self.c_instance = None  # subclasses build this
 
     @property
@@ -110,7 +115,7 @@ class DiffusionBase:
 
     def kick_capsule(self, seed):
         """A fresh kick (own RNG) for one integration; it keeps this model alive."""
-        return self.c_instance.kick_capsule(seed)
+        return self.c_instance.kick_capsule(seed, self.kick_every)
 
     def coefficients(self, w, t=0.0):
         """Evaluate the model's drift and diffusion tensor at phase-space points.
@@ -151,6 +156,9 @@ class ConstantDiffusion(DiffusionBase):
         'cylindrical' (default) or 'cartesian'.
     units : `~gala.units.UnitSystem`, optional
         Unit system the coefficients are expressed in.
+    kick_every : int, optional
+        Apply the kick every ``kick_every`` integrator steps, with the interval since
+        the last kick as its timestep. Default 1 (every step).
 
     Notes
     -----
@@ -160,8 +168,8 @@ class ConstantDiffusion(DiffusionBase):
     table and a conversion example.
     """
 
-    def __init__(self, D, drift=None, basis="cylindrical", units=None):
-        super().__init__(basis=basis, units=units)
+    def __init__(self, D, drift=None, basis="cylindrical", units=None, kick_every=1):
+        super().__init__(basis=basis, units=units, kick_every=kick_every)
 
         D = _check_plain("D", D)
         if D.shape != (6, 6):
@@ -204,6 +212,9 @@ class GriddedDiffusion(DiffusionBase):
         'cylindrical' (default) or 'cartesian'.
     units : `~gala.units.UnitSystem`, optional
         Unit system the coefficients/grid are expressed in.
+    kick_every : int, optional
+        Apply the kick every ``kick_every`` integrator steps, with the interval since
+        the last kick as its timestep. Default 1 (every step).
 
     Notes
     -----
@@ -223,9 +234,16 @@ class GriddedDiffusion(DiffusionBase):
     """
 
     def __init__(
-        self, R_grid, z_grid, D_grid, drift_grid=None, basis="cylindrical", units=None
+        self,
+        R_grid,
+        z_grid,
+        D_grid,
+        drift_grid=None,
+        basis="cylindrical",
+        units=None,
+        kick_every=1,
     ):
-        super().__init__(basis=basis, units=units)
+        super().__init__(basis=basis, units=units, kick_every=kick_every)
 
         R = _check_plain("R_grid", R_grid).ravel()
         z = _check_plain("z_grid", z_grid).ravel()

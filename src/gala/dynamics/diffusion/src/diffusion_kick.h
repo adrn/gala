@@ -21,6 +21,7 @@ typedef struct {
     kickfunc kick;  // the kick implementation (lives in the diffusion extension)
     void *state;    // model state (a CDiffusion*)
     void *rng;      // random-number generator (a gsl_rng*)
+    int every;      // kick every `every` integrator steps (dt = accumulated interval)
 } DiffusionKick;
 
 #endif

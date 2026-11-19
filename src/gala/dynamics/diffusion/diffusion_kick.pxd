@@ -8,3 +8,4 @@ cdef extern from "dynamics/diffusion/src/diffusion_kick.h":
         kickfunc kick
         void *state
         void *rng
+        int every

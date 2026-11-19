@@ -51,13 +51,20 @@ def test_diffusion_off_matches_leapfrog():
     )
 
 
-def test_velocity_diffusion_variance():
-    """Free particle + velocity-block D: Var(v_i) grows as D_ii * T."""
+@pytest.mark.parametrize("kick_every", [1, 7])
+def test_velocity_diffusion_variance(kick_every):
+    """Free particle + velocity-block D: Var(v_i) grows as D_ii * T.
+
+    kick_every=7 does not divide the 200 steps, so this also checks that the final
+    partial interval is kicked with its true length.
+    """
     N = 4000
     Dvel = np.array([1e-4, 4e-4, 2.5e-4])
     D = np.zeros((6, 6))
     D[3, 3], D[4, 4], D[5, 5] = Dvel
-    diff = ConstantDiffusion(D=D, basis="cartesian", units=galactic)
+    diff = ConstantDiffusion(
+        D=D, basis="cartesian", units=galactic, kick_every=kick_every
+    )
 
     Hn, w0 = _free_ensemble(N)
     dt, ns = 0.5, 200
@@ -340,6 +347,10 @@ def test_model_input_validation():
             np.zeros((3, 3, 6, 6)),
             units=galactic,
         )
+    with pytest.raises(ValueError):  # kick cadence must be >= 1 step
+        ConstantDiffusion(D=np.zeros((6, 6)), units=galactic, kick_every=0)
+    with pytest.raises(TypeError):  # ... and an integer
+        ConstantDiffusion(D=np.zeros((6, 6)), units=galactic, kick_every=2.5)
 
 
 # ---- regression tests for review findings ----
