@@ -586,7 +586,8 @@ static int dopcor(unsigned n, FcnEqDiff fcn, CPotential *p, CFrameType *fr,
       if (dense_state && output_times && output_y && n_output_times > 0) {
         double x0 = dense_state->xold;
         double h = dense_state->hout;
-        double x1 = x0 + h;
+        // On the last step, x0 + h can round short of the requested end.
+        double x1 = last ? xend : x0 + h;
 
         // For each output time in [x0, x1], fill output_y
 
