@@ -112,6 +112,16 @@ def test_cylindrical_kick_is_curvilinear():
     assert np.std(vphi) < 1e-12
 
 
+def test_too_few_times_raises():
+    """A time grid with fewer than two times must raise, not read out of bounds."""
+    diff = ConstantDiffusion(D=np.eye(6) * 1e-6, basis="cartesian", units=galactic)
+    H = gp.Hamiltonian(gp.NullPotential(units=galactic))
+    w0 = gd.PhaseSpacePosition(pos=[1.0, 0, 0] * u.kpc, vel=[0, 0.1, 0] * u.kpc / u.Myr)
+    for kw in ({}, {"diffusion": diff}):
+        with pytest.raises(ValueError, match="at least two times"):
+            H.integrate_orbit(w0, t=np.array([0.0]), **kw)
+
+
 def test_drift_is_deterministic():
     """A pure velocity drift (D=0) advances velocity as mu*T, seed-independent."""
     N = 50

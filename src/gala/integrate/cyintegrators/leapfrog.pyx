@@ -78,6 +78,9 @@ cpdef leapfrog_integrate_hamiltonian(hamiltonian, double [:, ::1] w0, double[::1
             f"not {hamiltonian.frame.__class__.__name__}"
         )
 
+    if t.shape[0] < 2:
+        raise ValueError("Leapfrog integration needs at least two times.")
+
     cdef:
         # temporary scalars
         int i, j, k
@@ -216,6 +219,9 @@ cpdef leapfrog_integrate_nbody(hamiltonian, double [:, ::1] w0, double[::1] t,
             "Leapfrog integration is currently only supported for StaticFrame, "
             f"not {hamiltonian.frame.__class__.__name__}"
         )
+
+    if t.shape[0] < 2:
+        raise ValueError("Leapfrog integration needs at least two times.")
 
     cdef:
         # temporary scalars

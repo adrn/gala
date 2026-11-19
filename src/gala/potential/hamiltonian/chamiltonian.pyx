@@ -320,8 +320,9 @@ class Hamiltonian(CommonBase):
                     "diffusion.units must have the same length and time units as "
                     "the Hamiltonian's unit system."
                 )
-            # SeedSequence(None) draws fresh entropy; hashing also keeps distinct
-            # user seeds distinct for GSL (which aliases e.g. 0 and 4357)
+            # SeedSequence(None) draws fresh entropy; hashing avoids GSL's aliasing
+            # of small seeds (e.g. 0 and 4357). Note SeedSequence ignores trailing
+            # zeros, so kick_seed=s and (s, 0) give the same noise.
             seed = np.random.SeedSequence(kick_seed).generate_state(1, np.uint64)[0]
             kick_capsule = diffusion.kick_capsule(int(seed))
 
@@ -355,7 +356,7 @@ class Hamiltonian(CommonBase):
             from ...integrate.timespec import parse_time_specification
 
             t = np.ascontiguousarray(parse_time_specification(self.units, **time_spec))
-            if kick_capsule is not None and t[1] < t[0]:
+            if kick_capsule is not None and t.size > 1 and t[1] <= t[0]:
                 raise ValueError(
                     "The `diffusion` option only supports forward integration (dt > 0)."
                 )
