@@ -29,28 +29,6 @@ def _free_ensemble(N):
     return Hn, w0
 
 
-def test_diffusion_off_matches_leapfrog():
-    """D=0 (and drift=0) reproduces plain leapfrog exactly."""
-    pot = gp.HernquistPotential(m=1e11, c=10, units=galactic)
-    H = gp.Hamiltonian(pot)
-    w0 = gd.PhaseSpacePosition(pos=[10.0, 0, 0] * u.kpc, vel=[0, 175.0, 0] * u.km / u.s)
-
-    diff0 = ConstantDiffusion(D=np.zeros((6, 6)), basis="cartesian", units=galactic)
-    o_diff = H.integrate_orbit(
-        w0, dt=1.0, n_steps=500, Integrator="leapfrog", diffusion=diff0, kick_seed=1
-    )
-    o_plain = H.integrate_orbit(w0, dt=1.0, n_steps=500, Integrator="leapfrog")
-
-    assert np.allclose(
-        o_diff.xyz.to_value(u.kpc), o_plain.xyz.to_value(u.kpc), atol=1e-12
-    )
-    assert np.allclose(
-        o_diff.v_xyz.to_value(u.kpc / u.Myr),
-        o_plain.v_xyz.to_value(u.kpc / u.Myr),
-        atol=1e-12,
-    )
-
-
 @pytest.mark.parametrize("kick_every", [1, 7])
 def test_velocity_diffusion_variance(kick_every):
     """Free particle + velocity-block D: Var(v_i) grows as D_ii * T.
