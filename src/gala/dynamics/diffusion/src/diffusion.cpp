@@ -72,7 +72,8 @@ void gala_diffusion_rng_set(void *rng, unsigned long long seed) {
 
 double gala_diffusion_rng_gaussian(void *rng) {
 #if USE_GSL == 1
-    return gsl_ran_ugaussian((gsl_rng *)rng);
+    // ziggurat: much faster than gsl_ran_ugaussian's polar method (no log per draw)
+    return gsl_ran_gaussian_ziggurat((gsl_rng *)rng, 1.0);
 #else
     (void)rng;
     return 0.0;
