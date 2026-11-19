@@ -483,13 +483,17 @@ def _winter27_reference(
     xv,
     units,
     J_floor_val,
-    planar_suppression=True,
-    environmental_scaling=False,
+    amplitude=1.0,
+    Sigma=12 * u.Msun / u.pc**2,
+    lambda_star=600 * u.pc,
+    tau_star=70 * u.Myr,
+    H_gas=250 * u.pc,
     long_wavelength_only=False,
-    vertical=True,
 ):
     """Independent numpy transcription of the reference script (eom_model.py) and
-    Winter-Granic et al. App. B, in physical units (kpc, km/s, Gyr)."""
+    Winter-Granic et al. App. B, in physical units (kpc, km/s, Gyr). Unlike the
+    script, the long-wavelength A_JR carries the same Sigma/tau/lambda factor as
+    D_JRJR (A = 1/2 dD/dJ)."""
     kms, kpc, Gyr = u.km / u.s, u.kpc, u.Gyr
     act = (1 * kpc * kms).decompose(units).value
     vel = (1 * kms).decompose(units).value
@@ -511,14 +515,12 @@ def _winter27_reference(
     J = max((vR**2 + ka**2 * (R - Rg) ** 2) / (2 * ka), floor)
     Jz = max((vz**2 + nu**2 * z**2) / (2 * nu), floor)
 
-    # environment: the script uses the potential's kappa, nu at 8 kpc when off
-    R8 = 8.0
-    q8 = np.array([[R8], [0.0], [0.0]]) * u.kpc
-    PR = pot.gradient(q8).decompose(units).value[0, 0]
-    h8 = pot.hessian(q8).decompose(units).value[..., 0]
-    kappa8 = np.sqrt(h8[0, 0] + 3 * PR / (R8 * (1 * kpc).decompose(units).value)) / freq
-    nu8 = np.sqrt(h8[2, 2]) / freq
-    R_env, ka_env, nu_env = (Rg, ka, nu) if environmental_scaling else (R8, kappa8, nu8)
+    # environment: always the orbit's own guiding radius
+    R_env, ka_env, nu_env = Rg, ka, nu
+    tt = (tau_star / (70 * u.Myr)).to_value(u.one)
+    Sr = (Sigma / (12 * u.Msun / u.pc**2)).to_value(u.one)
+    lr = (lambda_star / (600 * u.pc)).to_value(u.one)
+    amp2 = amplitude**2
 
     big = np.inf if long_wavelength_only else None
     JR_break = big or 2.4
@@ -530,22 +532,25 @@ def _winter27_reference(
     rr = R_env / 8.0
     j = J
     use_high_R, use_high_phi = j > JR_break, j > Jp_break
-    D_R_high = 35.0 * j**-0.5 * kr**0.5
-    D_JRJR = D_R_high if use_high_R else 9.3 * j / kr
-    dD = -0.5 * D_R_high / j if use_high_R else 9.3 / kr
-    D_JpJp = 5900.0 * j**-0.5 * rr**2 * kr**0.5 if use_high_phi else 6900.0 * rr**2
-    A_JR = 0.5 * dD
+    D_R_low = 9.3 * j / kr * tt * Sr**2 * lr**2.3
+    D_R_high = 35.0 * j**-0.5 * kr**0.5 * Sr**2 * tt * lr ** (2.3 + 3)
+    D_phi_low = 6900.0 * rr**2 * Sr**2 * tt * lr**2.3
+    D_phi_high = 5900.0 * j**-0.5 * rr**2 * kr**0.5 * Sr**2 * tt * lr ** (2.3 + 1)
+    D_JRJR = amp2 * (D_R_high if use_high_R else D_R_low)
+    dD = -0.5 * D_R_high / j if use_high_R else D_R_low / j
+    D_JpJp = amp2 * (D_phi_high if use_high_phi else D_phi_low)
+    A_JR = 0.5 * amp2 * dD
     A_Jp = 0.0
-    if planar_suppression:
-        Hgas, kstar = 0.25, 10.0  # kpc, 1/kpc
-        KH = kstar * Hgas
-        Jvert = max(2 * Jz / (nu_env * Hgas**2), 0.0)  # (kpc km/s)/(km/s/kpc kpc^2)
-        pre = (1 + 0.71 * KH) ** 2
-        xi = pre / (1 + (pre - 1) * (1 + KH ** (1 / 3) * Jvert**0.75))
-        sR = xi / (0.75 if use_high_R else 0.94)
-        A_JR *= sR
-        D_JRJR *= sR
-        D_JpJp *= xi / (0.84 if use_high_phi else 0.98)
+    # planar suppression by the gas-disc thickness
+    Hgas, kstar = H_gas.to_value(kpc), 10.0  # kpc, 1/kpc
+    KH = kstar * Hgas
+    Jvert = max(2 * Jz / (nu_env * Hgas**2), 0.0)  # (kpc km/s)/(km/s/kpc kpc^2)
+    pre = (1 + 0.71 * KH) ** 2
+    xi = pre / (1 + (pre - 1) * (1 + KH ** (1 / 3) * Jvert**0.75))
+    sR = xi / (0.75 if use_high_R else 0.94)
+    A_JR *= sR
+    D_JRJR *= sR
+    D_JpJp *= xi / (0.84 if use_high_phi else 0.98)
 
     g = 2 * Om / ka
     q = 2 - 2 / g**2
@@ -565,28 +570,22 @@ def _winter27_reference(
     Dphph = g**3 / 4 * D_JRJR / (J * L)
     AvT = (A_Jp - vT * AR - DrvT) / R
 
-    Dzz = Dvzvz = Az = Avz = 0.0
-    if vertical:
-        nu_ratio = (nu_env * kms / kpc).to_value(1 / u.Myr) / (2 * np.pi / 75.55)
-        D_low = 0.29 * Jz / nu_ratio
-        D_mid = 0.35 * Jz * J**-0.5 / nu_ratio * kr**0.5
-        D_high = 1.2 * Jz**-0.5 * J**-0.5 * nu_ratio**0.5 * kr**0.5
-        if JRz_break < J:
-            D_JzJz, dDz = (
-                (D_high, -0.5 * D_high / Jz)
-                if Jz > Jz_break
-                else (
-                    D_mid,
-                    D_mid / Jz,
-                )
-            )
-        else:
-            D_JzJz, dDz = D_low, D_low / Jz
-        A_Jz = 0.5 * dDz
-        Dzz = D_JzJz / (2 * nu * Jz)
-        Dvzvz = nu * D_JzJz / (2 * Jz)
-        Cz = A_Jz / (2 * Jz) - D_JzJz / (4 * Jz**2)
-        Az, Avz = z * Cz, vz * Cz
+    nu_ratio = (nu_env * kms / kpc).to_value(1 / u.Myr) / (2 * np.pi / 75.55)
+    D_low = 0.29 * Jz / nu_ratio
+    D_mid = 0.35 * Jz * J**-0.5 / nu_ratio * kr**0.5
+    D_high = 1.2 * Jz**-0.5 * J**-0.5 * nu_ratio**0.5 * kr**0.5
+    if JRz_break < J:
+        D_JzJz, dDz = (
+            (D_high, -0.5 * D_high / Jz) if Jz > Jz_break else (D_mid, D_mid / Jz)
+        )
+    else:
+        D_JzJz, dDz = D_low, D_low / Jz
+    D_JzJz *= amp2
+    A_Jz = 0.5 * amp2 * dDz
+    Dzz = D_JzJz / (2 * nu * Jz)
+    Dvzvz = nu * D_JzJz / (2 * Jz)
+    Cz = A_Jz / (2 * Jz) - D_JzJz / (4 * Jz**2)
+    Az, Avz = z * Cz, vz * Cz
 
     # everything above is in (kpc, km/s, Gyr); convert to the target unit system
     X, V, T = kpc, kms, Gyr
@@ -629,9 +628,14 @@ def _winter27_reference(
     "opts",
     [
         {},
-        {"planar_suppression": False, "vertical": False},
-        {"environmental_scaling": True},
         {"long_wavelength_only": True},
+        {
+            "amplitude": 1.5,
+            "Sigma": 20 * u.Msun / u.pc**2,
+            "lambda_star": 400 * u.pc,
+            "tau_star": 40 * u.Myr,
+            "H_gas": 150 * u.pc,
+        },
     ],
 )
 def test_winter27_matches_paper_formulas(opts):
@@ -673,7 +677,7 @@ def test_winter27_round_trip_to_actions():
     pot = gp.LogarithmicPotential(
         v_c=235 * u.km / u.s, r_h=1e-3 * u.kpc, q1=1, q2=1, q3=0.9, units=galactic
     )
-    model = ISMDiffusionWinter27(pot, planar_suppression=False)
+    model = ISMDiffusionWinter27(pot)
     Ju = (1 * u.kpc * u.km / u.s).decompose(galactic).value
     Du = Ju**2 / (1 * u.Gyr).decompose(galactic).value
     Rg = 8.0
@@ -727,14 +731,19 @@ def test_winter27_round_trip_to_actions():
             A_J += G @ mu + 0.5 * np.einsum("kij,ij->k", Hs, D)
             n += 1
 
-    # the fits' kappa/nu rescaling evaluated at 8 kpc
+    # the fits' kappa/nu rescaling and planar suppression at R_g = 8 kpc
     kr = (ka / (np.sqrt(2) * 28 * u.km / u.s / u.kpc).decompose(galactic)).value
     nr = (nu_Rg / (2 * np.pi / 75.55 / u.Myr).decompose(galactic)).value
+    nu_kms = nu_Rg / (1 * u.km / u.s / u.kpc).decompose(galactic).value
+    KH, Jvert = 2.5, 2 * jz / (nu_kms * 0.25**2)
+    pre = (1 + 0.71 * KH) ** 2
+    xi = pre / (1 + (pre - 1) * (1 + KH ** (1 / 3) * Jvert**0.75))
+    sR, sP = xi / 0.94, xi / 0.98
     np.testing.assert_allclose(
-        D_J / n / Du, [9.3 * jR / kr, 6900.0, 0.29 * jz / nr], rtol=0.01
+        D_J / n / Du, [9.3 * jR / kr * sR, 6900.0 * sP, 0.29 * jz / nr], rtol=0.01
     )
     np.testing.assert_allclose(
-        A_J / n / (Du / Ju), [4.65 / kr, 0.0, 0.145 / nr], rtol=0.01, atol=1e-3
+        A_J / n / (Du / Ju), [4.65 / kr * sR, 0.0, 0.145 / nr], rtol=0.01, atol=1e-3
     )
 
 

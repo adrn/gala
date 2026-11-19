@@ -300,10 +300,13 @@ static int epicyclic_actions(const epicyclic_state *s, const double *x, const do
 
 /*
     ISM-driven diffusion (Modak et al. 2026 fits as used by Winter-Granic et al. 2027,
-    following their reference script). Regimes switch at fixed breaks (in kpc km/s) that
-    are the crossings of the asymptotic fits. Drifts A_i = 1/2 dD_ii/dJ_i; A_Jphi = 0.
-    pars = [scale, J_unit, D_unit, J_floor, planar, env, longwave, vertical,
-            kappa_ref, nu_ref, R_ref, kappa_8, nu_8, H_gas, k_star]
+    following their reference script). The fits are rescaled to each orbit's guiding
+    radius (R_g, kappa, nu), suppressed for vertically hot orbits by the gas-disc
+    thickness, and multiplied by factors for the ISM surface density, fluctuation scale
+    and correlation time (computed in Python). Regimes switch at fixed breaks (in kpc
+    km/s). Drifts A_i = 1/2 dD_ii/dJ_i; A_Jphi = 0.
+    pars = [amp2, J_unit, D_unit, J_floor, longwave, kappa_ref, nu_ref, R_ref, H_gas,
+            k_star, f_low, f_R_high, f_P_high]
     (all in the integrator's units; D_unit = (kpc km/s)^2/Gyr, J_unit = kpc km/s).
 */
 void ism_diffusion_winter27(double t, double *pars, double *x, double *v,
@@ -312,69 +315,63 @@ void ism_diffusion_winter27(double t, double *pars, double *x, double *v,
     for (int i = 0; i < GALA_DIFF_PS; i++) mu[i] = 0.0;
     for (int i = 0; i < GALA_DIFF_PS * GALA_DIFF_PS; i++) M[i] = 0.0;
 
-    const double scale = pars[0], Ju = pars[1], Du = pars[2], J_floor = pars[3];
-    const int planar = pars[4] != 0.0, env = pars[5] != 0.0;
-    const int longwave = pars[6] != 0.0, vertical = pars[7] != 0.0;
-    const double kappa_ref = pars[8], nu_ref = pars[9], R_ref = pars[10];
-    const double H_gas = pars[13], k_star = pars[14];
+    const double amp2 = pars[0], Ju = pars[1], Du = pars[2], J_floor = pars[3];
+    const int longwave = pars[4] != 0.0;
+    const double kappa_ref = pars[5], nu_ref = pars[6], R_ref = pars[7];
+    const double H_gas = pars[8], k_star = pars[9];
+    const double f_low = pars[10], f_R_high = pars[11], f_P_high = pars[12];
 
     double epi[5], J[3], cyl[5];
     if (!epicyclic_actions((const epicyclic_state *)state, x, v, J_floor, epi, J, cyl))
         return;
 
-    // environment: per-orbit (R_g, kappa, nu), or fixed at R_ref
-    const double R_env = env ? epi[0] : R_ref;
-    const double ka_env = env ? epi[2] : pars[11];
-    const double nu_env = env ? epi[3] : pars[12];
-    const double kr = ka_env / kappa_ref, rr = R_env / R_ref, nr = nu_env / nu_ref;
+    // local environment at the guiding radius
+    const double nu = epi[3];
+    const double kr = epi[2] / kappa_ref, rr = epi[0] / R_ref, nr = nu / nu_ref;
 
     const double jR = J[0] / Ju, jz = J[2] / Ju; // dimensionless actions
     const double inf = INFINITY;
     const double JR_break = longwave ? inf : 2.4, Jp_break = longwave ? inf : 0.72;
     const double JRz_break = longwave ? inf : 1.5, Jz_break = 2.3;
 
-    double D_J[3] = {0.0, 0.0, 0.0}; // JRJR, JpJp, JzJz in D_unit
-    double A_J[3] = {0.0, 0.0, 0.0}; // in D_unit / J_unit
+    double D_J[3], A_J[3] = {0.0, 0.0, 0.0}; // in D_unit and D_unit / J_unit
 
     // D_JRJR: 9.3 jR / kr (long wavelength) | 35 jR^-1/2 kr^1/2 (short)
     const int hiR = jR > JR_break, hiP = jR > Jp_break;
     if (hiR) {
-        D_J[0] = 35.0 / sqrt(jR) * sqrt(kr);
+        D_J[0] = 35.0 / sqrt(jR) * sqrt(kr) * f_R_high;
         A_J[0] = -0.25 * D_J[0] / jR;
     } else {
-        D_J[0] = 9.3 * jR / kr;
-        A_J[0] = 0.5 * 9.3 / kr;
+        D_J[0] = 9.3 * jR / kr * f_low;
+        A_J[0] = 0.5 * 9.3 / kr * f_low;
     }
-    // D_JpJp: 6900 rr^2 | 5900 jR^-1/2 rr^2 kr^1/2 (no J_phi dependence used => A_Jp = 0)
-    D_J[1] = hiP ? 5900.0 / sqrt(jR) * rr * rr * sqrt(kr) : 6900.0 * rr * rr;
+    // D_JpJp: 6900 rr^2 | 5900 jR^-1/2 rr^2 kr^1/2 (J_phi dependence not used => A_Jp = 0)
+    D_J[1] = hiP ? 5900.0 / sqrt(jR) * rr * rr * sqrt(kr) * f_P_high
+                 : 6900.0 * rr * rr * f_low;
 
-    if (planar) {
-        // thickness of the gas disc suppresses planar forcing for vertically hot orbits
-        double KH = k_star * H_gas;
-        double Jv = fmax(2.0 * J[2] / (nu_env * H_gas * H_gas), 0.0);
-        double pre = (1.0 + 0.71 * KH) * (1.0 + 0.71 * KH);
-        double xi = pre / (1.0 + (pre - 1.0) * (1.0 + cbrt(KH) * pow(Jv, 0.75)));
-        double sR = xi / (hiR ? 0.75 : 0.94), sP = xi / (hiP ? 0.84 : 0.98);
-        D_J[0] *= sR;
-        A_J[0] *= sR;
-        D_J[1] *= sP;
-    }
+    // the thickness of the gas disc suppresses planar forcing of vertically hot orbits
+    const double KH = k_star * H_gas;
+    const double Jv = fmax(2.0 * J[2] / (nu * H_gas * H_gas), 0.0);
+    const double pre = (1.0 + 0.71 * KH) * (1.0 + 0.71 * KH);
+    const double xi = pre / (1.0 + (pre - 1.0) * (1.0 + cbrt(KH) * pow(Jv, 0.75)));
+    const double sR = xi / (hiR ? 0.75 : 0.94);
+    D_J[0] *= sR;
+    A_J[0] *= sR;
+    D_J[1] *= xi / (hiP ? 0.84 : 0.98);
 
-    if (vertical) {
-        // 0.29 jz / nr | 0.35 jz jR^-1/2 kr^1/2 / nr | 1.2 jz^-1/2 jR^-1/2 nr^1/2 kr^1/2
-        if (!(jR > JRz_break)) {
-            D_J[2] = 0.29 * jz / nr;
-            A_J[2] = 0.5 * 0.29 / nr;
-        } else if (jz > Jz_break) {
-            D_J[2] = 1.2 / sqrt(jz * jR) * sqrt(nr * kr);
-            A_J[2] = -0.25 * D_J[2] / jz;
-        } else {
-            D_J[2] = 0.35 * jz / sqrt(jR) * sqrt(kr) / nr;
-            A_J[2] = 0.5 * D_J[2] / jz;
-        }
+    // D_JzJz: 0.29 jz / nr | 0.35 jz jR^-1/2 kr^1/2 / nr | 1.2 jz^-1/2 jR^-1/2 nr^1/2 kr^1/2
+    if (!(jR > JRz_break)) {
+        D_J[2] = 0.29 * jz / nr;
+        A_J[2] = 0.5 * 0.29 / nr;
+    } else if (jz > Jz_break) {
+        D_J[2] = 1.2 / sqrt(jz * jR) * sqrt(nr * kr);
+        A_J[2] = -0.25 * D_J[2] / jz;
+    } else {
+        D_J[2] = 0.35 * jz / sqrt(jR) * sqrt(kr) / nr;
+        A_J[2] = 0.5 * D_J[2] / jz;
     }
 
-    const double k = scale * Du;
+    const double k = amp2 * Du;
     for (int i = 0; i < 3; i++) {
         D_J[i] *= k;
         A_J[i] *= k / Ju;

@@ -308,13 +308,22 @@ class ISMDiffusionWinter27(DiffusionBase):
        ``D_JRJR``, ``D_JphiJphi``, and ``D_JzJz``. The short- and long-wavelength
        regimes switch at fixed actions (2.4, 0.72, and 1.5 kpc km/s in ``J_R`` for the
        radial, azimuthal and vertical coefficients; 2.3 kpc km/s in ``J_z``). Cross
-       terms are zero.
+       terms are zero. The fits are
+
+       - rescaled to each orbit's guiding radius with ``kappa(R_g)``, ``nu(R_g)`` and
+         ``R_g`` (relative to ``sqrt(2) 28 km/s/kpc``, ``2 pi / 75.55 Myr`` and 8 kpc);
+       - multiplied by a planar-suppression factor ``xi(J_z)`` for ``D_JRJR`` and
+         ``D_JphiJphi``, because vertically hot orbits spend less time in the gas disc;
+       - multiplied by ``amplitude**2 (Sigma/Sigma_0)**2 (tau_star/tau_0)`` and a power
+         of ``lambda_star/lambda_0``: 2.3 for both long-wavelength in-plane fits, 5.3
+         for short-wavelength ``D_JRJR`` and 3.3 for short-wavelength
+         ``D_JphiJphi``. The fiducial values are ``Sigma_0 = 12 Msun/pc^2``,
+         ``lambda_0 = 600 pc`` and ``tau_0 = 70 Myr``.
     3. Drifts are the quasilinear ones, ``A_i = 1/2 dD_ii/dJ_i``. ``A_Jphi = 0``.
     4. ``(A_J, D_J)`` are mapped to cylindrical ``(R, phi, z, v_R, v_phi, v_z)`` drift
        and diffusion with the paper's epicyclic formulas (App. B).
 
-    This follows the authors' reference script (``eom_model.py``), including the
-    optional corrections below.
+    This follows the authors' reference script (``eom_model.py``).
 
     Parameters
     ----------
@@ -322,26 +331,21 @@ class ISMDiffusionWinter27(DiffusionBase):
         Axisymmetric potential used to tabulate the rotation curve (along the x axis
         in the z=0 plane). The model uses ``potential.units``, which must match the
         integration Hamiltonian's length and time units.
-    scale : float, optional
-        Multiplies every diffusion and drift coefficient (the square of the ISM
-        fluctuation amplitude). Default 1.
-    planar_suppression : bool, optional
-        Multiply ``D_JRJR``, ``A_JR`` and ``D_JphiJphi`` by a factor ``xi(J_z)`` that
-        accounts for the finite thickness of the gas disc (scale height 250 pc,
-        ``k_* = 0.01/pc``): vertically hot orbits spend less time in the gas and feel
-        weaker in-plane forcing. Default True.
-    environmental_scaling : bool, optional
-        The fits are measured in the solar neighbourhood. If True, rescale them to each
-        orbit's guiding radius using ``kappa(R_g)``, ``nu(R_g)`` and ``R_g`` (relative
-        to ``sqrt(2) 28 km/s/kpc``, ``2 pi / 75.55 Myr`` and 8 kpc), to extrapolate the
-        diffusion to other radii. If False, the same rescaling is applied once with the
-        potential's values at 8 kpc. Default False.
+    amplitude : float, optional
+        Strength of the ISM density fluctuations relative to the fiducial model; every
+        diffusion and drift coefficient scales as ``amplitude**2``. Default 1.
+    Sigma : `~astropy.units.Quantity`, optional
+        Gas surface density of the ISM. Default 12 Msun/pc^2.
+    lambda_star : `~astropy.units.Quantity`, optional
+        Characteristic length scale of the ISM fluctuations. Default 600 pc.
+    tau_star : `~astropy.units.Quantity`, optional
+        Correlation time of the ISM fluctuations. Default 70 Myr.
+    H_gas : `~astropy.units.Quantity`, optional
+        Vertical scale height of the gas disc, which sets the planar suppression of
+        vertically hot orbits. Default 250 pc.
     long_wavelength_only : bool, optional
         Always use the long-wavelength (low-action) branches of the fits, as in the
         paper's Gaia-snail and bar-resonance examples. Default False.
-    vertical : bool, optional
-        Include vertical (``J_z``) diffusion and drift. Set False for in-plane-only
-        experiments. Default True.
     R_min, R_max : `~astropy.units.Quantity`, optional
         Range of the rotation-curve tables. Orbits whose guiding radius falls outside
         get no kick. Defaults 0.5 and 50 kpc.
@@ -360,26 +364,46 @@ class ISMDiffusionWinter27(DiffusionBase):
     - The paper defines ``q_R = dln kappa/dln R`` but states ``q_R = 1`` for a flat
       rotation curve; the minus-sign convention is used here.
     - The short-wavelength ``D_JphiJphi`` normalization is 5900 (kpc km/s)^2/Gyr, as in
-      the reference script (the 0.72 kpc km/s break is where it meets the 6900
-      plateau); the paper text says 4600.
-    - With ``environmental_scaling``, ``D_JphiJphi`` depends on ``J_phi`` through
-      ``R_g``, but the drift ``A_Jphi`` is still set to zero, as in the script.
+      the reference script; the paper text says 4600.
+    - ``D_JphiJphi`` depends on ``J_phi`` through ``R_g``, but the drift ``A_Jphi`` is
+      set to zero, as in the script.
+    - The vertical fits, the regime breaks and the suppression wavenumber (0.01/pc) do
+      not yet depend on ``Sigma``, ``lambda_star`` or ``tau_star``. Away from
+      ``lambda_star = 600 pc`` the long- and short-wavelength branches no longer meet at
+      the breaks, so the coefficients jump there.
+    - The long-wavelength ``A_JR`` includes the same ``Sigma``/``lambda_star``/``tau_star``
+      factor as ``D_JRJR`` (the reference script omits it), so ``A = 1/2 dD/dJ`` holds.
     """
 
     def __init__(
         self,
         potential,
-        scale=1.0,
-        planar_suppression=True,
-        environmental_scaling=False,
+        amplitude=1.0,
+        Sigma=12 * u.Msun / u.pc**2,
+        lambda_star=600 * u.pc,
+        tau_star=70 * u.Myr,
+        H_gas=250 * u.pc,
         long_wavelength_only=False,
-        vertical=True,
         R_min=0.5 * u.kpc,
         R_max=50.0 * u.kpc,
         n_R=512,
         J_floor=1e-3 * u.kpc * u.km / u.s,
         kick_every=1,
     ):
+        ratios = {}
+        for name, value, fiducial in [
+            ("Sigma", Sigma, 12 * u.Msun / u.pc**2),
+            ("lambda_star", lambda_star, 600 * u.pc),
+            ("tau_star", tau_star, 70 * u.Myr),
+            ("H_gas", H_gas, 250 * u.pc),
+        ]:
+            ratio = u.Quantity(value).to_value(fiducial.unit)
+            if not (np.isscalar(ratio) and np.isfinite(ratio) and ratio > 0):
+                raise ValueError(f"{name} must be a positive scalar Quantity.")
+            ratios[name] = ratio / fiducial.value
+        f = ratios["Sigma"] ** 2 * ratios["tau_star"]
+        lam = ratios["lambda_star"]
+
         units = potential.units
         super().__init__(basis="cylindrical", units=units, kick_every=kick_every)
         self.potential = potential
@@ -410,33 +434,27 @@ class ISMDiffusionWinter27(DiffusionBase):
         def val(x):
             return x.decompose(units).value
 
-        R_ref = val(8.0 * u.kpc)
-        lnR = np.log(R)
-        kappa_8 = np.exp(np.interp(np.log(R_ref), lnR, 0.5 * np.log(kappa2)))
-        nu_8 = np.exp(np.interp(np.log(R_ref), lnR, 0.5 * np.log(nu2)))
         params = np.array(
             [
-                float(scale),
+                float(amplitude) ** 2,
                 val(1 * u.kpc * u.km / u.s),
                 val(1 * (u.kpc * u.km / u.s) ** 2 / u.Gyr),
                 val(J_floor),
-                float(planar_suppression),
-                float(environmental_scaling),
                 float(long_wavelength_only),
-                float(vertical),
                 val(np.sqrt(2) * 28 * u.km / u.s / u.kpc),
                 val(2 * np.pi / (75.55 * u.Myr)),
-                R_ref,
-                kappa_8,
-                nu_8,
-                val(250 * u.pc),
+                val(8.0 * u.kpc),
+                val(H_gas),
                 val(0.01 / u.pc),
+                f * lam**2.3,
+                f * lam**5.3,
+                f * lam**3.3,
             ]
         )
 
         wrapper = CDiffusionWrapper()
         wrapper.init_winter27(
-            lnR,
+            np.log(R),
             0.5 * np.log(Omega2),
             0.5 * np.log(kappa2),
             0.5 * np.log(nu2),

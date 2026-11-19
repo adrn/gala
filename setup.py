@@ -483,8 +483,9 @@ for ext in extensions:
     ext.extra_compile_args.extend(["-Ofast"])
     ext.extra_link_args.extend(["-Ofast"])
 
-    if "actionangle" in ext.name:
-        # the Staeckel fudge relies on NaN/inf checks, which -Ofast would remove
+    if "actionangle" in ext.name or "diffusion" in ext.name:
+        # the Staeckel fudge and the diffusion models rely on NaN/inf checks and
+        # values, which -Ofast would remove
         ext.extra_compile_args.append("-fno-finite-math-only")
 
     gsl_exts = ["potential.potential", "scf", "actionangle", "diffusion"]
