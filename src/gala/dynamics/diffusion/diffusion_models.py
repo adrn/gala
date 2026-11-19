@@ -337,7 +337,9 @@ class ISMDiffusionWinter27(DiffusionBase):
     Sigma : `~astropy.units.Quantity`, optional
         Gas surface density of the ISM. Default 12 Msun/pc^2.
     lambda_star : `~astropy.units.Quantity`, optional
-        Characteristic length scale of the ISM fluctuations. Default 600 pc.
+        Characteristic length scale of the ISM fluctuations. Besides rescaling the
+        fits, it sets the wavenumber ``k_* = 2 pi / lambda_star`` of the planar
+        suppression. Default 600 pc.
     tau_star : `~astropy.units.Quantity`, optional
         Correlation time of the ISM fluctuations. Default 70 Myr.
     H_gas : `~astropy.units.Quantity`, optional
@@ -367,8 +369,8 @@ class ISMDiffusionWinter27(DiffusionBase):
       the reference script; the paper text says 4600.
     - ``D_JphiJphi`` depends on ``J_phi`` through ``R_g``, but the drift ``A_Jphi`` is
       set to zero, as in the script.
-    - The vertical fits, the regime breaks and the suppression wavenumber (0.01/pc) do
-      not yet depend on ``Sigma``, ``lambda_star`` or ``tau_star``. Away from
+    - The vertical fits and the regime breaks do not yet depend on ``Sigma``,
+      ``lambda_star`` or ``tau_star``. Away from
       ``lambda_star = 600 pc`` the long- and short-wavelength branches no longer meet at
       the breaks, so the coefficients jump there.
     - The long-wavelength ``A_JR`` includes the same ``Sigma``/``lambda_star``/``tau_star``
@@ -445,7 +447,7 @@ class ISMDiffusionWinter27(DiffusionBase):
                 val(2 * np.pi / (75.55 * u.Myr)),
                 val(8.0 * u.kpc),
                 val(H_gas),
-                val(0.01 / u.pc),
+                val(2 * np.pi / lambda_star),
                 f * lam**2.3,
                 f * lam**5.3,
                 f * lam**3.3,

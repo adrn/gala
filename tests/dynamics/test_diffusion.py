@@ -542,7 +542,8 @@ def _winter27_reference(
     A_JR = 0.5 * amp2 * dD
     A_Jp = 0.0
     # planar suppression by the gas-disc thickness
-    Hgas, kstar = H_gas.to_value(kpc), 10.0  # kpc, 1/kpc
+    Hgas = H_gas.to_value(kpc)
+    kstar = 2 * np.pi / lambda_star.to_value(kpc)  # 1/kpc
     KH = kstar * Hgas
     Jvert = max(2 * Jz / (nu_env * Hgas**2), 0.0)  # (kpc km/s)/(km/s/kpc kpc^2)
     pre = (1 + 0.71 * KH) ** 2
@@ -735,7 +736,7 @@ def test_winter27_round_trip_to_actions():
     kr = (ka / (np.sqrt(2) * 28 * u.km / u.s / u.kpc).decompose(galactic)).value
     nr = (nu_Rg / (2 * np.pi / 75.55 / u.Myr).decompose(galactic)).value
     nu_kms = nu_Rg / (1 * u.km / u.s / u.kpc).decompose(galactic).value
-    KH, Jvert = 2.5, 2 * jz / (nu_kms * 0.25**2)
+    KH, Jvert = 2 * np.pi / 0.6 * 0.25, 2 * jz / (nu_kms * 0.25**2)  # k_* H_gas
     pre = (1 + 0.71 * KH) ** 2
     xi = pre / (1 + (pre - 1) * (1 + KH ** (1 / 3) * Jvert**0.75))
     sR, sP = xi / 0.94, xi / 0.98
